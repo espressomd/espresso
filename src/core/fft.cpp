@@ -133,10 +133,10 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
       }
     }
 
-    fft.plan[i].send_block = (int *)Utils::realloc(fft.plan[i].send_block, 6*fft.plan[i].g_size*sizeof(int));
-    fft.plan[i].send_size  = (int *)Utils::realloc(fft.plan[i].send_size, 1*fft.plan[i].g_size*sizeof(int));
-    fft.plan[i].recv_block = (int *)Utils::realloc(fft.plan[i].recv_block, 6*fft.plan[i].g_size*sizeof(int));
-    fft.plan[i].recv_size  = (int *)Utils::realloc(fft.plan[i].recv_size, 1*fft.plan[i].g_size*sizeof(int));
+    fft.plan[i].send_block = Utils::realloc(fft.plan[i].send_block, 6*fft.plan[i].g_size*sizeof(int));
+    fft.plan[i].send_size  = Utils::realloc(fft.plan[i].send_size, 1*fft.plan[i].g_size*sizeof(int));
+    fft.plan[i].recv_block = Utils::realloc(fft.plan[i].recv_block, 6*fft.plan[i].g_size*sizeof(int));
+    fft.plan[i].recv_size  = Utils::realloc(fft.plan[i].recv_size, 1*fft.plan[i].g_size*sizeof(int));
 
     fft.plan[i].new_size = fft_calc_local_mesh(my_pos[i], n_grid[i], global_mesh_dim,
 					   global_mesh_off, fft.plan[i].new_mesh, 
@@ -222,13 +222,13 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
   }
   
   /* Factor 2 for complex numbers */
-  fft.send_buf = (double *)Utils::realloc(fft.send_buf, fft.max_comm_size*sizeof(double));
-  fft.recv_buf = (double *)Utils::realloc(fft.recv_buf, fft.max_comm_size*sizeof(double));
+  fft.send_buf = Utils::realloc(fft.send_buf, fft.max_comm_size*sizeof(double));
+  fft.recv_buf = Utils::realloc(fft.recv_buf, fft.max_comm_size*sizeof(double));
   if (*data) fftw_free(*data);
   (*data)  = (double *)fftw_malloc(fft.max_mesh_size*sizeof(double));
   if (fft.data_buf) fftw_free(fft.data_buf);
   fft.data_buf = (double *)fftw_malloc(fft.max_mesh_size*sizeof(double));
-  if(!(*data) || !fft.data_buf || !fft.recv_buf || !fft.send_buf) {
+  if(!(*data) || !fft.data_buf) {
     fprintf(stderr,"%d: Could not allocate FFT data arays\n",this_node);
     errexit();
   }
@@ -335,7 +335,7 @@ void fft_perform_forw(double *data)
   /* REMARK: Result has to be in data. */
 }
 
-void fft_perform_back(double *data)
+void fft_perform_back(double *data, bool check_complex)
 {
   int i;
   
@@ -366,14 +366,13 @@ void fft_perform_back(double *data)
   for(i=0;i<fft.plan[1].new_size;i++) {
     fft.data_buf[i] = data[2*i]; /* real value */
     //Vincent:
-    if (data[2*i+1]>1e-5) {
+    if (check_complex && (data[2*i+1]>1e-5)) {
       printf("Complex value is not zero (i=%d,data=%g)!!!\n",i,data[2*i+1]);
       if (i>100) errexit();
       } 
   }
   /* communicate (in is fft.data_buf) */
   fft_back_grid_comm(fft.plan[1],fft.back[1],fft.data_buf,data);
-
 
   /* REMARK: Result has to be in data. */
 }

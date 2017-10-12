@@ -108,14 +108,14 @@ IF REACTION_ENSEMBLE:
             """
             return RE.m_current_reaction_system.slab_start_z, RE.m_current_reaction_system.slab_end_z       
          
-        def set_volume(volume):
+        def set_volume(self,volume):
             """
             set the volume to be used in the acceptance probability of the reaction ensemble. This can be useful when using constraints, if the relevant volume is different from the box volume. If not used the default volume which is used, is the box volume.
 
             """
             RE.m_current_reaction_system.volume=volume
 
-        def get_volume(volume):
+        def get_volume(self):
             """
             get the volume to be used in the acceptance probability of the reaction ensemble.
 
@@ -207,11 +207,17 @@ IF REACTION_ENSEMBLE:
             if(isinstance(self._params["dictionary"],dict)==False):
                 raise ValueError("No dictionary for relation between types and default charges provided.")
         
-        def reaction(self):
+        def reaction(self, reaction_steps = 1):
             """
-            performs one randomly selected reaction of the provided reaction system
+            performs randomly selected reactions of the provided reaction system
+            
+            Parameters
+            ----------
+            reaction_steps : int
+                              the number of reactions to be performed at once, defaults to 1
+                         
             """
-            RE.do_reaction()
+            RE.do_reaction(reaction_steps)
         
         def global_mc_move_for_one_particle_of_type(type_mc):
             """

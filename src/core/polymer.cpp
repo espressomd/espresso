@@ -650,14 +650,14 @@ int collectBonds(PartCfg & partCfg, int mode, int part_id, int N_P, int MPC, int
                        ? 2 * (partCfg[k].p.identity + 1) / MPC - 1
                        : 2 * partCfg[k].p.identity / MPC;
               bonds[i] =
-                  (int *)Utils::realloc(bonds[i], (bond[i] + 1) * sizeof(int));
+                  Utils::realloc(bonds[i], (bond[i] + 1) * sizeof(int));
               bonds[ii][bond[ii]++] = partCfg[k].bl.e[i];
             } else if ((partCfg[k].bl.e[i] % MPC == 0) ||
                        ((partCfg[k].bl.e[i] + 1) % MPC == 0)) {
               ii = partCfg[k].bl.e[i] % MPC ? 2 * (partCfg[k].bl.e[i] + 1) / MPC - 1
                                         : 2 * partCfg[k].bl.e[i] / MPC;
               bonds[i] =
-                  (int *)Utils::realloc(bonds[i], (bond[i] + 1) * sizeof(int));
+                  Utils::realloc(bonds[i], (bond[i] + 1) * sizeof(int));
               bonds[ii][bond[ii]++] = partCfg[k].p.identity;
             }
             i++;
@@ -689,10 +689,10 @@ int collectBonds(PartCfg & partCfg, int mode, int part_id, int N_P, int MPC, int
           for (j = 0; j < size; j++) {
             ii = partCfg[k].bl.e[i];
             bonds[k] =
-                (int *)Utils::realloc(bonds[k], (bond[k] + 1) * sizeof(int));
+                Utils::realloc(bonds[k], (bond[k] + 1) * sizeof(int));
             bonds[k][bond[k]++] = ii;
             bonds[ii] =
-                (int *)Utils::realloc(bonds[ii], (bond[ii] + 1) * sizeof(int));
+                Utils::realloc(bonds[ii], (bond[ii] + 1) * sizeof(int));
             bonds[ii][bond[ii]++] = k;
             i++;
           }
@@ -744,7 +744,7 @@ int crosslinkC(PartCfg & partCfg, int N_P, int MPC, int part_id, double r_catch,
         links[2 * i + k] = (int *)Utils::malloc(n_part * sizeof(int));
         link[2 * i + k] = mindist3(partCfg,i * MPC + k * (MPC - 1) + part_id, r_catch,
                                    links[2 * i + k]);
-        links[2 * i + k] = (int *)Utils::realloc(links[2 * i + k],
+        links[2 * i + k] = Utils::realloc(links[2 * i + k],
                                                  link[2 * i + k] * sizeof(int));
       } else if (bond[i * MPC + k * (MPC - 1)] == 2)
         link[2 * i + k] = -1; /* Note that links[2*i+k] will not be malloc()ed
@@ -784,7 +784,7 @@ int crosslinkC(PartCfg & partCfg, int N_P, int MPC, int part_id, double r_catch,
                   links[2 * i + k][j]; /* no ends accepted */
         }
         link[2 * i + k] = size;
-        links[2 * i + k] = (int *)Utils::realloc(links[2 * i + k],
+        links[2 * i + k] = Utils::realloc(links[2 * i + k],
                                                  link[2 * i + k] * sizeof(int));
       }
       POLY_TRACE(printf("%d: ", ii); for (j = 0; j < link[2 * i + k]; j++)

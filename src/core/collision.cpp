@@ -25,6 +25,7 @@
 #include "domain_decomposition.hpp"
 #include "interaction_data.hpp" 
 #include "initialize.hpp"
+#include "rotation.hpp"
 
 
 
@@ -383,11 +384,9 @@ void place_vs_and_relate_to_particle(const int current_vs_pid, const double* con
     memmove(local_particles[current_vs_pid]->r.p,pos,3*sizeof(double));
 	  local_vs_relate_to(current_vs_pid,relate_to);
 	  
-	  (local_particles[current_vs_pid])->p.isVirtual=1;
-	  #ifdef ROTATION_PER_PARTICLE
-	    (local_particles[relate_to])->p.rotation=14;
-	  #endif
-	  (local_particles[current_vs_pid])->p.type=collision_params.vs_particle_type;
+	  (local_particles[max_seen_particle])->p.isVirtual=1;
+	  (local_particles[relate_to])->p.rotation=ROTATION_X | ROTATION_Y | ROTATION_Z;
+	  (local_particles[max_seen_particle])->p.type=collision_params.vs_particle_type;
 }
 
 

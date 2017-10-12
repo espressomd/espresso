@@ -7,7 +7,7 @@ char *strcat_alloc(char *left, const char *right) {
     strcpy(res, right);
     return res;
   } else {
-    char *res = (char *)Utils::realloc(left, strlen(left) + strlen(right) + 1);
+    char *res = Utils::realloc(left, strlen(left) + strlen(right) + 1);
     strcat(res, right);
     return res;
   }

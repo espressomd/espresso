@@ -116,11 +116,9 @@ struct ParticleProperties {
   double out_direction[3] = {0., 0., 0.};
 #endif
 
-#ifdef ROTATION_PER_PARTICLE
   // Determines, wether a particle's rotational degrees of freedom are
   // integrated
-  short int rotation = 14;
-#endif
+  short int rotation = 0;
 
 #ifdef ELECTROSTATICS
   /** charge. */
@@ -161,14 +159,14 @@ struct ParticleProperties {
 #ifndef PARTICLE_ANISOTROPY
   double gamma = -1.;
 #else
-  double gamma[3] = {-1., -1., -1.};
+  Vector3d gamma = {-1., -1., -1.};
 #endif // PARTICLE_ANISOTROPY
 /* Friction coefficient gamma for rotation */
 #ifdef ROTATION
-#ifndef ROTATIONAL_INERTIA
+#ifndef PARTICLE_ANISOTROPY
   double gamma_rot = -1.;
 #else
-  double gamma_rot[3] = {-1., -1., -1.};
+  Vector3d gamma_rot = {-1., -1., -1.};
 #endif // ROTATIONAL_INERTIA
 #endif // ROTATION
 #endif // LANGEVIN_PER_PARTICLE
@@ -620,7 +618,6 @@ int set_particle_solvation(int part, double *solvation);
 int set_particle_rotational_inertia(int part, double rinertia[3]);
 #endif
 
-#ifdef ROTATION_PER_PARTICLE
 /** Call only on the master node: Specifies whether a particle's rotational
     degrees of freedom are integrated or not. If set to zero, the content of
     the torque and omega variables are meaningless
@@ -629,7 +626,6 @@ int set_particle_rotational_inertia(int part, double rinertia[3]);
     @return ES_OK if particle existed
 */
 int set_particle_rotation(int part, int rot);
-#endif
 
 #ifdef AFFINITY
 /** Call only on the master node: set particle affinity.
@@ -768,13 +764,13 @@ int set_particle_temperature(int part, double T);
 #ifndef PARTICLE_ANISOTROPY
 int set_particle_gamma(int part, double gamma);
 #else
-int set_particle_gamma(int part, double gamma[3]);
+int set_particle_gamma(int part, Vector3d gamma);
 #endif
 #ifdef ROTATION
-#ifndef ROTATIONAL_INERTIA
+#ifndef PARTICLE_ANISOTROPY
 int set_particle_gamma_rot(int part, double gamma);
 #else
-int set_particle_gamma_rot(int part, double gamma[3]);
+int set_particle_gamma_rot(int part, Vector3d gamma);
 #endif
 #endif
 #endif // LANGEVIN_PER_PARTICLE
@@ -906,8 +902,8 @@ void local_rescale_particles(int dir, double scale);
 void send_particles(ParticleList *particles, int node);
 
 /** Synchronous receive of a particle buffer from another node. The other node
-    MUST call \ref send_particles when this is called. The particles are
-    APPENDED to the list, so it has to be a valid one */
+    MUST call \ref send_particles when this is called. Particles needs to initialized,
+    it is realloced to the correct size and the content is overwritten. */
 void recv_particles(ParticleList *particles, int node);
 
 #ifdef EXCLUSIONS
@@ -1065,8 +1061,7 @@ void pointer_to_temperature(Particle *p, double *&res);
 void pointer_to_gamma_rot(Particle *p, double *&res);
 #endif
 #endif // LANGEVIN_PER_PARTICLE
-
-#ifdef ROTATION_PER_PARTICLE
+#ifdef ROTATION
 void pointer_to_rotation(Particle *p, short int *&res);
 #endif
 

@@ -1,6 +1,7 @@
 /* maximal set of features usable at the same time */
 #define PARTIAL_PERIODIC
 #define ELECTROSTATICS
+#define COULOMB_DEBYE_HUECKEL
 #define DIPOLES
 #define ROTATION
 #define ROTATIONAL_INERTIA
@@ -17,6 +18,7 @@
 #define MODES
 #endif
 
+#define BOND_CONSTRAINT
 #define BOND_VIRTUAL
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
@@ -78,7 +80,4 @@
 #define VIRTUAL_SITES_RELATIVE
 #define FLATNOISE
 
-
-
-
-
+#define ADDITIONAL_CHECKS

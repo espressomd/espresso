@@ -60,7 +60,7 @@
 /** Included needed by callbacks. */
 #include "cuda_init.hpp"
 #include "particle_data.hpp"
-#include "utils/serialization/array.hpp" 
+#include "utils/serialization/array.hpp"
 
 /**************************************************
  * exported variables
@@ -84,12 +84,11 @@ extern boost::mpi::communicator comm_cart;
 #endif
 
 namespace Communication {
-  /**
-   * @brief Returns a reference to the global callback class instance.
-   *
-   */
-  MpiCallbacks &mpiCallbacks();
-  
+/**
+ * @brief Returns a reference to the global callback class instance.
+ *
+ */
+MpiCallbacks &mpiCallbacks();
 }
 
 /**************************************************
@@ -127,13 +126,6 @@ void mpi_finalize();
 void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
                               std::array<int, 3> const &periodicity = {1, 1,
                                                                        1});
-
-/** Issue REQ_BCAST_PAR: broadcast a parameter from datafield.
-    @param i the number from \ref global.hpp "global.hpp" referencing the
-   datafield.
-    @return nonzero on error
-*/
-int mpi_bcast_parameter(int i);
 
 /** Issue REQ_WHO_HAS: ask nodes for their attached particles. */
 void mpi_who_has();
@@ -501,15 +493,15 @@ void mpi_set_particle_temperature(int pnode, int part, double _T);
 #ifndef PARTICLE_ANISOTROPY
 void mpi_set_particle_gamma(int pnode, int part, double gamma);
 #else
-void mpi_set_particle_gamma(int pnode, int part, double gamma[3]);
+void mpi_set_particle_gamma(int pnode, int part, Vector3d gamma);
 #endif
 
 #ifdef ROTATION
-#ifndef ROTATIONAL_INERTIA
+#ifndef PARTICLE_ANISOTROPY
 void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot);
 #else
-void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot[3]);
-#endif // ROTATIONAL_INERTIA
+void mpi_set_particle_gamma_rot(int pnode, int part, Vector3d gamma_rot);
+#endif // PARTICLE_ANISOTROPY
 #endif
 #endif // LANGEVIN_PER_PARTICLE
 
@@ -649,6 +641,19 @@ void mpi_thermalize_cpu(int temp);
  *  \param write 1 to write, 0 to read
  */
 void mpi_mpiio(const char *filename, unsigned fields, int write);
+
+/**
+ * @brief Resort the particles.
+ *
+ * This function resorts the particles on the nodes.
+ *
+ * @param global_flag If true a global resort is done,
+ *        if false particles are only exchanges between
+ *        neighbors.
+ * @return The number of particles on the nodes after
+ *         the resort.
+ */
+std::vector<int> mpi_resort_particles(int global_flag);
 
 /*@}*/
 

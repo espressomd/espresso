@@ -118,7 +118,7 @@ void realloc_local_particles(int part) {
     /* round up part + 1 in granularity PART_INCREMENT */
     max_local_particles =
         PART_INCREMENT * ((part + PART_INCREMENT) / PART_INCREMENT);
-    local_particles = (Particle **)Utils::realloc(
+    local_particles = Utils::realloc(
         local_particles, sizeof(Particle *) * max_local_particles);
 
     /* Set new memory to 0 */
@@ -137,7 +137,7 @@ static void realloc_particle_node(int part) {
     max_particle_node =
         PART_INCREMENT * ((part + PART_INCREMENT) / PART_INCREMENT);
     particle_node =
-        (int *)Utils::realloc(particle_node, sizeof(int) * max_particle_node);
+        Utils::realloc(particle_node, sizeof(int) * max_particle_node);
   }
 }
 
@@ -181,7 +181,7 @@ int realloc_particlelist(ParticleList *l, int size) {
     /* round up */
     l->max = PART_INCREMENT * ((size + PART_INCREMENT - 1) / PART_INCREMENT);
   if (l->max != old_max)
-    l->part = (Particle *)Utils::realloc(l->part, sizeof(Particle) * l->max);
+    l->part = Utils::realloc(l->part, sizeof(Particle) * l->max);
   return l->part != old_start;
 }
 
@@ -409,8 +409,7 @@ int set_particle_rotational_inertia(int part, double rinertia[3]) {
   return ES_OK;
 }
 #endif
-
-#ifdef ROTATION_PER_PARTICLE
+#ifdef ROTATION
 int set_particle_rotation(int part, int rot) {
   int pnode;
   if (!particle_node)
@@ -551,8 +550,7 @@ int set_particle_smaller_timestep(int part, int smaller_timestep) {
 }
 #endif
 
-int set_particle_q(int part, double q)
-{
+int set_particle_q(int part, double q) {
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -777,7 +775,7 @@ int set_particle_temperature(int part, double T) {
 #ifndef PARTICLE_ANISOTROPY
 int set_particle_gamma(int part, double gamma)
 #else
-int set_particle_gamma(int part, double gamma[3])
+int set_particle_gamma(int part, Vector3d gamma)
 #endif // PARTICLE_ANISOTROPY
 {
   int pnode;
@@ -797,11 +795,11 @@ int set_particle_gamma(int part, double gamma[3])
   return ES_OK;
 }
 #ifdef ROTATION
-#ifndef ROTATIONAL_INERTIA
+#ifndef PARTICLE_ANISOTROPY
 int set_particle_gamma_rot(int part, double gamma_rot)
 #else
-int set_particle_gamma_rot(int part, double gamma_rot[3])
-#endif // ROTATIONAL_INERTIA
+int set_particle_gamma_rot(int part, Vector3d gamma_rot)
+#endif // PARTICLE_ANISOTROPY
 {
   int pnode;
 
@@ -1051,22 +1049,13 @@ void local_remove_all_particles() {
 }
 
 void local_rescale_particles(int dir, double scale) {
-  Particle *p, *p1;
-  int j, c;
-  Cell *cell;
-
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p = cell->part;
-    for (j = 0; j < cell->n; j++) {
-      p1 = &p[j];
-      if (dir < 3)
-        p1->r.p[dir] *= scale;
-      else {
-        p1->r.p[0] *= scale;
-        p1->r.p[1] *= scale;
-        p1->r.p[2] *= scale;
-      }
+  for (auto &p : local_cells.particles()) {
+    if (dir < 3)
+      p.r.p[dir] *= scale;
+    else {
+      p.r.p[0] *= scale;
+      p.r.p[1] *= scale;
+      p.r.p[2] *= scale;
     }
   }
 }
@@ -1143,61 +1132,42 @@ int try_delete_bond(Particle *part, int *bond) {
 }
 
 void remove_all_bonds_to(int identity) {
-  Cell *cell;
-  int p, np, c;
-  Particle *part;
+  for (auto &p : local_cells.particles()) {
+    IntList *bl = &p.bl;
+    int i, j, partners;
 
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    np = cell->n;
-    part = cell->part;
-    for (p = 0; p < np; p++) {
-      IntList *bl = &part[p].bl;
-      int i, j, partners;
-
-      for (i = 0; i < bl->n;) {
-        partners = bonded_ia_params[bl->e[i]].num;
-        for (j = 1; j <= partners; j++)
-          if (bl->e[i + j] == identity)
-            break;
-        if (j <= partners) {
-          bl->n -= 1 + partners;
-          memmove(bl->e + i, bl->e + i + 1 + partners,
-                  sizeof(int) * (bl->n - i));
-          realloc_intlist(bl, bl->n);
-        } else
-          i += 1 + partners;
-      }
-      if (i != bl->n) {
-        fprintf(stderr, "%d: INTERNAL ERROR: bond information corrupt for "
-                        "particle %d, exiting...\n",
-                this_node, part[p].p.identity);
-        errexit();
-      }
+    for (i = 0; i < bl->n;) {
+      partners = bonded_ia_params[bl->e[i]].num;
+      for (j = 1; j <= partners; j++)
+        if (bl->e[i + j] == identity)
+          break;
+      if (j <= partners) {
+        bl->n -= 1 + partners;
+        memmove(bl->e + i, bl->e + i + 1 + partners, sizeof(int) * (bl->n - i));
+        realloc_intlist(bl, bl->n);
+      } else
+        i += 1 + partners;
+    }
+    if (i != bl->n) {
+      fprintf(stderr, "%d: INTERNAL ERROR: bond information corrupt for "
+                      "particle %d, exiting...\n",
+              this_node, p.p.identity);
+      errexit();
     }
   }
 }
 
 #ifdef EXCLUSIONS
 void local_change_exclusion(int part1, int part2, int _delete) {
-  Cell *cell;
-  int p, np, c;
-  Particle *part;
-
   if (part1 == -1 && part2 == -1) {
-    /* delete all exclusions */
-    for (c = 0; c < local_cells.n; c++) {
-      cell = local_cells.cell[c];
-      np = cell->n;
-      part = cell->part;
-      for (p = 0; p < np; p++)
-        realloc_intlist(&part[p].el, part[p].el.n = 0);
+    for (auto &p : local_cells.particles()) {
+      realloc_intlist(&p.el, p.el.n = 0);
+      return;
     }
-    return;
   }
 
   /* part1, if here */
-  part = local_particles[part1];
+  auto part = local_particles[part1];
   if (part) {
     if (_delete)
       try_delete_exclusion(part, part2);
@@ -1259,7 +1229,6 @@ void send_particles(ParticleList *particles, int node) {
 
 void recv_particles(ParticleList *particles, int node) {
   PART_TRACE(fprintf(stderr, "%d: recv_particles from %d\n", this_node, node));
-
   comm_cart.recv(node, REQ_SNDRCV_PART, *particles);
 
   update_local_particles(particles);
@@ -1403,14 +1372,14 @@ int init_type_array(int type) {
   }
 
   Type.index =
-      (int *)Utils::realloc((void *)Type.index, sizeof(int) * Type.max_entry);
+      Utils::realloc(Type.index, sizeof(int) * Type.max_entry);
 
   // reallocate the array that holds the particle type and points to the type
   // index used for the type_list
 
   if (type >= Index.max_entry) {
     Index.type =
-        (int *)Utils::realloc((void *)Index.type, (type + 1) * sizeof(int));
+        Utils::realloc(Index.type, (type + 1) * sizeof(int));
     Index.max_entry = type + 1;
   }
   for (int i = 0; i < Type.max_entry; i++)
@@ -1444,15 +1413,15 @@ int init_type_array(int type) {
     }
     // now the array is shrinked to at least 4 times the highest entry
     type_array[Index.type[type]].id_list =
-        (int *)Utils::realloc((void *)type_array[Index.type[type]].id_list,
+        Utils::realloc(type_array[Index.type[type]].id_list,
                               sizeof(int) * 2 * max_size);
     type_array[Index.type[type]].max_entry = t_c;
     type_array[Index.type[type]].cur_size = max_size * 2;
   } else {
     // no particles of the given type were found, so leave array size fixed at a
     // reasonable start entry 64 ints in this case
-    type_array[Index.type[type]].id_list = (int *)Utils::realloc(
-        (void *)type_array[Index.type[type]].id_list, sizeof(int) * 64);
+    type_array[Index.type[type]].id_list = Utils::realloc(
+        type_array[Index.type[type]].id_list, sizeof(int) * 64);
     type_array[Index.type[type]].max_entry = t_c;
     type_array[Index.type[type]].cur_size = 64;
   }
@@ -1466,8 +1435,8 @@ int init_type_array(int type) {
 }
 
 int reallocate_type_array(int type) {
-  type_array[Index.type[type]].id_list = (int *)Utils::realloc(
-      (void *)type_array[Index.type[type]].id_list,
+  type_array[Index.type[type]].id_list = Utils::realloc(
+      type_array[Index.type[type]].id_list,
       sizeof(int) * type_array[Index.type[type]].cur_size * 2);
   if (type_array[Index.type[type]].id_list == (int *)0) {
     return ES_ERROR;
@@ -1536,7 +1505,7 @@ int reallocate_global_type_list(int size) {
   if (size <= 0)
     return ES_ERROR;
   type_array =
-      (TypeList *)Utils::realloc((void *)type_array, sizeof(TypeList) * size);
+      Utils::realloc(type_array, sizeof(TypeList) * size);
   number_of_type_lists = size;
   if (type_array == (TypeList *)0)
     return ES_ERROR;
@@ -1740,16 +1709,16 @@ void pointer_to_gamma(Particle *p, double *&res) {
 #ifndef PARTICLE_ANISOTROPY
   res = &(p->p.gamma);
 #else
-  res = p->p.gamma; // array [3]
+  res = p->p.gamma.data(); // array [3]
 #endif // PARTICLE_ANISTROPY
 }
 
 #ifdef ROTATION
 void pointer_to_gamma_rot(Particle *p, double *&res) {
-#ifndef ROTATIONAL_INERTIA
+#ifndef PARTICLE_ANISOTROPY
   res = &(p->p.gamma_rot);
 #else
-  res = p->p.gamma_rot; // array [3]
+  res = p->p.gamma_rot.data(); // array [3]
 #endif // ROTATIONAL_INERTIA
 }
 #endif // ROTATION
@@ -1757,11 +1726,9 @@ void pointer_to_gamma_rot(Particle *p, double *&res) {
 void pointer_to_temperature(Particle *p, double *&res) { res = &(p->p.T); }
 #endif // LANGEVIN_PER_PARTICLE
 
-#ifdef ROTATION_PER_PARTICLE
 void pointer_to_rotation(Particle *p, short int *&res) {
   res = &(p->p.rotation);
 }
-#endif
 
 #ifdef ENGINE
 void pointer_to_swimming(Particle *p, ParticleParametersSwimming *&swim) {

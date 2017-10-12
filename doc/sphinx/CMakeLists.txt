@@ -27,7 +27,6 @@ if(SPHINX_FOUND)
         "${CMAKE_CURRENT_SOURCE_DIR}/dg.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/ug.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/introduction.rst"
-        "${CMAKE_CURRENT_SOURCE_DIR}/firststeps.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/installation.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/part.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/inter.rst"
