@@ -4278,7 +4278,7 @@ void lb_lbfluid_get_population( int xyz[3], float population_host[LBQ], int c )
  * @param *d_v                  Pointer to local device values
  * @param coupling              int denoting wether to use two- (0) or three-point (1) coupling for the velocity interpolation (Input)
 */
-__global__ void lb_lbfluid_get_fluid_velocity_at_particle_positions_kernel(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float* u_gpu, LB_node_force_gpu node_f, int coupling){
+__global__ void lb_lbfluid_get_fluid_velocity_at_particle_positions_kernel(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float* u_gpu, LB_node_force_gpu node_f, LB_rho_v_gpu *d_v, int coupling){
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   if (index < para.number_of_particles) {
     float position[3];
@@ -4289,13 +4289,11 @@ __global__ void lb_lbfluid_get_fluid_velocity_at_particle_positions_kernel(LB_no
     position[1] = particle_data[index].p[1];
     position[2] = particle_data[index].p[2];
     // Do the velocity interpolation
-#ifndef SHANCHEN //because SHANCHEN uses dv in the two point coupling and we only give NULL pointer.
     if (coupling == 0) {
         interpolation_two_point_coupling(n_a, position, node_index, mode, nullptr, delta, &u_gpu[3*index]);
     } else if (coupling == 1) {
         interpolation_three_point_coupling(n_a, position, node_index, nullptr, delta, &u_gpu[3*index]);
     }
-#endif
   }
 }
 
