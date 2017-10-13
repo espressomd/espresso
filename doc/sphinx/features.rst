@@ -226,6 +226,17 @@ following features.
 
 -  ``BOND_ENDANGLEDIST``
 
+Object-in-fluid module
+----------------------
+
+If you intend to use objects immersed in a fluid, you need the following features.
+-  ``OIF_LOCAL_FORCES``
+
+-  ``OIF_GLOBAL_FORCES``
+
+-  ``MEMBRANE_COLLISION``
+
+
 Debug messages
 --------------
 
