@@ -4275,7 +4275,7 @@ void lb_lbfluid_get_population( int xyz[3], float population_host[LBQ], int c )
  * @param *particle_data        Pointer to the particle position and velocity (Input)
  * @param *u_gpu                Pointer to float array (Output)
  * @param node_f                Struct for node force (Input)
- * @param coupling              int denoting wether to use two- (0) or three-point (1) coupling for the velocity (1) interpolation (Input)
+ * @param coupling              int denoting wether to use two- (0) or three-point (1) coupling for the velocity interpolation (Input)
 */
 __global__ void lb_lbfluid_get_fluid_velocity_at_particle_positions_kernel(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float* u_gpu, LB_node_force_gpu node_f, int coupling){
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
