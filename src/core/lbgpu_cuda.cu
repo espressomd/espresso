@@ -1554,7 +1554,7 @@ __device__ void calc_mode(float *mode, LB_nodes_gpu n_a, unsigned int node_index
  * @param part_index      particle id / thread id (Input)
  * @param node_index      node index around (8) particle (Output)
  * @param *d_v            Pointer to local device values
- * @param *interpolated_u Pointer to the interpolated velocity
+ * @param *interpolated_u Pointer to the interpolated velocity (Output)
 */
 __device__ __inline__ void interpolation_three_point_coupling( LB_nodes_gpu n_a, float* particle_position, unsigned int *node_index, LB_rho_v_gpu *d_v, float *delta, float *interpolated_u ) {
 
@@ -1810,12 +1810,12 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared, int *number_o
 /*********************************************************/
 /**(Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
  * @param n_a                   Pointer to local node residing in array a (Input)
- * @param node_index            node index around (8) particle (Output)
  * @param *particle_position    Pointer to the particle position (Input)
- * @param *mode                 Pointer to the 19 modes for current lattice point
+ * @param node_index            node index around (8) particle (Output)
+ * @param *mode                 Pointer to the 19 modes for current lattice point (Output)
  * @param *d_v                  Pointer to local device values
- * @param *interpolated_u       Pointer to the interpolated velocity
  * @param *delta                Pointer for the weighting of particle position (Output)
+ * @param *interpolated_u       Pointer to the interpolated velocity (Output)
 */
 __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, float *particle_position, unsigned int* node_index, float* mode, LB_rho_v_gpu *d_v, float* delta, float *interpolated_u ) {
   int   left_node_index[3];
@@ -3803,7 +3803,7 @@ __device__ void get_interpolated_velocity(LB_nodes_gpu n_a, float* r, float* u, 
 //      mode[2]+=0.5f*node_f.force[1*para.number_of_nodes + node_index[i]];
 //      mode[3]+=0.5f*node_f.force[2*para.number_of_nodes + node_index[i]];
 //
-    }
+  }
 
   #pragma unroll
   for(int i=0; i<3; ++i){
@@ -4275,22 +4275,34 @@ void lb_lbfluid_get_population( int xyz[3], float population_host[LBQ], int c )
  * @param *particle_data        Pointer to the particle position and velocity (Input)
  * @param *u_gpu                Pointer to float array (Output)
  * @param node_f                Struct for node force (Input)
+ * @param coupling              int denoting wether to use two- (0) or three-point (1) coupling for the velocity (1) interpolation (Input)
 */
-__global__ void lb_lbfluid_get_fluid_velocity_at_particle_positions_kernel(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float* u_gpu, LB_node_force_gpu node_f){
+__global__ void lb_lbfluid_get_fluid_velocity_at_particle_positions_kernel(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float* u_gpu, LB_node_force_gpu node_f, int coupling){
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   if (index < para.number_of_particles) {
     float position[3];
+    unsigned int node_index[8];
+    float mode[19*LB_COMPONENTS];
+    float delta[8];
     position[0] = particle_data[index].p[0];
     position[1] = particle_data[index].p[1];
     position[2] = particle_data[index].p[2];
     // Do the velocity interpolation
-    get_interpolated_velocity(n_a, position, &u_gpu[3*index], node_f);
+#ifndef SHANCHEN //because SHANCHEN uses dv in the two point coupling and we only give NULL pointer.
+    if (coupling == 0) {
+        interpolation_two_point_coupling(n_a, position, node_index, mode, nullptr, delta, &u_gpu[3*index]);
+    } else if (coupling == 1) {
+        printf("before u_gpu: %f, %f, %f\n", u_gpu[3*index], u_gpu[3*index+1], u_gpu[3*index+2]);
+        interpolation_three_point_coupling(n_a, position, node_index, nullptr, delta, &u_gpu[3*index]);
+        printf("after u_gpu: %f, %f, %f\n", u_gpu[3*index], u_gpu[3*index+1], u_gpu[3*index+2]);
+    }
+#endif
   }
 }
 
 /** interface to get fluid velocities at particle positions
 */
-std::vector<float> lb_lbfluid_get_fluid_velocity_at_particle_positions() {
+std::vector<float> lb_lbfluid_get_fluid_velocity_at_particle_positions(std::string coupling="twopoint") {
   //call KERNEL and copy velocities from GPU to host
   /** call of the particle kernel */
   /** values for the particle kernel */
@@ -4301,13 +4313,24 @@ std::vector<float> lb_lbfluid_get_fluid_velocity_at_particle_positions() {
   int blocks_per_grid_particles_x = (lbpar_gpu.number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1) /
                                     (threads_per_block_particles * blocks_per_grid_particles_y);
   dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
-  KERNELCALL( lb_lbfluid_get_fluid_velocity_at_particle_positions_kernel, dim_grid_particles, threads_per_block_particles,
-              ( *current_nodes, gpu_get_particle_pointer(), u_gpu, node_f)
-            );
-  std::vector<float> u_host(3*lbpar_gpu.number_of_particles);
+  if (coupling.compare("twopoint") == 0) {
+      std::cout << "Using 2-point coupling" << std::endl;
+      KERNELCALL( lb_lbfluid_get_fluid_velocity_at_particle_positions_kernel, dim_grid_particles, threads_per_block_particles,
+                  ( *current_nodes, gpu_get_particle_pointer(), u_gpu, node_f, 0)
+                );
+  } else if (coupling.compare("threepoint") == 0) {
+      std::cout << "Using 3-point coupling" << std::endl;
+      KERNELCALL( lb_lbfluid_get_fluid_velocity_at_particle_positions_kernel, dim_grid_particles, threads_per_block_particles,
+                  ( *current_nodes, gpu_get_particle_pointer(), u_gpu, node_f, 1)
+                );
+  }
 
+  std::vector<float> u_host(3*lbpar_gpu.number_of_particles);
   cuda_safe_mem(cudaMemcpy(u_host.data(), u_gpu, 3*lbpar_gpu.number_of_particles*sizeof(float), cudaMemcpyDeviceToHost));
   cuda_safe_mem(cudaFree(u_gpu));
+  // Multiply all values of u_host by agrid/tau to get MD units.
+  std::transform(u_host.begin(), u_host.end(), u_host.begin(),
+                         std::bind1st(std::multiplies<float>(),lbpar_gpu.agrid/lbpar_gpu.tau));
   return u_host;
 }
 
