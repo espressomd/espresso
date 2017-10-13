@@ -248,19 +248,25 @@ IF LB_GPU:
             lb_lbfluid_get_interpolated_velocity_global(p, v)
             return v
 
-        def get_fluid_velocity_at_particle_positions(self):
-            """ Calculate the fluid velocity at all particle positions.
+        def get_fluid_velocity_at_particle_positions(self, coupling="twopoint"):
+            """Calculate the fluid velocity at all particle positions.
             
             Note
             ----
             Velocities are ordered by particle id.
 
+            Parameters
+            ----------
+            coupling : :obj:`str`
+                       Either ``twopoint``- or ``threepoint``-coupling is used.
+
             Returns
             -------
             velocities : array_like :obj:`float` of shape (number of particles, 3)
                          Fluid velocities at the particle positions.
+
             """
-            velocities = lb_lbfluid_get_fluid_velocity_at_particle_positions()
+            velocities = lb_lbfluid_get_fluid_velocity_at_particle_positions(coupling)
             return np.array(velocities).reshape(len(velocities)//3, 3)
 
 IF LB or LB_GPU:

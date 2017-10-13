@@ -20,6 +20,7 @@ from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from libcpp cimport bool
 from libcpp.vector cimport vector
+from libcpp.string cimport string
 from .actors cimport Actor
 
 cdef class HydrodynamicInteraction(Actor):
@@ -106,7 +107,7 @@ IF LB_GPU or LB:
 
     cdef extern from "lbgpu.hpp":
         int lb_lbfluid_remove_total_momentum()
-        vector[float] lb_lbfluid_get_fluid_velocity_at_particle_positions()
+        vector[float] lb_lbfluid_get_fluid_velocity_at_particle_positions(string coupling)
 
     ###############################################
     #
