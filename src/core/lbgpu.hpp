@@ -314,7 +314,7 @@ void lb_lbfluid_particles_add_momentum(float velocity[3]);
 void lb_lbfluid_set_population( int[3], float[LBQ], int );
 void lb_lbfluid_get_population( int[3], float[LBQ], int );
 
-std::vector<float> lb_lbfluid_get_fluid_velocity_at_particle_positions();
+std::vector<float> lb_lbfluid_get_fluid_velocity_at_particle_positions(std::string coupling);
 //int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pdata, double* A, unsigned int n_A);
 //int statistics_observable_lbgpu_velocity_profile(profile_data* pdata, double* A, unsigned int n_A);
 
