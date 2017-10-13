@@ -58,7 +58,7 @@ class TestLBGetUAtPart(ut.TestCase):
         """
         numpy.testing.assert_allclose(
             self.vels[:self.vels.shape[0] / 2, :], self.lb_fluid.get_fluid_velocity_at_particle_positions(
-                coupling="twopoint"), atol=1e-6)
+                particle_coupling="2pt"), atol=1e-6)
 
     def test_get_u_at_part_three_point(self):
         """
@@ -68,7 +68,7 @@ class TestLBGetUAtPart(ut.TestCase):
         """
         numpy.testing.assert_allclose(
             self.vels[:self.vels.shape[0] / 2, :], self.lb_fluid.get_fluid_velocity_at_particle_positions(
-                coupling="threepoint"), atol=1e-6)
+                particle_coupling="3pt"), atol=1e-6)
 
 
 if __name__ == "__main__":

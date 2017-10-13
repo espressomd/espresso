@@ -107,7 +107,12 @@ IF LB_GPU or LB:
 
     cdef extern from "lbgpu.hpp":
         int lb_lbfluid_remove_total_momentum()
-        vector[float] lb_lbfluid_get_fluid_velocity_at_particle_positions(string coupling)
+        cdef cppclass ParticleCoupling:
+                pass
+        vector[float] lb_lbfluid_get_fluid_velocity_at_particle_positions(ParticleCoupling coupling)
+    cdef extern from "lbgpu.hpp" namespace "ParticleCoupling":
+        cdef ParticleCoupling twopoint
+        cdef ParticleCoupling threepoint
 
     ###############################################
     #
