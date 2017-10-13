@@ -1,4 +1,4 @@
-#!/usr/bin/python
+from __future__ import print_function
 import espressomd
 from espressomd import thermostat
 from espressomd import integrate
@@ -17,7 +17,7 @@ def increaseTemp():
     global temperature
     temperature += 0.1
     system.thermostat.set_langevin(kT=temperature, gamma=1.0)
-    print "T =", system.thermostat.get_state()[0]['kT']
+    print("T =", system.thermostat.get_state()[0]['kT'])
 
 
 def decreaseTemp():
@@ -26,11 +26,11 @@ def decreaseTemp():
 
     if temperature > 0:
         system.thermostat.set_langevin(kT=temperature, gamma=1.0)
-        print "T =", system.thermostat.get_state()[0]['kT']
+        print("T =", system.thermostat.get_state()[0]['kT'])
     else:
         temperature = 0
         system.thermostat.turn_off()
-        print "T = 0"
+        print("T = 0")
 
 
 system = espressomd.System()
@@ -53,18 +53,18 @@ for key, value in visualizer.specs.items():
 
 # Register buttons
 visualizer.keyboardManager.registerButton(
-    KeyboardButtonEvent('t', KeyboardFireEvent.Hold, increaseTemp))
+    KeyboardButtonEvent('u', KeyboardFireEvent.Hold, increaseTemp))
 visualizer.keyboardManager.registerButton(
-    KeyboardButtonEvent('g', KeyboardFireEvent.Hold, decreaseTemp))
+    KeyboardButtonEvent('j', KeyboardFireEvent.Hold, decreaseTemp))
 
 
 # Register additional callback to run in main thread
 def muu():
-    print "muu"
+    print("muu")
 
 
 def foo():
-    print "foo"
+    print("foo")
 
 
 visualizer.registerCallback(foo, interval=500)

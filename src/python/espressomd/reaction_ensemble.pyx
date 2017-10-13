@@ -207,11 +207,17 @@ IF REACTION_ENSEMBLE:
             if(isinstance(self._params["dictionary"],dict)==False):
                 raise ValueError("No dictionary for relation between types and default charges provided.")
         
-        def reaction(self):
+        def reaction(self, reaction_steps = 1):
             """
-            performs one randomly selected reaction of the provided reaction system
+            performs randomly selected reactions of the provided reaction system
+            
+            Parameters
+            ----------
+            reaction_steps : int
+                              the number of reactions to be performed at once, defaults to 1
+                         
             """
-            RE.do_reaction()
+            RE.do_reaction(reaction_steps)
         
         def global_mc_move_for_one_particle_of_type(type_mc):
             """

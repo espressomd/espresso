@@ -133,6 +133,12 @@ This produces an executable named \verb!pypresso! in the build directory which c
 For the development code and upcoming releases see the Online Documentation for
 ESPResSo with python at \url{http://espressomd.org/html/doc/index.html}.
 
+As an expert option, you can locally create this html documentation by running
+\begin{lstlisting}[language=bash]
+make sphinx
+\end{lstlisting}
+in your build directory. The resulting web pages can then be browsed by opening \texttt{build/doc/spinx/html/index.html}.
+
 \subsection{Configuring features}
 %
 After successfully running the \verb!cmake! script, your build folder will contain a file \\ \texttt{myconfig-sample.hpp}. Create a copy of this file called \texttt{myconfig.hpp} by executing

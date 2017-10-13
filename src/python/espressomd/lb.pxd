@@ -101,6 +101,7 @@ IF LB_GPU or LB:
         int lb_lbnode_get_boundary(int * coord, int * int_return)
         int lb_lbfluid_set_couple_flag(int c_couple_flag)
         int lb_lbfluid_get_couple_flag(int * c_couple_flag)
+        int lb_lbfluid_get_interpolated_velocity_global(double *p, double *v)
 
     cdef extern from "lbgpu.hpp":
         int lb_lbfluid_remove_total_momentum();
