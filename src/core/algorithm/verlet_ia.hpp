@@ -9,8 +9,9 @@ namespace detail {
 template <typename CellIterator, typename ParticleKernel, typename PairKernel,
           typename DistanceFunction, typename VerletCriterion>
 void update_and_kernel(CellIterator first, CellIterator last,
-                       ParticleKernel particle_kernel, PairKernel pair_kernel,
-                       DistanceFunction distance_function,
+                       ParticleKernel &&particle_kernel,
+                       PairKernel &&pair_kernel,
+                       DistanceFunction &&distance_function,
                        VerletCriterion &&verlet_criterion) {
   for (; first != last; ++first) {
     /* Clear the VL */
@@ -50,8 +51,8 @@ void update_and_kernel(CellIterator first, CellIterator last,
 template <typename CellIterator, typename ParticleKernel, typename PairKernel,
           typename DistanceFunction>
 void kernel(CellIterator first, CellIterator last,
-            ParticleKernel particle_kernel, PairKernel pair_kernel,
-            DistanceFunction distance_function) {
+            ParticleKernel &&particle_kernel, PairKernel &&pair_kernel,
+            DistanceFunction &&distance_function) {
   for (; first != last; ++first) {
     for (int i = 0; i != first->n; i++) {
       particle_kernel(first->part[i]);

@@ -10,7 +10,7 @@ namespace Algorithm {
 template <typename CellIterator, typename ParticleKernel, typename PairKernel,
           typename DistanceFunction, typename VerletCriterion>
 void for_each_pair(CellIterator first, CellIterator last,
-                   ParticleKernel &&particle_kernel, PairKernel pair_kernel,
+                   ParticleKernel &&particle_kernel, PairKernel &&pair_kernel,
                    DistanceFunction &&distance_function,
                    VerletCriterion &&verlet_criterion, bool use_verlet_list,
                    bool rebuild) {
