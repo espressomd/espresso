@@ -1433,9 +1433,9 @@ int lb_lbnode_set_u(int* ind, double* u){
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
         float host_velocity[3];
-        host_velocity[0] = (float)u[0]*lbpar_gpu.tau*lbpar_gpu.agrid;
-        host_velocity[1] = (float)u[1]*lbpar_gpu.tau*lbpar_gpu.agrid;
-        host_velocity[2] = (float)u[2]*lbpar_gpu.tau*lbpar_gpu.agrid;
+        host_velocity[0] = (float)u[0]*lbpar_gpu.tau/lbpar_gpu.agrid;
+        host_velocity[1] = (float)u[1]*lbpar_gpu.tau/lbpar_gpu.agrid;
+        host_velocity[2] = (float)u[2]*lbpar_gpu.tau/lbpar_gpu.agrid;
         int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
         lb_set_node_velocity_GPU(single_nodeindex, host_velocity);
 #endif // LB_GPU
