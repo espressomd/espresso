@@ -12,6 +12,10 @@ def CuStr(realn):
 
 
 def GetNTriangle(a, b, c):
+    """
+    Returns the normal vector of a triangle given by points a,b,c.
+
+    """
     n = [0.0, 0.0, 0.0]
     n[0] = (b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1])
     n[1] = (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2])
@@ -19,19 +23,35 @@ def GetNTriangle(a, b, c):
     return n
 
 def Norm(v):
+    """
+    Returns the norm of a vector.
+
+    """
     norm = np.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2])
     return norm
 
 def Distance(a, b):
+    """
+    Returns the length of vector between points a and b.
+
+    """
     dist = np.sqrt((a[0] - b[0]) * (a[0] - b[0]) + (a[1] - b[1]) * (a[1] - b[1]) + (a[2] - b[2]) * (a[2] - b[2]))
     return dist
 
 def AreaTriangle(a, b, c):
+    """
+    Returns the area of a triangle given by points a,b,c.
+
+    """
     n = GetNTriangle(a, b, c)
     area = 0.5 * Norm(n)
     return area
 
 def AngleBtwTriangles(P1, P2, P3, P4):
+    """
+    Returns the size of an angle between triangles given by points P2, P1, P3 and P2, P3, P4.
+
+    """
     n1 = GetNTriangle(P2, P1, P3)
     n2 = GetNTriangle(P2, P3, P4)
     tmp11 = n1[0] * n2[0] + n1[1] * n2[1] + n1[2] * n2[2]
@@ -59,6 +79,10 @@ def AngleBtwTriangles(P1, P2, P3, P4):
     return phi
 
 def DiscardEpsilon(x):
+    """
+    Returns zero if the argument is too small.
+
+    """
     if (x > -smallEpsilon and x < smallEpsilon):
         res = 0.0
     else:
@@ -66,11 +90,19 @@ def DiscardEpsilon(x):
     return res
 
 def KS(lambd):
+    """
+    Defines NeoHookean nonlinearity.
+
+    """
     # Defined by (19) from Dupin2007
     res = (pow(lambd, 0.5) + pow(lambd, -2.5)) / (lambd + pow(lambd, -3.))
     return res
 
 def CalcStretchingForce(ks, pA, pB, dist0, dist):
+    """
+    Calculates nonlinear stretching forces between two points on an edge.
+
+    """
     # this has to correspond to the calculation in oif_local_forces.hpp: calc_oif_local
     # as of now, corresponds to git commit f156f9b44dcfd3cef9dd5537a1adfc903ac4772a
     dr = dist - dist0
@@ -81,12 +113,20 @@ def CalcStretchingForce(ks, pA, pB, dist0, dist):
     return f
 
 def CalcLinearStretchingForce(ks, pA, pB, dist0, dist):
+    """
+    Calculates linear stretching forces between two points on an edge.
+
+    """
     dr = dist - dist0
     fac = ks * dr                   # no negative sign here! different from C implementation due to reverse order of vector subtraction
     f = fac * (np.array(pB) - np.array(pA)) / dist
     return f
 
 def CalcBendingForce(kb, pA, pB, pC, pD, phi0, phi):
+    """
+    Calculates bending forces for four points on two adjacent triangles.
+
+    """
     # this has to correspond to the calculation in oif_local_forces.hpp: calc_oif_local
     # as of now, corresponds to git commit f156f9b44dcfd3cef9dd5537a1adfc903ac4772a
     n1 = GetNTriangle(pB, pA, pC)
@@ -104,6 +144,10 @@ def CalcBendingForce(kb, pA, pB, pC, pD, phi0, phi):
     return f
 
 def CalcLocalAreaForce(kal, pA, pB, pC, A0, A):
+    """
+    Calculates local area forces between three points in one triangle.
+
+    """
     # this has to correspond to the calculation in oif_local_forces.hpp: calc_oif_local
     # except for division by 3 - each triangle enters this calculation once, while each triangle enters the
     # calc_oif_local three times
@@ -132,6 +176,10 @@ def CalcLocalAreaForce(kal, pA, pB, pC, A0, A):
     return f
 
 def CalcGlobalAreaForce(kag, pA, pB, pC, Ag0, Ag):
+    """
+    Calculates global area forces between three points in a triangle.
+
+    """
     # this has to correspond to the calculation in oif_global_forces.hpp: add_oif_global_forces
     # as of now, corresponds to git commit f156f9b44dcfd3cef9dd5537a1adfc903ac4772a
     centroid = np.array((pA + pB + pC) / 3.0)
@@ -159,6 +207,10 @@ def CalcGlobalAreaForce(kag, pA, pB, pC, Ag0, Ag):
     return f
 
 def CalcVolumeForce(kv, pA, pB, pC, V0, V):
+    """
+    Calculates volume forces for three points in a triangle.
+
+    """
     # this has to correspond to the calculation in oif_global_forces.hpp: add_oif_global_forces
     # as of now, corresponds to git commit f156f9b44dcfd3cef9dd5537a1adfc903ac4772a
     n = GetNTriangle(pA, pB, pC)
@@ -169,6 +221,10 @@ def CalcVolumeForce(kv, pA, pB, pC, V0, V):
     return f
 
 def OutputVtkRhomboid(corner, a, b, c, outFile):
+    """
+    Outputs the VTK files for visualisation of a rhomboid in e.g. Paraview.
+
+    """
     if ".vtk" not in outFile:
         print "OutputVtkRhomboid warning: A file with vtk format will be written without .vtk extension."
     outputFile = open(outFile, "w")
@@ -199,6 +255,10 @@ def OutputVtkRhomboid(corner, a, b, c, outFile):
     return 0
 
 def OutputVtkCylinder(center, axis, length, radius, n, outFile):
+    """
+    Outputs the VTK files for visualisation of a cylinder in e.g. Paraview.
+
+    """
     # L is the half height of the cylinder
     # only vertical cylinders are supported for now, i.e. with normal (0.0, 0.0, 1.0)
 
@@ -256,6 +316,10 @@ def OutputVtkCylinder(center, axis, length, radius, n, outFile):
     return 0
 
 def OutputVtkLines(lines, outFile):
+    """
+    Outputs the VTK files for visualisation of lines in e.g. Paraview.
+
+    """
     # lines is a list of pairs of points p1, p2
     # each pair represents a line segment to output to vtk
     # each line in lines contains 6 floats: p1x, p1y, p1z, p2x, p2y, p2z
@@ -283,6 +347,10 @@ def OutputVtkLines(lines, outFile):
     return 0
 
 def GetInterpolatedVelocity(position,lbf):
+    """
+    Outputs interpolated velocity of lb-fluid in a given position.
+
+    """
     # position is a vector [x,y,z] in which we want the fluid velocity
     # WARNING: this is only for agrid = 1
 

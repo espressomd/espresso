@@ -7,7 +7,10 @@ from espressomd.interactions import OifOutDirection
 
 
 class FixedPoint:
-    """ Represents mesh points, not connected to any ESPResSo particle"""
+    """
+    Represents mesh points, not connected to any ESPResSo particle.
+
+    """
     def __init__(self, pos, id):
         self.x = pos[0]
         self.y = pos[1]
@@ -27,7 +30,10 @@ class FixedPoint:
 
 
 class PartPoint:
-    """ Represents mesh points, connected to ESPResSo particle"""
+    """
+    Represents mesh points, connected to ESPResSo particle.
+
+    """
     def __init__(self, part, id, partId):  # part is physical ESPResSo particle corresponding to that particular point
         self.part = part
         self.partId = partId  # because in adding bonds to the particles in OifCell one needs to know the global id of the particle.    
@@ -65,8 +71,10 @@ class PartPoint:
 
 
 class Edge:
-    """ Represents edges in a mesh"""
+    """
+    Represents edges in a mesh.
 
+    """
     def __init__(self, A, B):
         self.A = A
         self.B = B
@@ -76,8 +84,10 @@ class Edge:
 
 
 class Triangle:
-    """ Represents triangles in a mesh"""
+    """
+    Represents triangles in a mesh.
 
+    """
     def __init__(self, A, B, C):
         self.A = A
         self.B = B
@@ -89,8 +99,10 @@ class Triangle:
 
 
 class Angle:
-    """ Represents triangles in a mesh"""
+    """
+    Represents angles in a mesh.
 
+    """
     def __init__(self, A, B, C, D):
         self.A = A
         self.B = B
@@ -102,8 +114,10 @@ class Angle:
         return angleSize
 
 class ThreeNeighbors:
-    """ Represents three best spatially distributed neighbors of a point in a mesh"""
+    """
+    Represents three best spatially distributed neighbors of a point in a mesh.
 
+    """
     def __init__(self, A, B, C):
         self.A = A
         self.B = B
@@ -114,8 +128,10 @@ class ThreeNeighbors:
         return outerNormal
 
 class Mesh:
-    """ Represents a triangular mesh """
+    """
+    Represents a triangular mesh.
 
+    """
     def __init__(self, nodesFile=None, trianglesFile=None, system=None, stretch=(1.0, 1.0, 1.0), partType=-1, partMass=1.0, normal=False, checkOrientation=True):
         if system is None:
             print "Mesh: No system provided. Quitting."
@@ -597,8 +613,10 @@ class Mesh:
 
 
 class OifCellType:  # analogous to oif_template
-    """ Represents a template for creating elastic objects"""
+    """
+    Represents a template for creating elastic objects.
 
+    """
     def __init__(self, nodesfile="", trianglesfile="", system=None, stretch=(1.0, 1.0, 1.0), ks=0.0, kslin=0.0, kb=0.0, kal=0.0, kag=0.0,
                  kv=0.0, kvisc=0.0, normal=False, checkOrientation=True):
         if system is None:
@@ -666,8 +684,10 @@ class OifCellType:  # analogous to oif_template
 
 
 class OifCell:
-    """ Represents a concrete elastic object """
+    """
+    Represents a concrete elastic object.
 
+    """
     def __init__(self, cellType=None, origin=None, partType=None, partMass=1.0, rotate=None):
         if cellType is None:
             print "OifCell: No cellType provided. Quitting."
