@@ -4292,9 +4292,7 @@ __global__ void lb_lbfluid_get_fluid_velocity_at_particle_positions_kernel(LB_no
     if (coupling == 0) {
         interpolation_two_point_coupling(n_a, position, node_index, mode, nullptr, delta, &u_gpu[3*index]);
     } else if (coupling == 1) {
-        printf("before u_gpu: %f, %f, %f\n", u_gpu[3*index], u_gpu[3*index+1], u_gpu[3*index+2]);
         interpolation_three_point_coupling(n_a, position, node_index, nullptr, delta, &u_gpu[3*index]);
-        printf("after u_gpu: %f, %f, %f\n", u_gpu[3*index], u_gpu[3*index+1], u_gpu[3*index+2]);
     }
 #endif
   }
@@ -4314,12 +4312,10 @@ std::vector<float> lb_lbfluid_get_fluid_velocity_at_particle_positions(std::stri
                                     (threads_per_block_particles * blocks_per_grid_particles_y);
   dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
   if (coupling.compare("twopoint") == 0) {
-      std::cout << "Using 2-point coupling" << std::endl;
       KERNELCALL( lb_lbfluid_get_fluid_velocity_at_particle_positions_kernel, dim_grid_particles, threads_per_block_particles,
                   ( *current_nodes, gpu_get_particle_pointer(), u_gpu, node_f, 0)
                 );
   } else if (coupling.compare("threepoint") == 0) {
-      std::cout << "Using 3-point coupling" << std::endl;
       KERNELCALL( lb_lbfluid_get_fluid_velocity_at_particle_positions_kernel, dim_grid_particles, threads_per_block_particles,
                   ( *current_nodes, gpu_get_particle_pointer(), u_gpu, node_f, 1)
                 );
