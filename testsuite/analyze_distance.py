@@ -39,50 +39,36 @@ class AnalyzeDistance(ut.TestCase):
     # python version of the espresso core function
     def mindist(self):
         r = np.array(self.system.part[:].pos)
-        # this finds all i<j combinations
+        # this generates indices for all i<j combinations
         ij = np.triu_indices(len(r), k=1)
-        r_ij = r[ij[0]] - r[ij[1]]
-        # PBC check
-        for dim in range(3):
-            fold_ind = np.where((r_ij[:, dim]) > 0.5 * self.system.box_l[dim])
-            r_ij[fold_ind[0], dim] -= self.system.box_l[dim]
-            fold_ind = np.where((r_ij[:, dim]) < -0.5 * self.system.box_l[dim])
-            r_ij[fold_ind[0], dim] += self.system.box_l[dim]
-        dist = np.sum(r_ij**2, axis=-1)
+        r_ij = np.fabs(r[ij[0]] - r[ij[1]])
+        # check smaller distances via PBC
+        r_ij = np.where(r_ij > 0.5 * self.system.box_l, self.system.box_l-r_ij, r_ij)
+        dist = np.sum(r_ij**2, axis=1)
         return np.sqrt(np.min(dist))
 
     # python version of the espresso core function
     def nbhood(self, pos, r_catch):
-        dist = np.array(self.system.part[:].pos) - pos
-        for dim in range(3):
-            fold_ind = np.where((dist[:, dim]) > 0.5 * self.system.box_l[dim])
-            dist[fold_ind[0], dim] -= self.system.box_l[dim]
-            fold_ind = np.where((dist[:, dim]) < -0.5 * self.system.box_l[dim])
-            dist[fold_ind[0], dim] += self.system.box_l[dim]
-        dist = np.sum(dist**2, axis=-1)
+        dist = np.fabs(np.array(self.system.part[:].pos) - pos)
+        # check smaller distances via PBC
+        dist = np.where(dist > 0.5 * self.system.box_l, self.system.box_l - dist, dist)
+        dist = np.sum(dist**2, axis=1)
         return np.where(dist < r_catch**2)[0]
 
-    # python version of the espresso core function
+    # python version of the espresso core function, using pos
     def distto_pos(self, pos):
-        dist = self.system.part[:].pos - pos
-        for dim in range(3):
-            fold_ind = np.where((dist[:, dim]) > 0.5 * self.system.box_l[dim])
-            dist[fold_ind[0], dim] -= self.system.box_l[dim]
-            fold_ind = np.where((dist[:, dim]) < -0.5 * self.system.box_l[dim])
-            dist[fold_ind[0], dim] += self.system.box_l[dim]
+        dist = np.fabs(self.system.part[:].pos - pos)
+        # check smaller distances via PBC
+        dist = np.where(dist > 0.5 * self.system.box_l, self.system.box_l - dist, dist)       
         dist = np.sum(dist**2, axis=-1)
         return np.sqrt(np.min(dist))
 
-    # python version of the espresso core function
+    # python version of the espresso core function, using id
     def distto_id(self, id):
-        dist = np.delete(self.system.part[:].pos, id, axis=0)
-        dist = dist - self.system.part[id].pos
-        for dim in range(3):
-            fold_ind = np.where((dist[:, dim]) > 0.5 * self.system.box_l[dim])
-            dist[fold_ind[0], dim] -= self.system.box_l[dim]
-            fold_ind = np.where((dist[:, dim]) < -0.5 * self.system.box_l[dim])
-            dist[fold_ind[0], dim] += self.system.box_l[dim]
-        dist = np.sum(dist**2, axis=-1)
+        dist = np.fabs(np.delete(self.system.part[:].pos, id, axis=0) - self.system.part[id].pos)
+        # check smaller distances via PBC
+        dist = np.where(dist > 0.5 * self.system.box_l, self.system.box_l - dist, dist)       
+        dist = np.sum(dist**2, axis=1)
         return np.sqrt(np.min(dist))
 
     def test_mindist(self):
