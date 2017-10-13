@@ -20,7 +20,6 @@ from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from libcpp cimport bool
 from libcpp.vector cimport vector
-from libcpp.string cimport string
 from .actors cimport Actor
 
 cdef class HydrodynamicInteraction(Actor):
