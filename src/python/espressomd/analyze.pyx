@@ -139,13 +139,16 @@ class Analysis(object):
         if id != None:
             if not isinstance(id, int):
                 raise ValueError("Id has to be an integer")
+            if not id in self._system.part[:].id:
+                raise ValueError("Id has to be an index of an existing particle")
             _pos = self._system.part[id].pos
             for i in range(3):
                 cpos[i] = _pos[i]
+            _id = id
         else:
             for i in range(3):
                 cpos[i] = pos[i]
-                _id = -1
+            _id = -1
         return c_analyze.distto(c_analyze.partCfg(), cpos, _id)
 
     #
