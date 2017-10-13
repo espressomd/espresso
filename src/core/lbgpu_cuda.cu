@@ -4299,7 +4299,7 @@ __global__ void lb_lbfluid_get_fluid_velocity_at_particle_positions_kernel(LB_no
 
 /** interface to get fluid velocities at particle positions
 */
-std::vector<float> lb_lbfluid_get_fluid_velocity_at_particle_positions(std::string coupling="twopoint") {
+std::vector<float> lb_lbfluid_get_fluid_velocity_at_particle_positions(std::string coupling="2pt") {
   //call KERNEL and copy velocities from GPU to host
   /** call of the particle kernel */
   /** values for the particle kernel */
@@ -4310,11 +4310,11 @@ std::vector<float> lb_lbfluid_get_fluid_velocity_at_particle_positions(std::stri
   int blocks_per_grid_particles_x = (lbpar_gpu.number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1) /
                                     (threads_per_block_particles * blocks_per_grid_particles_y);
   dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
-  if (coupling.compare("twopoint") == 0) {
+  if (coupling.compare("2pt") == 0) {
       KERNELCALL( lb_lbfluid_get_fluid_velocity_at_particle_positions_kernel, dim_grid_particles, threads_per_block_particles,
                   ( *current_nodes, gpu_get_particle_pointer(), u_gpu, node_f, device_rho_v, 0)
                 );
-  } else if (coupling.compare("threepoint") == 0) {
+  } else if (coupling.compare("3pt") == 0) {
       KERNELCALL( lb_lbfluid_get_fluid_velocity_at_particle_positions_kernel, dim_grid_particles, threads_per_block_particles,
                   ( *current_nodes, gpu_get_particle_pointer(), u_gpu, node_f, device_rho_v, 1)
                 );

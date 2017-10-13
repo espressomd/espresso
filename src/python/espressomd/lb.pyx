@@ -248,7 +248,7 @@ IF LB_GPU:
             lb_lbfluid_get_interpolated_velocity_global(p, v)
             return v
 
-        def get_fluid_velocity_at_particle_positions(self, coupling="twopoint"):
+        def get_fluid_velocity_at_particle_positions(self, coupling="2pt"):
             """Calculate the fluid velocity at all particle positions.
             
             Note
@@ -258,7 +258,7 @@ IF LB_GPU:
             Parameters
             ----------
             coupling : :obj:`str`
-                       Either ``twopoint``- or ``threepoint``-coupling is used.
+                       Either ``2pt``- or ``3pt``-coupling is used.
 
             Returns
             -------
