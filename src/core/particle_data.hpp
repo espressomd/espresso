@@ -553,7 +553,7 @@ void build_particle_node();
 void particle_invalidate_part_node();
 
 /** Realloc \ref local_particles. */
-void realloc_local_particles();
+void realloc_local_particles(int part);
 
 /** Get particle data.
     @param part the identity of the particle to fetch
