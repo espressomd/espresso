@@ -108,7 +108,7 @@ void boundingBoxKernel()
 {
 	register int i, j, k, l, inc;
 	register float val;
-	float minp[3], maxp[3];
+	register float minp[3], maxp[3];
 	__shared__ volatile float smin[3*THREADS1], smax[3*THREADS1];
 	for (l = 0; l < 3; l++) {
 	  minp[l] = maxp[l] = xd[l];
@@ -191,21 +191,25 @@ __global__
 __launch_bounds__(THREADS2, FACTOR2)
 void treeBuildingKernel()
 {
-	register int i, j, k, depth, localmaxdepth, skip, inc;
-	register float x, y, z, r;
-	register float px, py, pz;
+	register int i, j, k, l, depth, localmaxdepth, skip, inc;
+	register float r;
+	register float pos[3];
+	register float p[3];
 	register int ch, n, cell, locked, patch;
-	register float radius, rootx, rooty, rootz;
+	register float radius;
+	register float root[3];
 
 	// cache root data
 	radius = radiusd;
-	rootx = xd[3 * nnodesd];
-	rooty = xd[3 * nnodesd + 1];
-	rootz = xd[3 * nnodesd + 2];
+	for (l = 0; l < 3; l++) root[l] = xd[3 * nnodesd + l];
 
 	localmaxdepth = 1;
 	skip = 1;
+	// increment to move among the bodies assigned to the given thread
+	// hence, one should step over all other threads in GPU with
+	// a quantity of blockDim.x * gridDim.x
 	inc = blockDim.x * gridDim.x;
+	// just a regular 1D GPU index
 	i = threadIdx.x + blockIdx.x * blockDim.x;
 
 	// iterate over all bodies assigned to thread
@@ -213,17 +217,13 @@ void treeBuildingKernel()
 		if (skip != 0) {
 			// new body, so start traversing at root
 			skip = 0;
-			px = xd[3 * i];
-			py = xd[3 * i + 1];
-			pz = xd[3 * i + 2];
+			for (l = 0; l < 3; l++) p[l] = xd[3 * i + l];
 			n = nnodesd;
 			depth = 1;
 			r = radius;
 			j = 0;
 			// determine which child to follow
-			if (rootx < px) j = 1;
-			if (rooty < py) j += 2;
-			if (rootz < pz) j += 4;
+			for (l = 0; l < 3; l++) if (root[l] < p[l]) j += pow(2, l);
 		}
 
 		// follow path to leaf cell
@@ -234,9 +234,7 @@ void treeBuildingKernel()
 			r *= 0.5f;
 			j = 0;
 			// determine which child to follow
-			if (xd[3 * n] < px) j = 1;
-			if (xd[3 * n + 1] < py) j += 2;
-			if (xd[3 * n + 2] < pz) j += 4;
+			for (l = 0; l < 3; l++) if (xd[3 * n + l] < p[l]) j += pow(2, l);
 			ch = childd[n * 8 + j];
 		}
 
@@ -263,16 +261,12 @@ void treeBuildingKernel()
 						}
 						patch = max(patch, cell);
 
-						x = (j & 1) * r;
-						y = ((j >> 1) & 1) * r;
-						z = ((j >> 2) & 1) * r;
+						for (l = 0; l < 3; l++) pos[l] = ((j >> l) & 1) * r;
 						r *= 0.5f;
 
 						massd[cell] = -1.0f;
 						startd[cell] = -1;
-						x = xd[3 * cell] = xd[3 * n] - r + x;
-						y = xd[3 * cell + 1] = xd[3 * n + 1] - r + y;
-						z = xd[3 * cell + 2] = xd[3 * n + 2] - r + z;
+						for (l = 0; l < 3; l++) pos[l] = xd[3 * cell + l] = xd[3 * n + l] - r + pos[l];
 						for (k = 0; k < 8; k++)
 							childd[cell* 8 + k] = -1;
 
@@ -281,16 +275,12 @@ void treeBuildingKernel()
 						}
 
 						j = 0;
-						if (x < xd[3 * ch]) j = 1;
-						if (y < xd[3 * ch + 1]) j += 2;
-						if (z < xd[3 * ch + 2]) j += 4;
+						for (l = 0; l < 3; l++) if (pos[l] < xd[3 * ch + l]) j += pow(2, l);
 						childd[cell * 8 + j] = ch;
 
 						n = cell;
 						j = 0;
-						if (x < px) j = 1;
-						if (y < py) j += 2;
-						if (z < pz) j += 4;
+						for (l = 0; l < 3; l++) if (pos[l] < p[l]) j += pow(2, l);
 
 						ch = childd[n * 8 + j];
 						// repeat until the two bodies are different children
@@ -310,9 +300,6 @@ void treeBuildingKernel()
 	}
 	// record maximum tree depth
 	atomicMax((int *)&maxdepthd, localmaxdepth);
-#ifdef DEBUG
-//	if ( maxdepthd == localmaxdepth ) printf ("Max tree depth: %d\n", maxdepthd);
-#endif
 }
 
 /******************************************************************************/
@@ -323,8 +310,12 @@ __global__
 __launch_bounds__(THREADS3, FACTOR3)
 void summarizationKernel()
 {
-	register int i, j, k, ch, inc, missing, cnt, bottom;
-	register float m, cm, px, py, pz, ux, uy, uz;
+	register int i, j, k, l, ch, inc, missing, cnt, bottom;
+	// the node "mass" and its count respectively:
+	register float m, cm;
+	// position of equivalent total dipole and its magnitude:
+	// (like a mass and the center of mass)
+	register float p[3], u[3];
 	__shared__ volatile int child[THREADS3 * 8];
 
 	bottom = bottomd;
@@ -339,12 +330,10 @@ void summarizationKernel()
 		if (missing == 0) {
 			// new cell, so initialize
 			cm = 0.0f;
-			px = 0.0f;
-			py = 0.0f;
-			pz = 0.0f;
-			ux = 0.0f;
-			uy = 0.0f;
-			uz = 0.0f;
+			for (l = 0; l < 3; l++) {
+			  p[l] = 0.0f;
+			  u[l] = 0.0f;
+			}
 			cnt = 0;
 			j = 0;
 			for (i = 0; i < 8; i++) {
@@ -366,12 +355,10 @@ void summarizationKernel()
 				}
 				// add child's contribution
 				cm += m;
-				px += xd[3 * ch] * m;
-				py += xd[3 * ch + 1] * m;
-				pz += xd[3 * ch + 2] * m;
-				ux += uxd[3 * ch];
-				uy += uxd[3 * ch + 1];
-				uz += uxd[3 * ch + 2];
+				for (l = 0; l < 3; l++) {
+				  p[l] += xd[3 * ch + l] * m;
+				  u[l] += uxd[3 * ch + l];
+				}
 			}
 			j++;
 				}
@@ -393,12 +380,10 @@ void summarizationKernel()
 					}
 					// add child's contribution
 					cm += m;
-					px += xd[3 * ch] * m;
-					py += xd[3 * ch + 1] * m;
-					pz += xd[3 * ch + 2] * m;
-					ux += uxd[3 * ch];
-					uy += uxd[3 * ch + 1];
-					uz += uxd[3 * ch + 2];
+					for (l = 0; l < 3; l++) {
+					    p[l] += xd[3 * ch + l] * m;
+					    u[l] += uxd[3 * ch + l];
+					  }
 				}
 				// repeat until we are done or child is not ready
 			} while ((m >= 0.0f) && (missing != 0));
@@ -408,13 +393,10 @@ void summarizationKernel()
 			// all children are ready, so store computed information
 				countd[k] = cnt;
 				m = 1.0f / cm;
-				xd[3 * k] = px * m;
-				xd[3 * k + 1] = py * m;
-				xd[3 * k + 2] = pz * m;
-
-				uxd[3 * k] = ux;
-				uxd[3 * k + 1] = uy;
-				uxd[3 * k + 2] = uz;
+				for (l = 0; l < 3; l++) {
+				  xd[3 * k + l] = p[l] * m;
+				  uxd[3 * k + l] = u[l];
+				}
 			__threadfence();	// make sure data are visible before setting mass
 			massd[k] = cm;
 			k += inc;	// move on to next cell
@@ -460,17 +442,17 @@ void sortKernel()
 
 
 /******************************************************************************/
-/*** compute force ************************************************************/
+/*** compute dipole-dipole force and torque ***********************************/
 /******************************************************************************/
 
 __global__
 __launch_bounds__(THREADS5, FACTOR5)
 void forceCalculationKernel(dds_float pf,
-	     float *f, float* torque, dds_float box_l[3], int periodic[3])
+	     float *force, float* torque, dds_float box_l[3], int periodic[3])
 {
-	register int i, j, k, n, depth, base, sbase, diff, t;
-	register float px, py, pz, dx, dy, dz, tmp, fx, fy, fz, hx, hy, hz, ux, uy, uz;
-	register float ucx, ucy, ucz;
+	register int i, j, k, l, n, depth, base, sbase, diff, t;
+	register float tmp;
+	register float dr[3], f[3], h[3], u[3], uc[3], N[3];
 	__shared__ volatile int pos[MAXDEPTH * THREADS5/WARPSIZE], node[MAXDEPTH * THREADS5/WARPSIZE];
 	__shared__ float dq[MAXDEPTH * THREADS5/WARPSIZE];
 	float b, b2, d1, dd5;
@@ -510,21 +492,11 @@ void forceCalculationKernel(dds_float pf,
 		for (k = threadIdx.x + blockIdx.x * blockDim.x; k < nbodiesd; k += blockDim.x * gridDim.x) {
 			i = sortd[k];	// get permuted/sorted index
 			// cache position info
-			px = xd[3 * i];
-			py = xd[3 * i + 1];
-			pz = xd[3 * i + 2];
-
-			ux = uxd[3 * i];
-			uy = uxd[3 * i + 1];
-			uz = uxd[3 * i + 2];
-
-			hx = 0.0f;
-			hy = 0.0f;
-			hz = 0.0f;
-
-			fx = 0.0f;
-			fy = 0.0f;
-			fz = 0.0f;
+			for (l = 0; l < 3; l++) {
+              u[l] = uxd[3 * i + l];
+              h[l] = 0.0f;
+              f[l] = 0.0f;
+			}
 
 			// initialize iteration stack, i.e., push root node onto stack
 			depth = j;
@@ -543,38 +515,35 @@ void forceCalculationKernel(dds_float pf,
 						pos[depth] = t + 1;
 					}
 					if (n >= 0) {
-						dx = -(xd[3 * n] - px);
-						dy = -(xd[3 * n + 1] - py);
-						dz = -(xd[3 * n + 2] - pz);
-						tmp = dx * dx + (dy * dy + dz * dz);	// compute distance squared
+					    tmp = 0.0f;    // compute distance squared
+					    for (l = 0; l < 3; l++) {
+					      dr[l] = -xd[3 * n + l] + xd[3 * i + l];
+					      tmp += dr[l] * dr[l];
+					    }
+
 						if ((n < nbodiesd) || __all(tmp >= dq[depth])) {	// check if all threads agree that cell is far enough away (or is a body)
 							if (n != i) {
 
-								ucx = uxd[3 * n];
-								ucy = uxd[3 * n + 1];
-								ucz = uxd[3 * n + 2];
+							    d1 = sqrtf(tmp/*, 0.5f*/);
+							    dd5 = __fdividef(1.0f, tmp * tmp * d1);
+							    b = 0.0f;
+							    b2 = 0.0f;
+							    umd5 = 0.0f;
+							    for (l = 0; l < 3; l++) {
+							      uc[l] = uxd[3 * n + l];
+							      b += uc[l] * dr[l];
+							      b2 += u[l] * dr[l];
+							      umd5 += u[l] * uc[l];
+							    }
+							    umd5 *= - 3.0f * dd5;
 
-								b = ucx * dx + ucy * dy + ucz * dz;
-								b2 = ux * dx + uy * dy + uz * dz;
-
-								d1 = sqrtf(tmp/*, 0.5f*/);
-								dd5 = __fdividef(1.0f, tmp * tmp * d1);
 								bb2d7 = 15.0f * b * b2 * __fdividef(dd5, tmp);
-								umd5 = - 3.0f * (ux*ucx + uy*ucy + uz*ucz) * dd5;
 
-								hx += (b * 3.0f * dx - tmp * ucx) * dd5;
-								hy += (b * 3.0f * dy - tmp * ucy) * dd5;
-								hz += (b * 3.0f * dz - tmp * ucz) * dd5;
-
-
-								fx += -dx * (umd5 + bb2d7)
-								+ 3.0f * (b * ux + b2 * ucx) * dd5;
-
-								fy += -dy * (umd5  +  bb2d7)
-								+ 3.0f * (b * uy + b2 * ucy) * dd5;
-
-								fz += -dz * (umd5  +  bb2d7)
-								+ 3.0f * (b * uz + b2 * ucz) * dd5;
+								for (l = 0; l < 3; l++) {
+								  h[l] += (b * 3.0f * dr[l] - tmp * uc[l]) * dd5;
+								  f[l] += -dr[l] * (umd5 + bb2d7)
+								     + 3.0f * (b * u[l] + b2 * uc[l]) * dd5;
+								}
 							}
 						} else {
 							// push cell onto stack
@@ -591,33 +560,21 @@ void forceCalculationKernel(dds_float pf,
 				depth--;	// done with this level
 			}
 
-#define	NX (uy * hz - uz * hy)
-#define	NY (uz * hx - ux * hz)
-#define	NZ (ux * hy - uy * hx)
+			N[0] = u[1] * h[2] - u[2] * h[1];
+			N[1] = u[2] * h[0] - u[0] * h[2];
+			N[2] = u[0] * h[1] - u[1] * h[0];
 
-#define MAX_DELTA 0.1f
-
-			if (fx != fx || fy != fy || fz != fz ||
-				hx != hx || hy != hy || hz != hz) {	//nan
-				printf("Force Kernel: NAN in particle[%d]\n", i);
-				printf("x = %f, y = %f, z = %f,\n", px, py, pz);
-				printf("fx = %f, fy = %f, fz = %f,\n", fx, fy, fz);
-				printf("hx = %f, hy = %f, hz = %f,\n", hx, hy, hz);
-
-				fx = 1E10;
-				fy = 1E10;
-				fz = 1E10;
-				hx = 0.0f;
-				hy = 0.0f;
-				hz = 0.0f;
+			for (l = 0; l < 3; l++)
+			{
+			  if (f[l] != f[l] || h[l] != h[l]) {	//nan
+			  	printf("Force Kernel: NAN in particle[%d]\n", i);
+			  	printf("x = %f, y = %f, z = %f,\n", uxd[3 * i + 0], uxd[3 * i + 1], uxd[3 * i + 2]);
+			  	printf("fx = %f, fy = %f, fz = %f,\n", f[0], f[1], f[2]);
+			  	printf("hx = %f, hy = %f, hz = %f,\n", h[0], h[1], h[2]);
+			  }
+			  atomicAdd(force + 3 * i + l, f[l] * pf);
+			  atomicAdd(torque + 3 * i + l, N[l] * pf);
 			}
-
-			atomicAdd(f+3*i+0, fx * pf);
-			atomicAdd(torque+3*i+0, NX * pf);
-			atomicAdd(f+3*i+1, fy * pf);
-			atomicAdd(torque+3*i+1, NY * pf);
-			atomicAdd(f+3*i+2, fz * pf);
-			atomicAdd(torque+3*i+2, NZ * pf);
 		}
 	}
 }
@@ -631,16 +588,15 @@ __launch_bounds__(THREADS5, FACTOR5)
 void energyCalculationKernel(dds_float pf,
 	     dds_float box_l[3], int periodic[3],dds_float* energySum)
 {
-	register int i, j, k, n, depth, base, sbase, diff, t;
-	register float px, py, pz, dx, dy, dz, tmp, fx, fy, fz, hx, hy, hz, ux, uy, uz;
-	register float ucx, ucy, ucz;
+	register int i, j, k, l, n, depth, base, sbase, diff, t;
+	register float tmp;
+	register float dr[3], h[3], u[3], uc[3];
 	__shared__ volatile int pos[MAXDEPTH * THREADS5/WARPSIZE], node[MAXDEPTH * THREADS5/WARPSIZE];
 	__shared__ float dq[MAXDEPTH * THREADS5/WARPSIZE];
 	dds_float sum=0.0;
 	extern __shared__ dds_float res[];
 
-	float b, b2, d1, dd5;
-	float bb2d7, umd5;
+	float b, d1, dd5;
 	float pow3s2d2, flj;
 
 	if (0 == threadIdx.x) {
@@ -676,21 +632,10 @@ void energyCalculationKernel(dds_float pf,
 		for (k = threadIdx.x + blockIdx.x * blockDim.x; k < nbodiesd; k += blockDim.x * gridDim.x) {
 			i = sortd[k];	// get permuted/sorted index
 			// cache position info
-			px = xd[3 * i];
-			py = xd[3 * i + 1];
-			pz = xd[3 * i + 2];
-
-			ux = uxd[3 * i];
-			uy = uxd[3 * i + 1];
-			uz = uxd[3 * i + 2];
-
-			hx = 0.0f;
-			hy = 0.0f;
-			hz = 0.0f;
-
-			fx = 0.0f;
-			fy = 0.0f;
-			fz = 0.0f;
+			for (l = 0; l < 3; l++) {
+			  u[l] = uxd[3 * i + l];
+			  h[l] = 0.0f;
+			}
 
 			// initialize iteration stack, i.e., push root node onto stack
 			depth = j;
@@ -709,28 +654,22 @@ void energyCalculationKernel(dds_float pf,
 						pos[depth] = t + 1;
 					}
 					if (n >= 0) {
-						dx = -(xd[3 * n] - px);
-						dy = -(xd[3 * n + 1] - py);
-						dz = -(xd[3 * n + 2] - pz);
-						tmp = dx * dx + (dy * dy + dz * dz);	// compute distance squared
+					    tmp = 0.0f;
+					    for (l = 0; l < 3; l++) {
+					      dr[l] = -xd[3 * n + l] + xd[3 * i + l];
+					      tmp += dr[l] * dr[l];
+					    }
 						if ((n < nbodiesd) || __all(tmp >= dq[depth])) {	// check if all threads agree that cell is far enough away (or is a body)
 							if (n != i) {
-
-								ucx = uxd[3 * n];
-								ucy = uxd[3 * n + 1];
-								ucz = uxd[3 * n + 2];
-
-								b = ucx * dx + ucy * dy + ucz * dz;
-								b2 = ux * dx + uy * dy + uz * dz;
-
 								d1 = sqrtf(tmp/*, 0.5f*/);
 								dd5 = __fdividef(1.0f, tmp * tmp * d1);
-								bb2d7 = 15.0f * b * b2 * __fdividef(dd5, tmp);
-								umd5 = - 3.0f * (ux*ucx + uy*ucy + uz*ucz) * dd5;
+								b = 0.0f;
+								for (l = 0; l < 3; l++) {
+								  uc[l] = uxd[3 * n + l];
+								  b += uc[l] * dr[l];
+								}
 
-								hx += (b * 3.0f * dx - tmp * ucx) * dd5;
-								hy += (b * 3.0f * dy - tmp * ucy) * dd5;
-								hz += (b * 3.0f * dz - tmp * ucz) * dd5;
+								for (l = 0; l < 3; l++) h[l] += (b * 3.0f * dr[l] - tmp * uc[l]) * dd5;
 							}
 						} else {
 							// push cell onto stack
@@ -747,28 +686,14 @@ void energyCalculationKernel(dds_float pf,
 				depth--;	// done with this level
 			}
 
-			sum += - (ux * hx + uy * hy + uz * hz);
-
-#define	NX (uy * hz - uz * hy)
-#define	NY (uz * hx - ux * hz)
-#define	NZ (ux * hy - uy * hx)
-
-#define MAX_DELTA 0.1f
-
-
-			if (fx != fx || fy != fy || fz != fz ||
-				hx != hx || hy != hy || hz != hz) {	//nan
-				printf("Force Kernel: NAN in particle[%d]\n", i);
-				printf("x = %f, y = %f, z = %f,\n", px, py, pz);
-				printf("fx = %f, fy = %f, fz = %f,\n", fx, fy, fz);
-				printf("hx = %f, hy = %f, hz = %f,\n", hx, hy, hz);
-
-				fx = 1E10;
-				fy = 1E10;
-				fz = 1E10;
-				hx = 0.0f;
-				hy = 0.0f;
-				hz = 0.0f;
+			for (l = 0; l < 3; l++)
+			{
+			  sum += -u[l] * h[l];
+			  if (h[l] != h[l]) {   //nan
+			    printf("Energy Kernel: NAN in particle[%d]\n", i);
+			    printf("x = %f, y = %f, z = %f,\n", uxd[3 * i + 0], uxd[3 * i + 1], uxd[3 * i + 2]);
+			    printf("hx = %f, hy = %f, hz = %f,\n", h[0], h[1], h[2]);
+			  }
 			}
 		}
 	}
