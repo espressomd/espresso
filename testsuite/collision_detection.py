@@ -75,12 +75,12 @@ class CollisionDetection(ut.TestCase):
         bond0=((self.s.bonded_inter[0],1),)
         bond1=((self.s.bonded_inter[0],0),)
         self.assertTrue(self.s.part[0].bonds==bond0 or self.s.part[1].bonds==bond1)
-        self.assertTrue(self.s.part[2].bonds==())
+        self.assertEqual(self.s.part[2].bonds,())
 
         # Check that no additional bonds appear
         self.s.integrator.run(1)
         self.assertTrue(self.s.part[0].bonds==bond0 or self.s.part[1].bonds==bond1)
-        self.assertTrue(self.s.part[2].bonds==())
+        self.assertEqual(self.s.part[2].bonds,())
 
 
         # Check turning it off
@@ -113,10 +113,11 @@ class CollisionDetection(ut.TestCase):
 
 
     def verify_state_after_bind_at_poc(self):
+        self.assertEqual(len(self.s.part),5)
         bond0=((self.s.bonded_inter[0],1),)
         bond1=((self.s.bonded_inter[0],0),)
         self.assertTrue(self.s.part[0].bonds==bond0 or self.s.part[1].bonds==bond1)
-        self.assertTrue(self.s.part[2].bonds==())
+        self.assertEqual(self.s.part[2].bonds,())
 
         # Check for presence of vs
         vs1=self.s.part[3]
