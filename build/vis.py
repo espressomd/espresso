@@ -10,10 +10,21 @@ vec = vec.reshape([len(vec), 19, 3])
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 
-X = np.zeros(19)
+quiver = vec[1,:,:]
 
-print vec[1]
+X = np.zeros(len(quiver))
 
-ax.quiver(X, X, X, vec[1,:,0], vec[1,:,1], vec[1,:,2])
+print(quiver)
+
+for i in np.arange(len(quiver)):
+  ax.quiver(X[i], X[i], X[i], quiver[i,0], quiver[i,1], quiver[i,2], pivot='tail', length=np.sqrt(np.sum(quiver[i]**2)))
+
+ax.set_xlim3d(np.min(quiver[:,0]), np.max(quiver[:,0]))
+ax.set_ylim3d(np.min(quiver[:,1]), np.max(quiver[:,1]))
+ax.set_zlim3d(np.min(quiver[:,2]), np.max(quiver[:,2]))
+
+ax.set_xlabel('x')
+ax.set_ylabel('y')
+ax.set_zlabel('z')
 
 plt.show()

@@ -1041,15 +1041,15 @@ __device__ void print_n_from_modes_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_LE_up
   if(y==0) {
 
     mode[0 + ii * LBQ] = 0.0f;
-    mode[1 + ii * LBQ] = nodes_LE_lower.vd[1*para.dim_x*para.dim_z + delta_index];
+    mode[1 + ii * LBQ] = 1.0f; //nodes_LE_lower.vd[1*para.dim_x*para.dim_z + delta_index];
     mode[2 + ii * LBQ] = 0.0f;
     mode[3 + ii * LBQ] = 0.0f;
-    mode[4 + ii * LBQ] = nodes_LE_lower.vd[4*para.dim_x*para.dim_z + delta_index];
-    mode[5 + ii * LBQ] = nodes_LE_lower.vd[5*para.dim_x*para.dim_z + delta_index];
-    mode[6 + ii * LBQ] = nodes_LE_lower.vd[6*para.dim_x*para.dim_z + delta_index];
-    mode[7 + ii * LBQ] = nodes_LE_lower.vd[7*para.dim_x*para.dim_z + delta_index];
-    mode[8 + ii * LBQ] = nodes_LE_lower.vd[8*para.dim_x*para.dim_z + delta_index];
-    mode[9 + ii * LBQ] = nodes_LE_lower.vd[9*para.dim_x*para.dim_z + delta_index];
+    mode[4 + ii * LBQ] = 0.0f; //nodes_LE_lower.vd[4*para.dim_x*para.dim_z + delta_index];
+    mode[5 + ii * LBQ] = 0.0f; //nodes_LE_lower.vd[5*para.dim_x*para.dim_z + delta_index];
+    mode[6 + ii * LBQ] = 0.0f; //nodes_LE_lower.vd[6*para.dim_x*para.dim_z + delta_index];
+    mode[7 + ii * LBQ] = 0.0f; //nodes_LE_lower.vd[7*para.dim_x*para.dim_z + delta_index];
+    mode[8 + ii * LBQ] = 0.0f; //nodes_LE_lower.vd[8*para.dim_x*para.dim_z + delta_index];
+    mode[9 + ii * LBQ] = 0.0f; //nodes_LE_lower.vd[9*para.dim_x*para.dim_z + delta_index];
     mode[10 + ii * LBQ] = 0.0f;
     mode[11 + ii * LBQ] = 0.0f;
     mode[12 + ii * LBQ] = 0.0f;
@@ -1061,18 +1061,19 @@ __device__ void print_n_from_modes_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_LE_up
     mode[18 + ii * LBQ] = 0.0f;
 
     if(x == 0 && z == 0) {
-      nodes_LE_upper.vd[0] =  
+      nodes_LE_upper.vd[0*para.dim_x*para.dim_z] =  
         1.0f/3.0f * (mode[0 + ii * LBQ] - mode[4 + ii * LBQ] + mode[16 + ii * LBQ]);
 
-      nodes_LE_upper.vd[1] =  
+      nodes_LE_upper.vd[1*para.dim_x*para.dim_z] =  
         1.0f/18.0f * (
                          mode[ 0 + ii * LBQ] + mode[ 1 + ii * LBQ]
                        + mode[ 5 + ii * LBQ] + mode[ 6 + ii * LBQ]
                        - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
                        - 2.0f*(mode[10 + ii * LBQ] + mode[16 + ii * LBQ])
                      );
+      printf("nodes_LE_upper.vd[1]=%e\n", nodes_LE_upper.vd[1*para.dim_x*para.dim_z]);
 
-      nodes_LE_upper.vd[2] =  
+      nodes_LE_upper.vd[2*para.dim_x*para.dim_z] =  
         1.0f/18.0f * (
                          mode[ 0 + ii * LBQ] - mode[ 1 + ii * LBQ]
                        + mode[ 5 + ii * LBQ] + mode[ 6 + ii * LBQ]
@@ -1080,7 +1081,7 @@ __device__ void print_n_from_modes_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_LE_up
                        + 2.0f*(mode[10 + ii * LBQ] - mode[16 + ii * LBQ])
                      );
 
-      nodes_LE_upper.vd[3] =  
+      nodes_LE_upper.vd[3*para.dim_x*para.dim_z] =  
         1.0f/18.0f * (
                          mode[ 0 + ii * LBQ] + mode[ 2 + ii * LBQ]
                        - mode[ 5 + ii * LBQ] + mode[ 6 + ii * LBQ]
@@ -1088,7 +1089,7 @@ __device__ void print_n_from_modes_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_LE_up
                        - 2.0f*(mode[11 + ii * LBQ] + mode[16 + ii * LBQ])
                      );
 
-      nodes_LE_upper.vd[4] =  
+      nodes_LE_upper.vd[4*para.dim_x*para.dim_z] =  
         1.0f/18.0f * (
                          mode[ 0 + ii * LBQ] - mode[ 2 + ii * LBQ]
                        - mode[ 5 + ii * LBQ] + mode[ 6 + ii * LBQ]
@@ -1096,21 +1097,21 @@ __device__ void print_n_from_modes_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_LE_up
                        + 2.0f*(mode[11 + ii * LBQ] - mode[16 + ii * LBQ])
                      );
 
-      nodes_LE_upper.vd[5] =  
+      nodes_LE_upper.vd[5*para.dim_x*para.dim_z] =  
         1.0f/18.0f * (
                          mode[0 + ii * LBQ] + mode[3 + ii * LBQ]
                        - 2.0f*(   mode[ 6 + ii * LBQ] + mode[12 + ii * LBQ]
                                 + mode[16 + ii * LBQ] - mode[18 + ii * LBQ])
                      );
 
-      nodes_LE_upper.vd[6] =  
+      nodes_LE_upper.vd[6*para.dim_x*para.dim_z] =  
         1.0f/18.0f * (
                          mode[0 + ii * LBQ] - mode[3 + ii * LBQ]
                        - 2.0f*(   mode[6 + ii * LBQ] - mode[12 + ii * LBQ]
                                 + mode[16 + ii * LBQ] - mode[18 + ii * LBQ])
                      );
 
-      nodes_LE_upper.vd[7] =  
+      nodes_LE_upper.vd[7*para.dim_x*para.dim_z] =  
         1.0f/36.0f * (
                          mode[ 0 + ii * LBQ] + mode[ 1 + ii * LBQ]
                        + mode[ 2 + ii * LBQ] + mode[ 4 + ii * LBQ]
@@ -1120,7 +1121,7 @@ __device__ void print_n_from_modes_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_LE_up
                        + mode[16 + ii * LBQ] + 2.0f*mode[18 + ii * LBQ]
                      );
 
-      nodes_LE_upper.vd[8] =  
+      nodes_LE_upper.vd[8*para.dim_x*para.dim_z] =  
         1.0f/36.0f * (
                          mode[ 0 + ii * LBQ] - mode[ 1 + ii * LBQ]
                        - mode[ 2 + ii * LBQ] + mode[ 4 + ii * LBQ]
@@ -1130,7 +1131,7 @@ __device__ void print_n_from_modes_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_LE_up
                        + mode[16 + ii * LBQ] + 2.0f*mode[18 + ii * LBQ]
                      );
 
-      nodes_LE_upper.vd[9] =  
+      nodes_LE_upper.vd[9*para.dim_x*para.dim_z] =  
         1.0f/36.0f * (
                          mode[ 0 + ii * LBQ] + mode[ 1 + ii * LBQ]
                        - mode[ 2 + ii * LBQ] + mode[ 4 + ii * LBQ]
@@ -1140,7 +1141,7 @@ __device__ void print_n_from_modes_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_LE_up
                        + mode[16 + ii * LBQ] + 2.0f*mode[18 + ii * LBQ]
                      );
 
-      nodes_LE_upper.vd[10] =  
+      nodes_LE_upper.vd[10*para.dim_x*para.dim_z] =  
         1.0f/36.0f * (
                          mode[ 0 + ii * LBQ] - mode[ 1 + ii * LBQ]
                        + mode[ 2 + ii * LBQ] + mode[ 4 + ii * LBQ]
@@ -1150,7 +1151,7 @@ __device__ void print_n_from_modes_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_LE_up
                        + mode[16 + ii * LBQ] + 2.0f*mode[18 + ii * LBQ]
                      );
 
-      nodes_LE_upper.vd[11] =  
+      nodes_LE_upper.vd[11*para.dim_x*para.dim_z] =  
         1.0f/36.0f * (
                          mode[ 0 + ii * LBQ] + mode[ 1 + ii * LBQ]
                        + mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
@@ -1161,7 +1162,7 @@ __device__ void print_n_from_modes_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_LE_up
                        + mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
                      );
 
-      nodes_LE_upper.vd[12] =  
+      nodes_LE_upper.vd[12*para.dim_x*para.dim_z] =  
         1.0f/36.0f * (
                          mode[ 0 + ii * LBQ] - mode[ 1 + ii * LBQ]
                        - mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
@@ -1172,7 +1173,7 @@ __device__ void print_n_from_modes_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_LE_up
                        + mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
                      );
 
-      nodes_LE_upper.vd[13] =  
+      nodes_LE_upper.vd[13*para.dim_x*para.dim_z] =  
         1.0f/36.0f * (
                          mode[ 0 + ii * LBQ] + mode[ 1 + ii * LBQ]
                        - mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
@@ -1183,7 +1184,7 @@ __device__ void print_n_from_modes_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_LE_up
                        + mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
                      );
 
-      nodes_LE_upper.vd[14] =  
+      nodes_LE_upper.vd[14*para.dim_x*para.dim_z] =  
         1.0f/36.0f * (
                          mode[ 0 + ii * LBQ] - mode[ 1 + ii * LBQ]
                        + mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
@@ -1194,7 +1195,7 @@ __device__ void print_n_from_modes_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_LE_up
                        + mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
                      );
 
-      nodes_LE_upper.vd[15] =  
+      nodes_LE_upper.vd[15*para.dim_x*para.dim_z] =  
         1.0f/36.0f * (
                          mode[ 0 + ii * LBQ] + mode[ 2 + ii * LBQ]
                        + mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
@@ -1205,7 +1206,7 @@ __device__ void print_n_from_modes_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_LE_up
                        - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
                      );
 
-      nodes_LE_upper.vd[16] =  
+      nodes_LE_upper.vd[16*para.dim_x*para.dim_z] =  
         1.0f/36.0f * (
                          mode[ 0 + ii * LBQ] - mode[ 2 + ii * LBQ]
                        - mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
@@ -1216,7 +1217,7 @@ __device__ void print_n_from_modes_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_LE_up
                        - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
                      );
 
-      nodes_LE_upper.vd[17] =  
+      nodes_LE_upper.vd[17*para.dim_x*para.dim_z] =  
         1.0f/36.0f * (
                          mode[ 0 + ii * LBQ] + mode[ 2 + ii * LBQ]
                        - mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
@@ -1227,7 +1228,7 @@ __device__ void print_n_from_modes_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_LE_up
                        - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
                      );
 
-      nodes_LE_upper.vd[18] =  
+      nodes_LE_upper.vd[18*para.dim_x*para.dim_z] =  
         1.0f/36.0f * (
                          mode[ 0 + ii * LBQ] - mode[ 2 + ii * LBQ]
                        + mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
@@ -1260,8 +1261,17 @@ __device__ void print_n_from_modes_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_LE_up
                        };
 
       for(int i = 0; i < 19; i++) {
-        //printf("%e %e %e  ", c[i][0]*nodes_LE_upper.vd[i], c[i][1]*nodes_LE_upper.vd[i], c[i][2]*nodes_LE_upper.vd[i]);
-        printf("%e %e %e  ", c[i][0], c[i][1], c[i][2]);
+        if(i != 0) {
+          float c_norm = sqrt(c[i][0]*c[i][0] + c[i][1]*c[i][1] + c[i][2]*c[i][2]);
+          c[i][0] /= c_norm;
+          c[i][1] /= c_norm;
+          c[i][2] /= c_norm;
+        }
+
+        if(i == 1)
+          printf("nodes_LE_upper.vd[1]*c[1]=[%e, %e, %e]\n", nodes_LE_upper.vd[i*para.dim_x*para.dim_z], nodes_LE_upper.vd[i*para.dim_x*para.dim_z], nodes_LE_upper.vd[i*para.dim_x*para.dim_z]);
+
+        printf("%e %e %e  ", c[i][0]*nodes_LE_upper.vd[i*para.dim_x*para.dim_z], c[i][1]*nodes_LE_upper.vd[i*para.dim_x*para.dim_z], c[i][2]*nodes_LE_upper.vd[i*para.dim_x*para.dim_z]);
       }
 
       printf("\n");
