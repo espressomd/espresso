@@ -962,32 +962,21 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
   binvolume = range[0] * range[1] * range[2] / (double)bins[0] /
               (double)bins[1] / (double)bins[2];
 
-  /* this next bit loops over all pair of particles, calculates the force
-   * between them, and distributes it amongst the tensors */
-  short_range_loop(
-      [&bins, &centre, &range, &TensorInBin, &range_start](Particle &p) {
-        int bin;
-        whichbin(p.r.p, bins, centre, range, &bin);
-        if (bin >= 0) {
-          PTENSOR_TRACE(fprintf(
-              stderr, "%d:Got particle %d pos is %f %f %f \n",
-              this_node, p.p.identity, p.r.p[0], p.r.p[1], p.r.p[2]));
-          PTENSOR_TRACE(
-              fprintf(stderr, "%d:Ideal gas component is {", this_node));
-          for (int k = 0; k < 3; k++) {
-            for (int l = 0; l < 3; l++) {
-              TensorInBin[bin].e[k * 3 + l] +=
-                  (p.m.v[k]) * (p.m.v[l]) * p.p.mass / time_step / time_step;
-              PTENSOR_TRACE(fprintf(stderr, "%f ",
-                                    (p.m.v[k]) * (p.m.v[l]) * p.p.mass /
-                                        time_step / time_step));
-            }
-          }
-
-          PTENSOR_TRACE(fprintf(stderr, "}\n"));
+  auto add_ideal = [&](Particle &p) {
+    int bin;
+    whichbin(p.r.p, bins, centre, range, &bin);
+    if (bin >= 0) {
+      for (int k = 0; k < 3; k++) {
+        for (int l = 0; l < 3; l++) {
+          TensorInBin[bin].e[k * 3 + l] +=
+              (p.m.v[k]) * (p.m.v[l]) * p.p.mass / time_step / time_step;
         }
+      }
+    }
+  };
 
-        /* bonded contributions */
+  auto add_bonded =
+      [&](Particle &p) {
         int j = 0;
         while (j < p.bl.n) {
           auto type_num = p.bl.e[j++];
@@ -1008,7 +997,17 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
               return 0;
           }
         }
-      },
+  };
+
+  auto add_single_particle_contribution = [&add_ideal, &add_bonded](Particle &p) {
+    add_ideal(p);
+    add_bonded(p);
+  };
+
+  /* this next bit loops over all pair of particles, calculates the force
+   * between them, and distributes it amongst the tensors */
+  short_range_loop(
+      add_single_particle_contribution,
       [&centre, &range, &TensorInBin, &range_start,
        &bins](Particle &p1, Particle &p2, Distance &d) {
         if ((incubewithskin(p1.r.p, centre, range)) &&
@@ -1121,26 +1120,6 @@ int analyze_local_stress_tensor(int* periodic, double* range_start, double* rang
 
 	mpi_local_stress_tensor(TensorInBin, bins, periodic,range_start, range);
 	PTENSOR_TRACE(fprintf(stderr,"%d: tclcommand_analyze_parse_local_stress_tensor: finished mpi_local_stress_tensor \n",this_node));
-
-//	/* Write stress profile to Tcl export */
-//	Tcl_AppendResult(interp, "{ LocalStressTensor } ", (char *)NULL);
-//	for ( i = 0 ; i < bins[0] ; i++) {
-//		for ( j = 0 ; j < bins[1] ; j++) {
-//			for ( k = 0 ; k < bins[2] ; k++) {
-//				Tcl_AppendResult(interp, " { ", (char *)NULL);
-//				sprintf(buffer," { %d %d %d } ",i,j,k);
-//				Tcl_AppendResult(interp,buffer, (char *)NULL);
-//				Tcl_AppendResult(interp, " { ", (char *)NULL);
-//				for ( l = 0 ; l < 9 ; l++) {
-//					Tcl_PrintDouble(interp,TensorInBin[i*bins[1]*bins[2]+j*bins[2]+k].e[l],buffer);
-//					Tcl_AppendResult(interp, buffer, (char *)NULL);
-//					Tcl_AppendResult(interp, " ", (char *)NULL);
-//				}
-//				Tcl_AppendResult(interp, " } ", (char *)NULL);
-//				Tcl_AppendResult(interp, " } ", (char *)NULL);
-//			}
-//		}
-//	}
 
 	return ES_OK;
 }
