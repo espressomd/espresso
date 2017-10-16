@@ -6,8 +6,8 @@ namespace Algorithm {
 template <typename CellIterator, typename ParticleKernel, typename PairKernel,
           typename DistanceFunction>
 void link_cell(CellIterator first, CellIterator last,
-               ParticleKernel&& particle_kernel, PairKernel&& pair_kernel,
-               DistanceFunction&& distance_function) {
+               ParticleKernel &&particle_kernel, PairKernel &&pair_kernel,
+               DistanceFunction &&distance_function) {
   for (; first != last; ++first) {
     for (int i = 0; i != first->n; i++) {
       auto &p1 = first->part[i];
@@ -22,8 +22,6 @@ void link_cell(CellIterator first, CellIterator last,
 
       /* Pairs with neighbors */
       for (auto &neighbor : first->neighbors()) {
-        if (&neighbor == &(*first))
-          continue;
         for (int j = 0; j < neighbor.n; j++) {
           auto &p2 = neighbor.part[j];
           auto dist = distance_function(p1, p2);

@@ -551,9 +551,8 @@ void dd_init_cell_interactions() {
       for (q = n - 1; q <= n + 1; q++)
         for (r = m - 1; r <= m + 1; r++) {
           ind2 = get_linear_index(r, q, p, dd.ghost_cell_grid);
-          if (ind2 >= ind1) {
+          if (ind2 > ind1) {
             cells[ind1].m_neighbors.emplace_back(std::ref(cells[ind2]));
-
           }
         }
 
