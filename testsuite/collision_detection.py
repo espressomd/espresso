@@ -42,7 +42,7 @@ class CollisionDetection(ut.TestCase):
 
     def test_00_interface_and_defaults(self):
         # Is it off by default
-        self.assertEquals(self.s.collision_detection.mode,"off")
+        self.assertEqual(self.s.collision_detection.mode,"off")
         # Make sure params cannot be set individually
         with self.assertRaises(Exception):
             self.s.collision_detection.mode="bind_centers" 
@@ -54,7 +54,7 @@ class CollisionDetection(ut.TestCase):
         
         # That should work
         self.s.collision_detection.set_params(mode="off")
-        self.assertEquals(self.s.collision_detection.mode,"off")
+        self.assertEqual(self.s.collision_detection.mode,"off")
 
     def test_bind_centers(self):
         # Check that it leaves particles alone, wehn off
@@ -85,7 +85,7 @@ class CollisionDetection(ut.TestCase):
 
         # Check turning it off
         self.s.collision_detection.set_params(mode="off")
-        self.assertEquals(self.s.collision_detection.mode,"off")
+        self.assertEqual(self.s.collision_detection.mode,"off")
     
     
     def run_test_bind_at_point_of_collision_for_pos(self,pos):
@@ -123,7 +123,7 @@ class CollisionDetection(ut.TestCase):
         vs1=self.s.part[3]
         vs2=self.s.part[4]
         # No additional particles?
-        self.assertEquals(self.s.part.highest_particle_id,4)
+        self.assertEqual(self.s.part.highest_particle_id,4)
 
         # Check for bond betwen vs
         vs_bond1=((self.s.bonded_inter[1],4),)
@@ -131,8 +131,8 @@ class CollisionDetection(ut.TestCase):
         self.assertTrue(vs1.bonds==vs_bond1 or vs2.bonds==vs_bond2)
 
         # Vs properties
-        self.assertEquals(vs1.virtual,1)
-        self.assertEquals(vs2.virtual,1)
+        self.assertEqual(vs1.virtual,1)
+        self.assertEqual(vs2.virtual,1)
 
 
         # vs_relative properties
@@ -255,7 +255,7 @@ class CollisionDetection(ut.TestCase):
         for i in range(n):
             for b in self.s.part[i].bonds:
                 if len(b)==2:
-                    self.assertEquals(b[0]._bond_id,self.H._bond_id)
+                    self.assertEqual(b[0]._bond_id,self.H._bond_id)
                     found_pairs.append(tuple(sorted((i,b[1]))))
                 elif len(b)==3:
                     partners=sorted(b[1:])
@@ -268,7 +268,7 @@ class CollisionDetection(ut.TestCase):
         found_pairs=sorted(found_pairs)
         found_angle_bonds=sorted(found_angle_bonds)
         expected_angle_bonds=sorted(expected_angle_bonds)
-        self.assertEquals(expected_pairs,found_pairs)
+        self.assertEqual(expected_pairs,found_pairs)
         
         if not  expected_angle_bonds == found_angle_bonds:
             # Verbose info
@@ -283,7 +283,7 @@ class CollisionDetection(ut.TestCase):
             print("extra:",found_angle_bonds)
             print()
         
-        self.assertEquals(expected_angle_bonds,found_angle_bonds)
+        self.assertEqual(expected_angle_bonds,found_angle_bonds)
             
                 
                     
