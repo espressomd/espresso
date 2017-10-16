@@ -1283,16 +1283,25 @@ int virtual_set_params(int bond_type);
 void set_dipolar_method_local(DipolarInteraction method);
 #endif
 
+#include "utils/math/sqr.hpp"
+
 /** Returns true if the particles are to be considered for short range
     interactions */
 class VerletCriterion {
   const double m_skin;
+  const double m_eff_max_cut2;
+  const double m_eff_coulomb_cut2 = 0.;
+  const double m_eff_dipolar_cut2 = 0.;
 
 public:
-  explicit VerletCriterion(double skin) : m_skin(skin) {}
+  VerletCriterion(double skin, double max_cut, double coulomb_cut = 0.,
+                  double dipolar_cut = 0.)
+      : m_skin(skin), m_eff_max_cut2(Utils::sqr(max_cut + m_skin)),
+        m_eff_coulomb_cut2(Utils::sqr(coulomb_cut + m_skin)),
+        m_eff_dipolar_cut2(Utils::sqr(dipolar_cut + m_skin)) {}
 
   bool operator()(const Particle &p1, const Particle &p2, double dist2) const {
-    if (dist2 > SQR(max_cut + m_skin))
+    if (dist2 > m_eff_max_cut2)
       return false;
 
 #ifdef EXCLUSIONS
@@ -1306,15 +1315,13 @@ public:
 
 // Within real space cutoff of electrostatics and both charged
 #ifdef ELECTROSTATICS
-    if ((dist2 <= SQR(coulomb_cutoff + m_skin)) && (p1.p.q != 0) &&
-        (p2.p.q != 0))
+    if ((dist2 <= m_eff_coulomb_cut2) && (p1.p.q != 0) && (p2.p.q != 0))
       return true;
 #endif
 
 // Within dipolar cutoff and both cary magnetic moments
 #ifdef DIPOLES
-    if ((dist2 <= SQR(dipolar_cutoff + m_skin)) && (p1.p.dipm != 0) &&
-        (p2.p.dipm != 0))
+    if ((dist2 <= m_eff_dipolar_cut2) && (p1.p.dipm != 0) && (p2.p.dipm != 0))
       return true;
 #endif
 

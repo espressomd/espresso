@@ -40,7 +40,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-
+#include "utils/mpi/gather_buffer.hpp"
 #include "algorithm/link_cell.hpp"
 #include "utils/NoOp.hpp"
 #include <boost/iterator/indirect_iterator.hpp>

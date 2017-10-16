@@ -46,5 +46,6 @@ BOOST_AUTO_TEST_CASE(batch) {
   auto batch = Utils::make_batch(a, b, c);
 
   batch(42);
+  BOOST_CHECK(counter == 3);
 }
 

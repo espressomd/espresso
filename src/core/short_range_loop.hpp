@@ -8,9 +8,9 @@
 #include "algorithm/for_each_pair.hpp"
 #include "cells.hpp"
 #include "grid.hpp"
+#include "integrate.hpp"
 #include "interaction_data.hpp"
 #include "utils/Batch.hpp"
-#include "integrate.hpp"
 
 /**
  * @brief Distance vector and length handed to pair kernels.
@@ -103,14 +103,16 @@ void short_range_loop(ParticleKernel &&particle_kernel,
         make_batch(
             [](Particle &p) { memcpy(p.l.p_old, p.r.p, 3 * sizeof(double)); },
             std::forward<ParticleKernel>(particle_kernel)),
-        std::forward<PairKernel>(pair_kernel), VerletCriterion{skin});
+        std::forward<PairKernel>(pair_kernel),
+        VerletCriterion{skin, max_cut, coulomb_cutoff, dipolar_cutoff});
 
     /* Now everything is up-to-date */
     rebuild_verletlist = 0;
   } else {
     detail::decide_distance(
         first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel), VerletCriterion{skin});
+        std::forward<PairKernel>(pair_kernel),
+        VerletCriterion{skin, max_cut, coulomb_cutoff, dipolar_cutoff});
   }
 }
 
