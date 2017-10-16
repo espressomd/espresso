@@ -228,14 +228,6 @@ enum ConstraintApplied {
  *  nonbonded interactions. Access via
  * get_ia_param(i, j), i,j < n_particle_types */
 typedef struct {
-
-  /** flag that tells whether there is any short-ranged interaction,
-   i.e. one that contributes to the "nonbonded" section of the
-   energy/pressure. Note that even if there is no short-ranged
-   interaction present, the \ref max_cut can be non-zero due to
-   e.g. electrostatics. */
-  int particlesInteract;
-
   /** maximal cutoff for this pair of particle types. This contains
       contributions from the short-ranged interactions, plus any
       cutoffs from global interactions like electrostatics.
@@ -252,6 +244,13 @@ typedef struct {
   double LJ_capradius;
   double LJ_min;
   /*@}*/
+
+  /** flag that tells whether there is any short-ranged interaction,
+      i.e. one that contributes to the "nonbonded" section of the
+      energy/pressure. Note that even if there is no short-ranged
+      interaction present, the \ref max_cut can be non-zero due to
+      e.g. electrostatics. */
+  int particlesInteract;
 
 #ifdef LENNARD_JONES_GENERIC
   /** \name Generic Lennard-Jones with shift */
