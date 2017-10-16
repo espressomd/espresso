@@ -1301,7 +1301,9 @@ public:
         m_eff_coulomb_cut2(Utils::sqr(coulomb_cut + m_skin)),
         m_eff_dipolar_cut2(Utils::sqr(dipolar_cut + m_skin)) {}
 
-  bool operator()(const Particle &p1, const Particle &p2, double dist2) const {
+  template<typename Distance>
+  bool operator()(const Particle &p1, const Particle &p2, Distance const& dist) const {
+    auto const& dist2 = dist.dist2;
     if (dist2 > m_eff_max_cut2)
       return false;
 

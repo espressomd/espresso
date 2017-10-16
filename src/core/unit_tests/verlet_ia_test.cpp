@@ -23,13 +23,13 @@ void check_pairs(int n_part, std::vector<std::pair<int, int>> const &pairs) {
 
 /* Dummy distance */
 struct Distance {
-  bool dist2;
+  bool interact;
 };
 
 /* Dummy interaction criterion */
 struct VerletCriterion {
-  bool operator()(Particle const &p1, Particle const &p2, bool d) const {
-    return d;
+  bool operator()(Particle const &p1, Particle const &p2, Distance const& d) const {
+    return d.interact;
   }
 };
 
