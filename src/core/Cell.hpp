@@ -4,6 +4,10 @@
 #include <functional>
 #include <vector>
 
+/* Needed for transform_iterator to work with
+   lambdas on older compilers. */
+#define BOOST_RESULT_OF_USE_DECLTYPE
+
 #include <boost/iterator/transform_iterator.hpp>
 
 #include "particle_data.hpp"
