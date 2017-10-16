@@ -39,6 +39,11 @@ class CollisionDetection(ut.TestCase):
     s.cell_system.skin=0
     s.min_global_cut=0.2
 
+    part_type_to_attach_vs_to=0
+    part_type_vs=1
+    part_type_to_be_glued=2
+    part_type_after_glueing=3 
+    other_type=5
 
     def test_00_interface_and_defaults(self):
         # Is it off by default
@@ -215,7 +220,120 @@ class CollisionDetection(ut.TestCase):
         # Head + other
         self.run_test_bind_at_point_of_collision_for_pos(np.array((0.0,0,0)),np.array((0.7,0,0)))
         # Head + mixed + other
-        self.run_test_bind_at_point_of_collision_for_pos(np.array((0.0,0,0)),np.array((0.45,0,0)),np.array((0.7,0,0)))
+        self.run_test_bind_at_point_of_collision_for_pos(np.array((0.2,0,0)),np.array((0.95,0,0)),np.array((0.7,0,0)))
+    
+    
+    
+    def run_test_glue_to_surface_for_pos(self,*positions):
+        self.s.part.clear()
+        # Place particle which should not take part in collisions
+        # In this case, it is skipped, because it is of the wrong type,
+        # even if it is within range for a collision
+        p=self.s.part.add(pos=positions[0],type=self.other_type)
+        for pos in positions:
+            p1=self.s.part.add(pos=pos+(0,0,0),type=self.part_type_to_attach_vs_to)
+            p2=self.s.part.add(pos=pos+(0.1,0,0),type=self.part_type_to_be_glued)
+
+        
+        # 2 non-virtual + 1 virtual + one that doesn't takekae part
+        expected_np=3*len(positions)+1
+
+        self.s.collision_detection.set_params(
+          mode="glue_to_surface",distance=0.11,distance_glued_particle_to_vs=0.02, bond_centers=self.H,bond_vs=self.H2,part_type_vs=self.part_type_vs,part_type_to_attach_vs_to=self.part_type_to_attach_vs_to,part_type_to_be_glued=self.part_type_to_be_glued,part_type_after_glueing=self.part_type_after_glueing)
+        self.s.integrator.run(0,recalc_forces=True)
+        self.verify_state_after_glue_to_surface(expected_np)
+
+
+        # Integrate again and check that nothing has changed
+        self.s.integrator.run(0,recalc_forces=True)
+        self.verify_state_after_glue_to_surface(expected_np)
+
+        # Check that nothing explodes, when the particles are moved.
+        # In particular for parallel simulations
+        self.s.thermostat.set_langevin(kT=0,gamma=0.01)
+        self.s.part[:].v=0.05,0.01,0.15
+        self.s.integrator.run(3000)
+        self.verify_state_after_glue_to_surface(expected_np)
+
+
+    def verify_state_after_glue_to_surface(self,expected_np):
+        self.assertEqual(len(self.s.part),expected_np)
+
+        # At the end of test, this list should be empty
+        parts_not_accounted_for=range(expected_np)
+        
+        # We traverse particles. We look for a vs, get base particle from there
+        # and prtner particle via bonds
+        for p in self.s.part:
+            # Skip non-virtual
+            if p.virtual==0:
+                continue
+            # The vs shouldn't have bonds
+            self.assertEqual(p.bonds,())
+
+            # Get base particles
+            base_p=self.s.part[p.vs_relative[0]]
+            # Get bound particle via bond of type bond_centers
+            self.assertEqual(len(base_p.bonds),1)
+            # Bond type
+            self.assertEqual(base_p.bonds[0][0],self.H)
+            p2=self.s.part[base_p.bonds[0][1]]
+            # Take note of accounted-for particles
+            for _p in p,p2,base_p:
+                parts_not_accounted_for.remove(_p.id)
+            self.verify_glue_to_surface_pair(base_p,p,p2)
+        # Check particle that did not take part in collision.
+        self.assertEqual(len(parts_not_accounted_for),1)
+        p=self.s.part[parts_not_accounted_for[0]]
+        self.assertEqual(p.virtual,0)
+        self.assertEqual(p.type,self.other_type)
+        self.assertEqual(p.bonds,())
+        parts_not_accounted_for.remove(p.id)
+        self.assertEqual(parts_not_accounted_for,[])
+
+
+    def verify_glue_to_surface_pair(self,base_p,vs,bound_p):
+        # Check all types
+        self.assertEqual(base_p.type,self.part_type_to_attach_vs_to)
+        self.assertEqual(vs.type,self.part_type_vs)
+        self.assertEqual(bound_p.type,self.part_type_after_glueing)
+        
+        # Bound particle should have a bond to vs
+        self.assertEqual(bound_p.bonds,((self.H2,vs.id),))
+        # Vs should not have a bond
+        self.assertEqual(vs.bonds,())
+        
+        # Vs properties
+        self.assertEqual(vs.virtual,1)
+        self.assertEqual(vs.vs_relative[0],base_p.id)
+        
+        # Distance vs,bound_p
+        print(base_p.pos,vs.pos,bound_p.pos)
+        self.assertAlmostEqual(self.s.distance(vs,bound_p),0.02,places=3)
+
+        # base_p,vs,bound_p on a line
+        self.assertGreater(np.dot(self.s.distancevec(base_p,vs),self.s.distnacevec(base_p,bound_p))/self.s.distance(base_p,vs)/self.s.distance(base_p,bound_p),0.99)
+
+
+       
+
+
+    def test_glue_to_surface(self):
+        # Single collision head node
+        self.run_test_glue_to_surface_for_pos(np.array((0,0,0)))
+        # Single collision, mixed
+        self.run_test_glue_to_surface_for_pos(np.array((0.45,0,0)))
+        # Single collision, non-head-node
+        self.run_test_glue_to_surface_for_pos(np.array((0.7,0,0)))
+
+        # head-node + mixed
+        self.run_test_glue_to_surface_for_pos(np.array((0,0,0)),np.array((0.45,0,0)))
+        # Mixed + other node
+        self.run_test_glue_to_surface_for_pos(np.array((0.45,0,0)),np.array((0.7,0,0)))
+        # Head + other
+        self.run_test_glue_to_surface_for_pos(np.array((0.0,0,0)),np.array((0.7,0,0)))
+        # Head + mixed + other
+        self.run_test_glue_to_surface_for_pos(np.array((0.2,0,0)),np.array((0.95,0,0)),np.array((0.7,0,0)))
 
 
 

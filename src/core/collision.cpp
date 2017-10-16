@@ -236,7 +236,7 @@ int glue_to_surface_calc_vs_pos(const Particle* const p1, const Particle* const 
          throw std::runtime_error("This should never be thrown. Bug.");
     }
     for (int i=0;i<3;i++) {
-       pos[i] = p1->r.p[i] - vec21[i] * c;
+       pos[i] = p2->r.p[i] -vec21[i] * c;
     }
    return bind_vs_to_pid;
 }
@@ -389,13 +389,19 @@ void bind_at_poc_create_bond_between_vs(const int current_vs_pid, const collisio
   }
 }
 
-void glue_to_surface_bind_vs_to_pp1(const int current_vs_pid, const collision_struct& c)
+void glue_to_surface_bind_part_to_vs(const Particle* const p1, const Particle* const p2, const int vs_pid_plus_one, const collision_struct& c)
 {
 	 int bondG[3];
          // Create bond between the virtual particles
          bondG[0] = collision_params.bond_vs;
-         bondG[1] = current_vs_pid-1;
-         local_change_bond(c.pp1, bondG, 0);
+         bondG[1] = vs_pid_plus_one-1;
+         if (p1->p.type == collision_params.part_type_after_glueing) {
+           local_change_bond(p1->p.identity, bondG, 0);
+         }
+         else
+         {
+           local_change_bond(p2->p.identity, bondG, 0);
+         }
 }
 
 #endif
@@ -679,8 +685,13 @@ void handle_collisions ()
       double pos[3];
       const int pid=glue_to_surface_calc_vs_pos(p1,p2,pos);
 	    
-      // Change type of partilce being attached
-      p1->p.type=collision_params.part_type_after_glueing;
+      // Change type of partilce being attached, to make it inert
+      if (p1->p.type==collision_params.part_type_to_be_glued) {
+         p1->p.type=collision_params.part_type_after_glueing;
+      }
+      if (p2->p.type==collision_params.part_type_to_be_glued) {
+         p2->p.type=collision_params.part_type_after_glueing;
+      }
       
       // Vs placement happens on the node that has p1
       if (!p1->l.ghost) {
@@ -692,7 +703,7 @@ void handle_collisions ()
         added_particle(current_vs_pid);
         current_vs_pid++;
       }  
-      glue_to_surface_bind_vs_to_pp1(current_vs_pid,c);
+      glue_to_surface_bind_part_to_vs(p1,p2,current_vs_pid,c);
       
     }
       } // Loop over all collisions in the queue
