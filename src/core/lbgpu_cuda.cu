@@ -3002,6 +3002,10 @@ __global__ void reset_boundaries(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
 
 __device__ void calculate_LE_mode_delta(float *mode, int index, LB_rho_v_gpu *d_v, float lees_edwards_velocity, LB_nodes_gpu nodes_LE_upper, LB_nodes_gpu nodes_LE_lower){
   
+  if(index==0){
+    printf("lees_edwards_velocity: %f \n", lees_edwards_velocity);
+  }
+
   float u[3];
   u[0] = d_v[index].v[0];
   u[1] = d_v[index].v[1];
@@ -3021,13 +3025,13 @@ __device__ void calculate_LE_mode_delta(float *mode, int index, LB_rho_v_gpu *d_
   if(pos[1] == 0){
     equilibrium_modes(mode, ii, u, &rho, modes_pi_without_LE);
 
-    u[1] -= lees_edwards_velocity;
+    u[0] += lees_edwards_velocity;
     equilibrium_modes(mode, ii, u, &rho, modes_pi_with_LE);
 
     delta_m = nodes_LE_lower.vd;
   
     delta_m[0*para.dim_x*para.dim_z + delta_index]  = 0.0f;
-    delta_m[1*para.dim_x*para.dim_z + delta_index]  = lees_edwards_velocity; //0.0f;
+    delta_m[1*para.dim_x*para.dim_z + delta_index]  = +lees_edwards_velocity * rho; //0.0f;
     delta_m[2*para.dim_x*para.dim_z + delta_index]  = 0.0f; //-lees_edwards_velocity * rho;
     delta_m[3*para.dim_x*para.dim_z + delta_index]  = 0.0f;
     delta_m[4*para.dim_x*para.dim_z + delta_index]  = modes_pi_with_LE[0] - modes_pi_without_LE[0];
@@ -3052,13 +3056,13 @@ __device__ void calculate_LE_mode_delta(float *mode, int index, LB_rho_v_gpu *d_
   else if(pos[1] == para.dim_y-1) {
     equilibrium_modes(mode, ii, u, &rho, modes_pi_without_LE);
 
-    u[1] += lees_edwards_velocity;
+    u[0] -= lees_edwards_velocity;
     equilibrium_modes(mode, ii, u, &rho, modes_pi_with_LE);
 
     delta_m = nodes_LE_upper.vd;
     
     delta_m[0*para.dim_x*para.dim_z + delta_index]  = 0.0f;
-    delta_m[1*para.dim_x*para.dim_z + delta_index]  = -lees_edwards_velocity; //0.0f;
+    delta_m[1*para.dim_x*para.dim_z + delta_index]  = -lees_edwards_velocity * rho; //0.0f;
     delta_m[2*para.dim_x*para.dim_z + delta_index]  = 0.0f; //lees_edwards_velocity * rho;
     delta_m[3*para.dim_x*para.dim_z + delta_index]  = 0.0f;
     delta_m[4*para.dim_x*para.dim_z + delta_index] = modes_pi_with_LE[0] - modes_pi_without_LE[0];
@@ -4022,15 +4026,20 @@ void lb_integrate_GPU() {
   /* NOTE: if pi is needed at every integration step, one should call an extended version 
            of the integrate kernel, or pass also device_rho_v_pi and make sure that either 
            it or device_rho_v are NULL depending on extended_values_flag */ 
+
+  printf("lees_edwards_rate: %f \n", lees_edwards_rate);
+  printf("lees_edwards_offset: %f \n", lees_edwards_offset);
+  printf("dim_y: %u \n", lbpar_gpu.dim_y);
+
   if (intflag == 1)
   {
-    KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_a, nodes_b, nodes_LE_upper, nodes_LE_lower, device_rho_v, node_f, lb_ek_parameters_gpu, lees_edwards_offset, lees_edwards_rate*lbpar_gpu.dim_y*lbpar_gpu.agrid));
+    KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_a, nodes_b, nodes_LE_upper, nodes_LE_lower, device_rho_v, node_f, lb_ek_parameters_gpu, lees_edwards_rate, lees_edwards_rate*lbpar_gpu.tau));
     current_nodes = &nodes_b;
     intflag = 0;
   }
   else
   {
-    KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_b, nodes_a, nodes_LE_upper, nodes_LE_lower, device_rho_v, node_f, lb_ek_parameters_gpu, lees_edwards_offset, lees_edwards_rate * lbpar_gpu.dim_y*lbpar_gpu.agrid));
+    KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_b, nodes_a, nodes_LE_upper, nodes_LE_lower, device_rho_v, node_f, lb_ek_parameters_gpu, lees_edwards_rate, lees_edwards_rate*lbpar_gpu.tau));
     current_nodes = &nodes_a;
     intflag = 1;
   }
