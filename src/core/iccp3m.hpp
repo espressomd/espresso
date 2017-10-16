@@ -58,15 +58,12 @@
 #if defined(ELECTROSTATICS)
 
 #include "cells.hpp"
-#include "domain_decomposition.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "integrate.hpp"
 #include "interaction_data.hpp"
-#include "layered.hpp"
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
-#include "nsquare.hpp"
 #include "p3m.hpp"
 #include "particle_data.hpp"
 #include "topology.hpp"
