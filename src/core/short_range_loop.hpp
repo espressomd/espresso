@@ -35,7 +35,7 @@ struct LayeredMinimalImageDistance {
   Distance operator()(Particle const &p1, Particle const &p2) const {
     Distance ret;
     get_mi_vector(ret.vec21, p1.r.p, p2.r.p);
-    // ret.vec21[2] = p1.r.p[2] - p2.r.p[2];
+    ret.vec21[2] = p1.r.p[2] - p2.r.p[2];
     ret.dist2 = sqrlen(ret.vec21);
 
     return ret;
