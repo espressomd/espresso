@@ -4095,7 +4095,7 @@ int statistics_observable_lbgpu_velocity_profile(profile_data* pdata, double* A,
 
 struct lb_lbfluid_mass_of_particle
 {
-  __device__ float operator()(CUDA_particle_data particle)
+  __device__ float operator()(CUDA_particle_data particle) const
   {
 #ifdef MASS
     return particle.mass;
@@ -4104,7 +4104,6 @@ struct lb_lbfluid_mass_of_particle
 #endif
   };
 };
-
 
 void lb_lbfluid_remove_total_momentum()
 {
@@ -4126,22 +4125,25 @@ void lb_lbfluid_remove_total_momentum()
   lb_calc_fluid_mass_GPU( &lb_calc_fluid_mass_res );
   float fluid_mass = lb_calc_fluid_mass_res;
 
-  float momentum[3] = {
-    -total_momentum[0]/(fluid_mass + particles_mass),
-    -total_momentum[1]/(fluid_mass + particles_mass),
-    -total_momentum[2]/(fluid_mass + particles_mass)
+  /* Momentum fraction of the particles */
+  auto const part_frac = particles_mass / (fluid_mass + particles_mass);
+  /* Mometum per particle */
+  float momentum_particles[3] = {
+    -total_momentum[0]*part_frac,
+    -total_momentum[1]*part_frac,
+    -total_momentum[2]*part_frac
   };
 
+  auto const fluid_frac = fluid_mass / (fluid_mass + particles_mass);
   float momentum_fluid[3] = {
-    momentum[0]*fluid_mass,
-    momentum[1]*fluid_mass,
-    momentum[2]*fluid_mass
+    -total_momentum[0]*fluid_frac,
+    -total_momentum[1]*fluid_frac,
+    -total_momentum[2]*fluid_frac
   };
 
-  lb_lbfluid_particles_add_momentum( momentum );
+  lb_lbfluid_particles_add_momentum( momentum_particles );
   lb_lbfluid_fluid_add_momentum( momentum_fluid );
 }
-
 
 __global__ void lb_lbfluid_fluid_add_momentum_kernel(
   float momentum[3],
