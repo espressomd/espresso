@@ -1,5 +1,5 @@
 from .script_interface import ScriptInterfaceHelper
-from .utils import handle_errors
+from .utils import handle_errors,to_str
 from .interactions import BondedInteraction,BondedInteractions
 
 
@@ -56,6 +56,9 @@ class CollisionDetection(ScriptInterfaceHelper):
 
 
     def _convert_param(self,name,value):
+        # Py3: Cast from binary to normal string. Don't understand, why a
+        # binary string can even occur, here, but it does.
+        name=to_str(name)
         # Convert mode parameter into python enum
         res=value
         if name == "mode":
