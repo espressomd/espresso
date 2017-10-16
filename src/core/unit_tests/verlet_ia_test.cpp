@@ -43,7 +43,8 @@ BOOST_AUTO_TEST_CASE(verlet_ia) {
   auto id = 0;
   for (auto &c : cells) {
     for (auto &n : cells) {
-      c.m_neighbors.push_back(std::ref(n));
+      if (&c != &n)
+        c.m_neighbors.push_back(std::ref(n));
     }
 
     c.part = new Particle[n_part_per_cell];
@@ -106,15 +107,15 @@ BOOST_AUTO_TEST_CASE(verlet_ia) {
 
   /* Rebuild again */
   Algorithm::verlet_ia(
-                       cells.begin(), cells.end(),
-                       [&id_counts](Particle const &p) { id_counts[p.p.identity]++; },
-                       [&pairs](Particle const &p1, Particle const &p2, Distance const &) {
-                         pairs.emplace_back(p1.p.identity, p2.p.identity);
-                       },
-                       [](Particle const &p1, Particle const &p2) {
-                         return Distance{p1.p.identity <= p2.p.identity};
-                       },
-                       VerletCriterion{}, /* rebuild */ true);
+      cells.begin(), cells.end(),
+      [&id_counts](Particle const &p) { id_counts[p.p.identity]++; },
+      [&pairs](Particle const &p1, Particle const &p2, Distance const &) {
+        pairs.emplace_back(p1.p.identity, p2.p.identity);
+      },
+      [](Particle const &p1, Particle const &p2) {
+        return Distance{p1.p.identity <= p2.p.identity};
+      },
+      VerletCriterion{}, /* rebuild */ true);
 
   /* Check that the particle kernel has been executed exactly once for every
    * particle. */

@@ -20,7 +20,8 @@ BOOST_AUTO_TEST_CASE(link_cell) {
   auto id = 0;
   for (auto &c : cells) {
     for (auto &n : cells) {
-      c.m_neighbors.push_back(std::ref(n));
+      if (&c != &n)
+        c.m_neighbors.push_back(std::ref(n));
     }
 
     c.part = new Particle[n_part_per_cell];
