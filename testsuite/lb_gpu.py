@@ -12,7 +12,7 @@ from espressomd import *
 import numpy as np
 from tests_common import abspath
 
-@ut.skipIf(not espressomd.has_features(["LB_GPU","LENNARD_JONES"]),
+@ut.skipIf(not espressomd.has_features(["LB_GPU","LENNARD_JONES","ROTATION"]),
            "Features not available, skipping test!")
 class lb_test(ut.TestCase):
 
