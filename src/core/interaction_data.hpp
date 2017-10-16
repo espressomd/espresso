@@ -24,7 +24,7 @@
     Various procedures concerning interactions between particles.
 */
 
-#include "particle_data.hpp" /* needed for constraints */
+#include "particle_data.hpp"
 #include "utils.hpp"
 
 /** \name Type codes of bonded interactions
@@ -253,6 +253,7 @@ typedef struct {
   double LJ_min;
   /*@}*/
 
+#ifdef LENNARD_JONES_GENERIC
   /** \name Generic Lennard-Jones with shift */
   /*@{*/
   double LJGEN_eps;
@@ -268,6 +269,7 @@ typedef struct {
   double LJGEN_lambda;
   double LJGEN_softrad;
 /*@}*/
+#endif
 
 #ifdef LJ_ANGLE
   /** \name Directional Lennard-Jones */
