@@ -88,47 +88,90 @@ class CollisionDetection(ut.TestCase):
         self.assertEqual(self.s.collision_detection.mode,"off")
     
     
-    def run_test_bind_at_point_of_collision_for_pos(self,pos):
+    def run_test_bind_at_point_of_collision_for_pos(self,*positions):
         self.s.part.clear()
-        self.s.part.add(pos=pos+(0,0,0),id=0)
-        self.s.part.add(pos=pos+(0.1,0,0),id=1)
-        self.s.part.add(pos=pos+(0.1,0.3,0),id=2)
+        # Place particle which should not take part in collisions
+        p=self.s.part.add(pos=(0.1,0.3,0))
+        for pos in positions:
+            p1=self.s.part.add(pos=pos+(0,0,0))
+            p2=self.s.part.add(pos=pos+(0.1,0,0))
+            if self.s.distance(p1,p) <0.12 or self.s.distance(p2,p)<0.12:
+                raise Exception("Test particle too close to particle, which should not take part in collision")
+
 
         
+        # 2 non-virtual + 2 virtual + one that doesn't tkae part
+        expected_np=4*len(positions)+1
+
         self.s.collision_detection.set_params(mode="bind_at_point_of_collision",distance=0.11,bond_centers=self.H,bond_vs=self.H2,part_type_vs=1,vs_placement=0.4)
         self.s.integrator.run(0,recalc_forces=True)
-        self.verify_state_after_bind_at_poc()
+        self.verify_state_after_bind_at_poc(expected_np)
 
 
         # Integrate again and check that nothing has changed
         self.s.integrator.run(0,recalc_forces=True)
-        self.verify_state_after_bind_at_poc()
+        self.verify_state_after_bind_at_poc(expected_np)
 
         # Check that nothing explodes, when the particles are moved.
         # In particular for parallel simulations
         self.s.thermostat.set_langevin(kT=0,gamma=0.01)
         self.s.part[:].v=0.05,0.01,0.15
         self.s.integrator.run(3000)
-        self.verify_state_after_bind_at_poc()
+        self.verify_state_after_bind_at_poc(expected_np)
 
 
-    def verify_state_after_bind_at_poc(self):
-        self.assertEqual(len(self.s.part),5)
-        bond0=((self.s.bonded_inter[0],1),)
-        bond1=((self.s.bonded_inter[0],0),)
-        self.assertTrue(self.s.part[0].bonds==bond0 or self.s.part[1].bonds==bond1)
-        self.assertEqual(self.s.part[2].bonds,())
+    def verify_state_after_bind_at_poc(self,expected_np):
+        self.assertEqual(len(self.s.part),expected_np)
+
+        # At the end of test, this list should be empty
+        parts_not_accounted_for=range(expected_np)
+        
+        # Collect pairs of non-virtual-particles found
+        non_virtual_pairs=[]
+
+        # We traverse particles. We look for a vs with a bond to find the other vs.
+        # From the two vs we find the two non-virtual particles
+        for p in self.s.part:
+            # Skip non-virtual
+            if p.virtual==0:
+                continue
+            # Skip vs that doesn't have a bond
+            if p.bonds==():
+                continue
+            # Parse the bond
+            self.assertEqual(len(p.bonds),1)
+            # Bond type
+            self.assertEqual(p.bonds[0][0],self.H2)
+            # get partner
+            p2 =self.s.part[p.bonds[0][1]]
+            # Is that really a vs
+            self.assertEqual(p2.virtual,1)
+            # Get base particles
+            base_p1=self.s.part[p.vs_relative[0]]
+            base_p2=self.s.part[p2.vs_relative[0]]
+            # Take note of accounted-for particles
+            for _p in p,p2,base_p1,base_p2:
+                parts_not_accounted_for.remove(_p.id)
+            self.verify_bind_at_poc_pair(base_p1,base_p2,p,p2)
+        # Check particle that did not take part in collision.
+        self.assertEqual(len(parts_not_accounted_for),1)
+        p=self.s.part[parts_not_accounted_for[0]]
+        self.assertEqual(p.virtual,0)
+        self.assertEqual(p.bonds,())
+        parts_not_accounted_for.remove(p.id)
+        self.assertEqual(parts_not_accounted_for,[])
+
+
+    def verify_bind_at_poc_pair(self,p1,p2,vs1,vs2):
+        bond_p1=((self.s.bonded_inter[0],p2.id),)
+        bond_p2=((self.s.bonded_inter[0],p1.id),)
+        self.assertTrue(p1.bonds==bond_p1 or p2.bonds==bond_p2)
 
         # Check for presence of vs
-        vs1=self.s.part[3]
-        vs2=self.s.part[4]
-        # No additional particles?
-        self.assertEqual(self.s.part.highest_particle_id,4)
-
         # Check for bond betwen vs
-        vs_bond1=((self.s.bonded_inter[1],4),)
-        vs_bond2=((self.s.bonded_inter[1],3),)
-        self.assertTrue(vs1.bonds==vs_bond1 or vs2.bonds==vs_bond2)
+        bond_vs1=((self.s.bonded_inter[1],vs2.id),)
+        bond_vs2=((self.s.bonded_inter[1],vs1.id),)
+        self.assertTrue(vs1.bonds==bond_vs1 or vs2.bonds==bond_vs2)
 
         # Vs properties
         self.assertEqual(vs1.virtual,1)
@@ -142,25 +185,43 @@ class CollisionDetection(ut.TestCase):
           rel_to=r[0]
           dist=r[1]
           # Vs is related to one of the particles
-          self.assertTrue(rel_to==0 or rel_to==1)
+          self.assertTrue(rel_to==p1.id or rel_to==p2.id)
           # The two vs relate to two different particles
           self.assertNotIn(rel_to,seen)
           seen.append(rel_to)
 
           # Check placement
-          if rel_to==0:
-            dist_centers=self.s.part[1].pos-self.s.part[0].pos
+          if rel_to==p1.id:
+            dist_centers=p2.pos-p1.pos
           else:
-            dist_centers=self.s.part[0].pos-self.s.part[1].pos
+            dist_centers=p1.pos-p2.pos
           expected_pos=self.s.part[rel_to].pos+self.s.collision_detection.vs_placement *dist_centers
           self.assertLess(np.sqrt(np.sum((p.pos-expected_pos)**2)),1E-5)
     
     @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"),"VIRTUAL_SITES not compiled in")
     #@ut.skipIf(s.cell_system.get_state()["n_nodes"]>1,"VS based tests only on a single node")
     def test_bind_at_point_of_collision(self):
+        # Single collision head node
         self.run_test_bind_at_point_of_collision_for_pos(np.array((0,0,0)))
+        # Single collision, mixed
         self.run_test_bind_at_point_of_collision_for_pos(np.array((0.45,0,0)))
-        self.run_test_bind_at_point_of_collision_for_pos(np.array((0.55,0,0)))
+        # Single collision, non-head-node
+        self.run_test_bind_at_point_of_collision_for_pos(np.array((0.7,0,0)))
+
+        # head-node + mixed
+        self.run_test_bind_at_point_of_collision_for_pos(np.array((0,0,0)),np.array((0.45,0,0)))
+        # Mixed + other node
+        self.run_test_bind_at_point_of_collision_for_pos(np.array((0.45,0,0)),np.array((0.7,0,0)))
+        # Head + other
+        self.run_test_bind_at_point_of_collision_for_pos(np.array((0.0,0,0)),np.array((0.7,0,0)))
+        # Head + mixed + other
+        self.run_test_bind_at_point_of_collision_for_pos(np.array((0.0,0,0)),np.array((0.45,0,0)),np.array((0.7,0,0)))
+
+
+
+
+
+    
 
     #@ut.skipIf(not espressomd.has_features("ANGLE_HARMONIC"),"Tests skipped because ANGLE_HARMONIC not compiled in")
     def test_angle_harmonic(self):
@@ -285,24 +346,13 @@ class CollisionDetection(ut.TestCase):
         
         self.assertEqual(expected_angle_bonds,found_angle_bonds)
             
-                
-                    
-
                   
 
 
-            
-        
-        
 
 
 
 
-
-
-
-
-        
 
 
 
