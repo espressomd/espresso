@@ -231,8 +231,13 @@ class CollisionDetection(ut.TestCase):
         # even if it is within range for a collision
         p=self.s.part.add(pos=positions[0],type=self.other_type)
         for pos in positions:
-            p1=self.s.part.add(pos=pos+(0,0,0),type=self.part_type_to_attach_vs_to)
-            p2=self.s.part.add(pos=pos+(0.1,0,0),type=self.part_type_to_be_glued)
+            # Since this is non-symmetric, we randomize order
+            if np.random.random()>.5:
+                p1=self.s.part.add(pos=pos+(0,0,0),type=self.part_type_to_attach_vs_to)
+                p2=self.s.part.add(pos=pos+(0.1,0,0),type=self.part_type_to_be_glued)
+            else:
+                p2=self.s.part.add(pos=pos+(0.1,0,0),type=self.part_type_to_be_glued)
+                p1=self.s.part.add(pos=pos+(0,0,0),type=self.part_type_to_attach_vs_to)
 
         
         # 2 non-virtual + 1 virtual + one that doesn't takekae part
@@ -273,14 +278,30 @@ class CollisionDetection(ut.TestCase):
 
             # Get base particles
             base_p=self.s.part[p.vs_relative[0]]
-            # Get bound particle via bond of type bond_centers
-            self.assertEqual(len(base_p.bonds),1)
-            # Bond type
-            self.assertEqual(base_p.bonds[0][0],self.H)
-            p2=self.s.part[base_p.bonds[0][1]]
+            
+            # Get bound particle
+            # There is a bond between the base particle and the bound particle
+            # but we have no guarantee, on where its stored
+            # 1. On the base particle of the vs
+            p2=None
+            if len(base_p.bonds)==1:
+                self.assertEqual(base_p.bonds[0][0],self.H)
+                p2=self.s.part[base_p.bonds[0][1]]
+            else:
+                # We need to go through all particles to find it
+                for candidate in self.s.part:
+                    if candidate.id not in parts_not_accounted_for:
+                        continue
+                    if len(candidate.bonds)>=1:
+                        for b in candidate.bonds:
+                            if b[0] == self.H and b[1]==base_p.id:
+                                p2=candidate
+                if p2==None:
+                    raise Exception("Bound particle not found")
             # Take note of accounted-for particles
-            for _p in p,p2,base_p:
-                parts_not_accounted_for.remove(_p.id)
+            parts_not_accounted_for.remove(base_p.id)
+            parts_not_accounted_for.remove(p.id)
+            parts_not_accounted_for.remove(p2.id)
             self.verify_glue_to_surface_pair(base_p,p,p2)
         # Check particle that did not take part in collision.
         self.assertEqual(len(parts_not_accounted_for),1)
@@ -298,8 +319,15 @@ class CollisionDetection(ut.TestCase):
         self.assertEqual(vs.type,self.part_type_vs)
         self.assertEqual(bound_p.type,self.part_type_after_glueing)
         
-        # Bound particle should have a bond to vs
-        self.assertEqual(bound_p.bonds,((self.H2,vs.id),))
+        # Bound particle should have a bond to vs. It can additionally have a bond
+        # to the base particle
+        bond_to_vs_found=False
+        for b in bound_p.bonds: 
+            if b[0] == self.H2: 
+                # bond to vs
+                self.assertEqual(b,(self.H2,vs.id))
+                bond_to_vs_found=True
+        self.assertEqual(bond_to_vs_found,True)
         # Vs should not have a bond
         self.assertEqual(vs.bonds,())
         
@@ -308,11 +336,12 @@ class CollisionDetection(ut.TestCase):
         self.assertEqual(vs.vs_relative[0],base_p.id)
         
         # Distance vs,bound_p
-        print(base_p.pos,vs.pos,bound_p.pos)
         self.assertAlmostEqual(self.s.distance(vs,bound_p),0.02,places=3)
+        self.assertAlmostEqual(self.s.distance(base_p,bound_p),0.1,places=3)
+        self.assertAlmostEqual(self.s.distance(base_p,vs),0.08,places=3)
 
         # base_p,vs,bound_p on a line
-        self.assertGreater(np.dot(self.s.distancevec(base_p,vs),self.s.distnacevec(base_p,bound_p))/self.s.distance(base_p,vs)/self.s.distance(base_p,bound_p),0.99)
+        self.assertGreater(np.dot(self.s.distance_vec(base_p,vs),self.s.distance_vec(base_p,bound_p))/self.s.distance(base_p,vs)/self.s.distance(base_p,bound_p),0.99)
 
 
        

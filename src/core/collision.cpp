@@ -222,13 +222,13 @@ int glue_to_surface_calc_vs_pos(const Particle* const p1, const Particle* const 
     if ((p1->p.type==collision_params.part_type_to_be_glued)
        && (p2->p.type ==collision_params.part_type_to_attach_vs_to))
     { 
-	       c = collision_params.dist_glued_part_to_vs/dist_betw_part;
+	       c = 1 -collision_params.dist_glued_part_to_vs/dist_betw_part;
          bind_vs_to_pid=p2->p.identity;
     }
     else if ((p2->p.type==collision_params.part_type_to_be_glued)
           && (p1->p.type ==collision_params.part_type_to_attach_vs_to))
     { 
-	       c = -collision_params.dist_glued_part_to_vs/dist_betw_part;
+	       c = collision_params.dist_glued_part_to_vs/dist_betw_part;
          bind_vs_to_pid=p1->p.identity;
     }
     else
@@ -236,7 +236,7 @@ int glue_to_surface_calc_vs_pos(const Particle* const p1, const Particle* const 
          throw std::runtime_error("This should never be thrown. Bug.");
     }
     for (int i=0;i<3;i++) {
-       pos[i] = p2->r.p[i] -vec21[i] * c;
+       pos[i] = p2->r.p[i] +vec21[i] * c;
     }
    return bind_vs_to_pid;
 }
