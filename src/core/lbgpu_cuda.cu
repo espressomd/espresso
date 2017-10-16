@@ -1026,6 +1026,249 @@ __device__ void calc_n_from_modes_push(LB_nodes_gpu n_b, float *mode, unsigned i
   }
 }
 
+__device__ void print_n_from_modes_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_LE_upper, LB_nodes_gpu nodes_LE_lower, float *mode, int index) {
+      
+  int xyz[3];
+  index_to_xyz(index, xyz);
+  
+  int delta_index = xyz[2]*para.dim_x + xyz[0];
+
+  int ii = 0;
+  unsigned int x = xyz[0];
+  unsigned int y = xyz[1];
+  unsigned int z = xyz[2];
+    
+  if(y==0) {
+
+    mode[0 + ii * LBQ] = 0.0f;
+    mode[1 + ii * LBQ] = nodes_LE_lower.vd[1*para.dim_x*para.dim_z + delta_index];
+    mode[2 + ii * LBQ] = 0.0f;
+    mode[3 + ii * LBQ] = 0.0f;
+    mode[4 + ii * LBQ] = nodes_LE_lower.vd[4*para.dim_x*para.dim_z + delta_index];
+    mode[5 + ii * LBQ] = nodes_LE_lower.vd[5*para.dim_x*para.dim_z + delta_index];
+    mode[6 + ii * LBQ] = nodes_LE_lower.vd[6*para.dim_x*para.dim_z + delta_index];
+    mode[7 + ii * LBQ] = nodes_LE_lower.vd[7*para.dim_x*para.dim_z + delta_index];
+    mode[8 + ii * LBQ] = nodes_LE_lower.vd[8*para.dim_x*para.dim_z + delta_index];
+    mode[9 + ii * LBQ] = nodes_LE_lower.vd[9*para.dim_x*para.dim_z + delta_index];
+    mode[10 + ii * LBQ] = 0.0f;
+    mode[11 + ii * LBQ] = 0.0f;
+    mode[12 + ii * LBQ] = 0.0f;
+    mode[13 + ii * LBQ] = 0.0f;
+    mode[14 + ii * LBQ] = 0.0f;
+    mode[15 + ii * LBQ] = 0.0f;
+    mode[16 + ii * LBQ] = 0.0f;
+    mode[17 + ii * LBQ] = 0.0f;
+    mode[18 + ii * LBQ] = 0.0f;
+
+    if(x == 0 && z == 0) {
+      nodes_LE_upper.vd[0] =  
+        1.0f/3.0f * (mode[0 + ii * LBQ] - mode[4 + ii * LBQ] + mode[16 + ii * LBQ]);
+
+      nodes_LE_upper.vd[1] =  
+        1.0f/18.0f * (
+                         mode[ 0 + ii * LBQ] + mode[ 1 + ii * LBQ]
+                       + mode[ 5 + ii * LBQ] + mode[ 6 + ii * LBQ]
+                       - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
+                       - 2.0f*(mode[10 + ii * LBQ] + mode[16 + ii * LBQ])
+                     );
+
+      nodes_LE_upper.vd[2] =  
+        1.0f/18.0f * (
+                         mode[ 0 + ii * LBQ] - mode[ 1 + ii * LBQ]
+                       + mode[ 5 + ii * LBQ] + mode[ 6 + ii * LBQ]
+                       - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
+                       + 2.0f*(mode[10 + ii * LBQ] - mode[16 + ii * LBQ])
+                     );
+
+      nodes_LE_upper.vd[3] =  
+        1.0f/18.0f * (
+                         mode[ 0 + ii * LBQ] + mode[ 2 + ii * LBQ]
+                       - mode[ 5 + ii * LBQ] + mode[ 6 + ii * LBQ]
+                       + mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
+                       - 2.0f*(mode[11 + ii * LBQ] + mode[16 + ii * LBQ])
+                     );
+
+      nodes_LE_upper.vd[4] =  
+        1.0f/18.0f * (
+                         mode[ 0 + ii * LBQ] - mode[ 2 + ii * LBQ]
+                       - mode[ 5 + ii * LBQ] + mode[ 6 + ii * LBQ]
+                       + mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
+                       + 2.0f*(mode[11 + ii * LBQ] - mode[16 + ii * LBQ])
+                     );
+
+      nodes_LE_upper.vd[5] =  
+        1.0f/18.0f * (
+                         mode[0 + ii * LBQ] + mode[3 + ii * LBQ]
+                       - 2.0f*(   mode[ 6 + ii * LBQ] + mode[12 + ii * LBQ]
+                                + mode[16 + ii * LBQ] - mode[18 + ii * LBQ])
+                     );
+
+      nodes_LE_upper.vd[6] =  
+        1.0f/18.0f * (
+                         mode[0 + ii * LBQ] - mode[3 + ii * LBQ]
+                       - 2.0f*(   mode[6 + ii * LBQ] - mode[12 + ii * LBQ]
+                                + mode[16 + ii * LBQ] - mode[18 + ii * LBQ])
+                     );
+
+      nodes_LE_upper.vd[7] =  
+        1.0f/36.0f * (
+                         mode[ 0 + ii * LBQ] + mode[ 1 + ii * LBQ]
+                       + mode[ 2 + ii * LBQ] + mode[ 4 + ii * LBQ]
+                       + 2.0f*mode[ 6 + ii * LBQ] + mode[ 7 + ii * LBQ]
+                       + mode[10 + ii * LBQ] + mode[11 + ii * LBQ]
+                       + mode[13 + ii * LBQ] + mode[14 + ii * LBQ]
+                       + mode[16 + ii * LBQ] + 2.0f*mode[18 + ii * LBQ]
+                     );
+
+      nodes_LE_upper.vd[8] =  
+        1.0f/36.0f * (
+                         mode[ 0 + ii * LBQ] - mode[ 1 + ii * LBQ]
+                       - mode[ 2 + ii * LBQ] + mode[ 4 + ii * LBQ]
+                       + 2.0f*mode[ 6 + ii * LBQ] + mode[ 7 + ii * LBQ]
+                       - mode[10 + ii * LBQ] - mode[11 + ii * LBQ]
+                       - mode[13 + ii * LBQ] - mode[14 + ii * LBQ]
+                       + mode[16 + ii * LBQ] + 2.0f*mode[18 + ii * LBQ]
+                     );
+
+      nodes_LE_upper.vd[9] =  
+        1.0f/36.0f * (
+                         mode[ 0 + ii * LBQ] + mode[ 1 + ii * LBQ]
+                       - mode[ 2 + ii * LBQ] + mode[ 4 + ii * LBQ]
+                       + 2.0f*mode[ 6 + ii * LBQ] - mode[ 7 + ii * LBQ]
+                       + mode[10 + ii * LBQ] - mode[11 + ii * LBQ]
+                       + mode[13 + ii * LBQ] - mode[14 + ii * LBQ]
+                       + mode[16 + ii * LBQ] + 2.0f*mode[18 + ii * LBQ]
+                     );
+
+      nodes_LE_upper.vd[10] =  
+        1.0f/36.0f * (
+                         mode[ 0 + ii * LBQ] - mode[ 1 + ii * LBQ]
+                       + mode[ 2 + ii * LBQ] + mode[ 4 + ii * LBQ]
+                       + 2.0f*mode[ 6 + ii * LBQ] - mode[ 7 + ii * LBQ]
+                       - mode[10 + ii * LBQ] + mode[11 + ii * LBQ]
+                       - mode[13 + ii * LBQ] + mode[14 + ii * LBQ]
+                       + mode[16 + ii * LBQ] + 2.0f*mode[18 + ii * LBQ]
+                     );
+
+      nodes_LE_upper.vd[11] =  
+        1.0f/36.0f * (
+                         mode[ 0 + ii * LBQ] + mode[ 1 + ii * LBQ]
+                       + mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
+                       + mode[ 5 + ii * LBQ] - mode[ 6 + ii * LBQ]
+                       + mode[ 8 + ii * LBQ] + mode[10 + ii * LBQ]
+                       + mode[12 + ii * LBQ] - mode[13 + ii * LBQ]
+                       + mode[15 + ii * LBQ] + mode[16 + ii * LBQ]
+                       + mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
+                     );
+
+      nodes_LE_upper.vd[12] =  
+        1.0f/36.0f * (
+                         mode[ 0 + ii * LBQ] - mode[ 1 + ii * LBQ]
+                       - mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
+                       + mode[ 5 + ii * LBQ] - mode[ 6 + ii * LBQ]
+                       + mode[ 8 + ii * LBQ] - mode[10 + ii * LBQ]
+                       - mode[12 + ii * LBQ] + mode[13 + ii * LBQ]
+                       - mode[15 + ii * LBQ] + mode[16 + ii * LBQ]
+                       + mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
+                     );
+
+      nodes_LE_upper.vd[13] =  
+        1.0f/36.0f * (
+                         mode[ 0 + ii * LBQ] + mode[ 1 + ii * LBQ]
+                       - mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
+                       + mode[ 5 + ii * LBQ] - mode[ 6 + ii * LBQ]
+                       - mode[ 8 + ii * LBQ] + mode[10 + ii * LBQ]
+                       - mode[12 + ii * LBQ] - mode[13 + ii * LBQ]
+                       - mode[15 + ii * LBQ] + mode[16 + ii * LBQ]
+                       + mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
+                     );
+
+      nodes_LE_upper.vd[14] =  
+        1.0f/36.0f * (
+                         mode[ 0 + ii * LBQ] - mode[ 1 + ii * LBQ]
+                       + mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
+                       + mode[ 5 + ii * LBQ] - mode[ 6 + ii * LBQ]
+                       - mode[ 8 + ii * LBQ] - mode[10 + ii * LBQ]
+                       + mode[12 + ii * LBQ] + mode[13 + ii * LBQ]
+                       + mode[15 + ii * LBQ] + mode[16 + ii * LBQ]
+                       + mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
+                     );
+
+      nodes_LE_upper.vd[15] =  
+        1.0f/36.0f * (
+                         mode[ 0 + ii * LBQ] + mode[ 2 + ii * LBQ]
+                       + mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
+                       - mode[ 5 + ii * LBQ] - mode[ 6 + ii * LBQ]
+                       + mode[ 9 + ii * LBQ] + mode[11 + ii * LBQ]
+                       + mode[12 + ii * LBQ] - mode[14 + ii * LBQ]
+                       - mode[15 + ii * LBQ] + mode[16 + ii * LBQ]
+                       - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
+                     );
+
+      nodes_LE_upper.vd[16] =  
+        1.0f/36.0f * (
+                         mode[ 0 + ii * LBQ] - mode[ 2 + ii * LBQ]
+                       - mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
+                       - mode[ 5 + ii * LBQ] - mode[ 6 + ii * LBQ]
+                       + mode[ 9 + ii * LBQ] - mode[11 + ii * LBQ]
+                       - mode[12 + ii * LBQ] + mode[14 + ii * LBQ]
+                       + mode[15 + ii * LBQ] + mode[16 + ii * LBQ]
+                       - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
+                     );
+
+      nodes_LE_upper.vd[17] =  
+        1.0f/36.0f * (
+                         mode[ 0 + ii * LBQ] + mode[ 2 + ii * LBQ]
+                       - mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
+                       - mode[ 5 + ii * LBQ] - mode[ 6 + ii * LBQ]
+                       - mode[ 9 + ii * LBQ] + mode[11 + ii * LBQ]
+                       - mode[12 + ii * LBQ] - mode[14 + ii * LBQ]
+                       + mode[15 + ii * LBQ] + mode[16 + ii * LBQ]
+                       - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
+                     );
+
+      nodes_LE_upper.vd[18] =  
+        1.0f/36.0f * (
+                         mode[ 0 + ii * LBQ] - mode[ 2 + ii * LBQ]
+                       + mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
+                       - mode[ 5 + ii * LBQ] - mode[ 6 + ii * LBQ]
+                       - mode[ 9 + ii * LBQ] - mode[11 + ii * LBQ]
+                       + mode[12 + ii * LBQ] + mode[14 + ii * LBQ]
+                       - mode[15 + ii * LBQ] + mode[16 + ii * LBQ]
+                       - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
+                     );
+
+      float c[19][3] = { { 0.0f, 0.0f, 0.0f},
+                         { 1.0f, 0.0f, 0.0f},
+                         {-1.0f, 0.0f, 0.0f},
+                         { 0.0f, 1.0f, 0.0f},
+                         { 0.0f,-1.0f, 0.0f},
+                         { 0.0f, 0.0f, 1.0f},
+                         { 0.0f, 0.0f,-1.0f},
+                         { 1.0f, 1.0f, 0.0f},
+                         {-1.0f,-1.0f, 0.0f},
+                         { 1.0f,-1.0f, 0.0f},
+                         {-1.0f, 1.0f, 0.0f},
+                         { 1.0f, 0.0f, 1.0f},
+                         {-1.0f, 0.0f,-1.0f},
+                         { 1.0f, 0.0f,-1.0f},
+                         {-1.0f, 0.0f, 1.0f},
+                         { 0.0f, 1.0f, 1.0f},
+                         { 0.0f,-1.0f,-1.0f},
+                         { 0.0f, 1.0f,-1.0f},
+                         { 0.0f,-1.0f, 1.0f}
+                       };
+
+      for(int i = 0; i < 19; i++) {
+        //printf("%e %e %e  ", c[i][0]*nodes_LE_upper.vd[i], c[i][1]*nodes_LE_upper.vd[i], c[i][2]*nodes_LE_upper.vd[i]);
+        printf("%e %e %e  ", c[i][0], c[i][1], c[i][2]);
+      }
+
+      printf("\n");
+  }
+ } 
+}
+
 __device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_LE_upper, LB_nodes_gpu nodes_LE_lower, float *mode, int index){
       
   int xyz[3];
@@ -1038,11 +1281,7 @@ __device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_L
   unsigned int y = xyz[1];
   unsigned int z = xyz[2];
     
-  //printf("LB_COMPONENTS: %i \n", LB_COMPONENTS);
-
-  if(y==0){
-
-    //printf("vd for lower nodes: %f, %f, %f, %f, %f, %f, %f \n", nodes_LE_lower.vd[2*para.dim_x*para.dim_z + delta_index], nodes_LE_lower.vd[4*para.dim_x*para.dim_z + delta_index], nodes_LE_lower.vd[5*para.dim_x*para.dim_z + delta_index], nodes_LE_lower.vd[6*para.dim_x*para.dim_z + delta_index], nodes_LE_lower.vd[7*para.dim_x*para.dim_z + delta_index], nodes_LE_lower.vd[8*para.dim_x*para.dim_z + delta_index], nodes_LE_lower.vd[9*para.dim_x*para.dim_z + delta_index]);
+  if(y==0) {
 
     mode[1 + ii * LBQ] += nodes_LE_lower.vd[1*para.dim_x*para.dim_z + delta_index];
     mode[4 + ii * LBQ] += nodes_LE_lower.vd[4*para.dim_x*para.dim_z + delta_index];
@@ -1051,16 +1290,6 @@ __device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_L
     mode[7 + ii * LBQ] += nodes_LE_lower.vd[7*para.dim_x*para.dim_z + delta_index];
     mode[8 + ii * LBQ] += nodes_LE_lower.vd[8*para.dim_x*para.dim_z + delta_index];
     mode[9 + ii * LBQ] += nodes_LE_lower.vd[9*para.dim_x*para.dim_z + delta_index];
-
-    //mode[2 + ii * LBQ] += 0.01;
-    //mode[4 + ii * LBQ] += 0.01;
-    //mode[5 + ii * LBQ] += 0.01;
-    //mode[6 + ii * LBQ] += 0.01;
-    //mode[7 + ii * LBQ] += 0.01;
-    //mode[8 + ii * LBQ] += 0.01;
-    //mode[9 + ii * LBQ] += 0.01;
-
-    //printf("modes for lower LE nodes: %f, %f, %f, %f, %f, %f, %f \n", mode[2 + ii * LBQ], mode[4 + ii * LBQ], mode[5 + ii * LBQ], mode[6 + ii * LBQ], mode[7 + ii * LBQ], mode[8 + ii * LBQ], mode[9 + ii * LBQ]);
 
     n_b.vd[(4 + ii*LBQ ) * para.number_of_nodes + x
                                                 + para.dim_x*((para.dim_y+y-1)%para.dim_y)
@@ -3003,7 +3232,7 @@ __global__ void reset_boundaries(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
 __device__ void calculate_LE_mode_delta(float *mode, int index, LB_rho_v_gpu *d_v, float lees_edwards_velocity, LB_nodes_gpu nodes_LE_upper, LB_nodes_gpu nodes_LE_lower){
   
   if(index==0){
-    printf("lees_edwards_velocity: %f \n", lees_edwards_velocity);
+    //printf("lees_edwards_velocity: %f \n", lees_edwards_velocity);
   }
 
   float u[3];
@@ -3157,6 +3386,7 @@ __device__ void apply_LE_shift(LB_nodes_gpu n_b, int index, double lees_edwards_
 */
 
 __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_nodes_gpu nodes_LE_upper, LB_nodes_gpu nodes_LE_lower, LB_rho_v_gpu *d_v, LB_node_force_gpu node_f, EK_parameters* ek_parameters_gpu, float lees_edwards_offset = 0.0f, float lees_edwards_velocity = 0.0f) {
+  //printf("ttt1\n");
   /**every node is connected to a thread via the index*/
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   /**the 19 moments (modes) are only temporary register values */
@@ -3165,6 +3395,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_nodes_gpu nodes
 
   if( index < para.number_of_nodes )
   {
+    //printf("ttt1.1\n");
     /** storing the seed into a register value*/
     rng.seed = n_a.seed[index];
     /**calc_m_from_n*/
@@ -3190,9 +3421,12 @@ apply_forces(index, mode, node_f,d_v);
     normalize_modes(mode);
     /**calc of velocity densities and streaming with pbc*/
     calc_n_from_modes_push(n_b, mode, index);
+    //printf("ttt1.2\n");
 #ifdef LEES_EDWARDS
     calc_n_from_modes_push_LE(n_b, nodes_LE_upper, nodes_LE_lower, mode, index);
     //apply_LE_shift(n_b, index, lees_edwards_offset, lees_edwards_velocity);
+    //printf("ttt1.3\n");
+    print_n_from_modes_LE(n_b, nodes_LE_upper, nodes_LE_lower, mode, index);
 #endif
     /** rewriting the seed back to the global memory*/
     n_b.seed[index] = rng.seed;
@@ -4027,18 +4261,21 @@ void lb_integrate_GPU() {
            of the integrate kernel, or pass also device_rho_v_pi and make sure that either 
            it or device_rho_v are NULL depending on extended_values_flag */ 
 
-  printf("lees_edwards_rate: %f \n", lees_edwards_rate);
-  printf("lees_edwards_offset: %f \n", lees_edwards_offset);
-  printf("dim_y: %u \n", lbpar_gpu.dim_y);
+  //printf("lees_edwards_rate: %f \n", lees_edwards_rate);
+  //printf("lees_edwards_offset: %f \n", lees_edwards_offset);
+  //printf("dim_y: %u \n", lbpar_gpu.dim_y);
+  //printf("ttt0\n");
 
   if (intflag == 1)
   {
+    //printf("ttt0.1 (%d, %d, %d) %d\n", blocks_per_grid_x, blocks_per_grid_y, 1, threads_per_block);
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_a, nodes_b, nodes_LE_upper, nodes_LE_lower, device_rho_v, node_f, lb_ek_parameters_gpu, lees_edwards_rate, lees_edwards_rate*lbpar_gpu.tau));
     current_nodes = &nodes_b;
     intflag = 0;
   }
   else
   {
+    //printf("ttt0.2 (%d, %d, %d) %d\n", blocks_per_grid_x, blocks_per_grid_y, 1, threads_per_block);
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_b, nodes_a, nodes_LE_upper, nodes_LE_lower, device_rho_v, node_f, lb_ek_parameters_gpu, lees_edwards_rate, lees_edwards_rate*lbpar_gpu.tau));
     current_nodes = &nodes_a;
     intflag = 1;
