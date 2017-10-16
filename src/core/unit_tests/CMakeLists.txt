@@ -21,7 +21,7 @@
 set_directory_properties(PROPERTIES EXCLUDE_FROM_ALL ON)
   
 # Target for the unit tests
-add_custom_target(check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND})
+add_custom_target(check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure)
 
 # Run unit tests on check
 add_dependencies(check check_unit_tests)
@@ -44,23 +44,21 @@ function(UNIT_TEST)
 endfunction(UNIT_TEST)
 
 # Add tests here
-
 unit_test(NAME Vector_test SRC Vector_test.cpp)
 unit_test(NAME RuntimeError_test SRC RuntimeError_test.cpp)
 unit_test(NAME RunningAverage_test SRC RunningAverage_test.cpp)
-
 unit_test(NAME RuntimeErrorCollector_test SRC RuntimeErrorCollector_test.cpp ../RuntimeErrorCollector.cpp ../RuntimeError.cpp)
 
 unit_test(NAME ScriptInterface_test SRC ScriptInterface_test.cpp)
-
 unit_test(NAME Wall_test SRC Wall_test.cpp ../shapes/Wall.cpp)
 unit_test(NAME Factory_test SRC Factory_test.cpp)
 unit_test(NAME NumeratedContainer_test SRC NumeratedContainer_test.cpp)
 
 unit_test(NAME MpiCallbacks_test SRC MpiCallbacks_test.cpp ../MpiCallbacks.cpp NUM_PROC 2)
 
-unit_test(NAME ParallelScriptInterface_test SRC ParallelScriptInterface_test.cpp NUM_PROC 2)
-target_link_libraries(ParallelScriptInterface_test EspressoScriptInterface)
+unit_test(NAME ParallelScriptInterface_test SRC ParallelScriptInterface_test.cpp
+  ../MpiCallbacks.cpp ../../script_interface/ScriptInterfaceBase.cpp ../../script_interface/ParallelScriptInterface.cpp
+  ../../script_interface/ParallelScriptInterfaceSlave.cpp ../../script_interface/Variant.cpp NUM_PROC 2)
 
 unit_test(NAME gather_buffer_test SRC gather_buffer_test.cpp NUM_PROC 4)
 unit_test(NAME scatter_buffer_test SRC scatter_buffer_test.cpp NUM_PROC 4)
@@ -75,4 +73,8 @@ unit_test(NAME verlet_ia_test SRC verlet_ia_test.cpp)
 unit_test(NAME Batch_test SRC Batch_test.cpp)
 unit_test(NAME ParticleCache_test SRC ParticleCache_test.cpp ../MpiCallbacks.cpp NUM_PROC 2)
 unit_test(NAME SkipIterator_test SRC SkipIterator_test.cpp)
-
+unit_test(NAME List_test SRC List_test.cpp)
+unit_test(NAME Particle_test SRC Particle_test.cpp)
+unit_test(NAME for_each_pair_test SRC for_each_pair_test.cpp)
+unit_test(NAME all_compare_test SRC all_compare_test.cpp NUM_PROC 3)
+unit_test(NAME None_test SRC None_test.cpp)

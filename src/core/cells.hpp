@@ -57,9 +57,6 @@
    node. \ref ghost_cells contains pointers to all cells containing
    the ghost particles of that node. The size of these lists has to be
    changed with \ref realloc_cellplist
-   <li> An example using the cell pointer lists to access particle data
-   can be found in the function \ref
-   print_local_particle_positions. DO NOT INVENT YOUR OWN WAY!!!
    </ul>
 */
 
@@ -278,12 +275,6 @@ void cells_update_ghosts();
 int cells_get_n_particles();
 
 std::vector<std::pair<int, int>> get_pairs(double distance);
-
-/** Debug function to print particle positions. */
-void print_local_particle_positions();
-
-/** Debug function to print ghost positions. */
-void print_ghost_positions();
 
 /** spread the particle resorting criterion across the nodes. */
 void announce_resort_particles();

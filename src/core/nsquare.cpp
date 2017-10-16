@@ -65,7 +65,7 @@ static void nsq_prepare_comm(GhostCommunicator *comm, int data_parts) {
 
 void nsq_topology_init(CellPList *old) {
   Particle *part;
-  int n, c, p, np, ntodo, diff;
+  int n, p, np, ntodo, diff;
 
   CELL_TRACE(fprintf(stderr, "%d: nsq_topology_init, %d\n", this_node, old->n));
 
@@ -83,6 +83,7 @@ void nsq_topology_init(CellPList *old) {
   cells[this_node].m_neighbors.clear();
 
   realloc_cellplist(&ghost_cells, ghost_cells.n = n_nodes - 1);
+  auto c = 0;
   for (n = 0; n < n_nodes; n++)
     if (n != this_node)
       ghost_cells.cell[c++] = &cells[n];
@@ -141,13 +142,18 @@ void nsq_topology_init(CellPList *old) {
     part = old->cell[c]->part;
     np = old->cell[c]->n;
     for (p = 0; p < np; p++)
-      append_unindexed_particle(local, &part[p]);
+      append_unindexed_particle(local, std::move(part[p]));
   }
   update_local_particles(local);
 }
 
 void nsq_balance_particles(int global_flag) {
   int i, n, surplus, s_node, tmp, lack, l_node, transfer;
+
+  /* Refold positions in any case, this is always safe. */
+  for (auto &p : local_cells.particles()) {
+    fold_position(p.r.p, p.l.i);
+  }
 
   /* we don't have the concept of neighbors, and therefore don't need that.
      However, if global particle changes happen, we might want to rebalance. */
@@ -213,7 +219,7 @@ void nsq_balance_particles(int global_flag) {
       init_particlelist(&send_buf);
       realloc_particlelist(&send_buf, send_buf.n = transfer);
       for (i = 0; i < transfer; i++) {
-        memcpy(&send_buf.part[i], &local->part[--local->n], sizeof(Particle));
+        send_buf.part[i] = std::move(local->part[--local->n]);
       }
       realloc_particlelist(local, local->n);
       update_local_particles(local);
@@ -222,8 +228,17 @@ void nsq_balance_particles(int global_flag) {
 #ifdef ADDITIONAL_CHECKS
       check_particle_consistency();
 #endif
-    } else if (l_node == this_node) {
-      recv_particles(local, s_node);
+    }
+    else if (l_node == this_node) {
+      ParticleList recv_buf{};
+
+      recv_particles(&recv_buf, s_node);
+      for (int i = 0; i < recv_buf.n; i++) {
+        append_indexed_particle(local, std::move(recv_buf.part[i]));
+      }
+
+      realloc_particlelist(&recv_buf, 0);
+
 #ifdef ADDITIONAL_CHECKS
       check_particle_consistency();
 #endif

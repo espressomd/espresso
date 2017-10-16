@@ -46,7 +46,7 @@
 #include "elc.hpp"
 #include "endangledist.hpp"
 #include "fene.hpp"
-//#include "forces.hpp"
+#include "forces.hpp"
 #include "gaussian.hpp"
 #include "gb.hpp"
 #include "harmonic.hpp"
@@ -871,16 +871,6 @@ inline void add_bonded_force(Particle *p1) {
       }
     }
   }
-}
-
-/** add force to another. This is used when collecting ghost forces. */
-inline void add_force(ParticleForce *F_to, ParticleForce *F_add) {
-  for (int i = 0; i < 3; i++)
-    F_to->f[i] += F_add->f[i];
-#ifdef ROTATION
-  for (int i = 0; i < 3; i++)
-    F_to->torque[i] += F_add->torque[i];
-#endif
 }
 
 inline void check_particle_force(Particle *part) {

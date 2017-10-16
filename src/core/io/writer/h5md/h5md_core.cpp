@@ -20,7 +20,6 @@
 */
 
 #include "h5md_core.hpp"
-#include "partCfg.hpp"
 
 namespace Writer {
 namespace H5md {
@@ -323,13 +322,18 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
     mass[0][particle_index][0] = current_particle.p.mass;
   /* store folded particle positions. */
   if (write_pos) {
-    pos[0][particle_index][0] = current_particle.r.p[0];
-    pos[0][particle_index][1] = current_particle.r.p[1];
-    pos[0][particle_index][2] = current_particle.r.p[2];
-    image[0][particle_index][0] = current_particle.l.i[0];
-    image[0][particle_index][1] = current_particle.l.i[1];
-    image[0][particle_index][2] = current_particle.l.i[2];
+    Vector3d p{{current_particle.r.p}};
+    Vector<3, int> i{{current_particle.l.i}};
+    fold_position(p, i);
+
+    pos[0][particle_index][0] = p[0];
+    pos[0][particle_index][1] = p[1];
+    pos[0][particle_index][2] = p[2];
+    image[0][particle_index][0] = i[0];
+    image[0][particle_index][1] = i[1];
+    image[0][particle_index][2] = i[2];
   }
+
   if (write_vel) {
     vel[0][particle_index][0] = current_particle.m.v[0] / time_step;
     vel[0][particle_index][1] = current_particle.m.v[1] / time_step;
@@ -359,7 +363,7 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
   }
 }
 
-void File::Write(int write_dat) {
+  void File::Write(int write_dat, PartCfg & partCfg) {
 #ifdef H5MD_DEBUG
   std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
@@ -405,21 +409,14 @@ void File::Write(int write_dat) {
       }
     }
   } else {
-    /* Get the number of particles on all other nodes. */
-
     /* loop over all local cells. */
-    Cell *local_cell;
     int particle_index = 0;
-    for (int cell_id = 0; cell_id < local_cells.n; ++cell_id) {
-      local_cell = local_cells.cell[cell_id];
-      for (int local_part_id = 0; local_part_id < local_cell->n;
-           ++local_part_id) {
-        auto &current_particle = local_cell->part[local_part_id];
-        fill_arrays_for_h5md_write_with_particle_property(
-            particle_index, id, typ, mass, pos, image, vel, f, charge,
-            current_particle, write_dat, bond);
-        particle_index++;
-      }
+
+    for (auto &current_particle : local_cells.particles()) {
+      fill_arrays_for_h5md_write_with_particle_property(
+          particle_index, id, typ, mass, pos, image, vel, f, charge,
+          current_particle, write_dat, bond);
+      particle_index++;
     }
   }
 

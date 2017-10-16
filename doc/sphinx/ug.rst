@@ -6,7 +6,6 @@ Userguide
     :maxdepth: 2
 
     introduction.rst
-    firststeps.rst
     installation.rst
     part.rst
     inter.rst
@@ -15,7 +14,6 @@ Userguide
     analysis.rst
     analysis-core.rst
     io.rst
-    aux.rst
     lb.rst
     electrokinetics.rst
     oif.rst

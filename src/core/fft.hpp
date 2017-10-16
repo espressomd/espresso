@@ -79,8 +79,7 @@ void fft_perform_forw(double *data);
     \warning The content of \a data is overwritten.
     \param data Mesh.
 */
-void fft_perform_back(double *data);
-
+void fft_perform_back(double *data, bool check_complex);
 
 /*@}*/
 #endif

@@ -1,26 +1,26 @@
 /*
   Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
-  
+
   This file is part of ESPResSo.
-  
+
   ESPResSo is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   ESPResSo is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 //
 
-/** \file iccp3m.hpp 
+/** \file iccp3m.hpp
 
     ICCP3M is a method that allows to take into account the influence
     of arbitrarliy shaped dielectric interfaces.  The dielectric
@@ -41,7 +41,7 @@
     to reserve the first n particle ids to wall charges, but as the
     other parts of espresso do not suffer from a limitation like this,
     it can be tolerated.
-    
+
     For the determination of the induced charges only the forces
     acting on the induced charges has to be determined. As P3M an the
     other coulomb solvers calculate all mutual forces, the force
@@ -50,38 +50,55 @@
     particle data organisation schemes this is performed differently.
     */
 
-#ifndef _ICCP3M_H 
+#ifndef _ICCP3M_H
 #define _ICCP3M_H
 
 #include "config.hpp"
 
 #if defined(ELECTROSTATICS)
 
+#include "cells.hpp"
+#include "domain_decomposition.hpp"
+#include "ghosts.hpp"
+#include "global.hpp"
+#include "integrate.hpp"
+#include "interaction_data.hpp"
+#include "layered.hpp"
+#include "mmm1d.hpp"
+#include "mmm2d.hpp"
+#include "nsquare.hpp"
+#include "p3m.hpp"
+#include "particle_data.hpp"
+#include "topology.hpp"
+#include "utils.hpp"
+#include <ctime>
+
 /* iccp3m data structures*/
 typedef struct {
   int initialized;
-  int n_ic;                             /* Last induced id (can not be smaller then 2) */
-  int num_iteration;                    /* Number of max iterations                    */
-  double eout;                          /* Dielectric constant of the bulk             */
-  double *areas;                        /* Array of area of the grid elements          */
-  double *ein;                          /* Array of dielectric constants at each surface element */
-  double *sigma;                        /* Surface Charge density */
-  double convergence;                   /* Convergence criterion                       */
+  int n_ic;          /* Last induced id (can not be smaller then 2) */
+  int num_iteration; /* Number of max iterations                    */
+  double eout;       /* Dielectric constant of the bulk             */
+  double *areas;     /* Array of area of the grid elements          */
+  double *ein;       /* Array of dielectric constants at each surface element */
+  double *sigma;     /* Surface Charge density */
+  double convergence; /* Convergence criterion                       */
   double *nvectorx;
   double *nvectory;
-  double *nvectorz;                     /* Surface normal vectors                      */
+  double *nvectorz; /* Surface normal vectors                      */
   double extx;
   double exty;
-  double extz;                          /* External field                              */
-  double relax;                         /* relaxation parameter for iterative                       */
-  int citeration;                      /* current number of iterations*/
-  int set_flag;                         /* flag that indicates if ICCP3M has been initialized properly */    
+  double extz;    /* External field                              */
+  double relax;   /* relaxation parameter for iterative                       */
+  int citeration; /* current number of iterations*/
+  int set_flag;   /* flag that indicates if ICCP3M has been initialized properly
+                     */
   double *fx;
   double *fy;
   double *fz;
   int first_id;
 } iccp3m_struct;
-extern iccp3m_struct iccp3m_cfg;        /* global variable with ICCP3M configuration */
+extern iccp3m_struct iccp3m_cfg; /* global variable with ICCP3M configuration */
 extern int iccp3m_initialized;
 
 int bcast_iccp3m_cfg(void);
@@ -90,7 +107,7 @@ int bcast_iccp3m_cfg(void);
  */
 int iccp3m_iteration();
 
-/** The initialisation of ICCP3M with zero values for all variables 
+/** The initialisation of ICCP3M with zero values for all variables
  */
 void iccp3m_init(void);
 
@@ -102,7 +119,7 @@ void iccp3m_alloc_lists();
  */
 void iccp3m_set_initialized();
 
-/** check sanity of parameters for use with ICCP3M 
+/** check sanity of parameters for use with ICCP3M
  */
 int iccp3m_sanity_check();
 

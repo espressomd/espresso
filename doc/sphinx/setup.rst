@@ -1,166 +1,65 @@
 Setting up the system
 =====================
 
-``setmd``: Setting global variables in TCL
-------------------------------------------
-
-setmd setmd +
-
-Variant returns the value of the global variable , variant can be used
-to set the variable to . The ’+’ in variant means that for some
-variables more than one can be given (example: setmd boxl 5 5 5). The
-following global variables can be set:
-
-(double[3]) Simulation box lengths of the cuboid box used by Espresso.
-Note that if you change the box length during the simulation, the folded
-particle coordinates will remain the same, i.e., the particle stay in
-the same image box, but at the same relative position in their image
-box. If you want to scale the positions, use the command.
-
-(int[3], *read-only*) Dimension of the inner cell grid.
-
-(double[3], *read-only*) Box-length of a cell.
-
-(double, *read-only*) Friction constant for the DPD thermostat.
-
-(double, *read-only*) Cutoff for DPD thermostat.
-
-(int, *read-only*) Switches fixed particle DPD force calculation ON (0)
-or OFF (1 default).
-
-(double double[3], *read-only*) Friction constant for the Langevin
-thermostat. Feature requires 3 values of the gamma corresponding to
-diagonal elements of the tensor. If one value is specified then other
-diagonal elements are defined equal to it automatically.
-
-(double double[3], *read-only*) Rotational friction constant for the
-Langevin thermostat. Feature requires 3 values of the gamma\_rot
-corresponding to diagonal elements of the tensor. If one is not
-specified then the translational gamma value is used.
-
-(int, *read-only*) Internal switch which integrator to use.
-
-(int, *read-only*) Number of fluid components.
-
-(int[3], *read-only*) Local simulation box length of the nodes.
-
-(double, *read-only*) Maximal cutoff of real space interactions.
-
-(double, *read-only*) Maximal cutoff of nonbonded real space
-interactions.
-
-(double, *read-only*) Maximal cutoff of bonded real space interactions.
-
-(int) Maximal number of cells for the link cell algorithm. Reasonable
-values are between 125 and 1000, or for some problems ( / ).
-
-(int, *read-only*) Maximal identity of a particle. *This is in general
-not related to the number of particles!*
-
-(double, *read-only*) Maximal range of real space interactions: + .
-
-(double, *read-only*) Maximal skin to be used for the link cell/verlet
-algorithm. This is the minimum of - .
-
-(double) Minimal total cutoff for real space. Effectively, this plus the
-skin is the minimally possible cell size. Espresso typically determines
-this value automatically, but some algorithms, virtual sites, require
-you to specify it manually.
-
-(int) Minimal number of cells for the link cell algorithm. Reasonable
-values range in :math:`10^{-6} N^2` to :math:`10^{-7} N^2`. In general 
-just make sure that the Verlet lists are not incredibly large. By default the
-minimum is 0, but for the automatic P3M tuning it may be wise to set larger
-values for high particle numbers.
-
-(int, *read-only*) Number of layers in cell structure LAYERED (see
-section ).
-
-(int, *read-only*) Number of nodes.
-
-(int, *read-only*) Total number of particles.
-
-(int, *read-only*) Number of particle types that were used so far in the
-command (see chaptertcl:inter).
-
-(int[3]) 3D node grid for real space domain decomposition (optional, if
-unset an optimal set is chosen automatically).
-
-(double, *read-only*)
-
-(double, *read-only*)
-
-(double, *read-only*) Pressure for NPT simulations.
-
-(double) Pressure calculated during an NPT\_isotropic integration.
-
-(double, *read-only*) Mass off the box when using NPT\_isotropic
-integrator.
-
-(bool[3]) Specifies periodicity for the three directions. If the feature
-PARTIAL\_PERIODIC is set, Espresso can be instructed to treat some
-dimensions as non-periodic. Per default espresso assumes periodicity in
-all directions which equals setting this variable to (1,1,1). A
-dimension is specified as non-periodic via setting the periodicity
-variable for this dimension to 0. E.g. Periodicity only in z-direction
-is obtained by (0,0,1). Caveat: Be aware of the fact that making a
-dimension non-periodic does not hinder particles from leaving the box in
-this direction. In this case for keeping particles in the simulation box
-a constraint has to be set.
-
-(double) Skin for the Verlet list.
-
-(double, *read-only*) Temperature of the simulation.
-
-(double, *read-only*) Internal variable which thermostat to use.
-
-(double) The simulation time.
-
-(double) Time step for MD integration.
-
-(int) Number of samples to (time-)average over.
-
-(bool) Indicates whether the Verlet list will be rebuild. The program
-decides this normally automatically based on your actions on the data.
-
-(double) Average number of integration steps the verlet list has been
-re-used.
-
-(int) if non-zero (default), some warnings are printed out. Set this to
-zero if you get annoyed by them.
+.. _Setting global variables in Python:
 
 Setting global variables in Python
 ----------------------------------
 
 The global variables in Python are controlled via the
-:class:`espressomd._system.System` class.
-In analogy to the TCL interface global system variables can be read and
-set in Python simply by accessing the attribute of the corresponding
-Python object. Those variables that are already available in the Python
-interface are listed in the following.
+:class:`espressomd.system.System` class.
+Global system variables can be read and set in Python simply by accessing the
+attribute of the corresponding Python object. Those variables that are already
+available in the Python interface are listed in the following.
 
-Variables of the system class
+* :py:attr:`~espressomd.system.System.box_l`
 
-    * :py:attr:`~espressomd._system.System.box_l`
-    * :py:attr:`~espressomd._system.System.periodicity`
-    * :py:attr:`~espressomd._system.System.time_step`
-    * :py:attr:`~espressomd._system.System.time`
-    * :py:attr:`~espressomd._system.System.max_cut_bonded`
-    * :py:attr:`~espressomd._system.System.max_cut_nonbonded`
-    * :py:attr:`~espressomd._system.System.min_global_cut`
+    (float[3]) Simulation box lengths of the cuboid box used by |es|.
+    Note that if you change the box length during the simulation, the folded
+    particle coordinates will remain the same, i.e., the particle stay in
+    the same image box, but at the same relative position in their image
+    box. If you want to scale the positions, use the command
+    :py:func:`~espressomd.system.System.change_volume_and_rescale_particles`
 
-The properties of the cell system can be accessed by
-:class:`espressomd._system.System.cell_system` Variables of the cell system
-module
+* :py:attr:`~espressomd.system.System.periodicity`
 
-    * :py:attr:`~espressomd.cellsystem.CellSystem.max_num_cells`
-    * :py:attr:`~espressomd.cellsystem.CellSystem.min_num_cells`
-    * :py:attr:`~espressomd.cellsystem.CellSystem.node_grid`
-    * :py:attr:`~espressomd.cellsystem.CellSystem.skin`
+    (int[3]) Specifies periodicity for the three directions. If the feature
+    PARTIAL\_PERIODIC is set, |es| can be instructed to treat some
+    dimensions as non-periodic. Per default espresso assumes periodicity in
+    all directions which equals setting this variable to [1,1,1]. A
+    dimension is specified as non-periodic via setting the periodicity
+    variable for this dimension to 0. E.g. Periodicity only in z-direction
+    is obtained by [0,0,1]. Caveat: Be aware of the fact that making a
+    dimension non-periodic does not hinder particles from leaving the box in
+    this direction. In this case for keeping particles in the simulation box
+    a constraint has to be set.
 
-Special attention has to be paid to the
-:py:attr:`~espressomd.cellsystem.CellSystem.skin` property. This value has to be
-set, otherwise the simulation will not start.
+* :py:attr:`~espressomd.system.System.time_step`
+
+    (float) Time step for MD integration.
+
+* :py:attr:`~espressomd.system.System.time`
+
+    (float) The simulation time.
+
+* :py:attr:`~espressomd.system.System.min_global_cut`
+
+    (float) Minimal total cutoff for real space. Effectively, this plus the
+    :py:attr:`~espressomd.cellsystem.CellSystem.skin` is the minimally possible cell size. Espresso typically determines
+    this value automatically, but some algorithms, virtual sites, require
+    you to specify it manually.
+
+* :py:attr:`~espressomd.system.System.max_cut_bonded`
+
+    *read-only* Maximal cutoff of bonded real space interactions.
+
+* :py:attr:`~espressomd.system.System.max_cut_nonbonded`
+
+    *read-only* Maximal cutoff of bonded real space interactions.
+
+
+Accessing module states
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Some variables like or are no longer directly available as attributes.
 In these cases they can be easily derived from the corresponding Python
@@ -176,7 +75,7 @@ or by calling the corresponding ``get_state`` methods like::
     
     gamma_rot = espressomd.System().thermostat.get_state()[0][’gamma_rotation’]
 
-.. _thermostat:
+.. _\`\`thermostat\`\`\: Setting up the thermostat:
 
 ``thermostat``: Setting up the thermostat
 -----------------------------------------
@@ -214,6 +113,8 @@ above zero and set it to :math:`-2\sigma` or :math:`2\sigma`
 respectively. In all three cases the distribution is made such that the
 second moment of the distribution is the same and thus results in the
 same temperature.
+
+.. _Langevin thermostat:
 
 Langevin thermostat
 ~~~~~~~~~~~~~~~~~~~
@@ -299,7 +200,7 @@ Dissipative Particle Dynamics (DPD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. todo::
-    this is not implemented yet
+    this is not yet implemented in the python interface.
 
 The DPD thermostat can be invoked by the function:
 :py:attr:`~espressomd.thermostat.Thermostat.set_dpd`
@@ -313,7 +214,8 @@ Thermostat DPD
 ^^^^^^^^^^^^^^
 
 .. todo::
-    this is not implemented yet
+    this is not yet implemented in the python interface.
+
 
 thermostat dpd
 
@@ -401,7 +303,7 @@ Transverse DPD thermostat
 '''''''''''''''''''''''''
 
 .. todo::
-    This is not yet implemted for the pyton interface
+    This is not yet implemted for the python interface
 
 This is an extension of the above standard DPD thermostat
 :cite:`junghans2008`, which dampens the degrees of freedom
@@ -423,7 +325,7 @@ momentum.
 Interaction DPD
 ^^^^^^^^^^^^^^^
 .. todo::
-    This is not yet implemted for the pyton interface
+    This is not yet implemted for the python interface
 
 thermostat inter\_dpd
 
@@ -447,7 +349,7 @@ By default the fixed particles are ignored
 Other DPD extensions
 ^^^^^^^^^^^^^^^^^^^^
 .. todo::
-    This is not yet implemted for the pyton interface
+    This is not yet implemted for the python interface
 
 
 The features ``DPD_MADD_RED`` or ``DPD_MADD_IN`` make the friction constant mass dependent:
@@ -465,33 +367,36 @@ The prefactors are such that equal masses result in a factor :math:`1`.
 Isotropic NPT thermostat
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-In order to use the isotropic NPT thermostat the following commond has to be invoked:
-:py:attr:`~espressomd.thermostat.Thermostat.set_npt`.
-In order to use this feature ``NPT`` has to be defined in the ``myconfig.hpp``
+In order to use this feature, ``NPT`` has to be defined in the ``myconfig.hpp``.
+Activate the NPT thermostat with the command :py:func:`~espressomd.thermostat.Thermostat.set_npt`
+and set the following parameters:
 
-This theormstat is based on the Anderson thermostat (see
+    * kT:     (float) Thermal energy of the heat bath
+    * gamma0: (float) Friction coefficient of the bath
+    * gammav: (float) Artificial friction coefficient for the volume fluctuations.
+
+Also, setup the integrator for the NPT ensemble with :py:func:`~espressomd.system.integrator.set_isotropic_npt` 
+and the parameters:
+
+    * ext_pressure:  (float) The external pressure as float variable.
+    * piston:        (float) The mass of the applied piston as float variable.
+
+This thermostat is based on the Anderson thermostat (see
 :cite:`andersen80a,mann05d`) and will thermalize the box
-geometry. It will only do isotropic changes of the box.
+geometry. It will only do isotropic changes of the box. 
+See this code snippet for the two commands::
+
+    import espressomd
+
+    system=espressomd.System()
+    system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0)
+    system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
 
 Be aware that this feature is neither properly examined for all systems
 nor is it maintained regularly. If you use it and notice strange
 behaviour, please contribute to solving the problem.
 
-CPU thermostat
-~~~~~~~~~~~~~~
-
-thermostat cpu
-
-The CPU thermostat consists of a number crunching and a time wasting
-term coupled via the central processing unit’s thermal diode. For a more
-detailed explanation, refer to German Patent No. DE 10 2015 04F00L.
-
-Using the CPU thermostat, it is posible to keep your central processing
-unit operating at a constant temperature.
-
-Be aware that this thermostat requires to be given in Kelvin.
-
-.. _nemd:
+.. _\`\`nemd\`\`\: Setting up non-equilibirum MD:
 
 ``nemd``: Setting up non-equilibrium MD
 ---------------------------------------
@@ -558,6 +463,46 @@ to different needs of different algorithms, |es| is able to change the
 organization of the particles in the computer memory, according to the
 needs of the used algorithms. For details on the internal organization,
 refer to section :ref:`internal_particle_org`.
+
+Global properties
+~~~~~~~~~~~~~~~~~
+
+The properties of the cell system can be accessed by
+:class:`espressomd.system.System.cell_system`:
+
+    * :py:attr:`~espressomd.cellsystem.CellSystem.max_num_cells`
+
+    (int) Maximal number of cells for the link cell algorithm. Reasonable
+    values are between 125 and 1000, or for some problems :math:`n_part / nnodes`.
+
+    * :py:attr:`~espressomd.cellsystem.CellSystem.min_num_cells`
+
+    (int) Minimal number of cells for the link cell algorithm. Reasonable
+    values range in :math:`10^{-6} N^2` to :math:`10^{-7} N^2`. In general 
+    just make sure that the Verlet lists are not incredibly large. By default the
+    minimum is 0, but for the automatic P3M tuning it may be wise to set larger
+    values for high particle numbers.
+
+    * :py:attr:`~espressomd.cellsystem.CellSystem.node_grid`
+    
+    (int[3]) 3D node grid for real space domain decomposition (optional, if
+    unset an optimal set is chosen automatically).
+
+    * :py:attr:`~espressomd.cellsystem.CellSystem.skin`
+    
+    (float) Skin for the Verlet list. This value has to be set, otherwise the simulation will not start.
+
+Details about the cell system can be obtained by ``espressomd.System().cell_system.get_state()``:
+
+    * `cell_grid`       Dimension of the inner cell grid.
+    * `cell_size`       Box-length of a cell.
+    * `local_box_l`     Local simulation box length of the nodes.
+    * `max_cut`         Maximal cutoff of real space interactions.
+    * `n_layers`        Number of layers in cell structure LAYERED
+    * `n_nodes`         Number of nodes.
+    * `type`            The current type of the cell system.
+    * `verlet_reuse`    Average number of integration steps the verlet list is re-used.
+
 
 Domain decomposition
 ~~~~~~~~~~~~~~~~~~~~
@@ -755,74 +700,41 @@ The following limitations currently apply for the collision detection:
 Catalytic Reactions
 -------------------
 
+With the help of the feature ``CATALYTIC_REACTIONS``, one can define three particle types to act as reactant (e.g. :math:`\mathrm{H_2 O_2}`), catalyzer (e.g. platinum), and product (e.g. :math:`\mathrm{O_2}` and :math:`\mathrm{H_2 O}`). The current setup allows one to simulate active swimmers and their chemical propulsion.
 
-
-With the help of the feature ``CATALYTIC_REACTIONS``, one can define three particle types to
-act as reactant (e.g. :math:`H_2O_2`), catalyzer (e.g. platinum), and
-products (e.g. :math:`O_2` and :math:`H_2O`). Using these reaction
-categories, we model the following chemical reaction system which is not
-thermodynamically consistent but rather intended to simulate active
-swimmers and their propulsion:
+For a Janus swimmer consisting of platinum on one hemisphere and gold on the other hemisphere, both surfaces catalytically induce a reaction. We assume an initial abundance of hydrogen peroxide and absence of products, so that back (recombination) reactions seldomly occur at the surface. A typical model for the propulsion of such a particle assumes
 
 .. math::
 
-   \begin{aligned}
-   rt & \rightleftharpoons & pr ; \\
-   rt & \xrightarrow{ct} & pr.\end{aligned}
+    \begin{aligned}
+      \mathrm{H_2 O_2} &\xrightarrow{\text{Pt}} \mathrm{2 H^{+} + 2 e^{-} + O_2} \\
+      \mathrm{2 H^{+} + 2 e^{-} + H_2 O_2} &\xrightarrow{\text{Au}} \mathrm{2 H_2 O}
+    \end{aligned}
 
-The first line indicates that there is a reversible chemical reaction in
-the bulk that converts the reactant particles () into product ()
-particles, leading to an equilibrium state. This reaction is intended to
-artificially recover the reactant () particles in this model. In the
-case of :math:`H_2O_2` this is artificial since it does not
-spontaneously build up if oxygen is dissolved in water. The second line
-indicates that in the vicinity of a catalyst () the forward reaction
-takes place, i.e., conversion of reactants into products. Of course the
-decompositon of a reactand into a product also takes place if there is
-no catalyst (since a catalyst has no effect on the chemical equilibrium)
-however the reaction is much faster than normally in the presence of a
-catalyst and the normal decomposition is neglected since it takes place
-so slowly. This is correct chemistry for waterperoxide since it
-spontaneously decomposes almost completely and much faster in the
-presence of a catalyst.
-
-The equilibrium reaction is described by the equilibrium constant
-
-.. math:: K_{\text{eq}} = \frac{k_{\text{eq,+}}}{k_{\text{eq,-}}} = \frac{[pr]}{[rt]},
-
-with :math:`[rt]` and :math:`[pr]` the reactant and product
-concentration and :math:`k_{\mathrm{eq},\pm}` the forward and
-backward reaction rate constants, respectively. The rate constants that
-specify the change in concentration for the equilibrium and catalytic
-reaction are given by
+That is, catalytic surfaces induce a reactions that produce charged species by consuming hydrogen peroxide. It is the change in distribution of charged species that leads to motion of the swimmer, a process refered to as self-electrophoresis. A minimal model for this would be
 
 .. math::
 
-   \begin{aligned}
-   \frac{d[rt]}{dt} & = & k_{\text{eq,-}}[pr] - k_{\text{eq,+}}[rt] ; \\
-   \frac{d[pr]}{dt} & = & k_{\text{eq,+}}[rt] - k_{\text{eq,-}}[pr] ; \\
-   -\frac{d[rt]}{dt} \;\; = \;\; \frac{d[pt]}{dt} & = & k_{\text{ct}}[rt] ,\end{aligned}
+    \begin{aligned}
+      A &\xrightarrow{C^{+}} B \\
+      B &\xrightarrow{C^{-}} A
+    \end{aligned}
 
- respectively.
+where on the upper half of the catalyst :math:`C^{+}` a species :math:`A` is converted into :math:`B`, and on the lower half :math:`C^{-}` the opposite reaction takes place. Note that when :math:`A` and :math:`B` are charged, this reaction conserves charge, provided the rates are equal.
 
-In the current |es| implementation we assume :math:`k_{\text{eq,+}} =
-k_{\text{eq,-}} \equiv k\_eq` and therefore :math:`K_{\text{eq}}=1`. The
-user can specify :math:`k\_eq \ge 0` and
-:math:`k\_ct \equiv k_{\text{ct}} >
-0`. The former rate constant is applied to all reactant and product
-particles in the system, whereas the latter is applied only to the
-reactant particles in the vicinity of a catalyst particle. Reactant
-particles that have a distance of or less to at least one catalyzer
-particle are therefore converted into product particles with rate
-constant :math:`k\_eq + k\_ct`. The conversion of particles is done
-stochastically on the basis of the relevant rate constant ( :math:`\ge`
-0):
+In |es| the orientation of a catalyzer particle is used to define hemispheres; half spaces going through the particle's center. The reaction region is bounded by the *reaction range*: :math:`r`. Inside the reaction range, we react only rectant-product pairs. The particles in a pair are swapped from hemisphere to another with a rate prescribed by
 
-.. math:: \label{eq:rate} P_{\text{cvt}} = 1 - \exp \left( - k  \Delta t  \right) ,
+.. math::
 
-with :math:`P_{\text{cvt}}` the probability of the conversion and
-:math:`\Delta t` the integration time step. If the equilibrium rate
-constant is not specified it is assumed that = 0.
+    P_{\text{move}} = 1 - \mathrm{e}^{-k_{\mathrm{ct}}\,\Delta t} ,
+
+with the reaction rate :math:`k_{\mathrm{ct}}` and the simulation time step :math:`\Delta t`. A pair may be swapped only once per MD time step, to avoid a no-net-effect situation. That is, we allow an exchange move only when the following conditions are met:
+
+1. Both partners of the reactant-product pair have to reside within the reaction range.
+2. The product has to reside in the upper half-space of the reaction range.
+3. The reactant has to reside in the lower half-space of the reaction range.
+
+Self-propulsion is achieved by imposing an interaction asymmetry between the partners of a swapped pair. That is, the heterogeneous distribution of chemical species induced by the swapping leads to a net force on the particle, counter balanced by friction.
 
 To set up the system for catalytic reactions the class :class:`espressomd.reaction.Reaction`
 can be used.::
@@ -833,7 +745,7 @@ can be used.::
 
     # setting up particles etc
 
-    r = Reaction(product_type = 1, reactant_type = 2, catalyzer_type = 0, ct_range = 2, ct_rate=0.2, eq_rate=0)
+    r = Reaction(product_type=1, reactant_type=2, catalyzer_type=0, ct_range=2, ct_rate=0.2, eq_rate=0)
     r.start()
     r.stop()
 
@@ -841,10 +753,10 @@ can be used.::
 
 * the first invocation of ``Reaction``, in the above example,  defines a
   reaction with particles of type number 2 as reactant, type 0 as catalyzer and
-  type 1 as product [#1]_. The catalytic reaction rate constant is given by :math:`ct\_rate^2`
+  type 1 as product [#1]_. The catalytic reaction rate constant is given by :math:`\mathrm{ct\_rate}`
   [#2]_ and to override the default rate constant for the equilibrium reaction
   ( = 0), one can specify it by as ``eq_rata``.  By default each reactant particle is checked
-  against each catalyst particle (``react_once =False``). However, when creating
+  against each catalyst particle (``react_once=False``). However, when creating
   smooth surfaces using many catalyst particles, it can be desirable to let the
   reaction rate be independent of the surface density of these particles. That
   is, each particle has a likelihood of reacting in the vicinity of the surface
@@ -852,7 +764,7 @@ can be used.::
   *not* according to :math:`P_{\text{cvt}} = 1 - \exp \left( - n k\Delta t
   \right)`, with :math:`n` the number of local catalysts. To accomplish this,
   each reactant is considered only once each time step by using the option
-  ``react_once = True`` . The reaction command is set up such that the different
+  ``react_once=True`` . The reaction command is set up such that the different
   properties may be influenced individually.
 
 *  ``r.stop()`` disables the reaction. Note that at the moment, there can
@@ -860,15 +772,10 @@ can be used.::
 
 *  ``print r``  returns the current reaction parameters.
 
-The Python interface has some modified capabilities with respect to the
-TCL interface. For example, you can alter parameters using the
-``r.setup()`` method of the reaction instance. The reaction mechanism can
-be inhibited and restarted using ``r.stop()`` and ``r.start()``.
-
-In future versions of the capabilities of the feature may be generalized
+In future versions of |es| the capabilities of the ``CATALYTIC_REACTIONS`` feature may be generalized
 to handle multiple reactant, catalyzer, and product types, as well as
 more general reaction schemes. Other changes may involve merging the
-current implementation with the feature.
+current implementation with the ``COLLISION_DETECTION`` feature.
 
 .. _galilei_transform: 
 
@@ -879,7 +786,7 @@ The following class :class:`espressomd.galilei.GalileiTransform` may be useful
 in effecting the velocity of the system.::
     
     system = espressomd.System()
-    gt = system.galilei()
+    gt = system.galilei
 
 Particle motion and rotation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

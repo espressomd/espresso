@@ -31,7 +31,7 @@ void external_potential_pre_init() {
 
 
 int generate_external_potential(ExternalPotential** e) {
-  external_potentials = (ExternalPotential*) Utils::realloc(external_potentials,
+  external_potentials = Utils::realloc(external_potentials,
 		  (n_external_potentials+1) * sizeof(ExternalPotential));
   *e = &external_potentials[n_external_potentials];
   n_external_potentials++;
@@ -193,7 +193,7 @@ int lattice_read_file(Lattice* lattice, char* filename) {
 
 
 int write_local_lattice_to_file(const char* filename_prefix, Lattice* lattice) {
-  index_t index[3];
+  Lattice::index_t index[3];
   double pos[3];
   int i,j,k;
   double *d;

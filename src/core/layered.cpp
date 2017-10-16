@@ -334,6 +334,9 @@ void layered_topology_init(CellPList *old) {
   }
   MPI_Bcast(&n_layers, 1, MPI_INT, 0, comm_cart);
 
+  if (PERIODIC(2))
+    layered_flags |= LAYERED_PERIODIC;
+
   top = this_node + 1;
   if (top == n_nodes && (layered_flags & LAYERED_PERIODIC))
     top = 0;
@@ -355,9 +358,6 @@ void layered_topology_init(CellPList *old) {
     layered_flags |= LAYERED_BOTTOM;
   if (this_node == n_nodes - 1)
     layered_flags |= LAYERED_TOP;
-
-  if (PERIODIC(2))
-    layered_flags |= LAYERED_PERIODIC;
 
   CELL_TRACE(fprintf(stderr, "%d: layered_flags tn %d bn %d \n", this_node,
                      LAYERED_TOP_NEIGHBOR, LAYERED_BTM_NEIGHBOR));
@@ -393,7 +393,7 @@ void layered_topology_init(CellPList *old) {
          somewhere for the moment */
       if (nc == NULL)
         nc = local_cells.cell[0];
-      append_unindexed_particle(nc, &part[p]);
+      append_unindexed_particle(nc, std::move(part[p]));
     }
   }
   for (c = 1; c <= n_layers; c++)

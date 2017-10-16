@@ -22,11 +22,14 @@
     Implementation of \ref pressure.hpp "pressure.h".
 */
 
-#include "pressure.hpp"
+#include "pressure_inline.hpp"
 #include "cells.hpp"
 #include "integrate.hpp"
 #include "initialize.hpp"
 #include "virtual_sites_relative.hpp" 
+#include "npt.hpp"
+#include "p3m.hpp"
+#include "p3m-dipolar.hpp"
 
 #include "short_range_loop.hpp"
 
@@ -141,10 +144,10 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
     
   for(i=0; i<9; i++)
     p_tensor.data.e[i] /= (volume*time_step*time_step);
-  
+
   for(i=9; i<p_tensor.data.n; i++)
     p_tensor.data.e[i]  /= volume;
-  
+
   /* Intra- and Inter- part of nonbonded interaction */
   for (n = 0; n < virials_non_bonded.data_nb.n; n++)
     virials_non_bonded.data_nb.e[n] /= 3.0*volume;

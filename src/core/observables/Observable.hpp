@@ -25,6 +25,8 @@
 #include <vector>
 #include <string>
 
+#include "core/PartCfg.hpp"
+
 namespace Observables {
 class Observable {
 public:
@@ -41,7 +43,7 @@ public:
   std::vector<double> last_value;
 
 private:
-  virtual int actual_calculate() = 0;
+  virtual int actual_calculate(PartCfg & partCfg) = 0;
 
   int n;
   double last_update;
