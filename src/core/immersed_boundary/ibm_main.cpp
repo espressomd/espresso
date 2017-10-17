@@ -177,7 +177,7 @@ void CoupleIBMParticleToFluid(Particle *p)
   delta_j[2] = p->f.f[2]*time_step*lbpar.tau/lbpar.agrid;
   
   // Get indices and weights of affected nodes using discrete delta function
-  index_t node_index[8];
+  Lattice::index_t node_index[8];
   double delta[6];
   lblattice.map_position_to_lattice(p->r.p,node_index,delta);
   
@@ -213,7 +213,7 @@ Very similar to the velocity interpolation done in standard Espresso, except tha
 
 void GetIBMInterpolatedVelocity(double *p, double *const v, double *const forceAdded)
 {
-  index_t node_index[8], index;
+  Lattice::index_t node_index[8], index;
   double delta[6];
   double local_rho, local_j[3], interpolated_u[3];
   double modes[19];
@@ -283,7 +283,7 @@ void GetIBMInterpolatedVelocity(double *p, double *const v, double *const forceA
 #endif
         {
           lb_calc_modes(index, modes);
-          local_rho = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
+          local_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
           
           // Add the +f/2 contribution!!
           local_j[0] = modes[1] + f[0]/2;
