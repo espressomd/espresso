@@ -56,6 +56,9 @@
 #include "bond/OverlapBondDihedral.hpp"
 //**Eight particle bonds**
 #include "bond/TwistStack.hpp"
+//**special Bonds**
+#include "bond/IbmTribend.hpp" //at least fourparticlebond
+#include "bond/VirtualBond.hpp" // 2 particle bond but not a real bond!
 
 /** \name Type codes of bonded interactions
     Enumeration of implemented bonded interactions.

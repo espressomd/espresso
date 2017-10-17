@@ -3,7 +3,7 @@
 #define IBM_TRIBEND_H
 
 #ifdef IMMERSED_BOUNDARY
-
+#include "interaction_data.hpp"
 // DEBUG stuff
 extern double maxBendingForce, maxBendingDist, maxX;
 

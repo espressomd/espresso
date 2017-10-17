@@ -9,6 +9,8 @@
 #include "communication.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"
 #include "immersed_boundary/ibm_tribend_helpers.hpp"
+#include "utils/make_unique.hpp" //for creating a unique ptr to a bond class object
+#include "bond/tBendingMethod.hpp" // for Bond::tBendingMethod::...
 
 // DEBUG
 /*double maxBendingForce;
@@ -27,11 +29,15 @@ void IBM_Tribend_CalcForce(Particle *p1, const int numPartners, Particle **const
 {
 
   const tBendingMethod method = iaparams.p.ibm_tribend.method;
-  if ( method == NodeNeighbors ) CalcForceGompper(p1, numPartners, partners, iaparams.p.ibm_tribend.kb);
+  if ( method == NodeNeighbors ) CalcForceGompper(p1, numPartners, 
+						  partners, iaparams.p.ibm_tribend.kb);
   if ( method == TriangleNormals )
   {
     // move to separate function
-    if ( numPartners != 3 ) { printf("Error. TriangleNormals bending with != 3 partners!\n"); exit(1); }
+    if ( numPartners != 3 ) { 
+      printf("Error. TriangleNormals bending with != 3 partners!\n");
+      exit(1);
+    }
     Particle *p2 = partners[0];
     Particle *p3 = partners[1];
     Particle *p4 = partners[2];
@@ -182,17 +188,17 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, c
     if ( !flat )
     {
       // Compute theta0
-      Particle p1, p2, p3, p4;
-      get_particle_data(ind1, &p1);
-      get_particle_data(ind2, &p2);
-      get_particle_data(ind3, &p3);
-      get_particle_data(ind4, &p4);
+      //Particle p1, p2, p3, p4;
+      auto p1 = get_particle_data(ind1);
+      auto p2 = get_particle_data(ind2);
+      auto p3 = get_particle_data(ind3);
+      auto p4 = get_particle_data(ind4);
       
       //Get vectors of triangles
       double dx1[3], dx2[3], dx3[3];
-      get_mi_vector(dx1, p1.r.p, p3.r.p);
-      get_mi_vector(dx2, p2.r.p, p3.r.p);
-      get_mi_vector(dx3, p4.r.p, p3.r.p);
+      get_mi_vector(dx1, p1->r.p, p3->r.p);
+      get_mi_vector(dx2, p2->r.p, p3->r.p);
+      get_mi_vector(dx3, p4->r.p, p3->r.p);
       
       //Get normals on triangle; pointing outwards by definition of indices sequence
       double n1l[3], n2l[3];
@@ -231,6 +237,9 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, c
     // For the numerical model, a factor sqrt(3) should be added, see Gompper&Kroll J. Phys. 1996 and Krüger thesis
     // This is an approximation, it holds strictly only for a sphere
     bonded_ia_params[bond_type].p.ibm_tribend.kb = kb;
+
+    set_bond_by_type(bond_type, Utils::make_unique<Bond::IbmTribend>
+		     (kb, Bond::tBendingMethod::TriangleNormals, theta0, 3));
   }
   
   // Gompper
@@ -246,6 +255,9 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, c
     // Only flat eq possible, but actually this is ignored in the computation anyway
     bonded_ia_params[bond_type].p.ibm_tribend.theta0 = 0;
     bonded_ia_params[bond_type].p.ibm_tribend.kb = kb;
+
+    set_bond_by_type(bond_type, Utils::make_unique<Bond::IbmTribend>
+    		     (kb, Bond::tBendingMethod::NodeNeighbors, 0.0, ind1));
   }
   
   // Broadcast and return
