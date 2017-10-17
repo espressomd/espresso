@@ -136,7 +136,7 @@ void EspressoSystemInterface::reallocDeviceMemory(int n) {
       cuda_get_device_props(devID,dev);
 
       m_blocks = dev.n_cores;
-      // each node corresponds to a split of the cubic box in 3D space to equal cubic boxes
+      // Each node corresponds to a split of the cubic box in 3D space to equal cubic boxes
       // hence, 8 nodes per particle is a theoretical octree limit:
       m_bhnnodes = n * 8;
       if (m_bhnnodes < 1024 * m_blocks) m_bhnnodes = 1024 * m_blocks;
@@ -170,11 +170,14 @@ void EspressoSystemInterface::reallocDeviceMemory(int n) {
    cuda_safe_mem(cudaMalloc((void **)&m_arrl.sort, sizeof(int) * (m_bhnnodes + 1)));
   }
 
+  // Weight coefficients of m_bhnnodes nodes: both particles and octant cells
   if ((m_mass == 0) || (n != m_gpu_npart))
   {
    if (m_mass != 0) cuda_safe_mem(cudaFree(m_mass));
    cuda_safe_mem(cudaMalloc((void **)&m_mass, sizeof(float) * (m_bhnnodes + 1)));
 
+   // n particles have unitary weight coefficients.
+   // Cells will be defined with -1 later.
    float *mass = new float [n];
    for(int i = 0; i < n; i++) {
         mass[i] = 1.0f;
@@ -182,14 +185,13 @@ void EspressoSystemInterface::reallocDeviceMemory(int n) {
    cuda_safe_mem(cudaMemcpy(m_mass, mass, sizeof(float) * n, cudaMemcpyHostToDevice));
    delete[] mass;
   }
-
+  // (max[3*i], max[3*i+1], max[3*i+2])
+  // are the octree box dynamical spatial constraints
+  // this array is updating per each block at each interaction calculation
+  // within the boundingBoxKernel
   if ((m_boxl.maxp == 0) || (n != m_gpu_npart))
   {
    if (m_boxl.maxp != 0) cuda_safe_mem(cudaFree(m_boxl.maxp));
-   // (max[3*i], max[3*i+1], max[3*i+2])
-   // are the octree box dynamical spatial constraints
-   // this array is updating per each block at each interaction calculation
-   // within the boundingBoxKernel
    cuda_safe_mem(cudaMalloc((void **)&m_boxl.maxp, sizeof(float) * m_blocks * 3));
   }
   // (min[3*i], min[3*i+1], min[3*i+2])

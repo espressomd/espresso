@@ -30,40 +30,55 @@ typedef float dds_float ;
 
 #ifdef BARNES_HUT
 
+//////////////////////////////////////////////////////////////////////////////////////////
+// The method concept is revealed within:                                               //
+// M. Burtscher, K. Pingali , in: GPU Gems’11: GPU Computing Gems Emerald Edition, 2011.//
+// An Efficient CUDA Implementation of the Tree-Based Barnes Hut n-Body Algorithm       //
+// http://iss.ices.utexas.edu/Publications/Papers/burtscher11.pdf                       //
+//////////////////////////////////////////////////////////////////////////////////////////
+
 #include "DipolarBarnesHut_cuda.cuh"
 
-#define SQ(x) ((x)*(x))
 #define IND (blockDim.x * blockIdx.x + threadIdx.x)
-
-__device__ float sgn(float x){
-	return (x > 0.0f) ? 1.0f : ((x < 0.0f) ? -1.0f : 0.0f);
-}
 
 using namespace std;
 
 // each node corresponds to a split of the cubic box in 3D space to equal cubic boxes
-// hence, 8 nodes per particle is a theoretical octree limit:
-// a number of nodes is "nnodesd" and a number of particles "nbodiesd" respectively
+// hence, 8 octant nodes per particle is a theoretical octree limit:
+// a maximal number of octree nodes is "nnodesd" and a number of particles "nbodiesd" respectively.
 __constant__ int nnodesd, nbodiesd;
+// Method performance/accuracy parameters
 __constant__ volatile float epssqd, itolsqd;
-// blkcntd is a factual blocks' count
-// bottomd is a bottom node
-// maxdepthd is a largest length of the octree "branch" till the "leaf"
+// blkcntd is a factual blocks' count.
+// bottomd is a bottom Barnes-Hut node (the division octant cell) in a linear array representation.
+// maxdepthd is a largest length of the octree "branch" till the "leaf".
 __device__ volatile int bottomd, maxdepthd, blkcntd;
 // hald edge of the BH box
 __device__ volatile float radiusd;
+// particle positions on the device:
 __device__ __constant__ volatile float* xd;
+// particle dipole moments on the device:
 __constant__ volatile float* uxd;
-__constant__ volatile float* massd; // not a real mass. Just a node weight coefficient.
+// Not a real mass. Just a node weight coefficient.
+__constant__ volatile float* massd;
+// Barnes-Hut tree spatial boundaries.
 __constant__ volatile float *mind;
+// Barnes-Hut tree spatial boundaries.
 __constant__ volatile float *maxd;
+// Error report.
 __constant__ volatile int *errd;
+// Indices of particles sorted according to the tree linear representation.
 __constant__ volatile int *sortd;
+// The tree linear representation.
 __constant__ volatile int *childd;
+// Supplementary array: a tree nodes (division octant cells/particles inside) counting.
 __constant__ volatile int *countd;
+// Start indices for the per-cell sorting.
 __constant__ volatile int *startd;
-__constant__ volatile float *box_ld;
 
+// The "half-convolution" multi-thread reduction.
+// The thread with a lower index will operate longer and
+// final result (here: the sum) is flowing down towards zero thread.
 __device__ void dds_sumReduction_BH(dds_float *input, dds_float *sum)
 {
 	int tid = threadIdx.x;
@@ -106,17 +121,27 @@ __global__
 __launch_bounds__(THREADS1, FACTOR1)
 void boundingBoxKernel()
 {
-	register int i, j, k, l, inc;
+	register int i, j, k, l, t, inc, n_blocks;
 	register float val;
+	// min/max positions per the thread:
 	register float minp[3], maxp[3];
+	// min/max positions per block:
 	__shared__ volatile float smin[3*THREADS1], smax[3*THREADS1];
 	for (l = 0; l < 3; l++) {
 	  minp[l] = maxp[l] = xd[l];
 	}
 
-	// scan all bodies
+	// Scan all bodies.
+	// In order to iterate over all bodies assigned to thread,
+	// it is necessary to step over all threads in the GPU:
+	// inc = [number of blocks: gridDim.x] * [THREADS1 per block within given kernel].
+	// Hence, this approach could handle an infinite number of bodies (particles)
 	i = threadIdx.x;
 	inc = THREADS1 * gridDim.x;
+	// j is an absolute index of the particle.
+	// It is shiftd over a count of the passed block threads behind: blockIdx.x * THREADS1.
+	// NOTE: this loop is extrema search among all particles of the given thread
+	// in the present block. However, one is not among all threads of this block.
 	for (j = i + blockIdx.x * THREADS1; j < nbodiesd; j += inc)
 	  for (l = 0; l < 3; l++) {
 	    val = xd[3 * j + l];
@@ -124,60 +149,77 @@ void boundingBoxKernel()
 	    maxp[l] = max(maxp[l], val);
 	  }
 
-	// reduction in shared memory:
+	// For a start point of a reduction in the given block shared memory
+	// of the i-th thread extrema:
 	for (l = 0; l < 3; l++) {
 	  smin[3 * i + l] = minp[l];
 	  smax[3 * i + l] = maxp[l];
 	}
 
-	for (j = THREADS1 / 2; j > 0; j /= 2) {
+	// Now it's time to (mix)maximize among all threads of the given block.
+	// Each mim/max operation will be applied between
+	// the shared memory smin/smax and the given thread.
+    // The "half-convolution" multi-thread reduction
+	// the thread with a lower index will operate longer and
+	// final result (here: the shared memory extrema)
+	// is flowing down towards zero thread.
+	for (t = THREADS1 / 2; t > 0; t /= 2) {
 		__syncthreads();
-		if (i < j) {
-			k = i + j;
+		if (i < t) {
+			k = i + t;
 			for (l = 0; l < 3; l++) {
 			  smin[3 * i + l] = minp[l] = min(minp[l], smin[3 * k + l]);
 			  smax[3 * i + l] = maxp[l] = max(maxp[l], smax[3 * k + l]);
+			  // very last minp/maxp assignment will be made by zero thread (i == 0)
 			}
 		}
 	}
 
-	// write a given block result to the global memory
+	// Thread i == 0 is responsible for a writing
+	// of a given block result into the global memory
+	// and other per-block operations.
 	if (i == 0) {
+	    // per k-th block
 		k = blockIdx.x;
 		for (l = 0; l < 3; l++) {
+		  // global memory storage of the per-block extrema
 		  mind[3 * k + l] = minp[l];
 		  maxd[3 * k + l] = maxp[l];
+		  // note, that we are in zero thread and its variables minp/maxp
+		  // contain de facto already reduced (see above) shared extrema smin/smax
 		}
 
-		inc = gridDim.x - 1;
-		if (inc == atomicInc((unsigned int *)&blkcntd, inc)) {
-		// I'm the last block, so combine all block results over the index j
-			for (j = 0; j <= inc; j++)
+		n_blocks = gridDim.x - 1;
+		// The block increment is performing by its zero thread.
+		if (n_blocks == atomicInc((unsigned int *)&blkcntd, n_blocks)) {
+		// I'm the (randomly) last block, so combine all other blocks' results over the index j:
+			for (j = 0; j <= n_blocks; j++)
 			  for (l = 0; l < 3; l++) {
 			    minp[l] = min(minp[l], mind[3 * j + l]);
 			    maxp[l] = max(maxp[l], maxd[3 * j + l]);
 			  }
 
-			// compute 'radius'
+			// Compute 'radius':
 			val = max(maxp[0] - minp[0], maxp[1] - minp[1]);
 			radiusd = max(val, maxp[2] - minp[2]) * 0.5f;
 
+			// NOTE: now the extrema are global.
+			// Present code fragment will be executed once: in zero thread of the last block.
+
 			k = nnodesd;
-			// create the root node of the Barnes-Hut octree
-			// bottom node is defined with max possible index just to start
-			// it will be updated within further tree building in
-			// corresponding kernel
+			// Create the root node of the Barnes-Hut octree.
+			// Bottom node is defined with max possible index just to start
+			// It will be updated within further tree building in
+			// corresponding kernel.
 			bottomd = k;
-			// mass of the root node has no physical sense cause
-			// it does not correspond to any real particle
+			// Weight of the root node init.
 			massd[k] = -1.0f;
-			// sorting init
+			// Sorting init for the tree root.
 			startd[k] = 0;
-			// position of the root node should be in the center of the just defined BH box
+			// Position of the root node should be in the center of just defined BH box:
 			for (l = 0; l < 3; l++) xd[3 * k + l] = (minp[l] + maxp[l]) * 0.5f;
-			k *= 8;
-			// init further tree building:
-			for (i = 0; i < 8; i++) childd[k + i] = -1;
+			// Init further tree building octo- meaning their absence at the beginning:
+			for (i = 0; i < 8; i++) childd[8 * k + i] = -1;
 		}
 	}
 }
@@ -191,6 +233,7 @@ __global__
 __launch_bounds__(THREADS2, FACTOR2)
 void treeBuildingKernel()
 {
+    //
 	register int i, j, k, l, depth, localmaxdepth, skip, inc;
 	register float r;
 	register float pos[3];
@@ -199,106 +242,198 @@ void treeBuildingKernel()
 	register float radius;
 	register float root[3];
 
-	// cache root data
+	// Radius is determined in boundingBoxKernel
 	radius = radiusd;
+	// The root node has been created at the end of the boundingBoxKernel.
+	// Cache the root data:
 	for (l = 0; l < 3; l++) root[l] = xd[3 * nnodesd + l];
-
+	// Maximum tree depth within the given thread.
 	localmaxdepth = 1;
+	// Skip the branch following and start from the root.
 	skip = 1;
-	// increment to move among the bodies assigned to the given thread
-	// hence, one should step over all other threads in GPU with
-	// a quantity of blockDim.x * gridDim.x
+	// Increment to move among the bodies assigned to the given thread.
+	// Hence, one should step over all other threads in GPU with
+	// a quantity of blockDim.x * gridDim.x.
 	inc = blockDim.x * gridDim.x;
-	// just a regular 1D GPU index
+	// Just a regular 1D GPU index
 	i = threadIdx.x + blockIdx.x * blockDim.x;
 
-	// iterate over all bodies assigned to thread
+	// Iterate over all bodies assigned to thread.
 	while (i < nbodiesd) {
 		if (skip != 0) {
-			// new body, so start traversing at root
+			// New body, so start traversing at root. Skip it further.
 			skip = 0;
+			// Particle position corresponding to the given thread and block:
 			for (l = 0; l < 3; l++) p[l] = xd[3 * i + l];
+			// Let's start a moving via the tree from the root node 8 * nbodiesd:
 			n = nnodesd;
 			depth = 1;
 			r = radius;
+			// Determine which child to follow.
+			// j=0..7 determines the octant in a binary representations
 			j = 0;
-			// determine which child to follow
 			for (l = 0; l < 3; l++) if (root[l] < p[l]) j += pow(2, l);
 		}
 
-		// follow path to leaf cell
+		// Follow path to leaf cell. Should not happen at the first iteration of this loop.
 		ch = childd[n * 8 + j];
+		// The child with the index higher than nbodiesd (number of particles) means
+		// that it is a octant cell, not a body.
+		// Actually, we need nnodesd == 8 * nbodiesd nodes for the cells storage.
+		// Let's iterate this "while" loop before we will reach the particle
+		// or an absence of a child:
 		while (ch >= nbodiesd) {
 			n = ch;
 			depth++;
+			// Going down through the octree depth: radius split corresponds to the cube split.
+			// Corresponding octants are cells, not bodies.
+			// Smaller radius will be used until the next skip == 1
 			r *= 0.5f;
 			j = 0;
-			// determine which child to follow
+			// Determine which child octant to follow based on body coordinates.
+			// j=0..7 determines the octant in a binary representations.
 			for (l = 0; l < 3; l++) if (xd[3 * n + l] < p[l]) j += pow(2, l);
 			ch = childd[n * 8 + j];
 		}
-
-		if (ch != -2) {	// skip if child pointer is locked and try again later
-			locked = n  * 8 + j;
-			if (ch == atomicCAS((int *)&childd[locked], ch, -2)) {	// try to lock
+		// Now we are deep enough in the tree, passed all levels of cells and reached the body (particle).
+		if (ch != -2) {	// Skip if child pointer is locked (-2) and try again later.
+			locked = n * 8 + j;
+			// Try to lock and iterate towards next body:
+			if (ch == atomicCAS((int *)&childd[locked], ch, -2)) {
+			// If we are here then childd[locked] was equal to "ch" and now is assigned to -2, it is locked.
+			// We will not came here in a case if this child will be already locked by other threads
+			// because other particle could already do it in other thread.
+			// Several particles simultaneously could force a new octants' split.
+			// In this case we will not came here and "i += inc" will be not executed below.
+			// Hence, the present loop "while (i < nbodiesd)" will mandatory repeat in the given thread for the given i-th particle
+			// until other threads will unlock this cell for either a body insertion and/or new octant level cells creation.
 				if (ch == -2) {
+				    // Cannot be here..
 					printf("Error: ch = -2\n");
 					break;
 				}
 				if (ch == -1) {
-					// if null, just insert the new body
+					// If -1 (i.e. no child index) then just insert a new body
 					childd[locked] = i;
-				} else {	// there already is a body in this position
+				} else {
 					patch = -1;
-					// create new cell(s) and insert the old and new body
+					// There already is a body and/or cell(s) in this position.
+					// We should start from a loop of the deepest child cell determination.
+					// Then, we need to create new cells and to distribute
+					// existing and new bodies between these new cells.
 					do {
-						depth++;
-
+						// If we are here then the tree bottom level is moving further:
+					    // Note, that the bottomd is not a global tree depth.
+					    // It is rather a tree size in 1D representation of nnodesd == 8 * nbodiesd nodes.
+					    // These lists will be correctly handled by the sortKernel later.
+					    depth++;
 						cell = atomicSub((int *)&bottomd, 1) - 1;
 						if (cell <= nbodiesd) {
+						    // This should not happen. A cell cannot have such index. Error.
 							*errd = 1;
 							bottomd = nnodesd;
 						}
+						// The "patch" is saving the information about a first cell created in the current thread
+						// before it continues to dive into the tree depth.
+						// Hence, the "patch" defines the new branch inception index.
 						patch = max(patch, cell);
 
+						// Note: "j" is defined by the body position against the parent cell
+						// within above "while (ch >= nbodiesd)" loop.
+						// The new cell will be placed below relatively the center of corresponding j-th octant:
 						for (l = 0; l < 3; l++) pos[l] = ((j >> l) & 1) * r;
+						// Note, that negative octants correspond to pos[l] == 0 and positive octants correspond
+						// to pos[l] == r.
+
+						// Going down through the octree depth: radius split corresponds to the cube split.
+						// Corresponding octants are cells, not bodies.
+						// Smaller radius will be used until the next skip == 1
 						r *= 0.5f;
 
+						// Init the node weight coefficients.
+						// Note: particles has mass=1.0 defined in the Espresso System Interface.
 						massd[cell] = -1.0f;
-						startd[cell] = -1;
-						for (l = 0; l < 3; l++) pos[l] = xd[3 * cell + l] = xd[3 * n + l] - r + pos[l];
-						for (k = 0; k < 8; k++)
-							childd[cell* 8 + k] = -1;
 
+						// The startd array is crucial for the sortKernel.
+						// The original root node already has startd = 0.
+						// Here, we assign -1 to the cells in contrast to bodies.
+						// Bodies do not need this array. They need only array sortd,
+						// which will be defined in the sortKernel for a usage by the force and energy
+						// calculation kernels.
+						startd[cell] = -1;
+
+						// Now, let's save the cell coordinates locally (pos[l]) and globally (xd[3 * cell + l]).
+						// This location should be shifted from the octant center defined above (pos[l] before this assignment).
+						// Parent cell coordinates xd[3 * n + l] will be added.
+						// Parent radius now is equal to 2 * r, where "r" is already updated above: r *= 0.5f.
+						// Hence, the negative octant is defined above by pos[l] == 0 and positive - by pos[l] == 2 * r.
+						// In order to transform these coordinates into relative octant positions, we need to add -r
+						// to obtain -r and r for negative and positive octants.
+						// Now, the child (cell) octants centers are deriving from the parent (n) octant center:
+						for (l = 0; l < 3; l++) pos[l] = xd[3 * cell + l] = xd[3 * n + l] - r + pos[l];
+
+						// By default, the new cell has no children in all k-th octants:
+						for (k = 0; k < 8; k++)
+							childd[cell * 8 + k] = -1;
+
+						// This condition should always be true cause "patch" is -1 at the beginning
+						// and the bottomd/cell reduces further.
 						if (patch != cell) {
+						    // New cell is assigned as a child of previous "n" parent:
 							childd[n * 8 + j] = cell;
 						}
 
+						// pos[l] already contains the child cell coordinates.
+						// Let's assign "childd" then. First the octant should be selected:
 						j = 0;
 						for (l = 0; l < 3; l++) if (pos[l] < xd[3 * ch + l]) j += pow(2, l);
+						// New element just appeared in the chain of cells. Hence, that what supposed
+						// to be a child ("ch") before entering the present iteration, now will be a
+						// child of the new cell (after this smallest octant split into new octants):
 						childd[cell * 8 + j] = ch;
 
+						// Now cell is claimed to be a parent of further iteration of the present loop.
 						n = cell;
 						j = 0;
+						// Let's handle the particle position (p[l]) corresponding to the given thread and block
+						// against new octant cell (pos[l]):
 						for (l = 0; l < 3; l++) if (pos[l] < p[l]) j += pow(2, l);
 
+						// Now the current cell's child should be considering in the new particle new octant:
 						ch = childd[n * 8 + j];
-						// repeat until the two bodies are different children
+						// Repeat until the two bodies will be different children.
+						// Hence, the current "childd" should have no children.
+						// It is equivalent to an absence of other particles
+						// in the i-th particle new smallest octant, otherwise we should split octants further
+						// until these two particles will come to different octants:
 					} while (ch >= 0);
 
+					// i-th particle assignment as a child to the last created cell:
 					childd[n * 8 + j] = i;
-					__threadfence();	// push out subtree
+					// Push out the subtree among the whole grid.
+					// Data setting must be completed after this point.
+					__threadfence();
+					// The final locked child index is defined by a maximal cell index,
+					// i.e. by a beginning of the new tree of cells created within
+					// the loop "while (ch >= 0)".
+					// The "patch" defines the new just created branch inception index:
 					childd[locked] = patch;
 				}
 
 				localmaxdepth = max(depth, localmaxdepth);
-				i += inc;	// move on to next body
+				// Each thread started from the skip=1 and made the above
+				// tree building loop procedure (while (ch >= 0)).
+				// They should do the same for remaining (each) particles.
+				// Note, that bottomd is a global variable and it is already updated.
+				// This is already taken into account in further sortKernel logic.
+				// Hence, move on to the next body assigned to the given thread:
+				i += inc;
 				skip = 1;
 			}
 		}
 		__syncthreads();	// throttle
 	}
-	// record maximum tree depth
+	// Record maximum tree depth:
 	atomicMax((int *)&maxdepthd, localmaxdepth);
 }
 
@@ -316,19 +451,27 @@ void summarizationKernel()
 	// position of equivalent total dipole and its magnitude:
 	// (like a mass and the center of mass)
 	register float p[3], u[3];
+	// Per-block BH tree cashing:
 	__shared__ volatile int child[THREADS3 * 8];
 
 	bottom = bottomd;
+	// Increment towards other particles assigned to the given thread:
 	inc = blockDim.x * gridDim.x;
-	k = (bottom & (-WARPSIZE)) + threadIdx.x + blockIdx.x * blockDim.x;	// align to warp size
+	// Nodes iteration "k" should start from the "bottomd" level of the cells,
+	// which is a minimal index of the last created cell.
+	// Starting "k" value should be aligned using the warp size
+	// according to the designed threads performance.
+	k = (bottom & (-WARPSIZE)) + threadIdx.x + blockIdx.x * blockDim.x;
+	// Threads below the bottom line could proceed to their next cells.
 	if (k < bottom) k += inc;
 
+	// Assume no missing children:
 	missing = 0;
-	// iterate over all cells assigned to thread
+	// Iterate over all cells (not particles) assigned to the thread:
 	while (k <= nnodesd) {
 		//iteration++;
 		if (missing == 0) {
-			// new cell, so initialize
+			// New cell, so initialize:
 			cm = 0.0f;
 			for (l = 0; l < 3; l++) {
 			  p[l] = 0.0f;
@@ -337,32 +480,46 @@ void summarizationKernel()
 			cnt = 0;
 			j = 0;
 			for (i = 0; i < 8; i++) {
-				ch = childd[k * 8 + i];
-				if (ch >= 0) {
-			if (i != j) {
-				// move children to front (needed later for speed)
-				childd[k* 8 + i] = -1;
-				childd[k* 8 + j] = ch;
+              ch = childd[k * 8 + i];
+              if (ch >= 0) {
+                if (i != j) {
+                    // Move children to front (needed later for a speed only).
+                    // The child's octant change is incorrect from
+                    // a tree organization perspective. However, the sum
+                    // will be the same.
+                    childd[k * 8 + i] = -1;
+                    childd[k * 8 + j] = ch;
+                }
+                // Cache a missing children in the block shared memory:
+                child[missing * THREADS3 + threadIdx.x] = ch;
+                m = massd[ch];
+                // Is a child the particle? Only particles have non-negative mass initialized originally.
+                // Another option: a cell which already aggregated masses of other cells and particles.
+                // "missing" means that a non-zero contribution of such kind is missing:
+                missing++;
+                if (m >= 0.0f) {
+                    // child is ready
+                    missing--;
+                    // The child is a cell, not a body (ch >= nbodiesd).
+                    // Also, the previous condition (m >= 0.0f) reveals
+                    // that its' children total mass is already calculated.
+                    // Hence, below command "countd[k] = cnt" is already executed by other threads/blocks
+                    // and we can add this count
+                    if (ch >= nbodiesd) {	// count bodies (needed later)
+                        // As far as a child is a cell, its "countd" was already calculated.
+                        cnt += countd[ch] - 1;
+                    }
+                    // add child's contribution
+                    cm += m;
+                    for (l = 0; l < 3; l++) {
+                      p[l] += xd[3 * ch + l] * m;
+                      u[l] += uxd[3 * ch + l];
+                    }
+                }
+                j++;
+              } // if (ch >= 0)
 			}
-			child[missing * THREADS3 + threadIdx.x] = ch;	// cache missing children
-			m = massd[ch];
-			missing++;
-			if (m >= 0.0f) {
-				// child is ready
-				missing--;
-				if (ch >= nbodiesd) {	// count bodies (needed later)
-					cnt += countd[ch] - 1;
-				}
-				// add child's contribution
-				cm += m;
-				for (l = 0; l < 3; l++) {
-				  p[l] += xd[3 * ch + l] * m;
-				  u[l] += uxd[3 * ch + l];
-				}
-			}
-			j++;
-				}
-			}
+			// Count of childs:
 			cnt += j;
 		}
 
@@ -371,9 +528,12 @@ void summarizationKernel()
 				// poll missing child
 				ch = child[(missing - 1) * THREADS3 + threadIdx.x];
 				m = massd[ch];
+				// Is a child the particle? Only particles have non-negative mass initialized originally.
+				// Another option: a cell which already aggregated masses of other cells and particles.
 				if (m >= 0.0f) {
 					// child is now ready
 					missing--;
+					// The child is a cell, not a body (ch >= nbodiesd).
 					if (ch >= nbodiesd) {
 						// count bodies (needed later)
 						cnt += countd[ch] - 1;
@@ -389,6 +549,11 @@ void summarizationKernel()
 			} while ((m >= 0.0f) && (missing != 0));
 		}
 
+		// (missing == 0) could be true and threads will move to next particles (k += inc)
+		// only if previous conditions (m >= 0.0f) will be true.
+		// It can happen only if cell will obtain the mass (only here below: "massd[k] = cm")
+		// or they will find the very last childs: particles.
+		// Before that: do/while loop will continue.
 		if (missing == 0) {
 			// all children are ready, so store computed information
 				countd[k] = cnt;
@@ -408,6 +573,11 @@ void summarizationKernel()
 /*** sort bodies **************************************************************/
 /******************************************************************************/
 
+// This kernel concurrently places the bodies into an array such that the bodies
+// appear in the same order in the array as they would during an in-order traversal
+// of the octree. This sorting groups spatially close bodies (in the same octant cells)
+// together, and these grouped bodies are crucial to speed up
+// forceCalculationKernel and energyCalculationKernel
 __global__
 __launch_bounds__(THREADS4, FACTOR4)
 void sortKernel()
@@ -416,23 +586,36 @@ void sortKernel()
 
 	bottom = bottomd;
 	dec = blockDim.x * gridDim.x;
+	// Start from the end of the nnodesd == 8 * nbodiesd.
+	// Reverse order is required now cause octant cells which are more close
+	// to the root have a larger count of entities inside (countd[k]).
+	// Particles should be sorted over all entities count in the tree array representation
+	// made by treeBuildingKernel.
 	k = nnodesd + 1 - dec + threadIdx.x + blockIdx.x * blockDim.x;
 
 	// iterate over all cells assigned to thread
 	while (k >= bottom) {
 		start = startd[k];
+		// Let's start from the root which has only startd=0 defined
+		// in boundingBoxKernel. All other bodies and cells have -1.
 		if (start >= 0) {
 			for (i = 0; i < 8; i++) {
-				ch = childd[k* 8 + i];
-				if (ch >= nbodiesd) {
-			// child is a cell
-			startd[ch] = start;	// set start ID of child
-			start += countd[ch];	// add #bodies in subtree
-				} else if (ch >= 0) {
-			// child is a body
-			sortd[start] = ch;	// record body in 'sorted' array
-			start++;
-				}
+				ch = childd[k * 8 + i];
+				  if (ch >= nbodiesd) {
+                    // child is a cell
+                    startd[ch] = start;	    // set start ID of child
+                    start += countd[ch];	// add # of bodies in subtree
+				  } else if (ch >= 0) {
+			        // Child is a body.
+				    // This particle should be saved with a stepping over
+				    // a count of particles in the cells.
+				    // treeBuildingKernel already has ordered cells in a
+				    // linear array way. The sortKernel just order random particle
+				    // indices in the same order. Hence, they will be much faster accessed
+				    // by forceCalculationKernel and energyCalculationKernel.
+			        sortd[start] = ch;	    // record body in 'sorted' array
+			        start++;
+				  }
 			}
 			k -= dec;	// move on to next cell
 		}
@@ -452,16 +635,36 @@ void forceCalculationKernel(dds_float pf,
 {
 	register int i, j, k, l, n, depth, base, sbase, diff, t;
 	register float tmp;
+	// dr is a distance between particles.
+	// f,h, and N are a target force, field, and torque respectively.
+	// u and uc are dipole moments of two particles.
 	register float dr[3], f[3], h[3], u[3], uc[3], N[3];
+	// Shared memory aggregates of each warp-specific stacks
+	// with the MAXDEPTH size per each warp:
+	// "node" is the BH octant sub-cell in the stack.
+	// "pos"=0..7 - which octant we are examining now in the stack.
+	// dq is an array used to determine that the given BH cell is far enough.
 	__shared__ volatile int pos[MAXDEPTH * THREADS5/WARPSIZE], node[MAXDEPTH * THREADS5/WARPSIZE];
 	__shared__ float dq[MAXDEPTH * THREADS5/WARPSIZE];
 	float b, b2, d1, dd5;
 	float bb2d7, umd5;
 	float pow3s2d2, flj;
 
+	// Zero thread of the block initialize shared data for all warps.
 	if (0 == threadIdx.x) {
-		tmp = radiusd;
-		// precompute values that depend only on tree level
+		// Precompute values that depend only on tree level.
+		// The method's parameters (a trade-off accuracy/performance)
+		// which determine that the
+		// cell is far enough are "itolsqd" and
+		// "epssqd" which define a fraction of the octant cell and
+		// an additive distance respectively.
+		// Their joint contribution for the given tree depth are
+		// calculated withing the array dq[i], which will
+		// be compared later with squared distance between the particle
+		// and the cell depending on a cell level.
+	    // Original tree box edge (2*radiusd) should be divided *0.5
+	    // as much as the tree depth takes place.
+	    tmp = radiusd;
 		dq[0] = tmp * tmp * itolsqd;
 		for (i = 1; i < maxdepthd; i++) {
 			dq[i] = dq[i - 1] * 0.25f;
@@ -469,36 +672,50 @@ void forceCalculationKernel(dds_float pf,
 		}
 		dq[i - 1] += epssqd;
 
+		// Only maximal Barnes-Hut tree depth is allowed.
+		// This error is technically possible, however, most applications
+		// are far from the 1/2^32 particles' convergence.
 		if (maxdepthd > MAXDEPTH) {
 			*errd = maxdepthd;
 		}
 	}
 	__syncthreads();
 
+	// Only maximal Barnes-Hut tree depth is allowed.
 	if (maxdepthd <= MAXDEPTH) {
-		// figure out first thread in each warp (lane 0)
+	    // How many warps are behind the current thread (?):
 		base = threadIdx.x / WARPSIZE;
+		// Figure out first thread in each warp (lane 0):
 		sbase = base * WARPSIZE;
+		// Initial stack index is its MAXDEPTH portion start for the given warp count base:
 		j = base * MAXDEPTH;
 
+		// How far the thread is from the warp beginning (?):
 		diff = threadIdx.x - sbase;
-		// make multiple copies to avoid index calculations later
+		// Make multiple copies to avoid index calculations later:
 		if (diff < MAXDEPTH) {
+		    // Each thread copy its own dq[] element to a part of
+		    // dq array dedicated to the given warp:
 			dq[diff+j] = dq[diff];
 		}
 		__syncthreads();
 
-		// iterate over all bodies assigned to thread
+		// Iterate over all bodies assigned to thread:
 		for (k = threadIdx.x + blockIdx.x * blockDim.x; k < nbodiesd; k += blockDim.x * gridDim.x) {
+		    // Sorted body indexes assigned to me:
 			i = sortd[k];	// get permuted/sorted index
-			// cache position info
+			// Cache the particle position info:
 			for (l = 0; l < 3; l++) {
               u[l] = uxd[3 * i + l];
               h[l] = 0.0f;
               f[l] = 0.0f;
 			}
 
-			// initialize iteration stack, i.e., push root node onto stack
+			// Force will be calculated for i-th particle.
+			// All other space is of interest, hence all cells will be considered.
+			// Hence, we should start from the root node (whole Barnes-Hut cube).
+			// Initialize iteration stack, i.e., push root node onto stack.
+			// Let's start from zero octant.
 			depth = j;
 			if (sbase == threadIdx.x) {
 				node[j] = nnodesd;
@@ -506,22 +723,40 @@ void forceCalculationKernel(dds_float pf,
 			}
 
 			while (depth >= j) {
-				// stack is not empty
+				// Stack is not empty (depth is still higher than j-level).
+			    // Hence, there are still some children to consider.
 				while ((t = pos[depth]) < 8) {
-					// node on top of stack has more children to process
-					n = childd[node[depth] * 8 + t];	// load child pointer
+					// Node on top of stack has more children to process:
+					n = childd[node[depth] * 8 + t]; // load child pointer
 					if (sbase == threadIdx.x) {
-						// I'm the first thread in the warp
+						// I'm the first thread in the warp.
+					    // Let me check for the current depth level of the tree
+					    // whether we have more children among 8 octant cells.
+					    // Hence, let's go to the next octant in the next iteration only:
 						pos[depth] = t + 1;
 					}
+					// There is a child (octant cell) with a dipole moment uxd[3 * n + l]
+					// and the center position xd[3 * n + l]:
 					if (n >= 0) {
-					    tmp = 0.0f;    // compute distance squared
+					    tmp = 0.0f; // compute distance squared
 					    for (l = 0; l < 3; l++) {
 					      dr[l] = -xd[3 * n + l] + xd[3 * i + l];
 					      tmp += dr[l] * dr[l];
 					    }
 
-						if ((n < nbodiesd) || __all(tmp >= dq[depth])) {	// check if all threads agree that cell is far enough away (or is a body)
+					    // NOTE: i-th particle is specific for the given thread.
+					    // However, the above-mentioned index "i" is already sorted by the sortKernel. Hence, below stack-diving operations will
+					    // be performed by different threads of the same warp almost synchronously because adjacent threads
+					    // have particles located in the space not far from each other (=adjacent octants of corresponding local maxdepth).
+					    // Hence, such particles will have a similar stack of the below execution from a perspective of other Barnes-Hut tree
+					    // branches distancing against them. Same global memory fragments (childd[]) will be loaded to the same warp access
+					    // and no corresponding threads' divergence will take place.
+					    // Only in this way, zero thread could control others: see "if (sbase == threadIdx.x)" above and below..
+					    // and this control will be correct. It will be even with a single stack arrays per the single warp:
+					    // The pos, node and dq array fragments are shared between all threads of the whole warp.
+
+					    // Check if all threads agree that cell is far enough away (or is a body, i.e. n < nbodiesd).
+						if ((n < nbodiesd) || __all(tmp >= dq[depth])) {
 							if (n != i) {
 
 							    d1 = sqrtf(tmp/*, 0.5f*/);
@@ -546,20 +781,27 @@ void forceCalculationKernel(dds_float pf,
 								}
 							}
 						} else {
-							// push cell onto stack
+						    // If it is not then let's split octants further (more depth).
+							// Push the cell onto the stack:
 							depth++;
 							if (sbase == threadIdx.x) {
+							    // The given warp should start from this child as a root further:
 								node[depth] = n;
+								// Let's start from it zero octant:
 								pos[depth] = 0;
 							}
 						}
 					} else {
-						depth = max(j, depth - 1);	// early out because all remaining children are also zero
+					    // Early out because all remaining children are also zero.
+					    // We shuld move to the next octant or to the next depth if other threads already
+					    // checked other octants:
+						depth = max(j, depth - 1);
 					}
 				}
-				depth--;	// done with this level
+				depth--;	// Done with this level
 			}
 
+			// Torque:
 			N[0] = u[1] * h[2] - u[2] * h[1];
 			N[1] = u[2] * h[0] - u[0] * h[2];
 			N[2] = u[0] * h[1] - u[1] * h[0];
@@ -588,6 +830,8 @@ __launch_bounds__(THREADS5, FACTOR5)
 void energyCalculationKernel(dds_float pf,
 	     dds_float box_l[3], int periodic[3],dds_float* energySum)
 {
+    // NOTE: the algorithm of this kernel is almost identical to forceCalculationKernel. See comments there.
+
 	register int i, j, k, l, n, depth, base, sbase, diff, t;
 	register float tmp;
 	register float dr[3], h[3], u[3], uc[3];
@@ -699,7 +943,9 @@ void energyCalculationKernel(dds_float pf,
 	}
 
 	sum *= pf;
-    sum /= 2.0f; // the self-consistent field energy
+	// the self-consistent field energy;
+	// the Barnes-Hut algorithm, probably, does not allow to avoid this /2 cause it is not symmetric:
+    sum /= 2.0f;
     // Save per thread result into block shared mem
     res[threadIdx.x] =sum;
     // Sum results within a block
@@ -707,6 +953,8 @@ void energyCalculationKernel(dds_float pf,
     dds_sumReduction_BH(res,&(energySum[blockIdx.x]));
 }
 
+
+// Cuda-specific error handling wrapper
 static void CudaTest(char *msg) {
 	cudaError_t e;
 
@@ -718,10 +966,12 @@ static void CudaTest(char *msg) {
 	}
 }
 
+// Required BH CUDA init.
 void initBHgpu(int blocks) {
 	initializationKernel<<<blocks * FACTOR5, THREADS5>>>();
 	CudaTest("init kernel launch failed");
 
+	// According to the experimental performance optimization:
 	cudaFuncSetCacheConfig(boundingBoxKernel, cudaFuncCachePreferShared);
 	cudaFuncSetCacheConfig(boundingBoxKernel, cudaFuncCachePreferShared);
 	cudaFuncSetCacheConfig(treeBuildingKernel, cudaFuncCachePreferL1);
@@ -732,6 +982,7 @@ void initBHgpu(int blocks) {
 	cudaGetLastError();	// reset error value
 }
 
+// Building Barnes-Hut spatial min/max position box
 void buildBoxBH(int blocks) {
 	cudaThreadSynchronize();
 	boundingBoxKernel<<<blocks * FACTOR1, THREADS1>>>();
@@ -739,24 +990,32 @@ void buildBoxBH(int blocks) {
 	cudaThreadSynchronize();
 }
 
+// Building Barnes-Hut tree in a linear childd array representation
+// of octant cells and particles inside.
 void buildTreeBH(int blocks) {
 	treeBuildingKernel<<<blocks * FACTOR2, THREADS2>>>();
 	CudaTest("kernel 2 launch failed");
 	cudaThreadSynchronize();
 }
 
+// Calculate octant cells masses and cell index counts.
+// Determine cells centers of mass and total dipole moments
+// on all possible levels of the BH tree.
 void summarizeBH(int blocks) {
 	summarizationKernel<<<blocks * FACTOR3, THREADS3>>>();
 	CudaTest("kernel 3 launch failed");
 	cudaThreadSynchronize();
 }
 
+// Sort particle indexes according to the BH tree representation.
+// Crucial for the per-warp perfomance tuning of forceCalculationKernel and energyCalculationKernel.
 void sortBH(int blocks) {
 	sortKernel<<<blocks * FACTOR4, THREADS4>>>();
 	CudaTest("kernel 4 launch failed");
 	cudaThreadSynchronize();
 }
 
+// Force calculation.
 void forceBH(int blocks, dds_float k, float* f, float* torque, dds_float box_l[3],int periodic[3]) {
 	dds_float* box_l_gpu;
 	int* periodic_gpu;
@@ -773,6 +1032,7 @@ void forceBH(int blocks, dds_float k, float* f, float* torque, dds_float box_l[3
 	cudaFree(periodic_gpu);
 }
 
+// Energy calculation.
 void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float* E) {
 	dds_float* box_l_gpu;
 	int* periodic_gpu;
@@ -805,6 +1065,7 @@ void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float*
 	cuda_safe_mem(cudaFree(periodic_gpu));
 }
 
+// Function to set the BH method parameters.
 void setBHPrecision(float epssq, float itolsq) {
     float epssq_loc, itolsq_loc;
     epssq_loc = epssq;

@@ -215,11 +215,11 @@ protected:
   int m_gpu_npart;
   bool m_gpu;
 #ifdef BARNES_HUT
-  int m_blocks;
-  int m_bhnnodes; // Barnes-Hut tree build nodes
-  BHBox m_boxl;
-  BHArrays m_arrl;
-  float *m_mass;
+  int m_blocks;   // # of blocks.
+  int m_bhnnodes; // Barnes-Hut tree build nodes (8*m_gpu_npart).
+  BHBox m_boxl;   // Barnes-Hut spatial min/max box limits.
+  BHArrays m_arrl;// All the arrays required for the present Barnes-Hut implementation.
+  float *m_mass;  // Count of particles in octant cells of different levels.
 #endif
 
   float *m_r_gpu_begin;
