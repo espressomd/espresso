@@ -139,13 +139,16 @@ class Analysis(object):
         if id != None:
             if not isinstance(id, int):
                 raise ValueError("Id has to be an integer")
+            if not id in self._system.part[:].id:
+                raise ValueError("Id has to be an index of an existing particle")
             _pos = self._system.part[id].pos
             for i in range(3):
                 cpos[i] = _pos[i]
+            _id = id
         else:
             for i in range(3):
                 cpos[i] = pos[i]
-                _id = -1
+            _id = -1
         return c_analyze.distto(c_analyze.partCfg(), cpos, _id)
 
     #
@@ -329,16 +332,31 @@ class Analysis(object):
     #
     # Pressure analysis
     #
-
-
-    def pressure(self, v_comp=0):
-        """Get the systems pressure.
-           
-        Parameters
-        ----------
-        v_comp : :obj:`bool`, optional
-                    
+    def pressure(self, v_comp=False):
+        """Calculates the pressure 
+        
+        Returns
+        -------
+        a dictionary with the following keys:
+         
+        * "total", total pressure
+        * "ideal", ideal pressure
+        * "bonded" , total bonded pressure
+        * "bonded", bond_type , bonded pressure which arises from the given bond_type
+        * "nonbonded", total nonbonded pressure
+        * "nonbonded", type_i, type_j, nonboned pressure which arises from the interactions between type_i and type_j
+        * "nonbonded_intra", type_i, type_j, nonboned pressure between short ranged forces between type i and j and with the same mol_id
+        * "nonbonded_inter" type_i, type_j", nonboned pressure between short ranged forces between type i and j and different mol_ids
+        * "coulomb", Maxwell stress, how it is calculated depends on the method
+        * "dipolar", TODO
+        * "vs_relative", In case of rigid body rotation, virial contribution from torques is not included.
+           The pressure contribution for rigid bodies constructed by means of the
+           VIRTUAL\_SITES\_RELATIVE mechanism is included. On the other hand, the
+           pressure contribution for rigid bonds is not included.
+        
         """
+        v_comp=int(v_comp)
+        
         check_type_or_throw_except(v_comp, 1, int, "v_comp must be a boolean")
     
         # Dict to store the results
@@ -418,14 +436,31 @@ class Analysis(object):
         return p
 
 
-    def stress_tensor(self, v_comp=0):
-        """Get the stress tensor.
-
-        Parameters
-        ----------
-        v_comp : :obj:`bool`
-
+    def stress_tensor(self, v_comp=False):
+        """Calculates the stress tensor
+        
+        Returns
+        -------
+        a dictionary with the following keys:
+         
+        * "total", total stress tensor
+        * "ideal", ideal stress tensor
+        * "bonded" , total bonded stress tensor
+        * "{bonded, bond_type}" , bonded stress tensor which arises from the given bond_type
+        * "nonbonded", total nonbonded stress tensor
+        * "nonbonded type_i", type_j, nonboned stress tensor which arises from the interactions between type_i and type_j
+        * "nonbonded_intra type_i" type_j, nonboned stress tensor between short ranged forces between type i and j and with the same mol_id
+        * "nonbonded_inter type_i", type_j, nonboned stress tensor between short ranged forces between type i and j and different mol_ids
+        * "coulomb", Maxwell stress tensor, how it is calculated depends on the method
+        * "dipolar", TODO
+        * "vs_relative", In case of rigid body rotation, virial contribution from torques is not included.
+           The stress_tensor contribution for rigid bodies constructed by means of the
+           VIRTUAL\_SITES\_RELATIVE mechanism is included. On the other hand, the
+           pressure contribution for rigid bonds is not included.
+        
         """
+        v_comp=int(v_comp)
+        
         check_type_or_throw_except(v_comp, 1, int, "v_comp must be a boolean")
 
         # Dict to store the results
@@ -628,10 +663,28 @@ class Analysis(object):
 
 
     def calc_re(self, chain_start=None, number_of_chains=None, chain_length=None):
+        """
+        Calculates the Root Mean Square end-to-end distance of chains and its standard deviation, as well as Mean Square end-to-end distance of chains and its standard deviation.
+        
+        Parameters
+        ----------
+        chain_start : :obj:`int`.
+        number_of_chains : :obj:`int`.
+        chain_length : :obj:`int`.
+        
+        Returns            
+        -------
+        array_like
+            Where [0] is the Root Mean Square end-to-end distance of chains
+            and [1] its standard deviation,
+            [2] the Mean Square end-to-end distance
+            and [3] its standard deviation.
+
+        """
         cdef double * re = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
         c_analyze.calc_re(c_analyze.partCfg(), & re)
-        tuple_re = (re[0], re[1], re[2])
+        tuple_re = (re[0], re[1], re[2], re[3])
         free(re)
         return tuple_re
 

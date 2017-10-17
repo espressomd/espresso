@@ -374,7 +374,7 @@ IF LENNARD_JONES_GENERIC == 1:
                 "e2": ia_params.LJGEN_a2,
                 "b1": ia_params.LJGEN_b1,
                 "b2": ia_params.LJGEN_b2,
-                "lambda": ia_params.LJGEN_lambda,
+                "lam": ia_params.LJGEN_lambda,
                 "delta": ia_params.LJGEN_softrad
             }
 
@@ -399,7 +399,7 @@ IF LENNARD_JONES_GENERIC == 1:
                                     self._params["b1"],
                                     self._params["b2"],
                                     0.0,
-                                    self._params["lambda"],
+                                    self._params["lam"],
                                     self._params["delta"]):
                     raise Exception(
                         "Could not set Generic Lennard Jones parameters")
@@ -430,7 +430,7 @@ IF LENNARD_JONES_GENERIC == 1:
                 "b1": 0.,
                 "b2": 0.,
                 "delta": 0.,
-                "lambda": 0.}
+                "lam": 0.}
 
         def type_name(self):
             return "GenericLennardJones"
@@ -462,14 +462,14 @@ IF LENNARD_JONES_GENERIC == 1:
             delta : float, optional
                     LJGEN_SOFTCORE parameter. Allows control over how smoothly
                     the potential drops to zero as lambda approaches zero.
-            lambda : float, optional
-                     LJGEN_SOFTCORE parameter. Tune the strength of the
+            lam : float, optional
+                     LJGEN_SOFTCORE parameter lambda. Tune the strength of the
                      interaction.
             """
             super(GenericLennardJonesInteraction, self).set_params(**kwargs)
 
         def valid_keys(self):
-            return "epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2", "delta", "lambda"
+            return "epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2", "delta", "lam"
 
         def required_keys(self):
             return "epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2"

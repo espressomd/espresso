@@ -40,8 +40,8 @@ cdef extern from "interaction_data.hpp":
         double LJGEN_shift
         double LJGEN_offset
         double LJGEN_capradius
-        int LJGEN_a1
-        int LJGEN_a2
+        double LJGEN_a1
+        double LJGEN_a2
         double LJGEN_b1
         double LJGEN_b2
         double LJGEN_lambda
@@ -95,14 +95,14 @@ cdef extern from "ljgen.hpp":
         cdef int ljgen_set_params(int part_type_a, int part_type_b,
                                   double eps, double sig, double cut,
                                   double shift, double offset,
-                                  int a1, int a2, double b1, double b2,
+                                  double a1, double a2, double b1, double b2,
                                   double cap_radius,
                                   double genlj_lambda, double softrad)
     ELSE:
         cdef int ljgen_set_params(int part_type_a, int part_type_b,
                                   double eps, double sig, double cut,
                                   double shift, double offset,
-                                  int a1, int a2, double b1, double b2,
+                                  double a1, double a2, double b1, double b2,
                                   double cap_radius)
 
 

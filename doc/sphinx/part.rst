@@ -37,7 +37,7 @@ It is also possible to add several particles at once:::
 
 Furthermore, the :meth:`espressomd.particle_data.ParticleList.add` method returns the added particle(s):::
 
-    tracer=system.part.add(poa=(0,0,0))
+    tracer=system.part.add(pos=(0,0,0))
     print(tracer.pos)
 
 Note that the instance of :class:`espressomd.particle_data.ParticleHandle` returned by :meth:`espressomd.particle_data.ParticleList.add` are handles for the live particles in the simulation, rather than offline copies. Changing their properties will affect the simulation.
@@ -46,18 +46,22 @@ Note that the instance of :class:`espressomd.particle_data.ParticleHandle` retur
 Accessing particle properties
 -----------------------------
 
-Particle properties can be accessed like a class
-member. To access property ``PROPERTY`` of the particle with id ``ID``::
+Particle properties can be accessed like a class member.
 
-    system.part[<ID>].<PROPERTY>
+To access property ``PROPERTY`` of the particle with index ``INDEX``::
 
-For example, to print the current position of the particle with id 0 in the system, call::
+    system.part[<INDEX>].<PROPERTY>
+
+For example, to print the current position of the particle with index 0 in the system, call::
 
     print(system.part[0].pos)
 
 Similarly, the position can be set::
 
     system.part[0].pos=(1,2.5,3)
+    system.part[0].id=4
+
+Note that the index and the property ID are not necessasirly the same.
 
 Interacting with groups of particles
 ------------------------------------
@@ -67,7 +71,7 @@ The :class:`espressomd.particle_data.ParticleList` support slicing similarly to 
     print(sysstem.part[:].pos)
     system.part[:].q=0
 
-To access particles with ids ranging from 0 to 9, use::
+To access particles with indices ranging from 0 to 9, use::
     
     system.party[0:10].pos
 
@@ -79,7 +83,7 @@ Deleting particles
 ------------------
 
 Particles can be easily deleted in Python using particle ids or ranges of particle ids.
-For example, to delete all particles with particle id greater than 10, run::
+For example, to delete all particles with particle index greater than 10, run::
 
     >>> system.part[10:].remove()
 
@@ -99,7 +103,7 @@ You can iterate over all particles or over a subset of particles as follows::
 
 You can iterate over all pairs of particles using::
     
-    for pair in system.part.paris():
+    for pair in system.part.pairs():
         print(pair[1].id,pair[2].id)
 
         
@@ -455,3 +459,89 @@ chosen particle id, for a particle of the given type. The keyword
 ``status`` will return a list with all particles with the given type,
 similarly giving ``number`` as argument will return the number of
 particles which share the given type.
+
+Self-propelled swimmers
+-----------------------
+
+.. note::
+
+    If you are using this feature, please cite :cite:`degraaf16`.
+
+
+.. seealso::
+
+    :class:`espressomd.particle_data.ParticleHandle.swimming`
+
+Langevin swimmers
+~~~~~~~~~~~~~~~~~
+
+::
+
+    import espressomd
+
+    system = espressomd.System()
+
+    system.part.add(id=0, pos=[1,0,0], swimming={'f_swim':0.03})
+
+This enables the particle to be self-propelled in the direction determined by
+its quaternion. For setting the particle's quaternion see
+:class:`espressomd.particle_data.ParticleHandle.quat`. The self-propulsion
+speed will relax to a constant velocity, that is specified by ``v_swim``.
+Alternatively it is possible to achieve a constant velocity by imposing a
+constant force term ``f_swim`` that is balanced by friction of a (Langevin)
+thermostat. The way the velocity of the particle decays to the constant
+terminal velocity in either of these methods is completely determined by the
+friction coefficient. You may only set one of the possibilities ``v_swim`` *or*
+``f_swim`` as you cannot relax to constant force *and* constant velocity at the
+same time. Note that there is no real difference between ``v_swim`` and
+``f_swim``, since the latter may aways be chosen such that the same terminal
+velocity is achieved for a given friction coefficient.
+
+Lattice-Boltzmann (LB) swimmers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+::
+
+    import espressomd
+
+    system = espressomd.System()
+
+    system.part.add(id=1, pos=[2,0,0], rotation=[1,1,1], swimming={
+       'f_swim':0.01, 'mode':'pusher', 'dipole_length':2.0, 'rotational_friction':20})
+
+For an explanation of the parameters ``v_swim`` and ``f_swim`` see the previous
+item. In lattice-Boltzmann self-propulsion is less trivial than for regular MD,
+because the self-propulsion is achieved by a force-free mechanism, which has
+strong implications for the far-field hydrodynamic flow field induced by the
+self-propelled particle. In |es| only the dipolar component of the flow field
+of an active particle is taken into account. This flow field can be generated
+by a *pushing* or a *pulling* mechanism, leading to change in the sign of the
+dipolar flow field with respect to the direction of motion. You can specify the
+nature of the particle's flow field by using one of the modes: ``pusher`` or
+``puller``. You will also need to specify a ``dipole_length`` which determines
+the distance of the source of propulsion from the particle's center. Note that
+you should not put this distance to zero; |es| (currently) does not support
+mathematical dipole flow fields. The key ``rotational_friction`` can be used to
+set the friction that causes the orientation of the particle to change in shear
+flow. The torque on the particle is determined by taking the cross product of
+the difference between the fluid velocity at the center of the particle and at
+the source point and the vector connecting the center and source.
+
+You may ask: “Why are there two methods ``v_swim`` and ``f_swim`` for the
+self-propulsion using the lattice-Bolzmann algorithm?” The answer is
+straightforward. When a particle is accelerating, it has a monopolar flow-field
+contribution which vanishes when it reaches its terminal velocity (for which
+there will only be a dipolar flow field). The major difference between the
+above two methods is that with ``v_swim`` the flow field *only* has a monopolar
+moment and *only* while the particle is accelerating. As soon as the particle
+reaches a constant speed (given by ``v_swim``) this monopolar moment is gone
+and the flow field is zero! In contrast, ``f_swim`` always, i.e., while
+accelerating *and* while swimming at constant force possesses a dipolar flow
+field.
+
+.. warning::
+
+    Please note that even though swimming is interoperable with the
+    CPU version of LB it is only supported on *one* Open MPI
+    node, i.e. ``n_nodes`` = 1.
+

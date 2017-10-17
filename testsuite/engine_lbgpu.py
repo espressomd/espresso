@@ -8,12 +8,12 @@ import espressomd.lb
 
 import os
 import numpy as np
+
 try:
     import vtk
 except ImportError:
     print("Module \"vtk\" not available, skipping test!")
     exit()
-
 
 @ut.skipIf(not espressomd.has_features(["ENGINE", "LB_GPU"]),
            "Features not available, skipping test!")
@@ -90,7 +90,7 @@ class SwimmerTest(ut.TestCase):
         S = espressomd.System()
         self.prepare(S)
 
-        lbm = espressomd.lb.LBFluid(
+        lbm = espressomd.lb.LBFluid_GPU(
             agrid=1.0,
             tau=S.time_step,
             fric=0.5,
@@ -100,14 +100,14 @@ class SwimmerTest(ut.TestCase):
         S.actors.add(lbm)
         self.run_and_check(S, lbm, tests_common.abspath("data/engine_lbgpu_2pt.vtk"))
 
-        # lbm = espressomd.lb.LBFluid(
-        #     agrid=1.0,
-        #     tau=S.time_step,
-        #     fric=0.5,
-        #     visc=1.0,
-        #     dens=1.0,
-        #     couple="3pt")
-        # self.run_and_check(S, lbm, tests_common.abspath("data/engine_lbgpu_3pt.vtk"))
+        lbm = espressomd.lb.LBFluid_GPU(
+            agrid=1.0,
+            tau=S.time_step,
+            fric=0.5,
+            visc=1.0,
+            dens=1.0,
+            couple="3pt")
+        self.run_and_check(S, lbm, tests_common.abspath("data/engine_lbgpu_3pt.vtk"))
 
 if __name__ == '__main__':
     ut.main()

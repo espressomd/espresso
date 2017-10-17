@@ -73,7 +73,7 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
 
     cdef cppclass c_reaction_ensemble "ReactionEnsemble::ReactionEnsemble":
         reaction_system m_current_reaction_system
-        int do_reaction() except +
+        int do_reaction(int reaction_steps) except +
         bool do_global_mc_move_for_particles_of_type(int type, int start_id_polymer, int end_id_polymer, int particle_number_of_type, bool use_wang_landau)
         int find_index_of_type(int type) except +
         void set_cuboid_reaction_ensemble_volume()

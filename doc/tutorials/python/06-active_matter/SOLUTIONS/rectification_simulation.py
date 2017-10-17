@@ -162,7 +162,8 @@ system.non_bonded_inter[0,4].lennard_jones.set_params(epsilon=eps, sigma=sig, cu
 # Setup the particles. We put them all in two points one in each chamber
 # and give them random directions. This speeds up the equilibration, since
 # putting them all in a single chamber, would make it take a long time to
-# observe the effect of rectification.
+# observe the effect of rectification. Note that they need to be able to 
+# rotate freely, hence the command rotation=[1,1,1] is provided
 #
 ################################################################################
 
@@ -180,7 +181,7 @@ for cntr in range(npart):
     phi   = float(2*np.random.random()*np.pi)
     quats = a2quat(theta,phi)
 
-    system.part.add(pos=[x,y,z],type=0,swimming={'v_swim':vel},quat=quats)
+    system.part.add(pos=[x,y,z],type=0,swimming={'v_swim':vel},quat=quats,rotation=[1,1,1])
 
 ################################################################################
 
@@ -199,6 +200,7 @@ with open("{}/CMS_{}.dat".format(outdir,vel), "w") as outfile:
      
     dev_sum = 0.0
     dev_av  = 0.0
+    time_0 = system.time
     for i in range(prod_steps):
         # We output the coordinate of the center of mass in 
         # the direction of the long axis, here we consider 
@@ -209,8 +211,10 @@ with open("{}/CMS_{}.dat".format(outdir,vel), "w") as outfile:
         if i > 0:
             dev_sum = dev_sum + dev
             dev_av  = dev_sum/i
+
+        time = system.time - time_0
      
-        print("{} {} {}".format(system.time,dev,dev_av),file=outfile)
+        print("{} {} {}".format(time,dev,dev_av),file=outfile)
 
         system.integrator.run(prod_length)
 
