@@ -112,6 +112,12 @@ void calculate_verlet_virials(int v_comp);
     interactions */
 inline bool verlet_list_criterion(const Particle* p1, const Particle* p2,double dist2)
 {
+ 
+#ifdef NO_INTRA_NB_ALL
+  if (p1->p.mol_id == p2->p.mol_id)
+    return false;
+#endif
+
   if (dist2 > SQR(max_cut +skin))
     return false;
 

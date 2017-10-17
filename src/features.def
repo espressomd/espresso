@@ -173,8 +173,10 @@ GAUSSRANDOMCUT                  requires not GAUSSRANDOM and not FLATNOISE
 /* Strange features. Use only if you know what you are doing! */
 /* activate the old dihedral form */
 OLD_DIHEDRAL                    notest
-/* turn off nonbonded interactions within molecules */
+/* turn off certain nonbonded interactions within molecules */
 NO_INTRA_NB                     notest
+/* turn off all nonbonded interactions within molecules */
+NO_INTRA_NB_ALL                 notest
 /* ghost particles also have the bond information. */
 GHOSTS_HAVE_BONDS               notest
 

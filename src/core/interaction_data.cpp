@@ -782,6 +782,8 @@ const char *get_name_of_bonded_ia(BondedInteraction type) {
     return "QUARTIC";
   case BONDED_IA_BONDED_COULOMB:
     return "BONDED_COULOMB";
+  case BONDED_IA_BONDED_COULOMB_P3M_SR:
+    return "BONDED_COULOMB_P3M_SR";
   case BONDED_IA_SUBT_LJ:
     return "SUBT_LJ";
   case BONDED_IA_TABULATED:

@@ -83,6 +83,9 @@
 #include "reaction_field.hpp"
 #include "scafacos.hpp"
 #endif
+#ifdef P3M
+#include "bonded_coulomb_p3m_sr.hpp"
+#endif
 #ifdef IMMERSED_BOUNDARY
 #include "immersed_boundary/ibm_main.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"
@@ -272,6 +275,7 @@ inline void calc_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
     @param dist2     distance squared between p1 and p2. */
 inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
                                       double dist, double dist2) {
+
   IA_parameters *ia_params = get_ia_param(p1->p.type, p2->p.type);
   double force[3] = {0., 0., 0.};
   double torque1[3] = {0., 0., 0.};
@@ -491,6 +495,10 @@ inline void add_bonded_force(Particle *p1) {
 
     /* fetch particle 2, which is always needed */
     p2 = local_particles[p1->bl.e[i++]];
+
+    //printf("BEFORE T %d F %.5f %.5f %.5f P1F %.5f %.5f %.5f\n", type, force[0], force[1], force[2],p1->f.f[0], p1->f.f[1],p1->f.f[2]);
+    //printf("BEFORE T %d F %.5f %.5f %.5f P2F %.5f %.5f %.5f\n", type, force[0], force[1], force[2],p2->f.f[0], p2->f.f[1],p2->f.f[2]);
+    
     if (!p2) {
       runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
                         << " and " << p1->bl.e[i - 1]
@@ -572,6 +580,11 @@ inline void add_bonded_force(Particle *p1) {
 #ifdef ELECTROSTATICS
     case BONDED_IA_BONDED_COULOMB:
       bond_broken = calc_bonded_coulomb_pair_force(p1, p2, iaparams, dx, force);
+      break;
+#endif
+#ifdef P3M
+    case BONDED_IA_BONDED_COULOMB_P3M_SR:
+      bond_broken = calc_bonded_coulomb_p3m_sr_pair_force(p1, p2, iaparams, dx, force);
       break;
 #endif
 #ifdef HYDROGEN_BOND
@@ -882,6 +895,8 @@ inline void add_bonded_force(Particle *p1) {
         break;
       }
     }
+    //printf("AFTER T %d F %.5f %.5f %.5f P1F %.5f %.5f %.5f\n", type, force[0], force[1], force[2],p1->f.f[0], p1->f.f[1],p1->f.f[2]);
+    //printf("AFTER T %d F %.5f %.5f %.5f P2F %.5f %.5f %.5f\n", type, force[0], force[1], force[2],p2->f.f[0], p2->f.f[1],p2->f.f[2]);
   }
 }
 

@@ -44,24 +44,23 @@ inline void add_thole_pair_force(const Particle * const p1, const Particle * con
 				   double d[3], double dist, double force[3])
 {
   double q1q2 = ia_params->THOLE_q1q2;
-  if (thole_active && q1q2 != 0 && dist < p3m.params.r_cut) {
+  if (thole_active && dist < p3m.params.r_cut && !(bond_between_particles(p1,p2, BONDED_IA_DRUDE))) {
     
-    if (bond_between_particles(p1,p2, BONDED_IA_DRUDE))
-        return;
-
     double dist2 = dist*dist;
     double thole_s = ia_params->THOLE_scaling_coeff;
-    //Subtract p3m shortrange
+    
+    //Subtract p3m shortrange (dipole-dipole charge portion) to add damped coulomb later
     p3m_add_pair_force(-q1q2, d, dist2, dist, force);
-
+    
     //Calc damping function
     // S(r) = 1.0 - (1.0 + thole_s*r/2.0) * exp(-thole_s*r); 
     // Calc F = - d/dr ( S(r)*q1q2/r) =  -(1/2)*(-2+(r^2*s^2+2*r*s+2)*exp(-s*r))*q1q2/r^2
     // Everything before q1q2/r^2 can be used as a factor for the p3m_add_pair_force method
     double sr = thole_s * dist;
     double dS_r = 0.5 * (  2.0 - ( exp(-sr) * (sr * (sr + 2.0) + 2.0) ) ); 
-    //Add damped p3m shortrange
+    //Add damped p3m shortrange of diploe term
     p3m_add_pair_force(q1q2*dS_r, d, dist2, dist, force);
+    
 
     ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: THOLE   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));
     ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: THOLE   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac));
@@ -75,7 +74,7 @@ inline double thole_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_pa
 {
     double e_thole = 0;
 
-    if (dist < p3m.params.r_cut) {
+    if (thole_active && dist < p3m.params.r_cut && !(bond_between_particles(p1,p2, BONDED_IA_DRUDE))) {
 
         double dist2 = dist*dist;
         double thole_s = ia_params->THOLE_scaling_coeff;

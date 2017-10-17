@@ -877,6 +877,86 @@ class HarmonicBond(BondedInteraction):
         harmonic_set_params(
             self._bond_id, self._params["k"], self._params["r_0"], self._params["r_cut"])
 
+
+if ELECTROSTATICS:
+    class BondedCoulombBond(BondedInteraction):
+
+        def __init__(self, *args, **kwargs):
+            """ 
+            BondedCoulombBond initialiser. Used to instatiate a BondedCoulombBond identifier
+            with a given set of parameters. 
+
+            Parameters
+            ----------
+
+            prefactor : float
+                        Sets the coulomb prefactor of the bonded coulomb interaction.
+            """
+            super(BondedCoulombBond, self).__init__(*args, **kwargs)
+
+
+        def type_number(self):
+            return BONDED_IA_BONDED_COULOMB
+
+        def type_name(self):
+            return "BONDED_COULOMB"
+
+        def valid_keys(self):
+            return {"prefactor"}
+
+        def required_keys(self):
+            return {"prefactor"}
+
+        def set_default_params(self):
+            self._params = {"prefactor": 1.}
+
+        def _get_params_from_es_core(self):
+            return \
+                {"prefactor": bonded_ia_params[self._bond_id].p.bonded_coulomb.prefactor}
+
+        def _set_params_in_es_core(self):
+            bonded_coulomb_set_params(
+                self._bond_id,  self._params["prefactor"])
+
+if P3M:
+    class BondedCoulombP3MSRBond(BondedInteraction):
+
+        def __init__(self, *args, **kwargs):
+            """ 
+            BondedCoulombP3MSRBond initialiser. Used to instatiate a BondedCoulombP3MSRBond identifier
+            with a given set of parameters. Calculates ony the P3M shortrange part.
+
+            Parameters
+            ----------
+
+            q1q2 : float
+                   Sets the charge factor of the involved particle pair. Useful to partly subtract coulomb interaction in combination with intramolecular thole screening.
+            """
+            super(BondedCoulombP3MSRBond, self).__init__(*args, **kwargs)
+
+
+        def type_number(self):
+            return BONDED_IA_BONDED_COULOMB_P3M_SR
+
+        def type_name(self):
+            return "BONDED_COULOMB_P3M_SR"
+
+        def valid_keys(self):
+            return {"q1q2"}
+
+        def required_keys(self):
+            return {"q1q2"}
+
+        def set_default_params(self):
+            self._params = {"q1q2": 1.}
+
+        def _get_params_from_es_core(self):
+            return \
+                {"q1q2": bonded_ia_params[self._bond_id].p.bonded_coulomb_p3m_sr.q1q2}
+
+        def _set_params_in_es_core(self):
+            bonded_coulomb_p3m_sr_set_params(
+                self._bond_id,  self._params["q1q2"])
 if DRUDE:
     class DrudeBond(BondedInteraction):
 
@@ -1559,7 +1639,10 @@ bonded_interaction_classes = {
 }
 IF LENNARD_JONES:
     bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = Subt_Lj
-
+IF ELECTROSTATICS:
+    bonded_interaction_classes[int(BONDED_IA_BONDED_COULOMB)] = BondedCoulombBond
+IF P3M:
+    bonded_interaction_classes[int(BONDED_IA_BONDED_COULOMB_P3M_SR)] = BondedCoulombP3MSRBond
 
 class BondedInteractions(object):
 

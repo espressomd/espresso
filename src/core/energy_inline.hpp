@@ -56,6 +56,9 @@
 #ifdef ELECTROSTATICS
 #include "bonded_coulomb.hpp"
 #endif
+#ifdef P3M
+#include "bonded_coulomb_p3m_sr.hpp"
+#endif
 #include "actor/EwaldGPU_ShortRange.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
@@ -371,6 +374,11 @@ inline void add_bonded_energy(Particle *p1) {
 #ifdef ELECTROSTATICS
     case BONDED_IA_BONDED_COULOMB:
       bond_broken = bonded_coulomb_pair_energy(p1, p2, iaparams, dx, &ret);
+      break;
+#endif
+#ifdef P3M
+    case BONDED_IA_BONDED_COULOMB_P3M_SR:
+      bond_broken = bonded_coulomb_p3m_sr_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #endif
 #ifdef LENNARD_JONES

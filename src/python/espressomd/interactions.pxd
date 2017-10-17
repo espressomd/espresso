@@ -160,6 +160,14 @@ cdef extern from "interaction_data.hpp":
         double k
         double r_cut
 
+#* Parameters for Bonded coulomb */
+    ctypedef struct Bonded_coulomb_bond_parameters:
+        double prefactor
+
+#* Parameters for Bonded coulomb p3m sr */
+    ctypedef struct Bonded_coulomb_p3m_sr_bond_parameters:
+        double q1q2
+
 #* Parameters for three body angular potential (bond-angle potentials).
     ctypedef struct Angle_bond_parameters:
         double bend
@@ -262,6 +270,8 @@ cdef extern from "interaction_data.hpp":
         Oif_global_forces_bond_parameters oif_global_forces
         Oif_local_forces_bond_parameters oif_local_forces
         Drude_bond_parameters drude
+        Bonded_coulomb_bond_parameters bonded_coulomb
+        Bonded_coulomb_p3m_sr_bond_parameters bonded_coulomb_p3m_sr
         Harmonic_bond_parameters harmonic
         Harmonic_dumbbell_bond_parameters harmonic_dumbbell
         Angle_bond_parameters angle
@@ -291,6 +301,10 @@ cdef extern from "harmonic.hpp":
     int harmonic_set_params(int bond_type, double k, double r, double r_cut)
 cdef extern from "drude.hpp":
     int drude_set_params(int bond_type, double temp_com, double gamma_com, double temp_drude, double gamma_drude, double k, double r_cut)
+cdef extern from "bonded_coulomb.hpp":
+    int bonded_coulomb_set_params(int bond_type, double prefactor)
+cdef extern from "bonded_coulomb_p3m_sr.hpp":
+    int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2)
 cdef extern from "dihedral.hpp":
     int dihedral_set_params(int bond_type, int mult, double bend, double phase)
 cdef extern from "angle_harmonic.hpp":
@@ -345,6 +359,7 @@ cdef extern from "interaction_data.hpp":
         BONDED_IA_HARMONIC_DUMBBELL,
         BONDED_IA_QUARTIC,
         BONDED_IA_BONDED_COULOMB,
+        BONDED_IA_BONDED_COULOMB_P3M_SR,
         BONDED_IA_ANGLE_OLD,
         BONDED_IA_DIHEDRAL,
         BONDED_IA_TABULATED,

@@ -18,28 +18,30 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-
-#include "utils.hpp"
-#include "thole.hpp"
-
-#ifdef THOLE
+/** \file bonded_coulomb.cpp
+ *
+ *  Implementation of \ref bonded_coulomb.hpp
+ */
+#include "bonded_coulomb_p3m_sr.hpp"
 #include "communication.hpp"
 
-bool thole_active = false;
+#ifdef ELECTROSTATICS
 
-int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff, double q1q2)
+int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2)
 {
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
-  
-  if (!data) return ES_ERROR;
+  if(bond_type < 0)
+    return ES_ERROR;
 
-  data->THOLE_scaling_coeff = scaling_coeff;
-  data->THOLE_q1q2 = q1q2;
-  thole_active = scaling_coeff != 0 and q1q2 != 0;
+  make_bond_type_exist(bond_type);
+
+  bonded_ia_params[bond_type].p.bonded_coulomb_p3m_sr.q1q2 = q1q2;
+  bonded_ia_params[bond_type].type = BONDED_IA_BONDED_COULOMB_P3M_SR;
+  bonded_ia_params[bond_type].num  = 1;
 
   /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-  
+  mpi_bcast_ia_params(bond_type, -1); 
+
   return ES_OK;
 }
+
 #endif

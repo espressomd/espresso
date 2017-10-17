@@ -64,8 +64,11 @@ inline int calc_drude_forces(Particle *p1, Particle *p2, Bonded_ia_parameters *i
 
   double force_p3m_sr[3] = {0,0,0}; 
 
-  //Coulomb Shortrange
+  
+  #ifndef NO_INTRA_NB_ALL 
+  //Excl. coulomb shortrange drude<->core only if not already done by NO_INRTA_NB_ALL. The case with NO_INTRA_NB_ALL is for drude without thole
   p3m_add_pair_force(chgfac, dx, dist*dist, dist, force_p3m_sr);
+  #endif
 
   for (int i=0; i<3; i++) {
 

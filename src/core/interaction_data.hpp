@@ -45,8 +45,6 @@ enum BondedInteraction {
   BONDED_IA_HARMONIC_DUMBBELL,
   /** Type of bonded interaction is a QUARTIC potential. */
   BONDED_IA_QUARTIC,
-  /** Type of bonded interaction is a BONDED_COULOMB */
-  BONDED_IA_BONDED_COULOMB,
   /** Type of bonded interaction is a bond angle potential. */
   BONDED_IA_ANGLE_OLD,
   /** Type of bonded interaction is a dihedral potential. */
@@ -99,6 +97,10 @@ enum BondedInteraction {
   BONDED_IA_UMBRELLA,
   /** Type of bonded interaction is drude. */
   BONDED_IA_DRUDE,
+  /** Type of bonded interaction is a BONDED_COULOMB */
+  BONDED_IA_BONDED_COULOMB,
+  /** Type of bonded interaction is a BONDED_COULOMB_P3M_SR */
+  BONDED_IA_BONDED_COULOMB_P3M_SR,
 };
 
 /** Specify tabulated bonded interactions  */
@@ -633,8 +635,15 @@ typedef struct {
   double r_cut;
 } Quartic_bond_parameters;
 
+#ifdef ELECTROSTATICS
 /** Parameters for coulomb bond Potential */
 typedef struct { double prefactor; } Bonded_coulomb_bond_parameters;
+#endif
+
+#ifdef P3M
+/** Parameters for coulomb bond p3m shortrange Potential */
+typedef struct { double q1q2; } Bonded_coulomb_p3m_sr_bond_parameters;
+#endif
 
 /** Parameters for three body angular potential (bond-angle potentials).
         ATTENTION: Note that there are different implementations of the bond
@@ -831,7 +840,6 @@ typedef union {
   Harmonic_dumbbell_bond_parameters harmonic_dumbbell;
 #endif
   Quartic_bond_parameters quartic;
-  Bonded_coulomb_bond_parameters bonded_coulomb;
   Angle_bond_parameters angle;
   Angle_harmonic_bond_parameters angle_harmonic;
   Angle_cosine_bond_parameters angle_cosine;
@@ -844,6 +852,12 @@ typedef union {
 #endif
 #ifdef DRUDE
     Drude_parameters drude;
+#endif
+#ifdef ELECTROSTATICS
+  Bonded_coulomb_bond_parameters bonded_coulomb;
+#endif
+#ifdef P3M
+  Bonded_coulomb_p3m_sr_bond_parameters bonded_coulomb_p3m_sr;
 #endif
   Subt_lj_bond_parameters subt_lj;
   Rigid_bond_parameters rigid_bond;
@@ -995,40 +1009,35 @@ int virtual_set_params(int bond_type);
 void set_dipolar_method_local(DipolarInteraction method);
 #endif
 
-//Checks if there is a specific bond between p1 and p2. Needs GHOSTS_HAVE_BONDS if particles are ghosts.
-inline bool bond_between_particles(const Particle * const p1, const Particle * const p2, BondedInteraction bond)
+//Checks if there is a specific bond between p_bond and p_partner, where the bond is stored on p_bond. Needs GHOSTS_HAVE_BONDS if particles are ghosts.
+inline bool are_bonded(const Particle * const p_bond, const Particle * const p_partner, BondedInteraction bond)
 {
-    if (p1==p2 || (p1->bl.n == 0 && p2->bl.n == 0))
-        return false;
-    else {
-        //Bond is saved only on one of the particles. Check which..
-        const Particle * p_bond;
-        const Particle * p_partner;
-        if (p1->bl.n > 0) {
-            p_bond = p1;
-            p_partner = p2;
+    Bonded_ia_parameters *iaparams;
+    int type_num;
+    int i = 0;
+    while (i < p_bond->bl.n) {
+        type_num = p_bond->bl.e[i];
+        iaparams = &bonded_ia_params[type_num];
+        if (iaparams->type == (int)bond && p_bond->bl.e[i+1] == p_partner->p.identity) {
+            return true;
         } else {
-            p_bond = p2;
-            p_partner = p1;
-        }
-       
-
-        Bonded_ia_parameters *iaparams;
-        int type_num ;
-        int i = 0;
-        while (i < p_bond->bl.n) {
-
-            type_num = p_bond->bl.e[i];
-            iaparams = &bonded_ia_params[type_num];
-
-            if (iaparams->type == (int)bond && p_bond->bl.e[i+1] == p_partner->p.identity) {
-                return true;
-            } else {
-                i+= iaparams->num + 1;
-            }
+            i+= iaparams->num + 1;
         }
     }
     return false;
 }
+
+//Checks both particles for a specific bond. Needs GHOSTS_HAVE_BONDS if particles are ghosts.
+inline bool bond_between_particles(const Particle * const p1, const Particle * const p2, BondedInteraction bond)
+{
+    if (p1==p2)
+        return false;
+    else {
+        //Check if particles have bonds (bl.n > 0) and search for the bond of interest with are_bonded().
+        //Could be saved on both sides (and both could have other bonds), so we need to check both.
+        return (p1->bl.n > 0 && are_bonded(p1, p2, bond)) || (p2->bl.n > 0 && are_bonded(p2, p1, bond)); 
+    }
+}
+
 
 #endif
