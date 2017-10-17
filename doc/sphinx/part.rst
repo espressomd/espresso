@@ -274,6 +274,8 @@ those particles, from which the virtual site was derived.
 There are two distinct types of virtual sites, described in the
 following.
 
+.. _Rigid arrangements of particles: 
+
 Rigid arrangements of particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
