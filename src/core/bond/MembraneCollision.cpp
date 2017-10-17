@@ -67,8 +67,11 @@ int Bond::MembraneCollision::add_bonded_four_particle_force(Particle *p1, Partic
 	dn=normr(n);
     if ( fabs(dn) < 0.001 )
 		printf("MembraneCollision.cpp, add_bonded_four_particle_force: Length of outward vector is close to zero!\n");
-	for(j=0;j<3;j++){
-            p1->p.out_direction[j] = n[j]/dn;
+    for(j=0;j<3;j++){
+	  //ifdef cases has to be fixed for all bond classes!!!
+#ifdef MEMBRANE_COLLISION
+	  p1->p.out_direction[j] = n[j]/dn;
+#endif
     }
     return 0;
 

@@ -1,7 +1,6 @@
 #ifndef FENE_BOND_CLASS_H
 #define FENE_BOND_CLASS_H
 #include"PairBond.hpp"
-#include<iostream>
 
 /*
 The definition of the concrete classes.

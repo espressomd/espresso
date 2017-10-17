@@ -8,7 +8,9 @@ namespace Bond {
     
   public:
     //constructor
-    Dihedral(int mult, double bend, double phase) : m_mult{mult}, m_bend{bend}, m_phase{phase} {m_bondtype = BondType::BONDED_IA_DIHEDRAL;}
+    Dihedral(int mult, double bend, double phase) : 
+      m_mult{mult}, m_bend{bend}, m_phase{phase} 
+    {m_bondtype = BondType::BONDED_IA_DIHEDRAL;}
     
     //force calculation
     int add_bonded_four_particle_force(Particle *p1, Particle *p2, Particle *p3, 
@@ -25,8 +27,8 @@ namespace Bond {
   private:  
     //internal function
     void calc_dihedral_angle(Particle *p1, Particle *p2, Particle *p3, Particle *p4, 
-				  double a[3], double b[3], double c[3], 
-				  double aXb[3], double *l_aXb, double bXc[3], double *l_bXc, 
+			     double a[3], double b[3], double c[3], 
+			     double aXb[3], double *l_aXb, double bXc[3], double *l_bXc, 
 			     double *cosphi, double *phi) const;
     // variables
     int m_mult;

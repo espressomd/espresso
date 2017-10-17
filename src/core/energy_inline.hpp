@@ -267,10 +267,60 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 #endif
 }
 
+#ifdef BOND_CLASS_DEBUG
+/**New add_bonded_energy function for bond classes**/
+inline void add_bonded_energy(Particle *p1)
+{
+
+  // variables
+  // bond_list_id: id of bond_map_id in p1->bl.e[]
+  // bond_map_id: id of bond in bond_map
+  // n_partners: number of partners, e.g. for a pair bond -> 1
+  int i, bond_list_id, bond_map_id, n_partners, bond_broken;
+  //energy of that bond
+  double ret;
+  i = 0;
+
+  //We are going through the bond list of particle p1
+  while(i < p1->bl.n){
+
+    //--first assign the variables for this step--
+    //get the bond id in bond list
+    bond_list_id = i;
+    //get the bond map id
+    bond_map_id = p1->bl.e[bond_list_id];
+    //now the number of partners can be determined
+    n_partners = bond_map[bond_map_id]->get_number_of_bond_partners();
+
+    //--Then calculate energy--
+    //and write it into ret
+    //partners are determined automatically in bond classes
+    bond_broken = bond_map[bond_map_id]->add_bonded_energy(p1, bond_list_id, &ret);
+
+    //--Finally add that value to global variable
+    *obsstat_bonded(&energy, bond_map_id) += ret;
+
+    //--Now we are finished and have to go to the next bond--
+    //in bond list: bond itself and number of partners 
+    //next bond in -> n_partners + 1
+    i += n_partners + 1;
+
+    // if there are no bond partners get out of this function
+    // it is easier to return 1 for the future!
+    if(bond_broken == 2)
+      return;
+    
+  };
+
+}
+#endif //BOND_CLASS_DEBUG
+
+
 /** Calculate bonded energies for one particle.
     @param p1 particle for which to calculate energies
 */
 
+#ifndef BOND_CLASS_DEBUG
 inline void add_bonded_energy(Particle *p1) {
   Particle *p2, *p3 = NULL, *p4 = NULL;
 #ifdef TWIST_STACK
@@ -282,13 +332,12 @@ inline void add_bonded_energy(Particle *p1) {
 
   i = 0;
   while (i < p1->bl.n) {
-    int bl_id = i;
     type_num = p1->bl.e[i++];
     iaparams = &bonded_ia_params[type_num];
     type = iaparams->type;
     n_partners = iaparams->num;
 
-    /* fetch particle 2, which is always needed */
+    //fetch particle 2, which is always needed
     p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
       runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
@@ -297,7 +346,7 @@ inline void add_bonded_energy(Particle *p1) {
       return;
     }
 
-    /* fetch particle 3 eventually */
+    //fetch particle 3 eventually
     if (n_partners >= 2) {
       p3 = local_particles[p1->bl.e[i++]];
       if (!p3) {
@@ -309,7 +358,7 @@ inline void add_bonded_energy(Particle *p1) {
       }
     }
 
-    /* fetch particle 4 eventually */
+    //fetch particle 4 eventually
     if (n_partners >= 3) {
       p4 = local_particles[p1->bl.e[i++]];
       if (!p4) {
@@ -338,17 +387,13 @@ inline void add_bonded_energy(Particle *p1) {
       }
     }
 #endif
-    /* similar to the force, we prepare the center-center vector */
+    //similar to the force, we prepare the center-center vector
     if (n_partners == 1)
       get_mi_vector(dx, p1->r.p, p2->r.p);
 
-    if(type == BONDED_IA_FENE){
-      bond_broken = bond_map[type_num]->add_bonded_energy(p1, bl_id, &ret);
-    };
-
     switch (type) {
     case BONDED_IA_FENE:
-      //bond_broken = fene_pair_energy(p1, p2, iaparams, dx, &ret);
+      bond_broken = fene_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #ifdef ROTATION
     case BONDED_IA_HARMONIC_DUMBBELL:
@@ -384,7 +429,7 @@ inline void add_bonded_energy(Particle *p1) {
 #endif
 #ifdef BOND_ANGLE
     case BONDED_IA_ANGLE_HARMONIC:
-      bond_broken = angle_harmonic_energy(p1, p2, p3, iaparams, &ret);
+      bond_broken = angle_harmonic_energy(p1, p2, p3, iaparams, &ret);      
       break;
     case BONDED_IA_ANGLE_COSINE:
       bond_broken = angle_cosine_energy(p1, p2, p3, iaparams, &ret);
@@ -494,6 +539,8 @@ inline void add_bonded_energy(Particle *p1) {
     *obsstat_bonded(&energy, type_num) += ret;
   }
 }
+
+#endif //BOND_CLASS_DEBUG
 
 /** Calculate kinetic energies for one particle.
     @param p1 particle for which to calculate energies

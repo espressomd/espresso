@@ -476,10 +476,53 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 }
 
 
+#ifdef BOND_CLASS_DEBUG
+/**New add_bonded_force function for bond classes**/
+inline void add_bonded_force(Particle *p1)
+{
+
+  // variables
+  // bond_list_id: id of bond_map_id in p1->bl.e[]
+  // bond_map_id: id of bond in bond_map
+  // n_partners: number of partners, e.g. for a pair bond -> 1
+  int i, bond_list_id, bond_map_id, n_partners, bond_broken;
+  i = 0;
+
+  //We are going through the bond list of particle p1
+  while(i < p1->bl.n){
+
+    //--first assign the variables for this step--
+    //get the bond id in bond list
+    bond_list_id = i;
+    //get the bond map id
+    bond_map_id = p1->bl.e[bond_list_id];
+    //now the number of partners can be determined
+    n_partners = bond_map[bond_map_id]->get_number_of_bond_partners();
+
+    //--Then calculate forces--
+    //in this function the forces are written directly into the particles
+    //because it determines the bond partners by itself
+    bond_broken = bond_map[bond_map_id]->add_bonded_force(p1, bond_list_id);
+
+    // if there are no bond partners get out of this function
+    // it is easier to return 1 for the future!
+    if(bond_broken == 2)
+      return;
+
+    //--Now we are finished and have to go to the next bond--
+    //in bond list: bond itself and number of partners 
+    //next bond in -> n_partners + 1
+    i += n_partners + 1;
+    
+  };
+
+}
+#endif //BOND_CLASS_DEBUG
+
 /** Calculate bonded forces for one particle.
     @param p1 particle for which to calculate forces
 */
-
+#ifndef BOND_CLASS_DEBUG
 inline void add_bonded_force(Particle *p1) {
   double dx[3] = {0., 0., 0.};
   double force[3] = {0., 0., 0.};
@@ -502,17 +545,17 @@ inline void add_bonded_force(Particle *p1) {
 #endif
   Particle *p2 = NULL, *p3 = NULL, *p4 = NULL;
 
-  int i, j, type_num, type, n_partners, bond_broken;
+  int i, j, type_num, type, n_partners, bond_broken, bl_id;
 
   i = 0;
   while (i < p1->bl.n) {
-    int bl_id = i;
+    // index in p1->bl.e where the bond is
     type_num = p1->bl.e[i++];
     Bonded_ia_parameters *iaparams = &bonded_ia_params[type_num];
     type = iaparams->type;
     n_partners = iaparams->num;
 
-    /* fetch particle 2, which is always needed */
+    //fetch particle 2, which is always needed
     p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
       runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
@@ -521,7 +564,7 @@ inline void add_bonded_force(Particle *p1) {
       return;
     }
 
-    /* fetch particle 3 eventually */
+    //fetch particle 3 eventually
     if (n_partners >= 2) {
       p3 = local_particles[p1->bl.e[i++]];
       if (!p3) {
@@ -533,7 +576,7 @@ inline void add_bonded_force(Particle *p1) {
       }
     }
 
-    /* fetch particle 4 eventually */
+    // fetch particle 4 eventually
     if (n_partners >= 3) {
       p4 = local_particles[p1->bl.e[i++]];
       if (!p4) {
@@ -564,19 +607,15 @@ inline void add_bonded_force(Particle *p1) {
 #endif
 
     if (n_partners == 1) {
-      /* because of the NPT pressure calculation for pair forces, we need the
-         1->2 distance vector here. For many body interactions this vector is
-         not needed,
-         and the pressure calculation not yet clear. */
+      // because of the NPT pressure calculation for pair forces, we need the
+      //   1->2 distance vector here. For many body interactions this vector is
+      //   not needed,
+      //   and the pressure calculation not yet clear.
       get_mi_vector(dx, p1->r.p, p2->r.p);
     }
-    //test!!!!!!!
-    if(type == BONDED_IA_FENE){
-      bond_broken = bond_map[type_num]->add_bonded_force(p1, bl_id);
-    };
     switch (type) {
     case BONDED_IA_FENE:
-      //bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
+      bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
       break;
 #ifdef ROTATION
     case BONDED_IA_HARMONIC_DUMBBELL:
@@ -625,15 +664,15 @@ inline void add_bonded_force(Particle *p1) {
 #endif
 // IMMERSED_BOUNDARY
 #ifdef IMMERSED_BOUNDARY
-    /*      case BONDED_IA_IBM_WALL_REPULSION:
-            IBM_WallRepulsion_CalcForce(p1, iaparams);
-            bond_broken = 0;
-            // These may be added later on, but we set them to zero because the
-       force has already been added in IBM_WallRepulsion_CalcForce
-            force[0] = force2[0] = force3[0] = 0;
-            force[1] = force2[1] = force3[1] = 0;
-            force[2] = force2[2] = force3[2] = 0;
-            break;*/
+      //      case BONDED_IA_IBM_WALL_REPULSION:
+      //      IBM_WallRepulsion_CalcForce(p1, iaparams);
+      //      bond_broken = 0;
+      //      // These may be added later on, but we set them to zero because the
+      //  force has already been added in IBM_WallRepulsion_CalcForce
+      //      force[0] = force2[0] = force3[0] = 0;
+      //      force[1] = force2[1] = force3[1] = 0;
+      //      force[2] = force2[2] = force3[2] = 0;
+      //      break;
     case BONDED_IA_IBM_TRIEL:
       bond_broken = IBM_Triel_CalcForce(p1, p2, p3, iaparams);
       // These may be added later on, but we set them to zero because the force
@@ -686,8 +725,7 @@ inline void add_bonded_force(Particle *p1) {
 #endif
 #ifdef BOND_ANGLE
     case BONDED_IA_ANGLE_HARMONIC:
-      bond_broken =
-          calc_angle_harmonic_force(p1, p2, p3, iaparams, force, force2);
+      bond_broken = calc_angle_harmonic_force(p1, p2, p3, iaparams, force, force2);
       break;
     case BONDED_IA_ANGLE_COSINE:
       bond_broken =
@@ -703,15 +741,14 @@ inline void add_bonded_force(Particle *p1) {
       bond_broken = calc_angledist_force(p1, p2, p3, iaparams, force, force2);
       break;
 #endif
-      /*#ifdef BOND_ENDANGLEDIST
+#ifdef BOND_ENDANGLEDIST
     case BONDED_IA_ENDANGLEDIST:
       bond_broken =
-          calc_endangledist_pair_force(p1, p2, iaparams, dx, force, force2);
+	calc_endangledist_pair_force(p1, p2, iaparams, dx, force, force2);
       break;
-      #endif*/
+#endif
     case BONDED_IA_DIHEDRAL:
-      bond_broken =
-          calc_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
+      bond_broken = calc_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
       break;
 #ifdef BOND_CONSTRAINT
     case BONDED_IA_RIGID_BOND:
@@ -790,12 +827,12 @@ inline void add_bonded_force(Particle *p1) {
 
       for (j = 0; j < 3; j++) {
         switch (type) {
-	  /*#ifdef BOND_ENDANGLEDIST
+#ifdef BOND_ENDANGLEDIST
         case BONDED_IA_ENDANGLEDIST:
           p1->f.f[j] += force[j];
           p2->f.f[j] += force2[j];
           break;
-	  #endif*/ // BOND_ENDANGLEDIST
+#endif // BOND_ENDANGLEDIST
         default:
           p1->f.f[j] += force[j];
           p2->f.f[j] -= force[j];
@@ -898,6 +935,7 @@ inline void add_bonded_force(Particle *p1) {
     }
   }
 }
+#endif //BOND_CLASS_DEBUG
 
 /** add force to another. This is used when collecting ghost forces. */
 inline void add_force(ParticleForce *F_to, ParticleForce *F_add) {
