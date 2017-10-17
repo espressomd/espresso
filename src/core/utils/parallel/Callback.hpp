@@ -34,11 +34,12 @@ namespace Parallel {
  */
 class Callback {
 public:
-  Callback(Communication::MpiCallbacks::function_type callback) {
-    m_callback_id = Communication::mpiCallbacks().add(callback);
+  Callback(Communication::MpiCallbacks &cb,
+           Communication::MpiCallbacks::function_type callback) : m_cb(cb) {
+    m_callback_id = m_cb.add(callback);
   }
 
-  ~Callback() { Communication::mpiCallbacks().remove(m_callback_id); }
+  ~Callback() { m_cb.remove(m_callback_id); }
 
   /**
    * @brief Run the callback function on the slave.
@@ -46,10 +47,12 @@ public:
    * The callback is not run on the calling node.
    */
   void call(int a = 0, int b = 0) {
-    Communication::mpiCallbacks().call(m_callback_id, a, b);
+    m_cb.call(m_callback_id, a, b);
   }
 
 private:
+  /* Callback system we're on */
+  Communication::MpiCallbacks & m_cb;
   /* Id of the encapsulated callback */
   int m_callback_id;
 };

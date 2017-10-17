@@ -25,6 +25,7 @@
 #include "cells.hpp"
 #include "global.hpp"
 #include "MpiCallbacks.hpp"
+#include "PartCfg.hpp"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -81,7 +82,7 @@ public:
    * write methods.
    * @param Boolean values for position, velocity, force and mass.
    */
-  void Write(int write_dat);
+  void Write(int write_dat, PartCfg &partCfg);
 
   /**
    * @brief Method to write the energy contributions to the H5MD file.

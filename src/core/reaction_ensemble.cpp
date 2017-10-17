@@ -12,13 +12,14 @@
 #include "external_potential.hpp" //for energies
 #include "global.hpp" //for access to global variables
 #include "particle_data.hpp" //for particle creation, modification
-#include "partCfg.hpp"
 #include "statistics.hpp" //for distto
 #include "integrate.hpp" //for time_step
 #include <stdio.h> //for getline()
 #include <iostream> //for std::cout
 #include <fstream> //for std::ifstream, std::ofstream for input output into files
 #include "utils.hpp" // for PI and random vectors
+#include "partCfg_global.hpp"
+
 namespace ReactionEnsemble{
 
 ReactionEnsemble::ReactionEnsemble(){}
@@ -32,9 +33,11 @@ ReactionEnsemble::~ReactionEnsemble(){
 /**
 * Performs a randomly selected reaction in the reaction ensemble
 */
-int ReactionEnsemble::do_reaction(){
-	int reaction_id=i_random(m_current_reaction_system.nr_single_reactions);
-	generic_oneway_reaction(reaction_id, reaction_ensemble_mode);
+int ReactionEnsemble::do_reaction(int reaction_steps){
+    for (int i = 0; i< reaction_steps; i++){
+        int reaction_id=i_random(m_current_reaction_system.nr_single_reactions);
+    	generic_oneway_reaction(reaction_id, reaction_ensemble_mode);
+    }
 	return 0;
 }
 
@@ -627,7 +630,7 @@ int ReactionEnsemble::create_particle(int desired_type){
 			#endif
 			//set velocities
 			set_particle_v(p_id,vel);
-			double d_min=distto(pos_vec,p_id); //TODO also catch constraints with an IFDEF CONSTRAINTS here, but only interesting, when doing MD/ HMC because then the system might explode easily here due to high forces
+			double d_min=distto(partCfg(), pos_vec,p_id); //TODO also catch constraints with an IFDEF CONSTRAINTS here, but only interesting, when doing MD/ HMC because then the system might explode easily here due to high forces
 			insert_tries+=1;
 			if(d_min>m_current_reaction_system.exclusion_radius)
 				particle_inserted_too_close_to_another_one=false;
@@ -780,7 +783,7 @@ bool ReactionEnsemble::do_global_mc_move_for_particles_of_type(int type, int sta
 			get_random_position_in_box(new_pos);
 //			get_random_position_in_box_enhanced_proposal_of_small_radii(new_pos); //enhanced proposal of small radii
 			place_particle(p_id,new_pos);
-			double d_min=distto(new_pos,p_id);
+			double d_min=distto(partCfg(), new_pos,p_id);
 			if(d_min>m_current_reaction_system.exclusion_radius){
 				particle_inserted_too_close_to_another_one=false;
 			}

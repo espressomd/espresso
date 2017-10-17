@@ -2,14 +2,14 @@
 #define OBSERVABLES_DENSITYPROFILE_HPP
 
 #include "ProfileObservable.hpp"
-#include "partCfg.hpp"
+
 #include <vector>
 
 namespace Observables {
 
 class DensityProfile : public ProfileObservable {
 public:
-  virtual int actual_calculate() override {
+  virtual int actual_calculate(PartCfg & partCfg) override {
     double bin_volume =
         (maxx - minx) * (maxy - miny) * (maxz - minz) / xbins / ybins / zbins;
 

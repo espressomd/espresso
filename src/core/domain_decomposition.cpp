@@ -29,8 +29,8 @@
 #include "lees_edwards_comms_manager.hpp"
 #include "lees_edwards.hpp"
 #include "errorhandling.hpp"
-#include "forces.hpp"
-#include "pressure.hpp"
+#include "forces_inline.hpp"
+#include "pressure_inline.hpp"
 #include "energy_inline.hpp"
 #include "constraints.hpp"
 #include "initialize.hpp"
@@ -655,46 +655,58 @@ void dd_position_to_cell_indices(double pos[3],int* idx)
 
 /*************************************************/
 
-/** Append the particles in pl to \ref local_cells and update \ref local_particles.  
+/** Append the particles in pl to \ref local_cells and update \ref
+   local_particles.
     @return 0 if all particles in pl reside in the nodes domain otherwise 1.*/
-int dd_append_particles(ParticleList *pl, int fold_dir)
-{
-  int p, dir, c, cpos[3], flag=0, fold_coord=fold_dir/2;
+int dd_append_particles(ParticleList *pl, int fold_dir) {
+  int p, dir, c, cpos[3], flag = 0, fold_coord = fold_dir / 2;
 
   CELL_TRACE(fprintf(stderr, "%d: dd_append_particles %d\n", this_node, pl->n));
 
-  for(p=0; p<pl->n; p++) {
-    if(boundary[fold_dir] != 0){
-      fold_coordinate(pl->part[p].r.p, pl->part[p].m.v, pl->part[p].l.i, fold_coord);
-    }    
+  for (p = 0; p < pl->n; p++) {
+    if (boundary[fold_dir] != 0) {
+      fold_coordinate(pl->part[p].r.p, pl->part[p].m.v, pl->part[p].l.i,
+                      fold_coord);
+    }
 
-    for(dir=0;dir<3;dir++) {
-      cpos[dir] = (int)((pl->part[p].r.p[dir]-my_left[dir])*dd.inv_cell_size[dir])+1;
+    for (dir = 0; dir < 3; dir++) {
+      cpos[dir] =
+          (int)((pl->part[p].r.p[dir] - my_left[dir]) * dd.inv_cell_size[dir]) +
+          1;
 
-      if (cpos[dir] < 1) { 
+      if (cpos[dir] < 1) {
         cpos[dir] = 1;
-        if( PERIODIC(dir) )
-          {
-            flag=1;
-            CELL_TRACE(if(fold_coord==2){fprintf(stderr, "%d: dd_append_particles: particle %d (%f,%f,%f) not inside node domain.\n", this_node,pl->part[p].p.identity,pl->part[p].r.p[0],pl->part[p].r.p[1],pl->part[p].r.p[2]);});
-          }
-      }
-      else if (cpos[dir] > dd.cell_grid[dir]) {
+        if (PERIODIC(dir)) {
+          flag = 1;
+          CELL_TRACE(if (fold_coord == 2) {
+            fprintf(stderr, "%d: dd_append_particles: particle %d (%f,%f,%f) "
+                            "not inside node domain.\n",
+                    this_node, pl->part[p].p.identity, pl->part[p].r.p[0],
+                    pl->part[p].r.p[1], pl->part[p].r.p[2]);
+          });
+        }
+      } else if (cpos[dir] > dd.cell_grid[dir]) {
         cpos[dir] = dd.cell_grid[dir];
-        if( PERIODIC(dir) )
-          {
-            flag=1;
-            CELL_TRACE(if(fold_coord==2){fprintf(stderr, "%d: dd_append_particles: particle %d (%f,%f,%f) not inside node domain.\n", this_node,pl->part[p].p.identity,pl->part[p].r.p[0],pl->part[p].r.p[1],pl->part[p].r.p[2]);});
-          }
+        if (PERIODIC(dir)) {
+          flag = 1;
+          CELL_TRACE(if (fold_coord == 2) {
+            fprintf(stderr, "%d: dd_append_particles: particle %d (%f,%f,%f) "
+                            "not inside node domain.\n",
+                    this_node, pl->part[p].p.identity, pl->part[p].r.p[0],
+                    pl->part[p].r.p[1], pl->part[p].r.p[2]);
+          });
+        }
       }
     }
-    c = get_linear_index(cpos[0],cpos[1],cpos[2], dd.ghost_cell_grid);
-    CELL_TRACE(fprintf(stderr,"%d: dd_append_particles: Appen Part id=%d to cell %d\n",this_node,pl->part[p].p.identity,c));
-    append_indexed_particle(&cells[c],&pl->part[p]);
+    c = get_linear_index(cpos[0], cpos[1], cpos[2], dd.ghost_cell_grid);
+    CELL_TRACE(fprintf(stderr,
+                       "%d: dd_append_particles: Appen Part id=%d to cell %d\n",
+                       this_node, pl->part[p].p.identity, c));
+    append_indexed_particle(&cells[c], std::move(pl->part[p]));
   }
   return flag;
 }
- 
+
 /*@}*/
 
 /************************************************************/
@@ -881,7 +893,7 @@ void dd_topology_init(CellPList *old)
          somewhere for the moment */
       if (nc == NULL)
         nc = local_cells.cell[0];
-      append_unindexed_particle(nc, &part[p]);
+      append_unindexed_particle(nc, std::move(part[p]));
     }
   }
   for(c=0; c<local_cells.n; c++) {

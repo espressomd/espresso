@@ -1,16 +1,38 @@
-image: espressomd/buildenv-espresso-ubuntu-cuda:python
+image: espressomd/espresso-ubuntu-cuda:latest
 
 stages:
+  - prepare
   - build
   - deploy
 
-build_and_test:
+status_pending:
+  stage: prepare
+  script: bash maintainer/gh_post_status.sh pending
+
+shanchen:
   stage: build
   script:
+    - export myconfig=shanchen
+    - bash maintainer/cuda_build.sh
+
+maxset:
+  stage: build
+  script:
+    - export myconfig=maxset
     - bash maintainer/cuda_build.sh
   artifacts:
     paths:
     - build/
+
+status_success:
+  stage: deploy
+  script: bash maintainer/gh_post_status.sh success
+  when: on_success
+
+status_failure:
+  stage: deploy
+  script: bash maintainer/gh_post_status.sh failure
+  when: on_failure
 
 sphinx_documentation:
   stage: deploy

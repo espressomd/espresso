@@ -25,10 +25,7 @@
 #ifdef OPEN_MPI
 #include <dlfcn.h>
 #endif
-
-#include <boost/mpi.hpp>
-#include <boost/serialization/array.hpp>
-#include <boost/serialization/string.hpp>
+#include <cassert>
 
 #include "communication.hpp"
 
@@ -74,6 +71,7 @@
 #include "observables/Observable.hpp"
 #include "overlap.hpp"
 #include "p3m.hpp"
+#include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "reaction.hpp"
@@ -85,14 +83,43 @@
 #include "tab.hpp"
 #include "topology.hpp"
 #include "virtual_sites.hpp"
+#include "p3m-dipolar.hpp"
+#include "debye_hueckel.hpp"
+#include "reaction_field.hpp"
+#include "collision.hpp"
+#include "ljgen.hpp"
+#include "ljcos2.hpp"
+#include "npt.hpp"
+
+#include <boost/mpi.hpp>
+#include <boost/serialization/array.hpp>
+#include <boost/serialization/string.hpp>
 
 using namespace std;
+
+namespace {
+std::unique_ptr<boost::mpi::environment> mpi_env;
+}
+
+boost::mpi::communicator comm_cart;
+
+namespace Communication {
+namespace {
+std::unique_ptr<MpiCallbacks> m_callbacks;
+}
+
+/* We use a singelton callback class for now. */
+MpiCallbacks &mpiCallbacks() {
+  assert(m_callbacks && "Mpi not initialized!");
+
+  return *m_callbacks;
+}
+}
+
 using Communication::mpiCallbacks;
 
 int this_node = -1;
 int n_nodes = -1;
-
-boost::mpi::communicator comm_cart;
 
 int graceful_exit = 0;
 /* whether there is already a termination going on. */
@@ -100,7 +127,6 @@ static int terminated = 0;
 
 // if you want to add a callback, add it here, and here only
 #define CALLBACK_LIST                                                          \
-  CB(mpi_stop_slave)                                                           \
   CB(mpi_bcast_parameter_slave)                                                \
   CB(mpi_who_has_slave)                                                        \
   CB(mpi_bcast_event_slave)                                                    \
@@ -177,7 +203,8 @@ static int terminated = 0;
   CB(mpi_thermalize_cpu_slave)                                                 \
   CB(mpi_scafacos_set_parameters_slave)                                        \
   CB(mpi_scafacos_free_slave)                                                  \
-  CB(mpi_mpiio_slave)
+  CB(mpi_mpiio_slave)                                                          \
+  CB(mpi_resort_particles_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -214,23 +241,7 @@ int mpi_check_runtime_errors(void);
  * procedures
  **********************************************/
 
-#ifdef COMM_DEBUG
-void mpi_add_callback(SlaveCallback *cb, const string &name) {
-  /** Name is only used for debug messages */
-  names.push_back(name);
-  mpiCallbacks().add(cb);
-}
-#endif
-
-void mpi_add_callback(SlaveCallback *cb) {
-#ifdef COMM_DEBUG
-  mpi_add_callback(cb, "dynamic callback");
-#else
-  mpiCallbacks().add(cb);
-#endif
-}
-
-void mpi_init(int *argc, char ***argv) {
+void mpi_init() {
 #ifdef OPEN_MPI
   void *handle = 0;
   int mode = RTLD_NOW | RTLD_GLOBAL;
@@ -257,32 +268,32 @@ void mpi_init(int *argc, char ***argv) {
   }
 #endif
 
-  MPI_Init(argc, argv);
+#ifdef BOOST_MPI_HAS_NOARG_INITIALIZATION
+  mpi_env = Utils::make_unique<boost::mpi::environment>();
+#else
+  int argc{};
+  char **argv{};
+  mpi_env = Utils::make_unique<boost::mpi::environment>(argc, argv);
+#endif
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
-
-  int reorder = 1;
-
   MPI_Dims_create(n_nodes, 3, node_grid);
 
   mpi_reshape_communicator({node_grid[0], node_grid[1], node_grid[2]},
                            /* periodicity */ {1, 1, 1});
-
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 
-  Communication::mpiCallbacks().set_comm(comm_cart);
+  Communication::m_callbacks =
+      Utils::make_unique<Communication::MpiCallbacks>(comm_cart);
 
   for (int i = 0; i < slave_callbacks.size(); ++i) {
     mpiCallbacks().add(slave_callbacks[i]);
   }
 
   ErrorHandling::init_error_handling(mpiCallbacks());
+  partCfg(Utils::make_unique<PartCfg>(mpiCallbacks(), GetLocalParts()));
 
-  /* Create the datatype cache before registering atexit(mpi_stop). This is
-     necessary as it is a static variable that would otherwise be destructed
-     before mpi_stop is called. mpi_stop however needs to communicate and thus
-     depends on the cache. */
-  boost::mpi::detail::mpi_datatype_cache();
+  on_program_start();
 }
 
 void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
@@ -311,67 +322,9 @@ void mpi_call(SlaveCallback cb, int node, int param) {
   COMM_TRACE(fprintf(stderr, "%d: finished sending.\n", this_node));
 }
 
-/**************** REQ_TERM ************/
-
-void mpi_stop() {
-  if (terminated)
-    return;
-
-  mpi_call(mpi_stop_slave, -1, 0);
-
-  MPI_Barrier(comm_cart);
-  MPI_Finalize();
-  regular_exit = 1;
-  terminated = 1;
-}
-
-void mpi_stop_slave(int node, int param) {
-  COMM_TRACE(fprintf(stderr, "%d: exiting\n", this_node));
-
-  MPI_Barrier(comm_cart);
-  MPI_Finalize();
-  regular_exit = 1;
-  exit(0);
-}
-
-/*************** REQ_BCAST_PAR ************/
-static void common_bcast_parameter(int i) {
-  switch (fields[i].type) {
-  case TYPE_INT:
-    MPI_Bcast((int *)fields[i].data, fields[i].dimension, MPI_INT, 0,
-              comm_cart);
-    break;
-  case TYPE_BOOL:
-    MPI_Bcast((int *)fields[i].data, 1, MPI_INT, 0, comm_cart);
-    break;
-  case TYPE_DOUBLE:
-    MPI_Bcast((double *)fields[i].data, fields[i].dimension, MPI_DOUBLE, 0,
-              comm_cart);
-    break;
-  default:
-    break;
-  }
-
-  on_parameter_change(i);
-}
-
-int mpi_bcast_parameter(int i) {
-  mpi_call(mpi_bcast_parameter_slave, -1, i);
-
-  common_bcast_parameter(i);
-
-  return check_runtime_errors();
-}
-
-void mpi_bcast_parameter_slave(int node, int i) {
-  common_bcast_parameter(i);
-  check_runtime_errors();
-}
-
 /*************** REQ_WHO_HAS ****************/
 
 void mpi_who_has() {
-  Cell *cell;
   static int *sizes = new int[n_nodes];
   int *pdata = NULL;
   int pdata_s = 0;
@@ -390,15 +343,13 @@ void mpi_who_has() {
     COMM_TRACE(
         fprintf(stderr, "node %d reports %d particles\n", pnode, sizes[pnode]));
     if (pnode == this_node) {
-      for (int c = 0; c < local_cells.n; c++) {
-        cell = local_cells.cell[c];
-        for (int i = 0; i < cell->n; i++)
-          particle_node[cell->part[i].p.identity] = this_node;
-      }
+      for (auto const &p : local_cells.particles())
+        particle_node[p.p.identity] = this_node;
+
     } else if (sizes[pnode] > 0) {
       if (pdata_s < sizes[pnode]) {
         pdata_s = sizes[pnode];
-        pdata = (int *)Utils::realloc(pdata, sizeof(int) * pdata_s);
+        pdata = Utils::realloc(pdata, sizeof(int) * pdata_s);
       }
       MPI_Recv(pdata, sizes[pnode], MPI_INT, pnode, SOME_TAG, comm_cart,
                MPI_STATUS_IGNORE);
@@ -410,8 +361,6 @@ void mpi_who_has() {
 }
 
 void mpi_who_has_slave(int node, int param) {
-  Cell *cell;
-  int npart, i, c;
   static int *sendbuf;
   int n_part;
 
@@ -420,13 +369,13 @@ void mpi_who_has_slave(int node, int param) {
   if (n_part == 0)
     return;
 
-  sendbuf = (int *)Utils::realloc(sendbuf, sizeof(int) * n_part);
-  npart = 0;
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    for (i = 0; i < cell->n; i++)
-      sendbuf[npart++] = cell->part[i].p.identity;
-  }
+  sendbuf = Utils::realloc(sendbuf, sizeof(int) * n_part);
+
+  auto end = std::transform(local_cells.particles().begin(),
+                            local_cells.particles().end(), sendbuf,
+                            [](Particle const &p) { return p.p.identity; });
+
+  auto npart = std::distance(sendbuf, end);
   MPI_Send(sendbuf, npart, MPI_INT, 0, SOME_TAG, comm_cart);
 }
 
@@ -458,7 +407,8 @@ void mpi_bcast_event_slave(int node, int event) {
     break;
 #endif
 
-  default:;
+  default:
+    ;
   }
 }
 
@@ -1113,7 +1063,6 @@ void mpi_send_vs_relative_slave(int pnode, int part) {
 // ********************************
 
 void mpi_send_rotation(int pnode, int part, int rot) {
-#ifdef ROTATION_PER_PARTICLE
   mpi_call(mpi_send_rotation_slave, pnode, part);
 
   if (pnode == this_node) {
@@ -1124,11 +1073,9 @@ void mpi_send_rotation(int pnode, int part, int rot) {
   }
 
   on_particle_change();
-#endif
 }
 
 void mpi_send_rotation_slave(int pnode, int part) {
-#ifdef ROTATION_PER_PARTICLE
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
@@ -1136,7 +1083,6 @@ void mpi_send_rotation_slave(int pnode, int part) {
   }
 
   on_particle_change();
-#endif
 }
 
 void mpi_observable_lb_radial_velocity_profile() {
@@ -1198,8 +1144,11 @@ void mpi_send_bond_slave(int pnode, int part) {
 
 /****************** REQ_GET_PART ************/
 void mpi_recv_part(int pnode, int part, Particle *pdata) {
+  assert(pdata);
+
   /* fetch fixed data */
   if (pnode == this_node) {
+    assert(local_particles[part]);
     *pdata = *local_particles[part];
   } else {
     mpi_call(mpi_recv_part_slave, pnode, part);
@@ -1211,6 +1160,7 @@ void mpi_recv_part_slave(int pnode, int part) {
   if (pnode != this_node)
     return;
 
+  assert(local_particles[part]);
   comm_cart.send(0, SOME_TAG, *local_particles[part]);
 }
 
@@ -2115,14 +2065,14 @@ void mpi_sync_topo_part_info_slave(int node, int parm) {
 
 /******************* REQ_BCAST_LBPAR ********************/
 
-void mpi_bcast_lb_params(int field) {
+void mpi_bcast_lb_params(int field, int value) {
 #ifdef LB
-  mpi_call(mpi_bcast_lb_params_slave, -1, field);
-  mpi_bcast_lb_params_slave(-1, field);
+  mpi_call(mpi_bcast_lb_params_slave, field, value);
+  mpi_bcast_lb_params_slave(field, value);
 #endif
 }
 
-void mpi_bcast_lb_params_slave(int node, int field) {
+void mpi_bcast_lb_params_slave(int field, int value) {
 #ifdef LB
   MPI_Bcast(&lbpar, sizeof(LB_Parameters), MPI_BYTE, 0, comm_cart);
   on_lb_params_change(field);
@@ -2415,28 +2365,17 @@ void mpi_set_particle_temperature_slave(int pnode, int part) {
 #ifndef PARTICLE_ANISOTROPY
 void mpi_set_particle_gamma(int pnode, int part, double gamma) {
 #else
-void mpi_set_particle_gamma(int pnode, int part, double gamma[3]) {
+void mpi_set_particle_gamma(int pnode, int part, Vector3d gamma) {
 #endif
-  int j;
   mpi_call(mpi_set_particle_gamma_slave, pnode, part);
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-/* here the setting actually happens, if the particle belongs to the local
- * node */
-#ifndef PARTICLE_ANISOTROPY
+    /* here the setting actually happens, if the particle belongs to the local
+     * node */
     p->p.gamma = gamma;
-#else
-    for (j = 0; j < 3; j++)
-      p->p.gamma[j] = gamma[j];
-#endif
-
   } else {
-#ifndef PARTICLE_ANISOTROPY
-    MPI_Send(&gamma, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
-#else
-    MPI_Send(gamma, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
-#endif
+    comm_cart.send(pnode, SOME_TAG, gamma);
   }
 
   on_particle_change();
@@ -2445,49 +2384,31 @@ void mpi_set_particle_gamma(int pnode, int part, double gamma[3]) {
 
 void mpi_set_particle_gamma_slave(int pnode, int part) {
 #ifdef LANGEVIN_PER_PARTICLE
-  double s_buf = 0.;
-  int j;
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Status status;
-/* here the setting happens for nonlocal nodes */
-#ifndef PARTICLE_ANISOTROPY
-    MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
-    p->p.gamma = s_buf;
-#else
-    MPI_Recv(p->p.gamma, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
-#endif
+    comm_cart.recv(0, SOME_TAG, p->p.gamma);
   }
+
   on_particle_change();
 #endif
 }
 
 #if defined(LANGEVIN_PER_PARTICLE) && defined(ROTATION)
-#ifndef ROTATIONAL_INERTIA
+#ifndef PARTICLE_ANISOTROPY
 void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot)
 #else
-void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot[3])
+void mpi_set_particle_gamma_rot(int pnode, int part, Vector3d gamma_rot)
 #endif
 {
-  int j;
   mpi_call(mpi_set_particle_gamma_rot_slave, pnode, part);
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-/* here the setting actually happens, if the particle belongs to the local
- * node */
-#ifndef ROTATIONAL_INERTIA
+    /* here the setting actually happens, if the particle belongs to the local
+     * node */
     p->p.gamma_rot = gamma_rot;
-#else
-    for (j = 0; j < 3; j++)
-      p->p.gamma_rot[j] = gamma_rot[j];
-#endif
   } else {
-#ifndef ROTATIONAL_INERTIA
-    MPI_Send(&gamma_rot, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
-#else
-    MPI_Send(gamma_rot, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
-#endif
+    comm_cart.send(pnode, SOME_TAG, gamma_rot);
   }
 
   on_particle_change();
@@ -2496,19 +2417,11 @@ void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot[3])
 
 void mpi_set_particle_gamma_rot_slave(int pnode, int part) {
 #if defined(LANGEVIN_PER_PARTICLE) && defined(ROTATION)
-  double s_buf = 0.;
-  int j;
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Status status;
-/* here the setting happens for nonlocal nodes */
-#ifndef ROTATIONAL_INERTIA
-    MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
-    p->p.gamma_rot = s_buf;
-#else
-    MPI_Recv(p->p.gamma_rot, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
-#endif
+    comm_cart.recv(pnode, SOME_TAG, p->p.gamma_rot);
   }
+
   on_particle_change();
 #endif
 }
@@ -2668,7 +2581,10 @@ void mpi_thermalize_cpu_slave(int node, int temp) { set_cpu_temp(temp); }
 
 /*********************** MAIN LOOP for slaves ****************/
 
-void mpi_loop() { mpiCallbacks().loop(); }
+void mpi_loop() {
+  if (this_node != 0)
+    mpiCallbacks().loop();
+}
 
 /*********************** error abort ****************/
 
@@ -2785,4 +2701,20 @@ void mpi_mpiio_slave(int dummy, int flen) {
   else
     mpi_mpiio_common_read(filename, fields);
   delete[] filename;
+}
+
+std::vector<int> mpi_resort_particles(int global_flag) {
+  mpi_call(mpi_resort_particles_slave, global_flag, 0);
+  cells_resort_particles(global_flag);
+
+  std::vector<int> n_parts;
+  boost::mpi::gather(comm_cart, cells_get_n_particles(), n_parts, 0);
+
+  return n_parts;
+}
+
+void mpi_resort_particles_slave(int global_flag, int) {
+  cells_resort_particles(global_flag);
+
+  boost::mpi::gather(comm_cart, cells_get_n_particles(), 0);
 }

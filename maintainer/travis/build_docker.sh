@@ -2,6 +2,11 @@
 
 ENV_FILE=$(mktemp esXXXXXXX.env)
 
+ci_env=""
+if [[ ! -z ${with_coverage+x} ]]; then 
+  ci_env=`bash <(curl -s https://codecov.io/env)`
+fi
+
 cat > $ENV_FILE <<EOF
 insource=$insource
 cmake_params=$cmake_params
@@ -19,7 +24,7 @@ fi
 
 if [ "$TRAVIS_OS_NAME" = "linux" ]; then
 	image=espressomd/espresso-$image:latest
-	docker run -u espresso --env-file $ENV_FILE -v ${PWD}:/travis -it $image /bin/bash -c "cp -r /travis .; cd travis && maintainer/travis/build_cmake.sh" || exit 1
+	docker run $ci_env -u espresso --env-file $ENV_FILE -v ${PWD}:/travis -it $image /bin/bash -c "cp -r /travis .; cd travis && maintainer/travis/build_cmake.sh" || exit 1
 elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 	brew install cmake || brew upgrade cmake
 	case "$image" in
@@ -29,6 +34,7 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 			pip3 install cython
 			pip3 install numpy
 			pip3 install pep8
+			pip3 install pylint
 			PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}' | awk -F . '{print $1"."$2}')
 			export cmake_params="-DPYTHON_EXECUTABLE=$(which python3) $cmake_params"
 		;;
@@ -38,17 +44,13 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 			pip install cython
 			pip install numpy
 			pip install pep8
+            pip install pylint
 		;;
 	esac
 	brew install boost-mpi
 	brew install fftw
-	brew install homebrew/science/hdf5 --with-mpi --without-cxx
+	travis_wait brew install hdf5 --with-mpi
 
 	export TMPDIR=/tmp
 	maintainer/travis/build_cmake.sh || exit 1
-fi
-
-if [ "$with_coverage" = "true" ]; then
-    cd ${PWD}
-    curl -s https://codecov.io/bash | bash -
 fi

@@ -61,7 +61,6 @@ if(CUDA)
 endif(CUDA)
 
 # Subdirectories
-add_subdirectory(utils)
 add_subdirectory(observables)
 add_subdirectory(correlators)
 add_subdirectory(io)
