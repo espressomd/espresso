@@ -301,6 +301,7 @@ inline void calc_three_body_bonded_forces(Particle *p1, Particle *p2, Particle *
     So here we do some tricks to get the value out without changing the forces.
     @param p1 particle for which to calculate virials
 */
+#ifndef BOND_CLASS_DEBUG
 inline void add_bonded_virials(Particle *p1)
 {
   double dx[3], force[3] = {0,0,0};
@@ -330,19 +331,94 @@ inline void add_bonded_virials(Particle *p1)
     calc_bonded_force(p1,p2,iaparams,&i,dx,force);
     *obsstat_bonded(&virials, type_num) += dx[0]*force[0] + dx[1]*force[1] + dx[2]*force[2];
 
- /* stress tensor part */
+    /* stress tensor part */
     for(k=0;k<3;k++)
       for(l=0;l<3;l++)
 	obsstat_bonded(&p_tensor, type_num)[k*3 + l] += force[k]*dx[l];
 
   }
 }
+#endif //BOND_CLASS_DEBUG
+
+/*New add_bonded_virials function*/
+// only pair bonds contribute in this function
+#ifdef BOND_CLASS_DEBUG
+inline void add_bonded_virials(Particle *p1)
+{
+
+  int i, bond_list_id, bond_broken, bond_map_id, n_partners;
+  i=0;
+  while(i<p1->bl.n){
+
+    //--first assign the variables for this step--
+    //get the bond id in bond list
+    bond_list_id = i;
+    //get the bond map id
+    bond_map_id = p1->bl.e[bond_list_id];
+    //now the number of partners can be determined
+    n_partners = bond_map[bond_map_id]->get_number_of_bond_partners();
+
+    //--Calculate pressure--
+    bond_broken = bond_map[bond_map_id]->add_virial(p1, bond_list_id);
+
+    // if there are no bond partners get out of this function
+    // it is easier to return 1 for the future!
+    if(bond_broken == 2)
+       return;
+
+    //--Now we are finished and have to go to the next bond--
+    //in bond list: bond itself and number of partners 
+    //next bond in -> n_partners + 1
+    i += n_partners + 1;
+    
+  };
+
+}
+#endif // BOND_CLASS_DEBUG
+
+
+/*New add_bonded_virials function*/
+// only pair bonds contribute in this function
+#ifdef BOND_CLASS_DEBUG
+inline void add_three_body_bonded_stress(Particle *p1)
+{
+
+  int i, bond_list_id, bond_broken, bond_map_id, n_partners;
+  i=0;
+  while(i<p1->bl.n){
+
+    //--first assign the variables for this step--
+    //get the bond id in bond list
+    bond_list_id = i;
+    //get the bond map id
+    bond_map_id = p1->bl.e[bond_list_id];
+    //now the number of partners can be determined
+    n_partners = bond_map[bond_map_id]->get_number_of_bond_partners();
+
+    //--Calculate pressure--
+    bond_broken = bond_map[bond_map_id]->add_three_body_pressure(p1, bond_list_id);
+
+    // if there are no bond partners get out of this function
+    // it is easier to return 1 for the future!
+    if(bond_broken == 2)
+       return;
+
+    //--Now we are finished and have to go to the next bond--
+    //in bond list: bond itself and number of partners 
+    //next bond in -> n_partners + 1
+    i += n_partners + 1;
+    
+  };
+
+}
+#endif // BOND_CLASS_DEBUG
 
 /** Calculate the contribution to the stress tensor from angular potentials.
     The central particle of the three-particle interaction is responsible
     for the contribution of the entire interaction - this is the coding
     not the physics.
 */
+#ifndef BOND_CLASS_DEBUG
 inline void add_three_body_bonded_stress(Particle *p1) {
   double dx12[3]; // espresso notation
   double dx21[3];
@@ -480,6 +556,7 @@ inline void add_three_body_bonded_stress(Particle *p1) {
     }
   } 
 }
+#endif //BOND_CLASS_DEBUG
  
 /** Calculate kinetic pressure (aka energy) for one particle.
     @param p1 particle for which to calculate pressure

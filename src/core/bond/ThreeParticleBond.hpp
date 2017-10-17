@@ -5,12 +5,14 @@
 namespace Bond {
   class ThreeParticleBond : public Bond {
   public:
+    ThreeParticleBond() : Bond(2) {}
     virtual ~ThreeParticleBond() = default;
 
     // new virtual methods for three particle bond calculation implemented
     // in concrete classes
     // force calculation
-    virtual int add_bonded_three_particle_force(Particle *p1, Particle *p2, Particle *p3, double force[3], double force2[3]) const=0;
+    virtual int add_bonded_three_particle_force(Particle *p1, Particle *p2, Particle *p3, 
+						double force[3], double force2[3]) const=0;
     //energy calculation
     virtual int add_bonded_three_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
 						 double *_energy) const=0;
@@ -19,16 +21,23 @@ namespace Bond {
     // there is a default implementation of this function
     // but it can be overwritten, because there are forces, which
     // sum up the forces in a different way
-    virtual void write_force_to_particle(Particle *p1, Particle *p2, Particle *p3, double force[3], double force2[3]) const;
+    virtual void write_force_to_particle(Particle *p1, Particle *p2, Particle *p3, 
+					 double force[3], double force2[3]) const;
+
+    //for add_three_body_bonded_stress
+    int add_three_body_pressure(Particle *p1, int bl_id) override;
+
+    // three body force calculation for pressure
+    virtual int calc_3body_forces(Particle *p_mid, Particle *p_left,
+				  Particle *p_right, double force1[3],
+				  double force2[3], double force3[3]) const;
 
     // general bond calculation functions of abstract class
     // p1: particle, bl_id: id number of bond in bl.e
     // return value: 0: ok, 1: bond broken, 2: return from "add_bonded_force" in forces_inline.cpp
-    int add_bonded_force(Particle *p1, int bl_id) const override;
-    int add_bonded_energy(Particle *p1, int bl_id, double* _energy) const override;
+    int add_bonded_force(Particle *p1, int bl_id) override;
+    int add_bonded_energy(Particle *p1, int bl_id, double* _energy) override;
 
-    // get the number of bond partners
-    int get_number_of_bond_partners() const override;
   };
 
 }

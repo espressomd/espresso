@@ -87,9 +87,9 @@ int Bond::TabulatedBondAngle::add_bonded_three_particle_energy(Particle *p1, Par
 // for pressure.hpp
 /* The force on each particle due to a three-body bonded tabulated
    potential is computed. */
-void Bond::TabulatedBondAngle::calc_angle_3body_tabulated_forces(Particle *p_mid, Particle *p_left,
-				       Particle *p_right, double force1[3], 
-				       double force2[3], double force3[3]) const
+int Bond::TabulatedBondAngle::calc_3body_forces(Particle *p_mid, Particle *p_left,
+							  Particle *p_right, double force1[3], 
+							  double force2[3], double force3[3]) const
 {
 
   int j;
@@ -144,4 +144,5 @@ void Bond::TabulatedBondAngle::calc_angle_3body_tabulated_forces(Particle *p_mid
     force3[j] = force3[j] + pot_dep * fk[j];
   }
 
+  return 0;
 }

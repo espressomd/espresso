@@ -977,6 +977,8 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3], int periodic[
       /* bonded contributions */
       j = 0;
       while(j < p1->bl.n) {
+
+#ifndef BOND_CLASS_DEBUG
 	type_num = p1->bl.e[j++];
 	iaparams = &bonded_ia_params[type_num];
 
@@ -988,6 +990,29 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3], int periodic[
 	if ((pow(force[0],2)+pow(force[1],2)+pow(force[2],2)) > 0) {
 	  if (distribute_tensors(TensorInBin,force,bins,range_start,range,p1->r.p, p2->r.p) != 1) return 0;
 	}
+#endif //BOND_CLASS_DEBUG
+
+#ifdef BOND_CLASS_DEBUG
+	int bond_list_id = j;
+	int bond_map_id = p1->bl.e[bond_list_id];
+	int n_partners = bond_map[bond_map_id]->get_number_of_bond_partners();
+	int bond_broken = bond_map[bond_map_id]->calc_pair_force(p1, p2, bond_list_id, force);
+
+	// only if bond is a pair bond
+	if(p2 != NULL){
+	  PTENSOR_TRACE(fprintf(stderr,"%d: Bonded to particle %d with force %f %f %f\n",
+				this_node,p2->p.identity,force[0],force[1],force[2]));
+	  if ((pow(force[0],2)+pow(force[1],2)+pow(force[2],2)) > 0) {
+
+	    if (distribute_tensors(TensorInBin,force,bins,
+				   range_start,range,p1->r.p, p2->r.p) != 1) return 0;
+
+	  };
+	};
+
+	j+= n_partners + 1;
+#endif //BOND_CLASS_DEBUG
+
       }
     }
 

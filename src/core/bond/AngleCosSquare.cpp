@@ -83,8 +83,10 @@ int Bond::AngleCosSquare::add_bonded_three_particle_energy(Particle *p1, Particl
 
 /* The force on each particle due to a three-body bonded potential
    is computed. */
-void Bond::AngleCosSquare::calc_angle_3body_forces(Particle *p_mid, Particle *p_left,
-			     Particle *p_right, double force1[3], double force2[3], double force3[3]) const {
+int Bond::AngleCosSquare::calc_3body_forces(Particle *p_mid, Particle *p_left,
+					    Particle *p_right, double force1[3], 
+					    double force2[3], double force3[3]) const 
+{
 
   int j;
   double pot_dep;
@@ -141,4 +143,5 @@ void Bond::AngleCosSquare::calc_angle_3body_forces(Particle *p_mid, Particle *p_
     force3[j] = force3[j] + fac * fk[j];
   }
 
+  return 0;
 }

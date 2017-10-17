@@ -19,9 +19,9 @@ namespace Bond {
     int add_bonded_three_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
 						 double *_energy) const override;
     // for pressure.hpp
-    void calc_angle_3body_tabulated_forces(Particle *p_mid, Particle *p_left,
-					   Particle *p_right, double force1[3], 
-					   double force2[3], double force3[3]) const;
+    int calc_3body_forces(Particle *p_mid, Particle *p_left,
+			   Particle *p_right, double force1[3], 
+			   double force2[3], double force3[3]) const override;
   };
 }
 #endif

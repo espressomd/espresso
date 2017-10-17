@@ -20,12 +20,7 @@ void Bond::EightParticleBond::write_force_to_particle(Particle *p1, Particle *p2
   };
 }
 
-int Bond::EightParticleBond::get_number_of_bond_partners() const
-{
-  return 7;
-}
-
-int Bond::EightParticleBond::add_bonded_force(Particle *p1, int bl_id) const
+int Bond::EightParticleBond::add_bonded_force(Particle *p1, int bl_id)
 {
 
   double force[3] = {0., 0., 0.};
@@ -39,113 +34,50 @@ int Bond::EightParticleBond::add_bonded_force(Particle *p1, int bl_id) const
   Particle *p2, *p3, *p4, *p5, *p6, *p7, *p8 = NULL;
   int bond_broken;
 
-  /* fetch particle 2, which is always needed */
-  p2 = local_particles[bl_id+1];
-  if (!p2) {
-    runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
-		      << " and " << p1->bl.e[bl_id+1]
-		      << " (particles are not stored on the same node)";
+  // get bond partners
+  if(get_n_bond_partners(p1, bl_id) == 1){
     return 2;
-  }
-
-  /* fetch particle 3 eventually */
-  p3 = local_particles[bl_id+2];
-  if (!p3) {
-    runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
-		      << ", " << p1->bl.e[bl_id+1] << " and "
-		      << p1->bl.e[bl_id+2]
-		      << " (particles are not stored on the same node)";
-    return 2;
-  }
-
-  p4 = local_particles[bl_id+3];
-  if (!p4) {
-    runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
-		      << ", " << p1->bl.e[bl_id+1] << ", " << p1->bl.e[bl_id+2]
-		      << " and " << p1->bl.e[bl_id+3]
-		      << " (particles not stored on the same node)";
-    return 2;
-  }
-
-  p5 = local_particles[bl_id+4];
-  p6 = local_particles[bl_id+5];
-  p7 = local_particles[bl_id+6];
-  p8 = local_particles[bl_id+7];
-
-  if (!p4 || !p5 || !p6 || !p7 || !p8) {
-    runtimeErrorMsg() << "bond broken between particles" << p1->p.identity
-		      << ", " << p1->bl.e[bl_id+1] << ", " << p1->bl.e[bl_id+2]
-		      << ", " << p1->bl.e[bl_id+3] << ", " << p1->bl.e[bl_id+4]
-		      << ", " << p1->bl.e[bl_id+5] << ", " << p1->bl.e[bl_id+6]
-		      << ", " << p1->bl.e[bl_id+7]
-		      << " (particles not stored on the same node)";
-    return 2; 
-
   };
+  p2 = m_bond_partners[0];
+  p3 = m_bond_partners[1];
+  p4 = m_bond_partners[2];
+  p5 = m_bond_partners[3];
+  p6 = m_bond_partners[4];
+  p7 = m_bond_partners[5];
+  p8 = m_bond_partners[6];
+  
+  bond_broken = add_bonded_eight_particle_force(p1, p2, p3, p4, p5, p6, p7, p8,
+						force, force2, force3, force4,
+						force5, force6, force7, force8);
 
-    bond_broken = add_bonded_eight_particle_force(p1, p2, p3, p4, p5, p6, p7, p8,
-						  force, force2, force3, force4,
-						  force5, force6, force7, force8);
-
-    if (bond_broken) {
-      runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
+  if (bond_broken) {
+    runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
 			<< ", " << p2->p.identity << ", " << p3->p.identity
 			<< " and " << p4->p.identity;
-      return bond_broken;
-    };
-
-    write_force_to_particle(p1, p2, p3, p4, p5, p6, p7, p8, force, force2, force3,
-			    force4, force5, force6, force7, force8);
     return bond_broken;
+  };
+
+  write_force_to_particle(p1, p2, p3, p4, p5, p6, p7, p8, force, force2, force3,
+			  force4, force5, force6, force7, force8);
+  return bond_broken;
 }
-int Bond::EightParticleBond::add_bonded_energy(Particle *p1, int bl_id, double* _energy) const
+
+int Bond::EightParticleBond::add_bonded_energy(Particle *p1, int bl_id, double* _energy)
 {
 
   Particle *p2, *p3, *p4, *p5, *p6, *p7, *p8 = NULL;
 
-  /* fetch particle 2, which is always needed */
-  p2 = local_particles[bl_id+1];
-  if (!p2) {
-    runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
-		      << " and " << p1->bl.e[bl_id+1]
-		      << " (particles are not stored on the same node)";
+  // get bond partners
+  if(get_n_bond_partners(p1, bl_id) == 1){
     return 2;
-  }
-
-  /* fetch particle 3 eventually */
-  p3 = local_particles[bl_id+2];
-  if (!p3) {
-    runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
-		      << ", " << p1->bl.e[bl_id+1] << " and "
-		      << p1->bl.e[bl_id+2]
-		      << " (particles are not stored on the same node)";
-    return 2;
-  }
-
-  p4 = local_particles[bl_id+3];
-  if (!p4) {
-    runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
-		      << ", " << p1->bl.e[bl_id+1] << ", " << p1->bl.e[bl_id+2]
-		      << " and " << p1->bl.e[bl_id+3]
-		      << " (particles not stored on the same node)";
-    return 2;
-  }
-
-  p5 = local_particles[bl_id+4];
-  p6 = local_particles[bl_id+5];
-  p7 = local_particles[bl_id+6];
-  p8 = local_particles[bl_id+7];
-
-  if (!p4 || !p5 || !p6 || !p7 || !p8) {
-    runtimeErrorMsg() << "bond broken between particles" << p1->p.identity
-		      << ", " << p1->bl.e[bl_id+1] << ", " << p1->bl.e[bl_id+2]
-		      << ", " << p1->bl.e[bl_id+3] << ", " << p1->bl.e[bl_id+4]
-		      << ", " << p1->bl.e[bl_id+5] << ", " << p1->bl.e[bl_id+6]
-		      << ", " << p1->bl.e[bl_id+7]
-		      << " (particles not stored on the same node)";
-    return 2; 
-
   };
+  p2 = m_bond_partners[0];
+  p3 = m_bond_partners[1];
+  p4 = m_bond_partners[2];
+  p5 = m_bond_partners[3];
+  p6 = m_bond_partners[4];
+  p7 = m_bond_partners[5];
+  p8 = m_bond_partners[6];
 
   return add_bonded_eight_particle_energy(p1, p2, p3, p4, p5, p6, p7, p8, _energy);
 

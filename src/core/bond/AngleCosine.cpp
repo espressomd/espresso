@@ -86,8 +86,10 @@ int Bond::AngleCosine::add_bonded_three_particle_energy(Particle *p1, Particle *
 
 /* The force on each particle due to a three-body bonded potential
    is computed. */
-void Bond::AngleCosine::calc_angle_3body_forces(Particle *p_mid, Particle *p_left,
-						  Particle *p_right, double force1[3], double force2[3], double force3[3]) const {
+int Bond::AngleCosine::calc_3body_forces(Particle *p_mid, Particle *p_left,
+					  Particle *p_right, double force1[3], 
+					  double force2[3], double force3[3]) const 
+{
 
 
   int j;
@@ -147,5 +149,7 @@ void Bond::AngleCosine::calc_angle_3body_forces(Particle *p_mid, Particle *p_lef
     force2[j] = force2[j] + fac * fj[j];
     force3[j] = force3[j] + fac * fk[j];
   }
+
+  return 0;
 
 }

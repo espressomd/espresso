@@ -6,6 +6,7 @@ namespace Bond {
 
   class EightParticleBond : public Bond {
   public:
+    EightParticleBond() : Bond(7) {}
     virtual ~EightParticleBond() = default;
 
     // new virtual methods for three particle bond calculation implemented
@@ -39,11 +40,8 @@ namespace Bond {
     // p1: particle, bl_id: id number of bond in bl.e
     // return value: 0: ok, 1: bond broken, 2: error in getting particles
     // =>return from "add_bonded_force()" - function in forces_inline.cpp
-    int add_bonded_force(Particle *p1, int bl_id) const override;
-    int add_bonded_energy(Particle *p1, int bl_id, double* _energy) const override;
-
-    // get the number of bond partners
-    int get_number_of_bond_partners() const override;
+    int add_bonded_force(Particle *p1, int bl_id) override;
+    int add_bonded_energy(Particle *p1, int bl_id, double* _energy) override;
 
   };
 
