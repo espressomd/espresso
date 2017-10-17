@@ -28,11 +28,11 @@ print("\n--->Setup system")
 # System parameters
 n_part = 200
 n_ionpairs = n_part/2
-density = 0.7
+density = 0.5
 time_step = 0.01
 temp = 1.0
 gamma = 1.0
-l_bjerrum = 1.0
+l_bjerrum = 7.0
 
 num_steps_equilibration = 1000
 num_configs = 100
@@ -61,9 +61,9 @@ system.cell_system.skin = 0.3
 system.thermostat.set_langevin(kT=temp, gamma=gamma)
 
 # Place particles
-for i in range(n_ionpairs):
+for i in range(int(n_ionpairs)):
     system.part.add(id=len(system.part), type=types["Anion"],  pos=numpy.random.random(3) * box_l, q=charges["Anion"])
-for i in range(n_ionpairs):
+for i in range(int(n_ionpairs)):
     system.part.add(id=len(system.part), type=types["Cation"], pos=numpy.random.random(3) * box_l, q=charges["Cation"])
 
 def combination_rule_epsilon(rule, eps1, eps2):
@@ -113,7 +113,7 @@ system.actors.add(p3m)
 
 print("\n--->Temperature Equilibration")
 system.time = 0.0
-for i in range(num_steps_equilibration/100):
+for i in range(int(num_steps_equilibration/100)):
     temp_measured = system.analysis.energy()['kinetic'] / ((3.0 / 2.0) * n_part)
     print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
                                        system.analysis.energy()['total'],

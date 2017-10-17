@@ -100,7 +100,7 @@ endforeach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
 ######################################################################
 
 if (WITH_CUDA)
-  find_package(CUDA QUIET)
+  find_package(CUDA 7.0)
   if(CUDA_FOUND)
     list(APPEND LIBRARIES ${CUDA_CUFFT_LIBRARIES})
     list(APPEND LIBRARIES ${CUDA_LIBRARIES})

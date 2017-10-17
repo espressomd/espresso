@@ -20,7 +20,8 @@ class LBTest(ut.TestCase):
 
     """
     system = espressomd.System()
-    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+    n_nodes = system.cell_system.get_state()["n_nodes"]
+    system.seed = range(n_nodes)
 
     def setUp(self):
         self.params = {'int_steps': 100,

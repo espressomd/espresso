@@ -374,7 +374,7 @@ class ek_eof_one_species_x(ut.TestCase):
                         "Pressure accuracy yy component not achieved")
         self.assertLess(total_pressure_difference_zz, 1.5e-07,
                         "Pressure accuracy zz component not achieved")
-        self.assertLess(total_pressure_difference_xy, 3.0e-10,
+        self.assertLess(total_pressure_difference_xy, 5.0e-10,
                         "Pressure accuracy xy component not achieved")
         self.assertLess(total_pressure_difference_yz, 2.5e-10,
                         "Pressure accuracy yz component not achieved")

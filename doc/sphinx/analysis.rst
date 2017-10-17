@@ -491,14 +491,10 @@ non-bonded interactions.
 Pressure
 ~~~~~~~~
 
-analyze pressure analyze pressure total analyze pressure analyze
-pressure bonded analyze pressure nonbonded analyze pressure
-nonbonded\_intra analyze pressure nonbonded\_inter
+:meth:`espressomd.analyze.Analysis.pressure`
 
-Computes the pressure and its contributions in the system. Variant
-returns all the contributions to the total pressure. Variant will return
-the total pressure only. Variants , and return the corresponding
-contributions to the total pressure.
+Computes the pressure and its contributions in the system. It
+returns all the contributions to the total pressure (see :meth:`espressomd.analyze.Analysis.pressure`).
 
 The pressure is calculated (if there are no electrostatic interactions)
 by
@@ -524,39 +520,25 @@ Ref. :cite:`thompson09a`. A different formula is used to
 calculate contribution from electrostatic interactions in P3M. For
 electrostatic interactions, the :math:`k`-space contribution is not well
 tested, so use with caution! Anything outside that is currently not
-implemented. Four-body dihedral potentials are not included. In case of
-rigid body rotation, virial contribution from torques is not included.
-The pressure contribution for rigid bodies constructed by means of the
-VIRTUAL\_SITES\_RELATIVE mechanism is included. On the other hand, the
-pressure contribution for rigid bonds is not included. All other
+implemented. Four-body dihedral potentials are not included. Except of 
+VIRTUAL\_SITES\_RELATIVE constraints all other
 constraints of any kind are not currently accounted for in the pressure
 calculations. The pressure is no longer correct, e.g., when particles
 are confined to a plane.
 
 The command is implemented in parallel.
 
-{ { pressure } { ideal } { { } } { { } } { coulomb } }
-
-specifying the pressure, the ideal gas pressure, the contributions from
-bonded interactions, the contributions from non-bonded interactions and
-the electrostatic contributions.
-
-
 .. _Stress Tensor:
 
 Stress Tensor
 ~~~~~~~~~~~~~
+:meth:`espressomd.analyze.Analysis.stress_tensor`
 
-analyze stress\_tensor analyze stress\_tensor total analyze
-stress\_tensor analyze stress\_tensor bonded analyze stress\_tensor
-nonbonded analyze stress\_tensor nonbonded\_intra analyze stress\_tensor
-nonbonded\_inter
+Computes the stress tensor of the system with options which are
+described by in :meth: espressomd.System.analysis.stress_tensor. 
+It is called a stress tensor but the sign convention follows that of a pressure tensor.
 
-Computes the stress tensor of the system. The various options are
-equivalent to those described by in . It is called a stress tensor but
-the sign convention follows that of a pressure tensor.
-
-The stress tensor is calculated by
+The virial stress tensor is calculated by
 
 .. math:: p^{(kl)} = \frac{\sum_{i} {m_{i}v_{i}^{(k)}v_{i}^{(l)}}}{V} + \frac{\sum_{j>i}{F_{ij}^{(k)}r_{ij}^{(l)}}}{V}
 
@@ -567,12 +549,6 @@ Note that the angular velocities of the particles are not included in
 the calculation of the stress tensor.
 
 The command is implemented in parallel.
-
-{ { pressure } { ideal } { { } } { { } } { coulomb } }
-
-specifying the pressure tensor, the ideal gas pressure tensor, the
-contributions from bonded interactions, the contributions from
-non-bonded interactions and the electrostatic contributions.
 
 
 .. _Local Stress Tensor:

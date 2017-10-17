@@ -36,7 +36,6 @@
 from __future__ import print_function
 import espressomd
 
-import cPickle as pickle
 import os 
 import numpy as np
 

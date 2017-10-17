@@ -17,7 +17,8 @@ from tests_common import abspath
 class lb_test(ut.TestCase):
 
     es = espressomd.System()
-    es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
+    n_nodes = es.cell_system.get_state()["n_nodes"]
+    es.seed = range(n_nodes)
 
     def test(self):
         #setup parameters
