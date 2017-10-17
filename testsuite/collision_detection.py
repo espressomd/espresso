@@ -24,6 +24,7 @@ import espressomd
 import numpy as np
 from espressomd.interactions import HarmonicBond,Angle_Harmonic
 import numpy as np
+from random import shuffle
 
 @ut.skipIf(not espressomd.has_features("COLLISION_DETECTION"),"Required features not compiled in")
 class CollisionDetection(ut.TestCase):
@@ -94,6 +95,8 @@ class CollisionDetection(ut.TestCase):
     
     
     def run_test_bind_at_point_of_collision_for_pos(self,*positions):
+        positions=list(positions)
+        shuffle(positions)
         self.s.part.clear()
         # Place particle which should not take part in collisions
         p=self.s.part.add(pos=(0.1,0.3,0))
@@ -129,7 +132,7 @@ class CollisionDetection(ut.TestCase):
         self.assertEqual(len(self.s.part),expected_np)
 
         # At the end of test, this list should be empty
-        parts_not_accounted_for=range(expected_np)
+        parts_not_accounted_for=list(range(expected_np))
         
         # Collect pairs of non-virtual-particles found
         non_virtual_pairs=[]
@@ -225,6 +228,8 @@ class CollisionDetection(ut.TestCase):
     
     
     def run_test_glue_to_surface_for_pos(self,*positions):
+        positions=list(positions)
+        shuffle(positions)
         self.s.part.clear()
         # Place particle which should not take part in collisions
         # In this case, it is skipped, because it is of the wrong type,
@@ -265,7 +270,7 @@ class CollisionDetection(ut.TestCase):
         self.assertEqual(len(self.s.part),expected_np)
 
         # At the end of test, this list should be empty
-        parts_not_accounted_for=range(expected_np)
+        parts_not_accounted_for=list(range(expected_np))
         
         # We traverse particles. We look for a vs, get base particle from there
         # and prtner particle via bonds
