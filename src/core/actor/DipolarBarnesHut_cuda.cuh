@@ -54,7 +54,6 @@ struct BHArrays{
 };
 
 // thread count for different kernels (see kernel calls from below functions).
-#define THREADS0 512	/* must be a power of 2 */
 #define THREADS1 512	/* must be a power of 2 */
 #define THREADS2 1024
 #define THREADS3 1024
@@ -63,7 +62,6 @@ struct BHArrays{
 
 // block count = factor * #SMs
 // for different kernels (see kernel calls from below functions).
-#define FACTOR0 1
 #define FACTOR1 3
 #define FACTOR2 1
 #define FACTOR3 1	/* must all be resident at the same time */
