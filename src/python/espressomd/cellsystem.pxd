@@ -36,7 +36,7 @@ cdef extern from "cells.hpp":
     int CELL_STRUCTURE_NSQUARE
     int CELL_STRUCTURE_LAYERED
 
-    vector[pair[int, int]] get_pairs(double distance)
+    vector[pair[int, int]] mpi_get_pairs(double distance)
 
 cdef extern from "layered.hpp":
     int determine_n_layers

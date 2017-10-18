@@ -25,6 +25,7 @@
  *  For more information on cells, see cells.hpp
  *   */
 #include "cells.hpp"
+#include "algorithm/link_cell.hpp"
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
 #include "ghosts.hpp"
@@ -37,13 +38,12 @@
 #include "nsquare.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
+#include "utils/NoOp.hpp"
+#include "utils/mpi/gather_buffer.hpp"
+#include <boost/iterator/indirect_iterator.hpp>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include "utils/mpi/gather_buffer.hpp"
-#include "algorithm/link_cell.hpp"
-#include "utils/NoOp.hpp"
-#include <boost/iterator/indirect_iterator.hpp>
 
 /* Variables */
 
@@ -68,12 +68,12 @@ int rebuild_verletlist = 1;
  *
  * This is mostly for testing purposes and uses link_cell
  * to get pairs out of the cellsystem by a simple distance
- * criterion. This only works for n_nodes == 1, and should
- * not be used in production code.
+ * criterion.
  *
  * Pairs are sorted so that first.id < second.id
  */
-std::vector<std::pair<int, int>> get_pairs(double distance) {
+std::vector<std::pair<int, int>>
+get_pairs(double distance) {
   std::vector<std::pair<int, int>> ret;
   auto const cutoff2 = distance * distance;
 
@@ -110,7 +110,8 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
                            double vec21[3];
                            get_mi_vector(vec21, p1.r.p, p2.r.p);
                            vec21[2] = p1.r.p[2] - p2.r.p[2];
-                           return sqrlen(vec21);
+
+                             return sqrlen(vec21);
                          });
   }
 
@@ -121,6 +122,29 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
   }
 
   return ret;
+}
+
+void mpi_get_pairs_slave(int, int) {
+  double distance;
+  boost::mpi::broadcast(comm_cart, distance, 0);
+
+  auto local_pairs = get_pairs(distance);
+
+  Utils::Mpi::gather_buffer(local_pairs, comm_cart);
+}
+
+/**
+ * @brief Collect pairs from all nodes.
+ */
+std::vector<std::pair<int, int>> mpi_get_pairs(double distance) {
+  mpi_call(mpi_get_pairs_slave, 0, 0);
+  boost::mpi::broadcast(comm_cart, distance, 0);
+
+  auto pairs = get_pairs(distance);
+
+  Utils::Mpi::gather_buffer(pairs, comm_cart);
+
+  return pairs;
 }
 
 /************************************************************/

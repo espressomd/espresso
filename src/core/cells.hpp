@@ -274,7 +274,16 @@ void cells_update_ghosts();
     node. */
 int cells_get_n_particles();
 
-std::vector<std::pair<int, int>> get_pairs(double distance);
+/**
+ * @brief Get pairs closer than distance from the cells.
+ *
+ * This is mostly for testing purposes and uses link_cell
+ * to get pairs out of the cellsystem by a simple distance
+ * criterion.
+ *
+ * Pairs are sorted so that first.id < second.id
+ */
+std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
 
 /** spread the particle resorting criterion across the nodes. */
 void announce_resort_particles();

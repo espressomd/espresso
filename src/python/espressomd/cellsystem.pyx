@@ -139,7 +139,7 @@ cdef class CellSystem(object):
 
 
     def get_pairs_(self, distance):
-        return get_pairs(distance)
+        return mpi_get_pairs(distance)
 
     def resort(self, global_flag = 1):
         """
