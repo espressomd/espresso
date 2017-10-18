@@ -134,8 +134,7 @@ class Mesh:
     """
     def __init__(self, nodesFile=None, trianglesFile=None, system=None, stretch=(1.0, 1.0, 1.0), partType=-1, partMass=1.0, normal=False, checkOrientation=True):
         if system is None:
-            print "Mesh: No system provided. Quitting."
-            quit()
+            raise Exception("Mesh: No system provided. Quitting.")
         self.system = system
         self.normal = normal
         self.nodesFile = nodesFile
@@ -329,8 +328,7 @@ class Mesh:
                         tmpVector = neighbor.GetPos() - pCoords
                         tmpLength = Norm(tmpVector)
                         if tmpLength < smallEpsilon:
-                            print "Mesh: Degenerate edge. Quitting"
-                            quit()
+                            raise Exception("Mesh: Degenerate edge. Quitting.")
                         tmpVector /= tmpLength
                         tmpVectorsToNeighbors.append(tmpVector)
                     # check all triplets of neighbors and select the one that is best spatially distributed
@@ -589,14 +587,11 @@ class Mesh:
 
     def Mirror(self, mirrorX=0, mirrorY=0, mirrorZ=0, outFileName=""):
         if (outFileName == ""):
-            print "Cell.Mirror: output meshnodes file for new mesh is missing. Quitting. "
-            quit()
+            raise Exception("Cell.Mirror: output meshnodes file for new mesh is missing. Quitting.")
         if ((mirrorX!=0 and mirrorX != 1) or (mirrorY!=0 and mirrorY != 1) or (mirrorZ!=0 and mirrorZ != 1)):
-            print "Mesh.Mirror: for mirroring only values 0 or 1 are accepted. 1 indicates that the corresponding coordinate will be flipped.  Exiting."
-            quit()
+            raise Exception("Mesh.Mirror: for mirroring only values 0 or 1 are accepted. 1 indicates that the corresponding coordinate will be flipped.  Exiting.")
         if (mirrorX + mirrorY + mirrorZ > 1):
-            print "Mesh.Mirror: flipping allowed only for one axis. Exiting."
-            quit()
+            raise Exception("Mesh.Mirror: flipping allowed only for one axis. Exiting.")
         if (mirrorX + mirrorY + mirrorZ == 1):
             outFile = open(outFileName, "w")
             for p in self.points:
@@ -620,18 +615,15 @@ class OifCellType:  # analogous to oif_template
     def __init__(self, nodesfile="", trianglesfile="", system=None, stretch=(1.0, 1.0, 1.0), ks=0.0, kslin=0.0, kb=0.0, kal=0.0, kag=0.0,
                  kv=0.0, kvisc=0.0, normal=False, checkOrientation=True):
         if system is None:
-            print "OifCellType: No system provided. Quitting."
-            quit()
+            raise Exception("OifCellType: No system provided. Quitting.")
         if (nodesfile is "") or (trianglesfile is ""):
-            print "OifCellType: One of nodesfile or trianglesfile is missing. Quitting."
-            quit()
+            raise Exception("OifCellType: One of nodesfile or trianglesfile is missing. Quitting.")
         if (normal is False):
             print "OifCellType warning: Option normal is not used => membrane collision will not work."
         if (checkOrientation is False):
             print "OifCellType warning: Check of orientation of triangles is switched off."
         if (ks != 0.0) and (kslin != 0.0):
-            print "OifCellType: Cannot use linear and nonlinear stretching at the same time. Quitting."
-            quit()
+            raise Exception("OifCellType: Cannot use linear and nonlinear stretching at the same time. Quitting.")
         self.system = system
         self.mesh = Mesh(nodesFile=nodesfile, trianglesFile=trianglesfile, system=system, stretch=stretch, normal=normal, checkOrientation=checkOrientation)
         self.localForceInteractions = []
@@ -690,14 +682,11 @@ class OifCell:
     """
     def __init__(self, cellType=None, origin=None, partType=None, partMass=1.0, rotate=None):
         if cellType is None:
-            print "OifCell: No cellType provided. Quitting."
-            quit()
+            raise Exception("OifCell: No cellType provided. Quitting.")
         if origin is None:
-            print "OifCell: No origin specified. Quitting."
-            quit()
+            raise Exception("OifCell: No origin specified. Quitting.")
         if partType is None:
-            print "OifCell: No partType specified. Quitting."
-            quit()
+            raise Exception("OifCell: No partType specified. Quitting.")
         self.cellType = cellType
         self.mesh = cellType.mesh.Copy(origin=origin, partType=partType, partMass=partMass, rotate=rotate)
         self.partMass = partMass
