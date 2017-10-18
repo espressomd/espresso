@@ -1064,7 +1064,7 @@ int virtual_set_params(int bond_type)
   bonded_ia_params[bond_type].num  = 1;
 
   //create new bond class in bond vector with params
-  set_bond_by_type(bond_type, Utils::make_unique<Bond::VirtualBond>();
+  set_bond_by_type(bond_type, Utils::make_unique<Bond::VirtualBond>());
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(bond_type, -1); 
