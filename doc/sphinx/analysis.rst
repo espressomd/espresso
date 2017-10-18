@@ -40,22 +40,19 @@ The command provides online-calculation of local and global observables.
 Minimal distances between particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:meth:`espressomd.analysis.mindist()`
+:meth:`espressomd.analyze.Analysis.mindist`
 Returns the minimal distance between all particles in the system.
 
-:meth:`espressomd.system.analysis.mindist(p1, p2)`
+When used with type-lists as arguments, then the minimal distance between particles of only those types is determined.
 
-If the type-lists are given via `p1` and `p2`, then the minimal distance between particles of only those types is determined.
 
-:meth:`espressomd.system.analysis.distto(id)`
+:meth:`espressomd.analyze.Analysis.distto()`
 
-Returns the minimal distance of all particles to particle with index `id`, or
-
-:meth:`espressomd.system.analysis.distto(pos)`
-
-to the coordinates given by the vector `pos`.
+Returns the minimal distance of all particles to either a particle (when used with an argument `id`) 
+or a position coordinate when used with a vector `pos`.
 
 For example, ::
+
     >>> import espressomd
     >>> system = espressomd.System()
     >>> system.box_l = [100, 100, 100]
@@ -74,8 +71,7 @@ For example, ::
 Particles in the neighbourhood
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:meth:`espressomd.system.analysis.nbhood()`
-
+:meth:`espressomd.analyze.Analysis.nbhood`
  
 Returns a list of the particle ids of that fall within a given radius of a target position.
 
@@ -83,8 +79,9 @@ Returns a list of the particle ids of that fall within a given radius of a targe
 
 Particle distribution
 ~~~~~~~~~~~~~~~~~~~~~
+:meth:`espressomd.analyze.Analysis.distribution`
 
-analyze distribution
+
 
 Returns its parameters and the distance distribution of particles
 (probability of finding a particle of type at a certain distance around
@@ -107,6 +104,7 @@ The output corresponds to the blockfile format (see section ):
 
 Radial density map
 ~~~~~~~~~~~~~~~~~~
+.. todo:: check this
 
 analyze radial\_density\_map
 
@@ -151,6 +149,7 @@ the currently identified properties.
 
 Cylindrical Average
 ~~~~~~~~~~~~~~~~~~~
+.. todo:: check this
 
 analyze cylindrical\_average
 
@@ -213,6 +212,7 @@ node[dot,label=above:center] – (0,1.5) node[above] direction; in 0, (2,)
 
 Modes
 ~~~~~
+.. todo:: check this
 
 analyze modes2d
 
@@ -227,6 +227,7 @@ numbers in the order:
 
 Lipid orientation
 ~~~~~~~~~~~~~~~~~
+.. todo:: check this
 
 analyze get\_lipid\_orients analyze lipid\_orient\_order
 
@@ -235,6 +236,7 @@ analyze get\_lipid\_orients analyze lipid\_orient\_order
 
 Bilayers
 ~~~~~~~~
+.. todo:: check this
 
 analyze bilayer\_set analyze bilayer\_density\_profile
 
@@ -243,6 +245,7 @@ analyze bilayer\_set analyze bilayer\_density\_profile
 
 GPB
 ~~~
+.. todo:: check this
 
 analyze cell\_gpb
 
@@ -251,6 +254,7 @@ analyze cell\_gpb
 
 Get folded positions
 ~~~~~~~~~~~~~~~~~~~~
+.. todo:: check this
 
 analyze get\_folded\_positions
 
@@ -265,6 +269,7 @@ separated molecules if needed.
 
 Vkappa
 ~~~~~~
+.. todo:: check this
 
 analyze Vkappa
 
@@ -283,6 +288,7 @@ set those.
 
 Radial distribution function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. todo:: check this
 
 [analyze:<rdf>]
 
@@ -300,6 +306,7 @@ The output corresponds to the blockfile format (see section ):
 
 Structure factor
 ~~~~~~~~~~~~~~~~
+.. todo:: check this
 
 analyze structurefactor
 
@@ -318,6 +325,7 @@ The output corresponds to the blockfile format (see section ):
 
 Van-Hove autocorrelation function :math:`G(r,t)`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. todo:: check this
 
 analyze vanhove
 
@@ -349,6 +357,7 @@ always yields :math:`1`.
 
 Center of mass
 ~~~~~~~~~~~~~~
+.. todo:: check this
 
 :meth:`espressomd.system.analysis.centermass`
 
@@ -359,6 +368,7 @@ Returns the center of mass of particles of the given type given by `part_type`.
 
 Moment of inertia matrix
 ~~~~~~~~~~~~~~~~~~~~~~~~
+.. todo:: check this
 
 [analyze:find-principal-axis]
 
@@ -373,6 +383,7 @@ returns the eigenvalues and eigenvectors of the matrix.
 
 Gyration tensor
 ~~~~~~~~~~~~~~~
+.. todo:: check this
 
 analyze gyration\_tensor
 
@@ -388,6 +399,7 @@ eigenvalues are sorted in descending order.
 
 Aggregation
 ~~~~~~~~~~~
+.. todo:: check this
 
 analyze aggregation
 
@@ -404,7 +416,7 @@ aggregation state of only oppositely charged particles.
 
 Identifying pearl-necklace structures
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+.. todo:: check this
 analyze necklace
 
 Algorithm for identifying pearl necklace structures for polyelectrolytes
@@ -427,6 +439,7 @@ structures.
 
 Finding holes
 ~~~~~~~~~~~~~
+.. todo:: check this
 
 analyze holes
 
@@ -465,6 +478,7 @@ Surface results have not been tested. .
 
 Temperature of the LB fluid
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. todo:: check this
 
 This command returns the temperature of the lattice-Boltzmann (LB)
 fluid, see Chapter [sec:lb], by averaging over the fluid nodes. In case
@@ -476,6 +490,7 @@ volume is taken into account.
 
 Momentum of the System
 ~~~~~~~~~~~~~~~~~~~~~~
+.. todo:: check this
 
 analyze momentum
 
@@ -489,20 +504,11 @@ of the particles.
 
 Energies
 ~~~~~~~~
-:meth:`espressomd.system.analysis.energy`
+:meth:`espressomd.analyze.Analysis.energy`
 
 
-
-analyze energy analyze energy analyze energy bonded analyze energy
-nonbonded
-
-Returns the energies of the system. Variant returns all the
-contributions to the total energy. Variant returns the numerical value
-of the total energy or its kinetic or Coulomb or magnetic contributions
-only. Variants and return the energy contributions of the bonded resp.
-non-bonded interactions.
-
-{ energy } { kinetic } { interaction } …
+Returns the energies of the system.
+The the different energetic contributions to the total energy can also be obtained.
 
 For example, ::
     >>> energy = system.analysis.energy()
@@ -581,6 +587,7 @@ The command is implemented in parallel.
 
 Local Stress Tensor
 ~~~~~~~~~~~~~~~~~~~
+.. todo:: check this
 
 analyze local\_stress\_tensor
 

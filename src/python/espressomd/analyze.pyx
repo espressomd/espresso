@@ -828,7 +828,27 @@ class Analysis(object):
 
     def distribution(self, type_list_a=None, type_list_b=None,
                      r_min=0.0, r_max=None, r_bins=100, log_flag=0, int_flag=0):
-        """Calculates the distance distribution of particles.
+        """Calculates the distance distribution of particles 
+	(probability of finding a particle of type at a certain distance around a particle of type , disregarding the fact that a spherical shell of a larger radius covers a larger volume) 
+	The distance is defined as the minimal distance between a particle of group `type_list_a` to any of the group `type_list_b`.
+
+	Parameters
+        ----------
+        type_list_a : array like
+           list of particle types, only consider distances from these types
+        type_list_b : array like, 
+           list of particle types, only consider distances to these types
+        r_min : float
+           minimum distance
+        r_max : float
+           maximum distance
+        r_bins : int
+           number of bins
+        log_flag : int
+           when set to 0, the bins are linearly equidistant; when set to 1, the bins are logarithmically equidistant.
+        int_flag : int
+           when set to 1, the result is an integrated distribution 
+
 
         """
 
