@@ -23,13 +23,13 @@ def get_triangle_normal(a, b, c):
     return n
 
 
-def norm(v):
+def norm(vect):
     """
     Returns the norm of a vector.
 
     """
-    norm = np.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2])
-    return norm
+    v = np.array(vect)
+    return np.sqrt(np.dot(v,v))
 
 
 def vec_distance(a, b):
@@ -37,8 +37,7 @@ def vec_distance(a, b):
     Returns the length of vector between points a and b.
 
     """
-    dist = np.sqrt((a[0] - b[0]) * (a[0] - b[0]) + (a[1] - b[1]) * (a[1] - b[1]) + (a[2] - b[2]) * (a[2] - b[2]))
-    return dist
+    return norm(np.array(a) - np.array(b))
 
 
 def area_triangle(a, b, c):
@@ -58,12 +57,12 @@ def angle_btw_triangles(P1, P2, P3, P4):
     """
     n1 = get_triangle_normal(P2, P1, P3)
     n2 = get_triangle_normal(P2, P3, P4)
-    tmp11 = n1[0] * n2[0] + n1[1] * n2[1] + n1[2] * n2[2]
+    tmp11 = np.dot(n1, n2)
     tmp11 = tmp11 * abs(tmp11)
 
-    tmp22 = n1[0] * n1[0] + n1[1] * n1[1] + n1[2] * n1[2]
-    tmp33 = n2[0] * n2[0] + n2[1] * n2[1] + n2[2] * n2[2]
-    tmp11 = tmp11 / (tmp22 * tmp33)
+    tmp22 = np.dot(n1, n1)
+    tmp33 = np.dot(n2, n2)
+    tmp11 /= (tmp22 * tmp33)
 
     if tmp11 > 0:
         tmp11 = np.sqrt(tmp11)
@@ -77,8 +76,7 @@ def angle_btw_triangles(P1, P2, P3, P4):
 
     phi = pi - math.acos(tmp11)
 
-    tmp11 = -(n1[0] * P1[0] + n1[1] * P1[1] + n1[2] * P1[2])
-    if n1[0] * P4[0] + n1[1] * P4[1] + n1[2] * P4[2] + tmp11 < 0:
+    if (np.dot(n1, np.array(P4)) - np.dot(n1, np.array(P1))) < 0:
         phi = 2.0 * pi - phi
     return phi
 
@@ -143,16 +141,13 @@ def oif_calc_bending_force(kb, pA, pB, pC, pD, phi0, phi):
     # this has to correspond to the calculation in oif_local_forces.hpp: calc_oif_local
     # as of now, corresponds to git commit f156f9b44dcfd3cef9dd5537a1adfc903ac4772a
     n1 = get_triangle_normal(pB, pA, pC)
-    dn1 = norm(n1)
-
     n2 = get_triangle_normal(pB, pC, pD)
-    dn2 = norm(n2)
 
     angles = (phi - phi0) / phi0
     fac = kb * angles
 
-    f1 = fac * np.array(n1) / dn1
-    f2 = fac * np.array(n2) / dn2
+    f1 = fac * np.array(n1) / norm(n1)
+    f2 = fac * np.array(n2) / norm(n2)
     f = [f1[0], f1[1], f1[2], f2[0], f2[1], f2[2]]
     return f
 
@@ -375,11 +370,8 @@ def get_lb_interpolated_velocity(position, lbf, system, fluid_agrid):
     # position is a vector [x,y,z], in which we want the fluid velocity
 
     # since the fluid node [0,0,0] is at the position [0.5, 0.5, 0.5], we need to shift, fold and rescale
-    shifted_position = [0.0,0.0,0.0]
-    for i in range(0, 3):
-        shifted_position[i] = position[i] - 0.5*fluid_agrid
-        shifted_position[i] = np.mod(shifted_position[i], system.box_l[i])
-        shifted_position[i] = shifted_position[i]/fluid_agrid
+    shifted_position = position - np.array(0.5*fluid_agrid, 0.5*fluid_agrid, 0.5*fluid_agrid)
+    shifted_position = np.mod(shifted_position, system.box_l)/fluid_agrid
 
     # these six variables are not positions, but lattice indices
     x_lower = math.floor(shifted_position[0])

@@ -29,7 +29,8 @@ class FixedPoint:
 
     def get_id(self):
         return self.id
-        
+
+
 class PartPoint:
     """
     Represents mesh points, connected to ESPResSo particle.
@@ -188,8 +189,8 @@ class Mesh:
             # removes a blank line at the end of the file if there is any:
             nodes_coord = filter(None, nodes_coord) # here we have list of lines with triplets of strings
             for line in nodes_coord:  # extracts coordinates from the string line
-                line = line.split()
-                coords = [resize[0]*float(line[0]), resize[1]*float(line[1]), resize[2]*float(line[2])]
+                line = np.array(map(float, line.split()))
+                coords = np.array(resize) * line
                 tmp_fixed_point = FixedPoint(coords, len(self.points))
                 self.points.append(tmp_fixed_point)
 
@@ -228,8 +229,7 @@ class Mesh:
             # removes a blank line at the end of the file if there is any:
             triangles_incid = filter(None, triangles_incid)
             for line in triangles_incid:  # extracts incidences from the string line
-                line = line.split()
-                incid = [int(line[0]), int(line[1]), int(line[2])]
+                incid = np.array(map(int, line.split()))
                 tmp_triangle = Triangle(self.points[incid[0]], self.points[incid[1]], self.points[incid[2]])
                 self.triangles.append(tmp_triangle)
 
@@ -382,9 +382,7 @@ class Mesh:
                                                                best_neighbors[2].get_pos())
                     tmp_length_normal_triangle = norm(tmp_normal_triangle)
                     tmp_length_normal_neighbors = norm(tmp_normal_neighbors)
-                    tmp_product = (tmp_normal_triangle[0] * tmp_normal_neighbors[0] +
-                                   tmp_normal_triangle[1] * tmp_normal_neighbors[1] +
-                                   tmp_normal_triangle[2] * tmp_normal_neighbors[2]) / \
+                    tmp_product = (tmp_normal_triangle * tmp_normal_neighbors) / \
                                   (tmp_length_normal_triangle * tmp_length_normal_neighbors)
                     tmp_angle = np.arccos(tmp_product)
                     if tmp_angle > np.pi/2.0:
@@ -425,9 +423,7 @@ class Mesh:
                 tmp_pos = rotation.dot(tmp_rotate_pos)
                 tmp_pos = [discard_epsilon(tmp_pos[0]), discard_epsilon(tmp_pos[1]), discard_epsilon(tmp_pos[2])]
             if origin is not None:
-                tmp_pos[0] += origin[0]
-                tmp_pos[1] += origin[1]
-                tmp_pos[2] += origin[2]
+                tmp_pos += np.array(origin)
             new_part_id = len(self.system.part)  # to remember the global id of the ESPResSo particle
             self.system.part.add(pos=tmp_pos, type=part_type, mass=part_mass, mol_id=part_type)
             new_part = self.system.part[new_part_id]
@@ -796,17 +792,14 @@ class OifCell:
             p.set_pos(new_position)
 
     def get_approx_origin(self):
-        approx_center = [0.0, 0.0, 0.0]
+        approx_center = np.array([0.0, 0.0, 0.0])
         for id in self.mesh.ids_extremal_points:
             approx_center += self.mesh.points[id].get_pos()
         return approx_center/len(self.mesh.ids_extremal_points)
 
     def get_origin_folded(self):
         origin = self.get_origin()
-        x_coor = np.mod(origin[0], self.cell_type.system.box_l[0])
-        y_coor = np.mod(origin[1], self.cell_type.system.box_l[1])
-        z_coor = np.mod(origin[2], self.cell_type.system.box_l[2])
-        return [x_coor, y_coor, z_coor]
+        return np.mod(origin, self.cell_type.system.box_l)
 
     def get_velocity(self):
         velocity = np.array([0.0, 0.0, 0.0])
@@ -910,10 +903,8 @@ class OifCell:
         for p in self.mesh.points:
             center += p.get_pos()
         center /= len(self.mesh.points)
-        fold_x = np.floor(center[0]/self.cell_type.system.box_l[0])
-        fold_y = np.floor(center[1]/self.cell_type.system.box_l[1])
-        fold_z = np.floor(center[2]/self.cell_type.system.box_l[2])
-        # these give how many times is the origin folded in all three directions
+        center_folded = np.floor(center/self.cell_type.system.box_l)
+        # this gives how many times the origin is folded in all three directions
         
         output_file = open(file_name, "w")
         output_file.write("# vtk DataFile Version 3.0\n")
@@ -922,11 +913,8 @@ class OifCell:
         output_file.write("DATASET POLYDATA\n")
         output_file.write("POINTS " + str(n_points) + " float\n")
         for p in self.mesh.points:
-            coords = p.get_pos()
-            x_coor = coords[0] - fold_x*self.cell_type.system.box_l[0]
-            y_coor = coords[1] - fold_y*self.cell_type.system.box_l[1]
-            z_coor = coords[2] - fold_z*self.cell_type.system.box_l[2]
-            output_file.write(custom_str(x_coor) + " " + custom_str(y_coor) + " " + custom_str(z_coor) + "\n")
+            coords = p.get_pos() - center_folded * self.cell_type.system.box_l
+            output_file.write(custom_str(coords[0]) + " " + custom_str(coords[1]) + " " + custom_str(coords[2]) + "\n")
         output_file.write("TRIANGLE_STRIPS " + str(n_triangles) + " " + str(4 * n_triangles) + "\n")
         for t in self.mesh.triangles:
             output_file.write("3 " + str(t.A.id) + " " + str(t.B.id) + " " + str(t.C.id) + "\n")
@@ -1006,7 +994,7 @@ class OifCell:
             i = 0
             for line in nodes_coord:  # extracts coordinates from the string line
                 line = line.split()
-                new_position = [float(line[0]), float(line[1]), float(line[2])] + center
+                new_position = np.array(map(float, line.split())) + center
                 self.mesh.points[i].set_pos(new_position)
                 i += 1
 
