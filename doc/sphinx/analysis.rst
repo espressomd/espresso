@@ -3,9 +3,9 @@
 Analysis
 ========
 
-has two fundamentally different classes of observables for analyzing the
-systems. On the one hand, some observables are computed from the Tcl
-level. In that case, the observable is measured in the moment that the
+has two fundamentally different classes of observables for analyzing the systems.
+On the one hand, some observables are computed from the Tcl level.
+In that case, the observable is measured in the moment that the
 corresponding Tcl function is called, and the results are returned to
 the Tcl script. In general, observables in this class should only be
 computed after a large number of timesteps, as switching forth and back
@@ -40,28 +40,44 @@ The command provides online-calculation of local and global observables.
 Minimal distances between particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-[analyze:distto]
+:meth:`espressomd.analysis.mindist()`
+Returns the minimal distance between all particles in the system.
 
-analyze mindist analyze distto analyze distto
+:meth:`espressomd.system.analysis.mindist(p1, p2)`
 
-Variant returns the minimal distance between two particles in the
-system. If the type-lists are given, then the minimal distance between
-particles of only those types is determined.
+If the type-lists are given via `p1` and `p2`, then the minimal distance between particles of only those types is determined.
 
-returns the minimal distance of all particles to particle (variant ), or
-to the coordinates (, , ) (Variant ).
+:meth:`espressomd.system.analysis.distto(id)`
 
+Returns the minimal distance of all particles to particle with index `id`, or
+
+:meth:`espressomd.system.analysis.distto(pos)`
+
+to the coordinates given by the vector `pos`.
+
+For example, ::
+    >>> import espressomd
+    >>> system = espressomd.System()
+    >>> system.box_l = [100, 100, 100]
+    >>> for i in range(10):
+    >>>     system.part.add(id=i, pos=[1.0, 1.0, i**2], type=0)
+    >>> system.analysis.distto(id=4)
+    7.0
+    >>> system.analysis.distto(pos=[0,0,0])
+    1.4142135623730951
+    >>> system.analysis.mindist()
+    1.0
+    
 
 .. _Particles in the neighbourhood:
 
 Particles in the neighbourhood
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-analyze nbhood analyze nbhood
+:meth:`espressomd.system.analysis.nbhood()`
 
-Returns a Tcl-list of the particle ids of all particles within a given
-radius around the position of the particle with number in variant or
-around the spatial coordinate (, , ) in variant .
+ 
+Returns a list of the particle ids of that fall within a given radius of a target position.
 
 .. _Particle distribution:
 
@@ -334,9 +350,9 @@ always yields :math:`1`.
 Center of mass
 ~~~~~~~~~~~~~~
 
-analyze centermass
+:meth:`espressomd.system.analysis.centermass`
 
-Returns the center of mass of particles of the given type.
+Returns the center of mass of particles of the given type given by `part_type`.
 
 
 .. _Moment of inertia matrix:
@@ -473,6 +489,9 @@ of the particles.
 
 Energies
 ~~~~~~~~
+:meth:`espressomd.system.analysis.energy`
+
+
 
 analyze energy analyze energy analyze energy bonded analyze energy
 nonbonded
@@ -484,6 +503,13 @@ only. Variants and return the energy contributions of the bonded resp.
 non-bonded interactions.
 
 { energy } { kinetic } { interaction } …
+
+For example, ::
+    >>> energy = system.analysis.energy()
+    >>> energy["total"]
+    >>> energy["kinetic"]
+    >>> energy["bonded"]
+    >>> energy["non_bonded"]
 
 
 .. _Pressure:
