@@ -467,6 +467,13 @@ Energies
 Returns the energies of the system.
 The the different energetic contributions to the total energy can also be obtained (kinetic, bonded,non-bonded, coublomb)).
 
+For example, ::
+    >>> energy = system.analysis.energy()
+    >>> energy["total"]
+    >>> energy["kinetic"]
+    >>> energy["bonded"]
+    >>> energy["non_bonded"]
+
 
 .. _Pressure:
 
