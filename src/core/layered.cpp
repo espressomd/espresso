@@ -303,8 +303,8 @@ void layered_topology_init(CellPList *old) {
   int c, p, np;
 
   CELL_TRACE(fprintf(stderr,
-                     "%d: layered_topology_init, %d old particle lists\n",
-                     this_node, old->n));
+                     "%d: layered_topology_init, %d old particle lists max_range %g\n",
+                     this_node, old->n, max_range));
 
   cell_structure.type = CELL_STRUCTURE_LAYERED;
   cell_structure.position_to_node = map_position_node_array;
@@ -334,21 +334,6 @@ void layered_topology_init(CellPList *old) {
   }
   MPI_Bcast(&n_layers, 1, MPI_INT, 0, comm_cart);
 
-  top = this_node + 1;
-  if (top == n_nodes)
-    top = 0;
-  btm = this_node - 1;
-  if (btm == -1)
-    btm = n_nodes - 1;
-
-  layer_h = local_box_l[2] / (double)(n_layers);
-  layer_h_i = 1 / layer_h;
-
-  if (layer_h < max_range) {
-    runtimeErrorMsg() << "layered: maximal interaction range " << max_range
-                      << " larger than layer height " << layer_h;
-  }
-
   /* check wether node is top and/or bottom */
   layered_flags = 0;
   if (this_node == 0)
@@ -359,6 +344,21 @@ void layered_topology_init(CellPList *old) {
   if (PERIODIC(2))
     layered_flags |= LAYERED_PERIODIC;
 
+  top = this_node + 1;
+  if ((top == n_nodes) && (layered_flags & LAYERED_PERIODIC))
+    top = 0;
+  btm = this_node - 1;
+  if ((btm == -1) && (layered_flags & LAYERED_PERIODIC))
+    btm = n_nodes - 1;
+
+  layer_h = local_box_l[2] / (double)(n_layers);
+  layer_h_i = 1 / layer_h;
+
+  if (layer_h < max_range) {
+    runtimeErrorMsg() << "layered: maximal interaction range " << max_range
+                      << " larger than layer height " << layer_h;
+  }
+
   CELL_TRACE(fprintf(stderr, "%d: layered_flags tn %d bn %d \n", this_node,
                      LAYERED_TOP_NEIGHBOR, LAYERED_BTM_NEIGHBOR));
 
@@ -367,12 +367,12 @@ void layered_topology_init(CellPList *old) {
   realloc_cellplist(&local_cells, local_cells.n = n_layers);
   for (c = 0; c < n_layers; c++) {
     local_cells.cell[c] = &cells[c + 1];
-    cells[c + 1].m_neighbors.push_back(std::ref(cells[c + 2]));
+    cells[c + 1].m_neighbors.push_back(std::ref(cells[c]));
   }
 
   realloc_cellplist(&ghost_cells, ghost_cells.n = 2);
-  ghost_cells.cell[0] = &cells[0];
-  ghost_cells.cell[1] = &cells[n_layers + 1];
+  ghost_cells.cell[0] = &cells.front();
+  ghost_cells.cell[1] = &cells.back();
 
   /* create communicators */
   layered_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM);
@@ -432,15 +432,10 @@ void layered_exchange_and_sort_particles(int global_flag) {
   Cell *nc, *oc;
   int c, p, flag, redo;
   ParticleList send_buf_dn, send_buf_up;
-  ParticleList recv_buf;
+  ParticleList recv_buf_up, recv_buf_dn;;
 
   CELL_TRACE(fprintf(stderr, "%d:layered exchange and sort %d\n", this_node,
                      global_flag));
-
-  init_particlelist(&send_buf_dn);
-  init_particlelist(&send_buf_up);
-
-  init_particlelist(&recv_buf);
 
   /* sort local particles */
   for (c = 1; c <= n_layers; c++) {
@@ -482,12 +477,12 @@ void layered_exchange_and_sort_particles(int global_flag) {
       if (this_node % 2 == 0) {
         /* send down */
         if (LAYERED_BTM_NEIGHBOR) {
-          CELL_TRACE(fprintf(stderr, "%d: send dn\n", this_node));
+          CELL_TRACE(fprintf(stderr, "%d: send dn %d\n", this_node, send_buf_dn.n));
           send_particles(&send_buf_dn, btm);
         }
         if (LAYERED_TOP_NEIGHBOR) {
-          CELL_TRACE(fprintf(stderr, "%d: recv up\n", this_node));
-          recv_particles(&recv_buf, top);
+          recv_particles(&recv_buf_up, top);
+          CELL_TRACE(fprintf(stderr, "%d: recv up %d\n", this_node, recv_buf_up.n));
         }
         /* send up */
         if (LAYERED_TOP_NEIGHBOR) {
@@ -495,21 +490,21 @@ void layered_exchange_and_sort_particles(int global_flag) {
           send_particles(&send_buf_up, top);
         }
         if (LAYERED_BTM_NEIGHBOR) {
-          CELL_TRACE(fprintf(stderr, "%d: recv dn\n", this_node));
-          recv_particles(&recv_buf, btm);
+          recv_particles(&recv_buf_dn, btm);
+          CELL_TRACE(fprintf(stderr, "%d: recv dn %d\n", this_node, recv_buf_dn.n));
         }
       } else {
         if (LAYERED_TOP_NEIGHBOR) {
           CELL_TRACE(fprintf(stderr, "%d: recv up\n", this_node));
-          recv_particles(&recv_buf, top);
+          recv_particles(&recv_buf_up, top);
         }
         if (LAYERED_BTM_NEIGHBOR) {
-          CELL_TRACE(fprintf(stderr, "%d: send dn\n", this_node));
+          CELL_TRACE(fprintf(stderr, "%d: send dn %d\n", this_node, send_buf_dn.n));
           send_particles(&send_buf_dn, btm);
         }
         if (LAYERED_BTM_NEIGHBOR) {
           CELL_TRACE(fprintf(stderr, "%d: recv dn\n", this_node));
-          recv_particles(&recv_buf, btm);
+          recv_particles(&recv_buf_dn, btm);
         }
         if (LAYERED_TOP_NEIGHBOR) {
           CELL_TRACE(fprintf(stderr, "%d: send up\n", this_node));
@@ -517,14 +512,15 @@ void layered_exchange_and_sort_particles(int global_flag) {
         }
       }
     } else {
-      if (recv_buf.n != 0 || send_buf_dn.n != 0 || send_buf_up.n != 0) {
+      if (recv_buf_up.n != 0 || recv_buf_dn.n != 0 || send_buf_dn.n != 0 || send_buf_up.n != 0) {
         fprintf(stderr, "1 node but transfer buffers are not empty. send up "
-                        "%d, down %d, recv %d\n",
-                send_buf_up.n, send_buf_dn.n, recv_buf.n);
+                "%d, down %d, recv up %d recv dn %d\n",
+                send_buf_up.n, send_buf_dn.n, recv_buf_up.n, recv_buf_dn.n);
         errexit();
       }
     }
-    layered_append_particles(&recv_buf, &send_buf_up, &send_buf_dn);
+    layered_append_particles(&recv_buf_up, &send_buf_up, &send_buf_dn);
+    layered_append_particles(&recv_buf_dn, &send_buf_up, &send_buf_dn);
 
     /* handshake redo */
     flag = (send_buf_up.n != 0 || send_buf_dn.n != 0);
@@ -553,5 +549,6 @@ void layered_exchange_and_sort_particles(int global_flag) {
     }
   }
 
-  realloc_particlelist(&recv_buf, 0);
+  realloc_particlelist(&recv_buf_up, 0);
+  realloc_particlelist(&recv_buf_dn, 0);
 }
