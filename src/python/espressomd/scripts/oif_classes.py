@@ -5,7 +5,6 @@ from espressomd.interactions import OifGlobalForces
 from espressomd.interactions import OifOutDirection
 
 
-
 class FixedPoint:
     """
     Represents mesh points, not connected to any ESPResSo particle.
@@ -17,16 +16,11 @@ class FixedPoint:
         self.z = pos[2]
         self.id = id
 
-    def GetPos(self):
+    def get_pos(self):
         return [self.x, self.y, self.z]
 
-    def GetID(self):
+    def get_id(self):
         return self.id
-
-    # def SetPos(self, pos):
-    #     self.x = pos[0]
-    #     self.y = pos[1]
-    #     self.z = pos[2]
 
 
 class PartPoint:
@@ -34,39 +28,40 @@ class PartPoint:
     Represents mesh points, connected to ESPResSo particle.
 
     """
-    def __init__(self, part, id, partId):  # part is physical ESPResSo particle corresponding to that particular point
+    def __init__(self, part, id, part_id):  # part is physical ESPResSo particle corresponding to that particular point
         self.part = part
-        self.partId = partId  # because in adding bonds to the particles in OifCell one needs to know the global id of the particle.    
+        self.part_id = part_id  # because in adding bonds to the particles in OifCell
+        # one needs to know the global id of the particle.
         self.id = id
 
-    def GetPos(self):
+    def get_pos(self):
         return self.part.pos
 
-    def GetVel(self):
+    def get_vel(self):
         return self.part.v
 
-    def GetMass(self):
+    def get_mass(self):
         return self.part.mass
 
-    def GetType(self):
+    def get_type(self):
         return self.part.type
 
-    def GetForce(self):
+    def get_force(self):
         return self.part.f
 
-    def SetPos(self,pos):
+    def set_pos(self,pos):
         self.part.pos = pos
 
-    def SetVel(self, vel):
+    def set_vel(self, vel):
         self.part.v = vel
 
-    def SetForce(self, force):
+    def set_force(self, force):
         self.part.ext_force = force
 
-    def KillMotion(self):
+    def kill_motion(self):
         self.part.fix = [1, 1, 1]
         
-    def UnkillMotion(self):
+    def unkill_motion(self):
         self.part.unfix()
 
 
@@ -79,8 +74,8 @@ class Edge:
         self.A = A
         self.B = B
 
-    def Length(self):
-        return Distance(self.A.GetPos(), self.B.GetPos())
+    def length(self):
+        return distance(self.A.get_pos(), self.B.get_pos())
 
 
 class Triangle:
@@ -93,8 +88,8 @@ class Triangle:
         self.B = B
         self.C = C
 
-    def Area(self):
-        area = AreaTriangle(self.A.GetPos(), self.B.GetPos(), self.C.GetPos())
+    def area(self):
+        area = area_triangle(self.A.get_pos(), self.B.get_pos(), self.C.get_pos())
         return area
 
 
@@ -109,9 +104,10 @@ class Angle:
         self.C = C
         self.D = D
 
-    def Size(self):
-        angleSize = AngleBtwTriangles(self.A.GetPos(), self.B.GetPos(), self.C.GetPos(), self.D.GetPos())
-        return angleSize
+    def size(self):
+        angle_size = angle_btw_triangles(self.A.get_pos(), self.B.get_pos(), self.C.get_pos(), self.D.get_pos())
+        return angle_size
+
 
 class ThreeNeighbors:
     """
@@ -123,134 +119,135 @@ class ThreeNeighbors:
         self.B = B
         self.C = C
 
-    def OuterNormal(self):
-        outerNormal = GetNTriangle(self.A.GetPos(), self.B.GetPos(), self.C.GetPos()) #check this!!!!
-        return outerNormal
+    def outer_normal(self):
+        outer_normal = get_triangle_normal(self.A.get_pos(), self.B.get_pos(), self.C.get_pos())
+        return outer_normal
+
 
 class Mesh:
     """
     Represents a triangular mesh.
 
     """
-    def __init__(self, nodesFile=None, trianglesFile=None, system=None, stretch=(1.0, 1.0, 1.0), partType=-1, partMass=1.0, normal=False, checkOrientation=True):
+    def __init__(self, nodes_file=None, triangles_file=None, system=None, resize=(1.0, 1.0, 1.0),
+                 part_type=-1, part_mass=1.0, normal=False, check_orientation=True):
         if system is None:
             raise Exception("Mesh: No system provided. Quitting.")
         self.system = system
         self.normal = normal
-        self.nodesFile = nodesFile
-        self.trianglesFile = trianglesFile
+        self.nodes_file = nodes_file
+        self.triangles_file = triangles_file
 
         self.points = []
         self.edges = []
         self.triangles = []
         self.angles = []
         self.neighbors = []
-        self.idsExtremalPoints = [0, 0, 0, 0, 0, 0, 0]
+        self.ids_extremal_points = [0, 0, 0, 0, 0, 0, 0]
         
-        if (nodesFile is None) or (trianglesFile is None):
-            print "OifMesh warning: one of nodesFile or trianglesFile was not given. May raise concern when Mesh object was being created."
+        if (nodes_file is None) or (triangles_file is None):
+            print "OifMesh warning: one of nodes_file or triangles_file was not given. " \
+                  "May raise concern when Mesh object was being created."
         else:
             # reading the mesh point positions from file
-            infile = open(nodesFile, "r")
-            nodesCoord = infile.read().split("\n")
-            infile.close()
+            in_file = open(nodes_file, "r")
+            nodes_coord = in_file.read().split("\n")
+            in_file.close()
             # removes a blank line at the end of the file if there is any:
-            nodesCoord = filter(None, nodesCoord) # here we have list of lines with triplets of strings
-            for line in nodesCoord:  # extracts coordinates from the string line
+            nodes_coord = filter(None, nodes_coord) # here we have list of lines with triplets of strings
+            for line in nodes_coord:  # extracts coordinates from the string line
                 line = line.split()
-                coords = [stretch[0]*float(line[0]), stretch[1]*float(line[1]), stretch[2]*float(line[2])]
-                tmpFixedPoint = FixedPoint(coords, len(self.points))
-                self.points.append(tmpFixedPoint)
-            #print "Coordinates of the mesh points"
-            #for tmpFixedPoint in self.points:
-            #    print tmpFixedPoint.GetPos()
+                coords = [resize[0]*float(line[0]), resize[1]*float(line[1]), resize[2]*float(line[2])]
+                tmp_fixed_point = FixedPoint(coords, len(self.points))
+                self.points.append(tmp_fixed_point)
 
             # searching for extremal points IDs
-            xMin = largeNumber
-            xMax = -largeNumber
-            yMin = largeNumber
-            yMax = -largeNumber
-            zMin = largeNumber
-            zMax = -largeNumber
-            for tmpFixedPoint in self.points:
-                coords = tmpFixedPoint.GetPos()
-                if coords[0] < xMin:
-                    xMin = coords[0]
-                    self.idsExtremalPoints[0] = tmpFixedPoint.GetID()
-                if coords[0] > xMax:
-                    xMax = coords[0]
-                    self.idsExtremalPoints[1] = tmpFixedPoint.GetID()
-                if coords[1] < yMin:
-                    yMin = coords[1]
-                    self.idsExtremalPoints[2] = tmpFixedPoint.GetID()
-                if coords[1] > yMax:
-                    yMax = coords[1]
-                    self.idsExtremalPoints[3] = tmpFixedPoint.GetID()
-                if coords[2] < zMin:
-                    zMin = coords[2]
-                    self.idsExtremalPoints[4] = tmpFixedPoint.GetID()
-                if coords[2] > zMax:
-                    zMax = coords[2]
-                    self.idsExtremalPoints[5] = tmpFixedPoint.GetID()
+            x_min = large_number
+            x_max = -large_number
+            y_min = large_number
+            y_max = -large_number
+            z_min = large_number
+            z_max = -large_number
+            for tmp_fixed_point in self.points:
+                coords = tmp_fixed_point.get_pos()
+                if coords[0] < x_min:
+                    x_min = coords[0]
+                    self.ids_extremal_points[0] = tmp_fixed_point.get_id()
+                if coords[0] > x_max:
+                    x_max = coords[0]
+                    self.ids_extremal_points[1] = tmp_fixed_point.get_id()
+                if coords[1] < y_min:
+                    y_min = coords[1]
+                    self.ids_extremal_points[2] = tmp_fixed_point.get_id()
+                if coords[1] > y_max:
+                    y_max = coords[1]
+                    self.ids_extremal_points[3] = tmp_fixed_point.get_id()
+                if coords[2] < z_min:
+                    z_min = coords[2]
+                    self.ids_extremal_points[4] = tmp_fixed_point.get_id()
+                if coords[2] > z_max:
+                    z_max = coords[2]
+                    self.ids_extremal_points[5] = tmp_fixed_point.get_id()
 
             # reading the triangle incidences from file
-            infile = open(trianglesFile, "r")
-            trianglesIncid = infile.read().split("\n")
-            infile.close()
+            in_file = open(triangles_file, "r")
+            triangles_incid = in_file.read().split("\n")
+            in_file.close()
             # removes a blank line at the end of the file if there is any:
-            trianglesIncid = filter(None, trianglesIncid)
-            for line in trianglesIncid:  # extracts incidences from the string line
+            triangles_incid = filter(None, triangles_incid)
+            for line in triangles_incid:  # extracts incidences from the string line
                 line = line.split()
                 incid = [int(line[0]), int(line[1]), int(line[2])]
-                tmpTriangle = Triangle(self.points[incid[0]], self.points[incid[1]], self.points[incid[2]])
-                self.triangles.append(tmpTriangle)
+                tmp_triangle = Triangle(self.points[incid[0]], self.points[incid[1]], self.points[incid[2]])
+                self.triangles.append(tmp_triangle)
 
-            if checkOrientation is True:
+            if check_orientation is True:
                 # check whether all triangles in file had the same orientation; if not, correct the orientation
                 print "OifMesh: Checking orientation of triangles (and repairing if needed). " \
                       "For large meshes this may take a while. " \
-                      "If you are certain your mesh is correct, this can be skipped using the OifCellType option checkOrientation = False."
-                self.CheckOrientation()
-
-            #print "Triangle incidences"
-            #for tmpTriangle in self.triangles:
-            #    print tmpTriangle.A.GetPos(), tmpTriangle.B.GetPos(), tmpTriangle.C.GetPos()
+                      "If you are certain your mesh is correct, this can be skipped using the OifCellType " \
+                      "option check_orientation = False."
+                self.check_orientation()
 
             # creating list of edge incidences from triangle incidences
             # using temporary list of edge incidences
-            tmpEdgeIncidences = []
+            tmp_edge_incidences = []
             for triangle in self.triangles:
                 pa = triangle.A.id
                 pb = triangle.B.id
                 pc = triangle.C.id
-                if (([pa, pb] not in tmpEdgeIncidences) and ([pb, pa] not in tmpEdgeIncidences)):
-                    tmpEdgeIncidences.append([pa, pb])
-                if (([pb, pc] not in tmpEdgeIncidences) and ([pc, pb] not in tmpEdgeIncidences)):
-                    tmpEdgeIncidences.append([pb, pc])
-                if (([pa, pc] not in tmpEdgeIncidences) and ([pc, pa] not in tmpEdgeIncidences)):
-                    tmpEdgeIncidences.append([pa, pc])
-            for tmpIncid in tmpEdgeIncidences:
-                tmpEdge = Edge(self.points[tmpIncid[0]], self.points[tmpIncid[1]])
-                self.edges.append(tmpEdge)
+                if ([pa, pb] not in tmp_edge_incidences) and ([pb, pa] not in tmp_edge_incidences):
+                    tmp_edge_incidences.append([pa, pb])
+                if ([pb, pc] not in tmp_edge_incidences) and ([pc, pb] not in tmp_edge_incidences):
+                    tmp_edge_incidences.append([pb, pc])
+                if ([pa, pc] not in tmp_edge_incidences) and ([pc, pa] not in tmp_edge_incidences):
+                    tmp_edge_incidences.append([pa, pc])
+            for tmp_incid in tmp_edge_incidences:
+                tmp_edge = Edge(self.points[tmp_incid[0]], self.points[tmp_incid[1]])
+                self.edges.append(tmp_edge)
 
-            #print "Edges:"
-            #for tmpEdge in self.edges:
-            #    print tmpEdge.A.id, tmpEdge.B.id
-
-            ## creating list angles (former bending incidences) from triangle incidences
+            # creating list angles (former bending incidences) from triangle incidences
             for edge in self.edges:
                 pa = edge.A.id
                 pb = edge.B.id
+                pc = -1
+                pd = -1
                 detected = 0
                 # detected = number of detected triangles with current edge common
-                # Algorithm is as follows: we run over all triangles and check whether two vertices are those from current edge. If we find such triangle, we put the ID of the third vertex to pc and we check if the orientation pa, pb, pc is the same as was in the triangle list (meaning, that we found one of the following three triples in the triangle list: pa, pb, pc or pb, pc, pa or pc, pa, pb). If we have the same orientation, we set orient = 1, otherwise orient = -1.
-                # Then we go further looking for the second triangle. The second triangle should have the opposite orientation.
+                # Algorithm is as follows: we run over all triangles and check
+                # whether two vertices are those from current edge. If we find such triangle,
+                # we put the ID of the third vertex to pc and we check if the orientation pa, pb, pc is the same as
+                # was in the triangle list (meaning, that we found one of the following three triples
+                # in the triangle list: pa, pb, pc or pb, pc, pa or pc, pa, pb).
+                # If we have the same orientation, we set orient = 1, otherwise orient = -1.
+                # Then we go further looking for the second triangle.
+                # The second triangle should have the opposite orientation.
                 # The normal of the first triangle will be P1P2 x P1P3, of the second triangle will be P2P4 x P2P3
                 orient = 0
                 for triangle in self.triangles:
                     # Run over all triangles and determine the two triangles with the common current edge
-                    if ((pa == triangle.A.id) and (pb == triangle.B.id)):
-                        if (detected == 0):
+                    if (pa == triangle.A.id) and (pb == triangle.B.id):
+                        if detected == 0:
                             # if no triangle with such edge was detected before
                             pc = triangle.C.id
                             detected = 1
@@ -259,120 +256,121 @@ class Mesh:
                             # if this is the second triangle with this edge, then also quit the for-loop over triangles 
                             pd = triangle.C.id
                             break
-                    if ((pa == triangle.B.id) and (pb == triangle.C.id)):
-                        if (detected == 0):
+                    if (pa == triangle.B.id) and (pb == triangle.C.id):
+                        if detected == 0:
                             pc = triangle.A.id
                             detected = 1
                             orient = 1
                         else:
                             pd = triangle.A.id
                             break
-                    if ((pa == triangle.C.id) and (pb == triangle.A.id)):
-                        if (detected == 0):
+                    if (pa == triangle.C.id) and (pb == triangle.A.id):
+                        if detected == 0:
                             pc = triangle.B.id
                             detected = 1
                             orient = 1
                         else:
                             pd = triangle.B.id
                             break
-                    if ((pa == triangle.B.id) and (pb == triangle.A.id)):
-                        if (detected == 0):
+                    if (pa == triangle.B.id) and (pb == triangle.A.id):
+                        if detected == 0:
                             pc = triangle.C.id
                             detected = 1
                             orient = -1
                         else:
                             pd = triangle.C.id
                             break
-                    if ((pa == triangle.C.id) and (pb == triangle.B.id)):
-                        if (detected == 0):
+                    if (pa == triangle.C.id) and (pb == triangle.B.id):
+                        if detected == 0:
                             pc = triangle.A.id
                             detected = 1
                             orient = -1
                         else:
                             pd = triangle.A.id
                             break
-                    if ((pa == triangle.A.id) and (pb == triangle.C.id)):
-                        if (detected == 0):
+                    if (pa == triangle.A.id) and (pb == triangle.C.id):
+                        if detected == 0:
                             pc = triangle.B.id
                             detected = 1
                             orient = -1
                         else:
                             pd = triangle.B.id
                             break
-                if (orient == 1):
+                if orient == 1:
                     tmp = pd
                     pd = pc
                     pc = tmp
-                tmpAngle = Angle(self.points[pc], self.points[pa], self.points[pb], self.points[pd])
-                self.angles.append(tmpAngle)
-
-            #print "Angles:"
-            #for tmpAngle in self.angles:
-            #    print tmpAngle.A.id, tmpAngle.B.id, tmpAngle.C.id, tmpAngle.D.id
+                tmp_angle = Angle(self.points[pc], self.points[pa], self.points[pb], self.points[pd])
+                self.angles.append(tmp_angle)
 
             # creating list of three neighbors for membrane collision
             if normal is True:
                 for point in self.points:
-                    tmpNeighbors = []
+                    tmp_neighbors = []
                     # cycle through edges and select those that contain point
                     for edge in self.edges:
                         # take an edge and copy the nodes of the edge to pa, pb
                         if edge.A.id == point.id:
-                            tmpNeighbors.append(edge.B)
+                            tmp_neighbors.append(edge.B)
                         if edge.B.id == point.id:
-                            tmpNeighbors.append(edge.A)
+                            tmp_neighbors.append(edge.A)
                     # create vectors to all neighbors and normalize them
-                    tmpVectorsToNeighbors = []
-                    pCoords = np.array(point.GetPos())
-                    for neighbor in tmpNeighbors:
-                        tmpVector = neighbor.GetPos() - pCoords
-                        tmpLength = Norm(tmpVector)
-                        if tmpLength < smallEpsilon:
+                    tmp_vectors_to_neighbors = []
+                    p_coords = np.array(point.get_pos())
+                    for neighbor in tmp_neighbors:
+                        tmp_vector = neighbor.get_pos() - p_coords
+                        tmp_length = norm(tmp_vector)
+                        if tmp_length < small_epsilon:
                             raise Exception("Mesh: Degenerate edge. Quitting.")
-                        tmpVector /= tmpLength
-                        tmpVectorsToNeighbors.append(tmpVector)
+                        tmp_vector /= tmp_length
+                        tmp_vectors_to_neighbors.append(tmp_vector)
                     # check all triplets of neighbors and select the one that is best spatially distributed
                     # by adding the corresponding three normalized vectors
                     # and selecting the one with smallest resultant vector
-                    nNeighbors = len(tmpNeighbors)
-                    minLength = largeNumber
-                    bestNeighbors = [tmpNeighbors[0], tmpNeighbors[1], tmpNeighbors[2]]
-                    for i in range(0,nNeighbors):
-                        for j in range(i+1,nNeighbors):
-                            for k in range(j+1,nNeighbors):
-                                tmpResultVector = tmpVectorsToNeighbors[i] + tmpVectorsToNeighbors[j] + tmpVectorsToNeighbors[k]
-                                tmpResultVectorLength = Norm(tmpResultVector)
-                                if tmpResultVectorLength < minLength:
-                                    minLength = tmpResultVectorLength
-                                    bestNeighbors = [tmpNeighbors[i], tmpNeighbors[j], tmpNeighbors[k]]
+                    n_neighbors = len(tmp_neighbors)
+                    min_length = large_number
+                    best_neighbors = [tmp_neighbors[0], tmp_neighbors[1], tmp_neighbors[2]]
+                    for i in range(0,n_neighbors):
+                        for j in range(i+1,n_neighbors):
+                            for k in range(j+1,n_neighbors):
+                                tmp_result_vector = tmp_vectors_to_neighbors[i] + tmp_vectors_to_neighbors[j] + \
+                                                    tmp_vectors_to_neighbors[k]
+                                tmp_result_vector_length = norm(tmp_result_vector)
+                                if tmp_result_vector_length < min_length:
+                                    min_length = tmp_result_vector_length
+                                    best_neighbors = [tmp_neighbors[i], tmp_neighbors[j], tmp_neighbors[k]]
                     # find one triangle that contains this point and compute its normal vector
                     for triangle in self.triangles:
-                        if (triangle.A.id == point.id or triangle.B.id == point.id or triangle.C.id == point.id):
-                            tmpNormalTriangle = GetNTriangle(triangle.A.GetPos(), triangle.B.GetPos(), triangle.C.GetPos())
+                        if triangle.A.id == point.id or triangle.B.id == point.id or triangle.C.id == point.id:
+                            tmp_normal_triangle = get_triangle_normal(triangle.A.get_pos(), triangle.B.get_pos(),
+                                                                      triangle.C.get_pos())
                             break
                     # properly orient selected neighbors and save them to the list of neighbors
-                    tmpNormalNeighbors = GetNTriangle(bestNeighbors[0].GetPos(), bestNeighbors[1].GetPos(), bestNeighbors[2].GetPos())
-                    tmpLengthNormalTriangle = Norm(tmpNormalTriangle)
-                    tmpLengthNormalNeighbors = Norm(tmpNormalNeighbors)
-                    tmpProduct = (tmpNormalTriangle[0] * tmpNormalNeighbors[0] + tmpNormalTriangle[1] * tmpNormalNeighbors[1] + tmpNormalTriangle[2] * tmpNormalNeighbors[2]) / (tmpLengthNormalTriangle * tmpLengthNormalNeighbors)
-                    tmpAngle = np.arccos(tmpProduct)
-                    if (tmpAngle > np.pi/2.0):
-                        selectedNeighbors = ThreeNeighbors(bestNeighbors[0], bestNeighbors[1], bestNeighbors[2])
+                    tmp_normal_neighbors = get_triangle_normal(best_neighbors[0].get_pos(), best_neighbors[1].get_pos(),
+                                                               best_neighbors[2].get_pos())
+                    tmp_length_normal_triangle = norm(tmp_normal_triangle)
+                    tmp_length_normal_neighbors = norm(tmp_normal_neighbors)
+                    tmp_product = (tmp_normal_triangle[0] * tmp_normal_neighbors[0] +
+                                   tmp_normal_triangle[1] * tmp_normal_neighbors[1] +
+                                   tmp_normal_triangle[2] * tmp_normal_neighbors[2]) / \
+                                  (tmp_length_normal_triangle * tmp_length_normal_neighbors)
+                    tmp_angle = np.arccos(tmp_product)
+                    if tmp_angle > np.pi/2.0:
+                        selected_neighbors = ThreeNeighbors(best_neighbors[0], best_neighbors[1], best_neighbors[2])
                     else:
-                        selectedNeighbors = ThreeNeighbors(bestNeighbors[0], bestNeighbors[2], bestNeighbors[1])
-                    self.neighbors.append(selectedNeighbors)
+                        selected_neighbors = ThreeNeighbors(best_neighbors[0], best_neighbors[2], best_neighbors[1])
+                    self.neighbors.append(selected_neighbors)
             else:
                 for point in self.points:
-                    selectedNeighbors = ThreeNeighbors(point, point, point)
-                    self.neighbors.append(selectedNeighbors)
+                    selected_neighbors = ThreeNeighbors(point, point, point)
+                    self.neighbors.append(selected_neighbors)
 
-            #print "Neighbors:"
-            #for tmpNeighbor in self.neighbors:
-            #    print tmpNeighbor.A.id, tmpNeighbor.B.id, tmpNeighbor.C.id
-
-    def Copy(self, origin=None, partType=-1, partMass=1.0, rotate=None):
+    def copy(self, origin=None, part_type=-1, part_mass=1.0, rotate=None):
         mesh = Mesh(system=self.system)
-        mesh.idsExtremalPoints = self.idsExtremalPoints
+        mesh.ids_extremal_points = self.ids_extremal_points
+        rotation = np.array([[1.0, 0.0, 0.0],
+                            [0.0, 1.0, 0.0],
+                            [0.0, 0.0, 1.0]])
 
         if rotate is not None:
             # variables for rotation
@@ -388,222 +386,225 @@ class Mesh:
 
         for point in self.points:
             # PartPoints are created
-            tmpPos = point.GetPos()
-            tmpRotatePos = np.array(point.GetPos())
+            tmp_pos = point.get_pos()
+            tmp_rotate_pos = np.array(point.get_pos())
             # rotation of nodes
             if rotate is not None:
-                tmpPos = rotation.dot(tmpRotatePos)
-                tmpPos = [DiscardEpsilon(tmpPos[0]), DiscardEpsilon(tmpPos[1]), DiscardEpsilon(tmpPos[2])]
+                tmp_pos = rotation.dot(tmp_rotate_pos)
+                tmp_pos = [discard_epsilon(tmp_pos[0]), discard_epsilon(tmp_pos[1]), discard_epsilon(tmp_pos[2])]
             if origin is not None:
-                tmpPos[0] += origin[0]
-                tmpPos[1] += origin[1]
-                tmpPos[2] += origin[2]
-            newPartId = len(self.system.part)  # to remember the global id of the ESPResSo particle
-            self.system.part.add(pos=tmpPos, type=partType, mass=partMass, mol_id=partType)
-            newPart = self.system.part[newPartId]
-            newPartPoint = PartPoint(newPart, len(mesh.points), newPartId)
-            mesh.points.append(newPartPoint)
+                tmp_pos[0] += origin[0]
+                tmp_pos[1] += origin[1]
+                tmp_pos[2] += origin[2]
+            new_part_id = len(self.system.part)  # to remember the global id of the ESPResSo particle
+            self.system.part.add(pos=tmp_pos, type=part_type, mass=part_mass, mol_id=part_type)
+            new_part = self.system.part[new_part_id]
+            new_part_point = PartPoint(new_part, len(mesh.points), new_part_id)
+            mesh.points.append(new_part_point)
         for edge in self.edges:
-            newEdge = Edge(mesh.points[edge.A.id], mesh.points[edge.B.id])
-            mesh.edges.append(newEdge)
+            new_edge = Edge(mesh.points[edge.A.id], mesh.points[edge.B.id])
+            mesh.edges.append(new_edge)
         for triangle in self.triangles:
-            newTriangle = Triangle(mesh.points[triangle.A.id], mesh.points[triangle.B.id], mesh.points[triangle.C.id])
-            mesh.triangles.append(newTriangle)
+            new_triangle = Triangle(mesh.points[triangle.A.id], mesh.points[triangle.B.id], mesh.points[triangle.C.id])
+            mesh.triangles.append(new_triangle)
         for angle in self.angles:
-            newAngle = Angle(mesh.points[angle.A.id], mesh.points[angle.B.id], mesh.points[angle.C.id], mesh.points[angle.D.id])
-            mesh.angles.append(newAngle)
+            new_angle = Angle(mesh.points[angle.A.id], mesh.points[angle.B.id], mesh.points[angle.C.id],
+                              mesh.points[angle.D.id])
+            mesh.angles.append(new_angle)
         for neighbors in self.neighbors:
-            newNeighbors = ThreeNeighbors(mesh.points[neighbors.A.id], mesh.points[neighbors.B.id], mesh.points[neighbors.C.id])
-            mesh.neighbors.append(newNeighbors)
-        # skopirovat aj normal true/false
-        # skopiruje obsah....
+            new_neighbors = ThreeNeighbors(mesh.points[neighbors.A.id], mesh.points[neighbors.B.id],
+                                           mesh.points[neighbors.C.id])
+            mesh.neighbors.append(new_neighbors)
         return mesh
 
-    def CheckOrientation(self):
-        tmpTriangleList = []
-        tmpTriangleListOK = []
+    def check_orientation(self):
+        tmp_triangle_list = []
+        tmp_triangle_list_ok = []
+        t_ok = None
+        corrected_triangle = None
         for triangle in self.triangles:
-            tmpTriangleList.append(triangle)
+            tmp_triangle_list.append(triangle)
 
         # move the first triangle to the checked and corrected list
-        tmpTriangleListOK.append(tmpTriangleList[0])
-        tmpTriangleList.pop(0)
+        tmp_triangle_list_ok.append(tmp_triangle_list[0])
+        tmp_triangle_list.pop(0)
 
-        #print strftime("%H:%M:%S", gmtime())
-        while len(tmpTriangleList) is not 0:
+        # print strftime("%H:%M:%S", gmtime())
+        while len(tmp_triangle_list) is not 0:
             i = 0
-            while i < len(tmpTriangleList):
-                tmpTriangle = tmpTriangleList[i]
-                for correctTriangle in tmpTriangleListOK:
+            while i < len(tmp_triangle_list):
+                tmp_triangle = tmp_triangle_list[i]
+                for correct_triangle in tmp_triangle_list_ok:
                     # check if triangles have a common edge, if so, check orientation
-                    areNeighbors = True
-                    if tmpTriangle.A.id == correctTriangle.A.id:
-                        if tmpTriangle.B.id == correctTriangle.B.id:
-                            tOK = False  # this is situation 123 and 124
-                            correctedTriangle = Triangle(tmpTriangle.A, tmpTriangle.C, tmpTriangle.B)
+                    are_neighbors = True
+                    if tmp_triangle.A.id == correct_triangle.A.id:
+                        if tmp_triangle.B.id == correct_triangle.B.id:
+                            t_ok = False  # this is situation 123 and 124
+                            corrected_triangle = Triangle(tmp_triangle.A, tmp_triangle.C, tmp_triangle.B)
                         else:
-                            if tmpTriangle.B.id == correctTriangle.C.id:
-                                tOK = True  # this is situation 123 and 142
+                            if tmp_triangle.B.id == correct_triangle.C.id:
+                                t_ok = True  # this is situation 123 and 142
                             else:
-                                if tmpTriangle.C.id == correctTriangle.B.id:
-                                    tOK = True  # this is situation 123 and 134
+                                if tmp_triangle.C.id == correct_triangle.B.id:
+                                    t_ok = True  # this is situation 123 and 134
                                 else:
-                                    if tmpTriangle.C.id == correctTriangle.C.id:
-                                        tOK = False  # this is situation 123 and 143
-                                        correctedTriangle = Triangle(tmpTriangle.A, tmpTriangle.C, tmpTriangle.B)
+                                    if tmp_triangle.C.id == correct_triangle.C.id:
+                                        t_ok = False  # this is situation 123 and 143
+                                        corrected_triangle = Triangle(tmp_triangle.A, tmp_triangle.C, tmp_triangle.B)
                                     else:
-                                        areNeighbors = False
+                                        are_neighbors = False
                     else:
-                        if tmpTriangle.A.id == correctTriangle.B.id:
-                            if tmpTriangle.B.id == correctTriangle.C.id:
-                                tOK = False  # this is situation 123 and 412
-                                correctedTriangle = Triangle(tmpTriangle.A, tmpTriangle.C, tmpTriangle.B)
+                        if tmp_triangle.A.id == correct_triangle.B.id:
+                            if tmp_triangle.B.id == correct_triangle.C.id:
+                                t_ok = False  # this is situation 123 and 412
+                                corrected_triangle = Triangle(tmp_triangle.A, tmp_triangle.C, tmp_triangle.B)
                             else:
-                                if tmpTriangle.B.id == correctTriangle.A.id:
-                                    tOK = True  # this is situation 123 and 214
+                                if tmp_triangle.B.id == correct_triangle.A.id:
+                                    t_ok = True  # this is situation 123 and 214
                                 else:
-                                    if tmpTriangle.C.id == correctTriangle.C.id:
-                                        tOK = True  # this is situation 123 and 413
+                                    if tmp_triangle.C.id == correct_triangle.C.id:
+                                        t_ok = True  # this is situation 123 and 413
                                     else:
-                                        if tmpTriangle.C.id == correctTriangle.A.id:
-                                            tOK = False  # this is situation 123 and 314
-                                            correctedTriangle = Triangle(tmpTriangle.A, tmpTriangle.C, tmpTriangle.B)
+                                        if tmp_triangle.C.id == correct_triangle.A.id:
+                                            t_ok = False  # this is situation 123 and 314
+                                            corrected_triangle = Triangle(tmp_triangle.A, tmp_triangle.C,
+                                                                          tmp_triangle.B)
                                         else:
-                                            areNeighbors = False
+                                            are_neighbors = False
                         else:
-                            if tmpTriangle.A.id == correctTriangle.C.id:
-                                if tmpTriangle.B.id == correctTriangle.A.id:
-                                    tOK = False  # this is situation 123 and 241
-                                    correctedTriangle = Triangle(tmpTriangle.A, tmpTriangle.C, tmpTriangle.B)
+                            if tmp_triangle.A.id == correct_triangle.C.id:
+                                if tmp_triangle.B.id == correct_triangle.A.id:
+                                    t_ok = False  # this is situation 123 and 241
+                                    corrected_triangle = Triangle(tmp_triangle.A, tmp_triangle.C, tmp_triangle.B)
                                 else:
-                                    if tmpTriangle.B.id == correctTriangle.B.id:
-                                        tOK = True  # this is situation 123 and 421
+                                    if tmp_triangle.B.id == correct_triangle.B.id:
+                                        t_ok = True  # this is situation 123 and 421
                                     else:
-                                        if tmpTriangle.C.id == correctTriangle.A.id:
-                                            tOK = True  # this is situation 123 and 341
+                                        if tmp_triangle.C.id == correct_triangle.A.id:
+                                            t_ok = True  # this is situation 123 and 341
                                         else:
-                                            if tmpTriangle.C.id == correctTriangle.B.id:
-                                                tOK = False  # this is situation 123 and 431
-                                                correctedTriangle = Triangle(tmpTriangle.A, tmpTriangle.C,
-                                                                             tmpTriangle.B)
+                                            if tmp_triangle.C.id == correct_triangle.B.id:
+                                                t_ok = False  # this is situation 123 and 431
+                                                corrected_triangle = Triangle(tmp_triangle.A, tmp_triangle.C,
+                                                                              tmp_triangle.B)
                                             else:
-                                                areNeighbors = False
+                                                are_neighbors = False
                             else:
-                                if tmpTriangle.B.id == correctTriangle.A.id:
-                                    if tmpTriangle.C.id == correctTriangle.B.id:
-                                        tOK = False  # this is situation 123 and 234
-                                        correctedTriangle = Triangle(tmpTriangle.A, tmpTriangle.C, tmpTriangle.B)
+                                if tmp_triangle.B.id == correct_triangle.A.id:
+                                    if tmp_triangle.C.id == correct_triangle.B.id:
+                                        t_ok = False  # this is situation 123 and 234
+                                        corrected_triangle = Triangle(tmp_triangle.A, tmp_triangle.C, tmp_triangle.B)
                                     else:
-                                        if tmpTriangle.C.id == correctTriangle.C.id:
-                                            tOK = True  # this is situation 123 and 243
+                                        if tmp_triangle.C.id == correct_triangle.C.id:
+                                            t_ok = True  # this is situation 123 and 243
                                         else:
-                                            areNeighbors = False
+                                            are_neighbors = False
                                 else:
-                                    if tmpTriangle.B.id == correctTriangle.B.id:
-                                        if tmpTriangle.C.id == correctTriangle.C.id:
-                                            tOK = False  # this is situation 123 and 423
-                                            correctedTriangle = Triangle(tmpTriangle.A, tmpTriangle.C,
-                                                                         tmpTriangle.B)
+                                    if tmp_triangle.B.id == correct_triangle.B.id:
+                                        if tmp_triangle.C.id == correct_triangle.C.id:
+                                            t_ok = False  # this is situation 123 and 423
+                                            corrected_triangle = Triangle(tmp_triangle.A, tmp_triangle.C,
+                                                                          tmp_triangle.B)
                                         else:
-                                            if tmpTriangle.C.id == correctTriangle.A.id:
-                                                tOK = True  # this is situation 123 and 324
+                                            if tmp_triangle.C.id == correct_triangle.A.id:
+                                                t_ok = True  # this is situation 123 and 324
                                             else:
-                                                areNeighbors = False
+                                                are_neighbors = False
                                     else:
-                                        if tmpTriangle.B.id == correctTriangle.C.id:
-                                            if tmpTriangle.C.id == correctTriangle.A.id:
-                                                tOK = False  # this is situation 123 and 342
-                                                correctedTriangle = Triangle(tmpTriangle.A, tmpTriangle.C,
-                                                                             tmpTriangle.B)
+                                        if tmp_triangle.B.id == correct_triangle.C.id:
+                                            if tmp_triangle.C.id == correct_triangle.A.id:
+                                                t_ok = False  # this is situation 123 and 342
+                                                corrected_triangle = Triangle(tmp_triangle.A, tmp_triangle.C,
+                                                                              tmp_triangle.B)
                                             else:
-                                                if tmpTriangle.C.id == correctTriangle.B.id:
-                                                    tOK = True  # this is situation 123 and 432
+                                                if tmp_triangle.C.id == correct_triangle.B.id:
+                                                    t_ok = True  # this is situation 123 and 432
                                                 else:
-                                                    areNeighbors = False
+                                                    are_neighbors = False
                                         else:
-                                            areNeighbors = False
-                    if areNeighbors:
-                        # move the tmpTriangle to the checked and corrected list
-                        if tOK:
-                            tmpTriangleListOK.append(tmpTriangle)
+                                            are_neighbors = False
+                    if are_neighbors:
+                        # move the tmp_triangle to the checked and corrected list
+                        if t_ok:
+                            tmp_triangle_list_ok.append(tmp_triangle)
                         else:
-                            tmpTriangleListOK.append(correctedTriangle)
+                            tmp_triangle_list_ok.append(corrected_triangle)
                             print "OifMesh: Correcting orientation of triangle."
-                        tmpTriangleList.pop(i)
+                        tmp_triangle_list.pop(i)
                         break
                 i += 1
         # replace triangles with checked triangles
         i = 0
-        for tmpTriangle in tmpTriangleListOK:
-            self.triangles[i] = Triangle(tmpTriangle.A, tmpTriangle.C, tmpTriangle.B)
+        for tmp_triangle in tmp_triangle_list_ok:
+            self.triangles[i] = Triangle(tmp_triangle.A, tmp_triangle.C, tmp_triangle.B)
             i += 1
         # all triangles now have the same orientation, check if it is correct
-        tmpVolume = self.Volume()
-        if tmpVolume < 0:
+        tmp_volume = self.volume()
+        if tmp_volume < 0:
             # opposite orientation, flip all triangles
             i = 0
-            for tmpTriangle in self.triangles:
-                    self.triangles[i] = Triangle(tmpTriangle.A, tmpTriangle.C, tmpTriangle.B)
+            for tmp_triangle in self.triangles:
+                    self.triangles[i] = Triangle(tmp_triangle.A, tmp_triangle.C, tmp_triangle.B)
                     i += 1
         print "OifMesh: Triangulation correct."
-        #print strftime("%H:%M:%S", gmtime())
+        # print strftime("%H:%M:%S", gmtime())
         return 0
 
-    def Surface(self):
+    def surface(self):
         surface = 0.0
         for triangle in self.triangles:
-            surface += triangle.Area()
+            surface += triangle.area()
         return surface
 
-    def Volume(self):
+    def volume(self):
         volume = 0.0
         for triangle in self.triangles:
-            tmpNormal = GetNTriangle(triangle.A.GetPos(), triangle.B.GetPos(), triangle.C.GetPos())
-            tmpNormalLength = Norm(tmpNormal)
-            tmpSumZCoords = 1.0 / 3.0 * (triangle.A.GetPos()[2] + triangle.B.GetPos()[2] + triangle.C.GetPos()[2])
-            volume -= triangle.Area() * tmpNormal[2] / tmpNormalLength * tmpSumZCoords #tu som to prepisala na minus
+            tmp_normal = get_triangle_normal(triangle.A.get_pos(), triangle.B.get_pos(), triangle.C.get_pos())
+            tmp_normal_length = norm(tmp_normal)
+            tmp_sum_z_coords = 1.0 / 3.0 * (triangle.A.get_pos()[2] + triangle.B.get_pos()[2] + triangle.C.get_pos()[2])
+            volume -= triangle.area() * tmp_normal[2] / tmp_normal_length * tmp_sum_z_coords
         return volume
 
-    def GetNNodes(self):
+    def get_n_nodes(self):
         return len(self.points)
 
-    def GetNTriangles(self):
+    def get_n_triangles(self):
         return len(self.triangles)
         
-    def GetNEdges(self):
+    def get_n_edges(self):
         return len(self.edges)
 
-    def OutputMeshTriangles(self, fileTriangles=None):
+    def output_mesh_triangles(self, triangles_file=None):
         # this is useful after the mesh correction
         # output of mesh nodes can be done from OifCell (this is because their position may change)
-        if fileTriangles is None:
-            print "OifMesh: No filename provided for triangles. Will use triangles.dat"
-            fileTriangles = "triangles.dat"
-        outputFile = open(fileTriangles, "w")
+        if triangles_file is None:
+            print "OifMesh: No file_name provided for triangles. Will use triangles.dat"
+            triangles_file = "triangles.dat"
+        output_file = open(triangles_file, "w")
         for t in self.triangles:
-            outputFile.write(str(t.A.id) + " " + str(t.B.id) + " " + str(t.C.id) + "\n")
-        outputFile.close()
+            output_file.write(str(t.A.id) + " " + str(t.B.id) + " " + str(t.C.id) + "\n")
+        output_file.close()
         return 0
 
-    def Mirror(self, mirrorX=0, mirrorY=0, mirrorZ=0, outFileName=""):
-        if (outFileName == ""):
+    def mirror(self, mirror_x=0, mirror_y=0, mirror_z=0, out_file_name=""):
+        if out_file_name == "":
             raise Exception("Cell.Mirror: output meshnodes file for new mesh is missing. Quitting.")
-        if ((mirrorX!=0 and mirrorX != 1) or (mirrorY!=0 and mirrorY != 1) or (mirrorZ!=0 and mirrorZ != 1)):
+        if (mirror_x!=0 and mirror_x != 1) or (mirror_y!=0 and mirror_y != 1) or (mirror_z!=0 and mirror_z != 1):
             raise Exception("Mesh.Mirror: for mirroring only values 0 or 1 are accepted. 1 indicates that the corresponding coordinate will be flipped.  Exiting.")
-        if (mirrorX + mirrorY + mirrorZ > 1):
+        if mirror_x + mirror_y + mirror_z > 1:
             raise Exception("Mesh.Mirror: flipping allowed only for one axis. Exiting.")
-        if (mirrorX + mirrorY + mirrorZ == 1):
-            outFile = open(outFileName, "w")
+        if mirror_x + mirror_y + mirror_z == 1:
+            out_file = open(out_file_name, "w")
             for p in self.points:
-                coor = p.GetPos()
-                if (mirrorX == 1):
+                coor = p.get_pos()
+                if mirror_x == 1:
                     coor[0] *= -1.0
-                if (mirrorY == 1):
+                if mirror_y == 1:
                     coor[1] *= -1.0
-                if (mirrorZ == 1):
+                if mirror_z == 1:
                     coor[2] *= -1.0
-                outFile.write(CuStr(coor[0]) + " " + CuStr(coor[1]) + " " + CuStr(coor[2]) + "\n")
-            outFile.close()
+                out_file.write(custom_str(coor[0]) + " " + custom_str(coor[1]) + " " + custom_str(coor[2]) + "\n")
+            out_file.close()
         return 0
 
 
@@ -612,22 +613,23 @@ class OifCellType:  # analogous to oif_template
     Represents a template for creating elastic objects.
 
     """
-    def __init__(self, nodesfile="", trianglesfile="", system=None, stretch=(1.0, 1.0, 1.0), ks=0.0, kslin=0.0, kb=0.0, kal=0.0, kag=0.0,
-                 kv=0.0, kvisc=0.0, normal=False, checkOrientation=True):
+    def __init__(self, nodes_file="", triangles_file="", system=None, resize=(1.0, 1.0, 1.0), ks=0.0, kslin=0.0,
+                 kb=0.0, kal=0.0, kag=0.0, kv=0.0, kvisc=0.0, normal=False, check_orientation=True):
         if system is None:
             raise Exception("OifCellType: No system provided. Quitting.")
-        if (nodesfile is "") or (trianglesfile is ""):
+        if (nodes_file is "") or (triangles_file is ""):
             raise Exception("OifCellType: One of nodesfile or trianglesfile is missing. Quitting.")
-        if (normal is False):
+        if normal is False:
             print "OifCellType warning: Option normal is not used => membrane collision will not work."
-        if (checkOrientation is False):
+        if check_orientation is False:
             print "OifCellType warning: Check of orientation of triangles is switched off."
         if (ks != 0.0) and (kslin != 0.0):
             raise Exception("OifCellType: Cannot use linear and nonlinear stretching at the same time. Quitting.")
         self.system = system
-        self.mesh = Mesh(nodesFile=nodesfile, trianglesFile=trianglesfile, system=system, stretch=stretch, normal=normal, checkOrientation=checkOrientation)
-        self.localForceInteractions = []
-        self.stretch = stretch
+        self.mesh = Mesh(nodes_file=nodes_file, triangles_file=triangles_file, system=system, resize=resize,
+                         normal=normal, check_orientation=check_orientation)
+        self.local_force_interactions = []
+        self.resize = resize
         self.ks = ks
         self.kslin = kslin
         self.kb = kb
@@ -638,40 +640,40 @@ class OifCellType:  # analogous to oif_template
         self.normal = normal
         if (ks != 0.0) or (kslin != 0.0) or (kb != 0.0) or (kal != 0.0):
             for angle in self.mesh.angles:
-                r0 = Distance(angle.B.GetPos(), angle.C.GetPos())
-                phi = AngleBtwTriangles(angle.A.GetPos(), angle.B.GetPos(), angle.C.GetPos(), angle.D.GetPos())
-                area1 = AreaTriangle(angle.A.GetPos(), angle.B.GetPos(), angle.C.GetPos())
-                area2 = AreaTriangle(angle.D.GetPos(), angle.B.GetPos(), angle.C.GetPos())
-                tmpLocalForceInter = OifLocalForces(r0=r0, ks=ks, kslin=kslin, phi0=phi, kb=kb, A01=area1, A02=area2,
-                                                    kal=kal, kvisc=kvisc)
-                self.localForceInteractions.append([tmpLocalForceInter, [angle.A, angle.B, angle.C, angle.D]])
-                self.system.bonded_inter.add(tmpLocalForceInter)
+                r0 = distance(angle.B.get_pos(), angle.C.get_pos())
+                phi = angle_btw_triangles(angle.A.get_pos(), angle.B.get_pos(), angle.C.get_pos(), angle.D.get_pos())
+                area1 = area_triangle(angle.A.get_pos(), angle.B.get_pos(), angle.C.get_pos())
+                area2 = area_triangle(angle.D.get_pos(), angle.B.get_pos(), angle.C.get_pos())
+                tmp_local_force_inter = OifLocalForces(r0=r0, ks=ks, kslin=kslin, phi0=phi, kb=kb, A01=area1, A02=area2,
+                                                       kal=kal, kvisc=kvisc)
+                self.local_force_interactions.append([tmp_local_force_inter, [angle.A, angle.B, angle.C, angle.D]])
+                self.system.bonded_inter.add(tmp_local_force_inter)
         else:
             print "OifCellType warning: No local interactions created when creating OifCellType."
         if (kag != 0.0) or (kv != 0.0):
-            surface = self.mesh.Surface()
-            volume = self.mesh.Volume()
-            self.globalForceInteraction = OifGlobalForces(A0_g=surface, ka_g=kag, V0=volume, kv=kv)
-            self.system.bonded_inter.add(self.globalForceInteraction)
+            surface = self.mesh.surface()
+            volume = self.mesh.volume()
+            self.global_force_interaction = OifGlobalForces(A0_g=surface, ka_g=kag, V0=volume, kv=kv)
+            self.system.bonded_inter.add(self.global_force_interaction)
         else:
             print "OifCellType warning: No global interactions created when creating OifCellType."
-        self.PrintInfo()
+        self.print_info()
 
-    def PrintInfo(self):
+    def print_info(self):
         print "\nThe following OifCellType was created: "
-        print "\t nodesFile: " + self.mesh.nodesFile
-        print "\t trianglesFile: " + self.mesh.trianglesFile
-        print "\t nNodes: " + str(self.mesh.GetNNodes())
-        print "\t nTriangles: " + str(self.mesh.GetNTriangles())
-        print "\t nEdges: " + str(self.mesh.GetNEdges())
-        print "\t ks: " + CuStr(self.ks)
-        print "\t kslin: " + CuStr(self.kslin)
-        print "\t kb: " + CuStr(self.kb)
-        print "\t kal: " + CuStr(self.kal)
-        print "\t kag: " + CuStr(self.kag)
-        print "\t kvisc: " + CuStr(self.kvisc)
+        print "\t nodes_file: " + self.mesh.nodes_file
+        print "\t triangles_file: " + self.mesh.triangles_file
+        print "\t nNodes: " + str(self.mesh.get_n_nodes())
+        print "\t n_triangles: " + str(self.mesh.get_n_triangles())
+        print "\t nEdges: " + str(self.mesh.get_n_edges())
+        print "\t ks: " + custom_str(self.ks)
+        print "\t kslin: " + custom_str(self.kslin)
+        print "\t kb: " + custom_str(self.kb)
+        print "\t kal: " + custom_str(self.kal)
+        print "\t kag: " + custom_str(self.kag)
+        print "\t kvisc: " + custom_str(self.kvisc)
         print "\t normal: " + str(self.normal)
-        print "\t stretch: " + str(self.stretch)
+        print "\t resize: " + str(self.resize)
         print ""
 
 
@@ -680,530 +682,573 @@ class OifCell:
     Represents a concrete elastic object.
 
     """
-    def __init__(self, cellType=None, origin=None, partType=None, partMass=1.0, rotate=None):
-        if cellType is None:
+    def __init__(self, cell_type=None, origin=None, part_type=None, part_mass=1.0, rotate=None):
+        if cell_type is None:
             raise Exception("OifCell: No cellType provided. Quitting.")
         if origin is None:
             raise Exception("OifCell: No origin specified. Quitting.")
-        if partType is None:
+        if part_type is None:
             raise Exception("OifCell: No partType specified. Quitting.")
-        self.cellType = cellType
-        self.mesh = cellType.mesh.Copy(origin=origin, partType=partType, partMass=partMass, rotate=rotate)
-        self.partMass = partMass
-        self.partType = partType
+        self.cell_type = cell_type
+        self.mesh = cell_type.mesh.copy(origin=origin, part_type=part_type, part_mass=part_mass, rotate=rotate)
+        self.part_mass = part_mass
+        self.part_type = part_type
         self.origin = origin
         self.rotate = rotate
-        for inter in self.cellType.localForceInteractions:
-            espInter = inter[0]
+        for inter in self.cell_type.local_force_interactions:
+            esp_inter = inter[0]
             points = inter[1]
             n_points = len(points)
             if n_points is 2:
                 p0 = self.mesh.points[points[0].id]  # Getting PartPoints from id's of FixedPoints
                 p1 = self.mesh.points[points[1].id]
-                p0.part.add_bond((espInter, p1.partId))
+                p0.part.add_bond((esp_inter, p1.part_id))
             if n_points is 3:
                 p0 = self.mesh.points[points[0].id]
                 p1 = self.mesh.points[points[1].id]
                 p2 = self.mesh.points[points[2].id]
-                p0.part.add_bond((espInter, p1.partId, p2.partId))
+                p0.part.add_bond((esp_inter, p1.part_id, p2.part_id))
             if n_points is 4:
                 p0 = self.mesh.points[points[0].id]
                 p1 = self.mesh.points[points[1].id]
                 p2 = self.mesh.points[points[2].id]
                 p3 = self.mesh.points[points[3].id]
-                p1.part.add_bond((espInter, p0.partId, p2.partId, p3.partId))
-                # Tu treba skontrolovat v akom poradi sa maju zadavat.....
+                p1.part.add_bond((esp_inter, p0.part_id, p2.part_id, p3.part_id))
 
-        if ((self.cellType.kag!=0.0) or (self.cellType.kv!=0.0)):
+        if (self.cell_type.kag!=0.0) or (self.cell_type.kv!=0.0):
             for triangle in self.mesh.triangles:
-                triangle.A.part.add_bond((self.cellType.globalForceInteraction, triangle.B.partId, triangle.C.partId))
+                triangle.A.part.add_bond((self.cell_type.global_force_interaction, triangle.B.part_id,
+                                          triangle.C.part_id))
 
         # setting the out_direction interaction for membrane collision
-        if self.cellType.mesh.normal is True:
-            tmpOutDirectionInteraction = OifOutDirection()
-            self.cellType.system.bonded_inter.add(tmpOutDirectionInteraction) # tato interakcia by mohla byt spolocna pre vsetky objekty, ale vytvara sa pre kazdy zvlast
+        if self.cell_type.mesh.normal is True:
+            tmp_out_direction_interaction = OifOutDirection()
+            # this interaction could be just one for all objects, but here it is created multiple times
+            self.cell_type.system.bonded_inter.add(tmp_out_direction_interaction)
             for p in self.mesh.points:
-                p.part.add_bond((tmpOutDirectionInteraction, self.mesh.neighbors[p.id].A.partId, self.mesh.neighbors[p.id].B.partId, self.mesh.neighbors[p.id].C.partId))
+                p.part.add_bond((tmp_out_direction_interaction, self.mesh.neighbors[p.id].A.part_id,
+                                 self.mesh.neighbors[p.id].B.part_id, self.mesh.neighbors[p.id].C.part_id))
 
-        self.PrintInfo()
+        self.print_info()
 
-    def GetOrigin(self):
+    def get_origin(self):
         center = np.array([0.0, 0.0, 0.0])
         for p in self.mesh.points:
-            center += p.GetPos()
+            center += p.get_pos()
         return center/len(self.mesh.points)
 
-    def SetOrigin(self, newOrigin = (0.0, 0.0, 0.0)):
-        oldOrigin = self.GetOrigin()
+    def set_origin(self, new_origin = (0.0, 0.0, 0.0)):
+        old_origin = self.get_origin()
         for p in self.mesh.points:
-            newPosition = p.GetPos() - oldOrigin + newOrigin
-            p.SetPos(newPosition)
+            new_position = p.get_pos() - old_origin + new_origin
+            p.set_pos(new_position)
 
-    def GetApproxOrigin(self):
-        approxCenter = [0.0, 0.0, 0.0]
-        for id in self.mesh.idsExtremalPoints:
-            approxCenter += self.mesh.points[id].GetPos()
-        return approxCenter/len(self.mesh.idsExtremalPoints)
+    def get_approx_origin(self):
+        approx_center = [0.0, 0.0, 0.0]
+        for id in self.mesh.ids_extremal_points:
+            approx_center += self.mesh.points[id].get_pos()
+        return approx_center/len(self.mesh.ids_extremal_points)
 
-    def GetOriginFolded(self):
-        origin = self.GetOrigin()
-        xCoor = np.mod(origin[0], self.cellType.system.box_l[0])
-        yCoor = np.mod(origin[1], self.cellType.system.box_l[1])
-        zCoor = np.mod(origin[2], self.cellType.system.box_l[2])
-        return [xCoor, yCoor, zCoor]
+    def get_origin_folded(self):
+        origin = self.get_origin()
+        x_coor = np.mod(origin[0], self.cell_type.system.box_l[0])
+        y_coor = np.mod(origin[1], self.cell_type.system.box_l[1])
+        z_coor = np.mod(origin[2], self.cell_type.system.box_l[2])
+        return [x_coor, y_coor, z_coor]
 
-    def GetVelocity(self):
+    def get_velocity(self):
         velocity = np.array([0.0, 0.0, 0.0])
         for p in self.mesh.points:
-            velocity += p.GetVel()
+            velocity += p.get_vel()
         return velocity/len(self.mesh.points)
 
-    def SetVelocity(self, newVelocity = (0.0, 0.0, 0.0)):
+    def set_velocity(self, new_velocity = (0.0, 0.0, 0.0)):
         for p in self.mesh.points:
-            p.SetVel(newVelocity)
+            p.set_vel(new_velocity)
 
-    def PosBounds(self):
-        xMin = largeNumber
-        xMax = -largeNumber
-        yMin = largeNumber
-        yMax = -largeNumber
-        zMin = largeNumber
-        zMax = -largeNumber
+    def pos_bounds(self):
+        x_min = large_number
+        x_max = -large_number
+        y_min = large_number
+        y_max = -large_number
+        z_min = large_number
+        z_max = -large_number
         for p in  self.mesh.points:
-            coords = p.GetPos()
-            if coords[0] < xMin:
-               xMin = coords[0]
-            if coords[0] > xMax:
-                xMax = coords[0]
-            if coords[1] < yMin:
-                yMin = coords[1]
-            if coords[1] > yMax:
-                yMax = coords[1]
-            if coords[2] < zMin:
-                zMin = coords[2]
-            if coords[2] > zMax:
-                zMax = coords[2]
-        return [xMin, xMax, yMin, yMax, zMin, zMax]
+            coords = p.get_pos()
+            if coords[0] < x_min:
+               x_min = coords[0]
+            if coords[0] > x_max:
+                x_max = coords[0]
+            if coords[1] < y_min:
+                y_min = coords[1]
+            if coords[1] > y_max:
+                y_max = coords[1]
+            if coords[2] < z_min:
+                z_min = coords[2]
+            if coords[2] > z_max:
+                z_max = coords[2]
+        return [x_min, x_max, y_min, y_max, z_min, z_max]
 
-    def Surface(self):
-        return self.mesh.Surface()
+    def surface(self):
+        return self.mesh.surface()
 
-    def Volume(self):
-        return self.mesh.Volume()
+    def volume(self):
+        return self.mesh.volume()
 
-    def Diameter(self):
+    def diameter(self):
         max_distance = 0.0
-        nPoints = len(self.mesh.points)
-        for i in range(0, nPoints):
-            for j in range(i+1, nPoints):
-                p1 = self.mesh.points[i].GetPos()
-                p2 = self.mesh.points[j].GetPos()
-                tmpDist = Distance(p1,p2)
-                if (tmpDist > max_distance):
-                    max_distance = tmpDist
+        n_points = len(self.mesh.points)
+        for i in range(0, n_points):
+            for j in range(i+1, n_points):
+                p1 = self.mesh.points[i].get_pos()
+                p2 = self.mesh.points[j].get_pos()
+                tmp_dist = distance(p1,p2)
+                if tmp_dist > max_distance:
+                    max_distance = tmp_dist
         return max_distance
         
-    def GetNNodes(self):
-        return self.mesh.GetNNodes()
+    def get_n_nodes(self):
+        return self.mesh.get_n_nodes()
 
-    def SetForce(self, newForce = (0.0, 0.0, 0.0)):
+    def set_force(self, new_force = (0.0, 0.0, 0.0)):
         for p in self.mesh.points:
-            p.SetForce(newForce)
+            p.set_force(new_force)
 
-    def KillMotion(self):
+    def kill_motion(self):
         for p in self.mesh.points:
-            p.KillMotion()
+            p.kill_motion()
             
-    def UnkillMotion(self):
+    def unkill_motion(self):
         for p in self.mesh.points:
-            p.UnkillMotion()
+            p.unkill_motion()
 
-    def OutputVtkPos(self, filename=None):
-        if filename is None:
-            print "OifCell: No filename provided for vtk output."
+    def output_vtk_pos(self, file_name=None):
+        if file_name is None:
+            print "OifCell: No file_name provided for vtk output."
             return
-        if ".vtk" not in filename:
+        if ".vtk" not in file_name:
             print "OifCell warning: A file with vtk format will be written without .vtk extension."
-        nPoints = len(self.mesh.points)
-        nTriangles = len(self.mesh.triangles)
-        outputFile = open(filename, "w")
-        outputFile.write("# vtk DataFile Version 3.0\n")
-        outputFile.write("Data\n")
-        outputFile.write("ASCII\n")
-        outputFile.write("DATASET POLYDATA\n")
-        outputFile.write("POINTS " + str(nPoints) + " float\n")
+        n_points = len(self.mesh.points)
+        n_triangles = len(self.mesh.triangles)
+        output_file = open(file_name, "w")
+        output_file.write("# vtk DataFile Version 3.0\n")
+        output_file.write("Data\n")
+        output_file.write("ASCII\n")
+        output_file.write("DATASET POLYDATA\n")
+        output_file.write("POINTS " + str(n_points) + " float\n")
         for p in self.mesh.points:
-            coords = p.GetPos()
-            outputFile.write(CuStr(coords[0]) + " " + CuStr(coords[1]) + " " + CuStr(coords[2]) + "\n")
-        outputFile.write("TRIANGLE_STRIPS " + str(nTriangles) + " " + str(4*nTriangles) + "\n")
+            coords = p.get_pos()
+            output_file.write(custom_str(coords[0]) + " " + custom_str(coords[1]) + " " + custom_str(coords[2]) + "\n")
+        output_file.write("TRIANGLE_STRIPS " + str(n_triangles) + " " + str(4*n_triangles) + "\n")
         for t in self.mesh.triangles:
-            outputFile.write("3 " + str(t.A.id) + " " + str(t.B.id) + " " + str(t.C.id) + "\n")
-        outputFile.close()
+            output_file.write("3 " + str(t.A.id) + " " + str(t.B.id) + " " + str(t.C.id) + "\n")
+        output_file.close()
 
-    def OutputVtkPosFolded(self, filename=None):
-        if filename is None:
-            print "OifCell: No filename provided for vtk output."
+    def output_vtk_pos_folded(self, file_name=None):
+        if file_name is None:
+            print "OifCell: No file_name provided for vtk output."
             return
-        if ".vtk" not in filename:
+        if ".vtk" not in file_name:
             print "OifCell warning: A file with vtk format will be written without .vtk extension."
-        nPoints = len(self.mesh.points)
-        nTriangles = len(self.mesh.triangles)
+        n_points = len(self.mesh.points)
+        n_triangles = len(self.mesh.triangles)
         
         # get coordinates of the origin
         center = np.array([0.0, 0.0, 0.0])
         for p in self.mesh.points:
-            center += p.GetPos()
-        center = center/len(self.mesh.points)
-        foldX = np.floor(center[0]/self.cellType.system.box_l[0])
-        foldY = np.floor(center[1]/self.cellType.system.box_l[1])
-        foldZ = np.floor(center[2]/self.cellType.system.box_l[2])
-        # these gives how many times is the origin folded in all three directions
+            center += p.get_pos()
+        center /= len(self.mesh.points)
+        fold_x = np.floor(center[0]/self.cell_type.system.box_l[0])
+        fold_y = np.floor(center[1]/self.cell_type.system.box_l[1])
+        fold_z = np.floor(center[2]/self.cell_type.system.box_l[2])
+        # these give how many times is the origin folded in all three directions
         
-        outputFile = open(filename, "w")
-        outputFile.write("# vtk DataFile Version 3.0\n")
-        outputFile.write("Data\n")
-        outputFile.write("ASCII\n")
-        outputFile.write("DATASET POLYDATA\n")
-        outputFile.write("POINTS " + str(nPoints) + " float\n")
+        output_file = open(file_name, "w")
+        output_file.write("# vtk DataFile Version 3.0\n")
+        output_file.write("Data\n")
+        output_file.write("ASCII\n")
+        output_file.write("DATASET POLYDATA\n")
+        output_file.write("POINTS " + str(n_points) + " float\n")
         for p in self.mesh.points:
-            coords = p.GetPos()
-            xCoor = coords[0] - foldX*self.cellType.system.box_l[0]
-            yCoor = coords[1] - foldY*self.cellType.system.box_l[1]
-            zCoor = coords[2] - foldZ*self.cellType.system.box_l[2]
-            outputFile.write(CuStr(xCoor) + " " + CuStr(yCoor) + " " + CuStr(zCoor) + "\n")
-        outputFile.write("TRIANGLE_STRIPS " + str(nTriangles) + " " + str(4 * nTriangles) + "\n")
+            coords = p.get_pos()
+            x_coor = coords[0] - fold_x*self.cell_type.system.box_l[0]
+            y_coor = coords[1] - fold_y*self.cell_type.system.box_l[1]
+            z_coor = coords[2] - fold_z*self.cell_type.system.box_l[2]
+            output_file.write(custom_str(x_coor) + " " + custom_str(y_coor) + " " + custom_str(z_coor) + "\n")
+        output_file.write("TRIANGLE_STRIPS " + str(n_triangles) + " " + str(4 * n_triangles) + "\n")
         for t in self.mesh.triangles:
-            outputFile.write("3 " + str(t.A.id) + " " + str(t.B.id) + " " + str(t.C.id) + "\n")
-        outputFile.close()
+            output_file.write("3 " + str(t.A.id) + " " + str(t.B.id) + " " + str(t.C.id) + "\n")
+        output_file.close()
 
-    def AppendPointDataToVtk(self, filename=None, dataName=None, data=None, firstAppend=None):
-        if filename is None:
-            print "OifCell: AppendPointDataToVtk: No filename provided."
+    def append_point_data_to_vtk(self, file_name=None, data_name=None, data=None, first_append=None):
+        if file_name is None:
+            print "OifCell: append_point_data_to_vtk: No file_name provided."
             return
         if data is None:
-            print "OifCell: AppendPointDataToVtk: No data provided."
+            print "OifCell: append_point_data_to_vtk: No data provided."
             return
-        if dataName is None:
-            print "OifCell: AppendPointDataToVtk: No dataName provided."
+        if data_name is None:
+            print "OifCell: append_point_data_to_vtk: No data_name provided."
             return
-        if firstAppend is None:
-            print "OifCell: AppendPointDataToVtk: Need to know whether this is the first data list to be appended for this file."
+        if first_append is None:
+            print "OifCell: append_point_data_to_vtk: Need to know whether this is the first data list to be " \
+                  "appended for this file."
             return
-        nPoints = self.GetNNodes()
-        if (len(data) != nPoints):
-            print "OifCell: AppendPointDataToVtk: Number of data points does not match number of mesh points."
+        n_points = self.get_n_nodes()
+        if (len(data) != n_points):
+            print "OifCell: append_point_data_to_vtk: Number of data points does not match number of mesh points."
             return
-        outputFile = open(filename, "a")
-        if firstAppend is True:
-            outputFile.write("POINT_DATA " + str(nPoints) + "\n")
-        outputFile.write("SCALARS " + dataName + " float 1\n")
-        outputFile.write("LOOKUP_TABLE default\n")
+        output_file = open(file_name, "a")
+        if first_append is True:
+            output_file.write("POINT_DATA " + str(n_points) + "\n")
+        output_file.write("SCALARS " + data_name + " float 1\n")
+        output_file.write("LOOKUP_TABLE default\n")
         for p in self.mesh.points:
-            outputFile.write(str(data[p.id]) + "\n")
-        outputFile.close()
+            output_file.write(str(data[p.id]) + "\n")
+        output_file.close()
 
-    def OutputRawData(self, filename=None, data=None):
-        if filename is None:
-            print "OifCell: OutputRawData: No filename provided."
+    def output_raw_data(self, file_name=None, data=None):
+        if file_name is None:
+            print "OifCell: output_raw_data: No file_name provided."
             return
         if data is None:
-            print "OifCell: OutputRawData: No data provided."
+            print "OifCell: output_raw_data: No data provided."
             return
-        nPoints = self.GetNNodes()
-        if (len(data) != nPoints):
-            print "OifCell: OutputRawData: Number of data points does not match number of mesh points."
+        n_points = self.get_n_nodes()
+        if (len(data) != n_points):
+            print "OifCell: output_raw_data: Number of data points does not match number of mesh points."
             return
-        outputFile = open(filename, "w")
+        output_file = open(file_name, "w")
         for p in self.mesh.points:
-            outputFile.write(" ".join(map(str,data[p.id])) + "\n")
-        outputFile.close()
+            output_file.write(" ".join(map(str,data[p.id])) + "\n")
+        output_file.close()
 
-    def OutputMeshPoints(self, filename=None):                   
-        if filename is None:
-            print "OifCell: No filename provided for mesh nodes output."
+    def output_mesh_points(self, file_name=None):
+        if file_name is None:
+            print "OifCell: No file_name provided for mesh nodes output."
             return
-        outputFile = open(filename, "w")
-        center = self.GetOrigin()
+        output_file = open(file_name, "w")
+        center = self.get_origin()
         for p in self.mesh.points:
-            coords = p.GetPos() - center
-            outputFile.write(CuStr(coords[0]) + " " + CuStr(coords[1]) + " " + CuStr(coords[2]) + "\n")
-        outputFile.close()
+            coords = p.get_pos() - center
+            output_file.write(custom_str(coords[0]) + " " + custom_str(coords[1]) + " " + custom_str(coords[2]) + "\n")
+        output_file.close()
 
-    def SetMeshPoints(self, filename=None):                   # a toto SetMeshPoints
-        if filename is None:
-            print "OifCell: No filename provided for SetMeshNodes. "
+    def set_mesh_points(self, file_name=None):
+        if file_name is None:
+            print "OifCell: No file_name provided for set_mesh_points. "
             return
-        center = self.GetOrigin()
-        nPoints = self.GetNNodes()
+        center = self.get_origin()
+        n_points = self.get_n_nodes()
 
-        infile = open(filename, "r")
-        nodesCoord = infile.read().split("\n")
-        infile.close()
+        in_file = open(file_name, "r")
+        nodes_coord = in_file.read().split("\n")
+        in_file.close()
         # removes a blank line at the end of the file if there is any:
-        nodesCoord = filter(None, nodesCoord)  # here we have list of lines with triplets of strings
-        if len(nodesCoord) is not nPoints:
-            print "OifCell: Mesh nodes not set to new positions: number of lines in the file does not equal number of Cell nodes."
+        nodes_coord = filter(None, nodes_coord)  # here we have list of lines with triplets of strings
+        if len(nodes_coord) is not n_points:
+            print "OifCell: Mesh nodes not set to new positions: " \
+                  "number of lines in the file does not equal number of Cell nodes."
             return
         else:
             i = 0
-            for line in nodesCoord:  # extracts coordinates from the string line
+            for line in nodes_coord:  # extracts coordinates from the string line
                 line = line.split()
-                newPosition = [float(line[0]), float(line[1]), float(line[2])] + center
-                self.mesh.points[i].SetPos(newPosition)
+                new_position = [float(line[0]), float(line[1]), float(line[2])] + center
+                self.mesh.points[i].set_pos(new_position)
                 i += 1
 
-    def PrintInfo(self):
+    def print_info(self):
         print "\nThe following OifCell was created: "
-        print "\t partMass: " + CuStr(self.partMass)
-        print "\t partType: " + str(self.partType)
+        print "\t part_mass: " + custom_str(self.part_mass)
+        print "\t part_type: " + str(self.part_type)
         print "\t rotate: " + str(self.rotate)
         print "\t origin: " + str(self.origin[0]) + " " + str(self.origin[1]) + " " + str(self.origin[2])
 
-    def ElasticForces(self, elasticForces = (0,0,0,0,0,0), fMetric = (0,0,0,0,0,0), vtkFile = None, rawDataFile = None):
-        # the order of parameters in elasticForces and in fMetric is as follows (ks, kb, kal, kag, kv, total)
-        # vtkFile means that a vtk file for visualisation of elastic forces will be written
-        # rawDataFile means that just the elastic forces will be written into the output file
+    def elastic_forces(self, el_forces=(0, 0, 0, 0, 0, 0), f_metric=(0, 0, 0, 0, 0, 0), vtk_file=None,
+                       raw_data_file=None):
+        # the order of parameters in elastic_forces and in f_metric is as follows (ks, kb, kal, kag, kv, total)
+        # vtk_file means that a vtk file for visualisation of elastic forces will be written
+        # raw_data_file means that just the elastic forces will be written into the output file
 
-        # chceme tu mat aj kslin???!!!
+        stretching_forces_list = []
+        bending_forces_list = []
+        local_area_forces_list = []
+        global_area_forces_list = []
+        volume_forces_list = []
+        elastic_forces_list = []
+        stretching_forces_norms_list = []
+        bending_forces_norms_list = []
+        local_area_forces_norms_list = []
+        global_area_forces_norms_list = []
+        volume_forces_norms_list = []
+        elastic_forces_norms_list = []
+        ks_f_metric = 0.0
+        kb_f_metric = 0.0
+        kal_f_metric = 0.0
+        kag_f_metric = 0.0
+        kv_f_metric = 0.0
+        total_f_metric = 0.0
 
         for i in range(0,6):
-            if (elasticForces[i] != 0) and (elasticForces[i] != 1):
-                print "OifCell: ElasticForces: Incorrect argument. elasticForces has to be a sixtuple of 0s and 1s, " \
-                      "specifying which elastic forces will be calculated. The order in the sixtuple is (ks, kb, kal, kag, kv, total)."
+            if (el_forces[i] != 0) and (el_forces[i] != 1):
+                print "OifCell: elastic_forces: Incorrect argument. el_forces has to be a sixtuple of 0s and 1s, " \
+                      "specifying which elastic forces will be calculated. The order in the sixtuple is (ks, kb, " \
+                      "kal, kag, kv, total)."
                 return
         for i in range(0,6):
-            if (fMetric[i] != 0) and (fMetric[i] != 1):
-                print "OifCell: ElasticForces: Incorrect argument. fMetric has to be a sixtuple of 0s and 1s, " \
-                      "specifying which fMetric will be calculated. The order in the sixtuple is (ks, kb, kal, kag, kv, total)"
+            if (f_metric[i] != 0) and (f_metric[i] != 1):
+                print "OifCell: elastic_forces: Incorrect argument. f_metric has to be a sixtuple of 0s and 1s, " \
+                      "specifying which f_metric will be calculated. The order in the sixtuple is (ks, kb, kal, " \
+                      "kag, kv, total)"
                 return
-        # calculation of stretching forces and fMetric
-        if (elasticForces[0] is 1) or (elasticForces[5] is 1) or (fMetric[0] is 1) or (fMetric[5] is 1):
+        # calculation of stretching forces and f_metric
+        if (el_forces[0] is 1) or (el_forces[5] is 1) or (f_metric[0] is 1) or (f_metric[5] is 1):
             # initialize list
-            stretchingForcesList = []
+            stretching_forces_list = []
             for p in self.mesh.points:
-                stretchingForcesList.append([0.0, 0.0, 0.0])
+                stretching_forces_list.append([0.0, 0.0, 0.0])
             # calculation uses edges, but results are stored for nodes
             for e in self.mesh.edges:
-                aCurrPos = e.A.GetPos()
-                bCurrPos = e.B.GetPos()
-                aOrigPos = self.cellType.mesh.points[e.A.id].GetPos()
-                bOrigPos = self.cellType.mesh.points[e.B.id].GetPos()
-                currDist = e.Length()
-                origDist = Distance(aOrigPos, bOrigPos)
-                tmpStretchingForce = CalcStretchingForce(self.cellType.ks, aCurrPos, bCurrPos, origDist, currDist)
-                stretchingForcesList[e.A.id] += tmpStretchingForce
-                stretchingForcesList[e.B.id] -= tmpStretchingForce
-            # calculation of stretching fMetric, if needed
-            if (fMetric[0] is 1):
-                ks_fmetric = 0.0
+                a_current_pos = e.A.get_pos()
+                b_current_pos = e.B.get_pos()
+                a_orig_pos = self.cell_type.mesh.points[e.A.id].get_pos()
+                b_orig_pos = self.cell_type.mesh.points[e.B.id].get_pos()
+                current_dist = e.length()
+                orig_dist = distance(a_orig_pos, b_orig_pos)
+                tmp_stretching_force = oif_calc_stretching_force(self.cell_type.ks, a_current_pos, b_current_pos,
+                                                             orig_dist, current_dist)
+                stretching_forces_list[e.A.id] += tmp_stretching_force
+                stretching_forces_list[e.B.id] -= tmp_stretching_force
+            # calculation of stretching f_metric, if needed
+            if f_metric[0] is 1:
+                ks_f_metric = 0.0
                 for p in self.mesh.points:
-                    ks_fmetric += Norm(stretchingForcesList[p.id])
+                    ks_f_metric += norm(stretching_forces_list[p.id])
 
-        # calculation of bending forces and fMetric
-        if (elasticForces[1] is 1) or (elasticForces[5] is 1) or (fMetric[1] is 1) or (fMetric[5] is 1):
+        # calculation of bending forces and f_metric
+        if (el_forces[1] is 1) or (el_forces[5] is 1) or (f_metric[1] is 1) or (f_metric[5] is 1):
             # initialize list
-            bendingForcesList = []
+            bending_forces_list = []
             for p in self.mesh.points:
-                bendingForcesList.append([0.0, 0.0, 0.0])
+                bending_forces_list.append([0.0, 0.0, 0.0])
             # calculation uses bending incidences, but results are stored for nodes
             for angle in self.mesh.angles:
-                aCurrPos = angle.A.GetPos()
-                bCurrPos = angle.B.GetPos()
-                cCurrPos = angle.C.GetPos()
-                dCurrPos = angle.D.GetPos()
-                aOrigPos = self.cellType.mesh.points[angle.A.id].GetPos()
-                bOrigPos = self.cellType.mesh.points[angle.B.id].GetPos()
-                cOrigPos = self.cellType.mesh.points[angle.C.id].GetPos()
-                dOrigPos = self.cellType.mesh.points[angle.D.id].GetPos()
-                currAngle = angle.Size()
-                origAngle = AngleBtwTriangles(aOrigPos, bOrigPos, cOrigPos, dOrigPos)
-                tmpBendingForces = CalcBendingForce(self.cellType.kb, aCurrPos, bCurrPos, cCurrPos, dCurrPos, origAngle, currAngle)
-                tmpBendingForce1 = np.array([tmpBendingForces[0], tmpBendingForces[1], tmpBendingForces[2]])
-                tmpBendingForce2 = np.array([tmpBendingForces[3], tmpBendingForces[4], tmpBendingForces[5]])
-                bendingForcesList[angle.A.id] += tmpBendingForce1
-                bendingForcesList[angle.B.id] -= 0.5*tmpBendingForce1 + 0.5*tmpBendingForce2
-                bendingForcesList[angle.C.id] -= 0.5*tmpBendingForce1 + 0.5*tmpBendingForce2
-                bendingForcesList[angle.D.id] += tmpBendingForce2
-            # calculation of bending fMetric, if needed
-            if (fMetric[1] is 1):
-                kb_fmetric = 0.0
+                a_current_pos = angle.A.get_pos()
+                b_current_pos = angle.B.get_pos()
+                c_current_pos = angle.C.get_pos()
+                d_current_pos = angle.D.get_pos()
+                a_orig_pos = self.cell_type.mesh.points[angle.A.id].get_pos()
+                b_orig_pos = self.cell_type.mesh.points[angle.B.id].get_pos()
+                c_orig_pos = self.cell_type.mesh.points[angle.C.id].get_pos()
+                d_orig_pos = self.cell_type.mesh.points[angle.D.id].get_pos()
+                current_angle = angle.size()
+                orig_angle = angle_btw_triangles(a_orig_pos, b_orig_pos, c_orig_pos, d_orig_pos)
+                tmp_bending_forces = oif_calc_bending_force(self.cell_type.kb, a_current_pos, b_current_pos, c_current_pos,
+                                                        d_current_pos, orig_angle, current_angle)
+                tmp_bending_force1 = np.array([tmp_bending_forces[0], tmp_bending_forces[1], tmp_bending_forces[2]])
+                tmp_bending_force2 = np.array([tmp_bending_forces[3], tmp_bending_forces[4], tmp_bending_forces[5]])
+                bending_forces_list[angle.A.id] += tmp_bending_force1
+                bending_forces_list[angle.B.id] -= 0.5*tmp_bending_force1 + 0.5*tmp_bending_force2
+                bending_forces_list[angle.C.id] -= 0.5*tmp_bending_force1 + 0.5*tmp_bending_force2
+                bending_forces_list[angle.D.id] += tmp_bending_force2
+            # calculation of bending f_metric, if needed
+            if f_metric[1] is 1:
+                kb_f_metric = 0.0
                 for p in self.mesh.points:
-                    kb_fmetric += Norm(bendingForcesList[p.id])
+                    kb_f_metric += norm(bending_forces_list[p.id])
 
-        # calculation of local area forces and fMetric
-        if (elasticForces[2] is 1) or (elasticForces[5] is 1) or (fMetric[2] is 1) or (fMetric[5] is 1):
+        # calculation of local area forces and f_metric
+        if (el_forces[2] is 1) or (el_forces[5] is 1) or (f_metric[2] is 1) or (f_metric[5] is 1):
             # initialize list
-            localAreaForcesList = []
+            local_area_forces_list = []
             for p in self.mesh.points:
-                localAreaForcesList.append([0.0, 0.0, 0.0])
+                local_area_forces_list.append([0.0, 0.0, 0.0])
             # calculation uses triangles, but results are stored for nodes
             for t in self.mesh.triangles:
-                aCurrPos = t.A.GetPos()
-                bCurrPos = t.B.GetPos()
-                cCurrPos = t.C.GetPos()
-                aOrigPos = self.cellType.mesh.points[t.A.id].GetPos()
-                bOrigPos = self.cellType.mesh.points[t.B.id].GetPos()
-                cOrigPos = self.cellType.mesh.points[t.C.id].GetPos()
-                currArea = t.Area()
-                origArea = AreaTriangle(aOrigPos, bOrigPos, cOrigPos)
-                tmpLocalAreaForces = CalcLocalAreaForce(self.cellType.kal, aCurrPos, bCurrPos, cCurrPos, origArea, currArea)
-                localAreaForcesList[t.A.id] += np.array([tmpLocalAreaForces[0], tmpLocalAreaForces[1], tmpLocalAreaForces[2]])
-                localAreaForcesList[t.B.id] += np.array([tmpLocalAreaForces[3], tmpLocalAreaForces[4], tmpLocalAreaForces[5]])
-                localAreaForcesList[t.C.id] += np.array([tmpLocalAreaForces[6], tmpLocalAreaForces[7], tmpLocalAreaForces[8]])
+                a_current_pos = t.A.get_pos()
+                b_current_pos = t.B.get_pos()
+                c_current_pos = t.C.get_pos()
+                a_orig_pos = self.cell_type.mesh.points[t.A.id].get_pos()
+                b_orig_pos = self.cell_type.mesh.points[t.B.id].get_pos()
+                c_orig_pos = self.cell_type.mesh.points[t.C.id].get_pos()
+                current_area = t.area()
+                orig_area = area_triangle(a_orig_pos, b_orig_pos, c_orig_pos)
+                tmp_local_area_forces = oif_calc_local_area_force(self.cell_type.kal, a_current_pos, b_current_pos,
+                                                              c_current_pos, orig_area, current_area)
+                local_area_forces_list[t.A.id] += np.array([tmp_local_area_forces[0], tmp_local_area_forces[1],
+                                                            tmp_local_area_forces[2]])
+                local_area_forces_list[t.B.id] += np.array([tmp_local_area_forces[3], tmp_local_area_forces[4],
+                                                            tmp_local_area_forces[5]])
+                local_area_forces_list[t.C.id] += np.array([tmp_local_area_forces[6], tmp_local_area_forces[7],
+                                                            tmp_local_area_forces[8]])
 
-            # calculation of local area fMetric, if needed
-            if (fMetric[2] is 1):
-                kal_fmetric = 0.0
+            # calculation of local area f_metric, if needed
+            if f_metric[2] is 1:
+                kal_f_metric = 0.0
                 for p in self.mesh.points:
-                    kal_fmetric += Norm(localAreaForcesList[p.id])
+                    kal_f_metric += norm(local_area_forces_list[p.id])
 
-        # calculation of global area forces and fMetric
-        if (elasticForces[3] is 1) or (elasticForces[5] is 1) or (fMetric[3] is 1) or (fMetric[5] is 1):
+        # calculation of global area forces and f_metric
+        if (el_forces[3] is 1) or (el_forces[5] is 1) or (f_metric[3] is 1) or (f_metric[5] is 1):
             # initialize list
-            globalAreaForcesList = []
+            global_area_forces_list = []
             for p in self.mesh.points:
-                globalAreaForcesList.append([0.0, 0.0, 0.0])
+                global_area_forces_list.append([0.0, 0.0, 0.0])
             # calculation uses triangles, but results are stored for nodes
             for t in self.mesh.triangles:
-                aCurrPos = t.A.GetPos()
-                bCurrPos = t.B.GetPos()
-                cCurrPos = t.C.GetPos()
-                currSurface = self.mesh.Surface()
-                origSurface = self.cellType.mesh.Surface()
-                tmpGlobalAreaForces = CalcGlobalAreaForce(self.cellType.kag, aCurrPos, bCurrPos, cCurrPos, origSurface, currSurface)
-                globalAreaForcesList[t.A.id] += np.array([tmpGlobalAreaForces[0], tmpGlobalAreaForces[1], tmpGlobalAreaForces[2]])
-                globalAreaForcesList[t.B.id] += np.array([tmpGlobalAreaForces[3], tmpGlobalAreaForces[4], tmpGlobalAreaForces[5]])
-                globalAreaForcesList[t.C.id] += np.array([tmpGlobalAreaForces[6], tmpGlobalAreaForces[7], tmpGlobalAreaForces[8]])
-            # calculation of global area fMetric, if needed
-            if (fMetric[3] is 1):
-                kag_fmetric = 0.0
+                a_current_pos = t.A.get_pos()
+                b_current_pos = t.B.get_pos()
+                c_current_pos = t.C.get_pos()
+                current_surface = self.mesh.surface()
+                orig_surface = self.cell_type.mesh.surface()
+                tmp_global_area_forces = oif_calc_global_area_force(self.cell_type.kag, a_current_pos, b_current_pos,
+                                                                c_current_pos, orig_surface, current_surface)
+                global_area_forces_list[t.A.id] += np.array([tmp_global_area_forces[0], tmp_global_area_forces[1],
+                                                             tmp_global_area_forces[2]])
+                global_area_forces_list[t.B.id] += np.array([tmp_global_area_forces[3], tmp_global_area_forces[4],
+                                                             tmp_global_area_forces[5]])
+                global_area_forces_list[t.C.id] += np.array([tmp_global_area_forces[6], tmp_global_area_forces[7],
+                                                             tmp_global_area_forces[8]])
+            # calculation of global area f_metric, if needed
+            if f_metric[3] is 1:
+                kag_f_metric = 0.0
                 for p in self.mesh.points:
-                    kag_fmetric += Norm(globalAreaForcesList[p.id])
+                    kag_f_metric += norm(global_area_forces_list[p.id])
 
-        # calculation of volume forces and fMetric
-        if (elasticForces[4] is 1) or (elasticForces[5] is 1) or (fMetric[4] is 1) or (fMetric[5] is 1):
+        # calculation of volume forces and f_metric
+        if (el_forces[4] is 1) or (el_forces[5] is 1) or (f_metric[4] is 1) or (f_metric[5] is 1):
             # initialize list
-            volumeForcesList = []
+            volume_forces_list = []
             for p in self.mesh.points:
-                volumeForcesList.append([0.0, 0.0, 0.0])
+                volume_forces_list.append([0.0, 0.0, 0.0])
             # calculation uses triangles, but results are stored for nodes
             for t in self.mesh.triangles:
-                aCurrPos = t.A.GetPos()
-                bCurrPos = t.B.GetPos()
-                cCurrPos = t.C.GetPos()
-                currVolume = self.mesh.Volume()
-                origVolume = self.cellType.mesh.Volume()
-                tmpVolumeForce = CalcVolumeForce(self.cellType.kv, aCurrPos, bCurrPos, cCurrPos, origVolume, currVolume)
-                volumeForcesList[t.A.id] += tmpVolumeForce
-                volumeForcesList[t.B.id] += tmpVolumeForce
-                volumeForcesList[t.C.id] += tmpVolumeForce
-            # calculation of volume fMetric, if needed
-            if (fMetric[4] is 1):
-                kv_fmetric = 0.0
+                a_current_pos = t.A.get_pos()
+                b_current_pos = t.B.get_pos()
+                c_current_pos = t.C.get_pos()
+                current_volume = self.mesh.volume()
+                orig_volume = self.cell_type.mesh.volume()
+                tmp_volume_force = oif_calc_volume_force(self.cell_type.kv, a_current_pos, b_current_pos, c_current_pos,
+                                                     orig_volume, current_volume)
+                volume_forces_list[t.A.id] += tmp_volume_force
+                volume_forces_list[t.B.id] += tmp_volume_force
+                volume_forces_list[t.C.id] += tmp_volume_force
+            # calculation of volume f_metric, if needed
+            if f_metric[4] is 1:
+                kv_f_metric = 0.0
                 for p in self.mesh.points:
-                    kv_fmetric += Norm(volumeForcesList[p.id])
+                    kv_f_metric += norm(volume_forces_list[p.id])
 
-        # calculation of total elastic forces and fMetric
-        if (elasticForces[5] is 1) or (fMetric[5] is 1):
-            elasticForcesList = []
+        # calculation of total elastic forces and f_metric
+        if (el_forces[5] is 1) or (f_metric[5] is 1):
+            elastic_forces_list = []
             for p in self.mesh.points:
-                totalElasticForces = stretchingForcesList[p.id] + bendingForcesList[p.id] + localAreaForcesList[p.id] \
-                                     + globalAreaForcesList[p.id] + volumeForcesList[p.id]
-                elasticForcesList.append(totalElasticForces)
-            # calculation of total fMetric, if needed
-            if (fMetric[5] is 1):
-                total_fmetric = 0.0
+                total_elastic_forces = stretching_forces_list[p.id] + bending_forces_list[p.id] + \
+                                       local_area_forces_list[p.id] + global_area_forces_list[p.id] + \
+                                       volume_forces_list[p.id]
+                elastic_forces_list.append(total_elastic_forces)
+            # calculation of total f_metric, if needed
+            if f_metric[5] is 1:
+                total_f_metric = 0.0
                 for p in self.mesh.points:
-                    total_fmetric += Norm(elasticForcesList[p.id])
+                    total_f_metric += norm(elastic_forces_list[p.id])
 
         # calculate norms of resulting forces
-        if (elasticForces[0] + elasticForces[1] + elasticForces[2] + elasticForces[3] + elasticForces[4] + elasticForces[5]) is not 0:
-            if (elasticForces[0] is 1):
-                stretchingForcesNormsList = []
+        if (el_forces[0] + el_forces[1] + el_forces[2] + el_forces[3] + el_forces[4] + el_forces[5]) is not 0:
+            if el_forces[0] is 1:
+                stretching_forces_norms_list = []
                 for p in self.mesh.points:
-                    stretchingForcesNormsList.append(Norm(stretchingForcesList[p.id]))
-            if (elasticForces[1] is 1):
-                bendingForcesNormsList = []
+                    stretching_forces_norms_list.append(norm(stretching_forces_list[p.id]))
+            if el_forces[1] is 1:
+                bending_forces_norms_list = []
                 for p in self.mesh.points:
-                    bendingForcesNormsList.append(Norm(bendingForcesList[p.id]))
-            if (elasticForces[2] is 1):
-                localAreaForcesNormsList = []
+                    bending_forces_norms_list.append(norm(bending_forces_list[p.id]))
+            if el_forces[2] is 1:
+                local_area_forces_norms_list = []
                 for p in self.mesh.points:
-                    localAreaForcesNormsList.append(Norm(localAreaForcesList[p.id]))
-            if (elasticForces[3] is 1):
-                globalAreaForcesNormsList = []
+                    local_area_forces_norms_list.append(norm(local_area_forces_list[p.id]))
+            if el_forces[3] is 1:
+                global_area_forces_norms_list = []
                 for p in self.mesh.points:
-                    globalAreaForcesNormsList.append(Norm(globalAreaForcesList[p.id]))
-            if (elasticForces[4] is 1):
-                volumeForcesNormsList = []
+                    global_area_forces_norms_list.append(norm(global_area_forces_list[p.id]))
+            if el_forces[4] is 1:
+                volume_forces_norms_list = []
                 for p in self.mesh.points:
-                    volumeForcesNormsList.append(Norm(volumeForcesList[p.id]))
-            if (elasticForces[5] is 1):
-                elasticForcesNormsList = []
+                    volume_forces_norms_list.append(norm(volume_forces_list[p.id]))
+            if el_forces[5] is 1:
+                elastic_forces_norms_list = []
                 for p in self.mesh.points:
-                    elasticForcesNormsList.append(Norm(elasticForcesList[p.id]))
+                    elastic_forces_norms_list.append(norm(elastic_forces_list[p.id]))
 
         # output vtk (folded)
-        if vtkFile is not None:
-            if (elasticForces == (0,0,0,0,0,0)):
-                print "OifCell: ElasticForces: The option elasticForces was not used. " \
+        if vtk_file is not None:
+            if el_forces == (0, 0, 0, 0, 0, 0):
+                print "OifCell: elastic_forces: The option elastic_forces was not used. " \
                       "Nothing to output to vtk file."
                 return
-            self.OutputVtkPosFolded(vtkFile)
+            self.output_vtk_pos_folded(vtk_file)
             first = True
-            if (elasticForces[0] is 1):
-                self.AppendPointDataToVtk(filename=vtkFile, dataName="ks_fMetric", data=stretchingForcesNormsList, firstAppend=first)
+            if el_forces[0] is 1:
+                self.append_point_data_to_vtk(file_name=vtk_file, data_name="ks_f_metric",
+                                              data=stretching_forces_norms_list, first_append=first)
                 first = False
-            if (elasticForces[1] is 1):
-                self.AppendPointDataToVtk(filename=vtkFile, dataName="kb_fMetric", data=bendingForcesNormsList, firstAppend=first)
+            if el_forces[1] is 1:
+                self.append_point_data_to_vtk(file_name=vtk_file, data_name="kb_f_metric",
+                                              data=bending_forces_norms_list, first_append=first)
                 first = False
-            if (elasticForces[2] is 1):
-                self.AppendPointDataToVtk(filename=vtkFile, dataName="kal_fMetric", data=localAreaForcesNormsList, firstAppend=first)
+            if el_forces[2] is 1:
+                self.append_point_data_to_vtk(file_name=vtk_file, data_name="kal_f_metric",
+                                              data=local_area_forces_norms_list, first_append=first)
                 first = False
-            if (elasticForces[3] is 1):
-                self.AppendPointDataToVtk(filename=vtkFile, dataName="kag_fMetric", data=globalAreaForcesNormsList, firstAppend=first)
+            if el_forces[3] is 1:
+                self.append_point_data_to_vtk(file_name=vtk_file, data_name="kag_f_metric",
+                                              data=global_area_forces_norms_list, first_append=first)
                 first = False
-            if (elasticForces[4] is 1):
-                self.AppendPointDataToVtk(filename=vtkFile, dataName="kav_fMetric", data=volumeForcesNormsList, firstAppend=first)
+            if el_forces[4] is 1:
+                self.append_point_data_to_vtk(file_name=vtk_file, data_name="kav_f_metric",
+                                              data=volume_forces_norms_list, first_append=first)
                 first = False
-            if (elasticForces[5] is 1):
-                self.AppendPointDataToVtk(filename=vtkFile, dataName="total_fMetric", data=elasticForcesNormsList, firstAppend=first)
+            if el_forces[5] is 1:
+                self.append_point_data_to_vtk(file_name=vtk_file, data_name="total_f_metric",
+                                              data=elastic_forces_norms_list, first_append=first)
                 first = False
 
         # output raw data
-        if rawDataFile is not None:
-            if (elasticForces[0] + elasticForces[1] + elasticForces[2] + elasticForces[3] + elasticForces[4] + elasticForces[5]) is not 1:
-                print "OifCell: ElasticForces: Only one type of elastic forces can be written into one rawDataFile. " \
-                      "If you need several, please call OifCell.ElasticForces multiple times - once per elastic force."
+        if raw_data_file is not None:
+            if (el_forces[0] + el_forces[1] + el_forces[2] + el_forces[3] + el_forces[4] + el_forces[5]) is not 1:
+                print "OifCell: elastic_forces: Only one type of elastic forces can be written into one " \
+                      "raw_data_file. If you need several, please call OifCell.elastic_forces multiple times - " \
+                      "once per elastic force."
                 return
-            if (elasticForces[0] is 1):
-                self.OutputRawData(filename=rawDataFile, data=stretchingForcesList)
-            if (elasticForces[1] is 1):
-                self.OutputRawData(filename=rawDataFile, data=bendingForcesList)
-            if (elasticForces[2] is 1):
-                self.OutputRawData(filename=rawDataFile, data=localAreaForcesList)
-            if (elasticForces[3] is 1):
-                self.OutputRawData(filename=rawDataFile, data=globalAreaForcesList)
-            if (elasticForces[4] is 1):
-                self.OutputRawData(filename=rawDataFile, data=volumeForcesList)
-            if (elasticForces[5] is 1):
-                self.OutputRawData(filename=rawDataFile, data=elasticForcesList)
+            if el_forces[0] is 1:
+                self.output_raw_data(file_name=raw_data_file, data=stretching_forces_list)
+            if el_forces[1] is 1:
+                self.output_raw_data(file_name=raw_data_file, data=bending_forces_list)
+            if el_forces[2] is 1:
+                self.output_raw_data(file_name=raw_data_file, data=local_area_forces_list)
+            if el_forces[3] is 1:
+                self.output_raw_data(file_name=raw_data_file, data=global_area_forces_list)
+            if el_forces[4] is 1:
+                self.output_raw_data(file_name=raw_data_file, data=volume_forces_list)
+            if el_forces[5] is 1:
+                self.output_raw_data(file_name=raw_data_file, data=elastic_forces_list)
 
-        # return fMetric
-        if fMetric[0] + fMetric[1] + fMetric[2] + fMetric[3] + fMetric[4] + fMetric[5] > 0:
+        # return f_metric
+        if f_metric[0] + f_metric[1] + f_metric[2] + f_metric[3] + f_metric[4] + f_metric[5] > 0:
             results = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-            if fMetric[0] is 1:
-                results[0] = ks_fmetric
-            if fMetric[1] is 1:
-                results[1] = kb_fmetric
-            if fMetric[2] is 1:
-                results[2] = kal_fmetric
-            if fMetric[3] is 1:
-                results[3] = kag_fmetric
-            if fMetric[4] is 1:
-                results[4] = kv_fmetric
-            if fMetric[5] is 1:
-                results[5] = total_fmetric
+            if f_metric[0] is 1:
+                results[0] = ks_f_metric
+            if f_metric[1] is 1:
+                results[1] = kb_f_metric
+            if f_metric[2] is 1:
+                results[2] = kal_f_metric
+            if f_metric[3] is 1:
+                results[3] = kag_f_metric
+            if f_metric[4] is 1:
+                results[4] = kv_f_metric
+            if f_metric[5] is 1:
+                results[5] = total_f_metric
             return results
         else:
             return 0
