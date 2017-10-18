@@ -32,7 +32,7 @@ def norm(v):
     return norm
 
 
-def distance(a, b):
+def vec_distance(a, b):
     """
     Returns the length of vector between points a and b.
 

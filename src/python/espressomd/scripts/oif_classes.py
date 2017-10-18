@@ -1,3 +1,4 @@
+import espressomd
 import numpy as np
 from oif_utils import *
 from espressomd.interactions import OifLocalForces
@@ -11,24 +12,32 @@ class FixedPoint:
 
     """
     def __init__(self, pos, id):
+        if not isinstance(id, int):
+            raise TypeError("Id must be integer.")
+        if False: #TODO
+        #if isinstance(pos[0],float) and isinstance(pos[0],float) and isinstance(pos[0],float):
+            raise TypeError("Pos must be .....") #TODO
+
         self.x = pos[0]
         self.y = pos[1]
         self.z = pos[2]
         self.id = id
+
 
     def get_pos(self):
         return [self.x, self.y, self.z]
 
     def get_id(self):
         return self.id
-
-
+        
 class PartPoint:
     """
     Represents mesh points, connected to ESPResSo particle.
 
     """
     def __init__(self, part, id, part_id):  # part is physical ESPResSo particle corresponding to that particular point
+        if not (isinstance(part, espressomd.particle_data.ParticleHandle) and isinstance(id,int) and isinstance(part_id,int)):
+            raise TypeError("Arguments to PartPoint are incorrect.")
         self.part = part
         self.part_id = part_id  # because in adding bonds to the particles in OifCell
         # one needs to know the global id of the particle.
@@ -71,11 +80,13 @@ class Edge:
 
     """
     def __init__(self, A, B):
+        if not (isinstance(A,PartPoint) or (isinstance(A,FixedPoint))) and (isinstance(B,PartPoint) or (isinstance(B,FixedPoint))):
+            TypeError("Arguments to Edge must be FixedPoint or PartPoint.")
         self.A = A
         self.B = B
 
     def length(self):
-        return distance(self.A.get_pos(), self.B.get_pos())
+        return vec_distance(self.A.get_pos(), self.B.get_pos())
 
 
 class Triangle:
@@ -84,6 +95,8 @@ class Triangle:
 
     """
     def __init__(self, A, B, C):
+        if not (isinstance(A,PartPoint) or (isinstance(A,FixedPoint))) and (isinstance(B,PartPoint) or (isinstance(B,FixedPoint))) and (isinstance(C,PartPoint) or (isinstance(C,FixedPoint))):
+            TypeError("Arguments to Triangle must be FixedPoint or PartPoint.")
         self.A = A
         self.B = B
         self.C = C
@@ -99,6 +112,8 @@ class Angle:
 
     """
     def __init__(self, A, B, C, D):
+        if not (isinstance(A,PartPoint) or (isinstance(A,FixedPoint))) and (isinstance(B,PartPoint) or (isinstance(B,FixedPoint))) and (isinstance(C,PartPoint) or (isinstance(C,FixedPoint))) and (isinstance(D,PartPoint) or (isinstance(D,FixedPoint))):
+            TypeError("Arguments to Angle must be FixedPoint or PartPoint.")
         self.A = A
         self.B = B
         self.C = C
@@ -115,9 +130,12 @@ class ThreeNeighbors:
 
     """
     def __init__(self, A, B, C):
+        if not (isinstance(A,PartPoint) or (isinstance(A,FixedPoint))) and (isinstance(B,PartPoint) or (isinstance(B,FixedPoint))) and (isinstance(C,PartPoint) or (isinstance(C,FixedPoint))):
+            TypeError("Arguments to ThreeNeighbors must be FixedPoint or PartPoint.")
         self.A = A
         self.B = B
         self.C = C
+   
 
     def outer_normal(self):
         outer_normal = get_triangle_normal(self.A.get_pos(), self.B.get_pos(), self.C.get_pos())
@@ -131,8 +149,9 @@ class Mesh:
     """
     def __init__(self, nodes_file=None, triangles_file=None, system=None, resize=(1.0, 1.0, 1.0),
                  part_type=-1, part_mass=1.0, normal=False, check_orientation=True):
-        if system is None:
-            raise Exception("Mesh: No system provided. Quitting.")
+        if (system is None) or (not isinstance(system,espressomd.System)):
+            raise Exception("Mesh: No system provided or wrong type given. Quitting.")
+
         self.system = system
         self.normal = normal
         self.nodes_file = nodes_file
@@ -149,6 +168,19 @@ class Mesh:
             print "OifMesh warning: one of nodes_file or triangles_file was not given. " \
                   "May raise concern when Mesh object was being created."
         else:
+            if not (isinstance(nodes_file,str) and isinstance(triangles_file,str)):
+                raise TypeError("Filenames must be strings.")
+#            if not isinstance(resize,tuple): #TOD
+            if False:
+                raise TypeError("resize must be a tuple.")
+            if not isinstance(part_type,int):
+                raise TypeError("part_type must be integer.") 
+            if not isinstance(part_mass,float):
+                raise TypeError("part_mass must be float.") 
+            if not isinstance(normal,bool):
+                raise TypeError("normal must be bool.") 
+            if not isinstance(check_orientation,bool):
+                raise TypeError("check_orientation must be bool.") 
             # reading the mesh point positions from file
             in_file = open(nodes_file, "r")
             nodes_coord = in_file.read().split("\n")
@@ -615,10 +647,23 @@ class OifCellType:  # analogous to oif_template
     """
     def __init__(self, nodes_file="", triangles_file="", system=None, resize=(1.0, 1.0, 1.0), ks=0.0, kslin=0.0,
                  kb=0.0, kal=0.0, kag=0.0, kv=0.0, kvisc=0.0, normal=False, check_orientation=True):
-        if system is None:
-            raise Exception("OifCellType: No system provided. Quitting.")
+        if (system is None) or (not isinstance(system,espressomd.System)):
+            raise Exception("OifCellType: No system provided or wrong type. Quitting.")
         if (nodes_file is "") or (triangles_file is ""):
             raise Exception("OifCellType: One of nodesfile or trianglesfile is missing. Quitting.")
+
+        if not (isinstance(nodes_file,str) and isinstance(triangles_file,str)):
+            raise TypeError("Filenames must be strings.")
+        #if not isinstance(resize,tuple): #TODO
+        if False:
+            raise TypeError("resize must be tuple.")
+        if not (isinstance(ks,float) and isinstance(ks,float) and isinstance(kb,float) and isinstance(kal,float) and isinstance(kag,float) and isinstance(kv,float) and isinstance(kvisc,float)):
+            raise TypeError("elastic parameters must be floats.")
+        if not isinstance(normal,bool):
+            raise TypeError("normal must be bool.") 
+        if not isinstance(check_orientation,bool):
+            raise TypeError("check_orientation must be bool.")     
+
         if normal is False:
             print "OifCellType warning: Option normal is not used => membrane collision will not work."
         if check_orientation is False:
@@ -640,7 +685,7 @@ class OifCellType:  # analogous to oif_template
         self.normal = normal
         if (ks != 0.0) or (kslin != 0.0) or (kb != 0.0) or (kal != 0.0):
             for angle in self.mesh.angles:
-                r0 = distance(angle.B.get_pos(), angle.C.get_pos())
+                r0 = vec_distance(angle.B.get_pos(), angle.C.get_pos())
                 phi = angle_btw_triangles(angle.A.get_pos(), angle.B.get_pos(), angle.C.get_pos(), angle.D.get_pos())
                 area1 = area_triangle(angle.A.get_pos(), angle.B.get_pos(), angle.C.get_pos())
                 area2 = area_triangle(angle.D.get_pos(), angle.B.get_pos(), angle.C.get_pos())
@@ -683,12 +728,19 @@ class OifCell:
 
     """
     def __init__(self, cell_type=None, origin=None, part_type=None, part_mass=1.0, rotate=None):
-        if cell_type is None:
-            raise Exception("OifCell: No cellType provided. Quitting.")
-        if origin is None:
-            raise Exception("OifCell: No origin specified. Quitting.")
-        if part_type is None:
-            raise Exception("OifCell: No partType specified. Quitting.")
+        if (cell_type is None) or (not isinstance(cell_type,OifCellType)):
+            raise Exception("OifCell: No cellType provided or wrong type. Quitting.")
+        #if (origin is None) or (not isinstance(origin,TODO)): #TODO
+        if (origin is None): #TODO
+            raise Exception("OifCell: No origin specified or wrong type. Quitting.")
+        if (part_type is None) or (not isinstance(part_type,int)):
+            raise Exception("OifCell: No partType specified or wrong type. Quitting.")
+        if not isinstance(part_mass,float):
+            raise Exception("OifCell: part mass must be float.")
+#        if not isinstance(rotate,tuple): #TODO
+        if False:
+            raise Exception("OifCell: rotate must be tuple")
+
         self.cell_type = cell_type
         self.mesh = cell_type.mesh.copy(origin=origin, part_type=part_type, part_mass=part_mass, rotate=rotate)
         self.part_mass = part_mass
@@ -802,7 +854,7 @@ class OifCell:
             for j in range(i+1, n_points):
                 p1 = self.mesh.points[i].get_pos()
                 p2 = self.mesh.points[j].get_pos()
-                tmp_dist = distance(p1,p2)
+                tmp_dist = vec_distance(p1,p2)
                 if tmp_dist > max_distance:
                     max_distance = tmp_dist
         return max_distance
@@ -1015,7 +1067,7 @@ class OifCell:
                 a_orig_pos = self.cell_type.mesh.points[e.A.id].get_pos()
                 b_orig_pos = self.cell_type.mesh.points[e.B.id].get_pos()
                 current_dist = e.length()
-                orig_dist = distance(a_orig_pos, b_orig_pos)
+                orig_dist = vec_distance(a_orig_pos, b_orig_pos)
                 tmp_stretching_force = oif_calc_stretching_force(self.cell_type.ks, a_current_pos, b_current_pos,
                                                              orig_dist, current_dist)
                 stretching_forces_list[e.A.id] += tmp_stretching_force
