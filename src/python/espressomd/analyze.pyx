@@ -268,7 +268,6 @@ class Analysis(object):
         """
         Calculates the particle distribution using cylindrical binning.
 
-
         Parameters
         ----------
         center : array of :obj:`float`
@@ -586,6 +585,37 @@ class Analysis(object):
     def local_stress_tensor(self, periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1)):
         """local_stress_tensor(periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1))
         """
+        """
+        Computes local stress tensors in the system.
+        
+        A cuboid is defined starting at the coordinate `range_start` and going to the coordinate `range_start`+`stress_range`.
+        This cuboid in divided into `bins[0]` in the x direction, `bins[1]` in the y direction and `bins[2]` in the z direction such that the total number of bins is `bins[0]*bins[1]*bins[2]`. 
+        For each of these bins a stress tensor is calculated using the Irving Kirkwood method.
+        That is, a given interaction contributes towards the stress tensor in a bin proportional to the fraction of the line connecting the two particles that is within the bin.
+        
+        If the P3M and MMM1D electrostatic methods are used, these interactions are not included in the local stress tensor.
+        The DH and RF methods, in contrast, are included.
+        Concerning bonded interactions only two body interactions (FENE, Harmonic) are included (angular and dihedral are not).
+        For all electrostatic interactions only the real space part is included.
+
+        Care should be taken when using constraints of any kind, since these are not accounted for in the local stress tensor calculations.
+
+        
+        Parameters
+        ----------
+        periodicity : array of :obj:`int`
+            coordinates of the centre of the cylinder.
+        ----------
+        range_start : array of :obj:`float`
+            the start coordinate of the cuboid
+        ----------
+        stress_range : array of :obj:`float`
+            the range of the cuboid.
+        ----------
+        bins : array of :obj:`int`
+            a list condaining the number of bins for each direction.
+        
+        """
 
         cdef double_list * local_stress_tensor = NULL
         cdef int[3] c_periodicity, c_bins
@@ -609,11 +639,22 @@ class Analysis(object):
 
 
     def energy(self):
-        """Calculate the systems energy.
+        """
+        Calculate the systems energy.
 
         Returns
         -------
         :obj:`dict` {'total', 'kinetic', 'bonded', 'nonbonded', ['coulomb']}
+
+
+        Examples
+        --------
+        >>> energy = system.analysis.energy()
+        >>> print(energy["total"])
+        >>> print(energy["kinetic"])
+        >>> print(energy["bonded"])
+        >>> print(energy["non_bonded"])
+
 
         """
     #  if system.n_part == 0:
@@ -975,6 +1016,27 @@ class Analysis(object):
 
 
     def gyration_tensor(self, p_type=None):
+        """
+        Analyze the gyration tensor of particles of a given type , or of all particles in the system if no type is given.
+
+        Parameters
+        ----------
+        p_type : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`), optional
+            A a particle type, or list of all particle types to be considered
+
+        Returns
+        -------
+        a dictionary with the following keys:
+        * "Rg^2", squared radius of gyration
+        * "shape", three shape descriptors (asphericity, acylindricity, and relative shape anisotropy)
+        * "eva0", eigenvalue 0 of the gyration tensor and its corresponding eigenvector.
+        * "eva1", eigenvalue 1 of the gyration tensor and its corresponding eigenvector.
+        * "eva2", eigenvalue 2 of the gyration tensor and its corresponding eigenvector.
+        The eigenvalues are sorted in descending order.
+      
+        """
+
+        
         cdef vector[double] gt
 
         if p_type is not None:

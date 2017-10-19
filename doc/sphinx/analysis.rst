@@ -107,7 +107,7 @@ Two arrays are returned corresponding to the normalized distribution and the bin
 
 Radial density map
 ~~~~~~~~~~~~~~~~~~
-.. todo:: check this
+.. todo:: This feature is not implemented
 
 analyze radial\_density\_map
 
@@ -201,7 +201,7 @@ the second triple to type 1.
 
 Modes
 ~~~~~
-.. todo:: check this
+.. todo:: This feature is not implemented
 
 analyze modes2d
 
@@ -216,7 +216,7 @@ numbers in the order:
 
 Lipid orientation
 ~~~~~~~~~~~~~~~~~
-.. todo:: check this
+.. todo:: This feature is not implemented
 
 analyze get\_lipid\_orients analyze lipid\_orient\_order
 
@@ -225,7 +225,7 @@ analyze get\_lipid\_orients analyze lipid\_orient\_order
 
 Bilayers
 ~~~~~~~~
-.. todo:: check this
+.. todo:: This feature is not implemented
 
 analyze bilayer\_set analyze bilayer\_density\_profile
 
@@ -234,7 +234,7 @@ analyze bilayer\_set analyze bilayer\_density\_profile
 
 GPB
 ~~~
-.. todo:: check this
+.. todo:: This feature is not implemented
 
 analyze cell\_gpb
 
@@ -243,7 +243,7 @@ analyze cell\_gpb
 
 Get folded positions
 ~~~~~~~~~~~~~~~~~~~~
-.. todo:: check this
+.. todo:: This feature is not implemented
 
 analyze get\_folded\_positions
 
@@ -294,11 +294,12 @@ Returns the spherically averaged structure factor :math:`S(q)` of
 particles specified in . :math:`S(q)` is calculated for all possible
 wave vectors, :math:`\frac{2\pi}{L} <= q <= \frac{2\pi}{L}` `order`.
 
+
 .. _Van-Hove autocorrelation function:
 
 Van-Hove autocorrelation function :math:`G(r,t)`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. todo:: check this
+.. todo:: This feature is not implemented
 
 analyze vanhove
 
@@ -330,7 +331,6 @@ always yields :math:`1`.
 
 Center of mass
 ~~~~~~~~~~~~~~
-
 :meth:`espressomd.analyze.Analysis.centermass`
 
 Returns the center of mass of particles of the given type given by `part_type`.
@@ -351,23 +351,14 @@ Gyration tensor
 ~~~~~~~~~~~~~~~
 :meth:`espressomd.analyze.Analysis.gyration_tensor`
 
-.. todo:: check this
-
-analyze gyration\_tensor
-
-Analyze the gyration tensor of particles of a given type , or of all
-particles in the system if no type is given. Returns a Tcl-list
-containing the squared radius of gyration, three shape descriptors
-(asphericity, acylindricity, and relative shape anisotropy), eigenvalues
-of the gyration tensor and their corresponding eigenvectors. The
-eigenvalues are sorted in descending order.
+Analyze the gyration tensor of particles of a given type, or of all particles in the system if no type is given. Returns a dictionary containing the squared radius of gyration, three shape descriptors (asphericity, acylindricity, and relative shape anisotropy), eigenvalues of the gyration tensor and their corresponding eigenvectors. The eigenvalues are sorted in descending order.
 
 
 .. _Aggregation:
 
 Aggregation
 ~~~~~~~~~~~
-.. todo:: check this
+.. todo:: This feature is not implemented
 
 analyze aggregation
 
@@ -384,7 +375,7 @@ aggregation state of only oppositely charged particles.
 
 Identifying pearl-necklace structures
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. todo:: check this
+.. todo:: This feature is not implemented
 analyze necklace
 
 Algorithm for identifying pearl necklace structures for polyelectrolytes
@@ -407,7 +398,7 @@ structures.
 
 Finding holes
 ~~~~~~~~~~~~~
-.. todo:: check this
+.. todo:: This feature is not implemented
 
 analyze holes
 
@@ -446,7 +437,7 @@ Surface results have not been tested. .
 
 Temperature of the LB fluid
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. todo:: check this
+.. todo:: This feature is not implemented
 
 This command returns the temperature of the lattice-Boltzmann (LB)
 fluid, see Chapter [sec:lb], by averaging over the fluid nodes. In case
@@ -458,9 +449,7 @@ volume is taken into account.
 
 Momentum of the System
 ~~~~~~~~~~~~~~~~~~~~~~
-.. todo:: check this
-
-analyze momentum
+:meth:`espressomd.analyze.Analysis.analyze_linear_momentum'
 
 This command returns the total linear momentum of the particles and the
 lattice-Boltzmann (LB) fluid, if one exists. Giving the optional
@@ -476,14 +465,7 @@ Energies
 
 
 Returns the energies of the system.
-The the different energetic contributions to the total energy can also be obtained.
-
-For example, ::
-    >>> energy = system.analysis.energy()
-    >>> energy["total"]
-    >>> energy["kinetic"]
-    >>> energy["bonded"]
-    >>> energy["non_bonded"]
+The the different energetic contributions to the total energy can also be obtained (kinetic, bonded,non-bonded, coublomb)).
 
 
 .. _Pressure:
@@ -500,9 +482,8 @@ The pressure is calculated (if there are no electrostatic interactions)
 by
 
 .. math::
-
-   \label{eq:ptens}
      p = \frac{2E_{kinetic}}{Vf} + \frac{\sum_{j>i} {F_{ij}r_{ij}}}{3V}
+     :label: eqptens
 
 where :math:`f=3` is the number of translational degrees of freedom of
 each particle, :math:`V` is the volume of the system,
@@ -512,7 +493,7 @@ them. The kinetic energy divided by the degrees of freedom is
 
 .. math:: \frac{2E_{kinetic}}{f} = \frac{1}{3}\sum_{i} {m_{i}v_{i}^{2}}.
 
-Note that Equation [eq:ptens] can only be applied to pair potentials and
+Note that Equation :eq:`eqptens` can only be applied to pair potentials and
 central forces. Description of how contributions from other interactions
 are calculated is beyond the scope of this manual. Three body potentials
 are implemented following the procedure in
@@ -555,18 +536,12 @@ The command is implemented in parallel.
 
 Local Stress Tensor
 ~~~~~~~~~~~~~~~~~~~
-.. todo:: check this
+:meth:`espressomd.analyze.Analysis.local_stress_tensor`
 
-analyze local\_stress\_tensor
 
-Computes local stress tensors in the system. A cuboid is defined
-starting at the coordinate (,,) and going to the coordinate (+, +, +).
-This cuboid in divided into bins in the x direction, bins in the y
-direction and bins in the z direction such that the total number of bins
-is \*\*. For each of these bins a stress tensor is calculated using the
-Irving Kirkwood method. That is, a given interaction contributes towards
-the stress tensor in a bin proportional to the fraction of the line
-connecting the two particles that is within the bin.
+A cuboid is defined in the system and divided into bins.
+For each of these bins a stress tensor is calculated using the Irving Kirkwood method.
+That is, a given interaction contributes towards the stress tensor in a bin proportional to the fraction of the line connecting the two particles that is within the bin.
 
 If the P3M and MMM1D electrostatic methods are used, these interactions
 are not included in the local stress tensor. The DH and RF methods, in
