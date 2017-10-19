@@ -28,7 +28,9 @@
 /* global features */
 #define PARTIAL_PERIODIC
 #define ELECTROSTATICS
-#define EWALD_GPU
+#ifdef CUDA
+  #define EWALD_GPU
+#endif
 #define EXTERNAL_FORCES
 #define CONSTRAINTS
 #define MASS
@@ -56,11 +58,15 @@
 // Lattice Boltzmann
 #define LB
 #define LB_BOUNDARIES
-#define LB_BOUNDARIES_GPU
-#define LB_GPU
+#ifdef CUDA
+  #define LB_GPU
+  #define LB_BOUNDARIES_GPU
+#endif  
 
 // Electrokinetics
-#define ELECTROKINETICS
-#define EK_BOUNDARIES
-#define EK_ELECTROSTATIC_COUPLING
+#ifdef CUDA
+  #define ELECTROKINETICS
+  #define EK_BOUNDARIES
+  #define EK_ELECTROSTATIC_COUPLING
+#endif
 
