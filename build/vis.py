@@ -3,14 +3,17 @@
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
+import sys
 
 vec = np.genfromtxt('ttt.dat')
+print vec
+print len(vec)
 vec = vec.reshape([len(vec), 19, 3])
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 
-quiver = vec[1,:,:]
+quiver = vec[int(sys.argv[1]),:,:]
 
 X = np.zeros(len(quiver))
 
