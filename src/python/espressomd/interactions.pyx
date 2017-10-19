@@ -37,7 +37,7 @@ cdef class NonBondedInteraction(object):
     def __init__(self, *args, **kwargs):
         """Represents an instance of a non-bonded interaction, such as Lennard-Jones.
         Either called with two particle type ids, in which case, the interaction
-        will represent the bonded interaction as it is defined in Espresso core
+        will represent the bonded interaction as it is defined in the Espresso core
         or called with keyword arguments describing a new interaction."""
 
         # Interaction id as argument
