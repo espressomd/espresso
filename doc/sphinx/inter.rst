@@ -21,7 +21,7 @@ define the interaction parameters.
 .. todo::
     IMPLEMENT: print interaction list
 
-.. _Isotropic non-bonded interactions :
+.. _Isotropic non-bonded interactions:
 
 Isotropic non-bonded interactions
 ---------------------------------
@@ -41,7 +41,7 @@ listed below.
 
 For many non-bonded interactions, it is possible to artificially cap the
 forces, which often allows to equilibrate the system much faster. See
-the subsection :ref:`Capping the force during warmup` for more details.
+the subsection :ref:`Capping the force during warmup` for more details.
 
 .. _Tabulated interaction:
 
@@ -57,15 +57,13 @@ The interface for tabulated interactions are implemented
 :class:`espressomd.interactions.TabulatedNonBonded` class. They can be configured
 via the following syntax::
 
-    system.non_bonded_inter[type1, type2].tabulated(filename='filename')
+    system.non_bonded_inter[type1, type2].tabulated.set_params(filename='filename')
 
 This defines an interaction between particles of the types *type1* and *type2* according
 to an arbitrary tabulated pair potential. *filename* specifies a file which
 contains the tabulated forces and energies as a function of the
-separation distance. The tabulated potential allows capping the force
-using MISSING, see section :ref:`Capping the force during warmup`.
-
-.. todo:: replace MISSING above.
+separation distance. The tabulated potential allows capping the force, see
+section :ref:`Capping the force during warmup`.
 
 At present the required file format is simply an ordered list separated
 by whitespaces. The data reader first looks for a ``#`` character and
@@ -234,9 +232,9 @@ section :ref:`Capping the force during warmup`
 The optional ``LJGEN_SOFTCORE`` feature activates a softcore version of
 the potential, where the following transformations apply:
 :math:`\epsilon \rightarrow \lambda \epsilon` and
-:math:`r-r_\mathrm{off} \rightarrow \sqrt{(r-r_\mathrm{off})^2 -
-(1-\lambda) \delta \sigma^2}`. allows to tune the strength of the
-interaction, while varies how smoothly the potential goes to zero as
+:math:`r-r_\mathrm{off} \rightarrow \sqrt{(r-r_\mathrm{off})^2 +
+(1-\lambda) \delta \sigma^2}`. :math:`\lambda` allows to tune the strength of the
+interaction, while :math:`\delta` varies how smoothly the potential goes to zero as
 :math:`\lambda\rightarrow 0`. Such a feature allows one to perform
 alchemical transformations, where a group of atoms can be slowly turned
 on/off during a simulation.
@@ -252,7 +250,7 @@ Lennard-Jones cosine interaction
 inter lj-cos inter lj-cos2
 
 specifies a Lennard-Jones interaction with cosine
-tail :cite:`soddeman01a` between particles of the types and
+tail :cite:`soddeman01a` between particles of the types and
 . The first variant behaves as follows: Until the minimum of the
 Lennard-Jones potential at
 :math:`r_\mathrm{min} = r_\mathrm{off} +
@@ -281,7 +279,7 @@ as normal Lennard-Jones potential, see equation [eq:lj] with
 :math:`c_\mathrm{shift} = 0`.
 
 Only the second variant allows capping the force using , see
-section [sec:forcecap].
+section [sec:forcecap].
 
 Smooth step interaction
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -363,7 +361,7 @@ of the types and . It serves similar purposes as the Lennard-Jones
 potential, but has a deeper minimum, around which it is harmonic. This
 models the potential energy in a diatomic molecule. This potential
 allows capping the force using ``inter forcecap``, see
-section [sec:forcecap].
+section [sec:forcecap].
 
 For :math:`r < r_\mathrm{cut}`, this potential is given by
 
@@ -394,7 +392,7 @@ for :math:`r_\mathrm{discont} < r < r_\mathrm{cut}`. Below ,
 the potential is linearly continued towards :math:`r=0`, similarly to
 force capping, see below. Above :math:`r=r_\mathrm{cut}`, the
 potential is :math:`0`. This potential allows capping the force using ,
-see section [sec:forcecap].
+see section [sec:forcecap].
 
 Soft-sphere interaction
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -747,7 +745,7 @@ information regarding particle properties in :ref:`Setting up particles`.
 FENE bond
 ~~~~~~~~~
 
-A FENE (finite extension nonlinear expander) bond can be instantiated via
+A FENE (finite extension nonlinear elastic) bond can be instantiated via
 :class:`espressomd.interactions.FeneBond`::
     
     from espressomd.interactions import FeneBond
@@ -802,7 +800,7 @@ A harmonic bond can be instantiated via
 
 
 This bond is similar to the normal harmonic bond in such a way that it
-sets up a harmonic potential, i.e. a spring, between the two particles.
+sets up a harmonic potential, i.e. a spring, between the two particles.
 Additionally the orientation of the first particle in the bond will be aligned along
 the distance vector between both particles. This alignment can be
 controlled by the second harmonic constant :math:`k2`. Keep in mind that orientation will
@@ -968,7 +966,7 @@ displayed in VMD.
 Object-in-fluid interactions
 ----------------------------
 
-Please cite :cite:`cimrak` when using the interactions in this section in order to
+Please cite :cite:`cimrak` when using the interactions in this section in order to
 simulate extended objects embedded in a LB fluid. For more details also
 see the documentation at http://cell-in-fluid.fri.uniza.sk/oif-documentation.
 
@@ -1204,67 +1202,95 @@ with respect to the underlying object, the triangle 123 needs to be
 properly oriented (as explained in the section on volume in
 oif_global_forces interaction).
 
+.. _Bond-angle interactions:
+
 Bond-angle interactions
 -----------------------
+..  note::
+    `Feature BOND_ANGLE required.`
 
-[sec:angle]
+Bond-angle interactions involve three particles forming the angle :math:`\phi`, as shown in the schematic below.
 
-[ phi_0 = ]
+.. _inter_angle:
+.. figure:: figures/inter_angle.png
+   :alt: Bond-angle interactions
+   :align: center
+   :height: 12.00cm
 
-inter angle_harmonic inter angle_cosine inter angle_cossquare
-
-This creates a bond type with identificator with an angle dependent
-potential. This potential is defined between three particles. The
-particle for which the bond is created, is the central particle, and the
+This allows for a bond type having an angle dependent potential.
+This potential is defined between three particles.
+The particle for which the bond is created, is the central particle, and the
 angle :math:`\phi` between the vectors from this particle to the two
-others determines the interaction. is the bending constant, and the
-optional parameter :math:`\phi_0` is the equilibirum bond angle in
-radians ranging from 0 to :math:`\pi`. If this parameter is not given, it
-defaults to :math:`\phi_0 = \pi`, which corresponds to a stretched
-configuration. For example, for a bond defined by
+others determines the interaction.
 
-part $p_2 bond 4 $p_1 $p_3
+Similar to other bonded interactions, these are defined for every particle triad and and must be added to a particle (see :attr:`espressomd.particle_data.ParticleHandle.bonds`).
+For example, for the schematic with particles ``id=0``, ``1`` and ``2`` the bond was defined using ::
 
-the minimal energy configurations are the following:
+    >>> system.part[1].add_bond((bond_angle, 0, 2))
 
-(8381,2684)(1570,-5393) (2701,-4561) (3601,-4561) (4501,-4561)
-(7021,-4561) (7921,-4561) (7921,-3661) (2701,-4561)( 1, 0)1800
-(7021,-4561)( 1, 0)900 (7921,-4561)( 0, 1)900 (5761,-2831)( 0,-1)2500
+The parameter ``bond_angle`` is a bond type identifier of three possible bond-angle classes, described below.
 
-(2701,-5191)(0,0)[b]:math:`p_1` (3601,-5191)(0,0)[b]:math:`p_2`
-(4501,-5191)(0,0)[b]:math:`p_3` (7021,-5191)(0,0)[b]:math:`p_1`
-(8371,-3751)(0,0)[b]:math:`p_3` (7921,-5191)(0,0)[b]:math:`p_2`
-(8371,-2941)(0,0)[b] (3601,-2941)(0,0)[b]
 
-For the potential acting between the three particles three variants are
-possible
+:class:`espressomd.interactions.Angle_Harmonic`
+    A classical harmonic potential of the form: 
+    
+    .. math:: V(\phi) = \frac{K}{2} \left(\phi - \phi_0\right)^2.
 
--  | Harmonic bond angle potential :
-   | A classical harmonic potential,
+    :math:`K` is the bending constant,
+    and the optional parameter :math:`\phi_0` is the equilibirum bond angle in
+    radians ranging from 0 to :math:`\pi`.
 
-     .. math:: V(\phi) = \frac{K}{2} \left(\phi - \phi_0\right)^2.
+    If this parameter is not given, it defaults to :math:`\phi_0 = \pi`,
+    which corresponds to a stretched conformation.
 
-     Unlike the two following variants, this potential has a kink at
-     :math:`\phi=\phi_0+\pi` and accordingly a discontinuity in the
-     force, and should therefore be used with caution.
+    Unlike the two other variants, this potential has a kink at
+    :math:`\phi=\phi_0+\pi` and accordingly a discontinuity in the
+    force, and should therefore be used with caution.
 
--  | Cosine bond angle potential :
-   | 
+    example ::
+        >>> angle_harmonic=Angle_Harmonic(bend=1.0, phi0=np.pi)
+        >>> system.bonded_inter.add(angle_harmonic)
+        >>> system.part[1].add_bond((angle_harmonic, 0, 2))
 
-     .. math:: V(\alpha) = K \left[1 - \cos(\phi - \phi0)\right]
 
-     Around :math:`\phi_0`, this potential is close to a harmonic one
-     (both are :math:`1/2(\phi-\phi_0)^2` in leading order), but it is
-     periodic and smooth for all angles :math:`\phi`.
 
--  | Cosine square bond angle potential :
-   | 
+:class:`espressomd.interactions.Angle_Cosine`
 
-     .. math:: V(\alpha) = \frac{K}{2} \left[\cos(\phi) - \cos(\phi_0)\right]^2
+    Cosine bond angle potential of the form:
 
-     This form is used for example in the GROMOS96 force field. The
-     potential is :math:`1/8(\phi-\phi_0)^4` around :math:`\phi_0`, and
-     therefore much flatter than the two potentials before.
+    .. math:: V(\phi) = K \left[1 - \cos(\phi - \phi0)\right]
+
+    :math:`K` is the bending constant,
+    and the optional parameter :math:`\phi_0` is the equilibirum bond angle in
+    radians ranging from 0 to :math:`\pi`.
+
+    If this parameter is not given, it defaults to :math:`\phi_0 = \pi`,
+    which corresponds to a stretched conformation.
+
+    Around :math:`\phi_0`, this potential is close to a harmonic one
+    (both are :math:`1/2(\phi-\phi_0)^2` in leading order), but it is
+    periodic and smooth for all angles :math:`\phi`.
+
+    example ::
+        >>> angle_cosine=Angle_Cosine(bend=1.0, phi0=np.pi)
+        >>> system.bonded_inter.add(angle_cosine)
+        >>> system.part[1].add_bond((angle_cosine, 0, 2))
+
+:class:`espressomd.interactions.Angle_Cossquare`
+
+    Cosine square bond angle potential of the form:
+
+    .. math:: V(\phi) = \frac{K}{2} \left[\cos(\phi) - \cos(\phi_0)\right]^2
+
+    This form is used for example in the GROMOS96 force field. The
+    potential is :math:`1/8(\phi-\phi_0)^4` around :math:`\phi_0`, and
+    therefore much flatter than the two potentials before.
+
+    example ::
+        >>> angle_cossquare=Angle_Cossquare(bend=1.0, phi0=np.pi)
+        >>> system.bonded_inter.add(angle_cossquare)
+        >>> system.part[1].add_bond((angle_cossquare, 0, 2))
+
 
 Dihedral interactions
 ---------------------
@@ -1310,7 +1336,7 @@ length, which measures the strength of the electrostatic interaction. As
 a special case, when the thermostat is switched off, the value of
 Bjerrum length you enter is treated as :math:`l_B k_B T` rather than
 :math:`l_B`. This is used to perform an NVE integration (see also
-section :ref:`thermostat`).
+section :ref:`\`\`thermostat\`\`\: Setting up the thermostat`).
 
 Computing electrostatic interactions is computationally very expensive.
 |es| features some state-of-the-art algorithms to deal with these
@@ -1463,6 +1489,8 @@ chosen for tuning.
 Debye-Hückel potential
 ~~~~~~~~~~~~~~~~~~~~~~
 
+.. todo:: FINISH DOCUMENTATION/TESTING/INTERFACE BELOW
+
 For a list of all parameters see :attr:`espressomd.electrostatics.DH` or :attr:`espressomd.electrostatics.CDH`.
 
 Uses the Debye-Hückel electrostatic potential defined by
@@ -1502,61 +1530,6 @@ continuous.
     require the feature "ELECTROSTATICS" do be defined.
 
 
-
-.. todo:: FINISH DOCUMENTATION/TESTING/INTERFACE BELOW
-
-.. _mmm2d_guide:
-
-MMM2D
-~~~~~
-
-.. note::
-    Required features: ELECTROSTATICS, PARTIAL_PERIODIC.
-
-Please cite :cite:`mmm2d` when using MMM2D, and when using dielectric interfaces.
-
-MMM2D coulomb method for systems with periodicity 1 1 0. Needs the
-layered cell system. The performance of the method depends on the number
-of slices of the cell system, which has to be tuned manually. It is
-automatically ensured that the maximal pairwise error is smaller than
-the given bound. The far cutoff setting should only be used for testing
-reasons, otherwise you are more safe with the automatic tuning. If you
-even don’t know what it is, do not even think of touching the far
-cutoff. For details on the MMM family of algorithms, refer to appendix :ref:`mmm_appendix`.
-
-For a detailed list of parameters see :attr:`espressomd.electrostatics.MMM2D`. 
-The last two, mutually exclusive parameters “dielectric” and
-“dielectric_constants_on” allow to specify dielectric contrasts at the
-upper and lower boundaries of the simulation box. The first form
-specifies the respective dielectric constants in the media, which
-however is only used to calculate the contrasts. That is, specifying
-:math:`\epsilon_t=\epsilon_m=\epsilon_b=\text{const}` is always
-identical to :math:`\epsilon_t=\epsilon_m=\epsilon_b=1`. The second form
-specifies only the dielectric contrasts at the boundaries, that is
-:math:`\Delta_t=\frac{\epsilon_m-\epsilon_t}{\epsilon_m+\epsilon_t}` and
-:math:`\Delta_b=\frac{\epsilon_m-\epsilon_b}{\epsilon_m+\epsilon_b}`.
-Using this form allows to choose :math:`\Delta_{t/b}=-1`, corresponding
-to metallic boundary conditions.
-
-Using `capacitor` allows to maintain a constant electric potential difference
-between the xy-planes at :math:`z=0` and :math:`z=L`, where :math:`L`
-denotes the box length in :math:`z`-direction. This is done by
-countering the total dipol moment of the system with the electric field
-:math:`E_{induced}` and superposing a homogeneous electric field
-:math:`E_{applied} = \frac{U}{L}` to retain :math:`U`. This mimics the induction
-of surface charges :math:`\pm\sigma = E_{induced} \cdot \epsilon_0` for
-planar electrodes at :math:`z=0` and :math:`z=L` in a capacitor
-connected to a battery with voltage `pot_diff`. Using 0 is equivalent to
-:math:`\Delta_{t/b}=-1`.
-
-.. todo::
-    efield_caps
-
-    The electric fields added by can be obtained by calling the above
-    command, where returns :math:`E_{induced}`, returns :math:`E_{applied}`
-    and their sum.
-
-
 .. _mmm1d_guide:
 
 MMM1D
@@ -1571,7 +1544,7 @@ MMM1D
     from espressomd.electrostatics import MMM1D
     from espressomd.electrostatics import MMM1D_GPU
 
-Please cite :cite:`mmm1d`  when using MMM1D.
+Please cite :cite:`mmm1d`  when using MMM1D.
 
 See :attr:`espressomd.electrostatics.MMM1D` or
 :attr:`espressomd.electrostatics.MMM1D_GPU` for the list of available
@@ -1610,10 +1583,228 @@ one.
 
 For details on the MMM family of algorithms, refer to appendix :ref:`mmm_appendix`.
 
+.. _mmm2d_guide:
+
+MMM2D
+~~~~~
+
+.. note::
+    Required features: ELECTROSTATICS, PARTIAL_PERIODIC.
+
+MMM2D is an electrostatics solver for explicit 2D periodic systems.
+It can account for different dielectric jumps on both sides of the 
+nonperiodic direction. MMM2D coulomb method needs periodicity 1 1 0 and the
+layered cell system. The performance of the method depends on the number of
+slices of the cell system, which has to be tuned manually. It is
+automatically ensured that the maximal pairwise error is smaller than
+the given bound. Note thate the user has to take care that the particles don't
+leave the box in the nonperiodic z-direction e.g. with constraints. By default,
+no dielectric contrast is set and it is used as::
+
+	mmm2d = electrostatics.MMM2D(bjerrum_length = 1.0, maxPWerror = 1e-3)
+	system.actors.add(mmm2d)
+
+
+For a detailed list of parameters see :attr:`espressomd.electrostatics.MMM2D`. 
+The last two, mutually exclusive parameters `dielectric` and
+`dielectric_constants_on` allow to specify dielectric contrasts at the
+upper and lower boundaries of the simulation box. The first form
+specifies the respective dielectric constants in the media, which
+however is only used to calculate the contrasts. That is, specifying
+:math:`\epsilon_t=\epsilon_m=\epsilon_b=\text{const}` is always
+identical to :math:`\epsilon_t=\epsilon_m=\epsilon_b=1`::
+
+	mmm2d = electrostatics.MMM2D(bjerrum_length = 1.0, maxPWerror = 1e-3, dielectric = 1, top = 1, mid = 1, bot = 1)
+
+The second form specifies only the dielectric contrasts at the boundaries,
+that is :math:`\Delta_t=\frac{\epsilon_m-\epsilon_t}{\epsilon_m+\epsilon_t}`
+and :math:`\Delta_b=\frac{\epsilon_m-\epsilon_b}{\epsilon_m+\epsilon_b}`.
+Using this form allows to choose :math:`\Delta_{t/b}=-1`, corresponding
+to metallic boundary conditions::
+
+	mmm2d = electrostatics.MMM2D(bjerrum_length = 1.0, maxPWerror = 1e-3, dielectric_contrast_on = 1, delta_mid_top = -1, delta_mid_bot = -1)
+
+Using `capacitor` allows to maintain a constant electric potential difference
+between the xy-planes at :math:`z=0` and :math:`z=L`, where :math:`L`
+denotes the box length in :math:`z`-direction::
+	
+	mmm2d = electrostatics.MMM2D(bjerrum_length = 100.0, maxPWerror = 1e-3, capacitor = 1, pot_diff = 100.0)
+
+This is done by countering the total dipol moment of the system with the
+electric field :math:`E_{induced}` and superposing a homogeneous electric field
+:math:`E_{applied} = \frac{U}{L}` to retain :math:`U`. This mimics the
+induction of surface charges :math:`\pm\sigma = E_{induced} \cdot \epsilon_0`
+for planar electrodes at :math:`z=0` and :math:`z=L` in a capacitor connected
+to a battery with voltage `pot_diff`. Using 0 is equivalent to
+:math:`\Delta_{t/b}=-1`.
+
+Finally, the far cutoff setting should only be used for testing reasons,
+otherwise you are more safe with the automatic tuning. If you even don’t know
+what it is, do not even think of touching the far cutoff. For details on the
+MMM family of algorithms, refer to appendix :ref:`mmm_appendix`. Please cite
+:cite:`mmm2d` when using MMM2D.
+
+A complete (but unphysical) sample script for a plate capacitor simulated with MMM2D
+can be found in `/samples/visualiztion_mmm2d.py`.
+
+
+.. _ELC:
+
+Electrostatic Layer Correction (ELC)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*ELC* can be used to simulate charged system with 2D periodicity. In more
+detail, is a special procedure that converts a 3D electrostatic method to a 2D
+method in computational order N. Currently, it only supports P3M. This means,
+that you will first have to set up the P3M algorithm before using ELC. The
+algorithm is definitely faster than MMM2D for larger numbers of particles
+(:math:`>400` at reasonable accuracy requirements). The periodicity has to be
+set to ``1 1 1`` still, and the 3D method has to be set to epsilon metallic,
+i.e. metallic boundary conditions.  Make sure that you read the papers on ELC
+(:cite:`arnold02c,icelc`) before using it. ELC  is an |es| actor and is used
+with::
+
+    elc = electrostatic_extensions.ELC(gap_size = box_l*0.2, maxPWerror = 1e-3)
+    system.actors.add(elc)
+
+
+Parameters are:
+    * gap_size:
+        The gap size gives the height of the empty region between the system box
+        and the neighboring artificial images. |es| does not
+        make sure that the gap is actually empty, this is the users
+        responsibility. The method will compute fine if the condition is not
+        fulfilled, however, the error bound will not be reached. Therefore you
+        should really make sure that the gap region is empty (e.g. by constraints).
+    * maxPWerror:
+		The maximal pairwise error sets the LUB error of the force between any
+		two charges without prefactors (see the papers). The algorithm tries to find
+		parameters to meet this LUB requirements or will throw an error if there are
+		none.
+    * far_cut:
+        The setting of the far cutoff is only intended for testing and allows to
+        directly set the cutoff. In this case, the maximal pairwise error is
+        ignored.     
+    * neutralize:
+		By default, ELC just as P3M adds a homogeneous neutralizing background
+		to the system in case of a net charge. However, unlike in three dimensions,
+		this background adds a parabolic potential across the
+		slab :cite:`ballenegger09a`. Therefore, under normal circumstance, you will
+		probably want to disable the neutralization.  This corresponds then to a formal
+		regularization of the forces and energies :cite:`ballenegger09a`. Also, if you
+		add neutralizing walls explicitely as constraints, you have to disable the
+		neutralization.
+
+.. _ICC:
+
+Dielectric interfaces with the ICC\ :math:`\star` algorithm
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ICC\ :math:`\star` algorithm allows to take into account arbitrarily shaped
+dielectric interfaces and dynamic charge induction. For instance, it can be
+used to simulate a curved metallic boundary. This is done by iterating the
+charge on a set of spatially fixed *ICC particles* until they correctly
+represent the influence of the dielectric discontinuity. All *ICC particles*
+need a certain area, normal vector and dielectric constant to specify the
+surface. ICC relies on a coulomb solver that is already initialized. So far, it
+is implemented and well tested with the Coulomb solver P3M. ICC is an |es|
+actor and can be activated via::
+
+	icc=ICC(<See the following list of ICC parameters>)
+	system.actors.add(icc)
+
+Paremters are:
+
+	* first_id: 
+		ID of the first ICC Particle.
+	* n_icc: 
+		Total number of ICC Particles.
+	* convergence:
+		Abort criteria of the iteration. It corresponds to the maximum relative
+		change of any of the interface particle’s charge.
+	* relaxation:
+		SOR relaxation parameter.
+	* ext_field:
+		Homogeneous electric field added to the calculation of dielectric boundary forces.
+	* max_iterations:
+		Maximal number of iterations.
+	* eps_out:
+		Relative permittivity of the outer region (where the particles are).
+	* normals:
+		List of size `n_icc` with normal vectors pointing into the outer region. 
+	* areas 
+		List of size `n_icc` with areas of the discretized surface. 
+	* sigmas 
+		List of size `n_icc` with an additional surface charge density in
+		absence of any charge induction
+	* epsilons
+		List of size `n_icc` with the dielectric constant associated to the area. 
+
+The ICC particles are setup as normal |es| particles. Note that they should be
+fixed in space and need an initial nonzero charge. The following usage example
+sets up parallel metallic plates and activates ICC::
+
+	# Set the ICC line density and calculate the number of
+	# ICC particles according to the box size
+	l = 3.2
+	nicc =int(box_l / l)
+	nicc_per_electrode = nicc * nicc
+	nicc_tot = 2 * nicc_per_electrode
+	iccArea = box_l * box_l / nicc_per_electrode
+	l=box_l / nicc
+
+	# Lists to collect required parameters
+	iccNormals=[]
+	iccAreas=[]
+	iccSigmas=[]
+	iccEpsilons=[]
+
+	# Add the fixed ICC particles:
+
+	# Left electrode (normal [0,0,1])
+	for xi in xrange(nicc):
+		for yi in xrange(nicc):
+			system.part.add(pos=[l * xi, l * yi, 0], q = -0.0001, fix = [1, 1, 1], type = icc_type)
+	iccNormals.extend([0, 0, 1] * nicc_per_electrode)
+
+	# Right electrode (normal [0,0,-1])
+	for xi in xrange(nicc):
+		for yi in xrange(nicc):
+			system.part.add(pos=[l * xi, l * yi, box_l], q = 0.0001, fix = [1, 1, 1], type = icc_type)
+	iccNormals.extend([0, 0, -1] * nicc_per_electrode)
+
+	# Common area, sigma and metallic epsilon
+	iccAreas.extend([iccArea] * nicc_tot)
+	iccSigmas.extend([0] * nicc_tot)
+	iccEpsilons.extend([100000] * nicc_tot)
+	
+	icc=ICC(first_id=0, 
+			n_icc=nicc_tot, 
+			convergence=1e-4, 
+			relaxation=0.75,
+			ext_field=[0,0,0], 
+			max_iterations=100, 
+			eps_out = 1.0,
+			normals=iccNormals, 
+			areas=iccAreas, 
+			sigmas=iccSigmas, 
+			epsilons=iccEpsilons)
+
+	system.actors.add(icc)
+
+
+With each iteration, ICC has to solve electrostatics which can severely slow
+down the integration. The performance can be improved by using multiple cores, 
+a minimal set of ICC particles and convergence and relaxation parameters that
+result in a minimal number of iterations. Also please make sure to read the
+corresponding articles, mainly :cite:`espresso2,tyagi10a,kesselheim11a` before
+using it.
+
+
 Maxwell Equation Molecular Dynamics (MEMD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
+.. todo:: NOT IMPLEMENTED IN PYTHON
 
 inter coulomb memd
 
@@ -1678,8 +1869,8 @@ momentarily it is advisable to choose the lattice with a rather fine
 mesh of the size of the particles. As a rule of thumb, the error will
 then be less than :math:`10^{-5}` for the particle force.
 
-For a more detailed description of the algorithm, see appendix  or the
-publications :cite:`maggs02a,pasichnyk04a`.
+For a more detailed description of the algorithm, see appendix  or the
+publications :cite:`maggs02a,pasichnyk04a`.
 
 Spatially varying dielectrics with MEMD
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1714,7 +1905,7 @@ permittivity set by the parameter .
 
 The permittivity on each lattice site is set relatively. By defining the
 (global) Bjerrum length of the system, the reference
-permittivity \ :math:`\varepsilon` is fixed via the formula
+permittivity \ :math:`\varepsilon` is fixed via the formula
 
 .. math::
 
@@ -1729,10 +1920,10 @@ Adaptive permittivity with MEMD
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In addition to setting the local permittivity manually as described in
-section [sec:dielectric-memd], MEMD is capable of adapting the local
+section [sec:dielectric-memd], MEMD is capable of adapting the local
 permittivity at each lattice site, dependent on the concentration of
 surrounding charges. More information on this can be found in
-article :cite:`fahrenberger15b`, which you should cite if
+article :cite:`fahrenberger15b`, which you should cite if
 you use this algorithm.
 
 To achieve this, the local salt concentration around each lattice cell
@@ -1776,7 +1967,7 @@ for this particular algorithm should most likely be set as the
 permittivity of pure water.
 
 is the scaling of the used length unit to match the expected unit
-system. For more details see equation [eq:adaptive-scaling] and the
+system. For more details see equation [eq:adaptive-scaling] and the
 paragraph before.
 
 is the mass of the field degree of freedom and equals to the square root
@@ -1800,8 +1991,8 @@ depending on your computer -- run roughly a factor of :math:`2` to
 :math:`4` longer than MEMD without temporally varying dielectric
 properties.
 
-Scafacos
-~~~~~~~~
+Scafacos Electrostatics
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Espresso can use the electrostatics methods from the SCAFACOS *Scalable
 fast Coulomb solvers* library. The specific methods available depend on the compile-time options of the library, and can be queried using :attr:`espressomd.scafacos.available_methods()`
@@ -1825,117 +2016,6 @@ cutoff to :math:`1.5` and tune the other parameters for an accuracy of
 
 For details of the various methods and their parameters please refer to
 the SCAFACOS manual. To use this feature, SCAFACOS has to be built as a shared library. SCAFACOS can be used only once, either for coulomb or for dipolar interactions.
-
-.. _ELC:
-
-Electrostatic Layer Correction (ELC)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Please cite when using ELC, and in addition if you use dielectric
-interfaces.
-
-[ neutralize = , far_cut = ]
-
-inter coulomb elc
-
-This is a special procedure that converts a 3d method, to a 2d method,
-in computational order N. Currently, it only supports P3M. This means,
-that you will first have to set up the P3M algorithm (via
-``inter coulomb p3m``) before using ELC. The algorithm is definitely
-faster than MMM2D for larger numbers of particles (:math:`>400` at
-reasonable accuracy requirements). The maximal pairwise error sets the
-LUB error of the force between any two charges without prefactors (see
-the papers). The algorithm tries to find parameters to meet this LUB
-requirements or will throw an error if there are none.
-
-The gap size gives the height of the empty region between the system box
-and the neighboring artificial images (again, see the paper). does not
-make sure that the gap is actually empty, this is the users
-responsibility. The method will compute fine of the condition is not
-fulfilled, however, the error bound will not be reached. Therefore you
-should really make sure that the gap region is empty (e. g. by
-constraints).
-
-The setting of the far cutoff is only intended for testing and allows to
-directly set the cutoff. In this case, the maximal pairwise error is
-ignored. The periodicity has to be set to ``1 1 1`` still, and the 3d
-method has to be set to epsilon metallic, i.e. metallic boundary
-conditions. For details, see appendix .
-
-By default, ELC just as P3M adds a homogeneous neutralizing background
-to the system in case of a net charge. However, unlike in three
-dimensions, this background adds a parabolic potential across the
-slab :cite:`ballenegger09a`. Therefore, under normal
-circumstance, you will probably want to disable the neutralization using
-. This corresponds then to a formal regularization of the forces and
-energies :cite:`ballenegger09a`. Also, if you add
-neutralizing walls explicitely as constraints, you have to disable the
-neutralization.
-
-The dielectric contrast features work exactly the same as for MMM2D, see
-the documentation above. Same accounts for , but the constant potential
-is maintained between the xy-plane at :math:`z=0` and
-:math:`z=L-gap_size`. The command to read out the electric fields added
-by also applies for the capacitor-feature of ELC.
-
-Make sure that you read the papers on ELC
-(:cite:`arnold02c,icelc`) before using it.
-
-.. _ICC:
-
-Dielectric interfaces with the ICC\ :math:`\star` algorithm
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-iccp3m convergence areas normals sigmas epsilons
-
-The ICC\ :math:`\star` algorithm allows to take into account arbitrarily
-shaped dielectric interfaces. This is done by iterating the charge on
-the particles with the ids 0 to until the correctly represent the
-influence of the dielectric discontinuity. It relies on a coulomb solver
-that is already initialized. This Coulomb solver can be P3M, P3M+ELC,
-MMM2D or MMM1D. As most of the times, ICC\ :math:`\star` will be used
-with P3M the corresponding command is called .
-
-Please make sure to read the corresponding articles,
-mainly:cite:`espresso2,tyagi10a,kesselheim11a` before
-using it.
-
-The particles with ids 0 to are treated as iterated particles by
-ICC\ :math:`\star`. The constitute the dielectric interface and should
-be fixed in space. The parameters and are Tcl lists containing one
-floating point number describing each surface elements area and
-dielectric constant. allows to take into account a (bare) charge
-density, thus a surface charge density in absence of any charge
-induction. is a Tcl list of Tcl lists with three floating point numbers
-describing the outward pointing normal vectors for every surface
-element. The parameter allows to specify the accuracy of the iteration.
-It corresponds to the maximum relative change of any of the interface
-particle’s charge. After the iteration stops anyways. The dielectric
-constant in bulk, i. e. outside the dielectric walls is specified by . A
-homogeneous electric field can be added to the calculation of dielectric
-boundary forces by specifying it in the parameter .
-
-Quick setup of dielectric interfaces
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-dielectric sphere center radius res dielectric wall normal dist res
-dielectric cylinder center axis radius direction dielectric pore center
-axis radius length smoothing_radius res dielectric slitpore pore_mouth
-channel_width pore_width pore_length upper_smoothing_radius
-lower_smoothing_radius
-
-The command allows to conveniently create dielectric interfaces similar
-to the constraint and the lbboundary command. Currently the creation of
-spherical, cylindrical and planar geometries as well as a pore and
-slitpore geometry is supported. Please check the documentation of the
-corresponding constraint for the detailed geometry. It is implemented in
-Tcl and places particles in the right positions and adds the correct
-values to the global Tcl variables and increases the global Tcl variable
-varn_induced_charges. Thus after setting up the shapes, it is still
-necessary to register them by calling , usually in the following way:
-
-| iccp3m $n_induced_charges epsilons $icc_epsilons normals
-| $icc_normals areas $icc_areas sigmas $icc_sigmas
 
 Dipolar interaction
 -------------------
@@ -2083,15 +2163,14 @@ the rest of the gpu remains idle. Hence, the method will perform poorly
 for small systems.
 
 To use the method, create an instance of :attr:`espressomd.magnetostatics.DipolarDirectSumGpu` and add it to the system's list of active actors. The only required parameter is the Bjerrum length::
+  
   from espressomd.magnetostatics import DipolarDirectSumGpu
   dds=DipolarDirectSumGpu(bjerrum_length=1)
   system.actors.add(dds)
-  
 
 
-
-Scafacos
-~~~~~~~~
+Scafacos Magnetostatics
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Espresso can use the methods from the Scafacos *Scalable fast Coulomb
 solvers* library for dipoles, if the methods support dipolar
@@ -2110,66 +2189,9 @@ For details of the various methods and their parameters please refer to
 the SCAFACOS manual. To use this feature, SCAFACOS has to be built as a shared library. SCAFACOS can be used only once, either for coulomb or for dipolar interactions.
 
 
-
-
-
-
-
 Special interaction commands
 ----------------------------
 
-Tunable-slip boundary interaction
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-inter tunable_slip
-
-Simulating micro-channel flow phenomena like the Plane Poiseuille and the
-Plane Couette Flow require accurate boundary conditions. There are two
-main boundary conditions in use:
-
-#. *slip boundary condition* which means that the flow velocity at the
-   the hydrodynamic boundaries is zero.
-
-#. *partial-slip boundary condition* which means that the flow velocity
-   at the hydrodynamic boundaries does not vanish.
-
-In recent years, experiments have indicated that the no-slip boundary
-condition is indeed usually not valid on the micrometer scale. Instead,
-it has to be replaced by the *partial-slip boundary condition*
-
-.. math::
-
-   \delta_B \; \; \partial_\mathbf{n} v_{\parallel} \rVert_{\mathbf{r}_B} =
-   v_{\parallel} \rVert_{\mathbf{r}_B},
-
-where :math:`v_{\parallel}` denotes the tangential component of the
-velocity and :math:`\partial_\mathbf{n} v_{\parallel}` its spatial
-derivative normal to the surface, both evaluated at the position
-:math:`\mathbf{r}_B` of the so-called *hydrodynamic boundary*. This
-boundary condition is characterized by two effective parameters, namely
-(i) the slip length :math:`\delta_B` and (ii) the hydrodynamic boundary
-:math:`\mathbf{r}_B`.
-
-Within the approach of the tunable-slip boundary interactions it is
-possible to tune the slip length systematically from full-slip to
-no-slip. A coordinate-dependent Langevin-equation describes a viscous
-layer in the vicinity of the channel walls which exerts an additional
-friction on the fluid particles. is the temperature, the friction
-coefficient and is the cut-off radius of this layer. is the timestep of
-the integration scheme. With and it is possible to give the layer a
-reference velocity to create a Plane Couette Flow. Make sure that the
-cutoff radius is larger than the cutoff radius of the constraint
-Lennard-Jones interactions. Otherwise there is no possibility that the
-particles feel the viscous layer.
-
-This method was tested for Dissipative Particle Dynamics but it is
-intended for mesoscopic simulation methods in general. Note, that to use
-tunable-slip boundary interactions you have to apply **two** wall
-constraints with Lennard-Jones in addition to the tunable-slip
-interaction. Make sure that the cutoff radius is larger than the cutoff
-radius of the constraint Lennard-Jones interactions. Otherwise there is
-no possibility that the particles feel the viscous layer. Please read
-reference :cite:`smiatek08a` before using this interaction.
 
 DPD interaction
 ~~~~~~~~~~~~~~~
@@ -2231,37 +2253,33 @@ particles, and a force of magnitude ( \* ) is applied on particles.
 Capping the force during warmup
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-inter forcecap
-
 Non-bonded interactions are often used to model the hard core repulsion
 between particles. Most of the potentials in the section are therefore
 singular at zero distance, and forces usually become very large for
 distances below the particle size. This is not a problem during the
 simulation, as particles will simply avoid overlapping. However,
 creating an initial dense random configuration without overlap is often
-difficult.
+difficult. The forces of all non-bonded interactions can be limited via::
 
-By artificially capping the forces, it is possible to simulate a system
-with overlaps. By gradually raising the cap value , possible overlaps
+	system.non_bonded_inter.set_force_cap(max)
+
+This command will cap the force to the specified value `max`, for particle distances
+which would lead to larger forces, the force remains at `max`. Accordingly, the
+potential is replaced by :math:`r F_\mathrm{max}`. Particles placed exactly on
+top of each other will be subject to a force of magnitude along the first
+coordinate axis.
+
+ By artificially capping the forces, it is possible to simulate a system
+with overlaps. By gradually raising the cap value, possible overlaps
 become unfavorable, and the system equilibrates to a overlap free
 configuration.
 
-This command will cap the force to , for particle distances which would
-lead to larger forces than , the force remains at . Accordingly, the
-potential is replaced by :math:`r F_\mathrm{max}`. Particles
-placed exactly on top of each other will be subject to a force of
-magnitude along the first coordinate axis.
+The force capping is switched off by setting the force capping to zero::
 
-The force capping is switched off by setting
-:math:`F_\mathrm{max}=0`. Note that force capping always applies
-to all Lennard-Jones, tabulated, Morse and Buckingham interactions
+	system.non_bonded_inter.set_force_cap(0)
+
+Note that force capping always applies to all non-bonded interactions
 regardless of the particle types.
-
-If instead of a force capping value, the string “individual” is given,
-the force capping can be set individually for each interaction. The
-capping radius is in this case not derived from the potential
-parameters, but is given by an additional signal floating point
-parameter to the interaction.
 
 .. |image1| image:: figures/hbond.pdf
 .. |image2| image:: figures/stretching.png
@@ -2269,3 +2287,403 @@ parameter to the interaction.
 .. |image4| image:: figures/arealocal.png
 .. |image5| image:: figures/volume.png
 .. |image6| image:: figures/dihedral-angle.pdf
+``constraint``: Setting up constraints
+--------------------------------------
+
+:class:`espressomd.constraints.Constraint`
+
+A Constraint is an immobile surface which can interact with particles via a
+nonbonded potential, where the distance between the two particles is
+replaced by the distance of the center of the particle to the surface.
+
+The constraints are identified like a particle via its type ``particle_type`` for the
+non-bonded interaction. After a type is defined for each constraint one
+has to define the interaction of all different particle types with the
+constraint using the  :class:`espressomd.interactions.NonBondedInteractions` class.
+
+      
+
+Shapes
+~~~~~~~
+:class:`espressomd.shapes`
+
+Python Syntax::
+
+    import espressomd from espressomd.shapes import <SHAPE>
+    system=espressomd.System()
+
+``<SHAPE>`` can be any of the available shapes.
+
+The surface's geometry is defined via a few available shapes.
+The following shapes can be used as constraints.
+
+.. warning::
+   When using shapes with concave edges and corners, the fact that a particle
+   only interacts with the closest point on the constraint surface leads to discontinuous
+   force fields acting on the particles. This breaks energy conservation in otherwise
+   symplectic integrators. Often, the total energy of the system increases exponentially.
+
+
+:class:`espressomd.shapes.Wall`
+    An infinite plane`.
+
+The resulting surface is a plane defined by the normal vector ``normal`` 
+and the distance ``dist`` from the origin (in the direction of the normal vector).
+The force acts in direction of the normal. 
+Note that ``dist`` describes the distance from the origin in units of the normal 
+vector so that the product of ``dist`` and ``normal`` is a point on the surface.
+Therefore negative distances are quite common!
+
+.. figure:: figures/shape-wall.png
+   :alt: Example constraint with a ``Wall`` shape.
+   :align: center
+   :height: 6.00000cm
+   
+Pictured is an example cosntraint with a ``Wall`` shape created with ::
+
+    wall = Wall( dist=20, normal=[0.1,0.0,1] )
+    system.constraints.add(shape=wall, particle_type=0)
+    
+In variant (1) if the only_positive flag is set to 1, interactions are only calculated if
+the particle is on the side of the wall in which the normal vector is
+pointing.
+This has only an effect for penetrable walls. If the flag is
+set to 1, then slip boundary interactions apply that are essential for
+microchannel flows like the Plane Poiseuille or Plane Couette Flow.
+Youalso need to use the tunable\_slip interaction (see [sec:tunableSlip])
+for this too work.
+
+
+:class:`espressomd.shapes.Sphere`
+    A sphere.
+
+The resulting surface is a sphere with center ``center`` and radius ``radius``. 
+The direction ``direction`` determines the force direction, ``-1`` or for inward and ``+1`` for outward.
+
+.. _shape-sphere:
+
+.. figure:: figures/shape-sphere.png
+   :alt: Example constraint with a ``Sphere`` shape.
+   :align: center
+   :height: 6.00000cm
+   
+Pictured is an example cosntraint with a ``Sphere`` shape created with ::
+  
+    sphere = Sphere(center=[25,25,25], radius = 15, direction = 1 )
+    system.constraints.add(shape=sphere, particle_type=0)
+
+
+:class:`espressomd.shapes.Cylinder`
+    A cylinder
+
+The resulting surface is a cylinder with center ``center`` and radius ``radius``.
+The ``length`` parameter is **half** of the cylinder length.
+The ``axis`` parameter is a vector along the cylinder axis, which is normalized in the program.
+The direction ``direction`` determines the force direction, ``-1`` or for inward and ``+1`` for outward.
+
+
+
+.. figure:: figures/shape-cylinder.png
+   :alt: Example constraint with a ``Cylinder`` shape.
+   :align: center
+   :height: 6.00000cm
+   
+Pictured is an example constraint with a ``Cylinder`` shape created with ::
+
+    cylinder=Cylinder(center=[25, 25, 25], axis = [1, 0, 0], direction = 1, radius = 10, length = 30)
+    system.constraints.add(shape=cylinder, particle_type = 0)
+
+:class:`espressomd.shapes.Rhomboid`
+    A rhomboid or parallelpiped.
+
+:todo: `This shape is currently broken. Please do not use.`
+
+The resulting surface is a rhomboid, defined by one corner located at ``corner`` 
+and three adjacent edges, defined by the three vectors connecting the 
+corner ``corner`` with it’s three neighboring corners:
+``a`` ``[ax ay az ]``; ``b`` ``[bx by bz]`` and ``c`` ``[cx cy cz]``.
+The direction ``direction`` determines the force direction, ``-1`` or for inward and ``+1`` for outward.
+
+ ::
+
+    rhomboid = Rhomboid(pos=[5.0, 5.0, 5.0], a=[1.0, 1.0, 0.0], b=[0.0, 0.0, 1.0], c=[0.0, 1.0, 0.0], direction=1)
+
+creates a rhomboid defined by one corner located at ``[5.0, 5.0, 5.0]`` and three
+adjacent edges, defined by the three vectors connecting the corner with its three neighboring corners, ``(1,1,0)`` , ``(0,0,1)`` and ``(0,1,0)``.
+
+
+:class:`espressomd.shapes.Maze`
+    Spherical cavities on a regular grid that are connected by tubes.
+
+The resulting surface is ``nsphere`` spheres of radius ``sphrad`` along each dimension, connected by cylinders of radius ``cylrad``.
+The sphere grid have simple cubic symmetry.
+The spheres are distributed evenly by dividing the boxl by ``nsphere``.
+Dimension of the maze can be controlled by ``dim``: 0 for one dimensional, 1 for two dimensional and 2 for three dimensional maze.
+
+
+.. figure:: figures/shape-maze.png
+   :alt: Example constraint with a ``Maze`` shape.
+   :align: center
+   :height: 6.00000cm
+
+Pictured is an example constraint with a ``Maze`` shape created with ::
+
+    maze=Maze(cylrad = 2, dim = 2, nsphere = 5, sphrad = 6)
+    system.constraints.add(shape=maze, particle_type = 0, penetrable = 1)
+
+
+:class:`espressomd.shapes.Pore`
+    A cylinder with a conical pore between the faces.
+  
+:todo: `This shape is currently broken. Please do not use.`
+    
+The pore openings are smoothed with torus segment. The outer radius can be chosen such that it is bigger than the box, to get a wall with a pore. The resulting surface is a cylindrical pore similar to :class:`espressomd.shapes::Cylinder` with a center ``center`` and radius ``radius``.
+
+The ``length`` parameter is half of the cylinder length.
+The parameter ``axis`` is a vector along the cylinder axis, which is normalized in the program.
+Optionally the outer radius ``outer_rad_left`` and ``outer_rad_right`` of the pore can be specified.
+By default these are (numerical) infinity and thus results in an infinite wall with one pore.
+The argument radius ``radius`` can be replaced by the argument ``rad_left`` and ``rad_right`` 
+to obtain a pore with a conical shape and corresponding opening radii. 
+The first radius ``radius_left`` is in the direction opposite to the axis vector.
+The same applies for ``outer_radius`` which can be replaced with ``outer_rad_left`` and ``outer_rad_right``.
+Per default sharp edges are replaced by circles of unit radius.
+The radius of this smoothing can be set with the optional keyword ``smoothing_radius``.
+
+.. figure:: figures/shape-pore1.png
+   :alt: Example constraint with a ``Pore`` shape.
+   :align: center
+   :height: 6.00000cm
+
+Pictured is an example constraint with a ``Pore`` shape created with ::
+
+    pore=Pore(axis = [1,0,0], length = 70, outer_rad_left = 20, outer_rad_right = 30, pos = [50,50,50], rad_left = 10, rad_right = 20, smoothing_radius = 5)
+    system.constraints.add(shape=pore, particle_type = 0, penetrable  = 1)
+
+    
+:class:`espressomd.shapes.Stomatocyte`
+    A stomatocyte.
+
+The resulting surface is a stomatocyte shaped boundary. 
+This command should be used with care. 
+The position can be any point in the simulation box, 
+and the orientation of the (cylindrically symmetric) stomatocyte is given by a vector, 
+which points in the direction of the symmetry axis, 
+it does not need to be normalized. 
+The parameters: ``outer_radius``, ``inner_radius``, and ``layer_width``, specify the shape of the stomatocyte.
+Here inappropriate choices of these parameters can yield undersired results. 
+The width ``layer_width`` is used as a scaling parameter.
+That is, a stomatocyte given by ``outer_radius``:``inner_radius``:``layer_width`` = 7:3:1 
+is half the size of the stomatocyte given by 7:3:2. 
+Not all choices of the parameters give reasonable values for the shape of the stomatocyte, 
+but the combination 7:3:1 is a good point to start from when trying to modify the shape.
+
+
+.. figure:: figures/shape-stomatocyte1.png
+   :alt: Example constraint with a ``Stomatocyte`` shape.
+   :align: center
+   :height: 6.00000cm
+
+.. figure:: figures/shape-stomatocyte2.png
+   :alt: Close-up of the internal ``Stomatocyte`` structure.
+   :align: center
+   :height: 6.00000cm
+
+   
+Pictured is an example constraint with a ``Stomatocyte`` shape (with a closeup of the internal structure) created with ::
+  
+    stomatocyte=Stomatocyte(inner_radius = 3, outer_radius = 7, orientation_x = 1.0, orientation_y = 0.0,orientation_z = 0.0, position_x = 25, position_y = 25, position_z = 25, layer_width = 3,    direction = 1)
+    system.constraints.add(shape=stomatocyte, particle_type = 0, penetrable = 1)
+
+    
+
+:class:`espressomd.shapes.Slitpore`
+   Channel-like surface
+
+The resulting surface is T-shape channel that extends in the z-direction.
+The cross sectional geometry is depicted in Fig.[fig:slitpore].
+It is translationally invariant in y direction.
+
+The region is described as a pore (lower vertical part of the "T"-shape) and a channel (upper horizontal part of the "T"-shape).
+
+.. figure:: figures/slitpore.pdf
+   :alt: Schematic for the slitpore shape showing geometrical parameters
+   :align: center
+   :height: 6.00000cm
+   
+The parameter ``channel_width`` specifies the distance between the top and the the plateau edge.
+The parameter ``pore_length`` specifies the distance between the bottom and the plateau edge.
+The parameter ``pore_width`` specifies the distance between the two plateau edges, it is the space between the left and right walls of the pore region.
+The parameter ``pore_mouth`` specifies the location (z-coordinate) of the pore opening (centre). It is always centered in the x-direction.
+
+All the edges  are smoothed via the parameters ``upper_smoothing_radius`` (for the concave corner at the edge of the plateau region) and ``lower_smoothing_radius`` (for the convex corner at the bottom of the pore region).
+The meaning of the geometrical parameters can be inferred from the shcematic in fig. [fig:slitpore].
+
+
+.. figure:: figures/shape-slitpore.png
+   :alt: Example constraint with a ``Slitpore`` shape.
+   :align: center
+   :height: 6.00000cm
+
+  
+Pictured is an example constraint with a ``Slitpore`` shape created with ::
+  
+    slitpore=Slitpore(Slitpore(channel_width = 30, lower_smoothing_radius = 3, upper_smoothing_radius = 3, pore_length = 40, pore_mouth = 60, pore_width = 10)
+    system.constraints.add(shape=slitpore, particle_type = 0, penetrable = 1)
+
+
+:class:`espressomd.shapes.SpheroCylinder`
+    A capsule, pill, or spherocylinder.
+    
+The resulting surface is a cylinder capped by hemispheres on both ends.
+Similar to `espressomd.shapes::Cylinder`, it is positioned at ``center`` and has a radius ``radius``.
+The ``length`` parameter is **half** of the cylinder length, and does not include the contribution from the hemispherical ends.
+The ``axis`` parameter is a vector along the cylinder axis, which is normalized in the program.
+The direction ``direction`` determines the force direction, ``-1`` or for inward and ``+1`` for outward.
+
+
+.. figure:: figures/shape-spherocylinder.png
+   :alt: Example constraint with a ``SpheroCylinder`` shape.
+   :align: center
+   :height: 6.00000cm
+   
+Pictured is an example constraint with a ``SpheroCylinder`` shape created with ::
+
+    spherocylinder = SpheroCylinder(center=[25, 25, 25], axis = [1, 0, 0], direction = 1, radius = 10, length = 30)
+    system.constraints.add(shape=spherocylinder, particle_type = 0)
+
+
+:class:`espressomd.shapes.Hollowcone`
+   A hollow cone.
+
+The resulting surface is a section of a hollow cone.
+The parameters ``inner_radius`` and ``outer_radius`` specifies the two radii .
+The parameter ``opening_angle`` specifies the opening angle of the cone (in radians, between 0 and:math:`\pi/2` ), and thus also determines the length.
+
+The orientation of the (cylindrically symmetric) codne is specified with the parameters ``orientation_x``, ``orientation_y`` and ``orientation_z``. It points in the direction of the symmetry axis, and does not need to be normalized.
+
+The position is specified with ``position_x``, ``position_y`` and ``position_z`` can be any point in the simulation box.
+
+The ``width`` specifies the width.
+This shape supports the ``direction`` parameter, +1 the normal points out of the mantel, -1 for when points inward.
+
+.. figure:: figures/shape-hollowcone.png
+   :alt:  Example constraint with a  ``Hollowcone`` shape.
+   :align: center
+   :height: 6.00000cm
+
+
+Pictured is an example constraint with a ``Hollowcone`` shape created with ::
+  
+    hollowcone=Hollowcone(HollowCone(inner_radius = 5, outer_radius = 20, opening_angle = np.pi/4.0, orientation_x = 1.0, orientation_y = 0.0, orientation_z = 0.0, position_x = 25, position_y = 25, positi    on_z = 25, width = 2,direction = 1)
+    system.constraints.add(shape=hollowcone, particle_type = 0, penetrable = 1)
+
+
+For the shapes ``wall``; ``sphere``; ``cylinder``; ``rhomboid``; ``maze``; ``pore`` and ``stomacyte``, constraints are able to be penetrated if ``penetrable`` is set to ``True``.
+Otherwise, when the ``penetrable`` option is
+ignored or is set to `False`, the constraint cannot be violated, i.e. no
+particle can go through the constraint surface (|es| will exit if it does).
+
+
+In variants ``wall``; ``sphere``; ``cylinder``; ``rhomboid`` and ``stomacyte`` it is
+also possible to specify a flag indicating if the constraints should be
+reflecting. The flags can equal 1 or 2. The flag 1 corresponds to a
+reflection process where the normal component of the velocity is
+reflected and the tangential component remains unchanged. If the flag is
+2, also the tangential component is turned around, so that a bounce back
+motion is performed. The second variant is useful for boundaries of DPD.
+The reflection property is only activated if an interaction is defined
+between a particular particle and the constraint! This will usually be a
+lennard-jones interaction with :math:`\epsilon=0`, but finite
+interaction range.
+
+
+Adding a shape-based constraint
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+All previosly listed shapes can be added to the system's constraints by passing a initialized shape object to :meth:`system.constraints.add`  ::
+  
+    myShape = Wall( dist=20, normal=[0.1, 0.0, 1] )
+    myConstraint = system.constraints.add(shape = myShape, particle_type=p_type)
+
+      
+The extra argument ``particle_type`` specifies the nonbonded interaction to be used with
+that constraint.
+      
+There are two further optional parameters and that can
+be used to fine tune the behavior of the constraint. If ``penetrable`` is
+set to ``True`` then particles can move through the constraint in this case the
+other option ``only_positive`` controls whether the particle is subject to the interaction
+potential of the wall. If set to then the constraint will only act in
+the direction of the normal vector.
+
+
+
+Deleting a constraint
+~~~~~~~~~~~~~~~~~~~~~
+
+Constraints can be removed in a similar fashion using :meth:`espressomd.system.constraints.remove` ::
+
+    system.constraints.remove(myConstraint)
+
+This command will delete the specified constraint.
+
+
+Getting the currently defined constraints
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+One can interate through constraints, for example ::
+  
+    >>> for c in system.constraints:
+    >>>    print(c.shape)
+
+will print the shape information for all defined constraints.
+
+
+Getting the force on a constraint
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:meth:`espressomd.system.constraints.total_force`
+
+Returns the force acting on the a constraint. Note, however, that this
+are only forces due to interactions with particles, not with other
+constraints. Also, these forces still do not mean that the constraints
+move, they are just the negative of the sum of forces acting on all
+particles due to this constraint. Similarly, the total energy does not
+contain constraint-constraint contributions.
+
+For example the pressure from wall ::
+    >>> p = system.constraints[0].total_force()
+    >>> print(p)
+
+Getting the minimal distance to a constraint
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:todo: `This feature is not yet implemented .`
+
+calculates the smallest distance to all non-penetrable
+constraints, that can be repulsive (wall, cylinder, sphere, rhomboid,
+maze, pore, slitpore). Negative distances mean that the position is
+within the area that particles should not access. Helpful to find
+initial configurations.)
+
+
+
+``harmonic_well``: Creating a harmonic trap
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:todo: `This feature is not yet implemented .`
+
+Calculates a spring force for all particles, where the equilibrium
+position of the spring is at and its force constant is . A more
+flexible trap can be constructed with constraints, but this one runs on
+the GPU.
+
+
+``Homogeneous Magnetic Field``: 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:class:`espressomd.Constraints::HomogeneousMagneticField`
+
+This does not define a surface but is based on magnetic dipolar
+interaction with an external magnetic field. It applies to all particles
+with a dipole moment.
+
+
+

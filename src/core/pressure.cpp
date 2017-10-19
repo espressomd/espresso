@@ -21,7 +21,7 @@
 /** \file pressure.cpp
     Implementation of \ref pressure.hpp "pressure.h".
 */
-#include "pressure.hpp"
+#include "pressure_inline.hpp"
 #include "cells.hpp"
 #include "integrate.hpp"
 #include "initialize.hpp"
@@ -29,6 +29,9 @@
 #include "nsquare.hpp"
 #include "layered.hpp"
 #include "virtual_sites_relative.hpp" 
+#include "npt.hpp"
+#include "p3m.hpp"
+#include "p3m-dipolar.hpp"
 
 Observable_stat virials  = {0, {}, 0,0,0,0,0};
 Observable_stat total_pressure = {0, {}, 0,0,0,0,0};
@@ -115,9 +118,6 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
     nsq_calculate_virials(v_comp);
   }
   /* rescale kinetic energy (=ideal contribution) */
-#ifdef ROTATION_PER_PARTICLE
-    fprintf(stderr, "Switching rotation per particle (#define ROTATION_PER_PARTICLE) and pressure calculation are incompatible.\n");
-#endif
 
   virials.data.e[0] /= (3.0*volume*time_step*time_step);
 
@@ -134,10 +134,10 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
     
   for(i=0; i<9; i++)
     p_tensor.data.e[i] /= (volume*time_step*time_step);
-  
+
   for(i=9; i<p_tensor.data.n; i++)
     p_tensor.data.e[i]  /= volume;
-  
+
   /* Intra- and Inter- part of nonbonded interaction */
   for (n = 0; n < virials_non_bonded.data_nb.n; n++)
     virials_non_bonded.data_nb.e[n] /= 3.0*volume;
