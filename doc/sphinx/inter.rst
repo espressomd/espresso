@@ -365,7 +365,7 @@ of the types *type1* and *type2*. It serves similar purposes as the Lennard-Jone
 potential, but has a deeper minimum, around which it is harmonic. This
 models the potential energy in a diatomic molecule. This potential
 allows capping the force using ``inter forcecap``, see
-section [sec:forcecap].
+section :ref:`Capping the force during warmup`.
 
 For :math:`r < r_\mathrm{cut}`, this potential is given by
 
