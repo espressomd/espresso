@@ -32,7 +32,6 @@
 #define CONSTRAINTS
 #define MASS
 #define EXCLUSIONS
-#define COMFORCE
 #define COMFIXED
 #define NPT
 
