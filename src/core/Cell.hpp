@@ -15,7 +15,8 @@
 
 class Cell : public ParticleList {
   struct GetReference {
-    Cell &operator()(std::reference_wrapper<Cell> &cell_ref) const {
+    template<typename T>
+    T &operator()(std::reference_wrapper<T> & cell_ref) const {
       return cell_ref.get();
     }
   };
