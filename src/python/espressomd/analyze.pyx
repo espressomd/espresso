@@ -266,7 +266,6 @@ class Analysis(object):
                             bins_axial=None, bins_radial=None,
                             types=[-1]):
         """
-        .. todo :: should `direction` be changed to `axis`
         Calculates the particle distribution using cylindrical binning.
 
 
@@ -780,7 +779,8 @@ class Analysis(object):
 
     def rdf(self, rdf_type=None, type_list_a=None, type_list_b=None,
             r_min=0.0, r_max=None, r_bins=100, n_conf=None):
-        """Calculate a radial distribution function.
+        """
+        Calculate a radial distribution function.
 
         Parameters
         ----------
@@ -858,12 +858,13 @@ class Analysis(object):
 
     def distribution(self, type_list_a=None, type_list_b=None,
                      r_min=0.0, r_max=None, r_bins=100, log_flag=0, int_flag=0):
-        """Calculates the distance distribution of particles 
-	(probability of finding a particle of type at a certain distance around a particle of type , disregarding the fact that a spherical shell of a larger radius covers a larger volume) 
-	The distance is defined as the minimal distance between a particle of group `type_list_a` to any of the group `type_list_b`.
-	Returns two arrays, the bins and the (normalized) distribution.
+        """
+        Calculates the distance distribution of particles 
+        (probability of finding a particle of type at a certain distance around a particle of type , disregarding the fact that a spherical shell of a larger radius covers a larger volume) 
+        The distance is defined as the minimal distance between a particle of group `type_list_a` to any of the group `type_list_b`.
+        Returns two arrays, the bins and the (normalized) distribution.
 
-	Parameters
+        Parameters
         ----------
         type_list_a : array like
            list of particle types, only consider distances from these types
@@ -885,7 +886,6 @@ class Analysis(object):
         array_like
           Where [0] contains the midpoints of the bins,
           and [1] contains the values of the rdf.
-
 
         """
 
@@ -1049,6 +1049,24 @@ class Analysis(object):
 
 
     def Vkappa(self, mode=None, Vk1=None, Vk2=None, avk=None):
+        """
+        .. todo:: Looks to be incomplete
+
+        Calculates the compressibility thought volume fluctuations.
+
+        Parameters
+        ----------
+        mode : string
+           one of `read`, `set` or `reset`
+        Vk1 : float
+           volume 
+        Vk2 : float
+           volume squared
+        avk : float
+           number of averages
+      
+        """
+        
         check_type_or_throw_except(mode, 1, str, "mode has to be a string")
 
         if (mode == "reset"):
