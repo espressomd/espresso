@@ -50,6 +50,13 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
+# Parse repository info from git if available
+include(version)
+
+configure_file(
+  ${CMAKE_SOURCE_DIR}/src/version.hpp.in
+  ${CMAKE_BINARY_DIR}/src/version.hpp
+  )
 
 # On Mac OS X, first look for other packages, then frameworks
 set(CMAKE_FIND_FRAMEWORK LAST)
@@ -100,7 +107,7 @@ endforeach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
 ######################################################################
 
 if (WITH_CUDA)
-  find_package(CUDA QUIET)
+  find_package(CUDA 7.0)
   if(CUDA_FOUND)
     list(APPEND LIBRARIES ${CUDA_CUFFT_LIBRARIES})
     list(APPEND LIBRARIES ${CUDA_LIBRARIES})

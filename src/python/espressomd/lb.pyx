@@ -173,12 +173,15 @@ IF LB_GPU or LB:
 
         # input/output function wrappers for whole LB fields
         ####################################################
-        def print_vtk_velocity(self, path):
-            lb_lbfluid_print_vtk_velocity(utils.to_char_pointer(path))
-        def print_vtk_velocity(self, path, bb1, bb2):
-            cdef vector[int] bb1_vec = bb1
-            cdef vector[int] bb2_vec = bb2
-            lb_lbfluid_print_vtk_velocity(utils.to_char_pointer(path), bb1_vec, bb2_vec)
+        def print_vtk_velocity(self, path, bb1=None, bb2=None):
+            cdef vector[int] bb1_vec
+            cdef vector[int] bb2_vec
+            if bb1 is None or bb2 is None:
+                lb_lbfluid_print_vtk_velocity(utils.to_char_pointer(path))
+            else:
+                bb1_vec = bb1
+                bb2_vec = bb2
+                lb_lbfluid_print_vtk_velocity(utils.to_char_pointer(path), bb1_vec, bb2_vec)
         def print_vtk_boundary(self, path):
             lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
         def print_velocity(self, path):
@@ -225,6 +228,26 @@ IF LB_GPU:
                 return
             ELSE:
                 raise Exception("LB_GPU not compiled in")
+            
+        def get_interpolated_velocity(self, pos):
+            """Get LB fluid velocity at specified position.
+
+            Parameters
+            ----------
+            pos : array_like :obj:`float`
+                  The position at which velocity is requested.
+
+            Returns
+            -------
+            v : array_like :obj:`float`
+                The LB fluid velocity at ``pos``.
+
+            """
+            cdef double[3] p = pos
+            cdef double[3] v
+            lb_lbfluid_get_interpolated_velocity_global(p, v)
+            return v
+
 
 IF LB or LB_GPU:
     cdef class LBFluidRoutines(object):

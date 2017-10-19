@@ -73,7 +73,7 @@ IF REACTION_ENSEMBLE:
             RE.m_current_reaction_system.standard_pressure_in_simulation_units = self._params["standard_pressure"]
             RE.m_current_reaction_system.exclusion_radius = self._params["exclusion_radius"]
 
-        def set_cylindrical_constraint_in_z_direction(center_x, center_y, radius_of_cylinder):
+        def set_cylindrical_constraint_in_z_direction(self, center_x, center_y, radius_of_cylinder):
             """
             constrain the reaction moves within a cylinder defined by its axis
             passing through centres (:math:`x` and :math:`y`) and the radius.
@@ -94,7 +94,7 @@ IF REACTION_ENSEMBLE:
             RE.m_current_reaction_system.cyl_radius=radius_of_cylinder
             RE.m_current_reaction_system.box_is_cylindric_around_z_axis=True
             
-        def set_wall_constraints_in_z_direction(slab_start_z,slab_end_z):
+        def set_wall_constraints_in_z_direction(self, slab_start_z,slab_end_z):
             """
             restrict the sampling area to a slab in z-direction. Requires setting the volume using :meth:`set_volume`.
             
@@ -128,7 +128,7 @@ IF REACTION_ENSEMBLE:
             """
             return (1.0*RE.m_accepted_configurational_MC_moves)/RE.m_tried_configurational_MC_moves
 
-        def set_non_interacting_type(non_interacting_type):
+        def set_non_interacting_type(self, non_interacting_type):
             """
             sets a type which is assumed to be non interacting in order to hide particles temporarily during a reaction trial move if they are to be deleted. The default value for this non_interacting type is 100. Please change this value if you intend to use a type 100 which has interactions. Please also note that particles in the current implementation of the Reaction Ensemble are only hidden with respect to Lennard-Jones interactions and Coulomb interactions. If there is for example a magnetic interaction hiding for this needs to be implemented in the code.
             """
@@ -207,13 +207,19 @@ IF REACTION_ENSEMBLE:
             if(isinstance(self._params["dictionary"],dict)==False):
                 raise ValueError("No dictionary for relation between types and default charges provided.")
         
-        def reaction(self):
+        def reaction(self, reaction_steps = 1):
             """
-            performs one randomly selected reaction of the provided reaction system
+            performs randomly selected reactions of the provided reaction system
+            
+            Parameters
+            ----------
+            reaction_steps : int
+                              the number of reactions to be performed at once, defaults to 1
+                         
             """
-            RE.do_reaction()
+            RE.do_reaction(reaction_steps)
         
-        def global_mc_move_for_one_particle_of_type(type_mc):
+        def global_mc_move_for_one_particle_of_type(self,type_mc):
             """
             performs a global mc move for one particle of type type_mc.
             If there are multiple types, that need to be moved, make sure to move them in a random order to avoid artefacts.
@@ -352,7 +358,7 @@ IF REACTION_ENSEMBLE:
             RE.m_current_wang_landau_system.do_not_sample_reaction_partition_function=self._params["do_not_sample_reaction_partition_function"]
 
         def _valid_keys_set_wang_landau_parameters(self):
-            return "final_wang_landau_parameter", "wang_landau_steps", "full_path_to_output_filename", "do_not_sample_reaction_partition_function", "use_hybrid_monte_carlo"
+            return "final_wang_landau_parameter", "wang_landau_steps", "full_path_to_output_filename", "do_not_sample_reaction_partition_function"
             
         def load_wang_landau_checkpoint(self):
             """
@@ -402,7 +408,7 @@ IF REACTION_ENSEMBLE:
         ##specify information for configuration changing monte carlo move
         property polymer_start_id:
             """
-            Optional: since you might not want to change the configuration of your polymer, e.g. if you are trying to simulate a rigid conformation. Sets the start id of the polymer, optional. Should be set when you have a non fixed polymer and want it to be moved by MC trail moves in order to sample its configuration space.. MC moves for free particles and polymer particles may be very different.
+            Optional: since you might not want to change the configuration of your polymer, e.g. if you are trying to simulate a rigid conformation. Sets the start id of the polymer, optional. Should be set when you have a non fixed polymer and want it to be moved by MC trail moves in order to sample its configuration space. MC moves for free particles and polymer particles may be very different.
             """
             def __set__(self, int start_id):
                 RE.m_current_wang_landau_system.polymer_start_id=start_id

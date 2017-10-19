@@ -700,72 +700,41 @@ The following limitations currently apply for the collision detection:
 Catalytic Reactions
 -------------------
 
-With the help of the feature ``CATALYTIC_REACTIONS``, one can define three particle types to
-act as reactant (e.g. :math:`H_2O_2`), catalyzer (e.g. platinum), and
-products (e.g. :math:`O_2` and :math:`H_2O`). Using these reaction
-categories, we model the following chemical reaction system which is not
-thermodynamically consistent but rather intended to simulate active
-swimmers and their propulsion:
+With the help of the feature ``CATALYTIC_REACTIONS``, one can define three particle types to act as reactant (e.g. :math:`\mathrm{H_2 O_2}`), catalyzer (e.g. platinum), and product (e.g. :math:`\mathrm{O_2}` and :math:`\mathrm{H_2 O}`). The current setup allows one to simulate active swimmers and their chemical propulsion.
+
+For a Janus swimmer consisting of platinum on one hemisphere and gold on the other hemisphere, both surfaces catalytically induce a reaction. We assume an initial abundance of hydrogen peroxide and absence of products, so that back (recombination) reactions seldomly occur at the surface. A typical model for the propulsion of such a particle assumes
 
 .. math::
 
-   \begin{aligned}
-   rt & \rightleftharpoons & pr ; \\
-   rt & \xrightarrow{ct} & pr.\end{aligned}
+    \begin{aligned}
+      \mathrm{H_2 O_2} &\xrightarrow{\text{Pt}} \mathrm{2 H^{+} + 2 e^{-} + O_2} \\
+      \mathrm{2 H^{+} + 2 e^{-} + H_2 O_2} &\xrightarrow{\text{Au}} \mathrm{2 H_2 O}
+    \end{aligned}
 
-The first line indicates that there is a reversible chemical reaction in
-the bulk that converts the reactant particles () into product ()
-particles, leading to an equilibrium state. This reaction is intended to
-artificially recover the reactant () particles in this model. In the
-case of :math:`H_2O_2` this is artificial since it does not
-spontaneously build up if oxygen is dissolved in water. The second line
-indicates that in the vicinity of a catalyst () the forward reaction
-takes place, i.e., conversion of reactants into products. Of course the
-decompositon of a reactand into a product also takes place if there is
-no catalyst (since a catalyst has no effect on the chemical equilibrium)
-however the reaction is much faster than normally in the presence of a
-catalyst and the normal decomposition is neglected since it takes place
-so slowly. This is correct chemistry for waterperoxide since it
-spontaneously decomposes almost completely and much faster in the
-presence of a catalyst.
-
-The equilibrium reaction is described by the equilibrium constant
-
-.. math:: K_{\text{eq}} = \frac{k_{\text{eq,+}}}{k_{\text{eq,-}}} = \frac{[pr]}{[rt]},
-
-with :math:`[rt]` and :math:`[pr]` the reactant and product
-concentration and :math:`k_{\mathrm{eq},\pm}` the forward and
-backward reaction rate constants, respectively. The rate constants that
-specify the change in concentration for the equilibrium and catalytic
-reaction are given by
+That is, catalytic surfaces induce a reactions that produce charged species by consuming hydrogen peroxide. It is the change in distribution of charged species that leads to motion of the swimmer, a process refered to as self-electrophoresis. A minimal model for this would be
 
 .. math::
 
-   \begin{aligned}
-   \frac{d[rt]}{dt} & = & k_{\text{eq,-}}[pr] - k_{\text{eq,+}}[rt] ; \\
-   \frac{d[pr]}{dt} & = & k_{\text{eq,+}}[rt] - k_{\text{eq,-}}[pr] ; \\
-   -\frac{d[rt]}{dt} \;\; = \;\; \frac{d[pt]}{dt} & = & k_{\text{ct}}[rt] ,\end{aligned}
+    \begin{aligned}
+      A &\xrightarrow{C^{+}} B \\
+      B &\xrightarrow{C^{-}} A
+    \end{aligned}
 
- respectively.
+where on the upper half of the catalyst :math:`C^{+}` a species :math:`A` is converted into :math:`B`, and on the lower half :math:`C^{-}` the opposite reaction takes place. Note that when :math:`A` and :math:`B` are charged, this reaction conserves charge, provided the rates are equal.
 
-In the current |es| implementation we assume :math:`k_{\text{eq,+}} =
-k_{\text{eq,-}} \equiv k\_eq` and therefore :math:`K_{\text{eq}}=1`. The
-user can specify :math:`k\_eq \ge 0` and
-:math:`k\_ct \equiv k_{\text{ct}} >
-0`. The former rate constant is applied to all reactant and product
-particles in the system, whereas the latter is applied only to the
-reactant particles in the vicinity of a catalyst particle. Reactant
-particles that have a distance of or less to at least one catalyzer
-particle are therefore converted into product particles with rate
-constant :math:`k\_eq + k\_ct`. The conversion of particles is done
-stochastically on the basis of the relevant rate constant ( :math:`\ge`
-0):
+In |es| the orientation of a catalyzer particle is used to define hemispheres; half spaces going through the particle's center. The reaction region is bounded by the *reaction range*: :math:`r`. Inside the reaction range, we react only rectant-product pairs. The particles in a pair are swapped from hemisphere to another with a rate prescribed by
 
-.. math:: \label{eq:rate} P_{\text{cvt}} = 1 - \exp \left( - k  \Delta t  \right) ,
+.. math::
 
-with :math:`P_{\text{cvt}}` the probability of the conversion and
-:math:`\Delta t` the integration time step. If the equilibrium rate
-constant is not specified it is assumed that = 0.
+    P_{\text{move}} = 1 - \mathrm{e}^{-k_{\mathrm{ct}}\,\Delta t} ,
+
+with the reaction rate :math:`k_{\mathrm{ct}}` and the simulation time step :math:`\Delta t`. A pair may be swapped only once per MD time step, to avoid a no-net-effect situation. That is, we allow an exchange move only when the following conditions are met:
+
+1. Both partners of the reactant-product pair have to reside within the reaction range.
+2. The product has to reside in the upper half-space of the reaction range.
+3. The reactant has to reside in the lower half-space of the reaction range.
+
+Self-propulsion is achieved by imposing an interaction asymmetry between the partners of a swapped pair. That is, the heterogeneous distribution of chemical species induced by the swapping leads to a net force on the particle, counter balanced by friction.
 
 To set up the system for catalytic reactions the class :class:`espressomd.reaction.Reaction`
 can be used.::
@@ -776,7 +745,7 @@ can be used.::
 
     # setting up particles etc
 
-    r = Reaction(product_type = 1, reactant_type = 2, catalyzer_type = 0, ct_range = 2, ct_rate=0.2, eq_rate=0)
+    r = Reaction(product_type=1, reactant_type=2, catalyzer_type=0, ct_range=2, ct_rate=0.2, eq_rate=0)
     r.start()
     r.stop()
 
@@ -784,10 +753,10 @@ can be used.::
 
 * the first invocation of ``Reaction``, in the above example,  defines a
   reaction with particles of type number 2 as reactant, type 0 as catalyzer and
-  type 1 as product [#1]_. The catalytic reaction rate constant is given by :math:`ct\_rate^2`
+  type 1 as product [#1]_. The catalytic reaction rate constant is given by :math:`\mathrm{ct\_rate}`
   [#2]_ and to override the default rate constant for the equilibrium reaction
   ( = 0), one can specify it by as ``eq_rata``.  By default each reactant particle is checked
-  against each catalyst particle (``react_once =False``). However, when creating
+  against each catalyst particle (``react_once=False``). However, when creating
   smooth surfaces using many catalyst particles, it can be desirable to let the
   reaction rate be independent of the surface density of these particles. That
   is, each particle has a likelihood of reacting in the vicinity of the surface
@@ -795,7 +764,7 @@ can be used.::
   *not* according to :math:`P_{\text{cvt}} = 1 - \exp \left( - n k\Delta t
   \right)`, with :math:`n` the number of local catalysts. To accomplish this,
   each reactant is considered only once each time step by using the option
-  ``react_once = True`` . The reaction command is set up such that the different
+  ``react_once=True`` . The reaction command is set up such that the different
   properties may be influenced individually.
 
 *  ``r.stop()`` disables the reaction. Note that at the moment, there can
@@ -803,15 +772,10 @@ can be used.::
 
 *  ``print r``  returns the current reaction parameters.
 
-The Python interface has some modified capabilities with respect to the
-TCL interface. For example, you can alter parameters using the
-``r.setup()`` method of the reaction instance. The reaction mechanism can
-be inhibited and restarted using ``r.stop()`` and ``r.start()``.
-
-In future versions of the capabilities of the feature may be generalized
+In future versions of |es| the capabilities of the ``CATALYTIC_REACTIONS`` feature may be generalized
 to handle multiple reactant, catalyzer, and product types, as well as
 more general reaction schemes. Other changes may involve merging the
-current implementation with the feature.
+current implementation with the ``COLLISION_DETECTION`` feature.
 
 .. _galilei_transform: 
 
