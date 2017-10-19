@@ -87,7 +87,7 @@ Optionally the ccmake utility can be installed for easier configuration:
 Installing Requirements on Mac OS X
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To make ESPResSo run on Mac OS X 10.9 or higher, its dependencies can be
+To make |es| run on Mac OS X 10.9 or higher, its dependencies can be
 installed using MacPorts. First, download the installer package
 appropriate for your Mac OS X version from
 https://www.macports.org/install.php and install it. Then, run the
@@ -95,14 +95,34 @@ following commands:
 
 .. code-block:: bash
 
-    sudo xcode-select –install sudo xcodebuild -license accept
+    sudo xcode-select --install
+    sudo xcodebuild -license accept
     sudo port selfupdate
-    sudo port port install cmake python27 python27-cython python27-numpy \
+    sudo port install cmake python27 python27-cython python27-numpy \
     openmpi-default fftw-3 +openmpi boost +openmpi +python27
-    sudo port select –set cython cython27
-    sudo port select –set python python27
-    sudo port select–set mpi openmpi-mp-fortran
+    sudo port select --set cython cython27
+    sudo port select --set python python27
+    sudo port select --set mpi openmpi-mp-fortran
 
+Alternatively, you can use Homebrew.
+
+.. code-block:: bash
+
+    sudo xcode-select --install
+    sudo xcodebuild -license accept
+    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    brew install cmake python cython boost boost-mpi fftw
+    brew install numpy --without-python3
+    ln -s /usr/local/bin/python2 /usr/local/bin/python
+
+Note: If both MacPorts and Homebrew are installed, you will not be able to
+run |es|. Therefore, if you have both installed, please uninstall one
+or the other by running one of the following two commands:
+
+.. code-block:: bash
+
+    sudo port -f uninstall installed && rm -r /opt/local
+    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall)"
 
 Installing python dependencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

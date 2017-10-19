@@ -1,3 +1,4 @@
+from __future__ import print_function
 from espressomd import *
 from espressomd.shapes import *
 from espressomd import electrostatics
@@ -31,11 +32,11 @@ system.non_bonded_inter[0,1].lennard_jones.set_params(epsilon=1.0, sigma=1.0, cu
 system.non_bonded_inter[0,0].lennard_jones.set_params(epsilon=1.0, sigma=1.0, cutoff=WCA_cut, shift="auto")
 
 energy = system.analysis.energy()
-print "Before Minimization: E_total=", energy['total']
+print("Before Minimization: E_total=", energy['total'])
 system.minimize_energy.init(f_max = 10, gamma = 50.0, max_steps = 1000, max_displacement= 0.2)
 system.minimize_energy.minimize()
 energy = system.analysis.energy()
-print "After Minimization: E_total=", energy['total']
+print("After Minimization: E_total=", energy['total'])
 
 system.thermostat.set_langevin(kT=0.1, gamma=1.0)
 

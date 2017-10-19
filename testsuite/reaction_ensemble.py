@@ -92,8 +92,7 @@ class ReactionEnsembleTest(ut.TestCase):
         K_HA_diss = ReactionEnsembleTest.K_HA_diss
         RE = ReactionEnsembleTest.RE
         """ chemical warmup in order to get to chemical equilibrium before starting to calculate the observable "degree of association" """
-        for i in range(40 * N0):
-            RE.reaction()
+        RE.reaction(40 * N0)
 
         volume = ReactionEnsembleTest.volume
         average_NH = 0.0

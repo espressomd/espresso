@@ -216,8 +216,8 @@ typedef struct {
   double LJGEN_cut;
   double LJGEN_shift;
   double LJGEN_offset;
-  int LJGEN_a1;
-  int LJGEN_a2;
+  double LJGEN_a1;
+  double LJGEN_a2;
   double LJGEN_b1;
   double LJGEN_b2;
   double LJGEN_lambda;
@@ -415,16 +415,6 @@ typedef struct {
 /** The maximum allowable filename length for a tabulated potential file*/
 #define MAXLENGTH_TABFILE_NAME 256
   char TAB_filename[MAXLENGTH_TABFILE_NAME];
-/*@}*/
-#endif
-
-#ifdef COMFORCE
-  /** \name center of mass directed force */
-  /*@{*/
-  int COMFORCE_flag;
-  int COMFORCE_dir;
-  double COMFORCE_force;
-  double COMFORCE_fratio;
 /*@}*/
 #endif
 

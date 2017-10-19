@@ -75,4 +75,5 @@ for skin in np.arange(5, 15, 1):
     profile()
 
 print("Using automatic tuning...")
-print(cs.tune_skin())
+skin=cs.tune_skin(min_skin=0.5, max_skin=50., tol=0.5, int_steps=100)
+profile()

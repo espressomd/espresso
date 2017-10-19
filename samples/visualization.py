@@ -106,8 +106,8 @@ print("Start with minimal distance {}".format(act_min_dist))
 system.cell_system.max_num_cells = 2744
 
 # Switch between openGl/Mayavi
-visualizer = visualization.mayaviLive(system)
-#visualizer = visualization.openGLLive(system)
+#visualizer = visualization.mayaviLive(system)
+visualizer = visualization.openGLLive(system)
 
 #############################################################
 #  Warmup Integration                                       #
@@ -186,12 +186,8 @@ def main_loop():
     visualizer.update()
 
     energies = system.analysis.energy()
-    print(energies)
     plot.set_xdata(numpy.append(plot.get_xdata(), system.time))
     plot.set_ydata(numpy.append(plot.get_ydata(), energies['total']))
-
-    linear_momentum = system.analysis.analyze_linear_momentum()
-    print(linear_momentum)
 
 def main_thread():
     for i in range(0, int_n_times):
@@ -210,12 +206,13 @@ def update_plot():
     pyplot.xlim(0, plot.get_xdata()[-1])
     pyplot.ylim(plot.get_ydata().min(), plot.get_ydata().max())
     pyplot.draw()
+    pyplot.pause(0.01)
 
 
 t = Thread(target=main_thread)
 t.daemon = True
 t.start()
-visualizer.registerCallback(update_plot, interval=2000)
+visualizer.registerCallback(update_plot, interval=1000)
 visualizer.start()
 
 # terminate program

@@ -51,6 +51,7 @@ import random  # for true random numbers from os.urandom()
 
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
                       "time_step", "timings", "force_cap"]
+
 IF LEES_EDWARDS == 1:
     setable_properties.append("lees_edwards_offset")
 

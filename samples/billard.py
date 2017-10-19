@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from __future__ import print_function
 import espressomd
 from espressomd import thermostat
 from espressomd import analyze
@@ -13,7 +14,7 @@ from math import *
 from espressomd.visualization_opengl import *
 from espressomd.shapes import *
 
-print '8Ball BILLARD - An Espresso Visualizer Demo\nControls:\nNumpad 4/6: Adjust Angle\nNumpad 2/8: Adjust Impulse\nNumpad 5: Shoot'
+print('8Ball BILLARD - An Espresso Visualizer Demo\nControls:\nNumpad 4/6: Adjust Angle\nNumpad 2/8: Adjust Impulse\nNumpad 5: Shoot')
 
 #ESPRESSO
 system = espressomd.System()
@@ -29,9 +30,9 @@ visualizer = openGLLive(system,
         particle_type_colors = [[1,1,1,1],[1,0,0,1],[0,0,1,1],[0.2,0.2,0.2,1]],
         camera_position = [ 1.12, 2.8, 0.56],
         window_size = [1000,600],
-        draw_axis = True, #False,
+        draw_axis = False,
         light_brightness = 5.0)
-    
+
 stopped = True
 angle = numpy.pi*0.5
 impulse = 10.0
@@ -39,13 +40,13 @@ impulse = 10.0
 def decreaseAngle():
     global angle,impulse
     if stopped:
-        angle += 0.05
+        angle += 0.01
         system.part[0].ext_force = impulse*np.array([sin(angle),0,cos(angle)])
 
 def increaseAngle():
     global angle,impulse
     if stopped:
-        angle -= 0.05
+        angle -= 0.01
         system.part[0].ext_force = impulse*np.array([sin(angle),0,cos(angle)])
 
 def decreaseImpulse():
@@ -77,7 +78,7 @@ visualizer.keyboardManager.registerButton(KeyboardButtonEvent('5',KeyboardFireEv
 def main():
     global stopped
 
-    system.time_step = 0.0003
+    system.time_step = 0.00008
     system.cell_system.skin = 0.4
 
     table_h = 0.5
@@ -100,7 +101,6 @@ def main():
     system.constraints.add(shape=Wall(dist=-(table_dim[0]-0.01),normal=[-1.0,0.0,0.0]),particle_type=types['wall'],penetrable=1)
     system.constraints.add(shape=Wall(dist=0.01,normal=[0.0,0.0,1.0]),particle_type=types['wall'],penetrable=1)
     system.constraints.add(shape=Wall(dist=-(table_dim[1]-0.01),normal=[0.0,0.0,-1.0]),particle_type=types['wall'],penetrable=1)
-#system.constraints.add(shape=Wall(dist=table_dim[0],normal=[0.0,0.0,-1.0]),particle_type=2)
     for h in hole_pos:
         system.constraints.add(shape=Cylinder(center=(np.array(h)-np.array([0,table_h*0.5,0])).tolist(), axis=[0,1,0],radius = hole_rad, length = 1.02*table_h, direction = 1),particle_type=types['hole'], penetrable=1)
 
@@ -109,7 +109,6 @@ def main():
     lj_cut = lj_sig*2.0**(1.0/6.0)
     lj_cap = 20
     mass = np.array([0.17])
-    charge=np.array([0])
 
     num_types=len(lj_sig)
 
@@ -130,7 +129,7 @@ def main():
 
     #PARTICLES
     ball_start_pos = [table_dim[0]*0.25, ball_y, table_dim[1]*0.5]
-    system.part.add(id=0, pos=ball_start_pos ,type=types['cue_ball'],q=charge[0],mass=mass[0])
+    system.part.add(id=0, pos=ball_start_pos ,type=types['cue_ball'],mass=mass[0])
     spawnpos = []
     spawnpos.append(ball_start_pos)
     ball = system.part[0]
@@ -152,7 +151,7 @@ def main():
             N=i+1
             t = order[pid-1]
             pos = sp + a1*(N-j) + a2*j
-            system.part.add(id = pid, pos=pos ,q=charge[0],mass=mass[0],type =t, fix = [0,1,0])
+            system.part.add(id = pid, pos=pos, mass=mass[0],type =t, fix = [0,1,0])
             spawnpos.append(pos)
             pid += 1
 

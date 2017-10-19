@@ -41,8 +41,8 @@
 #include "utils.hpp"
 
 int ljgen_set_params(int part_type_a, int part_type_b, double eps, double sig,
-                     double cut, double shift, double offset, int a1, int a2,
-                     double b1, double b2
+                     double cut, double shift, double offset, double a1,
+                     double a2, double b1, double b2
 #ifdef LJGEN_SOFTCORE
                      ,
                      double lambda, double softrad
@@ -61,7 +61,7 @@ inline void add_ljgen_pair_force(const Particle *const p1,
 
 #ifdef LJGEN_SOFTCORE
     r_off *= r_off;
-    r_off += pow(ia_params->LJGEN_sig, 2) * (1.0 - ia_params->LJGEN_lambda) *
+    r_off += sqr(ia_params->LJGEN_sig) * (1.0 - ia_params->LJGEN_lambda) *
              ia_params->LJGEN_softrad;
     /* Taking a square root is not optimal, but we can't prevent the user from
        using an odd m, n coefficient. */

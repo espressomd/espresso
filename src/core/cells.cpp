@@ -142,7 +142,7 @@ void cells_re_init(int new_cs) {
 
   topology_init(new_cs, &tmp_local);
 
-  particle_invalidate_part_node();
+  clear_particle_node();
 
   /* finally deallocate the old cells */
   realloc_cellplist(&tmp_local, 0);
@@ -208,7 +208,7 @@ void cells_resort_particles(int global_flag) {
 
   invalidate_ghosts();
 
-  particle_invalidate_part_node();
+  clear_particle_node();
   n_verlet_updates++;
 
   switch (cell_structure.type) {
