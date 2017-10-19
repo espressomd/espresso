@@ -631,6 +631,8 @@ void rotate_particle_body_j(Particle* p, int j, double phi)
   }
 }
 
+#ifdef BROWNIAN_DYNAMICS
+
 void bd_drift_rot(Particle *p, double dt) {
   int j;
   double a[3];
@@ -827,5 +829,7 @@ void bd_random_walk_vel_rot(Particle *p, double dt) {
     }
   }
 }
+
+#endif // BROWNIAN_DYNAMICS
 
 #endif
