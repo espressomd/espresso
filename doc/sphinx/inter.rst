@@ -2231,7 +2231,7 @@ simulation, as particles will simply avoid overlapping. However,
 creating an initial dense random configuration without overlap is often
 difficult. The forces of all non-bonded interactions can be limited via::
 
-	system.non_bonded_inter.set_force_cap(max)
+	system.force_cap = max
 
 By artificially capping the forces, it is possible to simulate a system
 with overlaps. By gradually raising the cap value, possible overlaps
