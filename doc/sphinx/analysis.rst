@@ -81,8 +81,6 @@ Particle distribution
 ~~~~~~~~~~~~~~~~~~~~~
 :meth:`espressomd.analyze.Analysis.distribution`
 
-
-
 Returns the distance distribution of particles
 (probability of finding a particle of a certain type at a specifeid distance around
 a particle of another specified type, disregarding the fact that a spherical shell of a
@@ -279,38 +277,22 @@ set those.
 
 Radial distribution function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. todo:: check this
+:meth:`espressomd.analyze.Analysis.rdf`
 
-[analyze:<rdf>]
+Calculates a radial distribution function.
 
-analyze
-
-Returns its parameters and the radial distribution function (rdf) of
-particles with types specified in around particles with types specified
-in . The range is given by and and is divided into equidistant bins.
-
-The output corresponds to the blockfile format (see section ):
-
-{ } { { } }
 
 .. _Structure factor:
 
 Structure factor
 ~~~~~~~~~~~~~~~~
-.. todo:: check this
+:meth:`espressomd.analyze.Analysis.structure_factor`
 
-analyze structurefactor
+Calculate the structure factor for given types.
 
 Returns the spherically averaged structure factor :math:`S(q)` of
 particles specified in . :math:`S(q)` is calculated for all possible
-wave vectors, :math:`\frac{2\pi}{L} <= q <= \frac{2\pi}{L}\var{order}`.
-Do not choose parameter too large, because the number of calculations
-grows as :math:`\var{order}^3`.
-
-The output corresponds to the blockfile format (see section ):
-
-{ }
-
+wave vectors, :math:`\frac{2\pi}{L} <= q <= \frac{2\pi}{L}` `order`.
 
 .. _Van-Hove autocorrelation function:
 
@@ -349,7 +331,7 @@ always yields :math:`1`.
 Center of mass
 ~~~~~~~~~~~~~~
 
-:meth:`espressomd.system.analysis.centermass`
+:meth:`espressomd.analyze.Analysis.centermass`
 
 Returns the center of mass of particles of the given type given by `part_type`.
 
@@ -358,21 +340,17 @@ Returns the center of mass of particles of the given type given by `part_type`.
 
 Moment of inertia matrix
 ~~~~~~~~~~~~~~~~~~~~~~~~
-.. todo:: check this
+:meth:`espressomd.analyze.Analysis.momentofinertiamatrix`
 
-[analyze:find-principal-axis]
-
-analyze momentofinertiamatrix analyze find\_principal\_axis
-
-Variant returns the moment of inertia matrix for particles of given type
-. The output is a list of all the elements of the 3x3 matrix. Variant
-returns the eigenvalues and eigenvectors of the matrix.
+Returns the 3x3 moment of interia matrix for particles of a given type.
 
 
 .. _Gyration tensor:
 
 Gyration tensor
 ~~~~~~~~~~~~~~~
+:meth:`espressomd.analyze.Analysis.gyration_tensor`
+
 .. todo:: check this
 
 analyze gyration\_tensor

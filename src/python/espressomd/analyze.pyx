@@ -757,7 +757,24 @@ class Analysis(object):
 
 
     def structure_factor(self, sf_types=None, sf_order=None):
-        """Calculate the structure factor for given types.
+        """
+        Calculate the structure factor for given types.
+        Returns the spherically averaged structure factor of particles specified in `types`.
+        The structure factor is calculated for all possible wave vectors q up to `order`
+        Do not choose parameter `order` too large because the number of calculations gros as `order` to the third power.
+
+        Parameters
+        ----------
+        sf_types : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
+            specifies which particle type should be considered
+        sf_order : int
+            specifies the maximum wavevector, 
+
+        Returns
+        -------
+        array_like
+          Where [0] contains q
+          and [1] contains the structure factor s(q)
 
         """
 
@@ -786,9 +803,9 @@ class Analysis(object):
         ----------
         rdf_type : string
            'rdf' or '<rdf>'.
-        type_list_a : array like
+        type_list_a : lists of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
            Left types of the rdf
-        type_list_b : array like, optional
+        type_list_b : lists of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`), optional
            Right types of the rdf01
         r_min : float
            Minimal distance to consider
@@ -866,9 +883,9 @@ class Analysis(object):
 
         Parameters
         ----------
-        type_list_a : array like
+        type_list_a : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
            list of particle types, only consider distances from these types
-        type_list_b : array like, 
+        type_list_b : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
            list of particle types, only consider distances to these types
         r_min : float
            minimum distance
@@ -981,6 +998,21 @@ class Analysis(object):
 
 
     def momentofinertiamatrix(self, p_type=None):
+        """
+        Returns the 3x3 moment of interia matrix for particles of a given type.
+
+        Parameters
+        ----------
+        p_type : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
+            A a particle type, or list of all particle types to be considered
+
+        Returns
+        -------
+        array_like
+        The output is a list of all the elements of the 3x3 matrix.
+      
+        """
+
         cdef double[9] MofImatrix
 
         if p_type is not None:
