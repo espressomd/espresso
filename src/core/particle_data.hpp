@@ -447,10 +447,6 @@ extern int max_seen_particle;
 /** total number of particles on all nodes. */
 extern int n_part;
 
-/** Capacity of the \ref particle_node / \ref local_particles. */
-extern int max_particle_node;
-/** Used only on master node: particle->node mapping. */
-extern int *particle_node;
 /** id->particle mapping on all nodes. This is used to find partners
     of bonded interactions. */
 extern Particle **local_particles;
@@ -541,16 +537,10 @@ Particle *move_indexed_particle(ParticleList *destList,
 */
 void update_local_particles(ParticleList *pl);
 
-/** Rebuild \ref particle_node from scratch.
-    After a simulation step \ref particle_node has to be rebuild
-    since the particles might have gone to a different node.
-*/
-void build_particle_node();
-
 /** Invalidate \ref particle_node. This has to be done
     at the beginning of the integration.
 */
-void particle_invalidate_part_node();
+void clear_particle_node();
 
 /** Realloc \ref local_particles. */
 void realloc_local_particles();

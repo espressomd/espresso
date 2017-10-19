@@ -322,63 +322,6 @@ void mpi_call(SlaveCallback cb, int node, int param) {
   COMM_TRACE(fprintf(stderr, "%d: finished sending.\n", this_node));
 }
 
-/*************** REQ_WHO_HAS ****************/
-
-void mpi_who_has() {
-  static int *sizes = new int[n_nodes];
-  int *pdata = NULL;
-  int pdata_s = 0;
-
-  mpi_call(mpi_who_has_slave, -1, 0);
-
-  int n_part = cells_get_n_particles();
-  /* first collect number of particles on each node */
-  MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
-
-  for (int i = 0; i <= max_seen_particle; i++)
-    particle_node[i] = -1;
-
-  /* then fetch particle locations */
-  for (int pnode = 0; pnode < n_nodes; pnode++) {
-    COMM_TRACE(
-        fprintf(stderr, "node %d reports %d particles\n", pnode, sizes[pnode]));
-    if (pnode == this_node) {
-      for (auto const &p : local_cells.particles())
-        particle_node[p.p.identity] = this_node;
-
-    } else if (sizes[pnode] > 0) {
-      if (pdata_s < sizes[pnode]) {
-        pdata_s = sizes[pnode];
-        pdata = Utils::realloc(pdata, sizeof(int) * pdata_s);
-      }
-      MPI_Recv(pdata, sizes[pnode], MPI_INT, pnode, SOME_TAG, comm_cart,
-               MPI_STATUS_IGNORE);
-      for (int i = 0; i < sizes[pnode]; i++)
-        particle_node[pdata[i]] = pnode;
-    }
-  }
-  free(pdata);
-}
-
-void mpi_who_has_slave(int node, int param) {
-  static int *sendbuf;
-  int n_part;
-
-  n_part = cells_get_n_particles();
-  MPI_Gather(&n_part, 1, MPI_INT, NULL, 0, MPI_INT, 0, comm_cart);
-  if (n_part == 0)
-    return;
-
-  sendbuf = Utils::realloc(sendbuf, sizeof(int) * n_part);
-
-  auto end = std::transform(local_cells.particles().begin(),
-                            local_cells.particles().end(), sendbuf,
-                            [](Particle const &p) { return p.p.identity; });
-
-  auto npart = std::distance(sendbuf, end);
-  MPI_Send(sendbuf, npart, MPI_INT, 0, SOME_TAG, comm_cart);
-}
-
 /**************** REQ_CHTOPL ***********/
 void mpi_bcast_event(int event) {
   mpi_call(mpi_bcast_event_slave, -1, event);
