@@ -736,11 +736,17 @@ class Analysis(object):
         """
         Calculates the Root Mean Square end-to-end distance of chains and its standard deviation, as well as Mean Square end-to-end distance of chains and its standard deviation.
         
+        This requires that a set of chains of equal length which start with the particle with particle number `chain_start` and are consecutively numbered (the last particle in that topology has id number :
+        `chain_start`+ `number_of_chains`*`chain_length` -1.
+
         Parameters
         ----------
         chain_start : :obj:`int`.
+            The id of the first monomer of the first chain
         number_of_chains : :obj:`int`.
+            number of chains contained in the range
         chain_length : :obj:`int`.
+            the length of every chain.
         
         Returns            
         -------
@@ -760,6 +766,30 @@ class Analysis(object):
 
 
     def calc_rg(self, chain_start=None, number_of_chains=None, chain_length=None):
+        """
+        Calculates the radius of gyration of chains and its standard deviation, as well as the Mean Square radius of gyration of chains and its standard deviation.
+        
+        This requires that a set of chains of equal length which start with the particle with particle number `chain_start` and are consecutively numbered (the last particle in that topology has id number :
+        `chain_start`+ `number_of_chains`*`chain_length`-1.
+
+        Parameters
+        ----------
+        chain_start : :obj:`int`.
+            The id of the first monomer of the first chain
+        number_of_chains : :obj:`int`.
+            number of chains contained in the range 
+        chain_length : :obj:`int`.
+            the length of every chain
+        
+        Returns            
+        -------
+        array_like
+            Where [0] is the Root Mean Square radius of gyration of the chains
+            and [1] its standard deviation,
+            [2] the Mean Square radius of gyration
+            and [3] its standard deviation.
+
+        """
         cdef double * rg = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
         c_analyze.calc_rg(c_analyze.partCfg(), & rg)
@@ -769,6 +799,29 @@ class Analysis(object):
 
 
     def calc_rh(self, chain_start=None, number_of_chains=None, chain_length=None):
+        """
+        Calculates the hydrodynamic mean radius of chains and its standard deviation.
+        
+        This requires that a set of chains of equal length which start with the particle with particle number `chain_start` and are consecutively numbered (the last particle in that topology has id number :
+        `chain_start`+ `number_of_chains`*`chain_length`-1.
+
+        Parameters
+        ----------
+        chain_start : :obj:`int`.
+            The id of the first monomer of the first chain
+        number_of_chains : :obj:`int`.
+            number of chains contained in the range 
+        chain_length : :obj:`int`.
+            the length of every chain
+        
+        Returns            
+        -------
+        array_like
+            Where [0] is the mean hydrodynamic radius of the chains
+            and [1] its standard deviation,
+
+        """
+
         cdef double * rh = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
         c_analyze.calc_rh(c_analyze.partCfg(), & rh)
@@ -1096,10 +1149,46 @@ class Analysis(object):
 
 
     def rdfchain(self, r_min=None, r_max=None, r_bins=None,
-                 chain_start=None, n_chains=None, chain_length=None):
+                 chain_start=None, number_of_chains=None, chain_length=None):
+        """
+        Returns three radial distribution functions (rdf) for the chains.
+        The first rdf is calculated for monomers belonging to different chains,
+        the second rdf is for the centers of mass of the chains and
+        the third one is the distribution of the closest distances between the chains (the shortest monomer-monomer distances).
+        
+        The distance range is given by `r_min` and `r_max` and it is divided into `r_bins` equidistant bins.
+        
+        This requires that a set of chains of equal length which start with the particle with particle number `chain_start` and are consecutively numbered (the last particle in that topology has id number :
+        `chain_start`+ `number_of_chains`*`chain_length`-1.
+
+        Parameters
+        ----------
+        r_min : :obj:`float`
+           Minimal distance to consider
+        r_max : :obj:`float`
+           Maximal distance to consider
+        r_bins : :obj:`int`
+           Number of bins
+        chain_start : :obj:`int`
+            The id of the first monomer of the first chain
+        number_of_chains : :obj:`int`.
+            number of chains contained in the range 
+        chain_length : :obj:`int`.
+            the length of every chain
+        
+        Returns            
+        -------
+        array_like
+            Where [0] is the bins used
+            [1] is the first rdf: monomers belonging to different chains,
+            [2] is the second rdf: from the centers of mass of the chains,
+            [3] is the third rdf: from the shortest monomer-monomer distances.
+
+        """        
         cdef double * f1
         cdef double * f2
         cdef double * f3
+        print("bleh ",r_min)
 
         check_type_or_throw_except(r_min, 1, float, "r_min has to be a float")
         check_type_or_throw_except(r_max, 1, float, "r_max has to be a float")

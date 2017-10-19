@@ -537,7 +537,7 @@ The command is implemented in parallel.
 Local Stress Tensor
 ~~~~~~~~~~~~~~~~~~~
 :meth:`espressomd.analyze.Analysis.local_stress_tensor`
-
+.. todo:: This feature is not implemented
 
 A cuboid is defined in the system and divided into bins.
 For each of these bins a stress tensor is calculated using the Irving Kirkwood method.
@@ -560,71 +560,38 @@ The command is implemented in parallel.
 specifying the local pressure tensor in each bin.
 
 
-.. _Analyzing groups of particles:
-
-Analyzing groups of particles (molecules)
------------------------------------------
-
-[analyze:set]
-
-analyze set chains analyze set topo\_part\_sync analyze set
-
-The above set of functions is designed to facilitate analysis of
-molecules. Molecules are expected to be a group of particles comprising
-a contiguous range of particle IDs. Each molecule is a set of
-consecutively numbered particles and all molecules are supposed to
-consist of the same number of particles. Some functions in this group
-require that the particles constituting a molecule are connected into
-linear chains (particle :math:`n` is connected to :math:`n+1` and so on)
-while others are applicable to molecules of whatever topology.
-
-The command defines the structure of the current system to be used with
-some of the analysis functions.
-
-Variant defines a set of chains of equal length which start with the
-particle with particle number and are consecutively numbered (the last
-particle in that topology has number :math:`\var{chain\_start} +
-\var{n\_chains}*\var{chain\_length} - 1`).
-
-Variant synchronizes topology and particle data, assigning values to
-particles.
-
-Variant will return the chains currently stored.
-
 
 .. _Chains:
 
 Chains
 ~~~~~~
 
-All analysis functions in this section require the topology of the
-chains to be set correctly. The topology can be provided upon calling.
-This (re-)sets the structure info permanently, it is only required once.
+All analysis functions in this section require the topology of the chains to be set correctly.
+The above set of functions is designed to facilitate analysis of molecules.
+Molecules are expected to be a group of particles comprising a contiguous range of particle IDs.
+Each molecule is a set of consecutively numbered particles and all molecules are supposed to consist of the same number of particles.
+
+Some functions in this group require that the particles constituting a molecule are connected into
+linear chains (particle :math:`n` is connected to :math:`n+1` and so on)
+while others are applicable to molecules of whatever topology.
 
 
 .. _End to end distance:
 
 End-to-end distance
 ^^^^^^^^^^^^^^^^^^^
+:meth:`espressomd.analyze.Analysis.calc_re`
 
-analyze
-
-Returns the quadratic end-to-end-distance and its root averaged over all
-chains. If is used, the distance is averaged over all stored
-configurations (see section ).
-
-{ }
-
+Returns the quadratic end-to-end-distance and its root averaged over all chains.
 
 .. _Radius of gyration:
 
 Radius of gyration
 ^^^^^^^^^^^^^^^^^^
+:meth:`espressomd.analyze.Analysis.calc_re`
 
-analyze
-
-Returns the radius of gyration averaged over all chains. It is a radius
-of a sphere, which would have the same moment of inertia as the
+Returns the radius of gyration averaged over all chains.
+It is a radius of a sphere, which would have the same moment of inertia as the
 molecule, defined as
 
 .. math::
@@ -636,22 +603,17 @@ where :math:`\vec r_i` are position vectors of individual particles
 constituting a molecule and :math:`\vec r_{\mathrm{cm}}` is the position
 vector of its centre of mass. The sum runs over all :math:`N` particles
 comprising the molecule. For more information see any polymer science
-book, e.g. :cite:`rubinstein03a`. If is used, the radius of
-gyration is averaged over all stored configurations (see section ).
-
-{ }
+book, e.g. :cite:`rubinstein03a`.
 
 
 .. _Hydrodynamic radius:
 
 Hydrodynamic radius
 ^^^^^^^^^^^^^^^^^^^
+:meth:`espressomd.analyze.Analysis.calc_rh`
 
-analyze
-
-Returns the hydrodynamic radius averaged over all chains. If is used,
-the hydrodynamic radius is averaged over all stored configurations (see
-section ). The following formula is used for the computation:
+Returns the hydrodynamic radius averaged over all chains.
+The following formula is used for the computation:
 
 .. math::
 
@@ -669,6 +631,7 @@ in :cite:`doi86a`.
 
 Internal distances
 ^^^^^^^^^^^^^^^^^^
+.. todo:: This feature is not implemented
 
 analyze
 
@@ -686,6 +649,7 @@ considered (0 = next neighbours, 1 = one monomer in between, …).
 
 Internal distances II (specific monomer)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. todo:: This feature is not implemented
 
 analyze
 
@@ -702,6 +666,7 @@ all stored configurations (see section ).
 
 Bond lengths
 ^^^^^^^^^^^^
+.. todo:: This feature is not implemented
 
 analyze
 
@@ -721,6 +686,7 @@ topology and does not check if the bonds really exist!
 
 Form factor
 ^^^^^^^^^^^
+.. todo:: This feature is not implemented
 
 | analyze
 
@@ -748,16 +714,13 @@ with :math:`q \in \{\var{qmin},\dots,\var{qmax}\}`.
 Chain radial distribution function
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-analyze rdfchain
+:meth:`espressomd.analyze.Analysis.rdfchain`
 
-Returns three radial distribution functions (rdf) for the chains. The
-first rdf is calculated for monomers belonging to different chains, the
-second rdf is for the centers of mass of the chains and the third one is
-the distribution of the closest distances between the chains (the
-shortest monomer-monomer distances). The distance range is given by and
-and it is divided into equidistant bins.
-
-{ { } }
+Returns three radial distribution functions (rdf) for the chains.
+The first rdf is calculated for monomers belonging to different chains,
+the second rdf is for the centers of mass of the chains and 
+the third one is the distribution of the closest distances between the chains (the
+shortest monomer-monomer distances).
 
 
 .. _Mean square displacement of chains:
