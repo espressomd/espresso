@@ -458,6 +458,7 @@ IF P3M == 1:
 
             def _activate_method(self):
                 #self._set_params_in_es_core()
+                python_p3m_gpu_init(self._params)
                 coulomb.method = COULOMB_P3M_GPU
                 if self._params["tune"]:
                     self._tune()
