@@ -1391,13 +1391,25 @@ __device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_L
 
   else if(y == para.dim_y-1){
     
-    mode[1 + ii * LBQ] += nodes_LE_upper.vd[1*para.dim_x*para.dim_z + delta_index];
-    mode[4 + ii * LBQ] += nodes_LE_upper.vd[4*para.dim_x*para.dim_z + delta_index];
-    mode[5 + ii * LBQ] += nodes_LE_upper.vd[5*para.dim_x*para.dim_z + delta_index];
-    mode[6 + ii * LBQ] += nodes_LE_upper.vd[6*para.dim_x*para.dim_z + delta_index];
-    mode[7 + ii * LBQ] += nodes_LE_upper.vd[7*para.dim_x*para.dim_z + delta_index];
-    mode[8 + ii * LBQ] += nodes_LE_upper.vd[8*para.dim_x*para.dim_z + delta_index];
-    mode[9 + ii * LBQ] += nodes_LE_upper.vd[9*para.dim_x*para.dim_z + delta_index];
+    mode[0 + ii * LBQ]  = 0.0f;
+    mode[1 + ii * LBQ]  = nodes_LE_upper.vd[1*para.dim_x*para.dim_z + delta_index];
+    mode[2 + ii * LBQ]  = 0.0f;
+    mode[3 + ii * LBQ]  = 0.0f;
+    mode[4 + ii * LBQ]  = nodes_LE_upper.vd[4*para.dim_x*para.dim_z + delta_index];
+    mode[5 + ii * LBQ]  = nodes_LE_upper.vd[5*para.dim_x*para.dim_z + delta_index];
+    mode[6 + ii * LBQ]  = nodes_LE_upper.vd[6*para.dim_x*para.dim_z + delta_index];
+    mode[7 + ii * LBQ]  = nodes_LE_upper.vd[7*para.dim_x*para.dim_z + delta_index];
+    mode[8 + ii * LBQ]  = nodes_LE_upper.vd[8*para.dim_x*para.dim_z + delta_index];
+    mode[9 + ii * LBQ]  = nodes_LE_upper.vd[9*para.dim_x*para.dim_z + delta_index];
+    mode[10 + ii * LBQ] = 0.0f;
+    mode[11 + ii * LBQ] = 0.0f;
+    mode[12 + ii * LBQ] = 0.0f;
+    mode[13 + ii * LBQ] = 0.0f;
+    mode[14 + ii * LBQ] = 0.0f;
+    mode[15 + ii * LBQ] = 0.0f;
+    mode[16 + ii * LBQ] = 0.0f;
+    mode[17 + ii * LBQ] = 0.0f;
+    mode[18 + ii * LBQ] = 0.0f;
 
     n_b.vd[(3 + ii*LBQ ) * para.number_of_nodes + x
                                                 + para.dim_x*((y+1)%para.dim_y)
@@ -3278,8 +3290,7 @@ __device__ void calculate_LE_mode_delta(int index, LB_rho_v_gpu *d_v, float lees
   u[2] = d_v[index].v[2];
  
   if(index==0){
-    printf("LE rate: %f \n", lees_edwards_rate);
-    printf("LE offset: %f \n", lees_edwards_offset);
+    //printf("u-velocity without LE: %f \n", u[0]);
   }
 
   int pos[3];
@@ -3348,7 +3359,7 @@ __device__ void calculate_LE_mode_delta(int index, LB_rho_v_gpu *d_v, float lees
     delta_m = nodes_LE_upper.vd;
     
     delta_m[0*para.dim_x*para.dim_z + delta_index]  = 0.0f;
-    delta_m[1*para.dim_x*para.dim_z + delta_index]  = - 0.5 * lees_edwards_velocity * rho; //0.0f;
+    delta_m[1*para.dim_x*para.dim_z + delta_index]  = -0.5 * lees_edwards_velocity * rho; //0.0f;
     delta_m[2*para.dim_x*para.dim_z + delta_index]  = 0.0f; //lees_edwards_velocity * rho;
     delta_m[3*para.dim_x*para.dim_z + delta_index]  = 0.0f;
     delta_m[4*para.dim_x*para.dim_z + delta_index] = modes_pi_with_LE[0] - modes_pi_without_LE[0];
@@ -3371,7 +3382,6 @@ __device__ void calculate_LE_mode_delta(int index, LB_rho_v_gpu *d_v, float lees
 }
 
 __global__ void apply_LE_velocity_shift(LB_nodes_gpu n_front, LB_nodes_gpu n_back, LB_nodes_gpu nodes_LE_upper, LB_nodes_gpu nodes_LE_lower, LB_rho_v_gpu *d_v, float lees_edwards_velocity) {
-  //TODO: Georg fragen!
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   if (index < para.dim_x * para.dim_z * 2) {
     calculate_LE_mode_delta(index, d_v, lees_edwards_velocity, nodes_LE_upper, nodes_LE_lower);
