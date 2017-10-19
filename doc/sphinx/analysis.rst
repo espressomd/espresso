@@ -154,9 +154,24 @@ the currently identified properties.
 
 Cylindrical Average
 ~~~~~~~~~~~~~~~~~~~
-.. todo:: check this
+:meth:`espressomd.analyze.Analysis.cylindrical_average`
 
-analyze cylindrical\_average
+Calculates the particle distribution using cylindrical binning.
+
+The volume considered is inside a cylinder defined by the parameters `center`, `axis`, `length` and  `radius`.
+
+The geometrical details of the cylindrical binning is defined using ` bins_axial` and `bins_radial` which are the number bins in the axial and radial directions (respectively).
+See figure :ref:`cylindrical_average` for a visual representation of the binning geometry.
+
+.. _cylindrical_average:
+
+.. figure:: figures/analysis_cylindrical_average.png
+   :alt: Geometry for the cylindrical binning
+   :align: center
+   :height: 6.00000cm
+
+   Geometry for the cylindrical binning
+
 
 The command returns a list of lists. The outer list contains all data
 combined whereas each inner list contains one line. Each lines stores a
@@ -165,53 +180,24 @@ look something like this
 
 ::
 
-    { { 0 0 0.05 -0.25 0.0314159 0 0 0 0 0 0 }
-      { 0 1 0.05 0.25 0.0314159 31.831 1.41421 1 0 0 0 }
-      ... }
+    [ [ 0 0 0.05 -0.25 0.0314159 0 0 0 0 0 0 ]
+      [ 0 1 0.05 0.25 0.0314159 31.831 1.41421 1 0 0 0 ]
+      ... ]
 
-In this case two different particle types were present. The columns of
-the respective lines are coded like this
+In this case two different particle types were present.
+The columns of the respective lines are coded like this
 
-output index\_radial index\_axial pos\_radial pos\_axial binvolume
-density v\_radial v\_axial density v\_radial v\_axial 0 0 0.05 -0.25
-0.0314159 0 0 0 0 0 0 0 1 0.05 0.25 0.0314159 31.831 1.41421 1 0 0 0
+=============    ============  ===========  ==========  =========  =======  ========   ========  =======  =========  =======
+index_radial     index_axial   pos_radial   pos_axial   binvolume  density  v_radial   v_axial   density  v_radial   v_axial 
+=============    ============  ===========  ==========  =========  =======  ========   ========  =======  =========  =======
+0                0             0.05         -0.25       0.0314159  0        0          0         0        0          0      
+0                1             0.05         0.25        0.0314159  31.831   1.41421    1         0        0          0      
+=============    ============  ===========  ==========  =========  =======  ========   ========  =======  =========  =======
 
-As one can see the columns , , and appear twice. The order of appearance
-corresponds two the order of the types in the argument . For example if
-was set to ``{0 1}`` then the first triple is associated to type 0 and
+As one can see the columns `density`, `v_radial` and `v_axial` appear twice.
+The order of appearance corresponds to the order of the types in the argument `types`.
+For example if was set to `types=[0, 1]` then the first triple is associated to type 0 and
 the second triple to type 1.
-
-After knowing what the output looks like we might want to have more
-information on how to input data.
-
--  is a double list containing the coordinates of the centre point of
-   the cylinder.
-
--  is a double list containing a (not necessarily normalised) vector.
-
--  is the total length of the cylinder.
-
--  is the radius of the cylinder.
-
--  is the number of bins along the vector.
-
--  is the number of bins in radial direction.
-
--  is an int list of the type IDs.
-
-Because all of this text is super abstract we additionally drew a
-picture of what these variables actually mean, see
-figure [fig:cylindricalaverage].
-
-[dot/.style=draw,fill,circle,inner sep=1pt,rotate=-100] in .5, 1, 1.5, 2
-in -, 0, (0,) ellipse ( and .5\*); (-,-) – (-,); (+,-) – (+,); (0,0)
-node[dot,label=above:center] – (0,1.5) node[above] direction; in 0, (2,)
-– (2,-); (2,-) – node[blue,below,rotate=-8] bins\_axial (2,); in .5, 1,
-1.5, 2 (,-) – (-.5,-); (2,-) – node[red,above,rotate=80] bins\_radial
-(0,-);
-
-(0,) – node[right] radius (2,); (-2,-) – node[above] length (-2,);
-
 
 .. _Modes:
 

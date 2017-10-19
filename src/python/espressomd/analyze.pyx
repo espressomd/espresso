@@ -261,16 +261,46 @@ class Analysis(object):
         return result
 
 
-    def cylindrical_average(self, center=None, direction=None,
+    def cylindrical_average(self, center=None, axis=None,
                             length=None, radius=None,
                             bins_axial=None, bins_radial=None,
                             types=[-1]):
+        """
+        .. todo :: should `direction` be changed to `axis`
+        Calculates the particle distribution using cylindrical binning.
+
+
+        Parameters
+        ----------
+        center : array of :obj:`float`
+            coordinates of the centre of the cylinder.
+        axis : array of :obj:`
+            axis vectory of the cylinder, does not need to be normalized.
+        length : :obj:`float`
+            length of the cylinder.
+        radius : :obj:`float`
+            radius of the cylinder.
+        bins_axial : :obj:`int`
+            number of axial bins
+        bins_radial : :obj:`int`
+            number of radial bins
+        types : lists of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
+            a list of type IDs
+
+        Returns
+        -------
+        list of lists
+            columns indicate `index_radial`, `index_axial`, `pos_radial`, `pos_axial`, `binvolume`, `density`, `v_radial`, `v_axial`, `density`, `v_radial` and `v_axial`.
+            Note that the columns `density`, `v_radial` and `v_axial` appear for each type indicated in `types` in the same order.
+
+        """
+
 
         # Check the input types
         check_type_or_throw_except(
             center,      3, float, "center has to be 3 floats")
         check_type_or_throw_except(
-            direction,   3, float, "direction has to be 3 floats")
+            axis,   3, float, "direction has to be 3 floats")
         check_type_or_throw_except(
             length,      1, float, "length has to be a float")
         check_type_or_throw_except(
@@ -282,7 +312,7 @@ class Analysis(object):
 
         # Convert Python types to C++ types
         cdef vector[double] c_center = center
-        cdef vector[double] c_direction = direction
+        cdef vector[double] c_direction = axis
         cdef double c_length = length
         cdef double c_radius = radius
         cdef int c_bins_axial = bins_axial
