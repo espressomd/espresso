@@ -62,6 +62,12 @@ cdef extern from "interaction_data.hpp":
         double GB_mu
         double GB_nu
 
+        double soft_a
+        double soft_n
+        double soft_cut
+        double soft_offset
+
+
     cdef ia_parameters * get_ia_param(int i, int j)
     cdef ia_parameters * get_ia_param_safe(int i, int j)
     cdef void make_bond_type_exist(int type)
@@ -98,6 +104,10 @@ cdef extern from "ljgen.hpp":
                                   double a1, double a2, double b1, double b2,
                                   double cap_radius)
 
+IF SOFT_SPHERE:
+    cdef extern from "soft_sphere.hpp":
+        int soft_sphere_set_params(int part_type_a, int part_type_b,
+                                   double a, double n, double cut, double offset);
 
 IF TABULATED==1:
     cdef extern from "tab.hpp":

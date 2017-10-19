@@ -191,7 +191,7 @@ Generic Lennard-Jones interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
-    Feature LENNARD_JONES_GENERIC required.
+    `Feature LENNARD_JONES_GENERIC required.`
 
 
 The interface for the generic Lennard-Jones interactions is implemented in 
@@ -397,11 +397,14 @@ see section [sec:forcecap].
 Soft-sphere interaction
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. todo::
-    
-    Not implemented yet.
+.. note::
+    `Feature SOFT_SPHERE required.`
 
-inter soft-sphere
+The interface for the Soft-sphere interaction is implemented in
+:class:`espressomd.interactions.SoftSphereInteraction`. The Soft-sphere parameters
+can be set via::
+
+    system.non_bonded_inter[type1, type2].soft_sphere.set_params(**kwargs)
 
 This defines a soft sphere interaction between particles of the types
 and , which is defined by a single power law:
@@ -1206,7 +1209,7 @@ oif_global_forces interaction).
 
 Bond-angle interactions
 -----------------------
-..  note::
+.. note::
     `Feature BOND_ANGLE required.`
 
 Bond-angle interactions involve three particles forming the angle :math:`\phi`, as shown in the schematic below.
@@ -2269,7 +2272,7 @@ potential is replaced by :math:`r F_\mathrm{max}`. Particles placed exactly on
 top of each other will be subject to a force of magnitude along the first
 coordinate axis.
 
- By artificially capping the forces, it is possible to simulate a system
+By artificially capping the forces, it is possible to simulate a system
 with overlaps. By gradually raising the cap value, possible overlaps
 become unfavorable, and the system equilibrates to a overlap free
 configuration.
@@ -2287,6 +2290,7 @@ regardless of the particle types.
 .. |image4| image:: figures/arealocal.png
 .. |image5| image:: figures/volume.png
 .. |image6| image:: figures/dihedral-angle.pdf
+
 ``constraint``: Setting up constraints
 --------------------------------------
 

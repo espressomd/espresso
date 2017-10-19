@@ -474,6 +474,95 @@ IF LENNARD_JONES_GENERIC == 1:
         def required_keys(self):
             return "epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2"
 
+# Soft-sphere
+
+IF SOFT_SPHERE == 1:
+
+    cdef class SoftSphereInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            """Check that parameters are valid.
+
+            """
+            if self._params["a"] < 0:
+                raise ValueError("Soft-sphere a has to be >=0")
+            if self._params["offset"] < 0:
+                raise ValueError("Soft-sphere offset has to be >=0")
+            if self._params["cutoff"] < 0:
+                raise ValueError("Soft-sphere cutoff has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(
+                self._part_types[0],
+                self._part_types[1])
+            return {
+                "a": ia_params.soft_a,
+                "n": ia_params.soft_n,
+                "cutoff": ia_params.soft_cut,
+                "offset": ia_params.soft_offset
+            }
+
+        def is_active(self):
+            """Check if interaction is active.
+
+            """
+            return (self._params["a"] > 0)
+
+        def _set_params_in_es_core(self):
+            if soft_sphere_set_params(self._part_types[0], self._part_types[1],
+                                      self._params["a"],
+                                      self._params["n"],
+                                      self._params["cutoff"],
+                                      self._params["offset"]):
+                raise Exception("Could not set Soft-sphere parameters")
+
+        def default_params(self):
+            """Python dictionary of default parameters.
+
+            """
+            return {
+                "a": 0.,
+                "n": 0.,
+                "cutoff": 0.,
+                "offset": 0.}
+
+        def type_name(self):
+            """Name of interaction type.
+
+            """
+            return "SoftSphere"
+
+        def set_params(self, **kwargs):
+            """
+            Set parameters for the Soft-sphere interaction.
+
+            Parameters
+            ----------
+            a : float
+                The magnitude of the interaction.
+            n : float
+                Exponent of the power law.
+            cutoff : float
+                     Cutoff distance of the interaction.
+            offset : float
+                     Offset distance of the interaction.
+            """
+            super(SoftSphereInteraction, self).set_params(**kwargs)
+
+        def valid_keys(self):
+            """All parameters that can be set.
+
+            """
+            return "a", "n", "cutoff", "offset"
+
+        def required_keys(self):
+            """Parameters that have to be set.
+
+            """
+            return "a", "n", "cutoff"
+
 
 class NonBondedInteractionHandle(object):
 
@@ -486,6 +575,7 @@ class NonBondedInteractionHandle(object):
     # Here, one line per non-bonded ia
     lennard_jones = None
     generic_lennard_jones = None
+    soft_sphere = None
     tabulated = None
     gay_berne = None
 
@@ -502,6 +592,8 @@ class NonBondedInteractionHandle(object):
         IF LENNARD_JONES_GENERIC:
             self.generic_lennard_jones = GenericLennardJonesInteraction(
                 _type1, _type2)
+        IF SOFT_SPHERE:
+            self.soft_sphere = SoftSphereInteraction(_type1, _type2)
         IF TABULATED == 1:
             self.tabulated = TabulatedNonBonded(_type1, _type2)
         IF GAY_BERNE:

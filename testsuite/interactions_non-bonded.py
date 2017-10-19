@@ -84,6 +84,19 @@ class InteractionsNonBondedTest(ut.TestCase):
                 f_lj *= numpy.sign(r - offset)
         return f_lj
 
+    # Analytical Expressions for Soft-sphere Interaction
+    def soft_sphere_potential(self, r, a, n, cutoff, offset=0):
+        V_ss = 0.
+        if ((r < offset + cutoff)):
+            V_ss = a * numpy.power(r - offset, -n)
+        return V_ss
+
+    def soft_sphere_force(self, r, a, n, cutoff, offset=0):
+        f_ss = 0.
+        if ((r > offset) and (r < offset + cutoff)):
+            f_ss = n * a * numpy.power(r - offset, -(n + 1))
+        return f_ss
+
     # Test Generic Lennard-Jones Potential
     @ut.skipIf(not espressomd.has_features(["LENNARD_JONES_GENERIC"]),
                "Features not available, skipping test!")
@@ -209,6 +222,46 @@ class InteractionsNonBondedTest(ut.TestCase):
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
         self.system.non_bonded_inter[0, 0].lennard_jones.set_params(epsilon=0.)
+
+    # Test Soft-sphere Potential
+    @ut.skipIf(not espressomd.has_features(["SOFT_SPHERE"]),
+               "Features not available, skipping test!")
+    def test_soft_sphere(self):
+
+        ss_a = 1.92
+        ss_n = 3.03
+        ss_cut = 1.123
+        ss_off = 0.123
+
+        self.system.non_bonded_inter[0, 0].soft_sphere.set_params(
+            a=ss_a, n=ss_n, cutoff=ss_cut, offset=ss_off)
+
+        for i in range(12):
+            self.system.part[1].pos += self.step
+        for i in range(113):
+            self.system.part[1].pos += self.step
+            self.system.integrator.run(recalc_forces=True, steps=0)
+
+            # Calculate energies
+            E_sim = self.system.analysis.energy()["non_bonded"]
+            E_ref = self.soft_sphere_potential(
+                r=(i + 13) * self.step_width, a=ss_a, n=ss_n, cutoff=ss_cut, offset=ss_off)
+
+            # Calculate forces
+            f0_sim = self.system.part[0].f
+            f1_sim = self.system.part[1].f
+            f1_ref = self.axis * \
+                self.soft_sphere_force(
+                    r=(i + 13) * self.step_width, a=ss_a, n=ss_n, cutoff=ss_cut, offset=ss_off)
+
+            # Check that energies match, ...
+            self.assertFractionAlmostEqual(E_sim, E_ref)
+            # force equals minus the counter-force  ...
+            self.assertTrue((f0_sim == -f1_sim).all())
+            # and has correct value.
+            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
+
+        self.system.non_bonded_inter[0, 0].soft_sphere.set_params(a=0.)
 
 
 if __name__ == '__main__':
