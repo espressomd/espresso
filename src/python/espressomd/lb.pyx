@@ -40,8 +40,8 @@ IF LB_GPU or LB:
     cdef class LBFluid(HydrodynamicInteraction):
         """
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the CPU.
-        
-        """
+
+        """            
 
         def __getitem__(self, key):
             if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
@@ -173,8 +173,15 @@ IF LB_GPU or LB:
 
         # input/output function wrappers for whole LB fields
         ####################################################
-        def print_vtk_velocity(self, path):
-            lb_lbfluid_print_vtk_velocity(utils.to_char_pointer(path))
+        def print_vtk_velocity(self, path, bb1=None, bb2=None):
+            cdef vector[int] bb1_vec
+            cdef vector[int] bb2_vec
+            if bb1 is None or bb2 is None:
+                lb_lbfluid_print_vtk_velocity(utils.to_char_pointer(path))
+            else:
+                bb1_vec = bb1
+                bb2_vec = bb2
+                lb_lbfluid_print_vtk_velocity(utils.to_char_pointer(path), bb1_vec, bb2_vec)
         def print_vtk_boundary(self, path):
             lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
         def print_velocity(self, path):
@@ -188,35 +195,58 @@ IF LB_GPU or LB:
         def load_checkpoint(self, path, binary):
             lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
 
-        # input/output function wrappers for LB nodes
-        ####################################################
-
-
-
-
         # Activate Actor
         ####################################################
         def _activate_method(self):
             self.validate_params()
-            self._set_lattice_switch()
             self._set_params_in_es_core()
-
-
-
-
+            self._set_lattice_switch()
+            IF LB:
+                return
+            ELSE:
+                raise Exception("LB not compiled in")
 
 IF LB_GPU:
     cdef class LBFluid_GPU(LBFluid):
         """
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the GPU.
-        
+
         """
+
         def _set_lattice_switch(self):
             if lb_set_lattice_switch(2):
                 raise Exception("lb_set_lattice_switch error")
 
         def remove_total_momentum(self):
             lb_lbfluid_remove_total_momentum()
+
+        def _activate_method(self):
+            self.validate_params()
+            self._set_lattice_switch()
+            self._set_params_in_es_core()
+            IF LB_GPU:
+                return
+            ELSE:
+                raise Exception("LB_GPU not compiled in")
+            
+        def get_interpolated_velocity(self, pos):
+            """Get LB fluid velocity at specified position.
+
+            Parameters
+            ----------
+            pos : array_like :obj:`float`
+                  The position at which velocity is requested.
+
+            Returns
+            -------
+            v : array_like :obj:`float`
+                The LB fluid velocity at ``pos``.
+
+            """
+            cdef double[3] p = pos
+            cdef double[3] v
+            lb_lbfluid_get_interpolated_velocity_global(p, v)
+            return v
 
 
 IF LB or LB_GPU:

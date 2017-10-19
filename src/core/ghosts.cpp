@@ -36,7 +36,7 @@
 #include "communication.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"
-#include "forces_inline.hpp"
+#include "domain_decomposition.hpp"
 
 /** Tag for communication in ghost_comm. */
 #define REQ_GHOST_SEND 100
@@ -62,6 +62,16 @@ static MPI_Op MPI_FORCES_SUM;
     NO CHANGES OF THIS VALUE OUTSIDE OF \ref on_ghost_flags_change !!!!
 */
 int ghosts_have_v = 0;
+
+/** add force to another. This is used when collecting ghost forces. */
+inline void add_force(ParticleForce *F_to, ParticleForce *F_add) {
+  for (int i = 0; i < 3; i++)
+    F_to->f[i] += F_add->f[i];
+#ifdef ROTATION
+  for (int i = 0; i < 3; i++)
+    F_to->torque[i] += F_add->torque[i];
+#endif
+}
 
 void prepare_comm(GhostCommunicator *comm, int data_parts, int num)
 {
@@ -142,7 +152,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts)
   n_s_buffer = calc_transmit_size(gc, data_parts);
   if (n_s_buffer > max_s_buffer) {
     max_s_buffer = n_s_buffer;
-    s_buffer = (char*)Utils::realloc(s_buffer, max_s_buffer);
+    s_buffer = Utils::realloc(s_buffer, max_s_buffer);
   }
   GHOST_TRACE(fprintf(stderr, "%d: will send %d\n", this_node, n_s_buffer));
 
@@ -267,7 +277,7 @@ void prepare_recv_buffer(GhostCommunication *gc, int data_parts)
   n_r_buffer = calc_transmit_size(gc, data_parts);
   if (n_r_buffer > max_r_buffer) {
     max_r_buffer = n_r_buffer;
-    r_buffer = (char*)Utils::realloc(r_buffer, max_r_buffer);
+    r_buffer = Utils::realloc(r_buffer, max_r_buffer);
   }
   GHOST_TRACE(fprintf(stderr, "%d: will get %d\n", this_node, n_r_buffer));
 }

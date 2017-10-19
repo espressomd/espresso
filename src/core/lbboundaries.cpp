@@ -181,9 +181,9 @@ void lb_init_boundaries() {
               (lbboundaries.size() > 0 || pdb_boundary_lattice)) {
             size_of_index = (number_of_boundnodes + 1) * sizeof(int);
             host_boundary_node_list =
-                (int *)Utils::realloc(host_boundary_node_list, size_of_index);
+                Utils::realloc(host_boundary_node_list, size_of_index);
             host_boundary_index_list =
-                (int *)Utils::realloc(host_boundary_index_list, size_of_index);
+                Utils::realloc(host_boundary_index_list, size_of_index);
             host_boundary_node_list[number_of_boundnodes] =
                 x + lbpar_gpu.dim_x * y + lbpar_gpu.dim_x * lbpar_gpu.dim_y * z;
             host_boundary_index_list[number_of_boundnodes] =
@@ -435,7 +435,7 @@ void lb_bounce_back() {
             for (l = 0; l < 3; l++) {
               population_shift -=
                   lbpar.agrid * lbpar.agrid * lbpar.agrid *
-                  lbpar.rho[0] * 2 * lbmodel.c[i][l] *
+                  lbpar.rho * 2 * lbmodel.c[i][l] *
                   lbmodel.w[i] *
 		(*LBBoundaries::lbboundaries[lbfields[k].boundary - 1]).velocity()[l] / //TODO
                   lbmodel.c_sound_sq;
