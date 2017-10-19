@@ -1289,7 +1289,7 @@ __device__ void print_n_from_modes_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_LE_up
  } 
 }
 
-__device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_LE_upper, LB_nodes_gpu nodes_LE_lower, int index){
+__device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_front, LB_nodes_gpu n_back, LB_nodes_gpu nodes_LE_upper, LB_nodes_gpu nodes_LE_lower, int index){
       
   int xyz[3];
   index_to_xyz_LE(index, xyz);
@@ -1327,9 +1327,12 @@ __device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_L
 
     //TODO later write into n_a and atomic_add n_a shifted and interpolated onto n_b
     //TODO the sqrt around the weights 1/18 and 1/36 needs justification
-    n_b.vd[(4 + ii*LBQ ) * para.number_of_nodes + x
+    n_front.vd[(4 + ii*LBQ ) * para.number_of_nodes + x
                                                 + para.dim_x*((para.dim_y+y-1)%para.dim_y)
-                                                + para.dim_x*para.dim_y*z] +=
+                                                + para.dim_x*para.dim_y*z] =
+    n_back.vd[(4 + ii*LBQ ) * para.number_of_nodes + x
+                                                + para.dim_x*((para.dim_y+y-1)%para.dim_y)
+                                                + para.dim_x*para.dim_y*z] +
       sqrt(1.0f/18.0f) * (
                        mode[ 0 + ii * LBQ] - mode[ 2 + ii * LBQ]
                      - mode[ 5 + ii * LBQ] + mode[ 6 + ii * LBQ]
@@ -1338,9 +1341,12 @@ __device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_L
                    );
 
 
-    n_b.vd[(8 + ii*LBQ ) * para.number_of_nodes + (para.dim_x+x-1)%para.dim_x
+    n_front.vd[(8 + ii*LBQ ) * para.number_of_nodes + (para.dim_x+x-1)%para.dim_x
                                                 + para.dim_x*((para.dim_y+y-1)%para.dim_y)
-                                                + para.dim_x*para.dim_y*z] +=
+                                                + para.dim_x*para.dim_y*z] =
+    n_back.vd[(8 + ii*LBQ ) * para.number_of_nodes + (para.dim_x+x-1)%para.dim_x
+                                                + para.dim_x*((para.dim_y+y-1)%para.dim_y)
+                                                + para.dim_x*para.dim_y*z] +
       sqrt(1.0f/36.0f) * (
                        mode[ 0 + ii * LBQ] - mode[ 1 + ii * LBQ]
                      - mode[ 2 + ii * LBQ] + mode[ 4 + ii * LBQ]
@@ -1350,9 +1356,12 @@ __device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_L
                      + mode[16 + ii * LBQ] + 2.0f*mode[18 + ii * LBQ]
                    );
 
-    n_b.vd[(9 + ii*LBQ ) * para.number_of_nodes + (x+1)%para.dim_x
+    n_front.vd[(9 + ii*LBQ ) * para.number_of_nodes + (x+1)%para.dim_x
                                                 + para.dim_x*((para.dim_y+y-1)%para.dim_y)
-                                                + para.dim_x*para.dim_y*z] +=
+                                                + para.dim_x*para.dim_y*z] =
+    n_back.vd[(9 + ii*LBQ ) * para.number_of_nodes + (x+1)%para.dim_x
+                                                + para.dim_x*((para.dim_y+y-1)%para.dim_y)
+                                                + para.dim_x*para.dim_y*z] +
       sqrt(1.0f/36.0f) * (
                        mode[ 0 + ii * LBQ] + mode[ 1 + ii * LBQ]
                      - mode[ 2 + ii * LBQ] + mode[ 4 + ii * LBQ]
@@ -1362,9 +1371,12 @@ __device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_L
                      + mode[16 + ii * LBQ] + 2.0f*mode[18 + ii * LBQ]
                    );
 
-    n_b.vd[(16 + ii*LBQ ) * para.number_of_nodes + x
+    n_front.vd[(16 + ii*LBQ ) * para.number_of_nodes + x
                                                  + para.dim_x*((para.dim_y+y-1)%para.dim_y)
-                                                 + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] +=
+                                                 + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] =
+    n_back.vd[(16 + ii*LBQ ) * para.number_of_nodes + x
+                                                 + para.dim_x*((para.dim_y+y-1)%para.dim_y)
+                                                 + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] +
       sqrt(1.0f/36.0f) * (
                        mode[ 0 + ii * LBQ] - mode[ 2 + ii * LBQ]
                      - mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
@@ -1375,9 +1387,12 @@ __device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_L
                      - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
                    );
 
-    n_b.vd[(18 + ii*LBQ ) * para.number_of_nodes + x
+    n_front.vd[(18 + ii*LBQ ) * para.number_of_nodes + x
                                                  + para.dim_x*((para.dim_y+y-1)%para.dim_y)
-                                                 + para.dim_x*para.dim_y*((z+1)%para.dim_z)] +=
+                                                 + para.dim_x*para.dim_y*((z+1)%para.dim_z)] =
+    n_back.vd[(18 + ii*LBQ ) * para.number_of_nodes + x
+                                                 + para.dim_x*((para.dim_y+y-1)%para.dim_y)
+                                                 + para.dim_x*para.dim_y*((z+1)%para.dim_z)] +
       sqrt(1.0f/36.0f) * (
                        mode[ 0 + ii * LBQ] - mode[ 2 + ii * LBQ]
                      + mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
@@ -1411,9 +1426,12 @@ __device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_L
     mode[17 + ii * LBQ] = 0.0f;
     mode[18 + ii * LBQ] = 0.0f;
 
-    n_b.vd[(3 + ii*LBQ ) * para.number_of_nodes + x
+    n_front.vd[(3 + ii*LBQ ) * para.number_of_nodes + x
                                                 + para.dim_x*((y+1)%para.dim_y)
-                                                + para.dim_x*para.dim_y*z] +=
+                                                + para.dim_x*para.dim_y*z] =
+    n_back.vd[(3 + ii*LBQ ) * para.number_of_nodes + x
+                                                + para.dim_x*((y+1)%para.dim_y)
+                                                + para.dim_x*para.dim_y*z] +
       sqrt(1.0f/18.0f) * (
                        mode[ 0 + ii * LBQ] + mode[ 2 + ii * LBQ]
                      - mode[ 5 + ii * LBQ] + mode[ 6 + ii * LBQ]
@@ -1421,9 +1439,12 @@ __device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_L
                      - 2.0f*(mode[11 + ii * LBQ] + mode[16 + ii * LBQ])
                    );
                    
-    n_b.vd[(7 + ii*LBQ ) * para.number_of_nodes + (x+1)%para.dim_x
+    n_front.vd[(7 + ii*LBQ ) * para.number_of_nodes + (x+1)%para.dim_x
                                                 + para.dim_x*((y+1)%para.dim_y)
-                                                + para.dim_x*para.dim_y*z] +=
+                                                + para.dim_x*para.dim_y*z] =
+    n_back.vd[(7 + ii*LBQ ) * para.number_of_nodes + (x+1)%para.dim_x
+                                                + para.dim_x*((y+1)%para.dim_y)
+                                                + para.dim_x*para.dim_y*z] +
       sqrt(1.0f/36.0f) * (
                        mode[ 0 + ii * LBQ] + mode[ 1 + ii * LBQ]
                      + mode[ 2 + ii * LBQ] + mode[ 4 + ii * LBQ]
@@ -1432,9 +1453,12 @@ __device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_L
                      + mode[13 + ii * LBQ] + mode[14 + ii * LBQ]
                      + mode[16 + ii * LBQ] + 2.0f*mode[18 + ii * LBQ]
                    );
-    n_b.vd[(10 + ii*LBQ ) * para.number_of_nodes + (para.dim_x+x-1)%para.dim_x
+    n_front.vd[(10 + ii*LBQ ) * para.number_of_nodes + (para.dim_x+x-1)%para.dim_x
                                                  + para.dim_x*((y+1)%para.dim_y)
-                                                 + para.dim_x*para.dim_y*z] += 
+                                                 + para.dim_x*para.dim_y*z] = 
+    n_back.vd[(10 + ii*LBQ ) * para.number_of_nodes + (para.dim_x+x-1)%para.dim_x
+                                                 + para.dim_x*((y+1)%para.dim_y)
+                                                 + para.dim_x*para.dim_y*z] +
       sqrt(1.0f/36.0f) * (
                        mode[ 0 + ii * LBQ] - mode[ 1 + ii * LBQ]
                      + mode[ 2 + ii * LBQ] + mode[ 4 + ii * LBQ]
@@ -1444,9 +1468,12 @@ __device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_L
                      + mode[16 + ii * LBQ] + 2.0f*mode[18 + ii * LBQ]
                    );
 
-    n_b.vd[(15 + ii*LBQ ) * para.number_of_nodes + x
+    n_front.vd[(15 + ii*LBQ ) * para.number_of_nodes + x
                                                  + para.dim_x*((y+1)%para.dim_y)
-                                                 + para.dim_x*para.dim_y*((z+1)%para.dim_z)] +=
+                                                 + para.dim_x*para.dim_y*((z+1)%para.dim_z)] =
+    n_back.vd[(15 + ii*LBQ ) * para.number_of_nodes + x
+                                                 + para.dim_x*((y+1)%para.dim_y)
+                                                 + para.dim_x*para.dim_y*((z+1)%para.dim_z)] +
       sqrt(1.0f/36.0f) * (
                        mode[ 0 + ii * LBQ] + mode[ 2 + ii * LBQ]
                      + mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
@@ -1457,9 +1484,12 @@ __device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_L
                      - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
                    );
 
-    n_b.vd[(17 + ii*LBQ ) * para.number_of_nodes + x
+    n_front.vd[(17 + ii*LBQ ) * para.number_of_nodes + x
                                                  + para.dim_x*((y+1)%para.dim_y)
-                                                 + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] +=
+                                                 + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] =
+    n_back.vd[(17 + ii*LBQ ) * para.number_of_nodes + x
+                                                 + para.dim_x*((y+1)%para.dim_y)
+                                                 + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] +
       sqrt(1.0f/36.0f) * (
                        mode[ 0 + ii * LBQ] + mode[ 2 + ii * LBQ]
                      - mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
@@ -1470,6 +1500,61 @@ __device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_L
                      - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
                    );
  } 
+}
+
+__global__ void apply_LE_position_offset(LB_nodes_gpu n_front, LB_nodes_gpu n_back, float lees_edwards_offset) {
+
+  int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
+
+  if (index < para.dim_x * para.dim_z * 2) {
+    int xyz[3];
+    index_to_xyz_LE(index, xyz);
+    printf("index=[%d, %d, %d]\n", xyz[0], xyz[1], xyz[2]);
+    
+    int grid_index = xyz_to_index(xyz);
+    int xyz_[3];
+    index_to_xyz(grid_index, xyz_);
+    printf("grid_index=[%d, %d, %d]\n", xyz_[0], xyz_[1], xyz_[2]);
+
+    int ii = 0;
+
+    unsigned int x = xyz[0];
+    unsigned int y = xyz[1];
+    unsigned int z = xyz[2];
+
+    if(y == 0) {
+      n_back.vd[ (4 + ii*LBQ ) * para.number_of_nodes + grid_index ] = 
+      n_front.vd[ (4 + ii*LBQ ) * para.number_of_nodes + grid_index ];
+
+      n_back.vd[ (8 + ii*LBQ ) * para.number_of_nodes + grid_index ] = 
+      n_front.vd[ (8 + ii*LBQ ) * para.number_of_nodes + grid_index ];
+
+      n_back.vd[ (9 + ii*LBQ ) * para.number_of_nodes + grid_index ] = 
+      n_front.vd[ (9 + ii*LBQ ) * para.number_of_nodes + grid_index ];
+
+      n_back.vd[ (16 + ii*LBQ ) * para.number_of_nodes + grid_index ] = 
+      n_front.vd[ (16 + ii*LBQ ) * para.number_of_nodes + grid_index ];
+
+      n_back.vd[ (18 + ii*LBQ ) * para.number_of_nodes + grid_index ] = 
+      n_front.vd[ (18 + ii*LBQ ) * para.number_of_nodes + grid_index ];
+    }
+    else if(y == para.dim_y-1) {
+      n_back.vd[ (3 + ii*LBQ ) * para.number_of_nodes + grid_index ] = 
+      n_front.vd[ (3 + ii*LBQ ) * para.number_of_nodes + grid_index ];
+
+      n_back.vd[ (7 + ii*LBQ ) * para.number_of_nodes + grid_index ] = 
+      n_front.vd[ (7 + ii*LBQ ) * para.number_of_nodes + grid_index ];
+
+      n_back.vd[ (10 + ii*LBQ ) * para.number_of_nodes + grid_index ] = 
+      n_front.vd[ (10 + ii*LBQ ) * para.number_of_nodes + grid_index ];
+
+      n_back.vd[ (15 + ii*LBQ ) * para.number_of_nodes + grid_index ] = 
+      n_front.vd[ (15 + ii*LBQ ) * para.number_of_nodes + grid_index ];
+
+      n_back.vd[ (17 + ii*LBQ ) * para.number_of_nodes + grid_index ] = 
+      n_front.vd[ (17 + ii*LBQ ) * para.number_of_nodes + grid_index ];
+    }
+  }
 }
 
 /** Bounce back boundary conditions.
@@ -3385,7 +3470,7 @@ __global__ void apply_LE_velocity_shift(LB_nodes_gpu n_front, LB_nodes_gpu n_bac
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   if (index < para.dim_x * para.dim_z * 2) {
     calculate_LE_mode_delta(index, d_v, lees_edwards_velocity, nodes_LE_upper, nodes_LE_lower);
-    calc_n_from_modes_push_LE(n_back, nodes_LE_upper, nodes_LE_lower, index);
+    calc_n_from_modes_push_LE(n_front, n_back, nodes_LE_upper, nodes_LE_lower, index);
     //print_n_from_modes_LE(n_back, nodes_LE_upper, nodes_LE_lower, index);
   }
 }
@@ -4302,6 +4387,7 @@ void lb_integrate_GPU() {
   blocks_per_grid_x = (lbpar_gpu.dim_x * lbpar_gpu.dim_z * 2 + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
   dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
   KERNELCALL(apply_LE_velocity_shift, dim_grid, threads_per_block, (*n_front, *n_back, nodes_LE_upper, nodes_LE_lower, device_rho_v, lees_edwards_rate/lbpar_gpu.time_step));
+  KERNELCALL(apply_LE_position_offset, dim_grid, threads_per_block, (*n_front, *n_back, lees_edwards_offset));
 #endif
 }
 
