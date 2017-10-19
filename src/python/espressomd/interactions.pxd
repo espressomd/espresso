@@ -62,6 +62,13 @@ cdef extern from "interaction_data.hpp":
         double GB_mu
         double GB_nu
 
+        double MORSE_eps
+        double MORSE_alpha
+        double MORSE_rmin
+        double MORSE_cut
+        double MORSE_rest
+        double MORSE_capradius
+
         double soft_a
         double soft_n
         double soft_cut
@@ -103,6 +110,12 @@ cdef extern from "ljgen.hpp":
                                   double shift, double offset,
                                   double a1, double a2, double b1, double b2,
                                   double cap_radius)
+
+IF MORSE:
+    cdef extern from "morse.hpp":
+        int morse_set_params(int part_type_a, int part_type_b,
+                             double eps, double alpha,
+                             double rmin, double cut, double cap_radius);
 
 IF SOFT_SPHERE:
     cdef extern from "soft_sphere.hpp":

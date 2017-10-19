@@ -346,6 +346,7 @@ IF GAY_BERNE:
             return "eps", "sig", "cut", "k1", "k2", "mu", "nu"
 
 # Generic Lennard Jones
+
 IF LENNARD_JONES_GENERIC == 1:
 
     cdef class GenericLennardJonesInteraction(NonBondedInteraction):
@@ -474,6 +475,104 @@ IF LENNARD_JONES_GENERIC == 1:
         def required_keys(self):
             return "epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2"
 
+# Morse
+
+IF MORSE == 1:
+
+    cdef class MorseInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            """Check that parameters are valid.
+
+            """
+            if self._params["eps"] < 0:
+                raise ValueError("Morse eps has to be >=0")
+            if self._params["offset"] < 0:
+                raise ValueError("Morse offset has to be >=0")
+            if self._params["cutoff"] < 0:
+                raise ValueError("Morse cutoff has to be >=0")
+            if self._params["cap"] < 0:
+                raise ValueError("Morse cap has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(
+                self._part_types[0],
+                self._part_types[1])
+            return {
+                "eps": ia_params.MORSE_eps,
+                "alpha": ia_params.MORSE_alpha,
+                "rmin": ia_params.MORSE_rmin,
+                "cutoff": ia_params.MORSE_cut,
+                "cap": ia_params.MORSE_capradius
+            }
+
+        def is_active(self):
+            """Check if interaction is active.
+
+            """
+            return (self._params["eps"] > 0)
+
+        def _set_params_in_es_core(self):
+            if morse_set_params(self._part_types[0], self._part_types[1],
+                                      self._params["eps"],
+                                      self._params["alpha"],
+                                      self._params["rmin"],
+                                      self._params["cutoff"],
+                                      self._params["cap"]):
+                raise Exception("Could not set Morse parameters")
+
+        def default_params(self):
+            """Python dictionary of default parameters.
+
+            """
+            return {
+                "eps": 0.,
+                "alpha": 0.,
+                "rmin": 0.,
+                "cutoff": 0.,
+                "cap": 0.}
+
+        def type_name(self):
+            """Name of interaction type.
+
+            """
+            return "Morse"
+
+        def set_params(self, **kwargs):
+            """
+            Set parameters for the Morse interaction.
+
+            Parameters
+            ----------
+            eps : float
+                The magnitude of the interaction.
+            alpha : float
+                Stiffness of the Morse interaction.
+            rmin : float
+                Distance of potential minimum
+            cutoff : float
+                Cutoff distance of the interaction.
+            cap : float, optional
+                If individual force caps are used, determines the distance
+                at which the force is capped.
+            """
+            super(MorseInteraction, self).set_params(**kwargs)
+
+        def valid_keys(self):
+            """All parameters that can be set.
+
+            """
+            return "eps", "alpha", "rmin", "cutoff", "cap"
+
+        def required_keys(self):
+            """Parameters that have to be set.
+
+            """
+            return "eps", "alpha", "rmin"
+
+
 # Soft-sphere
 
 IF SOFT_SPHERE == 1:
@@ -575,6 +674,7 @@ class NonBondedInteractionHandle(object):
     # Here, one line per non-bonded ia
     lennard_jones = None
     generic_lennard_jones = None
+    morse = None
     soft_sphere = None
     tabulated = None
     gay_berne = None
@@ -592,6 +692,8 @@ class NonBondedInteractionHandle(object):
         IF LENNARD_JONES_GENERIC:
             self.generic_lennard_jones = GenericLennardJonesInteraction(
                 _type1, _type2)
+        IF MORSE:
+            self.morse = MorseInteraction(_type1, _type2)
         IF SOFT_SPHERE:
             self.soft_sphere = SoftSphereInteraction(_type1, _type2)
         IF TABULATED == 1:

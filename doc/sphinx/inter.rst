@@ -250,7 +250,7 @@ Lennard-Jones cosine interaction
 inter lj-cos inter lj-cos2
 
 specifies a Lennard-Jones interaction with cosine
-tail :cite:`soddeman01a` between particles of the types and
+tail :cite:`soddeman01a` between particles of the types *type1* and *type2*
 . The first variant behaves as follows: Until the minimum of the
 Lennard-Jones potential at
 :math:`r_\mathrm{min} = r_\mathrm{off} +
@@ -290,8 +290,8 @@ Smooth step interaction
 
 inter smooth-step
 
-This defines a smooth step interaction between particles of the types
-and , for which the potential is
+This defines a smooth step interaction between particles of the types *type1*
+and *type2*, for which the potential is
 
 .. math:: V(r)= \left(\sigma_1/d\right)^n + \epsilon/(1 + \exp\left[2k_0 (r - \sigma_2)\right])
 
@@ -313,8 +313,8 @@ BMHTF potential
 inter bmhtf-nacl
 
 This defines an interaction with the *short-ranged part* of the
-Born-Meyer-Huggins-Tosi-Fumi potential between particles of the types
-and , which is often used to simulate NaCl crystals. The potential is
+Born-Meyer-Huggins-Tosi-Fumi potential between particles of the types *type1*
+and *type2*, which is often used to simulate NaCl crystals. The potential is
 defined by:
 
 .. math::
@@ -350,14 +350,18 @@ Cl-particles, the corresponding prefactor of the Coulomb interaction is
 Morse interaction
 ~~~~~~~~~~~~~~~~~
 
-.. todo::
-    
-    Not implemented yet.
+.. note::
+     `Feature MORSE required.`
 
-inter morse
+The interface for the Morse interaction is implemented in
+:class:`espressomd.interactions.MorseInteraction`. The Morse interaction parameters
+can be set via::
+
+     system.non_bonded_inter[type1, type2].morse.set_params(**kwargs)
+
 
 This defines an interaction using the Morse potential between particles
-of the types and . It serves similar purposes as the Lennard-Jones
+of the types *type1* and *type2*. It serves similar purposes as the Lennard-Jones
 potential, but has a deeper minimum, around which it is harmonic. This
 models the potential energy in a diatomic molecule. This potential
 allows capping the force using ``inter forcecap``, see
@@ -383,7 +387,7 @@ Buckingham interaction
 
 inter buckingham
 
-This defines a Buckingham interaction between particles of the types and
+This defines a Buckingham interaction between particles of the types *type1* and *type2*
 , for which the potential is given by
 
 .. math:: V(r)= A\exp(-B r) - Cr^{-6} - Dr^{-4} + \epsilon_\mathrm{shift}
@@ -406,8 +410,8 @@ can be set via::
 
     system.non_bonded_inter[type1, type2].soft_sphere.set_params(**kwargs)
 
-This defines a soft sphere interaction between particles of the types
-and , which is defined by a single power law:
+This defines a soft sphere interaction between particles of the types *type1*
+and *type2*, which is defined by a single power law:
 
 .. math:: V(r)=a\left(r-r_\mathrm{offset}\right)^{-n}
 
@@ -426,7 +430,7 @@ Membrane-collision interaction
 inter membrane
 
 This defines a membrane collision interaction between particles of the
-types and , where particle of belongs to one OIF or OIF-like object and
+types *type1* and *type2*, where particle of belongs to one OIF or OIF-like object and
 particle of belongs to another such object.
 
 It is very similar to soft-sphere interaction, but it takes into account
@@ -461,7 +465,7 @@ Hat interaction
 
 inter hat
 
-This defines a simple force ramp between particles of the types and .
+This defines a simple force ramp between particles of the types *type1* and *type2*.
 The maximal force acts at zero distance and zero force is applied at
 distances :math:`r_c` and bigger. For distances smaller than , the force
 is given by
@@ -492,7 +496,7 @@ Hertzian interaction
 inter hertzian
 
 This defines an interaction according to the Hertzian potential between
-particles of the types and . The Hertzian potential is defined by
+particles of the types *type1* and *type2*. The Hertzian potential is defined by
 
 .. math::
 
@@ -554,7 +558,7 @@ inter lj-angle
 |image1|
 
 Specifies a 12-10 Lennard-Jones interaction with angular dependence
-between particles of the types and . These two particles need two bonded
+between particles of the types *type1* and *type2*. These two particles need two bonded
 partners oriented in a symmetric way. They define an orientation for the
 central particle. The purpose of using bonded partners is to avoid
 dealing with torques, therefore the interaction does *not* need the

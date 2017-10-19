@@ -84,10 +84,27 @@ class InteractionsNonBondedTest(ut.TestCase):
                 f_lj *= numpy.sign(r - offset)
         return f_lj
 
+    # Analytical Expressions for Morse Interaction
+    def morse_potential(self, r, eps, alpha, cutoff, rmin=0):
+        V_m = 0.
+        if (r < cutoff):
+            V_m = eps * (numpy.exp(-2. * alpha * (r - rmin)) -
+                         2 * numpy.exp(-alpha * (r - rmin)))
+            V_m -= eps * (numpy.exp(-2. * alpha * (cutoff - rmin)
+                                    ) - 2 * numpy.exp(-alpha * (cutoff - rmin)))
+        return V_m
+
+    def morse_force(self, r, eps, alpha, cutoff, rmin=0):
+        f_m = 0.
+        if (r < cutoff):
+            f_m = 2. * numpy.exp((rmin - r) * alpha) * \
+                (numpy.exp((rmin - r) * alpha) - 1) * alpha * eps
+        return f_m
+
     # Analytical Expressions for Soft-sphere Interaction
     def soft_sphere_potential(self, r, a, n, cutoff, offset=0):
         V_ss = 0.
-        if ((r < offset + cutoff)):
+        if (r < offset + cutoff):
             V_ss = a * numpy.power(r - offset, -n)
         return V_ss
 
@@ -222,6 +239,46 @@ class InteractionsNonBondedTest(ut.TestCase):
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
         self.system.non_bonded_inter[0, 0].lennard_jones.set_params(epsilon=0.)
+
+    # Test Morse Potential
+    @ut.skipIf(not espressomd.has_features(["MORSE"]),
+               "Features not available, skipping test!")
+    def test_morse(self):
+
+        m_eps = 1.92
+        m_alpha = 3.03
+        m_cut = 1.253
+        m_rmin = 0.123
+
+        self.system.non_bonded_inter[0, 0].morse.set_params(
+            eps=m_eps, alpha=m_alpha, cutoff=m_cut, rmin=m_rmin)
+
+#        for i in range(12):
+#            self.system.part[1].pos += self.step
+        for i in range(126):
+            self.system.part[1].pos += self.step
+            self.system.integrator.run(recalc_forces=True, steps=0)
+
+            # Calculate energies
+            E_sim = self.system.analysis.energy()["non_bonded"]
+            E_ref = self.morse_potential(
+                r=(i + 1) * self.step_width, eps=m_eps, alpha=m_alpha, cutoff=m_cut, rmin=m_rmin)
+
+            # Calculate forces
+            f0_sim = self.system.part[0].f
+            f1_sim = self.system.part[1].f
+            f1_ref = self.axis * \
+                self.morse_force(r=(i + 1) * self.step_width, eps=m_eps,
+                                 alpha=m_alpha, cutoff=m_cut, rmin=m_rmin)
+
+            # Check that energies match, ...
+            self.assertFractionAlmostEqual(E_sim, E_ref)
+            # force equals minus the counter-force  ...
+            self.assertTrue((f0_sim == -f1_sim).all())
+            # and has correct value.
+            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
+
+        self.system.non_bonded_inter[0, 0].morse.set_params(eps=0.)
 
     # Test Soft-sphere Potential
     @ut.skipIf(not espressomd.has_features(["SOFT_SPHERE"]),
