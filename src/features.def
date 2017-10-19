@@ -99,13 +99,6 @@ SHANCHEN                        implies LB_GPU
 SHANCHEN                        requires not ELECTROKINETICS
 
 /* Stokesian-Dynamics features */
-BD
-SD                              requires CUDA
-SD                              requires ARPACK
-SD                              implies BD
-SD_FF_ONLY                      requires SD
-SD_USE_FLOAT                    requires SD
-SD_NOT_PERIODIC                 requires SD
 
 /* Interaction features */
 TABULATED
@@ -176,7 +169,6 @@ GHOSTS_HAVE_BONDS               notest
 
 /* Debugging */
 ADDITIONAL_CHECKS
-ASYNC_BARRIER
 
 ESIF_DEBUG
 COMM_DEBUG
@@ -212,8 +204,6 @@ SD_DEBUG
 CUDA_DEBUG
 H5MD_DEBUG
 
-MPI_CORE
-FORCE_CORE
 
 /* Single particle debugging */
 ONEPART_DEBUG
@@ -224,6 +214,5 @@ ONEPART_DEBUG
 # Switches that are set by configure or gcc, not to be set manually
 CUDA external
 FFTW external
-TK   external
 H5MD external
 SCAFACOS external
