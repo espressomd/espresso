@@ -793,7 +793,7 @@ class Analysis(object):
         cdef double * rg = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
         c_analyze.calc_rg(c_analyze.partCfg(), & rg)
-        tuple_rg = (rg[0], rg[1], rg[2])
+        tuple_rg = (rg[0], rg[1], rg[2], rg[3])
         free(rg)
         return tuple_rg
 
@@ -825,7 +825,7 @@ class Analysis(object):
         cdef double * rh = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
         c_analyze.calc_rh(c_analyze.partCfg(), & rh)
-        tuple_rh = (rh[0], rh[1], rh[2])
+        tuple_rh = (rh[0], rh[1])
         free(rh)
         return tuple_rh
 
