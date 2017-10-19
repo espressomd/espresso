@@ -3,37 +3,24 @@
 Analysis
 ========
 
-has two fundamentally different classes of observables for analyzing the systems.
-On the one hand, some observables are computed from the Tcl level.
-In that case, the observable is measured in the moment that the
-corresponding Tcl function is called, and the results are returned to
-the Tcl script. In general, observables in this class should only be
-computed after a large number of timesteps, as switching forth and back
-between the C- and the Tcl-level is costly. This chapter describes all
-observables in this class.
+The :class:`espressomd.analyze.Analysis` class provides online-calculation of local and global observables.
+These exist for convenience and historical reasons.
+Since arithmetic in TCL was quite painful to perform, there exists a series of common analysis routines which can be used whenever possible.
+They usualy have parts of the calculations performed in the core.
+
 
 On the other hand, some observables are computed and stored in the
 C-core of during a call to the function , while they are set up and
-their results are collected from the Tcl level. These observables are
-more complex to implement and offer less flexibility, while the are
+their results are collected from the script level. These observables are
+more complex to implement and offer less flexibility, while they are
 significantly faster and more memory efficient, and they can be set up
 to be computed every few timesteps. The observables in this class are
 described in chapter [chap:analysis-core].
-
-The class of Tcl-level analysis functions is mainly controlled via the
-command. It has two main uses: Calculation of observables () and
-definition and analysis of topologies in the system (). In addition,
-offers the command (see section [sec:uwerr] for computing statistical
-errors in time series.
-
 
 .. _Available observables:
 
 Available observables
 ---------------------
-
-The command provides online-calculation of local and global observables.
-
 
 .. _Minimal distances between particles:
 
@@ -595,7 +582,7 @@ Returns the quadratic end-to-end-distance and its root averaged over all chains.
 
 Radius of gyration
 ^^^^^^^^^^^^^^^^^^
-:meth:`espressomd.analyze.Analysis.calc_re`
+:meth:`espressomd.analyze.Analysis.calc_rg`
 
 Returns the radius of gyration averaged over all chains.
 It is a radius of a sphere, which would have the same moment of inertia as the
@@ -630,8 +617,6 @@ The following formula is used for the computation:
 The above-mentioned formula is only valid under certain assumptions. For
 more information, see Chapter 4 and equation 4.102
 in :cite:`doi86a`.
-
-{ }
 
 
 .. _Internal distances:
@@ -729,33 +714,4 @@ the second rdf is for the centers of mass of the chains and
 the third one is the distribution of the closest distances between the chains (the
 shortest monomer-monomer distances).
 
-
-.. _Mean square displacement of chains:
-
-Mean square displacement of chains
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. todo:: This feature is not implemented
-
-[analyze:<g2>] [analyze:<g3>] [analyze:g123]
-
-analyze analyze g123
-
-Variant returns
-
--  the mean-square displacement of the beads in the chain ()
-
--  the mean-square displacement of the beads relative to the center of
-   mass of the chain ()
-
--  or the motion of the center of mass ()
-
-averaged over all stored configurations (see section ). At short time
-scales, and coincide, since the motion of the center of mass is much
-slower. At large timescales and coincide and correspond to the center of
-mass motion, while levels off. and together correspond to . For details,
-see :cite:`grest86a`.
-
-Variant returns all of these observables for the current configuration,
-as compared to the reference configuration. The reference configuration
-is set, when the option is used.
 
