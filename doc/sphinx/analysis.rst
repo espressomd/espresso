@@ -3,7 +3,7 @@
 Analysis
 ========
 
-The :class:`espressomd.analyze.Analysis` class provides online-calculation of local and global observables.
+The :mod:`espressomd.analyze` module provides online-calculation of local and global observables.
 These exist for convenience and historical reasons.
 Since arithmetic in TCL was quite painful to perform, there exists a series of common analysis routines which can be used whenever possible.
 They usualy have parts of the calculations performed in the core.
@@ -15,7 +15,8 @@ their results are collected from the script level. These observables are
 more complex to implement and offer less flexibility, while they are
 significantly faster and more memory efficient, and they can be set up
 to be computed every few timesteps. The observables in this class are
-described in chapter [chap:analysis-core].
+described in chapter :ref:`Analysis in the core`:
+.
 
 .. _Available observables:
 

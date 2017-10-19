@@ -1,3 +1,5 @@
+.. _Analysis in the core:
+
 Analysis in the core
 ====================
 
