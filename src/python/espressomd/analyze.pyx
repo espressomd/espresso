@@ -1201,7 +1201,7 @@ class Analysis(object):
             raise Exception("The chain topology has not been set")
         if (r_bins <= 0):
             raise Exception("Nothing to be done - choose <r_bins> greater zero!")
-        if (r_min <= 0.):
+        if (r_min < 0.):
             raise Exception("<r_min> has to be positive")
         if (r_max <= r_min):
             raise Exception("<r_max> has to be larger than <r_min>")
