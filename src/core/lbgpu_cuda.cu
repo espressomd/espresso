@@ -4282,16 +4282,18 @@ __global__ void lb_lbfluid_get_fluid_velocity_at_particle_positions_kernel(LB_no
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   if (index < para.number_of_particles) {
     float position[3];
-    unsigned int node_index[8];
     float mode[19*LB_COMPONENTS];
-    float delta[8];
     position[0] = particle_data[index].p[0];
     position[1] = particle_data[index].p[1];
     position[2] = particle_data[index].p[2];
     // Do the velocity interpolation
     if (coupling == ParticleCoupling::twopoint) {
+        unsigned int node_index[8];
+        float delta[8];
         interpolation_two_point_coupling(n_a, position, node_index, mode, nullptr, delta, &u_gpu[3*index]);
     } else if (coupling == ParticleCoupling::threepoint) {
+        unsigned int node_index[27];
+        float delta[27];
         interpolation_three_point_coupling(n_a, position, node_index, nullptr, delta, &u_gpu[3*index]);
     }
   }
