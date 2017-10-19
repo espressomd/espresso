@@ -1,0 +1,128 @@
+\documentclass[11pt, tikz]{standalone}
+\usepackage[english]{babel}
+\usepackage[utf8]{luainputenc}
+\usepackage{graphicx}
+%\usepackage{subcaption}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{breakurl}
+\usepackage{amstext}
+\usepackage{color}
+\usepackage{transparent}
+%\usepackage{float}
+\usepackage{caption}
+%\usepackage{textcomp}
+%\usepackage[sorting=none,backend=biber]{biblatex}
+%\usepackage{csquotes}
+\usepackage{siunitx}
+%\usepackage{framed}
+%\usepackage{listings}
+%\usepackage{ifthen}
+%\usepackage{xkeyval}
+%\usepackage{calc}
+%\usepackage{todonotes}
+%\usepackage{letltxmacro}
+%
+%\bibliographystyle{plain}
+%%%%%% plotting %%%%%%%%%%%%%%%%%%
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\usepackage{tikz}
+\usetikzlibrary{backgrounds, arrows, positioning, intersections, fit, pgfplots.groupplots, spy, matrix, calc}
+\pgfplotsset{compat=newest}
+%\usepgfplotslibrary{external}
+%\tikzset{external/system call={lualatex
+%\tikzexternalcheckshellescape -halt-on-error -interaction=batchmode
+%-jobname "\image" "\texsource"}}
+%\tikzexternalize[prefix=./images/]
+%
+%%%%%%%%% Solving problem of externalize and package 'todonotes'
+%\LetLtxMacro{\oldmissingfigure}{\missingfigure}
+%\renewcommand{\missingfigure}[2][]{\tikzexternaldisable\oldmissingfigure[{x}]{#2}\tikzexternalenable}
+%
+%\LetLtxMacro{\oldtodo}{\todo}
+%\renewcommand{\todo}[2][size=\small]{\tikzexternaldisable\oldtodo[x]{#2}\tikzexternalenable}
+\newcommand{\kb}{k_\textnormal{B}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\setlength{\marginparwidth}{3cm}
+%define paper colors
+\definecolor{paper_01}{HTML}{1809F0}
+\definecolor{paper_02}{HTML}{338F06}
+\definecolor{paper_03}{HTML}{DA0B12}
+\definecolor{paper_04}{HTML}{F1950A}
+\definecolor{paper_05}{HTML}{A9D81D}
+\definecolor{paper_06}{HTML}{F56B20}
+
+%define bright color palette
+\definecolor{custom_0_00}{HTML}{8585DD}
+\definecolor{custom_0_01}{HTML}{99CC01}
+\definecolor{custom_0_02}{HTML}{E20C53}
+\definecolor{custom_0_03}{HTML}{66056B}
+\definecolor{custom_0_04}{HTML}{044749}
+\definecolor{custom_0_05}{HTML}{DBB30B}
+\definecolor{custom_0_06}{HTML}{6B320B}
+\definecolor{custom_0_07}{HTML}{919B08}
+\definecolor{custom_0_08}{HTML}{589FAF}
+\definecolor{custom_0_09}{HTML}{C17A3A}
+%define medium color palette
+\definecolor{custom_1_00}{HTML}{B4B3E0}
+\definecolor{custom_1_01}{HTML}{C5E507}
+\definecolor{custom_1_02}{HTML}{E46288}
+\definecolor{custom_1_03}{HTML}{83518C}
+\definecolor{custom_1_04}{HTML}{1F6666}
+\definecolor{custom_1_05}{HTML}{DCC252}
+\definecolor{custom_1_06}{HTML}{6C5646}
+\definecolor{custom_1_07}{HTML}{989E6D}
+\definecolor{custom_1_08}{HTML}{91ACB5}
+\definecolor{custom_1_09}{HTML}{C49E76}
+%define pale color palette
+\definecolor{custom_2_00}{HTML}{E9E9F2}
+\definecolor{custom_2_01}{HTML}{E7FF80}
+\definecolor{custom_2_02}{HTML}{FFC2D9}
+\definecolor{custom_2_03}{HTML}{C692CC}
+\definecolor{custom_2_04}{HTML}{64B0B2}
+\definecolor{custom_2_05}{HTML}{F2E5AF}
+\definecolor{custom_2_06}{HTML}{B2A29A}
+\definecolor{custom_2_07}{HTML}{BEBFA5}
+\definecolor{custom_2_08}{HTML}{C0DEE2}
+\definecolor{custom_2_09}{HTML}{E5D5C3}
+%define SimTech colors
+\definecolor{simtech_blue}{HTML}{879DC4}
+\definecolor{simtech_orange}{HTML}{F15D27}
+%define colors for code listings
+\definecolor{mygreen}{rgb}{0,0.4,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{lightgray}{rgb}{0.9,0.9,0.9}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+\definecolor{myred}{HTML}{B02A2C}
+\definecolor{mypink}{HTML}{FF53FF}
+\definecolor{myblue}{HTML}{0B0BC8}
+%
+\definecolor{warningred}{HTML}{FF0000}
+% colwidth is 221 for 11pt article, we use 1.5*colwidth
+\newlength{\plotwidth}
+\setlength{\plotwidth}{330pt}
+\pgfplotsset{every x tick/.append style={color=black, thick}}
+\pgfplotsset{axis line style={thick}}
+%\pgfplotsset{width=\plotwidth}
+\pgfplotsset{width=\textwidth}
+%
+\tikzset{every pin/.style={fill=lightgray,rectangle,rounded
+	corners=3pt}}
+\pgfplotsset{%
+	every axis/.append style={mark=x, line width=.8pt, scaled ticks=false, tick label style={/pgf/number format/fixed}},
+	every axis legend/.append style={nodes={right},draw=none, fill=none},
+	every mark/.append style={solid},
+	mystyle1/.style ={solid, mark=x, mark options={solid, scale=1.0}, line width=.8pt},
+	%mystyle2/.style ={dotted, mark=x, mark options={solid}},	
+	mystyle2/.style ={solid, mark=o, mark options={solid, scale=1.0}, line width=.8pt},	
+	%mystyle3/.style ={dashed, mark=x, mark options={solid}},
+	mystyle3/.style ={solid, mark=pentagon*, mark options={solid, scale=1.0}, line width=.8pt},
+	%mystyle4/.style ={dashdotted, mark=x, mark options={solid}},
+	mystyle4/.style ={solid, mark=diamond*, mark options={solid, scale=1.0}, line width=.8pt},
+	%mystyle5/.style ={dashdotdotted, mark=x, mark options={solid}},
+	mystyle5/.style ={solid, mark=square*, mark options={solid, scale=1.0}, line width=.8pt},
+}
+
+
