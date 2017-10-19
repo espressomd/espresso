@@ -45,6 +45,8 @@ from .observables import AutoUpdateObservables
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
 from .ekboundaries import EKBoundaries
+from .comfixed import ComFixed
+
 
 import sys
 import random  # for true random numbers from os.urandom()
@@ -83,6 +85,7 @@ cdef class System(object):
         ekboundaries
         __seed
         cuda_init_handle
+        comfixed
 
     def __init__(self):
         global _system_created
@@ -106,6 +109,8 @@ cdef class System(object):
                 self.ekboundaries = EKBoundaries()
             IF CUDA:
                 self.cuda_init_handle = cuda_init.CudaInitHandle()
+
+            self.comfixed = ComFixed()
             _system_created = True
         else:
             raise RuntimeError(

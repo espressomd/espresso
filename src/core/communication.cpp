@@ -38,8 +38,10 @@
 #include "actor/EwaldGPU.hpp"
 #include "buckingham.hpp"
 #include "cells.hpp"
+#include "collision.hpp"
 #include "correlators.hpp"
 #include "cuda_interface.hpp"
+#include "debye_hueckel.hpp"
 #include "elc.hpp"
 #include "energy.hpp"
 #include "external_potential.hpp"
@@ -59,6 +61,8 @@
 #include "lj.hpp"
 #include "ljangle.hpp"
 #include "ljcos.hpp"
+#include "ljcos2.hpp"
+#include "ljgen.hpp"
 #include "maggs.hpp"
 #include "mdlc_correction.hpp"
 #include "minimize_energy.hpp"
@@ -67,14 +71,17 @@
 #include "molforces.hpp"
 #include "morse.hpp"
 #include "mpiio.hpp"
+#include "npt.hpp"
 #include "observables/LbRadialVelocityProfile.hpp"
 #include "observables/Observable.hpp"
 #include "overlap.hpp"
+#include "p3m-dipolar.hpp"
 #include "p3m.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "reaction.hpp"
+#include "reaction_field.hpp"
 #include "rotation.hpp"
 #include "scafacos.hpp"
 #include "statistics.hpp"
@@ -83,13 +90,6 @@
 #include "tab.hpp"
 #include "topology.hpp"
 #include "virtual_sites.hpp"
-#include "p3m-dipolar.hpp"
-#include "debye_hueckel.hpp"
-#include "reaction_field.hpp"
-#include "collision.hpp"
-#include "ljgen.hpp"
-#include "ljcos2.hpp"
-#include "npt.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/array.hpp>
@@ -407,8 +407,7 @@ void mpi_bcast_event_slave(int node, int event) {
     break;
 #endif
 
-  default:
-    ;
+  default:;
   }
 }
 

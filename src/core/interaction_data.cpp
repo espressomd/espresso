@@ -58,7 +58,6 @@
 #include "gb.hpp"
 #include "cells.hpp"
 #include "comforce.hpp"
-#include "comfixed.hpp"
 #include "morse.hpp"
 #include "dpd.hpp"
 #include "tunable_slip.hpp"
@@ -353,10 +352,6 @@ void initialize_ia_params(IA_parameters *params) {
   params->COMFORCE_dir = 0;
   params->COMFORCE_force = 0.;
   params->COMFORCE_fratio = 0.;
-#endif
-
-#ifdef COMFIXED
-  params->COMFIXED_flag = 0;
 #endif
 
 #ifdef INTER_RF
