@@ -831,6 +831,7 @@ class Analysis(object):
         """Calculates the distance distribution of particles 
 	(probability of finding a particle of type at a certain distance around a particle of type , disregarding the fact that a spherical shell of a larger radius covers a larger volume) 
 	The distance is defined as the minimal distance between a particle of group `type_list_a` to any of the group `type_list_b`.
+	Returns two arrays, the bins and the (normalized) distribution.
 
 	Parameters
         ----------
@@ -848,6 +849,12 @@ class Analysis(object):
            when set to 0, the bins are linearly equidistant; when set to 1, the bins are logarithmically equidistant.
         int_flag : int
            when set to 1, the result is an integrated distribution 
+
+        Returns
+        -------
+        array_like
+          Where [0] contains the midpoints of the bins,
+          and [1] contains the values of the rdf.
 
 
         """

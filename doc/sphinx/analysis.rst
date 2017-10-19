@@ -83,21 +83,26 @@ Particle distribution
 
 
 
-Returns its parameters and the distance distribution of particles
-(probability of finding a particle of type at a certain distance around
-a particle of type , disregarding the fact that a spherical shell of a
-larger radius covers a larger volume) with types specified in around
-particles with types specified in with distances between and , binned
-into bins. The bins are either equidistant (if
-:math:`\var{log\_flag} = 0`) or logarithmically equidistant (if
-:math:`\var{log\_flag} \geq 1`). If an integrated distribution is
-required, use :math:`\var{int\_flag}=1`. The distance is defined as the
-*minimal* distance between a particle of one group to any of the other
+Returns the distance distribution of particles
+(probability of finding a particle of a certain type at a specifeid distance around
+a particle of another specified type, disregarding the fact that a spherical shell of a
+larger radius covers a larger volume). 
+The distance is defined as the *minimal* distance between a particle of one group to any of the other
 group.
 
-The output corresponds to the blockfile format (see section ):
+Two arrays are returned corresponding to the normalized distribution and the bins midpoints, for example ::
 
-{ } { { } }
+    >>> system = espressomd.System()
+    >>> box_l=10.
+    >>> system.box_l = [box_l, box_l, box_l]
+    >>> for i in range(5):
+    >>>     system.part.add(id=i, pos=i*system.box_l, type=0)
+    >>> bins, count=system.analysis.distribution(type_list_a=[0], type_list_b=[0], r_min=0.0, r_max = 10.0, r_bins=10)
+    >>>
+    >>> print(bins)
+    [ 0.5  1.5  2.5  3.5  4.5  5.5  6.5  7.5  8.5  9.5]
+    >>> print(count)
+    [ 1.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
 
 
 .. _Radial density map:
@@ -357,7 +362,6 @@ always yields :math:`1`.
 
 Center of mass
 ~~~~~~~~~~~~~~
-.. todo:: check this
 
 :meth:`espressomd.system.analysis.centermass`
 
