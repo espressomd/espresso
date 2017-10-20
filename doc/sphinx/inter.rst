@@ -493,7 +493,7 @@ Hertzian interaction
     `Feature HERTZIAN required.`
 
 The interface for the Hertzian interaction is implemented in
-:class:`espressomd.interactions.HertzianInteraction`. The Hertzin interaction parameters
+:class:`espressomd.interactions.HertzianInteraction`. The Hertzian interaction parameters
 can be set via::
 
     system.non_bonded_inter[type1, type2].hertzian.set_params(**kwargs)
