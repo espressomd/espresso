@@ -57,7 +57,11 @@ class InteractionsNonBondedTest(ut.TestCase):
         for i, ai in enumerate(a):
             self.assertFractionAlmostEqual(ai, b[i])
 
-    # Analytical Expression for Generic Lennard-Jones Potential ...
+    ###
+    # Analytical Expressions
+    ###
+
+    # Generic Lennard-Jones
     def lj_generic_potential(self, r, eps, sig, cutoff, offset=0., shift=0., e1=12., e2=6., b1=4., b2=4., delta=0., lam=1.):
         V_lj = 0.
         if (r >= offset + cutoff):
@@ -71,7 +75,6 @@ class InteractionsNonBondedTest(ut.TestCase):
                  b2 * numpy.power(sig / rroff, e2) + shift)
         return V_lj
 
-    # ... and resulting force
     def lj_generic_force(self, r, eps, sig, cutoff, offset=0., e1=12, e2=6, b1=4., b2=4., delta=0., lam=1.):
         f_lj = 1.
         if (r >= offset + cutoff):
@@ -84,7 +87,7 @@ class InteractionsNonBondedTest(ut.TestCase):
                 f_lj *= numpy.sign(r - offset)
         return f_lj
 
-    # Analytical Expressions for Morse Interaction
+    # Morse
     def morse_potential(self, r, eps, alpha, cutoff, rmin=0):
         V_m = 0.
         if (r < cutoff):
@@ -101,7 +104,7 @@ class InteractionsNonBondedTest(ut.TestCase):
                 (numpy.exp((rmin - r) * alpha) - 1) * alpha * eps
         return f_m
 
-    # Analytical Expressions for Soft-sphere Interaction
+    # Soft-sphere
     def soft_sphere_potential(self, r, a, n, cutoff, offset=0):
         V_ss = 0.
         if (r < offset + cutoff):
@@ -113,6 +116,23 @@ class InteractionsNonBondedTest(ut.TestCase):
         if ((r > offset) and (r < offset + cutoff)):
             f_ss = n * a * numpy.power(r - offset, -(n + 1))
         return f_ss
+
+    # Gaussian
+    def gaussian_potential(self, r, eps, sig, cutoff):
+        V_g = 0.
+        if (r < cutoff):
+            V_g = eps * numpy.exp(-numpy.power(r / sig, 2) / 2)
+        return V_g
+
+    def gaussian_force(self, r, eps, sig, cutoff):
+        f_g = 0.
+        if (r < cutoff):
+            f_g = eps * r / sig**2 * numpy.exp(-numpy.power(r / sig, 2) / 2)
+        return f_g
+
+    ###
+    # Tests
+    ###
 
     # Test Generic Lennard-Jones Potential
     @ut.skipIf(not espressomd.has_features(["LENNARD_JONES_GENERIC"]),
@@ -319,6 +339,43 @@ class InteractionsNonBondedTest(ut.TestCase):
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
         self.system.non_bonded_inter[0, 0].soft_sphere.set_params(a=0.)
+
+    # Test Gaussian Potential
+    @ut.skipIf(not espressomd.has_features(["GAUSSIAN"]),
+               "Features not available, skipping test!")
+    def test_gaussian(self):
+
+        g_eps = 6.92
+        g_sig = 4.03
+        g_cut = 1.243
+
+        self.system.non_bonded_inter[0, 0].gaussian.set_params(
+            eps=g_eps, sig=g_sig, cutoff=g_cut)
+
+        for i in range(125):
+            self.system.part[1].pos += self.step
+            self.system.integrator.run(recalc_forces=True, steps=0)
+
+            # Calculate energies
+            E_sim = self.system.analysis.energy()["non_bonded"]
+            E_ref = self.gaussian_potential(
+                r=(i + 1) * self.step_width, eps=g_eps, sig=g_sig, cutoff=g_cut)
+
+            # Calculate forces
+            f0_sim = self.system.part[0].f
+            f1_sim = self.system.part[1].f
+            f1_ref = self.axis * \
+                self.gaussian_force(r=(i + 1) * self.step_width,
+                                    eps=g_eps, sig=g_sig, cutoff=g_cut)
+
+            # Check that energies match, ...
+            self.assertFractionAlmostEqual(E_sim, E_ref)
+            # force equals minus the counter-force  ...
+            self.assertTrue((f0_sim == -f1_sim).all())
+            # and has correct value.
+            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
+
+        self.system.non_bonded_inter[0, 0].gaussian.set_params(eps=0.)
 
 
 if __name__ == '__main__':

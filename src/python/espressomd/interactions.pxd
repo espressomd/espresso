@@ -74,6 +74,10 @@ cdef extern from "interaction_data.hpp":
         double soft_cut
         double soft_offset
 
+        double Gaussian_eps
+        double Gaussian_sig
+        double Gaussian_cut
+
 
     cdef ia_parameters * get_ia_param(int i, int j)
     cdef ia_parameters * get_ia_param_safe(int i, int j)
@@ -121,6 +125,11 @@ IF SOFT_SPHERE:
     cdef extern from "soft_sphere.hpp":
         int soft_sphere_set_params(int part_type_a, int part_type_b,
                                    double a, double n, double cut, double offset);
+
+IF GAUSSIAN:
+    cdef extern from "gaussian.hpp":
+        int gaussian_set_params(int part_type_a, int part_type_b,
+                                double eps, double sig, double cut);
 
 IF TABULATED==1:
     cdef extern from "tab.hpp":

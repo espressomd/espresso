@@ -512,14 +512,17 @@ is undefined.
 Gaussian
 ~~~~~~~~
 
-.. todo::
-    
-    Not implemented yet.
+.. note::
+    `Feature GAUSSIAN required.`
 
-inter gaussian
+The interface for the Gaussian interaction is implemented in
+:class:`espressomd.interactions.GaussianInteraction`. The Gaussian interaction parameters
+can be set via::
+
+    system.non_bonded_inter[type1, type2].gaussian.set_params(**kwargs)
 
 This defines an interaction according to the Gaussian potential between
-particles of the typers and . The Gaussian potential is defined by
+particles of the types *type1* and *type2*. The Gaussian potential is defined by
 
 .. math::
 

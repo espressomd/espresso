@@ -572,7 +572,6 @@ IF MORSE == 1:
             """
             return "eps", "alpha", "rmin"
 
-
 # Soft-sphere
 
 IF SOFT_SPHERE == 1:
@@ -662,6 +661,90 @@ IF SOFT_SPHERE == 1:
             """
             return "a", "n", "cutoff"
 
+# Gaussian
+
+IF GAUSSIAN == 1:
+
+    cdef class GaussianInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            """Check that parameters are valid.
+
+            """
+            if self._params["eps"] < 0:
+                raise ValueError("Gaussian eps a has to be >=0")
+            if self._params["sig"] < 0:
+                raise ValueError("Gaussian sig has to be >=0")
+            if self._params["offset"] < 0:
+                raise ValueError("Gaussian offset has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(
+                self._part_types[0],
+                self._part_types[1])
+            return {
+                "eps": ia_params.Gaussian_eps,
+                "sig": ia_params.Gaussian_sig,
+                "cutoff": ia_params.Gaussian_cut
+            }
+
+        def is_active(self):
+            """Check if interaction is active.
+
+            """
+            return (self._params["eps"] > 0)
+
+        def _set_params_in_es_core(self):
+            if gaussian_set_params(self._part_types[0], self._part_types[1],
+                                   self._params["eps"],
+                                   self._params["sig"],
+                                   self._params["cutoff"]):
+                raise Exception("Could not set Soft-sphere parameters")
+
+        def default_params(self):
+            """Python dictionary of default parameters.
+
+            """
+            return {
+                "eps": 0.,
+                "sig": 1.,
+                "cutoff": 0.}
+
+        def type_name(self):
+            """Name of interaction type.
+
+            """
+            return "Gaussian"
+
+        def set_params(self, **kwargs):
+            """
+            Set parameters for the Soft-sphere interaction.
+
+            Parameters
+            ----------
+            eps : float
+                  Overlap energy epsilon.
+            sig : float
+                  Variance sigma of the Gaussian interactin.
+            cutoff : float
+                     Cutoff distance of the interaction.
+            """
+            super(GaussianInteraction, self).set_params(**kwargs)
+
+        def valid_keys(self):
+            """All parameters that can be set.
+
+            """
+            return "eps", "sig", "cutoff"
+
+        def required_keys(self):
+            """Parameters that have to be set.
+
+            """
+            return "eps", "sig", "cutoff"
+
 
 class NonBondedInteractionHandle(object):
 
@@ -676,6 +759,7 @@ class NonBondedInteractionHandle(object):
     generic_lennard_jones = None
     morse = None
     soft_sphere = None
+    gaussian = None
     tabulated = None
     gay_berne = None
 
@@ -696,6 +780,8 @@ class NonBondedInteractionHandle(object):
             self.morse = MorseInteraction(_type1, _type2)
         IF SOFT_SPHERE:
             self.soft_sphere = SoftSphereInteraction(_type1, _type2)
+        IF GAUSSIAN:
+            self.gaussian = GaussianInteraction(_type1, _type2)
         IF TABULATED == 1:
             self.tabulated = TabulatedNonBonded(_type1, _type2)
         IF GAY_BERNE:
