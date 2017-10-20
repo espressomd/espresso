@@ -425,16 +425,6 @@ typedef struct {
 /*@}*/
 #endif
 
-#ifdef COMFORCE
-  /** \name center of mass directed force */
-  /*@{*/
-  int COMFORCE_flag;
-  int COMFORCE_dir;
-  double COMFORCE_force;
-  double COMFORCE_fratio;
-/*@}*/
-#endif
-
 #ifdef COMFIXED
   /** \name center of mass directed force */
   /*@{*/
