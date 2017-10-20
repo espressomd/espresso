@@ -1,10 +1,10 @@
 from espressomd import has_features, System
-from espressomd.reaction import Reaction
-
+if(has_features(["CATALYTIC_REACTIONS"])):
+    from espressomd.reaction import Reaction
 import unittest as ut
 import numpy as np
 
-@ut.skipIf(not has_features(["ROTATION","CATALYTIC_REACTIONS"]),
+@ut.skipIf(not has_features(["CATALYTIC_REACTIONS"]),
            "Features missing")
 class ReactionTest(ut.TestCase):
 
@@ -15,15 +15,15 @@ class ReactionTest(ut.TestCase):
         system.time_step = 0.01
 
         system.part.add(pos=0.5*system.box_l,type=0)
-        reactant = system.part.add(pos=0.5*system.box_l-[0,0,1],type=1)
-        product = system.part.add(pos=0.5*system.box_l+[0,0,1],type=2)
+        reactant = system.part.add(pos=0.5*system.box_l-[0,0,1],type=1, v=[0,0,0])
+        product = system.part.add(pos=0.5*system.box_l+[0,0,1],type=2, v=[0,0,0])
 
-        # Set up the reaction, rate is infinity to always trigger a reaction
+        # Set up the reaction, rate is infinity to almost surely trigger a reaction
         Reaction(reactant_type=1,catalyzer_type=0,product_type=2,ct_range=3.0,ct_rate=np.inf)
 
-        system.integrator.run(1)
+        system.integrator.run(2) #run two reactions and MD. this also tests that the particles are not switched back after the first reaction (which should switch the particles)
         
-        # Check that particles have switched type
+        # Check that particles have switched type (due to the first reaction) the second reaction may not change the particles back since they are now not in the right orientation for a reaction
         self.assertEqual(reactant.type,2)
         self.assertEqual(product.type,1)
         
