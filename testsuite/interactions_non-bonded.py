@@ -117,6 +117,19 @@ class InteractionsNonBondedTest(ut.TestCase):
             f_ss = n * a * numpy.power(r - offset, -(n + 1))
         return f_ss
 
+    # Hertzian
+    def hertzian_potential(self, r, eps, sig):
+        V_h = 0.
+        if (r < sig):
+            V_h = eps * numpy.power(1 - r / sig, 5. / 2.)
+        return V_h
+
+    def hertzian_force(self, r, eps, sig):
+        f_h = 0.
+        if (r < sig):
+            f_h = 5. / 2. * eps / sig * numpy.power(1 - r / sig, 3. / 2.)
+        return f_h
+
     # Gaussian
     def gaussian_potential(self, r, eps, sig, cutoff):
         V_g = 0.
@@ -273,8 +286,6 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].morse.set_params(
             eps=m_eps, alpha=m_alpha, cutoff=m_cut, rmin=m_rmin)
 
-#        for i in range(12):
-#            self.system.part[1].pos += self.step
         for i in range(126):
             self.system.part[1].pos += self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
@@ -339,6 +350,42 @@ class InteractionsNonBondedTest(ut.TestCase):
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
         self.system.non_bonded_inter[0, 0].soft_sphere.set_params(a=0.)
+
+    # Test Hertzian Potential
+    @ut.skipIf(not espressomd.has_features(["HERTZIAN"]),
+               "Features not available, skipping test!")
+    def test_hertzian(self):
+
+        h_eps = 6.92
+        h_sig = 2.432
+
+        self.system.non_bonded_inter[0, 0].hertzian.set_params(
+            eps=h_eps, sig=h_sig)
+
+        for i in range(244):
+            self.system.part[1].pos += self.step
+            self.system.integrator.run(recalc_forces=True, steps=0)
+
+            # Calculate energies
+            E_sim = self.system.analysis.energy()["non_bonded"]
+            E_ref = self.hertzian_potential(
+                r=(i + 1) * self.step_width, eps=h_eps, sig=h_sig)
+
+            # Calculate forces
+            f0_sim = self.system.part[0].f
+            f1_sim = self.system.part[1].f
+            f1_ref = self.axis * \
+                self.hertzian_force(
+                    r=(i + 1) * self.step_width, eps=h_eps, sig=h_sig)
+
+            # Check that energies match, ...
+            self.assertFractionAlmostEqual(E_sim, E_ref)
+            # force equals minus the counter-force  ...
+            self.assertTrue((f0_sim == -f1_sim).all())
+            # and has correct value.
+            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
+
+        self.system.non_bonded_inter[0, 0].hertzian.set_params(eps=0.)
 
     # Test Gaussian Potential
     @ut.skipIf(not espressomd.has_features(["GAUSSIAN"]),

@@ -74,6 +74,9 @@ cdef extern from "interaction_data.hpp":
         double soft_cut
         double soft_offset
 
+        double Hertzian_eps
+        double Hertzian_sig
+
         double Gaussian_eps
         double Gaussian_sig
         double Gaussian_cut
@@ -125,6 +128,11 @@ IF SOFT_SPHERE:
     cdef extern from "soft_sphere.hpp":
         int soft_sphere_set_params(int part_type_a, int part_type_b,
                                    double a, double n, double cut, double offset);
+
+IF HERTZIAN:
+    cdef extern from "hertzian.hpp":
+        int hertzian_set_params(int part_type_a, int part_type_b,
+                                double eps, double sig);
 
 IF GAUSSIAN:
     cdef extern from "gaussian.hpp":

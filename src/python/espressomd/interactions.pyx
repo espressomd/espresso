@@ -661,6 +661,83 @@ IF SOFT_SPHERE == 1:
             """
             return "a", "n", "cutoff"
 
+# Hertzian
+
+IF HERTZIAN == 1:
+
+    cdef class HertzianInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            """Check that parameters are valid.
+
+            """
+            if self._params["eps"] < 0:
+                raise ValueError("Hertzian eps a has to be >=0")
+            if self._params["sig"] < 0:
+                raise ValueError("Hertzian sig has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(
+                self._part_types[0],
+                self._part_types[1])
+            return {
+                "eps": ia_params.Hertzian_eps,
+                "sig": ia_params.Hertzian_sig
+            }
+
+        def is_active(self):
+            """Check if interaction is active.
+
+            """
+            return (self._params["eps"] > 0)
+
+        def _set_params_in_es_core(self):
+            if hertzian_set_params(self._part_types[0], self._part_types[1],
+                                   self._params["eps"],
+                                   self._params["sig"]):
+                raise Exception("Could not set Hertzian parameters")
+
+        def default_params(self):
+            """Python dictionary of default parameters.
+
+            """
+            return {
+                "eps": 0.,
+                "sig": 1.}
+
+        def type_name(self):
+            """Name of interaction type.
+
+            """
+            return "Hertzian"
+
+        def set_params(self, **kwargs):
+            """
+            Set parameters for the Hertzian interaction.
+
+            Parameters
+            ----------
+            eps : float
+                  The magnitude of the interaction.
+            sig : float
+                  Parameter sigma which determines the length over which the potential decays.
+            """
+            super(HertzianInteraction, self).set_params(**kwargs)
+
+        def valid_keys(self):
+            """All parameters that can be set.
+
+            """
+            return "eps", "sig"
+
+        def required_keys(self):
+            """Parameters that have to be set.
+
+            """
+            return "eps", "sig"
+
 # Gaussian
 
 IF GAUSSIAN == 1:
@@ -701,7 +778,7 @@ IF GAUSSIAN == 1:
                                    self._params["eps"],
                                    self._params["sig"],
                                    self._params["cutoff"]):
-                raise Exception("Could not set Soft-sphere parameters")
+                raise Exception("Could not set Gaussian interaction parameters")
 
         def default_params(self):
             """Python dictionary of default parameters.
@@ -720,7 +797,7 @@ IF GAUSSIAN == 1:
 
         def set_params(self, **kwargs):
             """
-            Set parameters for the Soft-sphere interaction.
+            Set parameters for the Gaussian interaction.
 
             Parameters
             ----------
@@ -759,6 +836,7 @@ class NonBondedInteractionHandle(object):
     generic_lennard_jones = None
     morse = None
     soft_sphere = None
+    hertzian = None
     gaussian = None
     tabulated = None
     gay_berne = None
@@ -780,6 +858,8 @@ class NonBondedInteractionHandle(object):
             self.morse = MorseInteraction(_type1, _type2)
         IF SOFT_SPHERE:
             self.soft_sphere = SoftSphereInteraction(_type1, _type2)
+        IF HERTZIAN:
+            self.hertzian = HertzianInteraction(_type1, _type2)
         IF GAUSSIAN:
             self.gaussian = GaussianInteraction(_type1, _type2)
         IF TABULATED == 1:

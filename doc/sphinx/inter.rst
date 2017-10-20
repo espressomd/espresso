@@ -489,11 +489,14 @@ entirely correct.
 Hertzian interaction
 ~~~~~~~~~~~~~~~~~~~~
 
-.. todo::
-    
-    Not implemented yet.
+.. note::
+    `Feature HERTZIAN required.`
 
-inter hertzian
+The interface for the Hertzian interaction is implemented in
+:class:`espressomd.interactions.HertzianInteraction`. The Hertzin interaction parameters
+can be set via::
+
+    system.non_bonded_inter[type1, type2].hertzian.set_params(**kwargs)
 
 This defines an interaction according to the Hertzian potential between
 particles of the types *type1* and *type2*. The Hertzian potential is defined by
@@ -506,7 +509,7 @@ particles of the types *type1* and *type2*. The Hertzian potential is defined by
      \end{cases}
 
 The potential has no singularity and is defined everywhere; the
-potential has nondifferentiable maximum at :math:`r=0`, where the force
+potential has a nondifferentiable maximum at :math:`r=0`, where the force
 is undefined.
 
 Gaussian
