@@ -366,7 +366,7 @@ This defines an interaction using the Morse potential between particles
 of the types *type1* and *type2*. It serves similar purposes as the Lennard-Jones
 potential, but has a deeper minimum, around which it is harmonic. This
 models the potential energy in a diatomic molecule. This potential
-allows capping the force using ``inter forcecap``, see
+allows capping the force using ``system.non_bonded_inter.set_force_cap(max)``, see
 section :ref:`Capping the force during warmup`.
 
 For :math:`r < r_\mathrm{cut}`, this potential is given by
