@@ -57,7 +57,6 @@
 #include "cos2.hpp"
 #include "gb.hpp"
 #include "cells.hpp"
-#include "comforce.hpp"
 #include "comfixed.hpp"
 #include "morse.hpp"
 #include "dpd.hpp"
@@ -344,15 +343,6 @@ void initialize_ia_params(IA_parameters *params) {
   params->TUNABLE_SLIP_vy  = 0.0;
   params->TUNABLE_SLIP_vz  = 0.0;
   params->TUNABLE_SLIP_r_cut = INACTIVE_CUTOFF;
-#endif
-
-  /* things that are not strictly speaking short-ranged interactions,
-     and do not have a cutoff */
-#ifdef COMFORCE
-  params->COMFORCE_flag = 0;
-  params->COMFORCE_dir = 0;
-  params->COMFORCE_force = 0.;
-  params->COMFORCE_fratio = 0.;
 #endif
 
 #ifdef COMFIXED
