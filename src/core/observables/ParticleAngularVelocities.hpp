@@ -1,5 +1,5 @@
-#ifndef OBSERVABLES_PARTICLEANGULARMOMENTUM_HPP
-#define OBSERVABLES_PARTICLEANGULARMOMENTUM_HPP
+#ifndef OBSERVABLES_PARTICLEANGULARVELOCITIES_HPP
+#define OBSERVABLES_PARTICLEANGULARVELOCITIES_HPP
 
 #include "PidObservable.hpp"
 #include "integrate.hpp"
@@ -9,7 +9,7 @@
 
 namespace Observables {
 
-class ParticleAngularMomentum : public PidObservable {
+class ParticleAngularVelocities : public PidObservable {
 public:
   virtual int actual_calculate(PartCfg & partCfg) override {
     last_value.resize(3 * ids().size());
