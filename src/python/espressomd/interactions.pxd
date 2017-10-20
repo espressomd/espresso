@@ -62,6 +62,13 @@ cdef extern from "interaction_data.hpp":
         double GB_mu
         double GB_nu
 
+        double SmSt_eps
+        double SmSt_sig
+        double SmSt_cut
+        double SmSt_d
+        int SmSt_n
+        double SmSt_k0
+
         double MORSE_eps
         double MORSE_alpha
         double MORSE_rmin
@@ -117,6 +124,13 @@ cdef extern from "ljgen.hpp":
                                   double shift, double offset,
                                   double a1, double a2, double b1, double b2,
                                   double cap_radius)
+
+IF SMOOTH_STEP:
+    cdef extern from "steppot.hpp":
+        int smooth_step_set_params(int part_type_a, int part_type_b,
+                                   double d, int n, double eps,
+                                   double k0, double sig,
+                                   double cut);
 
 IF MORSE:
     cdef extern from "morse.hpp":

@@ -87,6 +87,21 @@ class InteractionsNonBondedTest(ut.TestCase):
                 f_lj *= numpy.sign(r - offset)
         return f_lj
 
+    # Smooth-Step
+    def smooth_step_potential(self, r, eps, sig, cutoff, d, n, k0):
+        V_sst = 0.
+        if (r < cutoff):
+            V_sst = numpy.power(d / r, n) + eps / \
+                (1 + numpy.exp(2 * k0 * (r - sig)))
+        return V_sst
+
+    def smooth_step_force(self, r, eps, sig, cutoff, d, n, k0):
+        f_sst = 0.
+        if (r < cutoff):
+            f_sst = n * d / r**2 * numpy.power(d / r, n - 1) + 2 * k0 * eps * numpy.exp(
+                2 * k0 * (r - sig)) / (1 + numpy.exp(2 * k0 * (r - sig))**2)
+        return f_sst
+
     # Morse
     def morse_potential(self, r, eps, alpha, cutoff, rmin=0):
         V_m = 0.
@@ -272,6 +287,45 @@ class InteractionsNonBondedTest(ut.TestCase):
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
         self.system.non_bonded_inter[0, 0].lennard_jones.set_params(epsilon=0.)
+
+    # Test Smooth-step Potential
+    @ut.skipIf(not espressomd.has_features(["SMOOTH_STEP"]),
+               "Features not available, skipping test!")
+    def test_smooth_step(self):
+
+        sst_eps = 1.92
+        sst_sig = 3.03
+        sst_cut = 1.253
+        sst_d = 2.52
+        sst_n = 11
+        sst_k0 = 2.13
+
+        self.system.non_bonded_inter[0, 0].smooth_step.set_params(
+            eps=sst_eps, sig=sst_sig, cutoff=sst_cut, d=sst_d, n=sst_n, k0=sst_k0)
+
+        for i in range(126):
+            self.system.part[1].pos += self.step
+            self.system.integrator.run(recalc_forces=True, steps=0)
+
+            # Calculate energies
+            E_sim = self.system.analysis.energy()["non_bonded"]
+            E_ref = self.smooth_step_potential(
+                r=(i + 1) * self.step_width, eps=sst_eps, sig=sst_sig, cutoff=sst_cut, d=sst_d, n=sst_n, k0=sst_k0)
+
+            # Calculate forces
+            f0_sim = self.system.part[0].f
+            f1_sim = self.system.part[1].f
+            f1_ref = self.axis * self.smooth_step_force(
+                r=(i + 1) * self.step_width, eps=sst_eps, sig=sst_sig, cutoff=sst_cut, d=sst_d, n=sst_n, k0=sst_k0)
+
+            # Check that energies match, ...
+            self.assertFractionAlmostEqual(E_sim, E_ref)
+            # force equals minus the counter-force  ...
+            self.assertTrue((f0_sim == -f1_sim).all())
+            # and has correct value.
+            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
+
+        self.system.non_bonded_inter[0, 0].smooth_step.set_params(d=0., eps=0.)
 
     # Test Morse Potential
     @ut.skipIf(not espressomd.has_features(["MORSE"]),

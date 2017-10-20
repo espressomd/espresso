@@ -284,24 +284,27 @@ section [sec:forcecap].
 Smooth step interaction
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. todo::
-    
-    Not implemented yet.
+.. note::
+     `Feature SMOOTH_STEP required.`
 
-inter smooth-step
+The interface for the smooth-step interaction is implemented in
+:class:`espressomd.interactions.SmoothStepInteraction`. The smooth-step parameters
+can be set via::
+
+     system.non_bonded_inter[type1, type2].smooth_step.set_params(**kwargs)
 
 This defines a smooth step interaction between particles of the types *type1*
 and *type2*, for which the potential is
 
-.. math:: V(r)= \left(\sigma_1/d\right)^n + \epsilon/(1 + \exp\left[2k_0 (r - \sigma_2)\right])
+.. math:: V(r)= \left(d/r\right)^n + \epsilon/(1 + \exp\left[2k_0 (r - \sigma)\right])
 
 for :math:`r<r_\mathrm{cut}`, and :math:`V(r)=0` elsewhere. With
 :math:`n` around 10, the first term creates a short range repulsion
 similar to the Lennard-Jones potential, while the second term provides a
 much softer repulsion. This potential therefore introduces two length
-scales, the range of the first term, :math:`\sigma_1`, and the range of
-the second one, :math:`\sigma_2`, where in general
-:math:`\sigma_1<\sigma_2`.
+scales, the range of the first term, :math:`d`, and the range of
+the second one, :math:`\sigma`, where in general
+:math:`d<\sigma`.
 
 BMHTF potential
 ~~~~~~~~~~~~~~~
@@ -358,7 +361,6 @@ The interface for the Morse interaction is implemented in
 can be set via::
 
      system.non_bonded_inter[type1, type2].morse.set_params(**kwargs)
-
 
 This defines an interaction using the Morse potential between particles
 of the types *type1* and *type2*. It serves similar purposes as the Lennard-Jones
