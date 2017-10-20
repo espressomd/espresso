@@ -181,10 +181,6 @@ void force_calc() {
     calc_particle_lattice_ia();
 #endif
 
-#ifdef COMFORCE
-  calc_comforce(partCfg());
-#endif
-
 #ifdef METADYNAMICS
   /* Metadynamics main function */
   meta_perform();
