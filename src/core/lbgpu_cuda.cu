@@ -1507,49 +1507,88 @@ __global__ void apply_LE_position_offset(LB_nodes_gpu n_front, LB_nodes_gpu n_ba
 
   if (index < para.dim_x * para.dim_z * 2) {
     int xyz[3];
+
     index_to_xyz_LE(index, xyz);
-    
-    int grid_index = xyz_to_index(xyz);
-    int xyz_[3];
-    index_to_xyz(grid_index, xyz_);
+    //int grid_index = xyz_to_index(xyz);
+    int target_index = xyz_to_index(xyz);
 
     int ii = 0;
 
-    unsigned int x = xyz[0];
-    unsigned int y = xyz[1];
-    unsigned int z = xyz[2];
+    int x = xyz[0];
+    int y = xyz[1];
+    int z = xyz[2];
+
+    float weight = fmodf(lees_edwards_offset + para.dim_x*para.agrid, para.agrid) / para.agrid;
+
+    int source1_xyz[3] = {-1, y, z};
+    int source2_xyz[3] = {-1, y, z};
+
+    int source1_index;
+    int source2_index;
 
     if(y == 0) {
-      n_front.vd[ (3 + ii*LBQ ) * para.number_of_nodes + grid_index ] = 
-      n_back.vd[ (3 + ii*LBQ ) * para.number_of_nodes + grid_index ];
+      source1_xyz[0] = (static_cast<int>(floorf(x + lees_edwards_offset)) + para.dim_x) % para.dim_x;
+      source2_xyz[0] = (static_cast<int>(ceilf(x + lees_edwards_offset)) + para.dim_x) % para.dim_x;
 
-      n_front.vd[ (7 + ii*LBQ ) * para.number_of_nodes + grid_index ] = 
-      n_back.vd[ (7 + ii*LBQ ) * para.number_of_nodes + grid_index ];
+      //printf(floorf(lees_edwards_offset) + para.dim_x) 
+      
+      source1_index = xyz_to_index(source1_xyz);
+      source2_index = xyz_to_index(source2_xyz);
 
-      n_front.vd[ (10 + ii*LBQ ) * para.number_of_nodes + grid_index ] = 
-      n_back.vd[ (10 + ii*LBQ ) * para.number_of_nodes + grid_index ];
+      //printf("LE_Offset: %f, Integer offset: %d Real offset: %f \n", lees_edwards_offset, integer_offset, weight);    
+      printf("   target index: %i bei: (%u%u%u) \n source1_index: %i bei: (%i%i%i) \n source2_index: %i bei: (%i%i%i)\n\n", target_index, x, y, z,  source1_index, source1_xyz[0], source1_xyz[1], source1_xyz[2], source2_index, source2_xyz[0], source2_xyz[1], source2_xyz[2]);
 
-      n_front.vd[ (15 + ii*LBQ ) * para.number_of_nodes + grid_index ] = 
-      n_back.vd[ (15 + ii*LBQ ) * para.number_of_nodes + grid_index ];
+      n_front.vd[ (3 + ii*LBQ ) * para.number_of_nodes + target_index ] = 
+      (1.0f-weight) * n_back.vd[ (3 + ii*LBQ ) * para.number_of_nodes + source1_index ] +
+      (weight) * n_back.vd[ (3 + ii*LBQ ) * para.number_of_nodes + source2_index ];
 
-      n_front.vd[ (17 + ii*LBQ ) * para.number_of_nodes + grid_index ] = 
-      n_back.vd[ (17 + ii*LBQ ) * para.number_of_nodes + grid_index ];
+      n_front.vd[ (7 + ii*LBQ ) * para.number_of_nodes + target_index ] = 
+      (1.0f-weight) * n_back.vd[ (7 + ii*LBQ ) * para.number_of_nodes + source1_index ] +
+      (weight) * n_back.vd[ (7 + ii*LBQ ) * para.number_of_nodes + source2_index ];
+
+      n_front.vd[ (10 + ii*LBQ ) * para.number_of_nodes + target_index ] = 
+      (1.0f-weight) * n_back.vd[ (10 + ii*LBQ ) * para.number_of_nodes + source1_index ] +
+      (weight) * n_back.vd[ (10 + ii*LBQ ) * para.number_of_nodes + source2_index ];
+
+      n_front.vd[ (15 + ii*LBQ ) * para.number_of_nodes + target_index ] = 
+      (1.0f-weight) * n_back.vd[ (15 + ii*LBQ ) * para.number_of_nodes + source1_index ] +
+      (weight) * n_back.vd[ (15 + ii*LBQ ) * para.number_of_nodes + source2_index ];
+
+      n_front.vd[ (17 + ii*LBQ ) * para.number_of_nodes + target_index ] = 
+      (1.0f-weight) * n_back.vd[ (17 + ii*LBQ ) * para.number_of_nodes + source1_index ] +
+      (weight) * n_back.vd[ (17 + ii*LBQ ) * para.number_of_nodes + source2_index ];
     }
     else if(y == para.dim_y-1) {
-      n_front.vd[ (4 + ii*LBQ ) * para.number_of_nodes + grid_index ] = 
-      n_back.vd[ (4 + ii*LBQ ) * para.number_of_nodes + grid_index ];
+      source1_xyz[0] = (static_cast<int>(floorf(x - lees_edwards_offset)) + para.dim_x) % para.dim_x;
+      source2_xyz[0] = (static_cast<int>(ceilf(x - lees_edwards_offset)) + para.dim_x) % para.dim_x;
 
-      n_front.vd[ (8 + ii*LBQ ) * para.number_of_nodes + grid_index ] = 
-      n_back.vd[ (8 + ii*LBQ ) * para.number_of_nodes + grid_index ];
+      //printf(floorf(lees_edwards_offset) + para.dim_x) 
+      
+      source1_index = xyz_to_index(source1_xyz);
+      source2_index = xyz_to_index(source2_xyz);
 
-      n_front.vd[ (9 + ii*LBQ ) * para.number_of_nodes + grid_index ] = 
-      n_back.vd[ (9 + ii*LBQ ) * para.number_of_nodes + grid_index ];
+      //printf("LE_Offset: %f, Integer offset: %d Real offset: %f \n", lees_edwards_offset, integer_offset, weight);    
+      printf("   target index: %i bei: (%u%u%u) \n source1_index: %i bei: (%i%i%i) \n source2_index: %i bei: (%i%i%i)\n\n", target_index, x, y, z,  source1_index, source1_xyz[0], source1_xyz[1], source1_xyz[2], source2_index, source2_xyz[0], source2_xyz[1], source2_xyz[2]);
 
-      n_front.vd[ (16 + ii*LBQ ) * para.number_of_nodes + grid_index ] = 
-      n_back.vd[ (16 + ii*LBQ ) * para.number_of_nodes + grid_index ];
+      n_front.vd[ (4 + ii*LBQ ) * para.number_of_nodes + target_index ] = 
+      (weight) * n_back.vd[ (4 + ii*LBQ ) * para.number_of_nodes + source1_index] +
+      (1.0f-weight) * n_back.vd[ (4 + ii*LBQ ) * para.number_of_nodes + source2_index];
 
-      n_front.vd[ (18 + ii*LBQ ) * para.number_of_nodes + grid_index ] = 
-      n_back.vd[ (18 + ii*LBQ ) * para.number_of_nodes + grid_index ];
+      n_front.vd[ (8 + ii*LBQ ) * para.number_of_nodes + target_index ] = 
+      (weight) * n_back.vd[ (8 + ii*LBQ ) * para.number_of_nodes + source1_index ] +
+      (1.0f-weight) * n_back.vd[ (8 + ii*LBQ ) * para.number_of_nodes + source2_index ];
+
+      n_front.vd[ (9 + ii*LBQ ) * para.number_of_nodes + target_index ] = 
+      (weight) * n_back.vd[ (9 + ii*LBQ ) * para.number_of_nodes + source1_index ] +
+      (1.0f-weight) * n_back.vd[ (9 + ii*LBQ ) * para.number_of_nodes + source2_index ];
+
+      n_front.vd[ (16 + ii*LBQ ) * para.number_of_nodes + target_index ] = 
+      (weight) * n_back.vd[ (16 + ii*LBQ ) * para.number_of_nodes + source1_index ] +
+      (1.0f-weight) * n_back.vd[ (16 + ii*LBQ ) * para.number_of_nodes + source2_index ];
+
+      n_front.vd[ (18 + ii*LBQ ) * para.number_of_nodes + target_index ] = 
+      (weight) * n_back.vd[ (18 + ii*LBQ ) * para.number_of_nodes + source1_index ] + 
+      (1.0f-weight) * n_back.vd[ (18 + ii*LBQ ) * para.number_of_nodes + source2_index ];
     }
   }
 }
