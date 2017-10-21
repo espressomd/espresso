@@ -10,8 +10,7 @@ cdef class Actor(object):
                        MagnetostaticInteraction=False,
                        MagnetostaticExtension=False,
                        HydrodynamicInteraction=False,
-                       ElectrostaticExtensions=False,
-                       Scafacos=True)
+                       ElectrostaticExtensions=False)
 
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
@@ -42,6 +41,7 @@ cdef class Actor(object):
 
     def _activate(self):
         inter = self._get_interaction_type()
+        print(inter)
         if Actor.active_list[inter]:
             raise ThereCanOnlyBeOne(self.__class__.__bases__[0])
         Actor.active_list[inter] = True
