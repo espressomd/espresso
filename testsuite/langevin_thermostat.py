@@ -24,9 +24,7 @@ import numpy as np
 from espressomd.interactions import FeneBond
 from time import time
 from espressomd.correlators import Correlator
-from espressomd.observables import ParticleVelocities, ParticleBodyAngularMomentum
-
-
+from espressomd.observables import ParticleVelocities, ParticleBodyAngularVelocities
 
 @ut.skipIf(espressomd.has_features("THERMOSTAT_IGNORE_NON_VIRTUAL"),
            "Skipped because of THERMOSTAT_IGNORE_NON_VIRTUAL")
@@ -164,9 +162,10 @@ class LangevinThermostat(ut.TestCase):
         error_tol = 0.014
         self.check_velocity_distribution(v_kT, v_minmax, bins, error_tol, kT)
         self.check_velocity_distribution(v_kT2, v_minmax, bins, error_tol, kT2)
-        
-        self.check_velocity_distribution(omega_kT, v_minmax, bins, error_tol, kT)
-        self.check_velocity_distribution(omega_kT2, v_minmax, bins, error_tol, kT2)
+
+        if espressomd.has_features("ROTATION"):
+            self.check_velocity_distribution(omega_kT, v_minmax, bins, error_tol, kT)
+            self.check_velocity_distribution(omega_kT2, v_minmax, bins, error_tol, kT2)
 
     def setup_diff_mass_rinertia(self,p):
         if espressomd.has_features("MASS"):
@@ -281,7 +280,7 @@ class LangevinThermostat(ut.TestCase):
             s.auto_update_correlators.add(corr_vel[p])
             # angular vel
             if espressomd.has_features("ROTATION"):
-                omega_obs[p]=ParticleBodyAngularMomentum(ids=(p.id,))
+                omega_obs[p]=ParticleBodyAngularVelocities(ids=(p.id,))
                 corr_omega[p] = Correlator(obs1=omega_obs[p], tau_lin=32, tau_max=4, dt=2*dt,
                     corr_operation="componentwise_product", compress1="discard1")
                 s.auto_update_correlators.add(corr_omega[p])
