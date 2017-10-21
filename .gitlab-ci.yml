@@ -28,11 +28,13 @@ status_success:
   stage: deploy
   script: bash maintainer/gh_post_status.sh success
   when: on_success
+  dependencies: []
 
 status_failure:
   stage: deploy
   script: bash maintainer/gh_post_status.sh failure
   when: on_failure
+  dependencies: []
 
 sphinx_documentation:
   stage: deploy
