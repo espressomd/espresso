@@ -314,7 +314,7 @@ void Mmm1dgpuForce::set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefa
 	// The changed parameters in mmm1d_params do not need to be broadcast: they are only accessed by the TCL print function (on node 0) when you call inter coulomb. The CUDA code only runs on node 0, so other nodes do not need the parameters. We couldn't broadcast from here anyway because set_params() might be called from inside computeForces() which is not a time at which the MPI loop on the slave nodes is waiting for broadcasts.
 }
 
-__global__ void forcesKernel(const __restrict__ mmm1dgpu_real *r, const __restrict__ mmm1dgpu_real *q, __restrict__ mmm1dgpu_real *force, int N, int pairs, int tStart = 0, int tStop = -1)
+__global__ void forcesKernel(const mmm1dgpu_real * __restrict__ r, const mmm1dgpu_real * __restrict__ q, mmm1dgpu_real * __restrict__ force, int N, int pairs, int tStart = 0, int tStop = -1)
 {
 	if (tStop < 0)
 		tStop = N*N;
@@ -408,7 +408,7 @@ __global__ void forcesKernel(const __restrict__ mmm1dgpu_real *r, const __restri
 	}
 }
 
-__global__ void energiesKernel(const __restrict__ mmm1dgpu_real *r, const __restrict__ mmm1dgpu_real *q, __restrict__ mmm1dgpu_real *energy, int N, int pairs, int tStart = 0, int tStop = -1)
+__global__ void energiesKernel(const mmm1dgpu_real * __restrict__ r, const mmm1dgpu_real * __restrict__ q, mmm1dgpu_real * __restrict__ energy, int N, int pairs, int tStart = 0, int tStop = -1)
 {
 	if (tStop < 0)
 		tStop = N*N;
