@@ -379,6 +379,10 @@ void Correlator::initialize() {
 }
 
 int Correlator::get_data() {
+  if (finalized) {
+     runtimeErrorMsg() << "No data can be added after finalize() was called.";
+     return 0;
+  }
   // We must now go through the hierarchy and make sure there is space for the new 
   // datapoint. For every hierarchy level we have to decide if it necessary to move 
   // something
@@ -611,6 +615,10 @@ int Correlator::read_data_from_file(const char * filename, bool binary){
 
 
 int Correlator::finalize() {
+  if (finalized) {
+     runtimeErrorMsg() << "Correlator::finalize() can only be called once.";
+     return 0;
+  }
   // We must now go through the hierarchy and make sure there is space for the new 
   // datapoint. For every hierarchy level we have to decide if it necessary to move 
   // something
