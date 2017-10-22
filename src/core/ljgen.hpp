@@ -61,7 +61,7 @@ inline void add_ljgen_pair_force(const Particle *const p1,
 
 #ifdef LJGEN_SOFTCORE
     r_off *= r_off;
-    r_off += sqr(ia_params->LJGEN_sig) * (1.0 - ia_params->LJGEN_lambda) *
+    r_off += Utils::sqr(ia_params->LJGEN_sig) * (1.0 - ia_params->LJGEN_lambda) *
              ia_params->LJGEN_softrad;
     /* Taking a square root is not optimal, but we can't prevent the user from
        using an odd m, n coefficient. */
