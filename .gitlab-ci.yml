@@ -12,13 +12,13 @@ status_pending:
 shanchen:
   stage: build
   script:
-    - export myconfig=shanchen
+    - export myconfig=shanchen with_coverage=true
     - bash maintainer/cuda_build.sh
 
 maxset:
   stage: build
   script:
-    - export myconfig=maxset
+    - export myconfig=maxset with_coverage=true
     - bash maintainer/cuda_build.sh
   artifacts:
     paths:
@@ -28,7 +28,7 @@ clang:
   stage: build
   image: mkuron/espresso-ubuntu-clang-cuda:latest
   script:
-    - export myconfig=maxset
+    - export myconfig=maxset with_coverage=false
     - bash maintainer/cuda_build.sh
 
 status_success:
