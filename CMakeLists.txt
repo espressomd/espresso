@@ -107,7 +107,11 @@ endforeach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
 ######################################################################
 
 if (WITH_CUDA)
+  if (EXISTS "$ENV{NVCC}" AND NOT CUDA_NVCC_EXECUTABLE)
+    set(CUDA_NVCC_EXECUTABLE $ENV{NVCC})
+  endif()
   if (CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_C_COMPILER OR CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_CXX_COMPILER)
+    message(STATUS "Found CUDA-capable host compiler: ${CUDA_NVCC_EXECUTABLE}")
     find_library(CUDA_LIBRARY NAMES cuda)
     find_library(CUDART_LIBRARY NAMES cudart)
     find_library(CUFFT_LIBRARY NAMES cufft)

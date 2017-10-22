@@ -24,6 +24,13 @@ maxset:
     paths:
     - build/
 
+clang:
+  stage: build
+  image: mkuron/espresso-ubuntu-clang-cuda:latest
+  script:
+    - export myconfig=maxset
+    - bash maintainer/cuda_build.sh
+
 status_success:
   stage: deploy
   script: bash maintainer/gh_post_status.sh success
