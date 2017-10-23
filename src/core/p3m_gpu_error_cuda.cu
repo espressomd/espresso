@@ -250,9 +250,9 @@ double p3m_k_space_error_gpu(double prefactor, int *mesh, int cao, int npart, do
 
   he_q.resize(mesh_size);
 
-  dim3 grid(max(1, mesh[0]/8 + 1),
-            max(1, mesh[1]/8 + 1),
-            max(1, mesh[2]/8 + 1));
+  dim3 grid(std::max<int>(1, mesh[0]/8 + 1),
+            std::max<int>(1, mesh[1]/8 + 1),
+            std::max<int>(1, mesh[2]/8 + 1));
   
   dim3 block(8,8,8);
   

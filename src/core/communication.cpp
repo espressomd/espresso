@@ -202,7 +202,8 @@ static int terminated = 0;
   CB(mpi_scafacos_set_parameters_slave)                                        \
   CB(mpi_scafacos_free_slave)                                                  \
   CB(mpi_mpiio_slave)                                                          \
-  CB(mpi_resort_particles_slave)
+  CB(mpi_resort_particles_slave)                                               \
+  CB(mpi_get_pairs_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -348,8 +349,7 @@ void mpi_bcast_event_slave(int node, int event) {
     break;
 #endif
 
-  default:
-    ;
+  default:;
   }
 }
 
