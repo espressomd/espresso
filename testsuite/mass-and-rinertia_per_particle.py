@@ -17,11 +17,13 @@ class ThermoTest(ut.TestCase):
     es = espressomd.System()
 
     def run_test_case(self, test_case):
+        self.es.thermostat.turn_off()
         gamma = np.array([1.0, 1.0])
 
         # Decelleration
         self.es.time_step = 0.007
-        self.es.thermostat.set_langevin(kT=0.0, gamma=gamma[0])
+        if not "BROWNIAN_DYNAMICS" in espressomd.features():
+            self.es.thermostat.set_langevin(kT=0.0, gamma=gamma[0])
         self.es.cell_system.skin = 5.0
         seed(1)
         mass = 12.74
@@ -41,6 +43,9 @@ class ThermoTest(ut.TestCase):
         print("\n")
 
         if test_case == 0:
+            print("================================================")
+            print("Group of test cases 0-3: Langevin thermostat")
+            print("================================================")
             print("------------------------------------------------")
             print("Test " + str(test_case) + ": no particle specific values")
             print("------------------------------------------------")
@@ -95,21 +100,82 @@ class ThermoTest(ut.TestCase):
                 self.es.part[1].gamma_rot = np.array(
                     [gamma[1], gamma[1], gamma[1]])
 
+        if "BROWNIAN_DYNAMICS" in espressomd.features():
+            if test_case == 4:
+                print("================================================")
+                print("Group of test cases 4-7: Brownian thermostat")
+                print("================================================")
+                print("------------------------------------------------")
+                print("Test " + str(test_case) + ": no particle specific values")
+                print("------------------------------------------------")
+                gamma[1] = gamma[0]
+    
+            if test_case == 5:
+                print("------------------------------------------------")
+                print("Test " + str(test_case) +
+                    ": particle specific gamma but not temperature")
+                print("------------------------------------------------")
+                if "PARTICLE_ANISOTROPY" in espressomd.features():
+                    self.es.part[0].gamma = np.array(
+                        [gamma[0], gamma[0], gamma[0]])
+                    self.es.part[1].gamma = np.array(
+                        [gamma[1], gamma[1], gamma[1]])
+                else:
+                    self.es.part[0].gamma = gamma[0]
+                    self.es.part[1].gamma = gamma[1]
+                if "ROTATION" in espressomd.features():
+                    self.es.part[0].gamma_rot = np.array(
+                        [gamma[0], gamma[0], gamma[0]])
+                    self.es.part[1].gamma_rot = np.array(
+                        [gamma[1], gamma[1], gamma[1]])
+    
+            if test_case == 6:
+                print("------------------------------------------------")
+                print("Test " + str(test_case) +
+                    ": particle specific temperature but not gamma")
+                print("------------------------------------------------")
+                self.es.part[0].temp = 0.0
+                self.es.part[1].temp = 0.0
+                gamma[1] = gamma[0]
+    
+            if test_case == 7:
+                print("------------------------------------------------")
+                print("Test " + str(test_case) +
+                    ": both particle specific gamma and temperature")
+                print("------------------------------------------------")
+                self.es.part[0].temp = 0.0
+                self.es.part[1].temp = 0.0
+                if "PARTICLE_ANISOTROPY" in espressomd.features():
+                    self.es.part[0].gamma = np.array(
+                        [gamma[0], gamma[0], gamma[0]])
+                    self.es.part[1].gamma = np.array(
+                        [gamma[1], gamma[1], gamma[1]])
+                else:
+                    self.es.part[0].gamma = gamma[0]
+                    self.es.part[1].gamma = gamma[1]
+                if "ROTATION" in espressomd.features():
+                    self.es.part[0].gamma_rot = np.array(
+                        [gamma[0], gamma[0], gamma[0]])
+                    self.es.part[1].gamma_rot = np.array(
+                        [gamma[1], gamma[1], gamma[1]])
+
         self.es.time = 0.0
 
-        tol = 1.25E-4
-        for i in range(100):
-            for k in range(3):
-                self.assertLess(
-                    abs(self.es.part[0].v[k] - math.exp(- gamma[0] * self.es.time / mass)), tol)
-                self.assertLess(
-                    abs(self.es.part[1].v[k] - math.exp(- gamma[1] * self.es.time / mass)), tol)
-                if "ROTATION" in espressomd.features():
-                    self.assertLess(abs(
-                        self.es.part[0].omega_body[k] - math.exp(- gamma[0] * self.es.time / J[k])), tol)
-                    self.assertLess(abs(
-                        self.es.part[1].omega_body[k] - math.exp(- gamma[1] * self.es.time / J[k])), tol)
-            self.es.integrator.run(10)
+        if not "BROWNIAN_DYNAMICS" in espressomd.features():
+            tol = 1.25E-4
+            for i in range(100):
+                for k in range(3):
+                    self.assertLess(
+                        abs(self.es.part[0].v[k] - math.exp(- gamma[0] * self.es.time / mass)), tol)
+                    self.assertLess(
+                        abs(self.es.part[1].v[k] - math.exp(- gamma[1] * self.es.time / mass)), tol)
+                    if "ROTATION" in espressomd.features():
+                        self.assertLess(abs(
+                            self.es.part[0].omega_body[k] - math.exp(- gamma[0] * self.es.time / J[k])), tol)
+                        self.assertLess(abs(
+                            self.es.part[1].omega_body[k] - math.exp(- gamma[1] * self.es.time / J[k])), tol)
+                self.es.integrator.run(10)
+        # TODO: start the BD drift test here from the Brownian thermostat activation.
 
         for i in range(len(self.es.part)):
             self.es.part[i].remove()
@@ -142,12 +208,12 @@ class ThermoTest(ut.TestCase):
         kT = 1.5
         gamma_global = np.ones((3))
 
-        if test_case == 2 or test_case == 3:
+        if test_case in [2,3,6,7]:
             halfkT = temp / 2.0
         else:
             halfkT = np.array([kT, kT]) / 2.0
 
-        if test_case == 1 or test_case == 3:
+        if test_case in [1,3,5,7]:
             gamma_tr = gamma_tran
         else:
             for k in range(2):
@@ -158,18 +224,32 @@ class ThermoTest(ut.TestCase):
             D_tr[k, :] = 2.0 * halfkT[k] / gamma_tr[k, :]
 
         if "PARTICLE_ANISOTROPY" in espressomd.features():
-            self.es.thermostat.set_langevin(
-                kT=kT,
-                gamma=[
-                    gamma_global[0],
-                    gamma_global[1],
-                    gamma_global[2]])
+            if test_case < 4:
+                self.es.thermostat.set_langevin(
+                    kT=kT,
+                    gamma=[
+                        gamma_global[0],
+                        gamma_global[1],
+                        gamma_global[2]])
+            else:
+                self.es.thermostat.set_brownian(
+                    kT=kT,
+                    gamma=[
+                        gamma_global[0],
+                        gamma_global[1],
+                        gamma_global[2]])
         else:
-            self.es.thermostat.set_langevin(kT=kT, gamma=gamma_global[0])
+            if test_case < 4:
+                self.es.thermostat.set_langevin(kT=kT, gamma=gamma_global[0])
+            else:
+                self.es.thermostat.set_brownian(kT=kT, gamma=gamma_global[0])
 
         # no need to rebuild Verlet lists, avoid it
         self.es.cell_system.skin = 5.0
-        self.es.time_step = 0.03
+        if test_case < 4:
+            self.es.time_step = 0.03
+        else:
+            self.es.time_step = 0.3
         n = 200
         mass = (0.2 + random()) * 7.0
         J = np.array((0.2 + random(3)) * 7.0)
@@ -184,7 +264,7 @@ class ThermoTest(ut.TestCase):
                                  pos=part_pos, v=part_v)
                 if "ROTATION" in espressomd.features():
                     self.es.part[ind].omega_body = part_omega_body
-                if test_case == 1:
+                if test_case in [1,5]:
                     if "PARTICLE_ANISOTROPY" in espressomd.features():
                         self.es.part[ind].gamma = gamma_tran[k, :]
                     else:
@@ -192,9 +272,9 @@ class ThermoTest(ut.TestCase):
                     if "ROTATION" in espressomd.features():
                         self.es.part[ind].gamma_rot = gamma_rot[k, :]
 
-                if test_case == 2:
+                if test_case in [2,6]:
                     self.es.part[ind].temp = temp[k]
-                if test_case == 3:
+                if test_case in [3,7]:
                     if "PARTICLE_ANISOTROPY" in espressomd.features():
                         self.es.part[ind].gamma = gamma_tran[k, :]
                     else:
@@ -272,7 +352,7 @@ class ThermoTest(ut.TestCase):
             print("mass = " + str(mass))
             print("gamma_tr = {0} {1} {2}".format(
                 gamma_tr[k, 0], gamma_tr[k, 1], gamma_tr[k, 2]))
-            if test_case == 1 or test_case == 3:
+            if test_case in [1,5,3,7]:
                 print("gamma_rot = {0} {1} {2}".format(
                     gamma_rot[k, 0], gamma_rot[k, 1], gamma_rot[k, 2]))
             else:
@@ -321,7 +401,11 @@ class ThermoTest(ut.TestCase):
                     dr_norm[k]))
 
     def test(self):
-        for i in range(4):
+        if not "BROWNIAN_DYNAMICS" in espressomd.features():
+            n_test_cases = 4
+        else:
+            n_test_cases = 8
+        for i in range(n_test_cases):
             self.run_test_case(i)
 
 
