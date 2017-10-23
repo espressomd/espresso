@@ -1416,51 +1416,46 @@ IF LENNARD_JONES == 1:
             subt_lj_set_params(
                 self._bond_id, self._params["k"], self._params["r"])
 
-IF BOND_VIRTUAL == 1:
-    class Virtual(BondedInteraction):
+class Virtual(BondedInteraction):
 
-        def __init__(self, *args, **kwargs):
-            """
-            VirtualBond initializer. Used to instantiate a VirtualBond identifier.
-            """
-            super(Virtual, self).__init__(*args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        """
+        VirtualBond initializer. Used to instantiate a VirtualBond identifier.
+        """
+        super(Virtual, self).__init__(*args, **kwargs)
 
-        def type_number(self):
-            return BONDED_IA_VIRTUAL_BOND
+    def type_number(self):
+        return BONDED_IA_VIRTUAL_BOND
 
-        def type_name(self):
-            """Name of interaction type.
+    def type_name(self):
+        """Name of interaction type.
 
-            """
-            return "VIRTUAL"
+        """
+        return "VIRTUAL"
 
-        def valid_keys(self):
-            """All parameters that can be set.
+    def valid_keys(self):
+        """All parameters that can be set.
 
-            """
-            return {}
+        """
+        return {}
 
-        def required_keys(self):
-            """Parameters that have to be set.
+    def required_keys(self):
+        """Parameters that have to be set.
 
-            """
-            return []
+        """
+        return []
 
-        def set_default_params(self):
-            """Sets parameters that are not required to their default value.
+    def set_default_params(self):
+        """Sets parameters that are not required to their default value.
 
-            """
-            self._params = {}
+        """
+        self._params = {}
 
-        def _get_params_from_es_core(self):
-            return {}
+    def _get_params_from_es_core(self):
+        return {}
 
-        def _set_params_in_es_core(self):
-            virtual_set_params(self._bond_id)
-
-ELSE:
-    class Virtual(BondedInteractionNotDefined):
-        name = "BOND_VIRTUAL"
+    def _set_params_in_es_core(self):
+        virtual_set_params(self._bond_id)
 
 IF BOND_ENDANGLEDIST == 1:
     class Endangledist(BondedInteraction):
