@@ -4,6 +4,10 @@
 #include <functional>
 #include <vector>
 
+/* Needed for transform_iterator to work with
+   lambdas on older compilers. */
+#define BOOST_RESULT_OF_USE_DECLTYPE
+
 #include <boost/iterator/transform_iterator.hpp>
 
 #include "particle_data.hpp"
@@ -11,7 +15,8 @@
 
 class Cell : public ParticleList {
   struct GetReference {
-    Cell &operator()(std::reference_wrapper<Cell> &cell_ref) const {
+    template<typename T>
+    T &operator()(std::reference_wrapper<T> & cell_ref) const {
       return cell_ref.get();
     }
   };

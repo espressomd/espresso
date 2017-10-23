@@ -2,14 +2,14 @@
 #define OBSERVABLES_FLUXDENSITYPROFILE_HPP
 
 #include "ProfileObservable.hpp"
-#include "partCfg.hpp"
+
 #include <vector>
 
 namespace Observables {
 class FluxDensityProfile : public ProfileObservable {
 public:
   virtual int n_values() const override { return 3 * xbins * ybins * zbins; }
-  virtual int actual_calculate() override {
+  virtual int actual_calculate(PartCfg & partCfg) override {
     double bin_volume =
         (maxx - minx) * (maxy - miny) * (maxz - minz) / xbins / ybins / zbins;
 

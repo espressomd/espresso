@@ -25,6 +25,7 @@
  *  For more information on cells, see cells.hpp
  *   */
 #include "cells.hpp"
+#include "algorithm/link_cell.hpp"
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
 #include "ghosts.hpp"
@@ -37,13 +38,12 @@
 #include "nsquare.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
+#include "utils/NoOp.hpp"
+#include "utils/mpi/gather_buffer.hpp"
+#include <boost/iterator/indirect_iterator.hpp>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-
-#include "algorithm/link_cell.hpp"
-#include "utils/NoOp.hpp"
-#include <boost/iterator/indirect_iterator.hpp>
 
 /* Variables */
 
@@ -68,12 +68,12 @@ int rebuild_verletlist = 1;
  *
  * This is mostly for testing purposes and uses link_cell
  * to get pairs out of the cellsystem by a simple distance
- * criterion. This only works for n_nodes == 1, and should
- * not be used in production code.
+ * criterion.
  *
  * Pairs are sorted so that first.id < second.id
  */
-std::vector<std::pair<int, int>> get_pairs(double distance) {
+std::vector<std::pair<int, int>>
+get_pairs(double distance) {
   std::vector<std::pair<int, int>> ret;
   auto const cutoff2 = distance * distance;
 
@@ -110,7 +110,8 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
                            double vec21[3];
                            get_mi_vector(vec21, p1.r.p, p2.r.p);
                            vec21[2] = p1.r.p[2] - p2.r.p[2];
-                           return sqrlen(vec21);
+
+                             return sqrlen(vec21);
                          });
   }
 
@@ -121,6 +122,29 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
   }
 
   return ret;
+}
+
+void mpi_get_pairs_slave(int, int) {
+  double distance;
+  boost::mpi::broadcast(comm_cart, distance, 0);
+
+  auto local_pairs = get_pairs(distance);
+
+  Utils::Mpi::gather_buffer(local_pairs, comm_cart);
+}
+
+/**
+ * @brief Collect pairs from all nodes.
+ */
+std::vector<std::pair<int, int>> mpi_get_pairs(double distance) {
+  mpi_call(mpi_get_pairs_slave, 0, 0);
+  boost::mpi::broadcast(comm_cart, distance, 0);
+
+  auto pairs = get_pairs(distance);
+
+  Utils::Mpi::gather_buffer(pairs, comm_cart);
+
+  return pairs;
 }
 
 /************************************************************/
@@ -206,10 +230,11 @@ void cells_re_init(int new_cs) {
 
   topology_init(new_cs, &tmp_local);
 
-  particle_invalidate_part_node();
+  clear_particle_node();
 
   /* finally deallocate the old cells */
   realloc_cellplist(&tmp_local, 0);
+
   for (auto &cell : tmp_cells) {
     cell.resize(0);
   }
@@ -258,55 +283,10 @@ void announce_resort_particles() {
 /*************************************************/
 
 int cells_get_n_particles() {
-  int c, cnt = 0;
-  for (c = 0; c < local_cells.n; c++)
-    cnt += local_cells.cell[c]->n;
-  return cnt;
+  using std::distance;
+  return distance(local_cells.particles().begin(),
+                  local_cells.particles().end());
 }
-
-/*************************************************/
-
-void print_local_particle_positions() {
-  Cell *cell;
-  int c, i, np, cnt = 0;
-  Particle *part;
-
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    part = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      fprintf(stderr, "%d: local cell %d contains part id=%d pos=(%f,%f,%f)\n",
-              this_node, c, part[i].p.identity, part[i].r.p[0], part[i].r.p[1],
-              part[i].r.p[2]);
-      cnt++;
-    }
-  }
-  fprintf(stderr, "%d: found %d particles\n", this_node, cnt);
-}
-
-/*************************************************/
-
-#ifdef CELL_DEBUG
-
-static void dump_particle_ordering() {
-  /* Loop local cells */
-  for (int c = 0; c < local_cells.n; c++) {
-    Cell *cell = local_cells.cell[c];
-    Particle *p = cell->part;
-    int np = cell->n;
-
-    fprintf(stderr, "%d: cell %d has particles", this_node, c);
-
-    /* Loop cell particles */
-    for (int i = 0; i < np; i++) {
-      fprintf(stderr, " %d", p[i].p.identity);
-    }
-    fprintf(stderr, "\n");
-  }
-}
-
-#endif // CELL_TRACE
 
 /*************************************************/
 
@@ -316,7 +296,7 @@ void cells_resort_particles(int global_flag) {
 
   invalidate_ghosts();
 
-  particle_invalidate_part_node();
+  clear_particle_node();
   n_verlet_updates++;
 
   switch (cell_structure.type) {
@@ -346,7 +326,6 @@ void cells_resort_particles(int global_flag) {
 
   on_resort_particles();
 
-  CELL_TRACE(dump_particle_ordering());
   CELL_TRACE(
       fprintf(stderr, "%d: leaving cells_resort_particles\n", this_node));
 }
@@ -382,21 +361,14 @@ void cells_on_geometry_change(int flags) {
 /*************************************************/
 
 void check_resort_particles() {
-  int i, c, np;
-  Cell *cell;
-  Particle *p;
-  double skin2 = SQR(skin / 2.0);
+  const double skin2 = SQR(skin / 2.0);
 
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      /* Verlet criterion check */
-      if (distance2(p[i].r.p, p[i].l.p_old) > skin2)
-        resort_particles = 1;
-    }
-  }
+  resort_particles =
+      std::any_of(local_cells.particles().begin(),
+                  local_cells.particles().end(), [&skin2](Particle const &p) {
+                    return distance2(p.r.p, p.l.p_old) > skin2;
+                  });
+
   announce_resort_particles();
 }
 
@@ -418,25 +390,4 @@ void cells_update_ghosts() {
   } else
     /* Communication step: ghost information */
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
-}
-
-/*************************************************/
-
-void print_ghost_positions() {
-  Cell *cell;
-  int c, i, np, cnt = 0;
-  Particle *part;
-
-  for (c = 0; c < ghost_cells.n; c++) {
-    cell = ghost_cells.cell[c];
-    part = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      fprintf(stderr, "%d: local cell %d contains ghost id=%d pos=(%f,%f,%f)\n",
-              this_node, c, part[i].p.identity, part[i].r.p[0], part[i].r.p[1],
-              part[i].r.p[2]);
-      cnt++;
-    }
-  }
-  fprintf(stderr, "%d: found %d ghosts\n", this_node, cnt);
 }

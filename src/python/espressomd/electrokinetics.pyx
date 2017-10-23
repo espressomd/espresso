@@ -6,8 +6,7 @@ from . import utils
 import numpy as np
 
 IF ELECTROKINETICS:
-
-    cdef class Electrokinetics(lb.HydrodynamicInteraction):
+    cdef class Electrokinetics(HydrodynamicInteraction):
         species_list = []
 
         def __getitem__(self, key):
@@ -326,6 +325,3 @@ IF ELECTROKINETICS:
                     raise Exception("Species has not been added to EK.")
 
                 return np.array(flux[0], flux[1], flux[2])
-
-
-

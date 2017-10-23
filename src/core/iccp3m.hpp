@@ -57,6 +57,19 @@
 
 #if defined(ELECTROSTATICS)
 
+#include "cells.hpp"
+#include "ghosts.hpp"
+#include "global.hpp"
+#include "integrate.hpp"
+#include "interaction_data.hpp"
+#include "mmm1d.hpp"
+#include "mmm2d.hpp"
+#include "p3m.hpp"
+#include "particle_data.hpp"
+#include "topology.hpp"
+#include "utils.hpp"
+#include <ctime>
+
 /* iccp3m data structures*/
 typedef struct {
   int initialized;
@@ -76,7 +89,8 @@ typedef struct {
   double relax;   /* relaxation parameter for iterative                       */
   int citeration; /* current number of iterations*/
   int set_flag;   /* flag that indicates if ICCP3M has been initialized properly
-                   */
+                     */
+
   double *fx;
   double *fy;
   double *fz;

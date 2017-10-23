@@ -24,7 +24,7 @@
     Various procedures concerning interactions between particles.
 */
 
-#include "particle_data.hpp" /* needed for constraints */
+#include "particle_data.hpp"
 #include "utils.hpp"
 
 /** \name Type codes of bonded interactions
@@ -178,49 +178,6 @@ enum DipolarInteraction {
 };
 #endif
 
-/** \name Type codes for constraints
-    Enumeration of implemented constraint types.
-*/
-/************************************************************/
-/*@{*/
-enum ConstraintApplied {
-  /** No constraint applied */
-  CONSTRAINT_NONE = 0,
-  /** wall constraint applied */
-  CONSTRAINT_WAL,
-  /** spherical constraint applied */
-  CONSTRAINT_SPH,
-  /** (finite) cylinder shaped constraint applied */
-  CONSTRAINT_CYL,
-  /** Rod-like charge. */
-  CONSTRAINT_ROD,
-  /** Plate-like charge. */
-  CONSTRAINT_PLATE,
-  /** maze-like constraint applied */
-  CONSTRAINT_MAZE,
-  /** pore constraint applied */
-  CONSTRAINT_PORE,
-  // ER
-  /** External magnetic field constraint applied */
-  CONSTRAINT_EXT_MAGN_FIELD,
-  // end ER
-  /** Constraint for tunable-lsip boundary conditions */
-  CONSTRAINT_PLANE,
-  /** Constraint for tunable-lsip boundary conditions */
-  CONSTRAINT_RHOMBOID,
-  /** Constraint for a stomatocyte boundary */
-  CONSTRAINT_STOMATOCYTE,
-  /** slitpore constraint applied */
-  CONSTRAINT_SLITPORE,
-  /** Constraint for a hollow cone boundary */
-  CONSTRAINT_HOLLOW_CONE,
-  /** Constraint for spherocylinder boundary */
-  CONSTRAINT_SPHEROCYLINDER,
-  /** Constraint for a voxel boundary */
-  CONSTRAINT_VOXEL
-};
-/*@}*/
-
 /* Data Types */
 /************************************************************/
 
@@ -228,14 +185,6 @@ enum ConstraintApplied {
  *  nonbonded interactions. Access via
  * get_ia_param(i, j), i,j < n_particle_types */
 typedef struct {
-
-  /** flag that tells whether there is any short-ranged interaction,
-   i.e. one that contributes to the "nonbonded" section of the
-   energy/pressure. Note that even if there is no short-ranged
-   interaction present, the \ref max_cut can be non-zero due to
-   e.g. electrostatics. */
-  int particlesInteract;
-
   /** maximal cutoff for this pair of particle types. This contains
       contributions from the short-ranged interactions, plus any
       cutoffs from global interactions like electrostatics.
@@ -253,6 +202,14 @@ typedef struct {
   double LJ_min;
   /*@}*/
 
+  /** flag that tells whether there is any short-ranged interaction,
+      i.e. one that contributes to the "nonbonded" section of the
+      energy/pressure. Note that even if there is no short-ranged
+      interaction present, the \ref max_cut can be non-zero due to
+      e.g. electrostatics. */
+  int particlesInteract;
+
+#ifdef LENNARD_JONES_GENERIC
   /** \name Generic Lennard-Jones with shift */
   /*@{*/
   double LJGEN_eps;
@@ -261,13 +218,14 @@ typedef struct {
   double LJGEN_shift;
   double LJGEN_offset;
   double LJGEN_capradius;
-  int LJGEN_a1;
-  int LJGEN_a2;
+  double LJGEN_a1;
+  double LJGEN_a2;
   double LJGEN_b1;
   double LJGEN_b2;
   double LJGEN_lambda;
   double LJGEN_softrad;
 /*@}*/
+#endif
 
 #ifdef LJ_ANGLE
   /** \name Directional Lennard-Jones */
@@ -465,16 +423,6 @@ typedef struct {
 /** The maximum allowable filename length for a tabulated potential file*/
 #define MAXLENGTH_TABFILE_NAME 256
   char TAB_filename[MAXLENGTH_TABFILE_NAME];
-/*@}*/
-#endif
-
-#ifdef COMFORCE
-  /** \name center of mass directed force */
-  /*@{*/
-  int COMFORCE_flag;
-  int COMFORCE_dir;
-  double COMFORCE_force;
-  double COMFORCE_fratio;
 /*@}*/
 #endif
 
@@ -890,275 +838,6 @@ typedef struct {
   Bond_parameters p;
 } Bonded_ia_parameters;
 
-#ifdef CONSTRAINTS
-/** \name Compounds for constraints */
-/*@{*/
-
-/** Parameters for a WALL constraint (or a plane if you like that more). */
-typedef struct {
-  /** normal vector on the plane. */
-  double n[3];
-  /** distance of the wall from the origin. */
-  double d;
-  /** whether the constraint is penetrable 1 or not 0*/
-  int penetrable;
-  int reflecting;
-  int only_positive;
-  /** whether to calculate tunable slip forces 1 or not 0 */
-  int tunable_slip;
-} Constraint_wall;
-
-/** Parameters for a SPHERE constraint. */
-typedef struct {
-  /** sphere center. */
-  double pos[3];
-  /** sphere radius. */
-  double rad;
-  /** sphere direction. (+1 outside -1 inside interaction direction)*/
-  double direction;
-  /** whether the constraint is penetrable 1 or not 0*/
-  int penetrable;
-  int reflecting;
-} Constraint_sphere;
-
-/** Parameters for a CYLINDER constraint. */
-typedef struct {
-  /** center of the cylinder. */
-  double pos[3];
-  /** Axis of the cylinder .*/
-  double axis[3];
-  /** cylinder radius. */
-  double rad;
-  /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
-  double length;
-  /** cylinder direction. (+1 outside -1 inside interaction direction)*/
-  double direction;
-  /** whether the constraint is penetrable 1 or not 0*/
-  int penetrable;
-  int reflecting;
-} Constraint_cylinder;
-
-/** Parameters for a SPHEROCYLINDER constraint. */
-typedef struct {
-  /** center of the cylinder. */
-  double pos[3];
-  /** Axis of the cylinder .*/
-  double axis[3];
-  /** cylinder radius. */
-  double rad;
-  /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
-  double length;
-  /** cylinder direction. (+1 outside -1 inside interaction direction)*/
-  double direction;
-  /** whether the constraint is penetrable 1 or not 0*/
-  int penetrable;
-  int reflecting;
-} Constraint_spherocylinder;
-
-/** Parameters for a RHOMBOID constraint. */
-typedef struct {
-  /** corner of the rhomboid */
-  double pos[3];
-  /** edges adjacent to the corner */
-  double a[3];
-  double b[3];
-  double c[3];
-  /** rhomboid direction. (+1 outside -1 inside interaction direction)*/
-  double direction;
-  /** whether the constraint is penetrable 1 or not 0*/
-  int penetrable;
-  int reflecting;
-} Constraint_rhomboid;
-
-/** Parameters for a PORE constraint. */
-typedef struct {
-  /** center of the cylinder. */
-  double pos[3];
-  /** Axis of the cylinder .*/
-  double axis[3];
-  /** cylinder radius. */
-  double rad_left;
-  double rad_right;
-  double smoothing_radius;
-  /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
-  double length;
-  int reflecting;
-  double outer_rad_left;
-  double outer_rad_right;
-} Constraint_pore;
-
-/** Parameters for a SLITPORE constraint. */
-typedef struct {
-  /** center of the cylinder. */
-  double pore_mouth;
-  /** Axis of the cylinder .*/
-  double upper_smoothing_radius;
-  double lower_smoothing_radius;
-  /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
-  double channel_width;
-  double pore_width;
-  double pore_length;
-  int reflecting;
-} Constraint_slitpore;
-
-/** Parameters for a ROD constraint. */
-typedef struct {
-  /** center of the cylinder in the x-y plane. */
-  double pos[2];
-  /** line charge density. Only makes sense if the axis along the rod is
-      periodically replicated and only with MMM1D. */
-  double lambda;
-} Constraint_rod;
-
-/** Parameters for a PLATE constraint. */
-typedef struct {
-  /** height of plane in z-axis. */
-  double pos;
-  /** charge density. Only makes sense if the axis along the rod is
-      periodically replicated and only with MMM2D. */
-  double sigma;
-} Constraint_plate;
-
-/** Parameters for a MAZE constraint. */
-typedef struct {
-  /** number of spheres. */
-  double nsphere;
-  /** dimension of the maze. */
-  double dim;
-  /** sphere radius. */
-  double sphrad;
-  /** cylinder (connecting the spheres) radius*/
-  double cylrad;
-  /** whether the constraint is penetrable 1 or not 0*/
-  int penetrable;
-} Constraint_maze;
-
-/** Parameters for a STOMATOCYTE constraint. */
-typedef struct {
-
-  /** Stomatocyte position. */
-
-  double position_x;
-  double position_y;
-  double position_z;
-
-  /** Stomatocyte orientation. */
-
-  double orientation_x;
-  double orientation_y;
-  double orientation_z;
-
-  /** Stomatocyte dimensions. */
-
-  double outer_radius;
-  double inner_radius;
-  double layer_width;
-
-  /** Inside/Outside (+1 outside -1 inside interaction direction)*/
-
-  double direction;
-
-  /** whether the constraint is penetrable 1 or not 0*/
-
-  int penetrable;
-  int reflecting;
-
-} Constraint_stomatocyte;
-
-/** Parameters for a HOLLOW_CONE constraint. */
-typedef struct {
-
-  /** Hollow cone position. */
-
-  double position_x;
-  double position_y;
-  double position_z;
-
-  /** Hollow cone orientation. */
-
-  double orientation_x;
-  double orientation_y;
-  double orientation_z;
-
-  /** Hollow cone dimensions. */
-
-  double inner_radius;
-  double outer_radius;
-  double width;
-  double opening_angle;
-
-  /** Inside/Outside (+1 outside -1 inside interaction direction)*/
-
-  double direction;
-
-  /** whether the constraint is penetrable 1 or not 0*/
-
-  int penetrable;
-  int reflecting;
-
-} Constraint_hollow_cone;
-
-/** Parameters for a VOXEL constraint. */
-typedef struct {
-
-/** Voxel position. x y z*/
-// double pos[3];
-/** normal vector towards fluid. */
-// double n[3];
-
-#define MAXLENGTH_VOXELFILE_NAME 256
-  char filename[MAXLENGTH_VOXELFILE_NAME];
-} Constraint_voxel;
-
-/** Parameters for a BOX constraint. */
-typedef struct { int value; } Constraint_box;
-
-// ER
-/** Parameters for a EXTERNAL MAGNETIC FIELD constraint */
-typedef struct {
-  /** vector (direction and magnitude) of the external magnetic field */
-  double ext_magn_field[3];
-} Constraint_ext_magn_field;
-// end ER
-
-typedef struct {
-  double omega;
-  double Prefactor;
-} SinusoidalField;
-
-/** Structure to specify a constraint. */
-struct Constraint {
-  Constraint() : type(CONSTRAINT_NONE) {}
-
-  /** type of the constraint. */
-  ConstraintApplied type;
-
-  union {
-    Constraint_wall wal;
-    Constraint_sphere sph;
-    Constraint_cylinder cyl;
-    Constraint_spherocylinder spherocyl;
-    Constraint_rhomboid rhomboid;
-    Constraint_rod rod;
-    Constraint_plate plate;
-    Constraint_maze maze;
-    Constraint_pore pore;
-    Constraint_slitpore slitpore;
-    Constraint_stomatocyte stomatocyte;
-    Constraint_hollow_cone hollow_cone;
-    Constraint_voxel voxel;
-    // ER
-    Constraint_ext_magn_field emfield;
-  } c;
-
-  /** particle representation of this constraint. Actually needed are only the
-     identity,
-      the type and the force. */
-  Particle part_rep;
-};
-/*@}*/
-#endif
-
 /************************************************
  * exported variables
  ************************************************/
@@ -1283,16 +962,27 @@ int virtual_set_params(int bond_type);
 void set_dipolar_method_local(DipolarInteraction method);
 #endif
 
+#include "utils/math/sqr.hpp"
+
 /** Returns true if the particles are to be considered for short range
     interactions */
 class VerletCriterion {
   const double m_skin;
+  const double m_eff_max_cut2;
+  const double m_eff_coulomb_cut2 = 0.;
+  const double m_eff_dipolar_cut2 = 0.;
 
 public:
-  explicit VerletCriterion(double skin) : m_skin(skin) {}
+  VerletCriterion(double skin, double max_cut, double coulomb_cut = 0.,
+                  double dipolar_cut = 0.)
+      : m_skin(skin), m_eff_max_cut2(Utils::sqr(max_cut + m_skin)),
+        m_eff_coulomb_cut2(Utils::sqr(coulomb_cut + m_skin)),
+        m_eff_dipolar_cut2(Utils::sqr(dipolar_cut + m_skin)) {}
 
-  bool operator()(const Particle &p1, const Particle &p2, double dist2) const {
-    if (dist2 > SQR(max_cut + m_skin))
+  template<typename Distance>
+  bool operator()(const Particle &p1, const Particle &p2, Distance const& dist) const {
+    auto const& dist2 = dist.dist2;
+    if (dist2 > m_eff_max_cut2)
       return false;
 
 #ifdef EXCLUSIONS
@@ -1306,15 +996,13 @@ public:
 
 // Within real space cutoff of electrostatics and both charged
 #ifdef ELECTROSTATICS
-    if ((dist2 <= SQR(coulomb_cutoff + m_skin)) && (p1.p.q != 0) &&
-        (p2.p.q != 0))
+    if ((dist2 <= m_eff_coulomb_cut2) && (p1.p.q != 0) && (p2.p.q != 0))
       return true;
 #endif
 
 // Within dipolar cutoff and both cary magnetic moments
 #ifdef DIPOLES
-    if ((dist2 <= SQR(dipolar_cutoff + m_skin)) && (p1.p.dipm != 0) &&
-        (p2.p.dipm != 0))
+    if ((dist2 <= m_eff_dipolar_cut2) && (p1.p.dipm != 0) && (p2.p.dipm != 0))
       return true;
 #endif
 

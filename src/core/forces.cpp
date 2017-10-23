@@ -34,17 +34,13 @@
 #include "iccp3m.hpp"
 #include "maggs.hpp"
 #include "p3m_gpu.hpp"
-
+#include "partCfg_global.hpp"
 #include "short_range_loop.hpp"
 
 #include <cassert>
 ActorList forceActors;
 
 void init_forces() {
-  Cell *cell;
-  Particle *p;
-  int np, c, i;
-
 /* The force initialization depends on the used thermostat and the
    thermodynamic ensemble */
 
@@ -58,23 +54,15 @@ void init_forces() {
      or zero depending on the thermostat
      set torque to zero for all and rescale quaternions
   */
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++)
-      init_local_particle_force(&p[i]);
+  for (auto &p : local_cells.particles()) {
+    init_local_particle_force(&p);
   }
 
   /* initialize ghost forces with zero
      set torque to zero for all and rescale quaternions
   */
-  for (c = 0; c < ghost_cells.n; c++) {
-    cell = ghost_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++)
-      init_ghost_force(&p[i]);
+  for (auto &p : ghost_cells.particles()) {
+    init_ghost_force(&p);
   }
 
 #ifdef CONSTRAINTS
@@ -83,16 +71,8 @@ void init_forces() {
 }
 
 void init_forces_ghosts() {
-  Cell *cell;
-  Particle *p;
-  int np, c, i;
-
-  for (c = 0; c < ghost_cells.n; c++) {
-    cell = ghost_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++)
-      init_ghost_force(&p[i]);
+  for (auto &p : ghost_cells.particles()) {
+    init_ghost_force(&p);
   }
 }
 
@@ -100,25 +80,12 @@ void init_forces_ghosts() {
 // The check was moved to rescale_fores() to avoid an additional iteration over
 // all particles
 void check_forces() {
-  Cell *cell;
-  Particle *p;
-  int np, c, i;
-
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      check_particle_force(&p[i]);
-    }
+  for (auto &p : local_cells.particles()) {
+    check_particle_force(&p);
   }
 
-  for (c = 0; c < ghost_cells.n; c++) {
-    cell = ghost_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++)
-      check_particle_force(&p[i]);
+  for (auto &p : ghost_cells.particles()) {
+    check_particle_force(&p);
   }
 }
 
@@ -211,10 +178,6 @@ void force_calc() {
 #ifdef LB
   if (lattice_switch & LATTICE_LB)
     calc_particle_lattice_ia();
-#endif
-
-#ifdef COMFORCE
-  calc_comforce();
 #endif
 
 #ifdef METADYNAMICS

@@ -22,8 +22,10 @@
  *
 */
 
-#include <vector>
 #include <random>
+#include <vector>
+
+#include "core/ParticleCache.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/access.hpp>
@@ -34,10 +36,11 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "core/ParticleCache.hpp"
 #include "utils/List.hpp"
-
 #include "mock/Particle.hpp"
+
+using Communication::MpiCallbacks;
+namespace mpi = boost::mpi;
 
 class Particle : public Testing::Particle {
 public:
@@ -45,6 +48,11 @@ public:
   Particle(int id) : Testing::Particle(id) {}
 
   IntList bl;
+
+  IntList &bonds() { return bl; }
+  IntList const &bonds() const { return bl; }
+
+  Particle flat_copy() const { return Particle(m_id); }
 
   template <typename Archive> void serialize(Archive &ar, unsigned int) {
     ar &m_id;
@@ -84,18 +92,17 @@ void check_merge(unsigned size, unsigned split) {
 }
 
 BOOST_AUTO_TEST_CASE(detail_merge_equal) { check_merge(2000, 2); }
-
 BOOST_AUTO_TEST_CASE(detail_merge_not_equal) { check_merge(2000, 3); }
-
 BOOST_AUTO_TEST_CASE(detail_merge_empty_left) { check_merge(2000, 1); }
-
 BOOST_AUTO_TEST_CASE(detail_merge_empty_right) { check_merge(2000, 2000); }
 
 BOOST_AUTO_TEST_CASE(update) {
   Particles local_parts;
+  mpi::communicator world;
+  MpiCallbacks cb(world);
 
-  auto const rank = Communication::mpiCallbacks().comm().rank();
-  auto const size = Communication::mpiCallbacks().comm().size();
+  auto const rank = cb.comm().rank();
+  auto const size = cb.comm().size();
   auto const n_part = 10000;
 
   local_parts.reserve(n_part);
@@ -104,8 +111,10 @@ BOOST_AUTO_TEST_CASE(update) {
     local_parts.emplace_back(rank * n_part + i);
   }
 
-  auto get_parts = [&local_parts]() -> Particles const& { return local_parts; };
-  ParticleCache<decltype(get_parts)> part_cfg(get_parts);
+  auto get_parts = [&local_parts]() -> Particles const & {
+    return local_parts;
+  };
+  ParticleCache<decltype(get_parts)> part_cfg(cb, get_parts);
 
   if (rank == 0) {
     BOOST_CHECK(part_cfg.size() == size * n_part);
@@ -113,19 +122,19 @@ BOOST_AUTO_TEST_CASE(update) {
     for (int i = 0; i < size * n_part; i++) {
       BOOST_CHECK(i == part_cfg[i].identity());
     }
-
-    Communication::mpiCallbacks().abort_loop();
   } else
-    Communication::mpiCallbacks().loop();
+    cb.loop();
 }
 
 BOOST_AUTO_TEST_CASE(update_with_bonds) {
   auto const bond_lengths = std::array<int, 6>{1, 2, 4, 9, 21, 0};
 
   Particles local_parts;
+  mpi::communicator world;
+  MpiCallbacks cb(world);
 
-  auto const rank = Communication::mpiCallbacks().comm().rank();
-  auto const size = Communication::mpiCallbacks().comm().size();
+  auto const rank = cb.comm().rank();
+  auto const size = cb.comm().size();
   auto const n_part = 1234;
 
   local_parts.reserve(n_part);
@@ -135,15 +144,15 @@ BOOST_AUTO_TEST_CASE(update_with_bonds) {
     local_parts.emplace_back(id);
     auto const bond_length = bond_lengths[id % bond_lengths.size()];
     auto &part = local_parts.back();
-    part.bl.e = nullptr;
-    part.bl.max = 0;
     part.bl.resize(bond_length);
-    part.bl.n = bond_length;
+
     std::fill(part.bl.begin(), part.bl.end(), id);
   }
 
-  auto get_parts = [&local_parts]() -> Particles const& { return local_parts; };
-  ParticleCache<decltype(get_parts)> part_cfg(get_parts);
+  auto get_parts = [&local_parts]() -> Particles const & {
+    return local_parts;
+  };
+  ParticleCache<decltype(get_parts)> part_cfg(cb, get_parts);
 
   if (rank == 0) {
     part_cfg.update_bonds();
@@ -156,17 +165,18 @@ BOOST_AUTO_TEST_CASE(update_with_bonds) {
       BOOST_CHECK(std::all_of(part_cfg[i].bl.begin(), part_cfg[i].bl.end(),
                               [&i](int j) { return j == i; }));
     }
-    Communication::mpiCallbacks().abort_loop();
   } else {
-    Communication::mpiCallbacks().loop();
+    cb.loop();
   }
 }
 
 BOOST_AUTO_TEST_CASE(iterators) {
   Particles local_parts;
+  mpi::communicator world;
+  MpiCallbacks cb(world);
 
-  auto const rank = Communication::mpiCallbacks().comm().rank();
-  auto const size = Communication::mpiCallbacks().comm().size();
+  auto const rank = cb.comm().rank();
+  auto const size = cb.comm().size();
   auto const n_part = 1000;
 
   local_parts.reserve(n_part);
@@ -175,8 +185,11 @@ BOOST_AUTO_TEST_CASE(iterators) {
     local_parts.emplace_back(rank * n_part + i);
   }
 
-  auto get_parts = [&local_parts]() -> Particles const& { return local_parts; };
-  ParticleCache<decltype(get_parts)> part_cfg(get_parts);
+  auto get_parts = [&local_parts]() -> Particles const & {
+    return local_parts;
+  };
+
+  ParticleCache<decltype(get_parts)> part_cfg(cb, get_parts);
 
   if (rank == 0) {
     BOOST_CHECK(part_cfg.size() == size * n_part);
@@ -194,14 +207,13 @@ BOOST_AUTO_TEST_CASE(iterators) {
                                [](Particle const &a, Particle const &b) {
                                  return a.identity() < b.identity();
                                }));
-    Communication::mpiCallbacks().abort_loop();
   } else {
-    Communication::mpiCallbacks().loop();
+    cb.loop();
   }
 }
 
 int main(int argc, char **argv) {
-  boost::mpi::environment mpi_env(argc, argv);
+  mpi::environment mpi_env(argc, argv);
 
-  boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

@@ -28,6 +28,7 @@
 #include "Vector.hpp"
 #include "config.hpp"
 #include "utils.hpp"
+#include <memory>
 
 /************************************************
  * defines
@@ -78,67 +79,67 @@
     needed in the interaction calculation, but are just copies of
     particles stored on different nodes.
 */
-typedef struct ParticleProperties ParticleProperties;
 struct ParticleProperties {
   /** unique identifier for the particle. */
-  int identity;
+  int identity = -1;
   /** Molecule identifier. */
-  int mol_id;
+  int mol_id = 0;
   /** particle type, used for non bonded interactions. */
-  int type;
+  int type = 0;
 
 #ifdef MASS
   /** particle mass */
-  double mass;
+  double mass = 1.0;
 #else
   constexpr static double mass{1.0};
 #endif /* MASS */
 
 #ifdef SHANCHEN
-  double solvation[2 * LB_COMPONENTS];
+  std::array<double, 2 *LB_COMPONENTS> solvation =
+      std::array<double, 2 * LB_COMPONENTS>{};
 #endif
 
 #ifdef ROTATIONAL_INERTIA
   /** rotational inertia */
-  double rinertia[3];
+  double rinertia[3] = {1., 1., 1.};
+#else
+  static constexpr const double rinertia[3] = {1., 1., 1.};
 #endif
 
 #ifdef AFFINITY
   /** parameters for affinity mechanisms */
-  double bond_site[3];
+  double bond_site[3] = {-1., -1., -1.};
 #endif
 
 #ifdef MEMBRANE_COLLISION
   /** parameters for membrane collision mechanisms */
-  double out_direction[3];
+  double out_direction[3] = {0., 0., 0.};
 #endif
 
-#ifdef ROTATION_PER_PARTICLE
   // Determines, wether a particle's rotational degrees of freedom are
   // integrated
-  short int rotation;
-#endif
+  short int rotation = 0;
 
 #ifdef ELECTROSTATICS
   /** charge. */
-  double q;
+  double q = 0.0;
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
   /** electrophoretic mobility times E-field: mu_0 * E */
-  double mu_E[3];
+  double mu_E[3] = {0., 0., 0.};
 #endif
 
 #ifdef DIPOLES
   /** dipole moment (absolute value)*/
-  double dipm;
+  double dipm = 0.;
 #endif
 
 #ifdef VIRTUAL_SITES
   /** is particle virtual
       0 = real particle
       else = virual particle */
-  int isVirtual;
+  int isVirtual = 0;
 #ifdef VIRTUAL_SITES_RELATIVE
   /** In case, the "relative" implementation of virtual sites is enabled, the
   following properties define, with respect to which real particle a virtual
@@ -146,47 +147,41 @@ struct ParticleProperties {
   pointing from real particle to virtual site with respect to the orientation
   of the real particle is stored in the virtual site's quaternion attribute.
   */
-  int vs_relative_to_particle_id;
-  double vs_relative_distance;
+  int vs_relative_to_particle_id = 0;
+  double vs_relative_distance = 0;
   // Store relative position of the virtual site
-  double vs_relative_rel_orientation[4];
+  double vs_relative_rel_orientation[4] = {0., 0., 0., 0};
 #endif
 #endif
 
 #ifdef LANGEVIN_PER_PARTICLE
-  double T;
+  double T = -1.;
 #ifndef PARTICLE_ANISOTROPY
-  double gamma;
+  double gamma = -1.;
 #else
-  double gamma[3];
+  Vector3d gamma = {-1., -1., -1.};
 #endif // PARTICLE_ANISOTROPY
 /* Friction coefficient gamma for rotation */
 #ifdef ROTATION
-#ifndef ROTATIONAL_INERTIA
-  double gamma_rot;
+#ifndef PARTICLE_ANISOTROPY
+  double gamma_rot = -1.;
 #else
-  double gamma_rot[3];
+  Vector3d gamma_rot = {-1., -1., -1.};
 #endif // ROTATIONAL_INERTIA
 #endif // ROTATION
 #endif // LANGEVIN_PER_PARTICLE
 
 #ifdef CATALYTIC_REACTIONS
-  int catalyzer_count;
+  int catalyzer_count = 0;
 #endif
 
 #ifdef MULTI_TIMESTEP
   /** does the particle need a small timestep?
    * 1= yes
    * 0 = no (default) */
-  int smaller_timestep;
+  int smaller_timestep = 0;
 #endif
 
-#ifdef CONFIGTEMP
-  /** is the particle included in the configurational temperature?
-  * 1 = yes
-  * 0 = no (Default) */
-  int configtemp;
-#endif
 #ifdef EXTERNAL_FORCES
   /** flag whether to fix a particle in space.
       Values:
@@ -196,83 +191,83 @@ struct ParticleProperties {
            <li> 5 apply external torque \ref ParticleLocal::ext_torque
       </ul>
   */
-  int ext_flag;
+  int ext_flag = 0;
   /** External force, apply if \ref ParticleLocal::ext_flag == 1. */
-  double ext_force[3];
+  double ext_force[3] = {0, 0, 0};
 
 #ifdef ROTATION
   /** External torque, apply if \ref ParticleLocal::ext_flag == 16. */
-  double ext_torque[3];
+  double ext_torque[3] = {0, 0, 0};
 #endif
-
 #endif
 };
 
 /** Positional information on a particle. Information that is
     communicated to calculate interactions with ghost particles. */
-typedef struct {
+struct ParticlePosition {
   /** periodically folded position. */
-  double p[3];
+  double p[3] = {0, 0, 0};
+  
 #ifdef ROTATION
   /** quaternions to define particle orientation */
-  double quat[4];
+  double quat[4] = {1., 0., 0., 0.};
   /** unit director calculated from the quaternions */
-  double quatu[3];
+  double quatu[3]{0., 0., 1.};
 #endif
 
 #ifdef DIPOLES
   /** dipol moment. This is synchronized with quatu and quat. */
-  double dip[3];
+  double dip[3] = {0., 0., 0.};
 #endif
 
 #ifdef BOND_CONSTRAINT
   /**stores the particle position at the previous time step*/
-  double p_old[3];
+  double p_old[3] = {0., 0., 0.};
 #endif
 
 #ifdef SHANCHEN
-  double composition[LB_COMPONENTS];
+  std::array<double, LB_COMPONENTS> composition =
+      std::array<double, LB_COMPONENTS>{};
 #endif
-
-} ParticlePosition;
+};
 
 /** Force information on a particle. Forces of ghost particles are
     collected and added up to the force of the original particle. */
-typedef struct {
+struct ParticleForce {
   /** force. */
-  double f[3];
+  double f[3] = {0., 0., 0.};
 
 #ifdef ROTATION
   /** torque */
-  double torque[3];
+  double torque[3] = {0., 0., 0.};
 #endif
 
-} ParticleForce;
+};
 
 /** Momentum information on a particle. Information not contained in
     communication of ghost particles so far, but a communication would
     be necessary for velocity dependend potentials. */
-typedef struct {
+struct ParticleMomentum {
   /** velocity. */
-  double v[3];
+  double v[3] = {0., 0., 0.};
 
 #ifdef ROTATION
   /** angular velocity
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
-  double omega[3];
+  double omega[3] = {0., 0., 0.};
 #endif
-} ParticleMomentum;
+};
 
 /** Information on a particle that is needed only on the
     node the particle belongs to */
-typedef struct {
+struct ParticleLocal {
   /** position in the last time step befor last Verlet list update. */
-  double p_old[3];
+  double p_old[3] = {0., 0., 0.};
   /** index of the simulation box image where the particle really sits. */
-  int i[3];
+  int i[3] = {0, 0, 0};
 
   /** check whether a particle is a ghost or not */
-  int ghost;
+  int ghost = 0;
 
 #ifdef GHMC
   /** Data for the ghmc thermostat, last saved
@@ -280,31 +275,31 @@ typedef struct {
   ParticlePosition r_ls;
   ParticleMomentum m_ls;
 #endif
-} ParticleLocal;
+};
 
 #ifdef LB
 /** Data related to the Lattice Boltzmann hydrodynamic coupling */
-typedef struct {
+struct ParticleLatticeCoupling {
   /** fluctuating part of the coupling force */
   double f_random[3];
-} ParticleLatticeCoupling;
+};
 #endif
 
-typedef struct {
+struct ParticleParametersSwimming {
 // ifdef inside because we need this type for some MPI prototypes
 #ifdef ENGINE
-  bool swimming;
-  double f_swim;
-  double v_swim;
+  bool swimming = false;
+  double f_swim = 0.;
+  double v_swim = 0.;
 #if defined(LB) || defined(LB_GPU)
-  int push_pull;
-  double dipole_length;
+  int push_pull = 0;
+  double dipole_length = 0.;
   double v_center[3];
   double v_source[3];
-  double rotational_friction;
+  double rotational_friction = 0.;
 #endif
 #endif
-} ParticleParametersSwimming;
+};
 
 /** Struct holding all information for one particle. */
 struct Particle {
@@ -317,6 +312,34 @@ struct Particle {
 
   bool operator!=(Particle const &rhs) const {
     return identity() != rhs.identity();
+  }
+
+  /**
+   * @brief Return a copy of the particle with
+   *        only the fixed size parts.
+   *
+   * This creates a copy of the particle with
+   * only the parts than can be copied w/o heap
+   * allocation, e.g. w/o bonds and exlusions.
+   * This is more efficient if these parts are
+   * not actually needed.
+   */
+  Particle flat_copy() const {
+    Particle ret;
+
+    ret.p = p;
+    ret.r = r;
+    ret.m = m;
+    ret.f = f;
+    ret.l = l;
+#ifdef LB
+    ret.lc = lc;
+#endif
+#ifdef ENGINE
+    ret.swim = swim;
+#endif
+
+    return ret;
   }
 
   ///
@@ -339,8 +362,20 @@ struct Particle {
       easily from the bonded_ia_params entry for the type. */
   IntList bl;
 
+  IntList &bonds() { return bl; }
+  IntList const &bonds() const { return bl; }
+
+  IntList &exclusions() {
 #ifdef EXCLUSIONS
-  /** list of particles, with which this particle has no nonbonded interactions
+    return el;
+#else
+    throw std::runtime_error{"Exclusions not enabled."};
+#endif
+  }
+
+#ifdef EXCLUSIONS
+  /** list of particles, with which this particle has no nonbonded
+   * interactions
    */
   IntList el;
 #endif
@@ -349,6 +384,38 @@ struct Particle {
   ParticleParametersSwimming swim;
 #endif
 };
+
+/**
+ * These functions cause a compile time error if
+ * Particles are copied by memmove or memcpy,
+ * which does not keep class invariants.
+ *
+ * These are templates so that the error is cause
+ * at the place they are used.
+ */
+template <typename Size> void memmove(Particle *, Particle *, Size) {
+  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
+}
+template <typename Size> void memmove(Particle *, Particle const *, Size) {
+  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
+}
+
+template <typename Size> void memcpy(Particle *, Particle *, Size) {
+  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
+}
+template <typename Size> void memcpy(Particle *, Particle const *, Size) {
+  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
+}
+
+template <typename Size, typename... Ts>
+void MPI_Send(Particle *, Size, Ts...) {
+  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
+}
+
+template <typename Size, typename... Ts>
+void MPI_Send(Particle const *, Size, Ts...) {
+  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
+}
 
 /** List of particles. The particle array is resized using a sophisticated
     (we hope) algorithm to avoid unnecessary resizes.
@@ -378,10 +445,6 @@ extern int max_seen_particle;
 /** total number of particles on all nodes. */
 extern int n_part;
 
-/** Capacity of the \ref particle_node / \ref local_particles. */
-extern int max_particle_node;
-/** Used only on master node: particle->node mapping. */
-extern int *particle_node;
 /** id->particle mapping on all nodes. This is used to find partners
     of bonded interactions. */
 extern Particle **local_particles;
@@ -398,18 +461,6 @@ extern int *partBondPartners;
 
 /*       Functions acting on Particles          */
 /************************************************/
-
-/** Initialize a particle.
-    This function just sets all values to the defaults (mostly zeros)!
-    Do NOT use this without setting the values of the
-    \ref ParticleProperties::identity "identity" and \ref ParticlePosition::p
-   "position" to
-    reasonable values. Also make sure that you update \ref local_particles.
-
-    Add here all initializations you need to be done !!!
-    If dynamic memory allocation is involved, also look at \ref free_particle.
-*/
-void init_particle(Particle *part);
 
 /** Deallocate the dynamic storage of a particle. */
 void free_particle(Particle *part);
@@ -440,9 +491,8 @@ Particle *got_particle(ParticleList *plist, int id);
     reallocates particles if necessary!
     This procedure does not care for \ref local_particles.
     \param plist List to append the particle to.
-    \param part  Particle to append.
-    \return Pointer to new location of the particle. */
-Particle *append_unindexed_particle(ParticleList *plist, Particle *part);
+    \param part  Particle to append. */
+void append_unindexed_particle(ParticleList *l, Particle &&part);
 
 /** Append a particle at the end of a particle List.
     reallocates particles if necessary!
@@ -450,7 +500,7 @@ Particle *append_unindexed_particle(ParticleList *plist, Particle *part);
     \param plist List to append the particle to.
     \param part  Particle to append.
     \return Pointer to new location of the particle. */
-Particle *append_indexed_particle(ParticleList *plist, Particle *part);
+Particle *append_indexed_particle(ParticleList *plist, Particle &&part);
 
 /** Remove a particle from one particle List and append it to another.
     Refill the sourceList with last particle and update its entry in
@@ -485,27 +535,20 @@ Particle *move_indexed_particle(ParticleList *destList,
 */
 void update_local_particles(ParticleList *pl);
 
-/** Rebuild \ref particle_node from scratch.
-    After a simulation step \ref particle_node has to be rebuild
-    since the particles might have gone to a different node.
-*/
-void build_particle_node();
-
 /** Invalidate \ref particle_node. This has to be done
     at the beginning of the integration.
 */
-void particle_invalidate_part_node();
+void clear_particle_node();
 
 /** Realloc \ref local_particles. */
 void realloc_local_particles();
 
-/** Get particle data. Note that the bond intlist is
-    allocated so that you are responsible to free it later.
+/** Get particle data.
     @param part the identity of the particle to fetch
-    @param data where to store its contents.
-    @return ES_OK if particle existed
+    @return Pointer to copy of particle if it exists,
+            nullptr otherwise;
 */
-int get_particle_data(int part, Particle *data);
+std::unique_ptr<Particle> get_particle_data(int part);
 
 /** Call only on the master node.
     Move a particle to a new position.
@@ -563,7 +606,6 @@ int set_particle_solvation(int part, double *solvation);
 int set_particle_rotational_inertia(int part, double rinertia[3]);
 #endif
 
-#ifdef ROTATION_PER_PARTICLE
 /** Call only on the master node: Specifies whether a particle's rotational
     degrees of freedom are integrated or not. If set to zero, the content of
     the torque and omega variables are meaningless
@@ -572,7 +614,6 @@ int set_particle_rotational_inertia(int part, double rinertia[3]);
     @return ES_OK if particle existed
 */
 int set_particle_rotation(int part, int rot);
-#endif
 
 #ifdef AFFINITY
 /** Call only on the master node: set particle affinity.
@@ -599,15 +640,6 @@ int set_particle_out_direction(int part, double out_direction[3]);
     @return TCL_OK if particle existed
 */
 int set_particle_smaller_timestep(int part, int small_timestep);
-#endif
-
-#ifdef CONFIGTEMP
-/** Call only on the master node: include particle in configurational T.
-    @param part the particle.
-    @param configtemp flag for configurational temperature inclusion.
-    @return TCL_OK if particle existed
-*/
-int set_particle_configtemp(int part, int configtemp);
 #endif
 
 /** Call only on the master node: set particle charge.
@@ -720,13 +752,13 @@ int set_particle_temperature(int part, double T);
 #ifndef PARTICLE_ANISOTROPY
 int set_particle_gamma(int part, double gamma);
 #else
-int set_particle_gamma(int part, double gamma[3]);
+int set_particle_gamma(int part, Vector3d gamma);
 #endif
 #ifdef ROTATION
-#ifndef ROTATIONAL_INERTIA
+#ifndef PARTICLE_ANISOTROPY
 int set_particle_gamma_rot(int part, double gamma);
 #else
-int set_particle_gamma_rot(int part, double gamma[3]);
+int set_particle_gamma_rot(int part, Vector3d gamma);
 #endif
 #endif
 #endif // LANGEVIN_PER_PARTICLE
@@ -858,8 +890,8 @@ void local_rescale_particles(int dir, double scale);
 void send_particles(ParticleList *particles, int node);
 
 /** Synchronous receive of a particle buffer from another node. The other node
-    MUST call \ref send_particles when this is called. The particles are
-    APPENDED to the list, so it has to be a valid one */
+    MUST call \ref send_particles when this is called. Particles needs to initialized,
+    it is realloced to the correct size and the content is overwritten. */
 void recv_particles(ParticleList *particles, int node);
 
 #ifdef EXCLUSIONS
@@ -960,10 +992,6 @@ int find_particle_type(int type, int *id);
  * typelist */
 int find_particle_type_id(int type, int *id, int *in_id);
 
-/** delete one randomly chosen particle of given type
- * returns ES_OK if succesful or else ES_ERROR		*/
-int delete_particle_of_type(int type);
-
 int remove_id_type_array(int part_id, int type);
 int add_particle_to_list(int part_id, int type);
 // print out a list of currently indexed ids
@@ -1021,13 +1049,8 @@ void pointer_to_temperature(Particle *p, double *&res);
 void pointer_to_gamma_rot(Particle *p, double *&res);
 #endif
 #endif // LANGEVIN_PER_PARTICLE
-
-#ifdef ROTATION_PER_PARTICLE
+#ifdef ROTATION
 void pointer_to_rotation(Particle *p, short int *&res);
-#endif
-
-#ifdef EXCLUSIONS
-void pointer_to_exclusions(Particle *p, int *&res1, int *&res2);
 #endif
 
 #ifdef ENGINE

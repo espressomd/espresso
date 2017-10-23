@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef _FORCES_HPP
-#define _FORCES_HPP
+#ifndef CORE_FORCES_HPP
+#define CORE_FORCES_HPP
 /** \file forces.hpp Force calculation. 
  *
  *  \todo Preprocessor switches for all forces (Default: everything is turned on).
@@ -72,7 +72,6 @@ void init_forces_ghosts();
  Uses <a href=P3M_calc_kspace_forces> P3M_calc_kspace_forces </a>
  *  </ol>
  */
-
 void force_calc();
 
 /** Check if forces are NAN 

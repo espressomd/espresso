@@ -30,7 +30,7 @@ class Cylinder : public Shape {
 public:
   Cylinder()
       : m_pos({0.0, 0.0, 0.0}), m_axis({0.0, 0.0, 0.0}), m_length(0.0),
-        m_direction(1.0), m_rad(0) {}
+        m_direction(1.0), m_rad(0), m_open(false) {}
   int calculate_dist(const double *ppos, double *dist,
                      double *vec) const override;
 
@@ -44,14 +44,16 @@ public:
 protected:
   /** center of the cylinder. */
   Vector3d m_pos;
-  /** Axis of the cylinder .*/
+  /** Axis of the cylinder. */
   Vector3d m_axis;
   /** cylinder radius. */
   double m_rad;
   /** cylinder length. */
   double m_length;
-  /** cylinder direction. (+1 outside -1 inside interaction direction)*/
+  /** cylinder direction. (+1 outside -1 inside interaction direction) */
   double m_direction;
+  /** ignore bottom and top cap of cylinder */
+  bool m_open;
 };
 };
 

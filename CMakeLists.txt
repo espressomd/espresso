@@ -50,6 +50,13 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
+# Parse repository info from git if available
+include(version)
+
+configure_file(
+  ${CMAKE_SOURCE_DIR}/src/version.hpp.in
+  ${CMAKE_BINARY_DIR}/src/version.hpp
+  )
 
 # On Mac OS X, first look for other packages, then frameworks
 set(CMAKE_FIND_FRAMEWORK LAST)
@@ -66,6 +73,7 @@ option(WITH_HDF5   "Build with HDF5 support" ON)
 option(WITH_TESTS  "Enable tests"            ON)
 option(WITH_SCAFACOS "Build with Scafacos support" ON)
 option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
+option(WITH_COVERAGE "Generate code coverage report" OFF)
 
 # Write compile commands to file, for various tools...
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -99,28 +107,68 @@ endforeach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
 ######################################################################
 
 if (WITH_CUDA)
-  find_package(CUDA QUIET)
-  if(CUDA_FOUND)
-    list(APPEND LIBRARIES ${CUDA_CUFFT_LIBRARIES})
-    list(APPEND LIBRARIES ${CUDA_LIBRARIES})
+  if (EXISTS "$ENV{NVCC}" AND NOT CUDA_NVCC_EXECUTABLE)
+    set(CUDA_NVCC_EXECUTABLE $ENV{NVCC})
+  endif()
+  if (CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_C_COMPILER OR CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_CXX_COMPILER)
+    message(STATUS "Found CUDA-capable host compiler: ${CUDA_NVCC_EXECUTABLE}")
+    find_library(CUDA_LIBRARY NAMES cuda)
+    find_library(CUDART_LIBRARY NAMES cudart)
+    find_library(CUFFT_LIBRARY NAMES cufft)
+    list(APPEND LIBRARIES ${CUDA_LIBRARY})
+    list(APPEND LIBRARIES ${CUDART_LIBRARY})
+    list(APPEND LIBRARIES ${CUFFT_LIBRARY})
     set(CUDA 1)
 
-    if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-      set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -g -G")
-    else()
-      set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3")
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} --cuda-gpu-arch=sm_30")
+    if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 3.8.9)
+      set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} --cuda-gpu-arch=sm_52")
     endif()
-    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_50,code=sm_50")
-    list(APPEND CUDA_NVCC_FLAGS "-std=c++11")
-    SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
 
-    if (APPLE)
-      set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -isysroot -Xcompiler ${CMAKE_OSX_SYSROOT}")
-    endif()
-  endif(CUDA_FOUND)
+    function(cuda_include_directories)
+      include_directories(${ARGV})
+    endfunction()
+    function(cuda_add_library)
+      set(options STATIC SHARED MODULE EXCLUDE_FROM_ALL)
+      set(oneValueArgs)
+      set(multiValueArgs)
+      cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+      list(REMOVE_AT ARG_UNPARSED_ARGUMENTS 0)
+      set_source_files_properties(${ARG_UNPARSED_ARGUMENTS} PROPERTIES LANGUAGE "CXX" COMPILE_FLAGS "${CUDA_NVCC_FLAGS}")
+      add_library(${ARGV})
+      set_target_properties(${ARGV0} PROPERTIES LINKER_LANGUAGE "CXX")
+      target_link_libraries(${ARGV0} ${CUDA_LIBRARY} ${CUDART_LIBRARY})
+    endfunction()
+    function(CUDA_ADD_CUFFT_TO_TARGET target)
+      target_link_libraries(${target} "cufft")
+    endfunction()
+  else()
+    find_package(CUDA 7.0)
+    if(CUDA_FOUND)
+      list(APPEND LIBRARIES ${CUDA_CUFFT_LIBRARIES})
+      list(APPEND LIBRARIES ${CUDA_LIBRARIES})
+      set(CUDA 1)
+
+      if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -g -G")
+      else()
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3")
+      endif()
+      set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_52,code=compute_52")
+      list(APPEND CUDA_NVCC_FLAGS "-std=c++11")
+      if (CUDA_VERSION VERSION_LESS "8.0" AND CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "5.0")
+        list(APPEND CUDA_NVCC_FLAGS "-D_MWAITXINTRIN_H_INCLUDED -D_FORCE_INLINES")
+      endif()
+      SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
+
+      if (APPLE)
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -isysroot -Xcompiler ${CMAKE_OSX_SYSROOT}")
+      endif()
+    endif(CUDA_FOUND)
+  endif()
 endif(WITH_CUDA)
 
-find_package(PythonInterp)
+find_package(PythonInterp REQUIRED)
 
 if (WITH_PYTHON)
   find_package(Cython 0.23 REQUIRED)
@@ -171,13 +219,13 @@ endif(WITH_HDF5)
 
 # Check for the h5xx submodule
 # and try to check it out if not found.
-if(WITH_HDF5 AND NOT EXISTS "libs/h5xx/.git")
+if(WITH_HDF5 AND NOT EXISTS "${CMAKE_SOURCE_DIR}/libs/h5xx/.git")
   # Try to find git
   find_package(Git)
-  if(GIT_FOUND)
+  if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
     execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init -- libs/h5xx
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-  endif(GIT_FOUND)
+  endif()
 endif()
 
 if(WITH_SCAFACOS)
@@ -201,6 +249,17 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 include(RequireCXX11)
 
 #######################################################################
+# Process MPI settings
+#######################################################################
+
+find_package(MPI REQUIRED)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_COMPILE_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_LINK_FLAGS}")
+include_directories(${MPI_INCLUDE_PATH})
+list(APPEND LIBRARIES ${MPI_LIBRARIES})
+add_definitions(-DH5XX_USE_MPI)
+
+#######################################################################
 # Boost
 #######################################################################
 
@@ -222,17 +281,6 @@ if(WITH_TESTS)
   add_custom_target(check)
   add_subdirectory(testsuite)
 endif(WITH_TESTS)
-
-#######################################################################
-# Process MPI settings
-#######################################################################
-
-find_package(MPI REQUIRED)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_COMPILE_FLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_LINK_FLAGS}")
-include_directories(${MPI_INCLUDE_PATH})
-list(APPEND LIBRARIES ${MPI_LIBRARIES})
-add_definitions(-DH5XX_USE_MPI)
 
 #######################################################################
 # Paths

@@ -10,14 +10,22 @@
 #include <utility>
 #include <vector>
 
+#include <boost/version.hpp>
+/* Work around bug in boost, see
+   https://github.com/boostorg/container/commit/5e4a107e82ab3281688311d22d2bfc2fddcf84a3
+*/
+#if BOOST_VERSION < 106400
+#include <boost/container/detail/pair.hpp>
+#endif
+
 #include <boost/container/flat_set.hpp>
-#include <boost/iterator/transform_iterator.hpp>
 #include <boost/mpi/collectives.hpp>
 
 #include "utils/NoOp.hpp"
 #include "utils/mpi/gather_buffer.hpp"
 #include "utils/parallel/Callback.hpp"
 #include "utils/serialization/flat_set.hpp"
+#include "core/MpiCallbacks.hpp"
 
 namespace detail {
 /**
@@ -120,14 +128,14 @@ template <typename GetParticles, typename UnaryOp = Utils::NoOp,
               typename Range::iterator>::value_type>
 class ParticleCache {
   using map_type = boost::container::flat_set<Particle, detail::IdCompare>;
+  /* Callback system we're on */
+  Communication::MpiCallbacks & m_cb;
 
   /** Index mapping particle ids to the position
       in remote_parts. */
   std::unordered_map<int, int> id_index;
   /** The particle data */
   map_type remote_parts;
-  /** Bond info for remote_parts */
-  std::vector<int> bond_info;
   /** State */
   bool m_valid, m_valid_bonds;
 
@@ -145,18 +153,23 @@ class ParticleCache {
    * @brief Implementation of bond update.
    *
    * Particle ids, and the bond info is packed
-   * into a linear buffer and gathet to the master.
+   * into a linear buffer and gather to the master.
    */
-  void m_update_bonds() {
+  std::vector<int> m_update_bonds() {
     std::vector<int> local_bonds;
 
-    for (auto &p : parts()) {
+    for (auto const &p : parts()) {
       local_bonds.push_back(p.identity());
-      std::copy(p.bl.begin(), p.bl.end(), std::back_inserter(local_bonds));
+
+      auto const& bonds = p.bonds();
+      local_bonds.push_back(bonds.size());
+      std::copy(std::begin(bonds), std::end(bonds), std::back_inserter(local_bonds));
     }
 
     Utils::Mpi::gather_buffer(local_bonds,
-                              Communication::mpiCallbacks().comm());
+                              m_cb.comm());
+
+    return local_bonds;
   }
 
   /**
@@ -165,21 +178,20 @@ class ParticleCache {
    * Master version of m_update_bonds().
    */
   void m_recv_bonds() {
-    bond_info.clear();
-
-    Utils::Mpi::gather_buffer(bond_info, Communication::mpiCallbacks().comm());
+    auto bond_info = m_update_bonds();
 
     for (auto it = bond_info.begin(); it != bond_info.end();) {
       /* Particle id for which the next bond info is for */
       auto const id = *it++;
+      auto const n_bonds = *it++;
       /* Use the index to find the particle in remote_parts */
       auto &p = remote_parts.begin()[id_index[id]];
       /* Update the bond list of the particle with the bond_info */
-      p.bl.e = &(*it);
-      p.bl.max = p.bl.size();
+      p.bonds().resize(n_bonds);
+      std::copy_n(it, n_bonds, p.bonds().begin());
 
       /* Jump to the next record */
-      it += p.bl.size();
+      it += n_bonds;
     }
   }
 
@@ -197,7 +209,7 @@ class ParticleCache {
     for (auto const &p : parts()) {
       typename map_type::iterator it;
       /* Add the particle to the map */
-      std::tie(it, std::ignore) = remote_parts.emplace(p);
+      std::tie(it, std::ignore) = remote_parts.emplace(p.flat_copy());
 
       /* And run the op on it. */
       m_op(*it);
@@ -205,7 +217,7 @@ class ParticleCache {
 
     /* Reduce data to the master by merging the flat_sets from
      * the nodes in a reduction tree. */
-    boost::mpi::reduce(Communication::mpiCallbacks().comm(), remote_parts,
+    boost::mpi::reduce(m_cb.comm(), remote_parts,
                        remote_parts,
                        detail::Merge<map_type, detail::IdCompare>(), 0);
   }
@@ -224,9 +236,10 @@ public:
   using value_iterator = typename map_type::const_iterator;
 
   ParticleCache() = delete;
-  ParticleCache(GetParticles parts, UnaryOp &&op = UnaryOp{})
-      : update_cb([this](int, int) { this->m_update(); }),
-        update_bonds_cb([this](int, int) { this->m_update_bonds(); }),
+  ParticleCache(Communication::MpiCallbacks &cb, GetParticles parts,
+                UnaryOp &&op = UnaryOp{})
+      : m_cb(cb), update_cb(cb, [this](int, int) { this->m_update(); }),
+        update_bonds_cb(cb, [this](int, int) { this->m_update_bonds(); }),
         parts(parts), m_valid(false), m_valid_bonds(false),
         m_op(std::forward<UnaryOp>(op)) {}
   /* Because the this ptr is captured by the callback lambdas,
@@ -242,7 +255,6 @@ public:
   void clear() {
     id_index.clear();
     remote_parts.clear();
-    bond_info.clear();
   }
 
   /**
@@ -258,7 +270,7 @@ public:
    * be stored.
    */
   value_iterator begin() {
-    assert(Communication::mpiCallbacks().comm().rank() == 0);
+    assert(m_cb.comm().rank() == 0);
 
     if (!m_valid)
       update();
@@ -274,7 +286,7 @@ public:
    * an update is triggered.
    */
   value_iterator end() {
-    assert(Communication::mpiCallbacks().comm().rank() == 0);
+    assert(m_cb.comm().rank() == 0);
 
     if (!m_valid)
       update();
@@ -303,7 +315,6 @@ public:
     clear();
     /* Release memory */
     remote_parts.shrink_to_fit();
-    bond_info.shrink_to_fit();
     /* Adjust state */
     m_valid = false;
     m_valid_bonds = false;
@@ -351,7 +362,7 @@ public:
     * Complexity: O(1)
   */
   size_t size() {
-    assert(Communication::mpiCallbacks().comm().rank() == 0);
+    assert(m_cb.comm().rank() == 0);
 
     if (!m_valid)
       update();
@@ -365,7 +376,7 @@ public:
    * Complexity: O(1)
    */
   bool empty() {
-    assert(Communication::mpiCallbacks().comm().rank() == 0);
+    assert(m_cb.comm().rank() == 0);
 
     if (!m_valid)
       update();
@@ -383,7 +394,7 @@ public:
    * Complexity: O(1)
    */
   Particle const &operator[](int id) {
-    assert(Communication::mpiCallbacks().comm().rank() == 0);
+    assert(m_cb.comm().rank() == 0);
 
     if (!m_valid)
       update();

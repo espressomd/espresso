@@ -26,7 +26,10 @@ public:
   Iterator end() { return m_end; }
 
   bool empty() const { return m_begin == m_end; }
-  difference_type size() const { return std::distance(m_begin, m_end); }
+  difference_type size() const {
+    using std::distance;
+    return distance(m_begin, m_end);
+  }
 
   bool operator==(Range const &rhs) const {
     return (m_begin == rhs.m_begin) && (m_end == rhs.m_end);

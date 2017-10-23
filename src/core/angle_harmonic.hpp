@@ -82,26 +82,8 @@ inline int calc_angle_harmonic_force(Particle *p_mid, Particle *p_left, Particle
     sinphi = sin(phi);
     if ( sinphi < TINY_SIN_VALUE ) sinphi = TINY_SIN_VALUE;
     fac *= (phi - iaparams->p.angle_harmonic.phi0)/sinphi;
-
-#ifdef CONFIGTEMP
-  extern double configtemp[2];
-  if (p_left->p.configtemp) {
-    configtemp[0] += SQR(fac*sinphi*d1i);
-    configtemp[1] -= iaparams->p.angle_harmonic.bend*(1+cosine/sinphi*(phi - iaparams->p.angle_harmonic.phi0))*SQR(d1i);
-  }
-  if (p_mid->p.configtemp) {
-    configtemp[0] += SQR(fac*sinphi) * (1./sqrlen(vec1) + 1./sqrlen(vec2) - 2*cosine*d1i*d2i);
-    configtemp[1] -= iaparams->p.angle_harmonic.bend*((1/sqrlen(vec1)+1/sqrlen(vec2)-cosine*d1i*d2i)
-      +cosine/sinphi * (1./sqrlen(vec1)+1./sqrlen(vec2)-d1i*d2i/cosine) *(phi - iaparams->p.angle_harmonic.phi0));
-  }
-  if (p_right->p.configtemp) {
-    configtemp[0] += SQR(fac*sinphi*d2i);
-    configtemp[1] -= iaparams->p.angle_harmonic.bend*(1+cosine/sinphi*(phi - iaparams->p.angle_harmonic.phi0))*SQR(d2i);
   }
 
-#endif
-
-  }
   for(j=0;j<3;j++) {
     f1               = fac * (cosine * vec1[j] - vec2[j]) * d1i;
     f2               = fac * (cosine * vec2[j] - vec1[j]) * d2i;

@@ -9,8 +9,9 @@ namespace detail {
 template <typename CellIterator, typename ParticleKernel, typename PairKernel,
           typename DistanceFunction, typename VerletCriterion>
 void update_and_kernel(CellIterator first, CellIterator last,
-                       ParticleKernel particle_kernel, PairKernel pair_kernel,
-                       DistanceFunction distance_function,
+                       ParticleKernel &&particle_kernel,
+                       PairKernel &&pair_kernel,
+                       DistanceFunction &&distance_function,
                        VerletCriterion &&verlet_criterion) {
   for (; first != last; ++first) {
     /* Clear the VL */
@@ -24,7 +25,7 @@ void update_and_kernel(CellIterator first, CellIterator last,
       /* Pairs in this cell */
       for (int j = i + 1; j < first->n; j++) {
         auto dist = distance_function(p1, first->part[j]);
-        if (verlet_criterion(p1, first->part[j], dist.dist2)) {
+        if (verlet_criterion(p1, first->part[j], dist)) {
           pair_kernel(p1, first->part[j], dist);
           first->m_verlet_list.emplace_back(&p1, &(first->part[j]));
         }
@@ -32,12 +33,10 @@ void update_and_kernel(CellIterator first, CellIterator last,
 
       /* Pairs with neighbors */
       for (auto &neighbor : first->neighbors()) {
-        if (&neighbor == &(*first))
-          continue;
         for (int j = 0; j < neighbor.n; j++) {
           auto &p2 = neighbor.part[j];
           auto dist = distance_function(p1, p2);
-          if (verlet_criterion(p1, p2, dist.dist2)) {
+          if (verlet_criterion(p1, p2, dist)) {
             pair_kernel(p1, p2, dist);
             first->m_verlet_list.emplace_back(&p1, &p2);
           }
@@ -50,8 +49,8 @@ void update_and_kernel(CellIterator first, CellIterator last,
 template <typename CellIterator, typename ParticleKernel, typename PairKernel,
           typename DistanceFunction>
 void kernel(CellIterator first, CellIterator last,
-            ParticleKernel particle_kernel, PairKernel pair_kernel,
-            DistanceFunction distance_function) {
+            ParticleKernel &&particle_kernel, PairKernel &&pair_kernel,
+            DistanceFunction &&distance_function) {
   for (; first != last; ++first) {
     for (int i = 0; i != first->n; i++) {
       particle_kernel(first->part[i]);
@@ -65,6 +64,12 @@ void kernel(CellIterator first, CellIterator last,
 }
 }
 
+/**
+ * @brief Iterates over all particles in the cell range
+ *        and all pairs in the verlet list of the cells.
+ *        If rebuild is true, all neighbor cells are iterated
+ *        and the verlet lists are updated with the so found pairs.
+ */
 template <typename CellIterator, typename ParticleKernel, typename PairKernel,
           typename DistanceFunction, typename VerletCriterion>
 void verlet_ia(CellIterator first, CellIterator last,
