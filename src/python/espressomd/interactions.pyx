@@ -619,7 +619,7 @@ IF SMOOTH_STEP == 1:
                 "eps": 0.,
                 "k0": 0.,
                 "sig": 0.,
-                "cutoff": 0.,}
+                "cutoff": 0.}
 
         def type_name(self):
             """Name of interaction type.
@@ -701,11 +701,11 @@ IF MORSE == 1:
 
         def _set_params_in_es_core(self):
             if morse_set_params(self._part_types[0], self._part_types[1],
-                                      self._params["eps"],
-                                      self._params["alpha"],
-                                      self._params["rmin"],
-                                      self._params["cutoff"],
-                                      self._params["cap"]):
+                                self._params["eps"],
+                                self._params["alpha"],
+                                self._params["rmin"],
+                                self._params["cutoff"],
+                                self._params["cap"]):
                 raise Exception("Could not set Morse parameters")
 
         def default_params(self):
@@ -756,6 +756,119 @@ IF MORSE == 1:
 
             """
             return "eps", "alpha", "rmin"
+
+# Buckingham
+
+IF BUCKINGHAM == 1:
+
+    cdef class BuckinghamInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            """Check that parameters are valid.
+
+            """
+            if self._params["a"] < 0:
+                raise ValueError("Buckingham a has to be >=0")
+            if self._params["b"] < 0:
+                raise ValueError("Buckingham b has to be >=0")
+            if self._params["c"] < 0:
+                raise ValueError("Buckingham c has to be >=0")
+            if self._params["d"] < 0:
+                raise ValueError("Buckingham d has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(
+                self._part_types[0],
+                self._part_types[1])
+            return {
+                "a": ia_params.BUCK_A,
+                "b": ia_params.BUCK_B,
+                "c": ia_params.BUCK_C,
+                "d": ia_params.BUCK_D,
+                "cutoff": ia_params.BUCK_cut,
+                "discont": ia_params.BUCK_discont,
+                "shift": ia_params.BUCK_shift,
+                "cap": ia_params.BUCK_capradius
+            }
+
+        def is_active(self):
+            """Check if interaction is active.
+
+            """
+            return ((self._params["a"] > 0) or (self._params["b"] > 0) or (self._params["d"] > 0) or (self._params["shift"] > 0))
+
+        def _set_params_in_es_core(self):
+            if buckingham_set_params(self._part_types[0], self._part_types[1],
+                                     self._params["a"],
+                                     self._params["b"],
+                                     self._params["c"],
+                                     self._params["d"],
+                                     self._params["cutoff"],
+                                     self._params["discont"],
+                                     self._params["shift"],
+                                     self._params["cap"]):
+                raise Exception("Could not set Buckingham parameters")
+
+        def default_params(self):
+            """Python dictionary of default parameters.
+
+            """
+            return {
+                "a": 0.,
+                "b": 0.,
+                "c": 0.,
+                "d": 0.,
+                "cutoff": 0.,
+                "discont": 0.,
+                "shift": 0.,
+                "cap": 0.}
+
+        def type_name(self):
+            """Name of interaction type.
+
+            """
+            return "Buckingham"
+
+        def set_params(self, **kwargs):
+            """
+            Set parameters for the Buckingham interaction.
+
+            Parameters
+            ----------
+            a : :obj:`float`
+                Magnitude of the exponential part of the interaction.
+            b : :obj`float`
+                Exponent of the exponential part of the interaction.
+            c : :obj:`float`
+                Prefactor of term decaying with the sixth power of distance.
+            d : :obj:`float`
+                Prefactor of term decaying with the fourth power of distance.
+            discont : :obj:`float`
+                Distance below which the potential is linearly continued.
+            cutoff : :obj:`float`
+                Cutoff distance of the interaction.
+            shift: :obj:`float`, optional
+                Constant potential shift.
+            cap : :obj:`float`, optional
+                If individual force caps are used, determines the distance
+                at which the force is capped.
+
+            """
+            super(BuckinghamInteraction, self).set_params(**kwargs)
+
+        def valid_keys(self):
+            """All parameters that can be set.
+
+            """
+            return "a", "b", "c", "d", "discont", "cutoff", "shift"
+
+        def required_keys(self):
+            """Parameters that have to be set.
+
+            """
+            return "a", "c", "d", "discont", "cutoff"
 
 # Soft-sphere
 
@@ -963,7 +1076,8 @@ IF GAUSSIAN == 1:
                                    self._params["eps"],
                                    self._params["sig"],
                                    self._params["cutoff"]):
-                raise Exception("Could not set Gaussian interaction parameters")
+                raise Exception(
+                    "Could not set Gaussian interaction parameters")
 
         def default_params(self):
             """Python dictionary of default parameters.
@@ -1021,6 +1135,7 @@ class NonBondedInteractionHandle(object):
     generic_lennard_jones = None
     smooth_step = None
     morse = None
+    buckingham = None
     soft_sphere = None
     hertzian = None
     gaussian = None
@@ -1044,6 +1159,8 @@ class NonBondedInteractionHandle(object):
             self.smooth_step = SmoothStepInteraction(_type1, _type2)
         IF MORSE:
             self.morse = MorseInteraction(_type1, _type2)
+        IF BUCKINGHAM:
+            self.buckingham = BuckinghamInteraction(_type1, _type2)
         IF SOFT_SPHERE:
             self.soft_sphere = SoftSphereInteraction(_type1, _type2)
         IF HERTZIAN:

@@ -278,8 +278,8 @@ For :math:`r < r_\mathrm{min}`, :math:`V(r)` is implemented
 as normal Lennard-Jones potential, see equation [eq:lj] with
 :math:`c_\mathrm{shift} = 0`.
 
-Only the second variant allows capping the force using , see
-section [sec:forcecap].
+Only the second variant allows capping the force using
+``system.non_bonded_inter.set_force_cap(max)``, see section :ref:`Capping the force during warmup`.
 
 Smooth step interaction
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -383,22 +383,25 @@ where is again chosen such that :math:`V(r_\mathrm{cut})=0`. For
 Buckingham interaction
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. todo::
-    
-    Not implemented yet.
+.. note::
+     `Feature BUCKINGHAM required.`
 
-inter buckingham
+The interface for the Buckingham interaction is implemented in
+:class:`espressomd.interactions.BuckinghamInteraction`. The Buckingham interaction parameters
+can be set via::
 
-This defines a Buckingham interaction between particles of the types *type1* and *type2*
-, for which the potential is given by
+     system.non_bonded_inter[type1, type2].morse.set_params(**kwargs)
 
-.. math:: V(r)= A\exp(-B r) - Cr^{-6} - Dr^{-4} + \epsilon_\mathrm{shift}
+This defines a Buckingham interaction between particles of the types *type1* and *type2*,
+for which the potential is given by
 
-for :math:`r_\mathrm{discont} < r < r_\mathrm{cut}`. Below ,
+.. math:: V(r)= A \exp(-B r) - C r^{-6} - D r^{-4} + \epsilon_\mathrm{shift}
+
+for :math:`r_\mathrm{discont} < r < r_\mathrm{cut}`. Below :math:`r_\mathrm{discont}`,
 the potential is linearly continued towards :math:`r=0`, similarly to
 force capping, see below. Above :math:`r=r_\mathrm{cut}`, the
-potential is :math:`0`. This potential allows capping the force using ,
-see section [sec:forcecap].
+potential is :math:`0`. This potential allows capping the force using
+``system.non_bonded_inter.set_force_cap(max)``, see section :ref:`Capping the force during warmup`.
 
 Soft-sphere interaction
 ~~~~~~~~~~~~~~~~~~~~~~~

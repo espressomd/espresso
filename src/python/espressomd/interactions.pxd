@@ -76,6 +76,15 @@ cdef extern from "interaction_data.hpp":
         double MORSE_rest
         double MORSE_capradius
 
+        double BUCK_A
+        double BUCK_B
+        double BUCK_C
+        double BUCK_D
+        double BUCK_cut
+        double BUCK_discont
+        double BUCK_shift
+        double BUCK_capradius
+
         double soft_a
         double soft_n
         double soft_cut
@@ -137,6 +146,12 @@ IF MORSE:
         int morse_set_params(int part_type_a, int part_type_b,
                              double eps, double alpha,
                              double rmin, double cut, double cap_radius);
+
+IF BUCKINGHAM:
+    cdef extern from "buckingham.hpp":
+        int buckingham_set_params(int part_type_a, int part_type_b,
+                                  double A, double B, double C, double D, double cut,
+                                  double discont, double shift, double cap_radius);
 
 IF SOFT_SPHERE:
     cdef extern from "soft_sphere.hpp":

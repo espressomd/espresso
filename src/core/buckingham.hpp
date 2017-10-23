@@ -38,8 +38,7 @@
 
 int buckingham_set_params(int part_type_a, int part_type_b,
 			  double A, double B, double C, double D, double cut,
-			  double discont, double shift, double cap_radius,
-			  double F1, double F2);
+			  double discont, double shift, double cap_radius);
 
 /** calculate buck_capradius from force_cap */
 void calc_buck_cap_radii();
@@ -117,7 +116,7 @@ inline double buck_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_par
 				double d[3], double dist)
 {
 
-  if((dist < ia_params->BUCK_cut)) {
+  if(dist < ia_params->BUCK_cut) {
     if(ia_params->BUCK_capradius==0.0)
     {
      /* case: resulting force/energy greater than discont and

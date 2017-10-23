@@ -57,113 +57,137 @@ class InteractionsNonBondedTest(ut.TestCase):
         for i, ai in enumerate(a):
             self.assertFractionAlmostEqual(ai, b[i])
 
-    ###
+    #
     # Analytical Expressions
-    ###
+    #
 
     # Generic Lennard-Jones
     def lj_generic_potential(self, r, eps, sig, cutoff, offset=0., shift=0., e1=12., e2=6., b1=4., b2=4., delta=0., lam=1.):
-        V_lj = 0.
+        V = 0.
         if (r >= offset + cutoff):
-            V_lj = 0.
+            V = 0.
         else:
             # LJGEN_SOFTCORE transformations
             rroff = numpy.sqrt(
                 numpy.power(r - offset, 2) + (1 - lam) * delta * sig**2)
-            V_lj = eps * lam * \
+            V = eps * lam * \
                 (b1 * numpy.power(sig / rroff, e1) -
                  b2 * numpy.power(sig / rroff, e2) + shift)
-        return V_lj
+        return V
 
     def lj_generic_force(self, r, eps, sig, cutoff, offset=0., e1=12, e2=6, b1=4., b2=4., delta=0., lam=1.):
-        f_lj = 1.
+        f = 1.
         if (r >= offset + cutoff):
-            f_lj = 0.
+            f = 0.
         else:
             h = (r - offset)**2 + delta * (1. - lam) * sig**2
-            f_lj = (r - offset) * eps * lam * (
+            f = (r - offset) * eps * lam * (
                 b1 * e1 * numpy.power(sig / numpy.sqrt(h), e1) - b2 * e2 * numpy.power(sig / numpy.sqrt(h), e2)) / h
-            if not espressomd.has_features(["LJGEN_SOFTCORE"]):
-                f_lj *= numpy.sign(r - offset)
-        return f_lj
+            if not espressomd.has_features("LJGEN_SOFTCORE"):
+                f *= numpy.sign(r - offset)
+        return f
 
     # Smooth-Step
     def smooth_step_potential(self, r, eps, sig, cutoff, d, n, k0):
-        V_sst = 0.
+        V = 0.
         if (r < cutoff):
-            V_sst = numpy.power(d / r, n) + eps / \
+            V = numpy.power(d / r, n) + eps / \
                 (1 + numpy.exp(2 * k0 * (r - sig)))
-        return V_sst
+        return V
 
     def smooth_step_force(self, r, eps, sig, cutoff, d, n, k0):
-        f_sst = 0.
+        f = 0.
         if (r < cutoff):
-            f_sst = n * d / r**2 * numpy.power(d / r, n - 1) + 2 * k0 * eps * numpy.exp(
+            f = n * d / r**2 * numpy.power(d / r, n - 1) + 2 * k0 * eps * numpy.exp(
                 2 * k0 * (r - sig)) / (1 + numpy.exp(2 * k0 * (r - sig))**2)
-        return f_sst
+        return f
 
     # Morse
     def morse_potential(self, r, eps, alpha, cutoff, rmin=0):
-        V_m = 0.
+        V = 0.
         if (r < cutoff):
-            V_m = eps * (numpy.exp(-2. * alpha * (r - rmin)) -
-                         2 * numpy.exp(-alpha * (r - rmin)))
-            V_m -= eps * (numpy.exp(-2. * alpha * (cutoff - rmin)
-                                    ) - 2 * numpy.exp(-alpha * (cutoff - rmin)))
-        return V_m
+            V = eps * (numpy.exp(-2. * alpha * (r - rmin)) -
+                       2 * numpy.exp(-alpha * (r - rmin)))
+            V -= eps * (numpy.exp(-2. * alpha * (cutoff - rmin)
+                                  ) - 2 * numpy.exp(-alpha * (cutoff - rmin)))
+        return V
 
     def morse_force(self, r, eps, alpha, cutoff, rmin=0):
-        f_m = 0.
+        f = 0.
         if (r < cutoff):
-            f_m = 2. * numpy.exp((rmin - r) * alpha) * \
+            f = 2. * numpy.exp((rmin - r) * alpha) * \
                 (numpy.exp((rmin - r) * alpha) - 1) * alpha * eps
-        return f_m
+        return f
+
+    #  Buckingham
+    def buckingham_potential(self, r, a, b, c, d, cutoff, discont, shift):
+        V = 0.
+        if (r < discont):
+            m = - self.buckingham_force(
+                discont, a, b, c, d, cutoff, discont, shift)
+            c = self.buckingham_potential(
+                discont, a, b, c, d, cutoff, discont, shift) - m * discont
+            V = m * r + c
+        if (r >= discont) and (r < cutoff):
+            V = a * numpy.exp(- b * r) - c * numpy.power(
+                r, -6) - d * numpy.power(r, -4) + shift
+        return V
+
+    def buckingham_force(self, r, a, b, c, d, cutoff, discont, shift):
+        f = 0.
+        if (r < discont):
+            f = self.buckingham_force(
+                discont, a, b, c, d, cutoff, discont, shift)
+        if (r >= discont) and (r < cutoff):
+            f = a * b * numpy.exp(- b * r) - 6 * c * numpy.power(
+                r, -7) - 4 * d * numpy.power(r, -5)
+        return f
 
     # Soft-sphere
     def soft_sphere_potential(self, r, a, n, cutoff, offset=0):
-        V_ss = 0.
+        V = 0.
         if (r < offset + cutoff):
-            V_ss = a * numpy.power(r - offset, -n)
-        return V_ss
+            V = a * numpy.power(r - offset, -n)
+        return V
 
     def soft_sphere_force(self, r, a, n, cutoff, offset=0):
-        f_ss = 0.
+        f = 0.
         if ((r > offset) and (r < offset + cutoff)):
-            f_ss = n * a * numpy.power(r - offset, -(n + 1))
-        return f_ss
+            f = n * a * numpy.power(r - offset, -(n + 1))
+        return f
 
     # Hertzian
     def hertzian_potential(self, r, eps, sig):
-        V_h = 0.
+        V = 0.
         if (r < sig):
-            V_h = eps * numpy.power(1 - r / sig, 5. / 2.)
-        return V_h
+            V = eps * numpy.power(1 - r / sig, 5. / 2.)
+        return V
 
     def hertzian_force(self, r, eps, sig):
-        f_h = 0.
+        f = 0.
         if (r < sig):
-            f_h = 5. / 2. * eps / sig * numpy.power(1 - r / sig, 3. / 2.)
-        return f_h
+            f = 5. / 2. * eps / sig * numpy.power(1 - r / sig, 3. / 2.)
+        return f
 
     # Gaussian
     def gaussian_potential(self, r, eps, sig, cutoff):
-        V_g = 0.
+        V = 0.
         if (r < cutoff):
-            V_g = eps * numpy.exp(-numpy.power(r / sig, 2) / 2)
-        return V_g
+            V = eps * numpy.exp(-numpy.power(r / sig, 2) / 2)
+        return V
 
     def gaussian_force(self, r, eps, sig, cutoff):
-        f_g = 0.
+        f = 0.
         if (r < cutoff):
-            f_g = eps * r / sig**2 * numpy.exp(-numpy.power(r / sig, 2) / 2)
-        return f_g
+            f = eps * r / sig**2 * numpy.exp(-numpy.power(r / sig, 2) / 2)
+        return f
 
-    ###
+    #
     # Tests
-    ###
+    #
 
     # Test Generic Lennard-Jones Potential
-    @ut.skipIf(not espressomd.has_features(["LENNARD_JONES_GENERIC"]),
+    @ut.skipIf(not espressomd.has_features("LENNARD_JONES_GENERIC"),
                "Features not available, skipping test!")
     def test_lj_generic(self):
 
@@ -186,13 +210,15 @@ class InteractionsNonBondedTest(ut.TestCase):
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["non_bonded"]
-            E_ref = self.lj_generic_potential(r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig,
+            E_ref = self.lj_generic_potential(
+                r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig,
                                               cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
-            f1_ref = self.axis * self.lj_generic_force(r=(i + 1) * self.step_width, eps=lj_eps,
+            f1_ref = self.axis * self.lj_generic_force(
+                r=(i + 1) * self.step_width, eps=lj_eps,
                                                        sig=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2)
 
             # Check that energies match, ...
@@ -206,7 +232,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             epsilon=0.)
 
     # Test Generic Lennard-Jones Softcore Potential
-    @ut.skipIf(not espressomd.has_features(["LJGEN_SOFTCORE"]),
+    @ut.skipIf(not espressomd.has_features("LJGEN_SOFTCORE"),
                "Features not available, skipping test!")
     def test_lj_generic_softcore(self):
 
@@ -231,13 +257,15 @@ class InteractionsNonBondedTest(ut.TestCase):
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["non_bonded"]
-            E_ref = self.lj_generic_potential(r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig, cutoff=lj_cut,
+            E_ref = self.lj_generic_potential(
+                r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig, cutoff=lj_cut,
                                               offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift, delta=lj_delta, lam=lj_lam)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
-            f1_ref = self.axis * self.lj_generic_force(r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig,
+            f1_ref = self.axis * self.lj_generic_force(
+                r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig,
                                                        cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, delta=lj_delta, lam=lj_lam)
 
             # Check that energies match, ...
@@ -251,7 +279,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             epsilon=0.)
 
     # Test Lennard-Jones Potential
-    @ut.skipIf(not espressomd.has_features(["LENNARD_JONES"]),
+    @ut.skipIf(not espressomd.has_features("LENNARD_JONES"),
                "Features not available, skipping test!")
     def test_lj(self):
 
@@ -289,7 +317,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].lennard_jones.set_params(epsilon=0.)
 
     # Test Smooth-step Potential
-    @ut.skipIf(not espressomd.has_features(["SMOOTH_STEP"]),
+    @ut.skipIf(not espressomd.has_features("SMOOTH_STEP"),
                "Features not available, skipping test!")
     def test_smooth_step(self):
 
@@ -328,7 +356,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].smooth_step.set_params(d=0., eps=0.)
 
     # Test Morse Potential
-    @ut.skipIf(not espressomd.has_features(["MORSE"]),
+    @ut.skipIf(not espressomd.has_features("MORSE"),
                "Features not available, skipping test!")
     def test_morse(self):
 
@@ -365,8 +393,52 @@ class InteractionsNonBondedTest(ut.TestCase):
 
         self.system.non_bonded_inter[0, 0].morse.set_params(eps=0.)
 
+    # Test Buckingham Potential
+    @ut.skipIf(not espressomd.has_features("BUCKINGHAM"),
+               "Features not available, skipping test!")
+    def test_buckingham(self):
+
+        b_a = 3.71
+        b_b = 2.92
+        b_c = 5.32
+        b_d = 4.11
+        b_disc = 1.03
+        b_cut = 2.253
+        b_shift = 0.133
+        b_f1 = 0.123
+        b_f2 = 0.123
+
+        self.system.non_bonded_inter[0, 0].buckingham.set_params(
+            a=b_a, b=b_b, c=b_c, d=b_d, discont=b_disc, cutoff=b_cut, shift=b_shift)
+
+        for i in range(226):
+            self.system.part[1].pos += self.step
+            self.system.integrator.run(recalc_forces=True, steps=0)
+
+            # Calculate energies
+            E_sim = self.system.analysis.energy()["non_bonded"]
+            E_ref = self.buckingham_potential(
+                r=(i + 1) * self.step_width, a=b_a, b=b_b, c=b_c, d=b_d, discont=b_disc, cutoff=b_cut, shift=b_shift)
+
+            # Calculate forces
+            f0_sim = self.system.part[0].f
+            f1_sim = self.system.part[1].f
+            f1_ref = self.axis * \
+                self.buckingham_force(
+                    r=(i + 1) * self.step_width, a=b_a, b=b_b, c=b_c, d=b_d, discont=b_disc, cutoff=b_cut, shift=b_shift)
+
+            # Check that energies match, ...
+            self.assertFractionAlmostEqual(E_sim, E_ref)
+            # force equals minus the counter-force  ...
+            self.assertTrue((f0_sim == -f1_sim).all())
+            # and has correct value.
+            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
+
+        self.system.non_bonded_inter[
+            0, 0].buckingham.set_params(a=0., c=0., d=0., shift=0.)
+
     # Test Soft-sphere Potential
-    @ut.skipIf(not espressomd.has_features(["SOFT_SPHERE"]),
+    @ut.skipIf(not espressomd.has_features("SOFT_SPHERE"),
                "Features not available, skipping test!")
     def test_soft_sphere(self):
 
@@ -406,7 +478,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].soft_sphere.set_params(a=0.)
 
     # Test Hertzian Potential
-    @ut.skipIf(not espressomd.has_features(["HERTZIAN"]),
+    @ut.skipIf(not espressomd.has_features("HERTZIAN"),
                "Features not available, skipping test!")
     def test_hertzian(self):
 
@@ -442,7 +514,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].hertzian.set_params(eps=0.)
 
     # Test Gaussian Potential
-    @ut.skipIf(not espressomd.has_features(["GAUSSIAN"]),
+    @ut.skipIf(not espressomd.has_features("GAUSSIAN"),
                "Features not available, skipping test!")
     def test_gaussian(self):
 
