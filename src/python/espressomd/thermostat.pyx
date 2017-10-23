@@ -223,13 +223,13 @@ cdef class Thermostat(object):
         scalar_gamma_def = True
         scalar_gamma_rot_def = True
         IF PARTICLE_ANISOTROPY:
-            if isinstance(gamma, list):
+            if hasattr(gamma, "__iter__"):
                 scalar_gamma_def = False
             else:
                 scalar_gamma_def = True
 
         IF PARTICLE_ANISOTROPY:
-            if isinstance(gamma_rotation, list):
+            if hasattr(gamma_rotation, "__iter__"):
                 scalar_gamma_rot_def = False
             else:
                 scalar_gamma_rot_def = True

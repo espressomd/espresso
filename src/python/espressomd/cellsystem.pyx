@@ -137,6 +137,10 @@ cdef class CellSystem(object):
 
         return s
 
+
+    def get_pairs_(self, distance):
+        return mpi_get_pairs(distance)
+
     def resort(self, global_flag = 1):
         """
         Resort the particles in the cellsystem.

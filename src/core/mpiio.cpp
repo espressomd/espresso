@@ -444,8 +444,8 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
     }
   }
 
-  clear_particle_node();
-
-  rebuild_verletlist = 1;
+  if (rank == 0)
+    clear_particle_node();
+  
   on_particle_change();
 }

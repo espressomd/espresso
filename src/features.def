@@ -29,7 +29,6 @@ COLLISION_DETECTION             implies GHOSTS_HAVE_BONDS
 LEES_EDWARDS                    implies DPD
 LEES_EDWARDS                    requires not ELECTROSTATICS and not LB and not PARTIAL_PERIODIC
 METADYNAMICS
-REACTION_ENSEMBLE
 NEMD
 NPT
 GHMC
@@ -75,7 +74,6 @@ DPD_MASS_RED                    requires not DPD_MASS_LIN
 DPD_MASS_LIN                    requires not DPD_MASS_RED
 DPD_MASS                        equals DPD_MASS_RED or DPD_MASS_LIN
 DPD_MASS                        implies MASS, DPD
-TUNABLE_SLIP                    implies DPD
 
 /* Alternative implementation of DPD */
 INTER_DPD
@@ -98,14 +96,6 @@ LATTICE                         equals LB or LB_GPU
 SHANCHEN                        implies LB_GPU
 SHANCHEN                        requires not ELECTROKINETICS
 
-/* Stokesian-Dynamics features */
-BD
-SD                              requires CUDA
-SD                              requires ARPACK
-SD                              implies BD
-SD_FF_ONLY                      requires SD
-SD_USE_FLOAT                    requires SD
-SD_NOT_PERIODIC                 requires SD
 
 /* Interaction features */
 TABULATED
@@ -159,7 +149,7 @@ SCAFACOS_DIPOLES                requires SCAFACOS
 SCAFACOS_DIPOLES                implies DIPOLES
 SCAFACOS                        requires ELECTROSTATICS
 
-// Shape of the noise in ther (Langevin) thermostat
+// Shape of the noise in the (Langevin) thermostat
 FLATNOISE                       requires not GAUSSRANDOM and not GAUSSRANDOM_CUT
 GAUSSRANDOM                     requires not FLATNOISE and not GAUSSRANDOM_CUT
 GAUSSRANDOMCUT                  requires not GAUSSRANDOM and not FLATNOISE
@@ -176,7 +166,6 @@ GHOSTS_HAVE_BONDS               notest
 
 /* Debugging */
 ADDITIONAL_CHECKS
-ASYNC_BARRIER
 
 ESIF_DEBUG
 COMM_DEBUG
@@ -212,8 +201,6 @@ SD_DEBUG
 CUDA_DEBUG
 H5MD_DEBUG
 
-MPI_CORE
-FORCE_CORE
 
 /* Single particle debugging */
 ONEPART_DEBUG
@@ -224,6 +211,5 @@ ONEPART_DEBUG
 # Switches that are set by configure or gcc, not to be set manually
 CUDA external
 FFTW external
-TK   external
 H5MD external
 SCAFACOS external
