@@ -1556,7 +1556,7 @@ __device__ void calc_mode(float *mode, LB_nodes_gpu n_a, unsigned int node_index
  * @param *d_v            Pointer to local device values
  * @param *interpolated_u Pointer to the interpolated velocity (Output)
 */
-__device__ __inline__ void interpolation_three_point_coupling( LB_nodes_gpu n_a, float* particle_position, unsigned int *node_index, LB_rho_v_gpu *d_v, float *delta, float *interpolated_u ) {
+__device__ __inline__ void interpolation_three_point_coupling(LB_nodes_gpu n_a, float* particle_position, unsigned int *node_index, LB_rho_v_gpu *d_v, float *delta, float *interpolated_u) {
 
   int my_center[3];
   float temp_delta[27];
@@ -1817,7 +1817,7 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared, int *number_o
  * @param *delta                Pointer for the weighting of particle position (Output)
  * @param *interpolated_u       Pointer to the interpolated velocity (Output)
 */
-__device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, float *particle_position, unsigned int* node_index, float* mode, LB_rho_v_gpu *d_v, float* delta, float *interpolated_u ) {
+__device__ __inline__ void interpolation_two_point_coupling(LB_nodes_gpu n_a, float *particle_position, unsigned int* node_index, float* mode, LB_rho_v_gpu *d_v, float* delta, float *interpolated_u) {
   int   left_node_index[3];
   float temp_delta[6];
   float temp_delta_half[6];
@@ -2925,7 +2925,7 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *par
  * @param node_f      Pointer to local node force (Input)
  * @param *d_v    Pointer to local device values
 */
-__global__ void calc_fluid_particle_ia_three_point_couple(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float *particle_force,                                             LB_node_force_gpu node_f, CUDA_particle_seed *part, LB_rho_v_gpu *d_v){
+__global__ void calc_fluid_particle_ia_three_point_couple(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float *particle_force, LB_node_force_gpu node_f, CUDA_particle_seed *part, LB_rho_v_gpu *d_v){
 
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   unsigned int node_index[27];
@@ -4275,8 +4275,8 @@ void lb_lbfluid_get_population( int xyz[3], float population_host[LBQ], int c )
  * @param *particle_data        Pointer to the particle position and velocity (Input)
  * @param *u_gpu                Pointer to float array (Output)
  * @param node_f                Struct for node force (Input)
- * @param *d_v                  Pointer to local device values
- * @param coupling              int denoting wether to use two- (0) or three-point (1) coupling for the velocity interpolation (Input)
+ * @param *d_v                  Pointer to local device values (Input)
+ * @param coupling              ParticleCoupling denoting wether to use two- or three-point coupling for the velocity interpolation (Input)
 */
 __global__ void lb_lbfluid_get_fluid_velocity_at_particle_positions_kernel(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float* u_gpu, LB_node_force_gpu node_f, LB_rho_v_gpu *d_v, ParticleCoupling coupling){
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
@@ -4290,11 +4290,11 @@ __global__ void lb_lbfluid_get_fluid_velocity_at_particle_positions_kernel(LB_no
     if (coupling == ParticleCoupling::twopoint) {
         unsigned int node_index[8];
         float delta[8];
-        interpolation_two_point_coupling(n_a, position, node_index, mode, nullptr, delta, &u_gpu[3*index]);
+        interpolation_two_point_coupling(n_a, position, node_index, mode, d_v, delta, &u_gpu[3*index]);
     } else if (coupling == ParticleCoupling::threepoint) {
         unsigned int node_index[27];
         float delta[27];
-        interpolation_three_point_coupling(n_a, position, node_index, nullptr, delta, &u_gpu[3*index]);
+        interpolation_three_point_coupling(n_a, position, node_index, d_v, delta, &u_gpu[3*index]);
     }
   }
 }
@@ -4304,7 +4304,6 @@ __global__ void lb_lbfluid_get_fluid_velocity_at_particle_positions_kernel(LB_no
 std::vector<float> lb_lbfluid_get_fluid_velocity_at_particle_positions(ParticleCoupling coupling = ParticleCoupling::twopoint) {
   //call KERNEL and copy velocities from GPU to host
   /** call of the particle kernel */
-  /** values for the particle kernel */
   float* u_gpu;
   cuda_safe_mem(cudaMalloc((void**)&u_gpu, 3*lbpar_gpu.number_of_particles*sizeof(float)));
   int threads_per_block_particles = 64;
@@ -4312,16 +4311,15 @@ std::vector<float> lb_lbfluid_get_fluid_velocity_at_particle_positions(ParticleC
   int blocks_per_grid_particles_x = (lbpar_gpu.number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1) /
                                     (threads_per_block_particles * blocks_per_grid_particles_y);
   dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
-  KERNELCALL( lb_lbfluid_get_fluid_velocity_at_particle_positions_kernel, dim_grid_particles, threads_per_block_particles,
-              ( *current_nodes, gpu_get_particle_pointer(), u_gpu, node_f, device_rho_v, coupling)
+  KERNELCALL(lb_lbfluid_get_fluid_velocity_at_particle_positions_kernel, dim_grid_particles, threads_per_block_particles,
+             (*current_nodes, gpu_get_particle_pointer(), u_gpu, node_f, device_rho_v, coupling)
             );
-
   std::vector<float> u_host(3*lbpar_gpu.number_of_particles);
   cuda_safe_mem(cudaMemcpy(u_host.data(), u_gpu, 3*lbpar_gpu.number_of_particles*sizeof(float), cudaMemcpyDeviceToHost));
   cuda_safe_mem(cudaFree(u_gpu));
   // Multiply all values of u_host by agrid/tau to get MD units.
   std::transform(u_host.begin(), u_host.end(), u_host.begin(),
-                         [](float &f) { return f * lbpar_gpu.agrid/lbpar_gpu.tau; });
+                 [](float &f) {return f * lbpar_gpu.agrid/lbpar_gpu.tau;});
   return u_host;
 }
 
