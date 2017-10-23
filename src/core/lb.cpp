@@ -2394,7 +2394,7 @@ inline void lb_relax_modes(Lattice::index_t index, double *mode)
      * include one half-step of the force action.  See the
      * Chapman-Enskog expansion in [Ladd & Verberg]. */
 #ifndef EXTERNAL_FORCES
-    if (lbfields[index].has_force)
+    if (lbfields[index].has_force || local_cells.particles().size())
 #endif // !EXTERNAL_FORCES
     {
         j[0] += 0.5 * lbfields[index].force[0];
@@ -2768,7 +2768,7 @@ inline void lb_collide_stream() {
 #ifdef EXTERNAL_FORCES
               lb_apply_forces(index, modes);
 #else // EXTERNAL_FORCES
-              if (lbfields[index].has_force) lb_apply_forces(index, modes);
+              if (lbfields[index].has_force || local_cells.particles().size()) lb_apply_forces(index, modes);
 #endif // EXTERNAL_FORCES
 
               /* transform back to populations and streaming */
@@ -2843,7 +2843,7 @@ inline void lb_stream_collide() {
                     if (lbpar.fluct) lb_thermalize_modes(index, modes);
                     
                     /* apply forces */
-                    if (lbfields[index].has_force) lb_apply_forces(index, modes);
+                    if (lbfields[index].has_force || local_cells.particles().size()) lb_apply_forces(index, modes);
                     
                     /* calculate new particle populations */
                     lb_calc_n_from_modes(index, modes);

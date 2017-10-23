@@ -14,7 +14,7 @@ class RemoveTotalMomentumTest(ut.TestCase):
         agrid = 1.0
         fric = 20.0
         visc = 1.0
-        dens = 1.0
+        dens = 12.0
 
         s = espressomd.System()
         s.box_l = [10, 10, 10]
@@ -23,8 +23,13 @@ class RemoveTotalMomentumTest(ut.TestCase):
 
         for i in range(100):
             r = s.box_l * np.random.random(3)
-            v = [0., 0., 1.]
-            s.part.add(pos=r, v=v)
+            v = [1., 1., 1.] * np.random.random(3)
+            # Make sure that id gaps work correctly
+            s.part.add(id=2*i, pos=r, v=v)
+
+        if espressomd.has_features(["MASS"]):
+            # Avoid masses too small for the time step
+            s.part[:].mass = 2. * (0.1 + np.random.random(100))
 
         lbf = espressomd.lb.LBFluid_GPU(
             agrid=agrid, fric=fric, dens=dens, visc=visc, tau=dt)
@@ -37,8 +42,8 @@ class RemoveTotalMomentumTest(ut.TestCase):
 
         p = np.array(s.analysis.analyze_linear_momentum())
 
-        self.assertTrue(np.all(np.abs(p) < 1e-3))
-
+        self.assertAlmostEqual(np.max(p), 0., places=3)
+        self.assertAlmostEqual(np.min(p), 0., places=3)
 
 if __name__ == "__main__":
     #print("Features: ", espressomd.features())

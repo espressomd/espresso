@@ -17,8 +17,8 @@ from tests_common import abspath
 class lb_test(ut.TestCase):
 
     es = espressomd.System()
-    n_nodes=es.cell_system.get_state()["n_nodes"]
-    es.seed=np.random.randint(low=1,high=2**31-1,size=n_nodes)
+    n_nodes = es.cell_system.get_state()["n_nodes"]
+    es.seed = range(n_nodes)
 
     def test(self):
         #setup parameters
@@ -62,7 +62,9 @@ class lb_test(ut.TestCase):
             pos = particle[3:6]
             f = particle[9:]
             v = particle[6:9]
-            system.part.add(id=int(id), pos=pos, v=v, type=int(typ), rotation=[1,1,1])
+            p=system.part.add(id=int(id), pos=pos, v=v, type=int(typ))
+            if espressomd.has_features("ROTATION"):
+                p.rotation=1,1,1
 
         n_col_part=len(system.part)
 

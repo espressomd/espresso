@@ -27,9 +27,6 @@ import espressomd  # pylint: disable=import-error
 from espressomd import reaction_ensemble
 from espressomd import grand_canonical
 
-
-@ut.skipIf('REACTION_ENSEMBLE' not in espressomd.code_info.features(),
-           "REACTION_ENSEMBLE not compiled in, can not check functionality.")
 class ReactionEnsembleTest(ut.TestCase):
     """Test the core implementation of the reaction ensemble."""
 
@@ -92,8 +89,7 @@ class ReactionEnsembleTest(ut.TestCase):
         K_HA_diss = ReactionEnsembleTest.K_HA_diss
         RE = ReactionEnsembleTest.RE
         """ chemical warmup in order to get to chemical equilibrium before starting to calculate the observable "degree of association" """
-        for i in range(40 * N0):
-            RE.reaction()
+        RE.reaction(40 * N0)
 
         volume = ReactionEnsembleTest.volume
         average_NH = 0.0

@@ -21,7 +21,7 @@ class LBTest(ut.TestCase):
     """
     system = espressomd.System()
     n_nodes = system.cell_system.get_state()["n_nodes"]
-    system.seed = np.random.randint(low=1, high=2**31 - 1, size=n_nodes)
+    system.seed = range(n_nodes)
 
     def setUp(self):
         self.params = {'int_steps': 100,
@@ -66,7 +66,9 @@ class LBTest(ut.TestCase):
             pos = particle[3:6]
             f = particle[9:]
             v = particle[6:9]
-            self.system.part.add(id=int(id), pos=pos, v=v, type=int(typ), rotation=[1,1,1])
+            p=self.system.part.add(id=int(id), pos=pos, v=v, type=int(typ))
+            if espressomd.has_features("ROTATION"): 
+                p.rotation=[1,1,1]
 
         self.n_col_part = len(self.system.part)
 
