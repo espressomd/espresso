@@ -243,21 +243,22 @@ IF LENNARD_JONES == 1:
             Parameters
             ----------
 
-            epsilon : float
+            epsilon : :obj:`float`
                       The magnitude of the interaction.
-            sigma : float
+            sigma : :obj:`float`
                     Determines the interaction length scale.
-            cutoff : float
+            cutoff : :obj:`float`
                      Cutoff distance of the interaction.
-            shift : float, string
+            shift : :obj:`float`, string
                     Constant shift of the potential. (4*epsilon*shift).
-            offset : float, optional
+            offset : :obj:`float`, optional
                      Offset distance of the interaction.
-            cap : float, optional
+            cap : :obj:`float`, optional
                   If individual force caps are used, determines the distance
                   at which the force is capped.
-            min : float, optional
+            min : :obj:`float`, optional
                   Restricts the interaction to a minimal distance.
+
             """
             super(LennardJonesInteraction, self).set_params(**kwargs)
 
@@ -347,21 +348,22 @@ IF GAY_BERNE:
             Parameters
             ----------
 
-            eps : float
+            eps : :obj:`float`
                   Potential well depth.
-            sig : float
+            sig : :obj:`float`
                   Interaction range.
-            cut : float
+            cut : :obj:`float`
                   Cutoff distance of the interaction.
-            k1  : float, string
+            k1  : :obj:`float`, string
                   Molecular elongation.
-            k2  : float, optional
+            k2  : :obj:`float`, optional
                   Ratio of the potential well depths for the side-by-side
                   and end-to-end configurations.
-            mu  : float, optional
+            mu  : :obj:`float`, optional
                   Adjustable exponent.
-            nu  : float, optional
+            nu  : :obj:`float`, optional
                   Adjustable exponent.
+
             """
             super(GayBerneInteraction, self).set_params(**kwargs)
 
@@ -520,30 +522,31 @@ IF LENNARD_JONES_GENERIC == 1:
 
             Parameters
             ----------
-            epsilon : float
+            epsilon : :obj:`float`
                       The magnitude of the interaction.
-            sigma : float
+            sigma : :obj:`float`
                     Determines the interaction length scale.
-            cutoff : float
+            cutoff : :obj:`float`
                      Cutoff distance of the interaction.
-            shift : float, string
+            shift : :obj:`float`, string
                     Constant shift of the potential.
-            offset : float
+            offset : :obj:`float`
                      Offset distance of the interaction.
-            e1 : int
+            e1 : :obj:`int`
                  Exponent of the repulsion term.
-            e2 : int
+            e2 : :obj:`int`
                  Exponent of the attraction term.
-            b1 : float
+            b1 : :obj:`float`
                  Prefactor of the repulsion term.
-            b2 : float
+            b2 : :obj:`float`
                  Prefactor of the attraction term.
-            delta : float, optional
+            delta : :obj:`float`, optional
                     LJGEN_SOFTCORE parameter. Allows control over how smoothly
                     the potential drops to zero as lambda approaches zero.
-            lam : float, optional
+            lam : :obj:`float`, optional
                      LJGEN_SOFTCORE parameter lambda. Tune the strength of the
                      interaction.
+
             """
             super(GenericLennardJonesInteraction, self).set_params(**kwargs)
 
@@ -633,18 +636,19 @@ IF SMOOTH_STEP == 1:
 
             Parameters
             ----------
-            d : float
+            d : :obj:`float`
                 Short range repulsion parameter.
-            n : int
+            n : :obj:`int`
                 Exponent of short range repulsion.
-            eps : float
+            eps : :obj:`float`
                   The magnitude of the second (soft) repulsion.
-            k0 : float
+            k0 : :obj:`float`
                  Exponential factor in second (soft) repulsion.
-            sig : float
+            sig : :obj:`float`
                   Length scale of second (soft) repulsion.
-            cutoff : float
+            cutoff : :obj:`float`
                 Cutoff distance of the interaction.
+
             """
             super(SmoothStepInteraction, self).set_params(**kwargs)
 
@@ -731,17 +735,18 @@ IF MORSE == 1:
 
             Parameters
             ----------
-            eps : float
+            eps : :obj:`float`
                 The magnitude of the interaction.
-            alpha : float
+            alpha : :obj:`float`
                 Stiffness of the Morse interaction.
-            rmin : float
+            rmin : :obj:`float`
                 Distance of potential minimum
-            cutoff : float
+            cutoff : :obj:`float`
                 Cutoff distance of the interaction.
-            cap : float, optional
+            cap : :obj:`float`, optional
                 If individual force caps are used, determines the distance
                 at which the force is capped.
+
             """
             super(MorseInteraction, self).set_params(**kwargs)
 
@@ -936,14 +941,15 @@ IF SOFT_SPHERE == 1:
 
             Parameters
             ----------
-            a : float
+            a : :obj:`float`
                 The magnitude of the interaction.
-            n : float
+            n : :obj:`float`
                 Exponent of the power law.
-            cutoff : float
+            cutoff : :obj:`float`
                      Cutoff distance of the interaction.
-            offset : float
+            offset : :obj:`float`
                      Offset distance of the interaction.
+
             """
             super(SoftSphereInteraction, self).set_params(**kwargs)
 
@@ -1017,10 +1023,11 @@ IF HERTZIAN == 1:
 
             Parameters
             ----------
-            eps : float
+            eps : :obj:`float`
                   The magnitude of the interaction.
-            sig : float
+            sig : :obj:`float`
                   Parameter sigma which determines the length over which the potential decays.
+
             """
             super(HertzianInteraction, self).set_params(**kwargs)
 
@@ -1100,12 +1107,13 @@ IF GAUSSIAN == 1:
 
             Parameters
             ----------
-            eps : float
+            eps : :obj:`float`
                   Overlap energy epsilon.
-            sig : float
+            sig : :obj:`float`
                   Variance sigma of the Gaussian interactin.
-            cutoff : float
+            cutoff : :obj:`float`
                      Cutoff distance of the interaction.
+
             """
             super(GaussianInteraction, self).set_params(**kwargs)
 
@@ -1437,13 +1445,14 @@ class FeneBond(BondedInteraction):
 
         Parameters
         ----------
-        k : float
+        k : :obj:`float`
             Specifies the magnitude of the bond interaction.
-        d_r_max : float
+        d_r_max : :obj:`float`
                   Specifies the maximum stretch and compression length of the
                   bond.
-        r_0 : float, optional
+        r_0 : :obj:`float`, optional
               Specifies the equilibrium length of the bond.
+
         """
         super(FeneBond, self).__init__(*args, **kwargs)
 
@@ -1498,13 +1507,14 @@ class HarmonicBond(BondedInteraction):
 
         Parameters
         ----------
-        k : float
+        k : :obj:`float`
             Specifies the magnitude of the bond interaction.
-        r_0 : float
+        r_0 : :obj:`float`
               Specifies the equilibrium length of the bond.
-        r_cut : float, optional
+        r_cut : :obj:`float`, optional
                 Specifies maximum distance beyond which the bond is considered
                 broken.
+
         """
         super(HarmonicBond, self).__init__(*args, **kwargs)
 
@@ -1556,15 +1566,16 @@ IF ROTATION:
 
             Parameters
             ----------
-            k1 : float
+            k1 : :obj:`float`
                 Specifies the magnitude of the bond interaction.
-            k2 : float
+            k2 : :obj:`float`
                 Specifies the magnitude of the angular interaction.
-            r_0 : float
+            r_0 : :obj:`float`
                   Specifies the equilibrium length of the bond.
-            r_cut : float, optional
+            r_cut : :obj:`float`, optional
                     Specifies maximum distance beyond which the bond is considered
                     broken.
+
             """
             super(HarmonicDumbbellBond, self).__init__(*args, **kwargs)
 
@@ -1617,15 +1628,16 @@ IF ROTATION != 1:
 
             Parameters
             ----------
-            k1 : float
+            k1 : :obj:`float`
                 Specifies the magnitude of the bond interaction.
-            k2 : float
+            k2 : :obj:`float`
                 Specifies the magnitude of the angular interaction.
-            r_0 : float
+            r_0 : :obj:`float`
                   Specifies the equilibrium length of the bond.
-            r_cut : float, optional
+            r_cut : :obj:`float`, optional
                     Specifies maximum distance beyond which the bond is considered
                     broken.
+
             """
             raise Exception(
                 "HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
@@ -1681,12 +1693,13 @@ IF BOND_CONSTRAINT == 1:
 
             Parameters
             ----------
-            r : float
+            r : :obj:`float`
                 Specifies the length of the rigid bond.
-            ptol : float, optional
+            ptol : :obj:`float`, optional
                    Specifies the tolerance for positional deviations.
-            vtop : float, optional
+            vtop : :obj:`float`, optional
                    Specifies the tolerance for velocity deviations.
+
             """
             super(RigidBond, self).__init__(*args, **kwargs)
 
@@ -1781,11 +1794,12 @@ IF TABULATED == 1:
 
             Parameters
             ----------
-            type : str
+            type : :obj:`str`
                    Specifies the type of bonded interaction. Possible inputs:
                    'distance', 'angle' and 'dihedral'.
-            filename : str
+            filename : :obj`str`
                        Filename of the tabular.
+
             """
             super(Tabulated, self).__init__(*args, **kwargs)
 
