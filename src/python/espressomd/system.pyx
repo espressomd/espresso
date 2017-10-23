@@ -382,7 +382,7 @@ cdef class System(object):
         """
         Return box volume of the cuboid box
         """
-        
+
         return self.box_l[0] * self.box_l[1] * self.box_l[2]
 
     def distance(self, p1, p2):
@@ -401,3 +401,19 @@ cdef class System(object):
         b = p2.pos
         get_mi_vector(res, b, a)
         return np.array((res[0], res[1], res[2]))
+
+IF EXCLUSIONS:
+    def auto_exclusions(self, distance):
+        """Automatically adds exclusions between particles
+        that are bonded.
+
+        This only considers pair bonds.
+
+        Parameters:
+        -----------
+        distance : int
+            Bond distance upto which the exlucsions should be added.
+
+        """
+        auto_exclusions(distance)
+

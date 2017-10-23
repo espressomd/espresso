@@ -40,5 +40,8 @@ cdef extern from "random.hpp" namespace "Random":
 cdef extern from "utils.hpp":
     void get_mi_vector(double* res,double* a, double* b)
 
+IF EXCLUSIONS:
+    cdef extern from "particle_data.hpp":
+        void auto_exclusions(int distance)
 
 cdef bool skin_set
