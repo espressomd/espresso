@@ -954,9 +954,7 @@ inline int checkIfParticlesInteract(int i, int j) {
 ///
 const char *get_name_of_bonded_ia(BondedInteraction type);
 
-#ifdef BOND_VIRTUAL
 int virtual_set_params(int bond_type);
-#endif
 
 #ifdef DIPOLES
 void set_dipolar_method_local(DipolarInteraction method);

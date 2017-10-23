@@ -946,11 +946,6 @@ The potential is calculated as follows:
 Virtual bonds
 ~~~~~~~~~~~~~
 
-.. note::
-    
-    requires BOND_VIRTUAL feature.
-
-
 A virtual bond can be instantiated via
 :class:`espressomd.interactions.Virtual`::
     
@@ -961,7 +956,7 @@ A virtual bond can be instantiated via
 This creates a virtual bond type identifier for a pair bond
 without associated potential or force. It can be used to specify topologies
 and for some analysis that rely on bonds, or for bonds that should be
-displayed in VMD.
+displayed in the visualization.
 
 Object-in-fluid interactions
 ----------------------------
