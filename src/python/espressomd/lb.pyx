@@ -248,7 +248,7 @@ IF LB_GPU:
             lb_lbfluid_get_interpolated_velocity_global(p, v)
             return v
 
-        def get_fluid_velocity_at_particle_positions(self, particle_coupling=None):
+        def get_fluid_velocity_at_particle_positions(self, particle_coupling="2pt"):
             """Calculate the fluid velocity at all particle positions.
             
             Note
@@ -274,7 +274,8 @@ IF LB_GPU:
             if particle_coupling in ("2pt", None):
                 velocities = lb_lbfluid_get_fluid_velocity_at_particle_positions(twopoint)
             if particle_coupling == "3pt":
-                velocities = lb_lbfluid_get_fluid_velocity_at_particle_positions(threepoint)
+                raise ValueError("Three point coupling is not yet working for this function.")
+                #velocities = lb_lbfluid_get_fluid_velocity_at_particle_positions(threepoint)
             return np.array(velocities).reshape(len(velocities)//3, 3)
 
 IF LB or LB_GPU:
