@@ -41,6 +41,11 @@ class SubtLjTest(ut.TestCase):
             epsilon=2.14, sigma=2.56,
             cutoff=1.5, shift=1.1, offset=0.5)
 
+        s.integrator.run(0)
+        f = np.sum(s.part[:].f**2)
+
+        self.assertGreater(f, 10.)
+
         subt = espressomd.interactions.Subt_Lj()
         s.bonded_inter.add(subt)
 
