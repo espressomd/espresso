@@ -402,18 +402,18 @@ cdef class System(object):
         get_mi_vector(res, b, a)
         return np.array((res[0], res[1], res[2]))
 
-IF EXCLUSIONS:
-    def auto_exclusions(self, distance):
-        """Automatically adds exclusions between particles
-        that are bonded.
+    IF EXCLUSIONS:
+        def auto_exclusions(self, distance):
+            """Automatically adds exclusions between particles
+            that are bonded.
 
-        This only considers pair bonds.
+            This only considers pair bonds.
 
-        Parameters:
-        -----------
-        distance : int
-            Bond distance upto which the exlucsions should be added.
+            Parameters:
+            -----------
+            distance : int
+                Bond distance upto which the exlucsions should be added.
 
-        """
-        auto_exclusions(distance)
+            """
+            auto_exclusions(distance)
 
