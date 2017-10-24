@@ -37,7 +37,7 @@ It is also possible to add several particles at once:::
 
 Furthermore, the :meth:`espressomd.particle_data.ParticleList.add` method returns the added particle(s):::
 
-    tracer=system.part.add(poa=(0,0,0))
+    tracer=system.part.add(pos=(0,0,0))
     print(tracer.pos)
 
 Note that the instance of :class:`espressomd.particle_data.ParticleHandle` returned by :meth:`espressomd.particle_data.ParticleList.add` are handles for the live particles in the simulation, rather than offline copies. Changing their properties will affect the simulation.
@@ -46,18 +46,22 @@ Note that the instance of :class:`espressomd.particle_data.ParticleHandle` retur
 Accessing particle properties
 -----------------------------
 
-Particle properties can be accessed like a class
-member. To access property ``PROPERTY`` of the particle with id ``ID``::
+Particle properties can be accessed like a class member.
 
-    system.part[<ID>].<PROPERTY>
+To access property ``PROPERTY`` of the particle with index ``INDEX``::
 
-For example, to print the current position of the particle with id 0 in the system, call::
+    system.part[<INDEX>].<PROPERTY>
+
+For example, to print the current position of the particle with index 0 in the system, call::
 
     print(system.part[0].pos)
 
 Similarly, the position can be set::
 
     system.part[0].pos=(1,2.5,3)
+    system.part[0].id=4
+
+Note that the index and the property ID are not necessasirly the same.
 
 Interacting with groups of particles
 ------------------------------------
@@ -67,7 +71,7 @@ The :class:`espressomd.particle_data.ParticleList` support slicing similarly to 
     print(sysstem.part[:].pos)
     system.part[:].q=0
 
-To access particles with ids ranging from 0 to 9, use::
+To access particles with indices ranging from 0 to 9, use::
     
     system.party[0:10].pos
 
@@ -79,7 +83,7 @@ Deleting particles
 ------------------
 
 Particles can be easily deleted in Python using particle ids or ranges of particle ids.
-For example, to delete all particles with particle id greater than 10, run::
+For example, to delete all particles with particle index greater than 10, run::
 
     >>> system.part[10:].remove()
 
@@ -99,7 +103,7 @@ You can iterate over all particles or over a subset of particles as follows::
 
 You can iterate over all pairs of particles using::
     
-    for pair in system.part.paris():
+    for pair in system.part.pairs():
         print(pair[1].id,pair[2].id)
 
         
@@ -458,6 +462,11 @@ particles which share the given type.
 
 Self-propelled swimmers
 -----------------------
+
+.. note::
+
+    If you are using this feature, please cite :cite:`degraaf16`.
+
 
 .. seealso::
 

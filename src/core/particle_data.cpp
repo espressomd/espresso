@@ -30,22 +30,23 @@
     The corresponding header file is particle_data.hpp.
 */
 #include "particle_data.hpp"
+#include "PartCfg.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "interaction_data.hpp"
-#include "PartCfg.hpp"
+#include "partCfg_global.hpp"
 #include "rotation.hpp"
 #include "utils.hpp"
 #include "utils/make_unique.hpp"
 #include "virtual_sites.hpp"
+
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
-#include "partCfg_global.hpp"
-
+#include <unordered_map>
 /************************************************
  * defines
  ************************************************/
@@ -69,8 +70,11 @@ int Type_array_init;
 
 int max_seen_particle = -1;
 int n_part = 0;
-int max_particle_node = 0;
-int *particle_node = NULL;
+/**
+ * @brief id -> rank
+ */
+std::unordered_map<int, int> particle_node;
+
 int max_local_particles = 0;
 Particle **local_particles = NULL;
 
@@ -100,9 +104,83 @@ void auto_exclusion(int distance);
  ************************************************/
 
 /** Deallocate the dynamic storage of a particle. */
-void free_particle(Particle *part) {
-  part->~Particle();
+void free_particle(Particle *part) { part->~Particle(); }
+
+void mpi_who_has_slave(int node, int param) {
+  static int *sendbuf;
+  int n_part;
+
+  n_part = cells_get_n_particles();
+  MPI_Gather(&n_part, 1, MPI_INT, NULL, 0, MPI_INT, 0, comm_cart);
+  if (n_part == 0)
+    return;
+
+  sendbuf = Utils::realloc(sendbuf, sizeof(int) * n_part);
+
+  auto end = std::transform(local_cells.particles().begin(),
+                            local_cells.particles().end(), sendbuf,
+                            [](Particle const &p) { return p.p.identity; });
+
+  auto npart = std::distance(sendbuf, end);
+  MPI_Send(sendbuf, npart, MPI_INT, 0, SOME_TAG, comm_cart);
 }
+
+void mpi_who_has() {
+  static int *sizes = new int[n_nodes];
+  int *pdata = NULL;
+  int pdata_s = 0;
+
+  mpi_call(mpi_who_has_slave, -1, 0);
+
+  int n_part = cells_get_n_particles();
+  /* first collect number of particles on each node */
+  MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
+
+  /* then fetch particle locations */
+  for (int pnode = 0; pnode < n_nodes; pnode++) {
+    COMM_TRACE(
+        fprintf(stderr, "node %d reports %d particles\n", pnode, sizes[pnode]));
+    if (pnode == this_node) {
+      for (auto const &p : local_cells.particles())
+        particle_node[p.p.identity] = this_node;
+
+    } else if (sizes[pnode] > 0) {
+      if (pdata_s < sizes[pnode]) {
+        pdata_s = sizes[pnode];
+        pdata = Utils::realloc(pdata, sizeof(int) * pdata_s);
+      }
+      MPI_Recv(pdata, sizes[pnode], MPI_INT, pnode, SOME_TAG, comm_cart,
+               MPI_STATUS_IGNORE);
+      for (int i = 0; i < sizes[pnode]; i++)
+        particle_node[pdata[i]] = pnode;
+    }
+  }
+  free(pdata);
+}
+
+/**
+ * @brief Rebuild the particle index.
+ */
+void build_particle_node() {
+  mpi_who_has();
+}
+
+/**
+ *  @brief Get the mpi rank which owns the particle with id.
+*/
+int get_particle_node(int id) {
+  if ((id < 0) or (id > max_seen_particle))
+    return -1;
+
+  if (particle_node.empty())
+    build_particle_node();
+
+  auto const needle = particle_node.find(id);
+
+  return (needle != particle_node.end()) ? needle->second : -1;
+}
+
+void clear_particle_node() { particle_node.clear(); }
 
 /************************************************
  * organizational functions
@@ -118,41 +196,13 @@ void realloc_local_particles(int part) {
     /* round up part + 1 in granularity PART_INCREMENT */
     max_local_particles =
         PART_INCREMENT * ((part + PART_INCREMENT) / PART_INCREMENT);
-    local_particles = Utils::realloc(
-        local_particles, sizeof(Particle *) * max_local_particles);
+    local_particles = Utils::realloc(local_particles,
+                                     sizeof(Particle *) * max_local_particles);
 
     /* Set new memory to 0 */
     for (int i = (max_seen_particle + 1); i < max_local_particles; i++)
       local_particles[i] = nullptr;
   }
-}
-
-/** resize \ref particle_node.
-    This procedure is only used on the master node in Tcl mode.
-    \param part the highest existing particle
-*/
-static void realloc_particle_node(int part) {
-  if (part >= max_particle_node) {
-    /* round up part + 1 in granularity PART_INCREMENT */
-    max_particle_node =
-        PART_INCREMENT * ((part + PART_INCREMENT) / PART_INCREMENT);
-    particle_node =
-        Utils::realloc(particle_node, sizeof(int) * max_particle_node);
-  }
-}
-
-void particle_invalidate_part_node() {
-  /* invalidate particle->node data */
-  if (particle_node) {
-    free(particle_node);
-    particle_node = NULL;
-    max_particle_node = 0;
-  }
-}
-
-void build_particle_node() {
-  realloc_particle_node(max_seen_particle);
-  mpi_who_has();
 }
 
 void init_particlelist(ParticleList *pList) {
@@ -205,12 +255,12 @@ Particle *got_particle(ParticleList *l, int id) {
 
 void append_unindexed_particle(ParticleList *l, Particle &&part) {
   realloc_particlelist(l, ++l->n);
-  new(&(l->part[l->n - 1])) Particle(std::move(part));
+  new (&(l->part[l->n - 1])) Particle(std::move(part));
 }
 
 Particle *append_indexed_particle(ParticleList *l, Particle &&part) {
   auto const re = realloc_particlelist(l, ++l->n);
-  auto p = new(&(l->part[l->n - 1])) Particle(std::move(part));
+  auto p = new (&(l->part[l->n - 1])) Particle(std::move(part));
 
   if (re)
     update_local_particles(l);
@@ -225,9 +275,9 @@ Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   auto src = &sl->part[i];
   auto end = &sl->part[sl->n - 1];
 
-  new(dst) Particle(std::move(*src));
+  new (dst) Particle(std::move(*src));
   if (src != end) {
-    new(src) Particle(std::move(*end));
+    new (src) Particle(std::move(*end));
   }
 
   sl->n -= 1;
@@ -241,14 +291,14 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   Particle *src = &sl->part[i];
   Particle *end = &sl->part[sl->n - 1];
 
-  new(dst) Particle(std::move(*src));
+  new (dst) Particle(std::move(*src));
   if (re) {
     update_local_particles(dl);
   } else {
     local_particles[dst->p.identity] = dst;
   }
   if (src != end) {
-    new(src) Particle(std::move(*end));
+    new (src) Particle(std::move(*end));
   }
   if (realloc_particlelist(sl, --sl->n)) {
     update_local_particles(sl);
@@ -259,14 +309,9 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
 }
 
 std::unique_ptr<Particle> get_particle_data(int part) {
-  if (part < 0 || part > max_seen_particle)
-    return nullptr;
+  auto const pnode = get_particle_node(part);
 
-  if (!particle_node)
-    build_particle_node();
-
-  int pnode = particle_node[part];
-  if (pnode == -1)
+  if(pnode < 0)
     return nullptr;
 
   auto pp = Utils::make_unique<Particle>();
@@ -277,26 +322,19 @@ std::unique_ptr<Particle> get_particle_data(int part) {
 
 int place_particle(int part, double p[3]) {
   int i;
-  int pnode, retcode = ES_PART_OK;
+  int retcode = ES_PART_OK;
 
   if (part < 0)
     return ES_PART_ERROR;
 
-  if (!particle_node)
-    build_particle_node();
+  auto pnode = (part <= max_seen_particle) ? get_particle_node(part) : -1;
 
-  pnode = (part <= max_seen_particle) ? particle_node[part] : -1;
   if (pnode == -1) {
     /* new particle, node by spatial position */
     pnode = cell_structure.position_to_node(p);
 
     /* master node specific stuff */
-    realloc_particle_node(part);
     particle_node[part] = pnode;
-
-    /* fill up possible gap */
-    for (i = max_seen_particle + 1; i < part; i++)
-      particle_node[i] = -1;
 
     retcode = ES_PART_CREATED;
 
@@ -310,13 +348,7 @@ int place_particle(int part, double p[3]) {
 }
 
 int set_particle_v(int part, double v[3]) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -326,13 +358,7 @@ int set_particle_v(int part, double v[3]) {
 
 #ifdef ENGINE
 int set_particle_swimming(int part, ParticleParametersSwimming swim) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -342,13 +368,7 @@ int set_particle_swimming(int part, ParticleParametersSwimming swim) {
 #endif
 
 int set_particle_f(int part, double F[3]) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -358,13 +378,7 @@ int set_particle_f(int part, double F[3]) {
 
 #ifdef SHANCHEN
 int set_particle_solvation(int part, double *solvation) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -376,13 +390,7 @@ int set_particle_solvation(int part, double *solvation) {
 
 #if defined(MASS) || defined(LB_BOUNDARIES_GPU)
 int set_particle_mass(int part, double mass) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -395,13 +403,7 @@ constexpr double ParticleProperties::mass;
 
 #ifdef ROTATIONAL_INERTIA
 int set_particle_rotational_inertia(int part, double rinertia[3]) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -411,13 +413,7 @@ int set_particle_rotational_inertia(int part, double rinertia[3]) {
 #endif
 #ifdef ROTATION
 int set_particle_rotation(int part, int rot) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -428,13 +424,7 @@ int set_particle_rotation(int part, int rot) {
 
 #ifdef AFFINITY
 int set_particle_affinity(int part, double bond_site[3]) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -445,13 +435,7 @@ int set_particle_affinity(int part, double bond_site[3]) {
 
 #ifdef MEMBRANE_COLLISION
 int set_particle_out_direction(int part, double out_direction[3]) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -462,13 +446,7 @@ int set_particle_out_direction(int part, double out_direction[3]) {
 
 #ifdef DIPOLES
 int set_particle_dipm(int part, double dipm) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -477,14 +455,7 @@ int set_particle_dipm(int part, double dipm) {
 }
 
 int set_particle_dip(int part, double dip[3]) {
-  int pnode;
-
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -497,13 +468,7 @@ int set_particle_dip(int part, double dip[3]) {
 
 #ifdef VIRTUAL_SITES
 int set_particle_virtual(int part, int isVirtual) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -515,14 +480,7 @@ int set_particle_virtual(int part, int isVirtual) {
 #ifdef VIRTUAL_SITES_RELATIVE
 int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
                              double *rel_ori) {
-  // Find out, on what node the particle is
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -535,13 +493,7 @@ int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
 
 #ifdef MULTI_TIMESTEP
 int set_particle_smaller_timestep(int part, int smaller_timestep) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -551,13 +503,7 @@ int set_particle_smaller_timestep(int part, int smaller_timestep) {
 #endif
 
 int set_particle_q(int part, double q) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -567,13 +513,7 @@ int set_particle_q(int part, double q) {
 
 #ifdef LB_ELECTROHYDRODYNAMICS
 int set_particle_mu_E(int part, double mu_E[3]) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -583,16 +523,8 @@ int set_particle_mu_E(int part, double mu_E[3]) {
 #endif
 
 int set_particle_type(int part, int type) {
-
-  int pnode;
+  auto const pnode = get_particle_node(part);
   make_particle_type_exist(type);
-
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
 
   if (pnode == -1)
     return ES_ERROR;
@@ -621,14 +553,7 @@ int set_particle_type(int part, int type) {
 }
 
 int set_particle_mol_id(int part, int mid) {
-  int pnode;
-
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -638,13 +563,7 @@ int set_particle_mol_id(int part, int mid) {
 
 #ifdef ROTATION
 int set_particle_quat(int part, double quat[4]) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -653,15 +572,9 @@ int set_particle_quat(int part, double quat[4]) {
 }
 
 int set_particle_omega_lab(int part, double omega_lab[3]) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
+  auto particle = get_particle_data(part);
 
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
-
-  if (pnode == -1)
+  if (!particle)
     return ES_ERROR;
 
   /* Internal functions require the body coordinates
@@ -670,7 +583,6 @@ int set_particle_omega_lab(int part, double omega_lab[3]) {
   double A[9];
   double omega[3];
 
-  auto particle = get_particle_data(part);
   define_rotation_matrix(particle.get(), A);
 
   omega[0] = A[0 + 3 * 0] * omega_lab[0] + A[0 + 3 * 1] * omega_lab[1] +
@@ -680,21 +592,13 @@ int set_particle_omega_lab(int part, double omega_lab[3]) {
   omega[2] = A[2 + 3 * 0] * omega_lab[0] + A[2 + 3 * 1] * omega_lab[1] +
              A[2 + 3 * 2] * omega_lab[2];
 
+  auto const pnode = get_particle_node(part);
   mpi_send_omega(pnode, part, omega);
   return ES_OK;
 }
 
 int set_particle_omega_body(int part, double omega[3]) {
-  /* Nothing to be done but pass, since the coordinates
-     are already in the proper frame */
-
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -703,15 +607,9 @@ int set_particle_omega_body(int part, double omega[3]) {
 }
 
 int set_particle_torque_lab(int part, double torque_lab[3]) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
+  auto particle = get_particle_data(part);
 
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
-
-  if (pnode == -1)
+  if (!particle)
     return ES_ERROR;
 
   /* Internal functions require the body coordinates
@@ -720,7 +618,6 @@ int set_particle_torque_lab(int part, double torque_lab[3]) {
   double A[9];
   double torque[3];
 
-  auto particle = get_particle_data(part);
   define_rotation_matrix(particle.get(), A);
 
   torque[0] = A[0 + 3 * 0] * torque_lab[0] + A[0 + 3 * 1] * torque_lab[1] +
@@ -730,24 +627,19 @@ int set_particle_torque_lab(int part, double torque_lab[3]) {
   torque[2] = A[2 + 3 * 0] * torque_lab[0] + A[2 + 3 * 1] * torque_lab[1] +
               A[2 + 3 * 2] * torque_lab[2];
 
+  auto const pnode = get_particle_node(part);
   mpi_send_torque(pnode, part, torque);
   return ES_OK;
 }
 
 int set_particle_torque_body(int part, double torque[3]) {
+  auto const pnode = get_particle_node(part);
+
   /* Nothing to be done but pass, since the coordinates
      are already in the proper frame */
-
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
-
   if (pnode == -1)
     return ES_ERROR;
+
   mpi_send_torque(pnode, part, torque);
   return ES_OK;
 }
@@ -756,17 +648,7 @@ int set_particle_torque_body(int part, double torque[3]) {
 
 #ifdef LANGEVIN_PER_PARTICLE
 int set_particle_temperature(int part, double T) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-
-  pnode = particle_node[part];
-
-  if (pnode == -1)
-    return ES_ERROR;
+  auto const pnode = get_particle_node(part);
 
   mpi_set_particle_temperature(pnode, part, T);
   return ES_OK;
@@ -778,15 +660,7 @@ int set_particle_gamma(int part, double gamma)
 int set_particle_gamma(int part, Vector3d gamma)
 #endif // PARTICLE_ANISOTROPY
 {
-  int pnode;
-
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -801,15 +675,7 @@ int set_particle_gamma_rot(int part, double gamma_rot)
 int set_particle_gamma_rot(int part, Vector3d gamma_rot)
 #endif // PARTICLE_ANISOTROPY
 {
-  int pnode;
-
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -823,13 +689,7 @@ int set_particle_gamma_rot(int part, Vector3d gamma_rot)
 #ifdef EXTERNAL_FORCES
 #ifdef ROTATION
 int set_particle_ext_torque(int part, int flag, double torque[3]) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -840,13 +700,7 @@ int set_particle_ext_torque(int part, int flag, double torque[3]) {
 #endif
 
 int set_particle_ext_force(int part, int flag, double force[3]) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -856,13 +710,7 @@ int set_particle_ext_force(int part, int flag, double force[3]) {
 }
 
 int set_particle_fix(int part, int flag) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -873,13 +721,7 @@ int set_particle_fix(int part, int flag) {
 #endif
 
 int change_particle_bond(int part, int *bond, int _delete) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
+  auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
@@ -898,12 +740,10 @@ int change_particle_bond(int part, int *bond, int _delete) {
 
 void remove_all_particles() {
   mpi_remove_particle(-1, -1);
-  realloc_particle_node(0);
+  clear_particle_node();
 }
 
 int remove_particle(int part) {
-  int pnode;
-
   auto cur_par = get_particle_data(part);
 
   if (cur_par) {
@@ -914,13 +754,8 @@ int remove_particle(int part) {
     return ES_ERROR;
   }
 
-  if (!particle_node)
-    build_particle_node();
+  auto const pnode = get_particle_node(part);
 
-  if (part > max_seen_particle)
-    return ES_ERROR;
-
-  pnode = particle_node[part];
   if (pnode == -1)
     return ES_ERROR;
 
@@ -929,7 +764,6 @@ int remove_particle(int part) {
   mpi_remove_particle(pnode, part);
 
   if (part == max_seen_particle) {
-    while (max_seen_particle >= 0 && particle_node[max_seen_particle] == -1)
       max_seen_particle--;
     mpi_bcast_parameter(FIELD_MAXPART);
   }
@@ -1001,7 +835,7 @@ void local_place_particle(int part, double p[3], int _new) {
       errexit();
     }
     rl = realloc_particlelist(cell, ++cell->n);
-    pt = new(&cell->part[cell->n - 1]) Particle;
+    pt = new (&cell->part[cell->n - 1]) Particle;
 
     pt->p.identity = part;
     if (rl)
@@ -1248,16 +1082,12 @@ void add_partner(IntList *il, int i, int j, int distance) {
 #ifdef EXCLUSIONS
 
 int change_exclusion(int part1, int part2, int _delete) {
-  if (!particle_node)
-    build_particle_node();
-
-  if (part1 < 0 || part1 > max_seen_particle || part2 < 0 ||
-      part2 > max_seen_particle || part1 == part2 ||
-      particle_node[part1] == -1 || particle_node[part2] == -1)
-    return ES_ERROR;
-
+  if(particle_exists(part1) && particle_exists(part2)) {
   mpi_send_exclusion(part1, part2, _delete);
   return ES_OK;
+  } else {
+    return ES_ERROR;
+  }
 }
 
 void remove_all_exclusions() { mpi_send_exclusion(-1, -1, 1); }
@@ -1370,15 +1200,13 @@ int init_type_array(int type) {
     reallocate_global_type_list(number_of_type_lists * 2);
   }
 
-  Type.index =
-      Utils::realloc(Type.index, sizeof(int) * Type.max_entry);
+  Type.index = Utils::realloc(Type.index, sizeof(int) * Type.max_entry);
 
   // reallocate the array that holds the particle type and points to the type
   // index used for the type_list
 
   if (type >= Index.max_entry) {
-    Index.type =
-        Utils::realloc(Index.type, (type + 1) * sizeof(int));
+    Index.type = Utils::realloc(Index.type, (type + 1) * sizeof(int));
     Index.max_entry = type + 1;
   }
   for (int i = 0; i < Type.max_entry; i++)
@@ -1411,16 +1239,15 @@ int init_type_array(int type) {
       max_size = floor((double)max_size / 2.0);
     }
     // now the array is shrinked to at least 4 times the highest entry
-    type_array[Index.type[type]].id_list =
-        Utils::realloc(type_array[Index.type[type]].id_list,
-                              sizeof(int) * 2 * max_size);
+    type_array[Index.type[type]].id_list = Utils::realloc(
+        type_array[Index.type[type]].id_list, sizeof(int) * 2 * max_size);
     type_array[Index.type[type]].max_entry = t_c;
     type_array[Index.type[type]].cur_size = max_size * 2;
   } else {
     // no particles of the given type were found, so leave array size fixed at a
     // reasonable start entry 64 ints in this case
-    type_array[Index.type[type]].id_list = Utils::realloc(
-        type_array[Index.type[type]].id_list, sizeof(int) * 64);
+    type_array[Index.type[type]].id_list =
+        Utils::realloc(type_array[Index.type[type]].id_list, sizeof(int) * 64);
     type_array[Index.type[type]].max_entry = t_c;
     type_array[Index.type[type]].cur_size = 64;
   }
@@ -1434,9 +1261,9 @@ int init_type_array(int type) {
 }
 
 int reallocate_type_array(int type) {
-  type_array[Index.type[type]].id_list = Utils::realloc(
-      type_array[Index.type[type]].id_list,
-      sizeof(int) * type_array[Index.type[type]].cur_size * 2);
+  type_array[Index.type[type]].id_list =
+      Utils::realloc(type_array[Index.type[type]].id_list,
+                     sizeof(int) * type_array[Index.type[type]].cur_size * 2);
   if (type_array[Index.type[type]].id_list == (int *)0) {
     return ES_ERROR;
   }
@@ -1503,8 +1330,7 @@ int update_particle_array(int type) {
 int reallocate_global_type_list(int size) {
   if (size <= 0)
     return ES_ERROR;
-  type_array =
-      Utils::realloc(type_array, sizeof(TypeList) * size);
+  type_array = Utils::realloc(type_array, sizeof(TypeList) * size);
   number_of_type_lists = size;
   if (type_array == (TypeList *)0)
     return ES_ERROR;
@@ -1742,13 +1568,6 @@ void pointer_to_rotational_inertia(Particle *p, double *&res) {
 #endif
 
 bool particle_exists(int part) {
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return false;
-
-  if (particle_node[part] != -1)
-    return true;
-  return false;
+  return get_particle_node(part) != -1;
 }
+
