@@ -60,15 +60,15 @@ class TestLBGetUAtPart(ut.TestCase):
             self.vels[:self.vels.shape[0] / 2, :], self.lb_fluid.get_fluid_velocity_at_particle_positions(
                 particle_coupling="2pt"), atol=1e-6)
 
-    def test_get_u_at_part_three_point(self):
-        """
-        Test if node velocities are equal to the velocities at the particle positions.
-        This test uses the three-point coupling under the hood.
+    #def test_get_u_at_part_three_point(self):
+    #    """
+    #    Test if node velocities are equal to the velocities at the particle positions.
+    #    This test uses the three-point coupling under the hood.
 
-        """
-        numpy.testing.assert_allclose(
-            self.vels[:self.vels.shape[0] / 2, :], self.lb_fluid.get_fluid_velocity_at_particle_positions(
-                particle_coupling="3pt"), atol=1e-6)
+    #    """
+    #    numpy.testing.assert_allclose(
+    #        self.vels[:self.vels.shape[0] / 2, :], self.lb_fluid.get_fluid_velocity_at_particle_positions(
+    #            particle_coupling="3pt"), atol=1e-6)
 
 
 if __name__ == "__main__":

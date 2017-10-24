@@ -260,10 +260,13 @@ IF LB_GPU:
             particle_coupling : :obj:`str`
                        Either ``2pt``- or ``3pt``-coupling is used.
 
+
             Returns
             -------
             velocities : array_like :obj:`float` of shape (number of particles, 3)
                          Fluid velocities at the particle positions.
+            
+            .. warning:: ``3pt``-coupling is currently not working!
 
             """
             if particle_coupling not in ("2pt", "3pt", "None"):
