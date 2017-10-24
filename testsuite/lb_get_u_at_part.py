@@ -59,7 +59,7 @@ class TestLBGetUAtPart(ut.TestCase):
         """
         numpy.testing.assert_allclose(
             self.interpolated_vels[:-1], self.lb_fluid.get_fluid_velocity_at_particle_positions(
-            )[:-1], atol=1e-6)
+            )[:-1], atol=1e-4)
 
 
 if __name__ == "__main__":
