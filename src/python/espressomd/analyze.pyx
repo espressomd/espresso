@@ -892,6 +892,8 @@ class Analysis(object):
             r_min=0.0, r_max=None, r_bins=100, n_conf=None):
         """
         Calculate a radial distribution function.
+	The result is normalized by the spherical bin shell, the total number of particle pairs and the system volume.
+
 
         Parameters
         ----------
@@ -1155,6 +1157,7 @@ class Analysis(object):
         The first rdf is calculated for monomers belonging to different chains,
         the second rdf is for the centers of mass of the chains and
         the third one is the distribution of the closest distances between the chains (the shortest monomer-monomer distances).
+	The result is normalized by the spherical bin shell, the total number of pairs and the system volume.
         
         The distance range is given by `r_min` and `r_max` and it is divided into `r_bins` equidistant bins.
         
