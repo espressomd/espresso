@@ -1,13 +1,8 @@
 image: espressomd/espresso-ubuntu-cuda:latest
 
 stages:
-  - prepare
   - build
   - deploy
-
-status_pending:
-  stage: prepare
-  script: bash maintainer/gh_post_status.sh pending
 
 shanchen:
   stage: build
