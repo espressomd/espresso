@@ -48,7 +48,7 @@ General features
 -  ``ROTATION`` Switch on rotational degrees of freedom for the particles, as well as
    the corresponding quaternion integrator. 
    
-   .. seealso:: :ref:`Defining particle properties`
+   .. seealso:: :ref:`Setting up particles`
 
    .. note:: 
       Note, that when the feature is activated, every particle has three

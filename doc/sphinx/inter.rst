@@ -2193,6 +2193,8 @@ Special interaction commands
 ----------------------------
 
 
+.. _DPD interaction:
+
 DPD interaction
 ~~~~~~~~~~~~~~~
 

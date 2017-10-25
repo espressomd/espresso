@@ -355,8 +355,8 @@ cdef class System(object):
     def change_volume_and_rescale_particles(self, d_new, dir="xyz"):
         """Change box size and rescale particle coordinates.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         d_new : float
                 new box length
         dir : str, optional

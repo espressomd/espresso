@@ -10,8 +10,10 @@ class wang_landau_has_converged(Exception):
 
 cdef class reaction_ensemble(object):
     """
-    This class provides the Reaction Ensemble algorithm, the Wang-Landau Reaction Ensemble algorithm and the constant pH method.
-    Initialize the reaction ensemble by setting the standard pressure, temperature, and the exclusion radius. 
+    This class provides the Reaction Ensemble algorithm, the Wang-Landau
+    Reaction Ensemble algorithm and the constant pH method. Initialize the
+    reaction ensemble by setting the standard pressure, temperature, and the
+    exclusion radius. 
 
     Parameters
     ----------
@@ -462,8 +464,8 @@ cdef class reaction_ensemble(object):
         simulation where the acceptance probability includes the factor
         :math:`\exp(-\\beta \\Delta E_{pot})`. The minimal and maximal
         potential energys which occur in the system are needed for the energy
-        reweighting simulations wehere the factor :math:`\exp(-\\beta \\Delta
-                E_{pot})` is not included in the acceptance probability in
+        reweighting simulations where the factor :math:`\exp(-\\beta \\Delta E_{pot})` 
+        is not included in the acceptance probability in
         order to avoid choosing the wrong potential energy boundaries.
 
         """
@@ -471,14 +473,17 @@ cdef class reaction_ensemble(object):
     
     def write_out_preliminary_energy_run_results(self):
         """
-        This writes out the minimum and maximum potential energy as a function of the degree of association to a file. It requires that previously :meth:`update_maximum_and_minimum_energies_at_current_state` was used.
+        This writes out the minimum and maximum potential energy as a function
+        of the degree of association to a file. It requires that previously
+        :meth:`update_maximum_and_minimum_energies_at_current_state` was used.
 
         """
         RE.write_out_preliminary_energy_run_results("preliminary_energy_run_results")
         
     def write_wang_landau_results_to_file(self,filename):
         """
-        This writes out the wang landau potential as a function of the used collective variables.
+        This writes out the wang landau potential as a function of the used
+        collective variables.
 
         """
         RE.write_wang_landau_results_to_file(filename)
