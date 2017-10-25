@@ -14,36 +14,32 @@ class H5md(object):
     Used for accessing the H5MD core implementation via the
     PScriptInterface.
 
+    .. note::
+       Bonds will be written to the file automatically if they exist.
+
+    Parameters
+    ----------
+    filename : :obj:`str`
+               Name of the trajectory file.
+    write_pos : :obj:`bool`, optional
+                If positions should be written.
+    write_vel : :obj:`bool`, optional
+                If velocities should be written.
+    write_force : :obj:`bool`, optional
+                  If forces should be written.
+    write_species : :obj:`bool`, optional
+                 If types (called 'species' in the H5MD specification) should be written.
+    write_mass : :obj:`bool`, optional
+                 If masses should be written.
+    write_charge : :obj:`bool`, opional
+                   If charges should be written.
+    write_ordered : :obj:`bool`, optional
+                    If particle properties should be ordered according to
+                    ids.
+
     """
 
     def __init__(self, write_ordered=True, **kwargs):
-        """
-        Initialize a H5md object.
-
-        .. note::
-           Bonds will be written to the file automatically if they exist.
-
-        Parameters
-        ----------
-        filename : str
-                   Name of the trajectory file.
-        write_pos : bool, optional
-                    If positions should be written.
-        write_vel : bool, optional
-                    If velocities should be written.
-        write_force : bool, optional
-                      If forces should be written.
-        write_species : bool, optional
-                     If types (called 'species' in the H5MD specification) should be written.
-        write_mass : bool, optional
-                     If masses should be written.
-        write_charge : bool, opional
-                       If charges should be written.
-        write_ordered : bool, optional
-                        If particle properties should be ordered according to
-                        ids.
-
-        """
         self.valid_params = ['filename', "write_ordered"]
         if 'filename' not in kwargs:
             raise ValueError("'filename' parameter missing.")

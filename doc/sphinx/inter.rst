@@ -2260,7 +2260,7 @@ simulation, as particles will simply avoid overlapping. However,
 creating an initial dense random configuration without overlap is often
 difficult. The forces of all non-bonded interactions can be limited via::
 
-	system.non_bonded_inter.set_force_cap(max)
+    system.non_bonded_inter.set_force_cap(max)
 
 This command will cap the force to the specified value `max`, for particle distances
 which would lead to larger forces, the force remains at `max`. Accordingly, the
@@ -2275,7 +2275,7 @@ configuration.
 
 The force capping is switched off by setting the force capping to zero::
 
-	system.non_bonded_inter.set_force_cap(0)
+    system.non_bonded_inter.set_force_cap(0)
 
 Note that force capping always applies to all non-bonded interactions
 regardless of the particle types.
@@ -2286,6 +2286,7 @@ regardless of the particle types.
 .. |image4| image:: figures/arealocal.png
 .. |image5| image:: figures/volume.png
 .. |image6| image:: figures/dihedral-angle.pdf
+
 
 ``constraint``: Setting up constraints
 --------------------------------------

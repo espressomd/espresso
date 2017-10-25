@@ -54,9 +54,7 @@ cdef extern from "integrate.hpp":
     extern double sim_time
     extern double smaller_time_step
     extern double verlet_reuse
-
-cdef extern from "verlet.hpp":
-    double skin
+    extern double skin
 
 cdef extern from "lattice.hpp":
     extern int lattice_switch

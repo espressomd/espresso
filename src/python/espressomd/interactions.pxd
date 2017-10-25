@@ -352,7 +352,7 @@ cdef extern from "angle_cosine.hpp":
 cdef extern from "angle_cossquare.hpp":
     int angle_cossquare_set_params(int bond_type, double bend, double phi0)
 cdef extern from "subt_lj.hpp":
-    int subt_lj_set_params(int bond_type, double k, double r)
+    int subt_lj_set_params(int bond_type)
 cdef extern from "object-in-fluid/oif_global_forces.hpp":
     int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g, double V0, double kv)
 cdef extern from "object-in-fluid/oif_local_forces.hpp":

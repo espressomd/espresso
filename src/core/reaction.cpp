@@ -82,9 +82,6 @@ void local_setup_reaction() {
 }
 
 void integrate_reaction_noswap() {
-  int c, np, n, i, check_catalyzer;
-  Particle *p1, *p2, **pairs;
-  Cell *cell;
   double dist2, vec21[3], ct_ratexp, eq_ratexp, rand, bernoulli;
 
   if (reaction.ct_rate > 0.0) {
@@ -94,18 +91,18 @@ void integrate_reaction_noswap() {
 
     on_observable_calc();
 
-    for (c = 0; c < local_cells.n; c++) {
+    for (int c = 0; c < local_cells.n; c++) {
 
       /* Take into account only those cell neighbourhoods for which
          the central cell contains a catalyzer particle */
 
-      check_catalyzer = 0;
+      auto check_catalyzer = 0;
 
-      cell = local_cells.cell[c];
-      p1 = cell->part;
-      np = cell->n;
+      auto cell = local_cells.cell[c];
+      auto p1 = cell->part;
+      auto np = cell->n;
 
-      for (i = 0; i < np; i++) {
+      for (int i = 0; i < np; i++) {
         if (p1[i].p.type == reaction.catalyzer_type) {
           check_catalyzer = 1;
           break;
@@ -115,32 +112,25 @@ void integrate_reaction_noswap() {
       /* If the central cell contains a catalyzer particle, ...*/
       if (check_catalyzer != 0) {
 
-        /* Loop cell neighbors */
-        for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
-          pairs = dd.cell_inter[c].nList[n].vList.pair;
-          np = dd.cell_inter[c].nList[n].vList.n;
+        for (auto &pair : cell->m_verlet_list) {
+          auto p1 = pair.first;      // pointer to particle 1
+          auto p2 = pair.second; // pointer to particle 2
 
-          /* Verlet list loop */
-          for (i = 0; i < 2 * np; i += 2) {
-            p1 = pairs[i];     // pointer to particle 1
-            p2 = pairs[i + 1]; // pointer to particle 2
+          if ((p1->p.type == reaction.reactant_type &&
+               p2->p.type == reaction.catalyzer_type) ||
+              (p2->p.type == reaction.reactant_type &&
+               p1->p.type == reaction.catalyzer_type)) {
+            get_mi_vector(vec21, p1->r.p, p2->r.p);
+            dist2 = sqrlen(vec21);
 
-            if ((p1->p.type == reaction.reactant_type &&
-                 p2->p.type == reaction.catalyzer_type) ||
-                (p2->p.type == reaction.reactant_type &&
-                 p1->p.type == reaction.catalyzer_type)) {
-              get_mi_vector(vec21, p1->r.p, p2->r.p);
-              dist2 = sqrlen(vec21);
+            /* Count the number of times a reactant particle is
+               checked against a catalyst */
+            if (dist2 < reaction.range * reaction.range) {
 
-              /* Count the number of times a reactant particle is
-                 checked against a catalyst */
-              if (dist2 < reaction.range * reaction.range) {
-
-                if (p1->p.type == reaction.reactant_type) {
-                  p1->p.catalyzer_count++;
-                } else {
-                  p2->p.catalyzer_count++;
-                }
+              if (p1->p.type == reaction.reactant_type) {
+                p1->p.catalyzer_count++;
+              } else {
+                p2->p.catalyzer_count++;
               }
             }
           }
@@ -148,39 +138,39 @@ void integrate_reaction_noswap() {
       }
     }
 
-    /* Now carry out the reaction on the particles which are tagged */
-    for (c = 0; c < local_cells.n; c++) {
-      cell = local_cells.cell[c];
-      p1 = cell->part;
-      np = cell->n;
+  /* Now carry out the reaction on the particles which are tagged */
+  for (int c = 0; c < local_cells.n; c++) {
+    auto cell = local_cells.cell[c];
+    auto p1 = cell->part;
+    auto np = cell->n;
 
-      for (i = 0; i < np; i++) {
-        if (p1[i].p.type == reaction.reactant_type) {
+    for (int i = 0; i < np; i++) {
+      if (p1[i].p.type == reaction.reactant_type) {
 
-          if (p1[i].p.catalyzer_count > 0) {
+        if (p1[i].p.catalyzer_count > 0) {
 
-            if (reaction.sing_mult == 0) {
-              rand = d_random();
+          if (reaction.sing_mult == 0) {
+            rand = d_random();
 
-              bernoulli = pow(ct_ratexp, p1[i].p.catalyzer_count);
+            bernoulli = pow(ct_ratexp, p1[i].p.catalyzer_count);
 
-              if (rand > bernoulli) {
-                p1[i].p.type = reaction.product_type;
-              }
-
-            } else /* We only consider each reactant once */
-            {
-              rand = d_random();
-
-              if (rand > ct_ratexp) {
-                p1[i].p.type = reaction.product_type;
-              }
+            if (rand > bernoulli) {
+              p1[i].p.type = reaction.product_type;
             }
 
-            p1[i].p.catalyzer_count = 0;
+          } else /* We only consider each reactant once */
+          {
+            rand = d_random();
+
+            if (rand > ct_ratexp) {
+              p1[i].p.type = reaction.product_type;
+            }
           }
+
+          p1[i].p.catalyzer_count = 0;
         }
       }
+    }
     }
 
     /* We only need to do something when the equilibrium
@@ -189,14 +179,14 @@ void integrate_reaction_noswap() {
 
       eq_ratexp = exp(-time_step * reaction.eq_rate);
 
-      for (c = 0; c < local_cells.n; c++) {
-        cell = local_cells.cell[c];
-        p1 = cell->part;
-        np = cell->n;
+      for (int c = 0; c < local_cells.n; c++) {
+        auto cell = local_cells.cell[c];
+        auto p1 = cell->part;
+        auto np = cell->n;
 
         /* Convert products into reactants and vice versa
            according to the specified rate constant */
-        for (i = 0; i < np; i++) {
+        for (int i = 0; i < np; i++) {
 
           if (p1[i].p.type == reaction.product_type) {
             rand = d_random();
@@ -287,9 +277,8 @@ void integrate_reaction_swap() {
       std::shuffle(catalyzers.begin(), catalyzers.end(), rng);
 
       // Loop cell neighbors
-      // for ( int n = 0; n < dd.cell_inter[*c].n_neighbors; n++ )
       for (int n = 0; n < cells.size(); n++) {
-        cell = &cells[n]; // dd.cell_inter[*c].nList[n].pList;
+        cell = &cells[n];
         p_neigh = cell->part;
         np = cell->n;
 

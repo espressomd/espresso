@@ -23,8 +23,12 @@ from . import utils
 # Non-bonded interactions
 
 cdef class NonBondedInteraction(object):
-    """Base class for non-bonded interactions.
-
+    """
+    Represents an instance of a non-bonded interaction, such as lennard jones
+    Either called with two particle type id, in which case, the interaction
+    will represent the bonded interaction as it is defined in Espresso core
+    Or called with keyword arguments describing a new interaction.
+    
     """
 
     cdef public object _part_types
@@ -35,10 +39,6 @@ cdef class NonBondedInteraction(object):
     user_interactions = {}
 
     def __init__(self, *args, **kwargs):
-        """Represents an instance of a non-bonded interaction, such as Lennard-Jones.
-        Either called with two particle type ids, in which case, the interaction
-        will represent the bonded interaction as it is defined in the Espresso core
-        or called with keyword arguments describing a new interaction."""
 
         # Interaction id as argument
         if len(args) == 2 and isinstance(args[0], int) and isinstance(args[1], int):
@@ -66,10 +66,12 @@ cdef class NonBondedInteraction(object):
 
         else:
             raise Exception(
-                "The constructor has to be called either with two particle type ids (as interger), or with a set of keyword arguments describing a new interaction")
+                "The constructor has to be called either with two particle type ids (as integer), or with a set of keyword arguments describing a new interaction")
 
     def is_valid(self):
-        """Check, if the data stored in the instance still matches what is in Espresso."""
+        """Check, if the data stored in the instance still matches what is in Espresso.
+        
+        """
 
         # check, if the bond parameters saved in the class still match those
         # saved in Espresso
@@ -81,7 +83,9 @@ cdef class NonBondedInteraction(object):
         return True
 
     def get_params(self):
-        """Get interaction parameters."""
+        """Get interaction parameters.
+        
+        """
         # If this instance refers to an actual interaction defined in the es core, load
         # current parameters from there
         if self._part_types[0] >= 0 and self._part_types[1] >= 0:
@@ -93,7 +97,9 @@ cdef class NonBondedInteraction(object):
         return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
 
     def set_params(self, **p):
-        """Update parameters."""
+        """Update the given parameters.
+        
+        """
         # Check, if any key was passed, which is not known
         for k in p.keys():
             if k not in self.valid_keys():
@@ -138,7 +144,9 @@ cdef class NonBondedInteraction(object):
         return True
 
     def __getattribute__(self, name):
-        """Every time _set_params_in_es_core is called, the parameter dict is also updated."""
+        """Every time _set_params_in_es_core is called, the parameter dict is also updated.
+        
+        """
         attr = object.__getattribute__(self, name)
         if hasattr(attr, '__call__') and attr.__name__ == "_set_params_in_es_core":
             def sync_params(*args, **kwargs):
@@ -249,7 +257,7 @@ IF LENNARD_JONES == 1:
                     Determines the interaction length scale.
             cutoff : :obj:`float`
                      Cutoff distance of the interaction.
-            shift : :obj:`float`, string
+            shift : :obj:`float` or :obj:`str`
                     Constant shift of the potential. (4*epsilon*shift).
             offset : :obj:`float`, optional
                      Offset distance of the interaction.
@@ -270,14 +278,14 @@ IF LENNARD_JONES == 1:
                     self._params["sigma"] / self._params["cutoff"])**6)
 
             if lennard_jones_set_params(
-                    self._part_types[0], self._part_types[1],
-                    self._params["epsilon"],
-                    self._params["sigma"],
-                    self._params["cutoff"],
-                    self._params["shift"],
-                    self._params["offset"],
-                    self._params["cap"],
-                    self._params["min"]):
+                self._part_types[0], self._part_types[1],
+                                        self._params["epsilon"],
+                                        self._params["sigma"],
+                                        self._params["cutoff"],
+                                        self._params["shift"],
+                                        self._params["offset"],
+                                        self._params["cap"],
+                                        self._params["min"]):
                 raise Exception("Could not set Lennard Jones parameters")
 
         def default_params(self):
@@ -343,23 +351,22 @@ IF GAY_BERNE:
             return (self._params["eps"] > 0)
 
         def set_params(self, **kwargs):
-            """ Set parameters for the Gay-Berne interaction.
+            """Set parameters for the Gay-Berne interaction.
 
             Parameters
             ----------
-
             eps : :obj:`float`
                   Potential well depth.
             sig : :obj:`float`
                   Interaction range.
             cut : :obj:`float`
                   Cutoff distance of the interaction.
-            k1  : :obj:`float`, string
+            k1 : :obj:`float` or :obj:`string`
                   Molecular elongation.
-            k2  : :obj:`float`, optional
+            k2 : :obj:`float`, optional
                   Ratio of the potential well depths for the side-by-side
                   and end-to-end configurations.
-            mu  : :obj:`float`, optional
+            mu : :obj:`float`, optional
                   Adjustable exponent.
             nu  : :obj:`float`, optional
                   Adjustable exponent.
@@ -1131,9 +1138,11 @@ IF GAUSSIAN == 1:
 
 
 class NonBondedInteractionHandle(object):
-
-    """Provides access to all Non-bonded interactions between
-    two particle types."""
+    """
+    Provides access to all Non-bonded interactions between
+    two particle types.
+    
+    """
 
     type1 = -1
     type2 = -1
@@ -1182,10 +1191,11 @@ class NonBondedInteractionHandle(object):
 
 
 cdef class NonBondedInteractions(object):
-
-    """Access to non-bonded interaction parameters via [i,j], where i,j are particle
+    """
+    Access to non-bonded interaction parameters via [i,j], where i,j are particle
     types. Returns NonBondedInteractionHandle.
-    Also: access to force capping
+    Also: access to force capping.
+
     """
 
     def __getitem__(self, key):
@@ -1249,9 +1259,10 @@ cdef class BondedInteraction(object):
 
     def __init__(self, *args, **kwargs):
         """
-           Either called with an interaction id, in which case, the interaction
-           will represent the bonded interaction as it is defined in Espresso core
-           Or called with keyword arguments describing a new interaction.
+        Either called with an interaction id, in which case, the interaction
+        will represent the bonded interaction as it is defined in Espresso core
+        Or called with keyword arguments describing a new interaction.
+
         """
         # Interaction id as argument
         if len(args) == 1 and isinstance(args[0], int):
@@ -1286,7 +1297,9 @@ cdef class BondedInteraction(object):
                 "The constructor has to be called either with a bond id (as interger), or with a set of keyword arguments describing a new interaction")
 
     def is_valid(self):
-        """Check, if the data stored in the instance still matches what is in Espresso"""
+        """Check, if the data stored in the instance still matches what is in Espresso.
+        
+        """
         # Check if the bond type in Espresso still matches the bond type saved
         # in this class
         if bonded_ia_params[self._bond_id].type != self.type_number():
@@ -1324,7 +1337,9 @@ cdef class BondedInteraction(object):
         return True
 
     def __getattribute__(self, name):
-        """Every time _set_params_in_es_core is called, the parameter dict is also updated."""
+        """Every time _set_params_in_es_core is called, the parameter dict is also updated.
+        
+        """
         attr = object.__getattribute__(self, name)
         if hasattr(attr, '__call__') and attr.__name__ == "_set_params_in_es_core":
             def sync_params(*args, **kwargs):
@@ -1973,6 +1988,8 @@ IF TABULATED != 1:
 
 IF LENNARD_JONES == 1:
     class Subt_Lj(BondedInteraction):
+        def __init__(self, *args, **kwargs):
+            super(Subt_Lj, self).__init__(*args, **kwargs)
 
         def type_number(self):
             return BONDED_IA_SUBT_LJ
@@ -1987,28 +2004,25 @@ IF LENNARD_JONES == 1:
             """All parameters that can be set.
 
             """
-            return "r", "k"
+            return {}
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return "r", "k"
+            return {}
 
         def set_default_params(self):
             """Sets parameters that are not required to their default value.
 
             """
-            self._params = {"k": 0, "r": 0}
+            self._params = {}
 
         def _get_params_from_es_core(self):
-            return \
-                {"k": bonded_ia_params[self._bond_id].p.subt_lj.k,
-                 "r": bonded_ia_params[self._bond_id].p.subt_lj.r}
+            return {}
 
         def _set_params_in_es_core(self):
-            subt_lj_set_params(
-                self._bond_id, self._params["k"], self._params["r"])
+            subt_lj_set_params(self._bond_id)
 
 IF BOND_VIRTUAL == 1:
     class Virtual(BondedInteraction):
@@ -2016,6 +2030,7 @@ IF BOND_VIRTUAL == 1:
         def __init__(self, *args, **kwargs):
             """
             VirtualBond initializer. Used to instantiate a VirtualBond identifier.
+
             """
             super(Virtual, self).__init__(*args, **kwargs)
 
@@ -2383,8 +2398,9 @@ IF LENNARD_JONES:
 
 
 class BondedInteractions(object):
-
-    """Represents the bonded interactions. Individual interactions can be accessed using
+    """Represents the bonded interactions.
+    
+    Individual interactions can be accessed using
     BondedInteractions[i], where i is the bond id. Will return a bonded interaction
     from bonded_interaction_classes"""
 
