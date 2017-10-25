@@ -72,63 +72,63 @@ class openGLLive(object):
 
         # DEFAULT PROPERTIES
         self.specs = {
-            'window_size':                [800, 800],
-            'name':                       'Espresso Visualization',
-            'background_color':           [0, 0, 0],
-            'update_fps':                 30.0,
-            'periodic_images':            [0, 0, 0],
-            'draw_box':                   True,
-            'draw_axis':                  True,
-            'quality_particles':          16,
-            'quality_bonds':              16,
-            'quality_arrows':             16,
-            'quality_constraints':        32,
-            'close_cut_distance':         0.1,
-            'far_cut_distance':           5,
-            'camera_position':            'auto',
-            'camera_target':              'auto',
-            'camera_right':               [1.0, 0.0, 0.0],
-            #'camera_rotation':           [3.55, -0.4],
+            'window_size': [800, 800],
+            'name': 'Espresso Visualization',
+            'background_color': [0, 0, 0],
+            'update_fps': 30.0,
+            'periodic_images': [0, 0, 0],
+            'draw_box': True,
+            'draw_axis': True,
+            'quality_particles': 16,
+            'quality_bonds': 16,
+            'quality_arrows': 16,
+            'quality_constraints': 32,
+            'close_cut_distance': 0.1,
+            'far_cut_distance': 5,
+            'camera_position': 'auto',
+            'camera_target': 'auto',
+            'camera_right': [1.0, 0.0, 0.0],
+            #'camera_rotation':	   		  [3.55, -0.4],
 
-            'particle_coloring':          'auto',
-            'particle_sizes':             'auto',
-            'particle_type_colors':       [[1, 1, 0, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 1, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
-            'particle_type_materials':    [[0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1]],
-            'particle_charge_colors':     [[1, 0, 0, 1], [0, 1, 0, 1]],
+            'particle_coloring': 'auto',
+            'particle_sizes': 'auto',
+            'particle_type_colors': [[1, 1, 0, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 1, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
+            'particle_type_materials': [[0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1]],
+            'particle_charge_colors': [[1, 0, 0, 1], [0, 1, 0, 1]],
 
-            'draw_constraints':           True,
-            'rasterize_pointsize':        10,
-            'rasterize_resolution':       75.0,
-            'constraint_type_colors':     [[0.5, 0.5, 0.5, 0.9], [0, 0.5, 0.5, 0.9], [0.5, 0, 0.5, 0.9], [0.5, 0.5, 0, 0.9], [0, 0, 0.5, 0.9], [0.5, 0, 0, 0.9]],
-            'constraint_type_materials':  [[0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1]],
+            'draw_constraints': True,
+            'rasterize_pointsize': 10,
+            'rasterize_resolution': 75.0,
+            'constraint_type_colors': [[0.5, 0.5, 0.5, 0.9], [0, 0.5, 0.5, 0.9], [0.5, 0, 0.5, 0.9], [0.5, 0.5, 0, 0.9], [0, 0, 0.5, 0.9], [0.5, 0, 0, 0.9]],
+            'constraint_type_materials': [[0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1]],
 
-            'draw_bonds':                 True,
-            'bond_type_radius':           [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
-            'bond_type_colors':           [[1, 1, 1, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
-            'bond_type_materials':        [[0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1]],
+            'draw_bonds': True,
+            'bond_type_radius': [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+            'bond_type_colors': [[1, 1, 1, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
+            'bond_type_materials': [[0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1]],
 
-            'ext_force_arrows':           True,
-            'ext_force_arrows_scale':     [1, 1, 1, 1, 1, 1, 1],
+            'ext_force_arrows': True,
+            'ext_force_arrows_scale': [1, 1, 1, 1, 1, 1, 1],
 
-            'LB':                         False,
-            'LB_plane_axis':              2,
-            'LB_plane_dist':              0,
-            'LB_plane_ngrid':             5,
-            'LB_vel_scale':               1.0,  
+            'LB': False,
+            'LB_plane_axis': 2,
+            'LB_plane_dist': 0,
+            'LB_plane_ngrid': 5,
+            'LB_vel_scale': 1.0,
 
-            'light_pos':                  'auto',
-            'light_colors':               [[0.1, 0.1, 0.2, 1.0], [0.9, 0.9, 0.9, 1.0], [1.0, 1.0, 1.0, 1.0]],
-            'light_brightness':           1.0,
-            'light_size':                 'auto',
+            'light_pos': 'auto',
+            'light_colors': [[0.1, 0.1, 0.2, 1.0], [0.9, 0.9, 0.9, 1.0], [1.0, 1.0, 1.0, 1.0]],
+            'light_brightness': 1.0,
+            'light_size': 'auto',
 
-            'spotlight_enabled':          True,
-            'spotlight_colors':           [[0.1, 0.1, 0.2, 1.0], [0.5, 0.5, 0.5, 1.0], [1.0, 1.0, 1.0, 1.0]],
-            'spotlight_angle':            45,
-            'spotlight_focus':            1,
-            'spotlight_brightness':       0.4,
+            'spotlight_enabled': True,
+            'spotlight_colors': [[0.1, 0.1, 0.2, 1.0], [0.5, 0.5, 0.5, 1.0], [1.0, 1.0, 1.0, 1.0]],
+            'spotlight_angle': 45,
+            'spotlight_focus': 1,
+            'spotlight_brightness': 0.4,
 
-            'drag_enabled':               False,
-            'drag_force':                 3.0
+            'drag_enabled': False,
+            'drag_force': 3.0
         }
 
         # OVERWRITE WITH USER PROPERTIES
@@ -153,7 +153,9 @@ class openGLLive(object):
         self.timers = []
 
     def registerCallback(self, cb, interval=1000):
-        """Register timed callbacks."""
+        """Register timed callbacks.
+
+        """
 
         self.timers.append((int(interval), cb))
 
@@ -204,7 +206,9 @@ class openGLLive(object):
 
     def update(self):
         """Update method to be called after integration.
-       Changes of espresso system can only happen here."""
+        Changes of espresso system can only happen here.
+
+        """
         if self.started:
 
             # UPDATE ON STARTUP
@@ -243,35 +247,37 @@ class openGLLive(object):
     # GET THE PARTICLE DATA
     def _updateParticles(self):
         IF EXTERNAL_FORCES and ELECTROSTATICS:
-            self.particles = {'coords':     self.system.part[:].pos_folded,
-                              'types':      self.system.part[:].type,
+            self.particles = {'coords': self.system.part[:].pos_folded,
+                              'types': self.system.part[:].type,
                               'ext_forces': self.system.part[:].ext_force,
-                              'charges':    self.system.part[:].q}
+                              'charges': self.system.part[:].q}
         ELIF EXTERNAL_FORCES and not ELECTROSTATICS:
-            self.particles = {'coords':     self.system.part[:].pos_folded,
-                              'types':      self.system.part[:].type,
+            self.particles = {'coords': self.system.part[:].pos_folded,
+                              'types': self.system.part[:].type,
                               'ext_forces': self.system.part[:].ext_force,
-                              'charges':    [0] * len(self.system.part)}
+                              'charges': [0] * len(self.system.part)}
         ELIF not EXTERNAL_FORCES and ELECTROSTATICS:
-            self.particles = {'coords':     self.system.part[:].pos_folded,
-                              'types':      self.system.part[:].type,
+            self.particles = {'coords': self.system.part[:].pos_folded,
+                              'types': self.system.part[:].type,
                               'ext_forces': [0, 0, 0] * len(self.system.part),
-                              'charges':    self.system.part[:].q}
+                              'charges': self.system.part[:].q}
         ELIF not EXTERNAL_FORCES and not ELECTROSTATICS:
-            self.particles = {'coords':     self.system.part[:].pos_folded,
-                              'types':      self.system.part[:].type,
+            self.particles = {'coords': self.system.part[:].pos_folded,
+                              'types': self.system.part[:].type,
                               'ext_forces': [0, 0, 0] * len(self.system.part),
-                              'charges':    [0] * len(self.system.part)}
-    
-    def _updateLB(self):
+                              'charges': [0] * len(self.system.part)}
+
+    def updateLB(self):
         agrid = self.lb_params['agrid']
         self.lb_plane_vel = []
         ng = self.specs['LB_plane_ngrid']
         for xi in xrange(ng):
             for xj in xrange(ng):
-                pp = (self.lb_plane_p + xi*1.0/ng * self.lb_plane_b1 + xj*1.0/ng * self.lb_plane_b2) % self.system.box_l
-                i,j,k = (int(ppp / agrid) for ppp in pp)
-                self.lb_plane_vel.append([pp, np.array(self.lb[i,j,k].velocity)])
+                pp = (self.lb_plane_p + xi * 1.0 / ng * self.lb_plane_b1 +
+                      xj * 1.0 / ng * self.lb_plane_b2) % self.system.box_l
+                i, j, k = (int(ppp / agrid) for ppp in pp)
+                self.lb_plane_vel.append(
+                    [pp, np.array(self.lb[i, j, k].velocity)])
 
     def _edgesFromPN(self, p, n, diag):
         v1, v2 = self._getTangents(n)
@@ -437,8 +443,9 @@ class openGLLive(object):
     def _determine_radius(self, ptype):
         def radiusByLJ(ptype):
             try:
-                radius = self.system.non_bonded_inter[ptype, ptype].lennard_jones.get_params()['sigma'] * 0.5
-            except:
+                radius = self.system.non_bonded_inter[ptype, ptype].lennard_jones.get_params()[
+                    'sigma'] * 0.5
+            except BaseException:
                 radius = 0.5
             if radius == 0:
                 radius = 0.5
@@ -452,7 +459,7 @@ class openGLLive(object):
             try:
                 radius = self._modulo_indexing(
                     self.specs['particle_sizes'], ptype)
-            except:
+            except BaseException:
                 radius = self.radiusByLJ(ptype)
         return radius
 
@@ -771,7 +778,7 @@ class openGLLive(object):
                     self.lb_params = pa
                     self.lb = a
                     break
-            pn = [0.0,0.0,0.0]
+            pn = [0.0, 0.0, 0.0]
             pn[self.specs['LB_plane_axis']] = 1.0
             self.lb_plane_b1, self.lb_plane_b2 = self._getTangents(pn)
             self.lb_plane_b1 *= np.array(self.system.box_l)
@@ -933,9 +940,16 @@ class openGLLive(object):
 
         # LIGHT0
         if self.specs['light_pos'] != 'auto':
-            glLightfv(GL_LIGHT0, GL_POSITION, np.array(self.specs['light_pos']).tolist())
+            glLightfv(
+                GL_LIGHT0, GL_POSITION, np.array(
+                    self.specs['light_pos']).tolist())
         else:
-            glLightfv(GL_LIGHT0, GL_POSITION, (np.array(self.system.box_l) * 0.5).tolist())
+            glLightfv(
+                GL_LIGHT0,
+                GL_POSITION,
+                (np.array(
+                    self.system.box_l) *
+                    0.5).tolist())
 
         glLightfv(GL_LIGHT0, GL_AMBIENT, self.specs['light_colors'][0])
         glLightfv(GL_LIGHT0, GL_DIFFUSE, self.specs['light_colors'][1])
@@ -975,9 +989,9 @@ class openGLLive(object):
 def _setSolidMaterial(r, g, b, a=1.0, ambient=0.6, diffuse=1.0, specular=0.1):
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT,  [
                  ambient * r, ambient * g, ambient * g, a])
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE,  [
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, [
                  diffuse * r, diffuse * g, diffuse * b, a])
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR,  [
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, [
                  specular * r, specular * g, specular * g, a])
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 50)
 
@@ -1079,6 +1093,7 @@ def _drawCylinder(posA, posB, radius, color, material, quality, draw_caps=False)
 
     d = posB - posA
 
+    # angle,t,length = calcAngle(d)
     length = np.linalg.norm(d)
     glTranslatef(posA[0], posA[1], posA[2])
     
@@ -1165,8 +1180,11 @@ def _drawArrow(pos, d, radius, color, quality):
     glPopMatrix()
 
 
+# MOUSE EVENT MANAGER
 class MouseFireEvent(object):
-    """Event type of mouse button used for mouse callbacks."""
+    """Event type of mouse button used for mouse callbacks.
+
+    """
 
     ButtonPressed = 0
     FreeMotion = 1
@@ -1175,7 +1193,9 @@ class MouseFireEvent(object):
 
 
 class MouseButtonEvent(object):
-    """Mouse event used for mouse callbacks. Stores button and callback."""
+    """Mouse event used for mouse callbacks. Stores button and callback.
+
+    """
 
     def __init__(self, button, fireEvent, callback, positional=False):
         self.button = button
@@ -1185,7 +1205,9 @@ class MouseButtonEvent(object):
 
 
 class MouseManager(object):
-    """Handles mouse callbacks."""
+    """Handles mouse callbacks.
+
+    """
 
     def __init__(self):
         self.mousePos = np.array([0, 0])
@@ -1200,7 +1222,9 @@ class MouseManager(object):
         self.mouseState[GLUT_RIGHT_BUTTON] = GLUT_UP
 
     def registerButton(self, mouseEvent):
-        """Register mouse input callbacks."""
+        """Register mouse input callbacks.
+
+        """
         if mouseEvent.fireEvent == MouseFireEvent.ButtonPressed:
             self.mouseEventsPressed.append(mouseEvent)
         elif mouseEvent.fireEvent == MouseFireEvent.ButtonReleased:
@@ -1236,9 +1260,13 @@ class MouseManager(object):
         for me in self.mouseEventsFreeMotion:
             me.callback(self.mousePos, self.mousePosOld, self.mouseState)
 
+# KEYBOARD EVENT MANAGER
+
 
 class KeyboardFireEvent(object):
-    """Event type of button used for keyboard callbacks."""
+    """Event type of button used for keyboard callbacks.
+
+    """
 
     Pressed = 0
     Hold = 1
@@ -1246,7 +1274,9 @@ class KeyboardFireEvent(object):
 
 
 class KeyboardButtonEvent(object):
-    """Keyboard event used for keyboard callbacks. Stores button, event type and callback."""
+    """Keyboard event used for keyboard callbacks. Stores button, event type and callback.
+
+    """
 
     def __init__(self, button, fireEvent, callback, internal=False):
         self.button = button
@@ -1256,7 +1286,9 @@ class KeyboardButtonEvent(object):
 
 
 class KeyboardManager(object):
-    """Handles keyboard callbacks."""
+    """Handles keyboard callbacks.
+
+    """
 
     def __init__(self):
         self.pressedKeys = set([])
@@ -1268,7 +1300,9 @@ class KeyboardManager(object):
         self.userCallbackStack = []
 
     def registerButton(self, buttonEvent):
-        """Register keyboard input callbacks."""
+        """Register keyboard input callbacks.
+
+        """
         if buttonEvent.fireEvent == KeyboardFireEvent.Pressed:
             self.buttonEventsPressed.append(buttonEvent)
         elif buttonEvent.fireEvent == KeyboardFireEvent.Hold:
@@ -1399,14 +1433,13 @@ class _Camera(object):
             self.state_pos[2] += 0.05 * dm[1] * self.moveSpeed
             self.rotateCameraR(dm[0] * 0.001 * self.globalRotSpeed)
 
-
-    def normalize(self,vec):
+    def normalize(self, vec):
         vec = self.normalized(vec)
 
-    def normalized(self,vec):
+    def normalized(self, vec):
         return vec / np.linalg.norm(vec)
 
-    def get_camera_rotation_matrix(self,target_vec, up_vec):
+    def get_camera_rotation_matrix(self, target_vec, up_vec):
         n = self.normalized(target_vec)
         u = self.normalized(up_vec)
         u = np.cross(u, target_vec)
@@ -1423,8 +1456,7 @@ class _Camera(object):
         m[2][2] = n[2]
         return m
 
-    
-    def rotate_vector(self,vec, ang, axe):
+    def rotate_vector(self, vec, ang, axe):
         sinhalf = sin(ang / 2)
         coshalf = cos(ang / 2)
 
@@ -1436,7 +1468,7 @@ class _Camera(object):
         rot = _Quaternion(rx, ry, rz, rw)
         conq = rot.conjugated()
         w1 = conq.mult_v(vec)
-        w  = w1.mult_q(rot)
+        w = w1.mult_q(rot)
 
         vec[0] = w[0]
         vec[1] = w[1]
@@ -1464,24 +1496,26 @@ class _Camera(object):
         self.state_target /= np.linalg.norm(self.state_target)
 
         # Center Box
-        trans = np.identity(4, np.float32) 
+        trans = np.identity(4, np.float32)
         trans[3][0] = -self.center[0]
         trans[3][1] = -self.center[1]
         trans[3][2] = -self.center[2]
-        
+
         # Camera rotation
-        rotate_cam = self.get_camera_rotation_matrix(-self.state_target, self.state_up)
+        rotate_cam = self.get_camera_rotation_matrix(
+            -self.state_target, self.state_up)
 
         # System translation
         trans_cam = np.identity(4, np.float32)
         trans_cam[3][0] = -self.state_pos[0]
         trans_cam[3][1] = -self.state_pos[1]
         trans_cam[3][2] = -self.state_pos[2]
-        
+
         self.modelview = trans.dot(rotate_cam.dot(trans_cam))
-        
-        cXYZ = -1 * np.mat(self.modelview[:3,:3]) * np.mat(self.modelview[3,:3]).T
-        self.camPos=np.array([cXYZ[0,0], cXYZ[1,0], cXYZ[2,0]])
+
+        cXYZ = -1 * np.mat(self.modelview[:3, :3]) * \
+            np.mat(self.modelview[3, :3]).T
+        self.camPos = np.array([cXYZ[0, 0], cXYZ[1, 0], cXYZ[2, 0]])
 
         self.updateLights()
 

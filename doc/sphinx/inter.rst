@@ -2229,11 +2229,7 @@ singular at zero distance, and forces usually become very large for
 distances below the particle size. This is not a problem during the
 simulation, as particles will simply avoid overlapping. However,
 creating an initial dense random configuration without overlap is often
-difficult. The forces of all non-bonded interactions can be limited via::
-
-	system.force_cap = max
-
-By artificially capping the forces, it is possible to simulate a system
+difficult. By artificially capping the forces, it is possible to simulate a system
 with overlaps. By gradually raising the cap value, possible overlaps
 become unfavorable, and the system equilibrates to a overlap free
 configuration.
@@ -2253,6 +2249,8 @@ identify the remaining overlap. The force capping is switched off by setting
 .. |image4| image:: figures/arealocal.png
 .. |image5| image:: figures/volume.png
 .. |image6| image:: figures/dihedral-angle.pdf
+
+
 ``constraint``: Setting up constraints
 --------------------------------------
 
