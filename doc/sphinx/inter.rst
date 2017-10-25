@@ -2229,24 +2229,6 @@ interaction).
 Since the necessary communication is lacking at present, this
 interaction only works on a single node.
 
-Pulling particles apart
-~~~~~~~~~~~~~~~~~~~~~~~
-
-inter comforce
-
-The comforce interaction type enables one to pull away particle groups
-of two different types. It is mainly designed for pulling experiments on
-bundles. Within a bundle of molecules of type number lets mark one
-molecule as of type . Using comforce one can apply a force such that t2
-can be pulled away from the bundle. The is set to 1 to turn on the
-interaction, and to 0 otherwise. The pulling can be done in two
-different directions. Either parallel to the major axis of the bundle
-(:math:`dir = 0`) or perpendicular to the major axis of the bundle
-(:math:`dir = 1`). is used to set the magnitude of the force. is
-used to set the ratio of the force applied on particles of vs. . This is
-useful if one has to keep the total applied force on the bundle and on
-the target molecule the same. A force of magnitude is applied on
-particles, and a force of magnitude ( \* ) is applied on particles.
 
 .. _Capping the force during warmup:
 
@@ -2261,7 +2243,7 @@ simulation, as particles will simply avoid overlapping. However,
 creating an initial dense random configuration without overlap is often
 difficult. The forces of all non-bonded interactions can be limited via::
 
-	system.non_bonded_inter.set_force_cap(max)
+    system.non_bonded_inter.set_force_cap(max)
 
 This command will cap the force to the specified value `max`, for particle distances
 which would lead to larger forces, the force remains at `max`. Accordingly, the
@@ -2287,6 +2269,8 @@ regardless of the particle types.
 .. |image4| image:: figures/arealocal.png
 .. |image5| image:: figures/volume.png
 .. |image6| image:: figures/dihedral-angle.pdf
+
+
 ``constraint``: Setting up constraints
 --------------------------------------
 

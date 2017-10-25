@@ -33,6 +33,7 @@ cdef np.ndarray create_nparray_from_int_list(int_list * il):
     Parameters
     ----------
     int_list : int_list* which is to be converted
+
     """
     numpyArray = np.zeros(il.n)
     for i in range(il.n):
@@ -45,6 +46,7 @@ cdef np.ndarray create_nparray_from_double_list(double_list * dl):
     Parameters
     ----------
     dl : double_list* which is to be converted
+
     """
     numpyArray = np.zeros(dl.n)
     for i in range(dl.n):
@@ -58,6 +60,7 @@ cdef int_list * create_int_list_from_python_object(obj):
     Parameters
     ----------
     obj : python object which supports subscripts
+
     """
     cdef int_list * il
     il = <int_list * > malloc(sizeof(int_list))
@@ -71,11 +74,13 @@ cdef int_list * create_int_list_from_python_object(obj):
 
 
 cdef check_type_or_throw_except(x, n, t, msg):
-    """Checks that x is of type t and that n values are given, otherwise throws ValueError with the message msg.
-       If x is an array/list/tuple, the type checking is done on the elements, and
-       all elements are checked.
-       Integers are accepted when a float was asked for.
-       """
+    """
+    Checks that x is of type t and that n values are given, otherwise throws
+    ValueError with the message msg. If x is an array/list/tuple, the type
+    checking is done on the elements, and all elements are checked. Integers
+    are accepted when a float was asked for.
+
+     """
     # Check whether x is an array/list/tuple or a single value
     if n > 1:
         if hasattr(x, "__getitem__"):
@@ -105,6 +110,7 @@ cdef np.ndarray create_nparray_from_double_array(double * x, int len_x):
     ----------
     x : double* which is to be converted
     len_x: len of array
+
     """
     numpyArray = np.zeros(len_x)
     for i in range(len_x):
@@ -112,7 +118,12 @@ cdef np.ndarray create_nparray_from_double_array(double * x, int len_x):
     return numpyArray
 
 cdef check_range_or_except(D, name, v_min, incl_min, v_max, incl_max):
-    """Checks that x is in range [v_min,v_max] (inlude boundaries via inlc_min/incl_max = true) or throws a ValueError. v_min/v_max = 'inf' to disable limit """
+    """
+    Checks that x is in range [v_min,v_max] (inlude boundaries via
+    inlc_min/incl_max = true) or throws a ValueError. v_min/v_max = 'inf' to
+    disable limit.
+    
+    """
     x = D[name]
 
     # Array/list/tuple
@@ -136,7 +147,8 @@ def to_char_pointer(s):
     
     Parameters
     ----------
-    s : string
+    s : :obj:`str`
+
     """
     if isinstance(s, unicode):
         s = (<unicode>s).encode('utf8')
@@ -144,11 +156,12 @@ def to_char_pointer(s):
 
 def to_str(s):
     """
-    Returns a python string
+    Returns a python string.
     
     Parameters
     ----------
     s : char*
+
     """
     if type(s) is unicode:
         return <unicode>s
@@ -162,12 +175,13 @@ def to_str(s):
 
 cdef handle_errors(msg):
     """
-    Gathers runtime errors
+    Gathers runtime errors.
     
     Parameters
     ----------
-    msg: string
+    msg: :obj:`str`
          Error message that is to be raised.
+
     """
     errors = mpi_gather_runtime_errors()
     for err in errors:
