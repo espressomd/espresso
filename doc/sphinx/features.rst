@@ -285,7 +285,7 @@ following features.
 
 
 DNA Model (Fyta DNA)
--------------------
+--------------------
 
 -  ``CG_DNA``
 

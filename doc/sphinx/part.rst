@@ -261,6 +261,8 @@ Sets the bond type for the connections to .
 
 If not specified, defaults to :math:`30000`.
 
+.. _Virtual sites:
+
 Virtual sites
 -------------
 
