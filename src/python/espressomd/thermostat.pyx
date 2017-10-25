@@ -168,7 +168,10 @@ cdef class Thermostat(object):
         return thermo_list
 
     def turn_off(self):
-        """Turns off all the thermostat and sets all the thermostat variables to zero"""
+        """
+        Turns off all the thermostat and sets all the thermostat variables to zero.
+        
+        """
 
         global temperature
         temperature = 0.
@@ -197,23 +200,22 @@ cdef class Thermostat(object):
 
     @AssertThermostatType(THERMO_LANGEVIN)
     def set_langevin(self, kT=None, gamma=None, gamma_rotation=None):
-        """Sets the Langevin thermostat with required parameters 'kT' 'gamma'
+        """
+        Sets the Langevin thermostat with required parameters 'kT' 'gamma'
         and optional parameter 'gamma_rotation'.
 
         Parameters
         -----------
-        'kT' : float
-            Thermal energy of the simulated heat bath.
-
-        'gamma' : float
-            Contains the friction coefficient of the bath. If the feature 'PARTICLE_ANISOTROPY'
-            is compiled in then 'gamma' can be a list of three positive floats, for the friction
-            coefficient in each cardinal direction.
-
-        gamma_rotation : float, optional
-            The same applies to 'gamma_rotation', which requires the feature
-            'ROTATION' to work properly. But also accepts three floating point numbers
-            if 'PARTICLE_ANISOTROPY' is also compiled in.
+        kT : :obj:`float`
+             Thermal energy of the simulated heat bath.
+        gamma : :obj:`float`
+                Contains the friction coefficient of the bath. If the feature 'PARTICLE_ANISOTROPY'
+                is compiled in then 'gamma' can be a list of three positive floats, for the friction
+                coefficient in each cardinal direction.
+        gamma_rotation : :obj:`float`, optional
+                         The same applies to 'gamma_rotation', which requires the feature
+                         'ROTATION' to work properly. But also accepts three floating point numbers
+                         if 'PARTICLE_ANISOTROPY' is also compiled in.
 
         """
 
@@ -332,8 +334,8 @@ cdef class Thermostat(object):
 
             Parameters
             ----------
-            'kT' : float
-                Specifies the thermal energy of the heat bath
+            kT : :obj:`float`
+                 Specifies the thermal energy of the heat bath.
 
             """
 
@@ -360,15 +362,13 @@ cdef class Thermostat(object):
 
             Parameters
             ----------
-
-            'kT' : float
-                Thermal energy of the heat bath
-
-            'gamma0' : float
-                Friction coefficient of the bath
-
-            'gammav' : float
-                Artificial friction coefficient for the volume fluctuations. Mass of the artificial piston
+            kT : :obj:`float`
+                 Thermal energy of the heat bath
+            gamma0 : :obj:`float`
+                     Friction coefficient of the bath
+            gammav : :obj:`float`
+                     Artificial friction coefficient for the volume
+                     fluctuations. Mass of the artificial piston.
 
             """
 
@@ -394,31 +394,26 @@ cdef class Thermostat(object):
         @AssertThermostatType(THERMO_DPD, THERMO_INTER_DPD)
         def set_dpd(self, **kwargs):
             """
-            Sets the DPD thermostat with required parameters 'kT' 'gamma' 'r_cut'.
+            Sets the DPD thermostat with required parameters ``kT``,  ``gamma`` and ``r_cut``.
 
             Parameters
             ----------
-            'kT' : float
-                Thermal energy of the heat bath, floating point number
-
-            'gamma' : float
-                Friction the particles experience in the bath, floating point number
-
-            'r_cut' : float
-                Cut off value, floating point number
-
-            'wf' : integer, optional
-                Integer value zero or one, affects scaling of the random forces
-
-            'tgamma' : float, optional
-                Friction coefficient for the transverse DPD algorithm
-
-            'tr_cut' : float, optional
-                Cut off radius for the transverse DPD
-
-            'twf' : integer
-                Interger value zero or one, affects the scaling of the random forces
-                in the transverse DPD algorithm
+            kT : :obj`float`
+                 Thermal energy of the heat bath, floating point number.
+            gamma : :obj:`float`
+                    Friction the particles experience in the bath, floating
+                    point number.
+            r_cut : :obj:`float`
+                    Cut off value, floating point number.
+            wf : :obj:`int`, optional
+                 Integer value zero or one, affects scaling of the random forces.
+            tgamma : :obj:`float`, optional
+                     Friction coefficient for the transverse DPD algorithm.
+            tr_cut : :obj:`float`, optional
+                     Cut off radius for the transverse DPD.
+            twf : :obj:`int`
+                  Integer value zero or one, affects the scaling of the random forces
+                  in the transverse DPD algorithm.
 
             """
             req = ["kT", "gamma", "r_cut"]
