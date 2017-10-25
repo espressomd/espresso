@@ -1188,7 +1188,6 @@ class Analysis(object):
         cdef double * f1
         cdef double * f2
         cdef double * f3
-        print("bleh ",r_min)
 
         check_type_or_throw_except(r_min, 1, float, "r_min has to be a float")
         check_type_or_throw_except(r_max, 1, float, "r_max has to be a float")
