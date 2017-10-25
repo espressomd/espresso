@@ -1379,6 +1379,8 @@ IF TABULATED != 1:
 
 IF LENNARD_JONES == 1:
     class Subt_Lj(BondedInteraction):
+        def __init__(self, *args, **kwargs):
+            super(Subt_Lj, self).__init__(*args, **kwargs)
 
         def type_number(self):
             return BONDED_IA_SUBT_LJ
@@ -1393,28 +1395,25 @@ IF LENNARD_JONES == 1:
             """All parameters that can be set.
 
             """
-            return "r", "k"
+            return {}
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return "r", "k"
+            return {}
 
         def set_default_params(self):
             """Sets parameters that are not required to their default value.
 
             """
-            self._params = {"k": 0, "r": 0}
+            self._params = {}
 
         def _get_params_from_es_core(self):
-            return \
-                {"k": bonded_ia_params[self._bond_id].p.subt_lj.k,
-                 "r": bonded_ia_params[self._bond_id].p.subt_lj.r}
+            return {}
 
         def _set_params_in_es_core(self):
-            subt_lj_set_params(
-                self._bond_id, self._params["k"], self._params["r"])
+            subt_lj_set_params(self._bond_id)
 
 class Virtual(BondedInteraction):
 

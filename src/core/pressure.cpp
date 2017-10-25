@@ -1102,9 +1102,6 @@ int analyze_local_stress_tensor(int* periodic, double* range_start, double* rang
 	DoubleList *TensorInBin;
 	PTENSOR_TRACE(fprintf(stderr,"%d: Running tclcommand_analyze_parse_local_stress_tensor\n",this_node));
 
-
-
-
 	/* Allocate a doublelist of bins to keep track of stress profile */
 	TensorInBin = (DoubleList *)Utils::malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
 	if ( TensorInBin ) {
