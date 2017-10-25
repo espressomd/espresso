@@ -70,7 +70,7 @@ Particle distribution
 :meth:`espressomd.analyze.Analysis.distribution`
 
 Returns the distance distribution of particles
-(probability of finding a particle of a certain type at a specifeid distance around
+(probability of finding a particle of a certain type at a specified distance around
 a particle of another specified type, disregarding the fact that a spherical shell of a
 larger radius covers a larger volume). 
 The distance is defined as the *minimal* distance between a particle of one group to any of the other
