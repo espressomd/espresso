@@ -220,7 +220,7 @@ Note that the prefactor 4 of the standard LJ potential is missing, so
 the normal LJ potential is recovered for :math:`b_1=b_2=4`,
 :math:`e_1=12` and :math:`e_2=6`.
 
-The net force on a particle can be capped by using force capping , see
+The net force on a particle can be capped by using force capping ``system.non_bonded_inter.set_force_cap(max)``, see
 section :ref:`Capping the force during warmup`
 
 .. todo::
@@ -303,8 +303,7 @@ for :math:`r<r_\mathrm{cut}`, and :math:`V(r)=0` elsewhere. With
 similar to the Lennard-Jones potential, while the second term provides a
 much softer repulsion. This potential therefore introduces two length
 scales, the range of the first term, :math:`d`, and the range of
-the second one, :math:`\sigma`, where in general
-:math:`d<\sigma`.
+the second one, :math:`\sigma`, where in general :math:`d<\sigma`.
 
 BMHTF potential
 ~~~~~~~~~~~~~~~

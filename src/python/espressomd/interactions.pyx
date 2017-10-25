@@ -947,7 +947,7 @@ IF SOFT_SPHERE == 1:
                 Exponent of the power law.
             cutoff : :obj:`float`
                      Cutoff distance of the interaction.
-            offset : :obj:`float`
+            offset : :obj:`float`, optional
                      Offset distance of the interaction.
 
             """
