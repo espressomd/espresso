@@ -237,7 +237,7 @@ def output_vtk_rhomboid(corner, a, b, c, out_file):
 
     """
     if ".vtk" not in out_file:
-        print "output_vtk_rhomboid warning: A file with vtk format will be written without .vtk extension."
+        print("output_vtk_rhomboid warning: A file with vtk format will be written without .vtk extension.")
     output_file = open(out_file, "w")
     output_file.write("# vtk DataFile Version 3.0\n")
     output_file.write("Data\n")
@@ -279,7 +279,7 @@ def output_vtk_cylinder(center, axis, length, radius, n, out_file):
     # only vertical cylinders are supported for now, i.e. with normal (0.0, 0.0, 1.0)
 
     if ".vtk" not in out_file:
-        print "output_vtk_cylinder warning: A file with vtk format will be written without .vtk extension."
+        print("output_vtk_cylinder warning: A file with vtk format will be written without .vtk extension.")
     check_axis = True
     if axis[0]!=0.0:
         check_axis = False
@@ -288,7 +288,7 @@ def output_vtk_cylinder(center, axis, length, radius, n, out_file):
     if axis[2]==0.0:
         check_axis = False
     if check_axis is False:
-        print "output_vtk_cylinder: Output for this type of cylinder is not supported yet."
+        print("output_vtk_cylinder: Output for this type of cylinder is not supported yet.")
         return
     axisZ = 1.0
 
@@ -344,7 +344,7 @@ def output_vtk_lines(lines, out_file):
     # each line in lines contains 6 floats: p1x, p1y, p1z, p2x, p2y, p2z
 
     if ".vtk" not in out_file:
-        print "output_vtk_lines warning: A file with vtk format will be written without .vtk extension."
+        print("output_vtk_lines warning: A file with vtk format will be written without .vtk extension.")
 
     n_lines = len(lines)
 

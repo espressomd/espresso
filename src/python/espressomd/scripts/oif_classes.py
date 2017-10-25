@@ -165,8 +165,8 @@ class Mesh:
         self.ids_extremal_points = [0, 0, 0, 0, 0, 0, 0]
         
         if (nodes_file is None) or (triangles_file is None):
-            print "OifMesh warning: one of nodes_file or triangles_file was not given. " \
-                  "May raise concern when Mesh object was being created."
+            print("OifMesh warning: one of nodes_file or triangles_file was not given. " \
+                  "May raise concern when Mesh object was being created.")
         else:
             if not (isinstance(nodes_file,str) and isinstance(triangles_file,str)):
                 raise TypeError("Filenames must be strings.")
@@ -233,10 +233,10 @@ class Mesh:
 
             if check_orientation is True:
                 # check whether all triangles in file had the same orientation; if not, correct the orientation
-                print "OifMesh: Checking orientation of triangles (and repairing if needed). " \
+                print("OifMesh: Checking orientation of triangles (and repairing if needed). " \
                       "For large meshes this may take a while. " \
                       "If you are certain your mesh is correct, this can be skipped using the OifCellType " \
-                      "option check_orientation = False."
+                      "option check_orientation = False.")
                 self.check_orientation()
 
             # creating list of edge incidences from triangle incidences
@@ -455,7 +455,6 @@ class Mesh:
         tmp_triangle_list_ok.append(tmp_triangle_list[0])
         tmp_triangle_list.pop(0)
 
-        # print strftime("%H:%M:%S", gmtime())
         while len(tmp_triangle_list) is not 0:
             i = 0
             while i < len(tmp_triangle_list):
@@ -555,7 +554,7 @@ class Mesh:
                             tmp_triangle_list_ok.append(tmp_triangle)
                         else:
                             tmp_triangle_list_ok.append(corrected_triangle)
-                            print "OifMesh: Correcting orientation of triangle."
+                            print("OifMesh: Correcting orientation of triangle.")
                         tmp_triangle_list.pop(i)
                         break
                 i += 1
@@ -572,8 +571,7 @@ class Mesh:
             for tmp_triangle in self.triangles:
                     self.triangles[i] = Triangle(tmp_triangle.A, tmp_triangle.C, tmp_triangle.B)
                     i += 1
-        print "OifMesh: Triangulation correct."
-        # print strftime("%H:%M:%S", gmtime())
+        print("OifMesh: Triangulation correct.")
         return 0
 
     def surface(self):
@@ -604,7 +602,7 @@ class Mesh:
         # this is useful after the mesh correction
         # output of mesh nodes can be done from OifCell (this is because their position may change)
         if triangles_file is None:
-            print "OifMesh: No file_name provided for triangles. Will use triangles.dat"
+            print("OifMesh: No file_name provided for triangles. Will use triangles.dat")
             triangles_file = "triangles.dat"
         output_file = open(triangles_file, "w")
         for t in self.triangles:
@@ -656,9 +654,9 @@ class OifCellType:  # analogous to oif_template
         if not isinstance(check_orientation,bool):
             raise TypeError("check_orientation must be bool.")     
         if normal is False:
-            print "OifCellType warning: Option normal is not used => membrane collision will not work."
+            print("OifCellType warning: Option normal is not used => membrane collision will not work.")
         if check_orientation is False:
-            print "OifCellType warning: Check of orientation of triangles is switched off."
+            print("OifCellType warning: Check of orientation of triangles is switched off.")
         if (ks != 0.0) and (kslin != 0.0):
             raise Exception("OifCellType: Cannot use linear and nonlinear stretching at the same time. Quitting.")
         self.system = system
@@ -685,32 +683,32 @@ class OifCellType:  # analogous to oif_template
                 self.local_force_interactions.append([tmp_local_force_inter, [angle.A, angle.B, angle.C, angle.D]])
                 self.system.bonded_inter.add(tmp_local_force_inter)
         else:
-            print "OifCellType warning: No local interactions created when creating OifCellType."
+            print("OifCellType warning: No local interactions created when creating OifCellType.")
         if (kag != 0.0) or (kv != 0.0):
             surface = self.mesh.surface()
             volume = self.mesh.volume()
             self.global_force_interaction = OifGlobalForces(A0_g=surface, ka_g=kag, V0=volume, kv=kv)
             self.system.bonded_inter.add(self.global_force_interaction)
         else:
-            print "OifCellType warning: No global interactions created when creating OifCellType."
+            print("OifCellType warning: No global interactions created when creating OifCellType.")
         self.print_info()
 
     def print_info(self):
-        print "\nThe following OifCellType was created: "
-        print "\t nodes_file: " + self.mesh.nodes_file
-        print "\t triangles_file: " + self.mesh.triangles_file
-        print "\t nNodes: " + str(self.mesh.get_n_nodes())
-        print "\t n_triangles: " + str(self.mesh.get_n_triangles())
-        print "\t nEdges: " + str(self.mesh.get_n_edges())
-        print "\t ks: " + custom_str(self.ks)
-        print "\t kslin: " + custom_str(self.kslin)
-        print "\t kb: " + custom_str(self.kb)
-        print "\t kal: " + custom_str(self.kal)
-        print "\t kag: " + custom_str(self.kag)
-        print "\t kvisc: " + custom_str(self.kvisc)
-        print "\t normal: " + str(self.normal)
-        print "\t resize: " + str(self.resize)
-        print ""
+        print("\nThe following OifCellType was created: ")
+        print("\t nodes_file: " + self.mesh.nodes_file)
+        print("\t triangles_file: " + self.mesh.triangles_file)
+        print("\t nNodes: " + str(self.mesh.get_n_nodes()))
+        print("\t n_triangles: " + str(self.mesh.get_n_triangles()))
+        print("\t nEdges: " + str(self.mesh.get_n_edges()))
+        print("\t ks: " + custom_str(self.ks))
+        print("\t kslin: " + custom_str(self.kslin))
+        print("\t kb: " + custom_str(self.kb))
+        print("\t kal: " + custom_str(self.kal))
+        print("\t kag: " + custom_str(self.kag))
+        print("\t kvisc: " + custom_str(self.kvisc))
+        print("\t normal: " + str(self.normal))
+        print("\t resize: " + str(self.resize))
+        print(" ")
 
 
 class OifCell:
@@ -729,7 +727,6 @@ class OifCell:
         if not isinstance(part_mass,float):
             raise Exception("OifCell: part mass must be float.")
         if (rotate is not None) and not ((len(rotate) == 3) and isinstance(rotate[0],float) and isinstance(rotate[1],float) and isinstance(rotate[2],float)):
-            print rotate
             raise TypeError("Rotate must be list of three floats.")
 
         self.cell_type = cell_type
@@ -773,6 +770,7 @@ class OifCell:
                                  self.mesh.neighbors[p.id].B.part_id, self.mesh.neighbors[p.id].C.part_id))
 
         self.print_info()
+
 
     def get_origin(self):
         center = np.array([0.0, 0.0, 0.0])
@@ -864,10 +862,10 @@ class OifCell:
 
     def output_vtk_pos(self, file_name=None):
         if file_name is None:
-            print "OifCell: No file_name provided for vtk output."
+            print("OifCell: No file_name provided for vtk output.")
             return
         if ".vtk" not in file_name:
-            print "OifCell warning: A file with vtk format will be written without .vtk extension."
+            print("OifCell warning: A file with vtk format will be written without .vtk extension.")
         n_points = len(self.mesh.points)
         n_triangles = len(self.mesh.triangles)
         output_file = open(file_name, "w")
@@ -886,10 +884,10 @@ class OifCell:
 
     def output_vtk_pos_folded(self, file_name=None):
         if file_name is None:
-            print "OifCell: No file_name provided for vtk output."
+            print("OifCell: No file_name provided for vtk output.")
             return
         if ".vtk" not in file_name:
-            print "OifCell warning: A file with vtk format will be written without .vtk extension."
+            print("OifCell warning: A file with vtk format will be written without .vtk extension.")
         n_points = len(self.mesh.points)
         n_triangles = len(self.mesh.triangles)
         
@@ -917,17 +915,17 @@ class OifCell:
 
     def append_point_data_to_vtk(self, file_name=None, data_name=None, data=None, first_append=None):
         if file_name is None:
-            print "OifCell: append_point_data_to_vtk: No file_name provided."
+            print("OifCell: append_point_data_to_vtk: No file_name provided.")
             return
         if data is None:
-            print "OifCell: append_point_data_to_vtk: No data provided."
+            print("OifCell: append_point_data_to_vtk: No data provided.")
             return
         if data_name is None:
-            print "OifCell: append_point_data_to_vtk: No data_name provided."
+            print("OifCell: append_point_data_to_vtk: No data_name provided.")
             return
         if first_append is None:
-            print "OifCell: append_point_data_to_vtk: Need to know whether this is the first data list to be " \
-                  "appended for this file."
+            print("OifCell: append_point_data_to_vtk: Need to know whether this is the first data list to be " \
+                  "appended for this file.")
             return
         n_points = self.get_n_nodes()
         if (len(data) != n_points):
@@ -994,11 +992,11 @@ class OifCell:
                 i += 1
 
     def print_info(self):
-        print "\nThe following OifCell was created: "
-        print "\t part_mass: " + custom_str(self.part_mass)
-        print "\t part_type: " + str(self.part_type)
-        print "\t rotate: " + str(self.rotate)
-        print "\t origin: " + str(self.origin[0]) + " " + str(self.origin[1]) + " " + str(self.origin[2])
+        print("\nThe following OifCell was created: ")
+        print("\t part_mass: " + custom_str(self.part_mass))
+        print("\t part_type: " + str(self.part_type))
+        print("\t rotate: " + str(self.rotate))
+        print("\t origin: " + str(self.origin[0]) + " " + str(self.origin[1]) + " " + str(self.origin[2]))
 
     def elastic_forces(self, el_forces=(0, 0, 0, 0, 0, 0), f_metric=(0, 0, 0, 0, 0, 0), vtk_file=None,
                        raw_data_file=None):
@@ -1027,15 +1025,15 @@ class OifCell:
 
         for i in range(0,6):
             if (el_forces[i] != 0) and (el_forces[i] != 1):
-                print "OifCell: elastic_forces: Incorrect argument. el_forces has to be a sixtuple of 0s and 1s, " \
+                print("OifCell: elastic_forces: Incorrect argument. el_forces has to be a sixtuple of 0s and 1s, " \
                       "specifying which elastic forces will be calculated. The order in the sixtuple is (ks, kb, " \
-                      "kal, kag, kv, total)."
+                      "kal, kag, kv, total).")
                 return
         for i in range(0,6):
             if (f_metric[i] != 0) and (f_metric[i] != 1):
-                print "OifCell: elastic_forces: Incorrect argument. f_metric has to be a sixtuple of 0s and 1s, " \
+                print("OifCell: elastic_forces: Incorrect argument. f_metric has to be a sixtuple of 0s and 1s, " \
                       "specifying which f_metric will be calculated. The order in the sixtuple is (ks, kb, kal, " \
-                      "kag, kv, total)"
+                      "kag, kv, total)")
                 return
         # calculation of stretching forces and f_metric
         if (el_forces[0] is 1) or (el_forces[5] is 1) or (f_metric[0] is 1) or (f_metric[5] is 1):
@@ -1219,8 +1217,8 @@ class OifCell:
         # output vtk (folded)
         if vtk_file is not None:
             if el_forces == (0, 0, 0, 0, 0, 0):
-                print "OifCell: elastic_forces: The option elastic_forces was not used. " \
-                      "Nothing to output to vtk file."
+                print("OifCell: elastic_forces: The option elastic_forces was not used. " \
+                      "Nothing to output to vtk file.")
                 return
             self.output_vtk_pos_folded(vtk_file)
             first = True
@@ -1252,9 +1250,9 @@ class OifCell:
         # output raw data
         if raw_data_file is not None:
             if (el_forces[0] + el_forces[1] + el_forces[2] + el_forces[3] + el_forces[4] + el_forces[5]) is not 1:
-                print "OifCell: elastic_forces: Only one type of elastic forces can be written into one " \
+                print("OifCell: elastic_forces: Only one type of elastic forces can be written into one " \
                       "raw_data_file. If you need several, please call OifCell.elastic_forces multiple times - " \
-                      "once per elastic force."
+                      "once per elastic force.")
                 return
             if el_forces[0] is 1:
                 self.output_raw_data(file_name=raw_data_file, data=stretching_forces_list)
