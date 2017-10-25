@@ -437,7 +437,7 @@ volume is taken into account.
 
 Momentum of the System
 ~~~~~~~~~~~~~~~~~~~~~~
-:meth:`espressomd.analyze.Analysis.analyze_linear_momentum'
+:meth:`espressomd.analyze.Analysis.analyze_linear_momentum`
 
 This command returns the total linear momentum of the particles and the
 lattice-Boltzmann (LB) fluid, if one exists. Giving the optional
@@ -451,16 +451,8 @@ Energies
 ~~~~~~~~
 :meth:`espressomd.analyze.Analysis.energy`
 
-
 Returns the energies of the system.
 The the different energetic contributions to the total energy can also be obtained (kinetic, bonded,non-bonded, coublomb)).
-
-For example, ::
-    >>> energy = system.analysis.energy()
-    >>> energy["total"]
-    >>> energy["kinetic"]
-    >>> energy["bonded"]
-    >>> energy["non_bonded"]
 
 
 .. _Pressure:
