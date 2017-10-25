@@ -425,18 +425,6 @@ field to generate the topology file. Normally the PDB file extension is
 , the topology file extension is . Obviously the PDB file is placed
 instead of and the topology file instead of .
 
-[ssec:ek-reac-output]Reaction-Specific Output
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-print
-
-The print parameter of the command can be used in combination with the
-``EK_REACTION`` feature to give advanced output options. Currently,
-supported values of the parameter are: and , which give the location and
-type of the reactive regions and the ideal-gas pressure coming from the
-diffusive species, respectively. To use this command a reaction must be
-set up.
-
 .. [1]
    http://www.paraview.org/
 

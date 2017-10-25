@@ -186,6 +186,7 @@ void rescale_boxl(int dir, double d_new);
   *  @param b the vector to subtract
   *  @param res where to store the result
 */
+
 template <typename T, typename U, typename V>
 inline void get_mi_vector(T &res, U const &a, V const &b) {
   for (int i = 0; i < 3; i++) {

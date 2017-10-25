@@ -7,13 +7,13 @@
 The ESPResSo compilation and installation process is decribed in
 detail in the ESPResSo user's guide. When you have obtained the
 sources in a .tar.gz file, the user's guide can be found in the file
-"ug.pdf" in the subdirectory "doc/ug/" relative to the directory where
+"index.html" in the subdirectory "doc/sphinx/html/" relative to the directory where
 this file resided.
 
 When you have obtained the sources from the git repository or by other
-means, the user's guide can be found on the ESPResSo-Homepage at
+means, the user's guide can always be found on the ESPResSo-Homepage at
 
-	http://espressomd.org
+	http://espressomd.org/html/doc/
 
 
 QUICK START - CMake (Recommended)
