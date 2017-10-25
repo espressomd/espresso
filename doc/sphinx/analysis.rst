@@ -618,6 +618,8 @@ The following formula is used for the computation:
 The above-mentioned formula is only valid under certain assumptions. For
 more information, see Chapter 4 and equation 4.102
 in :cite:`doi86a`.
+Note that the hydrodynamic radius is sometimes defined in a similar fashion but with a denominator of :math:`N(N-1)` instead of :math:`N^2` in the prefactor.
+Both versions are equivalent in the :math:`N\rightarrow \infty` limit but give numericaly different values for finite polymers.
 
 
 .. _Internal distances:
