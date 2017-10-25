@@ -684,9 +684,6 @@ typedef struct {
 
 /** Dummy parameters for -LJ Potential */
 typedef struct {
-  double k;
-  double r;
-  double r2;
 } Subt_lj_bond_parameters;
 
 /**Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM*/

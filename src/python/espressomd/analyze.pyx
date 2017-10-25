@@ -558,7 +558,7 @@ class Analysis(object):
         """local_stress_tensor(periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1))
         """
 
-        cdef double_list * local_stress_tensor = NULL
+        cdef double_list local_stress_tensor
         cdef int[3] c_periodicity, c_bins
         cdef double[3] c_range_start, c_stress_range
 
@@ -568,10 +568,9 @@ class Analysis(object):
             c_range_start[i] = range_start[i]
             c_stress_range[i] = stress_range[i]
 
-        if c_analyze.analyze_local_stress_tensor(c_periodicity, c_range_start, c_stress_range, c_bins, local_stress_tensor):
+        if c_analyze.analyze_local_stress_tensor(c_periodicity, c_range_start, c_stress_range, c_bins, &local_stress_tensor):
             handle_errors("Error while calculating local stress tensor")
-        stress_tensor = create_nparray_from_double_list(local_stress_tensor)
-        free(local_stress_tensor)
+        stress_tensor = create_nparray_from_double_list(&local_stress_tensor)
         return stress_tensor
 
     #
