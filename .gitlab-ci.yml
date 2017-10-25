@@ -2,6 +2,7 @@ image: espressomd/espresso-ubuntu-cuda:latest
 
 stages:
   - build
+  - doc_check
   - deploy
 
 shanchen:
@@ -25,6 +26,12 @@ clang:
   script:
     - export myconfig=maxset with_coverage=false
     - bash maintainer/cuda_build.sh
+
+sphinx:
+  stage: doc_check
+  when: on_success
+  script:
+    - cd ${CI_PROJECT_DIR}; cd build && find ./ -exec touch -c -t 203901010000 {} \; && make sphinx
 
 status_success:
   stage: deploy
