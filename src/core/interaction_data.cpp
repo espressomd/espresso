@@ -57,7 +57,6 @@
 #include "cos2.hpp"
 #include "gb.hpp"
 #include "cells.hpp"
-#include "comforce.hpp"
 #include "comfixed.hpp"
 #include "morse.hpp"
 #include "dpd.hpp"
@@ -346,15 +345,6 @@ void initialize_ia_params(IA_parameters *params) {
   params->TUNABLE_SLIP_r_cut = INACTIVE_CUTOFF;
 #endif
 
-  /* things that are not strictly speaking short-ranged interactions,
-     and do not have a cutoff */
-#ifdef COMFORCE
-  params->COMFORCE_flag = 0;
-  params->COMFORCE_dir = 0;
-  params->COMFORCE_force = 0.;
-  params->COMFORCE_fratio = 0.;
-#endif
-
 #ifdef COMFIXED
   params->COMFIXED_flag = 0;
 #endif
@@ -396,10 +386,6 @@ static void recalc_maximal_cutoff_bonded()
     case BONDED_IA_HARMONIC:
       if((bonded_ia_params[i].p.harmonic.r_cut>0)&&(max_cut_bonded < bonded_ia_params[i].p.harmonic.r_cut))
 	max_cut_bonded = bonded_ia_params[i].p.harmonic.r_cut;
-      break;
-    case BONDED_IA_SUBT_LJ:
-      if(max_cut_bonded < bonded_ia_params[i].p.subt_lj.r)
-	max_cut_bonded = bonded_ia_params[i].p.subt_lj.r;
       break;
     case BONDED_IA_RIGID_BOND:
       if(max_cut_bonded < sqrt(bonded_ia_params[i].p.rigid_bond.d2))

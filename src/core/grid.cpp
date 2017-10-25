@@ -31,7 +31,6 @@
 #include "global.hpp"
 #include "interaction_data.hpp"
 #include "utils.hpp"
-#include "verlet.hpp"
 #include <cmath>
 #include <cstdio>
 

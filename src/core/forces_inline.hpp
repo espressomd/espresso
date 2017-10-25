@@ -27,6 +27,11 @@
 #include "topology.hpp"
 #endif
 
+#include "thermostat.hpp"
+#include "mmm1d.hpp"
+#include "mmm2d.hpp"
+#include "p3m.hpp"
+#include "external_potential.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
 #include "angle_harmonic.hpp"
@@ -35,7 +40,6 @@
 #include "buckingham.hpp"
 #include "collision.hpp"
 #include "comfixed.hpp"
-#include "comforce.hpp"
 #include "constraints.hpp"
 #include "dihedral.hpp"
 #include "elc.hpp"
@@ -351,7 +355,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 #ifdef ELECTROSTATICS
 
   /* real space coulomb */
-  double q1q2 = p1->p.q * p2->p.q;
+  const double q1q2 = p1->p.q * p2->p.q;
 
   switch (coulomb.method) {
 #ifdef P3M

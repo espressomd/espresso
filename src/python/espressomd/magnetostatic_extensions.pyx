@@ -41,15 +41,13 @@ IF DIPOLES == 1:
 
         Attributes
         ----------
-        far_cut : float
-            Cutoff of the exponential sum.
-
-        gap_size : float
-            Size of the empty gap. Note that DLC relies on the user to make sure that
-            this condition is fulfilled.
-
-        maxPWerror : float
-            Maximal pairwise error of the potential and force.
+        far_cut : :obj:`float`
+                  Cutoff of the exponential sum.
+        gap_size : :obj:`float`
+                   Size of the empty gap. Note that DLC relies on the user to make sure that
+                   this condition is fulfilled.
+        maxPWerror : :obj:`float`
+                     Maximal pairwise error of the potential and force.
 
         """
 
