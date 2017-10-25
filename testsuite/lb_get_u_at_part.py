@@ -31,6 +31,7 @@ class TestLBGetUAtPart(ut.TestCase):
         self.system.time_step = 0.01
         self.n_nodes_per_dim = int(self.system.box_l[0] / self.params['agrid'])
         for p in range(self.n_nodes_per_dim):
+            # Set particles exactly between two LB nodes in x direction.
             self.system.part.add(id=p,
                                  pos=[(p + 1) * self.params['agrid'],
                                       0.5 * self.params['agrid'],
@@ -53,8 +54,9 @@ class TestLBGetUAtPart(ut.TestCase):
 
     def test_get_u_at_part_two_point(self):
         """
-        Test if node velocities are equal to the velocities at the particle positions.
-        This test uses the two-point coupling under the hood.
+        Test if linear interpolated velocities are equal to the velocities at
+        the particle positions. This test uses the two-point coupling under
+        the hood.
 
         """
         numpy.testing.assert_allclose(
