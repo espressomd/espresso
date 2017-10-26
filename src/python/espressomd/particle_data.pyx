@@ -23,6 +23,7 @@ cimport numpy as np
 import numpy as np
 from . cimport utils
 from espressomd.utils cimport *
+from espressomd.utils import readonly_nparray
 from . cimport particle_data
 from .interactions import BondedInteraction
 from .interactions import BondedInteractions
@@ -137,6 +138,7 @@ cdef class ParticleHandle(object):
             self.update_particle_data()
             return self.particle_data.get()[0].p.mol_id
 
+
     # Position
     property pos:
         """
@@ -165,7 +167,9 @@ cdef class ParticleHandle(object):
                 ppos[i] = self.particle_data.get()[0].r.p[i]
 
             unfold_position(ppos, img)
-            return np.array([ppos[0], ppos[1], ppos[2]])
+
+            #return np.array([ppos[0], ppos[1], ppos[2]])
+            return readonly_nparray(np.array([ppos[0], ppos[1], ppos[2]]))
 
     property pos_folded:
         """
@@ -208,7 +212,7 @@ cdef class ParticleHandle(object):
             cdef double pos[3]
             pos = self.pos
             fold_position(pos, self.particle_data.get()[0].l.i)
-            return pos
+            return readonly_nparray(np.array(pos))
 
     # Velocity
     property v:
@@ -239,20 +243,22 @@ cdef class ParticleHandle(object):
             self.update_particle_data()
             IF MULTI_TIMESTEP:
                 if smaller_time_step > 0. and self.smaller_timestep:
-                    return np.array([self.particle_data.get()[0].m.v[0] / smaller_time_step,
+                    ret = np.array([self.particle_data.get()[0].m.v[0] / smaller_time_step,
                                      self.particle_data.get()[0].m.v[
                                          1] / smaller_time_step,
                                      self.particle_data.get()[0].m.v[2] / smaller_time_step])
                 else:
-                    return np.array([self.particle_data.get()[0].m.v[0] / time_step,
+                    ret = np.array([self.particle_data.get()[0].m.v[0] / time_step,
                                      self.particle_data.get()[
                         0].m.v[1] / time_step,
                         self.particle_data.get()[0].m.v[2] / time_step])
             ELSE:
-                return np.array([self.particle_data.get()[0].m.v[0] / time_step,
+                ret = np.array([self.particle_data.get()[0].m.v[0] / time_step,
                                  self.particle_data.get()[
                     0].m.v[1] / time_step,
                     self.particle_data.get()[0].m.v[2] / time_step])
+
+            return readonly_nparray(ret)
 
     # Force
     property f:
@@ -282,10 +288,10 @@ cdef class ParticleHandle(object):
         def __get__(self):
             global time_step
             self.update_particle_data()
-            return np.array([self.particle_data.get()[0].f.f[0] * self.particle_data.get()[0].p.mass / (0.5 * time_step**2),
+            return readonly_nparray(np.array([self.particle_data.get()[0].f.f[0] * self.particle_data.get()[0].p.mass / (0.5 * time_step**2),
                              self.particle_data.get()[
                 0].f.f[1] * self.particle_data.get()[0].p.mass / (0.5 * time_step**2),
-                self.particle_data.get()[0].f.f[2] * self.particle_data.get()[0].p.mass / (0.5 * time_step**2)])
+                self.particle_data.get()[0].f.f[2] * self.particle_data.get()[0].p.mass / (0.5 * time_step**2)]))
 
     # Bonds
     property bonds:
@@ -438,7 +444,7 @@ cdef class ParticleHandle(object):
                 self.update_particle_data()
                 cdef double o[3]
                 convert_omega_body_to_space(self.particle_data.get(), o)
-                return np.array([o[0], o[1], o[2]])
+                return readonly_nparray(np.array([o[0], o[1], o[2]]))
 
         property quat:
             """
@@ -466,7 +472,7 @@ cdef class ParticleHandle(object):
                 self.update_particle_data()
                 cdef double * x = NULL
                 pointer_to_quat(self.particle_data.get(), x)
-                return np.array([x[0], x[1], x[2], x[3]])
+                return readonly_nparray(np.array([x[0], x[1], x[2], x[3]]))
 
 # Director ( z-axis in body fixed frame)
         property director:
@@ -493,7 +499,7 @@ cdef class ParticleHandle(object):
                 self.update_particle_data()
                 cdef double * x = NULL
                 pointer_to_quatu(self.particle_data.get(), x)
-                return np.array([x[0], x[1], x[2]])
+                return readonly_nparray(np.array([x[0], x[1], x[2]]))
 
     # ROTATIONAL_INERTIA
         property omega_body:
@@ -523,7 +529,7 @@ cdef class ParticleHandle(object):
                 self.update_particle_data()
                 cdef double * o = NULL
                 pointer_to_omega_body(self.particle_data.get(), o)
-                return np.array([o[0], o[1], o[2]])
+                return readonly_nparray(np.array([o[0], o[1], o[2]]))
 
         property torque_lab:
             """
@@ -559,7 +565,7 @@ cdef class ParticleHandle(object):
                 self.update_particle_data()
                 cdef double x[3]
                 convert_torques_body_to_space(self.particle_data.get(), x)
-                return np.array([x[0], x[1], x[2]])
+                return readonly_nparray(np.array([x[0], x[1], x[2]]))
 
     IF ROTATIONAL_INERTIA == 1:
         property rinertia:
@@ -593,7 +599,7 @@ cdef class ParticleHandle(object):
                 cdef double * rinertia = NULL
                 pointer_to_rotational_inertia(
                     self.particle_data.get(), rinertia)
-                return np.array([rinertia[0], rinertia[1], rinertia[2]])
+                return readonly_nparray(np.array([rinertia[0], rinertia[1], rinertia[2]]))
 
 # Charge
     IF ELECTROSTATICS == 1:
@@ -732,7 +738,7 @@ cdef class ParticleHandle(object):
                 self.update_particle_data()
                 cdef double * x = NULL
                 pointer_to_dip(self.particle_data.get(), x)
-                return np.array([x[0], x[1], x[2]])
+                return readonly_nparray(np.array([x[0], x[1], x[2]]))
 
         # Scalar magnitude of dipole moment
         property dipm:
@@ -790,9 +796,10 @@ cdef class ParticleHandle(object):
                 cdef int * ext_flag = NULL
                 pointer_to_ext_force(self.particle_data.get(), ext_flag, ext_f)
                 if (ext_flag[0] & PARTICLE_EXT_FORCE):
-                    return np.array([ext_f[0], ext_f[1], ext_f[2]])
+                    ret=np.array([ext_f[0], ext_f[1], ext_f[2]])
                 else:
-                    return np.array([0.0, 0.0, 0.0])
+                    ret=np.array([0.0, 0.0, 0.0])
+                return readonly_nparray(ret)
 
         property fix:
             """
@@ -831,7 +838,7 @@ cdef class ParticleHandle(object):
                 for i in map(long, range(3)):
                     if (ext_flag[0] & _COORD_FIXED(i)):
                         fixed_coord_flag[i] = 1
-                return fixed_coord_flag
+                return readonly_nparray(fixed_coord_flag)
 
         IF ROTATION:
             property ext_torque:
@@ -867,9 +874,10 @@ cdef class ParticleHandle(object):
                     pointer_to_ext_torque(
                         self.particle_data.get(), ext_flag, ext_t)
                     if (ext_flag[0] & PARTICLE_EXT_TORQUE):
-                        return np.array([ext_t[0], ext_t[1], ext_t[2]])
+                        ret = np.array([ext_t[0], ext_t[1], ext_t[2]])
                     else:
-                        return np.array([0.0, 0.0, 0.0])
+                        ret = np.array([0.0, 0.0, 0.0])
+                    return readonly_nparray(ret)
 
     IF LANGEVIN_PER_PARTICLE:
         IF PARTICLE_ANISOTROPY:
@@ -901,7 +909,7 @@ cdef class ParticleHandle(object):
                     self.update_particle_data()
                     cdef double * gamma = NULL
                     pointer_to_gamma(self.particle_data.get(), gamma)
-                    return np.array([gamma[0], gamma[1], gamma[2]])
+                    return readonly_nparray(np.array([gamma[0], gamma[1], gamma[2]]))
         ELSE:
             property gamma:
                 """
@@ -955,7 +963,7 @@ cdef class ParticleHandle(object):
                         cdef double * gamma_rot = NULL
                         pointer_to_gamma_rot(
                             self.particle_data.get(), gamma_rot)
-                        return np.array([gamma_rot[0], gamma_rot[1], gamma_rot[2]])
+                        return readonly_nparray(np.array([gamma_rot[0], gamma_rot[1], gamma_rot[2]]))
             ELSE:
                 property gamma_rot:
                     """
@@ -1037,7 +1045,7 @@ cdef class ParticleHandle(object):
                 if rot&ROT_X: res[0]=1
                 if rot&ROT_Y: res[1]=1
                 if rot&ROT_Z: res[2]=1
-                return res
+                return readonly_nparray(res)
 
     IF EXCLUSIONS:
         property exclusions:

@@ -32,6 +32,7 @@ from . import particle_data
 from . import cuda_init
 from . import code_info
 from .utils cimport numeric_limits
+from .utils import readonly_nparray
 from .thermostat import Thermostat
 from .cellsystem import CellSystem
 from .minimize_energy import MinimizeEnergy
@@ -139,7 +140,7 @@ cdef class System(object):
             mpi_bcast_parameter(FIELD_BOXL)
 
         def __get__(self):
-            return np.array([box_l[0], box_l[1], box_l[2]])
+            return readonly_nparray(np.array([box_l[0], box_l[1], box_l[2]]))
 
     property integ_switch:
         def __get__(self):
@@ -177,7 +178,7 @@ cdef class System(object):
             periodicity[0] = periodic % 2
             periodicity[1] = int(periodic / 2) % 2
             periodicity[2] = int(periodic / 4) % 2
-            return periodicity
+            return readonly_nparray(periodicity)
 
     property time:
         """

@@ -19,6 +19,7 @@
 from __future__ import print_function, absolute_import
 from . cimport cellsystem
 from . cimport integrate
+from .utils import readonly_nparray
 from globals cimport *
 import numpy as np
 from espressomd.utils cimport handle_errors
@@ -204,7 +205,7 @@ cdef class CellSystem(object):
             raise Exception('node_grid is not settable by the user.')
 
         def __get__(self):
-            return np.array([node_grid[0], node_grid[1], node_grid[2]])
+            return readonly_nparray(np.array([node_grid[0], node_grid[1], node_grid[2]]))
 
 
     property skin:

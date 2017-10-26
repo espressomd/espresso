@@ -172,6 +172,9 @@ def to_str(s):
     else:
         return s
 
+def readonly_nparray(ret):
+    ret.flags.writeable = False
+    return ret
 
 cdef handle_errors(msg):
     """
