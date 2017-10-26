@@ -1281,10 +1281,10 @@ __device__ void print_n_from_modes_LE(LB_nodes_gpu nodes_LE_upper, LB_nodes_gpu 
         //if(i == 1)
           //printf("print_pop[1]*c[1]=[%e, %e, %e]\n", print_pop[i], print_pop[i], print_pop[i]);
 
-        printf("%e %e %e  ", c[i][0]*print_pop[i], c[i][1]*print_pop[i], c[i][2]*print_pop[i]);
+        //printf("%e %e %e  ", c[i][0]*print_pop[i], c[i][1]*print_pop[i], c[i][2]*print_pop[i]);
       }
 
-      printf("\n");
+      //printf("\n");
   }
  } 
 }
@@ -1536,7 +1536,7 @@ __global__ void apply_LE_position_offset(LB_nodes_gpu n_front, LB_nodes_gpu n_ba
       source2_index = xyz_to_index(source2_xyz);
 
       //printf("LE_Offset: %f, Integer offset: %d Real offset: %f \n", lees_edwards_offset, integer_offset, weight);    
-      printf("   target index: %i bei: (%u%u%u) \n source1_index: %i bei: (%i%i%i) \n source2_index: %i bei: (%i%i%i)\n\n", target_index, x, y, z,  source1_index, source1_xyz[0], source1_xyz[1], source1_xyz[2], source2_index, source2_xyz[0], source2_xyz[1], source2_xyz[2]);
+      //printf("   target index: %i bei: (%u%u%u) \n source1_index: %i bei: (%i%i%i) \n source2_index: %i bei: (%i%i%i)\n\n", target_index, x, y, z,  source1_index, source1_xyz[0], source1_xyz[1], source1_xyz[2], source2_index, source2_xyz[0], source2_xyz[1], source2_xyz[2]);
 
       n_front.vd[ (3 + ii*LBQ ) * para.number_of_nodes + target_index ] = 
       (1.0f-weight) * n_back.vd[ (3 + ii*LBQ ) * para.number_of_nodes + source1_index ] +
@@ -1568,7 +1568,7 @@ __global__ void apply_LE_position_offset(LB_nodes_gpu n_front, LB_nodes_gpu n_ba
       source2_index = xyz_to_index(source2_xyz);
 
       //printf("LE_Offset: %f, Integer offset: %d Real offset: %f \n", lees_edwards_offset, integer_offset, weight);    
-      printf("   target index: %i bei: (%u%u%u) \n source1_index: %i bei: (%i%i%i) \n source2_index: %i bei: (%i%i%i)\n\n", target_index, x, y, z,  source1_index, source1_xyz[0], source1_xyz[1], source1_xyz[2], source2_index, source2_xyz[0], source2_xyz[1], source2_xyz[2]);
+      //printf("   target index: %i bei: (%u%u%u) \n source1_index: %i bei: (%i%i%i) \n source2_index: %i bei: (%i%i%i)\n\n", target_index, x, y, z,  source1_index, source1_xyz[0], source1_xyz[1], source1_xyz[2], source2_index, source2_xyz[0], source2_xyz[1], source2_xyz[2]);
 
       n_front.vd[ (4 + ii*LBQ ) * para.number_of_nodes + target_index ] = 
       (weight) * n_back.vd[ (4 + ii*LBQ ) * para.number_of_nodes + source1_index] +
