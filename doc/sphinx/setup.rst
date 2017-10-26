@@ -221,54 +221,8 @@ a force ramp which is implemented as :ref:`Hat interaction`.
 A complete example of setting up a DPD fluid and running it
 to sample the equation of state can be found in samples/dpd.py.
 
-Thermostat DPD
-^^^^^^^^^^^^^^
-
-.. todo::
-    this is not yet implemented in the python interface.
-
-
-thermostat dpd
-
-or
-
-DPD adds a
-velocity dependent dissipative force and a random force to the usual
-conservative pair forces (Lennard-Jones).
-
-The dissipative force is calculated by
-
-.. math:: \vec{F}_{ij}^{D} = -\zeta w^D (r_{ij}) (\hat{r}_{ij} \cdot \vec{v}_{ij}) \hat{r}_{ij}
-
-The random force by
-
-.. math:: \vec{F}_{ij}^R = \sigma w^R (r_{ij}) \Theta_{ij} \hat{r}_{ij}
-
-where :math:` \Theta_{ij} \in [ -0.5 , 0.5 [ ` is a uniformly
-distributed random number. The connection of :math:`\sigma ` and
-:math:`\zeta ` is given by the dissipation fluctuation theorem:
-
-.. math:: (\sigma w^R (r_{ij})^2=\zeta w^D (r_{ij}) \text{k}_\text{B} T
-
-The parameters and define the strength of the friction :math:`\zeta` and
-the cutoff radius.
-
-According to the optional parameter WF (can be set to 0 or 1, default is
-0) of the thermostat command the functions :math:`w^D` and :math:`w^R`
-are chosen in the following way ( :math:` r_{ij} < \{r\_cut} ` ) :
-
-.. math::
-
-   w^D (r_{ij}) = ( w^R (r_{ij})) ^2 = 
-      \left\{
-      \begin{array}{clcr} 
-                {( 1 - \frac{r_{ij}}{r_c}} )^2 & , \; {wf} = 0 \\
-                1                      & , \; {wf} = 1
-      \end{array}
-      \right.
-
-For :math:` r_{ij} \ge {r\_cut} ` :math:`w^D` and :math:`w^R` are
-identical to 0 in both cases.
+DPD adds a velocity dependent dissipative force and a random force
+to the conservative pair forces.
 
 The friction (dissipative) and noise (random) term are coupled via the
 fluctuation- dissipation theorem. The friction term is a function of the
@@ -281,52 +235,6 @@ When using a Lennard-Jones interaction, :math:`{r\_cut} =
 thermostat acts on the relative velocities between nearest neighbor
 particles. Larger cutoffs including next nearest neighbors or even more
 are unphysical.
-
-is basically an inverse timescale on which the system thermally
-equilibrates. Values between :math:`0.1` and :math:`1` are o.k, but you
-propably want to try this out yourself to get a feeling for how fast
-temperature jumps during a simulation are. The dpd thermostat does not
-act on the system center of mass motion. Therefore, before using dpd,
-you have to stop the center of mass motion of your system, which you can
-achieve by using the command [sec:Galilei]. This may be repeated once in
-a while for long runs due to round off errors (check this with the
-command ) [:ref:`galilei_transform`].
-
-Two restrictions apply for the dpd implementation of :
-
-    * As soon as at least one of the two interacting particles is fixed
-      (see [chap:part] on how to fix a particle in space) the dissipative
-      and the stochastic force part is set to zero for both particles (you
-      should only change this hardcoded behaviour if you are sure not to
-      violate the dissipation fluctuation theorem).
-
-    * ``DPD`` does not take into account any internal rotational degrees of
-      freedom of the particles if ``ROTATION`` is switched on. Up to the
-      current version DPD only acts on the translatorial degrees of
-      freedom.
-
-Transverse DPD thermostat
-'''''''''''''''''''''''''
-
-.. todo::
-    This is not yet implemted for the python interface
-
-This is an extension of the above standard DPD thermostat
-:cite:`junghans2008`, which dampens the degrees of freedom
-perpendicular on the axis between two particles. To switch it on, the
-feature is required instead of the feature ``DPD``.
-
-The dissipative force is calculated by
-
-.. math:: \vec{F}_{ij}^{D} = -\zeta w^D (r_{ij}) (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{v}_{ij}
-
-The random force by
-
-.. math:: \vec{F}_{ij}^R = \sigma w^R (r_{ij}) (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{\Theta}_{ij}
-
-The parameters define the strength of the friction and the cutoff in the
-same way as above. Note: This thermostat does *not* conserve angular
-momentum.
 
 Isotropic NPT thermostat
 ~~~~~~~~~~~~~~~~~~~~~~~~

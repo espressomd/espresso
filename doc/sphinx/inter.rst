@@ -2215,6 +2215,49 @@ see :class:`espressomd.interactions.DPDInteraction`. The interaction
 only has an effect if the DPD thermostat activated, and acts according to the
 temperature of the thermostat.
 
+The interaction consists of a dissipative force :math:`\vec{F}_{ij}^{D}` and
+a random force :math:`\vec{F}_{ij}^R`, and is decomposed into a component
+parallel and perpendicular to the distance vector of the particle pair :math:`\vec{F}_{ij}`.
+The parameters for the two parts can be chosen independently.
+The force contributions of the parallel part are
+
+.. math:: \vec{F}_{ij}^{D} = -\zeta w^D (r_{ij}) (\hat{r}_{ij} \cdot \vec{v}_{ij}) \hat{r}_{ij}
+
+for the dissipative force and
+
+.. math:: \vec{F}_{ij}^R = \sigma w^R (r_{ij}) \Theta_{ij} \hat{r}_{ij}
+
+for the random force. Here :math:`w^D` and :math:`w^R` are weight functions that
+can be specified via the weight_function parameter of the interaction. The dissipative
+and random weight function are related by the dissipation-fluctuation theorem:
+
+.. math:: (\sigma w^R (r_{ij}))^2=\zeta w^D (r_{ij}) \text{k}_\text{B} T
+
+The possible values for weight_function are 0 and 1, correcpoding to the
+order of :math:`w^R`:
+
+.. math::
+
+   w^D (r_{ij}) = ( w^R (r_{ij})) ^2 = 
+      \left\{
+   \begin{array}{clcr}
+                1                      & , \; {weight_function} = 0 \\
+                {( 1 - \frac{r_{ij}}{r_c}} )^2 & , \; {weight_function} = 1
+      \end{array}
+      \right.
+
+For the perpendicular part, the dissipative force is calculated by
+
+.. math:: \vec{F}_{ij}^{D} = -\zeta w^D (r_{ij}) (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{v}_{ij}
+
+The random force by
+
+.. math:: \vec{F}_{ij}^R = \sigma w^R (r_{ij}) (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{\Theta}_{ij}
+
+The parameters define the strength of the friction and the cutoff in the
+same way as above. Note: This interaction does *not* conserve angular
+momentum.
+
 
 
 Fixing the center of mass
