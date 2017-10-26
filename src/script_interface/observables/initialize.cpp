@@ -49,8 +49,8 @@ void initialize() {
   REGISTER(ParticleVelocities);
   REGISTER(ParticleForces);
   REGISTER(ParticleBodyVelocities);
-  REGISTER(ParticleAngularMomentum);
-  REGISTER(ParticleBodyAngularMomentum);
+  REGISTER(ParticleAngularVelocities);
+  REGISTER(ParticleBodyAngularVelocities);
   REGISTER(ParticleCurrent);
   REGISTER(Current);
   REGISTER(DipoleMoment);

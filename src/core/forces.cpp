@@ -27,11 +27,16 @@
 #include "EspressoSystemInterface.hpp"
 
 #include "comfixed_global.hpp"
+#include "domain_decomposition.hpp"
 #include "electrokinetics.hpp"
+#include "external_potential.hpp"
+#include "forces.hpp"
 #include "forces_inline.hpp"
+#include "iccp3m.hpp"
 #include "maggs.hpp"
 #include "p3m_gpu.hpp"
 #include "partCfg_global.hpp"
+#include "short_range_loop.hpp"
 
 #include <cassert>
 
@@ -142,22 +147,16 @@ void force_calc() {
 
   calc_long_range_forces();
 
-  switch (cell_structure.type) {
-  case CELL_STRUCTURE_LAYERED:
-    layered_calculate_ia();
-    break;
-  case CELL_STRUCTURE_DOMDEC:
-    if (dd.use_vList) {
-      if (rebuild_verletlist)
-        build_verlet_lists_and_calc_verlet_ia();
-      else
-        calculate_verlet_ia();
-    } else
-      calc_link_cell();
-    break;
-  case CELL_STRUCTURE_NSQUARE:
-    nsq_calculate_ia();
-  }
+  short_range_loop([](Particle &p) { add_single_particle_force(&p); },
+                   [](Particle &p1, Particle &p2, Distance &d) {
+#ifdef EXCLUSIONS
+                     if (do_nonbonded(&p1, &p2))
+#endif
+                     {
+                       add_non_bonded_pair_force(&(p1), &(p2), d.vec21,
+                                                 sqrt(d.dist2), d.dist2);
+                     }
+                   });
 
 #ifdef OIF_GLOBAL_FORCES
   double area_volume[2]; // There are two global quantities that need to be
