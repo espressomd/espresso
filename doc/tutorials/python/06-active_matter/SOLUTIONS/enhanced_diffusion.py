@@ -26,7 +26,7 @@
 from __future__ import print_function
 
 from espressomd import assert_features, System
-from espressomd.observables import ParticlePositions, ParticleVelocities, ParticleAngularMomentum
+from espressomd.observables import ParticlePositions, ParticleVelocities, ParticleAngularVelocities
 from espressomd.correlators import Correlator
 
 import numpy as np
@@ -82,9 +82,9 @@ for run in range(5):
 
     system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
-    # Place a single active particle
+    # Place a single active particle (that can rotate freely! rotation=[1,1,1])
 
-    system.part.add(pos=[5.0, 5.0, 5.0],swimming={ 'v_swim' : vel })
+    system.part.add(pos=[5.0, 5.0, 5.0],swimming={ 'v_swim' : vel },rotation=[1,1,1])
 
     # Initialize the mean squared displacement (MSD) correlator
 
@@ -110,7 +110,7 @@ for run in range(5):
 
     # Initialize the angular velocity auto-correlation function (AVACF) correlator
 
-    ang_id = ParticleAngularMomentum(ids=[0])
+    ang_id = ParticleAngularVelocities(ids=[0])
     avacf  = Correlator(obs1=ang_id,
                         corr_operation="scalar_product",
                         dt=tstep,
