@@ -582,11 +582,11 @@ IF SMOOTH_STEP == 1:
             if self._params["eps"] < 0:
                 raise ValueError("Smooth-step eps has to be >=0")
             if self._params["offset"] < 0:
-                raise ValueError("Morse offset has to be >=0")
+                raise ValueError("Smooth-step offset has to be >=0")
             if self._params["cutoff"] < 0:
-                raise ValueError("Morse cutoff has to be >=0")
+                raise ValueError("Smooth-step cutoff has to be >=0")
             if self._params["cap"] < 0:
-                raise ValueError("Morse cap has to be >=0")
+                raise ValueError("Smooth-step cap has to be >=0")
             return True
 
         def _get_params_from_es_core(self):
@@ -670,6 +670,108 @@ IF SMOOTH_STEP == 1:
 
             """
             return "d", "eps", "cutoff"
+
+# BMHTF
+
+IF BMHTF_NACL == 1:
+
+    cdef class BMHTFInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            """Check that parameters are valid.
+
+            """
+            if self._params["a"] < 0:
+                raise ValueError("BMHTF a has to be >=0")
+            if self._params["c"] < 0:
+                raise ValueError("BMHTF c has to be >=0")
+            if self._params["d"] < 0:
+                raise ValueError("BMHTF d has to be >=0")
+            if self._params["cutoff"] < 0:
+                raise ValueError("BMHTF cutoff has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(
+                self._part_types[0],
+                self._part_types[1])
+            return {
+                "a": ia_params.BMHTF_A,
+                "b": ia_params.BMHTF_B,
+                "c": ia_params.BMHTF_C,
+                "d": ia_params.BMHTF_D,
+                "sig": ia_params.BMHTF_sig,
+                "cutoff": ia_params.BMHTF_cut,
+            }
+
+        def is_active(self):
+            """Check if interaction is active.
+
+            """
+            return ((self._params["a"] > 0) and (self._params["c"] > 0) and (self._params["d"] > 0))
+
+        def _set_params_in_es_core(self):
+            if BMHTF_set_params(self._part_types[0], self._part_types[1],
+                                self._params["a"],
+                                self._params["b"],
+                                self._params["c"],
+                                self._params["d"],
+                                self._params["sig"],
+                                self._params["cutoff"]):
+                raise Exception("Could not set BMHTF parameters")
+
+        def default_params(self):
+            """Python dictionary of default parameters.
+
+            """
+            return {
+                "a": 0.,
+                "b": 0.,
+                "c": 0.,
+                "d": 0.,
+                "sig": 0.,
+                "cutoff": 0.}
+
+        def type_name(self):
+            """Name of interaction type.
+
+            """
+            return "BMHTF"
+
+        def set_params(self, **kwargs):
+            """
+            Set parameters for the BMHTF interaction.
+
+            Parameters
+            ----------
+            a : :obj:`float`
+                The magnitude of exponential part of the interaction.
+            b : :obj:`float`
+                Exponential factor of the interaction.
+            c : :obj:`float`
+                The magnitude of the term decaying with the sixth power of r.
+            d : :obj:`float`
+                The magnitude of the term decaying with the eighth power of r.
+            sig : :obj:`float`
+                Shift in the exponent.
+            cutoff : :obj:`float`
+                Cutoff distance of the interaction.
+
+            """
+            super(BMHTFInteraction, self).set_params(**kwargs)
+
+        def valid_keys(self):
+            """All parameters that can be set.
+
+            """
+            return "a", "b", "c", "d", "sig", "cutoff"
+
+        def required_keys(self):
+            """Parameters that have to be set.
+
+            """
+            return "a", "b", "c", "d", "sig", "cutoff"
 
 # Morse
 
@@ -1151,6 +1253,7 @@ class NonBondedInteractionHandle(object):
     lennard_jones = None
     generic_lennard_jones = None
     smooth_step = None
+    bmhtf = None
     morse = None
     buckingham = None
     soft_sphere = None
@@ -1174,6 +1277,8 @@ class NonBondedInteractionHandle(object):
                 _type1, _type2)
         IF SMOOTH_STEP:
             self.smooth_step = SmoothStepInteraction(_type1, _type2)
+        IF BMHTF_NACL:
+            self.bmhtf = BMHTFInteraction(_type1, _type2)
         IF MORSE:
             self.morse = MorseInteraction(_type1, _type2)
         IF BUCKINGHAM:

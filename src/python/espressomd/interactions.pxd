@@ -69,6 +69,14 @@ cdef extern from "interaction_data.hpp":
         int SmSt_n
         double SmSt_k0
 
+        double BMHTF_A;
+        double BMHTF_B;
+        double BMHTF_C;
+        double BMHTF_D;
+        double BMHTF_sig;
+        double BMHTF_cut;
+        double BMHTF_computed_shift;
+
         double MORSE_eps
         double MORSE_alpha
         double MORSE_rmin
@@ -140,6 +148,11 @@ IF SMOOTH_STEP:
                                    double d, int n, double eps,
                                    double k0, double sig,
                                    double cut);
+IF BMHTF_NACL:
+    cdef extern from "bmhtf-nacl.hpp":
+        int BMHTF_set_params(int part_type_a, int part_type_b,
+                             double A, double B, double C,
+                             double D, double sig, double cut);
 
 IF MORSE:
     cdef extern from "morse.hpp":
