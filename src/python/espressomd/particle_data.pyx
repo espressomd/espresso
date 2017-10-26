@@ -165,7 +165,9 @@ cdef class ParticleHandle(object):
                 ppos[i] = self.particle_data.get()[0].r.p[i]
 
             unfold_position(ppos, img)
-            return np.array([ppos[0], ppos[1], ppos[2]])
+            ret = np.array([ppos[0], ppos[1], ppos[2]])
+            ret.flags.writeable = False
+            return ret
 
     property pos_folded:
         """

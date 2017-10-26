@@ -1230,6 +1230,7 @@ void ELC_init() {
 
   if (elc_params.far_calculated && (coulomb.method == COULOMB_ELC_P3M &&
                                     elc_params.dielectric_contrast_on)) {
+    printf("ELC_init tune\n");
     if (ELC_tune(elc_params.maxPWerror) == ES_ERROR) {
       runtimeErrorMsg() << "ELC auto-retuning failed, gap size too small";
     }
@@ -1316,6 +1317,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
     elc_params.far_calculated = 0;
   } else {
     elc_params.far_calculated = 1;
+    printf("ELC_set_params tune\n");
     if (ELC_tune(elc_params.maxPWerror) == ES_ERROR) {
       runtimeErrorMsg() << "ELC tuning failed, gap size too small";
     }
