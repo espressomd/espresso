@@ -1137,6 +1137,7 @@ double ELC_energy() {
 }
 
 int ELC_tune(double error) {
+  printf("ELC_tune\n");
   double err;
   double h = elc_params.h, lz = box_l[2];
   double min_inv_boxl = std::min(ux, uy);
@@ -1165,6 +1166,7 @@ int ELC_tune(double error) {
     return ES_ERROR;
   elc_params.far_cut -= min_inv_boxl;
   elc_params.far_cut2 = SQR(elc_params.far_cut);
+
 
   return ES_OK;
 }
@@ -1196,6 +1198,7 @@ int ELC_sanity_checks() {
 }
 
 void ELC_init() {
+  printf("ELC_init\n");
   double maxsl;
 
   ELC_setup_constants();
@@ -1236,9 +1239,16 @@ void ELC_init() {
     }
   }
   if (coulomb.method == COULOMB_ELC_P3M && elc_params.dielectric_contrast_on) {
-    p3m.params.additional_mesh[0] = p3m.params.additional_mesh[1] = 0;
+    p3m.params.additional_mesh[0] = 0;
+    p3m.params.additional_mesh[1] = 0;
     p3m.params.additional_mesh[2] = elc_params.space_layer;
+  } else {
+    p3m.params.additional_mesh[0] = 0;
+    p3m.params.additional_mesh[1] = 0;
+    p3m.params.additional_mesh[2] = 0;
   }
+  
+  printf("far_cut %f\n far_cut2 %f\n h %f\n space_layer %f\n space_box %f\n far_calculated %d\n addmesh %f %f %f\n",elc_params.far_cut,elc_params.far_cut2, elc_params.h, elc_params.space_layer, elc_params.space_box, elc_params.far_calculated, p3m.params.additional_mesh[0],p3m.params.additional_mesh[1],p3m.params.additional_mesh[2]);
 }
 
 void ELC_on_resort_particles() {
