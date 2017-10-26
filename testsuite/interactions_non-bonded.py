@@ -102,6 +102,25 @@ class InteractionsNonBondedTest(ut.TestCase):
                 2 * k0 * (r - sig)) / (1 + numpy.exp(2 * k0 * (r - sig))**2)
         return f
 
+    # BMHTF
+    def bmhtf_potential(self, r, a, b, c, d, sig, cutoff):
+        V = 0.
+        if (r == cutoff):
+            V = a * numpy.exp(b * (sig - r)) - c * numpy.power(
+                r, -6) - d * numpy.power(r, -8)
+        if (r < cutoff):
+            V = a * numpy.exp(b * (sig - r)) - c * numpy.power(
+                r, -6) - d * numpy.power(r, -8)
+            V -= self.bmhtf_potential(cutoff, a, b, c, d, sig, cutoff)
+        return V
+
+    def bmhtf_force(self, r, a, b, c, d, sig, cutoff):
+        f = 0.
+        if (r < cutoff):
+            f = a * b * numpy.exp(b * (sig - r)) - 6 * c * numpy.power(
+                r, -7) - 8 * d * numpy.power(r, -9)
+        return f
+
     # Morse
     def morse_potential(self, r, eps, alpha, cutoff, rmin=0):
         V = 0.
@@ -354,6 +373,46 @@ class InteractionsNonBondedTest(ut.TestCase):
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
         self.system.non_bonded_inter[0, 0].smooth_step.set_params(d=0., eps=0.)
+
+    # Test BMHTF Potential
+    @ut.skipIf(not espressomd.has_features("BMHTF_NACL"),
+               "Features not available, skipping test!")
+    def test_bmhtf(self):
+
+        bmhtf_a = 3.92
+        bmhtf_b = 2.43
+        bmhtf_c = 1.23
+        bmhtf_d = 3.33
+        bmhtf_sig = 0.123
+        bmhtf_cut = 1.253
+
+        self.system.non_bonded_inter[0, 0].bmhtf.set_params(
+            a=bmhtf_a, b=bmhtf_b, c=bmhtf_c, d=bmhtf_d, sig=bmhtf_sig, cutoff=bmhtf_cut)
+
+        for i in range(126):
+            self.system.part[1].pos += self.step
+            self.system.integrator.run(recalc_forces=True, steps=0)
+
+            # Calculate energies
+            E_sim = self.system.analysis.energy()["non_bonded"]
+            E_ref = self.bmhtf_potential(
+                r=(i + 1) * self.step_width, a=bmhtf_a, b=bmhtf_b, c=bmhtf_c, d=bmhtf_d, sig=bmhtf_sig, cutoff=bmhtf_cut)
+
+            # Calculate forces
+            f0_sim = self.system.part[0].f
+            f1_sim = self.system.part[1].f
+            f1_ref = self.axis * \
+                self.bmhtf_force(r=(i + 1) * self.step_width, a=bmhtf_a,
+                                 b=bmhtf_b, c=bmhtf_c, d=bmhtf_d, sig=bmhtf_sig, cutoff=bmhtf_cut)
+
+            # Check that energies match, ...
+            self.assertFractionAlmostEqual(E_sim, E_ref)
+            # force equals minus the counter-force  ...
+            self.assertTrue((f0_sim == -f1_sim).all())
+            # and has correct value.
+            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
+
+        self.system.non_bonded_inter[0, 0].bmhtf.set_params(a=0., c=0., d=0.)
 
     # Test Morse Potential
     @ut.skipIf(not espressomd.has_features("MORSE"),
