@@ -17,13 +17,42 @@ class ThermoTest(ut.TestCase):
     es = espressomd.System()
 
     def run_test_case(self, test_case):
-        gamma = np.array([1.0, 1.0])
-
+        seed(1)
         # Decelleration
         self.es.time_step = 0.007
-        self.es.thermostat.set_langevin(kT=0.0, gamma=gamma[0])
+        # gamma_tran/gamma_rot matrix: [2 types of particless] x [3 dimensions
+        # X Y Z]
+        gamma_tran = np.zeros((2, 3))
+        gamma_tr = np.zeros((2, 3))
+        gamma_rot = np.zeros((2, 3))
+        gamma_rot_validate = np.zeros((2, 3))
+        # Global gamma for tests without particle-specific gammas:
+        gamma_global = np.ones((3))
+        # Per-paricle values for the remaining tests:
+        # Either translational friction isotropy is required
+        # or both translational and rotational ones.
+        # Otherwise these types of motion will interfere.
+        # ..Let's test both cases depending on the particle index.
+        gamma_tran[0, 0] = np.array(0.5 + random(1))
+        gamma_tran[0, 1] = gamma_tran[0, 0]
+        gamma_tran[0, 2] = gamma_tran[0, 0]
+        gamma_rot[0, :] = np.array((0.5 + random(3)) * 2.0 / 3.0)
+        
+        gamma_tran[1, 0] = np.array(0.5 + random(1))
+        gamma_tran[1, 1] = gamma_tran[1, 0]
+        gamma_tran[1, 2] = gamma_tran[1, 0]
+        gamma_rot[1, 0] = np.array((0.5 + random(1)) * 2.0 / 3.0)
+        gamma_rot[1, 1] = gamma_rot[1, 0]
+        gamma_rot[1, 2] = gamma_rot[1, 0]
+
+        self.es.thermostat.set_langevin(
+            kT=0.0,
+            gamma=[
+                gamma_global[0],
+                gamma_global[1],
+                gamma_global[2]])
+
         self.es.cell_system.skin = 5.0
-        seed(1)
         mass = 12.74
         J = [10.0, 10.0, 10.0]
 
@@ -44,7 +73,7 @@ class ThermoTest(ut.TestCase):
             print("------------------------------------------------")
             print("Test " + str(test_case) + ": no particle specific values")
             print("------------------------------------------------")
-            gamma[1] = gamma[0]
+            # No assignments are needed.
 
         if test_case == 1:
             print("------------------------------------------------")
@@ -52,18 +81,14 @@ class ThermoTest(ut.TestCase):
                   ": particle specific gamma but not temperature")
             print("------------------------------------------------")
             if "PARTICLE_ANISOTROPY" in espressomd.features():
-                self.es.part[0].gamma = np.array(
-                    [gamma[0], gamma[0], gamma[0]])
-                self.es.part[1].gamma = np.array(
-                    [gamma[1], gamma[1], gamma[1]])
+                self.es.part[0].gamma = gamma_tran[0, :]
+                self.es.part[1].gamma = gamma_tran[1, :]
             else:
-                self.es.part[0].gamma = gamma[0]
-                self.es.part[1].gamma = gamma[1]
+                self.es.part[0].gamma = gamma_tran[0, 0]
+                self.es.part[1].gamma = gamma_tran[1, 0]
             if "ROTATION" in espressomd.features():
-                self.es.part[0].gamma_rot = np.array(
-                    [gamma[0], gamma[0], gamma[0]])
-                self.es.part[1].gamma_rot = np.array(
-                    [gamma[1], gamma[1], gamma[1]])
+                self.es.part[0].gamma_rot = gamma_rot[0, :]
+                self.es.part[1].gamma_rot = gamma_rot[1, :]
 
         if test_case == 2:
             print("------------------------------------------------")
@@ -72,7 +97,6 @@ class ThermoTest(ut.TestCase):
             print("------------------------------------------------")
             self.es.part[0].temp = 0.0
             self.es.part[1].temp = 0.0
-            gamma[1] = gamma[0]
 
         if test_case == 3:
             print("------------------------------------------------")
@@ -82,18 +106,22 @@ class ThermoTest(ut.TestCase):
             self.es.part[0].temp = 0.0
             self.es.part[1].temp = 0.0
             if "PARTICLE_ANISOTROPY" in espressomd.features():
-                self.es.part[0].gamma = np.array(
-                    [gamma[0], gamma[0], gamma[0]])
-                self.es.part[1].gamma = np.array(
-                    [gamma[1], gamma[1], gamma[1]])
+                self.es.part[0].gamma = gamma_tran[0, :]
+                self.es.part[1].gamma = gamma_tran[1, :]
             else:
-                self.es.part[0].gamma = gamma[0]
-                self.es.part[1].gamma = gamma[1]
+                self.es.part[0].gamma = gamma_tran[0, 0]
+                self.es.part[1].gamma = gamma_tran[1, 0]
             if "ROTATION" in espressomd.features():
-                self.es.part[0].gamma_rot = np.array(
-                    [gamma[0], gamma[0], gamma[0]])
-                self.es.part[1].gamma_rot = np.array(
-                    [gamma[1], gamma[1], gamma[1]])
+                self.es.part[0].gamma_rot = gamma_rot[0, :]
+                self.es.part[1].gamma_rot = gamma_rot[1, :]
+
+        if test_case == 1 or test_case == 3:
+            gamma_tr = gamma_tran
+            gamma_rot_validate = gamma_rot
+        else:
+            for k in range(2):
+                gamma_tr[k, :] = gamma_global[:]
+                gamma_rot_validate[k, :] = gamma_global[:]
 
         self.es.time = 0.0
 
@@ -101,14 +129,14 @@ class ThermoTest(ut.TestCase):
         for i in range(100):
             for k in range(3):
                 self.assertLess(
-                    abs(self.es.part[0].v[k] - math.exp(- gamma[0] * self.es.time / mass)), tol)
+                    abs(self.es.part[0].v[k] - math.exp(- gamma_tr[0, k] * self.es.time / mass)), tol)
                 self.assertLess(
-                    abs(self.es.part[1].v[k] - math.exp(- gamma[1] * self.es.time / mass)), tol)
+                    abs(self.es.part[1].v[k] - math.exp(- gamma_tr[1, k] * self.es.time / mass)), tol)
                 if "ROTATION" in espressomd.features():
                     self.assertLess(abs(
-                        self.es.part[0].omega_body[k] - math.exp(- gamma[0] * self.es.time / J[k])), tol)
+                        self.es.part[0].omega_body[k] - math.exp(- gamma_rot_validate[0, k] * self.es.time / J[k])), tol)
                     self.assertLess(abs(
-                        self.es.part[1].omega_body[k] - math.exp(- gamma[1] * self.es.time / J[k])), tol)
+                        self.es.part[1].omega_body[k] - math.exp(- gamma_rot_validate[1, k] * self.es.time / J[k])), tol)
             self.es.integrator.run(10)
 
         for i in range(len(self.es.part)):
@@ -120,20 +148,18 @@ class ThermoTest(ut.TestCase):
 
         # 2 different langevin parameters for particles
         temp = np.array([2.5, 2.0])
-        # gamma_tran/gamma_rot matrix: [2 types of particless] x [3 dimensions
-        # X Y Z]
-        gamma_tran = np.zeros((2, 3))
-        gamma_tr = np.zeros((2, 3))
-        gamma_rot = np.zeros((2, 3))
         D_tr = np.zeros((2, 3))
         for k in range(2):
             if "PARTICLE_ANISOTROPY" in espressomd.features():
                 gamma_tran[k, :] = np.array((0.4 + random(3)) * 10)
+                gamma_rot[k, :] = np.array((0.2 + random(3)) * 20)
             else:
                 gamma_tran[k, 0] = np.array((0.4 + random(1)) * 10)
                 gamma_tran[k, 1] = gamma_tran[k, 0]
                 gamma_tran[k, 2] = gamma_tran[k, 0]
-            gamma_rot[k, :] = np.array((0.2 + random(3)) * 20)
+                gamma_rot[k, 0] = np.array((0.2 + random(1)) * 20)
+                gamma_rot[k, 1] = gamma_rot[k, 0]
+                gamma_rot[k, 2] = gamma_rot[k, 0]
 
         box = 10.0
         self.es.box_l = [box, box, box]
