@@ -387,10 +387,6 @@ static void recalc_maximal_cutoff_bonded()
       if((bonded_ia_params[i].p.harmonic.r_cut>0)&&(max_cut_bonded < bonded_ia_params[i].p.harmonic.r_cut))
 	max_cut_bonded = bonded_ia_params[i].p.harmonic.r_cut;
       break;
-    case BONDED_IA_SUBT_LJ:
-      if(max_cut_bonded < bonded_ia_params[i].p.subt_lj.r)
-	max_cut_bonded = bonded_ia_params[i].p.subt_lj.r;
-      break;
     case BONDED_IA_RIGID_BOND:
       if(max_cut_bonded < sqrt(bonded_ia_params[i].p.rigid_bond.d2))
 	max_cut_bonded = sqrt(bonded_ia_params[i].p.rigid_bond.d2);

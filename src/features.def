@@ -28,7 +28,6 @@ LANGEVIN_PER_PARTICLE
 COLLISION_DETECTION             implies GHOSTS_HAVE_BONDS
 LEES_EDWARDS                    requires not ELECTROSTATICS and not LB and not PARTIAL_PERIODIC
 METADYNAMICS
-REACTION_ENSEMBLE
 NEMD
 NPT
 GHMC
@@ -68,8 +67,7 @@ THERMOSTAT_IGNORE_NON_VIRTUAL   implies VIRTUAL_SITES_THERMOSTAT
 
 /* DPD features */
 DPD
-TRANS_DPD                       implies DPD
-TUNABLE_SLIP                    implies DPD
+TUNABLE_SLIP
 
 /* Lattice-Boltzmann features */
 LB
@@ -89,7 +87,6 @@ LATTICE                         equals LB or LB_GPU
 SHANCHEN                        implies LB_GPU
 SHANCHEN                        requires not ELECTROKINETICS
 
-/* Stokesian-Dynamics features */
 
 /* Interaction features */
 TABULATED
@@ -143,7 +140,7 @@ SCAFACOS_DIPOLES                requires SCAFACOS
 SCAFACOS_DIPOLES                implies DIPOLES
 SCAFACOS                        requires ELECTROSTATICS
 
-// Shape of the noise in ther (Langevin) thermostat
+// Shape of the noise in the (Langevin) thermostat
 FLATNOISE                       requires not GAUSSRANDOM and not GAUSSRANDOM_CUT
 GAUSSRANDOM                     requires not FLATNOISE and not GAUSSRANDOM_CUT
 GAUSSRANDOMCUT                  requires not GAUSSRANDOM and not FLATNOISE
