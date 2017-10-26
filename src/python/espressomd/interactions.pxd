@@ -75,7 +75,6 @@ cdef extern from "interaction_data.hpp":
         double BMHTF_D;
         double BMHTF_sig;
         double BMHTF_cut;
-        double BMHTF_computed_shift;
 
         double MORSE_eps
         double MORSE_alpha
