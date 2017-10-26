@@ -149,7 +149,6 @@ class InteractionsNonBondedTest(ut.TestCase):
 
         for i in range(231):
             self.system.part[1].pos = self.system.part[1].pos + self.step
-            self.system.part[1].pos = self.system.part[1].pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
