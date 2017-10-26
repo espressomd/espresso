@@ -316,7 +316,7 @@ To set up a virtual site,
        p=system.part.add(pos=(1,2,3))
        p.vs_auto_relate_to(<ID>)
 
-   where <ID> is the id of the central particle. This will also set the :any:`espressomd.particle_data.ParticleHandle.virtual` attribute on the particle to 1.
+   where <ID> is the id of the central particle. This will also set the :attr:`espressomd.particle_data.ParticleHandle.virtual` attribute on the particle to 1.
   
 #. Repeat the previous step with more virtual sites, if desired.
 
@@ -339,12 +339,12 @@ Please note:
    placed in the center of mass of the rigid arrangement of particles.
 
 -  In case you know the correct quaternions, you can also setup a
-   virtual site using its :any:`espressomd.particle_data.ParticleHandle.vs_relative` and :any:`espressomd.particle_data.ParticleHandle.virtual` attributes.
+   virtual site using its :attr:`espressomd.particle_data.ParticleHandle.vs_relative` and :attr:`espressomd.particle_data.ParticleHandle.virtual` attributes.
 
 -  In a simulation on more than one CPU, the effective cell size needs
    to be larger than the largest distance between a non-virtual particle
    and its associated virtual sites. To this aim, you need to set the
-   system's :any:`espressomd.system.System.min_global_cut` attribute to this largest distance. issues a warning when
+   system's :attr:`espressomd.system.System.min_global_cut` attribute to this largest distance. issues a warning when
    creating a virtual site with and the cutoff is insufficient.
 
 -  If the virtual sites represent actual particles carrying a mass, the
