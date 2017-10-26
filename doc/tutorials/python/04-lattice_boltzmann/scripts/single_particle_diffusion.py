@@ -45,7 +45,7 @@ system.auto_update_correlators.add(c)
 print("Sampling started.")
 for i in range(loops):
     system.integrator.run(steps)
-
+    print(system.part[:].pos)
     if i % 1e2 == 0:
         sys.stdout.write("\rSampling: %05i"%i)
         sys.stdout.flush()

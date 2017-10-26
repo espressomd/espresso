@@ -502,7 +502,7 @@ Optional keywords:
     * `background_color`: RGB of the background.
     * `periodic_images`: Periodic repetitions on both sides of the box in xyzdirection.
     * `draw_box`: Draw wireframe boundaries.
-    * `draw_axis`: Draws xyz system axes.
+    * `draw_axis`: Draws xyz system axes. red=x,green=y, blue=z.
     * `quality_particles`: The number of subdivisions for particle spheres.
     * `quality_bonds`: The number of subdivisions for cylindrical bonds.
     * `quality_arrows`: The number of subdivisions for external force arrows.
