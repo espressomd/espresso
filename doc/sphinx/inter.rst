@@ -350,7 +350,7 @@ In addition to this short ranged interaction, one needs to add a
 Coulombic, long-ranged part. If one uses elementary charges, a charge of
 :math:`q=+1` for the Na-particles, and :math:`q=-1` for the
 Cl-particles, the corresponding prefactor of the Coulomb interaction is
-:math:`\approx 1389.3549\,{mathrm{kJ}/\mathrm{mol}`.
+:math:`\approx 1389.3549\,\mathrm{kJ}/\mathrm{mol}`.
 
 Morse interaction
 ~~~~~~~~~~~~~~~~~
