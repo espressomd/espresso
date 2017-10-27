@@ -463,7 +463,7 @@ can be set via::
 
     system.non_bonded_inter[type1, type2].hat.set_params(**kwargs)
 
-This defines a simple force ramp between particle so of two types.
+This defines a simple force ramp between particles of two types.
 The maximal force acts at zero distance and zero force is applied at
 distances :math:`r_c` and bigger. For distances smaller than :math:`r_c`,
 the force is given by

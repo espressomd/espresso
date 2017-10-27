@@ -344,10 +344,9 @@ IF HAT == 1:
 
             Parameters
             ----------
-
-            F_max : float
+            F_max : :obj:`float`
                       The magnitude of the interaction.
-            cutoff : float
+            cutoff : :obj:`float`
                      Cutoff distance of the interaction.
 
             """
@@ -496,21 +495,21 @@ IF DPD:
 
             Parameters
             ----------
-
-            weight_function : float
+            weight_function : :obj:`float`
                 The distance dependence of the parallel part,
                 either 0 (constant) or 1 (linear)
-            gamma : float
+            gamma : :obj:`float`
                 Friction coefficient of the parallel part
-            r_cut : float
+            r_cut : :obj:`float`
                 Cutoff of the parallel part
-            trans_weight_function : float
+            trans_weight_function : :obj:`float`
                 The distance dependence of the orthogonal part,
                 either 0 (constant) or 1 (linear)
-            trans_gamma : float
+            trans_gamma : :obj:`float`
                 Friction coefficient of the orthogonal part
-            trans_r_cut : float
+            trans_r_cut : :obj:`float`
                 Cutoff of the orthogonal part
+
             """
             super(DPDInteraction, self).set_params(**kwargs)
 
