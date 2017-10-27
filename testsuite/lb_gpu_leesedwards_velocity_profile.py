@@ -26,7 +26,7 @@ class LB_GPU_LeesEdwards_test(ut.TestCase):
    system = md.System()
    
    #allowed deviation from analytical results
-   tol = 1.0e-10
+   tol = 1.0e-5
    
    #LB parameter
    box_l = 9 
@@ -51,7 +51,7 @@ class LB_GPU_LeesEdwards_test(ut.TestCase):
    x_vel = np.empty(box_l)
    
    while system.time <= total_time:
-     
+      
      #Compute analystical solution
      U = u(X, system.time, nu, v/time_step, box_l, k_max)
    
@@ -60,29 +60,19 @@ class LB_GPU_LeesEdwards_test(ut.TestCase):
        w = lb[0,i,0].velocity
        x_vel[i] = w[0]
    
+     #Compare results
+     quad_dev = 0.0
+     dev = U-x_vel
+     
+     for i in np.arange(0,len(x_vel)):
+       quad_dev += dev[i]**2
+     
+     print(quad_dev)
+     self.assertTrue(quad_dev < tol)
+     
      #Integrate
      system.integrator.run(1)
      system.lees_edwards_offset += v*time_step
-   
-   #Calulate quadratical deviation
-   
-   #print(U) 
-   #print(x_vel)
-   #print(X) 
-   #print(np.arange(0,box_l)+0.5)
-   dev = U-x_vel
-   
-   for i in np.arange(0,len(x_vel)):
-     quad_dev = dev[i]**2
-   #dev= ()/(len(x_vel))
-   
-   #print(dev)
-   #print(quad_dev)
-   
-   self.assertTrue(quad_dev < tol)
-   
-   if quad_dev<tol:
-     print("passed")
-  
+     
 if __name__ == "__main__":
   ut.main()
