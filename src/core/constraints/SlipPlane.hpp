@@ -23,6 +23,7 @@
 #include "Constraint.hpp"
 #include "core/shapes/Wall.hpp"
 #include "random.hpp"
+#include "integrate.hpp"
 
 #include <cmath>
 #include <vector>

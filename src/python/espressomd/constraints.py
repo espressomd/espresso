@@ -64,10 +64,7 @@ class Constraint(ScriptInterfaceHelper):
 
     _so_name = "Constraints::Constraint"
 
-<<<<<<< HEAD
-=======
 
->>>>>>> upstream/python
 @script_interface_register
 class ShapeBasedConstraint(Constraint):
     """
@@ -175,6 +172,7 @@ class SlipPlane(Constraint):
         Normal of the plane.
     dist : float
         Distance of the plane from the origin, parallel to the normal.
+    
     """
 
     _so_name = "Constraints::SlipPlane"
