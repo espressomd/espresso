@@ -103,7 +103,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift)
 
         for i in range(231):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
+            self.system.part[1].pos += self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -148,8 +148,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift, delta=lj_delta, lam=lj_lam)
 
         for i in range(231):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
-            self.system.part[1].pos = self.system.part[1].pos + self.step
+            self.system.part[1].pos += self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -187,7 +186,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift=lj_shift)
 
         for i in range(113):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
+            self.system.part[1].pos += self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies

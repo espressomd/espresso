@@ -228,6 +228,7 @@ cdef class ParticleHandle(object):
     cdef bint valid
     cdef unique_ptr[particle] particle_data
     cdef int update_particle_data(self) except -1
+    #cdef np.ndarray pos_core
 
 cdef class _ParticleSliceImpl:
     cdef unique_ptr[particle] particle_data

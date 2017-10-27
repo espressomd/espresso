@@ -25,7 +25,7 @@ from . import cuda_init
 from globals cimport *
 from copy import deepcopy
 from . import utils
-from .utils import readonly_nparray
+from .utils import array_ref
 import os
 
 # Actor class
@@ -262,7 +262,7 @@ IF LB or LB_GPU:
             def __get__(self):
                 cdef double[3] double_return
                 lb_lbnode_get_u(self.node, double_return)
-                return readonly_nparray(np.array(double_return))
+                return array_ref(np.array(double_return), self, 'velocity')
 
             def __set__(self, value):
                 raise Exception("Not implemented.")
@@ -271,7 +271,7 @@ IF LB or LB_GPU:
             def __get__(self):
                 cdef double[3] double_return
                 lb_lbnode_get_rho(self.node, double_return)
-                return readonly_nparray(np.array(double_return))
+                return array_ref(np.array(double_return), self, 'density')
 
             def __set__(self, value):
                 raise Exception("Not implemented.")
@@ -281,9 +281,9 @@ IF LB or LB_GPU:
             def __get__(self):
                 cdef double[6] pi
                 lb_lbnode_get_pi(self.node, pi)
-                return readonly_nparray(np.array([[pi[0],pi[1],pi[3]],
+                return array_ref(np.array([[pi[0],pi[1],pi[3]],
                                  [pi[1],pi[2],pi[4]],
-                                 [pi[3],pi[4],pi[5]]]))
+                                 [pi[3],pi[4],pi[5]]]), self, 'pi')
 
             def __set__(self, value):
                 raise Exception("Not implemented.")
@@ -292,9 +292,9 @@ IF LB or LB_GPU:
             def __get__(self):
                 cdef double[6] pi
                 lb_lbnode_get_pi_neq(self.node, pi)
-                return readonly_nparray(np.array([[pi[0],pi[1],pi[3]],
+                return array_ref(np.array([[pi[0],pi[1],pi[3]],
                                  [pi[1],pi[2],pi[4]],
-                                 [pi[3],pi[4],pi[5]]]))
+                                 [pi[3],pi[4],pi[5]]]), self, 'pi_neq')
 
             def __set__(self, value):
                 raise Exception("Not implemented.")
@@ -303,7 +303,7 @@ IF LB or LB_GPU:
             def __get__(self):
                 cdef double[19] double_return
                 lb_lbnode_get_pop(self.node, double_return)
-                return readonly_nparray(np.array(double_return))
+                return array_ref(np.array(double_return), self, 'population')
 
             def __set__(self, value):
                 cdef double[19] double_return = value
