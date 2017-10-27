@@ -5,6 +5,7 @@ stages:
   - build
   - doc_check
   - deploy
+  - result
 
 status_pending:
   stage: prepare
@@ -32,25 +33,13 @@ clang:
     - export myconfig=maxset with_coverage=false
     - bash maintainer/cuda_build.sh
 
-sphinx:
+check_sphinx:
   stage: doc_check
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}; cd build && find ./ -exec touch -c -t 203901010000 {} \; && make sphinx
 
-status_success:
-  stage: deploy
-  script: bash maintainer/gh_post_status.sh success
-  when: on_success
-  dependencies: []
-
-status_failure:
-  stage: deploy
-  script: bash maintainer/gh_post_status.sh failure
-  when: on_failure
-  dependencies: []
-
-sphinx_documentation:
+deploy_documentation:
   stage: deploy
   only:
     - doc
@@ -67,3 +56,15 @@ sphinx_documentation:
       rsync -avz --delete -e "ssh -i ~/.ssh/espresso_rsa" ./* espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/doc
     - cd ../../doxygen/html &&
       rsync -avz --delete -e "ssh -i ~/.ssh/espresso_rsa" ./* espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox
+
+status_success:
+  stage: result
+  script: bash maintainer/gh_post_status.sh success
+  when: on_success
+  dependencies: []
+
+status_failure:
+  stage: result
+  script: bash maintainer/gh_post_status.sh failure
+  when: on_failure
+  dependencies: []
