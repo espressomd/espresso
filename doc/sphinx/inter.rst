@@ -2234,15 +2234,15 @@ and random weight function are related by the dissipation-fluctuation theorem:
 .. math:: (\sigma w^R (r_{ij}))^2=\zeta w^D (r_{ij}) \text{k}_\text{B} T
 
 The possible values for weight_function are 0 and 1, correcpoding to the
-order of :math:`w^R`:
+order of :math:`w^D`:
 
 .. math::
 
    w^D (r_{ij}) = ( w^R (r_{ij})) ^2 = 
       \left\{
    \begin{array}{clcr}
-                1                      & , \; {weight_function} = 0 \\
-                {( 1 - \frac{r_{ij}}{r_c}} )^2 & , \; {weight_function} = 1
+                1                      & , \; \text{weight_function} = 0 \\
+                {( 1 - \frac{r_{ij}}{r_c}} )^2 & , \; \text{weight_function} = 1
       \end{array}
       \right.
 
