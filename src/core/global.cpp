@@ -35,6 +35,7 @@
 #include "rattle.hpp"
 #include "tuning.hpp"
 #include "communication.hpp"
+#include "interaction_data.hpp"
 #include "utils/mpi/all_compare.hpp"
 
 #include <boost/functional/hash.hpp>
