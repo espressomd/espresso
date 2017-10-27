@@ -146,8 +146,11 @@ static int failcounter=0;
  * set lattice switch on C-level
 */
 int lb_set_lattice_switch(int py_switch) {
-
   switch(py_switch) {
+  case 0:
+    lattice_switch = LATTICE_OFF;
+    mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
+    return 0;
   case 1:
     lattice_switch = LATTICE_LB;
     mpi_bcast_parameter(FIELD_LATTICE_SWITCH);

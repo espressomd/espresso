@@ -176,7 +176,7 @@ class Actors(object):
             actor._activate()
         else:
             raise ThereCanOnlyBeOne(actor)
-            
+
     def remove(self, actor):
         """
         Parameters
