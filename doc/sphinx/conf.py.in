@@ -306,3 +306,9 @@ autodoc_default_flags = ['members',
 rst_epilog = """
 .. |es| replace:: `ESPResSo`
 """
+# see http://opendreamkit.org/2017/06/09/CythonSphinx/ why this is needed
+def isfunction(obj):
+    return hasattr(type(obj), "__code__")
+
+import inspect
+inspect.isfunction = isfunction

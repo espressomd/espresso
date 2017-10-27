@@ -23,66 +23,54 @@ from . cimport cuda_init
 cdef class CudaInitHandle(object):
     def __init__(self):
         IF CUDA != 1:
-            raise Exception("Cuda is not compiled in")
+            raise Exception("CUDA is not compiled in")
 
-    property device:
-        """cuda device to use
+    IF CUDA == 1:
+        @property
+        def device(self):
+            """
+            Returns
+            -------
+            :obj:`int`
+                Id of current set device.
 
-        :setter: Specify which device to use
+            """
+            dev = cuda_get_device()
+            if dev == -1:
+                raise Exception("cuda device get error")
+            return dev
 
-        :getter: Returns the currently selected Cuda device id
+        @device.setter
+        def device(self, int _dev):
+            """
+            Specify which device to use.
 
-        :type: int"""
-
-        IF CUDA == 1:
-            def __set__(self, int _dev):
-                """
-                Specify which device to use.
-
-                Parameters
-                ----------
-
-                'dev':  integer
+            Parameters
+            ----------
+            'dev' : :obj:`int`
                     Set the device id of the graphics card to use.
 
-                """
-                if cuda_set_device(_dev):
-                    raise Exception("cuda device set error")
+            """
+            if cuda_set_device(_dev):
+                raise Exception("cuda device set error")
 
-            def __get__(self):
-                """
-                Get the id of the currently set device
-                """
-                dev = cuda_get_device()
-                if dev == -1:
-                    raise Exception("cuda device get error")
-                return dev
+    IF CUDA == 1:
+        @property
+        def device_list(self):
+            """
+            Returns
+            -------
+            :obj:`list`
+                List of available CUDA devices.
 
-    property device_list:
-        """available cuda devices
+            """
+            cdef char gpu_name_buffer[4+64]
+            devices = dict()
+            for i in range(cuda_get_n_gpus()):
+                cuda_get_gpu_name(i, gpu_name_buffer)
+                devices[i] = gpu_name_buffer
+            return devices
 
-        :getter: Returns available devices
-
-        :type: dict"""
-        IF CUDA == 1:
-            def __set__(self, dict _dev_dict):
-                raise Exception("cuda device list is read only")
-            def __get__(self):
-                cdef char gpu_name_buffer[4+64]
-                devices = dict()
-                for i in range(cuda_get_n_gpus()):
-                    cuda_get_gpu_name(i, gpu_name_buffer)
-                    devices[i] = gpu_name_buffer
-                return devices
-
-
-    # property device_list:
-    #   IF CUDA == 1:
-    #     def __set__(self, int _dev):
-    #       raise Exception("cuda device list is read only")
-    #     def __get__(self):
-    #       cdef int _p_devl
-    #       cdef char _devname[4+64]
-    #       if getdevicelist(&_p_devl, _devname):
-    #         raise Exception("cuda devicelist error")
-    #       return _devname
+        @device_list.setter
+        def device_list(self, dict _dev_dict):
+            raise Exception("cuda device list is read only")

@@ -83,6 +83,7 @@ foreach(cython_file ${cython_SRC})
       add_custom_command(OUTPUT ${outputpath}
                          COMMAND ${CYTHON_EXECUTABLE}  --cplus
                          --directive embedsignature=True
+                         --directive binding=True
                          -I ${CMAKE_CURRENT_SOURCE_DIR}
                          -I ${CMAKE_CURRENT_BINARY_DIR}
                          ${cython_file}

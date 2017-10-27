@@ -23,19 +23,21 @@
  *  For more information on ghosts,
  *  see \ref ghosts.hpp "ghosts.hpp" 
 */
-#include <mpi.h>
+#include "ghosts.hpp"
+#include "cells.hpp"
+#include "communication.hpp"
+#include "domain_decomposition.hpp"
+#include "forces_inline.hpp"
+#include "global.hpp"
+#include "grid.hpp"
+#include "particle_data.hpp"
+#include "utils.hpp"
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <mpi.h>
 #include <vector>
-#include <algorithm>
-#include "utils.hpp"
-#include "ghosts.hpp"
-#include "global.hpp"
-#include "cells.hpp"
-#include "communication.hpp"
-#include "grid.hpp"
-#include "particle_data.hpp"
 
 /** Tag for communication in ghost_comm. */
 #define REQ_GHOST_SEND 100
@@ -255,7 +257,7 @@ static void prepare_ghost_cell(Cell *cell, int size)
     }
   }          
 #endif
-  realloc_particlelist(cell, cell->n = size);
+  cell->resize(size);
   // invalidate pointers etc
   {
     int np   = cell->n;
@@ -289,7 +291,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
   std::vector<int>::const_iterator bond_retrieve = r_bondbuffer.begin();
 
   for (int pl = 0; pl < gc->n_part_lists; pl++) {
-    ParticleList *cur_list = gc->part_lists[pl];
+    auto cur_list = gc->part_lists[pl];
     if (data_parts & GHOSTTRANS_PARTNUM) {
       GHOST_TRACE(fprintf(stderr, "%d: reallocating cell %p to size %d, assigned to node %d\n",
 			  this_node, cur_list, *(int *)retrieve, gc->node));

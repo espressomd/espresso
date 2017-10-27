@@ -40,8 +40,8 @@ cdef extern from "interaction_data.hpp":
         double LJGEN_shift
         double LJGEN_offset
         double LJGEN_capradius
-        int LJGEN_a1
-        int LJGEN_a2
+        double LJGEN_a1
+        double LJGEN_a2
         double LJGEN_b1
         double LJGEN_b2
         double LJGEN_lambda
@@ -88,14 +88,14 @@ cdef extern from "ljgen.hpp":
         cdef int ljgen_set_params(int part_type_a, int part_type_b,
                                   double eps, double sig, double cut,
                                   double shift, double offset,
-                                  int a1, int a2, double b1, double b2,
+                                  double a1, double a2, double b1, double b2,
                                   double cap_radius,
                                   double genlj_lambda, double softrad)
     ELSE:
         cdef int ljgen_set_params(int part_type_a, int part_type_b,
                                   double eps, double sig, double cut,
                                   double shift, double offset,
-                                  int a1, int a2, double b1, double b2,
+                                  double a1, double a2, double b1, double b2,
                                   double cap_radius)
 
 
@@ -283,7 +283,7 @@ cdef extern from "angle_cosine.hpp":
 cdef extern from "angle_cossquare.hpp":
     int angle_cossquare_set_params(int bond_type, double bend, double phi0)
 cdef extern from "subt_lj.hpp":
-    int subt_lj_set_params(int bond_type, double k, double r)
+    int subt_lj_set_params(int bond_type)
 cdef extern from "object-in-fluid/oif_global_forces.hpp":
     int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g, double V0, double kv)
 cdef extern from "object-in-fluid/oif_local_forces.hpp":

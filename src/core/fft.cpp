@@ -335,7 +335,7 @@ void fft_perform_forw(double *data)
   /* REMARK: Result has to be in data. */
 }
 
-void fft_perform_back(double *data)
+void fft_perform_back(double *data, bool check_complex)
 {
   int i;
   
@@ -366,14 +366,13 @@ void fft_perform_back(double *data)
   for(i=0;i<fft.plan[1].new_size;i++) {
     fft.data_buf[i] = data[2*i]; /* real value */
     //Vincent:
-    if (data[2*i+1]>1e-5) {
+    if (check_complex && (data[2*i+1]>1e-5)) {
       printf("Complex value is not zero (i=%d,data=%g)!!!\n",i,data[2*i+1]);
       if (i>100) errexit();
       } 
   }
   /* communicate (in is fft.data_buf) */
   fft_back_grid_comm(fft.plan[1],fft.back[1],fft.data_buf,data);
-
 
   /* REMARK: Result has to be in data. */
 }

@@ -279,8 +279,8 @@ explanation for ``ks``:
    stiffness constant is linked to triangles. Therefore, must contain
    the same number of lines as there are triangles in the object.
 
-[ssec:oif-add-object]Elastic objects
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Elastic objects
+~~~~~~~~~~~~~~~
 
 object-id template-id origin part-type
 
@@ -309,8 +309,8 @@ this parameter refers to the mass of one particle (one mesh point of the
 triangulation). For the proper setting, the mass of the whole membrane
 must be distributed to all mesh points. Default value is 1.0.
 
-[ssec:oif-mesh-analyze]Mesh analysis
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Mesh analysis
+~~~~~~~~~~~~~
 
 oif\_mesh\_analyze nodes-file triangles-file
 
@@ -334,8 +334,8 @@ subtracts 1 from all numbers in and saves a new file . This is useful,
 if the mesh generating software starts numbering the particles from 1
 instead of 0.
 
-[ssec:oif-object-output]Output information about specific object
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Output information about specific object
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 object-id
 
@@ -361,8 +361,8 @@ creates a new file that can be used by ``oif_object_set``. The center of
 the object is located at point (0,0,0). This command is aimed to store
 the deformed shape in order to be loaded later.
 
-[ssec:oif-object-analyze]Descriptive information about specific object
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Descriptive information about specific object
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 object-id
 
@@ -395,8 +395,8 @@ y-min, y-max, z-min, z-max*.
 - outputs the current average velocity of the object. Runs over all mesh
   points and calculates their average velocity.
 
-[ssec:oif-object-set]Setting properties for specific object
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Setting properties for specific object
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 object-id
 
