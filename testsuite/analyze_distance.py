@@ -3,7 +3,6 @@ import sys
 import unittest as ut
 import numpy as np
 import espressomd
-from espressomd.interactions import HarmonicBond
 
 
 @ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "Skipped because LENNARD_JONES turned off.")
@@ -59,7 +58,7 @@ class AnalyzeDistance(ut.TestCase):
     def distto_pos(self, pos):
         dist = np.fabs(self.system.part[:].pos - pos)
         # check smaller distances via PBC
-        dist = np.where(dist > 0.5 * self.system.box_l, self.system.box_l - dist, dist)       
+        dist = np.where(dist > 0.5 * self.system.box_l, self.system.box_l - dist, dist)
         dist = np.sum(dist**2, axis=-1)
         return np.sqrt(np.min(dist))
 
@@ -67,7 +66,7 @@ class AnalyzeDistance(ut.TestCase):
     def distto_id(self, id):
         dist = np.fabs(np.delete(self.system.part[:].pos, id, axis=0) - self.system.part[id].pos)
         # check smaller distances via PBC
-        dist = np.where(dist > 0.5 * self.system.box_l, self.system.box_l - dist, dist)       
+        dist = np.where(dist > 0.5 * self.system.box_l, self.system.box_l - dist, dist)
         dist = np.sum(dist**2, axis=1)
         return np.sqrt(np.min(dist))
 

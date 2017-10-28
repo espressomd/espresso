@@ -121,7 +121,7 @@ class ParticleProperties(ut.TestCase):
             0, Angle_Cossquare, {"bend": 5.2, "phi0": 0.})
     if espressomd.has_features(["LENNARD_JONES"]):
         test_subt_lj = generateTestForBondParams(
-            0, Subt_Lj, {"k": 5.2, "r": 3.2})
+            0, Subt_Lj, {})
 
     if espressomd.has_features(["TABULATED"]):
         test_tabulated = generateTestForBondParams(
