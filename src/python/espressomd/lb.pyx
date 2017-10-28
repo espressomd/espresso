@@ -19,7 +19,9 @@
 from __future__ import print_function, absolute_import, division
 include "myconfig.pxi"
 import os
+import cython
 import numpy as np
+cimport numpy as np
 from .actors cimport Actor
 from . cimport cuda_init
 from . import cuda_init
@@ -248,35 +250,31 @@ IF LB_GPU:
             lb_lbfluid_get_interpolated_velocity_global(p, v)
             return v
 
-        def get_fluid_velocity_at_particle_positions(self, particle_coupling="2pt"):
-            """Calculate the fluid velocity at all particle positions.
-            
-            Note
-            ----
-            Velocities are ordered by particle id.
+        @cython.boundscheck(False)
+        @cython.wraparound(False)
+        def get_interpolated_fluid_velocity_at_positions(self, np.ndarray[double, ndim=2, mode="c"] positions not None):
+            """Calculate the fluid velocity at given positions.
 
             Parameters
             ----------
-            particle_coupling : :obj:`str`
-                       Either ``2pt``- or ``3pt``-coupling is used.
-
+            positions : numpy-array of type :obj:`float`
+                        The 3-dimensional positions.
 
             Returns
             -------
-            velocities : array_like :obj:`float` of shape (number of particles, 3)
-                         Fluid velocities at the particle positions.
-            
-            .. warning:: ``3pt``-coupling is currently not working!
+            velocities : numpy-array of type :obj:`float`
+                         The 3-dimensional velocities.
+            Raises
+            ------
+            AssertionError : If shape of `positions` not (N,3)
 
             """
-            if particle_coupling not in ("2pt", "3pt", "None"):
-                raise ValueError("Coupling can only have the value '2pt' or '3pt'")
-            if particle_coupling in ("2pt", None):
-                velocities = lb_lbfluid_get_fluid_velocity_at_particle_positions(twopoint)
-            if particle_coupling == "3pt":
-                raise ValueError("Three point coupling is not yet working for this function.")
-                #velocities = lb_lbfluid_get_fluid_velocity_at_particle_positions(threepoint)
-            return np.array(velocities).reshape(len(velocities)//3, 3)
+            assert positions.shape[1] == 3, "The input array must have shape (N,3)"
+            cdef int length
+            length = positions.shape[0]
+            velocities = np.empty_like(positions)
+            lb_lbfluid_get_interpolated_velocity_at_positions(<double *>np.PyArray_GETPTR2(positions, 0, 0), <double *>np.PyArray_GETPTR2(velocities, 0, 0), length)
+            return velocities
 
 IF LB or LB_GPU:
     cdef class LBFluidRoutines(object):

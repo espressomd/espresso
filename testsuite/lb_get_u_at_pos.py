@@ -6,9 +6,9 @@ import espressomd
 from espressomd import lb
 
 
-@ut.skipIf(not espressomd.has_features("LB_GPU") or espressomd.has_features("SHANCHEN"),
-           "LB_GPU feature not available, skipping test!")
-class TestLBGetUAtPart(ut.TestCase):
+@ut.skipIf(not espressomd.has_features("LB_GPU") or espressomd.has_features(
+    "SHANCHEN"), "LB_GPU feature not available, skipping test!")
+class TestLBGetUAtPos(ut.TestCase):
     """
     Check velocities at particle positions are sorted by ``id`` and
     quantitatively correct (only LB GPU).
@@ -52,7 +52,7 @@ class TestLBGetUAtPart(ut.TestCase):
             self.lb_fluid[n, 0, 0].velocity = self.vels[n, :]
         self.system.integrator.run(0)
 
-    def test_get_u_at_part_two_point(self):
+    def test_get_u_at_pos(self):
         """
         Test if linear interpolated velocities are equal to the velocities at
         the particle positions. This test uses the two-point coupling under
@@ -60,12 +60,14 @@ class TestLBGetUAtPart(ut.TestCase):
 
         """
         numpy.testing.assert_allclose(
-            self.interpolated_vels[:-1], self.lb_fluid.get_fluid_velocity_at_particle_positions(
-            )[:-1], atol=1e-4)
+                self.interpolated_vels[:-1],
+            self.lb_fluid.get_interpolated_fluid_velocity_at_positions(
+                self.system.part[:].pos)[:-1],
+            atol=1e-4)
 
 
 if __name__ == "__main__":
     suite = ut.TestSuite()
-    suite.addTests(ut.TestLoader().loadTestsFromTestCase(TestLBGetUAtPart))
+    suite.addTests(ut.TestLoader().loadTestsFromTestCase(TestLBGetUAtPos))
     result = ut.TextTestRunner(verbosity=4).run(suite)
     sys.exit(not result.wasSuccessful())
