@@ -4261,26 +4261,24 @@ struct two_point_interpolation {
     LB_nodes_gpu current_nodes_gpu;
     LB_rho_v_gpu *d_v_gpu;
     two_point_interpolation(LB_nodes_gpu _current_nodes_gpu, LB_rho_v_gpu *_d_v_gpu) : current_nodes_gpu(_current_nodes_gpu), d_v_gpu(_d_v_gpu) {};
-	__device__ float3 operator()(const float3 &position) {
+	__device__ float3 operator()(const float3 &position) const {
         unsigned int node_index[8];
         float delta[8];
         float u[3];
         float mode[19*LB_COMPONENTS];
         float _position[3] = {position.x, position.y, position.z};
         interpolation_two_point_coupling(current_nodes_gpu, _position, node_index, mode, d_v_gpu, delta, u);
-        float3 _u = make_float3(u[0], u[1], u[2]);
-		return _u;
+        return make_float3(u[0], u[1], u[2]);
 	} 
 };
 
 void lb_lbfluid_get_interpolated_velocity_at_positions(double *positions, double *velocities, int length) {
     thrust::host_vector<float3> positions_host(length);
-    for (int p=0; p < 3 * length;) {
+    for (int p=0; p < 3 * length; p+=3) {
         // Cast double coming from python to float.
-        positions_host[p/3].x = (float)positions[p];
-        positions_host[p/3].y = (float)positions[p+1];
-        positions_host[p/3].z = (float)positions[p+2];
-        p += 3;
+        positions_host[p/3].x = static_cast<float>(positions[p]);
+        positions_host[p/3].y = static_cast<float>(positions[p+1]);
+        positions_host[p/3].z = static_cast<float>(positions[p+2]);
     }
     thrust::device_vector<float3> positions_device = positions_host;
     thrust::device_vector<float3> velocities_device(length);
@@ -4288,9 +4286,9 @@ void lb_lbfluid_get_interpolated_velocity_at_positions(double *positions, double
     thrust::host_vector<float3> velocities_host = velocities_device;
     int index = 0;
     for (auto v : velocities_host) {
-        velocities[index] = (double)v.x * lbpar_gpu.agrid/lbpar_gpu.tau;
-        velocities[index+1] = (double)v.y * lbpar_gpu.agrid/lbpar_gpu.tau;
-        velocities[index+2] = (double)v.z * lbpar_gpu.agrid/lbpar_gpu.tau;
+        velocities[index] = static_cast<double>(v.x) * lbpar_gpu.agrid/lbpar_gpu.tau;
+        velocities[index+1] = static_cast<double>(v.y) * lbpar_gpu.agrid/lbpar_gpu.tau;
+        velocities[index+2] = static_cast<double>(v.z) * lbpar_gpu.agrid/lbpar_gpu.tau;
         index += 3;
     }
 }
