@@ -230,18 +230,40 @@ class ThermoTest(ut.TestCase):
                     tor1 = np.array([-0.03, -174, 368])
                     self.es.part[0].ext_torque = tor0
                     self.es.part[1].ext_torque = tor1
+                    # Let's set the dipole perpendicular to the torque
+                    if "DIPOLES" in espressomd.features():
+                        dip0 = np.array([0.0, tor0[2], -tor0[1]])
+                        dip1 = np.array([-tor1[2], 0.0, tor1[0]])
+                        self.es.part[0].dip = dip0
+                        self.es.part[1].dip = dip1
                 for i in range(100):
-                    self.es.integrator.run(1)
+                    self.es.integrator.run(10)
+                    #print("i = {0}".format(i))
                     for k in range(3):
                         self.assertLess(
                             abs(self.es.part[0].v[k] - f0[k] / gamma_tr[0, k]), tol)
                         self.assertLess(
                             abs(self.es.part[1].v[k] - f1[k] / gamma_tr[1, k]), tol)
+                        self.assertLess(
+                            abs(self.es.part[0].pos[k] - self.es.time * f0[k] / gamma_tr[0, k]), tol)
+                        self.assertLess(
+                            abs(self.es.part[1].pos[k] - self.es.time * f1[k] / gamma_tr[1, k]), tol)
                         if "ROTATION" in espressomd.features():
                             self.assertLess(abs(
                                 self.es.part[0].omega_lab[k] - tor0[k] / gamma_rot_validate[0, k]), tol)
                             self.assertLess(abs(
                                 self.es.part[1].omega_lab[k] - tor1[k] / gamma_rot_validate[1, k]), tol)
+                    if "ROTATION" in espressomd.features() and "DIPOLES" in espressomd.features():
+                        cos_alpha0 = np.dot(dip0,self.es.part[0].dip) / (np.linalg.norm(dip0) * self.es.part[0].dipm)
+                        cos_alpha0_test = np.cos(self.es.time * np.linalg.norm(tor0) / gamma_rot_validate[0, 0])
+                        
+                        cos_alpha1 = np.dot(dip1,self.es.part[1].dip) / (np.linalg.norm(dip1) * self.es.part[1].dipm)
+                        cos_alpha1_test = np.cos(self.es.time * np.linalg.norm(tor1) / gamma_rot_validate[1, 0])
+                        
+                        #print("cos_alpha0 = {0}, cos_alpha0_test={1}".format(cos_alpha0, cos_alpha0_test))
+                        #print("dip0 = {0}, self.es.part[0].dip={1}".format(dip0, self.es.part[0].dip))
+                        self.assertLess(abs(cos_alpha0 - cos_alpha0_test), tol)
+                        self.assertLess(abs(cos_alpha1 - cos_alpha1_test), tol)
 
         for i in range(len(self.es.part)):
             self.es.part[i].remove()
@@ -296,17 +318,21 @@ class ThermoTest(ut.TestCase):
                         gamma_global[1],
                         gamma_global[2]])
             else:
-                self.es.thermostat.set_brownian(
-                    kT=kT,
-                    gamma=[
-                        gamma_global[0],
-                        gamma_global[1],
-                        gamma_global[2]])
+                if "BROWNIAN_DYNAMICS" in espressomd.features():
+                    self.es.thermostat.turn_off()
+                    self.es.thermostat.set_brownian(
+                        kT=kT,
+                        gamma=[
+                            gamma_global[0],
+                            gamma_global[1],
+                            gamma_global[2]])
         else:
             if test_case < 4:
                 self.es.thermostat.set_langevin(kT=kT, gamma=gamma_global[0])
             else:
-                self.es.thermostat.set_brownian(kT=kT, gamma=gamma_global[0])
+                if "BROWNIAN_DYNAMICS" in espressomd.features():
+                    self.es.thermostat.turn_off()
+                    self.es.thermostat.set_brownian(kT=kT, gamma=gamma_global[0])
 
         # no need to rebuild Verlet lists, avoid it
         self.es.cell_system.skin = 5.0
