@@ -236,6 +236,8 @@ class ThermoTest(ut.TestCase):
                         dip1 = np.array([-tor1[2], 0.0, tor1[0]])
                         self.es.part[0].dip = dip0
                         self.es.part[1].dip = dip1
+                        tmp_axis0 = np.cross(tor0, dip0) / (np.linalg.norm(tor0) * np.linalg.norm(dip0))
+                        tmp_axis1 = np.cross(tor1, dip1) / (np.linalg.norm(tor1) * np.linalg.norm(dip1))
                 for i in range(100):
                     self.es.integrator.run(10)
                     #print("i = {0}".format(i))
@@ -256,14 +258,20 @@ class ThermoTest(ut.TestCase):
                     if "ROTATION" in espressomd.features() and "DIPOLES" in espressomd.features():
                         cos_alpha0 = np.dot(dip0,self.es.part[0].dip) / (np.linalg.norm(dip0) * self.es.part[0].dipm)
                         cos_alpha0_test = np.cos(self.es.time * np.linalg.norm(tor0) / gamma_rot_validate[0, 0])
+                        sgn0 = np.sign(np.dot(self.es.part[0].dip, tmp_axis0))
+                        sgn0_test = np.sign(np.sin(self.es.time * np.linalg.norm(tor0) / gamma_rot_validate[0, 0]))
                         
                         cos_alpha1 = np.dot(dip1,self.es.part[1].dip) / (np.linalg.norm(dip1) * self.es.part[1].dipm)
                         cos_alpha1_test = np.cos(self.es.time * np.linalg.norm(tor1) / gamma_rot_validate[1, 0])
+                        sgn1 = np.sign(np.dot(self.es.part[1].dip, tmp_axis1))
+                        sgn1_test = np.sign(np.sin(self.es.time * np.linalg.norm(tor1) / gamma_rot_validate[1, 0]))
                         
                         #print("cos_alpha0 = {0}, cos_alpha0_test={1}".format(cos_alpha0, cos_alpha0_test))
                         #print("dip0 = {0}, self.es.part[0].dip={1}".format(dip0, self.es.part[0].dip))
                         self.assertLess(abs(cos_alpha0 - cos_alpha0_test), tol)
                         self.assertLess(abs(cos_alpha1 - cos_alpha1_test), tol)
+                        self.assertEqual(sgn0, sgn0_test)
+                        self.assertEqual(sgn1, sgn1_test)
 
         for i in range(len(self.es.part)):
             self.es.part[i].remove()
