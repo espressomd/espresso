@@ -213,7 +213,7 @@ class ThermoTest(ut.TestCase):
                 self.es.integrator.run(10)
         # Brownian dynamics drift test
         else:
-            tol = 1.25E-4
+            tol = 1.27E-6
             # Brownian dynamics is designed for larger time-steps
             # propagate for time_step >> max(tau0_tran, tau0_rot)
             # tau0_tran = mass / gamma = 12.74 / 1.0
