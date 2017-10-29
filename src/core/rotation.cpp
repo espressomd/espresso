@@ -635,7 +635,8 @@ void rotate_particle_body_j(Particle* p, int j, double phi)
 void bd_drift_rot(Particle *p, double dt) {
   int j;
   double a[3];
-  double dphi[3];
+  double dphi[3], dphi_u[3];
+  double dphi_m;
   Thermostat::GammaType local_gamma;
 
   a[0] = a[1] = a[2] = 1.0;
@@ -653,20 +654,27 @@ void bd_drift_rot(Particle *p, double dt) {
   if(p->p.gamma_rot >= Thermostat::GammaType{}) local_gamma = p->p.gamma_rot;
   else local_gamma = langevin_gamma_rotation;
 
+  dphi[0] = dphi[1] = dphi[2] = 0.0;
   for (j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p->p.ext_flag & COORD_FIXED(j)))
 #endif
     {
-      dphi[0] = dphi[1] = dphi[2] = 0.0;
       // only a conservative part of the torque is used here
 #ifndef PARTICLE_ANISOTROPY
       dphi[j] = a[j] * p->f.torque[j] * dt / (local_gamma);
 #else
       dphi[j] = a[j] * p->f.torque[j] * dt / (local_gamma[j]);
 #endif // ROTATIONAL_INERTIA
-      rotate_particle_body_j(p, j, dphi[j]);
+      //rotate_particle_body_j(p, j, dphi[j]);
     }
+  } //j
+  dphi_m = 0.0;
+  for (j = 0; j < 3; j++) dphi_m += pow(dphi[j], 2);
+  dphi_m = sqrt(dphi_m);
+  if (dphi_m) {
+    for (j = 0; j < 3; j++) dphi_u[j] = dphi[j] / dphi_m;
+    rotate_particle_body(p, dphi_u, dphi_m);
   }
 }
 
