@@ -21,9 +21,6 @@ class ThermoTest(ut.TestCase):
         gamma = np.array([1.0, 1.0])
 
         # Decelleration
-        self.es.time_step = 0.007
-        if not "BROWNIAN_DYNAMICS" in espressomd.features():
-            self.es.thermostat.set_langevin(kT=0.0, gamma=gamma[0])
         self.es.cell_system.skin = 5.0
         seed(1)
         mass = 12.74
@@ -161,7 +158,9 @@ class ThermoTest(ut.TestCase):
 
         self.es.time = 0.0
 
-        if not "BROWNIAN_DYNAMICS" in espressomd.features():
+        if test_case < 4:
+            self.es.time_step = 0.007
+            self.es.thermostat.set_langevin(kT=0.0, gamma=gamma[0])
             tol = 1.25E-4
             for i in range(100):
                 for k in range(3):
@@ -175,7 +174,25 @@ class ThermoTest(ut.TestCase):
                         self.assertLess(abs(
                             self.es.part[1].omega_body[k] - math.exp(- gamma[1] * self.es.time / J[k])), tol)
                 self.es.integrator.run(10)
-        # TODO: start the BD drift test here from the Brownian thermostat activation.
+        # BD drift test
+        else:
+            # Brownian dynamics is designed for larger time-steps
+            # propagate for time_step >> max(tau0_tran, tau0_rot)
+            # tau0_tran = mass / gamma = 12.74 / 1.0
+            # tau0_rot = I / gamma = 10 / 1.0
+            # Hence, let's select time_step ~ 100
+            self.es.time_step = 100
+            # Brownian thermostat activation
+            self.es.thermostat.set_brownian(kT=0.0, gamma=gamma[0])
+            if "EXTERNAL_FORCES" in espressomd.features():
+                f1 = np.array([-1.2, 58.3578, 0.002])
+                f2 = np.array([-15.112, -2.0, 368])
+                self.es.part[0].ext_force = f1
+                self.es.part[1].ext_force = f2
+                for i in range(100):
+                    self.es.integrator.run(1)
+                    for k in range(3):
+                        # TODO
 
         for i in range(len(self.es.part)):
             self.es.part[i].remove()
@@ -249,7 +266,7 @@ class ThermoTest(ut.TestCase):
         if test_case < 4:
             self.es.time_step = 0.03
         else:
-            self.es.time_step = 0.3
+            self.es.time_step = 10
         n = 200
         mass = (0.2 + random()) * 7.0
         J = np.array((0.2 + random(3)) * 7.0)
