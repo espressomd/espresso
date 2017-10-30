@@ -1797,7 +1797,7 @@ void MMM2D_self_energy() {
 
   auto parts = local_cells.particles();
   self_energy = std::accumulate(
-      parts.begin(), parts.end(), 0,
+      parts.begin(), parts.end(), 0.0,
       [seng](double sum, Particle const &p) { return sum + seng * SQR(p.p.q); });
 }
 

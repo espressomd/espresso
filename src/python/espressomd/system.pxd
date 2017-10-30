@@ -40,5 +40,4 @@ cdef extern from "random.hpp" namespace "Random":
 cdef extern from "utils.hpp":
     void get_mi_vector(double* res,double* a, double* b)
 
-
 cdef bool skin_set
