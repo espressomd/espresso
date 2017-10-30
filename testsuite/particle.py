@@ -115,6 +115,13 @@ class ParticleProperties(ut.TestCase):
         test_mass = generateTestForScalarProperty("mass", 1.3)
 
     if espressomd.has_features(["ROTATION"]):
+        
+        for x in 0,1:
+            for y in 0,1:
+                for z in 0,1:
+                    test_rotation = generateTestForVectorProperty(
+                        "rotation", np.array([x,y,z],dtype=int))
+
         test_omega_lab = generateTestForVectorProperty(
             "omega_lab", np.array([4., 2., 1.]))
         test_omega_body = generateTestForVectorProperty(
@@ -132,7 +139,7 @@ class ParticleProperties(ut.TestCase):
             else:
                 test_gamma = generateTestForScalarProperty("gamma", 17.3)
 
-            if espressomd.has_features(["ROTATIONAL_INERTIA"]):
+            if espressomd.has_features(["PARTICLE_ANISOTROPY"]):
                 test_gamma_rot = generateTestForVectorProperty(
                     "gamma_rot", np.array([5., 10., 0.33]))
             else:

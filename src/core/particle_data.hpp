@@ -116,11 +116,9 @@ struct ParticleProperties {
   double out_direction[3] = {0., 0., 0.};
 #endif
 
-#ifdef ROTATION_PER_PARTICLE
   // Determines, wether a particle's rotational degrees of freedom are
   // integrated
-  short int rotation = 14;
-#endif
+  short int rotation = 0;
 
 #ifdef ELECTROSTATICS
   /** charge. */
@@ -423,17 +421,15 @@ void MPI_Send(Particle const *, Size, Ts...) {
     (we hope) algorithm to avoid unnecessary resizes.
     Access using \ref realloc_particlelist, \ref got_particle,...
 */
-typedef struct {
+struct ParticleList {
+  ParticleList() : part{nullptr}, n{0}, max{0} {}
   /** The particles payload */
   Particle *part;
   /** Number of particles contained */
   int n;
   /** Number of particles that fit in until a resize is needed */
   int max;
-#ifdef LEES_EDWARDS
-  int myIndex[3];
-#endif
-} ParticleList;
+};
 
 /************************************************
  * exported variables
@@ -449,10 +445,6 @@ extern int max_seen_particle;
 /** total number of particles on all nodes. */
 extern int n_part;
 
-/** Capacity of the \ref particle_node / \ref local_particles. */
-extern int max_particle_node;
-/** Used only on master node: particle->node mapping. */
-extern int *particle_node;
 /** id->particle mapping on all nodes. This is used to find partners
     of bonded interactions. */
 extern Particle **local_particles;
@@ -543,16 +535,10 @@ Particle *move_indexed_particle(ParticleList *destList,
 */
 void update_local_particles(ParticleList *pl);
 
-/** Rebuild \ref particle_node from scratch.
-    After a simulation step \ref particle_node has to be rebuild
-    since the particles might have gone to a different node.
-*/
-void build_particle_node();
-
 /** Invalidate \ref particle_node. This has to be done
     at the beginning of the integration.
 */
-void particle_invalidate_part_node();
+void clear_particle_node();
 
 /** Realloc \ref local_particles. */
 void realloc_local_particles();
@@ -620,7 +606,6 @@ int set_particle_solvation(int part, double *solvation);
 int set_particle_rotational_inertia(int part, double rinertia[3]);
 #endif
 
-#ifdef ROTATION_PER_PARTICLE
 /** Call only on the master node: Specifies whether a particle's rotational
     degrees of freedom are integrated or not. If set to zero, the content of
     the torque and omega variables are meaningless
@@ -629,7 +614,6 @@ int set_particle_rotational_inertia(int part, double rinertia[3]);
     @return ES_OK if particle existed
 */
 int set_particle_rotation(int part, int rot);
-#endif
 
 #ifdef AFFINITY
 /** Call only on the master node: set particle affinity.
@@ -913,7 +897,7 @@ void recv_particles(ParticleList *particles, int node);
 #ifdef EXCLUSIONS
 /** Determines if the non bonded interactions between p1 and p2 should be
  * calculated */
-inline int do_nonbonded(Particle *p1, Particle *p2) {
+inline int do_nonbonded(Particle const *p1, Particle const *p2) {
   int i, i2;
   /* check for particle 2 in particle 1's exclusion list. The exclusion list is
      symmetric, so this is sufficient. */
@@ -1065,8 +1049,7 @@ void pointer_to_temperature(Particle *p, double *&res);
 void pointer_to_gamma_rot(Particle *p, double *&res);
 #endif
 #endif // LANGEVIN_PER_PARTICLE
-
-#ifdef ROTATION_PER_PARTICLE
+#ifdef ROTATION
 void pointer_to_rotation(Particle *p, short int *&res);
 #endif
 

@@ -1,13 +1,15 @@
 Running the simulation
 ======================
 
+.. _Integrator:
+
 Integrator
 ----------
 
 To run the integrator call the method
 :meth:`espressomd.integrate.Integrator.run`::
 
-    system.integrator.run(steps=number_of_steps)
+    system.integrator.run(steps=number_of_steps, recalc_forces=False, reuse_forces=False)
 
 where ``number_of_steps`` is the number of time steps the integrator
 should perform.
@@ -35,14 +37,14 @@ that you read back in actually match the parameters that are set.
 Therefore, |es| would recompute the forces before the first time step, which
 makes it essentially impossible to checkpoint LB simulations, where it
 is vital to keep the coupling forces. To work around this, there is
-an additional parameter, which tells integrate to not recalculate
+an additional parameter ``reuse_forces``, which tells integrate to not recalculate
 the forces for the first time step, but use that the values still stored
 with the particles. Use this only if you are absolutely sure that the
 forces stored match your current setup!
 
 The opposite problem occurs when timing interactions: In this case, one
 would like to recompute the forces, despite the fact that they are
-already correctly calculated. To this aim, the option can be used to
+already correctly calculated. To this aim, the option ``recalc_forces`` can be used to
 enforce force recalculation.
 
 Run steepest descent minimization
@@ -143,9 +145,9 @@ simulations, respectively. See :cite:`bereau15` for more details.
 Reaction Ensemble
 -----------------
 
-.. note:: Required features: REACTION\_ENSEMBLE
+.. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies.
 
-The reaction ensemble ::cite:`smith94a,turner2008simulation` allows to simulate
+The reaction ensemble ::cite:`smith94a,turner2008simulation` allows to simulate
 chemical reactions which can be represented by the general equation:
 
 .. math::
@@ -201,7 +203,7 @@ In the *forward* reaction, the appropriate number of reactants (given by
 products is inserted into the system. In the *reverse* reaction,
 reactants and products exchange their roles. The acceptance probability
 :math:`P^{\xi}` for move from state :math:`o` to :math:`n` reaction
-ensemble is given by the criterion ::cite:`smith94a`
+ensemble is given by the criterion ::cite:`smith94a`
 
 .. math::
 
@@ -231,8 +233,7 @@ For a description of the available methods see :mod:`espressomd.reaction_ensembl
 
 Wang-Landau Reaction Ensemble
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. note:: Required features: REACTION_ENSEMBLE
+.. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies in one way or the other.
 
 Since you might be interested in thermodynamic properties of a reacting
 system you may use the Wang-Landau algorithm ::cite:`wang01a`
@@ -243,9 +244,8 @@ commands for the reaction ensemble use the following commands for the
 Wang-Landau reaction ensemble. For a description of the available methods see :mod:`espressomd.reaction_ensemble`:
 
 Constant pH method
-~~~~~~~~~~~~~~~~~~
-
-.. note:: Required features: REACTION_ENSEMBLE
+------------------
+.. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies.
 
 In the constant pH method due to Reed and Reed
 ::cite:`reed92a` it is possible to set the chemical potential
@@ -322,3 +322,49 @@ in the given simulation volume and compare this to the expected value at
 pH 7). Further the :math:`pK_w=14` should be reproduced -also in the
 case of an initial excess of acid or base in the simulation box. Note
 that this only works for big enough volumes.
+
+
+
+Integrating rotational degrees of freedom
+-----------------------------------------
+When the feature ROTATION is compiled in, Particles not only have a position, but also an orientation.
+Just as a force on a particle leads to an increase in linear velocity, a torque on a particle leads to an increase in angular velocity. The rotational degrees of freedom are also integrated using a velocity Verlet scheme.
+When the Langevin thermostat is enabled, the rotational degrees of freedom are also thermalized.
+
+Whether or not rotational degrees of freedom are propagated, is controlled on a per-particle and per-axis level, where the axes are the Cartesian axes of the particle in its body-fixed frame.
+It is important to note that starting from version 4.0 and unlike in earlier versions of |es|, the particles' rotation is disabled by default.
+In this way, just compiling in the ROTATION feature no longer changes the physics of the system.
+
+The rotation of a particle is controlled via the :any:`espressomd.particle_data.ParticleHandle.rotation` property. E.g., the following code adds a particle with rotation on the x axis enabled:::
+    
+    import espressomd
+    s=espressomd.System()
+    s.part.add(pos=(0,0,0),rotation=(1,0,0))
+
+Notes:
+
+* The orientation of a particle is stored as a quaternion in the :any:`espressomd.particle_data.ParticleHandle.quat` property. For a value of (1,0,0,0), the body and space frames coincide. 
+* The space-frame direction of the particle's z-axis in its body frame is accessible through the `espressomd.particle_data.ParticleHandle.director` property.
+* Any other vector can be converted from body to space fixed frame using the `espressomd.particle_data.ParticleHandle.convert_vector_body_to_space` method.
+* When DIPOLES are compiled in, the particles dipole moment is always co-aligned with the z-axis in the body-fixed frame.
+* Changing the particles dipole moment and director will re-orient the particle such that its z-axis in space frame is aligned parallel to the given vector. No guarantees are made for the other two axes after setting the direcotr or the dipole moment.
+
+
+The following particle properties are related to rotation:
+
+* :any:`espressomd.particle_data.ParticleHandle.dip`
+* :any:`espressomd.particle_data.ParticleHandle.director`
+* :any:`espressomd.particle_data.ParticleHandle.ext_torque`
+* :any:`espressomd.particle_data.ParticleHandle.gamma_rot`
+* :any:`espressomd.particle_data.ParticleHandle.gamma_rot`
+* :any:`espressomd.particle_data.ParticleHandle.omega_body`
+* :any:`espressomd.particle_data.ParticleHandle.omega_lab`
+* :any:`espressomd.particle_data.ParticleHandle.quat`
+* :any:`espressomd.particle_data.ParticleHandle.rinertia`
+* :any:`espressomd.particle_data.ParticleHandle.rotation`
+* :any:`espressomd.particle_data.ParticleHandle.torque_lab`
+
+
+
+
+

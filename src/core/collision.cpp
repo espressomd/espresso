@@ -23,6 +23,7 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "domain_decomposition.hpp"
+#include "rotation.hpp"
 
 
 using namespace std;
@@ -430,9 +431,7 @@ void place_vs_and_relate_to_particle(double* pos, int relate_to)
 	  vs_relate_to(max_seen_particle,relate_to);
 	  
 	  (local_particles[max_seen_particle])->p.isVirtual=1;
-	  #ifdef ROTATION_PER_PARTICLE
-	    (local_particles[relate_to])->p.rotation=14;
-	  #endif
+	  (local_particles[relate_to])->p.rotation=ROTATION_X | ROTATION_Y | ROTATION_Z;
 	  (local_particles[max_seen_particle])->p.type=collision_params.vs_particle_type;
 }
 

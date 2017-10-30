@@ -7,6 +7,7 @@ import math
 
 
 @ut.skipIf(not espressomd.has_features(["MASS",
+                                        "PARTICLE_ANISOTROPY",
                                         "ROTATIONAL_INERTIA",
                                         "LANGEVIN_PER_PARTICLE"]),
            "Features not available, skipping test!")
@@ -30,7 +31,7 @@ class ThermoTest(ut.TestCase):
             self.es.part[i].remove()
 
         for i in range(2):
-            self.es.part.add(pos=np.array([0.0, 0.0, 0.0]), id=i)
+            self.es.part.add(rotation=(1,1,1), pos=np.array([0.0, 0.0, 0.0]), id=i)
             self.es.part[i].v = np.array([1.0, 1.0, 1.0])
             if "ROTATION" in espressomd.features():
                 self.es.part[i].omega_body = np.array([1.0, 1.0, 1.0])
@@ -179,7 +180,7 @@ class ThermoTest(ut.TestCase):
                 part_pos = np.array(random(3) * box)
                 part_v = np.array([0.0, 0.0, 0.0])
                 part_omega_body = np.array([0.0, 0.0, 0.0])
-                self.es.part.add(id=ind, mass=mass, rinertia=J,
+                self.es.part.add(rotation=(1,1,1), id=ind, mass=mass, rinertia=J,
                                  pos=part_pos, v=part_v)
                 if "ROTATION" in espressomd.features():
                     self.es.part[ind].omega_body = part_omega_body

@@ -54,9 +54,7 @@ cdef extern from "integrate.hpp":
     extern double sim_time
     extern double smaller_time_step
     extern double verlet_reuse
-
-cdef extern from "verlet.hpp":
-    double skin
+    extern double skin
 
 cdef extern from "lattice.hpp":
     extern int lattice_switch
@@ -96,19 +94,10 @@ cdef extern from "interaction_data.hpp":
 
 
 cdef extern from "thermostat.hpp":
-    IF PARTICLE_ANISOTROPY:
-        double langevin_gamma[3]
-    ELSE:
-        double langevin_gamma
     extern double nptiso_gamma0
     extern double nptiso_gammav
     extern double temperature
     extern int thermo_switch
-    IF ROTATION:
-        IF ROTATIONAL_INERTIA:
-            double langevin_gamma_rotation[3]
-        ELSE:
-            double langevin_gamma_rotation
 
 cdef extern from "dpd.hpp":
     extern int dpd_wf

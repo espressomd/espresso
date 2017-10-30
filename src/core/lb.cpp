@@ -1433,9 +1433,9 @@ int lb_lbnode_set_u(int* ind, double* u){
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
         float host_velocity[3];
-        host_velocity[0] = (float)u[0]*lbpar_gpu.tau*lbpar_gpu.agrid;
-        host_velocity[1] = (float)u[1]*lbpar_gpu.tau*lbpar_gpu.agrid;
-        host_velocity[2] = (float)u[2]*lbpar_gpu.tau*lbpar_gpu.agrid;
+        host_velocity[0] = (float)u[0]*lbpar_gpu.tau/lbpar_gpu.agrid;
+        host_velocity[1] = (float)u[1]*lbpar_gpu.tau/lbpar_gpu.agrid;
+        host_velocity[2] = (float)u[2]*lbpar_gpu.tau/lbpar_gpu.agrid;
         int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
         lb_set_node_velocity_GPU(single_nodeindex, host_velocity);
 #endif // LB_GPU
@@ -2394,7 +2394,7 @@ inline void lb_relax_modes(Lattice::index_t index, double *mode)
      * include one half-step of the force action.  See the
      * Chapman-Enskog expansion in [Ladd & Verberg]. */
 #ifndef EXTERNAL_FORCES
-    if (lbfields[index].has_force)
+    if (lbfields[index].has_force || local_cells.particles().size())
 #endif // !EXTERNAL_FORCES
     {
         j[0] += 0.5 * lbfields[index].force[0];
@@ -2768,7 +2768,7 @@ inline void lb_collide_stream() {
 #ifdef EXTERNAL_FORCES
               lb_apply_forces(index, modes);
 #else // EXTERNAL_FORCES
-              if (lbfields[index].has_force) lb_apply_forces(index, modes);
+              if (lbfields[index].has_force || local_cells.particles().size()) lb_apply_forces(index, modes);
 #endif // EXTERNAL_FORCES
 
               /* transform back to populations and streaming */
@@ -2843,7 +2843,7 @@ inline void lb_stream_collide() {
                     if (lbpar.fluct) lb_thermalize_modes(index, modes);
                     
                     /* apply forces */
-                    if (lbfields[index].has_force) lb_apply_forces(index, modes);
+                    if (lbfields[index].has_force || local_cells.particles().size()) lb_apply_forces(index, modes);
                     
                     /* calculate new particle populations */
                     lb_calc_n_from_modes(index, modes);
