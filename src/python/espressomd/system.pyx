@@ -361,8 +361,9 @@ cdef class System(object):
         d_new : float
                 new box length
         dir : str, optional
-              coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
-              Isotropic assumes a cubic box.
+                coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
+                Isotropic assumes a cubic box.
+
         """
 
         if d_new < 0:
@@ -382,8 +383,9 @@ cdef class System(object):
     def volume(self):
         """
         Return box volume of the cuboid box
+
         """
-        
+
         return self.box_l[0] * self.box_l[1] * self.box_l[2]
 
     def distance(self, p1, p2):
