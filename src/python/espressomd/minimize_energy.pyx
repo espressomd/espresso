@@ -22,23 +22,24 @@ from __future__ import print_function, absolute_import
 from . cimport minimize_energy
 
 cdef class MinimizeEnergy(object):
+    """
+    Initialize steepest descent energy minimization.
+
+    Parameters
+    ----------
+    f_max : :obj:`float`
+            Maximal allowed force.
+    gamma : :obj:`float`
+            Dampening constant.
+    max_steps : :obj:`int`
+                Maximal number of iterations.
+    max_displacement : :obj:`float`
+                       Maximal allowed displacement per step.
+
+    """
     cdef object _params
 
     def __init__(self, *args, **kwargs):
-        """
-        Initialize steepest descent energy minimization
-
-        Parameters
-        ----------
-        f_max               : float
-                              Maximal allowed force
-        gamma               : float
-                              Dampening constant
-        max_steps           : int
-                              Maximal number of iterations
-        max_displacement    : float
-                              Maximal allowed displacement per step
-        """
         if len(args) == 0:
             # Initialize default values
             self._params = self.default_params()
@@ -90,6 +91,7 @@ cdef class MinimizeEnergy(object):
     def minimize(self):
         """
         Perform energy minimization sweep.
+
         """
         minimize_energy_init(self._params["f_max"], self._params["gamma"], self._params[
                              "max_steps"], self._params["max_displacement"])

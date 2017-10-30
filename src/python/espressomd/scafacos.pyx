@@ -18,7 +18,9 @@ include "myconfig.pxi"
 
 IF SCAFACOS == 1:
     class ScafacosConnector(Actor):
-        """Scafacos interface class shared by charge and dipole methods. Do not use directly."""
+        """Scafacos interface class shared by charge and dipole methods. Do not use directly.
+        
+        """
 
         def valid_keys(self):
             return "method_name", "method_params", "bjerrum_length"
@@ -69,10 +71,11 @@ IF SCAFACOS == 1:
             return {}
 
     def available_methods():
-        """Lists long range methods available in the Scafacos library"""
+        """Lists long range methods available in the Scafacos library.
+        
+        """
         methods=available_methods_core()
         res=[]
         for m in methods:
             res.append(to_str(m))
         return res
-    

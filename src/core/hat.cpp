@@ -39,7 +39,7 @@ int hat_set_params(int part_type_a, int part_type_b,
 
   data->HAT_Fmax = Fmax;
   data->HAT_r    = r;
- 
+
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
 

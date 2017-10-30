@@ -62,6 +62,20 @@ cdef extern from "interaction_data.hpp":
         double GB_mu
         double GB_nu
 
+        int dpd_wf
+        int dpd_twf
+        double dpd_gamma
+        double dpd_r_cut
+        double dpd_pref1
+        double dpd_pref2
+        double dpd_tgamma
+        double dpd_tr_cut
+        double dpd_pref3
+        double dpd_pref4
+
+        double HAT_Fmax
+        double HAT_r
+
     cdef ia_parameters * get_ia_param(int i, int j)
     cdef ia_parameters * get_ia_param_safe(int i, int j)
     cdef void make_bond_type_exist(int type)
@@ -99,10 +113,20 @@ cdef extern from "ljgen.hpp":
                                   double cap_radius)
 
 
+IF DPD:
+    cdef extern from "dpd.hpp":
+        int dpd_set_params(int part_type_a, int part_type_b,
+                           double gamma, double r_c, int wf,
+                           double tgamma, double tr_c, int twf)
+
+IF HAT:
+    cdef extern from "hat.hpp":
+        int hat_set_params(int part_type_a, int part_type_b,
+                           double Fmax, double r)
+
 IF TABULATED==1:
     cdef extern from "tab.hpp":
         int tabulated_set_params(int part_type_a, int part_type_b, char* filename);
-
 
 cdef extern from "interaction_data.hpp":
     ctypedef struct Fene_bond_parameters:
@@ -283,7 +307,7 @@ cdef extern from "angle_cosine.hpp":
 cdef extern from "angle_cossquare.hpp":
     int angle_cossquare_set_params(int bond_type, double bend, double phi0)
 cdef extern from "subt_lj.hpp":
-    int subt_lj_set_params(int bond_type, double k, double r)
+    int subt_lj_set_params(int bond_type)
 cdef extern from "object-in-fluid/oif_global_forces.hpp":
     int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g, double V0, double kv)
 cdef extern from "object-in-fluid/oif_local_forces.hpp":
