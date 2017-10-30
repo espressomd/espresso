@@ -299,8 +299,11 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   /* non bonded pair potentials                  */
   /***********************************************/
 
-  calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2, force, torque1,
-                             torque2);
+#ifdef EXCLUSIONS
+  if (do_nonbonded(p1, p2))
+#endif
+    calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2, force,
+                               torque1, torque2);
 
 /***********************************************/
 /* short range electrostatics                  */

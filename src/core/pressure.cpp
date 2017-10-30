@@ -113,13 +113,8 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
 #endif
       },
       [](Particle &p1, Particle &p2, Distance &d) {
-#ifdef EXCLUSIONS
-        if (do_nonbonded(&p1, &p2))
-#endif
-        {
           add_non_bonded_pair_virials(&(p1), &(p2), d.vec21, sqrt(d.dist2),
                                       d.dist2);
-        }
       });
 
 /* rescale kinetic energy (=ideal contribution) */
