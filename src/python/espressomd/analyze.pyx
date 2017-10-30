@@ -261,16 +261,44 @@ class Analysis(object):
         return result
 
 
-    def cylindrical_average(self, center=None, direction=None,
+    def cylindrical_average(self, center=None, axis=None,
                             length=None, radius=None,
                             bins_axial=None, bins_radial=None,
                             types=[-1]):
+        """
+        Calculates the particle distribution using cylindrical binning.
+
+        Parameters
+        ----------
+        center : array of :obj:`float`
+            coordinates of the centre of the cylinder.
+        axis : array of :obj:`
+            axis vectory of the cylinder, does not need to be normalized.
+        length : :obj:`float`
+            length of the cylinder.
+        radius : :obj:`float`
+            radius of the cylinder.
+        bins_axial : :obj:`int`
+            number of axial bins
+        bins_radial : :obj:`int`
+            number of radial bins
+        types : lists of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
+            a list of type IDs
+
+        Returns
+        -------
+        list of lists
+            columns indicate `index_radial`, `index_axial`, `pos_radial`, `pos_axial`, `binvolume`, `density`, `v_radial`, `v_axial`, `density`, `v_radial` and `v_axial`.
+            Note that the columns `density`, `v_radial` and `v_axial` appear for each type indicated in `types` in the same order.
+
+        """
+
 
         # Check the input types
         check_type_or_throw_except(
             center,      3, float, "center has to be 3 floats")
         check_type_or_throw_except(
-            direction,   3, float, "direction has to be 3 floats")
+            axis,   3, float, "direction has to be 3 floats")
         check_type_or_throw_except(
             length,      1, float, "length has to be a float")
         check_type_or_throw_except(
@@ -282,7 +310,7 @@ class Analysis(object):
 
         # Convert Python types to C++ types
         cdef vector[double] c_center = center
-        cdef vector[double] c_direction = direction
+        cdef vector[double] c_direction = axis
         cdef double c_length = length
         cdef double c_radius = radius
         cdef int c_bins_axial = bins_axial
@@ -557,6 +585,37 @@ class Analysis(object):
     def local_stress_tensor(self, periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1)):
         """local_stress_tensor(periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1))
         """
+        """
+        Computes local stress tensors in the system.
+        
+        A cuboid is defined starting at the coordinate `range_start` and going to the coordinate `range_start`+`stress_range`.
+        This cuboid in divided into `bins[0]` in the x direction, `bins[1]` in the y direction and `bins[2]` in the z direction such that the total number of bins is `bins[0]*bins[1]*bins[2]`. 
+        For each of these bins a stress tensor is calculated using the Irving Kirkwood method.
+        That is, a given interaction contributes towards the stress tensor in a bin proportional to the fraction of the line connecting the two particles that is within the bin.
+        
+        If the P3M and MMM1D electrostatic methods are used, these interactions are not included in the local stress tensor.
+        The DH and RF methods, in contrast, are included.
+        Concerning bonded interactions only two body interactions (FENE, Harmonic) are included (angular and dihedral are not).
+        For all electrostatic interactions only the real space part is included.
+
+        Care should be taken when using constraints of any kind, since these are not accounted for in the local stress tensor calculations.
+
+        
+        Parameters
+        ----------
+        periodicity : array of :obj:`int`
+            coordinates of the centre of the cylinder.
+        ----------
+        range_start : array of :obj:`float`
+            the start coordinate of the cuboid
+        ----------
+        stress_range : array of :obj:`float`
+            the range of the cuboid.
+        ----------
+        bins : array of :obj:`int`
+            a list condaining the number of bins for each direction.
+        
+        """
 
         cdef double_list local_stress_tensor
         cdef int[3] c_periodicity, c_bins
@@ -579,11 +638,22 @@ class Analysis(object):
 
 
     def energy(self):
-        """Calculate the systems energy.
+        """
+        Calculate the systems energy.
 
         Returns
         -------
         :obj:`dict` {'total', 'kinetic', 'bonded', 'nonbonded', ['coulomb']}
+
+
+        Examples
+        --------
+        >>> energy = system.analysis.energy()
+        >>> print(energy["total"])
+        >>> print(energy["kinetic"])
+        >>> print(energy["bonded"])
+        >>> print(energy["non_bonded"])
+
 
         """
     #  if system.n_part == 0:
@@ -665,11 +735,17 @@ class Analysis(object):
         """
         Calculates the Root Mean Square end-to-end distance of chains and its standard deviation, as well as Mean Square end-to-end distance of chains and its standard deviation.
         
+        This requires that a set of chains of equal length which start with the particle with particle number `chain_start` and are consecutively numbered (the last particle in that topology has id number :
+        `chain_start`+ `number_of_chains`*`chain_length` -1.
+
         Parameters
         ----------
         chain_start : :obj:`int`.
+            The id of the first monomer of the first chain
         number_of_chains : :obj:`int`.
+            number of chains contained in the range
         chain_length : :obj:`int`.
+            the length of every chain.
         
         Returns            
         -------
@@ -689,19 +765,66 @@ class Analysis(object):
 
 
     def calc_rg(self, chain_start=None, number_of_chains=None, chain_length=None):
+        """
+        Calculates the radius of gyration of chains and its standard deviation, as well as the Mean Square radius of gyration of chains and its standard deviation.
+        
+        This requires that a set of chains of equal length which start with the particle with particle number `chain_start` and are consecutively numbered (the last particle in that topology has id number :
+        `chain_start`+ `number_of_chains`*`chain_length`-1.
+
+        Parameters
+        ----------
+        chain_start : :obj:`int`.
+            The id of the first monomer of the first chain
+        number_of_chains : :obj:`int`.
+            number of chains contained in the range 
+        chain_length : :obj:`int`.
+            the length of every chain
+        
+        Returns            
+        -------
+        array_like
+            Where [0] is the Root Mean Square radius of gyration of the chains
+            and [1] its standard deviation,
+            [2] the Mean Square radius of gyration
+            and [3] its standard deviation.
+
+        """
         cdef double * rg = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
         c_analyze.calc_rg(c_analyze.partCfg(), & rg)
-        tuple_rg = (rg[0], rg[1], rg[2])
+        tuple_rg = (rg[0], rg[1], rg[2], rg[3])
         free(rg)
         return tuple_rg
 
 
     def calc_rh(self, chain_start=None, number_of_chains=None, chain_length=None):
+        """
+        Calculates the hydrodynamic mean radius of chains and its standard deviation.
+        
+        This requires that a set of chains of equal length which start with the particle with particle number `chain_start` and are consecutively numbered (the last particle in that topology has id number :
+        `chain_start`+ `number_of_chains`*`chain_length`-1.
+
+        Parameters
+        ----------
+        chain_start : :obj:`int`.
+            The id of the first monomer of the first chain
+        number_of_chains : :obj:`int`.
+            number of chains contained in the range 
+        chain_length : :obj:`int`.
+            the length of every chain
+        
+        Returns            
+        -------
+        array_like
+            Where [0] is the mean hydrodynamic radius of the chains
+            and [1] its standard deviation,
+
+        """
+
         cdef double * rh = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
         c_analyze.calc_rh(c_analyze.partCfg(), & rh)
-        tuple_rh = (rh[0], rh[1], rh[2])
+        tuple_rh = (rh[0], rh[1])
         free(rh)
         return tuple_rh
 
@@ -727,7 +850,24 @@ class Analysis(object):
 
 
     def structure_factor(self, sf_types=None, sf_order=None):
-        """Calculate the structure factor for given types.
+        """
+        Calculate the structure factor for given types.
+        Returns the spherically averaged structure factor of particles specified in `types`.
+        The structure factor is calculated for all possible wave vectors q up to `order`
+        Do not choose parameter `order` too large because the number of calculations gros as `order` to the third power.
+
+        Parameters
+        ----------
+        sf_types : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
+            specifies which particle type should be considered
+        sf_order : int
+            specifies the maximum wavevector, 
+
+        Returns
+        -------
+        array_like
+          Where [0] contains q
+          and [1] contains the structure factor s(q)
 
         """
 
@@ -749,15 +889,18 @@ class Analysis(object):
 
     def rdf(self, rdf_type=None, type_list_a=None, type_list_b=None,
             r_min=0.0, r_max=None, r_bins=100, n_conf=None):
-        """Calculate a radial distribution function.
+        """
+        Calculate a radial distribution function.
+	The result is normalized by the spherical bin shell, the total number of particle pairs and the system volume.
+
 
         Parameters
         ----------
         rdf_type : string
            'rdf' or '<rdf>'.
-        type_list_a : array like
+        type_list_a : lists of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
            Left types of the rdf
-        type_list_b : array like, optional
+        type_list_b : lists of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`), optional
            Right types of the rdf01
         r_min : float
            Minimal distance to consider
@@ -827,7 +970,34 @@ class Analysis(object):
 
     def distribution(self, type_list_a=None, type_list_b=None,
                      r_min=0.0, r_max=None, r_bins=100, log_flag=0, int_flag=0):
-        """Calculates the distance distribution of particles.
+        """
+        Calculates the distance distribution of particles 
+        (probability of finding a particle of type at a certain distance around a particle of type , disregarding the fact that a spherical shell of a larger radius covers a larger volume) 
+        The distance is defined as the minimal distance between a particle of group `type_list_a` to any of the group `type_list_b`.
+        Returns two arrays, the bins and the (normalized) distribution.
+
+        Parameters
+        ----------
+        type_list_a : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
+           list of particle types, only consider distances from these types
+        type_list_b : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
+           list of particle types, only consider distances to these types
+        r_min : float
+           minimum distance
+        r_max : float
+           maximum distance
+        r_bins : int
+           number of bins
+        log_flag : int
+           when set to 0, the bins are linearly equidistant; when set to 1, the bins are logarithmically equidistant.
+        int_flag : int
+           when set to 1, the result is an integrated distribution 
+
+        Returns
+        -------
+        array_like
+          Where [0] contains the midpoints of the bins,
+          and [1] contains the values of the rdf.
 
         """
 
@@ -900,6 +1070,27 @@ class Analysis(object):
 
 
     def gyration_tensor(self, p_type=None):
+        """
+        Analyze the gyration tensor of particles of a given type , or of all particles in the system if no type is given.
+
+        Parameters
+        ----------
+        p_type : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`), optional
+            A a particle type, or list of all particle types to be considered
+
+        Returns
+        -------
+        a dictionary with the following keys:
+        * "Rg^2", squared radius of gyration
+        * "shape", three shape descriptors (asphericity, acylindricity, and relative shape anisotropy)
+        * "eva0", eigenvalue 0 of the gyration tensor and its corresponding eigenvector.
+        * "eva1", eigenvalue 1 of the gyration tensor and its corresponding eigenvector.
+        * "eva2", eigenvalue 2 of the gyration tensor and its corresponding eigenvector.
+        The eigenvalues are sorted in descending order.
+      
+        """
+
+        
         cdef vector[double] gt
 
         if p_type is not None:
@@ -923,6 +1114,21 @@ class Analysis(object):
 
 
     def momentofinertiamatrix(self, p_type=None):
+        """
+        Returns the 3x3 moment of interia matrix for particles of a given type.
+
+        Parameters
+        ----------
+        p_type : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
+            A a particle type, or list of all particle types to be considered
+
+        Returns
+        -------
+        array_like
+        The output is a list of all the elements of the 3x3 matrix.
+      
+        """
+
         cdef double[9] MofImatrix
 
         if p_type is not None:
@@ -944,7 +1150,43 @@ class Analysis(object):
 
 
     def rdfchain(self, r_min=None, r_max=None, r_bins=None,
-                 chain_start=None, n_chains=None, chain_length=None):
+                 chain_start=None, number_of_chains=None, chain_length=None):
+        """
+        Returns three radial distribution functions (rdf) for the chains.
+        The first rdf is calculated for monomers belonging to different chains,
+        the second rdf is for the centers of mass of the chains and
+        the third one is the distribution of the closest distances between the chains (the shortest monomer-monomer distances).
+	The result is normalized by the spherical bin shell, the total number of pairs and the system volume.
+        
+        The distance range is given by `r_min` and `r_max` and it is divided into `r_bins` equidistant bins.
+        
+        This requires that a set of chains of equal length which start with the particle with particle number `chain_start` and are consecutively numbered (the last particle in that topology has id number :
+        `chain_start`+ `number_of_chains`*`chain_length`-1.
+
+        Parameters
+        ----------
+        r_min : :obj:`float`
+           Minimal distance to consider
+        r_max : :obj:`float`
+           Maximal distance to consider
+        r_bins : :obj:`int`
+           Number of bins
+        chain_start : :obj:`int`
+            The id of the first monomer of the first chain
+        number_of_chains : :obj:`int`.
+            number of chains contained in the range 
+        chain_length : :obj:`int`.
+            the length of every chain
+        
+        Returns            
+        -------
+        array_like
+            Where [0] is the bins used
+            [1] is the first rdf: monomers belonging to different chains,
+            [2] is the second rdf: from the centers of mass of the chains,
+            [3] is the third rdf: from the shortest monomer-monomer distances.
+
+        """        
         cdef double * f1
         cdef double * f2
         cdef double * f3
@@ -960,7 +1202,7 @@ class Analysis(object):
             raise Exception("The chain topology has not been set")
         if (r_bins <= 0):
             raise Exception("Nothing to be done - choose <r_bins> greater zero!")
-        if (r_min <= 0.):
+        if (r_min < 0.):
             raise Exception("<r_min> has to be positive")
         if (r_max <= r_min):
             raise Exception("<r_max> has to be larger than <r_min>")
@@ -991,6 +1233,24 @@ class Analysis(object):
 
 
     def Vkappa(self, mode=None, Vk1=None, Vk2=None, avk=None):
+        """
+        .. todo:: Looks to be incomplete
+
+        Calculates the compressibility thought volume fluctuations.
+
+        Parameters
+        ----------
+        mode : string
+           one of `read`, `set` or `reset`
+        Vk1 : float
+           volume 
+        Vk2 : float
+           volume squared
+        avk : float
+           number of averages
+      
+        """
+        
         check_type_or_throw_except(mode, 1, str, "mode has to be a string")
 
         if (mode == "reset"):

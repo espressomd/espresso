@@ -31,6 +31,11 @@ from numpy import random
            "Test requires VIRTUAL_SITES_RELATIVE")
 class VirtualSites(ut.TestCase):
     s = espressomd.System()
+    s.seed = range(s.cell_system.get_state()["n_nodes"])
+
+    @classmethod
+    def setUpClass(cls):
+        np.random.seed(42)
 
     def multiply_quaternions(self, a, b):
         return np.array(
