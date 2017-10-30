@@ -90,6 +90,9 @@
 #include "immersed_boundary/ibm_triel.hpp"
 #include "immersed_boundary/ibm_volume_conservation.hpp"
 #endif
+#ifdef DPD
+#include "dpd.hpp"
+#endif
 
 /** initialize the forces for a ghost particle */
 inline void init_ghost_force(Particle *part) {
@@ -292,22 +295,6 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node,
                       p1->p.identity, p2->p.identity, dist));
 
-/***********************************************/
-/* thermostat                                  */
-/***********************************************/
-
-#ifdef DPD
-  /* DPD thermostat forces */
-  if (thermo_switch & THERMO_DPD)
-    add_dpd_thermo_pair_force(p1, p2, d, dist, dist2);
-#endif
-
-/** The inter dpd force should not be part of the virial */
-
-#ifdef INTER_DPD
-  add_inter_dpd_pair_force(p1, p2, ia_params, d, dist, dist2);
-#endif
-
   /***********************************************/
   /* non bonded pair potentials                  */
   /***********************************************/
@@ -335,6 +322,15 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   for (j = 0; j < 3; j++)
     if (integ_switch == INTEG_METHOD_NPT_ISO)
       nptiso.p_vir[j] += force[j] * d[j];
+#endif
+
+/***********************************************/
+/* thermostat                                  */
+/***********************************************/
+
+/** The inter dpd force should not be part of the virial */
+#ifdef DPD
+  add_dpd_pair_force(p1, p2, ia_params, d, dist, dist2);
 #endif
 
 /***********************************************/
