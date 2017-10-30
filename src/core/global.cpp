@@ -23,19 +23,19 @@
 */
 #include "global.hpp"
 
+#include "communication.hpp"
 #include "domain_decomposition.hpp"
-#include "dpd.hpp"
 #include "errorhandling.hpp"
 #include "ghmc.hpp"
 #include "grid.hpp"
 #include "initialize.hpp"
+#include "interaction_data.hpp"
 #include "layered.hpp"
 #include "lb.hpp"
 #include "lees_edwards.hpp"
 #include "npt.hpp"
 #include "rattle.hpp"
 #include "tuning.hpp"
-#include "communication.hpp"
 #include "utils/mpi/all_compare.hpp"
 
 #include <boost/functional/hash.hpp>
@@ -78,12 +78,6 @@ const std::unordered_map<int, Datafield> fields{
      {FIELD_CELLSIZE,
       {dd.cell_size, Datafield::Type::DOUBLE, 3, "cell_size",
        6}}, /* 2  from cells.cpp */
-     {FIELD_DPD_GAMMA,
-      {&dpd_gamma, Datafield::Type::DOUBLE, 1, "dpd_gamma",
-       5}}, /* 3  from thermostat.cpp */
-     {FIELD_DPD_RCUT,
-      {&dpd_r_cut, Datafield::Type::DOUBLE, 1, "dpd_r_cut",
-       5}}, /* 4  from thermostat.cpp */
 #ifndef PARTICLE_ANISOTROPY
      {FIELD_LANGEVIN_GAMMA,
       {&langevin_gamma, Datafield::Type::DOUBLE, 1, "gamma",
@@ -189,18 +183,6 @@ const std::unordered_map<int, Datafield> fields{
      {FIELD_LATTICE_SWITCH,
       {&lattice_switch, Datafield::Type::INT, 1, "lattice_switch",
        2}}, /* 37 from lattice.cpp */
-     {FIELD_DPD_TGAMMA,
-      {&dpd_tgamma, Datafield::Type::DOUBLE, 1, "dpd_tgamma",
-       6}}, /* 38 from thermostat.cpp */
-     {FIELD_DPD_TRCUT,
-      {&dpd_tr_cut, Datafield::Type::DOUBLE, 1, "dpd_tr_cut",
-       6}}, /* 39 from thermostat.cpp */
-     {FIELD_DPD_TWF,
-      {&dpd_twf, Datafield::Type::INT, 1, "dpd_twf",
-       6}}, /* 40 from thermostat.cpp */
-     {FIELD_DPD_WF,
-      {&dpd_wf, Datafield::Type::INT, 1, "dpd_wf",
-       5}}, /* 41 from thermostat.cpp */
      {FIELD_MCUT_BONDED,
       {&max_cut_bonded, Datafield::Type::DOUBLE, 1, "max_cut_bonded",
        9}}, /* 42 from interaction_data.cpp */
@@ -228,9 +210,6 @@ const std::unordered_map<int, Datafield> fields{
      {FIELD_WARNINGS,
       {&warnings, Datafield::Type::INT, 1, "warnings",
        1}}, /* 50 from global.cpp */
-     {FIELD_DPD_IGNORE_FIXED_PARTICLES,
-      {&dpd_ignore_fixed_particles, Datafield::Type::INT, 1,
-       "dpd_ignore_fixed_particles", 1}}, /* 51 from global.cpp */
      {FIELD_SMALLERTIMESTEP,
       {&smaller_time_step, Datafield::Type::DOUBLE, 1, "smaller_time_step",
        5}}, /* 52 from integrate.cpp */

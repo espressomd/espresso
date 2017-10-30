@@ -60,6 +60,20 @@ cdef extern from "interaction_data.hpp":
         double GB_mu
         double GB_nu
 
+        int dpd_wf
+        int dpd_twf
+        double dpd_gamma
+        double dpd_r_cut
+        double dpd_pref1
+        double dpd_pref2
+        double dpd_tgamma
+        double dpd_tr_cut
+        double dpd_pref3
+        double dpd_pref4
+
+        double HAT_Fmax
+        double HAT_r
+
     cdef ia_parameters * get_ia_param(int i, int j)
     cdef ia_parameters * get_ia_param_safe(int i, int j)
     cdef void make_bond_type_exist(int type)
@@ -91,10 +105,20 @@ cdef extern from "ljgen.hpp":
                                   double a1, double a2, double b1, double b2,
                                   )
 
+IF DPD:
+    cdef extern from "dpd.hpp":
+        int dpd_set_params(int part_type_a, int part_type_b,
+                           double gamma, double r_c, int wf,
+                           double tgamma, double tr_c, int twf)
+
+IF HAT:
+    cdef extern from "hat.hpp":
+        int hat_set_params(int part_type_a, int part_type_b,
+                           double Fmax, double r)
+
 IF TABULATED==1:
     cdef extern from "tab.hpp":
         int tabulated_set_params(int part_type_a, int part_type_b, char* filename);
-
 
 cdef extern from "interaction_data.hpp":
     ctypedef struct Fene_bond_parameters:
