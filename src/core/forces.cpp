@@ -26,6 +26,7 @@
 
 #include "EspressoSystemInterface.hpp"
 
+#include "comfixed_global.hpp"
 #include "domain_decomposition.hpp"
 #include "electrokinetics.hpp"
 #include "external_potential.hpp"
@@ -38,6 +39,7 @@
 #include "short_range_loop.hpp"
 
 #include <cassert>
+
 ActorList forceActors;
 
 void init_forces() {
@@ -204,10 +206,9 @@ void force_calc() {
   calc_and_apply_mol_constraints();
 #endif
 
-// should be pretty late, since it needs to zero out the total force
-#ifdef COMFIXED
-  calc_comfixed();
-#endif
+  auto local_particles = local_cells.particles();
+  // should be pretty late, since it needs to zero out the total force
+  comfixed.apply(comm_cart, local_particles);
 
   // mark that forces are now up-to-date
   recalc_forces = 0;
@@ -328,21 +329,21 @@ void calc_long_range_forces() {
 #endif /*ifdef DIPOLES */
 }
 
-void
-calc_non_bonded_pair_force_from_partcfg(Particle const *p1, Particle const *p2, IA_parameters *ia_params,
-                                        double d[3], double dist, double dist2,
-                                        double force[3],
-                                        double torque1[3], double torque2[3]) {
-     calc_non_bonded_pair_force_parts(p1, p2, ia_params,
-                                      d, dist, dist2, force, torque1, torque2);
+void calc_non_bonded_pair_force_from_partcfg(
+    Particle const *p1, Particle const *p2, IA_parameters *ia_params,
+    double d[3], double dist, double dist2, double force[3], double torque1[3],
+    double torque2[3]) {
+  calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist, dist2, force,
+                                   torque1, torque2);
 }
 
-void
-calc_non_bonded_pair_force_from_partcfg_simple(Particle const *p1, Particle const *p2,
-                                               double d[3], double dist,
-                                               double dist2, double force[3]){
-   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
-   double torque1[3],torque2[3];
-   calc_non_bonded_pair_force_from_partcfg(p1, p2, ia_params, d, dist, dist2,
-                                           force, torque1, torque2);
+void calc_non_bonded_pair_force_from_partcfg_simple(Particle const *p1,
+                                                    Particle const *p2,
+                                                    double d[3], double dist,
+                                                    double dist2,
+                                                    double force[3]) {
+  IA_parameters *ia_params = get_ia_param(p1->p.type, p2->p.type);
+  double torque1[3], torque2[3];
+  calc_non_bonded_pair_force_from_partcfg(p1, p2, ia_params, d, dist, dist2,
+                                          force, torque1, torque2);
 }

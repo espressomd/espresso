@@ -39,7 +39,6 @@
 #include "bmhtf-nacl.hpp"
 #include "buckingham.hpp"
 #include "collision.hpp"
-#include "comfixed.hpp"
 #include "constraints.hpp"
 #include "dihedral.hpp"
 #include "elc.hpp"
