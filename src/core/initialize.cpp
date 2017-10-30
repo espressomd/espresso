@@ -68,7 +68,7 @@
 #include "thermostat.hpp"
 #include "utils.hpp"
 #include "global.hpp"
-
+#include "utils/mpi/all_compare.hpp" 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
 static int reinit_electrostatics = 0;
@@ -219,6 +219,19 @@ void on_integration_start() {
   check_global_consistency();
 #endif
 
+#ifdef ADDITIONAL_CHECKS
+#ifdef ELECTROSTATICS
+  if (!Utils::Mpi::all_compare(comm_cart,coulomb.method))
+    runtimeErrorMsg() << "Nodes disagree about Coulomb long range method";
+#endif
+#ifdef DIPOLES 
+  if (!Utils::Mpi::all_compare(comm_cart,coulomb.Dmethod))
+    runtimeErrorMsg() << "Nodes disagree about dipolar long range method";
+#endif
+#endif
+
+   
+
   on_observable_calc();
 }
 
@@ -274,6 +287,7 @@ void on_observable_calc() {
 
 void on_particle_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_particle_change\n", this_node));
+
   resort_particles = 1;
   reinit_electrostatics = 1;
   reinit_magnetostatics = 1;
@@ -554,7 +568,7 @@ void on_parameter_change(int field) {
   case FIELD_BOXL:
     grid_changed_box_l();
 #ifdef SCAFACOS
-    Scafacos::on_boxl_change();
+    Scafacos::update_system_params();
 #endif
     /* Electrostatics cutoffs mostly depend on the system size,
        therefore recalculate them. */
@@ -568,6 +582,9 @@ void on_parameter_change(int field) {
   case FIELD_SKIN:
     cells_on_geometry_change(0);
   case FIELD_PERIODIC:
+#ifdef SCAFACOS
+      Scafacos::update_system_params();
+#endif
     cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
     break;
   case FIELD_NODEGRID:

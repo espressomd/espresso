@@ -286,6 +286,9 @@ void tune_r_cut() {
 
 void tune() {
   particles.update_particle_data();
+  if (!check_position_validity(particles.positions)) {
+    return;
+  }
 
   /** Check whether we have to do a bisection for the short range cutoff */
   /** Check if there is a user supplied cutoff */
@@ -386,7 +389,7 @@ delete scafacos;
   }
 }
 
-void on_boxl_change() {
+void update_system_params() {
 // If scafacos is not active, do nothing
 if (!scafacos) return;
 
