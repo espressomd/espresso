@@ -115,16 +115,26 @@ class Exclusions(ut.TestCase):
         from espressomd.electrostatics import P3M
         self.s.part.add(id=0, pos=[0, 0, 0], type=0, q=+1.)
         self.s.part.add(id=1, pos=[1, 0, 0], type=0, q=-1.)
-        self.s.part[0].exclusions = [1]
 
-        self.s.actors.add(P3M(bjerrum_length=1, r_cut=1.5, accuracy=1e-3,
-                                  mesh=32, cao=7, alpha=2.5, tune=False))
+        # Small alpha means large short-range contribution
+        self.s.actors.add(P3M(bjerrum_length=1, r_cut=3.0, accuracy=1e-3,
+                                  mesh=32, cao=7, alpha=0.1, tune=False))
 
-        self.assertGreater(abs(self.s.analysis.energy()['coulomb']), 0.)
+        # Only short-range part of the coulomb energy
+        pair_energy = self.s.analysis.energy()[('coulomb', 0)]
+        self.assertGreater(abs(pair_energy), 0.)
 
         self.s.integrator.run(0)
-        self.assertGreater(abs(self.s.part[0].f[0]), 0.)
-        self.assertGreater(abs(self.s.part[1].f[0]), 0.)
+        pair_force = self.s.part[0].f[0]
+        self.assertGreater(abs(pair_force), 0.)
+        self.assertAlmostEqual(self.s.part[1].f[0], -pair_force, places=7)
+
+        self.s.part[0].exclusions = [1]
+        # Force and energy should not be changed by the exclusion
+        self.s.integrator.run(0)
+        self.assertAlmostEqual(self.s.part[0].f[0], pair_force, places=7)
+        self.assertAlmostEqual(self.s.part[1].f[0], -pair_force, places=7)
+        self.assertAlmostEqual(self.s.analysis.energy()[('coulomb', 0)], pair_energy, places=7)
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())
