@@ -173,14 +173,14 @@ static void prepare_scy_cache() {
   int ic, freq, o;
   double pref, arg;
 
-  for (freq = 1; freq <= n_scxcache; freq++) {
+  for (freq = 1; freq <= n_scycache; freq++) {
     pref = C_2PI * uy * freq;
     o = (freq - 1) * n_localpart;
     ic = 0;
     for (auto const &part : local_cells.particles()) {
       arg = pref * part.r.p[1];
-      scxcache[o + ic].s = sin(arg);
-      scxcache[o + ic].c = cos(arg);
+      scycache[o + ic].s = sin(arg);
+      scycache[o + ic].c = cos(arg);
       ic++;
     }
   }
