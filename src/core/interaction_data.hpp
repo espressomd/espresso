@@ -419,13 +419,6 @@ typedef struct {
 /*@}*/
 #endif
 
-#ifdef COMFIXED
-  /** \name center of mass directed force */
-  /*@{*/
-  int COMFIXED_flag;
-/*@}*/
-#endif
-
 #ifdef DPD
   /** \name DPD as interaction */
   /*@{*/
