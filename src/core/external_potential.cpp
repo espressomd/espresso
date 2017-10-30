@@ -206,10 +206,10 @@ int write_local_lattice_to_file(const char* filename_prefix, Lattice* lattice) {
   fprintf(outfile,"halo_grid %d %d %d\n", lattice->halo_grid[0], lattice->halo_grid[1], lattice->halo_grid[2]);
   fprintf(outfile,"halo_size %d\n", lattice->halo_size);
   
-  fprintf(outfile,"grid_volume %ld\n", lattice->grid_volume);
-  fprintf(outfile,"halo_grid_volume %ld\n", lattice->halo_grid_volume);
-  fprintf(outfile,"halo_grid_surface %ld\n", lattice->halo_grid_surface);
-  fprintf(outfile,"halo_offset %ld\n", lattice->halo_offset);
+  fprintf(outfile,"grid_volume %d\n", lattice->grid_volume);
+  fprintf(outfile,"halo_grid_volume %d\n", lattice->halo_grid_volume);
+  fprintf(outfile,"halo_grid_surface %d\n", lattice->halo_grid_surface);
+  fprintf(outfile,"halo_offset %d\n", lattice->halo_offset);
 
   fprintf(outfile,"dim %d\n", lattice->dim);
 

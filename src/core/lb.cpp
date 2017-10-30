@@ -28,6 +28,7 @@
  */
 
 #include <mpi.h>
+#include <cassert>
 #include <cstdio>
 #include <iostream>
 #include "utils.hpp"
@@ -1060,19 +1061,19 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
 
         if (!binary) {
             for (int n=0; n<(19*int(lbpar_gpu.number_of_nodes)); n++) {
-                fscanf(cpfile, "%f", &host_checkpoint_vd[n]);
+                assert(fscanf(cpfile, "%f", &host_checkpoint_vd[n]) != EOF);
             }
             for (int n=0; n<int(lbpar_gpu.number_of_nodes); n++) {
-                fscanf(cpfile, "%u", &host_checkpoint_seed[n]);
+                assert(fscanf(cpfile, "%u", &host_checkpoint_seed[n]) != EOF);
             }
             for (int n=0; n<int(lbpar_gpu.number_of_nodes); n++) {
-                fscanf(cpfile, "%u", &host_checkpoint_boundary[n]);
+                assert(fscanf(cpfile, "%u", &host_checkpoint_boundary[n]) != EOF);
             }
             for (int n=0; n<(3*int(lbpar_gpu.number_of_nodes)); n++) {
               if (sizeof(lbForceFloat) == sizeof(float))
-                fscanf(cpfile, "%f", &host_checkpoint_force[n]);
+                assert(fscanf(cpfile, "%f", &host_checkpoint_force[n]) != EOF);
               else
-                fscanf(cpfile, "%f", &host_checkpoint_force[n]);
+                assert(fscanf(cpfile, "%f", &host_checkpoint_force[n]) != EOF);
             }
         }
         else
@@ -3416,7 +3417,7 @@ static void lb_check_halo_regions() {
           index = get_linear_index(lblattice.grid[0],y,z,lblattice.halo_grid);
           for (i = 0; i < lbmodel.n_veloc; i++) r_buffer[i] = lbfluid[1][i][index];
           if (compare_buffers(s_buffer,r_buffer,count*sizeof(double))) {
-            fprintf(stderr,"buffers differ in dir=%d at index=%ld y=%d z=%d\n",0,index,y,z);
+            std::cerr << "buffers differ in dir=" << 0 << " at index=" << index << " y=" << y << " z=" << z << "\n";
           }
         }
 
@@ -3436,7 +3437,7 @@ static void lb_check_halo_regions() {
           index = get_linear_index(1,y,z,lblattice.halo_grid);
           for (i = 0; i < lbmodel.n_veloc; i++) r_buffer[i] = lbfluid[1][i][index];
           if (compare_buffers(s_buffer,r_buffer,count*sizeof(double))) {
-            fprintf(stderr,"buffers differ in dir=%d at index=%ld y=%d z=%d\n",0,index,y,z);
+            std::cerr << "buffers differ in dir=0 at index=" << index << " y=" << y << " z=" << z << "\n";
           }
         }
 
@@ -3463,7 +3464,7 @@ static void lb_check_halo_regions() {
               index = get_linear_index(x,lblattice.grid[1],z,lblattice.halo_grid);
               for (i = 0; i < lbmodel.n_veloc; i++) r_buffer[i] = lbfluid[1][i][index];
               if (compare_buffers(s_buffer,r_buffer,count*sizeof(double))) {
-                fprintf(stderr,"buffers differ in dir=%d at index=%ld x=%d z=%d\n",1,index,x,z);
+                std::cerr << "buffers differ in dir=1 at index=" << index << " x=" << x << " z=" << z << "\n";
               }
             }
 
@@ -3485,7 +3486,7 @@ static void lb_check_halo_regions() {
             index = get_linear_index(x,1,z,lblattice.halo_grid);
             for (i = 0;i < lbmodel.n_veloc; i++) r_buffer[i] = lbfluid[1][i][index];
             if (compare_buffers(s_buffer,r_buffer,count*sizeof(double))) {
-              fprintf(stderr,"buffers differ in dir=%d at index=%ld x=%d z=%d\n",1,index,x,z);
+              std::cerr << "buffers differ in dir=1 at index=" << index << " x=" << x << " z=" << z << "\n";
             }
           }
           
@@ -3512,7 +3513,7 @@ static void lb_check_halo_regions() {
           index = get_linear_index(x,y,lblattice.grid[2],lblattice.halo_grid);
           for (i = 0; i < lbmodel.n_veloc; i++) r_buffer[i] = lbfluid[1][i][index];
           if (compare_buffers(s_buffer,r_buffer,count*sizeof(double))) {
-            fprintf(stderr,"buffers differ in dir=%d at index=%ld x=%d y=%d z=%d\n",2,index,x,y,lblattice.grid[2]);
+            std::cerr << "buffers differ in dir=2 at index=" << index << " x=" << x << " y=" << y << " z=" << lblattice.grid[2] << "\n";
           }
         }
 
@@ -3536,7 +3537,7 @@ static void lb_check_halo_regions() {
           index = get_linear_index(x,y,1,lblattice.halo_grid);
           for (i = 0; i < lbmodel.n_veloc; i++) r_buffer[i] = lbfluid[1][i][index];
           if(compare_buffers(s_buffer,r_buffer,count*sizeof(double))) {
-            fprintf(stderr,"buffers differ in dir=%d at index=%ld x=%d y=%d\n",2,index,x,y);
+            std::cerr << "buffers differ in dir=2 at index=" << index << " x=" << x << " y=" << y << "\n";
           }
         }
 

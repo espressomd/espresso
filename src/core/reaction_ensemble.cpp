@@ -14,6 +14,7 @@
 #include "particle_data.hpp" //for particle creation, modification
 #include "statistics.hpp" //for distto
 #include "integrate.hpp" //for time_step
+#include <cassert>
 #include <stdio.h> //for getline()
 #include <iostream> //for std::cout
 #include <fstream> //for std::ifstream, std::ofstream for input output into files
@@ -1116,7 +1117,7 @@ int ReactionEnsemble::initialize_wang_landau(){
 			size_t len = 0;
 			ssize_t length_line;
 			const char* delim="\t ";
-			getline(&line, &len, pFile);//dummy call of getline to get rid of header line (first line in file)
+			assert(getline(&line, &len, pFile) != -1);//dummy call of getline to get rid of header line (first line in file)
 			while ((length_line = getline(&line, &len, pFile)) != -1) {
 				int counter_words_in_line=0;
 				for(char* word=strtok(line,delim);word!=nullptr;word=strtok(nullptr,delim)){
