@@ -186,6 +186,7 @@ void rescale_boxl(int dir, double d_new);
   *  @param b the vector to subtract
   *  @param res where to store the result
 */
+
 template <typename T, typename U, typename V>
 inline void get_mi_vector(T &res, U const &a, V const &b) {
   for (int i = 0; i < 3; i++) {
@@ -304,6 +305,10 @@ template <typename Particle> Vector3d folded_position(Particle const &p) {
   }
 
   return pos;
+}
+
+inline void fold_position(Vector3d &pos, Vector<3, int> &image_box) {
+  fold_position(pos.data(), image_box.data());
 }
 
 /** unfold coordinates to physical position.

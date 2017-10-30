@@ -207,7 +207,7 @@ int vs_relate_to(int part_num, int relate_to)
     double l=sqrt(sqrlen(d));
     if (l>min_global_cut) {
         ostringstream msg;
-        msg << "Warning: The distance between virtual and non-virtual particle (" << l << ") is\nlarger than the minimum global cutoff (" << min_global_cut << "). This may lead to incorrect simulations\nunder certain conditions. Use \"setmd min_global_cut\" to increase the minimum cutoff.\n";
+        msg << "Warning: The distance between virtual and non-virtual particle (" << l << ") is\nlarger than the minimum global cutoff (" << min_global_cut << "). This may lead to incorrect simulations\nunder certain conditions. Set the \"System()\" class property \"min_global_cut\" to\nincrease the minimum cutoff.\n";
         runtimeWarning(msg);
       return ES_ERROR;
     }

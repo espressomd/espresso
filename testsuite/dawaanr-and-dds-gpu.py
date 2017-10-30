@@ -162,7 +162,7 @@ class DDSGPUTest(ut.TestCase):
             for i in range(len(self.es.actors.active_actors)):
                 self.es.actors.remove(self.es.actors.active_actors[i])
             # for i in reversed(range(len(self.es.part))):
-            #    self.es.part[i].delete()
+            #    self.es.part[i].remove()
             self.es.part.clear()
 
     def test(self):

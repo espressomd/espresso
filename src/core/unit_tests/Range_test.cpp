@@ -50,28 +50,31 @@ BOOST_AUTO_TEST_CASE(std_begin_end) {
 BOOST_AUTO_TEST_CASE(make_range) {
   int a[10];
 
-  BOOST_CHECK(Range<int *>(a, a + 10) == Utils::make_range(a, a + 10));
+  BOOST_CHECK(Range<int *>(a, a + 10) ==
+              Utils::make_range(std::begin(a), std::begin(a) + 10));
 }
 
 BOOST_AUTO_TEST_CASE(empty) {
   int a[10];
 
-  auto r = Range<int *>(a, a);
+  auto r = Range<int *>(std::begin(a), std::begin(a));
   BOOST_CHECK(r.empty());
-  auto s = Range<int *>(a, a + 10);
+  auto s = Range<int *>(std::begin(a), std::begin(a) + 10);
   BOOST_CHECK(!s.empty());
 }
 
 BOOST_AUTO_TEST_CASE(size) {
   int a[10];
 
-  auto r = Range<int *>(a, a + 10);
+  auto r = Range<int *>(std::begin(a), std::begin(a) + 10);
   BOOST_CHECK(r.size() == 10);
 }
 
 BOOST_AUTO_TEST_CASE(comparison) {
   int a[10];
 
-  BOOST_CHECK(!(Range<int *>(a, a) == Range<int *>(a, a + 10)));
-  BOOST_CHECK(Range<int *>(a, a + 10) == Range<int *>(a, a + 10));
+  BOOST_CHECK(!(Range<int *>(std::begin(a), std::begin(a)) ==
+                Range<int *>(std::begin(a), std::begin(a) + 10)));
+  BOOST_CHECK(Range<int *>(a, a + 10) ==
+              Range<int *>(std::begin(a), std::begin(a) + 10));
 }
