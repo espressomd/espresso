@@ -59,7 +59,7 @@ typedef struct collective_variable {
                                  // collective_variable_index) and another input
                                  // for a void pointer and returns a double
   // for collective variables of type degree of association
-  int *corresponding_acid_types; // is NULL if the current collective variable
+  int *corresponding_acid_types; // is nullptr if the current collective variable
                                  // has nothing to do with a degree of
                                  // association
   int nr_corresponding_acid_types;
@@ -119,10 +119,10 @@ public:
 
   reaction_system m_current_reaction_system = {
       .nr_single_reactions = 0,
-      .reactions = NULL,
-      .type_index = NULL,
+      .reactions = nullptr,
+      .type_index = nullptr,
       .nr_different_types = 0,
-      .charges_of_types = NULL,
+      .charges_of_types = nullptr,
       .standard_pressure_in_simulation_units = -10,
       .temperature_reaction_ensemble = -10.0,
       .exclusion_radius = 0.0,
@@ -175,12 +175,12 @@ public:
   ///////////////////////////////////////////// Wang-Landau algorithm
 
   wang_landau_system m_current_wang_landau_system = {
-      .histogram = NULL,
+      .histogram = nullptr,
       .len_histogram = 0,
-      .wang_landau_potential = NULL,
+      .wang_landau_potential = nullptr,
       .nr_collective_variables = 0,
-      .collective_variables = NULL,
-      .nr_subindices_of_collective_variable = NULL,
+      .collective_variables = nullptr,
+      .nr_subindices_of_collective_variable = nullptr,
       .wang_landau_parameter = 1.0,
       .initial_wang_landau_parameter = 1.0,
       .int_fill_value = -10,
@@ -190,9 +190,9 @@ public:
       .used_bins = -10,
       .monte_carlo_trial_moves = 0,
       .wang_landau_steps = 1,
-      .output_filename = NULL,
-      .minimum_energies_at_flat_index = NULL,
-      .maximum_energies_at_flat_index = NULL,
+      .output_filename = nullptr,
+      .minimum_energies_at_flat_index = nullptr,
+      .maximum_energies_at_flat_index = nullptr,
       .do_energy_reweighting = false,
       .polymer_start_id = -10,
       .polymer_end_id = -10,

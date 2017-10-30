@@ -1072,7 +1072,7 @@ void mpi_send_bond_slave(int pnode, int part) {
       MPI_Recv(bond, bond_size, MPI_INT, 0, SOME_TAG, comm_cart,
                MPI_STATUS_IGNORE);
     } else
-      bond = NULL;
+      bond = nullptr;
     MPI_Recv(&_delete, 1, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
     stat = local_change_bond(part, bond, _delete);
     if (bond)
@@ -1351,34 +1351,34 @@ void mpi_gather_stats_slave(int ana_num, int job) {
   switch (job) {
   case 1:
     /* calculate and reduce (sum up) energies */
-    energy_calc(NULL);
+    energy_calc(nullptr);
     break;
   case 2:
     /* calculate and reduce (sum up) virials for 'analyze pressure' or 'analyze
      * stress_tensor'*/
-    pressure_calc(NULL, NULL, NULL, NULL, 0);
+    pressure_calc(nullptr, nullptr, nullptr, nullptr, 0);
     break;
   case 3:
     /* calculate and reduce (sum up) virials, revert velocities half a timestep
      * for 'analyze p_inst' */
-    pressure_calc(NULL, NULL, NULL, NULL, 1);
+    pressure_calc(nullptr, nullptr, nullptr, nullptr, 1);
     break;
   case 4:
-    predict_momentum_particles(NULL);
+    predict_momentum_particles(nullptr);
     break;
 #ifdef LB
   case 5:
-    lb_calc_fluid_mass(NULL);
+    lb_calc_fluid_mass(nullptr);
     break;
   case 6:
-    lb_calc_fluid_momentum(NULL);
+    lb_calc_fluid_momentum(nullptr);
     break;
   case 7:
-    lb_calc_fluid_temp(NULL);
+    lb_calc_fluid_temp(nullptr);
     break;
 #ifdef LB_BOUNDARIES
   case 8:
-    lb_collect_boundary_forces(NULL);
+    lb_collect_boundary_forces(nullptr);
     break;
 #endif
 #endif
@@ -1460,7 +1460,7 @@ void mpi_local_stress_tensor_slave(int ana_num, int job) {
   local_stress_tensor_calc(TensorInBin, bins, periodic, range_start, range);
 
   for (i = 0; i < bins[0] * bins[1] * bins[2]; i++) {
-    MPI_Reduce(TensorInBin[i].e, NULL, 9, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+    MPI_Reduce(TensorInBin[i].e, nullptr, 9, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
     PTENSOR_TRACE(fprintf(
         stderr, "%d: mpi_local_stress_tensor: Tensor sent in bin %d is {",
         this_node, i));

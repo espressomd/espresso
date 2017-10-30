@@ -569,7 +569,7 @@ void three_particle_binding_domain_decomposition()
   for (int id=0;id<total_collisions;id++) {
 
       // Get first cell Idx
-      if ((local_particles[gathered_queue[id].pp1] != NULL) && (local_particles[gathered_queue[id].pp2] != NULL)) {
+      if ((local_particles[gathered_queue[id].pp1] != nullptr) && (local_particles[gathered_queue[id].pp2] != nullptr)) {
 
         Particle* p1=local_particles[gathered_queue[id].pp1];
         Particle* p2=local_particles[gathered_queue[id].pp2];

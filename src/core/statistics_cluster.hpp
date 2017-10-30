@@ -71,7 +71,7 @@ typedef struct StructCluster Cluster;
 /************************************************************/
 /*@{*/
 
-/** NULL terminated linked list of elements of a cluster (indices in particle list) */
+/** nullptr terminated linked list of elements of a cluster (indices in particle list) */
 extern ClusterElement *element;
 /** Double linked list of \ref statistics_cluster::Cluster */
 extern Cluster        *cluster;

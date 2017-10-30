@@ -228,7 +228,7 @@ void realloc_cells(int size);
 inline void init_cellplist(CellPList *cpl) {
   cpl->n = 0;
   cpl->max = 0;
-  cpl->cell = NULL;
+  cpl->cell = nullptr;
 }
 
 /** Reallocate a list of cell pointers */

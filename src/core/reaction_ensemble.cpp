@@ -338,7 +338,7 @@ int ReactionEnsemble::generic_oneway_reaction(int reaction_id, int reaction_modu
 	}
 	
 	//calculate potential energy
-	const double E_pot_old=calculate_current_potential_energy_of_system_wrap(0, NULL); //only consider potential energy since we assume that the kinetic part drops out in the process of calculating ensemble averages (kinetic part may be seperated and crossed out)
+	const double E_pot_old=calculate_current_potential_energy_of_system_wrap(0, nullptr); //only consider potential energy since we assume that the kinetic part drops out in the process of calculating ensemble averages (kinetic part may be seperated and crossed out)
 	
 	//find reacting molecules in reactants and save their properties for later recreation if step is not accepted
 	//do reaction
@@ -355,7 +355,7 @@ int ReactionEnsemble::generic_oneway_reaction(int reaction_id, int reaction_modu
 	const int number_of_saved_properties=3; //save p_id, charge and type of the reactant particle, only thing we need to hide the particle and recover it
 	make_reaction_attempt(current_reaction, changed_particles_properties, p_ids_created_particles, hidden_particles_properties);
 	
-	const double E_pot_new=calculate_current_potential_energy_of_system_wrap(0, NULL);
+	const double E_pot_new=calculate_current_potential_energy_of_system_wrap(0, nullptr);
 
 
 	//Wang-Landau begin
@@ -455,7 +455,7 @@ int ReactionEnsemble::add_types_to_index(int* type_list, int len_type_list, int 
 int ReactionEnsemble::update_type_index(int* reactant_types, int len_reactant_types, int* product_types, int len_product_types){
 	//should only be used when defining a new reaction
 	int status_gc_init=0;
-	if(m_current_reaction_system.type_index==NULL){
+	if(m_current_reaction_system.type_index==nullptr){
 		m_current_reaction_system.type_index=(int*) calloc(1,sizeof(int));
 		if(len_reactant_types>0)
 			m_current_reaction_system.type_index[0]=reactant_types[0];
@@ -740,7 +740,7 @@ bool ReactionEnsemble::do_global_mc_move_for_particles_of_type(int type, int sta
 	}
 
 
-	const double E_pot_old=calculate_current_potential_energy_of_system_wrap(0, NULL);
+	const double E_pot_old=calculate_current_potential_energy_of_system_wrap(0, nullptr);
 
 	double particle_positions[3*particle_number_of_type];
 	int changed_particle_counter=0;
@@ -814,7 +814,7 @@ bool ReactionEnsemble::do_global_mc_move_for_particles_of_type(int type, int sta
 		
 	}
 	
-	const double E_pot_new=calculate_current_potential_energy_of_system_wrap(0, NULL);
+	const double E_pot_new=calculate_current_potential_energy_of_system_wrap(0, nullptr);
 	double beta =1.0/m_current_reaction_system.temperature_reaction_ensemble;
 	
 	int new_state_index;
@@ -822,7 +822,7 @@ bool ReactionEnsemble::do_global_mc_move_for_particles_of_type(int type, int sta
 	if(use_wang_landau==true){
 		new_state_index=get_flattened_index_wang_landau_of_current_state();
 		std::vector<int> dummy_old_particle_numbers;
-		bf=calculate_boltzmann_factor_reaction_ensemble_wang_landau(NULL, E_pot_old, E_pot_new, dummy_old_particle_numbers, old_state_index, new_state_index, true);
+		bf=calculate_boltzmann_factor_reaction_ensemble_wang_landau(nullptr, E_pot_old, E_pot_new, dummy_old_particle_numbers, old_state_index, new_state_index, true);
 	}else{
 		bf=std::min(1.0, bf*exp(-beta*(E_pot_new-E_pot_old))); //Metropolis Algorithm since proposal density is symmetric
 	}
@@ -1082,44 +1082,44 @@ double find_maximum(double* list, int len){
 * Initializes the current Wang-Landau system.
 */
 int ReactionEnsemble::initialize_wang_landau(){
-	if(m_current_wang_landau_system.nr_subindices_of_collective_variable!=NULL){
+	if(m_current_wang_landau_system.nr_subindices_of_collective_variable!=nullptr){
 		//initialize_wang_landau() has been called before, free everything that was allocated
 		free(m_current_wang_landau_system.nr_subindices_of_collective_variable);
 	}
 	
 	//initialize deltas for collective variables which are of the type of a degree of association
 	int energy_collective_variable_index=-10;
-	double* min_boundaries_energies=NULL;
-	double* max_boundaries_energies=NULL;
+	double* min_boundaries_energies=nullptr;
+	double* max_boundaries_energies=nullptr;
 	for(int collective_variable_i=0; collective_variable_i<m_current_wang_landau_system.nr_collective_variables;collective_variable_i++){
 		collective_variable* current_collective_variable=m_current_wang_landau_system.collective_variables[collective_variable_i];
-		if(current_collective_variable->corresponding_acid_types!=NULL){
+		if(current_collective_variable->corresponding_acid_types!=nullptr){
 			//found a collective variable which is of the type of a degree_of_association
 			current_collective_variable->delta_CV=calculate_delta_degree_of_association(collective_variable_i);
 		}
 		
 		int flattened_index_previous_run=0; //len_histogram of energy preparation run
-		if(current_collective_variable->energy_boundaries_filename!=NULL){
+		if(current_collective_variable->energy_boundaries_filename!=nullptr){
 			//found a collective variable which is not of the type of an energy
 			m_current_wang_landau_system.do_energy_reweighting=true;
 			energy_collective_variable_index=collective_variable_i;
 			//load energy boundaries from file
 			FILE* pFile;
 			pFile = fopen(current_collective_variable->energy_boundaries_filename,"r");
-			if (pFile==NULL){
+			if (pFile==nullptr){
 			    throw std::runtime_error("ERROR: energy boundaries file for the specific system could not be read.\n");
 				// Note that you cannot change the other collective variables in the pre-production run and the production run
 				return ES_ERROR;
 			}
 			//save minimum and maximum energies as a function of the other collective variables under m_current_wang_landau_system.energ...
-			char *line = NULL;
+			char *line = nullptr;
 			size_t len = 0;
 			ssize_t length_line;
 			const char* delim="\t ";
 			getline(&line, &len, pFile);//dummy call of getline to get rid of header line (first line in file)
 			while ((length_line = getline(&line, &len, pFile)) != -1) {
 				int counter_words_in_line=0;
-				for(char* word=strtok(line,delim);word!=NULL;word=strtok(NULL,delim)){
+				for(char* word=strtok(line,delim);word!=nullptr;word=strtok(nullptr,delim)){
 					if(counter_words_in_line<m_current_wang_landau_system.nr_collective_variables-1){
 						counter_words_in_line+=1;
 						continue;
@@ -1187,11 +1187,11 @@ int ReactionEnsemble::initialize_wang_landau(){
 	//assign determine_current_state_in_this_collective_variable function pointers to correct function
 	for(int collective_variable_i=0; collective_variable_i<m_current_wang_landau_system.nr_collective_variables;collective_variable_i++){
 		collective_variable* current_collective_variable=m_current_wang_landau_system.collective_variables[collective_variable_i];
-		if(current_collective_variable->corresponding_acid_types!=NULL){
+		if(current_collective_variable->corresponding_acid_types!=nullptr){
 			//found a collective variable which is not of the type of a degree_of_association association)	
 			current_collective_variable->determine_current_state_in_collective_variable_with_index=&calculate_degree_of_association;
 		}
-		if(current_collective_variable->energy_boundaries_filename!=NULL){
+		if(current_collective_variable->energy_boundaries_filename!=nullptr){
 			//found a collective variable which is not of the type of an energy
 			current_collective_variable->determine_current_state_in_collective_variable_with_index=&calculate_current_potential_energy_of_system_wrap;
 		}
@@ -1307,10 +1307,10 @@ void ReactionEnsemble::free_wang_landau(){
 	free(m_current_wang_landau_system.wang_landau_potential);
 	for(int CV_i=0;CV_i<m_current_wang_landau_system.nr_collective_variables;CV_i++){
 		collective_variable* current_collective_variable=m_current_wang_landau_system.collective_variables[CV_i];
-		if(current_collective_variable->corresponding_acid_types!=NULL) { //check wether we have a collective variable which is of the type of a degree of association
+		if(current_collective_variable->corresponding_acid_types!=nullptr) { //check wether we have a collective variable which is of the type of a degree of association
 			free(current_collective_variable->corresponding_acid_types);
 		}
-		if(current_collective_variable->energy_boundaries_filename!=NULL){//check wether we have a collective variable which is of the type of an energy
+		if(current_collective_variable->energy_boundaries_filename!=nullptr){//check wether we have a collective variable which is of the type of an energy
 			free(current_collective_variable->energy_boundaries_filename);
 		}
 		free(current_collective_variable);
@@ -1319,9 +1319,9 @@ void ReactionEnsemble::free_wang_landau(){
 	free(m_current_wang_landau_system.output_filename);
 	free(m_current_wang_landau_system.nr_subindices_of_collective_variable);
 
-	if(m_current_wang_landau_system.minimum_energies_at_flat_index!=NULL) //only present in energy preparation run
+	if(m_current_wang_landau_system.minimum_energies_at_flat_index!=nullptr) //only present in energy preparation run
 		free(m_current_wang_landau_system.minimum_energies_at_flat_index);
-	if(m_current_wang_landau_system.maximum_energies_at_flat_index!=NULL)
+	if(m_current_wang_landau_system.maximum_energies_at_flat_index!=nullptr)
 		free(m_current_wang_landau_system.maximum_energies_at_flat_index);
 }
 
@@ -1424,7 +1424,7 @@ void ReactionEnsemble::write_wang_landau_results_to_file(char* full_path_to_outp
 
 	FILE* pFile;
 	pFile = fopen(full_path_to_output_filename,"w");
-	if (pFile==NULL){
+	if (pFile==nullptr){
 	    throw std::runtime_error("ERROR: Wang-Landau file could not be written\n");
 	}else{
 		int* nr_subindices_of_collective_variable =m_current_wang_landau_system.nr_subindices_of_collective_variable;
@@ -1450,7 +1450,7 @@ void ReactionEnsemble::write_wang_landau_results_to_file(char* full_path_to_outp
 *Update the minimum and maximum observed energies using the current state. Needed for perliminary energy reweighting runs.
 */
 int ReactionEnsemble::update_maximum_and_minimum_energies_at_current_state(){
-	if(m_current_wang_landau_system.minimum_energies_at_flat_index==NULL || m_current_wang_landau_system.maximum_energies_at_flat_index==NULL){
+	if(m_current_wang_landau_system.minimum_energies_at_flat_index==nullptr || m_current_wang_landau_system.maximum_energies_at_flat_index==nullptr){
 		m_current_wang_landau_system.minimum_energies_at_flat_index=(double*) calloc(1,sizeof(double)*m_current_wang_landau_system.len_histogram);
 		m_current_wang_landau_system.maximum_energies_at_flat_index=(double*) calloc(1,sizeof(double)*m_current_wang_landau_system.len_histogram);
 		for (int i = 0; i < m_current_wang_landau_system.len_histogram; i++){
@@ -1459,7 +1459,7 @@ int ReactionEnsemble::update_maximum_and_minimum_energies_at_current_state(){
 		}
 	}
 	
-	const double E_pot_current=calculate_current_potential_energy_of_system_wrap(0, NULL);
+	const double E_pot_current=calculate_current_potential_energy_of_system_wrap(0, nullptr);
 	int index=get_flattened_index_wang_landau_of_current_state();
 
 	//update stored energy values
@@ -1480,7 +1480,7 @@ int ReactionEnsemble::update_maximum_and_minimum_energies_at_current_state(){
 void ReactionEnsemble::write_out_preliminary_energy_run_results (char* full_path_to_output_filename) {
 	FILE* pFile;
 	pFile = fopen(full_path_to_output_filename,"w");
-	if(pFile==NULL){
+	if(pFile==nullptr){
 	    throw std::runtime_error("ERROR: Wang-Landau file could not be written\n");
 	}else{
 		fprintf(pFile, "#nbar E_min E_max\n");
@@ -1669,7 +1669,7 @@ int ReactionEnsemble::do_reaction_constant_pH(){
 	//get a list of reactions where a randomly selected particle type occurs in the reactant list. the selection probability of the particle types has to be proportional to the number of occurances of the number of particles with this type
 	
 	//for optimizations this list could be determined during the initialization
-	int* list_of_reaction_ids_with_given_reactant_type=NULL;
+	int* list_of_reaction_ids_with_given_reactant_type=nullptr;
 	int found_reactions_with_given_reactant_type=0;
 	while(found_reactions_with_given_reactant_type==0) { // avoid selecting a (e.g. salt) particle which does not take part in a reaction
 		int random_p_id =get_random_p_id(); // only used to determine which reaction is attempted.

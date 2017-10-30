@@ -549,7 +549,7 @@ void File::WriteDataset(T &data, const std::string &path, int *change_extent,
   for (int i = 0; i < rank; i++) {
     maxdims[i] = H5S_UNLIMITED;
   }
-  H5Sselect_hyperslab(ds, H5S_SELECT_SET, offset, NULL, count, NULL);
+  H5Sselect_hyperslab(ds, H5S_SELECT_SET, offset, nullptr, count, nullptr);
   /* Create a temporary dataspace. */
   hid_t ds_new = H5Screate_simple(rank, count, maxdims);
   /* Finally write the data to the dataset. */
@@ -583,7 +583,7 @@ void File::WriteScript(std::string const &filename) {
   dtype = H5Tcopy(H5T_C_S1);
   H5Tset_size(dtype, filelen * sizeof(char));
 
-  space = H5Screate_simple(1, dims, NULL);
+  space = H5Screate_simple(1, dims, nullptr);
   /* Create the dataset. */
   hid_t link_crt_plist = H5Pcreate(H5P_LINK_CREATE);
   H5Pset_create_intermediate_group(

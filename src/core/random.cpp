@@ -70,7 +70,7 @@ int get_state_size_of_generator() {
 void mpi_random_seed_slave(int pnode, int cnt) {
   int this_seed;
 
-  MPI_Scatter(NULL, 1, MPI_INT, &this_seed, 1, MPI_INT, 0, comm_cart);
+  MPI_Scatter(nullptr, 1, MPI_INT, &this_seed, 1, MPI_INT, 0, comm_cart);
 
   RANDOM_TRACE(printf("%d: Received seed %d\n", this_node, this_seed));
   init_random_seed(this_seed);

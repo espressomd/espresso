@@ -89,7 +89,7 @@ LB_Parameters lbpar = {
 };
 
 /** The DnQm model to be used. */
-LB_Model lbmodel = { 19, d3q19_lattice, d3q19_coefficients, d3q19_w, NULL, 1./3. };
+LB_Model lbmodel = { 19, d3q19_lattice, d3q19_coefficients, d3q19_w, nullptr, 1./3. };
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  * ! MAKE SURE THAT D3Q19 is #undefined WHEN USING OTHER MODELS !
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
@@ -106,13 +106,13 @@ LB_Model lbmodel = { 19, d3q19_lattice, d3q19_coefficients, d3q19_w, NULL, 1./3.
 Lattice lblattice;
 
 /** Pointer to the velocity populations of the fluid nodes */
-double **lbfluid[2] = { NULL, NULL };
+double **lbfluid[2] = { nullptr, nullptr };
 
 /** Pointer to the hydrodynamic fields of the fluid nodes */
-LB_FluidNode *lbfields = NULL;
+LB_FluidNode *lbfields = nullptr;
 
 /** Communicator for halo exchange between processors */
-HaloCommunicator update_halo_comm = { 0, NULL };
+HaloCommunicator update_halo_comm = { 0, nullptr };
 
 
 /*@{*/
@@ -646,7 +646,7 @@ int lb_lbfluid_get_ext_force(double* p_f){
 int lb_lbfluid_print_vtk_boundary(char* filename) {
     FILE* fp = fopen(filename, "w");
 
-    if(fp == NULL)
+    if(fp == nullptr)
     {
         return 1;
     }
@@ -715,7 +715,7 @@ int lb_lbfluid_print_vtk_density(char** filename) {
     for(ii=0;ii<LB_COMPONENTS;++ii) {
         FILE* fp = fopen(filename[ii], "w");
 
-        if(fp == NULL) {
+        if(fp == nullptr) {
             perror("lb_lbfluid_print_vtk_density");
             return 1;
         }
@@ -756,7 +756,7 @@ int lb_lbfluid_print_vtk_density(char** filename) {
 int lb_lbfluid_print_vtk_velocity(char* filename, std::vector<int> bb1, std::vector<int> bb2) {
     FILE* fp = fopen(filename, "w");
 
-    if(fp == NULL)
+    if(fp == nullptr)
     {
         return 1;
     }
@@ -838,7 +838,7 @@ int lb_lbfluid_print_vtk_velocity(char* filename, std::vector<int> bb1, std::vec
 int lb_lbfluid_print_boundary(char* filename) {
     FILE* fp = fopen(filename, "w");
 
-    if(fp == NULL)
+    if(fp == nullptr)
     {
 	  	return 1;
     }
@@ -898,7 +898,7 @@ int lb_lbfluid_print_boundary(char* filename) {
 int lb_lbfluid_print_velocity(char* filename) {
     FILE* fp = fopen(filename, "w");
 
-    if(fp == NULL)
+    if(fp == nullptr)
     {
         return 1;
     }
@@ -1147,9 +1147,9 @@ int lb_lbnode_get_rho(int* ind, double* p_rho){
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
         int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
-        static LB_rho_v_pi_gpu *host_print_values=NULL;
+        static LB_rho_v_pi_gpu *host_print_values=nullptr;
 
-        if(host_print_values==NULL) host_print_values = (LB_rho_v_pi_gpu *) Utils::malloc(sizeof(LB_rho_v_pi_gpu));
+        if(host_print_values==nullptr) host_print_values = (LB_rho_v_pi_gpu *) Utils::malloc(sizeof(LB_rho_v_pi_gpu));
         lb_print_node_GPU(single_nodeindex, host_print_values);
         for(int ii=0;ii<LB_COMPONENTS;ii++) {
             p_rho[ii] = (double)(host_print_values->rho[ii]);
@@ -1178,8 +1178,8 @@ int lb_lbnode_get_rho(int* ind, double* p_rho){
 int lb_lbnode_get_u(int* ind, double* p_u) {
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-        static LB_rho_v_pi_gpu *host_print_values=NULL;
-        if(host_print_values==NULL) host_print_values= (LB_rho_v_pi_gpu *) Utils::malloc(sizeof(LB_rho_v_pi_gpu));
+        static LB_rho_v_pi_gpu *host_print_values=nullptr;
+        if(host_print_values==nullptr) host_print_values= (LB_rho_v_pi_gpu *) Utils::malloc(sizeof(LB_rho_v_pi_gpu));
 
         int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
         lb_print_node_GPU(single_nodeindex, host_print_values);
@@ -1309,8 +1309,8 @@ int lb_lbnode_get_pi(int* ind, double* p_pi) {
 int lb_lbnode_get_pi_neq(int* ind, double* p_pi) {
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-        static LB_rho_v_pi_gpu *host_print_values=NULL;
-        if(host_print_values==NULL) host_print_values= (LB_rho_v_pi_gpu *) Utils::malloc(sizeof(LB_rho_v_pi_gpu));
+        static LB_rho_v_pi_gpu *host_print_values=nullptr;
+        if(host_print_values==nullptr) host_print_values= (LB_rho_v_pi_gpu *) Utils::malloc(sizeof(LB_rho_v_pi_gpu));
 
         int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
         lb_print_node_GPU(single_nodeindex, host_print_values);
@@ -1510,7 +1510,7 @@ static void halo_push_communication() {
     Lattice::index_t index;
     int x, y, z, count;
     int rnode, snode;
-    double *buffer=NULL, *sbuf=NULL, *rbuf=NULL;
+    double *buffer=nullptr, *sbuf=nullptr, *rbuf=nullptr;
     MPI_Status status;
 
     int yperiod = lblattice.halo_grid[0];
@@ -1886,7 +1886,7 @@ static void lb_realloc_fluid() {
  *  See also \ref halo.cpp */
 static void lb_prepare_communication() {
     int i;
-    HaloCommunicator comm = { 0, NULL };
+    HaloCommunicator comm = { 0, nullptr };
 
     /* since the data layout is a structure of arrays, we have to
      * generate a communication for this structure: first we generate
