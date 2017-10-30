@@ -5,16 +5,17 @@
 # 3) measure temperature of colloid and fluid  
 
 from __future__ import print_function
+import sys
+import numpy as np
 import unittest as ut
 import espressomd
 import espressomd.lb
 from espressomd import *
-import numpy as np
 from tests_common import abspath
 
-@ut.skipIf(not espressomd.has_features(["LB_GPU","LENNARD_JONES"]),
+@ut.skipIf(not espressomd.has_features(["LB_GPU","LENNARD_JONES"]) or espressomd.has_features("SHANCHEN"),
            "Features not available, skipping test!")
-class lb_test(ut.TestCase):
+class TestLBGPU(ut.TestCase):
 
     es = espressomd.System()
     n_nodes = es.cell_system.get_state()["n_nodes"]
@@ -156,4 +157,7 @@ class lb_test(ut.TestCase):
 
         
 if __name__ == "__main__":
-    ut.main()
+    suite = ut.TestSuite()
+    suite.addTests(ut.TestLoader().loadTestsFromTestCase(TestLBGPU))
+    result = ut.TextTestRunner(verbosity=4).run(suite)
+    sys.exit(not result.wasSuccessful())
