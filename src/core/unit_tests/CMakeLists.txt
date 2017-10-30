@@ -19,7 +19,7 @@
 
 # Build tests only when testing
 set_directory_properties(PROPERTIES EXCLUDE_FROM_ALL ON)
-  
+
 # Target for the unit tests
 add_custom_target(check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure)
 
@@ -35,6 +35,12 @@ function(UNIT_TEST)
 
   # If NUM_PROC is given, set up MPI parallel test case
   if( TEST_NUM_PROC )
+    if(DEFINED TEST_NP)
+      if(${TEST_NUM_PROC} GREATER ${TEST_NP})
+        set(TEST_NUM_PROC ${TEST_NP})
+      endif()
+    endif()
+
     add_test(${TEST_NAME} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${TEST_NUM_PROC} ${TEST_NAME})
   else( )
     add_test(${TEST_NAME} ${TEST_NAME})
@@ -78,3 +84,4 @@ unit_test(NAME Particle_test SRC Particle_test.cpp)
 unit_test(NAME for_each_pair_test SRC for_each_pair_test.cpp)
 unit_test(NAME all_compare_test SRC all_compare_test.cpp NUM_PROC 3)
 unit_test(NAME None_test SRC None_test.cpp)
+unit_test(NAME keys_test SRC keys_test.cpp)

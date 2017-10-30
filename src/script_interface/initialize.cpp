@@ -29,6 +29,8 @@
 #include "correlators/initialize.hpp" 
 #include "lbboundaries/initialize.hpp"
 
+#include "ComFixed.hpp"
+
 #include "ParallelScriptInterface.hpp"
 #include "VariantTester.hpp"
 
@@ -49,6 +51,7 @@ void initialize() {
   LBBoundaries::initialize();
 
   ScriptInterface::register_new<Testing::VariantTester>("Testing::VariantTester");
+  ScriptInterface::register_new<ComFixed>();
 }
 
 } /* namespace ScriptInterface */

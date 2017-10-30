@@ -45,6 +45,8 @@ from .observables import AutoUpdateObservables
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
 from .ekboundaries import EKBoundaries
+from .comfixed import ComFixed
+
 
 import sys
 import random  # for true random numbers from os.urandom()
@@ -83,6 +85,7 @@ cdef class System(object):
         ekboundaries
         __seed
         cuda_init_handle
+        comfixed
 
     def __init__(self):
         global _system_created
@@ -106,6 +109,8 @@ cdef class System(object):
                 self.ekboundaries = EKBoundaries()
             IF CUDA:
                 self.cuda_init_handle = cuda_init.CudaInitHandle()
+
+            self.comfixed = ComFixed()
             _system_created = True
         else:
             raise RuntimeError(
@@ -360,8 +365,9 @@ cdef class System(object):
         d_new : float
                 new box length
         dir : str, optional
-              coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
-              Isotropic assumes a cubic box.
+                coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
+                Isotropic assumes a cubic box.
+
         """
 
         if d_new < 0:
@@ -381,6 +387,7 @@ cdef class System(object):
     def volume(self):
         """
         Return box volume of the cuboid box
+
         """
 
         return self.box_l[0] * self.box_l[1] * self.box_l[2]
