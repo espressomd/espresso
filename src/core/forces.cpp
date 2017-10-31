@@ -36,6 +36,7 @@
 #include "maggs.hpp"
 #include "p3m_gpu.hpp"
 #include "partCfg_global.hpp"
+#include "forcecap.hpp"
 #include "short_range_loop.hpp"
 
 #include <cassert>
@@ -209,6 +210,9 @@ void force_calc() {
   auto local_particles = local_cells.particles();
   // should be pretty late, since it needs to zero out the total force
   comfixed.apply(comm_cart, local_particles);
+
+  // Needs to be the last one to be effective
+  forcecap_cap(local_cells.particles());
 
   // mark that forces are now up-to-date
   recalc_forces = 0;

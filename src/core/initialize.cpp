@@ -627,6 +627,11 @@ void on_parameter_change(int field) {
     on_ghost_flags_change();
     break;
 #endif
+  case FIELD_FORCE_CAP:
+    /* If the force cap changed, forces are invalid */
+    invalidate_obs();
+    recalc_forces = 1;
+    break;
   }
 }
 
