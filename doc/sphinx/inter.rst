@@ -2307,7 +2307,7 @@ potential is replaced by :math:`r F_\mathrm{max}`. Particles placed exactly on
 top of each other will be subject to a force of magnitude along the first
 coordinate axis.
 
- By artificially capping the forces, it is possible to simulate a system
+By artificially capping the forces, it is possible to simulate a system
 with overlaps. By gradually raising the cap value, possible overlaps
 become unfavorable, and the system equilibrates to a overlap free
 configuration.

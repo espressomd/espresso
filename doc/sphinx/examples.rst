@@ -1,5 +1,5 @@
 Tutorials
-========
+=========
 
 There is a number of tutorials that guide you in creating simulations using a number of different features of |es|. You can find them in the directory ``/doc/tutorials``.
 
