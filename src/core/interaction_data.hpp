@@ -426,24 +426,17 @@ typedef struct {
 /*@}*/
 #endif
 
-#ifdef COMFIXED
-  /** \name center of mass directed force */
-  /*@{*/
-  int COMFIXED_flag;
-/*@}*/
-#endif
-
-#ifdef INTER_DPD
+#ifdef DPD
   /** \name DPD as interaction */
   /*@{*/
+  int dpd_wf;
+  int dpd_twf;
   double dpd_gamma;
   double dpd_r_cut;
-  int dpd_wf;
   double dpd_pref1;
   double dpd_pref2;
   double dpd_tgamma;
   double dpd_tr_cut;
-  int dpd_twf;
   double dpd_pref3;
   double dpd_pref4;
 /*@}*/

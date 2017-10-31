@@ -90,6 +90,8 @@ void prepare_comm(GhostCommunicator *comm, int data_parts, int num)
   comm->comm = (GhostCommunication*)Utils::malloc(num*sizeof(GhostCommunication));
   for(i=0; i<num; i++) {
     comm->comm[i].shift[0]=comm->comm[i].shift[1]=comm->comm[i].shift[2]=0.0;
+    comm->comm[i].n_part_lists = 0;
+    comm->comm[i].part_lists = nullptr;
   }
 }
 
