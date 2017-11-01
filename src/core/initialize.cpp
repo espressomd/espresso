@@ -90,8 +90,6 @@ void on_program_start() {
   EF_ALLOW_MALLOC_0 = 1;
 #endif
 
-  ErrorHandling::register_sigint_handler();
-
 #ifdef CUDA
   cuda_init();
 #endif
