@@ -1137,7 +1137,6 @@ double ELC_energy() {
 }
 
 int ELC_tune(double error) {
-  printf("ELC_tune\n");
   double err;
   double h = elc_params.h, lz = box_l[2];
   double min_inv_boxl = std::min(ux, uy);
@@ -1198,7 +1197,6 @@ int ELC_sanity_checks() {
 }
 
 void ELC_init() {
-  printf("ELC_init\n");
   double maxsl;
 
   ELC_setup_constants();
@@ -1233,7 +1231,6 @@ void ELC_init() {
 
   if (elc_params.far_calculated && (coulomb.method == COULOMB_ELC_P3M &&
                                     elc_params.dielectric_contrast_on)) {
-    printf("ELC_init tune\n");
     if (ELC_tune(elc_params.maxPWerror) == ES_ERROR) {
       runtimeErrorMsg() << "ELC auto-retuning failed, gap size too small";
     }
@@ -1248,7 +1245,6 @@ void ELC_init() {
     p3m.params.additional_mesh[2] = 0;
   }
   
-  printf("far_cut %f\n far_cut2 %f\n h %f\n space_layer %f\n space_box %f\n far_calculated %d\n addmesh %f %f %f\n",elc_params.far_cut,elc_params.far_cut2, elc_params.h, elc_params.space_layer, elc_params.space_box, elc_params.far_calculated, p3m.params.additional_mesh[0],p3m.params.additional_mesh[1],p3m.params.additional_mesh[2]);
 }
 
 void ELC_on_resort_particles() {
@@ -1327,7 +1323,6 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
     elc_params.far_calculated = 0;
   } else {
     elc_params.far_calculated = 1;
-    printf("ELC_set_params tune\n");
     if (ELC_tune(elc_params.maxPWerror) == ES_ERROR) {
       runtimeErrorMsg() << "ELC tuning failed, gap size too small";
     }
