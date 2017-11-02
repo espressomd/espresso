@@ -34,6 +34,15 @@ namespace ErrorHandling {
 RuntimeErrorCollector::RuntimeErrorCollector(const communicator &comm)
     : m_comm(comm) {}
 
+RuntimeErrorCollector::~RuntimeErrorCollector() {
+  if (!m_errors.empty())
+    std::cerr << "There were unhandled errors.\n";
+  /* Print remaining error messages on destruction */
+  for (auto const &e : m_errors) {
+    std::cerr << e.format() << std::endl;
+  }
+}
+
 void RuntimeErrorCollector::message(const RuntimeError &message) {
   m_errors.emplace_back(message);
 }
