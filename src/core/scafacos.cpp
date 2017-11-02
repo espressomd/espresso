@@ -78,9 +78,10 @@ int ScafacosData::update_particle_data() {
   }
 
   for (auto const &p : local_cells.particles()) {
-    positions.push_back(p.r.p[0]);
-    positions.push_back(p.r.p[1]);
-    positions.push_back(p.r.p[2]);
+    auto pos=folded_position(p);
+    positions.push_back(pos[0]);
+    positions.push_back(pos[1]);
+    positions.push_back(pos[2]);
     if (!dipolar()) {
       charges.push_back(p.p.q);
     } else {
