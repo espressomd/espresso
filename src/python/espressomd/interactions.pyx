@@ -236,7 +236,6 @@ IF LENNARD_JONES == 1:
                 "cutoff": ia_params.LJ_cut,
                 "shift": ia_params.LJ_shift,
                 "offset": ia_params.LJ_offset,
-                "cap": ia_params.LJ_capradius,
                 "min": ia_params.LJ_min}
 
         def is_active(self):
@@ -261,9 +260,6 @@ IF LENNARD_JONES == 1:
                     Constant shift of the potential. (4*epsilon*shift).
             offset : :obj:`float`, optional
                      Offset distance of the interaction.
-            cap : :obj:`float`, optional
-                  If individual force caps are used, determines the distance
-                  at which the force is capped.
             min : :obj:`float`, optional
                   Restricts the interaction to a minimal distance.
 
@@ -284,7 +280,6 @@ IF LENNARD_JONES == 1:
                                         self._params["cutoff"],
                                         self._params["shift"],
                                         self._params["offset"],
-                                        self._params["cap"],
                                         self._params["min"]):
                 raise Exception("Could not set Lennard Jones parameters")
 
@@ -298,7 +293,6 @@ IF LENNARD_JONES == 1:
                 "cutoff": 0.,
                 "shift": 0.,
                 "offset": 0.,
-                "cap": 0.,
                 "min": 0.}
 
         def type_name(self):
@@ -311,7 +305,7 @@ IF LENNARD_JONES == 1:
             """All parameters that can be set.
 
             """
-            return "epsilon", "sigma", "cutoff", "shift", "offset", "cap", "min"
+            return "epsilon", "sigma", "cutoff", "shift", "offset", "min"
 
         def required_keys(self):
             """Parameters that have to be set.
@@ -605,7 +599,6 @@ IF LENNARD_JONES_GENERIC == 1:
                                     self._params["e2"],
                                     self._params["b1"],
                                     self._params["b2"],
-                                    0.0,
                                     self._params["lam"],
                                     self._params["delta"]):
                     raise Exception(
@@ -621,7 +614,7 @@ IF LENNARD_JONES_GENERIC == 1:
                                     self._params["e2"],
                                     self._params["b1"],
                                     self._params["b2"],
-                                    0.0):
+                                    ):
                     raise Exception(
                         "Could not set Generic Lennard Jones parameters")
 
@@ -752,29 +745,13 @@ cdef class NonBondedInteractions(object):
                 "NonBondedInteractions[] expects two particle types as indices.")
         return NonBondedInteractionHandle(key[0], key[1])
 
-    def set_force_cap(self, cap):
-        """Setter function for force cap.
-
-        """
-        if forcecap_set_params(cap):
-            raise Exception("Could not set forcecap")
-
-    def get_force_cap(self):
-        """Getter function for force cap.
-
-        """
-        return force_cap
-
     def __getstate__(self):
         # contains info about ALL nonbonded interactions
         odict = NonBondedInteractionHandle(-1, -
                                            1).lennard_jones.user_interactions
-        odict['force_cap'] = self.get_force_cap()
         return odict
 
     def __setstate__(self, odict):
-        self.set_force_cap(odict['force_cap'])
-        del odict['force_cap']
         for _type1 in odict:
             for _type2 in odict[_type1]:
                 attrs = dir(NonBondedInteractionHandle(_type1, _type2))

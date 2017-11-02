@@ -90,8 +90,6 @@ void on_program_start() {
   EF_ALLOW_MALLOC_0 = 1;
 #endif
 
-  ErrorHandling::register_sigint_handler();
-
 #ifdef CUDA
   cuda_init();
 #endif
@@ -644,6 +642,11 @@ void on_parameter_change(int field) {
     on_ghost_flags_change();
     break;
 #endif
+  case FIELD_FORCE_CAP:
+    /* If the force cap changed, forces are invalid */
+    invalidate_obs();
+    recalc_forces = 1;
+    break;
   }
 }
 

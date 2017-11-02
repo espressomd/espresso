@@ -214,12 +214,12 @@ while min_dist < max_sigma:
             [types["Anion"],types["Cation"]],
             [types["Anion"],types["Cation"]])
     cap += min_dist
-    system.non_bonded_inter.set_force_cap(cap)
+    system.force_cap = cap
     system.integrator.run(10)
 
 #Don't forget to reset thermostat and force cap
 system.thermostat.set_langevin(kT=temp, gamma=gamma)
-system.non_bonded_inter.set_force_cap(0)
+system.force_cap = 0
 \end{pypresso}
 
 \es\ uses so-called \pypressoinline{actors} for electrostatics, magnetostatics and

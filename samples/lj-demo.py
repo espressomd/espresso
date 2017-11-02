@@ -108,7 +108,7 @@ system.box_l = [box_l, box_l, box_l]
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
     cutoff=lj_cut, shift="auto")
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 
 # Particle setup
 #############################################################
@@ -303,7 +303,7 @@ class Controls(HasTraits):
 
 # set LJ cap
 lj_cap = 20
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 
 # # Warmup Integration Loop
 # i = 0
@@ -315,7 +315,7 @@ system.non_bonded_inter.set_force_cap(lj_cap)
 #
 # #   Increase LJ cap
 #     lj_cap = lj_cap + 10
-#     system.non_bonded_inter.set_force_cap(lj_cap)
+#     system.force_cap = lj_cap
 #     mayavi.update()
 
 #############################################################
@@ -324,7 +324,7 @@ system.non_bonded_inter.set_force_cap(lj_cap)
 
 # remove force capping
 #lj_cap = 0
-# system.non_bonded_inter.set_force_cap(lj_cap)
+# system.force_cap = lj_cap
 
 # get initial observables
 pressure = system.analysis.pressure()

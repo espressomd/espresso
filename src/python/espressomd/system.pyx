@@ -45,12 +45,15 @@ from .observables import AutoUpdateObservables
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
 from .ekboundaries import EKBoundaries
+from .comfixed import ComFixed
+
 
 import sys
 import random  # for true random numbers from os.urandom()
 
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
-                      "time_step", "timings"]
+                      "time_step", "timings", "force_cap"]
+
 IF LEES_EDWARDS == 1:
     setable_properties.append("lees_edwards_offset")
 
@@ -83,6 +86,7 @@ cdef class System(object):
         ekboundaries
         __seed
         cuda_init_handle
+        comfixed
 
     def __init__(self):
         global _system_created
@@ -106,6 +110,8 @@ cdef class System(object):
                 self.ekboundaries = EKBoundaries()
             IF CUDA:
                 self.cuda_init_handle = cuda_init.CudaInitHandle()
+
+            self.comfixed = ComFixed()
             _system_created = True
         else:
             raise RuntimeError(
@@ -144,6 +150,20 @@ cdef class System(object):
     property integ_switch:
         def __get__(self):
             return integ_switch
+
+    property force_cap:
+        """
+        If > 0, the magnitude of the force on the particles
+        are capped to this value.
+
+        type : float
+
+        """
+        def __get__(self):
+            return forcecap_get()
+
+        def __set__(self, cap):
+            forcecap_set(cap)
 
     property periodicity:
         """
@@ -401,5 +421,6 @@ cdef class System(object):
         cdef double[3] res, a, b
         a = p1.pos
         b = p2.pos
+
         get_mi_vector(res, b, a)
         return np.array((res[0], res[1], res[2]))

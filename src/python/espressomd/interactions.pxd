@@ -31,7 +31,6 @@ cdef extern from "interaction_data.hpp":
         double LJ_cut
         double LJ_shift
         double LJ_offset
-        double LJ_capradius
         double LJ_min
 
         double LJGEN_eps
@@ -39,20 +38,19 @@ cdef extern from "interaction_data.hpp":
         double LJGEN_cut
         double LJGEN_shift
         double LJGEN_offset
-        double LJGEN_capradius
         double LJGEN_a1
         double LJGEN_a2
         double LJGEN_b1
         double LJGEN_b2
         double LJGEN_lambda
         double LJGEN_softrad
-        int TAB_npoints;
-        int TAB_startindex;
-        double TAB_minval;
-        double TAB_minval2;
-        double TAB_maxval;
-        double TAB_stepsize;
-        char TAB_filename[256];
+        int TAB_npoints
+        int TAB_startindex
+        double TAB_minval
+        double TAB_minval2
+        double TAB_maxval
+        double TAB_stepsize
+        char TAB_filename[256]
 
         double GB_eps
         double GB_sig
@@ -84,7 +82,7 @@ cdef extern from "lj.hpp":
     cdef int lennard_jones_set_params(int part_type_a, int part_type_b,
                                       double eps, double sig, double cut,
                                       double shift, double offset,
-                                      double cap_radius, double min)
+                                      double min)
 
 IF GAY_BERNE:
     cdef extern from "gb.hpp":
@@ -93,25 +91,19 @@ IF GAY_BERNE:
                                  double k1, double k2,
                                  double mu, double nu);
 
-cdef extern from "forcecap.hpp":
-    double force_cap
-    int forcecap_set_params(double forcecap)
-
 cdef extern from "ljgen.hpp":
     IF LJGEN_SOFTCORE:
         cdef int ljgen_set_params(int part_type_a, int part_type_b,
                                   double eps, double sig, double cut,
                                   double shift, double offset,
                                   double a1, double a2, double b1, double b2,
-                                  double cap_radius,
                                   double genlj_lambda, double softrad)
     ELSE:
         cdef int ljgen_set_params(int part_type_a, int part_type_b,
                                   double eps, double sig, double cut,
                                   double shift, double offset,
                                   double a1, double a2, double b1, double b2,
-                                  double cap_radius)
-
+                                  )
 
 IF DPD:
     cdef extern from "dpd.hpp":

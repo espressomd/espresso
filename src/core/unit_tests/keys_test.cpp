@@ -1,7 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016,2017 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
+  Copyright (C) 2017 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -19,9 +17,23 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "ParticleRange.hpp"
+#define BOOST_TEST_MODULE Utils::keys test
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
 
-void forcecap_set(double forcecap);
-double forcecap_get();
+#include "core/utils/keys.hpp"
 
-void forcecap_cap(ParticleRange particles);
+#include <algorithm>
+#include <map>
+
+BOOST_AUTO_TEST_CASE(values) {
+  using pair_type = std::map<int,int>::value_type;
+
+  auto pairs = std::map<int, int>{{31, 2}, {2, 63}, {23, 9}, {4, 9}};
+  auto keys = Utils::keys(pairs);
+
+  BOOST_CHECK(
+      std::equal(keys.begin(), keys.end(), pairs.begin(),
+                 [](int k, pair_type const &kv) { return k == kv.first; }));
+}
+

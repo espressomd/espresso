@@ -139,11 +139,6 @@ class Non_bonded_interactionsTests(ut.TestCase):
                 "k2": 5.0, "mu": 2.0, "nu": 1.0},
             "gay_berne")
 
-    def test_forcecap(self):
-        self.es.non_bonded_inter.set_force_cap(17.5)
-        self.assertEqual(self.es.non_bonded_inter.get_force_cap(), 17.5)
-
-
 if __name__ == "__main__":
     print("Features: ", espressomd.features())
     ut.main()
