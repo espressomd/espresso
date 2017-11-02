@@ -1,7 +1,7 @@
 #include <algorithm>
-#include <random>
 #include <type_traits>
 #include <vector>
+#include <numeric>
 
 #include "core/utils/make_unique.hpp"
 

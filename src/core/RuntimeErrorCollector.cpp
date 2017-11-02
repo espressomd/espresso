@@ -17,11 +17,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "RuntimeErrorCollector.hpp"
-#include <utility>
+
+#include "communication.hpp"
+#include "utils/mpi/gather_buffer.hpp"
 
 #include <boost/mpi/collectives.hpp>
 
-#include "communication.hpp"
+#include <utility>
 
 using namespace std;
 using boost::mpi::communicator;
@@ -33,7 +35,11 @@ RuntimeErrorCollector::RuntimeErrorCollector(const communicator &comm)
     : m_comm(comm) {}
 
 void RuntimeErrorCollector::message(const RuntimeError &message) {
-  m_errors.push_back(message);
+  m_errors.emplace_back(message);
+}
+
+void RuntimeErrorCollector::message(RuntimeError &&message) {
+  m_errors.emplace_back(std::move(message));
 }
 
 void RuntimeErrorCollector::message(RuntimeError::ErrorLevel level,
@@ -101,38 +107,17 @@ int RuntimeErrorCollector::count(RuntimeError::ErrorLevel level) {
 void RuntimeErrorCollector::clear() { m_errors.clear(); }
 
 vector<RuntimeError> RuntimeErrorCollector::gather() {
-  typedef vector<RuntimeError> return_type;
+  vector<RuntimeError> all_errors{};
+  std::swap(all_errors, m_errors);
 
-  if (count() == 0) {
-    return return_type();
-  }
-
-  vector<return_type> all_error_vectors;
-  return_type all_errors;
-
-  // Gather the errors on the master
-  boost::mpi::gather(m_comm, m_errors, all_error_vectors, 0);
-
-  /** Flaten the vector of vectors */
-  for (auto const &v : all_error_vectors) {
-    all_errors.insert(all_errors.end(), v.begin(), v.end());
-  }
-
-  this->clear();
+  Utils::Mpi::gather_buffer(all_errors, m_comm);
 
   return all_errors;
 }
 
 void RuntimeErrorCollector::gatherSlave() {
-  // If no processor encountered an error, return
-  if (count() == 0) {
-    return;
-  }
+  Utils::Mpi::gather_buffer(m_errors, m_comm);
 
-  // Gather the errors on the master
-  boost::mpi::gather(m_comm, m_errors, 0);
-
-  // finally empty the list
   this->clear();
 }
 

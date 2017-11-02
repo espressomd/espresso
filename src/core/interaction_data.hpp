@@ -24,7 +24,7 @@
     Various procedures concerning interactions between particles.
 */
 
-#include "particle_data.hpp" /* needed for constraints */
+#include "particle_data.hpp"
 #include "utils.hpp"
 
 /** \name Type codes of bonded interactions
@@ -100,11 +100,11 @@ enum BondedInteraction {
 };
 
 /** Specify tabulated bonded interactions  */
-enum TabulatedBondedInteraction{
-    TAB_UNKNOWN = 0,
-    TAB_BOND_LENGTH = 1,
-    TAB_BOND_ANGLE = 2,
-    TAB_BOND_DIHEDRAL = 3
+enum TabulatedBondedInteraction {
+  TAB_UNKNOWN = 0,
+  TAB_BOND_LENGTH = 1,
+  TAB_BOND_ANGLE = 2,
+  TAB_BOND_DIHEDRAL = 3
 };
 
 /** Specify overlapped bonded interactions  */
@@ -140,7 +140,7 @@ enum CoulombMethod {
   COULOMB_RF,        //< Coulomb method is Reaction-Field
   COULOMB_INTER_RF,  //< Coulomb method is Reaction-Field BUT as interaction
   COULOMB_P3M_GPU,   //< Coulomb method is P3M with GPU based long range part
-                     //calculation
+                     // calculation
   COULOMB_MMM1D_GPU, //< Coulomb method is one-dimensional MMM running on GPU
   COULOMB_EWALD_GPU, //< Coulomb method is Ewald running on GPU
   COULOMB_EK,        //< Coulomb method is electrokinetics
@@ -185,14 +185,6 @@ enum DipolarInteraction {
  *  nonbonded interactions. Access via
  * get_ia_param(i, j), i,j < n_particle_types */
 typedef struct {
-
-  /** flag that tells whether there is any short-ranged interaction,
-   i.e. one that contributes to the "nonbonded" section of the
-   energy/pressure. Note that even if there is no short-ranged
-   interaction present, the \ref max_cut can be non-zero due to
-   e.g. electrostatics. */
-  int particlesInteract;
-
   /** maximal cutoff for this pair of particle types. This contains
       contributions from the short-ranged interactions, plus any
       cutoffs from global interactions like electrostatics.
@@ -206,10 +198,17 @@ typedef struct {
   double LJ_cut;
   double LJ_shift;
   double LJ_offset;
-  double LJ_capradius;
   double LJ_min;
   /*@}*/
 
+  /** flag that tells whether there is any short-ranged interaction,
+      i.e. one that contributes to the "nonbonded" section of the
+      energy/pressure. Note that even if there is no short-ranged
+      interaction present, the \ref max_cut can be non-zero due to
+      e.g. electrostatics. */
+  int particlesInteract;
+
+#ifdef LENNARD_JONES_GENERIC
   /** \name Generic Lennard-Jones with shift */
   /*@{*/
   double LJGEN_eps;
@@ -217,7 +216,6 @@ typedef struct {
   double LJGEN_cut;
   double LJGEN_shift;
   double LJGEN_offset;
-  double LJGEN_capradius;
   double LJGEN_a1;
   double LJGEN_a2;
   double LJGEN_b1;
@@ -225,6 +223,7 @@ typedef struct {
   double LJGEN_lambda;
   double LJGEN_softrad;
 /*@}*/
+#endif
 
 #ifdef LJ_ANGLE
   /** \name Directional Lennard-Jones */
@@ -238,9 +237,7 @@ typedef struct {
   int LJANGLE_bonded1neg;
   int LJANGLE_bonded2pos;
   int LJANGLE_bonded2neg;
-  /* Cap */
-  double LJANGLE_capradius;
-  /* Optional 2nd environment */
+    /* Optional 2nd environment */
   double LJANGLE_z0;
   double LJANGLE_dz;
   double LJANGLE_kappa;
@@ -298,7 +295,6 @@ typedef struct {
   double MORSE_rmin;
   double MORSE_cut;
   double MORSE_rest;
-  double MORSE_capradius;
 /*@}*/
 #endif
 
@@ -312,7 +308,6 @@ typedef struct {
   double BUCK_cut;
   double BUCK_discont;
   double BUCK_shift;
-  double BUCK_capradius;
   double BUCK_F1;
   double BUCK_F2;
 /*@}*/
@@ -381,7 +376,6 @@ typedef struct {
   double LJCOS2_offset;
   double LJCOS2_w;
   double LJCOS2_rchange;
-  double LJCOS2_capradius;
 /*@}*/
 #endif
 
@@ -425,24 +419,17 @@ typedef struct {
 /*@}*/
 #endif
 
-#ifdef COMFIXED
-  /** \name center of mass directed force */
-  /*@{*/
-  int COMFIXED_flag;
-/*@}*/
-#endif
-
-#ifdef INTER_DPD
+#ifdef DPD
   /** \name DPD as interaction */
   /*@{*/
+  int dpd_wf;
+  int dpd_twf;
   double dpd_gamma;
   double dpd_r_cut;
-  int dpd_wf;
   double dpd_pref1;
   double dpd_pref2;
   double dpd_tgamma;
   double dpd_tr_cut;
-  int dpd_twf;
   double dpd_pref3;
   double dpd_pref4;
 /*@}*/
@@ -690,9 +677,6 @@ typedef struct {
 
 /** Dummy parameters for -LJ Potential */
 typedef struct {
-  double k;
-  double r;
-  double r2;
 } Subt_lj_bond_parameters;
 
 /**Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM*/
@@ -930,8 +914,7 @@ void realloc_ia_params(int nsize);
     electrostatics. The result is stored in the global variable
     max_cut. The maximal cutoff of the non-bonded + real space
     electrostatic interactions is stored in max_cut_non_bonded. This
-    value is used in the verlet pair list algorithm (see \ref
-    verlet.hpp). */
+    value is used in the verlet pair list algorithm. */
 void recalc_maximal_cutoff();
 
 /** call when the temperature changes, for Bjerrum length adjusting. */
@@ -962,4 +945,51 @@ int virtual_set_params(int bond_type);
 void set_dipolar_method_local(DipolarInteraction method);
 #endif
 
+#include "utils/math/sqr.hpp"
+
+/** Returns true if the particles are to be considered for short range
+    interactions */
+class VerletCriterion {
+  const double m_skin;
+  const double m_eff_max_cut2;
+  const double m_eff_coulomb_cut2 = 0.;
+  const double m_eff_dipolar_cut2 = 0.;
+
+public:
+  VerletCriterion(double skin, double max_cut, double coulomb_cut = 0.,
+                  double dipolar_cut = 0.)
+      : m_skin(skin), m_eff_max_cut2(Utils::sqr(max_cut + m_skin)),
+        m_eff_coulomb_cut2(Utils::sqr(coulomb_cut + m_skin)),
+        m_eff_dipolar_cut2(Utils::sqr(dipolar_cut + m_skin)) {}
+
+  template<typename Distance>
+  bool operator()(const Particle &p1, const Particle &p2, Distance const& dist) const {
+    auto const& dist2 = dist.dist2;
+    if (dist2 > m_eff_max_cut2)
+      return false;
+
+#ifdef EXCLUSIONS
+    if (!do_nonbonded(&p1, &p2))
+      return false;
+#endif
+
+    // Within short-range distance (incl dpd and the like)
+    if (dist2 <= SQR(get_ia_param(p1.p.type, p2.p.type)->max_cut + m_skin))
+      return true;
+
+// Within real space cutoff of electrostatics and both charged
+#ifdef ELECTROSTATICS
+    if ((dist2 <= m_eff_coulomb_cut2) && (p1.p.q != 0) && (p2.p.q != 0))
+      return true;
+#endif
+
+// Within dipolar cutoff and both cary magnetic moments
+#ifdef DIPOLES
+    if ((dist2 <= m_eff_dipolar_cut2) && (p1.p.dipm != 0) && (p2.p.dipm != 0))
+      return true;
+#endif
+
+    return false;
+  }
+};
 #endif

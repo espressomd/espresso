@@ -33,7 +33,6 @@
 #include "communication.hpp"
 #include "thermostat.hpp"
 #include "grid.hpp"
-#include "domain_decomposition.hpp"
 #include "integrate.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"

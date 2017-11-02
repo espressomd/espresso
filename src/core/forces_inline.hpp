@@ -27,6 +27,11 @@
 #include "topology.hpp"
 #endif
 
+#include "thermostat.hpp"
+#include "mmm1d.hpp"
+#include "mmm2d.hpp"
+#include "p3m.hpp"
+#include "external_potential.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
 #include "angle_harmonic.hpp"
@@ -34,7 +39,6 @@
 #include "bmhtf-nacl.hpp"
 #include "buckingham.hpp"
 #include "collision.hpp"
-#include "comfixed.hpp"
 #include "constraints.hpp"
 #include "dihedral.hpp"
 #include "elc.hpp"
@@ -85,6 +89,9 @@
 #include "immersed_boundary/ibm_tribend.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
 #include "immersed_boundary/ibm_volume_conservation.hpp"
+#endif
+#ifdef DPD
+#include "dpd.hpp"
 #endif
 
 /** initialize the forces for a ghost particle */
@@ -288,22 +295,6 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node,
                       p1->p.identity, p2->p.identity, dist));
 
-/***********************************************/
-/* thermostat                                  */
-/***********************************************/
-
-#ifdef DPD
-  /* DPD thermostat forces */
-  if (thermo_switch & THERMO_DPD)
-    add_dpd_thermo_pair_force(p1, p2, d, dist, dist2);
-#endif
-
-/** The inter dpd force should not be part of the virial */
-
-#ifdef INTER_DPD
-  add_inter_dpd_pair_force(p1, p2, ia_params, d, dist, dist2);
-#endif
-
   /***********************************************/
   /* non bonded pair potentials                  */
   /***********************************************/
@@ -334,6 +325,15 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 #endif
 
 /***********************************************/
+/* thermostat                                  */
+/***********************************************/
+
+/** The inter dpd force should not be part of the virial */
+#ifdef DPD
+  add_dpd_pair_force(p1, p2, ia_params, d, dist, dist2);
+#endif
+
+/***********************************************/
 /* semi-bonded multi-body potentials            */
 /***********************************************/
 
@@ -350,7 +350,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 #ifdef ELECTROSTATICS
 
   /* real space coulomb */
-  double q1q2 = p1->p.q * p2->p.q;
+  const double q1q2 = p1->p.q * p2->p.q;
 
   switch (coulomb.method) {
 #ifdef P3M
