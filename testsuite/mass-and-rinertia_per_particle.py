@@ -52,7 +52,7 @@ class ThermoTest(ut.TestCase):
         gamma_rot[1, 1] = gamma_rot[1, 0]
         gamma_rot[1, 2] = gamma_rot[1, 0]
 
-        if test_case != 5:
+        if test_case != 4:
             self.es.thermostat.set_langevin(
                 kT=0.0,
                 gamma=[
@@ -125,10 +125,11 @@ class ThermoTest(ut.TestCase):
                 if "ROTATION" in espressomd.features():
                     self.es.part[k].gamma_rot = gamma_rot[k, :]
             
-            if test_case == 5:
+            if test_case == 4:
                 if (k == 0):
                     print("------------------------------------------------")
-                    print("Test " + str(test_case) + ": no particle specific values")
+                    print("Test " + str(test_case) + ": no particle specific values.")
+                    print("Rotational specific global thermostat")
                     print("------------------------------------------------")
                     # No assignments are needed.
 
@@ -138,7 +139,7 @@ class ThermoTest(ut.TestCase):
         else:
             for k in range(2):
                 gamma_tr[k, :] = gamma_global[:]
-                if test_case != 5:
+                if test_case != 4:
                     gamma_rot_validate[k, :] = gamma_global[:]
                 else:
                     gamma_rot_validate[k, :] = gamma_global_rot[:]
@@ -178,9 +179,9 @@ class ThermoTest(ut.TestCase):
         if espressomd.has_features(("PARTIAL_PERIODIC",)):
             self.es.periodicity = 0, 0, 0
         # Random temperature
-        kT = (0.01 + np.random.random()) * 10
+        kT = (0.3 + np.random.random()) * 5
         gamma_global = np.array((0.5 + np.random.random(3)) * 2.0 / 3.0)
-        gamma_global_rot = np.array((0.5 + np.random.random(3)) * 2.0 / 3.0)
+        gamma_global_rot = np.array((0.2 + np.random.random(3)) * 20)
 
         if test_case == 2 or test_case == 3:
             halfkT = temp / 2.0
@@ -197,7 +198,7 @@ class ThermoTest(ut.TestCase):
         for k in range(2):
             D_tr[k, :] = 2.0 * halfkT[k] / gamma_tr[k, :]
 
-        if test_case != 5:
+        if test_case != 4:
             self.es.thermostat.set_langevin(
                 kT=kT,
                 gamma=[
@@ -291,9 +292,9 @@ class ThermoTest(ut.TestCase):
                     sigma2_tr[k] = 0.0
                     for j in range(3):
                         sigma2_tr[k] = sigma2_tr[k] + D_tr[k,
-                                                           j] * (2 * dt + dt0[k,
-                                                                              j] * (- 3 + 4 * math.exp(- dt / dt0[k,
-                                                                                                                  j]) - math.exp(- 2 * dt / dt0[k,
+                                                           j] * (2.0 * dt + dt0[k,
+                                                                              j] * (- 3.0 + 4.0 * math.exp(- dt / dt0[k,
+                                                                                                                  j]) - math.exp(- 2.0 * dt / dt0[k,
                                                                                                                                                 j])))
                     dr_norm[k] = dr_norm[k] + \
                         (sum(dr2[k, :]) - sigma2_tr[k]) / sigma2_tr[k]
@@ -305,8 +306,8 @@ class ThermoTest(ut.TestCase):
         do = np.zeros((2))
         do_vec = np.zeros((2, 3))
         for k in range(2):
-            dv[k] = sum(Ev[k, :]) / (3 * halfkT[k]) - 1.0
-            do[k] = sum(Eo[k, :]) / (3 * halfkT[k]) - 1.0
+            dv[k] = sum(Ev[k, :]) / (3.0 * halfkT[k]) - 1.0
+            do[k] = sum(Eo[k, :]) / (3.0 * halfkT[k]) - 1.0
             do_vec[k, :] = Eo[k, :] / halfkT[k] - 1.0
         dr_norm = dr_norm / (n * loops)
         for k in range(2):
