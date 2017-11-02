@@ -1,10 +1,6 @@
 #ifndef UTILS_MPI_GATHERV_HPP
 #define UTILS_MPI_GATHERV_HPP
 
-#include <boost/version.hpp>
-
-#if BOOST_VERSION <= 105800
-
 #include <boost/mpi/communicator.hpp>
 #include <boost/mpi/datatype.hpp>
 #include <boost/mpi/exception.hpp>
@@ -66,15 +62,4 @@ void gatherv(const boost::mpi::communicator &comm, const T *in_values,
 }
 }
 }
-
-#else
-#include <boost/mpi/collectives/gatherv.hpp>
-
-namespace Utils {
-namespace Mpi {
-using gatherv = boost::mpi::gatherv;
-}
-}
-#endif
-
 #endif
