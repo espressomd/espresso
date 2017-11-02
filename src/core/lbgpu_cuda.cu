@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <cuda.h>
 #include <stdlib.h>
+#include <vector>
 
 #include "electrokinetics.hpp"
 #include "electrokinetics_pdb_parse.hpp"
@@ -40,6 +41,8 @@
 #include <thrust/transform_reduce.h>
 #include <thrust/functional.h>
 #include <thrust/device_ptr.h>
+#include <thrust/host_vector.h>
+#include <thrust/device_vector.h>
 
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
@@ -1548,9 +1551,9 @@ __device__ void calc_mode(float *mode, LB_nodes_gpu n_a, unsigned int node_index
  * @param part_index      particle id / thread id (Input)
  * @param node_index      node index around (8) particle (Output)
  * @param *d_v            Pointer to local device values
- * @param *interpolated_u Pointer to the interpolated velocity
+ * @param *interpolated_u Pointer to the interpolated velocity (Output)
 */
-__device__ __inline__ void interpolation_three_point_coupling( LB_nodes_gpu n_a, float* particle_position, unsigned int *node_index, LB_rho_v_gpu *d_v, float *delta, float *interpolated_u ) {
+__device__ __inline__ void interpolation_three_point_coupling(LB_nodes_gpu n_a, float* particle_position, unsigned int *node_index, LB_rho_v_gpu *d_v, float *delta, float *interpolated_u) {
 
   int my_center[3];
   float temp_delta[27];
@@ -1804,14 +1807,14 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared, int *number_o
 /*********************************************************/
 /**(Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
  * @param n_a                   Pointer to local node residing in array a (Input)
- * @param node_index            node index around (8) particle (Output)
  * @param *particle_position    Pointer to the particle position (Input)
- * @param *mode                 Pointer to the 19 modes for current lattice point
+ * @param node_index            node index around (8) particle (Output)
+ * @param *mode                 Pointer to the 19 modes for current lattice point (Output)
  * @param *d_v                  Pointer to local device values
- * @param *interpolated_u       Pointer to the interpolated velocity
  * @param *delta                Pointer for the weighting of particle position (Output)
+ * @param *interpolated_u       Pointer to the interpolated velocity (Output)
 */
-__device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, float *particle_position, unsigned int* node_index, float* mode, LB_rho_v_gpu *d_v, float* delta, float *interpolated_u ) {
+__device__ __inline__ void interpolation_two_point_coupling(LB_nodes_gpu n_a, float *particle_position, unsigned int* node_index, float* mode, LB_rho_v_gpu *d_v, float* delta, float *interpolated_u) {
   int   left_node_index[3];
   float temp_delta[6];
   float temp_delta_half[6];
@@ -2184,6 +2187,8 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
 #endif
 
 }
+
+
 
 /**calculation of the node force caused by the particles, with atomicadd due to avoiding race conditions 
   (Eq. (14) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
@@ -2917,7 +2922,7 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *par
  * @param node_f      Pointer to local node force (Input)
  * @param *d_v    Pointer to local device values
 */
-__global__ void calc_fluid_particle_ia_three_point_couple(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float *particle_force,                                             LB_node_force_gpu node_f, CUDA_particle_seed *part, LB_rho_v_gpu *d_v){
+__global__ void calc_fluid_particle_ia_three_point_couple(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float *particle_force, LB_node_force_gpu node_f, CUDA_particle_seed *part, LB_rho_v_gpu *d_v){
 
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   unsigned int node_index[27];
@@ -3712,7 +3717,7 @@ void lb_gpu_get_boundary_forces(double* forces) {
 #endif
 }
 
-__device__ void get_interpolated_velocity(LB_nodes_gpu n_a, float* r, float* u, LB_node_force_gpu node_f, int asdf) {
+__device__ void get_interpolated_velocity(LB_nodes_gpu n_a, float* r, float* u, LB_node_force_gpu node_f) {
 
   /** see ahlrichs + duenweg page 8227 equ (10) and (11) */
   float temp_delta[6];
@@ -3786,7 +3791,7 @@ __device__ void get_interpolated_velocity(LB_nodes_gpu n_a, float* r, float* u, 
 //      mode[2]+=0.5f*node_f.force[1*para.number_of_nodes + node_index[i]];
 //      mode[3]+=0.5f*node_f.force[2*para.number_of_nodes + node_index[i]];
 //
-    }
+  }
 
   #pragma unroll
   for(int i=0; i<3; ++i){
@@ -3837,7 +3842,7 @@ __global__ void fill_lb_radial_velocity_profile(LB_nodes_gpu n_a, radial_profile
   p[2]=z+pdata->center[2];
 
   float v[3];
-  get_interpolated_velocity(n_a, p, v, node_f, 0);
+  get_interpolated_velocity(n_a, p, v, node_f);
   unsigned int linear_index = rbin*maxj*maxk + phibin*maxk + zbin;
 
  float v_r,v_phi;
@@ -3905,7 +3910,7 @@ __global__ void fill_lb_velocity_profile(LB_nodes_gpu n_a, profile_data* pdata, 
   p[2]=z;
 
   float v[3];
-  get_interpolated_velocity(n_a, p, v, node_f, 0);
+  get_interpolated_velocity(n_a, p, v, node_f);
   unsigned int linear_index = xbin*maxj*maxk + ybin*maxk + zbin;
 
   data[3*linear_index+0]=v[0];
@@ -4252,5 +4257,40 @@ void lb_lbfluid_get_population( int xyz[3], float population_host[LBQ], int c )
   cuda_safe_mem(cudaFree(population_device));
 }
 
+struct two_point_interpolation { 
+    LB_nodes_gpu current_nodes_gpu;
+    LB_rho_v_gpu *d_v_gpu;
+    two_point_interpolation(LB_nodes_gpu _current_nodes_gpu, LB_rho_v_gpu *_d_v_gpu) : current_nodes_gpu(_current_nodes_gpu), d_v_gpu(_d_v_gpu) {};
+	__device__ float3 operator()(const float3 &position) const {
+        unsigned int node_index[8];
+        float delta[8];
+        float u[3];
+        float mode[19*LB_COMPONENTS];
+        float _position[3] = {position.x, position.y, position.z};
+        interpolation_two_point_coupling(current_nodes_gpu, _position, node_index, mode, d_v_gpu, delta, u);
+        return make_float3(u[0], u[1], u[2]);
+	} 
+};
+
+void lb_lbfluid_get_interpolated_velocity_at_positions(double *positions, double *velocities, int length) {
+    thrust::host_vector<float3> positions_host(length);
+    for (int p=0; p < 3 * length; p+=3) {
+        // Cast double coming from python to float.
+        positions_host[p/3].x = static_cast<float>(positions[p]);
+        positions_host[p/3].y = static_cast<float>(positions[p+1]);
+        positions_host[p/3].z = static_cast<float>(positions[p+2]);
+    }
+    thrust::device_vector<float3> positions_device = positions_host;
+    thrust::device_vector<float3> velocities_device(length);
+    thrust::transform(positions_device.begin(), positions_device.end(), velocities_device.begin(), two_point_interpolation(*current_nodes, device_rho_v));
+    thrust::host_vector<float3> velocities_host = velocities_device;
+    int index = 0;
+    for (auto v : velocities_host) {
+        velocities[index] = static_cast<double>(v.x) * lbpar_gpu.agrid/lbpar_gpu.tau;
+        velocities[index+1] = static_cast<double>(v.y) * lbpar_gpu.agrid/lbpar_gpu.tau;
+        velocities[index+2] = static_cast<double>(v.z) * lbpar_gpu.agrid/lbpar_gpu.tau;
+        index += 3;
+    }
+}
 
 #endif /* LB_GPU */

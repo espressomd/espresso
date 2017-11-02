@@ -29,7 +29,7 @@
 
 int morse_set_params(int part_type_a, int part_type_b,
 		     double eps, double alpha,
-		     double rmin, double cut, double cap_radius)
+		     double rmin, double cut)
 {
   double add1, add2;
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
@@ -44,62 +44,12 @@ int morse_set_params(int part_type_a, int part_type_b,
   /* calculate dependent parameter */
   add1 = exp(-2.0*data->MORSE_alpha*(data->MORSE_cut - data->MORSE_rmin));
   add2 = 2.0*exp(-data->MORSE_alpha*(data->MORSE_cut - data->MORSE_rmin));
-  data->MORSE_rest = data->MORSE_eps * (add1 - add2); 
- 
-  if (cap_radius > 0) {
-    data->MORSE_capradius = cap_radius;
-  }
+  data->MORSE_rest = data->MORSE_eps * (add1 - add2);
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
 
-  mpi_cap_forces(force_cap);
-
   return ES_OK;
 }
 
-void calc_morse_cap_radii()
-{
-  /* do not compute cap radii if force capping is "individual" */
-  if( force_cap != -1.0){
-    int i,j,cnt=0;
-    IA_parameters *params;
-    double force=0.0, rad=0.0, step, add1, add2;
-
-    for(i=0; i<n_particle_types; i++) {
-      for(j=0; j<n_particle_types; j++) {
-        params = get_ia_param(i,j);
-        if(force_cap > 0.0 && params->MORSE_eps > 0.0) {
-
-    /* I think we have to solve this numerically... and very crude as well */
-
-    cnt=0;
-    rad = params->MORSE_rmin - 0.69314719 / params->MORSE_alpha;
-    step = -0.1 * rad;
-    force=0.0;
-    
-    while(step != 0) {
-      add1 = exp(-2.0 * params->MORSE_alpha * (rad - params->MORSE_rmin));
-      add2 = exp( -params->MORSE_alpha * (rad - params->MORSE_rmin));
-      force   = -params->MORSE_eps * 2.0 * params->MORSE_alpha * (add2 - add1) / rad;
-
-      if((step < 0 && force_cap < force) || (step > 0 && force_cap > force)) {
-        step = - (step/2.0); 
-      }
-      if(fabs(force-force_cap) < 1.0e-6) step=0;
-      rad += step; cnt++;
-    } 
-          params->MORSE_capradius = rad;
-        }
-        else {
-    params->MORSE_capradius = 0.0; 
-        }
-        FORCE_TRACE(fprintf(stderr,"%d: Ptypes %d-%d have cap_radius %f and cap_force %f (iterations: %d)\n",
-          this_node,i,j,rad,force,cnt));
-      }
-    }
-  }
-}
-
 #endif
-

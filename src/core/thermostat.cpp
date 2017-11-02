@@ -163,15 +163,9 @@ void thermo_init() {
   if (thermo_switch == THERMO_OFF) {
     return;
   }
-#ifdef INTER_DPD
-  if (thermo_switch & THERMO_INTER_DPD)
-    inter_dpd_init();
-#endif
-  if (thermo_switch & THERMO_LANGEVIN)
-    thermo_init_langevin();
+  if(thermo_switch & THERMO_LANGEVIN ) thermo_init_langevin();
 #ifdef DPD
-  if (thermo_switch & THERMO_DPD)
-    thermo_init_dpd();
+  if(thermo_switch & THERMO_DPD) dpd_init();
 #endif
 #ifdef NPT
   if (thermo_switch & THERMO_NPT_ISO)
@@ -205,11 +199,6 @@ void thermo_heat_up() {
     dpd_heat_up();
   }
 #endif
-#ifdef INTER_DPD
-  if (thermo_switch & THERMO_INTER_DPD) {
-    inter_dpd_heat_up();
-  }
-#endif
 }
 
 void langevin_cool_down() {
@@ -229,10 +218,6 @@ void thermo_cool_down() {
   if (thermo_switch & THERMO_DPD) {
     dpd_cool_down();
   }
-#endif
-#ifdef INTER_DPD
-  if (thermo_switch & THERMO_INTER_DPD)
-    inter_dpd_cool_down();
 #endif
 }
 

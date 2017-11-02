@@ -90,6 +90,7 @@ typedef struct {
   int citeration; /* current number of iterations*/
   int set_flag;   /* flag that indicates if ICCP3M has been initialized properly
                      */
+
   double *fx;
   double *fy;
   double *fz;
@@ -100,7 +101,8 @@ extern int iccp3m_initialized;
 
 int bcast_iccp3m_cfg(void);
 
-/** The main iterative scheme, where the surface element charges are calculated self-consistently. 
+/** The main iterative scheme, where the surface element charges are calculated
+ * self-consistently.
  */
 int iccp3m_iteration();
 

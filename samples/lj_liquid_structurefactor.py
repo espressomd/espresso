@@ -91,7 +91,7 @@ system.box_l = [box_l, box_l, box_l]
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
     cutoff=lj_cut, shift="auto")
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 
 print("LJ-parameters:")
 print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
@@ -137,7 +137,7 @@ Stop if minimal distance is larger than {}
 
 # set LJ cap
 lj_cap = 20
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
 # Warmup Integration Loop
@@ -151,7 +151,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
 
 #   Increase LJ cap
     lj_cap = lj_cap + 10
-    system.non_bonded_inter.set_force_cap(lj_cap)
+    system.force_cap = lj_cap
 
 # Just to see what else we may get from the c code
 import pprint
@@ -173,7 +173,7 @@ print("\nStart integration: run %d times %d steps" % (int_n_times, int_steps))
 
 # remove force capping
 lj_cap = 0
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
 energies = system.analysis.energy()

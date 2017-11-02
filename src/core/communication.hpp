@@ -507,9 +507,6 @@ void mpi_set_particle_gamma_rot(int pnode, int part, Vector3d gamma_rot);
 void mpi_bcast_lbboundary(int del_num);
 #endif
 
-/** Issue REQ_BCAST_LJFORCECAP: initialize force capping. */
-void mpi_cap_forces(double force_cap);
-
 /** Issue REQ_RESCALE_PART: rescales all particle positions in direction 'dir'
  * by a factor 'scale'. */
 void mpi_rescale_particles(int dir, double scale);
@@ -520,9 +517,6 @@ void mpi_bcast_cell_structure(int cs);
 /** Issue REQ_BCAST_NPTISO_GEOM: broadcast nptiso geometry parameter to all
  * nodes. */
 void mpi_bcast_nptiso_geom(void);
-
-/** Issue REQ_BCAST_LJANGLEFORCECAP: initialize LJANGLE force capping. */
-// void mpi_ljangle_cap_forces(double force_cap);
 
 /** Issue REQ_UPDATE_MOL_IDS: Update the molecule ids so that they are
     in sync with the topology.  Note that this only makes sense if you

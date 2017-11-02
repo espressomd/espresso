@@ -236,7 +236,6 @@ IF LENNARD_JONES == 1:
                 "cutoff": ia_params.LJ_cut,
                 "shift": ia_params.LJ_shift,
                 "offset": ia_params.LJ_offset,
-                "cap": ia_params.LJ_capradius,
                 "min": ia_params.LJ_min}
 
         def is_active(self):
@@ -261,9 +260,6 @@ IF LENNARD_JONES == 1:
                     Constant shift of the potential. (4*epsilon*shift).
             offset : :obj:`float`, optional
                      Offset distance of the interaction.
-            cap : :obj:`float`, optional
-                  If individual force caps are used, determines the distance
-                  at which the force is capped.
             min : :obj:`float`, optional
                   Restricts the interaction to a minimal distance.
 
@@ -284,7 +280,6 @@ IF LENNARD_JONES == 1:
                                         self._params["cutoff"],
                                         self._params["shift"],
                                         self._params["offset"],
-                                        self._params["cap"],
                                         self._params["min"]):
                 raise Exception("Could not set Lennard Jones parameters")
 
@@ -298,7 +293,6 @@ IF LENNARD_JONES == 1:
                 "cutoff": 0.,
                 "shift": 0.,
                 "offset": 0.,
-                "cap": 0.,
                 "min": 0.}
 
         def type_name(self):
@@ -311,13 +305,67 @@ IF LENNARD_JONES == 1:
             """All parameters that can be set.
 
             """
-            return "epsilon", "sigma", "cutoff", "shift", "offset", "cap", "min"
+            return "epsilon", "sigma", "cutoff", "shift", "offset", "min"
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
             return "epsilon", "sigma", "cutoff", "shift"
+
+IF HAT == 1:
+    cdef class HatInteraction(NonBondedInteraction):
+        def validate_params(self):
+            if self._params["F_max"] < 0:
+                raise ValueError("Hat max force has to be >=0")
+            if self._params["cutoff"] < 0:
+                raise ValueError("Hat cutoff has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
+            return {
+                "F_max": ia_params.HAT_Fmax,
+                "cutoff": ia_params.HAT_r,
+            }
+
+        def is_active(self):
+            return (self._params["F_max"] > 0)
+
+        def set_params(self, **kwargs):
+            """ Set parameters for the Hat interaction.
+
+            Parameters
+            ----------
+            F_max : :obj:`float`
+                      The magnitude of the interaction.
+            cutoff : :obj:`float`
+                     Cutoff distance of the interaction.
+
+            """
+            super(HatInteraction, self).set_params(**kwargs)
+
+        def _set_params_in_es_core(self):
+            if hat_set_params(self._part_types[0], self._part_types[1],
+                                        self._params["F_max"],
+                                        self._params["cutoff"]):
+                raise Exception("Could not set Hat parameters")
+
+        def default_params(self):
+            return {
+                "F_max": 0.,
+                "cutoff": 0.,
+            }
+
+        def type_name(self):
+            return "Hat"
+
+        def valid_keys(self):
+            return "F_max", "cutoff"
+
+        def required_keys(self):
+            return "F_max", "cutoff"
 
 # Gay-Berne
 
@@ -416,6 +464,77 @@ IF GAY_BERNE:
             """
             return "eps", "sig", "cut", "k1", "k2", "mu", "nu"
 
+IF DPD:
+    cdef class DPDInteraction(NonBondedInteraction):
+        def validate_params(self):
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
+            return {
+                "weight_function": ia_params.dpd_wf,
+                "gamma": ia_params.dpd_gamma,
+                "r_cut": ia_params.dpd_r_cut,
+                "trans_weight_function": ia_params.dpd_twf,
+                "trans_gamma": ia_params.dpd_tgamma,
+                "trans_r_cut": ia_params.dpd_tr_cut
+            }
+
+        def is_active(self):
+            return (self._params["r_cut"] > 0) or (self._params["trans_r_cut"] > 0)
+
+        def set_params(self, **kwargs):
+            """ Set parameters for the DPD interaction.
+
+            Parameters
+            ----------
+            weight_function : :obj:`float`
+                The distance dependence of the parallel part,
+                either 0 (constant) or 1 (linear)
+            gamma : :obj:`float`
+                Friction coefficient of the parallel part
+            r_cut : :obj:`float`
+                Cutoff of the parallel part
+            trans_weight_function : :obj:`float`
+                The distance dependence of the orthogonal part,
+                either 0 (constant) or 1 (linear)
+            trans_gamma : :obj:`float`
+                Friction coefficient of the orthogonal part
+            trans_r_cut : :obj:`float`
+                Cutoff of the orthogonal part
+
+            """
+            super(DPDInteraction, self).set_params(**kwargs)
+
+        def _set_params_in_es_core(self):
+            if dpd_set_params(self._part_types[0], self._part_types[1],
+                              self._params["gamma"],
+                              self._params["r_cut"],
+                              self._params["weight_function"],
+                              self._params["trans_gamma"],
+                              self._params["trans_r_cut"],
+                              self._params["trans_weight_function"]):
+                raise Exception("Could not set DPD parameters")
+
+        def default_params(self):
+            return {
+                "weight_function": 0,
+                "gamma": 0.0,
+                "r_cut": -1.0,
+                "trans_weight_function": 0,
+                "trans_gamma": 0.0,
+                "trans_r_cut": -1.0}
+
+        def type_name(self):
+            return "DPD"
+
+        def valid_keys(self):
+            return self.default_params().keys()
+
+        def required_keys(self):
+            return []
+
 # Generic Lennard Jones
 
 IF LENNARD_JONES_GENERIC == 1:
@@ -480,7 +599,6 @@ IF LENNARD_JONES_GENERIC == 1:
                                     self._params["e2"],
                                     self._params["b1"],
                                     self._params["b2"],
-                                    0.0,
                                     self._params["lam"],
                                     self._params["delta"]):
                     raise Exception(
@@ -496,7 +614,7 @@ IF LENNARD_JONES_GENERIC == 1:
                                     self._params["e2"],
                                     self._params["b1"],
                                     self._params["b2"],
-                                    0.0):
+                                    ):
                     raise Exception(
                         "Could not set Generic Lennard Jones parameters")
 
@@ -585,6 +703,8 @@ class NonBondedInteractionHandle(object):
     generic_lennard_jones = None
     tabulated = None
     gay_berne = None
+    dpd = None
+    hat = None
 
     def __init__(self, _type1, _type2):
         """Takes two particle types as argument"""
@@ -603,7 +723,10 @@ class NonBondedInteractionHandle(object):
             self.tabulated = TabulatedNonBonded(_type1, _type2)
         IF GAY_BERNE:
             self.gay_berne = GayBerneInteraction(_type1, _type2)
-
+        IF DPD:
+            self.dpd = DPDInteraction(_type1, _type2)
+        IF HAT:
+            self.hat = HatInteraction(_type1, _type2)
 
 cdef class NonBondedInteractions(object):
     """
@@ -622,29 +745,13 @@ cdef class NonBondedInteractions(object):
                 "NonBondedInteractions[] expects two particle types as indices.")
         return NonBondedInteractionHandle(key[0], key[1])
 
-    def set_force_cap(self, cap):
-        """Setter function for force cap.
-
-        """
-        if forcecap_set_params(cap):
-            raise Exception("Could not set forcecap")
-
-    def get_force_cap(self):
-        """Getter function for force cap.
-
-        """
-        return force_cap
-
     def __getstate__(self):
         # contains info about ALL nonbonded interactions
         odict = NonBondedInteractionHandle(-1, -
                                            1).lennard_jones.user_interactions
-        odict['force_cap'] = self.get_force_cap()
         return odict
 
     def __setstate__(self, odict):
-        self.set_force_cap(odict['force_cap'])
-        del odict['force_cap']
         for _type1 in odict:
             for _type2 in odict[_type1]:
                 attrs = dir(NonBondedInteractionHandle(_type1, _type2))
