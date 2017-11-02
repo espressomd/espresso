@@ -22,8 +22,9 @@ class openGLLive(object):
     Keyboad callbacks via  keyboardManager.registerButton()."""
 
     def __init__(self, system, **kwargs):
-        """Constructor.
-        **Arguments**
+        """
+        Parameters
+        ----------
 
         :system: instance of espressomd.System
         :window\_size: Size of the visualizer window in pixels.

@@ -15,7 +15,6 @@ class RuntimeErrorCollector;
 
 class RuntimeErrorStream {
 public:
-  RuntimeErrorStream(RuntimeErrorStream &&) = default;
   RuntimeErrorStream(const RuntimeErrorStream &rhs);
   RuntimeErrorStream(RuntimeErrorCollector &ec, RuntimeError::ErrorLevel level,
                      const std::string &file, const int line,
