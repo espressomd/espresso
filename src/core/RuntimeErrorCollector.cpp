@@ -38,7 +38,7 @@ void RuntimeErrorCollector::message(const RuntimeError &message) {
   m_errors.emplace_back(message);
 }
 
-void RuntimeErrorCollector::message(RuntimeError &&message) {
+void RuntimeErrorCollector::message(RuntimeError message) {
   m_errors.emplace_back(std::move(message));
 }
 

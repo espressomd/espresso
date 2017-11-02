@@ -63,7 +63,7 @@ cdef extern from "RuntimeError.hpp" namespace "ErrorHandling":
         ErrorLevel level()
 
 cdef extern from "errorhandling.hpp" namespace "ErrorHandling":
-    cdef vector[RuntimeError]mpi_gather_runtime_errors()
+    cdef vector[RuntimeError] mpi_gather_runtime_errors()
 
 cdef handle_errors(msg)
 
