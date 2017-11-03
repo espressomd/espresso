@@ -1,6 +1,8 @@
 Setting up the system
 =====================
 
+.. _Setting global variables in Python:
+
 Setting global variables in Python
 ----------------------------------
 
@@ -10,10 +12,7 @@ Global system variables can be read and set in Python simply by accessing the
 attribute of the corresponding Python object. Those variables that are already
 available in the Python interface are listed in the following.
 
-The system class
-~~~~~~~~~~~~~~~~
-
-    * :py:attr:`~espressomd.system.System.box_l`
+* :py:attr:`~espressomd.system.System.box_l`
 
     (float[3]) Simulation box lengths of the cuboid box used by |es|.
     Note that if you change the box length during the simulation, the folded
@@ -22,7 +21,7 @@ The system class
     box. If you want to scale the positions, use the command
     :py:func:`~espressomd.system.System.change_volume_and_rescale_particles`
 
-    * :py:attr:`~espressomd.system.System.periodicity`
+* :py:attr:`~espressomd.system.System.periodicity`
 
     (int[3]) Specifies periodicity for the three directions. If the feature
     PARTIAL\_PERIODIC is set, |es| can be instructed to treat some
@@ -35,32 +34,32 @@ The system class
     this direction. In this case for keeping particles in the simulation box
     a constraint has to be set.
 
-    * :py:attr:`~espressomd.system.System.time_step`
-    
+* :py:attr:`~espressomd.system.System.time_step`
+
     (float) Time step for MD integration.
 
-    * :py:attr:`~espressomd.system.System.time`
+* :py:attr:`~espressomd.system.System.time`
 
     (float) The simulation time.
 
-    * :py:attr:`~espressomd.system.System.min_global_cut`
+* :py:attr:`~espressomd.system.System.min_global_cut`
 
     (float) Minimal total cutoff for real space. Effectively, this plus the
     :py:attr:`~espressomd.cellsystem.CellSystem.skin` is the minimally possible cell size. Espresso typically determines
     this value automatically, but some algorithms, virtual sites, require
     you to specify it manually.
 
-    * :py:attr:`~espressomd.system.System.max_cut_bonded`
+* :py:attr:`~espressomd.system.System.max_cut_bonded`
 
     *read-only* Maximal cutoff of bonded real space interactions.
 
-    * :py:attr:`~espressomd.system.System.max_cut_nonbonded`
-    
+* :py:attr:`~espressomd.system.System.max_cut_nonbonded`
+
     *read-only* Maximal cutoff of bonded real space interactions.
 
 
 Accessing module states
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Some variables like or are no longer directly available as attributes.
 In these cases they can be easily derived from the corresponding Python
@@ -76,7 +75,7 @@ or by calling the corresponding ``get_state`` methods like::
     
     gamma_rot = espressomd.System().thermostat.get_state()[0][’gamma_rotation’]
 
-.. _thermostat:
+.. _\`\`thermostat\`\`\: Setting up the thermostat:
 
 ``thermostat``: Setting up the thermostat
 -----------------------------------------
@@ -114,6 +113,8 @@ above zero and set it to :math:`-2\sigma` or :math:`2\sigma`
 respectively. In all three cases the distribution is made such that the
 second moment of the distribution is the same and thus results in the
 same temperature.
+
+.. _Langevin thermostat:
 
 Langevin thermostat
 ~~~~~~~~~~~~~~~~~~~
@@ -195,72 +196,33 @@ momenta flip is . The :math:`\pmb{\xi}` noise vector’s variance van be
 tuned to exactly :math:`1/\mathrm{temperature}` by specifying the option.
 The default for temperature scaling is .
 
-Dissipative Particle Dynamics (DPD) 
+.. _Dissipative Particle Dynamics (DPD):
+
+Dissipative Particle Dynamics (DPD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. todo::
-    this is not implemented yet
+To realize a complete DPD fluid model, three parts are needed:
+The DPD thermostat, which controlls the temperatur, a dissipative
+interaction between the particles that make up the fluid,
+see :ref:`DPD interaction`, and a repulsive conservative force.
 
 The DPD thermostat can be invoked by the function:
-:py:attr:`~espressomd.thermostat.Thermostat.set_dpd`
+:py:attr:`espressomd.thermostat.Thermostat.set_dpd`
+which takes :math:`k_\mathrm{B} T` as the only agument.
 
-Implements Dissipative Particle Dynamics (DPD) either via a global
-thermostat, or via a thermostat and a special DPD interaction between
-particle types. The latter allows the user to specify friction
-coefficients on a per-interaction basis.
+The friction coefficients and cutoff are controlled via the
+:ref:`DPD interaction` on a per type-pair basis. For details see
+there.
 
-Thermostat DPD
-^^^^^^^^^^^^^^
+As a conservative force any interaction potential can be used,
+see :ref:`Isotropic non-bonded interactions`. A common choice is
+a force ramp which is implemented as :ref:`Hat interaction`.
 
-.. todo::
-    this is not implemented yet
+A complete example of setting up a DPD fluid and running it
+to sample the equation of state can be found in samples/dpd.py.
 
-thermostat dpd
-
-or
-
-’s standard DPD thermostat implements the thermostat exactly as
-described in :cite:`soddeman03a`. We use the standard
-*Velocity-Verlet* integration scheme, DPD only influences the
-calculation of the forces. No special measures have been taken to
-self-consistently determine the velocities and the dissipative forces as
-it is for example described in :cite:`Nikunen03`. DPD adds a
-velocity dependent dissipative force and a random force to the usual
-conservative pair forces (Lennard-Jones).
-
-The dissipative force is calculated by
-
-.. math:: \vec{F}_{ij}^{D} = -\zeta w^D (r_{ij}) (\hat{r}_{ij} \cdot \vec{v}_{ij}) \hat{r}_{ij}
-
-The random force by
-
-.. math:: \vec{F}_{ij}^R = \sigma w^R (r_{ij}) \Theta_{ij} \hat{r}_{ij}
-
-where :math:` \Theta_{ij} \in [ -0.5 , 0.5 [ ` is a uniformly
-distributed random number. The connection of :math:`\sigma ` and
-:math:`\zeta ` is given by the dissipation fluctuation theorem:
-
-.. math:: (\sigma w^R (r_{ij})^2=\zeta w^D (r_{ij}) \text{k}_\text{B} T
-
-The parameters and define the strength of the friction :math:`\zeta` and
-the cutoff radius.
-
-According to the optional parameter WF (can be set to 0 or 1, default is
-0) of the thermostat command the functions :math:`w^D` and :math:`w^R`
-are chosen in the following way ( :math:` r_{ij} < \{r\_cut} ` ) :
-
-.. math::
-
-   w^D (r_{ij}) = ( w^R (r_{ij})) ^2 = 
-      \left\{
-      \begin{array}{clcr} 
-                {( 1 - \frac{r_{ij}}{r_c}} )^2 & , \; {wf} = 0 \\
-                1                      & , \; {wf} = 1
-      \end{array}
-      \right.
-
-For :math:` r_{ij} \ge {r\_cut} ` :math:`w^D` and :math:`w^R` are
-identical to 0 in both cases.
+DPD adds a velocity dependent dissipative force and a random force
+to the conservative pair forces.
 
 The friction (dissipative) and noise (random) term are coupled via the
 fluctuation- dissipation theorem. The friction term is a function of the
@@ -273,94 +235,6 @@ When using a Lennard-Jones interaction, :math:`{r\_cut} =
 thermostat acts on the relative velocities between nearest neighbor
 particles. Larger cutoffs including next nearest neighbors or even more
 are unphysical.
-
-is basically an inverse timescale on which the system thermally
-equilibrates. Values between :math:`0.1` and :math:`1` are o.k, but you
-propably want to try this out yourself to get a feeling for how fast
-temperature jumps during a simulation are. The dpd thermostat does not
-act on the system center of mass motion. Therefore, before using dpd,
-you have to stop the center of mass motion of your system, which you can
-achieve by using the command [sec:Galilei]. This may be repeated once in
-a while for long runs due to round off errors (check this with the
-command ) [:ref:`galilei_transform`].
-
-Two restrictions apply for the dpd implementation of :
-
-    * As soon as at least one of the two interacting particles is fixed
-      (see [chap:part] on how to fix a particle in space) the dissipative
-      and the stochastic force part is set to zero for both particles (you
-      should only change this hardcoded behaviour if you are sure not to
-      violate the dissipation fluctuation theorem).
-
-    * ``DPD`` does not take into account any internal rotational degrees of
-      freedom of the particles if ``ROTATION`` is switched on. Up to the
-      current version DPD only acts on the translatorial degrees of
-      freedom.
-
-Transverse DPD thermostat
-'''''''''''''''''''''''''
-
-.. todo::
-    This is not yet implemted for the pyton interface
-
-This is an extension of the above standard DPD thermostat
-:cite:`junghans2008`, which dampens the degrees of freedom
-perpendicular on the axis between two particles. To switch it on, the
-feature is required instead of the feature ``DPD``.
-
-The dissipative force is calculated by
-
-.. math:: \vec{F}_{ij}^{D} = -\zeta w^D (r_{ij}) (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{v}_{ij}
-
-The random force by
-
-.. math:: \vec{F}_{ij}^R = \sigma w^R (r_{ij}) (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{\Theta}_{ij}
-
-The parameters define the strength of the friction and the cutoff in the
-same way as above. Note: This thermostat does *not* conserve angular
-momentum.
-
-Interaction DPD
-^^^^^^^^^^^^^^^
-.. todo::
-    This is not yet implemted for the pyton interface
-
-thermostat inter\_dpd
-
-Another way to use DPD is by using the interaction DPD. In this case,
-DPD is implemented via a thermostat and corresponding interactions. The
-above command will set the global temperature of the system, while the
-friction and other parameters have to be set via the command
-``inter inter_dpd`` (see ). This allows to set the friction on a
-per-interaction basis.
-
-DPD interactions with fixed particles is switched off by default,
-because it is not clear if the results obtained with that method are
-physically correct. If you want activate ``inter_dpd`` with fixed
-particles please use:
-
-setmd dpd\_ignore\_fixed\_particles 0
-
-By default the fixed particles are ignored
-(``dpd_ignore_fixed_particles`` is 1).
-
-Other DPD extensions
-^^^^^^^^^^^^^^^^^^^^
-.. todo::
-    This is not yet implemted for the pyton interface
-
-
-The features ``DPD_MADD_RED`` or ``DPD_MADD_IN`` make the friction constant mass dependent:
-
-.. math:: \zeta \to \zeta M_{ij}
-
-There are two implemented cases.
-
--  uses the reduced mass: :math:`M_{ij}=2\frac{m_i m_j}{m_i+m_j}`
-
--  uses the real mass: :math:`M_{ij}=\frac{m_i+m_j}{2}`
-
-The prefactors are such that equal masses result in a factor :math:`1`.
 
 Isotropic NPT thermostat
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -394,7 +268,7 @@ Be aware that this feature is neither properly examined for all systems
 nor is it maintained regularly. If you use it and notice strange
 behaviour, please contribute to solving the problem.
 
-.. _nemd:
+.. _\`\`nemd\`\`\: Setting up non-equilibirum MD:
 
 ``nemd``: Setting up non-equilibrium MD
 ---------------------------------------
@@ -698,72 +572,41 @@ The following limitations currently apply for the collision detection:
 Catalytic Reactions
 -------------------
 
-With the help of the feature ``CATALYTIC_REACTIONS``, one can define three particle types to
-act as reactant (e.g. :math:`H_2O_2`), catalyzer (e.g. platinum), and
-products (e.g. :math:`O_2` and :math:`H_2O`). Using these reaction
-categories, we model the following chemical reaction system which is not
-thermodynamically consistent but rather intended to simulate active
-swimmers and their propulsion:
+With the help of the feature ``CATALYTIC_REACTIONS``, one can define three particle types to act as reactant (e.g. :math:`\mathrm{H_2 O_2}`), catalyzer (e.g. platinum), and product (e.g. :math:`\mathrm{O_2}` and :math:`\mathrm{H_2 O}`). The current setup allows one to simulate active swimmers and their chemical propulsion.
+
+For a Janus swimmer consisting of platinum on one hemisphere and gold on the other hemisphere, both surfaces catalytically induce a reaction. We assume an initial abundance of hydrogen peroxide and absence of products, so that back (recombination) reactions seldomly occur at the surface. A typical model for the propulsion of such a particle assumes
 
 .. math::
 
-   \begin{aligned}
-   rt & \rightleftharpoons & pr ; \\
-   rt & \xrightarrow{ct} & pr.\end{aligned}
+    \begin{aligned}
+      \mathrm{H_2 O_2} &\xrightarrow{\text{Pt}} \mathrm{2 H^{+} + 2 e^{-} + O_2} \\
+      \mathrm{2 H^{+} + 2 e^{-} + H_2 O_2} &\xrightarrow{\text{Au}} \mathrm{2 H_2 O}
+    \end{aligned}
 
-The first line indicates that there is a reversible chemical reaction in
-the bulk that converts the reactant particles () into product ()
-particles, leading to an equilibrium state. This reaction is intended to
-artificially recover the reactant () particles in this model. In the
-case of :math:`H_2O_2` this is artificial since it does not
-spontaneously build up if oxygen is dissolved in water. The second line
-indicates that in the vicinity of a catalyst () the forward reaction
-takes place, i.e., conversion of reactants into products. Of course the
-decompositon of a reactand into a product also takes place if there is
-no catalyst (since a catalyst has no effect on the chemical equilibrium)
-however the reaction is much faster than normally in the presence of a
-catalyst and the normal decomposition is neglected since it takes place
-so slowly. This is correct chemistry for waterperoxide since it
-spontaneously decomposes almost completely and much faster in the
-presence of a catalyst.
-
-The equilibrium reaction is described by the equilibrium constant
-
-.. math:: K_{\text{eq}} = \frac{k_{\text{eq,+}}}{k_{\text{eq,-}}} = \frac{[pr]}{[rt]},
-
-with :math:`[rt]` and :math:`[pr]` the reactant and product
-concentration and :math:`k_{\mathrm{eq},\pm}` the forward and
-backward reaction rate constants, respectively. The rate constants that
-specify the change in concentration for the equilibrium and catalytic
-reaction are given by
+That is, catalytic surfaces induce a reactions that produce charged species by consuming hydrogen peroxide. It is the change in distribution of charged species that leads to motion of the swimmer, a process refered to as self-electrophoresis. A minimal model for this would be
 
 .. math::
 
-   \begin{aligned}
-   \frac{d[rt]}{dt} & = & k_{\text{eq,-}}[pr] - k_{\text{eq,+}}[rt] ; \\
-   \frac{d[pr]}{dt} & = & k_{\text{eq,+}}[rt] - k_{\text{eq,-}}[pr] ; \\
-   -\frac{d[rt]}{dt} \;\; = \;\; \frac{d[pt]}{dt} & = & k_{\text{ct}}[rt] ,\end{aligned}
+    \begin{aligned}
+      A &\xrightarrow{C^{+}} B \\
+      B &\xrightarrow{C^{-}} A
+    \end{aligned}
 
- respectively.
+where on the upper half of the catalyst :math:`C^{+}` a species :math:`A` is converted into :math:`B`, and on the lower half :math:`C^{-}` the opposite reaction takes place. Note that when :math:`A` and :math:`B` are charged, this reaction conserves charge, provided the rates are equal.
 
-In the current |es| implementation we assume :math:`k_{\text{eq,+}} =
-k_{\text{eq,-}} \equiv k\_eq` and therefore :math:`K_{\text{eq}}=1`. The
-user can specify :math:`k\_eq \ge 0` and
-:math:`k\_ct \equiv k_{\text{ct}} >
-0`. The former rate constant is applied to all reactant and product
-particles in the system, whereas the latter is applied only to the
-reactant particles in the vicinity of a catalyst particle. Reactant
-particles that have a distance of or less to at least one catalyzer
-particle are therefore converted into product particles with rate
-constant :math:`k\_eq + k\_ct`. The conversion of particles is done
-stochastically on the basis of the relevant rate constant ( :math:`\ge`
-0):
+In |es| the orientation of a catalyzer particle is used to define hemispheres; half spaces going through the particle's center. The reaction region is bounded by the *reaction range*: :math:`r`. Inside the reaction range, we react only rectant-product pairs. The particles in a pair are swapped from hemisphere to another with a rate prescribed by
 
-.. math:: \label{eq:rate} P_{\text{cvt}} = 1 - \exp \left( - k  \Delta t  \right) ,
+.. math::
 
-with :math:`P_{\text{cvt}}` the probability of the conversion and
-:math:`\Delta t` the integration time step. If the equilibrium rate
-constant is not specified it is assumed that = 0.
+    P_{\text{move}} = 1 - \mathrm{e}^{-k_{\mathrm{ct}}\,\Delta t} ,
+
+with the reaction rate :math:`k_{\mathrm{ct}}` and the simulation time step :math:`\Delta t`. A pair may be swapped only once per MD time step, to avoid a no-net-effect situation. That is, we allow an exchange move only when the following conditions are met:
+
+1. Both partners of the reactant-product pair have to reside within the reaction range.
+2. The product has to reside in the upper half-space of the reaction range.
+3. The reactant has to reside in the lower half-space of the reaction range.
+
+Self-propulsion is achieved by imposing an interaction asymmetry between the partners of a swapped pair. That is, the heterogeneous distribution of chemical species induced by the swapping leads to a net force on the particle, counter balanced by friction.
 
 To set up the system for catalytic reactions the class :class:`espressomd.reaction.Reaction`
 can be used.::
@@ -774,7 +617,7 @@ can be used.::
 
     # setting up particles etc
 
-    r = Reaction(product_type = 1, reactant_type = 2, catalyzer_type = 0, ct_range = 2, ct_rate=0.2, eq_rate=0)
+    r = Reaction(product_type=1, reactant_type=2, catalyzer_type=0, ct_range=2, ct_rate=0.2, eq_rate=0)
     r.start()
     r.stop()
 
@@ -782,10 +625,10 @@ can be used.::
 
 * the first invocation of ``Reaction``, in the above example,  defines a
   reaction with particles of type number 2 as reactant, type 0 as catalyzer and
-  type 1 as product [#1]_. The catalytic reaction rate constant is given by :math:`ct\_rate^2`
+  type 1 as product [#1]_. The catalytic reaction rate constant is given by :math:`\mathrm{ct\_rate}`
   [#2]_ and to override the default rate constant for the equilibrium reaction
   ( = 0), one can specify it by as ``eq_rata``.  By default each reactant particle is checked
-  against each catalyst particle (``react_once =False``). However, when creating
+  against each catalyst particle (``react_once=False``). However, when creating
   smooth surfaces using many catalyst particles, it can be desirable to let the
   reaction rate be independent of the surface density of these particles. That
   is, each particle has a likelihood of reacting in the vicinity of the surface
@@ -793,7 +636,7 @@ can be used.::
   *not* according to :math:`P_{\text{cvt}} = 1 - \exp \left( - n k\Delta t
   \right)`, with :math:`n` the number of local catalysts. To accomplish this,
   each reactant is considered only once each time step by using the option
-  ``react_once = True`` . The reaction command is set up such that the different
+  ``react_once=True`` . The reaction command is set up such that the different
   properties may be influenced individually.
 
 *  ``r.stop()`` disables the reaction. Note that at the moment, there can
@@ -801,15 +644,10 @@ can be used.::
 
 *  ``print r``  returns the current reaction parameters.
 
-The Python interface has some modified capabilities with respect to the
-TCL interface. For example, you can alter parameters using the
-``r.setup()`` method of the reaction instance. The reaction mechanism can
-be inhibited and restarted using ``r.stop()`` and ``r.start()``.
-
-In future versions of the capabilities of the feature may be generalized
+In future versions of |es| the capabilities of the ``CATALYTIC_REACTIONS`` feature may be generalized
 to handle multiple reactant, catalyzer, and product types, as well as
 more general reaction schemes. Other changes may involve merging the
-current implementation with the feature.
+current implementation with the ``COLLISION_DETECTION`` feature.
 
 .. _galilei_transform: 
 
@@ -820,7 +658,7 @@ The following class :class:`espressomd.galilei.GalileiTransform` may be useful
 in effecting the velocity of the system.::
     
     system = espressomd.System()
-    gt = system.galilei()
+    gt = system.galilei
 
 Particle motion and rotation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -3,11 +3,15 @@ How to get started with SPHINX
 
 #. Install the latest stable sphinx version via pip::
 
-       pip install git+https://github.com/sphinx-doc/sphinx@stable --user
+    pip2 install git+https://github.com/sphinx-doc/sphinx@stable --user --upgrade
 
-#. Install a bibtex extension to SPHINX::
+#. Install a bibtex extension to Sphinx::
 
-       pip install sphinxcontrib-bibtex --user
+    pip2 install sphinxcontrib-bibtex --user --upgrade
+
+#. Install the numpydoc extension to Sphinx::
+
+    pip2 install numpydoc --user --upgrade
 
 #. Compile the ``sphinx`` target in your build directory (that can take some time
    since we depend on finishing the build of the interface)::

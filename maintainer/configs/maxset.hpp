@@ -1,6 +1,7 @@
 /* maximal set of features usable at the same time */
 #define PARTIAL_PERIODIC
 #define ELECTROSTATICS
+#define COULOMB_DEBYE_HUECKEL
 #define DIPOLES
 #define ROTATION
 #define ROTATIONAL_INERTIA
@@ -23,11 +24,11 @@
 #define LANGEVIN_PER_PARTICLE
 #define ROTATION_PER_PARTICLE
 #define CATALYTIC_REACTIONS
-#define REACTION_ENSEMBLE
 
 #define NEMD
 #define NPT 
 #define GHMC
+#define DPD
 
 #define LB
 #define LB_BOUNDARIES

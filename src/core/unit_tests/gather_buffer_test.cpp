@@ -19,6 +19,7 @@
 */
 
 #include <random>
+#include <string>
 #include <vector>
 
 #include <boost/mpi.hpp>
@@ -188,6 +189,27 @@ BOOST_AUTO_TEST_CASE(pointer_empty_root) {
   auto root = (world.size() >= 3) ? world.size() - 2 : world.size() - 1;
 
   check_pointer_empty(world, root);
+}
+
+BOOST_AUTO_TEST_CASE(non_trivial_type) {
+  mpi::communicator world;
+
+  std::string s(
+      "A long string that is too long for short-string optimization.");
+  BOOST_CHECK(s.size() > sizeof(s));
+
+  std::vector<std::string> buf(world.rank() + 1, s);
+
+  gather_buffer(buf, world);
+
+  if(world.rank() == 0) {
+    auto const n = world.size();
+    BOOST_CHECK(buf.size() == (n * (n+1) / 2));
+
+    for(auto const& e : buf) {
+      BOOST_CHECK(e == s);
+    }
+  }
 }
 
 int main(int argc, char **argv) {

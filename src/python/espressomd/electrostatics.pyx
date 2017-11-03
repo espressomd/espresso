@@ -385,9 +385,6 @@ IF P3M == 1:
 
             def validate_params(self):
                 default_params = self.default_params()
-                if not (self._params["bjerrum_length"] > 0.0):
-                    raise ValueError(
-                        "Bjerrum_length should be a positive double")
 
                 if not (self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
                     raise ValueError("P3M r_cut has to be >=0")
@@ -457,7 +454,7 @@ IF P3M == 1:
                 self._params.update(self._get_params_from_es_core())
 
             def _activate_method(self):
-                #self._set_params_in_es_core()
+                python_p3m_gpu_init(self._params)
                 coulomb.method = COULOMB_P3M_GPU
                 if self._params["tune"]:
                     self._tune()
@@ -848,9 +845,6 @@ IF ELECTROSTATICS:
                     "mid": 0,
                     "bot": 0,
                     "dielectric": 0,
-                    "top": 0,
-                    "mid": 0,
-                    "bot": 0,
                     "dielectric_contrast_on": 0,
                     "capacitor": 0,
                     "delta_mid_top": 0,
@@ -907,6 +901,7 @@ IF ELECTROSTATICS:
                 coulomb.method = COULOMB_SCAFACOS
                 coulomb_set_bjerrum(self._params["bjerrum_length"])
                 self._set_params_in_es_core()
+                mpi_bcast_coulomb_params()
 
             def default_params(self):
                 return {}
@@ -914,3 +909,4 @@ IF ELECTROSTATICS:
             def _deactivate_method(self):
                 super(Scafacos,self)._deactivate_method()
                 scafacos.free_handle()
+                mpi_bcast_coulomb_params()

@@ -18,20 +18,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from espressomd import *
-from espressomd import electrostatics
+from espressomd import System, assert_features, electrostatics
 import numpy
+
+assert_features(["ELECTROSTATICS", "LENNARD_JONES"])
 
 print("\n--->Setup system")
 
 # System parameters
 n_part = 200
 n_ionpairs = n_part/2
-density = 0.7
+density = 0.5
 time_step = 0.01
 temp = 1.0
 gamma = 1.0
-l_bjerrum = 1.0
+l_bjerrum = 7.0
 
 num_steps_equilibration = 1000
 num_configs = 100
@@ -49,7 +50,7 @@ lj_cuts     = {"Anion":  WCA_cut * lj_sigmas["Anion"],
                "Cation": WCA_cut * lj_sigmas["Cation"]}
 
 # Setup System
-system = espressomd.System()
+system = System()
 box_l = (n_part / density)**(1. / 3.)
 system.box_l = [box_l, box_l, box_l]
 system.periodicity = [1, 1, 1]
@@ -58,9 +59,9 @@ system.cell_system.skin = 0.3
 system.thermostat.set_langevin(kT=temp, gamma=gamma)
 
 # Place particles
-for i in range(n_ionpairs):
+for i in range(int(n_ionpairs)):
     system.part.add(id=len(system.part), type=types["Anion"],  pos=numpy.random.random(3) * box_l, q=charges["Anion"])
-for i in range(n_ionpairs):
+for i in range(int(n_ionpairs)):
     system.part.add(id=len(system.part), type=types["Cation"], pos=numpy.random.random(3) * box_l, q=charges["Cation"])
 
 def combination_rule_epsilon(rule, eps1, eps2):
@@ -91,21 +92,18 @@ min_dist = 0.0
 cap = 10.0
 #Warmup Helper: Cold, highly damped system
 system.thermostat.set_langevin(kT=temp*0.1, gamma=gamma*50.0)
-#Warmup Helper: Reduced time_step
-#system.time_step = time_step*0.1
 
 while min_dist < max_sigma:
     #Warmup Helper: Cap max. force, increase slowly for overlapping particles
     min_dist = system.analysis.mindist([types["Anion"],types["Cation"]],[types["Anion"],types["Cation"]])
     cap += min_dist
 #print min_dist, cap
-    system.non_bonded_inter.set_force_cap(cap)
+    system.force_cap = cap
     system.integrator.run(10)
 
 #Don't forget to reset thermostat, timestep and force cap
-system.time_step = time_step
 system.thermostat.set_langevin(kT=temp, gamma=gamma)
-system.non_bonded_inter.set_force_cap(0)
+system.force_cap = 0
 
 print("\n--->Tuning Electrostatics")
 p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-3)
@@ -113,9 +111,9 @@ system.actors.add(p3m)
 
 print("\n--->Temperature Equilibration")
 system.time = 0.0
-for i in range(num_steps_equilibration/100):
+for i in range(int(num_steps_equilibration/100)):
     temp_measured = system.analysis.energy()['kinetic'] / ((3.0 / 2.0) * n_part)
-    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T={3:.4f}".format(system.time,
+    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
                                        system.analysis.energy()['total'],
                                        system.analysis.energy()['coulomb'],
                                        temp_measured))
@@ -123,12 +121,13 @@ for i in range(num_steps_equilibration/100):
 
 print("\n--->Integration")
 system.time = 0.0
+temp_measured=[]
 for i in range(num_configs):
-    temp_measured = system.analysis.energy()['kinetic'] / ((3.0 / 2.0) * n_part)
-    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T={3:.4f}".format(system.time,
+    temp_measured.append(system.analysis.energy()['kinetic'] / ((3.0 / 2.0) * n_part))
+    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
                                        system.analysis.energy()['total'],
                                        system.analysis.energy()['coulomb'],
-                                       temp_measured))
+                                       temp_measured[-1]))
     system.integrator.run(integ_steps_per_config)
 
     # Interally append particle configuration
@@ -153,11 +152,7 @@ r,rdf_01 = system.analysis.rdf(rdf_type='<rdf>',
                             r_min=r_min,
                             r_max=r_max, 
                             r_bins=rdf_bins)
-
 # Write out the data
-rdf_fp = open('rdf.data', 'w')
-for i in range(rdf_bins):
-    rdf_fp.write("%1.5e %1.5e %1.5e\n" % (r[i], rdf_00[i], rdf_01[i]))
-rdf_fp.close()
+numpy.savetxt('rdf.data', numpy.c_[r, rdf_00, rdf_01])
 print("\n--->Written rdf.data")
 print("\n--->Done")

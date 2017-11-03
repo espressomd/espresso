@@ -299,10 +299,16 @@ texinfo_documents = [
 # Supress warning if html is build
 # http://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
 numpydoc_show_class_members = False
-autodoc_mock_imports = ['featuredefs', ]
+autodoc_mock_imports = ['featuredefs', 'espressomd.visualization_mayavi']
 autodoc_default_flags = ['members',
                          'show-inheritance', 'undoc-members']
 # Replacements
 rst_epilog = """
 .. |es| replace:: `ESPResSo`
 """
+# see http://opendreamkit.org/2017/06/09/CythonSphinx/ why this is needed
+def isfunction(obj):
+    return hasattr(type(obj), "__code__")
+
+import inspect
+inspect.isfunction = isfunction

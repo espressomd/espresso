@@ -311,11 +311,10 @@ void lb_lbfluid_fluid_add_momentum(float momentum[3]);
 void lb_lbfluid_calc_linear_momentum(float momentum[3], int include_particles, int include_lbfluid);
 void lb_lbfluid_particles_add_momentum(float velocity[3]);
 
-void lb_lbfluid_set_population( int[3], float[LBQ], int );
-void lb_lbfluid_get_population( int[3], float[LBQ], int );
+void lb_lbfluid_set_population(int[3], float[LBQ], int);
+void lb_lbfluid_get_population(int[3], float[LBQ], int);
 
-//int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pdata, double* A, unsigned int n_A);
-//int statistics_observable_lbgpu_velocity_profile(profile_data* pdata, double* A, unsigned int n_A);
+void lb_lbfluid_get_interpolated_velocity_at_positions(double *positions, double *velocities, int length);
 
 /*@{*/
 

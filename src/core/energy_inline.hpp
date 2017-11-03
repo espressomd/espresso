@@ -514,9 +514,7 @@ inline void add_kinetic_energy(Particle *p1) {
       (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2])) * (*p1).p.mass;
 
 #ifdef ROTATION
-#ifdef ROTATION_PER_PARTICLE
   if (p1->p.rotation)
-#endif
   {
     /* the rotational part is added to the total kinetic energy;
        Here we use the rotational inertia  */
