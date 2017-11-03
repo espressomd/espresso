@@ -28,7 +28,6 @@
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 #include "debye_hueckel.hpp"
-#include "domain_decomposition.hpp"
 #include "elc.hpp"
 #include "energy.hpp"
 #include "errorhandling.hpp"
@@ -100,12 +99,9 @@ void on_program_start() {
   Random::init_random();
 
   init_node_grid();
-  /* calculate initial minimal number of cells (see tclcallback_min_num_cells)
-   */
-  min_num_cells = calc_processor_min_num_cells();
 
   /* initially go for domain decomposition */
-  dd_topology_init(&local_cells);
+  topology_init(CELL_STRUCTURE_DOMDEC, &local_cells);
 
   ghost_init();
   /* Initialise force and energy tables */

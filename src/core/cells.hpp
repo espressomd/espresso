@@ -139,7 +139,7 @@ struct CellStructure {
   /** type descriptor */
   int type;
 
-  bool use_verlet_list;
+  int use_verlet_list;
 
   /** Communicator to exchange ghost cell information. */
   GhostCommunicator ghost_cells_comm;
@@ -210,6 +210,10 @@ extern int rebuild_verletlist;
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
+
+/** Switch for choosing the topology init function of a certain
+    cell system. */
+void topology_init(int cs, CellPList *local);
 
 /** Reinitialize the cell structures.
     @param new_cs gives the new topology to use afterwards. May be set to

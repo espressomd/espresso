@@ -27,7 +27,6 @@
 #include "EspressoSystemInterface.hpp"
 
 #include "comfixed_global.hpp"
-#include "domain_decomposition.hpp"
 #include "electrokinetics.hpp"
 #include "external_potential.hpp"
 #include "forces.hpp"
@@ -108,7 +107,7 @@ void force_calc() {
   // to reassemble the cell lists after all position updates, also of virtual
   // particles.
   if ((lattice_switch & LATTICE_LB) &&
-      cell_structure.type == CELL_STRUCTURE_DOMDEC && (!dd.use_vList))
+      cell_structure.type == CELL_STRUCTURE_DOMDEC && (!cell_structure.use_verlet_list))
     cells_update_ghosts();
 #endif
 

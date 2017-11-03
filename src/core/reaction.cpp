@@ -24,11 +24,15 @@
 
 #include "reaction.hpp"
 #include "cells.hpp"
-#include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
 #include "initialize.hpp"
 #include "utils.hpp"
+#include "random.hpp"
+#include "communication.hpp"
+#include "integrate.hpp"
+#include "grid.hpp"
+
 #include <algorithm>
 #include <random>
 #include <vector>
@@ -38,10 +42,9 @@ reaction_struct reaction;
 #ifdef CATALYTIC_REACTIONS
 
 void reactions_sanity_checks() {
-
   if (reaction.ct_rate != 0.0) {
 
-    if (dd.use_vList == 0 || cell_structure.type != CELL_STRUCTURE_DOMDEC) {
+    if (cell_structure.use_verlet_list == 0 || cell_structure.type != CELL_STRUCTURE_DOMDEC) {
       runtimeErrorMsg() << "The CATALYTIC_REACTIONS feature requires verlet "
                            "lists and domain decomposition";
     }

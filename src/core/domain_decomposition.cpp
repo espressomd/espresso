@@ -817,13 +817,11 @@ void dd_topology_init(CellPList *old) {
                      "%d: dd_topology_init: Number of recieved cells=%d\n",
                      this_node, old->n));
 
-  /** broadcast the flag for using verlet list */
-  MPI_Bcast(&dd.use_vList, 1, MPI_INT, 0, comm_cart);
+  min_num_cells = calc_processor_min_num_cells();
 
   cell_structure.type = CELL_STRUCTURE_DOMDEC;
   cell_structure.position_to_node = map_position_node_array;
   cell_structure.position_to_cell = dd_position_to_cell;
-  cell_structure.use_verlet_list = dd.use_vList;
 
   /* set up new domain decomposition cell structure */
   dd_create_cell_grid();
@@ -932,7 +930,6 @@ void dd_topology_release() {
 #ifdef IMMERSED_BOUNDARY
   free_comm(&cell_structure.ibm_ghost_force_comm);
 #endif
-  cell_structure.use_verlet_list = false;
 }
 
 /************************************************************/
