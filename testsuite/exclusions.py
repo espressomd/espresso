@@ -70,6 +70,9 @@ class Exclusions(ut.TestCase):
         pair_energy = self.s.analysis.energy()['total']
         self.assertGreater(pair_energy, 0.)
 
+        pair_pressure = self.s.analysis.pressure()['total']
+        self.assertGreater(pair_pressure, 0.)
+
         self.s.integrator.run(0)
         pair_force = self.s.part[0].f[0]
         self.assertGreater(abs(pair_force), 0.)
@@ -79,17 +82,21 @@ class Exclusions(ut.TestCase):
         self.s.integrator.run(0)
         self.assertAlmostEqual(self.s.analysis.energy()[
                                'total'], 2 * pair_energy)
+        self.assertAlmostEqual(self.s.analysis.pressure()[
+                               'total'], 2 * pair_pressure)
         self.assertAlmostEqual(self.s.part[2].f[0], -pair_force, places=7)
 
         self.s.part[1].exclusions = [0, 2]
         self.s.integrator.run(0)
         self.assertAlmostEqual(self.s.analysis.energy()['total'], 0)
+        self.assertAlmostEqual(self.s.analysis.pressure()['total'], 0)
         self.assertAlmostEqual(self.s.part[0].f[0], 0, places=7)
         self.assertAlmostEqual(self.s.part[1].f[0], 0, places=7)
         self.assertAlmostEqual(self.s.part[2].f[0], 0, places=7)
 
         self.s.part[1].exclusions = [0]
         self.assertAlmostEqual(self.s.analysis.energy()['total'], pair_energy)
+        self.assertAlmostEqual(self.s.analysis.pressure()['total'], pair_pressure)
         self.s.integrator.run(0)
         self.assertAlmostEqual(self.s.part[0].f[0], 0, places=7)
         self.assertAlmostEqual(self.s.part[1].f[0], pair_force, places=7)
@@ -98,6 +105,8 @@ class Exclusions(ut.TestCase):
         self.s.part[1].exclusions = []
         self.assertAlmostEqual(self.s.analysis.energy()[
                                'total'], 2 * pair_energy)
+        self.assertAlmostEqual(self.s.analysis.pressure()[
+                               'total'], 2 * pair_pressure)
         self.s.integrator.run(0)
         self.assertAlmostEqual(self.s.part[0].f[0], pair_force, places=7)
         self.assertAlmostEqual(self.s.part[1].f[0], 0, places=7)
@@ -105,6 +114,7 @@ class Exclusions(ut.TestCase):
 
         self.s.part[1].exclusions = [0]
         self.assertAlmostEqual(self.s.analysis.energy()['total'], pair_energy)
+        self.assertAlmostEqual(self.s.analysis.pressure()['total'], pair_pressure)
         self.s.integrator.run(0)
         self.assertAlmostEqual(self.s.part[0].f[0], 0, places=7)
         self.assertAlmostEqual(self.s.part[1].f[0], pair_force, places=7)
@@ -129,12 +139,16 @@ class Exclusions(ut.TestCase):
         self.assertGreater(abs(pair_force), 0.)
         self.assertAlmostEqual(self.s.part[1].f[0], -pair_force, places=7)
 
+        pair_pressure = self.s.analysis.pressure()[('coulomb', 0)]
+        self.assertGreater(abs(pair_pressure), 0.)
+
         self.s.part[0].exclusions = [1]
         # Force and energy should not be changed by the exclusion
         self.s.integrator.run(0)
         self.assertAlmostEqual(self.s.part[0].f[0], pair_force, places=7)
         self.assertAlmostEqual(self.s.part[1].f[0], -pair_force, places=7)
         self.assertAlmostEqual(self.s.analysis.energy()[('coulomb', 0)], pair_energy, places=7)
+        self.assertAlmostEqual(self.s.analysis.pressure()[('coulomb', 0)], pair_pressure, places=7)
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())
