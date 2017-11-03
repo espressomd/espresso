@@ -90,6 +90,7 @@ python_test(FILE coulomb_cloud_wall_duplicated.py MAX_NUM_PROC 4)
 python_test(FILE lb_get_u_at_pos.py MAX_NUM_PROC 4)
 python_test(FILE lj.py MAX_NUM_PROC 4)
 python_test(FILE pairs.py MAX_NUM_PROC 4)
+python_test(FILE auto_exclusions.py MAX_NUM_PROC 1)
 python_test(FILE subt_lj.py MAX_NUM_PROC 2)
 
 if(PY_H5PY)

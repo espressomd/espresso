@@ -201,10 +201,8 @@ inline void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters *
     case BONDED_IA_RIGID_BOND:
       force[0] = force[1] = force[2] = 0; break;
 #endif
-#ifdef BOND_VIRTUAL
     case BONDED_IA_VIRTUAL_BOND:
       force[0] = force[1] = force[2] = 0; break;
-#endif
     default :
       //      fprintf(stderr,"add_bonded_virials: WARNING: Bond type %d of atom %d unhandled\n",bonded_ia_params[type_num].type,p1->p.identity);
       fprintf(stderr,"add_bonded_virials: WARNING: Bond type %d , atom %d unhandled, Atom 2: %d\n",iaparams->type,p1->p.identity,p2->p.identity);
@@ -449,11 +447,9 @@ inline void add_three_body_bonded_stress(Particle *p1) {
       i = i + 2;
     }
 #endif
-#ifdef BOND_VIRTUAL
     else if(type == BONDED_IA_VIRTUAL_BOND) {
       i = i + 2;
     }
-#endif
     else {
       runtimeErrorMsg() <<"add_three_body_bonded_stress: match not found for particle " << p1->p.identity << ".\n";
     }

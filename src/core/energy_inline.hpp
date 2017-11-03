@@ -450,12 +450,10 @@ inline void add_bonded_energy(Particle *p1) {
       bond_broken = umbrella_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #endif
-#ifdef BOND_VIRTUAL
     case BONDED_IA_VIRTUAL_BOND:
       bond_broken = 0;
       ret = 0;
       break;
-#endif
     default:
       runtimeErrorMsg() << "add_bonded_energy: bond type (" << type
                         << ") of atom " << p1->p.identity << " unknown\n";

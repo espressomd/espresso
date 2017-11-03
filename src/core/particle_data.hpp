@@ -927,11 +927,7 @@ void try_add_exclusion(Particle *part, int part2);
  should be on a single node, therefore the \ref partCfg array is used. With
  large amounts
  of particles, you should avoid this function and setup exclusions manually. */
-void auto_exclusion(int distance);
-
-/* keep a unique list for particle i. Particle j is only added if it is not i
- and not already in the list. */
-void add_partner(IntList *il, int i, int j, int distance);
+void auto_exclusions(int distance);
 
 // value that is returned in the case there was no error, but the type was not
 // yet indexed

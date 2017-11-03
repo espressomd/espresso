@@ -734,12 +734,10 @@ inline void add_bonded_force(Particle *p1) {
       bond_broken = calc_umbrella_pair_force(p1, p2, iaparams, dx, force);
       break;
 #endif
-#ifdef BOND_VIRTUAL
     case BONDED_IA_VIRTUAL_BOND:
       bond_broken = 0;
       force[0] = force[1] = force[2] = 0.0;
       break;
-#endif
     default:
       runtimeErrorMsg() << "add_bonded_force: bond type of atom "
                         << p1->p.identity << " unknown\n";
