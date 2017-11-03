@@ -1155,7 +1155,7 @@ int ELC_tune(double error) {
         0.5 * (exp(2 * M_PI * elc_params.far_cut * h) / (lz - h) *
                    (C_2PI * elc_params.far_cut + 2 * (ux + uy) + 1 / (lz - h)) /
                    (exp(2 * M_PI * elc_params.far_cut * lz) - 1) +
-               exp(-2 * M_PI * elc_params.far_cut * h) / (lz + 1) *
+               exp(-2 * M_PI * elc_params.far_cut * h) / (lz + h) *
                    (C_2PI * elc_params.far_cut + 2 * (ux + uy) + 1 / (lz + h)) /
                    (exp(2 * M_PI * elc_params.far_cut * lz) - 1));
 
