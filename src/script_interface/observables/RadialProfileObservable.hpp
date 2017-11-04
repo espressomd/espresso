@@ -69,6 +69,7 @@ public:
 
   void set_parameter(std::string const &name, Variant const &value) override {
     SET_PARAMETER_HELPER("ids", radial_profile_observable()->ids());
+    SET_PARAMETER_HELPER("center", radial_profile_observable()->center);
     SET_PARAMETER_HELPER("n_r_bins", radial_profile_observable()->n_r_bins);
     SET_PARAMETER_HELPER("n_phi_bins", radial_profile_observable()->n_phi_bins);
     SET_PARAMETER_HELPER("n_z_bins", radial_profile_observable()->n_z_bins);
