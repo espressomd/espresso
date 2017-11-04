@@ -46,32 +46,42 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
   int p1molid, p2molid, k, l;
   double force[3] = {0, 0, 0};
 
-  calc_non_bonded_pair_force(p1, p2, d, dist, dist2, force);
+#ifdef EXCLUSIONS
+  if (do_nonbonded(p1, p2))
+#endif
+  {
+    calc_non_bonded_pair_force(p1, p2, d, dist, dist2, force);
+    *obsstat_nonbonded(&virials, p1->p.type, p2->p.type) +=
+        d[0] * force[0] + d[1] * force[1] + d[2] * force[2];
 
-  *obsstat_nonbonded(&virials, p1->p.type, p2->p.type) += d[0]*force[0] + d[1]*force[1] + d[2]*force[2];
+    /* stress tensor part */
+    for (k = 0; k < 3; k++)
+      for (l = 0; l < 3; l++)
+        obsstat_nonbonded(&p_tensor, p1->p.type, p2->p.type)[k * 3 + l] +=
+            force[k] * d[l];
 
- /* stress tensor part */
-  for(k=0;k<3;k++)
-    for(l=0;l<3;l++)
-      obsstat_nonbonded(&p_tensor, p1->p.type, p2->p.type)[k*3 + l] += force[k]*d[l];
+    p1molid = p1->p.mol_id;
+    p2molid = p2->p.mol_id;
+    if (p1molid == p2molid) {
+      *obsstat_nonbonded_intra(&virials_non_bonded, p1->p.type, p2->p.type) +=
+          d[0] * force[0] + d[1] * force[1] + d[2] * force[2];
 
-  p1molid = p1->p.mol_id;
-  p2molid = p2->p.mol_id;
-  if ( p1molid == p2molid ) {
-    *obsstat_nonbonded_intra(&virials_non_bonded, p1->p.type, p2->p.type) += d[0]*force[0] + d[1]*force[1] + d[2]*force[2];
-    
-    for(k=0;k<3;k++)
-      for(l=0;l<3;l++)
-        obsstat_nonbonded_intra(&p_tensor_non_bonded, p1->p.type, p2->p.type)[k*3 + l] += force[k]*d[l];
-  } 
-  if ( p1molid != p2molid ) {
-    *obsstat_nonbonded_inter(&virials_non_bonded, p1->p.type, p2->p.type) += d[0]*force[0] + d[1]*force[1] + d[2]*force[2];
-    
-    for(k=0;k<3;k++)
-      for(l=0;l<3;l++)
-        obsstat_nonbonded_inter(&p_tensor_non_bonded, p1->p.type, p2->p.type)[k*3 + l] += force[k]*d[l];
+      for (k = 0; k < 3; k++)
+        for (l = 0; l < 3; l++)
+          obsstat_nonbonded_intra(&p_tensor_non_bonded, p1->p.type,
+                                  p2->p.type)[k * 3 + l] += force[k] * d[l];
+    }
+    if (p1molid != p2molid) {
+      *obsstat_nonbonded_inter(&virials_non_bonded, p1->p.type, p2->p.type) +=
+          d[0] * force[0] + d[1] * force[1] + d[2] * force[2];
+
+      for (k = 0; k < 3; k++)
+        for (l = 0; l < 3; l++)
+          obsstat_nonbonded_inter(&p_tensor_non_bonded, p1->p.type,
+                                  p2->p.type)[k * 3 + l] += force[k] * d[l];
+    }
   }
-  
+
 #ifdef ELECTROSTATICS
   /* real space coulomb */
   if (coulomb.method != COULOMB_NONE) {

@@ -966,26 +966,21 @@ public:
     if (dist2 > m_eff_max_cut2)
       return false;
 
-#ifdef EXCLUSIONS
-    if (!do_nonbonded(&p1, &p2))
-      return false;
-#endif
-
-    // Within short-range distance (incl dpd and the like)
-    if (dist2 <= SQR(get_ia_param(p1.p.type, p2.p.type)->max_cut + m_skin))
-      return true;
-
-// Within real space cutoff of electrostatics and both charged
+    // Within real space cutoff of electrostatics and both charged
 #ifdef ELECTROSTATICS
     if ((dist2 <= m_eff_coulomb_cut2) && (p1.p.q != 0) && (p2.p.q != 0))
       return true;
 #endif
 
-// Within dipolar cutoff and both cary magnetic moments
+    // Within dipolar cutoff and both cary magnetic moments
 #ifdef DIPOLES
     if ((dist2 <= m_eff_dipolar_cut2) && (p1.p.dipm != 0) && (p2.p.dipm != 0))
       return true;
 #endif
+
+    // Within short-range distance (incl dpd and the like)
+    if (dist2 <= SQR(get_ia_param(p1.p.type, p2.p.type)->max_cut + m_skin))
+      return true;
 
     return false;
   }

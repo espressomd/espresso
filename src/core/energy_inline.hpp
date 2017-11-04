@@ -197,6 +197,9 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
   double ret = 0;
 #endif
 
+#ifdef EXCLUSIONS
+  if (do_nonbonded(p1, p2))
+#endif
   *obsstat_nonbonded(&energy, p1->p.type, p2->p.type) +=
       calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist, dist2);
 
