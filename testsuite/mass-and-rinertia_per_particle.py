@@ -4,6 +4,7 @@ import numpy as np
 from numpy.random import random, seed
 import espressomd
 import math
+import tests_common as tc
 
 
 @ut.skipIf(not espressomd.has_features(["MASS",
@@ -171,7 +172,14 @@ class ThermoTest(ut.TestCase):
         D_tr = np.zeros((2, 3))
         for k in range(2):
             gamma_tran[k, :] = np.array((0.4 + np.random.random(3)) * 10)
-            gamma_rot[k, :] = np.array((0.2 + np.random.random(3)) * 20)
+            # Second particle should be isotropic for the rotational diffusion test.
+            # It is valid within test cases #1 and #3
+            if test_case in (1, 3) and k == 1:
+                gamma_rot[k, 0] = np.array((0.4 + np.random.random()) * 20)
+                gamma_rot[k, 1] = gamma_rot[k, 0]
+                gamma_rot[k, 2] = gamma_rot[k, 0]
+            else:
+                gamma_rot[k, :] = np.array((0.2 + np.random.random(3)) * 20)
 
         box = 10.0
         self.es.box_l = [box, box, box]
@@ -221,7 +229,18 @@ class ThermoTest(ut.TestCase):
         self.es.time_step = 0.03
         n = 200
         mass = (0.2 + np.random.random()) * 7.0
-        J = np.array((0.2 + np.random.random(3)) * 7.0)
+        J = np.zeros((2, 3))
+        J[0, :] = np.array((0.2 + np.random.random(3)) * 7.0)
+        # Second particle should be isotropic for the rotational diffusion test.
+        # It is valid within test cases #1 and #3
+        if test_case in (1, 3):
+            J[1, 0] = np.array((0.2 + np.random.random()) * 1.0)
+            J[1, 1] = J[1, 0]
+            J[1, 2] = J[1, 0]
+        else:
+            J[1, :] = np.array((0.2 + np.random.random(3)) * 7.0)
+
+        D_rot_p1 = 2.0 * halfkT[1] / gamma_rot[1, 0]
 
         for i in range(n):
             for k in range(2):
@@ -229,7 +248,8 @@ class ThermoTest(ut.TestCase):
                 part_pos = np.array(np.random.random(3) * box)
                 part_v = np.array([0.0, 0.0, 0.0])
                 part_omega_body = np.array([0.0, 0.0, 0.0])
-                self.es.part.add(rotation=(1,1,1), id=ind, mass=mass, rinertia=J,
+                self.es.part.add(rotation=(1,1,1), id=ind, mass=mass,
+                                 rinertia=[J[k, 0], J[k, 1], J[k, 2]],
                                  pos=part_pos, v=part_v)
                 if "ROTATION" in espressomd.features():
                     self.es.part[ind].omega_body = part_omega_body
@@ -245,6 +265,14 @@ class ThermoTest(ut.TestCase):
                     if "ROTATION" in espressomd.features():
                         self.es.part[ind].gamma_rot = gamma_rot[k, :]
                     self.es.part[ind].temp = temp[k]
+                # It is needed for further rotational diffusion validation:
+                if k == 1:
+                    if i <= n / 3:
+                        self.es.part[ind].rotation = 1, 0, 0
+                    if i > n / 3 and i <= 2 * n / 3:
+                        self.es.part[ind].rotation = 0, 1, 0
+                    if i > 2 * n / 3:
+                        self.es.part[ind].rotation = 0, 0, 1
 
         # Get rid of short range calculations if exclusions are on
         # if espressomd.has_features("EXCLUSIONS"):
@@ -256,6 +284,19 @@ class ThermoTest(ut.TestCase):
         dr2 = np.zeros((2, 3))
         sigma2_tr = np.zeros((2))
         dr_norm = np.zeros((2))
+        
+        # Only for the second particle.
+        # Total curve within a spherical trigonometry:
+        alpha = np.zeros((n, 3))
+        alpha_norm = 0.0
+        # Previous directions of the principal axes:
+        # [particle_index, which principal axis, its lab coordinate]
+        prev_pa_lab = np.zeros((n, 3, 3))
+        pa_body = np.zeros((3))
+        pa_lab = np.zeros((3, 3))
+        vec = np.zeros((3))
+        vec1 = np.zeros((3))
+        vec_diag = np.ones((3))
 
         pos0 = np.zeros((2 * n, 3))
         for p in range(n):
@@ -263,14 +304,16 @@ class ThermoTest(ut.TestCase):
                 ind = p + k * n
                 pos0[ind, :] = self.es.part[ind].pos
         dt0 = mass / gamma_tr
+        # Corresponding below test will be made only for the second particle:
+        dt0_rot_1 = J[1, 0] / gamma_rot[1, 0]
 
-        loops = 200
+        loops = 1250
         print("Thermalizing...")
         therm_steps = 150
         self.es.integrator.run(therm_steps)
         print("Measuring...")
 
-        int_steps = 5
+        int_steps = 1
         for i in range(loops):
             self.es.integrator.run(int_steps)
             # Get kinetic energy in each degree of freedom for all particles
@@ -297,6 +340,32 @@ class ThermoTest(ut.TestCase):
                                                                                                                                                 j])))
                     dr_norm[k] = dr_norm[k] + \
                         (sum(dr2[k, :]) - sigma2_tr[k]) / sigma2_tr[k]
+                    
+                    # Rotational diffusion variance.
+                    if test_case in (1, 3) and k == 1:
+                        dt -= self.es.time_step * (1 + therm_steps)
+                        # First, let's identify principal axes in the lab reference frame.
+                        for j in range(3):
+                            for j1 in range(3):
+                                pa_body[j1] = 0.0
+                            pa_body[j] = 1.0
+                            vec = tc.convert_vec_body_to_space(self.es, ind, pa_body)
+                            pa_lab[j, :] = vec[:]
+                            
+                            if i > 0:
+                                # Calc a rotational diffusion within the spherical trigonometry
+                                vec1[:] = prev_pa_lab[p, j, :]
+                                dalpha = np.arccos(np.dot(vec, vec1) / (np.linalg.norm(vec) * np.linalg.norm(vec1)))
+                                # just a formal sign keep to distinguish opposite rotations
+                                sign = np.sign(np.dot(np.cross(vec, vec1), vec_diag))
+                                alpha[p, j] += sign * dalpha
+                                alpha2 = alpha[p, j]**2
+                                sigma2_alpha = D_rot_p1 * (2.0 * dt + dt0_rot_1 * (- 3.0 +
+                                                                                4.0 * math.exp(- dt / dt0_rot_1) 
+                                                                                - math.exp(- 2.0 * dt / dt0_rot_1)))
+                                if dalpha > 0:
+                                    alpha_norm += (alpha2 - sigma2_alpha) / sigma2_alpha
+                            prev_pa_lab[p, j, :] = pa_lab[j, :]
 
         tolerance = 0.15
         Ev = 0.5 * mass * v2 / (n * loops)
@@ -306,9 +375,18 @@ class ThermoTest(ut.TestCase):
         do_vec = np.zeros((2, 3))
         for k in range(2):
             dv[k] = sum(Ev[k, :]) / (3 * halfkT[k]) - 1.0
-            do[k] = sum(Eo[k, :]) / (3 * halfkT[k]) - 1.0
-            do_vec[k, :] = Eo[k, :] / halfkT[k] - 1.0
+            if k == 0:
+                do[k] = sum(Eo[k, :]) / (3 * halfkT[k]) - 1.0
+                do_vec[k, :] = Eo[k, :] / halfkT[k] - 1.0
+            else:
+                # Two rotational axes are fixed for the second particle:
+                do[k] = sum(Eo[k, :]) / (1 * halfkT[k]) - 1.0
+                do_vec[k, :] = Eo[k, :] / (halfkT[k] / 3.0) - 1.0
         dr_norm = dr_norm / (n * loops)
+        
+        # Only two body axes move around the non-fixed third one.
+        alpha_norm = alpha_norm / (2 * n * loops)
+        
         for k in range(2):
             print("\n")
             print("k = " + str(k))
@@ -336,6 +414,9 @@ class ThermoTest(ut.TestCase):
             print(
                 "Deviation in translational diffusion: {0} ".format(
                     dr_norm[k]))
+            print(
+                "Deviation in rotational diffusion: {0} ".format(
+                    alpha_norm))
 
             self.assertLessEqual(
                 abs(
@@ -362,6 +443,13 @@ class ThermoTest(ut.TestCase):
                 tolerance,
                 msg='Relative deviation in translational diffusion is too large: {0}'.format(
                     dr_norm[k]))
+            if test_case in (1, 3):
+                self.assertLessEqual(
+                    abs(
+                        alpha_norm),
+                    tolerance,
+                    msg='Relative deviation in rotational diffusion is too large: {0}'.format(
+                        alpha_norm))
 
     def test(self):
         if "ROTATION" in espressomd.features():
