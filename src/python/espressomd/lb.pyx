@@ -257,16 +257,18 @@ IF LB_GPU:
 
             Parameters
             ----------
-            positions : numpy-array of type :obj:`float`
+            positions : numpy-array of type :obj:`float` of shape (N,3)
                         The 3-dimensional positions.
 
             Returns
             -------
-            velocities : numpy-array of type :obj:`float`
-                         The 3-dimensional velocities.
+            velocities : numpy-array of type :obj:`float` of shape (N,3)
+                         The 3-dimensional LB fluid velocities.
+
             Raises
             ------
-            AssertionError : If shape of `positions` not (N,3)
+            AssertionError
+                If shape of ``positions`` not (N,3).
 
             """
             assert positions.shape[1] == 3, "The input array must have shape (N,3)"
