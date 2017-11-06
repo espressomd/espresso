@@ -114,8 +114,6 @@ General features
 
 -  ``THERMOSTAT_IGNORE_NON_VIRTUAL``
 
--  ``BOND_VIRTUAL``
-
 -  ``MODES``
 
 -  ``METADYNAMICS``

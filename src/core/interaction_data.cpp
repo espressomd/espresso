@@ -994,7 +994,6 @@ void recalc_coulomb_prefactor()
 #endif
 }
 
-#ifdef BOND_VIRTUAL
 int virtual_set_params(int bond_type)
 {
   if(bond_type < 0)
@@ -1010,5 +1009,3 @@ int virtual_set_params(int bond_type)
 
   return ES_OK;
 }
-
-#endif

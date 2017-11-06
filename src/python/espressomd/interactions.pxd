@@ -329,9 +329,8 @@ IF OVERLAPPED == 1:
         int overlapped_bonded_set_params(int bond_type, OverlappedBondedInteraction overlap_type,
                                          char * filename)
 
-IF BOND_VIRTUAL == 1:
-    cdef extern from "interaction_data.hpp":
-        int virtual_set_params(int bond_type)
+cdef extern from "interaction_data.hpp":
+    int virtual_set_params(int bond_type)
 
 
 cdef extern from "interaction_data.hpp":
