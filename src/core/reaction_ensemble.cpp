@@ -1166,7 +1166,7 @@ int ReactionEnsemble::initialize_wang_landau(){
 		for(int flattened_index=0;flattened_index<m_current_wang_landau_system.len_histogram;flattened_index++){
 			//unravel index
 			int unraveled_index[m_current_wang_landau_system.nr_collective_variables];
-			unravel_index(nr_subindices_of_collective_variable,m_current_wang_landau_system.nr_collective_variables,flattened_index,unraveled_index);
+			utils::unravel_index(nr_subindices_of_collective_variable,m_current_wang_landau_system.nr_collective_variables,flattened_index,unraveled_index);
 			//use unraveled index
 			double current_energy=unraveled_index[energy_collective_variable_index]*m_current_wang_landau_system.collective_variables[energy_collective_variable_index]->delta_CV+m_current_wang_landau_system.collective_variables[energy_collective_variable_index]->CV_minimum;
 			if(current_energy>max_boundaries_energies[get_flattened_index_wang_landau_without_energy_collective_variable(flattened_index,energy_collective_variable_index)] || current_energy<min_boundaries_energies[get_flattened_index_wang_landau_without_energy_collective_variable(flattened_index,energy_collective_variable_index)]-m_current_wang_landau_system.collective_variables[energy_collective_variable_index]->delta_CV ){
@@ -1414,18 +1414,6 @@ bool ReactionEnsemble::achieved_desired_number_of_refinements_one_over_t() {
 
 }
 
-/**
-*Returns the unraveled index of the provided flattened index (needed for writing the Wang-Landau results to file)
-*/
-void ReactionEnsemble::unravel_index(int* len_dims, int ndims, int flattened_index, int* unraveled_index_out){
-	//idea taken from http://codinghighway.com/2014/02/22/c-multi-dimensional-arrays-part-2-flattened-to-unflattened-index/
-	int mul[ndims];
-	mul[ndims-1]=1;
-	for (int j = ndims-2; j >= 0; j--)
-		mul[j] = mul[j+1]*len_dims[j+1];
-	for (int j = 0; j < ndims; j++)
-		unraveled_index_out[j]=(flattened_index/mul[j])%len_dims[j];
-}
 
 
 /**
@@ -1443,7 +1431,7 @@ void ReactionEnsemble::write_wang_landau_results_to_file(char* full_path_to_outp
 			//unravel index
 			if(std::abs(m_current_wang_landau_system.wang_landau_potential[flattened_index]-m_current_wang_landau_system.double_fill_value)>1){ //only output data if they are not equal to m_current_reaction_system.double_fill_value. This if ensures that for the energy observable not allowed energies (energies in the interval [global_E_min, global_E_max]) in the multidimensional wang landau potential are printed out, since the range [E_min(nbar), E_max(nbar)] for each nbar may be a different one
 				int unraveled_index[m_current_wang_landau_system.nr_collective_variables];
-				unravel_index(nr_subindices_of_collective_variable,m_current_wang_landau_system.nr_collective_variables,flattened_index,unraveled_index);
+				utils::unravel_index(nr_subindices_of_collective_variable,m_current_wang_landau_system.nr_collective_variables,flattened_index,unraveled_index);
 				//use unraveled index
 				for(int i=0;i<m_current_wang_landau_system.nr_collective_variables;i++){
 					fprintf(pFile, "%f ",unraveled_index[i]*m_current_wang_landau_system.collective_variables[i]->delta_CV+m_current_wang_landau_system.collective_variables[i]->CV_minimum);
@@ -1500,7 +1488,7 @@ void ReactionEnsemble::write_out_preliminary_energy_run_results (char* full_path
 		for(int flattened_index=0;flattened_index<m_current_wang_landau_system.len_histogram;flattened_index++){
 			//unravel index
 			int unraveled_index[m_current_wang_landau_system.nr_collective_variables];
-			unravel_index(nr_subindices_of_collective_variable,m_current_wang_landau_system.nr_collective_variables,flattened_index,unraveled_index);
+			utils::unravel_index(nr_subindices_of_collective_variable,m_current_wang_landau_system.nr_collective_variables,flattened_index,unraveled_index);
 			//use unraveled index
 			for(int i=0;i<m_current_wang_landau_system.nr_collective_variables;i++){
 				fprintf(pFile, "%f ",unraveled_index[i]*m_current_wang_landau_system.collective_variables[i]->delta_CV+m_current_wang_landau_system.collective_variables[i]->CV_minimum);
@@ -1520,7 +1508,7 @@ int ReactionEnsemble::get_flattened_index_wang_landau_without_energy_collective_
 	int* nr_subindices_of_collective_variable=m_current_wang_landau_system.nr_subindices_of_collective_variable;
 	//unravel index
 	int unraveled_index[m_current_wang_landau_system.nr_collective_variables];
-	unravel_index(nr_subindices_of_collective_variable,m_current_wang_landau_system.nr_collective_variables,flattened_index_with_energy_collective_variable,unraveled_index);
+	utils::unravel_index(nr_subindices_of_collective_variable,m_current_wang_landau_system.nr_collective_variables,flattened_index_with_energy_collective_variable,unraveled_index);
 	//use unraveled index
 	const int nr_collective_variables=m_current_wang_landau_system.nr_collective_variables-1; //forget the last collective variable (the energy collective variable)
 	double current_state[nr_collective_variables];
