@@ -265,14 +265,6 @@ class ThermoTest(ut.TestCase):
                     if "ROTATION" in espressomd.features():
                         self.es.part[ind].gamma_rot = gamma_rot[k, :]
                     self.es.part[ind].temp = temp[k]
-                # It is needed for further rotational diffusion validation:
-                if k == 1:
-                    if i <= n / 3:
-                        self.es.part[ind].rotation = 1, 0, 0
-                    if i > n / 3 and i <= 2 * n / 3:
-                        self.es.part[ind].rotation = 0, 1, 0
-                    if i > 2 * n / 3:
-                        self.es.part[ind].rotation = 0, 0, 1
 
         # Get rid of short range calculations if exclusions are on
         # if espressomd.has_features("EXCLUSIONS"):
@@ -286,17 +278,20 @@ class ThermoTest(ut.TestCase):
         dr_norm = np.zeros((2))
         
         # Only for the second particle.
-        # Total curve within a spherical trigonometry:
-        alpha = np.zeros((n, 3))
+        # Total curve within a spherical trigonometry.
+        # [particle_index, which principal axis, around which lab axis]
+        alpha = np.zeros((n, 3, 3))
         alpha_norm = 0.0
         # Previous directions of the principal axes:
         # [particle_index, which principal axis, its lab coordinate]
         prev_pa_lab = np.zeros((n, 3, 3))
         pa_body = np.zeros((3))
         pa_lab = np.zeros((3, 3))
+        ref_lab = np.zeros((3))
         vec = np.zeros((3))
         vec1 = np.zeros((3))
-        vec_diag = np.ones((3))
+        vec2 = np.zeros((3))
+        #vec_diag = np.ones((3))
 
         pos0 = np.zeros((2 * n, 3))
         for p in range(n):
@@ -353,18 +348,29 @@ class ThermoTest(ut.TestCase):
                             pa_lab[j, :] = vec[:]
                             
                             if i > 0:
-                                # Calc a rotational diffusion within the spherical trigonometry
-                                vec1[:] = prev_pa_lab[p, j, :]
-                                dalpha = np.arccos(np.dot(vec, vec1) / (np.linalg.norm(vec) * np.linalg.norm(vec1)))
-                                # just a formal sign keep to distinguish opposite rotations
-                                sign = np.sign(np.dot(np.cross(vec, vec1), vec_diag))
-                                alpha[p, j] += sign * dalpha
-                                alpha2 = alpha[p, j]**2
-                                sigma2_alpha = D_rot_p1 * (2.0 * dt + dt0_rot_1 * (- 3.0 +
-                                                                                4.0 * math.exp(- dt / dt0_rot_1) 
-                                                                                - math.exp(- 2.0 * dt / dt0_rot_1)))
-                                if dalpha > 0:
-                                    alpha_norm += (alpha2 - sigma2_alpha) / sigma2_alpha
+                                # Around which axis we rotates?
+                                for j1 in range(3):
+                                    # Calc a rotational diffusion within the spherical trigonometry
+                                    vec2 = vec
+                                    #vec2[j1] = 0.0
+                                    vec1[:] = prev_pa_lab[p, j, :]
+                                    #vec1[j1] = 0.0
+                                    for j2 in range(3):
+                                        ref_lab[j2] = 0.0
+                                    ref_lab[j1] = 1.0
+                                    dalpha = np.arccos(np.dot(vec2, vec1) / (np.linalg.norm(vec2) * np.linalg.norm(vec1)))
+                                    # just a formal sign keep to distinguish opposite rotations
+                                    # it can be zero and this is important to track non-rotational
+                                    #sign = np.sign(np.dot(np.cross(vec2, vec1), ref_lab))
+                                    rot_projection = np.dot(np.cross(vec2, vec1), ref_lab) / np.linalg.norm(np.cross(vec2, vec1))
+                                    theta = np.arccos(np.dot(vec2, ref_lab) / (np.linalg.norm(vec2) * np.linalg.norm(ref_lab)))
+                                    alpha[p, j, j1] += dalpha * rot_projection / np.sin(theta)
+                                    alpha2 = alpha[p, j, j1]**2
+                                    sigma2_alpha = D_rot_p1 * (2.0 * dt + dt0_rot_1 * (- 3.0 +
+                                                                                    4.0 * math.exp(- dt / dt0_rot_1) 
+                                                                                    - math.exp(- 2.0 * dt / dt0_rot_1)))
+                                    if dalpha > 0:
+                                        alpha_norm += (alpha2 - sigma2_alpha) / sigma2_alpha
                             prev_pa_lab[p, j, :] = pa_lab[j, :]
 
         tolerance = 0.15
@@ -375,17 +381,17 @@ class ThermoTest(ut.TestCase):
         do_vec = np.zeros((2, 3))
         for k in range(2):
             dv[k] = sum(Ev[k, :]) / (3 * halfkT[k]) - 1.0
-            if k == 0:
-                do[k] = sum(Eo[k, :]) / (3 * halfkT[k]) - 1.0
-                do_vec[k, :] = Eo[k, :] / halfkT[k] - 1.0
-            else:
+            #if k == 0:
+            do[k] = sum(Eo[k, :]) / (3 * halfkT[k]) - 1.0
+            do_vec[k, :] = Eo[k, :] / halfkT[k] - 1.0
+            #else:
                 # Two rotational axes are fixed for the second particle:
-                do[k] = sum(Eo[k, :]) / (1 * halfkT[k]) - 1.0
-                do_vec[k, :] = Eo[k, :] / (halfkT[k] / 3.0) - 1.0
+            #    do[k] = sum(Eo[k, :]) / (1 * halfkT[k]) - 1.0
+            #    do_vec[k, :] = Eo[k, :] / (halfkT[k] / 3.0) - 1.0
         dr_norm = dr_norm / (n * loops)
         
         # Only two body axes move around the non-fixed third one.
-        alpha_norm = alpha_norm / (2 * n * loops)
+        alpha_norm = alpha_norm / (9 * n * loops)
         
         for k in range(2):
             print("\n")
