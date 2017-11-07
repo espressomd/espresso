@@ -381,7 +381,6 @@ public:
         using boost::spirit::qi::_val;
         using boost::spirit::qi::alpha;
         using boost::spirit::qi::alnum;
-        using boost::spirit::qi::no_case;
         using boost::spirit::qi::raw;
 
         boost::phoenix::function<unary_expr_<real_t>> unary_expr;
@@ -419,12 +418,11 @@ public:
             |   '(' >> expression  [_val =  _1] >> ')'
             |   ('-' >> primary    [_val = unary_expr(std::negate<real_t>{}, _1)])
             |   ('+' >> primary    [_val =  _1])
-            |   (no_case[ufunc] >> '(' >> expression >> ')')
+            |   (ufunc >> '(' >> expression >> ')')
                                    [_val = unary_expr(_1, _2)]
-            |   (no_case[bfunc] >> '(' >> expression >> ','
-                                       >> expression >> ')')
+            |   (bfunc >> '(' >> expression >> ',' >> expression >> ')')
                                    [_val = binary_expr(_1, _2, _3)]
-            |   no_case[constant]  [_val =  _1]
+            |   constant           [_val =  _1]
             |   variable           [_val =  _1]
             ;
     }
