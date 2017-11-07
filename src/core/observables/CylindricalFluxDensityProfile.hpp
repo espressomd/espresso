@@ -55,22 +55,27 @@ public:
   virtual int n_values() const override {
     return 3 * n_r_bins * n_phi_bins * n_z_bins;
   }
+
 private:
   virtual void do_write() override {
-    // We override the implementation to actually write positions not plain indices.
+    // We override the implementation to actually write positions not plain
+    // indices.
     static const int len_dims[4] = {n_r_bins, n_phi_bins, n_z_bins, 3};
     static const int n_dims = 4;
-    static const std::array<double, 3> bin_sizes = {r_bin_size(), phi_bin_size(), z_bin_size()};
+    static const std::array<double, 3> bin_sizes = {
+        r_bin_size(), phi_bin_size(), z_bin_size()};
     std::array<double, 3> position;
     int index;
     int unravelled_index[4];
-    for (auto it = last_value.begin(); it != last_value.end(); it+=3) {
+    for (auto it = last_value.begin(); it != last_value.end(); it += 3) {
       index = std::distance(last_value.begin(), it);
       ::utils::unravel_index(len_dims, n_dims, index, unravelled_index);
-      position = {(static_cast<double>(unravelled_index[0]) + 0.5) * bin_sizes[0],
-                  (static_cast<double>(unravelled_index[1]) + 0.5) * bin_sizes[1],
-                  (static_cast<double>(unravelled_index[2]) + 0.5) * bin_sizes[2]};
-      m_ofile << position[0] << " " << position[1] << " " << position[2] << " " << *it << " " << *(it+1) << " " << *(it+2) <<"\n";
+      position = {
+          (static_cast<double>(unravelled_index[0]) + 0.5) * bin_sizes[0],
+          (static_cast<double>(unravelled_index[1]) + 0.5) * bin_sizes[1],
+          (static_cast<double>(unravelled_index[2]) + 0.5) * bin_sizes[2]};
+      m_ofile << position[0] << " " << position[1] << " " << position[2] << " "
+              << *it << " " << *(it + 1) << " " << *(it + 2) << "\n";
     }
     m_ofile << std::endl;
   }
