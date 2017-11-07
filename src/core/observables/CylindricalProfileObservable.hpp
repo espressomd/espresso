@@ -1,5 +1,5 @@
-#ifndef OBSERVABLES_RADIALPROFILEOBSERVABLE_HPP
-#define OBSERVABLES_RADIALPROFILEOBSERVABLE_HPP
+#ifndef OBSERVABLES_CYLINDRICALPROFILEOBSERVABLE_HPP
+#define OBSERVABLES_CYLINDRICALPROFILEOBSERVABLE_HPP
 
 #include <cmath>
 
@@ -10,7 +10,7 @@
 
 namespace Observables {
 
-class RadialProfileObservable : public PidObservable {
+class CylindricalProfileObservable : public PidObservable {
 public:
   ::Vector<3, double> center;
   double min_r, max_r;

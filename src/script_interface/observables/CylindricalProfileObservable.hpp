@@ -19,38 +19,38 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef SCRIPT_INTERFACE_OBSERVABLES_RADIALPROFILEOBSERVABLE_HPP
-#define SCRIPT_INTERFACE_OBSERVABLES_RADIALPROFILEOBSERVABLE_HPP
+#ifndef SCRIPT_INTERFACE_OBSERVABLES_CYLINDRICALPROFILEOBSERVABLE_HPP
+#define SCRIPT_INTERFACE_OBSERVABLES_CYLINDRICALPROFILEOBSERVABLE_HPP
 
 #include "ScriptInterface.hpp"
 
 #include <memory>
 
 #include "Observable.hpp"
-#include "core/observables/RadialProfileObservable.hpp"
-#include "core/observables/RadialFluxDensityProfile.hpp"
+#include "core/observables/CylindricalProfileObservable.hpp"
+#include "core/observables/CylindricalFluxDensityProfile.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
 
-class RadialProfileObservable : public Observable {
+class CylindricalProfileObservable : public Observable {
 public:
   const std::string name() const override {
-    return "Observables::RadialProfileObservable";
+    return "Observables::CylindricalProfileObservable";
   };
 
   VariantMap get_parameters() const override {
-    return {{"ids", radial_profile_observable()->ids()},
-            {"center", radial_profile_observable()->center},
-            {"n_r_bins", radial_profile_observable()->n_r_bins},
-            {"n_phi_bins", radial_profile_observable()->n_phi_bins},
-            {"n_z_bins", radial_profile_observable()->n_z_bins},
-            {"min_r", radial_profile_observable()->min_r},
-            {"min_phi", radial_profile_observable()->min_phi},
-            {"min_z", radial_profile_observable()->min_z},
-            {"max_r", radial_profile_observable()->max_r},
-            {"max_phi", radial_profile_observable()->max_phi},
-            {"max_z", radial_profile_observable()->max_z}};
+    return {{"ids", cylindrical_profile_observable()->ids()},
+            {"center", cylindrical_profile_observable()->center},
+            {"n_r_bins", cylindrical_profile_observable()->n_r_bins},
+            {"n_phi_bins", cylindrical_profile_observable()->n_phi_bins},
+            {"n_z_bins", cylindrical_profile_observable()->n_z_bins},
+            {"min_r", cylindrical_profile_observable()->min_r},
+            {"min_phi", cylindrical_profile_observable()->min_phi},
+            {"min_z", cylindrical_profile_observable()->min_z},
+            {"max_r", cylindrical_profile_observable()->max_r},
+            {"max_phi", cylindrical_profile_observable()->max_phi},
+            {"max_z", cylindrical_profile_observable()->max_z}};
   };
 
   ParameterMap valid_parameters() const override {
@@ -68,25 +68,25 @@ public:
   };
 
   void set_parameter(std::string const &name, Variant const &value) override {
-    SET_PARAMETER_HELPER("ids", radial_profile_observable()->ids());
-    SET_PARAMETER_HELPER("center", radial_profile_observable()->center);
-    SET_PARAMETER_HELPER("n_r_bins", radial_profile_observable()->n_r_bins);
-    SET_PARAMETER_HELPER("n_phi_bins", radial_profile_observable()->n_phi_bins);
-    SET_PARAMETER_HELPER("n_z_bins", radial_profile_observable()->n_z_bins);
-    SET_PARAMETER_HELPER("min_r", radial_profile_observable()->min_r);
-    SET_PARAMETER_HELPER("min_phi", radial_profile_observable()->min_phi);
-    SET_PARAMETER_HELPER("min_z", radial_profile_observable()->min_z);
-    SET_PARAMETER_HELPER("max_r", radial_profile_observable()->max_r);
-    SET_PARAMETER_HELPER("max_phi", radial_profile_observable()->max_phi);
-    SET_PARAMETER_HELPER("max_z", radial_profile_observable()->max_z);
+    SET_PARAMETER_HELPER("ids", cylindrical_profile_observable()->ids());
+    SET_PARAMETER_HELPER("center", cylindrical_profile_observable()->center);
+    SET_PARAMETER_HELPER("n_r_bins", cylindrical_profile_observable()->n_r_bins);
+    SET_PARAMETER_HELPER("n_phi_bins", cylindrical_profile_observable()->n_phi_bins);
+    SET_PARAMETER_HELPER("n_z_bins", cylindrical_profile_observable()->n_z_bins);
+    SET_PARAMETER_HELPER("min_r", cylindrical_profile_observable()->min_r);
+    SET_PARAMETER_HELPER("min_phi", cylindrical_profile_observable()->min_phi);
+    SET_PARAMETER_HELPER("min_z", cylindrical_profile_observable()->min_z);
+    SET_PARAMETER_HELPER("max_r", cylindrical_profile_observable()->max_r);
+    SET_PARAMETER_HELPER("max_phi", cylindrical_profile_observable()->max_phi);
+    SET_PARAMETER_HELPER("max_z", cylindrical_profile_observable()->max_z);
   };
 
-  virtual std::shared_ptr<::Observables::RadialProfileObservable>
-  radial_profile_observable() const = 0;
+  virtual std::shared_ptr<::Observables::CylindricalProfileObservable>
+  cylindrical_profile_observable() const = 0;
 };
 
 #define NEW_RADIAL_PROFILE_OBSERVABLE(obs_name)                                \
-  class obs_name : public RadialProfileObservable {                            \
+  class obs_name : public CylindricalProfileObservable {                            \
   public:                                                                      \
     obs_name() : m_observable(new ::Observables::obs_name()){};                \
                                                                                \
@@ -98,8 +98,8 @@ public:
       return m_observable;                                                     \
     }                                                                          \
                                                                                \
-    std::shared_ptr<::Observables::RadialProfileObservable>                    \
-    radial_profile_observable() const override {                               \
+    std::shared_ptr<::Observables::CylindricalProfileObservable>                    \
+    cylindrical_profile_observable() const override {                               \
       return m_observable;                                                     \
     }                                                                          \
                                                                                \
@@ -107,7 +107,7 @@ public:
     std::shared_ptr<::Observables::obs_name> m_observable;                     \
   };
 
-NEW_RADIAL_PROFILE_OBSERVABLE(RadialFluxDensityProfile);
+NEW_RADIAL_PROFILE_OBSERVABLE(CylindricalFluxDensityProfile);
 
 } /* namespace Observables */
 } /* namespace ScriptInterface */

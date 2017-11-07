@@ -123,5 +123,5 @@ class StressTensorAcf(Observable):
 
 
 @script_interface_register
-class RadialFluxDensityProfile(Observable):
-    _so_name="Observables::RadialFluxDensityProfile"
+class CylindricalFluxDensityProfile(Observable):
+    _so_name="Observables::CylindricalFluxDensityProfile"

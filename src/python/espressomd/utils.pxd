@@ -40,7 +40,9 @@ cdef extern from "utils.hpp":
     cdef void init_intlist(int_list * il)
     cdef void alloc_intlist(int_list * il, int size)
     cdef void realloc_intlist(int_list * il, int size)
-    cdef void unravel_index(int* len_dims, int ndims, int flattened_index, int* unraveled_index_out)
+
+cdef extern from "utils.hpp" namespace "utils":
+    cdef void unravel_index(int* len_dims, int ndims, int flattened_index, int* unravelled_index_out)
 
 cdef int_list * create_int_list_from_python_object(obj)
 cdef np.ndarray create_nparray_from_int_list(int_list * il)

@@ -1095,14 +1095,14 @@ template <typename T> int sign(T value) {
 /**
 *Returns the unraveled index of the provided flattened index.
 */
-inline void unravel_index(int* len_dims, int ndims, int flattened_index, int* unraveled_index_out){
+inline void unravel_index(const int* len_dims, const int ndims, const int flattened_index, int* unravelled_index_out){
 	//idea taken from http://codinghighway.com/2014/02/22/c-multi-dimensional-arrays-part-2-flattened-to-unflattened-index/
 	int mul[ndims];
 	mul[ndims-1]=1;
 	for (int j = ndims-2; j >= 0; j--)
 		mul[j] = mul[j+1]*len_dims[j+1];
 	for (int j = 0; j < ndims; j++)
-		unraveled_index_out[j]=(flattened_index/mul[j])%len_dims[j];
+		unravelled_index_out[j]=(flattened_index/mul[j])%len_dims[j];
 }
 }// namespace utils
 
