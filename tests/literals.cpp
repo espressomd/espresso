@@ -1,5 +1,6 @@
 #define BOOST_TEST_MODULE literals
-#include <boost/test/included/unit_test.hpp>
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
 #include "exprtest.hpp"
 
 EXPRTEST(literal1, "1.234",    1.234)

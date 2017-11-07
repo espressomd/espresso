@@ -25,7 +25,6 @@ function(UNIT_TEST)
     set_property(SOURCE ${UT_SOURCE} PROPERTY COMPILE_FLAGS "/DNOMINMAX")
   endif()
   target_link_libraries(${UT_TARGET} ${LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
-  target_compile_definitions(${UT_TARGET} PRIVATE "BOOST_TEST_DYN_LINK=1")
   # Tests are executed in the root directory
   add_test(NAME ${UT_TARGET} COMMAND ${UT_TARGET})
   add_dependencies(check ${UT_TARGET})

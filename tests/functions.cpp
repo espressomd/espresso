@@ -1,5 +1,6 @@
 #define BOOST_TEST_MODULE functions
-#include <boost/test/included/unit_test.hpp>
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
 #include "exprtest.hpp"
 
 EXPRTEST(func_abs   , "abs   (-1.0)", std::abs   (-1.0))
