@@ -100,6 +100,8 @@ int ScafacosData::update_particle_data() {
 
 void ScafacosData::update_particle_forces() const {
   int it = 0;
+  if (positions.size()==0)
+    return;
 
   for (auto &p : local_cells.particles()) {
     if (!dipolar()) {
@@ -148,6 +150,7 @@ void ScafacosData::update_particle_forces() const {
   if (!dipolar()) {
     assert(it == fields.size());
   } else {
+    int tmp=positions.size()/3;
     assert(it = positions.size() / 3);
   }
 }
@@ -184,7 +187,9 @@ bool check_position_validity(const std::vector<double>& pos) {
   for (int i=0;i<pos.size()/3;i++) {
     for (int j=0;j<3;j++) {
       if (pos[3*i+j]<0 || pos[3*i+j]>box_l[j]) {
-        runtimeErrorMsg() << "Particle position outside the box domain not allowed for scafacos-based methods.";
+        // Throwing exception rather than runtime error, because continuing will result
+        // in mpi deadlock
+        throw std::runtime_error("Particle position outside the box domain not allowed for scafacos-based methods.");
         return false;
       }
     }
@@ -210,7 +215,7 @@ void add_long_range_force() {
 #endif
     }
   } else
-    runtimeError("Scafacos internal error.");
+    throw std::runtime_error("Scafacos internal error. Instance pointer is not valid.");
 
   particles.update_particle_forces();
 }
