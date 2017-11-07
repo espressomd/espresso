@@ -299,11 +299,9 @@ public:
         constant_()
         {
             this->add
-                ("digits",   std::numeric_limits<real_t>::digits    )
-                ("digits10", std::numeric_limits<real_t>::digits10  )
-                ("e" ,       boost::math::constants::e<real_t>()    )
-                ("epsilon",  std::numeric_limits<real_t>::epsilon() )
-                ("pi",       boost::math::constants::pi<real_t>()   )
+                ("e"      , boost::math::constants::e<real_t>()   )
+                ("epsilon", std::numeric_limits<real_t>::epsilon())
+                ("pi"     , boost::math::constants::pi<real_t>()  )
             ;
         }
     } constant;

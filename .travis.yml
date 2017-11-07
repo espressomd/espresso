@@ -15,8 +15,9 @@ compiler:
 addons:
   apt:
     packages:
-    - libboost-dev
-    - libboost-test-dev
+      - doxygen
+      - libboost-dev
+      - libboost-test-dev
 
 script:
   - mkdir build
@@ -24,3 +25,10 @@ script:
   - cmake ..
   - make -j 2
   - make -j 2 check
+
+matrix:
+  include:
+    - if: branch = master
+      os: linux
+      script:
+        - bash doc/publish_documentation.sh

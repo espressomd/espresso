@@ -1,0 +1,77 @@
+/** @mainpage Short Documentation
+
+@tableofcontents
+
+Boost Matheval is a header-only C++11 libary built on top of
+Boost.Spirit and Boost.Phoenix to parse and evaluate mathematical
+expressions.
+
+The interface consists only of the matheval::parse function which
+skips all whitespace in the input sequence, i.e. `x+y` is equivalent
+to `x +\ty\n`.
+
+@section arithmetic Supported arithmetic operations
+
+Commonly known arithmetic operations are supported:
+
+- Addition `x + y`
+- Subtraction `x - y`
+- Multiplication `x*y`
+- Division `x/y`
+- Modulus `x%%y` (`fmod` for floating point types)
+- Power `x**y`
+
+@section unary_op Supported unary functions
+
+Most functions of the C++11 standard math header `<cmath>` are
+supported.  On top of that, Boost Matheval defines the mathematical
+sign function `sgn`.
+
+- `abs`
+- `acos`
+- `acosh`
+- `asin`
+- `asinh`
+- `atan`
+- `atanh`
+- `cbrt`
+- `ceil`
+- `cos`
+- `cosh`
+- `erf`
+- `erfc`
+- `exp`
+- `exp2`
+- `floor`
+- `log`
+- `log2`
+- `log10`
+- `round`
+- `sgn`
+- `sin`
+- `sinh`
+- `sqrt`
+- `tan`
+- `tanh`
+- `tgamma`
+
+@section binary_op Supported binary functions
+
+Binary functions are rather uncommon in mathematics.  Nevertheless
+there exist some:
+
+- `atan2`
+- `max`
+- `min`
+- `pow`
+
+@section constants Known constants
+
+Currently only very few constants are defined.  This could possibly
+extended to physical constants in the future.
+
+- `e`
+- `epsilon`
+- `pi`
+
+*/
