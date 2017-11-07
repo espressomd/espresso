@@ -10,6 +10,10 @@ The interface consists only of the matheval::parse function which
 skips all whitespace in the input sequence, i.e. `x+y` is equivalent
 to `x +\ty\n`.
 
+The underlying grammar and the abstract syntax tree can be accessed
+through the matheval::detail namespace, in case the user wants to
+manipulate the AST or repurpose the grammar.
+
 @section arithmetic Supported arithmetic operations
 
 Commonly known arithmetic operations are supported:
@@ -67,11 +71,23 @@ there exist some:
 
 @section constants Known constants
 
-Currently only very few constants are defined.  This could possibly
-extended to physical constants in the future.
+Currently only very few constants are defined.
 
 - `e`
 - `epsilon`
 - `pi`
+
+@section variables Variables
+
+Variables are composed of alphanumerical characters (a-z, A-Z, 0-9)
+and the underscore character `_`, but always start with a letter.  In
+other words, variables cannot start with a digit or an underscore.
+
+@warning Constants always have higher priority than variables.  That
+is to say, that
+\code
+matheval::parse("e",{std::make_pair("e", 1)});
+\endcode
+will evaluate to `2.71828` (Euler's number) regardsless.
 
 */
