@@ -23,6 +23,7 @@
 #include <stdexcept>
 #include <string>
 
+#define BOOST_SPIRIT_USE_PHOENIX_V3
 #include <boost/math/constants/constants.hpp>
 #include <boost/spirit/include/phoenix.hpp>
 #include <boost/spirit/include/qi.hpp>
@@ -110,8 +111,6 @@ public:
     expr_ast& operator*=(expr_ast const &rhs);
     /** @brief Divide by a tree */
     expr_ast& operator/=(expr_ast const &rhs);
-    /** @brief Modulo by a tree */
-    expr_ast& operator%=(expr_ast const &rhs);
 };
 
 /** @brief Store a unary operator and its argument tree */
@@ -176,13 +175,6 @@ expr_ast<real_t>& expr_ast<real_t>::operator/=(expr_ast<real_t> const &rhs)
     tree = binary_op<real_t>(std::divides<real_t>{}, tree, rhs);
     return *this;
 }
-template < typename real_t >
-expr_ast<real_t>& expr_ast<real_t>::operator%=(expr_ast<real_t> const &rhs)
-{
-    tree = binary_op<real_t>(static_cast<real_t(*)(real_t,real_t)>(&std::fmod),
-                             tree, rhs);
-    return *this;
-}
 
 /** @brief Evaluate the Abstract Syntax Tree
  *
@@ -206,7 +198,11 @@ public:
     eval_ast(symbol_table_t const &sym) : st(sym) {}
 
     /** @brief Empty nodes in the tree evaluate to 0 (probably shouldn't happen) */
+#if BOOST_VERSION >= 105600
     result_type operator()(qi::info::nil_) const { return 0; }
+#else
+    result_type operator()(qi::info::nil) const { return 0; }
+#endif
 
     /** @brief Numbers evaluate to themselves */
     result_type operator()(result_type n)  const { return n; }
@@ -391,6 +387,7 @@ public:
         boost::phoenix::function<unary_expr_<real_t>> unary_expr;
         boost::phoenix::function<binary_expr_<real_t>> binary_expr;
 
+        auto fmod = static_cast<real_t(*)(real_t,real_t)>(&std::fmod);
         auto pow = static_cast<real_t(*)(real_t,real_t)>(&std::pow);
 
         expression =
@@ -404,7 +401,7 @@ public:
             factor                 [_val =  _1]
             >> *(  ('*' >> factor  [_val *= _1])
                 |  ('/' >> factor  [_val /= _1])
-                |  ('%' >> factor  [_val %= _1])
+                |  ('%' >> factor  [_val = binary_expr(fmod, _val, _1)])
                 )
             ;
 

@@ -1,5 +1,7 @@
 # Boost Matheval
 
+[![Build status][travis-svg]][travis-link]
+
 This header-only C++11 libary uses
 [Boost.Spirit](http://www.boost.org/libs/spirit/index.html) and
 [Boost.Phoenix](http://www.boost.org/libs/phoenix/index.html) to parse
@@ -66,3 +68,6 @@ General:
 ### License
 
 Distributed under the [Boost Software License, Version 1.0](http://boost.org/LICENSE_1_0.txt).
+
+[travis-svg]: https://travis-ci.org/hmenke/boost_matheval.svg?branch=master
+[travis-link]: https://travis-ci.org/hmenke/boost_matheval

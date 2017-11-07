@@ -1,0 +1,24 @@
+dist: trusty
+sudo: false
+
+language: cpp
+
+os:
+  - linux
+
+compiler:
+  - clang
+  - gcc
+
+addons:
+  apt:
+    packages:
+    - libboost-dev
+    - libboost-test-dev
+
+script:
+  - mkdir build
+  - cd build
+  - cmake ..
+  - make -j 2
+  - make -j 2 check
