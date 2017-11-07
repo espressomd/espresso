@@ -1,4 +1,5 @@
 from espressomd.utils import to_char_pointer,to_str
+import numpy as np
 
 cdef class PObjectId(object):
     cdef ObjectId id
@@ -127,12 +128,15 @@ cdef class PScriptInterface(object):
             return v
         elif type(value) == str:
             return make_variant[string](to_char_pointer(value))
-        elif type(value) == int:
-            return make_variant[int](value)
-        elif type(value) == float:
-            return make_variant[float](value)
+        
+        # Note: Bool has to be checked before int/float because
+        # numpy considers True to be an instance of np.int
         elif type(value) == type(True):
             return make_variant[bool](value)
+        elif type(value) == int or isinstance(value,np.int):
+            return make_variant[int](value)
+        elif type(value) == float or isinstance(value,np.float):
+            return make_variant[float](value)
         else:
             raise TypeError("Unkown type for conversion to Variant")
 
