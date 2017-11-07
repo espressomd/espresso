@@ -1,5 +1,9 @@
 # ESPResSo
 
+[![Build Status](https://travis-ci.org/espressomd/espresso.svg?branch=python)](https://travis-ci.org/espressomd/espresso)
+[![CUDA Build Status](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/badges/doc/pipeline.svg)](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/commits/doc)
+[![codecov](https://codecov.io/gh/espressomd/espresso/branch/python/graph/badge.svg)](https://codecov.io/gh/espressomd/espresso)
+
 This is the Molecular Dynamics software ESPResSo ("Extensible
 Simulation Package for the Research on Soft Matter Systems").
 

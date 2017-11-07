@@ -198,7 +198,6 @@ typedef struct {
   double LJ_cut;
   double LJ_shift;
   double LJ_offset;
-  double LJ_capradius;
   double LJ_min;
   /*@}*/
 
@@ -217,7 +216,6 @@ typedef struct {
   double LJGEN_cut;
   double LJGEN_shift;
   double LJGEN_offset;
-  double LJGEN_capradius;
   double LJGEN_a1;
   double LJGEN_a2;
   double LJGEN_b1;
@@ -239,9 +237,7 @@ typedef struct {
   int LJANGLE_bonded1neg;
   int LJANGLE_bonded2pos;
   int LJANGLE_bonded2neg;
-  /* Cap */
-  double LJANGLE_capradius;
-  /* Optional 2nd environment */
+    /* Optional 2nd environment */
   double LJANGLE_z0;
   double LJANGLE_dz;
   double LJANGLE_kappa;
@@ -299,7 +295,6 @@ typedef struct {
   double MORSE_rmin;
   double MORSE_cut;
   double MORSE_rest;
-  double MORSE_capradius;
 /*@}*/
 #endif
 
@@ -313,7 +308,6 @@ typedef struct {
   double BUCK_cut;
   double BUCK_discont;
   double BUCK_shift;
-  double BUCK_capradius;
   double BUCK_F1;
   double BUCK_F2;
 /*@}*/
@@ -382,7 +376,6 @@ typedef struct {
   double LJCOS2_offset;
   double LJCOS2_w;
   double LJCOS2_rchange;
-  double LJCOS2_capradius;
 /*@}*/
 #endif
 
@@ -426,24 +419,17 @@ typedef struct {
 /*@}*/
 #endif
 
-#ifdef COMFIXED
-  /** \name center of mass directed force */
-  /*@{*/
-  int COMFIXED_flag;
-/*@}*/
-#endif
-
-#ifdef INTER_DPD
+#ifdef DPD
   /** \name DPD as interaction */
   /*@{*/
+  int dpd_wf;
+  int dpd_twf;
   double dpd_gamma;
   double dpd_r_cut;
-  int dpd_wf;
   double dpd_pref1;
   double dpd_pref2;
   double dpd_tgamma;
   double dpd_tr_cut;
-  int dpd_twf;
   double dpd_pref3;
   double dpd_pref4;
 /*@}*/
@@ -941,9 +927,7 @@ inline int checkIfParticlesInteract(int i, int j) {
 ///
 const char *get_name_of_bonded_ia(BondedInteraction type);
 
-#ifdef BOND_VIRTUAL
 int virtual_set_params(int bond_type);
-#endif
 
 #ifdef DIPOLES
 void set_dipolar_method_local(DipolarInteraction method);
@@ -972,26 +956,21 @@ public:
     if (dist2 > m_eff_max_cut2)
       return false;
 
-#ifdef EXCLUSIONS
-    if (!do_nonbonded(&p1, &p2))
-      return false;
-#endif
-
-    // Within short-range distance (incl dpd and the like)
-    if (dist2 <= SQR(get_ia_param(p1.p.type, p2.p.type)->max_cut + m_skin))
-      return true;
-
-// Within real space cutoff of electrostatics and both charged
+    // Within real space cutoff of electrostatics and both charged
 #ifdef ELECTROSTATICS
     if ((dist2 <= m_eff_coulomb_cut2) && (p1.p.q != 0) && (p2.p.q != 0))
       return true;
 #endif
 
-// Within dipolar cutoff and both cary magnetic moments
+    // Within dipolar cutoff and both cary magnetic moments
 #ifdef DIPOLES
     if ((dist2 <= m_eff_dipolar_cut2) && (p1.p.dipm != 0) && (p2.p.dipm != 0))
       return true;
 #endif
+
+    // Within short-range distance (incl dpd and the like)
+    if (dist2 <= SQR(get_ia_param(p1.p.type, p2.p.type)->max_cut + m_skin))
+      return true;
 
     return false;
   }

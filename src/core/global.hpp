@@ -60,10 +60,6 @@ enum Fields {
   FIELD_CELLGRID,
   /** index of \ref DomainDecomposition::cell_size in  \ref #fields */
   FIELD_CELLSIZE,
-  /** index of \ref dpd_gamma in  \ref #fields */
-  FIELD_DPD_GAMMA,
-  /** index of \ref dpd_r_cut in  \ref #fields */
-  FIELD_DPD_RCUT,
   /** index of \ref langevin_gamma in  \ref #fields */
   FIELD_LANGEVIN_GAMMA,
   /** index of \ref lees_edwards_offset in \ref #fields */
@@ -130,14 +126,6 @@ enum Fields {
   FIELD_VERLETREUSE,
   /** index of \ref lattice_switch in \ref #fields */
   FIELD_LATTICE_SWITCH,
-  /** index of \ref dpd_tgamma in \ref #fields */
-  FIELD_DPD_TGAMMA,
-  /** index of \ref dpd_tr_cut in \ref #fields */
-  FIELD_DPD_TRCUT,
-  /** index of \ref dpd_twf in \ref #fields */
-  FIELD_DPD_TWF,
-  /** index of \ref dpd_wf in \ref #fields */
-  FIELD_DPD_WF,
   /** index of \ref max_cut_bonded in \ref #fields */
   FIELD_MCUT_BONDED,
   /** index of \ref min_global_cut in \ref #fields */
@@ -156,8 +144,6 @@ enum Fields {
   FIELD_LB_COMPONENTS,
   /** index of \ref warnings in \ref #fields */
   FIELD_WARNINGS,
-  /** DPD_IGNORE_FIXED_PARTICLES */
-  FIELD_DPD_IGNORE_FIXED_PARTICLES,
   /** index of \ref smaller_timestep in \ref #fields */
   FIELD_SMALLERTIMESTEP,
   /** index of \ref langevin_trans in \ref #fields */
@@ -165,7 +151,8 @@ enum Fields {
   /** index of \ref langevin_rotate in \ref #fields */
   FIELD_LANGEVIN_ROT_SWITCH,
   /** index of \ref langevin_gamma_rotation in  \ref #fields */
-  FIELD_LANGEVIN_GAMMA_ROTATION
+  FIELD_LANGEVIN_GAMMA_ROTATION,
+  FIELD_FORCE_CAP
 };
 /*@}*/
 

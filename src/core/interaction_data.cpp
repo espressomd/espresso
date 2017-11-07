@@ -57,7 +57,6 @@
 #include "cos2.hpp"
 #include "gb.hpp"
 #include "cells.hpp"
-#include "comfixed.hpp"
 #include "morse.hpp"
 #include "dpd.hpp"
 #include "magnetic_non_p3m_methods.hpp"
@@ -154,7 +153,6 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJ_sig =
     params->LJ_shift =
     params->LJ_offset =
-    params->LJ_capradius =
     params->LJ_min = 0.0;
   params->LJ_cut = INACTIVE_CUTOFF;
 #endif
@@ -164,7 +162,6 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJGEN_sig =
     params->LJGEN_shift =
     params->LJGEN_offset =
-    params->LJGEN_capradius =
     params->LJGEN_a1 =
     params->LJGEN_a2 = 
     params->LJGEN_b1 =
@@ -184,7 +181,6 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJANGLE_bonded1neg = 
     params->LJANGLE_bonded2pos = 
     params->LJANGLE_bonded2neg = 
-    params->LJANGLE_capradius =
     params->LJANGLE_z0 =
     params->LJANGLE_kappa =
     params->LJANGLE_epsprime = 0.0;
@@ -227,7 +223,6 @@ void initialize_ia_params(IA_parameters *params) {
     params->MORSE_alpha =
     params->MORSE_rmin =
     params->MORSE_rest = 
-    params->MORSE_capradius = 0;
   params->MORSE_cut = INACTIVE_CUTOFF;
 #endif
 
@@ -238,7 +233,6 @@ void initialize_ia_params(IA_parameters *params) {
     params->BUCK_D =
     params->BUCK_discont =
     params->BUCK_shift =
-    params->BUCK_capradius =
     params->BUCK_F1 =
     params->BUCK_F2 = 0.0;
   params->BUCK_cut = INACTIVE_CUTOFF;
@@ -289,7 +283,6 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJCOS2_offset =
     params->LJCOS2_w =
     params->LJCOS2_rchange = 
-    params->LJCOS2_capradius = 0.0;
   params->LJCOS2_cut = INACTIVE_CUTOFF;
 #endif
 
@@ -321,7 +314,7 @@ void initialize_ia_params(IA_parameters *params) {
   params->TAB_maxval = INACTIVE_CUTOFF;
 #endif
 
-#ifdef INTER_DPD
+#ifdef DPD
   params->dpd_gamma = 0.0;
   params->dpd_wf = 0;
   params->dpd_pref1 = 0.0;
@@ -332,10 +325,6 @@ void initialize_ia_params(IA_parameters *params) {
   params->dpd_pref3 = 0;
   params->dpd_pref4 = 0;
   params->dpd_r_cut = INACTIVE_CUTOFF;
-#endif
-
-#ifdef COMFIXED
-  params->COMFIXED_flag = 0;
 #endif
 
 #ifdef INTER_RF
@@ -510,23 +499,6 @@ static void recalc_global_maximal_nonbonded_and_long_range_cutoff()
    for the relative virtual sites algorithm. */
    max_cut_global = min_global_cut;
 
-  
-
-
-#ifdef DPD
-  if (dpd_r_cut != 0) {
-    if(max_cut_global < dpd_r_cut)
-      max_cut_global = dpd_r_cut;
-  }
-#endif
-  
-#ifdef TRANS_DPD
-  if (dpd_tr_cut != 0) {
-    if(max_cut_global < dpd_tr_cut)
-      max_cut_global = dpd_tr_cut;
-  }
-#endif
-
 // global cutoff without dipolar and coulomb methods is needed
 // for more selective additoin of particle pairs to verlet lists
 max_cut_global_without_coulomb_and_dipolar=max_cut_global;
@@ -565,13 +537,9 @@ static void recalc_maximal_cutoff_nonbonded()
 	max_cut_current = (data->LJ_cut+data->LJ_offset);
 #endif
 
-#ifdef INTER_DPD
-      {
-	double max_cut_tmp = (data->dpd_r_cut > data->dpd_tr_cut) ?
-	  data->dpd_r_cut : data->dpd_tr_cut;
-	if (max_cut_current <  max_cut_tmp)
-	  max_cut_current = max_cut_tmp;
-      }
+#ifdef DPD
+      max_cut_current = std::max(max_cut_current,
+                                 std::max(data->dpd_r_cut, data->dpd_tr_cut));
 #endif
 
 #ifdef LENNARD_JONES_GENERIC
@@ -631,7 +599,7 @@ static void recalc_maximal_cutoff_nonbonded()
 
 #ifdef HAT
       if (max_cut_current < data->HAT_r)
-	max_cut_current = data->HAT_r;
+        max_cut_current = data->HAT_r;
 #endif
 
 #ifdef LJCOS
@@ -1010,7 +978,6 @@ void recalc_coulomb_prefactor()
 #endif
 }
 
-#ifdef BOND_VIRTUAL
 int virtual_set_params(int bond_type)
 {
   if(bond_type < 0)
@@ -1026,5 +993,3 @@ int virtual_set_params(int bond_type)
 
   return ES_OK;
 }
-
-#endif

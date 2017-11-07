@@ -59,7 +59,7 @@ typedef struct {
 
 /** data structure which must be copied to the GPU at each step run on the GPU
  */
-typedef struct {
+struct CUDA_particle_data {
 
 //   // This has to stay in front of the struct for memmove reasons
 #ifdef ENGINE
@@ -101,7 +101,7 @@ typedef struct {
   float dip[3];
 #endif
 
-} CUDA_particle_data;
+};
 
 /** data structure for the different kinds of energies */
 typedef struct { float bonded, non_bonded, coulomb, dipolar; } CUDA_energy;

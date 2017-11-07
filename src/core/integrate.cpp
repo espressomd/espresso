@@ -342,7 +342,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     INTEG_TRACE(fprintf(stderr, "%d: STEP %d\n", this_node, step));
 
 #ifdef BOND_CONSTRAINT
+  if (n_rigidbonds)
     save_old_pos();
+
 #endif
 
 #ifdef GHMC
@@ -377,9 +379,11 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #ifdef BOND_CONSTRAINT
     /**Correct those particle positions that participate in a rigid/constrained
      * bond */
+  if (n_rigidbonds) {
     cells_update_ghosts();
 
     correct_pos_shake();
+  }
 #endif
 
 #ifdef ELECTROSTATICS
@@ -388,10 +392,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 #endif
 
-#ifdef NPT
-    if (check_runtime_errors())
-      break;
-#endif
 
 #ifdef MULTI_TIMESTEP
     if (smaller_time_step > 0) {
@@ -460,8 +460,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
     integrate_reaction();
 #endif
 
-    if (check_runtime_errors())
-      break;
 
 #ifdef MULTI_TIMESTEP
 #ifdef NPT
@@ -480,15 +478,15 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 // SHAKE velocity updates
 #ifdef BOND_CONSTRAINT
+  if (n_rigidbonds) {
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
     correct_vel_shake();
+  }
 #endif
 // VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
     update_mol_vel();
-    if (check_runtime_errors())
-      break;
 #endif
 
 // progagate one-step functionalities
@@ -562,6 +560,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #ifdef COLLISION_DETECTION
     handle_collisions();
 #endif
+    if (check_runtime_errors())
+      break;
   }
 
 #ifdef VALGRIND_INSTRUMENTATION

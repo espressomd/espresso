@@ -270,20 +270,20 @@ class Analysis(object):
 
         Parameters
         ----------
-        center : array of :obj:`float`
-            coordinates of the centre of the cylinder.
-        axis : array of :obj:`
-            axis vectory of the cylinder, does not need to be normalized.
+        center : array_like :obj:`float`
+                 Coordinates of the centre of the cylinder.
+        axis : array_like :obj:`float`
+               Axis vectory of the cylinder, does not need to be normalized.
         length : :obj:`float`
-            length of the cylinder.
+                 Length of the cylinder.
         radius : :obj:`float`
-            radius of the cylinder.
+                 Radius of the cylinder.
         bins_axial : :obj:`int`
-            number of axial bins
+                     Number of axial bins.
         bins_radial : :obj:`int`
-            number of radial bins
+                      Number of radial bins.
         types : lists of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-            a list of type IDs
+                A list of type IDs.
 
         Returns
         -------
@@ -361,11 +361,11 @@ class Analysis(object):
     # Pressure analysis
     #
     def pressure(self, v_comp=False):
-        """Calculates the pressure 
+        """Calculates the pressure.
         
         Returns
         -------
-        a dictionary with the following keys:
+        A dictionary with the following keys:
          
         * "total", total pressure
         * "ideal", ideal pressure
@@ -588,32 +588,37 @@ class Analysis(object):
         """
         Computes local stress tensors in the system.
         
-        A cuboid is defined starting at the coordinate `range_start` and going to the coordinate `range_start`+`stress_range`.
-        This cuboid in divided into `bins[0]` in the x direction, `bins[1]` in the y direction and `bins[2]` in the z direction such that the total number of bins is `bins[0]*bins[1]*bins[2]`. 
-        For each of these bins a stress tensor is calculated using the Irving Kirkwood method.
-        That is, a given interaction contributes towards the stress tensor in a bin proportional to the fraction of the line connecting the two particles that is within the bin.
+        A cuboid is defined starting at the coordinate `range_start` and going
+        to the coordinate `range_start`+`stress_range`.  This cuboid in divided
+        into `bins[0]` in the x direction, `bins[1]` in the y direction and
+        `bins[2]` in the z direction such that the total number of bins is
+        `bins[0]*bins[1]*bins[2]`.  For each of these bins a stress tensor is
+        calculated using the Irving Kirkwood method.  That is, a given
+        interaction contributes towards the stress tensor in a bin proportional
+        to the fraction of the line connecting the two particles that is within
+        the bin.
         
-        If the P3M and MMM1D electrostatic methods are used, these interactions are not included in the local stress tensor.
-        The DH and RF methods, in contrast, are included.
-        Concerning bonded interactions only two body interactions (FENE, Harmonic) are included (angular and dihedral are not).
-        For all electrostatic interactions only the real space part is included.
+        If the P3M and MMM1D electrostatic methods are used, these interactions
+        are not included in the local stress tensor.  The DH and RF methods, in
+        contrast, are included.  Concerning bonded interactions only two body
+        interactions (FENE, Harmonic) are included (angular and dihedral are
+        not).  For all electrostatic interactions only the real space part is
+        included.
 
-        Care should be taken when using constraints of any kind, since these are not accounted for in the local stress tensor calculations.
+        Care should be taken when using constraints of any kind, since these
+        are not accounted for in the local stress tensor calculations.
 
         
         Parameters
         ----------
-        periodicity : array of :obj:`int`
-            coordinates of the centre of the cylinder.
-        ----------
-        range_start : array of :obj:`float`
-            the start coordinate of the cuboid
-        ----------
-        stress_range : array of :obj:`float`
-            the range of the cuboid.
-        ----------
-        bins : array of :obj:`int`
-            a list condaining the number of bins for each direction.
+        periodicity : array_like :obj:`int`
+                      Coordinates of the centre of the cylinder.
+        range_start : array_like :obj:`float`
+                      The start coordinate of the cuboid.
+        stress_range : array_like :obj:`float`
+                       The range of the cuboid.
+        bins : array_like :obj:`int`
+               A list condaining the number of bins for each direction.
         
         """
 
@@ -638,8 +643,7 @@ class Analysis(object):
 
 
     def energy(self):
-        """
-        Calculate the systems energy.
+        """Calculate the systems energy.
 
         Returns
         -------
@@ -733,27 +737,34 @@ class Analysis(object):
 
     def calc_re(self, chain_start=None, number_of_chains=None, chain_length=None):
         """
-        Calculates the Root Mean Square end-to-end distance of chains and its standard deviation, as well as Mean Square end-to-end distance of chains and its standard deviation.
+        Calculates the Root Mean Square end-to-end distance of chains and its
+        standard deviation, as well as Mean Square end-to-end distance of
+        chains and its standard deviation.
         
-        This requires that a set of chains of equal length which start with the particle with particle number `chain_start` and are consecutively numbered (the last particle in that topology has id number :
-        `chain_start`+ `number_of_chains`*`chain_length` -1.
+        This requires that a set of chains of equal length which start with the
+        particle with particle number ``chain_start`` and are consecutively
+        numbered, the last particle in that topology has id number
+
+        .. math::
+
+            ``chain_start`` + ``number_of_chains`` * ``chain_length`` -1.
 
         Parameters
         ----------
-        chain_start : :obj:`int`.
-            The id of the first monomer of the first chain
-        number_of_chains : :obj:`int`.
-            number of chains contained in the range
-        chain_length : :obj:`int`.
-            the length of every chain.
+        chain_start : :obj:`int`
+                      The id of the first monomer of the first chain.
+        number_of_chains : :obj:`int`
+                           Number of chains contained in the range.
+        chain_length : :obj:`int`
+                       The length of every chain.
         
         Returns            
         -------
-        array_like
-            Where [0] is the Root Mean Square end-to-end distance of chains
-            and [1] its standard deviation,
-            [2] the Mean Square end-to-end distance
-            and [3] its standard deviation.
+        array_like : :obj:`float`
+                     Where [0] is the Root Mean Square end-to-end distance of chains
+                     and [1] its standard deviation,
+                     [2] the Mean Square end-to-end distance
+                     and [3] its standard deviation.
 
         """
         cdef double * re = NULL
@@ -766,27 +777,34 @@ class Analysis(object):
 
     def calc_rg(self, chain_start=None, number_of_chains=None, chain_length=None):
         """
-        Calculates the radius of gyration of chains and its standard deviation, as well as the Mean Square radius of gyration of chains and its standard deviation.
+        Calculates the radius of gyration of chains and its standard deviation,
+        as well as the Mean Square radius of gyration of chains and its
+        standard deviation.
         
-        This requires that a set of chains of equal length which start with the particle with particle number `chain_start` and are consecutively numbered (the last particle in that topology has id number :
-        `chain_start`+ `number_of_chains`*`chain_length`-1.
+        This requires that a set of chains of equal length which start with the
+        particle with particle number ``chain_start`` and are consecutively
+        numbered, the last particle in that topology has id number
+
+        .. math::
+
+            ``chain_start`` + ``number_of_chains`` * ``chain_length`` - 1.
 
         Parameters
         ----------
         chain_start : :obj:`int`.
-            The id of the first monomer of the first chain
+                      The id of the first monomer of the first chain.
         number_of_chains : :obj:`int`.
-            number of chains contained in the range 
+                           Number of chains contained in the range.
         chain_length : :obj:`int`.
-            the length of every chain
+                       The length of every chain.
         
         Returns            
         -------
-        array_like
-            Where [0] is the Root Mean Square radius of gyration of the chains
-            and [1] its standard deviation,
-            [2] the Mean Square radius of gyration
-            and [3] its standard deviation.
+        array_like : :obj:`float`
+                     Where [0] is the Root Mean Square radius of gyration of the chains
+                     and [1] its standard deviation,
+                     [2] the Mean Square radius of gyration
+                     and [3] its standard deviation.
 
         """
         cdef double * rg = NULL
@@ -801,17 +819,19 @@ class Analysis(object):
         """
         Calculates the hydrodynamic mean radius of chains and its standard deviation.
         
-        This requires that a set of chains of equal length which start with the particle with particle number `chain_start` and are consecutively numbered (the last particle in that topology has id number :
+        This requires that a set of chains of equal length which start with the
+        particle with particle number `chain_start` and are consecutively
+        numbered (the last particle in that topology has id number :
         `chain_start`+ `number_of_chains`*`chain_length`-1.
 
         Parameters
         ----------
         chain_start : :obj:`int`.
-            The id of the first monomer of the first chain
+                      The id of the first monomer of the first chain
         number_of_chains : :obj:`int`.
-            number of chains contained in the range 
+                           Number of chains contained in the range.
         chain_length : :obj:`int`.
-            the length of every chain
+                       The length of every chain.
         
         Returns            
         -------
@@ -851,17 +871,18 @@ class Analysis(object):
 
     def structure_factor(self, sf_types=None, sf_order=None):
         """
-        Calculate the structure factor for given types.
-        Returns the spherically averaged structure factor of particles specified in `types`.
-        The structure factor is calculated for all possible wave vectors q up to `order`
-        Do not choose parameter `order` too large because the number of calculations gros as `order` to the third power.
+        Calculate the structure factor for given types.  Returns the
+        spherically averaged structure factor of particles specified in
+        `types`.  The structure factor is calculated for all possible wave
+        vectors q up to `order` Do not choose parameter `order` too large
+        because the number of calculations gros as `order` to the third power.
 
         Parameters
         ----------
         sf_types : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-            specifies which particle type should be considered
-        sf_order : int
-            specifies the maximum wavevector, 
+            Specifies which particle type should be considered.
+        sf_order : :obj:`int`
+            Specifies the maximum wavevector.
 
         Returns
         -------
@@ -891,26 +912,27 @@ class Analysis(object):
             r_min=0.0, r_max=None, r_bins=100, n_conf=None):
         """
         Calculate a radial distribution function.
-	The result is normalized by the spherical bin shell, the total number of particle pairs and the system volume.
+        The result is normalized by the spherical bin shell, the total number
+        of particle pairs and the system volume.
 
 
         Parameters
         ----------
-        rdf_type : string
-           'rdf' or '<rdf>'.
+        rdf_type : :obj:`str`
+                   'rdf' or '<rdf>'.
         type_list_a : lists of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-           Left types of the rdf
+                      Left types of the rdf.
         type_list_b : lists of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`), optional
-           Right types of the rdf01
-        r_min : float
-           Minimal distance to consider
-        r_max : float
-           Maximal distance to consider
-        r_bins : int
-           Number of bins
-        n_conf : int, optional
-           If rdf_type is '<rdf>' this determines
-           the number of stored configs that are used.
+                      Right types of the rdf.
+        r_min : :obj:`float`
+                Minimal distance to consider.
+        r_max : :obj:`float`
+                Maximal distance to consider
+        r_bins : :obj:`int`
+                 Number of bins.
+        n_conf : :obj:`int`, optional
+                 If rdf_type is '<rdf>' this determines
+                 the number of stored configs that are used.
 
         Returns
         -------
@@ -971,27 +993,31 @@ class Analysis(object):
     def distribution(self, type_list_a=None, type_list_b=None,
                      r_min=0.0, r_max=None, r_bins=100, log_flag=0, int_flag=0):
         """
-        Calculates the distance distribution of particles 
-        (probability of finding a particle of type at a certain distance around a particle of type , disregarding the fact that a spherical shell of a larger radius covers a larger volume) 
-        The distance is defined as the minimal distance between a particle of group `type_list_a` to any of the group `type_list_b`.
-        Returns two arrays, the bins and the (normalized) distribution.
+        Calculates the distance distribution of particles (probability of
+        finding a particle of type at a certain distance around a particle of
+        type , disregarding the fact that a spherical shell of a larger radius
+        covers a larger volume) The distance is defined as the minimal distance
+        between a particle of group `type_list_a` to any of the group
+        `type_list_b`.  Returns two arrays, the bins and the (normalized)
+        distribution.
 
         Parameters
         ----------
         type_list_a : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-           list of particle types, only consider distances from these types
+                      List of particle types, only consider distances from these types.
         type_list_b : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-           list of particle types, only consider distances to these types
-        r_min : float
-           minimum distance
-        r_max : float
-           maximum distance
-        r_bins : int
-           number of bins
-        log_flag : int
-           when set to 0, the bins are linearly equidistant; when set to 1, the bins are logarithmically equidistant.
-        int_flag : int
-           when set to 1, the result is an integrated distribution 
+                      List of particle types, only consider distances to these types.
+        r_min : :obj:`float`
+                Minimum distance.
+        r_max : :obj:`float`
+                Maximum distance.
+        r_bins : :obj:`int`
+                 Number of bins.
+        log_flag : :obj:`int`
+                   When set to 0, the bins are linearly equidistant; when set
+                   to 1, the bins are logarithmically equidistant.
+        int_flag : :obj:`int`
+                   When set to 1, the result is an integrated distribution.
 
         Returns
         -------
@@ -1071,16 +1097,18 @@ class Analysis(object):
 
     def gyration_tensor(self, p_type=None):
         """
-        Analyze the gyration tensor of particles of a given type , or of all particles in the system if no type is given.
+        Analyze the gyration tensor of particles of a given type or of all
+        particles in the system if no type is given.
 
         Parameters
         ----------
         p_type : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`), optional
-            A a particle type, or list of all particle types to be considered
+                 A particle type, or list of all particle types to be considered.
 
         Returns
         -------
-        a dictionary with the following keys:
+        A dictionary with the following keys:
+
         * "Rg^2", squared radius of gyration
         * "shape", three shape descriptors (asphericity, acylindricity, and relative shape anisotropy)
         * "eva0", eigenvalue 0 of the gyration tensor and its corresponding eigenvector.
@@ -1120,12 +1148,12 @@ class Analysis(object):
         Parameters
         ----------
         p_type : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-            A a particle type, or list of all particle types to be considered
+                 A particle type, or list of all particle types to be considered.
 
         Returns
         -------
         array_like
-        The output is a list of all the elements of the 3x3 matrix.
+            The output is a list of all the elements of the 3x3 matrix.
       
         """
 
@@ -1152,31 +1180,35 @@ class Analysis(object):
     def rdfchain(self, r_min=None, r_max=None, r_bins=None,
                  chain_start=None, number_of_chains=None, chain_length=None):
         """
-        Returns three radial distribution functions (rdf) for the chains.
-        The first rdf is calculated for monomers belonging to different chains,
-        the second rdf is for the centers of mass of the chains and
-        the third one is the distribution of the closest distances between the chains (the shortest monomer-monomer distances).
-	The result is normalized by the spherical bin shell, the total number of pairs and the system volume.
+        Returns three radial distribution functions (rdf) for the chains.  The
+        first rdf is calculated for monomers belonging to different chains, the
+        second rdf is for the centers of mass of the chains and the third one
+        is the distribution of the closest distances between the chains (the
+        shortest monomer-monomer distances).  The result is normalized by the
+        spherical bin shell, the total number of pairs and the system volume.
         
-        The distance range is given by `r_min` and `r_max` and it is divided into `r_bins` equidistant bins.
+        The distance range is given by `r_min` and `r_max` and it is divided
+        into `r_bins` equidistant bins.
         
-        This requires that a set of chains of equal length which start with the particle with particle number `chain_start` and are consecutively numbered (the last particle in that topology has id number :
+        This requires that a set of chains of equal length which start with the
+        particle with particle number `chain_start` and are consecutively
+        numbered (the last particle in that topology has id number :
         `chain_start`+ `number_of_chains`*`chain_length`-1.
 
         Parameters
         ----------
         r_min : :obj:`float`
-           Minimal distance to consider
+                Minimal distance to consider.
         r_max : :obj:`float`
-           Maximal distance to consider
+                Maximal distance to consider.
         r_bins : :obj:`int`
-           Number of bins
+                 Number of bins.
         chain_start : :obj:`int`
-            The id of the first monomer of the first chain
+                      The id of the first monomer of the first chain.
         number_of_chains : :obj:`int`.
-            number of chains contained in the range 
+                           Number of chains contained in the range.
         chain_length : :obj:`int`.
-            the length of every chain
+                       The length of every chain.
         
         Returns            
         -------
@@ -1240,14 +1272,14 @@ class Analysis(object):
 
         Parameters
         ----------
-        mode : string
-           one of `read`, `set` or `reset`
-        Vk1 : float
-           volume 
-        Vk2 : float
-           volume squared
-        avk : float
-           number of averages
+        mode : :obj:`str`
+               One of `read`, `set` or `reset`.
+        Vk1 : :obj:`float`
+              Volume.
+        Vk2 : :obj:`float`
+              Volume squared.
+        avk : :obj:`float`
+              Number of averages.
       
         """
         

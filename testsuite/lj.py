@@ -21,12 +21,13 @@ import espressomd
 from espressomd import thermostat
 import numpy
 import unittest as ut
+from tests_common import abspath
 
 @ut.skipIf(not espressomd.has_features(["LENNARD_JONES"]) ,
            "Features not available, skipping test!")
 class LennardJonesTest(ut.TestCase):
     system = espressomd.System()
-    data = numpy.loadtxt('data/lj_system.dat')
+    data = numpy.loadtxt(abspath('data/lj_system.dat'))
 
     def setUp(self):
         self.system.part.clear()
