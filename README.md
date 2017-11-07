@@ -1,6 +1,7 @@
 # Boost Matheval
 
 [![Build status][travis-svg]][travis-link]
+[![AppVeyor build status][appveyor-svg]][appveyor-link]
 
 This header-only C++11 libary uses
 [Boost.Spirit](http://www.boost.org/libs/spirit/index.html) and
@@ -71,3 +72,5 @@ Distributed under the [Boost Software License, Version 1.0](http://boost.org/LIC
 
 [travis-svg]: https://travis-ci.org/hmenke/boost_matheval.svg?branch=master
 [travis-link]: https://travis-ci.org/hmenke/boost_matheval
+[appveyor-svg]: https://ci.appveyor.com/api/projects/status/bphe1739kownt81c/branch/master?svg=true
+[appveyor-link]: https://ci.appveyor.com/project/hmenke/boost-matheval/branch/master

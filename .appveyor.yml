@@ -1,0 +1,13 @@
+environment:
+  GENERATOR: "Visual Studio 14 2015 Win64"
+  BOOST_ROOT: "C:\\Libraries\\boost_1_59_0"
+  BOOST_LIBRARYDIR: "C:\\Libraries\\boost_1_59_0\\lib64-msvc-14.0"
+
+build_script:
+  - mkdir build
+  - cd build
+  - cmake -G "%GENERATOR%" -DBOOST_ROOT="%BOOST_ROOT%" -DBOOST_LIBRARYDIR="%BOOST_LIBRARYDIR%" ..
+  - cmake --build .
+
+#test_script:
+#  - cmake --build . --target check

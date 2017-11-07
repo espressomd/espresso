@@ -15,12 +15,6 @@ function(UNIT_TEST)
   cmake_parse_arguments(UT "" "TARGET" "SOURCE" ${ARGN} )
   # Add target for test and link with libraries
   add_executable(${UT_TARGET} ${UT_SOURCE})
-  if(WITH_ASAN)
-    set_source_files_properties(${UT_SOURCE}
-      PROPERTIES COMPILE_FLAGS "-fsanitize=address,bounds,leak")
-    set_target_properties(${UT_TARGET}
-      PROPERTIES LINK_FLAGS "-fsanitize=address,bounds,leak")
-  endif()
   if(MSVC)
     set_property(SOURCE ${UT_SOURCE} PROPERTY COMPILE_FLAGS "/DNOMINMAX")
   endif()
