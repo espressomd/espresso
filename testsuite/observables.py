@@ -72,9 +72,8 @@ class Observables(ut.TestCase):
             # Data from observable
             obs_data = obs_name(ids=id_list).calculate()
             np.testing.assert_array_almost_equal(
-                    obs_data,
-                    part_data, err_msg =
-                "Data did not agree for observable " +
+                obs_data,
+                part_data, err_msg="Data did not agree for observable " +
                 str(obs_name) +
                 " and particle property " +
                 pprop_name, decimal=9)
@@ -98,18 +97,20 @@ class Observables(ut.TestCase):
     def test_stress_tensor(self):
         s = self.es.analysis.stress_tensor()["total"].reshape(9)
         obs_data = np.array(StressTensor().calculate())
-        np.testing.assert_array_almost_equal(s,
-                obs_data, err_msg = 
-            "Stress tensor from analysis and observable did not agree", decimal=9)
+        np.testing.assert_array_almost_equal(
+            s,
+            obs_data,
+            err_msg="Stress tensor from analysis and observable did not agree",
+            decimal=9)
 
     def test_stress_tensor_acf(self):
         s = self.es.analysis.stress_tensor()["total"].reshape(9)
         s = np.array((s[1], s[5], s[6], s[0] - s[4], s[0] - s[8], s[4] - s[8]))
         obs_data = np.array(StressTensorAcf().calculate())
         np.testing.assert_array_almost_equal(
-                s,
-                obs_data, err_msg=
-            "Stress tensor from analysis and observable StressTensorAcf did not agree",
+            s,
+            obs_data,
+            err_msg="Stress tensor from analysis and observable StressTensorAcf did not agree",
             decimal=9)
 
     def test_com_position(self):
@@ -120,8 +121,8 @@ class Observables(ut.TestCase):
             com = sum((self.es.part[:].pos.T).T, 0) / len(self.es.part)
 
         obs_data = ComPosition(ids=range(1000)).calculate()
-        np.testing.assert_array_almost_equal(com, obs_data, err_msg=
-                        "Center of mass observable wrong value", decimal=9)
+        np.testing.assert_array_almost_equal(
+            com, obs_data, err_msg="Center of mass observable wrong value", decimal=9)
 
     def test_com_velocity(self):
         if espressomd.has_features(["MASS"]):
@@ -130,8 +131,11 @@ class Observables(ut.TestCase):
         else:
             com_vel = sum((self.es.part[:].v.T).T, 0) / len(self.es.part)
         obs_data = ComVelocity(ids=range(1000)).calculate()
-        np.testing.assert_array_almost_equal(com_vel, obs_data, err_msg=
-                        "Center of mass velocity observable wrong value", decimal=9)
+        np.testing.assert_array_almost_equal(
+            com_vel,
+            obs_data,
+            err_msg="Center of mass velocity observable wrong value",
+            decimal=9)
 
 
 if __name__ == "__main__":
