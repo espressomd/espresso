@@ -98,12 +98,12 @@ while min_dist < max_sigma:
     min_dist = system.analysis.mindist([types["Anion"],types["Cation"]],[types["Anion"],types["Cation"]])
     cap += min_dist
 #print min_dist, cap
-    system.non_bonded_inter.set_force_cap(cap)
+    system.force_cap = cap
     system.integrator.run(10)
 
 #Don't forget to reset thermostat, timestep and force cap
 system.thermostat.set_langevin(kT=temp, gamma=gamma)
-system.non_bonded_inter.set_force_cap(0)
+system.force_cap = 0
 
 print("\n--->Tuning Electrostatics")
 p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-3)

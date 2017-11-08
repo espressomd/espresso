@@ -901,6 +901,7 @@ IF ELECTROSTATICS:
                 coulomb.method = COULOMB_SCAFACOS
                 coulomb_set_bjerrum(self._params["bjerrum_length"])
                 self._set_params_in_es_core()
+                mpi_bcast_coulomb_params()
 
             def default_params(self):
                 return {}
@@ -908,3 +909,4 @@ IF ELECTROSTATICS:
             def _deactivate_method(self):
                 super(Scafacos,self)._deactivate_method()
                 scafacos.free_handle()
+                mpi_bcast_coulomb_params()

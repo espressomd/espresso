@@ -79,7 +79,7 @@ print("# Number of colloid beads = {}".format(n_col_part))
 #here we let the bead positions relax. The LJ potential with the central bead combined with the
 #harmonic bond keep the monomers roughly radius_col away from the central bead. The LJ
 #between the surface beads cause them to distribute more or less evenly on the surface.
-system.non_bonded_inter.set_force_cap(1000)
+system.force_cap = 1000
 system.time_step=eq_tstep
 
 for i in range(n_cycle):
@@ -200,13 +200,13 @@ for i in range(n_col_part):
 ljcap = 100
 CapSteps = 1000
 for i in range(CapSteps):
-    system.non_bonded_inter.set_force_cap(ljcap)
+    system.force_cap = ljcap
     print("\r # step {} of  {}".format(i+1, CapSteps)),
     sys.stdout.flush()
     system.integrator.run(integ_steps)
     ljcap+=5
  
-system.non_bonded_inter.set_force_cap(0)
+system.force_cap = 0
 
 #let the colloid move now that bad overlaps have been eliminated
 for i in range(n_col_part):

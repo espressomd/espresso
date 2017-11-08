@@ -35,8 +35,8 @@ cdef class mayaviLive(object):
     you run your integrate loop in a separate thread, you can call
     run_gui_event_loop in your main thread to be able to interact with the GUI.
     
-    Arguments
-    ---------
+    Parameters
+    ----------
     system : instance of espressomd.System
     particle_sizes : (optional) function, list, or dict, which maps particle types to radii
 
