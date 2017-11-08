@@ -907,8 +907,6 @@ IF MORSE == 1:
                 raise ValueError("Morse offset has to be >=0")
             if self._params["cutoff"] < 0:
                 raise ValueError("Morse cutoff has to be >=0")
-            if self._params["cap"] < 0:
-                raise ValueError("Morse cap has to be >=0")
             return True
 
         def _get_params_from_es_core(self):
@@ -920,8 +918,7 @@ IF MORSE == 1:
                 "eps": ia_params.MORSE_eps,
                 "alpha": ia_params.MORSE_alpha,
                 "rmin": ia_params.MORSE_rmin,
-                "cutoff": ia_params.MORSE_cut,
-                "cap": ia_params.MORSE_capradius
+                "cutoff": ia_params.MORSE_cut
             }
 
         def is_active(self):
@@ -935,8 +932,7 @@ IF MORSE == 1:
                                 self._params["eps"],
                                 self._params["alpha"],
                                 self._params["rmin"],
-                                self._params["cutoff"],
-                                self._params["cap"]):
+                                self._params["cutoff"]):
                 raise Exception("Could not set Morse parameters")
 
         def default_params(self):
@@ -947,8 +943,7 @@ IF MORSE == 1:
                 "eps": 0.,
                 "alpha": 0.,
                 "rmin": 0.,
-                "cutoff": 0.,
-                "cap": 0.}
+                "cutoff": 0.}
 
         def type_name(self):
             """Name of interaction type.
@@ -970,9 +965,6 @@ IF MORSE == 1:
                 Distance of potential minimum
             cutoff : :obj:`float`
                 Cutoff distance of the interaction.
-            cap : :obj:`float`, optional
-                If individual force caps are used, determines the distance
-                at which the force is capped.
 
             """
             super(MorseInteraction, self).set_params(**kwargs)
@@ -981,7 +973,7 @@ IF MORSE == 1:
             """All parameters that can be set.
 
             """
-            return "eps", "alpha", "rmin", "cutoff", "cap"
+            return "eps", "alpha", "rmin", "cutoff"
 
         def required_keys(self):
             """Parameters that have to be set.
@@ -1021,8 +1013,7 @@ IF BUCKINGHAM == 1:
                 "d": ia_params.BUCK_D,
                 "cutoff": ia_params.BUCK_cut,
                 "discont": ia_params.BUCK_discont,
-                "shift": ia_params.BUCK_shift,
-                "cap": ia_params.BUCK_capradius
+                "shift": ia_params.BUCK_shift
             }
 
         def is_active(self):
@@ -1039,8 +1030,7 @@ IF BUCKINGHAM == 1:
                                      self._params["d"],
                                      self._params["cutoff"],
                                      self._params["discont"],
-                                     self._params["shift"],
-                                     self._params["cap"]):
+                                     self._params["shift"]):
                 raise Exception("Could not set Buckingham parameters")
 
         def default_params(self):
@@ -1054,8 +1044,7 @@ IF BUCKINGHAM == 1:
                 "d": 0.,
                 "cutoff": 0.,
                 "discont": 0.,
-                "shift": 0.,
-                "cap": 0.}
+                "shift": 0.}
 
         def type_name(self):
             """Name of interaction type.
@@ -1083,9 +1072,6 @@ IF BUCKINGHAM == 1:
                 Cutoff distance of the interaction.
             shift: :obj:`float`, optional
                 Constant potential shift.
-            cap : :obj:`float`, optional
-                If individual force caps are used, determines the distance
-                at which the force is capped.
 
             """
             super(BuckinghamInteraction, self).set_params(**kwargs)

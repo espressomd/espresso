@@ -44,6 +44,7 @@ cdef extern from "interaction_data.hpp":
         double LJGEN_b2
         double LJGEN_lambda
         double LJGEN_softrad
+
         int TAB_npoints
         int TAB_startindex
         double TAB_minval
@@ -79,7 +80,6 @@ cdef extern from "interaction_data.hpp":
         double MORSE_rmin
         double MORSE_cut
         double MORSE_rest
-        double MORSE_capradius
 
         double BUCK_A
         double BUCK_B
@@ -88,7 +88,6 @@ cdef extern from "interaction_data.hpp":
         double BUCK_cut
         double BUCK_discont
         double BUCK_shift
-        double BUCK_capradius
 
         double soft_a
         double soft_n
@@ -162,13 +161,13 @@ IF MORSE:
     cdef extern from "morse.hpp":
         int morse_set_params(int part_type_a, int part_type_b,
                              double eps, double alpha,
-                             double rmin, double cut, double cap_radius);
+                             double rmin, double cut);
 
 IF BUCKINGHAM:
     cdef extern from "buckingham.hpp":
         int buckingham_set_params(int part_type_a, int part_type_b,
                                   double A, double B, double C, double D, double cut,
-                                  double discont, double shift, double cap_radius);
+                                  double discont, double shift);
 
 IF SOFT_SPHERE:
     cdef extern from "soft_sphere.hpp":
