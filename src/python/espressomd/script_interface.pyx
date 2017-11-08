@@ -129,13 +129,11 @@ cdef class PScriptInterface(object):
         elif type(value) == str:
             return make_variant[string](to_char_pointer(value))
         
-        # Note: Bool has to be checked before int/float because
-        # numpy considers True to be an instance of np.int
         elif type(value) == type(True):
             return make_variant[bool](value)
-        elif type(value) == int or isinstance(value,np.int):
+        elif np.issubdtype(np.dtype(type(value)),int):
             return make_variant[int](value)
-        elif type(value) == float or isinstance(value,np.float):
+        elif np.issubdtype(np.dtype(type(value)),float):
             return make_variant[float](value)
         else:
             raise TypeError("Unkown type for conversion to Variant")
