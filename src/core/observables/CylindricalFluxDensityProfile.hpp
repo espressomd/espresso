@@ -25,8 +25,9 @@ public:
           z_bin_size() * phi_bin_size() / (2 * PI);
       if (r_bin >= 0 && r_bin < n_r_bins && phi_bin >= 0 &&
           phi_bin < n_phi_bins && z_bin >= 0 && z_bin < n_z_bins) {
-        // Coordinate transform the velocities and divide by time_step to get MD
-        // units. v_r = (x * v_x + y * v_y) / sqrt(x^2 + y^2)
+        // Coordinate transform the velocities and divide core velocities by time_step to get MD
+        // units.
+        // v_r = (x * v_x + y * v_y) / sqrt(x^2 + y^2)
         double v_r = (ppos_shifted[0] * partCfg[id].m.v[0] / time_step +
                       ppos_shifted[1] * partCfg[id].m.v[1] / time_step) /
                      std::sqrt(ppos_shifted[0] * ppos_shifted[0] +
@@ -45,9 +46,10 @@ public:
         // and n_i is the size of the ith dimension.
         int ind =
             3 * (r_bin * n_phi_bins * n_z_bins + phi_bin * n_z_bins + z_bin);
-        last_value[ind + 0] += v_r / bin_volume;
-        last_value[ind + 1] += v_phi / bin_volume;
-        last_value[ind + 2] += v_z / bin_volume;
+        // The velocity transformation might yield nan if the denominator is 0.0 (Particle exactly on the center).
+        if (!(v_r != v_r)) {last_value[ind + 0] += v_r / bin_volume;}
+        if (!(v_phi != v_phi)) {last_value[ind + 1] += v_phi / bin_volume;}
+        if (!(v_z != v_z)) {last_value[ind + 2] += v_z / bin_volume;}
       }
     }
     return 0;
