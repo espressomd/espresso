@@ -24,7 +24,7 @@ fi
 
 if [ "$TRAVIS_OS_NAME" = "linux" ]; then
 	image=espressomd/espresso-$image:latest
-	docker run $ci_env -u espresso --env-file $ENV_FILE -v ${PWD}:/travis -it $image /bin/bash -c "cp -r /travis .; cd travis && maintainer/travis/build_cmake.sh" || exit 1
+	sudo docker run $ci_env -u espresso --env-file $ENV_FILE -v ${PWD}:/travis -it $image /bin/bash -c "cp -r /travis .; cd travis && maintainer/travis/build_cmake.sh" || exit 1
 elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 	brew install cmake || brew upgrade cmake
 	case "$image" in
