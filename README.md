@@ -29,7 +29,7 @@ Outputs
 
 ```cpp
 #include <iostream>
-#include <map>
+#include <unordered_map>
 #include "matheval.hpp"
 
 int main()
@@ -43,6 +43,28 @@ int main()
 Outputs
 ```
 1.25548
+```
+
+### Motivating example 3
+
+We can also evaluate an expression multiple times without paying the
+cost of parsing again.
+```cpp
+#include <iostream>
+#include <unordered_map>
+#include "matheval.hpp"
+
+int main()
+{
+    matheval::Parser<double> parser;
+    parser.parse("x + 1");
+    std::cout << parser.evaluate({std::make_pair("x",1)}) << ' '
+              << parser.evaluate({std::make_pair("x",2)}) << '\n';
+}
+```
+Outputs
+```
+2 3
 ```
 
 ### Build instructions

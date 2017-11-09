@@ -19,9 +19,9 @@
 #include <functional>
 #include <iterator>
 #include <limits>
-#include <map>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 
 #define BOOST_SPIRIT_USE_PHOENIX_V3
 #include <boost/math/constants/constants.hpp>
@@ -96,7 +96,7 @@ public:
      */
     expr_ast() : tree(nil{}) {}
 
-    /** @brief Copy constructor 
+    /** @brief Copy constructor
      *
      * Deep copies the syntax tree.
      */
@@ -189,7 +189,7 @@ public:
     using result_type = real_t;
 
     /** @brief Type of the symbol table */
-    using symbol_table_t = std::map<std::string, result_type>;
+    using symbol_table_t = std::unordered_map<std::string, result_type>;
 
     /** @brief Constructor
      *
@@ -288,7 +288,7 @@ private:
     qi::rule<Iterator, expr_ast<real_t>(), ascii::space_type> factor;
     qi::rule<Iterator, expr_ast<real_t>(), ascii::space_type> primary;
     qi::rule<Iterator, std::string()> variable;
-public: 
+public:
     /** @brief symbol table for constants like "pi" */
     struct constant_
         : boost::spirit::qi::symbols<
@@ -429,6 +429,62 @@ public:
 } // namespace detail
 
 
+/** @brief Class interface
+ *
+ * This class hides the grammar, AST, and AST traversal behind some
+ * member functions.
+ *
+ * @tparam real_t datatype of the result
+ */
+template < typename real_t >
+class Parser
+{
+    detail::expr_ast<real_t> ast;
+public:
+    /** @brief Parse an expression
+     *
+     * This function builds the grammar and parses the iterator into
+     * an AST.
+     *
+     * @param[in] first iterator to the start of the input sequence
+     * @param[in] last  iterator to the end of the input sequence
+     */
+    template < typename Iterator >
+    void parse(Iterator first, Iterator last)
+    {
+        static detail::grammar<real_t,Iterator> const g;
+
+        ast = detail::expr_ast<real_t>{}; // Drop old AST
+
+        bool r = boost::spirit::qi::phrase_parse(
+            first, last, g,
+            boost::spirit::ascii::space, ast);
+
+        if (!r || first != last)
+        {
+            std::string rest(first, last);
+            throw std::runtime_error("Parsing failed at " + rest);
+        }
+    }
+
+    /** @overload parse(Iterator first, Iterator last) */
+    void parse(std::string const &str)
+    {
+        parse(str.begin(), str.end());
+    }
+
+    /** @brief Evaluate the AST with a given symbol table
+     *
+     * @param[in] st the symbol table for variables
+     */
+    real_t evaluate(typename detail::eval_ast<real_t>::symbol_table_t const &st)
+    {
+        detail::eval_ast<real_t> solver(st);
+        return solver(ast);
+    }
+};
+
+
 /** @brief Convenience function
  *
  * This function builds the grammar, parses the iterator to an AST,
@@ -442,25 +498,15 @@ template < typename real_t, typename Iterator >
 real_t parse(Iterator first, Iterator last,
              typename detail::eval_ast<real_t>::symbol_table_t const &st)
 {
-    static detail::grammar<real_t,Iterator> const g;
-    detail::expr_ast<real_t> ast;
-    bool r = boost::spirit::qi::phrase_parse(
-        first, last, g,
-        boost::spirit::ascii::space, ast);
-
-    if (!r || first != last)
-    {
-        std::string rest(first, last);
-        throw std::runtime_error("Parsing failed at " + rest);
-    }
-
-    detail::eval_ast<real_t> solver(st);
-    return solver(ast);
+    Parser<real_t> parser;
+    parser.parse(first, last);
+    return parser.evaluate(st);
 }
 
 /** @overload parse(Iterator first, Iterator last, typename detail::eval_ast<real_t>::symbol_table_t const &st) */
 template < typename real_t >
-real_t parse(std::string str, typename detail::eval_ast<real_t>::symbol_table_t const &st)
+real_t parse(std::string const &str,
+             typename detail::eval_ast<real_t>::symbol_table_t const &st)
 {
     return parse<real_t>(str.begin(), str.end(), st);
 }
