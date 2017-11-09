@@ -44,6 +44,7 @@ cdef extern from "interaction_data.hpp":
         double LJGEN_b2
         double LJGEN_lambda
         double LJGEN_softrad
+
         int TAB_npoints
         int TAB_startindex
         double TAB_minval
@@ -59,6 +60,46 @@ cdef extern from "interaction_data.hpp":
         double GB_k2
         double GB_mu
         double GB_nu
+        
+        double SmSt_eps
+        double SmSt_sig
+        double SmSt_cut
+        double SmSt_d
+        int SmSt_n
+        double SmSt_k0
+
+        double BMHTF_A;
+        double BMHTF_B;
+        double BMHTF_C;
+        double BMHTF_D;
+        double BMHTF_sig;
+        double BMHTF_cut;
+
+        double MORSE_eps
+        double MORSE_alpha
+        double MORSE_rmin
+        double MORSE_cut
+        double MORSE_rest
+
+        double BUCK_A
+        double BUCK_B
+        double BUCK_C
+        double BUCK_D
+        double BUCK_cut
+        double BUCK_discont
+        double BUCK_shift
+
+        double soft_a
+        double soft_n
+        double soft_cut
+        double soft_offset
+
+        double Hertzian_eps
+        double Hertzian_sig
+
+        double Gaussian_eps
+        double Gaussian_sig
+        double Gaussian_cut
 
         int dpd_wf
         int dpd_twf
@@ -102,8 +143,46 @@ cdef extern from "ljgen.hpp":
         cdef int ljgen_set_params(int part_type_a, int part_type_b,
                                   double eps, double sig, double cut,
                                   double shift, double offset,
-                                  double a1, double a2, double b1, double b2,
-                                  )
+                                  double a1, double a2, double b1, double b2)
+
+IF SMOOTH_STEP:
+    cdef extern from "steppot.hpp":
+        int smooth_step_set_params(int part_type_a, int part_type_b,
+                                   double d, int n, double eps,
+                                   double k0, double sig,
+                                   double cut);
+IF BMHTF_NACL:
+    cdef extern from "bmhtf-nacl.hpp":
+        int BMHTF_set_params(int part_type_a, int part_type_b,
+                             double A, double B, double C,
+                             double D, double sig, double cut);
+
+IF MORSE:
+    cdef extern from "morse.hpp":
+        int morse_set_params(int part_type_a, int part_type_b,
+                             double eps, double alpha,
+                             double rmin, double cut);
+
+IF BUCKINGHAM:
+    cdef extern from "buckingham.hpp":
+        int buckingham_set_params(int part_type_a, int part_type_b,
+                                  double A, double B, double C, double D, double cut,
+                                  double discont, double shift);
+
+IF SOFT_SPHERE:
+    cdef extern from "soft_sphere.hpp":
+        int soft_sphere_set_params(int part_type_a, int part_type_b,
+                                   double a, double n, double cut, double offset);
+
+IF HERTZIAN:
+    cdef extern from "hertzian.hpp":
+        int hertzian_set_params(int part_type_a, int part_type_b,
+                                double eps, double sig);
+
+IF GAUSSIAN:
+    cdef extern from "gaussian.hpp":
+        int gaussian_set_params(int part_type_a, int part_type_b,
+                                double eps, double sig, double cut);
 
 IF DPD:
     cdef extern from "dpd.hpp":
