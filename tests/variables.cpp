@@ -6,7 +6,7 @@
 double const x = 1;
 double const y = 2;
 
-std::unordered_map<std::string, double> const symtab = {
+std::map<std::string, double> const symtab = {
     std::make_pair("x",  x),
     std::make_pair("y",  y),
     std::make_pair("e", -1),

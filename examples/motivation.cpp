@@ -1,5 +1,5 @@
 #include <iostream>
-#include <unordered_map>
+#include <map>
 #include "matheval.hpp"
 
 void first()
@@ -9,7 +9,7 @@ void first()
 
 void second()
 {
-    std::unordered_map<std::string,double> symtab;
+    std::map<std::string,double> symtab;
     symtab.emplace(std::make_pair("x",  2));
     symtab.emplace(std::make_pair("y", -1));
     std::cout << matheval::parse<double>("cbrt(x/2 + sqrt(x**2/4 + y**3/24))",symtab) << '\n';

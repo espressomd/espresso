@@ -5,7 +5,7 @@
 BOOST_AUTO_TEST_CASE( casename )                                       \
 {                                                                      \
     std::string const s = expr;                                        \
-    std::unordered_map<std::string, double> st;                        \
+    std::map<std::string, double> st;                        \
     double result;                                                     \
     BOOST_CHECK_NO_THROW(result = matheval::parse<double>(s, st));     \
     BOOST_CHECK_CLOSE(result, (expected),                              \

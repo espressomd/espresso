@@ -29,7 +29,7 @@ Outputs
 
 ```cpp
 #include <iostream>
-#include <unordered_map>
+#include <map>
 #include "matheval.hpp"
 
 int main()
@@ -51,7 +51,7 @@ We can also evaluate an expression multiple times without paying the
 cost of parsing again.
 ```cpp
 #include <iostream>
-#include <unordered_map>
+#include <map>
 #include "matheval.hpp"
 
 int main()
@@ -84,10 +84,23 @@ make check   # build and run the tests
 
 General:
 
-* C++11 compatible compiler, i.e. GCC >= 5.0, Clang, Visual Studio 2015 (maybe).
-* Boost.Spirit, Boost.Phoenix, and Boost.MathConstants (versions in Ubuntu 16.04 are known to work).
+* C++11 compatible compiler, i.e. GCC >= 4.8, Clang, Visual Studio 2015.
+* Boost.Spirit, Boost.Phoenix, and Boost.MathConstants.
 * No support for ternary functions (e.g. `if`).
 * No support for complex numbers.
+
+### Alternatives
+
+* [GNU libmatheval](https://www.gnu.org/software/libmatheval/) is a C
+  library built using the parser generator YACC with about the same
+  scope as Boost Matheval.  It is a not header-only and does not have
+  a C++ interface at the moment, but it is much faster in terms of
+  compilation time.
+* [ExprTk](http://www.partow.net/programming/exprtk/) is a true
+  monster with almost 40000 lines in a single header file.  It
+  implements a complete state machine including things like logical
+  operations, control structures, and even file IO.  Compilation time
+  is even longer than with Boost Matheval.
 
 ### License
 

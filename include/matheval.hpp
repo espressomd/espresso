@@ -19,9 +19,9 @@
 #include <functional>
 #include <iterator>
 #include <limits>
+#include <map>
 #include <stdexcept>
 #include <string>
-#include <unordered_map>
 
 #define BOOST_SPIRIT_USE_PHOENIX_V3
 #include <boost/math/constants/constants.hpp>
@@ -189,7 +189,7 @@ public:
     using result_type = real_t;
 
     /** @brief Type of the symbol table */
-    using symbol_table_t = std::unordered_map<std::string, result_type>;
+    using symbol_table_t = std::map<std::string, result_type>;
 
     /** @brief Constructor
      *
