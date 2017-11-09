@@ -364,6 +364,7 @@ aggregation state of only oppositely charged particles.
 Identifying pearl-necklace structures
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. todo:: This feature is not implemented
+
 analyze necklace
 
 Algorithm for identifying pearl necklace structures for polyelectrolytes

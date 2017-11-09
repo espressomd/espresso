@@ -52,7 +52,8 @@ import sys
 import random  # for true random numbers from os.urandom()
 
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
-                      "time_step", "timings"]
+                      "time_step", "timings", "force_cap"]
+
 IF LEES_EDWARDS == 1:
     setable_properties.append("lees_edwards_offset")
 
@@ -149,6 +150,20 @@ cdef class System(object):
     property integ_switch:
         def __get__(self):
             return integ_switch
+
+    property force_cap:
+        """
+        If > 0, the magnitude of the force on the particles
+        are capped to this value.
+
+        type : float
+
+        """
+        def __get__(self):
+            return forcecap_get()
+
+        def __set__(self, cap):
+            forcecap_set(cap)
 
     property periodicity:
         """
@@ -360,12 +375,12 @@ cdef class System(object):
     def change_volume_and_rescale_particles(self, d_new, dir="xyz"):
         """Change box size and rescale particle coordinates.
 
-        Parameters:
-        -----------
-        d_new : float
-                new box length
-        dir : str, optional
-                coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
+        Parameters
+        ----------
+        d_new : :obj:`float`
+                New box length
+        dir : :obj:`str`, optional
+                Coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
                 Isotropic assumes a cubic box.
 
         """
@@ -385,8 +400,7 @@ cdef class System(object):
                 'Usage: change_volume_and_rescale_particles(<L_new>, [{ "x" | "y" | "z" | "xyz" }])')
 
     def volume(self):
-        """
-        Return box volume of the cuboid box
+        """Return box volume of the cuboid box.
 
         """
 
@@ -406,5 +420,22 @@ cdef class System(object):
         cdef double[3] res, a, b
         a = p1.pos
         b = p2.pos
+
         get_mi_vector(res, b, a)
         return np.array((res[0], res[1], res[2]))
+
+    IF EXCLUSIONS:
+        def auto_exclusions(self, distance):
+            """Automatically adds exclusions between particles
+            that are bonded.
+
+            This only considers pair bonds.
+
+            Parameters
+            ----------
+            distance : :obj:`int`
+                       Bond distance upto which the exlucsions should be added.
+
+            """
+            auto_exclusions(distance)
+

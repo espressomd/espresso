@@ -154,7 +154,6 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJ_sig =
     params->LJ_shift =
     params->LJ_offset =
-    params->LJ_capradius =
     params->LJ_min = 0.0;
   params->LJ_cut = INACTIVE_CUTOFF;
 #endif
@@ -164,7 +163,6 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJGEN_sig =
     params->LJGEN_shift =
     params->LJGEN_offset =
-    params->LJGEN_capradius =
     params->LJGEN_a1 =
     params->LJGEN_a2 = 
     params->LJGEN_b1 =
@@ -184,7 +182,6 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJANGLE_bonded1neg = 
     params->LJANGLE_bonded2pos = 
     params->LJANGLE_bonded2neg = 
-    params->LJANGLE_capradius =
     params->LJANGLE_z0 =
     params->LJANGLE_kappa =
     params->LJANGLE_epsprime = 0.0;
@@ -227,7 +224,6 @@ void initialize_ia_params(IA_parameters *params) {
     params->MORSE_alpha =
     params->MORSE_rmin =
     params->MORSE_rest = 
-    params->MORSE_capradius = 0;
   params->MORSE_cut = INACTIVE_CUTOFF;
 #endif
 
@@ -238,7 +234,6 @@ void initialize_ia_params(IA_parameters *params) {
     params->BUCK_D =
     params->BUCK_discont =
     params->BUCK_shift =
-    params->BUCK_capradius =
     params->BUCK_F1 =
     params->BUCK_F2 = 0.0;
   params->BUCK_cut = INACTIVE_CUTOFF;
@@ -289,7 +284,6 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJCOS2_offset =
     params->LJCOS2_w =
     params->LJCOS2_rchange = 
-    params->LJCOS2_capradius = 0.0;
   params->LJCOS2_cut = INACTIVE_CUTOFF;
 #endif
 
@@ -1000,7 +994,6 @@ void recalc_coulomb_prefactor()
 #endif
 }
 
-#ifdef BOND_VIRTUAL
 int virtual_set_params(int bond_type)
 {
   if(bond_type < 0)
@@ -1016,5 +1009,3 @@ int virtual_set_params(int bond_type)
 
   return ES_OK;
 }
-
-#endif
