@@ -16,16 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
+from __future__ import print_function, absolute_import, division
 include "myconfig.pxi"
+import os
+import cython
 import numpy as np
+cimport numpy as np
 from .actors cimport Actor
 from . cimport cuda_init
 from . import cuda_init
 from globals cimport *
 from copy import deepcopy
 from . import utils
-import os
 
 # Actor class
 ####################################################
@@ -248,6 +250,33 @@ IF LB_GPU:
             lb_lbfluid_get_interpolated_velocity_global(p, v)
             return v
 
+        @cython.boundscheck(False)
+        @cython.wraparound(False)
+        def get_interpolated_fluid_velocity_at_positions(self, np.ndarray[double, ndim=2, mode="c"] positions not None):
+            """Calculate the fluid velocity at given positions.
+
+            Parameters
+            ----------
+            positions : numpy-array of type :obj:`float` of shape (N,3)
+                        The 3-dimensional positions.
+
+            Returns
+            -------
+            velocities : numpy-array of type :obj:`float` of shape (N,3)
+                         The 3-dimensional LB fluid velocities.
+
+            Raises
+            ------
+            AssertionError
+                If shape of ``positions`` not (N,3).
+
+            """
+            assert positions.shape[1] == 3, "The input array must have shape (N,3)"
+            cdef int length
+            length = positions.shape[0]
+            velocities = np.empty_like(positions)
+            lb_lbfluid_get_interpolated_velocity_at_positions(<double *>np.PyArray_GETPTR2(positions, 0, 0), <double *>np.PyArray_GETPTR2(velocities, 0, 0), length)
+            return velocities
 
 IF LB or LB_GPU:
     cdef class LBFluidRoutines(object):
@@ -263,8 +292,17 @@ IF LB or LB_GPU:
                 lb_lbnode_get_u(self.node, double_return)
                 return double_return
 
-            def __set__(self, value):
-                raise Exception("Not implemented.")
+            IF LB_GPU:
+                def __set__(self, value):
+                    cdef double[3] host_velocity
+                    if all(isinstance(v, float) for v in value) and len(value) == 3:
+                        host_velocity = value
+                        lb_lbnode_set_u(self.node, host_velocity)
+                    else:
+                        raise ValueError("Velocity has to be of shape 3 and type float.")
+            ELSE:
+                def __set__(self, value):
+                    raise NotImplementedError("Not implemented for CPU LB.")
 
         property density:
             def __get__(self):
@@ -273,7 +311,7 @@ IF LB or LB_GPU:
                 return double_return
 
             def __set__(self, value):
-                raise Exception("Not implemented.")
+                raise NotImplementedError
 
 
         property pi:
@@ -285,7 +323,7 @@ IF LB or LB_GPU:
                                  [pi[3],pi[4],pi[5]]])
 
             def __set__(self, value):
-                raise Exception("Not implemented.")
+                raise NotImplementedError
 
         property pi_neq:
             def __get__(self):
@@ -296,7 +334,7 @@ IF LB or LB_GPU:
                                  [pi[3],pi[4],pi[5]]])
 
             def __set__(self, value):
-                raise Exception("Not implemented.")
+                raise NotImplementedError
 
         property population:
             def __get__(self):
@@ -315,4 +353,4 @@ IF LB or LB_GPU:
                 return int_return
 
             def __set__(self, value):
-                raise Exception("Not implemented.")
+                raise NotImplementedError

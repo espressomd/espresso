@@ -31,7 +31,6 @@
 #include "global.hpp"
 #include "interaction_data.hpp"
 #include "utils.hpp"
-#include "verlet.hpp"
 #include <cmath>
 #include <cstdio>
 
@@ -63,6 +62,7 @@ int boundary[6] = {0, 0, 0, 0, 0, 0};
 int periodic = 7;
 
 double box_l[3] = {1, 1, 1};
+double half_box_l[3] = {.5, .5, .5};
 double box_l_i[3] = {1, 1, 1};
 double min_box_l;
 double local_box_l[3] = {1, 1, 1};
@@ -263,6 +263,7 @@ void grid_changed_box_l() {
     my_left[i] = node_pos[i] * local_box_l[i];
     my_right[i] = (node_pos[i] + 1) * local_box_l[i];
     box_l_i[i] = 1 / box_l[i];
+    half_box_l[i] = 0.5 * box_l[i];
   }
 
   calc_minimal_box_dimensions();

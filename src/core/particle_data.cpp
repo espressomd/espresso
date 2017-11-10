@@ -161,9 +161,7 @@ void mpi_who_has() {
 /**
  * @brief Rebuild the particle index.
  */
-void build_particle_node() {
-  mpi_who_has();
-}
+void build_particle_node() { mpi_who_has(); }
 
 /**
  *  @brief Get the mpi rank which owns the particle with id.
@@ -311,7 +309,7 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
 std::unique_ptr<Particle> get_particle_data(int part) {
   auto const pnode = get_particle_node(part);
 
-  if(pnode < 0)
+  if (pnode < 0)
     return nullptr;
 
   auto pp = Utils::make_unique<Particle>();
@@ -764,7 +762,7 @@ int remove_particle(int part) {
   mpi_remove_particle(pnode, part);
 
   if (part == max_seen_particle) {
-      max_seen_particle--;
+    max_seen_particle--;
     mpi_bcast_parameter(FIELD_MAXPART);
   }
   return ES_OK;
@@ -1067,6 +1065,11 @@ void recv_particles(ParticleList *particles, int node) {
   update_local_particles(particles);
 }
 
+#ifdef EXCLUSIONS
+
+namespace {
+/* keep a unique list for particle i. Particle j is only added if it is not i
+   and not already in the list. */
 void add_partner(IntList *il, int i, int j, int distance) {
   int k;
   if (j == i)
@@ -1078,13 +1081,12 @@ void add_partner(IntList *il, int i, int j, int distance) {
   il->e[il->n++] = j;
   il->e[il->n++] = distance;
 }
-
-#ifdef EXCLUSIONS
+}
 
 int change_exclusion(int part1, int part2, int _delete) {
-  if(particle_exists(part1) && particle_exists(part2)) {
-  mpi_send_exclusion(part1, part2, _delete);
-  return ES_OK;
+  if (particle_exists(part1) && particle_exists(part2)) {
+    mpi_send_exclusion(part1, part2, _delete);
+    return ES_OK;
   } else {
     return ES_ERROR;
   }
@@ -1092,7 +1094,7 @@ int change_exclusion(int part1, int part2, int _delete) {
 
 void remove_all_exclusions() { mpi_send_exclusion(-1, -1, 1); }
 
-void auto_exclusion(int distance) {
+void auto_exclusions(int distance) {
   int count, p, i, j, p1, p2, p3, dist1, dist2;
   Bonded_ia_parameters *ia_params;
 
@@ -1106,6 +1108,9 @@ void auto_exclusion(int distance) {
       (IntList *)Utils::malloc((max_seen_particle + 1) * sizeof(IntList));
   for (p = 0; p <= max_seen_particle; p++)
     init_intlist(&partners[p]);
+
+  /* We need bond information */
+  partCfg().update_bonds();
 
   /* determine initial connectivity */
   for (auto const &part1 : partCfg()) {
@@ -1567,7 +1572,4 @@ void pointer_to_rotational_inertia(Particle *p, double *&res) {
 }
 #endif
 
-bool particle_exists(int part) {
-  return get_particle_node(part) != -1;
-}
-
+bool particle_exists(int part) { return get_particle_node(part) != -1; }

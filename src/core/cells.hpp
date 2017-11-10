@@ -60,11 +60,13 @@
    </ul>
 */
 
+#include <utility>
+#include <vector>
+
 #include "ParticleIterator.hpp"
 #include "ghosts.hpp"
 #include "particle_data.hpp"
 #include "utils/Range.hpp"
-#include "verlet.hpp"
 
 #include "Cell.hpp"
 #include "ParticleRange.hpp"
@@ -119,6 +121,9 @@ struct CellPList {
                              CellParticleIterator(cell + n, cell + n, 0));
   }
 
+  Cell **begin() { return cell; }
+  Cell **end() { return cell + n; }
+
   Cell **cell;
   int n;
   int max;
@@ -133,6 +138,8 @@ struct CellPList {
 struct CellStructure {
   /** type descriptor */
   int type;
+
+  bool use_verlet_list;
 
   /** Communicator to exchange ghost cell information. */
   GhostCommunicator ghost_cells_comm;
@@ -266,6 +273,17 @@ void cells_update_ghosts();
 /** Calculate and return the total number of particles on this
     node. */
 int cells_get_n_particles();
+
+/**
+ * @brief Get pairs closer than distance from the cells.
+ *
+ * This is mostly for testing purposes and uses link_cell
+ * to get pairs out of the cellsystem by a simple distance
+ * criterion.
+ *
+ * Pairs are sorted so that first.id < second.id
+ */
+std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
 
 /** spread the particle resorting criterion across the nodes. */
 void announce_resort_particles();

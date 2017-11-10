@@ -33,8 +33,8 @@
 #include "core/observables/Current.hpp"
 #include "core/observables/DipoleMoment.hpp"
 #include "core/observables/MagneticDipoleMoment.hpp"
-#include "core/observables/ParticleAngularMomentum.hpp"
-#include "core/observables/ParticleBodyAngularMomentum.hpp"
+#include "core/observables/ParticleAngularVelocities.hpp"
+#include "core/observables/ParticleBodyAngularVelocities.hpp"
 #include "core/observables/ParticleBodyVelocities.hpp"
 #include "core/observables/ParticleCurrents.hpp"
 #include "core/observables/ParticleForces.hpp"
@@ -94,8 +94,8 @@ NEW_PID_OBSERVABLE(ParticlePositions);
 NEW_PID_OBSERVABLE(ParticleVelocities);
 NEW_PID_OBSERVABLE(ParticleForces);
 NEW_PID_OBSERVABLE(ParticleBodyVelocities);
-NEW_PID_OBSERVABLE(ParticleAngularMomentum);
-NEW_PID_OBSERVABLE(ParticleBodyAngularMomentum);
+NEW_PID_OBSERVABLE(ParticleAngularVelocities);
+NEW_PID_OBSERVABLE(ParticleBodyAngularVelocities);
 NEW_PID_OBSERVABLE(ParticleCurrent);
 NEW_PID_OBSERVABLE(Current);
 NEW_PID_OBSERVABLE(DipoleMoment);

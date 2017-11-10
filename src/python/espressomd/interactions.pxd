@@ -31,7 +31,6 @@ cdef extern from "interaction_data.hpp":
         double LJ_cut
         double LJ_shift
         double LJ_offset
-        double LJ_capradius
         double LJ_min
 
         double LJGEN_eps
@@ -39,20 +38,20 @@ cdef extern from "interaction_data.hpp":
         double LJGEN_cut
         double LJGEN_shift
         double LJGEN_offset
-        double LJGEN_capradius
         double LJGEN_a1
         double LJGEN_a2
         double LJGEN_b1
         double LJGEN_b2
         double LJGEN_lambda
         double LJGEN_softrad
-        int TAB_npoints;
-        int TAB_startindex;
-        double TAB_minval;
-        double TAB_minval2;
-        double TAB_maxval;
-        double TAB_stepsize;
-        char TAB_filename[256];
+
+        int TAB_npoints
+        int TAB_startindex
+        double TAB_minval
+        double TAB_minval2
+        double TAB_maxval
+        double TAB_stepsize
+        char TAB_filename[256]
 
         double GB_eps
         double GB_sig
@@ -61,6 +60,60 @@ cdef extern from "interaction_data.hpp":
         double GB_k2
         double GB_mu
         double GB_nu
+        
+        double SmSt_eps
+        double SmSt_sig
+        double SmSt_cut
+        double SmSt_d
+        int SmSt_n
+        double SmSt_k0
+
+        double BMHTF_A;
+        double BMHTF_B;
+        double BMHTF_C;
+        double BMHTF_D;
+        double BMHTF_sig;
+        double BMHTF_cut;
+
+        double MORSE_eps
+        double MORSE_alpha
+        double MORSE_rmin
+        double MORSE_cut
+        double MORSE_rest
+
+        double BUCK_A
+        double BUCK_B
+        double BUCK_C
+        double BUCK_D
+        double BUCK_cut
+        double BUCK_discont
+        double BUCK_shift
+
+        double soft_a
+        double soft_n
+        double soft_cut
+        double soft_offset
+
+        double Hertzian_eps
+        double Hertzian_sig
+
+        double Gaussian_eps
+        double Gaussian_sig
+        double Gaussian_cut
+
+        int dpd_wf
+        int dpd_twf
+        double dpd_gamma
+        double dpd_r_cut
+        double dpd_pref1
+        double dpd_pref2
+        double dpd_tgamma
+        double dpd_tr_cut
+        double dpd_pref3
+        double dpd_pref4
+
+        double HAT_Fmax
+        double HAT_r
 
     cdef ia_parameters * get_ia_param(int i, int j)
     cdef ia_parameters * get_ia_param_safe(int i, int j)
@@ -70,7 +123,7 @@ cdef extern from "lj.hpp":
     cdef int lennard_jones_set_params(int part_type_a, int part_type_b,
                                       double eps, double sig, double cut,
                                       double shift, double offset,
-                                      double cap_radius, double min)
+                                      double min)
 
 IF GAY_BERNE:
     cdef extern from "gb.hpp":
@@ -79,30 +132,72 @@ IF GAY_BERNE:
                                  double k1, double k2,
                                  double mu, double nu);
 
-cdef extern from "forcecap.hpp":
-    double force_cap
-    int forcecap_set_params(double forcecap)
-
 cdef extern from "ljgen.hpp":
     IF LJGEN_SOFTCORE:
         cdef int ljgen_set_params(int part_type_a, int part_type_b,
                                   double eps, double sig, double cut,
                                   double shift, double offset,
                                   double a1, double a2, double b1, double b2,
-                                  double cap_radius,
                                   double genlj_lambda, double softrad)
     ELSE:
         cdef int ljgen_set_params(int part_type_a, int part_type_b,
                                   double eps, double sig, double cut,
                                   double shift, double offset,
-                                  double a1, double a2, double b1, double b2,
-                                  double cap_radius)
+                                  double a1, double a2, double b1, double b2)
 
+IF SMOOTH_STEP:
+    cdef extern from "steppot.hpp":
+        int smooth_step_set_params(int part_type_a, int part_type_b,
+                                   double d, int n, double eps,
+                                   double k0, double sig,
+                                   double cut);
+IF BMHTF_NACL:
+    cdef extern from "bmhtf-nacl.hpp":
+        int BMHTF_set_params(int part_type_a, int part_type_b,
+                             double A, double B, double C,
+                             double D, double sig, double cut);
+
+IF MORSE:
+    cdef extern from "morse.hpp":
+        int morse_set_params(int part_type_a, int part_type_b,
+                             double eps, double alpha,
+                             double rmin, double cut);
+
+IF BUCKINGHAM:
+    cdef extern from "buckingham.hpp":
+        int buckingham_set_params(int part_type_a, int part_type_b,
+                                  double A, double B, double C, double D, double cut,
+                                  double discont, double shift);
+
+IF SOFT_SPHERE:
+    cdef extern from "soft_sphere.hpp":
+        int soft_sphere_set_params(int part_type_a, int part_type_b,
+                                   double a, double n, double cut, double offset);
+
+IF HERTZIAN:
+    cdef extern from "hertzian.hpp":
+        int hertzian_set_params(int part_type_a, int part_type_b,
+                                double eps, double sig);
+
+IF GAUSSIAN:
+    cdef extern from "gaussian.hpp":
+        int gaussian_set_params(int part_type_a, int part_type_b,
+                                double eps, double sig, double cut);
+
+IF DPD:
+    cdef extern from "dpd.hpp":
+        int dpd_set_params(int part_type_a, int part_type_b,
+                           double gamma, double r_c, int wf,
+                           double tgamma, double tr_c, int twf)
+
+IF HAT:
+    cdef extern from "hat.hpp":
+        int hat_set_params(int part_type_a, int part_type_b,
+                           double Fmax, double r)
 
 IF TABULATED==1:
     cdef extern from "tab.hpp":
         int tabulated_set_params(int part_type_a, int part_type_b, char* filename);
-
 
 cdef extern from "interaction_data.hpp":
     ctypedef struct Fene_bond_parameters:
@@ -283,7 +378,7 @@ cdef extern from "angle_cosine.hpp":
 cdef extern from "angle_cossquare.hpp":
     int angle_cossquare_set_params(int bond_type, double bend, double phi0)
 cdef extern from "subt_lj.hpp":
-    int subt_lj_set_params(int bond_type, double k, double r)
+    int subt_lj_set_params(int bond_type)
 cdef extern from "object-in-fluid/oif_global_forces.hpp":
     int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g, double V0, double kv)
 cdef extern from "object-in-fluid/oif_local_forces.hpp":
@@ -313,9 +408,8 @@ IF OVERLAPPED == 1:
         int overlapped_bonded_set_params(int bond_type, OverlappedBondedInteraction overlap_type,
                                          char * filename)
 
-IF BOND_VIRTUAL == 1:
-    cdef extern from "interaction_data.hpp":
-        int virtual_set_params(int bond_type)
+cdef extern from "interaction_data.hpp":
+    int virtual_set_params(int bond_type)
 
 
 cdef extern from "interaction_data.hpp":
