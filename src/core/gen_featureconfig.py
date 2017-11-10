@@ -78,13 +78,6 @@ hfile.write("""
 
 """)
 
-# Include definitions from CMake
-hfile.write("""
-/* Definitions from CMake */
-#include <cmake_config.hpp>
-
-""")
-
 # handle implications
 hfile.write('/* Handle implications */')
 implication_template = string.Template("""
