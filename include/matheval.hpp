@@ -62,6 +62,8 @@ T sgn(T x) { return (T{0} < x) - (x < T{0}); }
 template < typename real_t > struct unary_op;
 template < typename real_t > struct binary_op;
 
+struct nil {};
+
 /** @brief Abstract Syntax Tree
  *
  * Stores the abstract syntax tree (AST) of the parsed mathematical
@@ -70,8 +72,6 @@ template < typename real_t > struct binary_op;
 template < typename real_t >
 struct expr_ast
 {
-    struct nil {};
-
     using tree_t = boost::variant<
         nil // can't happen!
         , real_t
@@ -198,12 +198,8 @@ public:
      */
     eval_ast(symbol_table_t const &sym) : st(sym) {}
 
-    /** @brief Empty nodes in the tree evaluate to 0 (probably shouldn't happen) */
-#if BOOST_VERSION >= 105600
-    result_type operator()(qi::info::nil_) const { return 0; }
-#else
-    result_type operator()(qi::info::nil) const { return 0; }
-#endif
+    /** @brief Empty nodes in the tree evaluate to 0 */
+    result_type operator()(nil) const { return 0; }
 
     /** @brief Numbers evaluate to themselves */
     result_type operator()(result_type n)  const { return n; }
