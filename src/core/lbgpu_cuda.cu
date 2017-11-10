@@ -1509,7 +1509,6 @@ __global__ void apply_LE_position_offset(LB_nodes_gpu n_front, LB_nodes_gpu n_ba
     int xyz[3];
 
     index_to_xyz_LE(index, xyz);
-    //int grid_index = xyz_to_index(xyz);
     int target_index = xyz_to_index(xyz);
 
     int ii = 0;
@@ -1559,8 +1558,8 @@ __global__ void apply_LE_position_offset(LB_nodes_gpu n_front, LB_nodes_gpu n_ba
       (weight) * n_back.vd[ (17 + ii*LBQ ) * para.number_of_nodes + source2_index ];
     }
     else if(y == para.dim_y-1) {
-      source1_xyz[0] = (static_cast<int>(floorf(x - lees_edwards_offset)) + para.dim_x) % para.dim_x;
-      source2_xyz[0] = (static_cast<int>(ceilf(x - lees_edwards_offset)) + para.dim_x) % para.dim_x;
+      source1_xyz[0] = (static_cast<int>(floorf(x - lees_edwards_offset)) - para.dim_x) % para.dim_x;
+      source2_xyz[0] = (static_cast<int>(ceilf(x - lees_edwards_offset)) - para.dim_x) % para.dim_x;
 
       //printf(floorf(lees_edwards_offset) + para.dim_x) 
       
