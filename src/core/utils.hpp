@@ -42,6 +42,7 @@
 #include "utils/List.hpp"
 #include "utils/math/sqr.hpp"
 #include "utils/memory.hpp"
+#include "Vector.hpp"
 
 /*************************************************************/
 /** \name Mathematical, physical and chemical constants.     */
@@ -105,7 +106,16 @@ template <unsigned n, typename T> inline T int_pow(T x) {
 
 /** Calculate signum of val, if supported by T */
 template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
+
+/** \brief Transform the given 3D Vector to cylinder coordinates.
+ */
+inline ::Vector<3, double>
+transform_to_cylinder_coordinates(::Vector<3, double> const &pos) {
+  double r = std::sqrt(pos[0] * pos[0] + pos[1] * pos[1]);
+  double phi = std::atan2(pos[1], pos[0]);
+  return ::Vector<3, double>{r, phi, pos[2]};
 }
+} // Namespace Utils
 
 /*************************************************************/
 /** \name List operations .                                  */
@@ -233,7 +243,7 @@ inline void sort_int_array(int *data, int size) {
     }
 }
 
-/** permute an interger array field of size size about permute positions. */
+/** permute an integer array field of size size about permute positions. */
 inline void permute_ifield(int *field, int size, int permute) {
   int i, tmp;
 
@@ -1092,18 +1102,6 @@ template <typename T> int sign(T value) {
   return (T(0) < value) - (value < T(0));
 }
 
-/**
-*Returns the unraveled index of the provided flattened index.
-*/
-inline void unravel_index(const int* len_dims, const int ndims, const int flattened_index, int* unravelled_index_out){
-	//idea taken from http://codinghighway.com/2014/02/22/c-multi-dimensional-arrays-part-2-flattened-to-unflattened-index/
-	int mul[ndims];
-	mul[ndims-1]=1;
-	for (int j = ndims-2; j >= 0; j--)
-		mul[j] = mul[j+1]*len_dims[j+1];
-	for (int j = 0; j < ndims; j++)
-		unravelled_index_out[j]=(flattened_index/mul[j])%len_dims[j];
-}
 }// namespace utils
 
 /*@}*/
