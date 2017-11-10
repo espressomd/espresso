@@ -3,6 +3,7 @@
 
 #include "CylindricalProfileObservable.hpp"
 #include "utils.hpp"
+#include "utils/Histogram.hpp"
 
 namespace Observables {
 class CylindricalFluxDensityProfile : public CylindricalProfileObservable {
@@ -13,7 +14,7 @@ public:
     for (int id : ids()) {
       auto const ppos = ::Vector<3, double>(folded_position(partCfg[id]));
       auto const ppos_shifted = ppos - center;
-      auto const ppos_cyl = transform_to_cylinder_coordinates(ppos_shifted);
+      auto const ppos_cyl = Utils::transform_to_cylinder_coordinates(ppos_shifted);
       r_bin = std::floor((ppos_cyl[0] - min_r) / r_bin_size());
       phi_bin = std::floor((ppos_cyl[1] - min_phi) / phi_bin_size());
       z_bin = std::floor((ppos_cyl[2] - min_z) / z_bin_size());
@@ -46,10 +47,9 @@ public:
         // and n_i is the size of the ith dimension.
         int ind =
             3 * (r_bin * n_phi_bins * n_z_bins + phi_bin * n_z_bins + z_bin);
-        // The velocity transformation might yield nan if the denominator is 0.0 (Particle exactly on the center).
-        if (!(v_r != v_r)) {last_value[ind + 0] += v_r / bin_volume;}
-        if (!(v_phi != v_phi)) {last_value[ind + 1] += v_phi / bin_volume;}
-        if (!(v_z != v_z)) {last_value[ind + 2] += v_z / bin_volume;}
+        if (std::isfinite(v_r)) {last_value[ind + 0] += v_r / bin_volume;}
+        if (std::isfinite(v_phi)) {last_value[ind + 1] += v_phi / bin_volume;}
+        if (std::isfinite(v_z)) {last_value[ind + 2] += v_z / bin_volume;}
       }
     }
     return 0;
@@ -71,7 +71,7 @@ private:
     int unravelled_index[4];
     for (auto it = last_value.begin(); it != last_value.end(); it += 3) {
       index = std::distance(last_value.begin(), it);
-      ::utils::unravel_index(len_dims, n_dims, index, unravelled_index);
+      ::Utils::unravel_index(len_dims, n_dims, index, unravelled_index);
       position = {
           (static_cast<double>(unravelled_index[0]) + 0.5) * bin_sizes[0],
           (static_cast<double>(unravelled_index[1]) + 0.5) * bin_sizes[1],

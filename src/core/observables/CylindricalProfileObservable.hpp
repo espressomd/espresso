@@ -24,12 +24,6 @@ public:
   virtual int n_values() const override {
     return n_r_bins * n_phi_bins * n_z_bins;
   };
-  ::Vector<3, double>
-  transform_to_cylinder_coordinates(::Vector<3, double> const &pos) const {
-    double r = std::sqrt(pos[0] * pos[0] + pos[1] * pos[1]);
-    double phi = std::atan2(pos[1], pos[0]);
-    return ::Vector<3, double>{r, phi, pos[2]};
-  }
 };
 
 } // Namespace Observables

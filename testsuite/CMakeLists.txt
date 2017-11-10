@@ -93,6 +93,7 @@ python_test(FILE pairs.py MAX_NUM_PROC 4)
 python_test(FILE auto_exclusions.py MAX_NUM_PROC 1)
 python_test(FILE subt_lj.py MAX_NUM_PROC 2)
 python_test(FILE observable_cylindricalfluxdensity.py MAX_NUM_PROC 4)
+python_test(FILE unravel_index.py MAX_NUM_PROC 4)
 
 if(PY_H5PY)
   python_test(FILE h5md.py MAX_NUM_PROC 2)
