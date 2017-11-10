@@ -24,6 +24,8 @@
 #include "global.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
+#include "interaction_data.hpp"
+
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>

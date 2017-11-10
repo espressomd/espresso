@@ -167,17 +167,15 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
 
   cnt1 = cnt2 = max_cnt = 0;
   for (p = 0; p < N_P; p++) {
+    if (p > 0) posed = NULL;
+
     for (cnt2 = 0; cnt2 < max_try; cnt2++) {
       /* place start monomer */
       if (posed != NULL) {
         /* if position of 1st monomer is given */
-        if (p > 0) {
-          posed = NULL;
-        } else {
-          pos[0] = posed[0];
-          pos[1] = posed[1];
-          pos[2] = posed[2];
-        }
+        pos[0] = posed[0];
+        pos[1] = posed[1];
+        pos[2] = posed[2];
       } else {
         /* randomly set position */
         for (cnt1 = 0; cnt1 < max_try; cnt1++) {

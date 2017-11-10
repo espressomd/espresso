@@ -63,7 +63,7 @@ void ParallelScriptInterfaceSlave::mpi_slave(int action, int = 0) {
     break;
   }
   case CallbackAction::CALL_METHOD: {
-    /* Name of the method and para// meters */
+    /* Name of the method and parameters */
     std::pair<std::string, VariantMap> d;
 
     /* Broadcast method name and parameters */
