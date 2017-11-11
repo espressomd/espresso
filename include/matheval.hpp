@@ -278,7 +278,7 @@ template <typename real_t> struct ConstantFolder {
 
     /* If both operands are known, we can directly evaluate the function,
      * else we just update the children with the new expressions. */
-    if (holds_alternative<real_t>(lhs) and holds_alternative<real_t>(rhs)) {
+    if (holds_alternative<real_t>(lhs) && holds_alternative<real_t>(rhs)) {
       return tree.op(boost::get<real_t>(lhs), boost::get<real_t>(rhs));
     } else {
       return binary_op<real_t>(tree.op, lhs, rhs);
