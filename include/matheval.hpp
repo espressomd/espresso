@@ -240,6 +240,62 @@ private:
     symbol_table_t st;
 };
 
+template <typename T> struct holds_alternative_impl {
+  using result_type = bool;
+
+  template <typename U> bool operator()(U const &) const {
+    return std::is_same<U, T>::value;
+  }
+};
+
+template <typename T, typename... Ts>
+bool holds_alternative(boost::variant<Ts...> const &v) {
+  return boost::apply_visitor(holds_alternative_impl<T>(), v);
+}
+
+template <typename real_t> struct ConstantFolder {
+  /** @brief Necessary typedef for `boost::apply_visitor` */
+  using result_type = typename expr_ast<real_t>::tree_t;
+
+  /** @brief Empty nodes in the tree evaluate to 0 */
+  result_type operator()(nil) const { return 0; }
+
+  /** @brief Numbers evaluate to themselves */
+  result_type operator()(real_t n) const { return n; }
+
+  /** @brief Variables evaluate to their value in the symbol table */
+  result_type operator()(std::string const &c) const { return c; }
+
+  /** @brief Recursively evaluate the AST */
+  result_type operator()(expr_ast<real_t> const &ast) const {
+    return boost::apply_visitor(*this, ast.tree);
+  }
+
+  /** @brief Evaluate a binary operator and optionally recurse its operands */
+  result_type operator()(binary_op<real_t> const &tree) const {
+    auto lhs = boost::apply_visitor(*this, tree.lhs.tree);
+    auto rhs = boost::apply_visitor(*this, tree.rhs.tree);
+
+    /* If both operands are known, we can directly evaluate the function,
+     * else we just update the children with the new expressions. */
+    if (holds_alternative<real_t>(lhs) and holds_alternative<real_t>(rhs)) {
+      return tree.op(boost::get<real_t>(lhs), boost::get<real_t>(rhs));
+    } else {
+      return binary_op<real_t>(tree.op, lhs, rhs);
+    }
+  }
+
+  /** @brief Evaluate a unary operator and optionally recurse its operand */
+  result_type operator()(unary_op<real_t> const &tree) const {
+    auto rhs = boost::apply_visitor(*this, tree.rhs.tree);
+    /* If the operand is known, we can directly evaluate the function. */
+    if (holds_alternative<real_t>(rhs)) {
+      return tree.op(boost::get<real_t>(rhs));
+    } else {
+      return unary_op<real_t>(tree.op, rhs);
+    }
+  }
+};
 
 // Expressions
 
@@ -423,6 +479,30 @@ public:
     }
 };
 
+/** @brief Parse an expression
+ *
+ * This function builds the grammar and parses the iterator into
+ * an AST.
+ *
+ * @param[in] first iterator to the start of the input sequence
+ * @param[in] last  iterator to the end of the input sequence
+ */
+template <typename real_t, typename Iterator>
+detail::expr_ast<real_t> parse(Iterator first, Iterator last) {
+  static detail::grammar<real_t, Iterator> const g;
+
+  auto ast = detail::expr_ast<real_t>{};
+
+  bool r = boost::spirit::qi::phrase_parse(first, last, g,
+                                           boost::spirit::ascii::space, ast);
+
+  if (!r || first != last) {
+    std::string rest(first, last);
+    throw std::runtime_error("Parsing failed at " + rest);
+  }
+
+  return ast;
+}
 } // namespace detail
 
 
@@ -449,25 +529,17 @@ public:
     template < typename Iterator >
     void parse(Iterator first, Iterator last)
     {
-        static detail::grammar<real_t,Iterator> const g;
-
-        ast = detail::expr_ast<real_t>{}; // Drop old AST
-
-        bool r = boost::spirit::qi::phrase_parse(
-            first, last, g,
-            boost::spirit::ascii::space, ast);
-
-        if (!r || first != last)
-        {
-            std::string rest(first, last);
-            throw std::runtime_error("Parsing failed at " + rest);
-        }
+        ast = detail::parse<real_t>(first, last);
     }
 
     /** @overload parse(Iterator first, Iterator last) */
     void parse(std::string const &str)
     {
         parse(str.begin(), str.end());
+    }
+
+    void optimize() {
+      ast.tree = boost::apply_visitor(detail::ConstantFolder<real_t>{}, ast.tree);
     }
 
     /** @brief Evaluate the AST with a given symbol table
