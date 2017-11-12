@@ -377,10 +377,10 @@ cdef class System(object):
 
         Parameters
         ----------
-        d_new : float
-                new box length
-        dir : str, optional
-                coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
+        d_new : :obj:`float`
+                New box length
+        dir : :obj:`str`, optional
+                Coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
                 Isotropic assumes a cubic box.
 
         """
@@ -400,8 +400,7 @@ cdef class System(object):
                 'Usage: change_volume_and_rescale_particles(<L_new>, [{ "x" | "y" | "z" | "xyz" }])')
 
     def volume(self):
-        """
-        Return box volume of the cuboid box
+        """Return box volume of the cuboid box.
 
         """
 
@@ -424,3 +423,19 @@ cdef class System(object):
 
         get_mi_vector(res, b, a)
         return np.array((res[0], res[1], res[2]))
+
+    IF EXCLUSIONS:
+        def auto_exclusions(self, distance):
+            """Automatically adds exclusions between particles
+            that are bonded.
+
+            This only considers pair bonds.
+
+            Parameters
+            ----------
+            distance : :obj:`int`
+                       Bond distance upto which the exlucsions should be added.
+
+            """
+            auto_exclusions(distance)
+
