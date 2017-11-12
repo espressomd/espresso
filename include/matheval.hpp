@@ -263,7 +263,7 @@ template <typename real_t> struct ConstantFolder {
   /** @brief Numbers evaluate to themselves */
   result_type operator()(real_t n) const { return n; }
 
-  /** @brief Variables evaluate to their value in the symbol table */
+  /** @brief Variables do not evaluate */
   result_type operator()(std::string const &c) const { return c; }
 
   /** @brief Recursively evaluate the AST */
@@ -493,8 +493,7 @@ detail::expr_ast<real_t> parse(Iterator first, Iterator last) {
 
   auto ast = detail::expr_ast<real_t>{};
 
-  bool r = boost::spirit::qi::phrase_parse(first, last, g,
-                                           boost::spirit::ascii::space, ast);
+  bool r = qi::phrase_parse(first, last, g, ascii::space, ast);
 
   if (!r || first != last) {
     std::string rest(first, last);
@@ -503,6 +502,7 @@ detail::expr_ast<real_t> parse(Iterator first, Iterator last) {
 
   return ast;
 }
+
 } // namespace detail
 
 

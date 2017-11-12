@@ -13,7 +13,7 @@ BOOST_AUTO_TEST_CASE(ConstantFolder) {
     auto ast = detail::parse<double>(expr.begin(), expr.end());
     auto transformed =
         boost::apply_visitor(detail::ConstantFolder<double>{}, ast.tree);
-    BOOST_CHECK_NO_THROW(boost::get<double>(transformed) == (1. + 1.));
+    BOOST_CHECK_EQUAL(boost::get<double>(transformed), 1. + 1.);
   }
 
   /* Binary op update right child */
@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE(ConstantFolder) {
     BOOST_REQUIRE(
         detail::holds_alternative<detail::binary_op<double>>(transformed));
     auto root = boost::get<detail::binary_op<double>>(transformed);
-    BOOST_CHECK_NO_THROW((1. * (2. + 3. * 4.)) ==
+    BOOST_CHECK_EQUAL(1. * (2. + 3. * 4.),
                          boost::get<double>(root.rhs.tree));
   }
 
@@ -40,10 +40,9 @@ BOOST_AUTO_TEST_CASE(ConstantFolder) {
 
     /* 1 * ( 2 + 3 * 4) + x -> 14 + x */
     BOOST_REQUIRE(
-                  detail::holds_alternative<detail::binary_op<double>>(transformed));
+        detail::holds_alternative<detail::binary_op<double>>(transformed));
     auto root = boost::get<detail::binary_op<double>>(transformed);
-    BOOST_CHECK_NO_THROW((1. * (2. + 3. * 4.)) ==
-                         boost::get<double>(root.lhs.tree));
+    BOOST_CHECK_EQUAL(1. * (2. + 3. * 4.), boost::get<double>(root.lhs.tree));
   }
 
   /* Unary op */
@@ -54,7 +53,7 @@ BOOST_AUTO_TEST_CASE(ConstantFolder) {
         boost::apply_visitor(detail::ConstantFolder<double>{}, ast.tree);
 
     /* -literal(1) -> literal(-1) */
-    BOOST_CHECK_NO_THROW(-1. == boost::get<double>(transformed));
+    BOOST_CHECK_EQUAL(-1., boost::get<double>(transformed));
   }
 
   /* Unary update child */
@@ -71,8 +70,8 @@ BOOST_AUTO_TEST_CASE(ConstantFolder) {
     BOOST_REQUIRE(
         detail::holds_alternative<detail::binary_op<double>>(minus.rhs.tree));
     auto plus = boost::get<detail::binary_op<double>>(minus.rhs.tree);
-    BOOST_CHECK_NO_THROW("x" == boost::get<std::string>(plus.lhs.tree));
-    BOOST_CHECK_NO_THROW((2. * (1. + 1.)) == boost::get<double>(plus.rhs.tree));
+    BOOST_CHECK_EQUAL("x", boost::get<std::string>(plus.lhs.tree));
+    BOOST_CHECK_EQUAL(2. * (1. + 1.), boost::get<double>(plus.rhs.tree));
   }
 
   /* Variable unchanged */
@@ -82,7 +81,7 @@ BOOST_AUTO_TEST_CASE(ConstantFolder) {
     auto transformed =
         boost::apply_visitor(detail::ConstantFolder<double>{}, ast.tree);
 
-    BOOST_CHECK_NO_THROW("x" == boost::get<std::string>(transformed));
+    BOOST_CHECK_EQUAL("x", boost::get<std::string>(transformed));
   }
 
   /* nil -> 0 */
@@ -91,6 +90,6 @@ BOOST_AUTO_TEST_CASE(ConstantFolder) {
     auto transformed =
         boost::apply_visitor(detail::ConstantFolder<double>{}, ast);
 
-    BOOST_CHECK_NO_THROW(0 == boost::get<double>(transformed));
+    BOOST_CHECK_EQUAL(0, boost::get<double>(transformed));
   }
 }
