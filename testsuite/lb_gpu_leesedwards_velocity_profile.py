@@ -15,7 +15,7 @@ class LB_GPU_LeesEdwards_test(ut.TestCase):
 
   def test(self):
 
-    #Analytical solution with Fourier siries of Navier-Stikes equation
+    #Analytical solution with Fourier series of Navier-Stikes equation
     def u(x, t, nu, v, h, k_max):
       u = x/h-0.5
       for k in np.arange(1, k_max+1):
