@@ -211,20 +211,24 @@ void on_integration_start() {
 
 #ifdef ADDITIONAL_CHECKS
   check_global_consistency();
-#endif
 
-#ifdef ADDITIONAL_CHECKS
+  if(!Utils::Mpi::all_compare(comm_cart, cell_structure.type)) {
+    runtimeErrorMsg() << "Nodes disagree about cell system type.";
+  }
+
+  if(!Utils::Mpi::all_compare(comm_cart, cell_structure.use_verlet_list)) {
+    runtimeErrorMsg() << "Nodes disagree about use of verlet lists.";
+  }
+
 #ifdef ELECTROSTATICS
   if (!Utils::Mpi::all_compare(comm_cart,coulomb.method))
     runtimeErrorMsg() << "Nodes disagree about Coulomb long range method";
 #endif
-#ifdef DIPOLES 
+#ifdef DIPOLES
   if (!Utils::Mpi::all_compare(comm_cart,coulomb.Dmethod))
     runtimeErrorMsg() << "Nodes disagree about dipolar long range method";
 #endif
-#endif
-
-   
+#endif /* ADDITIONAL_CHECKS */
 
   on_observable_calc();
 }
