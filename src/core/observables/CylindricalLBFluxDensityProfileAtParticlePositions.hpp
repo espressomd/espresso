@@ -1,6 +1,7 @@
 #ifndef OBSERVABLES_CYLINDRICALLBFLUXDENSITYPROFILEATPARTICLEPOSITIONS_HPP
 #define OBSERVABLES_CYLINDRICALLBFLUXDENSITYPROFILEATPARTICLEPOSITIONS_HPP
 
+#ifdef LB_GPU
 #include "CylindricalProfileObservable.hpp"
 #include "utils.hpp"
 #include "utils/Histogram.hpp"
@@ -31,10 +32,8 @@ public:
       ppos_cyl[3*index + 1] = ppos_cyl_tmp[1];
       ppos_cyl[3*index + 2] = ppos_cyl_tmp[2];
     }
-#ifdef LB_GPU
     std::vector<double> velocities(3*ids().size());
     lb_lbfluid_get_interpolated_velocity_at_positions(ppos.data(), velocities.data(), ids().size());
-#endif
     for (int index = 0; index < ids().size(); ++index) {
       r_bin = std::floor((ppos_cyl[3*index + 0] - min_r) / r_bin_size());
       phi_bin = std::floor((ppos_cyl[3*index + 1] - min_phi) / phi_bin_size());
@@ -106,4 +105,5 @@ private:
 
 } // Namespace Observables
 
+#endif // LB_GPU
 #endif

@@ -128,5 +128,5 @@ class CylindricalFluxDensityProfile(Observable):
 
 
 @script_interface_register
-class CylindricalLBFluxDensityProfile(Observable):
-    _so_name="Observables::CylindricalLBFluxDensityProfile"
+class CylindricalLBFluxDensityProfileAtParticlePositions(Observable):
+    _so_name="Observables::CylindricalLBFluxDensityProfileAtParticlePositions"

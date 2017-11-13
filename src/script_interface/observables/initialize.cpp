@@ -64,6 +64,7 @@ void initialize() {
   REGISTER(FluxDensityProfile);
   REGISTER(LBVelocityProfile);
   REGISTER(CylindricalFluxDensityProfile);
+  REGISTER(CylindricalLBFluxDensityProfileAtParticlePositions);
 
 #undef REGISTER
 }

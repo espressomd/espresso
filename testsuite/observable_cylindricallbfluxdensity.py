@@ -3,9 +3,12 @@ import numpy as np
 import unittest as ut
 import espressomd
 import espressomd.observables
+import espressomd.lb
 from espressomd import utils
 import tests_common
 
+@ut.skipIf(not espressomd.has_features(['LB_GPU']),
+           "LB_GPU not compiled in, can not check functionality.")
 class TestCylindricalFluxDensityObservable(ut.TestCase):
     """
     Testcase for the CylindricalFluxDensityObservable.
@@ -27,8 +30,12 @@ class TestCylindricalFluxDensityObservable(ut.TestCase):
         'max_r': 5.0,
         'max_phi': np.pi,
         'max_z': 10.0,
-        'N': 100  # number of particles
+        'N': 10  # number of particles
     }
+
+
+    lbf = espressomd.lb.LBFluid_GPU(agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01)
+    system.actors.add(lbf)
 
 
     def pol_coords(self):
@@ -39,7 +46,6 @@ class TestCylindricalFluxDensityObservable(ut.TestCase):
             positions[i, :] = tests_common.transform_pos_from_cartesian_to_polar_coordinates(tmp)
             velocities[i, :] = tests_common.transform_vel_from_cartesian_to_polar_coordinates(tmp, p.v)
         return positions, velocities
-
 
     def test_hist(self):
         # Calculate the histogram normalization.
@@ -55,40 +61,26 @@ class TestCylindricalFluxDensityObservable(ut.TestCase):
                                      (self.params['min_r'] + r_bin_size * i)**2.0) * \
                 phi_bin_size / (2.0 * np.pi) * z_bin_size
         self.system.part.clear()
-        # Parameters for an ellipse.
-        a = 1.0  # semi minor-axis length
-        b = 2.0  # semi major-axis length
         # Choose the cartesian velocities such that each particle gets the same
         # v_r, v_phi and v_z, respectively.
         v_r = .75
         v_phi = 2.5
         v_z = 1.5
-        for i in range(self.params['N']):
-            position = np.array([a *
-                                 np.cos(i *
-                                        2.0 *
-                                        np.pi /
-                                        (self.params['N'] +
-                                         1)), b *
-                                 np.sin(i *
-                                        2.0 *
-                                        np.pi /
-                                        (self.params['N'] +
-                                         1)), i *
-                                 10.0 /
-                                 (self.params['N'] +
-                                     1)])
+        node_positions = np.arange(-4.5, 5.0, 1.0)
+        for i, value in enumerate(node_positions):
+            position = np.array([node_positions[i], node_positions[i], 0.5])
             v_y = (position[0] * np.sqrt(position[0]**2.0 + position[1]**2.0) * \
                    v_phi + position[1] * v_r) / np.sqrt(position[0]**2.0 + position[1]**2.0)
             v_x = (v_r * np.sqrt(position[0]**2.0 + position[1] **
                                  2.0) - position[1] * v_y) / position[0]
             position += np.array(self.params['center'])
-            self.system.part.add(id=i, pos=position, v=[v_x, v_y, v_z])
+            self.system.part.add(id=i, pos=position)
+            self.lbf[i, i, 0].velocity = [v_x, v_y, v_z]
         pol_positions, pol_velocities = self.pol_coords()
         # Set up the Observable.
-        p = espressomd.observables.CylindricalFluxDensityProfile(
+        p = espressomd.observables.CylindricalLBFluxDensityProfileAtParticlePositions(
             ids=range(
-                self.params['N']),
+                10),
             center=self.params['center'],
             n_r_bins=self.params['n_r_bins'],
             n_phi_bins=self.params['n_phi_bins'],
