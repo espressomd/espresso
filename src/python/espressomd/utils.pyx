@@ -21,6 +21,7 @@ cimport numpy as np
 cimport cython
 import numpy as np
 from cpython.version cimport PY_MAJOR_VERSION
+from libcpp.vector cimport vector
 
 cdef extern from "stdlib.h":
     void free(void * ptr)
@@ -213,19 +214,16 @@ def get_unravelled_index(len_dims, n_dims, flattened_index):
                        An array containing the index for each dimension.
 
     """
-    cdef int *c_len_dims
-    c_len_dims = <int *>malloc(len(len_dims) * cython.sizeof(int))
+    cdef vector[int] c_len_dims
     for i in range(len(len_dims)):
-        c_len_dims[i] = len_dims[i]
+        c_len_dims.push_back(len_dims[i])
     cdef int c_n_dims = n_dims
     cdef int c_flattened_index = flattened_index
-    cdef int *unravelled_index_out
-    unravelled_index_out = <int *>malloc(n_dims * cython.sizeof(int))
-    unravel_index(c_len_dims, c_n_dims, c_flattened_index, unravelled_index_out)
+    cdef vector[int] unravelled_index_out
+    unravelled_index_out.assign(n_dims, 0)
+    unravel_index(c_len_dims.data(), c_n_dims, c_flattened_index, unravelled_index_out.data())
     out = np.empty(n_dims)
     for i in range(n_dims):
         out[i] = unravelled_index_out[i]
-    free(c_len_dims)
-    free(unravelled_index_out)
     return out
     
