@@ -63,7 +63,6 @@ public:
     SET_PARAMETER_HELPER("ids", pid_observable()->ids());
   };
 
-  virtual std::shared_ptr<::Observables::Observable> observable() const = 0;
   virtual std::shared_ptr<::Observables::PidObservable>
   pid_observable() const = 0;
 };

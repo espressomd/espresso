@@ -976,6 +976,7 @@ double p3m_calc_dipole_term(int force_flag, int energy_flag) {
     }
     return en;
   }
+  return 0;
 }
 
 /************************************************************/
