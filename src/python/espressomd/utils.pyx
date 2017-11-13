@@ -183,8 +183,8 @@ class array_locked(np.ndarray):
 
     """
 
-    ERR_MSG = "Array properties return non-writable arrays \
-    and can only be modified as a whole, not in-place or componentwise. \
+    ERR_MSG = "ESPResSo array properties return non-writable arrays \
+    and can only be modified as a whole, not in-place or component-wise. \
     Use numpy.copy(<ESPResSo array property>) to get a writable copy."
 
     def __new__(cls, input_array):
@@ -195,51 +195,47 @@ class array_locked(np.ndarray):
     def __repr__(self):
         return repr(np.array(self))
 
-    def __array_finalize__(self, obj):
-        if obj is None:
-            return
-
     def __setitem__(self, i, val):
-        raise UserWarning(array_locked.ERR_MSG)
+        raise ValueError(array_locked.ERR_MSG)
 
     def __iadd__(self, val):
-        raise UserWarning(array_locked.ERR_MSG)
+        raise ValueError(array_locked.ERR_MSG)
 
     def __isub__(self, val):
-        raise UserWarning(array_locked.ERR_MSG)
+        raise ValueError(array_locked.ERR_MSG)
 
     def __imul__(self, val):
-        raise UserWarning(array_locked.ERR_MSG)
+        raise ValueError(array_locked.ERR_MSG)
 
     def __idiv__(self, val):
-        raise UserWarning(array_locked.ERR_MSG)
+        raise ValueError(array_locked.ERR_MSG)
 
     def __itruediv__(self, val):
-        raise UserWarning(array_locked.ERR_MSG)
+        raise ValueError(array_locked.ERR_MSG)
 
     def __ifloordiv__(self, val):
-        raise UserWarning(array_locked.ERR_MSG)
+        raise ValueError(array_locked.ERR_MSG)
 
     def __imod__(self, val):
-        raise UserWarning(array_locked.ERR_MSG)
+        raise ValueError(array_locked.ERR_MSG)
 
     def __ipow__(self, val):
-        raise UserWarning(array_locked.ERR_MSG)
+        raise ValueError(array_locked.ERR_MSG)
 
     def __ilshift__(self, val):
-        raise UserWarning(array_locked.ERR_MSG)
+        raise ValueError(array_locked.ERR_MSG)
 
     def __irshift__(self, val):
-        raise UserWarning(array_locked.ERR_MSG)
+        raise ValueError(array_locked.ERR_MSG)
 
     def __iand__(self, val):
-        raise UserWarning(array_locked.ERR_MSG)
+        raise ValueError(array_locked.ERR_MSG)
 
     def __ior__(self, val):
-        raise UserWarning(array_locked.ERR_MSG)
+        raise ValueError(array_locked.ERR_MSG)
 
     def __ixor__(self, val):
-        raise UserWarning(array_locked.ERR_MSG)
+        raise ValueError(array_locked.ERR_MSG)
 
 cdef handle_errors(msg):
     """

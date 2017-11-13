@@ -10,7 +10,13 @@ The global variables in Python are controlled via the
 :class:`espressomd.system.System` class.
 Global system variables can be read and set in Python simply by accessing the
 attribute of the corresponding Python object. Those variables that are already
-available in the Python interface are listed in the following.
+available in the Python interface are listed in the following. Note that for the
+vectorial properties ``box_l`` and ``periodicity``, component-wise manipulation
+like ``system.box_l[0] = 1`` or in-place operators like ``+=`` or ``*=`` are not
+allowed and result in an error. This behavior is inherited, so the same applies
+to ``a`` after ``a = system.box_l``. If you want to use an vectorial property
+for further calculations, you should explicity make a copy e.g. via
+``a = numpy.copy(system.box_l)``.
 
 * :py:attr:`~espressomd.system.System.box_l`
 
@@ -19,7 +25,7 @@ available in the Python interface are listed in the following.
     particle coordinates will remain the same, i.e., the particle stay in
     the same image box, but at the same relative position in their image
     box. If you want to scale the positions, use the command
-    :py:func:`~espressomd.system.System.change_volume_and_rescale_particles`
+    :py:func:`~espressomd.system.System.change_volume_and_rescale_particles`.
 
 * :py:attr:`~espressomd.system.System.periodicity`
 
@@ -32,7 +38,7 @@ available in the Python interface are listed in the following.
     is obtained by [0,0,1]. Caveat: Be aware of the fact that making a
     dimension non-periodic does not hinder particles from leaving the box in
     this direction. In this case for keeping particles in the simulation box
-    a constraint has to be set.
+    a constraint has to be set. 
 
 * :py:attr:`~espressomd.system.System.time_step`
 
