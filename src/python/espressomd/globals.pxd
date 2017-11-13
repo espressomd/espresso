@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 include "myconfig.pxi"
+from libcpp cimport bool
 
 cdef extern from "global.hpp":
     int FIELD_BOXL
@@ -117,7 +118,7 @@ cdef extern from "cells.hpp":
     extern double max_range
     ctypedef struct CellStructure:
         int type
-        int use_verlet_list
+        bool use_verlet_list
 
     CellStructure cell_structure
 

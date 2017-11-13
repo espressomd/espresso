@@ -139,7 +139,7 @@ struct CellStructure {
   /** type descriptor */
   int type;
 
-  int use_verlet_list;
+  bool use_verlet_list;
 
   /** Communicator to exchange ghost cell information. */
   GhostCommunicator ghost_cells_comm;

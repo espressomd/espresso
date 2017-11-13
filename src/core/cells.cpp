@@ -182,7 +182,7 @@ static void topology_release(int cs) {
     cell system. */
 void topology_init(int cs, CellPList *local) {
   /** broadcast the flag for using verlet list */
-  MPI_Bcast(&cell_structure.use_verlet_list, 1, MPI_INT, 0, comm_cart);
+  boost::mpi::broadcast(comm_cart, cell_structure.use_verlet_list, 0);
 
   switch (cs) {
   case CELL_STRUCTURE_NONEYET:

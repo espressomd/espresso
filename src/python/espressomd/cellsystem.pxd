@@ -27,7 +27,6 @@ from libcpp.pair cimport pair
 
 cdef extern from "communication.hpp":
     void mpi_bcast_cell_structure(int cs)
-    int use_verlet_lists
     int n_nodes
     vector[int] mpi_resort_particles(int global_flag)
 
