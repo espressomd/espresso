@@ -63,12 +63,12 @@ class ParticleSliceTest(ut.TestCase):
         "Features not available, skipping test!")
     def test_4_str(self):
         self.assertEqual(
-            repr(self.system.part[0].fix), repr(np.array([0, 1, 0])))
+            repr(np.asarray(self.system.part[0].fix)), repr(np.array([0, 1, 0])))
         self.assertEqual(repr(self.system.part[:].fix), repr(
             np.array([[0, 1, 0], [0, 0, 1]])))
 
     def test_pos_str(self):
-        self.assertEqual(repr(self.system.part[0].pos), repr(
+        self.assertEqual(repr(np.asarray(self.system.part[0].pos)), repr(
             np.array([0.0, 0.0, 0.0])))
         if (len(self.system.part)) > 1:
             self.assertEqual(repr(self.system.part[:].pos), repr(

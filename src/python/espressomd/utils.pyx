@@ -172,6 +172,24 @@ def to_str(s):
     else:
         return s
 
+class array_ref(np.ndarray):
+
+    def __new__(cls, input_array, source, attr):
+        obj = np.asarray(input_array).view(cls)
+        obj.source = source
+        obj.attr = attr
+        return obj
+
+    def __array_finalize__(self, obj):
+        if obj is None: return
+        self.source = getattr(obj, 'source', None)
+        self.attr = getattr(obj, 'attr', None)
+
+    def __setitem__(self, i, val):
+        attr = self.source.__class__.__dict__[self.attr]
+        newval = np.asarray(attr.__get__(self.source))
+        newval[i] = val
+        attr.__set__(self.source, newval)
 
 cdef handle_errors(msg):
     """
