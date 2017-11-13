@@ -132,15 +132,15 @@ print("Q_tot:", np.sum(system.part[:].q))
 #      Warmup                                               #
 #############################################################
 
-system.non_bonded_inter.set_force_cap(10)
+system.force_cap = 10
 
 for i in range(1000):
     sys.stdout.write("\rWarmup: %03i" % i)
     sys.stdout.flush()
     system.integrator.run(steps=1)
-    system.non_bonded_inter.set_force_cap(10 * i)
+    system.force_cap = 10*i
 
-system.non_bonded_inter.set_force_cap(0)
+system.force_cap = 0
 
 print("\nWarmup finished!\n")
 

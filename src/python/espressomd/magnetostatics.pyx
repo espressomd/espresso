@@ -85,7 +85,7 @@ IF DIPOLES == 1:
                         raise Exception(
                             "Could not set magnetostatic prefactor")
                     else:
-                        self._params["bjerrum_length"] = self.params[
+                        self._params["bjerrum_length"] = self._params[
                             "prefactor"] / temperature
             # also necessary on 1 CPU or GPU, does more than just broadcasting
             mpi_bcast_coulomb_params()

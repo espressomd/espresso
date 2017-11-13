@@ -54,6 +54,8 @@ class SubtLjTest(ut.TestCase):
         s.integrator.run(0)
         f = np.sum(s.part[:].f**2)
 
+        print(s.analysis.energy())
+
         self.assertAlmostEqual(f, 0, places=10)
         self.assertAlmostEqual(s.analysis.energy()['total'] , 0, places=10)
 

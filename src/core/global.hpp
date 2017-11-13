@@ -151,7 +151,8 @@ enum Fields {
   /** index of \ref langevin_rotate in \ref #fields */
   FIELD_LANGEVIN_ROT_SWITCH,
   /** index of \ref langevin_gamma_rotation in  \ref #fields */
-  FIELD_LANGEVIN_GAMMA_ROTATION
+  FIELD_LANGEVIN_GAMMA_ROTATION,
+  FIELD_FORCE_CAP
 };
 /*@}*/
 
