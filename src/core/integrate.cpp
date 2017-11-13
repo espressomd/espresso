@@ -1228,6 +1228,7 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
   integ_switch = INTEG_METHOD_NPT_ISO;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
   mpi_bcast_parameter(FIELD_NPTISO_PISTON);
+  mpi_bcast_parameter(FIELD_NPTISO_PEXT);
 
   /* broadcast npt geometry information to all nodes */
   mpi_bcast_nptiso_geom();
