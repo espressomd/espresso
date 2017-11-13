@@ -36,12 +36,12 @@ class Lees_Edwards_test(ut.TestCase):
     vel_difference_y = system.part[0].v[1] - 0.1
     vel_difference_z = system.part[0].v[2] - 0.05
     
-    self.assertTrue(pos_difference_x < tol)
-    self.assertTrue(pos_difference_y < tol)
-    self.assertTrue(pos_difference_z < tol)
-    self.assertTrue(vel_difference_x < tol)
-    self.assertTrue(vel_difference_y < tol)
-    self.assertTrue(vel_difference_z < tol)
+    self.assertLess(pos_difference_x, tol)
+    self.assertLess(pos_difference_y, tol)
+    self.assertLess(pos_difference_z, tol)
+    self.assertLess(vel_difference_x, tol)
+    self.assertLess(vel_difference_y, tol)
+    self.assertLess(vel_difference_z, tol)
 
     print(pos_difference_x, pos_difference_y, pos_difference_z, vel_difference_x, vel_difference_y, vel_difference_z)
     
@@ -60,8 +60,8 @@ class Lees_Edwards_test(ut.TestCase):
       vel_difference = system.part[0].v[1] - 0.1
       print(pos_difference, vel_difference)
 
-      self.assertTrue(pos_difference < tol)
-      self.assertTrue(vel_difference < tol)
+      self.assertLess(pos_difference, tol)
+      self.assertLess(vel_difference, tol)
 
     for i in range(3):
       system.integrator.run(1)
@@ -70,8 +70,8 @@ class Lees_Edwards_test(ut.TestCase):
       vel_difference = system.part[0].v[1] -0.1
       print(pos_difference, vel_difference)
    
-      self.assertTrue(pos_difference < tol)
-      self.assertTrue(vel_difference < tol)
+      self.assertLess(pos_difference, tol)
+      self.assertLess(vel_difference, tol)
 
     system.part.clear()
     system.lees_edwards_offset = 0.0
@@ -88,8 +88,8 @@ class Lees_Edwards_test(ut.TestCase):
       vel_difference = system.part[0].v[1] - -0.1
       print(pos_difference, vel_difference)
       
-      self.assertTrue(pos_difference < tol)
-      self.assertTrue(vel_difference < tol)
+      self.assertLess(pos_difference, tol)
+      self.assertLess(vel_difference, tol)
     
     for i in range(3):
       system.integrator.run(1)
@@ -98,8 +98,8 @@ class Lees_Edwards_test(ut.TestCase):
       vel_difference = system.part[0].v[1] - -0.1
       print(pos_difference, vel_difference)
 
-      self.assertTrue(pos_difference < tol)
-      self.assertTrue(vel_difference < tol)
+      self.assertLess(pos_difference, tol)
+      self.assertLess(vel_difference, tol)
 
     system.part.clear()
     system.lees_edwards_offset = 0.0
@@ -117,8 +117,8 @@ class Lees_Edwards_test(ut.TestCase):
       #print(system.part[0].pos_folded, system.part[0].v)
       print(pos_difference, vel_difference)
       
-      self.assertTrue(pos_difference < tol)
-      self.assertTrue(vel_difference < tol)
+      self.assertLess(pos_difference, tol)
+      self.assertLess(vel_difference, tol)
     
     for i in range(3,6):
       system.integrator.run(1)
@@ -128,8 +128,8 @@ class Lees_Edwards_test(ut.TestCase):
       #print(system.part[0].pos_folded, system.part[0].v)
       print(pos_difference, vel_difference)
       
-      self.assertTrue(pos_difference < tol)
-      self.assertTrue(vel_difference < tol)
+      self.assertLess(pos_difference, tol)
+      self.assertLess(vel_difference, tol)
     
     system.part.clear()
     system.lees_edwards_offset = 0.0
@@ -147,8 +147,8 @@ class Lees_Edwards_test(ut.TestCase):
       #print(system.part[0].pos_folded, system.part[0].v)
       print(pos_difference, vel_difference)
       
-      self.assertTrue(pos_difference < tol)
-      self.assertTrue(vel_difference < tol)
+      self.assertLess(pos_difference, tol)
+      self.assertLess(vel_difference, tol)
     
     for i in range(3,6):
       system.integrator.run(1)
@@ -158,8 +158,8 @@ class Lees_Edwards_test(ut.TestCase):
       #print(system.part[0].pos_folded, system.part[0].v)
       print(pos_difference, vel_difference)
       
-      self.assertTrue(pos_difference < tol)
-      self.assertTrue(vel_difference < tol)
+      self.assertLess(pos_difference, tol)
+      self.assertLess(vel_difference, tol)
     
     system.part.clear()
     system.lees_edwards_offset = 0.0
