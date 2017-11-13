@@ -1,3 +1,5 @@
+#ifndef HISTOGRAM_HPP
+#define HISTOGRAM_HPP
 namespace Utils {
 
 /**
@@ -18,3 +20,4 @@ inline void unravel_index(const int* const len_dims, const int ndims, const int 
 		unravelled_index_out[j]=(flattened_index/mul[j])%len_dims[j];
 }
 } // Namespace Utils
+#endif
