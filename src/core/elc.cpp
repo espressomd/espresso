@@ -173,14 +173,14 @@ static void prepare_scy_cache() {
   int ic, freq, o;
   double pref, arg;
 
-  for (freq = 1; freq <= n_scxcache; freq++) {
+  for (freq = 1; freq <= n_scycache; freq++) {
     pref = C_2PI * uy * freq;
     o = (freq - 1) * n_localpart;
     ic = 0;
     for (auto const &part : local_cells.particles()) {
       arg = pref * part.r.p[1];
-      scxcache[o + ic].s = sin(arg);
-      scxcache[o + ic].c = cos(arg);
+      scycache[o + ic].s = sin(arg);
+      scycache[o + ic].c = cos(arg);
       ic++;
     }
   }
@@ -1155,7 +1155,7 @@ int ELC_tune(double error) {
         0.5 * (exp(2 * M_PI * elc_params.far_cut * h) / (lz - h) *
                    (C_2PI * elc_params.far_cut + 2 * (ux + uy) + 1 / (lz - h)) /
                    (exp(2 * M_PI * elc_params.far_cut * lz) - 1) +
-               exp(-2 * M_PI * elc_params.far_cut * h) / (lz + 1) *
+               exp(-2 * M_PI * elc_params.far_cut * h) / (lz + h) *
                    (C_2PI * elc_params.far_cut + 2 * (ux + uy) + 1 / (lz + h)) /
                    (exp(2 * M_PI * elc_params.far_cut * lz) - 1));
 
@@ -1165,6 +1165,7 @@ int ELC_tune(double error) {
     return ES_ERROR;
   elc_params.far_cut -= min_inv_boxl;
   elc_params.far_cut2 = SQR(elc_params.far_cut);
+
 
   return ES_OK;
 }
@@ -1235,9 +1236,15 @@ void ELC_init() {
     }
   }
   if (coulomb.method == COULOMB_ELC_P3M && elc_params.dielectric_contrast_on) {
-    p3m.params.additional_mesh[0] = p3m.params.additional_mesh[1] = 0;
+    p3m.params.additional_mesh[0] = 0;
+    p3m.params.additional_mesh[1] = 0;
     p3m.params.additional_mesh[2] = elc_params.space_layer;
+  } else {
+    p3m.params.additional_mesh[0] = 0;
+    p3m.params.additional_mesh[1] = 0;
+    p3m.params.additional_mesh[2] = 0;
   }
+  
 }
 
 void ELC_on_resort_particles() {

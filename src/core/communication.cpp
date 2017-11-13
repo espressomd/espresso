@@ -45,7 +45,6 @@
 #include "elc.hpp"
 #include "energy.hpp"
 #include "external_potential.hpp"
-#include "forcecap.hpp"
 #include "forces.hpp"
 #include "galilei.hpp"
 #include "gb.hpp"
@@ -151,7 +150,6 @@ static int terminated = 0;
   CB(mpi_send_ext_torque_slave)                                                \
   CB(mpi_place_new_particle_slave)                                             \
   CB(mpi_remove_particle_slave)                                                \
-  CB(mpi_cap_forces_slave)                                                     \
   CB(mpi_rescale_particles_slave)                                              \
   CB(mpi_bcast_cell_structure_slave)                                           \
   CB(mpi_send_quat_slave)                                                      \
@@ -1823,49 +1821,6 @@ void mpi_send_ext_force_slave(int pnode, int part) {
   }
 
   on_particle_change();
-#endif
-}
-
-void mpi_cap_forces(double fc) {
-  force_cap = fc;
-  mpi_call(mpi_cap_forces_slave, 1, 0);
-  mpi_cap_forces_slave(1, 0);
-}
-
-void mpi_cap_forces_slave(int node, int parm) {
-#ifdef LENNARD_JONES
-  MPI_Bcast(&force_cap, 1, MPI_DOUBLE, 0, comm_cart);
-  calc_lj_cap_radii();
-#ifdef LENNARD_JONES_GENERIC
-  calc_ljgen_cap_radii();
-#endif
-#ifdef LJCOS2
-  calc_ljcos2_cap_radii();
-#endif
-  on_short_range_ia_change();
-#endif
-#ifdef LJ_ANGLE
-  MPI_Bcast(&force_cap, 1, MPI_DOUBLE, 0, comm_cart);
-  calc_ljangle_cap_radii();
-  on_short_range_ia_change();
-#endif
-#ifdef MORSE
-  MPI_Bcast(&force_cap, 1, MPI_DOUBLE, 0, comm_cart);
-  calc_morse_cap_radii();
-  on_short_range_ia_change();
-#endif
-#ifdef BUCKINGHAM
-  MPI_Bcast(&force_cap, 1, MPI_DOUBLE, 0, comm_cart);
-  calc_buck_cap_radii();
-  on_short_range_ia_change();
-#endif
-#ifdef TABULATED
-  MPI_Bcast(&force_cap, 1, MPI_DOUBLE, 0, comm_cart);
-  /* to do: check if "check_tab_forcecap" is still useful since force capping
-     is defined globally now -- the cap for other forces would be removed too!
-    check_tab_forcecap(force_cap);
-  */
-  on_short_range_ia_change();
 #endif
 }
 
