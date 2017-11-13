@@ -171,16 +171,10 @@ class ThermoTest(ut.TestCase):
         # 2 different langevin parameters for particles
         temp = np.array([2.5, 2.0])
         D_tr = np.zeros((2, 3))
+        D_rot = np.zeros((2, 3))
         for k in range(2):
             gamma_tran[k, :] = np.array((0.4 + np.random.random(3)) * 10)
-            # Second particle should be isotropic for the rotational diffusion test.
-            # It is valid within test cases #1 and #3
-            if test_case in (1, 3) and k == 1:
-                gamma_rot[k, 0] = np.array((0.4 + np.random.random()) * 20)
-                gamma_rot[k, 1] = gamma_rot[k, 0]
-                gamma_rot[k, 2] = gamma_rot[k, 0]
-            else:
-                gamma_rot[k, :] = np.array((0.2 + np.random.random(3)) * 20)
+            gamma_rot[k, :] = np.array((0.2 + np.random.random(3)) * 20)
 
         box = 10.0
         self.es.box_l = [box, box, box]
@@ -205,6 +199,8 @@ class ThermoTest(ut.TestCase):
         # translational diffusion
         for k in range(2):
             D_tr[k, :] = 2.0 * halfkT[k] / gamma_tr[k, :]
+            if test_case == 1 or test_case == 3:
+                D_rot[k, :] = 2.0 * halfkT[k] / gamma_rot[k, :]
 
         if test_case != 4:
             self.es.thermostat.set_langevin(
@@ -231,17 +227,8 @@ class ThermoTest(ut.TestCase):
         n = 200
         mass = (0.2 + np.random.random()) * 7.0
         J = np.zeros((2, 3))
-        J[0, :] = np.array((0.2 + np.random.random(3)) * 7.0)
-        # Second particle should be isotropic for the rotational diffusion test.
-        # It is valid within test cases #1 and #3
-        if test_case in (1, 3):
-            J[1, 0] = np.array((0.2 + np.random.random()) * 1.0)
-            J[1, 1] = J[1, 0]
-            J[1, 2] = J[1, 0]
-        else:
-            J[1, :] = np.array((0.2 + np.random.random(3)) * 7.0)
-
-        D_rot_p1 = 2.0 * halfkT[1] / gamma_rot[1, 0]
+        for k in range(2):
+            J[k, :] = np.array((0.2 + np.random.random(3)) * 7.0)
 
         for i in range(n):
             for k in range(2):
@@ -278,14 +265,15 @@ class ThermoTest(ut.TestCase):
         sigma2_tr = np.zeros((2))
         dr_norm = np.zeros((2))
         
-        # Only for the second particle.
         # Total curve within a spherical trigonometry.
         # [particle_index, which principal axis, around which lab axis]
-        alpha = np.zeros((n, 3, 3))
-        alpha_norm = 0.0
+        alpha = np.zeros((2, n, 3, 3))
+        alpha_norm = np.zeros((2))
+        sigma2_alpha = np.zeros((2))
+        alpha2 = np.zeros((2))
         # Previous directions of the principal axes:
         # [particle_index, which principal axis, its lab coordinate]
-        prev_pa_lab = np.zeros((n, 3, 3))
+        prev_pa_lab = np.zeros((2, n, 3, 3))
         pa_body = np.zeros((3))
         pa_lab = np.zeros((3, 3))
         ref_lab = np.zeros((3))
@@ -300,8 +288,7 @@ class ThermoTest(ut.TestCase):
                 ind = p + k * n
                 pos0[ind, :] = self.es.part[ind].pos
         dt0 = mass / gamma_tr
-        # Corresponding below test will be made only for the second particle:
-        dt0_rot_1 = J[1, 0] / gamma_rot[1, 0]
+        dt0_rot = J / gamma_rot
 
         loops = 1250
         print("Thermalizing...")
@@ -310,6 +297,7 @@ class ThermoTest(ut.TestCase):
         print("Measuring...")
 
         int_steps = 1
+        fraction_i = 0.65
         for i in range(loops):
             self.es.integrator.run(int_steps)
             # Get kinetic energy in each degree of freedom for all particles
@@ -338,36 +326,40 @@ class ThermoTest(ut.TestCase):
                         (sum(dr2[k, :]) - sigma2_tr[k]) / sigma2_tr[k]
                     
                     # Rotational diffusion variance.
-                    if test_case in (1, 3) and k == 1:
-                        dt -= self.es.time_step * (1 + therm_steps)
-                        # First, let's identify principal axes in the lab reference frame.
-                        for j in range(3):
-                            for j1 in range(3):
-                                pa_body[j1] = 0.0
-                            pa_body[j] = 1.0
-                            vec = tc.convert_vec_body_to_space(self.es, ind, pa_body)
-                            pa_lab[j, :] = vec[:]
-                            
-                            if i > 0:
-                                # Around which axis we rotates?
+                    if i >= fraction_i * loops:
+                        # let's limit test cases to speed this test..
+                        if test_case == 3:
+                            dt -= self.es.time_step * (1 + therm_steps + fraction_i * loops)
+                            # First, let's identify principal axes in the lab reference frame.
+                            alpha2[k] = 0.0
+                            sigma2_alpha[k] = 0.0
+                            for j in range(3):
                                 for j1 in range(3):
-                                    # Calc a rotational diffusion within the spherical trigonometry
-                                    vec2 = vec
-                                    vec1[:] = prev_pa_lab[p, j, :]
-                                    for j2 in range(3):
-                                        ref_lab[j2] = 0.0
-                                    ref_lab[j1] = 1.0
-                                    dalpha = np.arccos(np.dot(vec2, vec1) / (np.linalg.norm(vec2) * np.linalg.norm(vec1)))
-                                    rot_projection = np.dot(np.cross(vec2, vec1), ref_lab) / np.linalg.norm(np.cross(vec2, vec1))
-                                    theta = np.arccos(np.dot(vec2, ref_lab) / (np.linalg.norm(vec2) * np.linalg.norm(ref_lab)))
-                                    alpha[p, j, j1] += dalpha * rot_projection / np.sin(theta)
-                                    alpha2 = alpha[p, j, j1]**2
-                                    sigma2_alpha = D_rot_p1 * (2.0 * dt + dt0_rot_1 * (- 3.0 +
-                                                                                    4.0 * math.exp(- dt / dt0_rot_1) 
-                                                                                    - math.exp(- 2.0 * dt / dt0_rot_1)))
-                                    if dalpha > 0:
-                                        alpha_norm += (alpha2 - sigma2_alpha) / sigma2_alpha
-                            prev_pa_lab[p, j, :] = pa_lab[j, :]
+                                    pa_body[j1] = 0.0
+                                pa_body[j] = 1.0
+                                vec = tc.convert_vec_body_to_space(self.es, ind, pa_body)
+                                pa_lab[j, :] = vec[:]
+                                
+                                if i >= fraction_i * loops + 1:
+                                    # Around which axis we rotates?
+                                    for j1 in range(3):
+                                        # Calc a rotational diffusion within the spherical trigonometry
+                                        vec2 = vec
+                                        vec1[:] = prev_pa_lab[k, p, j, :]
+                                        for j2 in range(3):
+                                            ref_lab[j2] = 0.0
+                                        ref_lab[j1] = 1.0
+                                        dalpha = np.arccos(np.dot(vec2, vec1) / (np.linalg.norm(vec2) * np.linalg.norm(vec1)))
+                                        rot_projection = np.dot(np.cross(vec2, vec1), ref_lab) / np.linalg.norm(np.cross(vec2, vec1))
+                                        theta = np.arccos(np.dot(vec2, ref_lab) / (np.linalg.norm(vec2) * np.linalg.norm(ref_lab)))
+                                        alpha[k, p, j, j1] += dalpha * rot_projection / np.sin(theta)
+                                        alpha2[k] += alpha[k, p, j, j1]**2
+                                        sigma2_alpha[k] += D_rot[k, j] * (2.0 * dt + dt0_rot[k, j] * (- 3.0 +
+                                                                                        4.0 * math.exp(- dt / dt0_rot[k, j]) 
+                                                                                        - math.exp(- 2.0 * dt / dt0_rot[k, j])))
+                                prev_pa_lab[k, p, j, :] = pa_lab[j, :]
+                            if i >= fraction_i * loops + 1:
+                                alpha_norm[k] += (alpha2[k] - sigma2_alpha[k]) / sigma2_alpha[k]
 
         tolerance = 0.15
         Ev = 0.5 * mass * v2 / (n * loops)
@@ -380,9 +372,7 @@ class ThermoTest(ut.TestCase):
             do[k] = sum(Eo[k, :]) / (3.0 * halfkT[k]) - 1.0
             do_vec[k, :] = Eo[k, :] / halfkT[k] - 1.0
         dr_norm = dr_norm / (n * loops)
-        
-        # Only two body axes move around the non-fixed third one.
-        alpha_norm = alpha_norm / (9 * n * loops)
+        alpha_norm = alpha_norm / (n * (1 - fraction_i) * loops)
         
         for k in range(2):
             print("\n")
@@ -443,10 +433,10 @@ class ThermoTest(ut.TestCase):
             if test_case in (1, 3):
                 self.assertLessEqual(
                     abs(
-                        alpha_norm),
+                        alpha_norm[k]),
                     tolerance,
                     msg='Relative deviation in rotational diffusion is too large: {0}'.format(
-                        alpha_norm))
+                        alpha_norm[k]))
 
     def test(self):
         if "ROTATION" in espressomd.features():
