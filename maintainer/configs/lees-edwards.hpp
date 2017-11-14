@@ -6,8 +6,6 @@
 #define CONSTRAINTS
 #define MASS
 #define EXCLUSIONS
-#define COMFORCE
-#define COMFIXED
 #define MOLFORCES
 #define LEES_EDWARDS
 
@@ -15,18 +13,13 @@
 #define MODES
 #endif
 
-#define BOND_VIRTUAL
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
-#define ROTATION_PER_PARTICLE
 #define CATALYTIC_REACTIONS
 
 #define NEMD
-#define NPT 
+#define NPT
 #define GHMC
-
-#define AREA_FORCE_GLOBAL   
-#define VOLUME_FORCE   
 
 #define TABULATED
 #define LENNARD_JONES
