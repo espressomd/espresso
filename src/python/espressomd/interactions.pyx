@@ -2187,7 +2187,7 @@ IF TABULATED != 1:
 IF LENNARD_JONES == 1:
     class SubtLJ(BondedInteraction):
         def __init__(self, *args, **kwargs):
-            super(Subt_Lj, self).__init__(*args, **kwargs)
+            super(SubtLJ, self).__init__(*args, **kwargs)
 
         def type_number(self):
             return BONDED_IA_SUBT_LJ
@@ -2578,14 +2578,14 @@ bonded_interaction_classes = {
     int(BONDED_IA_VIRTUAL_BOND): Virtual,
     int(BONDED_IA_ENDANGLEDIST): Endangledist,
     int(BONDED_IA_OVERLAPPED): Overlapped,
-    int(BONDED_IA_ANGLE_HARMONIC): Angle_Harmonic,
-    int(BONDED_IA_ANGLE_COSINE): Angle_Cosine,
-    int(BONDED_IA_ANGLE_COSSQUARE): Angle_Cossquare,
-    int(BONDED_IA_OIF_GLOBAL_FORCES): Oif_Global_Forces,
-    int(BONDED_IA_OIF_LOCAL_FORCES): Oif_Local_Forces,
+    int(BONDED_IA_ANGLE_HARMONIC): AngleHarmonic,
+    int(BONDED_IA_ANGLE_COSINE): AngleCosine,
+    int(BONDED_IA_ANGLE_COSSQUARE): AngleCossquare,
+    int(BONDED_IA_OIF_GLOBAL_FORCES): OifGlobalForces,
+    int(BONDED_IA_OIF_LOCAL_FORCES): OifLocalForces,
 }
 IF LENNARD_JONES:
-    bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = SubtLj
+    bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = SubtLJ
 
 
 class BondedInteractions(object):
