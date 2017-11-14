@@ -296,10 +296,6 @@ private:
       int index_of_current_collective_variable);
   int *initialize_histogram();
   double *initialize_wang_landau_potential();
-  void unravel_index(int *len_dims, int ndims, int flattened_index,
-                     int *unraveled_index_out); // needed for writing results
-                                                // and energy collective
-                                                // variable
   void reset_histogram();
   int m_WL_accepted_moves = 0;
   int m_WL_tries = 0;
