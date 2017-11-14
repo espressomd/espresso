@@ -51,7 +51,7 @@ class ReactionEnsembleTest(ut.TestCase):
     system.box_l = [box_l, box_l, box_l]
     system.cell_system.skin = 0.4
     system.time_step = 0.01
-    RE = reaction_ensemble.reaction_ensemble(
+    RE = reaction_ensemble.ReactionEnsemble(
         standard_pressure=standard_pressure_in_simulation_units,
         temperature=1.0,
         exclusion_radius=1)
@@ -72,6 +72,7 @@ class ReactionEnsembleTest(ut.TestCase):
                 1, 1])
         cls.RE.set_default_charges(dictionary={"0": 0, "1": -1, "2": +1})
         cls.RE.constant_pH = cls.pH
+        print(cls.RE.get_status())
 
     @classmethod
     def ideal_degree_of_association(cls, pH):

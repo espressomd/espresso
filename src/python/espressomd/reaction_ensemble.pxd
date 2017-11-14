@@ -4,6 +4,10 @@ from libcpp cimport bool
 from libcpp.vector cimport vector
 from libcpp.string cimport string
 
+cdef extern from "utils.hpp":
+    cdef int ES_ERROR
+
+
 cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
 
     ctypedef struct single_reaction:
@@ -71,7 +75,7 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         bool fix_polymer
         bool do_not_sample_reaction_partition_function
 
-    cdef cppclass c_reaction_ensemble "ReactionEnsemble::ReactionEnsemble":
+    cdef cppclass cReactionEnsemble "ReactionEnsemble::ReactionEnsemble":
         reaction_system m_current_reaction_system
         int do_reaction(int reaction_steps) except +
         bool do_global_mc_move_for_particles_of_type(int type, int start_id_polymer, int end_id_polymer, int particle_number_of_type, bool use_wang_landau)
@@ -99,7 +103,3 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         double m_constant_pH
         void set_pH(double pH)
         int do_reaction_constant_pH() except +
-
-
-cdef class reaction_ensemble:
-    cdef _params

@@ -50,7 +50,7 @@ class ReactionEnsembleTest(ut.TestCase):
     system.box_l = np.ones(3) * (N0 / c0)**(1.0 / 3.0)
     system.cell_system.skin = 0.4
     system.time_step = 0.01
-    RE = reaction_ensemble.reaction_ensemble(
+    RE = reaction_ensemble.ReactionEnsemble(
         standard_pressure=standard_pressure_in_simulation_units,
         temperature=temperature,
         exclusion_radius=exclusion_radius)
@@ -148,14 +148,19 @@ class ReactionEnsembleTest(ut.TestCase):
             ReactionEnsembleTest.exclusion_radius,
             RE_status["exclusion_radius"],
             places=9,
-            msg="reaction ensemble temperature not set correctly.")
+            msg="reaction ensemble exclusion radius not set correctly.")
 
         self.assertAlmostEqual(
             ReactionEnsembleTest.volume,
             ReactionEnsembleTest.RE.get_volume(),
             places=9,
-            msg="reaction ensemble temperature not set correctly.")
+            msg="reaction ensemble golume not set correctly.")
 
+        self.assertAlmostEqual(
+            ReactionEnsembleTest.standard_pressure_in_simulation_units,
+            RE_status["standard_pressure"],
+            places=9,
+            msg="reaction ensemble standard_pressure not set correctly.")
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())
