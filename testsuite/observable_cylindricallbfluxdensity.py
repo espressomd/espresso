@@ -7,8 +7,8 @@ import espressomd.lb
 from espressomd import utils
 import tests_common
 
-@ut.skipIf(not espressomd.has_features(['LB_GPU']),
-           "LB_GPU not compiled in, can not check functionality.")
+@ut.skipIf(not espressomd.has_features(['LB_GPU']) or espressomd.has_features['SHANCHEN'],
+           "LB_GPU not compiled in or SHANCHEN activated, can not check functionality.")
 class TestCylindricalFluxDensityObservable(ut.TestCase):
     """
     Testcase for the CylindricalFluxDensityObservable.
