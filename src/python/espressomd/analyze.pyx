@@ -206,7 +206,7 @@ class Analysis(object):
     # plane
 
 
-    def nb_hood(self, pos=None, r_catch=None, plane='3d'):
+    def nbhood(self, pos=None, r_catch=None, plane='3d'):
         """
         Get all particles in a defined neighborhood.
 

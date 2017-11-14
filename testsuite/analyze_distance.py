@@ -47,7 +47,7 @@ class AnalyzeDistance(ut.TestCase):
         return np.sqrt(np.min(dist))
 
     # python version of the espresso core function
-    def nb_hood(self, pos, r_catch):
+    def nbhood(self, pos, r_catch):
         dist = np.fabs(np.array(self.system.part[:].pos) - pos)
         # check smaller distances via PBC
         dist = np.where(dist > 0.5 * self.system.box_l, self.system.box_l - dist, dist)
@@ -78,12 +78,12 @@ class AnalyzeDistance(ut.TestCase):
                                    delta=1e-7)
             self.system.integrator.run(100)
 
-    def test_nb_hood(self):
+    def test_nbhood(self):
         # try five times
         for i in range(1, 10, 2):
             self.assertTrue(
-                np.allclose(self.system.analysis.nb_hood([i, i, i], i * 2),
-                            self.nb_hood([i, i, i], i * 2)))
+                np.allclose(self.system.analysis.nbhood([i, i, i], i * 2),
+                            self.nbhood([i, i, i], i * 2)))
             self.system.integrator.run(100)
 
     def test_dist_to_pos(self):

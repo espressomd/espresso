@@ -59,7 +59,7 @@ For example, ::
 Particles in the neighbourhood
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:meth:`espressomd.analyze.Analysis.nb_hood`
+:meth:`espressomd.analyze.Analysis.nbhood`
  
 Returns a list of the particle ids of that fall within a given radius of a target position.
 
