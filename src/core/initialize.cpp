@@ -28,7 +28,6 @@
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 #include "debye_hueckel.hpp"
-#include "domain_decomposition.hpp"
 #include "elc.hpp"
 #include "energy.hpp"
 #include "errorhandling.hpp"
@@ -68,7 +67,7 @@
 #include "thermostat.hpp"
 #include "utils.hpp"
 #include "global.hpp"
-
+#include "utils/mpi/all_compare.hpp" 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
 static int reinit_electrostatics = 0;
@@ -100,12 +99,9 @@ void on_program_start() {
   Random::init_random();
 
   init_node_grid();
-  /* calculate initial minimal number of cells (see tclcallback_min_num_cells)
-   */
-  min_num_cells = calc_processor_min_num_cells();
 
   /* initially go for domain decomposition */
-  dd_topology_init(&local_cells);
+  topology_init(CELL_STRUCTURE_DOMDEC, &local_cells);
 
   ghost_init();
   /* Initialise force and energy tables */
@@ -215,7 +211,24 @@ void on_integration_start() {
 
 #ifdef ADDITIONAL_CHECKS
   check_global_consistency();
+
+  if(!Utils::Mpi::all_compare(comm_cart, cell_structure.type)) {
+    runtimeErrorMsg() << "Nodes disagree about cell system type.";
+  }
+
+  if(!Utils::Mpi::all_compare(comm_cart, cell_structure.use_verlet_list)) {
+    runtimeErrorMsg() << "Nodes disagree about use of verlet lists.";
+  }
+
+#ifdef ELECTROSTATICS
+  if (!Utils::Mpi::all_compare(comm_cart,coulomb.method))
+    runtimeErrorMsg() << "Nodes disagree about Coulomb long range method";
 #endif
+#ifdef DIPOLES
+  if (!Utils::Mpi::all_compare(comm_cart,coulomb.Dmethod))
+    runtimeErrorMsg() << "Nodes disagree about dipolar long range method";
+#endif
+#endif /* ADDITIONAL_CHECKS */
 
   on_observable_calc();
 }
@@ -272,6 +285,7 @@ void on_observable_calc() {
 
 void on_particle_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_particle_change\n", this_node));
+
   resort_particles = 1;
   reinit_electrostatics = 1;
   reinit_magnetostatics = 1;
@@ -552,7 +566,7 @@ void on_parameter_change(int field) {
   case FIELD_BOXL:
     grid_changed_box_l();
 #ifdef SCAFACOS
-    Scafacos::on_boxl_change();
+    Scafacos::update_system_params();
 #endif
     /* Electrostatics cutoffs mostly depend on the system size,
        therefore recalculate them. */
@@ -566,6 +580,9 @@ void on_parameter_change(int field) {
   case FIELD_SKIN:
     cells_on_geometry_change(0);
   case FIELD_PERIODIC:
+#ifdef SCAFACOS
+      Scafacos::update_system_params();
+#endif
     cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
     break;
   case FIELD_NODEGRID:

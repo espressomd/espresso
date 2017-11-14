@@ -3,6 +3,7 @@
 #include "errorhandling.hpp"
 #include <cassert>
 
+
 namespace Scafacos {
 
 #define handle_error(stmt) { const FCSResult res = stmt; if(res) runtimeError(fcs_result_get_message(res)); }
@@ -120,7 +121,7 @@ void Scafacos::run_dipolar(std::vector<double> &dipoles, std::vector<double> &po
   fields.resize(6*local_n_part);
   potentials.resize(3*local_n_part);
 
-  //handle_error(fcs_tune(handle, local_n_part, &(positions[0]), &(charges[0])));
+  handle_error(fcs_tune(handle, 0, NULL,NULL));
   
   handle_error(fcs_set_dipole_particles(handle, local_n_part,&(positions[0]),&(dipoles[0]), &(fields[0]),&(potentials[0])));
   handle_error(fcs_run(handle, 0, NULL, NULL, NULL, NULL));
@@ -148,6 +149,10 @@ void Scafacos::set_common_parameters(double *box_l, int *periodicity, int total_
    sr=1;
   }
   handle_error(fcs_set_common(handle, sr, boxa, boxb, boxc, off, periodicity, total_particles));
+#ifdef SCAFACOS_DIPOLES
+  if (m_dipolar)
+    handle_error(fcs_set_total_dipole_particles(handle, total_particles));
+#endif
 }
 
 void Scafacos::set_dipolar(bool d) {

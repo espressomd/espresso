@@ -398,11 +398,15 @@ class LangevinThermostat(ut.TestCase):
         s.time=0
         for i in range(100):
             s.integrator.run(10)
+            if espressomd.has_features("ROTATIONAL_INERTIA"):
+                rinertia=s.part[0].rinertia
+            else:
+                rinertia=(1,1,1)
             for j in range(3):
                 if espressomd.has_features("PARTICLE_ANISOTROPY"):
-                    self.assertAlmostEqual(s.part[0].omega_body[j],o0*np.exp(-gamma_r_a[j]/s.part[0].rinertia[j]*s.time),places=2)
+                    self.assertAlmostEqual(s.part[0].omega_body[j],o0*np.exp(-gamma_r_a[j]/rinertia[j]*s.time),places=2)
                 else:
-                    self.assertAlmostEqual(s.part[0].omega_body[j],o0*np.exp(-gamma_r_i/s.part[0].rinertia[j]*s.time),places=2)
+                    self.assertAlmostEqual(s.part[0].omega_body[j],o0*np.exp(-gamma_r_i/rinertia[j]*s.time),places=2)
 
 
 

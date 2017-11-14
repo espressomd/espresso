@@ -52,7 +52,6 @@
 #define BOND_ANGLE
 #define GAUSSIAN
 #define HERTZIAN
-#define BOND_VIRTUAL
 
 // Lattice Boltzmann
 #define LB

@@ -24,7 +24,6 @@
 */
 #include "statistics.hpp"
 #include "communication.hpp"
-#include "domain_decomposition.hpp"
 #include "energy.hpp"
 #include "grid.hpp"
 #include "initialize.hpp"

@@ -13,14 +13,13 @@ set(EspressoScriptInterface_SRC
 )
 
 if(H5MD)
-    list(APPEND EspressoScriptInterface_SRC 
+    list(APPEND EspressoScriptInterface_SRC
         "${CMAKE_CURRENT_SOURCE_DIR}/h5md/initialize.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/h5md/h5md.cpp"
         )
     endif(H5MD)
 
 if( WITH_COVERAGE )
-  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage -fprofile-arcs -ftest-coverage")
   link_libraries(gcov)
 endif()

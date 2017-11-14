@@ -82,6 +82,8 @@ extern int periodic;
 
 /** Simulation box dimensions. */
 extern double box_l[3];
+/** Half the box dimensions. Used for get_mi_vector. */
+extern double half_box_l[3];
 /** 1 / box dimensions. */
 extern double box_l_i[3];
 /** Smallest simulation box dimension (\ref box_l).
@@ -191,7 +193,7 @@ template <typename T, typename U, typename V>
 inline void get_mi_vector(T &res, U const &a, V const &b) {
   for (int i = 0; i < 3; i++) {
     res[i] = a[i] - b[i];
-    if (PERIODIC(i))
+    if (std::fabs(res[i]) > half_box_l[i] && PERIODIC(i))
       res[i] -= dround(res[i] * box_l_i[i]) * box_l[i];
   }
 }
