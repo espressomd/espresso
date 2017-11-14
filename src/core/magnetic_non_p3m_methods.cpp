@@ -35,6 +35,7 @@
 
 #include "magnetic_non_p3m_methods.hpp"
 #include "thermostat.hpp"
+#include "interaction_data.hpp"
 
 #ifdef DIPOLES
 

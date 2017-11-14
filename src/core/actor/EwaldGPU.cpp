@@ -113,7 +113,7 @@ int EwaldgpuForce::adaptive_tune(char **log, SystemInterface &s) {
 
   // Squared charge
   auto const q_sqr = std::accumulate(
-      partCfg().begin(), partCfg().end(), 0,
+      partCfg().begin(), partCfg().end(), 0.0,
       [](double q2, Particle const &p) { return q2 + p.p.q * p.p.q; });
 
   char b[3 * ES_INTEGER_SPACE + 3 * ES_DOUBLE_SPACE + 128];

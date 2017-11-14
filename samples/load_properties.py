@@ -65,7 +65,7 @@ print("Non-bonded interactions from checkpoint:")
 print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
 
 print("Force cap from checkpoint:")
-print(system.non_bonded_inter.get_force_cap())
+print(system.force_cap)
 
 
 # Integration parameters
@@ -94,7 +94,7 @@ if not system.non_bonded_inter[0, 0].lennard_jones.is_active():
     system.non_bonded_inter[0, 0].lennard_jones.set_params(
         epsilon=lj_eps, sigma=lj_sig,
         cutoff=lj_cut, shift="auto")
-    system.non_bonded_inter.set_force_cap(lj_cap)
+    system.force_cap = lj_cap
     print("Reset Lennard-Jones Interactions to:")
     print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
 
@@ -136,7 +136,7 @@ print("\nStart integration: run %d times %d steps" % (int_n_times, int_steps))
 
 # remove force capping
 lj_cap = 0
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
 # print(initial energies)

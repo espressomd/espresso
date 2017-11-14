@@ -236,7 +236,6 @@ IF LENNARD_JONES == 1:
                 "cutoff": ia_params.LJ_cut,
                 "shift": ia_params.LJ_shift,
                 "offset": ia_params.LJ_offset,
-                "cap": ia_params.LJ_capradius,
                 "min": ia_params.LJ_min}
 
         def is_active(self):
@@ -261,9 +260,6 @@ IF LENNARD_JONES == 1:
                     Constant shift of the potential. (4*epsilon*shift).
             offset : :obj:`float`, optional
                      Offset distance of the interaction.
-            cap : :obj:`float`, optional
-                  If individual force caps are used, determines the distance
-                  at which the force is capped.
             min : :obj:`float`, optional
                   Restricts the interaction to a minimal distance.
 
@@ -284,7 +280,6 @@ IF LENNARD_JONES == 1:
                                         self._params["cutoff"],
                                         self._params["shift"],
                                         self._params["offset"],
-                                        self._params["cap"],
                                         self._params["min"]):
                 raise Exception("Could not set Lennard Jones parameters")
 
@@ -298,7 +293,6 @@ IF LENNARD_JONES == 1:
                 "cutoff": 0.,
                 "shift": 0.,
                 "offset": 0.,
-                "cap": 0.,
                 "min": 0.}
 
         def type_name(self):
@@ -311,13 +305,67 @@ IF LENNARD_JONES == 1:
             """All parameters that can be set.
 
             """
-            return "epsilon", "sigma", "cutoff", "shift", "offset", "cap", "min"
+            return "epsilon", "sigma", "cutoff", "shift", "offset", "min"
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
             return "epsilon", "sigma", "cutoff", "shift"
+
+IF HAT == 1:
+    cdef class HatInteraction(NonBondedInteraction):
+        def validate_params(self):
+            if self._params["F_max"] < 0:
+                raise ValueError("Hat max force has to be >=0")
+            if self._params["cutoff"] < 0:
+                raise ValueError("Hat cutoff has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
+            return {
+                "F_max": ia_params.HAT_Fmax,
+                "cutoff": ia_params.HAT_r,
+            }
+
+        def is_active(self):
+            return (self._params["F_max"] > 0)
+
+        def set_params(self, **kwargs):
+            """ Set parameters for the Hat interaction.
+
+            Parameters
+            ----------
+            F_max : :obj:`float`
+                      The magnitude of the interaction.
+            cutoff : :obj:`float`
+                     Cutoff distance of the interaction.
+
+            """
+            super(HatInteraction, self).set_params(**kwargs)
+
+        def _set_params_in_es_core(self):
+            if hat_set_params(self._part_types[0], self._part_types[1],
+                                        self._params["F_max"],
+                                        self._params["cutoff"]):
+                raise Exception("Could not set Hat parameters")
+
+        def default_params(self):
+            return {
+                "F_max": 0.,
+                "cutoff": 0.,
+            }
+
+        def type_name(self):
+            return "Hat"
+
+        def valid_keys(self):
+            return "F_max", "cutoff"
+
+        def required_keys(self):
+            return "F_max", "cutoff"
 
 # Gay-Berne
 
@@ -351,13 +399,13 @@ IF GAY_BERNE:
             return (self._params["eps"] > 0)
 
         def set_params(self, **kwargs):
-            """Set parameters for the Lennard-Jones interaction.
+            """Set parameters for the Gay-Berne interaction.
 
             Parameters
             ----------
             eps : :obj:`float`
                   Potential well depth.
-            sig : float
+            sig : :obj:`float`
                   Interaction range.
             cut : :obj:`float`
                   Cutoff distance of the interaction.
@@ -368,7 +416,7 @@ IF GAY_BERNE:
                   and end-to-end configurations.
             mu : :obj:`float`, optional
                   Adjustable exponent.
-            nu  : float, optional
+            nu  : :obj:`float`, optional
                   Adjustable exponent.
 
             """
@@ -415,6 +463,77 @@ IF GAY_BERNE:
 
             """
             return "eps", "sig", "cut", "k1", "k2", "mu", "nu"
+
+IF DPD:
+    cdef class DPDInteraction(NonBondedInteraction):
+        def validate_params(self):
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
+            return {
+                "weight_function": ia_params.dpd_wf,
+                "gamma": ia_params.dpd_gamma,
+                "r_cut": ia_params.dpd_r_cut,
+                "trans_weight_function": ia_params.dpd_twf,
+                "trans_gamma": ia_params.dpd_tgamma,
+                "trans_r_cut": ia_params.dpd_tr_cut
+            }
+
+        def is_active(self):
+            return (self._params["r_cut"] > 0) or (self._params["trans_r_cut"] > 0)
+
+        def set_params(self, **kwargs):
+            """ Set parameters for the DPD interaction.
+
+            Parameters
+            ----------
+            weight_function : :obj:`float`
+                The distance dependence of the parallel part,
+                either 0 (constant) or 1 (linear)
+            gamma : :obj:`float`
+                Friction coefficient of the parallel part
+            r_cut : :obj:`float`
+                Cutoff of the parallel part
+            trans_weight_function : :obj:`float`
+                The distance dependence of the orthogonal part,
+                either 0 (constant) or 1 (linear)
+            trans_gamma : :obj:`float`
+                Friction coefficient of the orthogonal part
+            trans_r_cut : :obj:`float`
+                Cutoff of the orthogonal part
+
+            """
+            super(DPDInteraction, self).set_params(**kwargs)
+
+        def _set_params_in_es_core(self):
+            if dpd_set_params(self._part_types[0], self._part_types[1],
+                              self._params["gamma"],
+                              self._params["r_cut"],
+                              self._params["weight_function"],
+                              self._params["trans_gamma"],
+                              self._params["trans_r_cut"],
+                              self._params["trans_weight_function"]):
+                raise Exception("Could not set DPD parameters")
+
+        def default_params(self):
+            return {
+                "weight_function": 0,
+                "gamma": 0.0,
+                "r_cut": -1.0,
+                "trans_weight_function": 0,
+                "trans_gamma": 0.0,
+                "trans_r_cut": -1.0}
+
+        def type_name(self):
+            return "DPD"
+
+        def valid_keys(self):
+            return self.default_params().keys()
+
+        def required_keys(self):
+            return []
 
 # Generic Lennard Jones
 
@@ -480,7 +599,6 @@ IF LENNARD_JONES_GENERIC == 1:
                                     self._params["e2"],
                                     self._params["b1"],
                                     self._params["b2"],
-                                    0.0,
                                     self._params["lam"],
                                     self._params["delta"]):
                     raise Exception(
@@ -496,7 +614,7 @@ IF LENNARD_JONES_GENERIC == 1:
                                     self._params["e2"],
                                     self._params["b1"],
                                     self._params["b2"],
-                                    0.0):
+                                    ):
                     raise Exception(
                         "Could not set Generic Lennard Jones parameters")
 
@@ -569,6 +687,661 @@ IF LENNARD_JONES_GENERIC == 1:
             """
             return "epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2"
 
+# Smooth-step
+
+IF SMOOTH_STEP == 1:
+
+    cdef class SmoothStepInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            """Check that parameters are valid.
+
+            """
+            if self._params["eps"] < 0:
+                raise ValueError("Smooth-step eps has to be >=0")
+            if self._params["offset"] < 0:
+                raise ValueError("Smooth-step offset has to be >=0")
+            if self._params["cutoff"] < 0:
+                raise ValueError("Smooth-step cutoff has to be >=0")
+            if self._params["cap"] < 0:
+                raise ValueError("Smooth-step cap has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(
+                self._part_types[0],
+                self._part_types[1])
+            return {
+                "d": ia_params.SmSt_d,
+                "n": ia_params.SmSt_n,
+                "eps": ia_params.SmSt_eps,
+                "k0": ia_params.SmSt_k0,
+                "sig": ia_params.SmSt_sig,
+                "cutoff": ia_params.SmSt_cut
+            }
+
+        def is_active(self):
+            """Check if interaction is active.
+
+            """
+            return ((self._params["eps"] > 0) and (self._params["sig"] > 0))
+
+        def _set_params_in_es_core(self):
+            if smooth_step_set_params(self._part_types[0], self._part_types[1],
+                                      self._params["d"],
+                                      self._params["n"],
+                                      self._params["eps"],
+                                      self._params["k0"],
+                                      self._params["sig"],
+                                      self._params["cutoff"]):
+                raise Exception("Could not set smooth-step parameters")
+
+        def default_params(self):
+            """Python dictionary of default parameters.
+
+            """
+            return {
+                "d": 0.,
+                "n": 10,
+                "eps": 0.,
+                "k0": 0.,
+                "sig": 0.,
+                "cutoff": 0.}
+
+        def type_name(self):
+            """Name of interaction type.
+
+            """
+            return "SmoothStep"
+
+        def set_params(self, **kwargs):
+            """
+            Set parameters for the smooth-step interaction.
+
+            Parameters
+            ----------
+            d : :obj:`float`
+                Short range repulsion parameter.
+            n : :obj:`int`
+                Exponent of short range repulsion.
+            eps : :obj:`float`
+                  The magnitude of the second (soft) repulsion.
+            k0 : :obj:`float`
+                 Exponential factor in second (soft) repulsion.
+            sig : :obj:`float`
+                  Length scale of second (soft) repulsion.
+            cutoff : :obj:`float`
+                Cutoff distance of the interaction.
+
+            """
+            super(SmoothStepInteraction, self).set_params(**kwargs)
+
+        def valid_keys(self):
+            """All parameters that can be set.
+
+            """
+            return "d", "n", "eps", "k0", "sig", "cutoff"
+
+        def required_keys(self):
+            """Parameters that have to be set.
+
+            """
+            return "d", "eps", "cutoff"
+
+# BMHTF
+
+IF BMHTF_NACL == 1:
+
+    cdef class BMHTFInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            """Check that parameters are valid.
+
+            """
+            if self._params["a"] < 0:
+                raise ValueError("BMHTF a has to be >=0")
+            if self._params["c"] < 0:
+                raise ValueError("BMHTF c has to be >=0")
+            if self._params["d"] < 0:
+                raise ValueError("BMHTF d has to be >=0")
+            if self._params["cutoff"] < 0:
+                raise ValueError("BMHTF cutoff has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(
+                self._part_types[0],
+                self._part_types[1])
+            return {
+                "a": ia_params.BMHTF_A,
+                "b": ia_params.BMHTF_B,
+                "c": ia_params.BMHTF_C,
+                "d": ia_params.BMHTF_D,
+                "sig": ia_params.BMHTF_sig,
+                "cutoff": ia_params.BMHTF_cut,
+            }
+
+        def is_active(self):
+            """Check if interaction is active.
+
+            """
+            return ((self._params["a"] > 0) and (self._params["c"] > 0) and (self._params["d"] > 0))
+
+        def _set_params_in_es_core(self):
+            if BMHTF_set_params(self._part_types[0], self._part_types[1],
+                                self._params["a"],
+                                self._params["b"],
+                                self._params["c"],
+                                self._params["d"],
+                                self._params["sig"],
+                                self._params["cutoff"]):
+                raise Exception("Could not set BMHTF parameters")
+
+        def default_params(self):
+            """Python dictionary of default parameters.
+
+            """
+            return {
+                "a": 0.,
+                "b": 0.,
+                "c": 0.,
+                "d": 0.,
+                "sig": 0.,
+                "cutoff": 0.}
+
+        def type_name(self):
+            """Name of interaction type.
+
+            """
+            return "BMHTF"
+
+        def set_params(self, **kwargs):
+            """
+            Set parameters for the BMHTF interaction.
+
+            Parameters
+            ----------
+            a : :obj:`float`
+                The magnitude of exponential part of the interaction.
+            b : :obj:`float`
+                Exponential factor of the interaction.
+            c : :obj:`float`
+                The magnitude of the term decaying with the sixth power of r.
+            d : :obj:`float`
+                The magnitude of the term decaying with the eighth power of r.
+            sig : :obj:`float`
+                Shift in the exponent.
+            cutoff : :obj:`float`
+                Cutoff distance of the interaction.
+
+            """
+            super(BMHTFInteraction, self).set_params(**kwargs)
+
+        def valid_keys(self):
+            """All parameters that can be set.
+
+            """
+            return "a", "b", "c", "d", "sig", "cutoff"
+
+        def required_keys(self):
+            """Parameters that have to be set.
+
+            """
+            return "a", "b", "c", "d", "sig", "cutoff"
+
+# Morse
+
+IF MORSE == 1:
+
+    cdef class MorseInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            """Check that parameters are valid.
+
+            """
+            if self._params["eps"] < 0:
+                raise ValueError("Morse eps has to be >=0")
+            if self._params["offset"] < 0:
+                raise ValueError("Morse offset has to be >=0")
+            if self._params["cutoff"] < 0:
+                raise ValueError("Morse cutoff has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(
+                self._part_types[0],
+                self._part_types[1])
+            return {
+                "eps": ia_params.MORSE_eps,
+                "alpha": ia_params.MORSE_alpha,
+                "rmin": ia_params.MORSE_rmin,
+                "cutoff": ia_params.MORSE_cut
+            }
+
+        def is_active(self):
+            """Check if interaction is active.
+
+            """
+            return (self._params["eps"] > 0)
+
+        def _set_params_in_es_core(self):
+            if morse_set_params(self._part_types[0], self._part_types[1],
+                                self._params["eps"],
+                                self._params["alpha"],
+                                self._params["rmin"],
+                                self._params["cutoff"]):
+                raise Exception("Could not set Morse parameters")
+
+        def default_params(self):
+            """Python dictionary of default parameters.
+
+            """
+            return {
+                "eps": 0.,
+                "alpha": 0.,
+                "rmin": 0.,
+                "cutoff": 0.}
+
+        def type_name(self):
+            """Name of interaction type.
+
+            """
+            return "Morse"
+
+        def set_params(self, **kwargs):
+            """
+            Set parameters for the Morse interaction.
+
+            Parameters
+            ----------
+            eps : :obj:`float`
+                The magnitude of the interaction.
+            alpha : :obj:`float`
+                Stiffness of the Morse interaction.
+            rmin : :obj:`float`
+                Distance of potential minimum
+            cutoff : :obj:`float`
+                Cutoff distance of the interaction.
+
+            """
+            super(MorseInteraction, self).set_params(**kwargs)
+
+        def valid_keys(self):
+            """All parameters that can be set.
+
+            """
+            return "eps", "alpha", "rmin", "cutoff"
+
+        def required_keys(self):
+            """Parameters that have to be set.
+
+            """
+            return "eps", "alpha", "rmin"
+
+# Buckingham
+
+IF BUCKINGHAM == 1:
+
+    cdef class BuckinghamInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            """Check that parameters are valid.
+
+            """
+            if self._params["a"] < 0:
+                raise ValueError("Buckingham a has to be >=0")
+            if self._params["b"] < 0:
+                raise ValueError("Buckingham b has to be >=0")
+            if self._params["c"] < 0:
+                raise ValueError("Buckingham c has to be >=0")
+            if self._params["d"] < 0:
+                raise ValueError("Buckingham d has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(
+                self._part_types[0],
+                self._part_types[1])
+            return {
+                "a": ia_params.BUCK_A,
+                "b": ia_params.BUCK_B,
+                "c": ia_params.BUCK_C,
+                "d": ia_params.BUCK_D,
+                "cutoff": ia_params.BUCK_cut,
+                "discont": ia_params.BUCK_discont,
+                "shift": ia_params.BUCK_shift
+            }
+
+        def is_active(self):
+            """Check if interaction is active.
+
+            """
+            return ((self._params["a"] > 0) or (self._params["b"] > 0) or (self._params["d"] > 0) or (self._params["shift"] > 0))
+
+        def _set_params_in_es_core(self):
+            if buckingham_set_params(self._part_types[0], self._part_types[1],
+                                     self._params["a"],
+                                     self._params["b"],
+                                     self._params["c"],
+                                     self._params["d"],
+                                     self._params["cutoff"],
+                                     self._params["discont"],
+                                     self._params["shift"]):
+                raise Exception("Could not set Buckingham parameters")
+
+        def default_params(self):
+            """Python dictionary of default parameters.
+
+            """
+            return {
+                "a": 0.,
+                "b": 0.,
+                "c": 0.,
+                "d": 0.,
+                "cutoff": 0.,
+                "discont": 0.,
+                "shift": 0.}
+
+        def type_name(self):
+            """Name of interaction type.
+
+            """
+            return "Buckingham"
+
+        def set_params(self, **kwargs):
+            """
+            Set parameters for the Buckingham interaction.
+
+            Parameters
+            ----------
+            a : :obj:`float`
+                Magnitude of the exponential part of the interaction.
+            b : :obj`float`
+                Exponent of the exponential part of the interaction.
+            c : :obj:`float`
+                Prefactor of term decaying with the sixth power of distance.
+            d : :obj:`float`
+                Prefactor of term decaying with the fourth power of distance.
+            discont : :obj:`float`
+                Distance below which the potential is linearly continued.
+            cutoff : :obj:`float`
+                Cutoff distance of the interaction.
+            shift: :obj:`float`, optional
+                Constant potential shift.
+
+            """
+            super(BuckinghamInteraction, self).set_params(**kwargs)
+
+        def valid_keys(self):
+            """All parameters that can be set.
+
+            """
+            return "a", "b", "c", "d", "discont", "cutoff", "shift"
+
+        def required_keys(self):
+            """Parameters that have to be set.
+
+            """
+            return "a", "c", "d", "discont", "cutoff"
+
+# Soft-sphere
+
+IF SOFT_SPHERE == 1:
+
+    cdef class SoftSphereInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            """Check that parameters are valid.
+
+            """
+            if self._params["a"] < 0:
+                raise ValueError("Soft-sphere a has to be >=0")
+            if self._params["offset"] < 0:
+                raise ValueError("Soft-sphere offset has to be >=0")
+            if self._params["cutoff"] < 0:
+                raise ValueError("Soft-sphere cutoff has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(
+                self._part_types[0],
+                self._part_types[1])
+            return {
+                "a": ia_params.soft_a,
+                "n": ia_params.soft_n,
+                "cutoff": ia_params.soft_cut,
+                "offset": ia_params.soft_offset
+            }
+
+        def is_active(self):
+            """Check if interaction is active.
+
+            """
+            return (self._params["a"] > 0)
+
+        def _set_params_in_es_core(self):
+            if soft_sphere_set_params(self._part_types[0], self._part_types[1],
+                                      self._params["a"],
+                                      self._params["n"],
+                                      self._params["cutoff"],
+                                      self._params["offset"]):
+                raise Exception("Could not set Soft-sphere parameters")
+
+        def default_params(self):
+            """Python dictionary of default parameters.
+
+            """
+            return {
+                "a": 0.,
+                "n": 0.,
+                "cutoff": 0.,
+                "offset": 0.}
+
+        def type_name(self):
+            """Name of interaction type.
+
+            """
+            return "SoftSphere"
+
+        def set_params(self, **kwargs):
+            """
+            Set parameters for the Soft-sphere interaction.
+
+            Parameters
+            ----------
+            a : :obj:`float`
+                The magnitude of the interaction.
+            n : :obj:`float`
+                Exponent of the power law.
+            cutoff : :obj:`float`
+                     Cutoff distance of the interaction.
+            offset : :obj:`float`, optional
+                     Offset distance of the interaction.
+
+            """
+            super(SoftSphereInteraction, self).set_params(**kwargs)
+
+        def valid_keys(self):
+            """All parameters that can be set.
+
+            """
+            return "a", "n", "cutoff", "offset"
+
+        def required_keys(self):
+            """Parameters that have to be set.
+
+            """
+            return "a", "n", "cutoff"
+
+# Hertzian
+
+IF HERTZIAN == 1:
+
+    cdef class HertzianInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            """Check that parameters are valid.
+
+            """
+            if self._params["eps"] < 0:
+                raise ValueError("Hertzian eps a has to be >=0")
+            if self._params["sig"] < 0:
+                raise ValueError("Hertzian sig has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(
+                self._part_types[0],
+                self._part_types[1])
+            return {
+                "eps": ia_params.Hertzian_eps,
+                "sig": ia_params.Hertzian_sig
+            }
+
+        def is_active(self):
+            """Check if interaction is active.
+
+            """
+            return (self._params["eps"] > 0)
+
+        def _set_params_in_es_core(self):
+            if hertzian_set_params(self._part_types[0], self._part_types[1],
+                                   self._params["eps"],
+                                   self._params["sig"]):
+                raise Exception("Could not set Hertzian parameters")
+
+        def default_params(self):
+            """Python dictionary of default parameters.
+
+            """
+            return {
+                "eps": 0.,
+                "sig": 1.}
+
+        def type_name(self):
+            """Name of interaction type.
+
+            """
+            return "Hertzian"
+
+        def set_params(self, **kwargs):
+            """
+            Set parameters for the Hertzian interaction.
+
+            Parameters
+            ----------
+            eps : :obj:`float`
+                  The magnitude of the interaction.
+            sig : :obj:`float`
+                  Parameter sigma which determines the length over which the potential decays.
+
+            """
+            super(HertzianInteraction, self).set_params(**kwargs)
+
+        def valid_keys(self):
+            """All parameters that can be set.
+
+            """
+            return "eps", "sig"
+
+        def required_keys(self):
+            """Parameters that have to be set.
+
+            """
+            return "eps", "sig"
+
+# Gaussian
+
+IF GAUSSIAN == 1:
+
+    cdef class GaussianInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            """Check that parameters are valid.
+
+            """
+            if self._params["eps"] < 0:
+                raise ValueError("Gaussian eps a has to be >=0")
+            if self._params["sig"] < 0:
+                raise ValueError("Gaussian sig has to be >=0")
+            if self._params["offset"] < 0:
+                raise ValueError("Gaussian offset has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(
+                self._part_types[0],
+                self._part_types[1])
+            return {
+                "eps": ia_params.Gaussian_eps,
+                "sig": ia_params.Gaussian_sig,
+                "cutoff": ia_params.Gaussian_cut
+            }
+
+        def is_active(self):
+            """Check if interaction is active.
+
+            """
+            return (self._params["eps"] > 0)
+
+        def _set_params_in_es_core(self):
+            if gaussian_set_params(self._part_types[0], self._part_types[1],
+                                   self._params["eps"],
+                                   self._params["sig"],
+                                   self._params["cutoff"]):
+                raise Exception(
+                    "Could not set Gaussian interaction parameters")
+
+        def default_params(self):
+            """Python dictionary of default parameters.
+
+            """
+            return {
+                "eps": 0.,
+                "sig": 1.,
+                "cutoff": 0.}
+
+        def type_name(self):
+            """Name of interaction type.
+
+            """
+            return "Gaussian"
+
+        def set_params(self, **kwargs):
+            """
+            Set parameters for the Gaussian interaction.
+
+            Parameters
+            ----------
+            eps : :obj:`float`
+                  Overlap energy epsilon.
+            sig : :obj:`float`
+                  Variance sigma of the Gaussian interactin.
+            cutoff : :obj:`float`
+                     Cutoff distance of the interaction.
+
+            """
+            super(GaussianInteraction, self).set_params(**kwargs)
+
+        def valid_keys(self):
+            """All parameters that can be set.
+
+            """
+            return "eps", "sig", "cutoff"
+
+        def required_keys(self):
+            """Parameters that have to be set.
+
+            """
+            return "eps", "sig", "cutoff"
+
 
 class NonBondedInteractionHandle(object):
     """
@@ -583,8 +1356,17 @@ class NonBondedInteractionHandle(object):
     # Here, one line per non-bonded ia
     lennard_jones = None
     generic_lennard_jones = None
+    smooth_step = None
+    bmhtf = None
+    morse = None
+    buckingham = None
+    soft_sphere = None
+    hertzian = None
+    gaussian = None
     tabulated = None
     gay_berne = None
+    dpd = None
+    hat = None
 
     def __init__(self, _type1, _type2):
         """Takes two particle types as argument"""
@@ -599,11 +1381,28 @@ class NonBondedInteractionHandle(object):
         IF LENNARD_JONES_GENERIC:
             self.generic_lennard_jones = GenericLennardJonesInteraction(
                 _type1, _type2)
+        IF SMOOTH_STEP:
+            self.smooth_step = SmoothStepInteraction(_type1, _type2)
+        IF BMHTF_NACL:
+            self.bmhtf = BMHTFInteraction(_type1, _type2)
+        IF MORSE:
+            self.morse = MorseInteraction(_type1, _type2)
+        IF BUCKINGHAM:
+            self.buckingham = BuckinghamInteraction(_type1, _type2)
+        IF SOFT_SPHERE:
+            self.soft_sphere = SoftSphereInteraction(_type1, _type2)
+        IF HERTZIAN:
+            self.hertzian = HertzianInteraction(_type1, _type2)
+        IF GAUSSIAN:
+            self.gaussian = GaussianInteraction(_type1, _type2)
         IF TABULATED == 1:
             self.tabulated = TabulatedNonBonded(_type1, _type2)
         IF GAY_BERNE:
             self.gay_berne = GayBerneInteraction(_type1, _type2)
-
+        IF DPD:
+            self.dpd = DPDInteraction(_type1, _type2)
+        IF HAT:
+            self.hat = HatInteraction(_type1, _type2)
 
 cdef class NonBondedInteractions(object):
     """
@@ -622,29 +1421,13 @@ cdef class NonBondedInteractions(object):
                 "NonBondedInteractions[] expects two particle types as indices.")
         return NonBondedInteractionHandle(key[0], key[1])
 
-    def set_force_cap(self, cap):
-        """Setter function for force cap.
-
-        """
-        if forcecap_set_params(cap):
-            raise Exception("Could not set forcecap")
-
-    def get_force_cap(self):
-        """Getter function for force cap.
-
-        """
-        return force_cap
-
     def __getstate__(self):
         # contains info about ALL nonbonded interactions
         odict = NonBondedInteractionHandle(-1, -
                                            1).lennard_jones.user_interactions
-        odict['force_cap'] = self.get_force_cap()
         return odict
 
     def __setstate__(self, odict):
-        self.set_force_cap(odict['force_cap'])
-        del odict['force_cap']
         for _type1 in odict:
             for _type2 in odict[_type1]:
                 attrs = dir(NonBondedInteractionHandle(_type1, _type2))
@@ -1005,6 +1788,7 @@ IF ROTATION:
             r_cut : :obj:`float`, optional
                     Specifies maximum distance beyond which the bond is considered
                     broken.
+
             """
             super(HarmonicDumbbellBond, self).__init__(*args, **kwargs)
 
@@ -1058,9 +1842,9 @@ IF ROTATION != 1:
             Parameters
             ----------
             k1 : :obj:`float`
-                 Specifies the magnitude of the bond interaction.
+                Specifies the magnitude of the bond interaction.
             k2 : :obj:`float`
-                 Specifies the magnitude of the angular interaction.
+                Specifies the magnitude of the angular interaction.
             r_0 : :obj:`float`
                   Specifies the equilibrium length of the bond.
             r_cut : :obj:`float`, optional
@@ -1128,6 +1912,7 @@ IF BOND_CONSTRAINT == 1:
                    Specifies the tolerance for positional deviations.
             vtop : :obj:`float`, optional
                    Specifies the tolerance for velocity deviations.
+
             """
             super(RigidBond, self).__init__(*args, **kwargs)
 
@@ -1225,7 +2010,7 @@ IF TABULATED == 1:
             type : :obj:`str`
                    Specifies the type of bonded interaction. Possible inputs:
                    'distance', 'angle' and 'dihedral'.
-            filename : :obj:`str`
+            filename : :obj`str`
                        Filename of the tabular.
 
             """
@@ -1437,52 +2222,45 @@ IF LENNARD_JONES == 1:
         def _set_params_in_es_core(self):
             subt_lj_set_params(self._bond_id)
 
-IF BOND_VIRTUAL == 1:
-    class Virtual(BondedInteraction):
+class Virtual(BondedInteraction):
+    def __init__(self, *args, **kwargs):
+        """
+        VirtualBond initializer. Used to instantiate a VirtualBond identifier.
+        """
+        super(Virtual, self).__init__(*args, **kwargs)
 
-        def __init__(self, *args, **kwargs):
-            """
-            VirtualBond initializer. Used to instantiate a VirtualBond identifier.
+    def type_number(self):
+        return BONDED_IA_VIRTUAL_BOND
 
-            """
-            super(Virtual, self).__init__(*args, **kwargs)
+    def type_name(self):
+        """Name of interaction type.
 
-        def type_number(self):
-            return BONDED_IA_VIRTUAL_BOND
+        """
+        return "VIRTUAL"
 
-        def type_name(self):
-            """Name of interaction type.
+    def valid_keys(self):
+        """All parameters that can be set.
 
-            """
-            return "VIRTUAL"
+        """
+        return {}
 
-        def valid_keys(self):
-            """All parameters that can be set.
+    def required_keys(self):
+        """Parameters that have to be set.
 
-            """
-            return {}
+        """
+        return []
 
-        def required_keys(self):
-            """Parameters that have to be set.
+    def set_default_params(self):
+        """Sets parameters that are not required to their default value.
 
-            """
-            return []
+        """
+        self._params = {}
 
-        def set_default_params(self):
-            """Sets parameters that are not required to their default value.
+    def _get_params_from_es_core(self):
+        return {}
 
-            """
-            self._params = {}
-
-        def _get_params_from_es_core(self):
-            return {}
-
-        def _set_params_in_es_core(self):
-            virtual_set_params(self._bond_id)
-
-ELSE:
-    class Virtual(BondedInteractionNotDefined):
-        name = "BOND_VIRTUAL"
+    def _set_params_in_es_core(self):
+        virtual_set_params(self._bond_id)
 
 IF BOND_ENDANGLEDIST == 1:
     class Endangledist(BondedInteraction):
