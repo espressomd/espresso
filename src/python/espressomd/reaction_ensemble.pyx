@@ -5,7 +5,7 @@ from libc.string cimport strdup
 
 es_error=1
 cdef c_reaction_ensemble* RE = new c_reaction_ensemble();
-class wang_landau_has_converged(Exception):
+class WangLandauHasConverged(Exception):
     pass
 
 cdef class reaction_ensemble(object):
@@ -436,7 +436,7 @@ cdef class reaction_ensemble(object):
         
         RE.m_current_wang_landau_system.final_wang_landau_parameter=self._params["final_wang_landau_parameter"]
         RE.m_current_wang_landau_system.wang_landau_steps=self._params["wang_landau_steps"]
-        RE.m_current_wang_landau_system.output_filename=strdup(self._params["filename"])
+        RE.m_current_wang_landau_system.output_filename=strdup(self._params["full_path_to_output_filename"])
         RE.m_current_wang_landau_system.do_not_sample_reaction_partition_function=self._params["do_not_sample_reaction_partition_function"]
 
     def _valid_keys_set_wang_landau_parameters(self):
@@ -495,7 +495,7 @@ cdef class reaction_ensemble(object):
         """
         status_wang_landau=RE.do_reaction_wang_landau()
         if(status_wang_landau<0):
-                raise wang_landau_has_converged("The Wang-Landau algorithm has converged.")
+                raise WangLandauHasConverged("The Wang-Landau algorithm has converged.")
 
     def global_mc_move_for_one_particle_of_type_wang_landau(self,type_mc):
         """

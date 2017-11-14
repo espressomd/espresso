@@ -124,10 +124,10 @@ class Analysis(object):
 
         """
 
-        if id == None and pos == None:
+        if id is None and pos is None:
             raise Exception("Either id or pos have to be specified\n" + __doc__)
 
-        if id != None and pos != None:
+        if (id is not None) and (pos is not None):
             raise Exception("Only one of id or pos may be specified\n" + __doc__)
 
         cdef double cpos[3]
