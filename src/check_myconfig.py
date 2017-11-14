@@ -45,17 +45,32 @@ def handle_unkown(f, all_features):
     else:
         print("Unknown feature '{}'".format(f))
 
-class ParseError(Exception):
+
+class FeatureError(Exception):
     pass
 
-def check_myconfig(compiler, feature_file, myconfig):
+def print_exception(ex):
+    print("""Skipped external header because {} returned non-zero exit code {},
+             output: {}.""".format(' '.join(ex.cmd), ex.returncode,ex.output.strip()))
+
+def check_myconfig(compiler, feature_file, myconfig, pre_header = None):
 # This does not work on all compilers, so if the parsing fails
 # we just bail out.
+    external_defs = []
+
+    if pre_header:
+        try:
+            external_features = Defines(compiler).defines(pre_header)
+        except CalledProcessError as ex:
+            print_exception(ex)
+            return
+
+        external_defs = ['-D' + s for s in external_features]
+
     try:
-        my_features = Defines(compiler).defines(myconfig)
+        my_features = Defines(compiler,flags=external_defs).defines(myconfig)
     except CalledProcessError as ex:
-        print("""Skipped myconfig check because {} returned non-zero exit code {},
-                  output: {}.""".format(ex.cmd, ex.returncode,ex.output.strip()))
+        print_exception(ex)
         return
 
 # Parse feature file
@@ -72,13 +87,18 @@ def check_myconfig(compiler, feature_file, myconfig):
         handle_unkown(u, defs.features)
 
     if error_state:
-        raise ParseError("There were errors in '{}'".format(argv[3]))
+        raise FeatureError("There were errors in '{}'".format(argv[3]))
     else:
         return
 
 if __name__ == "__main__":
+    if(len(argv) > 4):
+        pre_header = argv[4]
+    else:
+        pre_header = None
+
     try:
-        check_myconfig(argv[1], argv[2], argv[3])
+        check_myconfig(argv[1], argv[2], argv[3], pre_header)
         sys.exit()
-    except ParseError:
+    except FeatureError:
         sys.exit("There were errors in '{}'".format(argv[3]))
