@@ -135,7 +135,7 @@ def verify_lj_forces(system, tolerance, ids_to_skip=[]):
     all_types=np.unique(system.part[:].type)
     for i in all_types:
         for j in all_types:
-            lj_params[i,j]=non_bonded_inter[i,j].lennard_jones.get_params()
+            lj_params[i,j]=non_bonded_inter[int(i),int(j)].lennard_jones.get_params()
             
 
 
