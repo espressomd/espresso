@@ -124,10 +124,10 @@ class Analysis(object):
 
         """
 
-        if id == None and pos == None:
+        if id is None and pos is None:
             raise Exception("Either id or pos have to be specified\n" + __doc__)
 
-        if id != None and pos != None:
+        if (id is not None) and (pos is not None):
             raise Exception("Only one of id or pos may be specified\n" + __doc__)
 
         cdef double cpos[3]
@@ -136,7 +136,7 @@ class Analysis(object):
 
         # Get position
         # If particle id specified
-        if id != None:
+        if id is not None:
             if not isinstance(id, int):
                 raise ValueError("Id has to be an integer")
             if not id in self._system.part[:].id:
