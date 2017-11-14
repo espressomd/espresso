@@ -7,7 +7,7 @@ import espressomd.lb
 from espressomd import utils
 import tests_common
 
-@ut.skipIf(not espressomd.has_features(['LB_GPU']) or espressomd.has_features['SHANCHEN'],
+@ut.skipIf(not espressomd.has_features('LB_GPU') or espressomd.has_features('SHANCHEN'),
            "LB_GPU not compiled in or SHANCHEN activated, can not check functionality.")
 class TestCylindricalFluxDensityObservable(ut.TestCase):
     """
@@ -33,9 +33,9 @@ class TestCylindricalFluxDensityObservable(ut.TestCase):
         'N': 10  # number of particles
     }
 
-
-    lbf = espressomd.lb.LBFluid_GPU(agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01)
-    system.actors.add(lbf)
+    def setUp(self):
+        self.lbf = espressomd.lb.LBFluid_GPU(agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01)
+        self.system.actors.add(self.lbf)
 
 
     def pol_coords(self):
