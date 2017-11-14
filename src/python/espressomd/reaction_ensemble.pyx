@@ -5,10 +5,10 @@ from libc.string cimport strdup
 
 es_error=1
 cdef c_reaction_ensemble* RE = new c_reaction_ensemble();
-class wang_landau_has_converged(Exception):
+class WangLandauHasConverged(Exception):
     pass
 
-cdef class reaction_ensemble(object):
+cdef class ReactionEnsemble(object):
     """
     This class provides the Reaction Ensemble algorithm, the Wang-Landau
     Reaction Ensemble algorithm and the constant pH method. Initialize the
@@ -495,7 +495,7 @@ cdef class reaction_ensemble(object):
         """
         status_wang_landau=RE.do_reaction_wang_landau()
         if(status_wang_landau<0):
-                raise wang_landau_has_converged("The Wang-Landau algorithm has converged.")
+                raise WangLandauHasConverged("The Wang-Landau algorithm has converged.")
 
     def global_mc_move_for_one_particle_of_type_wang_landau(self,type_mc):
         """

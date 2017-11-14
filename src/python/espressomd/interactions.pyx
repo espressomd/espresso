@@ -2185,7 +2185,7 @@ IF TABULATED != 1:
 
 
 IF LENNARD_JONES == 1:
-    class Subt_Lj(BondedInteraction):
+    class SubtLJ(BondedInteraction):
         def __init__(self, *args, **kwargs):
             super(Subt_Lj, self).__init__(*args, **kwargs)
 
@@ -2355,7 +2355,7 @@ ELSE:
         name = "OVERLAPPED"
 
 IF BOND_ANGLE == 1:
-    class Angle_Harmonic(BondedInteraction):
+    class AngleHarmonic(BondedInteraction):
 
         def type_number(self):
             return BONDED_IA_ANGLE_HARMONIC
@@ -2393,11 +2393,11 @@ IF BOND_ANGLE == 1:
             angle_harmonic_set_params(
                 self._bond_id, self._params["bend"], self._params["phi0"])
 ELSE:
-    class Angle_Harmonic(BondedInteractionNotDefined):
-        name = "BOND_ANGLE"
+    class AngleHarmonic(BondedInteractionNotDefined):
+        name = "AngleHarmonic"
 
 IF BOND_ANGLE == 1:
-    class Angle_Cosine(BondedInteraction):
+    class AngleCosine(BondedInteraction):
 
         def type_number(self):
             return BONDED_IA_ANGLE_COSINE
@@ -2435,11 +2435,11 @@ IF BOND_ANGLE == 1:
             angle_cosine_set_params(
                 self._bond_id, self._params["bend"], self._params["phi0"])
 ELSE:
-    class Angle_Cosine(BondedInteractionNotDefined):
-        name = "BOND_ANGLE"
+    class AngleCosine(BondedInteractionNotDefined):
+        name = "AngelCosine"
 
 IF BOND_ANGLE == 1:
-    class Angle_Cossquare(BondedInteraction):
+    class AngleCossquare(BondedInteraction):
 
         def type_number(self):
             return BONDED_IA_ANGLE_COSSQUARE
@@ -2477,11 +2477,11 @@ IF BOND_ANGLE == 1:
             angle_cossquare_set_params(
                 self._bond_id, self._params["bend"], self._params["phi0"])
 ELSE:
-    class Angle_Cossquare(BondedInteractionNotDefined):
-        name = "BOND_ANGLE"
+    class AngleCossquare(BondedInteractionNotDefined):
+        name = "AngleCossquare"
 
 
-class Oif_Global_Forces(BondedInteraction):
+class OifGlobalForces(BondedInteraction):
 
     def type_number(self):
         return BONDED_IA_OIF_GLOBAL_FORCES
@@ -2522,7 +2522,7 @@ class Oif_Global_Forces(BondedInteraction):
             self._bond_id, self._params["A0_g"], self._params["ka_g"], self._params["V0"], self._params["kv"])
 
 
-class Oif_Local_Forces(BondedInteraction):
+class OifLocalForces(BondedInteraction):
 
     def type_number(self):
         return BONDED_IA_OIF_LOCAL_FORCES
@@ -2585,7 +2585,7 @@ bonded_interaction_classes = {
     int(BONDED_IA_OIF_LOCAL_FORCES): Oif_Local_Forces,
 }
 IF LENNARD_JONES:
-    bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = Subt_Lj
+    bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = SubtLj
 
 
 class BondedInteractions(object):

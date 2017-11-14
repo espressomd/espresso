@@ -334,7 +334,7 @@ IF P3M == 1:
             self._set_params_in_es_core()
 
     IF CUDA:
-        cdef class P3M_GPU(ElectrostaticInteraction):
+        cdef class P3MGPU(ElectrostaticInteraction):
 
             def __init__(self, *args, **kwargs):
                 """
@@ -679,7 +679,7 @@ IF ELECTROSTATICS:
             self._set_params_in_es_core()
 
 IF ELECTROSTATICS and MMM1D_GPU:
-    cdef class MMM1D_GPU(ElectrostaticInteraction):
+    cdef class MMM1DGPU(ElectrostaticInteraction):
         """
         Electrostatics solver for Systems with one periodic direction.
         See :ref:`mmm1d_guide` for more details.

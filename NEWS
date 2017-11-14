@@ -51,7 +51,7 @@ New user-visible features
 * ELECTROKINETICS: An algorithm to treat species of ions on a mean-field
   level. Implementation takes advantage of a GPU.
 
-* MMM1D_GPU: The mmm1d electrostatics algorithm is now available as GPU version.
+* MMM1DGPU: The mmm1d electrostatics algorithm is now available as GPU version.
 
 * Support of P3M on GPU.
 
