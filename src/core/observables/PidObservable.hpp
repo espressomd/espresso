@@ -33,7 +33,7 @@ class PidObservable : public Observable {
 public:
   std::vector<int> &ids() { return m_ids; }
   std::vector<int> const &ids() const { return m_ids; }
-  int n_values() const override { return 3 * ids().size(); }
+  virtual int n_values() const override { return 3 * ids().size(); }
 };
 
 } // Namespace Observables

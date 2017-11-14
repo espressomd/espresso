@@ -85,7 +85,7 @@ class AnalyzeChain(ut.TestCase):
         data_cm=[]
         data_min=[]
         data_mono=[]
-        i=np.arange(self.num_mono*self.num_mono)/self.num_mono
+        i=np.arange(self.num_mono*self.num_mono)//self.num_mono
         j=np.arange(self.num_mono*self.num_mono)%self.num_mono
         for p1 in range(self.num_poly):
             for p2 in range(p1):

@@ -57,7 +57,7 @@ class NPTintegrator(ut.TestCase):
 
     def test_npt(self):
         avp=0
-        n=1000
+        n=1500
         Vs=[]
         for t in range(n): 
             self.S.integrator.run(10)
