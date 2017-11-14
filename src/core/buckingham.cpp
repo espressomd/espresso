@@ -27,9 +27,10 @@
 #ifdef BUCKINGHAM
 #include "communication.hpp"
 
-int buckingham_set_params(int part_type_a, int part_type_b, double A, double B,
-                          double C, double D, double cut, double discont,
-                          double shift, double F1, double F2) {
+int buckingham_set_params(int part_type_a, int part_type_b,
+			  double A, double B, double C, double D, double cut,
+			  double discont, double shift)
+{
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
   if (!data)
@@ -45,6 +46,9 @@ int buckingham_set_params(int part_type_a, int part_type_b, double A, double B,
 
   /* Replace the buckingham potential for interatomic dist. less
      than or equal to discontinuity by a straight line (F1+F2*r) */
+  double F1;
+  double F2;
+
   F1 = buck_energy_r(A, B, C, D, shift, discont) +
        discont * buck_force_r(A, B, C, D, discont);
   F2 = -buck_force_r(A, B, C, D, discont);

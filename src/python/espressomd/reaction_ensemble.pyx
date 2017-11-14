@@ -551,6 +551,10 @@ cdef class reaction_ensemble(object):
     
     #//////////////////////////constant pH ensemble
     property constant_pH:
+        """
+        Sets the input pH for the constant pH ensemble method.
+        
+        """
         def __set__(self, double pH):
             """
             Sets the pH that the method assumes for the implicit pH bath.

@@ -28,10 +28,6 @@
 #include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
 
-#include "forces_inline.hpp"
-#include "pressure_inline.hpp"
-#include "energy_inline.hpp"
-#include "constraints.hpp"
 #include "initialize.hpp"
 #include "lees_edwards.hpp"
 #include "lees_edwards_comms_manager.hpp"

@@ -32,12 +32,10 @@
 
 #include "debug.hpp"
 #include "interaction_data.hpp"
-#include "particle_data.hpp"
-#include "utils.hpp"
 
-int buckingham_set_params(int part_type_a, int part_type_b, double A, double B,
-                          double C, double D, double cut, double discont,
-                          double shift, double F1, double F2);
+int buckingham_set_params(int part_type_a, int part_type_b,
+			  double A, double B, double C, double D, double cut,
+			  double discont, double shift);
 
 /**Resultant Force due to a buckingham potential between two particles at
  * interatomic separation r greater than or equal to discont*/
@@ -104,7 +102,6 @@ inline void add_buck_pair_force(const Particle *const p1,
 inline double buck_pair_energy(Particle *p1, Particle *p2,
                                IA_parameters *ia_params, double d[3],
                                double dist) {
-
   if ((dist < ia_params->BUCK_cut)) {
     /* case: resulting force/energy greater than discont and
              less than cutoff (true buckingham region) */

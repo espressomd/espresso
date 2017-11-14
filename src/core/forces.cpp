@@ -149,13 +149,8 @@ void force_calc() {
 
   short_range_loop([](Particle &p) { add_single_particle_force(&p); },
                    [](Particle &p1, Particle &p2, Distance &d) {
-#ifdef EXCLUSIONS
-                     if (do_nonbonded(&p1, &p2))
-#endif
-                     {
-                       add_non_bonded_pair_force(&(p1), &(p2), d.vec21,
-                                                 sqrt(d.dist2), d.dist2);
-                     }
+                     add_non_bonded_pair_force(&(p1), &(p2), d.vec21,
+                                               sqrt(d.dist2), d.dist2);
                    });
 
 #ifdef OIF_GLOBAL_FORCES
