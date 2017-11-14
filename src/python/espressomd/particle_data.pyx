@@ -1892,7 +1892,7 @@ cdef class ParticleList(object):
             for p in self:
                 for t in types:
                     if (p.type == t or t == "all"):
-                        vtk.write("{} {} {}\n".format(*(p.pos % box_l)))
+                        vtk.write("{} {} {}\n".format(*(p.pos_folded)))
 
             vtk.write("POINT_DATA {}\n".format(n))
             vtk.write("SCALARS velocity float 3\n")
