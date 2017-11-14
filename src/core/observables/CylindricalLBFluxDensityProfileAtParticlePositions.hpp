@@ -1,7 +1,6 @@
 #ifndef OBSERVABLES_CYLINDRICALLBFLUXDENSITYPROFILEATPARTICLEPOSITIONS_HPP
 #define OBSERVABLES_CYLINDRICALLBFLUXDENSITYPROFILEATPARTICLEPOSITIONS_HPP
 
-#ifdef LB_GPU
 #include "CylindricalProfileObservable.hpp"
 #include "utils.hpp"
 #include "utils/Histogram.hpp"
@@ -11,6 +10,7 @@ namespace Observables {
 class CylindricalLBFluxDensityProfileAtParticlePositions : public CylindricalProfileObservable {
 public:
   virtual int actual_calculate(PartCfg &partCfg) override {
+#ifdef LB_GPU
     double bin_volume;
     int r_bin, phi_bin, z_bin;
     // First collect all positions (since we want to call the LB function to
@@ -72,6 +72,7 @@ public:
         if (std::isfinite(v_z)) {last_value[ind + 2] += v_z / bin_volume;}
       }
     }
+#endif // LB_GPU
     return 0;
   }
   virtual int n_values() const override {
@@ -105,5 +106,4 @@ private:
 
 } // Namespace Observables
 
-#endif // LB_GPU
 #endif

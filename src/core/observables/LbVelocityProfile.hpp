@@ -24,7 +24,7 @@ public:
 #ifdef LB_GPU
   if (lattice_switch & LATTICE_LB_GPU) {
 //    return statistics_observable_lbgpu_velocity_profile((profile_data*) pdata_, A, n_A);
-    throw std::runtime_error("The Lb Velocity profile observable is currently not available for lb glu");
+    throw std::runtime_error("The Lb Velocity profile observable is currently not available for GPU LB.");
     /* notes:
       * The proifle_data struct is no longer used. Instead, the values are
         stored in the Observable class. The profile code, however, needs the
