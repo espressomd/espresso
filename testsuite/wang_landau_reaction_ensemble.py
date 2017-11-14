@@ -20,7 +20,6 @@
 """
 from __future__ import print_function
 import numpy as np
-import scipy.optimize
 import unittest as ut
 
 import espressomd
@@ -102,9 +101,6 @@ class ReactionEnsembleTest(ut.TestCase):
                 break
         # test as soon as wang_landau has converged (throws exception then)
 
-        def log_degeneracy_Epot(E_pot, prefactor, offset):
-            return prefactor * np.log(E_pot) + offset
-
         nbars, Epots, WL_potentials = np.loadtxt(
             "WL_potential_out.dat", unpack=True)
         mask_nbar_0 = np.where(np.abs(nbars - 1.0) < 0.0001)
@@ -112,8 +108,6 @@ class ReactionEnsembleTest(ut.TestCase):
         Epots = Epots[1:]
         WL_potentials = WL_potentials[mask_nbar_0]
         WL_potentials = WL_potentials[1:]
-        popt, pcov = scipy.optimize.curve_fit(
-            log_degeneracy_Epot, Epots, WL_potentials)
 
         expected_canonical_potential_energy = np.sum(np.exp(WL_potentials) * Epots * np.exp(
             -Epots / self.temperature)) / np.sum(np.exp(WL_potentials) * np.exp(-Epots / self.temperature))
@@ -132,8 +126,6 @@ class ReactionEnsembleTest(ut.TestCase):
         self.assertAlmostEqual(
             expected_canonical_configurational_heat_capacity - 1.5, 0.00, places=1,
                                msg="difference to analytical expected canonical configurational heat capacity too big")
-        self.assertAlmostEqual(
-            abs(popt[0]) - 0.5, 0.00, places=0, msg="difference of the dependency of the degeneracy on the potential energy is too big.")
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())
