@@ -136,7 +136,7 @@ class Analysis(object):
 
         # Get position
         # If particle id specified
-        if id != None:
+        if id is not None:
             if not isinstance(id, int):
                 raise ValueError("Id has to be an integer")
             if not id in self._system.part[:].id:

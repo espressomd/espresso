@@ -23,7 +23,7 @@ class AnalyzeDistance(ut.TestCase):
         self.system.thermostat.set_langevin(kT=1., gamma=1.)
         for i in range(100):
             self.system.part.add(id=i, pos=np.random.random(3) * box_l)
-        self.system.non_bonded_inter.set_force_cap(10)
+        self.system.force_cap = 10
         i = 0
         min_dist = self.system.analysis.mindist()
         while (i < 50 and min_dist < 0.9):
@@ -31,8 +31,8 @@ class AnalyzeDistance(ut.TestCase):
             min_dist = self.system.analysis.mindist()
             i += 1
             lj_cap = lj_cap + 10
-            self.system.non_bonded_inter.set_force_cap(lj_cap)
-        self.system.non_bonded_inter.set_force_cap(0)
+            self.system.force_cap = lj_cap
+        self.system.force_cap = 0
         self.system.integrator.run(1000)
 
     # python version of the espresso core function
