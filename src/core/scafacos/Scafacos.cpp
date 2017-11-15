@@ -124,10 +124,8 @@ void Scafacos::run_dipolar(std::vector<double> &dipoles, std::vector<double> &po
   potentials.resize(3*local_n_part);
 
   
-  //printf("node %d, sim_time %f, particles_on_node: %d: before scafacos call\n",this_node,sim_time,local_n_part);
   handle_error(fcs_set_dipole_particles(handle, local_n_part,&(positions[0]),&(dipoles[0]), &(fields[0]),&(potentials[0])));
   handle_error(fcs_run(handle, 0, NULL, NULL, NULL, NULL));
-  //printf("node %d, sim_time %f, particles_on_node: %d: after scafacos call\n",this_node,sim_time,local_n_part);
 }
 #endif
 
