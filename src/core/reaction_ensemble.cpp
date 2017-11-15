@@ -1099,7 +1099,7 @@ int ReactionEnsemble::initialize_wang_landau(){
 		}
 		
 		int flattened_index_previous_run=0; //len_histogram of energy preparation run
-		if(current_collective_variable->energy_boundaries_filename!=""){
+		if(!current_collective_variable->energy_boundaries_filename.empty()){
 			//found a collective variable which is not of the type of an energy
 			m_current_wang_landau_system.do_energy_reweighting=true;
 			energy_collective_variable_index=collective_variable_i;
@@ -1191,7 +1191,7 @@ int ReactionEnsemble::initialize_wang_landau(){
 			//found a collective variable which is not of the type of a degree_of_association association)	
 			current_collective_variable->determine_current_state_in_collective_variable_with_index=&calculate_degree_of_association;
 		}
-		if(current_collective_variable->energy_boundaries_filename!=""){
+		if(!current_collective_variable->energy_boundaries_filename.empty()){
 			//found a collective variable which is not of the type of an energy
 			current_collective_variable->determine_current_state_in_collective_variable_with_index=&calculate_current_potential_energy_of_system_wrap;
 		}
