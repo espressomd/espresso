@@ -41,7 +41,7 @@ class SimplePoreConstraint(ut.TestCase):
         end_energy = s.analysis.energy()['total']
         rel_diff = abs(end_energy-start_energy) / start_energy
 
-        self.assertTrue(rel_diff < 1e-3)
+        self.assertLess(rel_diff, 1e-3)
 
 if __name__ == "__main__":
     ut.main()
