@@ -2,7 +2,6 @@ include "myconfig.pxi"
 from libcpp.vector cimport vector
 from libcpp.string cimport string
 from libc.string cimport strdup
-from utils import to_char_pointer
 
 
 class WangLandauHasConverged(Exception):
@@ -405,8 +404,7 @@ cdef class ReactionEnsemble(object):
                     raise ValueError(
                         "At least the following keys have to be given as keyword arguments: " + self._required_keys_add_collective_variable_degree_of_association().__str__() + " got " + kwargs.__str__())
                 self._params[k] = kwargs[k]
-        filename = to_char_pointer(self._params["filename"])
-        self.RE.add_new_CV_potential_energy(filename, self._params["delta"])
+        self.RE.add_new_CV_potential_energy(self._params["filename"], self._params["delta"])
 
     def _valid_keys_add_collective_variable_potential_energy(self):
         return "filename", "delta"
