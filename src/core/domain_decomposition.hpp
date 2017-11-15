@@ -65,11 +65,9 @@
  * decomposition. */
 struct DomainDecomposition {
   DomainDecomposition()
-      : use_vList{1}, cell_grid{0, 0, 0}, ghost_cell_grid{0, 0, 0}, cell_size{
+      : cell_grid{0, 0, 0}, ghost_cell_grid{0, 0, 0}, cell_size{
                                                                         0, 0,
                                                                         0} {}
-  /** flag for using Verlet List */
-  int use_vList;
   /** linked cell grid in nodes spatial domain. */
   int cell_grid[3];
   /** linked cell grid with ghost frame. */

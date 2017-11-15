@@ -36,7 +36,6 @@
 #include "mdlc_correction.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "domain_decomposition.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "p3m-dipolar.hpp"
