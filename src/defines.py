@@ -13,7 +13,7 @@ class Defines(object):
 
     def _run_compiler(self, filename):
         raw_output = subprocess.check_output([self._compiler] + self._flags + [filename],stderr=subprocess.STDOUT)
-        return raw_output.splitlines()
+        return raw_output.decode('ascii').splitlines()
 
     def _remove_define(self, line):
         return line[len("#define"):].strip()
