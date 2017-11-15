@@ -1890,6 +1890,10 @@ int MMM2D_sanity_checks()
 void MMM2D_init()
 {
   int err;
+  if (cell_structure.use_verlet_list) {
+     runtimeErrorMsg() << "MMM2d cannot be used with Verlet lists.";
+     return;
+  }
 
   if (MMM2D_sanity_checks()) return;
 
