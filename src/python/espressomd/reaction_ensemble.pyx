@@ -41,7 +41,7 @@ cdef class ReactionEnsemble(object):
 
     """
     cdef object _params
-    cdef cReactionEnsemble * RE
+    cdef cReactionEnsemble* RE
 
     def __init__(self, *args, **kwargs):
 
@@ -460,8 +460,7 @@ cdef class ReactionEnsemble(object):
             "final_wang_landau_parameter"]
         self.RE.m_current_wang_landau_system.wang_landau_steps = self._params[
             "wang_landau_steps"]
-        filename=to_char_pointer(self._params["full_path_to_output_filename"])
-        self.RE.m_current_wang_landau_system.output_filename = filename
+        self.RE.m_current_wang_landau_system.output_filename = self._params["full_path_to_output_filename"]
         self.RE.m_current_wang_landau_system.do_not_sample_reaction_partition_function = self._params[
             "do_not_sample_reaction_partition_function"]
 

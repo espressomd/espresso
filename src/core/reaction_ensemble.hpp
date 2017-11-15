@@ -1,4 +1,5 @@
 #include "utils.hpp"
+#include <string>
 
 namespace ReactionEnsemble {
 
@@ -65,7 +66,7 @@ typedef struct collective_variable {
   int nr_corresponding_acid_types;
   int associated_type;
   // for collective variables of type energy
-  char *energy_boundaries_filename;
+  std::string energy_boundaries_filename;
 } collective_variable;
 
 typedef struct wang_landau_system {
@@ -92,7 +93,7 @@ typedef struct wang_landau_system {
   int wang_landau_steps; // may be used for performance improvements, when you
                          // do not want to record other observables in the tcl
                          // script
-  char *output_filename;
+  std::string output_filename;
 
   double
       *minimum_energies_at_flat_index; // only present in energy preparation run
@@ -190,7 +191,7 @@ public:
       .used_bins = -10,
       .monte_carlo_trial_moves = 0,
       .wang_landau_steps = 1,
-      .output_filename = NULL,
+      .output_filename = "",
       .minimum_energies_at_flat_index = NULL,
       .maximum_energies_at_flat_index = NULL,
       .do_energy_reweighting = false,
@@ -214,14 +215,14 @@ public:
                                                               // energy
                                                               // reweighting
                                                               // runs
-  void write_out_preliminary_energy_run_results(char *filename);
+  void write_out_preliminary_energy_run_results(std::string filename);
   bool do_HMC_move_wang_landau();
 
   // checkpointing, only designed to reassign values of a previous simulation to
   // a new simulation with the same initialization process
-  int write_wang_landau_checkpoint(char *identifier);
-  int load_wang_landau_checkpoint(char *identifier);
-  void write_wang_landau_results_to_file(char *full_path_to_output_filename);
+  int write_wang_landau_checkpoint(std::string identifier);
+  int load_wang_landau_checkpoint(std::string identifier);
+  void write_wang_landau_results_to_file(std::string full_path_to_output_filename);
 
   /////////////////////////////////////////////  Constant-pH Reactions
   int do_reaction_constant_pH();

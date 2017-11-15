@@ -889,7 +889,7 @@ void ReactionEnsemble::add_new_CV_degree_of_association(int associated_type, dou
 */
 void ReactionEnsemble::add_new_CV_potential_energy(std::string filename, double delta_CV){
             collective_variable* new_collective_variable=(collective_variable*) calloc(1,sizeof(collective_variable));
-            new_collective_variable->energy_boundaries_filename=strdup(filename.c_str());
+            new_collective_variable->energy_boundaries_filename=filename;
             new_collective_variable->delta_CV=delta_CV;
             m_current_wang_landau_system.collective_variables=(collective_variable**) realloc(m_current_wang_landau_system.collective_variables,sizeof(collective_variable*)*(m_current_wang_landau_system.nr_collective_variables+1));
             m_current_wang_landau_system.collective_variables[m_current_wang_landau_system.nr_collective_variables]=new_collective_variable;
@@ -1099,13 +1099,13 @@ int ReactionEnsemble::initialize_wang_landau(){
 		}
 		
 		int flattened_index_previous_run=0; //len_histogram of energy preparation run
-		if(current_collective_variable->energy_boundaries_filename!=NULL){
+		if(current_collective_variable->energy_boundaries_filename!=""){
 			//found a collective variable which is not of the type of an energy
 			m_current_wang_landau_system.do_energy_reweighting=true;
 			energy_collective_variable_index=collective_variable_i;
 			//load energy boundaries from file
 			FILE* pFile;
-			pFile = fopen(current_collective_variable->energy_boundaries_filename,"r");
+			pFile = fopen(current_collective_variable->energy_boundaries_filename.c_str(),"r");
 			if (pFile==NULL){
 			    throw std::runtime_error("ERROR: energy boundaries file for the specific system could not be read.\n");
 				// Note that you cannot change the other collective variables in the pre-production run and the production run
@@ -1191,7 +1191,7 @@ int ReactionEnsemble::initialize_wang_landau(){
 			//found a collective variable which is not of the type of a degree_of_association association)	
 			current_collective_variable->determine_current_state_in_collective_variable_with_index=&calculate_degree_of_association;
 		}
-		if(current_collective_variable->energy_boundaries_filename!=NULL){
+		if(current_collective_variable->energy_boundaries_filename!=""){
 			//found a collective variable which is not of the type of an energy
 			current_collective_variable->determine_current_state_in_collective_variable_with_index=&calculate_current_potential_energy_of_system_wrap;
 		}
@@ -1310,13 +1310,9 @@ void ReactionEnsemble::free_wang_landau(){
 		if(current_collective_variable->corresponding_acid_types!=NULL) { //check wether we have a collective variable which is of the type of a degree of association
 			free(current_collective_variable->corresponding_acid_types);
 		}
-		if(current_collective_variable->energy_boundaries_filename!=NULL){//check wether we have a collective variable which is of the type of an energy
-			free(current_collective_variable->energy_boundaries_filename);
-		}
 		free(current_collective_variable);
 	}
 	free(m_current_wang_landau_system.collective_variables);
-	free(m_current_wang_landau_system.output_filename);
 	free(m_current_wang_landau_system.nr_subindices_of_collective_variable);
 
 	if(m_current_wang_landau_system.minimum_energies_at_flat_index!=NULL) //only present in energy preparation run
@@ -1420,10 +1416,10 @@ bool ReactionEnsemble::achieved_desired_number_of_refinements_one_over_t() {
 /**
 *Writes the Wang-Landau potential to file.
 */
-void ReactionEnsemble::write_wang_landau_results_to_file(char* full_path_to_output_filename){
+void ReactionEnsemble::write_wang_landau_results_to_file(std::string full_path_to_output_filename){
 
 	FILE* pFile;
-	pFile = fopen(full_path_to_output_filename,"w");
+	pFile = fopen(full_path_to_output_filename.c_str(),"w");
 	if (pFile==NULL){
 	    throw std::runtime_error("ERROR: Wang-Landau file could not be written\n");
 	}else{
@@ -1477,9 +1473,9 @@ int ReactionEnsemble::update_maximum_and_minimum_energies_at_current_state(){
 /**
 *Write out an energy boundary file using the energy boundaries observed in a preliminary energy reweighting run.
 */
-void ReactionEnsemble::write_out_preliminary_energy_run_results (char* full_path_to_output_filename) {
+void ReactionEnsemble::write_out_preliminary_energy_run_results (std::string full_path_to_output_filename) {
 	FILE* pFile;
-	pFile = fopen(full_path_to_output_filename,"w");
+	pFile = fopen(full_path_to_output_filename.c_str(),"w");
 	if(pFile==NULL){
 	    throw std::runtime_error("ERROR: Wang-Landau file could not be written\n");
 	}else{
@@ -1561,7 +1557,7 @@ void ReactionEnsemble::remove_bins_that_have_not_been_sampled(){
 /**
 *Writes the Wang-Landau parameter, the histogram and the potential to a file. You can restart a Wang-Landau simulation using this information. Additionally you should store the positions of the particles. Not storing them introduces small, small statistical errors.
 */
-int ReactionEnsemble::write_wang_landau_checkpoint(char* identifier){
+int ReactionEnsemble::write_wang_landau_checkpoint(std::string identifier){
 	std::ofstream outfile;
 
 	//write current wang landau parameters (wang_landau_parameter, monte_carlo_trial_moves, flat_index_of_current_state)
@@ -1588,7 +1584,7 @@ int ReactionEnsemble::write_wang_landau_checkpoint(char* identifier){
 /**
 *Loads the Wang-Landau checkpoint
 */
-int ReactionEnsemble::load_wang_landau_checkpoint(char* identifier){
+int ReactionEnsemble::load_wang_landau_checkpoint(std::string identifier){
 	std::ifstream infile;
 	
 	//restore wang landau parameters

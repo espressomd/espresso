@@ -48,7 +48,7 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         int* corresponding_acid_types
         int nr_corresponding_acid_types
         int associated_type
-        char* energy_boundaries_filename
+        string energy_boundaries_filename
 
     ctypedef struct wang_landau_system:
         int* histogram
@@ -66,7 +66,7 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         int used_bins
         int monte_carlo_trial_moves
         int wang_landau_steps
-        char* output_filename
+        string output_filename
         double* minimum_energies_at_flat_index
         double* maximum_energies_at_flat_index
         bool do_energy_reweighting
@@ -93,10 +93,10 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         void add_new_CV_potential_energy(string filename, double delta_CV)
         int do_reaction_wang_landau() except +
         int update_maximum_and_minimum_energies_at_current_state()
-        void write_out_preliminary_energy_run_results(char* filename)
-        int write_wang_landau_checkpoint(char* identifier)
-        int load_wang_landau_checkpoint(char* identifier)
-        void write_wang_landau_results_to_file(char* full_path_to_output_filename)
+        void write_out_preliminary_energy_run_results(string filename)
+        int write_wang_landau_checkpoint(string identifier)
+        int load_wang_landau_checkpoint(string identifier)
+        void write_wang_landau_results_to_file(string full_path_to_output_filename)
         bool do_HMC_move_wang_landau()
 
     #///////////////////////////////////////////// Constant-pH ensemble
