@@ -2,6 +2,7 @@ include "myconfig.pxi"
 from libcpp.vector cimport vector
 from libcpp.string cimport string
 from libc.string cimport strdup
+from utils import to_char_pointer
 
 
 class WangLandauHasConverged(Exception):
@@ -404,7 +405,7 @@ cdef class ReactionEnsemble(object):
                     raise ValueError(
                         "At least the following keys have to be given as keyword arguments: " + self._required_keys_add_collective_variable_degree_of_association().__str__() + " got " + kwargs.__str__())
                 self._params[k] = kwargs[k]
-        self.RE.add_new_CV_potential_energy(self._params["filename"], self._params["delta"])
+        self.RE.add_new_CV_potential_energy(to_char_pointer(self._params["filename"]), self._params["delta"])
 
     def _valid_keys_add_collective_variable_potential_energy(self):
         return "filename", "delta"
@@ -458,7 +459,7 @@ cdef class ReactionEnsemble(object):
             "final_wang_landau_parameter"]
         self.RE.m_current_wang_landau_system.wang_landau_steps = self._params[
             "wang_landau_steps"]
-        self.RE.m_current_wang_landau_system.output_filename = self._params["full_path_to_output_filename"]
+        self.RE.m_current_wang_landau_system.output_filename = to_char_pointer(self._params["full_path_to_output_filename"])
         self.RE.m_current_wang_landau_system.do_not_sample_reaction_partition_function = self._params[
             "do_not_sample_reaction_partition_function"]
 
