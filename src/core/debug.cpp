@@ -78,7 +78,8 @@ void check_particle_consistency() {
                         "mismatch for part id %d: local: %p cell: %p in cell "
                         "%d\n",
                 this_node, part[n].p.identity,
-                local_particles[part[n].p.identity], static_cast<void*>(&part[n]), c);
+                static_cast<void*>(local_particles[part[n].p.identity]),
+                static_cast<void*>(&part[n]), c);
         errexit();
       }
     }
@@ -185,7 +186,8 @@ void check_particles() {
         fprintf(stderr, "%d: check_particles: ERROR: address mismatch for part "
                         "id %d: local: %p cell: %p in cell %d\n",
                 this_node, part[n].p.identity,
-                local_particles[part[n].p.identity], static_cast<void*>(&part[n]), c);
+                static_cast<void*>(local_particles[part[n].p.identity]),
+                static_cast<void*>(&part[n]), c);
         errexit();
       }
     }
