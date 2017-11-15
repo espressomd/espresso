@@ -33,7 +33,6 @@
 #include "utils.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
-#include "domain_decomposition.hpp"
 #include "interaction_data.hpp"
 #include "thermostat.hpp"
 #include "halo.hpp"
@@ -1841,7 +1840,7 @@ int lb_sanity_checks() {
         runtimeErrorMsg() <<"LB requires a positive skin";
         ret = 1;
     }
-    if (dd.use_vList && skin>=lbpar.agrid/2.0) {
+    if (cell_structure.use_verlet_list && skin>=lbpar.agrid/2.0) {
         runtimeErrorMsg() <<"LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing";
         ret = -1;
     }

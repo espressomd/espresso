@@ -105,7 +105,7 @@ exit()
 with open("particle_save", "r") as particle_save:
     pickle.load(particle_save)
 
-act_min_dist = system.analysis.mindist()
+act_min_dist = system.analysis.min_dist()
 
 with open("p3m_save", "r") as p3m_save:
     p3m = pickle.load(p3m_save)

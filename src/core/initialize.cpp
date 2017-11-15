@@ -28,7 +28,6 @@
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 #include "debye_hueckel.hpp"
-#include "domain_decomposition.hpp"
 #include "elc.hpp"
 #include "energy.hpp"
 #include "errorhandling.hpp"
@@ -100,12 +99,9 @@ void on_program_start() {
   Random::init_random();
 
   init_node_grid();
-  /* calculate initial minimal number of cells (see tclcallback_min_num_cells)
-   */
-  min_num_cells = calc_processor_min_num_cells();
 
   /* initially go for domain decomposition */
-  dd_topology_init(&local_cells);
+  topology_init(CELL_STRUCTURE_DOMDEC, &local_cells);
 
   ghost_init();
   /* Initialise force and energy tables */
@@ -215,20 +211,24 @@ void on_integration_start() {
 
 #ifdef ADDITIONAL_CHECKS
   check_global_consistency();
-#endif
 
-#ifdef ADDITIONAL_CHECKS
+  if(!Utils::Mpi::all_compare(comm_cart, cell_structure.type)) {
+    runtimeErrorMsg() << "Nodes disagree about cell system type.";
+  }
+
+  if(!Utils::Mpi::all_compare(comm_cart, cell_structure.use_verlet_list)) {
+    runtimeErrorMsg() << "Nodes disagree about use of verlet lists.";
+  }
+
 #ifdef ELECTROSTATICS
   if (!Utils::Mpi::all_compare(comm_cart,coulomb.method))
     runtimeErrorMsg() << "Nodes disagree about Coulomb long range method";
 #endif
-#ifdef DIPOLES 
+#ifdef DIPOLES
   if (!Utils::Mpi::all_compare(comm_cart,coulomb.Dmethod))
     runtimeErrorMsg() << "Nodes disagree about dipolar long range method";
 #endif
-#endif
-
-   
+#endif /* ADDITIONAL_CHECKS */
 
   on_observable_calc();
 }
