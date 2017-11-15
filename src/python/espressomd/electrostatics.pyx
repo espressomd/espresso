@@ -57,7 +57,6 @@ IF ELECTROSTATICS == 1:
             for param in tuneParams.iterkeys():
                 if not param in self.required_keys() or (not subsetTuneParams == None and param in subsetTuneParams.keys()):
                     self._params[param] = tuneParams[param]
-            print(self._params)
             self._tune()
     
 IF COULOMB_DEBYE_HUECKEL:
@@ -880,16 +879,20 @@ IF ELECTROSTATICS:
                 self._params["delta_mid_bot"] = -1
                 self._params["const_pot_on"] = 1
 
-            print(MMM2D_set_params(self._params["maxPWerror"], self._params["far_cut"], self._params["delta_mid_top"], self._params["delta_mid_bot"], self._params["capacitor"], self._params["pot_diff"]))
+            res=MMM2D_set_params(self._params["maxPWerror"], self._params["far_cut"], self._params["delta_mid_top"], self._params["delta_mid_bot"], self._params["capacitor"], self._params["pot_diff"])
             handle_errors("MMM2d setup")
+            if res:
+                raise Exception("MMM2D setup failed")
 
         def _activate_method(self):
             coulomb.method = COULOMB_MMM2D
             self._set_params_in_es_core()
             MMM2D_init()
             handle_errors("MMM2d setup")
-            print(MMM2D_sanity_checks())
+            res=MMM2D_sanity_checks()
             handle_errors("MMM2d setup")
+            if res:
+                raise Exception("MMM2D sanity checks failed.")
             mpi_bcast_coulomb_params()
             handle_errors("MMM2d setup")
 

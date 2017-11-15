@@ -38,14 +38,15 @@ class CoulombMixedPeriodicity(ut.TestCase):
     S = espressomd.System()
     S.thermostat.turn_off()
     forces = {}
-    tolerance = 1E-3
+    tolerance_force = 1E-3
+    tolerance_energy = 1.5E-3
     generate_data=False
 
-    # Reference energy from p3m in the tcl test case
-    reference_energy = 216.559159389
+    # Reference energy from MMM2D
+    reference_energy = 216.640984711 
 
     def setUp(self):
-        self.S.box_l = (10, 10, 10)
+        self.S.box_l = (10, 10, 12)
         self.S.time_step = 0.01
         self.S.cell_system.skin = 0.4
         while len(self.S.actors)>0:
@@ -81,20 +82,20 @@ class CoulombMixedPeriodicity(ut.TestCase):
         if energy:
             energy_abs_diff = abs(self.S.analysis.energy()["total"] - self.reference_energy)
             print(method_name, "energy difference", energy_abs_diff)
-            #self.assertLessEqual(
-            #    energy_abs_diff,
-            #    self.tolerance,
-            #    "Absolte energy difference " +
-            #    str(energy_abs_diff) +
-            #    " too large for " +
-            #    method_name)
-        #self.assertLessEqual(
-        #    force_abs_diff,
-        #    self.tolerance,
-        #    "Asbolute force difference " +
-        #    str(force_abs_diff) +
-        #    " too large for method " +
-        #    method_name)
+            self.assertLessEqual(
+                energy_abs_diff,
+                self.tolerance_energy,
+                "Absolte energy difference " +
+                str(energy_abs_diff) +
+                " too large for " +
+                method_name)
+        self.assertLessEqual(
+            rms_force_diff,
+            self.tolerance_force,
+            "Asbolute force difference " +
+            str(rms_force_diff) +
+            " too large for method " +
+            method_name)
 
     # Tests for individual methods
 
@@ -107,30 +108,33 @@ class CoulombMixedPeriodicity(ut.TestCase):
             
             self.S.cell_system.set_domain_decomposition()
             self.S.periodicity=1,1,1
+            self.S.box_l = (10, 10, 12)
 
-            p3m=el.P3M(bjerrum_length=1, mesh=100, accuracy=1e-7,
+            p3m=el.P3M(bjerrum_length=1, mesh=(64,64,80),accuracy=1e-4,
                                   tune=True)
             
             self.S.actors.add(p3m)
-            elc=el_ext.ELC(maxPWerror=1E-9,gap_size=1)
+            elc=el_ext.ELC(maxPWerror=1E-9,gap_size=3)
             self.S.actors.add(elc)
             self.S.integrator.run(0)
-            if self.generate_data:
-                n=len(self.S.part)
-                data=np.hstack((self.S.part[:].id.reshape((n,1)),self.S.part[:].pos_folded,self.S.part[:].q.reshape((n,1)),self.S.part[:].f))
-                np.savetxt(tests_common.abspath(
-                    "data/coulomb_mixed_periodicity_system.data"),data)
             self.compare("elc", energy=True)
             self.S.actors.remove(p3m)
 
-    def test_z_MMM2D(self):
-        self.S.cell_system.set_layered(n_layers=10)
+    def test_MMM2D(self):
+        self.S.box_l = (10, 10, 12)
+        self.S.cell_system.set_layered(n_layers=10,use_verlet_lists=False)
         self.S.periodicity=1,1,0
         mmm2d=(el.MMM2D(bjerrum_length=1,maxPWerror=1E-7))
             
         self.S.actors.add(mmm2d)
         self.S.integrator.run(0)
-        self.compare("mmm2d", energy=True)
+        if self.generate_data:
+            n=len(self.S.part)
+            data=np.hstack((self.S.part[:].id.reshape((n,1)),self.S.part[:].pos_folded,self.S.part[:].q.reshape((n,1)),self.S.part[:].f))
+            np.savetxt(tests_common.abspath(
+                "data/coulomb_mixed_periodicity_system.data"),data)
+        print(self.S.analysis.energy()["total"])
+        self.compare("mmm2d (compared to stored data)", energy=True)
         self.S.actors.remove(mmm2d)
 
     if espressomd.has_features("SCAFACOS"):
@@ -138,12 +142,13 @@ class CoulombMixedPeriodicity(ut.TestCase):
             def test_scafacos_p2nfft(self):
                 self.S.periodicity=1,1,0
                 self.S.cell_system.set_domain_decomposition()
+                self.S.box_l=10,10,10
                 
                 scafacos=el.Scafacos(
                         bjerrum_length=1,
                         method_name="p2nfft",
                         method_params={
-                            "tolerance_field": 2E-6})
+                            "tolerance_field": 2E-5})
                 self.S.actors.add(scafacos)
                 self.S.integrator.run(0)
                 self.compare("scafacos_p2nfft", energy=True)

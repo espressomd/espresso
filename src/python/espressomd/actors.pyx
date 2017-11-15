@@ -41,7 +41,6 @@ cdef class Actor(object):
 
     def _activate(self):
         inter = self._get_interaction_type()
-        print(inter)
         if Actor.active_list[inter]:
             raise ThereCanOnlyBeOne(self.__class__.__bases__[0])
         Actor.active_list[inter] = True
@@ -199,10 +198,7 @@ class Actors(object):
         self.active_actors.remove(actor)
 
     def __str__(self):
-        print("Active Actors:")
-        for actor in Actors.active_actors:
-            print(actor)
-        return ""
+        return "Active Actors: "+Actors.active_actors.__str__()
 
     def __getitem__(self, key):
         return self.active_actors[key]

@@ -85,7 +85,7 @@ IF ELECTROSTATICS and P3M:
             self._set_params_in_es_core()
 
         def _deactivateMethod(self):
-            pass
+            raise Exception("ELC cannot be deactivated safely.")
 
     cdef class ICC(ElectrostaticExtensions):
 
@@ -232,4 +232,4 @@ IF ELECTROSTATICS and P3M:
             self._set_params_in_es_core()
 
         def _deactivate_method(self):
-            pass
+            raise Exception("ICC cannot be deactivated.")
