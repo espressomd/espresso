@@ -187,7 +187,7 @@ class Mesh:
             # removes a blank line at the end of the file if there is any:
             nodes_coord = filter(None, nodes_coord) # here we have list of lines with triplets of strings
             for line in nodes_coord:  # extracts coordinates from the string line
-                line = np.array(map(float, line.split()))
+                line = np.array([float(x) for x in line.split()])
                 coords = np.array(resize) * line
                 tmp_fixed_point = FixedPoint(coords, len(self.points))
                 self.points.append(tmp_fixed_point)
@@ -227,7 +227,7 @@ class Mesh:
             # removes a blank line at the end of the file if there is any:
             triangles_incid = filter(None, triangles_incid)
             for line in triangles_incid:  # extracts incidences from the string line
-                incid = np.array(map(int, line.split()))
+                incid = np.array([int(x) for x in line.split()])
                 tmp_triangle = Triangle(self.points[incid[0]], self.points[incid[1]], self.points[incid[2]])
                 self.triangles.append(tmp_triangle)
 
@@ -455,7 +455,7 @@ class Mesh:
         tmp_triangle_list_ok.append(tmp_triangle_list[0])
         tmp_triangle_list.pop(0)
 
-        while len(tmp_triangle_list) is not 0:
+        while len(tmp_triangle_list) != 0:
             i = 0
             while i < len(tmp_triangle_list):
                 tmp_triangle = tmp_triangle_list[i]
@@ -641,7 +641,7 @@ class OifCellType:  # analogous to oif_template
                  kb=0.0, kal=0.0, kag=0.0, kv=0.0, kvisc=0.0, normal=False, check_orientation=True):
         if (system is None) or (not isinstance(system,espressomd.System)):
             raise Exception("OifCellType: No system provided or wrong type. Quitting.")
-        if (nodes_file is "") or (triangles_file is ""):
+        if (nodes_file == "") or (triangles_file == ""):
             raise Exception("OifCellType: One of nodesfile or trianglesfile is missing. Quitting.")
         if not (isinstance(nodes_file,str) and isinstance(triangles_file,str)):
             raise TypeError("Filenames must be strings.")
@@ -739,16 +739,16 @@ class OifCell:
             esp_inter = inter[0]
             points = inter[1]
             n_points = len(points)
-            if n_points is 2:
+            if n_points == 2:
                 p0 = self.mesh.points[points[0].id]  # Getting PartPoints from id's of FixedPoints
                 p1 = self.mesh.points[points[1].id]
                 p0.part.add_bond((esp_inter, p1.part_id))
-            if n_points is 3:
+            if n_points == 3:
                 p0 = self.mesh.points[points[0].id]
                 p1 = self.mesh.points[points[1].id]
                 p2 = self.mesh.points[points[2].id]
                 p0.part.add_bond((esp_inter, p1.part_id, p2.part_id))
-            if n_points is 4:
+            if n_points == 4:
                 p0 = self.mesh.points[points[0].id]
                 p1 = self.mesh.points[points[1].id]
                 p2 = self.mesh.points[points[2].id]
@@ -929,7 +929,7 @@ class OifCell:
             return
         n_points = self.get_n_nodes()
         if (len(data) != n_points):
-            print "OifCell: append_point_data_to_vtk: Number of data points does not match number of mesh points."
+            print ("OifCell: append_point_data_to_vtk: Number of data points does not match number of mesh points.")
             return
         output_file = open(file_name, "a")
         if first_append is True:
@@ -942,14 +942,14 @@ class OifCell:
 
     def output_raw_data(self, file_name=None, data=None):
         if file_name is None:
-            print "OifCell: output_raw_data: No file_name provided."
+            print ("OifCell: output_raw_data: No file_name provided.")
             return
         if data is None:
-            print "OifCell: output_raw_data: No data provided."
+            print ("OifCell: output_raw_data: No data provided.")
             return
         n_points = self.get_n_nodes()
         if (len(data) != n_points):
-            print "OifCell: output_raw_data: Number of data points does not match number of mesh points."
+            print ("OifCell: output_raw_data: Number of data points does not match number of mesh points.")
             return
         output_file = open(file_name, "w")
         for p in self.mesh.points:
@@ -958,7 +958,7 @@ class OifCell:
 
     def output_mesh_points(self, file_name=None):
         if file_name is None:
-            print "OifCell: No file_name provided for mesh nodes output."
+            print ("OifCell: No file_name provided for mesh nodes output.")
             return
         output_file = open(file_name, "w")
         center = self.get_origin()
@@ -969,7 +969,7 @@ class OifCell:
 
     def set_mesh_points(self, file_name=None):
         if file_name is None:
-            print "OifCell: No file_name provided for set_mesh_points. "
+            print ("OifCell: No file_name provided for set_mesh_points. ")
             return
         center = self.get_origin()
         n_points = self.get_n_nodes()
@@ -980,14 +980,14 @@ class OifCell:
         # removes a blank line at the end of the file if there is any:
         nodes_coord = filter(None, nodes_coord)  # here we have list of lines with triplets of strings
         if len(nodes_coord) is not n_points:
-            print "OifCell: Mesh nodes not set to new positions: " \
-                  "number of lines in the file does not equal number of Cell nodes."
+            print ("OifCell: Mesh nodes not set to new positions: " \
+                  "number of lines in the file does not equal number of Cell nodes.")
             return
         else:
             i = 0
             for line in nodes_coord:  # extracts coordinates from the string line
                 line = line.split()
-                new_position = np.array(map(float, line.split())) + center
+                new_position = np.array([float(x) for x in line.split()]) + center
                 self.mesh.points[i].set_pos(new_position)
                 i += 1
 
@@ -1036,7 +1036,7 @@ class OifCell:
                       "kag, kv, total)")
                 return
         # calculation of stretching forces and f_metric
-        if (el_forces[0] is 1) or (el_forces[5] is 1) or (f_metric[0] is 1) or (f_metric[5] is 1):
+        if (el_forces[0] == 1) or (el_forces[5] == 1) or (f_metric[0] == 1) or (f_metric[5] == 1):
             # initialize list
             stretching_forces_list = []
             for p in self.mesh.points:
@@ -1054,13 +1054,13 @@ class OifCell:
                 stretching_forces_list[e.A.id] += tmp_stretching_force
                 stretching_forces_list[e.B.id] -= tmp_stretching_force
             # calculation of stretching f_metric, if needed
-            if f_metric[0] is 1:
+            if f_metric[0] == 1:
                 ks_f_metric = 0.0
                 for p in self.mesh.points:
                     ks_f_metric += norm(stretching_forces_list[p.id])
 
         # calculation of bending forces and f_metric
-        if (el_forces[1] is 1) or (el_forces[5] is 1) or (f_metric[1] is 1) or (f_metric[5] is 1):
+        if (el_forces[1] == 1) or (el_forces[5] == 1) or (f_metric[1] == 1) or (f_metric[5] == 1):
             # initialize list
             bending_forces_list = []
             for p in self.mesh.points:
@@ -1086,13 +1086,13 @@ class OifCell:
                 bending_forces_list[angle.C.id] -= 0.5*tmp_bending_force1 + 0.5*tmp_bending_force2
                 bending_forces_list[angle.D.id] += tmp_bending_force2
             # calculation of bending f_metric, if needed
-            if f_metric[1] is 1:
+            if f_metric[1] == 1:
                 kb_f_metric = 0.0
                 for p in self.mesh.points:
                     kb_f_metric += norm(bending_forces_list[p.id])
 
         # calculation of local area forces and f_metric
-        if (el_forces[2] is 1) or (el_forces[5] is 1) or (f_metric[2] is 1) or (f_metric[5] is 1):
+        if (el_forces[2] == 1) or (el_forces[5] == 1) or (f_metric[2] == 1) or (f_metric[5] == 1):
             # initialize list
             local_area_forces_list = []
             for p in self.mesh.points:
@@ -1117,13 +1117,13 @@ class OifCell:
                                                             tmp_local_area_forces[8]])
 
             # calculation of local area f_metric, if needed
-            if f_metric[2] is 1:
+            if f_metric[2] == 1:
                 kal_f_metric = 0.0
                 for p in self.mesh.points:
                     kal_f_metric += norm(local_area_forces_list[p.id])
 
         # calculation of global area forces and f_metric
-        if (el_forces[3] is 1) or (el_forces[5] is 1) or (f_metric[3] is 1) or (f_metric[5] is 1):
+        if (el_forces[3] == 1) or (el_forces[5] == 1) or (f_metric[3] == 1) or (f_metric[5] == 1):
             # initialize list
             global_area_forces_list = []
             for p in self.mesh.points:
@@ -1144,13 +1144,13 @@ class OifCell:
                 global_area_forces_list[t.C.id] += np.array([tmp_global_area_forces[6], tmp_global_area_forces[7],
                                                              tmp_global_area_forces[8]])
             # calculation of global area f_metric, if needed
-            if f_metric[3] is 1:
+            if f_metric[3] == 1:
                 kag_f_metric = 0.0
                 for p in self.mesh.points:
                     kag_f_metric += norm(global_area_forces_list[p.id])
 
         # calculation of volume forces and f_metric
-        if (el_forces[4] is 1) or (el_forces[5] is 1) or (f_metric[4] is 1) or (f_metric[5] is 1):
+        if (el_forces[4] == 1) or (el_forces[5] == 1) or (f_metric[4] == 1) or (f_metric[5] == 1):
             # initialize list
             volume_forces_list = []
             for p in self.mesh.points:
@@ -1168,13 +1168,13 @@ class OifCell:
                 volume_forces_list[t.B.id] += tmp_volume_force
                 volume_forces_list[t.C.id] += tmp_volume_force
             # calculation of volume f_metric, if needed
-            if f_metric[4] is 1:
+            if f_metric[4] == 1:
                 kv_f_metric = 0.0
                 for p in self.mesh.points:
                     kv_f_metric += norm(volume_forces_list[p.id])
 
         # calculation of total elastic forces and f_metric
-        if (el_forces[5] is 1) or (f_metric[5] is 1):
+        if (el_forces[5] == 1) or (f_metric[5] == 1):
             elastic_forces_list = []
             for p in self.mesh.points:
                 total_elastic_forces = stretching_forces_list[p.id] + bending_forces_list[p.id] + \
@@ -1182,34 +1182,34 @@ class OifCell:
                                        volume_forces_list[p.id]
                 elastic_forces_list.append(total_elastic_forces)
             # calculation of total f_metric, if needed
-            if f_metric[5] is 1:
+            if f_metric[5] == 1:
                 total_f_metric = 0.0
                 for p in self.mesh.points:
                     total_f_metric += norm(elastic_forces_list[p.id])
 
         # calculate norms of resulting forces
-        if (el_forces[0] + el_forces[1] + el_forces[2] + el_forces[3] + el_forces[4] + el_forces[5]) is not 0:
-            if el_forces[0] is 1:
+        if (el_forces[0] + el_forces[1] + el_forces[2] + el_forces[3] + el_forces[4] + el_forces[5]) != 0:
+            if el_forces[0] == 1:
                 stretching_forces_norms_list = []
                 for p in self.mesh.points:
                     stretching_forces_norms_list.append(norm(stretching_forces_list[p.id]))
-            if el_forces[1] is 1:
+            if el_forces[1] == 1:
                 bending_forces_norms_list = []
                 for p in self.mesh.points:
                     bending_forces_norms_list.append(norm(bending_forces_list[p.id]))
-            if el_forces[2] is 1:
+            if el_forces[2] == 1:
                 local_area_forces_norms_list = []
                 for p in self.mesh.points:
                     local_area_forces_norms_list.append(norm(local_area_forces_list[p.id]))
-            if el_forces[3] is 1:
+            if el_forces[3] == 1:
                 global_area_forces_norms_list = []
                 for p in self.mesh.points:
                     global_area_forces_norms_list.append(norm(global_area_forces_list[p.id]))
-            if el_forces[4] is 1:
+            if el_forces[4] == 1:
                 volume_forces_norms_list = []
                 for p in self.mesh.points:
                     volume_forces_norms_list.append(norm(volume_forces_list[p.id]))
-            if el_forces[5] is 1:
+            if el_forces[5] == 1:
                 elastic_forces_norms_list = []
                 for p in self.mesh.points:
                     elastic_forces_norms_list.append(norm(elastic_forces_list[p.id]))
@@ -1222,65 +1222,65 @@ class OifCell:
                 return
             self.output_vtk_pos_folded(vtk_file)
             first = True
-            if el_forces[0] is 1:
+            if el_forces[0] == 1:
                 self.append_point_data_to_vtk(file_name=vtk_file, data_name="ks_f_metric",
                                               data=stretching_forces_norms_list, first_append=first)
                 first = False
-            if el_forces[1] is 1:
+            if el_forces[1] == 1:
                 self.append_point_data_to_vtk(file_name=vtk_file, data_name="kb_f_metric",
                                               data=bending_forces_norms_list, first_append=first)
                 first = False
-            if el_forces[2] is 1:
+            if el_forces[2] == 1:
                 self.append_point_data_to_vtk(file_name=vtk_file, data_name="kal_f_metric",
                                               data=local_area_forces_norms_list, first_append=first)
                 first = False
-            if el_forces[3] is 1:
+            if el_forces[3] == 1:
                 self.append_point_data_to_vtk(file_name=vtk_file, data_name="kag_f_metric",
                                               data=global_area_forces_norms_list, first_append=first)
                 first = False
-            if el_forces[4] is 1:
+            if el_forces[4] == 1:
                 self.append_point_data_to_vtk(file_name=vtk_file, data_name="kav_f_metric",
                                               data=volume_forces_norms_list, first_append=first)
                 first = False
-            if el_forces[5] is 1:
+            if el_forces[5] == 1:
                 self.append_point_data_to_vtk(file_name=vtk_file, data_name="total_f_metric",
                                               data=elastic_forces_norms_list, first_append=first)
                 first = False
 
         # output raw data
         if raw_data_file is not None:
-            if (el_forces[0] + el_forces[1] + el_forces[2] + el_forces[3] + el_forces[4] + el_forces[5]) is not 1:
+            if (el_forces[0] + el_forces[1] + el_forces[2] + el_forces[3] + el_forces[4] + el_forces[5]) != 1:
                 print("OifCell: elastic_forces: Only one type of elastic forces can be written into one " \
                       "raw_data_file. If you need several, please call OifCell.elastic_forces multiple times - " \
                       "once per elastic force.")
                 return
-            if el_forces[0] is 1:
+            if el_forces[0] == 1:
                 self.output_raw_data(file_name=raw_data_file, data=stretching_forces_list)
-            if el_forces[1] is 1:
+            if el_forces[1] == 1:
                 self.output_raw_data(file_name=raw_data_file, data=bending_forces_list)
-            if el_forces[2] is 1:
+            if el_forces[2] == 1:
                 self.output_raw_data(file_name=raw_data_file, data=local_area_forces_list)
-            if el_forces[3] is 1:
+            if el_forces[3] == 1:
                 self.output_raw_data(file_name=raw_data_file, data=global_area_forces_list)
-            if el_forces[4] is 1:
+            if el_forces[4] == 1:
                 self.output_raw_data(file_name=raw_data_file, data=volume_forces_list)
-            if el_forces[5] is 1:
+            if el_forces[5] == 1:
                 self.output_raw_data(file_name=raw_data_file, data=elastic_forces_list)
 
         # return f_metric
         if f_metric[0] + f_metric[1] + f_metric[2] + f_metric[3] + f_metric[4] + f_metric[5] > 0:
             results = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-            if f_metric[0] is 1:
+            if f_metric[0] == 1:
                 results[0] = ks_f_metric
-            if f_metric[1] is 1:
+            if f_metric[1] == 1:
                 results[1] = kb_f_metric
-            if f_metric[2] is 1:
+            if f_metric[2] == 1:
                 results[2] = kal_f_metric
-            if f_metric[3] is 1:
+            if f_metric[3] == 1:
                 results[3] = kag_f_metric
-            if f_metric[4] is 1:
+            if f_metric[4] == 1:
                 results[4] = kv_f_metric
-            if f_metric[5] is 1:
+            if f_metric[5] == 1:
                 results[5] = total_f_metric
             return results
         else:
