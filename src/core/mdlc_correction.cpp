@@ -36,7 +36,6 @@
 #include "mdlc_correction.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "domain_decomposition.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "p3m-dipolar.hpp"
@@ -52,7 +51,7 @@ static double mu_max;
 
 void calc_mu_max() {
   mu_max = std::accumulate(
-      local_cells.particles().begin(), local_cells.particles().end(), 0,
+      local_cells.particles().begin(), local_cells.particles().end(), 0.0,
       [](double mu, Particle const &p) { return std::max(mu, p.p.dipm); });
 
   MPI_Allreduce(MPI_IN_PLACE, &mu_max, 1, MPI_DOUBLE, MPI_MAX, comm_cart);

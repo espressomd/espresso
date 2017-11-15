@@ -1,7 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
+  Copyright (C) 2017 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -18,22 +16,12 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef COMFIXED_H
-#define COMFIXED_H
+#ifndef CORE_COMFIXED_GLOBAL_HPP
+#define CORE_COMFIXED_GLOBAL_HPP
 
-#include "config.hpp"
+#include "ComFixed.hpp"
+#include "ParticleRange.hpp"
 
-/** \file comfixed.hpp
- *  Routines to enable comfixed
- */
-#ifdef COMFIXED
-
-///
-int comfixed_set_params(int part_type_a, int part_type_b, int flag);
-
-///
-void calc_comfixed();
-
-#endif
+extern ComFixed<ParticleRange> comfixed;
 
 #endif

@@ -86,7 +86,7 @@ class CoulombCloudWallTune(ut.TestCase):
         def test_p3m_gpu(self):
             # We have to add some tolerance here, because the reference
             # system is not homogeneous
-            self.S.actors.add(P3M_GPU(bjerrum_length=1., accuracy=5e-4,
+            self.S.actors.add(P3MGPU(bjerrum_length=1., accuracy=5e-4,
                                       tune=True))
             self.S.integrator.run(0)
             self.compare("p3m_gpu")

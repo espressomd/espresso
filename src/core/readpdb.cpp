@@ -28,7 +28,7 @@ static void  add_lj_interaction(std::set<PdbParser::itp_atomtype, PdbParser::itp
 	READPDB_TRACE(printf("adding lj interaction types %d %d eps %e sig %e cut %e shift %e\n", 
 			   it->other_type, jt->espresso_id, epsilon_ij, sigma_ij, cutoff_ij, shift_ij););
 	lennard_jones_set_params(it->other_type, jt->espresso_id, epsilon_ij, sigma_ij,
-			       cutoff_ij, shift_ij, 0.0, -1.0, 0.0);
+			       cutoff_ij, shift_ij, 0.0, 0.0);
     }
   }
 }
@@ -52,7 +52,7 @@ static void add_lj_internal(std::set<PdbParser::itp_atomtype, PdbParser::itp_ato
 	READPDB_TRACE(printf("adding internal lj interaction types %d %d eps %e sig %e cut %e shift %e epsilon_i %e\n", 
 			   it->espresso_id, jt->espresso_id, epsilon_ij, sigma_ij, cutoff_ij, shift_ij, it->epsilon););
 	lennard_jones_set_params(it->espresso_id, jt->espresso_id, epsilon_ij, sigma_ij,
-			       cutoff_ij, shift_ij, 0.0, -1.0, 0.0);      
+			       cutoff_ij, shift_ij, 0.0, 0.0);
     }
   }
 }

@@ -99,7 +99,7 @@ system.non_bonded_inter[0, 1].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
     cutoff=lj_cut_mixed, shift="auto")
 
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 
 print("LJ-parameters:")
 print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
@@ -135,9 +135,9 @@ while i < warm_n_time and act_min_dist < min_dist :
     print("run {} at time = {} (LJ cap= {} ) min dist = {}".strip().format(i, system.time, lj_cap, act_min_dist))
     i+=1
     lj_cap += 1.0
-    system.non_bonded_inter.set_force_cap(lj_cap)
+    system.force_cap = lj_cap
 
-system.non_bonded_inter.set_force_cap(0)
+system.force_cap = 0
 
 print("\nWarm up finished\n")
 

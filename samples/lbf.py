@@ -43,7 +43,7 @@ system.part.add(id=0, pos=[box_l / 2.0, box_l /
 # system.part.add(id=0, pos=[box_l/2.0,box_l/2.0,box_l/2.0], ext_force=[0,0,1])
 
 
-#lbf = lb.LBFluid_GPU(agrid=1, fric=1, dens=1, visc=1, tau=0.01, ext_force=[0,0,-1.0/(box_l**3)])
+#lbf = lb.LBFluidGPU(agrid=1, fric=1, dens=1, visc=1, tau=0.01, ext_force=[0,0,-1.0/(box_l**3)])
 lbf = lb.LBFluid(agrid=1, fric=1, dens=1, visc=1, tau=0.01,
                  ext_force=[0, 0, -1.0 / (box_l**3)])
 system.actors.add(lbf)

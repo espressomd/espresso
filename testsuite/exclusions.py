@@ -70,19 +70,85 @@ class Exclusions(ut.TestCase):
         pair_energy = self.s.analysis.energy()['total']
         self.assertGreater(pair_energy, 0.)
 
+        pair_pressure = self.s.analysis.pressure()['total']
+        self.assertGreater(pair_pressure, 0.)
+
+        self.s.integrator.run(0)
+        pair_force = self.s.part[0].f[0]
+        self.assertGreater(abs(pair_force), 0.)
+        self.assertAlmostEqual(self.s.part[1].f[0], -pair_force, places=7)
+
         self.s.part.add(id=2, pos=[2, 0, 0], type=0)
+        self.s.integrator.run(0)
         self.assertAlmostEqual(self.s.analysis.energy()[
                                'total'], 2 * pair_energy)
+        self.assertAlmostEqual(self.s.analysis.pressure()[
+                               'total'], 2 * pair_pressure)
+        self.assertAlmostEqual(self.s.part[2].f[0], -pair_force, places=7)
+
         self.s.part[1].exclusions = [0, 2]
+        self.s.integrator.run(0)
         self.assertAlmostEqual(self.s.analysis.energy()['total'], 0)
+        self.assertAlmostEqual(self.s.analysis.pressure()['total'], 0)
+        self.assertAlmostEqual(self.s.part[0].f[0], 0, places=7)
+        self.assertAlmostEqual(self.s.part[1].f[0], 0, places=7)
+        self.assertAlmostEqual(self.s.part[2].f[0], 0, places=7)
+
         self.s.part[1].exclusions = [0]
         self.assertAlmostEqual(self.s.analysis.energy()['total'], pair_energy)
+        self.assertAlmostEqual(self.s.analysis.pressure()['total'], pair_pressure)
+        self.s.integrator.run(0)
+        self.assertAlmostEqual(self.s.part[0].f[0], 0, places=7)
+        self.assertAlmostEqual(self.s.part[1].f[0], pair_force, places=7)
+        self.assertAlmostEqual(self.s.part[2].f[0], -pair_force, places=7)
+
         self.s.part[1].exclusions = []
         self.assertAlmostEqual(self.s.analysis.energy()[
                                'total'], 2 * pair_energy)
+        self.assertAlmostEqual(self.s.analysis.pressure()[
+                               'total'], 2 * pair_pressure)
+        self.s.integrator.run(0)
+        self.assertAlmostEqual(self.s.part[0].f[0], pair_force, places=7)
+        self.assertAlmostEqual(self.s.part[1].f[0], 0, places=7)
+        self.assertAlmostEqual(self.s.part[2].f[0], -pair_force, places=7)
+
         self.s.part[1].exclusions = [0]
         self.assertAlmostEqual(self.s.analysis.energy()['total'], pair_energy)
+        self.assertAlmostEqual(self.s.analysis.pressure()['total'], pair_pressure)
+        self.s.integrator.run(0)
+        self.assertAlmostEqual(self.s.part[0].f[0], 0, places=7)
+        self.assertAlmostEqual(self.s.part[1].f[0], pair_force, places=7)
+        self.assertAlmostEqual(self.s.part[2].f[0], -pair_force, places=7)
 
+    @ut.skipIf(not espressomd.has_features(['P3M']), "Skipping test")
+    def test_electrostatics_not_excluded(self):
+        from espressomd.electrostatics import P3M
+        self.s.part.add(id=0, pos=[0, 0, 0], type=0, q=+1.)
+        self.s.part.add(id=1, pos=[1, 0, 0], type=0, q=-1.)
+
+        # Small alpha means large short-range contribution
+        self.s.actors.add(P3M(bjerrum_length=1, r_cut=3.0, accuracy=1e-3,
+                                  mesh=32, cao=7, alpha=0.1, tune=False))
+
+        # Only short-range part of the coulomb energy
+        pair_energy = self.s.analysis.energy()[('coulomb', 0)]
+        self.assertGreater(abs(pair_energy), 0.)
+
+        self.s.integrator.run(0)
+        pair_force = self.s.part[0].f[0]
+        self.assertGreater(abs(pair_force), 0.)
+        self.assertAlmostEqual(self.s.part[1].f[0], -pair_force, places=7)
+
+        pair_pressure = self.s.analysis.pressure()[('coulomb', 0)]
+        self.assertGreater(abs(pair_pressure), 0.)
+
+        self.s.part[0].exclusions = [1]
+        # Force and energy should not be changed by the exclusion
+        self.s.integrator.run(0)
+        self.assertAlmostEqual(self.s.part[0].f[0], pair_force, places=7)
+        self.assertAlmostEqual(self.s.part[1].f[0], -pair_force, places=7)
+        self.assertAlmostEqual(self.s.analysis.energy()[('coulomb', 0)], pair_energy, places=7)
+        self.assertAlmostEqual(self.s.analysis.pressure()[('coulomb', 0)], pair_pressure, places=7)
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())

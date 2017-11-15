@@ -39,7 +39,6 @@
 #include "bmhtf-nacl.hpp"
 #include "buckingham.hpp"
 #include "collision.hpp"
-#include "comfixed.hpp"
 #include "constraints.hpp"
 #include "dihedral.hpp"
 #include "elc.hpp"
@@ -300,8 +299,11 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   /* non bonded pair potentials                  */
   /***********************************************/
 
-  calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2, force, torque1,
-                             torque2);
+#ifdef EXCLUSIONS
+  if (do_nonbonded(p1, p2))
+#endif
+    calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2, force,
+                               torque1, torque2);
 
 /***********************************************/
 /* short range electrostatics                  */
@@ -735,12 +737,10 @@ inline void add_bonded_force(Particle *p1) {
       bond_broken = calc_umbrella_pair_force(p1, p2, iaparams, dx, force);
       break;
 #endif
-#ifdef BOND_VIRTUAL
     case BONDED_IA_VIRTUAL_BOND:
       bond_broken = 0;
       force[0] = force[1] = force[2] = 0.0;
       break;
-#endif
     default:
       runtimeErrorMsg() << "add_bonded_force: bond type of atom "
                         << p1->p.identity << " unknown\n";

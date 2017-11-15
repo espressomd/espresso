@@ -17,18 +17,22 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+#include "cuda_interface.hpp"
+
+#ifdef CUDA
+
+#include "utils/serialization/CUDA_particle_data.hpp"
+#include "utils/mpi/gather_buffer.hpp"
+#include "utils/mpi/scatter_buffer.hpp"
 #include "communication.hpp"
 #include "config.hpp"
-#include "cuda_interface.hpp"
 #include "debug.hpp"
 #include "energy.hpp"
 #include "grid.hpp"
 #include "interaction_data.hpp"
 #include "random.hpp"
-#include "utils/mpi/gather_buffer.hpp"
-#include "utils/mpi/scatter_buffer.hpp"
 
-#ifdef CUDA
 
 /// MPI tag for cuda particle gathering
 #define REQ_CUDAGETPARTS 0xcc01
