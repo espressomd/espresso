@@ -154,7 +154,7 @@ class ReactionEnsembleTest(ut.TestCase):
             ReactionEnsembleTest.volume,
             ReactionEnsembleTest.RE.get_volume(),
             places=9,
-            msg="reaction ensemble golume not set correctly.")
+            msg="reaction ensemble volume not set correctly.")
 
         self.assertAlmostEqual(
             ReactionEnsembleTest.standard_pressure_in_simulation_units,
