@@ -30,6 +30,7 @@
 namespace Observables {
 class Observable {
 public:
+  friend class CylindricalFluxDensityProfile;
   Observable();
   virtual ~Observable() = default;
   int calculate();

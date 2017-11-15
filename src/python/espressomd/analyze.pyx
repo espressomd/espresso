@@ -63,7 +63,7 @@ class Analysis(object):
     # Minimal distance between particles
     #
 
-    def mindist(self, p1='default', p2='default'):
+    def min_dist(self, p1='default', p2='default'):
         """Minimal distance between two sets of particles.
         
         Parameters
@@ -106,7 +106,7 @@ class Analysis(object):
     #
 
 
-    def distto(self, id=None, pos=None):
+    def dist_to(self, id=None, pos=None):
         """
         Calculates the distance to a point or particle.
 
@@ -124,10 +124,10 @@ class Analysis(object):
 
         """
 
-        if id == None and pos == None:
+        if id is None and pos is None:
             raise Exception("Either id or pos have to be specified\n" + __doc__)
 
-        if id != None and pos != None:
+        if (id is not None) and (pos is not None):
             raise Exception("Only one of id or pos may be specified\n" + __doc__)
 
         cdef double cpos[3]
@@ -136,7 +136,7 @@ class Analysis(object):
 
         # Get position
         # If particle id specified
-        if id != None:
+        if id is not None:
             if not isinstance(id, int):
                 raise ValueError("Id has to be an integer")
             if not id in self._system.part[:].id:
@@ -183,7 +183,7 @@ class Analysis(object):
     #
 
 
-    def centermass(self, part_type=None):
+    def center_of_mass(self, part_type=None):
         """
         Calculates the systems center of mass.
 
@@ -1078,7 +1078,7 @@ class Analysis(object):
     #
 
 
-    def angularmomentum(self, p_type=None):
+    def angular_momentum(self, p_type=None):
         print("p_type = ", p_type)
         check_type_or_throw_except(
             p_type, 1, int,   "p_type has to be an int")
@@ -1141,7 +1141,7 @@ class Analysis(object):
     #
 
 
-    def momentofinertiamatrix(self, p_type=None):
+    def moment_of_inertia_matrix(self, p_type=None):
         """
         Returns the 3x3 moment of interia matrix for particles of a given type.
 
@@ -1177,7 +1177,7 @@ class Analysis(object):
     #
 
 
-    def rdfchain(self, r_min=None, r_max=None, r_bins=None,
+    def rdf_chain(self, r_min=None, r_max=None, r_bins=None,
                  chain_start=None, number_of_chains=None, chain_length=None):
         """
         Returns three radial distribution functions (rdf) for the chains.  The
@@ -1264,7 +1264,7 @@ class Analysis(object):
     }
 
 
-    def Vkappa(self, mode=None, Vk1=None, Vk2=None, avk=None):
+    def v_kappa(self, mode=None, Vk1=None, Vk2=None, avk=None):
         """
         .. todo:: Looks to be incomplete
 
