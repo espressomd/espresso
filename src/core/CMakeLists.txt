@@ -39,6 +39,7 @@ if(SCAFACOS)
 endif(SCAFACOS)
 
 set_target_properties(EspressoCore PROPERTIES MACOSX_RPATH TRUE)
+set_target_properties(EspressoConfig PROPERTIES MACOSX_RPATH TRUE)
 
 if(CUDA)
   file(GLOB EspressoCuda_SRC
