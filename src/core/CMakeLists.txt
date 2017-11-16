@@ -61,6 +61,7 @@ endif(CUDA)
 # Subdirectories
 add_subdirectory(observables)
 add_subdirectory(correlators)
+add_subdirectory(accumulators)
 add_subdirectory(io)
 if(HDF5_FOUND)
     target_link_libraries(EspressoCore H5mdCore)
