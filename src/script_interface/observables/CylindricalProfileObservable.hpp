@@ -27,9 +27,9 @@
 #include <memory>
 
 #include "Observable.hpp"
-#include "core/observables/CylindricalProfileObservable.hpp"
 #include "core/observables/CylindricalFluxDensityProfile.hpp"
 #include "core/observables/CylindricalLBFluxDensityProfileAtParticlePositions.hpp"
+#include "core/observables/CylindricalProfileObservable.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
@@ -71,9 +71,12 @@ public:
   void set_parameter(std::string const &name, Variant const &value) override {
     SET_PARAMETER_HELPER("ids", cylindrical_profile_observable()->ids());
     SET_PARAMETER_HELPER("center", cylindrical_profile_observable()->center);
-    SET_PARAMETER_HELPER("n_r_bins", cylindrical_profile_observable()->n_r_bins);
-    SET_PARAMETER_HELPER("n_phi_bins", cylindrical_profile_observable()->n_phi_bins);
-    SET_PARAMETER_HELPER("n_z_bins", cylindrical_profile_observable()->n_z_bins);
+    SET_PARAMETER_HELPER("n_r_bins",
+                         cylindrical_profile_observable()->n_r_bins);
+    SET_PARAMETER_HELPER("n_phi_bins",
+                         cylindrical_profile_observable()->n_phi_bins);
+    SET_PARAMETER_HELPER("n_z_bins",
+                         cylindrical_profile_observable()->n_z_bins);
     SET_PARAMETER_HELPER("min_r", cylindrical_profile_observable()->min_r);
     SET_PARAMETER_HELPER("min_phi", cylindrical_profile_observable()->min_phi);
     SET_PARAMETER_HELPER("min_z", cylindrical_profile_observable()->min_z);
@@ -86,8 +89,8 @@ public:
   cylindrical_profile_observable() const = 0;
 };
 
-#define NEW_CYLINDRICAL_PROFILE_OBSERVABLE(obs_name)                                \
-  class obs_name : public CylindricalProfileObservable {                            \
+#define NEW_CYLINDRICAL_PROFILE_OBSERVABLE(obs_name)                           \
+  class obs_name : public CylindricalProfileObservable {                       \
   public:                                                                      \
     obs_name() : m_observable(new ::Observables::obs_name()){};                \
                                                                                \
@@ -99,8 +102,8 @@ public:
       return m_observable;                                                     \
     }                                                                          \
                                                                                \
-    std::shared_ptr<::Observables::CylindricalProfileObservable>                    \
-    cylindrical_profile_observable() const override {                               \
+    std::shared_ptr<::Observables::CylindricalProfileObservable>               \
+    cylindrical_profile_observable() const override {                          \
       return m_observable;                                                     \
     }                                                                          \
                                                                                \
@@ -109,7 +112,8 @@ public:
   };
 
 NEW_CYLINDRICAL_PROFILE_OBSERVABLE(CylindricalFluxDensityProfile);
-NEW_CYLINDRICAL_PROFILE_OBSERVABLE(CylindricalLBFluxDensityProfileAtParticlePositions);
+NEW_CYLINDRICAL_PROFILE_OBSERVABLE(
+    CylindricalLBFluxDensityProfileAtParticlePositions);
 
 } /* namespace Observables */
 } /* namespace ScriptInterface */
