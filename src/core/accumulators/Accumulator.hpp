@@ -20,38 +20,42 @@
 #ifndef _ACCUMULATORS_ACCUMULATOR_H
 #define _ACCUMULATORS_ACCUMULATOR_H
 
-
 #include <memory>
-#include <boost/accumulators/numeric/functional/vector.hpp>
+/* Needed for transform_iterator to work with
+   lambdas on older compilers. */
+#define BOOST_RESULT_OF_USE_DECLTYPE
 #include <boost/accumulators/accumulators.hpp>
-#include <boost/accumulators/statistics/stats.hpp>
+#include <boost/accumulators/numeric/functional/vector.hpp>
 #include <boost/accumulators/statistics/mean.hpp>
+#include <boost/accumulators/statistics/stats.hpp>
 #include <boost/accumulators/statistics/variance.hpp>
 
 #include "observables/Observable.hpp"
 
-
 namespace ba = boost::accumulators;
 
 namespace Accumulators {
-typedef ba::accumulator_set <std::vector<double>, ba::stats<ba::tag::mean, ba::tag::variance>> acc;
+typedef ba::accumulator_set<std::vector<double>,
+                            ba::stats<ba::tag::mean, ba::tag::variance>>
+    acc;
 
-class Accumulator
-{
+class Accumulator {
 public:
-  // The accumulator struct has to be initialized with the correct vector size, therefore the order of init is important.
-  Accumulator() : m_initialized(false), m_autoupdate(false) {};
-  std::shared_ptr <Observables::Observable> m_obs = nullptr;
+  // The accumulator struct has to be initialized with the correct vector size,
+  // therefore the order of init is important.
+  Accumulator() : m_initialized(false), m_autoupdate(false){};
+  std::shared_ptr<Observables::Observable> m_obs = nullptr;
   void initialize();
   int update();
   std::vector<double> get_mean();
   std::vector<double> get_variance();
   bool m_initialized;
   bool m_autoupdate;
+
 private:
   acc m_acc;
 };
 
-}
+} // namespace Accumulators
 
 #endif
