@@ -171,10 +171,11 @@ void thermo_init_npt_isotropic() {
 // default particle mass is assumed to be unitary in this global parameters
 void thermo_init_brownian() {
     int j;
+    // Dispersions correspond to the Gaussian noise only which is only valid for the BD.
     // here, the time_step is used only to align with Espresso default dimensionless model (translational velocity only)
-    brown_sigma_vel = sqrt(12.0 * temperature) * time_step;
+    brown_sigma_vel = sqrt(temperature) * time_step;
     if (temperature > 0.0)
-      brown_sigma_pos_inv = sqrt(langevin_gamma / (24.0 * temperature));
+      brown_sigma_pos_inv = sqrt(langevin_gamma / (2.0 * temperature));
     else
       brown_sigma_pos_inv = -1.0 * sqrt(langevin_gamma); // just an indication of the infinity; negative sign has no sense here
   #ifdef ROTATION
@@ -184,9 +185,9 @@ void thermo_init_brownian() {
     if (langevin_gamma_rotation < GammaType{}) {
       langevin_gamma_rotation = langevin_gamma;
     }
-    brown_sigma_vel_rotation = sqrt(12.0 * temperature);
+    brown_sigma_vel_rotation = sqrt(temperature);
     if (temperature > 0.0)
-      brown_sigma_pos_rotation_inv = sqrt(langevin_gamma / (24.0 * temperature));
+      brown_sigma_pos_rotation_inv = sqrt(langevin_gamma / (2.0 * temperature));
     else
       brown_sigma_pos_rotation_inv = -1.0 * sqrt(langevin_gamma); // just an indication of the infinity; negative sign has no sense here
     THERMO_TRACE(fprintf(stderr,"%d: thermo_init_bd: brown_sigma_vel_rotation=%f, brown_sigma_pos_rotation=%f",this_node, brown_sigma_vel_rotation,brown_sigma_pos_rotation_inv));

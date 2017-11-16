@@ -445,20 +445,22 @@ cdef class Thermostat(object):
                 if 'PARTICLE_ANISOTROPY' is also compiled in.
     
             """
+
             scalar_gamma_def = True
             scalar_gamma_rot_def = True
             IF PARTICLE_ANISOTROPY:
-                if isinstance(gamma, list):
+                if hasattr(gamma, "__iter__"):
                     scalar_gamma_def = False
                 else:
                     scalar_gamma_def = True
     
             IF PARTICLE_ANISOTROPY:
-                if isinstance(gamma_rotation, list):
+                if hasattr(gamma_rotation, "__iter__"):
                     scalar_gamma_rot_def = False
                 else:
                     scalar_gamma_rot_def = True
-    
+
+
             if kT is None or gamma is None:
                 raise ValueError(
                     "Both, kT and gamma have to be given as keyword args")

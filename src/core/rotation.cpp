@@ -742,7 +742,7 @@ void bd_random_walk_rot(Particle *p, double dt) {
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
-  auto const constexpr langevin_temp_coeff = 24.0;
+  auto const constexpr langevin_temp_coeff = 2.0;
 
   if(p->p.gamma_rot >= Thermostat::GammaType{})
   {
@@ -780,12 +780,12 @@ void bd_random_walk_rot(Particle *p, double dt) {
       dphi[0] = dphi[1] = dphi[2] = 0.0;
 #ifndef PARTICLE_ANISOTROPY
       if (brown_sigma_pos_temp_inv > 0.0)
-        dphi[j] = a[j] * Thermostat::noise() * (1.0 / brown_sigma_pos_temp_inv) * sqrt(dt);
+        dphi[j] = a[j] * Thermostat::noise_g() * (1.0 / brown_sigma_pos_temp_inv) * sqrt(dt);
       else
         dphi[j] = 0.0;
 #else
       if (brown_sigma_pos_temp_inv[j] > 0.0)
-        dphi[j] = a[j] * Thermostat::noise() * (1.0 / brown_sigma_pos_temp_inv[j]) * sqrt(dt);
+        dphi[j] = a[j] * Thermostat::noise_g() * (1.0 / brown_sigma_pos_temp_inv[j]) * sqrt(dt);
       else
         dphi[j] = 0.0;
 #endif // ROTATIONAL_INERTIA
@@ -818,7 +818,7 @@ void bd_random_walk_vel_rot(Particle *p, double dt) {
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
-  auto const constexpr langevin_temp_coeff = 12.0;
+  auto const constexpr langevin_temp_coeff = 1.0;
   // Is a particle-specific temperature specified?
   if (p->p.T >= 0.)
     brown_sigma_vel_temp = sqrt(langevin_temp_coeff * p->p.T);
@@ -832,7 +832,7 @@ void bd_random_walk_vel_rot(Particle *p, double dt) {
 #endif
     {
       // velocity is added here. It is assigned in the drift part.
-      p->m.omega[j] += a[j] * brown_sigma_vel_temp * Thermostat::noise() / sqrt(p->p.rinertia[j]);
+      p->m.omega[j] += a[j] * brown_sigma_vel_temp * Thermostat::noise_g() / sqrt(p->p.rinertia[j]);
     }
   }
 }

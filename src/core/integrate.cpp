@@ -1393,7 +1393,7 @@ void bd_random_walk(Particle *p, double dt) {
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
-  auto const constexpr langevin_temp_coeff = 24.0;
+  auto const constexpr langevin_temp_coeff = 2.0;
 
   if(p->p.gamma >= Thermostat::GammaType{})
   {
@@ -1436,12 +1436,12 @@ void bd_random_walk(Particle *p, double dt) {
     {
 #ifndef PARTICLE_ANISOTROPY
       if (brown_sigma_pos_temp_inv > 0.0)
-        delta_pos_body[j] = (1.0 / brown_sigma_pos_temp_inv) * sqrt(dt) * Thermostat::noise();
+        delta_pos_body[j] = (1.0 / brown_sigma_pos_temp_inv) * sqrt(dt) * Thermostat::noise_g();
       else
         delta_pos_body[j] = 0.0;
 #else
       if (brown_sigma_pos_temp_inv[j] > 0.0)
-        delta_pos_body[j] = (1.0 / brown_sigma_pos_temp_inv[j]) * sqrt(dt) * Thermostat::noise();
+        delta_pos_body[j] = (1.0 / brown_sigma_pos_temp_inv[j]) * sqrt(dt) * Thermostat::noise_g();
       else
         delta_pos_body[j] = 0.0;
 #endif // PARTICLE_ANISOTROPY
@@ -1483,7 +1483,7 @@ void bd_random_walk_vel(Particle *p, double dt) {
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
-  auto const constexpr langevin_temp_coeff = 12.0;
+  auto const constexpr langevin_temp_coeff = 1.0;
   // Is a particle-specific temperature specified?
   // here, the time_step is used only to align with Espresso default dimensionless model
   if (p->p.T >= 0.)
@@ -1498,7 +1498,7 @@ void bd_random_walk_vel(Particle *p, double dt) {
 #endif
     {
       // velocity is added here. It is assigned in the drift part.
-      p->m.v[j] += brown_sigma_vel_temp * Thermostat::noise() / sqrt(p->p.mass);
+      p->m.v[j] += brown_sigma_vel_temp * Thermostat::noise_g() / sqrt(p->p.mass);
     }
   }
 }
