@@ -34,7 +34,7 @@ class TestCylindricalFluxDensityObservable(ut.TestCase):
     }
 
     def setUp(self):
-        self.lbf = espressomd.lb.LBFluid_GPU(agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01)
+        self.lbf = espressomd.lb.LBFluidGPU(agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01)
         self.system.actors.add(self.lbf)
 
 
