@@ -47,6 +47,7 @@
 #include "minimize_energy.hpp"
 #include "nemd.hpp"
 #include "observables.hpp"
+#include "accumulators.hpp"
 #include "p3m.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
@@ -1112,7 +1113,8 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
 
   /* perform integration */
   if (!Correlators::auto_update_enabled() &&
-      !Observables::auto_update_enabled()) {
+      !Observables::auto_update_enabled() &&
+      !Accumulators::auto_update_enabled()) {
     if (mpi_integrate(n_steps, reuse_forces))
       return ES_ERROR;
   } else {
@@ -1122,6 +1124,7 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
       reuse_forces = 1;
       Observables::auto_update();
       Correlators::auto_update();
+      Accumulators::auto_update();
 
       if (Observables::auto_write_enabled()) {
         Observables::auto_write();
