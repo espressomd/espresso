@@ -38,8 +38,6 @@ if(SCAFACOS)
   target_link_libraries(EspressoCore Scafacos)
 endif(SCAFACOS)
 
-set_target_properties(EspressoCore PROPERTIES MACOSX_RPATH TRUE)
-
 if(CUDA)
   file(GLOB EspressoCuda_SRC
           "*.cu"
@@ -53,7 +51,6 @@ if(CUDA)
   set_target_properties(EspressoCuda PROPERTIES SOVERSION ${SOVERSION})
   add_dependencies(EspressoCuda EspressoConfig)
 
-  set_target_properties(EspressoCuda PROPERTIES MACOSX_RPATH TRUE)
   CUDA_ADD_CUFFT_TO_TARGET(EspressoCuda)
   target_link_libraries(EspressoCore EspressoCuda)
 endif(CUDA)

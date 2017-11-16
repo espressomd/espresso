@@ -28,7 +28,6 @@ add_library(EspressoScriptInterface SHARED ${EspressoScriptInterface_SRC})
 install(TARGETS EspressoScriptInterface LIBRARY DESTINATION ${LIBDIR})
 set_target_properties(EspressoScriptInterface PROPERTIES SOVERSION ${SOVERSION})
 add_dependencies(EspressoScriptInterface EspressoConfig EspressoConfig)
-set_target_properties(EspressoScriptInterface PROPERTIES MACOSX_RPATH TRUE)
 target_link_libraries(EspressoScriptInterface EspressoCore)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
