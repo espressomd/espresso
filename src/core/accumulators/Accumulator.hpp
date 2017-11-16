@@ -32,9 +32,9 @@
 
 #include "observables/Observable.hpp"
 
-namespace ba = boost::accumulators;
 
 namespace Accumulators {
+namespace ba = boost::accumulators;
 typedef ba::accumulator_set<std::vector<double>,
                             ba::stats<ba::tag::mean, ba::tag::variance>>
     acc;
