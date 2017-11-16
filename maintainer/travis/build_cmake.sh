@@ -103,7 +103,7 @@ if ! $insource; then
 fi
 
 # load MPI module if necessary
-if [ -f "/etc/os-release"]; then
+if [ -f "/etc/os-release" ]; then
     grep -q suse /etc/os-release && source /etc/profile.d/modules.sh && module load gnu-openmpi
     grep -q rhel /etc/os-release && source /etc/profile.d/modules.sh && module load mpi
 fi
