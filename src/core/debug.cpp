@@ -78,7 +78,8 @@ void check_particle_consistency() {
                         "mismatch for part id %d: local: %p cell: %p in cell "
                         "%d\n",
                 this_node, part[n].p.identity,
-                local_particles[part[n].p.identity], &part[n], c);
+                static_cast<void*>(local_particles[part[n].p.identity]),
+                static_cast<void*>(&part[n]), c);
         errexit();
       }
     }
@@ -98,7 +99,7 @@ void check_particle_consistency() {
                      this_node, cell_part_cnt, ghost_part_cnt));
   /* checks: local particle id */
   for (n = 0; n < max_seen_particle + 1; n++) {
-    if (local_particles[n] != NULL) {
+    if (local_particles[n] != nullptr) {
       local_part_cnt++;
       if (local_particles[n]->p.identity != n) {
         fprintf(stderr, "%d: check_particle_consistency: ERROR: "
@@ -185,7 +186,8 @@ void check_particles() {
         fprintf(stderr, "%d: check_particles: ERROR: address mismatch for part "
                         "id %d: local: %p cell: %p in cell %d\n",
                 this_node, part[n].p.identity,
-                local_particles[part[n].p.identity], &part[n], c);
+                static_cast<void*>(local_particles[part[n].p.identity]),
+                static_cast<void*>(&part[n]), c);
         errexit();
       }
     }
@@ -196,7 +198,7 @@ void check_particles() {
 
   /* checks: local particle id */
   for (n = 0; n <= max_seen_particle; n++) {
-    if (local_particles[n] != NULL) {
+    if (local_particles[n] != nullptr) {
       local_part_cnt++;
       if (local_particles[n]->p.identity != n) {
         fprintf(stderr, "%d: check_particles: ERROR: local_particles part %d "
