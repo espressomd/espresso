@@ -31,8 +31,15 @@ namespace Accumulators {
 
 class AutoUpdateAccumulators : public ScriptObjectRegistry<Accumulator> {
   virtual void add_in_core(std::shared_ptr<Accumulator> obj_ptr) {
-    obj_ptr->accumulator()->m_autoupdate=true;
-    ::Accumulators::auto_update_accumulators.push_back(obj_ptr->accumulator());
+    if (obj_ptr->accumulator()->m_initialized) {
+      obj_ptr->accumulator()->m_autoupdate = true;
+      ::Accumulators::auto_update_accumulators.push_back(
+          obj_ptr->accumulator());
+    } else {
+      throw std::runtime_error(
+          "Accumulator not initialized with observable, please "
+          "associate an observable with the accumulator.");
+    }
   }
   virtual void remove_in_core(std::shared_ptr<Accumulator> obj_ptr) {
     auto it = std::find(::Accumulators::auto_update_accumulators.begin(),
@@ -40,11 +47,11 @@ class AutoUpdateAccumulators : public ScriptObjectRegistry<Accumulator> {
                         obj_ptr->accumulator());
 
     if (it != ::Accumulators::auto_update_accumulators.end()) {
-      obj_ptr->accumulator()->m_autoupdate=false;
+      obj_ptr->accumulator()->m_autoupdate = false;
       ::Accumulators::auto_update_accumulators.erase(it);
 
     } else {
-      throw "Could not find Accumulator to remove";
+      throw std::runtime_error("Could not find Accumulator to remove");
     };
   };
 
@@ -56,4 +63,4 @@ public:
 } /* namespace Accumulators */
 } /* namespace ScriptInterface */
 
-#endif //SCRIPT_INTERFACE_ACCUMULATOR_AUTOUPDATEACCUMULATORS_HPP
+#endif // SCRIPT_INTERFACE_ACCUMULATOR_AUTOUPDATEACCUMULATORS_HPP
