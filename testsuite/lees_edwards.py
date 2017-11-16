@@ -44,12 +44,12 @@ class lees_edwards_test(ut.TestCase):
     vel_difference_y = system.part[0].v[1] - 0.1
     vel_difference_z = system.part[0].v[2] - 0.05
     
-    self.assertTrue(pos_difference_x < tol)
-    self.assertTrue(pos_difference_y < tol)
-    self.assertTrue(pos_difference_z < tol)
-    self.assertTrue(vel_difference_x < tol)
-    self.assertTrue(vel_difference_y < tol)
-    self.assertTrue(vel_difference_z < tol)
+    self.assertLess(pos_difference_x, tol)
+    self.assertLess(pos_difference_y, tol)
+    self.assertLess(pos_difference_z, tol)
+    self.assertLess(vel_difference_x, tol)
+    self.assertLess(vel_difference_y, tol)
+    self.assertLess(vel_difference_z, tol)
 
     system.part.clear()
     system.lees_edwards_offset = 0.0
@@ -65,8 +65,8 @@ class lees_edwards_test(ut.TestCase):
       pos_difference = system.part[0].pos_folded[0] - 2.5
       vel_difference = system.part[0].v[1] - 0.1
 
-      self.assertTrue(pos_difference < tol)
-      self.assertTrue(vel_difference < tol)
+      self.assertLess(pos_difference, tol)
+      self.assertLess(vel_difference, tol)
 
     for i in range(3):
       system.integrator.run(1)
@@ -74,8 +74,8 @@ class lees_edwards_test(ut.TestCase):
       pos_difference = system.part[0].pos_folded[0] - 2.4
       vel_difference = system.part[0].v[1] - 0.1
    
-      self.assertTrue(pos_difference < tol)
-      self.assertTrue(vel_difference < tol)
+      self.assertLess(pos_difference, tol)
+      self.assertLess(vel_difference, tol)
 
     system.part.clear()
     system.lees_edwards_offset = 0.0
@@ -91,8 +91,8 @@ class lees_edwards_test(ut.TestCase):
       pos_difference = system.part[0].pos_folded[0] - 2.5
       vel_difference = system.part[0].v[1] - -0.1
       
-      self.assertTrue(pos_difference < tol)
-      self.assertTrue(vel_difference < tol)
+      self.assertLess(pos_difference, tol)
+      self.assertLess(vel_difference, tol)
     
     for i in range(3):
       system.integrator.run(1)
@@ -100,8 +100,8 @@ class lees_edwards_test(ut.TestCase):
       pos_difference = system.part[0].pos_folded[0] - 2.6
       vel_difference = system.part[0].v[1] - -0.1
 
-      self.assertTrue(pos_difference < tol)
-      self.assertTrue(vel_difference < tol)
+      self.assertLess(pos_difference, tol)
+      self.assertLess(vel_difference, tol)
 
     system.part.clear()
     system.lees_edwards_offset = 0.0
@@ -118,8 +118,8 @@ class lees_edwards_test(ut.TestCase):
       pos_difference = system.part[0].pos_folded[0] - 2.5
       vel_difference = system.part[0].v[0] + 0.0
       
-      self.assertTrue(pos_difference < tol)
-      self.assertTrue(vel_difference < tol)
+      self.assertLess(pos_difference, tol)
+      self.assertLess(vel_difference, tol)
     
     for i in range(3, 6):
       system.integrator.run(1)
@@ -127,8 +127,8 @@ class lees_edwards_test(ut.TestCase):
       pos_difference = system.part[0].pos_folded[0] - 2.6 + i * 0.1
       vel_difference = system.part[0].v[0] + 0.1
       
-      self.assertTrue(pos_difference < tol)
-      self.assertTrue(vel_difference < tol)
+      self.assertLess(pos_difference, tol)
+      self.assertLess(vel_difference, tol)
     
     system.part.clear()
     system.lees_edwards_offset = 0.0
@@ -144,8 +144,8 @@ class lees_edwards_test(ut.TestCase):
       pos_difference = system.part[0].pos_folded[0] - 2.5
       vel_difference = system.part[0].v[0] - 0.0
       
-      self.assertTrue(pos_difference < tol)
-      self.assertTrue(vel_difference < tol)
+      self.assertLess(pos_difference, tol)
+      self.assertLess(vel_difference, tol)
     
     for i in range(3, 6):
       system.integrator.run(1)
@@ -153,8 +153,8 @@ class lees_edwards_test(ut.TestCase):
       pos_difference = system.part[0].pos_folded[0] - 2.4 - i * 0.1
       vel_difference = system.part[0].v[0] - 0.1
       
-      self.assertTrue(pos_difference < tol)
-      self.assertTrue(vel_difference < tol)
+      self.assertLess(pos_difference, tol)
+      self.assertLess(vel_difference, tol)
     
     system.part.clear()
     system.lees_edwards_offset = 0.0
