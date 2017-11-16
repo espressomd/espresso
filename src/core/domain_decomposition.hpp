@@ -65,11 +65,9 @@
  * decomposition. */
 struct DomainDecomposition {
   DomainDecomposition()
-      : use_vList{1}, cell_grid{0, 0, 0}, ghost_cell_grid{0, 0, 0}, cell_size{
+      : cell_grid{0, 0, 0}, ghost_cell_grid{0, 0, 0}, cell_size{
                                                                         0, 0,
                                                                         0} {}
-  /** flag for using Verlet List */
-  int use_vList;
   /** linked cell grid in nodes spatial domain. */
   int cell_grid[3];
   /** linked cell grid with ghost frame. */
@@ -179,7 +177,7 @@ int calc_processor_min_num_cells();
 int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]);
 
 /** Returns pointer to the cell which corresponds to the position if
-    the position is in the nodes spatial domain otherwise a NULL
+    the position is in the nodes spatial domain otherwise a nullptr
     pointer. */
 Cell *dd_save_position_to_cell(double pos[3]);
 

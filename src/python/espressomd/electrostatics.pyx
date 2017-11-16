@@ -334,7 +334,7 @@ IF P3M == 1:
             self._set_params_in_es_core()
 
     IF CUDA:
-        cdef class P3M_GPU(ElectrostaticInteraction):
+        cdef class P3MGPU(ElectrostaticInteraction):
 
             def __init__(self, *args, **kwargs):
                 """
@@ -679,7 +679,7 @@ IF ELECTROSTATICS:
             self._set_params_in_es_core()
 
 IF ELECTROSTATICS and MMM1D_GPU:
-    cdef class MMM1D_GPU(ElectrostaticInteraction):
+    cdef class MMM1DGPU(ElectrostaticInteraction):
         """
         Electrostatics solver for Systems with one periodic direction.
         See :ref:`mmm1d_guide` for more details.
@@ -825,8 +825,6 @@ IF ELECTROSTATICS:
                 raise ValueError("Dielectric constants should be > 0!")
             if self._params["dielectric_contrast_on"] == 1 and (self._params["delta_mid_top"] == default_params["delta_mid_top"] or self._params["delta_mid_bot"] == default_params["delta_mid_bot"]):
                 raise ValueError("Dielectric constrast not set!")
-            if self._params["capacitor"] == 1 and self._params["pot_diff"] == default_params["pot_diff"]:
-                raise ValueError("Potential difference not set!")
             if self._params["dielectric"] == 1 and self._params["dielectric_contrast_on"] == 1:
                 raise ValueError(
                     "dielectric and dielectric_contrast are mutually exclusive!")
