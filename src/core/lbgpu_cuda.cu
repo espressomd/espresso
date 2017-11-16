@@ -63,14 +63,14 @@ int extended_values_flag=0; /* TODO: this has to be set to one by
 /** device_rho_v: struct for hydrodynamic fields: this is for internal use 
     (i.e. stores values in LB units) and should not used for 
     printing values  */
-static LB_rho_v_gpu *device_rho_v= NULL;
+static LB_rho_v_gpu *device_rho_v= nullptr;
 
 /** device_rho_v_pi: extended struct for hydrodynamic fields: this is the interface
     to tcl, and stores values in MD units. It should not be used
     as an input for any LB calculations. TODO: This structure is not yet 
     used, and it is here to allow access to the stress tensor at any
     timestep, e.g. for future implementations of moving boundary codes */
-static LB_rho_v_pi_gpu *device_rho_v_pi= NULL;
+static LB_rho_v_pi_gpu *device_rho_v_pi= nullptr;
 
 /** print_rho_v_pi: struct for hydrodynamic fields: this is the interface
     to tcl, and stores values in MD units. It should not used
@@ -78,21 +78,21 @@ static LB_rho_v_pi_gpu *device_rho_v_pi= NULL;
     one might want to have several structures for printing 
     separately rho, v, pi without having to compute/store 
     the complete set. */
-static LB_rho_v_pi_gpu *print_rho_v_pi= NULL;
+static LB_rho_v_pi_gpu *print_rho_v_pi= nullptr;
 
 /** structs for velocity densities */
-static LB_nodes_gpu nodes_a = {.vd=NULL,.seed=NULL,.boundary=NULL};
-static LB_nodes_gpu nodes_b = {.vd=NULL,.seed=NULL,.boundary=NULL};;
+static LB_nodes_gpu nodes_a = {.vd=nullptr,.seed=nullptr,.boundary=nullptr};
+static LB_nodes_gpu nodes_b = {.vd=nullptr,.seed=nullptr,.boundary=nullptr};;
 /** struct for node force */
 
-LB_node_force_gpu node_f = {.force=NULL,.scforce=NULL} ;
+LB_node_force_gpu node_f = {.force=nullptr,.scforce=nullptr} ;
 
-static LB_extern_nodeforce_gpu *extern_nodeforces = NULL;
+static LB_extern_nodeforce_gpu *extern_nodeforces = nullptr;
 
 #ifdef LB_BOUNDARIES_GPU
-static float* lb_boundary_force = NULL;
+static float* lb_boundary_force = nullptr;
 
-static float* lb_boundary_velocity = NULL;
+static float* lb_boundary_velocity = nullptr;
 
 /** pointer for bound index array*/
 static int *boundary_node_list;
@@ -103,11 +103,11 @@ static size_t size_of_boundindex;
 EK_parameters* lb_ek_parameters_gpu;
 
 /** pointers for additional cuda check flag*/
-static int *gpu_check = NULL;
-static int *h_gpu_check = NULL;
+static int *gpu_check = nullptr;
+static int *h_gpu_check = nullptr;
 
 static unsigned int intflag = 1;
-LB_nodes_gpu *current_nodes = NULL;
+LB_nodes_gpu *current_nodes = nullptr;
 /**defining size values for allocating global memory */
 static size_t size_of_rho_v;
 static size_t size_of_rho_v_pi;
@@ -3149,7 +3149,7 @@ void lb_get_device_values_pointer(LB_rho_v_gpu** pointeradress) {
 */
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 #define free_and_realloc(var,size)\
-  { if( (var) != NULL ) cudaFree((var)); cuda_safe_mem(cudaMalloc((void**)&var, size)); } 
+  { if( (var) != nullptr ) cudaFree((var)); cuda_safe_mem(cudaMalloc((void**)&var, size)); } 
 
   size_of_rho_v     = lbpar_gpu->number_of_nodes * sizeof(LB_rho_v_gpu);
   size_of_rho_v_pi  = lbpar_gpu->number_of_nodes * sizeof(LB_rho_v_pi_gpu);
@@ -3189,7 +3189,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   /**check flag if lb gpu init works*/
   free_and_realloc(gpu_check, sizeof(int));
 
-  if(h_gpu_check!=NULL)
+  if(h_gpu_check!=nullptr)
     free(h_gpu_check);  
 
   h_gpu_check = (int*)Utils::malloc(sizeof(int));
@@ -3682,7 +3682,7 @@ void lb_integrate_GPU() {
   /**call of fluid step*/
   /* NOTE: if pi is needed at every integration step, one should call an extended version 
            of the integrate kernel, or pass also device_rho_v_pi and make sure that either 
-           it or device_rho_v are NULL depending on extended_values_flag */ 
+           it or device_rho_v are nullptr depending on extended_values_flag */ 
   if (intflag == 1)
   {
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_a, nodes_b, device_rho_v, node_f, lb_ek_parameters_gpu));

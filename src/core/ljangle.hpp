@@ -72,7 +72,7 @@ inline void add_ljangle_force(Particle *p1, Particle *p2,
   double angular_jik, angular_ikn, angular_jik_prime, angular_ikn_prime;
   /* Recreate angular dependence of potential by including 6 particles instead
    * of 2. */
-  Particle *p3 = NULL, *p4 = NULL, *p5 = NULL, *p6 = NULL;
+  Particle *p3 = nullptr, *p4 = nullptr, *p5 = nullptr, *p6 = nullptr;
   int part1p, part1n, part2p, part2n;
   /* Optional 2nd environment */
   double effective_eps = ia_params->LJANGLE_eps, z1, z2, z_middle, z_ref,
@@ -104,7 +104,7 @@ inline void add_ljangle_force(Particle *p1, Particle *p2,
     /* Check whether pointers have been allocated.
      * Otherwise, there's a communication error (verlet skin too small).
      */
-    if (p3 == NULL || p4 == NULL || p5 == NULL || p6 == NULL)
+    if (p3 == nullptr || p4 == nullptr || p5 == nullptr || p6 == nullptr)
       fprintf(stderr, "LJANGLE - Communication error, all particles cannot be "
                       "reached locally.\n");
 
@@ -245,7 +245,7 @@ inline double ljangle_pair_energy(Particle *p1, Particle *p2,
   double angular_jik, angular_ikn;
   /* Recreate angular dependence of potential by including 6 particles instead
    * of 2. */
-  Particle *p3 = NULL, *p4 = NULL, *p5 = NULL, *p6 = NULL;
+  Particle *p3 = nullptr, *p4 = nullptr, *p5 = nullptr, *p6 = nullptr;
   int part1p, part1n, part2p, part2n;
   /* Optional 2nd environment */
   double effective_eps = ia_params->LJANGLE_eps, z1, z2, z_middle, z_ref,

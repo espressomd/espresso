@@ -106,7 +106,7 @@ void lb_calc_fluid_temp(double *result) {
 	if ( !lbfields[index].boundary )
 #endif
 	  {
-	    lb_calc_local_fields(index, &rho, j, NULL);
+	    lb_calc_local_fields(index, &rho, j, nullptr);
 	    temp += scalar(j,j);
 	    number_of_non_boundary_nodes++;
 	  }
@@ -270,7 +270,7 @@ void lb_calc_velprof(double *result, int *params) {
     for (dir[pdir]=1;dir[pdir]<=lblattice.grid[pdir];dir[pdir]++) {
       
       index = get_linear_index(dir[0],dir[1],dir[2],lblattice.halo_grid);
-      lb_calc_local_fields(index, &rho, j, NULL);
+      lb_calc_local_fields(index, &rho, j, nullptr);
       
       //fprintf(stderr,"%p %d %.12e %.12e %d\n",lbfluid[0],index,rho,j[0],vcomp);
 

@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <vector>
 
 #include "cells.hpp"
 #include "grid.hpp"
@@ -107,8 +108,8 @@ int EwaldgpuForce::set_params_tune(double accuracy, double precision, int K_max,
 int EwaldgpuForce::adaptive_tune(char **log, SystemInterface &s) {
   ewaldgpu_params.isTuned = false;
   int Kmax = ewaldgpu_params.K_max;
-  double alpha_array[Kmax]; //  All computed alpha in dependence of K
-  double rcut_array[Kmax];  //  All computed r_cut in dependence of all computed
+  std::vector<double> alpha_array(Kmax); //  All computed alpha in dependence of K
+  std::vector<double> rcut_array(Kmax);  //  All computed r_cut in dependence of all computed
                             //  alpha
 
   // Squared charge

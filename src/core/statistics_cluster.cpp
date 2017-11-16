@@ -31,7 +31,7 @@
 #include "grid.hpp"
 #include "interaction_data.hpp"
 
-/** NULL terminated linked list of elements of a cluster (indices in particle list) */
+/** nullptr terminated linked list of elements of a cluster (indices in particle list) */
 ClusterElement *element;
 /** Double linked list of \ref statistics_cluster::Cluster */
 Cluster        *cluster;
@@ -67,7 +67,7 @@ void cluster_init(PartCfg & partCfg, Particle *part, int size) {
     cluster[i].next  = &cluster[(i+1)%size];
     cluster[i].prev  = &cluster[(size+i-1)%size];
     element[i].id    = i;
-    element[i].next  = NULL;
+    element[i].next  = nullptr;
   }
 }
 
@@ -83,7 +83,7 @@ void clusters_join(Cluster *cluster1, Cluster *cluster2)
 
   /* join cluster2 to cluster1 */
   local_element = cluster1->first;
-  while(local_element->next != NULL) local_element = local_element->next;
+  while(local_element->next != nullptr) local_element = local_element->next;
   local_element->next  = cluster2->first;
   cluster1->size += cluster2->size;
   /* remove cluster2 */
@@ -100,10 +100,10 @@ int clusters_connected(Particle *part, Cluster cluster1, Cluster cluster2)
   ClusterElement *element1,*element2;
 
   element1 = cluster1.first;
-  while ( element1 != NULL ) {
+  while ( element1 != nullptr ) {
     id1      = element1->id;
     element2 = cluster2.first;
-    while ( element2 != NULL ) {
+    while ( element2 != nullptr ) {
       id2 = element2->id;
       if ( abs( id1 - id2 ) > backbone_distance && 
 	   distance2(part[id1].r.p,part[id2].r.p) < space_distance2 ) return 1;
@@ -122,7 +122,7 @@ int clusters_interpenetrate(Cluster cluster1, Cluster cluster2)
 
   local_element = cluster1.first;
   min1 = max1 = local_element->id;
-  while(local_element->next != NULL) {
+  while(local_element->next != nullptr) {
     local_element = local_element->next;
     if(local_element->id < min1) min1 = local_element->id;
     if(local_element->id > max1) max1 = local_element->id;
@@ -130,7 +130,7 @@ int clusters_interpenetrate(Cluster cluster1, Cluster cluster2)
 
   local_element = cluster2.first;
   min2 = max2 = local_element->id;
-  while(local_element->next != NULL) {
+  while(local_element->next != nullptr) {
     local_element = local_element->next;
     if(local_element->id < min2) min2 = local_element->id;
     if(local_element->id > max2) max2 = local_element->id;

@@ -43,8 +43,8 @@ public:
     return m_instance;
   };
 
-  void init();
-  void update();
+  void init() override;
+  void update() override;
 
 #ifdef CUDA
   float *rGpuBegin() { return m_r_gpu_begin; };
@@ -150,7 +150,7 @@ public:
 
   Vector3d box() const override;
 
-  unsigned int npart_gpu() {
+  unsigned int npart_gpu() override {
 #ifdef CUDA
     return m_gpu_npart;
 #else

@@ -54,7 +54,7 @@ void Observable::set_filename(std::string const &filename, bool binary) {
 
     m_ofile.open(m_filename, mode);
   }
-};
+}
 
 bool Observable::writable() const { return m_ofile.is_open(); }
 
