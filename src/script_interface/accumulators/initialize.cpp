@@ -21,11 +21,16 @@
 #include "ScriptInterface.hpp"
 
 #include "Accumulator.hpp"
+#include "AutoUpdateAccumulators.hpp"
 
 namespace ScriptInterface {
 namespace Accumulators {
 
 void initialize() {
+  ScriptInterface::register_new<
+      ScriptInterface::Accumulators::AutoUpdateAccumulators>(
+      "Accumulators::AutoUpdateAccumulators");
+
   ScriptInterface::register_new<
       ScriptInterface::Accumulators::Accumulator>(
       "Accumulators::Accumulator");

@@ -17,7 +17,10 @@ class Accumulator(ScriptInterfaceHelper):
     _so_name = "Accumulators::Accumulator"
     _so_bind_methods = (
         "update",
-        "auto_update")
+        "auto_update",
+        "get_mean",
+        "get_variance"
+    )
     _so_creation_policy = "LOCAL"
 
 
