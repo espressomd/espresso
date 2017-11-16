@@ -45,14 +45,14 @@
 static int n_s_buffer = 0;
 static int max_s_buffer = 0;
 /** send buffer. Just grows, which should be ok */
-static char *s_buffer = NULL;
+static char *s_buffer = nullptr;
 
 std::vector<int> s_bondbuffer;
 
 static int n_r_buffer = 0;
 static int max_r_buffer = 0;
 /** recv buffer. Just grows, which should be ok */
-static char *r_buffer = NULL;
+static char *r_buffer = nullptr;
 
 std::vector<int> r_bondbuffer;
 
@@ -327,7 +327,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
           }
 #endif
 #endif
-	  if (local_particles[pt->p.identity] == NULL) {
+	  if (local_particles[pt->p.identity] == nullptr) {
 	    local_particles[pt->p.identity] = pt;
 	  }
 	}
@@ -649,7 +649,7 @@ void ghost_communicator(GhostCommunicator *gc)
 	if (node == this_node)
 	  MPI_Reduce(s_buffer, r_buffer, n_s_buffer, MPI_BYTE, MPI_FORCES_SUM, node, comm_cart);
 	else
-	  MPI_Reduce(s_buffer, NULL, n_s_buffer, MPI_BYTE, MPI_FORCES_SUM, node, comm_cart);
+	  MPI_Reduce(s_buffer, nullptr, n_s_buffer, MPI_BYTE, MPI_FORCES_SUM, node, comm_cart);
 	break;
       }
       //GHOST_TRACE(MPI_Barrier(comm_cart));
@@ -720,7 +720,7 @@ void invalidate_ghosts()
 	 if the pointer stored there belongs to a ghost celll
 	 particle array. */
       if( &(part[p]) == local_particles[part[p].p.identity] ) 
-	local_particles[part[p].p.identity] = NULL;
+	local_particles[part[p].p.identity] = nullptr;
       free_particle(part+p);
     }
     ghost_cells.cell[c]->n = 0;

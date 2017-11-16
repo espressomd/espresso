@@ -126,7 +126,7 @@ transform_to_cylinder_coordinates(::Vector<3, double> const &pos) {
 inline void init_intlist(IntList *il) {
   il->n = 0;
   il->max = 0;
-  il->e = NULL;
+  il->e = nullptr;
 }
 // extern int this_node;
 
@@ -175,7 +175,7 @@ inline int intlist_contains(IntList *il, int c) {
 inline void init_doublelist(DoubleList *il) {
   il->n = 0;
   il->max = 0;
-  il->e = NULL;
+  il->e = nullptr;
 }
 
 /** Allocate an \ref DoubleList of size size. If you need an \ref DoubleList
@@ -753,15 +753,15 @@ inline void get_grid_pos(int i, int *a, int *b, int *c, int adim[3]) {
 inline int malloc_3d_grid(double ****grid, int dim[3]) {
   int i, j;
   *grid = (double ***)Utils::malloc(sizeof(double **) * dim[0]);
-  if (*grid == NULL)
+  if (*grid == nullptr)
     return 0;
   for (i = 0; i < dim[0]; i++) {
     (*grid)[i] = (double **)Utils::malloc(sizeof(double *) * dim[1]);
-    if ((*grid)[i] == NULL)
+    if ((*grid)[i] == nullptr)
       return 0;
     for (j = 0; j < dim[1]; j++) {
       (*grid)[i][j] = (double *)Utils::malloc(sizeof(double) * dim[2]);
-      if ((*grid)[i][j] == NULL)
+      if ((*grid)[i][j] == nullptr)
         return 0;
     }
   }

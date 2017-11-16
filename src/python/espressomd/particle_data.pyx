@@ -1939,9 +1939,11 @@ cdef class ParticleList(object):
 
         """
 
+        cdef int i
+        cdef int j
         for i in range(max_seen_particle + 1):
             for j in range(i + 1, max_seen_particle + 1, 1):
-                if not (self.exists(i) and self.exists(j)):
+                if not (particle_exists(i) and particle_exists(j)):
                     continue
                 yield (self[i], self[j])
 

@@ -110,9 +110,9 @@ def lj_force(v_d, d, lj_params):
     Supports epsilon and cutoff."""
 
     if d >= lj_params["cutoff"]:
-        return np.array((0., 0., 0.))
+        return np.zeros(3)
 
-    return 4. * lj_params["epsilon"] * v_d / d * (-12 * d**-13 + 6 * d**-7)
+    return 4. * lj_params["epsilon"] * v_d * (-12.0 * d**-14 + 6.0 * d**-8)
 
 
 def verify_lj_forces(system, tolerance, ids_to_skip=[]):
@@ -126,23 +126,36 @@ def verify_lj_forces(system, tolerance, ids_to_skip=[]):
     for id in system.part[:].id:
         f_expected[id] = np.zeros(3)
 
+    # Cache some stuff to speed up pair loop
+    dist_vec=system.distance_vec
+    norm=np.linalg.norm
+    non_bonded_inter=system.non_bonded_inter
+    # lj parameters
+    lj_params={}
+    all_types=np.unique(system.part[:].type)
+    for i in all_types:
+        for j in all_types:
+            lj_params[i,j]=non_bonded_inter[int(i),int(j)].lennard_jones.get_params()
+            
+
+
+      
+
     # Go over all pairs of particles
     for pair in system.part.pairs():
-        if pair[0].id in ids_to_skip or pair[1].id in ids_to_skip:
+        p0=pair[0]
+        p1=pair[1]
+        if p0.id in ids_to_skip or p1.id in ids_to_skip:
             continue
 
         # Distance and distance vec
-        v_d = system.distance_vec(pair[0], pair[1])
-        d = system.distance(pair[0], pair[1])
-
-        # get lj params for the type combination from system
-        lj_params = system.non_bonded_inter[pair[0].type,
-                                            pair[1].type].lennard_jones.get_params()
+        v_d = dist_vec(p0,p1)
+        d = norm(v_d)
 
         # calc and add expected lj force
-        f = lj_force(v_d, d, lj_params)
-        f_expected[pair[0].id] += f
-        f_expected[pair[1].id] -= f
+        f = lj_force(v_d, d, lj_params[p0.type,p1.type])
+        f_expected[p0.id] += f
+        f_expected[p1.id] -= f
     # Check actual forces agaisnt expected
     for id in system.part[:].id:
         if id in ids_to_skip:

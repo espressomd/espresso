@@ -565,7 +565,7 @@ void dd_init_cell_interactions() {
 /*************************************************/
 
 /** Returns pointer to the cell which corresponds to the position if
-    the position is in the nodes spatial domain otherwise a NULL
+    the position is in the nodes spatial domain otherwise a nullptr
     pointer. */
 Cell *dd_save_position_to_cell(double pos[3]) {
   int i, cpos[3];
@@ -583,13 +583,13 @@ Cell *dd_save_position_to_cell(double pos[3]) {
           (!PERIODIC(i) && boundary[2 * i]))
         cpos[i] = 1;
       else
-        return NULL;
+        return nullptr;
     } else if (cpos[i] > dd.cell_grid[i]) {
       if (lpos < local_box_l[i] + ROUND_ERROR_PREC * box_l[i] ||
           (!PERIODIC(i) && boundary[2 * i + 1]))
         cpos[i] = dd.cell_grid[i];
       else
-        return NULL;
+        return nullptr;
     }
   }
   i = get_linear_index(cpos[0], cpos[1], cpos[2], dd.ghost_cell_grid);
@@ -813,13 +813,11 @@ void dd_topology_init(CellPList *old) {
                      "%d: dd_topology_init: Number of recieved cells=%d\n",
                      this_node, old->n));
 
-  /** broadcast the flag for using verlet list */
-  MPI_Bcast(&dd.use_vList, 1, MPI_INT, 0, comm_cart);
+  min_num_cells = calc_processor_min_num_cells();
 
   cell_structure.type = CELL_STRUCTURE_DOMDEC;
   cell_structure.position_to_node = map_position_node_array;
   cell_structure.position_to_cell = dd_position_to_cell;
-  cell_structure.use_verlet_list = dd.use_vList;
 
   /* set up new domain decomposition cell structure */
   dd_create_cell_grid();
@@ -895,7 +893,7 @@ void dd_topology_init(CellPList *old) {
       Cell *nc = dd_save_position_to_cell(part[p].r.p);
       /* particle does not belong to this node. Just stow away
          somewhere for the moment */
-      if (nc == NULL)
+      if (nc == nullptr)
         nc = local_cells.cell[0];
       append_unindexed_particle(nc, std::move(part[p]));
     }
@@ -928,7 +926,6 @@ void dd_topology_release() {
 #ifdef IMMERSED_BOUNDARY
   free_comm(&cell_structure.ibm_ghost_force_comm);
 #endif
-  cell_structure.use_verlet_list = false;
 }
 
 /************************************************************/
@@ -970,7 +967,7 @@ void dd_exchange_and_sort_particles(int global_flag) {
                 CELL_TRACE(fprintf(stderr,
                                    "%d: dd_ex_and_sort_p: send part left %d\n",
                                    this_node, part->p.identity));
-                local_particles[part->p.identity] = NULL;
+                local_particles[part->p.identity] = nullptr;
                 move_indexed_particle(&send_buf_l, cell, p);
                 if (p < cell->n)
                   p--;
@@ -984,7 +981,7 @@ void dd_exchange_and_sort_particles(int global_flag) {
                 CELL_TRACE(fprintf(stderr,
                                    "%d: dd_ex_and_sort_p: send part right %d\n",
                                    this_node, part->p.identity));
-                local_particles[part->p.identity] = NULL;
+                local_particles[part->p.identity] = nullptr;
                 move_indexed_particle(&send_buf_r, cell, p);
                 if (p < cell->n)
                   p--;
@@ -994,7 +991,7 @@ void dd_exchange_and_sort_particles(int global_flag) {
             else if (dir == 2) {
               sort_cell = dd_save_position_to_cell(part->r.p);
               if (sort_cell != cell) {
-                if (sort_cell == NULL) {
+                if (sort_cell == nullptr) {
                   CELL_TRACE(fprintf(
                       stderr,
                       "%d: dd_exchange_and_sort_particles: Take another loop",
@@ -1089,7 +1086,7 @@ void dd_exchange_and_sort_particles(int global_flag) {
             if (dir == 2) {
               sort_cell = dd_save_position_to_cell(part->r.p);
               if (sort_cell != cell) {
-                if (sort_cell == NULL) {
+                if (sort_cell == nullptr) {
                   CELL_TRACE(fprintf(stderr, "%d: "
                                              "dd_exchange_and_sort_particles: "
                                              "CP2 Particle %d (%f,%f,%f) not "
@@ -1129,7 +1126,7 @@ void dd_exchange_and_sort_particles(int global_flag) {
         else
           finished = sum;
       } else {
-        MPI_Reduce(&finished, NULL, 1, MPI_INT, MPI_SUM, 0, comm_cart);
+        MPI_Reduce(&finished, nullptr, 1, MPI_INT, MPI_SUM, 0, comm_cart);
       }
       MPI_Bcast(&finished, 1, MPI_INT, 0, comm_cart);
     } else {

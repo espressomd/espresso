@@ -40,7 +40,7 @@ public:
 
   virtual std::shared_ptr<CoreObs> observable() const = 0;
   virtual Variant call_method(std::string const &method,
-                              VariantMap const &parameters) {
+                              VariantMap const &parameters) override {
     if (method == "calculate") {
       observable()->calculate();
       return observable()->last_value;

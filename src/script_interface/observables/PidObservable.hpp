@@ -63,7 +63,6 @@ public:
     SET_PARAMETER_HELPER("ids", pid_observable()->ids());
   };
 
-  virtual std::shared_ptr<::Observables::Observable> observable() const = 0;
   virtual std::shared_ptr<::Observables::PidObservable>
   pid_observable() const = 0;
 };
@@ -90,19 +89,19 @@ public:
     std::shared_ptr<::Observables::obs_name> m_observable;                     \
   };
 
-NEW_PID_OBSERVABLE(ParticlePositions);
-NEW_PID_OBSERVABLE(ParticleVelocities);
-NEW_PID_OBSERVABLE(ParticleForces);
-NEW_PID_OBSERVABLE(ParticleBodyVelocities);
-NEW_PID_OBSERVABLE(ParticleAngularVelocities);
-NEW_PID_OBSERVABLE(ParticleBodyAngularVelocities);
-NEW_PID_OBSERVABLE(ParticleCurrent);
-NEW_PID_OBSERVABLE(Current);
-NEW_PID_OBSERVABLE(DipoleMoment);
-NEW_PID_OBSERVABLE(MagneticDipoleMoment);
-NEW_PID_OBSERVABLE(ComPosition);
-NEW_PID_OBSERVABLE(ComVelocity);
-NEW_PID_OBSERVABLE(ComForce);
+NEW_PID_OBSERVABLE(ParticlePositions)
+NEW_PID_OBSERVABLE(ParticleVelocities)
+NEW_PID_OBSERVABLE(ParticleForces)
+NEW_PID_OBSERVABLE(ParticleBodyVelocities)
+NEW_PID_OBSERVABLE(ParticleAngularVelocities)
+NEW_PID_OBSERVABLE(ParticleBodyAngularVelocities)
+NEW_PID_OBSERVABLE(ParticleCurrent)
+NEW_PID_OBSERVABLE(Current)
+NEW_PID_OBSERVABLE(DipoleMoment)
+NEW_PID_OBSERVABLE(MagneticDipoleMoment)
+NEW_PID_OBSERVABLE(ComPosition)
+NEW_PID_OBSERVABLE(ComVelocity)
+NEW_PID_OBSERVABLE(ComForce)
 
 } /* namespace Observables */
 } /* namespace ScriptInterface */

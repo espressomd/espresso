@@ -31,11 +31,11 @@ namespace ScriptInterface {
 namespace Correlators {
 
 class AutoUpdateCorrelators : public ScriptObjectRegistry<Correlator> {
-  virtual void add_in_core(std::shared_ptr<Correlator> obj_ptr) {
+  virtual void add_in_core(std::shared_ptr<Correlator> obj_ptr) override {
     obj_ptr->correlator()->start_auto_update();
     ::Correlators::auto_update_correlators.push_back(obj_ptr->correlator());
   }
-  virtual void remove_in_core(std::shared_ptr<Correlator> obj_ptr) {
+  virtual void remove_in_core(std::shared_ptr<Correlator> obj_ptr) override {
     auto it = std::find(::Correlators::auto_update_correlators.begin(),
                         ::Correlators::auto_update_correlators.end(),
                         obj_ptr->correlator());

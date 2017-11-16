@@ -31,7 +31,7 @@ class RemoveTotalMomentumTest(ut.TestCase):
             # Avoid masses too small for the time step
             s.part[:].mass = 2. * (0.1 + np.random.random(100))
 
-        lbf = espressomd.lb.LBFluid_GPU(
+        lbf = espressomd.lb.LBFluidGPU(
             agrid=agrid, fric=fric, dens=dens, visc=visc, tau=dt)
 
         s.actors.add(lbf)

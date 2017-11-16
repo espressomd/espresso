@@ -51,13 +51,13 @@
 std::vector<Cell> cells;
 /** list of pointers to all cells containing particles physically on the local
  * node. */
-CellPList local_cells = {NULL, 0, 0};
+CellPList local_cells = {nullptr, 0, 0};
 /** list of pointers to all cells containing ghosts. */
-CellPList ghost_cells = {NULL, 0, 0};
+CellPList ghost_cells = {nullptr, 0, 0};
 
 /** Type of cell structure in use */
 CellStructure cell_structure = {/* type */ CELL_STRUCTURE_NONEYET,
-                                /* use_verlet_list*/ false};
+                                /* use_verlet_list*/ true};
 
 double max_range = 0.0;
 
@@ -180,7 +180,10 @@ static void topology_release(int cs) {
 
 /** Switch for choosing the topology init function of a certain
     cell system. */
-static void topology_init(int cs, CellPList *local) {
+void topology_init(int cs, CellPList *local) {
+  /** broadcast the flag for using verlet list */
+  boost::mpi::broadcast(comm_cart, cell_structure.use_verlet_list, 0);
+
   switch (cs) {
   case CELL_STRUCTURE_NONEYET:
     break;
@@ -374,11 +377,6 @@ void check_resort_particles() {
 
 /*************************************************/
 void cells_update_ghosts() {
-  /* if dd.use_vList is set, it so far means we want EXACT sorting of the
-   * particles.*/
-  if (dd.use_vList == 0)
-    resort_particles = 1;
-
   if (resort_particles) {
 #ifdef LEES_EDWARDS
     /* Communication step:  number of ghosts and ghost information */
