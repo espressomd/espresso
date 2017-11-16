@@ -76,7 +76,7 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         bool do_not_sample_reaction_partition_function
 
     cdef cppclass CReactionEnsemble:
-        ReactionEnsemble()
+        CReactionEnsemble()
         reaction_system m_current_reaction_system
         int do_reaction(int reaction_steps) except +
         bool do_global_mc_move_for_particles_of_type(int type, int start_id_polymer, int end_id_polymer, int particle_number_of_type, bool use_wang_landau)
