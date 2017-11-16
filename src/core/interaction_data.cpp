@@ -73,7 +73,7 @@
  *****************************************/
 int n_particle_types = 0;
 int n_interaction_types = 0;
-IA_parameters *ia_params = NULL;
+IA_parameters *ia_params = nullptr;
 
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
 Coulomb_parameters coulomb = { 
@@ -97,7 +97,7 @@ double field_applied;
 #endif
 
 int n_bonded_ia = 0;
-Bonded_ia_parameters *bonded_ia_params = NULL;
+Bonded_ia_parameters *bonded_ia_params = nullptr;
 
 double min_global_cut = 0.0;
 
@@ -798,8 +798,8 @@ void make_bond_type_exist(int type)
 	 bonded_ia_params[type].p.tab.npoints > 0 ) {
       free(bonded_ia_params[type].p.tab.f);
       free(bonded_ia_params[type].p.tab.e);
-      bonded_ia_params[type].p.tab.f = NULL;
-      bonded_ia_params[type].p.tab.e = NULL;
+      bonded_ia_params[type].p.tab.f = nullptr;
+      bonded_ia_params[type].p.tab.e = nullptr;
     }
 #endif 
 #ifdef OVERLAPPED
@@ -808,9 +808,9 @@ void make_bond_type_exist(int type)
       free(bonded_ia_params[type].p.overlap.para_a);
       free(bonded_ia_params[type].p.overlap.para_b);
       free(bonded_ia_params[type].p.overlap.para_c);
-      bonded_ia_params[type].p.overlap.para_a = NULL;
-      bonded_ia_params[type].p.overlap.para_b = NULL;
-      bonded_ia_params[type].p.overlap.para_c = NULL;
+      bonded_ia_params[type].p.overlap.para_a = nullptr;
+      bonded_ia_params[type].p.overlap.para_b = nullptr;
+      bonded_ia_params[type].p.overlap.para_c = nullptr;
     }
 #endif
     return;

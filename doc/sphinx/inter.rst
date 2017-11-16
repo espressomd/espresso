@@ -188,7 +188,7 @@ Generic Lennard-Jones interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
-    Feature LENNARD_JONES_GENERIC required.
+    `Feature LENNARD_JONES_GENERIC required.`
 
 
 The interface for the generic Lennard-Jones interactions is implemented in 
@@ -217,7 +217,7 @@ Note that the prefactor 4 of the standard LJ potential is missing, so
 the normal LJ potential is recovered for :math:`b_1=b_2=4`,
 :math:`e_1=12` and :math:`e_2=6`.
 
-The net force on a particle can be capped by using force capping , see
+The net force on a particle can be capped by using force capping ``system.non_bonded_inter.set_force_cap(max)``, see
 section :ref:`Capping the force during warmup`
 
 The optional ``LJGEN_SOFTCORE`` feature activates a softcore version of
@@ -241,7 +241,7 @@ Lennard-Jones cosine interaction
 inter lj-cos inter lj-cos2
 
 specifies a Lennard-Jones interaction with cosine
-tail :cite:`soddeman01a` between particles of the types and
+tail :cite:`soddeman01a` between particles of the types *type1* and *type2*
 . The first variant behaves as follows: Until the minimum of the
 Lennard-Jones potential at
 :math:`r_\mathrm{min} = r_\mathrm{off} +
@@ -275,37 +275,42 @@ section :ref:`Capping the force during warmup`
 Smooth step interaction
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. todo::
-    
-    Not implemented yet.
+.. note::
+     `Feature SMOOTH_STEP required.`
 
-inter smooth-step
+The interface for the smooth-step interaction is implemented in
+:class:`espressomd.interactions.SmoothStepInteraction`. The smooth-step parameters
+can be set via::
 
-This defines a smooth step interaction between particles of the types
-and , for which the potential is
+     system.non_bonded_inter[type1, type2].smooth_step.set_params(**kwargs)
 
-.. math:: V(r)= \left(\sigma_1/d\right)^n + \epsilon/(1 + \exp\left[2k_0 (r - \sigma_2)\right])
+This defines a smooth step interaction between particles of the types *type1*
+and *type2*, for which the potential is
+
+.. math:: V(r)= \left(d/r\right)^n + \epsilon/(1 + \exp\left[2k_0 (r - \sigma)\right])
 
 for :math:`r<r_\mathrm{cut}`, and :math:`V(r)=0` elsewhere. With
 :math:`n` around 10, the first term creates a short range repulsion
 similar to the Lennard-Jones potential, while the second term provides a
 much softer repulsion. This potential therefore introduces two length
-scales, the range of the first term, :math:`\sigma_1`, and the range of
-the second one, :math:`\sigma_2`, where in general
-:math:`\sigma_1<\sigma_2`.
+scales, the range of the first term, :math:`d`, and the range of
+the second one, :math:`\sigma`, where in general :math:`d<\sigma`.
 
 BMHTF potential
 ~~~~~~~~~~~~~~~
 
-.. todo::
-    
-    Not implemented yet.
+.. note::
+     `Feature BMHTF_NACL required.`
 
-inter bmhtf-nacl
+The interface for the smooth-step interaction is implemented in
+:class:`espressomd.interactions.BMHTFInteraction`. The parameters of the BMHTF potential
+can be set via::
+
+     system.non_bonded_inter[type1, type2].bmhtf.set_params(**kwargs)
 
 This defines an interaction with the *short-ranged part* of the
-Born-Meyer-Huggins-Tosi-Fumi potential between particles of the types
-and , which is often used to simulate NaCl crystals. The potential is
+Born-Meyer-Huggins-Tosi-Fumi potential between particles of the types *type1*
+and *type2*, which is often used to simulate NaCl crystals. The potential is
 defined by:
 
 .. math::
@@ -313,21 +318,21 @@ defined by:
    V(r)= A\exp\left[B(\sigma - r)\right] -
      C r^{-6} - D r^{-8} + \epsilon_\mathrm{shift},
 
-where :math:`\epsilon_\mathrm{shift}` is chosen such that
+where :math:`\epsilon_\mathrm{shift}` is automatically chosen such that
 :math:`V(r_\mathrm{cut})=0`. For
 :math:`r\ge r_\mathrm{cut}`, the :math:`V(r)=0`.
 
 For NaCl, the parameters should be chosen as follows:
 
-+---------+-----------+-----------------------------+--------------------------+------------------------+---------+
-| types   | ()        | (:math:`\unit{\AA^{-1}}`)   | (:math:`\unit{\AA^6}`)   | :math:`\unit{\AA^8}`   | ()      |
-+=========+===========+=============================+==========================+========================+=========+
-| Na-Na   | 25.4435   | 3.1546                      | 101.1719                 | 48.1771                | 2.34    |
-+---------+-----------+-----------------------------+--------------------------+------------------------+---------+
-| Na-Cl   | 20.3548   | 3.1546                      | 674.4793                 | 837.0770               | 2.755   |
-+---------+-----------+-----------------------------+--------------------------+------------------------+---------+
-| Cl-Cl   | 15.2661   | 3.1546                      | 6985.6786                | 14031.5785             | 3.170   |
-+---------+-----------+-----------------------------+--------------------------+------------------------+---------+
++---------+---------------------------------------------------------+-----------------------------------------------------------+----------------------------------------------------------------------------------+---------------------------------------------------------------------------------+-----------------------------------------------------------+
+| types   | :math:`A` :math:`\left(\mathrm{kJ}/\mathrm{mol}\right)` | :math:`B` :math:`\left(\mathring{\mathrm{A}}^{-1}\right)` | :math:`C` :math:`\left(\mathring{\mathrm{A}}^6 \mathrm{kJ}/\mathrm{mol})\right)` | :math:`D` :math:`\left(\mathring{\mathrm{A}}^8 \mathrm{kJ}/\mathrm{mol}\right)` | :math:`\sigma` :math:`\left(\mathring{\mathrm{A}}\right)` |
++=========+=========================================================+===========================================================+==================================================================================+=================================================================================+===========================================================+
+| Na-Na   | 25.4435                                                 | 3.1546                                                    | 101.1719                                                                         | 48.1771                                                                         | 2.34                                                      |
++---------+---------------------------------------------------------+-----------------------------------------------------------+----------------------------------------------------------------------------------+---------------------------------------------------------------------------------+-----------------------------------------------------------+
+| Na-Cl   | 20.3548                                                 | 3.1546                                                    | 674.4793                                                                         | 837.0770                                                                        | 2.755                                                     |
++---------+---------------------------------------------------------+-----------------------------------------------------------+----------------------------------------------------------------------------------+---------------------------------------------------------------------------------+-----------------------------------------------------------+
+| Cl-Cl   | 15.2661                                                 | 3.1546                                                    | 6985.6786                                                                        | 14031.5785                                                                      | 3.170                                                     |
++---------+---------------------------------------------------------+-----------------------------------------------------------+----------------------------------------------------------------------------------+---------------------------------------------------------------------------------+-----------------------------------------------------------+
 
 The cutoff can be chosen relatively freely because the potential decays
 fast; a value around 10 seems reasonable.
@@ -336,19 +341,22 @@ In addition to this short ranged interaction, one needs to add a
 Coulombic, long-ranged part. If one uses elementary charges, a charge of
 :math:`q=+1` for the Na-particles, and :math:`q=-1` for the
 Cl-particles, the corresponding prefactor of the Coulomb interaction is
-:math:`\approx 1389.3549 \AA\,kJ/mol`.
+:math:`\approx 1389.3549\,\mathrm{kJ}/\mathrm{mol}`.
 
 Morse interaction
 ~~~~~~~~~~~~~~~~~
 
-.. todo::
-    
-    Not implemented yet.
+.. note::
+     `Feature MORSE required.`
 
-inter morse
+The interface for the Morse interaction is implemented in
+:class:`espressomd.interactions.MorseInteraction`. The Morse interaction parameters
+can be set via::
+
+     system.non_bonded_inter[type1, type2].morse.set_params(**kwargs)
 
 This defines an interaction using the Morse potential between particles
-of the types and . It serves similar purposes as the Lennard-Jones
+of the types *type1* and *type2*. It serves similar purposes as the Lennard-Jones
 potential, but has a deeper minimum, around which it is harmonic. This
 models the potential energy in a diatomic molecule. 
 
@@ -366,18 +374,21 @@ where is again chosen such that :math:`V(r_\mathrm{cut})=0`. For
 Buckingham interaction
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. todo::
-    
-    Not implemented yet.
+.. note::
+     `Feature BUCKINGHAM required.`
 
-inter buckingham
+The interface for the Buckingham interaction is implemented in
+:class:`espressomd.interactions.BuckinghamInteraction`. The Buckingham interaction parameters
+can be set via::
 
-This defines a Buckingham interaction between particles of the types and
-, for which the potential is given by
+     system.non_bonded_inter[type1, type2].morse.set_params(**kwargs)
 
-.. math:: V(r)= A\exp(-B r) - Cr^{-6} - Dr^{-4} + \epsilon_\mathrm{shift}
+This defines a Buckingham interaction between particles of the types *type1* and *type2*,
+for which the potential is given by
 
-for :math:`r_\mathrm{discont} < r < r_\mathrm{cut}`. Below ,
+.. math:: V(r)= A \exp(-B r) - C r^{-6} - D r^{-4} + \epsilon_\mathrm{shift}
+
+for :math:`r_\mathrm{discont} < r < r_\mathrm{cut}`. Below :math:`r_\mathrm{discont}`,
 the potential is linearly continued towards :math:`r=0`, similarly to
 force capping, see below. Above :math:`r=r_\mathrm{cut}`, the
 potential is :math:`0`.
@@ -385,14 +396,17 @@ potential is :math:`0`.
 Soft-sphere interaction
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. todo::
-    
-    Not implemented yet.
+.. note::
+    `Feature SOFT_SPHERE required.`
 
-inter soft-sphere
+The interface for the Soft-sphere interaction is implemented in
+:class:`espressomd.interactions.SoftSphereInteraction`. The Soft-sphere parameters
+can be set via::
 
-This defines a soft sphere interaction between particles of the types
-and , which is defined by a single power law:
+    system.non_bonded_inter[type1, type2].soft_sphere.set_params(**kwargs)
+
+This defines a soft sphere interaction between particles of the types *type1*
+and *type2*, which is defined by a single power law:
 
 .. math:: V(r)=a\left(r-r_\mathrm{offset}\right)^{-n}
 
@@ -411,7 +425,7 @@ Membrane-collision interaction
 inter membrane
 
 This defines a membrane collision interaction between particles of the
-types and , where particle of belongs to one OIF or OIF-like object and
+types *type1* and *type2*, where particle of belongs to one OIF or OIF-like object and
 particle of belongs to another such object.
 
 It is very similar to soft-sphere interaction, but it takes into account
@@ -472,14 +486,17 @@ combination with :ref:`Dissipative Particle Dynamics (DPD)`.
 Hertzian interaction
 ~~~~~~~~~~~~~~~~~~~~
 
-.. todo::
-    
-    Not implemented yet.
+.. note::
+    `Feature HERTZIAN required.`
 
-inter hertzian
+The interface for the Hertzian interaction is implemented in
+:class:`espressomd.interactions.HertzianInteraction`. The Hertzian interaction parameters
+can be set via::
+
+    system.non_bonded_inter[type1, type2].hertzian.set_params(**kwargs)
 
 This defines an interaction according to the Hertzian potential between
-particles of the types and . The Hertzian potential is defined by
+particles of the types *type1* and *type2*. The Hertzian potential is defined by
 
 .. math::
 
@@ -489,20 +506,23 @@ particles of the types and . The Hertzian potential is defined by
      \end{cases}
 
 The potential has no singularity and is defined everywhere; the
-potential has nondifferentiable maximum at :math:`r=0`, where the force
+potential has a nondifferentiable maximum at :math:`r=0`, where the force
 is undefined.
 
 Gaussian
 ~~~~~~~~
 
-.. todo::
-    
-    Not implemented yet.
+.. note::
+    `Feature GAUSSIAN required.`
 
-inter gaussian
+The interface for the Gaussian interaction is implemented in
+:class:`espressomd.interactions.GaussianInteraction`. The Gaussian interaction parameters
+can be set via::
+
+    system.non_bonded_inter[type1, type2].gaussian.set_params(**kwargs)
 
 This defines an interaction according to the Gaussian potential between
-particles of the typers and . The Gaussian potential is defined by
+particles of the types *type1* and *type2*. The Gaussian potential is defined by
 
 .. math::
 
@@ -541,7 +561,7 @@ inter lj-angle
 o|image1|
 
 Specifies a 12-10 Lennard-Jones interaction with angular dependence
-between particles of the types and . These two particles need two bonded
+between particles of the types *type1* and *type2*. These two particles need two bonded
 partners oriented in a symmetric way. They define an orientation for the
 central particle. The purpose of using bonded partners is to avoid
 dealing with torques, therefore the interaction does *not* need the
@@ -964,7 +984,7 @@ modeling objects are described in section :ref:`Object-in-fluid`.
 OIF local forces
 ~~~~~~~~~~~~~~~~
 
-OIF local forces are available through the :class:`espressomd.interactions.Oif_Local_Forces` class.
+OIF local forces are available through the :class:`espressomd.interactions.OifLocalForces` class.
 
 This type of interaction is available for closed 3D immersed objects as
 well as for 2D sheet flowing in the 3D flow.
@@ -1089,7 +1109,7 @@ OIF global forces
 ~~~~~~~~~~~~~~~~~
 
 OIF global forces are available through the
-:class:`espressomd.interactions.Oif_Global_Forces` class.
+:class:`espressomd.interactions.OifGlobalForces` class.
 
 This type of interaction is available solely for closed 3D immersed
 objects.
@@ -1191,7 +1211,7 @@ oif_global_forces interaction).
 
 Bond-angle interactions
 -----------------------
-..  note::
+.. note::
     `Feature BOND_ANGLE required.`
 
 Bond-angle interactions involve three particles forming the angle :math:`\phi`, as shown in the schematic below.
@@ -1216,7 +1236,7 @@ For example, for the schematic with particles ``id=0``, ``1`` and ``2`` the bond
 The parameter ``bond_angle`` is a bond type identifier of three possible bond-angle classes, described below.
 
 
-:class:`espressomd.interactions.Angle_Harmonic`
+:class:`espressomd.interactions.AngleHarmonic`
     A classical harmonic potential of the form: 
     
     .. math:: V(\phi) = \frac{K}{2} \left(\phi - \phi_0\right)^2.
@@ -1233,13 +1253,13 @@ The parameter ``bond_angle`` is a bond type identifier of three possible bond-an
     force, and should therefore be used with caution.
 
     example ::
-        >>> angle_harmonic=Angle_Harmonic(bend=1.0, phi0=np.pi)
+        >>> angle_harmonic=AngleHarmonic(bend=1.0, phi0=np.pi)
         >>> system.bonded_inter.add(angle_harmonic)
         >>> system.part[1].add_bond((angle_harmonic, 0, 2))
 
 
 
-:class:`espressomd.interactions.Angle_Cosine`
+:class:`espressomd.interactions.AngleCosine`
 
     Cosine bond angle potential of the form:
 
@@ -1257,11 +1277,11 @@ The parameter ``bond_angle`` is a bond type identifier of three possible bond-an
     periodic and smooth for all angles :math:`\phi`.
 
     example ::
-        >>> angle_cosine=Angle_Cosine(bend=1.0, phi0=np.pi)
+        >>> angle_cosine=AngleCosine(bend=1.0, phi0=np.pi)
         >>> system.bonded_inter.add(angle_cosine)
         >>> system.part[1].add_bond((angle_cosine, 0, 2))
 
-:class:`espressomd.interactions.Angle_Cossquare`
+:class:`espressomd.interactions.AngleCossquare`
 
     Cosine square bond angle potential of the form:
 
@@ -1272,7 +1292,7 @@ The parameter ``bond_angle`` is a bond type identifier of three possible bond-an
     therefore much flatter than the two potentials before.
 
     example ::
-        >>> angle_cossquare=Angle_Cossquare(bend=1.0, phi0=np.pi)
+        >>> angle_cossquare=AngleCossquare(bend=1.0, phi0=np.pi)
         >>> system.bonded_inter.add(angle_cossquare)
         >>> system.part[1].add_bond((angle_cossquare, 0, 2))
 
@@ -1411,7 +1431,7 @@ milliseconds, length scales are in units of inverse box lengths.
 Coulomb P3M on GPU
 ^^^^^^^^^^^^^^^^^^
 
-:class:`espressomd.electrostatics.P3M_GPU`
+:class:`espressomd.electrostatics.P3MGPU`
 
 Required parameters:
     * bjerrum_length
@@ -1420,12 +1440,12 @@ Required parameters:
 The GPU implementation of P3M calculates the far field portion on the GPU. 
 It uses the same parameters and interface functionality as the CPU version of
 the solver. It should be noted that this does not always provide significant
-increase in performance.  Furthermore it computes the far field interactions
+increase in performance. Furthermore it computes the far field interactions
 with only single precision which limits the maximum precision. The algorithm
 does not work in combination with the electrostatic extensions :ref:`ICC` and
 :ref:`ELC`.
 
-.. todo:: Check P3M_GPU for non-cubic boxes, and also for cubic.
+.. todo:: Check P3MGPU for non-cubic boxes, and also for cubic.
 
 Coulomb Ewald GPU
 ~~~~~~~~~~~~~~~~~
@@ -1522,17 +1542,17 @@ MMM1D
 
 .. note::
     Required features: ELECTROSTATICS, PARTIAL_PERIODIC for MMM1D, the GPU version additionally needs
-    the features CUDA and MMM1D_GPU.
+    the features CUDA and MMM1DGPU.
 
 :: 
 
     from espressomd.electrostatics import MMM1D
-    from espressomd.electrostatics import MMM1D_GPU
+    from espressomd.electrostatics import MMM1DGPU
 
 Please cite :cite:`mmm1d`  when using MMM1D.
 
 See :attr:`espressomd.electrostatics.MMM1D` or
-:attr:`espressomd.electrostatics.MMM1D_GPU` for the list of available
+:attr:`espressomd.electrostatics.MMM1DGPU` for the list of available
 parameters.
 
 ::
@@ -1553,8 +1573,8 @@ test force calculations.
 
 ::
 
-    mmm1d_gpu = MMM1D_GPU(bjerrum_length=lb, far_switch_radius = fr, maxPWerror=err, tune=False, bessel_cutoff=bc)
-    mmm1d_gpu = MMM1D_GPU(bjerrum_length=lb, maxPWerror=err)
+    mmm1d_gpu = MMM1DGPU(bjerrum_length=lb, far_switch_radius = fr, maxPWerror=err, tune=False, bessel_cutoff=bc)
+    mmm1d_gpu = MMM1DGPU(bjerrum_length=lb, maxPWerror=err)
 
 MMM1D is also available in a GPU implementation. Unlike its CPU
 counterpart, it does not need the nsquared cell system. The first form

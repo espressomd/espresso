@@ -55,6 +55,6 @@ protected:
   /** ignore bottom and top cap of cylinder */
   bool m_open;
 };
-};
+}
 
 #endif

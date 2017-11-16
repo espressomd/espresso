@@ -77,7 +77,7 @@ class TestLBGPU(ut.TestCase):
             system.part[i].v=[0.0,0.0,0.0]
         system.thermostat.turn_off()
         
-        lbf = lb.LBFluid_GPU(visc=viscosity, dens=dens, agrid=agrid, tau=system.time_step, fric=friction)
+        lbf = lb.LBFluidGPU(visc=viscosity, dens=dens, agrid=agrid, tau=system.time_step, fric=friction)
         system.actors.add(lbf)
         system.thermostat.set_lb(kT=temp)
         #give particles a push

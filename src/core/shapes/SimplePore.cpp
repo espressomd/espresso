@@ -3,6 +3,14 @@
 #include <cassert>
 
 namespace Shapes {
+/**
+ * @brief Calculate the distance function in the coordinates of the cylinder.
+ *
+ * @param r Distance from the cylinder axis.
+ * @param z Distance from the center along the axis.
+ *
+ * @returns The distance vector from the surface in the cylinder system.
+ */
 std::pair<double, double> SimplePore::dist_half_pore(double r, double z) const {
   assert(z >= 0.0);
   assert(r >= 0.0);

@@ -99,7 +99,7 @@ extern EK_parameters* lb_ek_parameters_gpu;
   unsigned int old_number_of_species = 0;
   unsigned int old_number_of_boundaries = 0;
 
-  FdElectrostatics* electrostatics = NULL;
+  FdElectrostatics* electrostatics = nullptr;
 
   bool initialized = false;
   
@@ -2554,7 +2554,7 @@ int ek_init() {
     }
    
     //initialize electrostatics
-    if(electrostatics != NULL)
+    if(electrostatics != nullptr)
       delete electrostatics;
 
     FdElectrostatics::InputParameters es_parameters = {ek_parameters.bjerrumlength, ek_parameters.T, int(ek_parameters.dim_x), int(ek_parameters.dim_y), int(ek_parameters.dim_z), ek_parameters.agrid};
@@ -2695,7 +2695,7 @@ int ek_lb_print_vtk_velocity( char* filename ) {
 
   FILE* fp = fopen( filename, "w" );
 
-  if( fp == NULL ) 
+  if( fp == nullptr ) 
   {  
     return 1;
   }
@@ -2757,7 +2757,7 @@ int ek_lb_print_vtk_density( char* filename ) {
 
   FILE* fp = fopen( filename, "w" );
 
-  if( fp == NULL ) 
+  if( fp == nullptr ) 
   {
     return 1;
   }
@@ -2800,7 +2800,7 @@ int ek_print_vtk_density( int species, char* filename ) {
 
   FILE* fp = fopen( filename, "w" );
 
-  if( fp == NULL ){
+  if( fp == nullptr ){
     return 1;
   }
 
@@ -3026,7 +3026,7 @@ int ek_print_vtk_flux( int species, char* filename ) {
 
   unsigned int coord[3];
 
-  if( fp == NULL ){
+  if( fp == nullptr ){
     return 1;
   }
 
@@ -3189,7 +3189,7 @@ int ek_print_vtk_potential( char* filename ) {
 
   FILE* fp = fopen( filename, "w" );
 
-  if( fp == NULL ) 
+  if( fp == nullptr ) 
   {  
     return 1;
   }
@@ -3240,7 +3240,7 @@ int ek_print_vtk_particle_potential( char* filename ) {
 
   FILE* fp = fopen( filename, "w" );
 
-  if( fp == NULL ) 
+  if( fp == nullptr ) 
   {  
     return 1;
   }
@@ -3294,7 +3294,7 @@ int ek_print_vtk_lbforce( char* filename ) {
 
   FILE* fp = fopen( filename, "w" );
 
-  if( fp == NULL ) 
+  if( fp == nullptr ) 
   {
     return 1;
   }

@@ -3,7 +3,6 @@ file(GLOB EspressoCore_SRC
           )
 
 if( WITH_COVERAGE )
-  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Og --coverage -fprofile-arcs -ftest-coverage")
   link_libraries(gcov)
 endif()
@@ -39,8 +38,6 @@ if(SCAFACOS)
   target_link_libraries(EspressoCore Scafacos)
 endif(SCAFACOS)
 
-set_target_properties(EspressoCore PROPERTIES MACOSX_RPATH TRUE)
-
 if(CUDA)
   file(GLOB EspressoCuda_SRC
           "*.cu"
@@ -54,7 +51,6 @@ if(CUDA)
   set_target_properties(EspressoCuda PROPERTIES SOVERSION ${SOVERSION})
   add_dependencies(EspressoCuda EspressoConfig)
 
-  set_target_properties(EspressoCuda PROPERTIES MACOSX_RPATH TRUE)
   CUDA_ADD_CUFFT_TO_TARGET(EspressoCuda)
   target_link_libraries(EspressoCore EspressoCuda)
 endif(CUDA)

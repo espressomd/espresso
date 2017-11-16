@@ -519,7 +519,7 @@ int calc_twist_stack_force(Particle *si1, Particle *bi1, Particle *bi2, Particle
 
 
 #ifdef TWIST_STACK_DEBUG
-  fflush(NULL);
+  fflush(nullptr);
   int big_force = 0;
 #endif
 

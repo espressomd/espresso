@@ -211,6 +211,10 @@ extern int rebuild_verletlist;
 /************************************************************/
 /*@{*/
 
+/** Switch for choosing the topology init function of a certain
+    cell system. */
+void topology_init(int cs, CellPList *local);
+
 /** Reinitialize the cell structures.
     @param new_cs gives the new topology to use afterwards. May be set to
     \ref CELL_STRUCTURE_CURRENT for not changing it.
@@ -224,7 +228,7 @@ void realloc_cells(int size);
 inline void init_cellplist(CellPList *cpl) {
   cpl->n = 0;
   cpl->max = 0;
-  cpl->cell = NULL;
+  cpl->cell = nullptr;
 }
 
 /** Reallocate a list of cell pointers */

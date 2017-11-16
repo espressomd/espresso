@@ -89,7 +89,7 @@ void lb_init_boundaries() {
         -1; // the number the boundary will actually belong to.
 
 #ifdef EK_BOUNDARIES
-    ekfloat *host_wallcharge_species_density = NULL;
+    ekfloat *host_wallcharge_species_density = nullptr;
     float node_wallcharge = 0.0f;
     int wallcharge_species = -1, charged_boundaries = 0;
     int node_charged = 0;
@@ -321,8 +321,8 @@ void lb_init_boundaries() {
         FILE *fp;
         fp = fopen(lb_boundaries[n].c.voxel.filename, "r");
 
-        while (fgets(line, 80, fp) != NULL) {
-          // get a line, up to 80 chars from fp,  done if NULL 
+        while (fgets(line, 80, fp) != nullptr) {
+          // get a line, up to 80 chars from fp,  done if nullptr 
           sscanf(line, "%d %d %d", &xxx, &yyy, &zzz);
 
           lbfields[get_linear_index(xxx, yyy, zzz, lblattice.halo_grid)]
@@ -368,7 +368,7 @@ int lbboundary_get_force(void* lbb, double *f) {
 #endif
   } else {
 #if defined(LB_BOUNDARIES) && defined(LB)
-    mpi_gather_stats(8, forces, NULL, NULL, NULL);
+    mpi_gather_stats(8, forces, nullptr, nullptr, nullptr);
 
     f[0] = forces[3 * no + 0] * lbpar.agrid / lbpar.tau; // lbpar.tau; TODO this makes the units wrong and 
     f[1] = forces[3 * no + 1] * lbpar.agrid / lbpar.tau; // lbpar.tau; the result correct. But it's 3.13AM
