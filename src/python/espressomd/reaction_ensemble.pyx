@@ -41,7 +41,7 @@ cdef class ReactionEnsemble(object):
 
     """
     cdef object _params
-    cdef cReactionEnsemble* RE
+    cdef CReactionEnsemble RE
 
     def __init__(self, *args, **kwargs):
 
@@ -49,7 +49,7 @@ cdef class ReactionEnsemble(object):
                         "temperature": 1,
                         "exclusion_radius": 0}
 
-        self.RE = new cReactionEnsemble()
+        self.RE = CReactionEnsemble()
 
         for k in self._required_keys():
             if k not in kwargs:
@@ -64,9 +64,6 @@ cdef class ReactionEnsemble(object):
                 raise KeyError("%s is not a vaild key" % k)
 
         self._set_params_in_es_core()
-
-    def __dealloc__(self):
-        del(self.RE)
 
     def _valid_keys(self):
         return "standard_pressure", "temperature", "exclusion_radius"
