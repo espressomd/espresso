@@ -160,7 +160,7 @@ cdef class mayaviLive(object):
         cdef int i=0,j=0,k=0 
         cdef int t 
         cdef int partner
-        cdef unique_ptr[particle] p
+        cdef unique_ptr[const particle] p
         cdef ia_parameters* ia
         cdef vector[int] bonds
 
@@ -171,13 +171,13 @@ cdef class mayaviLive(object):
             if not p:
                 continue
 
-            coords[j,:] = p.get()[0].r.p
+            coords[j,:] = np.array([p.get().r.p[0],p.get().r.p[1],p.get().r.p[2]])
             t = p.get()[0].p.type
             types[j] = t +1
             radii[j] = self._determine_radius(t)
 
             # Iterate over bonds
-            k = 0        
+            k = 0
             while k<p.get()[0].bl.n:
                 # Bond type
                 t = p.get()[0].bl.e[k]
@@ -195,7 +195,7 @@ cdef class mayaviLive(object):
         bond_coords = numpy.empty((Nbonds,7))
 
         cdef int n
-        cdef unique_ptr[particle] p1,p2
+        cdef unique_ptr[const particle] p1,p2
         cdef double bond_vec[3]
         for n in range(Nbonds):
             i = bonds[3*n]
@@ -203,13 +203,12 @@ cdef class mayaviLive(object):
             t = bonds[3*n+2]
             p1 = get_particle_data(i)
             p2 = get_particle_data(j)
-            bond_coords[n,:3] = p1.get()[0].r.p 
+            bond_coords[n,:3] = np.array([p1.get().r.p[0],p1.get().r.p[1],p1.get().r.p[2]])
             get_mi_vector(bond_vec,p2.get()[0].r.p,p1.get()[0].r.p)
             bond_coords[n,3:6] = bond_vec
             bond_coords[n,6] = t
 
         boxl = self.system.box_l
-
 
         if self.data is None:
             self.data = coords, types, radii, (self.last_N != N), \

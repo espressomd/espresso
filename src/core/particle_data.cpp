@@ -306,7 +306,7 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   return dst;
 }
 
-std::unique_ptr<Particle> get_particle_data(int part) {
+std::unique_ptr<const Particle> get_particle_data(int part) {
   auto const pnode = get_particle_node(part);
 
   if (pnode < 0)
@@ -315,7 +315,7 @@ std::unique_ptr<Particle> get_particle_data(int part) {
   auto pp = Utils::make_unique<Particle>();
 
   mpi_recv_part(pnode, part, pp.get());
-  return pp;
+  return std::unique_ptr<const Particle>(pp.release());
 }
 
 int place_particle(int part, double p[3]) {

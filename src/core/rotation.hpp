@@ -78,7 +78,7 @@ inline void convert_quat_to_quatu(double quat[4], double quatu[3]) {
 }
 
 /** Multiply two quaternions */
-void multiply_quaternions(double a[4], double b[4], double result[4]);
+void multiply_quaternions(double const a[4], double const b[4], double result[4]);
 
 /** Convert director to quaternions */
 int convert_quatu_to_quat(double d[3], double quat[4]);

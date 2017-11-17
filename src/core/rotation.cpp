@@ -500,7 +500,7 @@ void convert_vec_space_to_body(Particle *p, double *v, double *res) {
 }
 
 /** Multiply two quaternions */
-void multiply_quaternions(double a[4], double b[4], double result[4]) {
+void multiply_quaternions(double const a[4], double const b[4], double result[4]) {
   // Formula from http://www.j3d.org/matrix_faq/matrfaq_latest.html
   result[0] = a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3];
   result[1] = a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2];
