@@ -11,22 +11,22 @@ cdef extern from "utils.hpp":
 cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
 
     ctypedef struct single_reaction:
-        int* reactant_types
+        vector[int] reactant_types
         int len_reactant_types
-        int* reactant_coefficients
-        int* product_types
+        vector[int] reactant_coefficients
+        vector[int] product_types
         int len_product_types
-        int* product_coefficients
+        vector[int] product_coefficients
         double equilibrium_constant
         int nu_bar
 
 
     ctypedef struct reaction_system:
         int nr_single_reactions
-        single_reaction** reactions
-        int* type_index
+        vector[single_reaction] reactions
+        vector[int] type_index
         int nr_different_types
-        double* charges_of_types
+        vector[double] charges_of_types
         double standard_pressure_in_simulation_units
         double temperature_reaction_ensemble
         double exclusion_radius
@@ -45,16 +45,14 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         double CV_maximum
         double delta_CV
         double (*determine_current_state_in_collective_variable_with_index) (int, void*)
-        int* corresponding_acid_types
-        int nr_corresponding_acid_types
+        vector[int] corresponding_acid_types
         int associated_type
         string energy_boundaries_filename
 
     ctypedef struct wang_landau_system:
         vector[int] histogram
         vector[double] wang_landau_potential
-        int nr_collective_variables
-        collective_variable** collective_variables
+        vector[collective_variable] collective_variables
         vector[int] nr_subindices_of_collective_variable
         double wang_landau_parameter
         double initial_wang_landau_parameter
@@ -89,7 +87,7 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
 
     #///////////////////////////////////////////// Wang-Landau reaction ensemble algorithm
         wang_landau_system m_current_wang_landau_system
-        void add_new_CV_degree_of_association(int associated_type, double CV_minimum, double CV_maximum, vector[int] _corresponding_acid_types)
+        void add_new_CV_degree_of_association(int associated_type, double CV_minimum, double CV_maximum, vector[int] corresponding_acid_types)
         void add_new_CV_potential_energy(string filename, double delta_CV)
         int do_reaction_wang_landau() except +
         int update_maximum_and_minimum_energies_at_current_state()

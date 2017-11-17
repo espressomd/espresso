@@ -1,16 +1,21 @@
 #include "utils.hpp"
 #include <string>
+#include "statistics.hpp" //for distto
+#include <stdio.h> //for getline()
+#include "utils.hpp" // for PI and random vectors
+#include "global.hpp" //for access to global variables
+#include "particle_data.hpp" //for particle creation, modification
 
 namespace ReactionEnsemble {
 
 typedef struct single_reaction {
   // strict input to the algorithm
-  int *reactant_types;
+  std::vector<int> reactant_types;
   int len_reactant_types;
-  int *reactant_coefficients;
-  int *product_types;
+  std::vector<int> reactant_coefficients;
+  std::vector<int> product_types;
   int len_product_types;
-  int *product_coefficients;
+  std::vector<int> product_coefficients;
   double equilibrium_constant;
   // calculated values that are stored for performance reasons
   int nu_bar;
@@ -18,10 +23,10 @@ typedef struct single_reaction {
 
 typedef struct reaction_system {
   int nr_single_reactions;
-  single_reaction **reactions;
-  int *type_index;
+  std::vector<single_reaction> reactions;
+  std::vector<int> type_index;
   int nr_different_types; // is equal to length type_index
-  double *charges_of_types;
+  std::vector<double> charges_of_types;
   double standard_pressure_in_simulation_units;
   double temperature_reaction_ensemble;
   double exclusion_radius; // this is used as a kind of hard sphere radius, if
@@ -60,10 +65,9 @@ typedef struct collective_variable {
                                  // collective_variable_index) and another input
                                  // for a void pointer and returns a double
   // for collective variables of type degree of association
-  int *corresponding_acid_types; // is NULL if the current collective variable
+  std::vector<int> corresponding_acid_types; // is NULL if the current collective variable
                                  // has nothing to do with a degree of
                                  // association
-  int nr_corresponding_acid_types;
   int associated_type;
   // for collective variables of type energy
   std::string energy_boundaries_filename;
@@ -73,8 +77,7 @@ typedef struct wang_landau_system {
   std::vector<int> histogram;
   std::vector<double> wang_landau_potential; // equals the logarithm to basis e of the
                                  // degeneracy of the states
-  int nr_collective_variables;
-  collective_variable **collective_variables;
+  std::vector<collective_variable> collective_variables;
   std::vector<int> nr_subindices_of_collective_variable;
   double wang_landau_parameter; // equals the logarithm to basis e of the
                                 // modification factor of the degeneracy of
@@ -119,10 +122,10 @@ public:
 
   reaction_system m_current_reaction_system = {
       .nr_single_reactions = 0,
-      .reactions = NULL,
-      .type_index = NULL,
+      .reactions = std::vector<single_reaction>(),
+      .type_index = std::vector<int>(),
       .nr_different_types = 0,
-      .charges_of_types = NULL,
+      .charges_of_types = std::vector<double>(),
       .standard_pressure_in_simulation_units = -10,
       .temperature_reaction_ensemble = -10.0,
       .exclusion_radius = 0.0,
@@ -145,13 +148,11 @@ public:
   void set_cuboid_reaction_ensemble_volume();
   int do_reaction(int reaction_steps);
   int check_reaction_ensemble();
-  int calculate_nu_bar(int *reactant_coefficients, int len_reactant_types,
-                       int *product_coefficients,
-                       int len_product_types); // should only be used at when
+  int calculate_nu_bar(std::vector<int>& reactant_coefficients,
+                       std::vector<int>& product_coefficients); // should only be used at when
                                                // defining a new reaction
-  int update_type_index(int *reactant_types, int len_reactant_types,
-                        int *product_types,
-                        int len_product_types); // assign different types an
+  int update_type_index(std::vector<int>& reactant_types,
+                        std::vector<int>& product_types); // assign different types an
                                                 // index in a growing list that
                                                 // starts at 0 and is
                                                 // incremented by 1 for each new
@@ -177,8 +178,7 @@ public:
   wang_landau_system m_current_wang_landau_system = {
       .histogram = std::vector<int>(),
       .wang_landau_potential = std::vector<double>(),
-      .nr_collective_variables = 0,
-      .collective_variables = NULL,
+      .collective_variables = std::vector<collective_variable>(),
       .nr_subindices_of_collective_variable=std::vector<int>(),
       .wang_landau_parameter = 1.0,
       .initial_wang_landau_parameter = 1.0,
@@ -237,7 +237,6 @@ private:
     reaction_ensemble_wang_landau_mode,
     constant_pH_mode
   };
-  int free_reaction_ensemble();
   double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
   bool all_reactant_particles_exist(int reaction_id);
   int replace(int p_id, int desired_type);
@@ -245,22 +244,50 @@ private:
   std::vector<int> m_empty_p_ids_smaller_than_max_seen_particle;
   int hide_particle(int p_id, int previous_type);
   void remove_bins_that_have_not_been_sampled();
-  double average_int_list(int *int_number_list, int len_int_nr_list);
-  bool is_in_list(int value, int *list, int len_list);
+
+    /**
+    *Calculates the average of an integer array (used for the histogram of the Wang-Landau algorithm). It excludes values which are initialized to be negative. Those values indicate that the Wang-Landau algorithm should not sample those values. The values still occur in the list because we can only store "rectangular" value ranges.
+    */
+
+    template <typename T>
+    double average_list_of_allowed_entries(T vector){
+	    double result=0.0;
+	    int counter_allowed_entries=0;
+	    for(int i=0;i<vector.size();i++){
+		    if(vector[i]>=0){ //checks for validity of index i (think of energy collective variables, in a cubic memory layout there will be indices which are not allowed by the energy boundaries. These values will be initalized with a negative fill value)
+			    result+=(double) vector[i];
+			    counter_allowed_entries+=1;
+		    }
+	    }
+	    return result/counter_allowed_entries;
+    }
+
+    /**
+    * Checks wether an integer is in an array of integers.
+    */
+    template <typename T>
+    bool is_in_list(T value, std::vector<T> list){
+	    for(int i=0;i<list.size();i++){
+		    if(list[i]==value)
+			    return true;
+	    }
+	    return false;
+    }
+    
   void append_particle_property_of_random_particle(
       int type, std::vector<stored_particle_property> &list_of_particles);
   void make_reaction_attempt(
-      single_reaction *current_reaction,
+      single_reaction& current_reaction,
       std::vector<stored_particle_property> &changed_particles_properties,
       std::vector<int> &p_ids_created_particles,
       std::vector<stored_particle_property> &hidden_particles_properties);
-  double calculate_factorial_expression(single_reaction *current_reaction,
+  double calculate_factorial_expression(single_reaction& current_reaction,
                                         int *old_particle_numbers);
   void restore_properties(std::vector<stored_particle_property> property_list,
                           const int number_of_saved_properties);
-  int add_types_to_index(int *type_list, int len_type_list, int status_gc_init);
+  int add_types_to_index(std::vector<int>& type_list, int status_gc_init);
   double calculate_boltzmann_factor_reaction_ensemble(
-      single_reaction *current_reaction, double E_pot_old, double E_pot_new,
+      single_reaction& current_reaction, double E_pot_old, double E_pot_new,
       std::vector<int> &old_particle_numbers);
   void add_random_vector(double *vector, int len_vector,
                          double length_of_displacement);
@@ -271,12 +298,10 @@ private:
   void get_random_position_in_box(double *out_pos);
   void
   get_random_position_in_box_enhanced_proposal_of_small_radii(double *out_pos);
-  int find_minimum_in_int_list(int* list, int len);
   
   // declarations wang_landau
   int initialize_wang_landau(); // may first be called after all collective
                                 // variables are added
-  void free_wang_landau();
   bool can_refine_wang_landau_one_over_t();
   bool achieved_desired_number_of_refinements_one_over_t();
   void refine_wang_landau_parameter_one_over_t();
@@ -284,15 +309,14 @@ private:
   void update_wang_landau_potential_and_histogram(
       int index_of_state_after_acceptance_or_rejection);
   double calculate_boltzmann_factor_reaction_ensemble_wang_landau(
-      single_reaction *current_reaction, double E_pot_old, double E_pot_new,
+      single_reaction& current_reaction, double E_pot_old, double E_pot_new,
       std::vector<int> &old_particle_numbers, int old_state_index,
       int new_state_index, bool only_make_configuration_changing_move);
   int get_flattened_index_wang_landau_without_energy_collective_variable(
       int flattened_index_with_energy_collective_variable,
       int collective_variable_index_energy_observable); // needed for energy
                                                         // collective variable
-  double calculate_delta_degree_of_association(
-      int index_of_current_collective_variable);
+  double calculate_delta_degree_of_association(collective_variable& current_collective_variable);
   void initialize_histogram();
   void initialize_wang_landau_potential();
   void reset_histogram();
@@ -302,7 +326,7 @@ private:
   // declarations constant pH
   int get_random_p_id();
   double
-  calculate_boltzmann_factor_consant_pH(single_reaction *current_reaction,
+  calculate_boltzmann_factor_consant_pH(single_reaction& current_reaction,
                                         double E_pot_old, double E_pot_new);
 };
 }

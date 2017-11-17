@@ -69,14 +69,12 @@ class ReactionEnsembleTest(ut.TestCase):
     h = HarmonicBond(r_0=0, k=1)
     system.bonded_inter[0] = h
     system.part[0].add_bond((h, 1))
-
     RE = reaction_ensemble.ReactionEnsemble(
         standard_pressure=0.00108, temperature=temperature, exclusion_radius=0)
     RE.add(equilibrium_constant=K_diss, reactant_types=[0], reactant_coefficients=[
            1], product_types=[1, 2], product_coefficients=[1, 1])
     RE.set_default_charges(dictionary={"0": 0, "1": -1, "2": +1})
     grand_canonical.setup([0, 1, 2, 3])
-
     # initialize wang_landau
     # generate preliminary_energy_run_results here, this should be done in a
     # seperate simulation without energy reweighting using the update energy
@@ -100,7 +98,6 @@ class ReactionEnsembleTest(ut.TestCase):
             except:  # only catch my exception
                 break
         # test as soon as wang_landau has converged (throws exception then)
-
         nbars, Epots, WL_potentials = np.loadtxt(
             "WL_potential_out.dat", unpack=True)
         mask_nbar_0 = np.where(np.abs(nbars - 1.0) < 0.0001)
