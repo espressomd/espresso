@@ -64,8 +64,6 @@ cdef class ParticleHandle(object):
         if not self.particle_data:
             raise Exception(
                 "Error updating particle data for id " + str(self.id))
-        else:
-            return 0
 
     def __str__(self):
         res = collections.OrderedDict()
@@ -108,7 +106,7 @@ cdef class ParticleHandle(object):
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.get()[0].p.type
+            return self.particle_data.get().p.type
 
     # Particle MolId
     property mol_id:
@@ -135,7 +133,7 @@ cdef class ParticleHandle(object):
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.get()[0].p.mol_id
+            return self.particle_data.get().p.mol_id
 
     # Position
     property pos:
@@ -161,8 +159,8 @@ cdef class ParticleHandle(object):
             cdef double ppos[3]
             cdef int img[3]
             for i in range(3):
-                img[i] = self.particle_data.get()[0].l.i[i]
-                ppos[i] = self.particle_data.get()[0].r.p[i]
+                img[i] = self.particle_data.get().l.i[i]
+                ppos[i] = self.particle_data.get().r.p[i]
 
             unfold_position(ppos, img)
             return np.array([ppos[0], ppos[1], ppos[2]])
@@ -207,7 +205,7 @@ cdef class ParticleHandle(object):
         def __get__(self):
             cdef double pos[3]
             pos = self.pos
-            fold_position(pos, self.particle_data.get()[0].l.i)
+            fold_position(pos, self.particle_data.get().l.i)
             return pos
 
     # Velocity
@@ -239,20 +237,20 @@ cdef class ParticleHandle(object):
             self.update_particle_data()
             IF MULTI_TIMESTEP:
                 if smaller_time_step > 0. and self.smaller_timestep:
-                    return np.array([self.particle_data.get()[0].m.v[0] / smaller_time_step,
-                                     self.particle_data.get()[0].m.v[
+                    return np.array([self.particle_data.get().m.v[0] / smaller_time_step,
+                                     self.particle_data.get().m.v[
                                          1] / smaller_time_step,
-                                     self.particle_data.get()[0].m.v[2] / smaller_time_step])
+                                     self.particle_data.get().m.v[2] / smaller_time_step])
                 else:
-                    return np.array([self.particle_data.get()[0].m.v[0] / time_step,
+                    return np.array([self.particle_data.get().m.v[0] / time_step,
                                      self.particle_data.get()[
                         0].m.v[1] / time_step,
-                        self.particle_data.get()[0].m.v[2] / time_step])
+                        self.particle_data.get().m.v[2] / time_step])
             ELSE:
-                return np.array([self.particle_data.get()[0].m.v[0] / time_step,
+                return np.array([self.particle_data.get().m.v[0] / time_step,
                                  self.particle_data.get()[
                     0].m.v[1] / time_step,
-                    self.particle_data.get()[0].m.v[2] / time_step])
+                    self.particle_data.get().m.v[2] / time_step])
 
     # Force
     property f:
@@ -282,10 +280,10 @@ cdef class ParticleHandle(object):
         def __get__(self):
             global time_step
             self.update_particle_data()
-            return np.array([self.particle_data.get()[0].f.f[0] * self.particle_data.get()[0].p.mass / (0.5 * time_step**2),
+            return np.array([self.particle_data.get().f.f[0] * self.particle_data.get().p.mass / (0.5 * time_step**2),
                              self.particle_data.get()[
-                0].f.f[1] * self.particle_data.get()[0].p.mass / (0.5 * time_step**2),
-                self.particle_data.get()[0].f.f[2] * self.particle_data.get()[0].p.mass / (0.5 * time_step**2)])
+                0].f.f[1] * self.particle_data.get().p.mass / (0.5 * time_step**2),
+                self.particle_data.get().f.f[2] * self.particle_data.get().p.mass / (0.5 * time_step**2)])
 
     # Bonds
     property bonds:
@@ -329,10 +327,10 @@ cdef class ParticleHandle(object):
             bonds = []
             # Go through the bond list of the particle
             i = 0
-            while i < self.particle_data.get()[0].bl.n:
+            while i < self.particle_data.get().bl.n:
                 bond = []
                 # Bond type:
-                bond_id = self.particle_data.get()[0].bl.e[i]
+                bond_id = self.particle_data.get().bl.e[i]
                 bond.append(BondedInteractions()[bond_id])
                 # Number of partners
                 nPartners = bonded_ia_params[bond_id].num
@@ -341,7 +339,7 @@ cdef class ParticleHandle(object):
 
                 # Copy bond partners
                 for j in range(nPartners):
-                    bond.append(self.particle_data.get()[0].bl.e[i])
+                    bond.append(self.particle_data.get().bl.e[i])
                     i += 1
                 bonds.append(tuple(bond))
 
@@ -399,7 +397,7 @@ cdef class ParticleHandle(object):
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.get()[0].p.mass
+            return self.particle_data.get().p.mass
 
     IF ROTATION == 1:
         property omega_lab:
@@ -1059,7 +1057,7 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef int_list exclusions = self.particle_data.get()[0].exclusions()
+                cdef int_list exclusions = self.particle_data.get().exclusions()
 
                 py_partners = []
                 for i in range(exclusions.n):
