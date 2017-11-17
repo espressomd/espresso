@@ -1887,6 +1887,12 @@ int MMM2D_sanity_checks()
       runtimeErrorMsg() <<"MMM2D at present requires layered (or n-square) cellsystem";
     return 1;
   }
+
+  if (cell_structure.use_verlet_list == true) {
+      runtimeErrorMsg() <<"MMM2D at present does not work with verlet lists";
+    return 1;
+  }
+
   return 0;
 }
 
