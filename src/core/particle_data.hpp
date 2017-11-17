@@ -373,6 +373,14 @@ struct Particle {
 #endif
   }
 
+  IntList const &exclusions() const {
+#ifdef EXCLUSIONS
+    return el;
+#else
+    throw std::runtime_error{"Exclusions not enabled."};
+#endif
+  }
+
 #ifdef EXCLUSIONS
   /** list of particles, with which this particle has no nonbonded
    * interactions

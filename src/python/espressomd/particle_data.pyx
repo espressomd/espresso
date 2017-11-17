@@ -156,14 +156,9 @@ cdef class ParticleHandle(object):
 
         def __get__(self):
             self.update_particle_data()
-            cdef double ppos[3]
-            cdef int img[3]
-            for i in range(3):
-                img[i] = self.particle_data.l.i[i]
-                ppos[i] = self.particle_data.r.p[i]
+            cdef Vector3d ret = unfolded_position(self.particle_data)
 
-            unfold_position(ppos, img)
-            return np.array([ppos[0], ppos[1], ppos[2]])
+            return np.array([ret[0], ret[1], ret[2]])
 
     property pos_folded:
         """
@@ -203,10 +198,10 @@ cdef class ParticleHandle(object):
             raise Exception("setting a folded position is not implemented")
 
         def __get__(self):
-            cdef double pos[3]
-            pos = self.pos
-            fold_position(pos, self.particle_data.l.i)
-            return pos
+            self.update_particle_data()
+            cdef Vector3d ret = folded_position(self.particle_data)
+
+            return np.array([ret[0], ret[1], ret[2]])
 
     # Velocity
     property v:
