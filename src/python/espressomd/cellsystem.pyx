@@ -35,11 +35,8 @@ cdef class CellSystem(object):
                              in the algorithm.
 
         """
-        if use_verlet_lists:
-            dd.use_vList = 1
-        else:
-            dd.use_vList = 0
 
+        cell_structure.use_verlet_list =  use_verlet_lists
         # grid.h::node_grid
         mpi_bcast_cell_structure(CELL_STRUCTURE_DOMDEC)
 
@@ -58,16 +55,14 @@ cdef class CellSystem(object):
                              lists for this algorithm.
 
         """
-        if use_verlet_lists:
-            dd.use_vList = 1
-        else:
-            dd.use_vList = 0
+        cell_structure.use_verlet_list = use_verlet_lists
+
         mpi_bcast_cell_structure(CELL_STRUCTURE_NSQUARE)
         # @TODO: gathering should be interface independent
         # return mpi_gather_runtime_errors(interp, TCL_OK)
         return True
 
-    def set_layered(self, n_layers=None):
+    def set_layered(self, n_layers=None, use_verlet_lists=True):
         """
         Activates the layered cell system.
 
@@ -76,8 +71,13 @@ cdef class CellSystem(object):
 
         'n_layers': :obj:`int`, optional, positive
                     Sets the number of layers in the z-direction.
-
+        'use_verlet_lists' : :obj:`bool`, optional
+                             Activates or deactivates the usage of the verlet
+                             lists for this algorithm.
+        
         """
+        cell_structure.use_verlet_list = use_verlet_lists
+
         if n_layers:
             if not isinstance(n_layers, int):
                 raise ValueError("layer height should be positive")
@@ -109,17 +109,15 @@ cdef class CellSystem(object):
         return True
 
     def get_state(self):
-        s = {}
+        s = {"use_verlet_list" : cell_structure.use_verlet_list}
+
         if cell_structure.type == CELL_STRUCTURE_LAYERED:
             s["type"] = "layered"
             s["n_layers"] = n_layers
         if cell_structure.type == CELL_STRUCTURE_DOMDEC:
             s["type"] = "domain_decomposition"
-            s["use_verlet_lists"] = dd.use_vList
         if cell_structure.type == CELL_STRUCTURE_NSQUARE:
             s["type"] = "nsquare"
-            s["use_verlet_lists"] = dd.use_vList
-
 
         s["skin"] = skin
         s["local_box_l"] = np.array([local_box_l[0], local_box_l[1], local_box_l[2]])

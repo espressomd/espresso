@@ -30,8 +30,8 @@ __device__ inline void atomicadd( float* address,float value);
 void InitCUDA_IBM(const int numParticles);
 
 // ***** Our own global variables ********
-IBM_CUDA_ParticleDataInput *IBM_ParticleDataInput_device = NULL;
-IBM_CUDA_ParticleDataOutput *IBM_ParticleDataOutput_device = NULL;
+IBM_CUDA_ParticleDataInput *IBM_ParticleDataInput_device = nullptr;
+IBM_CUDA_ParticleDataOutput *IBM_ParticleDataOutput_device = nullptr;
 
 // ****** These variables are defined in lbgpu_cuda.cu, but we also want them here ****
 extern LB_node_force_gpu node_f;
@@ -40,8 +40,8 @@ extern LB_nodes_gpu *current_nodes;
 // ** These variables are static in lbgpu_cuda.cu, so we need to duplicate them here
 // They are initialized in ForcesIntoFluid
 // The pointers are on the host, but point into device memory
-LB_parameters_gpu *paraIBM = NULL;
-float* lb_boundary_velocity_IBM = NULL;
+LB_parameters_gpu *paraIBM = nullptr;
+float* lb_boundary_velocity_IBM = nullptr;
 
 /****************
    IBM_ResetLBForces_GPU
@@ -78,7 +78,7 @@ void IBM_ForcesIntoFluid_GPU(ParticleRange particles)
   const int numParticles = gpu_get_global_particle_vars_pointer_host()->number_of_particles;
 
   // Storage only needed on master and allocated only once at the first time step
-  if ( IBM_ParticleDataInput_host == NULL && this_node == 0 )
+  if ( IBM_ParticleDataInput_host == nullptr && this_node == 0 )
     InitCUDA_IBM(numParticles);
 
   // We gather particle positions and forces from all nodes

@@ -185,13 +185,13 @@ MMM2D_struct mmm2d_params = { 1e100, 10, 1, 0, 0, 0, 0, 1, 1, 1 };
 static int n_localpart = 0;
 
 /** temporary buffers for product decomposition */
-static double *partblk = NULL;
+static double *partblk = nullptr;
 /** for all local cells including ghosts */
-static double *lclcblk = NULL;
+static double *lclcblk = nullptr;
 /** collected data from the cells above the top neighbor
     of a cell rsp. below the bottom neighbor
     (P=below, M=above, as the signs in the exp). */
-static double *gblcblk = NULL;
+static double *gblcblk = nullptr;
 
 /** contribution from the image charges */
 static double lclimge[8]; 
@@ -201,10 +201,10 @@ typedef struct {
 } SCCache;
 
 /** sin/cos caching */ 
-static SCCache *scxcache = NULL;
+static SCCache *scxcache = nullptr;
 static int    n_scxcache;  
 /** sin/cos caching */ 
-static SCCache *scycache = NULL;
+static SCCache *scycache = nullptr;
 static int    n_scycache;  
 
 
@@ -701,7 +701,7 @@ static void setup_P(int p, double omega, double fac)
   double layer_top;
   double e, e_di_l, e_di_h;
   double *llclcblk;
-  double *lclimgebot = NULL, *lclimgetop = NULL;
+  double *lclimgebot = nullptr, *lclimgetop = nullptr;
   int e_size = 2, size = 4;
 
   if (mmm2d_params.dielectric_contrast_on)
@@ -810,7 +810,7 @@ static void setup_Q(int q, double omega, double fac)
   double layer_top;
   double e, e_di_l, e_di_h;
   double *llclcblk;
-  double *lclimgebot=NULL, *lclimgetop=NULL;
+  double *lclimgebot=nullptr, *lclimgetop=nullptr;
   int e_size = 2, size = 4;
  
   if (mmm2d_params.dielectric_contrast_on)
@@ -1013,7 +1013,7 @@ static void setup_PQ(int p, int q, double omega, double fac)
   double layer_top;
   double e, e_di_l, e_di_h;
   double *llclcblk;
-  double *lclimgebot=NULL, *lclimgetop=NULL;
+  double *lclimgebot=nullptr, *lclimgetop=nullptr;
   int e_size = 4, size = 8;
 
   if (mmm2d_params.dielectric_contrast_on)

@@ -34,7 +34,7 @@ Returns the minimal distance between all particles in the system.
 When used with type-lists as arguments, then the minimal distance between particles of only those types is determined.
 
 
-:meth:`espressomd.analyze.Analysis.distto()`
+:meth:`espressomd.analyze.Analysis.dist_to()`
 
 Returns the minimal distance of all particles to either a particle (when used with an argument `id`) 
 or a position coordinate when used with a vector `pos`.
@@ -46,9 +46,9 @@ For example, ::
     >>> system.box_l = [100, 100, 100]
     >>> for i in range(10):
     >>>     system.part.add(id=i, pos=[1.0, 1.0, i**2], type=0)
-    >>> system.analysis.distto(id=4)
+    >>> system.analysis.dist_to(id=4)
     7.0
-    >>> system.analysis.distto(pos=[0,0,0])
+    >>> system.analysis.dist_to(pos=[0,0,0])
     1.4142135623730951
     >>> system.analysis.mindist()
     1.0
@@ -246,7 +246,7 @@ separated molecules if needed.
 
 Vkappa
 ~~~~~~
-:meth:`espressomd.analyze.Analysis.Vkappa`
+:meth:`espressomd.analyze.Analysis.v_kappa`
 
 .. todo:: Implementation appears to be incomplete
 
@@ -319,7 +319,7 @@ always yields :math:`1`.
 
 Center of mass
 ~~~~~~~~~~~~~~
-:meth:`espressomd.analyze.Analysis.centermass`
+:meth:`espressomd.analyze.Analysis.center_of_mass`
 
 Returns the center of mass of particles of the given type given by `part_type`.
 
@@ -328,7 +328,7 @@ Returns the center of mass of particles of the given type given by `part_type`.
 
 Moment of inertia matrix
 ~~~~~~~~~~~~~~~~~~~~~~~~
-:meth:`espressomd.analyze.Analysis.momentofinertiamatrix`
+:meth:`espressomd.analyze.Analysis.moment_of_inertia_matrix`
 
 Returns the 3x3 moment of interia matrix for particles of a given type.
 
@@ -702,7 +702,7 @@ with :math:`q \in \{\var{qmin},\dots,\var{qmax}\}`.
 Chain radial distribution function
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:meth:`espressomd.analyze.Analysis.rdfchain`
+:meth:`espressomd.analyze.Analysis.rdf_chain`
 
 Returns three radial distribution functions (rdf) for the chains.
 The first rdf is calculated for monomers belonging to different chains,

@@ -483,7 +483,7 @@ int realloc_particlelist(ParticleList *plist, int size);
 /** Search for a specific particle.
     \param plist the list on which to operate
     \param id the identity of the particle to search
-    \return a pointer to the particle structure or NULL if particle is
+    \return a pointer to the particle structure or nullptr if particle is
     not in this list */
 Particle *got_particle(ParticleList *plist, int id);
 
@@ -792,7 +792,7 @@ int set_particle_fix(int part, int flag);
 /** Call only on the master node: change particle bond.
     @param part     identity of principal atom of the bond.
     @param bond     field containing the bond type number and the
-    identity of all bond partners (secundary atoms of the bond). If NULL, delete
+    identity of all bond partners (secundary atoms of the bond). If nullptr, delete
    all bonds.
     @param _delete   if true, do not add the bond, rather delete it if found
     @return ES_OK on success or ES_ERROR if no success

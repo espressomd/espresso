@@ -118,12 +118,6 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
       });
 
 /* rescale kinetic energy (=ideal contribution) */
-#ifdef ROTATION_PER_PARTICLE
-  fprintf(stderr, "Switching rotation per particle (#define "
-                  "ROTATION_PER_PARTICLE) and pressure calculation are "
-                  "incompatible.\n");
-#endif
-
   virials.data.e[0] /= (3.0*volume*time_step*time_step);
 
   calc_long_range_virials();
@@ -995,6 +989,7 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
               return 0;
           }
         }
+        return 0;
   };
 
   auto add_single_particle_contribution = [&add_ideal, &add_bonded](Particle &p) {
@@ -1018,6 +1013,7 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
               return 0;
           }
         }
+        return 0;
       });
 
   for (int i = 0; i < bins[0] * bins[1] * bins[2]; i++) {

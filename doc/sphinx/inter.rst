@@ -984,7 +984,7 @@ modeling objects are described in section :ref:`Object-in-fluid`.
 OIF local forces
 ~~~~~~~~~~~~~~~~
 
-OIF local forces are available through the :class:`espressomd.interactions.Oif_Local_Forces` class.
+OIF local forces are available through the :class:`espressomd.interactions.OifLocalForces` class.
 
 This type of interaction is available for closed 3D immersed objects as
 well as for 2D sheet flowing in the 3D flow.
@@ -1109,7 +1109,7 @@ OIF global forces
 ~~~~~~~~~~~~~~~~~
 
 OIF global forces are available through the
-:class:`espressomd.interactions.Oif_Global_Forces` class.
+:class:`espressomd.interactions.OifGlobalForces` class.
 
 This type of interaction is available solely for closed 3D immersed
 objects.
@@ -1236,7 +1236,7 @@ For example, for the schematic with particles ``id=0``, ``1`` and ``2`` the bond
 The parameter ``bond_angle`` is a bond type identifier of three possible bond-angle classes, described below.
 
 
-:class:`espressomd.interactions.Angle_Harmonic`
+:class:`espressomd.interactions.AngleHarmonic`
     A classical harmonic potential of the form: 
     
     .. math:: V(\phi) = \frac{K}{2} \left(\phi - \phi_0\right)^2.
@@ -1253,13 +1253,13 @@ The parameter ``bond_angle`` is a bond type identifier of three possible bond-an
     force, and should therefore be used with caution.
 
     example ::
-        >>> angle_harmonic=Angle_Harmonic(bend=1.0, phi0=np.pi)
+        >>> angle_harmonic=AngleHarmonic(bend=1.0, phi0=np.pi)
         >>> system.bonded_inter.add(angle_harmonic)
         >>> system.part[1].add_bond((angle_harmonic, 0, 2))
 
 
 
-:class:`espressomd.interactions.Angle_Cosine`
+:class:`espressomd.interactions.AngleCosine`
 
     Cosine bond angle potential of the form:
 
@@ -1277,11 +1277,11 @@ The parameter ``bond_angle`` is a bond type identifier of three possible bond-an
     periodic and smooth for all angles :math:`\phi`.
 
     example ::
-        >>> angle_cosine=Angle_Cosine(bend=1.0, phi0=np.pi)
+        >>> angle_cosine=AngleCosine(bend=1.0, phi0=np.pi)
         >>> system.bonded_inter.add(angle_cosine)
         >>> system.part[1].add_bond((angle_cosine, 0, 2))
 
-:class:`espressomd.interactions.Angle_Cossquare`
+:class:`espressomd.interactions.AngleCossquare`
 
     Cosine square bond angle potential of the form:
 
@@ -1292,7 +1292,7 @@ The parameter ``bond_angle`` is a bond type identifier of three possible bond-an
     therefore much flatter than the two potentials before.
 
     example ::
-        >>> angle_cossquare=Angle_Cossquare(bend=1.0, phi0=np.pi)
+        >>> angle_cossquare=AngleCossquare(bend=1.0, phi0=np.pi)
         >>> system.bonded_inter.add(angle_cossquare)
         >>> system.part[1].add_bond((angle_cossquare, 0, 2))
 
@@ -1431,7 +1431,7 @@ milliseconds, length scales are in units of inverse box lengths.
 Coulomb P3M on GPU
 ^^^^^^^^^^^^^^^^^^
 
-:class:`espressomd.electrostatics.P3M_GPU`
+:class:`espressomd.electrostatics.P3MGPU`
 
 Required parameters:
     * bjerrum_length
@@ -1440,12 +1440,12 @@ Required parameters:
 The GPU implementation of P3M calculates the far field portion on the GPU. 
 It uses the same parameters and interface functionality as the CPU version of
 the solver. It should be noted that this does not always provide significant
-increase in performance.  Furthermore it computes the far field interactions
+increase in performance. Furthermore it computes the far field interactions
 with only single precision which limits the maximum precision. The algorithm
 does not work in combination with the electrostatic extensions :ref:`ICC` and
 :ref:`ELC`.
 
-.. todo:: Check P3M_GPU for non-cubic boxes, and also for cubic.
+.. todo:: Check P3MGPU for non-cubic boxes, and also for cubic.
 
 Coulomb Ewald GPU
 ~~~~~~~~~~~~~~~~~
@@ -1542,17 +1542,17 @@ MMM1D
 
 .. note::
     Required features: ELECTROSTATICS, PARTIAL_PERIODIC for MMM1D, the GPU version additionally needs
-    the features CUDA and MMM1D_GPU.
+    the features CUDA and MMM1DGPU.
 
 :: 
 
     from espressomd.electrostatics import MMM1D
-    from espressomd.electrostatics import MMM1D_GPU
+    from espressomd.electrostatics import MMM1DGPU
 
 Please cite :cite:`mmm1d`  when using MMM1D.
 
 See :attr:`espressomd.electrostatics.MMM1D` or
-:attr:`espressomd.electrostatics.MMM1D_GPU` for the list of available
+:attr:`espressomd.electrostatics.MMM1DGPU` for the list of available
 parameters.
 
 ::
@@ -1573,8 +1573,8 @@ test force calculations.
 
 ::
 
-    mmm1d_gpu = MMM1D_GPU(bjerrum_length=lb, far_switch_radius = fr, maxPWerror=err, tune=False, bessel_cutoff=bc)
-    mmm1d_gpu = MMM1D_GPU(bjerrum_length=lb, maxPWerror=err)
+    mmm1d_gpu = MMM1DGPU(bjerrum_length=lb, far_switch_radius = fr, maxPWerror=err, tune=False, bessel_cutoff=bc)
+    mmm1d_gpu = MMM1DGPU(bjerrum_length=lb, maxPWerror=err)
 
 MMM1D is also available in a GPU implementation. Unlike its CPU
 counterpart, it does not need the nsquared cell system. The first form

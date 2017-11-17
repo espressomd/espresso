@@ -51,8 +51,8 @@ namespace Observables {
     std::shared_ptr<::Observables::obs_name> m_observable;                     \
   };
 
-NEW_PARAMLESS_OBSERVABLE(StressTensor);
-NEW_PARAMLESS_OBSERVABLE(StressTensorAcf);
+NEW_PARAMLESS_OBSERVABLE(StressTensor)
+NEW_PARAMLESS_OBSERVABLE(StressTensorAcf)
 
 } /* namespace Observables */
 } /* namespace ScriptInterface */
