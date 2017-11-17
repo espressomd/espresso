@@ -1511,13 +1511,6 @@ cdef class _ParticleSliceImpl(object):
         for i in self.id_selection:
             yield ParticleHandle(i)
 
-    cdef int update_particle_data(self, id) except -1:
-        self.particle_data = get_particle_data(id)
-        if not self.particle_data:
-            raise Exception("Error updating particle data.")
-        else:
-            return 0
-
     property pos_folded:
         """
         Particle position (folded into central image).

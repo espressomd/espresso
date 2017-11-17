@@ -230,10 +230,9 @@ cdef class ParticleHandle(object):
     cdef int update_particle_data(self) except -1
 
 cdef class _ParticleSliceImpl:
-    cdef unique_ptr[particle] particle_data
-    cdef int update_particle_data(self, id) except -1
     cdef public id_selection
 
 cdef extern from "grid.hpp":
     cdef void fold_position(double *, int*)
-    void unfold_position(double pos[3], int image_box[3]) 
+    void unfold_position(double pos[3], int image_box[3])
+    Vector3d unfolded_position(P)
