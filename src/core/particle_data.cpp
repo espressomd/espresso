@@ -78,7 +78,7 @@ int n_part = 0;
 std::unordered_map<int, int> particle_node;
 
 int max_local_particles = 0;
-Particle **local_particles = NULL;
+Particle **local_particles = nullptr;
 
 /************************************************
  * local functions
@@ -113,7 +113,7 @@ void mpi_who_has_slave(int node, int param) {
   int n_part;
 
   n_part = cells_get_n_particles();
-  MPI_Gather(&n_part, 1, MPI_INT, NULL, 0, MPI_INT, 0, comm_cart);
+  MPI_Gather(&n_part, 1, MPI_INT, nullptr, 0, MPI_INT, 0, comm_cart);
   if (n_part == 0)
     return;
 
@@ -129,7 +129,7 @@ void mpi_who_has_slave(int node, int param) {
 
 void mpi_who_has() {
   static int *sizes = new int[n_nodes];
-  int *pdata = NULL;
+  int *pdata = nullptr;
   int pdata_s = 0;
 
   mpi_call(mpi_who_has_slave, -1, 0);
@@ -208,7 +208,7 @@ void realloc_local_particles(int part) {
 void init_particlelist(ParticleList *pList) {
   pList->n = 0;
   pList->max = 0;
-  pList->part = NULL;
+  pList->part = nullptr;
 }
 
 int realloc_particlelist(ParticleList *l, int size) {
@@ -249,7 +249,7 @@ Particle *got_particle(ParticleList *l, int id) {
     if (l->part[i].p.identity == id)
       break;
   if (i == l->n)
-    return NULL;
+    return nullptr;
   return &(l->part[i]);
 }
 
@@ -554,7 +554,7 @@ int set_particle_type(int part, int type) {
     }
 
     if (add_particle_to_list(part, type) == ES_ERROR) {
-      // Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
+      // Tcl_AppendResult(interp, "gc particle add failed", (char *) nullptr);
       return ES_ERROR;
     }
   }
@@ -726,7 +726,7 @@ int set_particle_fix(int part, int flag) {
 
   if (pnode == -1)
     return ES_ERROR;
-  mpi_send_ext_force(pnode, part, flag, COORDS_FIX_MASK, NULL);
+  mpi_send_ext_force(pnode, part, flag, COORDS_FIX_MASK, nullptr);
   return ES_OK;
 }
 
@@ -737,10 +737,10 @@ int change_particle_bond(int part, int *bond, int _delete) {
 
   if (pnode == -1)
     return ES_ERROR;
-  if (_delete != 0 || bond == NULL)
+  if (_delete != 0 || bond == nullptr)
     _delete = 1;
 
-  if (bond != NULL) {
+  if (bond != nullptr) {
     if (bond[0] < 0 || bond[0] >= n_bonded_ia) {
       runtimeErrorMsg() << "invalid/unknown bonded interaction type "
                         << bond[0];
@@ -785,7 +785,7 @@ int remove_particle(int part) {
 void local_remove_particle(int part) {
   int ind, c;
   Particle *p = local_particles[part];
-  ParticleList *pl = NULL, *tmp;
+  ParticleList *pl = nullptr, *tmp;
 
   /* the tricky - say ugly - part: determine
      the cell the particle is located in by checking
@@ -808,7 +808,7 @@ void local_remove_particle(int part) {
   free_particle(p);
 
   /* remove local_particles entry */
-  local_particles[p->p.identity] = NULL;
+  local_particles[p->p.identity] = nullptr;
 
   if (&pl->part[pl->n - 1] != p) {
     /* move last particle to free position */
@@ -1065,7 +1065,7 @@ void send_particles(ParticleList *particles, int node) {
 
   /* remove particles from this nodes local list and free data */
   for (int pc = 0; pc < particles->n; pc++) {
-    local_particles[particles->part[pc].p.identity] = NULL;
+    local_particles[particles->part[pc].p.identity] = nullptr;
     free_particle(&particles->part[pc]);
   }
 
@@ -1185,7 +1185,7 @@ void auto_exclusions(int distance) {
 #endif
 
 int init_gc(void) {
-  if (type_array == (TypeList *)NULL) {
+  if (type_array == (TypeList *)nullptr) {
     // stores the number of currently available type_list's
     number_of_type_lists = 10;
 

@@ -989,6 +989,7 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
               return 0;
           }
         }
+        return 0;
   };
 
   auto add_single_particle_contribution = [&add_ideal, &add_bonded](Particle &p) {
@@ -1012,6 +1013,7 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
               return 0;
           }
         }
+        return 0;
       });
 
   for (int i = 0; i < bins[0] * bins[1] * bins[2]; i++) {

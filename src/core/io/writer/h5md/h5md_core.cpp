@@ -19,6 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <vector>
 #include "h5md_core.hpp"
 
 namespace Writer {
@@ -521,14 +522,14 @@ void File::ExtendDataset(std::string path, int *change_extent) {
   /* Get the current dimensions of the dataspace. */
   hid_t ds = H5Dget_space(dataset.hid());
   hsize_t rank = H5Sget_simple_extent_ndims(ds);
-  hsize_t dims[rank], maxdims[rank];
-  H5Sget_simple_extent_dims(ds, dims, maxdims);
+  std::vector<hsize_t> dims(rank), maxdims(rank);
+  H5Sget_simple_extent_dims(ds, dims.data(), maxdims.data());
   H5Sclose(ds);
   /* Extend the dataset for another timestep (extent = 1) */
   for (int i = 0; i < rank; i++) {
     dims[i] += change_extent[i];
   }
-  H5Dset_extent(dataset.hid(), dims); // extend all dims is collective
+  H5Dset_extent(dataset.hid(), dims.data()); // extend all dims is collective
 }
 
 /* data is assumed to be three dimensional */
@@ -545,13 +546,13 @@ void File::WriteDataset(T &data, const std::string &path, int *change_extent,
   auto &dataset = datasets[path];
   hid_t ds = H5Dget_space(dataset.hid());
   hsize_t rank = H5Sget_simple_extent_ndims(ds);
-  hsize_t maxdims[rank];
+  std::vector<hsize_t> maxdims(rank);
   for (int i = 0; i < rank; i++) {
     maxdims[i] = H5S_UNLIMITED;
   }
-  H5Sselect_hyperslab(ds, H5S_SELECT_SET, offset, NULL, count, NULL);
+  H5Sselect_hyperslab(ds, H5S_SELECT_SET, offset, nullptr, count, nullptr);
   /* Create a temporary dataspace. */
-  hid_t ds_new = H5Screate_simple(rank, count, maxdims);
+  hid_t ds_new = H5Screate_simple(rank, count, maxdims.data());
   /* Finally write the data to the dataset. */
   H5Dwrite(dataset.hid(), dataset.get_type(), ds_new, ds, H5P_DEFAULT,
            data.origin());
@@ -583,7 +584,7 @@ void File::WriteScript(std::string const &filename) {
   dtype = H5Tcopy(H5T_C_S1);
   H5Tset_size(dtype, filelen * sizeof(char));
 
-  space = H5Screate_simple(1, dims, NULL);
+  space = H5Screate_simple(1, dims, nullptr);
   /* Create the dataset. */
   hid_t link_crt_plist = H5Pcreate(H5P_LINK_CREATE);
   H5Pset_create_intermediate_group(
