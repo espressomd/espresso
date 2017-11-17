@@ -673,10 +673,13 @@ static double z_energy()
     }
 
     MPI_Allreduce(&lcl_dm_z, &gbl_dm_z, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
-    // zero potential difference contribution
-    eng += gbl_dm_z*gbl_dm_z * coulomb.prefactor*2*M_PI*ux*uy*uz;
-    // external potential shift contribution
-    eng += mmm2d_params.pot_diff * uz * gbl_dm_z;
+    if (this_node == 0)
+    {
+        // zero potential difference contribution
+        eng += gbl_dm_z*gbl_dm_z * coulomb.prefactor*2*M_PI*ux*uy*uz;
+        // external potential shift contribution
+        eng -= mmm2d_params.pot_diff * uz * gbl_dm_z;
+    }
   }
 
   return eng;
@@ -1890,7 +1893,6 @@ int MMM2D_sanity_checks()
 void MMM2D_init()
 {
   int err;
-
   if (MMM2D_sanity_checks()) return;
 
   MMM2D_setup_constants();

@@ -45,7 +45,7 @@ IF ELECTROSTATICS and P3M:
                 self._params["neutralize"], 1, type(True), "")
 
         def valid_keys(self):
-            return "maxPWerror", "gap_size", "far_cut", "neutralize", "di_mid_top", "di_mid_bot", "const_pot_on", "dielectric_contrast_on", "pot_diff"
+            return "maxPWerror", "gap_size", "far_cut", "neutralize", "delta_mid_top", "delta_mid_bot", "const_pot", "dielectric_contrast_on", "pot_diff"
 
         def required_keys(self):
             return ["maxPWerror", "gap_size"]
@@ -54,10 +54,10 @@ IF ELECTROSTATICS and P3M:
             return {"maxPWerror": -1,
                     "gap_size": -1,
                     "far_cut": -1,
-                    "di_mid_top": 0,
-                    "di_mid_bot": 0,
+                    "delta_mid_top": 0,
+                    "delta_mid_bot": 0,
                     "dielectric_contrast_on": 0,
-                    "const_pot_on": 0,
+                    "const_pot": 0,
                     "pot_diff": 0.0,
                     "neutralize": True}
 
@@ -70,22 +70,28 @@ IF ELECTROSTATICS and P3M:
             if coulomb.method == COULOMB_P3M_GPU:
                 raise Exception(
                     "ELC tuning failed, ELC is not set up to work with the GPU P3M")
+            
+            if self._params["const_pot"]:
+                self._params["delta_mid_top"] = -1
+                self._params["delta_mid_bot"] = -1
+
             if ELC_set_params(
                 self._params["maxPWerror"],
                 self._params["gap_size"], 
                 self._params["far_cut"], 
                 int(self._params["neutralize"]), 
-                self._params["di_mid_top"], 
-                self._params["di_mid_bot"], 
-                int(self._params["const_pot_on"]),
+                self._params["delta_mid_top"], 
+                self._params["delta_mid_bot"], 
+                int(self._params["const_pot"]),
                 self._params["pot_diff"]):
                 handle_errors("ELC tuning failed, ELC is not set up to work with the GPU P3M")
 
         def _activate_method(self):
             self._set_params_in_es_core()
 
-        def _deactivateMethod(self):
-            pass
+        def _deactivate_method(self):
+            raise Exception(
+                "Unable to remove ELC as the state of the underlying electrostatics method will remain unclear.")
 
     cdef class ICC(ElectrostaticExtensions):
 

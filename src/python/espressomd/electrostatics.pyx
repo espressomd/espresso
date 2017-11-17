@@ -805,12 +805,12 @@ IF ELECTROSTATICS:
                                   this parameter sets the dielectric contrast
                                   between the lower boundary and the simulation
                                   box :math:`\\Delta_b`.
-        capacitor               : int, optional
+        const_pot               : int, optional
                                   Selector parameter for setting a constant
                                   electric potential between the top and bottom
                                   of the simulation box.
         pot_diff                : float, optional
-                                  If capacitor mode is selected this parameter
+                                  If const_pot mode is selected this parameter
                                   controls the applied voltage.
         far_cut                 : float, optional
                                   Cut off radius, use with care, intended for testing purposes. 
@@ -825,17 +825,9 @@ IF ELECTROSTATICS:
                 raise ValueError("Dielectric constants should be > 0!")
             if self._params["dielectric_contrast_on"] == 1 and (self._params["delta_mid_top"] == default_params["delta_mid_top"] or self._params["delta_mid_bot"] == default_params["delta_mid_bot"]):
                 raise ValueError("Dielectric constrast not set!")
-            if self._params["capacitor"] == 1 and self._params["pot_diff"] == default_params["pot_diff"]:
-                raise ValueError("Potential difference not set!")
             if self._params["dielectric"] == 1 and self._params["dielectric_contrast_on"] == 1:
                 raise ValueError(
                     "dielectric and dielectric_contrast are mutually exclusive!")
-            if self._params["dielectric"] == 1 and self._params["capacitor"] == 1:
-                raise ValueError(
-                    "dielectric and constant potential are mutually exclusive")
-            if self._params["dielectric_contrast_on"] == 1 and self._params["capacitor"] == 1:
-                raise ValueError(
-                    "dielectric contrast and constant potential are mutually exclusive")
 
         def default_params(self):
             return {"bjerrum_length": -1,
@@ -846,7 +838,7 @@ IF ELECTROSTATICS:
                     "bot": 0,
                     "dielectric": 0,
                     "dielectric_contrast_on": 0,
-                    "capacitor": 0,
+                    "const_pot": 0,
                     "delta_mid_top": 0,
                     "delta_mid_bot": 0,
                     "pot_diff": 0}
@@ -855,13 +847,13 @@ IF ELECTROSTATICS:
             return ["bjerrum_length", "maxPWerror"]
 
         def valid_keys(self):
-            return "bjerrum_length", "maxPWerror", "top", "mid", "bot", "delta_mid_top", "delta_mid_bot", "pot_diff", "dielectric", "dielectric_contrast_on", "capacitor", "far_cut"
+            return "bjerrum_length", "maxPWerror", "top", "mid", "bot", "delta_mid_top", "delta_mid_bot", "pot_diff", "dielectric", "dielectric_contrast_on", "const_pot", "far_cut"
 
         def _get_params_from_es_core(self):
             params = {}
             params.update(mmm2d_params)
             params["bjerrum_length"] = coulomb.bjerrum
-            if params["dielectric_contrast_on"] or params["const_pot_on"]:
+            if params["dielectric_contrast_on"] or params["const_pot"]:
                 params["dielectric"] = 0
             else:
                 params["dielectric"] = 1
@@ -875,18 +867,20 @@ IF ELECTROSTATICS:
                 self._params["delta_mid_bot"] = (self._params[
                                                  "mid"] - self._params["bot"]) / (self._params["mid"] + self._params["bot"])
 
-            if self._params["capacitor"]:
+            if self._params["const_pot"]:
                 self._params["delta_mid_top"] = -1
                 self._params["delta_mid_bot"] = -1
-                self._params["const_pot_on"] = 1
 
-            print(MMM2D_set_params(self._params["maxPWerror"], self._params["far_cut"], self._params["delta_mid_top"], self._params["delta_mid_bot"], self._params["capacitor"], self._params["pot_diff"]))
+            MMM2D_set_params(self._params["maxPWerror"],
+            self._params["far_cut"], self._params["delta_mid_top"],
+            self._params["delta_mid_bot"], self._params["const_pot"], self._params["pot_diff"])
+
 
         def _activate_method(self):
             coulomb.method = COULOMB_MMM2D
             self._set_params_in_es_core()
             MMM2D_init()
-            print(MMM2D_sanity_checks())
+            MMM2D_sanity_checks()
 
     IF SCAFACOS == 1:
         class Scafacos(ScafacosConnector, ElectrostaticInteraction):
