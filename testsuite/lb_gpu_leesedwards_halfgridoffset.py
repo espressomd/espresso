@@ -21,7 +21,7 @@ class LeesEdwardsOffsetTest(ut.TestCase):
 
   def test(self):
     
-"""The velocity components at all LB nodes are tested against a table stored in testduite/data/"""   
+    """The velocity components at all LB nodes are tested against a table stored in testsuite/data/"""   
     
     # LB parameter
     box_l = 9
