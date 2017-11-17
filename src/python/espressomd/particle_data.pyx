@@ -52,18 +52,15 @@ for d in dir(ParticleHandle):
         if not d in ["pos_folded"]:
             particle_attributes.append(d)
 
-
 cdef class ParticleHandle(object):
     def __cinit__(self, _id):
         self.id = _id
 
     cdef int update_particle_data(self) except -1:
-        self._particle_data_holder = get_particle_data(self.id)
-        if not self._particle_data_holder:
+        self.particle_data = get_particle_data(self.id)
+        if not self.particle_data:
             raise Exception(
                 "Error updating particle data for id " + str(self.id))
-        else:
-            self.particle_data = self._particle_data_holder.get()
 
     def __str__(self):
         res = collections.OrderedDict()

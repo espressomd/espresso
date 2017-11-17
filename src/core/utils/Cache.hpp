@@ -91,7 +91,7 @@ public:
  */
 template <typename Key, typename Value, typename Get>
 Cache<Key, Value, Get> make_cache(Get &&getter) {
-  return Cache<Key, Value, typename std::remove_reference<Get>::type>(
+  return Cache<Key, Value, Get>(
       std::forward<Get>(getter));
 }
 }

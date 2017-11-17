@@ -208,6 +208,7 @@ void on_integration_start() {
    */
   invalidate_obs();
   partCfg().invalidate();
+  invalidate_fetch_cache();
 
 #ifdef ADDITIONAL_CHECKS
   check_global_consistency();
@@ -300,6 +301,9 @@ void on_particle_change() {
 
   /* the particle information is no longer valid */
   partCfg().invalidate();
+
+  /* the particle information is no longer valid */
+  invalidate_fetch_cache();
 }
 
 void on_coulomb_change() {

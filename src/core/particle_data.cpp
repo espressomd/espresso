@@ -39,9 +39,11 @@
 #include "interaction_data.hpp"
 #include "partCfg_global.hpp"
 #include "rotation.hpp"
+#include "virtual_sites.hpp"
+
 #include "utils.hpp"
 #include "utils/make_unique.hpp"
-#include "virtual_sites.hpp"
+#include "utils/Cache.hpp"
 
 #include <cmath>
 #include <cstdlib>
@@ -306,16 +308,28 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   return dst;
 }
 
-std::unique_ptr<const Particle> get_particle_data(int part) {
-  auto const pnode = get_particle_node(part);
+namespace {
+  std::unique_ptr<const Particle> get_particle_data_uncached(int part) {
+    auto const pnode = get_particle_node(part);
 
-  if (pnode < 0)
-    return nullptr;
+    if (pnode < 0)
+      return nullptr;
 
-  auto pp = Utils::make_unique<Particle>();
+    auto pp = Utils::make_unique<Particle>();
 
-  mpi_recv_part(pnode, part, pp.get());
-  return std::unique_ptr<const Particle>(pp.release());
+    mpi_recv_part(pnode, part, pp.get());
+    return std::unique_ptr<const Particle>(pp.release());
+  }
+
+  auto particle_fetch_cache = Utils::make_cache<int, Particle>(get_particle_data_uncached);
+}
+
+void invalidate_fetch_cache() {
+  particle_fetch_cache.invalidate();
+}
+
+const Particle * get_particle_data(int part) {
+  return particle_fetch_cache.get(part);
 }
 
 int place_particle(int part, double p[3]) {
@@ -581,7 +595,7 @@ int set_particle_omega_lab(int part, double omega_lab[3]) {
   double A[9];
   double omega[3];
 
-  define_rotation_matrix(particle.get(), A);
+  define_rotation_matrix(particle, A);
 
   omega[0] = A[0 + 3 * 0] * omega_lab[0] + A[0 + 3 * 1] * omega_lab[1] +
              A[0 + 3 * 2] * omega_lab[2];
@@ -616,7 +630,7 @@ int set_particle_torque_lab(int part, double torque_lab[3]) {
   double A[9];
   double torque[3];
 
-  define_rotation_matrix(particle.get(), A);
+  define_rotation_matrix(particle, A);
 
   torque[0] = A[0 + 3 * 0] * torque_lab[0] + A[0 + 3 * 1] * torque_lab[1] +
               A[0 + 3 * 2] * torque_lab[2];

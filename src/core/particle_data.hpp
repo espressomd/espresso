@@ -556,7 +556,10 @@ void realloc_local_particles();
     @return Pointer to copy of particle if it exists,
             nullptr otherwise;
 */
-std::unique_ptr<const Particle> get_particle_data(int part);
+const Particle * get_particle_data(int part);
+
+/** @brief Invalidate the fetch cache for @f get_particle_data. */
+void invalidate_fetch_cache();
 
 /** Call only on the master node.
     Move a particle to a new position.

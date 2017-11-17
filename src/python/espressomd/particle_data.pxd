@@ -85,7 +85,7 @@ cdef extern from "particle_data.hpp":
                 double v_swim
 
     # Setter/getter/modifier functions functions
-    unique_ptr[const particle] get_particle_data(int part)
+    const particle* get_particle_data(int part)
 
     int place_particle(int part, double p[3])
 
@@ -226,7 +226,6 @@ cdef extern from "interaction_data.hpp":
 cdef class ParticleHandle(object):
     cdef public int id
     cdef bint valid
-    cdef unique_ptr[const particle] _particle_data_holder
     cdef const particle * particle_data
     cdef int update_particle_data(self) except -1
 
