@@ -10,7 +10,7 @@ import unittest as ut
 @ut.skipIf(not md.has_features(['LEES_EDWARDS']),
   'Feature not available, skipping test!')
 
-class lees_edwards_test(ut.TestCase):
+class LeesEdwardsTest(ut.TestCase):
 
   def test(self):
     """The test calculates a particle's position for different lees_edwards_offsets
