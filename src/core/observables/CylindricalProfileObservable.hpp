@@ -13,6 +13,7 @@ namespace Observables {
 class CylindricalProfileObservable : public PidObservable {
 public:
   ::Vector<3, double> center;
+  std::string axis;
   double min_r, max_r;
   double min_phi, max_phi;
   double min_z, max_z;

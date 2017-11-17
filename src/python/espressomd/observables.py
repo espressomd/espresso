@@ -132,6 +132,8 @@ class CylindricalFluxDensityProfile(Observable):
           The ids of (existing) particles to take into account.
     center : array_like of :obj:`float`
              Position of the center of the polar coordinate system for the histogram.
+    axis : :obj:`str` (``x``, ``y``, or ``z``)
+           Orientation of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
     n_phi_bins : :obj:`int`
@@ -150,12 +152,6 @@ class CylindricalFluxDensityProfile(Observable):
               Maximum ``phi`` to consider.
     max_z : :obj:`float`
             Maximum ``z`` to consider.
-
-    Notes
-    -----
-    Until now the ``z`` axis of the histogram is aligned with the respective
-    axis in the cartesian coordinates and cannot be oriented in cartesian
-    ``x``- or ``y``-axis direction yet.
 
     """
     _so_name="Observables::CylindricalFluxDensityProfile"
@@ -171,6 +167,8 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(Observable):
           The ids of (existing) particles to take into account.
     center : array_like of :obj:`float`
              Position of the center of the polar coordinate system for the histogram.
+    axis : :obj:`str` (``x``, ``y``, or ``z``)
+           Orientation of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
     n_phi_bins : :obj:`int`
@@ -189,12 +187,6 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(Observable):
               Maximum ``phi`` to consider.
     max_z : :obj:`float`
             Maximum ``z`` to consider.
-
-    Notes
-    -----
-    Until now the ``z`` axis of the histogram is aligned with the respective
-    axis in the cartesian coordinates and cannot be oriented in cartesian
-    ``x``- or ``y``-axis direction yet.
 
     """
     _so_name="Observables::CylindricalLBFluxDensityProfileAtParticlePositions"

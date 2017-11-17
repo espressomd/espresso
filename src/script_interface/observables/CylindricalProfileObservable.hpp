@@ -43,6 +43,7 @@ public:
   VariantMap get_parameters() const override {
     return {{"ids", cylindrical_profile_observable()->ids()},
             {"center", cylindrical_profile_observable()->center},
+            {"axis", cylindrical_profile_observable()->axis},
             {"n_r_bins", cylindrical_profile_observable()->n_r_bins},
             {"n_phi_bins", cylindrical_profile_observable()->n_phi_bins},
             {"n_z_bins", cylindrical_profile_observable()->n_z_bins},
@@ -57,6 +58,7 @@ public:
   ParameterMap valid_parameters() const override {
     return {{"ids", {ParameterType::INT_VECTOR, true}},
             {"center", {ParameterType::DOUBLE_VECTOR, true}},
+            {"axis", {ParameterType::STRING, true}},
             {"n_r_bins", {ParameterType::INT, true}},
             {"n_phi_bins", {ParameterType::INT, true}},
             {"n_z_bins", {ParameterType::INT, true}},
@@ -71,6 +73,7 @@ public:
   void set_parameter(std::string const &name, Variant const &value) override {
     SET_PARAMETER_HELPER("ids", cylindrical_profile_observable()->ids());
     SET_PARAMETER_HELPER("center", cylindrical_profile_observable()->center);
+    SET_PARAMETER_HELPER("axis", cylindrical_profile_observable()->axis);
     SET_PARAMETER_HELPER("n_r_bins",
                          cylindrical_profile_observable()->n_r_bins);
     SET_PARAMETER_HELPER("n_phi_bins",

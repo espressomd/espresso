@@ -18,6 +18,7 @@ class TestCylindricalFluxDensityObservable(ut.TestCase):
 
     params = {
         'center': [5.0, 5.0, 0.0],  # center of the histogram
+        'axis': 'z',
         'n_r_bins': 10,  # number of bins in r
         'n_phi_bins': 10,  # -*- in phi
         'n_z_bins': 10,  # -*- in z

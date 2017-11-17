@@ -40,9 +40,19 @@ int CylindricalLBFluxDensityProfileAtParticlePositions::actual_calculate(
     ppos[3 * index + 1] = ppos_tmp[1];
     ppos[3 * index + 2] = ppos_tmp[2];
     auto const ppos_shifted_tmp = ppos_tmp - center;
-    ppos_shifted[3 * index + 0] = ppos_shifted_tmp[0];
-    ppos_shifted[3 * index + 1] = ppos_shifted_tmp[1];
-    ppos_shifted[3 * index + 2] = ppos_shifted_tmp[2];
+    if (axis == "z") {
+      ppos_shifted[3 * index + 0] = ppos_shifted_tmp[0];
+      ppos_shifted[3 * index + 1] = ppos_shifted_tmp[1];
+      ppos_shifted[3 * index + 2] = ppos_shifted_tmp[2];
+    } else if (axis == "x") {
+      ppos_shifted[3 * index + 0] = ppos_shifted_tmp[1];
+      ppos_shifted[3 * index + 1] = ppos_shifted_tmp[2];
+      ppos_shifted[3 * index + 2] = ppos_shifted_tmp[0];
+    } else if (axis == "y") {
+      ppos_shifted[3 * index + 0] = ppos_shifted_tmp[2];
+      ppos_shifted[3 * index + 1] = ppos_shifted_tmp[0];
+      ppos_shifted[3 * index + 2] = ppos_shifted_tmp[1];
+    }
     auto const ppos_cyl_tmp =
         Utils::transform_to_cylinder_coordinates(ppos_shifted_tmp);
     ppos_cyl[3 * index + 0] = ppos_cyl_tmp[0];

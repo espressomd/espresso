@@ -13,7 +13,14 @@ public:
     int r_bin, phi_bin, z_bin;
     for (int id : ids()) {
       auto const ppos = ::Vector<3, double>(folded_position(partCfg[id]));
-      auto const ppos_shifted = ppos - center;
+      ::Vector<3, double> ppos_shifted;
+      if (axis == "z") {
+        ppos_shifted = ppos - center;
+      } else if (axis == "x") {
+        ppos_shifted = ::Vector<3, double>{ppos[1] - center[1], ppos[2] - center[2], ppos[0] - center[0]};
+      } else if (axis == "y") {
+        ppos_shifted = ::Vector<3, double>{ppos[2] - center[2], ppos[0] - center[0], ppos[1] - center[1]};
+      }
       auto const ppos_cyl = Utils::transform_to_cylinder_coordinates(ppos_shifted);
       r_bin = std::floor((ppos_cyl[0] - min_r) / r_bin_size());
       phi_bin = std::floor((ppos_cyl[1] - min_phi) / phi_bin_size());
