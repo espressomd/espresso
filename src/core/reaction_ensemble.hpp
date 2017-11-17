@@ -112,11 +112,11 @@ double calculate_degree_of_association(int index_of_current_collective_variable,
 double calculate_current_potential_energy_of_system_wrap(
     int unimportant_int, void *unimportant_wang_landau_system);
 
-class CReactionEnsemble {
+class ReactionEnsemble {
 
 public:
-  CReactionEnsemble();
-  ~CReactionEnsemble();
+  ReactionEnsemble();
+  ~ReactionEnsemble();
 
   reaction_system m_current_reaction_system = {
       .nr_single_reactions = 0,
