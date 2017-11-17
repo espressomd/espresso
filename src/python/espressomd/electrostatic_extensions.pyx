@@ -45,7 +45,7 @@ IF ELECTROSTATICS and P3M:
                 self._params["neutralize"], 1, type(True), "")
 
         def valid_keys(self):
-            return "maxPWerror", "gap_size", "far_cut", "neutralize", "delta_mid_top", "delta_mid_bot", "const_pot", "dielectric_contrast_on", "pot_diff"
+            return "maxPWerror", "gap_size", "far_cut", "neutralize", "delta_mid_top", "delta_mid_bot", "const_pot", "pot_diff"
 
         def required_keys(self):
             return ["maxPWerror", "gap_size"]
@@ -56,7 +56,6 @@ IF ELECTROSTATICS and P3M:
                     "far_cut": -1,
                     "delta_mid_top": 0,
                     "delta_mid_bot": 0,
-                    "dielectric_contrast_on": 0,
                     "const_pot": 0,
                     "pot_diff": 0.0,
                     "neutralize": True}

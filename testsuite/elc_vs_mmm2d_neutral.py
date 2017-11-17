@@ -23,7 +23,7 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
         
         elc_param_sets = { 
         "inert":         { "gap_size": self.elc_gap, "maxPWerror": self.acc }, 
-        "dielectric":    { "gap_size": self.elc_gap, "maxPWerror": self.acc, "dielectric_contrast_on": 1, "delta_mid_bot": 0.1, "delta_mid_top": 0.9 },
+        "dielectric":    { "gap_size": self.elc_gap, "maxPWerror": self.acc, "delta_mid_bot": 0.1, "delta_mid_top": 0.9 },
         "const_pot_0":   { "gap_size": self.elc_gap, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": 0.0},
         "const_pot_1":   { "gap_size": self.elc_gap, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": 1.0},
         "const_pot_m1":  { "gap_size": self.elc_gap, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": -1.0}
@@ -39,7 +39,8 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
 
         self.system.box_l = [self.box_l, self.box_l, self.box_l]
         buf_node_grid = self.system.cell_system.node_grid
-        self.system.cell_system.set_layered(n_layers=10)
+        self.system.cell_system.set_layered(n_layers=10, use_verlet_lists = False)
+        
         self.system.periodicity = [1, 1, 0]
 
         q=1.0
@@ -70,7 +71,7 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
 
         #ELC
         self.system.box_l = [self.box_l, self.box_l, self.box_l+self.elc_gap]
-        self.system.cell_system.set_domain_decomposition(use_verlet_lists=True)
+        self.system.cell_system.set_domain_decomposition(use_verlet_lists = True)
         self.system.cell_system.node_grid = buf_node_grid
         self.system.periodicity = [1, 1, 1]
         p3m = P3M(bjerrum_length=1.0, accuracy=self.acc, mesh = [16,16,24], cao = 6)

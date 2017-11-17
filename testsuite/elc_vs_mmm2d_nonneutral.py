@@ -37,7 +37,7 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
 
         self.system.box_l = [self.box_l, self.box_l, self.box_l]
         buf_node_grid = self.system.cell_system.node_grid
-        self.system.cell_system.set_layered(n_layers=10)
+        self.system.cell_system.set_layered(n_layers=10, use_verlet_lists = False)
         self.system.periodicity = [1, 1, 0]
 
         q=1.0
@@ -65,11 +65,10 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
 
         #ELC
         self.system.box_l = [self.box_l, self.box_l, self.box_l+self.elc_gap]
-        self.system.cell_system.set_domain_decomposition(use_verlet_lists=True)
+        self.system.cell_system.set_domain_decomposition(use_verlet_lists = True)
         self.system.cell_system.node_grid = buf_node_grid
         self.system.periodicity = [1, 1, 1]
         p3m = P3M(bjerrum_length=1.0, accuracy=self.acc, mesh = [20,20,32], cao = 7)
-        p3m = P3M(bjerrum_length=1.0, accuracy=self.acc)
         self.system.actors.add(p3m)
         
         elc = electrostatic_extensions.ELC(**elc_param_sets["inert"])
