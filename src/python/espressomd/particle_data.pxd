@@ -226,7 +226,8 @@ cdef extern from "interaction_data.hpp":
 cdef class ParticleHandle(object):
     cdef public int id
     cdef bint valid
-    cdef unique_ptr[particle] particle_data
+    cdef unique_ptr[particle] _particle_data_holder
+    cdef particle * particle_data
     cdef int update_particle_data(self) except -1
 
 cdef class _ParticleSliceImpl:
@@ -235,4 +236,3 @@ cdef class _ParticleSliceImpl:
 cdef extern from "grid.hpp":
     cdef void fold_position(double *, int*)
     void unfold_position(double pos[3], int image_box[3])
-    Vector3d unfolded_position(P)
