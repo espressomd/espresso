@@ -75,7 +75,7 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         bool fix_polymer
         bool do_not_sample_reaction_partition_function
 
-    cdef cppclass CReactionEnsemble:
+    cdef cppclass CReactionEnsemble "ReactionEnsemble::ReactionEnsemble":
         CReactionEnsemble()
         reaction_system m_current_reaction_system
         int do_reaction(int reaction_steps) except +
