@@ -51,12 +51,11 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         string energy_boundaries_filename
 
     ctypedef struct wang_landau_system:
-        int* histogram
-        int len_histogram
-        double* wang_landau_potential
+        vector[int] histogram
+        vector[double] wang_landau_potential
         int nr_collective_variables
         collective_variable** collective_variables
-        int* nr_subindices_of_collective_variable
+        vector[int] nr_subindices_of_collective_variable
         double wang_landau_parameter
         double initial_wang_landau_parameter
         int int_fill_value
@@ -67,8 +66,8 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         int monte_carlo_trial_moves
         int wang_landau_steps
         string output_filename
-        double* minimum_energies_at_flat_index
-        double* maximum_energies_at_flat_index
+        vector[double] minimum_energies_at_flat_index
+        vector[double] maximum_energies_at_flat_index
         bool do_energy_reweighting
         int polymer_start_id
         int polymer_end_id

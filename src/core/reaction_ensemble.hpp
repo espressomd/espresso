@@ -70,13 +70,12 @@ typedef struct collective_variable {
 } collective_variable;
 
 typedef struct wang_landau_system {
-  int *histogram;
-  int len_histogram; // equals also len_wang_landau_potential and also len_Gamma
-  double *wang_landau_potential; // equals the logarithm to basis e of the
+  std::vector<int> histogram;
+  std::vector<double> wang_landau_potential; // equals the logarithm to basis e of the
                                  // degeneracy of the states
   int nr_collective_variables;
   collective_variable **collective_variables;
-  int *nr_subindices_of_collective_variable;
+  std::vector<int> nr_subindices_of_collective_variable;
   double wang_landau_parameter; // equals the logarithm to basis e of the
                                 // modification factor of the degeneracy of
                                 // states when the state is visited
@@ -95,10 +94,10 @@ typedef struct wang_landau_system {
                          // script
   std::string output_filename;
 
-  double
-      *minimum_energies_at_flat_index; // only present in energy preparation run
-  double
-      *maximum_energies_at_flat_index; // only present in energy preparation run
+  std::vector<double>
+      minimum_energies_at_flat_index; // only present in energy preparation run
+  std::vector<double>
+      maximum_energies_at_flat_index; // only present in energy preparation run
 
   bool do_energy_reweighting;
   int polymer_start_id;
@@ -176,12 +175,11 @@ public:
   ///////////////////////////////////////////// Wang-Landau algorithm
 
   wang_landau_system m_current_wang_landau_system = {
-      .histogram = NULL,
-      .len_histogram = 0,
-      .wang_landau_potential = NULL,
+      .histogram = std::vector<int>(),
+      .wang_landau_potential = std::vector<double>(),
       .nr_collective_variables = 0,
       .collective_variables = NULL,
-      .nr_subindices_of_collective_variable = NULL,
+      .nr_subindices_of_collective_variable=std::vector<int>(),
       .wang_landau_parameter = 1.0,
       .initial_wang_landau_parameter = 1.0,
       .int_fill_value = -10,
@@ -192,8 +190,8 @@ public:
       .monte_carlo_trial_moves = 0,
       .wang_landau_steps = 1,
       .output_filename = "",
-      .minimum_energies_at_flat_index = NULL,
-      .maximum_energies_at_flat_index = NULL,
+      .minimum_energies_at_flat_index = std::vector<double>(),
+      .maximum_energies_at_flat_index = std::vector<double>(),
       .do_energy_reweighting = false,
       .polymer_start_id = -10,
       .polymer_end_id = -10,
@@ -295,8 +293,8 @@ private:
                                                         // collective variable
   double calculate_delta_degree_of_association(
       int index_of_current_collective_variable);
-  int *initialize_histogram();
-  double *initialize_wang_landau_potential();
+  void initialize_histogram();
+  void initialize_wang_landau_potential();
   void reset_histogram();
   int m_WL_accepted_moves = 0;
   int m_WL_tries = 0;
