@@ -1,10 +1,5 @@
 #include "utils.hpp"
 #include <string>
-#include "statistics.hpp" //for distto
-#include <stdio.h> //for getline()
-#include "utils.hpp" // for PI and random vectors
-#include "global.hpp" //for access to global variables
-#include "particle_data.hpp" //for particle creation, modification
 
 namespace ReactionEnsemble {
 

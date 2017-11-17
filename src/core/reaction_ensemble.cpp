@@ -13,6 +13,11 @@
 #include <fstream> //for std::ifstream, std::ofstream for input output into files
 #include "utils/Histogram.hpp"
 #include "partCfg_global.hpp"
+#include "statistics.hpp" //for distto
+#include <stdio.h> //for getline()
+#include "utils.hpp" // for PI and random vectors
+#include "global.hpp" //for access to global variables
+#include "particle_data.hpp" //for particle creation, modification
 
 namespace ReactionEnsemble{
 
@@ -1511,7 +1516,7 @@ int ReactionEnsemble::do_reaction_constant_pH(){
 	//get a list of reactions where a randomly selected particle type occurs in the reactant list. the selection probability of the particle types has to be proportional to the number of occurances of the number of particles with this type
 	
 	//for optimizations this list could be determined during the initialization
-	int* list_of_reaction_ids_with_given_reactant_type=NULL;
+	std::vector<int> list_of_reaction_ids_with_given_reactant_type;
 	int found_reactions_with_given_reactant_type=0;
 	while(found_reactions_with_given_reactant_type==0) { // avoid selecting a (e.g. salt) particle which does not take part in a reaction
 		int random_p_id =get_random_p_id(); // only used to determine which reaction is attempted.
@@ -1528,7 +1533,7 @@ int ReactionEnsemble::do_reaction_constant_pH(){
 			for(int reactant_i=0; reactant_i< 1; reactant_i++){ //reactant_i<1 since it is assumed in this place that the types A, and HA occur in the first place only. These are the types that should be switched, H+ should not be switched
 				if(current_reaction.reactant_types[reactant_i]== type_of_random_p_id){
 					found_reactions_with_given_reactant_type+=1;
-					list_of_reaction_ids_with_given_reactant_type=(int*) realloc(list_of_reaction_ids_with_given_reactant_type, sizeof(int)*found_reactions_with_given_reactant_type);
+					list_of_reaction_ids_with_given_reactant_type.resize(found_reactions_with_given_reactant_type);
 					list_of_reaction_ids_with_given_reactant_type[found_reactions_with_given_reactant_type-1]=reaction_i;
 					break;
 				}
@@ -1538,7 +1543,6 @@ int ReactionEnsemble::do_reaction_constant_pH(){
 	
 	//randomly select a reaction to be performed
 	int reaction_id=list_of_reaction_ids_with_given_reactant_type[i_random(found_reactions_with_given_reactant_type)];
-	free(list_of_reaction_ids_with_given_reactant_type);
 	generic_oneway_reaction(reaction_id, constant_pH_mode);
 	return 0;
 }
