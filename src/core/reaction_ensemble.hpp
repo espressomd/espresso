@@ -161,7 +161,7 @@ public:
                                                 // "type_value". therefore the
                                                 // type of type "typevalue" has
                                                 // the index i;
-  int generic_oneway_reaction(int reaction_id, int reaction_modus);
+                                                bool generic_oneway_reaction(int reaction_id, int reaction_modus);
   int find_index_of_type(int type);
   bool do_global_mc_move_for_particles_of_type(int type, int start_id_polymer,
                                                int end_id_polymer,
@@ -240,7 +240,7 @@ private:
     constant_pH_mode
   };
   int free_reaction_ensemble();
-  float factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
+  double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
   bool all_reactant_particles_exist(int reaction_id);
   int replace(int p_id, int desired_type);
   int create_particle(int desired_type);
