@@ -34,6 +34,7 @@ class ParticleProperties(ut.TestCase):
 
     # Handle for espresso system
     es = espressomd.System()
+    es.box_l = 3 * [10.]
 
     f1 = FeneBond(k=1, d_r_max=5)
     es.bonded_inter.add(f1)
