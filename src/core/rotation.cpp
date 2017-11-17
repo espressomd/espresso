@@ -438,7 +438,7 @@ void convert_initial_torques() {
 
 /** convert from the body-fixed frames to space-fixed coordinates */
 
-void convert_omega_body_to_space(Particle *p, double *omega) {
+void convert_omega_body_to_space(const Particle *p, double *omega) {
   double A[9];
   define_rotation_matrix(p, A);
 
@@ -466,7 +466,7 @@ Vector3d convert_vector_body_to_space(const Particle& p, const Vector3d& vec) {
 }
 
 
-void convert_torques_body_to_space(Particle *p, double *torque) {
+void convert_torques_body_to_space(const Particle *p, double *torque) {
   double A[9];
   define_rotation_matrix(p, A);
 
@@ -478,7 +478,7 @@ void convert_torques_body_to_space(Particle *p, double *torque) {
               A[2 + 3 * 2] * p->f.torque[2];
 }
 
-void convert_vel_space_to_body(Particle *p, double *vel_body) {
+void convert_vel_space_to_body(const Particle *p, double *vel_body) {
   double A[9];
   define_rotation_matrix(p, A);
 

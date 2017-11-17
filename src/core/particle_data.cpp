@@ -1482,26 +1482,26 @@ int number_of_particles_with_type(int type, int *number) {
 // within a ctypedef definition
 
 #ifdef ROTATION
-void pointer_to_omega_body(Particle *p, double *&res) { res = p->m.omega; }
+void pointer_to_omega_body(Particle const *p, double const *&res) { res = p->m.omega; }
 
-void pointer_to_torque_lab(Particle *p, double *&res) { res = p->f.torque; }
+void pointer_to_torque_lab(Particle const *p, double const *&res) { res = p->f.torque; }
 
-void pointer_to_quat(Particle *p, double *&res) { res = p->r.quat; }
+void pointer_to_quat(Particle const *p, double const *&res) { res = p->r.quat; }
 
-void pointer_to_quatu(Particle *p, double *&res) { res = p->r.quatu; }
+void pointer_to_quatu(Particle const *p, double const *&res) { res = p->r.quatu; }
 #endif
 
 #ifdef ELECTROSTATICS
-void pointer_to_q(Particle *p, double *&res) { res = &(p->p.q); }
+void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }
 #endif
 
 #ifdef VIRTUAL_SITES
-void pointer_to_virtual(Particle *p, int *&res) { res = &(p->p.isVirtual); }
+void pointer_to_virtual(Particle const *p, int const *&res) { res = &(p->p.isVirtual); }
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void pointer_to_vs_relative(Particle *p, int *&res1, double *&res2,
-                            double *&res3) {
+void pointer_to_vs_relative(Particle const *p, int const *&res1, double const *&res2,
+                            double const *&res3) {
   res1 = &(p->p.vs_relative_to_particle_id);
   res2 = &(p->p.vs_relative_distance);
   res3 = (p->p.vs_relative_rel_orientation);
@@ -1509,33 +1509,33 @@ void pointer_to_vs_relative(Particle *p, int *&res1, double *&res2,
 #endif
 
 #ifdef MULTI_TIMESTEP
-void pointer_to_smaller_timestep(Particle *p, int *&res) {
+void pointer_to_smaller_timestep(Particle const *p, int const *&res) {
   res = &(p->p.smaller_timestep);
 }
 #endif
 
 #ifdef DIPOLES
-void pointer_to_dip(Particle *p, double *&res) { res = p->r.dip; }
+void pointer_to_dip(Particle const *p, double const *&res) { res = p->r.dip; }
 
-void pointer_to_dipm(Particle *p, double *&res) { res = &(p->p.dipm); }
+void pointer_to_dipm(Particle const *p, double const *&res) { res = &(p->p.dipm); }
 #endif
 
 #ifdef EXTERNAL_FORCES
-void pointer_to_ext_force(Particle *p, int *&res1, double *&res2) {
+void pointer_to_ext_force(Particle const *p, int const *&res1, double const *&res2) {
   res1 = &(p->p.ext_flag);
   res2 = p->p.ext_force;
 }
 #ifdef ROTATION
-void pointer_to_ext_torque(Particle *p, int *&res1, double *&res2) {
+void pointer_to_ext_torque(Particle const *p, int const *&res1, double const *&res2) {
   res1 = &(p->p.ext_flag);
   res2 = p->p.ext_torque;
 }
 #endif
-void pointer_to_fix(Particle *p, int *&res) { res = &(p->p.ext_flag); }
+void pointer_to_fix(Particle const *p, int const *&res) { res = &(p->p.ext_flag); }
 #endif
 
 #ifdef LANGEVIN_PER_PARTICLE
-void pointer_to_gamma(Particle *p, double *&res) {
+void pointer_to_gamma(Particle const *p, double const *&res) {
 #ifndef PARTICLE_ANISOTROPY
   res = &(p->p.gamma);
 #else
@@ -1544,7 +1544,7 @@ void pointer_to_gamma(Particle *p, double *&res) {
 }
 
 #ifdef ROTATION
-void pointer_to_gamma_rot(Particle *p, double *&res) {
+void pointer_to_gamma_rot(Particle const *p, double const *&res) {
 #ifndef PARTICLE_ANISOTROPY
   res = &(p->p.gamma_rot);
 #else
@@ -1553,21 +1553,21 @@ void pointer_to_gamma_rot(Particle *p, double *&res) {
 }
 #endif // ROTATION
 
-void pointer_to_temperature(Particle *p, double *&res) { res = &(p->p.T); }
+void pointer_to_temperature(Particle const *p, double const *&res) { res = &(p->p.T); }
 #endif // LANGEVIN_PER_PARTICLE
 
-void pointer_to_rotation(Particle *p, short int *&res) {
+void pointer_to_rotation(Particle const *p, short int const *&res) {
   res = &(p->p.rotation);
 }
 
 #ifdef ENGINE
-void pointer_to_swimming(Particle *p, ParticleParametersSwimming *&swim) {
+void pointer_to_swimming(Particle const *p, ParticleParametersSwimming const *&swim) {
   swim = &(p->swim);
 }
 #endif
 
 #ifdef ROTATIONAL_INERTIA
-void pointer_to_rotational_inertia(Particle *p, double *&res) {
+void pointer_to_rotational_inertia(Particle const *p, double const *&res) {
   res = p->p.rinertia;
 }
 #endif

@@ -1000,61 +1000,61 @@ int number_of_particles_with_type(int type, int *number);
 // within a ctypedef definition
 
 #ifdef ROTATION
-void pointer_to_omega_body(Particle *p, double *&res);
+void pointer_to_omega_body(Particle const *p, double const *&res);
 
-void pointer_to_torque_lab(Particle *p, double *&res);
+void pointer_to_torque_lab(Particle const *p, double const *&res);
 
-void pointer_to_quat(Particle *p, double *&res);
-void pointer_to_quatu(Particle *p, double *&res);
+void pointer_to_quat(Particle const *p, double const *&res);
+void pointer_to_quatu(Particle const *p, double const *&res);
 
 #endif
 
 #ifdef ELECTROSTATICS
-void pointer_to_q(Particle *p, double *&res);
+void pointer_to_q(Particle const *p, double const *&res);
 #endif
 
 #ifdef VIRTUAL_SITES
-void pointer_to_virtual(Particle *p, int *&res);
+void pointer_to_virtual(Particle const *p, int const *&res);
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void pointer_to_vs_relative(Particle *p, int *&res1, double *&res2,
-                            double *&res3);
+void pointer_to_vs_relative(Particle const *p, int const *&res1, double const *&res2,
+                            double const *&res3);
 #endif
 
 #ifdef MULTI_TIMESTEP
-void pointer_to_smaller_timestep(Particle *p, int *&res);
+void pointer_to_smaller_timestep(Particle const *p, int const *&res);
 #endif
 
-void pointer_to_dip(Particle *P, double *&res);
+void pointer_to_dip(Particle const *P, double const *&res);
 
-void pointer_to_dipm(Particle *P, double *&res);
+void pointer_to_dipm(Particle const *P, double const *&res);
 
 #ifdef EXTERNAL_FORCES
-void pointer_to_ext_force(Particle *p, int *&res1, double *&res2);
+void pointer_to_ext_force(Particle const *p, int const *&res1, double const *&res2);
 #ifdef ROTATION
-void pointer_to_ext_torque(Particle *p, int *&res1, double *&res2);
+void pointer_to_ext_torque(Particle const *p, int const *&res1, double const *&res2);
 #endif
-void pointer_to_fix(Particle *p, int *&res);
+void pointer_to_fix(Particle const *p, int const *&res);
 #endif
 
 #ifdef LANGEVIN_PER_PARTICLE
-void pointer_to_gamma(Particle *p, double *&res);
-void pointer_to_temperature(Particle *p, double *&res);
+void pointer_to_gamma(Particle const *p, double const *&res);
+void pointer_to_temperature(Particle const *p, double const *&res);
 #ifdef ROTATION
-void pointer_to_gamma_rot(Particle *p, double *&res);
+void pointer_to_gamma_rot(Particle const *p, double const *&res);
 #endif
 #endif // LANGEVIN_PER_PARTICLE
 #ifdef ROTATION
-void pointer_to_rotation(Particle *p, short int *&res);
+void pointer_to_rotation(Particle const *p, short int const *&res);
 #endif
 
 #ifdef ENGINE
-void pointer_to_swimming(Particle *p, ParticleParametersSwimming *&swim);
+void pointer_to_swimming(Particle const *p, ParticleParametersSwimming const *&swim);
 #endif
 
 #ifdef ROTATIONAL_INERTIA
-void pointer_to_rotational_inertia(Particle *p, double *&res);
+void pointer_to_rotational_inertia(Particle const *p, double const *&res);
 #endif
 
 bool particle_exists(int part);
