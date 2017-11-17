@@ -61,7 +61,7 @@ class ParticleProperties(ut.TestCase):
             # which was there, when the outer function was called
             setattr(self.system.part[self.pid], propName, value)
             np.testing.assert_allclose(getattr(self.system.part[
-                self.pid], propName), value, err_msg=propName + ": value set and value gotten back differ.")
+                self.pid], propName), value, err_msg=propName + ": value set and value gotten back differ.", atol=self.tol)
 
         return func
 
@@ -150,7 +150,7 @@ class ParticleProperties(ut.TestCase):
             self.assertEqual(res[1], 5.0, "vs_relative: " + res.__str__())
             np.testing.assert_allclose(
     res[2], np.array(
-         (0.5, -0.5, -0.5, -0.5)), err_msg="vs_relative: " + res.__str__())
+         (0.5, -0.5, -0.5, -0.5)), err_msg="vs_relative: " + res.__str__(), atol=self.tol)
 
 
 if __name__ == "__main__":
