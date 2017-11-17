@@ -84,6 +84,10 @@ class TestCylindricalFluxDensityObservable(ut.TestCase):
             v_x = (v_r * np.sqrt(position[0]**2.0 + position[1] **
                                  2.0) - position[1] * v_y) / position[0]
             position += np.array(self.params['center'])
+            if self.params['axis'] == 'x':
+                position = np.array([position[1], position[2], position[0]])
+            elif self.params['axis'] == 'y':
+                position = np.array([position[2], position[0], position[1]])
             self.system.part.add(id=i, pos=position, v=[v_x, v_y, v_z])
         pol_positions, pol_velocities = self.pol_coords()
         # Set up the Observable.
@@ -91,6 +95,7 @@ class TestCylindricalFluxDensityObservable(ut.TestCase):
             ids=range(
                 self.params['N']),
             center=self.params['center'],
+            axis=self.params['axis'],
             n_r_bins=self.params['n_r_bins'],
             n_phi_bins=self.params['n_phi_bins'],
             n_z_bins=self.params['n_z_bins'],
