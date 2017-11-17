@@ -15,6 +15,8 @@ from espressomd import lb
 class LBGPULeesEdwardsTest(ut.TestCase):
   def test(self):
 
+"""In this test the velocity profile of a LB fluid under steady shear is compared to the velocity profile that is obtained by solving the Navier-Stokes equation with Fourier series."""
+
     # Analytical solution with Fourier series of Navier-Stikes equation
     def u(x, t, nu, v, h, k_max):
       u = x / h - 0.5

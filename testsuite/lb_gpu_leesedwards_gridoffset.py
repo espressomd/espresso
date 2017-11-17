@@ -20,6 +20,9 @@ tol = 1.0e-16
 class LeesEdwardsOffsetTest(ut.TestCase):
 
   def test(self):
+    
+"""The velocity components at all LB nodes are tested against a table stored in testduite/data/"""   
+
     # LB parameter
     box_l = 9
     eta = 1.0
