@@ -82,3 +82,37 @@ BOOST_AUTO_TEST_CASE(put) {
 
   cache.put(0, 2);
 }
+
+BOOST_AUTO_TEST_CASE(max_size) {
+  {
+  Cache<int, char> cache(1);
+
+  cache.put(1, 2);
+  cache.put(2, 3);
+
+  BOOST_CHECK(!cache.has(1));
+  BOOST_CHECK(cache.has(2));
+
+  cache.put(1, 2);
+
+  BOOST_CHECK(cache.has(1));
+  BOOST_CHECK(!cache.has(2));
+  }
+
+  {
+    const Cache<int, int>::size_type max_size = 1000;
+    Cache<int, int> cache(max_size);
+    BOOST_CHECK(max_size == cache.max_size());
+  }
+
+  {
+    const Cache<int, int>::size_type max_size = 1000;
+    Cache<int, int> cache(max_size);
+
+    for(int i = 0; i < 10000; i++) {
+      cache.put(i, 11);
+    }
+
+    BOOST_CHECK(max_size == cache.size());
+  }
+}

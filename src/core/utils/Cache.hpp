@@ -21,6 +21,7 @@
 #define CORE_UTILS_CACHE_HPP
 
 #include <memory>
+#include <random>
 #include <type_traits>
 #include <unordered_map>
 
@@ -32,31 +33,89 @@ template <typename Key, typename Value> class Cache {
 public:
   using key_type = Key;
   using value_type = const Value *;
+  using size_type = typename map_type::size_type;
+
+  Cache() {
+    /* Default to maximal size of our map. */
+    m_max_size = m_cache.max_size();
+  }
+  explicit Cache(size_type max_size) : m_max_size(max_size), m_rand(max_size) {}
 
 private:
-  /** @brief The actual cache, maps id -> Particle copy.
+  /** @brief The actual cache, maps Key -> Value.
+   */
+  map_type m_cache;
+  size_type m_max_size;
+
+  /** Cheap linear-congruential PRNG. */
+  std::minstd_rand m_rand;
+
+  /** @brief Drop an element.
    *
-   * This is mutable so that access works on a constant
-   * cache. This is fine because it does not change the
-   * obsevable behaviour of the class.
-  */
-  mutable map_type m_cache;
+   * This function drops an element from the cache,
+   * it is used when a new item is to be cached, but then
+   * maximal size is reached. We use the bucket interface
+   * here to be able to pick a random element in constant
+   * time.
+   */
+  void drop_random_element() {
+    if (m_cache.empty())
+      return;
+
+    auto const bucket_count = m_cache.bucket_count();
+
+    /* Pick a random bucket, this has to terminate because
+    * the map is not empty. So there has to be a bucket with
+    * at least one element. */
+    auto bucket =
+        std::uniform_int_distribution<size_type>{0, bucket_count - 1}(m_rand);
+
+    while (0 == m_cache.bucket_size(bucket)) {
+      /* Wrap around the end */
+      bucket = ((bucket + 1) % bucket_count);
+    }
+
+    /* Pick a random elemnt form that bucket. */
+    auto const elem_in_bucket = std::uniform_int_distribution<size_type>{
+        0, m_cache.bucket_size(bucket) - 1}(m_rand);
+
+    /* Get the element in the bucket */
+    auto const drop_key =
+        std::next(m_cache.cbegin(bucket), elem_in_bucket)->first;
+
+    /* And drop it. */
+    m_cache.erase(drop_key);
+  }
 
 public:
   /** @brief Clear the cache.
    *
    * This invalidates all pointers into the cache.
-   * It is not const on purpose because it can
-   * have visible effects, even though m_cache is
-   * mutable.
    */
   void invalidate() { m_cache.clear(); }
 
   /** @brief Query if k is contained in the cache. */
   bool has(Key const &k) const { return m_cache.find(k) != m_cache.end(); }
 
-  /** @brief Put a value into the cache. */
+  /** @brief Number of elements currently cached. */
+  size_type size() const { return m_cache.size(); }
+
+  /** @brief Maximal size of the cache. */
+  size_type max_size() const { return m_max_size; }
+
+  /** @brief Put a value into the cache.
+   *
+   * If the value already exists, it is overwritten.
+   * When the size of the cache would grow below the
+   * maximal size, a random element is removed before
+   * putting the new one. */
   Value const *put(Key const &k, Value &&v) {
+    /* If there already is a value for k, overwriting it
+     * will not increase the size, so we don't have to
+     * make room. */
+    if ((m_cache.size() >= m_max_size) && !has(k))
+      drop_random_element();
+
     typename map_type::const_iterator it;
     std::tie(it, std::ignore) = m_cache.emplace(k, std::move(v));
 
@@ -65,9 +124,9 @@ public:
 
   /** @brief Get a value.
    *
-   * If the value is not cached, it is fetched. If the fetching fails
-   * e.g. if Get can not finde the requested element, a nullptr is
-   * returned. The value is owned by the Cache and can not be modified.
+   *  The value is owned by the Cache and can not be modified.
+   *  Pointers into the cache can be invalidated at any point
+   *  and should not be stored beyond the calling function.
    */
   Value const *get(Key const &k) const {
     auto const needle = m_cache.find(k);
