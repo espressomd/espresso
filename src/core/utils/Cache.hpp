@@ -25,24 +25,13 @@
 #include <unordered_map>
 
 namespace Utils {
-template <typename Key, typename Value, typename Get> class Cache {
-  using value_storage_type =
-      std::unique_ptr<typename std::add_const<Value>::type>;
-  using map_type = std::unordered_map<Key, value_storage_type>;
-
-  static_assert(
-      std::is_convertible<value_storage_type, decltype(std::declval<Get>()(
-                                                  std::declval<Key>()))>::value,
-      "Return value of Get::operator() needs to be convertible to "
-      "value_storage_type.");
+template <typename Key, typename Value> class Cache {
+  using map_type =
+      std::unordered_map<Key, typename std::add_const<Value>::type>;
 
 public:
   using key_type = Key;
   using value_type = const Value *;
-
-public:
-  template <typename GetRef>
-  explicit Cache(GetRef &&getter) : m_getter(std::forward<GetRef>(getter)) {}
 
 private:
   /** @brief The actual cache, maps id -> Particle copy.
@@ -52,8 +41,6 @@ private:
    * obsevable behaviour of the class.
   */
   mutable map_type m_cache;
-  /** Value getter. */
-  Get m_getter;
 
 public:
   /** @brief Clear the cache.
@@ -68,6 +55,14 @@ public:
   /** @brief Query if k is contained in the cache. */
   bool has(Key const &k) const { return m_cache.find(k) != m_cache.end(); }
 
+  /** @brief Put a value into the cache. */
+  Value const *put(Key const &k, Value &&v) {
+    typename map_type::const_iterator it;
+    std::tie(it, std::ignore) = m_cache.emplace(k, std::move(v));
+
+    return &(it->second);
+  }
+
   /** @brief Get a value.
    *
    * If the value is not cached, it is fetched. If the fetching fails
@@ -78,22 +73,12 @@ public:
     auto const needle = m_cache.find(k);
 
     if (m_cache.end() != needle) {
-      return needle->second.get();
+      return &(needle->second);
     } else {
-      auto const &val = m_cache[k] = m_getter(k);
-      return val.get();
+      return nullptr;
     }
   }
 };
-
-/**
- * @brief Type deduction helper for Cache.
- */
-template <typename Key, typename Value, typename Get>
-Cache<Key, Value, Get> make_cache(Get &&getter) {
-  return Cache<Key, Value, Get>(
-      std::forward<Get>(getter));
-}
 }
 
 #endif

@@ -23,43 +23,38 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "utils/make_unique.hpp"
-using Utils::make_unique;
-
 #include "utils/Cache.hpp"
 using Utils::Cache;
-using Utils::make_cache;
 
 BOOST_AUTO_TEST_CASE(types) {
-  auto null = [](int) { return make_unique<const char>(0); };
-  using cache_type = Cache<int, char, decltype(null)>;
+  using cache_type = Cache<int, char>;
   static_assert(std::is_same<cache_type::key_type, int>::value, "");
   static_assert(std::is_same<cache_type::value_type, const char *>::value, "");
 }
 
 BOOST_AUTO_TEST_CASE(get_value) {
   {
-    auto next = [](int i) { return make_unique<const char>(i + 1); };
-
-    Cache<int, char, decltype(next)> cache{next};
-    BOOST_CHECK(*cache.get(41) == 42);
-    BOOST_CHECK(*cache.get(42) == 43);
+    Cache<int, char> cache;
+    cache.put(41, 42);
+    cache.put(42, 43);
+    BOOST_REQUIRE(cache.get(41));
+    BOOST_CHECK(42 == *cache.get(41));
+    BOOST_REQUIRE(cache.get(42));
+    BOOST_CHECK(43 == *cache.get(42));
   }
+
   {
-    auto null_getter = [](int) { return std::unique_ptr<const char>{}; };
-    Cache<int, char, decltype(null_getter)> cache{null_getter};
-    BOOST_CHECK(!cache.get(123));
-    BOOST_CHECK(!cache.get(11));
+    Cache<int, char> cache;
+    BOOST_CHECK(nullptr == cache.get(123));
+    BOOST_CHECK(nullptr == cache.get(11));
   }
 }
 
 BOOST_AUTO_TEST_CASE(has) {
   {
-    auto next = [](int i) { return make_unique<const char>(i + 1); };
-
-    Cache<int, char, decltype(next)> cache{next};
-    cache.get(41);
-    cache.get(1);
+    Cache<int, char> cache;
+    cache.put(41,0);
+    cache.put(1, 0);
 
     BOOST_CHECK(cache.has(41));
     BOOST_CHECK(cache.has(1));
@@ -70,11 +65,9 @@ BOOST_AUTO_TEST_CASE(has) {
 
 BOOST_AUTO_TEST_CASE(invalidate) {
   {
-    auto next = [](int i) { return make_unique<const char>(i + 1); };
-
-    Cache<int, char, decltype(next)> cache{next};
-    cache.get(41);
-    cache.get(1);
+    Cache<int, char> cache;
+    cache.put(41, 11);
+    cache.put(1, 123);
 
     cache.invalidate();
 
@@ -84,32 +77,8 @@ BOOST_AUTO_TEST_CASE(invalidate) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(caching) {
-  {
-    auto count = 0;
-    auto counter = [&count](int i) {
-      count++;
-      return make_unique<const char>(i + 1);
-    };
+BOOST_AUTO_TEST_CASE(put) {
+  Cache<int, char> cache;
 
-    Cache<int, char, decltype(counter)> cache{counter};
-    BOOST_CHECK(*cache.get(41) == 42);
-    BOOST_CHECK(*cache.get(41) == 42);
-    BOOST_CHECK(*cache.get(41) == 42);
-    BOOST_CHECK(*cache.get(41) == 42);
-    BOOST_CHECK(*cache.get(41) == 42);
-    BOOST_CHECK(*cache.get(41) == 42);
-
-    BOOST_CHECK(1 == count);
-    cache.invalidate();
-
-    BOOST_CHECK(*cache.get(41) == 42);
-    BOOST_CHECK(*cache.get(41) == 42);
-    BOOST_CHECK(*cache.get(41) == 42);
-    BOOST_CHECK(*cache.get(41) == 42);
-    BOOST_CHECK(*cache.get(41) == 42);
-    BOOST_CHECK(*cache.get(41) == 42);
-
-    BOOST_CHECK(2 == count);
-  }
+  cache.put(0, 2);
 }

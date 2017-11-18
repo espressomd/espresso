@@ -42,8 +42,8 @@
 #include "virtual_sites.hpp"
 
 #include "utils.hpp"
-#include "utils/make_unique.hpp"
 #include "utils/Cache.hpp"
+#include "utils/make_unique.hpp"
 
 #include <cmath>
 #include <cstdlib>
@@ -309,27 +309,29 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
 }
 
 namespace {
-  std::unique_ptr<const Particle> get_particle_data_uncached(int part) {
-    auto const pnode = get_particle_node(part);
+Utils::Cache<int, Particle> particle_fetch_cache;
+}
 
-    if (pnode < 0)
-      return nullptr;
+void invalidate_fetch_cache() { particle_fetch_cache.invalidate(); }
 
-    auto pp = Utils::make_unique<Particle>();
-
-    mpi_recv_part(pnode, part, pp.get());
-    return std::unique_ptr<const Particle>(pp.release());
+const Particle *get_particle_data(int part) {
+  auto pnode = get_particle_node(part);
+  /* Check if particle exists at all. */
+  if (-1 == pnode) {
+    return nullptr;
   }
 
-  auto particle_fetch_cache = Utils::make_cache<int, Particle>(get_particle_data_uncached);
-}
+  /* Query the cache */
+  auto const p_ptr = particle_fetch_cache.get(part);
+  if (p_ptr) {
+    return p_ptr;
+  }
 
-void invalidate_fetch_cache() {
-  particle_fetch_cache.invalidate();
-}
-
-const Particle * get_particle_data(int part) {
-  return particle_fetch_cache.get(part);
+  /* Cache miss, fetch the particle,
+  * put it into the cache and return a pointer into the cache. */
+  auto const cache_ptr =
+      particle_fetch_cache.put(part, mpi_recv_part(pnode, part));
+  return cache_ptr;
 }
 
 int place_particle(int part, double p[3]) {
@@ -1496,13 +1498,19 @@ int number_of_particles_with_type(int type, int *number) {
 // within a ctypedef definition
 
 #ifdef ROTATION
-void pointer_to_omega_body(Particle const *p, double const *&res) { res = p->m.omega; }
+void pointer_to_omega_body(Particle const *p, double const *&res) {
+  res = p->m.omega;
+}
 
-void pointer_to_torque_lab(Particle const *p, double const *&res) { res = p->f.torque; }
+void pointer_to_torque_lab(Particle const *p, double const *&res) {
+  res = p->f.torque;
+}
 
 void pointer_to_quat(Particle const *p, double const *&res) { res = p->r.quat; }
 
-void pointer_to_quatu(Particle const *p, double const *&res) { res = p->r.quatu; }
+void pointer_to_quatu(Particle const *p, double const *&res) {
+  res = p->r.quatu;
+}
 #endif
 
 #ifdef ELECTROSTATICS
@@ -1510,12 +1518,14 @@ void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }
 #endif
 
 #ifdef VIRTUAL_SITES
-void pointer_to_virtual(Particle const *p, int const *&res) { res = &(p->p.isVirtual); }
+void pointer_to_virtual(Particle const *p, int const *&res) {
+  res = &(p->p.isVirtual);
+}
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void pointer_to_vs_relative(Particle const *p, int const *&res1, double const *&res2,
-                            double const *&res3) {
+void pointer_to_vs_relative(Particle const *p, int const *&res1,
+                            double const *&res2, double const *&res3) {
   res1 = &(p->p.vs_relative_to_particle_id);
   res2 = &(p->p.vs_relative_distance);
   res3 = (p->p.vs_relative_rel_orientation);
@@ -1531,21 +1541,27 @@ void pointer_to_smaller_timestep(Particle const *p, int const *&res) {
 #ifdef DIPOLES
 void pointer_to_dip(Particle const *p, double const *&res) { res = p->r.dip; }
 
-void pointer_to_dipm(Particle const *p, double const *&res) { res = &(p->p.dipm); }
+void pointer_to_dipm(Particle const *p, double const *&res) {
+  res = &(p->p.dipm);
+}
 #endif
 
 #ifdef EXTERNAL_FORCES
-void pointer_to_ext_force(Particle const *p, int const *&res1, double const *&res2) {
+void pointer_to_ext_force(Particle const *p, int const *&res1,
+                          double const *&res2) {
   res1 = &(p->p.ext_flag);
   res2 = p->p.ext_force;
 }
 #ifdef ROTATION
-void pointer_to_ext_torque(Particle const *p, int const *&res1, double const *&res2) {
+void pointer_to_ext_torque(Particle const *p, int const *&res1,
+                           double const *&res2) {
   res1 = &(p->p.ext_flag);
   res2 = p->p.ext_torque;
 }
 #endif
-void pointer_to_fix(Particle const *p, int const *&res) { res = &(p->p.ext_flag); }
+void pointer_to_fix(Particle const *p, int const *&res) {
+  res = &(p->p.ext_flag);
+}
 #endif
 
 #ifdef LANGEVIN_PER_PARTICLE
@@ -1567,7 +1583,9 @@ void pointer_to_gamma_rot(Particle const *p, double const *&res) {
 }
 #endif // ROTATION
 
-void pointer_to_temperature(Particle const *p, double const *&res) { res = &(p->p.T); }
+void pointer_to_temperature(Particle const *p, double const *&res) {
+  res = &(p->p.T);
+}
 #endif // LANGEVIN_PER_PARTICLE
 
 void pointer_to_rotation(Particle const *p, short int const *&res) {
@@ -1575,7 +1593,8 @@ void pointer_to_rotation(Particle const *p, short int const *&res) {
 }
 
 #ifdef ENGINE
-void pointer_to_swimming(Particle const *p, ParticleParametersSwimming const *&swim) {
+void pointer_to_swimming(Particle const *p,
+                         ParticleParametersSwimming const *&swim) {
   swim = &(p->swim);
 }
 #endif
