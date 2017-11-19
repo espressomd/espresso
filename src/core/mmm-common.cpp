@@ -31,7 +31,7 @@
 #include "mmm-common.hpp"
 #include "utils.hpp"
 
-Polynom *modPsi = NULL;
+Polynom *modPsi = nullptr;
 int      n_modPsi = 0;
 
 static void preparePolygammaEven(int n, double binom, Polynom *series)

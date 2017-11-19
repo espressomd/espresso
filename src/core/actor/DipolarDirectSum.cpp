@@ -35,7 +35,7 @@ if (dipolarDirectSum)
   forceActors.remove(dipolarDirectSum);
   energyActors.remove(dipolarDirectSum);
   delete(dipolarDirectSum);
-  dipolarDirectSum=NULL;
+  dipolarDirectSum=nullptr;
 
 }
 }

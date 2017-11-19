@@ -41,10 +41,11 @@ public:
 #endif
   }
 
-  Variant call_method(const std::string &name, const VariantMap &) {
+  Variant call_method(const std::string &name, const VariantMap &) override {
     if (name == "get_force") {
       return m_lbboundary->get_force();
     }
+    return none;
   }
 
   const std::string name() const override { return "LBBoundaries:LBBoundary"; }
