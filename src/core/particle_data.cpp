@@ -309,13 +309,15 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
 }
 
 namespace {
-Utils::Cache<int, Particle> particle_fetch_cache;
+  /* Limit cache to 100 MiB */
+  std::size_t const max_cache_size = (100ul * 1048576ul) / sizeof(Particle);
+  Utils::Cache<int, Particle> particle_fetch_cache(max_cache_size);
 }
 
 void invalidate_fetch_cache() { particle_fetch_cache.invalidate(); }
 
 const Particle *get_particle_data(int part) {
-  auto pnode = get_particle_node(part);
+  auto const pnode = get_particle_node(part);
   /* Check if particle exists at all. */
   if (-1 == pnode) {
     return nullptr;
