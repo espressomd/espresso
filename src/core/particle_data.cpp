@@ -321,6 +321,11 @@ const Particle *get_particle_data(int part) {
     return nullptr;
   }
 
+  if(pnode == this_node) {
+    assert(local_particles[part]);
+    return local_particles[part];
+  }
+
   /* Query the cache */
   auto const p_ptr = particle_fetch_cache.get(part);
   if (p_ptr) {

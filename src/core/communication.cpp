@@ -1085,18 +1085,12 @@ void mpi_send_bond_slave(int pnode, int part) {
 
 /****************** REQ_GET_PART ************/
 Particle mpi_recv_part(int pnode, int part) {
-  /* fetch fixed data */
-  if (pnode == this_node) {
-    assert(local_particles[part]);
-    return *local_particles[part];
-  } else {
-    mpi_call(mpi_recv_part_slave, pnode, part);
-    Particle ret;
+  Particle ret;
 
-    comm_cart.recv(pnode, SOME_TAG, ret);
+  mpi_call(mpi_recv_part_slave, pnode, part);
+  comm_cart.recv(pnode, SOME_TAG, ret);
 
-    return ret;
-  }
+  return ret;
 }
 
 void mpi_recv_part_slave(int pnode, int part) {
