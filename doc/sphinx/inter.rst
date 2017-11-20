@@ -1690,42 +1690,42 @@ Parameters are:
     * delta_mid_top/delta_mid_bot: 
         *ELC* can also be used to simulate 2D periodic systems with image charges, 
         specified by dielectric contrasts on the non-periodic boundaries
-        (:cite: `icelc`).  Similar to *MMM2D*, these can be set with the
-        keywords `delta_mid_bot` and `delta_mid_top`, setting the dielectric
-        jump from the simulation region (*middle*) to *bottom* (at `z<0`) and
-        from *middle* to *top* (`z > box_l[2] - gap_size`). The fully metallic case
-        `delta_mid_top=delta_mid_bot=-1` would lead to divergence of the
+        (:cite:`icelc`).  Similar to *MMM2D*, these can be set with the
+        keywords ``delta_mid_bot`` and ``delta_mid_top``, setting the dielectric
+        jump from the simulation region (*middle*) to *bottom* (at :math:`z<0`) and
+        from *middle* to *top* (:math:`z > box_l[2] - gap_size`). The fully metallic case
+        :math:`delta_mid_top=delta_mid_bot=-1` would lead to divergence of the
         forces/energies in *ELC* and is therefore only possible with the
-        `const_pot_on` option.
+        ``const_pot_on`` option.
     * const_pot_on: 
-        As descibed, setting this to `1` leads to fully metallic boundaries and
+        As descibed, setting this to ``1`` leads to fully metallic boundaries and
         behaves just like the mmm2d parameter of the same name: It maintaines a
-        constant potential `pot_diff` by countering the total dipol moment of
+        constant potential ``pot_diff`` by countering the total dipol moment of
         the system and adding a homogeneous electric field according to
-        `pot_diff`.
+        ``pot_diff``.
     * pot_diff:
-        Used in conjunction with `const_pot_on=1`, this sets the potential difference
-        between the boundaries in the z-direction between `z=0` and `z = box_l[2] -
-        gap_size`.
-    * neutralize:
-		By default, ELC just as P3M adds a homogeneous neutralizing background
-		to the system in case of a net charge. However, unlike in three dimensions,
-		this background adds a parabolic potential across the
-		slab :cite:`ballenegger09a`. Therefore, under normal circumstance, you will
-		probably want to disable the neutralization for non-neutral systems.
-        This corresponds then to a formal regularization of the forces and
-        energies :cite:`ballenegger09a`. Also, if you add neutralizing walls
-        explicitely as constraints, you have to disable the neutralization.
-        When using a dielectric contrast or full metallic walls (`delta_mid_top
-        != 0` or `delta_mid_bot != 0` or `const_pot_on=1`), `neutralize` is
-        overwritten and switched off internally. Note that the special case of
-        non-neutral systems with a *non-metallic* dielectric jump (eg.
-        `delta_mid_top` or `delta_mid_bot` in `]-1,1[`) is not covered by the
-        algorithm and will throw an error.
+        Used in conjunction with ``const_pot_on`` set to 1, this sets the potential difference
+        between the boundaries in the z-direction between :math:`z=0` and 
+        :math:`z = box_l[2] - gap_size`.
     * far_cut:
         The setting of the far cutoff is only intended for testing and allows to
         directly set the cutoff. In this case, the maximal pairwise error is
-        ignored.     
+        ignored.
+    * neutralize:
+        By default, ELC just as P3M adds a homogeneous neutralizing background
+        to the system in case of a net charge. However, unlike in three dimensions,
+        this background adds a parabolic potential across the
+        slab :cite:`ballenegger09a`. Therefore, under normal circumstance, you will
+        probably want to disable the neutralization for non-neutral systems.
+        This corresponds then to a formal regularization of the forces and
+        energies :cite:`ballenegger09a`. Also, if you add neutralizing walls
+        explicitely as constraints, you have to disable the neutralization.
+        When using a dielectric contrast or full metallic walls
+        (:math:`delta_mid_top != 0` or :math:`delta_mid_bot != 0` or
+        :math:`const_pot_on=1`), ``neutralize`` is overwritten and switched off internally.
+        Note that the special case of non-neutral systems with a *non-metallic* dielectric jump (eg.
+        ``delta_mid_top`` or ``delta_mid_bot`` in :math:`]-1,1[`) is not covered by the
+        algorithm and will throw an error.
 
 .. _ICC:
 
