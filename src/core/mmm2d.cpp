@@ -1013,7 +1013,7 @@ static void setup_PQ(int p, int q, double omega, double fac)
   double layer_top;
   double e, e_di_l, e_di_h;
   double *llclcblk;
-  double *lclimgebot=nullptr, *lclimgetop=nullptr;
+  double *lclimgebot=NULL, *lclimgetop=NULL;
   int e_size = 4, size = 8;
 
   if (mmm2d_params.dielectric_contrast_on)
@@ -1888,7 +1888,7 @@ int MMM2D_sanity_checks()
     return 1;
   }
 
-  if (cell_structure.use_verlet_list == true) {
+  if (cell_structure.use_verlet_list) {
       runtimeErrorMsg() <<"MMM2D at present does not work with verlet lists";
     return 1;
   }
@@ -1899,6 +1899,7 @@ int MMM2D_sanity_checks()
 void MMM2D_init()
 {
   int err;
+
   if (MMM2D_sanity_checks()) return;
 
   MMM2D_setup_constants();

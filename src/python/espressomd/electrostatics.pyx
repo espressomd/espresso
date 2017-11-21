@@ -26,6 +26,7 @@ import numpy as np
 IF SCAFACOS == 1:
     from .scafacos import ScafacosConnector 
     from . cimport scafacos
+from espressomd.utils cimport handle_errors
 
 IF ELECTROSTATICS == 1: 
     cdef class ElectrostaticInteraction(actors.Actor):
@@ -56,7 +57,6 @@ IF ELECTROSTATICS == 1:
             for param in tuneParams.iterkeys():
                 if not param in self.required_keys() or (not subsetTuneParams == None and param in subsetTuneParams.keys()):
                     self._params[param] = tuneParams[param]
-            print(self._params)
             self._tune()
     
 IF COULOMB_DEBYE_HUECKEL:
@@ -853,10 +853,10 @@ IF ELECTROSTATICS:
             params = {}
             params.update(mmm2d_params)
             params["bjerrum_length"] = coulomb.bjerrum
-            if params["dielectric_contrast_on"] or params["const_pot"]:
-                params["dielectric"] = 0
-            else:
+            if params["dielectric_contrast_on"] == 1 or params["const_pot"] == 1:
                 params["dielectric"] = 1
+            else:
+                params["dielectric"] = 0
             return params
 
         def _set_params_in_es_core(self):
@@ -871,16 +871,25 @@ IF ELECTROSTATICS:
                 self._params["delta_mid_top"] = -1
                 self._params["delta_mid_bot"] = -1
 
-            MMM2D_set_params(self._params["maxPWerror"],
+            res = MMM2D_set_params(self._params["maxPWerror"],
             self._params["far_cut"], self._params["delta_mid_top"],
             self._params["delta_mid_bot"], self._params["const_pot"], self._params["pot_diff"])
-
+            handle_errors("MMM2d setup")
+            if res:
+                raise Exception("MMM2D setup failed")
 
         def _activate_method(self):
             coulomb.method = COULOMB_MMM2D
             self._set_params_in_es_core()
             MMM2D_init()
-            MMM2D_sanity_checks()
+            handle_errors("MMM2d setup")
+            res=MMM2D_sanity_checks()
+            handle_errors("MMM2d setup")
+            if res:
+                raise Exception("MMM2D sanity checks failed.")
+            mpi_bcast_coulomb_params()
+            handle_errors("MMM2d setup")
+
 
     IF SCAFACOS == 1:
         class Scafacos(ScafacosConnector, ElectrostaticInteraction):
