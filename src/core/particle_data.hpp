@@ -207,7 +207,7 @@ struct ParticleProperties {
 struct ParticlePosition {
   /** periodically folded position. */
   double p[3] = {0, 0, 0};
-  
+
 #ifdef ROTATION
   /** quaternions to define particle orientation */
   double quat[4] = {1., 0., 0., 0.};
@@ -241,7 +241,6 @@ struct ParticleForce {
   /** torque */
   double torque[3] = {0., 0., 0.};
 #endif
-
 };
 
 /** Momentum information on a particle. Information not contained in
@@ -551,12 +550,25 @@ void clear_particle_node();
 /** Realloc \ref local_particles. */
 void realloc_local_particles();
 
-/** Get particle data.
-    @param part the identity of the particle to fetch
-    @return Pointer to copy of particle if it exists,
-            nullptr otherwise;
+/**
+ * @brief Get particle data.
+ *
+ *   @param part the identity of the particle to fetch
+ *   @return Pointer to copy of particle if it exists,
+ *          nullptr otherwise;
 */
-const Particle * get_particle_data(int part);
+const Particle *get_particle_data(int part);
+
+/**
+ * @brief Fetch a range of particle into the fetch cache.
+ *
+ * If the range is larger than the cache size, only
+ * the particle that fit into the cache are fetched.
+ *
+ * @param ids Ids of the particles that should be
+ *        fetched.
+ */
+void prefetch_particle_data(std::vector<int> ids);
 
 /** @brief Invalidate the fetch cache for @f get_particle_data. */
 void invalidate_fetch_cache();
@@ -803,7 +815,8 @@ int set_particle_fix(int part, int flag);
 /** Call only on the master node: change particle bond.
     @param part     identity of principal atom of the bond.
     @param bond     field containing the bond type number and the
-    identity of all bond partners (secundary atoms of the bond). If nullptr, delete
+    identity of all bond partners (secundary atoms of the bond). If nullptr,
+   delete
    all bonds.
     @param _delete   if true, do not add the bond, rather delete it if found
     @return ES_OK on success or ES_ERROR if no success
@@ -901,7 +914,8 @@ void local_rescale_particles(int dir, double scale);
 void send_particles(ParticleList *particles, int node);
 
 /** Synchronous receive of a particle buffer from another node. The other node
-    MUST call \ref send_particles when this is called. Particles needs to initialized,
+    MUST call \ref send_particles when this is called. Particles needs to
+   initialized,
     it is realloced to the correct size and the content is overwritten. */
 void recv_particles(ParticleList *particles, int node);
 
@@ -1029,8 +1043,8 @@ void pointer_to_virtual(Particle const *p, int const *&res);
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void pointer_to_vs_relative(Particle const *p, int const *&res1, double const *&res2,
-                            double const *&res3);
+void pointer_to_vs_relative(Particle const *p, int const *&res1,
+                            double const *&res2, double const *&res3);
 #endif
 
 #ifdef MULTI_TIMESTEP
@@ -1042,9 +1056,11 @@ void pointer_to_dip(Particle const *P, double const *&res);
 void pointer_to_dipm(Particle const *P, double const *&res);
 
 #ifdef EXTERNAL_FORCES
-void pointer_to_ext_force(Particle const *p, int const *&res1, double const *&res2);
+void pointer_to_ext_force(Particle const *p, int const *&res1,
+                          double const *&res2);
 #ifdef ROTATION
-void pointer_to_ext_torque(Particle const *p, int const *&res1, double const *&res2);
+void pointer_to_ext_torque(Particle const *p, int const *&res1,
+                           double const *&res2);
 #endif
 void pointer_to_fix(Particle const *p, int const *&res);
 #endif
@@ -1061,7 +1077,8 @@ void pointer_to_rotation(Particle const *p, short int const *&res);
 #endif
 
 #ifdef ENGINE
-void pointer_to_swimming(Particle const *p, ParticleParametersSwimming const *&swim);
+void pointer_to_swimming(Particle const *p,
+                         ParticleParametersSwimming const *&swim);
 #endif
 
 #ifdef ROTATIONAL_INERTIA

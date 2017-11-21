@@ -60,6 +60,7 @@
 /** Included needed by callbacks. */
 #include "cuda_init.hpp"
 #include "particle_data.hpp"
+
 #include "utils/serialization/array.hpp"
 
 /**************************************************

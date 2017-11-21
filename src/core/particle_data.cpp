@@ -44,6 +44,7 @@
 #include "utils.hpp"
 #include "utils/Cache.hpp"
 #include "utils/make_unique.hpp"
+#include "utils/mpi/gatherv.hpp"
 
 #include <cmath>
 #include <cstdlib>
@@ -309,9 +310,9 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
 }
 
 namespace {
-  /* Limit cache to 100 MiB */
-  std::size_t const max_cache_size = (100ul * 1048576ul) / sizeof(Particle);
-  Utils::Cache<int, Particle> particle_fetch_cache(max_cache_size);
+/* Limit cache to 100 MiB */
+std::size_t const max_cache_size = (100ul * 1048576ul) / sizeof(Particle);
+Utils::Cache<int, Particle> particle_fetch_cache(max_cache_size);
 }
 
 void invalidate_fetch_cache() { particle_fetch_cache.invalidate(); }
@@ -323,7 +324,7 @@ const Particle *get_particle_data(int part) {
     return nullptr;
   }
 
-  if(pnode == this_node) {
+  if (pnode == this_node) {
     assert(local_particles[part]);
     return local_particles[part];
   }
@@ -339,6 +340,96 @@ const Particle *get_particle_data(int part) {
   auto const cache_ptr =
       particle_fetch_cache.put(part, mpi_recv_part(pnode, part));
   return cache_ptr;
+}
+
+void mpi_get_particles_slave(int, int) {
+  std::vector<int> ids;
+  boost::mpi::scatter(comm_cart, ids, 0);
+
+  std::vector<Particle> parts(ids.size());
+  std::transform(ids.begin(), ids.end(), parts.begin(), [](int id) {
+    assert(local_particles[id]);
+    return *local_particles[id];
+  });
+
+  Utils::Mpi::gatherv(comm_cart, parts.data(), parts.size(), 0);
+}
+
+/**
+ * @brief Get multiple particles at once.
+ *
+ * *WARNING* Particles are returned in an arbitrary order.
+ *
+ * @param ids The ids of the particles that should be returned.
+ *
+ * @returns The particle data.
+ */
+std::vector<Particle> mpi_get_particles(std::vector<int> const &ids) {
+  mpi_call(mpi_get_particles_slave, 0, 0);
+  /* Return value */
+  std::vector<Particle> parts(ids.size());
+
+  /* Group ids per node */
+  std::vector<std::vector<int>> node_ids(comm_cart.size());
+  for (auto const &id : ids) {
+    auto const pnode = get_particle_node(id);
+
+    node_ids[pnode].push_back(id);
+  }
+
+  /* Distributed ids to the nodes */
+  {
+    std::vector<int> ignore;
+    boost::mpi::scatter(comm_cart, node_ids, ignore, 0);
+  }
+
+  /* Copy local particles */
+  std::transform(node_ids[this_node].cbegin(), node_ids[this_node].cend(),
+                 parts.begin(), [](int id) {
+                   assert(id);
+                   return *local_particles[id];
+                 });
+
+  std::vector<int> node_sizes(comm_cart.size());
+  std::transform(
+      node_ids.cbegin(), node_ids.cend(), node_sizes.begin(),
+      [](std::vector<int> const &ids) { return static_cast<int>(ids.size()); });
+
+  Utils::Mpi::gatherv(comm_cart, parts.data(), parts.size(), parts.data(),
+                      node_sizes.data(), 0);
+
+  return parts;
+}
+
+void prefetch_particle_data(std::vector<int> ids) {
+  /* Nothing to do on a single node. */
+  if(comm_cart.size() == 1)
+    return;
+
+  /* Remove local, already cached and non-existent particles from the list. */
+  ids.erase(std::remove_if(ids.begin(), ids.end(),
+                           [](int id) {
+                             auto const pnode = get_particle_node(id);
+                             return (pnode < 0) || (pnode == this_node) ||
+                                    particle_fetch_cache.has(id);
+                           }),
+            ids.end());
+
+  /* Don't prefetch more particles than fit the cache. */
+  if (ids.size() > particle_fetch_cache.max_size())
+    ids.resize(particle_fetch_cache.max_size());
+
+  /* Fetch the particles... */
+  auto parts = mpi_get_particles(ids);
+
+  /* mpi_get_particles does not return the parts in the correct
+     order, so the ids need to be updated. */
+  std::transform(parts.cbegin(), parts.cend(), ids.begin(),
+                 [](Particle const &p) { return p.identity(); });
+
+  /* ... and put them into the cache. */
+  particle_fetch_cache.put(ids.cbegin(), ids.cend(),
+                           std::make_move_iterator(parts.begin()));
 }
 
 int place_particle(int part, double p[3]) {
