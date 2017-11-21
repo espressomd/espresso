@@ -184,8 +184,8 @@ class array_locked(np.ndarray):
     """
 
     ERR_MSG = "ESPResSo array properties return non-writable arrays \
-    and can only be modified as a whole, not in-place or component-wise. \
-    Use numpy.copy(<ESPResSo array property>) to get a writable copy."
+and can only be modified as a whole, not in-place or component-wise. \
+Use numpy.copy(<ESPResSo array property>) to get a writable copy."
 
     def __new__(cls, input_array):
         obj = np.asarray(input_array).view(cls)
