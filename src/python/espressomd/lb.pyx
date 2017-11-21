@@ -210,7 +210,7 @@ IF LB_GPU or LB:
                 raise Exception("LB not compiled in")
 
 IF LB_GPU:
-    cdef class LBFluid_GPU(LBFluid):
+    cdef class LBFluidGPU(LBFluid):
         """
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the GPU.
 

@@ -81,7 +81,7 @@ void calc_mol_vel(Particle *p_com,double v_com[3]){
    for (i=0;i<topology[mol_id].part.n;i++){
       p=local_particles[topology[mol_id].part.e[i]];
       #ifdef VIRTUAL_SITES_DEBUG
-      if (p==NULL){
+      if (p==nullptr){
           runtimeErrorMsg() <<"Particle does not exist in calc_mol_vel! id= " << topology[mol_id].part.e[i] << "\n";
          return;
       }
@@ -123,7 +123,7 @@ void calc_mol_pos(Particle *p_com,double r_com[3]){
    for (i=0;i<topology[mol_id].part.n;i++){
       p=local_particles[topology[mol_id].part.e[i]];
       #ifdef VIRTUAL_SITES_DEBUG
-      if (p==NULL){
+      if (p==nullptr){
           runtimeErrorMsg() <<"Particle does not exist in calc_mol_pos! id= " << topology[mol_id].part.e[i] << "\n";
          return;
       }
@@ -167,7 +167,7 @@ void put_mol_force_on_parts(Particle *p_com){
    for (i=0;i<topology[mol_id].part.n;i++){
       p=local_particles[topology[mol_id].part.e[i]];
       #ifdef VIRTUAL_SITES_DEBUG
-      if (p==NULL){
+      if (p==nullptr){
           runtimeErrorMsg() <<"Particle does not exist in put_mol_force_on_parts! id= " << topology[mol_id].part.e[i] << "\n";
          return;
       }
@@ -181,7 +181,7 @@ void put_mol_force_on_parts(Particle *p_com){
    for (i=0;i<topology[mol_id].part.n;i++){
       p=local_particles[topology[mol_id].part.e[i]];
       #ifdef VIRTUAL_SITES_DEBUG
-      if (p==NULL){
+      if (p==nullptr){
           runtimeErrorMsg() <<"Particle does not exist in put_mol_force_on_parts! id= " << topology[mol_id].part.e[i] << "\n";
          return;
       }
@@ -212,14 +212,14 @@ Particle *get_mol_com_particle(Particle *calling_p){
 
    if (mol_id < 0) {
      runtimeErrorMsg() <<"Particle does not have a mol id! pnr= " << calling_p->p.identity << "\n";
-     return NULL;
+     return nullptr;
    }
    for (i=0;i<topology[mol_id].part.n;i++){
       p=local_particles[topology[mol_id].part.e[i]];
 
-      if (p==NULL){
+      if (p==nullptr){
           runtimeErrorMsg() <<"Particle does not exist in put_mol_force_on_parts! id= " << topology[mol_id].part.e[i] << "\n";
-         return NULL;
+         return nullptr;
       }
 
       if (ifParticleIsVirtual(p)) {
@@ -228,7 +228,7 @@ Particle *get_mol_com_particle(Particle *calling_p){
    }
 
    runtimeErrorMsg() <<"No com found in get_mol_com_particleParticle does not exist in put_mol_force_on_parts! pnr= " << calling_p->p.identity << "\n";
-   return NULL;
+   return nullptr;
 
    return calling_p;
 }
@@ -239,11 +239,11 @@ double get_mol_dist(Particle *p1,Particle *p2){
    p1_com=get_mol_com_particle(p1);
    p2_com=get_mol_com_particle(p2);
    #ifdef VIRTUAL_SITES_DEBUG
-   if (p1_com==NULL){
+   if (p1_com==nullptr){
        runtimeErrorMsg() <<"COM Particle not found for particle in get_mol_dist id= " << p1->p.identity << "\n";
       dist[0]=dist[1]=dist[2]=0.0;
    }
-   if (p2_com==NULL){
+   if (p2_com==nullptr){
        runtimeErrorMsg() <<"COM Particle not found for particle in get_mol_dist id= " << p2->p.identity << "\n";
       dist[0]=dist[1]=dist[2]=0.0;
    }
@@ -367,13 +367,13 @@ void calc_total_dipolmoment_mol(int type,double total_dipole[4]){
 
 void calc_dipole_of_molecule(int mol_id,double dipole[4]){
    int j,k;
-   Particle *p,*p_first=NULL;
+   Particle *p,*p_first=nullptr;
    double vec12[3];
    dipole[0]=dipole[1]=dipole[2]=dipole[3]=0.0;
    for (j=0;j<topology[mol_id].part.n;j++){
       p=&partCfg[topology[mol_id].part.e[j]];
       if (ifParticleIsVirtual(p)) continue;
-      if (p_first==NULL){
+      if (p_first==nullptr){
          p_first=p;
       }
       else

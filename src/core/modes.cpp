@@ -456,7 +456,7 @@ int bilayer_density_profile_sphere (PartCfg & partCfg, IntList *beadids, double 
   nbeadtypes=beadids->max;
   binwidth = 2*rrange/(double)nbins;
 
-  if ( density_profile == NULL ) {
+  if ( density_profile == nullptr ) {
       runtimeErrorMsg() <<"density_profile not initialized in calc_bilayer_density_profile";
     return -1;
   }
@@ -555,7 +555,7 @@ int bilayer_density_profile (PartCfg &partCfg, IntList *beadids, double hrange ,
 
   binwidth = hrange*2.0/(double)(nbins);
 
-  if ( density_profile == NULL ) {
+  if ( density_profile == nullptr ) {
       runtimeErrorMsg() <<"density_profile not initialized in calc_bilayer_density_profile";
     return -1;
   }
@@ -668,7 +668,7 @@ int calc_fluctuations ( PartCfg & partCfg, double* height_grid, int switch_fluc 
   }
   
 
-  if ( height_grid == NULL ) {
+  if ( height_grid == nullptr ) {
       runtimeErrorMsg() <<"you must allocate memory for the height grid / thickness first";
     return -1;
   }

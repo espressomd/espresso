@@ -39,7 +39,6 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 			export cmake_params="-DPYTHON_EXECUTABLE=$(which python3) $cmake_params"
 		;;
 		*)
-			brew install python
 			pip install h5py
 			pip install cython
 			pip install numpy

@@ -113,10 +113,10 @@ public:
     std::shared_ptr<::Observables::obs_name> m_observable;                     \
   };
 
-NEW_PROFILE_OBSERVABLE(DensityProfile);
-NEW_PROFILE_OBSERVABLE(ForceDensityProfile);
-NEW_PROFILE_OBSERVABLE(FluxDensityProfile);
-NEW_PROFILE_OBSERVABLE(LBVelocityProfile);
+NEW_PROFILE_OBSERVABLE(DensityProfile)
+NEW_PROFILE_OBSERVABLE(ForceDensityProfile)
+NEW_PROFILE_OBSERVABLE(FluxDensityProfile)
+NEW_PROFILE_OBSERVABLE(LBVelocityProfile)
 
 } /* namespace Observables */
 } /* namespace ScriptInterface */

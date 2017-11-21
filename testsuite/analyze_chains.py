@@ -84,7 +84,7 @@ class AnalyzeChain(ut.TestCase):
         data_cm=[]
         data_min=[]
         data_mono=[]
-        i=np.arange(self.num_mono*self.num_mono)/self.num_mono
+        i=np.arange(self.num_mono*self.num_mono)//self.num_mono
         j=np.arange(self.num_mono*self.num_mono)%self.num_mono
         for p1 in range(self.num_poly):
             for p2 in range(p1):
@@ -137,7 +137,7 @@ class AnalyzeChain(ut.TestCase):
         r_bins = 10
         bin_width = (r_max-r_min)/r_bins
         bins = np.arange(r_min, r_max+bin_width, bin_width)
-        core_rdf = self.system.analysis.rdfchain(r_min=r_min,
+        core_rdf = self.system.analysis.rdf_chain(r_min=r_min,
                                                  r_max=r_max,
                                                  r_bins=r_bins,
                                                  chain_start=0,

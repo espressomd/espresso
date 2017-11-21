@@ -1892,7 +1892,7 @@ cdef class ParticleList(object):
             for p in self:
                 for t in types:
                     if (p.type == t or t == "all"):
-                        vtk.write("{} {} {}\n".format(*(p.pos % box_l)))
+                        vtk.write("{} {} {}\n".format(*(p.pos_folded)))
 
             vtk.write("POINT_DATA {}\n".format(n))
             vtk.write("SCALARS velocity float 3\n")
@@ -1943,9 +1943,11 @@ cdef class ParticleList(object):
 
         """
 
+        cdef int i
+        cdef int j
         for i in range(max_seen_particle + 1):
             for j in range(i + 1, max_seen_particle + 1, 1):
-                if not (self.exists(i) and self.exists(j)):
+                if not (particle_exists(i) and particle_exists(j)):
                     continue
                 yield (self[i], self[j])
 

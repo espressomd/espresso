@@ -43,7 +43,7 @@ class Stokes(ut.TestCase):
         kinematic_visc = 1.0
 
         # Invoke LB fluid
-        lbf = lb.LBFluid_GPU(visc=kinematic_visc, dens=1,
+        lbf = lb.LBFluidGPU(visc=kinematic_visc, dens=1,
                              agrid=agrid, tau=system.time_step, fric=1)
         system.actors.add(lbf)
 

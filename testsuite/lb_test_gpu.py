@@ -8,7 +8,7 @@ S.cell_system.skin = 0.4
 S.time_step = 0.01
 
 print("Setup LB")
-lb = espressomd.lb.LBFluid_GPU(
+lb = espressomd.lb.LBFluidGPU(
     dens=0.5,
     agrid=1.0,
     visc=0.8,

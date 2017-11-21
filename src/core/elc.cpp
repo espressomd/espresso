@@ -86,7 +86,7 @@ ELC_struct elc_params = {1e100, 10, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0};
 static int n_localpart = 0;
 
 /** temporary buffers for product decomposition */
-static double *partblk = NULL;
+static double *partblk = nullptr;
 /** collected data from the other cells */
 static double gblcblk[8];
 
@@ -95,9 +95,9 @@ typedef struct { double s, c; } SCCache;
 
 /** \name sin/cos caching */
 /*@{*/
-static SCCache *scxcache = NULL;
+static SCCache *scxcache = nullptr;
 static int n_scxcache;
-static SCCache *scycache = NULL;
+static SCCache *scycache = nullptr;
 static int n_scycache;
 /*@}*/
 

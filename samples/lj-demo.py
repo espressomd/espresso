@@ -119,9 +119,9 @@ n_part = int(volume * density)
 for i in range(n_part):
     system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
 
-system.analysis.distto(0)
+system.analysis.dist_to(0)
 
-act_min_dist = system.analysis.mindist()
+act_min_dist = system.analysis.min_dist()
 system.cell_system.max_num_cells = 2744
 
 mayavi = visualization.mayaviLive(system)
@@ -310,7 +310,7 @@ system.force_cap = lj_cap
 # while (i < warm_n_times and act_min_dist < min_dist):
 #     system.integrator.run(warm_steps)
 #     # Warmup criterion
-#     act_min_dist = system.analysis.mindist()
+#     act_min_dist = system.analysis.min_dist()
 #     i += 1
 #
 # #   Increase LJ cap
