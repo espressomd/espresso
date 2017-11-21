@@ -355,10 +355,6 @@ int calc_radial_density_map(int xbins, int ybins, int thetabins, double xrange,
                             IntList *beadids, DoubleList *density_map,
                             DoubleList *density_profile);
 
-void calc_diffusion_profile(int dir, double xmin, double xmax, int nbins,
-                            int n_part, int n_conf, int time, int type,
-                            double *bins);
-
 /** returns the minimal squared distance between two positions in the perhaps
  periodic
     simulation box.

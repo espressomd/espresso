@@ -912,68 +912,6 @@ void density_profile_av(PartCfg &partCfg, int n_conf, int n_bin, double density,
     rho_ave[i] /= n_conf;
 }
 
-void calc_diffusion_profile(PartCfg &partCfg, int dir, double xmin, double xmax,
-                            int nbins, int n_part, int n_conf, int time,
-                            int type, double *bins) {
-  int i, t, count, index;
-  double tcount = 0;
-  double xpos;
-  double tpos[3];
-  int img_box[3] = {0, 0, 0};
-  // double delta_x = (box_l[0])/((double) nbins);
-
-  /* create and initialize the array of bins */
-
-  // double *bins;
-
-  int *label;
-  label = (int *)Utils::malloc(n_part * sizeof(int));
-
-  /* calculation over last n_conf configurations */
-  t = n_configs - n_conf;
-
-  while (t < n_configs - time) {
-    /* check initial condition */
-    count = 0;
-
-    for (i = 0; i < n_part; i++) {
-      if (partCfg[i].p.type == type) {
-        tpos[0] = configs[t][3 * i];
-        tpos[1] = configs[t][3 * i + 1];
-        tpos[2] = configs[t][3 * i + 2];
-        fold_coordinate(tpos, img_box, dir);
-        xpos = tpos[dir];
-        if (xpos > xmin && xpos < xmax) {
-          label[count] = i;
-        } else
-          label[count] = -1;
-        count++;
-      }
-    }
-
-    /* check at time 'time' */
-    for (i = 0; i < n_part; i++) {
-      if (label[i] > 0) {
-        tpos[0] = configs[t + time][3 * label[i]];
-        tpos[1] = configs[t + time][3 * label[i] + 1];
-        tpos[2] = configs[t + time][3 * label[i] + 2];
-        fold_coordinate(tpos, img_box, dir);
-        xpos = tpos[dir];
-
-        index = (int)(xpos / box_l[dir] * nbins);
-        bins[index]++;
-      }
-    }
-    t++;
-    tcount++;
-  }
-
-  /* normalization */
-  for (i = 0; i < nbins; i++) {
-    bins[i] = bins[i] / (tcount);
-  }
-  free(label);
-}
 
 int calc_cylindrical_average(
     PartCfg &partCfg, std::vector<double> center_,
