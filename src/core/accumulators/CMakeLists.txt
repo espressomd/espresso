@@ -1,0 +1,6 @@
+set(Accumulators_SRC Accumulator.hpp Accumulator.cpp)
+add_library(Accumulators SHARED ${Accumulators_SRC})
+install(TARGETS Accumulators LIBRARY DESTINATION ${LIBDIR})
+set_target_properties(Accumulators PROPERTIES SOVERSION ${SOVERSION})
+add_dependencies(Accumulators EspressoConfig)
+set_target_properties(Accumulators PROPERTIES MACOSX_RPATH TRUE)

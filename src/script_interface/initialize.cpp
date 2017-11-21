@@ -25,7 +25,8 @@
 #ifdef H5MD
 #include "h5md/initialize.hpp"
 #endif
-#include "observables/initialize.hpp" 
+#include "observables/initialize.hpp"
+#include "accumulators/initialize.hpp"
 #include "correlators/initialize.hpp" 
 #include "lbboundaries/initialize.hpp"
 
@@ -46,6 +47,7 @@ void initialize() {
 #ifdef H5MD
   Writer::initialize();
 #endif
+  Accumulators::initialize();
   Observables::initialize();
   Correlators::initialize();
   LBBoundaries::initialize();
