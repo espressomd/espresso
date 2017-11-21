@@ -116,3 +116,37 @@ BOOST_AUTO_TEST_CASE(max_size) {
     BOOST_CHECK(max_size == cache.size());
   }
 }
+
+BOOST_AUTO_TEST_CASE(range_put) {
+  /* Basic test */
+  {
+    Cache<int, int> cache(5);
+
+    std::vector<int> keys = {1, 2, 3, 4, 5};
+    std::vector<int> vals = {6, 7, 8, 9, 10};
+
+    cache.put(keys.begin(), keys.end(), vals.begin());
+
+    for (auto kit = keys.cbegin(), vit = vals.cbegin(); kit != keys.cend();
+         ++kit, ++vit) {
+      BOOST_CHECK(cache.has(*kit) && *vit == *cache.get(*kit));
+    }
+  }
+
+  {
+    Cache<int, int> cache(5);
+
+    std::vector<int> keys = {1, 2, 3, 4, 5};
+    std::vector<int> vals = {6, 7, 8, 9, 10};
+
+    for(int i = 12; i > 0; i--)
+      cache.put(i, i);
+
+    cache.put(keys.begin(), keys.end(), vals.begin());
+
+    for (auto kit = keys.cbegin(), vit = vals.cbegin(); kit != keys.cend();
+         ++kit, ++vit) {
+      BOOST_CHECK(cache.has(*kit) && *vit == *cache.get(*kit));
+    }
+  }
+}

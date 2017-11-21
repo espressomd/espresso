@@ -109,7 +109,7 @@ public:
    * When the size of the cache would grow below the
    * maximal size, a random element is removed before
    * putting the new one. */
-  Value const *put(Key const &k, Value &&v) {
+  template <typename ValueRef> Value const *put(Key const &k, ValueRef &&v) {
     /* If there already is a value for k, overwriting it
      * will not increase the size, so we don't have to
      * make room. */
@@ -117,9 +117,42 @@ public:
       drop_random_element();
 
     typename map_type::const_iterator it;
-    std::tie(it, std::ignore) = m_cache.emplace(k, std::move(v));
+    std::tie(it, std::ignore) = m_cache.emplace(k, std::forward<ValueRef>(v));
 
     return &(it->second);
+  }
+
+  /** @brief Put a range of values into the cache.
+   *
+   * If the values already exists, it is overwritten.
+   * When the size of the cache would grow below the
+   * maximal size, a random elements are removed until
+   * all of the new values fit. If the given range is
+   * larger than max_size(), only the first max_size()
+   * elements are put into the caache.
+   *
+   * @tparam KeyInputIterator iterator of keys, at least InputIterator.
+   * @tparam ValueInputIterator iterator of value, at least InputIterator.
+   *
+   * @returns KeyInputIterator one past the last element that was put
+   *          into the cache.
+   */
+  template <typename KeyInputIterator, typename ValueInputIterator>
+  KeyInputIterator put(KeyInputIterator kbegin, KeyInputIterator kend, ValueInputIterator vbegin) {
+    auto const range_len = std::distance(kbegin, kend);
+    auto const len = (range_len > max_size()) ? max_size() : range_len;
+    kend = std::next(kbegin, len);
+
+    /* Make some space. */
+    while ((max_size() - size()) < len) {
+      drop_random_element();
+    }
+
+    while(kbegin != kend) {
+      put(*kbegin++, *vbegin++);
+    }
+
+    return kend;
   }
 
   /** @brief Get a value.
