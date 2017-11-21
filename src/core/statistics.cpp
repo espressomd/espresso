@@ -29,7 +29,6 @@
 #include "initialize.hpp"
 #include "interaction_data.hpp"
 #include "lb.hpp"
-#include "modes.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
