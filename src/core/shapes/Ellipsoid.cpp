@@ -54,8 +54,7 @@ int Ellipsoid::calculate_dist(const double *ppos, double *dist,
     double distance = 0;
 
     for (int i=0; i<3; i++) {
-        //vec[i] = std::copysign( (pel[i] - pposC[i]), m_direction);
-        vec[i] = (pel[i] - pposC[i]);
+        vec[i] = m_direction * (pel[i] - pposC[i]);
         distance += SQR(pel[i] - pposC[i]);
     } 
 
