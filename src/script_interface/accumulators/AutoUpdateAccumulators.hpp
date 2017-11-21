@@ -30,7 +30,7 @@ namespace ScriptInterface {
 namespace Accumulators {
 
 class AutoUpdateAccumulators : public ScriptObjectRegistry<Accumulator> {
-  virtual void add_in_core(std::shared_ptr<Accumulator> obj_ptr) {
+  virtual void add_in_core(std::shared_ptr<Accumulator> obj_ptr) override {
     if (obj_ptr->accumulator()->m_initialized) {
       obj_ptr->accumulator()->m_autoupdate = true;
       ::Accumulators::auto_update_accumulators.push_back(
@@ -41,7 +41,7 @@ class AutoUpdateAccumulators : public ScriptObjectRegistry<Accumulator> {
           "associate an observable with the accumulator.");
     }
   }
-  virtual void remove_in_core(std::shared_ptr<Accumulator> obj_ptr) {
+  virtual void remove_in_core(std::shared_ptr<Accumulator> obj_ptr) override {
     auto it = std::find(::Accumulators::auto_update_accumulators.begin(),
                         ::Accumulators::auto_update_accumulators.end(),
                         obj_ptr->accumulator());

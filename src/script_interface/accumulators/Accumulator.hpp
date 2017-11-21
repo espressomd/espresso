@@ -32,38 +32,32 @@
 namespace ScriptInterface {
 namespace Accumulators {
 
-class Accumulator : public ScriptInterfaceBase {
+class Accumulator : public AutoParameters {
 public:
   Accumulator()
-      : m_accumulator(new ::Accumulators::Accumulator()) {}
+      : m_accumulator(std::make_shared<::Accumulators::Accumulator>())
+  {
+    add_parameters({{"obs",
+                     [this](Variant const &value) {
+                       auto obs_ptr = get_value<std::shared_ptr<Observables::Observable>>(value);
+                       // We are expecting a ScriptInterface::Observables::Observable here,
+                       // throw if not. That means the assigned object had the wrong type.
+                       if (obs_ptr) {
+                         m_accumulator->m_obs = obs_ptr->observable();
+                         m_accumulator->initialize();
+                       }
+                     },
+                     [this]() {
+                       return m_obs ? m_obs->id() : ObjectId();
+                     }}});
+  }
 
   const std::string name() const override { return "Accumulators::Accumulator"; }
-
-  VariantMap get_parameters() const override {
-    return {{"obs", (m_obs != nullptr) ? m_obs->id() : ObjectId()}};
-  }
-
-  ParameterMap valid_parameters() const override {
-    return {{"obs", {ParameterType::OBJECTID, true}}};
-  }
-
-  void set_parameter(std::string const &name, Variant const &value) override {
-    if (name == "obs") {
-      auto obs_ptr = get_value<std::shared_ptr<Observables::Observable>>(value);
-      /* We are expecting a ScriptInterface::Observables::Observable here,
-         throw if not. That means the assigned object had the wrong type. */
-      if (obs_ptr != nullptr) {m_accumulator->m_obs = obs_ptr->observable();}
-    }
-  }
-
-  virtual void set_parameters(const VariantMap &p) override {
-    ScriptInterfaceBase::set_parameters(p);
-    m_accumulator->initialize();
-  }
 
   std::shared_ptr<::Accumulators::Accumulator> accumulator() {
     return m_accumulator;
   }
+
   void check_if_initialized() {
     if (!m_accumulator->m_initialized)
       throw std::runtime_error("The accumulator has not yet been initialied.");
