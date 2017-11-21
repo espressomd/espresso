@@ -306,27 +306,6 @@ aggregation state of only oppositely charged particles.
 
 .. _Identifying pearl necklace structures:
 
-Identifying pearl-necklace structures
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. todo:: This feature is not implemented
-
-analyze necklace
-
-Algorithm for identifying pearl necklace structures for polyelectrolytes
-in poor solvent :cite:`limbach03a`. The first three
-parameters are tuning parameters for the algorithm: is the minimal
-number of monomers in a pearl. is the number of monomers along the chain
-backbone which are excluded from the space distance criterion to form
-clusters. is the distance between two monomers up to which they are
-considered to belong to the same clusters. The three parameters may be
-connected by scaling arguments. Make sure that your results are only
-weakly dependent on the exact choice of your parameters. For the
-algorithm the coordinates stored in partCfg are used. The chain itself
-is defined by the identity first of its first monomer and the chain
-length length. Attention: This function is very specific to the problem
-and might not give useful results for other cases with similar
-structures.
-
 
 .. _Finding holes:
 
