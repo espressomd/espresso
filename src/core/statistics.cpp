@@ -37,7 +37,6 @@
 #include "statistics_chain.hpp"
 #include "statistics_cluster.hpp"
 #include "statistics_fluid.hpp"
-#include "statistics_molecule.hpp"
 #include "utils.hpp"
 #include "utils/NoOp.hpp"
 #include "virtual_sites.hpp"
