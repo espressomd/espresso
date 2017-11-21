@@ -369,7 +369,6 @@ void angularmomentum(PartCfg &, int type, double *com);
  *  \param type_1  type of the particle, -1 for all
  *  \param com     center of mass position
  */
-void centermass_conf(int k, int type_1, double *com);
 
 void momentofinertiamatrix(PartCfg & partCfg, int type, double *MofImatrix);
 void calc_gyration_tensor(PartCfg & partCfg, int type, std::vector<double> &gt);

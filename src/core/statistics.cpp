@@ -1243,24 +1243,6 @@ void invalidate_obs() {
   total_p_tensor.init_status = 0;
 }
 
-void centermass_conf(PartCfg &partCfg, int k, int type_1, double *com) {
-  int i, j;
-  double M = 0.0;
-  com[0] = com[1] = com[2] = 0.;
-
-  for (auto const &p : partCfg) {
-    if ((p.p.type == type_1) || (type_1 == -1)) {
-      for (i = 0; i < 3; i++) {
-        com[i] += configs[k][3 * j + i] * (partCfg[j]).p.mass;
-      }
-      M += (partCfg[j]).p.mass;
-    }
-  }
-  for (i = 0; i < 3; i++) {
-    com[i] /= M;
-  }
-  return;
-}
 
 void update_pressure(int v_comp) {
   int i;
