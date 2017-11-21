@@ -86,6 +86,7 @@ cdef extern from "particle_data.hpp":
 
     # Setter/getter/modifier functions functions
     const particle* get_particle_data(int part)
+    void prefetch_particle_data(vector[int] ids)
 
     int place_particle(int part, double p[3])
 

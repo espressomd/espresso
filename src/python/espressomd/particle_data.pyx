@@ -1482,7 +1482,9 @@ cdef class _ParticleSliceImpl(object):
 
     """
 
-    def __cinit__(self, slice_):
+    def __cinit__(self, slice_, prefetch_chunk_size=10000):
+        self._chunk_size = prefetch_chunk_size
+
         id_list = np.arange(max_seen_particle + 1)
         self.id_selection = id_list[slice_]
         mask = np.empty(len(self.id_selection), dtype=np.bool)
@@ -1493,9 +1495,17 @@ cdef class _ParticleSliceImpl(object):
         self.id_selection = self.id_selection[mask]
 
     def __iter__(self):
-        cdef int i
-        for i in self.id_selection:
-            yield ParticleHandle(i)
+        for chunk in self.chunks(self.id_selection, self._chunk_size):
+            print(chunk)
+            prefetch_particle_data(chunk)
+            for i in chunk:
+                yield ParticleHandle(i)
+
+    def chunks(self, l, n):
+        """Generator returning chunks of length n from l.
+        """
+        for i in range(0, len(l), n):
+            yield l[i:i + n]
 
     property pos_folded:
         """
