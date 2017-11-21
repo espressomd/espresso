@@ -1496,7 +1496,6 @@ cdef class _ParticleSliceImpl(object):
 
     def __iter__(self):
         for chunk in self.chunks(self.id_selection, self._chunk_size):
-            print(chunk)
             prefetch_particle_data(chunk)
             for i in chunk:
                 yield ParticleHandle(i)
