@@ -187,61 +187,6 @@ the second triple to type 1.
 
 .. _Modes:
 
-Modes
-~~~~~
-.. todo:: This feature is not implemented
-
-analyze modes2d
-
-Analyzes the modes of a configuration. Requires that a grid is set and
-that the system contains more than two particles. Output are four
-numbers in the order:
-
-.. math:: ht_{RE}\qquad ht_{IM}\qquad \theta_{RE}\qquad \theta_{IM}
-
-
-.. _Lipid orientation:
-
-Lipid orientation
-~~~~~~~~~~~~~~~~~
-.. todo:: This feature is not implemented
-
-analyze get\_lipid\_orients analyze lipid\_orient\_order
-
-
-.. _Bilayers:
-
-Bilayers
-~~~~~~~~
-.. todo:: This feature is not implemented
-
-analyze bilayer\_set analyze bilayer\_density\_profile
-
-
-.. _GPB:
-
-GPB
-~~~
-.. todo:: This feature is not implemented
-
-analyze cell\_gpb
-
-
-.. _Get folded positions:
-
-Get folded positions
-~~~~~~~~~~~~~~~~~~~~
-.. todo:: This feature is not implemented
-
-analyze get\_folded\_positions
-
-Outputs the folded positions of particles. Without any parameters, the
-positions of all particles are given, folded to the box length. The
-optional parameter ensures that molecules (particle groups) are kept
-intact. The optional shift parameters can be used to shift the not
-separated molecules if needed.
-
-
 .. _Vkappa:
 
 Vkappa
