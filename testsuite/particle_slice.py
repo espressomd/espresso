@@ -97,6 +97,10 @@ class ParticleSliceTest(ut.TestCase):
     def test_empty(self):
         self.assertTrue(np.array_equal(self.system.part[0:0].pos, np.empty(0)))
 
+    def test_len(self):
+        self.assertEqual(len(self.system.part[0:0]), 0)
+        self.assertEqual(len(self.system.part[0:1]), 1)
+        self.assertEqual(len(self.system.part[0:2]), 2)
 
 if __name__ == "__main__":
     ut.main()

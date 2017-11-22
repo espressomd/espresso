@@ -1513,6 +1513,9 @@ cdef class _ParticleSliceImpl(object):
         for i in self.id_selection:
             yield ParticleHandle(i)
 
+    def __len__(self):
+        return len(self.id_selection)
+
     cdef int update_particle_data(self, id) except -1:
         self.particle_data = get_particle_data(id)
         if not self.particle_data:
