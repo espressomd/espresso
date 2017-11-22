@@ -312,6 +312,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-as-needed")
 endif()
 
+set(CMAKE_MACOSX_RPATH TRUE)
+
 #######################################################################
 # Subdirectories
 #######################################################################

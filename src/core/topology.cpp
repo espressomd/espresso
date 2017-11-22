@@ -35,7 +35,7 @@
 #include "molforces.hpp"
 
 int     n_molecules = -1;
-Molecule *topology = NULL;
+Molecule *topology = nullptr;
 int topo_part_info_synced = 0;
 
 void realloc_topology(int size)

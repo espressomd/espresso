@@ -49,7 +49,7 @@
 
 /** Previous particle configurations (needed for offline analysis and
     correlation analysis in \ref tclcommand_analyze) */
-double **configs = NULL;
+double **configs = nullptr;
 int n_configs = 0;
 int n_part_conf = 0;
 
@@ -236,7 +236,7 @@ std::vector<double> calc_linear_momentum(int include_particles,
   double momentum_particles[3] = {0., 0., 0.};
   std::vector<double> linear_momentum(3, 0.0);
   if (include_particles) {
-    mpi_gather_stats(4, momentum_particles, NULL, NULL, NULL);
+    mpi_gather_stats(4, momentum_particles, nullptr, nullptr, nullptr);
     linear_momentum[0] += momentum_particles[0];
     linear_momentum[1] += momentum_particles[1];
     linear_momentum[2] += momentum_particles[2];
@@ -245,7 +245,7 @@ std::vector<double> calc_linear_momentum(int include_particles,
     double momentum_fluid[3] = {0., 0., 0.};
 #ifdef LB
     if (lattice_switch & LATTICE_LB) {
-      mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
+      mpi_gather_stats(6, momentum_fluid, nullptr, nullptr, nullptr);
     }
 #endif
 #ifdef LB_GPU
@@ -783,7 +783,7 @@ void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
 void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
                           int order, double **_ff) {
   int i, j, k, n, qi, p, t, order2;
-  double qr, twoPI_L, C_sum, S_sum, *ff = NULL;
+  double qr, twoPI_L, C_sum, S_sum, *ff = nullptr;
 
   order2 = order * order;
   *_ff = ff = Utils::realloc(ff, 2 * order2 * sizeof(double));
@@ -791,12 +791,12 @@ void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
 
   if ((n_types < 0) || (n_types > n_particle_types)) {
     fprintf(stderr, "WARNING: Wrong number of particle types!");
-    fflush(NULL);
+    fflush(nullptr);
     errexit();
   } else if (order < 1) {
     fprintf(stderr,
             "WARNING: parameter \"order\" has to be a whole positive number");
-    fflush(NULL);
+    fflush(nullptr);
     errexit();
   } else {
     for (qi = 0; qi < 2 * order2; qi++) {
@@ -1195,7 +1195,7 @@ int calc_radial_density_map(PartCfg &partCfg, int xbins, int ybins,
           if (tindex >= thetabins) {
             fprintf(stderr, "ERROR: outside density_profile array bounds in "
                             "calc_radial_density_map");
-            fflush(NULL);
+            fflush(nullptr);
             errexit();
           } else {
             density_profile[bi].e[tindex] += 1;
