@@ -61,6 +61,7 @@ CellStructure cell_structure = {/* type */ CELL_STRUCTURE_NONEYET,
 
 double max_range = 0.0;
 
+unsigned resort_particles = Cells::RESORT_NONE;
 int rebuild_verletlist = 1;
 
 /**
@@ -273,9 +274,9 @@ void realloc_cells(int size) {
 /*************************************************/
 
 void announce_resort_particles() {
-  int sum;
+  unsigned sum;
 
-  MPI_Allreduce(&resort_particles, &sum, 1, MPI_INT, MPI_SUM, comm_cart);
+  MPI_Allreduce(&resort_particles, &sum, 1, MPI_UNSIGNED, MPI_BOR, comm_cart);
   resort_particles = (sum > 0) ? 1 : 0;
 
   INTEG_TRACE(fprintf(stderr,

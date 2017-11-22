@@ -97,6 +97,18 @@
 /** Flag for exchange_and_sort_particles : Do neighbor exchange. */
 #define CELL_NEIGHBOR_EXCHANGE 0
 
+namespace Cells {
+enum Resort {
+  RESORT_NONE = 2u << 0,
+  RESORT_LOCAL = 2u << 1,
+  RESORT_GLOBAL = 2u << 2
+};
+}
+
+/** On of Cells::Resort, annouces the level of resort needed.
+ */
+extern unsigned resort_particles;
+
 /** \name Flags for cells_on_geometry_change */
 /*@{*/
 

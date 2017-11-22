@@ -85,7 +85,6 @@ double skin = 0.0;
 double skin2 = 0.0;
 bool skin_set = false;
 
-int resort_particles = 1;
 int recalc_forces = 1;
 
 double verlet_reuse = 0.0;

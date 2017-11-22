@@ -446,6 +446,6 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
 
   if (rank == 0)
     clear_particle_node();
-  
+
   on_particle_change();
 }
