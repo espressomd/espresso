@@ -2429,6 +2429,42 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
   node_index[6] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
   node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
 
+#ifdef LEES_EDWARDS
+
+// TODO: Calculate new indizes for nodes at the boundaries
+  
+  unsigned int pos[3];
+  index_to_xyz(*node_index, pos);
+  unsigned int node_index_LE[8];
+  
+  printf("Node position = %u %u %u \n", pos[0], pos[1], pos[2]);
+
+  if(pos[1] == para.dim_y -1){
+    printf("ttt2 \n");
+    printf ("x-pos = %i \n", x);
+    x -= 3;
+    printf ("x-pos+shift = %i \n", x);
+    
+    node_index[2] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
+    node_index[3] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
+    node_index[6] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+    node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+    }
+  
+  if(pos[1] == 0){
+    printf("ttt2 \n");
+    printf ("x-pos = %i \n", x);
+    x += 3;
+    printf ("x-pos+shift = %i \n", x);
+    
+    node_index[0] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
+    node_index[1] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
+    node_index[4] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+    node_index[5] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+    }
+
+#endif 
+
 
   interpolated_u[0] = 0.0f;
   interpolated_u[1] = 0.0f;
