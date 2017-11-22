@@ -100,7 +100,7 @@ int ScafacosData::update_particle_data() {
 
 void ScafacosData::update_particle_forces() const {
   int it = 0;
-  if (positions.size()==0)
+  if (positions.empty())
     return;
 
   for (auto &p : local_cells.particles()) {
@@ -151,7 +151,7 @@ void ScafacosData::update_particle_forces() const {
     assert(it == fields.size());
   } else {
     int tmp=positions.size()/3;
-    assert(it = positions.size() / 3);
+    assert(it == positions.size() / 3);
   }
 }
 
