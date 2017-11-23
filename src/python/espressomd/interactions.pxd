@@ -33,12 +33,15 @@ cdef extern from "interaction_data.hpp":
         double LJ_offset
         double LJ_min
 
-        double LJCOS2_eps;
-        double LJCOS2_sig;
-        double LJCOS2_cut;
-        double LJCOS2_offset;
-        double LJCOS2_w;
-        double LJCOS2_rchange;
+        double LJCOS_eps
+        double LJCOS_sig
+        double LJCOS_cut
+        double LJCOS_offset
+
+        double LJCOS2_eps
+        double LJCOS2_sig
+        double LJCOS2_offset
+        double LJCOS2_w
 
         double LJGEN_eps
         double LJGEN_sig
@@ -131,6 +134,11 @@ cdef extern from "lj.hpp":
                                       double eps, double sig, double cut,
                                       double shift, double offset,
                                       double min)
+IF LJCOS:
+    cdef extern from "ljcos.hpp":
+        cdef int lj_cos_set_params(int part_type_a, int part_type_b,
+                                   double eps, double sig,
+                                   double cut, double offset);
 
 IF LJCOS2:
     cdef extern from "ljcos2.hpp":
