@@ -47,6 +47,7 @@
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
+#include "initialize.hpp"
 
 #include "short_range_loop.hpp"
 #include "utils/NoOp.hpp"
@@ -65,7 +66,6 @@ void calc_long_range_forces_iccp3m();
 
 inline void init_local_particle_force_iccp3m(Particle *part);
 inline void init_ghost_force_iccp3m(Particle *part);
-extern void on_particle_change();
 
 /** Calculation of the electrostatic forces between source charges (= real
  * charges) and wall charges. For each electrostatic method the proper functions
@@ -233,7 +233,6 @@ int iccp3m_iteration() {
   for (j = 0; j < iccp3m_cfg.num_iteration; j++) {
     hmax = 0.;
 
-    ghost_communicator(&cell_structure.exchange_ghosts_comm);
     force_calc_iccp3m(); /* Calculate electrostatic forces (SR+LR) excluding
                             source source interaction*/
     ghost_communicator(&cell_structure.collect_ghost_force_comm);
@@ -263,11 +262,7 @@ int iccp3m_iteration() {
             msg << "ICCP3M found zero electric field on a charge. This must "
                    "never happen";
             runtimeError(msg);
-            /*
-               fprintf(stderr, "ICCP3M found zero electric field on a charge.
-               This must never happen\n"); ex = 0.00001 * d_random(); ey =
-               0.00001 * d_random(); ez = 0.00001 * d_random();
-             */
+
           }
           /* the dot product   */
           fdot = ex * iccp3m_cfg.nvectorx[id] + ey * iccp3m_cfg.nvectory[id] +
@@ -318,8 +313,10 @@ int iccp3m_iteration() {
     if (diff > 1e89) /* Error happened */
       return iccp3m_cfg.citeration++;
 
+    /* Update charges on ghosts. */
+    ghost_communicator(&cell_structure.exchange_ghosts_comm);
   } /* iteration */
-  on_particle_change();
+  on_particle_charge_change();
 
   return iccp3m_cfg.citeration;
 }
