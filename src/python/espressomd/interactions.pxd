@@ -132,10 +132,11 @@ cdef extern from "lj.hpp":
                                       double shift, double offset,
                                       double min)
 
-cdef extern from "ljcos2.hpp":
-    cdef int ljcos2_set_params(int part_type_a, int part_type_b,
-                               double eps, double sig, double offset,
-                               double w)
+IF LJCOS2:
+    cdef extern from "ljcos2.hpp":
+        cdef int ljcos2_set_params(int part_type_a, int part_type_b,
+                                   double eps, double sig, double offset,
+                                   double w)
 
 IF GAY_BERNE:
     cdef extern from "gb.hpp":
