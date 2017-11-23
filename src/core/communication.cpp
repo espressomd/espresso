@@ -363,6 +363,7 @@ void mpi_place_particle(int pnode, int part, double p[3]) {
   else
     MPI_Send(p, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
 
+  resort_particles |= Cells::RESORT_GLOBAL;
   on_particle_change();
 }
 
@@ -374,6 +375,7 @@ void mpi_place_particle_slave(int pnode, int part) {
     local_place_particle(part, p, 0);
   }
 
+  resort_particles |= Cells::RESORT_GLOBAL;
   on_particle_change();
 }
 

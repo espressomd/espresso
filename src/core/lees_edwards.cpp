@@ -61,7 +61,7 @@ void lees_edwards_step_boundaries(){
  rebuild_verletlist    = 1;
  
  /* request a redo of particle-cell assignment */
- resort_particles      = 1;
+ resort_particles      |= Cells::RESORT_GLOBAL;
  
  /* Only part of the comms system needs to be rebuilt,
     but it is still very slow. */

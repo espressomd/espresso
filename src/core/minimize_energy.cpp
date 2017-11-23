@@ -121,7 +121,7 @@ bool steepest_descent_step(void) {
     f_max = std::max(f_max, f);
     f_max = std::max(f_max, t);
     dp2_max = std::max(dp2_max, dp2);
-    resort_particles = 1;
+    resort_particles |= Cells::RESORT_LOCAL;
   }
 
   MINIMIZE_ENERGY_TRACE(

@@ -98,11 +98,7 @@
 #define CELL_NEIGHBOR_EXCHANGE 0
 
 namespace Cells {
-enum Resort {
-  RESORT_NONE = 2u << 0,
-  RESORT_LOCAL = 2u << 1,
-  RESORT_GLOBAL = 2u << 2
-};
+enum Resort : unsigned { RESORT_NONE = 0u, RESORT_LOCAL = 1u, RESORT_GLOBAL = 2u };
 }
 
 /** On of Cells::Resort, annouces the level of resort needed.
