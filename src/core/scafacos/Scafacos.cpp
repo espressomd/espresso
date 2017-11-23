@@ -2,6 +2,8 @@
 #include "Scafacos.hpp"
 #include "errorhandling.hpp"
 #include <cassert>
+#include "communication.hpp"
+#include "integrate.hpp"
 
 
 namespace Scafacos {
@@ -121,7 +123,6 @@ void Scafacos::run_dipolar(std::vector<double> &dipoles, std::vector<double> &po
   fields.resize(6*local_n_part);
   potentials.resize(3*local_n_part);
 
-  handle_error(fcs_tune(handle, 0, NULL,NULL));
   
   handle_error(fcs_set_dipole_particles(handle, local_n_part,&(positions[0]),&(dipoles[0]), &(fields[0]),&(potentials[0])));
   handle_error(fcs_run(handle, 0, nullptr, nullptr, nullptr, nullptr));
