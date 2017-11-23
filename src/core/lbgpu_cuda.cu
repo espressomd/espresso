@@ -2445,8 +2445,8 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
   // (static_cast<int>(ceilf (x - lees_edwards_offset)) - para.dim_x) % para.dim_x;
  
   weight = fmodf(lees_edwards_offset + para.dim_x*para.agrid, para.agrid) / para.agrid;
-  le_integer_shift = (static_cast<int>(floorf(lees_edwards_offset))-para.dim_x) % para.dim_x;
-  printf("le_integer_shift: %i \n", le_integer_shift);
+  le_integer_shift = (static_cast<int>(floorf(x - lees_edwards_offset)) - para.dim_x) % para.dim_x;
+  printf("le_offset: %f, le_integer_shift: %i \n", lees_edwards_offset, le_integer_shift);
   printf("Node position = %u %u %u \n", pos[0], pos[1], pos[2]);
 
   if(pos[1] == para.dim_y -1){
