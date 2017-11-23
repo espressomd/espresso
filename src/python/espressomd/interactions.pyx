@@ -313,6 +313,78 @@ IF LENNARD_JONES == 1:
             """
             return "epsilon", "sigma", "cutoff", "shift"
 
+    cdef class LennardJonesInteractionCos2(NonBondedInteraction):
+        
+        def validate_params(self):
+            if self._params["epsilon"] < 0:
+                raise ValueError("Lennard-Jones eps has to be >=0")
+            if self._params["sigma"] < 0:
+                raise ValueError("Lennard-Jones sigma has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(
+                self._part_types[0],
+                self._part_types[1])
+            return{
+            "epsilon":ia_params.LJCOS2_eps,
+            "sigma"  :ia_params.LJCOS2_sig,
+            "cutoff" :ia_params.LJCOS2_cut,
+            "offset" :ia_params.LJCOS2_offset,
+            "width"  :ia_params.LJCOS2_w,
+            "min"    :ia_params.LJCOS2_rchange}            
+        def is_active(self):
+            return(self._params["epsilon"] > 0)
+
+        def set_params(self, **kwargs):
+            """ Set parameters for the Lennard-Jones Cosine2 interaction.
+
+            Parameters
+            ----------
+
+            epsilon : float
+                      The magnitude of the interaction.
+            sigma : float
+                    Determines the interaction length scale.
+            cutoff : float, calculated automatically
+                     Cutoff distance of the interaction.
+            offset : float
+                     Offset distance of the interaction.
+            width : float, 
+                     Width of interaction. 
+            min : float, calculated automatically
+                  Restricts the interaction to a minimal distance.
+            """
+            super(LennardJonesInteractionCos2, self).set_params(**kwargs)
+
+        def _set_params_in_es_core(self):
+            if ljcos2_set_params(self._part_types[0], 
+                                self._part_types[1],
+                                self._params["epsilon"],
+                                self._params["sigma"],
+                                self._params["offset"],
+                                self._params["width"]):
+                raise Exception("Could not set Lennard Jones parameters")
+
+        def default_params(self):
+            return {
+                "epsilon": 0.,
+                "sigma"  : 0.,
+                "cutoff" : 0.,
+                "offset" : 0.,
+                "width"  : 0.,
+                "min"    : 0.}
+                
+        def type_name(self):
+            return "LennardJonesCos2"
+
+        def valid_keys(self):
+            return "epsilon", "sigma", "cutoff", "offset", "width", "min"
+
+        def required_keys(self):
+            return "epsilon", "sigma", "offset", "width"
+
 IF HAT == 1:
     cdef class HatInteraction(NonBondedInteraction):
         def validate_params(self):
@@ -1355,6 +1427,7 @@ class NonBondedInteractionHandle(object):
 
     # Here, one line per non-bonded ia
     lennard_jones = None
+    ljCos2 = None
     generic_lennard_jones = None
     smooth_step = None
     bmhtf = None
@@ -1378,6 +1451,8 @@ class NonBondedInteractionHandle(object):
         # Here, add one line for each nonbonded ia
         IF LENNARD_JONES:
             self.lennard_jones = LennardJonesInteraction(_type1, _type2)
+            self.ljCos2        = LennardJonesInteractionCos2(_type1,_type2)
+
         IF LENNARD_JONES_GENERIC:
             self.generic_lennard_jones = GenericLennardJonesInteraction(
                 _type1, _type2)
