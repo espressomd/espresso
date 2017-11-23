@@ -2388,7 +2388,7 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared, int *number_o
  * @param *interpolated_u       Pointer to the interpolated velocity
  * @param *delta                Pointer for the weighting of particle position (Output)
 */
-__device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, float *particle_position, unsigned int* node_index, float* mode, LB_rho_v_gpu *d_v, float* delta, float *interpolated_u ) {
+__device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, float *particle_position, unsigned int* node_index, float* mode, LB_rho_v_gpu *d_v, float* delta, float lees_edwards_offset, float *interpolated_u ) {
   int   left_node_index[3];
   float temp_delta[6];
   float temp_delta_half[6];
@@ -2435,15 +2435,27 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
   
   unsigned int pos[3];
   index_to_xyz(*node_index, pos);
-  unsigned int node_index_LE[8];
+  //unsigned int node_index_LE[8];
   
+  int le_integer_shift;
+  float weight;
+
+  //float weight = fmodf(lees_edwards_offset + para.dim_x*para.agrid, para.agrid) / para.agrid;
+  // (static_cast<int>(floorf(x - lees_edwards_offset)) - para.dim_x) % para.dim_x;
+  // (static_cast<int>(ceilf (x - lees_edwards_offset)) - para.dim_x) % para.dim_x;
+ 
+  weight = fmodf(lees_edwards_offset + para.dim_x*para.agrid, para.agrid) / para.agrid;
+  le_integer_shift = (static_cast<int>(floorf(lees_edwards_offset))-para.dim_x) % para.dim_x;
+  printf("le_integer_shift: %i \n", le_integer_shift);
   printf("Node position = %u %u %u \n", pos[0], pos[1], pos[2]);
 
   if(pos[1] == para.dim_y -1){
-    printf("ttt2 \n");
+    
+    printf("Upper boundary \n");
     printf ("x-pos = %i \n", x);
-    x -= 3;
+    x -= le_integer_shift;
     printf ("x-pos+shift = %i \n", x);
+    printf("Node position = %u %u %u \n", pos[0], pos[1], pos[2]);
     
     node_index[2] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[3] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
@@ -2452,10 +2464,12 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
     }
   
   if(pos[1] == 0){
-    printf("ttt2 \n");
+    
+    printf("Lower boundary \n");
     printf ("x-pos = %i \n", x);
-    x += 3;
+    x += le_integer_shift;
     printf ("x-pos+shift = %i \n", x);
+    printf("Node position = %u %u %u \n", pos[0], pos[1], pos[2]);
     
     node_index[0] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[1] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
@@ -2520,7 +2534,7 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
  * @param *d_v                  Pointer to local device values
  * @param flag_cs               Determine if we are at the centre (0, typical) or at the source (1, swimmer only)
 */
-__device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partgrad1, float * partgrad2, float * partgrad3, CUDA_particle_data *particle_data, float *particle_force, CUDA_fluid_composition * fluid_composition, unsigned int part_index, LB_randomnr_gpu *rn_part, float *delta_j, unsigned int *node_index, LB_rho_v_gpu *d_v, int flag_cs){
+__device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partgrad1, float * partgrad2, float * partgrad3, CUDA_particle_data *particle_data, float *particle_force, CUDA_fluid_composition * fluid_composition, unsigned int part_index, LB_randomnr_gpu *rn_part, float *delta_j, float lees_edwards_offset, unsigned int *node_index, LB_rho_v_gpu *d_v, int flag_cs){
 
   float interpolated_u[3];
   float interpolated_rho[LB_COMPONENTS];
@@ -2577,7 +2591,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
 #endif
 
   // Do the velocity interpolation
-  interpolation_two_point_coupling(n_a, position, node_index, mode, d_v, delta, interpolated_u);
+  interpolation_two_point_coupling(n_a, position, node_index, mode, d_v, delta, lees_edwards_offset, interpolated_u);
 
 #ifdef ENGINE
   velocity[0] -= (particle_data[part_index].swim.v_swim*para.time_step)*particle_data[part_index].swim.quatu[0];
@@ -3602,7 +3616,7 @@ apply_forces(index, mode, node_f,d_v);
  * @param *fluid_composition Pointer to the local fluid composition for the Shanchen
  * @param *d_v               Pointer to local device values
 */
-__global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float *particle_force, CUDA_fluid_composition * fluid_composition, LB_node_force_gpu node_f, CUDA_particle_seed *part, LB_rho_v_gpu *d_v){
+__global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float *particle_force, CUDA_fluid_composition * fluid_composition, LB_node_force_gpu node_f, CUDA_particle_seed *part, LB_rho_v_gpu *d_v, float lees_edwards_offset=0.0f){
 
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   unsigned int node_index[8];
@@ -3621,7 +3635,7 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *par
       rng_part.seed = part[part_index].seed;
 
       /**force acting on the particle. delta_j will be used later to compute the force that acts back onto the fluid. */
-      calc_viscous_force(n_a, delta, partgrad1, partgrad2, partgrad3, particle_data, particle_force, fluid_composition,part_index, &rng_part, delta_j, node_index, d_v, 0);
+      calc_viscous_force(n_a, delta, partgrad1, partgrad2, partgrad3, particle_data, particle_force, fluid_composition,part_index, &rng_part, delta_j, lees_edwards_offset, node_index, d_v, 0);
       calc_node_force(delta, delta_j, partgrad1, partgrad2, partgrad3, node_index, node_f); 
 
 #ifdef ENGINE
@@ -4097,7 +4111,7 @@ void lb_calc_particle_lattice_ia_gpu(){
       KERNELCALL( calc_fluid_particle_ia, dim_grid_particles, threads_per_block_particles, 
                   ( *current_nodes, gpu_get_particle_pointer(), 
                     gpu_get_particle_force_pointer(), gpu_get_fluid_composition_pointer(),
-                    node_f, gpu_get_particle_seed_pointer(), device_rho_v )
+                    node_f, gpu_get_particle_seed_pointer(), device_rho_v, lees_edwards_offset)
                 );
     }
     else { /** only other option is the three point coupling scheme */
