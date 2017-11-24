@@ -2020,8 +2020,11 @@ def _add_particle_slice_properties():
 
         values = np.empty((N,) + np.shape(target), dtype=target_type)
         for i in range(N):
-            values[i] = getattr(ParticleHandle(
+            attr = getattr(ParticleHandle(
                 particle_slice.id_selection[i]), attribute)
+            if not attr:
+                attr = [None]
+            values[i] = attr
         return values
 
     for attribute_name in particle_attributes:
