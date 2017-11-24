@@ -92,6 +92,7 @@ include(MyConfig)
 
 include(CheckCXXSourceCompiles)
 
+set(__PRETTYFUNC__ __func__)
 foreach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
    check_cxx_source_compiles("
      #include <string>
