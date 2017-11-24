@@ -98,7 +98,7 @@ python_test(FILE analyze_chains.py MAX_NUM_PROC 1)
 python_test(FILE analyze_distance.py MAX_NUM_PROC 1)
 python_test(FILE comfixed.py MAX_NUM_PROC 2)
 python_test(FILE rescale.py MAX_NUM_PROC 2)
-python_test(FILE lees_edwards.py MAX_NUM_PROC 1)
+python_test(FILE lees_edwards.py MAX_NUM_PROC 4)
 python_test(FILE npt.py MAX_NUM_PROC 4)
 python_test(FILE accumulator.py MAX_NUM_PROC 4)
 
