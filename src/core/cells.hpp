@@ -101,10 +101,6 @@ namespace Cells {
 enum Resort : unsigned { RESORT_NONE = 0u, RESORT_LOCAL = 1u, RESORT_GLOBAL = 2u };
 }
 
-/** On of Cells::Resort, annouces the level of resort needed.
- */
-extern unsigned resort_particles;
-
 /** \name Flags for cells_on_geometry_change */
 /*@{*/
 
@@ -296,6 +292,18 @@ int cells_get_n_particles();
  * Pairs are sorted so that first.id < second.id
  */
 std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
+
+/**
+ * @brief Increase the local resort level at least to level.
+ *
+ * The changed level has to be commuicated via annouce_resort_particles.
+ */
+  void set_resort_particles(Cells::Resort level);
+
+/**
+ * @brief Get the currently scheduled resort level.
+  */
+unsigned const &get_resort_particles();
 
 /** spread the particle resorting criterion across the nodes. */
 void announce_resort_particles();

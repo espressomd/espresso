@@ -61,6 +61,8 @@ CellStructure cell_structure = {/* type */ CELL_STRUCTURE_NONEYET,
 
 double max_range = 0.0;
 
+/** On of Cells::Resort, annouces the level of resort needed.
+ */
 unsigned resort_particles = Cells::RESORT_NONE;
 int rebuild_verletlist = 1;
 
@@ -272,11 +274,16 @@ void realloc_cells(int size) {
 
 /*************************************************/
 
-void announce_resort_particles() {
-  unsigned sum;
+void set_resort_particles(Cells::Resort level) {
+  resort_particles |= level;
+  assert(resort_particles & level);
+}
 
-  MPI_Allreduce(&resort_particles, &sum, 1, MPI_UNSIGNED, MPI_BOR, comm_cart);
-  resort_particles = sum;
+unsigned const &get_resort_particles() { return resort_particles; }
+
+void announce_resort_particles() {
+  MPI_Allreduce(MPI_IN_PLACE, &resort_particles, 1, MPI_UNSIGNED, MPI_BOR,
+                comm_cart);
 
   INTEG_TRACE(fprintf(stderr,
                       "%d: announce_resort_particles: resort_particles=%d\n",
@@ -366,11 +373,13 @@ void cells_on_geometry_change(int flags) {
 void check_resort_particles() {
   const double skin2 = SQR(skin / 2.0);
 
-  resort_particles |=
-    (std::any_of(local_cells.particles().begin(),
-                  local_cells.particles().end(), [&skin2](Particle const &p) {
-                    return distance2(p.r.p, p.l.p_old) > skin2;
-                 })) ? Cells::RESORT_LOCAL : Cells::RESORT_NONE;
+  resort_particles |= (std::any_of(local_cells.particles().begin(),
+                                   local_cells.particles().end(),
+                                   [&skin2](Particle const &p) {
+                                     return distance2(p.r.p, p.l.p_old) > skin2;
+                                   }))
+                          ? Cells::RESORT_LOCAL
+                          : Cells::RESORT_NONE;
 
   announce_resort_particles();
 }
