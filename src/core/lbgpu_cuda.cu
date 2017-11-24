@@ -81,11 +81,11 @@ static LB_rho_v_pi_gpu *device_rho_v_pi= nullptr;
 static LB_rho_v_pi_gpu *print_rho_v_pi= nullptr;
 
 /** structs for velocity densities */
-static LB_nodes_gpu nodes_a = {.vd=nullptr,.seed=nullptr,.boundary=nullptr};
-static LB_nodes_gpu nodes_b = {.vd=nullptr,.seed=nullptr,.boundary=nullptr};;
+static LB_nodes_gpu nodes_a = { nullptr, nullptr, nullptr};
+static LB_nodes_gpu nodes_b = { nullptr, nullptr, nullptr};;
 /** struct for node force */
 
-LB_node_force_gpu node_f = {.force=nullptr,.scforce=nullptr} ;
+LB_node_force_gpu node_f = {nullptr, nullptr} ;
 
 static LB_extern_nodeforce_gpu *extern_nodeforces = nullptr;
 
