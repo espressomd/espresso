@@ -579,7 +579,7 @@ Cell *dd_save_position_to_cell(double pos[3]) {
   for (i = 0; i < 3; i++) {
     lpos = pos[i] - my_left[i];
 
-    cpos[i] = (int)(lpos * dd.inv_cell_size[i]) + 1;
+    cpos[i] = static_cast<int>(std::floor(lpos * dd.inv_cell_size[i])) + 1;
 
     /* particles outside our box. Still take them if
        VERY close or nonperiodic boundary */
