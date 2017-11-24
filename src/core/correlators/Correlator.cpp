@@ -165,20 +165,15 @@ void Correlator::initialize() {
   dim_B = 0;
   if (A_obs)
     dim_A = A_obs->n_values();
-  if (B_obs.get())
-    dim_B = B_obs->n_values();
+  if (!B_obs) {
+    B_obs = A_obs;
+    autocorrelation = 1;
+  }
+
+  dim_B = B_obs->n_values();
 
   if (dim_A < 1) {
     throw std::runtime_error(init_errors[6]);
-  }
-
-  autocorrelation = 1;
-  if (dim_B == 0) {
-    dim_B = dim_A;
-  } else if (dim_B > 0) {
-    autocorrelation = 0;
-  } else {
-    throw std::runtime_error(init_errors[7]);
   }
 
   // choose the correlation operation
@@ -239,15 +234,8 @@ void Correlator::initialize() {
   }
 
   if (compressB_name == "") {
-    if (autocorrelation) { // the default for autocorrelation
-      compressB_name = strdup("none");
-      compressB = &compress_do_nothing;
-    } else { // the default for corsscorrelation
-      compressB_name = compressA_name;
-      compressB = compressA;
-    }
-  } else if (autocorrelation) {
-    throw std::runtime_error(init_errors[17]);
+    compressB_name = compressA_name;
+    compressB = compressA;
   } else if (compressB_name == "discard2") {
     compressB = &compress_discard2;
   } else if (compressB_name == "discard1") {
@@ -258,14 +246,10 @@ void Correlator::initialize() {
     throw std::runtime_error(init_errors[13]);
   }
 
-  // Memmory allocation
-  A_data = (double *)Utils::malloc((tau_lin + 1) * hierarchy_depth * dim_A *
-                                   sizeof(double));
-  if (autocorrelation)
-    B_data = A_data;
-  else
-    B_data = (double *)Utils::malloc((tau_lin + 1) * hierarchy_depth * dim_B *
-                                     sizeof(double));
+  A.resize(std::array<int, 2>{hierarchy_depth, tau_lin + 1});
+  std::fill_n(A.data(), A.num_elements(), std::vector<double>(dim_A, 0));
+  B.resize(std::array<int, 2>{hierarchy_depth, tau_lin + 1});
+  std::fill_n(B.data(), B.num_elements(), std::vector<double>(dim_B, 0));
 
   n_data = 0;
   A_accumulated_average = (double *)Utils::malloc(dim_A * sizeof(double));
@@ -274,15 +258,12 @@ void Correlator::initialize() {
     A_accumulated_average[k] = 0;
     A_accumulated_variance[k] = 0;
   }
-  if (autocorrelation) {
-    B_accumulated_average = A_accumulated_average;
-  } else {
-    B_accumulated_average = (double *)Utils::malloc(dim_B * sizeof(double));
-    B_accumulated_variance = (double *)Utils::malloc(dim_B * sizeof(double));
-    for (k = 0; k < dim_B; k++) {
-      B_accumulated_average[k] = 0;
-      B_accumulated_variance[k] = 0;
-    }
+
+  B_accumulated_average = (double *)Utils::malloc(dim_B * sizeof(double));
+  B_accumulated_variance = (double *)Utils::malloc(dim_B * sizeof(double));
+  for (k = 0; k < dim_B; k++) {
+    B_accumulated_average[k] = 0;
+    B_accumulated_variance[k] = 0;
   }
 
   n_result = tau_lin + 1 + (tau_lin + 1) / 2 * (hierarchy_depth - 1);
@@ -291,42 +272,7 @@ void Correlator::initialize() {
   result_data = (double *)Utils::malloc(n_result * dim_corr * sizeof(double));
   n_vals =
       (unsigned int *)Utils::malloc(hierarchy_depth * sizeof(unsigned int));
-
-  // allocate space for convenience pointer to A and B buffers
-  A = (double ***)Utils::malloc(hierarchy_depth * sizeof(double **));
-  if (autocorrelation)
-    B = A;
-  else
-    B = (double ***)Utils::malloc(hierarchy_depth * sizeof(double **));
-
-  for (i = 0; i < hierarchy_depth; i++) {
-    A[i] = (double **)Utils::malloc((tau_lin + 1) * sizeof(double *));
-    if (!autocorrelation)
-      B[i] = (double **)Utils::malloc((tau_lin + 1) * sizeof(double *));
-  }
-
-  // and initialize the values
-  for (i = 0; i < hierarchy_depth; i++) {
-    n_vals[i] = 0;
-    for (j = 0; j < tau_lin + 1; j++) {
-      A[i][j] = &A_data[(i * (tau_lin + 1)) * dim_A + j * dim_A];
-      for (k = 0; k < dim_A; k++)
-        A[i][j][k] = 0.;
-      if (!autocorrelation) {
-        B[i][j] = &B_data[(i * (tau_lin + 1)) * dim_B + j * dim_B];
-        for (k = 0; k < dim_B; k++)
-          B[i][j][k] = 0.;
-      }
-    }
-  }
-
-  if (A == 0) {
-    throw std::runtime_error(init_errors[9]);
-  }
-
-  if (B == 0 && !autocorrelation) {
-    throw std::runtime_error(init_errors[10]);
-  }
+  std::fill_n(n_vals, hierarchy_depth, 0);
 
   // allocate space for convenience pointer to the result
   result = (double **)Utils::malloc(n_result * sizeof(double *));
@@ -398,26 +344,20 @@ int Correlator::get_data() {
     // folding)
     newest[i + 1] = (newest[i + 1] + 1) % (tau_lin + 1);
     n_vals[i + 1] += 1;
-    (*compressA)(A[i][(newest[i] + 1) % (tau_lin + 1)],
-                 A[i][(newest[i] + 2) % (tau_lin + 1)], A[i + 1][newest[i + 1]],
-                 dim_A);
-    if (!autocorrelation)
-      (*compressB)(B[i][(newest[i] + 1) % (tau_lin + 1)],
-                   B[i][(newest[i] + 2) % (tau_lin + 1)],
-                   B[i + 1][newest[i + 1]], dim_B);
+    (*compressA)(A[i][(newest[i] + 1) % (tau_lin + 1)].data(),
+                 A[i][(newest[i] + 2) % (tau_lin + 1)].data(),
+                 A[i + 1][newest[i + 1]].data(), dim_A);
+    (*compressB)(B[i][(newest[i] + 1) % (tau_lin + 1)].data(),
+                 B[i][(newest[i] + 2) % (tau_lin + 1)].data(),
+                 B[i + 1][newest[i + 1]].data(), dim_B);
   }
 
   newest[0] = (newest[0] + 1) % (tau_lin + 1);
   n_vals[0]++;
 
   // copy the result:
-  memmove(A[0][newest[0]], (A_obs->operator()(partCfg())).data(),
-          dim_A * sizeof(double));
-
-  if (!autocorrelation) {
-    memmove(B[0][newest[0]], (B_obs->operator()(partCfg())).data(),
-            dim_B * sizeof(double));
-  }
+  A[0][newest[0]] = A_obs->operator()(partCfg());
+  B[0][newest[0]] = B_obs->operator()(partCfg());
 
   // Now we update the cumulated averages and variances of A and B
   n_data++;
@@ -425,12 +365,10 @@ int Correlator::get_data() {
     A_accumulated_average[k] += A[0][newest[0]][k];
     A_accumulated_variance[k] += A[0][newest[0]][k] * A[0][newest[0]][k];
   }
-  // Here we check if it is an autocorrelation
-  if (!autocorrelation) {
-    for (unsigned k = 0; k < dim_B; k++) {
-      B_accumulated_average[k] += B[0][newest[0]][k];
-      B_accumulated_variance[k] += B[0][newest[0]][k] * B[0][newest[0]][k];
-    }
+
+  for (unsigned k = 0; k < dim_B; k++) {
+    B_accumulated_average[k] += B[0][newest[0]][k];
+    B_accumulated_variance[k] += B[0][newest[0]][k] * B[0][newest[0]][k];
   }
 
   double *temp = (double *)Utils::malloc(dim_corr * sizeof(double));
@@ -440,7 +378,7 @@ int Correlator::get_data() {
   for (j = 0; j < int(MIN(tau_lin + 1, n_vals[0])); j++) {
     index_new = newest[0];
     index_old = (newest[0] - j + tau_lin + 1) % (tau_lin + 1);
-    error = (corr_operation)(A[0][index_old], dim_A, B[0][index_new], dim_B,
+    error = (corr_operation)(A[0][index_old].data(), dim_A, B[0][index_new].data(), dim_B,
                              temp, dim_corr, correlation_args);
     if (error != 0)
       return error;
@@ -456,8 +394,9 @@ int Correlator::get_data() {
       index_new = newest[i];
       index_old = (newest[i] - j + tau_lin + 1) % (tau_lin + 1);
       index_res = tau_lin + (i - 1) * tau_lin / 2 + (j - tau_lin / 2 + 1) - 1;
-      error = (corr_operation)(A[i][index_old], dim_A, B[i][index_new], dim_B,
-                               temp, dim_corr, correlation_args);
+      error = (corr_operation)(A[i][index_old].data(), dim_A,
+                               B[i][index_new].data(), dim_B, temp, dim_corr,
+                               correlation_args);
       if (error != 0)
         return error;
       n_sweeps[index_res]++;
@@ -542,12 +481,12 @@ int Correlator::finalize() {
         newest[i + 1] = (newest[i + 1] + 1) % (tau_lin + 1);
         n_vals[i + 1] += 1;
 
-        (*compressA)(A[i][(newest[i] + 1) % (tau_lin + 1)],
-                     A[i][(newest[i] + 2) % (tau_lin + 1)],
-                     A[i + 1][newest[i + 1]], dim_A);
-        (*compressB)(B[i][(newest[i] + 1) % (tau_lin + 1)],
-                     B[i][(newest[i] + 2) % (tau_lin + 1)],
-                     B[i + 1][newest[i + 1]], dim_B);
+        (*compressA)(A[i][(newest[i] + 1) % (tau_lin + 1)].data(),
+                     A[i][(newest[i] + 2) % (tau_lin + 1)].data(),
+                     A[i + 1][newest[i + 1]].data(), dim_A);
+        (*compressB)(B[i][(newest[i] + 1) % (tau_lin + 1)].data(),
+                     B[i][(newest[i] + 2) % (tau_lin + 1)].data(),
+                     B[i + 1][newest[i + 1]].data(), dim_B);
       }
       newest[ll] = (newest[ll] + 1) % (tau_lin + 1);
 
@@ -559,8 +498,9 @@ int Correlator::finalize() {
           index_old = (newest[i] - j + tau_lin + 1) % (tau_lin + 1);
           index_res =
               tau_lin + (i - 1) * tau_lin / 2 + (j - tau_lin / 2 + 1) - 1;
-          error = (corr_operation)(A[i][index_old], dim_A, B[i][index_new],
-                                   dim_B, temp, dim_corr, correlation_args);
+          error = (corr_operation)(A[i][index_old].data(), dim_A,
+                                   B[i][index_new].data(), dim_B, temp,
+                                   dim_corr, correlation_args);
           if (error != 0)
             return error;
           n_sweeps[index_res]++;

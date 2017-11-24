@@ -119,6 +119,9 @@
 #include "Vector.hpp"
 #include "observables/Observable.hpp"
 #include "utils.hpp"
+
+#include <boost/multi_array.hpp>
+
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -248,8 +251,9 @@ public:
   // Convenience pointers to our stored data
   // indices: A[level][tau_i][component]
   int *tau;        // time differences
-  double ***A;     // input quantity 1
-  double ***B;     // input quantity 2
+  boost::multi_array<std::vector<double>, 2> A;
+  boost::multi_array<std::vector<double>, 2> B;
+
   double **result; // output quantity
   int n_result;    // the total number of result values
 
@@ -259,8 +263,6 @@ public:
   unsigned int *n_vals; // number of data values already present at a particular
                         // value of tau
   unsigned int *newest; // index of the newest entry in each hierarchy level
-  double *A_data;
-  double *B_data;
   double *result_data;
 
   double *A_accumulated_average;  // all A values are added up here
