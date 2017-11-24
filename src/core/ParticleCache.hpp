@@ -246,10 +246,10 @@ public:
   ParticleCache() = delete;
   ParticleCache(Communication::MpiCallbacks &cb, GetParticles parts,
                 UnaryOp &&op = UnaryOp{})
-      : m_cb(cb), update_cb(cb, [this](int, int) { this->m_update(); }),
+      : m_cb(cb), m_valid(false), m_valid_bonds(false),
+        update_cb(cb, [this](int, int) { this->m_update(); }),
         update_bonds_cb(cb, [this](int, int) { this->m_update_bonds(); }),
-        parts(parts), m_valid(false), m_valid_bonds(false),
-        m_op(std::forward<UnaryOp>(op)) {}
+        parts(parts), m_op(std::forward<UnaryOp>(op)) {}
   /* Because the this ptr is captured by the callback lambdas,
    * this class can be neither copied nor moved. */
   ParticleCache(ParticleCache const &) = delete;

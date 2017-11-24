@@ -126,7 +126,7 @@ int Correlator::get_correlation_time(double* correlation_time) {
 
 
 Correlator::Correlator() :
-			    t(0), finalized(0), autoupdate(0),autocorrelation(1),initialized(0),correlation_args{}
+			    correlation_args{}, autocorrelation(1), finalized(0), t(0), autoupdate(0), initialized(0)
            {}
 
 void Correlator::initialize() {
@@ -629,8 +629,6 @@ int Correlator::finalize() {
   unsigned int index_new, index_old, index_res;
   int error;
   //int compress;
-  unsigned tau_lin=tau_lin;
-  int hierarchy_depth=hierarchy_depth;
 
   double* temp = (double*)Utils::malloc(dim_corr*sizeof(double));
 

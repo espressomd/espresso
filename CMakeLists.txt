@@ -257,7 +257,7 @@ include(RequireCXX11)
 find_package(MPI REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_COMPILE_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_LINK_FLAGS}")
-include_directories(${MPI_INCLUDE_PATH})
+include_directories(${MPI_INCLUDE_PATH} SYSTEM)
 list(APPEND LIBRARIES ${MPI_LIBRARIES})
 add_definitions(-DH5XX_USE_MPI)
 
@@ -266,7 +266,7 @@ add_definitions(-DH5XX_USE_MPI)
 #######################################################################
 
 find_package(Boost REQUIRED mpi serialization filesystem system)
-include_directories(${Boost_INCLUDE_DIRS})
+include_directories(${Boost_INCLUDE_DIRS} SYSTEM)
 list(APPEND LIBRARIES ${Boost_LIBRARIES})
 
 #######################################################################
@@ -320,7 +320,8 @@ if(WARNINGS_ARE_ERRORS)
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -Werror")
   endif()
 endif(WARNINGS_ARE_ERRORS)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-sign-compare -Wno-unused-variable -Wno-unused-function -Wno-unused-private-field -pedantic")
+
 set(CMAKE_MACOSX_RPATH TRUE)
 
 #######################################################################

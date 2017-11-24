@@ -22,15 +22,16 @@
 #include "HollowCone.hpp"
 
 #include <cmath>
+#include <cassert>
 
 using namespace std;
 
 namespace Shapes {
 int HollowCone::calculate_dist(const double *ppos, double *dist, double *vec) const {
-  int number;
+  int number = -1;
   double r0, r1, w, alpha, xd, yd, zd, mu, x_2D, y_2D, t0, t1, t2, time1, time2,
       time3, time4, mdst0, mdst1, mdst2, mdst3, mindist, normalize, x, y, z,
-      distance, normal_x, normal_y, direction, xp, yp, zp, xpp, ypp, sin_xy,
+      distance, normal_x, normal_y, direction = 0.0, xp, yp, zp, xpp, ypp, sin_xy,
       cos_xy, normal_x_3D, normal_y_3D, normal_z_3D, normal_3D_x, normal_3D_y,
       normal_3D_z;
 
@@ -291,6 +292,8 @@ int HollowCone::calculate_dist(const double *ppos, double *dist, double *vec) co
       normal_x *= -1.0;
       normal_y *= -1.0;
     }
+  } else {
+    assert(0);
   }
 
   /***** Convert 2D normal to 3D coordinates *****/
