@@ -1087,14 +1087,20 @@ cdef class ParticleHandle(object):
                     raise Exception(
                         "Cannot exclude of a particle with itself!\n->particle id %i, partner %i." % (self.id, partner))
                 if change_exclusion(self.id, partner, 0) == 1:
-                    raise Exception("Set particle position first.")
+                    raise Exception("Particle with id " + str(partner) + " does not exist.")
 
-        def delete_exclusion(self, *_partners):
+        def delete_exclusion(self, _partners):
+
+            if isinstance(_partners, int):
+                _partners = [_partners]
+
             for partner in _partners:
                 check_type_or_throw_except(
                     partner, 1, int, "PID of partner has to be an int.")
+                if not partner in self.exclusions:
+                    raise Exception("Particle with id " + str(partner) + " is not in exclusion list.")
                 if change_exclusion(self.id, partner, 1) == 1:
-                    raise Exception("Set particle position first.")
+                    raise Exception("Particle with id " + str(partner) + " does not exist.")
 
     IF ENGINE:
         property swimming:
