@@ -74,6 +74,7 @@ option(WITH_TESTS  "Enable tests"            ON)
 option(WITH_SCAFACOS "Build with Scafacos support" ON)
 option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
 option(WITH_COVERAGE "Generate code coverage report" OFF)
+option(WARNINGS_ARE_ERRORS "Treat warnings as errors during compilation" OFF)
 
 # Write compile commands to file, for various tools...
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -312,6 +313,12 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-as-needed")
 endif()
 
+if(WARNINGS_ARE_ERRORS)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+  if (NOT CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_C_COMPILER AND NOT CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_CXX_COMPILER)
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -Werror")
+  endif()
+endif(WARNINGS_ARE_ERRORS)
 set(CMAKE_MACOSX_RPATH TRUE)
 
 #######################################################################
