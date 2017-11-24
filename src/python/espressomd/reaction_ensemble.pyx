@@ -72,7 +72,7 @@ cdef class ReactionEnsemble(object):
         return "standard_pressure", "temperature", "exclusion_radius"
 
     def _set_params_in_es_core(self):
-        self.RE.m_current_reaction_system.temperature_reaction_ensemble = self._params[
+        self.RE.m_current_reaction_system.temperature = self._params[
             "temperature"]
         # setting a volume is a side effect, sets the default volume of the
         # reaction ensemble as the volume of the cuboid simulation box. this
@@ -283,35 +283,31 @@ cdef class ReactionEnsemble(object):
         the used reactions, the used temperature and the used exclusion radius.
 
         """
-        if(self.RE.m_current_reaction_system.nr_single_reactions == 0):
-            raise Exception("Reaction System is not initialized")
-        if(self.RE.check_reaction_ensemble() == ES_ERROR):
-            raise ValueError("")
-        else:
-            reactions = []
-            for single_reaction_i in range(self.RE.m_current_reaction_system.nr_single_reactions):
-                reactant_types = []
-                for i in range(self.RE.m_current_reaction_system.reactions[single_reaction_i].len_reactant_types):
-                    reactant_types.append(
-                        self.RE.m_current_reaction_system.reactions[single_reaction_i].reactant_types[i])
-                reactant_coefficients = []
-                for i in range(self.RE.m_current_reaction_system.reactions[single_reaction_i].len_reactant_types):
-                    reactant_coefficients.append(
-                        self.RE.m_current_reaction_system.reactions[single_reaction_i].reactant_coefficients[i])
+        self.RE.check_reaction_ensemble()
+        reactions = []
+        for single_reaction_i in range(self.RE.m_current_reaction_system.nr_single_reactions):
+            reactant_types = []
+            for i in range(self.RE.m_current_reaction_system.reactions[single_reaction_i].len_reactant_types):
+                reactant_types.append(
+                    self.RE.m_current_reaction_system.reactions[single_reaction_i].reactant_types[i])
+            reactant_coefficients = []
+            for i in range(self.RE.m_current_reaction_system.reactions[single_reaction_i].len_reactant_types):
+                reactant_coefficients.append(
+                    self.RE.m_current_reaction_system.reactions[single_reaction_i].reactant_coefficients[i])
 
-                product_types = []
-                for i in range(self.RE.m_current_reaction_system.reactions[single_reaction_i].len_product_types):
-                    product_types.append(
-                        self.RE.m_current_reaction_system.reactions[single_reaction_i].product_types[i])
-                product_coefficients = []
-                for i in range(self.RE.m_current_reaction_system.reactions[single_reaction_i].len_product_types):
-                    product_coefficients.append(
-                        self.RE.m_current_reaction_system.reactions[single_reaction_i].product_coefficients[i])
-                reaction = {"reactant_coefficients": reactant_coefficients, "reactant_types": reactant_types, "product_types": product_types, "product_coefficients":
-                            product_coefficients, "reactant_types": reactant_types, "equilibrium_constant": self.RE.m_current_reaction_system.reactions[single_reaction_i].equilibrium_constant}
-                reactions.append(reaction)
+            product_types = []
+            for i in range(self.RE.m_current_reaction_system.reactions[single_reaction_i].len_product_types):
+                product_types.append(
+                    self.RE.m_current_reaction_system.reactions[single_reaction_i].product_types[i])
+            product_coefficients = []
+            for i in range(self.RE.m_current_reaction_system.reactions[single_reaction_i].len_product_types):
+                product_coefficients.append(
+                    self.RE.m_current_reaction_system.reactions[single_reaction_i].product_coefficients[i])
+            reaction = {"reactant_coefficients": reactant_coefficients, "reactant_types": reactant_types, "product_types": product_types, "product_coefficients":
+                        product_coefficients, "reactant_types": reactant_types, "equilibrium_constant": self.RE.m_current_reaction_system.reactions[single_reaction_i].equilibrium_constant}
+            reactions.append(reaction)
 
-        return {"reactions": reactions, "temperature": self.RE.m_current_reaction_system.temperature_reaction_ensemble, "exclusion_radius": self.RE.m_current_reaction_system.exclusion_radius, "standard_pressure": self.RE.m_current_reaction_system.standard_pressure_in_simulation_units}
+        return {"reactions": reactions, "temperature": self.RE.m_current_reaction_system.temperature, "exclusion_radius": self.RE.m_current_reaction_system.exclusion_radius, "standard_pressure": self.RE.m_current_reaction_system.standard_pressure_in_simulation_units}
 
     def delete_particle(self, p_id):
         """

@@ -72,16 +72,16 @@ void ReactionEnsemble::add_reaction(double equilibrium_constant, std::vector<int
 /**
 * Checks whether all necessary variables for the reaction ensemble have been set.
 */
-int ReactionEnsemble::check_reaction_ensemble(){
+void ReactionEnsemble::check_reaction_ensemble(){
 	/**checks the reaction_ensemble struct for valid parameters */
-	int check_is_successfull =ES_OK;
+	if(m_current_reaction_system.nr_single_reactions==0){
+	    throw std::runtime_error("Reaction system not initialized");
+	}
 	if(m_current_reaction_system.standard_pressure_in_simulation_units<0 and not (std::abs(m_constant_pH-(-10)) > std::numeric_limits<double>::epsilon() ) ){
 	    throw std::runtime_error("Please initialize your reaction ensemble standard pressure before calling initialize.\n");
-		check_is_successfull=ES_ERROR;
 	}
-	if(m_current_reaction_system.temperature_reaction_ensemble<0){
+	if(m_current_reaction_system.temperature<0){
 	    throw std::runtime_error("Temperatures cannot be negative. Please provide a temperature (in k_B T) to the simulation. Normally it should be 1.0. This will be used directly to calculate beta:=1/(k_B T) which occurs in the exp(-beta*E)\n");
-		check_is_successfull=ES_ERROR;
 	}
 	#ifdef ELECTROSTATICS
 	//check for the existence of default charges for all types that take part in the reactions
@@ -89,11 +89,9 @@ int ReactionEnsemble::check_reaction_ensemble(){
 		if(m_current_reaction_system.charges_of_types[m_current_reaction_system.type_index[i]]==m_invalid_charge) {
 		    std::string message = std::string("Forgot to assign charge to type") +std::to_string(m_current_reaction_system.charges_of_types[m_current_reaction_system.type_index[i]]);
 		    throw std::runtime_error(message);
-			check_is_successfull=ES_ERROR;
 		}
 	}
 	#endif
-	return check_is_successfull;
 }
 
 //boring helper functions
@@ -232,7 +230,7 @@ double ReactionEnsemble::calculate_factorial_expression(single_reaction& current
 /**
 * Restores the previosly stored particle properties. This funtion is invoked when a reaction attempt is rejected.
 */
-void ReactionEnsemble::restore_properties(std::vector<stored_particle_property> property_list ,const int number_of_saved_properties){
+void ReactionEnsemble::restore_properties(std::vector<stored_particle_property>& property_list ,const int number_of_saved_properties){
 	//this function restores all properties of all particles provided in the property list, the format of the property list is (p_id,charge,type) repeated for each particle that occurs in that list
 	for(int i=0;i<property_list.size();i++) {
 		double charge= property_list[i].charge;
@@ -254,7 +252,7 @@ double ReactionEnsemble::calculate_boltzmann_factor_reaction_ensemble(single_rea
 	const double volume = m_current_reaction_system.volume;
 	const double factorial_expr=calculate_factorial_expression(current_reaction, old_particle_numbers.data());
 
-	const double beta =1.0/m_current_reaction_system.temperature_reaction_ensemble;
+	const double beta =1.0/m_current_reaction_system.temperature;
 	const double standard_pressure_in_simulation_units=m_current_reaction_system.standard_pressure_in_simulation_units;
 	//calculate boltzmann factor
 	return std::pow(volume*beta*standard_pressure_in_simulation_units, current_reaction.nu_bar) * current_reaction.equilibrium_constant * factorial_expr * exp(-beta * (E_pot_new - E_pot_old));
@@ -395,8 +393,7 @@ int ReactionEnsemble::add_types_to_index(std::vector<int>& type_list, int status
 	for (int i =0; i<len_type_list;i++){
 		bool type_i_is_known=is_in_list(type_list[i],m_current_reaction_system.type_index);
 		if (!type_i_is_known){
-			m_current_reaction_system.type_index.resize(m_current_reaction_system.nr_different_types+1);
-			m_current_reaction_system.type_index[m_current_reaction_system.nr_different_types]=type_list[i];
+			m_current_reaction_system.type_index.push_back(type_list[i]);
 			m_current_reaction_system.nr_different_types+=1;
 			status_gc_init_temp=init_type_array(type_list[i]); //make types known in espresso
 			status_gc_init=status_gc_init || status_gc_init_temp;
@@ -414,11 +411,10 @@ int ReactionEnsemble::update_type_index(std::vector<int>& reactant_types, std::v
 	int len_product_types=product_types.size();
 	int status_gc_init=0;
 	if(m_current_reaction_system.type_index.empty()){
-		m_current_reaction_system.type_index.resize(1,0);
 		if(len_reactant_types>0)
-			m_current_reaction_system.type_index[0]=reactant_types[0];
+			m_current_reaction_system.type_index.push_back(reactant_types[0]);
 		else
-			m_current_reaction_system.type_index[0]=product_types[0];
+			m_current_reaction_system.type_index.push_back(product_types[0]);
 		m_current_reaction_system.nr_different_types=1;
 		status_gc_init=init_type_array(m_current_reaction_system.type_index[0]); //make types known in espresso
 	}
@@ -426,8 +422,7 @@ int ReactionEnsemble::update_type_index(std::vector<int>& reactant_types, std::v
 	status_gc_init=add_types_to_index(product_types,status_gc_init);
 	
 	//increase m_current_reaction_system.charges_of_types length
-	m_current_reaction_system.charges_of_types.resize(m_current_reaction_system.nr_different_types);
-	m_current_reaction_system.charges_of_types[m_current_reaction_system.nr_different_types-1]=m_invalid_charge;
+	m_current_reaction_system.charges_of_types.push_back(m_invalid_charge);
 	return status_gc_init;
 }
 
@@ -569,9 +564,9 @@ int ReactionEnsemble::create_particle(int desired_type){
 	//create random velocity vector according to Maxwell Boltzmann distribution for components
 	double vel[3];
 	//we usse mass=1 for all particles, think about adapting this
-	vel[0]=std::pow(2*PI*m_current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
-	vel[1]=std::pow(2*PI*m_current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
-	vel[2]=std::pow(2*PI*m_current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
+	vel[0]=std::pow(2*PI*m_current_reaction_system.temperature,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
+	vel[1]=std::pow(2*PI*m_current_reaction_system.temperature,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
+	vel[2]=std::pow(2*PI*m_current_reaction_system.temperature,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
 	double charge= m_current_reaction_system.charges_of_types[find_index_of_type(desired_type)];
 	bool particle_inserted_too_close_to_another_one=true;
 	int max_insert_tries=1000;
@@ -763,7 +758,7 @@ bool ReactionEnsemble::do_global_mc_move_for_particles_of_type(int type, int sta
 	}
 	
 	const double E_pot_new=calculate_current_potential_energy_of_system_wrap(0, NULL);
-	double beta =1.0/m_current_reaction_system.temperature_reaction_ensemble;
+	double beta =1.0/m_current_reaction_system.temperature;
 	
 	int new_state_index;
 	double bf=1.0;
@@ -1040,12 +1035,10 @@ int ReactionEnsemble::initialize_wang_landau(){
 					}else if(counter_words_in_line==m_current_wang_landau_system.collective_variables.size()-1){
 						double energy_boundary_minimum=atof(word);
 						counter_words_in_line+=1;
-						min_boundaries_energies.resize(flattened_index_previous_run+1);			
-						min_boundaries_energies[flattened_index_previous_run]=energy_boundary_minimum;
+						min_boundaries_energies.push_back(energy_boundary_minimum);
 					}else if(counter_words_in_line==m_current_wang_landau_system.collective_variables.size()){
 						double energy_boundary_maximum=atof(word);
-						max_boundaries_energies.resize(flattened_index_previous_run+1);				
-						max_boundaries_energies[flattened_index_previous_run]=energy_boundary_maximum;
+						max_boundaries_energies.push_back(energy_boundary_maximum);
 						counter_words_in_line+=1;							
 					}
 					
@@ -1115,7 +1108,7 @@ double ReactionEnsemble::calculate_boltzmann_factor_reaction_ensemble_wang_landa
 	/**determine the acceptance probabilities of the reaction move 
 	* in wang landau reaction ensemble
 	*/
-	double beta =1.0/m_current_reaction_system.temperature_reaction_ensemble;
+	double beta =1.0/m_current_reaction_system.temperature;
 	double bf;
 	if(m_current_wang_landau_system.do_not_sample_reaction_partition_function || only_make_configuration_changing_move){
 		bf=1.0;
@@ -1533,8 +1526,7 @@ int ReactionEnsemble::do_reaction_constant_pH(){
 			for(int reactant_i=0; reactant_i< 1; reactant_i++){ //reactant_i<1 since it is assumed in this place that the types A, and HA occur in the first place only. These are the types that should be switched, H+ should not be switched
 				if(current_reaction.reactant_types[reactant_i]== type_of_random_p_id){
 					found_reactions_with_given_reactant_type+=1;
-					list_of_reaction_ids_with_given_reactant_type.resize(found_reactions_with_given_reactant_type);
-					list_of_reaction_ids_with_given_reactant_type[found_reactions_with_given_reactant_type-1]=reaction_i;
+					list_of_reaction_ids_with_given_reactant_type.push_back(reaction_i);
 					break;
 				}
 			}
@@ -1553,7 +1545,7 @@ double ReactionEnsemble::calculate_boltzmann_factor_consant_pH(single_reaction& 
     */
 	double ln_bf;
 	double pKa;
-	const double beta =1.0/m_current_reaction_system.temperature_reaction_ensemble;
+	const double beta =1.0/m_current_reaction_system.temperature;
 	if(current_reaction.nu_bar > 0){ //deprotonation of monomer
 		pKa = -log10(current_reaction.equilibrium_constant);
 		ln_bf= (E_pot_new - E_pot_old)- 1.0/beta*log(10)*(m_constant_pH-pKa) ;

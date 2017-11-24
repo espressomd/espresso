@@ -3,7 +3,7 @@
 
 namespace ReactionEnsemble {
 
-typedef struct single_reaction {
+struct single_reaction {
   // strict input to the algorithm
   std::vector<int> reactant_types;
   int len_reactant_types;
@@ -14,16 +14,16 @@ typedef struct single_reaction {
   double equilibrium_constant;
   // calculated values that are stored for performance reasons
   int nu_bar;
-} single_reaction;
+};
 
-typedef struct reaction_system {
+struct reaction_system {
   int nr_single_reactions;
   std::vector<single_reaction> reactions;
   std::vector<int> type_index;
   int nr_different_types; // is equal to length type_index
   std::vector<double> charges_of_types;
   double standard_pressure_in_simulation_units;
-  double temperature_reaction_ensemble;
+  double temperature;
   double exclusion_radius; // this is used as a kind of hard sphere radius, if
                            // particles are closer than that it is assumed that
                            // their interaction energy gets approximately
@@ -38,15 +38,15 @@ typedef struct reaction_system {
   double slab_start_z;
   double slab_end_z;
   int non_interacting_type;
-} reaction_system;
+};
 
-typedef struct stored_particle_property {
+struct stored_particle_property {
   int p_id;
   double charge;
   int type;
-} stored_particle_property;
+};
 
-typedef struct collective_variable {
+struct collective_variable {
   double CV_minimum;
   double CV_maximum;
   double delta_CV;
@@ -66,9 +66,9 @@ typedef struct collective_variable {
   int associated_type;
   // for collective variables of type energy
   std::string energy_boundaries_filename;
-} collective_variable;
+};
 
-typedef struct wang_landau_system {
+struct wang_landau_system {
   std::vector<int> histogram;
   std::vector<double> wang_landau_potential; // equals the logarithm to basis e of the
                                  // degeneracy of the states
@@ -102,12 +102,13 @@ typedef struct wang_landau_system {
   int polymer_end_id;
   bool fix_polymer;
   bool do_not_sample_reaction_partition_function;
-} wang_landau_system;
+};
 
 double calculate_degree_of_association(int index_of_current_collective_variable,
                                        void *m_wang_landau_system);
 double calculate_current_potential_energy_of_system_wrap(
     int unimportant_int, void *unimportant_wang_landau_system);
+
 
 class ReactionEnsemble {
 
@@ -122,7 +123,7 @@ public:
       .nr_different_types = 0,
       .charges_of_types = std::vector<double>(),
       .standard_pressure_in_simulation_units = -10,
-      .temperature_reaction_ensemble = -10.0,
+      .temperature = -10.0,
       .exclusion_radius = 0.0,
       .volume = -10,
       .box_is_cylindric_around_z_axis = false,
@@ -142,7 +143,7 @@ public:
 
   void set_cuboid_reaction_ensemble_volume();
   int do_reaction(int reaction_steps);
-  int check_reaction_ensemble();
+  void check_reaction_ensemble();
   int calculate_nu_bar(std::vector<int>& reactant_coefficients,
                        std::vector<int>& product_coefficients); // should only be used at when
                                                // defining a new reaction
@@ -209,7 +210,6 @@ public:
                                                               // reweighting
                                                               // runs
   void write_out_preliminary_energy_run_results(std::string filename);
-  bool do_HMC_move_wang_landau();
 
   // checkpointing, only designed to reassign values of a previous simulation to
   // a new simulation with the same initialization process
@@ -278,7 +278,7 @@ private:
       std::vector<stored_particle_property> &hidden_particles_properties);
   double calculate_factorial_expression(single_reaction& current_reaction,
                                         int *old_particle_numbers);
-  void restore_properties(std::vector<stored_particle_property> property_list,
+  void restore_properties(std::vector<stored_particle_property>& property_list,
                           const int number_of_saved_properties);
   int add_types_to_index(std::vector<int>& type_list, int status_gc_init);
   double calculate_boltzmann_factor_reaction_ensemble(

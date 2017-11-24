@@ -4,10 +4,6 @@ from libcpp cimport bool
 from libcpp.vector cimport vector
 from libcpp.string cimport string
 
-cdef extern from "utils.hpp":
-    cdef int ES_ERROR
-
-
 cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
 
     ctypedef struct single_reaction:
@@ -28,7 +24,7 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         int nr_different_types
         vector[double] charges_of_types
         double standard_pressure_in_simulation_units
-        double temperature_reaction_ensemble
+        double temperature
         double exclusion_radius
         double volume
         bool box_is_cylindric_around_z_axis
