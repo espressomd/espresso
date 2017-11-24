@@ -2002,7 +2002,8 @@ def _add_particle_slice_properties():
     def geta(particle_slice, attribute):
         """
         Getter function that copies attribute from every member of
-        particle_slice into an array.
+        particle_slice into an array (if possible). 
+        For special properties, a tuple of tuples is used.
         
         """
         
@@ -2018,13 +2019,18 @@ def _add_particle_slice_properties():
         else:  # scalar quantity
             target_type = type(target)
 
-        values = np.empty((N,) + np.shape(target), dtype=target_type)
-        for i in range(N):
-            attr = getattr(ParticleHandle(
-                particle_slice.id_selection[i]), attribute)
-            if not attr:
-                attr = [None]
-            values[i] = attr
+        if (attribute in ["exclusions", "bonds", "vs_relative", "swimming"]):
+            values = []
+            for i in range(N):
+                values.append(getattr(ParticleHandle(
+                    particle_slice.id_selection[i]), attribute))
+            values = tuple(values)
+        else:
+            values = np.empty((N,) + np.shape(target), dtype=target_type)
+            for i in range(N):
+                values[i] = getattr(ParticleHandle(
+                    particle_slice.id_selection[i]), attribute)
+
         return values
 
     for attribute_name in particle_attributes:
