@@ -335,12 +335,12 @@ bool ReactionEnsemble::generic_oneway_reaction(int reaction_id, int reaction_mod
 		//delete hidden reactant_particles (remark: dont delete changed particles)
 		//extract ids of to be deleted particles and sort them. needed since delete_particle changes particle p_ids. start deletion from the largest p_id onwards
 		int len_hidden_particles_properties= (int) hidden_particles_properties.size();
-		int to_be_deleted_hidden_ids[len_hidden_particles_properties];
+		std::vector<int> to_be_deleted_hidden_ids(len_hidden_particles_properties);
 		for(int i=0;i<len_hidden_particles_properties;i++) {
-			int p_id = hidden_particles_properties[i].p_id;
+			int p_id = (int) hidden_particles_properties[i].p_id;
 			to_be_deleted_hidden_ids[i]=p_id;
 		}
-		std::sort(to_be_deleted_hidden_ids,to_be_deleted_hidden_ids+len_hidden_particles_properties,std::greater<int>());
+		std::sort(to_be_deleted_hidden_ids.begin(),to_be_deleted_hidden_ids.end(),std::greater<int>());
 		
 		for(int i=0;i<len_hidden_particles_properties;i++)
 			delete_particle(to_be_deleted_hidden_ids[i]); //delete particle
@@ -1025,7 +1025,7 @@ int ReactionEnsemble::initialize_wang_landau(){
 			size_t len = 0;
 			ssize_t length_line;
 			const char* delim="\t ";
-			getline(&line, &len, pFile);//dummy call of getline to get rid of header line (first line in file)
+			length_line =getline(&line, &len, pFile);//dummy call of getline to get rid of header line (first line in file)
 			while ((length_line = getline(&line, &len, pFile)) != -1) {
 				int counter_words_in_line=0;
 				for(char* word=strtok(line,delim);word!=NULL;word=strtok(NULL,delim)){

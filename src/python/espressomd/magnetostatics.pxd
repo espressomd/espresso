@@ -20,6 +20,7 @@ IF DIPOLES == 1:
 
         ctypedef struct coulomb_parameters "Coulomb_parameters":
             double Dprefactor
+            double Dbjerrum
             dipolar_interaction Dmethod
         cdef extern coulomb_parameters coulomb
 

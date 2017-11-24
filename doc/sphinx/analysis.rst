@@ -187,61 +187,6 @@ the second triple to type 1.
 
 .. _Modes:
 
-Modes
-~~~~~
-.. todo:: This feature is not implemented
-
-analyze modes2d
-
-Analyzes the modes of a configuration. Requires that a grid is set and
-that the system contains more than two particles. Output are four
-numbers in the order:
-
-.. math:: ht_{RE}\qquad ht_{IM}\qquad \theta_{RE}\qquad \theta_{IM}
-
-
-.. _Lipid orientation:
-
-Lipid orientation
-~~~~~~~~~~~~~~~~~
-.. todo:: This feature is not implemented
-
-analyze get\_lipid\_orients analyze lipid\_orient\_order
-
-
-.. _Bilayers:
-
-Bilayers
-~~~~~~~~
-.. todo:: This feature is not implemented
-
-analyze bilayer\_set analyze bilayer\_density\_profile
-
-
-.. _GPB:
-
-GPB
-~~~
-.. todo:: This feature is not implemented
-
-analyze cell\_gpb
-
-
-.. _Get folded positions:
-
-Get folded positions
-~~~~~~~~~~~~~~~~~~~~
-.. todo:: This feature is not implemented
-
-analyze get\_folded\_positions
-
-Outputs the folded positions of particles. Without any parameters, the
-positions of all particles are given, folded to the box length. The
-optional parameter ensures that molecules (particle groups) are kept
-intact. The optional shift parameters can be used to shift the not
-separated molecules if needed.
-
-
 .. _Vkappa:
 
 Vkappa
@@ -360,27 +305,6 @@ aggregation state of only oppositely charged particles.
 
 
 .. _Identifying pearl necklace structures:
-
-Identifying pearl-necklace structures
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. todo:: This feature is not implemented
-
-analyze necklace
-
-Algorithm for identifying pearl necklace structures for polyelectrolytes
-in poor solvent :cite:`limbach03a`. The first three
-parameters are tuning parameters for the algorithm: is the minimal
-number of monomers in a pearl. is the number of monomers along the chain
-backbone which are excluded from the space distance criterion to form
-clusters. is the distance between two monomers up to which they are
-considered to belong to the same clusters. The three parameters may be
-connected by scaling arguments. Make sure that your results are only
-weakly dependent on the exact choice of your parameters. For the
-algorithm the coordinates stored in partCfg are used. The chain itself
-is defined by the identity first of its first monomer and the chain
-length length. Attention: This function is very specific to the problem
-and might not give useful results for other cases with similar
-structures.
 
 
 .. _Finding holes:

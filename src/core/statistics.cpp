@@ -29,7 +29,6 @@
 #include "initialize.hpp"
 #include "interaction_data.hpp"
 #include "lb.hpp"
-#include "modes.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
@@ -38,7 +37,6 @@
 #include "statistics_chain.hpp"
 #include "statistics_cluster.hpp"
 #include "statistics_fluid.hpp"
-#include "statistics_molecule.hpp"
 #include "utils.hpp"
 #include "utils/NoOp.hpp"
 #include "virtual_sites.hpp"
@@ -49,7 +47,7 @@
 
 /** Previous particle configurations (needed for offline analysis and
     correlation analysis in \ref tclcommand_analyze) */
-double **configs = NULL;
+double **configs = nullptr;
 int n_configs = 0;
 int n_part_conf = 0;
 
@@ -236,7 +234,7 @@ std::vector<double> calc_linear_momentum(int include_particles,
   double momentum_particles[3] = {0., 0., 0.};
   std::vector<double> linear_momentum(3, 0.0);
   if (include_particles) {
-    mpi_gather_stats(4, momentum_particles, NULL, NULL, NULL);
+    mpi_gather_stats(4, momentum_particles, nullptr, nullptr, nullptr);
     linear_momentum[0] += momentum_particles[0];
     linear_momentum[1] += momentum_particles[1];
     linear_momentum[2] += momentum_particles[2];
@@ -245,7 +243,7 @@ std::vector<double> calc_linear_momentum(int include_particles,
     double momentum_fluid[3] = {0., 0., 0.};
 #ifdef LB
     if (lattice_switch & LATTICE_LB) {
-      mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
+      mpi_gather_stats(6, momentum_fluid, nullptr, nullptr, nullptr);
     }
 #endif
 #ifdef LB_GPU
@@ -444,131 +442,6 @@ double distto(PartCfg &partCfg, double p[3], int pid) {
   return std::sqrt(mindist);
 }
 
-void calc_cell_gpb(double xi_m, double Rc, double ro, double gacc, int maxtry,
-                   double *result) {
-  double LOG, xi_min, RM, gamma, g1, g2, gmid = 0, dg, ig, f, fmid, rtb;
-  int i;
-  LOG = log(Rc / ro);
-  xi_min = LOG / (1 + LOG);
-  if (maxtry < 1)
-    maxtry = 1;
-
-  /* determine which of the regimes we are in: */
-  if (xi_m > 1) {
-    ig = 1.0;
-    g1 = PI / LOG;
-    g2 = PI / (LOG + xi_m / (xi_m - 1.0));
-  } else if (xi_m == 1) {
-    ig = 1.0;
-    g1 = (PI / 2.0) / LOG;
-    g2 = (PI / 2.0) / (LOG + 1.0);
-  } else if (xi_m == xi_min) {
-    ig = 1.0;
-    g1 = g2 = 0.0;
-  } else if (xi_m > xi_min) {
-    ig = 1.0;
-    g1 = (PI / 2.0) / LOG;
-    g2 =
-        sqrt(3.0 * (LOG - xi_m / (1.0 - xi_m)) / (1 - pow((1.0 - xi_m), -3.0)));
-  } else if (xi_m > 0.0) {
-    ig = -1.0;
-    g1 = 1 - xi_m;
-    g2 = xi_m * (6.0 - (3.0 - xi_m) * xi_m) / (3.0 * LOG);
-  } else if (xi_m == 0.0) {
-    ig = -1.0;
-    g1 = g2 = 1 - xi_m;
-  } else {
-    result[2] = -5.0;
-    return;
-  }
-
-  /* decide which method to use (if any): */
-  if (xi_m == xi_min) {
-    gamma = 0.0;
-    RM = 0.0;
-  } else if (xi_m == 0.0) {
-    gamma = 1 - xi_m;
-    RM = -1.0;
-  } else if (ig == 1.0) {
-    /* determine gamma via a bisection-search: */
-    f = atan(1.0 / g1) + atan((xi_m - 1.0) / g1) - g1 * LOG;
-    fmid = atan(1.0 / g2) + atan((xi_m - 1.0) / g2) - g2 * LOG;
-    if (f * fmid >= 0.0) {
-      /* failed to bracket function value with intial guess - abort: */
-      result[0] = f;
-      result[1] = fmid;
-      result[2] = -3.0;
-      return;
-    }
-
-    /* orient search such that the positive part of the function lies to the
-     * right of the zero */
-    rtb = f < 0.0 ? (dg = g2 - g1, g1) : (dg = g1 - g2, g2);
-    for (i = 1; i <= maxtry; i++) {
-      gmid = rtb + (dg *= 0.5);
-      fmid = atan(1.0 / gmid) + atan((xi_m - 1.0) / gmid) - gmid * LOG;
-      if (fmid <= 0.0)
-        rtb = gmid;
-      if (fabs(dg) < gacc || fmid == 0.0)
-        break;
-    }
-
-    if (fabs(dg) > gacc) {
-      /* too many iterations without success - abort: */
-      result[0] = gmid;
-      result[1] = dg;
-      result[2] = -2.0;
-      return;
-    }
-
-    /* So, these are the values for gamma and Manning-radius: */
-    gamma = gmid;
-    RM = Rc * exp(-(1.0 / gamma) * atan(1.0 / gamma));
-  } else if (ig == -1.0) {
-    /* determine -i*gamma: */
-    f = -1.0 * (atanh(g2) + atanh(g2 / (xi_m - 1))) - g2 * LOG;
-
-    /* modified orient search, this time starting from the upper bound
-     * backwards: */
-    if (f < 0.0) {
-      rtb = g1;
-      dg = g1 - g2;
-    } else {
-      fprintf(stderr, "WARNING: Lower boundary is actually larger than "
-                      "l.hpp.s, flipping!\n");
-      rtb = g1;
-      dg = g1;
-    }
-    for (i = 1; i <= maxtry; i++) {
-      gmid = rtb - (dg *= 0.5);
-      fmid = -1.0 * (atanh(gmid) + atanh(gmid / (xi_m - 1))) - gmid * LOG;
-      if (fmid >= 0.0)
-        rtb = gmid;
-      if (fabs(dg) < gacc || fmid == 0.0)
-        break;
-    }
-
-    if (fabs(dg) > gacc) {
-      /* too many iterations without success - abort: */
-      result[0] = gmid;
-      result[1] = dg;
-      result[2] = -2.0;
-      return;
-    }
-
-    /* So, these are the values for -i*gamma and Manning-radius: */
-    gamma = gmid;
-    RM = Rc * exp(atan(1.0 / gamma) / gamma);
-  } else {
-    result[2] = -5.0;
-    return;
-  }
-
-  result[0] = gamma;
-  result[1] = RM;
-  result[2] = ig;
-  return;
-}
 
 void calc_part_distribution(PartCfg &partCfg, int *p1_types, int n_p1,
                             int *p2_types, int n_p2, double r_min, double r_max,
@@ -783,7 +656,7 @@ void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
 void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
                           int order, double **_ff) {
   int i, j, k, n, qi, p, t, order2;
-  double qr, twoPI_L, C_sum, S_sum, *ff = NULL;
+  double qr, twoPI_L, C_sum, S_sum, *ff = nullptr;
 
   order2 = order * order;
   *_ff = ff = Utils::realloc(ff, 2 * order2 * sizeof(double));
@@ -791,12 +664,12 @@ void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
 
   if ((n_types < 0) || (n_types > n_particle_types)) {
     fprintf(stderr, "WARNING: Wrong number of particle types!");
-    fflush(NULL);
+    fflush(nullptr);
     errexit();
   } else if (order < 1) {
     fprintf(stderr,
             "WARNING: parameter \"order\" has to be a whole positive number");
-    fflush(NULL);
+    fflush(nullptr);
     errexit();
   } else {
     for (qi = 0; qi < 2 * order2; qi++) {
@@ -913,68 +786,6 @@ void density_profile_av(PartCfg &partCfg, int n_conf, int n_bin, double density,
     rho_ave[i] /= n_conf;
 }
 
-void calc_diffusion_profile(PartCfg &partCfg, int dir, double xmin, double xmax,
-                            int nbins, int n_part, int n_conf, int time,
-                            int type, double *bins) {
-  int i, t, count, index;
-  double tcount = 0;
-  double xpos;
-  double tpos[3];
-  int img_box[3] = {0, 0, 0};
-  // double delta_x = (box_l[0])/((double) nbins);
-
-  /* create and initialize the array of bins */
-
-  // double *bins;
-
-  int *label;
-  label = (int *)Utils::malloc(n_part * sizeof(int));
-
-  /* calculation over last n_conf configurations */
-  t = n_configs - n_conf;
-
-  while (t < n_configs - time) {
-    /* check initial condition */
-    count = 0;
-
-    for (i = 0; i < n_part; i++) {
-      if (partCfg[i].p.type == type) {
-        tpos[0] = configs[t][3 * i];
-        tpos[1] = configs[t][3 * i + 1];
-        tpos[2] = configs[t][3 * i + 2];
-        fold_coordinate(tpos, img_box, dir);
-        xpos = tpos[dir];
-        if (xpos > xmin && xpos < xmax) {
-          label[count] = i;
-        } else
-          label[count] = -1;
-        count++;
-      }
-    }
-
-    /* check at time 'time' */
-    for (i = 0; i < n_part; i++) {
-      if (label[i] > 0) {
-        tpos[0] = configs[t + time][3 * label[i]];
-        tpos[1] = configs[t + time][3 * label[i] + 1];
-        tpos[2] = configs[t + time][3 * label[i] + 2];
-        fold_coordinate(tpos, img_box, dir);
-        xpos = tpos[dir];
-
-        index = (int)(xpos / box_l[dir] * nbins);
-        bins[index]++;
-      }
-    }
-    t++;
-    tcount++;
-  }
-
-  /* normalization */
-  for (i = 0; i < nbins; i++) {
-    bins[i] = bins[i] / (tcount);
-  }
-  free(label);
-}
 
 int calc_cylindrical_average(
     PartCfg &partCfg, std::vector<double> center_,
@@ -1195,7 +1006,7 @@ int calc_radial_density_map(PartCfg &partCfg, int xbins, int ybins,
           if (tindex >= thetabins) {
             fprintf(stderr, "ERROR: outside density_profile array bounds in "
                             "calc_radial_density_map");
-            fflush(NULL);
+            fflush(nullptr);
             errexit();
           } else {
             density_profile[bi].e[tindex] += 1;
@@ -1432,24 +1243,6 @@ void invalidate_obs() {
   total_p_tensor.init_status = 0;
 }
 
-void centermass_conf(PartCfg &partCfg, int k, int type_1, double *com) {
-  int i, j;
-  double M = 0.0;
-  com[0] = com[1] = com[2] = 0.;
-
-  for (auto const &p : partCfg) {
-    if ((p.p.type == type_1) || (type_1 == -1)) {
-      for (i = 0; i < 3; i++) {
-        com[i] += configs[k][3 * j + i] * (partCfg[j]).p.mass;
-      }
-      M += (partCfg[j]).p.mass;
-    }
-  }
-  for (i = 0; i < 3; i++) {
-    com[i] /= M;
-  }
-  return;
-}
 
 void update_pressure(int v_comp) {
   int i;

@@ -117,26 +117,28 @@ public:
   ~ReactionEnsemble();
 
   reaction_system m_current_reaction_system = {
-      .nr_single_reactions = 0,
-      .reactions = std::vector<single_reaction>(),
-      .type_index = std::vector<int>(),
-      .nr_different_types = 0,
-      .charges_of_types = std::vector<double>(),
-      .standard_pressure_in_simulation_units = -10,
-      .temperature = -10.0,
-      .exclusion_radius = 0.0,
-      .volume = -10,
-      .box_is_cylindric_around_z_axis = false,
-      .cyl_radius = -10,
-      .cyl_x = -10,
-      .cyl_y = -10,
-      .box_has_wall_constraints = false,
-      .slab_start_z = -10,
-      .slab_end_z = -10,
-      .non_interacting_type = 100}; // the standard_pressure_in_simulation_units
-                                    // is an input parameter for the reaction
-                                    // ensemble;
-
+    0, // int nr_single_reactions
+    std::vector<single_reaction>(), // reactions
+    std::vector<int>(), //type_index
+    0, // int nr_different_types
+    std::vector<double>(), // charges_of_types
+    -10.0, // double standard_pressure_in_simulation_units
+    -10.0, // double temperature
+    0.0, // double exclusion_radius
+    -10, // double volume
+    false, // bool box_is_cylindric_around_z_axis
+    -10.0, // double cyl_radius
+    -10.0, // double cyl_x
+    -10.0, // double cyl_y
+    false, // bool box_has_wall_constraints
+    -10.0, // double slab_start_z
+    -10.0, // double slab_end_z
+    100 // int non_interacting_type
+  };
+  // the standard_pressure_in_simulation_units
+  // is an input parameter for the reaction
+  // ensemble;
+    
   int m_accepted_configurational_MC_moves = 0;
   int m_tried_configurational_MC_moves = 0;
   bool m_system_is_in_1_over_t_regime = false;
@@ -172,31 +174,32 @@ public:
   ///////////////////////////////////////////// Wang-Landau algorithm
 
   wang_landau_system m_current_wang_landau_system = {
-      .histogram = std::vector<int>(),
-      .wang_landau_potential = std::vector<double>(),
-      .collective_variables = std::vector<collective_variable>(),
-      .nr_subindices_of_collective_variable=std::vector<int>(),
-      .wang_landau_parameter = 1.0,
-      .initial_wang_landau_parameter = 1.0,
-      .int_fill_value = -10,
-      .double_fill_value = -10.0,
-      .number_of_monte_carlo_moves_between_check_of_convergence = 5000,
-      .final_wang_landau_parameter = 0.00001,
-      .used_bins = -10,
-      .monte_carlo_trial_moves = 0,
-      .wang_landau_steps = 1,
-      .output_filename = "",
-      .minimum_energies_at_flat_index = std::vector<double>(),
-      .maximum_energies_at_flat_index = std::vector<double>(),
-      .do_energy_reweighting = false,
-      .polymer_start_id = -10,
-      .polymer_end_id = -10,
-      .fix_polymer = false,
-      .do_not_sample_reaction_partition_function = false,
-      }; // use negative value as fill value since it cannot occur in
-                  // the wang_landau algorithm in the histogram and in the wang
-                  // landau potential, use only 1 wang_landau_steps if you want
-                  // to record other observables in the tcl script.
+    std::vector<int>(), // histogram
+    std::vector<double>(), // wang_landau_potential
+    std::vector<collective_variable>(), // collective_variables
+    std::vector<int>(), // nr_subindices_of_collective_variable
+    1.0, // double wang_landau_parameter
+    1.0, // double initial_wang_landau_parameter
+    -10, // int int_fill_value
+    -10.0, // double double_fill_value
+    5000, // int number_of_monte_carlo_moves_between_check_of_convergence
+    0.00001, // double final_wang_landau_parameter
+    -10, // int used_bins
+    0, // int monte_carlo_trial_moves
+    1, // int wang_landau_steps
+    "", // output_filename
+    std::vector<double>(), // minimum_energies_at_flat_index
+    std::vector<double>(), // maximum_energies_at_flat_index
+    false, // bool do_energy_reweighting
+    -10, // int polymer_start_id
+    -10, // int polymer_end_id
+    false, // bool fix_polymer
+    false // bool do_not_sample_reaction_partition_function
+  };
+  // use negative value as fill value since it cannot occur in
+  // the wang_landau algorithm in the histogram and in the wang
+  // landau potential, use only 1 wang_landau_steps if you want
+  // to record other observables in the tcl script.
 
   void
   add_new_CV_degree_of_association(int associated_type, double CV_minimum,

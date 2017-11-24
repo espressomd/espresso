@@ -107,7 +107,7 @@ public:
     std::shared_ptr<::Observables::obs_name> m_observable;                     \
   };
 
-NEW_RADIAL_PROFILE_OBSERVABLE(CylindricalFluxDensityProfile);
+NEW_RADIAL_PROFILE_OBSERVABLE(CylindricalFluxDensityProfile)
 
 } /* namespace Observables */
 } /* namespace ScriptInterface */

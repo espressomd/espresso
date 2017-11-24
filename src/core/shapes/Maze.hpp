@@ -47,6 +47,6 @@ private:
   /** cylinder (connecting the spheres) radius*/
   double m_cylrad;
 };
-};
+}
 
 #endif
