@@ -17,6 +17,12 @@ shanchen:
     - export myconfig=shanchen with_coverage=true
     - bash maintainer/cuda_build.sh
 
+lees_edwards:
+  stage: build
+  script:
+    - export myconfig=lees-edwards with_coverage=true
+    - bash maintainer/cuda_build.sh
+
 maxset:
   stage: build
   script:
