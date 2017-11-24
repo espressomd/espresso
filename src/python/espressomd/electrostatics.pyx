@@ -68,8 +68,8 @@ IF COULOMB_DEBYE_HUECKEL:
 
         Parameters
         ----------
-        bjerrum_length      : float
-                              Bjerrum length
+        prefactor      : float
+                             Electrostatics prefactor
         kappa               : float
                               Inverse Debye screening length
         r_cut               : float 
@@ -87,8 +87,8 @@ IF COULOMB_DEBYE_HUECKEL:
 
         """
         def validate_params(self):
-            if (self._params["bjerrum_length"] <= 0):
-                raise ValueError("Bjerrum_length should be a positive double")
+            if (self._params["prefactor"] <= 0):
+                raise ValueError("Prefactor should be a positive float")
             if (self._params["kappa"] < 0):
                 raise ValueError("kappa should be a non-negative double")
             if (self._params["r_cut"] < 0):
@@ -107,13 +107,13 @@ IF COULOMB_DEBYE_HUECKEL:
                 raise ValueError("alpha should be a non-negative double")
 
         def valid_keys(self):
-            return "bjerrum_length", "kappa", "r_cut", "eps_int", "eps_ext", "r0", "r1", "alpha"
+            return "prefactor", "kappa", "r_cut", "eps_int", "eps_ext", "r0", "r1", "alpha"
 
         def required_keys(self):
-            return "bjerrum_length", "kappa", "r_cut", "eps_int", "eps_ext", "r0", "r1", "alpha"
+            return "prefactor", "kappa", "r_cut", "eps_int", "eps_ext", "r0", "r1", "alpha"
 
         def _set_params_in_es_core(self):
-            coulomb_set_bjerrum(self._params["bjerrum_length"])
+            coulomb_set_prefactor(self._params["prefactor"])
             dh_set_params_cdh(self._params["kappa"], self._params["r_cut"], self._params[
                               "eps_int"], self._params["eps_ext"], self._params["r0"], self._params["r1"], self._params["alpha"])
 
@@ -127,7 +127,7 @@ IF COULOMB_DEBYE_HUECKEL:
             self._set_params_in_es_core()
 
         def default_params(self):
-            return {"bjerrum_length": -1,
+            return {"prefactor": -1,
                     "kappa": -1,
                     "r_cut": -1,
                     "eps_int": -1,
@@ -145,8 +145,8 @@ ELSE:
 
             Parameters
             ----------
-            bjerrum_length  : float
-                              Bjerrum length
+            prefactor  : float
+                             Electrostatics prefactor
             kappa           : float
                               Inverse Debye sreening length
             r_cut           : float
@@ -154,22 +154,22 @@ ELSE:
 
             """
             def validate_params(self):
-                if (self._params["bjerrum_length"] <= 0):
+                if (self._params["prefactor"] <= 0):
                     raise ValueError(
-                        "Bjerrum_length should be a positive double")
+                        "prefactor should be a positive float")
                 if (self._params["kappa"] < 0):
                     raise ValueError("kappa should be a non-negative double")
                 if (self._params["r_cut"] < 0):
                     raise ValueError("r_cut should be a non-negative double")
 
             def valid_keys(self):
-                return "bjerrum_length", "kappa", "r_cut"
+                return "prefactor", "kappa", "r_cut"
 
             def required_keys(self):
-                return "bjerrum_length", "kappa", "r_cut"
+                return "prefactor", "kappa", "r_cut"
 
             def _set_params_in_es_core(self):
-                coulomb_set_bjerrum(self._params["bjerrum_length"])
+                coulomb_set_prefactor(self._params["prefactor"])
                 dh_set_params(self._params["kappa"], self._params["r_cut"])
 
             def _get_params_from_es_core(self):
@@ -182,7 +182,7 @@ ELSE:
                 self._set_params_in_es_core()
 
             def default_params(self):
-                return {"bjerrum_length": -1,
+                return {"prefactor": -1,
                         "kappa": -1,
                         "r_cut": -1}
 
@@ -199,10 +199,8 @@ IF P3M == 1:
 
             Parameters
             ----------
-            bjerrum_length : float
-                             The separation at which the electrostatic interaction
-                             energy and thermal energy are comparable. Defined as
-                             :math:`l_B = e_o^2 / (4 \pi \epsilon k_B T)` 
+            prefactor : float
+                    Electrostatics prefactor
             accuracy : float
                        P3M tunes its parameters to provide this target accuracy.
 
@@ -239,8 +237,8 @@ IF P3M == 1:
 
         def validate_params(self):
             default_params = self.default_params()
-            if not (self._params["bjerrum_length"] > 0.0):
-                raise ValueError("Bjerrum_length should be a positive double")
+            if not (self._params["prefactor"] > 0.0):
+                raise ValueError("prefactor should be a positive float")
 
             if not (self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
                 raise ValueError("P3M r_cut has to be >=0")
@@ -279,10 +277,10 @@ IF P3M == 1:
                     "alpha should be positive")
 
         def valid_keys(self):
-            return "mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut", "bjerrum_length", "tune"
+            return "mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut", "prefactor", "tune"
 
         def required_keys(self):
-            return ["bjerrum_length", "accuracy"]
+            return ["prefactor", "accuracy"]
 
         def default_params(self):
             return {"cao": 0,
@@ -298,13 +296,13 @@ IF P3M == 1:
         def _get_params_from_es_core(self):
             params = {}
             params.update(p3m.params)
-            params["bjerrum_length"] = coulomb.bjerrum
+            params["prefactor"] = coulomb.prefactor
             params["tune"] = self._params["tune"]
             return params
 
         def _set_params_in_es_core(self):
             #Sets lb, bcast, resets vars to zero if lb=0
-            coulomb_set_bjerrum(self._params["bjerrum_length"])
+            coulomb_set_prefactor(self._params["prefactor"])
             #Sets cdef vars and calls p3m_set_params() in core 
             python_p3m_set_params(self._params["r_cut"],
                         self._params["mesh"], self._params["cao"],
@@ -319,7 +317,7 @@ IF P3M == 1:
             python_p3m_set_mesh_offset(self._params["mesh_off"])
 
         def _tune(self):
-            coulomb_set_bjerrum(self._params["bjerrum_length"])
+            coulomb_set_prefactor(self._params["prefactor"])
             python_p3m_set_tune_params(self._params["r_cut"], self._params["mesh"], self._params[
                                        "cao"], -1.0, self._params["accuracy"], self._params["inter"])
             resp = python_p3m_adaptive_tune()
@@ -345,10 +343,8 @@ IF P3M == 1:
 
                 Parameters
                 ----------
-                bjerrum_length : float
-                                 The separation at which the electrostatic interaction
-                                 energy and thermal energy are comparable. Defined as
-                                 :math:`l_B = e_o^2 / (4 \pi \epsilon k_B T)` 
+                prefactor : float
+                           Electrostatics prefactor
                 accuracy : float
                            P3M tunes its parameters to provide this target accuracy.
 
@@ -420,10 +416,10 @@ IF P3M == 1:
                         "mesh_off should be a list of length 3 and values between 0.0 and 1.0")
 
             def valid_keys(self):
-                return "mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut", "bjerrum_length", "tune"
+                return "mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut", "prefactor", "tune"
 
             def required_keys(self):
-                return ["bjerrum_length", "accuracy"]
+                return ["prefactor", "accuracy"]
 
             def default_params(self):
                 return {"cao": 0,
@@ -439,12 +435,12 @@ IF P3M == 1:
             def _get_params_from_es_core(self):
                 params = {}
                 params.update(p3m.params)
-                params["bjerrum_length"] = coulomb.bjerrum
+                params["prefactor"] = coulomb.prefactor
                 params["tune"] = self._params["tune"]
                 return params
 
             def _tune(self):
-                coulomb_set_bjerrum(self._params["bjerrum_length"])
+                coulomb_set_prefactor(self._params["prefactor"])
                 python_p3m_set_tune_params(self._params["r_cut"], self._params["mesh"], self._params[
                                            "cao"], -1.0, self._params["accuracy"], self._params["inter"])
                 resp = python_p3m_adaptive_tune()
@@ -462,7 +458,7 @@ IF P3M == 1:
                 self._set_params_in_es_core()
 
             def _set_params_in_es_core(self):
-                coulomb_set_bjerrum(self._params["bjerrum_length"])
+                coulomb_set_prefactor(self._params["prefactor"])
                 python_p3m_set_params(self._params["r_cut"], self._params["mesh"], self._params[
                                       "cao"], self._params["alpha"], self._params["accuracy"])
                 p3m_set_eps(self._params["epsilon"])
@@ -481,10 +477,8 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
 
             Parameters
             ----------
-            bjerrum_length : float
-                             The separation at which the electrostatic interaction
-                             energy and thermal energy are comparable. Defined as
-                             :math:`l_B = e_o^2 / (4 \pi \epsilon k_B T)` 
+            prefactor : float
+                    Electrostatics prefactor
             accuracy : float
                        Maximal allowed root mean square error regarding the forces
 
@@ -523,10 +517,10 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             del self.thisptr
 
         def valid_keys(self):
-            return "bjerrum_length", "rcut", "num_kx", "num_ky", "num_kz",  "K_max", "alpha", "accuracy", "precision", "time_calc_steps"
+            return "prefactor", "rcut", "num_kx", "num_ky", "num_kz",  "K_max", "alpha", "accuracy", "precision", "time_calc_steps"
 
         def default_params(self):
-            return {"bjerrum_length": -1,
+            return {"prefactor": -1,
                     "rcut": -1,
                     "num_kx": -1,
                     "num_ky": -1,
@@ -541,8 +535,8 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
 
         def validate_params(self):
             default_params = self.default_params()
-            if self._params["bjerrum_length"] <= 0.0 and self._params["bjerrum_length"] != default_params["bjerrum_length"]:
-                raise ValueError("Bjerrum_length should be a positive double")
+            if self._params["prefactor"] <= 0.0:
+                raise ValueError("prefactor should be a positive float")
             if isinstance(self._params["K_max"], (list, np.ndarray)):
                 if isinstance(self._params["K_max"], int) and len(self._params["K_max"]) == 3:
                     self._params["num_kx"] = self._params["K_max"][0]
@@ -568,10 +562,10 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
                 raise ValueError("alpha has to be a positive double")
 
         def required_keys(self):
-            return "bjerrum_length", "accuracy", "precision", "K_max"
+            return "prefactor", "accuracy", "precision", "K_max"
 
         def _tune(self):
-            coulomb_set_bjerrum(self._params["bjerrum_length"])
+            coulomb_set_prefactor(self._params["prefactor"])
             default_params = self.default_params()
             if self._params["time_calc_steps"] == default_params["time_calc_steps"]:
                 self._params[
@@ -587,14 +581,14 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
                 print(self.log)
 
         def _set_params_in_es_core(self):
-            coulomb_set_bjerrum(self._params["bjerrum_length"])
+            coulomb_set_prefactor(self._params["prefactor"])
             self.thisptr.set_params(self._params["rcut"], self._params[
                                     "num_kx"], self._params["num_ky"], self._params["num_kz"], self._params["alpha"])
 
         def _get_params_from_es_core(self):
             params = {}
             params.update(ewaldgpu_params)
-            params["bjerrum_length"] = coulomb.bjerrum
+            params["prefactor"] = coulomb.prefactor
             return params
 
         def _activate_method(self):
@@ -614,8 +608,8 @@ IF ELECTROSTATICS:
 
         Parameters
         ----------
-        bjerrum_length      : float
-                              Bjerrum length
+        prefactor      : float
+                             Electrostatics prefactor
         maxWPerror          : float
                               Maximal pairwise error
         far_switch_radius   : float, optional
@@ -627,8 +621,8 @@ IF ELECTROSTATICS:
 
         def validate_params(self):
             default_params = self.default_params()
-            if self._params["bjerrum_length"] < 0:
-                raise ValueError("Bjerrum_length should be a positive double")
+            if self._params["prefactor"] <= 0.:
+                raise ValueError("Prefactor should be a positive float")
             if self._params["maxPWerror"] < 0 and self._params["maxPWerror"] != default_params["maxPWerror"]:
                 raise ValueError("maxPWerror should be a positive double")
             if self._params["far_switch_radius"] < 0 and self._params["far_switch_radius"] != default_params["far_switch_radius"]:
@@ -637,29 +631,29 @@ IF ELECTROSTATICS:
                 raise ValueError("bessel_cutoff should be a positive integer")
 
         def default_params(self):
-            return {"bjerrum_length": -1,
+            return {"prefactor": -1,
                     "maxPWerror": -1,
                     "far_switch_radius": -1,
                     "bessel_cutoff": -1,
                     "tune": True}
 
         def valid_keys(self):
-            return "bjerrum_length", "maxPWerror", "far_switch_radius", "bessel_cutoff", "tune"
+            return "prefactor", "maxPWerror", "far_switch_radius", "bessel_cutoff", "tune"
 
         def required_keys(self):
-            return ["bjerrum_length", "maxPWerror"]
+            return ["prefactor", "maxPWerror"]
 
         def _get_params_from_es_core(self):
             params = {}
             params.update(mmm1d_params)
             params["far_switch_radius"] = np.sqrt(params["far_switch_radius_2"])
             del params["far_switch_radius_2"]
-            params["bjerrum_length"] = coulomb.bjerrum
+            params["prefactor"] = coulomb.prefactor
             params["tune"] = self._params["tune"]
             return params
 
         def _set_params_in_es_core(self):
-            coulomb_set_bjerrum(self._params["bjerrum_length"])
+            coulomb_set_prefactor(self._params["prefactor"])
             MMM1D_set_params(
                 self._params["far_switch_radius"], self._params["maxPWerror"])
 
@@ -686,8 +680,8 @@ IF ELECTROSTATICS and MMM1D_GPU:
 
         Parameters
         ----------
-        bjerrum_length      : float
-                              Bjerrum length
+        prefactor      : float
+                             Electrostatics prefactor
         maxWPerror          : float
                               Maximal pairwise error
         far_switch_radius   : float, optional
@@ -713,8 +707,8 @@ IF ELECTROSTATICS and MMM1D_GPU:
 
         def validate_params(self):
             default_params = self.default_params()
-            if self._params["bjerrum_length"] < 0:
-                raise ValueError("Bjerrum_length should be a positive double")
+            if self._params["prefactor"] <= 0:
+                raise ValueError("prefactor should be a positive float")
             if self._params["maxPWerror"] < 0 and self._params["maxPWerror"] != default_params["maxPWerror"]:
                 raise ValueError("maxPWerror should be a positive double")
             if self._params["far_switch_radius"] < 0 and self._params["far_switch_radius"] != default_params["far_switch_radius"]:
@@ -723,29 +717,29 @@ IF ELECTROSTATICS and MMM1D_GPU:
                 raise ValueError("bessel_cutoff should be a positive integer")
 
         def default_params(self):
-            return {"bjerrum_length": -1,
+            return {"prefactor": -1,
                     "maxPWerror": -1.0,
                     "far_switch_radius": -1.0,
                     "bessel_cutoff": -1,
                     "tune": True}
 
         def valid_keys(self):
-            return "bjerrum_length", "maxPWerror", "far_switch_radius", "bessel_cutoff", "tune"
+            return "prefactor", "maxPWerror", "far_switch_radius", "bessel_cutoff", "tune"
 
         def required_keys(self):
-            return ["bjerrum_length", "maxPWerror"]
+            return ["prefactor", "maxPWerror"]
 
         def _get_params_from_es_core(self):
             params = {}
             params.update(mmm1d_params)
-            params["bjerrum_length"] = coulomb.bjerrum
+            params["prefactor"] = coulomb.prefactor
             return params
 
         def _set_params_in_es_core(self):
-            coulomb_set_bjerrum(self._params["bjerrum_length"])
+            coulomb_set_prefactor(self._params["prefactor"])
             default_params = self.default_params()
 
-            self.thisptr.set_params(globals.box_l[2], globals.temperature * coulomb.bjerrum, self._params[
+            self.thisptr.set_params(globals.box_l[2], coulomb.prefactor, self._params[
                                     "maxPWerror"], self._params["far_switch_radius"], self._params["bessel_cutoff"])
 
         def _tune(self):
@@ -769,8 +763,8 @@ IF ELECTROSTATICS:
 
         Parameters
         ----------
-        bjerrum_length          : float
-                                  Bjerrum length
+        prefactor          : float
+                                  Electrostatics prefactor
         maxWPerror              : float
                                   Maximal pairwise error
         dielectric              : int, optional
@@ -817,8 +811,8 @@ IF ELECTROSTATICS:
         """
         def validate_params(self):
             default_params = self.default_params()
-            if self._params["bjerrum_length"] < 0:
-                raise ValueError("Bjerrum_length should be a positive double")
+            if self._params["prefactor"] <= 0:
+                raise ValueError("prefactor should be a positive float")
             if self._params["maxPWerror"] < 0 and self._params["maxPWerror"] != default_params["maxPWerror"]:
                 raise ValueError("maxPWerror should be a positive double")
             if self._params["dielectric"] == 1 and (self._params["top"] < 0 or self._params["mid"] < 0 or self._params["bot"] < 0):
@@ -836,7 +830,7 @@ IF ELECTROSTATICS:
                     "dielectric contrast and constant potential are mutually exclusive")
 
         def default_params(self):
-            return {"bjerrum_length": -1,
+            return {"prefactor": -1,
                     "maxPWerror": -1,
                     "far_cut": -1,
                     "top": 0,
@@ -850,15 +844,15 @@ IF ELECTROSTATICS:
                     "pot_diff": 0}
 
         def required_keys(self):
-            return ["bjerrum_length", "maxPWerror"]
+            return ["prefactor", "maxPWerror"]
 
         def valid_keys(self):
-            return "bjerrum_length", "maxPWerror", "top", "mid", "bot", "delta_mid_top", "delta_mid_bot", "pot_diff", "dielectric", "dielectric_contrast_on", "capacitor", "far_cut"
+            return "prefactor", "maxPWerror", "top", "mid", "bot", "delta_mid_top", "delta_mid_bot", "pot_diff", "dielectric", "dielectric_contrast_on", "capacitor", "far_cut"
 
         def _get_params_from_es_core(self):
             params = {}
             params.update(mmm2d_params)
-            params["bjerrum_length"] = coulomb.bjerrum
+            params["prefactor"] = coulomb.prefactor
             if params["dielectric_contrast_on"] or params["const_pot_on"]:
                 params["dielectric"] = 0
             else:
@@ -866,7 +860,7 @@ IF ELECTROSTATICS:
             return params
 
         def _set_params_in_es_core(self):
-            coulomb_set_bjerrum(self._params["bjerrum_length"])
+            coulomb_set_prefactor(self._params["prefactor"])
             if self._params["dielectric"]:
                 self._params["delta_mid_top"] = (self._params[
                                                  "mid"] - self._params["top"]) / (self._params["mid"] + self._params["top"])
@@ -897,7 +891,7 @@ IF ELECTROSTATICS:
 
             def _activate_method(self):
                 coulomb.method = COULOMB_SCAFACOS
-                coulomb_set_bjerrum(self._params["bjerrum_length"])
+                coulomb_set_prefactor(self._params["prefactor"])
                 self._set_params_in_es_core()
                 mpi_bcast_coulomb_params()
 

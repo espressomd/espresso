@@ -43,7 +43,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             system,
             P3M,
             dict(
-                bjerrum_length=1.0,
+                prefactor=1.0,
                 epsilon=0.0,
                 r_cut=2.4,
                 mesh=[
@@ -60,7 +60,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             system,
             CDH,
             dict(
-                bjerrum_length=1.0,
+                prefactor=1.0,
                 kappa=2.3,
                 r_cut=2,
                 r0=1,

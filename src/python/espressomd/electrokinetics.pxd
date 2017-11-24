@@ -26,7 +26,7 @@ IF ELECTROKINETICS and CUDA:
             float gamma_even
             float friction
             float T
-            float bjerrumlength
+            float prefactor 
             float lb_force[3]
             unsigned int number_of_species
             int reaction_species[3]
@@ -80,7 +80,7 @@ IF ELECTROKINETICS and CUDA:
         int ek_set_viscosity(double viscosity)
         int ek_set_friction(double friction)
         int ek_set_T(double T)
-        int ek_set_bjerrumlength(double bjerrumlength)
+        int ek_set_prefactor(double prefactor)
         int ek_set_bulk_viscosity(double bulk_viscosity)
         int ek_set_gamma_odd(double gamma_odd)
         int ek_set_gamma_even(double gamma_even)

@@ -96,7 +96,7 @@ class CoulombCloudWall(ut.TestCase):
 
     if espressomd.has_features(["P3M"]):
         def test_p3m(self):
-            self.S.actors.add(P3M(bjerrum_length=1, r_cut=1.001, accuracy=1e-3,
+            self.S.actors.add(P3M(prefactor=1, r_cut=1.001, accuracy=1e-3,
                                   mesh=64, cao=7, alpha=2.70746, tune=False))
             self.S.integrator.run(0)
             self.compare("p3m", energy=True)
@@ -105,7 +105,7 @@ class CoulombCloudWall(ut.TestCase):
         def test_p3m_gpu(self):
             self.S.actors.add(
                 P3MGPU(
-                    bjerrum_length=1,
+                    prefactor=1,
                     r_cut=1.001,
                     accuracy=1e-3,
                     mesh=64,
@@ -120,7 +120,7 @@ class CoulombCloudWall(ut.TestCase):
             def test_scafacos_p3m(self):
                 self.S.actors.add(
                     Scafacos(
-                        bjerrum_length=1,
+                        prefactor=1,
                         method_name="p3m",
                         method_params={
                             "p3m_r_cut": 1.001,
@@ -134,7 +134,7 @@ class CoulombCloudWall(ut.TestCase):
             def test_scafacos_p2nfft(self):
                 self.S.actors.add(
                     Scafacos(
-                        bjerrum_length=1,
+                        prefactor=1,
                         method_name="p2nfft",
                         method_params={
                             "p2nfft_r_cut": 1.001,

@@ -127,7 +127,7 @@ class Exclusions(ut.TestCase):
         self.s.part.add(id=1, pos=[1, 0, 0], type=0, q=-1.)
 
         # Small alpha means large short-range contribution
-        self.s.actors.add(P3M(bjerrum_length=1, r_cut=3.0, accuracy=1e-3,
+        self.s.actors.add(P3M(prefactor=1, r_cut=3.0, accuracy=1e-3,
                                   mesh=32, cao=7, alpha=0.1, tune=False))
 
         # Only short-range part of the coulomb energy

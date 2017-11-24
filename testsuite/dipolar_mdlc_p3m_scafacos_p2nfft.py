@@ -162,7 +162,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
             s.part.add(id=int(p[0]), pos=p[1:4], dip=p[4:7],rotation=(1,1,1))
 
         scafacos = magnetostatics.Scafacos(
-            bjerrum_length=1,
+            prefactor=1,
             method_name="p2nfft",
             method_params={
                 "p2nfft_verbose_tuning": 0,

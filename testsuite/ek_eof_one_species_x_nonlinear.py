@@ -32,7 +32,7 @@ import math
 # root finding function
 
 
-def solve(xi, d, bjerrum_length, sigma, valency):
+def solve(xi, d, gth, sigma, valency):
     pi = math.pi
     el_char = 1.0
     return xi * math.tan(xi * d / 2.0) + 2.0 * pi * \

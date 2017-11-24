@@ -307,8 +307,6 @@ void on_coulomb_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_coulomb_change\n", this_node));
   invalidate_obs();
 
-  recalc_coulomb_prefactor();
-
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_DH:
@@ -554,9 +552,6 @@ void on_temperature_change() {
   }
 #endif
 
-#ifdef ELECTROSTATICS
-  recalc_coulomb_prefactor();
-#endif
 }
 
 void on_parameter_change(int field) {

@@ -58,10 +58,9 @@ IF ELECTROSTATICS:
                 COULOMB_EK, \
                 COULOMB_SCAFACOS
 
-        int coulomb_set_bjerrum(double bjerrum)
+        int coulomb_set_prefactor(double prefactor)
 
         ctypedef struct Coulomb_parameters:
-            double bjerrum
             double prefactor
             CoulombMethod method
 
@@ -239,7 +238,7 @@ IF ELECTROSTATICS:
         int mmm1d_tune(char **log);
 
     cdef extern from "interaction_data.hpp":
-        int coulomb_set_bjerrum(double bjerrum)
+        int coulomb_set_prefactor(double prefactor)
 
         ctypedef enum CoulombMethod :
             COULOMB_NONE, 
@@ -257,7 +256,6 @@ IF ELECTROSTATICS:
             COULOMB_EK 
 
         ctypedef struct Coulomb_parameters:
-            double bjerrum
             double prefactor
             CoulombMethod method
 

@@ -79,7 +79,7 @@ class Scafacos1d2d(ut.TestCase):
 
             if dim == 2:
                 scafacos = magnetostatics.Scafacos(
-                    bjerrum_length=1,
+                    prefactor=1,
                     method_name="p2nfft",
                     method_params={
                         "p2nfft_verbose_tuning": 0,
@@ -100,7 +100,7 @@ class Scafacos1d2d(ut.TestCase):
                 if dim == 1:
                     # 1d periodic in x
                     scafacos = magnetostatics.Scafacos(
-                        bjerrum_length=1,
+                        prefactor=1,
                         method_name="p2nfft",
                         method_params={
                             "p2nfft_verbose_tuning": 1,

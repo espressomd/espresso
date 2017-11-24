@@ -79,10 +79,10 @@ IA_parameters *ia_params = nullptr;
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
 Coulomb_parameters coulomb = { 
 #ifdef ELECTROSTATICS
-  0.0, 0.0, COULOMB_NONE,
+  0.0, COULOMB_NONE,
 #endif
 #ifdef DIPOLES
-  0.0, 0.0, DIPOLAR_NONE,
+  0.0, DIPOLAR_NONE,
 #endif
 };
 #endif
@@ -895,43 +895,17 @@ coulomb.Dmethod = method;
 /*                                 electrostatics                               */
 /********************************************************************************/
 
-int coulomb_set_bjerrum(double bjerrum)
+int coulomb_set_prefactor(double prefactor)
 {
-  if (bjerrum < 0.0)
+  if (prefactor < 0.0) {
+    runtimeErrorMsg() << "Coulomb prefactor has to be >=0";
     return ES_ERROR;
-  
-  coulomb.bjerrum = bjerrum;
-
-  if (coulomb.bjerrum == 0.0) {
-    switch (coulomb.method) {
-#ifdef P3M
-    case COULOMB_ELC_P3M:
-    case COULOMB_P3M_GPU:
-    case COULOMB_P3M:
-      p3m_set_bjerrum();
-      break;
-#endif
-    case COULOMB_DH:
-      dh_params.r_cut   = 0.0;
-      dh_params.kappa   = 0.0;
-    case COULOMB_RF:
-    case COULOMB_INTER_RF:
-      rf_params.kappa  = 0.0;
-      rf_params.epsilon1   = 0.0;
-      rf_params.epsilon2   = 0.0;
-      rf_params.r_cut   = 0.0;
-      rf_params.B   = 0.0;
-    case COULOMB_MMM1D:
-      mmm1d_params.maxPWerror = 1e40;
-    default: break;
-    }
- 
-    mpi_bcast_coulomb_params();
-    coulomb.method = COULOMB_NONE;
-    mpi_bcast_coulomb_params();
-
   }
+  
+  coulomb.prefactor=prefactor;
+  mpi_bcast_coulomb_params();
 
+ 
   return ES_OK;
 }
 
@@ -943,56 +917,22 @@ int coulomb_set_bjerrum(double bjerrum)
 
 #ifdef DIPOLES
 
-int dipolar_set_Dbjerrum(double bjerrum)
+int dipolar_set_Dprefactor(double prefactor)
 {
-  if (bjerrum < 0.0)
+  if (prefactor < 0.0){
+    runtimeErrorMsg() << "Dipolar prefactor has to be >=0";
     return ES_ERROR;
-  
-  coulomb.Dbjerrum = bjerrum;
-
-  if (coulomb.Dbjerrum == 0.0) {
-    switch (coulomb.Dmethod) {
-#ifdef DP3M
-    case DIPOLAR_MDLC_P3M:
-      // fall through
-    case DIPOLAR_P3M:
-      coulomb.Dbjerrum = bjerrum;
-      dp3m_set_bjerrum();
-      break;
-#endif
-    case DIPOLAR_SCAFACOS: ;
-      // Fall through 
-    default:
-        break;
-    }
- 
-    mpi_bcast_coulomb_params();
-    set_dipolar_method_local(DIPOLAR_NONE);
-    mpi_bcast_coulomb_params();
-
   }
+  
+  coulomb.Dprefactor = prefactor;
+
+  mpi_bcast_coulomb_params();
 
   return ES_OK;
 }
 
 #endif   /* ifdef  DIPOLES */
 
-void recalc_coulomb_prefactor()
-{
-#ifdef ELECTROSTATICS
-  if(temperature > 0.0)
-    coulomb.prefactor = coulomb.bjerrum * temperature; 
-  else
-    coulomb.prefactor = coulomb.bjerrum;
-#endif
-
-#ifdef DIPOLES
-  if(temperature > 0.0)
-    coulomb.Dprefactor = coulomb.Dbjerrum * temperature; 
-  else
-    coulomb.Dprefactor = coulomb.Dbjerrum;
-#endif
-}
 
 int virtual_set_params(int bond_type)
 {
