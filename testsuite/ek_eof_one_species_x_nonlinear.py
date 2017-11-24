@@ -154,7 +154,7 @@ class ek_eof_one_species_x(ut.TestCase):
             viscosity=viscosity_kinematic,
             friction=friction,
             T=temperature,
-            bjerrum_length=bjerrum_length,
+            prefactor=bjerrum_length*temperature,
             stencil="nonlinear")
 
         counterions = electrokinetics.Species(

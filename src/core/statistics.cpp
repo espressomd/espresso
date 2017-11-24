@@ -1202,7 +1202,7 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
                         n_dipolar + n_vsr);
 
   // Allocate mem for the double list
-  realloc_doublelist(&(stat->data), stat->data.n = total);
+  stat->data.resize(total);
   // Number of doubles per interaction (pressure=1, stress tensor=9,...)
   stat->chunk_size = c_size;
 

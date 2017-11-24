@@ -2557,7 +2557,7 @@ int ek_init() {
     if(electrostatics != nullptr)
       delete electrostatics;
 
-    FdElectrostatics::InputParameters es_parameters = {ek_parameters.prefactor, ek_parameters.T, int(ek_parameters.dim_x), int(ek_parameters.dim_y), int(ek_parameters.dim_z), ek_parameters.agrid};
+    FdElectrostatics::InputParameters es_parameters = {ek_parameters.prefactor, int(ek_parameters.dim_x), int(ek_parameters.dim_y), int(ek_parameters.dim_z), ek_parameters.agrid};
     try {
       electrostatics = new FdElectrostatics(es_parameters, stream[0]);
     }
