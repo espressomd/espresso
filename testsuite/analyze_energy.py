@@ -7,9 +7,9 @@ from espressomd import electrostatics
 from espressomd.interactions import HarmonicBond
 
 
-@ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "Skipped because LENNARD_JONES turned off.")
-@ut.skipIf(not espressomd.has_features("ELECTROSTATICS"), "Skipped because LENNARD_JONES turned off.")
-@ut.skipIf(not espressomd.has_features("P3M"), "Skipped because LENNARD_JONES turned off.")
+features = ["LENNARD_JONES", "ELECTROSTATICS", "P3M"]
+@ut.skipIf(not espressomd.has_features(*features),
+           "Missing features: " + ", ".join(espressomd.missing_features(*features)))
 
 class AnalyzeEnergy(ut.TestCase):
     system = espressomd.System()
@@ -152,7 +152,7 @@ class AnalyzeEnergy(ut.TestCase):
         # did not verify if this is correct, but looks pretty good (close to 1/2)
         u_p3m = -0.501062398379
         energy = self.system.analysis.energy()
-        self.assertAlmostEqual(energy["total"], u_p3m, delta=1e-7)
+        self.assertAlmostEqual(energy["total"], u_p3m, delta=1e-5)
         self.assertAlmostEqual(energy["kinetic"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["bonded"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 0, delta=1e-7)
