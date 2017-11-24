@@ -122,7 +122,6 @@
 
 #include <boost/multi_array.hpp>
 
-
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -263,10 +262,8 @@ public:
   std::vector<unsigned int>
       newest; // index of the newest entry in each hierarchy level
 
-  double *A_accumulated_average;  // all A values are added up here
-  double *B_accumulated_average;  // all B values are added up here
-  double *A_accumulated_variance; // all A**2 values are added up here
-  double *B_accumulated_variance; // all B**2 values are added up here
+  std::vector<double> A_accumulated_average; // all A values are added up here
+  std::vector<double> B_accumulated_average; // all B values are added up here
   unsigned int n_data; // a counter to calculated averages and variances
 
   int is_from_file;

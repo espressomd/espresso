@@ -252,19 +252,8 @@ void Correlator::initialize() {
   std::fill_n(B.data(), B.num_elements(), std::vector<double>(dim_B, 0));
 
   n_data = 0;
-  A_accumulated_average = (double *)Utils::malloc(dim_A * sizeof(double));
-  A_accumulated_variance = (double *)Utils::malloc(dim_A * sizeof(double));
-  for (k = 0; k < dim_A; k++) {
-    A_accumulated_average[k] = 0;
-    A_accumulated_variance[k] = 0;
-  }
-
-  B_accumulated_average = (double *)Utils::malloc(dim_B * sizeof(double));
-  B_accumulated_variance = (double *)Utils::malloc(dim_B * sizeof(double));
-  for (k = 0; k < dim_B; k++) {
-    B_accumulated_average[k] = 0;
-    B_accumulated_variance[k] = 0;
-  }
+  A_accumulated_average = std::vector<double>(dim_A, 0);
+  B_accumulated_average = std::vector<double>(dim_B, 0);
 
   n_result = tau_lin + 1 + (tau_lin + 1) / 2 * (hierarchy_depth - 1);
   n_sweeps = std::vector<unsigned int>(n_result, 0);
@@ -359,12 +348,10 @@ int Correlator::get_data() {
   n_data++;
   for (unsigned k = 0; k < dim_A; k++) {
     A_accumulated_average[k] += A[0][newest[0]][k];
-    A_accumulated_variance[k] += A[0][newest[0]][k] * A[0][newest[0]][k];
   }
 
   for (unsigned k = 0; k < dim_B; k++) {
     B_accumulated_average[k] += B[0][newest[0]][k];
-    B_accumulated_variance[k] += B[0][newest[0]][k] * B[0][newest[0]][k];
   }
 
   double *temp = (double *)Utils::malloc(dim_corr * sizeof(double));
