@@ -267,31 +267,24 @@ void Correlator::initialize() {
   }
 
   n_result = tau_lin + 1 + (tau_lin + 1) / 2 * (hierarchy_depth - 1);
-  tau = (int *)Utils::malloc(n_result * sizeof(int));
-  n_sweeps = (unsigned int *)Utils::malloc(n_result * sizeof(int));
-  result_data = (double *)Utils::malloc(n_result * dim_corr * sizeof(double));
-  n_vals =
-      (unsigned int *)Utils::malloc(hierarchy_depth * sizeof(unsigned int));
-  std::fill_n(n_vals, hierarchy_depth, 0);
+  n_sweeps = std::vector<unsigned int>(n_result, 0);
+  n_vals = std::vector<unsigned int>(hierarchy_depth, 0);
 
-  // allocate space for convenience pointer to the result
-  result = (double **)Utils::malloc(n_result * sizeof(double *));
+  result.resize(std::array<int, 2>{n_result, dim_corr});
+
   for (i = 0; i < n_result; i++) {
-    n_sweeps[i] = 0;
-    result[i] = &result_data[i * dim_corr];
     for (j = 0; j < dim_corr; j++)
       // and initialize the values
       result[i][j] = 0;
   }
 
-  newest =
-      (unsigned int *)Utils::malloc(hierarchy_depth * sizeof(unsigned int));
-  for (i = 0; i < hierarchy_depth; i++) {
-    newest[i] = tau_lin;
-  }
+  newest = std::vector<unsigned int>(hierarchy_depth, tau_lin);
+
+  tau.resize(n_result);
   for (i = 0; i < tau_lin + 1; i++) {
     tau[i] = i;
   }
+
   for (j = 1; j < hierarchy_depth; j++)
     for (k = 0; k < tau_lin / 2; k++) {
       tau[tau_lin + 1 + (j - 1) * tau_lin / 2 + k] =

@@ -122,6 +122,7 @@
 
 #include <boost/multi_array.hpp>
 
+
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -129,8 +130,6 @@
 #include <memory>
 
 namespace Correlators {
-#define MAXLINELENGTH 2048
-
 #define MIN(a, b) ((a) > (b) ? (b) : (a))
 
 // IDs of different correlations
@@ -249,20 +248,20 @@ public:
 
   // Convenience pointers to our stored data
   // indices: A[level][tau_i][component]
-  int *tau;        // time differences
+  std::vector<int> tau;        // time differences
   boost::multi_array<std::vector<double>, 2> A;
   boost::multi_array<std::vector<double>, 2> B;
 
-  double **result; // output quantity
+  boost::multi_array<double, 2> result; // output quantity
   int n_result;    // the total number of result values
 
   // The actual allocated storage space
-  unsigned int
-      *n_sweeps; // number of correlation sweeps at a particular value of tau
-  unsigned int *n_vals; // number of data values already present at a particular
+  std::vector<unsigned int>
+      n_sweeps; // number of correlation sweeps at a particular value of tau
+  std::vector<unsigned int> n_vals; // number of data values already present at a particular
                         // value of tau
-  unsigned int *newest; // index of the newest entry in each hierarchy level
-  double *result_data;
+  std::vector<unsigned int>
+      newest; // index of the newest entry in each hierarchy level
 
   double *A_accumulated_average;  // all A values are added up here
   double *B_accumulated_average;  // all B values are added up here
