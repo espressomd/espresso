@@ -245,7 +245,7 @@ void cells_re_init(int new_cs) {
   CELL_TRACE(fprintf(stderr, "%d: old cells deallocated\n", this_node));
 
   /* to enforce initialization of the ghost cells */
-  resort_particles = Cells::RESORT_LOCAL;
+  resort_particles = Cells::RESORT_GLOBAL;
 
   on_cell_structure_change();
 }
