@@ -176,14 +176,6 @@ public:
   Correlator();
 
   void initialize();
-  /** Restore a correlation from a checkpoint - the observable has to be created
-   * first ordinary
-  */
-  int read_data_from_file(const char *filename, bool binary);
-  /** Write a checkpoint, saving all history buffers and other important
-   * variables of a correlation in a file
-  */
-  int write_data_to_file(const char *filename, bool binary) const;
 
   /** The function to process a new datapoint of A and B
    *
