@@ -69,19 +69,6 @@ const char double_correlation_get_data_errors[][64] = {
 
 int correlations_autoupdate = 0;
 
-int correlation_update(unsigned int no) {
-  //    return correlations.at(no)->get_data();
-  return 0;
-}
-
-int correlation_update_from_file(unsigned int no) {
-  //  if (!correlations.at(no)->is_from_file)
-  //    return 1;
-  //  while ( ! correlations.at(no)->get_data()) {
-  //  }
-  return 0;
-}
-
 int Correlator::get_correlation_time(double *correlation_time) {
   // We calculate the correlation time for each dim_corr by normalizing the
   // correlation,
@@ -103,15 +90,11 @@ int Correlator::get_correlation_time(double *correlation_time) {
                 A_accumulated_average[j] * B_accumulated_average[j] / n_data /
                     n_data) /
                (result[0][j] / n_sweeps[0]) * dt * (tau[k] - tau[k - 1]);
-      //      C_tau+=(self->result[k][j]/ (double) self->n_sweeps[k] -
-      //      self->A_accumulated_average[j]*self->B_accumulated_average[j]/self->n_data/self->n_data)/(self->result[0][j]/self->n_sweeps[0])*self->dt*(self->tau[k]-self->tau[k-1]);
 
-      //        if (C_tau < i*tau[k]*dt) {
       if (exp(-tau[k] * dt / C_tau) + 2 * sqrt(tau[k] * dt / n_data) >
           exp(-tau[k - 1] * dt / C_tau) + 2 * sqrt(tau[k - 1] * dt / n_data)) {
         correlation_time[j] =
             C_tau * (1 + (2 * (double)tau[k] + 1) / (double)n_data);
-        //          printf("stopped at tau=>%f\n", tau[k]*dt);
         ok_flag = 1;
         break;
       }
@@ -233,9 +216,6 @@ void Correlator::initialize() {
       throw std::runtime_error(init_errors[18]);
     dim_corr = dim_A / 3;
     corr_operation = &fcs_acf;
-    // square_distance will be removed -- will be replaced by strides and blocks
-    //  } else if ( strcmp(corr_operation_name,"square_distance") == 0 ) {
-    //    corr_operation = &square_distance;
   } else if (corr_operation_name == "scalar_product") {
     dim_corr = 1;
     corr_operation = &scalar_product;
@@ -277,13 +257,6 @@ void Correlator::initialize() {
   } else {
     throw std::runtime_error(init_errors[13]);
   }
-
-  //  if (A_fun == &file_data_source_readline && (B_fun ==
-  //  &file_data_source_readline|| autocorrelation)) {
-  //    is_from_file = 1;
-  //  } else {
-  //    is_from_file = 0;
-  //  }
 
   // Memmory allocation
   A_data = (double *)Utils::malloc((tau_lin + 1) * hierarchy_depth * dim_A *
@@ -425,9 +398,6 @@ int Correlator::get_data() {
     // folding)
     newest[i + 1] = (newest[i + 1] + 1) % (tau_lin + 1);
     n_vals[i + 1] += 1;
-    //    printf("t %d compressing level %d no %d and %d to level %d no %d, nv
-    //    %d\n",t, i, (newest[i]+1) % (tau_lin+1),
-    //(newest[i]+2) % (tau_lin+1), i+1, newest[i+1], n_vals[i]);
     (*compressA)(A[i][(newest[i] + 1) % (tau_lin + 1)],
                  A[i][(newest[i] + 2) % (tau_lin + 1)], A[i + 1][newest[i + 1]],
                  dim_A);
@@ -470,7 +440,6 @@ int Correlator::get_data() {
   for (j = 0; j < int(MIN(tau_lin + 1, n_vals[0])); j++) {
     index_new = newest[0];
     index_old = (newest[0] - j + tau_lin + 1) % (tau_lin + 1);
-    //    printf("old %d new %d\n", index_old, index_new);
     error = (corr_operation)(A[0][index_old], dim_A, B[0][index_new], dim_B,
                              temp, dim_corr, correlation_args);
     if (error != 0)
@@ -667,15 +636,12 @@ int Correlator::finalize() {
 
   if (!temp)
     return 4;
-  // printf ("tau_lin:%d, hierarchy_depth: %d\n",tau_lin,hierarchy_depth);
-  // for(ll=0;ll<hierarchy_depth;ll++) printf("n_vals[l=%d]=%d\n",ll,
-  // n_vals[ll]);
+
   for (ll = 0; ll < hierarchy_depth - 1; ll++) {
     if (n_vals[ll] > tau_lin + 1)
       vals_ll = tau_lin + n_vals[ll] % 2;
     else
       vals_ll = n_vals[ll];
-    // printf("\nfinalizing level %d with %d vals initially\n",ll,vals_ll);
 
     while (vals_ll) {
       // Check, if we will want to push the value from the lowest level
@@ -684,9 +650,6 @@ int Correlator::finalize() {
       } else {
         highest_level_to_compress = -1;
       }
-      // printf("have %d values in ll=%d ",vals_ll,ll);
-      // if(highest_level_to_compress<0) printf("Do NOT ");
-      // printf("Compress\n"); fflush(stdout);
 
       i = ll + 1; // lowest level, for which we have to check for compression
       j = 1;
@@ -696,21 +659,16 @@ int Correlator::finalize() {
         // printf("test level %d for compression, n_vals=%d ... ",i,n_vals[i]);
         if (n_vals[i] % 2) {
           if (i < (hierarchy_depth - 1) && n_vals[i] > tau_lin) {
-            // printf("YES\n");
             highest_level_to_compress += 1;
             i++;
           } else {
-            // printf("NO\n");
             break;
           }
         } else {
-          // printf("NO\n");
           break;
         }
       }
       vals_ll -= 1;
-      // printf("ll: %d, highest_lvevel_to_compress:%d\n",ll,
-      // highest_level_to_compress); fflush(stdout);
 
       // Now we know we must make space on the levels
       // 0..highest_level_to_compress
@@ -721,9 +679,7 @@ int Correlator::finalize() {
         // folding)
         newest[i + 1] = (newest[i + 1] + 1) % (tau_lin + 1);
         n_vals[i + 1] += 1;
-        // printf("compressing level %d no %d and %d to level %d no %d, nv
-        // %d\n",i, (newest[i]+1) % (tau_lin+1), (newest[i]+2) % (tau_lin+1),
-        // i+1, newest[i+1], n_vals[i]);
+
         (*compressA)(A[i][(newest[i] + 1) % (tau_lin + 1)],
                      A[i][(newest[i] + 2) % (tau_lin + 1)],
                      A[i + 1][newest[i + 1]], dim_A);
@@ -750,11 +706,6 @@ int Correlator::finalize() {
             result[index_res][k] += temp[k];
           }
         }
-      }
-      // lowest level exploited, go upwards
-      if (!vals_ll) {
-        // printf("reached end of level %d, go up\n",ll);
-        // fflush(stdout);
       }
     }
   }
