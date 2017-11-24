@@ -235,7 +235,6 @@ public:
   // A lot of the following should be private
   Vector3d correlation_args; // additional arguments, which the correlation may
                              // need (currently only used by fcs_acf)
-  unsigned int autocorrelation; // autocorrelation flag
   unsigned int finalized;       // non-zero of correlation is finialized
   int hierarchy_depth;          // maximum level of data compression
   int tau_lin;                  // number of frames in the linear correlation
@@ -304,34 +303,11 @@ private:
 
 extern int correlations_autoupdate;
 
-/** This struct allow to use a file as input for the correlation.
- * It is initalized and then just passed as extra argument to the
- * file_data_source_readline
- * function that extracts floating point values from the particular file.
- *
- */
-class FileDataSource {
-  FileDataSource(char *filename, IntList *columns);
-  int readline(void *xargs, double *A, unsigned int dim_A);
-
-  FILE *f;
-  IntList requested_columns;
-  int n_columns;
-  char last_line[MAXLINELENGTH];
-  int data_left;
-};
-
 /********** The error codes ********************************/
 extern const char init_errors[][64];
 extern const char init_from_checkpoint_errors[][64];
 extern const char file_data_source_init_errors[][64];
 extern const char double_correlation_get_data_errors[][64];
-
-void write_double(FILE *fp, const double *data, unsigned int n, bool binary);
-void write_uint(FILE *fp, const unsigned int *data, unsigned int n,
-                bool binary);
-int read_double(FILE *fp, double *data, unsigned int n, bool binary);
-int read_uint(FILE *fp, unsigned int *data, unsigned int n, bool binary);
 
 int identity(double *input, unsigned int n_input, double *A,
              unsigned int dim_A);

@@ -108,7 +108,7 @@ int Correlator::get_correlation_time(double *correlation_time) {
 }
 
 Correlator::Correlator()
-    : t(0), finalized(0), autoupdate(0), autocorrelation(1), initialized(0),
+    : t(0), finalized(0), autoupdate(0), initialized(0),
       correlation_args{} {}
 
 void Correlator::initialize() {
@@ -138,7 +138,6 @@ void Correlator::initialize() {
     tau_lin = (int)ceil(tau_max / dt);
     if (tau_lin % 2)
       tau_lin += 1;
-    printf("tau_lin: %d\n", tau_lin);
   }
 
   if (tau_lin < 2) {
@@ -163,6 +162,7 @@ void Correlator::initialize() {
 
   dim_A = 0;
   dim_B = 0;
+  auto autocorrelation = 0;
   if (A_obs)
     dim_A = A_obs->n_values();
   if (!B_obs) {
