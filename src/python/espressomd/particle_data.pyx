@@ -63,7 +63,7 @@ cdef class ParticleHandle(object):
         self.particle_data = get_particle_data(self.id)
         if not self.particle_data:
             raise Exception(
-                "Error updating particle data for id " + str(self.id))
+                "Particle with id " + str(self.id) + " does not exist.") 
         else:
             return 0
 
