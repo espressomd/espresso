@@ -60,9 +60,7 @@ struct collective_variable {
                                  // collective_variable_index) and another input
                                  // for a void pointer and returns a double
   // for collective variables of type degree of association
-  std::vector<int> corresponding_acid_types; // is NULL if the current collective variable
-                                 // has nothing to do with a degree of
-                                 // association
+  std::vector<int> corresponding_acid_types;
   int associated_type;
   // for collective variables of type energy
   std::string energy_boundaries_filename;
@@ -290,9 +288,9 @@ private:
   void add_random_vector(double *vector, int len_vector,
                          double length_of_displacement);
   int get_flattened_index_wang_landau(
-      double *current_state, double *collective_variables_minimum_values,
-      double *collective_variables_maximum_values,
-      double *delta_collective_variables_values, int nr_collective_variables);
+      std::vector<double>& current_state, std::vector<double>& collective_variables_minimum_values,
+      std::vector<double>& collective_variables_maximum_values,
+      std::vector<double>& delta_collective_variables_values, int nr_collective_variables);
   void get_random_position_in_box(double *out_pos);
   void
   get_random_position_in_box_enhanced_proposal_of_small_radii(double *out_pos);
