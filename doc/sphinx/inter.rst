@@ -1337,9 +1337,10 @@ follows. For a pair of particles at distance :math:`r` with charges
 .. math:: U_C(r)=C \cdot \frac{q_1 q_2}{r}.
 
 where 
-.. math::
-    C=\frac{1}{4pi \epsilon_0 \epsilon_r} 
-    :label:coulomb_prefactor
+
+.. math::  
+   C=\frac{1}{4pi \epsilon_0 \epsilon_r} 
+   :label: coulomb_prefactor
     
 is a prefactor which can be set by the user. 
 The commonly used Bjerrum length :math:`l_B = e_o^2 / (4 \pi \e\epsilon k_B T)` is the length at which the Coulomb energy between two unit charges is equal to the thermal energy :math:`k_B T`.
@@ -1352,7 +1353,7 @@ some knowledge to use them properly. Uneducated use can result in
 completely unphysical simulations.
 
 Coulomb interactions have to be added to the list of active actors of the system object to become
-active. This is done by calling the add-method of :prop:`espressomd.system.System.actors`.
+active. This is done by calling the add-method of :attr:`espressomd.system.System.actors`.
 Only one electrostatics method can be active at any time.
 
 Note that using the electrostatic interaction also requires assigning charges to
@@ -1372,7 +1373,7 @@ activation to achieve the given accuracy::
     solver = electrostatics.<SOLVER>(prefactor = C, <ADDITIONAL REQUIRED PARAMETERS>)
     system.actors.add(solver)
 
-where the prefactor :math:`C` is defined as in Eqn. :eq:`coulomb_prefactor`.
+where the prefactor :math:`C` is defined as in Eqn. :eq:`coulomb_prefactor`
 
 
 Coulomb P3M
@@ -1503,7 +1504,7 @@ For a list of all parameters see :attr:`espressomd.electrostatics.DH` or :attr:`
 Uses the Debye-Hückel electrostatic potential defined by
 
   .. math:: U^{C-DH} = C \cdot \frac{q_1 q_2 exp(-\kappa r)}{r}\quad \mathrm{for}\quad r<r_{\mathrm{cut}}
-___
+
 where :math:`C` is defined as in Eqn. :eq:`coulomb_prefactor`.
 The Debye-Hückel potential is an approximate method for calculating
 electrostatic interactions, but technically it is treated as other
