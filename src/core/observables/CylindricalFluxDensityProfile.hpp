@@ -8,13 +8,15 @@
 namespace Observables {
 class CylindricalFluxDensityProfile : public CylindricalProfileObservable {
 public:
-  virtual int actual_calculate(PartCfg &partCfg) override {
+  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
+    std::vector<double> res(n_values());
     double bin_volume;
     int r_bin, phi_bin, z_bin;
     for (int id : ids()) {
       auto const ppos = ::Vector<3, double>(folded_position(partCfg[id]));
       auto const ppos_shifted = ppos - center;
-      auto const ppos_cyl = Utils::transform_to_cylinder_coordinates(ppos_shifted);
+      auto const ppos_cyl =
+          Utils::transform_to_cylinder_coordinates(ppos_shifted);
       r_bin = std::floor((ppos_cyl[0] - min_r) / r_bin_size());
       phi_bin = std::floor((ppos_cyl[1] - min_phi) / phi_bin_size());
       z_bin = std::floor((ppos_cyl[2] - min_z) / z_bin_size());
@@ -26,9 +28,9 @@ public:
           z_bin_size() * phi_bin_size() / (2 * PI);
       if (r_bin >= 0 && r_bin < n_r_bins && phi_bin >= 0 &&
           phi_bin < n_phi_bins && z_bin >= 0 && z_bin < n_z_bins) {
-        // Coordinate transform the velocities and divide core velocities by time_step to get MD
-        // units.
-        // v_r = (x * v_x + y * v_y) / sqrt(x^2 + y^2)
+        // Coordinate transform the velocities and divide core velocities by
+        // time_step to get MD units. v_r = (x * v_x + y * v_y) / sqrt(x^2 +
+        // y^2)
         double v_r = (ppos_shifted[0] * partCfg[id].m.v[0] / time_step +
                       ppos_shifted[1] * partCfg[id].m.v[1] / time_step) /
                      std::sqrt(ppos_shifted[0] * ppos_shifted[0] +
@@ -47,12 +49,18 @@ public:
         // and n_i is the size of the ith dimension.
         int ind =
             3 * (r_bin * n_phi_bins * n_z_bins + phi_bin * n_z_bins + z_bin);
-        if (std::isfinite(v_r)) {last_value[ind + 0] += v_r / bin_volume;}
-        if (std::isfinite(v_phi)) {last_value[ind + 1] += v_phi / bin_volume;}
-        if (std::isfinite(v_z)) {last_value[ind + 2] += v_z / bin_volume;}
+        if (std::isfinite(v_r)) {
+          res[ind + 0] += v_r / bin_volume;
+        }
+        if (std::isfinite(v_phi)) {
+          res[ind + 1] += v_phi / bin_volume;
+        }
+        if (std::isfinite(v_z)) {
+          res[ind + 2] += v_z / bin_volume;
+        }
       }
     }
-    return 0;
+    return res;
   }
   virtual int n_values() const override {
     return 3 * n_r_bins * n_phi_bins * n_z_bins;
@@ -69,8 +77,9 @@ private:
     std::array<double, 3> position;
     int index;
     int unravelled_index[4];
-    for (auto it = last_value.begin(); it != last_value.end(); it += 3) {
-      index = std::distance(last_value.begin(), it);
+    std::vector<double> tmp = operator()(partCfg());
+    for (auto it = tmp.begin(); it != tmp.end(); it += 3) {
+      index = std::distance(tmp.begin(), it);
       ::Utils::unravel_index(len_dims, n_dims, index, unravelled_index);
       position = {
           (static_cast<double>(unravelled_index[0]) + 0.5) * bin_sizes[0],

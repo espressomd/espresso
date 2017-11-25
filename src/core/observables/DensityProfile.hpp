@@ -9,7 +9,8 @@ namespace Observables {
 
 class DensityProfile : public ProfileObservable {
 public:
-  virtual int actual_calculate(PartCfg & partCfg) override {
+  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
+    std::vector<double> res(n_values());
     double bin_volume =
         (maxx - minx) * (maxy - miny) * (maxz - minz) / xbins / ybins / zbins;
 
@@ -21,11 +22,10 @@ public:
       int binz = (int)floor(zbins * (ppos[2] - minz) / (maxz - minz));
       if (binx >= 0 && binx < xbins && biny >= 0 && biny < ybins && binz >= 0 &&
           binz < zbins) {
-        last_value[binx * ybins * zbins + biny * zbins + binz] +=
-            1. / bin_volume;
+        res[binx * ybins * zbins + biny * zbins + binz] += 1. / bin_volume;
       }
     }
-    return 0;
+    return res;
   }
 };
 
