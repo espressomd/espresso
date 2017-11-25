@@ -114,8 +114,8 @@ for i in range(n_part / 2 - 1):
 #############################################################
 
 print("\nSCRIPT--->Create p3m\n")
-#p3m = electrostatics.P3M_GPU(bjerrum_length=2.0, accuracy=1e-2)
-p3m = electrostatics.P3M(bjerrum_length=2.0, accuracy=1e-2)
+#p3m = electrostatics.P3M_GPU(prefactor=2.0, accuracy=1e-2)
+p3m = electrostatics.P3M(prefactor=2.0, accuracy=1e-2)
 
 print("\nSCRIPT--->Add actor\n")
 system.actors.add(p3m)

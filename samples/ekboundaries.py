@@ -7,7 +7,7 @@ system.time_step = 0.1
 
 
 ek = electrokinetics.Electrokinetics(
-    lb_density=1, friction=1, agrid=1, viscosity=1, T=1, bjerrum_length=1)
+    lb_density=1, friction=1, agrid=1, viscosity=1, T=1, prefactor=1)
 
 pos = electrokinetics.Species(
     density=0.05, D=0.1, valency=1, ext_force=[0, 0, 1.])
