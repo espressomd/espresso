@@ -1,7 +1,7 @@
 #ifndef OBSERVABLES_PROFIELS_HPP
 #define OBSERVABLES_PROFIELS_HPP
-typedef struct { 
-  IntList* id_list;
+typedef struct {
+  IntList *id_list;
   double minx;
   double maxx;
   double miny;
@@ -11,11 +11,11 @@ typedef struct {
   int xbins;
   int ybins;
   int zbins;
-  void* container;
+  void *container;
 } profile_data;
 
 typedef struct {
-  IntList* id_list;
+  IntList *id_list;
   double minr;
   double maxr;
   double minphi;
@@ -27,9 +27,7 @@ typedef struct {
   int phibins;
   int rbins;
   int zbins;
-  void* container;
+  void *container;
 } radial_profile_data;
 
-
 #endif
-

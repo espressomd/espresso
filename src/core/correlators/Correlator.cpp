@@ -20,7 +20,8 @@
 #include "particle_data.hpp"
 #include <cstring>
 #include "integrate.hpp"
-#include "utils.hpp" 
+#include "utils.hpp"
+#include "partCfg_global.hpp"
 
 #include <limits>
 
@@ -428,15 +429,11 @@ int Correlator::get_data() {
   newest[0] = ( newest[0] + 1 ) % (tau_lin +1); 
   n_vals[0]++;
 
-  if ( A_obs->calculate() != 0 )
-    return 1;
-  // copy the result:
-  memmove(A[0][newest[0]], &(A_obs->last_value[0]), dim_A*sizeof(double));
+    // copy the result:
+  memmove(A[0][newest[0]], (A_obs->operator()(partCfg())).data(), dim_A*sizeof(double));
 
   if (!autocorrelation) {
-    if ( B_obs->calculate() != 0 )
-      return 2;
-    memmove(B[0][newest[0]], &(B_obs->last_value[0]), dim_B*sizeof(double));
+      memmove(B[0][newest[0]], (B_obs->operator()(partCfg())).data(), dim_B*sizeof(double));
   }
 
   // Now we update the cumulated averages and variances of A and B

@@ -17,26 +17,15 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <string>
-#include <fstream>
 #include "Observable.hpp"
 #include "integrate.hpp"
 #include "partCfg_global.hpp"
+#include <fstream>
+#include <string>
 
 namespace Observables {
 
-Observable::Observable()
-    : last_value(n_values()), n(), last_update(0), m_ofile(), m_filename(),
-      m_binary(false) {}
-
-  int Observable::calculate() {
-  // Clear last value
-  last_value.assign(n_values(), 0.0);
-
-  int temp = actual_calculate(partCfg());
-  last_update = sim_time;
-  return temp;
-}
+Observable::Observable() : m_ofile(), m_filename(), m_binary(false) {}
 
 void Observable::set_filename(std::string const &filename, bool binary) {
   if (!filename.empty()) {
@@ -66,7 +55,7 @@ void Observable::write() {
 
 void Observable::do_write() {
   m_ofile << sim_time;
-  for (auto p : last_value)
+  for (auto p : operator()(partCfg()))
     m_ofile << " " << p;
   m_ofile << std::endl;
 }
