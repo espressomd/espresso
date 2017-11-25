@@ -9,7 +9,7 @@ namespace Observables {
 
 class DensityProfile : public ProfileObservable {
 public:
-  virtual std::vector<double> operator()(PartCfg &partCfg) override {
+  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
     double bin_volume =
         (maxx - minx) * (maxy - miny) * (maxz - minz) / xbins / ybins / zbins;

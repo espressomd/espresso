@@ -8,7 +8,7 @@
 namespace Observables {
 class CylindricalFluxDensityProfile : public CylindricalProfileObservable {
 public:
-  virtual std::vector<double> operator()(PartCfg &partCfg) override {
+  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
     double bin_volume;
     int r_bin, phi_bin, z_bin;
