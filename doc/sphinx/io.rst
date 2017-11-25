@@ -109,7 +109,7 @@ To give an example::
     checkpoint.register("system.part")
 
     # ... set charges of particles here ... from espressomd import
-    electrostatics p3m = electrostatics.P3M(bjerrum_length=1.0, accuracy=1e-2)
+    electrostatics p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
     system.actors.add(p3m)
     checkpoint.register("p3m")
 
