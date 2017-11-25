@@ -69,7 +69,7 @@ IF COULOMB_DEBYE_HUECKEL:
         Parameters
         ----------
         prefactor      : float
-                             Electrostatics prefactor
+                             Electrostatics prefactor (see :eq:`coulomb_prefactor`)
         kappa               : float
                               Inverse Debye screening length
         r_cut               : float 
@@ -146,7 +146,7 @@ ELSE:
             Parameters
             ----------
             prefactor  : float
-                             Electrostatics prefactor
+                             Electrostatics prefactor (see :eq:`coulomb_prefactor`)
             kappa           : float
                               Inverse Debye sreening length
             r_cut           : float
@@ -200,7 +200,7 @@ IF P3M == 1:
             Parameters
             ----------
             prefactor : float
-                    Electrostatics prefactor
+                    Electrostatics prefactor (see :eq:`coulomb_prefactor`)
             accuracy : float
                        P3M tunes its parameters to provide this target accuracy.
 
@@ -344,7 +344,7 @@ IF P3M == 1:
                 Parameters
                 ----------
                 prefactor : float
-                           Electrostatics prefactor
+                           Electrostatics prefactor (see :eq:`coulomb_prefactor`)
                 accuracy : float
                            P3M tunes its parameters to provide this target accuracy.
 
@@ -479,7 +479,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             Parameters
             ----------
             prefactor : float
-                    Electrostatics prefactor
+                    Electrostatics prefactor (see :eq:`coulomb_prefactor`)
             accuracy : float
                        Maximal allowed root mean square error regarding the forces
 
@@ -610,7 +610,7 @@ IF ELECTROSTATICS:
         Parameters
         ----------
         prefactor      : float
-                             Electrostatics prefactor
+                             Electrostatics prefactor (see :eq:`coulomb_prefactor`)
         maxWPerror          : float
                               Maximal pairwise error
         far_switch_radius   : float, optional
@@ -682,7 +682,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
         Parameters
         ----------
         prefactor      : float
-                             Electrostatics prefactor
+                             Electrostatics prefactor (see :eq:`coulomb_prefactor`)
         maxWPerror          : float
                               Maximal pairwise error
         far_switch_radius   : float, optional
@@ -765,7 +765,7 @@ IF ELECTROSTATICS:
         Parameters
         ----------
         prefactor          : float
-                                  Electrostatics prefactor
+                                  Electrostatics prefactor (see :eq:`coulomb_prefactor`)
         maxWPerror              : float
                                   Maximal pairwise error
         dielectric              : int, optional
