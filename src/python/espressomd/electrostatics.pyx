@@ -38,10 +38,7 @@ IF ELECTROSTATICS == 1:
                 "Subclasses of ElectrostaticInteraction must define the _set_params_in_es_core() method.")
     
         def _deactivate_method(self):
-            print(self.__class__.__name__,"deactivate")
-            coulomb.method = COULOMB_NONE
-            coulomb_set_prefactor(0)
-            mpi_bcast_coulomb_params()
+            deactivate_coulomb_method()
             handle_errors("Coulom method deactivation")
     
         def Tune(self, **subsetTuneParams):

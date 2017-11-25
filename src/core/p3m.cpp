@@ -2298,8 +2298,8 @@ void p3m_calc_send_mesh() {
 /************************************************/
 
 void p3m_scaleby_box_l() {
-  if (coulomb.prefactor <= 0.0) {
-    runtimeErrorMsg() << "The Coulomb prefactor has to be >0";
+  if (coulomb.prefactor < 0.0) {
+    runtimeErrorMsg() << "The Coulomb prefactor has to be >=0";
     return;
   }
 

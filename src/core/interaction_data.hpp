@@ -869,6 +869,12 @@ void force_and_energy_tables_init();
 #ifdef ELECTROSTATICS
 /** @brief Set the electrostatics prefactor */
 int coulomb_set_prefactor(double prefactor);
+
+
+/** @brief Deactivates the current Coulomb mhthod 
+    This was part of coulomb_set_bjerrum()
+*/
+void deactivate_coulomb_method();
 #endif
 
 #ifdef DIPOLES

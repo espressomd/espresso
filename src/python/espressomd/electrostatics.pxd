@@ -59,6 +59,7 @@ IF ELECTROSTATICS:
                 COULOMB_SCAFACOS
 
         int coulomb_set_prefactor(double prefactor)
+        void deactivate_coulomb_method()
 
         ctypedef struct Coulomb_parameters:
             double prefactor

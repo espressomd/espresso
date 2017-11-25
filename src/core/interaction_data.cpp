@@ -909,6 +909,40 @@ int coulomb_set_prefactor(double prefactor)
   return ES_OK;
 }
 
+/** @brief Deactivates the current Coulomb mhthod 
+    This was part of coulomb_set_bjerrum()
+*/
+void deactivate_coulomb_method() {
+coulomb.prefactor =0;
+switch (coulomb.method) {
+#ifdef P3M
+    case COULOMB_ELC_P3M:
+    case COULOMB_P3M_GPU:
+    case COULOMB_P3M:
+      break;
+#endif
+    case COULOMB_DH:
+      dh_params.r_cut   = 0.0;
+      dh_params.kappa   = 0.0;
+    case COULOMB_RF:
+    case COULOMB_INTER_RF:
+      rf_params.kappa  = 0.0;
+      rf_params.epsilon1   = 0.0;
+      rf_params.epsilon2   = 0.0;
+      rf_params.r_cut   = 0.0;
+      rf_params.B   = 0.0;
+    case COULOMB_MMM1D:
+      mmm1d_params.maxPWerror = 1e40;
+    default: break;
+    }
+ 
+    mpi_bcast_coulomb_params();
+    coulomb.method = COULOMB_NONE;
+    mpi_bcast_coulomb_params();
+
+}
+
+
 
 
 /* =========================================================
