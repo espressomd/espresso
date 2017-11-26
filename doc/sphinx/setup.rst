@@ -138,7 +138,7 @@ the particle becomes
 
 .. math:: D = \frac{\text{temperature}}{\text{gamma}}.
 
-The relaxation time is given by :math:`\text{gamma}/\text{MASS}`, with
+The relaxation time is given by :math:`\text{MASS}/\text{gamma}`, with
 ``MASS`` the particle’s mass.  For a more detailed explanation, refer to
 :cite:`grest86a`.  An anisotropic diffusion coefficient tensor is available to
 simulate anisotropic colloids (rods, etc.) properly. It can be enabled by the
@@ -151,7 +151,7 @@ same value as that for the translation.
 
 A separate rotational diffusion coefficient can be set by inputting
 ``gamma_rotate``.  This also allows one to properly match the translational and
-rotational diffusion coefficients of a sphere. ``ROTATIONAL_INERTIA`` Feature
+rotational diffusion coefficients of a sphere. ``PARTICLE_ANISOTROPY`` feature
 enables an anisotropic rotational diffusion coefficient tensor through
 corresponding friction coefficients. 
 
@@ -395,6 +395,61 @@ See this code snippet for the two commands::
 Be aware that this feature is neither properly examined for all systems
 nor is it maintained regularly. If you use it and notice strange
 behaviour, please contribute to solving the problem.
+
+Brownian thermostat
+~~~~~~~~~~~~~~~~~~~
+
+Brownian thermostat is a formal name of a thermostat enabling the
+Brownian Dynamics feature (see :cite:`schlick2010`).
+
+In order to activate the Brownian thermostat the memberfunction
+:py:attr:`~espressomd.thermostat.Thermostat.set_brownian` of the thermostat
+class :class:`espressomd.thermostat.Thermostat` has to be invoked.
+Best explained in an example:::
+    
+    import espressomd
+    system = espressomd.System()
+    therm  = system.Thermostat()
+
+    therm.set_brownian(kT=1.0, gamma=1.0)
+
+In terms of Python interface and setup, Brownian thermostat derives most 
+properties of the :ref:`Langevin thermostat`. Same feature
+``LANGEVIN_PER_PARTICLE`` is using to control the per-particle
+temperature and the friction coefficient setup. Major differences are
+its internal integrator implementation and other temporal constraints.
+The integrator is still symplectic Velocity Verlet-like integrator.
+It is implemented via a drift part and a random walk of both position and
+velocity. Due to a nature of the Brownian Dynamics method, ``time_step``
+should be large enough compare to the relaxation time
+:math:`\text{MASS}/\text{gamma}`. Note, that with all similarities of
+Langevin and Brownian Dynamics, the Langevin thermostat temporal constraint
+is opposite. Hence, a velocity is restarting from zero at every step,
+velocity at the beginning of the the ``time_step`` interval is dissipated
+and does not contribute to the final one. Another temporal constrain
+which is valid for both Langevin and Brownian Dynamics: conservative forces
+should not change significantly over the ``time_step`` interval.
+
+The position :math:`\Delta_r` and velocity :math:`\Delta_v`
+drift are driven by conservative forces:
+
+.. math:: \Delta r = \frac{\text{F} \cdot \text{time_step}}{\text{gamma}}
+
+.. math:: \Delta v = \frac{\text{F}}{\text{gamma}}
+
+Position random walk variance of each coordinate :math:`\sigma_p^2`
+corresponds to a diffusion within the Wiener process:
+
+.. math:: \sigma_p^2 = 2 D \Delta t
+
+Velocity component random walk variance :math:`\sigma_v^2` is defined by a heat
+velocity component: 
+
+.. math:: \sigma_v^2 = \frac{\text{temperature}}{\text{MASS}}
+
+A rotational motion is implemented similarly. The Velocity Verlet quaternion
+based rotational method implementation is still used, however, modified
+for a larger ``time_step``.
 
 .. _\`\`nemd\`\`\: Setting up non-equilibirum MD:
 
