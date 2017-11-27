@@ -87,7 +87,7 @@ cdef class PScriptInterface(object):
                     raise ValueError(
                         "Value of %s expected to be %i elements" % (name, n_elements))
 
-            # We accept floats for ints (but not the other way round)
+            # We accept ints for floats (but not the other way round)
             if <int> type == <int> DOUBLE and isinstance(kwargs[pname], int):
                 kwargs[pname] = float(kwargs[pname])
             # We already know that the argument is an iterable of the correct length

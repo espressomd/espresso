@@ -75,6 +75,8 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         void set_parameters(map[string, Variant] & parameters) except +
         Variant call_method(const string & name, const map[string, Variant] & parameters) except +
         ObjectId id() except +
+        void set_state(map[string, Variant]) except +
+        map[string, Variant] get_state() except +
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase":
     cdef cppclass CreationPolicy:

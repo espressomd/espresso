@@ -170,6 +170,13 @@ public:
 
     return sp;
   }
+
+  /* Checkpointing functions. */
+  virtual VariantMap get_state() const { return this->get_parameters(); }
+
+  virtual void set_state(VariantMap const &state) {
+    return this->set_parameters(state);
+  }
 };
 
 /**
