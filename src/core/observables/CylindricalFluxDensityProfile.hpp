@@ -72,8 +72,8 @@ private:
     // indices.
     static const int len_dims[4] = {n_r_bins, n_phi_bins, n_z_bins, 3};
     static const int n_dims = 4;
-    static const std::array<double, 3> bin_sizes = {
-        r_bin_size(), phi_bin_size(), z_bin_size()};
+    static const std::array<double, 3> bin_sizes = {{
+        r_bin_size(), phi_bin_size(), z_bin_size()}};
     std::array<double, 3> position;
     int index;
     int unravelled_index[4];
@@ -81,10 +81,10 @@ private:
     for (auto it = tmp.begin(); it != tmp.end(); it += 3) {
       index = std::distance(tmp.begin(), it);
       ::Utils::unravel_index(len_dims, n_dims, index, unravelled_index);
-      position = {
+      position = {{
           (static_cast<double>(unravelled_index[0]) + 0.5) * bin_sizes[0],
           (static_cast<double>(unravelled_index[1]) + 0.5) * bin_sizes[1],
-          (static_cast<double>(unravelled_index[2]) + 0.5) * bin_sizes[2]};
+          (static_cast<double>(unravelled_index[2]) + 0.5) * bin_sizes[2]}};
       m_ofile << position[0] << " " << position[1] << " " << position[2] << " "
               << *it << " " << *(it + 1) << " " << *(it + 2) << "\n";
     }

@@ -60,8 +60,6 @@ BOOST_AUTO_TEST_CASE(iterator_constructor) {
 }
 
 BOOST_AUTO_TEST_CASE(default_constructor_test) {
-  Vector<0, int> v1;
-  BOOST_CHECK(v1.size() == 0);
   Vector<1, int> v2;
   BOOST_CHECK(v2.size() == 1);
   Vector<2, int> v3;

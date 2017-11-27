@@ -389,7 +389,7 @@ void dp3m_init() {
 
     /* FFT */
     P3M_TRACE(
-        fprintf(stderr, "%d: dp3m.rs_mesh ADR=%p\n", this_node, dp3m.rs_mesh));
+        fprintf(stderr, "%d: dp3m.rs_mesh ADR=%p\n", this_node, (void*) dp3m.rs_mesh));
 
     int ca_mesh_size =
         dfft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim, dp3m.local_mesh.margin,
@@ -402,11 +402,11 @@ void dp3m_init() {
           dp3m.rs_mesh_dip[n], ca_mesh_size * sizeof(double));
 
     P3M_TRACE(fprintf(stderr, "%d: dp3m.rs_mesh_dip[0] ADR=%p\n", this_node,
-                      dp3m.rs_mesh_dip[0]));
+                      (void*) dp3m.rs_mesh_dip[0]));
     P3M_TRACE(fprintf(stderr, "%d: dp3m.rs_mesh_dip[1] ADR=%p\n", this_node,
-                      dp3m.rs_mesh_dip[1]));
+                      (void*) dp3m.rs_mesh_dip[1]));
     P3M_TRACE(fprintf(stderr, "%d: dp3m.rs_mesh_dip[2] ADR=%p\n", this_node,
-                      dp3m.rs_mesh_dip[2]));
+                      (void*) dp3m.rs_mesh_dip[2]));
 
     /* k-space part: */
 

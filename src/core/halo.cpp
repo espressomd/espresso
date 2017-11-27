@@ -378,7 +378,7 @@ void halo_communication(HaloCommunicator *hc, char *base) {
 	      s_node = hc->halo_info[n].source_node ;
 	      r_node = hc->halo_info[n].dest_node ;
 	      
-	      HALO_TRACE(fprintf(stderr,"%d: halo_comm sendrecv %d to %d (%d) (%p)\n",this_node,s_node,r_node,REQ_HALO_SPREAD,&datatype));
+	      HALO_TRACE(fprintf(stderr,"%d: halo_comm sendrecv %d to %d (%d) (%p)\n",this_node,s_node,r_node,REQ_HALO_SPREAD,(void*) &datatype));
 
 	      MPI_Sendrecv(s_buffer, 1, datatype, r_node, REQ_HALO_SPREAD,
 			   r_buffer, 1, datatype, s_node, REQ_HALO_SPREAD,
