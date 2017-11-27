@@ -1244,7 +1244,7 @@ void ELC_init() {
     p3m.params.additional_mesh[1] = 0;
     p3m.params.additional_mesh[2] = 0;
   }
-  
+  ELC_on_resort_particles();
 }
 
 void ELC_on_resort_particles() {
