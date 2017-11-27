@@ -69,6 +69,7 @@ public:
       throw std::runtime_error(
           "Correlator cannot be changed after initial setup");
     }
+
     if ((name == "obs1") || (name == "obs2")) {
       auto obs_ptr = get_value<std::shared_ptr<Observables::Observable>>(value);
 
@@ -102,10 +103,12 @@ public:
   std::shared_ptr<::Correlators::Correlator> correlator() {
     return m_correlator;
   }
+
   void check_if_initialized() {
     if (!m_correlator->initialized)
       throw std::runtime_error("The correlator has not yet been initialied.");
   }
+
   virtual Variant call_method(std::string const &method,
                               VariantMap const &parameters) override {
     check_if_initialized();
@@ -130,8 +133,6 @@ public:
       return m_correlator->n_result;
     if (method == "dim_corr")
       return m_correlator->dim_corr;
-    if (method == "hierarchy_depth")
-      return m_correlator->hierarchy_depth;
 
     return {};
   }

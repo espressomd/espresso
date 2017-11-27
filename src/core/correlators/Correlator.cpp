@@ -27,6 +27,51 @@
 
 namespace Correlators {
 
+int identity(double *input, unsigned int n_input, double *A,
+             unsigned int dim_A) {
+  if (n_input != dim_A) {
+    return 5;
+  }
+  for (unsigned i = 0; i < dim_A; i++) {
+    A[i] = input[i];
+  }
+  return 0;
+}
+
+/** The minimal version of compression function */
+std::vector<double> compress_do_nothing(std::vector<double> const &A1,
+                                        std::vector<double> const &A2) {
+  return {};
+}
+
+/** Compress computing arithmetic mean: A_compressed=(A1+A2)/2 */
+std::vector<double> compress_linear(std::vector<double> const &A1,
+                                    std::vector<double> const &A2) {
+  assert(A1.size() == A2.size());
+  std::vector<double> A_compressed(A1.size());
+
+  std::transform(A1.begin(), A1.end(), A2.begin(), A_compressed.begin(),
+                 [](double a, double b) -> double { return 0.5 * (a + b); });
+
+  return A_compressed;
+}
+
+/** Compress discarding the 1st argument and return the 2nd */
+std::vector<double> compress_discard1(std::vector<double> const &A1,
+                                      std::vector<double> const &A2) {
+  assert(A1.size() == A2.size());
+  std::vector<double> A_compressed(A2);
+  return A_compressed;
+}
+
+/** Compress discarding the 2nd argument and return the 1st */
+std::vector<double> compress_discard2(std::vector<double> const &A1,
+                                      std::vector<double> const &A2) {
+  assert(A1.size() == A2.size());
+  std::vector<double> A_compressed(A1);
+  return A_compressed;
+}
+
 /* global variables */
 
 /* Error codes */
@@ -108,8 +153,7 @@ int Correlator::get_correlation_time(double *correlation_time) {
 }
 
 Correlator::Correlator()
-    : t(0), finalized(0), autoupdate(0), initialized(0),
-      correlation_args{} {}
+    : t(0), finalized(0), autoupdate(0), initialized(0), correlation_args{} {}
 
 void Correlator::initialize() {
   unsigned int i, j, k;
@@ -326,12 +370,12 @@ int Correlator::get_data() {
     // folding)
     newest[i + 1] = (newest[i + 1] + 1) % (tau_lin + 1);
     n_vals[i + 1] += 1;
-    (*compressA)(A[i][(newest[i] + 1) % (tau_lin + 1)].data(),
-                 A[i][(newest[i] + 2) % (tau_lin + 1)].data(),
-                 A[i + 1][newest[i + 1]].data(), dim_A);
-    (*compressB)(B[i][(newest[i] + 1) % (tau_lin + 1)].data(),
-                 B[i][(newest[i] + 2) % (tau_lin + 1)].data(),
-                 B[i + 1][newest[i + 1]].data(), dim_B);
+    A[i + 1][newest[i + 1]] =
+        (*compressA)(A[i][(newest[i] + 1) % (tau_lin + 1)],
+                     A[i][(newest[i] + 2) % (tau_lin + 1)]);
+    B[i + 1][newest[i + 1]] =
+        (*compressB)(B[i][(newest[i] + 1) % (tau_lin + 1)],
+                     B[i][(newest[i] + 2) % (tau_lin + 1)]);
   }
 
   newest[0] = (newest[0] + 1) % (tau_lin + 1);
@@ -361,8 +405,9 @@ int Correlator::get_data() {
   for (j = 0; j < int(MIN(tau_lin + 1, n_vals[0])); j++) {
     index_new = newest[0];
     index_old = (newest[0] - j + tau_lin + 1) % (tau_lin + 1);
-    error = (corr_operation)(A[0][index_old].data(), dim_A, B[0][index_new].data(), dim_B,
-                             temp, dim_corr, correlation_args);
+    error =
+        (corr_operation)(A[0][index_old].data(), dim_A, B[0][index_new].data(),
+                         dim_B, temp, dim_corr, correlation_args);
     if (error != 0)
       return error;
     n_sweeps[j]++;
@@ -389,7 +434,7 @@ int Correlator::get_data() {
     }
   }
   free(temp);
-  last_update = sim_time;
+  m_last_update = sim_time;
   return 0;
 }
 
@@ -464,12 +509,10 @@ int Correlator::finalize() {
         newest[i + 1] = (newest[i + 1] + 1) % (tau_lin + 1);
         n_vals[i + 1] += 1;
 
-        (*compressA)(A[i][(newest[i] + 1) % (tau_lin + 1)].data(),
-                     A[i][(newest[i] + 2) % (tau_lin + 1)].data(),
-                     A[i + 1][newest[i + 1]].data(), dim_A);
-        (*compressB)(B[i][(newest[i] + 1) % (tau_lin + 1)].data(),
-                     B[i][(newest[i] + 2) % (tau_lin + 1)].data(),
-                     B[i + 1][newest[i + 1]].data(), dim_B);
+        (*compressA)(A[i][(newest[i] + 1) % (tau_lin + 1)],
+                     A[i][(newest[i] + 2) % (tau_lin + 1)]);
+        (*compressB)(B[i][(newest[i] + 1) % (tau_lin + 1)],
+                     B[i][(newest[i] + 2) % (tau_lin + 1)]);
       }
       newest[ll] = (newest[ll] + 1) % (tau_lin + 1);
 
@@ -502,7 +545,7 @@ void Correlator::start_auto_update() {
   if (update_frequency > 0) {
     correlations_autoupdate = 1;
     autoupdate = 1;
-    last_update = sim_time;
+    m_last_update = sim_time;
   } else {
     throw std::runtime_error(
         "Could not start autoupdate: update frequency not set");
@@ -535,46 +578,6 @@ std::vector<double> Correlator::get_correlation() {
     }
   }
   return res;
-}
-
-int identity(double *input, unsigned int n_input, double *A,
-             unsigned int dim_A) {
-  if (n_input != dim_A) {
-    return 5;
-  }
-  for (unsigned i = 0; i < dim_A; i++) {
-    A[i] = input[i];
-  }
-  return 0;
-}
-
-int compress_do_nothing(double *A1, double *A2, double *A_compressed,
-                        unsigned int dim_A) {
-  return 0;
-}
-
-int compress_linear(double *A1, double *A2, double *A_compressed,
-                    unsigned int dim_A) {
-  unsigned int i;
-  for (i = 0; i < dim_A; i++)
-    A_compressed[i] = 0.5 * (A1[i] + A2[i]);
-  return 0;
-}
-
-int compress_discard1(double *A1, double *A2, double *A_compressed,
-                      unsigned int dim_A) {
-  unsigned int i;
-  for (i = 0; i < dim_A; i++)
-    A_compressed[i] = A2[i];
-  return 0;
-}
-
-int compress_discard2(double *A1, double *A2, double *A_compressed,
-                      unsigned int dim_A) {
-  unsigned int i;
-  for (i = 0; i < dim_A; i++)
-    A_compressed[i] = A1[i];
-  return 0;
 }
 
 int obs_nothing(void *params, double *A, unsigned int n_A) { return 0; }

@@ -245,6 +245,22 @@ public:
   void start_auto_update();
   void stop_auto_update();
 
+  double last_update() const {
+    return m_last_update;
+  }
+
+  std::string compressA_name;
+  std::string compressB_name;
+  int autoupdate;
+  std::string corr_operation_name;
+
+  int initialized;
+  int n_result;    // the total number of result values
+
+  std::shared_ptr<Observables::Observable> A_obs;
+  std::shared_ptr<Observables::Observable> B_obs;
+
+private:
   // Convenience pointers to our stored data
   // indices: A[level][tau_i][component]
   std::vector<int> tau;        // time differences
@@ -252,7 +268,6 @@ public:
   boost::multi_array<std::vector<double>, 2> B;
 
   boost::multi_array<double, 2> result; // output quantity
-  int n_result;    // the total number of result values
 
   // The actual allocated storage space
   std::vector<unsigned int>
@@ -266,35 +281,21 @@ public:
   std::vector<double> B_accumulated_average; // all B values are added up here
   unsigned int n_data; // a counter to calculated averages and variances
 
-  int is_from_file;
-  int autoupdate;
-  double last_update;
+  double m_last_update;
 
-  std::string compressA_name;
-  std::string compressB_name;
-  std::string corr_operation_name;
-
-  int initialized;
-
-  std::shared_ptr<Observables::Observable> A_obs;
-  std::shared_ptr<Observables::Observable> B_obs;
-
-private:
   unsigned int dim_A; // dimensionality of A
   unsigned int dim_B;
-  // Functions producing observables A and B from the input data
-  int A_obs_id;
-  int B_obs_id;
 
   int (*corr_operation)(double *A, unsigned int dim_A, double *B,
                         unsigned int dim_B, double *C, unsigned int dim_corr,
                         Vector3d);
 
+  using compression_function = std::vector<double> (*)(
+      std::vector<double> const &A1, std::vector<double> const &A2);
+
   // compressing functions
-  int (*compressA)(double *A1, double *A2, double *A_compressed,
-                   unsigned int dim_A);
-  int (*compressB)(double *B1, double *B2, double *A_compressed,
-                   unsigned int dim_B);
+  compression_function compressA;
+  compression_function compressB;
 };
 
 extern int correlations_autoupdate;
@@ -307,27 +308,6 @@ extern const char double_correlation_get_data_errors[][64];
 
 int identity(double *input, unsigned int n_input, double *A,
              unsigned int dim_A);
-
-/* *************************
-*
-* Functions for compressing data
-*
-**************************/
-/** The minimal version of compression function */
-int compress_do_nothing(double *A1, double *A2, double *A_compressed,
-                        unsigned int dim_A);
-
-/** Compress computing arithmetic mean: A_compressed=(A1+A2)/2 */
-int compress_linear(double *A1, double *A2, double *A_compressed,
-                    unsigned int dim_A);
-
-/** Compress discarding the 1st argument and return the 2nd */
-int compress_discard1(double *A1, double *A2, double *A_compressed,
-                      unsigned int dim_A);
-
-/** Compress discarding the 2nd argument and return the 1st */
-int compress_discard2(double *A1, double *A2, double *A_compressed,
-                      unsigned int dim_A);
 
 /* *************************
 *
