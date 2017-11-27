@@ -286,9 +286,10 @@ private:
   unsigned int dim_A; // dimensionality of A
   unsigned int dim_B;
 
-  int (*corr_operation)(double *A, unsigned int dim_A, double *B,
-                        unsigned int dim_B, double *C, unsigned int dim_corr,
-                        Vector3d);
+  using correlation_operation = std::vector<double> (*)(
+      std::vector<double> const &, std::vector<double> const &, Vector3d);
+
+  correlation_operation corr_operation;
 
   using compression_function = std::vector<double> (*)(
       std::vector<double> const &A1, std::vector<double> const &A2);
@@ -305,47 +306,6 @@ extern const char init_errors[][64];
 extern const char init_from_checkpoint_errors[][64];
 extern const char file_data_source_init_errors[][64];
 extern const char double_correlation_get_data_errors[][64];
-
-int identity(double *input, unsigned int n_input, double *A,
-             unsigned int dim_A);
-
-/* *************************
-*
-* Functions for correlation operations
-*
-**************************/
-int scalar_product(double *A, unsigned int dim_A, double *B, unsigned int dim_B,
-                   double *C, unsigned int dim_corr, Vector3d);
-
-int componentwise_product(double *A, unsigned int dim_A, double *B,
-                          unsigned int dim_B, double *C, unsigned int dim_corr,
-                          Vector3d);
-
-int complex_conjugate_product(double *A, unsigned int dim_A, double *B,
-                              unsigned int dim_B, double *C,
-                              unsigned int dim_corr, Vector3d);
-
-int tensor_product(double *A, unsigned int dim_A, double *B, unsigned int dim_B,
-                   double *C, unsigned int dim_corr, Vector3d);
-
-int fcs_acf(double *A, unsigned int dim_A, double *B, unsigned int dim_B,
-            double *C, unsigned int dim_corr, Vector3d correlation_args);
-
-int square_distance_componentwise(double *A, unsigned int dim_A, double *B,
-                                  unsigned int dim_B, double *C,
-                                  unsigned int dim_corr, Vector3d);
-
-int square_distance(double *A, unsigned int dim_A, double *B,
-                    unsigned int dim_B, double *C, unsigned int dim_corr,
-                    Vector3d);
-
-int square_distance_cond(double *A, unsigned int dim_A, double *B,
-                         unsigned int dim_B, double *C, unsigned int dim_corr,
-                         Vector3d);
-
-int square_distance_cond_chain(double *A, unsigned int dim_A, double *B,
-                               unsigned int dim_B, double *C,
-                               unsigned int dim_corr, Vector3d);
 
 } // Namespace correlators
 #endif

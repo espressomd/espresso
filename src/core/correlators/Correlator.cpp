@@ -26,18 +26,6 @@
 #include <limits>
 
 namespace Correlators {
-
-int identity(double *input, unsigned int n_input, double *A,
-             unsigned int dim_A) {
-  if (n_input != dim_A) {
-    return 5;
-  }
-  for (unsigned i = 0; i < dim_A; i++) {
-    A[i] = input[i];
-  }
-  return 0;
-}
-
 /** The minimal version of compression function */
 std::vector<double> compress_do_nothing(std::vector<double> const &A1,
                                         std::vector<double> const &A2) {
@@ -70,6 +58,98 @@ std::vector<double> compress_discard2(std::vector<double> const &A1,
   assert(A1.size() == A2.size());
   std::vector<double> A_compressed(A1);
   return A_compressed;
+}
+
+std::vector<double> scalar_product(std::vector<double> const &A,
+                                   std::vector<double> const &B, Vector3d) {
+  if (A.size() != B.size()) {
+    throw std::runtime_error(
+        "Error in scalar product: The vector sizes do not match");
+  }
+
+  return std::vector<double>(
+      1, std::inner_product(A.begin(), A.end(), B.begin(), 0.0));
+}
+
+std::vector<double> componentwise_product(std::vector<double> const &A,
+                                          std::vector<double> const &B,
+                                          Vector3d) {
+  std::vector<double> C(A.size());
+  if (!(A.size() == B.size())) {
+    throw std::runtime_error(
+        "Error in componentwise product: The vector sizes do not match");
+  }
+
+  std::transform(A.begin(), A.end(), B.begin(), C.begin(),
+                 std::multiplies<double>());
+
+  return C;
+}
+
+std::vector<double> tensor_product(std::vector<double> const &A,
+                                   std::vector<double> const &B, Vector3d) {
+  std::vector<double> C(A.size() * B.size());
+  auto C_it = C.begin();
+
+  for (auto A_it = A.begin(); A_it != A.begin(); ++A_it) {
+    for (auto B_it = B.begin(); B_it != B.end(); ++B_it) {
+      *(C_it++) = *A_it * *B_it;
+    }
+  }
+  assert(C_it == C.end());
+
+  return C;
+}
+
+std::vector<double> square_distance_componentwise(std::vector<double> const &A,
+                                                  std::vector<double> const &B,
+                                                  Vector3d) {
+  if (!(A.size() == B.size())) {
+    throw std::runtime_error(
+        "Error in square distance componentwise: The vector sizes do not "
+        "match.");
+  }
+
+  std::vector<double> C(A.size());
+
+  std::transform(
+      A.begin(), A.end(), B.begin(), C.begin(),
+      [](double a, double b) -> double { return (a - b) * (a - b); });
+
+  return C;
+}
+
+// note: the argument name wsquare denotes that it value is w^2 while the user
+// sets w
+std::vector<double> fcs_acf(std::vector<double> const &A,
+                            std::vector<double> const &B,
+                            Vector3d wsquare) {
+  if (!(A.size() == B.size())) {
+    throw std::runtime_error(
+        "Error in square distance componentwise: The vector sizes do not "
+        "match.");
+  }
+
+  auto const C_size = A.size() / 3;
+  if (3 * C_size == A.size()) {
+    throw std::runtime_error("Invalid dimensions.");
+  }
+
+  std::vector<double> C(C_size, 0);
+
+  for (unsigned i = 0; i < C_size; i++) {
+    for (int j = 0; j < 3; j++) {
+      auto const &a = A[3 * i + j];
+      auto const &b = B[3 * i + j];
+
+      C[i] -= (a - b) * (a - b) / wsquare[j];
+    }
+  }
+
+  std::transform(C.begin(), C.end(), C.begin(),
+                 [](double c) -> double { return std::exp(c); });
+
+  return C;
 }
 
 /* global variables */
@@ -226,10 +306,6 @@ void Correlator::initialize() {
   } else if (corr_operation_name == "componentwise_product") {
     dim_corr = dim_A;
     corr_operation = &componentwise_product;
-    correlation_args = Vector3d{0, 0, 0};
-  } else if (corr_operation_name == "complex_conjugate_product") {
-    dim_corr = dim_A;
-    corr_operation = &complex_conjugate_product;
     correlation_args = Vector3d{0, 0, 0};
   } else if (corr_operation_name == "tensor_product") {
     dim_corr = dim_A * dim_B;
@@ -398,18 +474,14 @@ int Correlator::get_data() {
     B_accumulated_average[k] += B[0][newest[0]][k];
   }
 
-  double *temp = (double *)Utils::malloc(dim_corr * sizeof(double));
-  if (!temp)
-    return 4;
   // Now update the lowest level correlation estimates
   for (j = 0; j < int(MIN(tau_lin + 1, n_vals[0])); j++) {
     index_new = newest[0];
     index_old = (newest[0] - j + tau_lin + 1) % (tau_lin + 1);
-    error =
-        (corr_operation)(A[0][index_old].data(), dim_A, B[0][index_new].data(),
-                         dim_B, temp, dim_corr, correlation_args);
-    if (error != 0)
-      return error;
+    auto const temp =
+        (corr_operation)(A[0][index_old], B[0][index_new], correlation_args);
+    assert(temp.size() == dim_corr);
+
     n_sweeps[j]++;
     for (unsigned k = 0; k < dim_corr; k++) {
       result[j][k] += temp[k];
@@ -422,18 +494,17 @@ int Correlator::get_data() {
       index_new = newest[i];
       index_old = (newest[i] - j + tau_lin + 1) % (tau_lin + 1);
       index_res = tau_lin + (i - 1) * tau_lin / 2 + (j - tau_lin / 2 + 1) - 1;
-      error = (corr_operation)(A[i][index_old].data(), dim_A,
-                               B[i][index_new].data(), dim_B, temp, dim_corr,
-                               correlation_args);
-      if (error != 0)
-        return error;
+      auto const temp =
+          (corr_operation)(A[i][index_old], B[i][index_new], correlation_args);
+      assert(temp.size() == dim_corr);
+
       n_sweeps[index_res]++;
       for (unsigned k = 0; k < dim_corr; k++) {
         result[index_res][k] += temp[k];
       }
     }
   }
-  free(temp);
+
   m_last_update = sim_time;
   return 0;
 }
@@ -458,13 +529,8 @@ int Correlator::finalize() {
   unsigned tau_lin = tau_lin;
   int hierarchy_depth = hierarchy_depth;
 
-  double *temp = (double *)Utils::malloc(dim_corr * sizeof(double));
-
   // make a flag that the correlation is finalized
   finalized = 1;
-
-  if (!temp)
-    return 4;
 
   for (ll = 0; ll < hierarchy_depth - 1; ll++) {
     if (n_vals[ll] > tau_lin + 1)
@@ -524,11 +590,11 @@ int Correlator::finalize() {
           index_old = (newest[i] - j + tau_lin + 1) % (tau_lin + 1);
           index_res =
               tau_lin + (i - 1) * tau_lin / 2 + (j - tau_lin / 2 + 1) - 1;
-          error = (corr_operation)(A[i][index_old].data(), dim_A,
-                                   B[i][index_new].data(), dim_B, temp,
-                                   dim_corr, correlation_args);
-          if (error != 0)
-            return error;
+
+          auto const temp = (corr_operation)(A[i][index_old], B[i][index_new],
+                                       correlation_args);
+          assert(temp.size() == dim_corr);
+
           n_sweeps[index_res]++;
           for (unsigned k = 0; k < dim_corr; k++) {
             result[index_res][k] += temp[k];
@@ -537,7 +603,6 @@ int Correlator::finalize() {
       }
     }
   }
-  free(temp);
   return 0;
 }
 
@@ -578,104 +643,6 @@ std::vector<double> Correlator::get_correlation() {
     }
   }
   return res;
-}
-
-int obs_nothing(void *params, double *A, unsigned int n_A) { return 0; }
-
-int scalar_product(double *A, unsigned int dim_A, double *B, unsigned int dim_B,
-                   double *C, unsigned int dim_corr, Vector3d) {
-  double temp = 0;
-  unsigned int i;
-  if (!(dim_A == dim_B && dim_corr == 1)) {
-    printf("Error in scalar product: The vector sizes do not match");
-    return 5;
-  }
-  for (i = 0; i < dim_A; i++) {
-    temp += A[i] * B[i];
-  }
-  C[0] = temp;
-  return 0;
-}
-
-int componentwise_product(double *A, unsigned int dim_A, double *B,
-                          unsigned int dim_B, double *C, unsigned int dim_corr,
-                          Vector3d) {
-  unsigned int i;
-  if (!(dim_A == dim_B)) {
-    printf("Error in componentwise product: The vector sizes do not match");
-    return 5;
-  }
-  if (!(dim_A == dim_corr)) {
-    printf("Error in componentwise product: The vector sizes do not match");
-    return 5;
-  }
-  for (i = 0; i < dim_A; i++) {
-    C[i] = A[i] * B[i];
-  }
-  return 0;
-}
-
-int complex_conjugate_product(double *A, unsigned int dim_A, double *B,
-                              unsigned int dim_B, double *C,
-                              unsigned int dim_corr, Vector3d) {
-  unsigned int i, j;
-  if (!(dim_A == dim_B)) {
-    printf("Error in complex_conjugate product: The vector sizes do not match");
-    return 5;
-  }
-  j = 0;
-  for (i = 0; i < dim_A / 2; i++) {
-    C[j] = A[j] * B[j] + A[j + 1] * B[j + 1];
-    C[j + 1] = A[j + 1] * B[j] - A[j] * B[j + 1];
-    j = j + 2;
-  }
-  return 0;
-}
-
-int tensor_product(double *A, unsigned int dim_A, double *B, unsigned int dim_B,
-                   double *C, unsigned int dim_corr, Vector3d) {
-  unsigned int i, j;
-  for (i = 0; i < dim_A; i++) {
-    for (j = 0; j < dim_B; j++) {
-      C[i * dim_B + j] = A[i] * B[j];
-    }
-  }
-  return 0;
-}
-
-int square_distance_componentwise(double *A, unsigned int dim_A, double *B,
-                                  unsigned int dim_B, double *C,
-                                  unsigned int dim_corr, Vector3d) {
-  unsigned int i;
-  if (!(dim_A == dim_B)) {
-    printf("Error in square distance componentwise: The vector sizes do not "
-           "match\n");
-    return 5;
-  }
-  for (i = 0; i < dim_A; i++) {
-    C[i] = (A[i] - B[i]) * (A[i] - B[i]);
-  }
-  return 0;
-}
-
-// note: the argument name wsquare denotes that it value is w^2 while the user
-// sets w
-int fcs_acf(double *A, unsigned int dim_A, double *B, unsigned int dim_B,
-            double *C, unsigned int dim_corr, Vector3d wsquare) {
-  if (!(dim_A == dim_B)) {
-    return 5;
-  }
-  if (dim_A / dim_corr != 3) {
-    return 6;
-  }
-  for (unsigned i = 0; i < dim_corr; i++)
-    C[i] = 0;
-  for (unsigned i = 0; i < dim_A; i++) {
-    C[i / 3] -= ((A[i] - B[i]) * (A[i] - B[i])) / wsquare[i % 3];
-  }
-  for (unsigned i = 0; i < dim_corr; i++)
-    C[i] = exp(C[i]);
-  return 0;
 }
 
 } // Namespace Correlators
