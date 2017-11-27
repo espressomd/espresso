@@ -40,8 +40,8 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi
                    DEPENDS gen_pxiconfig
                    )
 
-include_directories(${PYTHON_INCLUDE_DIRS})
-include_directories(${NUMPY_INCLUDE_DIR})
+include_directories(SYSTEM ${PYTHON_INCLUDE_DIRS})
+include_directories(SYSTEM ${NUMPY_INCLUDE_DIR})
 
 add_custom_target(espressomd)
 add_custom_command(OUTPUT code_info.pyx
@@ -106,7 +106,6 @@ foreach(cython_file ${cython_SRC})
       elseif( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" )
           set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS "-Wno-pedantic -Wno-#warnings -Wno-sometimes-uninitialized")
       else()
-          message(WARNING "Need to disable warnings for ${CMAKE_CXX_COMPILER_ID}")
           set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS "-Wno-pedantic")
       endif()
       target_link_libraries(${basename} EspressoCore EspressoScriptInterface ${LIBRARIES})
