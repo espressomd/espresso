@@ -921,25 +921,13 @@ double ReactionEnsemble::calculate_delta_degree_of_association(collective_variab
 /**
 * Initializes the Wang-Landau histogram.
 */
-void ReactionEnsemble::initialize_histogram(){
+int ReactionEnsemble::get_num_needed_bins(){
 	int needed_bins=1;
 	for(int CV_i=0;CV_i<m_current_wang_landau_system.collective_variables.size();CV_i++){
 		collective_variable& current_collective_variable=m_current_wang_landau_system.collective_variables[CV_i];
 		needed_bins=needed_bins*(int((current_collective_variable.CV_maximum-current_collective_variable.CV_minimum)/current_collective_variable.delta_CV)+1); // plus 1 needed for degrees of association related part of histogram (think of only one acid particle)
 	}
-	m_current_wang_landau_system.histogram.resize(needed_bins); //initialize new values with 0
-}
-
-/**
-* Initializes the Wang-Landau potential.
-*/
-void ReactionEnsemble::initialize_wang_landau_potential(){
-	int needed_bins=1;
-	for(int CV_i=0;CV_i<m_current_wang_landau_system.collective_variables.size();CV_i++){
-		collective_variable& current_collective_variable=m_current_wang_landau_system.collective_variables[CV_i];
-		needed_bins*=int((current_collective_variable.CV_maximum-current_collective_variable.CV_minimum)/current_collective_variable.delta_CV)+1; // plus 1 needed for degrees of association related part of histogram (think of only one acid particle) 
-	}
-	m_current_wang_landau_system.wang_landau_potential.resize(needed_bins,0); //initialize new values with 0
+    return needed_bins;
 }
 
 /**
@@ -1027,10 +1015,11 @@ int ReactionEnsemble::initialize_wang_landau(){
 	m_current_wang_landau_system.nr_subindices_of_collective_variable[new_collective_variable_i]=int((m_current_wang_landau_system.collective_variables[new_collective_variable_i].CV_maximum-m_current_wang_landau_system.collective_variables[new_collective_variable_i].CV_minimum)/m_current_wang_landau_system.collective_variables[new_collective_variable_i].delta_CV)+1; //+1 for collecive variables which are of type degree of association
 
 	//construct (possibly higher dimensional) histogram over Gamma (the room which should be equally sampled when the wang-landau algorithm has converged)
-	initialize_histogram();
+	int needed_bins=get_num_needed_bins();
+	m_current_wang_landau_system.histogram.resize(needed_bins,0); //initialize new values with 0
 
 	//construct (possibly higher dimensional) wang_landau potential over Gamma (the room which should be equally sampled when the wang-landau algorithm has converged)
-	initialize_wang_landau_potential();
+	m_current_wang_landau_system.wang_landau_potential.resize(needed_bins,0); //initialize new values with 0
 	
 	m_current_wang_landau_system.used_bins=m_current_wang_landau_system.wang_landau_potential.size(); //initialize for 1/t wang_landau algorithm
 	

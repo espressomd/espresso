@@ -336,8 +336,7 @@ private:
       int collective_variable_index_energy_observable); // needed for energy
                                                         // collective variable
   double calculate_delta_degree_of_association(collective_variable& current_collective_variable);
-  void initialize_histogram();
-  void initialize_wang_landau_potential();
+  int get_num_needed_bins();
   void reset_histogram();
   int m_WL_accepted_moves = 0;
   int m_WL_tries = 0;
