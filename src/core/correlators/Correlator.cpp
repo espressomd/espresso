@@ -341,7 +341,7 @@ void Correlator::initialize() {
 
   // Choose the compression function
   if (compressA_name == "") { // this is the default
-    compressA_name = strdup("discard2");
+    compressA_name = "discard2";
     compressA = &compress_discard2;
   } else if (compressA_name == "discard2") {
     compressA = &compress_discard2;
@@ -429,7 +429,6 @@ int Correlator::get_data() {
     if (((t - ((tau_lin + 1) * ((1 << (i + 1)) - 1) + 1)) % (1 << (i + 1)) ==
          0)) {
       if (i < (int(hierarchy_depth) - 1) && n_vals[i] > tau_lin) {
-
         highest_level_to_compress += 1;
         i++;
       } else

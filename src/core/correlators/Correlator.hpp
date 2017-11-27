@@ -261,8 +261,6 @@ public:
   std::shared_ptr<Observables::Observable> B_obs;
 
 private:
-  // Convenience pointers to our stored data
-  // indices: A[level][tau_i][component]
   std::vector<int> tau;        // time differences
   boost::multi_array<std::vector<double>, 2> A;
   boost::multi_array<std::vector<double>, 2> B;
