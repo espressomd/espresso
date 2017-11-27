@@ -82,6 +82,7 @@ IF ELECTROSTATICS and P3M:
                                   Cut off radius, use with care, intended for testing purposes. 
         """
 
+
         def validate_params(self):
             default_params = self.default_params()
             check_type_or_throw_except(

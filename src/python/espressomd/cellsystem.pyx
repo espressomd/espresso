@@ -207,7 +207,6 @@ cdef class CellSystem(object):
                 node_grid[2] = _node_grid[2]
                 mpi_err = mpi_bcast_parameter(FIELD_NODEGRID)
                 handle_errors("mpi_bcast_parameter failed")
-                #raise Exception('node_grid is not settable by the user.')
                 if mpi_err:
                     raise Exception("Broadcasting the node grid failed")
 

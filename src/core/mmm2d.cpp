@@ -1013,7 +1013,7 @@ static void setup_PQ(int p, int q, double omega, double fac)
   double layer_top;
   double e, e_di_l, e_di_h;
   double *llclcblk;
-  double *lclimgebot=NULL, *lclimgetop=NULL;
+  double *lclimgebot=nullptr, *lclimgetop=nullptr;
   int e_size = 4, size = 8;
 
   if (mmm2d_params.dielectric_contrast_on)
