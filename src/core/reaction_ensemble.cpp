@@ -8,7 +8,7 @@
 
 #include "reaction_ensemble.hpp"
 #include "random.hpp" //for random numbers
-#include "energy.hpp"	//for energies
+#include "energy.hpp"	//for calculate_current_potential_energy_of_system
 #include "integrate.hpp" //for time_step
 #include <fstream> //for std::ifstream, std::ofstream for input output into files
 #include "utils/Histogram.hpp"
@@ -140,13 +140,6 @@ bool ReactionEnsemble::all_reactant_particles_exist(int reaction_id) {
 		}
 	}
 	return enough_particles;
-}
-
-/**
-* Calculates the current potential energy of the system and returns it. The function arguments are only dummy arguments needed to provide the same function signature as the function calculate_degree_of_association()
-*/
-double calculate_current_potential_energy_of_system_wrap(int unimportant_int, void* unimportant_wang_landau_system){
-	return calculate_current_potential_energy_of_system();
 }
 
 /**
@@ -289,7 +282,7 @@ bool ReactionEnsemble::generic_oneway_reaction(int reaction_id, int reaction_mod
 	}
 	
 	//calculate potential energy
-	const double E_pot_old=calculate_current_potential_energy_of_system_wrap(0, nullptr); //only consider potential energy since we assume that the kinetic part drops out in the process of calculating ensemble averages (kinetic part may be seperated and crossed out)
+	const double E_pot_old=calculate_current_potential_energy_of_system(); //only consider potential energy since we assume that the kinetic part drops out in the process of calculating ensemble averages (kinetic part may be seperated and crossed out)
 	
 	//find reacting molecules in reactants and save their properties for later recreation if step is not accepted
 	//do reaction
@@ -306,7 +299,7 @@ bool ReactionEnsemble::generic_oneway_reaction(int reaction_id, int reaction_mod
 	const int number_of_saved_properties=3; //save p_id, charge and type of the reactant particle, only thing we need to hide the particle and recover it
 	make_reaction_attempt(current_reaction, changed_particles_properties, p_ids_created_particles, hidden_particles_properties);
 	
-	const double E_pot_new=calculate_current_potential_energy_of_system_wrap(0, nullptr);
+	const double E_pot_new=calculate_current_potential_energy_of_system();
 
 
 	//Wang-Landau begin
@@ -683,7 +676,7 @@ bool ReactionEnsemble::do_global_mc_move_for_particles_of_type(int type, int sta
 	}
 
 
-	const double E_pot_old=calculate_current_potential_energy_of_system_wrap(0, nullptr);
+	const double E_pot_old=calculate_current_potential_energy_of_system();
 
 	std::vector<double> particle_positions(3*particle_number_of_type);
 	int changed_particle_counter=0;
@@ -757,7 +750,7 @@ bool ReactionEnsemble::do_global_mc_move_for_particles_of_type(int type, int sta
 		
 	}
 	
-	const double E_pot_new=calculate_current_potential_energy_of_system_wrap(0, nullptr);
+	const double E_pot_new=calculate_current_potential_energy_of_system();
 	double beta =1.0/m_current_reaction_system.temperature;
 	
 	int new_state_index;
@@ -877,7 +870,7 @@ int ReactionEnsemble::get_flattened_index_wang_landau_of_current_state(){
 	//get current state
 	std::vector<double> current_state(nr_collective_variables);
 	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
-		current_state[CV_i]=(m_current_wang_landau_system.collective_variables[CV_i].determine_current_state_in_collective_variable_with_index)(CV_i,&m_current_wang_landau_system);
+		current_state[CV_i]=m_current_wang_landau_system.collective_variables[CV_i].determine_current_state_in_current_collective_variable();
 	}
 	//get collective_variables_minimum_values
 	std::vector<double> collective_variables_minimum_values(nr_collective_variables);
@@ -947,27 +940,6 @@ void ReactionEnsemble::initialize_wang_landau_potential(){
 		needed_bins*=int((current_collective_variable.CV_maximum-current_collective_variable.CV_minimum)/current_collective_variable.delta_CV)+1; // plus 1 needed for degrees of association related part of histogram (think of only one acid particle) 
 	}
 	m_current_wang_landau_system.wang_landau_potential.resize(needed_bins,0); //initialize new values with 0
-}
-
-/**
-* Returns the degree of association for a given index of the collective variable. This is needed since you may use multiple degrees of association as collective variable for the Wang-Landau algorithm.
-*/
-double calculate_degree_of_association(int index_of_current_collective_variable, void* _m_current_wang_landau_system){
-    wang_landau_system* current_wang_landau_system=(wang_landau_system*) _m_current_wang_landau_system;
-	collective_variable current_collective_variable=current_wang_landau_system->collective_variables[index_of_current_collective_variable];
-	int total_number_of_corresponding_acid=0;
-	for(int corresponding_type_i=0; corresponding_type_i<current_collective_variable.corresponding_acid_types.size();corresponding_type_i++){
-		int num_of_current_type;
-		number_of_particles_with_type(current_collective_variable.corresponding_acid_types[corresponding_type_i],&num_of_current_type);
-		total_number_of_corresponding_acid+=num_of_current_type;
-	}
-	if(total_number_of_corresponding_acid==0){
-	    throw std::runtime_error("Have you forgotten to specify all corresponding acid types? Total particle number of corresponding acid type is zero\n");
-	}
-	int num_of_associated_acid;
-	number_of_particles_with_type(current_collective_variable.associated_type,&num_of_associated_acid);
-	double degree_of_association=double(num_of_associated_acid)/total_number_of_corresponding_acid; //cast to double because otherwise any fractional part is lost
-	return degree_of_association;
 }
 
 /**
@@ -1083,21 +1055,7 @@ int ReactionEnsemble::initialize_wang_landau(){
 		m_current_wang_landau_system.used_bins=m_current_wang_landau_system.wang_landau_potential.size()-empty_bins_in_memory;
 		
 	}
-
-
-	//assign determine_current_state_in_this_collective_variable function pointers to correct function
-	for(int collective_variable_i=0; collective_variable_i<m_current_wang_landau_system.collective_variables.size();collective_variable_i++){
-		collective_variable* current_collective_variable=&m_current_wang_landau_system.collective_variables[collective_variable_i];
-		if(!current_collective_variable->corresponding_acid_types.empty()){
-			//found a collective variable which is not of the type of a degree_of_association association)
-			current_collective_variable->determine_current_state_in_collective_variable_with_index=&calculate_degree_of_association;
-		}
-		if(!current_collective_variable->energy_boundaries_filename.empty()){
-			//found a collective variable which is not of the type of an energy
-			current_collective_variable->determine_current_state_in_collective_variable_with_index=&calculate_current_potential_energy_of_system_wrap;
-		}
-		
-	}
+	
 	return ES_OK;
 }
 
@@ -1301,7 +1259,7 @@ int ReactionEnsemble::update_maximum_and_minimum_energies_at_current_state(){
 		}
 	}
 	
-	const double E_pot_current=calculate_current_potential_energy_of_system_wrap(0, nullptr);
+	const double E_pot_current=calculate_current_potential_energy_of_system();
 	int index=get_flattened_index_wang_landau_of_current_state();
 
 	//update stored energy values
@@ -1510,8 +1468,7 @@ int ReactionEnsemble::do_reaction_constant_pH(){
 	
 	//for optimizations this list could be determined during the initialization
 	std::vector<int> list_of_reaction_ids_with_given_reactant_type;
-	int found_reactions_with_given_reactant_type=0;
-	while(found_reactions_with_given_reactant_type==0) { // avoid selecting a (e.g. salt) particle which does not take part in a reaction
+	while(list_of_reaction_ids_with_given_reactant_type.size()==0) { // avoid selecting a (e.g. salt) particle which does not take part in a reaction
 		int random_p_id =get_random_p_id(); // only used to determine which reaction is attempted.
 		auto part = get_particle_data(random_p_id);
 
@@ -1525,7 +1482,6 @@ int ReactionEnsemble::do_reaction_constant_pH(){
 			single_reaction& current_reaction=m_current_reaction_system.reactions[reaction_i];
 			for(int reactant_i=0; reactant_i< 1; reactant_i++){ //reactant_i<1 since it is assumed in this place that the types A, and HA occur in the first place only. These are the types that should be switched, H+ should not be switched
 				if(current_reaction.reactant_types[reactant_i]== type_of_random_p_id){
-					found_reactions_with_given_reactant_type+=1;
 					list_of_reaction_ids_with_given_reactant_type.push_back(reaction_i);
 					break;
 				}
@@ -1534,7 +1490,7 @@ int ReactionEnsemble::do_reaction_constant_pH(){
 	}
 	
 	//randomly select a reaction to be performed
-	int reaction_id=list_of_reaction_ids_with_given_reactant_type[i_random(found_reactions_with_given_reactant_type)];
+	int reaction_id=list_of_reaction_ids_with_given_reactant_type[i_random(list_of_reaction_ids_with_given_reactant_type.size())];
 	generic_oneway_reaction(reaction_id, constant_pH_mode);
 	return 0;
 }

@@ -1,5 +1,6 @@
 #include "utils.hpp"
 #include <string>
+#include "energy.hpp"	//for calculate_current_potential_energy_of_system
 
 namespace ReactionEnsemble {
 
@@ -50,20 +51,45 @@ struct collective_variable {
   double CV_minimum;
   double CV_maximum;
   double delta_CV;
-  double (*determine_current_state_in_collective_variable_with_index)(
-      int,
-      void *
-          m_wang_landau_system); // declare a function pointer with name
-                                 // determine_current_state_in_this_collective_variable
-                                 // that has to point to a function that has 1
-                                 // int input parameter (for the
-                                 // collective_variable_index) and another input
-                                 // for a void pointer and returns a double
   // for collective variables of type degree of association
   std::vector<int> corresponding_acid_types;
   int associated_type;
   // for collective variables of type energy
   std::string energy_boundaries_filename;
+  
+  double determine_current_state_in_current_collective_variable(){
+  		if(!this->corresponding_acid_types.empty()){
+			//found a collective variable which is not of the type of a degree_of_association association)
+			return calculate_degree_of_association();
+		}
+		if(!this->energy_boundaries_filename.empty()){
+			//found a collective variable which is not of the type of an energy
+			return calculate_current_potential_energy_of_system();
+		}else{
+		    throw std::runtime_error("collective variable not implemented\n");
+		}
+  
+  };
+  
+  private:
+    /**
+    * Returns the degree of association for the current collective variable. This is needed since you may use multiple degrees of association as collective variable for the Wang-Landau algorithm.
+    */
+    double calculate_degree_of_association(){
+	    int total_number_of_corresponding_acid=0;
+	    for(int corresponding_type_i=0; corresponding_type_i<this->corresponding_acid_types.size();corresponding_type_i++){
+		    int num_of_current_type;
+		    number_of_particles_with_type(this->corresponding_acid_types[corresponding_type_i],&num_of_current_type);
+		    total_number_of_corresponding_acid+=num_of_current_type;
+	    }
+	    if(total_number_of_corresponding_acid==0){
+	        throw std::runtime_error("Have you forgotten to specify all corresponding acid types? Total particle number of corresponding acid type is zero\n");
+	    }
+	    int num_of_associated_acid;
+	    number_of_particles_with_type(this->associated_type,&num_of_associated_acid);
+	    double degree_of_association=double(num_of_associated_acid)/total_number_of_corresponding_acid; //cast to double because otherwise any fractional part is lost
+	    return degree_of_association;
+    }
 };
 
 struct wang_landau_system {
@@ -101,12 +127,6 @@ struct wang_landau_system {
   bool fix_polymer;
   bool do_not_sample_reaction_partition_function;
 };
-
-double calculate_degree_of_association(int index_of_current_collective_variable,
-                                       void *m_wang_landau_system);
-double calculate_current_potential_energy_of_system_wrap(
-    int unimportant_int, void *unimportant_wang_landau_system);
-
 
 class ReactionEnsemble {
 
@@ -211,6 +231,9 @@ public:
                                                               // reweighting
                                                               // runs
   void write_out_preliminary_energy_run_results(std::string filename);
+
+  double calculate_degree_of_association(int index_of_current_collective_variable);
+  double calculate_current_potential_energy_of_system_wrap(int unimportant_int);
 
   // checkpointing, only designed to reassign values of a previous simulation to
   // a new simulation with the same initialization process
