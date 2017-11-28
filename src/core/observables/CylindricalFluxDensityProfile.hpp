@@ -18,10 +18,10 @@ public:
       ::Vector<3, double> vel = {partCfg[id].m.v[0], partCfg[id].m.v[1],
                                  partCfg[id].m.v[2]};
       if (axis == "x") {
-        // x' = z, y' = y, z'= -x
-        ppos_shifted = ::Vector<3, double>{ppos_shifted[2], ppos_shifted[1],
-                                           -ppos_shifted[0]};
-        vel = {vel[2], vel[1], -vel[0]};
+        // x' = -z, y' = y, z'= x
+        ppos_shifted = ::Vector<3, double>{-ppos_shifted[2], ppos_shifted[1],
+                                           ppos_shifted[0]};
+        vel = {-vel[2], vel[1], vel[0]};
       } else if (axis == "y") {
         // x' = x, y' = -z, z' = y
         ppos_shifted = ::Vector<3, double>{ppos_shifted[0], -ppos_shifted[2],
@@ -57,6 +57,7 @@ public:
                         ppos_shifted[1] * ppos_shifted[1]);
         // v_z = v_z
         double v_z = vel[2] / time_step;
+        printf("Velocity: %f %f %f\n", v_r, v_phi, v_z);
         // Write a flat histogram.
         // index calculation: using the following formula for N dimensions:
         //   ind = ind_{N-1} + sum_{j=0}^{N-2} (ind_j * prod_{k=j+1}^{N-1} n_k),
@@ -73,10 +74,6 @@ public:
         if (std::isfinite(v_z)) {
           last_value[ind + 2] += v_z / bin_volume;
         }
-      }
-      if (id == 0) {
-        printf("\nid: %d, r_bin %d phi_bin %d z_bin %d\npos %f %f %f", id, r_bin, phi_bin,
-               z_bin, ppos_shifted[0], ppos_shifted[1], ppos_shifted[2]);
       }
     }
     return 0;
