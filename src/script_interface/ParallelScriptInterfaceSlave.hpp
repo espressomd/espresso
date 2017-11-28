@@ -32,7 +32,7 @@ class ParallelScriptInterfaceSlaveBase {};
 class ParallelScriptInterfaceSlave : private ParallelScriptInterfaceSlaveBase {
 public:
   enum class CallbackAction {
-    CREATE,
+    NEW,
     SET_PARAMETER,
     SET_PARAMETERS,
     CALL_METHOD,
@@ -57,10 +57,11 @@ private:
     }
   }
 
+  VariantMap bcast_variant_map() const;
+
 private:
   void mpi_slave(int action, int);
 };
-
 } /* namespace ScriptInterface */
 
 #endif

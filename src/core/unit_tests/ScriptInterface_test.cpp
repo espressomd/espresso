@@ -79,7 +79,6 @@ struct ScriptInterfaceTest : public ScriptInterface::ScriptInterfaceBase {
   vector<double> vec_double;
   vector<int> vec_int;
 };
-
 } /* namespace Testing */
 
 using namespace Testing;

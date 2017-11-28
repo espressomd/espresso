@@ -25,17 +25,21 @@
 
 namespace ScriptInterface {
 std::shared_ptr<ScriptInterfaceBase>
-ScriptInterfaceBase::make_shared(std::string const &name,
-                                 CreationPolicy policy) {
-  auto sp = [&policy, &name]() -> std::shared_ptr<ScriptInterfaceBase> {
-    switch (policy) {
-    case CreationPolicy::LOCAL:
-      return Utils::Factory<ScriptInterfaceBase>::make(name);
-    case CreationPolicy::GLOBAL:
-      return std::shared_ptr<ScriptInterfaceBase>(
-          new ParallelScriptInterface(name));
-    }
-  }();
+ScriptInterfaceBase::make_shared(std::string const &name, CreationPolicy policy,
+                                 VariantMap const &params) {
+
+  std::shared_ptr<ScriptInterfaceBase> sp;
+
+  switch (policy) {
+  case CreationPolicy::LOCAL:
+    sp = Utils::Factory<ScriptInterfaceBase>::make(name);
+    sp->construct(params);
+    break;
+  case CreationPolicy::GLOBAL:
+    sp = std::shared_ptr<ScriptInterfaceBase>(
+        new ParallelScriptInterface(name, params));
+    break;
+  }
 
   /* Id of the newly created instance */
   const auto id = sp->id();
@@ -44,6 +48,8 @@ ScriptInterfaceBase::make_shared(std::string const &name,
      it with our shared ptr, so that everybody uses the same ref count.
   */
   sp->get_instance(id) = sp;
+
+  sp->construct(params);
 
   return sp;
 }

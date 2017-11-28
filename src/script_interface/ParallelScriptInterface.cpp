@@ -34,7 +34,8 @@
 namespace ScriptInterface {
 using CallbackAction = ParallelScriptInterfaceSlave::CallbackAction;
 
-ParallelScriptInterface::ParallelScriptInterface(std::string const &name) {
+ParallelScriptInterface::ParallelScriptInterface(std::string const &name,
+                                                 VariantMap const &params) {
   assert(m_cb && "Not initialized!");
 
   /* Create the slaves */
@@ -46,12 +47,23 @@ ParallelScriptInterface::ParallelScriptInterface(std::string const &name) {
 
   /* Create local object */
   m_p = ScriptInterfaceBase::make_shared(
-      name, ScriptInterfaceBase::CreationPolicy::LOCAL);
+      name, ScriptInterfaceBase::CreationPolicy::LOCAL, params);
 
+  int has_params = !params.empty();
   /* Bcast class name and global id to the slaves */
-  call(CallbackAction::CREATE);
+  call(CallbackAction::NEW, has_params);
+
   std::pair<ObjectId, std::string> what = std::make_pair(m_p->id(), name);
+
   boost::mpi::broadcast(m_cb->comm(), what, 0);
+
+  /* Only broadcast the constructor parameters if they are not empty. */
+  if (has_params) {
+    /* Copy parameters into a non-const buffer, needed by boost::mpi */
+    auto p = unwrap_variant_map(params);
+
+    boost::mpi::broadcast(m_cb->comm(), p, 0);
+  }
 }
 
 ParallelScriptInterface::~ParallelScriptInterface() {
@@ -97,15 +109,7 @@ void ParallelScriptInterface::set_parameter(const std::string &name,
 void ParallelScriptInterface::set_parameters(const VariantMap &parameters) {
   call(CallbackAction::SET_PARAMETERS);
 
-  /* Copy parameters into a non-const buffer, needed by boost::mpi */
-  auto p = parameters;
-
-  /* Unwrap the object ids */
-  for (auto &it : p) {
-    if (is_objectid(it.second)) {
-      it.second = map_parallel_to_local_id(it.first, it.second);
-    }
-  }
+  auto p = unwrap_variant_map(parameters);
 
   boost::mpi::broadcast(m_cb->comm(), p, 0);
 
@@ -117,14 +121,7 @@ void ParallelScriptInterface::set_parameters(const VariantMap &parameters) {
 Variant ParallelScriptInterface::call_method(const std::string &name,
                                              const VariantMap &parameters) {
   call(CallbackAction::CALL_METHOD);
-  VariantMap p = parameters;
-
-  /* Unwrap the object ids */
-  for (auto &it : p) {
-    if (is_objectid(it.second)) {
-      it.second = map_parallel_to_local_id(it.first, it.second);
-    }
-  }
+  VariantMap p = unwrap_variant_map(parameters);
 
   auto d = std::make_pair(name, p);
   /* Broadcast method name and parameters */
@@ -143,13 +140,27 @@ Variant ParallelScriptInterface::get_parameter(std::string const &name) const {
   }
 }
 
-std::map<std::string, Variant> ParallelScriptInterface::get_parameters() const {
+VariantMap ParallelScriptInterface::get_parameters() const {
   auto p = m_p->get_parameters();
 
   /* Wrap the object ids */
   for (auto &it : p) {
     if (is_objectid(it.second)) {
       it.second = map_local_to_parallel_id(it.first, it.second);
+    }
+  }
+
+  return p;
+}
+
+VariantMap ParallelScriptInterface::unwrap_variant_map(VariantMap const &map) {
+  /* Copy parameters into a non-const buffer, needed by boost::mpi */
+  auto p = map;
+
+  /* Unwrap the object ids */
+  for (auto &it : p) {
+    if (is_objectid(it.second)) {
+      it.second = map_parallel_to_local_id(it.first, it.second);
     }
   }
 

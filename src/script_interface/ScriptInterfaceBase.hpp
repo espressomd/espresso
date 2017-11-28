@@ -77,6 +77,22 @@ public:
   // return boost::core::demangle(typeid(*this).name()) ?
   virtual const std::string name() const = 0;
 
+private:
+  /**
+   * @brief Constructor
+   *
+   * This function is called on object creation with user
+   * provided parameters. This can be used if the SO represents
+   * some type that can not reasonably be default constructed,
+   * or if the core implementation has to be chosen by a parameter.
+   * It is guarantueed that no other function from this interface
+   * is called before construct, and it is only called once.
+   *
+   * The default implementation does nothing.
+   */
+  virtual void construct(VariantMap const &params) {}
+
+public:
   /**
    * @brief get current parameters.
    * @return Parameters set in class.
@@ -148,8 +164,8 @@ public:
    *
    */
   static std::shared_ptr<ScriptInterfaceBase>
-  make_shared(std::string const &name,
-              CreationPolicy policy = CreationPolicy::LOCAL);
+  make_shared(std::string const &name, CreationPolicy policy,
+              VariantMap const &params = {});
 
   /**
    * @brief Get a new reference counted instance of a script interface by

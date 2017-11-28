@@ -11,12 +11,22 @@ cdef class PObjectId(object):
             raise NotImplementedError
 
 cdef class PScriptInterface(object):
-    def __init__(self, name=None, policy="GLOBAL"):
+    def __init__(self, name=None, policy="GLOBAL", constructor_args={}, **kwargs):
+        cdef CreationPolicy policy_
+        cdef map[string, Variant] ctor_args
+
+        if policy == "GLOBAL":
+            policy_ = GLOBAL
+        elif policy == "LOCAL":
+            policy_ = LOCAL
+        else:
+            raise Exception("Unknown policy '{}'.".format(policy))
+
         if name:
-            if(policy=="GLOBAL"):
-                self.sip = make_shared(to_char_pointer(name), GLOBAL)
-            else:
-                self.sip = make_shared(to_char_pointer(name), LOCAL)
+            for arg in constructor_args:
+                ctor_args[to_char_pointer(name)] = self.python_object_to_variant(arg)
+
+            self.sip = make_shared(to_char_pointer(name), policy_, ctor_args)
             self.parameters = self.sip.get().valid_parameters()
         else:
             raise Exception("the name parameter has to be set.")
@@ -42,7 +52,7 @@ cdef class PScriptInterface(object):
             self.set_sip(ptr)
         except:
             raise Exception("Could not get sip for given_id")
-    
+
     def _valid_parameters(self):
         parameters = []
 
@@ -128,7 +138,6 @@ cdef class PScriptInterface(object):
             return v
         elif type(value) == str:
             return make_variant[string](to_char_pointer(value))
-        
         elif type(value) == type(True):
             return make_variant[bool](value)
         elif np.issubdtype(np.dtype(type(value)),int):
@@ -207,8 +216,8 @@ class ScriptInterfaceHelper(PScriptInterface):
     _so_bind_methods =()
     _so_creation_policy = "GLOBAL"
 
-    def __init__(self, **kwargs):
-        super(ScriptInterfaceHelper,self).__init__(self._so_name, self._so_creation_policy)
+    def __init__(self, constructor_args={}, **kwargs):
+        super(ScriptInterfaceHelper,self).__init__(self._so_name, constructor_args=constructor_args, policy=self._so_creation_policy)
         self.set_params(**kwargs)
         self.define_bound_methods()
 
