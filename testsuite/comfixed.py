@@ -14,7 +14,7 @@ class ComFixed(ut.TestCase):
         skin = 0.4
 
         s = espressomd.System()
-        s.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+        s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
         s.box_l = [10, 10, 10]
         s.time_step = dt
         s.cell_system.skin = skin
