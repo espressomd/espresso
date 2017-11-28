@@ -23,9 +23,10 @@
 
 namespace Observables {
 
-int CylindricalLBFluxDensityProfileAtParticlePositions::actual_calculate(
-    PartCfg &partCfg) {
+std::vector<double> CylindricalLBFluxDensityProfileAtParticlePositions::operator() (
+    PartCfg &partCfg) const {
 #ifdef LB_GPU
+  std::vector<double> res(n_values());
   double bin_volume;
   int r_bin, phi_bin, z_bin;
   // First collect all positions (since we want to call the LB function to
@@ -45,12 +46,12 @@ int CylindricalLBFluxDensityProfileAtParticlePositions::actual_calculate(
       ppos_shifted[3 * index + 1] = ppos_shifted_tmp[1];
       ppos_shifted[3 * index + 2] = ppos_shifted_tmp[2];
     } else if (axis == "x") {
-      ppos_shifted[3 * index + 0] = ppos_shifted_tmp[1];
-      ppos_shifted[3 * index + 1] = ppos_shifted_tmp[2];
+      ppos_shifted[3 * index + 0] = -ppos_shifted_tmp[2];
+      ppos_shifted[3 * index + 1] = ppos_shifted_tmp[1];
       ppos_shifted[3 * index + 2] = ppos_shifted_tmp[0];
     } else if (axis == "y") {
-      ppos_shifted[3 * index + 0] = ppos_shifted_tmp[2];
-      ppos_shifted[3 * index + 1] = ppos_shifted_tmp[0];
+      ppos_shifted[3 * index + 0] = ppos_shifted_tmp[0];
+      ppos_shifted[3 * index + 1] = -ppos_shifted_tmp[2];
       ppos_shifted[3 * index + 2] = ppos_shifted_tmp[1];
     }
     auto const ppos_cyl_tmp =
@@ -97,17 +98,17 @@ int CylindricalLBFluxDensityProfileAtParticlePositions::actual_calculate(
       int ind =
           3 * (r_bin * n_phi_bins * n_z_bins + phi_bin * n_z_bins + z_bin);
       if (std::isfinite(v_r)) {
-        last_value[ind + 0] += v_r / bin_volume;
+        res[ind + 0] += v_r / bin_volume;
       }
       if (std::isfinite(v_phi)) {
-        last_value[ind + 1] += v_phi / bin_volume;
+        res[ind + 1] += v_phi / bin_volume;
       }
       if (std::isfinite(v_z)) {
-        last_value[ind + 2] += v_z / bin_volume;
+        res[ind + 2] += v_z / bin_volume;
       }
     }
   }
+  return res;
 #endif // LB_GPU
-  return 0;
 }
 } // namespace Observables

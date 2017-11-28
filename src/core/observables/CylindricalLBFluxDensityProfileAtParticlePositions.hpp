@@ -22,12 +22,13 @@
 
 #include "CylindricalProfileObservable.hpp"
 #include "utils/Histogram.hpp"
+#include "partCfg_global.hpp"
 
 namespace Observables {
 class CylindricalLBFluxDensityProfileAtParticlePositions
     : public CylindricalProfileObservable {
 public:
-  virtual int actual_calculate(PartCfg &partCfg) override;
+  virtual std::vector<double> operator()(PartCfg &partCfg) const override;
   virtual int n_values() const override {
     return 3 * n_r_bins * n_phi_bins * n_z_bins;
   }
@@ -43,8 +44,9 @@ private:
     std::array<double, 3> position;
     int index;
     int unravelled_index[4];
-    for (auto it = last_value.begin(); it != last_value.end(); it += 3) {
-      index = std::distance(last_value.begin(), it);
+    std::vector<double> tmp = operator()(partCfg());
+    for (auto it = tmp.begin(); it != tmp.end(); it += 3) {
+      index = std::distance(tmp.begin(), it);
       ::Utils::unravel_index(len_dims, n_dims, index, unravelled_index);
       position = {
           (static_cast<double>(unravelled_index[0]) + 0.5) * bin_sizes[0],
