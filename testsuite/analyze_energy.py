@@ -18,7 +18,6 @@ class AnalyzeEnergy(ut.TestCase):
     @classmethod
     def setUpClass(self):
         box_l = 20
-        0.0
         self.system.box_l = [box_l, box_l, box_l]
         self.system.cell_system.skin = 0.4
         self.system.time_step = 0.01
@@ -32,8 +31,6 @@ class AnalyzeEnergy(ut.TestCase):
         self.system.part.add(id=1, pos=[5, 2, 2], type=0, q=-1)
         self.system.thermostat.set_langevin(kT=0., gamma=1.)
         self.system.bonded_inter.add(self.harmonic)
-        p3m = electrostatics.P3M(bjerrum_length=1.0, accuracy=1e-7)
-        self.system.actors.add(p3m)
 
 
     def test_kinetic(self):
@@ -149,6 +146,15 @@ class AnalyzeEnergy(ut.TestCase):
         self.system.part[1].pos = [3, 2, 2]
         self.system.part[0].q = 1
         self.system.part[1].q = -1
+        p3m = electrostatics.P3M(bjerrum_length=1.0,
+                                 accuracy=9.910945054074526e-08,
+                                 mesh=[22,22,22],
+                                 cao=7,
+                                 r_cut=8.906249999999998,
+                                 alpha=0.387611049779351,
+                                 tune=False)
+        self.system.actors.add(p3m)
+
         # did not verify if this is correct, but looks pretty good (close to 1/2)
         u_p3m = -0.501062398379
         energy = self.system.analysis.energy()
