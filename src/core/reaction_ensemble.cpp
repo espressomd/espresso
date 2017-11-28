@@ -260,7 +260,7 @@ double ReactionEnsemble::calculate_boltzmann_factor_reaction_ensemble(single_rea
 bool ReactionEnsemble::generic_oneway_reaction(int reaction_id, int reaction_modus){
 	single_reaction& current_reaction=m_current_reaction_system.reactions[reaction_id];
 	//Wang-Landau begin
-	int old_state_index;
+	int old_state_index = -1;
 	if(reaction_modus==reaction_ensemble_wang_landau_mode){
 		old_state_index=get_flattened_index_wang_landau_of_current_state();
 		if(old_state_index>=0){
@@ -304,7 +304,7 @@ bool ReactionEnsemble::generic_oneway_reaction(int reaction_id, int reaction_mod
 
 	//Wang-Landau begin
 	//save new_state_index
-	int new_state_index;
+	int new_state_index = -1;
 	if(reaction_modus==reaction_ensemble_wang_landau_mode)
 		new_state_index=get_flattened_index_wang_landau_of_current_state();
 	double bf;
@@ -318,7 +318,7 @@ bool ReactionEnsemble::generic_oneway_reaction(int reaction_id, int reaction_mod
 		throw std::runtime_error("Reaction mode is unknown");
 	bool reaction_is_accepted=false;
 	//Wang-Landau begin
-	int accepted_state;
+	int accepted_state = -1;
 	//Wang-Landau end
 	if ( d_random() < bf ) {
 		//accept
@@ -444,7 +444,7 @@ int ReactionEnsemble::find_index_of_type(int type){
 */
 int ReactionEnsemble::replace(int p_id, int desired_type){
 	int err_code_type=set_particle_type(p_id, desired_type);
-	int err_code_q;
+	int err_code_q = 0.0;
 	#ifdef ELECTROSTATICS
 	err_code_q=set_particle_q(p_id, m_current_reaction_system.charges_of_types[find_index_of_type(desired_type)]);
 	#endif

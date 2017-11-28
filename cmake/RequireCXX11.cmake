@@ -11,7 +11,7 @@ endif ()
 
 set(required_gcc_version 4.8)
 set(required_clang_version 3.3)
-set(required_icc_version 11.0)
+set(required_icc_version 14.0)
 
 # CMAKE_CXX_COMPILER_VERSION may not always be available (e.g. particularly
 # for CMakes older than 2.8.10, but use it if it exists.

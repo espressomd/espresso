@@ -211,7 +211,7 @@ int realloc_particlelist(ParticleList *l, int size) {
   Particle *old_start = l->part;
 
   PART_TRACE(fprintf(stderr, "%d: realloc_particlelist %p: %d/%d->%d\n",
-                     this_node, l, l->n, l->max, size));
+                     this_node, (void*) l, l->n, l->max, size));
 
   if (size < l->max) {
     if (size == 0)
