@@ -26,6 +26,7 @@ class TestLBGetUAtPos(ut.TestCase):
             'gamma': 1.5
         }
         self.system = espressomd.System()
+        self.system.seed = self.system.cell_system.get_state()['n_nodes'] * [1234]
         self.system.box_l = self.params['box_l']
         self.system.cell_system.skin = 0.4
         self.system.time_step = 0.01
