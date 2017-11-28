@@ -24,6 +24,7 @@ import unittest as ut
 
 class InteractionsBondedTest(ut.TestCase):
     system = espressomd.System()
+    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
     box_l = 10.
 

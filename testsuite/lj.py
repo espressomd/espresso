@@ -27,6 +27,8 @@ from tests_common import abspath
            "Features not available, skipping test!")
 class LennardJonesTest(ut.TestCase):
     system = espressomd.System()
+    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+
     data = numpy.loadtxt(abspath('data/lj_system.dat'))
 
     def setUp(self):
