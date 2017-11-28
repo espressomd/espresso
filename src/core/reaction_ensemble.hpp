@@ -269,7 +269,7 @@ private:
     */
 
     template <typename T>
-    double average_list_of_allowed_entries(T vector){
+    double average_list_of_allowed_entries(std::vector<T> vector){
 	    double result=0.0;
 	    int counter_allowed_entries=0;
 	    for(int i=0;i<vector.size();i++){
@@ -282,12 +282,12 @@ private:
     }
 
     /**
-    * Checks wether an integer is in an array of integers.
+    * Checks wether a number is in a std:vector of numbers.
     */
     template <typename T>
     bool is_in_list(T value, std::vector<T> list){
 	    for(int i=0;i<list.size();i++){
-		    if(list[i]==value)
+		    if(std::abs(list[i]-value)<std::numeric_limits<double>::epsilon())
 			    return true;
 	    }
 	    return false;
@@ -319,8 +319,7 @@ private:
   get_random_position_in_box_enhanced_proposal_of_small_radii(double *out_pos);
   
   // declarations wang_landau
-  int initialize_wang_landau(); // may first be called after all collective
-                                // variables are added
+  int initialize_wang_landau(); // has to be called (at least) after the last collective variable is added
   bool can_refine_wang_landau_one_over_t();
   bool achieved_desired_number_of_refinements_one_over_t();
   void refine_wang_landau_parameter_one_over_t();

@@ -72,7 +72,6 @@ class ReactionEnsembleTest(ut.TestCase):
                 1, 1])
         cls.RE.set_default_charges(dictionary={"0": 0, "1": -1, "2": +1})
         cls.RE.constant_pH = cls.pH
-        print(cls.RE.get_status())
 
     @classmethod
     def ideal_degree_of_association(cls, pH):
@@ -111,6 +110,7 @@ class ReactionEnsembleTest(ut.TestCase):
             average_degree_of_association - ReactionEnsembleTest.ideal_degree_of_association(
                 ReactionEnsembleTest.pH)) / ReactionEnsembleTest.ideal_degree_of_association(
             ReactionEnsembleTest.pH)
+        print(average_degree_of_association)
         self.assertLess(
             real_error_in_degree_of_association,
             0.07,

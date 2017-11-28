@@ -46,16 +46,10 @@ def setup(type_list=None):
         raise ValueError("type_list has to be iterable.")
 
     for current_type in type_list:
-        if (current_type < 0):
-            raise ValueError("type", current_type, "is invalid!")
         if (max_seen_particle < 0):
             raise ValueError(
                 "The system contains no particles. Create one particle with arbitrary type first!")
-        status=init_type_array(current_type)
-        if status==es_error:
-            raise Exception("gc init failed")
-        handle_errors("init_type_array -> updatePartCfg failed")
-
+        init_type_map(current_type)
 
 def number_of_particles(current_type=None):
     """
@@ -72,8 +66,6 @@ def number_of_particles(current_type=None):
     """
     check_valid_type(current_type)
     cdef int number
-    if ( number_of_particles_with_type(current_type, &number) == -3 ):
-        raise Exception("no list for particle type ", current_type)
     number_of_particles_with_type(current_type, & number)
     return int(number)
 
@@ -85,38 +77,6 @@ def find_particle(current_type=None):
     """
     check_valid_type(current_type)
     cdef int pid
-    status=find_particle_type(current_type, & pid)
-    if(status== es_error):
-        print("error no particle found")
-        return -1
-    else:
-        return int(pid)
+    find_particle_type(current_type, & pid)
+    return int(pid)
 
-def status(current_type=None):
-    """
-    Parameters
-    ----------
-    current_type : :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-                   Particle type to get the ids for. 
-
-    Returns
-    -------
-    list of :obj:`int`
-        The id list for particles which share the given type.
-
-    """
-    check_valid_type(current_type)
-    if ( (type_array!=NULL) and type_array[Index.type[current_type]].max_entry!= 0 ):
-        indexed=0;
-        for i in range(Type.max_entry):
-            if (current_type==Type.index[i]):
-                indexed=1;
-                break;
-    if ( indexed==1 ):
-        id_list=[]
-        for i in range( type_array[Index.type[current_type]].max_entry):
-            id_list.append(type_array[Index.type[current_type]].id_list[i])
-        return id_list
-    else:
-        print("no list for particle")
-        return []
