@@ -24,7 +24,6 @@
 #include "Variant.hpp"
 
 namespace ScriptInterface {
-
 namespace detail {
 /**
  * @brief Implementation of get_value.
@@ -94,6 +93,45 @@ struct get_value_helper<
  */
 template <typename T> T get_value(Variant const &v) {
   return detail::get_value_helper<T>{}(v);
+}
+
+namespace detail {
+template <typename T>
+T get_or_throw(VariantMap const &vals, std::string const &name) {
+  try {
+    return get_value<T>(vals.at(name));
+  } catch (boost::bad_get const &) {
+    /* TODO: Better exceptions. */
+    throw;
+  } catch (std::out_of_range const &) {
+    /* TODO: Better exceptions. */
+    throw;
+  }
+}
+}
+
+/**
+ * @brief Make a new T with arguments extracted from a VariantMap.
+ */
+template <typename T, typename... Types, typename... ArgNames>
+T make_from_args(VariantMap const &vals, ArgNames... args) {
+  return T{detail::get_or_throw<Types>(vals, args)...};
+}
+
+/**
+ * @brief Make a new std::shared_ptr<T> with arguments extracted from a
+ * VariantMap.
+ */
+template <typename T, typename... Types, typename... ArgNames>
+std::shared_ptr<T> make_shared_from_args(VariantMap const &vals,
+                                         ArgNames... args) {
+  return std::make_shared<T>(detail::get_or_throw<Types>(vals, args)...);
+}
+
+template <typename T, typename R, typename... Args, typename... ArgNames>
+auto call_with_args(T &this_, R (T::*m)(Args...), VariantMap const &vals,
+                    ArgNames... args) -> R {
+  return (this_.*m)(detail::get_or_throw<Args>(vals, args)...);
 }
 
 } /* namespace ScriptInterface */

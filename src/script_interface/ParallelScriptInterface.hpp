@@ -35,7 +35,7 @@ class ParallelScriptInterface : public ScriptInterfaceBase {
 public:
   using CallbackAction = ParallelScriptInterfaceSlave::CallbackAction;
 
-  ParallelScriptInterface(std::string const &name, VariantMap const &params);
+  ParallelScriptInterface(std::string const &name, VariantMap const &params = {});
   ~ParallelScriptInterface() override;
 
   /**

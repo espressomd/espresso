@@ -7,6 +7,8 @@
 #include "core/Vector.hpp"
 #include "utils/AutoObjectId.hpp"
 
+#include <map>
+
 namespace ScriptInterface {
 class ScriptInterfaceBase;
 using ObjectId = Utils::ObjectId<ScriptInterfaceBase>;
@@ -41,6 +43,8 @@ enum class VariantType {
   VECTOR
 };
 
+typedef std::map<std::string, Variant> VariantMap;
+
 namespace detail {
 /**
  * @brief Implementation of @f infer_type.
@@ -49,7 +53,9 @@ namespace detail {
  * of functions is not allowed. Every specialization deals
  * with a specific type, to extend just add a new one.
  */
-template <typename T> struct infer_type_helper {};
+template <typename T> struct infer_type_helper {
+  static_assert(sizeof(T) == 0, "Type T is not contained in Variant.");
+};
 
 template <> struct infer_type_helper<None> {
   static constexpr VariantType value{VariantType::NONE};
@@ -99,7 +105,7 @@ template <> struct infer_type_helper<ObjectId> {
 /**
  * @brief Infer the variant type id from the c++ type.
  *
- * infer_type<int>() return VariantType::INT an so on.
+ * infer_type<int>() returns VariantType::INT an so on.
  */
 template <typename T> constexpr VariantType infer_type() {
   return detail::infer_type_helper<T>::value;
