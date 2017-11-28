@@ -50,6 +50,6 @@ private:
   double m_pore_width;
   double m_pore_length;
 };
-};
+}
 
 #endif

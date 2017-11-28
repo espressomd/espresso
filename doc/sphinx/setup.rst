@@ -196,73 +196,33 @@ momenta flip is . The :math:`\pmb{\xi}` noise vector’s variance van be
 tuned to exactly :math:`1/\mathrm{temperature}` by specifying the option.
 The default for temperature scaling is .
 
-Dissipative Particle Dynamics (DPD) 
+.. _Dissipative Particle Dynamics (DPD):
+
+Dissipative Particle Dynamics (DPD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. todo::
-    this is not yet implemented in the python interface.
+To realize a complete DPD fluid model, three parts are needed:
+The DPD thermostat, which controlls the temperatur, a dissipative
+interaction between the particles that make up the fluid,
+see :ref:`DPD interaction`, and a repulsive conservative force.
 
 The DPD thermostat can be invoked by the function:
-:py:attr:`~espressomd.thermostat.Thermostat.set_dpd`
+:py:attr:`espressomd.thermostat.Thermostat.set_dpd`
+which takes :math:`k_\mathrm{B} T` as the only agument.
 
-Implements Dissipative Particle Dynamics (DPD) either via a global
-thermostat, or via a thermostat and a special DPD interaction between
-particle types. The latter allows the user to specify friction
-coefficients on a per-interaction basis.
+The friction coefficients and cutoff are controlled via the
+:ref:`DPD interaction` on a per type-pair basis. For details see
+there.
 
-Thermostat DPD
-^^^^^^^^^^^^^^
+As a conservative force any interaction potential can be used,
+see :ref:`Isotropic non-bonded interactions`. A common choice is
+a force ramp which is implemented as :ref:`Hat interaction`.
 
-.. todo::
-    this is not yet implemented in the python interface.
+A complete example of setting up a DPD fluid and running it
+to sample the equation of state can be found in samples/dpd.py.
 
-
-thermostat dpd
-
-or
-
-’s standard DPD thermostat implements the thermostat exactly as
-described in :cite:`soddeman03a`. We use the standard
-*Velocity-Verlet* integration scheme, DPD only influences the
-calculation of the forces. No special measures have been taken to
-self-consistently determine the velocities and the dissipative forces as
-it is for example described in :cite:`Nikunen03`. DPD adds a
-velocity dependent dissipative force and a random force to the usual
-conservative pair forces (Lennard-Jones).
-
-The dissipative force is calculated by
-
-.. math:: \vec{F}_{ij}^{D} = -\zeta w^D (r_{ij}) (\hat{r}_{ij} \cdot \vec{v}_{ij}) \hat{r}_{ij}
-
-The random force by
-
-.. math:: \vec{F}_{ij}^R = \sigma w^R (r_{ij}) \Theta_{ij} \hat{r}_{ij}
-
-where :math:` \Theta_{ij} \in [ -0.5 , 0.5 [ ` is a uniformly
-distributed random number. The connection of :math:`\sigma ` and
-:math:`\zeta ` is given by the dissipation fluctuation theorem:
-
-.. math:: (\sigma w^R (r_{ij})^2=\zeta w^D (r_{ij}) \text{k}_\text{B} T
-
-The parameters and define the strength of the friction :math:`\zeta` and
-the cutoff radius.
-
-According to the optional parameter WF (can be set to 0 or 1, default is
-0) of the thermostat command the functions :math:`w^D` and :math:`w^R`
-are chosen in the following way ( :math:` r_{ij} < \{r\_cut} ` ) :
-
-.. math::
-
-   w^D (r_{ij}) = ( w^R (r_{ij})) ^2 = 
-      \left\{
-      \begin{array}{clcr} 
-                {( 1 - \frac{r_{ij}}{r_c}} )^2 & , \; {wf} = 0 \\
-                1                      & , \; {wf} = 1
-      \end{array}
-      \right.
-
-For :math:` r_{ij} \ge {r\_cut} ` :math:`w^D` and :math:`w^R` are
-identical to 0 in both cases.
+DPD adds a velocity dependent dissipative force and a random force
+to the conservative pair forces.
 
 The friction (dissipative) and noise (random) term are coupled via the
 fluctuation- dissipation theorem. The friction term is a function of the
@@ -275,94 +235,6 @@ When using a Lennard-Jones interaction, :math:`{r\_cut} =
 thermostat acts on the relative velocities between nearest neighbor
 particles. Larger cutoffs including next nearest neighbors or even more
 are unphysical.
-
-is basically an inverse timescale on which the system thermally
-equilibrates. Values between :math:`0.1` and :math:`1` are o.k, but you
-propably want to try this out yourself to get a feeling for how fast
-temperature jumps during a simulation are. The dpd thermostat does not
-act on the system center of mass motion. Therefore, before using dpd,
-you have to stop the center of mass motion of your system, which you can
-achieve by using the command [sec:Galilei]. This may be repeated once in
-a while for long runs due to round off errors (check this with the
-command ) [:ref:`galilei_transform`].
-
-Two restrictions apply for the dpd implementation of :
-
-    * As soon as at least one of the two interacting particles is fixed
-      (see [chap:part] on how to fix a particle in space) the dissipative
-      and the stochastic force part is set to zero for both particles (you
-      should only change this hardcoded behaviour if you are sure not to
-      violate the dissipation fluctuation theorem).
-
-    * ``DPD`` does not take into account any internal rotational degrees of
-      freedom of the particles if ``ROTATION`` is switched on. Up to the
-      current version DPD only acts on the translatorial degrees of
-      freedom.
-
-Transverse DPD thermostat
-'''''''''''''''''''''''''
-
-.. todo::
-    This is not yet implemted for the python interface
-
-This is an extension of the above standard DPD thermostat
-:cite:`junghans2008`, which dampens the degrees of freedom
-perpendicular on the axis between two particles. To switch it on, the
-feature is required instead of the feature ``DPD``.
-
-The dissipative force is calculated by
-
-.. math:: \vec{F}_{ij}^{D} = -\zeta w^D (r_{ij}) (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{v}_{ij}
-
-The random force by
-
-.. math:: \vec{F}_{ij}^R = \sigma w^R (r_{ij}) (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{\Theta}_{ij}
-
-The parameters define the strength of the friction and the cutoff in the
-same way as above. Note: This thermostat does *not* conserve angular
-momentum.
-
-Interaction DPD
-^^^^^^^^^^^^^^^
-.. todo::
-    This is not yet implemted for the python interface
-
-thermostat inter\_dpd
-
-Another way to use DPD is by using the interaction DPD. In this case,
-DPD is implemented via a thermostat and corresponding interactions. The
-above command will set the global temperature of the system, while the
-friction and other parameters have to be set via the command
-``inter inter_dpd`` (see ). This allows to set the friction on a
-per-interaction basis.
-
-DPD interactions with fixed particles is switched off by default,
-because it is not clear if the results obtained with that method are
-physically correct. If you want activate ``inter_dpd`` with fixed
-particles please use:
-
-setmd dpd\_ignore\_fixed\_particles 0
-
-By default the fixed particles are ignored
-(``dpd_ignore_fixed_particles`` is 1).
-
-Other DPD extensions
-^^^^^^^^^^^^^^^^^^^^
-.. todo::
-    This is not yet implemted for the python interface
-
-
-The features ``DPD_MADD_RED`` or ``DPD_MADD_IN`` make the friction constant mass dependent:
-
-.. math:: \zeta \to \zeta M_{ij}
-
-There are two implemented cases.
-
--  uses the reduced mass: :math:`M_{ij}=2\frac{m_i m_j}{m_i+m_j}`
-
--  uses the real mass: :math:`M_{ij}=\frac{m_i+m_j}{2}`
-
-The prefactors are such that equal masses result in a factor :math:`1`.
 
 Isotropic NPT thermostat
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -452,6 +324,46 @@ NEMD as implemented generates a Pouseille flow, with shear flow rate
 varying over a finite wavelength determined by the box. For a planar
 Couette flow (constant shear, infinite wavelength), consider using
 Lees-Edwards boundary conditions (see ) to drive the shear.
+
+.. _Lees-Edwards boundary conditions:
+
+Lees-Edwards boundary condition: Setting up a shear flow
+-------------------------------------------------------------
+
+To use the Lees-Edwards boundary conditions, the feature ``LEES_EDWARDS`` is required.
+
+Lees-Edwards boundary conditions can be used to introduce a shear flow to the MD simulation. An introduction can be found in :cite:`lees72`. Compared to NEMD simulations they have two big advantages: First, the bulk behavior of the system remains unchanged. Second, the image boxes are moved, whereas the flow within the primary simulation box has to develope on its own. Hence, this allows two additional phenomena: Shear banding can occure as well as non-linear shear profiles can be observed. This makes Lees-Edwards boundary conditions suitable for comparison with rheological experiments. 
+
+Lees-Edwards boundary conditions impose a shear flow of speed :math:`\dot\gamma` by moving the periodic image boxes along the x-direction according to:
+
+.. math:: v_{\text{x, unfolded}} = v_{\text{x, folded}} + \dot\gamma \cdot y_{\text{imagecount}}
+
+:math:`v_{\text{x, unfolded}}` refers to the velocity of a particle outside the main simulation box, :math:`y_{\text{imagecount}}` is the amount of periodic boundaries crossed in the  :math:`y`-direction. 
+
+The absolute offset of the periodic images can be set via
+
+* :py:attr:`~espressomd.System().lees_edwards_offset`
+
+The following example introduces the usage::
+    
+    import espressomd
+    system = espressomd.System()
+    absolute_offset = 0.2
+    system.lees_edwards_offset = absolute_offset
+
+Lees-Edwards boundary conditions can be used to obtain the shear modulus :math:`G = \frac{\tau}{\gamma}` or the shear viscosity :math:`\eta = \frac{\tau}{\dot\gamma}` outside the linear regime, where Green-Kubo relations are not valid anymore. For this purpose a lees_edwards_offset is set followed by one integration step for multiple times. Strain, strain rate and the shear stress need to be recorded for the calculation. Alternatively a sinusoidal lees_edwards_offset series can be used to carry out oscillatory experiments to calculate viscoelastic moduli (:math:`G', G''`). Furthermore a lees_edwards_offset can be set followed by many integration steps obtain the relaxation behaviour of a system. 
+
+When applying a constant shear rate :math:`\dot\gamma` the velocity of the particles changes from :math:`-\frac{\dot\gamma}{2}` at the bottom of the box to :math:`\frac{\dot\gamma}{2}` at the top of the box. 
+
+Physical meaningful values for systems where hydrodynamics play a major role, can only be obtained by including hydrodynamic interactions. Lees-Edwards boundary conditions are implemented in the :ref:`Lattice-Boltzmann` algorithms. For this algorithm the feature ``LB_GPU`` is required. Please refer to chapter :ref:`Lattice-Boltzmann` for more information. 
+
+Lees-Edwards boundary conditions work with the DPD thermostat. In order to correctly observe transport properties, symmetry-breaking or entropy production in relation to shear flow is probably better to use the DPD thermostat (:ref:`Dissipative Particle Dynamics (DPD)`) once the initial heat-up has been carried out. The DPD thermostat removes kinetic energy from the system based on a frictional term defined relative to a local reference frame of a given particle-pair, without enforcing any specific flow pattern apriori. At high rates of dissipation, this can however lead to an artefactual shear-banding type effect at the periodic boundaries, such that the bulk fluid is nearly stationary. y. This effect is removed using the modification proposed to the DPD thermostat by Chatterjee :cite:`chatterjee2007` to allow treatment of systems with high dissipation rates, which is applied automatically if ``LEES_EDWARDS`` is compiled in. Chatterjee’s modification is just to skip calculation of DPD forces (both dissipative and random) for particle pairs which cross a boundary in y.
+
+The command::
+
+  print(system.lees_edwards_offset)
+
+returns the current value of the offset. If ``LEES_EDWARDS`` is compiled in, then coordinates are folded into the primary simulation box as the integration progresses, to prevent a numerical overflow.
 
 .. _cellsystem:
 

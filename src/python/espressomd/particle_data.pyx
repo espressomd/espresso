@@ -90,7 +90,7 @@ cdef class ParticleHandle(object):
         """
         The particle type for nonbonded interactions.
 
-        type : int
+        type : :obj:`int`
                Nonbonded interactions act between different types of particles.
 
         .. note::
@@ -115,7 +115,7 @@ cdef class ParticleHandle(object):
         """
         The molecule id of the Particle.
 
-        mol_id : int
+        mol_id : :obj:`int`
                  The particle mol_id is used to differentiate between
                  particles belonging to different molecules, e.g. when virtual
                  sites are used, or object-in-fuid cells. The default
@@ -142,7 +142,7 @@ cdef class ParticleHandle(object):
         """
         The unwrapped (not folded into central box) particle position.
 
-        pos : list of floats
+        pos : list of :obj:`float`
               A list of three floats representing the particles's absolute position.
 
         """
@@ -171,7 +171,7 @@ cdef class ParticleHandle(object):
         """
         The wrapped (folded into central box) position vector of a particle.
 
-        pos : list of floats
+        pos : list of :obj:`float`
               A list of three floats representing the particles's position.
 
         .. note::
@@ -215,7 +215,7 @@ cdef class ParticleHandle(object):
         """
         The particle velocity in the lab frame.
 
-        v : list of floats
+        v : list of :obj:`float`
             A list of three floats representing the Particles's velocity
 
         .. note::
@@ -259,7 +259,7 @@ cdef class ParticleHandle(object):
         """
         The instantaneous force acting on this particle.
 
-        f : list of floats
+        f : list of :obj:`float`
             A list of three floats representing the current forces on the Particle
 
         .. note::
@@ -352,7 +352,7 @@ cdef class ParticleHandle(object):
     IF MULTI_TIMESTEP == 1:
         property smaller_timestep:
             """
-            smaller_timestep : int
+            smaller_timestep : :obj:`int`
                                Particle flag specifying whether particle trajectory
                                should be integrated with time_step of small_time_step.
 
@@ -378,7 +378,7 @@ cdef class ParticleHandle(object):
         """
         Particle mass.
 
-        mass : float
+        mass : :obj:`float`
                The particle mass.
 
         See Also
@@ -406,8 +406,9 @@ cdef class ParticleHandle(object):
             """
             The particle angular velocity the lab frame.
 
-            omega_lab : list of floats
-                list of three floats giving the particle angular velocity as measured from the lab frame.
+            omega_lab : list of :obj:`float`
+                        List of three floats giving the particle angular
+                        velocity as measured from the lab frame.
 
             .. note::
                This needs the feature ROTATION.
@@ -443,7 +444,7 @@ cdef class ParticleHandle(object):
             """
             Particle quaternion representation.
 
-            quat : list fo floats (of length four)
+            quat : list fo :obj:`float` (of length four)
                    This list of four floats sets the quaternion representation
                    of the rotational position of this particle.
 
@@ -499,7 +500,7 @@ cdef class ParticleHandle(object):
             """
             The particle angular velocity in body frame.
 
-            omega_body : list of floats
+            omega_body : list of :obj:`float`
 
             This property sets the angular momentum of this particle in the
             particles co-rotating frame (or body frame).
@@ -528,7 +529,7 @@ cdef class ParticleHandle(object):
             """
             The particle torque in the lab frame.
 
-            torque_lab : list of floats
+            torque_lab : list of :obj:`float`
 
             This property defines the torque of this particle
             in the fixed frame (or laboratory frame).
@@ -565,7 +566,7 @@ cdef class ParticleHandle(object):
             """
             The particle rotational inertia.
 
-            rintertia : list of floats
+            rintertia : list of :obj:`float`
 
             Sets the diagonal elements of this particles rotational inertia
             tensor. These correspond with the inertial moments along the
@@ -600,7 +601,7 @@ cdef class ParticleHandle(object):
             """
             Particle charge.
 
-            q : float
+            q : :obj:`float`
 
             .. note::
                This needs the feature ELECTROSTATICS.
@@ -711,7 +712,7 @@ cdef class ParticleHandle(object):
             """
             The orientation of the dipole axis.
 
-            dip : list of floats
+            dip : list of :obj:`float`
 
             .. note::
                This needs the feature DIPOLES.
@@ -738,7 +739,7 @@ cdef class ParticleHandle(object):
             """
             The magnitude of the dipole moment.
 
-            dipm : float
+            dipm : :obj:`float`
 
             .. note::
                This needs the feature DIPOLES.
@@ -762,7 +763,7 @@ cdef class ParticleHandle(object):
             """
             An additional external force applied to the particle.
 
-            ext_force : list of floats
+            ext_force : list of :obj:`float`
 
             .. note::
                This needs the feature EXTERNAL_FORCES.
@@ -837,7 +838,7 @@ cdef class ParticleHandle(object):
                 """
                 An additional external torque is applied to the particle.
 
-                ext_torque : list of floats
+                ext_torque : list of :obj:`float`
 
                 ..  note::
                     * This torque is specified in the laboratory frame!
@@ -876,7 +877,7 @@ cdef class ParticleHandle(object):
                 """
                 The rotational frictional coefficient used in the the Langevin thermostat.
 
-                gamma : list of floats
+                gamma : list of :obj:`float`
 
                 .. note::
                    This needs the feature LANGEVIN_PER_PARTICLE and PARTICLE_ANISOTROPY.
@@ -906,7 +907,7 @@ cdef class ParticleHandle(object):
                 """
                 The translational frictional coefficient used in the the Langevin thermostat.
 
-                gamma : float
+                gamma : :obj:`float`
 
                 .. note::
                    This needs the feature LANGEVIN_PER_PARTICLE.
@@ -934,7 +935,7 @@ cdef class ParticleHandle(object):
                     """
                     The particle translational frictional coefficient used in the Langevin thermostat.
 
-                    gamma_rot : list of floats
+                    gamma_rot : list of :obj:`float`
 
                     .. note::
                        This needs the feature LANGEVIN_PER_PARTICLE, ROTATION and PARTICLE_ANISOTROPY.
@@ -960,7 +961,7 @@ cdef class ParticleHandle(object):
                     """
                     The particle rotational frictional coefficient used in the Langevin thermostat.
 
-                    gamma : float
+                    gamma : :obj:`float`
 
                     """
 
@@ -981,7 +982,7 @@ cdef class ParticleHandle(object):
             """
             Particle's temperature in the Langevin thermostat.
 
-            temp: float
+            temp: :obj:`float`
 
             .. note::
                This needs the feature LANGEVIN_PER_PARTICLE.
@@ -1122,12 +1123,12 @@ cdef class ParticleHandle(object):
 
             Parameters
             ----------
-            'f_swim' : float
+            'f_swim' : :obj:`float`
                        Achieve a constant velocity by imposing a constant
                        force term 'f_swim' that is balanced by friction of a
                        (Langevin) thermostat.  This exludes the option
                        'v_swim'.
-            'v_swim' : float
+            'v_swim' : :obj:`float`
                        Achieve a constant velocity by imposing a constant
                        terminal velocity 'v_swim'.  This exludes the option
                        'f_swim'.
@@ -1136,10 +1137,10 @@ cdef class ParticleHandle(object):
                      pulling mechanism, leading to change in the sign of the
                      dipolar flow field with respect to the direction of
                      motion.
-            'dipole_length' : float
+            'dipole_length' : :obj:`float`
                               This determines the distance of the source of
                               propulsion from the particle's center.
-            'rotational_friction' : float
+            'rotational_friction' : :obj:`float`
                                     This key can be used to set the friction that causes
                                     the orientation of the particle to change in shear
                                     flow. The torque on the particle is determined by
@@ -1489,10 +1490,11 @@ cdef class ParticleHandle(object):
 
 
 cdef class _ParticleSliceImpl(object):
-    """
-    Handles slice inputs.
+    """Handles slice inputs.
 
-    This base class should not be used directly. Use :class:`espressomd.ParticleSlice` instead, which contains all the particle properties.
+    This base class should not be used directly. Use
+    :class:`espressomd.ParticleSlice` instead, which contains all the particle
+    properties.
 
     """
 
@@ -1616,7 +1618,8 @@ cdef class _ParticleSliceImpl(object):
 
 class ParticleSlice(_ParticleSliceImpl):
     """
-    Handles slice inputs e.g. part[0:2]. Sets values for selected slices or returns values as a single list.
+    Handles slice inputs e.g. part[0:2]. Sets values for selected slices or
+    returns values as a single list.
 
     """
 
@@ -1625,7 +1628,8 @@ class ParticleSlice(_ParticleSliceImpl):
 
 cdef class ParticleList(object):
     """
-    Provides access to the particles via [i], where i is the particle id. Returns a ParticleHandle object.
+    Provides access to the particles via [i], where i is the particle id.
+    Returns a ParticleHandle object.
 
     """
 
@@ -1648,16 +1652,14 @@ cdef class ParticleList(object):
 
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
-        """
-        Attributes to pickle.
-        Content of particle_attributes, minus a few exceptions
-        dip, director: Setting only the director will overwrite
-        the orientation of the particle around the axis parallel
-        to dipole moment/director. Quaternions contain the full info
-        id: The particle id is used as the storage key when pickling
-        all particles via ParticleList, and the interface
-        (rightly) does not support changing of the id after the particle
-        was created.
+        """Attributes to pickle.
+        Content of particle_attributes, minus a few exceptions dip, director:
+        Setting only the director will overwrite the orientation of the
+        particle around the axis parallel to dipole moment/director.
+        Quaternions contain the full info id: The particle id is used as the
+        storage key when pickling all particles via ParticleList, and the
+        interface (rightly) does not support changing of the id after the
+        particle was created.
 
         """
 
@@ -1696,7 +1698,7 @@ cdef class ParticleList(object):
 
         Returns
         -------
-        Returns one ParticleHandle per created particle.
+        Returns an instance of :class:`espressomd.particle_data.ParticleHandle` for each added particle.
 
         See Also
         --------
@@ -1841,10 +1843,10 @@ cdef class ParticleList(object):
         Parameters
         ----------
  
-        'fname': string
-            filename of the target output file
-        'types': list of integers or the string 'all', optional (default: 'all')
-            A list of particle types which should be output to 'fname'
+        fname: :obj:`str`
+               Filename of the target output file
+        types: list of :obj:`int` or the string 'all', optional (default: 'all')
+               A list of particle types which should be output to 'fname'
    
         Examples
         --------
@@ -1886,7 +1888,7 @@ cdef class ParticleList(object):
             for p in self:
                 for t in types:
                     if (p.type == t or t == "all"):
-                        vtk.write("{} {} {}\n".format(*(p.pos % box_l)))
+                        vtk.write("{} {} {}\n".format(*(p.pos_folded)))
 
             vtk.write("POINT_DATA {}\n".format(n))
             vtk.write("SCALARS velocity float 3\n")
@@ -1937,9 +1939,11 @@ cdef class ParticleList(object):
 
         """
 
+        cdef int i
+        cdef int j
         for i in range(max_seen_particle + 1):
             for j in range(i + 1, max_seen_particle + 1, 1):
-                if not (self.exists(i) and self.exists(j)):
+                if not (particle_exists(i) and particle_exists(j)):
                     continue
                 yield (self[i], self[j])
 

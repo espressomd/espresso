@@ -36,7 +36,7 @@
 #include "halo.hpp"
 
 /** Primitive fieldtypes and their initializers */
-struct _Fieldtype fieldtype_double = { 0, NULL, NULL, sizeof(double), 0, 0, 0, 0, NULL };
+struct _Fieldtype fieldtype_double = { 0, nullptr, nullptr, sizeof(double), 0, 0, 0, 0, nullptr };
 
 /** Creates a fieldtype describing the data layout 
  *  @param count   number of subtypes (Input)
@@ -50,7 +50,7 @@ void halo_create_fieldtype(int count, int* lengths, int *disps, int extent, Fiel
 
   Fieldtype ntype = *newtype = (Fieldtype) Utils::malloc(sizeof(*ntype));
 
-  ntype->subtype = NULL;
+  ntype->subtype = nullptr;
   ntype->vflag   = 0;
 
   ntype->vblocks = 1;
@@ -138,7 +138,7 @@ void halo_create_field_hvector(int vblocks, int vstride, int vskip, Fieldtype ol
 void halo_free_fieldtype(Fieldtype *ftype) {
   if ((*ftype)->count>0) {
     free((*ftype)->lengths);
-    (*ftype)->lengths = NULL;
+    (*ftype)->lengths = nullptr;
   }
   free(*ftype);
 }

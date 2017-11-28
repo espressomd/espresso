@@ -25,6 +25,7 @@
 #include "PidObservable.hpp"
 #include "ParamlessObservable.hpp"
 #include "ProfileObservable.hpp"
+#include "CylindricalProfileObservable.hpp"
 
 //#include "ParticleVelocities.hpp"
 //#include "ParticlePositions.hpp"
@@ -49,8 +50,8 @@ void initialize() {
   REGISTER(ParticleVelocities);
   REGISTER(ParticleForces);
   REGISTER(ParticleBodyVelocities);
-  REGISTER(ParticleAngularMomentum);
-  REGISTER(ParticleBodyAngularMomentum);
+  REGISTER(ParticleAngularVelocities);
+  REGISTER(ParticleBodyAngularVelocities);
   REGISTER(ParticleCurrent);
   REGISTER(Current);
   REGISTER(DipoleMoment);
@@ -62,6 +63,7 @@ void initialize() {
   REGISTER(ForceDensityProfile);
   REGISTER(FluxDensityProfile);
   REGISTER(LBVelocityProfile);
+  REGISTER(CylindricalFluxDensityProfile);
 
 #undef REGISTER
 }

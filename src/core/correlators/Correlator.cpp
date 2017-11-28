@@ -75,6 +75,7 @@ int correlations_autoupdate=0;
 
 int correlation_update(unsigned int no) {
 //    return correlations.at(no)->get_data();
+  return 0;
 }
 
 int correlation_update_from_file(unsigned int no) {
@@ -82,7 +83,7 @@ int correlation_update_from_file(unsigned int no) {
 //    return 1;
 //  while ( ! correlations.at(no)->get_data()) {
 //  }
-//  return 0;
+  return 0;
 }
 
 
@@ -301,7 +302,6 @@ void Correlator::initialize() {
   }
   if (autocorrelation) {
     B_accumulated_average =  A_accumulated_average;
-    B_accumulated_variance = B_accumulated_variance;
   } else {
     B_accumulated_average = (double*)Utils::malloc(dim_B*sizeof(double));
     B_accumulated_variance = (double*)Utils::malloc(dim_B*sizeof(double));
@@ -379,6 +379,10 @@ void Correlator::initialize() {
 }
 
 int Correlator::get_data() {
+  if (finalized) {
+     runtimeErrorMsg() << "No data can be added after finalize() was called.";
+     return 0;
+  }
   // We must now go through the hierarchy and make sure there is space for the new 
   // datapoint. For every hierarchy level we have to decide if it necessary to move 
   // something
@@ -611,6 +615,10 @@ int Correlator::read_data_from_file(const char * filename, bool binary){
 
 
 int Correlator::finalize() {
+  if (finalized) {
+     runtimeErrorMsg() << "Correlator::finalize() can only be called once.";
+     return 0;
+  }
   // We must now go through the hierarchy and make sure there is space for the new 
   // datapoint. For every hierarchy level we have to decide if it necessary to move 
   // something

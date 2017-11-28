@@ -421,17 +421,15 @@ void MPI_Send(Particle const *, Size, Ts...) {
     (we hope) algorithm to avoid unnecessary resizes.
     Access using \ref realloc_particlelist, \ref got_particle,...
 */
-typedef struct {
+struct ParticleList {
+  ParticleList() : part{nullptr}, n{0}, max{0} {}
   /** The particles payload */
   Particle *part;
   /** Number of particles contained */
   int n;
   /** Number of particles that fit in until a resize is needed */
   int max;
-#ifdef LEES_EDWARDS
-  int myIndex[3];
-#endif
-} ParticleList;
+};
 
 /************************************************
  * exported variables
@@ -447,10 +445,6 @@ extern int max_seen_particle;
 /** total number of particles on all nodes. */
 extern int n_part;
 
-/** Capacity of the \ref particle_node / \ref local_particles. */
-extern int max_particle_node;
-/** Used only on master node: particle->node mapping. */
-extern int *particle_node;
 /** id->particle mapping on all nodes. This is used to find partners
     of bonded interactions. */
 extern Particle **local_particles;
@@ -489,7 +483,7 @@ int realloc_particlelist(ParticleList *plist, int size);
 /** Search for a specific particle.
     \param plist the list on which to operate
     \param id the identity of the particle to search
-    \return a pointer to the particle structure or NULL if particle is
+    \return a pointer to the particle structure or nullptr if particle is
     not in this list */
 Particle *got_particle(ParticleList *plist, int id);
 
@@ -541,16 +535,10 @@ Particle *move_indexed_particle(ParticleList *destList,
 */
 void update_local_particles(ParticleList *pl);
 
-/** Rebuild \ref particle_node from scratch.
-    After a simulation step \ref particle_node has to be rebuild
-    since the particles might have gone to a different node.
-*/
-void build_particle_node();
-
 /** Invalidate \ref particle_node. This has to be done
     at the beginning of the integration.
 */
-void particle_invalidate_part_node();
+void clear_particle_node();
 
 /** Realloc \ref local_particles. */
 void realloc_local_particles();
@@ -804,7 +792,7 @@ int set_particle_fix(int part, int flag);
 /** Call only on the master node: change particle bond.
     @param part     identity of principal atom of the bond.
     @param bond     field containing the bond type number and the
-    identity of all bond partners (secundary atoms of the bond). If NULL, delete
+    identity of all bond partners (secundary atoms of the bond). If nullptr, delete
    all bonds.
     @param _delete   if true, do not add the bond, rather delete it if found
     @return ES_OK on success or ES_ERROR if no success
@@ -909,7 +897,7 @@ void recv_particles(ParticleList *particles, int node);
 #ifdef EXCLUSIONS
 /** Determines if the non bonded interactions between p1 and p2 should be
  * calculated */
-inline int do_nonbonded(Particle *p1, Particle *p2) {
+inline int do_nonbonded(Particle const *p1, Particle const *p2) {
   int i, i2;
   /* check for particle 2 in particle 1's exclusion list. The exclusion list is
      symmetric, so this is sufficient. */
@@ -939,11 +927,7 @@ void try_add_exclusion(Particle *part, int part2);
  should be on a single node, therefore the \ref partCfg array is used. With
  large amounts
  of particles, you should avoid this function and setup exclusions manually. */
-void auto_exclusion(int distance);
-
-/* keep a unique list for particle i. Particle j is only added if it is not i
- and not already in the list. */
-void add_partner(IntList *il, int i, int j, int distance);
+void auto_exclusions(int distance);
 
 // value that is returned in the case there was no error, but the type was not
 // yet indexed

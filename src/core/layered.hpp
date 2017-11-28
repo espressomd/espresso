@@ -34,7 +34,7 @@ extern int n_layers, determine_n_layers;
 /** height of the layers, i. e. box_l[2]/n_nodes */
 extern double layer_h, layer_h_i;
 
-/** map a position to a cell, if on this node, else returns NULL. */
+/** map a position to a cell, if on this node, else returns nullptr. */
 Cell *layered_position_to_cell(double pos[3]);
 
 /// free all data structure that belong to this cell system

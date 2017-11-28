@@ -480,7 +480,7 @@ void assign_charges(const CUDA_particle_data *const pdata, const P3MGpuData p) {
     parts_per_block++;
   }
   if ((p.n_part % parts_per_block) == 0)
-    n_blocks = max(1, p.n_part / parts_per_block);
+    n_blocks = std::max<int>(1, p.n_part / parts_per_block);
   else
     n_blocks = p.n_part / parts_per_block + 1;
 
@@ -489,7 +489,7 @@ void assign_charges(const CUDA_particle_data *const pdata, const P3MGpuData p) {
   while (grid.x > 65536) {
     grid.y++;
     if ((n_blocks % grid.y) == 0)
-      grid.x = max(1, n_blocks / grid.y);
+      grid.x = std::max<int>(1, n_blocks / grid.y);
     else
       grid.x = n_blocks / grid.y + 1;
   }
@@ -618,7 +618,7 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
   }
 
   if ((n_part % parts_per_block) == 0)
-    n_blocks = max(1, n_part / parts_per_block);
+    n_blocks = std::max<int>(1, n_part / parts_per_block);
   else
     n_blocks = n_part / parts_per_block + 1;
 
@@ -627,7 +627,7 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
   while (grid.x > 65536) {
     grid.y++;
     if ((n_blocks % grid.y) == 0)
-      grid.x = max(1, n_blocks / grid.y);
+      grid.x = std::max<int>(1, n_blocks / grid.y);
     else
       grid.x = n_blocks / grid.y + 1;
   }

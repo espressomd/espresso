@@ -45,7 +45,7 @@ Required Development Tools
 -  To be able to access the development version of |es|, you will need
    the distributed versioning control system git_. 
 
--  The documentation is currently being converted from LaTeX to Sphinx. To build the old user and developer guides, you will need LaTeX. For building the sphinx documentation, you will need the Python packages listed in ``requirements.txt`` in the top-level source directory. To install them, issue::
+-  To build the sphinx documentation, you will need the Python packages listed in ``requirements.txt`` in the top-level source directory. To install them, issue::
       pip install --upgrade --user -r requirements.txt
 
    Note, that some distributions now use ``pip`` for Python3 and ``pip2`` for Python 2. 

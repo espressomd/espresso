@@ -32,7 +32,6 @@
 #include "lees_edwards_comms_manager.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
-#include "verlet.hpp"
 
 #ifdef LEES_EDWARDS
 
