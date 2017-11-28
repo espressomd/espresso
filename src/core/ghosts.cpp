@@ -98,7 +98,7 @@ void prepare_comm(GhostCommunicator *comm, int data_parts, int num)
 void free_comm(GhostCommunicator *comm)
 {
   int n;
-  GHOST_TRACE(fprintf(stderr,"%d: free_comm: %p has %d ghost communications\n",this_node,comm,comm->num));
+  GHOST_TRACE(fprintf(stderr,"%d: free_comm: %p has %d ghost communications\n",this_node,(void*) comm,comm->num));
   for (n = 0; n < comm->num; n++) free(comm->comm[n].part_lists);
   free(comm->comm);
 }
@@ -296,7 +296,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
     auto cur_list = gc->part_lists[pl];
     if (data_parts & GHOSTTRANS_PARTNUM) {
       GHOST_TRACE(fprintf(stderr, "%d: reallocating cell %p to size %d, assigned to node %d\n",
-			  this_node, cur_list, *(int *)retrieve, gc->node));
+			  this_node, (void*) cur_list, *(int *)retrieve, gc->node));
       prepare_ghost_cell(cur_list, *(int *)retrieve);
       retrieve += sizeof(int);
     }
@@ -539,7 +539,7 @@ void ghost_communicator(GhostCommunicator *gc)
   int n, n2;
   int data_parts = gc->data_parts;
 
-  GHOST_TRACE(fprintf(stderr, "%d: ghost_comm %p, data_parts %d\n", this_node, gc, data_parts));
+  GHOST_TRACE(fprintf(stderr, "%d: ghost_comm %p, data_parts %d\n", this_node, (void*) gc, data_parts));
 
   for (n = 0; n < gc->num; n++) {
     GhostCommunication *gcn = &gc->comm[n];

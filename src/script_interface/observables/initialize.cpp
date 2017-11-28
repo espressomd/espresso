@@ -43,9 +43,7 @@ void initialize() {
   //    register_new("Observables::ParticleVelocities");
 
   REGISTER(AutoUpdateObservables);
-
   REGISTER(StressTensor);
-  REGISTER(StressTensorAcf);
   REGISTER(ParticlePositions);
   REGISTER(ParticleVelocities);
   REGISTER(ParticleForces);

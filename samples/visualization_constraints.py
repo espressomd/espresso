@@ -58,7 +58,7 @@ system.non_bonded_inter[0, 1].lennard_jones.set_params(
     epsilon=200.0, sigma=5.0,
     cutoff=20.0, shift="auto")
 
-system.non_bonded_inter.set_force_cap(1000.0)
+system.force_cap = 1000.0
 
 
 def main():

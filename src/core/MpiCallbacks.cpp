@@ -39,7 +39,7 @@ void MpiCallbacks::call(int id, int par1, int par2) const {
     throw std::out_of_range("Callback does not exists.");
   }
 
-  std::array<int, 3> request{id, par1, par2};
+  std::array<int, 3> request{{id, par1, par2}};
 
   /** Send request to slaves */
   boost::mpi::broadcast(m_comm, request.data(), request.size(), 0);

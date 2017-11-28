@@ -30,6 +30,7 @@
 #include <cuda.h>
 #include <stdlib.h>
 #include <vector>
+#include <cassert>
 
 #include "electrokinetics.hpp"
 #include "electrokinetics_pdb_parse.hpp"
@@ -81,11 +82,11 @@ static LB_rho_v_pi_gpu *device_rho_v_pi= nullptr;
 static LB_rho_v_pi_gpu *print_rho_v_pi= nullptr;
 
 /** structs for velocity densities */
-static LB_nodes_gpu nodes_a = {.vd=nullptr,.seed=nullptr,.boundary=nullptr};
-static LB_nodes_gpu nodes_b = {.vd=nullptr,.seed=nullptr,.boundary=nullptr};;
+static LB_nodes_gpu nodes_a = { nullptr, nullptr, nullptr};
+static LB_nodes_gpu nodes_b = { nullptr, nullptr, nullptr};;
 /** struct for node force */
 
-LB_node_force_gpu node_f = {.force=nullptr,.scforce=nullptr} ;
+LB_node_force_gpu node_f = {nullptr, nullptr} ;
 
 static LB_extern_nodeforce_gpu *extern_nodeforces = nullptr;
 
@@ -3781,10 +3782,9 @@ __device__ void get_interpolated_velocity(LB_nodes_gpu n_a, float* r, float* u, 
 //      u[0] += d_v[node_index[i]].v[0]/8.0f;  
 //      u[1] += d_v[node_index[i]].v[1]/8.0f;
 //      u[2] += d_v[node_index[i]].v[2]/8.0f;
-#warning "lb_radial_velocity_profile does not work with SHANCHEN yet/"
-        u[0] = 0;
-        u[1] = 0;
-        u[2] = 0;
+        u[0] = 0*delta[i];
+        u[1] = 0*delta[i];
+        u[2] = 0*delta[i];
 #endif
 
 //      mode[1]+=0.5f*node_f.force[0*para.number_of_nodes + node_index[i]];
@@ -3921,6 +3921,9 @@ __global__ void fill_lb_velocity_profile(LB_nodes_gpu n_a, profile_data* pdata, 
 
 
 int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pdata, double* A, unsigned int n_A){
+#ifdef SHANCHEN
+  assert(0);
+#endif
 
   unsigned int maxj, maxk;
   float normalization_factor=1;
@@ -3999,6 +4002,10 @@ int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pda
 }
 
 int statistics_observable_lbgpu_velocity_profile(profile_data* pdata, double* A, unsigned int n_A){
+#ifdef SHANCHEN
+  assert(0);
+#endif
+
   unsigned int maxi, maxj, maxk;
   int linear_index;
   float normalization_factor=1;

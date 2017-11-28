@@ -8,7 +8,8 @@
 namespace Observables {
 class CylindricalFluxDensityProfile : public CylindricalProfileObservable {
 public:
-  virtual int actual_calculate(PartCfg &partCfg) override {
+  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
+    std::vector<double> res(n_values());
     double bin_volume;
     int r_bin, phi_bin, z_bin;
     for (int id : ids()) {
@@ -57,7 +58,6 @@ public:
                         ppos_shifted[1] * ppos_shifted[1]);
         // v_z = v_z
         double v_z = vel[2] / time_step;
-        printf("Velocity: %f %f %f\n", v_r, v_phi, v_z);
         // Write a flat histogram.
         // index calculation: using the following formula for N dimensions:
         //   ind = ind_{N-1} + sum_{j=0}^{N-2} (ind_j * prod_{k=j+1}^{N-1} n_k),
@@ -66,17 +66,17 @@ public:
         int ind =
             3 * (r_bin * n_phi_bins * n_z_bins + phi_bin * n_z_bins + z_bin);
         if (std::isfinite(v_r)) {
-          last_value[ind + 0] += v_r / bin_volume;
+          res[ind + 0] += v_r / bin_volume;
         }
         if (std::isfinite(v_phi)) {
-          last_value[ind + 1] += v_phi / bin_volume;
+          res[ind + 1] += v_phi / bin_volume;
         }
         if (std::isfinite(v_z)) {
-          last_value[ind + 2] += v_z / bin_volume;
+          res[ind + 2] += v_z / bin_volume;
         }
       }
     }
-    return 0;
+    return res;
   }
   virtual int n_values() const override {
     return 3 * n_r_bins * n_phi_bins * n_z_bins;
@@ -88,18 +88,19 @@ private:
     // indices.
     static const int len_dims[4] = {n_r_bins, n_phi_bins, n_z_bins, 3};
     static const int n_dims = 4;
-    static const std::array<double, 3> bin_sizes = {
-        r_bin_size(), phi_bin_size(), z_bin_size()};
+    static const std::array<double, 3> bin_sizes = {{
+        r_bin_size(), phi_bin_size(), z_bin_size()}};
     std::array<double, 3> position;
     int index;
     int unravelled_index[4];
-    for (auto it = last_value.begin(); it != last_value.end(); it += 3) {
-      index = std::distance(last_value.begin(), it);
+    std::vector<double> tmp = operator()(partCfg());
+    for (auto it = tmp.begin(); it != tmp.end(); it += 3) {
+      index = std::distance(tmp.begin(), it);
       ::Utils::unravel_index(len_dims, n_dims, index, unravelled_index);
-      position = {
+      position = {{
           (static_cast<double>(unravelled_index[0]) + 0.5) * bin_sizes[0],
           (static_cast<double>(unravelled_index[1]) + 0.5) * bin_sizes[1],
-          (static_cast<double>(unravelled_index[2]) + 0.5) * bin_sizes[2]};
+          (static_cast<double>(unravelled_index[2]) + 0.5) * bin_sizes[2]}};
       m_ofile << position[0] << " " << position[1] << " " << position[2] << " "
               << *it << " " << *(it + 1) << " " << *(it + 2) << "\n";
     }
