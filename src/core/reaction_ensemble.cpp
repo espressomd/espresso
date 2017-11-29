@@ -413,8 +413,8 @@ int ReactionEnsemble::update_type_index(std::vector<int>& reactant_types, std::v
 		m_current_reaction_system.nr_different_types=1;
 		init_type_map(m_current_reaction_system.type_index[0]); //make types known in espresso
 	}
-	add_types_to_index(reactant_types,status_gc_init);
-	add_types_to_index(product_types,status_gc_init);
+	add_types_to_index(reactant_types);
+	add_types_to_index(product_types);
 	
 	//increase m_current_reaction_system.charges_of_types length
 	m_current_reaction_system.charges_of_types.push_back(m_invalid_charge);
