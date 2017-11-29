@@ -661,7 +661,7 @@ int set_particle_mu_E(int part, double mu_E[3]);
     @param type its new type.
     @return ES_OK if particle existed
 */
-int set_particle_type(int part, int type);
+int set_particle_type(int p_id, int type);
 
 /** Call only on the master node: set particle's molecule id.
     @param part the particle.

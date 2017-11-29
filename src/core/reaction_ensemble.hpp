@@ -258,10 +258,10 @@ private:
   };
   double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
   bool all_reactant_particles_exist(int reaction_id);
-  int replace(int p_id, int desired_type);
+  int replace_particle(int p_id, int desired_type);
   int create_particle(int desired_type);
-  std::vector<int> m_empty_p_ids_smaller_than_max_seen_particle;
   int hide_particle(int p_id, int previous_type);
+  std::vector<int> m_empty_p_ids_smaller_than_max_seen_particle;
   void remove_bins_that_have_not_been_sampled();
 
     /**

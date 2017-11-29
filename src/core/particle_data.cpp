@@ -164,8 +164,9 @@ void build_particle_node() { mpi_who_has(); }
  *  @brief Get the mpi rank which owns the particle with id.
 */
 int get_particle_node(int id) {
-  if ((id < 0) or (id > max_seen_particle))
+  if ((id < 0) or (id > max_seen_particle)){
     return -1;
+  }
 
   if (particle_node.empty())
     build_particle_node();
@@ -517,29 +518,33 @@ int set_particle_mu_E(int part, double mu_E[3]) {
 }
 #endif
 
-int set_particle_type(int part, int type) {
-  auto const pnode = get_particle_node(part);
+int set_particle_type(int p_id, int type) {
+  auto const pnode = get_particle_node(p_id);
   make_particle_type_exist(type);
 
-  if (pnode == -1)
+  if (pnode == -1){
+    throw std::runtime_error("pnode not found\n");
     return ES_ERROR;
+  }
 
   if (GC_init) {
     // check if the particle exists already and the type is changed, then remove
     // it from the list which contains it
-    auto cur_par = get_particle_data(part);
+    auto cur_par = get_particle_data(p_id);
     if (cur_par) {
       int prev_type = cur_par->p.type;
       if (prev_type != type) {
         // particle existed before so delete it from the list
-        remove_id_from_map(part, prev_type);
+        remove_id_from_map(p_id, prev_type);
       }
+    } else {
+      throw std::runtime_error("Cannot set type for non-existing particle");
     }
     
-    add_particle_to_list(part, type);
+    add_particle_to_list(p_id, type);
   }
 
-  mpi_send_type(pnode, part, type);
+  mpi_send_type(pnode, p_id, type);
 
   return ES_OK;
 }
@@ -737,14 +742,14 @@ void remove_all_particles() {
 
 int remove_particle(int p_id) {
   auto cur_par = get_particle_data(p_id);
-
   if (cur_par) {
     if(GC_init==true){
+        //remove particle from its current type_list
         int type = cur_par->p.type;
         remove_id_from_map(p_id, type);
     }
   } else {
-    throw std::runtime_error("particle could not be retrieved");
+    throw std::runtime_error("particle could not be retrieved during remove");
   }
 
   auto const pnode = get_particle_node(p_id);
@@ -1187,14 +1192,19 @@ void remove_id_from_map(int part_id, int type) {
 }
 
 int get_random_p_id(int type){
+    if(ParticleTypeMap[type].size()==0)
+        throw std::runtime_error("No particles could be found");
     int i=0;
+    int p_id_ret=0;
     int rand_index = i_random(ParticleTypeMap[type].size());
     for( int p_id :ParticleTypeMap[type]){
         if(i==rand_index){
-            return p_id;
+            p_id_ret=p_id;
+            break;
         }
         i++;
     }
+    return p_id_ret;
 }
 
 void find_particle_type(int type, int *id) {
