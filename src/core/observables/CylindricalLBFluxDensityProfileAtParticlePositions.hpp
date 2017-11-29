@@ -49,9 +49,9 @@ private:
       index = std::distance(tmp.begin(), it);
       ::Utils::unravel_index(len_dims, n_dims, index, unravelled_index);
       position = {
-          (static_cast<double>(unravelled_index[0]) + 0.5) * bin_sizes[0],
-          (static_cast<double>(unravelled_index[1]) + 0.5) * bin_sizes[1],
-          (static_cast<double>(unravelled_index[2]) + 0.5) * bin_sizes[2]};
+          {(static_cast<double>(unravelled_index[0]) + 0.5) * bin_sizes[0],
+           (static_cast<double>(unravelled_index[1]) + 0.5) * bin_sizes[1],
+           (static_cast<double>(unravelled_index[2]) + 0.5) * bin_sizes[2]}};
       m_ofile << position[0] << " " << position[1] << " " << position[2] << " "
               << *it << " " << *(it + 1) << " " << *(it + 2) << "\n";
     }
