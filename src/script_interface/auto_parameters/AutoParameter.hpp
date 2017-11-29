@@ -89,7 +89,17 @@ struct AutoParameter {
                 size_t length = infer_length<T>())
       : name(name), type(type), length(length),
         set([&binding](Variant const &v) { binding = get_value<T>(v); }),
-        get([&binding]() { return binding; }) {}
+        get([&binding]() { return Variant{binding}; }) {}
+
+  template <typename T>
+  AutoParameter(std::string const &name, std::shared_ptr<T> &binding,
+                VariantType type = infer_type<std::shared_ptr<T>>(),
+                size_t length = infer_length<std::shared_ptr<T>>())
+      : name(name), type(type), length(length),
+        set([&binding](Variant const &v) {
+          binding = get_value<std::shared_ptr<T>>(v);
+        }),
+        get([&binding]() { return (binding) ? binding->id() : ObjectId(); }) {}
 
   /**
    * @brief read-only parameter that is bound to a const referece.
@@ -105,8 +115,16 @@ struct AutoParameter {
                 VariantType type = infer_type<T>(),
                 size_t length = infer_length<T>())
       : name(name), type(type), length(length),
-        set([this](Variant const &) { throw WriteError{}; }),
-        get([&binding]() { return binding; }) {}
+        set([](Variant const &) { throw WriteError{}; }),
+        get([&binding]() -> Variant { return binding; }) {}
+
+  template <typename T>
+  AutoParameter(std::string const &name, std::shared_ptr<T> const& binding,
+                VariantType type = infer_type<std::shared_ptr<T>>(),
+                size_t length = infer_length<std::shared_ptr<T>>())
+      : name(name), type(type), length(length),
+        set([](Variant const &) { throw WriteError{}; }),
+        get([&binding]() { return (binding) ? binding->id() : ObjectId(); }) {}
 
   /**
    * @brief Parameter with a user-proivded getter and setter.

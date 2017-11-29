@@ -100,6 +100,12 @@ template <> struct infer_type_helper<std::vector<Variant>> {
 template <> struct infer_type_helper<ObjectId> {
   static constexpr VariantType value{VariantType::OBJECTID};
 };
+
+/* Deduce std::shared_ptr<ScriptInterfaceBase> as ObjectId */
+template <typename T> struct infer_type_helper<std::shared_ptr<T>> {
+  static_assert(std::is_base_of<ScriptInterfaceBase, T>::value, "");
+  static constexpr VariantType value{VariantType::OBJECTID};
+};
 }
 
 /**
