@@ -4,8 +4,6 @@ import unittest as ut
 import espressomd
 import espressomd.observables
 from espressomd import utils
-from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt
 import tests_common
 
 class TestCylindricalFluxDensityObservable(ut.TestCase):
