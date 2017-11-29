@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 
 
 
-@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS", "EXTERNAL_FORCES"]),
+@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
            "Features not available, skipping test!")
 class ElectrostaticInteractionsTests(ut.TestCase):
     # Handle to espresso system
@@ -38,10 +38,10 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         self.system.time_step = 0.01
 
         if not self.system.part.exists(0):
-            self.system.part.add(id=0, pos=(1.0, 2.0, 2.0), q=1, fix=[1, 1, 1])
+            self.system.part.add(id=0, pos=(1.0, 2.0, 2.0), q=1)
         if not self.system.part.exists(1):
             self.system.part.add(
-                id=1, pos=(3.0, 2.0, 2.0), q=-1, fix=[1, 1, 1])
+                id=1, pos=(3.0, 2.0, 2.0), q=-1)
         print("ut.TestCase setUp")
        
     def calc_dh_potential(self, r, df_params):
