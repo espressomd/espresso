@@ -21,14 +21,6 @@
 #include "partCfg_global.hpp"
 
 namespace Accumulators {
-
-void Accumulator::initialize() {
-  if (m_obs != nullptr){
-    m_acc = acc(std::vector<double>(m_obs->n_values()));
-    m_initialized = true;
-  }
-}
-
 int Accumulator::update() {
   m_acc(m_obs->operator()(partCfg()));
   return 0;

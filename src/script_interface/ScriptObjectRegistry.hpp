@@ -38,9 +38,6 @@ public:
       auto obj_ptr =
           get_value<std::shared_ptr<ManagedType>>(parameters.at("object"));
 
-      if (obj_ptr == nullptr)
-        throw std::runtime_error("Wrong type");
-
       add_in_core(obj_ptr);
       m_elements.push_back(obj_ptr);
     }

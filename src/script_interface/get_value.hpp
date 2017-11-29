@@ -95,9 +95,14 @@ template <typename T> T get_value(Variant const &v) {
   return detail::get_value_helper<T>{}(v);
 }
 
-namespace detail {
+/**
+ * @brief Get a value from a VariantMap by name, or throw
+ *        if it does not exist or is not convertiable to
+ *        the target type.
+ *
+ */
 template <typename T>
-T get_or_throw(VariantMap const &vals, std::string const &name) {
+T get_value(VariantMap const &vals, std::string const &name) {
   try {
     return get_value<T>(vals.at(name));
   } catch (boost::bad_get const &) {
@@ -108,14 +113,13 @@ T get_or_throw(VariantMap const &vals, std::string const &name) {
     throw;
   }
 }
-}
 
 /**
  * @brief Make a new T with arguments extracted from a VariantMap.
  */
 template <typename T, typename... Types, typename... ArgNames>
 T make_from_args(VariantMap const &vals, ArgNames... args) {
-  return T{detail::get_or_throw<Types>(vals, args)...};
+  return T{get_value<Types>(vals, args)...};
 }
 
 /**
@@ -125,43 +129,42 @@ T make_from_args(VariantMap const &vals, ArgNames... args) {
 template <typename T, typename... Types, typename... ArgNames>
 std::shared_ptr<T> make_shared_from_args(VariantMap const &vals,
                                          ArgNames... args) {
-  return std::make_shared<T>(detail::get_or_throw<Types>(vals, args)...);
+  return std::make_shared<T>(get_value<Types>(vals, args)...);
 }
 
-  /**
-   * @brief Call a function with parameters fetched from a VariantMap.
-   *
-   * If not provided the types of the arguments are deduced from the
-   * function signature.
-   *
-   * (In R (T::*m)(Args...), m is a pointer to member function of a T,
-   * returning R and taking Args as parameters.)
-   */
+/**
+ * @brief Call a function with parameters fetched from a VariantMap.
+ *
+ * If not provided the types of the arguments are deduced from the
+ * function signature.
+ *
+ * (In R (T::*m)(Args...), m is a pointer to member function of a T,
+ * returning R and taking Args as parameters.)
+ */
 template <typename T, typename R, typename... Args, typename... ArgNames>
 auto call_with_args(T &this_, R (T::*m)(Args...), VariantMap const &vals,
                     ArgNames... args) -> R {
-  return (this_.*m)(detail::get_or_throw<Args>(vals, args)...);
+  return (this_.*m)(get_value<Args>(vals, args)...);
 }
 
-  /**
-   * @brief Call a function with parameters fetched from a VariantMap.
-   *
-   * If not provided the types of the arguments are deduced from the
-   * function signature.
-   *
-   * (In R (*m)(Args...), m is a function pointer,
-   * returning R and taking Args as parameters.)
-   */
-  template <typename R, typename... Args, typename... ArgNames>
-  auto call_with_args(R (*m)(Args...), VariantMap const &vals,
-                      ArgNames... args) -> R {
-    return (*m)(detail::get_or_throw<Args>(vals, args)...);
-  }
-
+/**
+ * @brief Call a function with parameters fetched from a VariantMap.
+ *
+ * If not provided the types of the arguments are deduced from the
+ * function signature.
+ *
+ * (In R (*m)(Args...), m is a function pointer,
+ * returning R and taking Args as parameters.)
+ */
+template <typename R, typename... Args, typename... ArgNames>
+auto call_with_args(R (*m)(Args...), VariantMap const &vals, ArgNames... args)
+    -> R {
+  return (*m)(get_value<Args>(vals, args)...);
+}
 
 template <typename T>
 void set_from_args(T &dst, VariantMap const &vals, const char *name) {
-  dst = detail::get_or_throw<T>(vals, name);
+  dst = get_value<T>(vals, name);
 }
 } /* namespace ScriptInterface */
 
