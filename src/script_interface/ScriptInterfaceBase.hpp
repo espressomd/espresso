@@ -33,7 +33,6 @@ namespace ScriptInterface {
 /**
  * Convinience typedefs.
  */
-typedef std::map<std::string, Variant> VariantMap;
 typedef std::map<std::string, Parameter> ParameterMap;
 
 /**
@@ -77,20 +76,25 @@ public:
   // return boost::core::demangle(typeid(*this).name()) ?
   virtual const std::string name() const = 0;
 
-private:
   /**
    * @brief Constructor
    *
    * This function is called on object creation with user
-   * provided parameters. This can be used if the SO represents
-   * some type that can not reasonably be default constructed,
+   * provided parameters. This can be used if the SO has required parameters,
+   * it represents some type that can not reasonably be default constructed,
    * or if the core implementation has to be chosen by a parameter.
-   * It is guarantueed that no other function from this interface
-   * is called before construct, and it is only called once.
+   * It is guarantueed that no getter or setter functions from this interface
+   * is called before construct (only name() and valid_parameters()),
+   * and it is only called once.
    *
-   * The default implementation does nothing.
+   * The default implementation just calls set_parameters.
+   *
+   * @param params The parameters to the constructor. Only parameters that
+   *               are valid for a default-constructed object are valid.
    */
-  virtual void construct(VariantMap const &params) {}
+  virtual void construct(VariantMap const &params) {
+    this->set_parameters(params);
+  }
 
 public:
   /**
@@ -164,8 +168,7 @@ public:
    *
    */
   static std::shared_ptr<ScriptInterfaceBase>
-  make_shared(std::string const &name, CreationPolicy policy,
-              VariantMap const &params = {});
+  make_shared(std::string const &name, CreationPolicy policy);
 
   /**
    * @brief Get a new reference counted instance of a script interface by

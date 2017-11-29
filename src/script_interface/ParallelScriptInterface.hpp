@@ -35,7 +35,7 @@ class ParallelScriptInterface : public ScriptInterfaceBase {
 public:
   using CallbackAction = ParallelScriptInterfaceSlave::CallbackAction;
 
-  ParallelScriptInterface(std::string const &name, VariantMap const &params = {});
+  ParallelScriptInterface(std::string const &name);
   ~ParallelScriptInterface() override;
 
   /**
@@ -53,6 +53,7 @@ public:
     return std::static_pointer_cast<ScriptInterfaceBase>(m_p);
   }
 
+  void construct(VariantMap const &params) override;
   const std::string name() const override { return m_p->name(); }
   void set_parameter(const std::string &name, const Variant &value) override;
   void

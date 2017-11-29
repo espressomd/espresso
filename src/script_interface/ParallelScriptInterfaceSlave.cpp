@@ -36,22 +36,23 @@ ParallelScriptInterfaceSlave::get_translation_table() {
   return m_translation_table;
 }
 
-void ParallelScriptInterfaceSlave::mpi_slave(int action, int has_params) {
+void ParallelScriptInterfaceSlave::mpi_slave(int action, int) {
   switch (CallbackAction(action)) {
   case CallbackAction::NEW: {
     std::pair<ObjectId, std::string> what;
     boost::mpi::broadcast(m_cb->comm(), what, 0);
 
-    VariantMap params;
-
-    if (has_params)
-      params = bcast_variant_map();
-
     m_p = ScriptInterfaceBase::make_shared(
-        what.second, ScriptInterfaceBase::CreationPolicy::LOCAL, params);
+        what.second, ScriptInterfaceBase::CreationPolicy::LOCAL);
 
     get_translation_table()[what.first] = m_p->id();
 
+    break;
+  }
+  case CallbackAction::CONSTRUCT: {
+    auto const parameters = bcast_variant_map();
+
+    m_p->construct(parameters);
     break;
   }
   case CallbackAction::SET_PARAMETER: {

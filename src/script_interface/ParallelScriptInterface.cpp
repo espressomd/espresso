@@ -34,8 +34,7 @@
 namespace ScriptInterface {
 using CallbackAction = ParallelScriptInterfaceSlave::CallbackAction;
 
-ParallelScriptInterface::ParallelScriptInterface(std::string const &name,
-                                                 VariantMap const &params) {
+ParallelScriptInterface::ParallelScriptInterface(std::string const &name) {
   assert(m_cb && "Not initialized!");
 
   /* Create the slaves */
@@ -45,25 +44,16 @@ ParallelScriptInterface::ParallelScriptInterface(std::string const &name,
   m_callback_id =
       m_cb->add(Communication::MpiCallbacks::function_type([](int, int) {}));
 
+  call(CallbackAction::NEW);
+
   /* Create local object */
   m_p = ScriptInterfaceBase::make_shared(
-      name, ScriptInterfaceBase::CreationPolicy::LOCAL, params);
+      name, ScriptInterfaceBase::CreationPolicy::LOCAL);
 
-  int has_params = !params.empty();
   /* Bcast class name and global id to the slaves */
-  call(CallbackAction::NEW, has_params);
-
   std::pair<ObjectId, std::string> what = std::make_pair(m_p->id(), name);
-
   boost::mpi::broadcast(m_cb->comm(), what, 0);
 
-  /* Only broadcast the constructor parameters if they are not empty. */
-  if (has_params) {
-    /* Copy parameters into a non-const buffer, needed by boost::mpi */
-    auto p = unwrap_variant_map(params);
-
-    boost::mpi::broadcast(m_cb->comm(), p, 0);
-  }
 }
 
 ParallelScriptInterface::~ParallelScriptInterface() {
@@ -85,6 +75,15 @@ void ParallelScriptInterface::initialize(Communication::MpiCallbacks &cb) {
 
   Utils::Parallel::ParallelObject<
       ParallelScriptInterfaceSlave>::register_callback(cb);
+}
+
+void ParallelScriptInterface::construct(VariantMap const &params) {
+  call(CallbackAction::CONSTRUCT);
+
+  auto p = unwrap_variant_map(params);
+  boost::mpi::broadcast(m_cb->comm(), p, 0);
+
+  m_p->construct(p);
 }
 
 void ParallelScriptInterface::set_parameter(const std::string &name,

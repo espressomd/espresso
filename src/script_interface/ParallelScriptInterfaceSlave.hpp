@@ -33,6 +33,7 @@ class ParallelScriptInterfaceSlave : private ParallelScriptInterfaceSlaveBase {
 public:
   enum class CallbackAction {
     NEW,
+    CONSTRUCT,
     SET_PARAMETER,
     SET_PARAMETERS,
     CALL_METHOD,
@@ -41,7 +42,7 @@ public:
 
 private:
   friend class ParallelScriptInterface;
-  static Communication::MpiCallbacks * m_cb;
+  static Communication::MpiCallbacks *m_cb;
   friend Utils::Parallel::ParallelObject<ParallelScriptInterfaceSlave>;
   ParallelScriptInterfaceSlave();
 
