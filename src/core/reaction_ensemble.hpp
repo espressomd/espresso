@@ -304,7 +304,7 @@ private:
                                         int *old_particle_numbers);
   void restore_properties(std::vector<stored_particle_property>& property_list,
                           const int number_of_saved_properties);
-  int add_types_to_index(std::vector<int>& type_list, int status_gc_init);
+  void add_types_to_index(std::vector<int>& type_list);
   double calculate_boltzmann_factor_reaction_ensemble(
       single_reaction& current_reaction, double E_pot_old, double E_pot_new,
       std::vector<int> &old_particle_numbers);

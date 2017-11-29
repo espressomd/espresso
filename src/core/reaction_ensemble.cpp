@@ -384,20 +384,17 @@ int ReactionEnsemble::calculate_nu_bar(std::vector<int>& reactant_coefficients, 
 /**
 * Adds types to an index. the index is later used inside of the Reaction ensemble algorithm to determine e.g. the charge which is associated to a type.
 */
-int ReactionEnsemble::add_types_to_index(std::vector<int>& type_list, int status_gc_init){
+void ReactionEnsemble::add_types_to_index(std::vector<int>& type_list){
     int len_type_list=type_list.size();
-	int status_gc_init_temp=0;
 	for (int i =0; i<len_type_list;i++){
 		bool type_i_is_known=is_in_list(type_list[i],m_current_reaction_system.type_index);
 		if (!type_i_is_known){
 			m_current_reaction_system.type_index.push_back(type_list[i]);
 			m_current_reaction_system.nr_different_types+=1;
 			init_type_map(type_list[i]); //make types known in espresso
-			status_gc_init=status_gc_init;
 		}
 	}
 	init_type_map(m_current_reaction_system.non_interacting_type);
-	return status_gc_init;
 }
 
 /**
@@ -416,8 +413,8 @@ int ReactionEnsemble::update_type_index(std::vector<int>& reactant_types, std::v
 		m_current_reaction_system.nr_different_types=1;
 		init_type_map(m_current_reaction_system.type_index[0]); //make types known in espresso
 	}
-	status_gc_init=add_types_to_index(reactant_types,status_gc_init);
-	status_gc_init=add_types_to_index(product_types,status_gc_init);
+	add_types_to_index(reactant_types,status_gc_init);
+	add_types_to_index(product_types,status_gc_init);
 	
 	//increase m_current_reaction_system.charges_of_types length
 	m_current_reaction_system.charges_of_types.push_back(m_invalid_charge);
