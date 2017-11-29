@@ -114,9 +114,9 @@ public:
     std::shared_ptr<::Observables::obs_name> m_observable;                     \
   };
 
-NEW_CYLINDRICAL_PROFILE_OBSERVABLE(CylindricalFluxDensityProfile);
+NEW_CYLINDRICAL_PROFILE_OBSERVABLE(CylindricalFluxDensityProfile)
 NEW_CYLINDRICAL_PROFILE_OBSERVABLE(
-    CylindricalLBFluxDensityProfileAtParticlePositions);
+    CylindricalLBFluxDensityProfileAtParticlePositions)
 
 } /* namespace Observables */
 } /* namespace ScriptInterface */

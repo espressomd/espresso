@@ -19,22 +19,29 @@ class TestCylindricalFluxDensityObservable(ut.TestCase):
     params = {
         'center': [7.5, 7.5, 7.5],  # center of the histogram
         'axis': 'y',
-        'n_r_bins': 3,  # number of bins in r
-        'n_phi_bins': 3,  # -*- in phi
-        'n_z_bins': 3,  # -*- in z
+        'n_r_bins': 4,  # number of bins in r
+        'n_phi_bins': 4,  # -*- in phi
+        'n_z_bins': 4,  # -*- in z
         'min_r': 0.0,
         'min_phi': -np.pi,
         'min_z': -5.0,
         'max_r': 5.0,
         'max_phi': np.pi,
         'max_z': 5.0,
-        'N': 1  # number of particles
+        'N': 100  # number of particles
     }
 
 
     def swap_axis(self, arr, axis):
         if axis == 'x':
             arr = np.array([arr[2], arr[1], -arr[0]])
+        elif axis == 'y':
+            arr = np.array([arr[0], arr[2], -arr[1]])
+        return arr
+
+    def swap_axis_inverse(self, arr, axis):
+        if axis == 'x':
+            arr = np.array([-arr[2], arr[1], arr[0]])
         elif axis == 'y':
             arr = np.array([arr[0], -arr[2], arr[1]])
         return arr
@@ -45,7 +52,7 @@ class TestCylindricalFluxDensityObservable(ut.TestCase):
         velocities = np.zeros((self.params['N'], 3))
         for i, p in enumerate(self.system.part):
             tmp = p.pos - np.array(self.params['center'])
-            tmp = self.swap_axis(tmp, self.params['axis'])
+            tmp = self.swap_axis_inverse(tmp, self.params['axis'])
             positions[i, :] = tests_common.transform_pos_from_cartesian_to_polar_coordinates(tmp)
         return positions
 
@@ -87,13 +94,13 @@ class TestCylindricalFluxDensityObservable(ut.TestCase):
                                   (self.params['max_z'] - self.params['min_z'])/
                                  (self.params['N'] +
                                      1) - self.params['center'][2]])
-            self.swap_axis(position, self.params['axis'])
             v_y = (position[0] * np.sqrt(position[0]**2.0 + position[1]**2.0) * \
                    v_phi + position[1] * v_r) / np.sqrt(position[0]**2.0 + position[1]**2.0)
             v_x = (v_r * np.sqrt(position[0]**2.0 + position[1] **
                                  2.0) - position[1] * v_y) / position[0]
             velocity = np.array([v_x, v_y, v_z])
             velocity = self.swap_axis(velocity, self.params['axis'])
+            position = self.swap_axis(position, self.params['axis'])
             position += np.array(self.params['center'])
             self.system.part.add(id=i, pos=position, v=velocity)
         pol_positions = self.pol_coords()
