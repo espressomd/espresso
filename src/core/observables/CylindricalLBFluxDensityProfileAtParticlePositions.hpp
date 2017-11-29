@@ -21,8 +21,8 @@
 #define OBSERVABLES_CYLINDRICALLBFLUXDENSITYPROFILEATPARTICLEPOSITIONS_HPP
 
 #include "CylindricalProfileObservable.hpp"
-#include "utils/Histogram.hpp"
 #include "partCfg_global.hpp"
+#include "utils/Histogram.hpp"
 
 namespace Observables {
 class CylindricalLBFluxDensityProfileAtParticlePositions
@@ -40,7 +40,7 @@ private:
     static const int len_dims[4] = {n_r_bins, n_phi_bins, n_z_bins, 3};
     static const int n_dims = 4;
     static const std::array<double, 3> bin_sizes = {
-        r_bin_size(), phi_bin_size(), z_bin_size()};
+        {r_bin_size(), phi_bin_size(), z_bin_size()}};
     std::array<double, 3> position;
     int index;
     int unravelled_index[4];

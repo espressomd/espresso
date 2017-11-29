@@ -25,8 +25,8 @@ namespace Observables {
 
 std::vector<double> CylindricalLBFluxDensityProfileAtParticlePositions::operator() (
     PartCfg &partCfg) const {
+  std::vector<double> res(n_values(), 0.0);
 #ifdef LB_GPU
-  std::vector<double> res(n_values());
   double bin_volume;
   int r_bin, phi_bin, z_bin;
   // First collect all positions (since we want to call the LB function to
@@ -108,7 +108,7 @@ std::vector<double> CylindricalLBFluxDensityProfileAtParticlePositions::operator
       }
     }
   }
-  return res;
 #endif // LB_GPU
+  return res;
 }
 } // namespace Observables
