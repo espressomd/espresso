@@ -112,7 +112,10 @@ class Angle:
 
     """
     def __init__(self, A, B, C, D):
-        if not (isinstance(A,PartPoint) or (isinstance(A,FixedPoint))) and (isinstance(B,PartPoint) or (isinstance(B,FixedPoint))) and (isinstance(C,PartPoint) or (isinstance(C,FixedPoint))) and (isinstance(D,PartPoint) or (isinstance(D,FixedPoint))):
+        if not (isinstance(A, PartPoint) or (isinstance(A, FixedPoint))) \
+                and (isinstance(B, PartPoint) or (isinstance(B, FixedPoint))) \
+                and (isinstance(C, PartPoint) or (isinstance(C, FixedPoint))) \
+                and (isinstance(D, PartPoint) or (isinstance(D, FixedPoint))):
             TypeError("Arguments to Angle must be FixedPoint or PartPoint.")
         self.A = A
         self.B = B
@@ -130,7 +133,9 @@ class ThreeNeighbors:
 
     """
     def __init__(self, A, B, C):
-        if not (isinstance(A,PartPoint) or (isinstance(A,FixedPoint))) and (isinstance(B,PartPoint) or (isinstance(B,FixedPoint))) and (isinstance(C,PartPoint) or (isinstance(C,FixedPoint))):
+        if not (isinstance(A, PartPoint) or (isinstance(A, FixedPoint))) \
+                and (isinstance(B, PartPoint) or (isinstance(B, FixedPoint))) \
+                and (isinstance(C, PartPoint) or (isinstance(C, FixedPoint))):
             TypeError("Arguments to ThreeNeighbors must be FixedPoint or PartPoint.")
         self.A = A
         self.B = B
@@ -147,7 +152,7 @@ class Mesh:
     Represents a triangular mesh.
 
     """
-    def __init__(self, nodes_file=None, triangles_file=None, system=None, resize=[1.0, 1.0, 1.0],
+    def __init__(self, nodes_file=None, triangles_file=None, system=None, resize=(1.0, 1.0, 1.0),
                  part_type=-1, part_mass=1.0, normal=False, check_orientation=True):
         if (system is None) or (not isinstance(system,espressomd.System)):
             raise Exception("Mesh: No system provided or wrong type given. Quitting.")
@@ -165,7 +170,7 @@ class Mesh:
         self.ids_extremal_points = [0, 0, 0, 0, 0, 0, 0]
         
         if (nodes_file is None) or (triangles_file is None):
-            print("OifMesh warning: one of nodes_file or triangles_file was not given. " \
+            print("OifMesh warning: one of nodes_file or triangles_file was not given. "
                   "May raise concern when Mesh object was being created.")
         else:
             if not (isinstance(nodes_file,str) and isinstance(triangles_file,str)):
@@ -233,9 +238,9 @@ class Mesh:
 
             if check_orientation is True:
                 # check whether all triangles in file had the same orientation; if not, correct the orientation
-                print("OifMesh: Checking orientation of triangles (and repairing if needed). " \
-                      "For large meshes this may take a while. " \
-                      "If you are certain your mesh is correct, this can be skipped using the OifCellType " \
+                print("OifMesh: Checking orientation of triangles (and repairing if needed). "
+                      "For large meshes this may take a while. "
+                      "If you are certain your mesh is correct, this can be skipped using the OifCellType "
                       "option check_orientation = False.")
                 self.check_orientation()
 
@@ -380,7 +385,7 @@ class Mesh:
                                                                best_neighbors[2].get_pos())
                     tmp_length_normal_triangle = norm(tmp_normal_triangle)
                     tmp_length_normal_neighbors = norm(tmp_normal_neighbors)
-                    tmp_product = (tmp_normal_triangle * tmp_normal_neighbors) / \
+                    tmp_product = np.dot(tmp_normal_triangle, tmp_normal_neighbors) / \
                                   (tmp_length_normal_triangle * tmp_length_normal_neighbors)
                     tmp_angle = np.arccos(tmp_product)
                     if tmp_angle > np.pi/2.0:
@@ -852,13 +857,15 @@ class OifCell:
         for p in self.mesh.points:
             p.set_force(new_force)
 
-    def kill_motion(self):
-        for p in self.mesh.points:
-            p.kill_motion()
-            
-    def unkill_motion(self):
-        for p in self.mesh.points:
-            p.unkill_motion()
+    # this is not implemented
+    # def kill_motion(self):
+    #    for p in self.mesh.points:
+    #        p.kill_motion()
+
+    # this is not implemented
+    # def unkill_motion(self):
+    #    for p in self.mesh.points:
+    #        p.unkill_motion()
 
     def output_vtk_pos(self, file_name=None):
         if file_name is None:
@@ -924,7 +931,7 @@ class OifCell:
             print("OifCell: append_point_data_to_vtk: No data_name provided.")
             return
         if first_append is None:
-            print("OifCell: append_point_data_to_vtk: Need to know whether this is the first data list to be " \
+            print("OifCell: append_point_data_to_vtk: Need to know whether this is the first data list to be "
                   "appended for this file.")
             return
         n_points = self.get_n_nodes()
@@ -979,15 +986,15 @@ class OifCell:
         in_file.close()
         # removes a blank line at the end of the file if there is any:
         nodes_coord = filter(None, nodes_coord)  # here we have list of lines with triplets of strings
-        if len(nodes_coord) is not n_points:
-            print ("OifCell: Mesh nodes not set to new positions: " \
+        if len(nodes_coord) != n_points:
+            print ("OifCell: Mesh nodes not set to new positions: "
                   "number of lines in the file does not equal number of Cell nodes.")
             return
         else:
             i = 0
             for line in nodes_coord:  # extracts coordinates from the string line
                 line = line.split()
-                new_position = np.array([float(x) for x in line.split()]) + center
+                new_position = np.array(line).astype(np.float) + center
                 self.mesh.points[i].set_pos(new_position)
                 i += 1
 
@@ -1025,14 +1032,14 @@ class OifCell:
 
         for i in range(0,6):
             if (el_forces[i] != 0) and (el_forces[i] != 1):
-                print("OifCell: elastic_forces: Incorrect argument. el_forces has to be a sixtuple of 0s and 1s, " \
-                      "specifying which elastic forces will be calculated. The order in the sixtuple is (ks, kb, " \
+                print("OifCell: elastic_forces: Incorrect argument. el_forces has to be a sixtuple of 0s and 1s, "
+                      "specifying which elastic forces will be calculated. The order in the sixtuple is (ks, kb, "
                       "kal, kag, kv, total).")
                 return
         for i in range(0,6):
             if (f_metric[i] != 0) and (f_metric[i] != 1):
-                print("OifCell: elastic_forces: Incorrect argument. f_metric has to be a sixtuple of 0s and 1s, " \
-                      "specifying which f_metric will be calculated. The order in the sixtuple is (ks, kb, kal, " \
+                print("OifCell: elastic_forces: Incorrect argument. f_metric has to be a sixtuple of 0s and 1s, "
+                      "specifying which f_metric will be calculated. The order in the sixtuple is (ks, kb, kal, "
                       "kag, kv, total)")
                 return
         # calculation of stretching forces and f_metric
@@ -1217,7 +1224,7 @@ class OifCell:
         # output vtk (folded)
         if vtk_file is not None:
             if el_forces == (0, 0, 0, 0, 0, 0):
-                print("OifCell: elastic_forces: The option elastic_forces was not used. " \
+                print("OifCell: elastic_forces: The option elastic_forces was not used. "
                       "Nothing to output to vtk file.")
                 return
             self.output_vtk_pos_folded(vtk_file)
@@ -1250,8 +1257,8 @@ class OifCell:
         # output raw data
         if raw_data_file is not None:
             if (el_forces[0] + el_forces[1] + el_forces[2] + el_forces[3] + el_forces[4] + el_forces[5]) != 1:
-                print("OifCell: elastic_forces: Only one type of elastic forces can be written into one " \
-                      "raw_data_file. If you need several, please call OifCell.elastic_forces multiple times - " \
+                print("OifCell: elastic_forces: Only one type of elastic forces can be written into one "
+                      "raw_data_file. If you need several, please call OifCell.elastic_forces multiple times - "
                       "once per elastic force.")
                 return
             if el_forces[0] == 1:
