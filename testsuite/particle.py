@@ -153,6 +153,7 @@ class ParticleProperties(ut.TestCase):
          (0.5, -0.5, -0.5, -0.5)), err_msg="vs_relative: " + res.__str__(), atol=self.tol)
 
 
+    @ut.skipIf(not espressomd.has_features("ELECTROSTATICS"), "Test needs ELECTROSTATICS")
     def test_zz_particle_selection(self):
         s=self.system
         s.part.clear()
