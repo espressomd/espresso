@@ -25,7 +25,6 @@ from tests_common import *
 import matplotlib.pyplot as plt
 
 
-
 @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
            "Features not available, skipping test!")
 class ElectrostaticInteractionsTests(ut.TestCase):
@@ -43,23 +42,23 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             self.system.part.add(
                 id=1, pos=(3.0, 2.0, 2.0), q=-1)
         print("ut.TestCase setUp")
-       
+
     def calc_dh_potential(self, r, df_params):
-        kT=1.0
-        q1=self.system.part[0].q
-        q2=self.system.part[1].q
+        kT = 1.0
+        q1 = self.system.part[0].q
+        q2 = self.system.part[1].q
         u = np.zeros_like(r)
         # r<r_cut
-        i = np.where(r<df_params['r_cut'])[0]
-        u[i]=df_params['bjerrum_length']*kT*q1*q2*np.exp(-df_params['kappa']*r[i])/r[i]
+        i = np.where(r < df_params['r_cut'])[0]
+        u[i] = df_params['bjerrum_length'] * kT * q1 * \
+            q2 * np.exp(-df_params['kappa'] * r[i]) / r[i]
         return u
-
 
     @ut.skipIf(not espressomd.has_features(["P3M"]),
                "Features not available, skipping test!")
     def test_p3m(self):
         self.system.part[0].pos = [1.0, 2.0, 2.0]
-        self.system.part[1].pos =[3.0, 2.0, 2.0]
+        self.system.part[1].pos = [3.0, 2.0, 2.0]
         # results,
         p3m_energy = -0.501062398379
         p3m_force = 2.48921612e-01
@@ -90,45 +89,46 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         self.assertTrue(np.allclose(self.system.part[1].f,
                                     [-p3m_force, 0, 0]))
         self.system.actors.remove(p3m)
-        
 
     def test_dh(self):
         dh_params = dict(bjerrum_length=1.0,
-                    kappa=2.0,
-                    r_cut=2.0)
+                         kappa=2.0,
+                         r_cut=2.0)
         test_DH = generate_test_for_class(
             self.system,
             electrostatics.DH,
             dh_params)
         dh = espressomd.electrostatics.DH(
-                                          bjerrum_length=dh_params['bjerrum_length'],
+            bjerrum_length=dh_params[
+                'bjerrum_length'],
                                            kappa=dh_params['kappa'],
                                            r_cut=dh_params['r_cut'])
         self.system.actors.add(dh)
-        dr=0.001
-        r = np.arange(.5, 1.01*dh_params['r_cut'], dr)
+        dr = 0.001
+        r = np.arange(.5, 1.01 * dh_params['r_cut'], dr)
         u_dh = self.calc_dh_potential(r, dh_params)
         f_dh = -np.gradient(u_dh, dr)
-        # zero the discontinuity, and re-evaluate the derivitive as a backwards difference
-        i_cut=np.argmin((dh_params['r_cut']-r)**2)
-        f_dh[i_cut]=0
-        f_dh[i_cut-1]=(u_dh[i_cut-2]-u_dh[i_cut-1])/dr
+        # zero the discontinuity, and re-evaluate the derivitive as a backwards
+        # difference
+        i_cut = np.argmin((dh_params['r_cut'] - r)**2)
+        f_dh[i_cut] = 0
+        f_dh[i_cut - 1] = (u_dh[i_cut - 2] - u_dh[i_cut - 1]) / dr
 
-        u_dh_core=np.zeros_like(r)
-        f_dh_core=np.zeros_like(r)
+        u_dh_core = np.zeros_like(r)
+        f_dh_core = np.zeros_like(r)
         # need to update forces
-        for i,ri in enumerate(r):
-            self.system.part[1].pos=self.system.part[0].pos+[ri, 0, 0]
+        for i, ri in enumerate(r):
+            self.system.part[1].pos = self.system.part[0].pos + [ri, 0, 0]
             self.system.integrator.run(0)
-            u_dh_core[i]=self.system.analysis.energy()['coulomb']
-            f_dh_core[i]=self.system.part[0].f[0]
+            u_dh_core[i] = self.system.analysis.energy()['coulomb']
+            f_dh_core[i] = self.system.part[0].f[0]
 
-        self.assertTrue( np.allclose(u_dh_core,
-                                     u_dh,
-                                     atol=1e-7))
-        self.assertTrue( np.allclose(f_dh_core,
-                                     -f_dh,
-                                     atol=1e-2))
+        self.assertTrue(np.allclose(u_dh_core,
+                                    u_dh,
+                                    atol=1e-7))
+        self.assertTrue(np.allclose(f_dh_core,
+                                    -f_dh,
+                                    atol=1e-2))
         self.system.actors.remove(dh)
 
 
