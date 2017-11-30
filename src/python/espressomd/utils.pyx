@@ -227,7 +227,11 @@ def get_unravelled_index(len_dims, n_dims, flattened_index):
         out[i] = unravelled_index_out[i]
     return out
    
-def nest_level(obj):
+def nesting_level(obj):
+    """
+    Returns the maximal nesting level of an object.
+
+    """
 
     if not isinstance(obj, (list,tuple)):
         return 0

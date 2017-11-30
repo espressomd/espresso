@@ -30,7 +30,7 @@ from copy import copy
 from globals cimport max_seen_particle, time_step, smaller_time_step, box_l, n_part, n_rigidbonds, n_particle_types
 import collections
 import functools
-from espressomd.utils import nest_level
+from espressomd.utils import nesting_level
 
 PARTICLE_EXT_FORCE = 1
 
@@ -319,7 +319,7 @@ cdef class ParticleHandle(object):
 
             # Empty list? ony delete
             if _bonds:
-                nlvl = nest_level(_bonds)
+                nlvl = nesting_level(_bonds)
                 if nlvl == 1:  # Single item
                     self.add_bond(_bonds)
                 elif nlvl == 2:  # List of items
@@ -1025,7 +1025,7 @@ cdef class ParticleHandle(object):
             def __set__(self, _rot):
                 cdef int rot
                 check_type_or_throw_except(
-                    _rot, 3, int, "The rotation flag is given as a tuple of 3 integes.")
+                    _rot, 3, int, "The rotation flag has to be given as a tuple of 3 integers.")
 
                 rot = 0
                 if _rot[0]:
@@ -1069,7 +1069,7 @@ cdef class ParticleHandle(object):
             # Empty list? ony delete
                 if _partners:
 
-                    nlvl = nest_level(_partners)
+                    nlvl = nesting_level(_partners)
 
                     if nlvl == 0:  # Single item
                         self.add_exclusion(_partners)
@@ -1317,7 +1317,7 @@ cdef class ParticleHandle(object):
             bond_info[i] = bond[i]
         if self.id in bond[1:]:
             raise Exception(
-                "Bond partners {} includes the particle {} itself.".format(bond[1:], self.id))
+                "Bond partners {} include the particle {} itself.".format(bond[1:], self.id))
 
         if change_particle_bond(self.id, bond_info, 0):
             handle_errors("Adding the bond failed.")
@@ -1575,12 +1575,12 @@ cdef class _ParticleSliceImpl(object):
 
     IF EXCLUSIONS:
         def add_exclusion(self, _partner):
-            for i in range(len(self.id_selection)):
-                ParticleHandle(self.id_selection[i]).add_exclusion(_partner)
+            for i in self.id_selection:
+                ParticleHandle(i).add_exclusion(_partner)
 
         def delete_exclusion(self, _partner):
-            for i in range(len(self.id_selection)):
-                ParticleHandle(self.id_selection[i]).delete_exclusion(_partner)
+            for i in self.id_selection:
+                ParticleHandle(i).delete_exclusion(_partner)
 
     def __str__(self):
         res = ""
@@ -1605,8 +1605,8 @@ cdef class _ParticleSliceImpl(object):
 
         """
 
-        for i in range(len(self.id_selection)):
-            ParticleHandle(self.id_selection[i]).add_bond(_bond)
+        for i in self.id_selection:
+            ParticleHandle(i).add_bond(_bond)
 
     def delete_bond(self, _bond):
         """
@@ -1614,12 +1614,12 @@ cdef class _ParticleSliceImpl(object):
 
         """
 
-        for i in range(len(self.id_selection)):
-            ParticleHandle(self.id_selection[i]).delete_bond(_bond)
+        for i in self.id_selection:
+            ParticleHandle(i).delete_bond(_bond)
 
     def delete_all_bonds(self):
-        for i in range(len(self.id_selection)):
-            ParticleHandle(self.id_selection[i]).delete_all_bonds()
+        for i in self.id_selection:
+            ParticleHandle(i).delete_all_bonds()
 
     def remove(self):
         """
@@ -1860,7 +1860,6 @@ cdef class ParticleList(object):
 
         Parameters
         ----------
-
         fname: :obj:`str`
                Filename of the target output file
         types: list of :obj:`int` or the string 'all', optional (default: 'all')
@@ -1887,6 +1886,7 @@ cdef class ParticleList(object):
         .. todo:: `move to ./io/writer/`
 
         """
+
         global box_l
         if not hasattr(types, '__iter__'):
             types = [types]
@@ -1982,6 +1982,7 @@ def _add_particle_slice_properties():
     Automatically add all of ParticleHandle's properties to ParticleSlice.
 
     """
+
     def seta(particle_slice, values, attribute):
         """
         Setter function that sets attribute on every member of particle_slice.
@@ -1990,13 +1991,13 @@ def _add_particle_slice_properties():
         to the corresponding one. For attributes that are lists of various lenght,
         (bonds, exclusions) the nesting level decides if it is one-for-all or one-for-each.
 
-
         """
+
         N = len(particle_slice.id_selection)
 
         # Special attributes 
         if attribute == "bonds":
-            nlvl = nest_level(values)
+            nlvl = nesting_level(values)
             if nlvl == 1 or nlvl == 2:  
                 set_slice_one_for_all(particle_slice, attribute, values)
             elif nlvl == 3 and len(values) == N:  
@@ -2007,7 +2008,7 @@ def _add_particle_slice_properties():
             return
 
         elif attribute == "exclusions":
-            nlvl = nest_level(values)
+            nlvl = nesting_level(values)
             if nlvl == 1:  
                 set_slice_one_for_all(particle_slice, attribute, values)
             elif nlvl == 2 and len(values) == N:  
@@ -2018,7 +2019,7 @@ def _add_particle_slice_properties():
             return
 
         elif attribute == "vs_relative":
-            nlvl = nest_level(values)
+            nlvl = nesting_level(values)
             if nlvl == 2: 
                 set_slice_one_for_all(particle_slice, attribute, values)
             elif nlvl == 3 and len(values) == N:  
