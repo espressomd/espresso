@@ -240,7 +240,7 @@ def nesting_level(obj):
 
     max_level = 0
     for item in obj: 
-        max_level = max(max_level, nest_level(item))
+        max_level = max(max_level, nesting_level(item))
 
     return max_level + 1
  
