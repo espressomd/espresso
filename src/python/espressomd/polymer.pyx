@@ -134,21 +134,6 @@ def create_polymer(**kwargs):
             val_poly = -1.0)
     """
 
-#~     """
-
-#~     """
-#~     Wrapper function to setup polymers.
-
-#~     Parameters
-#~     ----------
-#~     N_P : :obj:`int`
-#~           Number of polymer chains
-#~     MPC : :obj:`int`
-#~           Number of monomers per chain
-#~     bond_length : :obj:`float`
-#~                   distance between adjacent monomers in a chain
-#~     bond :  :obj:float
-#~                   distance between adjacent monomers in a chain
     params=dict()
     default_params=dict()
     default_params["N_P"] = 0 
