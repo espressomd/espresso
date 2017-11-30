@@ -33,22 +33,25 @@ public:
                                            ppos_shifted[1]};
         vel = {vel[0], -vel[2], vel[1]};
       }
+
       auto const ppos_cyl =
           Utils::transform_to_cylinder_coordinates(ppos_shifted);
+
       // Coordinate transform the velocities and divide core velocities by
       // time_step to get MD units. v_r = (x * v_x + y * v_y) / sqrt(x^2 +
       // y^2)
-      double v_r = (ppos_shifted[0] * partCfg[id].m.v[0] / time_step +
-                    ppos_shifted[1] * partCfg[id].m.v[1] / time_step) /
+      double v_r = (ppos_shifted[0] * vel[0] / time_step +
+                    ppos_shifted[1] * vel[1] / time_step) /
                    std::sqrt(ppos_shifted[0] * ppos_shifted[0] +
                              ppos_shifted[1] * ppos_shifted[1]);
       // v_phi = (x * v_y - y * v_x ) / (x^2 + y^2)
-      double v_phi = (ppos_shifted[0] * partCfg[id].m.v[1] / time_step -
-                      ppos_shifted[1] * partCfg[id].m.v[0] / time_step) /
+      double v_phi = (ppos_shifted[0] * vel[1] / time_step -
+                      ppos_shifted[1] * vel[0] / time_step) /
                      (ppos_shifted[0] * ppos_shifted[0] +
                       ppos_shifted[1] * ppos_shifted[1]);
       // v_z = v_z
-      double v_z = partCfg[id].m.v[2] / time_step;
+      double v_z = vel[2] / time_step;
+      // Write data to the histogram.
       histogram.update(ppos_cyl, std::vector<double>{{v_r, v_phi, v_z}});
       }
     histogram.normalize();
