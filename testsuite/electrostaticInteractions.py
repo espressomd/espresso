@@ -22,7 +22,6 @@ import espressomd
 import numpy as np
 from espressomd import electrostatics
 from tests_common import *
-import matplotlib.pyplot as plt
 
 
 @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
