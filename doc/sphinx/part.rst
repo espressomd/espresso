@@ -84,7 +84,7 @@ Setting slices can be done by
 
 - supplying an *array of values* that matches the length of the slice which sets each entry individually, e.g.::
 
-    system.part[0:3].ext_force = [[1, 0, 0], [1, 0, 0], [1, 0, 0]]
+    system.part[0:3].ext_force = [[1, 0, 0], [2, 0, 0], [3, 0, 0]]
 
 For list properties that have no fixed length like ``exculsions`` or ``bonds``, some care has to be taken.
 There, *single value* assignment also accepts lists/tuples just like setting the property of an individual particle. For example::
@@ -103,7 +103,7 @@ by the length of the input, as slice length and input length can be equal. Here,
     system.part[2:4].exclusions = [[0, 1], [0, 1]]
 
 The above code snippet would lead the the same exclusions as the one before.
-The same accounts for setting bonds by interchanging the integer entries of the exclusion list with 
+The same accounts for the ``bonds`` property by interchanging the integer entries of the exclusion list with 
 the tuple ``(bond, partners)``. 
 
 
