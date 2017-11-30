@@ -45,21 +45,25 @@ inline size_t ravel_index(std::vector<size_t> unravelled_indices,
 }
 
 /**
-* \brief Returns the unravelled index of the provided flat index.
-*        Therefore is the inversion of flattening an ndims dimensional index.
-* \param len_dims an int array of length ndims containing the lengths of the dimensions. (Input)
-* \param ndims int denoting the number of dimensions. (Input)
-* \flattened_index an int denoting the flat index. (Input)
-* \unravelled_index_out an int array with length ndims where the unflat indices are written to. (Output)
-*/
-inline void unravel_index(const int* const len_dims, const int ndims, const int flattened_index, int* unravelled_index_out){
-	//idea taken from http://codinghighway.com/2014/02/22/c-multi-dimensional-arrays-part-2-flattened-to-unflattened-index/
-    std::vector<int> mul(ndims);
-	mul[ndims-1]=1;
-	for (int j = ndims-2; j >= 0; j--)
-		mul[j] = mul[j+1]*len_dims[j+1];
-	for (int j = 0; j < ndims; j++)
-		unravelled_index_out[j]=(flattened_index/mul[j])%len_dims[j];
+ * \brief Returns the unravelled index of the provided flat index.
+ *        Therefore is the inversion of flattening an ndims dimensional index.
+ * \param len_dims an int array of length ndims containing the lengths of the
+ * dimensions. (Input) \param ndims int denoting the number of dimensions.
+ * (Input) \flattened_index an int denoting the flat index. (Input)
+ * \unravelled_index_out an int array with length ndims where the unflat indices
+ * are written to. (Output)
+ */
+inline void unravel_index(const int *const len_dims, const int ndims,
+                          const int flattened_index,
+                          int *unravelled_index_out) {
+  // idea taken from
+  // http://codinghighway.com/2014/02/22/c-multi-dimensional-arrays-part-2-flattened-to-unflattened-index/
+  std::vector<int> mul(ndims);
+  mul[ndims - 1] = 1;
+  for (int j = ndims - 2; j >= 0; j--)
+    mul[j] = mul[j + 1] * len_dims[j + 1];
+  for (int j = 0; j < ndims; j++)
+    unravelled_index_out[j] = (flattened_index / mul[j]) % len_dims[j];
 }
 
 /**
@@ -175,7 +179,7 @@ void Histogram<T>::update(std::vector<T> const &data,
     std::vector<size_t> index;
     for (size_t dim = 0; dim < m_n_bins.size(); ++dim) {
       index.push_back(calculate_bin_index(data[dim], m_bin_sizes[dim],
-                                                 m_limits[dim].first));
+                                          m_limits[dim].first));
     }
     size_t flat_index = m_n_dims_data * ::Utils::ravel_index(index, m_n_bins);
     if (weights.size() != m_n_dims_data)
@@ -223,12 +227,16 @@ template <typename T> void Histogram<T>::normalize() { do_normalize(); }
 
 /**
  * \brief Histogram normalization.
+ *        Devide by total number of counts times the bin volume.
  */
 template <typename T> void Histogram<T>::do_normalize() {
   T tot_count =
       std::accumulate(m_hist.begin(), m_hist.end(), static_cast<T>(0.0));
-  std::transform(m_hist.begin(), m_hist.end(), m_hist.begin(),
-                 [tot_count](T v) { return v / tot_count; });
+  T bin_volume = std::accumulate(m_bin_sizes.begin(), m_bin_sizes.end(),
+                                 static_cast<T>(1.0), std::multiplies<T>());
+  std::transform(
+      m_hist.begin(), m_hist.end(), m_hist.begin(),
+      [tot_count, bin_volume](T v) { return v / (tot_count * bin_volume); });
 }
 
 class CylindricalHistogram : public Histogram<double> {
@@ -265,9 +273,6 @@ private:
   }
 };
 
-
-
 } // Namespace Utils
 
 #endif
-
