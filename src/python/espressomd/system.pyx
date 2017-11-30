@@ -47,7 +47,7 @@ if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
 from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
-
+from globals cimport max_seen_particle
 
 import sys
 import random  # for true random numbers from os.urandom()
@@ -442,3 +442,61 @@ cdef class System(object):
             """
             auto_exclusions(distance)
 
+
+    def _is_valid_type(self, current_type):
+        return (not (isinstance(current_type, int) or current_type < 0 or current_type > globals.n_particle_types))
+
+
+    def check_valid_type(self, current_type):
+        if self._is_valid_type(current_type):
+            raise ValueError("type", current_type, "does not exist!")
+
+
+    def setup(self, type_list=None):
+        """
+        For using Espresso conveniently for simulations in the grand canonical
+        ensemble, or other purposes, when particles of certain types are created
+        and deleted frequently. Particle ids can be stored in lists for each
+        individual type and so random ids of particles of a certain type can be
+        drawn. If you want Espresso to keep track of particle ids of a certain type
+        you have to initialize the method by calling the setup function. After that
+        Espresso will keep track of particle ids of that type.
+
+        """
+        if not hasattr(type_list, "__iter__"):
+            raise ValueError("type_list has to be iterable.")
+
+        for current_type in type_list:
+            if (max_seen_particle < 0):
+                raise ValueError(
+                    "The system contains no particles. Create one particle with arbitrary type first!")
+            init_type_map(current_type)
+
+    def number_of_particles(self, current_type=None):
+        """
+        Parameters
+        ----------
+        current_type : :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
+                       Particle type to count the number for. 
+
+        Returns
+        -------
+        :obj:`int`
+            The number of particles which share the given type.
+
+        """
+        self.check_valid_type( current_type)
+        cdef int number
+        number_of_particles_with_type(current_type, & number)
+        return int(number)
+
+    def find_particle(self, current_type=None):
+        """
+        The command will return a randomly chosen particle id, for a particle of
+        the given type.
+        
+        """
+        self.check_valid_type(current_type)
+        cdef int pid
+        find_particle_type(current_type, & pid)
+        return int(pid)

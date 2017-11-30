@@ -36,37 +36,20 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         double slab_end_z
         int non_interacting_type
 
-    ctypedef struct collective_variable:
-        double CV_minimum
-        double CV_maximum
-        double delta_CV
-        double (*determine_current_state_in_collective_variable_with_index) (int, void*)
-        vector[int] corresponding_acid_types
-        int associated_type
-        string energy_boundaries_filename
-
     ctypedef struct wang_landau_system:
-        vector[int] histogram
-        vector[double] wang_landau_potential
-        vector[collective_variable] collective_variables
-        vector[int] nr_subindices_of_collective_variable
         double wang_landau_parameter
         double initial_wang_landau_parameter
-        int int_fill_value
-        double double_fill_value
         int number_of_monte_carlo_moves_between_check_of_convergence
         double final_wang_landau_parameter
-        int used_bins
-        int monte_carlo_trial_moves
         int wang_landau_steps
         string output_filename
         vector[double] minimum_energies_at_flat_index
         vector[double] maximum_energies_at_flat_index
-        bool do_energy_reweighting
         int polymer_start_id
         int polymer_end_id
         bool fix_polymer
         bool do_not_sample_reaction_partition_function
+
 
     cdef cppclass CReactionEnsemble "ReactionEnsemble::ReactionEnsemble":
         CReactionEnsemble()
@@ -91,7 +74,6 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         int write_wang_landau_checkpoint(string identifier)
         int load_wang_landau_checkpoint(string identifier)
         void write_wang_landau_results_to_file(string full_path_to_output_filename)
-        bool do_HMC_move_wang_landau()
 
     #///////////////////////////////////////////// Constant-pH ensemble
         double m_constant_pH

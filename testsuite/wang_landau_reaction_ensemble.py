@@ -28,7 +28,7 @@ from espressomd import analyze
 from espressomd import integrate
 from espressomd.interactions import *
 from espressomd import reaction_ensemble
-from espressomd import grand_canonical
+from espressomd import system
 
 
 class ReactionEnsembleTest(ut.TestCase):
@@ -74,24 +74,25 @@ class ReactionEnsembleTest(ut.TestCase):
     RE.add(equilibrium_constant=K_diss, reactant_types=[0], reactant_coefficients=[
            1], product_types=[1, 2], product_coefficients=[1, 1])
     RE.set_default_charges(dictionary={"0": 0, "1": -1, "2": +1})
-    grand_canonical.setup([0, 1, 2, 3])
+    system.setup([0, 1, 2, 3])
     # initialize wang_landau
     # generate preliminary_energy_run_results here, this should be done in a
     # seperate simulation without energy reweighting using the update energy
     # functions
     np.savetxt("energy_boundaries.dat", np.c_[
-               [0, 1], [0, 0], [9, 9]], header="nbar E_min E_max")
+               [0, 1], [0, 0], [9, 9]],delimiter='\t' ,  header="nbar   E_potmin   E_potmax")
 
     RE.add_collective_variable_degree_of_association(
         associated_type=0, min=0, max=1, corresponding_acid_types=[0, 1])
     RE.add_collective_variable_potential_energy(
         filename="energy_boundaries.dat", delta=0.05)
     RE.set_wang_landau_parameters(
-        final_wang_landau_parameter=0.125, wang_landau_steps=1,
+        final_wang_landau_parameter=0.025, wang_landau_steps=1,
                                   do_not_sample_reaction_partition_function=True, full_path_to_output_filename="WL_potential_out.dat")
 
     def test_wang_landau_output(self):
         while True:
+            self.RE.global_mc_move_for_one_particle_of_type_wang_landau(3)
             try:
                 self.RE.reaction_wang_landau()
                 self.RE.global_mc_move_for_one_particle_of_type_wang_landau(3)
@@ -114,6 +115,8 @@ class ReactionEnsembleTest(ut.TestCase):
 
         expected_canonical_configurational_heat_capacity = expected_canonical_squared_potential_energy - \
             expected_canonical_potential_energy**2
+
+        print(expected_canonical_potential_energy, expected_canonical_configurational_heat_capacity)
 
         # for the calculation regarding the analytical results which are
         # compared here, see Master Thesis Jonas Landsgesell p. 72

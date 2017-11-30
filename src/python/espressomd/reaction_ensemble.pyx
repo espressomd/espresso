@@ -244,6 +244,7 @@ cdef class ReactionEnsemble(object):
 
         for key in self._params["dictionary"]:
                 if(self.RE.find_index_of_type(int(key)) >= 0):
+                    self.RE.m_current_reaction_system.charges_of_types.resize(self.RE.m_current_reaction_system.nr_different_types)
                     self.RE.m_current_reaction_system.charges_of_types[
                         self.RE.find_index_of_type(int(key))] = self._params["dictionary"][key]
 

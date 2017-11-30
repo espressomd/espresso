@@ -25,7 +25,6 @@ import unittest as ut
 import numpy as np
 import espressomd  # pylint: disable=import-error
 from espressomd import reaction_ensemble
-from espressomd import grand_canonical
 
 
 class ReactionEnsembleTest(ut.TestCase):
@@ -47,7 +46,8 @@ class ReactionEnsembleTest(ut.TestCase):
     K_HA_diss_apparent = 10**(-pKa)
     box_l = (N0 / c0)**(1.0 / 3.0)
     system = espressomd.System()
-    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+    system.seed = system.cell_system.get_state()['n_nodes'] * [2]
+    np.random.seed(69) #make reaction code fully deterministic
     system.box_l = [box_l, box_l, box_l]
     system.cell_system.skin = 0.4
     system.time_step = 0.01
@@ -93,12 +93,12 @@ class ReactionEnsembleTest(ut.TestCase):
         volume = np.prod(self.system.box_l)  # cuboid box
         average_NH = 0.0
         average_degree_of_association = 0.0
-        num_samples = 10000
+        num_samples = 1000
         for i in range(num_samples):
             RE.reaction_constant_pH()
-            average_NH += grand_canonical.number_of_particles(
+            average_NH += system.number_of_particles(
                 current_type=type_H)
-            average_degree_of_association += grand_canonical.number_of_particles(
+            average_degree_of_association += system.number_of_particles(
                 current_type=type_HA) / float(N0)
         average_NH /= num_samples
         average_degree_of_association /= num_samples

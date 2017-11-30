@@ -1180,23 +1180,20 @@ void init_type_map(int type) {
     ParticleTypeMap[type]=std::set<int>();
   for (auto const &p : partCfg()) {
     if (p.p.type == type)
-      ParticleTypeMap[type].insert(p.p.identity);
+      ParticleTypeMap.at(type).insert(p.p.identity);
   }
 }
 
 void remove_id_from_map(int part_id, int type) {
-
-  if(ParticleTypeMap.count(type)==0)
-    throw std::runtime_error("Type not indexed, cannot remove particle from map");
-  ParticleTypeMap[type].erase(part_id);
+  ParticleTypeMap.at(type).erase(part_id);
 }
 
 int get_random_p_id(int type){
-    if(ParticleTypeMap[type].size()==0)
-        throw std::runtime_error("No particles could be found");
+    if(ParticleTypeMap.at(type).size()==0)
+        throw std::runtime_error("No particles of given type could be found");
     int i=0;
     int p_id_ret=0;
-    int rand_index = i_random(ParticleTypeMap[type].size());
+    int rand_index = i_random(ParticleTypeMap.at(type).size());
     for( int p_id :ParticleTypeMap[type]){
         if(i==rand_index){
             p_id_ret=p_id;
@@ -1204,28 +1201,23 @@ int get_random_p_id(int type){
         }
         i++;
     }
+    if(p_id_ret > max_seen_particle)
+        throw std::runtime_error("Find_particle_type: returned id is bigger than max seen particle id");
     return p_id_ret;
 }
 
 void find_particle_type(int type, int *id) {
-  if(ParticleTypeMap.count(type)==0)
-    throw std::runtime_error("Type not indexed, cannot find particle of given type");
   
   *id = get_random_p_id(type);
-  if(*id > max_seen_particle)
-    throw std::runtime_error("Find_particle_type: returned id is bigger than max seen particle id");
 
 }
 
 void add_particle_to_list(int part_id, int type) {
-  if(ParticleTypeMap.count(type)!=0) //check if particle type is indexed
-    ParticleTypeMap[type].insert(part_id);
+    ParticleTypeMap.at(type).insert(part_id);
 }
 
 void number_of_particles_with_type(int type, int *number) {
-  if(ParticleTypeMap.count(type)==0)
-    throw std::runtime_error("Particle type not indexed, particle could not be added to list");
-  *number = ParticleTypeMap[type].size();
+  *number = ParticleTypeMap.at(type).size();
 }
 
 // The following functions are used by the python interface to obtain

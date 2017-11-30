@@ -21,6 +21,68 @@
 
 namespace ReactionEnsemble{
 
+void ReactionEnsemble::invalidate_bins(){
+    	//make values in histogram and wang landau potential negative if they are not allowed at the given degree of association, because the energy boundaries prohibit them
+
+		int empty_bins_in_memory=0;
+		for(int flattened_index=0;flattened_index<m_current_wang_landau_system.wang_landau_potential.size();flattened_index++){
+			//unravel index
+			std::vector<int> unraveled_index(m_current_wang_landau_system.collective_variables.size());
+			Utils::unravel_index(m_current_wang_landau_system.nr_subindices_of_collective_variable.data(),m_current_wang_landau_system.collective_variables.size(),flattened_index,unraveled_index.data());
+			//use unraveled index
+			int energy_collective_variable_index=0;
+            if(m_current_wang_landau_system.collective_variables.size()>1)
+                energy_collective_variable_index=m_current_wang_landau_system.collective_variables.size()-1; //assume the energy collective variable to be the last added collective variable
+			double current_energy=unraveled_index[energy_collective_variable_index]*m_current_wang_landau_system.collective_variables[energy_collective_variable_index]->delta_CV+m_current_wang_landau_system.collective_variables[energy_collective_variable_index]->CV_minimum;
+			int flat_index_without_energy_CV=m_current_wang_landau_system.get_flattened_index_wang_landau_without_energy_collective_variable(flattened_index,energy_collective_variable_index);
+            std::shared_ptr<collective_variable> energy_CV= m_current_wang_landau_system.collective_variables[energy_collective_variable_index];
+			if(current_energy>m_current_wang_landau_system.max_boundaries_energies[flat_index_without_energy_CV] || current_energy<m_current_wang_landau_system.min_boundaries_energies[flat_index_without_energy_CV]-energy_CV->delta_CV ){
+				m_current_wang_landau_system.histogram[flattened_index]=m_current_wang_landau_system.int_fill_value;
+				m_current_wang_landau_system.wang_landau_potential[flattened_index]=m_current_wang_landau_system.double_fill_value;
+				empty_bins_in_memory+=1;	
+			}
+		}
+		
+		m_current_wang_landau_system.used_bins=m_current_wang_landau_system.wang_landau_potential.size()-empty_bins_in_memory;
+    }
+    
+void energy_collective_variable::load_CV_boundaries(wang_landau_system &m_current_wang_landau_system){
+	    m_current_wang_landau_system.do_energy_reweighting=true;
+	    //load energy boundaries from file
+	    FILE* pFile;
+	    pFile = fopen(energy_boundaries_filename.c_str(),"r");
+	    if (pFile==nullptr){
+	        throw std::runtime_error("ERROR: energy boundaries file for the specific system could not be read.\n");
+		    // Note that you cannot change the other collective variables in the pre-production run and the production run
+	    }
+	    //save minimum and maximum energies as a function of the other collective variables under min_boundaries_energies...
+	    char *line = nullptr;
+	    size_t len = 0;
+	    ssize_t length_line;
+	    const char* delim="\t ";
+	    length_line =getline(&line, &len, pFile);//dummy call of getline to get rid of header line (first line in file)
+	    while ((length_line = getline(&line, &len, pFile)) != -1) {
+		    int counter_words_in_line=0;
+		    for(char* word=strtok(line,delim);word!=nullptr;word=strtok(nullptr,delim)){
+			    if(counter_words_in_line<m_current_wang_landau_system.collective_variables.size()-1){
+				    counter_words_in_line+=1;
+				    continue;
+			    }else if(counter_words_in_line==m_current_wang_landau_system.collective_variables.size()-1){
+				    double energy_boundary_minimum=atof(word);
+				    counter_words_in_line+=1;
+				    m_current_wang_landau_system.min_boundaries_energies.push_back(energy_boundary_minimum);
+			    }else if(counter_words_in_line==m_current_wang_landau_system.collective_variables.size()){
+				    double energy_boundary_maximum=atof(word);
+				    m_current_wang_landau_system.max_boundaries_energies.push_back(energy_boundary_maximum);
+				    counter_words_in_line+=1;							
+			    }
+			
+		    }
+	    }
+	    CV_minimum=*(std::min_element(m_current_wang_landau_system.min_boundaries_energies.begin(),m_current_wang_landau_system.min_boundaries_energies.end()));
+	    CV_maximum=*(std::max_element(m_current_wang_landau_system.max_boundaries_energies.begin(),m_current_wang_landau_system.max_boundaries_energies.end()));
+    }
+
 ReactionEnsemble::ReactionEnsemble(){}
 
 ReactionEnsemble::~ReactionEnsemble(){
@@ -261,7 +323,7 @@ bool ReactionEnsemble::generic_oneway_reaction(int reaction_id, int reaction_mod
 	//Wang-Landau begin
 	int old_state_index = -1;
 	if(reaction_modus==reaction_ensemble_wang_landau_mode){
-		old_state_index=get_flattened_index_wang_landau_of_current_state();
+		old_state_index=m_current_wang_landau_system.get_flattened_index_wang_landau_of_current_state();
 		if(old_state_index>=0){
 			if(m_current_wang_landau_system.histogram[old_state_index]>=0)
 				m_current_wang_landau_system.monte_carlo_trial_moves+=1;
@@ -273,8 +335,9 @@ bool ReactionEnsemble::generic_oneway_reaction(int reaction_id, int reaction_mod
 		
 		//Wang-Landau begin
 		//increase the wang landau potential and histogram at the current nbar (this case covers the cases nbar=0 or nbar=1)
-		if(reaction_modus==reaction_ensemble_wang_landau_mode)
+		if(reaction_modus==reaction_ensemble_wang_landau_mode){
 			update_wang_landau_potential_and_histogram(old_state_index);
+		}
 		//Wang-Landau end
 		
 		return false;
@@ -304,14 +367,15 @@ bool ReactionEnsemble::generic_oneway_reaction(int reaction_id, int reaction_mod
 	//Wang-Landau begin
 	//save new_state_index
 	int new_state_index = -1;
-	if(reaction_modus==reaction_ensemble_wang_landau_mode)
-		new_state_index=get_flattened_index_wang_landau_of_current_state();
+	if(reaction_modus==reaction_ensemble_wang_landau_mode){
+		new_state_index=m_current_wang_landau_system.get_flattened_index_wang_landau_of_current_state();
+	}
 	double bf;
 	if(reaction_modus==reaction_ensemble_mode){
 		bf=calculate_boltzmann_factor_reaction_ensemble(current_reaction, E_pot_old, E_pot_new, old_particle_numbers);
-	}else if (reaction_modus==reaction_ensemble_wang_landau_mode)
+	}else if (reaction_modus==reaction_ensemble_wang_landau_mode){
 		bf=calculate_boltzmann_factor_reaction_ensemble_wang_landau(current_reaction, E_pot_old, E_pot_new, old_particle_numbers, old_state_index, new_state_index, false);
-	else if (reaction_modus==constant_pH_mode)
+	}else if (reaction_modus==constant_pH_mode)
 		bf=calculate_boltzmann_factor_consant_pH(current_reaction, E_pot_old, E_pot_new);
 	else
 		throw std::runtime_error("Reaction mode is unknown");
@@ -326,7 +390,6 @@ bool ReactionEnsemble::generic_oneway_reaction(int reaction_id, int reaction_mod
 		
 		//delete hidden reactant_particles (remark: dont delete changed particles)
 		//extract ids of to be deleted particles
-		//XXX obsolete? and sort them. needed since delete_particle changes particle p_ids. start deletion from the largest p_id onwards
 		int len_hidden_particles_properties= (int) hidden_particles_properties.size();
 		std::vector<int> to_be_deleted_hidden_ids(len_hidden_particles_properties);
 		std::vector<int> to_be_deleted_hidden_types(len_hidden_particles_properties);
@@ -336,7 +399,6 @@ bool ReactionEnsemble::generic_oneway_reaction(int reaction_id, int reaction_mod
 			to_be_deleted_hidden_types[i]=hidden_particles_properties[i].type;
 //			set_particle_type(p_id, hidden_particles_properties[i].type); //change back type otherwise the bookkeeping algorithm is not working
 		}
-		std::sort(to_be_deleted_hidden_ids.begin(),to_be_deleted_hidden_ids.end(),std::greater<int>());
 		
 		for(int i=0;i<len_hidden_particles_properties;i++){
 			delete_particle(to_be_deleted_hidden_ids[i]); //delete particle
@@ -348,7 +410,6 @@ bool ReactionEnsemble::generic_oneway_reaction(int reaction_id, int reaction_mod
 			accepted_state=old_state_index;
 		//reverse reaction
 		//1) delete created product particles
-		std::sort(p_ids_created_particles.begin(),p_ids_created_particles.end(),std::greater<int>());// needed since delete_particle changes particle p_ids. start deletion from the largest p_id onwards //TODO obsolete? //XXX
 		for(int i=0;i<p_ids_created_particles.size();i++){
 			delete_particle(p_ids_created_particles[i]);
 		}
@@ -358,9 +419,9 @@ bool ReactionEnsemble::generic_oneway_reaction(int reaction_id, int reaction_mod
 		restore_properties(changed_particles_properties, number_of_saved_properties);
 		reaction_is_accepted= false;
 	}
-	if(reaction_modus==reaction_ensemble_wang_landau_mode)
+	if(reaction_modus==reaction_ensemble_wang_landau_mode){
 		update_wang_landau_potential_and_histogram(accepted_state);
-
+    }
 	return reaction_is_accepted;
 }
 
@@ -432,7 +493,7 @@ int ReactionEnsemble::find_index_of_type(int type){
 			break;
 		}
 	}
-	if(index<0){
+	if(index<0 or index >=m_current_reaction_system.nr_different_types){
 		throw std::runtime_error("Invalid Index");
 		
 	}
@@ -659,7 +720,7 @@ bool ReactionEnsemble::do_global_mc_move_for_particles_of_type(int type, int sta
 
 	int old_state_index=-1;
 	if(use_wang_landau){
-		old_state_index=get_flattened_index_wang_landau_of_current_state();
+		old_state_index=m_current_wang_landau_system.get_flattened_index_wang_landau_of_current_state();
 		if(old_state_index>=0){
 			if(m_current_wang_landau_system.histogram[old_state_index]>=0)
 				m_current_wang_landau_system.monte_carlo_trial_moves+=1;
@@ -757,7 +818,7 @@ bool ReactionEnsemble::do_global_mc_move_for_particles_of_type(int type, int sta
 	int new_state_index;
 	double bf=1.0;
 	if(use_wang_landau){
-		new_state_index=get_flattened_index_wang_landau_of_current_state();
+		new_state_index=m_current_wang_landau_system.get_flattened_index_wang_landau_of_current_state();
 		std::vector<int> dummy_old_particle_numbers;
 		single_reaction& temp_unimportant_arbitrary_reaction=m_current_reaction_system.reactions[0]; //arbitrary reference to single reaction
 		bf=calculate_boltzmann_factor_reaction_ensemble_wang_landau(temp_unimportant_arbitrary_reaction, E_pot_old, E_pot_new, dummy_old_particle_numbers, old_state_index, new_state_index, true);
@@ -804,12 +865,12 @@ bool ReactionEnsemble::do_global_mc_move_for_particles_of_type(int type, int sta
 * Adds a new collective variable (CV) of the type degree of association to the Wang-Landau sampling
 */
 void ReactionEnsemble::add_new_CV_degree_of_association(int associated_type, double CV_minimum, double CV_maximum, std::vector<int> corresponding_acid_types){
-            collective_variable new_collective_variable;
-            new_collective_variable.associated_type=associated_type;
-            new_collective_variable.CV_minimum=CV_minimum;
-            new_collective_variable.CV_maximum=CV_maximum;
-            new_collective_variable.corresponding_acid_types=corresponding_acid_types;
-            new_collective_variable.delta_CV=calculate_delta_degree_of_association(new_collective_variable);
+            std::shared_ptr<degree_of_association_collective_variable> new_collective_variable=std::make_shared<degree_of_association_collective_variable>();
+            new_collective_variable->associated_type=associated_type;
+            new_collective_variable->CV_minimum=CV_minimum;
+            new_collective_variable->CV_maximum=CV_maximum;
+            new_collective_variable->corresponding_acid_types=corresponding_acid_types;
+            new_collective_variable->delta_CV=calculate_delta_degree_of_association(*new_collective_variable);
             m_current_wang_landau_system.collective_variables.push_back(new_collective_variable);
             initialize_wang_landau();
 }
@@ -818,38 +879,40 @@ void ReactionEnsemble::add_new_CV_degree_of_association(int associated_type, dou
 * Adds a new collective variable (CV) of the type potential energy to the Wang-Landau sampling
 */
 void ReactionEnsemble::add_new_CV_potential_energy(std::string filename, double delta_CV){
-            collective_variable new_collective_variable;
-            new_collective_variable.energy_boundaries_filename=filename;
-            new_collective_variable.delta_CV=delta_CV;
+            std::shared_ptr<energy_collective_variable> new_collective_variable=std::make_shared<energy_collective_variable>();
+            new_collective_variable->energy_boundaries_filename=filename;
+            new_collective_variable->delta_CV=delta_CV;
             m_current_wang_landau_system.collective_variables.push_back(new_collective_variable);
+            new_collective_variable->load_CV_boundaries(m_current_wang_landau_system);
+            m_current_wang_landau_system.collective_variables[m_current_wang_landau_system.collective_variables.size()-1]=new_collective_variable;
             initialize_wang_landau();
 }
 
 /**
 * Returns the flattened index of the multidimensional Wang-Landau histogram
 */
-int ReactionEnsemble::get_flattened_index_wang_landau(std::vector<double>& current_state, std::vector<double>& collective_variables_minimum_values, std::vector<double>& collective_variables_maximum_values, std::vector<double>& delta_collective_variables_values, int nr_collective_variables){
+int wang_landau_system::get_flattened_index_wang_landau(std::vector<double>& current_state, std::vector<double>& collective_variables_minimum_values, std::vector<double>& collective_variables_maximum_values, std::vector<double>& delta_collective_variables_values, int nr_collective_variables){
 	int index=-10; //negative number is not allowed as index and therefore indicates error
-	std::vector<int> individual_indices{}; //pre result
-	individual_indices.resize(nr_collective_variables,-1); //initialize individual_indices to -1
-	std::vector<int> nr_subindices_of_collective_variable =m_current_wang_landau_system.nr_subindices_of_collective_variable;
-
+	std::vector<int> individual_indices(nr_collective_variables); //pre result
+//	individual_indices.resize(nr_collective_variables,-1); //initialize individual_indices to -1
+    
 	//check for the current state to be an allowed state in the [range collective_variables_minimum_values:collective_variables_maximum_values], else return a negative index
 	for(int collective_variable_i=0;collective_variable_i<nr_collective_variables;collective_variable_i++){
-		if(current_state[collective_variable_i]>collective_variables_maximum_values[collective_variable_i]+delta_collective_variables_values[collective_variable_i]*0.98 || current_state[collective_variable_i]<collective_variables_minimum_values[collective_variable_i]-delta_collective_variables_values[collective_variable_i]*0.01)
+		if(current_state[collective_variable_i]>collective_variables_maximum_values[collective_variable_i]+delta_collective_variables_values[collective_variable_i]*0.98 || current_state[collective_variable_i]<collective_variables_minimum_values[collective_variable_i]-delta_collective_variables_values[collective_variable_i]*0.01){
 			return -10;
+		}
 	}
 
 	for(int collective_variable_i=0;collective_variable_i<nr_collective_variables;collective_variable_i++){
-		if(collective_variable_i==m_current_wang_landau_system.collective_variables.size()-1 &&
-			 m_current_wang_landau_system.do_energy_reweighting)	//for energy collective variable (simple truncating conversion desired)
+		if(collective_variable_i==collective_variables.size()-1 &&
+			 do_energy_reweighting)	//for energy collective variable (simple truncating conversion desired)
 			individual_indices[collective_variable_i]=(int) ((current_state[collective_variable_i]-collective_variables_minimum_values[collective_variable_i])/delta_collective_variables_values[collective_variable_i]);
 		else	//for degree of association collective variables (rounding conversion desired)
 			individual_indices[collective_variable_i]=(int) ((current_state[collective_variable_i]-collective_variables_minimum_values[collective_variable_i])/delta_collective_variables_values[collective_variable_i]+0.5);
-		if(individual_indices[collective_variable_i]<0 or individual_indices[collective_variable_i]>=nr_subindices_of_collective_variable[collective_variable_i]) // sanity check
+		if(individual_indices[collective_variable_i]<0 or individual_indices[collective_variable_i]>=nr_subindices_of_collective_variable[collective_variable_i]){ // sanity check
 			return -10;
+		}
 	}
-	
 	//get flattened index from individual_indices
 	index=0; //this is already part of the algorithm to find the correct index
 	for(int collective_variable_i=0;collective_variable_i<nr_collective_variables;collective_variable_i++){
@@ -866,27 +929,26 @@ int ReactionEnsemble::get_flattened_index_wang_landau(std::vector<double>& curre
 /**
 * Returns the flattened index of the multidimensional Wang-Landau histogram for the current state of the simulation.
 */
-int ReactionEnsemble::get_flattened_index_wang_landau_of_current_state(){
-	int nr_collective_variables=m_current_wang_landau_system.collective_variables.size();
+int wang_landau_system::get_flattened_index_wang_landau_of_current_state(){
+	int nr_collective_variables=collective_variables.size();
 	//get current state
 	std::vector<double> current_state(nr_collective_variables);
-	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
-		current_state[CV_i]=m_current_wang_landau_system.collective_variables[CV_i].determine_current_state_in_current_collective_variable();
-	}
+	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++)
+		current_state[CV_i]=collective_variables[CV_i]->determine_current_state();
 	//get collective_variables_minimum_values
 	std::vector<double> collective_variables_minimum_values(nr_collective_variables);
 	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
-		collective_variables_minimum_values[CV_i]=m_current_wang_landau_system.collective_variables[CV_i].CV_minimum;	
+		collective_variables_minimum_values[CV_i]=collective_variables[CV_i]->CV_minimum;
 	}
 	//get collective_variables_maximum_values
 	std::vector<double> collective_variables_maximum_values(nr_collective_variables);
 	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
-		collective_variables_maximum_values[CV_i]=m_current_wang_landau_system.collective_variables[CV_i].CV_maximum;	
+		collective_variables_maximum_values[CV_i]=collective_variables[CV_i]->CV_maximum;	
 	}
 	//get delta_collective_variables_values
 	std::vector<double> delta_collective_variables_values(nr_collective_variables);
 	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
-		delta_collective_variables_values[CV_i]=m_current_wang_landau_system.collective_variables[CV_i].delta_CV;	
+		delta_collective_variables_values[CV_i]=collective_variables[CV_i]->delta_CV;
 	}
 	int index=get_flattened_index_wang_landau(current_state, collective_variables_minimum_values, collective_variables_maximum_values, delta_collective_variables_values, nr_collective_variables);
 	return index;
@@ -905,7 +967,7 @@ double get_minimum_CV_value_on_delta_CV_spaced_grid(double min_CV_value, double 
 /**
 * Calculates the smallest difference in the degree of association which can be observed when changing the degree of association by one single reaction.
 */
-double ReactionEnsemble::calculate_delta_degree_of_association(collective_variable& current_collective_variable){
+double ReactionEnsemble::calculate_delta_degree_of_association(degree_of_association_collective_variable& current_collective_variable){
 	//calculate Delta in the degree of association so that EVERY reaction step is driven.
 	int total_number_of_corresponding_acid=0;
 	for(int corresponding_type_i=0; corresponding_type_i<current_collective_variable.corresponding_acid_types.size();corresponding_type_i++){
@@ -925,8 +987,8 @@ double ReactionEnsemble::calculate_delta_degree_of_association(collective_variab
 int ReactionEnsemble::get_num_needed_bins(){
 	int needed_bins=1;
 	for(int CV_i=0;CV_i<m_current_wang_landau_system.collective_variables.size();CV_i++){
-		collective_variable& current_collective_variable=m_current_wang_landau_system.collective_variables[CV_i];
-		needed_bins=needed_bins*(int((current_collective_variable.CV_maximum-current_collective_variable.CV_minimum)/current_collective_variable.delta_CV)+1); // plus 1 needed for degrees of association related part of histogram (think of only one acid particle)
+		std::shared_ptr<collective_variable> current_collective_variable=m_current_wang_landau_system.collective_variables[CV_i];
+		needed_bins=needed_bins*(int((current_collective_variable->CV_maximum-current_collective_variable->CV_minimum)/current_collective_variable->delta_CV)+1); // plus 1 needed for degrees of association related part of histogram (think of only one acid particle)
 	}
     return needed_bins;
 }
@@ -957,63 +1019,15 @@ double find_maximum(double* list, int len){
 	return maximum;
 }
 
+
 /**
 * Initializes the current Wang-Landau system.
 */
 int ReactionEnsemble::initialize_wang_landau(){
 	
-	//initialize deltas for collective variables which are of the type of a degree of association
-	int energy_collective_variable_index=-10;
-	std::vector<double> min_boundaries_energies;
-	std::vector<double> max_boundaries_energies;
-	for(int collective_variable_i=0; collective_variable_i<m_current_wang_landau_system.collective_variables.size();collective_variable_i++){
-		collective_variable* current_collective_variable=&m_current_wang_landau_system.collective_variables[collective_variable_i];
-		int flattened_index_previous_run=0; //len_histogram of energy preparation run
-		if(!current_collective_variable->energy_boundaries_filename.empty()){
-			//found a collective variable which is not of the type of an energy
-			m_current_wang_landau_system.do_energy_reweighting=true;
-			energy_collective_variable_index=collective_variable_i;
-			//load energy boundaries from file
-			FILE* pFile;
-			pFile = fopen(current_collective_variable->energy_boundaries_filename.c_str(),"r");
-			if (pFile==nullptr){
-			    throw std::runtime_error("ERROR: energy boundaries file for the specific system could not be read.\n");
-				// Note that you cannot change the other collective variables in the pre-production run and the production run
-				return ES_ERROR;
-			}
-			//save minimum and maximum energies as a function of the other collective variables under m_current_wang_landau_system.energ...
-			char *line = nullptr;
-			size_t len = 0;
-			ssize_t length_line;
-			const char* delim="\t ";
-			length_line =getline(&line, &len, pFile);//dummy call of getline to get rid of header line (first line in file)
-			while ((length_line = getline(&line, &len, pFile)) != -1) {
-				int counter_words_in_line=0;
-				for(char* word=strtok(line,delim);word!=nullptr;word=strtok(nullptr,delim)){
-					if(counter_words_in_line<m_current_wang_landau_system.collective_variables.size()-1){
-						counter_words_in_line+=1;
-						continue;
-					}else if(counter_words_in_line==m_current_wang_landau_system.collective_variables.size()-1){
-						double energy_boundary_minimum=atof(word);
-						counter_words_in_line+=1;
-						min_boundaries_energies.push_back(energy_boundary_minimum);
-					}else if(counter_words_in_line==m_current_wang_landau_system.collective_variables.size()){
-						double energy_boundary_maximum=atof(word);
-						max_boundaries_energies.push_back(energy_boundary_maximum);
-						counter_words_in_line+=1;							
-					}
-					
-				}
-				flattened_index_previous_run+=1;		
-			}
-			current_collective_variable->CV_minimum=*(std::min_element(min_boundaries_energies.begin(),min_boundaries_energies.end()));
-			current_collective_variable->CV_maximum=*(std::max_element(max_boundaries_energies.begin(),max_boundaries_energies.end()));
-		}
-	}
-
 	m_current_wang_landau_system.nr_subindices_of_collective_variable.resize(m_current_wang_landau_system.collective_variables.size(),0);
 	int new_collective_variable_i=m_current_wang_landau_system.collective_variables.size()-1;
-	m_current_wang_landau_system.nr_subindices_of_collective_variable[new_collective_variable_i]=int((m_current_wang_landau_system.collective_variables[new_collective_variable_i].CV_maximum-m_current_wang_landau_system.collective_variables[new_collective_variable_i].CV_minimum)/m_current_wang_landau_system.collective_variables[new_collective_variable_i].delta_CV)+1; //+1 for collecive variables which are of type degree of association
+	m_current_wang_landau_system.nr_subindices_of_collective_variable[new_collective_variable_i]=int((m_current_wang_landau_system.collective_variables[new_collective_variable_i]->CV_maximum-m_current_wang_landau_system.collective_variables[new_collective_variable_i]->CV_minimum)/m_current_wang_landau_system.collective_variables[new_collective_variable_i]->delta_CV)+1; //+1 for collecive variables which are of type degree of association
 
 	//construct (possibly higher dimensional) histogram over Gamma (the room which should be equally sampled when the wang-landau algorithm has converged)
 	int needed_bins=get_num_needed_bins();
@@ -1024,28 +1038,9 @@ int ReactionEnsemble::initialize_wang_landau(){
 	
 	m_current_wang_landau_system.used_bins=needed_bins; //initialize for 1/t wang_landau algorithm
 	
-	if(energy_collective_variable_index>=0){
-		//make values in histogram and wang landau potential negative if they are not allowed at the given degree of association, because the energy boundaries prohibit them
-
-		int empty_bins_in_memory=0;
-
-		for(int flattened_index=0;flattened_index<m_current_wang_landau_system.wang_landau_potential.size();flattened_index++){
-			//unravel index
-			std::vector<int> unraveled_index(m_current_wang_landau_system.collective_variables.size());
-			Utils::unravel_index(m_current_wang_landau_system.nr_subindices_of_collective_variable.data(),m_current_wang_landau_system.collective_variables.size(),flattened_index,unraveled_index.data());
-			//use unraveled index
-			double current_energy=unraveled_index[energy_collective_variable_index]*m_current_wang_landau_system.collective_variables[energy_collective_variable_index].delta_CV+m_current_wang_landau_system.collective_variables[energy_collective_variable_index].CV_minimum;
-			if(current_energy>max_boundaries_energies[get_flattened_index_wang_landau_without_energy_collective_variable(flattened_index,energy_collective_variable_index)] || current_energy<min_boundaries_energies[get_flattened_index_wang_landau_without_energy_collective_variable(flattened_index,energy_collective_variable_index)]-m_current_wang_landau_system.collective_variables[energy_collective_variable_index].delta_CV ){
-				m_current_wang_landau_system.histogram[flattened_index]=m_current_wang_landau_system.int_fill_value;
-				m_current_wang_landau_system.wang_landau_potential[flattened_index]=m_current_wang_landau_system.double_fill_value;
-				empty_bins_in_memory+=1;	
-			}
-		}
-		
-		m_current_wang_landau_system.used_bins=m_current_wang_landau_system.wang_landau_potential.size()-empty_bins_in_memory;
-		
-	}
-	
+    if(m_current_wang_landau_system.do_energy_reweighting){
+	    invalidate_bins();
+    }
 	return ES_OK;
 }
 
@@ -1225,7 +1220,7 @@ void ReactionEnsemble::write_wang_landau_results_to_file(std::string full_path_t
 				Utils::unravel_index(nr_subindices_of_collective_variable.data(),m_current_wang_landau_system.collective_variables.size(),flattened_index,unraveled_index.data());
 				//use unraveled index
 				for(int i=0;i<m_current_wang_landau_system.collective_variables.size();i++){
-					fprintf(pFile, "%f ",unraveled_index[i]*m_current_wang_landau_system.collective_variables[i].delta_CV+m_current_wang_landau_system.collective_variables[i].CV_minimum);
+					fprintf(pFile, "%f ",unraveled_index[i]*m_current_wang_landau_system.collective_variables[i]->delta_CV+m_current_wang_landau_system.collective_variables[i]->CV_minimum);
 				}
 				fprintf(pFile, "%f \n", m_current_wang_landau_system.wang_landau_potential[flattened_index]);
 			}
@@ -1246,7 +1241,7 @@ int ReactionEnsemble::update_maximum_and_minimum_energies_at_current_state(){
 	}
 	
 	const double E_pot_current=calculate_current_potential_energy_of_system();
-	int index=get_flattened_index_wang_landau_of_current_state();
+	int index=m_current_wang_landau_system.get_flattened_index_wang_landau_of_current_state();
 
 	//update stored energy values
 	if( (( E_pot_current<m_current_wang_landau_system.minimum_energies_at_flat_index[index])|| std::abs(m_current_wang_landau_system.minimum_energies_at_flat_index[index] -m_current_wang_landau_system.double_fill_value)<std::numeric_limits<double>::epsilon()) ) {
@@ -1278,7 +1273,7 @@ void ReactionEnsemble::write_out_preliminary_energy_run_results (std::string ful
 			Utils::unravel_index(nr_subindices_of_collective_variable.data(),m_current_wang_landau_system.collective_variables.size(),flattened_index,unraveled_index.data());
 			//use unraveled index
 			for(int i=0;i<m_current_wang_landau_system.collective_variables.size();i++){
-				fprintf(pFile, "%f ",unraveled_index[i]*m_current_wang_landau_system.collective_variables[i].delta_CV+m_current_wang_landau_system.collective_variables[i].CV_minimum);
+				fprintf(pFile, "%f ",unraveled_index[i]*m_current_wang_landau_system.collective_variables[i]->delta_CV+m_current_wang_landau_system.collective_variables[i]->CV_minimum);
 			}
 			fprintf(pFile, "%f %f \n", m_current_wang_landau_system.minimum_energies_at_flat_index[flattened_index], m_current_wang_landau_system.maximum_energies_at_flat_index[flattened_index]);
 		}
@@ -1291,32 +1286,31 @@ void ReactionEnsemble::write_out_preliminary_energy_run_results (std::string ful
 /**
 *Returns the flattened index of a given flattened index without the energy collective variable.
 */
-int ReactionEnsemble::get_flattened_index_wang_landau_without_energy_collective_variable(int flattened_index_with_energy_collective_variable, int collective_variable_index_energy_observable){
-	std::vector<int> nr_subindices_of_collective_variable=m_current_wang_landau_system.nr_subindices_of_collective_variable;
+int wang_landau_system::get_flattened_index_wang_landau_without_energy_collective_variable(int flattened_index_with_energy_collective_variable, int collective_variable_index_energy_observable){
 	//unravel index
-	std::vector<int> unraveled_index(m_current_wang_landau_system.collective_variables.size());
-	Utils::unravel_index(nr_subindices_of_collective_variable.data(),m_current_wang_landau_system.collective_variables.size(),flattened_index_with_energy_collective_variable,unraveled_index.data());
+	std::vector<int> unraveled_index(collective_variables.size());
+	Utils::unravel_index(nr_subindices_of_collective_variable.data(),collective_variables.size(),flattened_index_with_energy_collective_variable,unraveled_index.data());
 	//use unraveled index
-	const int nr_collective_variables=m_current_wang_landau_system.collective_variables.size()-1; //forget the last collective variable (the energy collective variable)
+	const int nr_collective_variables=collective_variables.size()-1; //forget the last collective variable (the energy collective variable)
 	std::vector<double> current_state(nr_collective_variables);
 	for(int i=0;i<nr_collective_variables;i++){
-		current_state[i]=unraveled_index[i]*m_current_wang_landau_system.collective_variables[i].delta_CV+m_current_wang_landau_system.collective_variables[i].CV_minimum;
+		current_state[i]=unraveled_index[i]*collective_variables[i]->delta_CV+collective_variables[i]->CV_minimum;
 	}
 	
 	//get collective_variables_minimum_values
 	std::vector<double> collective_variables_minimum_values(nr_collective_variables);
 	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
-		collective_variables_minimum_values[CV_i]=m_current_wang_landau_system.collective_variables[CV_i].CV_minimum;	
+		collective_variables_minimum_values[CV_i]=collective_variables[CV_i]->CV_minimum;	
 	}
 	//get collective_variables_maximum_values
 	std::vector<double> collective_variables_maximum_values(nr_collective_variables);
 	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
-		collective_variables_maximum_values[CV_i]=m_current_wang_landau_system.collective_variables[CV_i].CV_maximum;	
+		collective_variables_maximum_values[CV_i]=collective_variables[CV_i]->CV_maximum;
 	}
 	//get delta_collective_variables_values
 	std::vector<double> delta_collective_variables_values(nr_collective_variables);
 	for(int CV_i=0;CV_i<nr_collective_variables;CV_i++){
-		delta_collective_variables_values[CV_i]=m_current_wang_landau_system.collective_variables[CV_i].delta_CV;	
+		delta_collective_variables_values[CV_i]=collective_variables[CV_i]->delta_CV;	
 	}
 	int index=get_flattened_index_wang_landau(current_state, collective_variables_minimum_values, collective_variables_maximum_values, delta_collective_variables_values, nr_collective_variables);
 	return index;
@@ -1350,7 +1344,7 @@ int ReactionEnsemble::write_wang_landau_checkpoint(std::string identifier){
 
 	//write current wang landau parameters (wang_landau_parameter, monte_carlo_trial_moves, flat_index_of_current_state)
 	outfile.open(std::string("checkpoint_wang_landau_parameters_")+identifier);
-	outfile << m_current_wang_landau_system.wang_landau_parameter << " " << m_current_wang_landau_system.monte_carlo_trial_moves << " " << get_flattened_index_wang_landau_of_current_state() << "\n" ;	
+	outfile << m_current_wang_landau_system.wang_landau_parameter << " " << m_current_wang_landau_system.monte_carlo_trial_moves << " " << m_current_wang_landau_system.get_flattened_index_wang_landau_of_current_state() << "\n" ;	
 	outfile.close();
 
 	//write histogram
