@@ -78,6 +78,9 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         ObjectId id() except +
         void set_state(map[string, Variant]) except +
         map[string, Variant] get_state() except +
+        string serialize() except +
+        @staticmethod
+        shared_ptr[ScriptInterfaceBase] unserialize(const string &state) except +
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase":
     cdef cppclass CreationPolicy:

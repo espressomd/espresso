@@ -189,6 +189,19 @@ public:
 
   /**
    * @brief Get a new reference counted instance of a script interface by
+   * name, restoring the state of the object
+   *
+   */
+  static std::shared_ptr<ScriptInterfaceBase>
+  make_shared(std::string const &name, CreationPolicy policy,
+              Variant const &state) {
+    auto so_ptr = make_shared(name, policy);
+    so_ptr->set_state(state);
+    return so_ptr;
+  }
+
+  /**
+   * @brief Get a new reference counted instance of a script interface by
    * type.
    *
    */
@@ -207,15 +220,13 @@ public:
     return sp;
   }
 
-private:
-  VariantMap serialize_object(std::shared_ptr<ScriptInterfaceBase> o) const;
-  std::shared_ptr<ScriptInterfaceBase>
-  deserialize_object(VariantMap state) const;
-
 public:
-  /* Checkpointing functions. */
-  virtual VariantMap get_state() const;
-  virtual void set_state(VariantMap const &state);
+  std::string serialize() const;
+  static std::shared_ptr<ScriptInterfaceBase> unserialize(std::string const& state);
+  virtual Variant get_state() const;
+
+private:
+  virtual void set_state(Variant const &state);
 };
 
 /**

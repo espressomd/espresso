@@ -20,11 +20,6 @@
 #include "ParallelScriptInterface.hpp"
 
 #include <boost/mpi/collectives.hpp>
-#include <boost/serialization/map.hpp>
-#include <boost/serialization/serialization.hpp>
-#include <boost/serialization/string.hpp>
-#include <boost/serialization/variant.hpp>
-#include <boost/serialization/vector.hpp>
 
 #include "ParallelScriptInterfaceSlave.hpp"
 #include "utils/parallel/ParallelObject.hpp"

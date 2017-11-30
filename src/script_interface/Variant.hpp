@@ -7,6 +7,12 @@
 #include "core/Vector.hpp"
 #include "utils/AutoObjectId.hpp"
 
+#include <boost/serialization/map.hpp>
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/variant.hpp>
+#include <boost/serialization/vector.hpp>
+
 #include <map>
 
 namespace ScriptInterface {

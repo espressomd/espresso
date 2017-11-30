@@ -126,16 +126,6 @@ public:
     }
   }
 
-  void set_state(VariantMap const &state) override {
-    for (auto const &kv : state) {
-      try {
-        set_parameter(kv.first, kv.second);
-      } catch (WriteError const &) { /* We just ignore read-only parameters. */
-        ;
-      }
-    }
-  }
-
 private:
   struct Parameter {
     VariantType type;

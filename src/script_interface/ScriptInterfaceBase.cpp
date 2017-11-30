@@ -21,8 +21,13 @@
 
 #include "ScriptInterfaceBase.hpp"
 #include "ParallelScriptInterface.hpp"
-#include "utils/Factory.hpp"
 #include "Serializer.hpp"
+#include "utils/Factory.hpp"
+
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+
+#include <sstream>
 
 namespace ScriptInterface {
 std::shared_ptr<ScriptInterfaceBase>
@@ -60,34 +65,57 @@ ScriptInterfaceBase::get_instance(ObjectId id) {
   return Utils::AutoObjectId<ScriptInterfaceBase>::get_instance(id);
 }
 
-VariantMap ScriptInterfaceBase::serialize_object(
-    std::shared_ptr<ScriptInterfaceBase> o) const {
-  VariantMap state;
-
-  state["name"] = o->name();
-  state["state"] = flatten_map(o->get_state());
-
-  return state;
-}
-
-std::shared_ptr<ScriptInterfaceBase>
-ScriptInterfaceBase::deserialize_object(VariantMap state) const {
-  ;
-}
-
 /* Checkpointing functions. */
-VariantMap ScriptInterfaceBase::get_state() const {
-  VariantMap state;
+Variant ScriptInterfaceBase::get_state() const {
+  std::vector<Variant> state;
+
   auto params = this->get_parameters();
+  state.reserve(params.size());
 
   for (auto const &p : params) {
-    state[p.first] = boost::apply_visitor(Serializer{}, p.second);
+    state.push_back(std::vector<Variant>{
+        {p.first, boost::apply_visitor(Serializer{}, p.second)}});
   }
 
   return state;
 }
 
-void ScriptInterfaceBase::set_state(VariantMap const &state) {
-  return this->construct(state);
+void ScriptInterfaceBase::set_state(Variant const &state) {
+  using boost::get;
+  using std::vector;
+
+  VariantMap params;
+  UnSerializer u;
+
+  for (auto const &v : get<vector<Variant>>(state)) {
+    auto const &p = get<vector<Variant>>(v);
+    params[get<std::string>(p.at(0))] = boost::apply_visitor(u, p.at(1));
+  }
+
+  this->construct(params);
 }
+
+std::string ScriptInterfaceBase::serialize() const {
+  std::stringstream ss;
+  boost::archive::binary_oarchive oa(ss);
+  auto v = Serializer{}(this->id());
+
+  oa << v;
+  return ss.str();
+}
+
+std::shared_ptr<ScriptInterfaceBase>
+ScriptInterfaceBase::unserialize(std::string const &state) {
+  std::stringstream ss(state);
+  boost::archive::binary_iarchive ia(ss);
+
+  Variant v;
+  ia >> v;
+
+  UnSerializer u;
+  auto oid = boost::get<ObjectId>(boost::apply_visitor(u, v));
+
+  return get_instance(oid).lock();
+}
+
 } /* namespace ScriptInterface */

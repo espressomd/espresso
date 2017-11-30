@@ -30,8 +30,6 @@ cdef class PScriptInterface(object):
             ctor_args = self._sanitize_params(kwargs)
 
             self.sip.get().construct(ctor_args)
-        else:
-            raise Exception("the name parameter has to be set.")
 
     def __richcmp__(a, b, op):
         if op == 2:
@@ -78,6 +76,13 @@ cdef class PScriptInterface(object):
 
     def name(self):
         return to_str(self.sip.get().name())
+
+    def _serialize(self):
+        return self.sip.get().serialize()
+
+    def _unserialize(self, state):
+        cdef shared_ptr[ScriptInterfaceBase] so_ptr = ScriptInterfaceBase.unserialize(state)
+        self.set_sip(so_ptr)
 
     cdef map[string, Variant] _sanitize_params(self, in_params):
         cdef map[string, Variant] out_params
@@ -244,6 +249,9 @@ class ScriptInterfaceHelper(PScriptInterface):
             self.set_params(**{attr:value})
         else:
             self.__dict__[attr] = value
+
+    def __getstate__(self):
+        return super(ScriptInterfaceHelper,self).serialize()
 
     def generate_caller(self,method_name):
         def template_method(**kwargs):
