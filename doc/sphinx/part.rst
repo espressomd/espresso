@@ -61,7 +61,7 @@ Similarly, the position can be set::
     system.part[0].pos=(1,2.5,3)
     system.part[0].id=4
 
-Note that the index and the property ID are not necessasirly the same.
+Note that the index and the property ID are not necessarily the same.
 
 Interacting with groups of particles
 ------------------------------------
@@ -75,7 +75,7 @@ To access particles with indices ranging from 0 to 9, use::
     
     system.part[0:10].pos
 
-Note that, like in other cases in Python, the lower bound is inclusive and the upper boudn is non-inclusive.
+Note that, like in other cases in Python, the lower bound is inclusive and the upper bound is non-inclusive.
 Setting slices can be done by 
 
 - supplying a *single value* that is assigned to each entry of the slice, e.g.::
@@ -401,7 +401,7 @@ that order
 #. Create a particle of the desired type for each molecule. It should be
    placed at least roughly in the center of the molecule to make sure,
    its on the same node as the other particles forming the molecule, in
-   a simulation with more than one cpu.
+   a simulation with more than one CPU.
 
 #. Make it a virtual site using
 
@@ -524,7 +524,7 @@ terminal velocity in either of these methods is completely determined by the
 friction coefficient. You may only set one of the possibilities ``v_swim`` *or*
 ``f_swim`` as you cannot relax to constant force *and* constant velocity at the
 same time. Note that there is no real difference between ``v_swim`` and
-``f_swim``, since the latter may aways be chosen such that the same terminal
+``f_swim``, since the latter may always be chosen such that the same terminal
 velocity is achieved for a given friction coefficient.
 
 Lattice-Boltzmann (LB) swimmers
@@ -558,7 +558,7 @@ the difference between the fluid velocity at the center of the particle and at
 the source point and the vector connecting the center and source.
 
 You may ask: “Why are there two methods ``v_swim`` and ``f_swim`` for the
-self-propulsion using the lattice-Bolzmann algorithm?” The answer is
+self-propulsion using the lattice-Boltzmann algorithm?” The answer is
 straightforward. When a particle is accelerating, it has a monopolar flow-field
 contribution which vanishes when it reaches its terminal velocity (for which
 there will only be a dipolar flow field). The major difference between the

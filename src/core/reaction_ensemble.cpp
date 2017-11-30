@@ -317,7 +317,7 @@ int ReactionEnsemble::generic_oneway_reaction(int reaction_id, int reaction_modu
 
 	single_reaction* current_reaction=m_current_reaction_system.reactions[reaction_id];
 	//Wang-Landau begin
-	int old_state_index;
+	int old_state_index = -1;
 	if(reaction_modus==reaction_ensemble_wang_landau_mode){
 		old_state_index=get_flattened_index_wang_landau_of_current_state();
 		if(old_state_index>=0){
@@ -362,7 +362,7 @@ int ReactionEnsemble::generic_oneway_reaction(int reaction_id, int reaction_modu
 
 	//Wang-Landau begin
 	//save new_state_index
-	int new_state_index;
+	int new_state_index = -1;
 	if(reaction_modus==reaction_ensemble_wang_landau_mode)
 		new_state_index=get_flattened_index_wang_landau_of_current_state();
 	double bf;
@@ -376,7 +376,7 @@ int ReactionEnsemble::generic_oneway_reaction(int reaction_id, int reaction_modu
 		throw std::runtime_error("Reaction mode is unknown");
 	int reaction_is_accepted=false;
 	//Wang-Landau begin
-	int accepted_state;
+	int accepted_state = -1;
 	//Wang-Landau end
 	if ( d_random() < bf ) {
 		//accept
@@ -498,7 +498,7 @@ int ReactionEnsemble::find_index_of_type(int type){
 */
 int ReactionEnsemble::replace(int p_id, int desired_type){
 	int err_code_type=set_particle_type(p_id, desired_type);
-	int err_code_q;
+	int err_code_q = 0.0;
 	#ifdef ELECTROSTATICS
 	err_code_q=set_particle_q(p_id, (double) m_current_reaction_system.charges_of_types[find_index_of_type(desired_type)]);
 	#endif
@@ -722,7 +722,7 @@ bool ReactionEnsemble::do_global_mc_move_for_particles_of_type(int type, int sta
 	m_tried_configurational_MC_moves+=1;
 	bool got_accepted=false;
 
-	int old_state_index;
+	int old_state_index = -1;
 	if(use_wang_landau==true){
 		old_state_index=get_flattened_index_wang_landau_of_current_state();
 		if(old_state_index>=0){
