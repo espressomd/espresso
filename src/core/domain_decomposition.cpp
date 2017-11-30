@@ -245,9 +245,9 @@ void dd_create_cell_grid() {
   realloc_cellplist(&ghost_cells, ghost_cells.n = new_cells - n_local_cells);
 
   CELL_TRACE(fprintf(
-      stderr, "%d: dd_create_cell_grid, n_cells=%d, local_cells.n=%d, "
+      stderr, "%d: dd_create_cell_grid, n_cells=%lu, local_cells.n=%d, "
               "ghost_cells.n=%d, dd.ghost_cell_grid=(%d,%d,%d)\n",
-      this_node, cells.size(), local_cells.n, ghost_cells.n,
+      this_node, (unsigned long) cells.size(), local_cells.n, ghost_cells.n,
       dd.ghost_cell_grid[0], dd.ghost_cell_grid[1], dd.ghost_cell_grid[2]));
 }
 

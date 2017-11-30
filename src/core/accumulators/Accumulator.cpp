@@ -18,6 +18,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "Accumulator.hpp"
+#include "partCfg_global.hpp"
 
 namespace Accumulators {
 
@@ -29,7 +30,7 @@ void Accumulator::initialize() {
 }
 
 int Accumulator::update() {
-  m_acc(m_obs->last_value);
+  m_acc(m_obs->operator()(partCfg()));
   return 0;
 }
 

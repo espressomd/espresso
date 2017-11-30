@@ -63,7 +63,7 @@ public:
       throw std::runtime_error("The accumulator has not yet been initialied.");
   }
   virtual Variant call_method(std::string const &method,
-                              VariantMap const &parameters) {
+                              VariantMap const &parameters) override {
     check_if_initialized();
     if (method == "update") {
       if (m_accumulator->m_autoupdate) {

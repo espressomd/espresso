@@ -132,6 +132,13 @@ struct AutoParameter {
       : name(name), type(type), length(length), set(Utils::make_function(set)),
         get(Utils::make_function(get)) {}
 
+  /** The interface name. */
+  const std::string name;
+  /** The expected type. */
+  VariantType type;
+  /** The expected length. */
+  size_t length;
+
   /**
    * @brief Set the parameter.
    */
@@ -140,13 +147,6 @@ struct AutoParameter {
    * @brief Get the parameter.
    */
   const std::function<Variant()> get;
-
-  /** The interface name. */
-  const std::string name;
-  /** The expected type. */
-  VariantType type;
-  /** The expected length. */
-  size_t length;
 };
 }
 
