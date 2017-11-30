@@ -2388,7 +2388,7 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared, int *number_o
  * @param *interpolated_u       Pointer to the interpolated velocity
  * @param *delta                Pointer for the weighting of particle position (Output)
 */
-__device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, float *particle_position, unsigned int* node_index, float* mode, LB_rho_v_gpu *d_v, float* delta, float lees_edwards_offset, float *interpolated_u ) {
+__device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, float *particle_position, unsigned int* node_index, float* mode, LB_rho_v_gpu *d_v, float* delta, float lees_edwards_offset, float le_position, float *interpolated_u ) {
   int   left_node_index[3];
   float temp_delta[6];
   float temp_delta_half[6];
@@ -2435,27 +2435,47 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
   
   unsigned int pos[3];
   index_to_xyz(*node_index, pos);
-  //unsigned int node_index_LE[8];
   
-  int le_integer_shift;
-  float weight;
+  //int upper_le_integer_shift;
+  //int lower_le_integer_shift;
+  //float weight;
+  
+  particle_position[0] = le_position;
+#pragma unroll
+  for(int i=0; i<3; ++i)
+  {
+    float scaledpos = particle_position[i]/para.agrid - 0.5f;
+    left_node_index[i] = (int)(floorf(scaledpos));
+    temp_delta[3+i] = scaledpos - left_node_index[i];
+    temp_delta[i] = 1.0f - temp_delta[3+i];
+    // further value used for interpolation of fluid velocity at part pos near boundaries
+    temp_delta_half[3+i] = (scaledpos - left_node_index[i])*2.0f;
+    temp_delta_half[i] = 2.0f - temp_delta_half[3+i];
+  }
 
-  //float weight = fmodf(lees_edwards_offset + para.dim_x*para.agrid, para.agrid) / para.agrid;
-  // (static_cast<int>(floorf(x - lees_edwards_offset)) - para.dim_x) % para.dim_x;
-  // (static_cast<int>(ceilf (x - lees_edwards_offset)) - para.dim_x) % para.dim_x;
- 
-  weight = fmodf(lees_edwards_offset + para.dim_x*para.agrid, para.agrid) / para.agrid;
-  le_integer_shift = (static_cast<int>(floorf(x - lees_edwards_offset)) - para.dim_x) % para.dim_x;
-  printf("le_offset: %f, le_integer_shift: %i \n", lees_edwards_offset, le_integer_shift);
-  printf("Node position = %u %u %u \n", pos[0], pos[1], pos[2]);
+  delta[0] = temp_delta[0] * temp_delta[1] * temp_delta[2];
+  delta[1] = temp_delta[3] * temp_delta[1] * temp_delta[2];
+  delta[2] = temp_delta[0] * temp_delta[4] * temp_delta[2];
+  delta[3] = temp_delta[3] * temp_delta[4] * temp_delta[2];
+  delta[4] = temp_delta[0] * temp_delta[1] * temp_delta[5];
+  delta[5] = temp_delta[3] * temp_delta[1] * temp_delta[5];
+  delta[6] = temp_delta[0] * temp_delta[4] * temp_delta[5];
+  delta[7] = temp_delta[3] * temp_delta[4] * temp_delta[5];
 
-  if(pos[1] == para.dim_y -1){
+  // modulo for negative numbers is strange at best, shift to make sure we are positive
+  x = left_node_index[0] + para.dim_x;
+  y = left_node_index[1] + para.dim_y;
+  z = left_node_index[2] + para.dim_z;
+
+  
+
+  //weight = fmodf(lees_edwards_offset + para.dim_x*para.agrid, para.agrid) / para.agrid;
+  //upper_le_integer_shift = (static_cast<int>(floorf(lees_edwards_offset)) + para.dim_x) % para.dim_x;
+  //printf("le_offset: %f, le_integer_shift: %i, non-integer-offset: %f\n", lees_edwards_offset, upper_le_integer_shift, weight);
+  //printf("Node position = %u %u %u \n", pos[0], pos[1], pos[2]);
+
+  if(pos[1] == para.dim_y -1 && particle_position[1] > para.dim_y-para.agrid){
     
-    printf("Upper boundary \n");
-    printf ("x-pos = %i \n", x);
-    x -= le_integer_shift;
-    printf ("x-pos+shift = %i \n", x);
-    printf("Node position = %u %u %u \n", pos[0], pos[1], pos[2]);
     
     node_index[2] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[3] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
@@ -2463,14 +2483,8 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
     node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
     }
   
-  if(pos[1] == 0){
-    
-    printf("Lower boundary \n");
-    printf ("x-pos = %i \n", x);
-    x += le_integer_shift;
-    printf ("x-pos+shift = %i \n", x);
-    printf("Node position = %u %u %u \n", pos[0], pos[1], pos[2]);
-    
+  if(pos[1] == 0 && particle_position[1] < para.agrid && particle_position[1] != 0.0){
+    //y = para.dim_y;
     node_index[0] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[1] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[4] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
@@ -2575,6 +2589,26 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   position[1] = particle_data[part_index].p[1];
   position[2] = particle_data[part_index].p[2];
 
+#ifdef LEES_EDWARDS
+  
+  float weight;
+  int upper_le_integer_shift;
+  float le_position;
+
+  weight = fmodf(lees_edwards_offset + para.dim_x*para.agrid, para.agrid) / para.agrid;
+  upper_le_integer_shift = (static_cast<int>(floorf(lees_edwards_offset)) + para.dim_x) % para.dim_x;
+  printf("le_offset: %f, le_integer_shift: %i, non-integer-offset: %f\n", lees_edwards_offset, upper_le_integer_shift, weight);
+ 
+ if(position[1] > para.dim_y-para.agrid) {
+    le_position = fmodf(position[0] - lees_edwards_offset, para.dim_x*para.agrid);
+    printf("Position shift upper boundary: %f => %f", position[0] ,le_position);
+    }
+ if(position[1] < para.agrid && position[1] != 0.0) {
+    le_position = fmodf(position[0] + lees_edwards_offset, para.dim_x*para.agrid);
+    printf("Position shift upper boundary %f => %f", position[0] ,le_position);
+    }
+#endif
+
   float velocity[3];
   velocity[0] = particle_data[part_index].v[0];
   velocity[1] = particle_data[part_index].v[1];
@@ -2591,7 +2625,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
 #endif
 
   // Do the velocity interpolation
-  interpolation_two_point_coupling(n_a, position, node_index, mode, d_v, delta, lees_edwards_offset, interpolated_u);
+  interpolation_two_point_coupling(n_a, position, node_index, mode, d_v, delta, lees_edwards_offset, le_position, interpolated_u);
 
 #ifdef ENGINE
   velocity[0] -= (particle_data[part_index].swim.v_swim*para.time_step)*particle_data[part_index].swim.quatu[0];
