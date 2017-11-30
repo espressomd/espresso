@@ -226,4 +226,17 @@ def get_unravelled_index(len_dims, n_dims, flattened_index):
     for i in range(n_dims):
         out[i] = unravelled_index_out[i]
     return out
-    
+   
+def nest_level(obj):
+
+    if not isinstance(obj, (list,tuple)):
+        return 0
+
+    obj=list(obj)
+
+    max_level = 0
+    for item in obj: 
+        max_level = max(max_level, nest_level(item))
+
+    return max_level + 1
+ 

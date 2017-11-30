@@ -9,6 +9,7 @@ class ParticleSliceTest(ut.TestCase):
 
     state = [[0, 0, 0], [0, 0, 1]]
     system = espressomd.System()
+    system.box_l = 10,10,10
 
     def __init__(self, *args, **kwargs):
         super(ParticleSliceTest, self).__init__(*args, **kwargs)
@@ -93,6 +94,237 @@ class ParticleSliceTest(ut.TestCase):
         qs = self.system.part[:].q
         self.assertEqual(qs[0], -1)
         self.assertEqual(qs[1], 1)
+   
+    def test_bonds(self):
+        self.system.part.clear()
+
+        self.system.part.add(id = 0,pos=[0, 0, 0])
+        self.system.part.add(id = 1,pos=[0, 0, 1])
+        self.system.part.add(id = 2,pos=[0, 0, 2])
+        self.system.part.add(id = 3,pos=[0, 0, 3])
+
+        fene = espressomd.interactions.FeneBond(k=1, d_r_max=1, r_0=1)
+        self.system.bonded_inter.add(fene)
+
+        # Setter
+
+        # tuple
+        b = fene,0
+        self.system.part[2].bonds = b
+        assert( self.system.part[:].bonds == ( (), (), ((fene,0),), () ) )
+
+        # list
+        self.system.part[:].bonds = []
+        b = [fene,0]
+        self.system.part[2].bonds = b
+        assert( self.system.part[:].bonds == ( (), (), ((fene,0),), () ) )
+
+        # nested list single
+        self.system.part[:].bonds = []
+        b = [[fene,0]]
+        self.system.part[2].bonds = b
+        assert( self.system.part[:].bonds == ( (), (), ((fene,0),), () ) )
+
+        # nested list multi
+        self.system.part[:].bonds = []
+        b = [[fene,0], [fene,1]]
+        self.system.part[2].bonds = b
+        assert( self.system.part[:].bonds == ( (), (), ((fene,0),(fene,1)), () ) )
+
+        # nested tuple single
+        self.system.part[:].bonds = []
+        b = ((fene,0),)
+        self.system.part[2].bonds = b
+        assert( self.system.part[:].bonds == ( (), (), ((fene,0),), () ) )
+
+        # nested tuple multi
+        self.system.part[:].bonds = []
+        b = ((fene,0), (fene,1))
+        self.system.part[2].bonds = b
+        assert( self.system.part[:].bonds == ( (), (), ((fene,0),(fene,1)), () ) )
+
+        #Add/Del bonds
+        self.system.part[:].bonds = []
+        self.system.part[2].add_bond((fene,0))
+        assert( self.system.part[:].bonds == ( (), (), ((fene,0),), () ) )
+        self.system.part[2].add_bond((fene,1))
+        assert( self.system.part[:].bonds == ( (), (), ((fene,0),(fene,1)), () ) )
+        self.system.part[2].delete_bond((fene,1))
+        assert( self.system.part[:].bonds == ( (), (), ((fene,0),), () ) )
+        self.system.part[2].delete_bond((fene,0))
+        assert( self.system.part[:].bonds == ( (), (), (), () ) )
+        
+        self.system.part[:].bonds = []
+        self.system.part[2].add_bond((fene,0))
+        self.system.part[2].add_bond((fene,1))
+        self.system.part[2].delete_all_bonds()
+        assert( self.system.part[:].bonds == ( (), (), (), () ) )
+
+
+        # Slices
+
+        # tuple for all
+        self.system.part[:].bonds = []
+        b = fene,0
+        self.system.part[2:].bonds = b
+        assert( self.system.part[:].bonds == ( (), (), ((fene,0),), ((fene,0),) ) )
+
+        # list for all
+        self.system.part[:].bonds = []
+        b = [fene,0]
+        self.system.part[2:].bonds = b
+        assert( self.system.part[:].bonds == ( (), (), ((fene,0),), ((fene,0),) ) )
+
+        # nested list single for all
+        self.system.part[:].bonds = []
+        b = [[fene,0]]
+        self.system.part[2:].bonds = b
+        assert( self.system.part[:].bonds == ( (), (), ((fene,0),), ((fene,0),) ) )
+
+        # nested list multi for all
+        self.system.part[:].bonds = []
+        b = [[fene,0], [fene,1]]
+        self.system.part[2:].bonds = b
+        assert( self.system.part[:].bonds == ( (), (), ((fene,0),(fene,1)), ((fene,0),(fene,1)) ) )
+
+        # tuples for each
+        self.system.part[:].bonds = []
+        b = (((fene,0),),((fene,1),))
+        self.system.part[2:].bonds = b
+        assert( self.system.part[:].bonds == ( (), (), ((fene,0),), ((fene,1),) ) )
+
+        # lists for each
+        self.system.part[:].bonds = []
+        b = [[[fene,0]],[[fene,1]]]
+        self.system.part[2:].bonds = b
+        assert( self.system.part[:].bonds == ( (), (), ((fene,0),), ((fene,1),) ) )
+
+        # multi tuples for each
+        self.system.part[:].bonds = []
+        b = (((fene,0),(fene,1)),((fene,0),(fene,1)))
+        self.system.part[2:].bonds = b
+        assert( self.system.part[:].bonds == ( (), (), ((fene,0),(fene,1)), ((fene,0),(fene,1)) ) )
+
+        # multi lists for each
+        self.system.part[:].bonds = []
+        b = [[[fene,0],[fene,1]],[[fene,0],[fene,1]]]
+        self.system.part[2:].bonds = b
+        assert( self.system.part[:].bonds == ( (), (), ((fene,0),(fene,1)), ((fene,0),(fene,1)) ) )
+
+        #Add/Del bonds
+
+        self.system.part[:].bonds = []
+        self.system.part[2:].add_bond((fene,0))
+        assert( self.system.part[:].bonds == ( (), (), ((fene,0),), ((fene,0),) ) )
+        self.system.part[2:].add_bond((fene,1))
+        assert( self.system.part[:].bonds == ( (), (), ((fene,0),(fene,1)), ((fene,0),(fene,1)) ) )
+        self.system.part[2:].delete_bond((fene,1))
+        assert( self.system.part[:].bonds == ( (), (), ((fene,0),), ((fene,0),) ) )
+        self.system.part[2:].delete_bond((fene,0))
+        assert( self.system.part[:].bonds == ( (), (), (), () ) )
+        
+        b = [[[fene,0],[fene,1]],[[fene,0],[fene,1]]]
+        self.system.part[2:].bonds = b
+        self.system.part[:].delete_all_bonds()
+        assert( self.system.part[:].bonds == ( (), (), (), () ) )
+
+
+        self.system.part.clear()
+        self.system.part.add(pos=[0, 0, 0])
+        self.system.part.add(pos=[0, 0, 1])
+
+ 
+    @ut.skipIf(
+        not has_features(
+            ["EXCLUSIONS"]),
+        "Features not available, skipping test!")
+    def test_exclusions(self):
+        self.system.part.clear()
+
+        self.system.part.add(id = 0,pos=[0, 0, 0])
+        self.system.part.add(id = 1,pos=[0, 0, 1])
+        self.system.part.add(id = 2,pos=[0, 0, 2])
+        self.system.part.add(id = 3,pos=[0, 0, 3])
+
+        #Exclusions
+
+        # Setter
+
+        # int
+        self.system.part[:].exclusions = []
+        b = 1
+        self.system.part[2].exclusions = b
+        assert( self.system.part[:].exclusions == ( [], [2], [1], [] ) )
+
+        # single list
+        self.system.part[:].exclusions = []
+        b = [1]
+        self.system.part[2].exclusions = b
+        assert( self.system.part[:].exclusions == ( [], [2], [1], [] ) )
+
+        # tuple
+        self.system.part[:].exclusions = []
+        b = (0,1)
+        self.system.part[2].exclusions = b
+        assert( self.system.part[:].exclusions == ( [2], [2], [0,1], [] ) )
+
+        # list
+        self.system.part[:].exclusions = []
+        b = [0,1]
+        self.system.part[2].exclusions = b
+        assert( self.system.part[:].exclusions == ( [2], [2], [0,1], [] ) )
+
+        # Add/Del exclusions 
+        self.system.part[:].exclusions = []
+        self.system.part[2].add_exclusion(1)
+        assert( self.system.part[:].exclusions == ( [], [2], [1], [] ) )
+        self.system.part[2].add_exclusion(0)
+        assert( self.system.part[:].exclusions == ( [2], [2], [1,0], [] ) )
+        self.system.part[2].delete_exclusion(0)
+        assert( self.system.part[:].exclusions == ( [], [2], [1], [] ) )
+        self.system.part[2].delete_exclusion(1)
+        assert( self.system.part[:].exclusions == ( [], [], [], [] ) )
+
+        # Slices
+
+        # single list for all
+        self.system.part[:].exclusions = []
+        b = [1]
+        self.system.part[2:].exclusions = b
+        assert( self.system.part[:].exclusions == ( [], [2,3], [1], [1] ) )
+
+        # list for all
+        self.system.part[:].exclusions = []
+        b = [0,1]
+        self.system.part[2:].exclusions = b
+        assert( self.system.part[:].exclusions == ( [2,3], [2,3], [0,1], [0,1] ) )
+
+        # single list for each
+        self.system.part[:].exclusions = []
+        b = [[0],[0]]
+        self.system.part[2:].exclusions = b
+        assert( self.system.part[:].exclusions == ( [2,3], [], [0], [0] ) )
+
+        # multi list for each
+        self.system.part[:].exclusions = []
+        b = [[0,1],[0,1]]
+        self.system.part[2:].exclusions = b
+        assert( self.system.part[:].exclusions == ( [2,3], [2,3], [0,1], [0,1] ) )
+
+        #Add/Del exclusions
+        self.system.part[:].exclusions = []
+        self.system.part[2:].add_exclusion(1)
+        assert( self.system.part[:].exclusions == ( [], [2,3], [1], [1] ) )
+        self.system.part[2:].add_exclusion(0)
+        assert( self.system.part[:].exclusions == ( [2,3], [2,3], [1,0], [1,0] ) )
+        self.system.part[2:].delete_exclusion(0)
+        assert( self.system.part[:].exclusions == ( [], [2,3], [1], [1] ) )
+        self.system.part[2:].delete_exclusion(1)
+        assert( self.system.part[:].exclusions == ( [], [], [], [] ) )
+        
+        self.system.part.clear()
+        self.system.part.add(pos=[0, 0, 0])
+        self.system.part.add(pos=[0, 0, 1])
 
     def test_empty(self):
         self.assertTrue(np.array_equal(self.system.part[0:0].pos, np.empty(0)))

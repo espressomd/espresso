@@ -1,4 +1,4 @@
-##
+#
 # Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -30,6 +30,7 @@ from copy import copy
 from globals cimport max_seen_particle, time_step, smaller_time_step, box_l, n_part, n_rigidbonds, n_particle_types
 import collections
 import functools
+from espressomd.utils import nest_level
 
 PARTICLE_EXT_FORCE = 1
 
@@ -293,7 +294,7 @@ cdef class ParticleHandle(object):
         The bonds stored by this particle. Note that bonds are only stored by one partner.
         You need to define a bonded interaction.
 
-        bonds : tuple of tuples (or list)
+        bonds : list/tuple of tuples/lists
                 a bond tuple is specified as a bond identifier associated with
                 a particle `(bond_ID, part_ID)`. A single particle may contain
                 multiple such tuples.
@@ -309,20 +310,23 @@ cdef class ParticleHandle(object):
         """
 
         def __set__(self, _bonds):
-            # First, we check that we got a list/tuple.
-            if not hasattr(_bonds, "__getitem__"):
-                raise ValueError(
-                    "Bonds have to specified as a tuple of tuples. (Lists can also be used).")
-            bonds = list(_bonds)  # as we modify it
+
 
             # Assigning to the bond property means replacing the existing value
             # i.e., we delete all existing bonds
             if change_particle_bond(self.id, NULL, 1):
                 handle_errors("Deleting existing bonds failed.")
-
-            # And add the new ones
-            for bond in bonds:
-                self.add_bond(bond)
+    
+            # Empty list? ony delete
+            if _bonds:            
+                nlvl = nest_level(_bonds)
+                if nlvl == 1: # Single item
+                    self.add_bond(_bonds)
+                elif nlvl == 2: # List of items
+                    for bond in _bonds:
+                        self.add_bond(bond)
+                else:
+                    raise ValueError("Bonds have to specified as lists of tuples/lists or a single list.")
 
         def __get__(self):
             self.update_particle_data()
@@ -777,7 +781,7 @@ cdef class ParticleHandle(object):
                     _ext_f, 3, float, "External force vector has to be 3 floats.")
                 for i in range(3):
                     ext_f[i] = _ext_f[i]
-                if (ext_f[0] == 0 and ext_f[1] == 0 and ext_f[2] == 0):
+                if ext_f[0] == 0 and ext_f[1] == 0 and ext_f[2] == 0:
                     ext_flag = 0
                 else:
                     ext_flag = PARTICLE_EXT_FORCE
@@ -789,7 +793,7 @@ cdef class ParticleHandle(object):
                 cdef double * ext_f = NULL
                 cdef int * ext_flag = NULL
                 pointer_to_ext_force(self.particle_data.get(), ext_flag, ext_f)
-                if (ext_flag[0] & PARTICLE_EXT_FORCE):
+                if ext_flag[0] & PARTICLE_EXT_FORCE:
                     return np.array([ext_f[0], ext_f[1], ext_f[2]])
                 else:
                     return np.array([0.0, 0.0, 0.0])
@@ -818,7 +822,7 @@ cdef class ParticleHandle(object):
                 check_type_or_throw_except(
                     _fixed_coord_flag, 3, int, "Fix has to be 3 ints.")
                 for i in map(long, range(3)):
-                    if (_fixed_coord_flag[i]):
+                    if _fixed_coord_flag[i]:
                         ext_flag |= _COORD_FIXED(i)
                 if set_particle_fix(self.id, ext_flag) == 1:
                     raise Exception("Set particle position first.")
@@ -829,7 +833,7 @@ cdef class ParticleHandle(object):
                 cdef int * ext_flag = NULL
                 pointer_to_fix(self.particle_data.get(), ext_flag)
                 for i in map(long, range(3)):
-                    if (ext_flag[0] & _COORD_FIXED(i)):
+                    if ext_flag[0] & _COORD_FIXED(i):
                         fixed_coord_flag[i] = 1
                 return fixed_coord_flag
 
@@ -853,7 +857,7 @@ cdef class ParticleHandle(object):
                         _ext_t, 3, float, "External force vector has to be 3 floats.")
                     for i in range(3):
                         ext_t[i] = _ext_t[i]
-                    if (ext_t[0] == 0 and ext_t[1] == 0 and ext_t[2] == 0):
+                    if ext_t[0] == 0 and ext_t[1] == 0 and ext_t[2] == 0:
                         ext_flag = 0
                     else:
                         ext_flag = PARTICLE_EXT_TORQUE
@@ -866,7 +870,7 @@ cdef class ParticleHandle(object):
                     cdef int * ext_flag = NULL
                     pointer_to_ext_torque(
                         self.particle_data.get(), ext_flag, ext_t)
-                    if (ext_flag[0] & PARTICLE_EXT_TORQUE):
+                    if ext_flag[0] & PARTICLE_EXT_TORQUE:
                         return np.array([ext_t[0], ext_t[1], ext_t[2]])
                     else:
                         return np.array([0.0, 0.0, 0.0])
@@ -1054,8 +1058,22 @@ cdef class ParticleHandle(object):
                 for e in self.exclusions:
                     self.delete_exclusion(e)
 
-                # Set new exlusion list
-                self.add_exclusion(_partners)
+            # Empty list? ony delete
+                if _partners:            
+                
+                    nlvl = nest_level(_partners)
+
+                    if nlvl == 0: # Single item
+                        self.add_exclusion(_partners)
+                    elif nlvl == 1: # List of items
+                        for partner in _partners:
+                            self.add_exclusion(partner)
+                    else:
+                        raise ValueError("Exclusions have to specified as a lists of partners or a single partner.")
+
+
+                    # Set new exclusion list
+                    #self.add_exclusion(_partners)
 
             def __get__(self):
                 self.update_particle_data()
@@ -1066,41 +1084,35 @@ cdef class ParticleHandle(object):
                     py_partners.append(exclusions.e[i])
                 return py_partners
 
-        def add_exclusion(self, _partners):
+        def add_exclusion(self, _partner):
             """
-            Excluding interaction with given partners.
+            Excluding interaction with the given partner.
 
             Parameters
             -----------
-            _partners : list of partners
+            _partner : partner
 
             """
+    
+            if _partner in self.exclusions:
+                raise Exception("Exclusion id {} already in exclusion list of particle {}".format(_partner, self.id))
 
-            if isinstance(_partners, int):
-                _partners = [_partners]
+            check_type_or_throw_except(
+                _partner, 1, int, "PID of partner has to be an int.")
+            if self.id == _partner:
+                raise Exception(
+                    "Cannot exclude of a particle with itself!\n->particle id %i, partner %i." % (self.id, _partner))
+            if change_exclusion(self.id, _partner, 0) == 1:
+                raise Exception("Particle with id " + str(_partner) + " does not exist.")
 
-            for partner in _partners:
+        def delete_exclusion(self, _partner):
 
-                check_type_or_throw_except(
-                    partner, 1, int, "PID of partner has to be an int.")
-                if self.id == partner:
-                    raise Exception(
-                        "Cannot exclude of a particle with itself!\n->particle id %i, partner %i." % (self.id, partner))
-                if change_exclusion(self.id, partner, 0) == 1:
-                    raise Exception("Particle with id " + str(partner) + " does not exist.")
-
-        def delete_exclusion(self, _partners):
-
-            if isinstance(_partners, int):
-                _partners = [_partners]
-
-            for partner in _partners:
-                check_type_or_throw_except(
-                    partner, 1, int, "PID of partner has to be an int.")
-                if not partner in self.exclusions:
-                    raise Exception("Particle with id " + str(partner) + " is not in exclusion list.")
-                if change_exclusion(self.id, partner, 1) == 1:
-                    raise Exception("Particle with id " + str(partner) + " does not exist.")
+            check_type_or_throw_except(
+                _partner, 1, int, "PID of partner has to be an int.")
+            if not _partner in self.exclusions:
+                raise Exception("Particle with id " + str(_partner) + " is not in exclusion list.")
+            if change_exclusion(self.id, _partner, 1) == 1:
+                raise Exception("Particle with id " + str(_partner) + " does not exist.")
 
     IF ENGINE:
         property swimming:
@@ -1291,6 +1303,9 @@ cdef class ParticleHandle(object):
         bond_info[0] = bond[0]._bond_id
         for i in range(1, len(bond)):
             bond_info[i] = bond[i]
+        if self.id in bond[1:]:
+            raise Exception("Bond partners {} includes the particle {} itself.".format(bond[1:], self.id ))
+
         if change_particle_bond(self.id, bond_info, 0):
             handle_errors("Adding the bond failed.")
 
@@ -1318,7 +1333,7 @@ cdef class ParticleHandle(object):
         if change_particle_bond(self.id, bond_info, 1):
             handle_errors("Deleting the bond failed.")
 
-    def check_bond_or_throw_exception(self, bond):
+    def check_bond_or_throw_exception(self, _bond):
         """
         Checks the validity of the given bond:
 
@@ -1331,6 +1346,8 @@ cdef class ParticleHandle(object):
         Throws an exception if any of these are not met.
 
         """
+
+        bond = _bond
 
         # Has it []-access
         if not hasattr(bond, "__getitem__"):
@@ -1370,6 +1387,8 @@ cdef class ParticleHandle(object):
                     # Put the particle id instead of the particle handle
                     bond[i] = bond[i].id
 
+        
+
     def add_bond(self, _bond):
         """
         Add a single bond to the particle.
@@ -1407,6 +1426,9 @@ cdef class ParticleHandle(object):
 
         """
 
+        if tuple(_bond) in self.bonds:
+            raise Exception("Bond {} already exists on particle {}.".format(tuple(_bond), self.id))
+            
         bond = list(_bond)  # As we will modify it
         self.check_bond_or_throw_exception(bond)
         self.add_verified_bond(bond)
@@ -1540,26 +1562,13 @@ cdef class _ParticleSliceImpl(object):
             return pos_array
 
     IF EXCLUSIONS:
-        def add_exclusion(self, _partners):
-            self.exclude = _partners
+        def add_exclusion(self, _partner):
+            for i in range(len(self.id_selection)):
+                ParticleHandle(self.id_selection[i]).add_exclusion(_partner)
 
-        def delete_exclusion(self, _partners):
-            if not isinstance(_partners, list):
-                raise Exception("List object expected.")
-            if isinstance(_partners[0], list):
-                for i in range(len(self.id_selection)):
-                    ParticleHandle(self.id_selection[
-                                   i]).delete_exclusion(_partners[i])
-            if isinstance(_partners[0], int):
-                for i in range(len(self.id_selection)):
-                    ParticleHandle(self.id_selection[
-                                   i]).delete_exclusion(_partners)
-            else:
-                raise TypeError("Unexpected exclusion partner type.")
-
-        def delete_exclusions(self):
-            for _id in self.id_selection:
-                ParticleHandle(_id).delete_exclusions()
+        def delete_exclusion(self, _partner):
+            for i in range(len(self.id_selection)):
+                ParticleHandle(self.id_selection[i]).delete_exclusion(_partner)
 
     def __str__(self):
         res = ""
@@ -1583,13 +1592,9 @@ cdef class _ParticleSliceImpl(object):
         Add a single bond to the particles.
 
         """
-
-        bond = list(_bond)  # As we will modify it
+            
         for i in range(len(self.id_selection)):
-            partners = []
-            for j in range(1, len(bond)):
-                partners.append(bond[j][i])
-            ParticleHandle(self.id_selection[i]).add_bond((bond[0], *partners))
+            ParticleHandle(self.id_selection[i]).add_bond(_bond)
 
     def delete_bond(self, _bond):
         """
@@ -1597,12 +1602,8 @@ cdef class _ParticleSliceImpl(object):
 
         """
 
-        bond = list(_bond)  # as we modify it
         for i in range(len(self.id_selection)):
-            partners = []
-            for j in range(1, len(bond)):
-                partners.append(bond[j][i])
-            ParticleHandle(self.id_selection[i]).delete_bond((bond[0], *partners))
+            ParticleHandle(self.id_selection[i]).delete_bond(_bond)
 
     def delete_all_bonds(self):
         for i in range(len(self.id_selection)):
@@ -1882,7 +1883,7 @@ cdef class ParticleList(object):
         n = 0
         for p in self:
             for t in types:
-                if (p.type == t or t == "all"):
+                if p.type == t or t == "all":
                     n += 1
 
         with open(fname, "w") as vtk:
@@ -1893,7 +1894,7 @@ cdef class ParticleList(object):
             vtk.write("POINTS {} floats\n".format(n))
             for p in self:
                 for t in types:
-                    if (p.type == t or t == "all"):
+                    if p.type == t or t == "all":
                         vtk.write("{} {} {}\n".format(*(p.pos_folded)))
 
             vtk.write("POINT_DATA {}\n".format(n))
@@ -1901,7 +1902,7 @@ cdef class ParticleList(object):
             vtk.write("LOOKUP_TABLE default\n")
             for p in self:
                 for t in types:
-                    if (p.type == t or t == "all"):
+                    if p.type == t or t == "all":
                         vtk.write("{} {} {}\n".format(*p.v))
 
     property highest_particle_id:
@@ -1986,6 +1987,54 @@ def _add_particle_slice_properties():
                     np.shape(values), target_shape))
             return
 
+#        # Attributes with lists have to be validated individually
+#        if attribute == "exclusions":
+#            if all(isinstance(x, int) for x in values): # one list of exclusions provided
+#                for i in range(N):
+#                    setattr(ParticleHandle(
+#                        particle_slice.id_selection[i]), attribute, values)
+#            # at least one value is a list and correct size: lists for each particle provided 
+#            elif len(values) == N: 
+#                for i in range(N):
+#                    setattr(ParticleHandle(
+#                        particle_slice.id_selection[i]), attribute, values[i])
+#            else:
+#                raise Exception("Failed to set exclusions for particle slice.")
+#            
+#            return
+
+        elif attribute in ["bonds"]:
+             nlvl = nest_level(values)
+             
+             if nlvl > 0 and nlvl <= 2: # one-for-all value provided.
+                for i in range(N):
+                    setattr(ParticleHandle(
+                        particle_slice.id_selection[i]), attribute, values)
+             elif nlvl > 2 and len(values) == N: # one-for-each value provided
+                for i in range(N):
+                    setattr(ParticleHandle(
+                        particle_slice.id_selection[i]), attribute, values[i])
+             else:
+                raise Exception("Failed to set bonds for particle slice.")
+                
+             return
+        elif attribute in ["exclusions"]:
+             nlvl = nest_level(values)
+             
+             if nlvl  == 1: # one-for-all value provided.
+                for i in range(N):
+                    setattr(ParticleHandle(
+                        particle_slice.id_selection[i]), attribute, values)
+             elif nlvl == 2 and len(values) == N: # one-for-each value provided
+                for i in range(N):
+                    setattr(ParticleHandle(
+                        particle_slice.id_selection[i]), attribute, values[i])
+             else:
+                raise Exception("Failed to set exclusions for particle slice.")
+                
+             return
+
+
         if target_shape == np.shape(values):  # one value provided
             for i in range(N):
                 setattr(ParticleHandle(
@@ -2019,7 +2068,7 @@ def _add_particle_slice_properties():
         else:  # scalar quantity
             target_type = type(target)
 
-        if (attribute in ["exclusions", "bonds", "vs_relative", "swimming"]):
+        if attribute in ["exclusions", "bonds", "vs_relative", "swimming"]:
             values = []
             for i in range(N):
                 values.append(getattr(ParticleHandle(
