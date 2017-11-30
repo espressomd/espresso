@@ -20,12 +20,19 @@
 #include "CylindricalLBFluxDensityProfileAtParticlePositions.hpp"
 #include "lbgpu.hpp"
 #include "utils.hpp"
+#include "utils/Histogram.hpp"
 
 namespace Observables {
 
-std::vector<double> CylindricalLBFluxDensityProfileAtParticlePositions::operator() (
-    PartCfg &partCfg) const {
-  std::vector<double> res(n_values(), 0.0);
+std::vector<double> CylindricalLBFluxDensityProfileAtParticlePositions::
+operator()(PartCfg &partCfg) const {
+  std::vector<size_t> n_bins{{static_cast<size_t>(n_r_bins),
+                              static_cast<size_t>(n_phi_bins),
+                              static_cast<size_t>(n_z_bins)}};
+  std::vector<std::pair<double, double>> limits{
+      {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
+       std::make_pair(min_z, max_z)}};
+  Utils::CylindricalHistogram histogram(n_bins, 3, limits);
 #ifdef LB_GPU
   double bin_volume;
   int r_bin, phi_bin, z_bin;
@@ -64,51 +71,32 @@ std::vector<double> CylindricalLBFluxDensityProfileAtParticlePositions::operator
   lb_lbfluid_get_interpolated_velocity_at_positions(
       ppos.data(), velocities.data(), ids().size());
   for (int index = 0; index < ids().size(); ++index) {
-    r_bin = std::floor((ppos_cyl[3 * index + 0] - min_r) / r_bin_size());
-    phi_bin = std::floor((ppos_cyl[3 * index + 1] - min_phi) / phi_bin_size());
-    z_bin = std::floor((ppos_cyl[3 * index + 2] - min_z) / z_bin_size());
-    bin_volume =
-        PI *
-        ((min_r + (r_bin + 1) * r_bin_size()) *
-             (min_r + (r_bin + 1) * r_bin_size()) -
-         (min_r + r_bin * r_bin_size()) * (min_r + r_bin * r_bin_size())) *
-        z_bin_size() * phi_bin_size() / (2 * PI);
-    if (r_bin >= 0 && r_bin < n_r_bins && phi_bin >= 0 &&
-        phi_bin < n_phi_bins && z_bin >= 0 && z_bin < n_z_bins) {
-      // Coordinate transform the velocities and divide core velocities by
-      // time_step to get MD units. v_r = (x * v_x + y * v_y) / sqrt(x^2 + y^2)
-      double v_r =
-          (ppos_shifted[3 * index + 0] * velocities[3 * index + 0] +
-           ppos_shifted[3 * index + 1] * velocities[3 * index + 1]) /
-          std::sqrt(ppos_shifted[3 * index + 0] * ppos_shifted[3 * index + 0] +
+    // Coordinate transform the velocities and divide core velocities by
+    // time_step to get MD units. v_r = (x * v_x + y * v_y) / sqrt(x^2 + y^2)
+    double v_r =
+        (ppos_shifted[3 * index + 0] * velocities[3 * index + 0] +
+         ppos_shifted[3 * index + 1] * velocities[3 * index + 1]) /
+        std::sqrt(ppos_shifted[3 * index + 0] * ppos_shifted[3 * index + 0] +
+                  ppos_shifted[3 * index + 1] * ppos_shifted[3 * index + 1]);
+    // v_phi = (x * v_y - y * v_x ) / (x^2 + y^2)
+    double v_phi = (ppos_shifted[3 * index + 0] * velocities[3 * index + 1] -
+                    ppos_shifted[3 * index + 1] * velocities[3 * index + 0]) /
+                   (ppos_shifted[3 * index + 0] * ppos_shifted[3 * index + 0] +
                     ppos_shifted[3 * index + 1] * ppos_shifted[3 * index + 1]);
-      // v_phi = (x * v_y - y * v_x ) / (x^2 + y^2)
-      double v_phi =
-          (ppos_shifted[3 * index + 0] * velocities[3 * index + 1] -
-           ppos_shifted[3 * index + 1] * velocities[3 * index + 0]) /
-          (ppos_shifted[3 * index + 0] * ppos_shifted[3 * index + 0] +
-           ppos_shifted[3 * index + 1] * ppos_shifted[3 * index + 1]);
-      // v_z = v_z
-      double v_z = velocities[3 * index + 2];
-      // Write a flat histogram.
-      // index calculation: using the following formula for N dimensions:
-      //   ind = ind_{N-1} + sum_{j=0}^{N-2} (ind_j * prod_{k=j+1}^{N-1} n_k),
-      // where ind is the flattened index, ind_i is the ith unflattened index
-      // and n_i is the size of the ith dimension.
-      int ind =
-          3 * (r_bin * n_phi_bins * n_z_bins + phi_bin * n_z_bins + z_bin);
-      if (std::isfinite(v_r)) {
-        res[ind + 0] += v_r / bin_volume;
-      }
-      if (std::isfinite(v_phi)) {
-        res[ind + 1] += v_phi / bin_volume;
-      }
-      if (std::isfinite(v_z)) {
-        res[ind + 2] += v_z / bin_volume;
-      }
-    }
+    // v_z = v_z
+    double v_z = velocities[3 * index + 2];
+    // Write a flat histogram.
+    // index calculation: using the following formula for N dimensions:
+    //   ind = ind_{N-1} + sum_{j=0}^{N-2} (ind_j * prod_{k=j+1}^{N-1} n_k),
+    // where ind is the flattened index, ind_i is the ith unflattened index
+    // and n_i is the size of the ith dimension.
+    histogram.update(
+        std::vector<double>{{ppos_cyl[3 * index + 0], ppos_cyl[3 * index + 1],
+                             ppos_cyl[3 * index + 2]}},
+        std::vector<double>{{v_r, v_phi, v_z}});
   }
+  histogram.normalize();
 #endif // LB_GPU
-  return res;
+  return histogram.get_histogram();
 }
 } // namespace Observables
