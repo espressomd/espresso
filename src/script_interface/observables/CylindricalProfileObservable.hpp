@@ -27,18 +27,14 @@
 #include <memory>
 
 #include "Observable.hpp"
-#include "core/observables/CylindricalProfileObservable.hpp"
 #include "core/observables/CylindricalFluxDensityProfile.hpp"
+#include "core/observables/CylindricalProfileObservable.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
 
 class CylindricalProfileObservable : public Observable {
 public:
-  const std::string name() const override {
-    return "Observables::CylindricalProfileObservable";
-  };
-
   VariantMap get_parameters() const override {
     return {{"ids", cylindrical_profile_observable()->ids()},
             {"center", cylindrical_profile_observable()->center},
@@ -51,7 +47,7 @@ public:
             {"max_r", cylindrical_profile_observable()->max_r},
             {"max_phi", cylindrical_profile_observable()->max_phi},
             {"max_z", cylindrical_profile_observable()->max_z}};
-  };
+  }
 
   ParameterMap valid_parameters() const override {
     return {{"ids", {ParameterType::INT_VECTOR, true}},
@@ -65,41 +61,40 @@ public:
             {"max_r", {ParameterType::DOUBLE, true}},
             {"max_phi", {ParameterType::DOUBLE, true}},
             {"max_z", {ParameterType::DOUBLE, true}}};
-  };
+  }
 
   void set_parameter(std::string const &name, Variant const &value) override {
     SET_PARAMETER_HELPER("ids", cylindrical_profile_observable()->ids());
     SET_PARAMETER_HELPER("center", cylindrical_profile_observable()->center);
-    SET_PARAMETER_HELPER("n_r_bins", cylindrical_profile_observable()->n_r_bins);
-    SET_PARAMETER_HELPER("n_phi_bins", cylindrical_profile_observable()->n_phi_bins);
-    SET_PARAMETER_HELPER("n_z_bins", cylindrical_profile_observable()->n_z_bins);
+    SET_PARAMETER_HELPER("n_r_bins",
+                         cylindrical_profile_observable()->n_r_bins);
+    SET_PARAMETER_HELPER("n_phi_bins",
+                         cylindrical_profile_observable()->n_phi_bins);
+    SET_PARAMETER_HELPER("n_z_bins",
+                         cylindrical_profile_observable()->n_z_bins);
     SET_PARAMETER_HELPER("min_r", cylindrical_profile_observable()->min_r);
     SET_PARAMETER_HELPER("min_phi", cylindrical_profile_observable()->min_phi);
     SET_PARAMETER_HELPER("min_z", cylindrical_profile_observable()->min_z);
     SET_PARAMETER_HELPER("max_r", cylindrical_profile_observable()->max_r);
     SET_PARAMETER_HELPER("max_phi", cylindrical_profile_observable()->max_phi);
     SET_PARAMETER_HELPER("max_z", cylindrical_profile_observable()->max_z);
-  };
+  }
 
   virtual std::shared_ptr<::Observables::CylindricalProfileObservable>
   cylindrical_profile_observable() const = 0;
 };
 
 #define NEW_RADIAL_PROFILE_OBSERVABLE(obs_name)                                \
-  class obs_name : public CylindricalProfileObservable {                            \
+  class obs_name : public CylindricalProfileObservable {                       \
   public:                                                                      \
     obs_name() : m_observable(new ::Observables::obs_name()){};                \
-                                                                               \
-    const std::string name() const override {                                  \
-      return "Observables::" #obs_name;                                        \
-    }                                                                          \
                                                                                \
     std::shared_ptr<::Observables::Observable> observable() const override {   \
       return m_observable;                                                     \
     }                                                                          \
                                                                                \
-    std::shared_ptr<::Observables::CylindricalProfileObservable>                    \
-    cylindrical_profile_observable() const override {                               \
+    std::shared_ptr<::Observables::CylindricalProfileObservable>               \
+    cylindrical_profile_observable() const override {                          \
       return m_observable;                                                     \
     }                                                                          \
                                                                                \

@@ -38,10 +38,6 @@ public:
                      },
                      []() { return comfixed.get_fixed_types(); }}});
   }
-
-  const std::string name() const override {
-    return "ComFixed";
-  }
 };
 }
 #endif

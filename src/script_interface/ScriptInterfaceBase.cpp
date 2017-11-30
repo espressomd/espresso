@@ -22,10 +22,12 @@
 #include "ScriptInterfaceBase.hpp"
 #include "ParallelScriptInterface.hpp"
 #include "utils/Factory.hpp"
+#include "Serializer.hpp"
 
 namespace ScriptInterface {
 std::shared_ptr<ScriptInterfaceBase>
-ScriptInterfaceBase::make_shared(std::string const &name, CreationPolicy policy) {
+ScriptInterfaceBase::make_shared(std::string const &name,
+                                 CreationPolicy policy) {
   std::shared_ptr<ScriptInterfaceBase> sp;
 
   switch (policy) {
@@ -33,10 +35,14 @@ ScriptInterfaceBase::make_shared(std::string const &name, CreationPolicy policy)
     sp = Utils::Factory<ScriptInterfaceBase>::make(name);
     break;
   case CreationPolicy::GLOBAL:
-    sp = std::shared_ptr<ScriptInterfaceBase>(
-        new ParallelScriptInterface(name));
+    sp =
+        std::shared_ptr<ScriptInterfaceBase>(new ParallelScriptInterface(name));
     break;
   }
+
+  /* Set the policy and the name */
+  sp->set_policy(policy);
+  sp->set_name(name);
 
   /* Id of the newly created instance */
   const auto id = sp->id();
@@ -53,4 +59,35 @@ std::weak_ptr<ScriptInterfaceBase> &
 ScriptInterfaceBase::get_instance(ObjectId id) {
   return Utils::AutoObjectId<ScriptInterfaceBase>::get_instance(id);
 }
+
+VariantMap ScriptInterfaceBase::serialize_object(
+    std::shared_ptr<ScriptInterfaceBase> o) const {
+  VariantMap state;
+
+  state["name"] = o->name();
+  state["state"] = flatten_map(o->get_state());
+
+  return state;
 }
+
+std::shared_ptr<ScriptInterfaceBase>
+ScriptInterfaceBase::deserialize_object(VariantMap state) const {
+  ;
+}
+
+/* Checkpointing functions. */
+VariantMap ScriptInterfaceBase::get_state() const {
+  VariantMap state;
+  auto params = this->get_parameters();
+
+  for (auto const &p : params) {
+    state[p.first] = boost::apply_visitor(Serializer{}, p.second);
+  }
+
+  return state;
+}
+
+void ScriptInterfaceBase::set_state(VariantMap const &state) {
+  return this->construct(state);
+}
+} /* namespace ScriptInterface */

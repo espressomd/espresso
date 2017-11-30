@@ -54,7 +54,7 @@ public:
   }
 
   void construct(VariantMap const &params) override;
-  const std::string name() const override { return m_p->name(); }
+  const std::string name() const { return m_p->name(); }
   void set_parameter(const std::string &name, const Variant &value) override;
   void
   set_parameters(const std::map<std::string, Variant> &parameters) override;

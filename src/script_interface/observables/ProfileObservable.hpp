@@ -27,21 +27,17 @@
 #include <memory>
 
 #include "Observable.hpp"
-#include "core/observables/ProfileObservable.hpp"
 #include "core/observables/DensityProfile.hpp"
-#include "core/observables/ForceDensityProfile.hpp"
 #include "core/observables/FluxDensityProfile.hpp"
+#include "core/observables/ForceDensityProfile.hpp"
 #include "core/observables/LbVelocityProfile.hpp"
+#include "core/observables/ProfileObservable.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
 
 class ProfileObservable : public Observable {
 public:
-  const std::string name() const override {
-    return "Observables::ProfileObservable";
-  };
-
   VariantMap get_parameters() const override {
     return {{"ids", profile_observable()->ids},
 
@@ -56,7 +52,7 @@ public:
             {"maxx", profile_observable()->maxx},
             {"maxy", profile_observable()->maxy},
             {"maxz", profile_observable()->maxz}};
-  };
+  }
 
   ParameterMap valid_parameters() const override {
     return {{"ids", {ParameterType::INT_VECTOR, true}},
@@ -69,7 +65,7 @@ public:
             {"maxx", {ParameterType::DOUBLE, true}},
             {"maxy", {ParameterType::DOUBLE, true}},
             {"maxz", {ParameterType::DOUBLE, true}}};
-  };
+  }
 
   void set_parameter(std::string const &name, Variant const &value) override {
     SET_PARAMETER_HELPER("ids", profile_observable()->ids);
@@ -85,7 +81,7 @@ public:
     SET_PARAMETER_HELPER("maxx", profile_observable()->maxx);
     SET_PARAMETER_HELPER("maxy", profile_observable()->maxy);
     SET_PARAMETER_HELPER("maxz", profile_observable()->maxz);
-  };
+  }
 
   virtual std::shared_ptr<::Observables::ProfileObservable>
   profile_observable() const = 0;
@@ -95,10 +91,6 @@ public:
   class obs_name : public ProfileObservable {                                  \
   public:                                                                      \
     obs_name() : m_observable(new ::Observables::obs_name()){};                \
-                                                                               \
-    const std::string name() const override {                                  \
-      return "Observables::" #obs_name;                                        \
-    }                                                                          \
                                                                                \
     std::shared_ptr<::Observables::Observable> observable() const override {   \
       return m_observable;                                                     \

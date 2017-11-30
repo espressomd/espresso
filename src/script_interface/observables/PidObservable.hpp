@@ -47,10 +47,6 @@ namespace Observables {
 
 class PidObservable : public Observable {
 public:
-  const std::string name() const override {
-    return "Observables::PidObservable";
-  };
-
   VariantMap get_parameters() const override {
     return {{"ids", pid_observable()->ids()}};
   };
@@ -71,10 +67,6 @@ public:
   class obs_name : public PidObservable {                                      \
   public:                                                                      \
     obs_name() : m_observable(new ::Observables::obs_name()){};                \
-                                                                               \
-    const std::string name() const override {                                  \
-      return "Observables::" #obs_name;                                        \
-    }                                                                          \
                                                                                \
     std::shared_ptr<::Observables::Observable> observable() const override {   \
       return m_observable;                                                     \

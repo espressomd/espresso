@@ -45,13 +45,8 @@ class AutoUpdateCorrelators : public ScriptObjectRegistry<Correlator> {
 
     } else {
       throw "Could not find Correlator to remove";
-    };
-  };
-
-public:
-  virtual const std::string name() const override {
-    return "Correlators::AutoUpdateCorrelators";
-  };
+    }
+  }
 };
 } /* namespace Correlators */
 } /* namespace ScriptInterface */

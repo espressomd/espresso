@@ -39,8 +39,6 @@ public:
                      [this]() { return m_wall->n(); }}});
   }
 
-  const std::string name() const override { return "Shapes::Wall"; }
-
   std::shared_ptr<::Shapes::Shape> shape() const override { return m_wall; }
 
 private:

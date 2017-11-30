@@ -41,10 +41,6 @@ public:
                     {"write_ordered", m_h5md->write_ordered()}});
   };
 
-  const std::string name() const override {
-    return "ScriptInterface::Writer::H5mdScript";
-  };
-
   Variant call_method(const std::string &name,
                       const VariantMap &parameters) override;
 

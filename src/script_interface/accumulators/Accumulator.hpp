@@ -38,10 +38,6 @@ public:
   /* as_const is to make obs read-only. */
   Accumulator() { add_parameters({{"obs", Utils::as_const(m_obs)}}); }
 
-  const std::string name() const override {
-    return "Accumulators::Accumulator";
-  }
-
   void construct(VariantMap const &params) override {
     set_from_args(m_obs, params, "obs");
 

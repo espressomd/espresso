@@ -38,8 +38,6 @@ public:
                     {"direction", m_rhomboid->direction()}});
   }
 
-  const std::string name() const override { return "Shapes::Rhomboid"; }
-
   std::shared_ptr<::Shapes::Shape> shape() const override { return m_rhomboid; }
 
 private:

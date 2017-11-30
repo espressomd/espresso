@@ -45,11 +45,6 @@ class AutoUpdateAccumulators : public ScriptObjectRegistry<Accumulator> {
       throw std::runtime_error("Could not find Accumulator to remove");
     }
   }
-
-public:
-  const std::string name() const override {
-    return "Accumulators::AutoUpdateAccumulators";
-  }
 };
 } /* namespace Accumulators */
 } /* namespace ScriptInterface */

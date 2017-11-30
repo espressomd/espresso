@@ -22,31 +22,26 @@
 #ifndef SCRIPT_INTERFACE_OBSERVABLES_AUTOUPDATEOBSERVABLES_HPP
 #define SCRIPT_INTERFACE_OBSERVABLES_AUTOUPDATEOBSERVABLES_HPP
 
+#include "Observable.hpp"
 #include "ScriptInterface.hpp"
 #include "ScriptObjectRegistry.hpp"
-#include "Observable.hpp"
 #include "core/observables.hpp"
-
 
 namespace ScriptInterface {
 namespace Observables {
-
 
 class AutoUpdateObservables : public ScriptObjectRegistry<Observable> {
   virtual void add_in_core(std::shared_ptr<Observable> obj_ptr) override {
     ::Observables::auto_update_observables.push_back(obj_ptr->observable());
   }
   virtual void remove_in_core(std::shared_ptr<Observable> obj_ptr) override {
-    auto it =std::find(::Observables::auto_update_observables.begin(), ::Observables::auto_update_observables.end(), obj_ptr->observable());
-    if (it !=::Observables::auto_update_observables.end())
-    {
+    auto it = std::find(::Observables::auto_update_observables.begin(),
+                        ::Observables::auto_update_observables.end(),
+                        obj_ptr->observable());
+    if (it != ::Observables::auto_update_observables.end()) {
       ::Observables::auto_update_observables.erase(it);
     }
-  };
-  public:
-  virtual const std::string name() const override {
-    return "Observables::AutoUpdateObservables"; 
-  };
+  }
 };
 } /* namespace Observables */
 } /* namespace ScriptInterface */

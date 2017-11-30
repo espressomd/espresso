@@ -44,8 +44,6 @@ public:
   std::shared_ptr<::Shapes::Shape> shape() const override {
     return m_simple_pore;
   }
-
-  const std::string name() const override { return "Shapes::SimplePore"; }
 };
 }
 }

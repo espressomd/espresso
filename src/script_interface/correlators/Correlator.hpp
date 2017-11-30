@@ -24,7 +24,6 @@
 
 #include "ScriptInterface.hpp"
 #include "core/correlators/Correlator.hpp"
-#include "core/utils/Factory.hpp"
 #include "observables/Observable.hpp"
 
 #include <memory>
@@ -37,8 +36,6 @@ public:
   Correlator()
       : m_correlator(new ::Correlators::Correlator()), m_obs1(nullptr),
         m_obs2(nullptr) {}
-
-  const std::string name() const override { return "Correlators::Correlator"; }
 
   VariantMap get_parameters() const override {
     return {{"tau_lin", (int)m_correlator->tau_lin},

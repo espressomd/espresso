@@ -55,7 +55,10 @@ class ScriptInterfaceBase : public Utils::AutoObjectId<ScriptInterfaceBase> {
 public:
   enum class CreationPolicy { LOCAL, GLOBAL };
 
+protected:
   ScriptInterfaceBase() = default;
+
+public:
   /* Copy has unclear semantics, so it should not be allowed. */
   ScriptInterfaceBase(ScriptInterfaceBase const &) = delete;
   ScriptInterfaceBase(ScriptInterfaceBase &&) = delete;
@@ -65,16 +68,30 @@ public:
 
   static std::weak_ptr<ScriptInterfaceBase> &get_instance(ObjectId id);
 
+private:
+  /* Memers related to object construction, they are
+     only to be used internally. */
+
+  std::string m_name;
+  CreationPolicy m_policy;
+
+  void set_name(std::string const &name) { m_name = name; }
+  void set_policy(CreationPolicy policy) { m_policy = policy; }
+
+public:
   /**
    * @brief Name of the object.
    *
-   * Should be the name of the derived type including
-   * namespace qualifiers. Must be unique.
+   * This is the name by which this instance was construted.
    *
    * @return Name of the object.
    */
-  // return boost::core::demangle(typeid(*this).name()) ?
-  virtual const std::string name() const = 0;
+  std::string const &name() const { return m_name; }
+
+  /**
+   * @brief The construction policy of this instance.
+   */
+  CreationPolicy policy() const { return m_policy; }
 
   /**
    * @brief Constructor
@@ -190,12 +207,15 @@ public:
     return sp;
   }
 
-  /* Checkpointing functions. */
-  virtual VariantMap get_state() const { return this->get_parameters(); }
+private:
+  VariantMap serialize_object(std::shared_ptr<ScriptInterfaceBase> o) const;
+  std::shared_ptr<ScriptInterfaceBase>
+  deserialize_object(VariantMap state) const;
 
-  virtual void set_state(VariantMap const &state) {
-    return this->set_parameters(state);
-  }
+public:
+  /* Checkpointing functions. */
+  virtual VariantMap get_state() const;
+  virtual void set_state(VariantMap const &state);
 };
 
 /**
