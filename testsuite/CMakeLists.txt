@@ -102,6 +102,7 @@ python_test(FILE comfixed.py MAX_NUM_PROC 2)
 python_test(FILE rescale.py MAX_NUM_PROC 2)
 python_test(FILE npt.py MAX_NUM_PROC 4)
 python_test(FILE accumulator.py MAX_NUM_PROC 4)
+python_test(FILE array_properties.py MAX_NUM_PROC 4)
 python_test(FILE analyze_distribution.py MAX_NUM_PROC 1)
 python_test(FILE observable_profile.py MAX_NUM_PROC 4)
 
