@@ -3,6 +3,8 @@
 
 #include "ProfileObservable.hpp"
 #include "particle_data.hpp"
+#include "lb.hpp"
+
 #include <vector>
 
 namespace Observables {
