@@ -245,7 +245,8 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
         dn2=normr(n2);
         phi = angle_btw_triangles(fp1,fp2,fp3,fp4);
         if (phi < 0.001 || phi > 2*M_PI - 0.001) printf("oif_local_forces.hpp, calc_oif_local: Angle approaches 0 or 2*Pi\n");
-        aa = (phi - iaparams->p.oif_local_forces.phi0)/iaparams->p.oif_local_forces.phi0;
+        //aa = (phi - iaparams->p.oif_local_forces.phi0)/iaparams->p.oif_local_forces.phi0;
+        aa = (phi - iaparams->p.oif_local_forces.phi0); // no renormalization by phi0, to be consistent with Krueger and Fedosov
         fac = iaparams->p.oif_local_forces.kb * aa;
         for(i=0; i<3; i++) {
             force[i] += fac * n1[i]/dn1;
