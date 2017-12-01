@@ -23,6 +23,8 @@
 #define SCRIPT_INTERFACE_CORRELATORS_CORRELATOR_HPP
 
 #include "ScriptInterface.hpp"
+#include "auto_parameters/AutoParameters.hpp"
+
 #include "core/correlators/Correlator.hpp"
 #include "observables/Observable.hpp"
 
@@ -31,71 +33,19 @@
 namespace ScriptInterface {
 namespace Correlators {
 
-class Correlator : public ScriptInterfaceBase {
+class Correlator : public AutoParameters {
 public:
-  Correlator()
-      : m_correlator(new ::Correlators::Correlator()), m_obs1(nullptr),
-        m_obs2(nullptr) {}
-
-  VariantMap get_parameters() const override {
-    return {{"tau_lin", (int)m_correlator->tau_lin},
-            {"tau_max", (int)m_correlator->tau_max},
-            {"dt", m_correlator->dt},
-            {"compress1", m_correlator->compressA_name},
-            {"compress2", m_correlator->compressB_name},
-            {"corr_operation", m_correlator->corr_operation_name},
-            {"args", m_correlator->correlation_args},
-            {"obs1", (m_obs1 != nullptr) ? m_obs1->id() : ObjectId()},
-            {"obs2", (m_obs2 != nullptr) ? m_obs2->id() : ObjectId()}};
+  Correlator() : m_correlator(std::make_shared<::Correlators::Correlator>()) {
+    add_parameters({{"tau_lin", m_correlator->tau_lin},
+                    {"tau_max", m_correlator->tau_max},
+                    {"dt", m_correlator->dt},
+                    {"compress1", m_correlator->compressA_name},
+                    {"compress2", m_correlator->compressB_name},
+                    {"corr_operation", m_correlator->corr_operation_name},
+                    {"args", m_correlator->correlation_args},
+                    {"obs1", m_obs1},
+                    {"obs2", m_obs2}});
   }
-
-  ParameterMap valid_parameters() const override {
-    return {{"tau_lin", {ParameterType::INT, true}},
-            {"tau_max", {ParameterType::DOUBLE, true}},
-            {"dt", {ParameterType::DOUBLE, true}},
-            {"obs1", {ParameterType::OBJECTID, true}},
-            {"obs2", {ParameterType::OBJECTID, true}},
-            {"compress1", {ParameterType::STRING, true}},
-            {"compress2", {ParameterType::STRING, true}},
-            {"args", {ParameterType::DOUBLE_VECTOR, true}},
-            {"corr_operation", {ParameterType::STRING, true}}};
-  }
-
-  void set_parameter(std::string const &name, Variant const &value) override {
-    if (m_correlator->initialized) {
-      throw std::runtime_error(
-          "Correlator cannot be changed after initial setup");
-    }
-
-    if ((name == "obs1") || (name == "obs2")) {
-      auto obs_ptr = get_value<std::shared_ptr<Observables::Observable>>(value);
-
-      /* We are expecting a ScriptInterface::Observables::Observable here,
-         throw if not. That means the assigned object had the wrong type. */
-      if (obs_ptr != nullptr) {
-        if (name == "obs1") {
-          m_correlator->A_obs = obs_ptr->observable();
-          m_obs1 = obs_ptr;
-        }
-        if (name == "obs2") {
-          m_correlator->B_obs = obs_ptr->observable();
-          m_obs2 = obs_ptr;
-        }
-      }
-    }
-
-    SET_PARAMETER_HELPER("tau_lin", m_correlator->tau_lin);
-    SET_PARAMETER_HELPER("tau_max", m_correlator->tau_max);
-    SET_PARAMETER_HELPER("dt", m_correlator->dt);
-    SET_PARAMETER_HELPER("args", m_correlator->correlation_args);
-    SET_PARAMETER_HELPER("corr_operation", m_correlator->corr_operation_name);
-    SET_PARAMETER_HELPER("compress1", m_correlator->compressA_name);
-    SET_PARAMETER_HELPER("compress2", m_correlator->compressB_name);
-  }
-  virtual void set_parameters(const VariantMap &p) override {
-    ScriptInterfaceBase::set_parameters(p);
-    m_correlator->initialize();
-  };
 
   std::shared_ptr<::Correlators::Correlator> correlator() {
     return m_correlator;
