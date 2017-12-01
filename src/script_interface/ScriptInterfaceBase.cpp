@@ -66,6 +66,15 @@ ScriptInterfaceBase::get_instance(ObjectId id) {
 }
 
 /* Checkpointing functions. */
+
+/**
+ * @brief  Return a Variant representation of the state of the object.
+ *
+ * This should returne the internal state of the instance, so that
+ * the instance can be restored from this information.  The default
+ * implementation stores all the public parameters, including object
+ * parameters that are captured by calling get_state on them.
+ */
 Variant ScriptInterfaceBase::get_state() const {
   std::vector<Variant> state;
 
@@ -95,6 +104,10 @@ void ScriptInterfaceBase::set_state(Variant const &state) {
   this->construct(params);
 }
 
+/**
+ * @brief Returns a binary representation of the state often
+ *        the instance, as returned by @f get_state().
+ */
 std::string ScriptInterfaceBase::serialize() const {
   std::stringstream ss;
   boost::archive::binary_oarchive oa(ss);
@@ -104,6 +117,10 @@ std::string ScriptInterfaceBase::serialize() const {
   return ss.str();
 }
 
+/**
+ * @brief Creates a new instance from a binary state,
+ *        as returned by @serialize().
+ */
 std::shared_ptr<ScriptInterfaceBase>
 ScriptInterfaceBase::unserialize(std::string const &state) {
   std::stringstream ss(state);

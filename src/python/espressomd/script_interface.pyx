@@ -264,10 +264,6 @@ class ScriptInterfaceHelper(PScriptInterface):
         for method_name in self._so_bind_methods:
             setattr(self,method_name,self.generate_caller(method_name))
 
-
-
-
-
 # Map from script object names to corresponding python classes
 _python_class_by_so_name ={}
 
@@ -280,7 +276,6 @@ def script_interface_register(c):
         raise Exception("Python classes representing a script object must define an _so_name attribute at class level")
     _python_class_by_so_name[c._so_name]=c
     return c
-    
 
 def init():
     initialize()
