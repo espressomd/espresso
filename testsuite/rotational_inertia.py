@@ -3,6 +3,7 @@ import unittest as ut
 import numpy as np
 import espressomd
 import math
+import tests_common as tc
 
 
 @ut.skipIf(not espressomd.has_features(["MASS", "ROTATIONAL_INERTIA"]),
@@ -12,29 +13,6 @@ class RotationalInertia(ut.TestCase):
     # Handle for espresso system
     es = espressomd.System()
     es.cell_system.skin = 0
-
-    def define_rotation_matrix(self, part):
-        A = np.zeros((3, 3))
-        quat = self.es.part[part].quat
-        qq = np.power(quat, 2)
-
-        A[0, 0] = qq[0] + qq[1] - qq[2] - qq[3]
-        A[1, 1] = qq[0] - qq[1] + qq[2] - qq[3]
-        A[2, 2] = qq[0] - qq[1] - qq[2] + qq[3]
-
-        A[0, 1] = 2 * (quat[1] * quat[2] + quat[0] * quat[3])
-        A[0, 2] = 2 * (quat[1] * quat[3] - quat[0] * quat[2])
-        A[1, 0] = 2 * (quat[1] * quat[2] - quat[0] * quat[3])
-
-        A[1, 2] = 2 * (quat[2] * quat[3] + quat[0] * quat[1])
-        A[2, 0] = 2 * (quat[1] * quat[3] + quat[0] * quat[2])
-        A[2, 1] = 2 * (quat[2] * quat[3] - quat[0] * quat[1])
-
-        return A
-
-    def convert_vec_body_to_space(self, part, vec):
-        A = self.define_rotation_matrix(part)
-        return np.dot(A.transpose(), vec)
 
     # Angular momentum
     def L_body(self, part):
@@ -63,11 +41,11 @@ class RotationalInertia(ut.TestCase):
 
         # Angular momentum
         L_0_body = self.L_body(0)
-        L_0_lab = self.convert_vec_body_to_space(0, L_0_body)
+        L_0_lab = tc.convert_vec_body_to_space(self.es, 0, L_0_body)
 
         for i in range(100):
             L_body = self.L_body(0)
-            L_lab = self.convert_vec_body_to_space(0, L_body)
+            L_lab = tc.convert_vec_body_to_space(self.es, 0, L_body)
             for k in range(3):
                 self.assertLessEqual(
                     abs(
@@ -99,11 +77,11 @@ class RotationalInertia(ut.TestCase):
         self.es.part[0].rinertia = J[:]
 
         L_0_body = self.L_body(0)
-        L_0_lab = self.convert_vec_body_to_space(0, L_0_body)
+        L_0_lab = tc.convert_vec_body_to_space(self.es, 0, L_0_body)
 
         for i in range(100):
             L_body = self.L_body(0)
-            L_lab = self.convert_vec_body_to_space(0, L_body)
+            L_lab = tc.convert_vec_body_to_space(self.es, 0, L_body)
             for k in range(3):
                 self.assertLessEqual(
                     abs(
@@ -135,11 +113,11 @@ class RotationalInertia(ut.TestCase):
         self.es.part[0].rinertia = J[:]
 
         L_0_body = self.L_body(0)
-        L_0_lab = self.convert_vec_body_to_space(0, L_0_body)
+        L_0_lab = tc.convert_vec_body_to_space(self.es, 0, L_0_body)
 
         for i in range(100):
             L_body = self.L_body(0)
-            L_lab = self.convert_vec_body_to_space(0, L_body)
+            L_lab = tc.convert_vec_body_to_space(self.es, 0, L_body)
             for k in range(3):
                 self.assertLessEqual(
                     abs(
