@@ -47,6 +47,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <unordered_map>
+#include <unordered_set>
 /************************************************
  * defines
  ************************************************/
@@ -63,7 +64,7 @@
 // List of particles for grandcanonical simulations
 int number_of_type_lists;
 bool GC_init;
-std::unordered_map<int, std::set<int>> ParticleTypeMap{};
+std::unordered_map<int, std::unordered_set<int>> ParticleTypeMap{};
 
 int max_seen_particle = -1;
 int n_part = 0;
@@ -1177,7 +1178,7 @@ void init_type_map(int type) {
 
   //fill particle map
   if(ParticleTypeMap.count(type)==0)
-    ParticleTypeMap[type]=std::set<int>();
+    ParticleTypeMap[type]=std::unordered_set<int>();
   for (auto const &p : partCfg()) {
     if (p.p.type == type)
       ParticleTypeMap.at(type).insert(p.p.identity);

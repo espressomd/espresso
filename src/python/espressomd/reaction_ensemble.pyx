@@ -50,7 +50,7 @@ cdef class ReactionAlgorithm(object):
         return "temperature", "exclusion_radius"
 
     def _set_params_in_es_core(self):
-        self.RE.m_current_reaction_system.temperature = self._params[
+        self.RE.temperature = self._params[
             "temperature"]
         # setting a volume is a side effect, sets the default volume of the
         # reaction ensemble as the volume of the cuboid simulation box. this
@@ -58,11 +58,11 @@ cdef class ReactionAlgorithm(object):
         # <volume>" if one wants to simulate e.g. in a system with constraint
         # (e.g. cuboid box with cylinder constraint, so that the particles are
         # only contained in the volume of the cylinder)
-        if(self.RE.m_current_reaction_system.volume < 0):
+        if(self.RE.volume < 0):
             self.RE.set_cuboid_reaction_ensemble_volume()
-        self.RE.m_current_reaction_system.standard_pressure_in_simulation_units = self._params[
+        self.RE.standard_pressure_in_simulation_units = self._params[
             "standard_pressure"]
-        self.RE.m_current_reaction_system.exclusion_radius = self._params[
+        self.RE.exclusion_radius = self._params[
             "exclusion_radius"]
 
     def set_cylindrical_constraint_in_z_direction(self, center_x, center_y, radius_of_cylinder):
@@ -81,10 +81,10 @@ cdef class ReactionAlgorithm(object):
                    radius of the cylinder
 
         """
-        self.RE.m_current_reaction_system.cyl_x = center_x
-        self.RE.m_current_reaction_system.cyl_y = center_y
-        self.RE.m_current_reaction_system.cyl_radius = radius_of_cylinder
-        self.RE.m_current_reaction_system.box_is_cylindric_around_z_axis = True
+        self.RE.cyl_x = center_x
+        self.RE.cyl_y = center_y
+        self.RE.cyl_radius = radius_of_cylinder
+        self.RE.box_is_cylindric_around_z_axis = True
 
     def set_wall_constraints_in_z_direction(self, slab_start_z, slab_end_z):
         """
@@ -92,15 +92,15 @@ cdef class ReactionAlgorithm(object):
         the volume using :meth:`set_volume`.
 
         """
-        self.RE.m_current_reaction_system.slab_start_z = slab_start_z
-        self.RE.m_current_reaction_system.slab_end_z = slab_end_z
+        self.RE.slab_start_z = slab_start_z
+        self.RE.slab_end_z = slab_end_z
 
     def get_wall_constraints_in_z_direction(self):
         """
         Returns the restrictions of the sampling area in z-direction.
 
         """
-        return self.RE.m_current_reaction_system.slab_start_z, self.RE.m_current_reaction_system.slab_end_z
+        return self.RE.slab_start_z, self.RE.slab_end_z
 
     def set_volume(self, volume):
         """
@@ -110,7 +110,7 @@ cdef class ReactionAlgorithm(object):
         which is used, is the box volume.
 
         """
-        self.RE.m_current_reaction_system.volume = volume
+        self.RE.volume = volume
 
     def get_volume(self):
         """
@@ -118,7 +118,7 @@ cdef class ReactionAlgorithm(object):
         ensemble.
 
         """
-        return self.RE.m_current_reaction_system.volume
+        return self.RE.volume
 
     def acceptance_rate_configurational_moves(self):
         """
@@ -140,14 +140,14 @@ cdef class ReactionAlgorithm(object):
         in the code.
 
         """
-        self.RE.m_current_reaction_system.non_interacting_type = non_interacting_type
+        self.RE.non_interacting_type = non_interacting_type
 
     def get_non_interacting_type(self):
         """
         Get the type which is used for hiding particles.
 
         """
-        return self.RE.m_current_reaction_system.non_interacting_type
+        return self.RE.non_interacting_type
 
     def add(self, *args, **kwargs):
         """
@@ -221,10 +221,10 @@ cdef class ReactionAlgorithm(object):
         self._validate_params_default_charge()
 
         for key in self._params["dictionary"]:
-                if(find_index_of_type(int(key), self.RE.m_current_reaction_system) >= 0):
-                    self.RE.m_current_reaction_system.charges_of_types.resize(self.RE.m_current_reaction_system.nr_different_types)
-                    self.RE.m_current_reaction_system.charges_of_types[
-                        find_index_of_type(int(key), self.RE.m_current_reaction_system)] = self._params["dictionary"][key]
+                if(find_index_of_type(int(key), self.RE) >= 0):
+                    self.RE.charges_of_types.resize(self.RE.nr_different_types)
+                    self.RE.charges_of_types[
+                        find_index_of_type(int(key), self.RE)] = self._params["dictionary"][key]
 
     def _valid_keys_default_charge(self):
         return "dictionary"
@@ -264,29 +264,29 @@ cdef class ReactionAlgorithm(object):
         """
         self.RE.check_reaction_ensemble()
         reactions = []
-        for single_reaction_i in range(self.RE.m_current_reaction_system.nr_single_reactions):
+        for single_reaction_i in range(self.RE.nr_single_reactions):
             reactant_types = []
-            for i in range(self.RE.m_current_reaction_system.reactions[single_reaction_i].len_reactant_types):
+            for i in range(self.RE.reactions[single_reaction_i].len_reactant_types):
                 reactant_types.append(
-                    self.RE.m_current_reaction_system.reactions[single_reaction_i].reactant_types[i])
+                    self.RE.reactions[single_reaction_i].reactant_types[i])
             reactant_coefficients = []
-            for i in range(self.RE.m_current_reaction_system.reactions[single_reaction_i].len_reactant_types):
+            for i in range(self.RE.reactions[single_reaction_i].len_reactant_types):
                 reactant_coefficients.append(
-                    self.RE.m_current_reaction_system.reactions[single_reaction_i].reactant_coefficients[i])
+                    self.RE.reactions[single_reaction_i].reactant_coefficients[i])
 
             product_types = []
-            for i in range(self.RE.m_current_reaction_system.reactions[single_reaction_i].len_product_types):
+            for i in range(self.RE.reactions[single_reaction_i].len_product_types):
                 product_types.append(
-                    self.RE.m_current_reaction_system.reactions[single_reaction_i].product_types[i])
+                    self.RE.reactions[single_reaction_i].product_types[i])
             product_coefficients = []
-            for i in range(self.RE.m_current_reaction_system.reactions[single_reaction_i].len_product_types):
+            for i in range(self.RE.reactions[single_reaction_i].len_product_types):
                 product_coefficients.append(
-                    self.RE.m_current_reaction_system.reactions[single_reaction_i].product_coefficients[i])
+                    self.RE.reactions[single_reaction_i].product_coefficients[i])
             reaction = {"reactant_coefficients": reactant_coefficients, "reactant_types": reactant_types, "product_types": product_types, "product_coefficients":
-                        product_coefficients, "reactant_types": reactant_types, "equilibrium_constant": self.RE.m_current_reaction_system.reactions[single_reaction_i].equilibrium_constant}
+                        product_coefficients, "reactant_types": reactant_types, "equilibrium_constant": self.RE.reactions[single_reaction_i].equilibrium_constant}
             reactions.append(reaction)
 
-        return {"reactions": reactions, "temperature": self.RE.m_current_reaction_system.temperature, "exclusion_radius": self.RE.m_current_reaction_system.exclusion_radius, "standard_pressure": self.RE.m_current_reaction_system.standard_pressure_in_simulation_units}
+        return {"reactions": reactions, "temperature": self.RE.temperature, "exclusion_radius": self.RE.exclusion_radius, "standard_pressure": self.RE.standard_pressure_in_simulation_units}
 
     def delete_particle(self, p_id):
         """
@@ -299,8 +299,10 @@ cdef class ReactionAlgorithm(object):
 
 
 cdef class ReactionEnsemble(ReactionAlgorithm):
+    cdef CReactionEnsemble* REptr
     def __init__(self, *args, **kwargs):
         self.RE = <CReactionAlgorithm*> new CReactionEnsemble()
+        self.REptr = <CReactionEnsemble*> new CReactionEnsemble()
         self._params = {"standard_pressure": 1,
                         "temperature": 1,
                         "exclusion_radius": 0}
@@ -317,6 +319,8 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
                 raise KeyError("%s is not a vaild key" % k)
 
         self._set_params_in_es_core()
+#    def __dealloc__(self):
+#        del(self.REptr)
 
 cdef class ConstantpHEnsemble(ReactionAlgorithm):
     cdef CConstantpHEnsemble* constpHptr
@@ -340,6 +344,9 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
 
         self._set_params_in_es_core()
 
+#    def __dealloc__(self):
+#        del(self.constpHptr)
+
     property constant_pH:
         """
         Sets the input pH for the constant pH ensemble method.
@@ -356,8 +363,10 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
             self.constpHptr.m_constant_pH = pH
 
 cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
+    cdef CWangLandauReactionEnsemble* WLRptr
     def __init__(self, *args, **kwargs):
         self.RE = <CReactionAlgorithm*> new CWangLandauReactionEnsemble()
+        self.WLRptr=<CWangLandauReactionEnsemble*> self.RE
         self._params = {"standard_pressure": 1,
                         "temperature": 1,
                         "exclusion_radius": 0}
@@ -373,6 +382,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
                 raise KeyError("%s is not a vaild key" % k)
 
         self._set_params_in_es_core()
+#    def __dealloc__(self):
+#        del(self.WLRptr)
 
     def reaction(self, reaction_steps=1):
         """
@@ -383,7 +394,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         called between consecutive reactions.
 
         """
-        status_wang_landau = self.RE.do_reaction(int(reaction_steps))
+        status_wang_landau = self.WLRptr.do_reaction(int(reaction_steps))
         if(status_wang_landau < 0):
                 raise WangLandauHasConverged(
                     "The Wang-Landau algorithm has converged.")
@@ -421,7 +432,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         for i in range(len(self._params["corresponding_acid_types"])):
             _corresponding_acid_types.push_back(
                 self._params["corresponding_acid_types"][i])
-        self.RE.m_current_wang_landau_system.add_new_CV_degree_of_association(
+        self.WLRptr.add_new_CV_degree_of_association(
             self._params["associated_type"], self._params["min"], self._params["max"], _corresponding_acid_types)
 
     def _valid_keys_add_collective_variable_degree_of_association(self):
@@ -467,7 +478,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
                     raise ValueError(
                         "At least the following keys have to be given as keyword arguments: " + self._required_keys_add_collective_variable_degree_of_association().__str__() + " got " + kwargs.__str__())
                 self._params[k] = kwargs[k]
-        self.RE.m_current_wang_landau_system.add_new_CV_potential_energy(to_char_pointer(self._params["filename"]), self._params["delta"])
+        self.WLRptr.add_new_CV_potential_energy(to_char_pointer(self._params["filename"]), self._params["delta"])
 
     def _valid_keys_add_collective_variable_potential_energy(self):
         return "filename", "delta"
@@ -509,10 +520,10 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
             else:
                 KeyError("%s is not a valid key" % k)
 
-        self.RE.m_current_wang_landau_system.final_wang_landau_parameter = self._params[
+        self.WLRptr.final_wang_landau_parameter = self._params[
             "final_wang_landau_parameter"]
-        self.RE.m_current_wang_landau_system.output_filename = to_char_pointer(self._params["full_path_to_output_filename"])
-        self.RE.m_current_wang_landau_system.do_not_sample_reaction_partition_function = self._params[
+        self.WLRptr.output_filename = to_char_pointer(self._params["full_path_to_output_filename"])
+        self.WLRptr.do_not_sample_reaction_partition_function = self._params[
             "do_not_sample_reaction_partition_function"]
 
     def _valid_keys_set_wang_landau_parameters(self):
@@ -523,7 +534,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         Loads the dumped wang landau potential file.
 
         """
-        self.RE.m_current_wang_landau_system.load_wang_landau_checkpoint("checkpoint")
+        self.WLRptr.load_wang_landau_checkpoint("checkpoint")
 
     def write_wang_landau_checkpoint(self):
         """
@@ -532,7 +543,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         number of executed trial moves.
 
         """
-        self.RE.m_current_wang_landau_system.write_wang_landau_checkpoint("checkpoint")
+        self.WLRptr.write_wang_landau_checkpoint("checkpoint")
 
     def update_maximum_and_minimum_energies_at_current_state(self):
         """
@@ -546,7 +557,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         order to avoid choosing the wrong potential energy boundaries.
 
         """
-        self.RE.m_current_wang_landau_system.update_maximum_and_minimum_energies_at_current_state()
+        self.WLRptr.update_maximum_and_minimum_energies_at_current_state()
 
     def write_out_preliminary_energy_run_results(self):
         """
@@ -555,7 +566,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         :meth:`update_maximum_and_minimum_energies_at_current_state` was used.
 
         """
-        self.RE.m_current_wang_landau_system.write_out_preliminary_energy_run_results(
+        self.WLRptr.write_out_preliminary_energy_run_results(
             "preliminary_energy_run_results")
 
     def write_wang_landau_results_to_file(self, filename):
@@ -564,7 +575,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         collective variables.
 
         """
-        self.RE.m_current_wang_landau_system.write_wang_landau_results_to_file(filename)
+        self.WLRptr.write_wang_landau_results_to_file(filename)
 
 
     def global_mc_move_for_one_particle_of_type_wang_landau(self, type_mc):
@@ -575,8 +586,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         artefacts.
 
         """
-        self.RE.do_global_mc_move_for_particles_of_type(
-            type_mc, self.RE.m_current_wang_landau_system.polymer_start_id, self.RE.m_current_wang_landau_system.polymer_end_id, 1, True)
+        self.WLRptr.do_global_mc_move_for_particles_of_type(
+            type_mc, self.WLRptr.polymer_start_id, self.WLRptr.polymer_end_id, 1, True)
 
     # specify information for configuration changing monte carlo move
     property polymer_start_id:
@@ -591,10 +602,10 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         """
 
         def __set__(self, int start_id):
-            self.RE.m_current_wang_landau_system.polymer_start_id = start_id
+            self.WLRptr.polymer_start_id = start_id
 
         def __get__(self):
-                    return self.RE.m_current_wang_landau_system.polymer_start_id
+                    return self.WLRptr.polymer_start_id
     property polymer_end_id:
         """
         Optional: since you might not want to change the configuration of your
@@ -607,10 +618,10 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         """
 
         def __set__(self, int end_id):
-            self.RE.m_current_wang_landau_system.polymer_end_id = end_id
+            self.WLRptr.polymer_end_id = end_id
 
         def __get__(self):
-            return self.RE.m_current_wang_landau_system.polymer_end_id
+            return self.WLRptr.polymer_end_id
 
     property fix_polymer_monomers:
         """
@@ -619,9 +630,9 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         """
 
         def __set__(self, bool fix_polymer):
-            self.RE.m_current_wang_landau_system.fix_polymer = fix_polymer
+            self.WLRptr.fix_polymer = fix_polymer
 
         def __get__(self):
-            return self.RE.m_current_wang_landau_system.fix_polymer
+            return self.WLRptr.fix_polymer
 
 
