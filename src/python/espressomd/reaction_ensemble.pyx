@@ -9,7 +9,7 @@ class WangLandauHasConverged(Exception):
     pass
 
 
-cdef class ReactionEnsemble(object):
+cdef class ReactionAlgorithm(object):
     """
     This class provides the Reaction Ensemble algorithm, the Wang-Landau
     Reaction Ensemble algorithm and the constant pH method. Initialize the
@@ -41,35 +41,13 @@ cdef class ReactionEnsemble(object):
 
     """
     cdef object _params
-    cdef CReactionEnsemble RE
-
-    def __init__(self, *args, **kwargs):
-
-        self._params = {"standard_pressure": 0,
-                        "temperature": 1,
-                        "exclusion_radius": 0}
-
-        self.RE = CReactionEnsemble()
-
-        for k in self._required_keys():
-            if k not in kwargs:
-                raise ValueError(
-                    "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
-            self._params[k] = kwargs[k]
-
-        for k in kwargs:
-            if k in self._valid_keys():
-                self._params[k] = kwargs[k]
-            else:
-                raise KeyError("%s is not a vaild key" % k)
-
-        self._set_params_in_es_core()
+    cdef CReactionAlgorithm* RE
 
     def _valid_keys(self):
         return "standard_pressure", "temperature", "exclusion_radius"
 
     def _required_keys(self):
-        return "standard_pressure", "temperature", "exclusion_radius"
+        return "temperature", "exclusion_radius"
 
     def _set_params_in_es_core(self):
         self.RE.m_current_reaction_system.temperature = self._params[
@@ -243,10 +221,10 @@ cdef class ReactionEnsemble(object):
         self._validate_params_default_charge()
 
         for key in self._params["dictionary"]:
-                if(self.RE.find_index_of_type(int(key)) >= 0):
+                if(find_index_of_type(int(key), self.RE.m_current_reaction_system) >= 0):
                     self.RE.m_current_reaction_system.charges_of_types.resize(self.RE.m_current_reaction_system.nr_different_types)
                     self.RE.m_current_reaction_system.charges_of_types[
-                        self.RE.find_index_of_type(int(key))] = self._params["dictionary"][key]
+                        find_index_of_type(int(key), self.RE.m_current_reaction_system)] = self._params["dictionary"][key]
 
     def _valid_keys_default_charge(self):
         return "dictionary"
@@ -258,7 +236,7 @@ cdef class ReactionEnsemble(object):
 
     def reaction(self, reaction_steps=1):
         """
-        Performs randomly selected reactions of the provided reaction system.
+        Performs randomly selected reactions.
 
         Parameters
         ----------
@@ -266,7 +244,7 @@ cdef class ReactionEnsemble(object):
                           The number of reactions to be performed at once, defaults to 1.
 
         """
-        self.RE.do_reaction(reaction_steps)
+        self.RE.do_reaction(int(reaction_steps))
 
     def global_mc_move_for_one_particle_of_type(self, type_mc):
         """
@@ -319,7 +297,97 @@ cdef class ReactionEnsemble(object):
         """
         self.RE.delete_particle(p_id)
 
-    #//////////////////////////Wang-Landau algorithm
+
+cdef class ReactionEnsemble(ReactionAlgorithm):
+    def __init__(self, *args, **kwargs):
+        self.RE = <CReactionAlgorithm*> new CReactionEnsemble()
+        self._params = {"standard_pressure": 1,
+                        "temperature": 1,
+                        "exclusion_radius": 0}
+        for k in self._required_keys():
+            if k not in kwargs:
+                raise ValueError(
+                    "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
+            self._params[k] = kwargs[k]
+
+        for k in kwargs:
+            if k in self._valid_keys():
+                self._params[k] = kwargs[k]
+            else:
+                raise KeyError("%s is not a vaild key" % k)
+
+        self._set_params_in_es_core()
+
+cdef class ConstantpHEnsemble(ReactionAlgorithm):
+    cdef CConstantpHEnsemble* constpHptr
+    def __init__(self, *args, **kwargs):
+        self.RE = <CReactionAlgorithm*> new CConstantpHEnsemble()
+        self.constpHptr=<CConstantpHEnsemble*> self.RE
+        self._params = {"standard_pressure": 1,
+                        "temperature": 1,
+                        "exclusion_radius": 0}
+        for k in self._required_keys():
+            if k not in kwargs:
+                raise ValueError(
+                    "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
+            self._params[k] = kwargs[k]
+
+        for k in kwargs:
+            if k in self._valid_keys():
+                self._params[k] = kwargs[k]
+            else:
+                raise KeyError("%s is not a vaild key" % k)
+
+        self._set_params_in_es_core()
+
+    property constant_pH:
+        """
+        Sets the input pH for the constant pH ensemble method.
+
+        """
+
+        def __set__(self, double pH):
+            """
+            Sets the pH that the method assumes for the implicit pH bath.
+
+            """
+            if(pH<=0):
+                raise ValueError("pH must be strictly positive")
+            self.constpHptr.m_constant_pH = pH
+
+cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
+    def __init__(self, *args, **kwargs):
+        self.RE = <CReactionAlgorithm*> new CWangLandauReactionEnsemble()
+        self._params = {"standard_pressure": 1,
+                        "temperature": 1,
+                        "exclusion_radius": 0}
+        for k in self._required_keys():
+            if k not in kwargs:
+                raise ValueError(
+                    "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
+            self._params[k] = kwargs[k]
+        for k in kwargs:
+            if k in self._valid_keys():
+                self._params[k] = kwargs[k]
+            else:
+                raise KeyError("%s is not a vaild key" % k)
+
+        self._set_params_in_es_core()
+
+    def reaction(self, reaction_steps=1):
+        """
+        Performs reaction_steps reactions. Sets the number of reaction steps which are
+        performed at once. Do not use too many reaction steps
+        steps consequetively without having conformation
+        changing steps in between (especially important for the Wang Landau reaction ensemble). Providing a number for the parameter reaction steps reduces the need for the interpreter to be
+        called between consecutive reactions.
+
+        """
+        status_wang_landau = self.RE.do_reaction(int(reaction_steps))
+        if(status_wang_landau < 0):
+                raise WangLandauHasConverged(
+                    "The Wang-Landau algorithm has converged.")
+
     def add_collective_variable_degree_of_association(self, *args, **kwargs):
         """
         Adds a reaction coordinate of the type degree of association.
@@ -353,7 +421,7 @@ cdef class ReactionEnsemble(object):
         for i in range(len(self._params["corresponding_acid_types"])):
             _corresponding_acid_types.push_back(
                 self._params["corresponding_acid_types"][i])
-        self.RE.add_new_CV_degree_of_association(
+        self.RE.m_current_wang_landau_system.add_new_CV_degree_of_association(
             self._params["associated_type"], self._params["min"], self._params["max"], _corresponding_acid_types)
 
     def _valid_keys_add_collective_variable_degree_of_association(self):
@@ -399,7 +467,7 @@ cdef class ReactionEnsemble(object):
                     raise ValueError(
                         "At least the following keys have to be given as keyword arguments: " + self._required_keys_add_collective_variable_degree_of_association().__str__() + " got " + kwargs.__str__())
                 self._params[k] = kwargs[k]
-        self.RE.add_new_CV_potential_energy(to_char_pointer(self._params["filename"]), self._params["delta"])
+        self.RE.m_current_wang_landau_system.add_new_CV_potential_energy(to_char_pointer(self._params["filename"]), self._params["delta"])
 
     def _valid_keys_add_collective_variable_potential_energy(self):
         return "filename", "delta"
@@ -415,14 +483,6 @@ cdef class ReactionEnsemble(object):
         ----------
         final_wang_landau_parameter : :obj:`float`
                                       Sets the final Wang-Landau parameter, which is the Wang-Landau parameter after which the simulation should stop.).
-        wang_landau_steps : :obj:`float`
-                            Sets the number of Wang-Landau steps which are
-                            performed at once. Do not use too many Wang-Landau
-                            steps consequetively without having conformation
-                            changing steps in between. Number of Wang-Landau
-                            steps performed at once. This is for performance.
-                            It reduces the need for the interpreter to be
-                            called.
         full_path_to_output_filename : :obj:`str`
                                        Sets the path to the output file of the
                                        Wang-Landau algorithm which contains the
@@ -451,21 +511,19 @@ cdef class ReactionEnsemble(object):
 
         self.RE.m_current_wang_landau_system.final_wang_landau_parameter = self._params[
             "final_wang_landau_parameter"]
-        self.RE.m_current_wang_landau_system.wang_landau_steps = self._params[
-            "wang_landau_steps"]
         self.RE.m_current_wang_landau_system.output_filename = to_char_pointer(self._params["full_path_to_output_filename"])
         self.RE.m_current_wang_landau_system.do_not_sample_reaction_partition_function = self._params[
             "do_not_sample_reaction_partition_function"]
 
     def _valid_keys_set_wang_landau_parameters(self):
-        return "final_wang_landau_parameter", "wang_landau_steps", "full_path_to_output_filename", "do_not_sample_reaction_partition_function"
+        return "final_wang_landau_parameter", "full_path_to_output_filename", "do_not_sample_reaction_partition_function"
 
     def load_wang_landau_checkpoint(self):
         """
         Loads the dumped wang landau potential file.
 
         """
-        self.RE.load_wang_landau_checkpoint("checkpoint")
+        self.RE.m_current_wang_landau_system.load_wang_landau_checkpoint("checkpoint")
 
     def write_wang_landau_checkpoint(self):
         """
@@ -474,7 +532,7 @@ cdef class ReactionEnsemble(object):
         number of executed trial moves.
 
         """
-        self.RE.write_wang_landau_checkpoint("checkpoint")
+        self.RE.m_current_wang_landau_system.write_wang_landau_checkpoint("checkpoint")
 
     def update_maximum_and_minimum_energies_at_current_state(self):
         """
@@ -488,7 +546,7 @@ cdef class ReactionEnsemble(object):
         order to avoid choosing the wrong potential energy boundaries.
 
         """
-        self.RE.update_maximum_and_minimum_energies_at_current_state()
+        self.RE.m_current_wang_landau_system.update_maximum_and_minimum_energies_at_current_state()
 
     def write_out_preliminary_energy_run_results(self):
         """
@@ -497,7 +555,7 @@ cdef class ReactionEnsemble(object):
         :meth:`update_maximum_and_minimum_energies_at_current_state` was used.
 
         """
-        self.RE.write_out_preliminary_energy_run_results(
+        self.RE.m_current_wang_landau_system.write_out_preliminary_energy_run_results(
             "preliminary_energy_run_results")
 
     def write_wang_landau_results_to_file(self, filename):
@@ -506,17 +564,8 @@ cdef class ReactionEnsemble(object):
         collective variables.
 
         """
-        self.RE.write_wang_landau_results_to_file(filename)
+        self.RE.m_current_wang_landau_system.write_wang_landau_results_to_file(filename)
 
-    def reaction_wang_landau(self):
-        """
-        Performs a reaction in the Wang-Landau reaction ensemble.
-
-        """
-        status_wang_landau = self.RE.do_reaction_wang_landau()
-        if(status_wang_landau < 0):
-                raise WangLandauHasConverged(
-                    "The Wang-Landau algorithm has converged.")
 
     def global_mc_move_for_one_particle_of_type_wang_landau(self, type_mc):
         """
@@ -575,23 +624,4 @@ cdef class ReactionEnsemble(object):
         def __get__(self):
             return self.RE.m_current_wang_landau_system.fix_polymer
 
-    #//////////////////////////constant pH ensemble
-    property constant_pH:
-        """
-        Sets the input pH for the constant pH ensemble method.
 
-        """
-
-        def __set__(self, double pH):
-            """
-            Sets the pH that the method assumes for the implicit pH bath.
-
-            """
-            self.RE.m_constant_pH = pH
-
-    def reaction_constant_pH(self):
-        """
-        Performs a reaction according to the constant pH method.
-
-        """
-        self.RE.do_reaction_constant_pH()

@@ -6,6 +6,7 @@ from libcpp.string cimport string
 
 cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
 
+
     ctypedef struct single_reaction:
         vector[int] reactant_types
         int len_reactant_types
@@ -15,7 +16,6 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         vector[int] product_coefficients
         double equilibrium_constant
         int nu_bar
-
 
     ctypedef struct reaction_system:
         int nr_single_reactions
@@ -36,12 +36,13 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         double slab_end_z
         int non_interacting_type
 
+    int find_index_of_type(int type, reaction_system m_current_reaction_system) except +
+
     ctypedef struct wang_landau_system:
         double wang_landau_parameter
         double initial_wang_landau_parameter
         int number_of_monte_carlo_moves_between_check_of_convergence
         double final_wang_landau_parameter
-        int wang_landau_steps
         string output_filename
         vector[double] minimum_energies_at_flat_index
         vector[double] maximum_energies_at_flat_index
@@ -49,14 +50,19 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         int polymer_end_id
         bool fix_polymer
         bool do_not_sample_reaction_partition_function
+        void add_new_CV_degree_of_association(int associated_type, double CV_minimum, double CV_maximum, vector[int] corresponding_acid_types)
+        void add_new_CV_potential_energy(string filename, double delta_CV)
+        int update_maximum_and_minimum_energies_at_current_state()
+        void write_out_preliminary_energy_run_results(string filename)
+        int write_wang_landau_checkpoint(string identifier)
+        int load_wang_landau_checkpoint(string identifier)
+        void write_wang_landau_results_to_file(string full_path_to_output_filename)
 
-
-    cdef cppclass CReactionEnsemble "ReactionEnsemble::ReactionEnsemble":
-        CReactionEnsemble()
+    cdef cppclass CReactionAlgorithm "ReactionEnsemble::ReactionAlgorithm":
+        CReactionAlgorithm()
         reaction_system m_current_reaction_system
         int do_reaction(int reaction_steps) except +
         bool do_global_mc_move_for_particles_of_type(int type, int start_id_polymer, int end_id_polymer, int particle_number_of_type, bool use_wang_landau)
-        int find_index_of_type(int type) except +
         void set_cuboid_reaction_ensemble_volume()
         int check_reaction_ensemble() except +
         int m_accepted_configurational_MC_moves
@@ -66,16 +72,14 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
 
     #///////////////////////////////////////////// Wang-Landau reaction ensemble algorithm
         wang_landau_system m_current_wang_landau_system
-        void add_new_CV_degree_of_association(int associated_type, double CV_minimum, double CV_maximum, vector[int] corresponding_acid_types)
-        void add_new_CV_potential_energy(string filename, double delta_CV)
-        int do_reaction_wang_landau() except +
-        int update_maximum_and_minimum_energies_at_current_state()
-        void write_out_preliminary_energy_run_results(string filename)
-        int write_wang_landau_checkpoint(string identifier)
-        int load_wang_landau_checkpoint(string identifier)
-        void write_wang_landau_results_to_file(string full_path_to_output_filename)
-
     #///////////////////////////////////////////// Constant-pH ensemble
+
+    cdef cppclass CReactionEnsemble "ReactionEnsemble::ReactionEnsemble":
+        CReactionEnsemble() 
+        
+    cdef cppclass CWangLandauReactionEnsemble "ReactionEnsemble::WangLandauReactionEnsemble":
+        CWangLandauReactionEnsemble()
+        
+    cdef cppclass CConstantpHEnsemble "ReactionEnsemble::ConstantpHEnsemble":
+        CConstantpHEnsemble()
         double m_constant_pH
-        void set_pH(double pH)
-        int do_reaction_constant_pH() except +

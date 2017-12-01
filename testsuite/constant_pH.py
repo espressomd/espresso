@@ -51,7 +51,7 @@ class ReactionEnsembleTest(ut.TestCase):
     system.box_l = [box_l, box_l, box_l]
     system.cell_system.skin = 0.4
     system.time_step = 0.01
-    RE = reaction_ensemble.ReactionEnsemble(
+    RE = reaction_ensemble.ConstantpHEnsemble(
         standard_pressure=standard_pressure_in_simulation_units,
         temperature=1.0,
         exclusion_radius=1)
@@ -88,14 +88,14 @@ class ReactionEnsembleTest(ut.TestCase):
         RE = ReactionEnsembleTest.RE
         """ chemical warmup in order to get to chemical equilibrium before starting to calculate the observable "degree of association" """
         for i in range(40 * N0):
-            r = RE.reaction_constant_pH()
+            r = RE.reaction()
 
         volume = np.prod(self.system.box_l)  # cuboid box
         average_NH = 0.0
         average_degree_of_association = 0.0
         num_samples = 1000
         for i in range(num_samples):
-            RE.reaction_constant_pH()
+            RE.reaction()
             average_NH += system.number_of_particles(
                 current_type=type_H)
             average_degree_of_association += system.number_of_particles(

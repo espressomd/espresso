@@ -69,7 +69,7 @@ class ReactionEnsembleTest(ut.TestCase):
     h = HarmonicBond(r_0=0, k=1)
     system.bonded_inter[0] = h
     system.part[0].add_bond((h, 1))
-    RE = reaction_ensemble.ReactionEnsemble(
+    RE = reaction_ensemble.WangLandauReactionEnsemble(
         standard_pressure=0.00108, temperature=temperature, exclusion_radius=0)
     RE.add(equilibrium_constant=K_diss, reactant_types=[0], reactant_coefficients=[
            1], product_types=[1, 2], product_coefficients=[1, 1])
@@ -87,16 +87,15 @@ class ReactionEnsembleTest(ut.TestCase):
     RE.add_collective_variable_potential_energy(
         filename="energy_boundaries.dat", delta=0.05)
     RE.set_wang_landau_parameters(
-        final_wang_landau_parameter=0.025, wang_landau_steps=1,
-                                  do_not_sample_reaction_partition_function=True, full_path_to_output_filename="WL_potential_out.dat")
+        final_wang_landau_parameter=1e-2, do_not_sample_reaction_partition_function=True, full_path_to_output_filename="WL_potential_out.dat")
 
     def test_wang_landau_output(self):
         while True:
-            self.RE.global_mc_move_for_one_particle_of_type_wang_landau(3)
             try:
-                self.RE.reaction_wang_landau()
+                self.RE.reaction()
                 self.RE.global_mc_move_for_one_particle_of_type_wang_landau(3)
-            except:  # only catch my exception
+		self.RE.global_mc_move_for_one_particle_of_type_wang_landau(3)
+            except reaction_ensemble.WangLandauHasConverged:  # only catch my exception
                 break
         # test as soon as wang_landau has converged (throws exception then)
         nbars, Epots, WL_potentials = np.loadtxt(
