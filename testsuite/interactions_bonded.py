@@ -83,7 +83,7 @@ class InteractionsBondedTest(ut.TestCase):
         self.system.part[0].add_bond((hb, 1))
 
         for i in range(335):
-            self.system.part[1].pos += self.step
+            self.system.part[1].pos = self.system.part[1].pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -106,7 +106,7 @@ class InteractionsBondedTest(ut.TestCase):
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
         # Check that bond breaks when distance > r_cut
-        self.system.part[1].pos += self.step
+        self.system.part[1].pos = self.system.part[1].pos + self.step
         with self.assertRaisesRegexp(Exception, "Encoutered errors during integrate"):
             self.system.integrator.run(recalc_forces=True, steps=0)
 
@@ -123,7 +123,7 @@ class InteractionsBondedTest(ut.TestCase):
         self.system.part[0].add_bond((fene, 1))
 
         for i in range(445):
-            self.system.part[1].pos += self.step
+            self.system.part[1].pos = self.system.part[1].pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -146,7 +146,7 @@ class InteractionsBondedTest(ut.TestCase):
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
         # Check that bond breaks when distance > r_cut
-        self.system.part[1].pos += self.step
+        self.system.part[1].pos = self.system.part[1].pos + self.step
         with self.assertRaisesRegexp(Exception, "Encoutered errors during integrate"):
             self.system.integrator.run(recalc_forces=True, steps=0)
 

@@ -256,7 +256,7 @@ In principle, any parameter which is accessible from the scripting level
 can be changed at any moment of runtime. In this way methods like
 thermodynamic integration become readily accessible.
 
-The focus of the user guide is documenting the scripting interfacce, its
+The focus of the user guide is documenting the scripting interface, its
 behaviour and use in the simulation. It only describes certain technical
 details of implementation which are necessary for understanding how the
 script interface works. Technical documentation of the code and program
