@@ -319,8 +319,8 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
                 raise KeyError("%s is not a vaild key" % k)
 
         self._set_params_in_es_core()
-#    def __dealloc__(self):
-#        del(self.REptr)
+    def __dealloc__(self):
+        del(self.REptr)
 
 cdef class ConstantpHEnsemble(ReactionAlgorithm):
     cdef CConstantpHEnsemble* constpHptr
@@ -344,8 +344,8 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
 
         self._set_params_in_es_core()
 
-#    def __dealloc__(self):
-#        del(self.constpHptr)
+    def __dealloc__(self):
+        del(self.constpHptr)
 
     property constant_pH:
         """
@@ -382,8 +382,9 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
                 raise KeyError("%s is not a vaild key" % k)
 
         self._set_params_in_es_core()
-#    def __dealloc__(self):
-#        del(self.WLRptr)
+
+    def __dealloc__(self):
+        del(self.WLRptr)
 
     def reaction(self, reaction_steps=1):
         """

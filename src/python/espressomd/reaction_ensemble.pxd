@@ -7,7 +7,7 @@ from libcpp.string cimport string
 cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
 
 
-    ctypedef struct single_reaction:
+    ctypedef struct SingleReaction:
         vector[int] reactant_types
         int len_reactant_types
         vector[int] reactant_coefficients
@@ -28,7 +28,7 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         void add_reaction(double equilibrium_constant, vector[int] _reactant_types, vector[int] _reactant_coefficients, vector[int] _product_types, vector[int] _product_coefficients) except +
         
         int nr_single_reactions
-        vector[single_reaction] reactions
+        vector[SingleReaction] reactions
         vector[int] type_index
         int nr_different_types
         vector[double] charges_of_types

@@ -96,7 +96,7 @@ void ReactionAlgorithm::add_reaction(double equilibrium_constant,
                                      std::vector<int> _reactant_coefficients,
                                      std::vector<int> _product_types,
                                      std::vector<int> _product_coefficients) {
-  single_reaction new_reaction;
+  SingleReaction new_reaction;
   int len_reactant_types = (int)_reactant_types.size();
   int len_product_types = (int)_product_types.size();
   new_reaction.len_reactant_types = len_reactant_types;
@@ -220,10 +220,10 @@ bool ReactionAlgorithm::all_reactant_particles_exist(int reaction_id) {
 * the provided vector
 */
 void ReactionAlgorithm::append_particle_property_of_random_particle(
-    int type, std::vector<stored_particle_property> &list_of_particles) {
+    int type, std::vector<StoredParticleProperty> &list_of_particles) {
   int p_id;
   find_particle_type(type, &p_id);
-  stored_particle_property property_of_part = {
+  StoredParticleProperty property_of_part = {
       p_id, charges_of_types[find_index_of_type(
                 type, this)],
       type};
@@ -234,10 +234,10 @@ void ReactionAlgorithm::append_particle_property_of_random_particle(
 *Performs a trial reaction move
 */
 void ReactionAlgorithm::make_reaction_attempt(
-    single_reaction &current_reaction,
-    std::vector<stored_particle_property> &changed_particles_properties,
+    SingleReaction &current_reaction,
+    std::vector<StoredParticleProperty> &changed_particles_properties,
     std::vector<int> &p_ids_created_particles,
-    std::vector<stored_particle_property> &hidden_particles_properties) {
+    std::vector<StoredParticleProperty> &hidden_particles_properties) {
   // create or hide particles of types with corresponding types in reaction
   for (int i = 0; i < std::min(current_reaction.len_product_types,
                                current_reaction.len_reactant_types);
@@ -308,7 +308,7 @@ void ReactionAlgorithm::make_reaction_attempt(
 * reaction ensemble acceptance probability
 */
 double
-calculate_factorial_expression(single_reaction &current_reaction,
+calculate_factorial_expression(SingleReaction &current_reaction,
                                int *old_particle_numbers,
                                ReactionAlgorithm &m_current_reaction_system) {
   double factorial_expr = 1.0;
@@ -342,7 +342,7 @@ calculate_factorial_expression(single_reaction &current_reaction,
 * when a reaction attempt is rejected.
 */
 void ReactionAlgorithm::restore_properties(
-    std::vector<stored_particle_property> &property_list,
+    std::vector<StoredParticleProperty> &property_list,
     const int number_of_saved_properties) {
   // this function restores all properties of all particles provided in the
   // property list, the format of the property list is (p_id,charge,type)
@@ -364,7 +364,7 @@ void ReactionAlgorithm::restore_properties(
 * ensemble
 */
 double ReactionEnsemble::calculate_boltzmann_factor(
-    single_reaction &current_reaction, double E_pot_old, double E_pot_new,
+    SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
     std::vector<int> &old_particle_numbers, int dummy_old_state_index,
     int dummy_new_state_index,
     bool dummy_only_make_configuration_changing_move) {
@@ -434,7 +434,7 @@ void WangLandauReactionEnsemble::on_end_reaction(int &accepted_state) {
 }
 
 bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
-  single_reaction &current_reaction =
+  SingleReaction &current_reaction =
       reactions[reaction_id];
   bool reaction_is_accepted = false;
   int old_state_index = -1; // for Wang-Landau algorithm
@@ -465,8 +465,8 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
   std::vector<int> old_particle_numbers = save_old_particle_numbers();
 
   std::vector<int> p_ids_created_particles;
-  std::vector<stored_particle_property> hidden_particles_properties;
-  std::vector<stored_particle_property> changed_particles_properties;
+  std::vector<StoredParticleProperty> hidden_particles_properties;
+  std::vector<StoredParticleProperty> changed_particles_properties;
   const int number_of_saved_properties =
       3; // save p_id, charge and type of the reactant particle, only thing we
          // need to hide the particle and recover it
@@ -998,7 +998,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   int new_state_index = -1;
   double bf = 1.0;
   std::vector<int> dummy_old_particle_numbers;
-  single_reaction temp_unimportant_arbitrary_reaction;
+  SingleReaction temp_unimportant_arbitrary_reaction;
 
   if (use_wang_landau) {
     new_state_index = on_mc_use_WL_get_new_state();
@@ -1107,55 +1107,55 @@ int WangLandauReactionEnsemble::get_flattened_index_wang_landau(
   // check for the current state to be an allowed state in the [range
   // collective_variables_minimum_values:collective_variables_maximum_values],
   // else return a negative index
-  for (int collective_variable_i = 0;
-       collective_variable_i < nr_collective_variables;
-       collective_variable_i++) {
-    if (current_state[collective_variable_i] >
-            collective_variables_maximum_values[collective_variable_i] +
-                delta_collective_variables_values[collective_variable_i] *
+  for (int CV_i = 0;
+       CV_i < nr_collective_variables;
+       CV_i++) {
+    if (current_state[CV_i] >
+            collective_variables_maximum_values[CV_i] +
+                delta_collective_variables_values[CV_i] *
                     0.98 ||
-        current_state[collective_variable_i] <
-            collective_variables_minimum_values[collective_variable_i] -
-                delta_collective_variables_values[collective_variable_i] *
+        current_state[CV_i] <
+            collective_variables_minimum_values[CV_i] -
+                delta_collective_variables_values[CV_i] *
                     0.01) {
       return -10;
     }
   }
 
-  for (int collective_variable_i = 0;
-       collective_variable_i < nr_collective_variables;
-       collective_variable_i++) {
-    if (collective_variable_i == collective_variables.size() - 1 &&
+  for (int CV_i = 0;
+       CV_i < nr_collective_variables;
+       CV_i++) {
+    if (CV_i == collective_variables.size() - 1 &&
         do_energy_reweighting) // for energy collective variable (simple
                                // truncating conversion desired)
-      individual_indices[collective_variable_i] =
-          (int)((current_state[collective_variable_i] -
-                 collective_variables_minimum_values[collective_variable_i]) /
-                delta_collective_variables_values[collective_variable_i]);
+      individual_indices[CV_i] =
+          (int)((current_state[CV_i] -
+                 collective_variables_minimum_values[CV_i]) /
+                delta_collective_variables_values[CV_i]);
     else // for degree of association collective variables (rounding conversion
          // desired)
-      individual_indices[collective_variable_i] =
-          (int)((current_state[collective_variable_i] -
-                 collective_variables_minimum_values[collective_variable_i]) /
-                    delta_collective_variables_values[collective_variable_i] +
+      individual_indices[CV_i] =
+          (int)((current_state[CV_i] -
+                 collective_variables_minimum_values[CV_i]) /
+                    delta_collective_variables_values[CV_i] +
                 0.5);
-    if (individual_indices[collective_variable_i] < 0 or
-        individual_indices[collective_variable_i] >=
+    if (individual_indices[CV_i] < 0 or
+        individual_indices[CV_i] >=
             nr_subindices_of_collective_variable
-                [collective_variable_i]) { // sanity check
+                [CV_i]) { // sanity check
       return -10;
     }
   }
   // get flattened index from individual_indices
   index = 0; // this is already part of the algorithm to find the correct index
-  for (int collective_variable_i = 0;
-       collective_variable_i < nr_collective_variables;
-       collective_variable_i++) {
+  for (int CV_i = 0;
+       CV_i < nr_collective_variables;
+       CV_i++) {
     int factor = 1;
-    for (int j = collective_variable_i + 1; j < nr_collective_variables; j++) {
+    for (int j = CV_i + 1; j < nr_collective_variables; j++) {
       factor *= nr_subindices_of_collective_variable[j];
     }
-    index += factor * individual_indices[collective_variable_i];
+    index += factor * individual_indices[CV_i];
   }
   return index;
 }
@@ -1333,11 +1333,11 @@ double find_maximum(double *list, int len) {
 int WangLandauReactionEnsemble::initialize_wang_landau() {
 
   nr_subindices_of_collective_variable.resize(collective_variables.size(), 0);
-  int new_collective_variable_i = collective_variables.size() - 1;
-  nr_subindices_of_collective_variable[new_collective_variable_i] =
-      int((collective_variables[new_collective_variable_i]->CV_maximum -
-           collective_variables[new_collective_variable_i]->CV_minimum) /
-          collective_variables[new_collective_variable_i]->delta_CV) +
+  int new_CV_i = collective_variables.size() - 1;
+  nr_subindices_of_collective_variable[new_CV_i] =
+      int((collective_variables[new_CV_i]->CV_maximum -
+           collective_variables[new_CV_i]->CV_minimum) /
+          collective_variables[new_CV_i]->delta_CV) +
       1; //+1 for collecive variables which are of type degree of association
 
   // construct (possibly higher dimensional) histogram over Gamma (the room
@@ -1364,7 +1364,7 @@ int WangLandauReactionEnsemble::initialize_wang_landau() {
 * probability.
 */
 double WangLandauReactionEnsemble::calculate_boltzmann_factor(
-    single_reaction &current_reaction, double E_pot_old, double E_pot_new,
+    SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
     std::vector<int> &old_particle_numbers, int old_state_index,
     int new_state_index, bool only_make_configuration_changing_move) {
   /**determine the acceptance probabilities of the reaction move
@@ -1648,8 +1648,6 @@ void WangLandauReactionEnsemble::write_out_preliminary_energy_run_results(
     throw std::runtime_error("ERROR: Wang-Landau file could not be written\n");
   } else {
     fprintf(pFile, "#nbar E_min E_max\n");
-    std::vector<int> nr_subindices_of_collective_variable =
-        nr_subindices_of_collective_variable;
 
     for (int flattened_index = 0;
          flattened_index < wang_landau_potential.size(); flattened_index++) {
@@ -1680,7 +1678,7 @@ void WangLandauReactionEnsemble::write_out_preliminary_energy_run_results(
 int WangLandauReactionEnsemble::
     get_flattened_index_wang_landau_without_EnergyCollectiveVariable(
         int flattened_index_with_EnergyCollectiveVariable,
-        int collective_variable_index_energy_observable) {
+        int CV_index_energy_observable) {
   // unravel index
   std::vector<int> unraveled_index(collective_variables.size());
   Utils::unravel_index(
@@ -1899,7 +1897,7 @@ int ConstantpHEnsemble::do_reaction(int reaction_steps) {
     for (int reaction_i = 0;
          reaction_i < nr_single_reactions;
          reaction_i++) {
-      single_reaction &current_reaction =
+      SingleReaction &current_reaction =
           reactions[reaction_i];
       for (int reactant_i = 0; reactant_i < 1;
            reactant_i++) { // reactant_i<1 since it is assumed in this place
@@ -1925,7 +1923,7 @@ int ConstantpHEnsemble::do_reaction(int reaction_steps) {
 }
 
 double ConstantpHEnsemble::calculate_boltzmann_factor(
-    single_reaction &current_reaction, double E_pot_old, double E_pot_new,
+    SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
     std::vector<int> &dummy_old_particle_numbers, int dummy_old_state_index,
     int dummy_new_state_index,
     bool dummy_only_make_configuration_changing_move) {

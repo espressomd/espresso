@@ -4,7 +4,7 @@
 
 namespace ReactionEnsemble {
 
-struct single_reaction {
+struct SingleReaction {
   // strict input to the algorithm
   std::vector<int> reactant_types;
   int len_reactant_types;
@@ -17,7 +17,7 @@ struct single_reaction {
   int nu_bar;
 };
 
-struct stored_particle_property {
+struct StoredParticleProperty {
   int p_id;
   double charge;
   int type;
@@ -87,10 +87,10 @@ class ReactionAlgorithm {
 
 public:
   ReactionAlgorithm(){};
-  ~ReactionAlgorithm(){};
+  virtual ~ReactionAlgorithm(){};
 
   int nr_single_reactions = 0;
-  std::vector<single_reaction> reactions = std::vector<single_reaction>();
+  std::vector<SingleReaction> reactions = std::vector<SingleReaction>();
   std::vector<int> type_index = std::vector<int>();
   int nr_different_types = 0; // is equal to length type_index
   std::vector<double> charges_of_types = std::vector<double>();
@@ -146,7 +146,7 @@ public:
                     std::vector<int> _product_types,
                     std::vector<int> _product_coefficients);
   virtual double calculate_boltzmann_factor(
-      single_reaction &current_reaction, double E_pot_old, double E_pot_new,
+      SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
       std::vector<int> &old_particle_numbers, int old_state_index,
       int new_state_index, bool only_make_configuration_changing_move) {
     return -10;
@@ -176,14 +176,14 @@ private:
   int hide_particle(int p_id, int previous_type);
 
   void append_particle_property_of_random_particle(
-      int type, std::vector<stored_particle_property> &list_of_particles);
+      int type, std::vector<StoredParticleProperty> &list_of_particles);
   void make_reaction_attempt(
-      single_reaction &current_reaction,
-      std::vector<stored_particle_property> &changed_particles_properties,
+      SingleReaction &current_reaction,
+      std::vector<StoredParticleProperty> &changed_particles_properties,
       std::vector<int> &p_ids_created_particles,
-      std::vector<stored_particle_property> &hidden_particles_properties);
+      std::vector<StoredParticleProperty> &hidden_particles_properties);
 
-  void restore_properties(std::vector<stored_particle_property> &property_list,
+  void restore_properties(std::vector<StoredParticleProperty> &property_list,
                           const int number_of_saved_properties);
   void add_types_to_index(std::vector<int> &type_list);
   void add_random_vector(double *vector, int len_vector,
@@ -199,7 +199,7 @@ private:
 class ReactionEnsemble : public ReactionAlgorithm {
 public:
   double calculate_boltzmann_factor(
-      single_reaction &current_reaction, double E_pot_old, double E_pot_new,
+      SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
       std::vector<int> &old_particle_numbers, int dummy_old_state_index,
       int dummy_new_state_index,
       bool dummy_only_make_configuration_changing_move);
@@ -211,7 +211,7 @@ public:
   void on_reaction_rejection_directly_after_entry(int &old_state_index);
   void on_attempted_reaction(int &new_state_index);
   void on_end_reaction(int &accepted_state);
-  double calculate_boltzmann_factor(single_reaction &current_reaction,
+  double calculate_boltzmann_factor(SingleReaction &current_reaction,
                                     double E_pot_old, double E_pot_new,
                                     std::vector<int> &old_particle_numbers,
                                     int old_state_index, int new_state_index,
@@ -316,7 +316,7 @@ class ConstantpHEnsemble : public ReactionAlgorithm {
 public:
   double m_constant_pH = -10;
   double calculate_boltzmann_factor(
-      single_reaction &current_reaction, double E_pot_old, double E_pot_new,
+      SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
       std::vector<int> &dummy_old_particle_numbers, int dummy_old_state_index,
       int dummy_new_state_index,
       bool dummy_only_make_configuration_changing_move);
@@ -328,7 +328,7 @@ private:
 
 //////////////////////////////////////////////////////////////////free functions
 double
-calculate_factorial_expression(single_reaction &current_reaction,
+calculate_factorial_expression(SingleReaction &current_reaction,
                                int *old_particle_numbers,
                                ReactionAlgorithm &m_current_reaction_system);
 double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
