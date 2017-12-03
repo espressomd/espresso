@@ -203,9 +203,10 @@ In practice, this constant is often used with the dimension of :math:`(c^{\ominu
 
 A simulation in
 the reaction ensemble consists of two types of moves: the *reaction move*
-and the *configuration move*. The configuration move is performed by a
-suitable molecular dynamics or a Monte Carlo scheme. The
-``reacton_ensemble`` command of takes care only of the reaction moves.
+and the *configuration move*. The configuration move changes the configuration
+of the system. It is not performed by the Reaction Ensemble module, and can be
+performed by a suitable molecular dynamics or a Monte Carlo scheme. The
+``reacton_ensemble`` command takes care only of the reaction moves.
 In the *forward* reaction, the appropriate number of reactants (given by
 :math:`\nu_i`) is removed from the system, and the concomitant number of
 products is inserted into the system. In the *backward* reaction,
@@ -228,7 +229,7 @@ The parameter :math:`\Gamma` proportional to the reaction constant. It is define
 
 .. math::
 
-   \Gamma = \prod_i \Bigl(\frac{N_i}{V} \Bigr)^{\bar\nu} = V^{-\bar\nu} \prod_i N_i^{\bar\nu_i}
+   \Gamma = \prod_i \Bigl(\frac{N_i}{V} \Bigr)^{\bar\nu} = V^{-\bar\nu} \prod_i N_i^{\bar\nu_i} = K_c(c^{\ominus}=1/\sigma^3)
 
 Note that the dimension of :math:`\Gamma` is :math:`V^{\bar\nu}`, therefore its
 units must be consistent with the units in which Espresso measures the box volume,
@@ -251,14 +252,14 @@ Converting tabulated reaction constants to internal units in Espresso
 
 The implementation in Espresso requires that the dimension of :math:`\Gamma` 
 is consistent with the internal unit of volume, :math:`\sigma^3`.
-The tabulated values of equilibrium constants for reations in solution, :math:`K_c`, typically use
+The tabulated values of equilibrium constants for reactions in solution, :math:`K_c`, typically use
 :math:`c^{\ominus} = 1\,\mathrm{moldm^{-3}}` as the reference concentration, 
 and have the dimension of :math:`(c^{\ominus})^{\bar\nu}`.  To be used with Espresso, the
 value of :math:`K_c` has to be converted as
 
 .. math::
 
-   \Gamma = K_c(c^{\ominus} = 1\,\mathrm{moldm^{-3}}) 
+   \Gamma = K_c(c^{\ominus} = 1/\sigma^3) = K_c(c^{\ominus} = 1\,\mathrm{moldm^{-3}}) 
    \Bigl( N_{\mathrm{A}}\bigl(\frac{\sigma}{\mathrm{dm}}\bigr)^3\Bigr)^{\bar\nu}
    
 where :math:`N_{\mathrm{A}}` is the Avogardo number.  For gas-phase reactions,
@@ -350,28 +351,32 @@ serious artifacts.
 The constant pH method can be used within the reaction ensemble module by
 initializing the reactions with the standard commands of the reaction ensemble. 
 
-However with the difference that
-you do not provide the dimensionless reaction constant but directly the
-*apparent reaction constant* (from the law of mass action) :math:`K_a`
-which can in general carry a unit. For an example file for how to setup
-a Constant pH simulation, see a file in the testcases. The following
-commands for the constant pH method are available. For a description of the available methods see :mod:`espressomd.reaction_ensemble`:
+The dissociation constant, which is the input of the constant pH method, is the equilibrium
+constant :math:`K_c` for the following reaction:
+
+.. math::
+
+   \mathrm{HA \rightleftharpoons\ H^+ + A^- } \,,
+
+For an example of how to setup
+a Constant pH simulation, see the file in the testsuite directory. 
+For a description of the available methods see :mod:`espressomd.reaction_ensemble`:
 
 Grand canonical ensemble simulation using the Reaction Ensemble
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As a special case, all stoichiometric coefficients on one side of the chemical
 reaction can be set to zero.  Such reaction creates particles *ex nihilo*, and 
-is equivalent to exchange with a reservoir. Then the simulation in reaction ensemble becomes equivalent with the
+is equivalent to exchange with a reservoir. Then the simulation in the reaction ensemble becomes equivalent with the
 grandcanonical simulation. Formally, this can be expressed by the reaction
 
 .. math::
  
     \mathrm{\emptyset \rightleftharpoons\ \nu_A A  }  \,, 
 
-where the reaction constant :math:`\Gamma` defines the chemical potential of species A.
+where, if :math:`\nu_A=1`, the reaction constant :math:`\Gamma` defines the chemical potential of species A.
 However, if :math:`\nu_A\neq 1`, the statistics of the reaction ensemble becomes
-equivalent to the grandcanonical only if large average number of species A in the box.
+equivalent to the grandcanonical only in the limit of large average number of species A in the box.
 It the reaction contains more than one product, then the reaction constant
 :math:`\Gamma` defines only the sum of their chemical potentials but not the
 chemical potential of each product alone.
