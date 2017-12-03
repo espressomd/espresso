@@ -147,6 +147,8 @@ void autoupdate_correlations();
  * it starts again from the beginning.
  */
 class Correlator {
+  using obs_ptr = std::shared_ptr<Observables::Observable>;
+
 public:
   /**
    * The initialization procedure for the correlation object. All important
@@ -174,7 +176,19 @@ public:
    * @param _args: the parameters of the observables
    *
    */
-  Correlator();
+  //  Correlator();
+  Correlator(int tau_lin, double tau_max)
+      : t(0), finalized(0), autoupdate(0), initialized(0), correlation_args{},
+        m_tau_lin(tau_lin), m_tau_max(tau_max) {
+    initialize();
+  }
+
+  // Correlator(int tau_lin, int tau_max, double dt, std::string const
+  // &compress1,
+  //            std::string const &compress2,
+  //            std::string const &corr_operation_name, obs_ptr obs1, obs_ptr
+  //            obs2,
+  //            Vector3d corr_args = {});
 
   void initialize();
 
@@ -233,35 +247,47 @@ public:
   // A lot of the following should be private
   Vector3d correlation_args; // additional arguments, which the correlation may
                              // need (currently only used by fcs_acf)
-  unsigned int finalized;       // non-zero of correlation is finialized
-  int hierarchy_depth;          // maximum level of data compression
-  int tau_lin;                  // number of frames in the linear correlation
-  int dim_corr;
-  unsigned int t; // global time in number of frames
-  double dt;      // time interval at which samples arrive
-  double
-      tau_max; // maximum time, for which the correlation should be calculated
-  int update_frequency; // time distance between updates in MD timesteps
+
+  int tau_lin() const { return m_tau_lin; }
+  double tau_max() const { return m_tau_max; }
+  double last_update() const { return m_last_update; }
+  double dt() const { return m_dt; }
+  int dim_corr() const { return m_dim_corr; }
+  int n_result() const { return m_n_result; }
+
+  std::string const &compress1() const { return compressA_name; }
+  std::string const &compress2() const { return compressB_name; }
+  std::string const &correlation_operation() const {
+    return corr_operation_name;
+  }
+
+  unsigned int finalized; // non-zero of correlation is finialized
+
   void start_auto_update();
   void stop_auto_update();
+  int autoupdate;
 
-  double last_update() const {
-    return m_last_update;
-  }
+private:
+  int hierarchy_depth; // maximum level of data compression
+  int m_tau_lin;       // number of frames in the linear correlation
+  int m_dim_corr;
+  unsigned int t; // global time in number of frames
+  double m_dt;    // time interval at which samples arrive
+  double
+      m_tau_max; // maximum time, for which the correlation should be calculated
+  int update_frequency; // time distance between updates in MD timesteps
 
   std::string compressA_name;
   std::string compressB_name;
-  int autoupdate;
   std::string corr_operation_name;
 
   int initialized;
-  int n_result;    // the total number of result values
+  int m_n_result; // the total number of result values
 
   std::shared_ptr<Observables::Observable> A_obs;
   std::shared_ptr<Observables::Observable> B_obs;
 
-private:
-  std::vector<int> tau;        // time differences
+  std::vector<int> tau; // time differences
   boost::multi_array<std::vector<double>, 2> A;
   boost::multi_array<std::vector<double>, 2> B;
 
@@ -270,8 +296,9 @@ private:
   // The actual allocated storage space
   std::vector<unsigned int>
       n_sweeps; // number of correlation sweeps at a particular value of tau
-  std::vector<unsigned int> n_vals; // number of data values already present at a particular
-                        // value of tau
+  std::vector<unsigned int>
+      n_vals; // number of data values already present at a particular
+              // value of tau
   std::vector<unsigned int>
       newest; // index of the newest entry in each hierarchy level
 
@@ -284,10 +311,10 @@ private:
   unsigned int dim_A; // dimensionality of A
   unsigned int dim_B;
 
-  using correlation_operation = std::vector<double> (*)(
+  using correlation_operation_type = std::vector<double> (*)(
       std::vector<double> const &, std::vector<double> const &, Vector3d);
 
-  correlation_operation corr_operation;
+  correlation_operation_type corr_operation;
 
   using compression_function = std::vector<double> (*)(
       std::vector<double> const &A1, std::vector<double> const &A2);

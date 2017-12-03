@@ -122,8 +122,7 @@ std::vector<double> square_distance_componentwise(std::vector<double> const &A,
 // note: the argument name wsquare denotes that it value is w^2 while the user
 // sets w
 std::vector<double> fcs_acf(std::vector<double> const &A,
-                            std::vector<double> const &B,
-                            Vector3d wsquare) {
+                            std::vector<double> const &B, Vector3d wsquare) {
   if (!(A.size() == B.size())) {
     throw std::runtime_error(
         "Error in square distance componentwise: The vector sizes do not "
@@ -159,8 +158,8 @@ const char init_errors[][64] = {
     "",                                                              // 0
     "No valid correlation given",                                    // 1
     "delta_t must be specified and > 0",                             // 2
-    "tau_lin must be >= 2",                                          // 3
-    "tau_max must be >= delta_t",                                    // 4
+    "m_tau_lin must be >= 2",                                        // 3
+    "m_tau_max must be >= delta_t",                                  // 4
     "window_distance must be >1",                                    // 5
     "dimension of A was not >1",                                     // 6
     "dimension of B was not >1",                                     // 7
@@ -170,9 +169,9 @@ const char init_errors[][64] = {
     "no proper function for correlation operation given",            // 11
     "no proper function for compression of first observable given",  // 12
     "no proper function for compression of second observable given", // 13
-    "tau_lin must be divisible by 2",                                // 14
-    "dt is smaller than the MD timestep",                            // 15
-    "dt is not a multiple of the MD timestep",                       // 16
+    "m_tau_lin must be divisible by 2",                              // 14
+    "m_dt is smaller than the MD timestep",                            // 15
+    "m_dt is not a multiple of the MD timestep",                       // 16
     "cannot set compress2 for autocorrelation",                      // 17
     "dim_A must be divisible by 3 for fcs_acf",                      // 18
     "fcs_acf requires 3 additional parameters"                       // 19
@@ -189,35 +188,35 @@ const char double_correlation_get_data_errors[][64] = {
     "Error calculating correlation\n",                               // 4
     "Error allocating temporary memory\n",                           // 4
     "Error in corr_operation: observable dimensions do not match\n", // 5
-    "Error: dim_corr and dim_A do not match for fcs_acf\n"           // 6
+    "Error: m_dim_corr and dim_A do not match for fcs_acf\n"           // 6
 };
 
 int correlations_autoupdate = 0;
 
 int Correlator::get_correlation_time(double *correlation_time) {
-  // We calculate the correlation time for each dim_corr by normalizing the
+  // We calculate the correlation time for each m_dim_corr by normalizing the
   // correlation,
   // integrating it and finding out where C(tau)=tau;
   double C_tau;
   int ok_flag;
-  for (unsigned j = 0; j < dim_corr; j++) {
+  for (unsigned j = 0; j < m_dim_corr; j++) {
     correlation_time[j] = 0.;
   }
 
   // here we still have to fix the stuff a bit!
-  for (unsigned j = 0; j < dim_corr; j++) {
-    C_tau = 1 * dt;
+  for (unsigned j = 0; j < m_dim_corr; j++) {
+    C_tau = 1 * m_dt;
     ok_flag = 0;
-    for (unsigned k = 1; k < n_result - 1; k++) {
+    for (unsigned k = 1; k < m_n_result - 1; k++) {
       if (n_sweeps[k] == 0)
         break;
       C_tau += (result[k][j] / (double)n_sweeps[k] -
                 A_accumulated_average[j] * B_accumulated_average[j] / n_data /
                     n_data) /
-               (result[0][j] / n_sweeps[0]) * dt * (tau[k] - tau[k - 1]);
+               (result[0][j] / n_sweeps[0]) * m_dt * (tau[k] - tau[k - 1]);
 
-      if (exp(-tau[k] * dt / C_tau) + 2 * sqrt(tau[k] * dt / n_data) >
-          exp(-tau[k - 1] * dt / C_tau) + 2 * sqrt(tau[k - 1] * dt / n_data)) {
+      if (exp(-tau[k] * m_dt / C_tau) + 2 * sqrt(tau[k] * m_dt / n_data) >
+          exp(-tau[k - 1] * m_dt / C_tau) + 2 * sqrt(tau[k - 1] * m_dt / n_data)) {
         correlation_time[j] =
             C_tau * (1 + (2 * (double)tau[k] + 1) / (double)n_data);
         ok_flag = 1;
@@ -232,55 +231,52 @@ int Correlator::get_correlation_time(double *correlation_time) {
   return 0;
 }
 
-Correlator::Correlator()
-    : t(0), finalized(0), autoupdate(0), initialized(0), correlation_args{} {}
-
 void Correlator::initialize() {
   unsigned int i, j, k;
   hierarchy_depth = 0;
   // Class members are assigned via the initializer list
 
   // Input validation
-  if (dt <= 0) {
+  if (m_dt <= 0) {
     throw std::runtime_error(init_errors[2]);
   }
 
-  if ((dt - time_step) < -1e-6 * time_step) {
+  if ((m_dt - time_step) < -1e-6 * time_step) {
     throw std::runtime_error(init_errors[15]);
   }
 
-  // check if dt is a multiple of the md timestep
-  if (std::abs(dt / time_step - round(dt / time_step)) > 1e-6) {
+  // check if m_dt is a multiple of the md timestep
+  if (std::abs(m_dt / time_step - round(m_dt / time_step)) > 1e-6) {
     throw std::runtime_error(init_errors[16]);
   }
 
   // Time steps and intervals
   update_frequency =
-      std::floor(dt / time_step + std::numeric_limits<double>::round_error());
+      std::floor(m_dt / time_step + std::numeric_limits<double>::round_error());
 
-  if (tau_lin == 1) { // use the default
-    tau_lin = (int)ceil(tau_max / dt);
-    if (tau_lin % 2)
-      tau_lin += 1;
+  if (m_tau_lin == 1) { // use the default
+    m_tau_lin = (int)ceil(m_tau_max / m_dt);
+    if (m_tau_lin % 2)
+      m_tau_lin += 1;
   }
 
-  if (tau_lin < 2) {
+  if (m_tau_lin < 2) {
     throw std::runtime_error(init_errors[3]);
   }
 
-  if (tau_lin % 2) {
+  if (m_tau_lin % 2) {
     throw std::runtime_error(init_errors[14]);
   }
 
-  if (tau_max <= dt) {
+  if (m_tau_max <= m_dt) {
     throw std::runtime_error(init_errors[4]);
 
-  } else { // set hierarchy depth which can  accommodate at least tau_max
-    if ((tau_max / dt) < tau_lin) {
+  } else { // set hierarchy depth which can  accommodate at least m_tau_max
+    if ((m_tau_max / m_dt) < m_tau_lin) {
       hierarchy_depth = 1;
     } else {
       hierarchy_depth = (unsigned int)ceil(
-          1 + log((tau_max / dt) / (tau_lin - 1)) / log(2.0));
+          1 + log((m_tau_max / m_dt) / (m_tau_lin - 1)) / log(2.0));
     }
   }
 
@@ -304,15 +300,15 @@ void Correlator::initialize() {
   if (corr_operation_name == "") {
     throw std::runtime_error(init_errors[11]); // there is no reasonable default
   } else if (corr_operation_name == "componentwise_product") {
-    dim_corr = dim_A;
+    m_dim_corr = dim_A;
     corr_operation = &componentwise_product;
     correlation_args = Vector3d{0, 0, 0};
   } else if (corr_operation_name == "tensor_product") {
-    dim_corr = dim_A * dim_B;
+    m_dim_corr = dim_A * dim_B;
     corr_operation = &tensor_product;
     correlation_args = Vector3d{0, 0, 0};
   } else if (corr_operation_name == "square_distance_componentwise") {
-    dim_corr = dim_A;
+    m_dim_corr = dim_A;
     corr_operation = &square_distance_componentwise;
     correlation_args = Vector3d{0, 0, 0};
   } else if (corr_operation_name == "fcs_acf") {
@@ -329,10 +325,10 @@ void Correlator::initialize() {
             correlation_args[1], correlation_args[2]);
     if (dim_A % 3)
       throw std::runtime_error(init_errors[18]);
-    dim_corr = dim_A / 3;
+    m_dim_corr = dim_A / 3;
     corr_operation = &fcs_acf;
   } else if (corr_operation_name == "scalar_product") {
-    dim_corr = 1;
+    m_dim_corr = 1;
     corr_operation = &scalar_product;
     correlation_args = Vector3d{0, 0, 0};
   } else {
@@ -366,38 +362,38 @@ void Correlator::initialize() {
     throw std::runtime_error(init_errors[13]);
   }
 
-  A.resize(std::array<int, 2>{hierarchy_depth, tau_lin + 1});
+  A.resize(std::array<int, 2>{hierarchy_depth, m_tau_lin + 1});
   std::fill_n(A.data(), A.num_elements(), std::vector<double>(dim_A, 0));
-  B.resize(std::array<int, 2>{hierarchy_depth, tau_lin + 1});
+  B.resize(std::array<int, 2>{hierarchy_depth, m_tau_lin + 1});
   std::fill_n(B.data(), B.num_elements(), std::vector<double>(dim_B, 0));
 
   n_data = 0;
   A_accumulated_average = std::vector<double>(dim_A, 0);
   B_accumulated_average = std::vector<double>(dim_B, 0);
 
-  n_result = tau_lin + 1 + (tau_lin + 1) / 2 * (hierarchy_depth - 1);
-  n_sweeps = std::vector<unsigned int>(n_result, 0);
+  m_n_result = m_tau_lin + 1 + (m_tau_lin + 1) / 2 * (hierarchy_depth - 1);
+  n_sweeps = std::vector<unsigned int>(m_n_result, 0);
   n_vals = std::vector<unsigned int>(hierarchy_depth, 0);
 
-  result.resize(std::array<int, 2>{n_result, dim_corr});
+  result.resize(std::array<int, 2>{m_n_result, m_dim_corr});
 
-  for (i = 0; i < n_result; i++) {
-    for (j = 0; j < dim_corr; j++)
+  for (i = 0; i < m_n_result; i++) {
+    for (j = 0; j < m_dim_corr; j++)
       // and initialize the values
       result[i][j] = 0;
   }
 
-  newest = std::vector<unsigned int>(hierarchy_depth, tau_lin);
+  newest = std::vector<unsigned int>(hierarchy_depth, m_tau_lin);
 
-  tau.resize(n_result);
-  for (i = 0; i < tau_lin + 1; i++) {
+  tau.resize(m_n_result);
+  for (i = 0; i < m_tau_lin + 1; i++) {
     tau[i] = i;
   }
 
   for (j = 1; j < hierarchy_depth; j++)
-    for (k = 0; k < tau_lin / 2; k++) {
-      tau[tau_lin + 1 + (j - 1) * tau_lin / 2 + k] =
-          (k + (tau_lin / 2) + 1) * (1 << j);
+    for (k = 0; k < m_tau_lin / 2; k++) {
+      tau[m_tau_lin + 1 + (j - 1) * m_tau_lin / 2 + k] =
+          (k + (m_tau_lin / 2) + 1) * (1 << j);
     }
 
   initialized = 1;
@@ -426,9 +422,9 @@ int Correlator::get_data() {
   // Lets find out how far we have to go back in the hierarchy to make space for
   // the new value
   while (1) {
-    if (((t - ((tau_lin + 1) * ((1 << (i + 1)) - 1) + 1)) % (1 << (i + 1)) ==
+    if (((t - ((m_tau_lin + 1) * ((1 << (i + 1)) - 1) + 1)) % (1 << (i + 1)) ==
          0)) {
-      if (i < (int(hierarchy_depth) - 1) && n_vals[i] > tau_lin) {
+      if (i < (int(hierarchy_depth) - 1) && n_vals[i] > m_tau_lin) {
         highest_level_to_compress += 1;
         i++;
       } else
@@ -443,17 +439,17 @@ int Correlator::get_data() {
   for (i = highest_level_to_compress; i >= 0; i--) {
     // We increase the index indicating the newest on level i+1 by one (plus
     // folding)
-    newest[i + 1] = (newest[i + 1] + 1) % (tau_lin + 1);
+    newest[i + 1] = (newest[i + 1] + 1) % (m_tau_lin + 1);
     n_vals[i + 1] += 1;
     A[i + 1][newest[i + 1]] =
-        (*compressA)(A[i][(newest[i] + 1) % (tau_lin + 1)],
-                     A[i][(newest[i] + 2) % (tau_lin + 1)]);
+        (*compressA)(A[i][(newest[i] + 1) % (m_tau_lin + 1)],
+                     A[i][(newest[i] + 2) % (m_tau_lin + 1)]);
     B[i + 1][newest[i + 1]] =
-        (*compressB)(B[i][(newest[i] + 1) % (tau_lin + 1)],
-                     B[i][(newest[i] + 2) % (tau_lin + 1)]);
+        (*compressB)(B[i][(newest[i] + 1) % (m_tau_lin + 1)],
+                     B[i][(newest[i] + 2) % (m_tau_lin + 1)]);
   }
 
-  newest[0] = (newest[0] + 1) % (tau_lin + 1);
+  newest[0] = (newest[0] + 1) % (m_tau_lin + 1);
   n_vals[0]++;
 
   A[0][newest[0]] = A_obs->operator()(partCfg());
@@ -474,31 +470,32 @@ int Correlator::get_data() {
   }
 
   // Now update the lowest level correlation estimates
-  for (j = 0; j < int(MIN(tau_lin + 1, n_vals[0])); j++) {
+  for (j = 0; j < int(MIN(m_tau_lin + 1, n_vals[0])); j++) {
     index_new = newest[0];
-    index_old = (newest[0] - j + tau_lin + 1) % (tau_lin + 1);
+    index_old = (newest[0] - j + m_tau_lin + 1) % (m_tau_lin + 1);
     auto const temp =
         (corr_operation)(A[0][index_old], B[0][index_new], correlation_args);
-    assert(temp.size() == dim_corr);
+    assert(temp.size() == m_dim_corr);
 
     n_sweeps[j]++;
-    for (unsigned k = 0; k < dim_corr; k++) {
+    for (unsigned k = 0; k < m_dim_corr; k++) {
       result[j][k] += temp[k];
     }
   }
   // Now for the higher ones
   for (int i = 1; i < highest_level_to_compress + 2; i++) {
-    for (unsigned j = (tau_lin + 1) / 2 + 1; j < MIN(tau_lin + 1, n_vals[i]);
-         j++) {
+    for (unsigned j = (m_tau_lin + 1) / 2 + 1;
+         j < MIN(m_tau_lin + 1, n_vals[i]); j++) {
       index_new = newest[i];
-      index_old = (newest[i] - j + tau_lin + 1) % (tau_lin + 1);
-      index_res = tau_lin + (i - 1) * tau_lin / 2 + (j - tau_lin / 2 + 1) - 1;
+      index_old = (newest[i] - j + m_tau_lin + 1) % (m_tau_lin + 1);
+      index_res =
+          m_tau_lin + (i - 1) * m_tau_lin / 2 + (j - m_tau_lin / 2 + 1) - 1;
       auto const temp =
           (corr_operation)(A[i][index_old], B[i][index_new], correlation_args);
-      assert(temp.size() == dim_corr);
+      assert(temp.size() == m_dim_corr);
 
       n_sweeps[index_res]++;
-      for (unsigned k = 0; k < dim_corr; k++) {
+      for (unsigned k = 0; k < m_dim_corr; k++) {
         result[index_res][k] += temp[k];
       }
     }
@@ -525,15 +522,15 @@ int Correlator::finalize() {
   unsigned int index_new, index_old, index_res;
   int error;
   // int compress;
-  unsigned tau_lin = tau_lin;
+  unsigned m_tau_lin = m_tau_lin;
   int hierarchy_depth = hierarchy_depth;
 
   // make a flag that the correlation is finalized
   finalized = 1;
 
   for (ll = 0; ll < hierarchy_depth - 1; ll++) {
-    if (n_vals[ll] > tau_lin + 1)
-      vals_ll = tau_lin + n_vals[ll] % 2;
+    if (n_vals[ll] > m_tau_lin + 1)
+      vals_ll = m_tau_lin + n_vals[ll] % 2;
     else
       vals_ll = n_vals[ll];
 
@@ -552,7 +549,7 @@ int Correlator::finalize() {
       while (highest_level_to_compress > -1) {
         // printf("test level %d for compression, n_vals=%d ... ",i,n_vals[i]);
         if (n_vals[i] % 2) {
-          if (i < (hierarchy_depth - 1) && n_vals[i] > tau_lin) {
+          if (i < (hierarchy_depth - 1) && n_vals[i] > m_tau_lin) {
             highest_level_to_compress += 1;
             i++;
           } else {
@@ -571,31 +568,31 @@ int Correlator::finalize() {
       for (i = highest_level_to_compress; i >= ll; i--) {
         // We increase the index indicating the newest on level i+1 by one (plus
         // folding)
-        newest[i + 1] = (newest[i + 1] + 1) % (tau_lin + 1);
+        newest[i + 1] = (newest[i + 1] + 1) % (m_tau_lin + 1);
         n_vals[i + 1] += 1;
 
-        (*compressA)(A[i][(newest[i] + 1) % (tau_lin + 1)],
-                     A[i][(newest[i] + 2) % (tau_lin + 1)]);
-        (*compressB)(B[i][(newest[i] + 1) % (tau_lin + 1)],
-                     B[i][(newest[i] + 2) % (tau_lin + 1)]);
+        (*compressA)(A[i][(newest[i] + 1) % (m_tau_lin + 1)],
+                     A[i][(newest[i] + 2) % (m_tau_lin + 1)]);
+        (*compressB)(B[i][(newest[i] + 1) % (m_tau_lin + 1)],
+                     B[i][(newest[i] + 2) % (m_tau_lin + 1)]);
       }
-      newest[ll] = (newest[ll] + 1) % (tau_lin + 1);
+      newest[ll] = (newest[ll] + 1) % (m_tau_lin + 1);
 
       // We only need to update correlation estimates for the higher levels
       for (i = ll + 1; i < highest_level_to_compress + 2; i++) {
-        for (j = (tau_lin + 1) / 2 + 1; j < int(MIN(tau_lin + 1, n_vals[i]));
-             j++) {
+        for (j = (m_tau_lin + 1) / 2 + 1;
+             j < int(MIN(m_tau_lin + 1, n_vals[i])); j++) {
           index_new = newest[i];
-          index_old = (newest[i] - j + tau_lin + 1) % (tau_lin + 1);
+          index_old = (newest[i] - j + m_tau_lin + 1) % (m_tau_lin + 1);
           index_res =
-              tau_lin + (i - 1) * tau_lin / 2 + (j - tau_lin / 2 + 1) - 1;
+              m_tau_lin + (i - 1) * m_tau_lin / 2 + (j - m_tau_lin / 2 + 1) - 1;
 
           auto const temp = (corr_operation)(A[i][index_old], B[i][index_new],
-                                       correlation_args);
-          assert(temp.size() == dim_corr);
+                                             correlation_args);
+          assert(temp.size() == m_dim_corr);
 
           n_sweeps[index_res]++;
-          for (unsigned k = 0; k < dim_corr; k++) {
+          for (unsigned k = 0; k < m_dim_corr; k++) {
             result[index_res][k] += temp[k];
           }
         }
@@ -627,13 +624,13 @@ std::vector<double> Correlator::get_correlation() {
   std::vector<double> res;
 
   // time + n_sweeps + corr_1...corr_n
-  int cols = 2 + dim_corr;
-  res.resize(n_result * cols);
+  int cols = 2 + m_dim_corr;
+  res.resize(m_n_result * cols);
 
-  for (int i = 0; i < n_result; i++) {
-    res[cols * i + 0] = tau[i] * dt;
+  for (int i = 0; i < m_n_result; i++) {
+    res[cols * i + 0] = tau[i] * m_dt;
     res[cols * i + 1] = n_sweeps[i];
-    for (int k = 0; k < dim_corr; k++) {
+    for (int k = 0; k < m_dim_corr; k++) {
       if (n_sweeps[i] > 0) {
         res[cols * i + 2 + k] = result[i][k] / n_sweeps[i];
       } else {

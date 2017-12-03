@@ -28,6 +28,8 @@
 #include "core/correlators/Correlator.hpp"
 #include "observables/Observable.hpp"
 
+#include "core/utils/as_const.hpp"
+
 #include <memory>
 
 namespace ScriptInterface {
@@ -35,30 +37,36 @@ namespace Correlators {
 
 class Correlator : public AutoParameters {
 public:
-  Correlator() : m_correlator(std::make_shared<::Correlators::Correlator>()) {
-    add_parameters({{"tau_lin", m_correlator->tau_lin},
-                    {"tau_max", m_correlator->tau_max},
-                    {"dt", m_correlator->dt},
-                    {"compress1", m_correlator->compressA_name},
-                    {"compress2", m_correlator->compressB_name},
-                    {"corr_operation", m_correlator->corr_operation_name},
+  Correlator() {
+    using Utils::as_const;
+    /* Only args can be changed after construction. */
+    add_parameters({{"tau_lin", m_correlator->tau_lin()},
+                    {"tau_max", m_correlator->tau_max()},
+                    {"dt", m_correlator->dt()},
+                    {"compress1", m_correlator->compress1()},
+                    {"compress2", m_correlator->compress2()},
+                    {"corr_operation", m_correlator->correlation_operation()},
                     {"args", m_correlator->correlation_args},
-                    {"obs1", m_obs1},
-                    {"obs2", m_obs2}});
+                    {"dim_corr", m_correlator->dim_corr()},
+                    {"obs1", as_const(m_obs1)},
+                    {"obs2", as_const(m_obs2)},
+                    {"n_result", m_correlator->n_result()}});
+  }
+
+  void construct(VariantMap const &args) override {
+    set_from_args(m_obs1, args, "obs1");
+    set_from_args(m_obs2, args, "obs2");
+
+    m_correlator = std::make_shared<::Correlators::Correlator>(
+        get_value<int>(args, "tau_lin"), get_value<double>(args, "tau_max"));
   }
 
   std::shared_ptr<::Correlators::Correlator> correlator() {
     return m_correlator;
   }
 
-  void check_if_initialized() {
-    if (!m_correlator->initialized)
-      throw std::runtime_error("The correlator has not yet been initialied.");
-  }
-
   virtual Variant call_method(std::string const &method,
                               VariantMap const &parameters) override {
-    check_if_initialized();
     if (method == "update") {
       if (m_correlator->autoupdate) {
         throw std::runtime_error(
@@ -76,10 +84,6 @@ public:
     if (method == "get_correlation") {
       return m_correlator->get_correlation();
     }
-    if (method == "n_results")
-      return m_correlator->n_result;
-    if (method == "dim_corr")
-      return m_correlator->dim_corr;
 
     return {};
   }
