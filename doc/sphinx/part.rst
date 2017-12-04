@@ -83,10 +83,38 @@ The :class:`espressomd.particle_data.ParticleList` support slicing similarly to 
 
 To access particles with indices ranging from 0 to 9, use::
     
-    system.party[0:10].pos
+    system.part[0:10].pos
 
 Note that, like in other cases in Python, the lower bound is inclusive and the upper bound is non-inclusive.
+Setting slices can be done by 
 
+- supplying a *single value* that is assigned to each entry of the slice, e.g.::
+
+    system.part[0:10].ext_force = [1, 0, 0]
+
+- supplying an *array of values* that matches the length of the slice which sets each entry individually, e.g.::
+
+    system.part[0:3].ext_force = [[1, 0, 0], [2, 0, 0], [3, 0, 0]]
+
+For list properties that have no fixed length like ``exculsions`` or ``bonds``, some care has to be taken.
+There, *single value* assignment also accepts lists/tuples just like setting the property of an individual particle. For example::
+
+    system.part[0].exclusions = [1, 2]
+
+would both exclude short-range interactions of the particle pairs ``0 <-> 1`` and ``0 <-> 2``.
+Similarly, a list can also be assigned to each entry of the slice::
+
+    system.part[2:4].exclusions = [0, 1]
+
+This would exclude interactions between ``2 <-> 0``, ``2 <-> 1``, ``3 <-> 0`` and ``3 <-> 1``.
+Now when it is desired to supply an *array of values* with individual values for each slice entry, the distinction can no longer be done
+by the length of the input, as slice length and input length can be equal. Here, the nesting level of the input is the distinctive criterion::
+
+    system.part[2:4].exclusions = [[0, 1], [0, 1]]
+
+The above code snippet would lead the the same exclusions as the one before.
+The same accounts for the ``bonds`` property by interchanging the integer entries of the exclusion list with 
+the tuple ``(bond, partners)``. 
 
 
 Deleting particles
