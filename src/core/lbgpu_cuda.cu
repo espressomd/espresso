@@ -2431,10 +2431,10 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
 
 #ifdef LEES_EDWARDS
 
-// TODO: Calculate new indizes for nodes at the boundaries
+// TODO: Calculate new indices for nodes at the boundaries
   
   unsigned int pos[3];
-  index_to_xyz(*node_index, pos);
+  index_to_xyz(node_index[0], pos);
   
   //int upper_le_integer_shift;
   //int lower_le_integer_shift;
@@ -2474,7 +2474,7 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
   //printf("le_offset: %f, le_integer_shift: %i, non-integer-offset: %f\n", lees_edwards_offset, upper_le_integer_shift, weight);
   //printf("Node position = %u %u %u \n", pos[0], pos[1], pos[2]);
 
-  if(pos[1] == para.dim_y -1 && particle_position[1] > para.dim_y-para.agrid){
+  if(pos[1] == para.dim_y -1 && particle_position[1] > para.dim_y- 0.5 * para.agrid){
     
     
     node_index[2] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
@@ -2483,7 +2483,7 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
     node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
     }
   
-  if(pos[1] == 0 && particle_position[1] < para.agrid && particle_position[1] != 0.0){
+  if(pos[1] == 0 && particle_position[1] <  0.5 * para.agrid && particle_position[1] != 0.0){
     //y = para.dim_y;
     node_index[0] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[1] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
