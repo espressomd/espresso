@@ -47,7 +47,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
     reference_energy = 216.640984711 
 
     def setUp(self):
-        self.S.box_l = (10, 10, 12)
+        self.S.box_l = (10, 10, 10)
         self.S.time_step = 0.01
         self.S.cell_system.skin = 0.1
         while len(self.S.actors)>0:
@@ -111,19 +111,19 @@ class CoulombMixedPeriodicity(ut.TestCase):
             self.S.cell_system.set_domain_decomposition()
             self.S.cell_system.node_grid = self.buf_node_grid 
             self.S.periodicity=1,1,1
-            self.S.box_l = (10, 10, 12)
+            self.S.box_l = (10, 10, 10)
 
             p3m=el.P3M(bjerrum_length=1, accuracy = 1e-6)
             
             self.S.actors.add(p3m)
-            elc=el_ext.ELC(maxPWerror=1E-4,gap_size=3)
+            elc=el_ext.ELC(maxPWerror=1E-4,gap_size=1)
             self.S.actors.add(elc)
             self.S.integrator.run(0)
             self.compare("elc", energy=True)
             self.S.actors.remove(p3m)
 
     def test_MMM2D(self):
-        self.S.box_l = (10, 10, 12)
+        self.S.box_l = (10, 10, 10)
         self.S.cell_system.set_layered(n_layers=10,use_verlet_lists=False)
         self.S.periodicity=1,1,0
         mmm2d=(el.MMM2D(bjerrum_length=1,maxPWerror=1E-7))
@@ -149,7 +149,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
                         bjerrum_length=1,
                         method_name="p2nfft",
                         method_params={
-                            "tolerance_field": 2E-5})
+                            "tolerance_field": 1E-5})
                 self.S.actors.add(scafacos)
                 self.S.integrator.run(0)
                 self.compare("scafacos_p2nfft", energy=True)
