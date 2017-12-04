@@ -31,6 +31,11 @@ from numpy import random
            "Test requires VIRTUAL_SITES_RELATIVE")
 class VirtualSites(ut.TestCase):
     s = espressomd.System()
+    s.seed = range(s.cell_system.get_state()["n_nodes"])
+
+    @classmethod
+    def setUpClass(cls):
+        np.random.seed(42)
 
     def multiply_quaternions(self, a, b):
         return np.array(
@@ -72,7 +77,7 @@ class VirtualSites(ut.TestCase):
 
     def test_pos_vel_forces(self):
         s = self.s
-        s.box_l = 2, 2, 2
+        s.box_l = 10,10,10
         s.part.clear()
         s.time_step = 0.008
         s.part.clear()
@@ -150,7 +155,7 @@ class VirtualSites(ut.TestCase):
           get lost or are outdated in the short range loop"""
         s = self.s
         # Parameters
-        n = 30
+        n = 90 
         phi = 0.6
         sigma = 1.
         eps = .025

@@ -48,7 +48,7 @@ function cmd {
 [ -z "$build_procs" ] && build_procs=2
 [ -z "$make_check" ] && make_check="true"
 
-cmake_params="-DTEST_NP:INT=$check_procs $cmake_params"
+cmake_params="-DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params"
 
 if $insource; then
     builddir=$srcdir
@@ -103,8 +103,10 @@ if ! $insource; then
 fi
 
 # load MPI module if necessary
-grep -q suse /etc/os-release && source /etc/profile.d/modules.sh && module load gnu-openmpi
-grep -q rhel /etc/os-release && source /etc/profile.d/modules.sh && module load mpi
+if [ -f "/etc/os-release" ]; then
+    grep -q suse /etc/os-release && source /etc/profile.d/modules.sh && module load gnu-openmpi
+    grep -q rhel /etc/os-release && source /etc/profile.d/modules.sh && module load mpi
+fi
 
 # CONFIGURE
 start "CONFIGURE"
@@ -144,7 +146,7 @@ end "CONFIGURE"
 # BUILD
 start "BUILD"
 
-cmd "make -j${build_procs}" || exit $?
+cmd "make -k -j${build_procs}" || exit $?
 
 end "BUILD"
 

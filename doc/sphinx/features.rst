@@ -28,22 +28,32 @@ General features
 
    .. seealso:: :ref:`Coulomb interaction`
 
+-  ``INTER_RF``
+
+-  ``MMM1D_GPU``
+
+-  ``EWALD_GPU``
+
+-  ``_P3M_GPU_FLOAT``
+
+-  ``_P3M_GPU_DOUBLE``
+
 -  ``DIPOLES`` This activates the dipole-moment property of particles; In addition,
    the various magnetostatics algorithms, such as P3M are switched on.
 
    .. seealso:: :ref:`Coulomb interaction`
 
+-  ``SCAFACOS_DIPOLES``
+
 -  ``ROTATION`` Switch on rotational degrees of freedom for the particles, as well as
    the corresponding quaternion integrator. 
    
-   .. seealso:: :ref:`Defining particle properties`
+   .. seealso:: :ref:`Setting up particles`
 
    .. note:: 
       Note, that when the feature is activated, every particle has three
       additional degrees of freedom, which for example means that the
       kinetic energy changes at constant temperature is twice as large.
-
--  ``ROTATION_PER_PARTICLE`` Allows to set whether a particle has rotational degrees of freedom.
 
 -  ``LANGEVIN_PER_PARTICLE`` Allows to choose the Langevin temperature and friction coefficient
    per particle.
@@ -58,11 +68,6 @@ General features
    or walls. This constraints interact with the particles through
    regular short ranged potentials such as the Lennard–Jones potential.
    See section for possible constraint forms.
-
--  ``TUNABLE_SLIP`` Switch on tunable slip conditions for planar wall boundary
-   conditions.
-   
-   .. seealso:: :ref:`Tunable-slip boundary interaction`
 
 -  ``MASS`` Allows particles to have individual masses. Note that some analysis
    procedures have not yet been adapted to take the masses into account
@@ -109,11 +114,7 @@ General features
 
 -  ``THERMOSTAT_IGNORE_NON_VIRTUAL``
 
--  ``BOND_VIRTUAL``
-
 -  ``MODES``
-
--  ``ADRESS``
 
 -  ``METADYNAMICS``
 
@@ -129,10 +130,6 @@ General features
 -  ``OVERLAPPED``
 
 -  ``COLLISION_DETECTION`` Allows particles to be bound on collision.
-
--  ``OLD_RW_VERSION`` This switches back to the old, *wrong* random walk code of the
-   polymer. Only use this if you rely on the old behaviour and *know
-   what you are doing*.
 
 -  ``H5MD`` Allows to write data to H5MD formatted hdf5 files.
 
@@ -150,9 +147,32 @@ integrator or thermostat:
    
    .. seealso:: :ref:`\`\`thermostat\`\`\: Setting up the thermostat`
 
+
+-  ``MEMBRANE_COLLISION``
+
+-  ``LEES_EDWARDS``
+
+-  ``REACTION_ENSEMBLE``
+
+-  ``GHMC``
+
+-  ``MULTI_TIMESTEP``
+
+-  ``ENGINE``
+
+-  ``PARTICLE_ANISOTROPY``
+
+
+Fluid dynamics and fluid structure interaction
+----------------------------------------------
+
 -  ``DPD`` Enables the dissipative particle dynamics thermostat and interaction.
 
    .. seealso:: :ref:`DPD interaction`
+
+-  ``DPD_MASS_RED``
+
+-  ``DPD_MASS_LIN``
 
 -  ``LB`` Enables the lattice-Boltzmann fluid code.
 
@@ -162,10 +182,33 @@ integrator or thermostat:
 
    .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice-Boltzmann`
 
+-  ``LB_BOUNDARIES``
+
+-  ``LB_BOUNDARIES_GPU``
+
 -  ``SHANCHEN`` Enables the Shan Chen bicomponent fluid code on the GPU.
+
+-  ``AFFINITY``
 
 -  ``LB_ELECTROHYDRODYNAMICS`` Enables the implicit calculation of electro-hydrodynamics for charged
    particles and salt ions in an electric field.
+
+-  ``ELECTROKINETICS``
+
+-  ``EK_BOUNDARIES``
+
+-  ``EK_ELECTROSTATIC_COUPLING``
+
+-  ``EK_DEBUG``
+
+-  ``EK_DOUBLE_PREC``
+
+-  ``IMMERSED_BOUNDARY`` Immersed-Boundary Bayreuth version.
+
+-  ``OIF_LOCAL_FORCES``
+
+-  ``OIF_GLOBAL_FORCES``
+
 
 Interactions
 ------------
@@ -190,8 +233,6 @@ section :ref:`Isotropic non-bonded interactions`):
 -  ``GAY_BERNE``
 
 -  ``HERTZIAN``
-
--  ``MOL_CUT``
 
 -  ``NO_INTRA_NB``
 
@@ -226,6 +267,45 @@ following features.
 
 -  ``BOND_ENDANGLEDIST``
 
+-  ``BOND_ANGLEDIST_HARMONIC``
+
+-  ``BOND_ENDANGLEDIST_HARMONIC``
+
+-  ``LJGEN_SOFTCORE``
+
+-  ``COS2``
+
+-  ``GAUSSIAN``
+
+-  ``HAT``
+
+-  ``UMBRELLA``
+
+
+DNA Model (Fyta DNA)
+--------------------
+
+-  ``CG_DNA``
+
+-  ``TWIST_STACK``
+
+-  ``HYDROGEN_BOND``
+
+-  ``COULOMB_DEBYE_HUECKEL``
+
+
+Miscellaneous
+-------------
+
+-  ``FLATNOISE`` Shape of the noise in ther (Langevin) thermostat.
+
+-  ``GAUSSRANDOM`` Shape of the noise in ther (Langevin) thermostat.
+
+-  ``GAUSSRANDOMCUT`` Shape of the noise in ther (Langevin) thermostat.
+
+-  ``GHOSTS_HAVE_BONDS`` Ghost particles also have the bond information.
+
+
 Debug messages
 --------------
 
@@ -235,11 +315,6 @@ one are
 -  ``ADDITIONAL_CHECKS`` Enables numerous additional checks which can detect inconsistencies
    especially in the cell systems. This checks are however too slow to
    be enabled in production runs.
-
--  ``MEM_DEBUG`` Enables an internal memory allocation checking system. This produces
-   output for each allocation and freeing of a memory chunk, and
-   therefore allows to track down memory leaks. This works by internally
-   replacing ``malloc``, ``realloc`` and ``free``.
 
 The following flags control the debug output of various sections of
 |es|. You will however understand the output very often only by
@@ -277,8 +352,6 @@ looking directly at the code.
 
 -  ``ESK_DEBUG`` debugging of P\ :math:`^3`\ Ms :math:`k` –space part.
 
--  ``EWALD_DEBUG``
-  
 -  ``FFT_DEBUG`` Output from the unified FFT code.
 
 -  ``MAGGS_DEBUG``
@@ -316,3 +389,16 @@ looking directly at the code.
 -  ``FORCE_CORE`` Causes |es| to try to provoke a core dump when exiting unexpectedly.
 
 -  ``MPI_CORE`` Causes |es| to try this even with MPI errors.
+
+-  ``ESIF_DEBUG``
+
+-  ``LE_DEBUG``
+
+-  ``SD_DEBUG``
+
+-  ``CUDA_DEBUG``
+
+-  ``H5MD_DEBUG``
+
+-  ``ONEPART_DEBUG_ID`` Use this define to supply a particle ID for which to output debug messages. For example: ``#define ONEPART_DEBUG_ID 13``
+

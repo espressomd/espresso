@@ -41,6 +41,9 @@ cdef extern from "utils.hpp":
     cdef void alloc_intlist(int_list * il, int size)
     cdef void realloc_intlist(int_list * il, int size)
 
+cdef extern from "utils/Histogram.hpp" namespace "Utils":
+    cdef void unravel_index(const int* const len_dims, const int ndims, const int flattened_index, int* unravelled_index_out)
+
 cdef int_list * create_int_list_from_python_object(obj)
 cdef np.ndarray create_nparray_from_int_list(int_list * il)
 cdef np.ndarray create_nparray_from_double_list(double_list * dl)
@@ -63,7 +66,7 @@ cdef extern from "RuntimeError.hpp" namespace "ErrorHandling":
         ErrorLevel level()
 
 cdef extern from "errorhandling.hpp" namespace "ErrorHandling":
-    cdef vector[RuntimeError]mpi_gather_runtime_errors()
+    cdef vector[RuntimeError] mpi_gather_runtime_errors()
 
 cpdef handle_errors(msg)
 

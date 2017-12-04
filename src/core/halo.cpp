@@ -36,7 +36,7 @@
 #include "halo.hpp"
 
 /** Primitive fieldtypes and their initializers */
-struct _Fieldtype fieldtype_double = { 0, NULL, NULL, sizeof(double), 0, 0, 0, 0, NULL };
+struct _Fieldtype fieldtype_double = { 0, nullptr, nullptr, sizeof(double), 0, 0, 0, 0, nullptr };
 
 /** Creates a fieldtype describing the data layout 
  *  @param count   number of subtypes (Input)
@@ -50,7 +50,7 @@ void halo_create_fieldtype(int count, int* lengths, int *disps, int extent, Fiel
 
   Fieldtype ntype = *newtype = (Fieldtype) Utils::malloc(sizeof(*ntype));
 
-  ntype->subtype = NULL;
+  ntype->subtype = nullptr;
   ntype->vflag   = 0;
 
   ntype->vblocks = 1;
@@ -138,7 +138,7 @@ void halo_create_field_hvector(int vblocks, int vstride, int vskip, Fieldtype ol
 void halo_free_fieldtype(Fieldtype *ftype) {
   if ((*ftype)->count>0) {
     free((*ftype)->lengths);
-    (*ftype)->lengths = NULL;
+    (*ftype)->lengths = nullptr;
   }
   free(*ftype);
 }
@@ -378,7 +378,7 @@ void halo_communication(HaloCommunicator *hc, char *base) {
 	      s_node = hc->halo_info[n].source_node ;
 	      r_node = hc->halo_info[n].dest_node ;
 	      
-	      HALO_TRACE(fprintf(stderr,"%d: halo_comm sendrecv %d to %d (%d) (%p)\n",this_node,s_node,r_node,REQ_HALO_SPREAD,&datatype));
+	      HALO_TRACE(fprintf(stderr,"%d: halo_comm sendrecv %d to %d (%d) (%p)\n",this_node,s_node,r_node,REQ_HALO_SPREAD,(void*) &datatype));
 
 	      MPI_Sendrecv(s_buffer, 1, datatype, r_node, REQ_HALO_SPREAD,
 			   r_buffer, 1, datatype, s_node, REQ_HALO_SPREAD,

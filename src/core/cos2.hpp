@@ -33,8 +33,6 @@
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 
-#include "forcecap.hpp"
-
 #ifdef COS2
 #include <cmath>
 

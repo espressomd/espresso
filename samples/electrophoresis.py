@@ -75,7 +75,7 @@ system.non_bonded_inter[1, 2].lennard_jones.set_params(
 # fene = interactions.FeneBond(k=10, d_r_max=2)
 # system.bonded_inter.add(fene)
 harmonic = interactions.HarmonicBond(k=10, r_0=2)
-harmonicangle = interactions.Angle_Harmonic(bend=10, phi0=np.pi)
+harmonicangle = interactions.AngleHarmonic(bend=10, phi0=np.pi)
 system.bonded_inter.add(harmonic)
 system.bonded_inter.add(harmonicangle)
 
@@ -132,15 +132,15 @@ print("Q_tot:", np.sum(system.part[:].q))
 #      Warmup                                               #
 #############################################################
 
-system.non_bonded_inter.set_force_cap(10)
+system.force_cap = 10
 
 for i in range(1000):
     sys.stdout.write("\rWarmup: %03i" % i)
     sys.stdout.flush()
     system.integrator.run(steps=1)
-    system.non_bonded_inter.set_force_cap(10 * i)
+    system.force_cap = 10*i
 
-system.non_bonded_inter.set_force_cap(0)
+system.force_cap = 0
 
 print("\nWarmup finished!\n")
 

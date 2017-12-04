@@ -21,11 +21,11 @@
 #include <boost/container/flat_set.hpp>
 #include <boost/mpi/collectives.hpp>
 
+#include "core/MpiCallbacks.hpp"
 #include "utils/NoOp.hpp"
 #include "utils/mpi/gather_buffer.hpp"
 #include "utils/parallel/Callback.hpp"
 #include "utils/serialization/flat_set.hpp"
-#include "core/MpiCallbacks.hpp"
 
 namespace detail {
 /**
@@ -93,6 +93,15 @@ public:
 };
 }
 
+/* Mark merge as commutative with all containers */
+namespace boost {
+namespace mpi {
+template <typename Container>
+struct is_commutative<::detail::Merge<Container, ::detail::IdCompare>,
+                      Container> : public boost::mpl::true_ {};
+}
+}
+
 /**
 * @brief Particle cache on the master.
 *
@@ -129,7 +138,7 @@ template <typename GetParticles, typename UnaryOp = Utils::NoOp,
 class ParticleCache {
   using map_type = boost::container::flat_set<Particle, detail::IdCompare>;
   /* Callback system we're on */
-  Communication::MpiCallbacks & m_cb;
+  Communication::MpiCallbacks &m_cb;
 
   /** Index mapping particle ids to the position
       in remote_parts. */
@@ -161,13 +170,13 @@ class ParticleCache {
     for (auto const &p : parts()) {
       local_bonds.push_back(p.identity());
 
-      auto const& bonds = p.bonds();
+      auto const &bonds = p.bonds();
       local_bonds.push_back(bonds.size());
-      std::copy(std::begin(bonds), std::end(bonds), std::back_inserter(local_bonds));
+      std::copy(std::begin(bonds), std::end(bonds),
+                std::back_inserter(local_bonds));
     }
 
-    Utils::Mpi::gather_buffer(local_bonds,
-                              m_cb.comm());
+    Utils::Mpi::gather_buffer(local_bonds, m_cb.comm());
 
     return local_bonds;
   }
@@ -217,8 +226,7 @@ class ParticleCache {
 
     /* Reduce data to the master by merging the flat_sets from
      * the nodes in a reduction tree. */
-    boost::mpi::reduce(m_cb.comm(), remote_parts,
-                       remote_parts,
+    boost::mpi::reduce(m_cb.comm(), remote_parts, remote_parts,
                        detail::Merge<map_type, detail::IdCompare>(), 0);
   }
 
@@ -238,10 +246,10 @@ public:
   ParticleCache() = delete;
   ParticleCache(Communication::MpiCallbacks &cb, GetParticles parts,
                 UnaryOp &&op = UnaryOp{})
-      : m_cb(cb), update_cb(cb, [this](int, int) { this->m_update(); }),
+      : m_cb(cb), m_valid(false), m_valid_bonds(false),
+        update_cb(cb, [this](int, int) { this->m_update(); }),
         update_bonds_cb(cb, [this](int, int) { this->m_update_bonds(); }),
-        parts(parts), m_valid(false), m_valid_bonds(false),
-        m_op(std::forward<UnaryOp>(op)) {}
+        parts(parts), m_op(std::forward<UnaryOp>(op)) {}
   /* Because the this ptr is captured by the callback lambdas,
    * this class can be neither copied nor moved. */
   ParticleCache(ParticleCache const &) = delete;

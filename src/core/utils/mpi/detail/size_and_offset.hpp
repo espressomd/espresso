@@ -45,8 +45,6 @@ int size_and_offset(std::vector<int> &sizes, std::vector<int> &displ,
 
   int offset = 0;
   for (int i = 0; i < sizes.size(); i++) {
-    /* Convert size from logical to physical */
-    sizes[i] *= sizeof(T);
     displ[i] = offset;
     offset += sizes[i];
   }

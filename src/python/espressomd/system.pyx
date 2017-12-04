@@ -42,9 +42,12 @@ if CONSTRAINTS == 1:
 
 from .correlators import AutoUpdateCorrelators
 from .observables import AutoUpdateObservables
+from .accumulators import AutoUpdateAccumulators
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
 from .ekboundaries import EKBoundaries
+from .comfixed import ComFixed
+from espressomd.utils import array_locked
 
 IF COLLISION_DETECTION == 1:
     from .collision_detection import CollisionDetection
@@ -53,7 +56,8 @@ import sys
 import random  # for true random numbers from os.urandom()
 
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
-                      "time_step", "timings"]
+                      "time_step", "timings", "force_cap"]
+
 IF LEES_EDWARDS == 1:
     setable_properties.append("lees_edwards_offset")
 
@@ -81,12 +85,14 @@ cdef class System(object):
         integrator
         auto_update_observables
         auto_update_correlators
+        auto_update_accumulators
         constraints
         lbboundaries
         ekboundaries
         collision_detection
         __seed
         cuda_init_handle
+        comfixed
 
     def __init__(self):
         global _system_created
@@ -103,6 +109,7 @@ cdef class System(object):
             self.integrator = integrate.Integrator()
             self.auto_update_observables = AutoUpdateObservables()
             self.auto_update_correlators = AutoUpdateCorrelators()
+            self.auto_update_accumulators = AutoUpdateAccumulators()
             if CONSTRAINTS:
                 self.constraints = Constraints()
             if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
@@ -112,6 +119,8 @@ cdef class System(object):
                 self.collision_detection = CollisionDetection()
             IF CUDA:
                 self.cuda_init_handle = cuda_init.CudaInitHandle()
+
+            self.comfixed = ComFixed()
             _system_created = True
         else:
             raise RuntimeError(
@@ -145,11 +154,25 @@ cdef class System(object):
             mpi_bcast_parameter(FIELD_BOXL)
 
         def __get__(self):
-            return np.array([box_l[0], box_l[1], box_l[2]])
+            return array_locked(np.array([box_l[0], box_l[1], box_l[2]]))
 
     property integ_switch:
         def __get__(self):
             return integ_switch
+
+    property force_cap:
+        """
+        If > 0, the magnitude of the force on the particles
+        are capped to this value.
+
+        type : float
+
+        """
+        def __get__(self):
+            return forcecap_get()
+
+        def __set__(self, cap):
+            forcecap_set(cap)
 
     property periodicity:
         """
@@ -183,7 +206,7 @@ cdef class System(object):
             periodicity[0] = periodic % 2
             periodicity[1] = int(periodic / 2) % 2
             periodicity[2] = int(periodic / 4) % 2
-            return periodicity
+            return array_locked(periodicity)
 
     property time:
         """
@@ -361,13 +384,14 @@ cdef class System(object):
     def change_volume_and_rescale_particles(self, d_new, dir="xyz"):
         """Change box size and rescale particle coordinates.
 
-        Parameters:
-        -----------
-        d_new : float
-                new box length
-        dir : str, optional
-              coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
-              Isotropic assumes a cubic box.
+        Parameters
+        ----------
+        d_new : :obj:`float`
+                New box length
+        dir : :obj:`str`, optional
+                Coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
+                Isotropic assumes a cubic box.
+
         """
 
         if d_new < 0:
@@ -385,10 +409,10 @@ cdef class System(object):
                 'Usage: change_volume_and_rescale_particles(<L_new>, [{ "x" | "y" | "z" | "xyz" }])')
 
     def volume(self):
+        """Return box volume of the cuboid box.
+
         """
-        Return box volume of the cuboid box
-        """
-        
+
         return self.box_l[0] * self.box_l[1] * self.box_l[2]
 
     def distance(self, p1, p2):
@@ -405,5 +429,22 @@ cdef class System(object):
         cdef double[3] res, a, b
         a = p1.pos
         b = p2.pos
+
         get_mi_vector(res, b, a)
         return np.array((res[0], res[1], res[2]))
+
+    IF EXCLUSIONS:
+        def auto_exclusions(self, distance):
+            """Automatically adds exclusions between particles
+            that are bonded.
+
+            This only considers pair bonds.
+
+            Parameters
+            ----------
+            distance : :obj:`int`
+                       Bond distance upto which the exlucsions should be added.
+
+            """
+            auto_exclusions(distance)
+

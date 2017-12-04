@@ -36,8 +36,8 @@
 const int pdb_SUCCESS = 0;
 const int pdb_ERROR = 1;
 
-float* pdb_charge_lattice = NULL;
-int* pdb_boundary_lattice = NULL;
+float* pdb_charge_lattice = nullptr;
+int* pdb_boundary_lattice = nullptr;
 
 typedef struct {
   float max_x;
@@ -76,9 +76,9 @@ unsigned int pdb_rhoindex_cartesian2linear(unsigned int x, unsigned int y, unsig
 
 int print_charge_field(char* filename) {
   FILE* fp;
-  if ((fp = fopen(filename,"w")) == NULL) return pdb_ERROR;
+  if ((fp = fopen(filename,"w")) == nullptr) return pdb_ERROR;
   
-  if( fp == NULL ) {
+  if( fp == nullptr ) {
     return 1;
   }
   
@@ -110,9 +110,9 @@ LOOKUP_TABLE default\n",
 
 int print_boundary_lattice(char* filename) {
   FILE* fp;
-  if ((fp = fopen(filename,"w")) == NULL) return pdb_ERROR;
+  if ((fp = fopen(filename,"w")) == nullptr) return pdb_ERROR;
   
-  if( fp == NULL ) {
+  if( fp == nullptr ) {
     return 1;
   }
   

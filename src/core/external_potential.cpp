@@ -25,7 +25,7 @@ ExternalPotential* external_potentials;
 int n_external_potentials;
 
 void external_potential_pre_init() {
-  external_potentials = NULL;
+  external_potentials = nullptr;
   n_external_potentials = 0;
 }
 
@@ -80,7 +80,7 @@ int lattice_read_file(Lattice* lattice, char* filename) {
   double size[3];
   double offset[3]={0,0,0};
   int dim=0;
-  if (fgets(first_line, 100, infile) == NULL) {
+  if (fgets(first_line, 100, infile) == nullptr) {
       fprintf(stderr, "Nothing read from file\n");
       return ES_ERROR;
   }
@@ -90,37 +90,37 @@ int lattice_read_file(Lattice* lattice, char* filename) {
   dim = atoi(token);
   if (dim<=0)  { fprintf(stderr, "Error reading dimensionality\n"); return ES_ERROR; }
   
-  token = strtok(NULL, " \t");
+  token = strtok(nullptr, " \t");
   if (!token) { fprintf(stderr, "Could not read box_l[0]\n"); return ES_ERROR; }
   size[0] = atof(token);
 
-  token = strtok(NULL, " \t");
+  token = strtok(nullptr, " \t");
   if (!token) { fprintf(stderr, "Could not read box_l[1]\n"); return ES_ERROR; }
   size[1] = atof(token);
   
-  token = strtok(NULL, " \t");
+  token = strtok(nullptr, " \t");
   if (!token) { fprintf(stderr, "Could not read box_l[2]\n"); return ES_ERROR;}
   size[2] = atof(token);
 
-  token = strtok(NULL, " \t");
+  token = strtok(nullptr, " \t");
   if (!token) { fprintf(stderr, "Could not read res[0]\n"); return ES_ERROR;}
   res[0] = atof(token);
   
-  token = strtok(NULL, " \t");
+  token = strtok(nullptr, " \t");
   if (!token) { fprintf(stderr, "Could not read res[1]\n"); return ES_ERROR;}
   res[1] = atof(token);
   
-  token = strtok(NULL, " \t");
+  token = strtok(nullptr, " \t");
   if (!token) { fprintf(stderr, "Could not read res[2]\n"); return ES_ERROR;}
   res[2] = atof(token);
 
-  token = strtok(NULL, " \t");
+  token = strtok(nullptr, " \t");
   if (token) {
     offset[0]=atof(token);
-    token = strtok(NULL, " \t");
+    token = strtok(nullptr, " \t");
     if (!token) { fprintf(stderr, "Could not read offset[1]\n"); return ES_ERROR;}
     offset[1] = atof(token);
-    token = strtok(NULL, " \t");
+    token = strtok(nullptr, " \t");
     if (!token) { fprintf(stderr, "Could not read offset[2]\n"); return ES_ERROR;}
     offset[2] = atof(token);
   }
@@ -168,15 +168,15 @@ int lattice_read_file(Lattice* lattice, char* filename) {
     if (!token) { fprintf(stderr, "Could not read pos[0]\n"); return ES_ERROR; }
     pos[0] = atof(token);
 
-    token = strtok(NULL, " \t");
+    token = strtok(nullptr, " \t");
     if (!token) { fprintf(stderr, "Could not read pos[1] in line:\n%s\n", line); return ES_ERROR; }
     pos[1] = atof(token);
     
-    token = strtok(NULL, " \t");
+    token = strtok(nullptr, " \t");
     if (!token) { fprintf(stderr, "Could not read pos[1]\n"); return ES_ERROR; }
     pos[2] = atof(token);
     for (i=0; i<dim;i++) {
-      token = strtok(NULL, " \t");
+      token = strtok(nullptr, " \t");
       if (!token) { fprintf(stderr, "Could not read f[%d]\n", i); return ES_ERROR; }
       f[i] = atof(token);
     }
@@ -206,10 +206,10 @@ int write_local_lattice_to_file(const char* filename_prefix, Lattice* lattice) {
   fprintf(outfile,"halo_grid %d %d %d\n", lattice->halo_grid[0], lattice->halo_grid[1], lattice->halo_grid[2]);
   fprintf(outfile,"halo_size %d\n", lattice->halo_size);
   
-  fprintf(outfile,"grid_volume %ld\n", lattice->grid_volume);
-  fprintf(outfile,"halo_grid_volume %ld\n", lattice->halo_grid_volume);
-  fprintf(outfile,"halo_grid_surface %ld\n", lattice->halo_grid_surface);
-  fprintf(outfile,"halo_offset %ld\n", lattice->halo_offset);
+  fprintf(outfile,"grid_volume %d\n", lattice->grid_volume);
+  fprintf(outfile,"halo_grid_volume %d\n", lattice->halo_grid_volume);
+  fprintf(outfile,"halo_grid_surface %d\n", lattice->halo_grid_surface);
+  fprintf(outfile,"halo_offset %d\n", lattice->halo_offset);
 
   fprintf(outfile,"dim %d\n", lattice->dim);
 

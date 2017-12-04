@@ -1,9 +1,8 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-  Max-Planck-Institute for Polymer Research, Theory Group
+  Copyright (C) 2016,2017 The ESPResSo project
 
   This file is part of ESPResSo.
+
 
   ESPResSo is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -31,11 +30,11 @@ namespace ScriptInterface {
 namespace Correlators {
 
 class AutoUpdateCorrelators : public ScriptObjectRegistry<Correlator> {
-  virtual void add_in_core(std::shared_ptr<Correlator> obj_ptr) {
+  virtual void add_in_core(std::shared_ptr<Correlator> obj_ptr) override {
     obj_ptr->correlator()->start_auto_update();
     ::Correlators::auto_update_correlators.push_back(obj_ptr->correlator());
   }
-  virtual void remove_in_core(std::shared_ptr<Correlator> obj_ptr) {
+  virtual void remove_in_core(std::shared_ptr<Correlator> obj_ptr) override {
     auto it = std::find(::Correlators::auto_update_correlators.begin(),
                         ::Correlators::auto_update_correlators.end(),
                         obj_ptr->correlator());

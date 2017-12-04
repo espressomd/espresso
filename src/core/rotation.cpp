@@ -45,7 +45,6 @@
 #include "particle_data.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
-#include "verlet.hpp"
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>

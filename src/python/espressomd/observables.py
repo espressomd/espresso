@@ -78,13 +78,13 @@ class MagneticDipoleMoment(Observable):
 
 
 @script_interface_register
-class ParticleAngularMomentum(Observable):
-    _so_name="Observables::ParticleAngularMomentum"
+class ParticleAngularVelocities(Observable):
+    _so_name="Observables::ParticleAngularVelocities"
 
 
 @script_interface_register
-class ParticleBodyAngularMomentum(Observable):
-    _so_name="Observables::ParticleBodyAngularMomentum"
+class ParticleBodyAngularVelocities(Observable):
+    _so_name="Observables::ParticleBodyAngularVelocities"
 
 
 @script_interface_register
@@ -122,3 +122,6 @@ class StressTensorAcf(Observable):
     _so_name="Observables::StressTensorAcf"
 
 
+@script_interface_register
+class CylindricalFluxDensityProfile(Observable):
+    _so_name="Observables::CylindricalFluxDensityProfile"

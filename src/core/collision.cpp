@@ -17,6 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
+#include <vector>
+
 #include "collision.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -410,13 +412,10 @@ std::vector<collision_struct> gather_global_collision_queue()
 {
     std::vector<collision_struct> res;
     
-    int displacements[n_nodes];                   // offsets into collisions
+    std::vector<int> displacements(n_nodes);                   // offsets into collisions
   
     // Initialize number of collisions gathered from all processors
-    int counts[n_nodes];
-    for (int a=0;a<n_nodes;a++)
-        counts[a]=0;
-    
+    std::vector<int> counts(n_nodes);
     // Total number of collisions
     int total_collisions;
     int tmp=local_collision_queue.size();
@@ -426,13 +425,13 @@ std::vector<collision_struct> gather_global_collision_queue()
       return std::move(res);
 
     // Gather number of collisions
-    MPI_Allgather(&tmp, 1, MPI_INT, counts, 1, MPI_INT, comm_cart);
+    MPI_Allgather(&tmp, 1, MPI_INT, &(counts[0]), 1, MPI_INT, comm_cart);
 
     // initialize displacement information for all nodes
     displacements[0]=0;
   
     // Find where to place collision information for each processor
-    int byte_counts[n_nodes];
+    std::vector<int> byte_counts(n_nodes);
     for (int k=1; k<n_nodes; k++)
         displacements[k]=displacements[k-1]+(counts[k-1])*sizeof(collision_struct);
     
@@ -444,7 +443,7 @@ std::vector<collision_struct> gather_global_collision_queue()
     res.resize(total_collisions);
 
     // Gather collision informtion from all nodes and send it to all nodes
-    MPI_Allgatherv(&(local_collision_queue[0]), byte_counts[this_node], MPI_BYTE, &(res[0]), byte_counts, displacements, MPI_BYTE, comm_cart);
+    MPI_Allgatherv(&(local_collision_queue[0]), byte_counts[this_node], MPI_BYTE, &(res[0]), &(byte_counts[0]), &(displacements[0]), MPI_BYTE, comm_cart);
 
     return std::move(res);
 }

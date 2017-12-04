@@ -22,7 +22,7 @@ from __future__ import print_function
 import unittest as ut
 import espressomd
 import numpy as np
-from espressomd.interactions import HarmonicBond,Angle_Harmonic
+from espressomd.interactions import HarmonicBond,AngleHarmonic
 import numpy as np
 from random import shuffle
 
@@ -200,7 +200,7 @@ class CollisionDetection(ut.TestCase):
 
           # Check placement
           if rel_to==p1.id:
-            dist_centers=p2.pos-p1.pos
+            dist_centers=np.copy(p2.pos-p1.pos)
           else:
             dist_centers=p1.pos-p2.pos
           expected_pos=self.s.part[rel_to].pos+self.s.collision_detection.vs_placement *dist_centers
@@ -375,8 +375,8 @@ class CollisionDetection(ut.TestCase):
 
     
 
-    #@ut.skipIf(not espressomd.has_features("ANGLE_HARMONIC"),"Tests skipped because ANGLE_HARMONIC not compiled in")
-    def test_angle_harmonic(self):
+    #@ut.skipIf(not espressomd.has_features("AngleHarmonic"),"Tests skipped because AngleHarmonic not compiled in")
+    def test_AngleHarmonic(self):
         # Setup particles
         self.s.part.clear()
         dx=np.array((1,0,0))
@@ -398,7 +398,7 @@ class CollisionDetection(ut.TestCase):
         # Setup bonds
         res=181
         for i in range(0,res,1):
-           self.s.bonded_inter[i+2]=Angle_Harmonic(bend=1,phi0=float(i)/(res-1)*np.pi)
+           self.s.bonded_inter[i+2]=AngleHarmonic(bend=1,phi0=float(i)/(res-1)*np.pi)
         cutoff=0.11
         self.s.collision_detection.set_params(mode="bind_three_particles",bond_centers=self.H,bond_three_particles=2,three_particle_binding_angle_resolution=res,distance=cutoff)
         self.s.integrator.run(0,recalc_forces=True)
@@ -443,9 +443,9 @@ class CollisionDetection(ut.TestCase):
                     p_k=self.s.part[k]
                     
                     # Normalized distnace vectors
-                    d_ij=p_j.pos-p_i.pos
-                    d_ik=p_k.pos-p_i.pos
-                    d_jk=p_k.pos-p_j.pos
+                    d_ij=np.copy(p_j.pos-p_i.pos)
+                    d_ik=np.copy(p_k.pos-p_i.pos)
+                    d_jk=np.copy(p_k.pos-p_j.pos)
                     d_ij/=np.sqrt(np.sum(d_ij**2))
                     d_ik/=np.sqrt(np.sum(d_ik**2))
                     d_jk/=np.sqrt(np.sum(d_jk**2))
