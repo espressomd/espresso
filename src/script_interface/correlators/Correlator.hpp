@@ -36,29 +36,42 @@ namespace ScriptInterface {
 namespace Correlators {
 
 class Correlator : public AutoParameters {
+  using CoreCorr = ::Correlators::Correlator;
+
 public:
   Correlator() {
     using Utils::as_const;
     /* Only args can be changed after construction. */
-    add_parameters({{"tau_lin", m_correlator->tau_lin()},
-                    {"tau_max", m_correlator->tau_max()},
-                    {"dt", m_correlator->dt()},
-                    {"compress1", m_correlator->compress1()},
-                    {"compress2", m_correlator->compress2()},
-                    {"corr_operation", m_correlator->correlation_operation()},
-                    {"args", m_correlator->correlation_args},
-                    {"dim_corr", m_correlator->dim_corr()},
-                    {"obs1", as_const(m_obs1)},
-                    {"obs2", as_const(m_obs2)},
-                    {"n_result", m_correlator->n_result()}});
+    add_parameters(
+        {{"tau_lin", m_correlator, &CoreCorr::tau_lin},
+         {"tau_max", m_correlator, &CoreCorr::tau_max},
+         {"dt", m_correlator, &CoreCorr::dt},
+         {"compress1", m_correlator, &CoreCorr::compress1},
+         {"compress2", m_correlator, &CoreCorr::compress2},
+         {"corr_operation", m_correlator, &CoreCorr::correlation_operation},
+         {"args", m_correlator, &CoreCorr::set_correlation_args,
+          &CoreCorr::correlation_args},
+         {"dim_corr", m_correlator, &CoreCorr::dim_corr},
+         {"obs1", as_const(m_obs1)},
+         {"obs2", as_const(m_obs2)},
+         {"n_result", m_correlator, &CoreCorr::n_result}});
   }
 
   void construct(VariantMap const &args) override {
     set_from_args(m_obs1, args, "obs1");
-    set_from_args(m_obs2, args, "obs2");
+    if (args.count("obs2"))
+      set_from_args(m_obs2, args, "obs2");
+    else
+      m_obs2 = m_obs1;
 
-    m_correlator = std::make_shared<::Correlators::Correlator>(
-        get_value<int>(args, "tau_lin"), get_value<double>(args, "tau_max"));
+    m_correlator = std::make_shared<CoreCorr>(
+        get_value<int>(args, "tau_lin"), get_value<double>(args, "tau_max"),
+        get_value<double>(args, "dt"),
+        /* These two are optional */
+        get_value_or<std::string>(args, "compess1", ""),
+        get_value_or<std::string>(args, "compess2", ""),
+        get_value<std::string>(args, "corr_operation"), m_obs1->observable(),
+        m_obs2->observable());
   }
 
   std::shared_ptr<::Correlators::Correlator> correlator() {
@@ -90,7 +103,7 @@ public:
 
 private:
   /* The actual correlator */
-  std::shared_ptr<::Correlators::Correlator> m_correlator;
+  std::shared_ptr<CoreCorr> m_correlator;
 
   std::shared_ptr<Observables::Observable> m_obs1;
   std::shared_ptr<Observables::Observable> m_obs2;

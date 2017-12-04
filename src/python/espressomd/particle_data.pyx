@@ -1997,9 +1997,9 @@ def _add_particle_slice_properties():
         """
         Getter function that copies attribute from every member of
         particle_slice into an array.
-        
+
         """
-        
+
         N = len(particle_slice.id_selection)
         if N == 0:
             return np.empty(0, dtype=type(None))

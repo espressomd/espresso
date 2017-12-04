@@ -115,6 +115,25 @@ T get_value(VariantMap const &vals, std::string const &name) {
 }
 
 /**
+ * @brief Get a value from a VariantMap by name, or return a default
+ *        value if it does not exsist.
+ */
+template <typename T>
+T get_value_or(VariantMap const &vals, std::string const &name,
+               T const &default_) {
+  if (vals.count(name)) {
+    try {
+      return get_value<T>(vals.at(name));
+    } catch (std::out_of_range const &) {
+      /* TODO: Better exceptions. */
+      throw;
+    }
+  } else {
+    return default_;
+  }
+}
+
+/**
  * @brief Make a new T with arguments extracted from a VariantMap.
  */
 template <typename T, typename... Types, typename... ArgNames>
