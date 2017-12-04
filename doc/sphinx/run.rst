@@ -222,15 +222,16 @@ ensemble is given by the criterion :cite:`smith94a`
 
 where :math:`\Delta E=E_\mathrm{new}-E_\mathrm{old}` is the change in potential energy,
 :math:`V` is the simulation box volume,
-and :math:`\beta=1/k_\mathrm{B}T`.
+and :math:`\beta=1/k_\mathrm{B}T`. 
 The extent of reaction, :math:`\xi=1` for the forward, and
 :math:`\xi=-1` for the backward direction. 
 The parameter :math:`\Gamma` proportional to the reaction constant. It is defined as
 
 .. math::
 
-   \Gamma = \prod_i \Bigl(\frac{N_i}{V} \Bigr)^{\bar\nu} = V^{-\bar\nu} \prod_i N_i^{\bar\nu_i} = K_c(c^{\ominus}=1/\sigma^3)
+   \Gamma = \prod_i \Bigl(\frac{\left<N_i\right>}{V} \Bigr)^{\bar\nu} = V^{-\bar\nu} \prod_i \left<N_i\right>^{\nu_i} = K_c(c^{\ominus}=1/\sigma^3)
 
+where :math:`\left<N_i\right>/V` is the average number density of particles of type :math:`i`.
 Note that the dimension of :math:`\Gamma` is :math:`V^{\bar\nu}`, therefore its
 units must be consistent with the units in which Espresso measures the box volume,
 i.e. :math:`\sigma^3`.
