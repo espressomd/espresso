@@ -71,51 +71,69 @@ def validate_params(_params, default):
 
 # wrapper function to expose to the user interface
 def create_polymer(**kwargs):
-    """
-    Wrapper function to setup polymers.
+    """ Generators have a ``Yields`` section instead of a ``Returns`` section.
 
     Parameters
     ----------
+    n : :obj:`intd`
+        The upper limit of the range to generate, from 0 to `n` - 1.
     N_P : :obj:`int`
-          Number of polymer chains
+        Number of polymer chains
     MPC : :obj:`int`
-          Number of monomers per chain
+        Number of monomers per chain
     bond_length : :obj:`float`
-                  distance between adjacent monomers in a chain
+        distance between adjacent monomers in a chain
+    bond : :obj:`espressomd.interactions.BondedInteraction`
+        The bonded interaction to be set up between the monomers. 
     start_id : :obj:`int`, optional
-               Particle ID of the first monomer, all other particles will have larger IDs
-    start_pos : array_like :obj:`float`
-                Position of the first monomer
+        Particle ID of the first monomer, all other particles will have larger IDs. Defaults to 0
+    start_pos : array_like :obj:`float`. Defaults to numpy.array([0, 0, 0])
+        Position of the first monomer
     mode : :obj:`int`, optional
-           Selects a specific random walk procedure for the
-           polymer setup mode = 1 uses a common random walk,
-           mode = 2 produces a pruned self-avoiding random walk,
-           and mode = 0 a self-avoiding random walk. Note that
-           mode = 2 does not produce a true self- avoiding
-           random walk distribution but is much faster than mode = 0
+        Selects a specific random walk procedure for the
+        polymer setup mode = 1 uses a common random walk,
+        mode = 2 produces a pruned self-avoiding random walk,
+        and mode = 0 a self-avoiding random walk. Note that
+        mode = 2 does not produce a true self-avoiding
+        random walk distribution but is much faster than mode = 0. Defaults to 1
     shield : :obj:`float`, optional
-             Shielding radius for the pruned self-avoiding walk mode
+        Shielding radius for the pruned self-avoiding walk mode. Defaults to 0
     max_tries : :obj:`int`, optional
-                Maximal number of attempts to set up a polymer,
-                default value is 30,000. Depending on the random walk
-                mode and the polymer length this value needs to be
-                adapted. 
+        Maximal number of attempts to set up a polymer,
+        default value is 1,000. Depending on the random walk
+        mode and the polymer length this value needs to be
+        adapted. 
     val_poly : :obj:`float`, optional
-               Valency of the monomers, default is 0.0
+        Valency of the monomers, default is 0.0
     charge_distance : :obj:`int`, optional
-                      Distance between charged monomers along the chain. 
+        Distance between charged monomers along the chain. Default is 1
     type_poly_neutral : :obj:`int`, optional
-                        Particle type of neutal monomers
+        Particle type of neutal monomers, default is 0.
     type_poly_charged : :obj:`int`, optional
-                        Particle type for charged monomers
+        Particle type for charged monomers, default is 1
     angle : :obj:`float`, optional
     angle2 : :obj:`float`, optional
-             The both angles angle and angle2 allow to set up
-             planar or helical polymers, they fix the angles
-             between adjacent bonds.
+        The both angles angle and angle2 allow to set up
+        planar or helical polymers, they fix the angles
+        between adjacent bonds.
     pos2 : array_like, optional
-           Sets the position of the second monomer. 
+        Sets the position of the second monomer. Defaults to numpy.array([0, 0, 0]).
+    constraints : :obj:`int`, optional
+        Either 0 or 1, default is 0. If 1, the particle setup-up tries to obey previously defined constraints.
+        
+    Examples
+    --------
+    This example sets 2 polyelectrolyte chains of the length 10. Beads are connected by FENE potential.
+
+    >>> fene = interactions.FeneBond(k=10, d_r_max=2)
+    >>> polymer.create_polymer(
+            N_P = 2, 
+            MPC = 10, 
+            bond_length = 1, 
+            bond = fene, 
+            val_poly = -1.0)
     """
+
     params=dict()
     default_params=dict()
     default_params["N_P"] = 0 
