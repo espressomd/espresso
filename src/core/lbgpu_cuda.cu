@@ -1558,8 +1558,8 @@ __global__ void apply_LE_position_offset(LB_nodes_gpu n_front, LB_nodes_gpu n_ba
       (weight) * n_back.vd[ (17 + ii*LBQ ) * para.number_of_nodes + source2_index ];
     }
     else if(y == para.dim_y-1) {
-      source1_xyz[0] = (static_cast<int>(floorf(x - lees_edwards_offset)) - para.dim_x) % para.dim_x;
-      source2_xyz[0] = (static_cast<int>(ceilf(x - lees_edwards_offset)) - para.dim_x) % para.dim_x;
+      source1_xyz[0] = (static_cast<int>(floorf(x - lees_edwards_offset)) + para.dim_x) % para.dim_x;
+      source2_xyz[0] = (static_cast<int>(ceilf(x - lees_edwards_offset)) + para.dim_x) % para.dim_x;
 
       //printf(floorf(lees_edwards_offset) + para.dim_x) 
       
@@ -2433,9 +2433,10 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
 
 // TODO: Calculate new indices for nodes at the boundaries
   
-  unsigned int pos[3];
-  index_to_xyz(node_index[0], pos);
-  
+  unsigned int upper_pos[3];
+  unsigned int lower_pos[3];
+  index_to_xyz(node_index[2], upper_pos);
+  index_to_xyz(node_index[0], lower_pos);
   //int upper_le_integer_shift;
   //int lower_le_integer_shift;
   //float weight;
@@ -2467,28 +2468,59 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
   y = left_node_index[1] + para.dim_y;
   z = left_node_index[2] + para.dim_z;
 
-  
+  //printf(" \n Node position = %u %u %u \n", pos[0], pos[1], pos[2]);
 
   //weight = fmodf(lees_edwards_offset + para.dim_x*para.agrid, para.agrid) / para.agrid;
   //upper_le_integer_shift = (static_cast<int>(floorf(lees_edwards_offset)) + para.dim_x) % para.dim_x;
   //printf("le_offset: %f, le_integer_shift: %i, non-integer-offset: %f\n", lees_edwards_offset, upper_le_integer_shift, weight);
   //printf("Node position = %u %u %u \n", pos[0], pos[1], pos[2]);
 
-  if(pos[1] == para.dim_y -1 && particle_position[1] > para.dim_y- 0.5 * para.agrid){
+  if(particle_position[1] > para.dim_y- 0.5 * para.agrid){
     
-    
+    //printf("Upper node position = %u %u %u \n", pos[0], pos[1], pos[2]);
     node_index[2] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[3] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[6] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
     node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+   
+    unsigned int pos_2[3];
+    unsigned int pos_3[3];
+    unsigned int pos_6[3];
+    unsigned int pos_7[3];
+    
+    index_to_xyz(node_index[2], pos_2);
+    index_to_xyz(node_index[3], pos_3);
+    index_to_xyz(node_index[6], pos_6);
+    index_to_xyz(node_index[7], pos_7);
+   
+    printf("\nNode 2 = %u %u %u \n", pos_2[0], pos_2[1], pos_2[2]);
+    printf("Node 3 = %u %u %u \n", pos_3[0], pos_3[1], pos_3[2]);
+    printf("Node 6 = %u %u %u \n", pos_6[0], pos_6[1], pos_6[2]);
+    printf("Node 7 = %u %u %u \n", pos_7[0], pos_7[1], pos_7[2]);
     }
   
-  if(pos[1] == 0 && particle_position[1] <  0.5 * para.agrid && particle_position[1] != 0.0){
+  if(particle_position[1] < 0.5 * para.agrid){
     //y = para.dim_y;
+    //printf("Lower node position = %u %u %u \n", pos[0], pos[1], pos[2]);
     node_index[0] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[1] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[4] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
     node_index[5] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+   
+    unsigned int pos_0[3];
+    unsigned int pos_1[3];
+    unsigned int pos_4[3];
+    unsigned int pos_5[3];
+    
+    index_to_xyz(node_index[0], pos_0);
+    index_to_xyz(node_index[1], pos_1);
+    index_to_xyz(node_index[4], pos_4);
+    index_to_xyz(node_index[5], pos_5);
+    
+    printf("\nNode 0 = %u %u %u \n", pos_0[0], pos_0[1], pos_0[2]);
+    printf("Node 1 = %u %u %u \n", pos_1[0], pos_1[1], pos_1[2]);
+    printf("Node 4 = %u %u %u \n", pos_4[0], pos_4[1], pos_4[2]);
+    printf("Node 5 = %u %u %u \n", pos_5[0], pos_5[1], pos_5[2]);
     }
 
 #endif 
@@ -2600,12 +2632,12 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   printf("le_offset: %f, le_integer_shift: %i, non-integer-offset: %f\n", lees_edwards_offset, upper_le_integer_shift, weight);
  
  if(position[1] > para.dim_y-para.agrid) {
-    le_position = fmodf(position[0] - lees_edwards_offset, para.dim_x*para.agrid);
+    le_position = fmodf(position[0] - lees_edwards_offset + para.dim_x*para.agrid, para.dim_x*para.agrid);
     printf("Position shift upper boundary: %f => %f", position[0] ,le_position);
     }
- if(position[1] < para.agrid && position[1] != 0.0) {
-    le_position = fmodf(position[0] + lees_edwards_offset, para.dim_x*para.agrid);
-    printf("Position shift upper boundary %f => %f", position[0] ,le_position);
+ if(position[1] < para.agrid) {
+    le_position = fmodf(position[0] + lees_edwards_offset + para.dim_x*para.agrid, para.dim_x*para.agrid);
+    printf("Position shift lower boundary %f => %f", position[0] ,le_position);
     }
 #endif
 
