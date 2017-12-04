@@ -2,7 +2,7 @@
 #include "core/random.hpp"
 
 //---HARMONIC DUMBBELL
-int Bond::HarmonicDumbbell::add_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], double force[3]) const {
+int Bond::HarmonicDumbbell::calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], double force[3]) const {
   #ifdef ROTATION
   int i;
   double fac;
@@ -51,7 +51,7 @@ int Bond::HarmonicDumbbell::add_bonded_pair_force(Particle *p1, Particle *p2, do
   return 0;
 }
 
-int Bond::HarmonicDumbbell::add_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3], double *_energy) const {
+int Bond::HarmonicDumbbell::calc_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3], double *_energy) const {
 
   #ifdef ROTATION
   double dist2 = sqrlen(dx);

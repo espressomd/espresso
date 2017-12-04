@@ -1,6 +1,6 @@
 #include "Umbrella.hpp"
 
-int Bond::Umbrella::add_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], 
+int Bond::Umbrella::calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], 
 					  double force[3]) const {
   double distn;
   double fac=0.0;
@@ -16,7 +16,7 @@ int Bond::Umbrella::add_bonded_pair_force(Particle *p1, Particle *p2, double dx[
 
 }
 
-int Bond::Umbrella::add_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3], 
+int Bond::Umbrella::calc_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3], 
 					   double *_energy) const {
   double distn;
   distn = dx[m_dir];  

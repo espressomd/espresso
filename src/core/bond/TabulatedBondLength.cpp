@@ -7,7 +7,7 @@
     than the tabulated range it uses a linear extrapolation based on
     the first two tabulated force values.
     Needs feature TABULATED compiled in (see \ref config.hpp). */
-int Bond::TabulatedBondLength::add_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], 
+int Bond::TabulatedBondLength::calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], 
 			  double force[3]) const 
 {
 
@@ -37,7 +37,7 @@ int Bond::TabulatedBondLength::add_bonded_pair_force(Particle *p1, Particle *p2,
     quadratic extrapolation based on the first two tabulated force
     values and the first tabulated energy value. 
     Needs feature TABULATED compiled in (see \ref config.hpp). */
-int Bond::TabulatedBondLength::add_bonded_pair_energy(Particle *p1, Particle *p2, 
+int Bond::TabulatedBondLength::calc_bonded_pair_energy(Particle *p1, Particle *p2, 
 			   double dx[3], double *_energy) const
 {
 

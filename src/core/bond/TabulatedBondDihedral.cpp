@@ -7,7 +7,7 @@
     add it to the particle forces. This function is not tested yet.
     Needs feature TABULATED compiled in (see \ref config.hpp). */
     //force calculation
-int Bond::TabulatedBondDihedral::add_bonded_four_particle_force(Particle *p1, Particle *p2, 
+int Bond::TabulatedBondDihedral::calc_bonded_four_particle_force(Particle *p1, Particle *p2, 
 								Particle *p3, Particle *p4, 
 								double force[3], double force2[3], 
 								double force3[3], double force4[3]) 
@@ -59,7 +59,7 @@ int Bond::TabulatedBondDihedral::add_bonded_four_particle_force(Particle *p1, Pa
     p3 and p4. This function is not tested yet. 
     Needs feature TABULATED compiled in (see \ref config.hpp). */
 //energy calculation
-int Bond::TabulatedBondDihedral::add_bonded_four_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
+int Bond::TabulatedBondDihedral::calc_bonded_four_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
 				    Particle *p4, double *_energy) const
 {
   /* vectors for dihedral calculations. */

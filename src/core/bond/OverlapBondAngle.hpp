@@ -13,9 +13,9 @@ namespace Bond {
     {m_bondtype = BondType::BONDED_IA_OVERLAPPED;}
 
     //force *
-    int add_bonded_three_particle_force(Particle *p1, Particle *p2, Particle *p3, double force[3], double force2[3]) const override;
+    int calc_bonded_three_particle_force(Particle *p1, Particle *p2, Particle *p3, double force[3], double force2[3]) const override;
     //energy *
-    int add_bonded_three_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
+    int calc_bonded_three_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
 						 double *_energy) const override;
 
   };

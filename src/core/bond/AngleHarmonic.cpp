@@ -13,7 +13,7 @@
     @param force2 returns force of particle 2
     @return 0
 */
-int Bond::AngleHarmonic::add_bonded_three_particle_force(Particle *p1, Particle *p2, Particle *p3, double force[3], double force2[3]) const {
+int Bond::AngleHarmonic::calc_bonded_three_particle_force(Particle *p1, Particle *p2, Particle *p3, double force[3], double force2[3]) const {
 
   double cosine, vec1[3], vec2[3], d1i, d2i, dist2,  fac, f1=0.0, f2=0.0;
   int j;
@@ -64,7 +64,7 @@ int Bond::AngleHarmonic::add_bonded_three_particle_force(Particle *p1, Particle 
     @param _energy   return energy pointer.
     @return 0.
 */
-int Bond::AngleHarmonic::add_bonded_three_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
+int Bond::AngleHarmonic::calc_bonded_three_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
 							  double *_energy) const {
   double cosine, vec1[3], vec2[3],  d1i, d2i, dist2;
   int j;

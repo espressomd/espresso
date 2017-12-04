@@ -12,7 +12,7 @@
     connecting vectors. It is assumed that the potential is tabulated
     for all angles between 0 and Pi. 
     Needs feature TABULATED compiled in (see \ref config.hpp). */
-int Bond::TabulatedBondAngle::add_bonded_three_particle_force(Particle *p1, Particle *p2, Particle *p3, double force[3], 
+int Bond::TabulatedBondAngle::calc_bonded_three_particle_force(Particle *p1, Particle *p2, Particle *p3, double force[3], 
 				    double force2[3]) const
 {
 
@@ -59,7 +59,7 @@ int Bond::TabulatedBondAngle::add_bonded_three_particle_force(Particle *p1, Part
     p1 and p3. It is assumed that the potential is tabulated
     for all angles between 0 and Pi. 
     Needs feature TABULATED compiled in (see \ref config.hpp). */
-int Bond::TabulatedBondAngle::add_bonded_three_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
+int Bond::TabulatedBondAngle::calc_bonded_three_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
 				     double *_energy) const
 {
 

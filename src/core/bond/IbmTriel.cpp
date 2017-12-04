@@ -3,7 +3,7 @@
 #include "interaction_data.hpp" // for NeoHookean
 
 //force
-int Bond::IbmTriel::add_bonded_three_particle_force(Particle *p1, Particle *p2, Particle *p3, 
+int Bond::IbmTriel::calc_bonded_three_particle_force(Particle *p1, Particle *p2, Particle *p3, 
 						    double force[3], double force2[3]) const {
 
   
@@ -170,7 +170,7 @@ int Bond::IbmTriel::add_bonded_three_particle_force(Particle *p1, Particle *p2, 
 }
 
 //energy
-int Bond::IbmTriel::add_bonded_three_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
+int Bond::IbmTriel::calc_bonded_three_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
 						     double *_energy) const {
   *_energy = 0.0;
   return 0;

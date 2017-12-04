@@ -3,7 +3,7 @@
 #include "core/random.hpp"
 
 //---HARMONIC BOND---
-int Bond::Harmonic::add_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], double force[3]) const {
+int Bond::Harmonic::calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], double force[3]) const {
   int i;
   double fac;
   double dist2 = sqrlen(dx);
@@ -31,11 +31,10 @@ int Bond::Harmonic::add_bonded_pair_force(Particle *p1, Particle *p2, double dx[
     force[i] = fac*dx[i];
   ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: HARMONIC f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist2,fac));
   ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: HARMONIC f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist2,fac));
-
   return 0;
 }
 
-int Bond::Harmonic::add_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3], double *_energy) const {
+int Bond::Harmonic::calc_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3], double *_energy) const {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
 

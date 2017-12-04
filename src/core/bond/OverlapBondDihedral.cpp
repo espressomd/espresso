@@ -16,7 +16,7 @@
     @return 0
     Needs feature OVERLAPPED compiled in (see \ref config.hpp).
 */
-int Bond::OverlapBondDihedral::add_bonded_four_particle_force(Particle *p1, Particle *p2, 
+int Bond::OverlapBondDihedral::calc_bonded_four_particle_force(Particle *p1, Particle *p2, 
 							      Particle *p3, Particle *p4, 
 							      double force[3], double force2[3], 
 							      double force3[3], double force4[3]) 
@@ -105,7 +105,7 @@ int Bond::OverlapBondDihedral::add_bonded_four_particle_force(Particle *p1, Part
     @return 0.
     Needs feature OVERLAPPED compiled in (see \ref config.hpp).
 */
-int Bond::OverlapBondDihedral::add_bonded_four_particle_energy(Particle *p1, Particle *p2, 
+int Bond::OverlapBondDihedral::calc_bonded_four_particle_energy(Particle *p1, Particle *p2, 
 							       Particle *p3, Particle *p4, 
 							       double *_energy) const
 {

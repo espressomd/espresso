@@ -2,7 +2,7 @@
 #include"grid.hpp" //get_mi_vector unfold_position
 #include"utils.hpp" //get_n_triangle
 
-int Bond::MembraneCollision::add_bonded_four_particle_force(Particle *p1, Particle *p2, 
+int Bond::MembraneCollision::calc_bonded_four_particle_force(Particle *p1, Particle *p2, 
 							    Particle *p3, Particle *p4, 
 							    double force[3], double force2[3], 
 							    double force3[3], double force4[3]) 
@@ -66,7 +66,7 @@ int Bond::MembraneCollision::add_bonded_four_particle_force(Particle *p1, Partic
 	get_n_triangle(fp2,fp3,fp4,n);
 	dn=normr(n);
     if ( fabs(dn) < 0.001 )
-		printf("MembraneCollision.cpp, add_bonded_four_particle_force: Length of outward vector is close to zero!\n");
+		printf("MembraneCollision.cpp, calc_bonded_four_particle_force: Length of outward vector is close to zero!\n");
     for(j=0;j<3;j++){
 	  //ifdef cases has to be fixed for all bond classes!!!
 #ifdef MEMBRANE_COLLISION
@@ -77,7 +77,7 @@ int Bond::MembraneCollision::add_bonded_four_particle_force(Particle *p1, Partic
 
 }
 
-int Bond::MembraneCollision::add_bonded_four_particle_energy(Particle *p1, Particle *p2, 
+int Bond::MembraneCollision::calc_bonded_four_particle_energy(Particle *p1, Particle *p2, 
 							     Particle *p3,Particle *p4, 
 							     double *_energy) const {
 

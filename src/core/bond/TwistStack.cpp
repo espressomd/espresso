@@ -60,7 +60,7 @@ inline double angle(double *x1, double *x2) {
 #endif /* TWIST_STACK_DEBUG */
 
 //***member functions***
-int Bond::TwistStack::add_bonded_eight_particle_force(Particle *si1, Particle *bi1, Particle *bi2, 
+int Bond::TwistStack::calc_bonded_eight_particle_force(Particle *si1, Particle *bi1, Particle *bi2, 
 						      Particle *si2, Particle *sj1, Particle *bj1, 
 						      Particle *bj2, Particle *sj2,
 						      double f_si1[3], double f_bi1[3], 
@@ -464,7 +464,7 @@ int Bond::TwistStack::add_bonded_eight_particle_force(Particle *si1, Particle *b
 
 }
 
-int Bond::TwistStack::add_bonded_eight_particle_energy(Particle *si1, Particle *bi1, Particle *bi2, 
+int Bond::TwistStack::calc_bonded_eight_particle_energy(Particle *si1, Particle *bi1, Particle *bi2, 
 						       Particle *si2, Particle *sj1, Particle *bj1, 
 						       Particle *bj2, Particle *sj2, double *_energy)
  const

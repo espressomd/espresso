@@ -1,7 +1,7 @@
 #include "SubtLj.hpp"
 #include "interaction_data.hpp" // for iaparams LJ
 
-int Bond::SubtLj::add_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], double force[3]) const {
+int Bond::SubtLj::calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], double force[3]) const {
   int i;
   double fac_lj=0.0;
   IA_parameters *ia_params;
@@ -41,7 +41,7 @@ int Bond::SubtLj::add_bonded_pair_force(Particle *p1, Particle *p2, double dx[3]
   return 0;
 }
 
-int Bond::SubtLj::add_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3], double *_energy) const {
+int Bond::SubtLj::calc_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3], double *_energy) const {
   double energy=0.0;
   IA_parameters *ia_params;
   double r_off, frac2, frac6;

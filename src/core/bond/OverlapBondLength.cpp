@@ -12,7 +12,7 @@
     @return 0.
     Needs feature OVERLAPPED compiled in (see \ref config.hpp).
 */
-int Bond::OverlapBondLength::add_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], 
+int Bond::OverlapBondLength::calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], 
 						   double force[3]) const 
 {
 
@@ -75,7 +75,7 @@ int Bond::OverlapBondLength::add_bonded_pair_force(Particle *p1, Particle *p2, d
     @return 0.
     Needs feature OVERLAPPED compiled in (see \ref config.hpp).
 */
-int Bond::OverlapBondLength::add_bonded_pair_energy(Particle *p1, Particle *p2, 
+int Bond::OverlapBondLength::calc_bonded_pair_energy(Particle *p1, Particle *p2, 
 						    double dx[3], double *_energy) const
 {
 

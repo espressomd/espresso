@@ -60,7 +60,7 @@ inline double angle(double *x1, double *x2) {
 // class implementation
 
 //force calculation
-int Bond::HydrogenBond::add_bonded_four_particle_force(Particle *p1, Particle *p2, Particle *p3, 
+int Bond::HydrogenBond::calc_bonded_four_particle_force(Particle *p1, Particle *p2, Particle *p3, 
 				     Particle *p4, double force[3], double force2[3], 
 				     double force3[3], double force4[3]) const {
   /* Base-Base and Sugar-Sugar vectors */
@@ -321,7 +321,7 @@ int Bond::HydrogenBond::add_bonded_four_particle_force(Particle *p1, Particle *p
 
 
 //energy calculation
-int Bond::HydrogenBond::add_bonded_four_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
+int Bond::HydrogenBond::calc_bonded_four_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
 				    Particle *p4, double *_energy) const {
 
   /* Base-Base and Sugar-Sugar vectors */

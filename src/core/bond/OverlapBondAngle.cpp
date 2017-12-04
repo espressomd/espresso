@@ -15,7 +15,7 @@
     @return 0
     Needs feature OVERLAPPED compiled in (see \ref config.hpp).
 */
-int Bond::OverlapBondAngle::add_bonded_three_particle_force(Particle *p1, Particle *p2, 
+int Bond::OverlapBondAngle::calc_bonded_three_particle_force(Particle *p1, Particle *p2, 
 							    Particle *p3, double force[3], 
 							    double force2[3]) const
 {
@@ -92,7 +92,7 @@ int Bond::OverlapBondAngle::add_bonded_three_particle_force(Particle *p1, Partic
     @return 0.
     Needs feature OVERLAPPED compiled in (see \ref config.hpp).
 */
-int Bond::OverlapBondAngle::add_bonded_three_particle_energy(Particle *p1, Particle *p2, 
+int Bond::OverlapBondAngle::calc_bonded_three_particle_energy(Particle *p1, Particle *p2, 
 							     Particle *p3, double *_energy) const
 {
 

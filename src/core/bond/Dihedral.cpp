@@ -68,7 +68,7 @@ void Bond::Dihedral::calc_dihedral_angle(Particle *p1, Particle *p2, Particle *p
     more general new dihedral form by Ana.
 */
 //p1->p2, p2->p1, force->force2, force2-> force
-int Bond::Dihedral::add_bonded_four_particle_force(Particle *p2, Particle *p1, Particle *p3, 
+int Bond::Dihedral::calc_bonded_four_particle_force(Particle *p2, Particle *p1, Particle *p3, 
 				   Particle *p4, double force2[3], double force[3], 
 						   double force3[3], double force4[3]) const {
 
@@ -141,7 +141,7 @@ int Bond::Dihedral::add_bonded_four_particle_force(Particle *p2, Particle *p1, P
 //p1->p2, p2->p1
 /** calculate dihedral energy between particles p1, p2 p3 and p4 
     Written by Arijit Maitra, adapted to new force interface by Hanjo */
-int Bond::Dihedral::add_bonded_four_particle_energy(Particle *p2, Particle *p1, Particle *p3, 
+int Bond::Dihedral::calc_bonded_four_particle_energy(Particle *p2, Particle *p1, Particle *p3, 
 						    Particle *p4, double *_energy) const {
 
   /* vectors for dihedral calculations. */

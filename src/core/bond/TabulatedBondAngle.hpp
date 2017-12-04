@@ -1,10 +1,10 @@
 #ifndef TABULATED_BOND_ANGLE_BOND_CLASS_H
 #define TABULATED_BOND_ANGLE_BOND_CLASS_H
-#include "ThreeParticleBond.hpp"
+#include "ThreeParticlePressureBond.hpp"
 #include "Tabulated.hpp"
 
 namespace Bond {
-  class TabulatedBondAngle : public ThreeParticleBond, public Tabulated {
+  class TabulatedBondAngle : public ThreeParticlePressureBond, public Tabulated {
   public:
 
     //constructor
@@ -14,9 +14,9 @@ namespace Bond {
     {m_bondtype = BondType::BONDED_IA_TABULATED;}
 
     //force *
-    int add_bonded_three_particle_force(Particle *p1, Particle *p2, Particle *p3, double force[3], double force2[3]) const override;
+    int calc_bonded_three_particle_force(Particle *p1, Particle *p2, Particle *p3, double force[3], double force2[3]) const override;
     //energy *
-    int add_bonded_three_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
+    int calc_bonded_three_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
 						 double *_energy) const override;
     // for pressure.hpp
     int calc_3body_forces(Particle *p_mid, Particle *p_left,

@@ -5,7 +5,7 @@
 #include "shapes/Wall.hpp" // for shapes
 
 
-int Bond::AngleDist::add_bonded_three_particle_force(Particle *p1, Particle *p2, Particle *p3, double force[3], 
+int Bond::AngleDist::calc_bonded_three_particle_force(Particle *p1, Particle *p2, Particle *p3, double force[3], 
 				    double force2[3]) const {
 
   double cosine = 0.0, vec1[3], vec2[3], fac = 0.0, f1 = 0.0, f2 = 0.0;
@@ -56,7 +56,7 @@ int Bond::AngleDist::add_bonded_three_particle_force(Particle *p1, Particle *p2,
 }
 
 
-int Bond::AngleDist::add_bonded_three_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
+int Bond::AngleDist::calc_bonded_three_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
 				     double *_energy) const {
 
   int j;

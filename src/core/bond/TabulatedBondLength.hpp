@@ -14,9 +14,9 @@ namespace Bond {
     {m_bondtype = BondType::BONDED_IA_TABULATED;}
 
     // Member function
-    int add_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], 
+    int calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], 
 			      double force[3]) const override;
-    int add_bonded_pair_energy(Particle *p1, Particle *p2, 
+    int calc_bonded_pair_energy(Particle *p1, Particle *p2, 
 			       double dx[3], double *_energy) const override;
 
   };

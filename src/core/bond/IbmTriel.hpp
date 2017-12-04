@@ -14,9 +14,9 @@ namespace Bond {
       m_area0{area0_i}, m_maxdist{maxdist_i}, m_elasticLaw{elasticLaw_i}, m_k1{k1_i}, m_k2{k2_i} {m_bondtype = BondType::BONDED_IA_IBM_TRIEL;}
 
     //force *
-    int add_bonded_three_particle_force(Particle *p1, Particle *p2, Particle *p3, double force[3], double force2[3]) const override;
+    int calc_bonded_three_particle_force(Particle *p1, Particle *p2, Particle *p3, double force[3], double force2[3]) const override;
     //energy *
-    int add_bonded_three_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
+    int calc_bonded_three_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
 						 double *_energy) const override;
 
     //reset params *

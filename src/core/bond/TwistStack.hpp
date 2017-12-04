@@ -16,7 +16,7 @@ namespace Bond {
       free(m_b);
     }
 
-    int add_bonded_eight_particle_force(Particle *p1, Particle *p2, Particle *p3, 
+    int calc_bonded_eight_particle_force(Particle *p1, Particle *p2, Particle *p3, 
 					Particle *p4, Particle *p5, Particle *p6, 
 					Particle *p7, Particle *p8, double force[3], 
 					double force2[3], double force3[3], 
@@ -24,7 +24,7 @@ namespace Bond {
 					double force6[3], double force7[3],
 					double force8[3]) const override;
 
-    int add_bonded_eight_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
+    int calc_bonded_eight_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
 					 Particle *p4, Particle *p5, Particle *p6, 
 					 Particle *p7, Particle *p8, 
 					 double *_energy) const override;

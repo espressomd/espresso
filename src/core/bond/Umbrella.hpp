@@ -7,10 +7,10 @@ namespace Bond {
   public:
     Umbrella(double k_i, int dir_i, double r_i) : m_k{k_i}, m_dir{dir_i}, m_r{r_i} {m_bondtype = BondType::BONDED_IA_UMBRELLA;}
     //force calculation
-    int add_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], 
+    int calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], 
 			       double force[3]) const override;
     //energy calculation
-    int add_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3], 
+    int calc_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3], 
 				double *_energy) const override;
 
   private:

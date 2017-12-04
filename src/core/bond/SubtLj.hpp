@@ -7,8 +7,8 @@ namespace Bond {
   public:
     SubtLj(double r_i) : m_r{r_i} {m_bondtype = BondType::BONDED_IA_SUBT_LJ;}
     // Member function
-    int add_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], double force[3]) const override;
-    int add_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3], double *_energy) const override;
+    int calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], double force[3]) const override;
+    int calc_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3], double *_energy) const override;
 
   private:
     double m_r;
