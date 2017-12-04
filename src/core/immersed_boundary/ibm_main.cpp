@@ -29,7 +29,7 @@ void GetIBMInterpolatedVelocity(double *p, double *const v, double *const forceA
 
 // ***** Internal variables ******
 
-bool *isHaloCache = NULL;
+bool *isHaloCache = nullptr;
 
 // ******** Variables from other espresso files *****
 extern HaloCommunicator update_halo_comm;
@@ -339,7 +339,7 @@ Checks for halo - only for CPU
 bool IsHalo(const int indexCheck)
 {
   // First call --> build cache
-  if ( isHaloCache == NULL )
+  if ( isHaloCache == nullptr )
   {
     isHaloCache = new bool[lblattice.halo_grid_volume];
     // Assume everything is a halo and correct in the next step

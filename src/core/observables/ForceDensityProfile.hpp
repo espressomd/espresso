@@ -10,7 +10,8 @@ namespace Observables {
 class ForceDensityProfile : public ProfileObservable {
 public:
   virtual int n_values() const override { return 3 * xbins * ybins * zbins; }
-  virtual int actual_calculate(PartCfg & partCfg) override {
+  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
+    std::vector<double> res(n_values());
     double bin_volume =
         (maxx - minx) * (maxy - miny) * (maxz - minz) / xbins / ybins / zbins;
 
@@ -23,11 +24,11 @@ public:
       if (binx >= 0 && binx < xbins && biny >= 0 && biny < ybins && binz >= 0 &&
           binz < zbins) {
         for (int dim = 0; dim < 3; dim++)
-          last_value[3 * (binx * ybins * zbins + biny * zbins + binz) + dim] +=
+          res[3 * (binx * ybins * zbins + biny * zbins + binz) + dim] +=
               partCfg[id].f.f[dim] / bin_volume;
       }
     }
-    return 0;
+    return res;
   }
 };
 

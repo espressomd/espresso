@@ -42,6 +42,7 @@
 #include "utils/List.hpp"
 #include "utils/math/sqr.hpp"
 #include "utils/memory.hpp"
+#include "Vector.hpp"
 
 /*************************************************************/
 /** \name Mathematical, physical and chemical constants.     */
@@ -105,7 +106,16 @@ template <unsigned n, typename T> inline T int_pow(T x) {
 
 /** Calculate signum of val, if supported by T */
 template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
+
+/** \brief Transform the given 3D Vector to cylinder coordinates.
+ */
+inline ::Vector<3, double>
+transform_to_cylinder_coordinates(::Vector<3, double> const &pos) {
+  double r = std::sqrt(pos[0] * pos[0] + pos[1] * pos[1]);
+  double phi = std::atan2(pos[1], pos[0]);
+  return ::Vector<3, double>{r, phi, pos[2]};
 }
+} // Namespace Utils
 
 /*************************************************************/
 /** \name List operations .                                  */
@@ -116,7 +126,7 @@ template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
 inline void init_intlist(IntList *il) {
   il->n = 0;
   il->max = 0;
-  il->e = NULL;
+  il->e = nullptr;
 }
 // extern int this_node;
 
@@ -165,7 +175,7 @@ inline int intlist_contains(IntList *il, int c) {
 inline void init_doublelist(DoubleList *il) {
   il->n = 0;
   il->max = 0;
-  il->e = NULL;
+  il->e = nullptr;
 }
 
 /** Allocate an \ref DoubleList of size size. If you need an \ref DoubleList
@@ -233,7 +243,7 @@ inline void sort_int_array(int *data, int size) {
     }
 }
 
-/** permute an interger array field of size size about permute positions. */
+/** permute an integer array field of size size about permute positions. */
 inline void permute_ifield(int *field, int size, int permute) {
   int i, tmp;
 
@@ -743,15 +753,15 @@ inline void get_grid_pos(int i, int *a, int *b, int *c, int adim[3]) {
 inline int malloc_3d_grid(double ****grid, int dim[3]) {
   int i, j;
   *grid = (double ***)Utils::malloc(sizeof(double **) * dim[0]);
-  if (*grid == NULL)
+  if (*grid == nullptr)
     return 0;
   for (i = 0; i < dim[0]; i++) {
     (*grid)[i] = (double **)Utils::malloc(sizeof(double *) * dim[1]);
-    if ((*grid)[i] == NULL)
+    if ((*grid)[i] == nullptr)
       return 0;
     for (j = 0; j < dim[1]; j++) {
       (*grid)[i][j] = (double *)Utils::malloc(sizeof(double) * dim[2]);
-      if ((*grid)[i][j] == NULL)
+      if ((*grid)[i][j] == nullptr)
         return 0;
     }
   }
@@ -836,7 +846,7 @@ inline double distance2(double const pos1[3], double const pos2[3]) {
  *  \param vec  vecotr pos1-pos2.
  *  \return distance squared
 */
-inline double distance2vec(double pos1[3], double pos2[3], double vec[3]) {
+inline double distance2vec(double const pos1[3], double const pos2[3], double vec[3]) {
   vec[0] = pos1[0] - pos2[0];
   vec[1] = pos1[1] - pos2[1];
   vec[2] = pos1[2] - pos2[2];
@@ -1091,7 +1101,8 @@ void vecsub(T const *const a, T const *const b, T *const c) {
 template <typename T> int sign(T value) {
   return (T(0) < value) - (value < T(0));
 }
-}
+
+}// namespace utils
 
 /*@}*/
 

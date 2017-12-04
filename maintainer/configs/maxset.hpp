@@ -24,11 +24,11 @@
 #define LANGEVIN_PER_PARTICLE
 #define ROTATION_PER_PARTICLE
 #define CATALYTIC_REACTIONS
-#define REACTION_ENSEMBLE
 
 #define NEMD
 #define NPT 
 #define GHMC
+#define DPD
 
 #define LB
 #define LB_BOUNDARIES

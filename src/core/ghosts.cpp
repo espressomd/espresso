@@ -23,21 +23,23 @@
  *  For more information on ghosts,
  *  see \ref ghosts.hpp "ghosts.hpp" 
 */
-#include <mpi.h>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <vector>
-#include <algorithm>
-#include "utils.hpp"
 #include "ghosts.hpp"
-#include "global.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "domain_decomposition.hpp"
+#include "forces_inline.hpp"
+#include "global.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"
 #include "forces_inline.hpp"
 #include "domain_decomposition.hpp"
+#include "utils.hpp"
+#include <algorithm>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <mpi.h>
+#include <vector>
 
 /** Tag for communication in ghost_comm. */
 #define REQ_GHOST_SEND 100
@@ -45,14 +47,14 @@
 static int n_s_buffer = 0;
 static int max_s_buffer = 0;
 /** send buffer. Just grows, which should be ok */
-static char *s_buffer = NULL;
+static char *s_buffer = nullptr;
 
 std::vector<int> s_bondbuffer;
 
 static int n_r_buffer = 0;
 static int max_r_buffer = 0;
 /** recv buffer. Just grows, which should be ok */
-static char *r_buffer = NULL;
+static char *r_buffer = nullptr;
 
 std::vector<int> r_bondbuffer;
 
@@ -90,13 +92,15 @@ void prepare_comm(GhostCommunicator *comm, int data_parts, int num)
   comm->comm = (GhostCommunication*)Utils::malloc(num*sizeof(GhostCommunication));
   for(i=0; i<num; i++) {
     comm->comm[i].shift[0]=comm->comm[i].shift[1]=comm->comm[i].shift[2]=0.0;
+    comm->comm[i].n_part_lists = 0;
+    comm->comm[i].part_lists = nullptr;
   }
 }
 
 void free_comm(GhostCommunicator *comm)
 {
   int n;
-  GHOST_TRACE(fprintf(stderr,"%d: free_comm: %p has %d ghost communications\n",this_node,comm,comm->num));
+  GHOST_TRACE(fprintf(stderr,"%d: free_comm: %p has %d ghost communications\n",this_node,(void*) comm,comm->num));
   for (n = 0; n < comm->num; n++) free(comm->comm[n].part_lists);
   free(comm->comm);
 }
@@ -257,7 +261,7 @@ static void prepare_ghost_cell(Cell *cell, int size)
     }
   }          
 #endif
-  realloc_particlelist(cell, cell->n = size);
+  cell->resize(size);
   // invalidate pointers etc
   {
     int np   = cell->n;
@@ -291,10 +295,10 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
   std::vector<int>::const_iterator bond_retrieve = r_bondbuffer.begin();
 
   for (int pl = 0; pl < gc->n_part_lists; pl++) {
-    ParticleList *cur_list = gc->part_lists[pl];
+    auto cur_list = gc->part_lists[pl];
     if (data_parts & GHOSTTRANS_PARTNUM) {
       GHOST_TRACE(fprintf(stderr, "%d: reallocating cell %p to size %d, assigned to node %d\n",
-			  this_node, cur_list, *(int *)retrieve, gc->node));
+			  this_node, (void*) cur_list, *(int *)retrieve, gc->node));
       prepare_ghost_cell(cur_list, *(int *)retrieve);
       retrieve += sizeof(int);
     }
@@ -325,7 +329,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
           }
 #endif
 #endif
-	  if (local_particles[pt->p.identity] == NULL) {
+	  if (local_particles[pt->p.identity] == nullptr) {
 	    local_particles[pt->p.identity] = pt;
 	  }
 	}
@@ -537,7 +541,7 @@ void ghost_communicator(GhostCommunicator *gc)
   int n, n2;
   int data_parts = gc->data_parts;
 
-  GHOST_TRACE(fprintf(stderr, "%d: ghost_comm %p, data_parts %d\n", this_node, gc, data_parts));
+  GHOST_TRACE(fprintf(stderr, "%d: ghost_comm %p, data_parts %d\n", this_node, (void*) gc, data_parts));
 
   for (n = 0; n < gc->num; n++) {
     GhostCommunication *gcn = &gc->comm[n];
@@ -647,7 +651,7 @@ void ghost_communicator(GhostCommunicator *gc)
 	if (node == this_node)
 	  MPI_Reduce(s_buffer, r_buffer, n_s_buffer, MPI_BYTE, MPI_FORCES_SUM, node, comm_cart);
 	else
-	  MPI_Reduce(s_buffer, NULL, n_s_buffer, MPI_BYTE, MPI_FORCES_SUM, node, comm_cart);
+	  MPI_Reduce(s_buffer, nullptr, n_s_buffer, MPI_BYTE, MPI_FORCES_SUM, node, comm_cart);
 	break;
       }
       //GHOST_TRACE(MPI_Barrier(comm_cart));
@@ -718,7 +722,7 @@ void invalidate_ghosts()
 	 if the pointer stored there belongs to a ghost celll
 	 particle array. */
       if( &(part[p]) == local_particles[part[p].p.identity] ) 
-	local_particles[part[p].p.identity] = NULL;
+	local_particles[part[p].p.identity] = nullptr;
       free_particle(part+p);
     }
     ghost_cells.cell[c]->n = 0;

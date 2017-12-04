@@ -145,9 +145,9 @@ simulations, respectively. See :cite:`bereau15` for more details.
 Reaction Ensemble
 -----------------
 
-.. note:: Required features: REACTION\_ENSEMBLE
+.. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies.
 
-The reaction ensemble ::cite:`smith94a,turner2008simulation` allows to simulate
+The reaction ensemble ::cite:`smith94a,turner2008simulation` allows to simulate
 chemical reactions which can be represented by the general equation:
 
 .. math::
@@ -203,7 +203,7 @@ In the *forward* reaction, the appropriate number of reactants (given by
 products is inserted into the system. In the *reverse* reaction,
 reactants and products exchange their roles. The acceptance probability
 :math:`P^{\xi}` for move from state :math:`o` to :math:`n` reaction
-ensemble is given by the criterion ::cite:`smith94a`
+ensemble is given by the criterion ::cite:`smith94a`
 
 .. math::
 
@@ -233,8 +233,7 @@ For a description of the available methods see :mod:`espressomd.reaction_ensembl
 
 Wang-Landau Reaction Ensemble
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. note:: Required features: REACTION_ENSEMBLE
+.. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies in one way or the other.
 
 Since you might be interested in thermodynamic properties of a reacting
 system you may use the Wang-Landau algorithm ::cite:`wang01a`
@@ -245,9 +244,8 @@ commands for the reaction ensemble use the following commands for the
 Wang-Landau reaction ensemble. For a description of the available methods see :mod:`espressomd.reaction_ensemble`:
 
 Constant pH method
-~~~~~~~~~~~~~~~~~~
-
-.. note:: Required features: REACTION_ENSEMBLE
+------------------
+.. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies.
 
 In the constant pH method due to Reed and Reed
 ::cite:`reed92a` it is possible to set the chemical potential
@@ -337,7 +335,7 @@ Whether or not rotational degrees of freedom are propagated, is controlled on a 
 It is important to note that starting from version 4.0 and unlike in earlier versions of |es|, the particles' rotation is disabled by default.
 In this way, just compiling in the ROTATION feature no longer changes the physics of the system.
 
-The rotation of a particle is controlled via the :any:`espressomd.particle_data.ParticleHandle.rotation` property. E.g., the following code adds a particle with rotation on the x axis enabled:::
+The rotation of a particle is controlled via the :attr:`espressomd.particle_data.ParticleHandle.rotation` property. E.g., the following code adds a particle with rotation on the x axis enabled:::
     
     import espressomd
     s=espressomd.System()
@@ -345,7 +343,7 @@ The rotation of a particle is controlled via the :any:`espressomd.particle_data.
 
 Notes:
 
-* The orientation of a particle is stored as a quaternion in the :any:`espressomd.particle_data.ParticleHandle.quat` property. For a value of (1,0,0,0), the body and space frames coincide. 
+* The orientation of a particle is stored as a quaternion in the :attr:`espressomd.particle_data.ParticleHandle.quat` property. For a value of (1,0,0,0), the body and space frames coincide. 
 * The space-frame direction of the particle's z-axis in its body frame is accessible through the `espressomd.particle_data.ParticleHandle.director` property.
 * Any other vector can be converted from body to space fixed frame using the `espressomd.particle_data.ParticleHandle.convert_vector_body_to_space` method.
 * When DIPOLES are compiled in, the particles dipole moment is always co-aligned with the z-axis in the body-fixed frame.
@@ -354,17 +352,17 @@ Notes:
 
 The following particle properties are related to rotation:
 
-* :any:`espressomd.particle_data.ParticleHandle.dip`
-* :any:`espressomd.particle_data.ParticleHandle.director`
-* :any:`espressomd.particle_data.ParticleHandle.ext_torque`
-* :any:`espressomd.particle_data.ParticleHandle.gamma_rot`
-* :any:`espressomd.particle_data.ParticleHandle.gamma_rot`
-* :any:`espressomd.particle_data.ParticleHandle.omega_body`
-* :any:`espressomd.particle_data.ParticleHandle.omega_lab`
-* :any:`espressomd.particle_data.ParticleHandle.quat`
-* :any:`espressomd.particle_data.ParticleHandle.rinertia`
-* :any:`espressomd.particle_data.ParticleHandle.rotation`
-* :any:`espressomd.particle_data.ParticleHandle.torque_lab`
+* :attr:`espressomd.particle_data.ParticleHandle.dip`
+* :attr:`espressomd.particle_data.ParticleHandle.director`
+* :attr:`espressomd.particle_data.ParticleHandle.ext_torque`
+* :attr:`espressomd.particle_data.ParticleHandle.gamma_rot`
+* :attr:`espressomd.particle_data.ParticleHandle.gamma_rot`
+* :attr:`espressomd.particle_data.ParticleHandle.omega_body`
+* :attr:`espressomd.particle_data.ParticleHandle.omega_lab`
+* :attr:`espressomd.particle_data.ParticleHandle.quat`
+* :attr:`espressomd.particle_data.ParticleHandle.rinertia`
+* :attr:`espressomd.particle_data.ParticleHandle.rotation`
+* :attr:`espressomd.particle_data.ParticleHandle.torque_lab`
 
 
 

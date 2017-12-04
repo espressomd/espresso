@@ -26,11 +26,6 @@ from espressomd import reaction_ensemble
 from espressomd import grand_canonical
 import numpy as np
 
-import sys
-
-if('REACTION_ENSEMBLE' not in espressomd.code_info.features()):
-    print("REACTION_ENSEMBLE not compiled in.")
-    sys.exit()
 dev = "cpu"
 
 # System parameters
@@ -68,7 +63,7 @@ for i in range(N0, 2 * N0):
     system.part.add(id=i, pos=np.random.random(3) * system.box_l, type=2)
 
 
-RE = reaction_ensemble.reaction_ensemble(
+RE = reaction_ensemble.ReactionEnsemble(
     standard_pressure=0.00108, temperature=1, exclusion_radius=1)
 RE.add(equilibrium_constant=K_diss, reactant_types=[0], reactant_coefficients=[
        1], product_types=[1, 2], product_coefficients=[1, 1])

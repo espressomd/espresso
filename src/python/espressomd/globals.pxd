@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 include "myconfig.pxi"
+from libcpp cimport bool
 
 cdef extern from "global.hpp":
     int FIELD_BOXL
@@ -54,20 +55,13 @@ cdef extern from "integrate.hpp":
     extern double sim_time
     extern double smaller_time_step
     extern double verlet_reuse
-
-cdef extern from "verlet.hpp":
-    double skin
+    extern double skin
 
 cdef extern from "lattice.hpp":
     extern int lattice_switch
 
 cdef extern from "domain_decomposition.hpp":
-    ctypedef struct IA_Neighbor:
-        pass
-    ctypedef struct IA_Neighbor_List:
-        pass
     ctypedef struct  DomainDecomposition:
-        int use_vList
         int cell_grid[3]
         double cell_size[3]
 
@@ -124,6 +118,8 @@ cdef extern from "cells.hpp":
     extern double max_range
     ctypedef struct CellStructure:
         int type
+        bool use_verlet_list
+
     CellStructure cell_structure
 
 cdef extern from "layered.hpp":

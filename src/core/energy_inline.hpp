@@ -197,6 +197,9 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
   double ret = 0;
 #endif
 
+#ifdef EXCLUSIONS
+  if (do_nonbonded(p1, p2))
+#endif
   *obsstat_nonbonded(&energy, p1->p.type, p2->p.type) +=
       calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist, dist2);
 
@@ -272,9 +275,9 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 */
 
 inline void add_bonded_energy(Particle *p1) {
-  Particle *p2, *p3 = NULL, *p4 = NULL;
+  Particle *p2, *p3 = nullptr, *p4 = nullptr;
 #ifdef TWIST_STACK
-  Particle *p5 = NULL, *p6 = NULL, *p7 = NULL, *p8 = NULL;
+  Particle *p5 = nullptr, *p6 = nullptr, *p7 = nullptr, *p8 = nullptr;
 #endif
   Bonded_ia_parameters *iaparams;
   int i, type_num, type, n_partners, bond_broken;
@@ -450,12 +453,10 @@ inline void add_bonded_energy(Particle *p1) {
       bond_broken = umbrella_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #endif
-#ifdef BOND_VIRTUAL
     case BONDED_IA_VIRTUAL_BOND:
       bond_broken = 0;
       ret = 0;
       break;
-#endif
     default:
       runtimeErrorMsg() << "add_bonded_energy: bond type (" << type
                         << ") of atom " << p1->p.identity << " unknown\n";

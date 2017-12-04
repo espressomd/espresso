@@ -44,6 +44,37 @@ struct AutoParameter {
   struct WriteError {};
 
   /**
+   * @brief read-write parameter that is bound to an object
+   *        with setter and getter that are member functions.
+   *
+   * @param name The name the parameter should be bound to in the interface.
+   * @param type The parameter type, by default this is deduced from the
+   *             type of the reference.
+   * @param length The supposed length of the parameter, by default this this
+   *               is deduced from the type of the reference.
+   */
+  template <typename T, class O>
+  AutoParameter(std::string const &name, O *obj, void (O::*setter)(T const &),
+                T (O::*getter)() const, VariantType type = infer_type<T>(),
+                size_t length = infer_length<T>())
+      : name(name), type(type), length(length),
+        set([obj, setter](Variant const &v) {
+          (obj->*setter)(get_value<T>(v));
+        }),
+        get([obj, getter]() { return (obj->*getter)(); }) {}
+
+  template <typename T, class O>
+  AutoParameter(std::string const &name, O *obj, void (O::*setter)(T const &),
+                T const &(O::*getter)() const,
+                VariantType type = infer_type<T>(),
+                size_t length = infer_length<T>())
+      : name(name), type(type), length(length),
+        set([obj, setter](Variant const &v) {
+          (obj->*setter)(get_value<T>(v));
+        }),
+        get([obj, getter]() { return (obj->*getter)(); }) {}
+
+  /**
    * @brief read-write parameter that is bound to a referece.
    *
    * @param name The name the parameter should be bound to in the interface.
@@ -101,6 +132,13 @@ struct AutoParameter {
       : name(name), type(type), length(length), set(Utils::make_function(set)),
         get(Utils::make_function(get)) {}
 
+  /** The interface name. */
+  const std::string name;
+  /** The expected type. */
+  VariantType type;
+  /** The expected length. */
+  size_t length;
+
   /**
    * @brief Set the parameter.
    */
@@ -109,13 +147,6 @@ struct AutoParameter {
    * @brief Get the parameter.
    */
   const std::function<Variant()> get;
-
-  /** The interface name. */
-  const std::string name;
-  /** The expected type. */
-  VariantType type;
-  /** The expected length. */
-  size_t length;
 };
 }
 

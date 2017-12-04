@@ -61,7 +61,17 @@ Similarly, the position can be set::
     system.part[0].pos=(1,2.5,3)
     system.part[0].id=4
 
-Note that the index and the property ID are not necessasirly the same.
+Note that the index and the property ID are not necessarily the same.
+
+Vectorial properties
+~~~~~~~~~~~~~~~~~~~~
+
+For vectorial particle properties, component-wise manipulation like ``system.part[0].pos[0]
+= 1`` or in-place operators like ``+=`` or ``*=`` are not allowed and result in an error.
+This behavior is inherited, so the same applies to ``a`` after ``a =
+system.part[0].pos``. If you want to use an vectorial property for further
+calculations, you should explicity make a copy e.g. via
+``a = numpy.copy(system.part[0].pos)``.
 
 Interacting with groups of particles
 ------------------------------------
@@ -73,10 +83,38 @@ The :class:`espressomd.particle_data.ParticleList` support slicing similarly to 
 
 To access particles with indices ranging from 0 to 9, use::
     
-    system.party[0:10].pos
+    system.part[0:10].pos
 
-Note that, like in other cases in Python, the lower bound is inclusive and the upper boudn is non-inclusive.
+Note that, like in other cases in Python, the lower bound is inclusive and the upper bound is non-inclusive.
+Setting slices can be done by 
 
+- supplying a *single value* that is assigned to each entry of the slice, e.g.::
+
+    system.part[0:10].ext_force = [1, 0, 0]
+
+- supplying an *array of values* that matches the length of the slice which sets each entry individually, e.g.::
+
+    system.part[0:3].ext_force = [[1, 0, 0], [2, 0, 0], [3, 0, 0]]
+
+For list properties that have no fixed length like ``exculsions`` or ``bonds``, some care has to be taken.
+There, *single value* assignment also accepts lists/tuples just like setting the property of an individual particle. For example::
+
+    system.part[0].exclusions = [1, 2]
+
+would both exclude short-range interactions of the particle pairs ``0 <-> 1`` and ``0 <-> 2``.
+Similarly, a list can also be assigned to each entry of the slice::
+
+    system.part[2:4].exclusions = [0, 1]
+
+This would exclude interactions between ``2 <-> 0``, ``2 <-> 1``, ``3 <-> 0`` and ``3 <-> 1``.
+Now when it is desired to supply an *array of values* with individual values for each slice entry, the distinction can no longer be done
+by the length of the input, as slice length and input length can be equal. Here, the nesting level of the input is the distinctive criterion::
+
+    system.part[2:4].exclusions = [[0, 1], [0, 1]]
+
+The above code snippet would lead the the same exclusions as the one before.
+The same accounts for the ``bonds`` property by interchanging the integer entries of the exclusion list with 
+the tuple ``(bond, partners)``. 
 
 
 Deleting particles
@@ -261,6 +299,8 @@ Sets the bond type for the connections to .
 
 If not specified, defaults to :math:`30000`.
 
+.. _Virtual sites:
+
 Virtual sites
 -------------
 
@@ -314,7 +354,7 @@ To set up a virtual site,
        p=system.part.add(pos=(1,2,3))
        p.vs_auto_relate_to(<ID>)
 
-   where <ID> is the id of the central particle. This will also set the :any:`espressomd.particle_data.ParticleHandle.virtual` attribute on the particle to 1.
+   where <ID> is the id of the central particle. This will also set the :attr:`espressomd.particle_data.ParticleHandle.virtual` attribute on the particle to 1.
   
 #. Repeat the previous step with more virtual sites, if desired.
 
@@ -337,12 +377,12 @@ Please note:
    placed in the center of mass of the rigid arrangement of particles.
 
 -  In case you know the correct quaternions, you can also setup a
-   virtual site using its :any:`espressomd.particle_data.ParticleHandle.vs_relative` and :any:`espressomd.particle_data.ParticleHandle.virtual` attributes.
+   virtual site using its :attr:`espressomd.particle_data.ParticleHandle.vs_relative` and :attr:`espressomd.particle_data.ParticleHandle.virtual` attributes.
 
 -  In a simulation on more than one CPU, the effective cell size needs
    to be larger than the largest distance between a non-virtual particle
    and its associated virtual sites. To this aim, you need to set the
-   system's :any:`espressomd.system.System.min_global_cut` attribute to this largest distance. issues a warning when
+   system's :attr:`espressomd.system.System.min_global_cut` attribute to this largest distance. issues a warning when
    creating a virtual site with and the cutoff is insufficient.
 
 -  If the virtual sites represent actual particles carrying a mass, the
@@ -371,7 +411,7 @@ that order
 #. Create a particle of the desired type for each molecule. It should be
    placed at least roughly in the center of the molecule to make sure,
    its on the same node as the other particles forming the molecule, in
-   a simulation with more than one cpu.
+   a simulation with more than one CPU.
 
 #. Make it a virtual site using
 
@@ -494,7 +534,7 @@ terminal velocity in either of these methods is completely determined by the
 friction coefficient. You may only set one of the possibilities ``v_swim`` *or*
 ``f_swim`` as you cannot relax to constant force *and* constant velocity at the
 same time. Note that there is no real difference between ``v_swim`` and
-``f_swim``, since the latter may aways be chosen such that the same terminal
+``f_swim``, since the latter may always be chosen such that the same terminal
 velocity is achieved for a given friction coefficient.
 
 Lattice-Boltzmann (LB) swimmers
@@ -528,7 +568,7 @@ the difference between the fluid velocity at the center of the particle and at
 the source point and the vector connecting the center and source.
 
 You may ask: “Why are there two methods ``v_swim`` and ``f_swim`` for the
-self-propulsion using the lattice-Bolzmann algorithm?” The answer is
+self-propulsion using the lattice-Boltzmann algorithm?” The answer is
 straightforward. When a particle is accelerating, it has a monopolar flow-field
 contribution which vanishes when it reaches its terminal velocity (for which
 there will only be a dipolar flow field). The major difference between the

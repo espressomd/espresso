@@ -252,34 +252,34 @@ void p3m_pre_init(void) {
   /* p3m.local_mesh is uninitialized */
   /* p3m.sm is uninitialized */
 
-  p3m.rs_mesh = NULL;
-  p3m.ks_mesh = NULL;
+  p3m.rs_mesh = nullptr;
+  p3m.ks_mesh = nullptr;
   p3m.sum_qpart = 0;
   p3m.sum_q2 = 0.0;
   p3m.square_sum_q = 0.0;
 
   for (int i = 0; i < 7; i++)
-    p3m.int_caf[i] = NULL;
+    p3m.int_caf[i] = nullptr;
   p3m.pos_shift = 0.0;
-  p3m.meshift_x = NULL;
-  p3m.meshift_y = NULL;
-  p3m.meshift_z = NULL;
+  p3m.meshift_x = nullptr;
+  p3m.meshift_y = nullptr;
+  p3m.meshift_z = nullptr;
 
-  p3m.d_op[0] = NULL;
-  p3m.d_op[1] = NULL;
-  p3m.d_op[2] = NULL;
-  p3m.g_force = NULL;
-  p3m.g_energy = NULL;
+  p3m.d_op[0] = nullptr;
+  p3m.d_op[1] = nullptr;
+  p3m.d_op[2] = nullptr;
+  p3m.g_force = nullptr;
+  p3m.g_energy = nullptr;
 
 #ifdef P3M_STORE_CA_FRAC
   p3m.ca_num = 0;
-  p3m.ca_frac = NULL;
-  p3m.ca_fmp = NULL;
+  p3m.ca_frac = nullptr;
+  p3m.ca_fmp = nullptr;
 #endif
   p3m.ks_pnum = 0;
 
-  p3m.send_grid = NULL;
-  p3m.recv_grid = NULL;
+  p3m.send_grid = nullptr;
+  p3m.recv_grid = nullptr;
 
   fft_pre_init();
 }
@@ -366,7 +366,7 @@ void p3m_init() {
 
     /* FFT */
     P3M_TRACE(
-        fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node, p3m.rs_mesh));
+        fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node, (void*) p3m.rs_mesh));
 
     int ca_mesh_size =
         fft_init(&p3m.rs_mesh, p3m.local_mesh.dim, p3m.local_mesh.margin,
@@ -374,7 +374,7 @@ void p3m_init() {
     p3m.ks_mesh = Utils::realloc(p3m.ks_mesh, ca_mesh_size * sizeof(double));
 
     P3M_TRACE(
-        fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node, p3m.rs_mesh));
+        fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node, (void*) p3m.rs_mesh));
 
     /* k-space part: */
     p3m_calc_differential_operator();
@@ -812,7 +812,7 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
   /* k space energy */
   double k_space_energy = 0.0, node_k_space_energy = 0.0;
   /* directions */
-  double *d_operator = NULL;
+  double *d_operator = nullptr;
 
   P3M_TRACE(fprintf(stderr, "%d: p3m_perform: \n", this_node));
   //     fprintf(stderr, "calculating kspace forces\n");
@@ -976,6 +976,7 @@ double p3m_calc_dipole_term(int force_flag, int energy_flag) {
     }
     return en;
   }
+  return 0;
 }
 
 /************************************************************/

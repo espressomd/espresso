@@ -373,7 +373,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
   local_particles = Utils::realloc(
       local_particles, sizeof(Particle *) * nglobalpart);
   for (int i = 0; i < nglobalpart; ++i)
-    local_particles[i] = NULL;
+    local_particles[i] = nullptr;
   n_part = nglobalpart;
   max_seen_particle = nglobalpart;
 
@@ -445,7 +445,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
   }
 
   if (rank == 0)
-    build_particle_node();
-  rebuild_verletlist = 1;
+    clear_particle_node();
+  
   on_particle_change();
 }

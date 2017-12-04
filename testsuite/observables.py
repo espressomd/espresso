@@ -34,24 +34,6 @@ class Observables(ut.TestCase):
     # Handle for espresso system
     es = espressomd.System()
 
-    def arraysNearlyEqual(self, a, b):
-        """Test, if the magnitude of the difference between two arrays is smaller than the tolerance"""
-
-        # Check length
-        if len(a) != len(b):
-            return False
-
-        # We have to use a loop, since we can't be sure, we're getting numpy
-        # arrays
-        sum = 0.
-        for i in range(len(a)):
-            sum += abs(a[i] - b[i])
-
-        if sum > self.tol:
-            return False
-
-        return True
-
     def setUp(self):
         if not len(self.es.part):
             for i in range(1000):
@@ -89,14 +71,12 @@ class Observables(ut.TestCase):
 
             # Data from observable
             obs_data = obs_name(ids=id_list).calculate()
-            self.assertTrue(
-                self.arraysNearlyEqual(
-                    obs_data,
-                    part_data),
-                "Data did not agree for observable " +
+            np.testing.assert_array_almost_equal(
+                obs_data,
+                part_data, err_msg="Data did not agree for observable " +
                 str(obs_name) +
                 " and particle property " +
-                pprop_name)
+                pprop_name, decimal=9)
 
         return func
 
@@ -117,21 +97,11 @@ class Observables(ut.TestCase):
     def test_stress_tensor(self):
         s = self.es.analysis.stress_tensor()["total"].reshape(9)
         obs_data = np.array(StressTensor().calculate())
-        self.assertTrue(
-            self.arraysNearlyEqual(
-                s,
-                obs_data),
-            "Stress tensor from analysis and observable did not agree")
-
-    def test_stress_tensor_acf(self):
-        s = self.es.analysis.stress_tensor()["total"].reshape(9)
-        s = np.array((s[1], s[5], s[6], s[0] - s[4], s[0] - s[8], s[4] - s[8]))
-        obs_data = np.array(StressTensorAcf().calculate())
-        self.assertTrue(
-            self.arraysNearlyEqual(
-                s,
-                obs_data),
-            "Stress tensor from analysis and observable StressTensorAcf did not agree")
+        np.testing.assert_array_almost_equal(
+            s,
+            obs_data,
+            err_msg="Stress tensor from analysis and observable did not agree",
+            decimal=9)
 
     def test_com_position(self):
         if espressomd.has_features(["MASS"]):
@@ -141,8 +111,8 @@ class Observables(ut.TestCase):
             com = sum((self.es.part[:].pos.T).T, 0) / len(self.es.part)
 
         obs_data = ComPosition(ids=range(1000)).calculate()
-        self.assertTrue(self.arraysNearlyEqual(com, obs_data),
-                        "Center of mass observable wrong value")
+        np.testing.assert_array_almost_equal(
+            com, obs_data, err_msg="Center of mass observable wrong value", decimal=9)
 
     def test_com_velocity(self):
         if espressomd.has_features(["MASS"]):
@@ -151,8 +121,11 @@ class Observables(ut.TestCase):
         else:
             com_vel = sum((self.es.part[:].v.T).T, 0) / len(self.es.part)
         obs_data = ComVelocity(ids=range(1000)).calculate()
-        self.assertTrue(self.arraysNearlyEqual(com_vel, obs_data),
-                        "Center of mass velocity observable wrong value")
+        np.testing.assert_array_almost_equal(
+            com_vel,
+            obs_data,
+            err_msg="Center of mass velocity observable wrong value",
+            decimal=9)
 
 
 if __name__ == "__main__":

@@ -53,7 +53,7 @@ std::string RuntimeError::format() const {
 
   return ostr.str();
 }
-void RuntimeError::print() {
+void RuntimeError::print() const {
 std::cerr << format() << std::endl; 
 }
 

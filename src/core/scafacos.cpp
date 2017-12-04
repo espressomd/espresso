@@ -41,6 +41,7 @@
 #include "interaction_data.hpp"
 #include "scafacos/Scafacos.hpp"
 #include "tuning.hpp"
+#include "communication.hpp" 
 
 /** This file contains the c-like interface for Scafacos */
 
@@ -77,9 +78,10 @@ int ScafacosData::update_particle_data() {
   }
 
   for (auto const &p : local_cells.particles()) {
-    positions.push_back(p.r.p[0]);
-    positions.push_back(p.r.p[1]);
-    positions.push_back(p.r.p[2]);
+    auto pos=folded_position(p);
+    positions.push_back(pos[0]);
+    positions.push_back(pos[1]);
+    positions.push_back(pos[2]);
     if (!dipolar()) {
       charges.push_back(p.p.q);
     } else {
@@ -98,6 +100,8 @@ int ScafacosData::update_particle_data() {
 
 void ScafacosData::update_particle_forces() const {
   int it = 0;
+  if (positions.empty())
+    return;
 
   for (auto &p : local_cells.particles()) {
     if (!dipolar()) {
@@ -146,7 +150,8 @@ void ScafacosData::update_particle_forces() const {
   if (!dipolar()) {
     assert(it == fields.size());
   } else {
-    assert(it = positions.size() / 3);
+    int tmp=positions.size()/3;
+    assert(it == positions.size() / 3);
   }
 }
 
@@ -172,8 +177,32 @@ double pair_energy(Particle *p1, Particle *p2, double dist) {
     return 0.;
 }
 
+
+// Issues a runtime error if positions are outside the box domain
+// This is needed, because the scafacos grid sort produces an mpi deadlock
+// otherwise
+// Returns true if calculations can continue.
+bool check_position_validity(const std::vector<double>& pos) {
+  assert(pos.size()%3==0);
+  for (int i=0;i<pos.size()/3;i++) {
+    for (int j=0;j<3;j++) {
+      if (pos[3*i+j]<0 || pos[3*i+j]>box_l[j]) {
+        // Throwing exception rather than runtime error, because continuing will result
+        // in mpi deadlock
+        throw std::runtime_error("Particle position outside the box domain not allowed for scafacos-based methods.");
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 void add_long_range_force() {
   particles.update_particle_data();
+
+  if (!check_position_validity(particles.positions)) {
+    return;
+  }
 
   if (scafacos) {
     if (!dipolar()) {
@@ -186,7 +215,7 @@ void add_long_range_force() {
 #endif
     }
   } else
-    runtimeError("Scafacos internal error.");
+    throw std::runtime_error("Scafacos internal error. Instance pointer is not valid.");
 
   particles.update_particle_forces();
 }
@@ -263,6 +292,9 @@ void tune_r_cut() {
 
 void tune() {
   particles.update_particle_data();
+  if (!check_position_validity(particles.positions)) {
+    return;
+  }
 
   /** Check whether we have to do a bisection for the short range cutoff */
   /** Check if there is a user supplied cutoff */
@@ -363,20 +395,16 @@ delete scafacos;
   }
 }
 
-void on_boxl_change() {
+void update_system_params() {
 // If scafacos is not active, do nothing
 if (!scafacos) return;
 
-// Get current parameters and re_initialize
-std::string params=scafacos->get_parameters();
-std::string method=scafacos->get_method();
-bool dip=scafacos->dipolar();
+  int per[3] = { PERIODIC(0) != 0, PERIODIC(1) != 0, PERIODIC(2) != 0 };
 
-// Delete existing scafacos instance
-free_handle();
-
-// And make a new one
-set_parameters(method,params,dip);
+  int tmp;
+  MPI_Allreduce(&n_part,&tmp,1,MPI_INT,MPI_MAX,comm_cart);
+  n_part=tmp;
+  scafacos->set_common_parameters(box_l, per, n_part);
 }
 
 } // namespace scafacos

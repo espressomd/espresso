@@ -334,7 +334,7 @@ IF P3M == 1:
             self._set_params_in_es_core()
 
     IF CUDA:
-        cdef class P3M_GPU(ElectrostaticInteraction):
+        cdef class P3MGPU(ElectrostaticInteraction):
 
             def __init__(self, *args, **kwargs):
                 """
@@ -385,9 +385,6 @@ IF P3M == 1:
 
             def validate_params(self):
                 default_params = self.default_params()
-                if not (self._params["bjerrum_length"] > 0.0):
-                    raise ValueError(
-                        "Bjerrum_length should be a positive double")
 
                 if not (self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
                     raise ValueError("P3M r_cut has to be >=0")
@@ -457,7 +454,7 @@ IF P3M == 1:
                 self._params.update(self._get_params_from_es_core())
 
             def _activate_method(self):
-                #self._set_params_in_es_core()
+                python_p3m_gpu_init(self._params)
                 coulomb.method = COULOMB_P3M_GPU
                 if self._params["tune"]:
                     self._tune()
@@ -682,7 +679,7 @@ IF ELECTROSTATICS:
             self._set_params_in_es_core()
 
 IF ELECTROSTATICS and MMM1D_GPU:
-    cdef class MMM1D_GPU(ElectrostaticInteraction):
+    cdef class MMM1DGPU(ElectrostaticInteraction):
         """
         Electrostatics solver for Systems with one periodic direction.
         See :ref:`mmm1d_guide` for more details.
@@ -828,8 +825,6 @@ IF ELECTROSTATICS:
                 raise ValueError("Dielectric constants should be > 0!")
             if self._params["dielectric_contrast_on"] == 1 and (self._params["delta_mid_top"] == default_params["delta_mid_top"] or self._params["delta_mid_bot"] == default_params["delta_mid_bot"]):
                 raise ValueError("Dielectric constrast not set!")
-            if self._params["capacitor"] == 1 and self._params["pot_diff"] == default_params["pot_diff"]:
-                raise ValueError("Potential difference not set!")
             if self._params["dielectric"] == 1 and self._params["dielectric_contrast_on"] == 1:
                 raise ValueError(
                     "dielectric and dielectric_contrast are mutually exclusive!")
@@ -904,6 +899,7 @@ IF ELECTROSTATICS:
                 coulomb.method = COULOMB_SCAFACOS
                 coulomb_set_bjerrum(self._params["bjerrum_length"])
                 self._set_params_in_es_core()
+                mpi_bcast_coulomb_params()
 
             def default_params(self):
                 return {}
@@ -911,3 +907,4 @@ IF ELECTROSTATICS:
             def _deactivate_method(self):
                 super(Scafacos,self)._deactivate_method()
                 scafacos.free_handle()
+                mpi_bcast_coulomb_params()
