@@ -63,6 +63,16 @@ Similarly, the position can be set::
 
 Note that the index and the property ID are not necessarily the same.
 
+Vectorial properties
+~~~~~~~~~~~~~~~~~~~~
+
+For vectorial particle properties, component-wise manipulation like ``system.part[0].pos[0]
+= 1`` or in-place operators like ``+=`` or ``*=`` are not allowed and result in an error.
+This behavior is inherited, so the same applies to ``a`` after ``a =
+system.part[0].pos``. If you want to use an vectorial property for further
+calculations, you should explicity make a copy e.g. via
+``a = numpy.copy(system.part[0].pos)``.
+
 Interacting with groups of particles
 ------------------------------------
 
