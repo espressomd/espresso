@@ -176,19 +176,15 @@ public:
    * @param _args: the parameters of the observables
    *
    */
-  //  Correlator();
-  Correlator(int tau_lin, double tau_max)
-      : t(0), finalized(0), autoupdate(0), initialized(0), correlation_args{},
-        m_tau_lin(tau_lin), m_tau_max(tau_max) {
+  Correlator(int tau_lin, double tau_max, double dt,
+             std::string const &compress1_, std::string const &compress2_,
+             std::string const &corr_operation, obs_ptr obs1, obs_ptr obs2)
+      : t(0), finalized(0), autoupdate(0), initialized(0), m_tau_lin(tau_lin),
+        m_tau_max(tau_max), m_dt(dt), compressA_name(compress1_),
+        compressB_name(compress2_), corr_operation_name(corr_operation),
+        A_obs(obs1), B_obs(obs2) {
     initialize();
   }
-
-  // Correlator(int tau_lin, int tau_max, double dt, std::string const
-  // &compress1,
-  //            std::string const &compress2,
-  //            std::string const &corr_operation_name, obs_ptr obs1, obs_ptr
-  //            obs2,
-  //            Vector3d corr_args = {});
 
   void initialize();
 
@@ -245,8 +241,6 @@ public:
   std::vector<double> get_correlation();
 
   // A lot of the following should be private
-  Vector3d correlation_args; // additional arguments, which the correlation may
-                             // need (currently only used by fcs_acf)
 
   int tau_lin() const { return m_tau_lin; }
   double tau_max() const { return m_tau_max; }
@@ -254,6 +248,9 @@ public:
   double dt() const { return m_dt; }
   int dim_corr() const { return m_dim_corr; }
   int n_result() const { return m_n_result; }
+
+  Vector3d const &correlation_args() const { return m_correlation_args; }
+  void set_correlation_args(Vector3d const &args) { m_correlation_args = args; }
 
   std::string const &compress1() const { return compressA_name; }
   std::string const &compress2() const { return compressB_name; }
@@ -268,6 +265,10 @@ public:
   int autoupdate;
 
 private:
+  Vector3d
+      m_correlation_args; // additional arguments, which the correlation may
+                          // need (currently only used by fcs_acf)
+
   int hierarchy_depth; // maximum level of data compression
   int m_tau_lin;       // number of frames in the linear correlation
   int m_dim_corr;

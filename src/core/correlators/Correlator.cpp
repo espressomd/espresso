@@ -158,8 +158,8 @@ const char init_errors[][64] = {
     "",                                                              // 0
     "No valid correlation given",                                    // 1
     "delta_t must be specified and > 0",                             // 2
-    "m_tau_lin must be >= 2",                                        // 3
-    "m_tau_max must be >= delta_t",                                  // 4
+    "tau_lin must be >= 2",                                          // 3
+    "tau_max must be >= delta_t",                                    // 4
     "window_distance must be >1",                                    // 5
     "dimension of A was not >1",                                     // 6
     "dimension of B was not >1",                                     // 7
@@ -169,11 +169,11 @@ const char init_errors[][64] = {
     "no proper function for correlation operation given",            // 11
     "no proper function for compression of first observable given",  // 12
     "no proper function for compression of second observable given", // 13
-    "m_tau_lin must be divisible by 2",                              // 14
-    "m_dt is smaller than the MD timestep",                            // 15
-    "m_dt is not a multiple of the MD timestep",                       // 16
+    "tau_lin must be divisible by 2",                                // 14
+    "dt is smaller than the MD timestep",                            // 15
+    "dt is not a multiple of the MD timestep",                       // 16
     "cannot set compress2 for autocorrelation",                      // 17
-    "dim_A must be divisible by 3 for fcs_acf",                      // 18
+    "diA must be divisible by 3 for fcs_acf",                        // 18
     "fcs_acf requires 3 additional parameters"                       // 19
 };
 
@@ -188,7 +188,7 @@ const char double_correlation_get_data_errors[][64] = {
     "Error calculating correlation\n",                               // 4
     "Error allocating temporary memory\n",                           // 4
     "Error in corr_operation: observable dimensions do not match\n", // 5
-    "Error: m_dim_corr and dim_A do not match for fcs_acf\n"           // 6
+    "Error: dicorr and diA do not match for fcs_acf\n"               // 6
 };
 
 int correlations_autoupdate = 0;
@@ -216,7 +216,8 @@ int Correlator::get_correlation_time(double *correlation_time) {
                (result[0][j] / n_sweeps[0]) * m_dt * (tau[k] - tau[k - 1]);
 
       if (exp(-tau[k] * m_dt / C_tau) + 2 * sqrt(tau[k] * m_dt / n_data) >
-          exp(-tau[k - 1] * m_dt / C_tau) + 2 * sqrt(tau[k - 1] * m_dt / n_data)) {
+          exp(-tau[k - 1] * m_dt / C_tau) +
+              2 * sqrt(tau[k - 1] * m_dt / n_data)) {
         correlation_time[j] =
             C_tau * (1 + (2 * (double)tau[k] + 1) / (double)n_data);
         ok_flag = 1;
@@ -302,27 +303,27 @@ void Correlator::initialize() {
   } else if (corr_operation_name == "componentwise_product") {
     m_dim_corr = dim_A;
     corr_operation = &componentwise_product;
-    correlation_args = Vector3d{0, 0, 0};
+    m_correlation_args = Vector3d{0, 0, 0};
   } else if (corr_operation_name == "tensor_product") {
     m_dim_corr = dim_A * dim_B;
     corr_operation = &tensor_product;
-    correlation_args = Vector3d{0, 0, 0};
+    m_correlation_args = Vector3d{0, 0, 0};
   } else if (corr_operation_name == "square_distance_componentwise") {
     m_dim_corr = dim_A;
     corr_operation = &square_distance_componentwise;
-    correlation_args = Vector3d{0, 0, 0};
+    m_correlation_args = Vector3d{0, 0, 0};
   } else if (corr_operation_name == "fcs_acf") {
     // note: user provides w=(wx,wy,wz) but we want to use
     // wsquare=(wx^2,wy^2,wz^2)
-    if (correlation_args[0] <= 0 || correlation_args[1] <= 0 ||
-        correlation_args[2] <= 0) {
+    if (m_correlation_args[0] <= 0 || m_correlation_args[1] <= 0 ||
+        m_correlation_args[2] <= 0) {
       throw std::runtime_error("missing parameter for fcs_acf: w_x w_y w_z");
     }
-    correlation_args[0] = correlation_args[0] * correlation_args[0];
-    correlation_args[1] = correlation_args[1] * correlation_args[1];
-    correlation_args[2] = correlation_args[2] * correlation_args[2];
-    fprintf(stderr, "args2: %f %f %f\n", correlation_args[0],
-            correlation_args[1], correlation_args[2]);
+    m_correlation_args[0] = m_correlation_args[0] * m_correlation_args[0];
+    m_correlation_args[1] = m_correlation_args[1] * m_correlation_args[1];
+    m_correlation_args[2] = m_correlation_args[2] * m_correlation_args[2];
+    fprintf(stderr, "args2: %f %f %f\n", m_correlation_args[0],
+            m_correlation_args[1], m_correlation_args[2]);
     if (dim_A % 3)
       throw std::runtime_error(init_errors[18]);
     m_dim_corr = dim_A / 3;
@@ -330,7 +331,7 @@ void Correlator::initialize() {
   } else if (corr_operation_name == "scalar_product") {
     m_dim_corr = 1;
     corr_operation = &scalar_product;
-    correlation_args = Vector3d{0, 0, 0};
+    m_correlation_args = Vector3d{0, 0, 0};
   } else {
     throw std::runtime_error(init_errors[11]);
   }
@@ -474,7 +475,7 @@ int Correlator::get_data() {
     index_new = newest[0];
     index_old = (newest[0] - j + m_tau_lin + 1) % (m_tau_lin + 1);
     auto const temp =
-        (corr_operation)(A[0][index_old], B[0][index_new], correlation_args);
+        (corr_operation)(A[0][index_old], B[0][index_new], m_correlation_args);
     assert(temp.size() == m_dim_corr);
 
     n_sweeps[j]++;
@@ -490,8 +491,8 @@ int Correlator::get_data() {
       index_old = (newest[i] - j + m_tau_lin + 1) % (m_tau_lin + 1);
       index_res =
           m_tau_lin + (i - 1) * m_tau_lin / 2 + (j - m_tau_lin / 2 + 1) - 1;
-      auto const temp =
-          (corr_operation)(A[i][index_old], B[i][index_new], correlation_args);
+      auto const temp = (corr_operation)(A[i][index_old], B[i][index_new],
+                                         m_correlation_args);
       assert(temp.size() == m_dim_corr);
 
       n_sweeps[index_res]++;
@@ -588,7 +589,7 @@ int Correlator::finalize() {
               m_tau_lin + (i - 1) * m_tau_lin / 2 + (j - m_tau_lin / 2 + 1) - 1;
 
           auto const temp = (corr_operation)(A[i][index_old], B[i][index_new],
-                                             correlation_args);
+                                             m_correlation_args);
           assert(temp.size() == m_dim_corr);
 
           n_sweeps[index_res]++;
