@@ -16,8 +16,6 @@ public:
         {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
          std::make_pair(min_z, max_z)}};
     Utils::CylindricalHistogram histogram(n_bins, 3, limits);
-    double bin_volume;
-    int r_bin, phi_bin, z_bin;
     for (int id : ids()) {
       auto const ppos = ::Vector<3, double>(folded_position(partCfg[id]));
       ::Vector<3, double> ppos_shifted;

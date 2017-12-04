@@ -3824,14 +3824,14 @@ __global__ void fill_lb_radial_velocity_profile(LB_nodes_gpu n_a, radial_profile
 
   unsigned int maxk;
   float zoffset, z_incr;
-  if ( pdata->zbins == 1 ) {
+  if ( pdata->n_z_bins == 1 ) {
     maxk = (int) para.dim_z;
     zoffset=-pdata->center[2];
     z_incr=para.agrid;
   } else {
-    maxk = (int) pdata->zbins;
-    zoffset=pdata->minz;
-    z_incr=(pdata->maxz-pdata->minz)/(pdata->zbins-1);
+    maxk = (int) pdata->n_z_bins;
+    zoffset=pdata->min_z;
+    z_incr=(pdata->max_z-pdata->min_z)/(pdata->n_z_bins-1);
   }
 
   float z = zoffset + zbin*z_incr;
@@ -3873,34 +3873,34 @@ __global__ void fill_lb_velocity_profile(LB_nodes_gpu n_a, profile_data* pdata, 
 
 
 
-  if ( pdata->xbins == 1 ) {
+  if ( pdata->n_x_bins == 1 ) {
     /* maxi = (int) floor(gridDim.x/para.agrid); */
     xoffset=0;
     x_incr=para.agrid;
   } else {
-    /* maxi = pdata->xbins; */
-    xoffset=pdata->minx;
-    x_incr=(pdata->maxx-pdata->minx)/(pdata->xbins-1);
+    /* maxi = pdata->n_x_bins; */
+    xoffset=pdata->min_x;
+    x_incr=(pdata->max_x-pdata->min_x)/(pdata->n_x_bins-1);
   }
   float x = xoffset + xbin*x_incr;
-  if ( pdata->ybins == 1 ) {
+  if ( pdata->n_y_bins == 1 ) {
     maxj = (int) floorf(para.dim_y/para.agrid);
     yoffset=0;
     y_incr=para.agrid;
   } else {
-    maxj = pdata->ybins;
-    yoffset=pdata->miny;
-    y_incr=(pdata->maxy-pdata->miny)/(pdata->ybins-1);
+    maxj = pdata->n_y_bins;
+    yoffset=pdata->min_y;
+    y_incr=(pdata->max_y-pdata->min_y)/(pdata->n_y_bins-1);
   }
   float y = yoffset + ybin*y_incr;
-  if ( pdata->zbins == 1 ) {
+  if ( pdata->n_z_bins == 1 ) {
     maxk = (int) floorf(para.dim_z/para.agrid);
     zoffset=0;
     z_incr=para.agrid;
   } else {
-    maxk = (int) pdata->zbins;
-    zoffset=pdata->minz;
-    z_incr=(pdata->maxz-pdata->minz)/(pdata->zbins-1);
+    maxk = (int) pdata->n_z_bins;
+    zoffset=pdata->min_z;
+    z_incr=(pdata->max_z-pdata->min_z)/(pdata->n_z_bins-1);
   }
   float z = zoffset + zbin*z_incr;
 
@@ -3940,11 +3940,11 @@ int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pda
   } else {
     maxj = pdata->phibins;
   }
-  if ( pdata->zbins == 1 ) {
+  if ( pdata->n_z_bins == 1 ) {
     maxk = (int) lbpar_gpu.dim_z;
     normalization_factor/=maxk;
   } else {
-    maxk = pdata->zbins;
+    maxk = pdata->n_z_bins;
   }
 
   for (int i = 0; i<n_A; i++) {
@@ -3981,10 +3981,10 @@ int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pda
       for (int k =0; k<maxk; k++) {
         linear_index = 0;
         if (pdata->rbins > 1)
-          linear_index += i*pdata->phibins*pdata->zbins;
+          linear_index += i*pdata->phibins*pdata->n_z_bins;
         if (pdata->phibins > 1)
-          linear_index += j*pdata->zbins;
-        if (pdata->zbins > 1)
+          linear_index += j*pdata->n_z_bins;
+        if (pdata->n_z_bins > 1)
           linear_index +=k;
         A[3*linear_index+0]+=host_data[3*(i*maxj*maxk + j*maxk + k)+0]*normalization_factor*lbpar_gpu.tau/lbpar_gpu.agrid;
         A[3*linear_index+1]+=host_data[3*(i*maxj*maxk + j*maxk + k)+1]*normalization_factor*lbpar_gpu.tau/lbpar_gpu.agrid;
@@ -4011,23 +4011,23 @@ int statistics_observable_lbgpu_velocity_profile(profile_data* pdata, double* A,
   float normalization_factor=1;
 
 
-  if ( pdata->xbins == 1 ) {
+  if ( pdata->n_x_bins == 1 ) {
     maxi = (int) floor(lbpar_gpu.dim_x/lbpar_gpu.agrid);
     normalization_factor/=maxi;
   } else {
-    maxi = pdata->xbins;
+    maxi = pdata->n_x_bins;
   }
-  if ( pdata->ybins == 1 ) {
+  if ( pdata->n_y_bins == 1 ) {
     maxj = (int) floor(lbpar_gpu.dim_y/lbpar_gpu.agrid);
     normalization_factor/=maxj;
   } else {
-    maxj = pdata->ybins;
+    maxj = pdata->n_y_bins;
   }
-  if ( pdata->zbins == 1 ) {
+  if ( pdata->n_z_bins == 1 ) {
     maxk = (int) floor(lbpar_gpu.dim_z/lbpar_gpu.agrid);
     normalization_factor/=maxk;
   } else {
-    maxk = pdata->zbins;
+    maxk = pdata->n_z_bins;
   }
 
   for (int i = 0; i<n_A; i++) {
@@ -4065,11 +4065,11 @@ int statistics_observable_lbgpu_velocity_profile(profile_data* pdata, double* A,
     for ( j = 0; j < maxj; j++ ) {
       for ( k = 0; k < maxk; k++ ) {
         linear_index = 0;
-        if (pdata->xbins > 1)
-          linear_index += i*pdata->ybins*pdata->zbins;
-        if (pdata->ybins > 1)
-          linear_index += j*pdata->zbins;
-        if (pdata->zbins > 1)
+        if (pdata->n_x_bins > 1)
+          linear_index += i*pdata->n_y_bins*pdata->n_z_bins;
+        if (pdata->n_y_bins > 1)
+          linear_index += j*pdata->n_z_bins;
+        if (pdata->n_z_bins > 1)
           linear_index +=k;
 
         A[3*linear_index+0]+=host_data[3*(i*maxj*maxk + j*maxk + k)+0]*normalization_factor*lbpar_gpu.tau/lbpar_gpu.agrid;

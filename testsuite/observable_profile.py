@@ -22,15 +22,15 @@ class ProfileObservablesTest(ut.TestCase):
     flat_index_3d = np.ravel_multi_index((0, 0, 1, 2), (2, 2, 2, 3))
     bin_volume = 5.0**3
     kwargs = {'ids': [0, 1],
-              'xbins': 2,
-              'ybins': 2,
-              'zbins': 2,
-              'minx': 0.0,
-              'maxx': 10.0,
-              'miny': 0.0,
-              'maxy': 10.0,
-              'minz': 0.0,
-              'maxz': 10.0}
+              'n_x_bins': 2,
+              'n_y_bins': 2,
+              'n_z_bins': 2,
+              'min_x': 0.0,
+              'max_x': 10.0,
+              'min_y': 0.0,
+              'max_y': 10.0,
+              'min_z': 0.0,
+              'max_z': 10.0}
 
     def test_density_profile(self):
         density_profile = espressomd.observables.DensityProfile(**self.kwargs)
@@ -63,4 +63,3 @@ if __name__ == '__main__':
         ProfileObservablesTest))
     result = ut.TextTestRunner(verbosity=4).run(suite)
     sys.exit(not result.wasSuccessful())
-    ut.main()

@@ -34,8 +34,6 @@ operator()(PartCfg &partCfg) const {
        std::make_pair(min_z, max_z)}};
   Utils::CylindricalHistogram histogram(n_bins, 3, limits);
 #ifdef LB_GPU
-  double bin_volume;
-  int r_bin, phi_bin, z_bin;
   // First collect all positions (since we want to call the LB function to
   // get the fluid velocities only once).
   std::vector<double> ppos(3 * ids().size());
@@ -85,15 +83,10 @@ operator()(PartCfg &partCfg) const {
                     ppos_shifted[3 * index + 1] * ppos_shifted[3 * index + 1]);
     // v_z = v_z
     double v_z = velocities[3 * index + 2];
-    // Write a flat histogram.
-    // index calculation: using the following formula for N dimensions:
-    //   ind = ind_{N-1} + sum_{j=0}^{N-2} (ind_j * prod_{k=j+1}^{N-1} n_k),
-    // where ind is the flattened index, ind_i is the ith unflattened index
-    // and n_i is the size of the ith dimension.
     histogram.update(
-        std::vector<double>{{ppos_cyl[3 * index + 0], ppos_cyl[3 * index + 1],
+      std::vector<double>{{ppos_cyl[3 * index + 0], ppos_cyl[3 * index + 1],
                              ppos_cyl[3 * index + 2]}},
-        std::vector<double>{{v_r, v_phi, v_z}});
+      std::vector<double>{{v_r, v_phi, v_z}});
   }
   histogram.normalize();
 #endif // LB_GPU

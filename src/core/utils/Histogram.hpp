@@ -68,8 +68,8 @@ inline void unravel_index(const int *const len_dims, const int ndims,
 
 /**
  * \brief Calculate the bin sizes.
- * \param limits: containts min/max values for each dimension.
- * \param nbins: number of bins for each dimension.
+ * \param limits: contains min/max values for each dimension.
+ * \param n_bins: number of bins for each dimension.
  * \return The bin sizes for each dimension.
  */
 template <typename T>
@@ -227,7 +227,7 @@ template <typename T> void Histogram<T>::normalize() { do_normalize(); }
 
 /**
  * \brief Histogram normalization.
- *        Devide by total number of counts times the bin volume.
+ *        Divide by total number of counts times the bin volume.
  */
 template <typename T> void Histogram<T>::do_normalize() {
   T tot_count =
