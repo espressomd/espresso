@@ -26,6 +26,17 @@ maxset:
     paths:
     - build/
 
+clang-static-analysis:
+  stage: build
+  image: espressomd/espresso-ubuntu-clang-cuda:latest
+  script:
+    - export myconfig=maxset with_coverage=false with_static_analysis=true
+    - bash maintainer/cuda_build.sh
+  artifacts:
+    when: on_failure
+    paths:
+    - build/analysis
+
 clang:
   stage: build
   image: espressomd/espresso-ubuntu-clang-cuda:latest
