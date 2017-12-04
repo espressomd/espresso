@@ -536,7 +536,7 @@ The collision detection is controlled via the :py:espressomd.system.System.colli
 
 Several modes are available for different types of binding.
 
-* "bind_centers": adds a pair-bond between two particles at their first collision. By making the bonded interaction `sitff` enough, the particles can be held together after the collision. Note that the particles can still slide on each others' surface, as the pair bond is not directional. This mode is set up as follows::
+* "bind_centers": adds a pair-bond between two particles at their first collision. By making the bonded interaction `stiff` enough, the particles can be held together after the collision. Note that the particles can still slide on each others' surface, as the pair bond is not directional. This mode is set up as follows::
     import espressomd
     from espressomd.interactions import HarmonicBond
     
@@ -575,12 +575,12 @@ Several modes are available for different types of binding.
     * `part_type_vs` is the particle type assigned to the virtual sites created on collision. In nearly all cases, no non-bonded interactions should be defined for this particle type.
     * `vs_placement` controls, where on the line connecting the centers of the colliding particles, the virtual sites are placed. A value of 0 means that the virtual sites are placed at the same position as the colliding particles on which they are based. A value of 0.5 will result in the virtual sites being placed ad the mid-point between the two colliding particles. A value of 1 will result the virtual site associated to the first colliding particle to be placed at the position of the second colliding particle. In most cases, 0.5, is a good choice. Then, the bond connecting the virtual sites should have an equilibrium length of zero.
 
-* "glue_to_surface": This mode is used to irreversibly attach small particles to the surface of a big particle. It is asymmetric in that several small particles can be bound to a big particle. The small particles can change type after collision to make them `inert`. On collision, a single virtual site is placed and related to the big particle. Then, a bond (`bond_centers`) connects the big and the small particle. A second bond (`bond_vs`) connects the virtual site and the small particle. Further required parameters are:
+* "glue_to_surface": This mode is used to irreversibly attach small particles to the surface of a big particle. It is asymmetric in that several small particles can be bound to a big particle but not vice versa. The small particles can change type after collision to make them `inert`. On collision, a single virtual site is placed and related to the big particle. Then, a bond (`bond_centers`) connects the big and the small particle. A second bond (`bond_vs`) connects the virtual site and the small particle. Further required parameters are:
   
   * `part_type_to_attach_vs_to`: Type of the particle to which the virtual site is attached, i.e., the `big` particle.
   * `part_type_to_be_glued`: Type of the particle bound to the virtual site (the `small` particle).
   * `part_type_after_glueing`: The type assigned to the particle bound to the virtual site (`small` particle) after the collision.
-  * `part_type_vs`: Particle type assigned to the virtual site created during the collision.
+  * `part_type_vs`: Particle type assigned to the virtual site created during the collision. 
   * `distance_glued_particle_to_vs`: Distance of the virtual site to the particle being bound to it (`small` particle).
 
 
@@ -590,10 +590,14 @@ Several modes are available for different types of binding.
   similarly to those create by the mode "bind_at_point_of_collision". The present approach works
   without virtual sites. Instead, for each two-particle collision, the
   surrounding is searched for a third particle. If one is found,
-  angular bonds are placed on each of the three particles in addition
+  angular bonds are placed to maintain the local shape.
+  If all three particles are within the cutoff distance, an angle bond is added
+  on each of the three particles in addition
   to the distance based bonds between the particle centers. 
+  If two particles are within the cutoff of a centrla particle (e.g., chain of three particles)
+  an angle bond is placed on the central particle.
   The angular bonds being added are determined from the angle between the particles.
-  This method has not depend on the particles’ rotational
+  This method does not depend on the particles’ rotational
   degrees of freedom being integrated. Virtual sites are also not
   required.
   The method, along with the corresponding bonds are setup as follows::
