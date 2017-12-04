@@ -3804,21 +3804,21 @@ __global__ void fill_lb_radial_velocity_profile(LB_nodes_gpu n_a, radial_profile
   unsigned int phibin=blockIdx.x;
   unsigned int zbin=blockIdx.y;
 
-  float roffset=pdata->minr;
-  float r_incr=(pdata->maxr-pdata->minr)/(pdata->rbins-1);
+  float roffset=pdata->min_r;
+  float r_incr=(pdata->max_r-pdata->min_r)/(pdata->n_r_bins-1);
 
   float r = roffset + rbin*r_incr;
 
   unsigned int maxj;
   float phioffset, phi_incr;
-  if ( pdata->phibins == 1 ) {
-    maxj = (int)floorf( 2*3.1415f*pdata->maxr/para.agrid ) ; 
+  if ( pdata->n_phi_bins == 1 ) {
+    maxj = (int)floorf( 2*3.1415f*pdata->max_r/para.agrid ) ;
     phioffset=0;
     phi_incr=2*3.1415f/maxj;
   } else {
-    maxj = pdata->phibins;
-    phioffset=pdata->minphi;
-    phi_incr=(pdata->maxphi-pdata->minphi)/(pdata->phibins);
+    maxj = pdata->n_phi_bins;
+    phioffset=pdata->min_phi;
+    phi_incr=(pdata->max_phi-pdata->min_phi)/(pdata->n_phi_bins);
   }
   float phi = phioffset + phibin*phi_incr;
 
@@ -3928,17 +3928,17 @@ int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pda
   unsigned int maxj, maxk;
   float normalization_factor=1;
   
-  if ( pdata->rbins == 1 ) {
+  if ( pdata->n_r_bins == 1 ) {
     return 1;
   }
 
-  unsigned int maxi=pdata->rbins;
+  unsigned int maxi=pdata->n_r_bins;
   
-  if ( pdata->phibins == 1 ) {
-    maxj = (int)floorf( 2*3.1415f*pdata->maxr/lbpar_gpu.agrid ) ; 
+  if ( pdata->n_phi_bins == 1 ) {
+    maxj = (int)floorf( 2*3.1415f*pdata->max_r/lbpar_gpu.agrid ) ;
     normalization_factor/=maxj;
   } else {
-    maxj = pdata->phibins;
+    maxj = pdata->n_phi_bins;
   }
   if ( pdata->n_z_bins == 1 ) {
     maxk = (int) lbpar_gpu.dim_z;
@@ -3980,9 +3980,9 @@ int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pda
     for (int j =0; j<maxj; j++)
       for (int k =0; k<maxk; k++) {
         linear_index = 0;
-        if (pdata->rbins > 1)
-          linear_index += i*pdata->phibins*pdata->n_z_bins;
-        if (pdata->phibins > 1)
+        if (pdata->n_r_bins > 1)
+          linear_index += i*pdata->n_phi_bins*pdata->n_z_bins;
+        if (pdata->n_phi_bins > 1)
           linear_index += j*pdata->n_z_bins;
         if (pdata->n_z_bins > 1)
           linear_index +=k;
