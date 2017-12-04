@@ -39,7 +39,9 @@ int dihedral_set_params(int bond_type, int mult, double bend, double phase)
   bonded_ia_params[bond_type].p.dihedral.bend = bend;
   bonded_ia_params[bond_type].p.dihedral.phase = phase;
 
+  
   set_bond_by_type(bond_type, Utils::make_unique<Bond::Dihedral>(mult, bend, phase));
+  bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::Dihedral>(mult, bend, phase));
 
   mpi_bcast_ia_params(bond_type, -1); 
 

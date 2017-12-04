@@ -51,5 +51,8 @@ int fene_set_params(int bond_type, double k, double drmax, double r0)
   set_bond_by_type(bond_type, Utils::make_unique<Bond::Fene>
 		   (r0, drmax, SQR(drmax), 1./SQR(drmax), k));
 
+  bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::Fene>
+				  (r0, drmax, SQR(drmax), 1./SQR(drmax), k));
+
   return ES_OK;
 }

@@ -48,6 +48,8 @@ int angle_harmonic_set_params(int bond_type, double bend, double phi0)
 
   set_bond_by_type(bond_type, Utils::make_unique<Bond::AngleHarmonic>(bend, phi0)); 
 
+  bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::AngleHarmonic>(bend, phi0)); 
+
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(bond_type, -1); 
 
