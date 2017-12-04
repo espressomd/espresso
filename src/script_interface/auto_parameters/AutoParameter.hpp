@@ -53,26 +53,67 @@ struct AutoParameter {
    * @param length The supposed length of the parameter, by default this this
    *               is deduced from the type of the reference.
    */
+
+  /* setter-getter */
   template <typename T, class O>
-  AutoParameter(std::string const &name, O *obj, void (O::*setter)(T const &),
-                T (O::*getter)() const, VariantType type = infer_type<T>(),
+  AutoParameter(std::string const &name, std::shared_ptr<O> &obj,
+                void (O::*setter)(T const &), T const &(O::*getter)() const,
+                VariantType type = infer_type<T>(),
                 size_t length = infer_length<T>())
       : name(name), type(type), length(length),
-        set([obj, setter](Variant const &v) {
-          (obj->*setter)(get_value<T>(v));
+        set([&obj, setter](Variant const &v) {
+          (obj.get()->*setter)(get_value<T>(v));
         }),
-        get([obj, getter]() { return (obj->*getter)(); }) {}
+        get([&obj, getter]() { return (obj.get()->*getter)(); }) {}
 
   template <typename T, class O>
-  AutoParameter(std::string const &name, O *obj, void (O::*setter)(T const &),
+  AutoParameter(std::string const &name, std::shared_ptr<O> &obj,
+                void (O::*setter)(T const &), T (O::*getter)() const,
+                VariantType type = infer_type<T>(),
+                size_t length = infer_length<T>())
+      : name(name), type(type), length(length),
+        set([&obj, setter](Variant const &v) {
+          (obj.get()->*setter)(get_value<T>(v));
+        }),
+        get([&obj, getter]() { return (obj.get()->*getter)(); }) {}
+
+  /* read-only */
+  template <typename T, class O>
+  AutoParameter(std::string const &name, std::shared_ptr<O> &obj,
                 T const &(O::*getter)() const,
                 VariantType type = infer_type<T>(),
                 size_t length = infer_length<T>())
       : name(name), type(type), length(length),
-        set([obj, setter](Variant const &v) {
-          (obj->*setter)(get_value<T>(v));
+        set([](Variant const &) { throw WriteError{}; }),
+        get([&obj, getter]() { return (obj.get()->*getter)(); }) {}
+
+  template <typename T, class O>
+  AutoParameter(std::string const &name, std::shared_ptr<O> &obj,
+                T (O::*getter)() const, VariantType type = infer_type<T>(),
+                size_t length = infer_length<T>())
+      : name(name), type(type), length(length),
+        set([](Variant const &) { throw WriteError{}; }),
+        get([&obj, getter]() { return (obj.get()->*getter)(); }) {}
+
+  template <typename T, class O>
+  AutoParameter(std::string const &name, std::shared_ptr<O> &obj, T O::*getter,
+                VariantType type = infer_type<T>(),
+                size_t length = infer_length<T>())
+      : name(name), type(type), length(length),
+        set([](Variant const &) { throw WriteError{}; }),
+        get([&obj, getter]() { return (obj.get()->*getter)(); }) {}
+
+  /* read-write */
+  template <typename T, class O>
+  AutoParameter(std::string const &name, std::shared_ptr<O> &obj,
+                T &(O::*getter_setter)(), VariantType type = infer_type<T>(),
+                size_t length = infer_length<T>())
+      : name(name), type(type), length(length),
+        set([&obj, getter_setter](Variant const &v) {
+          (obj.get()->*getter_setter)() = get_value<T>(v);
         }),
-        get([obj, getter]() { return (obj->*getter)(); }) {}
+        get([&obj, getter_setter]() { return (obj.get()->*getter_setter)(); }) {
+  }
 
   /**
    * @brief read-write parameter that is bound to a referece.
@@ -119,7 +160,7 @@ struct AutoParameter {
         get([&binding]() -> Variant { return binding; }) {}
 
   template <typename T>
-  AutoParameter(std::string const &name, std::shared_ptr<T> const& binding,
+  AutoParameter(std::string const &name, std::shared_ptr<T> const &binding,
                 VariantType type = infer_type<std::shared_ptr<T>>(),
                 size_t length = infer_length<std::shared_ptr<T>>())
       : name(name), type(type), length(length),
