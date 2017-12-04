@@ -13,13 +13,11 @@ class ProfileObservablesTest(ut.TestCase):
     system.part.add(
         id=0, pos=[
             4.0, 4.0, 6.0], v=[
-            0.0, 0.0, 1.0], ext_force=[
-                0.0, 0.0, 1.0])
+            0.0, 0.0, 1.0])
     system.part.add(
         id=1, pos=[
             4.0, 4.0, 6.0], v=[
-            0.0, 0.0, 1.0], ext_force=[
-                0.0, 0.0, 1.0])
+            0.0, 0.0, 1.0])
     flat_index = np.ravel_multi_index((0, 0, 1), (2, 2, 2))
     flat_index_3d = np.ravel_multi_index((0, 0, 1, 2), (2, 2, 2, 3))
     bin_volume = 5.0**3
@@ -39,9 +37,14 @@ class ProfileObservablesTest(ut.TestCase):
         self.assertEqual(density_profile.calculate()[
                          self.flat_index], 2.0 / (2.0 * self.bin_volume))
 
+    @ut.skipIf(
+        not espressomd.has_features("EXTERNAL_FORCES"),
+        "Can not check force density profile because EXT_FORCES not compiled in.")
     def test_force_density_profile(self):
         density_profile = espressomd.observables.ForceDensityProfile(
             **self.kwargs)
+        self.system.part[0].ext_force = [0.0, 0.0, 1.0]
+        self.system.part[1].ext_force = [0.0, 0.0, 1.0]
         self.system.integrator.run(0)
         self.assertEqual(density_profile.calculate()[
                          self.flat_index_3d], 2.0 / (2.0 * self.bin_volume))
@@ -52,6 +55,7 @@ class ProfileObservablesTest(ut.TestCase):
         self.system.integrator.run(0)
         self.assertEqual(density_profile.calculate()[
                          self.flat_index_3d], 2.0 / (2.0 * self.bin_volume))
+
 
 if __name__ == '__main__':
     suite = ut.TestSuite()
