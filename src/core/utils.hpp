@@ -683,7 +683,7 @@ inline double angle_btw_triangles(double *P1, double *P2, double *P3,
   return phi;
 }
 
-namespace utils {
+namespace Utils {
 
 struct vector_size_unequal : public std::exception {
   const char *what() const throw() { return "Vector sizes do not match!"; }
@@ -706,8 +706,7 @@ std::vector<T> cross_product(const std::vector<T> &a,
     throw vector_size_unequal();
 
   std::vector<T> c(3);
-  c[0] = a[1] * b[2] - a[2] * b[1];
-  c[1] = a[2] * b[0] - a[0] * b[2];
+  c[0] = a[1] * b[2] - a[2] * b[1];  c[1] = a[2] * b[0] - a[0] * b[2];
   c[2] = a[0] * b[1] - a[1] * b[0];
   return c;
 }
