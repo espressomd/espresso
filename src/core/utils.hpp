@@ -173,23 +173,6 @@ inline void vector_subt(double res[3], double a[3], double b[3]) {
     res[i] = a[i] - b[i];
 }
 
-/** Very slow sort routine for small integer arrays. Sorts the values
-    in decending order.
-    \param data   the integer array
-    \param size   size of the array
- */
-inline void sort_int_array(int *data, int size) {
-  int i, j, tmp;
-  for (i = 0; i < size - 1; i++)
-    for (j = i + 1; j < size; j++) {
-      if (data[i] < data[j]) {
-        tmp = data[i];
-        data[i] = data[j];
-        data[j] = tmp;
-      }
-    }
-}
-
 /** permute an integer array field of size size about permute positions. */
 inline void permute_ifield(int *field, int size, int permute) {
   int i, tmp;
