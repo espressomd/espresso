@@ -125,8 +125,8 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
   int *contact_num, ind;
 
   if (min_contact > 1) {
-    contact_num = (int *)Utils::malloc(n_molecules * n_molecules * sizeof(int));
-    for (int i = 0; i < n_molecules * n_molecules; i++)
+    contact_num = (int *)Utils::malloc(topology.size() * topology.size() * sizeof(int));
+    for (int i = 0; i < topology.size() * topology.size(); i++)
       contact_num[i] = 0;
   } else {
     contact_num = (int *)0; /* Just to keep the compiler happy */
@@ -155,9 +155,9 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
 #endif
                          if (d.dist2 < dist_criteria2) {
                            if (p1molid > p2molid) {
-                             ind = p1molid * n_molecules + p2molid;
+                             ind = p1molid * topology.size() + p2molid;
                            } else {
-                             ind = p2molid * n_molecules + p1molid;
+                             ind = p2molid * topology.size() + p1molid;
                            }
                            if (min_contact > 1) {
                              contact_num[ind]++;

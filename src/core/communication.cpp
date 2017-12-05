@@ -1888,13 +1888,12 @@ int mpi_sync_topo_part_info() {
   int i;
   int molsize = 0;
   int moltype = 0;
-  int n_mols = 0;
 
   mpi_call(mpi_sync_topo_part_info_slave, -1, 0);
-  n_mols = n_molecules;
+  auto n_mols = topology.size();
   MPI_Bcast(&n_mols, 1, MPI_INT, 0, comm_cart);
 
-  for (i = 0; i < n_molecules; i++) {
+  for (i = 0; i < n_mols; i++) {
     molsize = topology[i].part.n;
     moltype = topology[i].type;
 
@@ -1933,7 +1932,7 @@ void mpi_sync_topo_part_info_slave(int node, int parm) {
 
   MPI_Bcast(&n_mols, 1, MPI_INT, 0, comm_cart);
   realloc_topology(n_mols);
-  for (i = 0; i < n_molecules; i++) {
+  for (i = 0; i < n_mols; i++) {
 
 #ifdef MOLFORCES
     MPI_Bcast(&(topology[i].trap_flag), 1, MPI_INT, 0, comm_cart);
