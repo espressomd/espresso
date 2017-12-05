@@ -1093,27 +1093,9 @@ void update_stress_tensor (int v_comp) {
 	}
 }
 
-int analyze_local_stress_tensor(int* periodic, double* range_start, double* range, int* bins, DoubleList* local_stress_tensor)
+int analyze_local_stress_tensor(int* periodic, double* range_start, double* range, int* bins, DoubleList* TensorInBin)
 {
-	int i,j;
-	DoubleList *TensorInBin;
 	PTENSOR_TRACE(fprintf(stderr,"%d: Running tclcommand_analyze_parse_local_stress_tensor\n",this_node));
-
-	/* Allocate a doublelist of bins to keep track of stress profile */
-	TensorInBin = (DoubleList *)Utils::malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
-	if ( TensorInBin ) {
-		/* Initialize the stress profile */
-		for ( i = 0 ; i < bins[0]*bins[1]*bins[2]; i++ ) {
-			init_doublelist(&TensorInBin[i]);
-			alloc_doublelist(&TensorInBin[i],9);
-			for ( j = 0 ; j < 9 ; j++ ) {
-				TensorInBin[i].e[j] = 0.0;
-			}
-		}
-	} else {
-		fprintf(stderr, "could not allocate memory for local_stress_tensor");
-		return (ES_ERROR);
-	}
 
 	mpi_local_stress_tensor(TensorInBin, bins, periodic,range_start, range);
 	PTENSOR_TRACE(fprintf(stderr,"%d: tclcommand_analyze_parse_local_stress_tensor: finished mpi_local_stress_tensor \n",this_node));
