@@ -64,16 +64,12 @@ cdef int_list * create_int_list_from_python_object(obj):
     obj : python object which supports subscripts
 
     """
-    cdef int_list * il
-    il = <int_list * > malloc(sizeof(int_list))
-    init_intlist(il)
+    cdef int_list * il = new int_list(len(obj))
 
-    alloc_intlist(il, len(obj))
     for i in range(len(obj)):
         il.e[i] = obj[i]
-    il.n = len(obj)
-    return il
 
+    return il
 
 cdef check_type_or_throw_except(x, n, t, msg):
     """

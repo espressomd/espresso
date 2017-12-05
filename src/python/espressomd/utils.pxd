@@ -29,15 +29,22 @@ cdef extern from "stdlib.h":
     void * realloc(void * ptr, size_t size)
 
 cdef extern from "utils.hpp":
-    ctypedef struct int_list "IntList":
+    cppclass int_list "IntList":
+        int_list()
+        int_list(int)
+        int_list(int, int)
+
         int * e
         unsigned n
 
-    ctypedef struct double_list "DoubleList":
+    cppclass double_list "DoubleList":
+        double_list()
+        double_list(int)
+        double_list(int, double)
+
         double * e
         unsigned n
 
-    cdef void init_intlist(int_list * il)
     cdef void alloc_intlist(int_list * il, int size)
     cdef void realloc_intlist(int_list * il, int size)
 

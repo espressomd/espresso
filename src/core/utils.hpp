@@ -120,14 +120,6 @@ transform_to_cylinder_coordinates(::Vector<3, double> const &pos) {
 /*************************************************************/
 /*@{*/
 
-/** Initialize an \ref IntList.  */
-inline void init_intlist(IntList *il) {
-  il->n = 0;
-  il->max = 0;
-  il->e = nullptr;
-}
-// extern int this_node;
-
 /** Allocate an \ref IntList of size size. If you need an \ref IntList
     with variable size better use \ref realloc_intlist */
 inline void alloc_intlist(IntList *il, int size) {
