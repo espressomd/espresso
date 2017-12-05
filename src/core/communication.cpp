@@ -1926,7 +1926,7 @@ void mpi_sync_topo_part_info_slave(int node, int parm) {
     MPI_Bcast(&molsize, 1, MPI_INT, 0, comm_cart);
     MPI_Bcast(&moltype, 1, MPI_INT, 0, comm_cart);
     topology[i].type = moltype;
-    realloc_intlist(&topology[i].part, topology[i].part.n = molsize);
+    topology[i].part.resize(molsize);
 
     MPI_Bcast(topology[i].part.e, topology[i].part.n, MPI_INT, 0, comm_cart);
     MPI_Bcast(&topology[i].type, 1, MPI_INT, 0, comm_cart);

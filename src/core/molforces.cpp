@@ -378,8 +378,6 @@ void calc_mol_info() {
   } else {
     mpi_comm_mol_info_slave(&local_trapped_mols);
   }
-
-  realloc_intlist(&local_trapped_mols, 0);
 }
 
 void calc_and_apply_mol_constraints() {

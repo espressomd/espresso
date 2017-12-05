@@ -120,14 +120,6 @@ transform_to_cylinder_coordinates(::Vector<3, double> const &pos) {
 /*************************************************************/
 /*@{*/
 
-/** Reallocate an \ref IntList */
-inline void realloc_intlist(IntList *il, int size) {
-  if (size != il->max) {
-    il->max = size;
-    il->e = (int *)Utils::realloc(il->e, sizeof(int) * il->max);
-  }
-}
-
 /** Check wether an \ref IntList contains the value c */
 inline int intlist_contains(IntList *il, int c) {
   int i;

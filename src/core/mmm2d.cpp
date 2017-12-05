@@ -1420,9 +1420,9 @@ static int MMM2D_tune_near(double error)
 
   // fprintf(stderr, "bessel cutoff %d %g\n", P, err);
 
-  realloc_intlist(&besselCutoff, besselCutoff.n = P);
+  besselCutoff.resize(P);
   for (p = 1; p < P; p++)
-    besselCutoff.e[p-1] = (int)floor(((double)P)/(2*p)) + 1;
+    besselCutoff[p-1] = (int)floor(((double)P)/(2*p)) + 1;
 
   /* complex sum, determine cutoffs (dist dependent) */
   T = log(part_error/(16*M_SQRT2)*box_l[0]*box_l[1]);
