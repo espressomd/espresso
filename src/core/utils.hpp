@@ -240,26 +240,6 @@ inline double sinc(double d) {
     return 1.0 + PId2 * (c2 + PId2 * (c4 + PId2 * (c6 + PId2 * c8)));
   }
 }
-
-/** factorizes small numbers up to a maximum of max factors. */
-inline int calc_factors(int n, int *factors, int max) {
-  int f = 2, i = 0;
-  while (n > 1) {
-    while (f <= n) {
-      if (n % f == 0) {
-        if (i >= max)
-          return 0;
-        n /= f;
-        factors[i] = f;
-        i++;
-        f = n;
-      }
-      f++;
-    }
-    f = 2;
-  }
-  return i;
-}
 /*@}*/
 
 /*************************************************************/
