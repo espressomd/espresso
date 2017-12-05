@@ -144,7 +144,7 @@ void on_integration_start() {
   INTEG_TRACE(fprintf(
       stderr,
       "%d: on_integration_start: reinit_thermo = %d, resort_particles=%d\n",
-      this_node, reinit_thermo, resort_particles));
+      this_node, reinit_thermo, get_resort_particles()));
 
   /********************************************/
   /* sanity checks                            */
@@ -217,6 +217,10 @@ void on_integration_start() {
     runtimeErrorMsg() << "Nodes disagree about cell system type.";
   }
 
+  if(!Utils::Mpi::all_compare(comm_cart, get_resort_particles())) {
+    runtimeErrorMsg() << "Nodes disagree about resort type.";
+  }
+
   if(!Utils::Mpi::all_compare(comm_cart, cell_structure.use_verlet_list)) {
     runtimeErrorMsg() << "Nodes disagree about use of verlet lists.";
   }
@@ -239,8 +243,7 @@ void on_observable_calc() {
   /* Prepare particle structure: Communication step: number of ghosts and ghost
    * information */
 
-  if (resort_particles)
-    cells_resort_particles(CELL_GLOBAL_EXCHANGE);
+  cells_update_ghosts();
 
 #ifdef ELECTROSTATICS
   if (reinit_electrostatics) {
@@ -287,7 +290,7 @@ void on_observable_calc() {
 void on_particle_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_particle_change\n", this_node));
 
-  resort_particles = 1;
+  set_resort_particles(Cells::RESORT_LOCAL);
   reinit_electrostatics = 1;
   reinit_magnetostatics = 1;
 

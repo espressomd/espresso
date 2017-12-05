@@ -21,8 +21,8 @@
 #ifndef OBSERVABLES_PIDOBSERVABLE_HPP
 #define OBSERVABLES_PIDOBSERVABLE_HPP
 
-#include <vector>
 #include "Observable.hpp"
+#include <vector>
 
 namespace Observables {
 
