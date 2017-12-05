@@ -1428,7 +1428,6 @@ void mpi_local_stress_tensor_slave(int ana_num, int job) {
   int periodic[3] = {0, 0, 0};
   double range_start[3] = {0, 0, 0};
   double range[3] = {0, 0, 0};
-  DoubleList *TensorInBin;
   int i, j;
 
   MPI_Bcast(bins, 3, MPI_INT, 0, comm_cart);
@@ -1436,8 +1435,8 @@ void mpi_local_stress_tensor_slave(int ana_num, int job) {
   MPI_Bcast(range_start, 3, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast(range, 3, MPI_DOUBLE, 0, comm_cart);
 
-  TensorInBin = (DoubleList *)Utils::malloc(bins[0] * bins[1] * bins[2] *
-                                            sizeof(DoubleList));
+  auto TensorInBin = std::vector<DoubleList>(bins[0] * bins[1] * bins[2], DoubleList(9, 0.0));
+
   for (i = 0; i < bins[0] * bins[1] * bins[2]; i++) {
     init_doublelist(&TensorInBin[i]);
     alloc_doublelist(&TensorInBin[i], 9);
@@ -1446,7 +1445,7 @@ void mpi_local_stress_tensor_slave(int ana_num, int job) {
     }
   }
 
-  local_stress_tensor_calc(TensorInBin, bins, periodic, range_start, range);
+  local_stress_tensor_calc(TensorInBin.data(), bins, periodic, range_start, range);
 
   for (i = 0; i < bins[0] * bins[1] * bins[2]; i++) {
     MPI_Reduce(TensorInBin[i].e, nullptr, 9, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
@@ -1458,11 +1457,6 @@ void mpi_local_stress_tensor_slave(int ana_num, int job) {
     }
     PTENSOR_TRACE(fprintf(stderr, "}\n"));
   }
-
-  for (i = 0; i < bins[0] * bins[1] * bins[2]; i++) {
-    realloc_doublelist(&TensorInBin[i], 0);
-  }
-  free(TensorInBin);
 }
 
 /*************** REQ_SET_TIME_STEP ************/
