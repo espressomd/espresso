@@ -128,23 +128,6 @@ inline void realloc_intlist(IntList *il, int size) {
   }
 }
 
-/** Allocate an \ref IntList, but only to multiples of grain. */
-inline void alloc_grained_intlist(IntList *il, int size, int grain) {
-  il->max = grain * ((size + grain - 1) / grain);
-  il->e = (int *)Utils::malloc(sizeof(int) * il->max);
-}
-
-/** Reallocate an \ref IntList, but only to multiples of grain. */
-inline void realloc_grained_intlist(IntList *il, int size, int grain) {
-  if (size >= il->max)
-    il->max = grain * ((size + grain - 1) / grain);
-  else
-    /* shrink not as fast, just lose half, rounded up */
-    il->max = grain * (((il->max + size + 1) / 2 + grain - 1) / grain);
-
-  il->e = (int *)Utils::realloc(il->e, sizeof(int) * il->max);
-}
-
 /** Check wether an \ref IntList contains the value c */
 inline int intlist_contains(IntList *il, int c) {
   int i;
@@ -176,22 +159,6 @@ inline void realloc_doublelist(DoubleList *dl, int size) {
   }
 }
 
-/** Allocate an \ref DoubleList, but only to multiples of grain. */
-inline void alloc_grained_doublelist(DoubleList *dl, int size, int grain) {
-  dl->max = grain * ((size + grain - 1) / grain);
-  dl->e = (double *)Utils::malloc(sizeof(double) * dl->max);
-}
-
-/** Reallocate an \ref DoubleList, but only to multiples of grain. */
-inline void realloc_grained_doublelist(DoubleList *dl, int size, int grain) {
-  if (size >= dl->max)
-    dl->max = grain * ((size + grain - 1) / grain);
-  else
-    /* shrink not as fast, just lose half, rounded up */
-    dl->max = grain * (((dl->max + size + 1) / 2 + grain - 1) / grain);
-
-  dl->e = (double *)Utils::realloc(dl->e, sizeof(double) * dl->max);
-}
 /*@}*/
 
 /*************************************************************/
