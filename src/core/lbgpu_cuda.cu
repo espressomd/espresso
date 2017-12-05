@@ -4764,7 +4764,7 @@ struct two_point_interpolation {
         float mode[19*LB_COMPONENTS];
         float _position[3] = {position.x, position.y, position.z};
         float lees_edwards_offset = 0.0f;
-        float le_position = 0.0f;
+        float le_position = position.x;
         interpolation_two_point_coupling(current_nodes_gpu, _position, node_index, mode, d_v_gpu, delta, lees_edwards_offset, le_position,  u);
         return make_float3(u[0], u[1], u[2]);
 	} 
