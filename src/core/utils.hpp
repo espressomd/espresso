@@ -575,17 +575,6 @@ char *strcat_alloc(char *left, const char *right);
 /*************************************************************/
 /*@{*/
 
-/** Computes the area of triangle between vectors P1 and P2,
- *  by computing the crossproduct P1 x P2 and taking the half of its norm */
-inline double area_triangle_new(double *P1, double *P2) {
-  double area;
-  double normal[3], n; // auxiliary variables
-  vector_product(P1, P2, normal);
-  n = normr(normal);
-  area = 0.5 * n;
-  return area;
-}
-
 /** Computes the area of triangle between vectors P1,P2,P3,
  *  by computing the crossproduct P1P2 x P1P3 and taking the half of its norm */
 inline double area_triangle(double *P1, double *P2, double *P3) {
