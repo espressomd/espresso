@@ -144,13 +144,6 @@ inline void init_doublelist(DoubleList *il) {
   il->e = nullptr;
 }
 
-/** Allocate an \ref DoubleList of size size. If you need an \ref DoubleList
-    with variable size better use \ref realloc_doublelist */
-inline void alloc_doublelist(DoubleList *dl, int size) {
-  dl->max = size;
-  dl->e = (double *)Utils::malloc(sizeof(double) * dl->max);
-}
-
 /** Reallocate an \ref DoubleList */
 inline void realloc_doublelist(DoubleList *dl, int size) {
   if (size != dl->max) {
