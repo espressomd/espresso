@@ -42,6 +42,8 @@ cdef extern from "utils.hpp":
         double_list(int)
         double_list(int, double)
 
+        double& operator[](int)
+
         double * e
         unsigned n
 

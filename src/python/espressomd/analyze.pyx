@@ -617,19 +617,36 @@ class Analysis(object):
         
         """
 
-        cdef double_list local_stress_tensor
+        cdef vector[double_list] local_stress_tensor
         cdef int[3] c_periodicity, c_bins
+        cdef int lst_ind, t_ind
         cdef double[3] c_range_start, c_stress_range
 
+        n_bins = 1
         for i in range(3):
+            n_bins *= bins[i]
             c_bins[i] = bins[i]
             c_periodicity[i] = periodicity[i]
             c_range_start[i] = range_start[i]
             c_stress_range[i] = stress_range[i]
 
-        if c_analyze.analyze_local_stress_tensor(c_periodicity, c_range_start, c_stress_range, c_bins, &local_stress_tensor):
+
+        local_stress_tensor.resize(n_bins, double_list(9, 0.0))
+
+        if c_analyze.analyze_local_stress_tensor(c_periodicity, c_range_start, c_stress_range, c_bins, local_stress_tensor.data()):
             handle_errors("Error while calculating local stress tensor")
-        stress_tensor = create_nparray_from_double_list(&local_stress_tensor)
+
+        stress_tensor = np.zeros((bins[0], bins[1], bins[2], 3, 3))
+
+        for i in range(bins[0]):
+            for j in range(bins[1]):
+                for k in range(bins[2]):
+                    for l in range(3):
+                        for m in range(3):
+                            lst_ind = i * bins[1]* bins[2] + j * bins[2] + k
+                            t_ind = l * 3 + m
+                            stress_tensor[i, j, k, l, m] = local_stress_tensor[lst_ind][t_ind]
+
         return stress_tensor
 
     #

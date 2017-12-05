@@ -1398,24 +1398,11 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3],
                              int periodic[3], double range_start[3],
                              double range[3]) {
 
-  int i, j;
-  DoubleList *TensorInBin_;
   PTENSOR_TRACE(fprintf(stderr, "%d: mpi_local_stress_tensor: Broadcasting "
                                 "local_stress_tensor parameters\n",
                         this_node));
 
   mpi_call(mpi_local_stress_tensor_slave, -1, 0);
-
-  TensorInBin_ = (DoubleList *)Utils::malloc(bins[0] * bins[1] * bins[2] *
-                                             sizeof(DoubleList));
-  for (i = 0; i < bins[0] * bins[1] * bins[2]; i++) {
-    init_doublelist(&TensorInBin_[i]);
-    alloc_doublelist(&TensorInBin_[i], 9);
-    for (j = 0; j < 9; j++) {
-      TensorInBin_[i].e[j] = TensorInBin[i].e[j];
-      TensorInBin[i].e[j] = 0;
-    }
-  }
 
   MPI_Bcast(bins, 3, MPI_INT, 0, comm_cart);
   MPI_Bcast(periodic, 3, MPI_INT, 0, comm_cart);
@@ -1425,13 +1412,13 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3],
   PTENSOR_TRACE(fprintf(
       stderr, "%d: mpi_local_stress_tensor: Call local_stress_tensor_calc\n",
       this_node));
-  local_stress_tensor_calc(TensorInBin_, bins, periodic, range_start, range);
+  local_stress_tensor_calc(TensorInBin, bins, periodic, range_start, range);
 
   PTENSOR_TRACE(fprintf(stderr, "%d: mpi_local_stress_tensor: Reduce local "
                                 "stress tensors with MPI_Reduce\n",
                         this_node));
-  for (i = 0; i < bins[0] * bins[1] * bins[2]; i++) {
-    MPI_Reduce(TensorInBin_[i].e, TensorInBin[i].e, 9, MPI_DOUBLE, MPI_SUM, 0,
+  for (int i = 0; i < bins[0] * bins[1] * bins[2]; i++) {
+    MPI_Reduce(MPI_IN_PLACE, TensorInBin[i].e, 9, MPI_DOUBLE, MPI_SUM, 0,
                comm_cart);
   }
 }
