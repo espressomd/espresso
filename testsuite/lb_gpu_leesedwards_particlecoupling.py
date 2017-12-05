@@ -4,7 +4,6 @@ from __future__ import print_function
 
 import espressomd as md
 from espressomd import lb
-import matplotlib.pyplot as plt
 import numpy as np
 import sys
 import unittest as ut
