@@ -120,13 +120,6 @@ transform_to_cylinder_coordinates(::Vector<3, double> const &pos) {
 /*************************************************************/
 /*@{*/
 
-/** Allocate an \ref IntList of size size. If you need an \ref IntList
-    with variable size better use \ref realloc_intlist */
-inline void alloc_intlist(IntList *il, int size) {
-  il->max = size;
-  il->e = (int *)Utils::malloc(sizeof(int) * il->max);
-}
-
 /** Reallocate an \ref IntList */
 inline void realloc_intlist(IntList *il, int size) {
   if (size != il->max) {

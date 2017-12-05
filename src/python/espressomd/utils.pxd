@@ -45,7 +45,6 @@ cdef extern from "utils.hpp":
         double * e
         unsigned n
 
-    cdef void alloc_intlist(int_list * il, int size)
     cdef void realloc_intlist(int_list * il, int size)
 
 cdef extern from "utils/Histogram.hpp" namespace "Utils":
