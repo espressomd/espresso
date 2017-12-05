@@ -422,7 +422,7 @@ std::vector<collision_struct> gather_global_collision_queue()
     MPI_Allreduce(&tmp, &total_collisions, 1, MPI_INT, MPI_SUM, comm_cart);
     
     if (total_collisions==0)
-      return std::move(res);
+      return res;
 
     // Gather number of collisions
     MPI_Allgather(&tmp, 1, MPI_INT, &(counts[0]), 1, MPI_INT, comm_cart);
@@ -445,7 +445,7 @@ std::vector<collision_struct> gather_global_collision_queue()
     // Gather collision informtion from all nodes and send it to all nodes
     MPI_Allgatherv(&(local_collision_queue[0]), byte_counts[this_node], MPI_BYTE, &(res[0]), &(byte_counts[0]), &(displacements[0]), MPI_BYTE, comm_cart);
 
-    return std::move(res);
+    return res;
 }
 
 
