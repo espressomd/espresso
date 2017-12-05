@@ -72,8 +72,8 @@ class Analysis(object):
 
         """
 
-        cdef int_list * set1
-        cdef int_list * set2
+        cdef int_list set1
+        cdef int_list set2
 
         if p1 == 'default' and p2 == 'default':
             result = c_analyze.mindist(c_analyze.partCfg(), NULL, NULL)
@@ -94,10 +94,7 @@ class Analysis(object):
             set1 = create_int_list_from_python_object(p1)
             set2 = create_int_list_from_python_object(p2)
 
-            result = c_analyze.mindist(c_analyze.partCfg(), set1, set2)
-
-            realloc_intlist(set1, 0)
-            realloc_intlist(set2, 0)
+            result = c_analyze.mindist(c_analyze.partCfg(), &set1, &set2)
 
         return result
 

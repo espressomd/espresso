@@ -55,7 +55,7 @@ cdef np.ndarray create_nparray_from_double_list(double_list * dl):
         numpyArray[i] = dl.e[i]
     return numpyArray
 
-cdef int_list * create_int_list_from_python_object(obj):
+cdef int_list create_int_list_from_python_object(obj):
     """
     Returns a int list pointer from a python object which supports subscripts.
 
@@ -64,7 +64,8 @@ cdef int_list * create_int_list_from_python_object(obj):
     obj : python object which supports subscripts
 
     """
-    cdef int_list * il = new int_list(len(obj))
+    cdef int_list il
+    il.resize(len(obj))
 
     for i in range(len(obj)):
         il.e[i] = obj[i]

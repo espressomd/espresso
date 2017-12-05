@@ -34,6 +34,10 @@ cdef extern from "utils.hpp":
         int_list(int)
         int_list(int, int)
 
+        int& operator[](int)
+        void resize(int)
+        void push_back(int)
+        
         int * e
         unsigned n
 
@@ -52,7 +56,7 @@ cdef extern from "utils.hpp":
 cdef extern from "utils/Histogram.hpp" namespace "Utils":
     cdef void unravel_index(const int* const len_dims, const int ndims, const int flattened_index, int* unravelled_index_out)
 
-cdef int_list * create_int_list_from_python_object(obj)
+cdef int_list create_int_list_from_python_object(obj)
 cdef np.ndarray create_nparray_from_int_list(int_list * il)
 cdef np.ndarray create_nparray_from_double_list(double_list * dl)
 cdef np.ndarray create_nparray_from_double_array(double * x, int n)
