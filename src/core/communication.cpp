@@ -1437,14 +1437,6 @@ void mpi_local_stress_tensor_slave(int ana_num, int job) {
 
   auto TensorInBin = std::vector<DoubleList>(bins[0] * bins[1] * bins[2], DoubleList(9, 0.0));
 
-  for (i = 0; i < bins[0] * bins[1] * bins[2]; i++) {
-    init_doublelist(&TensorInBin[i]);
-    alloc_doublelist(&TensorInBin[i], 9);
-    for (j = 0; j < 9; j++) {
-      TensorInBin[i].e[j] = 0.0;
-    }
-  }
-
   local_stress_tensor_calc(TensorInBin.data(), bins, periodic, range_start, range);
 
   for (i = 0; i < bins[0] * bins[1] * bins[2]; i++) {
