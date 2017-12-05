@@ -147,10 +147,11 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
 /** returns all particles within a given radius r_catch around a position.
     @param pos position of sphere of point
     @param r_catch the radius around the position
-    @param il the list where to store the particles indices
     @param planedims orientation of coordinate system
+
+    @return List of ids close to pos.
 */
-void nbhood(PartCfg & partCfg, double pos[3], double r_catch, IntList *il, int planedims[3]);
+IntList nbhood(PartCfg & partCfg, double pos[3], double r_catch, int planedims[3]);
 
 /** minimal distance to point.
     @param pos point

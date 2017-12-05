@@ -227,7 +227,7 @@ class Analysis(object):
         """
 
         cdef int planedims[3]
-        cdef int_list * il = NULL
+        cdef int_list ids
         cdef double c_pos[3]
 
         check_type_or_throw_except(
@@ -252,14 +252,9 @@ class Analysis(object):
         for i in range(3):
             c_pos[i] = pos[i]
 
-        il = <int_list * > malloc(sizeof(int_list))
-        c_analyze.nbhood(c_analyze.partCfg(), c_pos, r_catch, il, planedims)
+        ids = c_analyze.nbhood(c_analyze.partCfg(), c_pos, r_catch, planedims)
 
-        result = create_nparray_from_int_list(il)
-        realloc_intlist(il, 0)
-        free(il)
-        return result
-
+        return create_nparray_from_int_list(&ids)
 
     def cylindrical_average(self, center=None, axis=None,
                             length=None, radius=None,

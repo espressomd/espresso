@@ -387,8 +387,6 @@ void calc_mol_info() {
     return;
   }
 
-  init_intlist(&local_trapped_mols);
-
   /* Find out which trapped molecules are on this node */
   get_local_trapped_mols(&local_trapped_mols);
 
