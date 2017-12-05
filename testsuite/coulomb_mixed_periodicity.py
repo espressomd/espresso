@@ -74,7 +74,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
         # Force
         rms_force_diff = 0.
         for p in self.S.part:
-            rms_force_diff += np.sum((p.f - self.forces[p.id])**2)
+            rms_force_diff += np.sum((np.copy(p.f) - self.forces[p.id])**2)
         rms_force_diff=np.sqrt(rms_force_diff/len(self.S.part))
 
         print(method_name, "rms force difference", rms_force_diff)
