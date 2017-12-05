@@ -46,7 +46,7 @@ class LeesEdwardsOffsetTest(ut.TestCase):
     system.integrator.run(2)
 
     # Add LB fluid
-    lb = md.lb.LBFluid_GPU(agrid=agrid, dens=rho, visc=eta, fric=1.0, tau=time_step)
+    lb = md.lb.LBFluidGPU(agrid=agrid, dens=rho, visc=eta, fric=1.0, tau=time_step)
     system.actors.add(lb)
 
     system.integrator.run(2)

@@ -46,7 +46,7 @@ class LBGPULeesEdwardsTest(ut.TestCase):
     system.cell_system.skin = 0.4
 
     # Add LB fluid
-    lb = md.lb.LBFluid_GPU(agrid=1.0, dens=rho, visc=eta, fric=1.1, tau=time_step)
+    lb = md.lb.LBFluidGPU(agrid=1.0, dens=rho, visc=eta, fric=1.1, tau=time_step)
     system.actors.add(lb)
 
     X = np.arange(0, box_l) + 0.5

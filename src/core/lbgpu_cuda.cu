@@ -81,7 +81,7 @@ static LB_rho_v_pi_gpu *device_rho_v_pi= nullptr;
 static LB_rho_v_pi_gpu *print_rho_v_pi= nullptr;
 
 /** structs for velocity densities */
-static LB_nodes_gpu nodes_LE_upper = {nullptr, nullptr, nullprt};
+static LB_nodes_gpu nodes_LE_upper = {nullptr, nullptr, nullptr};
 static LB_nodes_gpu nodes_LE_lower = {nullptr, nullptr, nullptr};
 static LB_nodes_gpu nodes_a = { nullptr, nullptr, nullptr};
 static LB_nodes_gpu nodes_b = { nullptr, nullptr, nullptr};;
@@ -1032,262 +1032,6 @@ __device__ void calc_n_from_modes_push(LB_nodes_gpu n_b, float *mode, unsigned i
   }
 }
 
-__device__ void print_n_from_modes_LE(LB_nodes_gpu nodes_LE_upper, LB_nodes_gpu nodes_LE_lower, int index) {
-  
-  float mode[19];
-  int xyz[3];
-  index_to_xyz_LE(index, xyz);
-  
-  int delta_index = xyz[2]*para.dim_x + xyz[0];
-
-  int ii = 0;
-  unsigned int x = xyz[0];
-  unsigned int y = xyz[1];
-  unsigned int z = xyz[2];
-
-  float print_pop[19];
-
-  if(y==0) {
-
-    mode[0 + ii * LBQ] =  nodes_LE_upper.vd[0*para.dim_x*para.dim_z + delta_index];
-    mode[1 + ii * LBQ] =  nodes_LE_upper.vd[1*para.dim_x*para.dim_z + delta_index];
-    mode[2 + ii * LBQ] =  nodes_LE_upper.vd[2*para.dim_x*para.dim_z + delta_index];
-    mode[3 + ii * LBQ] =  nodes_LE_upper.vd[3*para.dim_x*para.dim_z + delta_index];
-    mode[4 + ii * LBQ] =  nodes_LE_upper.vd[4*para.dim_x*para.dim_z + delta_index];
-    mode[5 + ii * LBQ] =  nodes_LE_upper.vd[5*para.dim_x*para.dim_z + delta_index];
-    mode[6 + ii * LBQ] =  nodes_LE_upper.vd[6*para.dim_x*para.dim_z + delta_index];
-    mode[7 + ii * LBQ] =  nodes_LE_upper.vd[7*para.dim_x*para.dim_z + delta_index];
-    mode[8 + ii * LBQ] =  nodes_LE_upper.vd[8*para.dim_x*para.dim_z + delta_index];
-    mode[9 + ii * LBQ] =  nodes_LE_upper.vd[9*para.dim_x*para.dim_z + delta_index];
-    mode[10 + ii * LBQ] = nodes_LE_upper.vd[10*para.dim_x*para.dim_z + delta_index];
-    mode[11 + ii * LBQ] = nodes_LE_upper.vd[11*para.dim_x*para.dim_z + delta_index];
-    mode[12 + ii * LBQ] = nodes_LE_upper.vd[12*para.dim_x*para.dim_z + delta_index];
-    mode[13 + ii * LBQ] = nodes_LE_upper.vd[13*para.dim_x*para.dim_z + delta_index];
-    mode[14 + ii * LBQ] = nodes_LE_upper.vd[14*para.dim_x*para.dim_z + delta_index];
-    mode[15 + ii * LBQ] = nodes_LE_upper.vd[15*para.dim_x*para.dim_z + delta_index];
-    mode[16 + ii * LBQ] = nodes_LE_upper.vd[16*para.dim_x*para.dim_z + delta_index];
-    mode[17 + ii * LBQ] = nodes_LE_upper.vd[17*para.dim_x*para.dim_z + delta_index];
-    mode[18 + ii * LBQ] = nodes_LE_upper.vd[18*para.dim_x*para.dim_z + delta_index];
-
-    if(x == 0 && z == 0) {
-      print_pop[0] =  
-        1.0f/3.0f * (mode[0 + ii * LBQ] - mode[4 + ii * LBQ] + mode[16 + ii * LBQ]);
-
-      print_pop[1] =  
-        1.0f/18.0f * (
-                         mode[ 0 + ii * LBQ] + mode[ 1 + ii * LBQ]
-                       + mode[ 5 + ii * LBQ] + mode[ 6 + ii * LBQ]
-                       - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
-                       - 2.0f*(mode[10 + ii * LBQ] + mode[16 + ii * LBQ])
-                     );
-      //printf("print_pop[1]=%e\n", print_pop[1]);
-
-      print_pop[2] =  
-        1.0f/18.0f * (
-                         mode[ 0 + ii * LBQ] - mode[ 1 + ii * LBQ]
-                       + mode[ 5 + ii * LBQ] + mode[ 6 + ii * LBQ]
-                       - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
-                       + 2.0f*(mode[10 + ii * LBQ] - mode[16 + ii * LBQ])
-                     );
-
-      print_pop[3] =  
-        1.0f/18.0f * (
-                         mode[ 0 + ii * LBQ] + mode[ 2 + ii * LBQ]
-                       - mode[ 5 + ii * LBQ] + mode[ 6 + ii * LBQ]
-                       + mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
-                       - 2.0f*(mode[11 + ii * LBQ] + mode[16 + ii * LBQ])
-                     );
-
-      print_pop[4] =  
-        1.0f/18.0f * (
-                         mode[ 0 + ii * LBQ] - mode[ 2 + ii * LBQ]
-                       - mode[ 5 + ii * LBQ] + mode[ 6 + ii * LBQ]
-                       + mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
-                       + 2.0f*(mode[11 + ii * LBQ] - mode[16 + ii * LBQ])
-                     );
-
-      print_pop[5] =  
-        1.0f/18.0f * (
-                         mode[0 + ii * LBQ] + mode[3 + ii * LBQ]
-                       - 2.0f*(   mode[ 6 + ii * LBQ] + mode[12 + ii * LBQ]
-                                + mode[16 + ii * LBQ] - mode[18 + ii * LBQ])
-                     );
-
-      print_pop[6] =  
-        1.0f/18.0f * (
-                         mode[0 + ii * LBQ] - mode[3 + ii * LBQ]
-                       - 2.0f*(   mode[6 + ii * LBQ] - mode[12 + ii * LBQ]
-                                + mode[16 + ii * LBQ] - mode[18 + ii * LBQ])
-                     );
-
-      print_pop[7] =  
-        1.0f/36.0f * (
-                         mode[ 0 + ii * LBQ] + mode[ 1 + ii * LBQ]
-                       + mode[ 2 + ii * LBQ] + mode[ 4 + ii * LBQ]
-                       + 2.0f*mode[ 6 + ii * LBQ] + mode[ 7 + ii * LBQ]
-                       + mode[10 + ii * LBQ] + mode[11 + ii * LBQ]
-                       + mode[13 + ii * LBQ] + mode[14 + ii * LBQ]
-                       + mode[16 + ii * LBQ] + 2.0f*mode[18 + ii * LBQ]
-                     );
-
-      print_pop[8] =  
-        1.0f/36.0f * (
-                         mode[ 0 + ii * LBQ] - mode[ 1 + ii * LBQ]
-                       - mode[ 2 + ii * LBQ] + mode[ 4 + ii * LBQ]
-                       + 2.0f*mode[ 6 + ii * LBQ] + mode[ 7 + ii * LBQ]
-                       - mode[10 + ii * LBQ] - mode[11 + ii * LBQ]
-                       - mode[13 + ii * LBQ] - mode[14 + ii * LBQ]
-                       + mode[16 + ii * LBQ] + 2.0f*mode[18 + ii * LBQ]
-                     );
-
-      print_pop[9] =  
-        1.0f/36.0f * (
-                         mode[ 0 + ii * LBQ] + mode[ 1 + ii * LBQ]
-                       - mode[ 2 + ii * LBQ] + mode[ 4 + ii * LBQ]
-                       + 2.0f*mode[ 6 + ii * LBQ] - mode[ 7 + ii * LBQ]
-                       + mode[10 + ii * LBQ] - mode[11 + ii * LBQ]
-                       + mode[13 + ii * LBQ] - mode[14 + ii * LBQ]
-                       + mode[16 + ii * LBQ] + 2.0f*mode[18 + ii * LBQ]
-                     );
-
-      print_pop[10] =  
-        1.0f/36.0f * (
-                         mode[ 0 + ii * LBQ] - mode[ 1 + ii * LBQ]
-                       + mode[ 2 + ii * LBQ] + mode[ 4 + ii * LBQ]
-                       + 2.0f*mode[ 6 + ii * LBQ] - mode[ 7 + ii * LBQ]
-                       - mode[10 + ii * LBQ] + mode[11 + ii * LBQ]
-                       - mode[13 + ii * LBQ] + mode[14 + ii * LBQ]
-                       + mode[16 + ii * LBQ] + 2.0f*mode[18 + ii * LBQ]
-                     );
-
-      print_pop[11] =  
-        1.0f/36.0f * (
-                         mode[ 0 + ii * LBQ] + mode[ 1 + ii * LBQ]
-                       + mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
-                       + mode[ 5 + ii * LBQ] - mode[ 6 + ii * LBQ]
-                       + mode[ 8 + ii * LBQ] + mode[10 + ii * LBQ]
-                       + mode[12 + ii * LBQ] - mode[13 + ii * LBQ]
-                       + mode[15 + ii * LBQ] + mode[16 + ii * LBQ]
-                       + mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
-                     );
-
-      print_pop[12] =  
-        1.0f/36.0f * (
-                         mode[ 0 + ii * LBQ] - mode[ 1 + ii * LBQ]
-                       - mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
-                       + mode[ 5 + ii * LBQ] - mode[ 6 + ii * LBQ]
-                       + mode[ 8 + ii * LBQ] - mode[10 + ii * LBQ]
-                       - mode[12 + ii * LBQ] + mode[13 + ii * LBQ]
-                       - mode[15 + ii * LBQ] + mode[16 + ii * LBQ]
-                       + mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
-                     );
-
-      print_pop[13] =  
-        1.0f/36.0f * (
-                         mode[ 0 + ii * LBQ] + mode[ 1 + ii * LBQ]
-                       - mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
-                       + mode[ 5 + ii * LBQ] - mode[ 6 + ii * LBQ]
-                       - mode[ 8 + ii * LBQ] + mode[10 + ii * LBQ]
-                       - mode[12 + ii * LBQ] - mode[13 + ii * LBQ]
-                       - mode[15 + ii * LBQ] + mode[16 + ii * LBQ]
-                       + mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
-                     );
-
-      print_pop[14] =  
-        1.0f/36.0f * (
-                         mode[ 0 + ii * LBQ] - mode[ 1 + ii * LBQ]
-                       + mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
-                       + mode[ 5 + ii * LBQ] - mode[ 6 + ii * LBQ]
-                       - mode[ 8 + ii * LBQ] - mode[10 + ii * LBQ]
-                       + mode[12 + ii * LBQ] + mode[13 + ii * LBQ]
-                       + mode[15 + ii * LBQ] + mode[16 + ii * LBQ]
-                       + mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
-                     );
-
-      print_pop[15] =  
-        1.0f/36.0f * (
-                         mode[ 0 + ii * LBQ] + mode[ 2 + ii * LBQ]
-                       + mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
-                       - mode[ 5 + ii * LBQ] - mode[ 6 + ii * LBQ]
-                       + mode[ 9 + ii * LBQ] + mode[11 + ii * LBQ]
-                       + mode[12 + ii * LBQ] - mode[14 + ii * LBQ]
-                       - mode[15 + ii * LBQ] + mode[16 + ii * LBQ]
-                       - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
-                     );
-
-      print_pop[16] =  
-        1.0f/36.0f * (
-                         mode[ 0 + ii * LBQ] - mode[ 2 + ii * LBQ]
-                       - mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
-                       - mode[ 5 + ii * LBQ] - mode[ 6 + ii * LBQ]
-                       + mode[ 9 + ii * LBQ] - mode[11 + ii * LBQ]
-                       - mode[12 + ii * LBQ] + mode[14 + ii * LBQ]
-                       + mode[15 + ii * LBQ] + mode[16 + ii * LBQ]
-                       - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
-                     );
-
-      print_pop[17] =  
-        1.0f/36.0f * (
-                         mode[ 0 + ii * LBQ] + mode[ 2 + ii * LBQ]
-                       - mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
-                       - mode[ 5 + ii * LBQ] - mode[ 6 + ii * LBQ]
-                       - mode[ 9 + ii * LBQ] + mode[11 + ii * LBQ]
-                       - mode[12 + ii * LBQ] - mode[14 + ii * LBQ]
-                       + mode[15 + ii * LBQ] + mode[16 + ii * LBQ]
-                       - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
-                     );
-
-      print_pop[18] =  
-        1.0f/36.0f * (
-                         mode[ 0 + ii * LBQ] - mode[ 2 + ii * LBQ]
-                       + mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
-                       - mode[ 5 + ii * LBQ] - mode[ 6 + ii * LBQ]
-                       - mode[ 9 + ii * LBQ] - mode[11 + ii * LBQ]
-                       + mode[12 + ii * LBQ] + mode[14 + ii * LBQ]
-                       - mode[15 + ii * LBQ] + mode[16 + ii * LBQ]
-                       - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
-                     );
-
-      float c[19][3] = { { 0.0f, 0.0f, 0.0f},
-                         { 1.0f, 0.0f, 0.0f},
-                         {-1.0f, 0.0f, 0.0f},
-                         { 0.0f, 1.0f, 0.0f},
-                         { 0.0f,-1.0f, 0.0f},
-                         { 0.0f, 0.0f, 1.0f},
-                         { 0.0f, 0.0f,-1.0f},
-                         { 1.0f, 1.0f, 0.0f},
-                         {-1.0f,-1.0f, 0.0f},
-                         { 1.0f,-1.0f, 0.0f},
-                         {-1.0f, 1.0f, 0.0f},
-                         { 1.0f, 0.0f, 1.0f},
-                         {-1.0f, 0.0f,-1.0f},
-                         { 1.0f, 0.0f,-1.0f},
-                         {-1.0f, 0.0f, 1.0f},
-                         { 0.0f, 1.0f, 1.0f},
-                         { 0.0f,-1.0f,-1.0f},
-                         { 0.0f, 1.0f,-1.0f},
-                         { 0.0f,-1.0f, 1.0f}
-                       };
-
-      for(int i = 0; i < 19; i++) {
-        if(i != 0) {
-          float c_norm = sqrt(c[i][0]*c[i][0] + c[i][1]*c[i][1] + c[i][2]*c[i][2]);
-          c[i][0] /= c_norm;
-          c[i][1] /= c_norm;
-          c[i][2] /= c_norm;
-        }
-
-        //if(i == 1)
-          //printf("print_pop[1]*c[1]=[%e, %e, %e]\n", print_pop[i], print_pop[i], print_pop[i]);
-
-        //printf("%e %e %e  ", c[i][0]*print_pop[i], c[i][1]*print_pop[i], c[i][2]*print_pop[i]);
-      }
-
-      //printf("\n");
-  }
- } 
-}
-
 __device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_front, LB_nodes_gpu n_back, LB_nodes_gpu nodes_LE_upper, LB_nodes_gpu nodes_LE_lower, int index){
       
   int xyz[3];
@@ -1528,13 +1272,8 @@ __global__ void apply_LE_position_offset(LB_nodes_gpu n_front, LB_nodes_gpu n_ba
       source1_xyz[0] = (static_cast<int>(floorf(x + lees_edwards_offset)) + para.dim_x) % para.dim_x;
       source2_xyz[0] = (static_cast<int>(ceilf(x + lees_edwards_offset)) + para.dim_x) % para.dim_x;
 
-      //printf(floorf(lees_edwards_offset) + para.dim_x) 
-      
       source1_index = xyz_to_index(source1_xyz);
       source2_index = xyz_to_index(source2_xyz);
-
-      //printf("LE_Offset: %f, Integer offset: %d Real offset: %f \n", lees_edwards_offset, integer_offset, weight);    
-      //printf("   target index: %i bei: (%u%u%u) \n source1_index: %i bei: (%i%i%i) \n source2_index: %i bei: (%i%i%i)\n\n", target_index, x, y, z,  source1_index, source1_xyz[0], source1_xyz[1], source1_xyz[2], source2_index, source2_xyz[0], source2_xyz[1], source2_xyz[2]);
 
       n_front.vd[ (3 + ii*LBQ ) * para.number_of_nodes + target_index ] = 
       (1.0f-weight) * n_back.vd[ (3 + ii*LBQ ) * para.number_of_nodes + source1_index ] +
@@ -1556,17 +1295,13 @@ __global__ void apply_LE_position_offset(LB_nodes_gpu n_front, LB_nodes_gpu n_ba
       (1.0f-weight) * n_back.vd[ (17 + ii*LBQ ) * para.number_of_nodes + source1_index ] +
       (weight) * n_back.vd[ (17 + ii*LBQ ) * para.number_of_nodes + source2_index ];
     }
+    
     else if(y == para.dim_y-1) {
       source1_xyz[0] = (static_cast<int>(floorf(x - lees_edwards_offset)) + para.dim_x) % para.dim_x;
       source2_xyz[0] = (static_cast<int>(ceilf(x - lees_edwards_offset)) + para.dim_x) % para.dim_x;
 
-      //printf(floorf(lees_edwards_offset) + para.dim_x) 
-      
       source1_index = xyz_to_index(source1_xyz);
       source2_index = xyz_to_index(source2_xyz);
-
-      //printf("LE_Offset: %f, Integer offset: %d Real offset: %f \n", lees_edwards_offset, integer_offset, weight);    
-      //printf("   target index: %i bei: (%u%u%u) \n source1_index: %i bei: (%i%i%i) \n source2_index: %i bei: (%i%i%i)\n\n", target_index, x, y, z,  source1_index, source1_xyz[0], source1_xyz[1], source1_xyz[2], source2_index, source2_xyz[0], source2_xyz[1], source2_xyz[2]);
 
       n_front.vd[ (4 + ii*LBQ ) * para.number_of_nodes + target_index ] = 
       (weight) * n_back.vd[ (4 + ii*LBQ ) * para.number_of_nodes + source1_index] +
@@ -2467,59 +2202,21 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
   y = left_node_index[1] + para.dim_y;
   z = left_node_index[2] + para.dim_z;
 
-  //printf(" \n Node position = %u %u %u \n", pos[0], pos[1], pos[2]);
-
-  //weight = fmodf(lees_edwards_offset + para.dim_x*para.agrid, para.agrid) / para.agrid;
-  //upper_le_integer_shift = (static_cast<int>(floorf(lees_edwards_offset)) + para.dim_x) % para.dim_x;
-  //printf("le_offset: %f, le_integer_shift: %i, non-integer-offset: %f\n", lees_edwards_offset, upper_le_integer_shift, weight);
-  //printf("Node position = %u %u %u \n", pos[0], pos[1], pos[2]);
-
   if(particle_position[1] > para.dim_y- 0.5 * para.agrid){
     
-    //printf("Upper node position = %u %u %u \n", pos[0], pos[1], pos[2]);
     node_index[2] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[3] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[6] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
     node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
    
-    unsigned int pos_2[3];
-    unsigned int pos_3[3];
-    unsigned int pos_6[3];
-    unsigned int pos_7[3];
-    
-    index_to_xyz(node_index[2], pos_2);
-    index_to_xyz(node_index[3], pos_3);
-    index_to_xyz(node_index[6], pos_6);
-    index_to_xyz(node_index[7], pos_7);
-   
-    printf("\nNode 2 = %u %u %u \n", pos_2[0], pos_2[1], pos_2[2]);
-    printf("Node 3 = %u %u %u \n", pos_3[0], pos_3[1], pos_3[2]);
-    printf("Node 6 = %u %u %u \n", pos_6[0], pos_6[1], pos_6[2]);
-    printf("Node 7 = %u %u %u \n", pos_7[0], pos_7[1], pos_7[2]);
     }
   
   if(particle_position[1] < 0.5 * para.agrid){
-    //y = para.dim_y;
-    //printf("Lower node position = %u %u %u \n", pos[0], pos[1], pos[2]);
     node_index[0] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[1] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[4] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
     node_index[5] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
    
-    unsigned int pos_0[3];
-    unsigned int pos_1[3];
-    unsigned int pos_4[3];
-    unsigned int pos_5[3];
-    
-    index_to_xyz(node_index[0], pos_0);
-    index_to_xyz(node_index[1], pos_1);
-    index_to_xyz(node_index[4], pos_4);
-    index_to_xyz(node_index[5], pos_5);
-    
-    printf("\nNode 0 = %u %u %u \n", pos_0[0], pos_0[1], pos_0[2]);
-    printf("Node 1 = %u %u %u \n", pos_1[0], pos_1[1], pos_1[2]);
-    printf("Node 4 = %u %u %u \n", pos_4[0], pos_4[1], pos_4[2]);
-    printf("Node 5 = %u %u %u \n", pos_5[0], pos_5[1], pos_5[2]);
     }
 
 #endif 
@@ -2622,21 +2319,13 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
 
 #ifdef LEES_EDWARDS
   
-  float weight;
-  int upper_le_integer_shift;
   float le_position;
 
-  weight = fmodf(lees_edwards_offset + para.dim_x*para.agrid, para.agrid) / para.agrid;
-  upper_le_integer_shift = (static_cast<int>(floorf(lees_edwards_offset)) + para.dim_x) % para.dim_x;
-  printf("le_offset: %f, le_integer_shift: %i, non-integer-offset: %f\n", lees_edwards_offset, upper_le_integer_shift, weight);
- 
  if(position[1] > para.dim_y-para.agrid) {
     le_position = fmodf(position[0] - lees_edwards_offset + para.dim_x*para.agrid, para.dim_x*para.agrid);
-    printf("Position shift upper boundary: %f => %f", position[0] ,le_position);
     }
  if(position[1] < para.agrid) {
     le_position = fmodf(position[0] + lees_edwards_offset + para.dim_x*para.agrid, para.dim_x*para.agrid);
-    printf("Position shift lower boundary %f => %f", position[0] ,le_position);
     }
 #endif
 
@@ -3516,10 +3205,6 @@ __global__ void reset_boundaries(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
 
 __device__ void calculate_LE_mode_delta(int index, LB_rho_v_gpu *d_v, float lees_edwards_velocity, LB_nodes_gpu nodes_LE_upper, LB_nodes_gpu nodes_LE_lower){
   
-  //if(index==0){
-  //  printf("lees_edwards_velocity: %f \n", lees_edwards_velocity);
-  //}
-
   float rho = d_v[index].rho[0];
   float u[3];
   u[0] = d_v[index].v[0];
@@ -3527,13 +3212,11 @@ __device__ void calculate_LE_mode_delta(int index, LB_rho_v_gpu *d_v, float lees
   u[2] = d_v[index].v[2];
  
   if(index==0){
-    //printf("u-velocity without LE: %f \n", u[0]);
   }
 
   int pos[3];
   index_to_xyz_LE(index, pos);
 
-  //printf("pos_1, pos_2, pos_3 %d %d %d \n", pos[0], pos[1], pos[2]);
   int ii = 0;
   
   float modes_pi_without_LE[6];
@@ -3544,17 +3227,10 @@ __device__ void calculate_LE_mode_delta(int index, LB_rho_v_gpu *d_v, float lees
 //TODO: do both cases at once
 
   if(pos[1] == 0){
-    if(index==0){
-      //printf("u-velocity w/o LE in loop: %f \n", u[0]);
-      }
 
     equilibrium_modes(ii, rho, u, modes_pi_without_LE);
 
     u[0] += 0.5 * lees_edwards_velocity;
-    
-    if(index==0){
-      //printf("u-velocity w LE in loop: %f \n", u[0]);
-      }
     
     equilibrium_modes(ii, rho, u, modes_pi_with_LE);
 
@@ -3579,22 +3255,17 @@ __device__ void calculate_LE_mode_delta(int index, LB_rho_v_gpu *d_v, float lees
     delta_m[16*para.dim_x*para.dim_z + delta_index]  = 0.0f;
     delta_m[17*para.dim_x*para.dim_z + delta_index]  = 0.0f;
     delta_m[18*para.dim_x*para.dim_z + delta_index]  = 0.0f;
-    
-    if(index == 0) {
-    //printf("Mode 1 und delta Mode 1, %f, %f \n", mode[1], delta_m[1*para.dim_x*para.dim_z + delta_index]);
     }
-
-    //printf("delta_m for lower LE nodes: %f, %f, %f, %f, %f, %f, %f \n", delta_m[2*para.dim_x*para.dim_z + delta_index], delta_m[4*para.dim_x*para.dim_z + delta_index], delta_m[5*para.dim_x*para.dim_z + delta_index], delta_m[6*para.dim_x*para.dim_z + delta_index], delta_m[7*para.dim_x*para.dim_z + delta_index], delta_m[8*para.dim_x*para.dim_z + delta_index], delta_m[9*para.dim_x*para.dim_z + delta_index]);
-
-  }
+  
   else if(pos[1] == para.dim_y-1) {
     equilibrium_modes(ii, rho, u, modes_pi_without_LE);
 
     u[0] -= 0.5 * lees_edwards_velocity;
+    
     equilibrium_modes(ii, rho, u, modes_pi_with_LE);
 
     delta_m = nodes_LE_upper.vd;
-    
+                      
     delta_m[0*para.dim_x*para.dim_z + delta_index]  = 0.0f;
     delta_m[1*para.dim_x*para.dim_z + delta_index]  = -0.5 * lees_edwards_velocity * rho; //0.0f;
     delta_m[2*para.dim_x*para.dim_z + delta_index]  = 0.0f; //lees_edwards_velocity * rho;
@@ -3620,10 +3291,10 @@ __device__ void calculate_LE_mode_delta(int index, LB_rho_v_gpu *d_v, float lees
 
 __global__ void apply_LE_velocity_shift(LB_nodes_gpu n_front, LB_nodes_gpu n_back, LB_nodes_gpu nodes_LE_upper, LB_nodes_gpu nodes_LE_lower, LB_rho_v_gpu *d_v, float lees_edwards_velocity) {
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
+  
   if (index < para.dim_x * para.dim_z * 2) {
     calculate_LE_mode_delta(index, d_v, lees_edwards_velocity, nodes_LE_upper, nodes_LE_lower);
     calc_n_from_modes_push_LE(n_front, n_back, nodes_LE_upper, nodes_LE_lower, index);
-    //print_n_from_modes_LE(nodes_LE_upper, nodes_LE_lower, index);
   }
 }
 
@@ -3636,7 +3307,6 @@ __global__ void apply_LE_velocity_shift(LB_nodes_gpu n_front, LB_nodes_gpu n_bac
 */
 
 __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v, LB_node_force_gpu node_f, EK_parameters* ek_parameters_gpu) {
-  //printf("ttt1\n");
   /**every node is connected to a thread via the index*/
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   /**the 19 moments (modes) are only temporary register values */
@@ -3645,7 +3315,6 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
 
   if( index < para.number_of_nodes )
   {
-    //printf("ttt1.1\n");
     /** storing the seed into a register value*/
     rng.seed = n_a.seed[index];
     /**calc_m_from_n*/
@@ -3668,7 +3337,6 @@ apply_forces(index, mode, node_f,d_v);
     normalize_modes(mode);
     /**calc of velocity densities and streaming with pbc*/
     calc_n_from_modes_push(n_b, mode, index);
-    //printf("ttt1.2\n");
     /** rewriting the seed back to the global memory*/
     n_b.seed[index] = rng.seed;
   }  
@@ -4498,7 +4166,6 @@ void lb_integrate_GPU() {
   {
     n_back = &nodes_a;
     n_front = &nodes_b;
-    //printf("ttt0.1 (%d, %d, %d) %d\n", blocks_per_grid_x, blocks_per_grid_y, 1, threads_per_block);
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_a, nodes_b, device_rho_v, node_f, lb_ek_parameters_gpu));
     current_nodes = &nodes_b;
     intflag = 0;
@@ -4507,7 +4174,6 @@ void lb_integrate_GPU() {
   {
     n_back = &nodes_b;
     n_front = &nodes_a;
-    //printf("ttt0.2 (%d, %d, %d) %d\n", blocks_per_grid_x, blocks_per_grid_y, 1, threads_per_block);
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_b, nodes_a, device_rho_v, node_f, lb_ek_parameters_gpu));
     current_nodes = &nodes_a;
     intflag = 1;
@@ -5097,7 +4763,9 @@ struct two_point_interpolation {
         float u[3];
         float mode[19*LB_COMPONENTS];
         float _position[3] = {position.x, position.y, position.z};
-        interpolation_two_point_coupling(current_nodes_gpu, _position, node_index, mode, d_v_gpu, delta, u);
+        float lees_edwards_offset = 0.0f;
+        float le_position = 0.0f;
+        interpolation_two_point_coupling(current_nodes_gpu, _position, node_index, mode, d_v_gpu, delta, lees_edwards_offset, le_position,  u);
         return make_float3(u[0], u[1], u[2]);
 	} 
 };
