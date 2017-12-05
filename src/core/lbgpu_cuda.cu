@@ -2171,9 +2171,6 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
   unsigned int lower_pos[3];
   index_to_xyz(node_index[2], upper_pos);
   index_to_xyz(node_index[0], lower_pos);
-  //int upper_le_integer_shift;
-  //int lower_le_integer_shift;
-  //float weight;
   
   particle_position[0] = le_position;
 #pragma unroll
@@ -2316,10 +2313,12 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   position[0] = particle_data[part_index].p[0];
   position[1] = particle_data[part_index].p[1];
   position[2] = particle_data[part_index].p[2];
+  
+  float le_position;
 
 #ifdef LEES_EDWARDS
   
-  float le_position;
+  //float le_position;
 
  if(position[1] > para.dim_y-para.agrid) {
     le_position = fmodf(position[0] - lees_edwards_offset + para.dim_x*para.agrid, para.dim_x*para.agrid);
@@ -3375,7 +3374,7 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *par
 
 #ifdef ENGINE
       if ( particle_data[part_index].swim.swimming ) {
-        calc_viscous_force(n_a, delta, partgrad1, partgrad2, partgrad3, particle_data, particle_force, fluid_composition,part_index, &rng_part, delta_j, node_index, d_v, 1);
+        calc_viscous_force(n_a, delta, partgrad1, partgrad2, partgrad3, particle_data, particle_force, fluid_composition,part_index, &rng_part, delta_j, lees_edwards_offset = 0.0f, node_index, d_v, 1);
         calc_node_force(delta, delta_j, partgrad1, partgrad2, partgrad3, node_index, node_f);
       }
 #endif
