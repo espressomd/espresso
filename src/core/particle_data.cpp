@@ -214,7 +214,7 @@ int realloc_particlelist(ParticleList *l, int size) {
   Particle *old_start = l->part;
 
   PART_TRACE(fprintf(stderr, "%d: realloc_particlelist %p: %d/%d->%d\n",
-                     this_node, (void*) l, l->n, l->max, size));
+                     this_node, (void *)l, l->n, l->max, size));
 
   if (size < l->max) {
     if (size == 0)
@@ -1100,14 +1100,7 @@ void auto_exclusions(int distance) {
 
   /* partners is a list containing the currently found excluded particles for
      each particle, and their distance, as a interleaved list */
-  IntList *partners;
-
-  /* setup bond partners and distance list. Since we need to identify particles
-     via their identity, we use a full sized array */
-  partners =
-      (IntList *)Utils::malloc((max_seen_particle + 1) * sizeof(IntList));
-  for (p = 0; p <= max_seen_particle; p++)
-    init_intlist(&partners[p]);
+  std::unordered_map<int, IntList> partners;
 
   /* We need bond information */
   partCfg().update_bonds();
@@ -1163,9 +1156,7 @@ void auto_exclusions(int distance) {
     for (j = 0; j < partners[p].n; j++)
       if (p < partners[p].e[j])
         change_exclusion(p, partners[p].e[j], 0);
-    realloc_intlist(&partners[p], 0);
   }
-  free(partners);
 }
 
 #endif

@@ -78,8 +78,6 @@
  * data types
  ************************************************/
 
-extern int this_node;
-
 namespace Utils {
 /**
  * \brief Calculate integer powers.
