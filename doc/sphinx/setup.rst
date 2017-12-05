@@ -521,6 +521,8 @@ available, but load-independent.::
 The first invocation in the sample above return the id of the set graphics card, the second one sets the 
 device id.
 
+.. _Creating bonds when particles collide:
+
 Creating bonds when particles collide
 -------------------------------------
 
@@ -532,7 +534,7 @@ automatically during the simulation, every time two particles collide.
 This is useful for simulations of chemical reactions and irreversible
 adhesion processes. Both, sliding and non-sliding contacts can be created.
 
-The collision detection is controlled via the :py:espressomd.system.System.collision_detection` property, which is an instance of the class :class:espressomd.collision_detection.CollisionDetection`.
+The collision detection is controlled via the :attr:`espressomd.system.System.collision_detection` attribute, which is an instance of the class :class:`espressomd.collision_detection.CollisionDetection`.
 
 Several modes are available for different types of binding.
 
