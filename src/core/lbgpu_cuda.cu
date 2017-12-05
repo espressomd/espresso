@@ -3237,8 +3237,8 @@ __device__ void calculate_LE_mode_delta(int index, LB_rho_v_gpu *d_v, float lees
     delta_m = nodes_LE_lower.vd;
   
     delta_m[0*para.dim_x*para.dim_z + delta_index]  = 0.0f;
-    delta_m[1*para.dim_x*para.dim_z + delta_index]  = 0.5 * lees_edwards_velocity * rho; //0.0f;
-    delta_m[2*para.dim_x*para.dim_z + delta_index]  = 0.0f; //-lees_edwards_velocity * rho;
+    delta_m[1*para.dim_x*para.dim_z + delta_index]  = 0.5 * lees_edwards_velocity * rho;
+    delta_m[2*para.dim_x*para.dim_z + delta_index]  = 0.0f;
     delta_m[3*para.dim_x*para.dim_z + delta_index]  = 0.0f;
     delta_m[4*para.dim_x*para.dim_z + delta_index]  = modes_pi_with_LE[0] - modes_pi_without_LE[0];
     delta_m[5*para.dim_x*para.dim_z + delta_index]  = modes_pi_with_LE[1] - modes_pi_without_LE[1];
@@ -3267,8 +3267,8 @@ __device__ void calculate_LE_mode_delta(int index, LB_rho_v_gpu *d_v, float lees
     delta_m = nodes_LE_upper.vd;
                       
     delta_m[0*para.dim_x*para.dim_z + delta_index]  = 0.0f;
-    delta_m[1*para.dim_x*para.dim_z + delta_index]  = -0.5 * lees_edwards_velocity * rho; //0.0f;
-    delta_m[2*para.dim_x*para.dim_z + delta_index]  = 0.0f; //lees_edwards_velocity * rho;
+    delta_m[1*para.dim_x*para.dim_z + delta_index]  = -0.5 * lees_edwards_velocity * rho;
+    delta_m[2*para.dim_x*para.dim_z + delta_index]  = 0.0f;
     delta_m[3*para.dim_x*para.dim_z + delta_index]  = 0.0f;
     delta_m[4*para.dim_x*para.dim_z + delta_index] = modes_pi_with_LE[0] - modes_pi_without_LE[0];
     delta_m[5*para.dim_x*para.dim_z + delta_index] = modes_pi_with_LE[1] - modes_pi_without_LE[1];
