@@ -243,9 +243,13 @@ double long_range_energy() {
 
 /** Determine runtime for a specific cutoff */
 double time_r_cut(double r_cut) {
+  assert(this_node==0);
   double t;
 
   /** Set cutoff to time */
+  mpi_call(mpi_scafacos_set_r_cut_and_tune_slave,0,0);
+  double tmp=r_cut;
+  MPI_Bcast(&tmp, 1, MPI_DOUBLE, 0, comm_cart);
   scafacos->set_r_cut(r_cut);
 
   /** Tune other parameters */
@@ -299,7 +303,9 @@ void tune() {
   /** Check whether we have to do a bisection for the short range cutoff */
   /** Check if there is a user supplied cutoff */
   if ((scafacos->has_near) && (scafacos->r_cut() <= 0.0)) {
-    tune_r_cut();
+    if (this_node==0) {
+      tune_r_cut();
+    }
   } else {
     scafacos->tune(particles.charges, particles.positions);
   }
@@ -440,4 +446,20 @@ void mpi_scafacos_free_slave(int a, int b) {
   using namespace Scafacos;
   free_handle();
   #endif
+}
+
+void mpi_scafacos_set_r_cut_and_tune_slave(int a, int b) {
+  #if defined(SCAFACOS) 
+  using namespace Scafacos;
+  double r_cut;
+  MPI_Bcast(&r_cut, 1, MPI_DOUBLE, 0, comm_cart);
+  particles.update_particle_data();
+  if (!check_position_validity(particles.positions)) {
+    return;
+  }
+
+  scafacos->set_r_cut(r_cut);
+  scafacos->tune(particles.charges, particles.positions);
+  #endif
+  printf("%d: scafacos_set_r_cut_and_tune_slave finished.\n",this_node);
 }

@@ -211,7 +211,6 @@ void on_integration_start() {
   partCfg().invalidate();
 
 #ifdef ADDITIONAL_CHECKS
-  check_global_consistency();
 
   if(!Utils::Mpi::all_compare(comm_cart, cell_structure.type)) {
     runtimeErrorMsg() << "Nodes disagree about cell system type.";
@@ -233,6 +232,7 @@ void on_integration_start() {
   if (!Utils::Mpi::all_compare(comm_cart,coulomb.Dmethod))
     runtimeErrorMsg() << "Nodes disagree about dipolar long range method";
 #endif
+  check_global_consistency();
 #endif /* ADDITIONAL_CHECKS */
 
   on_observable_calc();
