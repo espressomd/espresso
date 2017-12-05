@@ -285,7 +285,7 @@ void calc_rdf_av(PartCfg & partCfg, std::vector<int> &p1_types, std::vector<int>
     @param vanhove  array to store G(r,t) (size (n_configs-1)*(rbins))
 
 */
-double calc_vanhove(PartCfg &, int ptype, double rmin, double rmax, int rbins, int tmax,
+int calc_vanhove(PartCfg &, int ptype, double rmin, double rmax, int rbins, int tmax,
                     double *msd, double **vanhove);
 
 /** Calculates the spherically averaged structure factor.

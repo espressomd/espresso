@@ -1030,29 +1030,21 @@ int calc_radial_density_map(PartCfg &partCfg, int xbins, int ybins,
   return ES_OK;
 }
 
-double calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
-                    int rbins, int tmax, double *msd, double **vanhove) {
+int calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
+                 int rbins, int tmax, double *msd, double **vanhove) {
   int c1, c3, c3_max, ind;
   double p1[3], p2[3], dist;
   double bin_width, inv_bin_width;
-  IntList p;
+  std::vector<int> ids;
 
-  /* create particle list */
-  init_intlist(&p);
-
-  auto const np =
-      std::count_if(partCfg.begin(), partCfg.end(),
-                    [&ptype](Particle const &p) { return p.p.type == ptype; });
-
-  if (np == 0) {
-    return 0;
-  }
-  alloc_intlist(&p, np);
-  for (auto const &part : partCfg) {
-    if (part.p.type == ptype) {
-      p.e[p.n] = part.p.identity;
-      p.n++;
+  for(auto const&p : partCfg) {
+    if(p.p.type == ptype) {
+      ids.push_back(p.p.identity);
     }
+  }
+
+  if (ids.empty()) {
+    return 0;
   }
 
   /* preparation */
@@ -1063,13 +1055,13 @@ double calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
   for (c1 = 0; c1 < n_configs; c1++) {
     c3_max = (c1 + tmax + 1) > n_configs ? n_configs : c1 + tmax + 1;
     for (c3 = (c1 + 1); c3 < c3_max; c3++) {
-      for (int i = 0; i < p.n; i++) {
-        p1[0] = configs[c1][3 * p.e[i]];
-        p1[1] = configs[c1][3 * p.e[i] + 1];
-        p1[2] = configs[c1][3 * p.e[i] + 2];
-        p2[0] = configs[c3][3 * p.e[i]];
-        p2[1] = configs[c3][3 * p.e[i] + 1];
-        p2[2] = configs[c3][3 * p.e[i] + 2];
+      for (auto const& id: ids) {
+        p1[0] = configs[c1][3 * id];
+        p1[1] = configs[c1][3 * id + 1];
+        p1[2] = configs[c1][3 * id + 2];
+        p2[0] = configs[c3][3 * id];
+        p2[1] = configs[c3][3 * id + 1];
+        p2[2] = configs[c3][3 * id + 2];
         dist = distance(p1, p2);
         if (dist > rmin && dist < rmax) {
           ind = (int)((dist - rmin) * inv_bin_width);
@@ -1083,13 +1075,12 @@ double calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
   /* normalize */
   for (c1 = 0; c1 < (tmax); c1++) {
     for (int i = 0; i < rbins; i++) {
-      vanhove[c1][i] /= (double)(n_configs - c1 - 1) * p.n;
+      vanhove[c1][i] /= (double)(n_configs - c1 - 1) * ids.size();
     }
-    msd[c1] /= (double)(n_configs - c1 - 1) * p.n;
+    msd[c1] /= (double)(n_configs - c1 - 1) * ids.size();
   }
 
-  realloc_intlist(&p, 0);
-  return np;
+  return ids.size();
 }
 
 /****************************************************************************************
