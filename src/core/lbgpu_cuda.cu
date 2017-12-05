@@ -2314,7 +2314,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   position[1] = particle_data[part_index].p[1];
   position[2] = particle_data[part_index].p[2];
   
-  float le_position;
+  float le_position = 0.0;
 
 #ifdef LEES_EDWARDS
   
