@@ -56,7 +56,7 @@ nptiso_struct   nptiso   = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,{0.0,0.0,0.0},{0.0,0.0,0
 /************************************************************/
 /* local prototypes                                         */
 /************************************************************/
-
+ 
 /** Calculate long range virials (P3M, MMM2d...). */
 void calc_long_range_virials();
 
@@ -353,6 +353,10 @@ void master_pressure_calc(int v_comp) {
 /*****************************************************/
 /* Routines for Local Stress Tensor                  */
 /*****************************************************/
+
+namespace {
+/** Calculates the remainder of a division */
+ double drem_down(double a, double b) { return a - floor(a / b) * b; }
 
 int getintersection(double pos1[3], double pos2[3],int given, int get, double value, double *answer, double box_size[3])
 {
@@ -897,6 +901,8 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force, Distanc
   } /*if p1-> ... */
   return 0;
 }
+
+} /* namespace */
 
 int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
                              int periodic[3], double range_start[3],

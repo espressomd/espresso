@@ -166,9 +166,6 @@ inline void realloc_doublelist(DoubleList *dl, int size) {
 /*************************************************************/
 /*@{*/
 
-/** Calculates the remainder of a division */
-inline double drem_down(double a, double b) { return a - floor(a / b) * b; }
-
 /** vector difference */
 inline void vector_subt(double res[3], double a[3], double b[3]) {
   int i;
