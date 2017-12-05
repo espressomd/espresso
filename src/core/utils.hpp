@@ -137,13 +137,6 @@ inline int intlist_contains(IntList *il, int c) {
   return 0;
 }
 
-/** Initialize an \ref DoubleList.  */
-inline void init_doublelist(DoubleList *il) {
-  il->n = 0;
-  il->max = 0;
-  il->e = nullptr;
-}
-
 /** Reallocate an \ref DoubleList */
 inline void realloc_doublelist(DoubleList *dl, int size) {
   if (size != dl->max) {
