@@ -47,6 +47,7 @@ class AccumulatorTest(ut.TestCase):
         self.system.auto_update_observables.add(self.pos_obs)
         self.pos_obs_acc = espressomd.accumulators.Accumulator(
             obs=self.pos_obs)
+        print self.pos_obs_acc.get_params()
         self.system.auto_update_accumulators.add(self.pos_obs_acc)
         self.positions = 10.0 * np.random.rand(10, 3)
 
