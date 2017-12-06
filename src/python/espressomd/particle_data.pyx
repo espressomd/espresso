@@ -2070,14 +2070,14 @@ def _add_particle_slice_properties():
 
         if attribute in ["exclusions", "bonds", "vs_relative", "swimming"]:
             values = []
-            for i in range(N):
-                values.append(getattr(ParticleHandle(
-                    particle_slice.id_selection[i]), attribute))
+            for part in particle_slice._id_gen():
+                values.append(getattr(part, attribute))
         else:
             values = np.empty((N,) + np.shape(target), dtype=target_type)
-            for i in range(N):
-                values[i] = getattr(ParticleHandle(
-                    particle_slice.id_selection[i]), attribute)
+            i = 0
+            for part in particle_slice._id_gen():
+                values[i] = getattr(part, attribute)
+                i += 1
 
         return values
 
