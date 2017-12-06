@@ -492,7 +492,7 @@ __global__ void EwaldGPU_q_sqr_LowThreads(real *q_i, real *q_sqr, int N, int max
 
 //Ewaldgpuforce
 EwaldgpuForce::EwaldgpuForce(SystemInterface &s, double rcut, int num_kx, int num_ky, int num_kz, double alpha)
-  :m_dev_k(nullptr), m_k(nullptr), m_dev_rho_hat(nullptr), m_dev_infl_factor(nullptr), m_infl_factor(nullptr), m_dev_energy_reci(nullptr), m_energy_reci(nullptr), m_dev_q_sqr(nullptr), m_q_sqr(nullptr)
+  :m_k(nullptr), m_dev_k(nullptr), m_infl_factor(nullptr), m_dev_infl_factor(nullptr), m_dev_rho_hat(nullptr), m_energy_reci(nullptr), m_dev_energy_reci(nullptr), m_q_sqr(nullptr), m_dev_q_sqr(nullptr)
 {
   //Interface sanity checks
   if(!s.requestFGpu())

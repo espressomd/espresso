@@ -154,7 +154,7 @@ void IBM_UpdateParticlePositions(ParticleRange particles)
         // Check if the particle might have crossed a box border (criterion see e-mail Axel 28.8.2014)
         // if possible resort_particles = 1
         const double dist2 = distance2( p[j].r.p, p[j].l.p_old);
-        if ( dist2 > skin2 ) { resort_particles = 1; }
+        if ( dist2 > skin2 ) { set_resort_particles(Cells::RESORT_LOCAL); }
       }
   }
   

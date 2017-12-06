@@ -11,8 +11,8 @@ namespace Observables {
 
 class ParticleAngularVelocities : public PidObservable {
 public:
-  virtual int actual_calculate(PartCfg & partCfg) override {
-    last_value.resize(3 * ids().size());
+  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
+    std::vector<double> res(n_values());
     for (int i = 0; i < ids().size(); i++) {
 #ifdef ROTATION
 
@@ -29,12 +29,12 @@ public:
                  RMat[1 + 3 * 2] * partCfg[ids()[i]].m.omega[1] +
                  RMat[2 + 3 * 2] * partCfg[ids()[i]].m.omega[2];
 
-      last_value[3 * i + 0] = omega[0];
-      last_value[3 * i + 1] = omega[1];
-      last_value[3 * i + 2] = omega[2];
+      res[3 * i + 0] = omega[0];
+      res[3 * i + 1] = omega[1];
+      res[3 * i + 2] = omega[2];
 #endif
     }
-    return 0;
+    return res;
   }
 };
 
