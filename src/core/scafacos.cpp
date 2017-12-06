@@ -47,6 +47,7 @@
 
 namespace Scafacos {
 
+
 /** Get available scafacos methods */
 std::list<std::string> available_methods() {
   return Scafacos::available_methods();
@@ -240,6 +241,17 @@ double long_range_energy() {
 
   return 0.0;
 }
+void set_r_cut_and_tune_local(double r_cut) {
+  particles.update_particle_data();
+  if (!check_position_validity(particles.positions)) {
+    return;
+  }
+
+  scafacos->set_r_cut(r_cut);
+  scafacos->tune(particles.charges, particles.positions);
+  on_coulomb_change();
+  printf("%d: on coulomb change finished.\n",this_node);
+}
 
 /** Determine runtime for a specific cutoff */
 double time_r_cut(double r_cut) {
@@ -248,15 +260,9 @@ double time_r_cut(double r_cut) {
 
   /** Set cutoff to time */
   mpi_call(mpi_scafacos_set_r_cut_and_tune_slave,0,0);
-  double tmp=r_cut;
-  MPI_Bcast(&tmp, 1, MPI_DOUBLE, 0, comm_cart);
-  scafacos->set_r_cut(r_cut);
+  MPI_Bcast(&r_cut, 1, MPI_DOUBLE, 0, comm_cart);
 
-  /** Tune other parameters */
-  scafacos->tune(particles.charges, particles.positions);
-
-  on_coulomb_change();
-
+  set_r_cut_and_tune_local(r_cut);
   return time_force_calc(10);
 }
 
@@ -413,6 +419,7 @@ if (!scafacos) return;
   scafacos->set_common_parameters(box_l, per, n_part);
 }
 
+
 } // namespace scafacos
 #endif /* SCAFACOS */
 
@@ -453,13 +460,7 @@ void mpi_scafacos_set_r_cut_and_tune_slave(int a, int b) {
   using namespace Scafacos;
   double r_cut;
   MPI_Bcast(&r_cut, 1, MPI_DOUBLE, 0, comm_cart);
-  particles.update_particle_data();
-  if (!check_position_validity(particles.positions)) {
-    return;
-  }
-
-  scafacos->set_r_cut(r_cut);
-  scafacos->tune(particles.charges, particles.positions);
+  set_r_cut_and_tune_local(r_cut);
   #endif
   printf("%d: scafacos_set_r_cut_and_tune_slave finished.\n",this_node);
 }
