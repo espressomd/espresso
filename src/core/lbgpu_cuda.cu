@@ -622,6 +622,11 @@ __device__ void update_rho_v(float *mode, unsigned int index, LB_node_force_gpu 
   d_v[index].v[2]=u_tot[2]; 
 }
 
+
+/** This function computes the equilibrium modes as needed by the LB and
+* and the LB-LeesEdwards implementation
+* equilibrium part of the stress modes (eq13 schiller)*/
+
 __device__ inline void equilibrium_modes(int ii, float rho, float *u, float *modes_from_pi_eq){
 
   float j[3];
@@ -1032,6 +1037,13 @@ __device__ void calc_n_from_modes_push(LB_nodes_gpu n_b, float *mode, unsigned i
   }
 }
 
+
+/*-------------------------------------------------------*/
+/**backtransformation from modespace to desityspace and streaming with the push method using pbc
+ * This time for the boundary nodes of the Lees-Edwards layers. 
+ * @param *nodes_LE_upper, nodes_LE_lower: Nodes of the upper and lowe LE boudary
+*/
+
 __device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_front, LB_nodes_gpu n_back, LB_nodes_gpu nodes_LE_upper, LB_nodes_gpu nodes_LE_lower, int index){
       
   int xyz[3];
@@ -1243,6 +1255,10 @@ __device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_front, LB_nodes_gpu n_b
                    );
  } 
 }
+
+
+/** Nodes that are shifted due to the Lees-Edwards offset are interpolated to the 
+ * regular lattice. A linear interpolation scheme is used for this purpose. */
 
 __global__ void apply_LE_position_offset(LB_nodes_gpu n_front, LB_nodes_gpu n_back, float lees_edwards_offset) {
 

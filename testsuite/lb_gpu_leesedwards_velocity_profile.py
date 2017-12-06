@@ -54,7 +54,7 @@ class LBGPULeesEdwardsTest(ut.TestCase):
 
     while system.time <= total_time:
 
-      # Compute analystical solution
+      # Compute analytical solution
       U = u(X, system.time, nu, v / time_step, box_l, k_max)
 
       # Read the data from the lattice nodes
