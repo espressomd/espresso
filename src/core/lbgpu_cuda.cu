@@ -2138,7 +2138,7 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared, int *number_o
  * @param *delta                Pointer for the weighting of particle position (Output)
  * @param *interpolated_u       Pointer to the interpolated velocity (Output)
 */
-__device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, float *particle_position, unsigned int* node_index, float* mode, LB_rho_v_gpu *d_v, float* delta, float lees_edwards_offset, float le_position, float *interpolated_u ) {
+__device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, float *particle_position, unsigned int* node_index, float* mode, LB_rho_v_gpu *d_v, float* delta, float *interpolated_u ) {
   int   left_node_index[3];
   float temp_delta[6];
   float temp_delta_half[6];
@@ -2179,16 +2179,85 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
   node_index[6] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
   node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
 
-#ifdef LEES_EDWARDS
+  interpolated_u[0] = 0.0f;
+  interpolated_u[1] = 0.0f;
+  interpolated_u[2] = 0.0f;
+#pragma unroll
+  for(int i=0; i<8; ++i)
+  {
+    float totmass=0.0f;
 
-// TODO: Calculate new indices for nodes at the boundaries
-  
-  unsigned int upper_pos[3];
-  unsigned int lower_pos[3];
-  index_to_xyz(node_index[2], upper_pos);
-  index_to_xyz(node_index[0], lower_pos);
-  
+    calc_m_from_n(n_a,node_index[i],mode);
+
+#pragma unroll
+    for(int ii=0;ii<LB_COMPONENTS;ii++)
+    {
+      totmass+=mode[0]+para.rho[ii]*para.agrid*para.agrid*para.agrid;
+    } 
+
+#ifdef SHANCHEN
+    interpolated_u[0] += d_v[node_index[i]].v[0]/8.0f * (n_a.boundary[node_index[i]] == 0);  
+    interpolated_u[1] += d_v[node_index[i]].v[1]/8.0f * (n_a.boundary[node_index[i]] == 0);
+    interpolated_u[2] += d_v[node_index[i]].v[2]/8.0f * (n_a.boundary[node_index[i]] == 0);
+#else
+    /* The boolean expression (n_a.boundary[node_index[i]] == 0) causes boundary nodes
+       to couple with velocity 0 to particles. This is necessary, since boundary nodes
+       undergo the same LB dynamics as fluid nodes do. The flow within the boundaries
+       does not interact with the physical fluid, since these populations are overwritten
+       by the bounce back kernel. Particles close to walls can couple to this unphysical
+       flow, though.
+    */
+    interpolated_u[0] += (mode[1]/totmass)*delta[i] * (n_a.boundary[node_index[i]] == 0);
+    interpolated_u[1] += (mode[2]/totmass)*delta[i] * (n_a.boundary[node_index[i]] == 0);
+    interpolated_u[2] += (mode[3]/totmass)*delta[i] * (n_a.boundary[node_index[i]] == 0);
+#endif
+  }
+}
+
+__device__ __inline__ void interpolation_two_point_coupling_LE( LB_nodes_gpu n_a, float *particle_position, unsigned int* node_index, float* mode, LB_rho_v_gpu *d_v, float* delta, float lees_edwards_offset, float le_position, float *interpolated_u ) {
+  int   left_node_index[3];
+  float temp_delta[6];
+  float temp_delta_half[6];
+
+  // see ahlrichs + duenweg page 8227 equ (10) and (11)
+#pragma unroll
+  for(int i=0; i<3; ++i)
+  {
+    float scaledpos = particle_position[i]/para.agrid - 0.5f;
+    left_node_index[i] = (int)(floorf(scaledpos));
+    temp_delta[3+i] = scaledpos - left_node_index[i];
+    temp_delta[i] = 1.0f - temp_delta[3+i];
+    // further value used for interpolation of fluid velocity at part pos near boundaries
+    temp_delta_half[3+i] = (scaledpos - left_node_index[i])*2.0f;
+    temp_delta_half[i] = 2.0f - temp_delta_half[3+i];
+  }
+
+  delta[0] = temp_delta[0] * temp_delta[1] * temp_delta[2];
+  delta[1] = temp_delta[3] * temp_delta[1] * temp_delta[2];
+  delta[2] = temp_delta[0] * temp_delta[4] * temp_delta[2];
+  delta[3] = temp_delta[3] * temp_delta[4] * temp_delta[2];
+  delta[4] = temp_delta[0] * temp_delta[1] * temp_delta[5];
+  delta[5] = temp_delta[3] * temp_delta[1] * temp_delta[5];
+  delta[6] = temp_delta[0] * temp_delta[4] * temp_delta[5];
+  delta[7] = temp_delta[3] * temp_delta[4] * temp_delta[5];
+
+  // modulo for negative numbers is strange at best, shift to make sure we are positive
+  int x = left_node_index[0] + para.dim_x;
+  int y = left_node_index[1] + para.dim_y;
+  int z = left_node_index[2] + para.dim_z;
+
+  node_index[0] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
+  node_index[1] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
+  node_index[2] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
+  node_index[3] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
+  node_index[4] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+  node_index[5] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+  node_index[6] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+  node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+
+  // Calculate new indices for nodes at the boundaries 
   particle_position[0] = le_position;
+
 #pragma unroll
   for(int i=0; i<3; ++i)
   {
@@ -2232,9 +2301,6 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
    
     }
 
-#endif 
-
-
   interpolated_u[0] = 0.0f;
   interpolated_u[1] = 0.0f;
   interpolated_u[2] = 0.0f;
@@ -2251,22 +2317,9 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
       totmass+=mode[0]+para.rho[ii]*para.agrid*para.agrid*para.agrid;
     } 
 
-#ifdef SHANCHEN
-    interpolated_u[0] += d_v[node_index[i]].v[0]/8.0f * (n_a.boundary[node_index[i]] == 0);  
-    interpolated_u[1] += d_v[node_index[i]].v[1]/8.0f * (n_a.boundary[node_index[i]] == 0);
-    interpolated_u[2] += d_v[node_index[i]].v[2]/8.0f * (n_a.boundary[node_index[i]] == 0);
-#else
-    /* The boolean expression (n_a.boundary[node_index[i]] == 0) causes boundary nodes
-       to couple with velocity 0 to particles. This is necessary, since boundary nodes
-       undergo the same LB dynamics as fluid nodes do. The flow within the boundaries
-       does not interact with the physical fluid, since these populations are overwritten
-       by the bounce back kernel. Particles close to walls can couple to this unphysical
-       flow, though.
-    */
     interpolated_u[0] += (mode[1]/totmass)*delta[i] * (n_a.boundary[node_index[i]] == 0);
     interpolated_u[1] += (mode[2]/totmass)*delta[i] * (n_a.boundary[node_index[i]] == 0);
     interpolated_u[2] += (mode[3]/totmass)*delta[i] * (n_a.boundary[node_index[i]] == 0);
-#endif
   }
 }
 
@@ -2330,11 +2383,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   position[1] = particle_data[part_index].p[1];
   position[2] = particle_data[part_index].p[2];
   
-  float le_position = 0.0;
-
 #ifdef LEES_EDWARDS
   
-  //float le_position;
+  float le_position;
 
  if(position[1] > para.dim_y-para.agrid) {
     le_position = fmodf(position[0] - lees_edwards_offset + para.dim_x*para.agrid, para.dim_x*para.agrid);
@@ -2360,7 +2411,13 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
 #endif
 
   // Do the velocity interpolation
-  interpolation_two_point_coupling(n_a, position, node_index, mode, d_v, delta, lees_edwards_offset, le_position, interpolated_u);
+  
+#ifndef LEES_EDWARDS  
+  interpolation_two_point_coupling(n_a, position, node_index, mode, d_v, delta, interpolated_u);
+#endif
+#ifdef LEES_EDWARDS
+  interpolation_two_point_coupling_LE(n_a, position, node_index, mode, d_v, delta, lees_edwards_offset, le_position, interpolated_u);
+#endif
 
 #ifdef ENGINE
   velocity[0] -= (particle_data[part_index].swim.v_swim*para.time_step)*particle_data[part_index].swim.quatu[0];
@@ -4778,9 +4835,7 @@ struct two_point_interpolation {
         float u[3];
         float mode[19*LB_COMPONENTS];
         float _position[3] = {position.x, position.y, position.z};
-        float lees_edwards_offset = 0.0f;
-        float le_position = position.x;
-        interpolation_two_point_coupling(current_nodes_gpu, _position, node_index, mode, d_v_gpu, delta, lees_edwards_offset, le_position,  u);
+        interpolation_two_point_coupling(current_nodes_gpu, _position, node_index, mode, d_v_gpu, delta, u);
         return make_float3(u[0], u[1], u[2]);
 	} 
 };
