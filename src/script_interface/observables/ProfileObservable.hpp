@@ -45,46 +45,46 @@ public:
   VariantMap get_parameters() const override {
     return {{"ids", profile_observable()->ids},
 
-            {"xbins", profile_observable()->xbins},
-            {"ybins", profile_observable()->ybins},
-            {"zbins", profile_observable()->zbins},
+            {"n_x_bins", profile_observable()->n_x_bins},
+            {"n_y_bins", profile_observable()->n_y_bins},
+            {"n_z_bins", profile_observable()->n_z_bins},
 
-            {"minx", profile_observable()->minx},
-            {"miny", profile_observable()->miny},
-            {"minz", profile_observable()->minz},
+            {"min_x", profile_observable()->min_x},
+            {"min_y", profile_observable()->min_y},
+            {"min_z", profile_observable()->min_z},
 
-            {"maxx", profile_observable()->maxx},
-            {"maxy", profile_observable()->maxy},
-            {"maxz", profile_observable()->maxz}};
+            {"max_x", profile_observable()->max_x},
+            {"max_y", profile_observable()->max_y},
+            {"max_z", profile_observable()->max_z}};
   };
 
   ParameterMap valid_parameters() const override {
     return {{"ids", {ParameterType::INT_VECTOR, true}},
-            {"xbins", {ParameterType::INT, true}},
-            {"ybins", {ParameterType::INT, true}},
-            {"zbins", {ParameterType::INT, true}},
-            {"minx", {ParameterType::DOUBLE, true}},
-            {"miny", {ParameterType::DOUBLE, true}},
-            {"minz", {ParameterType::DOUBLE, true}},
-            {"maxx", {ParameterType::DOUBLE, true}},
-            {"maxy", {ParameterType::DOUBLE, true}},
-            {"maxz", {ParameterType::DOUBLE, true}}};
+            {"n_x_bins", {ParameterType::INT, true}},
+            {"n_y_bins", {ParameterType::INT, true}},
+            {"n_z_bins", {ParameterType::INT, true}},
+            {"min_x", {ParameterType::DOUBLE, true}},
+            {"min_y", {ParameterType::DOUBLE, true}},
+            {"min_z", {ParameterType::DOUBLE, true}},
+            {"max_x", {ParameterType::DOUBLE, true}},
+            {"max_y", {ParameterType::DOUBLE, true}},
+            {"max_z", {ParameterType::DOUBLE, true}}};
   };
 
   void set_parameter(std::string const &name, Variant const &value) override {
     SET_PARAMETER_HELPER("ids", profile_observable()->ids);
 
-    SET_PARAMETER_HELPER("xbins", profile_observable()->xbins);
-    SET_PARAMETER_HELPER("ybins", profile_observable()->ybins);
-    SET_PARAMETER_HELPER("zbins", profile_observable()->zbins);
+    SET_PARAMETER_HELPER("n_x_bins", profile_observable()->n_x_bins);
+    SET_PARAMETER_HELPER("n_y_bins", profile_observable()->n_y_bins);
+    SET_PARAMETER_HELPER("n_z_bins", profile_observable()->n_z_bins);
 
-    SET_PARAMETER_HELPER("minx", profile_observable()->minx);
-    SET_PARAMETER_HELPER("miny", profile_observable()->miny);
-    SET_PARAMETER_HELPER("minz", profile_observable()->minz);
+    SET_PARAMETER_HELPER("min_x", profile_observable()->min_x);
+    SET_PARAMETER_HELPER("min_y", profile_observable()->min_y);
+    SET_PARAMETER_HELPER("min_z", profile_observable()->min_z);
 
-    SET_PARAMETER_HELPER("maxx", profile_observable()->maxx);
-    SET_PARAMETER_HELPER("maxy", profile_observable()->maxy);
-    SET_PARAMETER_HELPER("maxz", profile_observable()->maxz);
+    SET_PARAMETER_HELPER("max_x", profile_observable()->max_x);
+    SET_PARAMETER_HELPER("max_y", profile_observable()->max_y);
+    SET_PARAMETER_HELPER("max_z", profile_observable()->max_z);
   };
 
   virtual std::shared_ptr<::Observables::ProfileObservable>

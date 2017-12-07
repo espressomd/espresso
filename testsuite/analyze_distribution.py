@@ -42,7 +42,7 @@ class AnalyzeDistributions(ut.TestCase):
     def test_rdf(self):
         # increase PBC for remove mirror images
         old_pos = self.system.part[:].pos.copy()
-        self.system.box_l *= 2.
+        self.system.box_l = self.system.box_l * 2.
         self.system.part[:].pos = old_pos
         r_min = 0.0
         r_max = 100.0
@@ -98,14 +98,14 @@ class AnalyzeDistributions(ut.TestCase):
             np.allclose(core_rdf[1] * bin_volume * num_pair / box_volume,
                         hist))
         # restore PBC
-        self.system.box_l /= 2.
+        self.system.box_l = self.system.box_l / 2.
         self.system.part[:].pos = old_pos
 
     # test system.analysis.distribution(), all the same particle types
     def test_distribution_lin(self):
         # increase PBC for remove mirror images
         old_pos = self.system.part[:].pos.copy()
-        self.system.box_l *= 2.
+        self.system.box_l = self.system.box_l * 2.
         self.system.part[:].pos = old_pos
         r_min = 0.0
         r_max = 100.0

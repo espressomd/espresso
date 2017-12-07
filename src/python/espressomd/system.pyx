@@ -47,7 +47,7 @@ if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
 from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
-
+from espressomd.utils import array_locked
 
 import sys
 import random  # for true random numbers from os.urandom()
@@ -148,7 +148,7 @@ cdef class System(object):
             mpi_bcast_parameter(FIELD_BOXL)
 
         def __get__(self):
-            return np.array([box_l[0], box_l[1], box_l[2]])
+            return array_locked(np.array([box_l[0], box_l[1], box_l[2]]))
 
     property integ_switch:
         def __get__(self):
@@ -200,7 +200,7 @@ cdef class System(object):
             periodicity[0] = periodic % 2
             periodicity[1] = int(periodic / 2) % 2
             periodicity[2] = int(periodic / 4) % 2
-            return periodicity
+            return array_locked(periodicity)
 
     property time:
         """

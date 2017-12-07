@@ -306,10 +306,8 @@ IF DIPOLES == 1:
                 Actor.__init__(self, *args, **kwargs)
 
             def _activate_method(self):
-                coulomb.Dmethod = DIPOLAR_SCAFACOS
                 dipolar_set_Dprefactor(self._params["prefactor"])
                 self._set_params_in_es_core()
-                mpi_bcast_coulomb_params()
             
             def _deactivate_method(self):
                 coulomb.Dmethod = DIPOLAR_NONE

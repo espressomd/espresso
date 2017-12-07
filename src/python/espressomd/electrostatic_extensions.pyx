@@ -30,6 +30,58 @@ IF ELECTROSTATICS and P3M:
         pass
 
     cdef class ELC(ElectrostaticExtensions):
+        """
+        Electrostatics solver for systems with two periodic dimensions. 
+
+        Parameters
+        ----------
+        gap_size                : float, required
+                                  The gap size gives the height of the empty region between the system box
+                                  and the neighboring artificial images. |es| does not
+                                  make sure that the gap is actually empty, this is the users
+                                  responsibility. The method will compute fine if the condition is not
+                                  fulfilled, however, the error bound will not be reached. Therefore you
+                                  should really make sure that the gap region is empty (e.g. with wall
+                                  constraints).
+        maxPWerror              : float, required
+                                  The maximal pairwise error sets the least upper bound (LUB) error of
+                                  the force between any two charges without prefactors (see the papers).
+                                  The algorithm tries to find parameters to meet this LUB requirements or
+                                  will throw an error if there are none.
+        delta_mid_top           : float, optional
+                                  This parameter sets the dielectric contrast
+                                  between the upper boundary and the simulation
+                                  box :math:`\\Delta_t`.
+        delta_mid_bottom        : float, optional
+                                  This parameter sets the dielectric contrast
+                                  between the lower boundary and the simulation
+                                  box :math:`\\Delta_b`.
+        const_pot               : int, optional
+                                  Selector parameter for setting a constant
+                                  electric potential between the top and bottom
+                                  of the simulation box.
+        pot_diff                : float, optional
+                                  If const_pot mode is selected this parameter
+                                  controls the applied voltage.
+        neutralize              : int, optional
+                                  By default, ELC just as P3M adds a homogeneous neutralizing background
+                                  to the system in case of a net charge. However, unlike in three dimensions,
+                                  this background adds a parabolic potential across the
+                                  slab :cite:`ballenegger09a`. Therefore, under normal circumstance, you will
+                                  probably want to disable the neutralization for non-neutral systems.
+                                  This corresponds then to a formal regularization of the forces and
+                                  energies :cite:`ballenegger09a`. Also, if you add neutralizing walls
+                                  explicitely as constraints, you have to disable the neutralization.
+                                  When using a dielectric contrast or full metallic walls (`delta_mid_top
+                                  != 0` or `delta_mid_bot != 0` or `const_pot_on=1`), `neutralize` is
+                                  overwritten and switched off internally. Note that the special case of
+                                  non-neutral systems with a *non-metallic* dielectric jump (eg.
+                                  `delta_mid_top` or `delta_mid_bot` in `]-1,1[`) is not covered by the
+                                  algorithm and will throw an error.
+        far_cut                 : float, optional
+                                  Cut off radius, use with care, intended for testing purposes. 
+        """
+
 
         def validate_params(self):
             default_params = self.default_params()
@@ -45,7 +97,7 @@ IF ELECTROSTATICS and P3M:
                 self._params["neutralize"], 1, type(True), "")
 
         def valid_keys(self):
-            return "maxPWerror", "gap_size", "far_cut", "neutralize", "di_mid_top", "di_mid_bot", "const_pot_on", "dielectric_contrast_on", "pot_diff"
+            return "maxPWerror", "gap_size", "far_cut", "neutralize", "delta_mid_top", "delta_mid_bot", "const_pot", "pot_diff"
 
         def required_keys(self):
             return ["maxPWerror", "gap_size"]
@@ -54,10 +106,9 @@ IF ELECTROSTATICS and P3M:
             return {"maxPWerror": -1,
                     "gap_size": -1,
                     "far_cut": -1,
-                    "di_mid_top": 0,
-                    "di_mid_bot": 0,
-                    "dielectric_contrast_on": 0,
-                    "const_pot_on": 0,
+                    "delta_mid_top": 0,
+                    "delta_mid_bot": 0,
+                    "const_pot": 0,
                     "pot_diff": 0.0,
                     "neutralize": True}
 
@@ -70,22 +121,28 @@ IF ELECTROSTATICS and P3M:
             if coulomb.method == COULOMB_P3M_GPU:
                 raise Exception(
                     "ELC tuning failed, ELC is not set up to work with the GPU P3M")
+            
+            if self._params["const_pot"]:
+                self._params["delta_mid_top"] = -1
+                self._params["delta_mid_bot"] = -1
+
             if ELC_set_params(
                 self._params["maxPWerror"],
                 self._params["gap_size"], 
                 self._params["far_cut"], 
                 int(self._params["neutralize"]), 
-                self._params["di_mid_top"], 
-                self._params["di_mid_bot"], 
-                int(self._params["const_pot_on"]),
+                self._params["delta_mid_top"], 
+                self._params["delta_mid_bot"], 
+                int(self._params["const_pot"]),
                 self._params["pot_diff"]):
                 handle_errors("ELC tuning failed, ELC is not set up to work with the GPU P3M")
 
         def _activate_method(self):
             self._set_params_in_es_core()
 
-        def _deactivateMethod(self):
-            pass
+        def _deactivate_method(self):
+            raise Exception(
+                "Unable to remove ELC as the state of the underlying electrostatics method will remain unclear.")
 
     cdef class ICC(ElectrostaticExtensions):
 
@@ -232,4 +289,4 @@ IF ELECTROSTATICS and P3M:
             self._set_params_in_es_core()
 
         def _deactivate_method(self):
-            pass
+            raise Exception("ICC cannot be deactivated.")

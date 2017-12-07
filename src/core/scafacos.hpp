@@ -67,6 +67,7 @@ void free_handle();
 
 /** Parameter callback */
 void mpi_scafacos_set_parameters_slave(int n_method, int n_params);
+void mpi_scafacos_set_r_cut_and_tune_slave(int a, int b);
 void mpi_scafacos_free_slave(int a, int b) ;
 
 #endif

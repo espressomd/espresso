@@ -366,7 +366,7 @@ void p3m_init() {
 
     /* FFT */
     P3M_TRACE(
-        fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node, p3m.rs_mesh));
+        fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node, (void*) p3m.rs_mesh));
 
     int ca_mesh_size =
         fft_init(&p3m.rs_mesh, p3m.local_mesh.dim, p3m.local_mesh.margin,
@@ -374,7 +374,7 @@ void p3m_init() {
     p3m.ks_mesh = Utils::realloc(p3m.ks_mesh, ca_mesh_size * sizeof(double));
 
     P3M_TRACE(
-        fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node, p3m.rs_mesh));
+        fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node, (void*) p3m.rs_mesh));
 
     /* k-space part: */
     p3m_calc_differential_operator();

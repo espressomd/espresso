@@ -46,7 +46,7 @@ void local_rotate_system(double phi, double theta, double alpha) {
 #endif
   }
 
-  resort_particles = 1;
+  set_resort_particles(Cells::RESORT_GLOBAL);
   announce_resort_particles();
 }
 

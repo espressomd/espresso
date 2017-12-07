@@ -127,7 +127,7 @@ int Correlator::get_correlation_time(double* correlation_time) {
 
 
 Correlator::Correlator() :
-			    t(0), finalized(0), autoupdate(0),autocorrelation(1),initialized(0),correlation_args{}
+			    correlation_args{}, autocorrelation(1), finalized(0), t(0), autoupdate(0), initialized(0)
            {}
 
 void Correlator::initialize() {
@@ -626,8 +626,6 @@ int Correlator::finalize() {
   unsigned int index_new, index_old, index_res;
   int error;
   //int compress;
-  unsigned tau_lin=tau_lin;
-  int hierarchy_depth=hierarchy_depth;
 
   double* temp = (double*)Utils::malloc(dim_corr*sizeof(double));
 
@@ -831,16 +829,14 @@ int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned i
 }
 
 int complex_conjugate_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, Vector3d ) {
-  unsigned int i,j;
+  unsigned int j;
   if (!(dim_A == dim_B )) {
     printf("Error in complex_conjugate product: The vector sizes do not match");
     return 5;
   }
-  j=0;
-  for ( i = 0; i < dim_A/2; i++ ) {
+  for ( j = 0; j < dim_A; j+=2 ) {
     C[j] = A[j]*B[j] + A[j+1]*B[j+1];
     C[j+1] = A[j+1]*B[j] - A[j]*B[j+1];
-    j=j+2;
   }
   return 0;
 }
