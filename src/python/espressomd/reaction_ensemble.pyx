@@ -249,12 +249,14 @@ cdef class reaction_ensemble(object):
     
     def reaction(self, reaction_steps = 1):
         """
-        Performs randomly selected reactions of the provided reaction system.
+        Performs `reaction_steps` reaction moves. 
+        In each step, first a random reaction is selected from the provided reaction system, and
+        then a trial move is performed for this reaction.
         
         Parameters
         ----------
         reaction_steps : :obj:`int`, optional
-                          The number of reactions to be performed at once, defaults to 1.
+                          The number of reaction moves to be performed per one call, defaults to 1.
                      
         """
         RE.do_reaction(reaction_steps)
