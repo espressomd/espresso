@@ -207,7 +207,7 @@ struct ParticleProperties {
 struct ParticlePosition {
   /** periodically folded position. */
   double p[3] = {0, 0, 0};
-  
+
 #ifdef ROTATION
   /** quaternions to define particle orientation */
   double quat[4] = {1., 0., 0., 0.};
@@ -241,7 +241,6 @@ struct ParticleForce {
   /** torque */
   double torque[3] = {0., 0., 0.};
 #endif
-
 };
 
 /** Momentum information on a particle. Information not contained in
@@ -792,7 +791,8 @@ int set_particle_fix(int part, int flag);
 /** Call only on the master node: change particle bond.
     @param part     identity of principal atom of the bond.
     @param bond     field containing the bond type number and the
-    identity of all bond partners (secundary atoms of the bond). If nullptr, delete
+    identity of all bond partners (secundary atoms of the bond). If nullptr,
+   delete
    all bonds.
     @param _delete   if true, do not add the bond, rather delete it if found
     @return ES_OK on success or ES_ERROR if no success
@@ -890,22 +890,19 @@ void local_rescale_particles(int dir, double scale);
 void send_particles(ParticleList *particles, int node);
 
 /** Synchronous receive of a particle buffer from another node. The other node
-    MUST call \ref send_particles when this is called. Particles needs to initialized,
+    MUST call \ref send_particles when this is called. Particles needs to
+   initialized,
     it is realloced to the correct size and the content is overwritten. */
 void recv_particles(ParticleList *particles, int node);
 
 #ifdef EXCLUSIONS
 /** Determines if the non bonded interactions between p1 and p2 should be
  * calculated */
-inline int do_nonbonded(Particle const *p1, Particle const *p2) {
-  int i, i2;
+inline bool do_nonbonded(Particle const *p1, Particle const *p2) {
   /* check for particle 2 in particle 1's exclusion list. The exclusion list is
      symmetric, so this is sufficient. */
-  i2 = p2->p.identity;
-  for (i = 0; i < p1->el.n; i++)
-    if (i2 == p1->el.e[i])
-      return 0;
-  return 1;
+  return std::none_of(p1->el.begin(), p1->el.end(),
+                     [p2](int id) { return p2->p.identity == id; });
 }
 #endif
 
