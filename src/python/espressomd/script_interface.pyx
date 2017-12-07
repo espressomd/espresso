@@ -11,7 +11,7 @@ cdef class PObjectId(object):
             raise NotImplementedError
 
 cdef class PScriptInterface(object):
-    def __init__(self, name=None, policy="GLOBAL", **kwargs):
+    def __init__(self, name=None, policy="GLOBAL", state=None, **kwargs):
         cdef CreationPolicy policy_
         cdef map[string, Variant] ctor_args
 
@@ -22,14 +22,13 @@ cdef class PScriptInterface(object):
         else:
             raise Exception("Unknown policy '{}'.".format(policy))
 
-        if name:
-            self.sip = make_shared(to_char_pointer(name), policy_)
+        if not state:
+            self.set_sip(make_shared(to_char_pointer(name), policy_))
 
-# Get the arguments from the new class, as they are needed for _sanitize_params.
-            self.parameters = self.sip.get().valid_parameters()
             ctor_args = self._sanitize_params(kwargs)
-
             self.sip.get().construct(ctor_args)
+        else:
+            self.set_sip(ScriptInterfaceBase.unserialize(state))
 
     def __richcmp__(a, b, op):
         if op == 2:
@@ -83,6 +82,9 @@ cdef class PScriptInterface(object):
     def _unserialize(self, state):
         cdef shared_ptr[ScriptInterfaceBase] so_ptr = ScriptInterfaceBase.unserialize(state)
         self.set_sip(so_ptr)
+
+    def __reduce__(self):
+        return (PScriptInterface , (None, "GLOBAL", self._serialize()))
 
     cdef map[string, Variant] _sanitize_params(self, in_params):
         cdef map[string, Variant] out_params
@@ -249,9 +251,6 @@ class ScriptInterfaceHelper(PScriptInterface):
             self.set_params(**{attr:value})
         else:
             self.__dict__[attr] = value
-
-    def __getstate__(self):
-        return super(ScriptInterfaceHelper,self).serialize()
 
     def generate_caller(self,method_name):
         def template_method(**kwargs):

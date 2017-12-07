@@ -56,7 +56,7 @@ public:
       return shape_based_constraint()->total_force();
     }
 
-    return false;
+    return none;
   }
 
   std::shared_ptr<::Constraints::Constraint> constraint() override {
