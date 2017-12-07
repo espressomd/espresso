@@ -30,6 +30,7 @@
 #include "correlators/initialize.hpp" 
 #include "lbboundaries/initialize.hpp"
 #include "collision_detection/initialize.hpp"
+#include "mpiio/initialize.hpp"
 
 #include "ComFixed.hpp"
 
@@ -54,7 +55,7 @@ void initialize() {
   Correlators::initialize();
   LBBoundaries::initialize();
   VirtualSites::initialize();
-
+  MPIIO::initialize();
   CollisionDetection::initialize();
  
 
