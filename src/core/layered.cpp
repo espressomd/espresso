@@ -92,7 +92,7 @@ void layered_get_mi_vector(double res[3], double a[3], double b[3]) {
 }
 
 Cell *layered_position_to_cell(double pos[3]) {
-  int cpos = (int)((pos[2] - my_left[2]) * layer_h_i) + 1;
+  int cpos = static_cast<int>(std::floor((pos[2] - my_left[2]) * layer_h_i)) + 1;
   if (cpos < 1) {
     if (!LAYERED_BTM_NEIGHBOR)
       cpos = 1;

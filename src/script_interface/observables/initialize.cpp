@@ -43,9 +43,7 @@ void initialize() {
   //    register_new("Observables::ParticleVelocities");
 
   REGISTER(AutoUpdateObservables);
-
   REGISTER(StressTensor);
-  REGISTER(StressTensorAcf);
   REGISTER(ParticlePositions);
   REGISTER(ParticleVelocities);
   REGISTER(ParticleForces);
@@ -64,6 +62,7 @@ void initialize() {
   REGISTER(FluxDensityProfile);
   REGISTER(LBVelocityProfile);
   REGISTER(CylindricalFluxDensityProfile);
+  REGISTER(CylindricalLBFluxDensityProfileAtParticlePositions);
 
 #undef REGISTER
 }

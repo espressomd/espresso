@@ -48,7 +48,7 @@ public:
 
   explicit MpiCallbacks(boost::mpi::communicator &comm,
                         bool abort_on_exit = true)
-      : m_comm(comm), m_abort_on_exit(abort_on_exit) {
+      : m_abort_on_exit(abort_on_exit), m_comm(comm) {
     /** Add a dummy at id 0 for loop abort. */
     m_callbacks.add(function_type());
   }

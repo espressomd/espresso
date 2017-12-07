@@ -278,8 +278,8 @@ void mpi_init() {
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
   MPI_Dims_create(n_nodes, 3, node_grid);
 
-  mpi_reshape_communicator({node_grid[0], node_grid[1], node_grid[2]},
-                           /* periodicity */ {1, 1, 1});
+  mpi_reshape_communicator({{node_grid[0], node_grid[1], node_grid[2]}},
+                           /* periodicity */ {{1, 1, 1}});
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 
   Communication::m_callbacks =
@@ -363,6 +363,7 @@ void mpi_place_particle(int pnode, int part, double p[3]) {
   else
     MPI_Send(p, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
 
+  set_resort_particles(Cells::RESORT_GLOBAL);
   on_particle_change();
 }
 
@@ -374,6 +375,7 @@ void mpi_place_particle_slave(int pnode, int part) {
     local_place_particle(part, p, 0);
   }
 
+  set_resort_particles(Cells::RESORT_GLOBAL);
   on_particle_change();
 }
 
