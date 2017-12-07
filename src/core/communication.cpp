@@ -1166,9 +1166,7 @@ void mpi_integrate_slave(int n_steps, int reuse_forces) {
 /*************** REQ_BCAST_IA ************/
 void mpi_bcast_ia_params(int i, int j) {
   mpi_call(mpi_bcast_ia_params_slave, i, j);
-#ifdef TABULATED
-  int tablesize = tabulated_forces.max;
-#endif
+
   if (j >= 0) {
     /* non-bonded interaction parameters */
     /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
@@ -1180,17 +1178,12 @@ void mpi_bcast_ia_params(int i, int j) {
 #ifdef TABULATED
     /* If there are tabulated forces broadcast those as well */
     if (get_ia_param(i, j)->TAB_maxval > 0) {
-      /* First let all nodes know the new size for force and energy tables */
-      MPI_Bcast(&tablesize, 1, MPI_INT, 0, comm_cart);
-
-      /* Communicate the data */
-      MPI_Bcast(tabulated_forces.e, tablesize, MPI_DOUBLE, 0, comm_cart);
-      MPI_Bcast(tabulated_energies.e, tablesize, MPI_DOUBLE, 0, comm_cart);
+      boost::mpi::broadcast(comm_cart, tabulated_forces, 0);
+      boost::mpi::broadcast(comm_cart, tabulated_energies, 0);
     }
 #endif
   } else {
     /* bonded interaction parameters */
-    /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
               comm_cart);
 #ifdef TABULATED
@@ -1228,19 +1221,10 @@ void mpi_bcast_ia_params_slave(int i, int j) {
     copy_ia_params(get_ia_param(j, i), get_ia_param(i, j));
 
 #ifdef TABULATED
-    {
-      int tablesize = 0;
-      /* If there are tabulated forces broadcast those as well */
-      if (get_ia_param(i, j)->TAB_maxval > 0) {
-        /* Determine the new size for force and energy tables */
-        MPI_Bcast(&tablesize, 1, MPI_INT, 0, comm_cart);
-        /* Allocate sizes accordingly */
-        realloc_doublelist(&tabulated_forces, tablesize);
-        realloc_doublelist(&tabulated_energies, tablesize);
-        /* Now communicate the data */
-        MPI_Bcast(tabulated_forces.e, tablesize, MPI_DOUBLE, 0, comm_cart);
-        MPI_Bcast(tabulated_energies.e, tablesize, MPI_DOUBLE, 0, comm_cart);
-      }
+    /* If there are tabulated forces broadcast those as well */
+    if (get_ia_param(i, j)->TAB_maxval > 0) {
+      boost::mpi::broadcast(comm_cart, tabulated_forces, 0);
+      boost::mpi::broadcast(comm_cart, tabulated_energies, 0);
     }
 #endif
   } else {                   /* bonded interaction parameters */
@@ -1435,9 +1419,11 @@ void mpi_local_stress_tensor_slave(int ana_num, int job) {
   MPI_Bcast(range_start, 3, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast(range, 3, MPI_DOUBLE, 0, comm_cart);
 
-  auto TensorInBin = std::vector<DoubleList>(bins[0] * bins[1] * bins[2], DoubleList(9, 0.0));
+  auto TensorInBin =
+      std::vector<DoubleList>(bins[0] * bins[1] * bins[2], DoubleList(9, 0.0));
 
-  local_stress_tensor_calc(TensorInBin.data(), bins, periodic, range_start, range);
+  local_stress_tensor_calc(TensorInBin.data(), bins, periodic, range_start,
+                           range);
 
   for (i = 0; i < bins[0] * bins[1] * bins[2]; i++) {
     MPI_Reduce(TensorInBin[i].e, nullptr, 9, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
