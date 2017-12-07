@@ -31,7 +31,7 @@ c = Correlator(tau_lin=16, tau_max=1000, dt=0.01, obs1=p,
                corr_operation="square_distance_componentwise", compress1="discard1")
 # Instance a correlator calculating the FCS autocorrelation function from particle positions, using the symmetric focal spot with wx=wy=wz=10 (sigma)
 fcs = Correlator(tau_lin=16, tau_max=10000, dt=0.1, obs1=p,
-                 corr_operation="fcs_acf", args=[10, 10, 10], compress1="discard1")
+                 corr_operation="fcs_acf", args=[10, 10, 10], compress1="discard2")
 # Ask the correlator for its parameters
 print c.get_params()
 
