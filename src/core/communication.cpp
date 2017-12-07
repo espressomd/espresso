@@ -30,9 +30,6 @@
 #include "communication.hpp"
 
 #include "errorhandling.hpp"
-#include "utils.hpp"
-#include "utils/make_unique.hpp"
-#include "utils/serialization/Particle.hpp"
 
 #include "EspressoSystemInterface.hpp"
 #include "actor/EwaldGPU.hpp"
@@ -89,6 +86,10 @@
 #include "tab.hpp"
 #include "topology.hpp"
 #include "virtual_sites.hpp"
+
+#include "utils.hpp"
+#include "utils/make_unique.hpp"
+#include "utils/serialization/Particle.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/array.hpp>
@@ -204,7 +205,8 @@ static int terminated = 0;
   CB(mpi_scafacos_free_slave)                                                  \
   CB(mpi_mpiio_slave)                                                          \
   CB(mpi_resort_particles_slave)                                               \
-  CB(mpi_get_pairs_slave)
+  CB(mpi_get_pairs_slave)                                                      \
+  CB(mpi_get_particles_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -1087,17 +1089,13 @@ void mpi_send_bond_slave(int pnode, int part) {
 }
 
 /****************** REQ_GET_PART ************/
-void mpi_recv_part(int pnode, int part, Particle *pdata) {
-  assert(pdata);
+Particle mpi_recv_part(int pnode, int part) {
+  Particle ret;
 
-  /* fetch fixed data */
-  if (pnode == this_node) {
-    assert(local_particles[part]);
-    *pdata = *local_particles[part];
-  } else {
-    mpi_call(mpi_recv_part_slave, pnode, part);
-    comm_cart.recv(pnode, SOME_TAG, *pdata);
-  }
+  mpi_call(mpi_recv_part_slave, pnode, part);
+  comm_cart.recv(pnode, SOME_TAG, ret);
+
+  return ret;
 }
 
 void mpi_recv_part_slave(int pnode, int part) {
