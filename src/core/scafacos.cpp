@@ -42,6 +42,7 @@
 #include "scafacos/Scafacos.hpp"
 #include "tuning.hpp"
 #include "communication.hpp" 
+#include "global.hpp" 
 
 /** This file contains the c-like interface for Scafacos */
 
@@ -249,8 +250,6 @@ void set_r_cut_and_tune_local(double r_cut) {
 
   scafacos->set_r_cut(r_cut);
   scafacos->tune(particles.charges, particles.positions);
-  on_coulomb_change();
-  printf("%d: on coulomb change finished.\n",this_node);
 }
 
 /** Determine runtime for a specific cutoff */
@@ -263,6 +262,7 @@ double time_r_cut(double r_cut) {
   MPI_Bcast(&r_cut, 1, MPI_DOUBLE, 0, comm_cart);
 
   set_r_cut_and_tune_local(r_cut);
+  //mpi_bcast_coulomb_params();
   return time_force_calc(10);
 }
 
@@ -309,10 +309,17 @@ void tune() {
   /** Check whether we have to do a bisection for the short range cutoff */
   /** Check if there is a user supplied cutoff */
   if ((scafacos->has_near) && (scafacos->r_cut() <= 0.0)) {
+    // Tuning of r_cut needs to run on the master node because it relies on 
+    // master-slve mode communication
     if (this_node==0) {
       tune_r_cut();
     }
+    else
+    {
+      return; // Tune on the master node will issue mpi calls
+    }
   } else {
+    // Espresso is not affected by a short range cutoff. Tune in parallel
     scafacos->tune(particles.charges, particles.positions);
   }
 }
@@ -328,16 +335,25 @@ static void set_params_safe(const std::string &method, const std::string &params
   int per[3] = { PERIODIC(0) != 0, PERIODIC(1) != 0, PERIODIC(2) != 0 };
 
   scafacos->set_dipolar(dipolar_ia);
-  scafacos->set_common_parameters(box_l, per, n_part);
-
-  on_coulomb_change();
-
+  #ifdef DIPOLES
+  if (dipolar_ia) {
+    coulomb.Dmethod = DIPOLAR_SCAFACOS;
+  }
+  #endif
+  #ifdef ELECTROSTATICS
   if (!dipolar_ia) {
-    tune();
-
-    on_coulomb_change();
+    coulomb.method = COULOMB_SCAFACOS;
+  }
+  #endif
+  scafacos->set_common_parameters(box_l, per, n_part);
+  
+  on_coulomb_change();
+  
+  if (!dipolar_ia) {
+      tune();
   }
 }
+
 
 /** Bend result from scafacos back to original format */
 std::string get_method_and_parameters() {
@@ -409,7 +425,9 @@ delete scafacos;
 
 void update_system_params() {
 // If scafacos is not active, do nothing
-if (!scafacos) return;
+if (!scafacos) {
+throw std::runtime_error("Scafacos object not there");
+}
 
   int per[3] = { PERIODIC(0) != 0, PERIODIC(1) != 0, PERIODIC(2) != 0 };
 
@@ -440,13 +458,10 @@ void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {
 #ifdef SCAFACOS_DIPOLES
   MPI_Bcast(&dip, sizeof(bool), MPI_CHAR, 0, comm_cart);
 #endif
-
   set_params_safe(method, params, dip);
-#ifdef SCAFACOS_DIPOLES
-  set_dipolar(dip);
-#endif
 #endif /* SCAFACOS */
 }
+
 
 void mpi_scafacos_free_slave(int a, int b) {
   #if defined(SCAFACOS) 
@@ -462,5 +477,4 @@ void mpi_scafacos_set_r_cut_and_tune_slave(int a, int b) {
   MPI_Bcast(&r_cut, 1, MPI_DOUBLE, 0, comm_cart);
   set_r_cut_and_tune_local(r_cut);
   #endif
-  printf("%d: scafacos_set_r_cut_and_tune_slave finished.\n",this_node);
 }

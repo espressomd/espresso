@@ -100,7 +100,6 @@ void Scafacos::set_r_cut(double r_cut) {
   if(has_near) {
     fcs_set_r_cut(handle, r_cut);
   }
-  printf("%d: set_r_cut finished %f\n",this_node,r_cut);
 }
 
 void Scafacos::run(std::vector<double> &charges, std::vector<double> &positions,
@@ -132,7 +131,6 @@ void Scafacos::run_dipolar(std::vector<double> &dipoles, std::vector<double> &po
 
 void Scafacos::tune(std::vector<double> &charges, std::vector<double> &positions) {
   handle_error(fcs_tune(handle, charges.size(), &(positions[0]), &(charges[0])));  
-  printf("%d: tune finished.\n",this_node);
 }
 
 void Scafacos::set_common_parameters(double *box_l, int *periodicity, int total_particles) {

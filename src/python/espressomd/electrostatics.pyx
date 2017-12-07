@@ -901,7 +901,6 @@ IF ELECTROSTATICS:
                 actors.Actor.__init__(self, *args, **kwargs)
 
             def _activate_method(self):
-                coulomb.method = COULOMB_SCAFACOS
                 coulomb_set_bjerrum(self._params["bjerrum_length"])
                 self._set_params_in_es_core()
                 mpi_bcast_coulomb_params()
