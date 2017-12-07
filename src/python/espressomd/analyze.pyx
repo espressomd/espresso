@@ -65,7 +65,7 @@ class Analysis(object):
 
     def min_dist(self, p1='default', p2='default'):
         """Minimal distance between two sets of particles.
-        
+
         Parameters
         ----------
         p1, p2 : lists of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
@@ -76,7 +76,7 @@ class Analysis(object):
         cdef int_list set2
 
         if p1 == 'default' and p2 == 'default':
-            result = c_analyze.mindist(c_analyze.partCfg(), NULL, NULL)
+            pass
         elif (p1 == 'default' and not p2 == 'default') or \
              (not p1 == 'default' and p2 == 'default'):
             raise Exception("Both, p1 and p2 have to be specified\n" + __doc__)
@@ -94,9 +94,7 @@ class Analysis(object):
             set1 = create_int_list_from_python_object(p1)
             set2 = create_int_list_from_python_object(p2)
 
-            result = c_analyze.mindist(c_analyze.partCfg(), &set1, &set2)
-
-        return result
+        return c_analyze.mindist(c_analyze.partCfg(), set1, set2)
 
     #
     # Distance to particle or point

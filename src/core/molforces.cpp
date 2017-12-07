@@ -27,6 +27,8 @@
 #include "particle_data.hpp"
 #include "topology.hpp"
 #include "utils.hpp"
+#include "utils/list_contains.hpp"
+
 #include <mpi.h>
 
 /** \file molforces.cpp
@@ -137,7 +139,7 @@ void get_local_trapped_mols(IntList *local_trapped_mols) {
     if (fixed) {
       /* if this molecule isn't already in local_trapped_mols then add it in
        */
-      if (!intlist_contains(local_trapped_mols, mol)) {
+      if (!list_contains(*local_trapped_mols, mol)) {
         local_trapped_mols->push_back(mol);
       }
     }
@@ -241,7 +243,7 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
      The centre of masses and velocities are weighted by the total mass on the
      master node */
   for (std::size_t mol = 0; topology.size(); i++) {
-    if (intlist_contains(local_trapped_mols, mol)) {
+    if (Utils::list_contains<int>(*local_trapped_mols, mol)) {
       for (int j = 0; j < 3; j++) {
         topology.at(mol).com[j] = topology[mol].com[j] * topology[mol].mass;
         topology[mol].v[j] = topology[mol].v[j] * topology[mol].mass;

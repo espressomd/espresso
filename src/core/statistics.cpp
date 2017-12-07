@@ -39,10 +39,11 @@
 #include "statistics_fluid.hpp"
 #include "utils.hpp"
 #include "utils/NoOp.hpp"
+#include "utils/list_contains.hpp"
 #include "virtual_sites.hpp"
+
 #include <cstdlib>
 #include <cstring>
-
 #include <limits>
 
 /** Previous particle configurations (needed for offline analysis and
@@ -65,11 +66,11 @@ double min_distance2(double const pos1[3], double const pos2[3]) {
  *                                 basic observables calculation
  ****************************************************************************************/
 
-double mindist(PartCfg &partCfg, IntList *set1, IntList *set2) {
+double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
   double pt[3];
-  int i, j, in_set;
+  int in_set;
 
-  auto mindist = std::numeric_limits<double>::infinity();
+  auto mindist2 = std::numeric_limits<double>::infinity();
 
   for (auto jt = partCfg.begin(); jt != (--partCfg.end()); ++jt) {
     pt[0] = jt->r.p[0];
@@ -79,9 +80,9 @@ double mindist(PartCfg &partCfg, IntList *set1, IntList *set2) {
        bit 0: set1, bit1: set2
     */
     in_set = 0;
-    if (!set1 || intlist_contains(set1, jt->p.type))
+    if (set1.empty() || list_contains(set1, jt->p.type))
       in_set = 1;
-    if (!set2 || intlist_contains(set2, jt->p.type))
+    if (set2.empty() || list_contains(set2, jt->p.type))
       in_set |= 2;
     if (in_set == 0)
       continue;
@@ -89,13 +90,12 @@ double mindist(PartCfg &partCfg, IntList *set1, IntList *set2) {
     for (auto it = std::next(jt); it != partCfg.end(); ++it)
       /* accept a pair if particle j is in set1 and particle i in set2 or vice
        * versa. */
-      if (((in_set & 1) && (!set2 || intlist_contains(set2, it->p.type))) ||
-          ((in_set & 2) && (!set1 || intlist_contains(set1, it->p.type))))
-        mindist = std::min(mindist, min_distance2(pt, it->r.p));
+      if (((in_set & 1) && (set2.empty() || list_contains(set2, it->p.type))) ||
+          ((in_set & 2) && (set1.empty() || list_contains(set1, it->p.type))))
+        mindist2 = std::min(mindist2, min_distance2(pt, it->r.p));
   }
-  mindist = std::sqrt(mindist);
 
-  return mindist;
+  return std::sqrt(mindist2);
 }
 
 void merge_aggregate_lists(int *head_list, int *agg_id_list, int p1molid,
@@ -125,7 +125,8 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
   int *contact_num, ind;
 
   if (min_contact > 1) {
-    contact_num = (int *)Utils::malloc(topology.size() * topology.size() * sizeof(int));
+    contact_num =
+        (int *)Utils::malloc(topology.size() * topology.size() * sizeof(int));
     for (int i = 0; i < topology.size() * topology.size(); i++)
       contact_num[i] = 0;
   } else {
@@ -1037,8 +1038,8 @@ int calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
   double bin_width, inv_bin_width;
   std::vector<int> ids;
 
-  for(auto const&p : partCfg) {
-    if(p.p.type == ptype) {
+  for (auto const &p : partCfg) {
+    if (p.p.type == ptype) {
       ids.push_back(p.p.identity);
     }
   }
@@ -1055,7 +1056,7 @@ int calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
   for (c1 = 0; c1 < n_configs; c1++) {
     c3_max = (c1 + tmax + 1) > n_configs ? n_configs : c1 + tmax + 1;
     for (c3 = (c1 + 1); c3 < c3_max; c3++) {
-      for (auto const& id: ids) {
+      for (auto const &id : ids) {
         p1[0] = configs[c1][3 * id];
         p1[1] = configs[c1][3 * id + 1];
         p1[2] = configs[c1][3 * id + 2];

@@ -121,7 +121,7 @@ extern int n_part_conf;
     @param set1 types of particles
     @param set2 types of particles
     @return the minimal distance of two particles */
-double mindist(PartCfg &, IntList *set1, IntList *set2);
+double mindist(PartCfg &, IntList const& set1, IntList const& set2);
 
 /** calculate the aggregate distribution for molecules.
     @param dist_criteria2 distance criteria squared

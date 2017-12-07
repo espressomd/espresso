@@ -36,13 +36,13 @@
 
 #include "config.hpp"
 
+#include "Vector.hpp"
 #include "debug.hpp"
 #include "errorhandling.hpp"
 #include "lees_edwards.hpp"
 #include "utils/List.hpp"
 #include "utils/math/sqr.hpp"
 #include "utils/memory.hpp"
-#include "Vector.hpp"
 
 /*************************************************************/
 /** \name Mathematical, physical and chemical constants.     */
@@ -108,7 +108,7 @@ template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
 /** \brief Transform the given 3D Vector to cylinder coordinates.
  */
 inline ::Vector<3, double>
-transform_to_cylinder_coordinates(::Vector<3, double> const &pos) {
+    transform_to_cylinder_coordinates(::Vector<3, double> const &pos) {
   double r = std::sqrt(pos[0] * pos[0] + pos[1] * pos[1]);
   double phi = std::atan2(pos[1], pos[0]);
   return ::Vector<3, double>{r, phi, pos[2]};
@@ -119,15 +119,6 @@ transform_to_cylinder_coordinates(::Vector<3, double> const &pos) {
 /** \name List operations .                                  */
 /*************************************************************/
 /*@{*/
-
-/** Check wether an \ref IntList contains the value c */
-inline int intlist_contains(IntList *il, int c) {
-  int i;
-  for (i = 0; i < il->n; i++)
-    if (c == il->e[i])
-      return 1;
-  return 0;
-}
 
 /*@}*/
 
@@ -236,8 +227,7 @@ inline double normr(double v[3]) {
 }
 
 /** calculates the squared length of a vector */
-template<typename T>
-double sqrlen(T const& v) {
+template <typename T> double sqrlen(T const &v) {
   double d2 = 0.0;
   int i;
   for (i = 0; i < 3; i++)
@@ -520,7 +510,8 @@ inline double distance2(double const pos1[3], double const pos2[3]) {
  *  \param vec  vecotr pos1-pos2.
  *  \return distance squared
 */
-inline double distance2vec(double const pos1[3], double const pos2[3], double vec[3]) {
+inline double distance2vec(double const pos1[3], double const pos2[3],
+                           double vec[3]) {
   vec[0] = pos1[0] - pos2[0];
   vec[1] = pos1[1] - pos2[1];
   vec[2] = pos1[2] - pos2[2];
@@ -676,7 +667,8 @@ std::vector<T> cross_product(const std::vector<T> &a,
     throw vector_size_unequal();
 
   std::vector<T> c(3);
-  c[0] = a[1] * b[2] - a[2] * b[1];  c[1] = a[2] * b[0] - a[0] * b[2];
+  c[0] = a[1] * b[2] - a[2] * b[1];
+  c[1] = a[2] * b[0] - a[0] * b[2];
   c[2] = a[0] * b[1] - a[1] * b[0];
   return c;
 }
@@ -764,7 +756,7 @@ template <typename T> int sign(T value) {
   return (T(0) < value) - (value < T(0));
 }
 
-}// namespace utils
+} // namespace utils
 
 /*@}*/
 
