@@ -57,14 +57,16 @@
 #include "mpiio.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
+#include "errorhandling.hpp"
+
+#include <mpi.h>
+
 #include <cstring>
 #include <errno.h>
 #include <string>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <vector>
-
-#include <mpi.h>
 
 /** Dumps arr of size len starting from prefix pref of type T using
  * MPI_T as MPI datatype. Beware, that T and MPI_T have to match!
