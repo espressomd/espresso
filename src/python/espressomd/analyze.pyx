@@ -744,7 +744,7 @@ class Analysis(object):
 
     def calc_re(self, chain_start=None, number_of_chains=None, chain_length=None):
         """
-        Calculates the Root Mean Square end-to-end distance of chains and its
+        Calculates the Mean end-to-end distance of chains and its
         standard deviation, as well as Mean Square end-to-end distance of
         chains and its standard deviation.
         
@@ -768,7 +768,7 @@ class Analysis(object):
         Returns            
         -------
         array_like : :obj:`float`
-                     Where [0] is the Root Mean Square end-to-end distance of chains
+                     Where [0] is the Mean end-to-end distance of chains
                      and [1] its standard deviation,
                      [2] the Mean Square end-to-end distance
                      and [3] its standard deviation.
@@ -784,17 +784,13 @@ class Analysis(object):
 
     def calc_rg(self, chain_start=None, number_of_chains=None, chain_length=None):
         """
-        Calculates the radius of gyration of chains and its standard deviation,
-        as well as the Mean Square radius of gyration of chains and its
+        Calculates the mean radius of gyration of chains and its standard deviation,
+        as well as the mean square radius of gyration of chains and its
         standard deviation.
         
         This requires that a set of chains of equal length which start with the
         particle with particle number ``chain_start`` and are consecutively
         numbered, the last particle in that topology has id number
-
-        .. math::
-
-            ``chain_start`` + ``number_of_chains`` * ``chain_length`` - 1.
 
         Parameters
         ----------
@@ -808,7 +804,7 @@ class Analysis(object):
         Returns            
         -------
         array_like : :obj:`float`
-                     Where [0] is the Root Mean Square radius of gyration of the chains
+                     Where [0] is the Mean radius of gyration of the chains
                      and [1] its standard deviation,
                      [2] the Mean Square radius of gyration
                      and [3] its standard deviation.
