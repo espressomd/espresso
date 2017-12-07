@@ -11,7 +11,7 @@ cdef class PObjectId(object):
             raise NotImplementedError
 
 cdef class PScriptInterface(object):
-    def __init__(self, name=None, policy="GLOBAL", state=None, **kwargs):
+    def __init__(self, name=None, policy="GLOBAL", **kwargs):
         cdef CreationPolicy policy_
         cdef map[string, Variant] ctor_args
 
@@ -22,13 +22,11 @@ cdef class PScriptInterface(object):
         else:
             raise Exception("Unknown policy '{}'.".format(policy))
 
-        if not state:
+        if name:
             self.set_sip(make_shared(to_char_pointer(name), policy_))
 
             ctor_args = self._sanitize_params(kwargs)
             self.sip.get().construct(ctor_args)
-        else:
-            self.set_sip(ScriptInterfaceBase.unserialize(state))
 
     def __richcmp__(a, b, op):
         if op == 2:
@@ -82,9 +80,6 @@ cdef class PScriptInterface(object):
     def _unserialize(self, state):
         cdef shared_ptr[ScriptInterfaceBase] so_ptr = ScriptInterfaceBase.unserialize(state)
         self.set_sip(so_ptr)
-
-    def __reduce__(self):
-        return (PScriptInterface , (None, "GLOBAL", self._serialize()))
 
     cdef map[string, Variant] _sanitize_params(self, in_params):
         cdef map[string, Variant] out_params
@@ -225,6 +220,18 @@ cdef class PScriptInterface(object):
 
         return odict
 
+def _unpickel_so_class(so_name, state):
+    cdef shared_ptr[ScriptInterfaceBase] sip = ScriptInterfaceBase.unserialize(state) 
+
+    poid=PObjectId()
+    poid.id=sip.get().id()
+
+    so = _python_class_by_so_name[so_name]()
+    so.set_sip_via_oid(poid)
+    so.define_bound_methods()
+
+    return so
+
 class ScriptInterfaceHelper(PScriptInterface):
     _so_name = None
     _so_bind_methods =()
@@ -233,6 +240,9 @@ class ScriptInterfaceHelper(PScriptInterface):
     def __init__(self, **kwargs):
         super(ScriptInterfaceHelper,self).__init__(self._so_name, policy=self._so_creation_policy, **kwargs)
         self.define_bound_methods()
+
+    def __reduce__(self):
+        return (_unpickel_so_class , (self._so_name, self._serialize()))
 
     def __dir__(self):
         return self.__dict__.keys() + self._valid_parameters()
