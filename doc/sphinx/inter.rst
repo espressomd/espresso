@@ -1339,7 +1339,7 @@ follows. For a pair of particles at distance :math:`r` with charges
 where 
 
 .. math::  
-   C=\frac{1}{4pi \epsilon_0 \epsilon_r} 
+   C=\frac{1}{4\pi \epsilon_0 \epsilon_r} 
    :label: coulomb_prefactor
     
 is a prefactor which can be set by the user. 

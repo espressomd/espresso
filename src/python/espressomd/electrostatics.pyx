@@ -842,24 +842,13 @@ IF ELECTROSTATICS:
             return ["prefactor", "maxPWerror"]
 
         def valid_keys(self):
-<<<<<<< HEAD
-            return "prefactor", "maxPWerror", "top", "mid", "bot", "delta_mid_top", "delta_mid_bot", "pot_diff", "dielectric", "dielectric_contrast_on", "capacitor", "far_cut"
-=======
-            return "bjerrum_length", "maxPWerror", "top", "mid", "bot", "delta_mid_top", "delta_mid_bot", "pot_diff", "dielectric", "dielectric_contrast_on", "const_pot", "far_cut"
->>>>>>> pr1638
+            return "prefactor", "maxPWerror", "top", "mid", "bot", "delta_mid_top", "delta_mid_bot", "pot_diff", "dielectric", "dielectric_contrast_on", "const_pot", "far_cut"
 
         def _get_params_from_es_core(self):
             params = {}
             params.update(mmm2d_params)
-<<<<<<< HEAD
             params["prefactor"] = coulomb.prefactor
-            if params["dielectric_contrast_on"] or params["const_pot_on"]:
-                params["dielectric"] = 0
-            else:
-=======
-            params["bjerrum_length"] = coulomb.bjerrum
             if params["dielectric_contrast_on"] == 1 or params["const_pot"] == 1:
->>>>>>> pr1638
                 params["dielectric"] = 1
             else:
                 params["dielectric"] = 0

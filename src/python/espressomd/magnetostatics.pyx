@@ -132,7 +132,7 @@ IF DP3M == 1:
                     "mesh_off should be a list of length 3 and values between 0.0 and 1.0")
 
         def valid_keys(self):
-            return "prefactor", "alpha_L", "r_cut_iL", "mesh", "mesh_off", "cao", "inter", "accuracy", "epsilon", "cao_cut", "a", "ai", "alpha", "r_cut", "inter2", "cao3", "additional_mesh", "prefactor", "tune"
+            return "prefactor", "alpha_L", "r_cut_iL", "mesh", "mesh_off", "cao", "inter", "accuracy", "epsilon", "cao_cut", "a", "ai", "alpha", "r_cut", "inter2", "cao3", "additional_mesh", "tune"
 
         def required_keys(self):
             return ["accuracy", ]
@@ -243,7 +243,7 @@ IF DIPOLES == 1:
             return ()
 
         def valid_keys(self):
-            return ("prefactor", "prefactor")
+            return ("prefactor",) 
 
         def _get_params_from_es_core(self):
             return {"prefactor": coulomb.Dprefactor}
@@ -278,7 +278,7 @@ IF DIPOLES == 1:
             return ("n_replica",)
 
         def valid_keys(self):
-            return ("prefactor", "prefactor", "n_replica")
+            return ("prefactor", "n_replica")
 
         def _get_params_from_es_core(self):
             return {"prefactor": coulomb.Dprefactor, "n_replica": Ncut_off_magnetic_dipolar_direct_sum}
@@ -335,7 +335,7 @@ IF DIPOLES == 1:
                 return ()
     
             def valid_keys(self):
-                return ("prefactor", "prefactor")
+                return ("prefactor",)
     
             def _get_params_from_es_core(self):
                 return {"prefactor": coulomb.Dprefactor}
