@@ -110,7 +110,7 @@ static IntList besselCutoff;
 /** cutoffs for the complex sum */
 static int  complexCutoff[COMPLEX_STEP + 1];
 /** bernoulli numbers divided by n */
-static DoubleList  bon;
+static DoubleList bon;
 
 /** inverse box dimensions */
 /*@{*/
@@ -1478,18 +1478,18 @@ static void prepareBernoulliNumbers(int bon_order)
   if (bon_order < 2)
     bon_order = 2;
 
-  realloc_doublelist(&bon, bon.n = bon_order);
+  bon.resize(bon_order);
 
   /* the ux is multiplied in to bessel, complex and psi at once, not here,
      and we use uy*(z + iy), so the uy is also treated below */
-  for(l = 1; (l <= bon_order) && (l < 34); l++)
-    bon.e[l-1] = 2*uy*bon_table[l];
+  for (l = 1; (l <= bon_order) && (l < 34); l++)
+    bon[l - 1] = 2 * uy * bon_table[l];
 
   for (; l <= bon_order; l++) {
     if (l & 1)
-      bon.e[l-1] =  4.0*uy;
+      bon[l - 1] = 4.0 * uy;
     else
-      bon.e[l-1] = -4.0*uy;      
+      bon[l - 1] = -4.0 * uy;
   }
 }
 

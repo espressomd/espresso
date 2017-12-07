@@ -129,14 +129,6 @@ inline int intlist_contains(IntList *il, int c) {
   return 0;
 }
 
-/** Reallocate an \ref DoubleList */
-inline void realloc_doublelist(DoubleList *dl, int size) {
-  if (size != dl->max) {
-    dl->max = size;
-    dl->e = (double *)Utils::realloc(dl->e, sizeof(double) * dl->max);
-  }
-}
-
 /*@}*/
 
 /*************************************************************/
