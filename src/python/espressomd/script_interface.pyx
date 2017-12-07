@@ -221,7 +221,7 @@ cdef class PScriptInterface(object):
         return odict
 
 def _unpickel_so_class(so_name, state):
-    cdef shared_ptr[ScriptInterfaceBase] sip = ScriptInterfaceBase.unserialize(state) 
+    cdef shared_ptr[ScriptInterfaceBase] sip = ScriptInterfaceBase.unserialize(state)
 
     poid=PObjectId()
     poid.id=sip.get().id()

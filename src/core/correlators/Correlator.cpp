@@ -21,8 +21,15 @@
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
-#include <cstring>
 
+#include "utils/serialization/multi_array.hpp"
+
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
+
+#include <cstring>
 #include <limits>
 
 namespace Correlators {
@@ -640,6 +647,43 @@ std::vector<double> Correlator::get_correlation() {
     }
   }
   return res;
+}
+
+std::string Correlator::get_internal_state() const {
+  std::stringstream ss;
+  boost::archive::binary_oarchive oa(ss);
+
+  oa << t;
+  oa << m_n_result;
+  oa << A;
+  oa << B;
+  oa << result;
+  oa << n_sweeps;
+  oa << n_vals;
+  oa << newest;
+  oa << A_accumulated_average;
+  oa << B_accumulated_average;
+  oa << n_data;
+  oa << m_last_update;
+
+  return ss.str();
+}
+void Correlator::set_internal_state(std::string const &state) {
+  std::stringstream ss(state);
+  boost::archive::binary_iarchive ia(ss);
+
+  ia >> t;
+  ia >> m_n_result;
+  ia >> A;
+  ia >> B;
+  ia >> result;
+  ia >> n_sweeps;
+  ia >> n_vals;
+  ia >> newest;
+  ia >> A_accumulated_average;
+  ia >> B_accumulated_average;
+  ia >> n_data;
+  ia >> m_last_update;
 }
 
 } // Namespace Correlators

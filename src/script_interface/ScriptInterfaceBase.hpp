@@ -225,7 +225,7 @@ public:
   static std::shared_ptr<ScriptInterfaceBase> unserialize(std::string const& state);
   virtual Variant get_state() const;
 
-private:
+protected:
   virtual void set_state(Variant const &state);
 };
 

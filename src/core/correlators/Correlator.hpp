@@ -121,6 +121,7 @@
 #include "utils.hpp"
 
 #include <boost/multi_array.hpp>
+#include <boost/serialization/access.hpp>
 
 #include <cmath>
 #include <cstdio>
@@ -258,13 +259,18 @@ public:
     return corr_operation_name;
   }
 
-  unsigned int finalized; // non-zero of correlation is finialized
-
   void start_auto_update();
   void stop_auto_update();
   int autoupdate;
 
+  /* Partial serialization of state that is not accessible
+     via the interface. */
+  std::string get_internal_state() const;
+  void set_internal_state(std::string const&);
+
 private:
+  unsigned int finalized; // non-zero of correlation is finialized
+
   Vector3d
       m_correlation_args; // additional arguments, which the correlation may
                           // need (currently only used by fcs_acf)

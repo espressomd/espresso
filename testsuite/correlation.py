@@ -25,7 +25,7 @@ from numpy.random import random
 from espressomd.interactions import FeneBond
 from espressomd.observables import *
 from espressomd.correlators import *
-
+import pickle
 
 class Observables(ut.TestCase):
     # Error tolerance when comparing arrays/tuples...
@@ -46,6 +46,10 @@ class Observables(ut.TestCase):
         O = ParticlePositions(ids=(0,))
         C2 = Correlator(obs1=O, dt=0.01, tau_lin=10, tau_max=10.0,
                         corr_operation="square_distance_componentwise")
+
+        c_str = pickle.dumps(C2)
+        C_new = pickle.loads(c_str)
+
         s.integrator.run(1000)
         s.auto_update_correlators.add(C2)
         s.integrator.run(20000)

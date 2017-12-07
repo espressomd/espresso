@@ -101,7 +101,22 @@ public:
     return {};
   }
 
+  Variant get_state() const override {
+    std::vector<Variant> state(2);
+    state[0] = ScriptInterfaceBase::get_state();
+    state[1] = m_correlator->get_internal_state();
+
+    return state;
+  }
+
 private:
+  void set_state(Variant const &state) override {
+    auto const &state_vec = boost::get<std::vector<Variant>>(state);
+
+    ScriptInterfaceBase::set_state(state_vec.at(0));
+    m_correlator->set_internal_state(boost::get<std::string>(state_vec.at(1)));
+  }
+
   /* The actual correlator */
   std::shared_ptr<CoreCorr> m_correlator;
 
