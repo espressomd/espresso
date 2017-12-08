@@ -932,9 +932,6 @@ inline int checkIfParticlesInteract(int i, int j) {
   return checkIfInteraction(get_ia_param(i, j));
 }
 
-///
-const char *get_name_of_bonded_ia(BondedInteraction type);
-
 int virtual_set_params(int bond_type);
 
 #ifdef DIPOLES
