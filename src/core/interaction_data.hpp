@@ -184,7 +184,7 @@ enum DipolarInteraction {
 /** field containing the interaction parameters for
  *  nonbonded interactions. Access via
  * get_ia_param(i, j), i,j < n_particle_types */
-typedef struct {
+struct IA_parameters {
   /** maximal cutoff for this pair of particle types. This contains
       contributions from the short-ranged interactions, plus any
       cutoffs from global interactions like electrostatics.
@@ -461,7 +461,7 @@ typedef struct {
   int affinity_on = 0;
 #endif
 
-} IA_parameters;
+};
 
 /** thermodynamic force parameters */
 
@@ -883,7 +883,7 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src);
 
 /** get interaction parameters between particle sorts i and j */
 inline IA_parameters *get_ia_param(int i, int j) {
-  extern IA_parameters *ia_params;
+  extern std::vector<IA_parameters> ia_params;
   extern int n_particle_types;
   return &ia_params[i * n_particle_types + j];
 }
