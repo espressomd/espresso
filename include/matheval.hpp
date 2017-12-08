@@ -28,6 +28,7 @@
 #include <iterator>
 #include <limits>
 #include <map>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 
@@ -38,12 +39,14 @@
 #include <boost/spirit/include/qi.hpp>
 #include <boost/variant.hpp>
 
+
 namespace matheval {
 
 namespace detail {
 
 namespace qi = boost::spirit::qi;
 namespace ascii = boost::spirit::ascii;
+
 
 /** @brief Sign function
  *
@@ -334,6 +337,24 @@ struct binary_expr_ {
     }
 };
 
+/** @brief Error handler for expectation errors */
+struct expectation_handler {
+    /** @brief Throw an exception saying where and why parsing failed */
+    template < typename Iterator >
+    void operator()(Iterator first, Iterator last,
+                    boost::spirit::info const& info) const {
+       std::stringstream msg;
+       msg << "Expected "
+           << info
+           << " at \""
+           << std::string{first, last}
+           << "\"";
+
+       throw std::runtime_error(msg.str());
+    }
+};
+
+
 // Grammar
 
 /** @brief Expression Grammar */
@@ -344,6 +365,7 @@ struct grammar
         >
 {
 private:
+    expectation_handler err_handler;
     qi::rule<Iterator, expr_ast<real_t>(), ascii::space_type> expression;
     qi::rule<Iterator, expr_ast<real_t>(), ascii::space_type> term;
     qi::rule<Iterator, expr_ast<real_t>(), ascii::space_type> factor;
@@ -437,6 +459,7 @@ public:
         using boost::spirit::qi::_1;
         using boost::spirit::qi::_2;
         using boost::spirit::qi::_3;
+        using boost::spirit::qi::_4;
         using boost::spirit::qi::_val;
         using boost::spirit::qi::alpha;
         using boost::spirit::qi::alnum;
@@ -449,23 +472,23 @@ public:
         auto pow = static_cast<real_t(*)(real_t,real_t)>(&std::pow);
 
         expression =
-            term                   [_val =  _1]
-            >> *(  ('+' >> term    [_val += _1])
-                |  ('-' >> term    [_val -= _1])
+            term                  [_val =  _1]
+            >> *(  ('+' > term    [_val += _1])
+                |  ('-' > term    [_val -= _1])
                 )
             ;
 
         term =
-            factor                 [_val =  _1]
-            >> *(  ('*' >> factor  [_val *= _1])
-                |  ('/' >> factor  [_val /= _1])
-                |  ('%' >> factor  [_val = binary_expr(fmod, _val, _1)])
+            factor                [_val =  _1]
+            >> *(  ('*' > factor  [_val *= _1])
+                |  ('/' > factor  [_val /= _1])
+                |  ('%' > factor  [_val = binary_expr(fmod, _val, _1)])
                 )
             ;
 
         factor =
-            primary                [_val =  _1]
-            >> *(  ("**" >> factor [_val = binary_expr(pow, _val, _1)])
+            primary               [_val =  _1]
+            >> *(  ("**" > factor [_val = binary_expr(pow, _val, _1)])
                 )
             ;
 
@@ -474,16 +497,33 @@ public:
 
         primary =
             real                   [_val =  _1]
-            |   '(' >> expression  [_val =  _1] >> ')'
-            |   ('-' >> primary    [_val = unary_expr(std::negate<real_t>{}, _1)])
-            |   ('+' >> primary    [_val =  _1])
-            |   (ufunc >> '(' >> expression >> ')')
+            |   ('(' > expression  [_val =  _1] > ')')
+            |   ('-' > primary     [_val = unary_expr(std::negate<real_t>{}, _1)])
+            |   ('+' > primary     [_val =  _1])
+            |   (ufunc > '(' > expression > ')')
                                    [_val = unary_expr(_1, _2)]
-            |   (bfunc >> '(' >> expression >> ',' >> expression >> ')')
+            |   (bfunc > '(' > expression > ',' > expression > ')')
                                    [_val = binary_expr(_1, _2, _3)]
             |   constant           [_val =  _1]
             |   variable           [_val =  _1]
             ;
+
+        expression.name("expression");
+        term.name("term");
+        factor.name("factor");
+        variable.name("variable");
+        primary.name("primary");
+
+        using boost::spirit::qi::fail;
+        using boost::spirit::qi::on_error;
+        using boost::phoenix::bind;
+        using boost::phoenix::ref;
+
+        on_error<fail>
+        (
+            expression,
+            bind(ref(err_handler), _3, _2, _4)
+        );
     }
 };
 
