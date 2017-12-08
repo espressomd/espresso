@@ -1536,7 +1536,7 @@ cdef class _ParticleSliceImpl(object):
         self.id_selection = self.id_selection[mask]
 
     def __iter__(self):
-        yield self._id_gen()
+        return self._id_gen()
 
     def _id_gen(self):
         """Generator for chunked and prefetched iteration of particles.
