@@ -810,8 +810,9 @@ bool ReactionEnsemble::do_global_mc_move_for_particles_of_type(int type, int sta
 			auto part = get_particle_data(i);
 			//move particle to new position nearby
 			const double length_of_displacement=0.05;
-			add_random_vector(part->r.p, 3, length_of_displacement);
-			place_particle(i,part->r.p);
+      auto pos_new = Vector3d{part->r.p};
+			add_random_vector(pos_new.data(), 3, length_of_displacement);
+			place_particle(i,pos_new.data());
 		}
 		
 	}
