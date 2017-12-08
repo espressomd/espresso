@@ -500,10 +500,10 @@ public:
             |   ('(' > expression  [_val =  _1] > ')')
             |   ('-' > primary     [_val = unary_expr(std::negate<real_t>{}, _1)])
             |   ('+' > primary     [_val =  _1])
-            |   (ufunc > '(' > expression > ')')
-                                   [_val = unary_expr(_1, _2)]
             |   (bfunc > '(' > expression > ',' > expression > ')')
                                    [_val = binary_expr(_1, _2, _3)]
+            |   (ufunc > '(' > expression > ')')
+                                   [_val = unary_expr(_1, _2)]
             |   constant           [_val =  _1]
             |   variable           [_val =  _1]
             ;
