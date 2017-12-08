@@ -139,9 +139,7 @@ static void recalc_maximal_cutoff_bonded();
 
 /** Initialize interaction parameters. */
 void initialize_ia_params(IA_parameters *params) {
- 
-  params->particlesInteract = 0;
-  params->max_cut = max_cut_global;
+  params->max_cut = INACTIVE_CUTOFF;
 
 #ifdef LENNARD_JONES
   params->LJ_eps =
@@ -249,7 +247,7 @@ void initialize_ia_params(IA_parameters *params) {
   params->affinity_maxBond =
   params->affinity_cut = INACTIVE_CUTOFF;
 #endif
-    
+
 #ifdef MEMBRANE_COLLISION
     params->membrane_a =
     params->membrane_n =
@@ -259,7 +257,7 @@ void initialize_ia_params(IA_parameters *params) {
 
 #ifdef HAT
   params->HAT_Fmax =
-    params->HAT_r = 0.0;
+    params->HAT_r = INACTIVE_CUTOFF;
 #endif
 
 #ifdef LJCOS
@@ -337,9 +335,8 @@ void initialize_ia_params(IA_parameters *params) {
 #endif
 
 #ifdef CATALYTIC_REACTIONS
-  params->REACTION_range = 0.0;
+  params->REACTION_range = INACTIVE_CUTOFF;
 #endif
-
 }
 
 /** Copy interaction parameters. */
@@ -533,7 +530,7 @@ static void recalc_maximal_cutoff_nonbonded()
   
   for (i = 0; i < n_particle_types; i++)
     for (j = i; j < n_particle_types; j++) {
-      double max_cut_current = 0;
+      double max_cut_current = INACTIVE_CUTOFF;
 
       IA_parameters *data = get_ia_param(i, j);
 
@@ -640,7 +637,7 @@ static void recalc_maximal_cutoff_nonbonded()
       if (max_cut_current < data->TAB_maxval)
 	max_cut_current = data->TAB_maxval;
 #endif
-	 
+
 #ifdef TUNABLE_SLIP
       if (max_cut_current < data->TUNABLE_SLIP_r_cut)
 	max_cut_current = data->TUNABLE_SLIP_r_cut;
@@ -654,16 +651,10 @@ static void recalc_maximal_cutoff_nonbonded()
       IA_parameters *data_sym = get_ia_param(j, i);
 
       /* no interaction ever touched it, at least no real
-	 short-ranged one (that writes to the nonbonded energy) */
-      data_sym->particlesInteract =
-	data->particlesInteract = (max_cut_current > 0.0);
-      
-      /* Bigger cutoffs are chosen due to dpd and the like. 
-         Coulomb and dipolar interactions are handled in the Verlet lists
-	 separately. */
+         short-ranged one (that writes to the nonbonded energy) */
+      data_sym->particlesInteract = data->particlesInteract =
+          (max_cut_current > 0.0);
 
-      max_cut_current =std::max(max_cut_current,max_cut_global_without_coulomb_and_dipolar);
-      
       data_sym->max_cut =
 	data->max_cut = max_cut_current;
 
