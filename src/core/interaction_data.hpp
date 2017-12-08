@@ -878,9 +878,6 @@ int coulomb_set_bjerrum(double bjerrum);
 int dipolar_set_Dbjerrum(double bjerrum);
 #endif
 
-/** copy a set of interaction parameters. */
-void copy_ia_params(IA_parameters *dst, IA_parameters *src);
-
 /** get interaction parameters between particle sorts i and j */
 inline IA_parameters *get_ia_param(int i, int j) {
   extern std::vector<IA_parameters> ia_params;

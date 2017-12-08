@@ -1172,7 +1172,7 @@ void mpi_bcast_ia_params(int i, int j) {
     MPI_Bcast(get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE, 0,
               comm_cart);
 
-    copy_ia_params(get_ia_param(j, i), get_ia_param(i, j));
+    *get_ia_param(j, i) = *get_ia_param(i, j);
 
 #ifdef TABULATED
     /* If there are tabulated forces broadcast those as well */
@@ -1217,7 +1217,7 @@ void mpi_bcast_ia_params_slave(int i, int j) {
     MPI_Bcast(get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE, 0,
               comm_cart);
 
-    copy_ia_params(get_ia_param(j, i), get_ia_param(i, j));
+    *get_ia_param(j, i) = *get_ia_param(i, j);
 
 #ifdef TABULATED
     /* If there are tabulated forces broadcast those as well */
