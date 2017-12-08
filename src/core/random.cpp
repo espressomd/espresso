@@ -24,6 +24,8 @@
 #include "communication.hpp"
 #include "debug.hpp"
 
+#include <sstream>
+
 namespace Random {
 using std::string;
 using std::ostringstream;
