@@ -121,7 +121,7 @@ extern int n_part_conf;
     @param set1 types of particles
     @param set2 types of particles
     @return the minimal distance of two particles */
-double mindist(PartCfg &, IntList *set1, IntList *set2);
+double mindist(PartCfg &, IntList const& set1, IntList const& set2);
 
 /** calculate the aggregate distribution for molecules.
     @param dist_criteria2 distance criteria squared
@@ -147,10 +147,11 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
 /** returns all particles within a given radius r_catch around a position.
     @param pos position of sphere of point
     @param r_catch the radius around the position
-    @param il the list where to store the particles indices
     @param planedims orientation of coordinate system
+
+    @return List of ids close to pos.
 */
-void nbhood(PartCfg & partCfg, double pos[3], double r_catch, IntList *il, int planedims[3]);
+IntList nbhood(PartCfg & partCfg, double pos[3], double r_catch, int planedims[3]);
 
 /** minimal distance to point.
     @param pos point
@@ -284,7 +285,7 @@ void calc_rdf_av(PartCfg & partCfg, std::vector<int> &p1_types, std::vector<int>
     @param vanhove  array to store G(r,t) (size (n_configs-1)*(rbins))
 
 */
-double calc_vanhove(PartCfg &, int ptype, double rmin, double rmax, int rbins, int tmax,
+int calc_vanhove(PartCfg &, int ptype, double rmin, double rmax, int rbins, int tmax,
                     double *msd, double **vanhove);
 
 /** Calculates the spherically averaged structure factor.

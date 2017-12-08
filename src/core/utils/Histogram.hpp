@@ -20,6 +20,8 @@
 #ifndef UTILS_HISTOGRAM_HPP
 #define UTILS_HISTOGRAM_HPP
 
+#include "constants.hpp"
+
 #include <algorithm>
 #include <functional>
 #include <numeric>

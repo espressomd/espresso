@@ -1,5 +1,8 @@
 #ifndef OBSERVABLES_PROFIELS_HPP
 #define OBSERVABLES_PROFIELS_HPP
+
+#include "utils/List.hpp"
+
 typedef struct {
   IntList *id_list;
   double min_x;

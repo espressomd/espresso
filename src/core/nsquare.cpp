@@ -28,6 +28,8 @@
 #include "constraints.hpp"
 #include "ghosts.hpp"
 #include "utils.hpp"
+#include "debug.hpp"
+
 #include <cstring>
 #include <mpi.h>
 
