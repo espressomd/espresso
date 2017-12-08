@@ -141,7 +141,7 @@ class AnalyzeEnergy(ut.TestCase):
         self.system.part[1].pos = [3, 2, 2]
         self.system.part[0].q = 1
         self.system.part[1].q = -1
-        p3m = electrostatics.P3M(bjerrum_length=1.0,
+        p3m = electrostatics.P3M(prefactor=1.0,
                                  accuracy=9.910945054074526e-08,
                                  mesh=[22,22,22],
                                  cao=7,
