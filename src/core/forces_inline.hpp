@@ -457,42 +457,7 @@ inline void add_bonded_force(Particle *p1)
   int bond_broken = bond_container.force_loop(p1);
   if(bond_broken == 2)
     return;
-  /*
-  // variables
-  // bond_list_id: id of bond_map_id in p1->bl.e[]
-  // bond_map_id: id of bond in bond_map
-  // n_partners: number of partners, e.g. for a pair bond -> 1
-  int i, bond_list_id, bond_map_id, n_partners, bond_broken;
-  i = 0;
 
-  //We are going through the bond list of particle p1
-  while(i < p1->bl.n){
-
-    //--first assign the variables for this step--
-    //get the bond id in bond list
-    bond_list_id = i;
-    //get the bond map id
-    bond_map_id = p1->bl.e[bond_list_id];
-    //now the number of partners can be determined
-    n_partners = bond_map[bond_map_id]->get_number_of_bond_partners();
-
-    //--Then calculate forces--
-    //in this function the forces are written directly into the particles
-    //because it determines the bond partners by itself
-    bond_broken = bond_map[bond_map_id]->add_bonded_force(p1, bond_list_id);
-
-    // if there are no bond partners get out of this function
-    // it is easier to return 1 for the future!
-    if(bond_broken == 2)
-      return;
-
-    //--Now we are finished and have to go to the next bond--
-    //in bond list: bond itself and number of partners 
-    //next bond in -> n_partners + 1
-    i += n_partners + 1;
-    
-  };
-  */
 }
 #endif //BOND_CLASS_DEBUG
 
