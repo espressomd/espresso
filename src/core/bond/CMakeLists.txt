@@ -1,4 +1,4 @@
-add_library(Bonds SHARED Bond.cpp PairBond.cpp Fene.cpp Harmonic.cpp
+add_library(Bonds SHARED PairBond.cpp Fene.cpp Harmonic.cpp
 HarmonicDumbbell.cpp BondedCoulomb.cpp Quartic.cpp SubtLj.cpp Umbrella.cpp
 ThreeParticleBond.cpp IbmTriel.cpp AngleHarmonic.cpp AngleCosine.cpp
 AngleCosSquare.cpp AngleDist.cpp FourParticleBond.cpp HydrogenBond.cpp
