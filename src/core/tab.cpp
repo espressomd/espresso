@@ -301,17 +301,17 @@ int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_ty
   // this structure is just for testing the code with old iaparams stuff
   switch(tab_type){
   case TAB_BOND_LENGTH:    
-    set_bond_by_type(bond_type, Utils::make_unique<Bond::TabulatedBondLength>
+    bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::TabulatedBondLength>
 		     (Bond::TabulatedBondedInteraction::TAB_BOND_LENGTH, input_filename,
 		      input_minval, input_maxval, input_npoints, input_invstepsize, input_f, 
 		      input_e));
   case TAB_BOND_ANGLE:    
-    set_bond_by_type(bond_type, Utils::make_unique<Bond::TabulatedBondAngle>
+    bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::TabulatedBondAngle>
 		     (Bond::TabulatedBondedInteraction::TAB_BOND_ANGLE, input_filename,
 		      input_minval, input_maxval, input_npoints, input_invstepsize, input_f, 
 		      input_e));
   case TAB_BOND_DIHEDRAL:    
-    set_bond_by_type(bond_type, Utils::make_unique<Bond::TabulatedBondDihedral>
+    bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::TabulatedBondDihedral>
 		     (Bond::TabulatedBondedInteraction::TAB_BOND_DIHEDRAL, input_filename,
 		      input_minval, input_maxval, input_npoints, input_invstepsize, input_f, 
 		      input_e));

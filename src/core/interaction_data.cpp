@@ -103,8 +103,7 @@ double field_applied;
 int n_bonded_ia = 0;
 Bonded_ia_parameters *bonded_ia_params = NULL;
 
-/** definition of Bond map with all bonds**/
-std::map<int, std::unique_ptr<Bond::Bond>> bond_map;
+/** definition of BondContainer with all bonds**/
 Bond::BondContainer bond_container;
 
 double min_global_cut = 0.0;
@@ -892,14 +891,6 @@ void make_bond_type_exist(int type)
   n_bonded_ia = ns;
 }
 
-void set_bond_by_type(int type, std::unique_ptr<Bond::Bond> && bond) {
-
-  /* ifdef cases must be here*/
-  
-  //insert bond with key "type"
-  bond_map.insert(std::pair<int, std::unique_ptr<Bond::Bond>>(type, std::move(bond)));
-}
-
 int interactions_sanity_checks()
 {
   /* set to zero if initialization was not successful. */
@@ -1065,7 +1056,7 @@ int virtual_set_params(int bond_type)
   bonded_ia_params[bond_type].num  = 1;
 
   //create new bond class in bond vector with params
-  set_bond_by_type(bond_type, Utils::make_unique<Bond::VirtualBond>());
+  bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::VirtualBond>());
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(bond_type, -1); 

@@ -174,15 +174,15 @@ int overlapped_bonded_set_params(int bond_type, OverlappedBondedInteraction over
   // in old style -> OverlappedBondedInteraction is now enum class
   switch(overlap_type){
   case OVERLAP_BOND_LENGTH:
-    set_bond_by_type(bond_type, Utils::make_unique<Bond::OverlapBondLength>
+    bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::OverlapBondLength>
 		     (input_filename, Bond::OverlappedBondedInteraction::OVERLAP_BOND_LENGTH, 
 		      input_maxval, input_noverlaps, input_para_a, input_para_b, input_para_c));
   case OVERLAP_BOND_ANGLE:
-    set_bond_by_type(bond_type, Utils::make_unique<Bond::OverlapBondAngle>
+    bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::OverlapBondAngle>
 		     (input_filename, Bond::OverlappedBondedInteraction::OVERLAP_BOND_ANGLE, 
 		      input_maxval, input_noverlaps, input_para_a, input_para_b, input_para_c));
   case OVERLAP_BOND_DIHEDRAL:
-        set_bond_by_type(bond_type, Utils::make_unique<Bond::OverlapBondDihedral>
+        bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::OverlapBondDihedral>
 		     (input_filename, Bond::OverlappedBondedInteraction::OVERLAP_BOND_DIHEDRAL, 
 		      input_maxval, input_noverlaps, input_para_a, input_para_b, input_para_c));
   };

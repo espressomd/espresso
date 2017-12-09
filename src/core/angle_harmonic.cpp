@@ -46,7 +46,7 @@ int angle_harmonic_set_params(int bond_type, double bend, double phi0)
   bonded_ia_params[bond_type].type = BONDED_IA_ANGLE_HARMONIC;
   bonded_ia_params[bond_type].num = 2;
 
-  set_bond_by_type(bond_type, Utils::make_unique<Bond::AngleHarmonic>(bend, phi0)); 
+  bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::AngleHarmonic>(bend, phi0)); 
 
   bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::AngleHarmonic>(bend, phi0)); 
 

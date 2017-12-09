@@ -238,7 +238,7 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, c
     // This is an approximation, it holds strictly only for a sphere
     bonded_ia_params[bond_type].p.ibm_tribend.kb = kb;
 
-    set_bond_by_type(bond_type, Utils::make_unique<Bond::IbmTribend>
+    bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::IbmTribend>
 		     (kb, Bond::tBendingMethod::TriangleNormals, theta0, 3));
   }
   
@@ -256,7 +256,7 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, c
     bonded_ia_params[bond_type].p.ibm_tribend.theta0 = 0;
     bonded_ia_params[bond_type].p.ibm_tribend.kb = kb;
 
-    set_bond_by_type(bond_type, Utils::make_unique<Bond::IbmTribend>
+    bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::IbmTribend>
     		     (kb, Bond::tBendingMethod::NodeNeighbors, 0.0, ind1));
   }
   

@@ -48,7 +48,7 @@ int oif_local_forces_set_params(int bond_type, double r0, double ks, double ksli
   bonded_ia_params[bond_type].type = BONDED_IA_OIF_LOCAL_FORCES;
   bonded_ia_params[bond_type].num  = 3;
 
-  set_bond_by_type(bond_type, Utils::make_unique<Bond::OifLocalForces>(phi0, kb, r0, ks, kslin, A01, A02, kal));
+  bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::OifLocalForces>(phi0, kb, r0, ks, kslin, A01, A02, kal));
 
   mpi_bcast_ia_params(bond_type, -1); 
 

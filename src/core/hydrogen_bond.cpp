@@ -493,7 +493,7 @@ int hydrogen_bond_set_params(int bond_type, DoubleList *params) {
   bonded_ia_params[bond_type].type = BONDED_IA_CG_DNA_BASEPAIR;
   bonded_ia_params[bond_type].num = 3;
 
-  set_bond_by_type(bond_type, Utils::make_unique<Bond::HydrogenBond>(params->e[0], params->e[1], 
+  bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::HydrogenBond>(params->e[0], params->e[1], 
 								     params->e[2], params->e[3], 
 								     params->e[4], params->e[5], 
 								     params->e[6], params->e[7], 

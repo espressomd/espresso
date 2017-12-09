@@ -899,9 +899,8 @@ extern int n_bonded_ia;
 /** Field containing the paramters of the bonded ia types */
 extern Bonded_ia_parameters *bonded_ia_params;
 
-/*map for bonds: unique pointers because bond is an abstracr class */
-extern std::map<int, std::unique_ptr<Bond::Bond> > bond_map;
-
+/*Bond Container for managing and storing bonds*/
+/*map for bonds: unique pointers because bond is an abstract class */
 extern Bond::BondContainer bond_container;
 
 /** Array containing all tabulated forces*/

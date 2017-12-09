@@ -674,7 +674,7 @@ int twist_stack_set_params(int bond_type, DoubleList *params) {
   for(int i = 0; i < 7; i++)
     input_b[i] = params->e[10+i];
 
-  set_bond_by_type(bond_type, Utils::make_unique<Bond::TwistStack>
+  bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::TwistStack>
 		   (params->e[0], params->e[1], ref_pot, input_a, input_b));
 
   mpi_bcast_ia_params(bond_type, -1);

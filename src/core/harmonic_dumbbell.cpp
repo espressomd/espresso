@@ -47,7 +47,7 @@ int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r, 
   mpi_bcast_ia_params(bond_type, -1); 
 
   //create new bond class in bond vector with params
-  set_bond_by_type(bond_type, Utils::make_unique<Bond::HarmonicDumbbell>(k1, k2, r, r_cut));
+  bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::HarmonicDumbbell>(k1, k2, r, r_cut));
 
   return ES_OK;
 }

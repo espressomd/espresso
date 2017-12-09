@@ -41,7 +41,6 @@ int harmonic_set_params(int bond_type, double k, double r,double r_cut)
   bonded_ia_params[bond_type].num  = 1;
 
   //create new bond class in bond vector with params
-  set_bond_by_type(bond_type, Utils::make_unique<Bond::Harmonic>(k, r, r_cut));
   bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::Harmonic>(k, r, r_cut));
 
   /* broadcast interaction parameters */

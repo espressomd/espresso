@@ -296,7 +296,7 @@ int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, con
 //  free_particle(&part3);
 
   //create new bond class in bond vector with params
-  set_bond_by_type(bond_type, Utils::make_unique<Bond::IbmTriel>(a1, a2, b1, b2, l0, lp0, sinPhi0, cosPhi0, 0.5*area2, max, elasticLaw, k1, k2));
+  bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::IbmTriel>(a1, a2, b1, b2, l0, lp0, sinPhi0, cosPhi0, 0.5*area2, max, elasticLaw, k1, k2));
   
   return ES_OK;
 }
