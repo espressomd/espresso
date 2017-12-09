@@ -49,6 +49,18 @@ void Bond::BondContainer::sort_bond_into_lists(int type)
       //only force contribution
       m_force_loop_bonds.insert(std::pair<int,Bond*>(type, insert_to));
       break;
+    case BondType::BONDED_IA_IBM_TRIEL:
+      //only force contribution
+      m_force_loop_bonds.insert(std::pair<int,Bond*>(type, insert_to));
+      break;
+    case BondType::BONDED_IA_OIF_OUT_DIRECTION:
+      //only force contribution
+      m_force_loop_bonds.insert(std::pair<int,Bond*>(type, insert_to));
+      break;
+    case BondType::BONDED_IA_OIF_LOCAL_FORCES:
+      //only force contribution
+      m_force_loop_bonds.insert(std::pair<int,Bond*>(type, insert_to));
+      break;      
     case BondType::BONDED_IA_VIRTUAL_BOND:
       //no force and energy contribution
       break;
