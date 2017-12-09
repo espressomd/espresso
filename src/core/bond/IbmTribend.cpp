@@ -61,12 +61,9 @@ int Bond::IbmTribend::add_bonded_force(Particle *p1, int bl_id)
   return bond_broken;
 }
 
-int Bond::IbmTribend::add_bonded_energy(Particle *p1, int bl_id, double *_energy)
+int Bond::IbmTribend::add_bonded_energy(Particle *p1, int bl_id)
 {
-
-  *_energy = 0.0; 
   return 0;
-
 }
 
 /*************

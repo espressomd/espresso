@@ -1,4 +1,5 @@
 #include "EightParticleBond.hpp"
+#include "energy.hpp"//for energy observable
 
 void Bond::EightParticleBond::write_force_to_particle(Particle *p1, Particle *p2, Particle *p3, 
 						      Particle *p4, Particle *p5, Particle *p6, 
@@ -35,50 +36,58 @@ int Bond::EightParticleBond::add_bonded_force(Particle *p1, int bl_id)
   int bond_broken;
 
   // get bond partners
-  if(get_n_bond_partners(p1, bl_id) == 1){
-    return 2;
-  };
-  p2 = m_bond_partners[0];
-  p3 = m_bond_partners[1];
-  p4 = m_bond_partners[2];
-  p5 = m_bond_partners[3];
-  p6 = m_bond_partners[4];
-  p7 = m_bond_partners[5];
-  p8 = m_bond_partners[6];
+  if(auto bond_partners =  get_n_bond_partners<7>(p1, bl_id)){
+    p2 = (*bond_partners)[0];
+    p3 = (*bond_partners)[1];
+    p4 = (*bond_partners)[2];
+    p5 = (*bond_partners)[3];
+    p6 = (*bond_partners)[4];
+    p7 = (*bond_partners)[5];
+    p8 = (*bond_partners)[6];
   
-  bond_broken = add_bonded_eight_particle_force(p1, p2, p3, p4, p5, p6, p7, p8,
-						force, force2, force3, force4,
-						force5, force6, force7, force8);
+    bond_broken = calc_bonded_eight_particle_force(p1, p2, p3, p4, p5, p6, p7, p8,
+						   force, force2, force3, force4,
+						   force5, force6, force7, force8);
 
-  if (bond_broken) {
-    runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
+    if (bond_broken) {
+      runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
 			<< ", " << p2->p.identity << ", " << p3->p.identity
 			<< " and " << p4->p.identity;
-    return bond_broken;
-  };
+      return bond_broken;
+    };
 
-  write_force_to_particle(p1, p2, p3, p4, p5, p6, p7, p8, force, force2, force3,
-			  force4, force5, force6, force7, force8);
-  return bond_broken;
+    write_force_to_particle(p1, p2, p3, p4, p5, p6, p7, p8, force, force2, force3,
+			    force4, force5, force6, force7, force8);
+    return bond_broken;
+  }
+  else{
+    return 2;
+    };
 }
 
-int Bond::EightParticleBond::add_bonded_energy(Particle *p1, int bl_id, double* _energy)
+int Bond::EightParticleBond::add_bonded_energy(Particle *p1, int bl_id)
 {
 
   Particle *p2, *p3, *p4, *p5, *p6, *p7, *p8 = NULL;
-
+  double _energy;
   // get bond partners
-  if(get_n_bond_partners(p1, bl_id) == 1){
+  if(auto bond_partners =  get_n_bond_partners<7>(p1, bl_id)){
+    p2 = (*bond_partners)[0];
+    p3 = (*bond_partners)[1];
+    p4 = (*bond_partners)[2];
+    p5 = (*bond_partners)[3];
+    p6 = (*bond_partners)[4];
+    p7 = (*bond_partners)[5];
+    p8 = (*bond_partners)[6];
+
+    // calc energy
+    int bond_broken = calc_bonded_eight_particle_energy(p1, p2, p3, p4, p5, p6, p7, p8, &_energy);
+    // add energy
+    *obsstat_bonded(&energy, p1->bl.e[bl_id]) += _energy;
+    // return
+    return bond_broken;
+  }
+  else{
     return 2;
   };
-  p2 = m_bond_partners[0];
-  p3 = m_bond_partners[1];
-  p4 = m_bond_partners[2];
-  p5 = m_bond_partners[3];
-  p6 = m_bond_partners[4];
-  p7 = m_bond_partners[5];
-  p8 = m_bond_partners[6];
-
-  return add_bonded_eight_particle_energy(p1, p2, p3, p4, p5, p6, p7, p8, _energy);
-
 }

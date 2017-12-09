@@ -5,7 +5,7 @@ int Bond::VirtualBond::add_bonded_force(Particle *p1, int bl_id)
   return 0;
 }
 
-int Bond::VirtualBond::add_bonded_energy(Particle *p1, int bl_id, double *_energy)
+int Bond::VirtualBond::add_bonded_energy(Particle *p1, int bl_id)
 {
   return 0;
 }
