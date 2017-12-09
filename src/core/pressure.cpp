@@ -975,10 +975,9 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3], int periodic[
       }
       
       /* bonded contributions */
+#ifndef BOND_CLASS_DEBUG
       j = 0;
       while(j < p1->bl.n) {
-
-#ifndef BOND_CLASS_DEBUG
 	type_num = p1->bl.e[j++];
 	iaparams = &bonded_ia_params[type_num];
 
@@ -990,9 +989,15 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3], int periodic[
 	if ((pow(force[0],2)+pow(force[1],2)+pow(force[2],2)) > 0) {
 	  if (distribute_tensors(TensorInBin,force,bins,range_start,range,p1->r.p, p2->r.p) != 1) return 0;
 	}
+
+      };
 #endif //BOND_CLASS_DEBUG
 
 #ifdef BOND_CLASS_DEBUG
+      if(bond_container.local_stress_tensor_loop(p1, TensorInBin, bins, range_start, range)==0){
+	return 0;
+      };
+      /*
 	int bond_list_id = j;
 	int bond_map_id = p1->bl.e[bond_list_id];
 	int n_partners = bond_map[bond_map_id]->get_number_of_bond_partners();
@@ -1010,10 +1015,10 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3], int periodic[
 	  };
 	};
 
-	j+= n_partners + 1;
+	j+= n_partners + 1;*/
 #endif //BOND_CLASS_DEBUG
 
-      }
+      
     }
 
     // Loop cell neighbors

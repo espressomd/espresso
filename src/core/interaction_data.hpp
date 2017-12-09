@@ -59,6 +59,8 @@
 //**special Bonds**
 #include "bond/IbmTribend.hpp" //at least fourparticlebond
 #include "bond/VirtualBond.hpp" // 2 particle bond but not a real bond!
+//bond container
+#include "bond/BondContainer.hpp"
 
 /** \name Type codes of bonded interactions
     Enumeration of implemented bonded interactions.
@@ -898,7 +900,9 @@ extern int n_bonded_ia;
 extern Bonded_ia_parameters *bonded_ia_params;
 
 /*map for bonds: unique pointers because bond is an abstracr class */
-extern std::map<int, std::unique_ptr<Bond::Bond>> bond_map;
+extern std::map<int, std::unique_ptr<Bond::Bond> > bond_map;
+
+extern Bond::BondContainer bond_container;
 
 /** Array containing all tabulated forces*/
 extern DoubleList tabulated_forces;

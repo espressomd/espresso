@@ -105,6 +105,7 @@ Bonded_ia_parameters *bonded_ia_params = NULL;
 
 /** definition of Bond map with all bonds**/
 std::map<int, std::unique_ptr<Bond::Bond>> bond_map;
+Bond::BondContainer bond_container;
 
 double min_global_cut = 0.0;
 

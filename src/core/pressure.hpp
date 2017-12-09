@@ -45,7 +45,6 @@ void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb);
 void init_p_tensor(Observable_stat *stat);
 void master_pressure_calc(int v_comp);
 
-
 /** Calculates the pressure in the system from a virial expansion using the terms from \ref calculate_verlet_virials or \ref nsq_calculate_virials dependeing on the used cell system.<BR>
     @param result here the data about the scalar pressure are stored
     @param result_t here the data about the stress tensor are stored
@@ -67,6 +66,9 @@ int observable_compute_stress_tensor(int v_comp, double *A);
 void update_pressure(int v_comp);
 void update_stress_tensor(int v_comp);
 int analyze_local_stress_tensor(int* periodic, double* range_start, double* range, int* bins, DoubleList* local_stress_tensor);
+
+//function for local_stress_tensor_calc: bond_container needs this function
+int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], double range_start[3], double range[3], double pos1[3], double pos2[3]);
 
 /*@}*/
 

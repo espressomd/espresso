@@ -454,6 +454,10 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 inline void add_bonded_force(Particle *p1)
 {
 
+  int bond_broken = bond_container.force_loop(p1);
+  if(bond_broken == 2)
+    return;
+  /*
   // variables
   // bond_list_id: id of bond_map_id in p1->bl.e[]
   // bond_map_id: id of bond in bond_map
@@ -488,7 +492,7 @@ inline void add_bonded_force(Particle *p1)
     i += n_partners + 1;
     
   };
-
+  */
 }
 #endif //BOND_CLASS_DEBUG
 

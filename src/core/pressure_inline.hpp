@@ -325,7 +325,12 @@ inline void add_bonded_virials(Particle *p1)
 inline void add_bonded_virials(Particle *p1)
 {
 
-  int i, bond_list_id, bond_broken, bond_map_id, n_partners;
+  int bond_broken = bond_container.virial_loop(p1);
+  if(bond_broken == 2){
+    return;
+  };
+
+  /*  int i, bond_list_id, bond_broken, bond_map_id, n_partners;
   i=0;
   while(i<p1->bl.n){
 
@@ -350,7 +355,7 @@ inline void add_bonded_virials(Particle *p1)
     //next bond in -> n_partners + 1
     i += n_partners + 1;
     
-  };
+    };*/
 
 }
 #endif // BOND_CLASS_DEBUG
@@ -362,6 +367,12 @@ inline void add_bonded_virials(Particle *p1)
 inline void add_three_body_bonded_stress(Particle *p1)
 {
 
+  int bond_broken = bond_container.three_body_stress_loop(p1);
+  if(bond_broken == 2){
+    return;
+  };
+
+  /*
   int i, bond_list_id, bond_broken, bond_map_id, n_partners;
   i=0;
   while(i<p1->bl.n){
@@ -387,7 +398,7 @@ inline void add_three_body_bonded_stress(Particle *p1)
     //next bond in -> n_partners + 1
     i += n_partners + 1;
     
-  };
+    };*/
 
 }
 #endif // BOND_CLASS_DEBUG
