@@ -16,7 +16,7 @@ inline double KS(double lambda){ // Defined by (19) from Dupin2007
     (triangles have particles p2 and p3 in common)
     @return 0
 */
-int Bond::OifLocalForces::add_bonded_four_particle_force(Particle *p1, Particle *p2, Particle *p3, 
+int Bond::OifLocalForces::calc_bonded_four_particle_force(Particle *p1, Particle *p2, Particle *p3, 
 				   Particle *p4, double force[3], double force2[3], 
 							 double force3[3], double force4[3]) const {
 	int i, img[3];
@@ -203,7 +203,7 @@ int Bond::OifLocalForces::add_bonded_four_particle_force(Particle *p1, Particle 
 
 }
 //energy calculation
-int Bond::OifLocalForces::add_bonded_four_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
+int Bond::OifLocalForces::calc_bonded_four_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
 							  Particle *p4, double *_energy) const {
   *_energy = 0.0;
   return 0;
