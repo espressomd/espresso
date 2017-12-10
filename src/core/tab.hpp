@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _TAB_H
-#define _TAB_H
+#ifndef CORE_TABULATED_HPP
+#define CORE_TABULATED_HPP
 
 /** \file tab.hpp
  *  Routines to calculate the  energy and/or  force

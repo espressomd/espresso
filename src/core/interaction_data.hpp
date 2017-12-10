@@ -416,6 +416,8 @@ struct IA_parameters {
   double TAB_minval2 = 0.0;
   double TAB_maxval = INACTIVE_CUTOFF;
   double TAB_stepsize = 0.0;
+  DoubleList TAB_force;
+  DoubleList TAB_energy;
 /** The maximum allowable filename length for a tabulated potential file*/
 #define MAXLENGTH_TABFILE_NAME 256
   char TAB_filename[MAXLENGTH_TABFILE_NAME] = { 0 };

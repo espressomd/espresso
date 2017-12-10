@@ -90,6 +90,7 @@
 #include "utils.hpp"
 #include "utils/make_unique.hpp"
 #include "utils/serialization/Particle.hpp"
+#include "utils/serialization/IA_parameters.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/array.hpp>
@@ -1168,9 +1169,7 @@ void mpi_bcast_ia_params(int i, int j) {
 
   if (j >= 0) {
     /* non-bonded interaction parameters */
-    /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
-    MPI_Bcast(get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE, 0,
-              comm_cart);
+    boost::mpi::broadcast(comm_cart, *get_ia_param(i,j), 0);
 
     *get_ia_param(j, i) = *get_ia_param(i, j);
 
@@ -1213,9 +1212,8 @@ void mpi_bcast_ia_params(int i, int j) {
 
 void mpi_bcast_ia_params_slave(int i, int j) {
   if (j >= 0) { /* non-bonded interaction parameters */
-    /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
-    MPI_Bcast(get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE, 0,
-              comm_cart);
+
+    boost::mpi::broadcast(comm_cart, *get_ia_param(i,j), 0);
 
     *get_ia_param(j, i) = *get_ia_param(i, j);
 
