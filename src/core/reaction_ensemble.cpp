@@ -674,7 +674,7 @@ bool ReactionEnsemble::is_in_list(int value, int* list, int len_list){
 */
 std::vector<double> vecnorm(std::vector<double> vec, double desired_length){
 	for(int i=0;i<vec.size();i++){
-		vec[i]=vec[i]/utils::veclen(vec)*desired_length;	
+		vec[i]=vec[i]/Utils::veclen(vec)*desired_length;	
 	}
 	return vec;
 }
@@ -696,7 +696,7 @@ std::vector<double> vec_random(double desired_length){
 		for(int i=0;i<3;i++){
 			vec.push_back(2*d_random()-1.0);
 		}
-		if (utils::veclen(vec)<=1)
+		if (Utils::veclen(vec)<=1)
 			break;
 	}
 	vecnorm(vec,desired_length);

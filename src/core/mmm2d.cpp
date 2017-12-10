@@ -110,7 +110,7 @@ static IntList besselCutoff;
 /** cutoffs for the complex sum */
 static int  complexCutoff[COMPLEX_STEP + 1];
 /** bernoulli numbers divided by n */
-static DoubleList  bon;
+static DoubleList bon;
 
 /** inverse box dimensions */
 /*@{*/
@@ -1423,9 +1423,9 @@ static int MMM2D_tune_near(double error)
 
   // fprintf(stderr, "bessel cutoff %d %g\n", P, err);
 
-  realloc_intlist(&besselCutoff, besselCutoff.n = P);
+  besselCutoff.resize(P);
   for (p = 1; p < P; p++)
-    besselCutoff.e[p-1] = (int)floor(((double)P)/(2*p)) + 1;
+    besselCutoff[p-1] = (int)floor(((double)P)/(2*p)) + 1;
 
   /* complex sum, determine cutoffs (dist dependent) */
   T = log(part_error/(16*M_SQRT2)*box_l[0]*box_l[1]);
@@ -1481,18 +1481,18 @@ static void prepareBernoulliNumbers(int bon_order)
   if (bon_order < 2)
     bon_order = 2;
 
-  realloc_doublelist(&bon, bon.n = bon_order);
+  bon.resize(bon_order);
 
   /* the ux is multiplied in to bessel, complex and psi at once, not here,
      and we use uy*(z + iy), so the uy is also treated below */
-  for(l = 1; (l <= bon_order) && (l < 34); l++)
-    bon.e[l-1] = 2*uy*bon_table[l];
+  for (l = 1; (l <= bon_order) && (l < 34); l++)
+    bon[l - 1] = 2 * uy * bon_table[l];
 
   for (; l <= bon_order; l++) {
     if (l & 1)
-      bon.e[l-1] =  4.0*uy;
+      bon[l - 1] = 4.0 * uy;
     else
-      bon.e[l-1] = -4.0*uy;      
+      bon[l - 1] = -4.0 * uy;
   }
 }
 

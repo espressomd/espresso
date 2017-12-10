@@ -100,16 +100,16 @@ inline void add_tabulated_pair_force(const Particle *const p1,
 
     if (dist > ia_params->TAB_minval) {
       phi = dindex - tablepos;
-      fac = tabulated_forces.e[table_start + tablepos] * (1 - phi) +
-            tabulated_forces.e[table_start + tablepos + 1] * phi;
+      fac = tabulated_forces[table_start + tablepos] * (1 - phi) +
+            tabulated_forces[table_start + tablepos + 1] * phi;
     } else {
       /* Use an extrapolation beyond the table */
       if (dist > 0) {
         tablepos = 0;
         phi = dindex - tablepos;
-        fac = (tabulated_forces.e[table_start] * ia_params->TAB_minval) *
+        fac = (tabulated_forces[table_start] * ia_params->TAB_minval) *
                   (1 - phi) +
-              (tabulated_forces.e[table_start + 1] *
+              (tabulated_forces[table_start + 1] *
                (ia_params->TAB_minval + ia_params->TAB_stepsize)) *
                   phi;
         fac = fac / dist;
@@ -144,20 +144,20 @@ inline double tabulated_pair_energy(Particle *p1, Particle *p2,
          This sould not occur too often, since it is quite expensive!
       */
       tablepos = 0;
-      b = (tabulated_forces.e[table_start + tablepos + 1] -
-           tabulated_forces.e[table_start + tablepos]) /
+      b = (tabulated_forces[table_start + tablepos + 1] -
+           tabulated_forces[table_start + tablepos]) /
           ia_params->TAB_stepsize;
       x0 = ia_params->TAB_minval -
-           tabulated_forces.e[table_start + tablepos] / b;
-      return ((tabulated_energies.e[table_start + tablepos] +
+           tabulated_forces[table_start + tablepos] / b;
+      return ((tabulated_energies[table_start + tablepos] +
                0.5 * b * SQR(ia_params->TAB_minval - x0)) -
               0.5 * b * SQR(dist - x0));
     }
 
     phi = (dindex - tablepos);
 
-    return tabulated_energies.e[table_start + tablepos] * (1 - phi) +
-           tabulated_energies.e[table_start + tablepos + 1] * phi;
+    return tabulated_energies[table_start + tablepos] * (1 - phi) +
+           tabulated_energies[table_start + tablepos + 1] * phi;
   }
   return 0.0;
 }

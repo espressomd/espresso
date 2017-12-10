@@ -141,12 +141,6 @@ int mpi_observable_lb_radial_velocity_profile_parallel(void *pdata_, double *A,
   return 0;
 }
 #endif
-
-void transform_to_cylinder_coordinates(double x, double y, double z_, double *r,
-                                       double *phi, double *z) {
-  *z = z_;
-  *r = sqrt(x * x + y * y);
-  *phi = atan2(y, x);
-}
+  
 } // namespace Observables
 #endif
