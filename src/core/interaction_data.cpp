@@ -116,11 +116,6 @@ double max_cut_global_without_coulomb_and_dipolar;
 double coulomb_cutoff;
 double dipolar_cutoff;
 
-/** Array containing all tabulated forces*/
-DoubleList tabulated_forces;
-/** Corresponding array containing all tabulated energies*/
-DoubleList tabulated_energies;
-
 /*****************************************
  * function prototypes
  *****************************************/

@@ -90,26 +90,22 @@ inline void add_tabulated_pair_force(const Particle *const p1,
                                      double dist, double force[3]) {
   if ((dist < ia_params->TAB_maxval)) {
     double phi, dindex, fac;
-    int tablepos, table_start, j;
 
     fac = 0.0;
 
-    table_start = ia_params->TAB_startindex;
     dindex = (dist - ia_params->TAB_minval) / ia_params->TAB_stepsize;
-    tablepos = (int)(floor(dindex));
+    auto const tablepos = (int)(floor(dindex));
 
     if (dist > ia_params->TAB_minval) {
       phi = dindex - tablepos;
-      fac = tabulated_forces[table_start + tablepos] * (1 - phi) +
-            tabulated_forces[table_start + tablepos + 1] * phi;
+      fac = ia_params->TAB_force[tablepos] * (1 - phi) +
+            ia_params->TAB_force[tablepos + 1] * phi;
     } else {
       /* Use an extrapolation beyond the table */
       if (dist > 0) {
-        tablepos = 0;
-        phi = dindex - tablepos;
-        fac = (tabulated_forces[table_start] * ia_params->TAB_minval) *
-                  (1 - phi) +
-              (tabulated_forces[table_start + 1] *
+        phi = dindex;
+        fac = (ia_params->TAB_force[0] * ia_params->TAB_minval) * (1 - phi) +
+              (ia_params->TAB_force[1] *
                (ia_params->TAB_minval + ia_params->TAB_stepsize)) *
                   phi;
         fac = fac / dist;
@@ -117,24 +113,20 @@ inline void add_tabulated_pair_force(const Particle *const p1,
       }
     }
 
-    for (j = 0; j < 3; j++)
+    for (int j = 0; j < 3; j++)
       force[j] += fac * d[j];
   }
 }
 
 /** Add a non-bonded pair energy by linear interpolation from a table.
     Needs feature TABULATED compiled in (see \ref config.hpp). */
-inline double tabulated_pair_energy(Particle *p1, Particle *p2,
-                                    IA_parameters *ia_params, double d[3],
+inline double tabulated_pair_energy(Particle const *p1, Particle const *p2,
+                                    IA_parameters const *ia_params, double d[3],
                                     double dist) {
-  double phi, dindex;
-  int tablepos, table_start;
-  double x0, b;
-
   if ((dist < ia_params->TAB_maxval)) {
-    dindex = (dist - ia_params->TAB_minval) / ia_params->TAB_stepsize;
-    tablepos = (int)(floor(dindex));
-    table_start = ia_params->TAB_startindex;
+    auto const dindex =
+        (dist - ia_params->TAB_minval) / ia_params->TAB_stepsize;
+    auto const tablepos = (int)(floor(dindex));
 
     if (tablepos < 0) {
       /* For distances smaller than the tabulated minimim take quadratic
@@ -143,21 +135,18 @@ inline double tabulated_pair_energy(Particle *p1, Particle *p2,
          point.
          This sould not occur too often, since it is quite expensive!
       */
-      tablepos = 0;
-      b = (tabulated_forces[table_start + tablepos + 1] -
-           tabulated_forces[table_start + tablepos]) /
-          ia_params->TAB_stepsize;
-      x0 = ia_params->TAB_minval -
-           tabulated_forces[table_start + tablepos] / b;
-      return ((tabulated_energies[table_start + tablepos] +
+      auto const b = (ia_params->TAB_force[1] - ia_params->TAB_force[0]) /
+                     ia_params->TAB_stepsize;
+      auto const x0 = ia_params->TAB_minval - ia_params->TAB_force[0] / b;
+      return ((ia_params->TAB_energy[0] +
                0.5 * b * SQR(ia_params->TAB_minval - x0)) -
               0.5 * b * SQR(dist - x0));
     }
 
-    phi = (dindex - tablepos);
+    auto const phi = (dindex - tablepos);
 
-    return tabulated_energies[table_start + tablepos] * (1 - phi) +
-           tabulated_energies[table_start + tablepos + 1] * phi;
+    return ia_params->TAB_energy[tablepos] * (1 - phi) +
+           ia_params->TAB_energy[tablepos + 1] * phi;
   }
   return 0.0;
 }

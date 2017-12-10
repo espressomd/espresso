@@ -42,9 +42,6 @@ int tabulated_set_params(int part_type_a, int part_type_b, char *filename) {
   if (!data)
     return 1;
 
-  if (strlen(filename) > MAXLENGTH_TABFILE_NAME - 1)
-    return 2;
-
   /* Open the file containing force and energy tables */
   fp = fopen(filename, "r");
   if (!fp)
@@ -66,42 +63,25 @@ int tabulated_set_params(int part_type_a, int part_type_b, char *filename) {
   if (fscanf(fp, "%d %lf %lf", &npoints, &minval, &maxval) != 3)
     return 5;
 
-  // Set the newsize to the same as old size : only changed if a new force table
-  // is being added.
-  newsize = tabulated_forces.max;
-
-  if (data->TAB_npoints == 0) {
-    // A new potential will be added so set the number of points, the startindex
-    // and newsize
-    data->TAB_npoints = npoints;
-    data->TAB_startindex = tabulated_forces.max;
-    newsize += npoints;
-  } else {
-    // We have existing data for this pair of monomer types check array sizing
-    if (data->TAB_npoints != npoints) {
-      fclose(fp);
-      return 6;
-    }
-  }
-
-  /* Update parameters symmetrically */
+  data->TAB_npoints = npoints;
   data->TAB_maxval = maxval;
   data->TAB_minval = minval;
-  strcpy(data->TAB_filename, filename);
 
   /* Calculate dependent parameters */
   data->TAB_stepsize = (maxval - minval) / (double)(data->TAB_npoints - 1);
 
-  /* Allocate space for new data */
-  tabulated_forces.resize(newsize);
-  tabulated_energies.resize(newsize);
+  data->TAB_force.clear();
+  data->TAB_energy.clear();
 
   /* Read in the new force and energy table data */
   for (i = 0; i < npoints; i++) {
-    if (fscanf(fp, "%lf %lf %lf", &dummr,
-               &(tabulated_forces[i + data->TAB_startindex]),
-               &(tabulated_energies[i + data->TAB_startindex])) != 3)
+    double dummr, force, energy;
+    if (fscanf(fp, "%lf %lf %lf", &dummr, &force, &energy) != 3) {
       return 5;
+    } else {
+      data->TAB_energy.push_back(energy);
+      data->TAB_force.push_back(force);
+    }
   }
 
   fclose(fp);

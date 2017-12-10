@@ -20,6 +20,7 @@ from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from . import utils
 
+
 # Non-bonded interactions
 
 cdef class NonBondedInteraction(object):
@@ -2129,12 +2130,7 @@ IF TABULATED == 1:
             self._params = {"filename": ""}
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
-            ia_params = get_ia_param_safe(
-                self._part_types[0],
-                self._part_types[1])
-            return {
-                "filename": utils.to_str(ia_params.TAB_filename)}
+            return {}
 
         def _set_params_in_es_core(self):
             self.state = tabulated_set_params(self._part_types[0], self._part_types[

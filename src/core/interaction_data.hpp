@@ -418,9 +418,6 @@ struct IA_parameters {
   double TAB_stepsize = 0.0;
   DoubleList TAB_force;
   DoubleList TAB_energy;
-/** The maximum allowable filename length for a tabulated potential file*/
-#define MAXLENGTH_TABFILE_NAME 256
-  char TAB_filename[MAXLENGTH_TABFILE_NAME] = { 0 };
 /*@}*/
 #endif
 
@@ -842,11 +839,6 @@ extern Coulomb_parameters coulomb;
 extern int n_bonded_ia;
 /** Field containing the paramters of the bonded ia types */
 extern Bonded_ia_parameters *bonded_ia_params;
-
-/** Array containing all tabulated forces*/
-extern DoubleList tabulated_forces;
-/** Array containing all tabulated energies*/
-extern DoubleList tabulated_energies;
 
 /** Maximal interaction cutoff (real space/short range interactions). */
 extern double max_cut;

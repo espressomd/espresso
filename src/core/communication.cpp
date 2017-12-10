@@ -1172,14 +1172,6 @@ void mpi_bcast_ia_params(int i, int j) {
     boost::mpi::broadcast(comm_cart, *get_ia_param(i,j), 0);
 
     *get_ia_param(j, i) = *get_ia_param(i, j);
-
-#ifdef TABULATED
-    /* If there are tabulated forces broadcast those as well */
-    if (get_ia_param(i, j)->TAB_maxval > 0) {
-      boost::mpi::broadcast(comm_cart, tabulated_forces, 0);
-      boost::mpi::broadcast(comm_cart, tabulated_energies, 0);
-    }
-#endif
   } else {
     /* bonded interaction parameters */
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
@@ -1217,13 +1209,6 @@ void mpi_bcast_ia_params_slave(int i, int j) {
 
     *get_ia_param(j, i) = *get_ia_param(i, j);
 
-#ifdef TABULATED
-    /* If there are tabulated forces broadcast those as well */
-    if (get_ia_param(i, j)->TAB_maxval > 0) {
-      boost::mpi::broadcast(comm_cart, tabulated_forces, 0);
-      boost::mpi::broadcast(comm_cart, tabulated_energies, 0);
-    }
-#endif
   } else {                   /* bonded interaction parameters */
     make_bond_type_exist(i); /* realloc bonded_ia_params on slave nodes! */
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
