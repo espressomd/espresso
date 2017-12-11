@@ -222,9 +222,7 @@ cdef class ReactionAlgorithm(object):
 
         for key in self._params["dictionary"]:
                 if(find_index_of_type(int(key), self.RE) >= 0):
-                    self.RE.charges_of_types.resize(self.RE.nr_different_types)
-                    self.RE.charges_of_types[
-                        find_index_of_type(int(key), self.RE)] = self._params["dictionary"][key]
+                    self.RE.charges_of_types[find_index_of_type(int(key), self.RE)]=self._params["dictionary"][key]
 
     def _valid_keys_default_charge(self):
         return "dictionary"
@@ -266,20 +264,20 @@ cdef class ReactionAlgorithm(object):
         reactions = []
         for single_reaction_i in range(self.RE.nr_single_reactions):
             reactant_types = []
-            for i in range(self.RE.reactions[single_reaction_i].len_reactant_types):
+            for i in range(self.RE.reactions[single_reaction_i].reactant_types.size()):
                 reactant_types.append(
                     self.RE.reactions[single_reaction_i].reactant_types[i])
             reactant_coefficients = []
-            for i in range(self.RE.reactions[single_reaction_i].len_reactant_types):
+            for i in range(self.RE.reactions[single_reaction_i].reactant_types.size()):
                 reactant_coefficients.append(
                     self.RE.reactions[single_reaction_i].reactant_coefficients[i])
 
             product_types = []
-            for i in range(self.RE.reactions[single_reaction_i].len_product_types):
+            for i in range(self.RE.reactions[single_reaction_i].product_types.size()):
                 product_types.append(
                     self.RE.reactions[single_reaction_i].product_types[i])
             product_coefficients = []
-            for i in range(self.RE.reactions[single_reaction_i].len_product_types):
+            for i in range(self.RE.reactions[single_reaction_i].product_types.size()):
                 product_coefficients.append(
                     self.RE.reactions[single_reaction_i].product_coefficients[i])
             reaction = {"reactant_coefficients": reactant_coefficients, "reactant_types": reactant_types, "product_types": product_types, "product_coefficients":
@@ -421,7 +419,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
             if k in self._valid_keys_add_collective_variable_degree_of_association():
                 self._params[k] = kwargs[k]
             else:
-                KeyError("%s is not a valid key" % k)
+                raise KeyError("%s is not a valid key" % k)
 
         for k in self._required_keys_add_collective_variable_degree_of_association():
             if k not in kwargs:
@@ -472,7 +470,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
             if k in self._valid_keys_add_collective_variable_potential_energy():
                 self._params[k] = kwargs[k]
             else:
-                KeyError("%s is not a valid key" % k)
+                raise KeyError("%s is not a valid key" % k)
 
             for k in self._required_keys_add_collective_variable_potential_energy():
                 if k not in kwargs:
@@ -519,7 +517,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
             if k in self._valid_keys_set_wang_landau_parameters():
                 self._params[k] = kwargs[k]
             else:
-                KeyError("%s is not a valid key" % k)
+                raise KeyError("%s is not a valid key" % k)
 
         self.WLRptr.final_wang_landau_parameter = self._params[
             "final_wang_landau_parameter"]

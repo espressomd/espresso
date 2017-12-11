@@ -524,7 +524,7 @@ int set_particle_type(int p_id, int type) {
   make_particle_type_exist(type);
 
   if (pnode == -1){
-    throw std::runtime_error("pnode not found\n");
+    throw std::runtime_error("Pnode not found\n");
     return ES_ERROR;
   }
 
@@ -750,13 +750,13 @@ int remove_particle(int p_id) {
         remove_id_from_map(p_id, type);
     }
   } else {
-    throw std::runtime_error("particle could not be retrieved during remove");
+    throw std::runtime_error("Particle could not be retrieved during remove");
   }
 
   auto const pnode = get_particle_node(p_id);
 
   if (pnode == -1)
-    throw std::runtime_error("particle node could not be retrieved");
+    throw std::runtime_error("Particle node could not be retrieved");
 
   particle_node[p_id] = -1;
 
@@ -1192,33 +1192,27 @@ void remove_id_from_map(int part_id, int type) {
 int get_random_p_id(int type){
     if(ParticleTypeMap.at(type).size()==0)
         throw std::runtime_error("No particles of given type could be found");
-    int i=0;
-    int p_id_ret=0;
-    int rand_index = i_random(ParticleTypeMap.at(type).size());
+    int returned_p_id=0;
+    int rand_index = i_random(ParticleTypeMap.at(type).size());\
+    int actual_i_th_p_id_in_map=0;
     for( int p_id :ParticleTypeMap[type]){
-        if(i==rand_index){
-            p_id_ret=p_id;
+        if(actual_i_th_p_id_in_map==rand_index){
+            returned_p_id=p_id;
             break;
         }
-        i++;
+        actual_i_th_p_id_in_map++;
     }
-    if(p_id_ret > max_seen_particle)
+    if(returned_p_id > max_seen_particle)
         throw std::runtime_error("Find_particle_type: returned id is bigger than max seen particle id");
-    return p_id_ret;
-}
-
-void find_particle_type(int type, int *id) {
-  
-  *id = get_random_p_id(type);
-
+    return returned_p_id;
 }
 
 void add_particle_to_list(int part_id, int type) {
     ParticleTypeMap.at(type).insert(part_id);
 }
 
-void number_of_particles_with_type(int type, int *number) {
-  *number = ParticleTypeMap.at(type).size();
+int number_of_particles_with_type(int type) {
+  return static_cast<int>(ParticleTypeMap.at(type).size());
 }
 
 // The following functions are used by the python interface to obtain

@@ -9,10 +9,8 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
 
     ctypedef struct SingleReaction:
         vector[int] reactant_types
-        int len_reactant_types
         vector[int] reactant_coefficients
         vector[int] product_types
-        int len_product_types
         vector[int] product_coefficients
         double equilibrium_constant
         int nu_bar

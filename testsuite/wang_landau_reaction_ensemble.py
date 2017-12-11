@@ -33,7 +33,13 @@ from espressomd import system
 
 class ReactionEnsembleTest(ut.TestCase):
 
-    """Test the core implementation of the wang_landau reaction ensemble."""
+    """Test the core implementation of the wang_landau reaction ensemble.
+    
+    Create a harmonic bond between the two reacting particles. Therefore the
+    potential energy is quadratic in the elongation of the bond and
+    therefore the density of states is known as the one of the harmonic
+    oscillator
+    """
 
     # System parameters
     #
@@ -50,8 +56,6 @@ class ReactionEnsembleTest(ut.TestCase):
     # Setup System
     #
 
-    # Interaction setup
-    #
     system.box_l = [box_l, box_l, box_l]
 
     N0 = 1  # number of titratable units
@@ -62,10 +66,7 @@ class ReactionEnsembleTest(ut.TestCase):
     system.part.add(id=2, pos=np.random.random() * system.box_l, type=2)
     system.part.add(id=3, pos=np.random.random() * system.box_l, type=2)
 
-    # create a harmonic bond between the two reacting particles => the
-    # potential energy is quadratic in the elongation of the bond and
-    # therefore the density of states is known as the one of the harmonic
-    # oscillator
+
     h = HarmonicBond(r_0=0, k=1)
     system.bonded_inter[0] = h
     system.part[0].add_bond((h, 1))

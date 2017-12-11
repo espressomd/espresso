@@ -487,8 +487,7 @@ cdef class System(object):
 
         """
         self.check_valid_type( current_type)
-        cdef int number
-        number_of_particles_with_type(current_type, & number)
+        number=number_of_particles_with_type(current_type)
         return int(number)
 
     def find_particle(self, current_type=None):
@@ -498,6 +497,5 @@ cdef class System(object):
         
         """
         self.check_valid_type(current_type)
-        cdef int pid
-        find_particle_type(current_type, & pid)
+        pid=get_random_p_id(current_type)
         return int(pid)

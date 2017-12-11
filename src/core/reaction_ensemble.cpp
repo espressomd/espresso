@@ -11,17 +11,17 @@
 /** @file */
 
 #include "reaction_ensemble.hpp"
-#include "energy.hpp"    //for calculate_current_potential_energy_of_system
-#include "global.hpp"    //for access to global variables
-#include "integrate.hpp" //for time_step
+#include "energy.hpp"
+#include "global.hpp"
+#include "integrate.hpp"
 #include "partCfg_global.hpp"
-#include "particle_data.hpp" //for particle creation, modification
-#include "random.hpp"        //for random numbers
-#include "statistics.hpp"    //for distto
-#include "utils.hpp"         // for PI and random vectors
+#include "particle_data.hpp"
+#include "random.hpp"
+#include "statistics.hpp"  
+#include "utils.hpp" 
 #include "utils/Histogram.hpp"
-#include <fstream> //for std::ifstream, std::ofstream for input output into files
-#include <stdio.h> //for getline()
+#include <fstream>
+#include <stdio.h> 
 
 namespace ReactionEnsemble {
 
@@ -97,18 +97,11 @@ void ReactionAlgorithm::add_reaction(double equilibrium_constant,
                                      std::vector<int> _product_types,
                                      std::vector<int> _product_coefficients) {
   SingleReaction new_reaction;
-  int len_reactant_types = (int)_reactant_types.size();
-  int len_product_types = (int)_product_types.size();
-  new_reaction.len_reactant_types = len_reactant_types;
-  new_reaction.len_product_types = len_product_types;
 
   new_reaction.equilibrium_constant = equilibrium_constant;
   new_reaction.reactant_types = _reactant_types;
-  new_reaction.len_reactant_types = len_reactant_types;
   new_reaction.reactant_coefficients = _reactant_coefficients;
-
   new_reaction.product_types = _product_types;
-  new_reaction.len_product_types = len_product_types;
   new_reaction.product_coefficients = _product_coefficients;
 
   new_reaction.nu_bar = calculate_nu_bar(new_reaction.reactant_coefficients,
@@ -124,7 +117,7 @@ void ReactionAlgorithm::add_reaction(double equilibrium_constant,
                                  new_reaction.product_types);
   if (status == ES_ERROR)
     throw std::runtime_error(
-        "could not initialize gc particle list for types\n");
+        "Could not initialize gc particle list for types\n");
 }
 
 /**
@@ -147,11 +140,11 @@ void ReactionAlgorithm::check_reaction_ensemble() {
 #ifdef ELECTROSTATICS
   // check for the existence of default charges for all types that take part in
   // the reactions
-  for (int i = 0; i < nr_different_types; i++) {
+  for (int i = 0; i < type_index.size(); i++) {
     if (charges_of_types[type_index[i]] ==
         m_invalid_charge) {
       std::string message =
-          std::string("Forgot to assign charge to type") +
+          std::string("Forgot to assign charge to type ") +
           std::to_string(
               charges_of_types[type_index[i]]);
       throw std::runtime_error(message);
@@ -185,7 +178,7 @@ double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i) {
         value = value * 1.0 / (Ni0 + i);
       }
     } else {
-      int abs_nu_i = (int)(-1.0 * nu_i);
+      int abs_nu_i = static_cast<int>(-1.0 * nu_i);
       for (int i = 0; i < abs_nu_i; i++) {
         value = value * (Ni0 - i);
       }
@@ -200,12 +193,10 @@ double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i) {
 bool ReactionAlgorithm::all_reactant_particles_exist(int reaction_id) {
   bool enough_particles = true;
   for (int i = 0;
-       i < reactions[reaction_id].len_reactant_types;
+       i < reactions[reaction_id].reactant_types.size();
        i++) {
-    int current_number;
-    number_of_particles_with_type(
-        reactions[reaction_id].reactant_types[i],
-        &current_number);
+    int current_number=number_of_particles_with_type(
+        reactions[reaction_id].reactant_types[i]);
     if (current_number < reactions[reaction_id]
                              .reactant_coefficients[i]) {
       enough_particles = false;
@@ -221,8 +212,7 @@ bool ReactionAlgorithm::all_reactant_particles_exist(int reaction_id) {
 */
 void ReactionAlgorithm::append_particle_property_of_random_particle(
     int type, std::vector<StoredParticleProperty> &list_of_particles) {
-  int p_id;
-  find_particle_type(type, &p_id);
+  int p_id=get_random_p_id(type);
   StoredParticleProperty property_of_part = {
       p_id, charges_of_types[find_index_of_type(
                 type, this)],
@@ -239,8 +229,8 @@ void ReactionAlgorithm::make_reaction_attempt(
     std::vector<int> &p_ids_created_particles,
     std::vector<StoredParticleProperty> &hidden_particles_properties) {
   // create or hide particles of types with corresponding types in reaction
-  for (int i = 0; i < std::min(current_reaction.len_product_types,
-                               current_reaction.len_reactant_types);
+  for (int i = 0; i < std::min(current_reaction.product_types.size(),
+                               current_reaction.reactant_types.size());
        i++) {
     // change std::min(reactant_coefficients(i),product_coefficients(i)) many
     // particles of reactant_types(i) to product_types(i)
@@ -279,13 +269,13 @@ void ReactionAlgorithm::make_reaction_attempt(
     }
   }
   // create or hide particles of types with noncorresponding replacement types
-  for (int i = std::min(current_reaction.len_product_types,
-                        current_reaction.len_reactant_types);
-       i < std::max(current_reaction.len_product_types,
-                    current_reaction.len_reactant_types);
+  for (int i = std::min(current_reaction.product_types.size(),
+                        current_reaction.reactant_types.size());
+       i < std::max(current_reaction.product_types.size(),
+                    current_reaction.reactant_types.size());
        i++) {
-    if (current_reaction.len_product_types <
-        current_reaction.len_reactant_types) {
+    if (current_reaction.product_types.size() <
+        current_reaction.reactant_types.size()) {
       // hide superfluous reactant_types particles
       for (int j = 0; j < current_reaction.reactant_coefficients[i]; j++) {
         append_particle_property_of_random_particle(
@@ -313,7 +303,7 @@ calculate_factorial_expression(SingleReaction &current_reaction,
                                ReactionAlgorithm &m_current_reaction_system) {
   double factorial_expr = 1.0;
   // factorial contribution of reactants
-  for (int i = 0; i < current_reaction.len_reactant_types; i++) {
+  for (int i = 0; i < current_reaction.reactant_types.size(); i++) {
     int nu_i = -1 * current_reaction.reactant_coefficients[i];
     int N_i0 = old_particle_numbers[find_index_of_type(
         current_reaction.reactant_types[i], &m_current_reaction_system)];
@@ -324,7 +314,7 @@ calculate_factorial_expression(SingleReaction &current_reaction,
                                           // call of the function
   }
   // factorial contribution of products
-  for (int i = 0; i < current_reaction.len_product_types; i++) {
+  for (int i = 0; i < current_reaction.product_types.size(); i++) {
     int nu_i = current_reaction.product_coefficients[i];
     int N_i0 = old_particle_numbers[find_index_of_type(
         current_reaction.product_types[i], &m_current_reaction_system)];
@@ -363,7 +353,7 @@ void ReactionAlgorithm::restore_properties(
 * Calculates the expression in the acceptance probability in the reaction
 * ensemble
 */
-double ReactionEnsemble::calculate_boltzmann_factor(
+double ReactionEnsemble::calculate_acceptance_probability(
     SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
     std::vector<int> &old_particle_numbers, int dummy_old_state_index,
     int dummy_new_state_index,
@@ -380,31 +370,17 @@ double ReactionEnsemble::calculate_boltzmann_factor(
          exp(-beta * (E_pot_new - E_pot_old));
 }
 
-/**
-*generic one way reaction
-*A+B+...+G +... --> K+...X + Z +...
-*you need to use 2A --> B instead of A+A --> B since in the last case you assume
-*distinctness of the particles, however both ways to describe the reaction are
-*equivalent in the thermodynamic limit
-*further it is crucial for the function in which order you provide the reactant
-*and product types since particles will be replaced correspondingly! If there
-*are less reactants than products, new product particles are created randomly in
-*the box. Matching particles simply change the types. If there are more
-*reactants than products, old reactant particles are deleted.
- */
-
 std::vector<int> ReactionAlgorithm::save_old_particle_numbers(void) {
   std::vector<int> old_particle_numbers;
   for (int type_i = 0;
-       type_i < nr_different_types;
+       type_i < type_index.size();
        type_i++) {
-    old_particle_numbers.push_back(0);
-    number_of_particles_with_type(
-        type_index[type_i],
-        &(old_particle_numbers[type_i])); // here could be optimized by not
-                                              // going over all types but only
-                                              // the types that occur in the
-                                              // reaction
+        int particle_number=number_of_particles_with_type(type_index[type_i]);
+        old_particle_numbers.push_back(particle_number);
+        // here could be optimized by not
+        // going over all types but only
+        // the types that occur in the
+        // reaction
   }
   return old_particle_numbers;
 }
@@ -434,6 +410,19 @@ void WangLandauReactionEnsemble::on_end_reaction(int &accepted_state) {
 }
 
 bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
+/**
+*generic one way reaction
+*A+B+...+G +... --> K+...X + Z +...
+*you need to use 2A --> B instead of A+A --> B since in the last case you assume
+*distinctness of the particles, however both ways to describe the reaction are
+*equivalent in the thermodynamic limit (large particle numbers)
+*further it is crucial for the function in which order you provide the reactant
+*and product types since particles will be replaced correspondingly! If there
+*are less reactants than products, new product particles are created randomly in
+*the box. Matching particles simply change the types. If there are more
+*reactants than products, old reactant particles are deleted.
+ */
+ 
   SingleReaction &current_reaction =
       reactions[reaction_id];
   bool reaction_is_accepted = false;
@@ -480,7 +469,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
   on_attempted_reaction(new_state_index);
 
   bool const only_make_configuration_changing_move = false;
-  double bf = calculate_boltzmann_factor(
+  double bf = calculate_acceptance_probability(
       current_reaction, E_pot_old, E_pot_new, old_particle_numbers,
       old_state_index, new_state_index, only_make_configuration_changing_move);
 
@@ -491,12 +480,12 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
     // delete hidden reactant_particles (remark: dont delete changed particles)
     // extract ids of to be deleted particles
     int len_hidden_particles_properties =
-        (int)hidden_particles_properties.size();
+        static_cast<int>(hidden_particles_properties.size());
     std::vector<int> to_be_deleted_hidden_ids(len_hidden_particles_properties);
     std::vector<int> to_be_deleted_hidden_types(
         len_hidden_particles_properties);
     for (int i = 0; i < len_hidden_particles_properties; i++) {
-      int p_id = (int)hidden_particles_properties[i].p_id;
+      int p_id = static_cast<int>(hidden_particles_properties[i].p_id);
       to_be_deleted_hidden_ids[i] = p_id;
       to_be_deleted_hidden_types[i] = hidden_particles_properties[i].type;
       //			set_particle_type(p_id,
@@ -534,13 +523,11 @@ int ReactionAlgorithm::calculate_nu_bar(
     std::vector<int> &reactant_coefficients,
     std::vector<int> &product_coefficients) {
   // should only be used at when defining a new reaction
-  int len_reactant_types = reactant_coefficients.size();
-  int len_product_types = product_coefficients.size();
   int nu_bar = 0;
-  for (int i = 0; i < len_reactant_types; i++) {
+  for (int i = 0; i < reactant_coefficients.size(); i++) {
     nu_bar -= reactant_coefficients[i];
   }
-  for (int i = 0; i < len_product_types; i++) {
+  for (int i = 0; i < product_coefficients.size(); i++) {
     nu_bar += product_coefficients[i];
   }
   return nu_bar;
@@ -557,7 +544,6 @@ void ReactionAlgorithm::add_types_to_index(std::vector<int> &type_list) {
         is_in_list(type_list[i], type_index);
     if (!type_i_is_known) {
       type_index.push_back(type_list[i]);
-      nr_different_types += 1;
       init_type_map(type_list[i]); // make types known in espresso
     }
   }
@@ -572,15 +558,12 @@ void ReactionAlgorithm::add_types_to_index(std::vector<int> &type_list) {
 int ReactionAlgorithm::update_type_index(std::vector<int> &reactant_types,
                                          std::vector<int> &product_types) {
   // should only be used when defining a new reaction
-  int len_reactant_types = reactant_types.size();
-  int len_product_types = product_types.size();
   int status_gc_init = 0;
   if (type_index.empty()) {
-    if (len_reactant_types > 0)
+    if (reactant_types.size() > 0)
       type_index.push_back(reactant_types[0]);
     else
       type_index.push_back(product_types[0]);
-    nr_different_types = 1;
     init_type_map(type_index[0]); // make types known in espresso
   }
   add_types_to_index(reactant_types);
@@ -906,7 +889,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   }
 
   int p_id;
-  number_of_particles_with_type(type, &(particle_number_of_type));
+  particle_number_of_type=number_of_particles_with_type(type);
   if (particle_number_of_type == 0) {
     // reject
     if (use_wang_landau) {
@@ -926,13 +909,12 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   get_random_position_in_box(temp_pos.data());
   while (changed_particle_counter < particle_number_of_type) {
     if (changed_particle_counter == 0) {
-      find_particle_type(type, &p_id);
+      p_id=get_random_p_id(type);
     } else {
       // determine a p_id you have not touched yet
       while (is_in_list(p_id, p_id_s_changed_particles) or
              changed_particle_counter == 0) {
-        find_particle_type(type,
-                           &p_id); // check wether you already touched this p_id
+        p_id=get_random_p_id(type); // check wether you already touched this p_id
       }
     }
 
@@ -1002,7 +984,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
 
   if (use_wang_landau) {
     new_state_index = on_mc_use_WL_get_new_state();
-    bf = calculate_boltzmann_factor(
+    bf = calculate_acceptance_probability(
         temp_unimportant_arbitrary_reaction, E_pot_old, E_pot_new,
         dummy_old_particle_numbers, old_state_index, new_state_index, true);
   } else {
@@ -1129,13 +1111,13 @@ int WangLandauReactionEnsemble::get_flattened_index_wang_landau(
         do_energy_reweighting) // for energy collective variable (simple
                                // truncating conversion desired)
       individual_indices[CV_i] =
-          (int)((current_state[CV_i] -
+          static_cast<int>((current_state[CV_i] -
                  collective_variables_minimum_values[CV_i]) /
                 delta_collective_variables_values[CV_i]);
     else // for degree of association collective variables (rounding conversion
          // desired)
       individual_indices[CV_i] =
-          (int)((current_state[CV_i] -
+          static_cast<int>((current_state[CV_i] -
                  collective_variables_minimum_values[CV_i]) /
                     delta_collective_variables_values[CV_i] +
                 0.5);
@@ -1224,11 +1206,9 @@ double WangLandauReactionEnsemble::calculate_delta_degree_of_association(
        corresponding_type_i <
        current_collective_variable.corresponding_acid_types.size();
        corresponding_type_i++) {
-    int num_of_current_type;
-    number_of_particles_with_type(
+    int num_of_current_type=number_of_particles_with_type(
         current_collective_variable
-            .corresponding_acid_types[corresponding_type_i],
-        &num_of_current_type);
+            .corresponding_acid_types[corresponding_type_i]);
     total_number_of_corresponding_acid += num_of_current_type;
   }
   double delta = 1.0 / total_number_of_corresponding_acid;
@@ -1245,7 +1225,7 @@ double WangLandauReactionEnsemble::calculate_delta_degree_of_association(
 int WangLandauReactionEnsemble::get_num_needed_bins() {
   int needed_bins = 1;
   for (int CV_i = 0; CV_i < collective_variables.size(); CV_i++) {
-    std::shared_ptr<collective_variable> current_collective_variable =
+    std::shared_ptr<CollectiveVariable> current_collective_variable =
         collective_variables[CV_i];
     needed_bins = needed_bins * (int((current_collective_variable->CV_maximum -
                                       current_collective_variable->CV_minimum) /
@@ -1284,7 +1264,7 @@ void WangLandauReactionEnsemble::invalidate_bins() {
     int flat_index_without_energy_CV =
         get_flattened_index_wang_landau_without_EnergyCollectiveVariable(
             flattened_index, EnergyCollectiveVariable_index);
-    std::shared_ptr<collective_variable> energy_CV =
+    std::shared_ptr<CollectiveVariable> energy_CV =
         collective_variables[EnergyCollectiveVariable_index];
     if (current_energy >
             max_boundaries_energies[flat_index_without_energy_CV] ||
@@ -1363,7 +1343,7 @@ int WangLandauReactionEnsemble::initialize_wang_landau() {
 * Calculates the expression which occurs in the Wang-Landau acceptance
 * probability.
 */
-double WangLandauReactionEnsemble::calculate_boltzmann_factor(
+double WangLandauReactionEnsemble::calculate_acceptance_probability(
     SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
     std::vector<int> &old_particle_numbers, int old_state_index,
     int new_state_index, bool only_make_configuration_changing_move) {
@@ -1537,7 +1517,7 @@ void WangLandauReactionEnsemble::reset_histogram() {
 *Refine the Wang-Landau parameter using the 1/t rule.
 */
 void WangLandauReactionEnsemble::refine_wang_landau_parameter_one_over_t() {
-  double monte_carlo_time = double(monte_carlo_trial_moves) / used_bins;
+  double monte_carlo_time = static_cast<double>(monte_carlo_trial_moves) / used_bins;
   if (wang_landau_parameter / 2.0 <= 1.0 / monte_carlo_time ||
       m_system_is_in_1_over_t_regime) {
     wang_landau_parameter = 1.0 / monte_carlo_time;
@@ -1922,7 +1902,7 @@ int ConstantpHEnsemble::do_reaction(int reaction_steps) {
   return 0;
 }
 
-double ConstantpHEnsemble::calculate_boltzmann_factor(
+double ConstantpHEnsemble::calculate_acceptance_probability(
     SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
     std::vector<int> &dummy_old_particle_numbers, int dummy_old_state_index,
     int dummy_new_state_index,
@@ -1956,13 +1936,13 @@ double ConstantpHEnsemble::calculate_boltzmann_factor(
 /////////////////////////////////////////////////////////////////free functions
 int find_index_of_type(int type, ReactionAlgorithm* m_current_reaction_system) {
   int index = -100; // initialize to invalid index
-  for (int i = 0; i < m_current_reaction_system->nr_different_types; i++) {
+  for (int i = 0; i < m_current_reaction_system->type_index.size(); i++) {
     if (type ==  m_current_reaction_system->type_index[i]) {
       index = i;
       break;
     }
   }
-  if (index < 0 or index >= m_current_reaction_system->nr_different_types) {
+  if (index < 0 or index >= m_current_reaction_system->type_index.size()) {
     throw std::runtime_error("Invalid Index");
   }
   return index;

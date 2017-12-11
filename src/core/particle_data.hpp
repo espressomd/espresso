@@ -932,15 +932,14 @@ void auto_exclusions(int distance);
 // flag indicating init_gc was called
 extern bool GC_init;
 
-/** init particle lists		*/
 void init_type_map(int type);
 
 /* find a particle of given type and return its id */
-void find_particle_type(int type, int *id);
+int get_random_p_id(int type);
 
 void remove_id_from_map(int part_id, int type);
 void add_particle_to_list(int part_id, int type);
-void number_of_particles_with_type(int type, int *number);
+int number_of_particles_with_type(int type);
 
 // The following functions are used by the python interface to obtain
 // properties of a particle, which are only compiled in in some configurations
