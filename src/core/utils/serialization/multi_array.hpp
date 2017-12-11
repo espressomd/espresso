@@ -12,9 +12,10 @@ namespace serialization {
 template <typename Archive, class T, std::size_t N, class Allocator>
 void load(Archive &ar, boost::multi_array<T, N, Allocator> &marray, unsigned) {
   boost::array<std::size_t, N> shape;
-  ar &shape;
+  ar &make_array(shape.data(), N);
 
   marray.resize(shape);
+
   ar &make_array(marray.data(), marray.num_elements());
 }
 
@@ -22,6 +23,7 @@ template <typename Archive, class T, std::size_t N, class Allocator>
 void save(Archive &ar, const boost::multi_array<T, N, Allocator> &marray,
           unsigned) {
   ar &make_array(marray.shape(), marray.num_dimensions());
+
   ar &make_array(marray.data(), marray.num_elements());
 }
 
