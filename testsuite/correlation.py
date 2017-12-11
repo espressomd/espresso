@@ -28,9 +28,6 @@ from espressomd.correlators import *
 import pickle
 
 class Observables(ut.TestCase):
-    # Error tolerance when comparing arrays/tuples...
-    tol = 1E-9
-
     # Handle for espresso system
     es = espressomd.System()
 
@@ -47,13 +44,17 @@ class Observables(ut.TestCase):
         C2 = Correlator(obs1=O, dt=0.01, tau_lin=10, tau_max=10.0,
                         corr_operation="square_distance_componentwise")
 
-        c_str = pickle.dumps(C2)
-        C_new = pickle.loads(c_str)
-
         s.integrator.run(1000)
         s.auto_update_correlators.add(C2)
         s.integrator.run(20000)
+
+
         corr = C2.result()
+
+        # Check pickling
+        C_unpickeled = pickle.loads(pickle.dumps(C2))
+        self.assertTrue(np.array_equal(corr, C_unpickeled.result()))
+
         for i in range(corr.shape[0]):
             t = corr[i, 0]
             self.assertAlmostEqual(corr[i, 2], t * t, places=3)

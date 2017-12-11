@@ -119,7 +119,7 @@ std::string ScriptInterfaceBase::serialize() const {
 
 /**
  * @brief Creates a new instance from a binary state,
- *        as returned by @serialize().
+ *        as returned by @f serialize().
  */
 std::shared_ptr<ScriptInterfaceBase>
 ScriptInterfaceBase::unserialize(std::string const &state) {
