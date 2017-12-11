@@ -2126,19 +2126,9 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared, int *number_o
   }
 }
 
-/*********************************************************/
-/** \name interpolation_two_point_coupling */
-/*********************************************************/
-/**(Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
- * @param n_a                   Pointer to local node residing in array a (Input)
- * @param *particle_position    Pointer to the particle position (Input)
- * @param node_index            node index around (8) particle (Output)
- * @param *mode                 Pointer to the 19 modes for current lattice point (Output)
- * @param *d_v                  Pointer to local device values
- * @param *delta                Pointer for the weighting of particle position (Output)
- * @param *interpolated_u       Pointer to the interpolated velocity (Output)
-*/
-__device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, float *particle_position, unsigned int* node_index, float* mode, LB_rho_v_gpu *d_v, float* delta, float *interpolated_u ) {
+// Calculating the xyz-position of the left node a particle
+ __device__ __inline__ void calculation_xyz_nearest_nodes(float* delta, float* particle_position, int* x, int* y, int* z)  {
+
   int   left_node_index[3];
   float temp_delta[6];
   float temp_delta_half[6];
@@ -2166,9 +2156,13 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
   delta[7] = temp_delta[3] * temp_delta[4] * temp_delta[5];
 
   // modulo for negative numbers is strange at best, shift to make sure we are positive
-  int x = left_node_index[0] + para.dim_x;
-  int y = left_node_index[1] + para.dim_y;
-  int z = left_node_index[2] + para.dim_z;
+  *x = left_node_index[0] + para.dim_x;
+  *y = left_node_index[1] + para.dim_y;
+  *z = left_node_index[2] + para.dim_z;
+}
+
+// The nearest 8 nodes for every particle is calculated based on the xyz-postion of the left node of a particle 
+__device__ __inline__ void calculation_nearest_nodes(int x, int y, int z, LB_nodes_gpu n_a, unsigned int* node_index) {
 
   node_index[0] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
   node_index[1] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
@@ -2178,6 +2172,31 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
   node_index[5] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
   node_index[6] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
   node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+
+
+} 
+
+/*********************************************************/
+/** \name interpolation_two_point_coupling */
+/*********************************************************/
+/**(Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
+ * @param n_a                   Pointer to local node residing in array a (Input)
+ * @param *particle_position    Pointer to the particle position (Input)
+ * @param node_index            node index around (8) particle (Output)
+ * @param *mode                 Pointer to the 19 modes for current lattice point (Output)
+ * @param *d_v                  Pointer to local device values
+ * @param *delta                Pointer for the weighting of particle position (Output)
+ * @param *interpolated_u       Pointer to the interpolated velocity (Output)
+*/
+
+__device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, float *particle_position, unsigned int* node_index, float* mode, LB_rho_v_gpu *d_v, float* delta, float *interpolated_u ) {
+  
+  int x;
+  int y;
+  int z;
+
+  calculation_xyz_nearest_nodes(delta, particle_position, &x, &y, &z);
+  calculation_nearest_nodes(x, y, z, n_a, node_index);
 
   interpolated_u[0] = 0.0f;
   interpolated_u[1] = 0.0f;
@@ -2215,74 +2234,17 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
 }
 
 __device__ __inline__ void interpolation_two_point_coupling_LE( LB_nodes_gpu n_a, float *particle_position, unsigned int* node_index, float* mode, LB_rho_v_gpu *d_v, float* delta, float lees_edwards_offset, float le_position, float *interpolated_u ) {
-  int   left_node_index[3];
-  float temp_delta[6];
-  float temp_delta_half[6];
+  
+  int x;
+  int y;
+  int z;
 
-  // see ahlrichs + duenweg page 8227 equ (10) and (11)
-#pragma unroll
-  for(int i=0; i<3; ++i)
-  {
-    float scaledpos = particle_position[i]/para.agrid - 0.5f;
-    left_node_index[i] = (int)(floorf(scaledpos));
-    temp_delta[3+i] = scaledpos - left_node_index[i];
-    temp_delta[i] = 1.0f - temp_delta[3+i];
-    // further value used for interpolation of fluid velocity at part pos near boundaries
-    temp_delta_half[3+i] = (scaledpos - left_node_index[i])*2.0f;
-    temp_delta_half[i] = 2.0f - temp_delta_half[3+i];
-  }
-
-  delta[0] = temp_delta[0] * temp_delta[1] * temp_delta[2];
-  delta[1] = temp_delta[3] * temp_delta[1] * temp_delta[2];
-  delta[2] = temp_delta[0] * temp_delta[4] * temp_delta[2];
-  delta[3] = temp_delta[3] * temp_delta[4] * temp_delta[2];
-  delta[4] = temp_delta[0] * temp_delta[1] * temp_delta[5];
-  delta[5] = temp_delta[3] * temp_delta[1] * temp_delta[5];
-  delta[6] = temp_delta[0] * temp_delta[4] * temp_delta[5];
-  delta[7] = temp_delta[3] * temp_delta[4] * temp_delta[5];
-
-  // modulo for negative numbers is strange at best, shift to make sure we are positive
-  int x = left_node_index[0] + para.dim_x;
-  int y = left_node_index[1] + para.dim_y;
-  int z = left_node_index[2] + para.dim_z;
-
-  node_index[0] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
-  node_index[1] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
-  node_index[2] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
-  node_index[3] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
-  node_index[4] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-  node_index[5] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-  node_index[6] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-  node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+  calculation_xyz_nearest_nodes(delta, particle_position, &x, &y, &z);
+  calculation_nearest_nodes(x, y, z, n_a, node_index);
 
   // Calculate new indices for nodes at the boundaries 
   particle_position[0] = le_position;
-
-#pragma unroll
-  for(int i=0; i<3; ++i)
-  {
-    float scaledpos = particle_position[i]/para.agrid - 0.5f;
-    left_node_index[i] = (int)(floorf(scaledpos));
-    temp_delta[3+i] = scaledpos - left_node_index[i];
-    temp_delta[i] = 1.0f - temp_delta[3+i];
-    // further value used for interpolation of fluid velocity at part pos near boundaries
-    temp_delta_half[3+i] = (scaledpos - left_node_index[i])*2.0f;
-    temp_delta_half[i] = 2.0f - temp_delta_half[3+i];
-  }
-
-  delta[0] = temp_delta[0] * temp_delta[1] * temp_delta[2];
-  delta[1] = temp_delta[3] * temp_delta[1] * temp_delta[2];
-  delta[2] = temp_delta[0] * temp_delta[4] * temp_delta[2];
-  delta[3] = temp_delta[3] * temp_delta[4] * temp_delta[2];
-  delta[4] = temp_delta[0] * temp_delta[1] * temp_delta[5];
-  delta[5] = temp_delta[3] * temp_delta[1] * temp_delta[5];
-  delta[6] = temp_delta[0] * temp_delta[4] * temp_delta[5];
-  delta[7] = temp_delta[3] * temp_delta[4] * temp_delta[5];
-
-  // modulo for negative numbers is strange at best, shift to make sure we are positive
-  x = left_node_index[0] + para.dim_x;
-  y = left_node_index[1] + para.dim_y;
-  z = left_node_index[2] + para.dim_z;
+  calculation_xyz_nearest_nodes(delta, particle_position, &x, &y, &z);
 
   if(particle_position[1] > para.dim_y- 0.5 * para.agrid){
     
