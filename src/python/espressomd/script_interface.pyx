@@ -11,7 +11,7 @@ cdef class PObjectId(object):
             raise NotImplementedError
 
 cdef class PScriptInterface(object):
-    def __init__(self, name=None, policy="GLOBAL", **kwargs):
+    def __init__(self, name=None, policy="GLOBAL", oid=None, **kwargs):
         cdef CreationPolicy policy_
         cdef map[string, Variant] ctor_args
 
@@ -22,7 +22,9 @@ cdef class PScriptInterface(object):
         else:
             raise Exception("Unknown policy '{}'.".format(policy))
 
-        if name:
+        if oid:
+            self.set_sip_via_oid(oid)
+        else:
             self.set_sip(make_shared(to_char_pointer(name), policy_))
 
             ctor_args = self._sanitize_params(kwargs)
@@ -226,8 +228,7 @@ def _unpickel_so_class(so_name, state):
     poid=PObjectId()
     poid.id=sip.get().id()
 
-    so = _python_class_by_so_name[so_name]()
-    so.set_sip_via_oid(poid)
+    so = _python_class_by_so_name[so_name](oid=poid)
     so.define_bound_methods()
 
     return so
