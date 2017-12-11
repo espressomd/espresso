@@ -3,13 +3,6 @@ sudo: false
 
 language: cpp
 
-addons:
-  apt:
-    packages:
-      - doxygen
-      - libboost-dev
-      - libboost-test-dev
-
 script:
   - mkdir build
   - cd build
@@ -21,11 +14,45 @@ matrix:
   include:
     - os: linux
       compiler: clang
+      env: Boost=1.54.0
+      addons:
+        apt:
+          packages:
+            - libboost-dev
+            - libboost-test-dev
     - os: linux
       compiler: gcc
+      env: Boost=1.54.0
+      addons:
+        apt:
+          packages:
+            - libboost-dev
+            - libboost-test-dev
+    - os: linux
+      compiler: clang
+      env: Boost=1.55.0
+      addons:
+        apt:
+          packages:
+            - libboost1.55-dev
+            - libboost-test1.55-dev
+    - os: linux
+      compiler: gcc
+      env: Boost=1.55.0
+      addons:
+        apt:
+          packages:
+            - libboost1.55-dev
+            - libboost-test1.55-dev
     - os: osx
       compiler: clang
     - if: branch = master
       os: linux
+      addons:
+        apt:
+          packages:
+            - doxygen
+            - libboost-dev
+            - libboost-test-dev
       script:
         - bash doc/publish_documentation.sh
