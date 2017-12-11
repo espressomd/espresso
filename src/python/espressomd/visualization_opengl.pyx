@@ -8,6 +8,8 @@ import os
 import time
 import espressomd
 import collections
+import sys
+from threading import Thread
 
 import scipy.spatial
 include "myconfig.pxi"
@@ -123,10 +125,10 @@ class openGLLive(object):
             'light_size': 'auto',
 
             'spotlight_enabled': True,
-            'spotlight_colors': [[0.1, 0.1, 0.2, 1.0], [0.5, 0.5, 0.5, 1.0], [1.0, 1.0, 1.0, 1.0]],
+            'spotlight_colors': [[0.2, 0.2, 0.3, 1.0], [0.5, 0.5, 0.5, 1.0], [1.0, 1.0, 1.0, 1.0]],
             'spotlight_angle': 45,
             'spotlight_focus': 1,
-            'spotlight_brightness': 0.4,
+            'spotlight_brightness': 0.6,
 
             'drag_enabled': False,
             'drag_force': 3.0
@@ -149,19 +151,39 @@ class openGLLive(object):
 
         self.system = system
         self.started = False
+        self.quit_savely = False
         self.keyboardManager = KeyboardManager()
         self.mouseManager = MouseManager()
         self.timers = []
 
     def registerCallback(self, cb, interval=1000):
         """Register timed callbacks.
-
         """
 
         self.timers.append((int(interval), cb))
 
+    def run(self, integ_steps = 1):
+        """Convenience method wiwith a simple integration thread.
+        """
+
+        def main():
+            while True:
+                try:
+                    self.system.integrator.run(integ_steps)
+                    self.update()
+                except:
+                    os._exit(1)
+
+        t = Thread(target=main)
+        t.daemon = True
+        t.start()
+
+        self.start()
+
     def start(self):
-        """The blocking start method."""
+        """The blocking start method.
+        """
+
         self._initOpenGL()
         self._initEspressoVisualization()
         self._initCamera()
@@ -244,6 +266,12 @@ class openGLLive(object):
                     self.system.part[self.dragId].ext_force = self.extForceOld
                     self.triggerResetParticleDrag = False
                     self.dragId = -1
+
+        # Escape was pressed: wait for ES to finish, then call sys exit from main thread
+        if self.quit_savely:
+            os._exit(1)
+
+
 
     # GET THE PARTICLE DATA
     def _updateParticles(self):
@@ -503,16 +531,17 @@ class openGLLive(object):
                             _redrawSphere(
                                 pos + (imx * self.imPos[0] + imy * self.imPos[1] + imz * self.imPos[2]), radius, self.specs['quality_particles'])
 
-            if self.specs['ext_force_arrows'] or pid == self.dragId:
-                if ext_f[0] != 0 or ext_f[1] != 0 or ext_f[2] != 0:
-                    if pid == self.dragId:
-                        sc = 1
-                    else:
-                        sc = self._modulo_indexing(
-                            self.specs['ext_force_arrows_scale'], ptype)
-                    if sc > 0:
-                        _drawArrow(pos, np.array(ext_f) * sc, 0.25 *
-                                  sc, [1, 1, 1, 1], self.specs['quality_arrows'])
+            IF EXTERNAL_FORCES:
+                if self.specs['ext_force_arrows'] or pid == self.dragId:
+                    if ext_f[0] != 0 or ext_f[1] != 0 or ext_f[2] != 0:
+                        if pid == self.dragId:
+                            sc = 1
+                        else:
+                            sc = self._modulo_indexing(
+                                self.specs['ext_force_arrows_scale'], ptype)
+                        if sc > 0:
+                            _drawArrow(pos, np.array(ext_f) * sc, 0.25 *
+                                      sc, [1, 1, 1, 1], self.specs['quality_arrows'])
 
     def _drawBonds(self):
         coords = self.particles['coords']
@@ -841,6 +870,8 @@ class openGLLive(object):
 
         # KEYBOARD BUTTONS
         self.keyboardManager.registerButton(KeyboardButtonEvent(
+            '\x1b', KeyboardFireEvent.Pressed, self._quit, True))
+        self.keyboardManager.registerButton(KeyboardButtonEvent(
             'w', KeyboardFireEvent.Hold, self.camera.moveUp, True))
         self.keyboardManager.registerButton(KeyboardButtonEvent(
             's', KeyboardFireEvent.Hold, self.camera.moveDown, True))
@@ -864,6 +895,10 @@ class openGLLive(object):
             't', KeyboardFireEvent.Hold, self.camera.moveForward, True))
         self.keyboardManager.registerButton(KeyboardButtonEvent(
             'g', KeyboardFireEvent.Hold, self.camera.moveBackward, True))
+
+    # CALLED ON ESCAPE PRESSED. TRIGGERS sys.exit() after ES is done 
+    def _quit(self):
+        self.quit_savely = True
 
     # ASYNCHRONOUS PARALLEL CALLS OF glLight CAUSES SEG FAULTS, SO ONLY CHANGE
     # LIGHT AT CENTRAL display METHOD AND TRIGGER CHANGES
