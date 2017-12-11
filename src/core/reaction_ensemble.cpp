@@ -889,7 +889,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     on_reaction_entry(old_state_index);
   }
 
-  int p_id;
+  int p_id=-1;
   particle_number_of_type=number_of_particles_with_type(type);
   if (particle_number_of_type == 0) {
     // reject
