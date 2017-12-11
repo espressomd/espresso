@@ -82,7 +82,7 @@ void EnergyCollectiveVariable::load_CV_boundaries(
 */
 int ReactionAlgorithm::do_reaction(int reaction_steps) {
   for (int i = 0; i < reaction_steps; i++) {
-    int reaction_id = i_random(nr_single_reactions);
+    int reaction_id = i_random(reactions.size());
     generic_oneway_reaction(reaction_id);
   }
   return 0;
@@ -109,7 +109,6 @@ void ReactionAlgorithm::add_reaction(double equilibrium_constant,
 
   // if everything is fine:
   reactions.push_back(new_reaction);
-  nr_single_reactions += 1;
 
   // assign different types an index in a growing list that starts at and is
   // incremented by 1 for each new type
@@ -126,7 +125,7 @@ void ReactionAlgorithm::add_reaction(double equilibrium_constant,
 */
 void ReactionAlgorithm::check_reaction_ensemble() {
   /**checks the reaction_ensemble struct for valid parameters */
-  if (nr_single_reactions == 0) {
+  if (reactions.size() == 0) {
     throw std::runtime_error("Reaction system not initialized");
   }
 
@@ -1430,7 +1429,7 @@ int WangLandauReactionEnsemble::do_reaction(int reaction_steps) {
   m_WL_tries += reaction_steps;
   bool got_accepted = false;
   for (int step = 0; step < reaction_steps; step++) {
-    int reaction_id = i_random(nr_single_reactions);
+    int reaction_id = i_random(reactions.size());
     got_accepted = generic_oneway_reaction(reaction_id);
     if (got_accepted) {
       m_WL_accepted_moves += 1;
@@ -1877,7 +1876,7 @@ int ConstantpHEnsemble::do_reaction(int reaction_steps) {
 
     // construct list of reactions with the above reactant type
     for (int reaction_i = 0;
-         reaction_i < nr_single_reactions;
+         reaction_i < reactions.size();
          reaction_i++) {
       SingleReaction &current_reaction =
           reactions[reaction_i];

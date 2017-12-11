@@ -25,7 +25,6 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         int delete_particle (int p_id)
         void add_reaction(double equilibrium_constant, vector[int] _reactant_types, vector[int] _reactant_coefficients, vector[int] _product_types, vector[int] _product_coefficients) except +
         
-        int nr_single_reactions
         vector[SingleReaction] reactions
         vector[int] type_index
         int nr_different_types

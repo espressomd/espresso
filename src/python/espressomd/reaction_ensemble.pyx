@@ -262,7 +262,7 @@ cdef class ReactionAlgorithm(object):
         """
         self.RE.check_reaction_ensemble()
         reactions = []
-        for single_reaction_i in range(self.RE.nr_single_reactions):
+        for single_reaction_i in range(self.RE.reactions.size()):
             reactant_types = []
             for i in range(self.RE.reactions[single_reaction_i].reactant_types.size()):
                 reactant_types.append(
