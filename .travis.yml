@@ -46,8 +46,10 @@ matrix:
             - libboost-test1.55-dev
     - os: osx
       compiler: clang
+  allow_failures:
     - if: branch = master
       os: linux
+      env: Doxygen
       addons:
         apt:
           packages:

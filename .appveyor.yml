@@ -4,9 +4,12 @@ platform:
 environment:
   GENERATOR: "Visual Studio 14 2015 Win64"
   CONFIG: Debug
-  BOOST_ROOT: "C:\\Libraries\\boost_1_59_0"
-  BOOST_LIBRARYDIR: "C:\\Libraries\\boost_1_59_0\\lib64-msvc-14.0"
   PATH: "%BOOST_LIBRARYDIR%;%PATH%"
+  matrix:
+  - BOOST_ROOT: "C:\\Libraries\\boost_1_59_0"
+    BOOST_LIBRARYDIR: "C:\\Libraries\\boost_1_59_0\\lib64-msvc-14.0"
+  - BOOST_ROOT: "C:\\Libraries\\boost_1_60_0"
+    BOOST_LIBRARYDIR: "C:\\Libraries\\boost_1_60_0\\lib64-msvc-14.0"
 
 build_script:
   - mkdir build

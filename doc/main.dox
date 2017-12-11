@@ -16,8 +16,8 @@ floating point type which you templated the parser on.
 If you want to parse a user provided or otherwise non-constant
 expression, you probably want to use the convenience function
 @code
-std::string expression = ...
-std::map<std::string, double> symbol_table = ...
+std::string expression = "...";
+std::map<std::string, double> symbol_table = { ... };
 matheval::parse<double>(expression, symbol_table);
 @endcode
 
@@ -26,8 +26,8 @@ for different values in the symbol table, you should use the class
 interface, because there you only pay the cost of parsing when
 actually calling matheval::Parser::parse.
 @code
-std::string expression = ...
-std::map<std::string, double> symbol_table = ...
+std::string expression = "...";
+std::map<std::string, double> symbol_table = { ... };
 matheval::Parser<double> parser;
 parser.parse(expression);
 double result = parser.evaluate(symbol_table);
@@ -110,7 +110,7 @@ other words, variables cannot start with a digit or an underscore.
 @warning Constants always have higher priority than variables.  That
 is to say, that
 @code
-matheval::parse("e",{std::make_pair("e", 1)});
+matheval::parse<double>("e",{std::make_pair("e", 1)});
 @endcode
 will evaluate to `2.71828` (Euler's number) regardsless.
 
