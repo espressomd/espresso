@@ -26,7 +26,6 @@
 #include <boost/test/unit_test.hpp>
 
 #include "script_interface/ScriptInterface.hpp"
-#include "script_interface/bind_function.hpp"
 
 using std::string;
 using std::map;
