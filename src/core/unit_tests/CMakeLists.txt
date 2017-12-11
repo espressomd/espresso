@@ -55,7 +55,7 @@ unit_test(NAME RuntimeError_test SRC RuntimeError_test.cpp)
 unit_test(NAME RunningAverage_test SRC RunningAverage_test.cpp)
 unit_test(NAME RuntimeErrorCollector_test SRC RuntimeErrorCollector_test.cpp ../RuntimeErrorCollector.cpp ../RuntimeError.cpp)
 
-unit_test(NAME ScriptInterface_test SRC ScriptInterface_test.cpp ../../script_interface/ScriptInterfaceBase.cpp)
+unit_test(NAME ScriptInterface_test SRC ScriptInterface_test.cpp ../MpiCallbacks.cpp ../../script_interface/ScriptInterfaceBase.cpp ../../script_interface/ParallelScriptInterface.cpp ../../script_interface/ParallelScriptInterfaceSlave.cpp ../../script_interface/Variant.cpp)
 unit_test(NAME Wall_test SRC Wall_test.cpp ../shapes/Wall.cpp)
 unit_test(NAME Factory_test SRC Factory_test.cpp)
 unit_test(NAME NumeratedContainer_test SRC NumeratedContainer_test.cpp)
@@ -68,7 +68,7 @@ unit_test(NAME ParallelScriptInterface_test SRC ParallelScriptInterface_test.cpp
 
 unit_test(NAME gather_buffer_test SRC gather_buffer_test.cpp NUM_PROC 4)
 unit_test(NAME scatter_buffer_test SRC scatter_buffer_test.cpp NUM_PROC 4)
-unit_test(NAME AutoParameters_test SRC AutoParameters_test.cpp)
+unit_test(NAME AutoParameters_test SRC AutoParameters_test.cpp ../MpiCallbacks.cpp ../../script_interface/ScriptInterfaceBase.cpp ../../script_interface/ParallelScriptInterface.cpp ../../script_interface/ParallelScriptInterfaceSlave.cpp ../../script_interface/Variant.cpp)
 unit_test(NAME make_function_test SRC make_function_test.cpp)
 unit_test(NAME AutoParameter_test SRC AutoParameter_test.cpp ../../script_interface/Variant.cpp)
 unit_test(NAME Variant_test SRC Variant_test.cpp ../../script_interface/Variant.cpp)
