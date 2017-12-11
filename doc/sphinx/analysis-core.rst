@@ -7,7 +7,7 @@ Analysis in the core is a new concept introduced in since version 3.1.
 It was motivated by the fact, that sometimes it is desirable that the
 analysis functions do more than just return a value to the scripting
 interface. For some observables it is desirable to be sampled every few
-integrations steps. In addition, it should be possible to pass the
+integration steps. In addition, it should be possible to pass the
 observable values to other functions which compute history-dependent
 quantities, such as correlation functions. All this should be done
 without the need to interrupt the integration by passing the control to
@@ -19,7 +19,7 @@ the :mod:`espressomd.analysis` module. However, only the core-observables can be
 on the fly with the toolbox of the correlator and on the fly analysis of
 time series. 
 Similarly, some special cases of using the correlator have
-their redundant counterparts in :mod:`esperssomd.analysis`,
+their redundant counterparts in :mod:`espressomd.analysis`,
 but the correlator provides a general and
 versatile toolbox which can be used with any implemented
 core-observables. 
@@ -73,23 +73,23 @@ The following observables are available:
      :math:`x_1,\ y_1,\ z_1,\ x_2,\ y_2,\ z_2,\ \dots\ x_n,\ y_n,\ z_n`.
      The particles are ordered according to the list of ids passed to the observable.
    - ParticleVelocities: Velocities of the particles in the form
-     :math:`v_{x1},\ v_{y1},\ v_{z1},\ v{x2},\ v_{y2},\ v_{z2},\ \dots\ v{xn},\ v_{yn},\ v_{zn}`.
+     :math:`v_{x1},\ v_{y1},\ v_{z1},\ v_{x2},\ v_{y2},\ v_{z2},\ \dots\ v_{xn},\ v_{yn},\ v_{zn}`.
      The particles are ordered according to the list of ids passed to the observable.
    - ParticleForces: Forces on the particles in the form
-     :math:`f_{x1},\ f_{y1},\ f_{z1},\ f{x2},\ f_{y2},\ f_{z2},\ \dots\ f{xn},\ f_{yn},\ f_{zn}`.
+     :math:`f_{x1},\ f_{y1},\ f_{z1},\ f_{x2},\ f_{y2},\ f_{z2},\ \dots\ f_{xn},\ f_{yn},\ f_{zn}`.
    - ParticleBodyVelocities: the particles' velocity in their respective body-fixed frames.
-     :math:`v_{x1},\ v_{y1},\ v_{z1},\ v{x2},\ v_{y2},\ v_{z2},\ \dots\ v{xn},\ v_{yn},\ v_{zn}`.
+     :math:`v_{x1},\ v_{y1},\ v_{z1},\ v_{x2},\ v_{y2},\ v_{z2},\ \dots\ v_{xn},\ v_{yn},\ v_{zn}`.
      The particles are ordered according to the list of ids passed to the observable.
-   - ParticleAngularVelocities: The particles' angular velocities in the space-fixed frame:
-     math:`\omega^x_1,\ \omega^y_1,\ \omega^z_1,\ \omega^x_2,\ \omega^y_2,\ \omega^z_2, \dots\ \omega^x_n,\ \omega^y_n,\ \omega^z_n`. 
+   - ParticleAngularVelocities: The particles' angular velocities in the space-fixed frame
+     :math:`\omega^x_1,\ \omega^y_1,\ \omega^z_1,\ \omega^x_2,\ \omega^y_2,\ \omega^z_2, \dots\ \omega^x_n,\ \omega^y_n,\ \omega^z_n`. 
      The particles are ordered according to the list of ids passed to the observable.
-   - ParticleBodyAngularVelocities: As above, but in the particles' body-ffixed frame
+   - ParticleBodyAngularVelocities: As above, but in the particles' body-fixed frame.
    - ParticleCurrent: Product of the particles' velocity and charge
      :math:`m_1 v^x_1, m_1 v^y_1, m_1 v^z_1, \ldots` 
      The particles are ordered according to the list of ids passed to the observable.
    - Current: Total current of the system
      :math:`\sum_i m_i v^x_i, \sum_i m_i v^y_i, \sum_i m_i v^z_i, \ldots` 
-   - DipoleMoment: Total electric dipole moment of the system obtained based on funfolded positions
+   - DipoleMoment: Total electric dipole moment of the system obtained based on unfolded positions
      :math:`\sum_i q_i r^x_i, \sum_i q_i r^y_i, \sum_i q_i r^z_i` 
    - MagneticDipoleMoment: Total magnetic dipole moment of the system based on the :attr:`espressomd.particle_data.ParticleHandle.dip` property.
      :math:`\sum_i \mu^x_i, \sum_i \mu^y_i, \sum_i \mu^z_i` 
@@ -121,7 +121,7 @@ Introduction
 Time correlation functions are ubiquitous in statistical mechanics and
 molecular simulations when dynamical properties of many-body systems are
 concerned. A prominent example is the velocity autocorrelation function,
-:math:` \left< \mathbf{v}(t) \cdot \mathbf{v}(t+\tau) \right> ` which is
+:math:`\left< \mathbf{v}(t) \cdot \mathbf{v}(t+\tau) \right>` which is
 used in the Green-Kubo relations. In general, time correlation functions
 are of the form
 
@@ -194,7 +194,7 @@ The correlation algorithm: multiple tau correlator
 
 Here we briefly describe the multiple tau correlator which is
 implemented in . For a more detailed description and discussion of its
-behaviour with respect to statistical and systematic errors, please read
+behavior with respect to statistical and systematic errors, please read
 the cited literature. This type of correlator has been in use for years
 in the analysis of dynamic light
 scattering :cite:`schatzel88a`. About a decade later it
@@ -232,7 +232,7 @@ compression level 0. To compute the correlations for lag times
 :math:`\tau \in [p:2(p-1)]`, the original data are first coarse-grained,
 so that :math:`m` values of the original data are compressed to produce
 a single data point in the higher compression level. Thus the lag time
-between the neighbouring values in the higher compression level
+between the neighboring values in the higher compression level
 increases by a factor of :math:`m`, while the number of stored values
 decreases by the same factor and the number of correlation operations at
 this level reduces by a factor of :math:`m^2`. Correlations for lag
@@ -265,7 +265,7 @@ pushes the first one to the higher level. This is robust and can be
 applied universally to any combination of observables and correlation
 operation. On the other hand, it reduces the statistical accuracy as the
 compression level increases. In many cases, the compression operation
-can be applied, which averages the two neighbouring values and the
+can be applied, which averages the two neighboring values and the
 average then enters the higher level, preserving almost the full
 statistical accuracy of the original data. In general, if averaging can
 be safely used or not, depends on the properties of the difference

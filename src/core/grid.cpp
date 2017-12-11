@@ -281,8 +281,8 @@ void grid_changed_box_l() {
 void grid_changed_n_nodes() {
   GRID_TRACE(fprintf(stderr, "%d: grid_changed_n_nodes:\n", this_node));
 
-  mpi_reshape_communicator({node_grid[0], node_grid[1], node_grid[2]},
-                           { 1, 1, 1});
+  mpi_reshape_communicator({{node_grid[0], node_grid[1], node_grid[2]}},
+                           {{ 1, 1, 1}});
 
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 

@@ -290,12 +290,11 @@ void Correlator::initialize() {
 
   dim_A = 0;
   dim_B = 0;
-  auto autocorrelation = 0;
+
   if (A_obs)
     dim_A = A_obs->n_values();
   if (!B_obs) {
     B_obs = A_obs;
-    autocorrelation = 1;
   }
 
   dim_B = B_obs->n_values();
@@ -403,8 +402,6 @@ void Correlator::initialize() {
       tau[m_tau_lin + 1 + (j - 1) * m_tau_lin / 2 + k] =
           (k + (m_tau_lin / 2) + 1) * (1 << j);
     }
-
-  initialized = 1;
 }
 
 int Correlator::get_data() {
@@ -530,8 +527,6 @@ int Correlator::finalize() {
   unsigned int index_new, index_old, index_res;
   int error;
   // int compress;
-  unsigned m_tau_lin = m_tau_lin;
-  int hierarchy_depth = hierarchy_depth;
 
   // make a flag that the correlation is finalized
   finalized = 1;

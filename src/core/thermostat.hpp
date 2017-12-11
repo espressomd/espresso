@@ -52,7 +52,7 @@
 /*@}*/
 
 namespace Thermostat {
-auto noise = []() { return (d_random() - 0.5); };
+static auto noise = []() { return (d_random() - 0.5); };
 
 #ifdef PARTICLE_ANISOTROPY
 using GammaType = Vector3d;

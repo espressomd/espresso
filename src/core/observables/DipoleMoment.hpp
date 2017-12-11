@@ -10,7 +10,7 @@ namespace Observables {
 class DipoleMoment : public PidObservable {
 public:
   virtual int n_values() const override { return 3; };
-  virtual std::vector<double> operator()(PartCfg &partCfg) override {
+  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
     for (int i = 0; i < ids().size(); i++) {
 #ifdef ELECTROSTATICS

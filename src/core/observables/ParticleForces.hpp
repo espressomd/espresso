@@ -10,7 +10,7 @@ namespace Observables {
 
 class ParticleForces : public PidObservable {
 public:
-  virtual std::vector<double> operator()(PartCfg &partCfg) override {
+  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
     double scale = 2. / time_step / time_step;
     for (int i = 0; i < ids().size(); i++) {

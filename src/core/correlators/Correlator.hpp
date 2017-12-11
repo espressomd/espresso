@@ -180,15 +180,17 @@ public:
   Correlator(int tau_lin, double tau_max, double dt,
              std::string const &compress1_, std::string const &compress2_,
              std::string const &corr_operation, obs_ptr obs1, obs_ptr obs2)
-      : t(0), finalized(0), autoupdate(0), initialized(0), m_tau_lin(tau_lin),
-        m_tau_max(tau_max), m_dt(dt), compressA_name(compress1_),
+      : autoupdate(0), finalized(0), t(0), m_tau_lin(tau_lin),
+        m_dt(dt), m_tau_max(tau_max), compressA_name(compress1_),
         compressB_name(compress2_), corr_operation_name(corr_operation),
         A_obs(obs1), B_obs(obs2) {
     initialize();
   }
 
+private:
   void initialize();
 
+public:
   /** The function to process a new datapoint of A and B
    *
    * First the function finds out if it necessary to make some space for the new
@@ -241,8 +243,6 @@ public:
   /** Return correlation result */
   std::vector<double> get_correlation();
 
-  // A lot of the following should be private
-
   int tau_lin() const { return m_tau_lin; }
   double tau_max() const { return m_tau_max; }
   double last_update() const { return m_last_update; }
@@ -266,10 +266,11 @@ public:
   /* Partial serialization of state that is not accessible
      via the interface. */
   std::string get_internal_state() const;
-  void set_internal_state(std::string const&);
+  void set_internal_state(std::string const &);
 
 private:
   unsigned int finalized; // non-zero of correlation is finialized
+  unsigned int t;         // global time in number of frames
 
   Vector3d
       m_correlation_args; // additional arguments, which the correlation may
@@ -278,8 +279,7 @@ private:
   int hierarchy_depth; // maximum level of data compression
   int m_tau_lin;       // number of frames in the linear correlation
   int m_dim_corr;
-  unsigned int t; // global time in number of frames
-  double m_dt;    // time interval at which samples arrive
+  double m_dt; // time interval at which samples arrive
   double
       m_tau_max; // maximum time, for which the correlation should be calculated
   int update_frequency; // time distance between updates in MD timesteps
@@ -288,7 +288,6 @@ private:
   std::string compressB_name;
   std::string corr_operation_name;
 
-  int initialized;
   int m_n_result; // the total number of result values
 
   std::shared_ptr<Observables::Observable> A_obs;

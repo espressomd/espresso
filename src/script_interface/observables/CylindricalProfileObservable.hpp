@@ -28,6 +28,7 @@
 
 #include "Observable.hpp"
 #include "core/observables/CylindricalFluxDensityProfile.hpp"
+#include "core/observables/CylindricalLBFluxDensityProfileAtParticlePositions.hpp"
 #include "core/observables/CylindricalProfileObservable.hpp"
 
 namespace ScriptInterface {
@@ -38,6 +39,7 @@ public:
   VariantMap get_parameters() const override {
     return {{"ids", cylindrical_profile_observable()->ids()},
             {"center", cylindrical_profile_observable()->center},
+            {"axis", cylindrical_profile_observable()->axis},
             {"n_r_bins", cylindrical_profile_observable()->n_r_bins},
             {"n_phi_bins", cylindrical_profile_observable()->n_phi_bins},
             {"n_z_bins", cylindrical_profile_observable()->n_z_bins},
@@ -52,6 +54,7 @@ public:
   ParameterMap valid_parameters() const override {
     return {{"ids", {ParameterType::INT_VECTOR, true}},
             {"center", {ParameterType::DOUBLE_VECTOR, true}},
+            {"axis", {ParameterType::STRING, true}},
             {"n_r_bins", {ParameterType::INT, true}},
             {"n_phi_bins", {ParameterType::INT, true}},
             {"n_z_bins", {ParameterType::INT, true}},
@@ -66,6 +69,7 @@ public:
   void set_parameter(std::string const &name, Variant const &value) override {
     SET_PARAMETER_HELPER("ids", cylindrical_profile_observable()->ids());
     SET_PARAMETER_HELPER("center", cylindrical_profile_observable()->center);
+    SET_PARAMETER_HELPER("axis", cylindrical_profile_observable()->axis);
     SET_PARAMETER_HELPER("n_r_bins",
                          cylindrical_profile_observable()->n_r_bins);
     SET_PARAMETER_HELPER("n_phi_bins",
@@ -84,7 +88,7 @@ public:
   cylindrical_profile_observable() const = 0;
 };
 
-#define NEW_RADIAL_PROFILE_OBSERVABLE(obs_name)                                \
+#define NEW_CYLINDRICAL_PROFILE_OBSERVABLE(obs_name)                           \
   class obs_name : public CylindricalProfileObservable {                       \
   public:                                                                      \
     obs_name() : m_observable(new ::Observables::obs_name()){};                \
@@ -102,7 +106,9 @@ public:
     std::shared_ptr<::Observables::obs_name> m_observable;                     \
   };
 
-NEW_RADIAL_PROFILE_OBSERVABLE(CylindricalFluxDensityProfile)
+NEW_CYLINDRICAL_PROFILE_OBSERVABLE(CylindricalFluxDensityProfile)
+NEW_CYLINDRICAL_PROFILE_OBSERVABLE(
+    CylindricalLBFluxDensityProfileAtParticlePositions)
 
 } /* namespace Observables */
 } /* namespace ScriptInterface */

@@ -40,8 +40,8 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi
                    DEPENDS gen_pxiconfig
                    )
 
-include_directories(${PYTHON_INCLUDE_DIRS})
-include_directories(${NUMPY_INCLUDE_DIR})
+include_directories(SYSTEM ${PYTHON_INCLUDE_DIRS})
+include_directories(SYSTEM ${NUMPY_INCLUDE_DIR})
 
 add_custom_target(espressomd)
 add_custom_command(OUTPUT code_info.pyx
@@ -102,9 +102,13 @@ foreach(cython_file ${cython_SRC})
          set_target_properties(${basename} PROPERTIES SUFFIX ".so")
       endif()
       if ( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
-          set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS "-Wno-cpp")
+          set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS "-Wno-pedantic -Wno-cpp -Wno-strict-aliasing -Wno-maybe-uninitialized")
       elseif( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" )
-          set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS "-Wno-#warnings")
+          set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS "-Wno-pedantic -Wno-#warnings -Wno-sometimes-uninitialized")
+      elseif( CMAKE_CXX_COMPILER_ID STREQUAL "Intel" )
+          set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS "-wd1224")
+      else()
+          set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS "-Wno-pedantic")
       endif()
       target_link_libraries(${basename} EspressoCore EspressoScriptInterface ${LIBRARIES})
       add_dependencies(espressomd ${basename})

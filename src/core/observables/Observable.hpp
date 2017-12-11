@@ -31,10 +31,11 @@ namespace Observables {
 class Observable {
 public:
   friend class CylindricalFluxDensityProfile;
+  friend class CylindricalLBFluxDensityProfileAtParticlePositions;
   Observable();
   virtual ~Observable() = default;
   // In the call operator the calculation is performed.
-  virtual std::vector<double> operator()(PartCfg &partCfg) = 0;
+  virtual std::vector<double> operator()(PartCfg &partCfg) const = 0;
   /* IO functions for observables */
   void set_filename(std::string const &filename, bool binary);
   bool writable() const;

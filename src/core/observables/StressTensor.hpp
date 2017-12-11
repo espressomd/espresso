@@ -10,7 +10,7 @@ namespace Observables {
 class StressTensor : public PidObservable {
 public:
   virtual int n_values() const override { return 9; };
-  virtual std::vector<double> operator()(PartCfg &partCfg) override {
+  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
     observable_compute_stress_tensor(1, res.data());
     return res;

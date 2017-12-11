@@ -51,7 +51,7 @@ public:
   }
 
   virtual Variant call_method(std::string const &method,
-                              VariantMap const &parameters) {
+                              VariantMap const &parameters) override {
     if (method == "update") {
       return m_accumulator->update();
     }

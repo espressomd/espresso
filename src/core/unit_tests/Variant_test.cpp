@@ -114,6 +114,8 @@ BOOST_AUTO_TEST_CASE(make_from_args_test) {
 
     auto c = make_from_args<C>(vals);
     c.i = 5;
+
+    BOOST_CHECK(5 == c.i);
   }
 
   {
