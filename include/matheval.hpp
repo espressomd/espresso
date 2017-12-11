@@ -68,6 +68,14 @@ namespace ascii = boost::spirit::ascii;
 template < typename T >
 T sgn(T x) { return (T{0} < x) - (x < T{0}); }
 
+/** @brief isnan function with adjusted return type */
+template < typename T >
+T isnan(T x) { return std::isnan(x); }
+
+/** @brief isinf function with adjusted return type */
+template < typename T >
+T isinf(T x) { return std::isinf(x); }
+
 // AST
 
 template < typename real_t > struct unary_op;
@@ -415,6 +423,8 @@ public:
                 ("exp"   , static_cast<real_t(*)(real_t)>(&std::exp   ))
                 ("exp2"  , static_cast<real_t(*)(real_t)>(&std::exp2  ))
                 ("floor" , static_cast<real_t(*)(real_t)>(&std::floor ))
+                ("isinf" , static_cast<real_t(*)(real_t)>(&isinf      ))
+                ("isnan" , static_cast<real_t(*)(real_t)>(&isnan      ))
                 ("log"   , static_cast<real_t(*)(real_t)>(&std::log   ))
                 ("log2"  , static_cast<real_t(*)(real_t)>(&std::log2  ))
                 ("log10" , static_cast<real_t(*)(real_t)>(&std::log10 ))

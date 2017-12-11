@@ -46,10 +46,9 @@ matrix:
             - libboost-test1.55-dev
     - os: osx
       compiler: clang
-  allow_failures:
     - if: branch = master
       os: linux
-      env: Doxygen
+      env: docs=yes
       addons:
         apt:
           packages:
@@ -58,3 +57,6 @@ matrix:
             - libboost-test-dev
       script:
         - bash doc/publish_documentation.sh
+
+  allow_failures:
+    - env: docs=yes
