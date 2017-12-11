@@ -957,7 +957,7 @@ void mpi_send_virtual_slave(int pnode, int part) {
 #ifdef VIRTUAL_SITES
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(&p->p.isVirtual, 1, MPI_INT, 0, SOME_TAG, comm_cart,
+    MPI_Recv(&(p->p.isVirtual), 1, MPI_INT, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 

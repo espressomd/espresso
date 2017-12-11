@@ -18,10 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _VIRTUAL_SITES_H
-#define _VIRTUAL_SITES_H
+#ifndef _VIRTUAL_SITES_HPP
+#define _VIRTUAL_SITES_HPP
 
-#include "particle_data.hpp"
 
 /** \file virtual_sites.hpp
  *  This file contains routine to handle virtual sites
@@ -35,54 +34,54 @@
  */
 
 #ifdef VIRTUAL_SITES
-// Recalculate position and velocity for all virtual particles
-void update_mol_vel_pos();
-// Recalc velocities for virtual particles
-void update_mol_vel();
-// Recalc positions of virtual particles
-void update_mol_pos();
+#include <memory>
 
-// The following three functions have to be provided by all implementations
-// of virtual sites
-// Update the vel/pos of the given virtual particle as defined by the real
-// particles in the same molecule
-// void update_mol_pos_particle(Particle *);
-// void update_mol_vel_particle(Particle *);
+/** @brief Base class for virtual sites implementations */
+class VirtualSites {
+  public:
+    VirtualSites() :  m_have_velocity(true) {};
+    /** @brief Update positions and/or velocities of virtual sites 
 
-// Distribute forces that have accumulated on virtual particles to the
-// associated real particles
-//void distribute_mol_force();
-
-
-// Checks, if a particle is virtual
-inline int ifParticleIsVirtual(Particle const*p){
-   if (p->p.isVirtual == 0) {
-      return 0;
-   }
-   else{
-      return 1;
-   }
-}
-
-inline int ifParticleIsVirtual(Particle  const& p){
-   return ifParticleIsVirtual(&p);
-}
+    * Velocities are only updated update_velocities() return true 
+    * @param recalc_positions can be used to skip the reculation of positions 
+    */
+    virtual void update(bool recalc_positions=true) const =0;
+    /** Back-transfer forces (and torques) to non-virtual particles */
+    virtual void back_transfer_forces_and_torques() const =0;
+    /** @brief Enable/disable velocity calculations for vs */
+    void set_have_velocity(bool v) { m_have_velocity=v; };
+    const bool& have_velocity() { return m_have_velocity; };
+    /** @brief Is a ghost communication needed before position updates */
+    virtual bool require_ghost_comm_before_pos_update() const =0;
+    /** Is a ghost comm needed before a velocity update */
+    virtual bool require_ghost_comm_before_vel_update() const =0;
+    /** Is a ghost comm needed after a velocity update */
+    virtual bool require_ghost_comm_after_vel_update() const =0;
+    private:
+      bool m_have_velocity;
+   };
 
 
-// According to what rules the virtual particles are placed and the forces and
-// torques accumulating on the virtual particles distributed back to real
-// particles, is decided by a specific implementation.
+   /** @brief Do-nothing virtual-sites implementation */
+   class VirtualSitesOff : public VirtualSites {
+    /** @brief Update positions and/or velocities of virtual sites 
 
-// Virtual particles in center of mass of molecule
-#ifdef VIRTUAL_SITES_COM
- #include "virtual_sites_com.hpp"
+    * Velocities are only updated update_velocities() return true 
+    * @param recalc_positions can be used to skip the reculation of positions 
+    */
+    void update(bool recalc_positions=true) const override {};
+    /** Back-transfer forces (and torques) to non-virtual particles */
+    void back_transfer_forces_and_torques() const override {};
+    /** @brief Enable/disable velocity calculations for vs */
+    /** @brief Is a ghost communication needed before position updates */
+    bool require_ghost_comm_before_pos_update() const override { return false;} 
+    /** Is a ghost comm needed before a velocity update */
+    bool require_ghost_comm_before_vel_update() const override {return false;};
+    /** Is a ghost comm needed after a velocity update */
+    bool require_ghost_comm_after_vel_update() const override {return false;};
+   };
+
+VirtualSites& virtual_sites(std::unique_ptr<VirtualSites> init = std::unique_ptr<VirtualSitesOff>{});
+
 #endif
-
-// Virtual particles relative to position and orientation of a real particle
-#ifdef VIRTUAL_SITES_RELATIVE
- #include "virtual_sites_relative.hpp"
-#endif
-
-#endif
-
 #endif

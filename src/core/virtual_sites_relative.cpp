@@ -17,30 +17,48 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
+#include "config.hpp"
 #include "virtual_sites_relative.hpp"
 #include "rotation.hpp"
+#include "virtual_sites_relative.hpp"
 
 #ifdef VIRTUAL_SITES_RELATIVE
 
-using std::ostringstream;
+void VirtualSitesRelative::update(bool recalc_positions) const  {
+if (!recalc_positions && !have_velocity()) return;
+
+for (auto p : local_cells.particles()) {
+  if (!p.p.isVirtual) continue;
+
+  if (recalc_positions)
+    update_pos(&p);
+
+  if (have_velocy())
+    update_vel(&p);
+
+
+}
+
+}
+
+
+};
+
+
 
 // This is the "relative" implementation for virtual sites.
 // Virtual particles are placed relative to the position of a real particle
 
 // Obtain the real particle from which a virtual particle derives it's position
 // Note: for now, we use the mol_di property of Particle
-Particle* vs_relative_get_real_particle(Particle* p)
-{
- return local_particles[p->p.vs_relative_to_particle_id];
-}
 
 // Update the pos of the given virtual particle as defined by the real 
 // particles in the same molecule
-void update_mol_pos_particle(Particle *p)
+void VirtualSitesRelative::update_pos(const Particle* const p)
 {
  // First obtain the real particle responsible for this virtual particle:
  // Find the 1st real particle in the topology for the virtual particle's mol_id
- Particle *p_real = vs_relative_get_real_particle(p);
+ const Particle *p_real = local_particles[p->p.vs_relative_to_particle_id];
  // Check, if a real particle was found
  if (!p_real)
  {
@@ -94,12 +112,10 @@ void update_mol_pos_particle(Particle *p)
 
 // Update the vel of the given virtual particle as defined by the real 
 // particles in the same molecule
-void update_mol_vel_particle(Particle *p)
+void VirtualSitesRelative::update_vel_(const Particle* const p)
 {
- // NOT TESTED!
- 
  // First obtain the real particle responsible for this virtual particle:
- Particle *p_real = vs_relative_get_real_particle(p);
+ Particle *p_real = local_particles[p->p.vs_relative_to_particle_id];
  // Check, if a real particle was found
  if (!p_real)
  {
@@ -109,25 +125,14 @@ void update_mol_vel_particle(Particle *p)
    return;
  }
  
- // Calculate the quaternion defining the orientation of the vecotr connectinhg
- // the virtual site and the real particle
- // This is obtained, by multiplying the quaternion representing the director
- // of the real particle with the quaternion of the virtual particle, which 
- // specifies the relative orientation.
- double q[4];
- multiply_quaternions(p_real->r.quat,p->p.vs_relative_rel_orientation,q);
- // Calculate the director resulting from the quaternions
- double director[3];
- convert_quat_to_quatu(q,director);
- // normalize
- double l =sqrt(sqrlen(director));
- // Division comes in the loop below
+ double d;
+ get_mi_vector(d,p->r.p,p_real->r.p);
 
  // Get omega of real particle in space-fixed frame
  double omega_space_frame[3];
  convert_omega_body_to_space(p_real,omega_space_frame);
  // Obtain velocity from v=v_real particle + omega_real_particle \times director
- vector_product(omega_space_frame,director,p->m.v);
+ vector_product(omega_space_frame,d,p->m.v);
 
  int i;
  // Add prefactors and add velocity of real particle
@@ -135,7 +140,7 @@ void update_mol_vel_particle(Particle *p)
  {
   // Scale the velocity by the distance of virtual particle from the real particle
   // Also, espresso stores not velocity but velocity * time_step
-  p->m.v[i] *= time_step * p->p.vs_relative_distance/l;
+  p->m.v[i] *= time_step;
   // Add velocity of real particle
   p->m.v[i] += p_real->m.v[i];
  }
@@ -143,15 +148,14 @@ void update_mol_vel_particle(Particle *p)
 
 // Distribute forces that have accumulated on virtual particles to the
 // associated real particles
-void distribute_mol_force() {
+void VirtualSitesRelative::back_transfer_forces_and_torques() {
   // Iterate over all the particles in the local cells
   for (auto &p : local_cells.particles()) {
     // We only care about virtual particles
-    if (ifParticleIsVirtual(&p)) {
-      update_mol_pos_particle(&p);
-
+    if (p.p.isVirtual) {
+    if (p.p.isVirtual) {
       // First obtain the real particle responsible for this virtual particle:
-      Particle *p_real = vs_relative_get_real_particle(&p);
+      Particle *p_real = local_particles[p->p.vs_relative_to_particle_id];
 
       // Get distance vector pointing from real to virtual particle, respecting
       // periodic boundary i
@@ -169,13 +173,8 @@ void distribute_mol_force() {
       vector_product(d, p.f.f, tmp);
 
       // Add forces and torques
-      int j;
-      //       printf("Particle %d gets torque from %f %f %f of particle
-      //       %d\n",p_real->p.identity, p.f.f[0], p.f.f[1],p.f.f[2],
-      //       p.p.identity);
-      for (j = 0; j < 3; j++) {
+      for (int j = 0; j < 3; j++) {
         p_real->f.torque[j] += tmp[j];
-        //	 printf("%f ",tmp[j]);
         p_real->f.f[j] += p.f.f[j];
       }
     }
@@ -299,7 +298,8 @@ void vs_relative_pressure_and_stress_tensor(double* pressure, double* stress_ten
   // Iterate over all the particles in the local cells
 
   for (auto &p : local_cells.particles()) {
-    if (!ifParticleIsVirtual(&p))
+    if (!p.p.isVirtual)
+    if (!p.p.isVirtual)
       continue;
 
     update_mol_pos_particle(&p);

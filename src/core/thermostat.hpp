@@ -254,7 +254,7 @@ inline void friction_thermo_langevin(Particle *p) {
 #ifdef VIRTUAL_SITES
 #ifndef VIRTUAL_SITES_THERMOSTAT
   // In this case, virtual sites are NOT thermostated
-  if (ifParticleIsVirtual(p)) {
+  if (p->p.isVirtual) {
     for (j = 0; j < 3; j++)
       p->f.f[j] = 0;
 
@@ -263,7 +263,7 @@ inline void friction_thermo_langevin(Particle *p) {
 #endif /* VIRTUAL_SITES_THERMOSTAT */
 #ifdef THERMOSTAT_IGNORE_NON_VIRTUAL
   // In this case NON-virtual particles are NOT thermostated
-  if (!ifParticleIsVirtual(p)) {
+  if (!p->p.isVirtual) {
     for (j = 0; j < 3; j++)
       p->f.f[j] = 0;
 

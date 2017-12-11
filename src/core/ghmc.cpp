@@ -163,7 +163,8 @@ void calc_kinetic(double *ek_trans, double *ek_rot) {
 
   for (auto &p : local_cells.particles()) {
 #ifdef VIRTUAL_SITES
-    if (ifParticleIsVirtual(&p))
+    if (p.p.isVirtual)
+    if (p.p.isVirtual)
       continue;
 #endif
 
@@ -236,7 +237,8 @@ void tscale_momentum_update() {
 
   for (auto &p : local_cells.particles()) {
 #ifdef VIRTUAL_SITES
-    if (ifParticleIsVirtual(&p))
+    if (p.p.isVirtual)
+    if (p.p.isVirtual)
       continue;
 #endif
 
@@ -258,7 +260,8 @@ void simple_momentum_update() {
 
   for (auto &p : local_cells.particles()) {
 #ifdef VIRTUAL_SITES
-    if (ifParticleIsVirtual(&p))
+    if (p.p.isVirtual)
+    if (p.p.isVirtual)
       continue;
 #endif
 

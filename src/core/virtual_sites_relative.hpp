@@ -17,33 +17,37 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _VIRTUAL_SITES_RELATIVE_H
-#define _VIRTUAL_SITES_RELATIVE_H
-
-#include "config.hpp"
-#include "particle_data.hpp"
+#ifndef _VIRTUAL_SITES_RELATIVE_HPP
+#define _VIRTUAL_SITES_RELATIVE_HPP
 
 #ifdef VIRTUAL_SITES_RELATIVE
 
-// The following three functions have to be provided by all implementations
-// of virtual sites
-// Update the vel/pos of the given virtual particle as defined by the real
-// particles in the same molecule
-void update_mol_pos_particle(Particle *p);
-void update_mol_vel_particle(Particle *p);
+#include "virtual_sites.hpp"
+#include "particle_data.hpp"
+#include "communication.hpp"
 
-// Distribute forces that have accumulated on virtual particles to the
-// associated real particles
-void distribute_mol_force();
 
-// Setup the virtual_sites_relative properties of a particle so that the given
-// virtaul particle will follow the given real particle
+   /** @brief Virtual sites implementation for rigid bodies */
+   class VirtualSitesRelative : public VirtualSites {
+    /** @brief Update positions and/or velocities of virtual sites 
+
+    * Velocities are only updated update_velocities() return true 
+    * @param recalc_positions can be used to skip the reculation of positions 
+    */
+    void update(bool recalc_positions=true) const override;
+    /** Back-transfer forces (and torques) to non-virtual particles */
+    void back_transfer_forces_and_torques() const override;
+    /** @brief Is a ghost communication needed before position updates */
+    bool require_ghost_comm_before_pos_update() const override { return n_nodes>1;} 
+    /** Is a ghost comm needed before a velocity update */
+    bool require_ghost_comm_before_vel_update() const override {return n_nodes>1;};
+    private:
+    void update_pos(const Particle* const p);
+    void update_vel(const Particle* const p);
+   };
+
+void vs_relative_pressure_and_stress_tensor(double* pressure, double* stress_tensor);
 int vs_relate_to(int part_num, int relate_to);
-
-// Rigid body conribution to scalar pressure and stress tensor
-void vs_relative_pressure_and_stress_tensor(double *pressure,
-                                            double *stress_tensor);
-
 #endif
 
 #endif

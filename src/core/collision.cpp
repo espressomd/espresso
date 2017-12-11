@@ -26,7 +26,7 @@
 #include "grid.hpp"
 #include "domain_decomposition.hpp"
 #include "rotation.hpp"
-
+#include "virtual_sites_relative.hpp"
 
 using namespace std;
 

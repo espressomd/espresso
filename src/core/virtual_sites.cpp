@@ -40,7 +40,8 @@ void update_mol_vel_pos() {
 void update_mol_vel() {
 #ifndef VIRTUAL_SITES_NO_VELOCITY
   for (auto &p : local_cells.particles()) {
-    if (ifParticleIsVirtual(&p))
+    if (p.p.isVirtual)
+    if (p.p.isVirtual)
       update_mol_vel_particle(&p);
   }
 #endif
@@ -48,7 +49,8 @@ void update_mol_vel() {
 
 void update_mol_pos() {
   for (auto &p : local_cells.particles()) {
-    if (ifParticleIsVirtual(&p))
+    if (p.p.isVirtual)
+    if (p.p.isVirtual)
       update_mol_pos_particle(&p);
   }
 }
