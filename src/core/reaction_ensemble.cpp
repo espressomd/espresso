@@ -280,11 +280,10 @@ double ReactionEnsemble::calculate_factorial_expression(single_reaction* current
 void ReactionEnsemble::restore_properties(std::vector<stored_particle_property> property_list ,const int number_of_saved_properties){
 	//this function restores all properties of all particles provided in the property list, the format of the property list is (p_id,charge,type) repeated for each particle that occurs in that list
 	for(int i=0;i<property_list.size();i++) {
-		double charge= property_list[i].charge;
 		int type=(int) property_list[i].type;
 		#ifdef ELECTROSTATICS
 		//set charge
-		set_particle_q(property_list[i].p_id, charge);
+		set_particle_q(property_list[i].p_id, property_list[i].charge);
 		#endif
 		//set type
 		set_particle_type(property_list[i].p_id, type);
@@ -614,7 +613,7 @@ int ReactionEnsemble::create_particle(int desired_type){
 	vel[0]=std::pow(2*PI*m_current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
 	vel[1]=std::pow(2*PI*m_current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
 	vel[2]=std::pow(2*PI*m_current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
-	double charge= (double) m_current_reaction_system.charges_of_types[find_index_of_type(desired_type)];
+
 	bool particle_inserted_too_close_to_another_one=true;
 	int max_insert_tries=1000;
 	int insert_tries=0;
@@ -626,6 +625,7 @@ int ReactionEnsemble::create_particle(int desired_type){
 			//set type
 			set_particle_type(p_id, desired_type);
 			#ifdef ELECTROSTATICS
+      double charge= (double) m_current_reaction_system.charges_of_types[find_index_of_type(desired_type)];
 			//set charge
 			set_particle_q(p_id, charge);
 			#endif
