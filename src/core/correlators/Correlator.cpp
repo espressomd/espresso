@@ -369,9 +369,9 @@ void Correlator::initialize() {
     throw std::runtime_error(init_errors[13]);
   }
 
-  A.resize(std::array<int, 2>{hierarchy_depth, m_tau_lin + 1});
+  A.resize(std::array<int, 2>{{hierarchy_depth, m_tau_lin + 1}});
   std::fill_n(A.data(), A.num_elements(), std::vector<double>(dim_A, 0));
-  B.resize(std::array<int, 2>{hierarchy_depth, m_tau_lin + 1});
+  B.resize(std::array<int, 2>{{hierarchy_depth, m_tau_lin + 1}});
   std::fill_n(B.data(), B.num_elements(), std::vector<double>(dim_B, 0));
 
   n_data = 0;
@@ -382,7 +382,7 @@ void Correlator::initialize() {
   n_sweeps = std::vector<unsigned int>(m_n_result, 0);
   n_vals = std::vector<unsigned int>(hierarchy_depth, 0);
 
-  result.resize(std::array<int, 2>{m_n_result, m_dim_corr});
+  result.resize(std::array<int, 2>{{m_n_result, m_dim_corr}});
 
   for (i = 0; i < m_n_result; i++) {
     for (j = 0; j < m_dim_corr; j++)
