@@ -93,14 +93,14 @@ int tabulated_set_params(int part_type_a, int part_type_b, char *filename) {
   data->TAB_stepsize = (maxval - minval) / (double)(data->TAB_npoints - 1);
 
   /* Allocate space for new data */
-  realloc_doublelist(&tabulated_forces, newsize);
-  realloc_doublelist(&tabulated_energies, newsize);
+  tabulated_forces.resize(newsize);
+  tabulated_energies.resize(newsize);
 
   /* Read in the new force and energy table data */
   for (i = 0; i < npoints; i++) {
     if (fscanf(fp, "%lf %lf %lf", &dummr,
-               &(tabulated_forces.e[i + data->TAB_startindex]),
-               &(tabulated_energies.e[i + data->TAB_startindex])) != 3)
+               &(tabulated_forces[i + data->TAB_startindex]),
+               &(tabulated_energies[i + data->TAB_startindex])) != 3)
       return 5;
   }
 

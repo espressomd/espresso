@@ -145,21 +145,21 @@ simulations, respectively. See :cite:`bereau15` for more details.
 Reaction Ensemble
 -----------------
 
-.. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies.
+.. note:: The whole Reaction Ensemble module uses Monte Carlo moves which require potential energies. Therefore the Reaction Ensemble requires support for energy calculations for all interactions which are used in the simulation.
 
-The reaction ensemble ::cite:`smith94a,turner2008simulation` allows to simulate
+The reaction ensemble :cite:`smith94a,turner2008simulation` allows to simulate
 chemical reactions which can be represented by the general equation:
 
 .. math::
 
-   \mathrm{\nu_1 S_1 +\ \dots\  \nu_l S_l\ \rightleftharpoons\ \nu_m S_m +\ \dots\ \nu_z S_z } \,,
+   \mathrm{\nu_1 S_1 +\ \dots\  \nu_l S_l\ \rightleftharpoons\ \nu_m S_m +\ \dots\ \nu_z S_z }
        \label{general-eq}
 
 where :math:`\nu_i` is the stoichiometric coefficient of species
-:math:`S_i`. By convention, stiochiometric coefficents of he
-species on the left-hand side of Eq.[general-eq] (*reactants*) attain
+:math:`S_i`. By convention, stoichiometric coefficents of the
+species on the left-hand side of the reaction (*reactants*) attain
 negative values, and those on the right-hand side (*products*) attain
-positive values, so that Eq.[general-eq] can be equivalently written as
+positive values, so that the reaction can be equivalently written as
 
 .. math::
 
@@ -171,7 +171,7 @@ The equilibrium constant of the reaction is then given as
 
 .. math::
 
-   K = \exp(-\Delta_{\mathrm{r}}G / k_B T)
+   K = \exp(-\Delta_{\mathrm{r}}G^{\ominus} / k_B T)
        \quad\text{with}\quad
        \Delta_{\mathrm{r}}G^{\ominus} = \sum_i \nu_i \mu_i^{\ominus}\,.
        \label{Keq}
@@ -179,149 +179,217 @@ The equilibrium constant of the reaction is then given as
 
 Here :math:`k_B` is the Boltzmann constant, :math:`T` is temperature,
 :math:`\Delta_{\mathrm{r}}G^{\ominus}` standard Gibbs free energy change
-of the reaction, and :math:`\mu_i^{\ominus}` the standard Chemical
-potential of species :math:`i`. Note that thermodynamic equilibrium is
-independent of the direction in which we write Eq.[general-eq]. If it is
-written with left and righ-hand side swapped, the stoichiometric
-coefficients and :math:`\Delta_{\mathrm{r}}G^{\ominus}` attain opposite
-signs, and the equilibrium constant attains the inverse value. Further,
-note that the equilibrium constant :math:`K` in Eq. [Keq] is the
-dimensionless *thermodynamic* equilibrium constant :math:`K_\mathrm{p}`.
-Apparent, concentration-based equilibrium constants can also be found in
-literature. To be used as input for the reaction ensemble, they need to
-be converted to thermodynamic constants as described in texbooks of
-Physical Chemistry. As a special case, all stoichiometric coefficients
-on one side of Eq.[general-eq] can be zero. Such reaction is equivalent
-to exchange with a reservoir, and the simulation in reaction ensemble
-becomes equivalent with the grandcanonical simulation. A simulation in
-the reaction ensemble consists of two types of moves: the reaction move
-and the configuration move. The configuration move is carried out by a
-suitable molecular dynamics or a Monte Carlo scheme. The
-``reacton_ensemble`` command of takes care only of the reaction moves.
-In the *forward* reaction, the appropriate number of reactants (given by
-:math:`\nu_i`) is removed from the system, and the concomitant number of
-products is inserted into the system. In the *reverse* reaction,
-reactants and products exchange their roles. The acceptance probability
-:math:`P^{\xi}` for move from state :math:`o` to :math:`n` reaction
-ensemble is given by the criterion ::cite:`smith94a`
+of the reaction, and :math:`\mu_i^{\ominus}` the standard chemical
+potential (per particle) of species :math:`i`. Note that thermodynamic equilibrium is
+independent of the direction in which we write the reaction. If it is
+written with left and righ-hand side swapped, 
+both :math:`\Delta_{\mathrm{r}}G^{\ominus}` and the stoichiometric
+coefficients attain opposite signs, and the equilibrium constant attains the inverse value. 
+Further, note that the equilibrium constant :math:`K` is the
+dimensionless *thermodynamic, concentration-based* equilibrium constant,
+defined as
 
 .. math::
 
-   P^{\xi} = \text{min}\biggl(1,V^{\bar\nu\xi}\Gamma^{\xi}e^{-\beta\Delta E_\mathrm{pot}}\prod_{i=1}\frac{N_i^0!}{(N_i^0+\nu_{i}\xi)!}
+   K(c^{\ominus}) = (c^{\ominus})^{-\bar\nu} \prod_i (c_i)^{\nu_i}
+
+wher :math:`\bar\nu=\sum_i \nu_i`, and :math:`c^{\ominus}` is the reference concentration,
+at which the standard chemical potential :math:`\Delta_{\mathrm{r}}G^{\ominus}` was determined.
+In practice, this constant is often used with the dimension of :math:`(c^{\ominus})^{\bar\nu}`
+
+.. math::
+
+   K_c(c^{\ominus}) = K(c^{\ominus})\times (c^{\ominus})^{\bar\nu}
+
+A simulation in
+the reaction ensemble consists of two types of moves: the *reaction move*
+and the *configuration move*. The configuration move changes the configuration
+of the system. It is not performed by the Reaction Ensemble module, and can be
+performed by a suitable molecular dynamics or a Monte Carlo scheme. The
+``reacton_ensemble`` command takes care only of the reaction moves.
+In the *forward* reaction, the appropriate number of reactants (given by
+:math:`\nu_i`) is removed from the system, and the concomitant number of
+products is inserted into the system. In the *backward* reaction,
+reactants and products exchange their roles. The acceptance probability
+:math:`P^{\xi}` for move from state :math:`o` to :math:`n` reaction
+ensemble is given by the criterion :cite:`smith94a`
+
+.. math::
+
+   P^{\xi} = \text{min}\biggl(1,V^{\bar\nu\xi}\Gamma^{\xi}e^{-\beta\Delta E}\prod_{i=1}\frac{N_i^0!}{(N_i^0+\nu_{i}\xi)!}
        \label{eq:Pacc}
        \biggr),
 
-where :math:`\Delta E_\mathrm{pot}=E_\mathrm{pot new}-E_\mathrm{pot old}` is the interaction energy change,
-:math:`\beta=1/k_\mathrm{B}T`, :math:`V` is the simulation box volume,
-:math:`\bar\nu = \sum_i
-\nu_i`. The extent of reaction, :math:`\xi=1` for the forward, and
-:math:`\xi=-1` for the reverse direction. The parameter :math:`\Gamma`
-is related to :math:`K` as
+where :math:`\Delta E=E_\mathrm{new}-E_\mathrm{old}` is the change in potential energy,
+:math:`V` is the simulation box volume,
+and :math:`\beta=1/k_\mathrm{B}T`. 
+The extent of reaction, :math:`\xi=1` for the forward, and
+:math:`\xi=-1` for the backward direction. 
+The parameter :math:`\Gamma` proportional to the reaction constant. It is defined as
 
 .. math::
 
-   \Gamma = K \biggl(\frac{p^{\ominus}}{k_\mathrm{B}T}\biggr)^{\bar\nu},
-         \label{eq:Gamma}
+   \Gamma = \prod_i \Bigl(\frac{\left<N_i\right>}{V} \Bigr)^{\bar\nu} = V^{-\bar\nu} \prod_i \left<N_i\right>^{\nu_i} = K_c(c^{\ominus}=1/\sigma^3)
 
-where :math:`p^{\ominus}=1 atm` is the standard pressure. It is often
-convenient and in some cases even necessary (dissociation reaction of
-polyelectrolytes) that some particles representing reactants are not
-removed from or placed at randomly in the system (think about reacting monomers in a polymer), but their identity is changed to that of the
-products (and vice versa in the reverse direction). The replacement rule is that for any given reactant type it is replaced by the corresponding product type (corresponding means here in terms of order in the reaction equation that was provided) as long as the corresponding coefficients allow it.
+where :math:`\left<N_i\right>/V` is the average number density of particles of type :math:`i`.
+Note that the dimension of :math:`\Gamma` is :math:`V^{\bar\nu}`, therefore its
+units must be consistent with the units in which Espresso measures the box volume,
+i.e. :math:`\sigma^3`.
+   
+It is often convenient, and in some cases even necessary, that some particles
+representing reactants are not removed from or placed at randomly in the system
+but their identity is changed to that of the products, or vice versa in the
+backward direction.  A typical example is the ionization reaction of weak
+polyelectrolytes, where the ionizable groups on the polymer have to remain on
+the polymer chain after the reaction.  The replacement rule is that the identity of a given reactant type is
+changed to the corresponding product type as long as the corresponding
+coefficients allow for it.  Corresponding means having the same position (index) in
+the python lists of reactants and products which are used to set up the
+reaction.
 For a description of the available methods see :mod:`espressomd.reaction_ensemble`
 
+Converting tabulated reaction constants to internal units in Espresso 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Wang-Landau Reaction Ensemble
+The implementation in Espresso requires that the dimension of :math:`\Gamma` 
+is consistent with the internal unit of volume, :math:`\sigma^3`.
+The tabulated values of equilibrium constants for reactions in solution, :math:`K_c`, typically use
+:math:`c^{\ominus} = 1\,\mathrm{moldm^{-3}}` as the reference concentration, 
+and have the dimension of :math:`(c^{\ominus})^{\bar\nu}`.  To be used with Espresso, the
+value of :math:`K_c` has to be converted as
+
+.. math::
+
+   \Gamma = K_c(c^{\ominus} = 1/\sigma^3) = K_c(c^{\ominus} = 1\,\mathrm{moldm^{-3}}) 
+   \Bigl( N_{\mathrm{A}}\bigl(\frac{\sigma}{\mathrm{dm}}\bigr)^3\Bigr)^{\bar\nu}
+   
+where :math:`N_{\mathrm{A}}` is the Avogardo number.  For gas-phase reactions,
+the pressure-based eaction constant, :math:`K_p` is often used, which can
+be converted to :math:`K_c` as
+
+.. math::
+
+   K_p(p^{\ominus}=1\,\mathrm{atm}) = K_c(c^{\ominus} = 1\,\mathrm{moldm^{-3}}) \biggl(\frac{c^{\ominus}RT}{p^{\ominus}}\biggr)^{\bar\nu},
+
+where :math:`p^{\ominus}=1\,\mathrm{atm}` is the standard pressure. 
+
+
+
+.. The text below is commented-out because it is still an open research question how it should be used correctly.
+..
+.. This can be used to include water autoprotolysis in the implicit solvent simulation, 
+.. by means of a reaction:
+.. 
+.. .. math::
+.. 
+..    \mathrm{2 H_2O \rightleftharpoons\ H_3O^+ + OH^- } \,,
+.. 
+.. 
+.. add the following ex nihilo reactions to Espresso. (:math:`\emptyset`, read ex
+.. nihilo). Ex nihilo means that the reaction has no reactants or products.
+.. Therefore, if :math:`\emptyset` is a product, particles vanish and if
+.. :math:`\emptyset` is an reactant, then particles are created ex nihilo:
+.. 
+.. .. math::
+.. 
+..    \mathrm{\emptyset \rightleftharpoons\ H_3O^+ + OH^- }  \,, 
+.. 
+.. with reaction constant K
+.. 
+.. .. math::
+.. 
+..    \mathrm{H_3O^+ + OH^- \rightleftharpoons\ \emptyset} \,, 
+.. 
+.. with reaction constant 1/K. K is given implicitly as a function of the apparent dissociation
+.. constant :math:`K_w=10^{-14} \rm{mol^2/l^2}=x\cdot \rm{1/(\sigma^3)^2}` such that the dimensionless is
+.. :math:`K=(x\cdot \rm{1/(\sigma^3)^2})/(\beta P^0)^{\overline{\nu}}` with
+.. :math:`\overline{\nu}=2` for the dissociation reaction and where x is
+.. the value of the apparent dissociation constant that is converted from
+.. :math:`\rm{mol^2/l^2}` to a number density in :math:`1/(\sigma^3)^2`,
+.. where :math:`\sigma` is the simulation length unit. If :math:`\beta` and
+.. :math:`P^0` are provided in simulation units this will make :math:`K`
+.. dimensionless. As a test for the autodissociation of water a big
+.. simulation box can be set up and the autodissociation reaction can be
+.. performed. Then the box should fill with the correct number of protons
+.. and hydroxide ions (check for the number of protons and hydroxide ions
+.. in the given simulation volume and compare this to the expected value at
+.. pH 7). Further the :math:`pK_w=14` should be reproduced -also in the
+.. case of an initial excess of acid or base in the simulation box. Note
+.. that this only works for big enough volumes.
+
+
+
+
+Wang-Landau Reaction Ensemble 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies in one way or the other.
+.. .. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies in one way or the other.
 
-Since you might be interested in thermodynamic properties of a reacting
-system you may use the Wang-Landau algorithm ::cite:`wang01a`
-to obtain them ::cite:`landsgesell16a`. Here the 1/t Wang-Landau
-algorithm ::cite:`belardinelli07a` is implemented since it
+Combination of the Reaction Ensemble with the Wang-Landau algorithm 
+:cite:`wang01a`
+allows for enhanced sampling of the reacting system, and
+and for the determination of the density of states with respect 
+to the reaction coordinate or with respect to some other collective
+variable :cite:`landsgesell16a`. Here the 1/t Wang-Landau
+algorithm :cite:`belardinelli07a` is implemented since it
 does not suffer from systematic errors. Additionally to the above
 commands for the reaction ensemble use the following commands for the
 Wang-Landau reaction ensemble. For a description of the available methods see :mod:`espressomd.reaction_ensemble`:
 
-Constant pH method
-------------------
-.. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies.
+Constant pH simulation using the Reaction Ensemble
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. .. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies.
 
 In the constant pH method due to Reed and Reed
-::cite:`reed92a` it is possible to set the chemical potential
-of :math:`H^{+}` ions, assuming the simulated system is coupled to an
+:cite:`reed92a` it is possible to set the chemical potential
+of :math:`H^{+}` ions, assuming that the simulated system is coupled to an
 infinite reservoir. This value is the used to simulate dissociation
 equilibrium of acids and bases. Under certain conditions, the constant
-pH method can yield equivalent results as the reaction ensemble. For
-more information see ::cite:`landsgesell16b`. However, it
+pH method can yield equivalent results as the reaction ensemble :cite:`landsgesell16b`. However, it
 treats the chemical potential of :math:`H^{+}` ions and their actual
 number in the simulation box as independent variables, which can lead to
-serious artifacts. The constant pH method significantly differs in its
-derivation compared to the Reaction Ensemble. The constant pH method can
-be used by initializing the reactions of interest with the commands
-mentioned for the reaction ensemble. However with the difference that
-you do not provide the dimensionless reaction constant but directly the
-*apparent reaction constant* (from the law of mass action) :math:`K_a`
-which can in general carry a unit. For an example file for how to setup
-a Constant pH simulation, see a file in the testcases. The following
-commands for the constant pH method are available. For a description of the available methods see :mod:`espressomd.reaction_ensemble`:
+serious artifacts. 
+The constant pH method can be used within the reaction ensemble module by
+initializing the reactions with the standard commands of the reaction ensemble. 
 
-Grand Canonical Ensemble
-------------------------
-
-Since the Reaction Ensemble acceptance transition probability can be
-derived from the grand canonical acceptance transition probability we
-can use the reaction ensemble to implement grand canonical simulation
-moves. This is done via adding reactions that only have reactants (for the
-deletion of particles) or only have products (for the creation of
-particles). There exists a one to one mapping of the expressions in the
-grand canonical transition probabilities and the expressions in the
-reaction ensemble transition probabilities.
-
-How to add the water autodissociation to a simulation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-With the above trick of grand canonical simulation moves include we can
-include the autodissociation of water into the system. In order to add
-the water autodissociation 
-
+The dissociation constant, which is the input of the constant pH method, is the equilibrium
+constant :math:`K_c` for the following reaction:
 
 .. math::
 
-   \mathrm{2 H_2O \rightleftharpoons\ H_3O^+ + OH^- } \,,
+   \mathrm{HA \rightleftharpoons\ H^+ + A^- } \,,
 
+For an example of how to setup
+a Constant pH simulation, see the file in the testsuite directory. 
+For a description of the available methods see :mod:`espressomd.reaction_ensemble`:
 
-add the following ex nihilo reactions to Espresso. (:math:`\emptyset`, read ex
-nihilo). Ex nihilo means that the reaction has no reactants or products.
-Therefore, if :math:`\emptyset` is a product, particles vanish and if
-:math:`\emptyset` is an reactant, then particles are created ex nihilo:
+Grand canonical ensemble simulation using the Reaction Ensemble
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As a special case, all stoichiometric coefficients on one side of the chemical
+reaction can be set to zero.  Such reaction creates particles *ex nihilo*, and 
+is equivalent to exchange with a reservoir. Then the simulation in the reaction ensemble becomes equivalent with the
+grandcanonical simulation. Formally, this can be expressed by the reaction
 
 .. math::
+ 
+    \mathrm{\emptyset \rightleftharpoons\ \nu_A A  }  \,, 
 
-   \mathrm{\emptyset \rightleftharpoons\ H_3O^+ + OH^- }  \,, 
+where, if :math:`\nu_A=1`, the reaction constant :math:`\Gamma` defines the chemical potential of species A.
+However, if :math:`\nu_A\neq 1`, the statistics of the reaction ensemble becomes
+equivalent to the grandcanonical only in the limit of large average number of species A in the box.
+It the reaction contains more than one product, then the reaction constant
+:math:`\Gamma` defines only the sum of their chemical potentials but not the
+chemical potential of each product alone.
 
-with reaction constant K
-
-.. math::
-
-   \mathrm{H_3O^+ + OH^- \rightleftharpoons\ \emptyset} \,, 
-
-with reaction constant 1/K. K is given implicitly as a function of the apparent dissociation
-constant :math:`K_w=10^{-14} \rm{mol^2/l^2}=x\cdot \rm{1/(\sigma^3)^2}` such that the dimensionless is
-:math:`K=(x\cdot \rm{1/(\sigma^3)^2})/(\beta P^0)^{\overline{\nu}}` with
-:math:`\overline{\nu}=2` for the dissociation reaction and where x is
-the value of the apparent dissociation constant that is converted from
-:math:`\rm{mol^2/l^2}` to a number density in :math:`1/(\sigma^3)^2`,
-where :math:`\sigma` is the simulation length unit. If :math:`\beta` and
-:math:`P^0` are provided in simulation units this will make :math:`K`
-dimensionless. As a test for the autodissociation of water a big
-simulation box can be set up and the autodissociation reaction can be
-performed. Then the box should fill with the correct number of protons
-and hydroxide ions (check for the number of protons and hydroxide ions
-in the given simulation volume and compare this to the expected value at
-pH 7). Further the :math:`pK_w=14` should be reproduced -also in the
-case of an initial excess of acid or base in the simulation box. Note
-that this only works for big enough volumes.
+.. Since the Reaction Ensemble acceptance transition probability can be
+.. derived from the grand canonical acceptance transition probability we
+.. can use the reaction ensemble to implement grand canonical simulation
+.. moves. This is done via adding reactions that only have reactants (for the
+.. deletion of particles) or only have products (for the creation of
+.. particles). There exists a one to one mapping of the expressions in the
+.. grand canonical transition probabilities and the expressions in the
+.. reaction ensemble transition probabilities.
 
 
 

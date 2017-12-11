@@ -674,7 +674,7 @@ bool ReactionEnsemble::is_in_list(int value, int* list, int len_list){
 */
 std::vector<double> vecnorm(std::vector<double> vec, double desired_length){
 	for(int i=0;i<vec.size();i++){
-		vec[i]=vec[i]/utils::veclen(vec)*desired_length;	
+		vec[i]=vec[i]/Utils::veclen(vec)*desired_length;	
 	}
 	return vec;
 }
@@ -696,7 +696,7 @@ std::vector<double> vec_random(double desired_length){
 		for(int i=0;i<3;i++){
 			vec.push_back(2*d_random()-1.0);
 		}
-		if (utils::veclen(vec)<=1)
+		if (Utils::veclen(vec)<=1)
 			break;
 	}
 	vecnorm(vec,desired_length);
@@ -810,8 +810,9 @@ bool ReactionEnsemble::do_global_mc_move_for_particles_of_type(int type, int sta
 			auto part = get_particle_data(i);
 			//move particle to new position nearby
 			const double length_of_displacement=0.05;
-			add_random_vector(part->r.p, 3, length_of_displacement);
-			place_particle(i,part->r.p);
+      auto pos_new = Vector3d{part->r.p};
+			add_random_vector(pos_new.data(), 3, length_of_displacement);
+			place_particle(i,pos_new.data());
 		}
 		
 	}
@@ -1660,7 +1661,6 @@ int ReactionEnsemble::get_random_p_id(){
 /**
 * Constant-pH Ensemble, for derivation see Reed and Reed 1992
 * For the constant pH reactions you need to provide the deprotonation and afterwards the corresponding protonation reaction (in this order). If you want to deal with multiple reactions do it multiple times.
-* Note that there is a difference in the usecase of the constant pH reactions and the above reaction ensemble. For the constant pH simulation directily the **apparent equilibrium constant which carries a unit** needs to be provided -- this is different from the reaction ensemble above, where the dimensionless reaction constant needs to be provided. Again: For the constant-pH algorithm not the dimensionless reaction constant needs to be provided here, but the apparent reaction constant.
 */
 
 /**

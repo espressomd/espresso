@@ -35,10 +35,8 @@ from espressomd.utils import array_locked
 
 PARTICLE_EXT_FORCE = 1
 
-
 def _COORD_FIXED(coord):
     return 2L << coord
-
 
 COORDS_FIX_MASK = _COORD_FIXED(0) | _COORD_FIXED(1) | _COORD_FIXED(2)
 COORDS_ALL_FIXED = _COORD_FIXED(0) & _COORD_FIXED(1) & _COORD_FIXED(2)
@@ -56,7 +54,6 @@ for d in dir(ParticleHandle):
         if not d in ["pos_folded"]:
             particle_attributes.append(d)
 
-
 cdef class ParticleHandle(object):
     def __cinit__(self, _id):
         self.id = _id
@@ -66,8 +63,6 @@ cdef class ParticleHandle(object):
         if not self.particle_data:
             raise Exception(
                 "Particle with id " + str(self.id) + " does not exist.")
-        else:
-            return 0
 
     def __str__(self):
         res = collections.OrderedDict()
@@ -110,7 +105,7 @@ cdef class ParticleHandle(object):
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.get()[0].p.type
+            return self.particle_data.p.type
 
     # Particle MolId
     property mol_id:
@@ -137,7 +132,7 @@ cdef class ParticleHandle(object):
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.get()[0].p.mol_id
+            return self.particle_data.p.mol_id
 
     # Position
     property pos:
@@ -160,14 +155,9 @@ cdef class ParticleHandle(object):
 
         def __get__(self):
             self.update_particle_data()
-            cdef double ppos[3]
-            cdef int img[3]
-            for i in range(3):
-                img[i] = self.particle_data.get()[0].l.i[i]
-                ppos[i] = self.particle_data.get()[0].r.p[i]
+            cdef Vector3d ret = unfolded_position(self.particle_data)
 
-            unfold_position(ppos, img)
-            return array_locked([ppos[0], ppos[1], ppos[2]])
+            return array_locked([ret[0], ret[1], ret[2]])
 
     property pos_folded:
         """
@@ -208,10 +198,10 @@ cdef class ParticleHandle(object):
             raise Exception("setting a folded position is not implemented")
 
         def __get__(self):
-            cdef double pos[3]
-            pos = self.pos
-            fold_position(pos, self.particle_data.get()[0].l.i)
-            return array_locked(pos)
+            self.update_particle_data()
+            cdef Vector3d ret = folded_position(self.particle_data)
+
+            return array_locked([ret[0], ret[1], ret[2]])
 
     # Velocity
     property v:
@@ -242,21 +232,17 @@ cdef class ParticleHandle(object):
             self.update_particle_data()
             IF MULTI_TIMESTEP:
                 if smaller_time_step > 0. and self.smaller_timestep:
-                    ret = np.array([self.particle_data.get()[0].m.v[0] / smaller_time_step,
-                                     self.particle_data.get()[0].m.v[
-                                         1] / smaller_time_step,
-                                     self.particle_data.get()[0].m.v[2] / smaller_time_step])
+                    return array_locked([self.particle_data.m.v[0] / smaller_time_step,
+                                         self.particle_data.m.v[1] / smaller_time_step,
+                                         self.particle_data.m.v[2] / smaller_time_step])
                 else:
-                    ret = np.array([self.particle_data.get()[0].m.v[0] / time_step,
-                                     self.particle_data.get()[
-                        0].m.v[1] / time_step,
-                        self.particle_data.get()[0].m.v[2] / time_step])
+                    return array_locked([self.particle_data.m.v[0] / time_step,
+                                         self.particle_data.m.v[1] / time_step,
+                                         self.particle_data.m.v[2] / time_step])
             ELSE:
-                ret = np.array([self.particle_data.get()[0].m.v[0] / time_step,
-                                 self.particle_data.get()[
-                    0].m.v[1] / time_step,
-                    self.particle_data.get()[0].m.v[2] / time_step])
-            return array_locked(ret)
+                return array_locked([self.particle_data.m.v[0] / time_step,
+                                     self.particle_data.m.v[1] / time_step,
+                                     self.particle_data.m.v[2] / time_step])
 
     # Force
     property f:
@@ -286,10 +272,9 @@ cdef class ParticleHandle(object):
         def __get__(self):
             global time_step
             self.update_particle_data()
-            return array_locked(np.array([self.particle_data.get()[0].f.f[0] * self.particle_data.get()[0].p.mass / (0.5 * time_step**2),
-                             self.particle_data.get()[
-                0].f.f[1] * self.particle_data.get()[0].p.mass / (0.5 * time_step**2),
-                self.particle_data.get()[0].f.f[2] * self.particle_data.get()[0].p.mass / (0.5 * time_step**2)]))
+            return array_locked([self.particle_data.f.f[0] * self.particle_data.p.mass / (0.5 * time_step**2),
+                                 self.particle_data.f.f[1] * self.particle_data.p.mass / (0.5 * time_step**2),
+                                 self.particle_data.f.f[2] * self.particle_data.p.mass / (0.5 * time_step**2)])
 
     # Bonds
     property bonds:
@@ -337,10 +322,10 @@ cdef class ParticleHandle(object):
             bonds = []
             # Go through the bond list of the particle
             i = 0
-            while i < self.particle_data.get()[0].bl.n:
+            while i < self.particle_data.bl.n:
                 bond = []
                 # Bond type:
-                bond_id = self.particle_data.get()[0].bl.e[i]
+                bond_id = self.particle_data.bl.e[i]
                 bond.append(BondedInteractions()[bond_id])
                 # Number of partners
                 nPartners = bonded_ia_params[bond_id].num
@@ -349,7 +334,7 @@ cdef class ParticleHandle(object):
 
                 # Copy bond partners
                 for j in range(nPartners):
-                    bond.append(self.particle_data.get()[0].bl.e[i])
+                    bond.append(self.particle_data.bl.e[i])
                     i += 1
                 bonds.append(tuple(bond))
 
@@ -377,8 +362,8 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef int * x = NULL
-                pointer_to_smaller_timestep(self.particle_data.get(), x)
+                cdef const int * x = NULL
+                pointer_to_smaller_timestep(self.particle_data, x)
                 return x[0]
 
     # MASS
@@ -407,7 +392,7 @@ cdef class ParticleHandle(object):
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.get()[0].p.mass
+            return self.particle_data.p.mass
 
     IF ROTATION == 1:
         property omega_lab:
@@ -445,8 +430,9 @@ cdef class ParticleHandle(object):
             def __get__(self):
                 self.update_particle_data()
                 cdef double o[3]
-                convert_omega_body_to_space(self.particle_data.get(), o)
-                return array_locked(np.array([o[0], o[1], o[2]]))
+
+                convert_omega_body_to_space(self.particle_data, o)
+                return array_locked([o[0], o[1], o[2]])
 
         property quat:
             """
@@ -472,9 +458,10 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef double * x = NULL
-                pointer_to_quat(self.particle_data.get(), x)
-                return array_locked(np.array([x[0], x[1], x[2], x[3]]))
+
+                cdef const double * x = NULL
+                pointer_to_quat(self.particle_data, x)
+                return array_locked([x[0], x[1], x[2], x[3]])
 
 # Director ( z-axis in body fixed frame)
         property director:
@@ -490,17 +477,11 @@ cdef class ParticleHandle(object):
             def __set__(self, _q):
                 raise Exception(
                     "Setting the director is not implemented in the c++-core of Espresso.")
-#        cdef double myq[3]
-#        check_type_or_throw_except(_q,3,float,"Director has to be 3 floats")
-#        for i in range(3):
-#            myq[i]=_q[i]
-#        if set_particle_quatu(self.id, myq) == 1:
-#          raise Exception("Set particle position first.")
 
             def __get__(self):
                 self.update_particle_data()
-                cdef double * x = NULL
-                pointer_to_quatu(self.particle_data.get(), x)
+                cdef const double * x = NULL
+                pointer_to_quatu(self.particle_data, x)
                 return np.array([x[0], x[1], x[2]])
 
     # ROTATIONAL_INERTIA
@@ -529,9 +510,10 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef double * o = NULL
-                pointer_to_omega_body(self.particle_data.get(), o)
-                return array_locked(np.array([o[0], o[1], o[2]]))
+
+                cdef const double *o = NULL
+                pointer_to_omega_body(self.particle_data, o)
+                return array_locked([o[0], o[1], o[2]])
 
         property torque_lab:
             """
@@ -566,8 +548,9 @@ cdef class ParticleHandle(object):
             def __get__(self):
                 self.update_particle_data()
                 cdef double x[3]
-                convert_torques_body_to_space(self.particle_data.get(), x)
-                return array_locked(np.array([x[0], x[1], x[2]]))
+
+                convert_torques_body_to_space(self.particle_data, x)
+                return array_locked([x[0], x[1], x[2]])
 
     IF ROTATIONAL_INERTIA == 1:
         property rinertia:
@@ -598,10 +581,10 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef double * rinertia = NULL
+                cdef const double * rinertia = NULL
                 pointer_to_rotational_inertia(
-                    self.particle_data.get(), rinertia)
-                return array_locked(np.array([rinertia[0], rinertia[1], rinertia[2]]))
+                    self.particle_data, rinertia)
+                return array_locked([rinertia[0], rinertia[1], rinertia[2]])
 
 # Charge
     IF ELECTROSTATICS == 1:
@@ -626,8 +609,8 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef double * x = NULL
-                pointer_to_q(self.particle_data.get(), x)
+                cdef const double * x = NULL
+                pointer_to_q(self.particle_data, x)
                 return x[0]
 
     IF VIRTUAL_SITES == 1:
@@ -653,8 +636,8 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef int * x = NULL
-                pointer_to_virtual(self.particle_data.get(), x)
+                cdef const int * x = NULL
+                pointer_to_virtual(self.particle_data, x)
                 return x[0]
 
     IF VIRTUAL_SITES_RELATIVE == 1:
@@ -694,11 +677,11 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef int * rel_to = NULL
-                cdef double * dist = NULL
-                cdef double * q = NULL
+                cdef const int * rel_to = NULL
+                cdef const double * dist = NULL
+                cdef const double * q = NULL
                 pointer_to_vs_relative(
-                    self.particle_data.get(), rel_to, dist, q)
+                    self.particle_data, rel_to, dist, q)
                 return (rel_to[0], dist[0], np.array((q[0], q[1], q[2], q[3])))
 
         # vs_auto_relate_to
@@ -736,9 +719,10 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef double * x = NULL
-                pointer_to_dip(self.particle_data.get(), x)
-                return array_locked(np.array([x[0], x[1], x[2]]))
+
+                cdef const double * x = NULL
+                pointer_to_dip(self.particle_data, x)
+                return array_locked([x[0], x[1], x[2]])
 
         # Scalar magnitude of dipole moment
         property dipm:
@@ -760,8 +744,8 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef double * x = NULL
-                pointer_to_dipm(self.particle_data.get(), x)
+                cdef const double * x = NULL
+                pointer_to_dipm(self.particle_data, x)
                 return x[0]
 
     IF EXTERNAL_FORCES:
@@ -792,14 +776,14 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef double * ext_f = NULL
-                cdef int * ext_flag = NULL
-                pointer_to_ext_force(self.particle_data.get(), ext_flag, ext_f)
-                if ext_flag[0] & PARTICLE_EXT_FORCE:
-                    ret = np.array([ext_f[0], ext_f[1], ext_f[2]])
+
+                cdef const double * ext_f = NULL
+                cdef const int * ext_flag = NULL
+                pointer_to_ext_force(self.particle_data, ext_flag, ext_f)
+                if (ext_flag[0] & PARTICLE_EXT_FORCE):
+                    return array_locked([ext_f[0], ext_f[1], ext_f[2]])
                 else:
-                    ret = np.array([0.0, 0.0, 0.0])
-                return array_locked(ret)
+                    return array_locked([0.0, 0.0, 0.0])
 
         property fix:
             """
@@ -833,8 +817,8 @@ cdef class ParticleHandle(object):
             def __get__(self):
                 self.update_particle_data()
                 fixed_coord_flag = np.array([0, 0, 0], dtype=int)
-                cdef int * ext_flag = NULL
-                pointer_to_fix(self.particle_data.get(), ext_flag)
+                cdef const int * ext_flag = NULL
+                pointer_to_fix(self.particle_data, ext_flag)
                 for i in map(long, range(3)):
                     if ext_flag[0] & _COORD_FIXED(i):
                         fixed_coord_flag[i] = 1
@@ -869,15 +853,14 @@ cdef class ParticleHandle(object):
 
                 def __get__(self):
                     self.update_particle_data()
-                    cdef double * ext_t = NULL
-                    cdef int * ext_flag = NULL
+                    cdef const double * ext_t = NULL
+                    cdef const int * ext_flag = NULL
                     pointer_to_ext_torque(
-                        self.particle_data.get(), ext_flag, ext_t)
-                    if ext_flag[0] & PARTICLE_EXT_TORQUE:
-                        ret = np.array([ext_t[0], ext_t[1], ext_t[2]])
+                        self.particle_data, ext_flag, ext_t)
+                    if (ext_flag[0] & PARTICLE_EXT_TORQUE):
+                        return array_locked([ext_t[0], ext_t[1], ext_t[2]])
                     else:
-                        ret = np.array([0.0, 0.0, 0.0])
-                    return array_locked(ret)
+                        return array_locked([0.0, 0.0, 0.0])
 
     IF LANGEVIN_PER_PARTICLE:
         IF PARTICLE_ANISOTROPY:
@@ -907,9 +890,11 @@ cdef class ParticleHandle(object):
 
                 def __get__(self):
                     self.update_particle_data()
-                    cdef double * gamma = NULL
-                    pointer_to_gamma(self.particle_data.get(), gamma)
-                    return array_locked(np.array([gamma[0], gamma[1], gamma[2]]))
+
+                    cdef const double * gamma = NULL
+                    pointer_to_gamma(self.particle_data, gamma)
+                    return array_locked([gamma[0], gamma[1], gamma[2]])
+
         ELSE:
             property gamma:
                 """
@@ -934,8 +919,8 @@ cdef class ParticleHandle(object):
 
                 def __get__(self):
                     self.update_particle_data()
-                    cdef double * gamma = NULL
-                    pointer_to_gamma(self.particle_data.get(), gamma)
+                    cdef const double * gamma = NULL
+                    pointer_to_gamma(self.particle_data, gamma)
                     return gamma[0]
         IF ROTATION:
             IF PARTICLE_ANISOTROPY:
@@ -960,10 +945,10 @@ cdef class ParticleHandle(object):
 
                     def __get__(self):
                         self.update_particle_data()
-                        cdef double * gamma_rot = NULL
+                        cdef const double * gamma_rot = NULL
                         pointer_to_gamma_rot(
-                            self.particle_data.get(), gamma_rot)
-                        return array_locked(np.array([gamma_rot[0], gamma_rot[1], gamma_rot[2]]))
+                            self.particle_data, gamma_rot)
+                        return array_locked([gamma_rot[0], gamma_rot[1], gamma_rot[2]])
             ELSE:
                 property gamma_rot:
                     """
@@ -981,9 +966,9 @@ cdef class ParticleHandle(object):
 
                     def __get__(self):
                         self.update_particle_data()
-                        cdef double * gamma_rot = NULL
+                        cdef const double * gamma_rot = NULL
                         pointer_to_gamma_rot(
-                            self.particle_data.get(), gamma_rot)
+                            self.particle_data, gamma_rot)
                         return gamma_rot[0]
 
         property temp:
@@ -1005,8 +990,8 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef double * temp = NULL
-                pointer_to_temperature(self.particle_data.get(), temp)
+                cdef const double * temp = NULL
+                pointer_to_temperature(self.particle_data, temp)
                 return temp[0]
 
     IF ROTATION:
@@ -1042,10 +1027,10 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef short int * _rot = NULL
-                pointer_to_rotation( self.particle_data.get(), _rot)
+                cdef const short int * _rot = NULL
+                pointer_to_rotation( self.particle_data, _rot)
                 rot=_rot[0]
-                res=np.zeros(3)
+                res=np.zeros(3, dtype=int)
                 if rot&ROT_X: res[0]=1
                 if rot&ROT_Y: res[1]=1
                 if rot&ROT_Z: res[2]=1
@@ -1085,7 +1070,7 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef int_list exclusions = self.particle_data.get()[0].exclusions()
+                cdef int_list exclusions = self.particle_data.exclusions()
 
                 py_partners = []
                 for i in range(exclusions.n):
@@ -1260,8 +1245,8 @@ cdef class ParticleHandle(object):
                 self.update_particle_data()
                 swim = {}
                 mode = "N/A"
-                cdef particle_parameters_swimming * _swim = NULL
-                pointer_to_swimming(self.particle_data.get(), _swim)
+                cdef const particle_parameters_swimming * _swim = NULL
+                pointer_to_swimming(self.particle_data, _swim)
                 IF LB or LB_GPU:
                     if _swim.push_pull == -1:
                         mode = 'pusher'
@@ -1525,8 +1510,8 @@ cdef class ParticleHandle(object):
             _v[1] = vec[1]
             _v[2] = vec[2]
             self.update_particle_data()
-            res = convert_vector_body_to_space(self.particle_data.get()[0], _v)
-            return np.array((res[0], res[1], res[2]))
+            res= convert_vector_body_to_space(self.particle_data[0],_v)
+            return np.array((res[0],res[1],res[2]))
 
 
 cdef class _ParticleSliceImpl(object):
@@ -1538,7 +1523,9 @@ cdef class _ParticleSliceImpl(object):
 
     """
 
-    def __cinit__(self, slice_):
+    def __cinit__(self, slice_, prefetch_chunk_size=10000):
+        self._chunk_size = prefetch_chunk_size
+
         id_list = np.arange(max_seen_particle + 1)
         self.id_selection = id_list[slice_]
         mask = np.empty(len(self.id_selection), dtype=np.bool)
@@ -1549,19 +1536,24 @@ cdef class _ParticleSliceImpl(object):
         self.id_selection = self.id_selection[mask]
 
     def __iter__(self):
-        cdef int i
-        for i in self.id_selection:
-            yield ParticleHandle(i)
+        return self._id_gen()
+
+    def _id_gen(self):
+        """Generator for chunked and prefetched iteration of particles.
+        """
+        for chunk in self.chunks(self.id_selection, self._chunk_size):
+            prefetch_particle_data(chunk)
+            for i in chunk:
+                yield ParticleHandle(i)
+
+    def chunks(self, l, n):
+        """Generator returning chunks of length n from l.
+        """
+        for i in range(0, len(l), n):
+            yield l[i:i + n]
 
     def __len__(self):
         return len(self.id_selection)
-
-    cdef int update_particle_data(self, id) except -1:
-        self.particle_data = get_particle_data(id)
-        if not self.particle_data:
-            raise Exception("Error updating particle data.")
-        else:
-            return 0
 
     property pos_folded:
         """
@@ -2059,7 +2051,7 @@ def _add_particle_slice_properties():
     def geta(particle_slice, attribute):
         """
         Getter function that copies attribute from every member of
-        particle_slice into an array (if possible). 
+        particle_slice into an array (if possible).
         For special properties, a tuple of tuples is used.
 
         """
@@ -2078,14 +2070,14 @@ def _add_particle_slice_properties():
 
         if attribute in ["exclusions", "bonds", "vs_relative", "swimming"]:
             values = []
-            for i in range(N):
-                values.append(getattr(ParticleHandle(
-                    particle_slice.id_selection[i]), attribute))
+            for part in particle_slice._id_gen():
+                values.append(getattr(part, attribute))
         else:
             values = np.empty((N,) + np.shape(target), dtype=target_type)
-            for i in range(N):
-                values[i] = getattr(ParticleHandle(
-                    particle_slice.id_selection[i]), attribute)
+            i = 0
+            for part in particle_slice._id_gen():
+                values[i] = getattr(part, attribute)
+                i += 1
 
         return values
 

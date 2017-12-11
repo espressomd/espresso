@@ -43,6 +43,7 @@ public:
                        // We are expecting a ScriptInterface::Observables::Observable here,
                        // throw if not. That means the assigned object had the wrong type.
                        if (obs_ptr) {
+                         m_obs = obs_ptr;
                          m_accumulator->m_obs = obs_ptr->observable();
                          m_accumulator->initialize();
                        }
