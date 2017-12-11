@@ -614,7 +614,12 @@ int ReactionEnsemble::create_particle(int desired_type){
 	vel[1]=std::pow(2*PI*m_current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
 	vel[2]=std::pow(2*PI*m_current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
 
-	bool particle_inserted_too_close_to_another_one=true;
+#ifdef ELECTROSTATICS
+        double charge = (double)m_current_reaction_system
+                            .charges_of_types[find_index_of_type(desired_type)];
+#endif
+
+        bool particle_inserted_too_close_to_another_one=true;
 	int max_insert_tries=1000;
 	int insert_tries=0;
 	double min_dist=m_current_reaction_system.exclusion_radius; //setting of a minimal distance is allowed to avoid overlapping configurations if there is a repulsive potential. States with very high energies have a probability of almost zero and therefore do not contribute to ensemble averages.
@@ -625,7 +630,6 @@ int ReactionEnsemble::create_particle(int desired_type){
 			//set type
 			set_particle_type(p_id, desired_type);
 			#ifdef ELECTROSTATICS
-      double charge= (double) m_current_reaction_system.charges_of_types[find_index_of_type(desired_type)];
 			//set charge
 			set_particle_q(p_id, charge);
 			#endif
