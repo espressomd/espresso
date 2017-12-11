@@ -880,7 +880,6 @@ void dd_topology_init(CellPList *old) {
 
 /************************************************************/
 void dd_topology_release() {
-  int i, j;
   CELL_TRACE(fprintf(stderr, "%d: dd_topology_release:\n", this_node));
   /* release cell interactions */
 
