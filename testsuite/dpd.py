@@ -132,8 +132,7 @@ class DPDThermostat(ut.TestCase):
         s.thermostat.turn_off()
 
         # Reset velocities
-        for p in s.part[:]:
-            p.v = [1.,2.,3.]
+        s.part[:].v = [1.,2.,3.]
 
         s.integrator.run(100)
 
@@ -146,8 +145,7 @@ class DPDThermostat(ut.TestCase):
         s.thermostat.set_dpd(kT=kT)
 
         # Reset velocities for faster convergence
-        for p in s.part[:]:
-            p.v = [0.,0.,0.]
+        s.part[:].v = [0.,0.,0.]
 
         loops=6000
         v_stored=np.zeros((N*loops,3))

@@ -219,8 +219,8 @@ bool in_lower_half_space(Particle p1, Particle p2) {
   // half space of particle p1
   double distvec[3];
   get_mi_vector(distvec, p1.r.p, p2.r.p);
-  double dot = utils::dot_product(p1.r.quatu, distvec);
-  int sgn = utils::sign(dot);
+  double dot = Utils::dot_product(p1.r.quatu, distvec);
+  int sgn = Utils::sign(dot);
   return (sgn + 1) / 2;
 }
 

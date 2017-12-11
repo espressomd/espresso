@@ -114,10 +114,16 @@ if (WITH_CUDA)
   endif()
   if (CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_C_COMPILER OR CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_CXX_COMPILER)
     message(STATUS "Found CUDA-capable host compiler: ${CUDA_NVCC_EXECUTABLE}")
-    find_library(CUDA_LIBRARY NAMES cuda)
-    find_library(CUDART_LIBRARY NAMES cudart)
-    find_library(CUFFT_LIBRARY NAMES cufft)
-    list(APPEND LIBRARIES ${CUDA_LIBRARY})
+    if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" )
+        execute_process(COMMAND ${CUDA_NVCC_EXECUTABLE} ${CMAKE_CXX_FLAGS} --verbose
+                ERROR_VARIABLE CUDA_DIR)
+        string(REGEX REPLACE "^.*Found CUDA installation: ([^,]+).*\$" "\\1" CUDA_DIR "${CUDA_DIR}")
+        message(STATUS "Found CUDA installation: ${CUDA_DIR}")
+    else()
+        set(CUDA_DIR "/usr/local/cuda")
+    endif()
+    find_library(CUDART_LIBRARY NAMES cudart PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib)
+    find_library(CUFFT_LIBRARY NAMES cufft PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib)
     list(APPEND LIBRARIES ${CUDART_LIBRARY})
     list(APPEND LIBRARIES ${CUFFT_LIBRARY})
     set(CUDA 1)
@@ -324,8 +330,6 @@ if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION VERSI
   # older versions don't support -Wno-pedantic which we need in src/python
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
 endif()
-
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG -D_LIBCPP_DEBUG")
 
 set(CMAKE_MACOSX_RPATH TRUE)
 

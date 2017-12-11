@@ -60,6 +60,7 @@
 /** Included needed by callbacks. */
 #include "cuda_init.hpp"
 #include "particle_data.hpp"
+
 #include "utils/serialization/array.hpp"
 
 /**************************************************
@@ -372,7 +373,7 @@ void mpi_remove_particle(int node, int id);
     \note Gets a copy of the particle data not a pointer to the actual particle
     used in integration
 */
-void mpi_recv_part(int node, int part, Particle *part_data);
+Particle mpi_recv_part(int node, int part);
 
 /** Issue REQ_INTEGRATE: start integrator.
     @param n_steps how many steps to do.

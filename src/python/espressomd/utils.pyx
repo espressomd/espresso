@@ -55,7 +55,7 @@ cdef np.ndarray create_nparray_from_double_list(double_list * dl):
         numpyArray[i] = dl.e[i]
     return numpyArray
 
-cdef int_list * create_int_list_from_python_object(obj):
+cdef int_list create_int_list_from_python_object(obj):
     """
     Returns a int list pointer from a python object which supports subscripts.
 
@@ -64,16 +64,13 @@ cdef int_list * create_int_list_from_python_object(obj):
     obj : python object which supports subscripts
 
     """
-    cdef int_list * il
-    il = <int_list * > malloc(sizeof(int_list))
-    init_intlist(il)
+    cdef int_list il
+    il.resize(len(obj))
 
-    alloc_intlist(il, len(obj))
     for i in range(len(obj)):
         il.e[i] = obj[i]
-    il.n = len(obj)
-    return il
 
+    return il
 
 cdef check_type_or_throw_except(x, n, t, msg):
     """
@@ -290,4 +287,21 @@ def get_unravelled_index(len_dims, n_dims, flattened_index):
     for i in range(n_dims):
         out[i] = unravelled_index_out[i]
     return out
-    
+   
+def nesting_level(obj):
+    """
+    Returns the maximal nesting level of an object.
+
+    """
+
+    if not isinstance(obj, (list,tuple)):
+        return 0
+
+    obj=list(obj)
+
+    max_level = 0
+    for item in obj: 
+        max_level = max(max_level, nesting_level(item))
+
+    return max_level + 1
+ 

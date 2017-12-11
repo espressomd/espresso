@@ -179,7 +179,7 @@ private:
   void restore_properties(std::vector<StoredParticleProperty> &property_list,
                           const int number_of_saved_properties);
   void add_types_to_index(std::vector<int> &type_list);
-  void add_random_vector(double *vector, int len_vector,
+  std::vector<double> add_random_vector(double const *vector, int len_vector,
                          double length_of_displacement);
   void get_random_position_in_box(double *out_pos);
   void
