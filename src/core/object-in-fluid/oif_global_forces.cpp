@@ -364,7 +364,8 @@ void add_oif_global_forces(double *area_volume,
         for(k=0;k<3;k++){
           h[k]=1.0/3.0 *(p11[k]+p22[k]+p33[k]);
         }
-        deltaA = area - iaparams->p.oif_global_forces.A0_g;
+        deltaA = (area - iaparams->p.oif_global_forces.A0_g)/iaparams->p.oif_global_forces.A0_g;
+        //deltaA = (area - iaparams->p.oif_global_forces.A0_g)/1.0;
         vecsub(h,p11,m1);
         vecsub(h,p22,m2);
         vecsub(h,p33,m3);  
