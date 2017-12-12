@@ -1,11 +1,8 @@
 from __future__ import print_function
 import espressomd
-from espressomd import thermostat
-from espressomd import integrate
-import numpy
-from threading import Thread
+from espressomd.visualization_opengl import openGLLive
+import numpy as np
 from math import *
-from espressomd.visualization_opengl import *
 
 system = espressomd.System()
 box_l = 15
@@ -96,10 +93,10 @@ for i in range(n_steam):
             system.part[pid].ext_force = [0,5.0,0]
 
 
-system.time_step = 0.00015
+system.time_step = 0.00022
 system.cell_system.skin = 0.4
 
-system.thermostat.set_langevin(kT=0.0, gamma=0.1)
+system.thermostat.set_langevin(kT=0.0, gamma=0.07)
 WCA_cut = 2.**(1. / 6.)
 
 lj_eps = 1.0
@@ -110,16 +107,23 @@ for i in range(2):
         system.non_bonded_inter[i,j].lennard_jones.set_params(epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
 visualizer = openGLLive(system, 
-                        particle_sizes = [0.6,0.7,0.2], 
-                        particle_type_colors = [[0, 0, 0.8, 1], [0.8, 0, 0, 1], [0.8, 0.8, 0.8, 1], [0, 1, 1, 1], [1, 1, 1, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
-                        bond_type_colors = [[0.2, 0.2, 0.2, 1], [0, 1, 1, 1], [1, 1, 1, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
+						background_color = [0.2,0.2,0.3],
+                        particle_sizes = [0.6,0.7,0.3], 
+						particle_type_materials = ['bright', 'gold', 'chrome'],
+						bond_type_materials = ['chrome'],
+                        particle_type_colors = [[0, 0, 0.8, 1], [0.8, 0, 0, 1], [0.8, 0.8, 0.8, 1]],
+                        bond_type_colors = [[0.2, 0.2, 0.2, 1], [0, 1, 1, 1], [1, 0.5, 0, 1]],
                         bond_type_radius = [0.1],
-                        spotlight_brightness = 1,
-                        light_brightness = 2.0,
+                        spotlight_brightness = 1.0,
+                        light_brightness = 1.0,
                         ext_force_arrows = False,
                         draw_axis = False,
                         draw_box = False,
                         drag_enabled = True )
+
+def rotate():
+	visualizer.camera.rotateSystemXL()
+
+visualizer.registerCallback(rotate, interval = 16)
+
 visualizer.run(1)
-
-

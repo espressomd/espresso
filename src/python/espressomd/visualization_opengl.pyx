@@ -72,6 +72,39 @@ class openGLLive(object):
         :spotlight\_angle: The spread angle of the spotlight in degrees (from 0 to 90).
         :spotlight\_brightness: Brightness (inverse constant attenuation) of the spotlight. 
         :spotlight\_focus: Focus (spot exponent) for the spotlight from 0 (uniform) to 128."""
+        
+
+        # MATERIALS
+        self.materials = {
+            'bright':       [[0.9,0.9,0.9],[1.0,1.0,1.0],[0.8,0.8,0.8],0.6],
+            'medium':       [[0.6,0.6,0.6],[0.8,0.8,0.8],[0.2,0.2,0.2],0.5],
+            'dark':         [[0.4,0.4,0.4],[0.5,0.5,0.5],[0.1,0.1,0.1],0.4],
+            'bluerubber':   [[0,0,0.05],[0.4,0.4,0.5],[0.04,0.04,0.7],0.078125],
+            'redrubber':    [[0.05,0,0],[0.5,0.4,0.4],[0.7,0.04,0.04],0.078125],
+            'yellowrubber': [[0.05,0.05,0],[0.5,0.5,0.4],[0.7,0.7,0.04],0.078125],
+            'greenrubber':  [[0,0.05,0],[0.4,0.5,0.4],[0.04,0.7,0.04],0.078125],
+            'whiterubber':  [[0.05,0.05,0.05],[0.5,0.5,0.5],[0.7,0.7,0.7],0.078125],
+            'cyanrubber':   [[0,0.05,0.05],[0.4,0.5,0.5],[0.04,0.7,0.7],0.078125],
+            'blackrubber':  [[0.02,0.02,0.02],[0.01,0.01,0.01],[0.4,0.4,0.4],0.078125],
+            'emerald':      [[0.0215,0.1745,0.0215],[0.07568,0.61424,0.07568],[0.633,0.727811,0.633],0.6],
+            'jade':         [[0.135,0.2225,0.1575],[0.54,0.89,0.63],[0.316228,0.316228,0.316228],0.1],
+            'obsidian':     [[0.05375,0.05,0.06625],[0.18275,0.17,0.22525],[0.332741,0.328634,0.346435],0.3],
+            'pearl':        [[0.25,0.20725,0.20725],[1,0.829,0.829],[0.296648,0.296648,0.296648],0.088],
+            'ruby':         [[0.1745,0.01175,0.01175],[0.61424,0.04136,0.04136],[0.727811,0.626959,0.626959],0.6],
+            'turquoise':    [[0.1,0.18725,0.1745],[0.396,0.74151,0.69102],[0.297254,0.30829,0.306678],0.1],
+            'brass':        [[0.329412,0.223529,0.027451],[0.780392,0.568627,0.113725],[0.992157,0.941176,0.807843],0.21794872],
+            'bronze':       [[0.2125,0.1275,0.054],[0.714,0.4284,0.18144],[0.393548,0.271906,0.166721],0.2],
+            'chrome':       [[0.25,0.25,0.25],[0.4,0.4,0.4],[0.774597,0.774597,0.774597],0.6],
+            'copper':       [[0.19125,0.0735,0.0225],[0.7038,0.27048,0.0828],[0.256777,0.137622,0.086014],0.1],
+            'gold':         [[0.24725,0.1995,0.0745],[0.75164,0.60648,0.22648],[0.628281,0.555802,0.366065],0.4],
+            'silver':       [[0.19225,0.19225,0.19225],[0.50754,0.50754,0.50754],[0.508273,0.508273,0.508273],0.4],
+            'blackplastic': [[0,0,0],[0.01,0.01,0.01],[0.5,0.5,0.5],0.25],
+            'cyanplastic':  [[0,0.1,0.06],[0,0.50980392,0.50980392],[0.50196078,0.50196078,0.50196078],0.25],
+            'greenplastic': [[0,0,0],[0.1,0.35,0.1],[0.45,0.55,0.45],0.25],
+            'redplastic':   [[0,0,0],[0.5,0,0],[0.7,0.6,0.6],0.25],
+            'whiteplastic': [[0,0,0],[0.55,0.55,0.55],[0.7,0.7,0.7],0.25],
+            'yellowplastic':[[0,0,0],[0.5,0.5,0],[0.6,0.6,0.5],0.25]}
+
 
         # DEFAULT PROPERTIES
         self.specs = {
@@ -82,7 +115,7 @@ class openGLLive(object):
             'periodic_images': [0, 0, 0],
             'draw_box': True,
             'draw_axis': True,
-            'quality_particles': 16,
+            'quality_particles': 20,
             'quality_bonds': 16,
             'quality_arrows': 16,
             'quality_constraints': 32,
@@ -91,24 +124,23 @@ class openGLLive(object):
             'camera_position': 'auto',
             'camera_target': 'auto',
             'camera_right': [1.0, 0.0, 0.0],
-            #'camera_rotation':	   		  [3.55, -0.4],
 
             'particle_coloring': 'auto',
             'particle_sizes': 'auto',
             'particle_type_colors': [[1, 1, 0, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 1, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
-            'particle_type_materials': [[0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1]],
+            'particle_type_materials': ['medium'],
             'particle_charge_colors': [[1, 0, 0, 1], [0, 1, 0, 1]],
 
             'draw_constraints': True,
             'rasterize_pointsize': 10,
             'rasterize_resolution': 75.0,
             'constraint_type_colors': [[0.5, 0.5, 0.5, 0.9], [0, 0.5, 0.5, 0.9], [0.5, 0, 0.5, 0.9], [0.5, 0.5, 0, 0.9], [0, 0, 0.5, 0.9], [0.5, 0, 0, 0.9]],
-            'constraint_type_materials': [[0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1]],
+            'constraint_type_materials': ['medium'],
 
             'draw_bonds': True,
             'bond_type_radius': [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
             'bond_type_colors': [[1, 1, 1, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
-            'bond_type_materials': [[0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1]],
+            'bond_type_materials': ['medium'],
 
             'ext_force_arrows': True,
             'ext_force_arrows_scale': [1, 1, 1, 1, 1, 1, 1],
@@ -133,6 +165,7 @@ class openGLLive(object):
             'drag_enabled': False,
             'drag_force': 3.0
         }
+
 
         # OVERWRITE WITH USER PROPERTIES
         for key in kwargs:
@@ -420,9 +453,9 @@ class openGLLive(object):
         if self.specs['draw_axis']:
             axis_fac = 0.2
             axis_r = np.min(self.system.box_l)/50.0
-            _drawArrow([0,0,0], [self.system.box_l[0] * axis_fac, 0, 0], axis_r, [1, 0, 0, 1], self.specs['quality_arrows'])
-            _drawArrow([0,0,0], [0, self.system.box_l[2] * axis_fac, 0], axis_r, [0, 1, 0, 1], self.specs['quality_arrows'])
-            _drawArrow([0,0,0], [0, 0, self.system.box_l[2] * axis_fac], axis_r, [0, 0, 1, 1], self.specs['quality_arrows'])
+            _drawArrow([0,0,0], [self.system.box_l[0] * axis_fac, 0, 0], axis_r, [1, 0, 0, 1], self.materials['chrome'], self.specs['quality_arrows'])
+            _drawArrow([0,0,0], [0, self.system.box_l[2] * axis_fac, 0], axis_r, [0, 1, 0, 1], self.materials['chrome'], self.specs['quality_arrows'])
+            _drawArrow([0,0,0], [0, 0, self.system.box_l[2] * axis_fac], axis_r, [0, 0, 1, 1], self.materials['chrome'], self.specs['quality_arrows'])
 
         self._drawSystemParticles()
 
@@ -443,28 +476,28 @@ class openGLLive(object):
             glClipPlane(GL_CLIP_PLANE0 + i, self.box_eqn[i])
 
         for s in self.shapes['Shapes::Sphere']:
-            _drawSphere(s[0], s[1], self._modulo_indexing(self.specs['constraint_type_colors'], s[2]), self._modulo_indexing(
-                self.specs['constraint_type_materials'], s[2]), self.specs['quality_constraints'])
+            _drawSphere(s[0], s[1], self._modulo_indexing(self.specs['constraint_type_colors'], s[2]), self.materials[self._modulo_indexing(
+                self.specs['constraint_type_materials'], s[2])], self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::SpheroCylinder']:
             _drawSpheroCylinder(
                 s[0], s[1], s[2], self._modulo_indexing(
                     self.specs['constraint_type_colors'], s[3]),
-                               self._modulo_indexing(self.specs['constraint_type_materials'], s[3]), self.specs['quality_constraints'])
+                               self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[3])], self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::Wall']:
             _drawPlane(
                 s[0], self._modulo_indexing(
                     self.specs['constraint_type_colors'], s[1]),
-                      self._modulo_indexing(self.specs['constraint_type_materials'], s[1]))
+                      self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[1])])
 
         for s in self.shapes['Shapes::Cylinder']:
-            _drawCylinder(s[0], s[1], s[2], self._modulo_indexing(self.specs['constraint_type_colors'], s[3]), self._modulo_indexing(
-                self.specs['constraint_type_materials'], s[3]), self.specs['quality_constraints'], True)
+            _drawCylinder(s[0], s[1], s[2], self._modulo_indexing(self.specs['constraint_type_colors'], s[3]), self.materials[self._modulo_indexing(
+                self.specs['constraint_type_materials'], s[3])], self.specs['quality_constraints'], True)
 
         for s in self.shapes['Shapes::Misc']:
             _drawPoints(s[0], self.specs['rasterize_pointsize'],  self._modulo_indexing(
-                self.specs['constraint_type_colors'], s[1]), self._modulo_indexing(self.specs['constraint_type_materials'], s[1]))
+                self.specs['constraint_type_colors'], s[1]), self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[1])])
 
         for i in range(6):
             glDisable(GL_CLIP_PLANE0 + i)
@@ -503,8 +536,8 @@ class openGLLive(object):
 
             radius = self._determine_radius(ptype)
 
-            material = self._modulo_indexing(
-                self.specs['particle_type_materials'], ptype)
+            m = self._modulo_indexing(self.specs['particle_type_materials'], ptype)
+            material = self.materials[m]
 
             if self.specs['particle_coloring'] == 'id':
                 color = self._IdToColorf(pid)
@@ -541,7 +574,7 @@ class openGLLive(object):
                                 self.specs['ext_force_arrows_scale'], ptype)
                         if sc > 0:
                             _drawArrow(pos, np.array(ext_f) * sc, 0.25 *
-                                      sc, [1, 1, 1, 1], self.specs['quality_arrows'])
+                                      sc, [1, 1, 1, 1], self.materials['chrome'], self.specs['quality_arrows'])
 
     def _drawBonds(self):
         coords = self.particles['coords']
@@ -550,7 +583,7 @@ class openGLLive(object):
         box_l2_sqr = pow(b2, 2.0)
         for b in self.bonds:
             col = self._modulo_indexing(self.specs['bond_type_colors'], b[2])
-            mat = self._modulo_indexing(self.specs['bond_type_materials'], b[2])
+            mat = self.materials[self._modulo_indexing(self.specs['bond_type_materials'], b[2])]
             radius = self._modulo_indexing(self.specs['bond_type_radius'], b[2])
             d = coords[b[0]] - coords[b[1]]
             bondLen_sqr = d[0] * d[0] + d[1] * d[1] + d[2] * d[2]
@@ -614,7 +647,7 @@ class openGLLive(object):
             p = lbl[0]
             v = lbl[1]
             c = np.linalg.norm(v)
-            _drawArrow(p, v * self.specs['LB_vel_scale'], self.lb_arrow_radius, [1,1,1,1], 16)
+            _drawArrow(p, v * self.specs['LB_vel_scale'], self.lb_arrow_radius, [1,1,1,1], self.materials['chrome'], 16)
         
     # USE MODULO IF THERE ARE MORE PARTICLE TYPES THAN TYPE DEFINITIONS FOR
     # COLORS, MATERIALS ETC..
@@ -1022,17 +1055,17 @@ class openGLLive(object):
 # OPENGL DRAW WRAPPERS
 
 
-def _setSolidMaterial(r, g, b, a=1.0, ambient=0.6, diffuse=1.0, specular=0.1):
+def _setSolidMaterial(r, g, b, a=1.0, ambient=[0.6,0.6,0.6], diffuse=[1.0,1.0,1.0], specular=[0.1,0.1,0.1], shininess = 0.4):
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT,  [
-                 ambient * r, ambient * g, ambient * g, a])
+                 ambient[0] * r, ambient[1] * g, ambient[2] * g, a])
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, [
-                 diffuse * r, diffuse * g, diffuse * b, a])
+                 diffuse[0] * r, diffuse[1] * g, diffuse[2] * b, a])
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, [
-                 specular * r, specular * g, specular * g, a])
-    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 50)
+                 specular[0] * r, specular[1] * g, specular[2] * g, a])
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, int(shininess * 128))
 
 def _drawBox(p0, s, color):
-    _setSolidMaterial(color[0], color[1], color[2], 1, 2, 1)
+    _setSolidMaterial(color[0], color[1], color[2])
     glPushMatrix()
     glTranslatef(p0[0], p0[1], p0[2])
     glBegin(GL_LINE_LOOP)
@@ -1064,8 +1097,7 @@ def _drawBox(p0, s, color):
 def _drawSphere(pos, radius, color, material, quality):
     glPushMatrix()
     glTranslatef(pos[0], pos[1], pos[2])
-    _setSolidMaterial(color[0], color[1], color[2], color[
-                     3], material[0], material[1], material[2])
+    _setSolidMaterial(color[0], color[1], color[2], color[3], material[0], material[1], material[2], material[3])
     glutSolidSphere(radius, quality, quality)
     glPopMatrix()
 
@@ -1080,7 +1112,7 @@ def _redrawSphere(pos, radius, quality):
 def _drawPlane(edges, color, material):
 
     _setSolidMaterial(color[0], color[1], color[2], color[
-                     3], material[0], material[1], material[2])
+                     3], material[0], material[1], material[2], material[3])
 
     glBegin(GL_QUADS)
     for e in edges:
@@ -1103,7 +1135,7 @@ def _drawTriangles(triangles, color, material):
         color = np.random.random(3).tolist()
         color.append(1)
         _setSolidMaterial(color[0], color[1], color[2],
-                         color[3], material[0], material[1], material[2])
+                         color[3], material[0], material[1], material[2], material[3])
         for p in t:
             glVertex3f(p[0], p[1], p[2])
     glEnd()
@@ -1111,7 +1143,7 @@ def _drawTriangles(triangles, color, material):
 
 def _drawPoints(points, pointsize, color, material):
     _setSolidMaterial(color[0], color[1], color[2], color[3],
-                     material[0], material[1], material[2])
+                     material[0], material[1], material[2], material[3])
     glEnable(GL_POINT_SMOOTH)
 
     glPointSize(pointsize)
@@ -1123,7 +1155,7 @@ def _drawPoints(points, pointsize, color, material):
 
 def _drawCylinder(posA, posB, radius, color, material, quality, draw_caps=False):
     _setSolidMaterial(color[0], color[1], color[2], color[3],
-                     material[0], material[1], material[2])
+                     material[0], material[1], material[2], material[3])
     glPushMatrix()
     quadric = gluNewQuadric()
 
@@ -1163,7 +1195,7 @@ def _rotationHelper(d):
 
 def _drawSpheroCylinder(posA, posB, radius, color, material, quality):
     _setSolidMaterial(color[0], color[1], color[
-                     2], color[3], material[0], material[1], material[2])
+                     2], color[3], material[0], material[1], material[2], material[3])
     glPushMatrix()
     quadric = gluNewQuadric()
 
@@ -1202,10 +1234,10 @@ def _drawSpheroCylinder(posA, posB, radius, color, material, quality):
     glPopMatrix()
 
 
-def _drawArrow(pos, d, radius, color, quality):
+def _drawArrow(pos, d, radius, color, material, quality):
     pos2 = np.array(pos) + np.array(d)
 
-    _drawCylinder(pos, pos2, radius, color,[0.6,1.0,0.1], quality)
+    _drawCylinder(pos, pos2, radius, color, material, quality)
     
     ax, rx, ry = _rotationHelper(d)
 
