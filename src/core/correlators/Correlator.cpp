@@ -28,8 +28,9 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
+#include <boost/iostreams/device/array.hpp>
+#include <boost/iostreams/stream.hpp>
 
-#include <cstring>
 #include <limits>
 
 namespace {
@@ -664,7 +665,9 @@ std::string Correlator::get_internal_state() const {
   return ss.str();
 }
 void Correlator::set_internal_state(std::string const &state) {
-  std::stringstream ss(state);
+  namespace iostreams = boost::iostreams;
+  iostreams::array_source src(state.data(), state.size());
+  iostreams::stream<iostreams::array_source> ss(src);
   boost::archive::binary_iarchive ia(ss);
 
   ia >> t;

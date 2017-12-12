@@ -47,7 +47,7 @@ public:
   }
 
   template <typename T> Variant operator()(T const &val) {
-    throw std::runtime_error("Invalid format.<-");
+    throw std::runtime_error("Invalid format.");
   }
 
   Variant operator()(std::vector<Variant> const &val) {
@@ -67,7 +67,7 @@ public:
       return so_ptr->id();
     } break;
     default: /* Error */
-      throw std::runtime_error("Invalid format.<=");
+      throw std::runtime_error("Invalid format.");
     }
   }
 };

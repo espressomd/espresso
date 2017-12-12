@@ -24,10 +24,14 @@
 #include "Serializer.hpp"
 #include "utils/Factory.hpp"
 
+#include <boost/iostreams/device/array.hpp>
+#include <boost/iostreams/stream.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 
 #include <sstream>
+
+namespace iostreams = boost::iostreams;
 
 namespace ScriptInterface {
 std::shared_ptr<ScriptInterfaceBase>
@@ -123,7 +127,8 @@ std::string ScriptInterfaceBase::serialize() const {
  */
 std::shared_ptr<ScriptInterfaceBase>
 ScriptInterfaceBase::unserialize(std::string const &state) {
-  std::stringstream ss(state);
+  iostreams::array_source src(state.data(), state.size());
+  iostreams::stream<iostreams::array_source> ss(src);
   boost::archive::binary_iarchive ia(ss);
 
   Variant v;
