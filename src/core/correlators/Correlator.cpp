@@ -189,16 +189,6 @@ constexpr const char init_errors[][64] = {
     "fcs_acf requires 3 additional parameters"                       // 19
 };
 
-constexpr const char double_correlation_get_data_errors[][64] = {
-    "",                                                              // 0
-    "Error calculating variable A\n",                                // 2
-    "Error calculating variable B\n",                                // 3
-    "Error calculating correlation\n",                               // 4
-    "Error allocating temporary memory\n",                           // 4
-    "Error in corr_operation: observable dimensions do not match\n", // 5
-    "Error: dicorr and diA do not match for fcs_acf\n"               // 6
-};
-
 int correlations_autoupdate = 0;
 
 int Correlator::get_correlation_time(double *correlation_time) {
@@ -418,7 +408,6 @@ int Correlator::get_data() {
   int i, j;
   int highest_level_to_compress;
   unsigned int index_new, index_old, index_res;
-  int error;
 
   t++;
 
@@ -526,8 +515,6 @@ int Correlator::finalize() {
   int vals_ll = 0; // number of values remaining in the lowest level
   int highest_level_to_compress;
   unsigned int index_new, index_old, index_res;
-  int error;
-  // int compress;
 
   // make a flag that the correlation is finalized
   finalized = 1;

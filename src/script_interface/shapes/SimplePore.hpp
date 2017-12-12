@@ -32,7 +32,6 @@ class SimplePore : public Shape {
 
 public:
   SimplePore() : m_simple_pore(new ::Shapes::SimplePore()) {
-    auto pp = m_simple_pore.get();
     add_parameters(
         {{"radius", m_simple_pore, &CoreShape::set_radius, &CoreShape::radius},
          {"length", m_simple_pore, &CoreShape::set_length, &CoreShape::length},
