@@ -325,7 +325,7 @@ if(WARNINGS_ARE_ERRORS)
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -Werror")
   endif()
 endif(WARNINGS_ARE_ERRORS)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-sign-compare -Wno-unused-variable -Wno-unused-function -Wno-unused-private-field")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-sign-compare -Wno-unused-function -Wno-unused-private-field")
 if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "4.8.5")
   # older versions don't support -Wno-pedantic which we need in src/python
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")

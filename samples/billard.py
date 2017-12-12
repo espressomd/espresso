@@ -65,7 +65,7 @@ def fire():
     global stopped
     if stopped:
         stopped = False
-        system.part[0].v += impulse * np.array([sin(angle),0,cos(angle)])
+        system.part[0].v = system.part[0].v + impulse * np.array([sin(angle),0,cos(angle)])
         system.part[0].fix = [0,1,0]
         system.part[0].ext_force = [0,0,0]
 

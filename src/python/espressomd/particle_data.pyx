@@ -1030,7 +1030,7 @@ cdef class ParticleHandle(object):
                 cdef const short int * _rot = NULL
                 pointer_to_rotation( self.particle_data, _rot)
                 rot=_rot[0]
-                res=np.zeros(3)
+                res=np.zeros(3, dtype=int)
                 if rot&ROT_X: res[0]=1
                 if rot&ROT_Y: res[1]=1
                 if rot&ROT_Z: res[2]=1
