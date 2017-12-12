@@ -275,9 +275,9 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 */
 
 inline void add_bonded_energy(Particle *p1) {
-  Particle *p2, *p3 = NULL, *p4 = NULL;
+  Particle *p2, *p3 = nullptr, *p4 = nullptr;
 #ifdef TWIST_STACK
-  Particle *p5 = NULL, *p6 = NULL, *p7 = NULL, *p8 = NULL;
+  Particle *p5 = nullptr, *p6 = nullptr, *p7 = nullptr, *p8 = nullptr;
 #endif
   Bonded_ia_parameters *iaparams;
   int i, type_num, type, n_partners, bond_broken;

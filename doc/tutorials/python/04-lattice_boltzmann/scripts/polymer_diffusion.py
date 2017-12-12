@@ -54,7 +54,7 @@ system.thermostat.turn_off()
 
 system.part[:].v = [0,0,0]
 
-lbf = lb.LBFluid_GPU(agrid=1, dens=1, visc=5, tau=time_step, fric=5)
+lbf = lb.LBFluidGPU(agrid=1, dens=1, visc=5, tau=time_step, fric=5)
 system.actors.add(lbf)
 system.thermostat.set_lb(kT=1)
 

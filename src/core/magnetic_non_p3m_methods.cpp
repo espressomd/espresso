@@ -206,11 +206,11 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
   Cell *cell;
   Particle *part;
   int i, c, np;
-  double *x = NULL, *y = NULL, *z = NULL;
-  double *mx = NULL, *my = NULL, *mz = NULL;
-  double *fx = NULL, *fy = NULL, *fz = NULL;
+  double *x = nullptr, *y = nullptr, *z = nullptr;
+  double *mx = nullptr, *my = nullptr, *mz = nullptr;
+  double *fx = nullptr, *fy = nullptr, *fz = nullptr;
 #ifdef ROTATION
-  double *tx = NULL, *ty = NULL, *tz = NULL;
+  double *tx = nullptr, *ty = nullptr, *tz = nullptr;
 #endif
   int dip_particles, dip_particles2;
   double ppos[3];

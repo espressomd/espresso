@@ -234,5 +234,29 @@ class Wall(ScriptInterfaceHelper):
            Distance from the origin.
     normal : array_like :obj:`int`
              Normal vector of the plan (needs not to be length 1).
+
     """
     _so_name = "Shapes::Wall"
+
+@script_interface_register
+class SimplePore(ScriptInterfaceHelper):
+    """
+    Two parallel infinite planes, and a cylindrical orfice connecting them.
+    The cylinder and the planes are connected by torus segments with an
+    adjustable radius.
+
+    Attributes
+    ----------
+    radius: float
+       The radius of the pore.
+    length: float
+       The distance between the planes.
+    smoothing_radius: float
+       Radius of the torus segments
+    axis: array_like
+       Axis of the cylinder and normal of the planes
+    center: array_like
+       Position of the center of the cylinder.
+
+    """
+    _so_name = "Shapes::SimplePore"

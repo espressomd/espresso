@@ -227,7 +227,7 @@ system.time_step=time_step
 system.galilei.kill_particle_motion()
 
 system.thermostat.turn_off()
-lb=espressomd.lb.LBFluid_GPU(dens=1., visc=3., agrid=1., tau=time_step, fric=20)
+lb=espressomd.lb.LBFluidGPU(dens=1., visc=3., agrid=1., tau=time_step, fric=20)
 system.actors.add(lb)
 
 

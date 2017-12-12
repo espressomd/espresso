@@ -268,7 +268,7 @@ class openGLLive(object):
                               'ext_forces': [0, 0, 0] * len(self.system.part),
                               'charges': [0] * len(self.system.part)}
 
-    def updateLB(self):
+    def _updateLB(self):
         agrid = self.lb_params['agrid']
         self.lb_plane_vel = []
         ng = self.specs['LB_plane_ngrid']

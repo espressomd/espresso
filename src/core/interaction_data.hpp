@@ -866,8 +866,6 @@ extern int ia_excl;
 /************************************************
  * exported functions
  ************************************************/
-/** Function for initializing force and energy tables */
-void force_and_energy_tables_init();
 
 #ifdef ELECTROSTATICS
 int coulomb_set_bjerrum(double bjerrum);

@@ -179,7 +179,7 @@ void correct_pos_shake() {
     if (this_node == 0)
       MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, comm_cart);
     else
-      MPI_Reduce(&repeat_, NULL, 1, MPI_INT, MPI_SUM, 0, comm_cart);
+      MPI_Reduce(&repeat_, nullptr, 1, MPI_INT, MPI_SUM, 0, comm_cart);
     MPI_Bcast(&repeat, 1, MPI_INT, 0, comm_cart);
 
     cnt++;
@@ -296,7 +296,7 @@ void correct_vel_shake() {
     if (this_node == 0)
       MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, comm_cart);
     else
-      MPI_Reduce(&repeat_, NULL, 1, MPI_INT, MPI_SUM, 0, comm_cart);
+      MPI_Reduce(&repeat_, nullptr, 1, MPI_INT, MPI_SUM, 0, comm_cart);
 
     MPI_Bcast(&repeat, 1, MPI_INT, 0, comm_cart);
     cnt++;

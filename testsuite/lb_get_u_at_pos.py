@@ -36,7 +36,7 @@ class TestLBGetUAtPos(ut.TestCase):
                                  pos=[(p + 1) * self.params['agrid'],
                                       0.5 * self.params['agrid'],
                                       0.5 * self.params['agrid']])
-        self.lb_fluid = lb.LBFluid_GPU(
+        self.lb_fluid = lb.LBFluidGPU(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
             agrid=self.params['agrid'],

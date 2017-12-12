@@ -184,4 +184,4 @@ namespace PdbParser {
     return parse_pdb_file(pdb_filename) && parse_itp_file(itp_filename);
   }
 
-};
+}

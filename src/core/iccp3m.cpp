@@ -130,11 +130,11 @@ void iccp3m_set_initialized() { iccp3m_initialized = 1; }
 
 void iccp3m_init(void) {
   iccp3m_cfg.set_flag = 0;
-  iccp3m_cfg.areas = NULL;
-  iccp3m_cfg.ein = NULL;
-  iccp3m_cfg.nvectorx = NULL;
-  iccp3m_cfg.nvectory = NULL;
-  iccp3m_cfg.nvectorz = NULL;
+  iccp3m_cfg.areas = nullptr;
+  iccp3m_cfg.ein = nullptr;
+  iccp3m_cfg.nvectorx = nullptr;
+  iccp3m_cfg.nvectory = nullptr;
+  iccp3m_cfg.nvectorz = nullptr;
   iccp3m_cfg.extx = 0;
   iccp3m_cfg.exty = 0;
   iccp3m_cfg.extz = 0;

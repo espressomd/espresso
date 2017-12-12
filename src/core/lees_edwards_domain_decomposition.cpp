@@ -38,7 +38,7 @@
 
 #define LE_TRACE(x)
 #ifdef LE_DEBUG
-FILE *comms_log = NULL;
+FILE *comms_log = nullptr;
 int comms_count = 0;
 #endif
 
@@ -318,9 +318,9 @@ void le_dd_prepare_comm(le_dd_comms_manager *mgr, GhostCommunicator *comm,
   int lc[3], hc[3], neighbor_index;
 
 #ifdef LE_DEBUG
-  if (comms_log != NULL) {
+  if (comms_log != nullptr) {
     fclose(comms_log);
-    comms_log = NULL;
+    comms_log = nullptr;
   }
   char vLogName[64];
   sprintf(vLogName, "%i_comms_%i.dat", comms_count++, this_node);
@@ -693,9 +693,9 @@ void le_dd_prepare_comm(le_dd_comms_manager *mgr, GhostCommunicator *comm,
 
 #ifdef LE_DEBUG
   printAllComms(comms_log, comm, 0);
-  if (comms_log != NULL) {
+  if (comms_log != nullptr) {
     fclose(comms_log);
-    comms_log = NULL;
+    comms_log = nullptr;
   }
 #endif
 }
@@ -709,9 +709,9 @@ void le_dd_dynamic_update_comm(le_dd_comms_manager *mgr,
   int lc[3], hc[3], neighbor_index;
 
 #ifdef LE_DEBUG
-  if (comms_log != NULL) {
+  if (comms_log != nullptr) {
     fclose(comms_log);
-    comms_log = NULL;
+    comms_log = nullptr;
   }
   char vLogName[64];
   sprintf(vLogName, "%i_recomm_%i.dat", comms_count++, this_node);
@@ -929,9 +929,9 @@ void le_dd_dynamic_update_comm(le_dd_comms_manager *mgr,
   }
 #ifdef LE_DEBUG
   printAllComms(comms_log, comm, backwards);
-  if (comms_log != NULL) {
+  if (comms_log != nullptr) {
     fclose(comms_log);
-    comms_log = NULL;
+    comms_log = nullptr;
   }
 #endif
 }

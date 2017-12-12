@@ -97,6 +97,10 @@
 /** Flag for exchange_and_sort_particles : Do neighbor exchange. */
 #define CELL_NEIGHBOR_EXCHANGE 0
 
+namespace Cells {
+enum Resort : unsigned { RESORT_NONE = 0u, RESORT_LOCAL = 1u, RESORT_GLOBAL = 2u };
+}
+
 /** \name Flags for cells_on_geometry_change */
 /*@{*/
 
@@ -211,6 +215,10 @@ extern int rebuild_verletlist;
 /************************************************************/
 /*@{*/
 
+/** Switch for choosing the topology init function of a certain
+    cell system. */
+void topology_init(int cs, CellPList *local);
+
 /** Reinitialize the cell structures.
     @param new_cs gives the new topology to use afterwards. May be set to
     \ref CELL_STRUCTURE_CURRENT for not changing it.
@@ -224,7 +232,7 @@ void realloc_cells(int size);
 inline void init_cellplist(CellPList *cpl) {
   cpl->n = 0;
   cpl->max = 0;
-  cpl->cell = NULL;
+  cpl->cell = nullptr;
 }
 
 /** Reallocate a list of cell pointers */
@@ -284,6 +292,18 @@ int cells_get_n_particles();
  * Pairs are sorted so that first.id < second.id
  */
 std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
+
+/**
+ * @brief Increase the local resort level at least to level.
+ *
+ * The changed level has to be commuicated via annouce_resort_particles.
+ */
+  void set_resort_particles(Cells::Resort level);
+
+/**
+ * @brief Get the currently scheduled resort level.
+  */
+unsigned const &get_resort_particles();
 
 /** spread the particle resorting criterion across the nodes. */
 void announce_resort_particles();

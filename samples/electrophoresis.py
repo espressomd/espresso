@@ -75,7 +75,7 @@ system.non_bonded_inter[1, 2].lennard_jones.set_params(
 # fene = interactions.FeneBond(k=10, d_r_max=2)
 # system.bonded_inter.add(fene)
 harmonic = interactions.HarmonicBond(k=10, r_0=2)
-harmonicangle = interactions.Angle_Harmonic(bend=10, phi0=np.pi)
+harmonicangle = interactions.AngleHarmonic(bend=10, phi0=np.pi)
 system.bonded_inter.add(harmonic)
 system.bonded_inter.add(harmonicangle)
 

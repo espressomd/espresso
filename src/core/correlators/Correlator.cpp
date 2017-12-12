@@ -20,7 +20,8 @@
 #include "particle_data.hpp"
 #include <cstring>
 #include "integrate.hpp"
-#include "utils.hpp" 
+#include "utils.hpp"
+#include "partCfg_global.hpp"
 
 #include <limits>
 
@@ -75,6 +76,7 @@ int correlations_autoupdate=0;
 
 int correlation_update(unsigned int no) {
 //    return correlations.at(no)->get_data();
+  return 0;
 }
 
 int correlation_update_from_file(unsigned int no) {
@@ -82,7 +84,7 @@ int correlation_update_from_file(unsigned int no) {
 //    return 1;
 //  while ( ! correlations.at(no)->get_data()) {
 //  }
-//  return 0;
+  return 0;
 }
 
 
@@ -125,7 +127,7 @@ int Correlator::get_correlation_time(double* correlation_time) {
 
 
 Correlator::Correlator() :
-			    t(0), finalized(0), autoupdate(0),autocorrelation(1),initialized(0),correlation_args{}
+			    correlation_args{}, autocorrelation(1), finalized(0), t(0), autoupdate(0), initialized(0)
            {}
 
 void Correlator::initialize() {
@@ -301,7 +303,6 @@ void Correlator::initialize() {
   }
   if (autocorrelation) {
     B_accumulated_average =  A_accumulated_average;
-    B_accumulated_variance = B_accumulated_variance;
   } else {
     B_accumulated_average = (double*)Utils::malloc(dim_B*sizeof(double));
     B_accumulated_variance = (double*)Utils::malloc(dim_B*sizeof(double));
@@ -428,15 +429,11 @@ int Correlator::get_data() {
   newest[0] = ( newest[0] + 1 ) % (tau_lin +1); 
   n_vals[0]++;
 
-  if ( A_obs->calculate() != 0 )
-    return 1;
-  // copy the result:
-  memmove(A[0][newest[0]], &(A_obs->last_value[0]), dim_A*sizeof(double));
+    // copy the result:
+  memmove(A[0][newest[0]], (A_obs->operator()(partCfg())).data(), dim_A*sizeof(double));
 
   if (!autocorrelation) {
-    if ( B_obs->calculate() != 0 )
-      return 2;
-    memmove(B[0][newest[0]], &(B_obs->last_value[0]), dim_B*sizeof(double));
+      memmove(B[0][newest[0]], (B_obs->operator()(partCfg())).data(), dim_B*sizeof(double));
   }
 
   // Now we update the cumulated averages and variances of A and B
@@ -629,8 +626,6 @@ int Correlator::finalize() {
   unsigned int index_new, index_old, index_res;
   int error;
   //int compress;
-  unsigned tau_lin=tau_lin;
-  int hierarchy_depth=hierarchy_depth;
 
   double* temp = (double*)Utils::malloc(dim_corr*sizeof(double));
 
@@ -834,16 +829,14 @@ int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned i
 }
 
 int complex_conjugate_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, Vector3d ) {
-  unsigned int i,j;
+  unsigned int j;
   if (!(dim_A == dim_B )) {
     printf("Error in complex_conjugate product: The vector sizes do not match");
     return 5;
   }
-  j=0;
-  for ( i = 0; i < dim_A/2; i++ ) {
+  for ( j = 0; j < dim_A; j+=2 ) {
     C[j] = A[j]*B[j] + A[j+1]*B[j+1];
     C[j+1] = A[j+1]*B[j] - A[j]*B[j+1];
-    j=j+2;
   }
   return 0;
 }

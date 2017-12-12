@@ -65,11 +65,9 @@
  * decomposition. */
 struct DomainDecomposition {
   DomainDecomposition()
-      : use_vList{1}, cell_grid{0, 0, 0}, ghost_cell_grid{0, 0, 0}, cell_size{
+      : cell_grid{0, 0, 0}, ghost_cell_grid{0, 0, 0}, cell_size{
                                                                         0, 0,
                                                                         0} {}
-  /** flag for using Verlet List */
-  int use_vList;
   /** linked cell grid in nodes spatial domain. */
   int cell_grid[3];
   /** linked cell grid with ghost frame. */
@@ -158,9 +156,6 @@ void dd_topology_release();
 */
 void dd_exchange_and_sort_particles(int global_flag);
 
-/** implements \ref CellStructure::position_to_cell. */
-Cell *dd_position_to_cell(double pos[3]);
-
 /** Get three cell indices (coordinates in cell gird) from particle position */
 void dd_position_to_cell_indices(double pos[3], int *idx);
 
@@ -177,11 +172,6 @@ int calc_processor_min_num_cells();
     \param hc          high up corner of the subgrid.
  */
 int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]);
-
-/** Returns pointer to the cell which corresponds to the position if
-    the position is in the nodes spatial domain otherwise a NULL
-    pointer. */
-Cell *dd_save_position_to_cell(double pos[3]);
 
 /** Of every two communication rounds, set the first receivers to prefetch and
  * poststore */

@@ -104,7 +104,7 @@ class CoulombCloudWall(ut.TestCase):
     if espressomd.has_features(["ELECTROSTATICS", "CUDA"]):
         def test_p3m_gpu(self):
             self.S.actors.add(
-                P3M_GPU(
+                P3MGPU(
                     bjerrum_length=1,
                     r_cut=1.001,
                     accuracy=1e-3,
