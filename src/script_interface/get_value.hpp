@@ -122,7 +122,7 @@ template <typename T>
 T get_value_or(VariantMap const &vals, std::string const &name,
                T const &default_) {
   if (vals.count(name)) {
-      return get_value<T>(vals.at(name));
+    return get_value<T>(vals.at(name));
   } else {
     return default_;
   }
@@ -132,8 +132,8 @@ T get_value_or(VariantMap const &vals, std::string const &name,
  * @brief Make a new T with arguments extracted from a VariantMap.
  */
 template <typename T, typename... Types, typename... ArgNames>
-T make_from_args(VariantMap const &vals, ArgNames... args) {
-  return T{get_value<Types>(vals, args)...};
+T make_from_args(VariantMap const &vals, ArgNames &&... args) {
+  return T{get_value<Types>(vals, std::forward<ArgNames>(args))...};
 }
 
 /**
@@ -142,8 +142,9 @@ T make_from_args(VariantMap const &vals, ArgNames... args) {
  */
 template <typename T, typename... Types, typename... ArgNames>
 std::shared_ptr<T> make_shared_from_args(VariantMap const &vals,
-                                         ArgNames... args) {
-  return std::make_shared<T>(get_value<Types>(vals, args)...);
+                                         ArgNames &&... args) {
+  return std::make_shared<T>(
+      get_value<Types>(std::forward<ArgNames>(vals), args)...);
 }
 
 /**
@@ -157,8 +158,8 @@ std::shared_ptr<T> make_shared_from_args(VariantMap const &vals,
  */
 template <typename T, typename R, typename... Args, typename... ArgNames>
 auto call_with_args(T &this_, R (T::*m)(Args...), VariantMap const &vals,
-                    ArgNames... args) -> R {
-  return (this_.*m)(get_value<Args>(vals, args)...);
+                    ArgNames &&... args) -> R {
+  return (this_.*m)(get_value<Args>(vals, std::forward<ArgNames>(args))...);
 }
 
 /**
@@ -171,9 +172,9 @@ auto call_with_args(T &this_, R (T::*m)(Args...), VariantMap const &vals,
  * returning R and taking Args as parameters.)
  */
 template <typename R, typename... Args, typename... ArgNames>
-auto call_with_args(R (*m)(Args...), VariantMap const &vals, ArgNames... args)
-    -> R {
-  return (*m)(get_value<Args>(vals, args)...);
+auto call_with_args(R (*m)(Args...), VariantMap const &vals,
+                    ArgNames &&... args) -> R {
+  return (*m)(get_value<Args>(vals, std::forward<ArgNames>(args))...);
 }
 
 template <typename T>
