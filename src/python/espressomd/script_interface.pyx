@@ -222,7 +222,7 @@ cdef class PScriptInterface(object):
 
         return odict
 
-def _unpickel_so_class(so_name, state):
+def _unpickle_so_class(so_name, state):
     cdef shared_ptr[ScriptInterfaceBase] sip = ScriptInterfaceBase.unserialize(state)
 
     poid=PObjectId()
@@ -243,7 +243,7 @@ class ScriptInterfaceHelper(PScriptInterface):
         self.define_bound_methods()
 
     def __reduce__(self):
-        return (_unpickel_so_class , (self._so_name, self._serialize()))
+        return (_unpickle_so_class , (self._so_name, self._serialize()))
 
     def __dir__(self):
         return self.__dict__.keys() + self._valid_parameters()
