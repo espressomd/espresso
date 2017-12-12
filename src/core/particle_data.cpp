@@ -192,8 +192,6 @@ void clear_particle_node() { particle_node.clear(); }
 */
 void realloc_local_particles(int part) {
   if (part >= max_local_particles) {
-    auto old_size = max_local_particles;
-
     /* round up part + 1 in granularity PART_INCREMENT */
     max_local_particles =
         PART_INCREMENT * ((part + PART_INCREMENT) / PART_INCREMENT);
@@ -433,7 +431,6 @@ void prefetch_particle_data(std::vector<int> ids) {
 }
 
 int place_particle(int part, double p[3]) {
-  int i;
   int retcode = ES_PART_OK;
 
   if (part < 0)
@@ -1006,8 +1003,6 @@ void local_rescale_particles(int dir, double scale) {
 }
 
 void added_particle(int part) {
-  int i;
-
   n_part++;
 
   if (part > max_seen_particle) {

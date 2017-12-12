@@ -167,7 +167,6 @@ void calc_long_range_virials()
     fprintf(stderr, "WARNING: pressure calculated, but GPU P3M pressure not implemented\n");
     break;
   case COULOMB_P3M: {
-    int k;
     p3m_charge_assign();
     virials.coulomb[1] = p3m_calc_kspace_forces(0,1);
     p3m_charge_assign();
@@ -920,12 +919,6 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
 
   double binvolume;
   double centre[3];
-
-  double force[3];
-  int k, l;
-  int type_num;
-  Bonded_ia_parameters *iaparams;
-  double dx[3];
 
   for (int i = 0; i < 3; i++) {
     if (periodic[i]) {
