@@ -922,15 +922,11 @@ void recv_particles(ParticleList *particles, int node);
 #ifdef EXCLUSIONS
 /** Determines if the non bonded interactions between p1 and p2 should be
  * calculated */
-inline int do_nonbonded(Particle const *p1, Particle const *p2) {
-  int i, i2;
+inline bool do_nonbonded(Particle const *p1, Particle const *p2) {
   /* check for particle 2 in particle 1's exclusion list. The exclusion list is
      symmetric, so this is sufficient. */
-  i2 = p2->p.identity;
-  for (i = 0; i < p1->el.n; i++)
-    if (i2 == p1->el.e[i])
-      return 0;
-  return 1;
+  return std::none_of(p1->el.begin(), p1->el.end(),
+                     [p2](int id) { return p2->p.identity == id; });
 }
 #endif
 

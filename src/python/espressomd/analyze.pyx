@@ -65,18 +65,18 @@ class Analysis(object):
 
     def min_dist(self, p1='default', p2='default'):
         """Minimal distance between two sets of particles.
-        
+
         Parameters
         ----------
         p1, p2 : lists of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
 
         """
 
-        cdef int_list * set1
-        cdef int_list * set2
+        cdef int_list set1
+        cdef int_list set2
 
         if p1 == 'default' and p2 == 'default':
-            result = c_analyze.mindist(c_analyze.partCfg(), NULL, NULL)
+            pass
         elif (p1 == 'default' and not p2 == 'default') or \
              (not p1 == 'default' and p2 == 'default'):
             raise Exception("Both, p1 and p2 have to be specified\n" + __doc__)
@@ -94,12 +94,7 @@ class Analysis(object):
             set1 = create_int_list_from_python_object(p1)
             set2 = create_int_list_from_python_object(p2)
 
-            result = c_analyze.mindist(c_analyze.partCfg(), set1, set2)
-
-            realloc_intlist(set1, 0)
-            realloc_intlist(set2, 0)
-
-        return result
+        return c_analyze.mindist(c_analyze.partCfg(), set1, set2)
 
     #
     # Distance to particle or point
@@ -227,7 +222,7 @@ class Analysis(object):
         """
 
         cdef int planedims[3]
-        cdef int_list * il = NULL
+        cdef int_list ids
         cdef double c_pos[3]
 
         check_type_or_throw_except(
@@ -252,14 +247,9 @@ class Analysis(object):
         for i in range(3):
             c_pos[i] = pos[i]
 
-        il = <int_list * > malloc(sizeof(int_list))
-        c_analyze.nbhood(c_analyze.partCfg(), c_pos, r_catch, il, planedims)
+        ids = c_analyze.nbhood(c_analyze.partCfg(), c_pos, r_catch, planedims)
 
-        result = create_nparray_from_int_list(il)
-        realloc_intlist(il, 0)
-        free(il)
-        return result
-
+        return create_nparray_from_int_list(&ids)
 
     def cylindrical_average(self, center=None, axis=None,
                             length=None, radius=None,
@@ -622,19 +612,36 @@ class Analysis(object):
         
         """
 
-        cdef double_list local_stress_tensor
+        cdef vector[double_list] local_stress_tensor
         cdef int[3] c_periodicity, c_bins
+        cdef int lst_ind, t_ind
         cdef double[3] c_range_start, c_stress_range
 
+        n_bins = 1
         for i in range(3):
+            n_bins *= bins[i]
             c_bins[i] = bins[i]
             c_periodicity[i] = periodicity[i]
             c_range_start[i] = range_start[i]
             c_stress_range[i] = stress_range[i]
 
-        if c_analyze.analyze_local_stress_tensor(c_periodicity, c_range_start, c_stress_range, c_bins, &local_stress_tensor):
+
+        local_stress_tensor.resize(n_bins, double_list(9, 0.0))
+
+        if c_analyze.analyze_local_stress_tensor(c_periodicity, c_range_start, c_stress_range, c_bins, local_stress_tensor.data()):
             handle_errors("Error while calculating local stress tensor")
-        stress_tensor = create_nparray_from_double_list(&local_stress_tensor)
+
+        stress_tensor = np.zeros((bins[0], bins[1], bins[2], 3, 3))
+
+        for i in range(bins[0]):
+            for j in range(bins[1]):
+                for k in range(bins[2]):
+                    for l in range(3):
+                        for m in range(3):
+                            lst_ind = i * bins[1]* bins[2] + j * bins[2] + k
+                            t_ind = l * 3 + m
+                            stress_tensor[i, j, k, l, m] = local_stress_tensor[lst_ind][t_ind]
+
         return stress_tensor
 
     #
