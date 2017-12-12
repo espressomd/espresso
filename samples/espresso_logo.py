@@ -102,7 +102,7 @@ system.constraints.add(
         axis = [0, 1, 0], 
         direction = 1, 
         radius = 7.5, 
-        length = 1), particle_type = 4, penetrable = 1)
+        length = 1), particle_type = 0, penetrable = 1)
 
 
 system.time_step = 0.00022
@@ -114,9 +114,9 @@ WCA_cut = 2.**(1. / 6.)
 lj_eps = 1.0
 lj_sig = 0.7
 lj_cut = WCA_cut * lj_sig
-#for i in range(2):
-#    for j in range(i,2):
-#        system.non_bonded_inter[i,j].lennard_jones.set_params(epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
+for i in range(2):
+    for j in range(i,2):
+        system.non_bonded_inter[i,j].lennard_jones.set_params(epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
 visualizer = openGLLive(system, 
 						background_color = [0.2,0.2,0.3],
