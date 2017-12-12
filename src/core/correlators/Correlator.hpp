@@ -130,7 +130,6 @@
 #include <memory>
 
 namespace Correlators {
-#define MIN(a, b) ((a) > (b) ? (b) : (a))
 
 // IDs of different correlations
 
@@ -331,12 +330,6 @@ private:
 };
 
 extern int correlations_autoupdate;
-
-/********** The error codes ********************************/
-extern const char init_errors[][64];
-extern const char init_from_checkpoint_errors[][64];
-extern const char file_data_source_init_errors[][64];
-extern const char double_correlation_get_data_errors[][64];
 
 } // Namespace correlators
 #endif

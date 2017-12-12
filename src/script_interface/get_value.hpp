@@ -46,14 +46,14 @@ template <size_t N, typename T> struct get_value_helper<Vector<N, T>, void> {
    an ObjectId variant. If the type is a derived type, the type is
    also checked.
 
-   We do a couple of checks: First we chack if the id is actualy the
+   We do a couple of checks: First we check if the id is actualy the
    empty id, which means None and is a valid value, represented by
    an empty ptr.
    If the id is not empty, we try to retieve an instance for that id.
    If it does not exist we throw, this means the caller supplied an id
    with no corresponding instance.
-   If we can find an instance, we check if it actualy has the right
-   type, and if so, we return it, therwise we throw.
+   If we can find an instance, we check if it has the right
+   type, and if so, we return it, otherwise we throw.
 */
 template <typename T>
 struct get_value_helper<
@@ -122,12 +122,7 @@ template <typename T>
 T get_value_or(VariantMap const &vals, std::string const &name,
                T const &default_) {
   if (vals.count(name)) {
-    try {
       return get_value<T>(vals.at(name));
-    } catch (std::out_of_range const &) {
-      /* TODO: Better exceptions. */
-      throw;
-    }
   } else {
     return default_;
   }

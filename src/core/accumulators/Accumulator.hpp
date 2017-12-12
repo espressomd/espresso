@@ -44,7 +44,7 @@ public:
   // The accumulator struct has to be initialized with the correct vector size,
   // therefore the order of init is important.
   Accumulator(std::shared_ptr<Observables::Observable> obs)
-      : m_obs(obs), m_acc(std::vector<double>(obs->n_values())) {}
+      : m_obs(std::move(obs)), m_acc(std::vector<double>(obs->n_values())) {}
 
   int update();
   std::vector<double> get_mean();

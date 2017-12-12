@@ -32,6 +32,10 @@
 #include <cstring>
 #include <limits>
 
+namespace {
+int min(int i, unsigned int j) { return std::min(i, static_cast<int>(j)); }
+}
+
 namespace Correlators {
 /** The minimal version of compression function */
 std::vector<double> compress_do_nothing(std::vector<double> const &A1,
@@ -137,7 +141,7 @@ std::vector<double> fcs_acf(std::vector<double> const &A,
   }
 
   auto const C_size = A.size() / 3;
-  if (3 * C_size == A.size()) {
+  if (3 * C_size != A.size()) {
     throw std::runtime_error("Invalid dimensions.");
   }
 
@@ -161,7 +165,7 @@ std::vector<double> fcs_acf(std::vector<double> const &A,
 /* global variables */
 
 /* Error codes */
-const char init_errors[][64] = {
+constexpr const char init_errors[][64] = {
     "",                                                              // 0
     "No valid correlation given",                                    // 1
     "delta_t must be specified and > 0",                             // 2
@@ -184,11 +188,7 @@ const char init_errors[][64] = {
     "fcs_acf requires 3 additional parameters"                       // 19
 };
 
-const char file_data_source_init_errors[][64] = {
-    "", "No valid filename given.", "File could not be opened.",
-    "No line found that was not commented out"};
-
-const char double_correlation_get_data_errors[][64] = {
+constexpr const char double_correlation_get_data_errors[][64] = {
     "",                                                              // 0
     "Error calculating variable A\n",                                // 2
     "Error calculating variable B\n",                                // 3
@@ -475,7 +475,7 @@ int Correlator::get_data() {
   }
 
   // Now update the lowest level correlation estimates
-  for (j = 0; j < int(MIN(m_tau_lin + 1, n_vals[0])); j++) {
+  for (j = 0; j < min(m_tau_lin + 1, n_vals[0]); j++) {
     index_new = newest[0];
     index_old = (newest[0] - j + m_tau_lin + 1) % (m_tau_lin + 1);
     auto const temp =
@@ -490,7 +490,7 @@ int Correlator::get_data() {
   // Now for the higher ones
   for (int i = 1; i < highest_level_to_compress + 2; i++) {
     for (unsigned j = (m_tau_lin + 1) / 2 + 1;
-         j < MIN(m_tau_lin + 1, n_vals[i]); j++) {
+         j < min(m_tau_lin + 1, n_vals[i]); j++) {
       index_new = newest[i];
       index_old = (newest[i] - j + m_tau_lin + 1) % (m_tau_lin + 1);
       index_res =
@@ -584,7 +584,7 @@ int Correlator::finalize() {
       // We only need to update correlation estimates for the higher levels
       for (i = ll + 1; i < highest_level_to_compress + 2; i++) {
         for (j = (m_tau_lin + 1) / 2 + 1;
-             j < int(MIN(m_tau_lin + 1, n_vals[i])); j++) {
+             j < min(m_tau_lin + 1, n_vals[i]); j++) {
           index_new = newest[i];
           index_old = (newest[i] - j + m_tau_lin + 1) % (m_tau_lin + 1);
           index_res =
