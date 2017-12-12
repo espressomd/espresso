@@ -6,8 +6,8 @@ import numpy as np
 from math import *
 
 system = espressomd.System()
-box_l = 15
-system.box_l = [box_l, box_l, box_l]
+box_l = 50
+system.box_l = [box_l, 15, box_l]
 
 yoff = 3
 
@@ -71,6 +71,32 @@ for i in range(n_saucer):
         posz =  box_l/2.0 + rad*cos(j*alpha)
         system.part.add(pos = [posx, posy, posz], type = 1)
 
+# python
+n_pbody = 12
+posy = 3.5
+posz = box_l/2.0 
+diam = 0.8
+mass = 0.01
+fl = -1
+harm = espressomd.interactions.HarmonicBond(
+            k=400.0, r_0=diam, r_cut=5.0)
+system.bonded_inter.add(harm)
+
+for i in range(n_pbody):
+    posx = i*diam
+    system.part.add(pos = [posx, posy, posz], type = 2, mass = mass)
+    pid = len(system.part)-1
+    if i > 0:
+        system.part[pid].bonds = (harm, pid-1)
+    if i % 3 == 0:
+       fl *= -1
+       system.part[pid].ext_force = [0,fl*40*mass,0]
+    if i >= n_pbody - 3:
+       system.part[pid].ext_force = [50.0*mass,0,0]
+    elif i == 0:
+       system.part[pid].ext_force = [-20*mass,0,0]
+
+
 # steam
 fene = espressomd.interactions.FeneBond(k=15.1, d_r_max=2.0, r_0=0.1)
 system.bonded_inter.add(fene)
@@ -84,7 +110,7 @@ for i in range(n_steam):
         posx = box_l/2.0 + rad*sin(i*alpha + j*0.6)
         posz = box_l/2.0 + rad*cos(i*alpha + j*0.6)
         posy = yoff + 2 + j * 0.1 *rad
-        system.part.add(pos = [posx, posy, posz], type = 2)
+        system.part.add(pos = [posx, posy, posz], type = 3)
         pid = len(system.part)-1
 
         if j == 0:
@@ -94,6 +120,8 @@ for i in range(n_steam):
 
         if j == l_steam-1:
             system.part[pid].ext_force = [0,7.0,0]
+
+
 
 # stand
 system.constraints.add(
@@ -108,7 +136,7 @@ system.constraints.add(
 system.time_step = 0.00022
 system.cell_system.skin = 0.4
 
-system.thermostat.set_langevin(kT=0.0, gamma=0.1)
+system.thermostat.set_langevin(kT=0.0, gamma=0.02)
 WCA_cut = 2.**(1. / 6.)
 
 lj_eps = 1.0
@@ -118,17 +146,24 @@ for i in range(2):
     for j in range(i,2):
         system.non_bonded_inter[i,j].lennard_jones.set_params(epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
+lj_eps = 1.0
+lj_sig = 1.0
+lj_cut = WCA_cut * lj_sig
+for i in range(3):
+    system.non_bonded_inter[i,2].lennard_jones.set_params(epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
+
 visualizer = openGLLive(system, 
-						background_color = [0.2,0.2,0.3],
-                        particle_sizes = [0.6,0.75,0.2], 
-						particle_type_materials = ['silver', 'gold', 'chrome'],
+						background_color = [0.2, 0.2, 0.3],
+                        camera_position = [box_l/2.0, box_l/4.0, 20*3],
+                        particle_sizes = [0.6, 0.75, 0.9, 0.2], 
+						particle_type_materials = ['silver', 'gold', 'greenplastic', 'chrome'],
+                        particle_type_colors = [[0.2, 0.2, 0.8, 1], [0.8, 0.2, 0.2, 1], [1, 1, 1, 1], [0.8, 0.8, 0.8, 1]],
 						bond_type_materials = ['chrome'],
-                        particle_type_colors = [[0.2, 0.2, 0.8, 1], [0.8, 0.2, 0.2, 1], [0.8, 0.8, 0.8, 1]],
                         bond_type_colors = [[0.2, 0.2, 0.2, 0.5]],
                         bond_type_radius = [0.1],
-                        constraint_type_colors = [[1,1,1,0.5]],
+                        constraint_type_colors = [[1, 1, 1, 0.5]],
                         constraint_type_materials = ['ruby'],
-                        spotlight_brightness = 4.0,
+                        spotlight_brightness = 5.0,
                         spotlight_focus = 100,
                         spotlight_angle = 60,
                         light_brightness = 1.0,
@@ -140,6 +175,6 @@ visualizer = openGLLive(system,
 def rotate():
 	visualizer.camera.rotateSystemXL()
 
-visualizer.registerCallback(rotate, interval = 16)
+#visualizer.registerCallback(rotate, interval = 16)
 
 visualizer.run(1)
