@@ -144,7 +144,7 @@ template <typename T, typename... Types, typename... ArgNames>
 std::shared_ptr<T> make_shared_from_args(VariantMap const &vals,
                                          ArgNames &&... args) {
   return std::make_shared<T>(
-      get_value<Types>(std::forward<ArgNames>(vals), args)...);
+      get_value<Types>(vals, std::forward<ArgNames>(args))...);
 }
 
 /**
