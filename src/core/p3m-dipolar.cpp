@@ -802,11 +802,6 @@ static void P3M_assign_torques(double prefac, int d_rs) {
   int q_m_off = (dp3m.local_mesh.dim[2] - dp3m.params.cao);
   int q_s_off =
       dp3m.local_mesh.dim[2] * (dp3m.local_mesh.dim[1] - dp3m.params.cao);
-#ifdef ONEPART_DEBUG
-  double db_fsum =
-      0; /* TODO: db_fsum was missing and code couldn't compile. Now the
-            arbitrary value of 0 is assigned to it, please check.*/
-#endif
 
   cp_cnt = 0;
   cf_cnt = 0;

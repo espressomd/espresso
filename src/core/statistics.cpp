@@ -39,10 +39,11 @@
 #include "statistics_fluid.hpp"
 #include "utils.hpp"
 #include "utils/NoOp.hpp"
+#include "utils/list_contains.hpp"
 #include "virtual_sites.hpp"
+
 #include <cstdlib>
 #include <cstring>
-
 #include <limits>
 
 /** Previous particle configurations (needed for offline analysis and
@@ -65,11 +66,11 @@ double min_distance2(double const pos1[3], double const pos2[3]) {
  *                                 basic observables calculation
  ****************************************************************************************/
 
-double mindist(PartCfg &partCfg, IntList *set1, IntList *set2) {
+double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
   double pt[3];
-  int i, j, in_set;
+  int in_set;
 
-  auto mindist = std::numeric_limits<double>::infinity();
+  auto mindist2 = std::numeric_limits<double>::infinity();
 
   for (auto jt = partCfg.begin(); jt != (--partCfg.end()); ++jt) {
     pt[0] = jt->r.p[0];
@@ -79,9 +80,9 @@ double mindist(PartCfg &partCfg, IntList *set1, IntList *set2) {
        bit 0: set1, bit1: set2
     */
     in_set = 0;
-    if (!set1 || intlist_contains(set1, jt->p.type))
+    if (set1.empty() || list_contains(set1, jt->p.type))
       in_set = 1;
-    if (!set2 || intlist_contains(set2, jt->p.type))
+    if (set2.empty() || list_contains(set2, jt->p.type))
       in_set |= 2;
     if (in_set == 0)
       continue;
@@ -89,13 +90,12 @@ double mindist(PartCfg &partCfg, IntList *set1, IntList *set2) {
     for (auto it = std::next(jt); it != partCfg.end(); ++it)
       /* accept a pair if particle j is in set1 and particle i in set2 or vice
        * versa. */
-      if (((in_set & 1) && (!set2 || intlist_contains(set2, it->p.type))) ||
-          ((in_set & 2) && (!set1 || intlist_contains(set1, it->p.type))))
-        mindist = std::min(mindist, min_distance2(pt, it->r.p));
+      if (((in_set & 1) && (set2.empty() || list_contains(set2, it->p.type))) ||
+          ((in_set & 2) && (set1.empty() || list_contains(set1, it->p.type))))
+        mindist2 = std::min(mindist2, min_distance2(pt, it->r.p));
   }
-  mindist = std::sqrt(mindist);
 
-  return mindist;
+  return std::sqrt(mindist2);
 }
 
 void merge_aggregate_lists(int *head_list, int *agg_id_list, int p1molid,
@@ -125,8 +125,9 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
   int *contact_num, ind;
 
   if (min_contact > 1) {
-    contact_num = (int *)Utils::malloc(n_molecules * n_molecules * sizeof(int));
-    for (int i = 0; i < n_molecules * n_molecules; i++)
+    contact_num =
+        (int *)Utils::malloc(topology.size() * topology.size() * sizeof(int));
+    for (int i = 0; i < topology.size() * topology.size(); i++)
       contact_num[i] = 0;
   } else {
     contact_num = (int *)0; /* Just to keep the compiler happy */
@@ -140,43 +141,45 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
     agg_id_list[i] = i;
     agg_size[i] = 0;
   }
-  
-  short_range_loop(Utils::NoOp{}, [&](Particle &p1, Particle &p2, Distance &d) {
-    auto p1molid = p1.p.mol_id;
-    auto p2molid = p2.p.mol_id;
-    if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) &&
-        ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
-      if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
-#ifdef ELECTROSTATICS
-        if (charge && (p1.p.q * p2.p.q >= 0)) {
-          return;
-        }
-#endif
-        if (d.dist2 < dist_criteria2) {
-          if (p1molid > p2molid) {
-            ind = p1molid * n_molecules + p2molid;
-          } else {
-            ind = p2molid * n_molecules + p1molid;
-          }
-          if (min_contact > 1) {
-            contact_num[ind]++;
-            if (contact_num[ind] >= min_contact) {
-              merge_aggregate_lists(head_list, agg_id_list, p1molid, p2molid,
-                                    link_list);
-            }
-          } else {
-            merge_aggregate_lists(head_list, agg_id_list, p1molid, p2molid,
-                                  link_list);
-          }
-        }
-      }
-    }
-  });
 
-  /* count number of aggregates 
+  short_range_loop(Utils::NoOp{},
+                   [&](Particle &p1, Particle &p2, Distance &d) {
+                     auto p1molid = p1.p.mol_id;
+                     auto p2molid = p2.p.mol_id;
+                     if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) &&
+                         ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
+                       if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
+#ifdef ELECTROSTATICS
+                         if (charge && (p1.p.q * p2.p.q >= 0)) {
+                           return;
+                         }
+#endif
+                         if (d.dist2 < dist_criteria2) {
+                           if (p1molid > p2molid) {
+                             ind = p1molid * topology.size() + p2molid;
+                           } else {
+                             ind = p2molid * topology.size() + p1molid;
+                           }
+                           if (min_contact > 1) {
+                             contact_num[ind]++;
+                             if (contact_num[ind] >= min_contact) {
+                               merge_aggregate_lists(head_list, agg_id_list,
+                                                     p1molid, p2molid,
+                                                     link_list);
+                             }
+                           } else {
+                             merge_aggregate_lists(head_list, agg_id_list,
+                                                   p1molid, p2molid, link_list);
+                           }
+                         }
+                       }
+                     }
+                   });
+
+  /* count number of aggregates
      find aggregate size
      find max and find min size, and std */
-  for (int i = s_mol_id ; i <= f_mol_id ; i++) {
+  for (int i = s_mol_id; i <= f_mol_id; i++) {
     if (head_list[i] != -2) {
       (*agg_num)++;
       agg_size[*agg_num - 1]++;
@@ -187,8 +190,8 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
       }
     }
   }
-  
-  for (int i = 0 ; i < *agg_num; i++) {
+
+  for (int i = 0; i < *agg_num; i++) {
     *agg_avg += agg_size[i];
     *agg_std += agg_size[i] * agg_size[i];
     if (*agg_min > agg_size[i]) {
@@ -311,7 +314,7 @@ void angularmomentum(PartCfg &partCfg, int type, double *com) {
 }
 
 void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
-  int i, j, count;
+  int i, count;
   double p1[3], massi;
   std::vector<double> com(3);
   count = 0;
@@ -404,17 +407,15 @@ void calc_gyration_tensor(PartCfg &partCfg, int type, std::vector<double> &gt) {
   }
 }
 
-void nbhood(PartCfg &partCfg, double pt[3], double r, IntList *il,
-            int planedims[3]) {
-  double d[3];
+IntList nbhood(PartCfg &partCfg, double pt[3], double r, int planedims[3]) {
+  IntList ids;
+  Vector3d d;
 
   auto const r2 = r * r;
 
-  init_intlist(il);
-
   for (auto const &p : partCfg) {
     if ((planedims[0] + planedims[1] + planedims[2]) == 3) {
-      get_mi_vector(d, pt, p.r.p);
+      d = get_mi_vector(pt, p.r.p);
     } else {
       /* Calculate the in plane distance */
       for (int j = 0; j < 3; j++) {
@@ -422,12 +423,12 @@ void nbhood(PartCfg &partCfg, double pt[3], double r, IntList *il,
       }
     }
 
-    if (sqrlen(d) < r2) {
-      realloc_intlist(il, il->n + 1);
-      il->e[il->n] = p.p.identity;
-      il->n++;
+    if (d.norm2() < r2) {
+      ids.push_back(p.p.identity);
     }
   }
+
+  return ids;
 }
 
 double distto(PartCfg &partCfg, double p[3], int pid) {
@@ -441,7 +442,6 @@ double distto(PartCfg &partCfg, double p[3], int pid) {
   }
   return std::sqrt(mindist);
 }
-
 
 void calc_part_distribution(PartCfg &partCfg, int *p1_types, int n_p1,
                             int *p2_types, int n_p2, double r_min, double r_max,
@@ -515,8 +515,8 @@ void calc_rdf(PartCfg &partCfg, std::vector<int> &p1_types,
 void calc_rdf(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
               int n_p2, double r_min, double r_max, int r_bins, double *rdf) {
   long int cnt = 0;
-  int i, j, t1, t2, ind;
-  int mixed_flag = 0, start;
+  int i, t1, t2, ind;
+  int mixed_flag = 0;
   double inv_bin_width = 0.0, bin_width = 0.0, dist;
   double volume, bin_volume, r_in, r_out;
 
@@ -578,7 +578,7 @@ void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
                  int n_conf) {
   long int cnt = 0;
   int cnt_conf = 1;
-  int mixed_flag = 0, start;
+  int mixed_flag = 0;
   double inv_bin_width = 0.0, bin_width = 0.0;
   double volume, bin_volume, r_in, r_out;
   double *rdf_tmp, p1[3], p2[3];
@@ -623,7 +623,8 @@ void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
                 p2[2] = configs[k][3 * j + 2];
                 auto const dist = min_distance(p1, p2);
                 if (dist > r_min && dist < r_max) {
-                  auto const ind = static_cast<int>((dist - r_min) * inv_bin_width);
+                  auto const ind =
+                      static_cast<int>((dist - r_min) * inv_bin_width);
                   rdf_tmp[ind]++;
                 }
                 cnt++;
@@ -655,7 +656,7 @@ void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
 
 void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
                           int order, double **_ff) {
-  int i, j, k, n, qi, p, t, order2;
+  int i, j, k, n, qi, t, order2;
   double qr, twoPI_L, C_sum, S_sum, *ff = nullptr;
 
   order2 = order * order;
@@ -786,7 +787,6 @@ void density_profile_av(PartCfg &partCfg, int n_conf, int n_bin, double density,
     rho_ave[i] /= n_conf;
 }
 
-
 int calc_cylindrical_average(
     PartCfg &partCfg, std::vector<double> center_,
     std::vector<double> direction_, double length, double radius,
@@ -904,7 +904,7 @@ int calc_radial_density_map(PartCfg &partCfg, int xbins, int ybins,
                             DoubleList *density_map,
                             DoubleList *density_profile) {
   int i, j, t;
-  int pi, bi;
+  int bi;
   int nbeadtypes;
   int beadcount;
   double vectprod[3];
@@ -1031,29 +1031,21 @@ int calc_radial_density_map(PartCfg &partCfg, int xbins, int ybins,
   return ES_OK;
 }
 
-double calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
-                    int rbins, int tmax, double *msd, double **vanhove) {
+int calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
+                 int rbins, int tmax, double *msd, double **vanhove) {
   int c1, c3, c3_max, ind;
   double p1[3], p2[3], dist;
   double bin_width, inv_bin_width;
-  IntList p;
+  std::vector<int> ids;
 
-  /* create particle list */
-  init_intlist(&p);
-
-  auto const np =
-      std::count_if(partCfg.begin(), partCfg.end(),
-                    [&ptype](Particle const &p) { return p.p.type == ptype; });
-
-  if (np == 0) {
-    return 0;
-  }
-  alloc_intlist(&p, np);
-  for (auto const &part : partCfg) {
-    if (part.p.type == ptype) {
-      p.e[p.n] = part.p.identity;
-      p.n++;
+  for (auto const &p : partCfg) {
+    if (p.p.type == ptype) {
+      ids.push_back(p.p.identity);
     }
+  }
+
+  if (ids.empty()) {
+    return 0;
   }
 
   /* preparation */
@@ -1064,13 +1056,13 @@ double calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
   for (c1 = 0; c1 < n_configs; c1++) {
     c3_max = (c1 + tmax + 1) > n_configs ? n_configs : c1 + tmax + 1;
     for (c3 = (c1 + 1); c3 < c3_max; c3++) {
-      for (int i = 0; i < p.n; i++) {
-        p1[0] = configs[c1][3 * p.e[i]];
-        p1[1] = configs[c1][3 * p.e[i] + 1];
-        p1[2] = configs[c1][3 * p.e[i] + 2];
-        p2[0] = configs[c3][3 * p.e[i]];
-        p2[1] = configs[c3][3 * p.e[i] + 1];
-        p2[2] = configs[c3][3 * p.e[i] + 2];
+      for (auto const &id : ids) {
+        p1[0] = configs[c1][3 * id];
+        p1[1] = configs[c1][3 * id + 1];
+        p1[2] = configs[c1][3 * id + 2];
+        p2[0] = configs[c3][3 * id];
+        p2[1] = configs[c3][3 * id + 1];
+        p2[2] = configs[c3][3 * id + 2];
         dist = distance(p1, p2);
         if (dist > rmin && dist < rmax) {
           ind = (int)((dist - rmin) * inv_bin_width);
@@ -1084,13 +1076,12 @@ double calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
   /* normalize */
   for (c1 = 0; c1 < (tmax); c1++) {
     for (int i = 0; i < rbins; i++) {
-      vanhove[c1][i] /= (double)(n_configs - c1 - 1) * p.n;
+      vanhove[c1][i] /= (double)(n_configs - c1 - 1) * ids.size();
     }
-    msd[c1] /= (double)(n_configs - c1 - 1) * p.n;
+    msd[c1] /= (double)(n_configs - c1 - 1) * ids.size();
   }
 
-  realloc_intlist(&p, 0);
-  return np;
+  return ids.size();
 }
 
 /****************************************************************************************
@@ -1099,8 +1090,7 @@ double calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
 
 void analyze_append(PartCfg &partCfg) {
   n_part_conf = partCfg.size();
-  configs =
-      Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
+  configs = Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
   configs[n_configs] =
       (double *)Utils::malloc(3 * n_part_conf * sizeof(double));
   int i = 0;
@@ -1160,8 +1150,7 @@ void analyze_remove(int ind) {
 void analyze_configs(double *tmp_config, int count) {
   int i;
   n_part_conf = count;
-  configs =
-      Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
+  configs = Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
   configs[n_configs] =
       (double *)Utils::malloc(3 * n_part_conf * sizeof(double));
   for (i = 0; i < n_part_conf; i++) {
@@ -1202,7 +1191,8 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
                         n_dipolar + n_vsr);
 
   // Allocate mem for the double list
-  realloc_doublelist(&(stat->data), stat->data.n = total);
+  stat->data.resize(total);
+
   // Number of doubles per interaction (pressure=1, stress tensor=9,...)
   stat->chunk_size = c_size;
 
@@ -1220,21 +1210,21 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
 
   // Set all obseravables to zero
   for (i = 0; i < total; i++)
-    stat->data.e[i] = 0.0;
+    stat->data[i] = 0.0;
 }
 
 void obsstat_realloc_and_clear_non_bonded(Observable_stat_non_bonded *stat_nb,
                                           int n_nonbonded, int c_size) {
   int i, total = c_size * (n_nonbonded + n_nonbonded);
 
-  realloc_doublelist(&(stat_nb->data_nb), stat_nb->data_nb.n = total);
+  stat_nb->data_nb.resize(total);
   stat_nb->chunk_size_nb = c_size;
   stat_nb->n_nonbonded = n_nonbonded;
   stat_nb->non_bonded_intra = stat_nb->data_nb.e;
   stat_nb->non_bonded_inter = stat_nb->non_bonded_intra + c_size * n_nonbonded;
 
   for (i = 0; i < total; i++)
-    stat_nb->data_nb.e[i] = 0.0;
+    stat_nb->data_nb[i] = 0.0;
 }
 
 void invalidate_obs() {
@@ -1242,7 +1232,6 @@ void invalidate_obs() {
   total_pressure.init_status = 0;
   total_p_tensor.init_status = 0;
 }
-
 
 void update_pressure(int v_comp) {
   int i;

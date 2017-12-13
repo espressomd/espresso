@@ -1030,7 +1030,7 @@ cdef class ParticleHandle(object):
                 cdef const short int * _rot = NULL
                 pointer_to_rotation( self.particle_data, _rot)
                 rot=_rot[0]
-                res=np.zeros(3)
+                res=np.zeros(3, dtype=int)
                 if rot&ROT_X: res[0]=1
                 if rot&ROT_Y: res[1]=1
                 if rot&ROT_Z: res[2]=1
@@ -1536,7 +1536,7 @@ cdef class _ParticleSliceImpl(object):
         self.id_selection = self.id_selection[mask]
 
     def __iter__(self):
-        yield self._id_gen()
+        return self._id_gen()
 
     def _id_gen(self):
         """Generator for chunked and prefetched iteration of particles.
