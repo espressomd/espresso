@@ -1277,17 +1277,8 @@ void remove_id_from_map(int part_id, int type) {
 int get_random_p_id(int type){
     if(particle_type_map.at(type).size()==0)
         throw std::runtime_error("No particles of given type could be found");
-    int returned_p_id=0;
-    int rand_index = i_random(particle_type_map.at(type).size());\
-    int actual_i_th_p_id_in_map=0;
-    for( int p_id :particle_type_map[type]){
-        if(actual_i_th_p_id_in_map==rand_index){
-            returned_p_id=p_id;
-            break;
-        }
-        actual_i_th_p_id_in_map++;
-    }
-    return returned_p_id;
+    int rand_index = i_random(particle_type_map.at(type).size());
+    return *std::next(particle_type_map[type].begin(),rand_index);
 }
 
 void add_id_to_type_map(int part_id, int type) {

@@ -954,7 +954,6 @@ void init_type_map(int type);
 
 /* find a particle of given type and return its id */
 int get_random_p_id(int type);
-
 int number_of_particles_with_type(int type);
 
 // The following functions are used by the python interface to obtain
