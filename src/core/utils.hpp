@@ -560,25 +560,21 @@ inline void get_n_triangle(double *p1, double *p2, double *p3, double *n) {
   n[2] = (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0]);
 }
 
-/** This function returns the angle btw the triangle p1,p2,p3 and p2,p3,p4.
- *  Be careful, the angle depends on the orientation of the trianlges!
- *  You need to be sure that the orientation (direction of normal vector)
- *  of p1p2p3 is given by the cross product p2p1 x p2p3.
- *  The orientation of p2p3p4 must be given by p2p3 x p2p4.
+/** This function returns the angle btw the triangle p1,p2,p3 and p2,p3,p4.  Be
+ * careful, the angle depends on the orientation of the trianlges!  You need to
+ * be sure that the orientation (direction of normal vector) of p1p2p3 is given
+ * by the cross product p2p1 x p2p3.  The orientation of p2p3p4 must be given
+ * by p2p3 x p2p4.
  *
- *  Example: p1 = (0,0,1), p2 = (0,0,0), p3=(1,0,0), p4=(0,1,0).
- *  The orientation of p1p2p3 should be in the direction (0,1,0)
- *  and indeed: p2p1 x p2p3 = (0,0,1)x(1,0,0) = (0,1,0)
- *  This function is called in the beginning of the simulation when creating
- *  bonds depending on the angle btw the triangles, the bending_force.
- *  Here, we determine the orientations by looping over the triangles
- *  and checking the correct orientation. So when defining the bonds by tcl
- * command
- *  "part p2 bond xxxx p1 p3 p4", we correctly input the particle id's.
- *  So if you have the access to the order of particles, you are safe to call
- * this
+ *  Example: p1 = (0,0,1), p2 = (0,0,0), p3=(1,0,0), p4=(0,1,0).  The
+ *  orientation of p1p2p3 should be in the direction (0,1,0) and indeed: p2p1 x
+ *  p2p3 = (0,0,1)x(1,0,0) = (0,1,0) This function is called in the beginning
+ *  of the simulation when creating bonds depending on the angle btw the
+ *  triangles, the bending_force.  Here, we determine the orientations by
+ *  looping over the triangles and checking the correct orientation.  So if you
+ *  have the access to the order of particles, you are safe to call this
  *  function with exactly this order. Otherwise you need to check the
- * orientations. */
+ *  orientations. */
 inline double angle_btw_triangles(double *P1, double *P2, double *P3,
                                   double *P4) {
   double phi;
