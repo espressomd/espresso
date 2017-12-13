@@ -47,13 +47,11 @@ int calc_angledist_force(Particle *p_mid, Particle *p_left, Particle *p_right,
                          Bonded_ia_parameters *iaparams, double force1[3],
                          double force2[3]);
 
-/** Computes the three body angle interaction energy (see \ref tclcommand_inter,
-   \ref tclcommand_analyze).
+/** Computes the three body angle interaction energy.
     @param p_mid        Pointer to second/middle particle.
     @param p_left       Pointer to first particle.
     @param p_right      Pointer to third particle.
-    @param iaparams  bond type number of the angle interaction (see \ref
-   tclcommand_inter).
+    @param iaparams  bond type number of the angle interaction.
     @param _energy   return energy pointer.
     @return 0.
 */

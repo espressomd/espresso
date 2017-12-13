@@ -90,8 +90,7 @@ typedef struct wang_landau_system {
   int monte_carlo_trial_moves; // for 1/t algorithm
 
   int wang_landau_steps; // may be used for performance improvements, when you
-                         // do not want to record other observables in the tcl
-                         // script
+                         // do not want to record other observables.
   char *output_filename;
 
   double
@@ -204,7 +203,7 @@ public:
   // use negative value as fill value since it cannot occur in
   // the wang_landau algorithm in the histogram and in the wang
   // landau potential, use only 1 wang_landau_steps if you want
-  // to record other observables in the tcl script.
+  // to record other observables.
 
   void
   add_new_CV_degree_of_association(int associated_type, double CV_minimum,

@@ -1088,10 +1088,10 @@ void update_stress_tensor (int v_comp) {
 
 int analyze_local_stress_tensor(int* periodic, double* range_start, double* range, int* bins, DoubleList* TensorInBin)
 {
-	PTENSOR_TRACE(fprintf(stderr,"%d: Running tclcommand_analyze_parse_local_stress_tensor\n",this_node));
+	PTENSOR_TRACE(fprintf(stderr,"%d: Running analyze_local_stress_tensor\n",this_node));
 
 	mpi_local_stress_tensor(TensorInBin, bins, periodic,range_start, range);
-	PTENSOR_TRACE(fprintf(stderr,"%d: tclcommand_analyze_parse_local_stress_tensor: finished mpi_local_stress_tensor \n",this_node));
+	PTENSOR_TRACE(fprintf(stderr,"%d: analyze_local_stress_tensor: finished mpi_local_stress_tensor \n",this_node));
 
 	return ES_OK;
 }

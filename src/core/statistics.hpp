@@ -104,7 +104,7 @@ typedef struct {
 
 /** \name Exported Variables
     Previous particle configurations (needed for offline analysis
-    and correlation analysis in \ref tclcommand_analyze)
+    and correlation analysis)
 */
 /************************************************************/
 /*@{*/
