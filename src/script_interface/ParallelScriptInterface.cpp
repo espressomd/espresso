@@ -209,10 +209,9 @@ void ParallelScriptInterface::collect_garbage() {
 
   for (auto it = obj_map.begin(); it != obj_map.end();) {
     if (pred(*it)) {
-      obj_map.erase(it++);
-    } else {
-      ++it;
+      obj_map.erase(it);
     }
+    ++it;
   }
 }
 

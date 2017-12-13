@@ -1,7 +1,7 @@
 #include <algorithm>
-#include <random>
 #include <type_traits>
 #include <vector>
+#include <numeric>
 
 #include "core/utils/make_unique.hpp"
 
@@ -82,7 +82,6 @@ BOOST_AUTO_TEST_CASE(skip_empty) {
   cells[2]->n = 1;
 
   auto begin = iterator(cells.begin(), cells.end(), 0);
-  auto end = iterator(cells.end(), cells.end(), 0);
 
   BOOST_CHECK(begin->identity() == 0);
   ++begin;

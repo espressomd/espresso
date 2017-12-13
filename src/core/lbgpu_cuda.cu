@@ -29,6 +29,8 @@
 #include <stdio.h>
 #include <cuda.h>
 #include <stdlib.h>
+#include <vector>
+#include <cassert>
 
 #include "electrokinetics.hpp"
 #include "electrokinetics_pdb_parse.hpp"
@@ -40,6 +42,8 @@
 #include <thrust/transform_reduce.h>
 #include <thrust/functional.h>
 #include <thrust/device_ptr.h>
+#include <thrust/host_vector.h>
+#include <thrust/device_vector.h>
 
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
@@ -60,14 +64,14 @@ int extended_values_flag=0; /* TODO: this has to be set to one by
 /** device_rho_v: struct for hydrodynamic fields: this is for internal use 
     (i.e. stores values in LB units) and should not used for 
     printing values  */
-static LB_rho_v_gpu *device_rho_v= NULL;
+static LB_rho_v_gpu *device_rho_v= nullptr;
 
 /** device_rho_v_pi: extended struct for hydrodynamic fields: this is the interface
     to tcl, and stores values in MD units. It should not be used
     as an input for any LB calculations. TODO: This structure is not yet 
     used, and it is here to allow access to the stress tensor at any
     timestep, e.g. for future implementations of moving boundary codes */
-static LB_rho_v_pi_gpu *device_rho_v_pi= NULL;
+static LB_rho_v_pi_gpu *device_rho_v_pi= nullptr;
 
 /** print_rho_v_pi: struct for hydrodynamic fields: this is the interface
     to tcl, and stores values in MD units. It should not used
@@ -75,41 +79,36 @@ static LB_rho_v_pi_gpu *device_rho_v_pi= NULL;
     one might want to have several structures for printing 
     separately rho, v, pi without having to compute/store 
     the complete set. */
-static LB_rho_v_pi_gpu *print_rho_v_pi= NULL;
+static LB_rho_v_pi_gpu *print_rho_v_pi= nullptr;
 
 /** structs for velocity densities */
-static LB_nodes_gpu nodes_a = {.vd=NULL,.seed=NULL,.boundary=NULL};
-static LB_nodes_gpu nodes_b = {.vd=NULL,.seed=NULL,.boundary=NULL};;
+static LB_nodes_gpu nodes_a = { nullptr, nullptr, nullptr};
+static LB_nodes_gpu nodes_b = { nullptr, nullptr, nullptr};;
 /** struct for node force */
 
-LB_node_force_gpu node_f = {.force=NULL,.scforce=NULL} ;
+LB_node_force_gpu node_f = {nullptr, nullptr} ;
 
-static LB_extern_nodeforce_gpu *extern_nodeforces = NULL;
+static LB_extern_nodeforce_gpu *extern_nodeforces = nullptr;
 
 #ifdef LB_BOUNDARIES_GPU
-static float* lb_boundary_force = NULL;
+static float* lb_boundary_force = nullptr;
 
-static float* lb_boundary_velocity = NULL;
+static float* lb_boundary_velocity = nullptr;
 
 /** pointer for bound index array*/
 static int *boundary_node_list;
 static int *boundary_index_list;
-static __device__ __constant__ int n_lb_boundaries_gpu = 0;
 static size_t size_of_boundindex;
-#endif
-
-#if defined(ELECTROKINETICS)
-static __device__ __constant__ int ek_initialized_gpu = 0;
 #endif
 
 EK_parameters* lb_ek_parameters_gpu;
 
 /** pointers for additional cuda check flag*/
-static int *gpu_check = NULL;
-static int *h_gpu_check = NULL;
+static int *gpu_check = nullptr;
+static int *h_gpu_check = nullptr;
 
 static unsigned int intflag = 1;
-LB_nodes_gpu *current_nodes = NULL;
+LB_nodes_gpu *current_nodes = nullptr;
 /**defining size values for allocating global memory */
 static size_t size_of_rho_v;
 static size_t size_of_rho_v_pi;
@@ -1553,9 +1552,9 @@ __device__ void calc_mode(float *mode, LB_nodes_gpu n_a, unsigned int node_index
  * @param part_index      particle id / thread id (Input)
  * @param node_index      node index around (8) particle (Output)
  * @param *d_v            Pointer to local device values
- * @param *interpolated_u Pointer to the interpolated velocity
+ * @param *interpolated_u Pointer to the interpolated velocity (Output)
 */
-__device__ __inline__ void interpolation_three_point_coupling( LB_nodes_gpu n_a, float* particle_position, unsigned int *node_index, LB_rho_v_gpu *d_v, float *delta, float *interpolated_u ) {
+__device__ __inline__ void interpolation_three_point_coupling(LB_nodes_gpu n_a, float* particle_position, unsigned int *node_index, LB_rho_v_gpu *d_v, float *delta, float *interpolated_u) {
 
   int my_center[3];
   float temp_delta[27];
@@ -1809,14 +1808,14 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared, int *number_o
 /*********************************************************/
 /**(Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
  * @param n_a                   Pointer to local node residing in array a (Input)
- * @param node_index            node index around (8) particle (Output)
  * @param *particle_position    Pointer to the particle position (Input)
- * @param *mode                 Pointer to the 19 modes for current lattice point
+ * @param node_index            node index around (8) particle (Output)
+ * @param *mode                 Pointer to the 19 modes for current lattice point (Output)
  * @param *d_v                  Pointer to local device values
- * @param *interpolated_u       Pointer to the interpolated velocity
  * @param *delta                Pointer for the weighting of particle position (Output)
+ * @param *interpolated_u       Pointer to the interpolated velocity (Output)
 */
-__device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, float *particle_position, unsigned int* node_index, float* mode, LB_rho_v_gpu *d_v, float* delta, float *interpolated_u ) {
+__device__ __inline__ void interpolation_two_point_coupling(LB_nodes_gpu n_a, float *particle_position, unsigned int* node_index, float* mode, LB_rho_v_gpu *d_v, float* delta, float *interpolated_u) {
   int   left_node_index[3];
   float temp_delta[6];
   float temp_delta_half[6];
@@ -2189,6 +2188,8 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
 #endif
 
 }
+
+
 
 /**calculation of the node force caused by the particles, with atomicadd due to avoiding race conditions 
   (Eq. (14) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
@@ -2922,7 +2923,7 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *par
  * @param node_f      Pointer to local node force (Input)
  * @param *d_v    Pointer to local device values
 */
-__global__ void calc_fluid_particle_ia_three_point_couple(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float *particle_force,                                             LB_node_force_gpu node_f, CUDA_particle_seed *part, LB_rho_v_gpu *d_v){
+__global__ void calc_fluid_particle_ia_three_point_couple(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float *particle_force, LB_node_force_gpu node_f, CUDA_particle_seed *part, LB_rho_v_gpu *d_v){
 
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   unsigned int node_index[27];
@@ -3149,7 +3150,7 @@ void lb_get_device_values_pointer(LB_rho_v_gpu** pointeradress) {
 */
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 #define free_and_realloc(var,size)\
-  { if( (var) != NULL ) cudaFree((var)); cuda_safe_mem(cudaMalloc((void**)&var, size)); } 
+  { if( (var) != nullptr ) cudaFree((var)); cuda_safe_mem(cudaMalloc((void**)&var, size)); } 
 
   size_of_rho_v     = lbpar_gpu->number_of_nodes * sizeof(LB_rho_v_gpu);
   size_of_rho_v_pi  = lbpar_gpu->number_of_nodes * sizeof(LB_rho_v_pi_gpu);
@@ -3189,7 +3190,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   /**check flag if lb gpu init works*/
   free_and_realloc(gpu_check, sizeof(int));
 
-  if(h_gpu_check!=NULL)
+  if(h_gpu_check!=nullptr)
     free(h_gpu_check);  
 
   h_gpu_check = (int*)Utils::malloc(sizeof(int));
@@ -3206,12 +3207,6 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   // TODO FIXME: 
   /* We must add shan-chen forces, which are zero only if the densities are uniform*/
   #endif
-
-#if defined(ELECTROKINETICS)
-  // We need to know if the electrokinetics is being used or not
-  cuda_safe_mem(cudaMemcpyToSymbol(ek_initialized_gpu, &ek_initialized, sizeof(int)));
-#endif
-
 
   /** calc of velocitydensities from given parameters and initialize the Node_Force array with zero */
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
@@ -3268,8 +3263,6 @@ void lb_realloc_particles_GPU_leftovers(LB_parameters_gpu *lbpar_gpu){
 void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes, int *host_boundary_node_list, int* host_boundary_index_list, float* host_lb_boundary_velocity){
   if (this_node != 0) return;
   
-  int temp = host_n_lb_boundaries;
-
   size_of_boundindex = number_of_boundnodes*sizeof(int);
   cuda_safe_mem(cudaMalloc((void**)&boundary_node_list, size_of_boundindex));
   cuda_safe_mem(cudaMalloc((void**)&boundary_index_list, size_of_boundindex));
@@ -3278,7 +3271,6 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes, 
   cuda_safe_mem(cudaMalloc((void**)&lb_boundary_force   , 3*host_n_lb_boundaries*sizeof(float)));
   cuda_safe_mem(cudaMalloc((void**)&lb_boundary_velocity, 3*host_n_lb_boundaries*sizeof(float)));
   cuda_safe_mem(cudaMemcpy(lb_boundary_velocity, host_lb_boundary_velocity, 3*LBBoundaries::lbboundaries.size()*sizeof(float), cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpyToSymbol(n_lb_boundaries_gpu, &temp, sizeof(int)));
 
   /** values for the kernel call */
   int threads_per_block = 64;
@@ -3691,7 +3683,7 @@ void lb_integrate_GPU() {
   /**call of fluid step*/
   /* NOTE: if pi is needed at every integration step, one should call an extended version 
            of the integrate kernel, or pass also device_rho_v_pi and make sure that either 
-           it or device_rho_v are NULL depending on extended_values_flag */ 
+           it or device_rho_v are nullptr depending on extended_values_flag */ 
   if (intflag == 1)
   {
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_a, nodes_b, device_rho_v, node_f, lb_ek_parameters_gpu));
@@ -3726,7 +3718,7 @@ void lb_gpu_get_boundary_forces(double* forces) {
 #endif
 }
 
-__device__ void get_interpolated_velocity(LB_nodes_gpu n_a, float* r, float* u, LB_node_force_gpu node_f, int asdf) {
+__device__ void get_interpolated_velocity(LB_nodes_gpu n_a, float* r, float* u, LB_node_force_gpu node_f) {
 
   /** see ahlrichs + duenweg page 8227 equ (10) and (11) */
   float temp_delta[6];
@@ -3790,17 +3782,16 @@ __device__ void get_interpolated_velocity(LB_nodes_gpu n_a, float* r, float* u, 
 //      u[0] += d_v[node_index[i]].v[0]/8.0f;  
 //      u[1] += d_v[node_index[i]].v[1]/8.0f;
 //      u[2] += d_v[node_index[i]].v[2]/8.0f;
-#warning "lb_radial_velocity_profile does not work with SHANCHEN yet/"
-        u[0] = 0;
-        u[1] = 0;
-        u[2] = 0;
+        u[0] = 0*delta[i];
+        u[1] = 0*delta[i];
+        u[2] = 0*delta[i];
 #endif
 
 //      mode[1]+=0.5f*node_f.force[0*para.number_of_nodes + node_index[i]];
 //      mode[2]+=0.5f*node_f.force[1*para.number_of_nodes + node_index[i]];
 //      mode[3]+=0.5f*node_f.force[2*para.number_of_nodes + node_index[i]];
 //
-    }
+  }
 
   #pragma unroll
   for(int i=0; i<3; ++i){
@@ -3813,34 +3804,34 @@ __global__ void fill_lb_radial_velocity_profile(LB_nodes_gpu n_a, radial_profile
   unsigned int phibin=blockIdx.x;
   unsigned int zbin=blockIdx.y;
 
-  float roffset=pdata->minr;
-  float r_incr=(pdata->maxr-pdata->minr)/(pdata->rbins-1);
+  float roffset=pdata->min_r;
+  float r_incr=(pdata->max_r-pdata->min_r)/(pdata->n_r_bins-1);
 
   float r = roffset + rbin*r_incr;
 
   unsigned int maxj;
   float phioffset, phi_incr;
-  if ( pdata->phibins == 1 ) {
-    maxj = (int)floorf( 2*3.1415f*pdata->maxr/para.agrid ) ; 
+  if ( pdata->n_phi_bins == 1 ) {
+    maxj = (int)floorf( 2*3.1415f*pdata->max_r/para.agrid ) ;
     phioffset=0;
     phi_incr=2*3.1415f/maxj;
   } else {
-    maxj = pdata->phibins;
-    phioffset=pdata->minphi;
-    phi_incr=(pdata->maxphi-pdata->minphi)/(pdata->phibins);
+    maxj = pdata->n_phi_bins;
+    phioffset=pdata->min_phi;
+    phi_incr=(pdata->max_phi-pdata->min_phi)/(pdata->n_phi_bins);
   }
   float phi = phioffset + phibin*phi_incr;
 
   unsigned int maxk;
   float zoffset, z_incr;
-  if ( pdata->zbins == 1 ) {
+  if ( pdata->n_z_bins == 1 ) {
     maxk = (int) para.dim_z;
     zoffset=-pdata->center[2];
     z_incr=para.agrid;
   } else {
-    maxk = (int) pdata->zbins;
-    zoffset=pdata->minz;
-    z_incr=(pdata->maxz-pdata->minz)/(pdata->zbins-1);
+    maxk = (int) pdata->n_z_bins;
+    zoffset=pdata->min_z;
+    z_incr=(pdata->max_z-pdata->min_z)/(pdata->n_z_bins-1);
   }
 
   float z = zoffset + zbin*z_incr;
@@ -3851,7 +3842,7 @@ __global__ void fill_lb_radial_velocity_profile(LB_nodes_gpu n_a, radial_profile
   p[2]=z+pdata->center[2];
 
   float v[3];
-  get_interpolated_velocity(n_a, p, v, node_f, 0);
+  get_interpolated_velocity(n_a, p, v, node_f);
   unsigned int linear_index = rbin*maxj*maxk + phibin*maxk + zbin;
 
  float v_r,v_phi;
@@ -3882,34 +3873,34 @@ __global__ void fill_lb_velocity_profile(LB_nodes_gpu n_a, profile_data* pdata, 
 
 
 
-  if ( pdata->xbins == 1 ) {
+  if ( pdata->n_x_bins == 1 ) {
     /* maxi = (int) floor(gridDim.x/para.agrid); */
     xoffset=0;
     x_incr=para.agrid;
   } else {
-    /* maxi = pdata->xbins; */
-    xoffset=pdata->minx;
-    x_incr=(pdata->maxx-pdata->minx)/(pdata->xbins-1);
+    /* maxi = pdata->n_x_bins; */
+    xoffset=pdata->min_x;
+    x_incr=(pdata->max_x-pdata->min_x)/(pdata->n_x_bins-1);
   }
   float x = xoffset + xbin*x_incr;
-  if ( pdata->ybins == 1 ) {
+  if ( pdata->n_y_bins == 1 ) {
     maxj = (int) floorf(para.dim_y/para.agrid);
     yoffset=0;
     y_incr=para.agrid;
   } else {
-    maxj = pdata->ybins;
-    yoffset=pdata->miny;
-    y_incr=(pdata->maxy-pdata->miny)/(pdata->ybins-1);
+    maxj = pdata->n_y_bins;
+    yoffset=pdata->min_y;
+    y_incr=(pdata->max_y-pdata->min_y)/(pdata->n_y_bins-1);
   }
   float y = yoffset + ybin*y_incr;
-  if ( pdata->zbins == 1 ) {
+  if ( pdata->n_z_bins == 1 ) {
     maxk = (int) floorf(para.dim_z/para.agrid);
     zoffset=0;
     z_incr=para.agrid;
   } else {
-    maxk = (int) pdata->zbins;
-    zoffset=pdata->minz;
-    z_incr=(pdata->maxz-pdata->minz)/(pdata->zbins-1);
+    maxk = (int) pdata->n_z_bins;
+    zoffset=pdata->min_z;
+    z_incr=(pdata->max_z-pdata->min_z)/(pdata->n_z_bins-1);
   }
   float z = zoffset + zbin*z_incr;
 
@@ -3919,7 +3910,7 @@ __global__ void fill_lb_velocity_profile(LB_nodes_gpu n_a, profile_data* pdata, 
   p[2]=z;
 
   float v[3];
-  get_interpolated_velocity(n_a, p, v, node_f, 0);
+  get_interpolated_velocity(n_a, p, v, node_f);
   unsigned int linear_index = xbin*maxj*maxk + ybin*maxk + zbin;
 
   data[3*linear_index+0]=v[0];
@@ -3930,27 +3921,30 @@ __global__ void fill_lb_velocity_profile(LB_nodes_gpu n_a, profile_data* pdata, 
 
 
 int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pdata, double* A, unsigned int n_A){
+#ifdef SHANCHEN
+  assert(0);
+#endif
 
   unsigned int maxj, maxk;
   float normalization_factor=1;
   
-  if ( pdata->rbins == 1 ) {
+  if ( pdata->n_r_bins == 1 ) {
     return 1;
   }
 
-  unsigned int maxi=pdata->rbins;
+  unsigned int maxi=pdata->n_r_bins;
   
-  if ( pdata->phibins == 1 ) {
-    maxj = (int)floorf( 2*3.1415f*pdata->maxr/lbpar_gpu.agrid ) ; 
+  if ( pdata->n_phi_bins == 1 ) {
+    maxj = (int)floorf( 2*3.1415f*pdata->max_r/lbpar_gpu.agrid ) ;
     normalization_factor/=maxj;
   } else {
-    maxj = pdata->phibins;
+    maxj = pdata->n_phi_bins;
   }
-  if ( pdata->zbins == 1 ) {
+  if ( pdata->n_z_bins == 1 ) {
     maxk = (int) lbpar_gpu.dim_z;
     normalization_factor/=maxk;
   } else {
-    maxk = pdata->zbins;
+    maxk = pdata->n_z_bins;
   }
 
   for (int i = 0; i<n_A; i++) {
@@ -3986,11 +3980,11 @@ int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pda
     for (int j =0; j<maxj; j++)
       for (int k =0; k<maxk; k++) {
         linear_index = 0;
-        if (pdata->rbins > 1)
-          linear_index += i*pdata->phibins*pdata->zbins;
-        if (pdata->phibins > 1)
-          linear_index += j*pdata->zbins;
-        if (pdata->zbins > 1)
+        if (pdata->n_r_bins > 1)
+          linear_index += i*pdata->n_phi_bins*pdata->n_z_bins;
+        if (pdata->n_phi_bins > 1)
+          linear_index += j*pdata->n_z_bins;
+        if (pdata->n_z_bins > 1)
           linear_index +=k;
         A[3*linear_index+0]+=host_data[3*(i*maxj*maxk + j*maxk + k)+0]*normalization_factor*lbpar_gpu.tau/lbpar_gpu.agrid;
         A[3*linear_index+1]+=host_data[3*(i*maxj*maxk + j*maxk + k)+1]*normalization_factor*lbpar_gpu.tau/lbpar_gpu.agrid;
@@ -4008,28 +4002,32 @@ int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pda
 }
 
 int statistics_observable_lbgpu_velocity_profile(profile_data* pdata, double* A, unsigned int n_A){
+#ifdef SHANCHEN
+  assert(0);
+#endif
+
   unsigned int maxi, maxj, maxk;
   int linear_index;
   float normalization_factor=1;
 
 
-  if ( pdata->xbins == 1 ) {
+  if ( pdata->n_x_bins == 1 ) {
     maxi = (int) floor(lbpar_gpu.dim_x/lbpar_gpu.agrid);
     normalization_factor/=maxi;
   } else {
-    maxi = pdata->xbins;
+    maxi = pdata->n_x_bins;
   }
-  if ( pdata->ybins == 1 ) {
+  if ( pdata->n_y_bins == 1 ) {
     maxj = (int) floor(lbpar_gpu.dim_y/lbpar_gpu.agrid);
     normalization_factor/=maxj;
   } else {
-    maxj = pdata->ybins;
+    maxj = pdata->n_y_bins;
   }
-  if ( pdata->zbins == 1 ) {
+  if ( pdata->n_z_bins == 1 ) {
     maxk = (int) floor(lbpar_gpu.dim_z/lbpar_gpu.agrid);
     normalization_factor/=maxk;
   } else {
-    maxk = pdata->zbins;
+    maxk = pdata->n_z_bins;
   }
 
   for (int i = 0; i<n_A; i++) {
@@ -4067,11 +4065,11 @@ int statistics_observable_lbgpu_velocity_profile(profile_data* pdata, double* A,
     for ( j = 0; j < maxj; j++ ) {
       for ( k = 0; k < maxk; k++ ) {
         linear_index = 0;
-        if (pdata->xbins > 1)
-          linear_index += i*pdata->ybins*pdata->zbins;
-        if (pdata->ybins > 1)
-          linear_index += j*pdata->zbins;
-        if (pdata->zbins > 1)
+        if (pdata->n_x_bins > 1)
+          linear_index += i*pdata->n_y_bins*pdata->n_z_bins;
+        if (pdata->n_y_bins > 1)
+          linear_index += j*pdata->n_z_bins;
+        if (pdata->n_z_bins > 1)
           linear_index +=k;
 
         A[3*linear_index+0]+=host_data[3*(i*maxj*maxk + j*maxk + k)+0]*normalization_factor*lbpar_gpu.tau/lbpar_gpu.agrid;
@@ -4266,5 +4264,40 @@ void lb_lbfluid_get_population( int xyz[3], float population_host[LBQ], int c )
   cuda_safe_mem(cudaFree(population_device));
 }
 
+struct two_point_interpolation { 
+    LB_nodes_gpu current_nodes_gpu;
+    LB_rho_v_gpu *d_v_gpu;
+    two_point_interpolation(LB_nodes_gpu _current_nodes_gpu, LB_rho_v_gpu *_d_v_gpu) : current_nodes_gpu(_current_nodes_gpu), d_v_gpu(_d_v_gpu) {};
+	__device__ float3 operator()(const float3 &position) const {
+        unsigned int node_index[8];
+        float delta[8];
+        float u[3];
+        float mode[19*LB_COMPONENTS];
+        float _position[3] = {position.x, position.y, position.z};
+        interpolation_two_point_coupling(current_nodes_gpu, _position, node_index, mode, d_v_gpu, delta, u);
+        return make_float3(u[0], u[1], u[2]);
+	} 
+};
+
+void lb_lbfluid_get_interpolated_velocity_at_positions(double *positions, double *velocities, int length) {
+    thrust::host_vector<float3> positions_host(length);
+    for (int p=0; p < 3 * length; p+=3) {
+        // Cast double coming from python to float.
+        positions_host[p/3].x = static_cast<float>(positions[p]);
+        positions_host[p/3].y = static_cast<float>(positions[p+1]);
+        positions_host[p/3].z = static_cast<float>(positions[p+2]);
+    }
+    thrust::device_vector<float3> positions_device = positions_host;
+    thrust::device_vector<float3> velocities_device(length);
+    thrust::transform(positions_device.begin(), positions_device.end(), velocities_device.begin(), two_point_interpolation(*current_nodes, device_rho_v));
+    thrust::host_vector<float3> velocities_host = velocities_device;
+    int index = 0;
+    for (auto v : velocities_host) {
+        velocities[index] = static_cast<double>(v.x) * lbpar_gpu.agrid/lbpar_gpu.tau;
+        velocities[index+1] = static_cast<double>(v.y) * lbpar_gpu.agrid/lbpar_gpu.tau;
+        velocities[index+2] = static_cast<double>(v.z) * lbpar_gpu.agrid/lbpar_gpu.tau;
+        index += 3;
+    }
+}
 
 #endif /* LB_GPU */

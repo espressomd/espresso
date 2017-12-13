@@ -28,8 +28,6 @@ from espressomd import reaction_ensemble
 from espressomd import grand_canonical
 
 
-@ut.skipIf('REACTION_ENSEMBLE' not in espressomd.code_info.features(),
-           "REACTION_ENSEMBLE not compiled in, can not check functionality.")
 class ReactionEnsembleTest(ut.TestCase):
     """Test the core implementation of the reaction ensemble."""
 

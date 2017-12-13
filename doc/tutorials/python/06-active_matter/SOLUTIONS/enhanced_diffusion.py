@@ -26,7 +26,7 @@
 from __future__ import print_function
 
 from espressomd import assert_features, System
-from espressomd.observables import ParticlePositions, ParticleVelocities, ParticleAngularMomentum
+from espressomd.observables import ParticlePositions, ParticleVelocities, ParticleAngularVelocities
 from espressomd.correlators import Correlator
 
 import numpy as np
@@ -110,7 +110,7 @@ for run in range(5):
 
     # Initialize the angular velocity auto-correlation function (AVACF) correlator
 
-    ang_id = ParticleAngularMomentum(ids=[0])
+    ang_id = ParticleAngularVelocities(ids=[0])
     avacf  = Correlator(obs1=ang_id,
                         corr_operation="scalar_product",
                         dt=tstep,

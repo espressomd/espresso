@@ -21,12 +21,13 @@
 #ifndef UTILS_MPI_SCATTER_BUFFER_HPP
 #define UTILS_MPI_SCATTER_BUFFER_HPP
 
-#include <algorithm>
-#include <vector>
+#include "detail/size_and_offset.hpp"
 
 #include <boost/mpi/communicator.hpp>
 
-#include "detail/size_and_offset.hpp"
+#include <algorithm>
+#include <vector>
+#include <type_traits>
 
 namespace Utils {
 namespace Mpi {
@@ -42,11 +43,17 @@ namespace Mpi {
 template <typename T>
 void scatter_buffer(T *buffer, int n_elem, boost::mpi::communicator comm,
                     int root = 0) {
+  static_assert(std::is_pod<T>::value, "");
   if (comm.rank() == root) {
     static std::vector<int> sizes;
     static std::vector<int> displ;
 
     detail::size_and_offset<T>(sizes, displ, n_elem, comm, root);
+
+    for(int i = 0; i < comm.size(); i++) {
+      sizes[i] *= sizeof(T);
+      displ[i] *= sizeof(T);
+    }
 
     /* Send data */
     MPI_Scatterv(buffer, sizes.data(), displ.data(), MPI_BYTE, MPI_IN_PLACE, 0,

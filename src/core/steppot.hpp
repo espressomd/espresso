@@ -44,7 +44,7 @@ int smooth_step_set_params(int part_type_a, int part_type_b,
 inline void add_SmSt_pair_force(const Particle * const p1, const Particle * const p2, IA_parameters *ia_params,
 				  double d[3], double dist,double dist2, double force[3])
 {
-  if (!(dist < ia_params->SmSt_cut))
+  if (dist >= ia_params->SmSt_cut)
     return;
   
   int j;
@@ -62,7 +62,7 @@ inline void add_SmSt_pair_force(const Particle * const p1, const Particle * cons
 inline double SmSt_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				 double d[3], double dist,double dist2)
 {
-  if (!(dist < ia_params->SmSt_cut))
+  if (dist >= ia_params->SmSt_cut)
     return 0.0;
 
   double frac, fracP, er;

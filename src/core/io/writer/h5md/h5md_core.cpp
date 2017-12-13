@@ -19,7 +19,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <vector>
 #include "h5md_core.hpp"
+#include "core/interaction_data.hpp"
 
 namespace Writer {
 namespace H5md {
@@ -163,7 +165,7 @@ void File::init_filestructure() {
                  "parameters/files"};
   h5xx::datatype type_double = h5xx::datatype(H5T_NATIVE_DOUBLE);
   h5xx::datatype type_int = h5xx::datatype(H5T_NATIVE_INT);
-  hsize_t npart = static_cast<hsize_t>(n_part);
+
   dataset_descriptors = {
       // path, dim, type
       {"particles/atoms/box/edges", 1, type_double},
@@ -355,15 +357,24 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
 
   if (!m_already_wrote_bonds) {
     int nbonds_local = bond.shape()[1];
-    for (int i = 1; i < current_particle.bl.n; i = i + 2) {
-      bond.resize(boost::extents[1][nbonds_local + 1][2]);
-      bond[0][nbonds_local][0] = current_particle.p.identity;
-      bond[0][nbonds_local][1] = current_particle.bl.e[i];
+    for (auto it = current_particle.bl.begin();
+         it != current_particle.bl.end();) {
+
+      auto const n_partners = bonded_ia_params[*it++].num;
+
+      if (1 == n_partners) {
+        bond.resize(boost::extents[1][nbonds_local + 1][2]);
+        bond[0][nbonds_local][0] = current_particle.p.identity;
+        bond[0][nbonds_local][1] = *it++;
+        nbonds_local++;
+      } else {
+        it += n_partners;
+      }
     }
   }
 }
 
-  void File::Write(int write_dat, PartCfg & partCfg) {
+void File::Write(int write_dat, PartCfg &partCfg) {
 #ifdef H5MD_DEBUG
   std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
@@ -521,14 +532,14 @@ void File::ExtendDataset(std::string path, int *change_extent) {
   /* Get the current dimensions of the dataspace. */
   hid_t ds = H5Dget_space(dataset.hid());
   hsize_t rank = H5Sget_simple_extent_ndims(ds);
-  hsize_t dims[rank], maxdims[rank];
-  H5Sget_simple_extent_dims(ds, dims, maxdims);
+  std::vector<hsize_t> dims(rank), maxdims(rank);
+  H5Sget_simple_extent_dims(ds, dims.data(), maxdims.data());
   H5Sclose(ds);
   /* Extend the dataset for another timestep (extent = 1) */
   for (int i = 0; i < rank; i++) {
     dims[i] += change_extent[i];
   }
-  H5Dset_extent(dataset.hid(), dims); // extend all dims is collective
+  H5Dset_extent(dataset.hid(), dims.data()); // extend all dims is collective
 }
 
 /* data is assumed to be three dimensional */
@@ -545,13 +556,13 @@ void File::WriteDataset(T &data, const std::string &path, int *change_extent,
   auto &dataset = datasets[path];
   hid_t ds = H5Dget_space(dataset.hid());
   hsize_t rank = H5Sget_simple_extent_ndims(ds);
-  hsize_t maxdims[rank];
+  std::vector<hsize_t> maxdims(rank);
   for (int i = 0; i < rank; i++) {
     maxdims[i] = H5S_UNLIMITED;
   }
-  H5Sselect_hyperslab(ds, H5S_SELECT_SET, offset, NULL, count, NULL);
+  H5Sselect_hyperslab(ds, H5S_SELECT_SET, offset, nullptr, count, nullptr);
   /* Create a temporary dataspace. */
-  hid_t ds_new = H5Screate_simple(rank, count, maxdims);
+  hid_t ds_new = H5Screate_simple(rank, count, maxdims.data());
   /* Finally write the data to the dataset. */
   H5Dwrite(dataset.hid(), dataset.get_type(), ds_new, ds, H5P_DEFAULT,
            data.origin());
@@ -576,14 +587,14 @@ void File::WriteScript(std::string const &filename) {
   buffer.assign(std::istreambuf_iterator<char>(scriptfile),
                 std::istreambuf_iterator<char>());
 
-  hid_t filetype, dtype, space, dset, file_id;
+  hid_t dtype, space, dset, file_id;
   file_id =
       H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
   dtype = H5Tcopy(H5T_C_S1);
   H5Tset_size(dtype, filelen * sizeof(char));
 
-  space = H5Screate_simple(1, dims, NULL);
+  space = H5Screate_simple(1, dims, nullptr);
   /* Create the dataset. */
   hid_t link_crt_plist = H5Pcreate(H5P_LINK_CREATE);
   H5Pset_create_intermediate_group(

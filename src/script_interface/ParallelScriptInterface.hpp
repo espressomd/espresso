@@ -25,13 +25,13 @@
 #include <utility>
 
 #include "ScriptInterface.hpp"
-
 #include "ParallelScriptInterfaceSlave.hpp"
 
 namespace ScriptInterface {
 
 class ParallelScriptInterface : public ScriptInterfaceBase {
-  static Communication::MpiCallbacks * m_cb;
+  static Communication::MpiCallbacks *m_cb;
+
 public:
   using CallbackAction = ParallelScriptInterfaceSlave::CallbackAction;
 

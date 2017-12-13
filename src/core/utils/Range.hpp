@@ -1,8 +1,8 @@
 #ifndef UTILS_RANGE_HPP
 #define UTILS_RANGE_HPP
 
-#include <utility>
 #include <iterator>
+#include <utility>
 
 namespace Utils {
 
@@ -16,11 +16,11 @@ template <typename Iterator> class Range {
 public:
   using iterator = Iterator;
   using value_type = typename std::iterator_traits<Iterator>::value_type;
-  using difference_type = typename std::iterator_traits<Iterator>::difference_type;
+  using difference_type =
+      typename std::iterator_traits<Iterator>::difference_type;
 
   Range(Iterator begin, Iterator end)
-      : m_begin(std::forward<Iterator>(begin)),
-        m_end(std::forward<Iterator>(end)) {}
+      : m_begin(std::move(begin)), m_end(std::move(end)) {}
 
   Iterator begin() { return m_begin; }
   Iterator end() { return m_end; }
@@ -43,8 +43,9 @@ public:
  * argument deduction to figure out the Range type.
  */
 template <typename Iterator>
-Range<Iterator> make_range(Iterator begin, Iterator end) {
-  return Range<Iterator>(begin, end);
+Range<Iterator> make_range(Iterator &&begin, Iterator &&end) {
+  return Range<Iterator>(std::forward<Iterator>(begin),
+                         std::forward<Iterator>(end));
 }
 
 } /* namespace Utils */

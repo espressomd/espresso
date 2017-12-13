@@ -12,8 +12,11 @@ IF CATALYTIC_REACTIONS:
         """
         Class that handles catalytic reactions for self propelled particles.
 
-        Keep in mind, that there may be
-        only one reaction enabled.  There can be only one.
+        .. note::
+           Requires the features CATALYTIC_REACTIONS.
+           
+           Keep in mind, that there may be only one reaction enabled. 
+           There can be only one.
 
         Parameters
         ----------
@@ -122,7 +125,8 @@ IF CATALYTIC_REACTIONS:
 
         def get_params(self):
             """
-            Get parameters set for the catalytic reactions
+            Get parameters set for the catalytic reactions.
+
             """
             self._get_params_from_es_core()
             return self._params
@@ -164,6 +168,7 @@ IF CATALYTIC_REACTIONS:
         def setup(self, *args, **kwargs):
             """
             Collect the parameters and set them in the core.
+
             """
 
             # Check if parameters are complete
@@ -184,7 +189,8 @@ IF CATALYTIC_REACTIONS:
 
         def start(self):
             """
-            Restart the reaction after it was stopped
+            Restart the reaction after it was stopped.
+
             """
             if (self._ct_rate != 0.0):
                 self._params["ct_rate"] = self._ct_rate
@@ -194,7 +200,8 @@ IF CATALYTIC_REACTIONS:
 
         def stop(self):
             """
-            Stop the reaction, i.e. set the reaction rate to 0.0
+            Stop the reaction, i.e. set the reaction rate to 0.0.
+
             """
             if (self._ct_rate == 0.0):
                 self._ct_rate = self._params["ct_rate"]

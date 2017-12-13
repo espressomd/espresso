@@ -28,6 +28,7 @@
 #include <stdexcept>
 
 #include "core/observables/Observable.hpp"
+#include "partCfg_global.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
@@ -40,15 +41,11 @@ public:
 
   virtual std::shared_ptr<CoreObs> observable() const = 0;
   virtual Variant call_method(std::string const &method,
-                              VariantMap const &parameters) {
+                              VariantMap const &parameters) override {
     if (method == "calculate") {
-      observable()->calculate();
-      return observable()->last_value;
+      return observable()->operator()(partCfg());
     }
 
-    if (method == "value") {
-      return observable()->last_value;
-    }
     if (method == "auto_write_to") {
       std::string filename;
       bool binary;

@@ -23,9 +23,10 @@ from espressomd.utils cimport *
 
 cdef class Integrator(object):
     """
-    Integrator class
+    Integrator class.
 
     This class interfaces the Velocity Verlet integrator.
+
     """
 
     cdef str _method
@@ -47,6 +48,7 @@ cdef class Integrator(object):
             Recalculate the forces regardless of whether they are reusable.
         reuse_forces : :obj:`bool`, optional
             Reuse the forces from previous time step.
+
         """
 
         if self._method == "VV":
@@ -72,6 +74,7 @@ cdef class Integrator(object):
 
         .. seealso::
             :class:`espressomd.minimize_energy.MinimizeEnergy`
+
         """
 
         req = ["f_max", "gamma", "max_displacement"]
@@ -85,12 +88,14 @@ cdef class Integrator(object):
     def set_vv(self):
         """
         Set the integration method to Velocity Verlet.
+
         """
         self._method = "VV"
 
     def set_nvt(self):
         """
         Set the integration method to NVT.
+
         """
 
         integrate_set_nvt()
@@ -109,6 +114,7 @@ cdef class Integrator(object):
             Three integers to set the box geometry for non-cubic boxes
         cubic_box : :obj:`bool`, optional
             If this optional parameter is true, a cubic box is assumed.
+
         """
 
         if "NPT" not in espressomd.code_info.features():

@@ -32,7 +32,7 @@
 /** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref
  * tclcommand_analyze) */
 /*@{*/
-float *partCoord_g = NULL, *partCM_g = NULL;
+float *partCoord_g = nullptr, *partCM_g = nullptr;
 int n_part_g = 0, n_chains_g = 0;
 /*@}*/
 
@@ -54,7 +54,7 @@ void calc_re(PartCfg & partCfg, double **_re) {
   int i;
   double dx, dy, dz;
   double dist = 0.0, dist2 = 0.0, dist4 = 0.0;
-  double *re = NULL, tmp;
+  double *re = nullptr, tmp;
   *_re = re = Utils::realloc(re, 4 * sizeof(double));
 
   for (i = 0; i < chain_n_chains; i++) {
@@ -80,7 +80,7 @@ void calc_re_av(double **_re) {
   int i, j;
   double dx, dy, dz;
   double dist = 0.0, dist2 = 0.0, dist4 = 0.0;
-  double *re = NULL, tmp;
+  double *re = nullptr, tmp;
   *_re = re = Utils::realloc(re, 4 * sizeof(double));
 
   for (j = 0; j < n_configs; j++) {
@@ -110,7 +110,7 @@ void calc_rg(PartCfg & partCfg, double **_rg) {
   int i, j, p;
   double dx, dy, dz, r_CM_x, r_CM_y, r_CM_z;
   double r_G = 0.0, r_G2 = 0.0, r_G4 = 0.0;
-  double *rg = NULL, IdoubMPC, tmp;
+  double *rg = nullptr, IdoubMPC, tmp;
   double M;
   *_rg = rg = Utils::realloc(rg, 4 * sizeof(double));
 
@@ -152,7 +152,7 @@ void calc_rg_av(PartCfg & partCfg, double **_rg) {
   int i, j, k, p;
   double dx, dy, dz, r_CM_x, r_CM_y, r_CM_z;
   double r_G = 0.0, r_G2 = 0.0, r_G4 = 0.0;
-  double *rg = NULL, IdoubMPC, tmp;
+  double *rg = nullptr, IdoubMPC, tmp;
   double M;
   *_rg = rg = Utils::realloc(rg, 4 * sizeof(double));
 
@@ -194,7 +194,7 @@ void calc_rg_av(PartCfg & partCfg, double **_rg) {
 
 void calc_rh(PartCfg & partCfg, double **_rh) {
   int i, j, p;
-  double dx, dy, dz, r_H = 0.0, r_H2 = 0.0, *rh = NULL, ri = 0.0, prefac, tmp;
+  double dx, dy, dz, r_H = 0.0, r_H2 = 0.0, *rh = nullptr, ri = 0.0, prefac, tmp;
   *_rh = rh = Utils::realloc(rh, 2 * sizeof(double));
 
   prefac = 0.5 * chain_length *
@@ -224,7 +224,7 @@ void calc_rh(PartCfg & partCfg, double **_rh) {
 
 void calc_rh_av(double **_rh) {
   int i, j, p, k;
-  double dx, dy, dz, r_H = 0.0, r_H2 = 0.0, *rh = NULL, ri = 0.0, prefac, tmp;
+  double dx, dy, dz, r_H = 0.0, r_H2 = 0.0, *rh = nullptr, ri = 0.0, prefac, tmp;
   *_rh = rh = Utils::realloc(rh, 2 * sizeof(double));
 
   prefac = 0.5 * chain_length * chain_length;
@@ -253,7 +253,7 @@ void calc_rh_av(double **_rh) {
 void calc_internal_dist(PartCfg & partCfg, double **_idf) {
   int i, j, k;
   double dx, dy, dz;
-  double *idf = NULL;
+  double *idf = nullptr;
   *_idf = idf = Utils::realloc(idf, chain_length * sizeof(double));
 
   idf[0] = 0.0;
@@ -277,7 +277,7 @@ void calc_internal_dist(PartCfg & partCfg, double **_idf) {
 void calc_internal_dist_av(double **_idf) {
   int i, j, k, n, i1, i2;
   double dx, dy, dz;
-  double *idf = NULL;
+  double *idf = nullptr;
   *_idf = idf = Utils::realloc(idf, chain_length * sizeof(double));
 
   idf[0] = 0.0;
@@ -303,7 +303,7 @@ void calc_internal_dist_av(double **_idf) {
 void calc_bond_l(PartCfg & partCfg, double **_bond_l) {
   int i, j;
   double dx, dy, dz, tmp;
-  double *bond_l = NULL;
+  double *bond_l = nullptr;
   *_bond_l = bond_l = Utils::realloc(bond_l, 4 * sizeof(double));
 
   bond_l[0] = bond_l[1] = bond_l[2] = 0.0;
@@ -337,7 +337,7 @@ void calc_bond_l(PartCfg & partCfg, double **_bond_l) {
 void calc_bond_l_av(double **_bond_l) {
   int i, j, n, i1, i2;
   double dx, dy, dz, tmp;
-  double *bond_l = NULL;
+  double *bond_l = nullptr;
   *_bond_l = bond_l = Utils::realloc(bond_l, 4 * sizeof(double));
 
   bond_l[0] = bond_l[1] = bond_l[2] = 0.0;
@@ -372,7 +372,7 @@ void calc_bond_l_av(double **_bond_l) {
 void calc_bond_dist(PartCfg & partCfg, double **_bdf, int ind_n) {
   int i, j = ind_n, k;
   double dx, dy, dz;
-  double *bdf = NULL;
+  double *bdf = nullptr;
   *_bdf = bdf = Utils::realloc(bdf, chain_length * sizeof(double));
 
   bdf[0] = 0.0;
@@ -396,7 +396,7 @@ void calc_bond_dist(PartCfg & partCfg, double **_bdf, int ind_n) {
 void calc_bond_dist_av(double **_bdf, int ind_n) {
   int i, j = ind_n, k, n, i1, i2;
   double dx, dy, dz;
-  double *bdf = NULL;
+  double *bdf = nullptr;
   *_bdf = bdf = Utils::realloc(bdf, chain_length * sizeof(double));
 
   bdf[0] = 0.0;
@@ -493,7 +493,7 @@ void calc_g123(PartCfg & partCfg, double *_g1, double *_g2, double *_g3) {
 
 void calc_g1_av(double **_g1, int window, double weights[3]) {
   int i, j, p, t, k, cnt;
-  double *g1 = NULL;
+  double *g1 = nullptr;
   *_g1 = g1 = Utils::realloc(g1, n_configs * sizeof(double));
 
   for (k = 0; k < n_configs; k++) {
@@ -517,7 +517,7 @@ void calc_g1_av(double **_g1, int window, double weights[3]) {
 
 void calc_g2_av(PartCfg & partCfg, double **_g2, int window, double weights[3]) {
   int i, j, p, t, k, cnt;
-  double *g2 = NULL, cm_tmp[3];
+  double *g2 = nullptr, cm_tmp[3];
   double M;
   *_g2 = g2 = Utils::realloc(g2, n_configs * sizeof(double));
 
@@ -561,7 +561,7 @@ void calc_g2_av(PartCfg & partCfg, double **_g2, int window, double weights[3]) 
 
 void calc_g3_av(PartCfg & partCfg, double **_g3, int window, double weights[3]) {
   int i, j, p, t, k, cnt;
-  double *g3 = NULL, cm_tmp[3];
+  double *g3 = nullptr, cm_tmp[3];
   double M;
   *_g3 = g3 = Utils::realloc(g3, n_configs * sizeof(double));
 
@@ -593,7 +593,7 @@ void calc_g3_av(PartCfg & partCfg, double **_g3, int window, double weights[3]) 
 
 void analyze_formfactor(PartCfg & partCfg, double qmin, double qmax, int qbins, double **_ff) {
   int i, j, k, qi, cnt, cnt_max;
-  double q, qfak, qr, dx, dy, dz, *r_ij = NULL, *ff = NULL;
+  double q, qfak, qr, dx, dy, dz, *r_ij = nullptr, *ff = nullptr;
   *_ff = ff = Utils::realloc(ff, (qbins + 1) * sizeof(double));
   r_ij = Utils::realloc(
       r_ij, chain_length * (chain_length - 1) / 2 * sizeof(double));
@@ -636,7 +636,7 @@ void analyze_formfactor(PartCfg & partCfg, double qmin, double qmax, int qbins, 
 
 void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff) {
   int i, j, k, n, qi, cnt, cnt_max;
-  double q, qfak, qr, dx, dy, dz, *r_ij = NULL, *ff = NULL;
+  double q, qfak, qr, dx, dy, dz, *r_ij = nullptr, *ff = nullptr;
   *_ff = ff = Utils::realloc(ff, (qbins + 1) * sizeof(double));
   r_ij = Utils::realloc(
       r_ij, chain_length * (chain_length - 1) / 2 * sizeof(double));
@@ -683,7 +683,7 @@ void analyze_rdfchain(PartCfg & partCfg, double r_min, double r_max, int r_bins,
                       double **_f2, double **_f3) {
   int i, j, ind, c_i, c_j, mon;
   double bin_width, inv_bin_width, factor, r_in, r_out, bin_volume, dist,
-      chain_mass, *cm = NULL, *min_d = NULL, *f1 = NULL, *f2 = NULL, *f3 = NULL;
+      chain_mass, *cm = nullptr, *min_d = nullptr, *f1 = nullptr, *f2 = nullptr, *f3 = nullptr;
 
   *_f1 = f1 = Utils::realloc(f1, r_bins * sizeof(double));
   *_f2 = f2 = Utils::realloc(f2, r_bins * sizeof(double));

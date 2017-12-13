@@ -279,31 +279,31 @@ void dp3m_pre_init(void) {
 
   /* dp3m.local_mesh is uninitialized */
   /* dp3m.sm is uninitialized */
-  dp3m.rs_mesh = NULL;
-  dp3m.rs_mesh_dip[0] = NULL;
-  dp3m.rs_mesh_dip[1] = NULL;
-  dp3m.rs_mesh_dip[2] = NULL;
-  dp3m.ks_mesh = NULL;
+  dp3m.rs_mesh = nullptr;
+  dp3m.rs_mesh_dip[0] = nullptr;
+  dp3m.rs_mesh_dip[1] = nullptr;
+  dp3m.rs_mesh_dip[2] = nullptr;
+  dp3m.ks_mesh = nullptr;
 
   dp3m.sum_dip_part = 0;
   dp3m.sum_mu2 = 0.0;
 
   for (int i = 0; i < 7; i++)
-    dp3m.int_caf[i] = NULL;
+    dp3m.int_caf[i] = nullptr;
   dp3m.pos_shift = 0.0;
-  dp3m.meshift = NULL;
+  dp3m.meshift = nullptr;
 
-  dp3m.d_op = NULL;
-  dp3m.g_force = NULL;
-  dp3m.g_energy = NULL;
+  dp3m.d_op = nullptr;
+  dp3m.g_force = nullptr;
+  dp3m.g_energy = nullptr;
 
   dp3m.ca_num = 0;
-  dp3m.ca_frac = NULL;
-  dp3m.ca_fmp = NULL;
+  dp3m.ca_frac = nullptr;
+  dp3m.ca_fmp = nullptr;
   dp3m.ks_pnum = 0;
 
-  dp3m.send_grid = NULL;
-  dp3m.recv_grid = NULL;
+  dp3m.send_grid = nullptr;
+  dp3m.recv_grid = nullptr;
 
   dp3m.energy_correction = 0.0;
 
@@ -389,7 +389,7 @@ void dp3m_init() {
 
     /* FFT */
     P3M_TRACE(
-        fprintf(stderr, "%d: dp3m.rs_mesh ADR=%p\n", this_node, dp3m.rs_mesh));
+        fprintf(stderr, "%d: dp3m.rs_mesh ADR=%p\n", this_node, (void*) dp3m.rs_mesh));
 
     int ca_mesh_size =
         dfft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim, dp3m.local_mesh.margin,
@@ -402,11 +402,11 @@ void dp3m_init() {
           dp3m.rs_mesh_dip[n], ca_mesh_size * sizeof(double));
 
     P3M_TRACE(fprintf(stderr, "%d: dp3m.rs_mesh_dip[0] ADR=%p\n", this_node,
-                      dp3m.rs_mesh_dip[0]));
+                      (void*) dp3m.rs_mesh_dip[0]));
     P3M_TRACE(fprintf(stderr, "%d: dp3m.rs_mesh_dip[1] ADR=%p\n", this_node,
-                      dp3m.rs_mesh_dip[1]));
+                      (void*) dp3m.rs_mesh_dip[1]));
     P3M_TRACE(fprintf(stderr, "%d: dp3m.rs_mesh_dip[2] ADR=%p\n", this_node,
-                      dp3m.rs_mesh_dip[2]));
+                      (void*) dp3m.rs_mesh_dip[2]));
 
     /* k-space part: */
 
@@ -802,11 +802,6 @@ static void P3M_assign_torques(double prefac, int d_rs) {
   int q_m_off = (dp3m.local_mesh.dim[2] - dp3m.params.cao);
   int q_s_off =
       dp3m.local_mesh.dim[2] * (dp3m.local_mesh.dim[1] - dp3m.params.cao);
-#ifdef ONEPART_DEBUG
-  double db_fsum =
-      0; /* TODO: db_fsum was missing and code couldn't compile. Now the
-            arbitrary value of 0 is assigned to it, please check.*/
-#endif
 
   cp_cnt = 0;
   cf_cnt = 0;
@@ -1182,7 +1177,7 @@ double calc_surface_term(int force_flag, int energy_flag) {
                       box_l_i[2] / (2 * dp3m.params.epsilon + 1);
   double suma, a[3];
   double en;
-  double *mx = NULL, *my = NULL, *mz = NULL;
+  double *mx = nullptr, *my = nullptr, *mz = nullptr;
 
   auto const n_local_part = local_cells.particles().size();
 

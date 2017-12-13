@@ -73,7 +73,7 @@ void transform_vectors(Variant &v) {
       return;
     }
 
-    /* only double, tranform to vector<int> */
+    /* only double, tranform to vector<double> */
     if (std::all_of(variant_vector.begin(), variant_vector.end(), is_double)) {
       v = to_vector<double>(variant_vector);
       return;
