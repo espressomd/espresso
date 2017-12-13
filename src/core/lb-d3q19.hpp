@@ -29,6 +29,7 @@
 
 #ifdef LB
 #include "lb.hpp"
+
 /** Velocity sub-lattice of the D3Q19 model */
 static double d3q19_lattice[19][3] = { {  0.,  0.,  0. },
                                        {  1.,  0.,  0. },

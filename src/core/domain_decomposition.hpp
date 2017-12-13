@@ -95,8 +95,7 @@ extern double max_skin;
 
 /** Maximal number of cells per node. In order to avoid memory
  *  problems due to the cell grid one has to specify the maximal
- *  number of \ref cells::cells . The corresponding callback function
- *  is \ref tclcallback_max_num_cells. If the number of cells \ref
+ *  number of \ref cells::cells. If the number of cells \ref
  *  n_cells, is larger than max_num_cells the cell grid is
  *  reduced. max_num_cells has to be larger than 27, e.g one inner
  *  cell.  max_num_cells is initialized with the default value
@@ -156,9 +155,6 @@ void dd_topology_release();
 */
 void dd_exchange_and_sort_particles(int global_flag);
 
-/** implements \ref CellStructure::position_to_cell. */
-Cell *dd_position_to_cell(double pos[3]);
-
 /** Get three cell indices (coordinates in cell gird) from particle position */
 void dd_position_to_cell_indices(double pos[3], int *idx);
 
@@ -175,11 +171,6 @@ int calc_processor_min_num_cells();
     \param hc          high up corner of the subgrid.
  */
 int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]);
-
-/** Returns pointer to the cell which corresponds to the position if
-    the position is in the nodes spatial domain otherwise a nullptr
-    pointer. */
-Cell *dd_save_position_to_cell(double pos[3]);
 
 /** Of every two communication rounds, set the first receivers to prefetch and
  * poststore */

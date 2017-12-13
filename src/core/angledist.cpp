@@ -63,7 +63,7 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
                                    Bonded_ia_parameters *iaparams) {
   double vec1[3], vec2[3], d2i = 0.0, dist2 = 0.0;
 
-  double normal, folded_pos[3];
+  double folded_pos[3];
 
   int img[3];
 

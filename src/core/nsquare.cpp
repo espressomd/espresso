@@ -65,7 +65,7 @@ static void nsq_prepare_comm(GhostCommunicator *comm, int data_parts) {
 
 void nsq_topology_init(CellPList *old) {
   Particle *part;
-  int n, p, np, ntodo, diff;
+  int n, p, np, diff;
 
   CELL_TRACE(fprintf(stderr, "%d: nsq_topology_init, %d\n", this_node, old->n));
 
@@ -89,7 +89,6 @@ void nsq_topology_init(CellPList *old) {
       ghost_cells.cell[c++] = &cells[n];
 
   /* distribute force calculation work  */
-  ntodo = (n_nodes + 3) / 2;
 
   for (n = 0; n < n_nodes; n++) {
     diff = n - this_node;

@@ -104,16 +104,6 @@ class Observables(ut.TestCase):
             err_msg="Stress tensor from analysis and observable did not agree",
             decimal=9)
 
-    def test_stress_tensor_acf(self):
-        s = self.es.analysis.stress_tensor()["total"].reshape(9)
-        s = np.array((s[1], s[5], s[6], s[0] - s[4], s[0] - s[8], s[4] - s[8]))
-        obs_data = np.array(StressTensorAcf().calculate())
-        np.testing.assert_array_almost_equal(
-            s,
-            obs_data,
-            err_msg="Stress tensor from analysis and observable StressTensorAcf did not agree",
-            decimal=9)
-
     def test_com_position(self):
         if espressomd.has_features(["MASS"]):
             com = sum(

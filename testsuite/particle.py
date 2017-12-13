@@ -61,8 +61,8 @@ class ParticleProperties(ut.TestCase):
             # It will use the state of the variables in the outer function,
             # which was there, when the outer function was called
             setattr(self.system.part[self.pid], propName, value)
-            np.testing.assert_allclose(getattr(self.system.part[
-                self.pid], propName), value, err_msg=propName + ": value set and value gotten back differ.", atol=self.tol)
+            np.testing.assert_allclose(np.array(getattr(self.system.part[
+                self.pid], propName)), value, err_msg=propName + ": value set and value gotten back differ.", atol=self.tol)
 
         return func
 

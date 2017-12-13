@@ -35,6 +35,7 @@ ScriptInterfaceBase::make_shared(std::string const &name,
       return std::shared_ptr<ScriptInterfaceBase>(
           new ParallelScriptInterface(name));
     }
+    return nullptr;
   }();
 
   /* Id of the newly created instance */

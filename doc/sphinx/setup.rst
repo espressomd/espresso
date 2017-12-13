@@ -10,7 +10,13 @@ The global variables in Python are controlled via the
 :class:`espressomd.system.System` class.
 Global system variables can be read and set in Python simply by accessing the
 attribute of the corresponding Python object. Those variables that are already
-available in the Python interface are listed in the following.
+available in the Python interface are listed in the following. Note that for the
+vectorial properties ``box_l`` and ``periodicity``, component-wise manipulation
+like ``system.box_l[0] = 1`` or in-place operators like ``+=`` or ``*=`` are not
+allowed and result in an error. This behavior is inherited, so the same applies
+to ``a`` after ``a = system.box_l``. If you want to use an vectorial property
+for further calculations, you should explicity make a copy e.g. via
+``a = numpy.copy(system.box_l)``.
 
 * :py:attr:`~espressomd.system.System.box_l`
 
@@ -19,7 +25,7 @@ available in the Python interface are listed in the following.
     particle coordinates will remain the same, i.e., the particle stay in
     the same image box, but at the same relative position in their image
     box. If you want to scale the positions, use the command
-    :py:func:`~espressomd.system.System.change_volume_and_rescale_particles`
+    :py:func:`~espressomd.system.System.change_volume_and_rescale_particles`.
 
 * :py:attr:`~espressomd.system.System.periodicity`
 
@@ -32,7 +38,7 @@ available in the Python interface are listed in the following.
     is obtained by [0,0,1]. Caveat: Be aware of the fact that making a
     dimension non-periodic does not hinder particles from leaving the box in
     this direction. In this case for keeping particles in the simulation box
-    a constraint has to be set.
+    a constraint has to be set. 
 
 * :py:attr:`~espressomd.system.System.time_step`
 
@@ -119,7 +125,7 @@ same temperature.
 Langevin thermostat
 ~~~~~~~~~~~~~~~~~~~
 
-In order to activate the langevin thermostat the memberfunction
+In order to activate the Langevin thermostat the member function
 :py:attr:`~espressomd.thermostat.Thermostat.set_langevin` of the thermostat
 class :class:`espressomd.thermostat.Thermostat` has to be invoked.
 Best explained in an example:::
@@ -161,7 +167,7 @@ can be useful, for instance, in high Péclet number active matter systems, where
 one only wants to thermalize the rotational degrees of freedom and
 translational motion is effected by the self-propulsion.
 
-Using the Langevin thermostat, it is posible to set a temperature and a
+Using the Langevin thermostat, it is possible to set a temperature and a
 friction coefficient for every particle individually via the feature
 ``LANGEVIN_PER_PARTICLE``.  Consult the reference of the ``part`` command
 (chapter :ref:`Setting up particles`) for information on how to achieve this.
@@ -202,13 +208,13 @@ Dissipative Particle Dynamics (DPD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To realize a complete DPD fluid model, three parts are needed:
-The DPD thermostat, which controlls the temperatur, a dissipative
+The DPD thermostat, which controls the temperate, a dissipative
 interaction between the particles that make up the fluid,
 see :ref:`DPD interaction`, and a repulsive conservative force.
 
 The DPD thermostat can be invoked by the function:
 :py:attr:`espressomd.thermostat.Thermostat.set_dpd`
-which takes :math:`k_\mathrm{B} T` as the only agument.
+which takes :math:`k_\mathrm{B} T` as the only argument.
 
 The friction coefficients and cutoff are controlled via the
 :ref:`DPD interaction` on a per type-pair basis. For details see
@@ -296,7 +302,7 @@ step the largest positive x-components of the velocity in the middle
 slab are selected and exchanged with the largest negative x-components
 of the velocity in the top slab.
 
-Variant chooses the shear-rate method. In this method, the targetted
+Variant chooses the shear-rate method. In this method, the targeted
 x-component of the mean velocity in the top and middle slabs are given
 by
 
@@ -320,7 +326,7 @@ where :math:`F` is the mean force (momentum transfer per unit time)
 acting on the slab, :math:`L_x L_y` is the area of the slab and
 :math:`\dot{\gamma}` is the shearrate.
 
-NEMD as implemented generates a Pouseille flow, with shear flow rate
+NEMD as implemented generates a Poiseuille flow, with shear flow rate
 varying over a finite wavelength determined by the box. For a planar
 Couette flow (constant shear, infinite wavelength), consider using
 Lees-Edwards boundary conditions (see ) to drive the shear.
@@ -332,7 +338,7 @@ Lees-Edwards boundary condition: Setting up a shear flow
 
 To use the Lees-Edwards boundary conditions, the feature ``LEES_EDWARDS`` is required.
 
-Lees-Edwards boundary conditions can be used to introduce a shear flow to the MD simulation. An introduction can be found in :cite:`lees72`. Compared to NEMD simulations they have two big advantages: First, the bulk behavior of the system remains unchanged. Second, the image boxes are moved, whereas the flow within the primary simulation box has to develope on its own. Hence, this allows two additional phenomena: Shear banding can occure as well as non-linear shear profiles can be observed. This makes Lees-Edwards boundary conditions suitable for comparison with rheological experiments. 
+Lees-Edwards boundary conditions can be used to introduce a shear flow to the MD simulation. An introduction can be found in :cite:`lees72`. Compared to NEMD simulations they have two big advantages: First, the bulk behavior of the system remains unchanged. Second, the image boxes are moved, whereas the flow within the primary simulation box has to develop on its own. Hence, this allows two additional phenomena: Shear banding can occur as well as non-linear shear profiles can be observed. This makes Lees-Edwards boundary conditions suitable for comparison with rheological experiments. 
 
 Lees-Edwards boundary conditions impose a shear flow of speed :math:`\dot\gamma` by moving the periodic image boxes along the x-direction according to:
 
@@ -485,7 +491,7 @@ selects the layered cell system, which is specifically designed for
 the needs of the MMM2D algorithm. Basically it consists of a nsquared
 algorithm in x and y, but a domain decomposition along z, i. e. the
 system is cut into equally sized layers along the z axis. The current
-implementation allows for the cpus to align only along the z axis,
+implementation allows for the CPUs to align only along the z axis,
 therefore the processor grid has to have the form 1x1xN. However, each
 processor may be responsible for several layers, which is determined by
 ``n_layers``, i. e. the system is split into N\* layers along the z axis. Since in x
@@ -588,9 +594,9 @@ Two methods of binding are available:
    to the distance based bonds between the particle centers. The id of
    the angular bonds is determined from the angle between the particles.
    Zero degrees corresponds to bond id , whereas 180 degrees corresponds
-   to bond id +. This method das not depend on the particles’ rotational
+   to bond id +. This method does not depend on the particles’ rotational
    degrees of freedom being integrated. Virtual sites are also not
-   required, and the method is implemented to run on more than one cpu
+   required, and the method is implemented to run on more than one CPU
    core.
 
 The code can throw an exception (background error) in case two particles
@@ -600,7 +606,7 @@ the collision:
 
 The following limitations currently apply for the collision detection:
 
--  The method is currently limited to simulations with a single cpu
+-  The method is currently limited to simulations with a single CPU
 
 -  No distinction is currently made between different particle types
 
@@ -623,7 +629,7 @@ For a Janus swimmer consisting of platinum on one hemisphere and gold on the oth
       \mathrm{2 H^{+} + 2 e^{-} + H_2 O_2} &\xrightarrow{\text{Au}} \mathrm{2 H_2 O}
     \end{aligned}
 
-That is, catalytic surfaces induce a reactions that produce charged species by consuming hydrogen peroxide. It is the change in distribution of charged species that leads to motion of the swimmer, a process refered to as self-electrophoresis. A minimal model for this would be
+That is, catalytic surfaces induce a reactions that produce charged species by consuming hydrogen peroxide. It is the change in distribution of charged species that leads to motion of the swimmer, a process referred to as self-electrophoresis. A minimal model for this would be
 
 .. math::
 
@@ -731,7 +737,7 @@ The centre of mass of the system
     gt.system_CMS()
 
 Returns the center of mass of the whole system. It currently does not
-factor in the density fluctuations of the Lattice-Boltzman fluid.
+factor in the density fluctuations of the Lattice-Boltzmann fluid.
 
 The centre-of-mass velocity
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -749,7 +755,7 @@ The Galilei transform
 
     gt.galilei_transform()
 
-Substracts the velocity of the center of mass of the whole system from
+Subtracts the velocity of the center of mass of the whole system from
 every particle’s velocity, thereby performing a Galilei transform into
 the reference frame of the center of mass of the system. This
 transformation is useful for example in combination with the DPD
