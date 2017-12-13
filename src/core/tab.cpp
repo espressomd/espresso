@@ -27,66 +27,21 @@
 #ifdef TABULATED
 #include "communication.hpp"
 
-int tabulated_set_params(int part_type_a, int part_type_b, char *filename) {
-  IA_parameters *data;
-  FILE *fp;
-  int npoints;
-  double minval, maxval;
-  int i, newsize;
-  int token;
-  double dummr;
-  token = 0;
+int tabulated_set_params(int part_type_a, int part_type_b, double min,
+                         double max, std::vector<double> const &energy,
+                         std::vector<double> const &force) {
+  auto data = get_ia_param_safe(part_type_a, part_type_b);
+  assert(max >= min);
+  assert(force.size() > 0);
+  assert(force.size() == energy.size());
 
-  data = get_ia_param_safe(part_type_a, part_type_b);
+  data->TAB.maxval = max;
+  data->TAB.minval = min;
+  data->TAB.invstepsize = static_cast<double>(force.size() - 1) / (max - min);
 
-  if (!data)
-    return 1;
+  data->TAB.force_tab = force;
+  data->TAB.energy_tab = energy;
 
-  /* Open the file containing force and energy tables */
-  fp = fopen(filename, "r");
-  if (!fp)
-    return 3;
-
-  /* Look for a line starting with # */
-  while (token != EOF) {
-    token = fgetc(fp);
-    if (token == '#') {
-      break;
-    }
-  }
-  if (token == EOF) {
-    fclose(fp);
-    return 4;
-  }
-
-  /* First read two important parameters we read in the data later*/
-  if (fscanf(fp, "%d %lf %lf", &npoints, &minval, &maxval) != 3)
-    return 5;
-
-  data->TAB_npoints = npoints;
-  data->TAB_maxval = maxval;
-  data->TAB_minval = minval;
-
-  /* Calculate dependent parameters */
-  data->TAB_stepsize = (maxval - minval) / (double)(data->TAB_npoints - 1);
-
-  data->TAB_force.clear();
-  data->TAB_energy.clear();
-
-  /* Read in the new force and energy table data */
-  for (i = 0; i < npoints; i++) {
-    double dummr, force, energy;
-    if (fscanf(fp, "%lf %lf %lf", &dummr, &force, &energy) != 3) {
-      return 5;
-    } else {
-      data->TAB_energy.push_back(energy);
-      data->TAB_force.push_back(force);
-    }
-  }
-
-  fclose(fp);
-
-  /* broadcast interaction parameters including force and energy tables*/
   mpi_bcast_ia_params(part_type_a, part_type_b);
 
   return 0;

@@ -57,7 +57,9 @@
     <li> 6 number of points of existing potential changed
     </ul>
 */
-int tabulated_set_params(int part_type_a, int part_type_b, char *filename);
+int tabulated_set_params(int part_type_a, int part_type_b, double min,
+                         double max, std::vector<double> const &energy,
+                         std::vector<double> const &force);
 
 /** Bonded tabulated potentials: Reads tabulated parameters and force
     and energy tables from a file.  ia_params and force/energy tables
@@ -86,35 +88,13 @@ int tabulated_bonded_set_params(int bond_type,
     Needs feature TABULATED compiled in (see \ref config.hpp). */
 inline void add_tabulated_pair_force(const Particle *const p1,
                                      const Particle *const p2,
-                                     IA_parameters *ia_params, double d[3],
+                                     IA_parameters const *ia_params, double const d[3],
                                      double dist, double force[3]) {
-  if ((dist < ia_params->TAB_maxval)) {
-    double phi, dindex, fac;
-
-    fac = 0.0;
-
-    dindex = (dist - ia_params->TAB_minval) / ia_params->TAB_stepsize;
-    auto const tablepos = (int)(floor(dindex));
-
-    if (dist > ia_params->TAB_minval) {
-      phi = dindex - tablepos;
-      fac = ia_params->TAB_force[tablepos] * (1 - phi) +
-            ia_params->TAB_force[tablepos + 1] * phi;
-    } else {
-      /* Use an extrapolation beyond the table */
-      if (dist > 0) {
-        phi = dindex;
-        fac = (ia_params->TAB_force[0] * ia_params->TAB_minval) * (1 - phi) +
-              (ia_params->TAB_force[1] *
-               (ia_params->TAB_minval + ia_params->TAB_stepsize)) *
-                  phi;
-        fac = fac / dist;
-      } else { /* Particles on top of each other .. leave fac as 0.0 */
-      }
-    }
+  if (dist < ia_params->TAB.cutoff()) {
+    auto const fac = ia_params->TAB.force(dist) / dist;
 
     for (int j = 0; j < 3; j++)
-      force[j] += fac * d[j];
+      force[j] -= fac * d[j];
   }
 }
 
@@ -123,32 +103,11 @@ inline void add_tabulated_pair_force(const Particle *const p1,
 inline double tabulated_pair_energy(Particle const *p1, Particle const *p2,
                                     IA_parameters const *ia_params, double d[3],
                                     double dist) {
-  if ((dist < ia_params->TAB_maxval)) {
-    auto const dindex =
-        (dist - ia_params->TAB_minval) / ia_params->TAB_stepsize;
-    auto const tablepos = (int)(floor(dindex));
-
-    if (tablepos < 0) {
-      /* For distances smaller than the tabulated minimim take quadratic
-         extrapolation from first two values of the force table!
-         This corresponds to the linear extrapolation of the force at that
-         point.
-         This sould not occur too often, since it is quite expensive!
-      */
-      auto const b = (ia_params->TAB_force[1] - ia_params->TAB_force[0]) /
-                     ia_params->TAB_stepsize;
-      auto const x0 = ia_params->TAB_minval - ia_params->TAB_force[0] / b;
-      return ((ia_params->TAB_energy[0] +
-               0.5 * b * SQR(ia_params->TAB_minval - x0)) -
-              0.5 * b * SQR(dist - x0));
-    }
-
-    auto const phi = (dindex - tablepos);
-
-    return ia_params->TAB_energy[tablepos] * (1 - phi) +
-           ia_params->TAB_energy[tablepos + 1] * phi;
+  if (dist < ia_params->TAB.cutoff()) {
+    return ia_params->TAB.energy(dist);
+  } else {
+    return 0.0;
   }
-  return 0.0;
 }
 
 /* BONDED INTERACTIONS */

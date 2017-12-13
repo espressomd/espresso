@@ -11,15 +11,10 @@ void load(Archive &ar, IA_parameters &p,
   ar >> make_array(reinterpret_cast<char *>(&p), sizeof(IA_parameters));
 
 #ifdef TABULATED
-  DoubleList tab_force;
-  ar >> tab_force;
+  TabulatedPotential tab;
+  ar >> tab;
 
-  new (&(p.TAB_force)) DoubleList(std::move(tab_force));
-
-  DoubleList tab_energy;
-  ar >> tab_energy;
-
-  new (&(p.TAB_energy)) DoubleList(std::move(tab_energy));
+  new (&(p.TAB)) TabulatedPotential(std::move(tab));
 #endif
 }
 
@@ -29,8 +24,7 @@ void save(Archive &ar, IA_parameters const &p,
   ar << make_array(reinterpret_cast<char const *>(&p), sizeof(IA_parameters));
 
 #ifdef TABULATED
-  ar << p.TAB_force;
-  ar << p.TAB_energy;
+  ar << p.TAB;
 #endif
 }
 

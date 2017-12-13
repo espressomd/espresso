@@ -415,8 +415,7 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef TABULATED
-      if (max_cut_current < data->TAB_maxval)
-        max_cut_current = data->TAB_maxval;
+      max_cut_current = std::max(max_cut_current, data->TAB.cutoff());
 #endif
 
 #ifdef TUNABLE_SLIP
@@ -470,11 +469,11 @@ void realloc_ia_params(int nsize) {
 
   auto new_params = std::vector<IA_parameters>(nsize * nsize);
 
-  /* if there is an old field, copy entries and delete */
-  for (int i = 0; i < nsize; i++)
-    for (int j = 0; j < nsize; j++) {
-      if ((i < n_particle_types) && (j < n_particle_types))
-        new_params[i * nsize + j] = ia_params[i * n_particle_types + j];
+  /* if there is an old field, move entries */
+  for (int i = 0; i < n_particle_types; i++)
+    for (int j = 0; j < n_particle_types; j++) {
+      new_params[i * nsize + j] =
+          std::move(ia_params[i * n_particle_types + j]);
     }
 
   n_particle_types = nsize;

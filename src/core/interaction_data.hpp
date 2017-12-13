@@ -27,6 +27,8 @@
 #include "particle_data.hpp"
 #include "utils.hpp"
 
+#include "TabulatedPotential.hpp"
+
 /** \name Type codes of bonded interactions
     Enumeration of implemented bonded interactions.
 */
@@ -410,14 +412,7 @@ struct IA_parameters {
 #ifdef TABULATED
   /** \name Tabulated potential */
   /*@{*/
-  int TAB_npoints = 0;
-  int TAB_startindex = 0;
-  double TAB_minval = 0.0;
-  double TAB_minval2 = 0.0;
-  double TAB_maxval = INACTIVE_CUTOFF;
-  double TAB_stepsize = 0.0;
-  DoubleList TAB_force;
-  DoubleList TAB_energy;
+  TabulatedPotential TAB;
 /*@}*/
 #endif
 

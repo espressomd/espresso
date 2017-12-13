@@ -1348,7 +1348,7 @@ class NonBondedInteractionHandle(object):
     """
     Provides access to all Non-bonded interactions between
     two particle types.
-    
+
     """
 
     type1 = -1
@@ -2095,7 +2095,6 @@ IF TABULATED == 1:
             self._params = self._get_params_from_es_core()
 
     cdef class TabulatedNonBonded(NonBondedInteraction):
-
         cdef int state
 
         def __init__(self, *args, **kwargs):
@@ -2106,7 +2105,7 @@ IF TABULATED == 1:
             return "TABULATED_NONBONDED"
 
         def type_name(self):
-            """Name of interaction type.
+            """Name of the potential.
 
             """
             return "TABULATED"
@@ -2115,26 +2114,37 @@ IF TABULATED == 1:
             """All parameters that can be set.
 
             """
-            return "filename"
+            return "min", "max", "energy", "force"
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return ["filename", ]
+            return ["min", "max", "energy", "force"]
 
         def set_default_params(self):
             """Sets parameters that are not required to their default value.
 
             """
-            self._params = {"filename": ""}
+            self._params = {'min': -1., 'max': -1, 'energy': [], 'force': []}
 
         def _get_params_from_es_core(self):
-            return {}
+            cdef ia_parameters * ia_params = get_ia_param_safe(
+                self._part_types[0],
+                self._part_types[1])
+
+            return {'min': ia_params.TAB.minval,
+                    'max': ia_params.TAB.maxval,
+                    'energy': ia_params.TAB.energy_tab,
+                    'force': ia_params.TAB.force_tab}
 
         def _set_params_in_es_core(self):
-            self.state = tabulated_set_params(self._part_types[0], self._part_types[
-                                              1], utils.to_char_pointer(self._params["filename"]))
+            self.state = tabulated_set_params(self._part_types[0],
+                                              self._part_types[1],
+                                              self._params["min"],
+                                              self._params["max"],
+                                              self._params["energy"],
+                                              self._params["force"])
 
         def is_active(self):
             """Check if interaction is active.
