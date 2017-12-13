@@ -75,7 +75,7 @@ class ReactionEnsembleTest(ut.TestCase):
     RE.add(equilibrium_constant=K_diss, reactant_types=[0], reactant_coefficients=[
            1], product_types=[1, 2], product_coefficients=[1, 1])
     RE.set_default_charges(dictionary={"0": 0, "1": -1, "2": +1})
-    system.setup([0, 1, 2, 3])
+    system.setup_type_map([0, 1, 2, 3])
     # initialize wang_landau
     # generate preliminary_energy_run_results here, this should be done in a
     # seperate simulation without energy reweighting using the update energy

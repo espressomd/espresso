@@ -950,16 +950,11 @@ void try_add_exclusion(Particle *part, int part2);
  of particles, you should avoid this function and setup exclusions manually. */
 void auto_exclusions(int distance);
 
-// flag indicating init_gc was called
-extern bool GC_init;
-
 void init_type_map(int type);
 
 /* find a particle of given type and return its id */
 int get_random_p_id(int type);
 
-void remove_id_from_map(int part_id, int type);
-void add_particle_to_list(int part_id, int type);
 int number_of_particles_with_type(int type);
 
 // The following functions are used by the python interface to obtain

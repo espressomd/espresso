@@ -66,8 +66,10 @@
  ************************************************/
 // List of particles for grandcanonical simulations
 int number_of_type_lists;
-bool GC_init;
-std::unordered_map<int, std::unordered_set<int>> ParticleTypeMap{};
+bool type_list_enable;
+std::unordered_map<int, std::unordered_set<int>> particle_type_map{};
+void remove_id_from_map(int part_id, int type);
+void add_id_to_type_map(int part_id, int type);
 
 int max_seen_particle = -1;
 int n_part = 0;
@@ -641,7 +643,7 @@ int set_particle_type(int p_id, int type) {
     return ES_ERROR;
   }
 
-  if (GC_init) {
+  if (type_list_enable) {
     // check if the particle exists already and the type is changed, then remove
     // it from the list which contains it
     auto cur_par = get_particle_data(p_id);
@@ -655,7 +657,7 @@ int set_particle_type(int p_id, int type) {
       throw std::runtime_error("Cannot set type for non-existing particle");
     }
     
-    add_particle_to_list(p_id, type);
+    add_id_to_type_map(p_id, type);
   }
 
   mpi_send_type(pnode, p_id, type);
@@ -857,7 +859,7 @@ void remove_all_particles() {
 int remove_particle(int p_id) {
   auto cur_par = get_particle_data(p_id);
   if (cur_par) {
-    if(GC_init==true){
+    if(type_list_enable==true){
         //remove particle from its current type_list
         int type = cur_par->p.type;
         remove_id_from_map(p_id, type);
@@ -1259,47 +1261,46 @@ void auto_exclusions(int distance) {
 #endif
 
 void init_type_map(int type) {
-  GC_init=true;
+  type_list_enable=true;
   if (type < 0)
     throw std::runtime_error("Types may not be negative");
 
   //fill particle map
-  if(ParticleTypeMap.count(type)==0)
-    ParticleTypeMap[type]=std::unordered_set<int>();
+    if(particle_type_map.count(type)==0)
+        particle_type_map[type]=std::unordered_set<int>();
+
   for (auto const &p : partCfg()) {
     if (p.p.type == type)
-      ParticleTypeMap.at(type).insert(p.p.identity);
+      particle_type_map.at(type).insert(p.p.identity);
   }
 }
 
 void remove_id_from_map(int part_id, int type) {
-  ParticleTypeMap.at(type).erase(part_id);
+  particle_type_map.at(type).erase(part_id);
 }
 
 int get_random_p_id(int type){
-    if(ParticleTypeMap.at(type).size()==0)
+    if(particle_type_map.at(type).size()==0)
         throw std::runtime_error("No particles of given type could be found");
     int returned_p_id=0;
-    int rand_index = i_random(ParticleTypeMap.at(type).size());\
+    int rand_index = i_random(particle_type_map.at(type).size());\
     int actual_i_th_p_id_in_map=0;
-    for( int p_id :ParticleTypeMap[type]){
+    for( int p_id :particle_type_map[type]){
         if(actual_i_th_p_id_in_map==rand_index){
             returned_p_id=p_id;
             break;
         }
         actual_i_th_p_id_in_map++;
     }
-    if(returned_p_id > max_seen_particle)
-        throw std::runtime_error("Find_particle_type: returned id is bigger than max seen particle id");
     return returned_p_id;
 }
 
-void add_particle_to_list(int part_id, int type) {
-    ParticleTypeMap.at(type).insert(part_id);
+void add_id_to_type_map(int part_id, int type) {
+    particle_type_map.at(type).insert(part_id);
 }
 
 int number_of_particles_with_type(int type) {
-  return static_cast<int>(ParticleTypeMap.at(type).size());
+  return static_cast<int>(particle_type_map.at(type).size());
 }
 
 // The following functions are used by the python interface to obtain

@@ -453,7 +453,7 @@ cdef class System(object):
             raise ValueError("type", current_type, "does not exist!")
 
 
-    def setup(self, type_list=None):
+    def setup_type_map(self, type_list=None):
         """
         For using Espresso conveniently for simulations in the grand canonical
         ensemble, or other purposes, when particles of certain types are created
@@ -468,9 +468,6 @@ cdef class System(object):
             raise ValueError("type_list has to be iterable.")
 
         for current_type in type_list:
-            if (max_seen_particle < 0):
-                raise ValueError(
-                    "The system contains no particles. Create one particle with arbitrary type first!")
             init_type_map(current_type)
 
     def number_of_particles(self, current_type=None):

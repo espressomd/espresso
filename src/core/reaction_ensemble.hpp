@@ -294,7 +294,6 @@ private:
   bool achieved_desired_number_of_refinements_one_over_t();
   void refine_wang_landau_parameter_one_over_t();
 
-private:
   int initialize_wang_landau(); // has to be called (at least) after the last
                                 // collective variable is added
   double calculate_delta_degree_of_association(
