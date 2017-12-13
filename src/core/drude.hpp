@@ -104,8 +104,8 @@ inline int drude_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *iapara
 
   if (iaparams->p.drude.r_cut > 0.0 && dist > iaparams->p.drude.r_cut) 
     return 1;
-   //Harmonic 
-  *_energy = 0.5*iaparams->p.drude.k*dist2;
+   //Harmonic, subtract drude-core shortrange energy
+  *_energy = 0.5*iaparams->p.drude.k*dist2 + p3m_pair_energy(-chgfac, dx, dist2, dist);
   
   return 0;
 }
