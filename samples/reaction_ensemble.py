@@ -79,5 +79,5 @@ system.setup_type_map([0, 1, 2])
 for i in range(10000):
     RE.reaction()
     if(i % 100 == 0):
-        print("HA", system.number_of_particles(current_type=0), "A-",
-              system.number_of_particles(current_type=1), "H+", system.number_of_particles(current_type=2))
+        print("HA", system.number_of_particles(type=0), "A-",
+              system.number_of_particles(type=1), "H+", system.number_of_particles(type=2))

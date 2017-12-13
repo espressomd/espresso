@@ -97,9 +97,9 @@ class ReactionEnsembleTest(ut.TestCase):
         for i in range(num_samples):
             RE.reaction()
             average_NH += system.number_of_particles(
-                current_type=type_H)
+                type=type_H)
             average_degree_of_association += system.number_of_particles(
-                current_type=type_HA) / float(N0)
+                type=type_HA) / float(N0)
         average_NH /= num_samples
         average_degree_of_association /= num_samples
         # note you cannot calculate the pH via -log10(<NH>/volume) in the
