@@ -337,10 +337,10 @@ void ReactionAlgorithm::restore_properties(
   // property list, the format of the property list is (p_id,charge,type)
   // repeated for each particle that occurs in that list
   for (int i = 0; i < property_list.size(); i++) {
-    double charge = property_list[i].charge;
     int type = property_list[i].type;
 #ifdef ELECTROSTATICS
     // set charge
+    double charge = property_list[i].charge;
     set_particle_q(property_list[i].p_id, charge);
 #endif
     // set type
@@ -745,8 +745,10 @@ int ReactionAlgorithm::create_particle(int desired_type) {
   vel[2] =
       std::pow(2 * PI * temperature, -3.0 / 2.0) *
       gaussian_random() * time_step; // scale for internal use in espresso
+#ifdef ELECTROSTATICS
   double charge = charges_of_types[find_index_of_type(
       desired_type, this)];
+#endif
   bool particle_inserted_too_close_to_another_one = true;
   int max_insert_tries = 1000;
   int insert_tries = 0;

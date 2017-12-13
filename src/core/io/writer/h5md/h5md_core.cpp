@@ -164,7 +164,7 @@ void File::init_filestructure() {
                  "parameters/files"};
   h5xx::datatype type_double = h5xx::datatype(H5T_NATIVE_DOUBLE);
   h5xx::datatype type_int = h5xx::datatype(H5T_NATIVE_INT);
-  hsize_t npart = static_cast<hsize_t>(n_part);
+
   dataset_descriptors = {
       // path, dim, type
       {"particles/atoms/box/edges", 1, type_double},
@@ -577,7 +577,7 @@ void File::WriteScript(std::string const &filename) {
   buffer.assign(std::istreambuf_iterator<char>(scriptfile),
                 std::istreambuf_iterator<char>());
 
-  hid_t filetype, dtype, space, dset, file_id;
+  hid_t dtype, space, dset, file_id;
   file_id =
       H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 

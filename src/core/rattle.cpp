@@ -106,7 +106,7 @@ void init_correction_vector() {
 /**Compute positional corrections*/
 void compute_pos_corr_vec(int *repeat_) {
   Bonded_ia_parameters *ia_params;
-  int i, j, k, c, np, cnt = -1;
+  int j, k, cnt = -1;
   Particle *p1, *p2;
   double r_ij_t[3], r_ij[3], r_ij_dot, G, pos_corr, r_ij2;
 
@@ -215,7 +215,7 @@ void transfer_force_init_vel() {
 /** Velocity correction vectors are computed*/
 void compute_vel_corr_vec(int *repeat_) {
   Bonded_ia_parameters *ia_params;
-  int i, j, k, c, np;
+  int j, k;
   Particle *p1, *p2;
   double v_ij[3], r_ij[3], K, vel_corr;
 
