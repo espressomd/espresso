@@ -27,7 +27,7 @@ import espressomd.lb
 
 print("""
 =======================================================
-=         Latiice Boltzmann fluid example             =
+=         Lattice Boltzmann fluid example             =
 =======================================================
 
 Program Information:""")
