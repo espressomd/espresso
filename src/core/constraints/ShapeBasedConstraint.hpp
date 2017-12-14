@@ -44,6 +44,12 @@ public:
   int &only_positive() { return m_only_positive; }
   int &penetrable() { return m_penetrable; }
   int &type() { return m_type; }
+  
+  void set_type(const int &type) {
+    m_type = type;
+    make_particle_type_exist(m_type);
+  }
+
   Vector3d total_force() const;
 
 private:
