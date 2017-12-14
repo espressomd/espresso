@@ -2030,31 +2030,26 @@ IF TABULATED == 1:
             """All parameters that can be set.
 
             """
-            return "type", "filename", "npoints", "minval", "maxval", "invstepsize"
+            return "type", "filename", "minval", "maxval", "energy", "force"
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return "type", "filename"
+            return "type", "filename", "energy", "force"
 
         def set_default_params(self):
             """Sets parameters that are not required to their default value.
 
             """
-            self._params = {"type": "bond", "filename": ""}
 
         def _get_params_from_es_core(self):
             make_bond_type_exist(self._bond_id)
             res = \
                 {"type": bonded_ia_params[self._bond_id].p.tab.type,
-                 "filename":
-                     utils.to_str(
-                         bonded_ia_params[self._bond_id].p.tab.filename),
-                 "npoints": bonded_ia_params[self._bond_id].p.tab.npoints,
-                 "minval": bonded_ia_params[self._bond_id].p.tab.minval,
-                 "maxval": bonded_ia_params[self._bond_id].p.tab.maxval,
-                 "invstepsize": bonded_ia_params[self._bond_id].p.tab.invstepsize}
+                 "minval": bonded_ia_params[self._bond_id].p.tab.pot.minval,
+                 "maxval": bonded_ia_params[self._bond_id].p.tab.pot.maxval,
+                }
             if res["type"] == 1:
                 res["type"] = "distance"
             if res["type"] == 2:
@@ -2078,19 +2073,8 @@ IF TABULATED == 1:
 
             res = tabulated_bonded_set_params(
                 self._bond_id, < TabulatedBondedInteraction > type_num, utils.to_char_pointer(self._params["filename"]))
-            msg = ""
             if res == 1:
-                msg = "unknon bond type"
-            if res == 3:
-                msg = "cannot open file"
-            if res == 4:
-                msg = "file too short"
-            if msg == 5:
-                msg = "file broken"
-            if msg == 6:
-                msg = "parameter out of bound"
-            if res:
-                raise Exception("Could not setup tabulated bond. " + msg)
+                raise Exception("Could not setup tabulated bond. Invalid bond type.")
             # Retrieve some params, Es calculates.
             self._params = self._get_params_from_es_core()
 

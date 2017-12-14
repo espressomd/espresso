@@ -279,14 +279,8 @@ cdef extern from "interaction_data.hpp":
 
 #* Parameters for n-body tabulated potential (n=2,3,4). */
     ctypedef struct Tabulated_bond_parameters:
-        char * filename
         int    type
-        int    npoints
-        double minval
-        double maxval
-        double invstepsize
-        double * f
-        double * e
+        TabulatedPotential * pot
 
 #* Parameters for n-body overlapped potential (n=2,3,4). */
     ctypedef struct Overlap_bond_parameters:
@@ -397,7 +391,7 @@ IF TABULATED == 1:
         cdef enum TabulatedBondedInteraction:
             TAB_UNKNOWN = 0, TAB_BOND_LENGTH, TAB_BOND_ANGLE, TAB_BOND_DIHEDRAL
     cdef extern from "tab.hpp":
-        int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_type, char * filename)
+        int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_type, double min, double max, vector[double] energy, vector[double] force)
 
 IF BOND_ENDANGLEDIST == 1:
     cdef extern from "endangledist.hpp":

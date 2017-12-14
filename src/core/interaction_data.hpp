@@ -642,14 +642,8 @@ typedef struct {
 
 /** Parameters for n-body tabulated potential (n=2,3,4). */
 typedef struct {
-  char *filename;
   TabulatedBondedInteraction type;
-  int npoints;
-  double minval;
-  double maxval;
-  double invstepsize;
-  double *f;
-  double *e;
+  TabulatedPotential *pot;
 } Tabulated_bond_parameters;
 
 /** Parameters for n-body overlapped potential (n=2,3,4). */

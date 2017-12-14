@@ -162,8 +162,8 @@ static void recalc_maximal_cutoff_bonded() {
 #ifdef TABULATED
     case BONDED_IA_TABULATED:
       if (bonded_ia_params[i].p.tab.type == TAB_BOND_LENGTH &&
-          max_cut_bonded < bonded_ia_params[i].p.tab.maxval)
-        max_cut_bonded = bonded_ia_params[i].p.tab.maxval;
+          max_cut_bonded < bonded_ia_params[i].p.tab.pot->cutoff())
+        max_cut_bonded = bonded_ia_params[i].p.tab.pot->cutoff();
       break;
 #endif
 #ifdef OVERLAPPED
@@ -491,12 +491,9 @@ void make_bond_type_exist(int type) {
 
   if (ns <= n_bonded_ia) {
 #ifdef TABULATED
-    if (bonded_ia_params[type].type == BONDED_IA_TABULATED &&
-        bonded_ia_params[type].p.tab.npoints > 0) {
-      free(bonded_ia_params[type].p.tab.f);
-      free(bonded_ia_params[type].p.tab.e);
-      bonded_ia_params[type].p.tab.f = nullptr;
-      bonded_ia_params[type].p.tab.e = nullptr;
+    if (bonded_ia_params[type].type == BONDED_IA_TABULATED) {
+      delete bonded_ia_params[type].p.tab.pot;
+      bonded_ia_params[type].p.tab.pot = nullptr;
     }
 #endif
 #ifdef OVERLAPPED
