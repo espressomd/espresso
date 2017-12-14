@@ -11,7 +11,7 @@ cdef class Actor(object):
                        MagnetostaticExtension=False,
                        HydrodynamicInteraction=False,
                        ElectrostaticExtensions=False,
-                       Scafacos=True)
+                       Scafacos=False)
 
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
@@ -199,10 +199,7 @@ class Actors(object):
         self.active_actors.remove(actor)
 
     def __str__(self):
-        print("Active Actors:")
-        for actor in Actors.active_actors:
-            print(actor)
-        return ""
+        return "Active Actors: "+Actors.active_actors.__str__()
 
     def __getitem__(self, key):
         return self.active_actors[key]

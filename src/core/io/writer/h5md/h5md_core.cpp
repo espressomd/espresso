@@ -21,6 +21,7 @@
 
 #include <vector>
 #include "h5md_core.hpp"
+#include "core/interaction_data.hpp"
 
 namespace Writer {
 namespace H5md {
@@ -164,7 +165,7 @@ void File::init_filestructure() {
                  "parameters/files"};
   h5xx::datatype type_double = h5xx::datatype(H5T_NATIVE_DOUBLE);
   h5xx::datatype type_int = h5xx::datatype(H5T_NATIVE_INT);
-  hsize_t npart = static_cast<hsize_t>(n_part);
+
   dataset_descriptors = {
       // path, dim, type
       {"particles/atoms/box/edges", 1, type_double},
@@ -356,15 +357,24 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
 
   if (!m_already_wrote_bonds) {
     int nbonds_local = bond.shape()[1];
-    for (int i = 1; i < current_particle.bl.n; i = i + 2) {
-      bond.resize(boost::extents[1][nbonds_local + 1][2]);
-      bond[0][nbonds_local][0] = current_particle.p.identity;
-      bond[0][nbonds_local][1] = current_particle.bl.e[i];
+    for (auto it = current_particle.bl.begin();
+         it != current_particle.bl.end();) {
+
+      auto const n_partners = bonded_ia_params[*it++].num;
+
+      if (1 == n_partners) {
+        bond.resize(boost::extents[1][nbonds_local + 1][2]);
+        bond[0][nbonds_local][0] = current_particle.p.identity;
+        bond[0][nbonds_local][1] = *it++;
+        nbonds_local++;
+      } else {
+        it += n_partners;
+      }
     }
   }
 }
 
-  void File::Write(int write_dat, PartCfg & partCfg) {
+void File::Write(int write_dat, PartCfg &partCfg) {
 #ifdef H5MD_DEBUG
   std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
@@ -577,7 +587,7 @@ void File::WriteScript(std::string const &filename) {
   buffer.assign(std::istreambuf_iterator<char>(scriptfile),
                 std::istreambuf_iterator<char>());
 
-  hid_t filetype, dtype, space, dset, file_id;
+  hid_t dtype, space, dset, file_id;
   file_id =
       H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 

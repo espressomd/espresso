@@ -194,7 +194,7 @@ void detect_collision(Particle* p1, Particle* p2)
 {
   // The check, whether collision detection is actually turned on is performed in forces.hpp
 
-  int part1, part2, size;
+  int part1, part2;
   std::vector<int> counts(n_nodes);
   //TRACE(printf("%d: consider particles %d and %d\n", this_node, p1->p.identity, p2->p.identity));
 
@@ -292,6 +292,7 @@ void detect_collision(Particle* p1, Particle* p2)
        }
        else
        {
+        c = 0.0;
         printf("Something is wrong %s: %d\n", __FILE__, __LINE__);
        }
      }

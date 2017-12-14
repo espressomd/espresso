@@ -6,7 +6,7 @@ Analysis
 The :mod:`espressomd.analyze` module provides online-calculation of local and global observables.
 These exist for convenience and historical reasons.
 Since arithmetic in TCL was quite painful to perform, there exists a series of common analysis routines which can be used whenever possible.
-They usualy have parts of the calculations performed in the core.
+They usually have parts of the calculations performed in the core.
 
 
 On the other hand, some observables are computed and stored in the
@@ -14,7 +14,7 @@ C-core of during a call to the function , while they are set up and
 their results are collected from the script level. These observables are
 more complex to implement and offer less flexibility, while they are
 significantly faster and more memory efficient, and they can be set up
-to be computed every few timesteps. The observables in this class are
+to be computed every few time steps. The observables in this class are
 described in chapter :ref:`Analysis in the core`:
 .
 
@@ -136,7 +136,7 @@ the currently identified properties.
    central axis, which one would think is natural.
 
 
-.. _Cylndrical average:
+.. _Cylindrical average:
 
 Cylindrical Average
 ~~~~~~~~~~~~~~~~~~~
@@ -275,7 +275,7 @@ Moment of inertia matrix
 ~~~~~~~~~~~~~~~~~~~~~~~~
 :meth:`espressomd.analyze.Analysis.moment_of_inertia_matrix`
 
-Returns the 3x3 moment of interia matrix for particles of a given type.
+Returns the 3x3 moment of inertia matrix for particles of a given type.
 
 
 .. _Gyration tensor:
@@ -536,7 +536,7 @@ The above-mentioned formula is only valid under certain assumptions. For
 more information, see Chapter 4 and equation 4.102
 in :cite:`doi86a`.
 Note that the hydrodynamic radius is sometimes defined in a similar fashion but with a denominator of :math:`N(N-1)` instead of :math:`N^2` in the prefactor.
-Both versions are equivalent in the :math:`N\rightarrow \infty` limit but give numericaly different values for finite polymers.
+Both versions are equivalent in the :math:`N\rightarrow \infty` limit but give numerically different values for finite polymers.
 
 
 .. _Internal distances:
