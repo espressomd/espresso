@@ -809,14 +809,14 @@ typedef union {
 } Bond_parameters;
 
 /** Defines parameters for a bonded interaction. */
-typedef struct {
+struct Bonded_ia_parameters {
   /** bonded interaction type. See \ref BONDED_IA_FENE "Type code for bonded" */
   BondedInteraction type;
   /** (Number of particles - 1) interacting for that type */
   int num;
   /** union to store the different bonded interaction parameters. */
   Bond_parameters p;
-} Bonded_ia_parameters;
+};
 
 /************************************************
  * exported variables
@@ -824,8 +824,6 @@ typedef struct {
 
 /** Maximal particle type seen so far. */
 extern int n_particle_types;
-/* Number of nonbonded (short range) interactions. Not used so far.*/
-extern int n_interaction_types;
 
 /** Structure containing the coulomb parameters. */
 extern Coulomb_parameters coulomb;

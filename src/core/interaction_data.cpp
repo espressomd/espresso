@@ -73,7 +73,6 @@
  * variables
  *****************************************/
 int n_particle_types = 0;
-int n_interaction_types = 0;
 std::vector<IA_parameters> ia_params;
 
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
