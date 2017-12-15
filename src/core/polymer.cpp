@@ -25,9 +25,6 @@
    necessary.
 
     The corresponding header file is polymer.hpp.
-
-    Created:       27.02.2003 by BAM
-       Based upon 'polymer.tcl' by BAM (20.02.2003).
 */
 
 #include <cmath>

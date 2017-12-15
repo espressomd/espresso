@@ -670,7 +670,6 @@ bool ReactionEnsemble::is_in_list(int value, int* list, int len_list){
 	return false;
 }
 
-//the following 2 functions are directly taken from ABHmath.tcl
 /**
 * Calculates the normed vector of a given vector
 */

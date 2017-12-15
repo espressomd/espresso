@@ -8,7 +8,7 @@
 // Also calculates and stores the reference state
 int IBM_VolumeConservation_SetParams(const int bond_type, const int softID, const double kappaV);
 // For reading checkpoints.
-// Idea: parameters are set in the run-continue tcl script
+// Idea: parameters are set in the run-continue script
 //       here only check consistency of bond type
 int IBM_VolumeConservation_ResetParams(const int bond_type, const double volRef);
 

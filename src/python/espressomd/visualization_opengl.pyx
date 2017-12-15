@@ -23,10 +23,138 @@ class openGLLive(object):
     Use the update method to push your current simulation state after
     integrating. Modify the appearance with a list of keywords.
     Timed callbacks can be registered via the registerCallback method.
-    Keyboad callbacks via  keyboardManager.registerButton()."""
+    Keyboad callbacks via  keyboardManager.registerButton().
+
+    Attributes
+    ----------
+
+    system : instance of :attr:`espressomd.System`
+    window_size : array_like :obj:`int`, optional
+                  Size of the visualizer window in pixels.
+    name : :obj:`str`, optional
+           The name of the visualizer window.
+    background_color : array_like :obj:`int`, optional
+                       RGB of the background.
+    periodic_images : array_like :obj:`int`, optional
+                      Periodic repetitions on both sides of the box in xyzdirection.
+    draw_box : :obj:`bool`, optional
+               Draw wireframe boundaries.
+    draw_axis : :obj:`bool`, optional
+                Draws xyz system axes.
+    quality_particles : :obj:`int`, optional
+                        The number of subdivisions for particle spheres.
+    quality_bonds : :obj:`int`, optional
+                    The number of subdivisions for cylindrical bonds.
+    quality_arrows : :obj:`int`, optional
+                     The number of subdivisions for external force arrows.
+    arrows_radius : :obj:`float`, optional
+                    Arrow radius for velocity, force and ext_force arrows
+    quality_constraints : :obj:`int`, optional
+                          The number of subdivisions for primitive constraints.
+    close_cut_distance : :obj:`float`, optional
+                         The distance from the viewer to the near clipping plane.
+    far_cut_distance : :obj:`float`, optional
+                       The distance from the viewer to the far clipping plane.
+    camera_position : :obj:`str` or array_like :obj:`float`, optional
+                      Initial camera position. ``auto`` (default) for shiftet position in z-direction.
+    camera_target : :obj:`str` or array_like :obj:`float`, optional
+                    Initial camera target. ``auto`` (default) to look towards the system center.
+    camera_right : array_like :obj:`float`, optional
+                   Camera right vector in system coordinates. Default is [1, 0, 0]
+    particle_sizes : :obj:`str` or array_like :obj:`float` or callable, optional
+                     auto (default): The Lennard-Jones sigma value of the
+                     self-interaction is used for the particle diameter.
+                     callable: A lambda function with one argument. Internally,
+                     the numerical particle type is passed to the lambda
+                     function to determine the particle radius.  list: A list
+                     of particle radii, indexed by the particle type.
+    particle_coloring : :obj:`str`, optional
+                        auto (default): Colors of charged particles are
+                        specified by particle_charge_colors, neutral particles
+                        by particle_type_colors. charge: Minimum and maximum
+                        charge of all particles is determined by the
+                        visualizer. All particles are colored by a linear
+                        interpolation of the two colors given by
+                        particle_charge_colors according to their charge. type:
+                        Particle colors are specified by particle_type_colors,
+                        indexed by their numerical particle type.
+    particle_type_colors : array_like :obj:`float`, optional
+                           Colors for particle types.
+    particle_type_materials : :obj:`str`, optional
+                              Materials of the particle types.
+    particle_charge_colors : array_like :obj:`float`, optional
+                             Two colors for min/max charged particles.
+    draw_constraints : :obj:`bool`, optional
+                       Enables constraint visualization. For simple constraints
+                       (planes, spheres and cylinders), OpenGL primitives are
+                       used. Otherwise, visualization by rasterization is used.
+    rasterize_pointsize : :obj:`float`, optional
+                          Point size for the rasterization dots.
+    rasterize_resolution : :obj:`float`, optional
+                           Accuracy of the rasterization.
+    quality_constraints : :obj:`int`, optional
+                          The number of subdivisions for primitive constraints.
+    constraint_type_colors : array_like :obj:`float`, optional
+                             Colors of the constaints by type.
+    constraint_type_materials : array_like :obj:`str`, optional 
+                                Materials of the constraints by type.
+    draw_bonds : :obj:`bool`, optional
+                 Enables bond visualization.
+    bond_type_radius : array_like :obj:`float`, optional
+                       Radii of bonds by type.
+    bond_type_colors : array_like :obj:`float`, optional
+                       Color of bonds by type.
+    bond_type_materials : array_like :obj:`float`, optional
+                          Materials of bonds by type.
+    ext_force_arrows : :obj:`bool`, optional
+                       Enables external force visualization.
+    ext_force_arrows_scale : :obj:`float`, optional
+                             Scale factor of external force arrows for different particle types.
+    ext_force_arrows_type_colors : array_like :obj:`float`, optional
+                                   Colors of ext_force arrows for different particle types.
+    force_arrows : :obj:`bool`, optional
+                   Enables particle force visualization.
+    force_arrows_scale : :obj:`float`, optional
+                         Scale factor of particle force arrows for different particle types.
+    force_arrows_type_colors : array_like :obj:`float`, optional
+                               Colors of particle force arrows for different particle types.
+    velocity_arrows : :obj:`bool`, optional
+                       Enables particle velocity visualization.
+    velocity_arrows_scale : :obj:`float`, optional
+                             Scale factor of particle velocity arrows for different particle types.
+    velocity_arrows_type_colors : array_like :obj:`float`, optional
+                                  Colors of particle velocity arrows for different particle types.
+    drag_enabled : :obj:`bool`, optional
+                   Enables mouse-controlled particles dragging (Default: False)
+    drag_force : :obj:`bool`, optional
+                 Factor for particle dragging
+    light_pos : array_like :obj:`float`, optional
+                If auto (default) is used, the light is placed dynamically in
+                the particle barycenter of the system. Otherwise, a fixed
+                coordinate can be set.
+    light_colors : array_like :obj:`float`, optional
+                   Three lists to specify ambient, diffuse and specular light colors.
+    light_brightness : :obj:`float`, optional
+                       Brightness (inverse constant attenuation) of the light.
+    light_size : :obj:`float`, optional
+                 Size (inverse linear attenuation) of the light. If auto
+                 (default) is used, the light size will be set to a reasonable
+                 value according to the box size at start.
+    spotlight_enabled : :obj:`bool`, optional
+                        If set to True (default), it enables a spotlight on the
+                        camera position pointing in look direction.
+    spotlight_colors : array_like :obj:`float`, optional
+                       Three lists to specify ambient, diffuse and specular spotlight colors.
+    spotlight_angle : :obj:`float`, optional
+                      The spread angle of the spotlight in degrees (from 0 to 90).
+    spotlight_brightness : :obj:`float`, optional
+                           Brightness (inverse constant attenuation) of the spotlight.
+    spotlight_focus : :obj:`float`, optional
+                      Focus (spot exponent) for the spotlight from 0 (uniform) to 128.
+
+    """
 
     def __init__(self, system, **kwargs):
-        
         # MATERIALS
         self.materials = {
             'bright':       [[0.9, 0.9, 0.9], [1.0, 1.0, 1.0], [0.8, 0.8, 0.8], 0.6],
@@ -296,7 +424,6 @@ class openGLLive(object):
                               'types': self.system.part[:].type,
                               'ext_forces': [0, 0, 0] * len(self.system.part),
                               'charges': [0] * len(self.system.part)}
-
 
     def _updateLB(self):
         agrid = self.lb_params['agrid']
