@@ -852,6 +852,9 @@ class openGLLive(object):
             self.specs['window_size'][1] = 1.0 * h
             # glPushMatrix()
 
+        def closeWindow():
+            os._exit(1)
+
         # TIMERS FOR registerCallback
         def dummyTimer(index):
             self.timers[index][1]()
@@ -863,6 +866,7 @@ class openGLLive(object):
         glutKeyboardUpFunc(keyboardUp)
         glutReshapeFunc(reshapeWindow)
         glutMotionFunc(motion)
+        glutWMCloseFunc(closeWindow)
 
         glutIdleFunc(idleUpdate)
 
