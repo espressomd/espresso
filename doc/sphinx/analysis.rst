@@ -530,7 +530,7 @@ The following formula is used for the computation:
 .. math::
 
    \label{eq:Rh}
-   \frac{1}{R_{\mathrm H}} = \frac{2}{N(N-1)} \sum\limits_{i=1}^{N} \sum\limits_{j=i}^{N} \frac{1}{|\vec r_i - \vec r_j|}\,,
+   \frac{1}{R_{\mathrm H}} = \frac{2}{N(N-1)} \sum\limits_{i=1}^{N} \sum\limits_{j<i}^{N} \frac{1}{|\vec r_i - \vec r_j|}\,,
 
 The above-mentioned formula is only valid under certain assumptions. For
 more information, see Chapter 4 and equation 4.102
