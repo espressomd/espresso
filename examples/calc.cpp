@@ -9,20 +9,27 @@
  */
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <iostream>
+
+#include <boost/lexical_cast.hpp>
+#include <boost/optional.hpp>
 
 #include <readline/readline.h>
 #include <readline/history.h>
 
 #include <matheval.hpp>
 
-void evaluate(char const * first, char const * last)
+template < typename Iterator >
+boost::optional<double> evaluate(Iterator first, Iterator last)
 {
     try {
         auto res = matheval::parse<double>(first, last, {});
         std::cout << res << '\n';
+        return res;
     } catch (std::exception const &e) {
         std::cerr << "Error: " << e.what() << '\n';
+        return boost::none;
     }
 }
 
@@ -41,6 +48,7 @@ void interactive()
 
     constexpr char const prompt[] = "> ";
     char * input = readline(prompt);
+    double res = 0;
 
     while (input)
     {
@@ -53,7 +61,15 @@ void interactive()
 
             add_history(input);
 
-            evaluate(input, input + len);
+            // Replace % by the last result
+            std::string line{input, input + len};
+            std::size_t pos = line.find("%");
+            if (pos != std::string::npos) {
+                line.replace(pos, 1, boost::lexical_cast<std::string>(res));
+            }
+
+            // Update result on success
+            res = evaluate(line.begin(), line.end()).value_or(res);
         }
 
         std::free(input);
@@ -68,6 +84,7 @@ void interactive()
 
 int main(int argc, char *argv[])
 {
+    std::cout.precision(std::numeric_limits<double>::digits10);
     if (argc > 1)
         commandline(argc,argv);
     else
