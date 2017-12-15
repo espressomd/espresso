@@ -53,6 +53,6 @@ private:
   double m_semiaxis_c;
   double m_direction;
 };
-};
+}
 
 #endif

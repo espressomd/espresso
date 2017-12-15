@@ -85,7 +85,7 @@ Vector3d Ellipsoid::ClosestEllipsoidPoint(Vector3d ppos) const {
                 }
                 else {
                     for (int i=0; i<3; i++) {
-                        closest_point[i] == ppos[i];
+                        closest_point[i] = ppos[i];
                     }
                 }
             }
