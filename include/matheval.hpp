@@ -47,6 +47,7 @@ namespace detail {
 namespace qi = boost::spirit::qi;
 namespace ascii = boost::spirit::ascii;
 
+namespace math {
 
 /** @brief Sign function
  *
@@ -75,6 +76,16 @@ T isnan(T x) { return std::isnan(x); }
 /** @brief isinf function with adjusted return type */
 template < typename T >
 T isinf(T x) { return std::isinf(x); }
+
+/** @brief Convert radians to degrees */
+template < typename T >
+T deg(T x) { return x*boost::math::constants::radian<T>(); }
+
+/** @brief Convert degrees to radians */
+template < typename T >
+T rad(T x) { return x*boost::math::constants::degree<T>(); }
+
+}
 
 // AST
 
@@ -392,6 +403,7 @@ public:
             this->add
                 ("e"      , boost::math::constants::e<real_t>()   )
                 ("epsilon", std::numeric_limits<real_t>::epsilon())
+                ("phi"    , boost::math::constants::phi<real_t>() )
                 ("pi"     , boost::math::constants::pi<real_t>()  )
             ;
         }
@@ -418,18 +430,20 @@ public:
                 ("ceil"  , static_cast<real_t(*)(real_t)>(&std::ceil  ))
                 ("cos"   , static_cast<real_t(*)(real_t)>(&std::cos   ))
                 ("cosh"  , static_cast<real_t(*)(real_t)>(&std::cosh  ))
+                ("deg"   , static_cast<real_t(*)(real_t)>(&math::deg  ))
                 ("erf"   , static_cast<real_t(*)(real_t)>(&std::erf   ))
                 ("erfc"  , static_cast<real_t(*)(real_t)>(&std::erfc  ))
                 ("exp"   , static_cast<real_t(*)(real_t)>(&std::exp   ))
                 ("exp2"  , static_cast<real_t(*)(real_t)>(&std::exp2  ))
                 ("floor" , static_cast<real_t(*)(real_t)>(&std::floor ))
-                ("isinf" , static_cast<real_t(*)(real_t)>(&isinf      ))
-                ("isnan" , static_cast<real_t(*)(real_t)>(&isnan      ))
+                ("isinf" , static_cast<real_t(*)(real_t)>(&math::isinf))
+                ("isnan" , static_cast<real_t(*)(real_t)>(&math::isnan))
                 ("log"   , static_cast<real_t(*)(real_t)>(&std::log   ))
                 ("log2"  , static_cast<real_t(*)(real_t)>(&std::log2  ))
                 ("log10" , static_cast<real_t(*)(real_t)>(&std::log10 ))
+                ("rad"   , static_cast<real_t(*)(real_t)>(&math::rad  ))
                 ("round" , static_cast<real_t(*)(real_t)>(&std::round ))
-                ("sgn"   , static_cast<real_t(*)(real_t)>(&sgn        ))
+                ("sgn"   , static_cast<real_t(*)(real_t)>(&math::sgn  ))
                 ("sin"   , static_cast<real_t(*)(real_t)>(&std::sin   ))
                 ("sinh"  , static_cast<real_t(*)(real_t)>(&std::sinh  ))
                 ("sqrt"  , static_cast<real_t(*)(real_t)>(&std::sqrt  ))

@@ -66,14 +66,18 @@ sign function `sgn`.
 - `ceil`
 - `cos`
 - `cosh`
+- `deg`
 - `erf`
 - `erfc`
 - `exp`
 - `exp2`
 - `floor`
+- `isinf`
+- `isnan`
 - `log`
 - `log2`
 - `log10`
+- `rad`
 - `round`
 - `sgn`
 - `sin`
@@ -99,6 +103,7 @@ Currently only very few constants are defined.
 
 - `e`
 - `epsilon`
+- `phi`
 - `pi`
 
 @section variables Variables
