@@ -3,17 +3,33 @@ cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 project(boost_matheval CXX)
 set(CMAKE_CXX_STANDARD 11)
 
+# Default build type is Debug
 if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the build type" FORCE)
-endif(NOT CMAKE_BUILD_TYPE)
+endif()
 
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+# Add local package finders
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
+# Build options
+option(WITH_COVERAGE "Generate code coverage report" OFF)
+if(WITH_COVERAGE)
+  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
+    link_libraries(gcov)
+  else()
+    message(STATUS "Coverage information only supported on GCC")
+  endif()
+endif()
+
+# Custom test command
 enable_testing()
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -C ${CMAKE_BUILD_TYPE})
 
+# Find Boost
 find_package(Boost REQUIRED COMPONENTS unit_test_framework)
 include_directories(${Boost_INCLUDE_DIRS})
+
 include_directories(include)
 
 add_subdirectory(doc)

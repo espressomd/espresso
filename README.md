@@ -2,6 +2,7 @@
 
 [![Build status][travis-svg]][travis-link]
 [![AppVeyor build status][appveyor-svg]][appveyor-link]
+[![Code coverage report][codecov-svg]][codecov-link]
 [Documentation][doxygen-link]
 
 This header-only C++11 libary uses
@@ -110,4 +111,6 @@ Distributed under the [Boost Software License, Version 1.0](http://boost.org/LIC
 [travis-link]: https://travis-ci.org/hmenke/boost_matheval
 [appveyor-svg]: https://ci.appveyor.com/api/projects/status/bphe1739kownt81c/branch/master?svg=true
 [appveyor-link]: https://ci.appveyor.com/project/hmenke/boost-matheval/branch/master
+[codecov-svg]: https://codecov.io/gh/hmenke/boost_matheval/branch/master/graph/badge.svg
+[codecov-link]: https://codecov.io/gh/hmenke/boost_matheval
 [doxygen-link]: https://hmenke.github.io/boost_matheval

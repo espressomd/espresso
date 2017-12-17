@@ -6,9 +6,10 @@ language: cpp
 script:
   - mkdir build
   - cd build
-  - cmake ..
+  - cmake -DWITH_COVERAGE=ON ..
   - make -j 2
   - make -j 2 check
+  - curl -s https://codecov.io/bash | bash -
 
 matrix:
   include:
