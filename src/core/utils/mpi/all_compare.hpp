@@ -40,7 +40,7 @@ namespace Mpi {
  */
 template <typename T>
 bool all_compare(boost::mpi::communicator const &comm, T const &value) {
-  T root_value;
+  T root_value{};
 
   /* Arbitraty pick the value on rank 0, and broadcast it */
   if (comm.rank() == 0) {

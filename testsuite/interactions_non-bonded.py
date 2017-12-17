@@ -224,7 +224,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift)
 
         for i in range(231):
-            self.system.part[1].pos += self.step
+            self.system.part[1].pos = self.system.part[1].pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -271,7 +271,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift, delta=lj_delta, lam=lj_lam)
 
         for i in range(231):
-            self.system.part[1].pos += self.step
+            self.system.part[1].pos = self.system.part[1].pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -311,7 +311,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift=lj_shift)
 
         for i in range(113):
-            self.system.part[1].pos += self.step
+            self.system.part[1].pos = self.system.part[1].pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -351,7 +351,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             eps=sst_eps, sig=sst_sig, cutoff=sst_cut, d=sst_d, n=sst_n, k0=sst_k0)
 
         for i in range(126):
-            self.system.part[1].pos += self.step
+            self.system.part[1].pos = self.system.part[1].pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -390,7 +390,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             a=bmhtf_a, b=bmhtf_b, c=bmhtf_c, d=bmhtf_d, sig=bmhtf_sig, cutoff=bmhtf_cut)
 
         for i in range(126):
-            self.system.part[1].pos += self.step
+            self.system.part[1].pos = self.system.part[1].pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -428,7 +428,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             eps=m_eps, alpha=m_alpha, cutoff=m_cut, rmin=m_rmin)
 
         for i in range(126):
-            self.system.part[1].pos += self.step
+            self.system.part[1].pos = self.system.part[1].pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -471,7 +471,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             a=b_a, b=b_b, c=b_c, d=b_d, discont=b_disc, cutoff=b_cut, shift=b_shift)
 
         for i in range(226):
-            self.system.part[1].pos += self.step
+            self.system.part[1].pos = self.system.part[1].pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -510,9 +510,9 @@ class InteractionsNonBondedTest(ut.TestCase):
             a=ss_a, n=ss_n, cutoff=ss_cut, offset=ss_off)
 
         for i in range(12):
-            self.system.part[1].pos += self.step
+            self.system.part[1].pos = self.system.part[1].pos + self.step
         for i in range(113):
-            self.system.part[1].pos += self.step
+            self.system.part[1].pos = self.system.part[1].pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -548,7 +548,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             eps=h_eps, sig=h_sig)
 
         for i in range(244):
-            self.system.part[1].pos += self.step
+            self.system.part[1].pos = self.system.part[1].pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -585,7 +585,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             eps=g_eps, sig=g_sig, cutoff=g_cut)
 
         for i in range(125):
-            self.system.part[1].pos += self.step
+            self.system.part[1].pos = self.system.part[1].pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies

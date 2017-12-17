@@ -199,7 +199,16 @@ cdef class CellSystem(object):
 
         """
         def __set__(self, _node_grid):
-            raise Exception('node_grid is not settable by the user.')
+            if not np.prod(_node_grid) == n_nodes:
+                raise ValueError("Number of available nodes " + str(n_nodes) + " and imposed node grid " + str(_node_grid) + " do not agree.")
+            else:
+                node_grid[0] = _node_grid[0]
+                node_grid[1] = _node_grid[1]
+                node_grid[2] = _node_grid[2]
+                mpi_err = mpi_bcast_parameter(FIELD_NODEGRID)
+                handle_errors("mpi_bcast_parameter failed")
+                if mpi_err:
+                    raise Exception("Broadcasting the node grid failed")
 
         def __get__(self):
             return np.array([node_grid[0], node_grid[1], node_grid[2]])

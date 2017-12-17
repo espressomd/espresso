@@ -30,6 +30,7 @@
 #include <cuda.h>
 #include <stdlib.h>
 #include <vector>
+#include <cassert>
 
 #include "electrokinetics.hpp"
 #include "electrokinetics_pdb_parse.hpp"
@@ -66,14 +67,14 @@ int extended_values_flag=0; /* TODO: this has to be set to one by
 static LB_rho_v_gpu *device_rho_v= nullptr;
 
 /** device_rho_v_pi: extended struct for hydrodynamic fields: this is the interface
-    to tcl, and stores values in MD units. It should not be used
+    and stores values in MD units. It should not be used
     as an input for any LB calculations. TODO: This structure is not yet 
     used, and it is here to allow access to the stress tensor at any
     timestep, e.g. for future implementations of moving boundary codes */
 static LB_rho_v_pi_gpu *device_rho_v_pi= nullptr;
 
 /** print_rho_v_pi: struct for hydrodynamic fields: this is the interface
-    to tcl, and stores values in MD units. It should not used
+    and stores values in MD units. It should not used
     as an input for any LB calculations. TODO: in the future,
     one might want to have several structures for printing 
     separately rho, v, pi without having to compute/store 
@@ -81,11 +82,11 @@ static LB_rho_v_pi_gpu *device_rho_v_pi= nullptr;
 static LB_rho_v_pi_gpu *print_rho_v_pi= nullptr;
 
 /** structs for velocity densities */
-static LB_nodes_gpu nodes_a = {.vd=nullptr,.seed=nullptr,.boundary=nullptr};
-static LB_nodes_gpu nodes_b = {.vd=nullptr,.seed=nullptr,.boundary=nullptr};;
+static LB_nodes_gpu nodes_a = { nullptr, nullptr, nullptr};
+static LB_nodes_gpu nodes_b = { nullptr, nullptr, nullptr};;
 /** struct for node force */
 
-LB_node_force_gpu node_f = {.force=nullptr,.scforce=nullptr} ;
+LB_node_force_gpu node_f = {nullptr, nullptr} ;
 
 static LB_extern_nodeforce_gpu *extern_nodeforces = nullptr;
 
@@ -2244,7 +2245,7 @@ __device__ void calc_node_force(float *delta, float *delta_j, float * partgrad1,
 /** \name System setup and Kernel functions */
 /*********************************************************/
 
-/**kernel to calculate local populations from hydrodynamic fields given by the tcl values.
+/**kernel to calculate local populations from hydrodynamic fields.
  * The mapping is given in terms of the equilibrium distribution.
  *
  * Eq. (2.15) Ladd, J. Fluid Mech. 271, 295-309 (1994)
@@ -3781,10 +3782,9 @@ __device__ void get_interpolated_velocity(LB_nodes_gpu n_a, float* r, float* u, 
 //      u[0] += d_v[node_index[i]].v[0]/8.0f;  
 //      u[1] += d_v[node_index[i]].v[1]/8.0f;
 //      u[2] += d_v[node_index[i]].v[2]/8.0f;
-#warning "lb_radial_velocity_profile does not work with SHANCHEN yet/"
-        u[0] = 0;
-        u[1] = 0;
-        u[2] = 0;
+        u[0] = 0*delta[i];
+        u[1] = 0*delta[i];
+        u[2] = 0*delta[i];
 #endif
 
 //      mode[1]+=0.5f*node_f.force[0*para.number_of_nodes + node_index[i]];
@@ -3804,34 +3804,34 @@ __global__ void fill_lb_radial_velocity_profile(LB_nodes_gpu n_a, radial_profile
   unsigned int phibin=blockIdx.x;
   unsigned int zbin=blockIdx.y;
 
-  float roffset=pdata->minr;
-  float r_incr=(pdata->maxr-pdata->minr)/(pdata->rbins-1);
+  float roffset=pdata->min_r;
+  float r_incr=(pdata->max_r-pdata->min_r)/(pdata->n_r_bins-1);
 
   float r = roffset + rbin*r_incr;
 
   unsigned int maxj;
   float phioffset, phi_incr;
-  if ( pdata->phibins == 1 ) {
-    maxj = (int)floorf( 2*3.1415f*pdata->maxr/para.agrid ) ; 
+  if ( pdata->n_phi_bins == 1 ) {
+    maxj = (int)floorf( 2*3.1415f*pdata->max_r/para.agrid ) ;
     phioffset=0;
     phi_incr=2*3.1415f/maxj;
   } else {
-    maxj = pdata->phibins;
-    phioffset=pdata->minphi;
-    phi_incr=(pdata->maxphi-pdata->minphi)/(pdata->phibins);
+    maxj = pdata->n_phi_bins;
+    phioffset=pdata->min_phi;
+    phi_incr=(pdata->max_phi-pdata->min_phi)/(pdata->n_phi_bins);
   }
   float phi = phioffset + phibin*phi_incr;
 
   unsigned int maxk;
   float zoffset, z_incr;
-  if ( pdata->zbins == 1 ) {
+  if ( pdata->n_z_bins == 1 ) {
     maxk = (int) para.dim_z;
     zoffset=-pdata->center[2];
     z_incr=para.agrid;
   } else {
-    maxk = (int) pdata->zbins;
-    zoffset=pdata->minz;
-    z_incr=(pdata->maxz-pdata->minz)/(pdata->zbins-1);
+    maxk = (int) pdata->n_z_bins;
+    zoffset=pdata->min_z;
+    z_incr=(pdata->max_z-pdata->min_z)/(pdata->n_z_bins-1);
   }
 
   float z = zoffset + zbin*z_incr;
@@ -3873,34 +3873,34 @@ __global__ void fill_lb_velocity_profile(LB_nodes_gpu n_a, profile_data* pdata, 
 
 
 
-  if ( pdata->xbins == 1 ) {
+  if ( pdata->n_x_bins == 1 ) {
     /* maxi = (int) floor(gridDim.x/para.agrid); */
     xoffset=0;
     x_incr=para.agrid;
   } else {
-    /* maxi = pdata->xbins; */
-    xoffset=pdata->minx;
-    x_incr=(pdata->maxx-pdata->minx)/(pdata->xbins-1);
+    /* maxi = pdata->n_x_bins; */
+    xoffset=pdata->min_x;
+    x_incr=(pdata->max_x-pdata->min_x)/(pdata->n_x_bins-1);
   }
   float x = xoffset + xbin*x_incr;
-  if ( pdata->ybins == 1 ) {
+  if ( pdata->n_y_bins == 1 ) {
     maxj = (int) floorf(para.dim_y/para.agrid);
     yoffset=0;
     y_incr=para.agrid;
   } else {
-    maxj = pdata->ybins;
-    yoffset=pdata->miny;
-    y_incr=(pdata->maxy-pdata->miny)/(pdata->ybins-1);
+    maxj = pdata->n_y_bins;
+    yoffset=pdata->min_y;
+    y_incr=(pdata->max_y-pdata->min_y)/(pdata->n_y_bins-1);
   }
   float y = yoffset + ybin*y_incr;
-  if ( pdata->zbins == 1 ) {
+  if ( pdata->n_z_bins == 1 ) {
     maxk = (int) floorf(para.dim_z/para.agrid);
     zoffset=0;
     z_incr=para.agrid;
   } else {
-    maxk = (int) pdata->zbins;
-    zoffset=pdata->minz;
-    z_incr=(pdata->maxz-pdata->minz)/(pdata->zbins-1);
+    maxk = (int) pdata->n_z_bins;
+    zoffset=pdata->min_z;
+    z_incr=(pdata->max_z-pdata->min_z)/(pdata->n_z_bins-1);
   }
   float z = zoffset + zbin*z_incr;
 
@@ -3921,27 +3921,30 @@ __global__ void fill_lb_velocity_profile(LB_nodes_gpu n_a, profile_data* pdata, 
 
 
 int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pdata, double* A, unsigned int n_A){
+#ifdef SHANCHEN
+  assert(0);
+#endif
 
   unsigned int maxj, maxk;
   float normalization_factor=1;
   
-  if ( pdata->rbins == 1 ) {
+  if ( pdata->n_r_bins == 1 ) {
     return 1;
   }
 
-  unsigned int maxi=pdata->rbins;
+  unsigned int maxi=pdata->n_r_bins;
   
-  if ( pdata->phibins == 1 ) {
-    maxj = (int)floorf( 2*3.1415f*pdata->maxr/lbpar_gpu.agrid ) ; 
+  if ( pdata->n_phi_bins == 1 ) {
+    maxj = (int)floorf( 2*3.1415f*pdata->max_r/lbpar_gpu.agrid ) ;
     normalization_factor/=maxj;
   } else {
-    maxj = pdata->phibins;
+    maxj = pdata->n_phi_bins;
   }
-  if ( pdata->zbins == 1 ) {
+  if ( pdata->n_z_bins == 1 ) {
     maxk = (int) lbpar_gpu.dim_z;
     normalization_factor/=maxk;
   } else {
-    maxk = pdata->zbins;
+    maxk = pdata->n_z_bins;
   }
 
   for (int i = 0; i<n_A; i++) {
@@ -3977,11 +3980,11 @@ int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pda
     for (int j =0; j<maxj; j++)
       for (int k =0; k<maxk; k++) {
         linear_index = 0;
-        if (pdata->rbins > 1)
-          linear_index += i*pdata->phibins*pdata->zbins;
-        if (pdata->phibins > 1)
-          linear_index += j*pdata->zbins;
-        if (pdata->zbins > 1)
+        if (pdata->n_r_bins > 1)
+          linear_index += i*pdata->n_phi_bins*pdata->n_z_bins;
+        if (pdata->n_phi_bins > 1)
+          linear_index += j*pdata->n_z_bins;
+        if (pdata->n_z_bins > 1)
           linear_index +=k;
         A[3*linear_index+0]+=host_data[3*(i*maxj*maxk + j*maxk + k)+0]*normalization_factor*lbpar_gpu.tau/lbpar_gpu.agrid;
         A[3*linear_index+1]+=host_data[3*(i*maxj*maxk + j*maxk + k)+1]*normalization_factor*lbpar_gpu.tau/lbpar_gpu.agrid;
@@ -3999,28 +4002,32 @@ int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pda
 }
 
 int statistics_observable_lbgpu_velocity_profile(profile_data* pdata, double* A, unsigned int n_A){
+#ifdef SHANCHEN
+  assert(0);
+#endif
+
   unsigned int maxi, maxj, maxk;
   int linear_index;
   float normalization_factor=1;
 
 
-  if ( pdata->xbins == 1 ) {
+  if ( pdata->n_x_bins == 1 ) {
     maxi = (int) floor(lbpar_gpu.dim_x/lbpar_gpu.agrid);
     normalization_factor/=maxi;
   } else {
-    maxi = pdata->xbins;
+    maxi = pdata->n_x_bins;
   }
-  if ( pdata->ybins == 1 ) {
+  if ( pdata->n_y_bins == 1 ) {
     maxj = (int) floor(lbpar_gpu.dim_y/lbpar_gpu.agrid);
     normalization_factor/=maxj;
   } else {
-    maxj = pdata->ybins;
+    maxj = pdata->n_y_bins;
   }
-  if ( pdata->zbins == 1 ) {
+  if ( pdata->n_z_bins == 1 ) {
     maxk = (int) floor(lbpar_gpu.dim_z/lbpar_gpu.agrid);
     normalization_factor/=maxk;
   } else {
-    maxk = pdata->zbins;
+    maxk = pdata->n_z_bins;
   }
 
   for (int i = 0; i<n_A; i++) {
@@ -4058,11 +4065,11 @@ int statistics_observable_lbgpu_velocity_profile(profile_data* pdata, double* A,
     for ( j = 0; j < maxj; j++ ) {
       for ( k = 0; k < maxk; k++ ) {
         linear_index = 0;
-        if (pdata->xbins > 1)
-          linear_index += i*pdata->ybins*pdata->zbins;
-        if (pdata->ybins > 1)
-          linear_index += j*pdata->zbins;
-        if (pdata->zbins > 1)
+        if (pdata->n_x_bins > 1)
+          linear_index += i*pdata->n_y_bins*pdata->n_z_bins;
+        if (pdata->n_y_bins > 1)
+          linear_index += j*pdata->n_z_bins;
+        if (pdata->n_z_bins > 1)
           linear_index +=k;
 
         A[3*linear_index+0]+=host_data[3*(i*maxj*maxk + j*maxk + k)+0]*normalization_factor*lbpar_gpu.tau/lbpar_gpu.agrid;

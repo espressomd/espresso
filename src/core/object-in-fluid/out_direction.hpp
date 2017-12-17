@@ -36,7 +36,6 @@ int out_direction_set_params(int bond_type);
 
 /** Computes the outward direction of the membrane from one particle and its three neighbors 
  
-    (see \ref tclcommand_inter).
     @param p1           Pointer to the central particle.
     @param p2,p3,p4     Pointers to the neighboring particles.
 

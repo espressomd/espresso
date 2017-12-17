@@ -27,10 +27,10 @@
 namespace Shapes {
 class Stomatocyte : public Shape {
 public:
-  Stomatocyte() : m_position_x(0.0), m_position_y(0.0), m_position_z(0.0), 
-	              m_orientation_x(0.0), m_orientation_y(0.0), m_orientation_z(0.0), 
-				  m_direction(0.0), m_outer_radius(0.0), m_inner_radius(0.0),
-	              m_layer_width(0.0) {}
+  Stomatocyte() : m_position_x(0.0), m_position_y(0.0), m_position_z(0.0),
+                  m_orientation_x(0.0), m_orientation_y(0.0), m_orientation_z(0.0),
+                  m_outer_radius(0.0), m_inner_radius(0.0), m_layer_width(0.0),
+                  m_direction(0.0) {}
 
   int calculate_dist(const double *ppos, double *dist, double *vec) const override;
 

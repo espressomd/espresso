@@ -372,6 +372,7 @@ BOOST_AUTO_TEST_CASE(erase) {
     std::iota(l.begin(), l.end(), 0);
 
     auto r = l.erase(l.end() - 4, l.end());
+    BOOST_CHECK(*r == (31 - 4));
     BOOST_CHECK(l.size() == (32 - 4));
     BOOST_CHECK(l.front() == 0);
     BOOST_CHECK(l.back() == (31 - 4));
@@ -383,6 +384,7 @@ BOOST_AUTO_TEST_CASE(erase) {
     std::iota(l.begin(), l.end(), 0);
 
     auto r = l.erase(l.begin() + 2, l.end() - 2);
+    BOOST_CHECK(*r == 31);
     BOOST_CHECK(l.size() == 4);
     BOOST_CHECK(l.front() == 0);
     BOOST_CHECK(l.back() == 31);

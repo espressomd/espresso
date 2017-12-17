@@ -1811,7 +1811,7 @@ class BondedInteractionNotDefined(object):
 
 
 class FeneBond(BondedInteraction):
-
+    
     def __init__(self, *args, **kwargs):
         """
         FeneBond initializer. Used to instatiate a FeneBond identifier

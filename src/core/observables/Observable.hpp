@@ -22,8 +22,8 @@
 #define OBSERVABLES_OBSERVABLE_HPP
 
 #include <fstream>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "core/PartCfg.hpp"
 
@@ -31,24 +31,18 @@ namespace Observables {
 class Observable {
 public:
   friend class CylindricalFluxDensityProfile;
+  friend class CylindricalLBFluxDensityProfileAtParticlePositions;
   Observable();
   virtual ~Observable() = default;
-  int calculate();
-
+  // In the call operator the calculation is performed.
+  virtual std::vector<double> operator()(PartCfg &partCfg) const = 0;
   /* IO functions for observables */
   void set_filename(std::string const &filename, bool binary);
   bool writable() const;
   void write();
-
   virtual int n_values() const { return 0; }
-  std::vector<double> last_value;
 
 private:
-  virtual int actual_calculate(PartCfg & partCfg) = 0;
-
-  int n;
-  double last_update;
-
   virtual void do_write();
   std::ofstream m_ofile;
   std::string m_filename;
