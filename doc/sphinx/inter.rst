@@ -249,7 +249,7 @@ between particles of the types *type1* and *type2* . The first variant
 behaves as follows: Until the minimum of the Lennard-Jones potential
 at :math:`r_\mathrm{min} = r_\mathrm{off} + 2^{\frac{1}{6}}\sigma`, it
 behaves identical to the unshifted Lennard-Jones potential
-(:math:`c_\mathrm{shift}=0`). Between and , a cosine is used to
+(:math:`c_\mathrm{shift}=0`). Between :math:`r_\mathrm{min}` and :math:`r_\mathrm{cut}`, a cosine is used to
 smoothly connect the potential to 0,
 
 .. math::
