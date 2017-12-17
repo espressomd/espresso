@@ -69,7 +69,9 @@ void interactive()
             }
 
             // Update result on success
-            res = evaluate(line.begin(), line.end()).value_or(res);
+            if (auto ores = evaluate(line.begin(), line.end())) {
+                res = *ores;
+            }
         }
 
         std::free(input);

@@ -4,11 +4,6 @@ set_directory_properties(PROPERTIES EXCLUDE_FROM_ALL ON)
 # Add current directory to search path
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-# Find the Boost unit test framework
-find_package(Boost REQUIRED COMPONENTS unit_test_framework)
-include_directories(${Boost_INCLUDE_DIRS})
-list(APPEND LIBRARIES ${Boost_LIBRARIES})
-
 # To add test cases easier we use the following function
 function(UNIT_TEST)
   # Parse arguments

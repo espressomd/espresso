@@ -12,3 +12,9 @@ endfunction(EXAMPLE)
 
 EXAMPLE(TARGET calculator SOURCE calculator.cpp)
 EXAMPLE(TARGET motivation SOURCE motivation.cpp)
+
+find_package(Readline)
+if(READLINE_FOUND)
+  EXAMPLE(TARGET calc SOURCE calc.cpp)
+  target_link_libraries(calc ${READLINE_LIBRARY})
+endif()
