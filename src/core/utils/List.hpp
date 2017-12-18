@@ -14,7 +14,6 @@ namespace Utils {
 /** List.
     Use the functions specified in list operations. */
 template <typename T, typename SizeType = uint32_t> class List {
-  static_assert(std::is_trivially_copyable<T>::value, "T needs to be trivially copyable.");
   static_assert(std::is_unsigned<SizeType>::value, "SizeType needs to be unsigned.");
 
 public:
