@@ -125,7 +125,7 @@ class ParticleProperties(ut.TestCase):
 
     if espressomd.has_features(["TABULATED"]):
         test_tabulated = generateTestForBondParams(0, Tabulated, {"type": "distance",
-                                                                  "max": 1.,
+                                                                  "min": 1.,
                                                                   "max": 2.,
                                                                   "energy": [1.,2.,3.],
                                                                   "force": [3.,4.,5.]})
