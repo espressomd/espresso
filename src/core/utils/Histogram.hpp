@@ -26,6 +26,7 @@
 #include <functional>
 #include <numeric>
 #include <vector>
+#include <cmath>
 
 namespace Utils {
 
