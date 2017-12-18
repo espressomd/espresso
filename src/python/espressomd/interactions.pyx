@@ -29,7 +29,7 @@ cdef class NonBondedInteraction(object):
     Either called with two particle type id, in which case, the interaction
     will represent the bonded interaction as it is defined in Espresso core
     Or called with keyword arguments describing a new interaction.
-    
+
     """
 
     cdef public object _part_types
@@ -1651,7 +1651,7 @@ class BondedInteractionNotDefined(object):
 
 
 class FeneBond(BondedInteraction):
-    
+
     def __init__(self, *args, **kwargs):
         """
         FeneBond initializer. Used to instatiate a FeneBond identifier
@@ -2030,25 +2030,26 @@ IF TABULATED == 1:
             """All parameters that can be set.
 
             """
-            return "type", "minval", "maxval", "energy", "force"
+            return "type", "min", "max", "energy", "force"
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return "type", "minval", "maxval", "energy", "force"
+            return "type", "min", "max", "energy", "force"
 
         def set_default_params(self):
             """Sets parameters that are not required to their default value.
 
             """
+            self._params = {'min': -1., 'max': -1., 'energy': [], 'force': []}
 
         def _get_params_from_es_core(self):
             make_bond_type_exist(self._bond_id)
             res = \
                 {"type": bonded_ia_params[self._bond_id].p.tab.type,
-                 "minval": bonded_ia_params[self._bond_id].p.tab.pot.minval,
-                 "maxval": bonded_ia_params[self._bond_id].p.tab.pot.maxval,
+                 "min": bonded_ia_params[self._bond_id].p.tab.pot.minval,
+                 "max": bonded_ia_params[self._bond_id].p.tab.pot.maxval,
                  "energy": bonded_ia_params[self._bond_id].p.tab.pot.energy_tab,
                  "force": bonded_ia_params[self._bond_id].p.tab.pot.force_tab
                 }

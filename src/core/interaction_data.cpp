@@ -490,12 +490,6 @@ void make_bond_type_exist(int type) {
   int i, ns = type + 1;
 
   if (ns <= n_bonded_ia) {
-#ifdef TABULATED
-    if (bonded_ia_params[type].type == BONDED_IA_TABULATED) {
-      delete bonded_ia_params[type].p.tab.pot;
-      bonded_ia_params[type].p.tab.pot = nullptr;
-    }
-#endif
 #ifdef OVERLAPPED
     if (bonded_ia_params[type].type == BONDED_IA_OVERLAPPED &&
         bonded_ia_params[type].p.overlap.noverlaps > 0) {
