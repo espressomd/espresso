@@ -1497,7 +1497,7 @@ cdef class BondedInteraction(object):
 
     def is_valid(self):
         """Check, if the data stored in the instance still matches what is in Espresso.
-        
+
         """
         # Check if the bond type in Espresso still matches the bond type saved
         # in this class
@@ -1537,7 +1537,7 @@ cdef class BondedInteraction(object):
 
     def __getattribute__(self, name):
         """Every time _set_params_in_es_core is called, the parameter dict is also updated.
-        
+
         """
         attr = object.__getattribute__(self, name)
         if hasattr(attr, '__call__') and attr.__name__ == "_set_params_in_es_core":
@@ -2030,13 +2030,13 @@ IF TABULATED == 1:
             """All parameters that can be set.
 
             """
-            return "type", "filename", "minval", "maxval", "energy", "force"
+            return "type", "minval", "maxval", "energy", "force"
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return "type", "filename", "energy", "force"
+            return "type", "minval", "maxval", "energy", "force"
 
         def set_default_params(self):
             """Sets parameters that are not required to their default value.
@@ -2049,6 +2049,8 @@ IF TABULATED == 1:
                 {"type": bonded_ia_params[self._bond_id].p.tab.type,
                  "minval": bonded_ia_params[self._bond_id].p.tab.pot.minval,
                  "maxval": bonded_ia_params[self._bond_id].p.tab.pot.maxval,
+                 "energy": bonded_ia_params[self._bond_id].p.tab.pot.energy_tab,
+                 "force": bonded_ia_params[self._bond_id].p.tab.pot.force_tab
                 }
             if res["type"] == 1:
                 res["type"] = "distance"
@@ -2061,18 +2063,21 @@ IF TABULATED == 1:
         def _set_params_in_es_core(self):
             if self._params["type"] == "distance":
                 type_num = 1
+            elif self._params["type"] == "angle":
+                type_num = 2
+            elif self._params["type"] == "dihedral":
+                type_num = 3
             else:
-                if self._params["type"] == "angle":
-                    type_num = 2
-                else:
-                    if self._params["type"] == "dihedral":
-                        type_num = 3
-                    else:
-                        raise ValueError(
-                            "Tabulated type needs to be distance, angle, or diherdal")
+                raise ValueError(
+                    "Tabulated type needs to be distance, angle, or diherdal")
 
             res = tabulated_bonded_set_params(
-                self._bond_id, < TabulatedBondedInteraction > type_num, utils.to_char_pointer(self._params["filename"]))
+                self._bond_id, < TabulatedBondedInteraction > type_num,
+                self._params["min"],
+                self._params["max"],
+                self._params["energy"],
+                self._params["force"])
+
             if res == 1:
                 raise Exception("Could not setup tabulated bond. Invalid bond type.")
             # Retrieve some params, Es calculates.
