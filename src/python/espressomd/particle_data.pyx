@@ -1801,9 +1801,9 @@ cdef class ParticleList(object):
     def _place_new_particles(self, Ps):
         # Check if all entries have the same length
         n_parts = len(Ps["pos"])
-        if not all(len(Ps[k]) == n_parts for k in Ps):
+        if not all(np.shape(Ps[k]) and len(Ps[k]) == n_parts for k in Ps):
             raise ValueError(
-                "When adding several particles at once, all sets of attributes have to have the same size")
+                "When adding several particles at once, all lists of attributes have to have the same size")
 
         # Place new particles and collect ids
         ids = []

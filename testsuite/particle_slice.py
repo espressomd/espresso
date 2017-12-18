@@ -335,9 +335,18 @@ class ParticleSliceTest(ut.TestCase):
         self.system.part.add(pos=positions)
         for p in positions:
             self.system.part.add(pos=p)
-
-
         np.testing.assert_allclose(np.copy(self.system.part[:3].pos), np.copy(self.system.part[3:6].pos))
+        
+        with self.assertRaises(ValueError):
+            self.system.part.add(pos=([1,1,1],[2,2,2]),type = 0)
+        with self.assertRaises(ValueError):
+            self.system.part.add(pos=([1,1,1],[2,2,2]),type = (0,1,2))
+
+        self.system.part.clear()
+        self.system.part.add(pos=([1,1,1],[2,2,2]),type = (0,1))
+        self.assertEqual(self.system.part[0].type,0)
+        self.assertEqual(self.system.part[1].type,1)
+
     def test_empty(self):
         self.assertTrue(np.array_equal(self.system.part[0:0].pos, np.empty(0)))
 
