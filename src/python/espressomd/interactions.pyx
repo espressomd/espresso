@@ -2008,11 +2008,20 @@ IF TABULATED == 1:
 
             Parameters
             ----------
-            type : :obj:`str`
-                   Specifies the type of bonded interaction. Possible inputs:
-                   'distance', 'angle' and 'dihedral'.
-            filename : :obj`str`
-                       Filename of the tabular.
+
+            type : :obj:`string`,
+                The type of bond, one of 'distance', 'angle' or
+                'dihedral'.
+            min : :obj:`float`,
+                The minimal interaction distance. Has to be 0 if
+                type is 'angle' or 'dihedral'
+            max : :obj:`float`,
+                The maximal interaction distance. Has to be pi if
+                type is 'angle' or 2pi if 'dihedral'
+            energy: array_like :obj:`float`
+                The energy table.
+            force: array_like :obj:`float`
+                The force table.
 
             """
             super(Tabulated, self).__init__(*args, **kwargs)
@@ -2112,6 +2121,24 @@ IF TABULATED == 1:
             """
             return ["min", "max", "energy", "force"]
 
+        def set_params(self, **kwargs):
+            """ Set parameters for the TabulatedNonBonded interaction.
+
+            Parameters
+            ----------
+
+            min : :obj:`float`,
+                  The minimal interaction distance.
+            max : :obj:`float`,
+                  The maximal interaction distance.
+            energy: array_like :obj:`float`
+                  The energy table.
+            force: array_like :obj:`float`
+                  The force table.
+
+            """
+            super(TabulatedNonBonded, self).set_params(**kwargs)
+
         def set_default_params(self):
             """Sets parameters that are not required to their default value.
 
@@ -2145,7 +2172,6 @@ IF TABULATED == 1:
 
 IF TABULATED != 1:
     class Tabulated(BondedInteraction):
-
         def type_number(self):
             raise Exception("TABULATED has to be defined in myconfig.hpp.")
 
