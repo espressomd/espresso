@@ -508,7 +508,7 @@ void mpi_send_q(int pnode, int part, double q) {
     MPI_Send(&q, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
   }
 
-  on_particle_change();
+  on_particle_charge_change();
 #endif
 }
 
@@ -519,7 +519,7 @@ void mpi_send_q_slave(int pnode, int part) {
     MPI_Recv(&p->p.q, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
   }
 
-  on_particle_change();
+  on_particle_charge_change();
 #endif
 }
 
