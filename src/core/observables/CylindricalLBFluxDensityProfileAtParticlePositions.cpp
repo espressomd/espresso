@@ -32,7 +32,7 @@ operator()(PartCfg &partCfg) const {
   std::vector<std::pair<double, double>> limits{
       {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
        std::make_pair(min_z, max_z)}};
-  Utils::CylindricalHistogram histogram(n_bins, 3, limits);
+  Utils::CylindricalHistogram<double> histogram(n_bins, 3, limits);
 #ifdef LB_GPU
   // First collect all positions (since we want to call the LB function to
   // get the fluid velocities only once).

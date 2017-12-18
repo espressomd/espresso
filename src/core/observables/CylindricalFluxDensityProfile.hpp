@@ -15,7 +15,7 @@ public:
     std::vector<std::pair<double, double>> limits{
         {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
          std::make_pair(min_z, max_z)}};
-    Utils::CylindricalHistogram histogram(n_bins, 3, limits);
+    Utils::CylindricalHistogram<double> histogram(n_bins, 3, limits);
     for (int id : ids()) {
       auto const ppos = ::Vector<3, double>(folded_position(partCfg[id]));
       ::Vector<3, double> ppos_shifted;
