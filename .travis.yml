@@ -46,6 +46,8 @@ matrix:
             - libboost1.55-dev
             - libboost-test1.55-dev
     - os: osx
+      install:
+        - brew link --force readline
       compiler: clang
     - if: branch = master
       os: linux

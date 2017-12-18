@@ -7,6 +7,7 @@
  *
  * c++ -Wall -Wextra -Wpedantic -std=c++11 -I/path/to/boost_matheval/include calc.cpp -lreadline
  */
+#include <csignal>
 #include <cstdlib>
 #include <cstring>
 #include <limits>
@@ -42,8 +43,18 @@ void commandline(int argc, char *argv[])
     evaluate(expr.c_str(), expr.c_str() + expr.size());
 }
 
+void sigint_handler(int)
+{
+    std::cout << "\n";
+    rl_on_new_line();
+    rl_replace_line("", 0);
+    rl_redisplay();
+}
+
 void interactive()
 {
+    std::signal(SIGINT, sigint_handler);
+
     std::cout << "Type [q or Q] to quit\n";
 
     constexpr char const prompt[] = "> ";
@@ -87,8 +98,9 @@ void interactive()
 int main(int argc, char *argv[])
 {
     std::cout.precision(std::numeric_limits<double>::digits10);
-    if (argc > 1)
+    if (argc > 1) {
         commandline(argc,argv);
-    else
+    } else {
         interactive();
+    }
 }
