@@ -39,7 +39,6 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "iccp3m.hpp" /* -iccp3m- */
-#include "interaction_data.hpp"
 #include "lattice.hpp"
 #include "lb.hpp"
 #include "lbboundaries.hpp"
@@ -84,12 +83,6 @@ static int reinit_particle_comm_gpu = 1;
 void on_program_start() {
   EVENT_TRACE(fprintf(stderr, "%d: on_program_start\n", this_node));
 
-/* tell Electric fence that we do realloc(0) on purpose. */
-#ifdef EFENCE
-  extern int EF_ALLOW_MALLOC_0;
-  EF_ALLOW_MALLOC_0 = 1;
-#endif
-
 #ifdef CUDA
   cuda_init();
 #endif
@@ -105,8 +98,7 @@ void on_program_start() {
   topology_init(CELL_STRUCTURE_DOMDEC, &local_cells);
 
   ghost_init();
-  /* Initialise force and energy tables */
-  force_and_energy_tables_init();
+
 #ifdef P3M
   p3m_pre_init();
 #endif
@@ -209,9 +201,9 @@ void on_integration_start() {
    */
   invalidate_obs();
   partCfg().invalidate();
+  invalidate_fetch_cache();
 
 #ifdef ADDITIONAL_CHECKS
-  check_global_consistency();
 
   if(!Utils::Mpi::all_compare(comm_cart, cell_structure.type)) {
     runtimeErrorMsg() << "Nodes disagree about cell system type.";
@@ -233,6 +225,7 @@ void on_integration_start() {
   if (!Utils::Mpi::all_compare(comm_cart,coulomb.Dmethod))
     runtimeErrorMsg() << "Nodes disagree about dipolar long range method";
 #endif
+  check_global_consistency();
 #endif /* ADDITIONAL_CHECKS */
 
   on_observable_calc();
@@ -304,6 +297,9 @@ void on_particle_change() {
 
   /* the particle information is no longer valid */
   partCfg().invalidate();
+
+  /* the particle information is no longer valid */
+  invalidate_fetch_cache();
 }
 
 void on_coulomb_change() {
@@ -564,13 +560,23 @@ void on_temperature_change() {
 
 void on_parameter_change(int field) {
   EVENT_TRACE(
-      fprintf(stderr, "%d: on_parameter_change %d\n", this_node, field));
+      fprintf(stderr, "%d: shon_parameter_change %d\n", this_node, field));
 
   switch (field) {
   case FIELD_BOXL:
     grid_changed_box_l();
 #ifdef SCAFACOS
-    Scafacos::update_system_params();
+    #ifdef ELECTROSTATICS
+    if (coulomb.method == COULOMB_SCAFACOS) {
+      Scafacos::update_system_params(); 
+    }
+    #endif
+    #ifdef DIPOLES
+    if (coulomb.Dmethod == DIPOLAR_SCAFACOS) {
+      Scafacos::update_system_params(); 
+    }
+    #endif
+
 #endif
     /* Electrostatics cutoffs mostly depend on the system size,
        therefore recalculate them. */
@@ -585,7 +591,17 @@ void on_parameter_change(int field) {
     cells_on_geometry_change(0);
   case FIELD_PERIODIC:
 #ifdef SCAFACOS
-      Scafacos::update_system_params();
+    #ifdef ELECTROSTATICS
+    if (coulomb.method == COULOMB_SCAFACOS) {
+      Scafacos::update_system_params(); 
+    }
+    #endif
+    #ifdef DIPOLES
+    if (coulomb.Dmethod == DIPOLAR_SCAFACOS) {
+      Scafacos::update_system_params(); 
+    }
+    #endif
+
 #endif
     cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
     break;

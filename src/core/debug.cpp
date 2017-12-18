@@ -150,9 +150,9 @@ void check_particle_consistency() {
 
 void check_particles() {
   Particle *part;
-  int *is_here;
+
   Cell *cell;
-  int n, dir, c, p;
+  int n, dir, c;
   int cell_part_cnt = 0, local_part_cnt = 0;
   int cell_err_cnt = 0;
   double skin2 = (skin != -1) ? skin / 2 : 0;

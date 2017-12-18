@@ -48,7 +48,7 @@ int comms_count = 0;
  * algorithm (see verlet.cpp) to build the verlet lists.
  */
 void le_dd_init_cell_interactions() {
-  int m, n, o, p, q, r, ind1, ind2, c_cnt = 0, n_cnt = 0;
+  int m, n, o, p, q, r, ind1, ind2;
   int extra_cells = 0;
 
   /* loop over non-ghost cells */
@@ -550,8 +550,8 @@ void le_dd_prepare_comm(le_dd_comms_manager *mgr, GhostCommunicator *comm,
             lc[dir] = 1;
             hc[dir] = 1;
           }
-          comm->comm[cnt].part_lists = (ParticleList **)Utils::malloc(
-              n_comm_cells[dir] * sizeof(ParticleList *));
+          comm->comm[cnt].part_lists = (Cell **)Utils::malloc(
+              n_comm_cells[dir] * sizeof(Cell *));
 
           switch (dir) {
           case 0:
@@ -624,8 +624,8 @@ void le_dd_prepare_comm(le_dd_comms_manager *mgr, GhostCommunicator *comm,
             lc[dir] = 0;
             hc[dir] = 0;
           }
-          comm->comm[cnt].part_lists = (ParticleList **)Utils::malloc(
-              n_comm_cells[dir] * sizeof(ParticleList *));
+          comm->comm[cnt].part_lists = (Cell **)Utils::malloc(
+              n_comm_cells[dir] * sizeof(Cell *));
 
           switch (dir) {
           case 0:
@@ -846,7 +846,7 @@ void le_dd_dynamic_update_comm(le_dd_comms_manager *mgr,
         /* exchange the send and receive parts of the comm */
         int nlist2 = comm->comm[cnt].n_part_lists / 2;
         for (int j = 0; j < nlist2; j++) {
-          ParticleList *tmplist = comm->comm[cnt].part_lists[j];
+          Cell *tmplist = comm->comm[cnt].part_lists[j];
           comm->comm[cnt].part_lists[j] =
               comm->comm[cnt].part_lists[j + nlist2];
           comm->comm[cnt].part_lists[j + nlist2] = tmplist;
