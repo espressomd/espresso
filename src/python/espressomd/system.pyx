@@ -427,6 +427,9 @@ cdef class System(object):
         get_mi_vector(res, b, a)
         return np.array((res[0], res[1], res[2]))
 
+    def rotate_system(self, phi, theta, alpha):
+        rotate_system(phi, theta, alpha)
+
     IF EXCLUSIONS:
         def auto_exclusions(self, distance):
             """Automatically adds exclusions between particles

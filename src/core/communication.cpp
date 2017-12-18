@@ -201,12 +201,13 @@ static int terminated = 0;
   CB(mpi_gather_cuda_devices_slave)                                            \
   CB(mpi_thermalize_cpu_slave)                                                 \
   CB(mpi_scafacos_set_parameters_slave)                                        \
-  CB(mpi_scafacos_set_r_cut_and_tune_slave)                                        \
+  CB(mpi_scafacos_set_r_cut_and_tune_slave)                                    \
   CB(mpi_scafacos_free_slave)                                                  \
   CB(mpi_mpiio_slave)                                                          \
   CB(mpi_resort_particles_slave)                                               \
   CB(mpi_get_pairs_slave)                                                      \
-  CB(mpi_get_particles_slave)
+  CB(mpi_get_particles_slave)                                                  \
+  CB(mpi_rotate_system_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
