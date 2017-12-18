@@ -171,3 +171,39 @@ def verify_lj_forces(system, tolerance, ids_to_skip=[]):
 
 def abspath(path):
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), path)
+
+
+def transform_pos_from_cartesian_to_polar_coordinates(pos):
+    """Transform the given cartesian coordinates to polar coordinates.
+
+    Parameters
+    ----------
+    pos : array_like :obj:`float`
+          ``x``, ``y``, and ``z``-component of the cartesian position.
+
+    Returns
+    -------
+    array_like
+        The given position in polar coordinates.
+
+    """
+    return np.array([np.sqrt(pos[0]**2.0 + pos[1]**2.0), np.arctan2(pos[1], pos[0]), pos[2]])
+
+def transform_vel_from_cartesian_to_polar_coordinates(pos, vel):
+    """Transform the given cartesian velocities to polar velocities.
+    
+    Parameters
+    ----------
+    pos : array_like :obj:`float`
+          ``x``, ``y``, and ``z``-component of the cartesian position.
+    vel : array_like :obj:`float`
+          ``x``, ``y``, and ``z``-component of the cartesian velocity.
+
+    """
+    return np.array([
+        (pos[0] * vel[0] + pos[1] *
+         vel[1]) / np.sqrt(pos[0]**2.0 + pos[1]**2.0),\
+        (pos[0] * vel[1] - pos[1] *
+         vel[0]) / (pos[0]**2.0 + pos[1]**2.0),\
+        vel[2]])
+

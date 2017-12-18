@@ -136,7 +136,6 @@ double calc_dipole_dipole_ia(Particle *p1, Particle *p2, int force_flag) {
 
 double dawaanr_calculations(int force_flag, int energy_flag) {
   double u;
-  int i, j, c, cc;
 
   if (n_nodes != 1) {
     fprintf(stderr, "error:  DAWAANR is just for one cpu .... \n");
@@ -203,9 +202,6 @@ int magnetic_dipolar_direct_sum_sanity_checks() {
 
 double magnetic_dipolar_direct_sum_calculations(int force_flag,
                                                 int energy_flag) {
-  Cell *cell;
-  Particle *part;
-  int i, c, np;
   double *x = nullptr, *y = nullptr, *z = nullptr;
   double *mx = nullptr, *my = nullptr, *mz = nullptr;
   double *fx = nullptr, *fy = nullptr, *fz = nullptr;

@@ -8,68 +8,183 @@ import os
 import time
 import espressomd
 import collections
+import sys
+from threading import Thread
 
 import scipy.spatial
 include "myconfig.pxi"
 
 from copy import deepcopy
 
+
 class openGLLive(object):
+
     """This class provides live visualization using pyOpenGL.
     Use the update method to push your current simulation state after
     integrating. Modify the appearance with a list of keywords.
     Timed callbacks can be registered via the registerCallback method.
-    Keyboad callbacks via  keyboardManager.registerButton()."""
+    Keyboad callbacks via  keyboardManager.registerButton().
+
+    Attributes
+    ----------
+
+    system : instance of :attr:`espressomd.System`
+    window_size : array_like :obj:`int`, optional
+                  Size of the visualizer window in pixels.
+    name : :obj:`str`, optional
+           The name of the visualizer window.
+    background_color : array_like :obj:`int`, optional
+                       RGB of the background.
+    periodic_images : array_like :obj:`int`, optional
+                      Periodic repetitions on both sides of the box in xyzdirection.
+    draw_box : :obj:`bool`, optional
+               Draw wireframe boundaries.
+    draw_axis : :obj:`bool`, optional
+                Draws xyz system axes.
+    quality_particles : :obj:`int`, optional
+                        The number of subdivisions for particle spheres.
+    quality_bonds : :obj:`int`, optional
+                    The number of subdivisions for cylindrical bonds.
+    quality_arrows : :obj:`int`, optional
+                     The number of subdivisions for external force arrows.
+    arrows_radius : :obj:`float`, optional
+                    Arrow radius for velocity, force and ext_force arrows
+    quality_constraints : :obj:`int`, optional
+                          The number of subdivisions for primitive constraints.
+    close_cut_distance : :obj:`float`, optional
+                         The distance from the viewer to the near clipping plane.
+    far_cut_distance : :obj:`float`, optional
+                       The distance from the viewer to the far clipping plane.
+    camera_position : :obj:`str` or array_like :obj:`float`, optional
+                      Initial camera position. ``auto`` (default) for shiftet position in z-direction.
+    camera_target : :obj:`str` or array_like :obj:`float`, optional
+                    Initial camera target. ``auto`` (default) to look towards the system center.
+    camera_right : array_like :obj:`float`, optional
+                   Camera right vector in system coordinates. Default is [1, 0, 0]
+    particle_sizes : :obj:`str` or array_like :obj:`float` or callable, optional
+                     auto (default): The Lennard-Jones sigma value of the
+                     self-interaction is used for the particle diameter.
+                     callable: A lambda function with one argument. Internally,
+                     the numerical particle type is passed to the lambda
+                     function to determine the particle radius.  list: A list
+                     of particle radii, indexed by the particle type.
+    particle_coloring : :obj:`str`, optional
+                        auto (default): Colors of charged particles are
+                        specified by particle_charge_colors, neutral particles
+                        by particle_type_colors. charge: Minimum and maximum
+                        charge of all particles is determined by the
+                        visualizer. All particles are colored by a linear
+                        interpolation of the two colors given by
+                        particle_charge_colors according to their charge. type:
+                        Particle colors are specified by particle_type_colors,
+                        indexed by their numerical particle type.
+    particle_type_colors : array_like :obj:`float`, optional
+                           Colors for particle types.
+    particle_type_materials : :obj:`str`, optional
+                              Materials of the particle types.
+    particle_charge_colors : array_like :obj:`float`, optional
+                             Two colors for min/max charged particles.
+    draw_constraints : :obj:`bool`, optional
+                       Enables constraint visualization. For simple constraints
+                       (planes, spheres and cylinders), OpenGL primitives are
+                       used. Otherwise, visualization by rasterization is used.
+    rasterize_pointsize : :obj:`float`, optional
+                          Point size for the rasterization dots.
+    rasterize_resolution : :obj:`float`, optional
+                           Accuracy of the rasterization.
+    quality_constraints : :obj:`int`, optional
+                          The number of subdivisions for primitive constraints.
+    constraint_type_colors : array_like :obj:`float`, optional
+                             Colors of the constaints by type.
+    constraint_type_materials : array_like :obj:`str`, optional 
+                                Materials of the constraints by type.
+    draw_bonds : :obj:`bool`, optional
+                 Enables bond visualization.
+    bond_type_radius : array_like :obj:`float`, optional
+                       Radii of bonds by type.
+    bond_type_colors : array_like :obj:`float`, optional
+                       Color of bonds by type.
+    bond_type_materials : array_like :obj:`float`, optional
+                          Materials of bonds by type.
+    ext_force_arrows : :obj:`bool`, optional
+                       Enables external force visualization.
+    ext_force_arrows_scale : :obj:`float`, optional
+                             Scale factor of external force arrows for different particle types.
+    ext_force_arrows_type_colors : array_like :obj:`float`, optional
+                                   Colors of ext_force arrows for different particle types.
+    force_arrows : :obj:`bool`, optional
+                   Enables particle force visualization.
+    force_arrows_scale : :obj:`float`, optional
+                         Scale factor of particle force arrows for different particle types.
+    force_arrows_type_colors : array_like :obj:`float`, optional
+                               Colors of particle force arrows for different particle types.
+    velocity_arrows : :obj:`bool`, optional
+                       Enables particle velocity visualization.
+    velocity_arrows_scale : :obj:`float`, optional
+                             Scale factor of particle velocity arrows for different particle types.
+    velocity_arrows_type_colors : array_like :obj:`float`, optional
+                                  Colors of particle velocity arrows for different particle types.
+    drag_enabled : :obj:`bool`, optional
+                   Enables mouse-controlled particles dragging (Default: False)
+    drag_force : :obj:`bool`, optional
+                 Factor for particle dragging
+    light_pos : array_like :obj:`float`, optional
+                If auto (default) is used, the light is placed dynamically in
+                the particle barycenter of the system. Otherwise, a fixed
+                coordinate can be set.
+    light_colors : array_like :obj:`float`, optional
+                   Three lists to specify ambient, diffuse and specular light colors.
+    light_brightness : :obj:`float`, optional
+                       Brightness (inverse constant attenuation) of the light.
+    light_size : :obj:`float`, optional
+                 Size (inverse linear attenuation) of the light. If auto
+                 (default) is used, the light size will be set to a reasonable
+                 value according to the box size at start.
+    spotlight_enabled : :obj:`bool`, optional
+                        If set to True (default), it enables a spotlight on the
+                        camera position pointing in look direction.
+    spotlight_colors : array_like :obj:`float`, optional
+                       Three lists to specify ambient, diffuse and specular spotlight colors.
+    spotlight_angle : :obj:`float`, optional
+                      The spread angle of the spotlight in degrees (from 0 to 90).
+    spotlight_brightness : :obj:`float`, optional
+                           Brightness (inverse constant attenuation) of the spotlight.
+    spotlight_focus : :obj:`float`, optional
+                      Focus (spot exponent) for the spotlight from 0 (uniform) to 128.
+
+    """
 
     def __init__(self, system, **kwargs):
-        """
-        Parameters
-        ----------
-
-        :system: instance of espressomd.System
-        :window\_size: Size of the visualizer window in pixels.
-        :name: The name of the visualizer window.
-        :background\_color: RGB of the background.
-        :periodic\_images: Periodic repetitions on both sides of the box in xyzdirection.
-        :draw\_box: Draw wireframe boundaries.
-        :draw\_axis: Draws xyz system axes.
-        :quality\_particles: The number of subdivisions for particle spheres.
-        :quality\_bonds: The number of subdivisions for cylindrical bonds.
-        :quality\_arrows: The number of subdivisions for external force arrows.
-        :quality\_constraints: The number of subdivisions for primitive constraints.
-        :close\_cut\_distance: The distance from the viewer to the near clipping plane.
-        :far\_cut\_distance: The distance from the viewer to the far clipping plane.
-        :camera\_position: Initial camera position. auto (default) for shiftet position in z-direction. 
-        :camera\_target: Initial camera target. auto (default) to look towards the system center.
-        :camera\_right: Camera right vector in system coordinates. Default is [1, 0, 0] 
-        :particle\_sizes: auto (default): The Lennard-Jones sigma value of the self-interaction is used for the particle diameter. callable: A lambda function with one argument. Internally, the numerical particle type is passed to the lambda function to determine the particle radius.  list: A list of particle radii, indexed by the particle type.
-        :particle\_coloring: auto (default): Colors of charged particles are specified by particle\_charge\_colors, neutral particles by particle\_type\_colors. charge: Minimum and maximum charge of all particles is determined by the visualizer. All particles are colored by a linear interpolation of the two colors given by particle\_charge\_colors according to their charge. type: Particle colors are specified by particle\_type\_colors, indexed by their numerical particle type.
-        :particle\_type\_colors: Colors for particle types.
-        :particle\_type\_materials: Materials of the particle types.
-        :particle\_charge\_colors: Two colors for min/max charged particles.
-        :draw\_constraints: Enables constraint visualization. For simple constraints (planes, spheres and cylinders), OpenGL primitives are used. Otherwise, visualization by rasterization is used.
-        :rasterize\_pointsize: Point size for the rasterization dots.
-        :rasterize\_resolution: Accuracy of the rasterization.
-        :quality\_constraints: The number of subdivisions for primitive constraints.
-        :constraint\_type\_colors: Colors of the constaints by type.
-        :constraint\_type\_materials: Materials of the constraints by type.
-        :draw\_bonds: Enables bond visualization.
-        :bond\_type\_radius: Radii of bonds by type.
-        :bond\_type\_colors: Color of bonds by type.
-        :bond\_type\_materials: Materials of bonds by type.
-        :ext\_force\_arrows: Enables external force visualization.
-        :ext\_force\_arrows\_scale: Scale factor for external force arrows.
-        :drag\_enabled: Enables mouse-controlled particles dragging (Default: False)
-        :drag\_force: Factor for particle dragging
-        :light\_pos: If auto (default) is used, the light is placed dynamically in the particle barycenter of the system. Otherwise, a fixed coordinate can be set.
-        :light\_colors: Three lists to specify ambient, diffuse and specular light colors.
-        :light\_brightness: Brightness (inverse constant attenuation) of the light. 
-        :light\_size: Size (inverse linear attenuation) of the light. If auto (default) is used, the light size will be set to a reasonable value according to the box size at start.
-        :spotlight\_enabled: If set to True (default), it enables a spotlight on the camera position pointing in look direction.
-        :spotlight\_colors: Three lists to specify ambient, diffuse and specular spotlight colors.
-        :spotlight\_angle: The spread angle of the spotlight in degrees (from 0 to 90).
-        :spotlight\_brightness: Brightness (inverse constant attenuation) of the spotlight. 
-        :spotlight\_focus: Focus (spot exponent) for the spotlight from 0 (uniform) to 128."""
+        # MATERIALS
+        self.materials = {
+            'bright':       [[0.9, 0.9, 0.9], [1.0, 1.0, 1.0], [0.8, 0.8, 0.8], 0.6],
+            'medium':       [[0.6, 0.6, 0.6], [0.8, 0.8, 0.8], [0.2, 0.2, 0.2], 0.5],
+            'dark':         [[0.4, 0.4, 0.4], [0.5, 0.5, 0.5], [0.1, 0.1, 0.1], 0.4],
+            'bluerubber':   [[0, 0, 0.05], [0.4, 0.4, 0.5], [0.04, 0.04, 0.7], 0.078125],
+            'redrubber':    [[0.05, 0, 0], [0.5, 0.4, 0.4], [0.7, 0.04, 0.04], 0.078125],
+            'yellowrubber': [[0.05, 0.05, 0], [0.5, 0.5, 0.4], [0.7, 0.7, 0.04], 0.078125],
+            'greenrubber':  [[0, 0.05, 0], [0.4, 0.5, 0.4], [0.04, 0.7, 0.04], 0.078125],
+            'whiterubber':  [[0.05, 0.05, 0.05], [0.5, 0.5, 0.5], [0.7, 0.7, 0.7], 0.078125],
+            'cyanrubber':   [[0, 0.05, 0.05], [0.4, 0.5, 0.5], [0.04, 0.7, 0.7], 0.078125],
+            'blackrubber':  [[0.02, 0.02, 0.02], [0.01, 0.01, 0.01], [0.4, 0.4, 0.4], 0.078125],
+            'emerald':      [[0.0215, 0.1745, 0.0215], [0.07568, 0.61424, 0.07568], [0.633, 0.727811, 0.633], 0.6],
+            'jade':         [[0.135, 0.2225, 0.1575], [0.54, 0.89, 0.63], [0.316228, 0.316228, 0.316228], 0.1],
+            'obsidian':     [[0.05375, 0.05, 0.06625], [0.18275, 0.17, 0.22525], [0.332741, 0.328634, 0.346435], 0.3],
+            'pearl':        [[0.25, 0.20725, 0.20725], [1, 0.829, 0.829], [0.296648, 0.296648, 0.296648], 0.088],
+            'ruby':         [[0.1745, 0.01175, 0.01175], [0.61424, 0.04136, 0.04136], [0.727811, 0.626959, 0.626959], 0.6],
+            'turquoise':    [[0.1, 0.18725, 0.1745], [0.396, 0.74151, 0.69102], [0.297254, 0.30829, 0.306678], 0.1],
+            'brass':        [[0.329412, 0.223529, 0.027451], [0.780392, 0.568627, 0.113725], [0.992157, 0.941176, 0.807843], 0.21794872],
+            'bronze':       [[0.2125, 0.1275, 0.054], [0.714, 0.4284, 0.18144], [0.393548, 0.271906, 0.166721], 0.2],
+            'chrome':       [[0.25, 0.25, 0.25], [0.4, 0.4, 0.4], [0.774597, 0.774597, 0.774597], 0.6],
+            'copper':       [[0.19125, 0.0735, 0.0225], [0.7038, 0.27048, 0.0828], [0.256777, 0.137622, 0.086014], 0.1],
+            'gold':         [[0.24725, 0.1995, 0.0745], [0.75164, 0.60648, 0.22648], [0.628281, 0.555802, 0.366065], 0.4],
+            'silver':       [[0.19225, 0.19225, 0.19225], [0.50754, 0.50754, 0.50754], [0.508273, 0.508273, 0.508273], 0.4],
+            'blackplastic': [[0, 0, 0], [0.01, 0.01, 0.01], [0.5, 0.5, 0.5], 0.25],
+            'cyanplastic':  [[0, 0.1, 0.06], [0, 0.50980392, 0.50980392], [0.50196078, 0.50196078, 0.50196078], 0.25],
+            'greenplastic': [[0, 0, 0], [0.1, 0.35, 0.1], [0.45, 0.55, 0.45], 0.25],
+            'redplastic':   [[0, 0, 0], [0.5, 0, 0], [0.7, 0.6, 0.6], 0.25],
+            'whiteplastic': [[0, 0, 0], [0.55, 0.55, 0.55], [0.7, 0.7, 0.7], 0.25],
+            'yellowplastic': [[0, 0, 0], [0.5, 0.5, 0], [0.6, 0.6, 0.5], 0.25]}
 
         # DEFAULT PROPERTIES
         self.specs = {
@@ -80,36 +195,45 @@ class openGLLive(object):
             'periodic_images': [0, 0, 0],
             'draw_box': True,
             'draw_axis': True,
-            'quality_particles': 16,
+            'quality_particles': 20,
             'quality_bonds': 16,
             'quality_arrows': 16,
+            'arrows_radius': 0.25,
             'quality_constraints': 32,
             'close_cut_distance': 0.1,
             'far_cut_distance': 5,
             'camera_position': 'auto',
             'camera_target': 'auto',
             'camera_right': [1.0, 0.0, 0.0],
-            #'camera_rotation':	   		  [3.55, -0.4],
 
             'particle_coloring': 'auto',
             'particle_sizes': 'auto',
             'particle_type_colors': [[1, 1, 0, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 1, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
-            'particle_type_materials': [[0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1]],
+            'particle_type_materials': ['medium'],
             'particle_charge_colors': [[1, 0, 0, 1], [0, 1, 0, 1]],
 
             'draw_constraints': True,
             'rasterize_pointsize': 10,
             'rasterize_resolution': 75.0,
             'constraint_type_colors': [[0.5, 0.5, 0.5, 0.9], [0, 0.5, 0.5, 0.9], [0.5, 0, 0.5, 0.9], [0.5, 0.5, 0, 0.9], [0, 0, 0.5, 0.9], [0.5, 0, 0, 0.9]],
-            'constraint_type_materials': [[0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1]],
+            'constraint_type_materials': ['medium'],
 
             'draw_bonds': True,
             'bond_type_radius': [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
             'bond_type_colors': [[1, 1, 1, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
-            'bond_type_materials': [[0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1]],
+            'bond_type_materials': ['medium'],
 
-            'ext_force_arrows': True,
-            'ext_force_arrows_scale': [1, 1, 1, 1, 1, 1, 1],
+            'ext_force_arrows': False,
+            'ext_force_arrows_scale': [1.0],
+            'ext_force_arrows_type_colors': [[1, 1, 1, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
+            
+            'velocity_arrows': False,
+            'velocity_arrows_scale': [1.0],
+            'velocity_arrows_type_colors': [[1, 1, 1, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
+            
+            'force_arrows': False,
+            'force_arrows_scale': [1.0],
+            'force_arrows_type_colors': [[1, 1, 1, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
 
             'LB': False,
             'LB_plane_axis': 2,
@@ -123,10 +247,10 @@ class openGLLive(object):
             'light_size': 'auto',
 
             'spotlight_enabled': True,
-            'spotlight_colors': [[0.1, 0.1, 0.2, 1.0], [0.5, 0.5, 0.5, 1.0], [1.0, 1.0, 1.0, 1.0]],
+            'spotlight_colors': [[0.2, 0.2, 0.3, 1.0], [0.5, 0.5, 0.5, 1.0], [1.0, 1.0, 1.0, 1.0]],
             'spotlight_angle': 45,
             'spotlight_focus': 1,
-            'spotlight_brightness': 0.4,
+            'spotlight_brightness': 0.6,
 
             'drag_enabled': False,
             'drag_force': 3.0
@@ -149,19 +273,39 @@ class openGLLive(object):
 
         self.system = system
         self.started = False
+        self.quit_savely = False
         self.keyboardManager = KeyboardManager()
         self.mouseManager = MouseManager()
         self.timers = []
 
     def registerCallback(self, cb, interval=1000):
         """Register timed callbacks.
-
         """
 
         self.timers.append((int(interval), cb))
 
+    def run(self, integ_steps=1):
+        """Convenience method wiwith a simple integration thread.
+        """
+
+        def main():
+            while True:
+                try:
+                    self.system.integrator.run(integ_steps)
+                    self.update()
+                except:
+                    os._exit(1)
+
+        t = Thread(target=main)
+        t.daemon = True
+        t.start()
+
+        self.start()
+
     def start(self):
-        """The blocking start method."""
+        """The blocking start method.
+        """
+
         self._initOpenGL()
         self._initEspressoVisualization()
         self._initCamera()
@@ -245,25 +389,38 @@ class openGLLive(object):
                     self.triggerResetParticleDrag = False
                     self.dragId = -1
 
+        # Escape was pressed: wait for ES to finish, then call sys exit from
+        # main thread
+        if self.quit_savely:
+            os._exit(1)
+
     # GET THE PARTICLE DATA
     def _updateParticles(self):
         IF EXTERNAL_FORCES and ELECTROSTATICS:
             self.particles = {'coords': self.system.part[:].pos_folded,
+                              'velocities': self.system.part[:].v if self.specs['velocity_arrows'] else [0, 0, 0] * len(self.system.part),
+                              'forces': self.system.part[:].f if self.specs['force_arrows'] else [0, 0, 0] * len(self.system.part),
                               'types': self.system.part[:].type,
                               'ext_forces': self.system.part[:].ext_force,
                               'charges': self.system.part[:].q}
         ELIF EXTERNAL_FORCES and not ELECTROSTATICS:
             self.particles = {'coords': self.system.part[:].pos_folded,
+                              'velocities': self.system.part[:].v if self.specs['velocity_arrows'] else [0, 0, 0] * len(self.system.part),
+                              'forces': self.system.part[:].f if self.specs['force_arrows'] else [0, 0, 0] * len(self.system.part),
                               'types': self.system.part[:].type,
                               'ext_forces': self.system.part[:].ext_force,
                               'charges': [0] * len(self.system.part)}
         ELIF not EXTERNAL_FORCES and ELECTROSTATICS:
             self.particles = {'coords': self.system.part[:].pos_folded,
+                              'velocities': self.system.part[:].v if self.specs['velocity_arrows'] else [0, 0, 0] * len(self.system.part),
+                              'forces': self.system.part[:].f if self.specs['force_arrows'] else [0, 0, 0] * len(self.system.part),
                               'types': self.system.part[:].type,
                               'ext_forces': [0, 0, 0] * len(self.system.part),
                               'charges': self.system.part[:].q}
         ELIF not EXTERNAL_FORCES and not ELECTROSTATICS:
             self.particles = {'coords': self.system.part[:].pos_folded,
+                              'velocities': self.system.part[:].v if self.specs['velocity_arrows'] else [0, 0, 0] * len(self.system.part),
+                              'forces': self.system.part[:].f if self.specs['force_arrows'] else [0, 0, 0] * len(self.system.part),
                               'types': self.system.part[:].type,
                               'ext_forces': [0, 0, 0] * len(self.system.part),
                               'charges': [0] * len(self.system.part)}
@@ -363,7 +520,7 @@ class openGLLive(object):
                 for k in range(int(res[2])):
                     p = np.array([i, j, k]) * sp
                     dist, vec = shape.call_method(
-                            "calc_distance", position=p.tolist())
+                        "calc_distance", position=p.tolist())
                     if not np.isnan(vec).any() and not np.isnan(dist) and abs(dist) < sp:
                         points.append((p - vec).tolist())
         return points
@@ -388,13 +545,16 @@ class openGLLive(object):
             self._drawLBVel()
         if self.specs['draw_box']:
             self._drawSystemBox()
-       
+
         if self.specs['draw_axis']:
             axis_fac = 0.2
-            axis_r = np.min(self.system.box_l)/50.0
-            _drawArrow([0,0,0], [self.system.box_l[0] * axis_fac, 0, 0], axis_r, [1, 0, 0, 1], self.specs['quality_arrows'])
-            _drawArrow([0,0,0], [0, self.system.box_l[2] * axis_fac, 0], axis_r, [0, 1, 0, 1], self.specs['quality_arrows'])
-            _drawArrow([0,0,0], [0, 0, self.system.box_l[2] * axis_fac], axis_r, [0, 0, 1, 1], self.specs['quality_arrows'])
+            axis_r = np.min(self.system.box_l) / 50.0
+            _drawArrow([0, 0, 0], [self.system.box_l[0] * axis_fac, 0, 0], axis_r, [
+                       1, 0, 0, 1], self.materials['chrome'], self.specs['quality_arrows'])
+            _drawArrow([0, 0, 0], [0, self.system.box_l[2] * axis_fac, 0], axis_r, [
+                       0, 1, 0, 1], self.materials['chrome'], self.specs['quality_arrows'])
+            _drawArrow([0, 0, 0], [0, 0, self.system.box_l[2] * axis_fac], axis_r, [
+                       0, 0, 1, 1], self.materials['chrome'], self.specs['quality_arrows'])
 
         self._drawSystemParticles()
 
@@ -415,28 +575,28 @@ class openGLLive(object):
             glClipPlane(GL_CLIP_PLANE0 + i, self.box_eqn[i])
 
         for s in self.shapes['Shapes::Sphere']:
-            _drawSphere(s[0], s[1], self._modulo_indexing(self.specs['constraint_type_colors'], s[2]), self._modulo_indexing(
-                self.specs['constraint_type_materials'], s[2]), self.specs['quality_constraints'])
+            _drawSphere(s[0], s[1], self._modulo_indexing(self.specs['constraint_type_colors'], s[2]), self.materials[self._modulo_indexing(
+                self.specs['constraint_type_materials'], s[2])], self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::SpheroCylinder']:
             _drawSpheroCylinder(
                 s[0], s[1], s[2], self._modulo_indexing(
                     self.specs['constraint_type_colors'], s[3]),
-                               self._modulo_indexing(self.specs['constraint_type_materials'], s[3]), self.specs['quality_constraints'])
+                               self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[3])], self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::Wall']:
             _drawPlane(
                 s[0], self._modulo_indexing(
                     self.specs['constraint_type_colors'], s[1]),
-                      self._modulo_indexing(self.specs['constraint_type_materials'], s[1]))
+                      self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[1])])
 
         for s in self.shapes['Shapes::Cylinder']:
-            _drawCylinder(s[0], s[1], s[2], self._modulo_indexing(self.specs['constraint_type_colors'], s[3]), self._modulo_indexing(
-                self.specs['constraint_type_materials'], s[3]), self.specs['quality_constraints'], True)
+            _drawCylinder(s[0], s[1], s[2], self._modulo_indexing(self.specs['constraint_type_colors'], s[3]), self.materials[self._modulo_indexing(
+                self.specs['constraint_type_materials'], s[3])], self.specs['quality_constraints'], True)
 
         for s in self.shapes['Shapes::Misc']:
             _drawPoints(s[0], self.specs['rasterize_pointsize'],  self._modulo_indexing(
-                self.specs['constraint_type_colors'], s[1]), self._modulo_indexing(self.specs['constraint_type_materials'], s[1]))
+                self.specs['constraint_type_colors'], s[1]), self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[1])])
 
         for i in range(6):
             glDisable(GL_CLIP_PLANE0 + i)
@@ -475,8 +635,9 @@ class openGLLive(object):
 
             radius = self._determine_radius(ptype)
 
-            material = self._modulo_indexing(
+            m = self._modulo_indexing(
                 self.specs['particle_type_materials'], ptype)
+            material = self.materials[m]
 
             if self.specs['particle_coloring'] == 'id':
                 color = self._IdToColorf(pid)
@@ -495,7 +656,7 @@ class openGLLive(object):
                     self.specs['particle_type_colors'], ptype)
 
             _drawSphere(pos, radius, color, material,
-                       self.specs['quality_particles'])
+                        self.specs['quality_particles'])
             for imx in range(-self.specs['periodic_images'][0], self.specs['periodic_images'][0] + 1):
                 for imy in range(-self.specs['periodic_images'][1], self.specs['periodic_images'][1] + 1):
                     for imz in range(-self.specs['periodic_images'][2], self.specs['periodic_images'][2] + 1):
@@ -503,16 +664,35 @@ class openGLLive(object):
                             _redrawSphere(
                                 pos + (imx * self.imPos[0] + imy * self.imPos[1] + imz * self.imPos[2]), radius, self.specs['quality_particles'])
 
-            if self.specs['ext_force_arrows'] or pid == self.dragId:
-                if ext_f[0] != 0 or ext_f[1] != 0 or ext_f[2] != 0:
-                    if pid == self.dragId:
-                        sc = 1
-                    else:
-                        sc = self._modulo_indexing(
-                            self.specs['ext_force_arrows_scale'], ptype)
-                    if sc > 0:
-                        _drawArrow(pos, np.array(ext_f) * sc, 0.25 *
-                                  sc, [1, 1, 1, 1], self.specs['quality_arrows'])
+            IF EXTERNAL_FORCES:
+                if self.specs['ext_force_arrows'] or pid == self.dragId:
+                    if ext_f[0] != 0 or ext_f[1] != 0 or ext_f[2] != 0:
+                        if pid == self.dragId:
+                            sc = 1
+                        else:
+                            sc = self._modulo_indexing(
+                                self.specs['ext_force_arrows_scale'], ptype)
+                        if sc > 0:
+                            col = self._modulo_indexing(self.specs['ext_force_arrows_type_colors'], ptype)
+                            _drawArrow(pos, np.array(ext_f) * sc, self.specs['arrows_radius']
+                                       , col, self.materials['chrome'], self.specs['quality_arrows'])
+            
+            if self.specs['velocity_arrows']:
+                sc = self._modulo_indexing(self.specs['velocity_arrows_scale'], ptype)
+                if sc > 0:
+                    v = self.particles['velocities'][pid]
+                    col = self._modulo_indexing(self.specs['velocity_arrows_type_colors'], ptype)
+                    _drawArrow(pos, np.array(v) * sc, self.specs['arrows_radius']
+                               , col, self.materials['chrome'], self.specs['quality_arrows'])
+            
+            if self.specs['force_arrows']:
+                sc = self._modulo_indexing(self.specs['force_arrows_scale'], ptype)
+                if sc > 0:
+                    v = self.particles['forces'][pid]
+                    col = self._modulo_indexing(self.specs['force_arrows_type_colors'], ptype)
+                    _drawArrow(pos, np.array(v) * sc, self.specs['arrows_radius']
+                               , col, self.materials['chrome'], self.specs['quality_arrows'])
+                
 
     def _drawBonds(self):
         coords = self.particles['coords']
@@ -521,21 +701,23 @@ class openGLLive(object):
         box_l2_sqr = pow(b2, 2.0)
         for b in self.bonds:
             col = self._modulo_indexing(self.specs['bond_type_colors'], b[2])
-            mat = self._modulo_indexing(self.specs['bond_type_materials'], b[2])
-            radius = self._modulo_indexing(self.specs['bond_type_radius'], b[2])
+            mat = self.materials[self._modulo_indexing(
+                self.specs['bond_type_materials'], b[2])]
+            radius = self._modulo_indexing(
+                self.specs['bond_type_radius'], b[2])
             d = coords[b[0]] - coords[b[1]]
             bondLen_sqr = d[0] * d[0] + d[1] * d[1] + d[2] * d[2]
 
             if bondLen_sqr < box_l2_sqr:
                 _drawCylinder(coords[b[0]], coords[b[1]], radius,
-                             col, mat, self.specs['quality_bonds'])
+                              col, mat, self.specs['quality_bonds'])
                 for imx in range(-self.specs['periodic_images'][0], self.specs['periodic_images'][0] + 1):
                     for imy in range(-self.specs['periodic_images'][1], self.specs['periodic_images'][1] + 1):
                         for imz in range(-self.specs['periodic_images'][2], self.specs['periodic_images'][2] + 1):
                             if imx != 0 or imy != 0 or imz != 0:
                                 im = np.array([imx, imy, imz])
                                 _drawCylinder(coords[b[0]] + im * self.imPos[dim], coords[b[1]] +
-                                             im * self.imPos[dim], radius, col, mat, self.specs['quality_bonds'])
+                                              im * self.imPos[dim], radius, col, mat, self.specs['quality_bonds'])
             else:
                 l = coords[b[0]] - coords[b[1]]
                 l0 = coords[b[0]]
@@ -556,9 +738,9 @@ class openGLLive(object):
                         if hits >= 2:
                             break
                 _drawCylinder(coords[b[0]], s0, radius, col,
-                             mat, self.specs['quality_bonds'])
+                              mat, self.specs['quality_bonds'])
                 _drawCylinder(coords[b[1]], s1, radius, col,
-                             mat, self.specs['quality_bonds'])
+                              mat, self.specs['quality_bonds'])
 
                 for imx in range(-self.specs['periodic_images'][0], self.specs['periodic_images'][0] + 1):
                     for imy in range(-self.specs['periodic_images'][1], self.specs['periodic_images'][1] + 1):
@@ -566,9 +748,9 @@ class openGLLive(object):
                             if imx != 0 or imy != 0 or imz != 0:
                                 im = np.array([imx, imy, imz])
                                 _drawCylinder(coords[b[0]] + im * self.imPos[dim], s0 + im *
-                                             self.imPos[dim], radius, col, mat, self.specs['quality_bonds'])
+                                              self.imPos[dim], radius, col, mat, self.specs['quality_bonds'])
                                 _drawCylinder(coords[b[1]] + im * self.imPos[dim], s1 + im *
-                                             self.imPos[dim], radius, col, mat, self.specs['quality_bonds'])
+                                              self.imPos[dim], radius, col, mat, self.specs['quality_bonds'])
 
     # HELPER TO DRAW PERIODIC BONDS
     def _isInsideBox(self, p):
@@ -585,8 +767,9 @@ class openGLLive(object):
             p = lbl[0]
             v = lbl[1]
             c = np.linalg.norm(v)
-            _drawArrow(p, v * self.specs['LB_vel_scale'], self.lb_arrow_radius, [1,1,1,1], 16)
-        
+            _drawArrow(p, v * self.specs['LB_vel_scale'], self.lb_arrow_radius, [
+                       1, 1, 1, 1], self.materials['chrome'], 16)
+
     # USE MODULO IF THERE ARE MORE PARTICLE TYPES THAN TYPE DEFINITIONS FOR
     # COLORS, MATERIALS ETC..
     def _modulo_indexing(self, l, t):
@@ -615,18 +798,17 @@ class openGLLive(object):
         def display():
             if self.hasParticleData:
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-                #glLoadIdentity()
-
+                # glLoadIdentity()
 
                 glLoadMatrixf(self.camera.modelview)
-                #self.camera.rotateSystem3()
-                #self.camera.glLookAt()
+                # self.camera.rotateSystem3()
+                # self.camera.glLookAt()
 
                 if self.updateLightPos:
                     self._setLightPos()
                     self.updateLightPos = False
 
-                #self.camera.rotateSystem()
+                # self.camera.rotateSystem()
 
                 self._draw()
 
@@ -652,7 +834,7 @@ class openGLLive(object):
         def motion(x, y):
             self.mouseManager._mouseMove(x, y)
             return
-        
+
         def idleUpdate():
             return
 
@@ -785,14 +967,15 @@ class openGLLive(object):
             self.lb_plane_b1 *= np.array(self.system.box_l)
             self.lb_plane_b2 *= np.array(self.system.box_l)
             self.lb_plane_p = np.array(pn) * self.specs['LB_plane_dist']
-            self.lb_arrow_radius = self.system.box_l[self.specs['LB_plane_axis']]*0.005
-            
+            self.lb_arrow_radius = self.system.box_l[
+                self.specs['LB_plane_axis']] * 0.005
+
             self.lb_min_vel = np.array([-1e-6] * 3)
             self.lb_max_vel = np.array([1e-6] * 3)
             self.lb_vel_range = self.lb_max_vel - self.lb_min_vel
             self.lb_min_dens = np.array([0] * 3)
             self.lb_max_dens = np.array([0] * 3)
-            
+
             self._updateLB()
 
         self.elapsedTime = 0
@@ -841,6 +1024,8 @@ class openGLLive(object):
 
         # KEYBOARD BUTTONS
         self.keyboardManager.registerButton(KeyboardButtonEvent(
+            '\x1b', KeyboardFireEvent.Pressed, self._quit, True))
+        self.keyboardManager.registerButton(KeyboardButtonEvent(
             'w', KeyboardFireEvent.Hold, self.camera.moveUp, True))
         self.keyboardManager.registerButton(KeyboardButtonEvent(
             's', KeyboardFireEvent.Hold, self.camera.moveDown, True))
@@ -865,6 +1050,10 @@ class openGLLive(object):
         self.keyboardManager.registerButton(KeyboardButtonEvent(
             'g', KeyboardFireEvent.Hold, self.camera.moveBackward, True))
 
+    # CALLED ON ESCAPE PRESSED. TRIGGERS sys.exit() after ES is done
+    def _quit(self):
+        self.quit_savely = True
+
     # ASYNCHRONOUS PARALLEL CALLS OF glLight CAUSES SEG FAULTS, SO ONLY CHANGE
     # LIGHT AT CENTRAL display METHOD AND TRIGGER CHANGES
     def _setLightPos(self):
@@ -873,15 +1062,13 @@ class openGLLive(object):
                       self.smooth_light_pos[0], self.smooth_light_pos[1], self.smooth_light_pos[2], 0.6])
 
         self._setCameraSpotlight()
-       
 
     def _setCameraSpotlight(self):
-        #p = np.linalg.norm(self.camera.state_pos) * self.camera.state_target
+        # p = np.linalg.norm(self.camera.state_pos) * self.camera.state_target
         p = self.camera.camPos
         fp = [p[0], p[1], p[2], 1]
         glLightfv(GL_LIGHT1, GL_POSITION, fp)
         glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, self.camera.state_target)
-
 
     def _triggerLightPosUpdate(self):
         self.updateLightPos = True
@@ -891,7 +1078,7 @@ class openGLLive(object):
         box_diag = np.linalg.norm(b)
         box_center = b * 0.5
         if self.specs['camera_position'] == 'auto':
-            cp = [box_center[0], box_center[1], b[2]*3]
+            cp = [box_center[0], box_center[1], b[2] * 3]
         else:
             cp = self.specs['camera_position']
 
@@ -899,10 +1086,11 @@ class openGLLive(object):
             ct = box_center
         else:
             ct = self.specs['camera_target']
-        
+
         cr = np.array(self.specs['camera_right'])
 
-        self.camera = _Camera(camPos=np.array(cp), camTarget=ct, camRight=cr, moveSpeed=0.5 * box_diag / 17.0,  center=box_center, updateLights=self._triggerLightPosUpdate)
+        self.camera = _Camera(camPos=np.array(cp), camTarget=ct, camRight=cr, moveSpeed=0.5 *
+                              box_diag / 17.0,  center=box_center, updateLights=self._triggerLightPosUpdate)
         self.smooth_light_pos = np.copy(box_center)
         self.smooth_light_posV = np.array([0.0, 0.0, 0.0])
         self.particle_COM = np.copy(box_center)
@@ -914,8 +1102,8 @@ class openGLLive(object):
         glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
         glutInitWindowSize(self.specs['window_size'][
                            0], self.specs['window_size'][1])
-        
-        #glutCreateWindow(bytes(self.specs['name'], encoding='ascii'))
+
+        # glutCreateWindow(bytes(self.specs['name'], encoding='ascii'))
         glutCreateWindow(b"ESPResSo visualization")
 
         glClearColor(self.specs['background_color'][0], self.specs[
@@ -925,7 +1113,7 @@ class openGLLive(object):
 
         glEnable(GL_BLEND)
 
-        #glEnable(GL_CULL_FACE)
+        # glEnable(GL_CULL_FACE)
 
         glLineWidth(2.0)
         glutIgnoreKeyRepeat(1)
@@ -987,17 +1175,18 @@ class openGLLive(object):
 # OPENGL DRAW WRAPPERS
 
 
-def _setSolidMaterial(r, g, b, a=1.0, ambient=0.6, diffuse=1.0, specular=0.1):
+def _setSolidMaterial(r, g, b, a=1.0, ambient=[0.6, 0.6, 0.6], diffuse=[1.0, 1.0, 1.0], specular=[0.1, 0.1, 0.1], shininess=0.4):
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT,  [
-                 ambient * r, ambient * g, ambient * g, a])
+                 ambient[0] * r, ambient[1] * g, ambient[2] * g, a])
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, [
-                 diffuse * r, diffuse * g, diffuse * b, a])
+                 diffuse[0] * r, diffuse[1] * g, diffuse[2] * b, a])
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, [
-                 specular * r, specular * g, specular * g, a])
-    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 50)
+                 specular[0] * r, specular[1] * g, specular[2] * g, a])
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, int(shininess * 128))
+
 
 def _drawBox(p0, s, color):
-    _setSolidMaterial(color[0], color[1], color[2], 1, 2, 1)
+    _setSolidMaterial(color[0], color[1], color[2])
     glPushMatrix()
     glTranslatef(p0[0], p0[1], p0[2])
     glBegin(GL_LINE_LOOP)
@@ -1030,7 +1219,7 @@ def _drawSphere(pos, radius, color, material, quality):
     glPushMatrix()
     glTranslatef(pos[0], pos[1], pos[2])
     _setSolidMaterial(color[0], color[1], color[2], color[
-                     3], material[0], material[1], material[2])
+                      3], material[0], material[1], material[2], material[3])
     glutSolidSphere(radius, quality, quality)
     glPopMatrix()
 
@@ -1045,7 +1234,7 @@ def _redrawSphere(pos, radius, quality):
 def _drawPlane(edges, color, material):
 
     _setSolidMaterial(color[0], color[1], color[2], color[
-                     3], material[0], material[1], material[2])
+        3], material[0], material[1], material[2], material[3])
 
     glBegin(GL_QUADS)
     for e in edges:
@@ -1060,6 +1249,7 @@ def _drawCube(pos, size, color, alpha):
     glutSolidCube(size)
     glPopMatrix()
 
+
 def _drawTriangles(triangles, color, material):
     np.random.seed(1)
 
@@ -1068,7 +1258,7 @@ def _drawTriangles(triangles, color, material):
         color = np.random.random(3).tolist()
         color.append(1)
         _setSolidMaterial(color[0], color[1], color[2],
-                         color[3], material[0], material[1], material[2])
+                          color[3], material[0], material[1], material[2], material[3])
         for p in t:
             glVertex3f(p[0], p[1], p[2])
     glEnd()
@@ -1076,7 +1266,7 @@ def _drawTriangles(triangles, color, material):
 
 def _drawPoints(points, pointsize, color, material):
     _setSolidMaterial(color[0], color[1], color[2], color[3],
-                     material[0], material[1], material[2])
+                      material[0], material[1], material[2], material[3])
     glEnable(GL_POINT_SMOOTH)
 
     glPointSize(pointsize)
@@ -1088,7 +1278,7 @@ def _drawPoints(points, pointsize, color, material):
 
 def _drawCylinder(posA, posB, radius, color, material, quality, draw_caps=False):
     _setSolidMaterial(color[0], color[1], color[2], color[3],
-                     material[0], material[1], material[2])
+                      material[0], material[1], material[2], material[3])
     glPushMatrix()
     quadric = gluNewQuadric()
 
@@ -1097,8 +1287,8 @@ def _drawCylinder(posA, posB, radius, color, material, quality, draw_caps=False)
     # angle,t,length = calcAngle(d)
     length = np.linalg.norm(d)
     glTranslatef(posA[0], posA[1], posA[2])
-    
-    ax,rx,ry = _rotationHelper(d)
+
+    ax, rx, ry = _rotationHelper(d)
     glRotatef(ax, rx, ry, 0.0)
     gluCylinder(quadric, radius, radius, length, quality, quality)
 
@@ -1108,6 +1298,7 @@ def _drawCylinder(posA, posB, radius, color, material, quality, draw_caps=False)
         gluDisk(quadric, 0, radius, quality, quality)
 
     glPopMatrix()
+
 
 def _rotationHelper(d):
     if d[2] == 0.0:
@@ -1126,9 +1317,10 @@ def _rotationHelper(d):
 
     return ax, rx, ry
 
+
 def _drawSpheroCylinder(posA, posB, radius, color, material, quality):
     _setSolidMaterial(color[0], color[1], color[
-                     2], color[3], material[0], material[1], material[2])
+        2], color[3], material[0], material[1], material[2], material[3])
     glPushMatrix()
     quadric = gluNewQuadric()
 
@@ -1167,11 +1359,11 @@ def _drawSpheroCylinder(posA, posB, radius, color, material, quality):
     glPopMatrix()
 
 
-def _drawArrow(pos, d, radius, color, quality):
+def _drawArrow(pos, d, radius, color, material, quality):
     pos2 = np.array(pos) + np.array(d)
 
-    _drawCylinder(pos, pos2, radius, color,[0.6,1.0,0.1], quality)
-    
+    _drawCylinder(pos, pos2, radius, color, material, quality)
+
     ax, rx, ry = _rotationHelper(d)
 
     glPushMatrix()
@@ -1183,6 +1375,7 @@ def _drawArrow(pos, d, radius, color, quality):
 
 # MOUSE EVENT MANAGER
 class MouseFireEvent(object):
+
     """Event type of mouse button used for mouse callbacks.
 
     """
@@ -1194,6 +1387,7 @@ class MouseFireEvent(object):
 
 
 class MouseButtonEvent(object):
+
     """Mouse event used for mouse callbacks. Stores button and callback.
 
     """
@@ -1206,6 +1400,7 @@ class MouseButtonEvent(object):
 
 
 class MouseManager(object):
+
     """Handles mouse callbacks.
 
     """
@@ -1265,6 +1460,7 @@ class MouseManager(object):
 
 
 class KeyboardFireEvent(object):
+
     """Event type of button used for keyboard callbacks.
 
     """
@@ -1275,6 +1471,7 @@ class KeyboardFireEvent(object):
 
 
 class KeyboardButtonEvent(object):
+
     """Keyboard event used for keyboard callbacks. Stores button, event type and callback.
 
     """
@@ -1287,6 +1484,7 @@ class KeyboardButtonEvent(object):
 
 
 class KeyboardManager(object):
+
     """Handles keyboard callbacks.
 
     """
@@ -1354,31 +1552,31 @@ class KeyboardManager(object):
 
 class _Camera(object):
 
-    def __init__(self, camPos=np.array([0, 0, 1]), camTarget=np.array([0, 0, 0]), camRight=np.array([1.0,0.0,0.0]), moveSpeed=0.5, rotSpeed=0.001, globalRotSpeed=3.0, center=np.array([0, 0, 0]), updateLights=None):
+    def __init__(self, camPos=np.array([0, 0, 1]), camTarget=np.array([0, 0, 0]), camRight=np.array([1.0, 0.0, 0.0]), moveSpeed=0.5, rotSpeed=0.001, globalRotSpeed=3.0, center=np.array([0, 0, 0]), updateLights=None):
         self.moveSpeed = moveSpeed
         self.lookSpeed = rotSpeed
         self.globalRotSpeed = globalRotSpeed
 
         self.center = center
         self.updateLights = updateLights
-        
+
         self.modelview = np.identity(4, np.float32)
 
-        t = camPos-camTarget
+        t = camPos - camTarget
         r = np.linalg.norm(t)
 
-        self.state_target = -t / r 
+        self.state_target = -t / r
         self.state_right = camRight / np.linalg.norm(camRight)
         self.state_up = np.cross(self.state_right, self.state_target)
 
-        self.state_pos = np.array([0,0,r])
-        
+        self.state_pos = np.array([0, 0, r])
+
         self.update_modelview()
 
     def moveForward(self):
         self.state_pos[2] += self.moveSpeed
         self.update_modelview()
-    
+
     def moveBackward(self):
         self.state_pos[2] -= self.moveSpeed
         self.update_modelview()
@@ -1416,7 +1614,6 @@ class _Camera(object):
 
     def rotateSystemZR(self):
         self.rotateCameraV(-0.01 * self.globalRotSpeed)
-
 
     def rotateCamera(self, mousePos, mousePosOld, mouseButtonState):
         dm = mousePos - mousePosOld
@@ -1522,6 +1719,7 @@ class _Camera(object):
 
 
 class _Quaternion:
+
     def __init__(self, x, y, z, w):
         self.array = np.array([x, y, z, w], np.float32)
 
@@ -1533,14 +1731,18 @@ class _Quaternion:
 
     def mult_v(self, v):
         w = - (self[0] * v[0]) - (self[1] * v[1]) - (self[2] * v[2])
-        x =   (self[3] * v[0]) + (self[1] * v[2]) - (self[2] * v[1])
-        y =   (self[3] * v[1]) + (self[2] * v[0]) - (self[0] * v[2])
-        z =   (self[3] * v[2]) + (self[0] * v[1]) - (self[1] * v[0])
+        x = (self[3] * v[0]) + (self[1] * v[2]) - (self[2] * v[1])
+        y = (self[3] * v[1]) + (self[2] * v[0]) - (self[0] * v[2])
+        z = (self[3] * v[2]) + (self[0] * v[1]) - (self[1] * v[0])
         return _Quaternion(x, y, z, w)
 
     def mult_q(self, q):
-        w = - (self[3] * q[3]) - (self[0] * q[0]) - (self[1] * q[1]) - (self[2] * q[2])
-        x =   (self[0] * q[3]) + (self[3] * q[0]) + (self[1] * q[2]) - (self[2] * q[1])
-        y =   (self[1] * q[3]) + (self[3] * q[1]) + (self[2] * q[0]) - (self[0] * q[2])
-        z =   (self[2] * q[3]) + (self[3] * q[2]) + (self[0] * q[1]) - (self[1] * q[0])
+        w = - (self[3] * q[3]) - (self[0] * q[0]) - \
+            (self[1] * q[1]) - (self[2] * q[2])
+        x =   (self[0] * q[3]) + (self[3] * q[0]) + \
+            (self[1] * q[2]) - (self[2] * q[1])
+        y = (self[1] * q[3]) + (self[3] * q[1]) + (
+            self[2] * q[0]) - (self[0] * q[2])
+        z = (self[2] * q[3]) + (self[3] * q[2]) + (
+            self[0] * q[1]) - (self[1] * q[0])
         return _Quaternion(x, y, z, w)

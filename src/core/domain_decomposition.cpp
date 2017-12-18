@@ -33,6 +33,11 @@
 #include "lees_edwards_comms_manager.hpp"
 #include "lees_edwards_domain_decomposition.hpp"
 
+/** Returns pointer to the cell which corresponds to the position if
+    the position is in the nodes spatial domain otherwise a nullptr
+    pointer. */
+Cell *dd_save_position_to_cell(double pos[3]);
+
 /************************************************/
 /** \name Defines */
 /************************************************/
@@ -574,7 +579,7 @@ Cell *dd_save_position_to_cell(double pos[3]) {
   for (i = 0; i < 3; i++) {
     lpos = pos[i] - my_left[i];
 
-    cpos[i] = (int)(lpos * dd.inv_cell_size[i]) + 1;
+    cpos[i] = static_cast<int>(std::floor(lpos * dd.inv_cell_size[i])) + 1;
 
     /* particles outside our box. Still take them if
        VERY close or nonperiodic boundary */
@@ -594,37 +599,6 @@ Cell *dd_save_position_to_cell(double pos[3]) {
   }
   i = get_linear_index(cpos[0], cpos[1], cpos[2], dd.ghost_cell_grid);
   return &(cells[i]);
-}
-
-Cell *dd_position_to_cell(double pos[3]) {
-  int i, cpos[3];
-  double lpos;
-
-  for (i = 0; i < 3; i++) {
-    lpos = pos[i] - my_left[i];
-
-    cpos[i] = (int)(lpos * dd.inv_cell_size[i]) + 1;
-
-    if (cpos[i] < 1) {
-      cpos[i] = 1;
-#ifdef ADDITIONAL_CHECKS
-      if (PERIODIC(i) && lpos < -ROUND_ERROR_PREC * box_l[i]) {
-        runtimeErrorMsg() << "particle @ (" << pos[0] << ", " << pos[1] << ", "
-                          << pos[2] << ") is outside of the allowed cell grid";
-      }
-#endif
-    } else if (cpos[i] > dd.cell_grid[i]) {
-      cpos[i] = dd.cell_grid[i];
-#ifdef ADDITIONAL_CHECKS
-      if (PERIODIC(i) && lpos > local_box_l[i] + ROUND_ERROR_PREC * box_l[i]) {
-        runtimeErrorMsg() << "particle @ (" << pos[0] << ", " << pos[1] << ", "
-                          << pos[2] << ") is outside of the allowed cell grid";
-      }
-#endif
-    }
-  }
-  i = get_linear_index(cpos[0], cpos[1], cpos[2], dd.ghost_cell_grid);
-  return &cells[i];
 }
 
 void dd_position_to_cell_indices(double pos[3], int *idx) {
@@ -817,7 +791,7 @@ void dd_topology_init(CellPList *old) {
 
   cell_structure.type = CELL_STRUCTURE_DOMDEC;
   cell_structure.position_to_node = map_position_node_array;
-  cell_structure.position_to_cell = dd_position_to_cell;
+  cell_structure.position_to_cell = dd_save_position_to_cell;
 
   /* set up new domain decomposition cell structure */
   dd_create_cell_grid();
@@ -906,7 +880,6 @@ void dd_topology_init(CellPList *old) {
 
 /************************************************************/
 void dd_topology_release() {
-  int i, j;
   CELL_TRACE(fprintf(stderr, "%d: dd_topology_release:\n", this_node));
   /* release cell interactions */
 

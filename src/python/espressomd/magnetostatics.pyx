@@ -340,7 +340,6 @@ IF DIPOLES == 1:
                 Actor.__init__(self, *args, **kwargs)
 
             def _activate_method(self):
-                coulomb.Dmethod = DIPOLAR_SCAFACOS
                 dipolar_set_Dbjerrum(self._params["bjerrum_length"])
                 self._set_params_in_es_core()
                 mpi_bcast_coulomb_params()

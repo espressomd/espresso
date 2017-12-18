@@ -30,9 +30,6 @@
 #include "communication.hpp"
 
 #include "errorhandling.hpp"
-#include "utils.hpp"
-#include "utils/make_unique.hpp"
-#include "utils/serialization/Particle.hpp"
 
 #include "EspressoSystemInterface.hpp"
 #include "actor/EwaldGPU.hpp"
@@ -89,6 +86,10 @@
 #include "tab.hpp"
 #include "topology.hpp"
 #include "virtual_sites.hpp"
+
+#include "utils.hpp"
+#include "utils/make_unique.hpp"
+#include "utils/serialization/Particle.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/array.hpp>
@@ -200,10 +201,12 @@ static int terminated = 0;
   CB(mpi_gather_cuda_devices_slave)                                            \
   CB(mpi_thermalize_cpu_slave)                                                 \
   CB(mpi_scafacos_set_parameters_slave)                                        \
+  CB(mpi_scafacos_set_r_cut_and_tune_slave)                                        \
   CB(mpi_scafacos_free_slave)                                                  \
   CB(mpi_mpiio_slave)                                                          \
   CB(mpi_resort_particles_slave)                                               \
-  CB(mpi_get_pairs_slave)
+  CB(mpi_get_pairs_slave)                                                      \
+  CB(mpi_get_particles_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -227,10 +230,6 @@ std::vector<SlaveCallback *> slave_callbacks{CALLBACK_LIST};
 std::vector<std::string> names{CALLBACK_LIST};
 #endif
 }
-
-/** The requests are compiled statically here, so that after a crash
-    you can get the last issued request from the debugger. */
-static int request[3];
 
 /** Forward declarations */
 
@@ -363,6 +362,7 @@ void mpi_place_particle(int pnode, int part, double p[3]) {
   else
     MPI_Send(p, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
 
+  set_resort_particles(Cells::RESORT_GLOBAL);
   on_particle_change();
 }
 
@@ -374,6 +374,7 @@ void mpi_place_particle_slave(int pnode, int part) {
     local_place_particle(part, p, 0);
   }
 
+  set_resort_particles(Cells::RESORT_GLOBAL);
   on_particle_change();
 }
 
@@ -1084,17 +1085,13 @@ void mpi_send_bond_slave(int pnode, int part) {
 }
 
 /****************** REQ_GET_PART ************/
-void mpi_recv_part(int pnode, int part, Particle *pdata) {
-  assert(pdata);
+Particle mpi_recv_part(int pnode, int part) {
+  Particle ret;
 
-  /* fetch fixed data */
-  if (pnode == this_node) {
-    assert(local_particles[part]);
-    *pdata = *local_particles[part];
-  } else {
-    mpi_call(mpi_recv_part_slave, pnode, part);
-    comm_cart.recv(pnode, SOME_TAG, *pdata);
-  }
+  mpi_call(mpi_recv_part_slave, pnode, part);
+  comm_cart.recv(pnode, SOME_TAG, ret);
+
+  return ret;
 }
 
 void mpi_recv_part_slave(int pnode, int part) {
@@ -1164,9 +1161,7 @@ void mpi_integrate_slave(int n_steps, int reuse_forces) {
 /*************** REQ_BCAST_IA ************/
 void mpi_bcast_ia_params(int i, int j) {
   mpi_call(mpi_bcast_ia_params_slave, i, j);
-#ifdef TABULATED
-  int tablesize = tabulated_forces.max;
-#endif
+
   if (j >= 0) {
     /* non-bonded interaction parameters */
     /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
@@ -1178,17 +1173,12 @@ void mpi_bcast_ia_params(int i, int j) {
 #ifdef TABULATED
     /* If there are tabulated forces broadcast those as well */
     if (get_ia_param(i, j)->TAB_maxval > 0) {
-      /* First let all nodes know the new size for force and energy tables */
-      MPI_Bcast(&tablesize, 1, MPI_INT, 0, comm_cart);
-
-      /* Communicate the data */
-      MPI_Bcast(tabulated_forces.e, tablesize, MPI_DOUBLE, 0, comm_cart);
-      MPI_Bcast(tabulated_energies.e, tablesize, MPI_DOUBLE, 0, comm_cart);
+      boost::mpi::broadcast(comm_cart, tabulated_forces, 0);
+      boost::mpi::broadcast(comm_cart, tabulated_energies, 0);
     }
 #endif
   } else {
     /* bonded interaction parameters */
-    /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
               comm_cart);
 #ifdef TABULATED
@@ -1226,19 +1216,10 @@ void mpi_bcast_ia_params_slave(int i, int j) {
     copy_ia_params(get_ia_param(j, i), get_ia_param(i, j));
 
 #ifdef TABULATED
-    {
-      int tablesize = 0;
-      /* If there are tabulated forces broadcast those as well */
-      if (get_ia_param(i, j)->TAB_maxval > 0) {
-        /* Determine the new size for force and energy tables */
-        MPI_Bcast(&tablesize, 1, MPI_INT, 0, comm_cart);
-        /* Allocate sizes accordingly */
-        realloc_doublelist(&tabulated_forces, tablesize);
-        realloc_doublelist(&tabulated_energies, tablesize);
-        /* Now communicate the data */
-        MPI_Bcast(tabulated_forces.e, tablesize, MPI_DOUBLE, 0, comm_cart);
-        MPI_Bcast(tabulated_energies.e, tablesize, MPI_DOUBLE, 0, comm_cart);
-      }
+    /* If there are tabulated forces broadcast those as well */
+    if (get_ia_param(i, j)->TAB_maxval > 0) {
+      boost::mpi::broadcast(comm_cart, tabulated_forces, 0);
+      boost::mpi::broadcast(comm_cart, tabulated_energies, 0);
     }
 #endif
   } else {                   /* bonded interaction parameters */
@@ -1396,24 +1377,11 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3],
                              int periodic[3], double range_start[3],
                              double range[3]) {
 
-  int i, j;
-  DoubleList *TensorInBin_;
   PTENSOR_TRACE(fprintf(stderr, "%d: mpi_local_stress_tensor: Broadcasting "
                                 "local_stress_tensor parameters\n",
                         this_node));
 
   mpi_call(mpi_local_stress_tensor_slave, -1, 0);
-
-  TensorInBin_ = (DoubleList *)Utils::malloc(bins[0] * bins[1] * bins[2] *
-                                             sizeof(DoubleList));
-  for (i = 0; i < bins[0] * bins[1] * bins[2]; i++) {
-    init_doublelist(&TensorInBin_[i]);
-    alloc_doublelist(&TensorInBin_[i], 9);
-    for (j = 0; j < 9; j++) {
-      TensorInBin_[i].e[j] = TensorInBin[i].e[j];
-      TensorInBin[i].e[j] = 0;
-    }
-  }
 
   MPI_Bcast(bins, 3, MPI_INT, 0, comm_cart);
   MPI_Bcast(periodic, 3, MPI_INT, 0, comm_cart);
@@ -1423,13 +1391,13 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3],
   PTENSOR_TRACE(fprintf(
       stderr, "%d: mpi_local_stress_tensor: Call local_stress_tensor_calc\n",
       this_node));
-  local_stress_tensor_calc(TensorInBin_, bins, periodic, range_start, range);
+  local_stress_tensor_calc(TensorInBin, bins, periodic, range_start, range);
 
   PTENSOR_TRACE(fprintf(stderr, "%d: mpi_local_stress_tensor: Reduce local "
                                 "stress tensors with MPI_Reduce\n",
                         this_node));
-  for (i = 0; i < bins[0] * bins[1] * bins[2]; i++) {
-    MPI_Reduce(TensorInBin_[i].e, TensorInBin[i].e, 9, MPI_DOUBLE, MPI_SUM, 0,
+  for (int i = 0; i < bins[0] * bins[1] * bins[2]; i++) {
+    MPI_Reduce(MPI_IN_PLACE, TensorInBin[i].e, 9, MPI_DOUBLE, MPI_SUM, 0,
                comm_cart);
   }
 }
@@ -1439,7 +1407,6 @@ void mpi_local_stress_tensor_slave(int ana_num, int job) {
   int periodic[3] = {0, 0, 0};
   double range_start[3] = {0, 0, 0};
   double range[3] = {0, 0, 0};
-  DoubleList *TensorInBin;
   int i, j;
 
   MPI_Bcast(bins, 3, MPI_INT, 0, comm_cart);
@@ -1447,17 +1414,11 @@ void mpi_local_stress_tensor_slave(int ana_num, int job) {
   MPI_Bcast(range_start, 3, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast(range, 3, MPI_DOUBLE, 0, comm_cart);
 
-  TensorInBin = (DoubleList *)Utils::malloc(bins[0] * bins[1] * bins[2] *
-                                            sizeof(DoubleList));
-  for (i = 0; i < bins[0] * bins[1] * bins[2]; i++) {
-    init_doublelist(&TensorInBin[i]);
-    alloc_doublelist(&TensorInBin[i], 9);
-    for (j = 0; j < 9; j++) {
-      TensorInBin[i].e[j] = 0.0;
-    }
-  }
+  auto TensorInBin =
+      std::vector<DoubleList>(bins[0] * bins[1] * bins[2], DoubleList(9, 0.0));
 
-  local_stress_tensor_calc(TensorInBin, bins, periodic, range_start, range);
+  local_stress_tensor_calc(TensorInBin.data(), bins, periodic, range_start,
+                           range);
 
   for (i = 0; i < bins[0] * bins[1] * bins[2]; i++) {
     MPI_Reduce(TensorInBin[i].e, nullptr, 9, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
@@ -1469,11 +1430,6 @@ void mpi_local_stress_tensor_slave(int ana_num, int job) {
     }
     PTENSOR_TRACE(fprintf(stderr, "}\n"));
   }
-
-  for (i = 0; i < bins[0] * bins[1] * bins[2]; i++) {
-    realloc_doublelist(&TensorInBin[i], 0);
-  }
-  free(TensorInBin);
 }
 
 /*************** REQ_SET_TIME_STEP ************/
@@ -1886,13 +1842,12 @@ int mpi_sync_topo_part_info() {
   int i;
   int molsize = 0;
   int moltype = 0;
-  int n_mols = 0;
 
   mpi_call(mpi_sync_topo_part_info_slave, -1, 0);
-  n_mols = n_molecules;
+  auto n_mols = topology.size();
   MPI_Bcast(&n_mols, 1, MPI_INT, 0, comm_cart);
 
-  for (i = 0; i < n_molecules; i++) {
+  for (i = 0; i < n_mols; i++) {
     molsize = topology[i].part.n;
     moltype = topology[i].type;
 
@@ -1931,7 +1886,7 @@ void mpi_sync_topo_part_info_slave(int node, int parm) {
 
   MPI_Bcast(&n_mols, 1, MPI_INT, 0, comm_cart);
   realloc_topology(n_mols);
-  for (i = 0; i < n_molecules; i++) {
+  for (i = 0; i < n_mols; i++) {
 
 #ifdef MOLFORCES
     MPI_Bcast(&(topology[i].trap_flag), 1, MPI_INT, 0, comm_cart);
@@ -1952,7 +1907,7 @@ void mpi_sync_topo_part_info_slave(int node, int parm) {
     MPI_Bcast(&molsize, 1, MPI_INT, 0, comm_cart);
     MPI_Bcast(&moltype, 1, MPI_INT, 0, comm_cart);
     topology[i].type = moltype;
-    realloc_intlist(&topology[i].part, topology[i].part.n = molsize);
+    topology[i].part.resize(molsize);
 
     MPI_Bcast(topology[i].part.e, topology[i].part.n, MPI_INT, 0, comm_cart);
     MPI_Bcast(&topology[i].type, 1, MPI_INT, 0, comm_cart);

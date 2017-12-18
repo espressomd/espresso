@@ -137,12 +137,6 @@ static void recalc_maximal_cutoff_bonded();
  * general lowlevel functions
  *****************************************/
 
-/** Initialize force and energy tables */
-void force_and_energy_tables_init() {
-  init_doublelist(&tabulated_forces);
-  init_doublelist(&tabulated_energies);
-}
-
 /** Initialize interaction parameters. */
 void initialize_ia_params(IA_parameters *params) {
  
