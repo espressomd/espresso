@@ -26,6 +26,7 @@ import unittest as ut
 import numpy as np
 import espressomd  # pylint: disable=import-error
 import h5py  # h5py has to be imported *after* espressomd (MPI)
+from espressomd.interactions import Virtual
 
 npart = 26
 
@@ -43,6 +44,7 @@ class CommonTests(ut.TestCase):
     system.box_l = [box_l, box_l, box_l]
     system.cell_system.skin = 0.4
     system.time_step = 0.01
+
     for i in range(npart):
         system.part.add(id=i, pos=np.array([float(i),
                                             float(i),
@@ -52,6 +54,13 @@ class CommonTests(ut.TestCase):
             system.part[i].mass = 2.3
         if espressomd.has_features(['EXTERNAL_FORCES']):
             system.part[i].ext_force = [0.1, 0.2, 0.3]
+
+    vb = Virtual()
+    system.bonded_inter.add(vb)
+
+    for i in range(npart - 1):
+        system.part[i].add_bond((vb, i + 1))
+
     system.integrator.run(steps=0)
 
     @classmethod
@@ -103,6 +112,16 @@ class CommonTests(ut.TestCase):
             msg="Forces not written correctly by H5md!")
 
 
+    def test_bonds(self):
+        """Test if bonds have been written properly."""
+        self.assertEqual(len(self.py_bonds), npart - 1)
+
+        for i in range(npart - 1):
+            bond = [x for x in self.py_bonds if x[0] == i][0]
+
+            self.assertEqual(bond[0], i + 0)
+            self.assertEqual(bond[1], i + 1)
+
 @ut.skipIf(not espressomd.has_features(['H5MD']),
            "H5MD not compiled in, can not check functionality.")
 class H5mdTestOrdered(CommonTests):
@@ -131,6 +150,7 @@ class H5mdTestOrdered(CommonTests):
         cls.py_vel = cls.py_file['particles/atoms/velocity/value'][0]
         cls.py_f = cls.py_file['particles/atoms/force/value'][0]
         cls.py_id = cls.py_file['particles/atoms/id/value'][0]
+        cls.py_bonds = cls.py_file['connectivity/atoms']
 
     @classmethod
     def tearDownClass(cls):
@@ -171,6 +191,7 @@ class H5mdTestUnordered(CommonTests):
         cls.py_vel = cls.py_file['particles/atoms/velocity/value'][0]
         cls.py_f = cls.py_file['particles/atoms/force/value'][0]
         cls.py_id = cls.py_file['particles/atoms/id/value'][0]
+        cls.py_bonds = cls.py_file['connectivity/atoms']
 
     @classmethod
     def tearDownClass(cls):

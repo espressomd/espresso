@@ -47,7 +47,7 @@
 #include <limits>
 
 /** Previous particle configurations (needed for offline analysis and
-    correlation analysis in \ref tclcommand_analyze) */
+    correlation analysis) */
 double **configs = nullptr;
 int n_configs = 0;
 int n_part_conf = 0;
