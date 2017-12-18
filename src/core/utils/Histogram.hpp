@@ -107,7 +107,7 @@ public:
                      std::vector<std::pair<T, T>> limits);
   std::vector<size_t> get_n_bins() const;
   std::vector<T> get_histogram() const;
-  std::vector<size_t> get_tot_count() const;
+  size_t get_tot_count() const;
   std::vector<std::pair<T, T>> get_limits() const;
   std::vector<T> get_bin_sizes() const;
   void update(std::vector<T> const &data);
@@ -226,7 +226,7 @@ template <typename T> std::vector<T> Histogram<T>::get_histogram() const {
 /**
  * \brief Get the histogram count data.
  */
-template <typename T> std::vector<size_t> Histogram<T>::get_tot_count() const {
+template <typename T> size_t Histogram<T>::get_tot_count() const {
   return m_tot_count;
 }
 /**
