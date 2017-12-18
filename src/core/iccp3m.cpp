@@ -309,13 +309,19 @@ int iccp3m_iteration() {
 
     if (globalmax < iccp3m_cfg.convergence)
       break;
-    if (diff > 1e89) /* Error happened */
+    if (diff > 1e89) {
       return iccp3m_cfg.citeration++;
+    }
 
     /* Update charges on ghosts. */
     ghost_communicator(&cell_structure.exchange_ghosts_comm);
   } /* iteration */
-  
+
+  if (globalmax > iccp3m_cfg.convergence) {
+    runtimeErrorMsg()
+        << "ICC failed to converge in the given number of maximal steps.";
+  }
+
   on_particle_charge_change();
 
   return iccp3m_cfg.citeration;
