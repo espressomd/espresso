@@ -126,7 +126,6 @@ inline int calc_tab_bond_force(Particle *p1, Particle *p2,
                                double dx[3], double force[3]) {
   auto const *tab_pot = iaparams->p.tab.pot;
   auto const dist = sqrt(sqrlen(dx));
-  double fac;
 
   if (dist < tab_pot->cutoff()) {
     auto const fac = tab_pot->force(dist) / dist;
