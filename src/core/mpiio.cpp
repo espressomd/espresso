@@ -147,7 +147,7 @@ static void dump_info(std::string fn, unsigned fields) {
 void mpi_mpiio_common_write(const char *filename, unsigned fields) {
   std::string fnam(filename);
   int nlocalpart = cells_get_n_particles(), pref = 0, bpref = 0;
-  int rank, ret;
+  int rank;
   // Keep static buffers in order not having to allocate them on every
   // function call
   static std::vector<double> pos, vel;

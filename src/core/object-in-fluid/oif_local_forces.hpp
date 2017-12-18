@@ -41,7 +41,7 @@ inline double KS(double lambda){ // Defined by (19) from Dupin2007
 }
 
 /** Computes the local forces (Dupin2007) and adds them
-    to the particle forces (see \ref tclcommand_inter). 
+    to the particle forces. 
     @param p1,p2,p3     Pointers to particles of triangle 1.
     @param p2,p3,p4     Pointers to particles of triangle 2.
     (triangles have particles p2 and p3 in common)

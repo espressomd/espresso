@@ -47,7 +47,7 @@
 #include <limits>
 
 /** Previous particle configurations (needed for offline analysis and
-    correlation analysis in \ref tclcommand_analyze) */
+    correlation analysis) */
 double **configs = nullptr;
 int n_configs = 0;
 int n_part_conf = 0;
@@ -314,7 +314,7 @@ void angularmomentum(PartCfg &partCfg, int type, double *com) {
 }
 
 void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
-  int i, j, count;
+  int i, count;
   double p1[3], massi;
   std::vector<double> com(3);
   count = 0;
@@ -515,8 +515,8 @@ void calc_rdf(PartCfg &partCfg, std::vector<int> &p1_types,
 void calc_rdf(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
               int n_p2, double r_min, double r_max, int r_bins, double *rdf) {
   long int cnt = 0;
-  int i, j, t1, t2, ind;
-  int mixed_flag = 0, start;
+  int i, t1, t2, ind;
+  int mixed_flag = 0;
   double inv_bin_width = 0.0, bin_width = 0.0, dist;
   double volume, bin_volume, r_in, r_out;
 
@@ -578,7 +578,7 @@ void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
                  int n_conf) {
   long int cnt = 0;
   int cnt_conf = 1;
-  int mixed_flag = 0, start;
+  int mixed_flag = 0;
   double inv_bin_width = 0.0, bin_width = 0.0;
   double volume, bin_volume, r_in, r_out;
   double *rdf_tmp, p1[3], p2[3];
@@ -656,7 +656,7 @@ void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
 
 void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
                           int order, double **_ff) {
-  int i, j, k, n, qi, p, t, order2;
+  int i, j, k, n, qi, t, order2;
   double qr, twoPI_L, C_sum, S_sum, *ff = nullptr;
 
   order2 = order * order;
@@ -904,7 +904,7 @@ int calc_radial_density_map(PartCfg &partCfg, int xbins, int ybins,
                             DoubleList *density_map,
                             DoubleList *density_profile) {
   int i, j, t;
-  int pi, bi;
+  int bi;
   int nbeadtypes;
   int beadcount;
   double vectprod[3];

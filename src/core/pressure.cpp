@@ -167,7 +167,6 @@ void calc_long_range_virials()
     fprintf(stderr, "WARNING: pressure calculated, but GPU P3M pressure not implemented\n");
     break;
   case COULOMB_P3M: {
-    int k;
     p3m_charge_assign();
     virials.coulomb[1] = p3m_calc_kspace_forces(0,1);
     p3m_charge_assign();
@@ -921,12 +920,6 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
   double binvolume;
   double centre[3];
 
-  double force[3];
-  int k, l;
-  int type_num;
-  Bonded_ia_parameters *iaparams;
-  double dx[3];
-
   for (int i = 0; i < 3; i++) {
     if (periodic[i]) {
       range[i] = box_l[i];
@@ -1095,10 +1088,10 @@ void update_stress_tensor (int v_comp) {
 
 int analyze_local_stress_tensor(int* periodic, double* range_start, double* range, int* bins, DoubleList* TensorInBin)
 {
-	PTENSOR_TRACE(fprintf(stderr,"%d: Running tclcommand_analyze_parse_local_stress_tensor\n",this_node));
+	PTENSOR_TRACE(fprintf(stderr,"%d: Running analyze_local_stress_tensor\n",this_node));
 
 	mpi_local_stress_tensor(TensorInBin, bins, periodic,range_start, range);
-	PTENSOR_TRACE(fprintf(stderr,"%d: tclcommand_analyze_parse_local_stress_tensor: finished mpi_local_stress_tensor \n",this_node));
+	PTENSOR_TRACE(fprintf(stderr,"%d: analyze_local_stress_tensor: finished mpi_local_stress_tensor \n",this_node));
 
 	return ES_OK;
 }

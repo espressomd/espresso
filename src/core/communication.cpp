@@ -232,10 +232,6 @@ std::vector<std::string> names{CALLBACK_LIST};
 #endif
 }
 
-/** The requests are compiled statically here, so that after a crash
-    you can get the last issued request from the debugger. */
-static int request[3];
-
 /** Forward declarations */
 
 int mpi_check_runtime_errors(void);

@@ -165,7 +165,6 @@ int bcast_iccp3m_cfg(void) {
   int i;
   MPI_Bcast((int *)&iccp3m_cfg.n_ic, 1, MPI_INT, 0, comm_cart);
   /* allocates Memory on slave nodes
-   * Master node allocates the memory when parsing tcl arguments
    * */
   if (this_node != 0) {
     iccp3m_cfg.areas = (double *)Utils::realloc(
@@ -223,7 +222,7 @@ int iccp3m_iteration() {
   if ((iccp3m_cfg.eout <= 0)) {
     ostringstream msg;
     msg << "ICCP3M: nonpositive dielectric constant is not allowed. Put a "
-           "decent tcl error here\n";
+           "decent exception here\n";
     runtimeError(msg);
   }
 
