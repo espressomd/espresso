@@ -174,6 +174,7 @@ cdef class System(object):
         [x, y, z]
         zero for no periodicity in this direction
         one for periodicity
+
         """
 
         def __set__(self, _periodic):
