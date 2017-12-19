@@ -41,6 +41,7 @@
 #include "p3m-dipolar.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
+#include "debug.hpp"
 
 #ifdef DIPOLES
 

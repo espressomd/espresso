@@ -47,6 +47,7 @@
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
+#include "initialize.hpp"
 
 #include "short_range_loop.hpp"
 #include "utils/NoOp.hpp"
@@ -65,7 +66,6 @@ void calc_long_range_forces_iccp3m();
 
 inline void init_local_particle_force_iccp3m(Particle *part);
 inline void init_ghost_force_iccp3m(Particle *part);
-extern void on_particle_change();
 
 /** Calculation of the electrostatic forces between source charges (= real
  * charges) and wall charges. For each electrostatic method the proper functions
@@ -232,7 +232,6 @@ int iccp3m_iteration() {
   for (j = 0; j < iccp3m_cfg.num_iteration; j++) {
     hmax = 0.;
 
-    ghost_communicator(&cell_structure.exchange_ghosts_comm);
     force_calc_iccp3m(); /* Calculate electrostatic forces (SR+LR) excluding
                             source source interaction*/
     ghost_communicator(&cell_structure.collect_ghost_force_comm);
@@ -262,11 +261,7 @@ int iccp3m_iteration() {
             msg << "ICCP3M found zero electric field on a charge. This must "
                    "never happen";
             runtimeError(msg);
-            /*
-               fprintf(stderr, "ICCP3M found zero electric field on a charge.
-               This must never happen\n"); ex = 0.00001 * d_random(); ey =
-               0.00001 * d_random(); ez = 0.00001 * d_random();
-             */
+
           }
           /* the dot product   */
           fdot = ex * iccp3m_cfg.nvectorx[id] + ey * iccp3m_cfg.nvectory[id] +
@@ -314,11 +309,20 @@ int iccp3m_iteration() {
 
     if (globalmax < iccp3m_cfg.convergence)
       break;
-    if (diff > 1e89) /* Error happened */
+    if (diff > 1e89) {
       return iccp3m_cfg.citeration++;
+    }
 
+    /* Update charges on ghosts. */
+    ghost_communicator(&cell_structure.exchange_ghosts_comm);
   } /* iteration */
-  on_particle_change();
+
+  if (globalmax > iccp3m_cfg.convergence) {
+    runtimeErrorMsg()
+        << "ICC failed to converge in the given number of maximal steps.";
+  }
+
+  on_particle_charge_change();
 
   return iccp3m_cfg.citeration;
 }
@@ -336,44 +340,12 @@ void force_calc_iccp3m() {
 }
 
 void init_forces_iccp3m() {
-  /* copied from forces.cpp */
-  Cell *cell;
-  Particle *p;
-  int np, c, i;
-
-/* The force initialization depends on the used thermostat and the
-   thermodynamic ensemble */
-
-#ifdef NPT
-  /* reset virial part of instantaneous pressure */
-  if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    ostringstream msg;
-    msg << "ICCP3M cannot be used with pressure coupling";
-    runtimeError(msg);
-  }
-#endif
-
-  /* initialize forces with langevin thermostat forces
-     or zero depending on the thermostat
-     set torque to zero for all and rescale quaternions
-   */
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++)
-      init_local_particle_force_iccp3m(&p[i]);
+  for(auto & p : local_cells.particles()) {
+    p.f = ParticleForce{};
   }
 
-  /* initialize ghost forces with zero
-     set torque to zero for all and rescale quaternions
-   */
-  for (c = 0; c < ghost_cells.n; c++) {
-    cell = ghost_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++)
-      init_ghost_force_iccp3m(&p[i]);
+  for(auto & p : ghost_cells.particles()) {
+    p.f = ParticleForce{};
   }
 }
 
@@ -427,34 +399,6 @@ void calc_long_range_forces_iccp3m() {
 /** \name Private Functions */
 /************************************************************/
 /*@{*/
-
-/** initialize the forces for a real particle */
-inline void init_local_particle_force_iccp3m(Particle *part) {
-  part->f.f[0] = 0.0; /* no need to friction_thermo_langevin function */
-  part->f.f[1] = 0.0;
-  part->f.f[2] = 0.0;
-
-#ifdef ROTATION
-  /* set torque to zero */
-  part->f.torque[0] = 0;
-  part->f.torque[1] = 0;
-  part->f.torque[2] = 0;
-#endif
-}
-
-/** initialize the forces for a ghost particle */
-inline void init_ghost_force_iccp3m(Particle *part) {
-  part->f.f[0] = 0.0;
-  part->f.f[1] = 0.0;
-  part->f.f[2] = 0.0;
-
-#ifdef ROTATION
-  /* set torque to zero */
-  part->f.torque[0] = 0;
-  part->f.torque[1] = 0;
-  part->f.torque[2] = 0;
-#endif
-}
 
 int iccp3m_sanity_check() {
   switch (coulomb.method) {
