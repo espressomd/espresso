@@ -20,6 +20,7 @@ IF DIPOLES == 1:
 
         ctypedef struct coulomb_parameters "Coulomb_parameters":
             double Dprefactor
+            double Dbjerrum
             dipolar_interaction Dmethod
         cdef extern coulomb_parameters coulomb
 
@@ -33,7 +34,7 @@ IF DIPOLES == 1:
             void activate_dipolar_direct_sum_gpu()
             void deactivate_dipolar_direct_sum_gpu()
 
-    IF (BARNES_HUT == 1):
+    IF (DIPOLAR_BARNES_HUT == 1):
         cdef extern from "actor/DipolarBarnesHut.hpp":
             void activate_dipolar_barnes_hut(float epssq, float itolsq)
             #void activate_dipolar_barnes_hut()

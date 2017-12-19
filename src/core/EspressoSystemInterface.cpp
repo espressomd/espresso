@@ -44,7 +44,7 @@ void EspressoSystemInterface::gatherParticles() {
 }
 
 void EspressoSystemInterface::init() { gatherParticles(); }
-#ifdef BARNES_HUT
+#ifdef DIPOLAR_BARNES_HUT
 void EspressoSystemInterface::initBH() {
     m_blocks = 0;
     m_bhnnodes = 0;

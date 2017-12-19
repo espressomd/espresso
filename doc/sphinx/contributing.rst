@@ -69,13 +69,13 @@ code and using Doxygen. It provides a cross-referenced documentation of
 all functions and data structures available in source code. It can be
 built by typing
 
-make dg
+make doxygen
 
 in the build directory. Afterwards it can be found in the subdirectory
-of the build directory: ``doc/dg/html/index.html``.
+of the build directory: ``doc/doxygen/html/index.html``.
 
 A recent version of this guide can also be found on the homepage
-http://espressomd.org.
+http://espressomd.org/html/dox/.
 
 User’s guide
 ------------
@@ -85,12 +85,7 @@ at all) described features or commands, you are very welcome to
 contribute to the guide and have others benefit from your knowledge.
 
 For this, you should also checkout the development version as described
-on the homepage. As the user guide, like all code, is always in flow and
-changes are made regularly, there are already many paragraphs marked
-with a “todo” box. To turn on these boxes, edit the main file
-``doc/ug/ug.tex`` and adapt the inclusion of the LaTeX package
-``todonotes``.
+on the homepage. You can then build the user guide by typing
 
-You can then build the user guide by typing
+make sphinx
 
-make ug

@@ -26,13 +26,20 @@
 
 #include "EspressoSystemInterface.hpp"
 
+#include "comfixed_global.hpp"
 #include "electrokinetics.hpp"
+#include "external_potential.hpp"
+#include "forces.hpp"
 #include "forces_inline.hpp"
+#include "iccp3m.hpp"
 #include "maggs.hpp"
 #include "p3m_gpu.hpp"
 #include "partCfg_global.hpp"
+#include "forcecap.hpp"
+#include "short_range_loop.hpp"
 
 #include <cassert>
+
 ActorList forceActors;
 
 void init_forces() {
@@ -100,7 +107,7 @@ void force_calc() {
   // to reassemble the cell lists after all position updates, also of virtual
   // particles.
   if ((lattice_switch & LATTICE_LB) &&
-      cell_structure.type == CELL_STRUCTURE_DOMDEC && (!dd.use_vList))
+      cell_structure.type == CELL_STRUCTURE_DOMDEC && (!cell_structure.use_verlet_list))
     cells_update_ghosts();
 #endif
 
@@ -140,22 +147,11 @@ void force_calc() {
 
   calc_long_range_forces();
 
-  switch (cell_structure.type) {
-  case CELL_STRUCTURE_LAYERED:
-    layered_calculate_ia();
-    break;
-  case CELL_STRUCTURE_DOMDEC:
-    if (dd.use_vList) {
-      if (rebuild_verletlist)
-        build_verlet_lists_and_calc_verlet_ia();
-      else
-        calculate_verlet_ia();
-    } else
-      calc_link_cell();
-    break;
-  case CELL_STRUCTURE_NSQUARE:
-    nsq_calculate_ia();
-  }
+  short_range_loop([](Particle &p) { add_single_particle_force(&p); },
+                   [](Particle &p1, Particle &p2, Distance &d) {
+                     add_non_bonded_pair_force(&(p1), &(p2), d.vec21,
+                                               sqrt(d.dist2), d.dist2);
+                   });
 
 #ifdef OIF_GLOBAL_FORCES
   double area_volume[2]; // There are two global quantities that need to be
@@ -179,10 +175,6 @@ void force_calc() {
 #ifdef LB
   if (lattice_switch & LATTICE_LB)
     calc_particle_lattice_ia();
-#endif
-
-#ifdef COMFORCE
-  calc_comforce(partCfg());
 #endif
 
 #ifdef METADYNAMICS
@@ -209,10 +201,12 @@ void force_calc() {
   calc_and_apply_mol_constraints();
 #endif
 
-// should be pretty late, since it needs to zero out the total force
-#ifdef COMFIXED
-  calc_comfixed();
-#endif
+  auto local_particles = local_cells.particles();
+  // should be pretty late, since it needs to zero out the total force
+  comfixed.apply(comm_cart, local_particles);
+
+  // Needs to be the last one to be effective
+  forcecap_cap(local_cells.particles());
 
   // mark that forces are now up-to-date
   recalc_forces = 0;
@@ -319,7 +313,7 @@ void calc_long_range_forces() {
   case DIPOLAR_DS_GPU:
     // Do nothing. It's an actor
     break;
-#ifdef BARNES_HUT
+#ifdef DIPOLAR_BARNES_HUT
   case DIPOLAR_BH_GPU:
     // Do nothing, it's an actor.
     break;
@@ -338,21 +332,21 @@ void calc_long_range_forces() {
 #endif /*ifdef DIPOLES */
 }
 
-void
-calc_non_bonded_pair_force_from_partcfg(Particle const *p1, Particle const *p2, IA_parameters *ia_params,
-                                        double d[3], double dist, double dist2,
-                                        double force[3],
-                                        double torque1[3], double torque2[3]) {
-     calc_non_bonded_pair_force_parts(p1, p2, ia_params,
-                                      d, dist, dist2, force, torque1, torque2);
+void calc_non_bonded_pair_force_from_partcfg(
+    Particle const *p1, Particle const *p2, IA_parameters *ia_params,
+    double d[3], double dist, double dist2, double force[3], double torque1[3],
+    double torque2[3]) {
+  calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist, dist2, force,
+                                   torque1, torque2);
 }
 
-void
-calc_non_bonded_pair_force_from_partcfg_simple(Particle const *p1, Particle const *p2,
-                                               double d[3], double dist,
-                                               double dist2, double force[3]){
-   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
-   double torque1[3],torque2[3];
-   calc_non_bonded_pair_force_from_partcfg(p1, p2, ia_params, d, dist, dist2,
-                                           force, torque1, torque2);
+void calc_non_bonded_pair_force_from_partcfg_simple(Particle const *p1,
+                                                    Particle const *p2,
+                                                    double d[3], double dist,
+                                                    double dist2,
+                                                    double force[3]) {
+  IA_parameters *ia_params = get_ia_param(p1->p.type, p2->p.type);
+  double torque1[3], torque2[3];
+  calc_non_bonded_pair_force_from_partcfg(p1, p2, ia_params, d, dist, dist2,
+                                          force, torque1, torque2);
 }

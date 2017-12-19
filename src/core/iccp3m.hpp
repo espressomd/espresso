@@ -53,24 +53,22 @@
 #ifndef _ICCP3M_H
 #define _ICCP3M_H
 
+#include "config.hpp"
+
+#if defined(ELECTROSTATICS)
+
 #include "cells.hpp"
-#include "domain_decomposition.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "integrate.hpp"
 #include "interaction_data.hpp"
-#include "layered.hpp"
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
-#include "nsquare.hpp"
 #include "p3m.hpp"
 #include "particle_data.hpp"
 #include "topology.hpp"
 #include "utils.hpp"
-#include "verlet.hpp"
 #include <ctime>
-
-#if defined(ELECTROSTATICS)
 
 /* iccp3m data structures*/
 typedef struct {
@@ -92,6 +90,7 @@ typedef struct {
   int citeration; /* current number of iterations*/
   int set_flag;   /* flag that indicates if ICCP3M has been initialized properly
                      */
+
   double *fx;
   double *fy;
   double *fz;
@@ -99,53 +98,8 @@ typedef struct {
 } iccp3m_struct;
 extern iccp3m_struct iccp3m_cfg; /* global variable with ICCP3M configuration */
 extern int iccp3m_initialized;
-#include "forces.hpp"
 
 int bcast_iccp3m_cfg(void);
-
-/** Calculation of the electrostatic forces between source charges (= real
- * charges) and wall charges.
- *  For each electrostatic method the proper functions for short and long range
- * parts are called.
- *  Long Range Parts are calculated directly, short range parts need helper
- * functions according
- *  to the particle data organisation. A modified version of \ref force_calc in
- * \ref forces.hpp.
- */
-void force_calc_iccp3m();
-
-/** Calculation of short range part of electrostatic interaction in layered
- * systems
- *  A modified version of \ref layered_calculate_ia in \ref layered.hpp
- */
-void layered_calculate_ia_iccp3m();
-
-/** Calculate the short range part of electrostatic interaction using verlet
- * lists.
- * A modified version of \ref build_verlet_lists_and_calc_verlet_ia()	in
- * \ref verlet.hpp
- */
-void build_verlet_lists_and_calc_verlet_ia_iccp3m();
-
-/** Calculate he short range part of electrostatic interaction using verlet
- * lists, if verlet lists
- * have already been properly built. A modified version of \ref
- * calculate_verlet_ia()	in \ref verlet.hpp
- */
-void calculate_verlet_ia_iccp3m();
-
-/** Calculate he short range part of electrostatic interaction using for linked
- * cell
- * systems. A modified version of \ref calc_link_cell() in \ref
- * domain_decomposition.hpp
- */
-void calc_link_cell_iccp3m();
-
-/** Calculate he short range part of electrostatic interaction using for
- * n-squared cell
- * systems. A modified version of nsq_calculate_ia \ref nsquare.hpp.
- */
-void nsq_calculate_ia_iccp3m();
 
 /** The main iterative scheme, where the surface element charges are calculated
  * self-consistently.
@@ -168,57 +122,6 @@ void iccp3m_set_initialized();
  */
 int iccp3m_sanity_check();
 
-/** Variant of add_non_bonded_pair_force where only coulomb
- *  contributions are calculated   */
-inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
-                                             double d[3], double dist,
-                                             double dist2) {
-  /* IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);*/
-  double force[3] = {0, 0, 0};
-  int j;
-
-  FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node,
-                      p1->p.identity, p2->p.identity, dist));
-
-  /***********************************************/
-  /* long range electrostatics                   */
-  /***********************************************/
-
-  /* real space coulomb */
-  double q1q2 = p1->p.q * p2->p.q;
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    if (q1q2)
-      p3m_add_pair_force(q1q2, d, dist2, dist, force);
-    break;
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M:
-    if (q1q2)
-      p3m_add_pair_force(q1q2, d, dist2, dist, force);
-    break;
-#endif /* P3M */
-  case COULOMB_MMM1D:
-    if (q1q2)
-      add_mmm1d_coulomb_pair_force(q1q2, d, dist2, dist, force);
-    break;
-  case COULOMB_MMM2D:
-    if (q1q2)
-      add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, force);
-    break;
-  default:
-    break;
-  }
-
-  /***********************************************/
-  /* add total nonbonded forces to particle      */
-  /***********************************************/
-  for (j = 0; j < 3; j++) {
-    p1->f.f[j] += force[j];
-    p2->f.f[j] -= force[j];
-  }
-  /***********************************************/
-}
 #endif /* ELECTROSTATICS */
 
 #endif /* ICCP3M_H */

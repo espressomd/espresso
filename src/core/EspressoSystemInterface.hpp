@@ -23,10 +23,11 @@
 
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
-#ifdef BARNES_HUT
+#ifdef DIPOLAR_BARNES_HUT
 // just for the required BH data types
 #include "actor/DipolarBarnesHut_cuda.cuh"
 #endif
+#include "debug.hpp"
 
 /** Syntactic sugar */
 #define espressoSystemInterface EspressoSystemInterface::Instance()
@@ -47,17 +48,17 @@ public:
     return m_instance;
   };
 
-  void init();
-#ifdef BARNES_HUT
+#ifdef DIPOLAR_BARNES_HUT
   void initBH();
 #endif
-  void update();
+  void init() override;
+  void update() override;
 
 #ifdef CUDA
-  float *rGpuBegin() { return m_r_gpu_begin; };
-  float *rGpuEnd() { return m_r_gpu_end; };
-  bool hasRGpu() { return true; };
-  bool requestRGpu() {
+  float *rGpuBegin() override { return m_r_gpu_begin; };
+  float *rGpuEnd() override { return m_r_gpu_end; };
+  bool hasRGpu() override { return true; };
+  bool requestRGpu() override {
     m_needsRGpu = hasRGpu();
     m_splitParticleStructGpu |= m_needsRGpu;
     m_gpu |= m_needsRGpu;
@@ -66,10 +67,10 @@ public:
     return m_needsRGpu;
   };
 #ifdef DIPOLES
-  float *dipGpuBegin() { return m_dip_gpu_begin; };
-  float *dipGpuEnd() { return m_dip_gpu_end; };
-  bool hasDipGpu() { return true; };
-  bool requestDipGpu() {
+  float *dipGpuBegin() override { return m_dip_gpu_begin; };
+  float *dipGpuEnd() override { return m_dip_gpu_end; };
+  bool hasDipGpu() override { return true; };
+  bool requestDipGpu() override {
     m_needsDipGpu = hasDipGpu();
     m_splitParticleStructGpu |= m_needsRGpu;
     m_gpu |= m_needsRGpu;
@@ -78,10 +79,10 @@ public:
     return m_needsDipGpu;
   };
 #endif
-  float *vGpuBegin() { return m_v_gpu_begin; };
-  float *vGpuEnd() { return m_v_gpu_end; };
-  bool hasVGpu() { return true; };
-  bool requestVGpu() {
+  float *vGpuBegin() override { return m_v_gpu_begin; };
+  float *vGpuEnd() override { return m_v_gpu_end; };
+  bool hasVGpu() override { return true; };
+  bool requestVGpu() override {
     m_needsVGpu = hasVGpu();
     m_splitParticleStructGpu |= m_needsVGpu;
     m_gpu |= m_needsVGpu;
@@ -90,10 +91,10 @@ public:
     return m_needsVGpu;
   };
 
-  float *qGpuBegin() { return m_q_gpu_begin; };
-  float *qGpuEnd() { return m_q_gpu_end; };
-  bool hasQGpu() { return true; };
-  bool requestQGpu() {
+  float *qGpuBegin() override { return m_q_gpu_begin; };
+  float *qGpuEnd() override { return m_q_gpu_end; };
+  bool hasQGpu() override { return true; };
+  bool requestQGpu() override {
     m_needsQGpu = hasQGpu();
     m_splitParticleStructGpu |= m_needsQGpu;
     m_gpu |= m_needsQGpu;
@@ -102,10 +103,10 @@ public:
     return m_needsQGpu;
   };
 
-  float *quatuGpuBegin() { return m_quatu_gpu_begin; };
-  float *quatuGpuEnd() { return m_quatu_gpu_end; };
-  bool hasQuatuGpu() { return true; };
-  bool requestQuatuGpu() {
+  float *quatuGpuBegin() override { return m_quatu_gpu_begin; };
+  float *quatuGpuEnd() override { return m_quatu_gpu_end; };
+  bool hasQuatuGpu() override { return true; };
+  bool requestQuatuGpu() override {
     m_needsQuatuGpu = hasQuatuGpu();
     m_splitParticleStructGpu |= m_needsQuatuGpu;
     m_gpu |= m_needsQuatuGpu;
@@ -122,19 +123,19 @@ public:
     return true;
   };
 
-  float *fGpuBegin() { return gpu_get_particle_force_pointer(); };
-  float *fGpuEnd() {
+  float *fGpuBegin() override { return gpu_get_particle_force_pointer(); };
+  float *fGpuEnd() override {
     return gpu_get_particle_force_pointer() + 3 * m_gpu_npart;
   };
-  float *eGpu() { return (float *)gpu_get_energy_pointer(); };
-  float *torqueGpuBegin() {
+  float *eGpu() override { return (float *)gpu_get_energy_pointer(); };
+  float *torqueGpuBegin() override {
     return (float *)gpu_get_particle_torque_pointer();
   };
-  float *torqueGpuEnd() {
+  float *torqueGpuEnd() override {
     return (float *)(gpu_get_particle_torque_pointer()) + 3 * m_gpu_npart;
   };
-  bool hasFGpu() { return true; };
-  bool requestFGpu() {
+  bool hasFGpu() override { return true; };
+  bool requestFGpu() override {
     m_needsFGpu = hasFGpu();
     m_gpu |= m_needsFGpu;
     if (m_gpu)
@@ -143,8 +144,8 @@ public:
   };
 
 #ifdef ROTATION
-  bool hasTorqueGpu() { return true; };
-  bool requestTorqueGpu() {
+  bool hasTorqueGpu() override { return true; };
+  bool requestTorqueGpu() override {
     m_needsTorqueGpu = hasTorqueGpu();
     m_gpu |= m_needsTorqueGpu;
     if (m_gpu)
@@ -157,7 +158,7 @@ public:
 
   Vector3d box() const override;
 
-  unsigned int npart_gpu() {
+  unsigned int npart_gpu() override {
 #ifdef CUDA
     return m_gpu_npart;
 #else
@@ -165,7 +166,7 @@ public:
 #endif
   };
 
-#ifdef BARNES_HUT
+#ifdef DIPOLAR_BARNES_HUT
   unsigned int bhnnodes() {
     return m_bhnnodes;
   };
@@ -190,7 +191,7 @@ protected:
         m_q_gpu_end(0), m_quatu_gpu_begin(0), m_quatu_gpu_end(0),
         m_needsParticleStructGpu(false), m_splitParticleStructGpu(false)
         {
-#ifdef BARNES_HUT
+#ifdef DIPOLAR_BARNES_HUT
           initBH();
 #endif
         };
@@ -214,7 +215,7 @@ protected:
 
   int m_gpu_npart;
   bool m_gpu;
-#ifdef BARNES_HUT
+#ifdef DIPOLAR_BARNES_HUT
   int m_blocks;   // # of blocks.
   int m_bhnnodes; // Barnes-Hut tree build nodes (8*m_gpu_npart).
   BHBox m_boxl;   // Barnes-Hut spatial min/max box limits.

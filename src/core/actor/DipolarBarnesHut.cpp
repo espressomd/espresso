@@ -7,7 +7,7 @@
 #include "forces.hpp"
 #include "energy.hpp"
 
-#ifdef BARNES_HUT
+#ifdef DIPOLAR_BARNES_HUT
 
 void activate_dipolar_barnes_hut(float epssq, float itolsq)
 {

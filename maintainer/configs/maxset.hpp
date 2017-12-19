@@ -10,8 +10,6 @@
 #define CONSTRAINTS
 #define MASS
 #define EXCLUSIONS
-#define COMFORCE
-#define COMFIXED
 #define MOLFORCES
 
 #ifdef FFTW
@@ -19,16 +17,14 @@
 #endif
 
 #define BOND_CONSTRAINT
-#define BOND_VIRTUAL
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
-#define ROTATION_PER_PARTICLE
 #define CATALYTIC_REACTIONS
-#define REACTION_ENSEMBLE
 
 #define NEMD
 #define NPT 
 #define GHMC
+#define DPD
 
 #define LB
 #define LB_BOUNDARIES
@@ -45,9 +41,6 @@
 #define MMM1D_GPU
 #define EWALD_GPU
 #endif
-
-#define AREA_FORCE_GLOBAL   
-#define VOLUME_FORCE   
 
 #define TABULATED
 #define LENNARD_JONES

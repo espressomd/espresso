@@ -1,6 +1,6 @@
 #include "config.hpp"
 
-#ifdef BARNES_HUT
+#ifdef DIPOLAR_BARNES_HUT
 
 #include "SystemInterface.hpp"
 #include "EspressoSystemInterface.hpp"

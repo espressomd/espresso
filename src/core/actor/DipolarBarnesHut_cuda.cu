@@ -28,7 +28,7 @@
 
 typedef float dds_float ;
 
-#ifdef BARNES_HUT
+#ifdef DIPOLAR_BARNES_HUT
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // The method concept is revealed within:                                               //

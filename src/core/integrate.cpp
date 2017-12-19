@@ -41,14 +41,13 @@
 #include "initialize.hpp"
 #include "interaction_data.hpp"
 #include "lattice.hpp"
-#include "layered.hpp"
 #include "lb.hpp"
 #include "lees_edwards.hpp"
 #include "maggs.hpp"
 #include "minimize_energy.hpp"
 #include "nemd.hpp"
-#include "nsquare.hpp"
 #include "observables.hpp"
+#include "accumulators.hpp"
 #include "p3m.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
@@ -57,7 +56,6 @@
 #include "rotation.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
-#include "verlet.hpp"
 #include "virtual_sites.hpp"
 #include "npt.hpp"
 #include "collision.hpp"
@@ -87,7 +85,6 @@ double skin = 0.0;
 double skin2 = 0.0;
 bool skin_set = false;
 
-int resort_particles = 1;
 int recalc_forces = 1;
 
 double verlet_reuse = 0.0;
@@ -345,7 +342,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     INTEG_TRACE(fprintf(stderr, "%d: STEP %d\n", this_node, step));
 
 #ifdef BOND_CONSTRAINT
+  if (n_rigidbonds)
     save_old_pos();
+
 #endif
 
 #ifdef GHMC
@@ -380,9 +379,11 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #ifdef BOND_CONSTRAINT
     /**Correct those particle positions that participate in a rigid/constrained
      * bond */
+  if (n_rigidbonds) {
     cells_update_ghosts();
 
     correct_pos_shake();
+  }
 #endif
 
 #ifdef ELECTROSTATICS
@@ -391,10 +392,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 #endif
 
-#ifdef NPT
-    if (check_runtime_errors())
-      break;
-#endif
 
 #ifdef MULTI_TIMESTEP
     if (smaller_time_step > 0) {
@@ -463,8 +460,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
     integrate_reaction();
 #endif
 
-    if (check_runtime_errors())
-      break;
 
 #ifdef MULTI_TIMESTEP
 #ifdef NPT
@@ -483,15 +478,15 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 // SHAKE velocity updates
 #ifdef BOND_CONSTRAINT
+  if (n_rigidbonds) {
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
     correct_vel_shake();
+  }
 #endif
 // VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
     update_mol_vel();
-    if (check_runtime_errors())
-      break;
 #endif
 
 // progagate one-step functionalities
@@ -565,6 +560,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #ifdef COLLISION_DETECTION
     handle_collisions();
 #endif
+    if (check_runtime_errors())
+      break;
   }
 
 #ifdef VALGRIND_INSTRUMENTATION
@@ -839,7 +836,8 @@ void propagate_press_box_pos_and_rescale_npt() {
                                 this_node, p.r.p[0], p.r.p[1], p.r.p[2]));
     }
 
-    resort_particles = 1;
+
+    set_resort_particles(Cells::RESORT_LOCAL);
 
     /* Apply new volume to the box-length, communicate it, and account for
      * necessary adjustments to the cell geometry */
@@ -953,7 +951,7 @@ void propagate_pos() {
       }
       /* Verlet criterion check */
       if (distance2(p.r.p, p.l.p_old) > skin2)
-        resort_particles = 1;
+        set_resort_particles(Cells::RESORT_LOCAL);
     }
   }
 
@@ -1026,7 +1024,7 @@ void propagate_vel_pos() {
           p.r.p[1] += box_l[1];
           p.l.i[1]--;
         }
-        resort_particles = 1;
+        set_resort_particles(Cells::RESORT_LOCAL);
       }
       /* Branch prediction on most systems should mean there is minimal cost
        * here */
@@ -1053,11 +1051,11 @@ void propagate_vel_pos() {
     if (SQR(p.r.p[0] - p.l.p_old[0]) + SQR(p.r.p[1] - p.l.p_old[1]) +
             SQR(p.r.p[2] - p.l.p_old[2]) >
         skin2)
-      resort_particles = 1;
+      set_resort_particles(Cells::RESORT_LOCAL);
   }
 
 #ifdef LEES_EDWARDS /* would be nice to be more refined about this */
-  resort_particles = 1;
+  set_resort_particles(Cells::RESORT_GLOBAL);
 #endif
 
   announce_resort_particles();
@@ -1115,7 +1113,8 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
 
   /* perform integration */
   if (!Correlators::auto_update_enabled() &&
-      !Observables::auto_update_enabled()) {
+      !Observables::auto_update_enabled() &&
+      !Accumulators::auto_update_enabled()) {
     if (mpi_integrate(n_steps, reuse_forces))
       return ES_ERROR;
   } else {
@@ -1125,6 +1124,7 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
       reuse_forces = 1;
       Observables::auto_update();
       Correlators::auto_update();
+      Accumulators::auto_update();
 
       if (Observables::auto_write_enabled()) {
         Observables::auto_write();
@@ -1230,6 +1230,8 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
   /* set integrator switch */
   integ_switch = INTEG_METHOD_NPT_ISO;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+  mpi_bcast_parameter(FIELD_NPTISO_PISTON);
+  mpi_bcast_parameter(FIELD_NPTISO_PEXT);
 
   /* broadcast npt geometry information to all nodes */
   mpi_bcast_nptiso_geom();

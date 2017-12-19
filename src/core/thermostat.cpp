@@ -121,6 +121,20 @@ void thermo_init_langevin() {
   langevin_pref2_rotation =
       sqrt(24.0 * temperature * langevin_gamma_rotation / time_step);
 
+#ifdef PARTICLE_ANISOTROPY
+#ifdef ROTATION
+  THERMO_TRACE(
+      fprintf(stderr, "%d: thermo_init_langevin: langevin_gamma_rotation=(%f,%f,%f), "
+                      "langevin_pref2_rotation=(%f,%f,%f)",
+              this_node, langevin_gamma_rotation[0], langevin_gamma_rotation[1],
+              langevin_gamma_rotation[2], langevin_pref2_rotation[0],
+              langevin_pref2_rotation[1], langevin_pref2_rotation[2]));
+#endif
+  THERMO_TRACE(fprintf(
+      stderr, "%d: thermo_init_langevin: langevin_pref1=(%f,%f,%f), langevin_pref2=(%f,%f,%f)",
+      this_node, langevin_pref1[0], langevin_pref1[1], langevin_pref1[2],
+      langevin_pref2[0], langevin_pref2[1], langevin_pref2[2]));
+#else
 #ifdef ROTATION
   THERMO_TRACE(
       fprintf(stderr, "%d: thermo_init_langevin: langevin_gamma_rotation=%f, "
@@ -130,6 +144,7 @@ void thermo_init_langevin() {
   THERMO_TRACE(fprintf(
       stderr, "%d: thermo_init_langevin: langevin_pref1=%f, langevin_pref2=%f",
       this_node, langevin_pref1, langevin_pref2));
+#endif
 }
 
 #ifdef NPT
@@ -163,15 +178,9 @@ void thermo_init() {
   if (thermo_switch == THERMO_OFF) {
     return;
   }
-#ifdef INTER_DPD
-  if (thermo_switch & THERMO_INTER_DPD)
-    inter_dpd_init();
-#endif
-  if (thermo_switch & THERMO_LANGEVIN)
-    thermo_init_langevin();
+  if(thermo_switch & THERMO_LANGEVIN ) thermo_init_langevin();
 #ifdef DPD
-  if (thermo_switch & THERMO_DPD)
-    thermo_init_dpd();
+  if(thermo_switch & THERMO_DPD) dpd_init();
 #endif
 #ifdef NPT
   if (thermo_switch & THERMO_NPT_ISO)
@@ -205,11 +214,6 @@ void thermo_heat_up() {
     dpd_heat_up();
   }
 #endif
-#ifdef INTER_DPD
-  if (thermo_switch & THERMO_INTER_DPD) {
-    inter_dpd_heat_up();
-  }
-#endif
 }
 
 void langevin_cool_down() {
@@ -229,10 +233,6 @@ void thermo_cool_down() {
   if (thermo_switch & THERMO_DPD) {
     dpd_cool_down();
   }
-#endif
-#ifdef INTER_DPD
-  if (thermo_switch & THERMO_INTER_DPD)
-    inter_dpd_cool_down();
 #endif
 }
 

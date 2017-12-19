@@ -28,6 +28,9 @@
 #include "Vector.hpp"
 #include "config.hpp"
 #include "utils.hpp"
+
+#include "utils/List.hpp"
+
 #include <memory>
 
 /************************************************
@@ -207,7 +210,7 @@ struct ParticleProperties {
 struct ParticlePosition {
   /** periodically folded position. */
   double p[3] = {0, 0, 0};
-  
+
 #ifdef ROTATION
   /** quaternions to define particle orientation */
   double quat[4] = {1., 0., 0., 0.};
@@ -241,7 +244,6 @@ struct ParticleForce {
   /** torque */
   double torque[3] = {0., 0., 0.};
 #endif
-
 };
 
 /** Momentum information on a particle. Information not contained in
@@ -373,6 +375,14 @@ struct Particle {
 #endif
   }
 
+  IntList const &exclusions() const {
+#ifdef EXCLUSIONS
+    return el;
+#else
+    throw std::runtime_error{"Exclusions not enabled."};
+#endif
+  }
+
 #ifdef EXCLUSIONS
   /** list of particles, with which this particle has no nonbonded
    * interactions
@@ -421,17 +431,15 @@ void MPI_Send(Particle const *, Size, Ts...) {
     (we hope) algorithm to avoid unnecessary resizes.
     Access using \ref realloc_particlelist, \ref got_particle,...
 */
-typedef struct {
+struct ParticleList {
+  ParticleList() : part{nullptr}, n{0}, max{0} {}
   /** The particles payload */
   Particle *part;
   /** Number of particles contained */
   int n;
   /** Number of particles that fit in until a resize is needed */
   int max;
-#ifdef LEES_EDWARDS
-  int myIndex[3];
-#endif
-} ParticleList;
+};
 
 /************************************************
  * exported variables
@@ -447,10 +455,6 @@ extern int max_seen_particle;
 /** total number of particles on all nodes. */
 extern int n_part;
 
-/** Capacity of the \ref particle_node / \ref local_particles. */
-extern int max_particle_node;
-/** Used only on master node: particle->node mapping. */
-extern int *particle_node;
 /** id->particle mapping on all nodes. This is used to find partners
     of bonded interactions. */
 extern Particle **local_particles;
@@ -489,7 +493,7 @@ int realloc_particlelist(ParticleList *plist, int size);
 /** Search for a specific particle.
     \param plist the list on which to operate
     \param id the identity of the particle to search
-    \return a pointer to the particle structure or NULL if particle is
+    \return a pointer to the particle structure or nullptr if particle is
     not in this list */
 Particle *got_particle(ParticleList *plist, int id);
 
@@ -541,26 +545,36 @@ Particle *move_indexed_particle(ParticleList *destList,
 */
 void update_local_particles(ParticleList *pl);
 
-/** Rebuild \ref particle_node from scratch.
-    After a simulation step \ref particle_node has to be rebuild
-    since the particles might have gone to a different node.
-*/
-void build_particle_node();
-
 /** Invalidate \ref particle_node. This has to be done
     at the beginning of the integration.
 */
-void particle_invalidate_part_node();
+void clear_particle_node();
 
 /** Realloc \ref local_particles. */
 void realloc_local_particles();
 
-/** Get particle data.
-    @param part the identity of the particle to fetch
-    @return Pointer to copy of particle if it exists,
-            nullptr otherwise;
+/**
+ * @brief Get particle data.
+ *
+ *   @param part the identity of the particle to fetch
+ *   @return Pointer to copy of particle if it exists,
+ *          nullptr otherwise;
 */
-std::unique_ptr<Particle> get_particle_data(int part);
+const Particle *get_particle_data(int part);
+
+/**
+ * @brief Fetch a range of particle into the fetch cache.
+ *
+ * If the range is larger than the cache size, only
+ * the particle that fit into the cache are fetched.
+ *
+ * @param ids Ids of the particles that should be
+ *        fetched.
+ */
+void prefetch_particle_data(std::vector<int> ids);
+
+/** @brief Invalidate the fetch cache for @f get_particle_data. */
+void invalidate_fetch_cache();
 
 /** Call only on the master node.
     Move a particle to a new position.
@@ -804,7 +818,8 @@ int set_particle_fix(int part, int flag);
 /** Call only on the master node: change particle bond.
     @param part     identity of principal atom of the bond.
     @param bond     field containing the bond type number and the
-    identity of all bond partners (secundary atoms of the bond). If NULL, delete
+    identity of all bond partners (secundary atoms of the bond). If nullptr,
+   delete
    all bonds.
     @param _delete   if true, do not add the bond, rather delete it if found
     @return ES_OK on success or ES_ERROR if no success
@@ -902,22 +917,19 @@ void local_rescale_particles(int dir, double scale);
 void send_particles(ParticleList *particles, int node);
 
 /** Synchronous receive of a particle buffer from another node. The other node
-    MUST call \ref send_particles when this is called. Particles needs to initialized,
+    MUST call \ref send_particles when this is called. Particles needs to
+   initialized,
     it is realloced to the correct size and the content is overwritten. */
 void recv_particles(ParticleList *particles, int node);
 
 #ifdef EXCLUSIONS
 /** Determines if the non bonded interactions between p1 and p2 should be
  * calculated */
-inline int do_nonbonded(Particle *p1, Particle *p2) {
-  int i, i2;
+inline bool do_nonbonded(Particle const *p1, Particle const *p2) {
   /* check for particle 2 in particle 1's exclusion list. The exclusion list is
      symmetric, so this is sufficient. */
-  i2 = p2->p.identity;
-  for (i = 0; i < p1->el.n; i++)
-    if (i2 == p1->el.e[i])
-      return 0;
-  return 1;
+  return std::none_of(p1->el.begin(), p1->el.end(),
+                     [p2](int id) { return p2->p.identity == id; });
 }
 #endif
 
@@ -939,11 +951,7 @@ void try_add_exclusion(Particle *part, int part2);
  should be on a single node, therefore the \ref partCfg array is used. With
  large amounts
  of particles, you should avoid this function and setup exclusions manually. */
-void auto_exclusion(int distance);
-
-/* keep a unique list for particle i. Particle j is only added if it is not i
- and not already in the list. */
-void add_partner(IntList *il, int i, int j, int distance);
+void auto_exclusions(int distance);
 
 // value that is returned in the case there was no error, but the type was not
 // yet indexed
@@ -1016,61 +1024,64 @@ int number_of_particles_with_type(int type, int *number);
 // within a ctypedef definition
 
 #ifdef ROTATION
-void pointer_to_omega_body(Particle *p, double *&res);
+void pointer_to_omega_body(Particle const *p, double const *&res);
 
-void pointer_to_torque_lab(Particle *p, double *&res);
+void pointer_to_torque_lab(Particle const *p, double const *&res);
 
-void pointer_to_quat(Particle *p, double *&res);
-void pointer_to_quatu(Particle *p, double *&res);
+void pointer_to_quat(Particle const *p, double const *&res);
+void pointer_to_quatu(Particle const *p, double const *&res);
 
 #endif
 
 #ifdef ELECTROSTATICS
-void pointer_to_q(Particle *p, double *&res);
+void pointer_to_q(Particle const *p, double const *&res);
 #endif
 
 #ifdef VIRTUAL_SITES
-void pointer_to_virtual(Particle *p, int *&res);
+void pointer_to_virtual(Particle const *p, int const *&res);
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void pointer_to_vs_relative(Particle *p, int *&res1, double *&res2,
-                            double *&res3);
+void pointer_to_vs_relative(Particle const *p, int const *&res1,
+                            double const *&res2, double const *&res3);
 #endif
 
 #ifdef MULTI_TIMESTEP
-void pointer_to_smaller_timestep(Particle *p, int *&res);
+void pointer_to_smaller_timestep(Particle const *p, int const *&res);
 #endif
 
-void pointer_to_dip(Particle *P, double *&res);
+void pointer_to_dip(Particle const *P, double const *&res);
 
-void pointer_to_dipm(Particle *P, double *&res);
+void pointer_to_dipm(Particle const *P, double const *&res);
 
 #ifdef EXTERNAL_FORCES
-void pointer_to_ext_force(Particle *p, int *&res1, double *&res2);
+void pointer_to_ext_force(Particle const *p, int const *&res1,
+                          double const *&res2);
 #ifdef ROTATION
-void pointer_to_ext_torque(Particle *p, int *&res1, double *&res2);
+void pointer_to_ext_torque(Particle const *p, int const *&res1,
+                           double const *&res2);
 #endif
-void pointer_to_fix(Particle *p, int *&res);
+void pointer_to_fix(Particle const *p, int const *&res);
 #endif
 
 #ifdef LANGEVIN_PER_PARTICLE
-void pointer_to_gamma(Particle *p, double *&res);
-void pointer_to_temperature(Particle *p, double *&res);
+void pointer_to_gamma(Particle const *p, double const *&res);
+void pointer_to_temperature(Particle const *p, double const *&res);
 #ifdef ROTATION
-void pointer_to_gamma_rot(Particle *p, double *&res);
+void pointer_to_gamma_rot(Particle const *p, double const *&res);
 #endif
 #endif // LANGEVIN_PER_PARTICLE
 #ifdef ROTATION
-void pointer_to_rotation(Particle *p, short int *&res);
+void pointer_to_rotation(Particle const *p, short int const *&res);
 #endif
 
 #ifdef ENGINE
-void pointer_to_swimming(Particle *p, ParticleParametersSwimming *&swim);
+void pointer_to_swimming(Particle const *p,
+                         ParticleParametersSwimming const *&swim);
 #endif
 
 #ifdef ROTATIONAL_INERTIA
-void pointer_to_rotational_inertia(Particle *p, double *&res);
+void pointer_to_rotational_inertia(Particle const *p, double const *&res);
 #endif
 
 bool particle_exists(int part);

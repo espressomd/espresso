@@ -36,12 +36,12 @@
 #include "mdlc_correction.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "domain_decomposition.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "p3m-dipolar.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
+#include "debug.hpp"
 
 #ifdef DIPOLES
 
@@ -52,7 +52,7 @@ static double mu_max;
 
 void calc_mu_max() {
   mu_max = std::accumulate(
-      local_cells.particles().begin(), local_cells.particles().end(), 0,
+      local_cells.particles().begin(), local_cells.particles().end(), 0.0,
       [](double mu, Particle const &p) { return std::max(mu, p.p.dipm); });
 
   MPI_Allreduce(MPI_IN_PLACE, &mu_max, 1, MPI_DOUBLE, MPI_MAX, comm_cart);
@@ -132,18 +132,16 @@ double get_DLC_dipolar(int kcut, double *fx, double *fy, double *fz, double *tx,
 
   double S[4] = {0.0, 0.0, 0.0, 0.0}; // S of Brodka methode, oder is S[4] =
                                       // {Re(S+), Im(S+), Re(S-), Im(S-)}
-  double *ReSjp = NULL, *ReSjm = NULL;
-  double *ImSjp = NULL, *ImSjm = NULL;
-  double *ReGrad_Mup = NULL, *ImGrad_Mup = NULL;
-  double *ReGrad_Mum = NULL, *ImGrad_Mum = NULL;
+  double *ReSjp = nullptr, *ReSjm = nullptr;
+  double *ImSjp = nullptr, *ImSjm = nullptr;
+  double *ReGrad_Mup = nullptr, *ImGrad_Mup = nullptr;
+  double *ReGrad_Mum = nullptr, *ImGrad_Mum = nullptr;
   double a, b, c, d, er, ez, f, fa1;
   double s1, s2, s3, s4;
   double s1z, s2z, s3z, s4z;
   double ss;
   double energy, piarea, facux, facuy;
-  int cc, j, np;
-  Cell *cell = NULL;
-  Particle *p1;
+  int j;
 
   facux = 2.0 * M_PI / box_l[0];
   facuy = 2.0 * M_PI / box_l[1];
@@ -332,7 +330,6 @@ double get_DLC_energy_dipolar(int kcut) {
   double a, b, c, d, er, ez, f, fa1;
   double s1;
   double energy, piarea, facux, facuy;
-  int cc, j, np;
 
   n_local_particles = local_cells.particles().size();
 
@@ -407,13 +404,10 @@ double get_DLC_energy_dipolar(int kcut) {
 ************************************************************************** */
 
 void add_mdlc_force_corrections() {
-  Cell *cell;
-  Particle *p;
-  int i, c, np, ip;
-  int cc;
+  int i, ip;
   int dip_DLC_kcut;
-  double *dip_DLC_f_x = NULL, *dip_DLC_f_y = NULL, *dip_DLC_f_z = NULL;
-  double *dip_DLC_t_x = NULL, *dip_DLC_t_y = NULL, *dip_DLC_t_z = NULL;
+  double *dip_DLC_f_x = nullptr, *dip_DLC_f_y = nullptr, *dip_DLC_f_z = nullptr;
+  double *dip_DLC_t_x = nullptr, *dip_DLC_t_y = nullptr, *dip_DLC_t_z = nullptr;
   double dip_DLC_energy = 0.0;
   double mz = 0.0, mx = 0.0, my = 0.0, volume, mtot = 0.0;
 #if defined(ROTATION) && defined(DP3M)

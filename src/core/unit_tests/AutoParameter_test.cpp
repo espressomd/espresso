@@ -24,6 +24,27 @@ BOOST_AUTO_TEST_CASE(direct_binding) {
   BOOST_CHECK(i == 42);
 }
 
+BOOST_AUTO_TEST_CASE(method_pointer) {
+  using namespace ScriptInterface;
+
+  class A {
+    int m_i;
+
+  public:
+    int i() const { return m_i; }
+    void set_i(int const &i) { m_i = i; }
+  };
+
+  A a;
+
+  auto p = AutoParameter("i", &a, &A::set_i, &A::i);
+
+  BOOST_CHECK(p.type == VariantType::INT);
+
+  p.set(42);
+  BOOST_CHECK(boost::get<int>(p.get()) == 42);
+}
+
 BOOST_AUTO_TEST_CASE(read_only) {
   using namespace ScriptInterface;
   const int i = 12;

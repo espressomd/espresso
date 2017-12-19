@@ -22,6 +22,11 @@
 */
 #include "p3m-common.hpp"
 
+#include "errorhandling.hpp"
+
+/* For debug messages */
+extern int this_node;
+
 #if defined(P3M) || defined(DP3M)
 
 void p3m_common_parameter_pre_init(p3m_parameter_struct *params) {

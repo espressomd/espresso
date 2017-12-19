@@ -21,10 +21,11 @@
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 #include "cuda_init.hpp"
-#ifdef BARNES_HUT
+#ifdef DIPOLAR_BARNES_HUT
 // just for the required BH data types
 #include "actor/DipolarBarnesHut_cuda.cuh"
 #endif
+#include "errorhandling.hpp"
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
@@ -126,7 +127,7 @@ __global__ void split_kernel_quatu(CUDA_particle_data *particles, float *quatu, 
 }
 
 void EspressoSystemInterface::reallocDeviceMemory(int n) {
-#ifdef BARNES_HUT
+#ifdef DIPOLAR_BARNES_HUT
   if ((n != m_gpu_npart) || (m_blocks == 0) || (m_bhnnodes == 0))
   {
       int devID = -1;
@@ -203,29 +204,29 @@ void EspressoSystemInterface::reallocDeviceMemory(int n) {
    if (m_boxl.minp != 0) cuda_safe_mem(cudaFree(m_boxl.minp));
    cuda_safe_mem(cudaMalloc((void **)&m_boxl.minp, sizeof(float) * m_blocks * 3));
   }
-#endif // BARNES_HUT
+#endif // DIPOLAR_BARNES_HUT
   if(m_needsRGpu && ((n != m_gpu_npart) || (m_r_gpu_begin == 0))) {
     if(m_r_gpu_begin != 0)
       cuda_safe_mem(cudaFree(m_r_gpu_begin));
-#ifndef BARNES_HUT
+#ifndef DIPOLAR_BARNES_HUT
     cuda_safe_mem(cudaMalloc(&m_r_gpu_begin, 3*n*sizeof(float)));
     m_r_gpu_end = m_r_gpu_begin + 3*n;
 #else
     cuda_safe_mem(cudaMalloc(&m_r_gpu_begin, 3 * (m_bhnnodes + 1) * sizeof(float)));
     m_r_gpu_end = m_r_gpu_begin + 3 * (m_bhnnodes + 1);
-#endif // BARNES_HUT
+#endif // DIPOLAR_BARNES_HUT
   }
 #ifdef DIPOLES
   if(m_needsDipGpu && ((n != m_gpu_npart) || (m_dip_gpu_begin == 0))) {
     if(m_dip_gpu_begin != 0)
       cuda_safe_mem(cudaFree(m_dip_gpu_begin));
-#ifndef BARNES_HUT
+#ifndef DIPOLAR_BARNES_HUT
     cuda_safe_mem(cudaMalloc(&m_dip_gpu_begin, 3*n*sizeof(float)));
     m_dip_gpu_end = m_dip_gpu_begin + 3*n;
 #else
     cuda_safe_mem(cudaMalloc(&m_dip_gpu_begin, 3 * (m_bhnnodes + 1) * sizeof(float)));
     m_dip_gpu_end = m_dip_gpu_begin + 3 * (m_bhnnodes + 1);
-#endif // BARNES_HUT
+#endif // DIPOLAR_BARNES_HUT
   }
 #endif
   if(m_needsVGpu && ((n != m_gpu_npart) || (m_v_gpu_begin == 0))) {

@@ -91,7 +91,7 @@ Of particular importance for self-propulsion at low Reynolds number is the fact 
 
 In \es{} one can model both pushers and pullers using the following command. Say we want to set up a pusher with ID 0 at the position $(1,1,1)$ that has a dipolar strength of 0.1. Then we need to first set up the LB fluid (on the GPU) by invoking
 \begin{espresso}
-lbf = espressomd.lb.LBFluid_GPU(agrid=1, dens=1.0, visc=1.0, tau=0.01, fric=20.0, couple='3pt')
+lbf = espressomd.lb.LBFluidGPU(agrid=1, dens=1.0, visc=1.0, tau=0.01, fric=20.0, couple='3pt')
 system.actors.add(lbf)
 system.thermostat.set_lb(kT=0.0)
 \end{espresso}
