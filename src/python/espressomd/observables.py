@@ -29,41 +29,159 @@ class Observable(ScriptInterfaceHelper):
 
 @script_interface_register
 class ComForce(Observable):
+    """Calculates the total force on particles with given ids.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+
+    """
     _so_name="Observables::ComForce"
 
 
 @script_interface_register
 class ComPosition(Observable):
+    """Calculates the center of mass for particles with given ids.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+
+    """
     _so_name="Observables::ComPosition"
 
 
 @script_interface_register
 class ComVelocity(Observable):
+    """Calculates the center of mass velocity for particles with given ids.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+
+    """
     _so_name="Observables::ComVelocity"
 
 
 @script_interface_register
 class Current(Observable):
+    """Calculates the electric current for particles with given ids.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+
+    """
     _so_name="Observables::Current"
 
 
 @script_interface_register
 class DensityProfile(Observable):
+    """Calculates the particle density profile for particles with given ids.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+    n_x_bins : :obj:`int`
+               Number of bins in ``x`` direction.
+    n_y_bins : :obj:`int`
+                 Number of bins in ``y`` direction.
+    n_z_bins : :obj:`int`
+               Number of bins in ``z`` direction.
+    min_x : :obj:`float`
+            Minimum ``x`` to consider.
+    min_y : :obj:`float`
+              Minimum ``y`` to consider.
+    min_z : :obj:`float`
+            Minimum ``z`` to consider.
+    max_x : :obj:`float`
+            Maximum ``x`` to consider.
+    max_y : :obj:`float`
+              Maximum ``y`` to consider.
+    max_z : :obj:`float`
+            Maximum ``z`` to consider.
+
+    """
     _so_name="Observables::DensityProfile"
 
 
 @script_interface_register
 class DipoleMoment(Observable):
+    """Calculates the dipole moment for particles with given ids.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+
+    """
     _so_name="Observables::DipoleMoment"
 
 
 @script_interface_register
 class FluxDensityProfile(Observable):
+    """Calculates the particle flux density for particles with given ids.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+    n_x_bins : :obj:`int`
+               Number of bins in ``x`` direction.
+    n_y_bins : :obj:`int`
+                 Number of bins in ``y`` direction.
+    n_z_bins : :obj:`int`
+               Number of bins in ``z`` direction.
+    min_x : :obj:`float`
+            Minimum ``x`` to consider.
+    min_y : :obj:`float`
+              Minimum ``y`` to consider.
+    min_z : :obj:`float`
+            Minimum ``z`` to consider.
+    max_x : :obj:`float`
+            Maximum ``x`` to consider.
+    max_y : :obj:`float`
+              Maximum ``y`` to consider.
+    max_z : :obj:`float`
+            Maximum ``z`` to consider.
+
+    """
     _so_name="Observables::FluxDensityProfile"
 
 
 @script_interface_register
 class ForceDensityProfile(Observable):
+    """Calculates the force density profile for particles with given ids.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+    n_x_bins : :obj:`int`
+               Number of bins in ``x`` direction.
+    n_y_bins : :obj:`int`
+                 Number of bins in ``y`` direction.
+    n_z_bins : :obj:`int`
+               Number of bins in ``z`` direction.
+    min_x : :obj:`float`
+            Minimum ``x`` to consider.
+    min_y : :obj:`float`
+              Minimum ``y`` to consider.
+    min_z : :obj:`float`
+            Minimum ``z`` to consider.
+    max_x : :obj:`float`
+            Maximum ``x`` to consider.
+    max_y : :obj:`float`
+              Maximum ``y`` to consider.
+    max_z : :obj:`float`
+            Maximum ``z`` to consider.
+
+    """
     _so_name="Observables::ForceDensityProfile"
 
 
@@ -74,12 +192,20 @@ class LBVelocityProfile(Observable):
 
 @script_interface_register
 class MagneticDipoleMoment(Observable):
+    """Calculates the magnetic dipole moment for particles with given ids.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+
+    """
     _so_name="Observables::MagneticDipoleMoment"
 
 
 @script_interface_register
 class ParticleAngularVelocities(Observable):
-    _so_name="Observables::ParticleAngularVelocities"
+     _so_name="Observables::ParticleAngularVelocities"
 
 
 @script_interface_register
@@ -94,21 +220,53 @@ class ParticleBodyVelocities(Observable):
 
 @script_interface_register
 class ParticleCurrent(Observable):
+    """Calculates the particle current for particles with given ids.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+
+    """
     _so_name="Observables::ParticleCurrent"
 
 
 @script_interface_register
 class ParticleForces(Observable):
+    """Calculates the particle forces for particles with given ids.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+
+    """
     _so_name="Observables::ParticleForces"
 
 
 @script_interface_register
 class ParticlePositions(Observable):
+    """Calculates the particle positions for particles with given ids.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+
+    """
     _so_name="Observables::ParticlePositions"
 
 
 @script_interface_register
 class ParticleVelocities(Observable):
+    """Calculates the particle velocities for particles with given ids.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+
+    """
     _so_name="Observables::ParticleVelocities"
 
 

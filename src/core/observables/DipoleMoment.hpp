@@ -16,9 +16,9 @@ public:
 #ifdef ELECTROSTATICS
       double charge = partCfg[ids()[i]].p.q;
 
-      res[0] += charge * partCfg[ids()[i]].r.p[0];
-      res[1] += charge * partCfg[ids()[i]].r.p[1];
-      res[2] += charge * partCfg[ids()[i]].r.p[2];
+      res[0] = charge * partCfg[ids()[i]].r.p[0];
+      res[1] = charge * partCfg[ids()[i]].r.p[1];
+      res[2] = charge * partCfg[ids()[i]].r.p[2];
 #endif // ELECTROSTATICS
     }
     return res;
