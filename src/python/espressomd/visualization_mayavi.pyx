@@ -252,7 +252,7 @@ cdef class mayaviLive(object):
         assert isinstance(threading.current_thread(), threading._MainThread)
         self.gui.start_event_loop()
 
-    def registerCallback(self, cb, interval=1000):
+    def register_callback(self, cb, interval=1000):
         self.timers.append(Timer(interval, cb))
 
 # TODO: constraints
