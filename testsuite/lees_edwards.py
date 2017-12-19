@@ -3,7 +3,7 @@
 
 from __future__ import print_function
 
-import espressomd as md
+import espressomd
 import unittest as ut
 
 
@@ -19,14 +19,11 @@ class LeesEdwardsTest(ut.TestCase):
     comparison with the expected value."""
 
     # Systemclass
-    system = md.System()
+    system = espressomdmd.System(box_l=[5.0, 5.0, 5.0])
 
     # allowed deviation from analytical results
     tol = 10e-15
 
-    # Simulation box and integration parameters
-    box_l = 5.0
-    system.box_l = [box_l, box_l, box_l]
     time_step = 1.0
     system.time_step = time_step
     system.cell_system.skin = 0.4
