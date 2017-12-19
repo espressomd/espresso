@@ -90,10 +90,16 @@ cdef class System(object):
         cuda_init_handle
         comfixed
 
-    def __init__(self, box_l):
+    def __init__(self, **kwargs):
         global _system_created
         if (not _system_created):
-            self.box_l = box_l
+            if 'box_l' not in kwargs:
+                raise ValueError("Required argument box_l not provided.")
+            for arg in kwargs:
+                if arg in setable_properties:
+                    System.__setattr__(self, arg, kwargs.get(arg))
+                else:
+                    raise ValueError("Property {} can not be set via argument to System class.".format(arg))
             self.part = particle_data.ParticleList()
             self.non_bonded_inter = interactions.NonBondedInteractions()
             self.bonded_inter = interactions.BondedInteractions()
