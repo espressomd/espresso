@@ -130,8 +130,6 @@ static double fluidstep=0.0;
 #ifdef ADDITIONAL_CHECKS
 /** counts the random numbers drawn for fluctuating LB and the coupling */
 static int rancounter=0;
-/** counts the occurences of negative populations due to fluctuations */
-static int failcounter=0;
 #endif // ADDITIONAL_CHECKS
 
 /***********************************************************************/
@@ -3563,6 +3561,9 @@ static void lb_check_halo_regions() {
          lb_check_negative_n
       */
 #ifdef ADDITIONAL_CHECKS
+/** counts the occurences of negative populations due to fluctuations */
+static int failcounter=0;
+
 static void lb_lattice_sum() {
 
     double *w   = lbmodel.w;

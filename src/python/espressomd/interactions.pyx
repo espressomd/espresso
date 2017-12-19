@@ -20,6 +20,7 @@ from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from . import utils
 
+
 # Non-bonded interactions
 
 cdef class NonBondedInteraction(object):
@@ -28,7 +29,7 @@ cdef class NonBondedInteraction(object):
     Either called with two particle type id, in which case, the interaction
     will represent the bonded interaction as it is defined in Espresso core
     Or called with keyword arguments describing a new interaction.
-    
+
     """
 
     cdef public object _part_types
@@ -1347,7 +1348,7 @@ class NonBondedInteractionHandle(object):
     """
     Provides access to all Non-bonded interactions between
     two particle types.
-    
+
     """
 
     type1 = -1
@@ -1496,7 +1497,7 @@ cdef class BondedInteraction(object):
 
     def is_valid(self):
         """Check, if the data stored in the instance still matches what is in Espresso.
-        
+
         """
         # Check if the bond type in Espresso still matches the bond type saved
         # in this class
@@ -1536,7 +1537,7 @@ cdef class BondedInteraction(object):
 
     def __getattribute__(self, name):
         """Every time _set_params_in_es_core is called, the parameter dict is also updated.
-        
+
         """
         attr = object.__getattribute__(self, name)
         if hasattr(attr, '__call__') and attr.__name__ == "_set_params_in_es_core":
@@ -2007,11 +2008,20 @@ IF TABULATED == 1:
 
             Parameters
             ----------
-            type : :obj:`str`
-                   Specifies the type of bonded interaction. Possible inputs:
-                   'distance', 'angle' and 'dihedral'.
-            filename : :obj`str`
-                       Filename of the tabular.
+
+            type : :obj:`string`,
+                The type of bond, one of 'distance', 'angle' or
+                'dihedral'.
+            min : :obj:`float`,
+                The minimal interaction distance. Has to be 0 if
+                type is 'angle' or 'dihedral'
+            max : :obj:`float`,
+                The maximal interaction distance. Has to be pi if
+                type is 'angle' or 2pi if 'dihedral'
+            energy: array_like :obj:`float`
+                The energy table.
+            force: array_like :obj:`float`
+                The force table.
 
             """
             super(Tabulated, self).__init__(*args, **kwargs)
@@ -2029,31 +2039,29 @@ IF TABULATED == 1:
             """All parameters that can be set.
 
             """
-            return "type", "filename", "npoints", "minval", "maxval", "invstepsize"
+            return "type", "min", "max", "energy", "force"
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return "type", "filename"
+            return "type", "min", "max", "energy", "force"
 
         def set_default_params(self):
             """Sets parameters that are not required to their default value.
 
             """
-            self._params = {"type": "bond", "filename": ""}
+            self._params = {'min': -1., 'max': -1., 'energy': [], 'force': []}
 
         def _get_params_from_es_core(self):
             make_bond_type_exist(self._bond_id)
             res = \
                 {"type": bonded_ia_params[self._bond_id].p.tab.type,
-                 "filename":
-                     utils.to_str(
-                         bonded_ia_params[self._bond_id].p.tab.filename),
-                 "npoints": bonded_ia_params[self._bond_id].p.tab.npoints,
-                 "minval": bonded_ia_params[self._bond_id].p.tab.minval,
-                 "maxval": bonded_ia_params[self._bond_id].p.tab.maxval,
-                 "invstepsize": bonded_ia_params[self._bond_id].p.tab.invstepsize}
+                 "min": bonded_ia_params[self._bond_id].p.tab.pot.minval,
+                 "max": bonded_ia_params[self._bond_id].p.tab.pot.maxval,
+                 "energy": bonded_ia_params[self._bond_id].p.tab.pot.energy_tab,
+                 "force": bonded_ia_params[self._bond_id].p.tab.pot.force_tab
+                }
             if res["type"] == 1:
                 res["type"] = "distance"
             if res["type"] == 2:
@@ -2065,36 +2073,27 @@ IF TABULATED == 1:
         def _set_params_in_es_core(self):
             if self._params["type"] == "distance":
                 type_num = 1
+            elif self._params["type"] == "angle":
+                type_num = 2
+            elif self._params["type"] == "dihedral":
+                type_num = 3
             else:
-                if self._params["type"] == "angle":
-                    type_num = 2
-                else:
-                    if self._params["type"] == "dihedral":
-                        type_num = 3
-                    else:
-                        raise ValueError(
-                            "Tabulated type needs to be distance, angle, or diherdal")
+                raise ValueError(
+                    "Tabulated type needs to be distance, angle, or diherdal")
 
             res = tabulated_bonded_set_params(
-                self._bond_id, < TabulatedBondedInteraction > type_num, utils.to_char_pointer(self._params["filename"]))
-            msg = ""
+                self._bond_id, < TabulatedBondedInteraction > type_num,
+                self._params["min"],
+                self._params["max"],
+                self._params["energy"],
+                self._params["force"])
+
             if res == 1:
-                msg = "unknon bond type"
-            if res == 3:
-                msg = "cannot open file"
-            if res == 4:
-                msg = "file too short"
-            if msg == 5:
-                msg = "file broken"
-            if msg == 6:
-                msg = "parameter out of bound"
-            if res:
-                raise Exception("Could not setup tabulated bond. " + msg)
+                raise Exception("Could not setup tabulated bond. Invalid bond type.")
             # Retrieve some params, Es calculates.
             self._params = self._get_params_from_es_core()
 
     cdef class TabulatedNonBonded(NonBondedInteraction):
-
         cdef int state
 
         def __init__(self, *args, **kwargs):
@@ -2105,7 +2104,7 @@ IF TABULATED == 1:
             return "TABULATED_NONBONDED"
 
         def type_name(self):
-            """Name of interaction type.
+            """Name of the potential.
 
             """
             return "TABULATED"
@@ -2114,31 +2113,55 @@ IF TABULATED == 1:
             """All parameters that can be set.
 
             """
-            return "filename"
+            return "min", "max", "energy", "force"
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return ["filename", ]
+            return ["min", "max", "energy", "force"]
+
+        def set_params(self, **kwargs):
+            """ Set parameters for the TabulatedNonBonded interaction.
+
+            Parameters
+            ----------
+
+            min : :obj:`float`,
+                  The minimal interaction distance.
+            max : :obj:`float`,
+                  The maximal interaction distance.
+            energy: array_like :obj:`float`
+                  The energy table.
+            force: array_like :obj:`float`
+                  The force table.
+
+            """
+            super(TabulatedNonBonded, self).set_params(**kwargs)
 
         def set_default_params(self):
             """Sets parameters that are not required to their default value.
 
             """
-            self._params = {"filename": ""}
+            self._params = {'min': -1., 'max': -1, 'energy': [], 'force': []}
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
-            ia_params = get_ia_param_safe(
+            cdef ia_parameters * ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
-            return {
-                "filename": utils.to_str(ia_params.TAB_filename)}
+
+            return {'min': ia_params.TAB.minval,
+                    'max': ia_params.TAB.maxval,
+                    'energy': ia_params.TAB.energy_tab,
+                    'force': ia_params.TAB.force_tab}
 
         def _set_params_in_es_core(self):
-            self.state = tabulated_set_params(self._part_types[0], self._part_types[
-                                              1], utils.to_char_pointer(self._params["filename"]))
+            self.state = tabulated_set_params(self._part_types[0],
+                                              self._part_types[1],
+                                              self._params["min"],
+                                              self._params["max"],
+                                              self._params["energy"],
+                                              self._params["force"])
 
         def is_active(self):
             """Check if interaction is active.
@@ -2149,7 +2172,6 @@ IF TABULATED == 1:
 
 IF TABULATED != 1:
     class Tabulated(BondedInteraction):
-
         def type_number(self):
             raise Exception("TABULATED has to be defined in myconfig.hpp.")
 

@@ -31,8 +31,7 @@ class AnalyzeChain(ut.TestCase):
         head_id = 0
         tail_id = head_id+self.num_mono
         cm=np.mean(self.system.part[head_id:tail_id].pos, axis=0)
-        self.system.part[head_id:tail_id].pos -= cm
-        self.system.part[head_id:tail_id].pos += self.system.box_l
+        self.system.part[head_id:tail_id].pos = self.system.part[head_id:tail_id].pos - cm + self.system.box_l
         head_id = self.num_mono+1
         tail_id = head_id+self.num_mono
         cm=np.mean(self.system.part[head_id:tail_id].pos, axis=0)
@@ -106,7 +105,7 @@ class AnalyzeChain(ut.TestCase):
     def test_radii(self):
         # increase PBC for remove mirror images
         old_pos = self.system.part[:].pos.copy()
-        self.system.box_l *= 2.
+        self.system.box_l = self.system.box_l * 2.
         self.system.part[:].pos = old_pos
         # compare calc_re()
         core_re = self.system.analysis.calc_re(chain_start=0,
@@ -124,14 +123,14 @@ class AnalyzeChain(ut.TestCase):
                                                chain_length=self.num_mono)
         self.assertTrue( np.allclose(core_rh, self.calc_rh()))
         # restore PBC
-        self.system.box_l /= 2.
+        self.system.box_l = self.system.box_l / 2.
         self.system.part[:].pos = old_pos
 
     # test core results versus python variants (no PBC)
     def test_chain_rdf(self):
         # increase PBC for remove mirror images
         old_pos = self.system.part[:].pos.copy()
-        self.system.box_l *= 2.
+        self.system.box_l = self.system.box_l * 2.
         self.system.part[:].pos = old_pos
         r_min = 0.0
         r_max = 100.0
@@ -162,7 +161,7 @@ class AnalyzeChain(ut.TestCase):
         # min rdf
         self.assertTrue( np.allclose(core_rdf[:,3]*bin_volume*num_pair_poly/box_volume, rdf[2]))
         # restore PBC
-        self.system.box_l /= 2.
+        self.system.box_l = self.system.box_l / 2.
         self.system.part[:].pos = old_pos
 
 if __name__ == "__main__":

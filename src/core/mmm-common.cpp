@@ -28,13 +28,15 @@
     electrostatic interactions in 2D slab geometries", Comp. Phys. Comm., 148/3(2002),327-348.
 */
 
+#include "config.hpp"
+
 #include "mmm-common.hpp"
 #include "utils.hpp"
 
-Polynom *modPsi = nullptr;
+std::vector<Polynom> modPsi;
 int      n_modPsi = 0;
 
-static void preparePolygammaEven(int n, double binom, Polynom *series)
+static void preparePolygammaEven(int n, double binom, Polynom &series)
 {
   /* (-0.5 n) psi^2n/2n! (-0.5 n) and psi^(2n+1)/(2n)! series expansions
      note that BOTH carry 2n! */
@@ -46,41 +48,39 @@ static void preparePolygammaEven(int n, double binom, Polynom *series)
   if (n == 0) {
     // psi^0 has a slightly different series expansion
     maxx = 0.25;
-    alloc_doublelist(series, 1);
-    series->e[0] = 2*(1 - C_GAMMA);
+    series.resize(1);
+    series[0] = 2*(1 - C_GAMMA);
     for (order = 1;; order += 1) {
       x_order = 2*order;
       coeff = -2*hzeta(x_order + 1, 2);
       if (fabs(maxx*coeff)*(4.0/3.0) < ROUND_ERROR_PREC)
 	break;
-      realloc_doublelist(series, order + 1);
-      series->e[order] = coeff;
+      series.push_back(coeff);
+
       maxx *= 0.25;
     }
-    series->n = order;
   }
   else {
     // even, n > 0
     maxx = 1;
     pref = 2;
-    init_doublelist(series);
+    
     for (order = 0;; order++) {
       // only even exponents of x
       x_order = 2*order;
       coeff = pref*hzeta(1 + deriv + x_order, 2);
       if ((fabs(maxx*coeff)*(4.0/3.0) < ROUND_ERROR_PREC) && (x_order > deriv))
 	break;
-      realloc_doublelist(series, order + 1);
-      series->e[order] = -binom*coeff;
+      series.push_back(-binom*coeff);
+
       maxx *= 0.25;
       pref *= (1.0 + deriv/(x_order + 1));
       pref *= (1.0 + deriv/(x_order + 2));
     }
-    series->n = order;
   }
 }
 
-static void preparePolygammaOdd(int n, double binom, Polynom *series)
+static void preparePolygammaOdd(int n, double binom, Polynom &series)
 {
   int order;
   double deriv;
@@ -90,20 +90,19 @@ static void preparePolygammaOdd(int n, double binom, Polynom *series)
   maxx = 0.5;
   // to get 1/(2n)! instead of 1/(2n+1)!
   pref = 2*deriv*(1 + deriv);
-  init_doublelist(series);
+
   for (order = 0;; order++) {
     // only odd exponents of x
     x_order = 2*order + 1;
     coeff = pref*hzeta(1 + deriv + x_order, 2);
     if ((fabs(maxx*coeff)*(4.0/3.0) < ROUND_ERROR_PREC) && (x_order > deriv))
       break;
-    realloc_doublelist(series, order + 1);
-    series->e[order] = -binom*coeff;
+
+    series.push_back( -binom*coeff);
     maxx *= 0.25;
     pref *= (1.0 + deriv/(x_order + 1));
     pref *= (1.0 + deriv/(x_order + 2));
   }
-  series->n = order;
 }
 
 void create_mod_psi_up_to(int new_n)
@@ -114,15 +113,15 @@ void create_mod_psi_up_to(int new_n)
   if (new_n > n_modPsi) {
     int old = n_modPsi;
     n_modPsi = new_n;
-    modPsi = Utils::realloc(modPsi, 2*n_modPsi*sizeof(Polynom));
+    modPsi.resize(2*n_modPsi);
 
     binom = 1.0;
     for (n = 0; n < old; n++)
       binom *= (-0.5 - n)/(double)(n+1);
 
     for (; n < n_modPsi; n++) {
-      preparePolygammaEven(n, binom, &modPsi[2*n]);
-      preparePolygammaOdd(n, binom, &modPsi[2*n + 1]);
+      preparePolygammaEven(n, binom, modPsi[2*n]);
+      preparePolygammaOdd(n, binom, modPsi[2*n + 1]);
       binom *= (-0.5 - n)/(double)(n+1);
     }
   }

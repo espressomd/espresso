@@ -3376,13 +3376,13 @@ void ek_print_parameters() {
   printf( "  float reaction_ct_rate = %f;\n",           ek_parameters.reaction_ct_rate); 
   printf( "  float reaction_fraction_0 = %f;\n",        ek_parameters.reaction_fraction_0);
   printf( "  float reaction_fraction_1 = %f;\n",        ek_parameters.reaction_fraction_0);
-  printf( "  float* j = %p;\n",                         ek_parameters.j );
+  printf( "  float* j = %p;\n",                         (void*) ek_parameters.j );
   
   printf( "  float* rho[] = {%p, %p, %p, %p, %p, %p, %p, %p, %p, %p};\n",
-          ek_parameters.rho[0], ek_parameters.rho[1], ek_parameters.rho[2],
-          ek_parameters.rho[3], ek_parameters.rho[4], ek_parameters.rho[5],
-          ek_parameters.rho[6], ek_parameters.rho[7], ek_parameters.rho[8],
-          ek_parameters.rho[9]                                              );
+          (void*) ek_parameters.rho[0], (void*) ek_parameters.rho[1], (void*) ek_parameters.rho[2],
+          (void*) ek_parameters.rho[3], (void*) ek_parameters.rho[4], (void*) ek_parameters.rho[5],
+          (void*) ek_parameters.rho[6], (void*) ek_parameters.rho[7], (void*) ek_parameters.rho[8],
+          (void*) ek_parameters.rho[9]                                              );
   
   printf( "  int species_index[] = {%d, %d, %d, %d, %d, %d, %d, %d, %d, %d};\n",
           ek_parameters.species_index[0], ek_parameters.species_index[1],

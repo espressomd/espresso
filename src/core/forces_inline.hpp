@@ -333,7 +333,9 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 
 /** The inter dpd force should not be part of the virial */
 #ifdef DPD
-  add_dpd_pair_force(p1, p2, ia_params, d, dist, dist2);
+  if (thermo_switch & THERMO_DPD) {
+    add_dpd_pair_force(p1, p2, ia_params, d, dist, dist2);
+  }
 #endif
 
 /***********************************************/

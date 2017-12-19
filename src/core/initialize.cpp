@@ -25,6 +25,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "correlators/Correlator.hpp"
+#include "accumulators/Accumulator.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 #include "debye_hueckel.hpp"
@@ -38,7 +39,6 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "iccp3m.hpp" /* -iccp3m- */
-#include "interaction_data.hpp"
 #include "lattice.hpp"
 #include "lb.hpp"
 #include "lbboundaries.hpp"
@@ -83,12 +83,6 @@ static int reinit_particle_comm_gpu = 1;
 void on_program_start() {
   EVENT_TRACE(fprintf(stderr, "%d: on_program_start\n", this_node));
 
-/* tell Electric fence that we do realloc(0) on purpose. */
-#ifdef EFENCE
-  extern int EF_ALLOW_MALLOC_0;
-  EF_ALLOW_MALLOC_0 = 1;
-#endif
-
 #ifdef CUDA
   cuda_init();
 #endif
@@ -104,8 +98,7 @@ void on_program_start() {
   topology_init(CELL_STRUCTURE_DOMDEC, &local_cells);
 
   ghost_init();
-  /* Initialise force and energy tables */
-  force_and_energy_tables_init();
+
 #ifdef P3M
   p3m_pre_init();
 #endif
@@ -143,7 +136,7 @@ void on_integration_start() {
   INTEG_TRACE(fprintf(
       stderr,
       "%d: on_integration_start: reinit_thermo = %d, resort_particles=%d\n",
-      this_node, reinit_thermo, resort_particles));
+      this_node, reinit_thermo, get_resort_particles()));
 
   /********************************************/
   /* sanity checks                            */
@@ -208,12 +201,16 @@ void on_integration_start() {
    */
   invalidate_obs();
   partCfg().invalidate();
+  invalidate_fetch_cache();
 
 #ifdef ADDITIONAL_CHECKS
-  check_global_consistency();
 
   if(!Utils::Mpi::all_compare(comm_cart, cell_structure.type)) {
     runtimeErrorMsg() << "Nodes disagree about cell system type.";
+  }
+
+  if(!Utils::Mpi::all_compare(comm_cart, get_resort_particles())) {
+    runtimeErrorMsg() << "Nodes disagree about resort type.";
   }
 
   if(!Utils::Mpi::all_compare(comm_cart, cell_structure.use_verlet_list)) {
@@ -228,6 +225,7 @@ void on_integration_start() {
   if (!Utils::Mpi::all_compare(comm_cart,coulomb.Dmethod))
     runtimeErrorMsg() << "Nodes disagree about dipolar long range method";
 #endif
+  check_global_consistency();
 #endif /* ADDITIONAL_CHECKS */
 
   on_observable_calc();
@@ -238,8 +236,7 @@ void on_observable_calc() {
   /* Prepare particle structure: Communication step: number of ghosts and ghost
    * information */
 
-  if (resort_particles)
-    cells_resort_particles(CELL_GLOBAL_EXCHANGE);
+  cells_update_ghosts();
 
 #ifdef ELECTROSTATICS
   if (reinit_electrostatics) {
@@ -283,10 +280,18 @@ void on_observable_calc() {
 #endif /*ifdef ELECTROSTATICS */
 }
 
+void on_particle_charge_change() {
+  reinit_electrostatics = 1;
+  invalidate_obs();
+
+  /* the particle information is no longer valid */
+  partCfg().invalidate();
+}
+
 void on_particle_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_particle_change\n", this_node));
 
-  resort_particles = 1;
+  set_resort_particles(Cells::RESORT_LOCAL);
   reinit_electrostatics = 1;
   reinit_magnetostatics = 1;
 
@@ -300,6 +305,9 @@ void on_particle_change() {
 
   /* the particle information is no longer valid */
   partCfg().invalidate();
+
+  /* the particle information is no longer valid */
+  invalidate_fetch_cache();
 }
 
 void on_coulomb_change() {
@@ -560,13 +568,23 @@ void on_temperature_change() {
 
 void on_parameter_change(int field) {
   EVENT_TRACE(
-      fprintf(stderr, "%d: on_parameter_change %d\n", this_node, field));
+      fprintf(stderr, "%d: shon_parameter_change %d\n", this_node, field));
 
   switch (field) {
   case FIELD_BOXL:
     grid_changed_box_l();
 #ifdef SCAFACOS
-    Scafacos::update_system_params();
+    #ifdef ELECTROSTATICS
+    if (coulomb.method == COULOMB_SCAFACOS) {
+      Scafacos::update_system_params(); 
+    }
+    #endif
+    #ifdef DIPOLES
+    if (coulomb.Dmethod == DIPOLAR_SCAFACOS) {
+      Scafacos::update_system_params(); 
+    }
+    #endif
+
 #endif
     /* Electrostatics cutoffs mostly depend on the system size,
        therefore recalculate them. */
@@ -581,7 +599,17 @@ void on_parameter_change(int field) {
     cells_on_geometry_change(0);
   case FIELD_PERIODIC:
 #ifdef SCAFACOS
-      Scafacos::update_system_params();
+    #ifdef ELECTROSTATICS
+    if (coulomb.method == COULOMB_SCAFACOS) {
+      Scafacos::update_system_params(); 
+    }
+    #endif
+    #ifdef DIPOLES
+    if (coulomb.Dmethod == DIPOLAR_SCAFACOS) {
+      Scafacos::update_system_params(); 
+    }
+    #endif
+
 #endif
     cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
     break;

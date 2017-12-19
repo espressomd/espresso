@@ -36,7 +36,7 @@ The following minimal example illustrates how to use the LBM in |es|::
 
 To use the GPU accelerated variant, replace line 5 in the example above by::
 
-    lb = espressomd.lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tua=0.01)
+    lb = espressomd.lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=0.01)
 
 .. note:: `Feature LB or LB_GPU required`
 
@@ -52,9 +52,9 @@ must be a multiple of ``agrid``.
 
 In the following, we discuss the parameters that can be supplied to the LBM in |es|. The detailed interface definition is available at :class:`espressomd.lb.LBFluid`.
 
-In the LB scheme and the MD scheme are not synchronized: In one LB time
+The LB scheme and the MD scheme are not synchronized: In one LB time
 step typically several MD steps are performed. This allows to speed up
-the simulations and is adjusted with the parameter ``tau``, the LB timestep.
+the simulations and is adjusted with the parameter ``tau``, the LB time step.
 The parameters ``dens`` and ``visc`` set up the density and (kinematic) viscosity of the
 LB fluid in (usual) MD units. Internally the LB implementation works
 with a different set of units: all lengths are expressed in ``agrid``, all times
@@ -70,7 +70,7 @@ parameters that were applied.
 In the following, we describe a number of optional parameters.
 The parameter ``ext_force`` takes a three dimensional vector as an `array_like`, representing a homogeneous external body force density in MD units to be applied to the fluid. The
 parameter ``bulk_visc`` allows one to tune the bulk viscosity of the fluid and is given in
-MD units. In the limit of low Mach number, the flow does not compress the fluid and the resulting flow field is therefore independent of the bulk viscosity. It is however known that the values of the viscosity does affect
+MD units. In the limit of low Mach number, the flow does not compress the fluid and the resulting flow field is therefore independent of the bulk viscosity. It is however known that the value of the viscosity does affect
 the quality of the implemented link-bounce-back method. ``gamma_even`` and ``gamma_odd`` are the
 relaxation parameters for the kinetic modes. These fluid parameters do not correspond to any macroscopic fluid properties, but do influence numerical properties of the algorithm, such as the magnitude of the error at boundaries. Unless you are an expert, leave their defaults unchanged. If you do change them, note that they are to be given in LB units.
 
@@ -88,14 +88,14 @@ version only) is extended to a two-component Shan-Chen (SC) method.
   used, otherwise they are set to the default values. The three elements
   of the coupling matrix can be supplied with the option ``sc_coupling``, and the
   mobility coefficient can be specified with the option ``mobility``. By default no
-  copuling is activated, and the relaxation parameter associated to the
+  coupling is activated, and the relaxation parameter associated to the
   mobility is zero, corresponding to an infinite value for ``mobility``. Additional
   details are given in [sec:shanchen] and [sec:scmd-coupling].
 
 ..
   lbfluid print_interpolated_velocity
 
-  This variant returns the velocity at point in countinous space. This can
+  This variant returns the velocity at point in continuous space. This can
   make it easier to calculate flow profiles independent of the lattice
   constant.
 
@@ -108,14 +108,14 @@ Checkpointing
     lb.load_checkpoint(path, binary)
 
 The first command saves all of the LB fluid nodes' populations
-to an ascii (``binary=0``) or binary (``binary=0``) format respectively. The load command loads
+to an ascii (``binary=0``) or binary (``binary=1``) format respectively. The load command loads
 the populations from a checkpoint file written with ``lb.save_checkpoint``. In both cases ``path`` specifies the location of the checkpoint file. This is useful for restarting a simulation either
 on the same machine or a different machine. Some care should be taken
 when using the binary format as the format of doubles can depend on both
 the computer being used as well as the compiler. One thing that one
 needs to be aware of is that loading the checkpoint also requires the
 user to reuse the old forces. This is necessary since the coupling force
-between the paricles and the fluid has already been applied to the
+between the particles and the fluid has already been applied to the
 fluid. Failing to reuse the old forces breaks momentum conservation,
 which is in general a problem. It is particularly problematic for bulk
 simulations as the system as a whole acquires a drift of the center of
@@ -148,7 +148,7 @@ using a three point scheme which couples the particles to the nearest 27
 LB nodes. This can be called using “lbfluid 3pt” and is described in
 Dünweg and Ladd by equation 301 :cite:`duenweg08a`. Note that
 the three point coupling scheme is incompatible with the Shan Chen
-Lattice Boltmann. The frictional force tends to decrease the relative
+Lattice Boltzmann. The frictional force tends to decrease the relative
 velocity between the fluid and the particle whereas the random forces
 are chosen so large that the average kinetic energy per particle
 corresponds to the given temperature, according to a fluctuation
@@ -190,7 +190,7 @@ the momentum modes, since they are not conserved quantities in the
 Shan-Chen method, by using the option ``mobility``. The mobility transport
 coefficient expresses the propensity of the two components to mutually
 diffuse, and, differently from other transport coefficients, only one
-value is needed, as it carachterizes the mixture as a whole. When
+value is needed, as it characterizes the mixture as a whole. When
 thermal fluctuations are switched on, a random noise is added, in
 addition, also to the momentum modes. Differently from the other modes,
 a correlated noise is added to the momentum ones, in order to preserve
@@ -220,7 +220,7 @@ where the index :math:`\zeta=1,2` specifies the component,
 :math:`p=\sum_{\zeta} p_{\zeta}=\sum_{\zeta} c_s^2
 \rho_{\zeta}` is the internal pressure of the mixture (:math:`c_s` being
 the sound speed). Two fluctuating terms :math:`\hat{{\vec{\sigma}}}` and
-:math:`\hat{{\vec{\xi}}}_{\zeta}` are associated, respectivelu, to the
+:math:`\hat{{\vec{\xi}}}_{\zeta}` are associated, respectively, to the
 diffusive current :math:`{\vec{D}}_{\zeta}` and to the viscous stress
 tensor :math:`{\vec{\Pi}}`.
 
@@ -288,7 +288,7 @@ particle. The particle property (Chap. [chap:part]) sets the coupling
 constants :math:`\lambda_A`,\ :math:`\kappa_A`,\ :math:`\lambda_B` and
 :math:`\kappa_B`, where :math:`A` and :math:`B` denote the first and
 second fluid component, respectively. A complete description of the
-copuling scheme can be found in :cite:`sega13c`.
+coupling scheme can be found in :cite:`sega13c`.
 
 .. _SC component-dependent interactions between particles:
 
@@ -424,7 +424,7 @@ The following example sets up a system consisting of a spherical boundary in the
 
 After integrating the system for a sufficient time to reach the steady state, the hydrodynamic drag force exerted on the sphere is evaluated.
 
-The LB boundaries use the same ``shapes`` objects to spedify their geometry as ``constraints`` for particles do. This allows the user to quickly set up a system with boundary conditions that simultaneously act on the fluid and particles. For a complete description of all of the available shapes, refer to :meth:`espressomd.shapes`.
+The LB boundaries use the same ``shapes`` objects to specify their geometry as ``constraints`` for particles do. This allows the user to quickly set up a system with boundary conditions that simultaneously act on the fluid and particles. For a complete description of all of the available shapes, refer to :meth:`espressomd.shapes`.
 
 Intersecting boundaries are in principle possible but must be treated
 with care. In the current implementation, all nodes that are
@@ -454,10 +454,10 @@ Choosing between the GPU and CPU implementations
 Espresso contains an implementation of the LBM for NVIDIA
 GPUs using the CUDA framework. On CUDA-supporting machines this can be
 activated by compiling with the feature ``LB_GPU``. Within the
-Python script, the ``LBFluid`` object can be subsituted with the ``LBFluidGPU`` object to switch from CPU based to GPU based execution. For further
+Python script, the ``LBFluid`` object can be substituted with the ``LBFluidGPU`` object to switch from CPU based to GPU based execution. For further
 information on CUDA support see section :ref:`GPU Acceleration with CUDA`.
 
-The follwoing minimal example demonstrates how to use the GPU implementation of the LBM in analogy to the example for the CPU given in section :ref:`Setting up a LB fluid`::
+The following minimal example demonstrates how to use the GPU implementation of the LBM in analogy to the example for the CPU given in section :ref:`Setting up a LB fluid`::
 
     import espressomd
     sys = espressomd.System()
@@ -470,6 +470,7 @@ The follwoing minimal example demonstrates how to use the GPU implementation of 
 
 For boundary conditions analogous to the CPU
 implementation, the feature ``LB_BOUNDARIES_GPU`` has to be activated.
+The feature ``LB_GPU`` allows the use of Lees-Edwards boundary conditions. Our implementation follows the the paper of :cite:`wagner02`. Note, that there is no extra python interface for the use of Lees-Edwards boundary conditions with the LB algorithm. All information are rather internally derived from the set of the Lees-Edwards offset in the system class. For further information Lees-Edwards boundary conditions please refer to section :ref:`Lees-Edwards boundary conditions`
 
 Electrohydrodynamics
 --------------------
@@ -481,7 +482,7 @@ Electrohydrodynamics
     setmd mu_E
 
 If the feature is activated, the (non-GPU) Lattice Boltzmann Code can be
-used to implicitely model surrounding salt ions in an external electric
+used to implicitly model surrounding salt ions in an external electric
 field by having the charged particles create flow.
 
 For that to work, you need to set the electrophoretic mobility

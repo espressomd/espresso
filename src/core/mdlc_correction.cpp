@@ -41,6 +41,7 @@
 #include "p3m-dipolar.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
+#include "debug.hpp"
 
 #ifdef DIPOLES
 
@@ -140,9 +141,7 @@ double get_DLC_dipolar(int kcut, double *fx, double *fy, double *fz, double *tx,
   double s1z, s2z, s3z, s4z;
   double ss;
   double energy, piarea, facux, facuy;
-  int cc, j, np;
-  Cell *cell = nullptr;
-  Particle *p1;
+  int j;
 
   facux = 2.0 * M_PI / box_l[0];
   facuy = 2.0 * M_PI / box_l[1];
@@ -331,7 +330,6 @@ double get_DLC_energy_dipolar(int kcut) {
   double a, b, c, d, er, ez, f, fa1;
   double s1;
   double energy, piarea, facux, facuy;
-  int cc, j, np;
 
   n_local_particles = local_cells.particles().size();
 
@@ -406,10 +404,7 @@ double get_DLC_energy_dipolar(int kcut) {
 ************************************************************************** */
 
 void add_mdlc_force_corrections() {
-  Cell *cell;
-  Particle *p;
-  int i, c, np, ip;
-  int cc;
+  int i, ip;
   int dip_DLC_kcut;
   double *dip_DLC_f_x = nullptr, *dip_DLC_f_y = nullptr, *dip_DLC_f_z = nullptr;
   double *dip_DLC_t_x = nullptr, *dip_DLC_t_y = nullptr, *dip_DLC_t_z = nullptr;
