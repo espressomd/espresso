@@ -618,7 +618,7 @@ int ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
 /**
 * Deletes the particle with the given p_id. This method is intended to only
 * delete unbonded particles since bonds are coupled to ids. In addition this
-* function keeps track of that are created in in the particle id range. The
+* function keeps track of particles that are created in the particle id range. The
 * function create_particle() can then fill these holes again. This avoids the id
 * range to become excessively huge.
 */
@@ -882,7 +882,7 @@ int WangLandauReactionEnsemble::on_mc_use_WL_get_new_state() {
 */
 bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     int type, int start_id_polymer, int end_id_polymer,
-    int particle_number_of_type, bool use_wang_landau) {
+    int particle_number_of_type_to_be_changed, bool use_wang_landau) {
   m_tried_configurational_MC_moves += 1;
   bool got_accepted = false;
 
@@ -891,9 +891,8 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     on_reaction_entry(old_state_index);
   }
 
-  int p_id=-1;
-  particle_number_of_type=number_of_particles_with_type(type);
-  if (particle_number_of_type == 0) {
+  int particle_number_of_type=number_of_particles_with_type(type);
+  if (particle_number_of_type == 0 or particle_number_of_type_to_be_changed==0) {
     // reject
     if (use_wang_landau) {
       on_mc_rejection_directly_after_entry(old_state_index);
@@ -903,33 +902,24 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
 
   const double E_pot_old = calculate_current_potential_energy_of_system();
 
-  std::vector<double> particle_positions(3 * particle_number_of_type);
+  std::vector<double> particle_positions(3 * particle_number_of_type_to_be_changed);
   int changed_particle_counter = 0;
-  std::vector<int> p_id_s_changed_particles(particle_number_of_type);
+  std::vector<int> p_id_s_changed_particles;
 
   // save old_position
-  std::vector<double> temp_pos(3);
-  get_random_position_in_box(temp_pos.data());
-  while (changed_particle_counter < particle_number_of_type) {
-    if (changed_particle_counter == 0) {
-      p_id=get_random_p_id(type);
-    } else {
+  int p_id=get_random_p_id(type);
+  while (changed_particle_counter < particle_number_of_type_to_be_changed) {
       // determine a p_id you have not touched yet
-      while (is_in_list(p_id, p_id_s_changed_particles) or
-             changed_particle_counter == 0) {
-        p_id=get_random_p_id(type); // check wether you already touched this p_id
+      while (is_in_list(p_id, p_id_s_changed_particles)) {
+        p_id=get_random_p_id(type); // check wether you already touched this p_id, then reassign
       }
-    }
 
     auto part = get_particle_data(p_id);
-    double ppos[3];
-    memmove(ppos, part->r.p, 3 * sizeof(double));
 
-    particle_positions[3 * changed_particle_counter] = ppos[0];
-    particle_positions[3 * changed_particle_counter + 1] = ppos[1];
-    particle_positions[3 * changed_particle_counter + 2] = ppos[2];
-    place_particle(p_id, temp_pos.data());
-    p_id_s_changed_particles[changed_particle_counter] = p_id;
+    particle_positions[3 * changed_particle_counter] = part->r.p[0];
+    particle_positions[3 * changed_particle_counter + 1] = part->r.p[1];
+    particle_positions[3 * changed_particle_counter + 2] = part->r.p[2];
+    p_id_s_changed_particles.push_back(p_id);
     changed_particle_counter += 1;
   }
 
@@ -939,7 +929,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
       100 * particle_number_of_type; // important for very dense systems
   int attempts = 0;
   std::vector<double> new_pos(3);
-  while (changed_particle_counter < particle_number_of_type) {
+  while (changed_particle_counter < particle_number_of_type_to_be_changed) {
     p_id = p_id_s_changed_particles[changed_particle_counter];
     bool particle_inserted_too_close_to_another_one = true;
     while (particle_inserted_too_close_to_another_one && attempts < max_tries) {
@@ -948,6 +938,8 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
       //			get_random_position_in_box_enhanced_proposal_of_small_radii(new_pos);
       ////enhanced proposal of small radii
       place_particle(p_id, new_pos.data());
+//      auto part = get_particle_data(p_id);
+//      printf("new pos proposed %f %f %f\n", part->r.p[0], part->r.p[1], part->r.p[2]);
       double d_min = distto(partCfg(), new_pos.data(), p_id);
       if (d_min > exclusion_radius) {
         particle_inserted_too_close_to_another_one = false;
@@ -959,7 +951,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   if (attempts == max_tries) {
     // reversing
     // create particles again at the positions they were
-    for (int i = 0; i < particle_number_of_type; i++)
+    for (int i = 0; i < particle_number_of_type_to_be_changed; i++)
       place_particle(p_id_s_changed_particles[i], &particle_positions[3 * i]);
   }
 
@@ -999,8 +991,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
                                                                    // symmetric
   }
 
-  //	//correct for enhanced proposal of small radii by using the metropolis
-  //hastings algorithm for asymmetric proposal densities.
+  //	//correct for enhanced proposal of small radii by using the metropolis hastings algorithm for asymmetric proposal densities.
   //	double
   //old_radius=std::sqrt(std::pow(particle_positions[0]-cyl_x,2)+std::pow(particle_positions[1]-cyl_y,2));
   //	double
@@ -1023,14 +1014,14 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
       on_mc_reject(old_state_index);
     }
     // create particles again at the positions they were
-    for (int i = 0; i < particle_number_of_type; i++)
-      place_particle(p_id_s_changed_particles[i], &particle_positions[3 * i]);
-    // restore polymer particle again at original position
-    if (start_id_polymer >= 0 && end_id_polymer >= 0) {
-      // place_particle(random_polymer_particle_id, old_pos_polymer_particle);
-      for (int i = start_id_polymer; i <= end_id_polymer; i++)
-        place_particle(i, &old_pos_polymer_particle[3 * i]);
-    }
+    for (int i = 0; i < particle_number_of_type_to_be_changed; i++)
+        place_particle(p_id_s_changed_particles[i], &particle_positions[3 * i]);
+        // restore polymer particle again at original position
+        if (start_id_polymer >= 0 && end_id_polymer >= 0) {
+          // place_particle(random_polymer_particle_id, old_pos_polymer_particle);
+          for (int i = start_id_polymer; i <= end_id_polymer; i++)
+            place_particle(i, &old_pos_polymer_particle[3 * i]);
+        }
   }
   return got_accepted;
 }
@@ -1265,7 +1256,7 @@ void WangLandauReactionEnsemble::invalidate_bins() {
             collective_variables[EnergyCollectiveVariable_index]->delta_CV +
         collective_variables[EnergyCollectiveVariable_index]->CV_minimum;
     int flat_index_without_energy_CV =
-        get_flattened_index_wang_landau_without_EnergyCollectiveVariable(
+        get_flattened_index_wang_landau_without_energy_collective_variable(
             flattened_index, EnergyCollectiveVariable_index);
     std::shared_ptr<CollectiveVariable> energy_CV =
         collective_variables[EnergyCollectiveVariable_index];
@@ -1659,7 +1650,7 @@ void WangLandauReactionEnsemble::write_out_preliminary_energy_run_results(
 *collective variable.
 */
 int WangLandauReactionEnsemble::
-    get_flattened_index_wang_landau_without_EnergyCollectiveVariable(
+    get_flattened_index_wang_landau_without_energy_collective_variable(
         int flattened_index_with_EnergyCollectiveVariable,
         int CV_index_energy_observable) {
   // unravel index

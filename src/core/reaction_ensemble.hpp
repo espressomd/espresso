@@ -273,7 +273,7 @@ private:
   int used_bins = -10;             // for 1/t algorithm
   int monte_carlo_trial_moves = 0; // for 1/t algorithm
 
-  int get_flattened_index_wang_landau_without_EnergyCollectiveVariable(
+  int get_flattened_index_wang_landau_without_energy_collective_variable(
       int flattened_index_with_EnergyCollectiveVariable,
       int collective_variable_index_energy_observable); // needed for energy
 
