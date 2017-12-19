@@ -18,7 +18,7 @@ if(WITH_COVERAGE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
     link_libraries(gcov)
   else()
-    message(STATUS "Coverage information only supported on GCC")
+    message(WARNING "Coverage information only supported on GCC")
   endif()
 endif()
 

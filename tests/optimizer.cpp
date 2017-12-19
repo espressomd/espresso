@@ -92,4 +92,12 @@ BOOST_AUTO_TEST_CASE(ConstantFolder) {
 
     BOOST_CHECK_EQUAL(0, boost::get<double>(transformed));
   }
+
+  /* Evaluate AST */
+  {
+    auto expr = std::string("1 + 1");
+    auto ast = detail::parse<double>(expr.begin(), expr.end());
+    auto transformed = detail::ConstantFolder<double>{}(ast);
+    BOOST_CHECK_EQUAL(boost::get<double>(transformed), 1. + 1.);
+  }
 }
