@@ -349,7 +349,7 @@ if( WITH_CLANG_TIDY )
     message(STATUS "clang-tidy not found.")
   else()
     message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
-    set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}" "-checks=*,-clang-analyzer-alpha.*" "-warnings-as-errors=*")
+    set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}" "-checks=*,-clang-analyzer-alpha.*,-misc-unused-*,-google-*,-llvm-*,-modernize-*,-readability-*,-cppcoreguidelines-*,-clang-analyzer-deadcode*,-cert-*,-clang-analyzer-core.NullDereference,-clang-analyzer-core.DivideZero,-misc-misplaced-widening-cast,-misc-macro-parentheses,-clang-analyzer-security.FloatLoopCounter" "-warnings-as-errors=*")
   endif()
 endif()
 

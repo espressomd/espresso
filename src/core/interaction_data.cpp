@@ -305,7 +305,7 @@ void initialize_ia_params(IA_parameters *params) {
     params->TAB_startindex = 0;
   params->TAB_minval =
     params->TAB_stepsize = 0.0;
-  strcpy(params->TAB_filename,"");
+  strncpy(params->TAB_filename,"", MAXLENGTH_TABFILE_NAME);
   params->TAB_maxval = INACTIVE_CUTOFF;
 #endif
 
@@ -344,7 +344,7 @@ void initialize_ia_params(IA_parameters *params) {
 
 /** Copy interaction parameters. */
 void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
-  memmove(dst, src, sizeof(IA_parameters));
+  memmove(dst, src, sizeof(IA_parameters)); // NOLINT
 }
 
 IA_parameters *get_ia_param_safe(int i, int j) {

@@ -525,7 +525,7 @@ void File::Write(int write_dat, PartCfg &partCfg) {
   }
 }
 
-void File::ExtendDataset(std::string path, int *change_extent) {
+void File::ExtendDataset(const std::string & path, int *change_extent) {
   /* Until now the h5xx does not support dataset extending, so we
      have to use the lower level hdf5 library functions. */
   auto &dataset = datasets[path];
@@ -537,7 +537,7 @@ void File::ExtendDataset(std::string path, int *change_extent) {
   H5Sclose(ds);
   /* Extend the dataset for another timestep (extent = 1) */
   for (int i = 0; i < rank; i++) {
-    dims[i] += change_extent[i];
+    dims[i] += change_extent[i]; // NOLINT
   }
   H5Dset_extent(dataset.hid(), dims.data()); // extend all dims is collective
 }

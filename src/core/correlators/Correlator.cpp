@@ -248,7 +248,7 @@ void Correlator::initialize() {
   
   // Choose the compression function
   if (compressA_name=="") { // this is the default
-    compressA_name=strdup("discard2");
+    compressA_name=std::string("discard2");
     compressA=&compress_discard2;
   } else if ( compressA_name=="discard2")  {
     compressA=&compress_discard2;
@@ -262,7 +262,7 @@ void Correlator::initialize() {
   
   if (compressB_name=="") { 
     if(autocorrelation) { // the default for autocorrelation
-      compressB_name=strdup("none"); 
+      compressB_name=std::string("none");
       compressB=&compress_do_nothing;
     } else { // the default for corsscorrelation
       compressB_name=compressA_name;
@@ -315,7 +315,7 @@ void Correlator::initialize() {
 
   n_result=tau_lin+1 + (tau_lin+1)/2*(hierarchy_depth-1);
   tau = (int*)                Utils::malloc(n_result*sizeof(int));
-  n_sweeps = (unsigned int*)  Utils::malloc(n_result*sizeof(int));
+  n_sweeps = (unsigned int*)  Utils::malloc(n_result*sizeof(unsigned int));
   result_data  = (double*)    Utils::malloc(n_result*dim_corr*sizeof(double));
   n_vals = (unsigned int*) Utils::malloc(hierarchy_depth*sizeof(unsigned int));
 
@@ -323,6 +323,14 @@ void Correlator::initialize() {
   A = (double***)Utils::malloc(hierarchy_depth*sizeof(double**));
   if(autocorrelation) B = A;
   else B = (double***)Utils::malloc(hierarchy_depth*sizeof(double**));
+
+  if (A == nullptr) {
+    throw std::runtime_error( init_errors[9]);
+  }
+
+  if (B == nullptr && !autocorrelation) {
+    throw std::runtime_error( init_errors[10]);
+  }
 
   for (i=0; i<hierarchy_depth; i++) {
     A[i] = (double**) Utils::malloc((tau_lin+1)*sizeof(double*));
@@ -342,14 +350,6 @@ void Correlator::initialize() {
           B[i][j][k] = 0.;
       }
     }
-  }
-  
-  if (A == 0) {
-    throw std::runtime_error( init_errors[9]);
-  }
-
-  if (B == 0 && !autocorrelation) {
-    throw std::runtime_error( init_errors[10]);
   }
 
 

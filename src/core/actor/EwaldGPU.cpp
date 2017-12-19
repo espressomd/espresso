@@ -13,7 +13,7 @@
 #include "tuning.hpp"
 #include "partCfg_global.hpp"
 
-#define DEBUG(A) std::cout << #A << ": " << A << std::endl;
+#define DEBUG(A) std::cout << #A << ": " << (A) << std::endl;
 
 typedef ewaldgpu_real real;
 extern Ewaldgpu_params ewaldgpu_params;
@@ -274,6 +274,9 @@ int EwaldgpuForce::determine_calc_time_steps() {
   auto const sum_qpart = std::count_if(
       local_cells.particles().begin(), local_cells.particles().end(),
       [](Particle const &p) { return p.p.q != 0.0; });
+
+  if (sum_qpart == 0)
+    return 0;
 
   return (1999 + sum_qpart) / sum_qpart;
 }

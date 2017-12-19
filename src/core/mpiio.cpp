@@ -76,7 +76,7 @@
  * \param MPI_T The MPI_Datatype corresponding to the template parameter T.
  */
 template <typename T>
-static void mpiio_dump_array(std::string fn, T *arr, size_t len, size_t pref,
+static void mpiio_dump_array(const std::string & fn, T *arr, size_t len, size_t pref,
                              MPI_Datatype MPI_T) {
   MPI_File f;
   int ret;
@@ -111,7 +111,7 @@ static void mpiio_dump_array(std::string fn, T *arr, size_t len, size_t pref,
  * \param fn The filename to write to
  * \param fields The dumped fields
  */
-static void dump_info(std::string fn, unsigned fields) {
+static void dump_info(const std::string & fn, unsigned fields) {
   static std::vector<int> npartners;
   int success;
   FILE *f = fopen(fn.c_str(), "wb");
@@ -241,7 +241,7 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields) {
  * \param elem_sz Sizeof a single element
  * \return The number of elements stored binary in the file
  */
-static int get_num_elem(std::string fn, size_t elem_sz) {
+static int get_num_elem(const std::string & fn, size_t elem_sz) {
   // Could also be done via MPI_File_open, MPI_File_get_size,
   // MPI_File_cose.
   struct stat st;
@@ -259,7 +259,7 @@ static int get_num_elem(std::string fn, size_t elem_sz) {
  *  have to match!
  */
 template <typename T>
-static void mpiio_read_array(std::string fn, T *arr, size_t len, size_t pref,
+static void mpiio_read_array(const std::string & fn, T *arr, size_t len, size_t pref,
                              MPI_Datatype MPI_T) {
   MPI_File f;
   int ret;
@@ -294,7 +294,7 @@ static void mpiio_read_array(std::string fn, T *arr, size_t len, size_t pref,
  * \param rank The rank of the current process in MPI_COMM_WORLD
  * \param file Pointer to store the fields to
  */
-static void read_head(std::string fn, int rank, unsigned *fields) {
+static void read_head(const std::string & fn, int rank, unsigned *fields) {
   FILE *f;
   if (rank == 0) {
     if (!(f = fopen(fn.c_str(), "rb"))) {
@@ -321,7 +321,7 @@ static void read_head(std::string fn, int rank, unsigned *fields) {
  * \param prefs Pointer to store the prefix to
  * \param nlocalpart Pointer to store the amount of local particles to
  */
-static void read_prefs(std::string fn, int rank, int size, int nglobalpart,
+static void read_prefs(const std::string & fn, int rank, int size, int nglobalpart,
                        int *pref, int *nlocalpart) {
   mpiio_read_array<int>(fn, pref, 1, rank, MPI_INT);
   if (rank > 0)

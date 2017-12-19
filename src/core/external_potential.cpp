@@ -47,7 +47,7 @@ int external_potential_tabulated_init(int number, char* filename, int n_particle
 
   if (strlen(filename)>MAX_FILENAME_SIZE)
     return ES_ERROR;
-  strcpy((char*)&(e->filename), filename);
+  strncpy((char*)&(e->filename), filename, MAX_FILENAME_SIZE);
   external_potentials[number].type=EXTERNAL_POTENTIAL_TYPE_TABULATED;
   external_potentials[number].scale = (double*) Utils::malloc(n_particle_types*sizeof(double));
   external_potentials[number].n_particle_types = n_particle_types;
@@ -156,20 +156,20 @@ int lattice_read_file(Lattice* lattice, char* filename) {
   lattice->init(res, offset, halosize, dim);
   lattice->interpolation_type = INTERPOLATION_LINEAR;
 
-  char* line = (char*) Utils::malloc((3+dim)*ES_DOUBLE_SPACE);
+  std::vector<char> line((3+dim)*ES_DOUBLE_SPACE);
   double pos[3];
   double f[3];
   int i;
   
-  while (fgets(line, 200, infile)) {
-    if (strlen(line)<2)
+  while (fgets(line.data(), 200, infile)) {
+    if (strlen(line.data())<2)
       continue;
-    token = strtok(line, " \t");
+    token = strtok(line.data(), " \t");
     if (!token) { fprintf(stderr, "Could not read pos[0]\n"); return ES_ERROR; }
     pos[0] = atof(token);
 
     token = strtok(nullptr, " \t");
-    if (!token) { fprintf(stderr, "Could not read pos[1] in line:\n%s\n", line); return ES_ERROR; }
+    if (!token) { fprintf(stderr, "Could not read pos[1] in line:\n%s\n", line.data()); return ES_ERROR; }
     pos[1] = atof(token);
     
     token = strtok(nullptr, " \t");
@@ -182,7 +182,6 @@ int lattice_read_file(Lattice* lattice, char* filename) {
     }
     lattice->set_data_for_global_position_with_periodic_image(pos, f);
   }
-  free(line);
 
   write_local_lattice_to_file("lattice", lattice);
   

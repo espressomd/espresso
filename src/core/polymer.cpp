@@ -144,9 +144,8 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
              int mode, double shield, int max_try, double val_cM, int cM_dist,
              int type_nM, int type_cM, int type_bond, double angle,
              double angle2, double *posed2, int constr) {
-  int p, n, cnt1, cnt2, max_cnt, bond_size, *bond, i;
+  int p, n, cnt1, cnt2, max_cnt, bond_size, i;
   double phi, zz, rr;
-  double *poly;
   double pos[3];
   double poz[3];
   double poy[3] = {0, 0, 0};
@@ -155,10 +154,10 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
   double b[3], c[3] = {0., 0., 0.}, d[3];
   double absc;
 
-  poly = (double *)Utils::malloc(3 * MPC * sizeof(double));
+  std::vector<double> poly(3 * MPC);
 
   bond_size = bonded_ia_params[type_bond].num;
-  bond = (int *)Utils::malloc(sizeof(int) * (bond_size + 1));
+  std::vector<int> bond(bond_size + 1);
   bond[0] = type_bond;
 
   cnt1 = cnt2 = max_cnt = 0;
@@ -183,7 +182,6 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
           POLY_TRACE(printf("s"); fflush(nullptr));
         }
         if (cnt1 >= max_try) {
-          free(poly);
           return (-1);
         }
       }
@@ -224,10 +222,10 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
           pos[2] = poz[2] + zz;
 #ifdef CONSTRAINTS
           if (constr == 0 ||
-              constraint_collision(pos, poly + 3 * (n - 1)) == 0) {
+              constraint_collision(pos, poly.data() + 3 * (n - 1)) == 0) {
 #endif
 
-            if (mode == 1 || collision(partCfg, pos, shield, n, poly) == 0)
+            if (mode == 1 || collision(partCfg, pos, shield, n, poly.data()) == 0)
               break;
             if (mode == 0) {
               cnt1 = -1;
@@ -339,9 +337,9 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
 
 #ifdef CONSTRAINTS
           if (constr == 0 ||
-              constraint_collision(pos, poly + 3 * (n - 1)) == 0) {
+              constraint_collision(pos, poly.data() + 3 * (n - 1)) == 0) {
 #endif
-            if (mode == 1 || collision(partCfg, pos, shield, n, poly) == 0)
+            if (mode == 1 || collision(partCfg, pos, shield, n, poly.data()) == 0)
               break;
             if (mode == 0) {
               cnt1 = -2;
@@ -376,7 +374,6 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
     } /* cnt2 */
     POLY_TRACE(printf(" %d/%d->%d \n", cnt1, cnt2, max_cnt));
     if (cnt2 >= max_try) {
-      free(poly);
       return (-2);
     } else
 
@@ -394,7 +391,6 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
           (set_particle_type(part_id,
                              ((n % cM_dist == 0) ? type_cM : type_nM)) ==
            ES_ERROR)) {
-        free(poly);
         return (-3);
       }
 
@@ -403,9 +399,8 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
         for (i = 2; i <= bond_size; i++) {
           bond[i] = part_id - bond_size + i;
         }
-        if (change_particle_bond(part_id - bond_size + 1, bond, 0) ==
+        if (change_particle_bond(part_id - bond_size + 1, bond.data(), 0) ==
             ES_ERROR) {
-          free(poly);
           return (-3);
         }
       }
@@ -414,7 +409,6 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
       // (%f,%f,%f)\n",n,pos[0],pos[1],pos[2]) */);
     }
   }
-  free(poly);
 
   return (std::max(max_cnt, cnt2));
 }
