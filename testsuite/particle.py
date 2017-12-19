@@ -145,12 +145,12 @@ class ParticleProperties(ut.TestCase):
             self.system.part.add(id=0, pos=(0, 0, 0))
             self.system.part.add(id=1, pos=(0, 0, 0))
             self.system.part[1].vs_relative = (0, 5.0, (0.5, -0.5, -0.5, -0.5))
-            res = self.system.part[1].vs_relative
+            res = np.copy(self.system.part[1].vs_relative)
             self.assertEqual(res[0], 0, "vs_relative: " + res.__str__())
             self.assertEqual(res[1], 5.0, "vs_relative: " + res.__str__())
             np.testing.assert_allclose(
-    res[2], np.array(
-         (0.5, -0.5, -0.5, -0.5)), err_msg="vs_relative: " + res.__str__(), atol=self.tol)
+                res[2], np.array(
+                    (0.5, -0.5, -0.5, -0.5)), err_msg="vs_relative: " + res.__str__(), atol=self.tol)
 
 
     @ut.skipIf(not espressomd.has_features("ELECTROSTATICS"), "Test needs ELECTROSTATICS")
@@ -177,7 +177,7 @@ class ParticleProperties(ut.TestCase):
         res = s.part.select(pos=(0.2, 0.3, 0.4))
         self.assertEqual(len(res.id) , len(charges))
         for p in res:
-            np.testing.assert_allclose((0.2, 0.3, 0.4), p.pos, atol=1E-12)
+            np.testing.assert_allclose((0.2, 0.3, 0.4), np.copy(p.pos), atol=1E-12)
         
         
         # Two criteria
