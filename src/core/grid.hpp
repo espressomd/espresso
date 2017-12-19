@@ -47,6 +47,7 @@
 #include "communication.hpp"
 #include "utils.hpp"
 #include "errorhandling.hpp"
+#include "lees_edwards.hpp"
 
 #include <climits>
 
