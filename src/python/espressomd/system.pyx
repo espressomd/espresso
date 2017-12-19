@@ -428,8 +428,23 @@ cdef class System(object):
         get_mi_vector(res, b, a)
         return np.array((res[0], res[1], res[2]))
 
-    def rotate_system(self, phi, theta, alpha):
-        rotate_system(phi, theta, alpha)
+    def rotate_system(self, **kwargs):
+        """Rotate the particles in the system about the center of mass.
+
+           If ROTATION is activated, the internal rotation degrees of
+           freedom are rotated accordingly.
+
+        Parameters
+        ----------
+        phi : :obj:`float`
+                Angle between the z-axis and the roation axis.
+        theta : :obj:`float`
+                Rotaton of the axis around the y-axis.
+        alpha : :obj:`float`
+                How much to rotate
+
+        """
+        rotate_system(kwargs['phi'], kwargs['theta'], kwargs['alpha'])
 
     IF EXCLUSIONS:
         def auto_exclusions(self, distance):

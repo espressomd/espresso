@@ -38,32 +38,32 @@ class RotateSystemTest(ut.TestCase):
         s.part.add(id=1, pos=[6, 6, 6])
 
         pi = np.pi
-        s.rotate_system(0., 0., pi / 2.)
+        s.rotate_system(phi=0., theta=0., alpha=pi / 2.)
 
         np.testing.assert_allclose(s.part[0].pos, [6, 4, 4])
         np.testing.assert_allclose(s.part[1].pos, [4, 6, 6])
 
-        s.rotate_system(0., 0., -pi / 2.)
+        s.rotate_system(phi=0., theta=0., alpha=-pi / 2.)
 
         np.testing.assert_allclose(s.part[0].pos, [4, 4, 4])
         np.testing.assert_allclose(s.part[1].pos, [6, 6, 6])
 
-        s.rotate_system(pi / 2., 0., pi / 2.)
+        s.rotate_system(phi=pi / 2., theta=0., alpha=pi / 2.)
 
         np.testing.assert_allclose(s.part[0].pos, [6, 4, 4])
         np.testing.assert_allclose(s.part[1].pos, [4, 6, 6])
 
-        s.rotate_system(pi / 2., 0., -pi / 2.)
+        s.rotate_system(phi=pi / 2., theta=0., alpha=-pi / 2.)
 
         np.testing.assert_allclose(s.part[0].pos, [4, 4, 4])
         np.testing.assert_allclose(s.part[1].pos, [6, 6, 6])
 
-        s.rotate_system(pi / 2., pi / 2., pi / 2.)
+        s.rotate_system(phi=pi / 2., theta=pi / 2., alpha=pi / 2.)
 
         np.testing.assert_allclose(s.part[0].pos, [4, 4, 6])
         np.testing.assert_allclose(s.part[1].pos, [6, 6, 4])
 
-        s.rotate_system(pi / 2., pi / 2., -pi / 2.)
+        s.rotate_system(phi=pi / 2., theta=pi / 2., alpha=-pi / 2.)
 
         np.testing.assert_allclose(s.part[0].pos, [4, 4, 4])
         np.testing.assert_allclose(s.part[1].pos, [6, 6, 6])
