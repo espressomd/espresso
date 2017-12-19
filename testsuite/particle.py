@@ -154,15 +154,15 @@ class ParticleProperties(ut.TestCase):
     
     @ut.skipIf(not espressomd.has_features("DIPOLES"),
         "Features not available, skipping test!")
-        def test_contradicting_properties_dip_dipm(self):
-            with self.assertRaises(ValueError):
-                self.system.part.add(pos = [0, 0, 0], dip=[1, 1, 1], dipm=1.0)
+    def test_contradicting_properties_dip_dipm(self):
+        with self.assertRaises(ValueError):
+            self.system.part.add(pos = [0, 0, 0], dip=[1, 1, 1], dipm=1.0)
     
     @ut.skipIf(not espressomd.has_features("DIPOLES", "ROTATION"),
         "Features not available, skipping test!")
-        def test_contradicting_properties_dip_quat(self):
-            with self.assertRaises(ValueError):
-                self.system.part.add(pos = [0, 0, 0], dip=[1, 1, 1], quat=[1.0,1.0,1.0,1.0])
+    def test_contradicting_properties_dip_quat(self):
+        with self.assertRaises(ValueError):
+            self.system.part.add(pos = [0, 0, 0], dip=[1, 1, 1], quat=[1.0,1.0,1.0,1.0])
 
 if __name__ == "__main__":
     #print("Features: ", espressomd.features())
