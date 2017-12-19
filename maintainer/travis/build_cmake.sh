@@ -156,6 +156,7 @@ if $make_check; then
     if [ -z "$run_tests" ]; then
         cmd "make -j${build_procs} check_python $make_params" || exit 1
     else
+        cmd "make python_tests $make_params"
         for t in $run_tests; do
             cmd "ctest --output-on-failure -R $t" || exit 1
         done
