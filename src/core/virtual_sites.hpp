@@ -50,7 +50,7 @@ class VirtualSites {
     virtual void back_transfer_forces_and_torques() const =0;
     /** @brief Enable/disable velocity calculations for vs */
     void set_have_velocity(bool v) { m_have_velocity=v; };
-    const bool& have_velocity() { return m_have_velocity; };
+    const bool& have_velocity() const { return m_have_velocity; };
     /** @brief Is a ghost communication needed before position updates */
     virtual bool require_ghost_comm_before_pos_update() const =0;
     /** Is a ghost comm needed before a velocity update */
@@ -81,7 +81,7 @@ class VirtualSites {
     bool require_ghost_comm_after_vel_update() const override {return false;};
    };
 
-VirtualSites& virtual_sites(std::unique_ptr<VirtualSites> init = std::unique_ptr<VirtualSitesOff>{});
+std::shared_ptr<VirtualSites> virtual_sites();  
 
 #endif
 #endif

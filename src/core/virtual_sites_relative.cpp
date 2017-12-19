@@ -21,20 +21,21 @@
 #include "virtual_sites_relative.hpp"
 #include "rotation.hpp"
 #include "virtual_sites_relative.hpp"
+#include "errorhandling.hpp" 
 
 #ifdef VIRTUAL_SITES_RELATIVE
 
-void VirtualSitesRelative::update(bool recalc_positions) const  {
+void VirtualSitesRelative::update(bool recalc_positions) const {
 if (!recalc_positions && !have_velocity()) return;
 
 for (auto p : local_cells.particles()) {
   if (!p.p.isVirtual) continue;
 
   if (recalc_positions)
-    update_pos(&p);
+    update_pos(p);
 
-  if (have_velocy())
-    update_vel(&p);
+  if (have_velocity())
+    update_vel(p);
 
 
 }
@@ -42,7 +43,6 @@ for (auto p : local_cells.particles()) {
 }
 
 
-};
 
 
 
@@ -54,17 +54,15 @@ for (auto p : local_cells.particles()) {
 
 // Update the pos of the given virtual particle as defined by the real 
 // particles in the same molecule
-void VirtualSitesRelative::update_pos(const Particle* const p)
+void VirtualSitesRelative::update_pos(Particle& p) const
 {
  // First obtain the real particle responsible for this virtual particle:
  // Find the 1st real particle in the topology for the virtual particle's mol_id
- const Particle *p_real = local_particles[p->p.vs_relative_to_particle_id];
+ const Particle *p_real = local_particles[p.p.vs_relative_to_particle_id];
  // Check, if a real particle was found
  if (!p_real)
  {
-     ostringstream msg;
-     msg <<"virtual_sites_relative.cpp - update_mol_pos_particle(): No real particle associated with virtual site.\n";
-     runtimeError(msg);
+     runtimeErrorMsg() <<"virtual_sites_relative.cpp - update_mol_pos_particle(): No real particle associated with virtual site.\n";
    return;
  }
  
@@ -74,7 +72,7 @@ void VirtualSitesRelative::update_pos(const Particle* const p)
  // of the real particle with the quaternion of the virtual particle, which 
  // specifies the relative orientation.
  double q[4];
- multiply_quaternions(p_real->r.quat,p->p.vs_relative_rel_orientation,q);
+ multiply_quaternions(p_real->r.quat,p.p.vs_relative_rel_orientation,q);
  // Calculate the director resulting from the quaternions
  double director[3];
  convert_quat_to_quatu(q,director);
@@ -89,50 +87,48 @@ void VirtualSitesRelative::update_pos(const Particle* const p)
  double tmp;
  for (i=0;i<3;i++)
  {
-  new_pos[i] =p_real->r.p[i] +director[i]/l*p->p.vs_relative_distance;
+  new_pos[i] =p_real->r.p[i] +director[i]/l*p.p.vs_relative_distance;
   // Handle the case that one of the particles had gone over the periodic
   // boundary and its coordinate has been folded
   if (PERIODIC(i)) 
   {
-    tmp =p->r.p[i] -new_pos[i];
+    tmp =p.r.p[i] -new_pos[i];
     //printf("%f\n",tmp);
     if (tmp > box_l[i]/2.) {
      //printf("greater than box_l/2 %f\n",tmp);
-     p->r.p[i] =new_pos[i] + box_l[i];
+     p.r.p[i] =new_pos[i] + box_l[i];
     }
     else if (tmp < -box_l[i]/2.) {
      //printf("smaller than box_l/2 %f\n",tmp);
-     p->r.p[i] =new_pos[i] - box_l[i];
+     p.r.p[i] =new_pos[i] - box_l[i];
     }
-    else p->r.p[i] =new_pos[i];
+    else p.r.p[i] =new_pos[i];
    }
-   else p->r.p[i] =new_pos[i];
+   else p.r.p[i] =new_pos[i];
  }
 }
 
 // Update the vel of the given virtual particle as defined by the real 
 // particles in the same molecule
-void VirtualSitesRelative::update_vel_(const Particle* const p)
+void VirtualSitesRelative::update_vel(Particle& p) const
 {
  // First obtain the real particle responsible for this virtual particle:
- Particle *p_real = local_particles[p->p.vs_relative_to_particle_id];
+ Particle *p_real = local_particles[p.p.vs_relative_to_particle_id];
  // Check, if a real particle was found
  if (!p_real)
  {
-     ostringstream msg;
-     msg <<"virtual_sites_relative.cpp - update_mol_pos_particle(): No real particle associated with virtual site.\n";
-     runtimeError(msg);
+     runtimeErrorMsg() <<"virtual_sites_relative.cpp - update_mol_pos_particle(): No real particle associated with virtual site.\n";
    return;
  }
  
- double d;
- get_mi_vector(d,p->r.p,p_real->r.p);
+ double d[3];
+ get_mi_vector(d,p.r.p,p_real->r.p);
 
  // Get omega of real particle in space-fixed frame
  double omega_space_frame[3];
  convert_omega_body_to_space(p_real,omega_space_frame);
  // Obtain velocity from v=v_real particle + omega_real_particle \times director
- vector_product(omega_space_frame,d,p->m.v);
+ vector_product(omega_space_frame,d,p.m.v);
 
  int i;
  // Add prefactors and add velocity of real particle
@@ -140,22 +136,22 @@ void VirtualSitesRelative::update_vel_(const Particle* const p)
  {
   // Scale the velocity by the distance of virtual particle from the real particle
   // Also, espresso stores not velocity but velocity * time_step
-  p->m.v[i] *= time_step;
+  p.m.v[i] *= time_step;
   // Add velocity of real particle
-  p->m.v[i] += p_real->m.v[i];
+  p.m.v[i] += p_real->m.v[i];
  }
 }
 
 // Distribute forces that have accumulated on virtual particles to the
 // associated real particles
-void VirtualSitesRelative::back_transfer_forces_and_torques() {
+void VirtualSitesRelative::back_transfer_forces_and_torques() const {
   // Iterate over all the particles in the local cells
   for (auto &p : local_cells.particles()) {
     // We only care about virtual particles
     if (p.p.isVirtual) {
     if (p.p.isVirtual) {
       // First obtain the real particle responsible for this virtual particle:
-      Particle *p_real = local_particles[p->p.vs_relative_to_particle_id];
+      Particle *p_real = local_particles[p.p.vs_relative_to_particle_id];
 
       // Get distance vector pointing from real to virtual particle, respecting
       // periodic boundary i
@@ -180,6 +176,7 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() {
     }
   }
 }
+}
 
 // Setup the virtual_sites_relative properties of a particle so that the given virtaul particle will follow the given real particle
 int vs_relate_to(int part_num, int relate_to)
@@ -189,9 +186,7 @@ int vs_relate_to(int part_num, int relate_to)
     auto p_current = get_particle_data(part_num);
     auto p_relate_to = get_particle_data(relate_to);
     if (!p_current || !p_relate_to) {
-        ostringstream msg;
-        msg <<"Could not retrieve particle data for the given id";
-        runtimeError(msg);
+        runtimeErrorMsg()  <<"Could not retrieve particle data for the given id";
       return ES_ERROR;
     }
     
@@ -205,9 +200,7 @@ int vs_relate_to(int part_num, int relate_to)
     // If so, warn user
     double l=sqrt(sqrlen(d));
     if (l>min_global_cut) {
-        ostringstream msg;
-        msg << "Warning: The distance between virtual and non-virtual particle (" << l << ") is\nlarger than the minimum global cutoff (" << min_global_cut << "). This may lead to incorrect simulations\nunder certain conditions. Set the \"System()\" class property \"min_global_cut\" to\nincrease the minimum cutoff.\n";
-        runtimeWarning(msg);
+        runtimeErrorMsg() << "Warning: The distance between virtual and non-virtual particle (" << l << ") is\nlarger than the minimum global cutoff (" << min_global_cut << "). This may lead to incorrect simulations\nunder certain conditions. Set the \"System()\" class property \"min_global_cut\" to\nincrease the minimum cutoff.\n";
       return ES_ERROR;
     }
 
@@ -280,9 +273,7 @@ int vs_relate_to(int part_num, int relate_to)
     // Set the particle id of the particle we want to relate to, the distnace
     // and the relative orientation
     if (set_particle_vs_relative(part_num, relate_to, l, quat) == ES_ERROR) {
-      ostringstream msg;
-      msg << "setting the vs_relative attributes failed";
-      runtimeError(msg);
+      runtimeErrorMsg() << "setting the vs_relative attributes failed";
       return ES_ERROR;
     }
     set_particle_virtual(part_num,1);
@@ -292,8 +283,7 @@ int vs_relate_to(int part_num, int relate_to)
 
 
 // Rigid body conribution to scalar pressure and stress tensor
-void vs_relative_pressure_and_stress_tensor(double* pressure, double* stress_tensor)
-{
+void VirtualSitesRelative::pressure_and_stress_tensor_contribution(double* pressure, double* stress_tensor) const {
   // Division by 3 volume is somewhere else. (pressure.cpp after all presure calculations)
   // Iterate over all the particles in the local cells
 
@@ -302,10 +292,10 @@ void vs_relative_pressure_and_stress_tensor(double* pressure, double* stress_ten
     if (!p.p.isVirtual)
       continue;
 
-    update_mol_pos_particle(&p);
+    update_pos(p);
 
     // First obtain the real particle responsible for this virtual particle:
-    Particle *p_real = vs_relative_get_real_particle(&p);
+    const Particle *p_real = local_particles[p.p.vs_relative_to_particle_id];
 
     // Get distance vector pointing from real to virtual particle, respecting
     // periodic boundary i

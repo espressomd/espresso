@@ -97,7 +97,7 @@ void force_calc() {
 
 // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
-  virtual_sites().update();
+  virtual_sites()->update();
   ghost_communicator(&cell_structure.update_ghost_pos_comm);
 #endif
 
@@ -190,7 +190,7 @@ void force_calc() {
 #ifdef VIRTUAL_SITES
   ghost_communicator(&cell_structure.collect_ghost_force_comm);
   init_forces_ghosts();
-  virtual_sites().back_transfer_forces_and_torques();
+  virtual_sites()->back_transfer_forces_and_torques();
 #endif
 
   // Communication Step: ghost forces

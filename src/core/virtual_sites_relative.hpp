@@ -29,9 +29,10 @@
 
    /** @brief Virtual sites implementation for rigid bodies */
    class VirtualSitesRelative : public VirtualSites {
+    public:
     /** @brief Update positions and/or velocities of virtual sites 
 
-    * Velocities are only updated update_velocities() return true 
+    * Velocities are only updated have_velocity() return true 
     * @param recalc_positions can be used to skip the reculation of positions 
     */
     void update(bool recalc_positions=true) const override;
@@ -41,12 +42,14 @@
     bool require_ghost_comm_before_pos_update() const override { return n_nodes>1;} 
     /** Is a ghost comm needed before a velocity update */
     bool require_ghost_comm_before_vel_update() const override {return n_nodes>1;};
+    bool require_ghost_comm_after_vel_update() const override {return n_nodes>1;};
+    void pressure_and_stress_tensor_contribution(double* pressure, double* stress_tensor) const;    
+    
     private:
-    void update_pos(const Particle* const p);
-    void update_vel(const Particle* const p);
+    void update_pos(Particle& p) const;
+    void update_vel(Particle& p) const;
    };
 
-void vs_relative_pressure_and_stress_tensor(double* pressure, double* stress_tensor);
 int vs_relate_to(int part_num, int relate_to);
 #endif
 

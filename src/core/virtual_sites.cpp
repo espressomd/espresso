@@ -19,40 +19,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "config.hpp" 
 #include "virtual_sites.hpp"
 
 #ifdef VIRTUAL_SITES
-#include "pressure.hpp"
-#include "cells.hpp"
 
-// The following four functions are independent of the specif
-// rules used to place virtual particles
-
-void update_mol_vel_pos() {
-  // replace this by a better implementation later!
-
-  // ORDER MATTERS! Update_mol_vel may rely on correct positions of virtual
-  // particcles
-  update_mol_pos();
-  update_mol_vel();
+namespace {
+std::shared_ptr<VirtualSites> m_virtual_sites = std::make_shared<VirtualSitesOff>();
 }
-
-void update_mol_vel() {
-#ifndef VIRTUAL_SITES_NO_VELOCITY
-  for (auto &p : local_cells.particles()) {
-    if (p.p.isVirtual)
-    if (p.p.isVirtual)
-      update_mol_vel_particle(&p);
-  }
-#endif
-}
-
-void update_mol_pos() {
-  for (auto &p : local_cells.particles()) {
-    if (p.p.isVirtual)
-    if (p.p.isVirtual)
-      update_mol_pos_particle(&p);
-  }
+std::shared_ptr<VirtualSites> virtual_sites() {  
+  return m_virtual_sites;
 }
 
 #endif

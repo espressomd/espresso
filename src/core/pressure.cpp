@@ -123,7 +123,10 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
   calc_long_range_virials();
 
 #ifdef VIRTUAL_SITES_RELATIVE  
-  vs_relative_pressure_and_stress_tensor(virials.vs_relative,p_tensor.vs_relative);
+  std::shared_ptr<VirtualSitesRelative> vsr =std::dynamic_pointer_cast<VirtualSitesRelative>(virtual_sites());
+  if (vsr) {
+    vsr->pressure_and_stress_tensor_contribution(virials.vs_relative,p_tensor.vs_relative);
+  }
 #endif
 
 

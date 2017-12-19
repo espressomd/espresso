@@ -486,7 +486,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 // VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    virtual_sites().update(false); // Recalc positions = false
+    virtual_sites()->update(false); // Recalc positions = false
 #endif
 
 // progagate one-step functionalities
