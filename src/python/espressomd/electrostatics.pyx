@@ -27,6 +27,7 @@ IF SCAFACOS == 1:
     from .scafacos import ScafacosConnector 
     from . cimport scafacos
 from espressomd.utils cimport handle_errors
+from espressomd.utils import is_valid_type
 
 IF ELECTROSTATICS == 1: 
     cdef class ElectrostaticInteraction(actors.Actor):
@@ -245,7 +246,7 @@ IF P3M == 1:
             if not (self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
                 raise ValueError("P3M r_cut has to be >=0")
 
-            if not (isinstance(self._params["mesh"], int) or len(self._params["mesh"])):
+            if not (is_valid_type(self._params["mesh"], int) or len(self._params["mesh"])):
                 raise ValueError(
                     "P3M mesh has to be an integer or integer list of length 3")
 
@@ -264,7 +265,7 @@ IF P3M == 1:
             if self._params["epsilon"] == "metallic":
                 self._params = 0.0
 
-            if not (isinstance(self._params["epsilon"], float) or self._params["epsilon"] == "metallic"):
+            if not (is_valid_type(self._params["epsilon"], float) or self._params["epsilon"] == "metallic"):
                 raise ValueError("epsilon should be a double or 'metallic'")
 
             if not (self._params["inter"] == default_params["inter"] or self._params["inter"] > 0):
@@ -389,7 +390,7 @@ IF P3M == 1:
                 if not (self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
                     raise ValueError("P3M r_cut has to be >=0")
 
-                if not (isinstance(self._params["mesh"], int) or len(self._params["mesh"])):
+                if not (is_valid_type(self._params["mesh"], int) or len(self._params["mesh"])):
                     raise ValueError(
                         "P3M mesh has to be an integer or integer list of length 3")
 
@@ -408,7 +409,7 @@ IF P3M == 1:
                 # if self._params["epsilon"] == "metallic":
                 #  self._params = 0.0
 
-                if not (isinstance(self._params["epsilon"], float) or self._params["epsilon"] == "metallic"):
+                if not (is_valid_type(self._params["epsilon"], float) or self._params["epsilon"] == "metallic"):
                     raise ValueError(
                         "epsilon should be a double or 'metallic'")
 
@@ -544,7 +545,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             if self._params["bjerrum_length"] <= 0.0 and self._params["bjerrum_length"] != default_params["bjerrum_length"]:
                 raise ValueError("Bjerrum_length should be a positive double")
             if isinstance(self._params["K_max"], (list, np.ndarray)):
-                if isinstance(self._params["K_max"], int) and len(self._params["K_max"]) == 3:
+                if is_valid_type(self._params["K_max"], int) and len(self._params["K_max"]) == 3:
                     self._params["num_kx"] = self._params["K_max"][0]
                     self._params["num_ky"] = self._params["K_max"][1]
                     self._params["num_kz"] = self._params["K_max"][2]
