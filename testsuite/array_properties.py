@@ -3,9 +3,65 @@ import unittest as ut
 import numpy as np
 import espressomd
 from espressomd import lb
+from espressomd import utils
+
+class ArrayLockedTest(ut.TestCase):
+    def test_locked_operators(self):
+        v = utils.array_locked([1., 2., 3.])
+
+        with self.assertRaises(ValueError):
+            v[0] = 0
+        with self.assertRaises(ValueError):
+            v += [1,1,1]
+        with self.assertRaises(ValueError):
+            v -= [1,1,1]
+        with self.assertRaises(ValueError):
+            v *= [1,1,1]
+        with self.assertRaises(ValueError):
+            v /= [1,1,1]
+        with self.assertRaises(ValueError):
+            v //= [1,1,1]
+        with self.assertRaises(ValueError):
+            v %= [1,1,1]
+        with self.assertRaises(ValueError):
+            v **= [1,1,1]
+        with self.assertRaises(ValueError):
+            v <<= [1,1,1]
+        with self.assertRaises(ValueError):
+            v >>= [1,1,1]
+        with self.assertRaises(ValueError):
+            v &= [1,1,1]
+        with self.assertRaises(ValueError):
+            v |= [1,1,1]
+        with self.assertRaises(ValueError):
+            v ^= [1,1,1]
+
+    def test_unlocked_operators(self):
+        v = utils.array_locked([1, 2, 3])
+        w = utils.array_locked([4, 5, 6])
+        add = v + w
+        sub = v - w
+
+        self.assertTrue(isinstance(add, np.ndarray))
+        self.assertTrue(isinstance(sub, np.ndarray))
+
+        self.assertTrue(add.flags.writeable)
+        self.assertTrue(sub.flags.writeable)
+
+        np.testing.assert_array_equal(add, np.add(np.copy(v), np.copy(w)))
+        np.testing.assert_array_equal(sub, np.subtract(np.copy(v), np.copy(w)))
+        np.testing.assert_array_equal(sub, -(w - v))
+
+    def test_copy_is_writeable(self):
+        v = np.copy(utils.array_locked([1, 2, 3]))
+        self.assertTrue(v.flags.writeable)
+
+    def test_setter(self):
+        v = utils.array_locked([1, 2, 3])
+        v = [4, 5, 6]
+        np.testing.assert_array_equal(v, [4, 5, 6])
 
 class ArrayPropertyTest(ut.TestCase):
-    
     system = espressomd.System()
     system.box_l = [12.0,12.0,12.0]
     system.time_step = 0.01
@@ -45,11 +101,10 @@ class ArrayPropertyTest(ut.TestCase):
 
     def set_copy(self, v):
         cpy = np.copy(v)
-        cpy[0] = 1234
-        self.assertTrue(cpy[0] == 1234)
+        self.assertTrue(cpy.flags.writeable)
 
     def test_common(self):
-        
+
         # Check for exception for various operators
         # Particle
         self.locked_operators(self.system.part[0].pos)
@@ -59,7 +114,7 @@ class ArrayPropertyTest(ut.TestCase):
 
         # System
         self.locked_operators(self.system.box_l)
-        
+
         # Check (allowed) setter
         # Particle 
         self.system.part[0].pos         = [2,2,2]    
