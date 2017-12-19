@@ -21,6 +21,7 @@ lees_edwards:
   stage: build
   script:
     - export myconfig=lees-edwards with_coverage=true
+    - export run_tests=less_edwards
     - bash maintainer/cuda_build.sh
 
 maxset:
