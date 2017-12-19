@@ -68,7 +68,7 @@
 #include "morse.hpp"
 #include "mpiio.hpp"
 #include "npt.hpp"
-#include "observables/LbRadialVelocityProfile.hpp"
+#include "observables/LBRadialVelocityProfile.hpp"
 #include "observables/Observable.hpp"
 #include "overlap.hpp"
 #include "p3m-dipolar.hpp"
