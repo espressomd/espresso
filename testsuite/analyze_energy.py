@@ -9,7 +9,7 @@ from espressomd.interactions import HarmonicBond
 @ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "Skipped because LENNARD_JONES turned off.")
 
 class AnalyzeEnergy(ut.TestCase):
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     harmonic = HarmonicBond(r_0=0.0, k=3)
 
     @classmethod

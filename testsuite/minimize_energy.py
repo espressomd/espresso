@@ -7,7 +7,7 @@ from espressomd.interactions import *
 
 @ut.skipIf(not espressomd.has_features("LENNARD_JONES"),"Skipped because LENNARD_JONES turned off.")
 class test_minimize_energy(ut.TestCase):
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.seed = range(system.cell_system.get_state()["n_nodes"])
 
     @classmethod

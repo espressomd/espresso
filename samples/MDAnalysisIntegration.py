@@ -11,7 +11,7 @@ import MDAnalysis as mda
 
 # set up a minimal sample system
 
-system = espressomd.System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 system.time_step = 0.001
 system.cell_system.skin = 0.1
 system.box_l = [10, 10, 10]

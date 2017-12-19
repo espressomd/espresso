@@ -11,7 +11,7 @@ import numpy as np
 # System parameters
 #############################################################
 
-system = espressomd.System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
 # if no seed is provided espresso generates a seed
 

@@ -8,7 +8,7 @@ import numpy as np
 class ParticleSliceTest(ut.TestCase):
 
     state = [[0, 0, 0], [0, 0, 1]]
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.box_l = 10,10,10
 
     def __init__(self, *args, **kwargs):

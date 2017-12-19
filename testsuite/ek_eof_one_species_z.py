@@ -96,7 +96,7 @@ def hydrostatic_pressure(
            "Features not available, skipping test!")
 class ek_eof_one_species_x(ut.TestCase):
 
-    es = espressomd.System()
+    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     def test(self):
         system = self.es

@@ -52,7 +52,7 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 system.time_step = 0.001
 system.cell_system.skin = 0.4
 #es._espressoHandle.Tcl_Eval('thermostat langevin 1.0 1.0')

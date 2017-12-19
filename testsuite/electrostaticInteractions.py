@@ -28,7 +28,7 @@ from tests_common import *
            "Features not available, skipping test!")
 class ElectrostaticInteractionsTests(ut.TestCase):
     # Handle to espresso system
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
     def setUp(self):

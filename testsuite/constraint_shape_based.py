@@ -35,7 +35,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
         return f_lj
 
     def test(self):
-        S = espressomd.System()
+        S = espressomd.System(box_l=[1.0, 1.0, 1.0])
         self.prepare(S)
 
         wy = Wall(normal=[0., 1., 0.], dist=0.)

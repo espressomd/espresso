@@ -50,7 +50,7 @@ class Scafacos1d2d(ut.TestCase):
                     1.0 / 3.0) * particle_radius
         skin = 0.5
 
-        s = espressomd.System()
+        s = espressomd.System(box_l=[1.0, 1.0, 1.0])
         # give Espresso some parameters
         s.time_step = 0.01
         s.cell_system.skin = skin

@@ -253,13 +253,14 @@ python is provided via a python module called
 import espressomd
 \end{pypresso}
 
-The next step would be to create an instance of the System class. 
-This instance is used as a handle to the simulation system. It can be used to manipulate the
-crucial system parameters like the time step and the size of the simulation box (\texttt{time\_step}, and \texttt{box\_l}). At any time, only one instance of the System class can exist.
+The next step would be to create an instance of the System class. This
+instance is used as a handle to the simulation system. It can be used to
+manipulate the crucial system parameters like the time step and the size of the
+simulation box (\texttt{time\_step}, and \texttt{box\_l}). At any time, only
+one instance of the System class can exist.
 \begin{pypresso}
-system = espressomd.System()
+system = espressomd.System(box_l=[box_l_x, box_l_y, box_l_z])
 system.time_step = time_step
-system.box_l = [box_l_x, box_l_y, box_l_z]
 \end{pypresso}
 
 \subsection{Choosing the thermodynamic ensemble, thermostat}

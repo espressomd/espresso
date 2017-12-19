@@ -33,7 +33,7 @@ import tests_common
            "Features not available, skipping test!")
 class CoulombCloudWallTune(ut.TestCase):
     """This compares p3m, p3m_gpu electrostatic forces against stored data."""
-    S = espressomd.System()
+    S = espressomd.System(box_l=[1.0, 1.0, 1.0])
     tolerance = 1E-3
 
     def setUp(self):

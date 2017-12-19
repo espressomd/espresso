@@ -19,7 +19,7 @@ checkpoint.register("skin")
 # test for "system"
 box_l = 10.7437
 
-system = espressomd.System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 system.time_step = 0.01
 system.cell_system.skin = skin
 system.box_l = [box_l, box_l, box_l]

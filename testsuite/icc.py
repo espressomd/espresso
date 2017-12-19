@@ -11,7 +11,7 @@ class test_icc(ut.TestCase):
         from espressomd.electrostatics import P3M
         from espressomd.electrostatic_extensions import ICC
 
-        S = espressomd.System()
+        S = espressomd.System(box_l=[1.0, 1.0, 1.0])
         # Parameters
         box_l = 20.0
         nicc = 10

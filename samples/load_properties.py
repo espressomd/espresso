@@ -54,7 +54,7 @@ lj_cap = 20
 
 # Import system properties
 #############################################################
-system = espressomd.System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 with open("system_save", "r") as system_save:
     pickle.load(system_save)
 

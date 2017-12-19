@@ -6,7 +6,7 @@ import espressomd.observables
 
 
 class ProfileObservablesTest(ut.TestCase):
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.box_l = [10.0, 10.0, 10.0]
     system.cell_system.skin = 0.1
     system.time_step = 0.01

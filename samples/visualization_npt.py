@@ -5,7 +5,7 @@ from espressomd.visualization_opengl import *
 import numpy
 from threading import Thread
 
-system = espressomd.System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 visualizer = openGLLive(system, background_color=[1, 1, 1])
 
 system.time_step = 0.005

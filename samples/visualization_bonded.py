@@ -10,7 +10,7 @@ from threading import Thread
 box_l = 50
 n_part = 200
 
-system = espressomd.System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 system.thermostat.set_langevin(kT=0.1, gamma=20.0)

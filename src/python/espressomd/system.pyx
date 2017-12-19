@@ -90,9 +90,10 @@ cdef class System(object):
         cuda_init_handle
         comfixed
 
-    def __init__(self):
+    def __init__(self, box_l):
         global _system_created
         if (not _system_created):
+            self.box_l = box_l
             self.part = particle_data.ParticleList()
             self.non_bonded_inter = interactions.NonBondedInteractions()
             self.bonded_inter = interactions.BondedInteractions()

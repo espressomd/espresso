@@ -38,7 +38,7 @@ np.random.seed(42)
 # System parameters
 #############################################################
 
-system = espressomd.System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 system.box_l = [100, 100, 100]

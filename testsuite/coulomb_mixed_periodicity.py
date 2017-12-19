@@ -35,7 +35,7 @@ import tests_common
 class CoulombMixedPeriodicity(ut.TestCase):
     """"Test mixed periodicity electrostatics"""
      
-    S = espressomd.System()
+    S = espressomd.System(box_l=[1.0, 1.0, 1.0])
     buf_node_grid = S.cell_system.node_grid
     S.thermostat.turn_off()
     forces = {}

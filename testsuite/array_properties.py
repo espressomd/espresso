@@ -62,7 +62,7 @@ class ArrayLockedTest(ut.TestCase):
         np.testing.assert_array_equal(v, [4, 5, 6])
 
 class ArrayPropertyTest(ut.TestCase):
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.box_l = [12.0,12.0,12.0]
     system.time_step = 0.01
     system.cell_system.skin = 0.01

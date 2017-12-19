@@ -7,7 +7,7 @@ from threading import Thread
 from math import *
 from espressomd.visualization_opengl import *
 
-system = espressomd.System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 visualizer = openGLLive(system, constraint_type_colors= [[1,1,1,1]], camera_position = [50,15,15], camera_right = [0,0,-1] )
 
 

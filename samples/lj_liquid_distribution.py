@@ -49,7 +49,7 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)

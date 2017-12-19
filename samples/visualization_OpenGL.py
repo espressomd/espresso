@@ -33,7 +33,7 @@ def decreaseTemp():
         print("T = 0")
 
 
-system = espressomd.System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
 system.time_step = 0.00001
 system.cell_system.skin = 0.4

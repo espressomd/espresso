@@ -5,7 +5,7 @@ from espressomd.visualization_opengl import *
 from threading import Thread
 import numpy
 
-system = espressomd.System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
 
 box_l = 50

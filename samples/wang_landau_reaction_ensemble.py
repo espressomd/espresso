@@ -34,7 +34,7 @@ box_l = 6 * np.sqrt(2)
 
 # Integration parameters
 #############################################################
-system = espressomd.System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 system.time_step = 0.02
 system.cell_system.skin = 0.4
 system.cell_system.max_num_cells = 2744
