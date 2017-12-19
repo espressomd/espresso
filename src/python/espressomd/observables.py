@@ -1,5 +1,6 @@
 from __future__ import print_function, absolute_import
-from .script_interface import ScriptInterfaceHelper,script_interface_register
+from .script_interface import ScriptInterfaceHelper, script_interface_register
+
 
 @script_interface_register
 class AutoUpdateObservables(ScriptInterfaceHelper):
@@ -21,11 +22,13 @@ class AutoUpdateObservables(ScriptInterfaceHelper):
     def remove(self, observable):
         self.call_method("remove", object=observable)
 
+
 @script_interface_register
 class Observable(ScriptInterfaceHelper):
-    _so_name="Observables::Observable"
-    _so_bind_methods = ("value","calculate","update","auto_write_to")
+    _so_name = "Observables::Observable"
+    _so_bind_methods = ("value", "calculate", "update", "auto_write_to")
     _so_creation_policy = "LOCAL"
+
 
 @script_interface_register
 class ComForce(Observable):
@@ -37,7 +40,7 @@ class ComForce(Observable):
           The ids of (existing) particles to take into account.
 
     """
-    _so_name="Observables::ComForce"
+    _so_name = "Observables::ComForce"
 
 
 @script_interface_register
@@ -50,7 +53,7 @@ class ComPosition(Observable):
           The ids of (existing) particles to take into account.
 
     """
-    _so_name="Observables::ComPosition"
+    _so_name = "Observables::ComPosition"
 
 
 @script_interface_register
@@ -63,7 +66,7 @@ class ComVelocity(Observable):
           The ids of (existing) particles to take into account.
 
     """
-    _so_name="Observables::ComVelocity"
+    _so_name = "Observables::ComVelocity"
 
 
 @script_interface_register
@@ -76,7 +79,7 @@ class Current(Observable):
           The ids of (existing) particles to take into account.
 
     """
-    _so_name="Observables::Current"
+    _so_name = "Observables::Current"
 
 
 @script_interface_register
@@ -107,7 +110,7 @@ class DensityProfile(Observable):
             Maximum ``z`` to consider.
 
     """
-    _so_name="Observables::DensityProfile"
+    _so_name = "Observables::DensityProfile"
 
 
 @script_interface_register
@@ -120,7 +123,7 @@ class DipoleMoment(Observable):
           The ids of (existing) particles to take into account.
 
     """
-    _so_name="Observables::DipoleMoment"
+    _so_name = "Observables::DipoleMoment"
 
 
 @script_interface_register
@@ -151,7 +154,7 @@ class FluxDensityProfile(Observable):
             Maximum ``z`` to consider.
 
     """
-    _so_name="Observables::FluxDensityProfile"
+    _so_name = "Observables::FluxDensityProfile"
 
 
 @script_interface_register
@@ -182,12 +185,12 @@ class ForceDensityProfile(Observable):
             Maximum ``z`` to consider.
 
     """
-    _so_name="Observables::ForceDensityProfile"
+    _so_name = "Observables::ForceDensityProfile"
 
 
 @script_interface_register
 class LBVelocityProfile(Observable):
-    _so_name="Observables::LBVelocityProfile"
+    _so_name = "Observables::LBVelocityProfile"
 
 
 @script_interface_register
@@ -200,22 +203,22 @@ class MagneticDipoleMoment(Observable):
           The ids of (existing) particles to take into account.
 
     """
-    _so_name="Observables::MagneticDipoleMoment"
+    _so_name = "Observables::MagneticDipoleMoment"
 
 
 @script_interface_register
 class ParticleAngularVelocities(Observable):
-     _so_name="Observables::ParticleAngularVelocities"
+    _so_name = "Observables::ParticleAngularVelocities"
 
 
 @script_interface_register
 class ParticleBodyAngularVelocities(Observable):
-    _so_name="Observables::ParticleBodyAngularVelocities"
+    _so_name = "Observables::ParticleBodyAngularVelocities"
 
 
 @script_interface_register
 class ParticleBodyVelocities(Observable):
-    _so_name="Observables::ParticleBodyVelocities"
+    _so_name = "Observables::ParticleBodyVelocities"
 
 
 @script_interface_register
@@ -228,7 +231,7 @@ class ParticleCurrent(Observable):
           The ids of (existing) particles to take into account.
 
     """
-    _so_name="Observables::ParticleCurrent"
+    _so_name = "Observables::ParticleCurrent"
 
 
 @script_interface_register
@@ -241,7 +244,7 @@ class ParticleForces(Observable):
           The ids of (existing) particles to take into account.
 
     """
-    _so_name="Observables::ParticleForces"
+    _so_name = "Observables::ParticleForces"
 
 
 @script_interface_register
@@ -254,7 +257,7 @@ class ParticlePositions(Observable):
           The ids of (existing) particles to take into account.
 
     """
-    _so_name="Observables::ParticlePositions"
+    _so_name = "Observables::ParticlePositions"
 
 
 @script_interface_register
@@ -267,17 +270,17 @@ class ParticleVelocities(Observable):
           The ids of (existing) particles to take into account.
 
     """
-    _so_name="Observables::ParticleVelocities"
+    _so_name = "Observables::ParticleVelocities"
 
 
 @script_interface_register
 class StressTensor(Observable):
-    _so_name="Observables::StressTensor"
+    _so_name = "Observables::StressTensor"
 
 
 @script_interface_register
 class StressTensorAcf(Observable):
-    _so_name="Observables::StressTensorAcf"
+    _so_name = "Observables::StressTensorAcf"
 
 
 @script_interface_register
@@ -312,7 +315,7 @@ class CylindricalFluxDensityProfile(Observable):
             Maximum ``z`` to consider.
 
     """
-    _so_name="Observables::CylindricalFluxDensityProfile"
+    _so_name = "Observables::CylindricalFluxDensityProfile"
 
 
 @script_interface_register
@@ -347,4 +350,4 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(Observable):
             Maximum ``z`` to consider.
 
     """
-    _so_name="Observables::CylindricalLBFluxDensityProfileAtParticlePositions"
+    _so_name = "Observables::CylindricalLBFluxDensityProfileAtParticlePositions"
