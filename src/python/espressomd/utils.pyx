@@ -195,7 +195,7 @@ Use numpy.copy(<ESPResSo array property>) to get a writable copy."
         return np.copy(self) + other
 
     def __radd__(self, other):
-        return np.copy(self) + other
+        return other + np.copy(self)
 
     def __sub__(self, other):
         return np.copy(self) - other

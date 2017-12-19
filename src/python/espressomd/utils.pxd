@@ -37,7 +37,7 @@ cdef extern from "utils.hpp":
         int& operator[](int)
         void resize(int)
         void push_back(int)
-        
+
         int * e
         unsigned n
 
