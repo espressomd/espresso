@@ -68,7 +68,7 @@
 #include "morse.hpp"
 #include "mpiio.hpp"
 #include "npt.hpp"
-#include "observables/LbRadialVelocityProfile.hpp"
+#include "observables/LBRadialVelocityProfile.hpp"
 #include "observables/Observable.hpp"
 #include "overlap.hpp"
 #include "p3m-dipolar.hpp"
@@ -89,6 +89,7 @@
 
 #include "utils.hpp"
 #include "utils/make_unique.hpp"
+#include "utils/serialization/IA_parameters.hpp"
 #include "utils/serialization/Particle.hpp"
 
 #include <boost/mpi.hpp>
@@ -1165,19 +1166,9 @@ void mpi_bcast_ia_params(int i, int j) {
 
   if (j >= 0) {
     /* non-bonded interaction parameters */
-    /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
-    MPI_Bcast(get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE, 0,
-              comm_cart);
+    boost::mpi::broadcast(comm_cart, *get_ia_param(i, j), 0);
 
-    copy_ia_params(get_ia_param(j, i), get_ia_param(i, j));
-
-#ifdef TABULATED
-    /* If there are tabulated forces broadcast those as well */
-    if (get_ia_param(i, j)->TAB_maxval > 0) {
-      boost::mpi::broadcast(comm_cart, tabulated_forces, 0);
-      boost::mpi::broadcast(comm_cart, tabulated_energies, 0);
-    }
-#endif
+    *get_ia_param(j, i) = *get_ia_param(i, j);
   } else {
     /* bonded interaction parameters */
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
@@ -1185,9 +1176,7 @@ void mpi_bcast_ia_params(int i, int j) {
 #ifdef TABULATED
     /* For tabulated potentials we have to send the tables extra */
     if (bonded_ia_params[i].type == BONDED_IA_TABULATED) {
-      int size = bonded_ia_params[i].p.tab.npoints;
-      MPI_Bcast(bonded_ia_params[i].p.tab.f, size, MPI_DOUBLE, 0, comm_cart);
-      MPI_Bcast(bonded_ia_params[i].p.tab.e, size, MPI_DOUBLE, 0, comm_cart);
+      boost::mpi::broadcast(comm_cart, *bonded_ia_params[i].p.tab.pot, 0);
     }
 #endif
 #ifdef OVERLAPPED
@@ -1210,19 +1199,11 @@ void mpi_bcast_ia_params(int i, int j) {
 
 void mpi_bcast_ia_params_slave(int i, int j) {
   if (j >= 0) { /* non-bonded interaction parameters */
-    /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
-    MPI_Bcast(get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE, 0,
-              comm_cart);
 
-    copy_ia_params(get_ia_param(j, i), get_ia_param(i, j));
+    boost::mpi::broadcast(comm_cart, *get_ia_param(i, j), 0);
 
-#ifdef TABULATED
-    /* If there are tabulated forces broadcast those as well */
-    if (get_ia_param(i, j)->TAB_maxval > 0) {
-      boost::mpi::broadcast(comm_cart, tabulated_forces, 0);
-      boost::mpi::broadcast(comm_cart, tabulated_energies, 0);
-    }
-#endif
+    *get_ia_param(j, i) = *get_ia_param(i, j);
+
   } else {                   /* bonded interaction parameters */
     make_bond_type_exist(i); /* realloc bonded_ia_params on slave nodes! */
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
@@ -1230,14 +1211,10 @@ void mpi_bcast_ia_params_slave(int i, int j) {
 #ifdef TABULATED
     /* For tabulated potentials we have to send the tables extra */
     if (bonded_ia_params[i].type == BONDED_IA_TABULATED) {
-      int size = bonded_ia_params[i].p.tab.npoints;
-      /* alloc force and energy tables on slave nodes! */
-      bonded_ia_params[i].p.tab.f =
-          (double *)Utils::malloc(size * sizeof(double));
-      bonded_ia_params[i].p.tab.e =
-          (double *)Utils::malloc(size * sizeof(double));
-      MPI_Bcast(bonded_ia_params[i].p.tab.f, size, MPI_DOUBLE, 0, comm_cart);
-      MPI_Bcast(bonded_ia_params[i].p.tab.e, size, MPI_DOUBLE, 0, comm_cart);
+      auto *tab_pot = new TabulatedPotential();
+      boost::mpi::broadcast(comm_cart, *tab_pot, 0);
+
+      bonded_ia_params[i].p.tab.pot = tab_pot;
     }
 #endif
 #ifdef OVERLAPPED

@@ -5,13 +5,13 @@
 #include "particle_data.hpp"
 #include <vector>
 
-
 namespace Observables {
-
 
 class LBVelocityProfile : public ProfileObservable {
 public:
-  virtual int n_values() const override { return 3 * n_x_bins * n_y_bins * n_z_bins; }
+  virtual int n_values() const override {
+    return 3 * n_x_bins * n_y_bins * n_z_bins;
+  }
   virtual std::vector<double> operator()(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
 #ifdef LB
@@ -23,18 +23,8 @@ public:
 
 #ifdef LB_GPU
     if (lattice_switch & LATTICE_LB_GPU) {
-      //    return statistics_observable_lbgpu_velocity_profile((profile_data*)
-      //    pdata_, A, n_A);
       throw std::runtime_error("The Lb Velocity profile observable is "
                                "currently not available for LBGPU");
-      /* notes:
-        * The proifle_data struct is no longer used. Instead, the values are
-          stored in the Observable class. The profile code, however, needs the
-          original struct on the gpu.
-        * Instance a profile_Data struct from Observable.hpp here
-        * fill it with info from ProfileObservable-class member variables
-        * pass it and a &(res[0]) to the lbgpu profile function
-      */
     }
 #endif
     if (lattice_switch & LATTICE_LB) {

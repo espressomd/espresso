@@ -191,6 +191,18 @@ Use numpy.copy(<ESPResSo array property>) to get a writable copy."
         obj.flags.writeable = False
         return obj
 
+    def __add__(self, other):
+        return np.copy(self) + other
+
+    def __radd__(self, other):
+        return other + np.copy(self)
+
+    def __sub__(self, other):
+        return np.copy(self) - other
+
+    def __rsub__(self, other):
+        return other - np.copy(self)
+
     def __repr__(self):
         return repr(np.array(self))
 

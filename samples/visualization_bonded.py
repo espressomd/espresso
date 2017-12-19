@@ -36,7 +36,6 @@ system.minimize_energy.init(
     f_max=10, gamma=50.0, max_steps=1000, max_displacement=0.2)
 system.minimize_energy.minimize()
 
-
 def main():
     while True:
         system.integrator.run(1)
