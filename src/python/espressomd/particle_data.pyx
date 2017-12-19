@@ -1772,10 +1772,13 @@ cdef class ParticleList(object):
         # Prevent setting of contradicting attributes
         IF DIPOLES:
             if 'dip' in P and 'dipm' in P:
-                raise ValueError("Contradicting attributes: dip and dipm")
+                raise ValueError("Contradicting attributes: dip and dipm. Setting\
+dip is sufficient as the length of the vector defines the scalar dipole moment.")
             IF ROTATION:
                 if 'dip' in P and 'quat' in P:
-                    raise ValueError("Contradicting attributes: dip and quat")
+                    raise ValueError("Contradicting attributes: dip and quat.\
+Setting dip overwrites the rotation of the particle around the dipole axis.\
+Set quat and scalar dipole moment (dipm) instead.")
 
         # The ParticleList[]-getter ist not valid yet, as the particle
         # doesn't yet exist. Hence, the setting of position has to be
