@@ -60,6 +60,35 @@ void gatherv(const boost::mpi::communicator &comm, const T *in_values,
   detail::gatherv_impl(comm, in_values, in_size, out_values, sizes, displs,
                        root, boost::mpi::is_mpi_datatype<T>());
 }
+
+template <typename T>
+void gatherv(const boost::mpi::communicator &comm, const T *in_values,
+             int in_size, T *out_values, const int *sizes, int root) {
+  if (comm.rank() == root) {
+    std::vector<int> displ(comm.size());
+
+    int offset = 0;
+    for (unsigned i = 0; i < displ.size(); i++) {
+      displ[i] = offset;
+      offset += sizes[i];
+    }
+
+    detail::gatherv_impl(comm, in_values, in_size, out_values, sizes,
+                         displ.data(), root, boost::mpi::is_mpi_datatype<T>());
+
+  } else {
+    detail::gatherv_impl(comm, in_values, in_size, out_values, 0, 0, root,
+                         boost::mpi::is_mpi_datatype<T>());
+  }
+}
+
+  template <typename T>
+  void gatherv(const boost::mpi::communicator &comm, const T *in_values,
+               int in_size, int root) {
+    assert(comm.rank() != root && "This overload can not be called on the root rank.");
+    gatherv(comm, in_values, in_size, static_cast<T*>(nullptr), 0, 0, root);
+  }
+
 }
 }
 #endif

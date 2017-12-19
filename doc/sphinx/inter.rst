@@ -53,41 +53,25 @@ Tabulated interaction
     `Feature TABULATED required.`
 
 
-The interface for tabulated interactions are implemented 
+The interface for tabulated interactions are implemented in the
 :class:`espressomd.interactions.TabulatedNonBonded` class. They can be configured
 via the following syntax::
 
-    system.non_bonded_inter[type1, type2].tabulated.set_params(filename='filename')
+  system.non_bonded_inter[type1, type2].tabulated.set_params(min='min', max='max', energy='energy', force='force')
 
-This defines an interaction between particles of the types *type1* and *type2* according
-to an arbitrary tabulated pair potential. *filename* specifies a file which
-contains the tabulated forces and energies as a function of the
-separation distance. The tabulated potential allows capping the force, see
-section :ref:`Capping the force during warmup`.
 
-At present the required file format is simply an ordered list separated
-by whitespaces. The data reader first looks for a ``#`` character and
-begins reading from that point in the file. Anything before the ``#``
-will be ignored.
+This defines an interaction between particles of the types *type1* and
+*type2* according to an arbitrary tabulated pair potential by linear interpolation.
+*force* specifies the tabulated forces and *energy* the energies as a function of the
+separation distance. *force* and *energy* have to have the same length :math:`N_\mathrm{points}`.
+Take care when choosing the number of points, since a copy of each lookup
+table is kept on each node and must be referenced very frequently.
+The maximal tabulated separation distance also acts as the effective cutoff
+value for the potential.
 
-The first three parameters after the ``#`` specify the number of data
-points :math:`N_\mathrm{points}` and the minimal and maximal tabulated
-separation distances :math:`r_\mathrm{min}` and :math:`r_\mathrm{max}`.
-The number of data points has to be given as an integer, the two others
-can be arbitrary positive floating-point numbers. Take care when choosing the number of
-points, since a copy of each lookup table is kept on each node and must
-be referenced very frequently. The maximal tabulated separation distance
-also acts as the effective cutoff value for the potential.
-
-The remaining data in the file should consist of :math:`N_\mathrm{points}` data triples
-:math:`r`, :math:`F(r)` and :math:`V(r)`. :math:`r` gives the particle
-separation, :math:`V(r)` specifies the interaction potential, and
-:math:`F(r)= -V'(r)/r` the force (note the factor :math:`r^{-1}`!). The
-values of :math:`r` are assumed to be equally distributed between
+The values of :math:`r` are assumed to be equally distributed between
 :math:`r_\mathrm{min}` and :math:`r_\mathrm{max}` with a fixed distance
-of :math:`(r_\mathrm{max}-r_\mathrm{min})/(N_\mathrm{points}-1)`; the
-distance values :math:`r` in the file are ignored and only included for
-human readability.
+of :math:`(r_\mathrm{max}-r_\mathrm{min})/(N_\mathrm{points}-1)`.
 
 .. _Lennard-Jones interaction:
 
@@ -909,19 +893,16 @@ A tabulated bond can be instantiated via
 :class:`espressomd.interactions.Tabulated`::
     
     from espressomd.interactions import Tabulated
-    tab = Tabulated(type = <str>, filename = <filename> )
+         tab = Tabulated(type = <str>, min = <min>, max = <max>,
+         energy = <energy>, force = <force> )
 
 This creates a bond type identifier with a two-body bond length, 
 three-body angle or four-body dihedral 
-tabulated potential. The tabulated forces and energies have to be
-provided in a file which is formatted identically as the files for
-non-bonded tabulated potentials (see :ref:`Tabulated interaction`).
-
+tabulated potential. For details of the interpolation, see :ref:`Tabulated interaction`.
 
 The bonded interaction can be based on a distance, a bond angle or a
 dihedral angle. This is determined by the ``type`` argument, which can
-be one of ``distance``, ``angle`` or ``dihedral``. The data is read from
-the file given by the ``filename`` argument.
+be one of ``distance``, ``angle`` or ``dihedral``.
 
 Calculation of the force and energy
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1629,11 +1610,11 @@ to metallic boundary conditions::
 
 	mmm2d = electrostatics.MMM2D(bjerrum_length = 1.0, maxPWerror = 1e-3, dielectric_contrast_on = 1, delta_mid_top = -1, delta_mid_bot = -1)
 
-Using `capacitor` allows to maintain a constant electric potential difference
+Using `const_pot` allows to maintain a constant electric potential difference `pot_diff`
 between the xy-planes at :math:`z=0` and :math:`z=L`, where :math:`L`
 denotes the box length in :math:`z`-direction::
 	
-	mmm2d = electrostatics.MMM2D(bjerrum_length = 100.0, maxPWerror = 1e-3, capacitor = 1, pot_diff = 100.0)
+	mmm2d = electrostatics.MMM2D(bjerrum_length = 100.0, maxPWerror = 1e-3, const_pot = 1, pot_diff = 100.0)
 
 This is done by countering the total dipol moment of the system with the
 electric field :math:`E_{induced}` and superposing a homogeneous electric field
@@ -1664,9 +1645,9 @@ method in computational order N. Currently, it only supports P3M. This means,
 that you will first have to set up the P3M algorithm before using ELC. The
 algorithm is definitely faster than MMM2D for larger numbers of particles
 (:math:`>400` at reasonable accuracy requirements). The periodicity has to be
-set to ``1 1 1`` still, and the 3D method has to be set to epsilon metallic,
-i.e. metallic boundary conditions.  Make sure that you read the papers on ELC
-(:cite:`arnold02c,icelc`) before using it. ELC  is an |es| actor and is used
+set to ``1 1 1`` still, *ELC* cancels the electrostatic contribution of the 
+periodic replica in **z-direction**. Make sure that you read the papers on ELC
+(:cite:`arnold02c,icelc`) before using it. ELC is an |es| actor and is used
 with::
 
     elc = electrostatic_extensions.ELC(gap_size = box_l*0.2, maxPWerror = 1e-3)
@@ -1680,25 +1661,52 @@ Parameters are:
         make sure that the gap is actually empty, this is the users
         responsibility. The method will compute fine if the condition is not
         fulfilled, however, the error bound will not be reached. Therefore you
-        should really make sure that the gap region is empty (e.g. by constraints).
+        should really make sure that the gap region is empty (e.g. with wall
+        constraints).
     * maxPWerror:
-		The maximal pairwise error sets the LUB error of the force between any
-		two charges without prefactors (see the papers). The algorithm tries to find
-		parameters to meet this LUB requirements or will throw an error if there are
-		none.
+        The maximal pairwise error sets the least upper bound (LUB) error of
+        the force between any two charges without prefactors (see the papers).
+        The algorithm tries to find parameters to meet this LUB requirements or
+        will throw an error if there are none.
+    * delta_mid_top/delta_mid_bot: 
+        *ELC* can also be used to simulate 2D periodic systems with image charges, 
+        specified by dielectric contrasts on the non-periodic boundaries
+        (:cite:`icelc`).  Similar to *MMM2D*, these can be set with the
+        keywords ``delta_mid_bot`` and ``delta_mid_top``, setting the dielectric
+        jump from the simulation region (*middle*) to *bottom* (at :math:`z<0`) and
+        from *middle* to *top* (:math:`z > box_l[2] - gap_size`). The fully metallic case
+        :math:`delta_mid_top=delta_mid_bot=-1` would lead to divergence of the
+        forces/energies in *ELC* and is therefore only possible with the
+        ``const_pot_on`` option.
+    * const_pot_on: 
+        As descibed, setting this to ``1`` leads to fully metallic boundaries and
+        behaves just like the mmm2d parameter of the same name: It maintaines a
+        constant potential ``pot_diff`` by countering the total dipol moment of
+        the system and adding a homogeneous electric field according to
+        ``pot_diff``.
+    * pot_diff:
+        Used in conjunction with ``const_pot_on`` set to 1, this sets the potential difference
+        between the boundaries in the z-direction between :math:`z=0` and 
+        :math:`z = box_l[2] - gap_size`.
     * far_cut:
         The setting of the far cutoff is only intended for testing and allows to
         directly set the cutoff. In this case, the maximal pairwise error is
-        ignored.     
+        ignored.
     * neutralize:
-		By default, ELC just as P3M adds a homogeneous neutralizing background
-		to the system in case of a net charge. However, unlike in three dimensions,
-		this background adds a parabolic potential across the
-		slab :cite:`ballenegger09a`. Therefore, under normal circumstance, you will
-		probably want to disable the neutralization.  This corresponds then to a formal
-		regularization of the forces and energies :cite:`ballenegger09a`. Also, if you
-		add neutralizing walls explicitely as constraints, you have to disable the
-		neutralization.
+        By default, ELC just as P3M adds a homogeneous neutralizing background
+        to the system in case of a net charge. However, unlike in three dimensions,
+        this background adds a parabolic potential across the
+        slab :cite:`ballenegger09a`. Therefore, under normal circumstance, you will
+        probably want to disable the neutralization for non-neutral systems.
+        This corresponds then to a formal regularization of the forces and
+        energies :cite:`ballenegger09a`. Also, if you add neutralizing walls
+        explicitely as constraints, you have to disable the neutralization.
+        When using a dielectric contrast or full metallic walls
+        (:math:`delta_mid_top != 0` or :math:`delta_mid_bot != 0` or
+        :math:`const_pot_on=1`), ``neutralize`` is overwritten and switched off internally.
+        Note that the special case of non-neutral systems with a *non-metallic* dielectric jump (eg.
+        ``delta_mid_top`` or ``delta_mid_bot`` in :math:`]-1,1[`) is not covered by the
+        algorithm and will throw an error.
 
 .. _ICC:
 

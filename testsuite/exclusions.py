@@ -40,11 +40,11 @@ class Exclusions(ut.TestCase):
 
         self.s.part[0].add_exclusion(1)
         self.s.part[0].add_exclusion(2)
-        self.assertEqual(self.s.part[0].exclusions, [1, 2])
+        self.assertTrue( (self.s.part[0].exclusions == [1, 2]).all() )
         self.s.part[0].delete_exclusion(1)
         self.assertEqual(self.s.part[0].exclusions, [2])
         self.s.part[0].delete_exclusion(2)
-        self.assertEqual(self.s.part[0].exclusions, [])
+        self.assertEqual( list(self.s.part[0].exclusions), [])
 
     def test_transfer(self):
         self.s.part.add(id=0, pos=[0, 0, 0], v=[1., 1., 1])
@@ -56,7 +56,7 @@ class Exclusions(ut.TestCase):
 
         for i in range(15):
             self.s.integrator.run(100)
-            self.assertEqual(self.s.part[0].exclusions, [1, 2, 3])
+            self.assertTrue( (self.s.part[0].exclusions == [1, 2, 3]).all() )
 
     @ut.skipIf(not espressomd.has_features(['LENNARD_JONES']), "Skipping test")
     def test_particle_property(self):

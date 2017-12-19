@@ -28,57 +28,16 @@
  *
 */
 
+#include "Vector.hpp"
+#include "utils/constants.hpp"
+#include "utils/math/sqr.hpp"
+#include "utils/memory.hpp"
+
 #include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <exception>
 #include <vector>
-
-#include "config.hpp"
-
-#include "debug.hpp"
-#include "errorhandling.hpp"
-#include "lees_edwards.hpp"
-#include "utils/List.hpp"
-#include "utils/math/sqr.hpp"
-#include "utils/memory.hpp"
-#include "Vector.hpp"
-
-/*************************************************************/
-/** \name Mathematical, physical and chemical constants.     */
-/*************************************************************/
-/*@{*/
-/** Pi. */
-#define PI 3.14159265358979323846264338328
-/** Square root of Pi */
-#define wupi 1.77245385090551602729816748334
-/** One over square root of Pi. */
-#define wupii 0.56418958354775627928034964498
-/** Pi to the power 1/3. */
-#define driwu2 1.25992104989487316476721060728
-
-/// error code if no error occured
-#define ES_OK 0
-/// error code if an error occured
-#define ES_ERROR 1
-
-/** space necessary for an (64-bit) integer with sprintf.
-    Analog to Tcl
- */
-#define ES_INTEGER_SPACE 24
-/** space necessary for an double with sprintf. Precision
-    is 17 digits, plus sign, dot, e, sign of exponent and
-    3 digits exponent etc. Analog to Tcl
-*/
-#define ES_DOUBLE_SPACE 27
-
-/*@}*/
-
-/************************************************
- * data types
- ************************************************/
-
-extern int this_node;
 
 namespace Utils {
 /**
@@ -110,7 +69,7 @@ template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
 /** \brief Transform the given 3D Vector to cylinder coordinates.
  */
 inline ::Vector<3, double>
-transform_to_cylinder_coordinates(::Vector<3, double> const &pos) {
+    transform_to_cylinder_coordinates(::Vector<3, double> const &pos) {
   double r = std::sqrt(pos[0] * pos[0] + pos[1] * pos[1]);
   double phi = std::atan2(pos[1], pos[0]);
   return ::Vector<3, double>{r, phi, pos[2]};
@@ -118,129 +77,15 @@ transform_to_cylinder_coordinates(::Vector<3, double> const &pos) {
 } // Namespace Utils
 
 /*************************************************************/
-/** \name List operations .                                  */
-/*************************************************************/
-/*@{*/
-
-/** Initialize an \ref IntList.  */
-inline void init_intlist(IntList *il) {
-  il->n = 0;
-  il->max = 0;
-  il->e = nullptr;
-}
-// extern int this_node;
-
-/** Allocate an \ref IntList of size size. If you need an \ref IntList
-    with variable size better use \ref realloc_intlist */
-inline void alloc_intlist(IntList *il, int size) {
-  il->max = size;
-  il->e = (int *)Utils::malloc(sizeof(int) * il->max);
-}
-
-/** Reallocate an \ref IntList */
-inline void realloc_intlist(IntList *il, int size) {
-  if (size != il->max) {
-    il->max = size;
-    il->e = (int *)Utils::realloc(il->e, sizeof(int) * il->max);
-  }
-}
-
-/** Allocate an \ref IntList, but only to multiples of grain. */
-inline void alloc_grained_intlist(IntList *il, int size, int grain) {
-  il->max = grain * ((size + grain - 1) / grain);
-  il->e = (int *)Utils::malloc(sizeof(int) * il->max);
-}
-
-/** Reallocate an \ref IntList, but only to multiples of grain. */
-inline void realloc_grained_intlist(IntList *il, int size, int grain) {
-  if (size >= il->max)
-    il->max = grain * ((size + grain - 1) / grain);
-  else
-    /* shrink not as fast, just lose half, rounded up */
-    il->max = grain * (((il->max + size + 1) / 2 + grain - 1) / grain);
-
-  il->e = (int *)Utils::realloc(il->e, sizeof(int) * il->max);
-}
-
-/** Check wether an \ref IntList contains the value c */
-inline int intlist_contains(IntList *il, int c) {
-  int i;
-  for (i = 0; i < il->n; i++)
-    if (c == il->e[i])
-      return 1;
-  return 0;
-}
-
-/** Initialize an \ref DoubleList.  */
-inline void init_doublelist(DoubleList *il) {
-  il->n = 0;
-  il->max = 0;
-  il->e = nullptr;
-}
-
-/** Allocate an \ref DoubleList of size size. If you need an \ref DoubleList
-    with variable size better use \ref realloc_doublelist */
-inline void alloc_doublelist(DoubleList *dl, int size) {
-  dl->max = size;
-  dl->e = (double *)Utils::malloc(sizeof(double) * dl->max);
-}
-
-/** Reallocate an \ref DoubleList */
-inline void realloc_doublelist(DoubleList *dl, int size) {
-  if (size != dl->max) {
-    dl->max = size;
-    dl->e = (double *)Utils::realloc(dl->e, sizeof(double) * dl->max);
-  }
-}
-
-/** Allocate an \ref DoubleList, but only to multiples of grain. */
-inline void alloc_grained_doublelist(DoubleList *dl, int size, int grain) {
-  dl->max = grain * ((size + grain - 1) / grain);
-  dl->e = (double *)Utils::malloc(sizeof(double) * dl->max);
-}
-
-/** Reallocate an \ref DoubleList, but only to multiples of grain. */
-inline void realloc_grained_doublelist(DoubleList *dl, int size, int grain) {
-  if (size >= dl->max)
-    dl->max = grain * ((size + grain - 1) / grain);
-  else
-    /* shrink not as fast, just lose half, rounded up */
-    dl->max = grain * (((dl->max + size + 1) / 2 + grain - 1) / grain);
-
-  dl->e = (double *)Utils::realloc(dl->e, sizeof(double) * dl->max);
-}
-/*@}*/
-
-/*************************************************************/
 /** \name Mathematical functions.                            */
 /*************************************************************/
 /*@{*/
-
-/** Calculates the remainder of a division */
-inline double drem_down(double a, double b) { return a - floor(a / b) * b; }
 
 /** vector difference */
 inline void vector_subt(double res[3], double a[3], double b[3]) {
   int i;
   for (i = 0; i < 3; i++)
     res[i] = a[i] - b[i];
-}
-
-/** Very slow sort routine for small integer arrays. Sorts the values
-    in decending order.
-    \param data   the integer array
-    \param size   size of the array
- */
-inline void sort_int_array(int *data, int size) {
-  int i, j, tmp;
-  for (i = 0; i < size - 1; i++)
-    for (j = i + 1; j < size; j++) {
-      if (data[i] < data[j]) {
-        tmp = data[i];
-        data[i] = data[j];
-        data[j] = tmp;
-      }
-    }
 }
 
 /** permute an integer array field of size size about permute positions. */
@@ -310,26 +155,6 @@ inline double sinc(double d) {
     return 1.0 + PId2 * (c2 + PId2 * (c4 + PId2 * (c6 + PId2 * c8)));
   }
 }
-
-/** factorizes small numbers up to a maximum of max factors. */
-inline int calc_factors(int n, int *factors, int max) {
-  int f = 2, i = 0;
-  while (n > 1) {
-    while (f <= n) {
-      if (n % f == 0) {
-        if (i >= max)
-          return 0;
-        n /= f;
-        factors[i] = f;
-        i++;
-        f = n;
-      }
-      f++;
-    }
-    f = 2;
-  }
-  return i;
-}
 /*@}*/
 
 /*************************************************************/
@@ -356,8 +181,7 @@ inline double normr(double v[3]) {
 }
 
 /** calculates the squared length of a vector */
-template<typename T>
-double sqrlen(T const& v) {
+template <typename T> double sqrlen(T const &v) {
   double d2 = 0.0;
   int i;
   for (i = 0; i < 3; i++)
@@ -574,144 +398,6 @@ inline int calc_eigenvector_3x3(double *a, double eva, double *eve) {
 /*@}*/
 
 /*************************************************************/
-/** \name Linear algebra functions                           */
-/*************************************************************/
-/*@{*/
-
-/** Calculate the LU decomposition of a matrix A. Uses Crout's method
- *  with partial implicit pivoting.  The original matrix A is replaced
- *  by its LU decomposition.  Due to the partial pivoting the result
- *  may contain row permutations which are recorded in perms.
- *  @return 0 for success, -1 otherwise (i.e. matrix is singular)
- *  @param A     Matrix to be decomposed (Input/Output)
- *  @param n     Dimension of the matrix (Input)
- *  @param perms Records row permutations effected by pivoting (Output)
- */
-inline int lu_decompose_matrix(double **A, int n, int *perms) {
-  int i, j, k, ip;
-  double max, sum, tmp;
-
-  double *scal = (double *)Utils::malloc(n * sizeof(double));
-
-  /* loop over rows and store implicit scaling factors */
-  for (i = 0; i < n; i++) {
-    max = 0.0;
-    for (j = 0; j < n; j++) {
-      if ((tmp = fabs(A[i][j])) > max)
-        max = tmp;
-    }
-    if (max == 0.0) {
-      /* matrix has a zero row and is singular */
-      return -1;
-    }
-    scal[i] = 1.0 / max;
-  }
-
-  /** Crout's algorithm: Calculate L and U columnwise from top to
-   *  bottom. The diagonal elements of L are chosen to be 1. Only
-   *  previously determined entries are used in the calculation. The
-   *  original matrix elements are used only once and can be
-   *  overwritten with the elements of L and U, the diagonal of L not
-   *  being stored. Rows may be permuted according to the largest
-   *  element (pivot) in the lower part, where rows are normalized to
-   *  have the largest element scaled to unity.
-   */
-
-  /* loop over columns */
-  for (j = 0; j < n; j++) {
-
-    /* calculate upper triangle part (without diagonal) */
-    for (i = 0; i < j; i++) {
-      sum = A[i][j];
-      for (k = 0; k <= i - 1; k++)
-        sum -= A[i][k] * A[k][j];
-      A[i][j] = sum;
-    }
-
-    /* calculate diagonal and lower triangle part */
-    /* pivot is determined on the fly, but not yet divided by */
-    ip = j;
-    max = 0.0;
-    for (i = j; i < n; i++) {
-      sum = A[i][j];
-      for (k = 0; k <= j - 1; k++)
-        sum -= A[i][k] * A[k][j];
-      A[i][j] = sum;
-      if ((tmp = scal[i] * fabs(sum)) > max) {
-        max = tmp;
-        ip = i;
-      }
-    }
-
-    /* swap rows according to pivot index */
-    if (j != ip) {
-      for (k = 0; k < n; k++) {
-        tmp = A[j][k];
-        A[j][k] = A[ip][k];
-        A[ip][k] = tmp;
-      }
-      scal[ip] = scal[j];
-    }
-    perms[j] = ip;
-
-    if (A[j][j] == 0.0) {
-      /* zero pivot indicates singular matrix */
-      return -1;
-    }
-
-    /* now divide by pivot element */
-    if (j != n) {
-      tmp = 1.0 / A[j][j];
-      for (i = j + 1; i < n; i++)
-        A[i][j] *= tmp;
-    }
-  }
-
-  free(scal);
-
-  return 0;
-}
-
-/** Solve the linear equation system for a LU decomposed matrix A.
- *  Uses forward substitution for the lower triangle part and
- *  backsubstitution for the upper triangle part. Row permutations as
- *  indicated in perms are applied to b accordingly. The solution is
- *  written to b in place.
- *  @param A     Matrix in LU decomposed form (Input)
- *  @param n     Dimension of the matrix (Input)
- *  @param perms Indicates row permutations due to pivoting (Input)
- *  @param b     Right-hand side of equation system (Input).
- *               Is destroyed and contains the solution x afterwards (Output).
- */
-inline void lu_solve_system(double **A, int n, int *perms, double *b) {
-  int i, j;
-  double sum;
-
-  /* Step 1: Solve Ly=b */
-
-  /* forward substitution for lower triangle part */
-  for (i = 0; i < n; i++) {
-    /* take care of the correct permutations */
-    sum = b[perms[i]];
-    b[perms[i]] = b[i];
-    for (j = 0; j <= i - 1; j++)
-      sum -= A[i][j] * b[j];
-    b[i] = sum;
-  }
-
-  /* Step 2: Solve Ux=y */
-
-  /* backsubstitution for upper triangle part */
-  for (i = n - 1; i >= 0; i--) {
-    sum = b[i];
-    for (j = i + 1; j < n; j++)
-      sum -= A[i][j] * b[j];
-    b[i] = sum / A[i][i];
-  }
-}
-/*@}*/
-
-/*************************************************************/
 /** \name Three dimensional grid operations                  */
 /*************************************************************/
 /*@{*/
@@ -746,74 +432,6 @@ inline void get_grid_pos(int i, int *a, int *b, int *c, int adim[3]) {
   *c = i;
 }
 
-/** Malloc a 3d grid for doubles with dimension dim[3] .
- * @param grid    pointer to grid.
- * @param dim  dimension of the grid.
-*/
-inline int malloc_3d_grid(double ****grid, int dim[3]) {
-  int i, j;
-  *grid = (double ***)Utils::malloc(sizeof(double **) * dim[0]);
-  if (*grid == nullptr)
-    return 0;
-  for (i = 0; i < dim[0]; i++) {
-    (*grid)[i] = (double **)Utils::malloc(sizeof(double *) * dim[1]);
-    if ((*grid)[i] == nullptr)
-      return 0;
-    for (j = 0; j < dim[1]; j++) {
-      (*grid)[i][j] = (double *)Utils::malloc(sizeof(double) * dim[2]);
-      if ((*grid)[i][j] == nullptr)
-        return 0;
-    }
-  }
-  return 1;
-}
-
-/** print a block of a 3D array.
- *  @param data    3D array.
- *  @param start   start coordinate for the block.
- *  @param size    size of the block.
- *  @param dim     dimension of the array.
- *  @param element size of the elements in the array.
- *  @param num     number of element to print.
-
-*/
-inline void print_block(double *data, int start[3], int size[3], int dim[3],
-                        int element, int num) {
-  int i0, i1, i2, b = 1;
-  int divide = 0, block1 = 0, start1;
-  double tmp;
-
-  while (divide == 0) {
-    if (b * size[2] > 7) {
-      block1 = b;
-      divide = (int)ceil(size[1] / (double)block1);
-    }
-    b++;
-  }
-  fprintf(
-      stderr,
-      "?: print_block (%d of %d): (%d,%d,%d)+(%d,%d,%d) from grid (%d,%d,%d)\n",
-      num + 1, element, start[0], start[1], start[2], size[0], size[1], size[2],
-      dim[0], dim[1], dim[2]);
-  for (b = 0; b < divide; b++) {
-    start1 = b * block1 + start[1];
-    for (i0 = start[0] + size[0] - 1; i0 >= start[0]; i0--) {
-      for (i1 = start1; i1 < std::min(start1 + block1, start[1] + size[1]);
-           i1++) {
-        for (i2 = start[2]; i2 < start[2] + size[2]; i2++) {
-          tmp = data[num + (element * (i2 + dim[2] * (i1 + dim[1] * i0)))];
-          if (tmp < 0)
-            fprintf(stderr, "%1.2e", tmp);
-          else
-            fprintf(stderr, " %1.2e", tmp);
-        }
-        fprintf(stderr, " | ");
-      }
-      fprintf(stderr, "\n");
-    }
-    fprintf(stderr, "\n");
-  }
-}
 /*@}*/
 
 /*************************************************************/
@@ -846,7 +464,8 @@ inline double distance2(double const pos1[3], double const pos2[3]) {
  *  \param vec  vecotr pos1-pos2.
  *  \return distance squared
 */
-inline double distance2vec(double const pos1[3], double const pos2[3], double vec[3]) {
+inline double distance2vec(double const pos1[3], double const pos2[3],
+                           double vec[3]) {
   vec[0] = pos1[0] - pos2[0];
   vec[1] = pos1[1] - pos2[1];
   vec[2] = pos1[2] - pos2[2];
@@ -870,17 +489,6 @@ char *strcat_alloc(char *left, const char *right);
 /** \name Object-in-fluid functions                          */
 /*************************************************************/
 /*@{*/
-
-/** Computes the area of triangle between vectors P1 and P2,
- *  by computing the crossproduct P1 x P2 and taking the half of its norm */
-inline double area_triangle_new(double *P1, double *P2) {
-  double area;
-  double normal[3], n; // auxiliary variables
-  vector_product(P1, P2, normal);
-  n = normr(normal);
-  area = 0.5 * n;
-  return area;
-}
 
 /** Computes the area of triangle between vectors P1,P2,P3,
  *  by computing the crossproduct P1P2 x P1P3 and taking the half of its norm */
@@ -906,25 +514,21 @@ inline void get_n_triangle(double *p1, double *p2, double *p3, double *n) {
   n[2] = (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0]);
 }
 
-/** This function returns the angle btw the triangle p1,p2,p3 and p2,p3,p4.
- *  Be careful, the angle depends on the orientation of the trianlges!
- *  You need to be sure that the orientation (direction of normal vector)
- *  of p1p2p3 is given by the cross product p2p1 x p2p3.
- *  The orientation of p2p3p4 must be given by p2p3 x p2p4.
+/** This function returns the angle btw the triangle p1,p2,p3 and p2,p3,p4.  Be
+ * careful, the angle depends on the orientation of the trianlges!  You need to
+ * be sure that the orientation (direction of normal vector) of p1p2p3 is given
+ * by the cross product p2p1 x p2p3.  The orientation of p2p3p4 must be given
+ * by p2p3 x p2p4.
  *
- *  Example: p1 = (0,0,1), p2 = (0,0,0), p3=(1,0,0), p4=(0,1,0).
- *  The orientation of p1p2p3 should be in the direction (0,1,0)
- *  and indeed: p2p1 x p2p3 = (0,0,1)x(1,0,0) = (0,1,0)
- *  This function is called in the beginning of the simulation when creating
- *  bonds depending on the angle btw the triangles, the bending_force.
- *  Here, we determine the orientations by looping over the triangles
- *  and checking the correct orientation. So when defining the bonds by tcl
- * command
- *  "part p2 bond xxxx p1 p3 p4", we correctly input the particle id's.
- *  So if you have the access to the order of particles, you are safe to call
- * this
+ *  Example: p1 = (0,0,1), p2 = (0,0,0), p3=(1,0,0), p4=(0,1,0).  The
+ *  orientation of p1p2p3 should be in the direction (0,1,0) and indeed: p2p1 x
+ *  p2p3 = (0,0,1)x(1,0,0) = (0,1,0) This function is called in the beginning
+ *  of the simulation when creating bonds depending on the angle btw the
+ *  triangles, the bending_force.  Here, we determine the orientations by
+ *  looping over the triangles and checking the correct orientation.  So if you
+ *  have the access to the order of particles, you are safe to call this
  *  function with exactly this order. Otherwise you need to check the
- * orientations. */
+ *  orientations. */
 inline double angle_btw_triangles(double *P1, double *P2, double *P3,
                                   double *P4) {
   double phi;
@@ -990,7 +594,7 @@ inline double angle_btw_triangles(double *P1, double *P2, double *P3,
   return phi;
 }
 
-namespace utils {
+namespace Utils {
 
 struct vector_size_unequal : public std::exception {
   const char *what() const throw() { return "Vector sizes do not match!"; }
@@ -1102,7 +706,7 @@ template <typename T> int sign(T value) {
   return (T(0) < value) - (value < T(0));
 }
 
-}// namespace utils
+} // namespace utils
 
 /*@}*/
 

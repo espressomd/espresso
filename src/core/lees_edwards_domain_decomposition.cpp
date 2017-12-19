@@ -48,7 +48,7 @@ int comms_count = 0;
  * algorithm (see verlet.cpp) to build the verlet lists.
  */
 void le_dd_init_cell_interactions() {
-  int m, n, o, p, q, r, ind1, ind2, c_cnt = 0, n_cnt = 0;
+  int m, n, o, p, q, r, ind1, ind2;
   int extra_cells = 0;
 
   /* loop over non-ghost cells */

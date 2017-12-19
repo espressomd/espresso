@@ -17,14 +17,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function
-import espressomd
-from espressomd import thermostat
-from espressomd import lb
+
+import matplotlib.pyplot as plt
 import numpy as np
+
+import espressomd
+import espressomd.lb
+
 
 print("""
 =======================================================
-=                      lbf.py                         =
+=         Lattice Boltzmann fluid example             =
 =======================================================
 
 Program Information:""")
@@ -36,16 +39,15 @@ system.time_step = 0.01
 system.cell_system.skin = 0.1
 box_l = 50
 system.box_l = [box_l, box_l, box_l]
-# system.periodic = [1,1,1]
 
 system.part.add(id=0, pos=[box_l / 2.0, box_l /
                            2.0, box_l / 2.0], fix=[1, 1, 1])
-# system.part.add(id=0, pos=[box_l/2.0,box_l/2.0,box_l/2.0], ext_force=[0,0,1])
 
 
-#lbf = lb.LBFluidGPU(agrid=1, fric=1, dens=1, visc=1, tau=0.01, ext_force=[0,0,-1.0/(box_l**3)])
-lbf = lb.LBFluid(agrid=1, fric=1, dens=1, visc=1, tau=0.01,
-                 ext_force=[0, 0, -1.0 / (box_l**3)])
+lb_params = {'agrid': 1, 'fric': 1, 'dens': 1, 'visc': 1, 'tau': 0.01,
+             'ext_force': [0, 0, -1.0 / (box_l**3)]}
+#lbf = espressomd.lb.LBFluidGPU(**lb_params)
+lbf = espressomd.lb.LBFluid(**lb_params)
 system.actors.add(lbf)
 print(system.actors)
 print(lbf.get_params())
@@ -58,9 +60,8 @@ for i in range(10):
 
 f_list = np.array(f_list)
 
-import matplotlib.pyplot as pp
 
-fig1 = pp.figure()
+fig1 = plt.figure()
 ax = fig1.add_subplot(111)
 ax.plot(f_list[:, 0], label="F_x")
 ax.plot(f_list[:, 1], label="F_y")
@@ -69,4 +70,4 @@ ax.legend()
 ax.set_xlabel("t")
 ax.set_ylabel("F")
 
-pp.show()
+plt.show()

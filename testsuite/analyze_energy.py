@@ -7,13 +7,14 @@ from espressomd.interactions import HarmonicBond
 
 
 @ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "Skipped because LENNARD_JONES turned off.")
+
 class AnalyzeEnergy(ut.TestCase):
     system = espressomd.System()
     harmonic = HarmonicBond(r_0=0.0, k=3)
 
     @classmethod
     def setUpClass(self):
-        box_l = 10.0
+        box_l = 20
         self.system.box_l = [box_l, box_l, box_l]
         self.system.cell_system.skin = 0.4
         self.system.time_step = 0.01
@@ -27,6 +28,7 @@ class AnalyzeEnergy(ut.TestCase):
         self.system.part.add(id=1, pos=[5, 2, 2], type=0)
         self.system.thermostat.set_langevin(kT=0., gamma=1.)
         self.system.bonded_inter.add(self.harmonic)
+
 
     def test_kinetic(self):
         self.system.part[0].pos = [1, 2, 2]
@@ -116,7 +118,7 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["bonded"], 3., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 1., delta=1e-7)
         # add another pair of particles
-        self.system.part.add(id=2, pos=[1, 5, 5], type=1)
+        self.system.part.add(id=2, pos=[1, 5, 5], type=1 )
         self.system.part.add(id=3, pos=[2, 5, 5], type=1)
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["total"], 50. + 3 + (1. + 1.), delta=1e-7)
@@ -126,6 +128,41 @@ class AnalyzeEnergy(ut.TestCase):
         self.system.part[2].remove()
         self.system.part[3].remove()
         self.system.part[0].delete_all_bonds()
+
+
+    features = ["ELECTROSTATICS", "P3M"]
+    @ut.skipIf(not espressomd.has_features(*features),
+               "Missing features: " + ", ".join(espressomd.missing_features(*features)))
+    def test_electrostatics(self):
+
+        from espressomd import electrostatics
+
+        self.system.part[0].pos = [1, 2, 2]
+        self.system.part[1].pos = [3, 2, 2]
+        self.system.part[0].q = 1
+        self.system.part[1].q = -1
+        p3m = electrostatics.P3M(bjerrum_length=1.0,
+                                 accuracy=9.910945054074526e-08,
+                                 mesh=[22,22,22],
+                                 cao=7,
+                                 r_cut=8.906249999999998,
+                                 alpha=0.387611049779351,
+                                 tune=False)
+        self.system.actors.add(p3m)
+
+        # did not verify if this is correct, but looks pretty good (close to 1/2)
+        u_p3m = -0.501062398379
+        energy = self.system.analysis.energy()
+        self.assertAlmostEqual(energy["total"], u_p3m, delta=1e-5)
+        self.assertAlmostEqual(energy["kinetic"], 0., delta=1e-7)
+        self.assertAlmostEqual(energy["bonded"], 0., delta=1e-7)
+        self.assertAlmostEqual(energy["non_bonded"], 0, delta=1e-7)
+        self.assertAlmostEqual(energy["coulomb"], u_p3m, delta=1e-7)
+        self.system.part[0].q = 0
+        self.system.part[1].q = 0
+        self.system.part[0].pos = [1, 2, 2]
+        self.system.part[1].pos = [5, 2, 2]
+
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())

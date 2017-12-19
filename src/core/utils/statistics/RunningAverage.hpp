@@ -36,14 +36,15 @@ namespace Statistics {
 template <typename Scalar> class RunningAverage {
 public:
   RunningAverage()
-      : m_n(0), m_new_var(0.0), m_min(std::numeric_limits<Scalar>::max()),
-        m_max(-std::numeric_limits<Scalar>::max()){};
+      : m_n(0), m_old_avg(0), m_new_avg(0), m_old_var(0),
+        m_new_var(0.0), m_min(std::numeric_limits<Scalar>::max()),
+        m_max(-std::numeric_limits<Scalar>::max())
+      {}
   void add_sample(Scalar s) {
     m_n++;
 
     if (m_n == 1) {
       m_old_avg = m_new_avg = s;
-      m_old_var = 0.0;
     } else {
       m_new_avg = m_old_avg + (s - m_old_avg) / m_n;
       m_new_var = m_old_var + (s - m_old_avg) * (s - m_new_avg);

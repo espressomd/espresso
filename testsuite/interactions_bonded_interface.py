@@ -124,8 +124,11 @@ class ParticleProperties(ut.TestCase):
             0, SubtLJ, {})
 
     if espressomd.has_features(["TABULATED"]):
-        test_tabulated = generateTestForBondParams(
-            0, Tabulated, {"type": "distance", "filename": abspath("data/lj1.tab")})
+        test_tabulated = generateTestForBondParams(0, Tabulated, {"type": "distance",
+                                                                  "min": 1.,
+                                                                  "max": 2.,
+                                                                  "energy": [1.,2.,3.],
+                                                                  "force": [3.,4.,5.]})
 
 
 if __name__ == "__main__":
