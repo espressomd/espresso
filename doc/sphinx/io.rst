@@ -462,8 +462,8 @@ openGLLive.
 ``start()`` starts the blocking visualizer window. 
 Should be called after a seperate thread containing ``update()`` has been started.
 
-| :meth:`espressomd.visualization.mayaviLive.registerCallback()`
-| :meth:`espressomd.visualization.openGLLive.registerCallback()`
+| :meth:`espressomd.visualization.mayaviLive.register_callback()`
+| :meth:`espressomd.visualization.openGLLive.register_callback()`
 
 Registers the method ``callback()``, which is called every ``interval`` milliseconds. Useful for
 live plotting (see sample script samples/python/visualization.py).
@@ -608,7 +608,7 @@ by a timer or keyboard input::
         print "foo"
 
     #Registers timed calls of foo()
-    visualizer.registerCallback(foo,interval=500)
+    visualizer.register_callback(foo,interval=500)
 
     #Callbacks to control temperature 
     temperature = 1.0

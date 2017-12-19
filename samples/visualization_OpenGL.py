@@ -46,15 +46,15 @@ for i in range(10):
 
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
-visualizer = openGLLive(system)
+visualizer = openGLLive(system, drag_enabled = True)
 
 for key, value in visualizer.specs.items():
     print(str(key) + ":" + (30 - len(key)) * " " + str(value))
 
 # Register buttons
-visualizer.keyboardManager.registerButton(
+visualizer.keyboardManager.register_button(
     KeyboardButtonEvent('u', KeyboardFireEvent.Hold, increaseTemp))
-visualizer.keyboardManager.registerButton(
+visualizer.keyboardManager.register_button(
     KeyboardButtonEvent('j', KeyboardFireEvent.Hold, decreaseTemp))
 
 
@@ -67,8 +67,8 @@ def foo():
     print("foo")
 
 
-visualizer.registerCallback(foo, interval=500)
-visualizer.registerCallback(muu)
+visualizer.register_callback(foo, interval=500)
+visualizer.register_callback(muu)
 
 
 def main():

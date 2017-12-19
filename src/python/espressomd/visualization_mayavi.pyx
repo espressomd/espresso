@@ -8,6 +8,8 @@ from espressomd.interactions cimport *
 from espressomd.system cimport *
 from libcpp.vector cimport vector
 
+include "myconfig.pxi"
+
 cdef extern from "utils.hpp":
     void get_mi_vector(double * res, double * a, double * b)
 
@@ -86,10 +88,12 @@ cdef class mayaviLive(object):
         """Determine radius of particle type t for visualization."""
         def radius_from_lj(t):
             radius = 0.
-            try:
-                radius = 0.5 * get_ia_param(t,t).LJ_sig
-            except:
-                radius = 0.
+            IF LENNARD_JONES:
+                try:
+                    radius = 0.5 * get_ia_param(t,t).LJ_sig
+                except:
+                    radius = 0.
+
             if radius == 0:
                 radius = 0.5  # fallback value
             return radius
@@ -248,7 +252,7 @@ cdef class mayaviLive(object):
         assert isinstance(threading.current_thread(), threading._MainThread)
         self.gui.start_event_loop()
 
-    def registerCallback(self, cb, interval=1000):
+    def register_callback(self, cb, interval=1000):
         self.timers.append(Timer(interval, cb))
 
 # TODO: constraints

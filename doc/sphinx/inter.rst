@@ -53,41 +53,25 @@ Tabulated interaction
     `Feature TABULATED required.`
 
 
-The interface for tabulated interactions are implemented 
+The interface for tabulated interactions are implemented in the
 :class:`espressomd.interactions.TabulatedNonBonded` class. They can be configured
 via the following syntax::
 
-    system.non_bonded_inter[type1, type2].tabulated.set_params(filename='filename')
+  system.non_bonded_inter[type1, type2].tabulated.set_params(min='min', max='max', energy='energy', force='force')
 
-This defines an interaction between particles of the types *type1* and *type2* according
-to an arbitrary tabulated pair potential. *filename* specifies a file which
-contains the tabulated forces and energies as a function of the
-separation distance. The tabulated potential allows capping the force, see
-section :ref:`Capping the force during warmup`.
 
-At present the required file format is simply an ordered list separated
-by whitespaces. The data reader first looks for a ``#`` character and
-begins reading from that point in the file. Anything before the ``#``
-will be ignored.
+This defines an interaction between particles of the types *type1* and
+*type2* according to an arbitrary tabulated pair potential by linear interpolation.
+*force* specifies the tabulated forces and *energy* the energies as a function of the
+separation distance. *force* and *energy* have to have the same length :math:`N_\mathrm{points}`.
+Take care when choosing the number of points, since a copy of each lookup
+table is kept on each node and must be referenced very frequently.
+The maximal tabulated separation distance also acts as the effective cutoff
+value for the potential.
 
-The first three parameters after the ``#`` specify the number of data
-points :math:`N_\mathrm{points}` and the minimal and maximal tabulated
-separation distances :math:`r_\mathrm{min}` and :math:`r_\mathrm{max}`.
-The number of data points has to be given as an integer, the two others
-can be arbitrary positive floating-point numbers. Take care when choosing the number of
-points, since a copy of each lookup table is kept on each node and must
-be referenced very frequently. The maximal tabulated separation distance
-also acts as the effective cutoff value for the potential.
-
-The remaining data in the file should consist of :math:`N_\mathrm{points}` data triples
-:math:`r`, :math:`F(r)` and :math:`V(r)`. :math:`r` gives the particle
-separation, :math:`V(r)` specifies the interaction potential, and
-:math:`F(r)= -V'(r)/r` the force (note the factor :math:`r^{-1}`!). The
-values of :math:`r` are assumed to be equally distributed between
+The values of :math:`r` are assumed to be equally distributed between
 :math:`r_\mathrm{min}` and :math:`r_\mathrm{max}` with a fixed distance
-of :math:`(r_\mathrm{max}-r_\mathrm{min})/(N_\mathrm{points}-1)`; the
-distance values :math:`r` in the file are ignored and only included for
-human readability.
+of :math:`(r_\mathrm{max}-r_\mathrm{min})/(N_\mathrm{points}-1)`.
 
 .. _Lennard-Jones interaction:
 
@@ -909,19 +893,16 @@ A tabulated bond can be instantiated via
 :class:`espressomd.interactions.Tabulated`::
     
     from espressomd.interactions import Tabulated
-    tab = Tabulated(type = <str>, filename = <filename> )
+         tab = Tabulated(type = <str>, min = <min>, max = <max>,
+         energy = <energy>, force = <force> )
 
 This creates a bond type identifier with a two-body bond length, 
 three-body angle or four-body dihedral 
-tabulated potential. The tabulated forces and energies have to be
-provided in a file which is formatted identically as the files for
-non-bonded tabulated potentials (see :ref:`Tabulated interaction`).
-
+tabulated potential. For details of the interpolation, see :ref:`Tabulated interaction`.
 
 The bonded interaction can be based on a distance, a bond angle or a
 dihedral angle. This is determined by the ``type`` argument, which can
-be one of ``distance``, ``angle`` or ``dihedral``. The data is read from
-the file given by the ``filename`` argument.
+be one of ``distance``, ``angle`` or ``dihedral``.
 
 Calculation of the force and energy
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
