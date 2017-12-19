@@ -103,15 +103,6 @@ if ! $insource; then
     cd $builddir
 fi
 
-if [ $with_static_analysis = "true" ]; then
-    function make {
-        scan-build-4.0 -o $builddir/analysis --status-bugs make $*
-    }
-    function cmake {
-        scan-build-4.0 -o $builddir/analysis --status-bugs cmake $*
-    }
-fi
-
 # load MPI module if necessary
 if [ -f "/etc/os-release" ]; then
     grep -q suse /etc/os-release && source /etc/profile.d/modules.sh && module load gnu-openmpi
@@ -135,6 +126,10 @@ fi
 
 if [ $with_coverage = "true" ]; then
     cmake_params="-DWITH_COVERAGE=ON $cmake_params"
+fi
+
+if [ $with_static_analysis = "true" ]; then
+    cmake_params="-DWITH_CLANG_TIDY=ON $cmake_params"
 fi
 
 MYCONFIG_DIR=$srcdir/maintainer/configs

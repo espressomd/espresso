@@ -39,7 +39,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # If the version is smaller than 3.4, use custom find HDF5 module
 # else, use prefer parallel feature of default module.
-if(CMAKE_MAJOR_VERSION EQUAL 3 AND CMAKE_MINOR_VERSION LESS 4)
+if(CMAKE_VERSION VERSION_LESS 3.4)
   set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
                         ${CMAKE_CURRENT_SOURCE_DIR}/cmake/hdf5)
 else()
@@ -74,6 +74,9 @@ option(WITH_TESTS  "Enable tests"            ON)
 option(WITH_SCAFACOS "Build with Scafacos support" ON)
 option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
 option(WITH_COVERAGE "Generate code coverage report" OFF)
+if( CMAKE_VERSION VERSION_GREATER 3.5.2 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
+  option(WITH_CLANG_TIDY "Run Clang-Tidy during compilation" OFF)
+endif()
 option(WARNINGS_ARE_ERRORS "Treat warnings as errors during compilation" OFF)
 
 # Write compile commands to file, for various tools...
@@ -253,8 +256,6 @@ if(WITH_VALGRIND_INSTRUMENTATION)
   endif(VALGRIND_FOUND)
 endif(WITH_VALGRIND_INSTRUMENTATION)
 
-include(RequireCXX11)
-
 #######################################################################
 # Process MPI settings
 #######################################################################
@@ -282,20 +283,6 @@ include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 list(APPEND LIBRARIES ${Boost_LIBRARIES})
 
 #######################################################################
-# Testing
-#######################################################################
-
-if(WITH_TESTS)
-  enable_testing()
-  if(Boost_UNIT_TEST_FRAMEWORK_FOUND)
-    set(WITH_UNIT_TESTS ON)
-    list(APPEND LIBRARIES ${Boost_LIBRARIES})
-  endif(Boost_UNIT_TEST_FRAMEWORK_FOUND)
-  add_custom_target(check)
-  add_subdirectory(testsuite)
-endif(WITH_TESTS)
-
-#######################################################################
 # Paths
 #######################################################################
 
@@ -318,6 +305,14 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIBDIR}")
 # Flags
 #######################################################################
 
+# C++ standard
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+if(CMAKE_VERSION VERSION_LESS 3.1)
+  include(RequireCXX11)
+endif()
+
 if(APPLE)
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
 endif()
@@ -338,6 +333,35 @@ if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION VERSI
 endif()
 
 set(CMAKE_MACOSX_RPATH TRUE)
+
+#######################################################################
+# Testing
+#######################################################################
+
+if( WITH_CLANG_TIDY )
+  string(REGEX REPLACE "^([1-9]+\\.[0-9]+).*$" "\\1" CLANG_MINOR_VERSION "${CMAKE_CXX_COMPILER_VERSION}")
+  find_program(
+    CLANG_TIDY_EXE
+    NAMES "clang-tidy-${CLANG_MINOR_VERSION}" "clang-tidy"
+    DOC "Path to clang-tidy executable"
+    )
+  if(NOT CLANG_TIDY_EXE)
+    message(STATUS "clang-tidy not found.")
+  else()
+    message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
+    set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}" "-checks=*,-clang-analyzer-alpha.*" "-warnings-as-errors=*")
+  endif()
+endif()
+
+if(WITH_TESTS)
+  enable_testing()
+  if(Boost_UNIT_TEST_FRAMEWORK_FOUND)
+    set(WITH_UNIT_TESTS ON)
+    list(APPEND LIBRARIES ${Boost_LIBRARIES})
+  endif(Boost_UNIT_TEST_FRAMEWORK_FOUND)
+  add_custom_target(check)
+  add_subdirectory(testsuite)
+endif(WITH_TESTS)
 
 #######################################################################
 # Subdirectories

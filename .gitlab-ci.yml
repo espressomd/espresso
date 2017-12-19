@@ -32,10 +32,6 @@ clang-static-analysis:
   script:
     - export myconfig=maxset with_coverage=false with_static_analysis=true
     - bash maintainer/cuda_build.sh
-  artifacts:
-    when: on_failure
-    paths:
-    - build/analysis
 
 clang:
   stage: build
