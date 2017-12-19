@@ -150,3 +150,29 @@ class HomogeneousMagneticField(Constraint):
     """
 
     _so_name = "Constraints::HomogeneousMagneticField"
+
+class SlipPlane(Constraint):
+    """
+    A wall with a slip velocity that causes cosistent noise and friction
+    corresponding to the difference between the part velocity and the slip velocity.
+
+    Attributes
+    ----------
+    velocity : array_like
+        The slip velocity
+    gamma : array_like
+        The friction parameter
+    kT : float
+        The temperature for the noise
+    types : array_like
+        List of type ids the constraint should act on.
+    r_cut : float
+        Cutoff for the friction.
+    normal : array_like
+        Normal of the plane.
+    dist : float
+        Distance of the plane from the origin, parallel to the normal.
+    
+    """
+
+    _so_name = "Constraints::SlipPlane"

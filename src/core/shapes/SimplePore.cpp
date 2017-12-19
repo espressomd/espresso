@@ -1,4 +1,3 @@
-
 #include "SimplePore.hpp"
 
 #include <cassert>

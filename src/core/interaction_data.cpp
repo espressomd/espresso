@@ -63,7 +63,6 @@
 #include "steppot.hpp"
 #include "tab.hpp"
 #include "thermostat.hpp"
-#include "tunable_slip.hpp"
 #include "umbrella.hpp"
 #include "utils.hpp"
 #include <cstdlib>
@@ -417,11 +416,6 @@ static void recalc_maximal_cutoff_nonbonded() {
       max_cut_current = std::max(max_cut_current, data->TAB.cutoff());
 #endif
 
-#ifdef TUNABLE_SLIP
-      if (max_cut_current < data->TUNABLE_SLIP_r_cut)
-        max_cut_current = data->TUNABLE_SLIP_r_cut;
-#endif
-
 #ifdef CATALYTIC_REACTIONS
       if (max_cut_current < data->REACTION_range)
         max_cut_current = data->REACTION_range;
@@ -624,8 +618,6 @@ int coulomb_set_bjerrum(double bjerrum) {
   return ES_OK;
 }
 
-/* =========================================================
-   ========================================================= */
 #endif /*ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES

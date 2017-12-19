@@ -12,7 +12,7 @@ namespace Constraints {
 Vector3d ShapeBasedConstraint::total_force() const {
     Vector3d total_force;
     boost::mpi::all_reduce(comm_cart, m_local_force, total_force,
-            std::plus<Vector3d>());                                                                         
+            std::plus<Vector3d>());
 
     return total_force;
 }
@@ -76,12 +76,7 @@ void ShapeBasedConstraint::add_force(Particle *p, double *folded_pos) {
     if (dist > 0) {
       calc_non_bonded_pair_force(p, &part_rep, ia_params, vec, dist,
                                  dist * dist, force, torque1, torque2);
-#ifdef TUNABLE_SLIP
-      if (tunable_slip) {
-        add_tunable_slip_pair_force(p1, &constraints[n].part_rep, ia_params,
-                                    vec, dist, force);
-      }
-#endif
+
     } else if (m_penetrable && (dist <= 0)) {
       if ((!m_only_positive) && (dist < 0)) {
         calc_non_bonded_pair_force(p, &part_rep, ia_params, vec, -1.0 * dist,

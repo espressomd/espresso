@@ -18,7 +18,7 @@ public:
   ShapeBasedConstraint()
       : m_shape(std::make_shared<Shapes::NoWhere>()),
         m_reflection_type(ReflectionType::NONE), m_penetrable(false),
-        m_only_positive(false), m_tuneable_slip(0), m_type(-1) {
+        m_only_positive(false), m_type(-1) {
     reset_force();
   }
 
@@ -63,7 +63,6 @@ private:
   ReflectionType m_reflection_type;
   int m_penetrable;
   int m_only_positive;
-  int m_tuneable_slip;
   int m_type;
   Vector3d m_local_force;
 };
