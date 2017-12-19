@@ -27,48 +27,34 @@ namespace ReactionEnsemble {
 
 void EnergyCollectiveVariable::load_CV_boundaries(
     WangLandauReactionEnsemble &m_current_wang_landau_system) {
+    /**save minimum and maximum energies as a function of the other collectiv variables under min_boundaries_energies, max_boundaries_energies **/
+    
   m_current_wang_landau_system.do_energy_reweighting = true;
   // load energy boundaries from file
-  FILE *pFile;
-  pFile = fopen(energy_boundaries_filename.c_str(), "r");
-  if (pFile == nullptr) {
-    throw std::runtime_error("ERROR: energy boundaries file for the specific "
-                             "system could not be read.\n");
+  std::ifstream infile;
+
+    infile.open(energy_boundaries_filename);// file containing numbers in 3 columns 
+    if(infile.fail())
+        throw std::runtime_error("ERROR: energy boundaries file for the specific system could not be read.\n");
+
     // Note that you cannot change the other collective variables in the
     // pre-production run and the production run
-  }
-  // save minimum and maximum energies as a function of the other collective
-  // variables under min_boundaries_energies...
-  char *line = nullptr;
-  size_t len = 0;
-  ssize_t length_line;
-  const char *delim = "\t ";
-  length_line = getline(&line, &len, pFile); // dummy call of getline to get rid
-                                             // of header line (first line in
-                                             // file)
-  while ((length_line = getline(&line, &len, pFile)) != -1) {
-    int counter_words_in_line = 0;
-    for (char *word = strtok(line, delim); word != nullptr;
-         word = strtok(nullptr, delim)) {
-      if (counter_words_in_line <
-          m_current_wang_landau_system.collective_variables.size() - 1) {
-        counter_words_in_line += 1;
-        continue;
-      } else if (counter_words_in_line ==
-                 m_current_wang_landau_system.collective_variables.size() - 1) {
-        double energy_boundary_minimum = atof(word);
-        counter_words_in_line += 1;
+  // Note: the number of collective variables is unknown, therefore we cannot read in the file in an easier way
+  std::string line="";
+  std::getline(infile,line); //dummy read to throw away header
+  while(std::getline(infile,line)){
+        std::istringstream iss(line);
+        std::vector<double> values;
+        double value=-1.0;
+        while(iss >> value){
+            values.push_back(value);
+        } 
         m_current_wang_landau_system.min_boundaries_energies.push_back(
-            energy_boundary_minimum);
-      } else if (counter_words_in_line ==
-                 m_current_wang_landau_system.collective_variables.size()) {
-        double energy_boundary_maximum = atof(word);
+            values[values.size()-2]);
         m_current_wang_landau_system.max_boundaries_energies.push_back(
-            energy_boundary_maximum);
-        counter_words_in_line += 1;
-      }
-    }
+            values[values.size()-1]);     
   }
+  
   CV_minimum = *(std::min_element(
       m_current_wang_landau_system.min_boundaries_energies.begin(),
       m_current_wang_landau_system.min_boundaries_energies.end()));
@@ -615,17 +601,15 @@ int ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
   return err_code_type;
 }
 
+int ReactionAlgorithm::delete_particle(int p_id) {
 /**
-* Deletes the particle with the given p_id. This method is intended to only
-* delete unbonded particles since bonds are coupled to ids. In addition this
-* function keeps track of particles that are created in the particle id range. The
-* function create_particle() can then fill these holes again. This avoids the id
-* range to become excessively huge.
+* Deletes the particle with the given p_id and stores if it created a hole
+   * at that position in the particle id range. This method is intended to only
+* delete unbonded particles since bonds are coupled to ids. This is used to avoid the id
+* range becoming excessively huge.
 */
 
-int ReactionAlgorithm::delete_particle(int p_id) {
-  /**deletes the particle with the provided id and stores if it created a hole
-   * at that position in the particle id range */
+  /**deletes the particle with the provided id  */
   if (p_id == max_seen_particle) {
     // last particle, just delete
     remove_particle(p_id);
@@ -652,7 +636,8 @@ int ReactionAlgorithm::delete_particle(int p_id) {
 /**
 * Writes a random position inside the central box into the provided array.
 */
-void ReactionAlgorithm::get_random_position_in_box(double *out_pos) {
+std::vector<double> ReactionAlgorithm::get_random_position_in_box() {
+  std::vector<double> out_pos(3);
   if (box_is_cylindric_around_z_axis) {
     // see http://mathworld.wolfram.com/DiskPointPicking.html
     double random_radius =
@@ -684,6 +669,7 @@ void ReactionAlgorithm::get_random_position_in_box(double *out_pos) {
     out_pos[1] = box_l[1] * d_random();
     out_pos[2] = box_l[2] * d_random();
   }
+  return out_pos;
 }
 
 /**
@@ -691,9 +677,8 @@ void ReactionAlgorithm::get_random_position_in_box(double *out_pos) {
 * Additionally it proposes points with a small radii more often than a uniform
 * random probability density would do it.
 */
-void ReactionAlgorithm::
-    get_random_position_in_box_enhanced_proposal_of_small_radii(
-        double *out_pos) {
+std::vector<double> ReactionAlgorithm::
+    get_random_position_in_box_enhanced_proposal_of_small_radii() {
   double random_radius =
       cyl_radius *
       d_random(); // for enhanced proposal of small radii, needs correction
@@ -701,6 +686,7 @@ void ReactionAlgorithm::
                   // p(x,y)=1/(2*pi*cyl_radius*r(x,y)), that means small radii
                   // are proposed more often
   double phi = 2.0 * PI * d_random();
+  std::vector<double> out_pos(3);
   out_pos[0] = random_radius * cos(phi);
   out_pos[1] = random_radius * sin(phi);
   while (std::pow(out_pos[0], 2) + std::pow(out_pos[1], 2) <=
@@ -714,6 +700,7 @@ void ReactionAlgorithm::
   out_pos[0] += cyl_x;
   out_pos[1] += cyl_y;
   out_pos[2] = box_l[2] * d_random();
+  return out_pos;
 }
 
 /**
@@ -730,7 +717,7 @@ int ReactionAlgorithm::create_particle(int desired_type) {
   } else {
     p_id = max_seen_particle + 1;
   }
-  double pos_vec[3];
+  std::vector<double> pos_vec;
 
   // create random velocity vector according to Maxwell Boltzmann distribution
   // for components
@@ -766,8 +753,8 @@ int ReactionAlgorithm::create_particle(int desired_type) {
   if (min_dist != 0) {
     while (particle_inserted_too_close_to_another_one &&
            insert_tries < max_insert_tries) {
-      get_random_position_in_box(pos_vec);
-      place_particle(p_id, pos_vec);
+      pos_vec=get_random_position_in_box();
+      place_particle(p_id, pos_vec.data());
       // set type
       set_particle_type(p_id, desired_type);
 #ifdef ELECTROSTATICS
@@ -776,7 +763,7 @@ int ReactionAlgorithm::create_particle(int desired_type) {
 #endif
       // set velocities
       set_particle_v(p_id, vel);
-      double d_min = distto(partCfg(), pos_vec,
+      double d_min = distto(partCfg(), pos_vec.data(),
                             p_id); // TODO also catch constraints with an IFDEF
                                    // CONSTRAINTS here, but only interesting,
                                    // when doing MD/ HMC because then the system
@@ -787,8 +774,8 @@ int ReactionAlgorithm::create_particle(int desired_type) {
         particle_inserted_too_close_to_another_one = false;
     }
   } else {
-    get_random_position_in_box(pos_vec);
-    place_particle(p_id, pos_vec);
+    pos_vec=get_random_position_in_box();
+    place_particle(p_id, pos_vec.data());
     // set type
     set_particle_type(p_id, desired_type);
     // set velocities
@@ -934,8 +921,8 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     bool particle_inserted_too_close_to_another_one = true;
     while (particle_inserted_too_close_to_another_one && attempts < max_tries) {
       // change particle position
-      get_random_position_in_box(new_pos.data());
-      //			get_random_position_in_box_enhanced_proposal_of_small_radii(new_pos);
+      new_pos=get_random_position_in_box();
+      //new_pos=get_random_position_in_box_enhanced_proposal_of_small_radii();
       ////enhanced proposal of small radii
       place_particle(p_id, new_pos.data());
 //      auto part = get_particle_data(p_id);

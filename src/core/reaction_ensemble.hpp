@@ -184,9 +184,9 @@ private:
   void add_types_to_index(std::vector<int> &type_list);
   std::vector<double> add_random_vector(double const *vector, int len_vector,
                          double length_of_displacement);
-  void get_random_position_in_box(double *out_pos);
-  void
-  get_random_position_in_box_enhanced_proposal_of_small_radii(double *out_pos);
+  std::vector<double> get_random_position_in_box();
+  std::vector<double>
+  get_random_position_in_box_enhanced_proposal_of_small_radii();
 };
 
 ////////////////////////////////////////////////////////////////actual
