@@ -760,13 +760,10 @@ typedef struct {
   //  bool writeCOM;
 } IBM_VolCons_Parameters;
 
-typedef enum { TriangleNormals, NodeNeighbors } tBendingMethod;
-
 /** Parameters for IBM tribend **/
 typedef struct {
   // Interaction data
   double kb;
-  tBendingMethod method;
 
   // Reference angle
   double theta0;

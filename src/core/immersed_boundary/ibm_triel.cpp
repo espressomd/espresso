@@ -238,19 +238,22 @@ int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, con
   make_bond_type_exist(bond_type);
 
   //Get data (especially location) of three particles
-  Particle part1, part2, part3;
+/*  Particle part1, part2, part3;
   get_particle_data(ind1,&part1);
   get_particle_data(ind2,&part2);
-  get_particle_data(ind3,&part3);
+  get_particle_data(ind3,&part3);*/
+  const std::unique_ptr<Particle> part1 = get_particle_data(ind1);
+  const std::unique_ptr<Particle> part2 = get_particle_data(ind2);
+  const std::unique_ptr<Particle> part3 = get_particle_data(ind3);
   
   // Calculate equilibrium lenghts and angle; Note the sequence of the points!
   // lo = lenght between 1 and 3
   double templo[3];
-  get_mi_vector(templo, part3.r.p, part1.r.p);
+  get_mi_vector(templo, part3->r.p, part1->r.p);
   const double l0 = sqrt (sqrlen(templo));
   // lpo = lenght between 1 and 2
   double templpo[3];
-  get_mi_vector(templpo, part2.r.p, part1.r.p);
+  get_mi_vector(templpo, part2->r.p, part1->r.p);
   const double lp0 = sqrt (sqrlen(templpo));
 
   // cospo / sinpo angle functions between these vectors; calculated directly via the products

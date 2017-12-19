@@ -2480,6 +2480,101 @@ ELSE:
     class AngleCossquare(BondedInteractionNotDefined):
         name = "AngleCossquare"
 
+# IBM triel
+IF IMMERSED_BOUNDARY == 1:
+    class IBM_Triel(BondedInteraction):
+
+        def type_number(self):
+            return BONDED_IA_IBM_TRIEL
+
+        def type_name(self):
+            return "IBM_Triel"
+
+        def valid_keys(self):
+            return "ind1", "ind2", "ind3", "k1","k2","elasticLaw", "maxDist"
+
+        def required_keys(self):
+            return "ind1", "ind2", "ind3","k1", "elasticLaw", "maxDist"
+
+        def set_default_params(self):
+            self._params = {"k2":0}
+
+        def _get_params_from_es_core(self):
+            return {}
+#               {"maxdist":bonded_ia_params[self._bond_id].p.ibm_triel.maxDist,\
+#                 "k1":bonded_ia_params[self._bond_id].p.ibm_triel.k1,\
+#                 "k2":bonded_ia_params[self._bond_id].p.ibm_triel.k2,\
+#                 "elasticLaw":bonded_ia_params[self._bond_id].p.ibm_triel.elasticLaw}
+
+        def _set_params_in_es_core(self):
+            if self._params["elasticLaw"] == "NeoHookean":
+                el = 0
+            if self._params["elasticLaw"] == "Skalak":
+                el = 1
+            IBM_Triel_SetParams(self._bond_id,self._params["ind1"],self._params["ind2"],self._params["ind3"],self._params["maxDist"], int(el), self._params["k1"], self._params["k2"])
+ELSE:
+    class IBM_Triel(BondedInteractionNotDefined):
+        name = "IBM_TRIEL"
+
+# IBM tribend
+IF IMMERSED_BOUNDARY == 1:
+    class IBM_Tribend(BondedInteraction):
+
+        def type_number(self):
+            return BONDED_IA_IBM_TRIBEND
+
+        def type_name(self):
+            return "IBM_Tribend"
+
+        def valid_keys(self):
+            return "ind1", "ind2", "ind3", "ind4", "kb", "refShape"
+
+        def required_keys(self):
+            return "ind1", "ind2", "ind3", "ind4", "kb"
+
+        def set_default_params(self):
+            self._params = {"flat":False}
+
+        def _get_params_from_es_core(self):
+            return {}
+
+        def _set_params_in_es_core(self):
+            if self._params["refShape"] == "Flat":
+                flat = True
+            if self._params["refShape"] == "Initial":
+                flat = False
+            IBM_Tribend_SetParams(self._bond_id,self._params["ind1"],self._params["ind2"],self._params["ind3"],self._params["ind4"], self._params["kb"], flat)
+ELSE:
+    class IBM_Tribend(BondedInteractionNotDefined):
+        name = "IBM_TRIBEND"
+
+# IBM VolCons
+IF IMMERSED_BOUNDARY == 1:
+    class IBM_VolCons(BondedInteraction):
+
+        def type_number(self):
+            return BONDED_IA_IBM_VOLUME_CONSERVATION
+
+        def type_name(self):
+            return "IBM_VolCons"
+
+        def valid_keys(self):
+            return "softID", "kappaV"
+
+        def required_keys(self):
+            return "softID", "kappaV"
+
+        def set_default_params(self):
+            self._params = {}
+
+        def _get_params_from_es_core(self):
+            return {}
+
+        def _set_params_in_es_core(self):
+            IBM_VolumeConservation_SetParams(self._bond_id,self._params["softID"],self._params["kappaV"])
+ELSE:
+    class IBM_VolCons(BondedInteractionNotDefined):
+        name = "IBM_VOLCONS"
 
 class OifGlobalForces(BondedInteraction):
 
@@ -2583,6 +2678,8 @@ bonded_interaction_classes = {
     int(BONDED_IA_ANGLE_COSSQUARE): AngleCossquare,
     int(BONDED_IA_OIF_GLOBAL_FORCES): OifGlobalForces,
     int(BONDED_IA_OIF_LOCAL_FORCES): OifLocalForces,
+    int(BONDED_IA_IBM_TRIEL): IBM_Triel,
+    int(BONDED_IA_IBM_TRIBEND): IBM_Tribend,
 }
 IF LENNARD_JONES:
     bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = SubtLJ

@@ -83,6 +83,11 @@ inline int ifParticleIsVirtual(Particle  const& p){
  #include "virtual_sites_relative.hpp"
 #endif
 
+// Virtual particles for IBM
+#ifdef IMMERSED_BOUNDARY
+  #include "immersed_boundary/ibm_main.hpp"
+#endif
+
 #endif
 
 #endif

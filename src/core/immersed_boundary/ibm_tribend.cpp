@@ -16,7 +16,7 @@ double maxBendingDist;
 double maxX;*/
 
 // Internal function
-void CalcForceGompper(Particle *p1, const int numPartners, Particle **const partners, const double kb);
+//void CalcForceGompper(Particle *p1, const int numPartners, Particle **const partners, const double kb);
 
 /*************
    IBM_Tribend_CalcForce
@@ -26,9 +26,9 @@ Calculate the bending force and add it to the particles
 void IBM_Tribend_CalcForce(Particle *p1, const int numPartners, Particle **const partners, const Bonded_ia_parameters &iaparams)
 {
 
-  const tBendingMethod method = iaparams.p.ibm_tribend.method;
-  if ( method == NodeNeighbors ) CalcForceGompper(p1, numPartners, partners, iaparams.p.ibm_tribend.kb);
-  if ( method == TriangleNormals )
+//  const tBendingMethod method = iaparams.p.ibm_tribend.method;
+//  if ( method == NodeNeighbors ) CalcForceGompper(p1, numPartners, partners, iaparams.p.ibm_tribend.kb);
+//  if ( method == TriangleNormals )
   {
     // move to separate function
     if ( numPartners != 3 ) { printf("Error. TriangleNormals bending with != 3 partners!\n"); exit(1); }
@@ -163,7 +163,7 @@ int IBM_Tribend_ResetParams(const int bond_type, const double kb)
    IBM_Tribend_SetParams
 ************/
 
-int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const int ind4, const tBendingMethod method, const double kb, const bool flat)
+int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const int ind4, const double kb, const bool flat)
 {
   // Create bond
   make_bond_type_exist(bond_type);
@@ -172,27 +172,31 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, c
   bonded_ia_params[bond_type].type = BONDED_IA_IBM_TRIBEND;
   
   // Specific parameters
-  bonded_ia_params[bond_type].p.ibm_tribend.method = method;
+//  bonded_ia_params[bond_type].p.ibm_tribend.method = method;
   
   // Distinguish bending methods
-  if ( method == TriangleNormals )
+//  if ( method == TriangleNormals )
   {
     double theta0;
   
     if ( !flat )
     {
       // Compute theta0
-      Particle p1, p2, p3, p4;
+/*      Particle p1, p2, p3, p4;
       get_particle_data(ind1, &p1);
       get_particle_data(ind2, &p2);
       get_particle_data(ind3, &p3);
-      get_particle_data(ind4, &p4);
+      get_particle_data(ind4, &p4);*/
+      const std::unique_ptr<Particle> p1 = get_particle_data(ind1);
+      const std::unique_ptr<Particle> p2 = get_particle_data(ind2);
+      const std::unique_ptr<Particle> p3 = get_particle_data(ind3);
+      const std::unique_ptr<Particle> p4 = get_particle_data(ind4);
       
       //Get vectors of triangles
       double dx1[3], dx2[3], dx3[3];
-      get_mi_vector(dx1, p1.r.p, p3.r.p);
-      get_mi_vector(dx2, p2.r.p, p3.r.p);
-      get_mi_vector(dx3, p4.r.p, p3.r.p);
+      get_mi_vector(dx1, p1->r.p, p3->r.p);
+      get_mi_vector(dx2, p2->r.p, p3->r.p);
+      get_mi_vector(dx3, p4->r.p, p3->r.p);
       
       //Get normals on triangle; pointing outwards by definition of indices sequence
       double n1l[3], n2l[3];
@@ -234,7 +238,7 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, c
   }
   
   // Gompper
-  if ( method == NodeNeighbors )
+/*  if ( method == NodeNeighbors )
   {
     // Interpret ind2 as number of partners
     
@@ -245,7 +249,7 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, c
     // Only flat eq possible, but actually this is ignored in the computation anyway
     bonded_ia_params[bond_type].p.ibm_tribend.theta0 = 0;
     bonded_ia_params[bond_type].p.ibm_tribend.kb = kb;
-  }
+  }*/
   
   // Broadcast and return
   mpi_bcast_ia_params(bond_type, -1);
@@ -257,19 +261,8 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, c
    CalcForceGompper
  **************/
 
-void CalcForceGompper(Particle *xi, const int numNeighbors, Particle **const neighbors, const double kb)
+/*void CalcForceGompper(Particle *xi, const int numNeighbors, Particle **const neighbors, const double kb)
 {
-//  if ( xi->r.p[0] > maxX ) maxX = xi->r.p[0];
-  
-  // DEBUG stuff
-/*  for (int i=0; i < numNeighbors; i++)
-  {
-    Vector3D tmp;
-    Subtr(tmp, xi, neighbors[i]);
-    const double dist = Length(tmp);
-    if ( dist > maxBendingDist ) maxBendingDist = dist;
-  }*/
-  
   // mainNumerator: Will be set to one of the terms in the numerator.
   Vector3D mainNumerator;
   mainNumerator.el[0] = mainNumerator.el[1] = mainNumerator.el[2] = 0;
@@ -381,20 +374,14 @@ void CalcForceGompper(Particle *xi, const int numNeighbors, Particle **const nei
     xl->f.f[1] += force.el[1];
     xl->f.f[2] += force.el[2];
     
-    // DEBUG stuff
-/*    for (int i=0; i < numNeighbors; i++)
-    {
-      const double f = Length(force);
-      if ( f > maxBendingForce ) maxBendingForce = f;
-    }*/
-    
+ 
   }
   
   // Clean up
   delete []derivNumerators;
   delete []derivDenominators;
     
-}
+}*/
 
 
 
