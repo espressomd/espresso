@@ -588,11 +588,6 @@ electrical dipoles alone using the magnetic code .. */
 int dp3m_set_eps(double eps) {
   dp3m.params.epsilon = eps;
 
-  fprintf(stderr, ">> dp3m.params.epsilon =%lf\n", dp3m.params.epsilon);
-  fprintf(stderr, "if you are doing true MAGNETIC CALCULATIONS the value of "
-                  "Depsilon should be 1, if you change it, you go on your own "
-                  "risk ...\n");
-
   mpi_bcast_coulomb_params();
 
   return ES_OK;

@@ -127,7 +127,7 @@ t = Thread(target=main)
 t.daemon = True
 t.start()
 
-visualizer.registerCallback(update_plot, interval=500)
+visualizer.register_callback(update_plot, interval=500)
 visualizer.start()
 
 # terminate program

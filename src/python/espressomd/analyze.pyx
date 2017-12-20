@@ -35,7 +35,7 @@ cimport numpy as np
 from globals cimport n_configs, min_box_l
 from collections import OrderedDict
 from .system import System
-
+from espressomd.utils import is_valid_type
 
 class Analysis(object):
 
@@ -82,12 +82,12 @@ class Analysis(object):
             raise Exception("Both, p1 and p2 have to be specified\n" + __doc__)
         else:
             for i in range(len(p1)):
-                if not isinstance(p1[i], int):
+                if not is_valid_type(p1[i], int):
                     raise ValueError(
                         "Particle types in p1 and p2 have to be of type int: " + str(p1[i]))
 
             for i in range(len(p2)):
-                if not isinstance(p2[i], int):
+                if not is_valid_type(p2[i], int):
                     raise ValueError(
                         "Particle types in p1 and p2 have to be of type int" + str(p2[i]))
 
@@ -132,7 +132,7 @@ class Analysis(object):
         # Get position
         # If particle id specified
         if id is not None:
-            if not isinstance(id, int):
+            if not is_valid_type(id, int):
                 raise ValueError("Id has to be an integer")
             if not id in self._system.part[:].id:
                 raise ValueError("Id has to be an index of an existing particle")

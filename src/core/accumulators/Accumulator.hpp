@@ -20,7 +20,6 @@
 #ifndef _ACCUMULATORS_ACCUMULATOR_H
 #define _ACCUMULATORS_ACCUMULATOR_H
 
-#include <memory>
 /* Needed for transform_iterator to work with
    lambdas on older compilers. */
 #define BOOST_RESULT_OF_USE_DECLTYPE
@@ -32,6 +31,7 @@
 
 #include "observables/Observable.hpp"
 
+#include <memory>
 
 namespace Accumulators {
 namespace ba = boost::accumulators;
@@ -43,16 +43,15 @@ class Accumulator {
 public:
   // The accumulator struct has to be initialized with the correct vector size,
   // therefore the order of init is important.
-  Accumulator() : m_initialized(false), m_autoupdate(false){};
-  std::shared_ptr<Observables::Observable> m_obs = nullptr;
-  void initialize();
+  Accumulator(std::shared_ptr<Observables::Observable> const& obs)
+      : m_obs(obs), m_acc(std::vector<double>(obs->n_values())) {}
+
   int update();
   std::vector<double> get_mean();
   std::vector<double> get_variance();
-  bool m_initialized;
-  bool m_autoupdate;
 
 private:
+  std::shared_ptr<Observables::Observable> m_obs;
   acc m_acc;
 };
 

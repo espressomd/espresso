@@ -48,7 +48,7 @@ if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
 from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
 from globals cimport max_seen_particle
-from espressomd.utils import array_locked
+from espressomd.utils import array_locked, is_valid_type
 
 import sys
 import random  # for true random numbers from os.urandom()
@@ -175,6 +175,7 @@ cdef class System(object):
         [x, y, z]
         zero for no periodicity in this direction
         one for periodicity
+
         """
 
         def __set__(self, _periodic):
@@ -320,7 +321,7 @@ cdef class System(object):
         def __set__(self, _seed):
             cdef vector[int] seed_array
             self.__seed = _seed
-            if(isinstance(_seed, int) and n_nodes == 1):
+            if(is_valid_type(_seed, int) and n_nodes == 1):
                 seed_array.resize(1)
                 seed_array[0] = int(_seed)
                 mpi_random_seed(0, seed_array)
@@ -363,7 +364,7 @@ cdef class System(object):
         # defines the lees edwards offset
             def __set__(self, double _lees_edwards_offset):
 
-                if isinstance(_lees_edwards_offset, float):
+                if is_valid_type(_lees_edwards_offset, float):
                     global lees_edwards_offset
                     lees_edwards_offset = _lees_edwards_offset
                     #new_offset = _lees_edwards_offset

@@ -20,6 +20,7 @@ from __future__ import print_function, absolute_import
 
 from collections import OrderedDict
 import sys, inspect, os, re, signal
+from espressomd.utils import is_valid_type
 
 try:
     import cPickle as pickle
@@ -232,7 +233,7 @@ class Checkpointing(object):
         Writes the given signal integer signum to the signal file.
         
         """
-        if not isinstance(signum, int):
+        if not is_valid_type(signum, int):
             raise ValueError("Signal must be an integer number.")
 
         signals = self.read_signals()
@@ -249,7 +250,7 @@ class Checkpointing(object):
         Register a signal that will trigger signal_handler().
         
         """
-        if not isinstance(signum, int):
+        if not is_valid_type(signum, int):
             raise ValueError("Signal must be an integer number.")
 
         if signum in self.checkpoint_signals:

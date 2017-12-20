@@ -24,6 +24,7 @@
 #include <boost/mpi/collectives.hpp>
 
 #include <utility>
+#include <sstream>
 
 using namespace std;
 using boost::mpi::communicator;
