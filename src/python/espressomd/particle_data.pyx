@@ -30,8 +30,8 @@ from copy import copy
 from globals cimport max_seen_particle, time_step, smaller_time_step, box_l, n_part, n_rigidbonds, n_particle_types
 import collections
 import functools
-from espressomd.utils import nesting_level
-from espressomd.utils import array_locked
+import types
+from espressomd.utils import nesting_level, array_locked, is_valid_type
 
 PARTICLE_EXT_FORCE = 1
 
@@ -97,7 +97,7 @@ cdef class ParticleHandle(object):
 
         def __set__(self, _type):
 
-            if isinstance(_type, int) and _type >= 0:
+            if is_valid_type(_type, int) and _type >= 0:
                 if set_particle_type(self.id, _type) == 1:
                     raise Exception("Set particle position first.")
             else:
@@ -124,7 +124,7 @@ cdef class ParticleHandle(object):
         """
 
         def __set__(self, _mol_id):
-            if isinstance(_mol_id, int) and _mol_id >= 0:
+            if is_valid_type(_mol_id, int) and _mol_id >= 0:
                 if set_particle_mol_id(self.id, _mol_id) == 1:
                     raise Exception("Set particle position first.")
             else:
@@ -628,7 +628,7 @@ cdef class ParticleHandle(object):
             """
 
             def __set__(self, _v):
-                if isinstance(_v, int):
+                if is_valid_type(_v, int):
                     if set_particle_virtual(self.id, _v) == 1:
                         raise Exception("Set particle position first.")
                 else:
@@ -668,7 +668,7 @@ cdef class ParticleHandle(object):
                 for i in range(4):
                     _q[i] = q[i]
 
-                if isinstance(_relto, int) and isinstance(_dist, float) and all(isinstance(fq,float) for fq in q):
+                if is_valid_type(_relto, int) and is_valid_type(_dist, float) and all(is_valid_type(fq,float) for fq in q):
                     if set_particle_vs_relative(self.id, _relto, _dist, _q) == 1:
                         raise Exception("Set particle position first.")
                 else:
@@ -1354,7 +1354,7 @@ cdef class ParticleHandle(object):
 
         # Bond type or numerical bond id
         if not isinstance(bond[0], BondedInteraction):
-            if isinstance(bond[0], int):
+            if is_valid_type(bond[0], int):
                 bond[0] = BondedInteractions()[bond[0]]
             else:
                 raise Exception(
@@ -1377,7 +1377,7 @@ cdef class ParticleHandle(object):
 
         # Type check on partners
         for i in range(1, len(bond)):
-            if not isinstance(bond[i], int):
+            if not is_valid_type(bond[i], int):
                 if not isinstance(bond[i], ParticleHandle):
                     raise ValueError(
                         "Bond partners have to be of type integer or ParticleHandle.")
@@ -1826,7 +1826,7 @@ Set quat and scalar dipole moment (dipm) instead.")
                 yield self[i]
 
     def exists(self, idx):
-        if isinstance(idx, int) or issubclass(type(idx), np.integer):
+        if is_valid_type(idx, int):
             return particle_exists(idx)
         if isinstance(idx, slice) or isinstance(idx, tuple) or isinstance(idx, list) or isinstance(idx, np.ndarray):
             tf_array = np.zeros(len(idx), dtype=np.bool)
@@ -1966,6 +1966,65 @@ Set quat and scalar dipole moment (dipm) instead.")
                 if not (particle_exists(i) and particle_exists(j)):
                     continue
                 yield (self[i], self[j])
+
+    def select(self,*args, **kwargs):
+        """Generates a particle slice by filtering particles via a user-defined criterion
+
+        Parameters
+        ----------
+        Either:
+
+            a keywor arguments in which the keys are names of particle properties 
+            and the values are the values to filter for. E.g.,::
+
+                type=0,q=1
+
+        Or:
+
+            a function taking a ParticleHandle as argument and returning True if
+            the particle is to be filtered for. E.g.,::
+
+                lambda p: p.pos[0]<0.5
+
+        Returns
+        -------
+        An instance of ParticleSlice containing the selected particles
+
+        """
+
+        # Ids of the selected particles
+        ids = []
+        # Did we get a function as argument?
+        if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0],types.FunctionType):
+            # Go over all particles and pass them to the user-provided function
+            for p in self:
+                if args[0](p):
+                    ids.append(p.id)
+            return ParticleSlice(ids)
+
+        # Did we get a set of keyword args?
+        elif len(args) == 0:
+            for p in self:
+                select = True
+                # Check, if the particle fails any required criteria
+                for k in kwargs:
+                    # Fetch user-provided value and value in particle
+                    val1 = kwargs[k]
+                    val2 = getattr(p, k)
+                    # Get tolerance from numerical accuracy limits
+                    tol = max(np.amax(np.spacing(val1)), np.amax(np.spacing(val2)))
+
+                    # Compare
+                    if not np.allclose(val1, val2, atol=tol):
+                        select = False
+                        break
+                if select:
+                    ids.append(p.id)
+            return ParticleSlice(ids)
+        else:
+            raise Exception(
+                "select() takes either selection function as positional argument or a set of keyword arguments.")
+
 
 def set_slice_one_for_all(particle_slice, attribute, values):
     for i in particle_slice.id_selection:
