@@ -15,6 +15,8 @@
 #include "immersed_boundary/ibm_cuda_interface.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
+#include "serialization.hpp"
+
 #include "utils/mpi/gather_buffer.hpp"
 #include "utils/mpi/scatter_buffer.hpp"
 
