@@ -19,6 +19,7 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from . import utils
+from espressomd.utils import is_valid_type
 
 
 # Non-bonded interactions
@@ -42,7 +43,7 @@ cdef class NonBondedInteraction(object):
     def __init__(self, *args, **kwargs):
 
         # Interaction id as argument
-        if len(args) == 2 and isinstance(args[0], int) and isinstance(args[1], int):
+        if len(args) == 2 and is_valid_type(args[0], int) and is_valid_type(args[1], int):
             self._part_types = args
 
             # Load the parameters currently set in the Espresso core
@@ -1371,7 +1372,7 @@ class NonBondedInteractionHandle(object):
 
     def __init__(self, _type1, _type2):
         """Takes two particle types as argument"""
-        if not (isinstance(_type1, int) and isinstance(_type2, int)):
+        if not (is_valid_type(_type1, int) and is_valid_type(_type2, int)):
             raise TypeError("The particle types have to be of type integer.")
         self.type1 = _type1
         self.type2 = _type2
@@ -1417,7 +1418,7 @@ cdef class NonBondedInteractions(object):
         if not isinstance(key, tuple):
             raise ValueError(
                 "NonBondedInteractions[] expects two particle types as indices.")
-        if len(key) != 2 or (not isinstance(key[0], int)) or (not isinstance(key[1], int)):
+        if len(key) != 2 or (not is_valid_type(key[0], int)) or (not is_valid_type(key[1], int)):
             raise ValueError(
                 "NonBondedInteractions[] expects two particle types as indices.")
         return NonBondedInteractionHandle(key[0], key[1])
@@ -1464,7 +1465,7 @@ cdef class BondedInteraction(object):
 
         """
         # Interaction id as argument
-        if len(args) == 1 and isinstance(args[0], int):
+        if len(args) == 1 and is_valid_type(args[0], int):
             bond_id = args[0]
             # Check, if the bond in Espresso core is really defined as a FENE
             # bond
@@ -2618,7 +2619,7 @@ class BondedInteractions(object):
     from bonded_interaction_classes"""
 
     def __getitem__(self, key):
-        if not isinstance(key, int):
+        if not is_valid_type(key, int):
             raise ValueError(
                 "Index to BondedInteractions[] has to be an integer referring to a bond id")
 
@@ -2644,7 +2645,7 @@ class BondedInteractions(object):
         # Validate arguments
 
         # type of key must be int
-        if not isinstance(key, int):
+        if not is_valid_type(key, int):
             raise ValueError(
                 "Index to BondedInteractions[] has to ba an integer referring to a bond id")
 

@@ -39,8 +39,6 @@ namespace Testing {
  * @brief Mock to test ScriptInterface.
  */
 struct ScriptInterfaceTest : public ScriptInterface::ScriptInterfaceBase {
-  const string name() const override { return string("ScriptInterfaceTest"); }
-
   map<string, Variant> get_parameters() const override {
     map<string, Variant> ret;
 
@@ -79,7 +77,6 @@ struct ScriptInterfaceTest : public ScriptInterface::ScriptInterfaceBase {
   vector<double> vec_double;
   vector<int> vec_int;
 };
-
 } /* namespace Testing */
 
 using namespace Testing;

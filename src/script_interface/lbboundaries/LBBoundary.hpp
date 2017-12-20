@@ -48,8 +48,6 @@ public:
     return none;
   }
 
-  const std::string name() const override { return "LBBoundaries:LBBoundary"; }
-
   std::shared_ptr<::LBBoundaries::LBBoundary> lbboundary() {
     return m_lbboundary;
   }
