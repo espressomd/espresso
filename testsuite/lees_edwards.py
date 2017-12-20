@@ -19,7 +19,7 @@ class LeesEdwardsTest(ut.TestCase):
     comparison with the expected value."""
 
     # Systemclass
-    system = espressomdmd.System(box_l=[5.0, 5.0, 5.0])
+    system = espressomd.System(box_l=[5.0, 5.0, 5.0])
 
     # allowed deviation from analytical results
     tol = 10e-15
