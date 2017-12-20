@@ -1,5 +1,6 @@
 from espressomd.utils import to_char_pointer,to_str
 import numpy as np
+from espressomd.utils import is_valid_type
 
 cdef class PObjectId(object):
     cdef ObjectId id
@@ -88,12 +89,12 @@ cdef class PScriptInterface(object):
                         "Value of %s expected to be %i elements" % (name, n_elements))
 
             # We accept floats for ints (but not the other way round)
-            if <int> type == <int> DOUBLE and isinstance(kwargs[pname], int):
+            if <int> type == <int> DOUBLE and is_valid_type(kwargs[pname], int):
                 kwargs[pname] = float(kwargs[pname])
             # We already know that the argument is an iterable of the correct length
             elif <int> type == <int> DOUBLE_VECTOR:
                 for i in range(len(kwargs[pname])):
-                    if isinstance(kwargs[pname][i], int):
+                    if is_valid_type(kwargs[pname][i], int):
                         kwargs[pname][i] = float(kwargs[pname][i])
 
             v = self.python_object_to_variant(kwargs[pname])
