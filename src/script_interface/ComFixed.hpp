@@ -24,7 +24,6 @@
 
 #include "ScriptInterfaceBase.hpp"
 #include "auto_parameters/AutoParameters.hpp"
-#include "get_value.hpp"
 
 #include "core/comfixed_global.hpp"
 
@@ -38,10 +37,6 @@ public:
                        comfixed.set_fixed_types(get_value<std::vector<int>>(v));
                      },
                      []() { return comfixed.get_fixed_types(); }}});
-  }
-
-  const std::string name() const override {
-    return "ComFixed";
   }
 };
 }
