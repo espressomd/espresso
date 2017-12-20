@@ -337,13 +337,13 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
   }
 
   if (write_vel) {
+    // Scale the stored velocity with 1./dt to get MD units.
     vel[0][particle_index][0] = current_particle.m.v[0] / time_step;
     vel[0][particle_index][1] = current_particle.m.v[1] / time_step;
     vel[0][particle_index][2] = current_particle.m.v[2] / time_step;
   }
   if (write_force) {
-    /* Scale the stored force with m/(0.5*dt**2.0) to get a real
-     * world force. */
+    // Scale the stored force with m/(0.5*dt**2.0) to get MD units.
     double fac = current_particle.p.mass / (0.5 * time_step * time_step);
     f[0][particle_index][0] = current_particle.f.f[0] * fac;
     f[0][particle_index][1] = current_particle.f.f[1] * fac;
