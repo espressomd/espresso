@@ -92,32 +92,32 @@ cdef class PScriptInterface(object):
             name = to_char_pointer(pname)
 
             try:
-                type = self.parameters.at(name).type()
+                ptype = self.parameters.at(name).type()
             except:
                 raise ValueError("Unknown parameter %s" % name)
 
             # Check number of elements if applicable
-            if < int > type in [ < int > INT_VECTOR, < int > DOUBLE_VECTOR]:
+            if < int > ptype in [ < int > INT_VECTOR, < int > DOUBLE_VECTOR]:
                 n_elements = self.parameters[name].n_elements()
                 if n_elements!=0 and not (len(in_params[pname]) == n_elements):
                     raise ValueError(
                         "Value of %s expected to be %i elements" % (name, n_elements))
 
             # We accept ints for floats (but not the other way round)
-            if <int> type == <int> DOUBLE and is_valid_type(in_params, int):
+            if <int> ptype == <int> DOUBLE and is_valid_type(in_params[pname], int):
                 in_params[pname] = float(in_params[pname])
             # We already know that the argument is an iterable of the correct length
-            elif <int> type == <int> DOUBLE_VECTOR:
+            elif <int> ptype == <int> DOUBLE_VECTOR:
                 for i in range(len(in_params[pname])):
                     if is_valid_type(in_params[pname][i], int):
                         in_params[pname][i] = float(in_params[pname][i])
 
             v = self.python_object_to_variant(in_params[pname])
 
-            if v.which() == <int> type:
+            if v.which() == <int> ptype:
                 out_params[name] = v
             else:
-                raise ValueError("Wrong type for parameter '%s': Expected %s, but got %s" % (pname, get_type_label(type), get_type_label(v)))
+                raise ValueError("Wrong type for parameter '%s': Expected %s, but got %s" % (pname, get_type_label(ptype), get_type_label(v)))
 
         return out_params
 
