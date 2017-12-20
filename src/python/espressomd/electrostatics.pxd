@@ -23,6 +23,7 @@ include "myconfig.pxi"
 from espressomd.system cimport *
 cimport numpy as np
 from espressomd.utils cimport *
+from espressomd.utils import is_valid_type
 
 cdef extern from "SystemInterface.hpp":
     cdef cppclass SystemInterface:
@@ -145,7 +146,7 @@ IF ELECTROSTATICS:
             cao = p_cao
             alpha = p_alpha
             accuracy = p_accuracy
-            if isinstance(p_mesh, int):
+            if is_valid_type(p_mesh, int):
                 mesh[0] = p_mesh
                 mesh[1] = p_mesh
                 mesh[2] = p_mesh
@@ -167,7 +168,7 @@ IF ELECTROSTATICS:
             alpha = p_alpha
             accuracy = p_accuracy
             n_interpol = p_n_interpol
-            if isinstance(p_mesh, int):
+            if is_valid_type(p_mesh, int):
                 mesh[0] = p_mesh
                 mesh[1] = p_mesh
                 mesh[2] = p_mesh

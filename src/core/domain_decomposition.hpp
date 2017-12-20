@@ -95,8 +95,7 @@ extern double max_skin;
 
 /** Maximal number of cells per node. In order to avoid memory
  *  problems due to the cell grid one has to specify the maximal
- *  number of \ref cells::cells . The corresponding callback function
- *  is \ref tclcallback_max_num_cells. If the number of cells \ref
+ *  number of \ref cells::cells. If the number of cells \ref
  *  n_cells, is larger than max_num_cells the cell grid is
  *  reduced. max_num_cells has to be larger than 27, e.g one inner
  *  cell.  max_num_cells is initialized with the default value

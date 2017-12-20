@@ -42,9 +42,6 @@
                   but in z it has a domain decomposition into layers.
     </ul>
 
-    One can switch between different cell systems with the tcl command
-    cellsystem implemented in \ref cells.cpp .
-
     Some structures are common to all cell systems:
 
    <ul>

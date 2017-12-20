@@ -22,6 +22,8 @@
 */
 #include "p3m-common.hpp"
 
+#include "errorhandling.hpp"
+
 /* For debug messages */
 extern int this_node;
 

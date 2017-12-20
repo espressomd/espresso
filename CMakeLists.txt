@@ -270,17 +270,23 @@ add_definitions(-DH5XX_USE_MPI)
 # Boost
 #######################################################################
 
-find_package(Boost REQUIRED mpi serialization filesystem system)
+
+list(APPEND BOOST_COMPONENTS mpi serialization filesystem system)
+
+if(WITH_TESTS)
+  list(APPEND BOOST_COMPONENTS unit_test_framework)
+endif()
+
+find_package(Boost REQUIRED ${BOOST_COMPONENTS})
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 list(APPEND LIBRARIES ${Boost_LIBRARIES})
 
 #######################################################################
-# Testing 
+# Testing
 #######################################################################
 
 if(WITH_TESTS)
   enable_testing()
-  find_package(Boost COMPONENTS unit_test_framework) 
   if(Boost_UNIT_TEST_FRAMEWORK_FOUND)
     set(WITH_UNIT_TESTS ON)
     list(APPEND LIBRARIES ${Boost_LIBRARIES})

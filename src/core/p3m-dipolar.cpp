@@ -588,11 +588,6 @@ electrical dipoles alone using the magnetic code .. */
 int dp3m_set_eps(double eps) {
   dp3m.params.epsilon = eps;
 
-  fprintf(stderr, ">> dp3m.params.epsilon =%lf\n", dp3m.params.epsilon);
-  fprintf(stderr, "if you are doing true MAGNETIC CALCULATIONS the value of "
-                  "Depsilon should be 1, if you change it, you go on your own "
-                  "risk ...\n");
-
   mpi_bcast_coulomb_params();
 
   return ES_OK;
@@ -1636,8 +1631,6 @@ double dp3m_get_accuracy(int mesh, int cao, double r_cut_iL, double *_alpha_L,
 
   // Alpha cannot be zero in the dipolar case because real_space formula breaks
   // down
-  // Idem of the previous function
-  // tclcommand_inter_magnetic_dp3m_print_tune_parameters, here we do nothing
   rs_err = P3M_DIPOLAR_real_space_error(box_l[0], coulomb.Dprefactor, r_cut_iL,
                                         dp3m.sum_dip_part, dp3m.sum_mu2, 0.001);
 
@@ -1844,7 +1837,7 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
     /* the required accuracy could not be obtained, try higher caos. Therefore
        optimisation can only be
        obtained with even higher caos, but not lower ones */
-    P3M_TRACE(fprintf(stderr, "tclcommand_inter_magnetic_p3m_print_m_time: "
+    P3M_TRACE(fprintf(stderr, "dp3m_m_time: "
                               "doesn't give precision, step up\n"));
     cao++;
     final_dir = 1;
@@ -1945,7 +1938,7 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
     else if (tmp_time > best_time + P3M_TIME_GRAN)
       break;
   }
-  P3M_TRACE(fprintf(stderr, "tclcommand_inter_magnetic_p3m_print_m_time: "
+  P3M_TRACE(fprintf(stderr, "dp3m_m_time: "
                             "Dmesh=%d final Dcao=%d Dr_cut=%f time=%f\n",
                     mesh, *_cao, *_r_cut_iL, best_time));
   return best_time;
@@ -2147,8 +2140,7 @@ void dp3m_count_magnetic_particles() {
    tune the parameters to minimize the time with the desired accuracy.
 
 
-   This functions are called by the functions: dp3m_get_accuracy() and
-   tclcommand_inter_magnetic_dp3m_print_tune_parameters.
+   This functions are called by the functions: dp3m_get_accuracy().
 
 */
 

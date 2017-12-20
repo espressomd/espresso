@@ -9,18 +9,14 @@
 #define CONSTRAINTS
 #define MASS
 #define EXCLUSIONS
-#define COMFORCE
-#define COMFIXED
 #define MOLFORCES
 
 #ifdef FFTW
 #define MODES
 #endif
 
-#define BOND_VIRTUAL
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
-#define ROTATION_PER_PARTICLE
 #define CATALYTIC_REACTIONS
 
 #define NEMD

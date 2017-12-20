@@ -30,7 +30,7 @@
 #include "core/observables/DensityProfile.hpp"
 #include "core/observables/FluxDensityProfile.hpp"
 #include "core/observables/ForceDensityProfile.hpp"
-#include "core/observables/LbVelocityProfile.hpp"
+#include "core/observables/LBVelocityProfile.hpp"
 #include "core/observables/ProfileObservable.hpp"
 
 namespace ScriptInterface {

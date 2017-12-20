@@ -28,6 +28,9 @@
 #include "Vector.hpp"
 #include "config.hpp"
 #include "utils.hpp"
+
+#include "utils/List.hpp"
+
 #include <memory>
 
 /************************************************
