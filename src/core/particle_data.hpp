@@ -675,12 +675,15 @@ int set_particle_smaller_timestep(int part, int small_timestep);
 */
 int set_particle_q(int part, double q);
 
+#ifdef LB_ELECTROHYDRODYNAMICS
 /** Call only on the master node: set particle electrophoretic mobility.
     @param part the particle.
     @param mu_E its new mobility.
     @return ES_OK if particle existed
 */
 int set_particle_mu_E(int part, double mu_E[3]);
+void get_particle_mu_E(int part, double (&mu_E)[3]);
+#endif
 
 /** Call only on the master node: set particle type.
     @param part the particle.

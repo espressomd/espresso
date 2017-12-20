@@ -401,7 +401,7 @@ std::vector<Particle> mpi_get_particles(std::vector<int> const &ids) {
 
 void prefetch_particle_data(std::vector<int> ids) {
   /* Nothing to do on a single node. */
-  if(comm_cart.size() == 1)
+  if (comm_cart.size() == 1)
     return;
 
   /* Remove local, already cached and non-existent particles from the list. */
@@ -628,6 +628,14 @@ int set_particle_mu_E(int part, double mu_E[3]) {
     return ES_ERROR;
   mpi_send_mu_E(pnode, part, mu_E);
   return ES_OK;
+}
+
+void get_particle_mu_E(int part, double (&mu_E)[3]) {
+  auto p = get_particle_data(part);
+
+  for (int i = 0; i < 3; i++) {
+    mu_E[i] = p->p.mu_E[i];
+  }
 }
 #endif
 
