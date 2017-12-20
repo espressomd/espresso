@@ -133,9 +133,6 @@ class TestCylindricalFluxDensityObservable(ut.TestCase):
                                     range=[(self.params['min_r'], self.params['max_r']), (self.params['min_phi'], self.params['max_phi']),
                                            (self.params['min_z'], self.params['max_z'])])
         # Normalization
-        tot_count = np.sum(np_hist)
-        for i in np.nditer(np_hist, op_flags=['readwrite']):
-            i[...] = i / tot_count
         for i in range(self.params['n_r_bins']):
             np_hist[i, :, :] /= bin_volume[i]
         np.testing.assert_array_almost_equal(np_hist * v_r, core_hist_v_r)

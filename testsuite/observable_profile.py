@@ -35,7 +35,7 @@ class ProfileObservablesTest(ut.TestCase):
     def test_density_profile(self):
         density_profile = espressomd.observables.DensityProfile(**self.kwargs)
         self.assertEqual(density_profile.calculate()[
-                         self.flat_index], 2.0 / (2.0 * self.bin_volume))
+                         self.flat_index], 2.0 / self.bin_volume)
 
     @ut.skipIf(
         not espressomd.has_features("EXTERNAL_FORCES"),
@@ -47,14 +47,14 @@ class ProfileObservablesTest(ut.TestCase):
         self.system.part[1].ext_force = [0.0, 0.0, 1.0]
         self.system.integrator.run(0)
         self.assertEqual(density_profile.calculate()[
-                         self.flat_index_3d], 2.0 / (2.0 * self.bin_volume))
+                         self.flat_index_3d], 2.0 / self.bin_volume)
 
     def test_flux_density_profile(self):
         density_profile = espressomd.observables.FluxDensityProfile(
             **self.kwargs)
         self.system.integrator.run(0)
         self.assertEqual(density_profile.calculate()[
-                         self.flat_index_3d], 2.0 / (2.0 * self.bin_volume))
+                         self.flat_index_3d], 2.0 / self.bin_volume)
 
 
 if __name__ == '__main__':
