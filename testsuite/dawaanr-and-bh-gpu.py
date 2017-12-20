@@ -11,7 +11,7 @@ from numpy import linalg as la
 from numpy.random import random
 from espressomd import assert_features, has_features, missing_features
 
-@ut.skipIf(not has_features(["BARNES_HUT"]),
+@ut.skipIf(not has_features(["DIPOLAR_BARNES_HUT"]),
            "Features not available, skipping test!")
 class DDSGPUTest(ut.TestCase):
     longMessage = True
@@ -73,7 +73,7 @@ class DDSGPUTest(ut.TestCase):
             
             self.es.non_bonded_inter[0, 0].lennard_jones.set_params(
                 epsilon=0.0, sigma=0.0,
-                cutoff=0.0, shift=0.0)
+                cutoff=-1, shift=0.0)
 
             self.es.cell_system.skin = 0.0
             self.es.time_step = 0.01
