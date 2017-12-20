@@ -203,7 +203,7 @@ Instead, we register it as a callback with the visualizer before we start up the
 t = Thread(target=main)
 t.daemon = True
 t.start()
-visualizer.registerCallback(update_plot, interval=500)
+visualizer.register_callback(update_plot, interval=500)
 visualizer.start()
 \end{pypresso}
 

@@ -28,7 +28,7 @@ from . import cuda_init
 from globals cimport *
 from copy import deepcopy
 from . import utils
-from espressomd.utils import array_locked
+from espressomd.utils import array_locked, is_valid_type
 
 # Actor class
 ####################################################
@@ -67,7 +67,7 @@ IF LB_GPU or LB:
                 if self._params["dens"] == default_params["dens"]:
                     raise Exception("LB_FLUID density not set")
                 else:
-                    if not (self._params["dens"] > 0.0 and (isinstance(self._params["dens"], float) or isinstance(self._params["dens"], int))):
+                    if not (self._params["dens"] > 0.0 and (is_valid_type(self._params["dens"], float) or is_valid_type(self._params["dens"], int))):
                         raise ValueError("Density must be one positive double")
 
         # list of valid keys for parameters
@@ -296,7 +296,7 @@ IF LB or LB_GPU:
             IF LB_GPU:
                 def __set__(self, value):
                     cdef double[3] host_velocity
-                    if all(isinstance(v, float) for v in value) and len(value) == 3:
+                    if all(is_valid_type(v, float) for v in value) and len(value) == 3:
                         host_velocity = value
                         lb_lbnode_set_u(self.node, host_velocity)
                     else:
