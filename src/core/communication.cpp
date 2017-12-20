@@ -98,17 +98,15 @@
 
 using namespace std;
 
-namespace {
+namespace Communication {
 auto const &mpi_datatype_cache = boost::mpi::detail::mpi_datatype_cache();
 std::unique_ptr<boost::mpi::environment> mpi_env;
+std::unique_ptr<MpiCallbacks> m_callbacks;
 }
 
 boost::mpi::communicator comm_cart;
 
 namespace Communication {
-namespace {
-std::unique_ptr<MpiCallbacks> m_callbacks;
-}
 
 /* We use a singelton callback class for now. */
 MpiCallbacks &mpiCallbacks() {
@@ -270,11 +268,11 @@ void mpi_init() {
 #endif
 
 #ifdef BOOST_MPI_HAS_NOARG_INITIALIZATION
-  mpi_env = Utils::make_unique<boost::mpi::environment>();
+  Communication::mpi_env = Utils::make_unique<boost::mpi::environment>();
 #else
   int argc{};
   char **argv{};
-  mpi_env = Utils::make_unique<boost::mpi::environment>(argc, argv);
+  Communication::mpi_env = Utils::make_unique<boost::mpi::environment>(argc, argv);
 #endif
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
