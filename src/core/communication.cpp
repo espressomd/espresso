@@ -99,6 +99,7 @@
 using namespace std;
 
 namespace {
+auto const &mpi_datatype_cache = boost::mpi::detail::mpi_datatype_cache();
 std::unique_ptr<boost::mpi::environment> mpi_env;
 }
 
