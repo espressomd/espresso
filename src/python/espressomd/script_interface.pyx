@@ -109,7 +109,7 @@ cdef class PScriptInterface(object):
             # We already know that the argument is an iterable of the correct length
             elif <int> type == <int> DOUBLE_VECTOR:
                 for i in range(len(in_params[pname])):
-                    if isinstance(in_params[pname][i], int):
+                    if is_valid_type(in_params[pname][i], int):
                         in_params[pname][i] = float(in_params[pname][i])
 
             v = self.python_object_to_variant(in_params[pname])
