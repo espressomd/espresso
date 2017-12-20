@@ -75,8 +75,6 @@ extern double skin;
 /** True iff the user has changed the skin setting. */
 extern bool skin_set;
 
-/** If non-zero, the particle data will be resorted before the next integration. */
-extern int    resort_particles;
 /** If non-zero, the forces will be recalculated before the next integration. */
 extern int    recalc_forces;
 /** Average number of integration steps the verlet list has been re

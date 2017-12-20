@@ -89,8 +89,8 @@ class DPDThermostat(ut.TestCase):
         N=200
         s=self.s
         s.part.clear()
-        s.part.add(pos=s.box_l * np.random.random((N//2,3)), type=0)
-        s.part.add(pos=s.box_l * np.random.random((N//2,3)), type=1)
+        s.part.add(pos=s.box_l * np.random.random((N//2,3)), type=N//2*[0])
+        s.part.add(pos=s.box_l * np.random.random((N//2,3)), type=N//2*[1])
         kT=2.3
         gamma=1.5
         s.thermostat.set_dpd(kT=kT)
@@ -132,8 +132,7 @@ class DPDThermostat(ut.TestCase):
         s.thermostat.turn_off()
 
         # Reset velocities
-        for p in s.part[:]:
-            p.v = [1.,2.,3.]
+        s.part[:].v = [1.,2.,3.]
 
         s.integrator.run(100)
 
@@ -146,8 +145,7 @@ class DPDThermostat(ut.TestCase):
         s.thermostat.set_dpd(kT=kT)
 
         # Reset velocities for faster convergence
-        for p in s.part[:]:
-            p.v = [0.,0.,0.]
+        s.part[:].v = [0.,0.,0.]
 
         loops=6000
         v_stored=np.zeros((N*loops,3))

@@ -92,18 +92,18 @@ void layered_get_mi_vector(double res[3], double a[3], double b[3]) {
 }
 
 Cell *layered_position_to_cell(double pos[3]) {
-  int cpos = (int)((pos[2] - my_left[2]) * layer_h_i) + 1;
+  int cpos = static_cast<int>(std::floor((pos[2] - my_left[2]) * layer_h_i)) + 1;
   if (cpos < 1) {
     if (!LAYERED_BTM_NEIGHBOR)
       cpos = 1;
     else
-      return NULL;
+      return nullptr;
   } else if (cpos > n_layers) {
     /* not periodic, but at top */
     if (!LAYERED_TOP_NEIGHBOR)
       cpos = n_layers;
     else
-      return NULL;
+      return nullptr;
   }
   return &(cells[cpos]);
 }
@@ -391,7 +391,7 @@ void layered_topology_init(CellPList *old) {
       Cell *nc = layered_position_to_cell(part[p].r.p);
       /* particle does not belong to this node. Just stow away
          somewhere for the moment */
-      if (nc == NULL)
+      if (nc == nullptr)
         nc = local_cells.cell[0];
       append_unindexed_particle(nc, std::move(part[p]));
     }

@@ -28,6 +28,7 @@ from . import cuda_init
 from globals cimport *
 from copy import deepcopy
 from . import utils
+from espressomd.utils import array_locked, is_valid_type
 
 # Actor class
 ####################################################
@@ -66,7 +67,7 @@ IF LB_GPU or LB:
                 if self._params["dens"] == default_params["dens"]:
                     raise Exception("LB_FLUID density not set")
                 else:
-                    if not (self._params["dens"] > 0.0 and (isinstance(self._params["dens"], float) or isinstance(self._params["dens"], int))):
+                    if not (self._params["dens"] > 0.0 and (is_valid_type(self._params["dens"], float) or is_valid_type(self._params["dens"], int))):
                         raise ValueError("Density must be one positive double")
 
         # list of valid keys for parameters
@@ -209,7 +210,7 @@ IF LB_GPU or LB:
                 raise Exception("LB not compiled in")
 
 IF LB_GPU:
-    cdef class LBFluid_GPU(LBFluid):
+    cdef class LBFluidGPU(LBFluid):
         """
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the GPU.
 
@@ -290,12 +291,12 @@ IF LB or LB_GPU:
             def __get__(self):
                 cdef double[3] double_return
                 lb_lbnode_get_u(self.node, double_return)
-                return double_return
+                return array_locked(double_return)
 
             IF LB_GPU:
                 def __set__(self, value):
                     cdef double[3] host_velocity
-                    if all(isinstance(v, float) for v in value) and len(value) == 3:
+                    if all(is_valid_type(v, float) for v in value) and len(value) == 3:
                         host_velocity = value
                         lb_lbnode_set_u(self.node, host_velocity)
                     else:
@@ -308,7 +309,7 @@ IF LB or LB_GPU:
             def __get__(self):
                 cdef double[3] double_return
                 lb_lbnode_get_rho(self.node, double_return)
-                return double_return
+                return array_locked(double_return)
 
             def __set__(self, value):
                 raise NotImplementedError
@@ -318,9 +319,9 @@ IF LB or LB_GPU:
             def __get__(self):
                 cdef double[6] pi
                 lb_lbnode_get_pi(self.node, pi)
-                return np.array([[pi[0],pi[1],pi[3]],
-                                 [pi[1],pi[2],pi[4]],
-                                 [pi[3],pi[4],pi[5]]])
+                return array_locked(np.array([[pi[0],pi[1],pi[3]],
+                                              [pi[1],pi[2],pi[4]],
+                                              [pi[3],pi[4],pi[5]]]))
 
             def __set__(self, value):
                 raise NotImplementedError
@@ -329,9 +330,9 @@ IF LB or LB_GPU:
             def __get__(self):
                 cdef double[6] pi
                 lb_lbnode_get_pi_neq(self.node, pi)
-                return np.array([[pi[0],pi[1],pi[3]],
-                                 [pi[1],pi[2],pi[4]],
-                                 [pi[3],pi[4],pi[5]]])
+                return array_locked(np.array([[pi[0],pi[1],pi[3]],
+                                              [pi[1],pi[2],pi[4]],
+                                              [pi[3],pi[4],pi[5]]]))
 
             def __set__(self, value):
                 raise NotImplementedError
@@ -340,7 +341,7 @@ IF LB or LB_GPU:
             def __get__(self):
                 cdef double[19] double_return
                 lb_lbnode_get_pop(self.node, double_return)
-                return double_return
+                return array_locked(double_return)
 
             def __set__(self, value):
                 cdef double[19] double_return = value

@@ -66,6 +66,6 @@ namespace PdbParser {
     std::map<int, itp_atom> itp_atoms;
     std::map<std::string, itp_atomtype> itp_atomtypes;
   };
-};
+}
 
 #endif

@@ -37,7 +37,7 @@ integrate rotationally non-invariant particles.
 ESPResSo is free, open-source software (GPL). It is parallelized and
 can be employed on desktop machines, convenience clusters as well as
 on supercomputers with hundreds of CPUs. The parallel code is
-controlled via the scripting language Tcl, which gives the software
+controlled via the scripting language Python, which gives the software
 its great flexibility and allows for many unconventional simulation
 protocols, as are often required when studying coarse-grained models.
 

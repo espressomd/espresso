@@ -74,6 +74,7 @@ option(WITH_TESTS  "Enable tests"            ON)
 option(WITH_SCAFACOS "Build with Scafacos support" ON)
 option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
 option(WITH_COVERAGE "Generate code coverage report" OFF)
+option(WARNINGS_ARE_ERRORS "Treat warnings as errors during compilation" OFF)
 
 # Write compile commands to file, for various tools...
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -91,6 +92,7 @@ include(MyConfig)
 
 include(CheckCXXSourceCompiles)
 
+set(__PRETTYFUNC__ __func__)
 foreach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
    check_cxx_source_compiles("
      #include <string>
@@ -108,14 +110,20 @@ endforeach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
 
 if (WITH_CUDA)
   if (EXISTS "$ENV{NVCC}" AND NOT CUDA_NVCC_EXECUTABLE)
-    set(CUDA_NVCC_EXECUTABLE $ENV{NVCC})
+    set(CUDA_NVCC_EXECUTABLE $ENV{NVCC} CACHE FILEPATH "Path to CUDA compiler.")
   endif()
   if (CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_C_COMPILER OR CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_CXX_COMPILER)
     message(STATUS "Found CUDA-capable host compiler: ${CUDA_NVCC_EXECUTABLE}")
-    find_library(CUDA_LIBRARY NAMES cuda)
-    find_library(CUDART_LIBRARY NAMES cudart)
-    find_library(CUFFT_LIBRARY NAMES cufft)
-    list(APPEND LIBRARIES ${CUDA_LIBRARY})
+    if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" )
+        execute_process(COMMAND ${CUDA_NVCC_EXECUTABLE} ${CMAKE_CXX_FLAGS} --verbose
+                ERROR_VARIABLE CUDA_DIR)
+        string(REGEX REPLACE "^.*Found CUDA installation: ([^,]+).*\$" "\\1" CUDA_DIR "${CUDA_DIR}")
+        message(STATUS "Found CUDA installation: ${CUDA_DIR}")
+    else()
+        set(CUDA_DIR "/usr/local/cuda")
+    endif()
+    find_library(CUDART_LIBRARY NAMES cudart PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib)
+    find_library(CUFFT_LIBRARY NAMES cufft PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib)
     list(APPEND LIBRARIES ${CUDART_LIBRARY})
     list(APPEND LIBRARIES ${CUFFT_LIBRARY})
     set(CUDA 1)
@@ -149,14 +157,13 @@ if (WITH_CUDA)
       list(APPEND LIBRARIES ${CUDA_LIBRARIES})
       set(CUDA 1)
 
-      if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -g -G")
-      else()
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3")
-      endif()
+      set(CUDA_NVCC_FLAGS_DEBUG "${CUDA_NVCC_FLAGS_DEBUG} -g -G")
+      set(CUDA_NVCC_FLAGS_RELEASE "${CUDA_NVCC_FLAGS_RELEASE} -O3 -DNDEBUG")
+      set(CUDA_NVCC_FLAGS_MINSIZEREL "${CUDA_NVCC_FLAGS_MINSIZEREL} -Os -DNDEBUG")
+      set(CUDA_NVCC_FLAGS_RELWITHDEBINFO "${CUDA_NVCC_FLAGS_RELWITHDEBINFO} -g -G -O2")
       set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_52,code=compute_52")
       list(APPEND CUDA_NVCC_FLAGS "-std=c++11")
-      if (CUDA_VERSION VERSION_LESS "8.0" AND CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "5.0")
+      if (CUDA_VERSION VERSION_LESS "8.0" AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "5.0")
         list(APPEND CUDA_NVCC_FLAGS "-D_MWAITXINTRIN_H_INCLUDED -D_FORCE_INLINES")
       endif()
       SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
@@ -190,7 +197,7 @@ endif(WITH_PYTHON)
 
 find_package(FFTW3)
 if (FFTW3_FOUND)
-  include_directories(${FFTW3_INCLUDE_DIR})
+  include_directories(SYSTEM ${FFTW3_INCLUDE_DIR})
   list(APPEND LIBRARIES ${FFTW3_LIBRARIES})
   set(FFTW 3)
 endif(FFTW3_FOUND)
@@ -209,7 +216,7 @@ if (WITH_HDF5)
     include(FindPythonModule)
     find_python_module(h5py)
     list(APPEND LIBRARIES ${HDF5_LIBRARIES})
-    include_directories(${HDF5_INCLUDE_DIRS})
+    include_directories(SYSTEM ${HDF5_INCLUDE_DIRS})
     add_feature_info(HDF5 ON "parallel")
   else()
     unset(H5MD)
@@ -242,7 +249,7 @@ if(WITH_VALGRIND_INSTRUMENTATION)
   if(VALGRIND_FOUND)
     set(VALGRIND_INSTRUMENTATION 1)
     message(STATUS ${VALGRIND_INCLUDE_DIRS})
-    include_directories(${VALGRIND_INCLUDE_DIRS})
+    include_directories(SYSTEM ${VALGRIND_INCLUDE_DIRS})
   endif(VALGRIND_FOUND)
 endif(WITH_VALGRIND_INSTRUMENTATION)
 
@@ -255,7 +262,7 @@ include(RequireCXX11)
 find_package(MPI REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_COMPILE_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_LINK_FLAGS}")
-include_directories(${MPI_INCLUDE_PATH})
+include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 list(APPEND LIBRARIES ${MPI_LIBRARIES})
 add_definitions(-DH5XX_USE_MPI)
 
@@ -263,17 +270,23 @@ add_definitions(-DH5XX_USE_MPI)
 # Boost
 #######################################################################
 
-find_package(Boost REQUIRED mpi serialization filesystem system)
-include_directories(${Boost_INCLUDE_DIRS})
+
+list(APPEND BOOST_COMPONENTS mpi serialization filesystem system)
+
+if(WITH_TESTS)
+  list(APPEND BOOST_COMPONENTS unit_test_framework)
+endif()
+
+find_package(Boost REQUIRED ${BOOST_COMPONENTS})
+include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 list(APPEND LIBRARIES ${Boost_LIBRARIES})
 
 #######################################################################
-# Testing 
+# Testing
 #######################################################################
 
 if(WITH_TESTS)
   enable_testing()
-  find_package(Boost COMPONENTS unit_test_framework) 
   if(Boost_UNIT_TEST_FRAMEWORK_FOUND)
     set(WITH_UNIT_TESTS ON)
     list(APPEND LIBRARIES ${Boost_LIBRARIES})
@@ -311,6 +324,20 @@ endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-as-needed")
 endif()
+
+if(WARNINGS_ARE_ERRORS)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+  if (NOT CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_C_COMPILER AND NOT CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_CXX_COMPILER)
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -Werror")
+  endif()
+endif(WARNINGS_ARE_ERRORS)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-sign-compare -Wno-unused-function -Wno-unused-private-field")
+if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "4.8.5")
+  # older versions don't support -Wno-pedantic which we need in src/python
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
+endif()
+
+set(CMAKE_MACOSX_RPATH TRUE)
 
 #######################################################################
 # Subdirectories

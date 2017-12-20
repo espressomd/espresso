@@ -188,7 +188,7 @@ private:
   int m_what;
   bool m_write_ordered;
   std::string m_backup_filename;
-  boost::filesystem::path m_absolute_script_path = "NULL";
+  boost::filesystem::path m_absolute_script_path = "nullptr";
   h5xx::file m_h5md_file;
 
   struct DatasetDescriptor {

@@ -25,6 +25,7 @@
 #include "random.hpp"
 #include "interaction_data.hpp"
 #include "cuda_init.hpp"
+#include "errorhandling.hpp"
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
@@ -35,26 +36,26 @@ static CUDA_global_part_vars global_part_vars_host = {0, 0, 0};
 static __device__ __constant__ CUDA_global_part_vars global_part_vars_device;
 
 /** struct for particle force */
-static float *particle_forces_device = NULL;
-static float *particle_torques_device = NULL;
+static float *particle_forces_device = nullptr;
+static float *particle_torques_device = nullptr;
 
 /** struct for particle position and veloctiy */
-static CUDA_particle_data *particle_data_device = NULL;
+static CUDA_particle_data *particle_data_device = nullptr;
 /** struct for storing particle rn seed */
-static CUDA_particle_seed *particle_seeds_device = NULL;
+static CUDA_particle_seed *particle_seeds_device = nullptr;
 /** struct for fluid composition */
-static CUDA_fluid_composition *fluid_composition_device = NULL;
+static CUDA_fluid_composition *fluid_composition_device = nullptr;
 /** struct for energies */
-static CUDA_energy *energy_device = NULL;
+static CUDA_energy *energy_device = nullptr;
 
-CUDA_particle_data *particle_data_host = NULL;
-float *particle_forces_host = NULL;
+CUDA_particle_data *particle_data_host = nullptr;
+float *particle_forces_host = nullptr;
 CUDA_energy energy_host;
-float *particle_torques_host = NULL;
+float *particle_torques_host = nullptr;
 
-CUDA_fluid_composition *fluid_composition_host = NULL;
+CUDA_fluid_composition *fluid_composition_host = nullptr;
 #ifdef ENGINE
-CUDA_v_cs *host_v_cs = NULL;
+CUDA_v_cs *host_v_cs = nullptr;
 #endif
 
 /**cuda streams for parallel computing on cpu and gpu */
@@ -482,7 +483,7 @@ void clear_energy_on_GPU() {
   if (!global_part_vars_host.communication_enabled)
     // || !global_part_vars_host.number_of_particles )
     return;
-  if (energy_device == NULL)
+  if (energy_device == nullptr)
     cuda_safe_mem(cudaMalloc((void **)&energy_device, sizeof(CUDA_energy)));
   cuda_safe_mem(cudaMemset(energy_device, 0, sizeof(CUDA_energy)));
 }

@@ -7,7 +7,7 @@
 #include <boost/serialization/is_bitwise_serializable.hpp>
 #include <boost/serialization/split_free.hpp>
 
-BOOST_IS_BITWISE_SERIALIZABLE(CUDA_particle_data);
+BOOST_IS_BITWISE_SERIALIZABLE(CUDA_particle_data)
 
  namespace boost {
 namespace serialization {

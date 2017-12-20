@@ -90,7 +90,7 @@ class SwimmerTest(ut.TestCase):
         S = espressomd.System()
         self.prepare(S)
 
-        lbm = espressomd.lb.LBFluid_GPU(
+        lbm = espressomd.lb.LBFluidGPU(
             agrid=1.0,
             tau=S.time_step,
             fric=0.5,

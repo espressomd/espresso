@@ -62,14 +62,14 @@ min_dist = 0.9
 lj_cap = 50
 system.force_cap = lj_cap
 i = 0
-act_min_dist = system.analysis.mindist()
+act_min_dist = system.analysis.min_dist()
 system.thermostat.set_langevin(kT=0.0, gamma=5.0)
 
 # warmp with zero temperature to remove overlaps
 while (i < warm_n_times and act_min_dist < min_dist):
     system.integrator.run(warm_steps + lj_cap)
     # Warmup criterion
-    act_min_dist = system.analysis.mindist()
+    act_min_dist = system.analysis.min_dist()
     i += 1
     lj_cap = lj_cap + 10
     system.force_cap = lj_cap

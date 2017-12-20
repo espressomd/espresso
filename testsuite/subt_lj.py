@@ -46,7 +46,7 @@ class SubtLjTest(ut.TestCase):
 
         self.assertGreater(f, 10.)
 
-        subt = espressomd.interactions.Subt_Lj()
+        subt = espressomd.interactions.SubtLJ()
         s.bonded_inter.add(subt)
 
         s.part[0].add_bond((subt, 1))
