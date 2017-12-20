@@ -25,12 +25,18 @@ void Bond::BondContainer::sort_bond_into_lists(int type)
   if(m_all_bonds.count(type) != 0){
 
     //---add Bonds with specific interface---
+
     //pairbond
     PairBond* derived_pair_bond = cast_base_class<Bond, PairBond>(m_all_bonds[type].get());
     //3_particle_pressure bond
     ThreeParticlePressureBond* derived_3_pressure_bond = cast_base_class<Bond, 
 									 ThreeParticlePressureBond>
       (m_all_bonds[type].get());
+    //oifglobal forces
+    OifGlobalForces* derived_oif_global_bond = cast_base_class<Bond,
+							       OifGlobalForces>
+      (m_all_bonds[type].get());
+
     //add if cast was successful
     if(derived_pair_bond){
       m_virial_loop_bonds.insert(std::pair<int, PairBond*>(type, derived_pair_bond));
@@ -38,6 +44,10 @@ void Bond::BondContainer::sort_bond_into_lists(int type)
     if(derived_3_pressure_bond){
       m_three_body_pressure_bonds.insert(std::pair<int, ThreeParticlePressureBond*>
 					 (type, derived_3_pressure_bond));
+    };
+    if(derived_oif_global_bond){
+      m_oif_global_forces_bonds.insert(std::pair<int, OifGlobalForces*>
+				       (type, derived_oif_global_bond));
     };
 
     //---add bonds which add energies and forces---
@@ -60,9 +70,13 @@ void Bond::BondContainer::sort_bond_into_lists(int type)
     case BondType::BONDED_IA_OIF_LOCAL_FORCES:
       //only force contribution
       m_force_loop_bonds.insert(std::pair<int,Bond*>(type, insert_to));
-      break;      
+      break;
     case BondType::BONDED_IA_VIRTUAL_BOND:
       //no force and energy contribution
+      break;
+    case BondType::BONDED_IA_OIF_GLOBAL_FORCES:
+      //no energy contribution
+      //force is calculated separately
       break;
     default:
       m_force_loop_bonds.insert(std::pair<int,Bond*>(type, insert_to));
@@ -114,3 +128,20 @@ int Bond::BondContainer::local_stress_tensor_loop(Particle *p1, DoubleList *Tens
 				 TensorInBin, bins, range_start, range);
 
 }
+
+int Bond::BondContainer::oif_global_loop(Particle *p1, double* partArea, double* VOL_partVol)
+{
+
+  return loop_over_bond_partners(m_oif_global_forces_bonds, &OifGlobalForces::calc_oif_global,
+				 p1, partArea, VOL_partVol);
+
+};
+
+int Bond::BondContainer::oif_global_force_loop(Particle *p1)
+{
+
+  return loop_over_bond_partners(m_oif_global_forces_bonds, &OifGlobalForces::add_bonded_force,
+				 p1);
+
+};
+

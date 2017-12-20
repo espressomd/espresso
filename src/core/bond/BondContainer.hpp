@@ -5,6 +5,7 @@
 #include "Bond.hpp"
 #include "PairBond.hpp"
 #include "ThreeParticlePressureBond.hpp"
+#include "OifGlobalForces.hpp"
 
 namespace Bond {
 
@@ -25,6 +26,9 @@ namespace Bond {
     // pair bonds
     int local_stress_tensor_loop(Particle *p1, DoubleList *TensorInBin, int bins[3]
 						   ,double range_start[3], double range[3]);
+    //oif_global_forces
+    int oif_global_loop(Particle *p1, double* partArea, double* VOL_partVol);
+    int oif_global_force_loop(Particle *p1);
     
   private:
     //---member variables---
@@ -35,6 +39,7 @@ namespace Bond {
     std::unordered_map<int, Bond* > m_energy_loop_bonds;
     std::unordered_map<int, PairBond*> m_virial_loop_bonds;
     std::unordered_map<int, ThreeParticlePressureBond*> m_three_body_pressure_bonds;
+    std::unordered_map<int, OifGlobalForces*> m_oif_global_forces_bonds;
     //---private functions---
     // sorts a Bond of type Bond
     //-> PairBonds, ThreeParticleBonds, etc.
@@ -62,6 +67,7 @@ namespace Bond {
 
       //We are going through the bond list of particle p1
       while(i < p1->bl.n){
+
 
 	//--first assign the variables for this step--
 	//get the bond id in bond list

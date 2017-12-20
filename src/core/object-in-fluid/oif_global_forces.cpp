@@ -32,6 +32,7 @@
 #include "lb.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
+#include "utils/make_unique.hpp" //for creating a unique ptr to a bond class object
 
 /** set parameters for the OIF_GLOBAL_FORCES potential.
 */
@@ -50,6 +51,9 @@ int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g,
   bonded_ia_params[bond_type].type = BONDED_IA_OIF_GLOBAL_FORCES;
   bonded_ia_params[bond_type].num = 2;
 
+  bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::OifGlobalForces>
+				  (A0_g, ka_g, V0, kv));
+
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(bond_type, -1);
 
@@ -64,7 +68,7 @@ int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g,
  *
  *  !!! loop over particles from domain_decomposition !!!
  */
-
+#ifndef BOND_CLASS_DEBUG
 void calc_oif_global(double *area_volume,
                      int molType) { // first-fold-then-the-same approach
   double partArea = 0.0;
@@ -157,6 +161,7 @@ void calc_oif_global(double *area_volume,
           } else {
             // in case the first and the second particle are ghost particles
             if (p3->l.ghost != 1) {
+
               memmove(p33, p3->r.p, 3 * sizeof(double));
               memmove(img, p3->l.i, 3 * sizeof(int));
               unfold_position(p33, img);
@@ -201,8 +206,8 @@ void calc_oif_global(double *area_volume,
       } else {
         j += n_partners;
       }
-    }
-  }
+    }//while
+  }//for
 
   part_area_volume[0] = partArea;
   part_area_volume[1] = VOL_partVol;
@@ -210,7 +215,9 @@ void calc_oif_global(double *area_volume,
   MPI_Allreduce(part_area_volume, area_volume, 2, MPI_DOUBLE, MPI_SUM,
                 MPI_COMM_WORLD);
 }
+#endif //#ifndef BOND_CLASS_DEBUG
 
+#ifndef BOND_CLASS_DEBUG
 void add_oif_global_forces(double *area_volume,
                            int molType) { // first-fold-then-the-same approach
   double area = area_volume[0];
@@ -388,16 +395,73 @@ void add_oif_global_forces(double *area_volume,
           force3[k] = iaparams->p.oif_global_forces.ka_g * aa * rh[k] / hn;
           //(&part3)->f.f[k]+=force[k];
         }
-
+	
         for (k = 0; k < 3; k++) {
           p1->f.f[k] += force1[k];
           p2->f.f[k] += force2[k];
           p3->f.f[k] += force3[k];
         }
-
+     
       } else {
         j += n_partners;
       }
-    }
-  }
+    }//while
+  }//for
 }
+#endif //#ifndef BOND_CLASS_DEBUG
+
+
+/** called in force_calc() from within forces.cpp
+ *  calculates the global area and global volume for a cell before the forces
+ * are handled
+ *  sums up parts for area with mpi_reduce from local triangles
+ *  synchronization with allreduce
+ *
+ *  !!! loop over particles from domain_decomposition !!!
+ */
+#ifdef BOND_CLASS_DEBUG
+void calc_oif_global(double *area_volume, int molType)
+{
+  double partArea, VOL_partVol = 0.0;
+  double part_area_volume[2];
+
+  Cell *cell;
+  Particle *p, *p1;
+  
+  for (auto &p : local_cells.particles()) {
+    p1 = &p;
+    if(p1->p.mol_id == molType){
+      bond_container.oif_global_loop(p1, &partArea, &VOL_partVol);
+    };
+  }//for
+
+  part_area_volume[0] = partArea;
+  part_area_volume[1] = VOL_partVol;
+
+  MPI_Allreduce(part_area_volume, area_volume, 2, MPI_DOUBLE, MPI_SUM,
+                MPI_COMM_WORLD);
+}
+#endif //#ifndef BOND_CLASS_DEBUG
+
+#ifdef BOND_CLASS_DEBUG
+void add_oif_global_forces(double *area_volume, int molType) 
+{
+
+  double area = area_volume[0];
+  double VOL_volume = area_volume[1];
+
+  Cell *cell;
+  Particle *p, *p1;
+
+  /*set area and volume for oif_global_forces- Bonds
+  which were calculated in calc_oif_global*/
+  Bond::OifGlobalForces::set_area_VOL(area, VOL_volume);
+
+  for (auto &p : local_cells.particles()) {
+    p1 = &p;
+    if(p1->p.mol_id == molType){
+      bond_container.oif_global_force_loop(p1);
+    };
+  }//for
+}
+#endif //#ifndef BOND_CLASS_DEBUG
