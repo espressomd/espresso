@@ -7,8 +7,9 @@ char *strcat_alloc(char *left, const char *right) {
     strncpy(res, right, strlen(right) + 1);
     return res;
   } else {
-    char *res = Utils::realloc(left, strlen(left) + strlen(right) + 1);
-    strncat(res, right, strlen(left) + strlen(right) + 1);
+    size_t newlen = strlen(left) + strlen(right) + 1;
+    char *res = Utils::realloc(left, newlen);
+    strncat(res, right, newlen);
     return res;
   }
 }

@@ -209,7 +209,7 @@ public:
   add_new_CV_degree_of_association(int associated_type, double CV_minimum,
                                    double CV_maximum,
                                    std::vector<int> _corresponding_acid_types);
-  void add_new_CV_potential_energy(std::string filename, double delta_CV);
+  void add_new_CV_potential_energy(const std::string & filename, double delta_CV);
   int do_reaction_wang_landau();
   int update_maximum_and_minimum_energies_at_current_state(); // use for
                                                               // preliminary

@@ -62,19 +62,19 @@ void ReactionEnsemble::add_reaction(double equilibrium_constant, std::vector<int
             new_reaction->len_reactant_types=len_reactant_types;
             
             
-            int* reactant_coefficients = (int*) malloc(len_reactant_types * sizeof(int));
+            int* reactant_coefficients = len_reactant_types == 0 ? nullptr : (int*) malloc(len_reactant_types * sizeof(int));
             for(int i=0; i< len_reactant_types; i++)
                 reactant_coefficients[i]=_reactant_coefficients[i];
             new_reaction->reactant_coefficients=reactant_coefficients;
             
-            int* product_types = (int *)malloc(len_product_types * sizeof(int));
+            int* product_types = (int *)calloc(len_product_types, sizeof(int));
             for(int i=0; i< len_product_types; i++)
                 product_types[i]=_product_types[i];
             new_reaction->product_types=product_types;
             new_reaction->len_product_types=len_product_types;
             
             
-            int* product_coefficients = (int *)malloc(len_product_types * sizeof(int));
+            int* product_coefficients = len_product_types == 0 ? nullptr : (int *)malloc(len_product_types * sizeof(int));
             for(int i=0; i< len_product_types; i++)
                 product_coefficients[i]=_product_coefficients[i];
             new_reaction->product_coefficients=product_coefficients;
@@ -459,7 +459,7 @@ int ReactionEnsemble::update_type_index(int* reactant_types, int len_reactant_ty
 		if(len_reactant_types>0)
 			m_current_reaction_system.type_index[0]=reactant_types[0];
 		else
-			m_current_reaction_system.type_index[0]=product_types[0];
+			m_current_reaction_system.type_index[0]=product_types[0]; // NOLINT
 		m_current_reaction_system.nr_different_types=1;
 		status_gc_init=init_type_array(m_current_reaction_system.type_index[0]); //make types known in espresso
 	}
@@ -891,7 +891,7 @@ void ReactionEnsemble::add_new_CV_degree_of_association(int associated_type, dou
 /**
 * Adds a new collective variable (CV) of the type potential energy to the Wang-Landau sampling
 */
-void ReactionEnsemble::add_new_CV_potential_energy(std::string filename, double delta_CV){
+void ReactionEnsemble::add_new_CV_potential_energy(const std::string & filename, double delta_CV){
             collective_variable* new_collective_variable=(collective_variable*) calloc(1,sizeof(collective_variable));
             new_collective_variable->energy_boundaries_filename=strdup(filename.c_str());
             new_collective_variable->delta_CV=delta_CV;
@@ -919,7 +919,7 @@ int ReactionEnsemble::get_flattened_index_wang_landau(double* current_state, dou
 		if(collective_variable_i==m_current_wang_landau_system.nr_collective_variables-1 && m_current_wang_landau_system.do_energy_reweighting==true)	//for energy collective variable (simple truncating conversion desired)
 			individual_indices[collective_variable_i]=(int) ((current_state[collective_variable_i]-collective_variables_minimum_values[collective_variable_i])/delta_collective_variables_values[collective_variable_i]);
 		else	//for degree of association collective variables (rounding conversion desired)
-			individual_indices[collective_variable_i]=(int) ((current_state[collective_variable_i]-collective_variables_minimum_values[collective_variable_i])/delta_collective_variables_values[collective_variable_i]+0.5);
+			individual_indices[collective_variable_i]= std::lround((current_state[collective_variable_i]-collective_variables_minimum_values[collective_variable_i])/delta_collective_variables_values[collective_variable_i]);
 		if(individual_indices[collective_variable_i]<0 or individual_indices[collective_variable_i]>=nr_subindices_of_collective_variable[collective_variable_i]) // sanity check
 			return -10;
 	}
@@ -1061,10 +1061,10 @@ double find_minimum_non_negative_value(double* list, int len){
 * Finds the minimum in a double array and returns it.
 */
 double find_minimum(double* list, int len){
-	double minimum =list[0];
+	double minimum =list[0]; // NOLINT
 	for (int i=0;i<len;i++){
-		if(list[i]<minimum)
-			minimum=list[i];	
+		if(list[i]<minimum) // NOLINT
+			minimum=list[i]; // NOLINT
 	}
 	return minimum;
 }

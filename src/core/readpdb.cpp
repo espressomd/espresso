@@ -41,7 +41,7 @@ static void add_lj_internal(std::set<PdbParser::itp_atomtype, PdbParser::itp_ato
 	continue;
       if(only_diagonal && (it->espresso_id != jt->espresso_id))
 	continue;
-      const double epsilon_ij = sqrt(it->epsilon * jt->epsilon);
+      const double epsilon_ij = sqrtf(it->epsilon * jt->epsilon);
       const double sigma_ij = 0.5*(10.*it->sigma+10.*jt->sigma);
       const double cutoff_ij = rel_cutoff*sigma_ij;
       const double shift_ij = -pow(sigma_ij/cutoff_ij,12) - pow(sigma_ij/cutoff_ij,6);

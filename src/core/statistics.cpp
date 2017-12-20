@@ -661,6 +661,7 @@ void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
 
   order2 = order * order;
   *_ff = ff = Utils::realloc(ff, 2 * order2 * sizeof(double));
+  ff[2 * order2] = 0;
   twoPI_L = 2 * PI / box_l[0];
 
   if ((n_types < 0) || (n_types > n_particle_types)) {
@@ -798,8 +799,8 @@ int calc_cylindrical_average(
   double binwd_axial = length / bins_axial;
   double binwd_radial = radius / bins_radial;
 
-  auto center = Vector3d{center_};
-  auto direction = Vector3d{direction_};
+  auto center = Vector3d{std::move(center_)};
+  auto direction = Vector3d{std::move(direction_)};
 
   // Select all particle types if the only entry in types is -1
   bool all_types = false;

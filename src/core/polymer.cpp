@@ -612,19 +612,19 @@ double maxwell_velocitiesC(int part_id, int N_T) {
 }
 
 int collectBonds(PartCfg & partCfg, int mode, int part_id, int N_P, int MPC, int type_bond,
-                 int **bond_out, int ***bonds_out) {
-  int i, j, k, ii, size, *bond = nullptr, **bonds = nullptr;
+                 std::vector<int> bond, std::vector<std::vector<int>> bonds) {
+  int i, j, k, ii, size;
 
   partCfg.update_bonds();
 
   if (mode == 1) {
     /* Find all the bonds leading to and from the ending monomers of the chains.
      */
-    bond = (int *)Utils::malloc(2 * N_P * sizeof(int));
-    bonds = (int **)Utils::malloc(2 * N_P * sizeof(int *));
+    bond.resize(2 * N_P);
+    bonds.resize(2 * N_P);
     for (i = 0; i < 2 * N_P; i++) {
       bond[i] = 0;
-      bonds[i] = (int *)Utils::malloc(1 * sizeof(int));
+      bonds[i].resize(1);
     }
     for (k = part_id; k < N_P * MPC + part_id; k++) {
       i = 0;
@@ -637,15 +637,13 @@ int collectBonds(PartCfg & partCfg, int mode, int part_id, int N_P, int MPC, int
               ii = partCfg[k].p.identity % MPC
                        ? 2 * (partCfg[k].p.identity + 1) / MPC - 1
                        : 2 * partCfg[k].p.identity / MPC;
-              bonds[i] =
-                  Utils::realloc(bonds[i], (bond[i] + 1) * sizeof(int));
+              bonds[i].resize(bond[i] + 1) ;
               bonds[ii][bond[ii]++] = partCfg[k].bl.e[i];
             } else if ((partCfg[k].bl.e[i] % MPC == 0) ||
                        ((partCfg[k].bl.e[i] + 1) % MPC == 0)) {
               ii = partCfg[k].bl.e[i] % MPC ? 2 * (partCfg[k].bl.e[i] + 1) / MPC - 1
                                         : 2 * partCfg[k].bl.e[i] / MPC;
-              bonds[i] =
-                  Utils::realloc(bonds[i], (bond[i] + 1) * sizeof(int));
+              bonds[i].resize(bond[i] + 1);
               bonds[ii][bond[ii]++] = partCfg[k].p.identity;
             }
             i++;
@@ -663,11 +661,11 @@ int collectBonds(PartCfg & partCfg, int mode, int part_id, int N_P, int MPC, int
     });
   } else if (mode == 2) {
     /* Find all the bonds leading to and from each monomer. */
-    bond = (int *)Utils::malloc(N_P * MPC * sizeof(int));
-    bonds = (int **)Utils::malloc(N_P * MPC * sizeof(int *));
+    bond.resize(N_P * MPC);
+    bonds.resize(N_P * MPC);
     for (i = 0; i < N_P * MPC + part_id; i++) {
       bond[i] = 0;
-      bonds[i] = (int *)Utils::malloc(1 * sizeof(int));
+      bonds[i].resize(1);
     }
     for (k = part_id; k < N_P * MPC + part_id; k++) {
       i = 0;
@@ -676,11 +674,9 @@ int collectBonds(PartCfg & partCfg, int mode, int part_id, int N_P, int MPC, int
         if (partCfg[k].bl.e[i++] == type_bond) {
           for (j = 0; j < size; j++) {
             ii = partCfg[k].bl.e[i];
-            bonds[k] =
-                Utils::realloc(bonds[k], (bond[k] + 1) * sizeof(int));
+            bonds[k].resize(bond[k] + 1);
             bonds[k][bond[k]++] = ii;
-            bonds[ii] =
-                Utils::realloc(bonds[ii], (bond[ii] + 1) * sizeof(int));
+            bonds[ii].resize(bond[ii] + 1);
             bonds[ii][bond[ii]++] = k;
             i++;
           }
@@ -701,18 +697,17 @@ int collectBonds(PartCfg & partCfg, int mode, int part_id, int N_P, int MPC, int
     return (-2);
   }
 
-  *bond_out = bond;
-  *bonds_out = bonds;
   return (0);
 }
 
 int crosslinkC(PartCfg & partCfg, int N_P, int MPC, int part_id, double r_catch, int link_dist,
                int chain_dist, int type_bond, int max_try) {
-  int i, j, k, ii, size, bondN[2], *bond, **bonds, *link, **links, *cross,
-      crossL;
+  int i, j, k, ii, size, bondN[2], crossL;
+  std::vector<int> bond;
+  std::vector<std::vector<int>> bonds;
 
   /* Find all the bonds leading to and from each monomer. */
-  if (collectBonds(partCfg, 2, part_id, N_P, MPC, type_bond, &bond, &bonds))
+  if (collectBonds(partCfg, 2, part_id, N_P, MPC, type_bond, bond, bonds))
     return (-2);
   POLY_TRACE(for (i = 0; i < N_P * MPC + part_id; i++) {
     printf("%d:\t", i);
@@ -724,16 +719,15 @@ int crosslinkC(PartCfg & partCfg, int N_P, int MPC, int part_id, double r_catch,
 
   /* Find all possible binding partners in the neighbourhood of the unconnected
    * ending monomers. */
-  link = (int *)Utils::malloc(2 * N_P * sizeof(int));
-  links = (int **)Utils::malloc(2 * N_P * sizeof(int *));
+  std::vector<int> link(2 * N_P);
+  std::vector<std::vector<int>> links(2 * N_P);
   for (i = 0; i < N_P; i++) {
     for (k = 0; k < 2; k++) {
       if (bond[i * MPC + k * (MPC - 1)] == 1) {
-        links[2 * i + k] = (int *)Utils::malloc(n_part * sizeof(int));
+        links[2 * i + k].resize(n_part);
         link[2 * i + k] = mindist3(partCfg,i * MPC + k * (MPC - 1) + part_id, r_catch,
-                                   links[2 * i + k]);
-        links[2 * i + k] = Utils::realloc(links[2 * i + k],
-                                                 link[2 * i + k] * sizeof(int));
+                                   links[2 * i + k].data());
+        links[2 * i + k].resize(link[2 * i + k]);
       } else if (bond[i * MPC + k * (MPC - 1)] == 2)
         link[2 * i + k] = -1; /* Note that links[2*i+k] will not be malloc()ed
                                  now (taken care of at end)!!! */
@@ -772,8 +766,7 @@ int crosslinkC(PartCfg & partCfg, int N_P, int MPC, int part_id, double r_catch,
                   links[2 * i + k][j]; /* no ends accepted */
         }
         link[2 * i + k] = size;
-        links[2 * i + k] = Utils::realloc(links[2 * i + k],
-                                                 link[2 * i + k] * sizeof(int));
+        links[2 * i + k].resize(link[2 * i + k]);
       }
       POLY_TRACE(printf("%d: ", ii); for (j = 0; j < link[2 * i + k]; j++)
                      printf("%d ", links[2 * i + k][j]);
@@ -783,7 +776,7 @@ int crosslinkC(PartCfg & partCfg, int N_P, int MPC, int part_id, double r_catch,
 
   /* Randomly choose a partner (if not available -> '-1') for each polymer
    * chain's end if it's not already been crosslinked (-> '-2'). */
-  cross = (int *)Utils::malloc(2 * N_P * sizeof(int));
+  std::vector<int> cross(2 * N_P);
   crossL = 0;
   for (i = 0; i < 2 * N_P; i++)
     if (link[i] > 0) {
@@ -897,20 +890,7 @@ int crosslinkC(PartCfg & partCfg, int N_P, int MPC, int part_id, double r_catch,
             ES_ERROR)
           return (-3);
       }
-      free(bonds[2 * i]);
-      if (link[2 * i] >= 0)
-        free(links[2 * i]); /* else crash(); because links[2*i]   has never been
-                               malloc()ed then */
-      free(bonds[2 * i + 1]);
-      if (link[2 * i + 1] >= 0)
-        free(links[2 * i + 1]); /* else crash(); because links[2*i+1] has never
-                                   been malloc()ed then */
     }
-    free(bond);
-    free(bonds);
-    free(link);
-    free(links);
-    free(cross);
     POLY_TRACE(printf("Created %d new bonds; now %d ends are crosslinked!\n",
                       size, crossL));
     return (crossL);
