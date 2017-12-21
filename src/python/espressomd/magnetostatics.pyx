@@ -35,7 +35,7 @@ IF DIPOLES == 1:
         Attributes
         ----------
         prefactor : :obj:`float`
-                Magnetoztatics prefactor
+                Magnetostatics prefactor
 
         """
 
