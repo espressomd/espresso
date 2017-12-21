@@ -630,7 +630,6 @@ switch (coulomb.method) {
     mpi_bcast_coulomb_params();
     coulomb.method = COULOMB_NONE;
     mpi_bcast_coulomb_params();
-    return ES_OK;
 }
 
 
@@ -659,24 +658,6 @@ int dipolar_set_Dprefactor(double prefactor)
 
 #endif /* ifdef  DIPOLES */
 
-<<<<<<< HEAD
-=======
-void recalc_coulomb_prefactor() {
-#ifdef ELECTROSTATICS
-  if (temperature > 0.0)
-    coulomb.prefactor = coulomb.bjerrum * temperature;
-  else
-    coulomb.prefactor = coulomb.bjerrum;
-#endif
-
-#ifdef DIPOLES
-  if (temperature > 0.0)
-    coulomb.Dprefactor = coulomb.Dbjerrum * temperature;
-  else
-    coulomb.Dprefactor = coulomb.Dbjerrum;
-#endif
-}
->>>>>>> d5e653e9d6ab3e06da29414930cc4da52b1410ee
 
 int virtual_set_params(int bond_type) {
   if (bond_type < 0)
