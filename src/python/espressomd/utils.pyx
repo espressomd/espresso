@@ -55,7 +55,7 @@ cdef np.ndarray create_nparray_from_double_list(double_list * dl):
         numpyArray[i] = dl.e[i]
     return numpyArray
 
-cdef int_list * create_int_list_from_python_object(obj):
+cdef int_list create_int_list_from_python_object(obj):
     """
     Returns a int list pointer from a python object which supports subscripts.
 
@@ -64,16 +64,13 @@ cdef int_list * create_int_list_from_python_object(obj):
     obj : python object which supports subscripts
 
     """
-    cdef int_list * il
-    il = <int_list * > malloc(sizeof(int_list))
-    init_intlist(il)
+    cdef int_list il
+    il.resize(len(obj))
 
-    alloc_intlist(il, len(obj))
     for i in range(len(obj)):
         il.e[i] = obj[i]
-    il.n = len(obj)
-    return il
 
+    return il
 
 cdef check_type_or_throw_except(x, n, t, msg):
     """
@@ -88,7 +85,7 @@ cdef check_type_or_throw_except(x, n, t, msg):
         if hasattr(x, "__getitem__"):
             for i in range(len(x)):
                 if not isinstance(x[i], t):
-                    if not ((t == float and isinstance(x[i], int))
+                    if not ((t == float and is_valid_type(x[i], int))
                       or (t == float and issubclass(type(x[i]), np.integer))) \
                       and not (t == int and issubclass(type(x[i]), np.integer)):
                         raise ValueError(
@@ -100,7 +97,7 @@ cdef check_type_or_throw_except(x, n, t, msg):
     else:
         # N=1 and a single value
         if not isinstance(x, t):
-            if not (t == float and isinstance(x, int)) and not (t == int and issubclass(type(x), np.integer)):
+            if not (t == float and is_valid_type(x, int)) and not (t == int and issubclass(type(x), np.integer)):
                 raise ValueError(msg + " -- Got an " + type(x).__name__)
 
 
@@ -193,6 +190,18 @@ Use numpy.copy(<ESPResSo array property>) to get a writable copy."
         obj = np.asarray(input_array).view(cls)
         obj.flags.writeable = False
         return obj
+
+    def __add__(self, other):
+        return np.copy(self) + other
+
+    def __radd__(self, other):
+        return other + np.copy(self)
+
+    def __sub__(self, other):
+        return np.copy(self) - other
+
+    def __rsub__(self, other):
+        return other - np.copy(self)
 
     def __repr__(self):
         return repr(np.array(self))
@@ -308,3 +317,16 @@ def nesting_level(obj):
 
     return max_level + 1
  
+def is_valid_type(value, t):
+    """
+    Extended checks for numpy int and float types.
+
+    """
+
+    if t == int:
+        return isinstance(value, (int, np.integer, np.long))
+    elif t == float:
+        return isinstance(value, (float, np.float16, np.float32, np.float64, np.float128, np.longdouble))
+    else:
+        return isinstance(value, t)
+

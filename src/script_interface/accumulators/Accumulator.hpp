@@ -24,8 +24,9 @@
 
 #include "ScriptInterface.hpp"
 #include "core/accumulators/Accumulator.hpp"
-#include "core/utils/Factory.hpp"
 #include "observables/Observable.hpp"
+
+#include "utils/as_const.hpp"
 
 #include <memory>
 
@@ -34,48 +35,30 @@ namespace Accumulators {
 
 class Accumulator : public AutoParameters {
 public:
-  Accumulator()
-      : m_accumulator(std::make_shared<::Accumulators::Accumulator>())
-  {
-    add_parameters({{"obs",
-                     [this](Variant const &value) {
-                       auto obs_ptr = get_value<std::shared_ptr<Observables::Observable>>(value);
-                       // We are expecting a ScriptInterface::Observables::Observable here,
-                       // throw if not. That means the assigned object had the wrong type.
-                       if (obs_ptr) {
-                         m_accumulator->m_obs = obs_ptr->observable();
-                         m_accumulator->initialize();
-                       }
-                     },
-                     [this]() {
-                       return m_obs ? m_obs->id() : ObjectId();
-                     }}});
-  }
+  /* as_const is to make obs read-only. */
+  Accumulator() { add_parameters({{"obs", Utils::as_const(m_obs)}}); }
 
-  const std::string name() const override { return "Accumulators::Accumulator"; }
+  void construct(VariantMap const &params) override {
+    set_from_args(m_obs, params, "obs");
+
+    if (m_obs)
+      m_accumulator =
+          std::make_shared<::Accumulators::Accumulator>(m_obs->observable());
+  }
 
   std::shared_ptr<::Accumulators::Accumulator> accumulator() {
     return m_accumulator;
   }
 
-  void check_if_initialized() {
-    if (!m_accumulator->m_initialized)
-      throw std::runtime_error("The accumulator has not yet been initialied.");
-  }
   virtual Variant call_method(std::string const &method,
                               VariantMap const &parameters) override {
-    check_if_initialized();
     if (method == "update") {
-      if (m_accumulator->m_autoupdate) {
-        throw std::runtime_error(
-            "auto_update is enabled for the accumulator. Cannot update manually");
-      }
       return m_accumulator->update();
     }
-    if (method == "auto_update") 
-      return m_accumulator->m_autoupdate;
+
     if (method == "get_mean")
       return m_accumulator->get_mean();
+
     if (method == "get_variance")
       return m_accumulator->get_variance();
     return {};

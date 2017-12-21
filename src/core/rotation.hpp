@@ -54,15 +54,15 @@ void convert_initial_torques();
 
 /** convert angular velocities and torques from the
     body-fixed frames to space-fixed coordinates */
-void convert_omega_body_to_space(Particle *p, double *omega);
-void convert_torques_body_to_space(Particle *p, double *torque);
+void convert_omega_body_to_space(const Particle *p, double *omega);
+void convert_torques_body_to_space(const Particle *p, double *torque);
 
 
 Vector3d convert_vector_body_to_space(const Particle& p, const Vector3d& v);
 
 /** convert velocity form the lab-fixed coordinates
     to the body-fixed frame */
-void convert_vel_space_to_body(Particle *p, double *vel_body);
+void convert_vel_space_to_body(const Particle *p, double *vel_body);
 
 /** Here we use quaternions to calculate the rotation matrix which
     will be used then to transform torques from the laboratory to

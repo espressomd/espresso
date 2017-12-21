@@ -22,6 +22,7 @@ from . cimport integrate
 from globals cimport *
 import numpy as np
 from espressomd.utils cimport handle_errors
+from espressomd.utils import is_valid_type
 
 cdef class CellSystem(object):
     def set_domain_decomposition(self, use_verlet_lists=True):
@@ -79,7 +80,7 @@ cdef class CellSystem(object):
         cell_structure.use_verlet_list = use_verlet_lists
 
         if n_layers:
-            if not isinstance(n_layers, int):
+            if not is_valid_type(n_layers, int):
                 raise ValueError("layer height should be positive")
 
             if not n_layers > 0:
@@ -199,7 +200,16 @@ cdef class CellSystem(object):
 
         """
         def __set__(self, _node_grid):
-            raise Exception('node_grid is not settable by the user.')
+            if not np.prod(_node_grid) == n_nodes:
+                raise ValueError("Number of available nodes " + str(n_nodes) + " and imposed node grid " + str(_node_grid) + " do not agree.")
+            else:
+                node_grid[0] = _node_grid[0]
+                node_grid[1] = _node_grid[1]
+                node_grid[2] = _node_grid[2]
+                mpi_err = mpi_bcast_parameter(FIELD_NODEGRID)
+                handle_errors("mpi_bcast_parameter failed")
+                if mpi_err:
+                    raise Exception("Broadcasting the node grid failed")
 
         def __get__(self):
             return np.array([node_grid[0], node_grid[1], node_grid[2]])

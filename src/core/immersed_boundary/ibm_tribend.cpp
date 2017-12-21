@@ -237,7 +237,6 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, c
   if ( method == NodeNeighbors )
   {
     // Interpret ind2 as number of partners
-    // Note: the actual partners are not set here, but must be set using the part command on the tcl level
     
     if ( ind1 != 5 && ind1 != 6) { printf("Gompper bending with %d partners seems strange. Are you sure?\n", ind2); return ES_ERROR; }
     

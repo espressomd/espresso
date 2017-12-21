@@ -37,7 +37,11 @@ public:
         m_shape(nullptr) {
     add_parameters({{"only_positive", m_constraint->only_positive()},
                     {"penetrable", m_constraint->penetrable()},
-                    {"particle_type", m_constraint->type()},
+                    {"particle_type", 
+                     [this](Variant const &value) {
+                       m_constraint->set_type(get_value<int>(value));
+                     },
+                     [this]() { return m_constraint->type(); }},
                     {"shape",
                      [this](Variant const &value) {
                        m_shape =
@@ -51,16 +55,12 @@ public:
                      }}});
   }
 
-  const std::string name() const override {
-    return "Constraints::ShapeBasedConstraint";
-  }
-
   Variant call_method(std::string const &name, VariantMap const &) override {
     if (name == "total_force") {
       return shape_based_constraint()->total_force();
     }
 
-    return false;
+    return none;
   }
 
   std::shared_ptr<::Constraints::Constraint> constraint() override {

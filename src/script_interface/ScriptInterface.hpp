@@ -40,10 +40,6 @@ template <typename T> static void register_new(std::string const &name) {
   Utils::Factory<ScriptInterfaceBase>::register_new<T>(name);
 }
 
-template <typename T> static void register_new() {
-  register_new<T>(T{}.name());
-}
-
 inline std::shared_ptr<ScriptInterfaceBase> get_instance(Variant value) {
   const auto id = boost::get<ObjectId>(value);
 

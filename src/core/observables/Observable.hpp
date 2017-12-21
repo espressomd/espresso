@@ -31,6 +31,7 @@ namespace Observables {
 class Observable {
 public:
   friend class CylindricalFluxDensityProfile;
+  friend class CylindricalLBFluxDensityProfileAtParticlePositions;
   Observable();
   virtual ~Observable() = default;
   // In the call operator the calculation is performed.

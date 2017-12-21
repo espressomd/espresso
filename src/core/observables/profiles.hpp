@@ -1,32 +1,35 @@
 #ifndef OBSERVABLES_PROFIELS_HPP
 #define OBSERVABLES_PROFIELS_HPP
+
+#include "utils/List.hpp"
+
 typedef struct {
   IntList *id_list;
-  double minx;
-  double maxx;
-  double miny;
-  double maxy;
-  double minz;
-  double maxz;
-  int xbins;
-  int ybins;
-  int zbins;
+  double min_x;
+  double max_x;
+  double min_y;
+  double max_y;
+  double min_z;
+  double max_z;
+  int n_x_bins;
+  int n_y_bins;
+  int n_z_bins;
   void *container;
 } profile_data;
 
 typedef struct {
   IntList *id_list;
-  double minr;
-  double maxr;
-  double minphi;
-  double maxphi;
-  double minz;
-  double maxz;
+  double min_r;
+  double max_r;
+  double min_phi;
+  double max_phi;
+  double min_z;
+  double max_z;
   double center[3];
   double axis[3];
-  int phibins;
-  int rbins;
-  int zbins;
+  int n_phi_bins;
+  int n_r_bins;
+  int n_z_bins;
   void *container;
 } radial_profile_data;
 

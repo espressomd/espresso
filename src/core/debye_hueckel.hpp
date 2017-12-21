@@ -57,7 +57,7 @@ int dh_set_params_cdh(double kappa, double r_cut, double eps_int,
                       double eps_ext, double r0, double r1, double alpha);
 
 /** Computes the Debye_Hueckel pair force and adds this
-    force to the particle forces (see \ref tclcommand_inter).
+    force to the particle forces.
     @param p1        Pointer to first particle.
     @param p2        Pointer to second/middle particle.
     @param d         Vector pointing from p1 to p2.

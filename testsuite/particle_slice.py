@@ -71,10 +71,11 @@ class ParticleSliceTest(ut.TestCase):
             np.array([[0, 1, 0], [0, 0, 1]])))
 
     def test_pos_str(self):
+        self.system.part[0].pos = [0,0,0]
+        self.system.part[1].pos = [0,0,1]
         self.assertEqual(repr(self.system.part[0].pos), repr(
-            np.array([0.0, 0.0, 0.0])))
-        if (len(self.system.part)) > 1:
-            self.assertEqual(repr(self.system.part[:2].pos), repr(
+                np.array([0.0, 0.0, 0.0])))
+        self.assertEqual(repr(self.system.part[:2].pos), repr(
                 np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 1.0]])))
 
     @ut.skipIf(
@@ -107,7 +108,6 @@ class ParticleSliceTest(ut.TestCase):
         # tuple
         b = fene,0
         self.system.part[2].bonds = b
-        print(self.system.part[:].bonds)
         self.assertTrue( self.system.part[:].bonds == [ (), (), ((fene,0),), () ] )
 
         # list
@@ -312,6 +312,11 @@ class ParticleSliceTest(ut.TestCase):
         "Features not available, skipping test!")
     def test_vs_relative(self):
         
+        self.system.part.clear()
+        self.system.part.add(pos=[0,0,0])
+        self.system.part.add(pos=[0,0,0])
+        self.system.part.add(pos=[0,0,0])
+        self.system.part.add(pos=[0,0,0])
         self.system.part[0].vs_relative = [1,1.0,(1.0,1.0,1.0,1.0)]
 
         self.assertTrue( repr(self.system.part[:].vs_relative) == repr([(1, 1.0, np.array([ 1.,  1.,  1.,  1.])), (0, 0.0, np.array([ 0.,  0.,  0.,  0.])), (0, 0.0, np.array([ 0.,  0.,  0.,  0.])), (0, 0.0, np.array([ 0.,  0.,  0.,  0.]))]) )
@@ -324,6 +329,23 @@ class ParticleSliceTest(ut.TestCase):
 
         self.assertTrue( repr(self.system.part[:].vs_relative) == repr([(1, 1.0, np.array([ 1.,  1.,  1.,  1.])), (1, 2.0, np.array([ 1.,  1.,  1.,  1.])), (1, 3.0, np.array([ 1.,  1.,  1.,  1.])), (1, 4.0, np.array([ 1.,  1.,  1.,  1.]))]) )
 
+    def test_multiadd(self):
+        self.system.part.clear()
+        positions = [[1,2,3],[4,5,6],[7,8,9]]
+        self.system.part.add(pos=positions)
+        for p in positions:
+            self.system.part.add(pos=p)
+        np.testing.assert_allclose(np.copy(self.system.part[:3].pos), np.copy(self.system.part[3:6].pos))
+        
+        with self.assertRaises(ValueError):
+            self.system.part.add(pos=([1,1,1],[2,2,2]),type = 0)
+        with self.assertRaises(ValueError):
+            self.system.part.add(pos=([1,1,1],[2,2,2]),type = (0,1,2))
+
+        self.system.part.clear()
+        self.system.part.add(pos=([1,1,1],[2,2,2]),type = (0,1))
+        self.assertEqual(self.system.part[0].type,0)
+        self.assertEqual(self.system.part[1].type,1)
 
     def test_empty(self):
         self.assertTrue(np.array_equal(self.system.part[0:0].pos, np.empty(0)))

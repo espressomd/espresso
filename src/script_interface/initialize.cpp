@@ -57,7 +57,7 @@ void initialize() {
  
 
   ScriptInterface::register_new<Testing::VariantTester>("Testing::VariantTester");
-  ScriptInterface::register_new<ComFixed>();
+  ScriptInterface::register_new<ComFixed>("ComFixed");
 }
 
 } /* namespace ScriptInterface */

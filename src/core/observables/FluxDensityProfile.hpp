@@ -8,25 +8,23 @@
 namespace Observables {
 class FluxDensityProfile : public ProfileObservable {
 public:
-  virtual int n_values() const override { return 3 * xbins * ybins * zbins; }
+  virtual int n_values() const override { return 3 * n_x_bins * n_y_bins * n_z_bins; }
   virtual std::vector<double> operator()(PartCfg &partCfg) const override {
-    std::vector<double> res(n_values());
-    double bin_volume =
-        (maxx - minx) * (maxy - miny) * (maxz - minz) / xbins / ybins / zbins;
-
+    std::vector<size_t> n_bins{{static_cast<size_t>(n_x_bins),
+                                static_cast<size_t>(n_y_bins),
+                                static_cast<size_t>(n_z_bins)}};
+    std::vector<std::pair<double, double>> limits{
+        {std::make_pair(min_x, max_x), std::make_pair(min_y, max_y),
+         std::make_pair(min_z, max_z)}};
+    Utils::Histogram<double> histogram(n_bins, 3, limits);
     for (int id : ids) {
-      auto const ppos = folded_position(partCfg[id]);
-      int binx = (int)floor(xbins * (ppos[0] - minx) / (maxx - minx));
-      int biny = (int)floor(ybins * (ppos[1] - miny) / (maxy - miny));
-      int binz = (int)floor(zbins * (ppos[2] - minz) / (maxz - minz));
-      if (binx >= 0 && binx < xbins && biny >= 0 && biny < ybins && binz >= 0 &&
-          binz < zbins) {
-        for (int dim = 0; dim < 3; dim++)
-          res[3 * (binx * ybins * zbins + biny * zbins + binz) + dim] +=
-              partCfg[id].m.v[dim] / bin_volume;
+      auto const ppos = ::Vector<3, double>(folded_position(partCfg[id]));
+      histogram.update(ppos, ::Vector<3, double> {{partCfg[id].m.v[0] / time_step,
+                                                   partCfg[id].m.v[1] / time_step,
+                                                   partCfg[id].m.v[2] / time_step}});
       }
-    }
-    return res;
+    histogram.normalize();
+    return histogram.get_histogram();
   }
 };
 

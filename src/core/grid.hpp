@@ -46,6 +46,9 @@
 #include "RuntimeErrorStream.hpp"
 #include "communication.hpp"
 #include "utils.hpp"
+#include "errorhandling.hpp"
+#include "lees_edwards.hpp"
+
 #include <climits>
 
 /** Macro that tests for a coordinate being periodic or not. */
@@ -309,6 +312,12 @@ template <typename Particle> Vector3d folded_position(Particle const &p) {
   return pos;
 }
 
+/** @overload */
+template <typename Particle> Vector3d folded_position(const Particle *p) {
+  assert(p);
+  return folded_position(*p);
+}
+
 inline void fold_position(Vector3d &pos, Vector<3, int> &image_box) {
   fold_position(pos.data(), image_box.data());
 }
@@ -323,9 +332,7 @@ inline void fold_position(Vector3d &pos, Vector<3, int> &image_box) {
 */
 inline void unfold_position(double pos[3], double vel[3], int image_box[3]) {
 #ifdef LEES_EDWARDS
-
-  int y_img_count;
-  y_img_count = (int)floor(pos[1] * box_l_i[1] + image_box[1]);
+  auto const y_img_count = static_cast<int>(floor(pos[1] * box_l_i[1] + image_box[1]));
 
   pos[0] += image_box[0] * box_l[0] + y_img_count * lees_edwards_offset;
   pos[1] += image_box[1] * box_l[1];
@@ -344,6 +351,25 @@ inline void unfold_position(double pos[3], double vel[3], int image_box[3]) {
   }
 
 #endif
+}
+
+template<typename Particle>
+Vector3d unfolded_position(const Particle * p) {
+  Vector3d pos{p->r.p};
+#ifdef LEES_EDWARDS
+  auto const y_img_count = static_cast<int>(floor(pos[1] * box_l_i[1] + p->l.i[1]));
+
+  pos[0] += p->l.i[0] * box_l[0] + y_img_count * lees_edwards_offset;
+  pos[1] += p->l.i[1] * box_l[1];
+  pos[2] += p->l.i[2] * box_l[2];
+#else
+  for (int i = 0; i < 3; i++) {
+    pos[i] += p->l.i[i] * box_l[i];
+  }
+
+#endif
+
+  return pos;
 }
 
 /** unfold coordinates to physical position.

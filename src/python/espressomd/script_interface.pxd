@@ -68,6 +68,7 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
 
     cdef cppclass ScriptInterfaceBase:
         const string name()
+        void construct(map[string, Variant]) except +
         map[string, Variant] get_parameters() except +
         map[string, Parameter] valid_parameters() except +
         Variant get_parameter(const string & name) except +
@@ -75,6 +76,11 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         void set_parameters(map[string, Variant] & parameters) except +
         Variant call_method(const string & name, const map[string, Variant] & parameters) except +
         ObjectId id() except +
+        void set_state(map[string, Variant]) except +
+        map[string, Variant] get_state() except +
+        string serialize() except +
+        @staticmethod
+        shared_ptr[ScriptInterfaceBase] unserialize(const string &state) except +
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase":
     cdef cppclass CreationPolicy:
@@ -92,4 +98,5 @@ cdef class PScriptInterface:
     cdef set_sip(self, shared_ptr[ScriptInterfaceBase] sip)
     cdef variant_to_python_object(self, Variant value)  except +
     cdef Variant python_object_to_variant(self, value)
+    cdef map[string, Variant] _sanitize_params(self, in_params)
 

@@ -39,9 +39,12 @@
 #include "interaction_data.hpp"
 #include "partCfg_global.hpp"
 #include "rotation.hpp"
-#include "utils.hpp"
-#include "utils/make_unique.hpp"
 #include "virtual_sites.hpp"
+
+#include "utils.hpp"
+#include "utils/Cache.hpp"
+#include "utils/make_unique.hpp"
+#include "utils/mpi/gatherv.hpp"
 
 #include <cmath>
 #include <cstdlib>
@@ -189,8 +192,6 @@ void clear_particle_node() { particle_node.clear(); }
 */
 void realloc_local_particles(int part) {
   if (part >= max_local_particles) {
-    auto old_size = max_local_particles;
-
     /* round up part + 1 in granularity PART_INCREMENT */
     max_local_particles =
         PART_INCREMENT * ((part + PART_INCREMENT) / PART_INCREMENT);
@@ -214,7 +215,7 @@ int realloc_particlelist(ParticleList *l, int size) {
   Particle *old_start = l->part;
 
   PART_TRACE(fprintf(stderr, "%d: realloc_particlelist %p: %d/%d->%d\n",
-                     this_node, (void*) l, l->n, l->max, size));
+                     this_node, (void *)l, l->n, l->max, size));
 
   if (size < l->max) {
     if (size == 0)
@@ -306,20 +307,130 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   return dst;
 }
 
-std::unique_ptr<Particle> get_particle_data(int part) {
+namespace {
+/* Limit cache to 100 MiB */
+std::size_t const max_cache_size = (100ul * 1048576ul) / sizeof(Particle);
+Utils::Cache<int, Particle> particle_fetch_cache(max_cache_size);
+}
+
+void invalidate_fetch_cache() { particle_fetch_cache.invalidate(); }
+
+const Particle *get_particle_data(int part) {
   auto const pnode = get_particle_node(part);
-
-  if (pnode < 0)
+  /* Check if particle exists at all. */
+  if (-1 == pnode) {
     return nullptr;
+  }
 
-  auto pp = Utils::make_unique<Particle>();
+  if (pnode == this_node) {
+    assert(local_particles[part]);
+    return local_particles[part];
+  }
 
-  mpi_recv_part(pnode, part, pp.get());
-  return pp;
+  /* Query the cache */
+  auto const p_ptr = particle_fetch_cache.get(part);
+  if (p_ptr) {
+    return p_ptr;
+  }
+
+  /* Cache miss, fetch the particle,
+  * put it into the cache and return a pointer into the cache. */
+  auto const cache_ptr =
+      particle_fetch_cache.put(part, mpi_recv_part(pnode, part));
+  return cache_ptr;
+}
+
+void mpi_get_particles_slave(int, int) {
+  std::vector<int> ids;
+  boost::mpi::scatter(comm_cart, ids, 0);
+
+  std::vector<Particle> parts(ids.size());
+  std::transform(ids.begin(), ids.end(), parts.begin(), [](int id) {
+    assert(local_particles[id]);
+    return *local_particles[id];
+  });
+
+  Utils::Mpi::gatherv(comm_cart, parts.data(), parts.size(), 0);
+}
+
+/**
+ * @brief Get multiple particles at once.
+ *
+ * *WARNING* Particles are returned in an arbitrary order.
+ *
+ * @param ids The ids of the particles that should be returned.
+ *
+ * @returns The particle data.
+ */
+std::vector<Particle> mpi_get_particles(std::vector<int> const &ids) {
+  mpi_call(mpi_get_particles_slave, 0, 0);
+  /* Return value */
+  std::vector<Particle> parts(ids.size());
+
+  /* Group ids per node */
+  std::vector<std::vector<int>> node_ids(comm_cart.size());
+  for (auto const &id : ids) {
+    auto const pnode = get_particle_node(id);
+
+    node_ids[pnode].push_back(id);
+  }
+
+  /* Distributed ids to the nodes */
+  {
+    std::vector<int> ignore;
+    boost::mpi::scatter(comm_cart, node_ids, ignore, 0);
+  }
+
+  /* Copy local particles */
+  std::transform(node_ids[this_node].cbegin(), node_ids[this_node].cend(),
+                 parts.begin(), [](int id) {
+                   assert(id);
+                   return *local_particles[id];
+                 });
+
+  std::vector<int> node_sizes(comm_cart.size());
+  std::transform(
+      node_ids.cbegin(), node_ids.cend(), node_sizes.begin(),
+      [](std::vector<int> const &ids) { return static_cast<int>(ids.size()); });
+
+  Utils::Mpi::gatherv(comm_cart, parts.data(), parts.size(), parts.data(),
+                      node_sizes.data(), 0);
+
+  return parts;
+}
+
+void prefetch_particle_data(std::vector<int> ids) {
+  /* Nothing to do on a single node. */
+  if(comm_cart.size() == 1)
+    return;
+
+  /* Remove local, already cached and non-existent particles from the list. */
+  ids.erase(std::remove_if(ids.begin(), ids.end(),
+                           [](int id) {
+                             auto const pnode = get_particle_node(id);
+                             return (pnode < 0) || (pnode == this_node) ||
+                                    particle_fetch_cache.has(id);
+                           }),
+            ids.end());
+
+  /* Don't prefetch more particles than fit the cache. */
+  if (ids.size() > particle_fetch_cache.max_size())
+    ids.resize(particle_fetch_cache.max_size());
+
+  /* Fetch the particles... */
+  auto parts = mpi_get_particles(ids);
+
+  /* mpi_get_particles does not return the parts in the correct
+     order, so the ids need to be updated. */
+  std::transform(parts.cbegin(), parts.cend(), ids.begin(),
+                 [](Particle const &p) { return p.identity(); });
+
+  /* ... and put them into the cache. */
+  particle_fetch_cache.put(ids.cbegin(), ids.cend(),
+                           std::make_move_iterator(parts.begin()));
 }
 
 int place_particle(int part, double p[3]) {
-  int i;
   int retcode = ES_PART_OK;
 
   if (part < 0)
@@ -581,7 +692,7 @@ int set_particle_omega_lab(int part, double omega_lab[3]) {
   double A[9];
   double omega[3];
 
-  define_rotation_matrix(particle.get(), A);
+  define_rotation_matrix(particle, A);
 
   omega[0] = A[0 + 3 * 0] * omega_lab[0] + A[0 + 3 * 1] * omega_lab[1] +
              A[0 + 3 * 2] * omega_lab[2];
@@ -616,7 +727,7 @@ int set_particle_torque_lab(int part, double torque_lab[3]) {
   double A[9];
   double torque[3];
 
-  define_rotation_matrix(particle.get(), A);
+  define_rotation_matrix(particle, A);
 
   torque[0] = A[0 + 3 * 0] * torque_lab[0] + A[0 + 3 * 1] * torque_lab[1] +
               A[0 + 3 * 2] * torque_lab[2];
@@ -893,8 +1004,6 @@ void local_rescale_particles(int dir, double scale) {
 }
 
 void added_particle(int part) {
-  int i;
-
   n_part++;
 
   if (part > max_seen_particle) {
@@ -905,20 +1014,14 @@ void added_particle(int part) {
 }
 
 int local_change_bond(int part, int *bond, int _delete) {
-  IntList *bl;
-  Particle *p;
-  int bond_size;
-  int i;
-
-  p = local_particles[part];
+  auto p = local_particles[part];
   if (_delete)
     return try_delete_bond(p, bond);
 
-  bond_size = bonded_ia_params[bond[0]].num + 1;
-  bl = &(p->bl);
-  realloc_intlist(bl, bl->n + bond_size);
-  for (i = 0; i < bond_size; i++)
-    bl->e[bl->n++] = bond[i];
+  auto const bond_size = bonded_ia_params[bond[0]].num + 1;
+
+  std::copy_n(bond, bond_size, std::back_inserter(p->bl));
+
   return ES_OK;
 }
 
@@ -928,7 +1031,8 @@ int try_delete_bond(Particle *part, int *bond) {
 
   // Empty bond means: delete all bonds
   if (!bond) {
-    realloc_intlist(bl, bl->n = 0);
+    bl->clear();
+
     return ES_OK;
   }
 
@@ -952,9 +1056,8 @@ int try_delete_bond(Particle *part, int *bond) {
       // and we go on with deleting
       if (j > partners) {
         // New length of bond list
-        bl->n -= 1 + partners;
-        memmove(bl->e + i, bl->e + i + 1 + partners, sizeof(int) * (bl->n - i));
-        realloc_intlist(bl, bl->n);
+        bl->erase(bl->begin() + i, bl->begin() + i + 1 + partners);
+
         return ES_OK;
       }
       i += 1 + partners;
@@ -974,9 +1077,7 @@ void remove_all_bonds_to(int identity) {
         if (bl->e[i + j] == identity)
           break;
       if (j <= partners) {
-        bl->n -= 1 + partners;
-        memmove(bl->e + i, bl->e + i + 1 + partners, sizeof(int) * (bl->n - i));
-        realloc_intlist(bl, bl->n);
+        bl->erase(bl->begin() + i, bl->begin() + i + 1 + partners);
       } else
         i += 1 + partners;
     }
@@ -993,9 +1094,10 @@ void remove_all_bonds_to(int identity) {
 void local_change_exclusion(int part1, int part2, int _delete) {
   if (part1 == -1 && part2 == -1) {
     for (auto &p : local_cells.particles()) {
-      realloc_intlist(&p.el, p.el.n = 0);
-      return;
+      p.el.clear();
     }
+
+    return;
   }
 
   /* part1, if here */
@@ -1018,27 +1120,17 @@ void local_change_exclusion(int part1, int part2, int _delete) {
 }
 
 void try_add_exclusion(Particle *part, int part2) {
-  int i;
-  for (i = 0; i < part->el.n; i++)
+  for (int i = 0; i < part->el.n; i++)
     if (part->el.e[i] == part2)
       return;
 
-  realloc_intlist(&part->el, part->el.n + 1);
-  part->el.e[part->el.n++] = part2;
+  part->el.push_back(part2);
 }
 
 void try_delete_exclusion(Particle *part, int part2) {
-  IntList *el = &part->el;
-  int i;
+  IntList &el = part->el;
 
-  for (i = 0; i < el->n; i++) {
-    if (el->e[i] == part2) {
-      el->n--;
-      memmove(el->e + i, el->e + i + 1, sizeof(int) * (el->n - i));
-      realloc_intlist(el, el->n);
-      break;
-    }
-  }
+  el.erase(std::remove(el.begin(), el.end(), part2), el.end());
 }
 #endif
 
@@ -1078,9 +1170,9 @@ void add_partner(IntList *il, int i, int j, int distance) {
   for (k = 0; k < il->n; k += 2)
     if (il->e[k] == j)
       return;
-  realloc_intlist(il, il->n + 2);
-  il->e[il->n++] = j;
-  il->e[il->n++] = distance;
+
+  il->push_back(j);
+  il->push_back(distance);
 }
 }
 
@@ -1101,14 +1193,7 @@ void auto_exclusions(int distance) {
 
   /* partners is a list containing the currently found excluded particles for
      each particle, and their distance, as a interleaved list */
-  IntList *partners;
-
-  /* setup bond partners and distance list. Since we need to identify particles
-     via their identity, we use a full sized array */
-  partners =
-      (IntList *)Utils::malloc((max_seen_particle + 1) * sizeof(IntList));
-  for (p = 0; p <= max_seen_particle; p++)
-    init_intlist(&partners[p]);
+  std::unordered_map<int, IntList> partners;
 
   /* We need bond information */
   partCfg().update_bonds();
@@ -1164,9 +1249,7 @@ void auto_exclusions(int distance) {
     for (j = 0; j < partners[p].n; j++)
       if (p < partners[p].e[j])
         change_exclusion(p, partners[p].e[j], 0);
-    realloc_intlist(&partners[p], 0);
   }
-  free(partners);
 }
 
 #endif
@@ -1483,26 +1566,34 @@ int number_of_particles_with_type(int type, int *number) {
 // within a ctypedef definition
 
 #ifdef ROTATION
-void pointer_to_omega_body(Particle *p, double *&res) { res = p->m.omega; }
+void pointer_to_omega_body(Particle const *p, double const *&res) {
+  res = p->m.omega;
+}
 
-void pointer_to_torque_lab(Particle *p, double *&res) { res = p->f.torque; }
+void pointer_to_torque_lab(Particle const *p, double const *&res) {
+  res = p->f.torque;
+}
 
-void pointer_to_quat(Particle *p, double *&res) { res = p->r.quat; }
+void pointer_to_quat(Particle const *p, double const *&res) { res = p->r.quat; }
 
-void pointer_to_quatu(Particle *p, double *&res) { res = p->r.quatu; }
+void pointer_to_quatu(Particle const *p, double const *&res) {
+  res = p->r.quatu;
+}
 #endif
 
 #ifdef ELECTROSTATICS
-void pointer_to_q(Particle *p, double *&res) { res = &(p->p.q); }
+void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }
 #endif
 
 #ifdef VIRTUAL_SITES
-void pointer_to_virtual(Particle *p, int *&res) { res = &(p->p.isVirtual); }
+void pointer_to_virtual(Particle const *p, int const *&res) {
+  res = &(p->p.isVirtual);
+}
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void pointer_to_vs_relative(Particle *p, int *&res1, double *&res2,
-                            double *&res3) {
+void pointer_to_vs_relative(Particle const *p, int const *&res1,
+                            double const *&res2, double const *&res3) {
   res1 = &(p->p.vs_relative_to_particle_id);
   res2 = &(p->p.vs_relative_distance);
   res3 = (p->p.vs_relative_rel_orientation);
@@ -1510,33 +1601,39 @@ void pointer_to_vs_relative(Particle *p, int *&res1, double *&res2,
 #endif
 
 #ifdef MULTI_TIMESTEP
-void pointer_to_smaller_timestep(Particle *p, int *&res) {
+void pointer_to_smaller_timestep(Particle const *p, int const *&res) {
   res = &(p->p.smaller_timestep);
 }
 #endif
 
 #ifdef DIPOLES
-void pointer_to_dip(Particle *p, double *&res) { res = p->r.dip; }
+void pointer_to_dip(Particle const *p, double const *&res) { res = p->r.dip; }
 
-void pointer_to_dipm(Particle *p, double *&res) { res = &(p->p.dipm); }
+void pointer_to_dipm(Particle const *p, double const *&res) {
+  res = &(p->p.dipm);
+}
 #endif
 
 #ifdef EXTERNAL_FORCES
-void pointer_to_ext_force(Particle *p, int *&res1, double *&res2) {
+void pointer_to_ext_force(Particle const *p, int const *&res1,
+                          double const *&res2) {
   res1 = &(p->p.ext_flag);
   res2 = p->p.ext_force;
 }
 #ifdef ROTATION
-void pointer_to_ext_torque(Particle *p, int *&res1, double *&res2) {
+void pointer_to_ext_torque(Particle const *p, int const *&res1,
+                           double const *&res2) {
   res1 = &(p->p.ext_flag);
   res2 = p->p.ext_torque;
 }
 #endif
-void pointer_to_fix(Particle *p, int *&res) { res = &(p->p.ext_flag); }
+void pointer_to_fix(Particle const *p, int const *&res) {
+  res = &(p->p.ext_flag);
+}
 #endif
 
 #ifdef LANGEVIN_PER_PARTICLE
-void pointer_to_gamma(Particle *p, double *&res) {
+void pointer_to_gamma(Particle const *p, double const *&res) {
 #ifndef PARTICLE_ANISOTROPY
   res = &(p->p.gamma);
 #else
@@ -1545,7 +1642,7 @@ void pointer_to_gamma(Particle *p, double *&res) {
 }
 
 #ifdef ROTATION
-void pointer_to_gamma_rot(Particle *p, double *&res) {
+void pointer_to_gamma_rot(Particle const *p, double const *&res) {
 #ifndef PARTICLE_ANISOTROPY
   res = &(p->p.gamma_rot);
 #else
@@ -1554,21 +1651,24 @@ void pointer_to_gamma_rot(Particle *p, double *&res) {
 }
 #endif // ROTATION
 
-void pointer_to_temperature(Particle *p, double *&res) { res = &(p->p.T); }
+void pointer_to_temperature(Particle const *p, double const *&res) {
+  res = &(p->p.T);
+}
 #endif // LANGEVIN_PER_PARTICLE
 
-void pointer_to_rotation(Particle *p, short int *&res) {
+void pointer_to_rotation(Particle const *p, short int const *&res) {
   res = &(p->p.rotation);
 }
 
 #ifdef ENGINE
-void pointer_to_swimming(Particle *p, ParticleParametersSwimming *&swim) {
+void pointer_to_swimming(Particle const *p,
+                         ParticleParametersSwimming const *&swim) {
   swim = &(p->swim);
 }
 #endif
 
 #ifdef ROTATIONAL_INERTIA
-void pointer_to_rotational_inertia(Particle *p, double *&res) {
+void pointer_to_rotational_inertia(Particle const *p, double const *&res) {
   res = p->p.rinertia;
 }
 #endif
