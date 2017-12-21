@@ -282,7 +282,7 @@ int vs_relate_to(int part_num, int relate_to)
     
     double quat[4];
     double l;
-    calculate_vs_relate_to_params(*(p_current.get()),*(p_relate_to.get()),l,quat);
+    calculate_vs_relate_to_params(*p_current,*p_relate_to,l,quat);
     
     // Set the particle id of the particle we want to relate to, the distnace
     // and the relative orientation
