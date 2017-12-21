@@ -32,17 +32,14 @@ class test_ljCos(unittest.TestCase):
 
     @classmethod
     def read(cls):
-        file = open(cls.test_file, 'r')
-        for line in file:
-            cls.data.append(line.split())
-        cls.prevTotalEnergy = float(cls.data[3][0])
-        cls.prevTotalPressure = float(cls.data[3][1])
-        cls.system.box_l = map(
-            float, [cls.data[5][1], cls.data[5][2], cls.data[5][3]])
-        for i in range(9, len(cls.data)):
-            cls.system.part.add(id=int(cls.data[i][0]), type=int(cls.data[i][1]),
-                                pos=map(float, [cls.data[i][2], cls.data[i][3], cls.data[i][4]]))
-            cls.prevParticleData.append(map(float, cls.data[i]))
+        cls.prevTotalEnergy, cls.prevTotalPressure = np.genfromtxt(
+            cls.test_file, skip_header=2, max_rows=1, unpack=True)
+        cls.prevParticleData = np.genfromtxt(
+            cls.test_file, skip_header=8, dtype=[int] * 2 + [float] * 6)
+        cls.system.box_l = np.genfromtxt(
+            cls.test_file, skip_header=5, max_rows=1, usecols=(1, 2, 3))
+        for p in cls.prevParticleData:
+            cls.system.part.add(id=p[0], type=p[1], pos=(p[2], p[3], p[4]))
 
     @classmethod
     def write(cls):

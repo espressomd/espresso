@@ -315,6 +315,160 @@ IF LENNARD_JONES == 1:
             """
             return "epsilon", "sigma", "cutoff", "shift"
 
+# Generic Lennard Jones
+
+IF LENNARD_JONES_GENERIC == 1:
+
+    cdef class GenericLennardJonesInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            """Check that parameters are valid.
+
+            Raises
+            ------
+            ValueError
+                If not true.
+            """
+            if self._params["epsilon"] < 0:
+                raise ValueError("Generic Lennard-Jones eps has to be >=0")
+            if self._params["sigma"] < 0:
+                raise ValueError("Generic Lennard-Jones sigma has to be >=0")
+            if self._params["cutoff"] < 0:
+                raise ValueError("Generic Lennard-Jones cutoff has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(
+                self._part_types[0],
+                self._part_types[1])
+            return {
+                "epsilon": ia_params.LJGEN_eps,
+                "sigma": ia_params.LJGEN_sig,
+                "cutoff": ia_params.LJGEN_cut,
+                "shift": ia_params.LJGEN_shift,
+                "offset": ia_params.LJGEN_offset,
+                "e1": ia_params.LJGEN_a1,
+                "e2": ia_params.LJGEN_a2,
+                "b1": ia_params.LJGEN_b1,
+                "b2": ia_params.LJGEN_b2,
+                "lam": ia_params.LJGEN_lambda,
+                "delta": ia_params.LJGEN_softrad
+            }
+
+        def is_active(self):
+            """Check if interaction is active.
+
+            """
+            return (self._params["epsilon"] > 0)
+
+        def _set_params_in_es_core(self):
+            # Handle the case of shift="auto"
+            if self._params["shift"] == "auto":
+                # Calc shift
+                self._params["shift"] = -(self._params["b1"] * (self._params["sigma"] / self._params["cutoff"])**self._params[
+                                          "e1"] - self._params["b2"] * (self._params["sigma"] / self._params["cutoff"])**self._params["e2"])
+            IF LJGEN_SOFTCORE:
+                if ljgen_set_params(self._part_types[0], self._part_types[1],
+                                    self._params["epsilon"],
+                                    self._params["sigma"],
+                                    self._params["cutoff"],
+                                    self._params["shift"],
+                                    self._params["offset"],
+                                    self._params["e1"],
+                                    self._params["e2"],
+                                    self._params["b1"],
+                                    self._params["b2"],
+                                    self._params["lam"],
+                                    self._params["delta"]):
+                    raise Exception(
+                        "Could not set Generic Lennard Jones parameters")
+            ELSE:
+                if ljgen_set_params(self._part_types[0], self._part_types[1],
+                                    self._params["epsilon"],
+                                    self._params["sigma"],
+                                    self._params["cutoff"],
+                                    self._params["shift"],
+                                    self._params["offset"],
+                                    self._params["e1"],
+                                    self._params["e2"],
+                                    self._params["b1"],
+                                    self._params["b2"],
+                                    ):
+                    raise Exception(
+                        "Could not set Generic Lennard Jones parameters")
+
+        def default_params(self):
+            """Python dictionary of default parameters.
+
+            """
+            return {
+                "epsilon": 0.,
+                "sigma": 0.,
+                "cutoff": 0.,
+                "shift": 0.,
+                "offset": 0.,
+                "e1": 0,
+                "e2": 0,
+                "b1": 0.,
+                "b2": 0.,
+                "delta": 0.,
+                "lam": 0.}
+
+        def type_name(self):
+            """Name of interaction type.
+
+            """
+            return "GenericLennardJones"
+
+        def set_params(self, **kwargs):
+            """
+            Set parameters for the generic Lennard-Jones interaction.
+
+            Parameters
+            ----------
+            epsilon : :obj:`float`
+                      The magnitude of the interaction.
+            sigma : :obj:`float`
+                    Determines the interaction length scale.
+            cutoff : :obj:`float`
+                     Cutoff distance of the interaction.
+            shift : :obj:`float`, string
+                    Constant shift of the potential.
+            offset : :obj:`float`
+                     Offset distance of the interaction.
+            e1 : :obj:`int`
+                 Exponent of the repulsion term.
+            e2 : :obj:`int`
+                 Exponent of the attraction term.
+            b1 : :obj:`float`
+                 Prefactor of the repulsion term.
+            b2 : :obj:`float`
+                 Prefactor of the attraction term.
+            delta : :obj:`float`, optional
+                    LJGEN_SOFTCORE parameter. Allows control over how smoothly
+                    the potential drops to zero as lambda approaches zero.
+            lam : :obj:`float`, optional
+                     LJGEN_SOFTCORE parameter lambda. Tune the strength of the
+                     interaction.
+
+            """
+            super(GenericLennardJonesInteraction, self).set_params(**kwargs)
+
+        def valid_keys(self):
+            """All parameters that can be set.
+
+            """
+            return "epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2", "delta", "lam"
+
+        def required_keys(self):
+            """Parameters that have to be set.
+
+            """
+            return "epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2"
+
+# Lennard-Jones cosine
+
 IF LJCOS:
     cdef class LennardJonesCosInteraction(NonBondedInteraction):
 
@@ -390,6 +544,8 @@ IF LJCOS:
 
             """
             return "epsilon", "sigma", "cutoff"
+
+# Lennard-Jones cosine^2
 
 IF LJCOS2:
     cdef class LennardJonesCos2Interaction(NonBondedInteraction):
@@ -689,158 +845,6 @@ IF DPD:
 
         def required_keys(self):
             return []
-
-# Generic Lennard Jones
-
-IF LENNARD_JONES_GENERIC == 1:
-
-    cdef class GenericLennardJonesInteraction(NonBondedInteraction):
-
-        def validate_params(self):
-            """Check that parameters are valid.
-
-            Raises
-            ------
-            ValueError
-                If not true.
-            """
-            if self._params["epsilon"] < 0:
-                raise ValueError("Generic Lennard-Jones eps has to be >=0")
-            if self._params["sigma"] < 0:
-                raise ValueError("Generic Lennard-Jones sigma has to be >=0")
-            if self._params["cutoff"] < 0:
-                raise ValueError("Generic Lennard-Jones cutoff has to be >=0")
-            return True
-
-        def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
-            ia_params = get_ia_param_safe(
-                self._part_types[0],
-                self._part_types[1])
-            return {
-                "epsilon": ia_params.LJGEN_eps,
-                "sigma": ia_params.LJGEN_sig,
-                "cutoff": ia_params.LJGEN_cut,
-                "shift": ia_params.LJGEN_shift,
-                "offset": ia_params.LJGEN_offset,
-                "e1": ia_params.LJGEN_a1,
-                "e2": ia_params.LJGEN_a2,
-                "b1": ia_params.LJGEN_b1,
-                "b2": ia_params.LJGEN_b2,
-                "lam": ia_params.LJGEN_lambda,
-                "delta": ia_params.LJGEN_softrad
-            }
-
-        def is_active(self):
-            """Check if interaction is active.
-
-            """
-            return (self._params["epsilon"] > 0)
-
-        def _set_params_in_es_core(self):
-            # Handle the case of shift="auto"
-            if self._params["shift"] == "auto":
-                # Calc shift
-                self._params["shift"] = -(self._params["b1"] * (self._params["sigma"] / self._params["cutoff"])**self._params[
-                                          "e1"] - self._params["b2"] * (self._params["sigma"] / self._params["cutoff"])**self._params["e2"])
-            IF LJGEN_SOFTCORE:
-                if ljgen_set_params(self._part_types[0], self._part_types[1],
-                                    self._params["epsilon"],
-                                    self._params["sigma"],
-                                    self._params["cutoff"],
-                                    self._params["shift"],
-                                    self._params["offset"],
-                                    self._params["e1"],
-                                    self._params["e2"],
-                                    self._params["b1"],
-                                    self._params["b2"],
-                                    self._params["lam"],
-                                    self._params["delta"]):
-                    raise Exception(
-                        "Could not set Generic Lennard Jones parameters")
-            ELSE:
-                if ljgen_set_params(self._part_types[0], self._part_types[1],
-                                    self._params["epsilon"],
-                                    self._params["sigma"],
-                                    self._params["cutoff"],
-                                    self._params["shift"],
-                                    self._params["offset"],
-                                    self._params["e1"],
-                                    self._params["e2"],
-                                    self._params["b1"],
-                                    self._params["b2"],
-                                    ):
-                    raise Exception(
-                        "Could not set Generic Lennard Jones parameters")
-
-        def default_params(self):
-            """Python dictionary of default parameters.
-
-            """
-            return {
-                "epsilon": 0.,
-                "sigma": 0.,
-                "cutoff": 0.,
-                "shift": 0.,
-                "offset": 0.,
-                "e1": 0,
-                "e2": 0,
-                "b1": 0.,
-                "b2": 0.,
-                "delta": 0.,
-                "lam": 0.}
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "GenericLennardJones"
-
-        def set_params(self, **kwargs):
-            """
-            Set parameters for the generic Lennard-Jones interaction.
-
-            Parameters
-            ----------
-            epsilon : :obj:`float`
-                      The magnitude of the interaction.
-            sigma : :obj:`float`
-                    Determines the interaction length scale.
-            cutoff : :obj:`float`
-                     Cutoff distance of the interaction.
-            shift : :obj:`float`, string
-                    Constant shift of the potential.
-            offset : :obj:`float`
-                     Offset distance of the interaction.
-            e1 : :obj:`int`
-                 Exponent of the repulsion term.
-            e2 : :obj:`int`
-                 Exponent of the attraction term.
-            b1 : :obj:`float`
-                 Prefactor of the repulsion term.
-            b2 : :obj:`float`
-                 Prefactor of the attraction term.
-            delta : :obj:`float`, optional
-                    LJGEN_SOFTCORE parameter. Allows control over how smoothly
-                    the potential drops to zero as lambda approaches zero.
-            lam : :obj:`float`, optional
-                     LJGEN_SOFTCORE parameter lambda. Tune the strength of the
-                     interaction.
-
-            """
-            super(GenericLennardJonesInteraction, self).set_params(**kwargs)
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return "epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2", "delta", "lam"
-
-        def required_keys(self):
-            """Parameters that have to be set.
-
-            """
-            return "epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2"
 
 # Smooth-step
 
@@ -1535,13 +1539,13 @@ class NonBondedInteractionHandle(object):
         # Here, add one line for each nonbonded ia
         IF LENNARD_JONES:
             self.lennard_jones = LennardJonesInteraction(_type1, _type2)
+        IF LENNARD_JONES_GENERIC:
+            self.generic_lennard_jones = GenericLennardJonesInteraction(
+                _type1, _type2)
         IF LJCOS:
             self.lennard_jones_cos = LennardJonesCosInteraction(_type1, _type2)
         IF LJCOS2:
             self.lennard_jones_cos2 = LennardJonesCos2Interaction(
-                _type1, _type2)
-        IF LENNARD_JONES_GENERIC:
-            self.generic_lennard_jones = GenericLennardJonesInteraction(
                 _type1, _type2)
         IF SMOOTH_STEP:
             self.smooth_step = SmoothStepInteraction(_type1, _type2)
