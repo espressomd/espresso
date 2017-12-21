@@ -25,9 +25,6 @@
    necessary.
 
     The corresponding header file is polymer.hpp.
-
-    Created:       27.02.2003 by BAM
-       Based upon 'polymer.tcl' by BAM (20.02.2003).
 */
 
 #include <cmath>
@@ -117,7 +114,6 @@ int collision(PartCfg & partCfg, double pos[3], double shield, int n_add, double
 int constraint_collision(double *p1, double *p2) {
   Particle part1, part2;
   double d1, d2, v[3];
-  int i;
   double folded_pos1[3];
   double folded_pos2[3];
   int img[3];
@@ -167,26 +163,24 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
 
   cnt1 = cnt2 = max_cnt = 0;
   for (p = 0; p < N_P; p++) {
+    if (p > 0) posed = nullptr;
+
     for (cnt2 = 0; cnt2 < max_try; cnt2++) {
       /* place start monomer */
-      if (posed != NULL) {
+      if (posed != nullptr) {
         /* if position of 1st monomer is given */
-        if (p > 0) {
-          posed = NULL;
-        } else {
-          pos[0] = posed[0];
-          pos[1] = posed[1];
-          pos[2] = posed[2];
-        }
+        pos[0] = posed[0];
+        pos[1] = posed[1];
+        pos[2] = posed[2];
       } else {
         /* randomly set position */
         for (cnt1 = 0; cnt1 < max_try; cnt1++) {
           pos[0] = box_l[0] * d_random();
           pos[1] = box_l[1] * d_random();
           pos[2] = box_l[2] * d_random();
-          if ((mode == 1) || (collision(partCfg, pos, shield, 0, NULL) == 0))
+          if ((mode == 1) || (collision(partCfg, pos, shield, 0, nullptr) == 0))
             break;
-          POLY_TRACE(printf("s"); fflush(NULL));
+          POLY_TRACE(printf("s"); fflush(nullptr));
         }
         if (cnt1 >= max_try) {
           free(poly);
@@ -198,7 +192,7 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
       poly[2] = pos[2];
 
       max_cnt = std::max(cnt1, max_cnt);
-      POLY_TRACE(printf("S"); fflush(NULL));
+      POLY_TRACE(printf("S"); fflush(nullptr));
 
       poz[0] = pos[0];
       poz[1] = pos[1];
@@ -206,7 +200,7 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
 
       /* place 2nd monomer */
       n = 1;
-      if (posed2 != NULL && posed != NULL && angle2 > -1.0) {
+      if (posed2 != nullptr && posed != nullptr && angle2 > -1.0) {
         /* if position of 2nd monomer is given */
         pos[0] = posed2[0];
         pos[1] = posed2[1];
@@ -242,7 +236,7 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
 #ifdef CONSTRAINTS
           }
 #endif
-          POLY_TRACE(printf("m"); fflush(NULL));
+          POLY_TRACE(printf("m"); fflush(nullptr));
         }
         if (cnt1 >= max_try) {
           fprintf(stderr, "\nWarning! Attempt #%d to build polymer %d failed "
@@ -255,15 +249,15 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
           continue; /* continue the main loop */
         }
       }
-      if (posed2 != NULL && p > 0) {
-        posed2 = NULL;
+      if (posed2 != nullptr && p > 0) {
+        posed2 = nullptr;
       }
       poly[3 * n] = pos[0];
       poly[3 * n + 1] = pos[1];
       poly[3 * n + 2] = pos[2];
 
       max_cnt = std::max(cnt1, max_cnt);
-      POLY_TRACE(printf("M"); fflush(NULL));
+      POLY_TRACE(printf("M"); fflush(nullptr));
 
       /* place remaining monomers */
       for (n = 2; n < MPC; n++) {
@@ -356,7 +350,7 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
 #ifdef CONSTRAINTS
           }
 #endif
-          POLY_TRACE(printf("m"); fflush(NULL));
+          POLY_TRACE(printf("m"); fflush(nullptr));
         }
         if (cnt1 >= max_try) {
           fprintf(stderr, "\nWarning! Attempt #%d to build polymer %d failed "
@@ -375,7 +369,7 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
 
         max_cnt = std::max(cnt1, max_cnt);
 
-        POLY_TRACE(printf("M"); fflush(NULL));
+        POLY_TRACE(printf("M"); fflush(nullptr));
       }
       if (n > 0)
         break;
@@ -436,9 +430,9 @@ int counterionsC(PartCfg & partCfg, int N_CI, int part_id, int mode, double shie
       pos[0] = box_l[0] * d_random();
       pos[1] = box_l[1] * d_random();
       pos[2] = box_l[2] * d_random();
-      if ((mode != 0) || (collision(partCfg, pos, shield, 0, NULL) == 0))
+      if ((mode != 0) || (collision(partCfg, pos, shield, 0, nullptr) == 0))
         break;
-      POLY_TRACE(printf("c"); fflush(NULL));
+      POLY_TRACE(printf("c"); fflush(nullptr));
     }
     if (cnt1 >= max_try)
       return (-1);
@@ -451,7 +445,7 @@ int counterionsC(PartCfg & partCfg, int N_CI, int part_id, int mode, double shie
     part_id++;
     max_cnt = std::max(cnt1, max_cnt);
 
-    POLY_TRACE(printf("C"); fflush(NULL));
+    POLY_TRACE(printf("C"); fflush(nullptr));
   }
   POLY_TRACE(printf(" %d->%d \n", cnt1, max_cnt));
   if (cnt1 >= max_try)
@@ -478,17 +472,17 @@ int saltC(PartCfg & partCfg, int N_pS, int N_nS, int part_id, int mode, double s
         pos[0] += box_l[0] * 0.5;
         pos[1] += box_l[1] * 0.5;
         pos[2] += box_l[2] * 0.5;
-        if (((mode != 0) || (collision(partCfg, pos, shield, 0, NULL) == 0)) &&
+        if (((mode != 0) || (collision(partCfg, pos, shield, 0, nullptr) == 0)) &&
             (dis2 < (rad * rad)))
           break;
       } else {
         pos[0] = box_l[0] * d_random();
         pos[1] = box_l[1] * d_random();
         pos[2] = box_l[2] * d_random();
-        if ((mode != 0) || (collision(partCfg, pos, shield, 0, NULL) == 0))
+        if ((mode != 0) || (collision(partCfg, pos, shield, 0, nullptr) == 0))
           break;
       }
-      POLY_TRACE(printf("p"); fflush(NULL));
+      POLY_TRACE(printf("p"); fflush(nullptr));
     }
     if (cnt1 >= max_try)
       return (-1);
@@ -501,7 +495,7 @@ int saltC(PartCfg & partCfg, int N_pS, int N_nS, int part_id, int mode, double s
     part_id++;
 
     max_cnt = std::max(cnt1, max_cnt);
-    POLY_TRACE(printf("P"); fflush(NULL));
+    POLY_TRACE(printf("P"); fflush(nullptr));
   }
   POLY_TRACE(printf(" %d->%d \n", cnt1, max_cnt));
   if (cnt1 >= max_try)
@@ -518,17 +512,17 @@ int saltC(PartCfg & partCfg, int N_pS, int N_nS, int part_id, int mode, double s
         pos[0] += box_l[0] * 0.5;
         pos[1] += box_l[1] * 0.5;
         pos[2] += box_l[2] * 0.5;
-        if (((mode != 0) || (collision(partCfg, pos, shield, 0, NULL) == 0)) &&
+        if (((mode != 0) || (collision(partCfg, pos, shield, 0, nullptr) == 0)) &&
             (dis2 < (rad * rad)))
           break;
       } else {
         pos[0] = box_l[0] * d_random();
         pos[1] = box_l[1] * d_random();
         pos[2] = box_l[2] * d_random();
-        if ((mode != 0) || (collision(partCfg, pos, shield, 0, NULL) == 0))
+        if ((mode != 0) || (collision(partCfg, pos, shield, 0, nullptr) == 0))
           break;
       }
-      POLY_TRACE(printf("n"); fflush(NULL));
+      POLY_TRACE(printf("n"); fflush(nullptr));
     }
     if (cnt1 >= max_try)
       return (-1);
@@ -542,7 +536,7 @@ int saltC(PartCfg & partCfg, int N_pS, int N_nS, int part_id, int mode, double s
 
     max_cnt = std::max(cnt1, max_cnt);
 
-    POLY_TRACE(printf("N"); fflush(NULL));
+    POLY_TRACE(printf("N"); fflush(nullptr));
   }
   POLY_TRACE(printf(" %d->%d \n", cnt1, max_cnt));
   if (cnt1 >= max_try)
@@ -625,7 +619,7 @@ double maxwell_velocitiesC(int part_id, int N_T) {
 
 int collectBonds(PartCfg & partCfg, int mode, int part_id, int N_P, int MPC, int type_bond,
                  int **bond_out, int ***bonds_out) {
-  int i, j, k, ii, size, *bond = NULL, **bonds = NULL;
+  int i, j, k, ii, size, *bond = nullptr, **bonds = nullptr;
 
   partCfg.update_bonds();
 
@@ -709,7 +703,7 @@ int collectBonds(PartCfg & partCfg, int mode, int part_id, int N_P, int MPC, int
     });
   } else {
     fprintf(stderr, "Unknown mode %d requested!\nAborting...\n", mode);
-    fflush(NULL);
+    fflush(nullptr);
     return (-2);
   }
 
@@ -754,13 +748,13 @@ int crosslinkC(PartCfg & partCfg, int N_P, int MPC, int part_id, double r_catch,
             stderr,
             "Runaway end-monomer %d detected (has %d bonds)!\nAborting...\n",
             i * N_P + k * (MPC - 1) + part_id, bond[i * MPC + k * (MPC - 1)]);
-        fflush(NULL);
+        fflush(nullptr);
         return (-2);
       }
       POLY_TRACE(printf("%d: ", i * MPC + k * (MPC - 1) + part_id);
                  for (j = 0; j < link[2 * i + k]; j++)
                      printf("%d ", links[2 * i + k][j]);
-                 printf("\t=%d\n", link[2 * i + k]); fflush(NULL));
+                 printf("\t=%d\n", link[2 * i + k]); fflush(nullptr));
     }
   }
 
@@ -789,7 +783,7 @@ int crosslinkC(PartCfg & partCfg, int N_P, int MPC, int part_id, double r_catch,
       }
       POLY_TRACE(printf("%d: ", ii); for (j = 0; j < link[2 * i + k]; j++)
                      printf("%d ", links[2 * i + k][j]);
-                 printf("\t=%d\n", link[2 * i + k]); fflush(NULL));
+                 printf("\t=%d\n", link[2 * i + k]); fflush(nullptr));
     }
   }
 
@@ -808,7 +802,7 @@ int crosslinkC(PartCfg & partCfg, int N_P, int MPC, int part_id, double r_catch,
   POLY_TRACE(for (i = 0; i < 2 * N_P; i++)
                  printf("%d -> %d \t",
                         i % 2 ? (i + 1) * MPC / 2 - 1 : i * MPC / 2, cross[i]);
-             printf("=> %d\n", crossL); fflush(NULL));
+             printf("=> %d\n", crossL); fflush(nullptr));
 
   /* Remove partners (-> '-3') if they are less than link_dist apart and retry.
    */
@@ -884,7 +878,7 @@ int crosslinkC(PartCfg & partCfg, int N_P, int MPC, int part_id, double r_catch,
   POLY_TRACE(for (i = 0; i < 2 * N_P; i++)
                  printf("%d -> %d \t",
                         i % 2 ? (i + 1) * MPC / 2 - 1 : i * MPC / 2, cross[i]);
-             printf("=> %d\n", crossL); fflush(NULL));
+             printf("=> %d\n", crossL); fflush(nullptr));
 
   /* Submit all lawful partners as new bonds to Espresso (observing that bonds
    * are stored with the higher-ID particle only). */

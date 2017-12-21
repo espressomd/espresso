@@ -1,9 +1,12 @@
+Tutorials
+=========
+
+There is a number of tutorials that guide you in creating simulations using a number of different features of |es|. You can find them in the directory ``/doc/tutorials``.
+
 Sample scripts
 ==============
 
-Serveral scripts that can serve as usage examples can be found in the directory ``/samples``
-
-.. todo:: currently resides in ``/samples/python`` should be moved?
+Several scripts that can serve as usage examples can be found in the directory ``/samples``
 
 * ``billard.py`` 
     A simple billard game, needs the Python ``pypopengl`` module

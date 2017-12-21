@@ -1,29 +1,30 @@
 /*
   Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
-  
+
   This file is part of ESPResSo.
-  
+
   ESPResSo is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   ESPResSo is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #ifndef _DOMAIN_DECOMPOSITION_H
 #define _DOMAIN_DECOMPOSITION_H
 
 /** \file domain_decomposition.hpp
  *
- *  This file contains everything related to the cell system: domain decomposition.
+ *  This file contains everything related to the cell system: domain
+ * decomposition.
  *
  *  The simulation box is split into spatial domains for each node
  *  according to a cartesian node grid (\ref node_grid).
@@ -52,72 +53,32 @@
  * some ghost-ghost cell interaction as well, which we do not need!
  *
  *  For more information on cells,
- *  see \ref cells.hpp 
+ *  see \ref cells.hpp
 */
 
-#include "utils.hpp"
 #include "cells.hpp"
 #include "integrate.hpp"
-#include "verlet.hpp"
 #include "thermostat.hpp"
+#include "utils.hpp"
 
-/** Structure containing information about non bonded interactions
-    with particles in a neighbor cell. */
-typedef struct {
-  /** Just for transparency the index of the neighbor cell. */
-  int cell_ind;
-  /** Pointer to particle list of neighbor cell. */
-  ParticleList *pList;
-  /** Verlet list for non bonded interactions of a cell with a neighbor cell. */
-  PairList vList;
-
-#ifdef CELL_DEBUG
-  double my_pos[3];  /* position of the cell corner, only here for debug */
-#endif
-
-} IA_Neighbor;
-
-
-typedef struct {
-  /** number of interacting neighbor cells . 
-
-      A word about the interacting neighbor cells:
-
-      In a 3D lattice each cell has 27 neighbors (including
-      itself!). Since we deal with pair forces, it is sufficient to
-      calculate only half of the interactions (Newtons law: actio =
-      reactio). For each cell 13+1=14 neighbors. This has only to be
-      done for the inner cells. 
-
-      Caution: This implementation needs double sided ghost
-      communication! For single sided ghost communication one would
-      need some ghost-ghost cell interaction as well, which we do not
-      need! 
-
-      It follows: inner cells: n_neighbors = 14
-      ghost cells:             n_neighbors = 0
-  */
-  int n_neighbors;
-  /** Interacting neighbor cell list  */
-  IA_Neighbor *nList;
-} IA_Neighbor_List;
-
-/** Structure containing the information about the cell grid used for domain decomposition. */
-typedef struct {
-  /** flag for using Verlet List */
-  int use_vList;
+/** Structure containing the information about the cell grid used for domain
+ * decomposition. */
+struct DomainDecomposition {
+  DomainDecomposition()
+      : cell_grid{0, 0, 0}, ghost_cell_grid{0, 0, 0}, cell_size{
+                                                                        0, 0,
+                                                                        0} {}
   /** linked cell grid in nodes spatial domain. */
   int cell_grid[3];
   /** linked cell grid with ghost frame. */
   int ghost_cell_grid[3];
-  /** cell size. 
-      Def: \verbatim cell_grid[i] = (int)(local_box_l[i]/max_range); \endverbatim */
+  /** cell size.
+      Def: \verbatim cell_grid[i] = (int)(local_box_l[i]/max_range);
+     \endverbatim */
   double cell_size[3];
   /** inverse cell size = \see DomainDecomposition::cell_size ^ -1. */
   double inv_cell_size[3];
-  /** Array containing information about the interactions between the cells. */
-  IA_Neighbor_List *cell_inter;
-}  DomainDecomposition;
+};
 
 /************************************************************/
 /** \name Exported Variables */
@@ -134,8 +95,7 @@ extern double max_skin;
 
 /** Maximal number of cells per node. In order to avoid memory
  *  problems due to the cell grid one has to specify the maximal
- *  number of \ref cells::cells . The corresponding callback function
- *  is \ref tclcallback_max_num_cells. If the number of cells \ref
+ *  number of \ref cells::cells. If the number of cells \ref
  *  n_cells, is larger than max_num_cells the cell grid is
  *  reduced. max_num_cells has to be larger than 27, e.g one inner
  *  cell.  max_num_cells is initialized with the default value
@@ -191,29 +151,15 @@ void dd_topology_release();
     @param global_flag Use DD_GLOBAL_EXCHANGE for global exchange and
     DD_NEIGHBOR_EXCHANGE for neighbor exchange (recommended for use within
     Molecular dynamics, or any other integration scheme using only local
-    particle moves) 
+    particle moves)
 */
 void dd_exchange_and_sort_particles(int global_flag);
 
-/** implements \ref CellStructure::position_to_cell. */
-Cell *dd_position_to_cell(double pos[3]);
-
 /** Get three cell indices (coordinates in cell gird) from particle position */
-void dd_position_to_cell_indices(double pos[3],int* idx);
+void dd_position_to_cell_indices(double pos[3], int *idx);
 
 /** calculate physical (processor) minimal number of cells */
 int calc_processor_min_num_cells();
-
-/** Calculate nonbonded and bonded forces with link-cell 
-    method (without Verlet lists)
-*/
-void calc_link_cell();
-
-/** Nonbonded and bonded energy calculation using link-cell method */
-void calculate_link_cell_energies();
-
-/** Nonbonded and bonded virials calculation using link-cell method */
-void calculate_link_cell_virials(int v_comp);
 
 /** Fill a communication cell pointer list. Fill the cell pointers of
     all cells which are inside a rectangular subgrid of the 3D cell
@@ -226,13 +172,8 @@ void calculate_link_cell_virials(int v_comp);
  */
 int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]);
 
-
-/** Returns pointer to the cell which corresponds to the position if
-    the position is in the nodes spatial domain otherwise a NULL
-    pointer. */
-Cell *dd_save_position_to_cell(double pos[3]);
-
-/** Of every two communication rounds, set the first receivers to prefetch and poststore */
+/** Of every two communication rounds, set the first receivers to prefetch and
+ * poststore */
 void dd_assign_prefetches(GhostCommunicator *comm);
 /*@}*/
 

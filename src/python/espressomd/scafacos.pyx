@@ -18,7 +18,16 @@ include "myconfig.pxi"
 
 IF SCAFACOS == 1:
     class ScafacosConnector(Actor):
-        """Scafacos interface class shared by charge and dipole methods. Do not use directly."""
+        """Scafacos interface class shared by charge and dipole methods. Do not use directly.
+        
+        """
+
+        def get_params(self):
+            return self._get_params_from_es_core()
+       
+        def set_params(self,params):
+            self._params=params
+            self._set_params_in_es_core()
 
         def valid_keys(self):
             return "method_name", "method_params", "bjerrum_length"
@@ -36,8 +45,45 @@ IF SCAFACOS == 1:
             p = to_str(get_method_and_parameters().split(" "))
             res = {}
             res["method_name"] = p[0]
-            for i in range((len(p) - 1) / 2):
-                res[p[2 * i + 1]] = p[2 * i + 2]
+            
+            
+            method_params={}
+            i=1
+            while i<len(p):
+                pname =p[i]
+                i+=1
+                
+                # The first item after the parameter name is alsways a value
+                # But in the case of array-like properties, there can also
+                # follow several values. Therefore, we treat the next
+                # words as part of the value, if they begin with a digit
+                pvalues=[p[i]]
+                i+=1
+                if i>=len(p):
+                    break
+                while p[i][:1] in "-0123456789":
+                    pvalues.append(p[i])
+                    i+=1
+                
+                # If there is one value, cast away the list
+                if len(pvalues)==1:
+                    pvalues=pvalues[0]
+                else:
+                    # Cast array elements to strings and join them by commata
+                    # to achieve consistency with setting array-likes
+                    # such as "pnfft_n":"128,128,128"
+                    for j in range(len(pvalues)):
+                        pvalues[j]=str(pvalues[j])
+                    pvalues=",".join(pvalues)
+                method_params[pname]=pvalues
+            
+            res["method_params"]=method_params
+            
+            # Re-add the Bjerrum length to the parameter set
+            if self.dipolar: 
+                res["bjerrum_length"] =magnetostatics.coulomb.Dbjerrum
+            else:
+                res["bjerrum_length"] =electrostatics.coulomb.bjerrum
             return res
 
         def _set_params_in_es_core(self):
@@ -69,10 +115,11 @@ IF SCAFACOS == 1:
             return {}
 
     def available_methods():
-        """Lists long range methods available in the Scafacos library"""
+        """Lists long range methods available in the Scafacos library.
+        
+        """
         methods=available_methods_core()
         res=[]
         for m in methods:
             res.append(to_str(m))
         return res
-    

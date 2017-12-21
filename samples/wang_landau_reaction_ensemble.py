@@ -26,11 +26,6 @@ from espressomd import reaction_ensemble
 from espressomd import grand_canonical
 import numpy as np
 
-import sys
-
-if('REACTION_ENSEMBLE' not in espressomd.code_info.features()):
-    print("REACTION_ENSEMBLE not compiled in.")
-    sys.exit()
 dev = "cpu"
 
 # System parameters

@@ -59,6 +59,6 @@ private:
   double m_outer_rad_left;
   double m_outer_rad_right;
 };
-};
+}
 
 #endif

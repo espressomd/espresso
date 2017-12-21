@@ -61,6 +61,9 @@ void on_observable_calc();
 /** called every time a particle property is changed via Tcl. */
 void on_particle_change();
 
+/** called every time the charge of a particle has changed. */
+void on_particle_charge_change();
+
 /** called every time the particles are resorted from node to node. */
 void on_resort_particles();
 

@@ -33,7 +33,7 @@ in the ESPResSo release.
 If you want to start developing code for ESPResSo, you might first
 want to have a look at the Developer's Guide (DG). You can find the
 most recent version of the DG at the <a
-href="http://espressomd.org/jenkins/job/ESPResSo/doclinks/2/">ESPResSo
+href="http://espressomd.org/html/doc/dg.html">ESPResSo
 homepage</a>. The DG explains
 
 - how to obtain the development code

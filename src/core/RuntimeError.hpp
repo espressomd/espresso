@@ -21,6 +21,7 @@
 #define ERROR_HANDLING_RUNTIME_ERROR_HPP
 
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/string.hpp>
 #include <string>
 
 namespace ErrorHandling {
@@ -35,7 +36,7 @@ struct RuntimeError {
    *  errors are fatal.
    */
   enum class ErrorLevel { DEBUG, INFO, WARNING, ERROR };
-  RuntimeError() {}
+  RuntimeError() = default;
   RuntimeError(ErrorLevel level, int who, const std::string &what,
                const std::string &function, const std::string &file, int line)
       : m_level(level), m_who(who), m_what(what), m_function(function),
@@ -55,7 +56,7 @@ struct RuntimeError {
   int line() const { return m_line; }
   /** Get a string representation */
   std::string format() const;
-  void print();
+  void print() const;
 
 private:
   /** Boost serialization */

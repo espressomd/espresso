@@ -18,18 +18,19 @@
 */
 
 #include "initialize.hpp"
-#include "NoWhere.hpp"
-#include "ScriptInterface.hpp"
-#include "Wall.hpp"
-#include "Sphere.hpp"
 #include "Cylinder.hpp"
-#include "SpheroCylinder.hpp"
-#include "Maze.hpp"
 #include "HollowCone.hpp"
+#include "Maze.hpp"
+#include "NoWhere.hpp"
 #include "Pore.hpp"
 #include "Rhomboid.hpp"
+#include "ScriptInterface.hpp"
+#include "SimplePore.hpp"
 #include "Slitpore.hpp"
+#include "Sphere.hpp"
+#include "SpheroCylinder.hpp"
 #include "Stomatocyte.hpp"
+#include "Wall.hpp"
 
 namespace ScriptInterface {
 namespace Shapes {
@@ -53,6 +54,8 @@ void initialize() {
       "Shapes::Slitpore");
   ScriptInterface::register_new<ScriptInterface::Shapes::Stomatocyte>(
       "Shapes::Stomatocyte");
+  ScriptInterface::register_new<ScriptInterface::Shapes::SimplePore>(
+      "Shapes::SimplePore");
 }
 } /* namespace Shapes */
 } /* namespace ScriptInterface */

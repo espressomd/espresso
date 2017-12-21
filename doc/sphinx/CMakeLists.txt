@@ -1,4 +1,6 @@
+include(ProcessorCount)
 find_package(Sphinx 1.5.2)
+ProcessorCount(N)
 if(SPHINX_FOUND) 
     # configured documentation tools and
     # intermediate build results
@@ -74,7 +76,9 @@ if(SPHINX_FOUND)
             ${EXCLUDE}
         COMMAND
         ${SPHINX_EXECUTABLE}
+            -j ${N}
             -q
+            -W
             -b html
             -c "${SPHINX_BASE}"
             -d "${SPHINX_CACHE_DIR}"

@@ -419,10 +419,6 @@ int maggs_sanity_checks()
       runtimeErrorMsg() <<"MEMD requires domain-decomposition cellsystem.";
     ret = -1;
   }
-  else if (dd.use_vList) {
-      runtimeErrorMsg() <<"MEMD requires no Verlet Lists.";
-    ret = -1;
-  }
   /** check if speed of light parameter makes sense */
   else if (maggs.f_mass < ( 2. * time_step * time_step / maggs.a / maggs.a ) ) {
       runtimeErrorMsg() <<"MEMD: Speed of light is set too high. Increase f_mass.";
@@ -1074,7 +1070,6 @@ void maggs_accumulate_charge_from_ghosts() {
 /** finds current lattice site of each particle.
     calculates charge interpolation on cube. */
 void maggs_distribute_particle_charges() {
-  int np;
   int first[SPACE_DIM];
   double q;
   double pos[SPACE_DIM], rel[SPACE_DIM];
@@ -2216,7 +2211,7 @@ void maggs_calc_forces()
 { 
   static int init = 1;
   static int Npart_old;
-  int i, c, np, d, index, Npart, ip; 
+  int d, index, Npart, ip; 
   double q;
   /* position of a particle in local lattice units */
   double pos[SPACE_DIM];

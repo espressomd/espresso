@@ -50,11 +50,6 @@ from MDAnalysis.core.topologyattrs import (
     ICodes, Occupancies, Tempfactors, Charges
 )
 
-try:
-    LooseVersion(MDAnalysis.__version__) >= LooseVersion('0.16')
-except:
-    raise RuntimeError("MDAnalysis version should be >= 0.16")
-
 
 class Stream(object):
 

@@ -3,94 +3,99 @@
 Analysis
 ========
 
-has two fundamentally different classes of observables for analyzing the
-systems. On the one hand, some observables are computed from the Tcl
-level. In that case, the observable is measured in the moment that the
-corresponding Tcl function is called, and the results are returned to
-the Tcl script. In general, observables in this class should only be
-computed after a large number of timesteps, as switching forth and back
-between the C- and the Tcl-level is costly. This chapter describes all
-observables in this class.
+The :mod:`espressomd.analyze` module provides online-calculation of local and global observables.
+These exist for convenience and historical reasons.
+Since arithmetic in TCL was quite painful to perform, there exists a series of common analysis routines which can be used whenever possible.
+They usually have parts of the calculations performed in the core.
+
 
 On the other hand, some observables are computed and stored in the
 C-core of during a call to the function , while they are set up and
-their results are collected from the Tcl level. These observables are
-more complex to implement and offer less flexibility, while the are
+their results are collected from the script level. These observables are
+more complex to implement and offer less flexibility, while they are
 significantly faster and more memory efficient, and they can be set up
-to be computed every few timesteps. The observables in this class are
-described in chapter [chap:analysis-core].
-
-The class of Tcl-level analysis functions is mainly controlled via the
-command. It has two main uses: Calculation of observables () and
-definition and analysis of topologies in the system (). In addition,
-offers the command (see section [sec:uwerr] for computing statistical
-errors in time series.
-
+to be computed every few time steps. The observables in this class are
+described in chapter :ref:`Analysis in the core`:
+.
 
 .. _Available observables:
 
 Available observables
 ---------------------
 
-The command provides online-calculation of local and global observables.
-
-
 .. _Minimal distances between particles:
 
 Minimal distances between particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-[analyze:distto]
+:meth:`espressomd.analyze.Analysis.mindist`
+Returns the minimal distance between all particles in the system.
 
-analyze mindist analyze distto analyze distto
+When used with type-lists as arguments, then the minimal distance between particles of only those types is determined.
 
-Variant returns the minimal distance between two particles in the
-system. If the type-lists are given, then the minimal distance between
-particles of only those types is determined.
 
-returns the minimal distance of all particles to particle (variant ), or
-to the coordinates (, , ) (Variant ).
+:meth:`espressomd.analyze.Analysis.dist_to()`
 
+Returns the minimal distance of all particles to either a particle (when used with an argument `id`) 
+or a position coordinate when used with a vector `pos`.
+
+For example, ::
+
+    >>> import espressomd
+    >>> system = espressomd.System()
+    >>> system.box_l = [100, 100, 100]
+    >>> for i in range(10):
+    >>>     system.part.add(id=i, pos=[1.0, 1.0, i**2], type=0)
+    >>> system.analysis.dist_to(id=4)
+    7.0
+    >>> system.analysis.dist_to(pos=[0,0,0])
+    1.4142135623730951
+    >>> system.analysis.mindist()
+    1.0
+    
 
 .. _Particles in the neighbourhood:
 
 Particles in the neighbourhood
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-analyze nbhood analyze nbhood
-
-Returns a Tcl-list of the particle ids of all particles within a given
-radius around the position of the particle with number in variant or
-around the spatial coordinate (, , ) in variant .
+:meth:`espressomd.analyze.Analysis.nbhood`
+ 
+Returns a list of the particle ids of that fall within a given radius of a target position.
 
 .. _Particle distribution:
 
 Particle distribution
 ~~~~~~~~~~~~~~~~~~~~~
+:meth:`espressomd.analyze.Analysis.distribution`
 
-analyze distribution
-
-Returns its parameters and the distance distribution of particles
-(probability of finding a particle of type at a certain distance around
-a particle of type , disregarding the fact that a spherical shell of a
-larger radius covers a larger volume) with types specified in around
-particles with types specified in with distances between and , binned
-into bins. The bins are either equidistant (if
-:math:`\var{log\_flag} = 0`) or logarithmically equidistant (if
-:math:`\var{log\_flag} \geq 1`). If an integrated distribution is
-required, use :math:`\var{int\_flag}=1`. The distance is defined as the
-*minimal* distance between a particle of one group to any of the other
+Returns the distance distribution of particles
+(probability of finding a particle of a certain type at a specified distance around
+a particle of another specified type, disregarding the fact that a spherical shell of a
+larger radius covers a larger volume). 
+The distance is defined as the *minimal* distance between a particle of one group to any of the other
 group.
 
-The output corresponds to the blockfile format (see section ):
+Two arrays are returned corresponding to the normalized distribution and the bins midpoints, for example ::
 
-{ } { { } }
+    >>> system = espressomd.System()
+    >>> box_l=10.
+    >>> system.box_l = [box_l, box_l, box_l]
+    >>> for i in range(5):
+    >>>     system.part.add(id=i, pos=i*system.box_l, type=0)
+    >>> bins, count=system.analysis.distribution(type_list_a=[0], type_list_b=[0], r_min=0.0, r_max = 10.0, r_bins=10)
+    >>>
+    >>> print(bins)
+    [ 0.5  1.5  2.5  3.5  4.5  5.5  6.5  7.5  8.5  9.5]
+    >>> print(count)
+    [ 1.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
 
 
 .. _Radial density map:
 
 Radial density map
 ~~~~~~~~~~~~~~~~~~
+.. todo:: This feature is not implemented
 
 analyze radial\_density\_map
 
@@ -131,12 +136,28 @@ the currently identified properties.
    central axis, which one would think is natural.
 
 
-.. _Cylndrical average:
+.. _Cylindrical average:
 
 Cylindrical Average
 ~~~~~~~~~~~~~~~~~~~
+:meth:`espressomd.analyze.Analysis.cylindrical_average`
 
-analyze cylindrical\_average
+Calculates the particle distribution using cylindrical binning.
+
+The volume considered is inside a cylinder defined by the parameters `center`, `axis`, `length` and  `radius`.
+
+The geometrical details of the cylindrical binning is defined using ` bins_axial` and `bins_radial` which are the number bins in the axial and radial directions (respectively).
+See figure :ref:`cylindrical_average` for a visual representation of the binning geometry.
+
+.. _cylindrical_average:
+
+.. figure:: figures/analysis_cylindrical_average.png
+   :alt: Geometry for the cylindrical binning
+   :align: center
+   :height: 6.00000cm
+
+   Geometry for the cylindrical binning
+
 
 The command returns a list of lists. The outer list contains all data
 combined whereas each inner list contains one line. Each lines stores a
@@ -145,121 +166,43 @@ look something like this
 
 ::
 
-    { { 0 0 0.05 -0.25 0.0314159 0 0 0 0 0 0 }
-      { 0 1 0.05 0.25 0.0314159 31.831 1.41421 1 0 0 0 }
-      ... }
+    [ [ 0 0 0.05 -0.25 0.0314159 0 0 0 0 0 0 ]
+      [ 0 1 0.05 0.25 0.0314159 31.831 1.41421 1 0 0 0 ]
+      ... ]
 
-In this case two different particle types were present. The columns of
-the respective lines are coded like this
+In this case two different particle types were present.
+The columns of the respective lines are coded like this
 
-output index\_radial index\_axial pos\_radial pos\_axial binvolume
-density v\_radial v\_axial density v\_radial v\_axial 0 0 0.05 -0.25
-0.0314159 0 0 0 0 0 0 0 1 0.05 0.25 0.0314159 31.831 1.41421 1 0 0 0
+=============    ============  ===========  ==========  =========  =======  ========   ========  =======  =========  =======
+index_radial     index_axial   pos_radial   pos_axial   binvolume  density  v_radial   v_axial   density  v_radial   v_axial 
+=============    ============  ===========  ==========  =========  =======  ========   ========  =======  =========  =======
+0                0             0.05         -0.25       0.0314159  0        0          0         0        0          0      
+0                1             0.05         0.25        0.0314159  31.831   1.41421    1         0        0          0      
+=============    ============  ===========  ==========  =========  =======  ========   ========  =======  =========  =======
 
-As one can see the columns , , and appear twice. The order of appearance
-corresponds two the order of the types in the argument . For example if
-was set to ``{0 1}`` then the first triple is associated to type 0 and
+As one can see the columns `density`, `v_radial` and `v_axial` appear twice.
+The order of appearance corresponds to the order of the types in the argument `types`.
+For example if was set to `types=[0, 1]` then the first triple is associated to type 0 and
 the second triple to type 1.
 
-After knowing what the output looks like we might want to have more
-information on how to input data.
-
--  is a double list containing the coordinates of the centre point of
-   the cylinder.
-
--  is a double list containing a (not necessarily normalised) vector.
-
--  is the total length of the cylinder.
-
--  is the radius of the cylinder.
-
--  is the number of bins along the vector.
-
--  is the number of bins in radial direction.
-
--  is an int list of the type IDs.
-
-Because all of this text is super abstract we additionally drew a
-picture of what these variables actually mean, see
-figure [fig:cylindricalaverage].
-
-[dot/.style=draw,fill,circle,inner sep=1pt,rotate=-100] in .5, 1, 1.5, 2
-in -, 0, (0,) ellipse ( and .5\*); (-,-) – (-,); (+,-) – (+,); (0,0)
-node[dot,label=above:center] – (0,1.5) node[above] direction; in 0, (2,)
-– (2,-); (2,-) – node[blue,below,rotate=-8] bins\_axial (2,); in .5, 1,
-1.5, 2 (,-) – (-.5,-); (2,-) – node[red,above,rotate=80] bins\_radial
-(0,-);
-
-(0,) – node[right] radius (2,); (-2,-) – node[above] length (-2,);
-
-
 .. _Modes:
-
-Modes
-~~~~~
-
-analyze modes2d
-
-Analyzes the modes of a configuration. Requires that a grid is set and
-that the system contains more than two particles. Output are four
-numbers in the order:
-
-.. math:: ht_{RE}\qquad ht_{IM}\qquad \theta_{RE}\qquad \theta_{IM}
-
-
-.. _Lipid orientation:
-
-Lipid orientation
-~~~~~~~~~~~~~~~~~
-
-analyze get\_lipid\_orients analyze lipid\_orient\_order
-
-
-.. _Bilayers:
-
-Bilayers
-~~~~~~~~
-
-analyze bilayer\_set analyze bilayer\_density\_profile
-
-
-.. _GPB:
-
-GPB
-~~~
-
-analyze cell\_gpb
-
-
-.. _Get folded positions:
-
-Get folded positions
-~~~~~~~~~~~~~~~~~~~~
-
-analyze get\_folded\_positions
-
-Outputs the folded positions of particles. Without any parameters, the
-positions of all particles are given, folded to the box length. The
-optional parameter ensures that molecules (particle groups) are kept
-intact. The optional shift parameters can be used to shift the not
-separated molecules if needed.
-
 
 .. _Vkappa:
 
 Vkappa
 ~~~~~~
+:meth:`espressomd.analyze.Analysis.v_kappa`
 
-analyze Vkappa
+.. todo:: Implementation appears to be incomplete
 
 Calculates the compressibility :math:`V \times \kappa_T` through the
 Volume fluctuations
 :math:`V \times \kappa_T = \beta \left(\langle V^2\rangle - \langle V \rangle^2\right)`
 :cite:`kolb99a`. Given no arguments this function calculates
 and returns the current value of the running average for the volume
-fluctuations. The argument clears the currently stored values. With the
+fluctuations.The `mode=reset` argument clears the currently stored values. With `mode=read` the
 cumulative mean volume, cumulative mean squared volume and how many
-samples were used can be retrieved. Likewise the option enables you to
+samples were used can be retrieved. Likewise the option `mode=set` enables you to
 set those.
 
 
@@ -267,41 +210,29 @@ set those.
 
 Radial distribution function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:meth:`espressomd.analyze.Analysis.rdf`
 
-[analyze:<rdf>]
+Calculates a radial distribution function.
 
-analyze
-
-Returns its parameters and the radial distribution function (rdf) of
-particles with types specified in around particles with types specified
-in . The range is given by and and is divided into equidistant bins.
-
-The output corresponds to the blockfile format (see section ):
-
-{ } { { } }
 
 .. _Structure factor:
 
 Structure factor
 ~~~~~~~~~~~~~~~~
+:meth:`espressomd.analyze.Analysis.structure_factor`
 
-analyze structurefactor
+Calculate the structure factor for given types.
 
 Returns the spherically averaged structure factor :math:`S(q)` of
 particles specified in . :math:`S(q)` is calculated for all possible
-wave vectors, :math:`\frac{2\pi}{L} <= q <= \frac{2\pi}{L}\var{order}`.
-Do not choose parameter too large, because the number of calculations
-grows as :math:`\var{order}^3`.
-
-The output corresponds to the blockfile format (see section ):
-
-{ }
+wave vectors, :math:`\frac{2\pi}{L} <= q <= \frac{2\pi}{L}` `order`.
 
 
 .. _Van-Hove autocorrelation function:
 
 Van-Hove autocorrelation function :math:`G(r,t)`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. todo:: This feature is not implemented
 
 analyze vanhove
 
@@ -333,45 +264,34 @@ always yields :math:`1`.
 
 Center of mass
 ~~~~~~~~~~~~~~
+:meth:`espressomd.analyze.Analysis.center_of_mass`
 
-analyze centermass
-
-Returns the center of mass of particles of the given type.
+Returns the center of mass of particles of the given type given by `part_type`.
 
 
 .. _Moment of inertia matrix:
 
 Moment of inertia matrix
 ~~~~~~~~~~~~~~~~~~~~~~~~
+:meth:`espressomd.analyze.Analysis.moment_of_inertia_matrix`
 
-[analyze:find-principal-axis]
-
-analyze momentofinertiamatrix analyze find\_principal\_axis
-
-Variant returns the moment of inertia matrix for particles of given type
-. The output is a list of all the elements of the 3x3 matrix. Variant
-returns the eigenvalues and eigenvectors of the matrix.
+Returns the 3x3 moment of inertia matrix for particles of a given type.
 
 
 .. _Gyration tensor:
 
 Gyration tensor
 ~~~~~~~~~~~~~~~
+:meth:`espressomd.analyze.Analysis.gyration_tensor`
 
-analyze gyration\_tensor
-
-Analyze the gyration tensor of particles of a given type , or of all
-particles in the system if no type is given. Returns a Tcl-list
-containing the squared radius of gyration, three shape descriptors
-(asphericity, acylindricity, and relative shape anisotropy), eigenvalues
-of the gyration tensor and their corresponding eigenvectors. The
-eigenvalues are sorted in descending order.
+Analyze the gyration tensor of particles of a given type, or of all particles in the system if no type is given. Returns a dictionary containing the squared radius of gyration, three shape descriptors (asphericity, acylindricity, and relative shape anisotropy), eigenvalues of the gyration tensor and their corresponding eigenvectors. The eigenvalues are sorted in descending order.
 
 
 .. _Aggregation:
 
 Aggregation
 ~~~~~~~~~~~
+.. todo:: This feature is not implemented
 
 analyze aggregation
 
@@ -386,31 +306,12 @@ aggregation state of only oppositely charged particles.
 
 .. _Identifying pearl necklace structures:
 
-Identifying pearl-necklace structures
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-analyze necklace
-
-Algorithm for identifying pearl necklace structures for polyelectrolytes
-in poor solvent :cite:`limbach03a`. The first three
-parameters are tuning parameters for the algorithm: is the minimal
-number of monomers in a pearl. is the number of monomers along the chain
-backbone which are excluded from the space distance criterion to form
-clusters. is the distance between two monomers up to which they are
-considered to belong to the same clusters. The three parameters may be
-connected by scaling arguments. Make sure that your results are only
-weakly dependent on the exact choice of your parameters. For the
-algorithm the coordinates stored in partCfg are used. The chain itself
-is defined by the identity first of its first monomer and the chain
-length length. Attention: This function is very specific to the problem
-and might not give useful results for other cases with similar
-structures.
-
 
 .. _Finding holes:
 
 Finding holes
 ~~~~~~~~~~~~~
+.. todo:: This feature is not implemented
 
 analyze holes
 
@@ -449,6 +350,7 @@ Surface results have not been tested. .
 
 Temperature of the LB fluid
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. todo:: This feature is not implemented
 
 This command returns the temperature of the lattice-Boltzmann (LB)
 fluid, see Chapter [sec:lb], by averaging over the fluid nodes. In case
@@ -460,8 +362,7 @@ volume is taken into account.
 
 Momentum of the System
 ~~~~~~~~~~~~~~~~~~~~~~
-
-analyze momentum
+:meth:`espressomd.analyze.Analysis.analyze_linear_momentum`
 
 This command returns the total linear momentum of the particles and the
 lattice-Boltzmann (LB) fluid, if one exists. Giving the optional
@@ -473,17 +374,10 @@ of the particles.
 
 Energies
 ~~~~~~~~
+:meth:`espressomd.analyze.Analysis.energy`
 
-analyze energy analyze energy analyze energy bonded analyze energy
-nonbonded
-
-Returns the energies of the system. Variant returns all the
-contributions to the total energy. Variant returns the numerical value
-of the total energy or its kinetic or Coulomb or magnetic contributions
-only. Variants and return the energy contributions of the bonded resp.
-non-bonded interactions.
-
-{ energy } { kinetic } { interaction } …
+Returns the energies of the system.
+The the different energetic contributions to the total energy can also be obtained (kinetic, bonded,non-bonded, coublomb)).
 
 
 .. _Pressure:
@@ -500,9 +394,8 @@ The pressure is calculated (if there are no electrostatic interactions)
 by
 
 .. math::
-
-   \label{eq:ptens}
      p = \frac{2E_{kinetic}}{Vf} + \frac{\sum_{j>i} {F_{ij}r_{ij}}}{3V}
+     :label: eqptens
 
 where :math:`f=3` is the number of translational degrees of freedom of
 each particle, :math:`V` is the volume of the system,
@@ -512,7 +405,7 @@ them. The kinetic energy divided by the degrees of freedom is
 
 .. math:: \frac{2E_{kinetic}}{f} = \frac{1}{3}\sum_{i} {m_{i}v_{i}^{2}}.
 
-Note that Equation [eq:ptens] can only be applied to pair potentials and
+Note that Equation :eq:`eqptens` can only be applied to pair potentials and
 central forces. Description of how contributions from other interactions
 are calculated is beyond the scope of this manual. Three body potentials
 are implemented following the procedure in
@@ -555,17 +448,12 @@ The command is implemented in parallel.
 
 Local Stress Tensor
 ~~~~~~~~~~~~~~~~~~~
+:meth:`espressomd.analyze.Analysis.local_stress_tensor`
+.. todo:: This feature is not implemented
 
-analyze local\_stress\_tensor
-
-Computes local stress tensors in the system. A cuboid is defined
-starting at the coordinate (,,) and going to the coordinate (+, +, +).
-This cuboid in divided into bins in the x direction, bins in the y
-direction and bins in the z direction such that the total number of bins
-is \*\*. For each of these bins a stress tensor is calculated using the
-Irving Kirkwood method. That is, a given interaction contributes towards
-the stress tensor in a bin proportional to the fraction of the line
-connecting the two particles that is within the bin.
+A cuboid is defined in the system and divided into bins.
+For each of these bins a stress tensor is calculated using the Irving Kirkwood method.
+That is, a given interaction contributes towards the stress tensor in a bin proportional to the fraction of the line connecting the two particles that is within the bin.
 
 If the P3M and MMM1D electrostatic methods are used, these interactions
 are not included in the local stress tensor. The DH and RF methods, in
@@ -584,71 +472,38 @@ The command is implemented in parallel.
 specifying the local pressure tensor in each bin.
 
 
-.. _Analyzing groups of particles:
-
-Analyzing groups of particles (molecules)
------------------------------------------
-
-[analyze:set]
-
-analyze set chains analyze set topo\_part\_sync analyze set
-
-The above set of functions is designed to facilitate analysis of
-molecules. Molecules are expected to be a group of particles comprising
-a contiguous range of particle IDs. Each molecule is a set of
-consecutively numbered particles and all molecules are supposed to
-consist of the same number of particles. Some functions in this group
-require that the particles constituting a molecule are connected into
-linear chains (particle :math:`n` is connected to :math:`n+1` and so on)
-while others are applicable to molecules of whatever topology.
-
-The command defines the structure of the current system to be used with
-some of the analysis functions.
-
-Variant defines a set of chains of equal length which start with the
-particle with particle number and are consecutively numbered (the last
-particle in that topology has number :math:`\var{chain\_start} +
-\var{n\_chains}*\var{chain\_length} - 1`).
-
-Variant synchronizes topology and particle data, assigning values to
-particles.
-
-Variant will return the chains currently stored.
-
 
 .. _Chains:
 
 Chains
 ~~~~~~
 
-All analysis functions in this section require the topology of the
-chains to be set correctly. The topology can be provided upon calling.
-This (re-)sets the structure info permanently, it is only required once.
+All analysis functions in this section require the topology of the chains to be set correctly.
+The above set of functions is designed to facilitate analysis of molecules.
+Molecules are expected to be a group of particles comprising a contiguous range of particle IDs.
+Each molecule is a set of consecutively numbered particles and all molecules are supposed to consist of the same number of particles.
+
+Some functions in this group require that the particles constituting a molecule are connected into
+linear chains (particle :math:`n` is connected to :math:`n+1` and so on)
+while others are applicable to molecules of whatever topology.
 
 
 .. _End to end distance:
 
 End-to-end distance
 ^^^^^^^^^^^^^^^^^^^
+:meth:`espressomd.analyze.Analysis.calc_re`
 
-analyze
-
-Returns the quadratic end-to-end-distance and its root averaged over all
-chains. If is used, the distance is averaged over all stored
-configurations (see section ).
-
-{ }
-
+Returns the quadratic end-to-end-distance and its root averaged over all chains.
 
 .. _Radius of gyration:
 
 Radius of gyration
 ^^^^^^^^^^^^^^^^^^
+:meth:`espressomd.analyze.Analysis.calc_rg`
 
-analyze
-
-Returns the radius of gyration averaged over all chains. It is a radius
-of a sphere, which would have the same moment of inertia as the
+Returns the radius of gyration averaged over all chains.
+It is a radius of a sphere, which would have the same moment of inertia as the
 molecule, defined as
 
 .. math::
@@ -660,22 +515,17 @@ where :math:`\vec r_i` are position vectors of individual particles
 constituting a molecule and :math:`\vec r_{\mathrm{cm}}` is the position
 vector of its centre of mass. The sum runs over all :math:`N` particles
 comprising the molecule. For more information see any polymer science
-book, e.g. :cite:`rubinstein03a`. If is used, the radius of
-gyration is averaged over all stored configurations (see section ).
-
-{ }
+book, e.g. :cite:`rubinstein03a`.
 
 
 .. _Hydrodynamic radius:
 
 Hydrodynamic radius
 ^^^^^^^^^^^^^^^^^^^
+:meth:`espressomd.analyze.Analysis.calc_rh`
 
-analyze
-
-Returns the hydrodynamic radius averaged over all chains. If is used,
-the hydrodynamic radius is averaged over all stored configurations (see
-section ). The following formula is used for the computation:
+Returns the hydrodynamic radius averaged over all chains.
+The following formula is used for the computation:
 
 .. math::
 
@@ -685,14 +535,15 @@ section ). The following formula is used for the computation:
 The above-mentioned formula is only valid under certain assumptions. For
 more information, see Chapter 4 and equation 4.102
 in :cite:`doi86a`.
-
-{ }
+Note that the hydrodynamic radius is sometimes defined in a similar fashion but with a denominator of :math:`N(N-1)` instead of :math:`N^2` in the prefactor.
+Both versions are equivalent in the :math:`N\rightarrow \infty` limit but give numerically different values for finite polymers.
 
 
 .. _Internal distances:
 
 Internal distances
 ^^^^^^^^^^^^^^^^^^
+.. todo:: This feature is not implemented
 
 analyze
 
@@ -710,6 +561,7 @@ considered (0 = next neighbours, 1 = one monomer in between, …).
 
 Internal distances II (specific monomer)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. todo:: This feature is not implemented
 
 analyze
 
@@ -726,6 +578,7 @@ all stored configurations (see section ).
 
 Bond lengths
 ^^^^^^^^^^^^
+.. todo:: This feature is not implemented
 
 analyze
 
@@ -745,6 +598,7 @@ topology and does not check if the bonds really exist!
 
 Form factor
 ^^^^^^^^^^^
+.. todo:: This feature is not implemented
 
 | analyze
 
@@ -772,168 +626,12 @@ with :math:`q \in \{\var{qmin},\dots,\var{qmax}\}`.
 Chain radial distribution function
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-analyze rdfchain
+:meth:`espressomd.analyze.Analysis.rdf_chain`
 
-Returns three radial distribution functions (rdf) for the chains. The
-first rdf is calculated for monomers belonging to different chains, the
-second rdf is for the centers of mass of the chains and the third one is
-the distribution of the closest distances between the chains (the
-shortest monomer-monomer distances). The distance range is given by and
-and it is divided into equidistant bins.
-
-{ { } }
+Returns three radial distribution functions (rdf) for the chains.
+The first rdf is calculated for monomers belonging to different chains,
+the second rdf is for the centers of mass of the chains and 
+the third one is the distribution of the closest distances between the chains (the
+shortest monomer-monomer distances).
 
 
-.. _Mean square displacement of chains:
-
-Mean square displacement of chains
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-[analyze:<g2>] [analyze:<g3>] [analyze:g123]
-
-analyze analyze g123
-
-Variant returns
-
--  the mean-square displacement of the beads in the chain ()
-
--  the mean-square displacement of the beads relative to the center of
-   mass of the chain ()
-
--  or the motion of the center of mass ()
-
-averaged over all stored configurations (see section ). At short time
-scales, and coincide, since the motion of the center of mass is much
-slower. At large timescales and coincide and correspond to the center of
-mass motion, while levels off. and together correspond to . For details,
-see :cite:`grest86a`.
-
-Variant returns all of these observables for the current configuration,
-as compared to the reference configuration. The reference configuration
-is set, when the option is used.
-
-{ …}
-
-{ }
-
-
-
-.. _Storing configurations:
-
-Storing configurations
-----------------------
-
-Some observables (non-static ones) require knowledge of the particles’
-positions at more than one or two times. Therefore, it is possible to
-store configurations for later analysis. Using this mechanism, the
-program is also able to work quasi-offline by successively reading in
-previously saved configurations and storing them to perform any analysis
-desired afterwards.
-
-Note that the time at which configurations were taken is not stored. The
-most observables that work with the set of stored configurations do
-expect that the configurations are taken at equidistant timesteps.
-
-Note also, that the stored configurations can be written to a file and
-read from it via the command (see section ).
-
-
-.. _Storing and removing configurations:
-
-Storing and removing configurations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-[analyze:push] [analyze:replace] [analyze:remove]
-
-analyze append analyze remove analyze replace analyze push analyze
-configs
-
-Variant appends the current configuration to the set of stored
-configurations. Variant removes the th stored configuration, or all, if
-is not specified. Variant will replace the th configuration with the
-current configuration.
-
-Variant will append the current configuration to the set of stored
-configuration and remove configurations from the beginning of the set
-until the number of stored configurations is equal to . If is not
-specified, only the first configuration in the set is removed.
-
-Variants to return the number of currently stored configurations.
-
-Variant will append the configuration to the set of stored
-configurations. has to define coordinates for all configurations in the
-format:
-
-{ …}
-
-
-.. _Getting the stored configurations:
-
-Getting the stored configurations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-[analyze:stored]
-
-analyze configs analyze stored
-
-Variant returns all stored configurations, while variant returns only
-the number of stored configurations.
-
-{ { …} }
-
-
-
-.. _Computing statistical errors in time series:
-
-Computing statistical errors in time series
----------------------------------------------
-
-uwerr
-
-uwerr
-
-Calculates the mean value, the error and the error of the error for an
-arbitrary numerical time series according to :cite:`wolff04a`.
-
-is a matrix filled with the primary estimates :math:`a_\alpha^{i,r}`
-from :math:`R\/` replica with :math:`N_1,N_2,\ldots,N_R` measurements
-each.
-
-.. math::
-
-   \var{data}=\left(
-         \begin{array}
-           {{4}{c}} a_1^{1,1}&a_2^{1,1}&a_3^{1,1}&\cdots\\ 
-           a_1^{2,1}&a_2^{2,1}&a_3^{2,1}&\cdots\\
-           \vdots&\vdots&\vdots&\vdots\\
-           a_1^{{N_1},1}&a_2^{{N_1},1}&a_3^{{N_1},1}&\cdots\\
-           a_1^{1,2}&a_2^{1,2}&a_3^{1,2}&\cdots\\
-           \vdots&\vdots&\vdots&\vdots\\
-           a_1^{{N_R},R}&a_2^{{N_R},R}&a_3^{{N_R},R}&\cdots\\
-         \end{array}
-       \right)
-
-is a vector whose elements specify the length of the individual replica.
-
-.. math:: nrep=\left(N_1,N_2,\ldots,N_R\right)
-
-is a user defined Tcl function returning a double with first argument a
-vector which has as many entries as data has columns. If is given
-instead of the column, the corresponding derived quantity is analyzed.
-
-are further arguments to .
-
-is the estimate :math:`S=\tau/\tau_{\textrm{int}}` as explained in
-section (3.3) of :cite:`wolff04a`. The default is 1.5 and it
-is never taken larger than :math:`\min_{r=1}^R{N_r}/2`.
-
-If plot is specified, you will get the plots of :math:`\Gamma/\Gamma(0)`
-and :math:`\tau_{int}` vs. :math:`W`. The data and gnuplot script is
-written to the current directory.
-
-where denotes the integrated autocorrelation time, and denotes a
-*quality measure*, the probability to find a :math:`\chi^2` fit of the
-replica estimates.
-
-The function returns an error message if the windowing failed or if the
-error in one of the replica is to large.

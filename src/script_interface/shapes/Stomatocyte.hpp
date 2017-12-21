@@ -43,8 +43,6 @@ public:
          {"direction", m_stomatocyte->direction()}});
   }
 
-  const std::string name() const override { return "Shapes::Stomatocyte"; }
-
   std::shared_ptr<::Shapes::Shape> shape() const override {
     return m_stomatocyte;
   }

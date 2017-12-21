@@ -26,6 +26,7 @@ IF SCAFACOS == 1:
     from . cimport scafacos
 
 from espressomd.utils cimport handle_errors
+from espressomd.utils import is_valid_type
 
 IF DIPOLES == 1:
     cdef class MagnetostaticInteraction(Actor):
@@ -33,13 +34,13 @@ IF DIPOLES == 1:
 
         Attributes
         ----------
-        bjerrum_length : float
+        bjerrum_length : :obj:`float`
             Similar to the Bjerrum length in electrostatics.
             Gives the separation at which the dipolar interaction energy
             corrensponds to a thermal energy of :math:`1 k_B T`.
             If not set, an explicit choice for the `prefactor` has to be made.
 
-        prefactor : float, optional
+        prefactor : :obj:`float`, optional
             If given, the magnetostatic prefactor is explicitly set to
             this value. Non-optional if `bjerrum_length` is not set.
 
@@ -62,7 +63,8 @@ IF DIPOLES == 1:
                     raise ValueError("prefactor should be a positive double")
 
         def set_magnetostatics_prefactor(self):
-            """Set the magnetostatics prefactor using either the `bjrerrum_length`
+            """
+            Set the magnetostatics prefactor using either the `bjerrum_length`
             or, if given, `prefactor`.
 
             """
@@ -84,7 +86,7 @@ IF DIPOLES == 1:
                         raise Exception(
                             "Could not set magnetostatic prefactor")
                     else:
-                        self._params["bjerrum_length"] = self.params[
+                        self._params["bjerrum_length"] = self._params[
                             "prefactor"] / temperature
             # also necessary on 1 CPU or GPU, does more than just broadcasting
             mpi_bcast_coulomb_params()
@@ -107,27 +109,21 @@ IF DP3M == 1:
 
         Attributes
         ----------
-        accuracy : float
-            P3M tunes its parameters to provide this target accuracy.
-
-        alpha : float
-            Ewald parameter.
-
-        cao : int
-            Charge-assignment order, an integer between -1 and 7.
-
-        mesh : int or array_like
-            Number of mesh points.
-
+        accuracy : :obj:`float`
+                   P3M tunes its parameters to provide this target accuracy.
+        alpha : :obj:`float`
+                Ewald parameter.
+        cao : :obj:`int`
+              Charge-assignment order, an integer between -1 and 7.
+        mesh : :obj:`int` or array_like
+               Number of mesh points.
         mesh_off : array_like
-            Mesh offset.
-
-        r_cut : float
-            Real space cutoff.
-
-        tune : bool, optional
-            Activate/deactivate the tuning method on activation
-            (default is True, i.e., activated).
+                   Mesh offset.
+        r_cut : :obj:`float`
+                Real space cutoff.
+        tune : :obj:`bool`, optional
+               Activate/deactivate the tuning method on activation
+               (default is True, i.e., activated).
 
         """
 
@@ -141,7 +137,7 @@ IF DP3M == 1:
             if not (self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
                 raise ValueError("P3M r_cut has to be >=0")
 
-            if not (isinstance(self._params["mesh"], int) or len(self._params["mesh"])):
+            if not (is_valid_type(self._params["mesh"], int) or len(self._params["mesh"])):
                 raise ValueError(
                     "P3M mesh has to be an integer or integer list of length 3")
 
@@ -160,7 +156,7 @@ IF DP3M == 1:
             if self._params["epsilon"] == "metallic":
                 self._params["epsilon"] = 0.0
 
-            if not (isinstance(self._params["epsilon"], float) or self._params["epsilon"] == "metallic"):
+            if not (is_valid_type(self._params["epsilon"], float) or self._params["epsilon"] == "metallic"):
                 raise ValueError("epsilon should be a double or 'metallic'")
 
             if not (self._params["inter"] == default_params["inter"] or self._params["inter"] > 0):
@@ -305,8 +301,8 @@ IF DIPOLES == 1:
 
         Attributes
         ----------
-        n_replica : int
-            Number of replicas to be taken into account at periodic boundaries.
+        n_replica : :obj:`int`
+                    Number of replicas to be taken into account at periodic boundaries.
 
         """
 
@@ -333,7 +329,10 @@ IF DIPOLES == 1:
                     "Could not activate magnetostatics method " + self.__class__.__name__)
     IF SCAFACOS_DIPOLES == 1:
         class Scafacos(ScafacosConnector, MagnetostaticInteraction):
-            """Calculates dipolar interactions using dipoles-capable method from the SCAFACOs library."""
+            """
+            Calculates dipolar interactions using dipoles-capable method from the SCAFACOs library.
+            
+            """
 
             dipolar = True
 
@@ -342,7 +341,6 @@ IF DIPOLES == 1:
                 Actor.__init__(self, *args, **kwargs)
 
             def _activate_method(self):
-                coulomb.Dmethod = DIPOLAR_SCAFACOS
                 dipolar_set_Dbjerrum(self._params["bjerrum_length"])
                 self._set_params_in_es_core()
                 mpi_bcast_coulomb_params()

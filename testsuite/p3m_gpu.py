@@ -26,9 +26,9 @@ from tests_common import *
 
 @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS", "CUDA"]),
            "Features not available, skipping test!")
-class P3M_GPU_test(ut.TestCase):
+class P3MGPU_test(ut.TestCase):
     def runTest(self):
-        from espressomd.electrostatics import P3M_GPU
+        from espressomd.electrostatics import P3MGPU
 
         es = espressomd.System()
         test_params = {}
@@ -41,7 +41,7 @@ class P3M_GPU_test(ut.TestCase):
         test_params["alpha"] = 1.1
         test_params["tune"] = False
 
-        p3m = P3M_GPU(**test_params)
+        p3m = P3MGPU(**test_params)
         es.actors.add(p3m)
         self.assertTrue(params_match(
             test_params, p3m._get_params_from_es_core()))

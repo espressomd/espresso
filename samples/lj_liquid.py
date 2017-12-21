@@ -79,7 +79,7 @@ system.box_l = [box_l, box_l, box_l]
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
     cutoff=lj_cut, shift="auto")
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 
 print("LJ-parameters:")
 print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
@@ -93,12 +93,12 @@ n_part = int(volume * density)
 for i in range(n_part):
     system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
 
-system.analysis.distto(0)
+system.analysis.dist_to(0)
 
 print("Simulate {} particles in a cubic simulation box {} at density {}."
       .format(n_part, box_l, density).strip())
 print("Interactions:\n")
-act_min_dist = system.analysis.mindist()
+act_min_dist = system.analysis.min_dist()
 print("Start with minimal distance {}".format(act_min_dist))
 
 system.cell_system.max_num_cells = 2744
@@ -122,7 +122,7 @@ Stop if minimal distance is larger than {}
 
 # set LJ cap
 lj_cap = 20
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
 # Warmup Integration Loop
@@ -130,7 +130,7 @@ i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
     system.integrator.run(steps=warm_steps)
     # Warmup criterion
-    act_min_dist = system.analysis.mindist()
+    act_min_dist = system.analysis.min_dist()
 #  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,system.time,lj_cap,act_min_dist), end=' ')
     i += 1
 
@@ -139,7 +139,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
 
 #   Increase LJ cap
     lj_cap = lj_cap + 10
-    system.non_bonded_inter.set_force_cap(lj_cap)
+    system.force_cap = lj_cap
 
 # Just to see what else we may get from the c code
 import pprint
@@ -161,7 +161,7 @@ print("\nStart integration: run %d times %d steps" % (int_n_times, int_steps))
 
 # remove force capping
 lj_cap = 0
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
 # print(initial energies)
