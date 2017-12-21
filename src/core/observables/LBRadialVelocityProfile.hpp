@@ -7,35 +7,6 @@
 namespace Observables {
 
 #ifdef LB
-// int ObservableLbRadialVelocityProfile::actual_calculate(PartCfg & partCfg) {
-//  double* A = last_value;
-//  void* pdata = container;
-//  unsigned int n_A = n;
-//
-//#ifdef LB_GPU
-//  if (lattice_switch & LATTICE_LB_GPU)
-//    return
-//    statistics_observable_lbgpu_radial_velocity_profile((radial_profile_data*)
-//    pdata, A, n_A);
-//#endif
-//
-//  if (!(lattice_switch & LATTICE_LB))
-//    return ES_ERROR;
-//
-//  if (n_nodes==1) {
-//    mpi_observable_lb_radial_velocity_profile_parallel(pdata, A, n_A);
-//    return ES_OK;
-//  } else {
-//    mpi_observable_lb_radial_velocity_profile();
-//    MPI_Bcast(pdata, sizeof(radial_profile_data), MPI_BYTE, 0, comm_cart);
-//    double* data = (double*) Utils::malloc(n_A*sizeof(double));
-//    mpi_observable_lb_radial_velocity_profile_parallel(pdata, data, n_A);
-//    MPI_Reduce(data, A, n_A, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
-//    free(data);
-//    return ES_OK;
-//  }
-//}
-
 int mpi_observable_lb_radial_velocity_profile_parallel(void *pdata_, double *A,
                                                        unsigned int n_A);
 
@@ -115,12 +86,10 @@ int mpi_observable_lb_radial_velocity_profile_parallel(void *pdata_, double *A,
         if (pdata->n_z_bins > 1)
           linear_index += k;
         if (r > 0) {
-          v_r = 1 / r *
-                ((p[0] - pdata->center[0]) * v[0] +
-                 (p[1] - pdata->center[1]) * v[1]);
-          v_phi = 1 / r / r *
-                  ((p[0] - pdata->center[0]) * v[1] -
-                   (p[1] - pdata->center[1]) * v[0]);
+          v_r = 1 / r * ((p[0] - pdata->center[0]) * v[0] +
+                         (p[1] - pdata->center[1]) * v[1]);
+          v_phi = 1 / r / r * ((p[0] - pdata->center[0]) * v[1] -
+                               (p[1] - pdata->center[1]) * v[0]);
         } else {
           v_r = 0;
           v_phi = 0;
@@ -142,11 +111,5 @@ int mpi_observable_lb_radial_velocity_profile_parallel(void *pdata_, double *A,
 }
 #endif
 
-void transform_to_cylinder_coordinates(double x, double y, double z_, double *r,
-                                       double *phi, double *z) {
-  *z = z_;
-  *r = sqrt(x * x + y * y);
-  *phi = atan2(y, x);
-}
 } // namespace Observables
 #endif

@@ -213,9 +213,7 @@ void ReactionEnsemble::append_particle_property_of_random_particle(int type, std
 /**
 *Performs a trial reaction move
 */
-void ReactionEnsemble::make_reaction_attempt(single_reaction* current_reaction, std::vector<stored_particle_property>& changed_particles_properties, std::vector<int>& p_ids_created_particles, std::vector<stored_particle_property>& hidden_particles_properties){
-	const int number_of_saved_properties=3;//save p_id, charge and type of the reactant particle, only thing we need to hide the particle and recover it
-	//create or hide particles of types with corresponding types in reaction
+void ReactionEnsemble::make_reaction_attempt(single_reaction* current_reaction, std::vector<stored_particle_property>& changed_particles_properties, std::vector<int>& p_ids_created_particles, std::vector<stored_particle_property>& hidden_particles_properties){	
 	for(int i=0;i<std::min(current_reaction->len_product_types,current_reaction->len_reactant_types);i++){
 		//change std::min(reactant_coefficients(i),product_coefficients(i)) many particles of reactant_types(i) to product_types(i)
 		for(int j=0;j<std::min(current_reaction->product_coefficients[i],current_reaction->reactant_coefficients[i]);j++){
@@ -282,11 +280,10 @@ double ReactionEnsemble::calculate_factorial_expression(single_reaction* current
 void ReactionEnsemble::restore_properties(std::vector<stored_particle_property> property_list ,const int number_of_saved_properties){
 	//this function restores all properties of all particles provided in the property list, the format of the property list is (p_id,charge,type) repeated for each particle that occurs in that list
 	for(int i=0;i<property_list.size();i++) {
-		double charge= property_list[i].charge;
 		int type=(int) property_list[i].type;
 		#ifdef ELECTROSTATICS
 		//set charge
-		set_particle_q(property_list[i].p_id, charge);
+		set_particle_q(property_list[i].p_id, property_list[i].charge);
 		#endif
 		//set type
 		set_particle_type(property_list[i].p_id, type);
@@ -616,8 +613,13 @@ int ReactionEnsemble::create_particle(int desired_type){
 	vel[0]=std::pow(2*PI*m_current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
 	vel[1]=std::pow(2*PI*m_current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
 	vel[2]=std::pow(2*PI*m_current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
-	double charge= (double) m_current_reaction_system.charges_of_types[find_index_of_type(desired_type)];
-	bool particle_inserted_too_close_to_another_one=true;
+
+#ifdef ELECTROSTATICS
+        double charge = (double)m_current_reaction_system
+                            .charges_of_types[find_index_of_type(desired_type)];
+#endif
+
+        bool particle_inserted_too_close_to_another_one=true;
 	int max_insert_tries=1000;
 	int insert_tries=0;
 	double min_dist=m_current_reaction_system.exclusion_radius; //setting of a minimal distance is allowed to avoid overlapping configurations if there is a repulsive potential. States with very high energies have a probability of almost zero and therefore do not contribute to ensemble averages.
@@ -668,13 +670,12 @@ bool ReactionEnsemble::is_in_list(int value, int* list, int len_list){
 	return false;
 }
 
-//the following 2 functions are directly taken from ABHmath.tcl
 /**
 * Calculates the normed vector of a given vector
 */
 std::vector<double> vecnorm(std::vector<double> vec, double desired_length){
 	for(int i=0;i<vec.size();i++){
-		vec[i]=vec[i]/utils::veclen(vec)*desired_length;	
+		vec[i]=vec[i]/Utils::veclen(vec)*desired_length;	
 	}
 	return vec;
 }
@@ -696,7 +697,7 @@ std::vector<double> vec_random(double desired_length){
 		for(int i=0;i<3;i++){
 			vec.push_back(2*d_random()-1.0);
 		}
-		if (utils::veclen(vec)<=1)
+		if (Utils::veclen(vec)<=1)
 			break;
 	}
 	vecnorm(vec,desired_length);
@@ -1544,8 +1545,7 @@ int ReactionEnsemble::get_flattened_index_wang_landau_without_energy_collective_
 */
 void ReactionEnsemble::remove_bins_that_have_not_been_sampled(){
 	int removed_bins=0;
-	double beta=1.0/m_current_reaction_system.temperature_reaction_ensemble;
-	double largest_wang_landau_potential_at_given_particle_number=find_maximum(m_current_wang_landau_system.wang_landau_potential,m_current_wang_landau_system.len_histogram);
+
 	for(int k=0;k<m_current_wang_landau_system.len_histogram;k++){
 		if(m_current_wang_landau_system.wang_landau_potential[k]==0){
 			removed_bins+=1;

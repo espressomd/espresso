@@ -153,7 +153,14 @@ end "BUILD"
 if $make_check; then
     start "TEST"
 
-    cmd "make -j${build_procs} check_python $make_params" || exit 1
+    if [ -z "$run_tests" ]; then
+        cmd "make -j${build_procs} check_python $make_params" || exit 1
+    else
+        cmd "make python_tests $make_params"
+        for t in $run_tests; do
+            cmd "ctest --output-on-failure -R $t" || exit 1
+        done
+    fi
     cmd "make -j${build_procs} check_unit_tests $make_params" || exit 1
 
     end "TEST"

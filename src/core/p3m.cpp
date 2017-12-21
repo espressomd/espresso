@@ -545,13 +545,10 @@ void p3m_charge_assign() {
 
 /* assign the charges */
 template <int cao> void p3m_do_charge_assign() {
-  Cell *cell;
-  Particle *p;
-  int i, c, np;
   /* charged particle counter, charge fraction counter */
   int cp_cnt = 0;
   /* prepare local FFT mesh */
-  for (i = 0; i < p3m.local_mesh.size; i++)
+  for (int i = 0; i < p3m.local_mesh.size; i++)
     p3m.rs_mesh[i] = 0.0;
 
   for (auto &p : local_cells.particles()) {
@@ -1183,7 +1180,6 @@ template <int cao> void calc_influence_function_force() {
     end[i] = fft.plan[3].start[i] + fft.plan[3].new_mesh[i];
   }
 
-  auto const old = p3m.g_force;
   p3m.g_force = Utils::realloc(p3m.g_force, size * sizeof(double));
 
   /* Skip influence function calculation in tuning mode,
@@ -2318,8 +2314,8 @@ void p3m_calc_kspace_stress(double *stress) {
   if (p3m.sum_q2 > 0) {
     double *node_k_space_stress;
     double *k_space_stress;
-    double force_prefac, node_k_space_energy, sqk, vterm, kx, ky, kz, eps_0,
-        kspace_eng = 0.0;
+    double force_prefac, node_k_space_energy, sqk, vterm, kx, ky, kz;
+
     int j[3], i, ind = 0;
     // ordering after fourier transform
     node_k_space_stress = (double *)Utils::malloc(9 * sizeof(double));

@@ -30,8 +30,8 @@ from copy import copy
 from globals cimport max_seen_particle, time_step, smaller_time_step, box_l, n_part, n_rigidbonds, n_particle_types
 import collections
 import functools
-from espressomd.utils import nesting_level
-from espressomd.utils import array_locked
+import types
+from espressomd.utils import nesting_level, array_locked, is_valid_type
 
 PARTICLE_EXT_FORCE = 1
 
@@ -97,7 +97,7 @@ cdef class ParticleHandle(object):
 
         def __set__(self, _type):
 
-            if isinstance(_type, int) and _type >= 0:
+            if is_valid_type(_type, int) and _type >= 0:
                 if set_particle_type(self.id, _type) == 1:
                     raise Exception("Set particle position first.")
             else:
@@ -124,7 +124,7 @@ cdef class ParticleHandle(object):
         """
 
         def __set__(self, _mol_id):
-            if isinstance(_mol_id, int) and _mol_id >= 0:
+            if is_valid_type(_mol_id, int) and _mol_id >= 0:
                 if set_particle_mol_id(self.id, _mol_id) == 1:
                     raise Exception("Set particle position first.")
             else:
@@ -628,7 +628,7 @@ cdef class ParticleHandle(object):
             """
 
             def __set__(self, _v):
-                if isinstance(_v, int):
+                if is_valid_type(_v, int):
                     if set_particle_virtual(self.id, _v) == 1:
                         raise Exception("Set particle position first.")
                 else:
@@ -668,7 +668,7 @@ cdef class ParticleHandle(object):
                 for i in range(4):
                     _q[i] = q[i]
 
-                if isinstance(_relto, int) and isinstance(_dist, float) and all(isinstance(fq,float) for fq in q):
+                if is_valid_type(_relto, int) and is_valid_type(_dist, float) and all(is_valid_type(fq,float) for fq in q):
                     if set_particle_vs_relative(self.id, _relto, _dist, _q) == 1:
                         raise Exception("Set particle position first.")
                 else:
@@ -1030,7 +1030,7 @@ cdef class ParticleHandle(object):
                 cdef const short int * _rot = NULL
                 pointer_to_rotation( self.particle_data, _rot)
                 rot=_rot[0]
-                res=np.zeros(3)
+                res=np.zeros(3, dtype=int)
                 if rot&ROT_X: res[0]=1
                 if rot&ROT_Y: res[1]=1
                 if rot&ROT_Z: res[2]=1
@@ -1354,7 +1354,7 @@ cdef class ParticleHandle(object):
 
         # Bond type or numerical bond id
         if not isinstance(bond[0], BondedInteraction):
-            if isinstance(bond[0], int):
+            if is_valid_type(bond[0], int):
                 bond[0] = BondedInteractions()[bond[0]]
             else:
                 raise Exception(
@@ -1377,7 +1377,7 @@ cdef class ParticleHandle(object):
 
         # Type check on partners
         for i in range(1, len(bond)):
-            if not isinstance(bond[i], int):
+            if not is_valid_type(bond[i], int):
                 if not isinstance(bond[i], ParticleHandle):
                     raise ValueError(
                         "Bond partners have to be of type integer or ParticleHandle.")
@@ -1759,6 +1759,7 @@ cdef class ParticleList(object):
         else:
             return self._place_new_particle(P)
 
+
     def _place_new_particle(self, P):
         # Handling of particle id
         if not "id" in P:
@@ -1768,6 +1769,16 @@ cdef class ParticleList(object):
             if particle_exists(P["id"]):
                 raise Exception("Particle %d already exists." % P["id"])
 
+        # Prevent setting of contradicting attributes
+        IF DIPOLES:
+            if 'dip' in P and 'dipm' in P:
+                raise ValueError("Contradicting attributes: dip and dipm. Setting\
+dip is sufficient as the length of the vector defines the scalar dipole moment.")
+            IF ROTATION:
+                if 'dip' in P and 'quat' in P:
+                    raise ValueError("Contradicting attributes: dip and quat.\
+Setting dip overwrites the rotation of the particle around the dipole axis.\
+Set quat and scalar dipole moment (dipm) instead.")
 
         # The ParticleList[]-getter ist not valid yet, as the particle
         # doesn't yet exist. Hence, the setting of position has to be
@@ -1779,6 +1790,7 @@ cdef class ParticleList(object):
             mypos[i] = P["pos"][i]
         if place_particle(P["id"], mypos) == -1:
             raise Exception("particle could not be set.")
+
         # Pos is taken care of
         del P["pos"]
         id = P["id"]
@@ -1789,29 +1801,23 @@ cdef class ParticleList(object):
 
         return self[id]
 
-    def _place_new_particles(self, P):
-        if not "id" in P:
-            # Generate particle ids
-            ids = np.arange(np.array(P["pos"]).shape[
-                            0]) + max_seen_particle + 1
-        else:
-            ids = P["id"]
-            del P["id"]
+    def _place_new_particles(self, Ps):
+        # Check if all entries have the same length
+        n_parts = len(Ps["pos"])
+        if not all(np.shape(Ps[k]) and len(Ps[k]) == n_parts for k in Ps):
+            raise ValueError(
+                "When adding several particles at once, all lists of attributes have to have the same size")
 
-        # Place particles
-        cdef double mypos[3]
-        for j in range(len(P["pos"])):
-            for i in range(3):
-                mypos[i] = P["pos"][j][i]
-            if place_particle(ids[j], mypos) == -1:
-                raise Exception("Particle could not be set.")
-
-        del P["pos"]
-
-        if P != {}:
-            self[ids].update(P)
+        # Place new particles and collect ids
+        ids = []
+        for i in range(n_parts):
+            P = {}
+            for k in Ps:
+                P[k] = Ps[k][i]
+            ids.append(self._place_new_particle(P).id)
 
         return self[ids]
+
 
     # Iteration over all existing particles
     def __iter__(self):
@@ -1820,7 +1826,7 @@ cdef class ParticleList(object):
                 yield self[i]
 
     def exists(self, idx):
-        if isinstance(idx, int) or issubclass(type(idx), np.integer):
+        if is_valid_type(idx, int):
             return particle_exists(idx)
         if isinstance(idx, slice) or isinstance(idx, tuple) or isinstance(idx, list) or isinstance(idx, np.ndarray):
             tf_array = np.zeros(len(idx), dtype=np.bool)
@@ -1960,6 +1966,65 @@ cdef class ParticleList(object):
                 if not (particle_exists(i) and particle_exists(j)):
                     continue
                 yield (self[i], self[j])
+
+    def select(self,*args, **kwargs):
+        """Generates a particle slice by filtering particles via a user-defined criterion
+
+        Parameters
+        ----------
+        Either:
+
+            a keywor arguments in which the keys are names of particle properties 
+            and the values are the values to filter for. E.g.,::
+
+                type=0,q=1
+
+        Or:
+
+            a function taking a ParticleHandle as argument and returning True if
+            the particle is to be filtered for. E.g.,::
+
+                lambda p: p.pos[0]<0.5
+
+        Returns
+        -------
+        An instance of ParticleSlice containing the selected particles
+
+        """
+
+        # Ids of the selected particles
+        ids = []
+        # Did we get a function as argument?
+        if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0],types.FunctionType):
+            # Go over all particles and pass them to the user-provided function
+            for p in self:
+                if args[0](p):
+                    ids.append(p.id)
+            return ParticleSlice(ids)
+
+        # Did we get a set of keyword args?
+        elif len(args) == 0:
+            for p in self:
+                select = True
+                # Check, if the particle fails any required criteria
+                for k in kwargs:
+                    # Fetch user-provided value and value in particle
+                    val1 = kwargs[k]
+                    val2 = getattr(p, k)
+                    # Get tolerance from numerical accuracy limits
+                    tol = max(np.amax(np.spacing(val1)), np.amax(np.spacing(val2)))
+
+                    # Compare
+                    if not np.allclose(val1, val2, atol=tol):
+                        select = False
+                        break
+                if select:
+                    ids.append(p.id)
+            return ParticleSlice(ids)
+        else:
+            raise Exception(
+                "select() takes either selection function as positional argument or a set of keyword arguments.")
+
 
 def set_slice_one_for_all(particle_slice, attribute, values):
     for i in particle_slice.id_selection:

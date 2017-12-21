@@ -39,7 +39,6 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "iccp3m.hpp" /* -iccp3m- */
-#include "interaction_data.hpp"
 #include "lattice.hpp"
 #include "lb.hpp"
 #include "lbboundaries.hpp"
@@ -84,12 +83,6 @@ static int reinit_particle_comm_gpu = 1;
 void on_program_start() {
   EVENT_TRACE(fprintf(stderr, "%d: on_program_start\n", this_node));
 
-/* tell Electric fence that we do realloc(0) on purpose. */
-#ifdef EFENCE
-  extern int EF_ALLOW_MALLOC_0;
-  EF_ALLOW_MALLOC_0 = 1;
-#endif
-
 #ifdef CUDA
   cuda_init();
 #endif
@@ -105,8 +98,7 @@ void on_program_start() {
   topology_init(CELL_STRUCTURE_DOMDEC, &local_cells);
 
   ghost_init();
-  /* Initialise force and energy tables */
-  force_and_energy_tables_init();
+
 #ifdef P3M
   p3m_pre_init();
 #endif
@@ -286,6 +278,14 @@ void on_observable_calc() {
     reinit_magnetostatics = 0;
   }
 #endif /*ifdef ELECTROSTATICS */
+}
+
+void on_particle_charge_change() {
+  reinit_electrostatics = 1;
+  invalidate_obs();
+
+  /* the particle information is no longer valid */
+  partCfg().invalidate();
 }
 
 void on_particle_change() {

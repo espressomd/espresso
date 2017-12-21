@@ -4,6 +4,7 @@ from .lb cimport HydrodynamicInteraction
 from .ekboundaries import EKBoundary
 from . import utils
 import numpy as np
+from espressomd.utils import is_valid_type
 
 IF ELECTROKINETICS:
     cdef class Electrokinetics(HydrodynamicInteraction):
@@ -104,12 +105,12 @@ IF ELECTROKINETICS:
         def set_density(self, species=None, density=None, node=None):
             if species == None or density == None:
                 raise ValueError("species and density has to be set.")
-            if not isinstance(int, species):
+            if not is_valid_type(species, int):
                 raise ValueError("species needs to be an integer.")
             if node == None:
                 ek_set_density(species, density)
             else:
-                if not (isinstance(list, node) or isinstance(np.ndarray, node)):
+                if not (isinstance(node, list) or isinstance(node, np.ndarray)):
                     if len(node) != 3:
                         raise ValueError("node has to be an array of length 3 of integers.")
                 ek_node_set_density(species, node[0], node[1], node[2], density)
@@ -302,7 +303,7 @@ IF ELECTROKINETICS:
 
         property density:
             def __set__(self, value):
-                if isinstance(value, float) or isinstance(value, int):
+                if is_valid_type(value, float) or is_valid_type(value, int):
                     if ek_node_set_density(self.id, self.node[0], self.node[1], self.node[2], value) != 0:
                         raise Exception("Species has not been added to EK.")
 

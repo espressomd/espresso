@@ -1069,7 +1069,6 @@ void maggs_accumulate_charge_from_ghosts() {
 /** finds current lattice site of each particle.
     calculates charge interpolation on cube. */
 void maggs_distribute_particle_charges() {
-  int np;
   int first[SPACE_DIM];
   double q;
   double pos[SPACE_DIM], rel[SPACE_DIM];
@@ -2211,7 +2210,7 @@ void maggs_calc_forces()
 { 
   static int init = 1;
   static int Npart_old;
-  int i, c, np, d, index, Npart, ip; 
+  int d, index, Npart, ip; 
   double q;
   /* position of a particle in local lattice units */
   double pos[SPACE_DIM];

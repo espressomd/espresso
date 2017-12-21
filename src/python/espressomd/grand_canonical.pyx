@@ -22,12 +22,12 @@ cimport globals
 from globals cimport max_seen_particle
 
 es_error=1
-def is_valid_type(current_type):
+def is_valid_particle_type(current_type):
     return (not (isinstance(current_type, int) or current_type < 0 or current_type > globals.n_particle_types))
 
 
 def check_valid_type(current_type):
-    if is_valid_type(current_type):
+    if is_valid_particle_type(current_type):
         raise ValueError("type", current_type, "does not exist!")
 
 

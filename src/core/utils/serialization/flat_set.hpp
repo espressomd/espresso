@@ -9,12 +9,13 @@ template <typename Archive, typename V, typename C>
 void load(Archive &ar, boost::container::flat_set<V, C> &v,
           const unsigned int) {
   using value_type = typename boost::container::flat_set<V>::value_type;
-  typename boost::container::flat_set<V>::size_type count;
+  using size_type = typename boost::container::flat_set<V>::size_type;
+  size_type count;
 
   ar >> count;
   v.reserve(count);
 
-  for (int i = 0; i < count; i++) {
+  for (; count > 0; --count) {
     value_type e;
 
     ar >> e;

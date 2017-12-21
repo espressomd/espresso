@@ -37,7 +37,7 @@ class DDSGPUTest(ut.TestCase):
 
     def run_test_case(self):
         print("----------------------------------------------")
-        print("- Testcase dawaanr-and-dds-gpu.tcl")
+        print("- Testcase dawaanr-and-dds-gpu.py")
         print("----------------------------------------------")
 
         pf_dds_gpu = 2.34

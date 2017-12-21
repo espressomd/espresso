@@ -28,37 +28,23 @@
 
 namespace ScriptInterface {
 namespace Accumulators {
-
 class AutoUpdateAccumulators : public ScriptObjectRegistry<Accumulator> {
-  virtual void add_in_core(std::shared_ptr<Accumulator> obj_ptr) override {
-    if (obj_ptr->accumulator()->m_initialized) {
-      obj_ptr->accumulator()->m_autoupdate = true;
-      ::Accumulators::auto_update_accumulators.push_back(
-          obj_ptr->accumulator());
-    } else {
-      throw std::runtime_error(
-          "Accumulator not initialized with observable, please "
-          "associate an observable with the accumulator.");
-    }
+  void add_in_core(std::shared_ptr<Accumulator> obj_ptr) override {
+    ::Accumulators::auto_update_accumulators.push_back(obj_ptr->accumulator());
   }
-  virtual void remove_in_core(std::shared_ptr<Accumulator> obj_ptr) override {
+
+  void remove_in_core(std::shared_ptr<Accumulator> obj_ptr) override {
     auto it = std::find(::Accumulators::auto_update_accumulators.begin(),
                         ::Accumulators::auto_update_accumulators.end(),
                         obj_ptr->accumulator());
 
     if (it != ::Accumulators::auto_update_accumulators.end()) {
-      obj_ptr->accumulator()->m_autoupdate = false;
       ::Accumulators::auto_update_accumulators.erase(it);
 
     } else {
       throw std::runtime_error("Could not find Accumulator to remove");
-    };
-  };
-
-public:
-  virtual const std::string name() const override {
-    return "Accumulators::AutoUpdateAccumulators";
-  };
+    }
+  }
 };
 } /* namespace Accumulators */
 } /* namespace ScriptInterface */

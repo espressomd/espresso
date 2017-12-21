@@ -4,6 +4,7 @@ cimport globals
 from . cimport reaction
 from . cimport utils
 from .highlander import ThereCanOnlyBeOne
+from espressomd.utils import is_valid_type
 
 IF CATALYTIC_REACTIONS:
     __reaction_is_initiated = False
@@ -49,17 +50,17 @@ IF CATALYTIC_REACTIONS:
         """
 
         def validate_params(self):
-            if not isinstance(self._params["product_type"], int):
+            if not is_valid_type(self._params["product_type"], int):
                 raise ValueError("product_type has to be an int")
-            if not isinstance(self._params["reactant_type"], int):
+            if not is_valid_type(self._params["reactant_type"], int):
                 raise ValueError("reactant_type has to be an int")
-            if not isinstance(self._params["catalyzer_type"], int):
+            if not is_valid_type(self._params["catalyzer_type"], int):
                 raise ValueError("catalyzer_type has to be an int")
-            if not isinstance(self._params["ct_range"], float):
+            if not is_valid_type(self._params["ct_range"], float):
                 raise ValueError("ct_range has to be a float")
-            if not isinstance(self._params["ct_rate"], float):
+            if not is_valid_type(self._params["ct_rate"], float):
                 raise ValueError("ct_rate has to be a float")
-            if not isinstance(self._params["eq_rate"], float):
+            if not is_valid_type(self._params["eq_rate"], float):
                 raise ValueError("eq_rate has to be a float")
             if not isinstance(self._params["react_once"], bool):
                 raise ValueError("react_once has to be a bool")

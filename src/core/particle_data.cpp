@@ -192,8 +192,6 @@ void clear_particle_node() { particle_node.clear(); }
 */
 void realloc_local_particles(int part) {
   if (part >= max_local_particles) {
-    auto old_size = max_local_particles;
-
     /* round up part + 1 in granularity PART_INCREMENT */
     max_local_particles =
         PART_INCREMENT * ((part + PART_INCREMENT) / PART_INCREMENT);
@@ -217,7 +215,7 @@ int realloc_particlelist(ParticleList *l, int size) {
   Particle *old_start = l->part;
 
   PART_TRACE(fprintf(stderr, "%d: realloc_particlelist %p: %d/%d->%d\n",
-                     this_node, (void*) l, l->n, l->max, size));
+                     this_node, (void *)l, l->n, l->max, size));
 
   if (size < l->max) {
     if (size == 0)
@@ -433,7 +431,6 @@ void prefetch_particle_data(std::vector<int> ids) {
 }
 
 int place_particle(int part, double p[3]) {
-  int i;
   int retcode = ES_PART_OK;
 
   if (part < 0)
@@ -1006,8 +1003,6 @@ void local_rescale_particles(int dir, double scale) {
 }
 
 void added_particle(int part) {
-  int i;
-
   n_part++;
 
   if (part > max_seen_particle) {
@@ -1018,20 +1013,14 @@ void added_particle(int part) {
 }
 
 int local_change_bond(int part, int *bond, int _delete) {
-  IntList *bl;
-  Particle *p;
-  int bond_size;
-  int i;
-
-  p = local_particles[part];
+  auto p = local_particles[part];
   if (_delete)
     return try_delete_bond(p, bond);
 
-  bond_size = bonded_ia_params[bond[0]].num + 1;
-  bl = &(p->bl);
-  realloc_intlist(bl, bl->n + bond_size);
-  for (i = 0; i < bond_size; i++)
-    bl->e[bl->n++] = bond[i];
+  auto const bond_size = bonded_ia_params[bond[0]].num + 1;
+
+  std::copy_n(bond, bond_size, std::back_inserter(p->bl));
+
   return ES_OK;
 }
 
@@ -1041,7 +1030,8 @@ int try_delete_bond(Particle *part, int *bond) {
 
   // Empty bond means: delete all bonds
   if (!bond) {
-    realloc_intlist(bl, bl->n = 0);
+    bl->clear();
+
     return ES_OK;
   }
 
@@ -1065,9 +1055,8 @@ int try_delete_bond(Particle *part, int *bond) {
       // and we go on with deleting
       if (j > partners) {
         // New length of bond list
-        bl->n -= 1 + partners;
-        memmove(bl->e + i, bl->e + i + 1 + partners, sizeof(int) * (bl->n - i));
-        realloc_intlist(bl, bl->n);
+        bl->erase(bl->begin() + i, bl->begin() + i + 1 + partners);
+
         return ES_OK;
       }
       i += 1 + partners;
@@ -1087,9 +1076,7 @@ void remove_all_bonds_to(int identity) {
         if (bl->e[i + j] == identity)
           break;
       if (j <= partners) {
-        bl->n -= 1 + partners;
-        memmove(bl->e + i, bl->e + i + 1 + partners, sizeof(int) * (bl->n - i));
-        realloc_intlist(bl, bl->n);
+        bl->erase(bl->begin() + i, bl->begin() + i + 1 + partners);
       } else
         i += 1 + partners;
     }
@@ -1106,9 +1093,10 @@ void remove_all_bonds_to(int identity) {
 void local_change_exclusion(int part1, int part2, int _delete) {
   if (part1 == -1 && part2 == -1) {
     for (auto &p : local_cells.particles()) {
-      realloc_intlist(&p.el, p.el.n = 0);
-      return;
+      p.el.clear();
     }
+
+    return;
   }
 
   /* part1, if here */
@@ -1131,27 +1119,17 @@ void local_change_exclusion(int part1, int part2, int _delete) {
 }
 
 void try_add_exclusion(Particle *part, int part2) {
-  int i;
-  for (i = 0; i < part->el.n; i++)
+  for (int i = 0; i < part->el.n; i++)
     if (part->el.e[i] == part2)
       return;
 
-  realloc_intlist(&part->el, part->el.n + 1);
-  part->el.e[part->el.n++] = part2;
+  part->el.push_back(part2);
 }
 
 void try_delete_exclusion(Particle *part, int part2) {
-  IntList *el = &part->el;
-  int i;
+  IntList &el = part->el;
 
-  for (i = 0; i < el->n; i++) {
-    if (el->e[i] == part2) {
-      el->n--;
-      memmove(el->e + i, el->e + i + 1, sizeof(int) * (el->n - i));
-      realloc_intlist(el, el->n);
-      break;
-    }
-  }
+  el.erase(std::remove(el.begin(), el.end(), part2), el.end());
 }
 #endif
 
@@ -1191,9 +1169,9 @@ void add_partner(IntList *il, int i, int j, int distance) {
   for (k = 0; k < il->n; k += 2)
     if (il->e[k] == j)
       return;
-  realloc_intlist(il, il->n + 2);
-  il->e[il->n++] = j;
-  il->e[il->n++] = distance;
+
+  il->push_back(j);
+  il->push_back(distance);
 }
 }
 
@@ -1214,14 +1192,7 @@ void auto_exclusions(int distance) {
 
   /* partners is a list containing the currently found excluded particles for
      each particle, and their distance, as a interleaved list */
-  IntList *partners;
-
-  /* setup bond partners and distance list. Since we need to identify particles
-     via their identity, we use a full sized array */
-  partners =
-      (IntList *)Utils::malloc((max_seen_particle + 1) * sizeof(IntList));
-  for (p = 0; p <= max_seen_particle; p++)
-    init_intlist(&partners[p]);
+  std::unordered_map<int, IntList> partners;
 
   /* We need bond information */
   partCfg().update_bonds();
@@ -1277,9 +1248,7 @@ void auto_exclusions(int distance) {
     for (j = 0; j < partners[p].n; j++)
       if (p < partners[p].e[j])
         change_exclusion(p, partners[p].e[j], 0);
-    realloc_intlist(&partners[p], 0);
   }
-  free(partners);
 }
 
 #endif
