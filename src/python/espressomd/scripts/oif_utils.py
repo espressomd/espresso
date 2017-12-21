@@ -3,7 +3,6 @@ import math
 
 small_epsilon = 0.000000001
 large_number = 10000000.0
-pi = 3.1415926535897931
 output_precision = 14
 
 
@@ -15,6 +14,14 @@ def get_triangle_normal(a, b, c):
     """
     Returns the normal vector of a triangle given by points a,b,c.
 
+    Parameters
+    ----------
+    a : list of :obj:`float`
+          vector with 3 components, point a
+    b : list of :obj:`float`
+          vector with 3 components, point b
+    c : list of :obj:`float`
+          vector with 3 components, point c
     """
     n = [0.0, 0.0, 0.0]
     n[0] = (b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1])
@@ -23,10 +30,17 @@ def get_triangle_normal(a, b, c):
     return np.array(n)
 
 
+
+
 def norm(vect):
     """
     Returns the norm of a vector.
 
+    Parameters
+    ----------
+    vect : list of :obj:`float`
+          vector with 3 components
+           
     """
     v = np.array(vect)
     return np.sqrt(np.dot(v,v))
@@ -36,6 +50,13 @@ def vec_distance(a, b):
     """
     Returns the length of vector between points a and b.
 
+    Parameters
+    ----------
+    a : list of :obj:`float`
+          vector with 3 components, point a
+    b : list of :obj:`float`
+          vector with 3 components, point b
+
     """
     return norm(np.array(a) - np.array(b))
 
@@ -43,6 +64,16 @@ def vec_distance(a, b):
 def area_triangle(a, b, c):
     """
     Returns the area of a triangle given by points a,b,c.
+
+
+    Parameters
+    ----------
+    a : list of :obj:`float`
+          vector with 3 components, point a
+    b : list of :obj:`float`
+          vector with 3 components, point b
+    c : list of :obj:`float`
+          vector with 3 components, point c
 
     """
     n = get_triangle_normal(a, b, c)
@@ -53,6 +84,17 @@ def area_triangle(a, b, c):
 def angle_btw_triangles(P1, P2, P3, P4):
     """
     Returns the size of an angle between triangles given by points P2, P1, P3 and P2, P3, P4.
+
+    Parameters
+    ----------
+    P1 : list of :obj:`float`
+          vector with 3 components, point P1
+    P2 : list of :obj:`float`
+          vector with 3 components, point P2
+    P3 : list of :obj:`float`
+          vector with 3 components, point P3
+    P4 : list of :obj:`float`
+          vector with 3 components, point P4
 
     """
     n1 = get_triangle_normal(P2, P1, P3)
@@ -72,18 +114,23 @@ def angle_btw_triangles(P1, P2, P3, P4):
     if tmp11 >= 1.0:
         tmp11 = 0.0
     elif tmp11 <= -1.:
-        tmp11 = pi
+        tmp11 = np.pi
 
-    phi = pi - math.acos(tmp11)
+    phi = np.pi - math.acos(tmp11)
 
     if (np.dot(n1, np.array(P4)) - np.dot(n1, np.array(P1))) < 0:
-        phi = 2.0 * pi - phi
+        phi = 2.0 * np.pi - phi
     return phi
 
 
 def discard_epsilon(x):
     """
     Returns zero if the argument is too small.
+
+    Parameters
+    ----------
+    x : :obj:`float`
+          real number
 
     """
     if (x > -small_epsilon and x < small_epsilon):
@@ -97,6 +144,10 @@ def oif_neo_hookean_nonlin(lambd):
     """
     Defines NeoHookean nonlinearity.
 
+    Parameters
+    ----------
+    lambd : :obj:`float`
+          real number
     """
     # Defined by (19) from Dupin2007
     res = (pow(lambd, 0.5) + pow(lambd, -2.5)) / (lambd + pow(lambd, -3.))
@@ -106,6 +157,20 @@ def oif_neo_hookean_nonlin(lambd):
 def oif_calc_stretching_force(ks, pA, pB, dist0, dist):
     """
     Calculates nonlinear stretching forces between two points on an edge.
+        
+    Parameters
+    ----------
+    ks : :obj:`float`
+          coefficient of the stretching, spring stiffness
+    pA : list of :obj:`float`
+          position of the first particle
+    pB : list of :obj:`float`
+          position of the second particle
+    dist0 : :obj:`float`
+          relaxed distance btw particles
+    dist : :obj:`float`
+          current distance btw particles
+
 
     """
     # this has to correspond to the calculation in oif_local_forces.hpp: calc_oif_local
@@ -124,6 +189,19 @@ def oif_calc_linear_stretching_force(ks, pA, pB, dist0, dist):
     """
     Calculates linear stretching forces between two points on an edge.
 
+    Parameters
+    ----------
+    ks : :obj:`float`
+          coefficient of the stretching, spring stiffness
+    pA : list of :obj:`float`
+          position of the first particle
+    pB : list of :obj:`float`
+          position of the second particle
+    dist0 : :obj:`float`
+          relaxed distance btw particles
+    dist : :obj:`float`
+          current distance btw particles
+
     """
     dr = dist - dist0
     fac = ks * dr
@@ -136,6 +214,23 @@ def oif_calc_linear_stretching_force(ks, pA, pB, dist0, dist):
 def oif_calc_bending_force(kb, pA, pB, pC, pD, phi0, phi):
     """
     Calculates bending forces for four points on two adjacent triangles.
+
+    Parameters
+    ----------
+    kb : :obj:`float`
+          coefficient of the stretching, spring stiffness
+    pA : list of :obj:`float`
+          position of the first particle
+    pB : list of :obj:`float`
+          position of the second particle
+    pC : list of :obj:`float`
+          position of the third particle
+    pD : list of :obj:`float`
+          position of the fourth particle
+    phi0 : :obj:`float`
+          relaxed angle btw two triangles
+    phi : :obj:`float`
+          current angle btw two triangles
 
     """
     # this has to correspond to the calculation in oif_local_forces.hpp: calc_oif_local
@@ -155,6 +250,21 @@ def oif_calc_bending_force(kb, pA, pB, pC, pD, phi0, phi):
 def oif_calc_local_area_force(kal, pA, pB, pC, A0, A):
     """
     Calculates local area forces between three points in one triangle.
+
+    Parameters
+    ----------
+    kal : :obj:`float`
+          coefficient of the stretching, spring stiffness
+    pA : list of :obj:`float`
+          position of the first particle
+    pB : list of :obj:`float`
+          position of the second particle
+    pC : list of :obj:`float`
+          position of the third particle
+    A0 : :obj:`float`
+          relaxed area of the triangle
+    A : :obj:`float`
+          current area of the triangle
 
     """
     # this has to correspond to the calculation in oif_local_forces.hpp: calc_oif_local
@@ -189,6 +299,21 @@ def oif_calc_global_area_force(kag, pA, pB, pC, Ag0, Ag):
     """
     Calculates global area forces between three points in a triangle.
 
+    Parameters
+    ----------
+    kag : :obj:`float`
+          coefficient of the stretching, spring stiffness
+    pA : list of :obj:`float`
+          position of the first particle
+    pB : list of :obj:`float`
+          position of the second particle
+    pC : list of :obj:`float`
+          position of the third particle
+    Ag0 : :obj:`float`
+          relaxed surface area of the cell
+    Ag : :obj:`float`
+          current surface area of the cell
+
     """
     # this has to correspond to the calculation in oif_global_forces.hpp: add_oif_global_forces
     # as of now, corresponds to git commit f156f9b44dcfd3cef9dd5537a1adfc903ac4772a
@@ -220,6 +345,21 @@ def oif_calc_volume_force(kv, pA, pB, pC, V0, V):
     """
     Calculates volume forces for three points in a triangle.
 
+    Parameters
+    ----------
+    kv : :obj:`float`
+          coefficient of the stretching, spring stiffness
+    pA : list of :obj:`float`
+          position of the first particle
+    pB : list of :obj:`float`
+          position of the second particle
+    pC : list of :obj:`float`
+          position of the third particle
+    V0 : :obj:`float`
+          relaxed volume of the cell
+    V : :obj:`float`
+          current volume of the cell
+
     """
     # this has to correspond to the calculation in oif_global_forces.hpp: add_oif_global_forces
     # as of now, corresponds to git commit f156f9b44dcfd3cef9dd5537a1adfc903ac4772a
@@ -234,10 +374,21 @@ def oif_calc_volume_force(kv, pA, pB, pC, V0, V):
 def output_vtk_rhomboid(corner, a, b, c, out_file):
     """
     Outputs the VTK files for visualisation of a rhomboid in e.g. Paraview.
+    
+    Parameters
+    ----------
+    corner : list of :obj:`float`
+          3 floats specifying position of the corner
+    a : list of :obj:`float`
+          3 floats specifying first edga of the rhomboid
+    b : list of :obj:`float`
+          3 floats specifying second edga of the rhomboid
+    c : list of :obj:`float`
+          3 floats specifying third edga of the rhomboid
+    out_file : :obj:`str`
+          filename for the output
 
     """
-    if ".vtk" not in out_file:
-        print("output_vtk_rhomboid warning: A file with vtk format will be written without .vtk extension.")
     output_file = open(out_file, "w")
     output_file.write("# vtk DataFile Version 3.0\n")
     output_file.write("Data\n")
@@ -274,12 +425,25 @@ def output_vtk_cylinder(center, axis, length, radius, n, out_file):
     """
     Outputs the VTK files for visualisation of a cylinder in e.g. Paraview.
 
+    Parameters
+    ----------
+    center : list of :obj:`float`
+          3 floats specifying position of the center
+    axis : list of :obj:`float`
+          3 floats specifying the axis
+    length : :obj:`float`
+          half of the cylinder's height
+    radius : :obj:`float`
+          radius of cylinder
+    n : :obj:`int`
+          number of discretization sections
+    out_file : :obj:`str`
+          filename for the output
+          
     """
     # L is the half height of the cylinder
     # only vertical cylinders are supported for now, i.e. with normal (0.0, 0.0, 1.0)
 
-    if ".vtk" not in out_file:
-        print("output_vtk_cylinder warning: A file with vtk format will be written without .vtk extension.")
     check_axis = True
     if axis[0]!=0.0:
         check_axis = False
@@ -288,12 +452,11 @@ def output_vtk_cylinder(center, axis, length, radius, n, out_file):
     if axis[2]==0.0:
         check_axis = False
     if check_axis is False:
-        print("output_vtk_cylinder: Output for this type of cylinder is not supported yet.")
-        return
+        raise Exception("output_vtk_cylinder: Output for this type of cylinder is not supported yet.")
     axisZ = 1.0
 
     # setting points on perimeter
-    alpha = 2 * pi / n
+    alpha = 2 * np.pi / n
     points = 2 * n
 
     # shift center to the bottom circle
@@ -338,13 +501,16 @@ def output_vtk_lines(lines, out_file):
     """
     Outputs the VTK files for visualisation of lines in e.g. Paraview.
 
+    Parameters
+    ----------
+    lines : list of :obj:`float`
+          lines is a list of pairs of points p1, p2
+          each pair represents a line segment to output to vtk
+          each line in lines contains 6 floats: p1x, p1y, p1z, p2x, p2y, p2z
+    out_file : :obj:`str`
+          filename for the output
+ 
     """
-    # lines is a list of pairs of points p1, p2
-    # each pair represents a line segment to output to vtk
-    # each line in lines contains 6 floats: p1x, p1y, p1z, p2x, p2y, p2z
-
-    if ".vtk" not in out_file:
-        print("output_vtk_lines warning: A file with vtk format will be written without .vtk extension.")
 
     n_lines = len(lines)
 
@@ -364,43 +530,3 @@ def output_vtk_lines(lines, out_file):
 
     output_file.close()
     return 0
-
-
-def get_lb_interpolated_velocity(position, lbf, system, fluid_agrid):
-    # position is a vector [x,y,z], in which we want the fluid velocity
-
-    # since the fluid node [0,0,0] is at the position [0.5, 0.5, 0.5], we need to shift, fold and rescale
-    shifted_position = position - np.array(0.5*fluid_agrid, 0.5*fluid_agrid, 0.5*fluid_agrid)
-    shifted_position = np.mod(shifted_position, system.box_l)/fluid_agrid
-
-    # these six variables are not positions, but lattice indices
-    x_lower = math.floor(shifted_position[0])
-    x_upper = math.ceil(shifted_position[0])
-    y_lower = math.floor(shifted_position[1])
-    y_upper = math.ceil(shifted_position[1])
-    z_lower = math.floor(shifted_position[2])
-    z_upper = math.ceil(shifted_position[2])
-
-    vel000 = np.array(lbf[x_lower, y_lower, z_lower].velocity)
-    vel100 = np.array(lbf[x_upper, y_lower, z_lower].velocity)
-    vel010 = np.array(lbf[x_lower, y_upper, z_lower].velocity)
-    vel001 = np.array(lbf[x_lower, y_lower, z_upper].velocity)
-    vel110 = np.array(lbf[x_upper, y_upper, z_lower].velocity)
-    vel101 = np.array(lbf[x_upper, y_lower, z_upper].velocity)
-    vel011 = np.array(lbf[x_lower, y_upper, z_upper].velocity)
-    vel111 = np.array(lbf[x_upper, y_upper, z_upper].velocity)
-
-    x = shifted_position[0] - x_lower
-    y = shifted_position[1] - y_lower
-    z = shifted_position[2] - z_lower
-
-    interpolated_velocity = vel000 * (1 - x) * (1 - y) * (1 - z) \
-        + vel001 * (1 - x) * (1 - y) * z \
-        + vel010 * (1 - x) * y * (1 - z) \
-        + vel100 * x * (1 - y) * (1 - z) \
-        + vel110 * x * y * (1 - z) \
-        + vel101 * x * (1 - y) * z \
-        + vel011 * (1 - x) * y * z \
-        + vel111 * x * y * z
-
-    return interpolated_velocity

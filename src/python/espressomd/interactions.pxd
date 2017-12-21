@@ -281,7 +281,6 @@ cdef extern from "interaction_data.hpp":
         Fene_bond_parameters fene
         Oif_global_forces_bond_parameters oif_global_forces
         Oif_local_forces_bond_parameters oif_local_forces
-        #Oif_out_direction_bond_parameters oif_out_direction
         Harmonic_bond_parameters harmonic
         Harmonic_dumbbell_bond_parameters harmonic_dumbbell
         Angle_bond_parameters angle

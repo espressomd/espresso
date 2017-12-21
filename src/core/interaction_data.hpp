@@ -577,11 +577,6 @@ typedef struct {
     double kvisc;
 } Oif_local_forces_bond_parameters;
 
-/** Parameters for oif_out_direction */
-typedef struct {
-
-} Oif_out_direction_bond_parameters;
-
 /** Parameters for harmonic bond Potential */
 typedef struct {
   double k;
@@ -794,7 +789,6 @@ typedef union {
   Fene_bond_parameters fene;
   Oif_global_forces_bond_parameters oif_global_forces;
   Oif_local_forces_bond_parameters oif_local_forces;
-  Oif_out_direction_bond_parameters oif_out_direction;
   Harmonic_bond_parameters harmonic;
 #ifdef ROTATION
   Harmonic_dumbbell_bond_parameters harmonic_dumbbell;

@@ -241,7 +241,6 @@ void add_oif_global_forces(double *area_volume,
   for (auto &p : local_cells.particles()) {
     j = 0;
     p1 = &p;
-    // printf("i=%d neigh=%d\n", i, p1->bl.n);
     while (j < p1->bl.n) {
       /* bond type */
       type_num = p1->bl.e[j++];
@@ -249,8 +248,6 @@ void add_oif_global_forces(double *area_volume,
       type = iaparams->type;
       n_partners = iaparams->num;
       id = p1->p.mol_id;
-      // printf("neigh=%d, type=%d type_num=%d\n", p1->bl.n-1, type, type_num);
-      // printf("id %d molType %d\n", id, molType);
       if (type == BONDED_IA_OIF_GLOBAL_FORCES &&
           id == molType) { // BONDED_IA_OIF_GLOBAL_FORCES with correct molType
         test++;
@@ -354,7 +351,6 @@ void add_oif_global_forces(double *area_volume,
         VOL_vv=(VOL_volume - iaparams->p.oif_global_forces.V0)/iaparams->p.oif_global_forces.V0;          
         for(k=0;k<3;k++) {
           VOL_force[k]=iaparams->p.oif_global_forces.kv * VOL_vv * VOL_A * VOL_norm[k]/VOL_dn * 1.0 / 3.0;
-          //printf("%e ",force[k]);
           p1->f.f[k] += VOL_force[k]; 
           p2->f.f[k] += VOL_force[k];
           p3->f.f[k] += VOL_force[k];
@@ -365,7 +361,6 @@ void add_oif_global_forces(double *area_volume,
           h[k]=1.0/3.0 *(p11[k]+p22[k]+p33[k]);
         }
         deltaA = (area - iaparams->p.oif_global_forces.A0_g)/iaparams->p.oif_global_forces.A0_g;
-        //deltaA = (area - iaparams->p.oif_global_forces.A0_g)/1.0;
         vecsub(h,p11,m1);
         vecsub(h,p22,m2);
         vecsub(h,p33,m3);  

@@ -59,7 +59,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
     double dx[3],fac,dr,len2,len,lambda;
     double A,h[3],rh[3],hn;
     double m1[3],m2[3],m3[3];
-    double v[3], len_new, len_old, def_vel;
+    double v[3], def_vel;
     double m1_length,m2_length,m3_length,t;
 
 	// first find out which particle out of p1, p2 (possibly p3, p4) is not a ghost particle. In almost all cases it is p2, however, it might be other one. we call this particle reference particle.
@@ -120,7 +120,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
                         fp3[i] = fp4[i] + CC[i];
                     }
 				} else {
-					printf("Something wrong in oif_local_forces.hpp: All particles in a bond are ghost particles, impossible to unfold the positions...\n");
+                    throw std::runtime_error("Something wrong in oif_local_forces.hpp: All particles in a bond are ghost particles, impossible to unfold the positions...\n");
 					return 0;
 				}
 			}
@@ -163,35 +163,12 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
     
      // viscous force
     if (iaparams->p.oif_local_forces.kvisc > TINY_OIF_ELASTICITY_COEFFICIENT) {	// to be implemented....
-        //vecsub(fp2,fp3,dx);
-        //len2 = sqrlen(dx);
-        //len = sqrt(len2);
-        //dr = len - iaparams->p.oif_local_forces.r0;
-        //fac = -iaparams->p.oif_local_forces.kslin * dr; // no normalization
-        //for(i=0; i<3; i++) {
-            //force2[i] += fac*dx[i]/len;
-            //force3[i] += -fac*dx[i]/len;
-        //}
-        
-        // KOD od Mata:
+
         vecsub(fp2,fp3,dx);
         len2 = sqrlen(dx);
         len = sqrt(len2);
           
-		//len_new = sqrt(pow((fp2[0] +  p2->m.v[0]) - (fp3[0] +  p3->m.v[0]),2) + pow((fp2[1] +  p2->m.v[1]) - (fp3[1] +  p3->m.v[1]),2) + pow((fp2[2] +  p2->m.v[2]) - (fp3[2] +  p3->m.v[2]),2));
-		//len_old = sqrt(pow((fp2[0] -  p2->m.v[0]) - (fp3[0] -  p3->m.v[0]),2) + pow((fp2[1] -  p2->m.v[1]) - (fp3[1] -  p3->m.v[1]),2) + pow((fp2[2] -  p2->m.v[2]) - (fp3[2] -  p3->m.v[2]),2));
 
-		//printf("future length %lf\n", len_new);
-		//printf("old length %lf\n", len_old);    
-		//printf("actual length %lf\n", len);
-
-		//if ( - len_old + len < 0 ) {
-		//	def_vel = -sqrt(pow(p2->m.v[0] - p3->m.v[0],2) + pow(p2->m.v[1] - p3->m.v[1],2) + pow(p2->m.v[2] - p3->m.v[2],2));}
-		//else if ( - len_old + len > 0 ) {
-		//	def_vel = +sqrt(pow(p2->m.v[0] - p3->m.v[0],2) + pow(p2->m.v[1] - p3->m.v[1],2) + pow(p2->m.v[2] - p3->m.v[2],2));}
-		//else { def_vel = 0; }
- 	 
-		//fac = -iaparams->p.oif_local_forces.kvisc*def_vel;
   
 		/* unscale velocities ! */
 		v[0] = (p3->m.v[0] - p2->m.v[0])/time_step;
@@ -207,8 +184,6 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
 			//force3[i] -= iaparams->p.oif_local_forces.kvisc*v[i];
 		//}
 
-
-		
 		// Variant B
 		// Here the force is the projection of relative velocity btw points onto line btw the points
 		
@@ -237,15 +212,12 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
        forceT1 is restoring force for triangle p1,p2,p3 and force2T restoring force for triangle p2,p3,p4
        p1 += forceT1; p2 -= 0.5*forceT1+0.5*forceT2; p3 -= 0.5*forceT1+0.5*forceT2; p4 += forceT2; */
     if (iaparams->p.oif_local_forces.kb > TINY_OIF_ELASTICITY_COEFFICIENT) {
-        if (iaparams->p.oif_local_forces.phi0 < 0.001 || iaparams->p.oif_local_forces.phi0 > 2*M_PI - 0.001)
-            printf("oif_local_forces.hpp, calc_oif_local: Resting angle is close to zero!\n");
         get_n_triangle(fp2,fp1,fp3,n1);
         dn1=normr(n1);
         get_n_triangle(fp2,fp3,fp4,n2);
         dn2=normr(n2);
         phi = angle_btw_triangles(fp1,fp2,fp3,fp4);
-        if (phi < 0.001 || phi > 2*M_PI - 0.001) printf("oif_local_forces.hpp, calc_oif_local: Angle approaches 0 or 2*Pi\n");
-        //aa = (phi - iaparams->p.oif_local_forces.phi0)/iaparams->p.oif_local_forces.phi0;
+
         aa = (phi - iaparams->p.oif_local_forces.phi0); // no renormalization by phi0, to be consistent with Krueger and Fedosov
         fac = iaparams->p.oif_local_forces.kb * aa;
         for(i=0; i<3; i++) {

@@ -168,23 +168,20 @@ class Mesh:
         self.angles = []
         self.neighbors = []
         self.ids_extremal_points = [0, 0, 0, 0, 0, 0, 0]
-        
-        if (nodes_file is None) or (triangles_file is None):
-            print("OifMesh warning: one of nodes_file or triangles_file was not given. "
-                  "May raise concern when Mesh object was being created.")
-        else:
+
+        if not ((nodes_file is None) or (triangles_file is None)):
             if not (isinstance(nodes_file,str) and isinstance(triangles_file,str)):
-                raise TypeError("Filenames must be strings.")
+                raise TypeError("Mesh: Filenames must be strings.")
             if not ((len(resize) == 3) and isinstance(resize[0],float) and isinstance(resize[1],float) and isinstance(resize[2],float)):
-                raise TypeError("Pos must be a list of three floats.") 
+                raise TypeError("Mesh: Pos must be a list of three floats.") 
             if not isinstance(part_type,int):
-                raise TypeError("part_type must be integer.") 
+                raise TypeError("Mesh: part_type must be integer.") 
             if not isinstance(part_mass,float):
-                raise TypeError("part_mass must be float.") 
+                raise TypeError("Mesh: part_mass must be float.") 
             if not isinstance(normal,bool):
-                raise TypeError("normal must be bool.") 
+                raise TypeError("Mesh: normal must be bool.") 
             if not isinstance(check_orientation,bool):
-                raise TypeError("check_orientation must be bool.") 
+                raise TypeError("Mesh: check_orientation must be bool.") 
             # reading the mesh point positions from file
             in_file = open(nodes_file, "r")
             nodes_coord = in_file.read().split("\n")
@@ -196,7 +193,7 @@ class Mesh:
                 coords = np.array(resize) * line
                 tmp_fixed_point = FixedPoint(coords, len(self.points))
                 self.points.append(tmp_fixed_point)
-
+    
             # searching for extremal points IDs
             x_min = large_number
             x_max = -large_number
@@ -224,7 +221,7 @@ class Mesh:
                 if coords[2] > z_max:
                     z_max = coords[2]
                     self.ids_extremal_points[5] = tmp_fixed_point.get_id()
-
+    
             # reading the triangle incidences from file
             in_file = open(triangles_file, "r")
             triangles_incid = in_file.read().split("\n")
@@ -235,15 +232,11 @@ class Mesh:
                 incid = np.array([int(x) for x in line.split()])
                 tmp_triangle = Triangle(self.points[incid[0]], self.points[incid[1]], self.points[incid[2]])
                 self.triangles.append(tmp_triangle)
-
+    
             if check_orientation is True:
                 # check whether all triangles in file had the same orientation; if not, correct the orientation
-                print("OifMesh: Checking orientation of triangles (and repairing if needed). "
-                      "For large meshes this may take a while. "
-                      "If you are certain your mesh is correct, this can be skipped using the OifCellType "
-                      "option check_orientation = False.")
                 self.check_orientation()
-
+    
             # creating list of edge incidences from triangle incidences
             # using temporary list of edge incidences
             tmp_edge_incidences = []
@@ -260,7 +253,7 @@ class Mesh:
             for tmp_incid in tmp_edge_incidences:
                 tmp_edge = Edge(self.points[tmp_incid[0]], self.points[tmp_incid[1]])
                 self.edges.append(tmp_edge)
-
+    
             # creating list angles (former bending incidences) from triangle incidences
             for edge in self.edges:
                 pa = edge.A.id
@@ -337,7 +330,7 @@ class Mesh:
                     pc = tmp
                 tmp_angle = Angle(self.points[pc], self.points[pa], self.points[pb], self.points[pd])
                 self.angles.append(tmp_angle)
-
+    
             # creating list of three neighbors for membrane collision
             if normal is True:
                 for point in self.points:
@@ -559,7 +552,6 @@ class Mesh:
                             tmp_triangle_list_ok.append(tmp_triangle)
                         else:
                             tmp_triangle_list_ok.append(corrected_triangle)
-                            print("OifMesh: Correcting orientation of triangle.")
                         tmp_triangle_list.pop(i)
                         break
                 i += 1
@@ -576,7 +568,6 @@ class Mesh:
             for tmp_triangle in self.triangles:
                     self.triangles[i] = Triangle(tmp_triangle.A, tmp_triangle.C, tmp_triangle.B)
                     i += 1
-        print("OifMesh: Triangulation correct.")
         return 0
 
     def surface(self):
@@ -607,8 +598,7 @@ class Mesh:
         # this is useful after the mesh correction
         # output of mesh nodes can be done from OifCell (this is because their position may change)
         if triangles_file is None:
-            print("OifMesh: No file_name provided for triangles. Will use triangles.dat")
-            triangles_file = "triangles.dat"
+            raise Exception("OifMesh: No file_name provided for triangles. Quitting.")
         output_file = open(triangles_file, "w")
         for t in self.triangles:
             output_file.write(str(t.A.id) + " " + str(t.B.id) + " " + str(t.C.id) + "\n")
@@ -649,19 +639,15 @@ class OifCellType:  # analogous to oif_template
         if (nodes_file == "") or (triangles_file == ""):
             raise Exception("OifCellType: One of nodesfile or trianglesfile is missing. Quitting.")
         if not (isinstance(nodes_file,str) and isinstance(triangles_file,str)):
-            raise TypeError("Filenames must be strings.")
+            raise TypeError("OifCellType: Filenames must be strings.")
         if not ((len(resize) == 3) and isinstance(resize[0],float) and isinstance(resize[1],float) and isinstance(resize[2],float)):
-            raise TypeError("resize must be a list of three floats.") 
+            raise TypeError("OifCellType: Resize must be a list of three floats.") 
         if not (isinstance(ks,float) and isinstance(ks,float) and isinstance(kb,float) and isinstance(kal,float) and isinstance(kag,float) and isinstance(kv,float) and isinstance(kvisc,float)):
-            raise TypeError("elastic parameters must be floats.")
+            raise TypeError("OifCellType: Elastic parameters must be floats.")
         if not isinstance(normal,bool):
-            raise TypeError("normal must be bool.") 
+            raise TypeError("OifCellType: normal must be bool.") 
         if not isinstance(check_orientation,bool):
-            raise TypeError("check_orientation must be bool.")     
-        if normal is False:
-            print("OifCellType warning: Option normal is not used => membrane collision will not work.")
-        if check_orientation is False:
-            print("OifCellType warning: Check of orientation of triangles is switched off.")
+            raise TypeError("OifCellType: check_orientation must be bool.")     
         if (ks != 0.0) and (kslin != 0.0):
             raise Exception("OifCellType: Cannot use linear and nonlinear stretching at the same time. Quitting.")
         self.system = system
@@ -687,16 +673,11 @@ class OifCellType:  # analogous to oif_template
                                                        kal=kal, kvisc=kvisc)
                 self.local_force_interactions.append([tmp_local_force_inter, [angle.A, angle.B, angle.C, angle.D]])
                 self.system.bonded_inter.add(tmp_local_force_inter)
-        else:
-            print("OifCellType warning: No local interactions created when creating OifCellType.")
         if (kag != 0.0) or (kv != 0.0):
             surface = self.mesh.surface()
             volume = self.mesh.volume()
             self.global_force_interaction = OifGlobalForces(A0_g=surface, ka_g=kag, V0=volume, kv=kv)
             self.system.bonded_inter.add(self.global_force_interaction)
-        else:
-            print("OifCellType warning: No global interactions created when creating OifCellType.")
-        self.print_info()
 
     def print_info(self):
         print("\nThe following OifCellType was created: ")
@@ -774,7 +755,6 @@ class OifCell:
                 p.part.add_bond((tmp_out_direction_interaction, self.mesh.neighbors[p.id].A.part_id,
                                  self.mesh.neighbors[p.id].B.part_id, self.mesh.neighbors[p.id].C.part_id))
 
-        self.print_info()
 
 
     def get_origin(self):
@@ -869,10 +849,7 @@ class OifCell:
 
     def output_vtk_pos(self, file_name=None):
         if file_name is None:
-            print("OifCell: No file_name provided for vtk output.")
-            return
-        if ".vtk" not in file_name:
-            print("OifCell warning: A file with vtk format will be written without .vtk extension.")
+            raise Exception("OifCell: No file_name provided for vtk output. Quitting")
         n_points = len(self.mesh.points)
         n_triangles = len(self.mesh.triangles)
         output_file = open(file_name, "w")
@@ -891,10 +868,7 @@ class OifCell:
 
     def output_vtk_pos_folded(self, file_name=None):
         if file_name is None:
-            print("OifCell: No file_name provided for vtk output.")
-            return
-        if ".vtk" not in file_name:
-            print("OifCell warning: A file with vtk format will be written without .vtk extension.")
+            raise Exception("OifCell: No file_name provided for vtk output. Quitting.")
         n_points = len(self.mesh.points)
         n_triangles = len(self.mesh.triangles)
         
@@ -922,22 +896,18 @@ class OifCell:
 
     def append_point_data_to_vtk(self, file_name=None, data_name=None, data=None, first_append=None):
         if file_name is None:
-            print("OifCell: append_point_data_to_vtk: No file_name provided.")
-            return
+            raise Exception("OifCell: append_point_data_to_vtk: No file_name provided. Quitting.")
         if data is None:
-            print("OifCell: append_point_data_to_vtk: No data provided.")
+            raise Exception("OifCell: append_point_data_to_vtk: No data provided. Quitting.")
             return
         if data_name is None:
-            print("OifCell: append_point_data_to_vtk: No data_name provided.")
-            return
+            raise Exception("OifCell: append_point_data_to_vtk: No data_name provided. Quitting.")
         if first_append is None:
-            print("OifCell: append_point_data_to_vtk: Need to know whether this is the first data list to be "
-                  "appended for this file.")
-            return
+            raise Exception("OifCell: append_point_data_to_vtk: Need to know whether this is the first data list to be "
+                  "appended for this file. Quitting.")
         n_points = self.get_n_nodes()
         if (len(data) != n_points):
-            print ("OifCell: append_point_data_to_vtk: Number of data points does not match number of mesh points.")
-            return
+            raise Exception("OifCell: append_point_data_to_vtk: Number of data points does not match number of mesh points. Quitting.")
         output_file = open(file_name, "a")
         if first_append is True:
             output_file.write("POINT_DATA " + str(n_points) + "\n")
@@ -949,15 +919,12 @@ class OifCell:
 
     def output_raw_data(self, file_name=None, data=None):
         if file_name is None:
-            print ("OifCell: output_raw_data: No file_name provided.")
-            return
+            raise Exception("OifCell: output_raw_data: No file_name provided. Quitting.")
         if data is None:
-            print ("OifCell: output_raw_data: No data provided.")
-            return
+            raise Exception("OifCell: output_raw_data: No data provided. Quitting.")
         n_points = self.get_n_nodes()
         if (len(data) != n_points):
-            print ("OifCell: output_raw_data: Number of data points does not match number of mesh points.")
-            return
+            raise Exception("OifCell: output_raw_data: Number of data points does not match number of mesh points. Quitting.")
         output_file = open(file_name, "w")
         for p in self.mesh.points:
             output_file.write(" ".join(map(str,data[p.id])) + "\n")
@@ -965,8 +932,7 @@ class OifCell:
 
     def output_mesh_points(self, file_name=None):
         if file_name is None:
-            print ("OifCell: No file_name provided for mesh nodes output.")
-            return
+            raise Exception("OifCell: No file_name provided for mesh nodes output. Quitting.")
         output_file = open(file_name, "w")
         center = self.get_origin()
         for p in self.mesh.points:
@@ -976,8 +942,7 @@ class OifCell:
 
     def set_mesh_points(self, file_name=None):
         if file_name is None:
-            print ("OifCell: No file_name provided for set_mesh_points. ")
-            return
+            raise Exception("OifCell: No file_name provided for set_mesh_points. Quitting.")
         center = self.get_origin()
         n_points = self.get_n_nodes()
 
@@ -987,9 +952,8 @@ class OifCell:
         # removes a blank line at the end of the file if there is any:
         nodes_coord = filter(None, nodes_coord)  # here we have list of lines with triplets of strings
         if len(nodes_coord) != n_points:
-            print ("OifCell: Mesh nodes not set to new positions: "
-                  "number of lines in the file does not equal number of Cell nodes.")
-            return
+            raise Exception("OifCell: Mesh nodes not set to new positions: "
+                  "number of lines in the file does not equal number of Cell nodes. Quitting.")
         else:
             i = 0
             for line in nodes_coord:  # extracts coordinates from the string line
@@ -1032,16 +996,14 @@ class OifCell:
 
         for i in range(0,6):
             if (el_forces[i] != 0) and (el_forces[i] != 1):
-                print("OifCell: elastic_forces: Incorrect argument. el_forces has to be a sixtuple of 0s and 1s, "
+                raise Exception("OifCell: elastic_forces: Incorrect argument. el_forces has to be a sixtuple of 0s and 1s, "
                       "specifying which elastic forces will be calculated. The order in the sixtuple is (ks, kb, "
                       "kal, kag, kv, total).")
-                return
         for i in range(0,6):
             if (f_metric[i] != 0) and (f_metric[i] != 1):
-                print("OifCell: elastic_forces: Incorrect argument. f_metric has to be a sixtuple of 0s and 1s, "
+                raise Exception("OifCell: elastic_forces: Incorrect argument. f_metric has to be a sixtuple of 0s and 1s, "
                       "specifying which f_metric will be calculated. The order in the sixtuple is (ks, kb, kal, "
                       "kag, kv, total)")
-                return
         # calculation of stretching forces and f_metric
         if (el_forces[0] == 1) or (el_forces[5] == 1) or (f_metric[0] == 1) or (f_metric[5] == 1):
             # initialize list
@@ -1224,9 +1186,8 @@ class OifCell:
         # output vtk (folded)
         if vtk_file is not None:
             if el_forces == (0, 0, 0, 0, 0, 0):
-                print("OifCell: elastic_forces: The option elastic_forces was not used. "
+                raise Exception("OifCell: elastic_forces: The option elastic_forces was not used. "
                       "Nothing to output to vtk file.")
-                return
             self.output_vtk_pos_folded(vtk_file)
             first = True
             if el_forces[0] == 1:
@@ -1257,10 +1218,9 @@ class OifCell:
         # output raw data
         if raw_data_file is not None:
             if (el_forces[0] + el_forces[1] + el_forces[2] + el_forces[3] + el_forces[4] + el_forces[5]) != 1:
-                print("OifCell: elastic_forces: Only one type of elastic forces can be written into one "
+                raise Exception("OifCell: elastic_forces: Only one type of elastic forces can be written into one "
                       "raw_data_file. If you need several, please call OifCell.elastic_forces multiple times - "
                       "once per elastic force.")
-                return
             if el_forces[0] == 1:
                 self.output_raw_data(file_name=raw_data_file, data=stretching_forces_list)
             if el_forces[1] == 1:
