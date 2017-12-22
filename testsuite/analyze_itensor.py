@@ -48,10 +48,10 @@ class AnalyzeITensor(ut.TestCase):
         # Partilces of type 0
         I0=self.i_tensor(range(0,10,1))
         
-        np.testing.assert_allclose(I0, self.system.analysis.momentofinertiamatrix(p_type=0),atol=1E-9)
+        np.testing.assert_allclose(I0, self.system.analysis.moment_of_inertia_matrix(p_type=0),atol=1E-9)
         # type=1
         I1=self.i_tensor(range(20,30,1))
-        self.assertTrue(np.allclose(I1, self.system.analysis.momentofinertiamatrix(p_type=1),atol=1E-9))
+        self.assertTrue(np.allclose(I1, self.system.analysis.moment_of_inertia_matrix(p_type=1),atol=1E-9))
 
         
         
