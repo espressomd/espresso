@@ -44,8 +44,6 @@ public:
                     {"direction", m_hollowcone->direction()}});
   }
 
-  const std::string name() const override { return "Shapes::HollowCone"; }
-
   std::shared_ptr<::Shapes::Shape> shape() const override {
     return m_hollowcone;
   }

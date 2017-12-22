@@ -40,11 +40,11 @@ class Exclusions(ut.TestCase):
 
         self.s.part[0].add_exclusion(1)
         self.s.part[0].add_exclusion(2)
-        self.assertEqual(self.s.part[0].exclusions, [1, 2])
+        self.assertTrue( (self.s.part[0].exclusions == [1, 2]).all() )
         self.s.part[0].delete_exclusion(1)
         self.assertEqual(self.s.part[0].exclusions, [2])
         self.s.part[0].delete_exclusion(2)
-        self.assertEqual(self.s.part[0].exclusions, [])
+        self.assertEqual( list(self.s.part[0].exclusions), [])
 
     def test_transfer(self):
         self.s.part.add(id=0, pos=[0, 0, 0], v=[1., 1., 1])
@@ -56,7 +56,7 @@ class Exclusions(ut.TestCase):
 
         for i in range(15):
             self.s.integrator.run(100)
-            self.assertEqual(self.s.part[0].exclusions, [1, 2, 3])
+            self.assertTrue( (self.s.part[0].exclusions == [1, 2, 3]).all() )
 
     @ut.skipIf(not espressomd.has_features(['LENNARD_JONES']), "Skipping test")
     def test_particle_property(self):
@@ -127,7 +127,7 @@ class Exclusions(ut.TestCase):
         self.s.part.add(id=1, pos=[1, 0, 0], type=0, q=-1.)
 
         # Small alpha means large short-range contribution
-        self.s.actors.add(P3M(bjerrum_length=1, r_cut=3.0, accuracy=1e-3,
+        self.s.actors.add(P3M(prefactor=1, r_cut=3.0, accuracy=1e-3,
                                   mesh=32, cao=7, alpha=0.1, tune=False))
 
         # Only short-range part of the coulomb energy

@@ -95,12 +95,12 @@ n_part = int(volume * density)
 for i in range(n_part):
     system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
 
-system.analysis.distto(0)
+system.analysis.dist_to(0)
 
 print("Simulate {} particles in a cubic simulation box {} at density {}."
       .format(n_part, box_l, density).strip())
 print("Interactions:\n")
-act_min_dist = system.analysis.mindist()
+act_min_dist = system.analysis.min_dist()
 print("Start with minimal distance {}".format(act_min_dist))
 
 system.cell_system.max_num_cells = 2744
@@ -114,8 +114,8 @@ for i in range(n_part / 2 - 1):
 #############################################################
 
 print("\nSCRIPT--->Create p3m\n")
-#p3m = electrostatics.P3M_GPU(bjerrum_length=2.0, accuracy=1e-2)
-p3m = electrostatics.P3M(bjerrum_length=2.0, accuracy=1e-2)
+#p3m = electrostatics.P3M_GPU(prefactor=2.0, accuracy=1e-2)
+p3m = electrostatics.P3M(prefactor=2.0, accuracy=1e-2)
 
 print("\nSCRIPT--->Add actor\n")
 system.actors.add(p3m)
@@ -161,7 +161,7 @@ i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
     system.integrator.run(warm_steps)
     # Warmup criterion
-    act_min_dist = system.analysis.mindist()
+    act_min_dist = system.analysis.min_dist()
     i += 1
 
 #   Increase LJ cap

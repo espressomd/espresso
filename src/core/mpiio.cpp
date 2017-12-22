@@ -57,14 +57,16 @@
 #include "mpiio.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
+#include "errorhandling.hpp"
+
+#include <mpi.h>
+
 #include <cstring>
 #include <errno.h>
 #include <string>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <vector>
-
-#include <mpi.h>
 
 /** Dumps arr of size len starting from prefix pref of type T using
  * MPI_T as MPI datatype. Beware, that T and MPI_T have to match!
@@ -145,7 +147,7 @@ static void dump_info(std::string fn, unsigned fields) {
 void mpi_mpiio_common_write(const char *filename, unsigned fields) {
   std::string fnam(filename);
   int nlocalpart = cells_get_n_particles(), pref = 0, bpref = 0;
-  int rank, ret;
+  int rank;
   // Keep static buffers in order not having to allocate them on every
   // function call
   static std::vector<double> pos, vel;
@@ -373,7 +375,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
   local_particles = Utils::realloc(
       local_particles, sizeof(Particle *) * nglobalpart);
   for (int i = 0; i < nglobalpart; ++i)
-    local_particles[i] = NULL;
+    local_particles[i] = nullptr;
   n_part = nglobalpart;
   max_seen_particle = nglobalpart;
 
@@ -437,15 +439,14 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
 
     for (int i = 0; i < nlocalpart; ++i) {
       int blen = boff[i + 1] - boff[i];
-      IntList *il = &local_particles[id[i]]->bl;
-      realloc_intlist(il, blen);
-      memcpy(il->e, &bond[boff[i]], blen * sizeof(int));
-      il->n = blen;
+      auto &bl = local_particles[id[i]]->bl;
+      bl.resize(blen);
+      std::copy_n(&bond[boff[i]], blen, bl.begin());
     }
   }
 
   if (rank == 0)
     clear_particle_node();
-  
+
   on_particle_change();
 }

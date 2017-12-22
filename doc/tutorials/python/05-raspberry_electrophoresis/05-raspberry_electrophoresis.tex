@@ -235,7 +235,7 @@ should be around $1$, while the friction should be set around $20.$ The grid spa
 {\small\vspace{0,2cm}
 \begin{pypresso}[numbers=none]
 system.galilei.kill_particle_motion()
-lb = espressomd.lb.LBFluid_GPU(dens=1., visc=3., agrid=1., tau=time_step, fric=20)
+lb = espressomd.lb.LBFluidGPU(dens=1., visc=3., agrid=1., tau=time_step, fric=20)
 system.actors.add(lb)
 \end{pypresso}
 }

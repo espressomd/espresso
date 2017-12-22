@@ -8,6 +8,8 @@ from espressomd.interactions cimport *
 from espressomd.system cimport *
 from libcpp.vector cimport vector
 
+include "myconfig.pxi"
+
 cdef extern from "utils.hpp":
     void get_mi_vector(double * res, double * a, double * b)
 
@@ -86,10 +88,12 @@ cdef class mayaviLive(object):
         """Determine radius of particle type t for visualization."""
         def radius_from_lj(t):
             radius = 0.
-            try:
-                radius = 0.5 * get_ia_param(t,t).LJ_sig
-            except:
-                radius = 0.
+            IF LENNARD_JONES:
+                try:
+                    radius = 0.5 * get_ia_param(t,t).LJ_sig
+                except:
+                    radius = 0.
+
             if radius == 0:
                 radius = 0.5  # fallback value
             return radius
@@ -160,7 +164,7 @@ cdef class mayaviLive(object):
         cdef int i=0,j=0,k=0 
         cdef int t 
         cdef int partner
-        cdef unique_ptr[particle] p
+        cdef const particle* p
         cdef ia_parameters* ia
         cdef vector[int] bonds
 
@@ -171,21 +175,21 @@ cdef class mayaviLive(object):
             if not p:
                 continue
 
-            coords[j,:] = p.get()[0].r.p
-            t = p.get()[0].p.type
+            coords[j,:] = np.array([p.r.p[0],p.r.p[1],p.r.p[2]])
+            t = p.p.type
             types[j] = t +1
             radii[j] = self._determine_radius(t)
 
             # Iterate over bonds
-            k = 0        
-            while k<p.get()[0].bl.n:
+            k = 0
+            while k<p.bl.n:
                 # Bond type
-                t = p.get()[0].bl.e[k]
+                t = p.bl.e[k]
                 k += 1
                 # Iterate over bond partners and store each connection
                 for l in range(bonded_ia_params[t].num):
                     bonds.push_back(i)
-                    bonds.push_back(p.get()[0].bl.e[k])
+                    bonds.push_back(p.bl.e[k])
                     bonds.push_back(t)
                     k += 1
             j += 1
@@ -195,7 +199,8 @@ cdef class mayaviLive(object):
         bond_coords = numpy.empty((Nbonds,7))
 
         cdef int n
-        cdef unique_ptr[particle] p1,p2
+        cdef const particle* p1
+        cdef const particle* p2
         cdef double bond_vec[3]
         for n in range(Nbonds):
             i = bonds[3*n]
@@ -203,13 +208,12 @@ cdef class mayaviLive(object):
             t = bonds[3*n+2]
             p1 = get_particle_data(i)
             p2 = get_particle_data(j)
-            bond_coords[n,:3] = p1.get()[0].r.p 
-            get_mi_vector(bond_vec,p2.get()[0].r.p,p1.get()[0].r.p)
+            bond_coords[n,:3] = np.array([p1.r.p[0],p1.r.p[1],p1.r.p[2]])
+            get_mi_vector(bond_vec,p2.r.p,p1.r.p)
             bond_coords[n,3:6] = bond_vec
             bond_coords[n,6] = t
 
         boxl = self.system.box_l
-
 
         if self.data is None:
             self.data = coords, types, radii, (self.last_N != N), \
@@ -248,7 +252,7 @@ cdef class mayaviLive(object):
         assert isinstance(threading.current_thread(), threading._MainThread)
         self.gui.start_event_loop()
 
-    def registerCallback(self, cb, interval=1000):
+    def register_callback(self, cb, interval=1000):
         self.timers.append(Timer(interval, cb))
 
 # TODO: constraints

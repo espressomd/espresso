@@ -23,20 +23,20 @@ class AnalyzeDistance(ut.TestCase):
         self.system.thermostat.set_langevin(kT=1., gamma=1.)
         for i in range(100):
             self.system.part.add(id=i, pos=np.random.random(3) * box_l)
-        self.system.non_bonded_inter.set_force_cap(10)
+        self.system.force_cap = 10
         i = 0
-        min_dist = self.system.analysis.mindist()
+        min_dist = self.system.analysis.min_dist()
         while (i < 50 and min_dist < 0.9):
             system.integrator.run(100)
-            min_dist = self.system.analysis.mindist()
+            min_dist = self.system.analysis.min_dist()
             i += 1
             lj_cap = lj_cap + 10
-            self.system.non_bonded_inter.set_force_cap(lj_cap)
-        self.system.non_bonded_inter.set_force_cap(0)
+            self.system.force_cap = lj_cap
+        self.system.force_cap = 0
         self.system.integrator.run(1000)
 
     # python version of the espresso core function
-    def mindist(self):
+    def min_dist(self):
         r = np.array(self.system.part[:].pos)
         # this generates indices for all i<j combinations
         ij = np.triu_indices(len(r), k=1)
@@ -55,7 +55,7 @@ class AnalyzeDistance(ut.TestCase):
         return np.where(dist < r_catch**2)[0]
 
     # python version of the espresso core function, using pos
-    def distto_pos(self, pos):
+    def dist_to_pos(self, pos):
         dist = np.fabs(self.system.part[:].pos - pos)
         # check smaller distances via PBC
         dist = np.where(dist > 0.5 * self.system.box_l, self.system.box_l - dist, dist)
@@ -63,18 +63,18 @@ class AnalyzeDistance(ut.TestCase):
         return np.sqrt(np.min(dist))
 
     # python version of the espresso core function, using id
-    def distto_id(self, id):
+    def dist_to_id(self, id):
         dist = np.fabs(np.delete(self.system.part[:].pos, id, axis=0) - self.system.part[id].pos)
         # check smaller distances via PBC
         dist = np.where(dist > 0.5 * self.system.box_l, self.system.box_l - dist, dist)
         dist = np.sum(dist**2, axis=1)
         return np.sqrt(np.min(dist))
 
-    def test_mindist(self):
+    def test_min_dist(self):
         # try five times
         for i in range(5):
-            self.assertAlmostEqual(self.system.analysis.mindist(),
-                                   self.mindist(),
+            self.assertAlmostEqual(self.system.analysis.min_dist(),
+                                   self.min_dist(),
                                    delta=1e-7)
             self.system.integrator.run(100)
 
@@ -86,19 +86,19 @@ class AnalyzeDistance(ut.TestCase):
                             self.nbhood([i, i, i], i * 2)))
             self.system.integrator.run(100)
 
-    def test_distto_pos(self):
+    def test_dist_to_pos(self):
         # try five times
         for i in range(5):
             self.assertTrue(
-                np.allclose(self.system.analysis.distto(pos=[i, i, i]),
-                            self.distto_pos([i, i, i])))
+                np.allclose(self.system.analysis.dist_to(pos=[i, i, i]),
+                            self.dist_to_pos([i, i, i])))
             self.system.integrator.run(100)
 
-    def test_distto_id(self):
+    def test_dist_to_id(self):
         # try five times
         for i in range(5):
-            self.assertAlmostEqual(self.system.analysis.distto(id=i),
-                                   self.distto_id(i))
+            self.assertAlmostEqual(self.system.analysis.dist_to(id=i),
+                                   self.dist_to_id(i))
             self.system.integrator.run(100)
 
 

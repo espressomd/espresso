@@ -55,7 +55,6 @@ void init_energies(Observable_stat *stat) {
   case COULOMB_NONE:
     n_coulomb = 0;
     break;
-#ifdef P3M
   case COULOMB_ELC_P3M:
     n_coulomb = 3;
     break;
@@ -63,12 +62,9 @@ void init_energies(Observable_stat *stat) {
   case COULOMB_P3M:
     n_coulomb = 2;
     break;
-#endif
-#ifdef SCAFACOS
   case COULOMB_SCAFACOS:
     n_coulomb = 2;
     break;
-#endif
   default:
     n_coulomb = 1;
   }
@@ -79,16 +75,14 @@ void init_energies(Observable_stat *stat) {
 
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE:
-    n_dipolar = 1;
+    n_dipolar = 1; // because there may be an external magnetic field
     break;
-#ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     n_dipolar = 3;
     break;
   case DIPOLAR_P3M:
     n_dipolar = 2;
     break;
-#endif
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
     n_dipolar = 2;
     break;
@@ -101,11 +95,9 @@ void init_energies(Observable_stat *stat) {
   case DIPOLAR_DS_GPU:
     n_dipolar = 2;
     break;
-#ifdef SCAFACOS_DIPOLES
   case DIPOLAR_SCAFACOS:
     n_dipolar = 2;
     break;
-#endif
   }
 
 #endif
@@ -121,7 +113,7 @@ void init_energies(Observable_stat *stat) {
 /************************************************************/
 
 void master_energy_calc() {
-  mpi_gather_stats(1, total_energy.data.e, NULL, NULL, NULL);
+  mpi_gather_stats(1, total_energy.data.e, nullptr, nullptr, nullptr);
 
   total_energy.init_status = 1;
 }

@@ -252,34 +252,34 @@ void p3m_pre_init(void) {
   /* p3m.local_mesh is uninitialized */
   /* p3m.sm is uninitialized */
 
-  p3m.rs_mesh = NULL;
-  p3m.ks_mesh = NULL;
+  p3m.rs_mesh = nullptr;
+  p3m.ks_mesh = nullptr;
   p3m.sum_qpart = 0;
   p3m.sum_q2 = 0.0;
   p3m.square_sum_q = 0.0;
 
   for (int i = 0; i < 7; i++)
-    p3m.int_caf[i] = NULL;
+    p3m.int_caf[i] = nullptr;
   p3m.pos_shift = 0.0;
-  p3m.meshift_x = NULL;
-  p3m.meshift_y = NULL;
-  p3m.meshift_z = NULL;
+  p3m.meshift_x = nullptr;
+  p3m.meshift_y = nullptr;
+  p3m.meshift_z = nullptr;
 
-  p3m.d_op[0] = NULL;
-  p3m.d_op[1] = NULL;
-  p3m.d_op[2] = NULL;
-  p3m.g_force = NULL;
-  p3m.g_energy = NULL;
+  p3m.d_op[0] = nullptr;
+  p3m.d_op[1] = nullptr;
+  p3m.d_op[2] = nullptr;
+  p3m.g_force = nullptr;
+  p3m.g_energy = nullptr;
 
 #ifdef P3M_STORE_CA_FRAC
   p3m.ca_num = 0;
-  p3m.ca_frac = NULL;
-  p3m.ca_fmp = NULL;
+  p3m.ca_frac = nullptr;
+  p3m.ca_fmp = nullptr;
 #endif
   p3m.ks_pnum = 0;
 
-  p3m.send_grid = NULL;
-  p3m.recv_grid = NULL;
+  p3m.send_grid = nullptr;
+  p3m.recv_grid = nullptr;
 
   fft_pre_init();
 }
@@ -299,7 +299,7 @@ void p3m_free() {
     free(p3m.int_caf[i]);
 }
 
-void p3m_set_bjerrum() {
+void p3m_set_prefactor() {
   p3m.params.alpha = 0.0;
   p3m.params.alpha_L = 0.0;
   p3m.params.r_cut = 0.0;
@@ -311,12 +311,12 @@ void p3m_set_bjerrum() {
 }
 
 void p3m_init() {
-  if (coulomb.bjerrum == 0.0) {
+  if (coulomb.prefactor <= 0.0) {
     p3m.params.r_cut = 0.0;
     p3m.params.r_cut_iL = 0.0;
 
     if (this_node == 0)
-      P3M_TRACE(fprintf(stderr, "0: P3M_init: Bjerrum length is "
+      P3M_TRACE(fprintf(stderr, "0: P3M_init: prefactor is "
                                 "zero.\nElectrostatics switched off!\n"););
 
   } else {
@@ -366,7 +366,7 @@ void p3m_init() {
 
     /* FFT */
     P3M_TRACE(
-        fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node, p3m.rs_mesh));
+        fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node, (void*) p3m.rs_mesh));
 
     int ca_mesh_size =
         fft_init(&p3m.rs_mesh, p3m.local_mesh.dim, p3m.local_mesh.margin,
@@ -374,7 +374,7 @@ void p3m_init() {
     p3m.ks_mesh = Utils::realloc(p3m.ks_mesh, ca_mesh_size * sizeof(double));
 
     P3M_TRACE(
-        fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node, p3m.rs_mesh));
+        fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node, (void*) p3m.rs_mesh));
 
     /* k-space part: */
     p3m_calc_differential_operator();
@@ -412,8 +412,6 @@ void p3m_set_tune_params(double r_cut, int mesh[3], int cao, double alpha,
   if (n_interpol != -1)
     p3m.params.inter = n_interpol;
 
-  coulomb.prefactor =
-      (temperature > 0) ? temperature * coulomb.bjerrum : coulomb.bjerrum;
 }
 
 /*@}*/
@@ -547,13 +545,10 @@ void p3m_charge_assign() {
 
 /* assign the charges */
 template <int cao> void p3m_do_charge_assign() {
-  Cell *cell;
-  Particle *p;
-  int i, c, np;
   /* charged particle counter, charge fraction counter */
   int cp_cnt = 0;
   /* prepare local FFT mesh */
-  for (i = 0; i < p3m.local_mesh.size; i++)
+  for (int i = 0; i < p3m.local_mesh.size; i++)
     p3m.rs_mesh[i] = 0.0;
 
   for (auto &p : local_cells.particles()) {
@@ -812,7 +807,7 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
   /* k space energy */
   double k_space_energy = 0.0, node_k_space_energy = 0.0;
   /* directions */
-  double *d_operator = NULL;
+  double *d_operator = nullptr;
 
   P3M_TRACE(fprintf(stderr, "%d: p3m_perform: \n", this_node));
   //     fprintf(stderr, "calculating kspace forces\n");
@@ -976,6 +971,7 @@ double p3m_calc_dipole_term(int force_flag, int energy_flag) {
     }
     return en;
   }
+  return 0;
 }
 
 /************************************************************/
@@ -1184,7 +1180,6 @@ template <int cao> void calc_influence_function_force() {
     end[i] = fft.plan[3].start[i] + fft.plan[3].new_mesh[i];
   }
 
-  auto const old = p3m.g_force;
   p3m.g_force = Utils::realloc(p3m.g_force, size * sizeof(double));
 
   /* Skip influence function calculation in tuning mode,
@@ -1751,8 +1746,8 @@ int p3m_adaptive_tune(char **log) {
   mpi_bcast_event(P3M_COUNT_CHARGES);
   /* Print Status */
   sprintf(b,
-          "P3M tune parameters: Accuracy goal = %.5e Bjerrum Length = %.5e \n",
-          p3m.params.accuracy, coulomb.bjerrum);
+          "P3M tune parameters: Accuracy goal = %.5e prefactor = %.5e \n",
+          p3m.params.accuracy, coulomb.prefactor);
   *log = strcat_alloc(*log, b);
   sprintf(b, "System: box_l = %.5e # charged part = %d Sum[q_i^2] = %.5e\n",
           box_l[0], p3m.sum_qpart, p3m.sum_q2);
@@ -2299,7 +2294,8 @@ void p3m_calc_send_mesh() {
 /************************************************/
 
 void p3m_scaleby_box_l() {
-  if (coulomb.bjerrum == 0.0) {
+  if (coulomb.prefactor < 0.0) {
+    runtimeErrorMsg() << "The Coulomb prefactor has to be >=0";
     return;
   }
 
@@ -2318,8 +2314,8 @@ void p3m_calc_kspace_stress(double *stress) {
   if (p3m.sum_q2 > 0) {
     double *node_k_space_stress;
     double *k_space_stress;
-    double force_prefac, node_k_space_energy, sqk, vterm, kx, ky, kz, eps_0,
-        kspace_eng = 0.0;
+    double force_prefac, node_k_space_energy, sqk, vterm, kx, ky, kz;
+
     int j[3], i, ind = 0;
     // ordering after fourier transform
     node_k_space_stress = (double *)Utils::malloc(9 * sizeof(double));

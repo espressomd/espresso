@@ -37,7 +37,7 @@ class DDSGPUTest(ut.TestCase):
 
     def run_test_case(self):
         print("----------------------------------------------")
-        print("- Testcase dawaanr-and-dds-gpu.tcl")
+        print("- Testcase dawaanr-and-dds-gpu.py")
         print("----------------------------------------------")
 
         pf_dds_gpu = 2.34
@@ -87,7 +87,7 @@ class DDSGPUTest(ut.TestCase):
             # and torque
             self.es.thermostat.set_langevin(kT=1.297, gamma=0.0)
 
-            dds_cpu = DipolarDirectSumCpu(bjerrum_length=pf_dawaanr)
+            dds_cpu = DipolarDirectSumCpu(prefactor=pf_dawaanr)
             self.es.actors.add(dds_cpu)
             self.es.integrator.run(steps=0, recalc_forces=True)
 
@@ -104,7 +104,7 @@ class DDSGPUTest(ut.TestCase):
                 self.es.actors.remove(self.es.actors.active_actors[i])
 
             self.es.integrator.run(steps=0, recalc_forces=True)
-            dds_gpu = DipolarDirectSumGpu(bjerrum_length=pf_dds_gpu)
+            dds_gpu = DipolarDirectSumGpu(prefactor=pf_dds_gpu)
             self.es.actors.add(dds_gpu)
             self.es.integrator.run(steps=0, recalc_forces=True)
 

@@ -77,7 +77,7 @@ class VirtualSites(ut.TestCase):
 
     def test_pos_vel_forces(self):
         s = self.s
-        s.box_l = 2, 2, 2
+        s.box_l = 10,10,10
         s.part.clear()
         s.time_step = 0.008
         s.part.clear()
@@ -155,7 +155,7 @@ class VirtualSites(ut.TestCase):
           get lost or are outdated in the short range loop"""
         s = self.s
         # Parameters
-        n = 30
+        n = 90 
         phi = 0.6
         sigma = 1.
         eps = .025

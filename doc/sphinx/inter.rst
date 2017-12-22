@@ -53,41 +53,25 @@ Tabulated interaction
     `Feature TABULATED required.`
 
 
-The interface for tabulated interactions are implemented 
+The interface for tabulated interactions are implemented in the
 :class:`espressomd.interactions.TabulatedNonBonded` class. They can be configured
 via the following syntax::
 
-    system.non_bonded_inter[type1, type2].tabulated.set_params(filename='filename')
+  system.non_bonded_inter[type1, type2].tabulated.set_params(min='min', max='max', energy='energy', force='force')
 
-This defines an interaction between particles of the types *type1* and *type2* according
-to an arbitrary tabulated pair potential. *filename* specifies a file which
-contains the tabulated forces and energies as a function of the
-separation distance. The tabulated potential allows capping the force, see
-section :ref:`Capping the force during warmup`.
 
-At present the required file format is simply an ordered list separated
-by whitespaces. The data reader first looks for a ``#`` character and
-begins reading from that point in the file. Anything before the ``#``
-will be ignored.
+This defines an interaction between particles of the types *type1* and
+*type2* according to an arbitrary tabulated pair potential by linear interpolation.
+*force* specifies the tabulated forces and *energy* the energies as a function of the
+separation distance. *force* and *energy* have to have the same length :math:`N_\mathrm{points}`.
+Take care when choosing the number of points, since a copy of each lookup
+table is kept on each node and must be referenced very frequently.
+The maximal tabulated separation distance also acts as the effective cutoff
+value for the potential.
 
-The first three parameters after the ``#`` specify the number of data
-points :math:`N_\mathrm{points}` and the minimal and maximal tabulated
-separation distances :math:`r_\mathrm{min}` and :math:`r_\mathrm{max}`.
-The number of data points has to be given as an integer, the two others
-can be arbitrary positive floating-point numbers. Take care when choosing the number of
-points, since a copy of each lookup table is kept on each node and must
-be referenced very frequently. The maximal tabulated separation distance
-also acts as the effective cutoff value for the potential.
-
-The remaining data in the file should consist of :math:`N_\mathrm{points}` data triples
-:math:`r`, :math:`F(r)` and :math:`V(r)`. :math:`r` gives the particle
-separation, :math:`V(r)` specifies the interaction potential, and
-:math:`F(r)= -V'(r)/r` the force (note the factor :math:`r^{-1}`!). The
-values of :math:`r` are assumed to be equally distributed between
+The values of :math:`r` are assumed to be equally distributed between
 :math:`r_\mathrm{min}` and :math:`r_\mathrm{max}` with a fixed distance
-of :math:`(r_\mathrm{max}-r_\mathrm{min})/(N_\mathrm{points}-1)`; the
-distance values :math:`r` in the file are ignored and only included for
-human readability.
+of :math:`(r_\mathrm{max}-r_\mathrm{min})/(N_\mathrm{points}-1)`.
 
 .. _Lennard-Jones interaction:
 
@@ -909,19 +893,16 @@ A tabulated bond can be instantiated via
 :class:`espressomd.interactions.Tabulated`::
     
     from espressomd.interactions import Tabulated
-    tab = Tabulated(type = <str>, filename = <filename> )
+         tab = Tabulated(type = <str>, min = <min>, max = <max>,
+         energy = <energy>, force = <force> )
 
 This creates a bond type identifier with a two-body bond length, 
 three-body angle or four-body dihedral 
-tabulated potential. The tabulated forces and energies have to be
-provided in a file which is formatted identically as the files for
-non-bonded tabulated potentials (see :ref:`Tabulated interaction`).
-
+tabulated potential. For details of the interpolation, see :ref:`Tabulated interaction`.
 
 The bonded interaction can be based on a distance, a bond angle or a
 dihedral angle. This is determined by the ``type`` argument, which can
-be one of ``distance``, ``angle`` or ``dihedral``. The data is read from
-the file given by the ``filename`` argument.
+be one of ``distance``, ``angle`` or ``dihedral``.
 
 Calculation of the force and energy
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -984,7 +965,7 @@ modeling objects are described in section :ref:`Object-in-fluid`.
 OIF local forces
 ~~~~~~~~~~~~~~~~
 
-OIF local forces are available through the :class:`espressomd.interactions.Oif_Local_Forces` class.
+OIF local forces are available through the :class:`espressomd.interactions.OifLocalForces` class.
 
 This type of interaction is available for closed 3D immersed objects as
 well as for 2D sheet flowing in the 3D flow.
@@ -1109,7 +1090,7 @@ OIF global forces
 ~~~~~~~~~~~~~~~~~
 
 OIF global forces are available through the
-:class:`espressomd.interactions.Oif_Global_Forces` class.
+:class:`espressomd.interactions.OifGlobalForces` class.
 
 This type of interaction is available solely for closed 3D immersed
 objects.
@@ -1236,7 +1217,7 @@ For example, for the schematic with particles ``id=0``, ``1`` and ``2`` the bond
 The parameter ``bond_angle`` is a bond type identifier of three possible bond-angle classes, described below.
 
 
-:class:`espressomd.interactions.Angle_Harmonic`
+:class:`espressomd.interactions.AngleHarmonic`
     A classical harmonic potential of the form: 
     
     .. math:: V(\phi) = \frac{K}{2} \left(\phi - \phi_0\right)^2.
@@ -1253,13 +1234,13 @@ The parameter ``bond_angle`` is a bond type identifier of three possible bond-an
     force, and should therefore be used with caution.
 
     example ::
-        >>> angle_harmonic=Angle_Harmonic(bend=1.0, phi0=np.pi)
+        >>> angle_harmonic=AngleHarmonic(bend=1.0, phi0=np.pi)
         >>> system.bonded_inter.add(angle_harmonic)
         >>> system.part[1].add_bond((angle_harmonic, 0, 2))
 
 
 
-:class:`espressomd.interactions.Angle_Cosine`
+:class:`espressomd.interactions.AngleCosine`
 
     Cosine bond angle potential of the form:
 
@@ -1277,11 +1258,11 @@ The parameter ``bond_angle`` is a bond type identifier of three possible bond-an
     periodic and smooth for all angles :math:`\phi`.
 
     example ::
-        >>> angle_cosine=Angle_Cosine(bend=1.0, phi0=np.pi)
+        >>> angle_cosine=AngleCosine(bend=1.0, phi0=np.pi)
         >>> system.bonded_inter.add(angle_cosine)
         >>> system.part[1].add_bond((angle_cosine, 0, 2))
 
-:class:`espressomd.interactions.Angle_Cossquare`
+:class:`espressomd.interactions.AngleCossquare`
 
     Cosine square bond angle potential of the form:
 
@@ -1292,7 +1273,7 @@ The parameter ``bond_angle`` is a bond type identifier of three possible bond-an
     therefore much flatter than the two potentials before.
 
     example ::
-        >>> angle_cossquare=Angle_Cossquare(bend=1.0, phi0=np.pi)
+        >>> angle_cossquare=AngleCossquare(bend=1.0, phi0=np.pi)
         >>> system.bonded_inter.add(angle_cossquare)
         >>> system.part[1].add_bond((angle_cossquare, 0, 2))
 
@@ -1334,14 +1315,17 @@ The Coulomb (or electrostatic) interaction is defined as
 follows. For a pair of particles at distance :math:`r` with charges
 :math:`q_1` and :math:`q_2`, the interaction is given by
 
-.. math:: U_C(r)=l_B k_B T\frac{q_1 q_2}{r}.
+.. math:: U_C(r)=C \cdot \frac{q_1 q_2}{r}.
 
-where :math:`l_B = e_o^2 / (4 \pi \epsilon k_B T)` denotes the Bjerrum
-length, which measures the strength of the electrostatic interaction. As
-a special case, when the thermostat is switched off, the value of
-Bjerrum length you enter is treated as :math:`l_B k_B T` rather than
-:math:`l_B`. This is used to perform an NVE integration (see also
-section :ref:`\`\`thermostat\`\`\: Setting up the thermostat`).
+where 
+
+.. math::  
+   C=\frac{1}{4\pi \epsilon_0 \epsilon_r} 
+   :label: coulomb_prefactor
+    
+is a prefactor which can be set by the user. 
+The commonly used Bjerrum length :math:`l_B = e_o^2 / (4 \pi \e\epsilon k_B T)` is the length at which the Coulomb energy between two unit charges is equal to the thermal energy :math:`k_B T`.
+Based on the this length, the prefactor is given by :math:`C=l_B *k_B T`.
 
 Computing electrostatic interactions is computationally very expensive.
 |es| features some state-of-the-art algorithms to deal with these
@@ -1349,10 +1333,9 @@ interactions as efficiently as possible, but almost all of them require
 some knowledge to use them properly. Uneducated use can result in
 completely unphysical simulations.
 
-Coulomb interactions have to be added to the actors of the system to become
-active. This prevents the simultaneous use of multiple electrostatic solvers.
-
-.. todo:: Document missing implementation for actor.remove()
+Coulomb interactions have to be added to the list of active actors of the system object to become
+active. This is done by calling the add-method of :attr:`espressomd.system.System.actors`.
+Only one electrostatics method can be active at any time.
 
 Note that using the electrostatic interaction also requires assigning charges to
 the particles via the particle property
@@ -1368,8 +1351,11 @@ activation to achieve the given accuracy::
     from espressomd import electrostatics
     
     system = espressomd.System()
-    solver = electrostatics.<SOLVER>(bjerrum_length = 1.0, <ADDITIONAL REQUIRED PARAMETERS>)
+    solver = electrostatics.<SOLVER>(prefactor = C, <ADDITIONAL REQUIRED PARAMETERS>)
     system.actors.add(solver)
+
+where the prefactor :math:`C` is defined as in Eqn. :eq:`coulomb_prefactor`
+
 
 Coulomb P3M
 ~~~~~~~~~~~
@@ -1377,7 +1363,7 @@ Coulomb P3M
 :class:`espressomd.electrostatics.P3M`
 
 Required parameters:
-    * bjerrum_length
+    * prefactor
     * accuracy
 
 For this feature to work, you need to have the ``fftw3`` library
@@ -1402,7 +1388,7 @@ To manually tune or retune P3M, call :meth:`espresso.electrostatics.P3M.Tune`.
 Note, however, that this is a method the P3M object inherited from
 :attr:`espressomd.electrostatics.ElectrostaticInteraction`. 
 All parameters passed to the method are fixed in the tuning routine. If not
-specified in the ``Tune()`` method, the parameters ``bjerrum_length`` and
+specified in the ``Tune()`` method, the parameters ``prefactor`` and
 ``accuracy`` are reused.
 
 It is not easy to calculate the various parameters of the P3M method
@@ -1431,28 +1417,26 @@ milliseconds, length scales are in units of inverse box lengths.
 Coulomb P3M on GPU
 ^^^^^^^^^^^^^^^^^^
 
-:class:`espressomd.electrostatics.P3M_GPU`
+:class:`espressomd.electrostatics.P3MGPU`
 
 Required parameters:
-    * bjerrum_length
+    * prefactor
     * accuracy
 
 The GPU implementation of P3M calculates the far field portion on the GPU. 
 It uses the same parameters and interface functionality as the CPU version of
 the solver. It should be noted that this does not always provide significant
-increase in performance.  Furthermore it computes the far field interactions
+increase in performance. Furthermore it computes the far field interactions
 with only single precision which limits the maximum precision. The algorithm
 does not work in combination with the electrostatic extensions :ref:`ICC` and
 :ref:`ELC`.
-
-.. todo:: Check P3M_GPU for non-cubic boxes, and also for cubic.
 
 Coulomb Ewald GPU
 ~~~~~~~~~~~~~~~~~
 
 
 Required parameters:
-    * bjerrum_length
+    * prefactor
     * accuracy
     * precision
     * K_max
@@ -1500,8 +1484,9 @@ For a list of all parameters see :attr:`espressomd.electrostatics.DH` or :attr:`
 
 Uses the Debye-Hückel electrostatic potential defined by
 
-  .. math:: U^{C-DH} = l_B k_B T \frac{q_1 q_2 exp(-\kappa r)}{r}\quad \mathrm{for}\quad r<r_{\mathrm{cut}}
+  .. math:: U^{C-DH} = C \cdot \frac{q_1 q_2 exp(-\kappa r)}{r}\quad \mathrm{for}\quad r<r_{\mathrm{cut}}
 
+where :math:`C` is defined as in Eqn. :eq:`coulomb_prefactor`.
 The Debye-Hückel potential is an approximate method for calculating
 electrostatic interactions, but technically it is treated as other
 short-ranged non-bonding potentials. For :math:`r>r_{\mathrm cut}` it is
@@ -1520,9 +1505,9 @@ introduces three new parameters :math:`\varepsilon_\mathrm{int}`,
 
    U(r)^{C-DHC} = 
      \begin{cases} 
-       \frac{l_B k_B T q_1 q_2}{\varepsilon_{\text{int}} r} & \text{if } r < r_0, \\ 
-       \frac{l_B k_B T q_1 q_2 e^{-\alpha (r - r_0)}}{\varepsilon_{\text{int}} r} & \text{if } r_0 < r < r_1,  \\
-       \frac{l_B k_B T q_1 q_2 e^{-\kappa r}}{\varepsilon_{\text{ext}} r} & \text{if } r_{\text{cut}} > r > r_1,  \\
+       \frac{C q_1 q_2}{\varepsilon_{\text{int}} r} & \text{if } r < r_0, \\ 
+       \frac{C q_1 q_2 e^{-\alpha (r - r_0)}}{\varepsilon_{\text{int}} r} & \text{if } r_0 < r < r_1,  \\
+       \frac{C q_1 q_2 e^{-\kappa r}}{\varepsilon_{\text{ext}} r} & \text{if } r_{\text{cut}} > r > r_1,  \\
        0 & \text{if } r > r_{\text{cut}}.
      \end{cases}
 
@@ -1542,24 +1527,25 @@ MMM1D
 
 .. note::
     Required features: ELECTROSTATICS, PARTIAL_PERIODIC for MMM1D, the GPU version additionally needs
-    the features CUDA and MMM1D_GPU.
+    the features CUDA and MMM1DGPU.
 
 :: 
 
     from espressomd.electrostatics import MMM1D
-    from espressomd.electrostatics import MMM1D_GPU
+    from espressomd.electrostatics import MMM1DGPU
 
 Please cite :cite:`mmm1d`  when using MMM1D.
 
 See :attr:`espressomd.electrostatics.MMM1D` or
-:attr:`espressomd.electrostatics.MMM1D_GPU` for the list of available
+:attr:`espressomd.electrostatics.MMM1DGPU` for the list of available
 parameters.
 
 ::
 
-    mmm1d = MMM1D(bjerrum_length=lb, far_switch_radius = fr, maxPWerror=err, tune=False, bessel_cutoff=bc)
-    mmm1d = MMM1D(bjerrum_length=lb, maxPWerror=err)
+    mmm1d = MMM1D(prefactor=C, far_switch_radius = fr, maxPWerror=err, tune=False, bessel_cutoff=bc)
+    mmm1d = MMM1D(prefactor=C, maxPWerror=err)
 
+where the prefactor :math:`C` is defined in Eqn. :eq:`coulomb_prefactor`.
 MMM1D coulomb method for systems with periodicity 0 0 1. Needs the
 nsquared cell system (see section :ref:`cellsystem`). The first form sets parameters
 manually. The switch radius determines at which xy-distance the force
@@ -1573,8 +1559,8 @@ test force calculations.
 
 ::
 
-    mmm1d_gpu = MMM1D_GPU(bjerrum_length=lb, far_switch_radius = fr, maxPWerror=err, tune=False, bessel_cutoff=bc)
-    mmm1d_gpu = MMM1D_GPU(bjerrum_length=lb, maxPWerror=err)
+    mmm1d_gpu = MMM1DGPU(prefactor=C, far_switch_radius = fr, maxPWerror=err, tune=False, bessel_cutoff=bc)
+    mmm1d_gpu = MMM1DGPU(prefactor=C, maxPWerror=err)
 
 MMM1D is also available in a GPU implementation. Unlike its CPU
 counterpart, it does not need the nsquared cell system. The first form
@@ -1606,10 +1592,10 @@ the given bound. Note thate the user has to take care that the particles don't
 leave the box in the nonperiodic z-direction e.g. with constraints. By default,
 no dielectric contrast is set and it is used as::
 
-	mmm2d = electrostatics.MMM2D(bjerrum_length = 1.0, maxPWerror = 1e-3)
+	mmm2d = electrostatics.MMM2D(prefactor=C, maxPWerror = 1e-3)
 	system.actors.add(mmm2d)
 
-
+where the prefactor :math:`C` is defined in Eqn. :eq:`coulomb_prefactor`.
 For a detailed list of parameters see :attr:`espressomd.electrostatics.MMM2D`. 
 The last two, mutually exclusive parameters `dielectric` and
 `dielectric_constants_on` allow to specify dielectric contrasts at the
@@ -1619,7 +1605,7 @@ however is only used to calculate the contrasts. That is, specifying
 :math:`\epsilon_t=\epsilon_m=\epsilon_b=\text{const}` is always
 identical to :math:`\epsilon_t=\epsilon_m=\epsilon_b=1`::
 
-	mmm2d = electrostatics.MMM2D(bjerrum_length = 1.0, maxPWerror = 1e-3, dielectric = 1, top = 1, mid = 1, bot = 1)
+	mmm2d = electrostatics.MMM2D(prefactor = C, maxPWerror = 1e-3, dielectric = 1, top = 1, mid = 1, bot = 1)
 
 The second form specifies only the dielectric contrasts at the boundaries,
 that is :math:`\Delta_t=\frac{\epsilon_m-\epsilon_t}{\epsilon_m+\epsilon_t}`
@@ -1627,15 +1613,15 @@ and :math:`\Delta_b=\frac{\epsilon_m-\epsilon_b}{\epsilon_m+\epsilon_b}`.
 Using this form allows to choose :math:`\Delta_{t/b}=-1`, corresponding
 to metallic boundary conditions::
 
-	mmm2d = electrostatics.MMM2D(bjerrum_length = 1.0, maxPWerror = 1e-3, dielectric_contrast_on = 1, delta_mid_top = -1, delta_mid_bot = -1)
+	mmm2d = electrostatics.MMM2D(prefactor = C, maxPWerror = 1e-3, dielectric_contrast_on = 1, delta_mid_top = -1, delta_mid_bot = -1)
 
-Using `capacitor` allows to maintain a constant electric potential difference
+Using `const_pot` allows to maintain a constant electric potential difference `pot_diff`
 between the xy-planes at :math:`z=0` and :math:`z=L`, where :math:`L`
 denotes the box length in :math:`z`-direction::
 	
-	mmm2d = electrostatics.MMM2D(bjerrum_length = 100.0, maxPWerror = 1e-3, capacitor = 1, pot_diff = 100.0)
+	mmm2d = electrostatics.MMM2D(prefactor = 100.0, maxPWerror = 1e-3, const_pot = 1, pot_diff = 100.0)
 
-This is done by countering the total dipol moment of the system with the
+This is done by countering the total dipole moment of the system with the
 electric field :math:`E_{induced}` and superposing a homogeneous electric field
 :math:`E_{applied} = \frac{U}{L}` to retain :math:`U`. This mimics the
 induction of surface charges :math:`\pm\sigma = E_{induced} \cdot \epsilon_0`
@@ -1664,9 +1650,9 @@ method in computational order N. Currently, it only supports P3M. This means,
 that you will first have to set up the P3M algorithm before using ELC. The
 algorithm is definitely faster than MMM2D for larger numbers of particles
 (:math:`>400` at reasonable accuracy requirements). The periodicity has to be
-set to ``1 1 1`` still, and the 3D method has to be set to epsilon metallic,
-i.e. metallic boundary conditions.  Make sure that you read the papers on ELC
-(:cite:`arnold02c,icelc`) before using it. ELC  is an |es| actor and is used
+set to ``1 1 1`` still, *ELC* cancels the electrostatic contribution of the 
+periodic replica in **z-direction**. Make sure that you read the papers on ELC
+(:cite:`arnold02c,icelc`) before using it. ELC is an |es| actor and is used
 with::
 
     elc = electrostatic_extensions.ELC(gap_size = box_l*0.2, maxPWerror = 1e-3)
@@ -1680,25 +1666,52 @@ Parameters are:
         make sure that the gap is actually empty, this is the users
         responsibility. The method will compute fine if the condition is not
         fulfilled, however, the error bound will not be reached. Therefore you
-        should really make sure that the gap region is empty (e.g. by constraints).
+        should really make sure that the gap region is empty (e.g. with wall
+        constraints).
     * maxPWerror:
-		The maximal pairwise error sets the LUB error of the force between any
-		two charges without prefactors (see the papers). The algorithm tries to find
-		parameters to meet this LUB requirements or will throw an error if there are
-		none.
+        The maximal pairwise error sets the least upper bound (LUB) error of
+        the force between any two charges without prefactors (see the papers).
+        The algorithm tries to find parameters to meet this LUB requirements or
+        will throw an error if there are none.
+    * delta_mid_top/delta_mid_bot: 
+        *ELC* can also be used to simulate 2D periodic systems with image charges, 
+        specified by dielectric contrasts on the non-periodic boundaries
+        (:cite:`icelc`).  Similar to *MMM2D*, these can be set with the
+        keywords ``delta_mid_bot`` and ``delta_mid_top``, setting the dielectric
+        jump from the simulation region (*middle*) to *bottom* (at :math:`z<0`) and
+        from *middle* to *top* (:math:`z > box_l[2] - gap_size`). The fully metallic case
+        :math:`delta_mid_top=delta_mid_bot=-1` would lead to divergence of the
+        forces/energies in *ELC* and is therefore only possible with the
+        ``const_pot_on`` option.
+    * const_pot_on: 
+        As descibed, setting this to ``1`` leads to fully metallic boundaries and
+        behaves just like the mmm2d parameter of the same name: It maintaines a
+        constant potential ``pot_diff`` by countering the total dipol moment of
+        the system and adding a homogeneous electric field according to
+        ``pot_diff``.
+    * pot_diff:
+        Used in conjunction with ``const_pot_on`` set to 1, this sets the potential difference
+        between the boundaries in the z-direction between :math:`z=0` and 
+        :math:`z = box_l[2] - gap_size`.
     * far_cut:
         The setting of the far cutoff is only intended for testing and allows to
         directly set the cutoff. In this case, the maximal pairwise error is
-        ignored.     
+        ignored.
     * neutralize:
-		By default, ELC just as P3M adds a homogeneous neutralizing background
-		to the system in case of a net charge. However, unlike in three dimensions,
-		this background adds a parabolic potential across the
-		slab :cite:`ballenegger09a`. Therefore, under normal circumstance, you will
-		probably want to disable the neutralization.  This corresponds then to a formal
-		regularization of the forces and energies :cite:`ballenegger09a`. Also, if you
-		add neutralizing walls explicitely as constraints, you have to disable the
-		neutralization.
+        By default, ELC just as P3M adds a homogeneous neutralizing background
+        to the system in case of a net charge. However, unlike in three dimensions,
+        this background adds a parabolic potential across the
+        slab :cite:`ballenegger09a`. Therefore, under normal circumstance, you will
+        probably want to disable the neutralization for non-neutral systems.
+        This corresponds then to a formal regularization of the forces and
+        energies :cite:`ballenegger09a`. Also, if you add neutralizing walls
+        explicitely as constraints, you have to disable the neutralization.
+        When using a dielectric contrast or full metallic walls
+        (:math:`delta_mid_top != 0` or :math:`delta_mid_bot != 0` or
+        :math:`const_pot_on=1`), ``neutralize`` is overwritten and switched off internally.
+        Note that the special case of non-neutral systems with a *non-metallic* dielectric jump (eg.
+        ``delta_mid_top`` or ``delta_mid_bot`` in :math:`]-1,1[`) is not covered by the
+        algorithm and will throw an error.
 
 .. _ICC:
 
@@ -2005,7 +2018,7 @@ fast Coulomb solvers* library. The specific methods available depend on the comp
 To use SCAFACOS, create an instance of :attr:`espressomd.electrostatics.Scafacos` and add it to the list of active actors. Three parameters have to be specified:
 * method_name: name of the SCAFACOS method being used.
 * method_params: dictionary containing the method-specific parameters
-* bjerrum_length
+* prefactor: Coulomb prefactor as defined in :eq:`coulomb_prefactor`.
 The method-specific parameters are described in the SCAFACOS manual.
 Additionally, methods supporting tuning have the parameter ``tolerance_field`` which sets the desired root mean square accuracy for the electric field 
 
@@ -2014,7 +2027,7 @@ cutoff to :math:`1.5` and tune the other parameters for an accuracy of
 :math:`10^{-3}`, use::
 
   from espressomd.electrostatics import Scafacos
-  scafacos=Scafacos(bjerrum_length=1,method_name="ewald", 
+  scafacos=Scafacos(prefactor=1,method_name="ewald", 
     method_params={"ewald_r_cut":1.5, "tolerance_field":1e-3})
   system.actors.add(scafacos)
   
@@ -2032,14 +2045,15 @@ is defined as follows:
 
 .. math::
 
-   U^{D-P3M}(\vec{r}) = l_{B} k_B T \left( \frac{(\vec{\mu}_i \cdot \vec{\mu}_j)}{r^3} 
+   U^{D-P3M}(\vec{r}) = D \cdot \left( \frac{(\vec{\mu}_i \cdot \vec{\mu}_j)}{r^3} 
      - \frac{3  (\vec{\mu}_i \cdot \vec{r})  (\vec{\mu}_j \cdot \vec{r}) }{r^5} \right)
 
 where :math:`r=|\vec{r}|`.
+The prefactor :math:`D` is can be set by the user and is given by
 
-:math:`l_{B}` is a dimensionless parameter similar to the Bjerrum length
-in electrostatics which helps to tune the effect of the medium on the
-magnetic interaction between two magnetic dipoles.
+.. math::
+
+  D =\frac{\mu_0 \mu}{4\pi}
 
 Computing magnetostatic interactions is computationally very expensive.
 features some state-of-the-art algorithms to deal with these

@@ -61,7 +61,7 @@ n_part = int(volume * density)
 for i in range(n_part):
     system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
 
-system.analysis.distto(0)
+system.analysis.dist_to(0)
 act_min_dist = system.analysis.mindist()
 system.cell_system.max_num_cells = 2744
 
@@ -127,7 +127,7 @@ t = Thread(target=main)
 t.daemon = True
 t.start()
 
-visualizer.registerCallback(update_plot, interval=500)
+visualizer.register_callback(update_plot, interval=500)
 visualizer.start()
 
 # terminate program

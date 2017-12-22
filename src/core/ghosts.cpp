@@ -45,14 +45,14 @@
 static int n_s_buffer = 0;
 static int max_s_buffer = 0;
 /** send buffer. Just grows, which should be ok */
-static char *s_buffer = NULL;
+static char *s_buffer = nullptr;
 
 std::vector<int> s_bondbuffer;
 
 static int n_r_buffer = 0;
 static int max_r_buffer = 0;
 /** recv buffer. Just grows, which should be ok */
-static char *r_buffer = NULL;
+static char *r_buffer = nullptr;
 
 std::vector<int> r_bondbuffer;
 
@@ -98,7 +98,7 @@ void prepare_comm(GhostCommunicator *comm, int data_parts, int num)
 void free_comm(GhostCommunicator *comm)
 {
   int n;
-  GHOST_TRACE(fprintf(stderr,"%d: free_comm: %p has %d ghost communications\n",this_node,comm,comm->num));
+  GHOST_TRACE(fprintf(stderr,"%d: free_comm: %p has %d ghost communications\n",this_node,(void*) comm,comm->num));
   for (n = 0; n < comm->num; n++) free(comm->comm[n].part_lists);
   free(comm->comm);
 }
@@ -296,7 +296,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
     auto cur_list = gc->part_lists[pl];
     if (data_parts & GHOSTTRANS_PARTNUM) {
       GHOST_TRACE(fprintf(stderr, "%d: reallocating cell %p to size %d, assigned to node %d\n",
-			  this_node, cur_list, *(int *)retrieve, gc->node));
+			  this_node, (void*) cur_list, *(int *)retrieve, gc->node));
       prepare_ghost_cell(cur_list, *(int *)retrieve);
       retrieve += sizeof(int);
     }
@@ -313,21 +313,22 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
 	  memmove(&n_bonds, retrieve, sizeof(int));
 	  retrieve +=  sizeof(int);
           if (n_bonds) {
-            realloc_intlist(&pt->bl, pt->bl.n = n_bonds);
-            std::copy(bond_retrieve, bond_retrieve + n_bonds, pt->bl.e);
+	    pt->bl.resize(n_bonds);
+            std::copy_n(bond_retrieve, n_bonds, pt->bl.begin());
             bond_retrieve += n_bonds;
           }
 #ifdef EXCLUSIONS
-	  memmove(&n_bonds, retrieve, sizeof(int));
+          int n_exclusions;
+	  memmove(&n_exclusions, retrieve, sizeof(int));
 	  retrieve +=  sizeof(int);
-          if (n_bonds) {
-            realloc_intlist(&pt->el, pt->el.n = n_bonds);
-            std::copy(bond_retrieve, bond_retrieve + n_bonds, pt->el.e);
-            bond_retrieve += n_bonds;
+          if (n_exclusions) {
+	    pt->el.resize(n_exclusions);
+            std::copy_n(bond_retrieve, n_exclusions, pt->el.begin());
+            bond_retrieve += n_exclusions;
           }
 #endif
 #endif
-	  if (local_particles[pt->p.identity] == NULL) {
+	  if (local_particles[pt->p.identity] == nullptr) {
 	    local_particles[pt->p.identity] = pt;
 	  }
 	}
@@ -450,11 +451,9 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts)
 	if (data_parts & GHOSTTRANS_PROPRTS) {
 	  memmove(&pt2->p, &pt1->p, sizeof(ParticleProperties));
 #ifdef GHOSTS_HAVE_BONDS
-          realloc_intlist(&(pt2->bl), pt2->bl.n = pt1->bl.n);
-	  memmove(pt2->bl.e, pt1->bl.e, pt1->bl.n*sizeof(int));
+	  pt2->bl = pt1->bl;
 #ifdef EXCLUSIONS
-          realloc_intlist(&(pt2->el), pt2->el.n = pt1->el.n);
-	  memmove(pt2->el.e, pt1->el.e, pt1->el.n*sizeof(int));
+	  pt2->el = pt1->el;
 #endif
 #endif
         }
@@ -539,7 +538,7 @@ void ghost_communicator(GhostCommunicator *gc)
   int n, n2;
   int data_parts = gc->data_parts;
 
-  GHOST_TRACE(fprintf(stderr, "%d: ghost_comm %p, data_parts %d\n", this_node, gc, data_parts));
+  GHOST_TRACE(fprintf(stderr, "%d: ghost_comm %p, data_parts %d\n", this_node, (void*) gc, data_parts));
 
   for (n = 0; n < gc->num; n++) {
     GhostCommunication *gcn = &gc->comm[n];
@@ -649,7 +648,7 @@ void ghost_communicator(GhostCommunicator *gc)
 	if (node == this_node)
 	  MPI_Reduce(s_buffer, r_buffer, n_s_buffer, MPI_BYTE, MPI_FORCES_SUM, node, comm_cart);
 	else
-	  MPI_Reduce(s_buffer, NULL, n_s_buffer, MPI_BYTE, MPI_FORCES_SUM, node, comm_cart);
+	  MPI_Reduce(s_buffer, nullptr, n_s_buffer, MPI_BYTE, MPI_FORCES_SUM, node, comm_cart);
 	break;
       }
       //GHOST_TRACE(MPI_Barrier(comm_cart));
@@ -720,7 +719,7 @@ void invalidate_ghosts()
 	 if the pointer stored there belongs to a ghost celll
 	 particle array. */
       if( &(part[p]) == local_particles[part[p].p.identity] ) 
-	local_particles[part[p].p.identity] = NULL;
+	local_particles[part[p].p.identity] = nullptr;
       free_particle(part+p);
     }
     ghost_cells.cell[c]->n = 0;

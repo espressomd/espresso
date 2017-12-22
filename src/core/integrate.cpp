@@ -47,6 +47,7 @@
 #include "minimize_energy.hpp"
 #include "nemd.hpp"
 #include "observables.hpp"
+#include "accumulators.hpp"
 #include "p3m.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
@@ -84,7 +85,6 @@ double skin = 0.0;
 double skin2 = 0.0;
 bool skin_set = false;
 
-int resort_particles = 1;
 int recalc_forces = 1;
 
 double verlet_reuse = 0.0;
@@ -836,7 +836,8 @@ void propagate_press_box_pos_and_rescale_npt() {
                                 this_node, p.r.p[0], p.r.p[1], p.r.p[2]));
     }
 
-    resort_particles = 1;
+
+    set_resort_particles(Cells::RESORT_LOCAL);
 
     /* Apply new volume to the box-length, communicate it, and account for
      * necessary adjustments to the cell geometry */
@@ -950,7 +951,7 @@ void propagate_pos() {
       }
       /* Verlet criterion check */
       if (distance2(p.r.p, p.l.p_old) > skin2)
-        resort_particles = 1;
+        set_resort_particles(Cells::RESORT_LOCAL);
     }
   }
 
@@ -1023,7 +1024,7 @@ void propagate_vel_pos() {
           p.r.p[1] += box_l[1];
           p.l.i[1]--;
         }
-        resort_particles = 1;
+        set_resort_particles(Cells::RESORT_LOCAL);
       }
       /* Branch prediction on most systems should mean there is minimal cost
        * here */
@@ -1050,11 +1051,11 @@ void propagate_vel_pos() {
     if (SQR(p.r.p[0] - p.l.p_old[0]) + SQR(p.r.p[1] - p.l.p_old[1]) +
             SQR(p.r.p[2] - p.l.p_old[2]) >
         skin2)
-      resort_particles = 1;
+      set_resort_particles(Cells::RESORT_LOCAL);
   }
 
 #ifdef LEES_EDWARDS /* would be nice to be more refined about this */
-  resort_particles = 1;
+  set_resort_particles(Cells::RESORT_GLOBAL);
 #endif
 
   announce_resort_particles();
@@ -1112,7 +1113,8 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
 
   /* perform integration */
   if (!Correlators::auto_update_enabled() &&
-      !Observables::auto_update_enabled()) {
+      !Observables::auto_update_enabled() &&
+      !Accumulators::auto_update_enabled()) {
     if (mpi_integrate(n_steps, reuse_forces))
       return ES_ERROR;
   } else {
@@ -1122,6 +1124,7 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
       reuse_forces = 1;
       Observables::auto_update();
       Correlators::auto_update();
+      Accumulators::auto_update();
 
       if (Observables::auto_write_enabled()) {
         Observables::auto_write();
@@ -1191,26 +1194,20 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
 
 /* Sanity Checks */
 #ifdef ELECTROSTATICS
-  if (nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.bjerrum > 0) {
-    fprintf(stderr, "WARNING: If electrostatics is being used you must use the "
-                    "-cubic_box option!\n");
-    fprintf(stderr,
-            "Automatically reverting to a cubic box for npt integration.\n");
-    fprintf(stderr, "Be aware though that all of the coulombic pressure is "
-                    "added to the x-direction only!\n");
-    nptiso.cubic_box = 1;
-  }
+  if (nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.prefactor > 0) {
+    runtimeErrorMsg() << "WARNING: If electrostatics is being used you must use the the cubic box npt." ;
+    integ_switch = INTEG_METHOD_NVT;
+    mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+    return ES_ERROR;
+ }
 #endif
 
 #ifdef DIPOLES
-  if (nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.Dbjerrum > 0) {
-    fprintf(stderr, "WARNING: If magnetostatics is being used you must use the "
-                    "-cubic_box option!\n");
-    fprintf(stderr,
-            "Automatically reverting to a cubic box for npt integration.\n");
-    fprintf(stderr, "Be aware though that all of the magnetostatic pressure is "
-                    "added to the x-direction only!\n");
-    nptiso.cubic_box = 1;
+  if (nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.Dprefactor > 0) {
+    runtimeErrorMsg() << "WARNING: If magnetostatics is being used you must use the the cubic box npt." ;
+    integ_switch = INTEG_METHOD_NVT;
+    mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+    return ES_ERROR;
   }
 #endif
 
@@ -1227,6 +1224,8 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
   /* set integrator switch */
   integ_switch = INTEG_METHOD_NPT_ISO;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+  mpi_bcast_parameter(FIELD_NPTISO_PISTON);
+  mpi_bcast_parameter(FIELD_NPTISO_PEXT);
 
   /* broadcast npt geometry information to all nodes */
   mpi_bcast_nptiso_geom();

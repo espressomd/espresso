@@ -109,7 +109,7 @@ To give an example::
     checkpoint.register("system.part")
 
     # ... set charges of particles here ... from espressomd import
-    electrostatics p3m = electrostatics.P3M(bjerrum_length=1.0, accuracy=1e-2)
+    electrostatics p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
     system.actors.add(p3m)
     checkpoint.register("p3m")
 
@@ -431,10 +431,11 @@ window with ``start()``. See the following minimal code example::
     system.time_step = 0.01
     system.box_l = [10,10,10]
 
-    system.part.add(pos = [1,1,1]) system.part.add(pos = [9,9,9])
+    system.part.add(pos = [1,1,1]) 
+    system.part.add(pos = [9,9,9])
 
-    visualizer = visualization.mayaviLive(system) 
-    #visualizer = visualization.openGLLive(system)
+    #visualizer = visualization.mayaviLive(system) 
+    visualizer = visualization.openGLLive(system)
 
     def main_thread(): 
         while True: 
@@ -461,8 +462,8 @@ openGLLive.
 ``start()`` starts the blocking visualizer window. 
 Should be called after a seperate thread containing ``update()`` has been started.
 
-| :meth:`espressomd.visualization.mayaviLive.registerCallback()`
-| :meth:`espressomd.visualization.openGLLive.registerCallback()`
+| :meth:`espressomd.visualization.mayaviLive.register_callback()`
+| :meth:`espressomd.visualization.openGLLive.register_callback()`
 
 Registers the method ``callback()``, which is called every ``interval`` milliseconds. Useful for
 live plotting (see sample script samples/python/visualization.py).
@@ -485,14 +486,29 @@ Optional keywords:
 OpenGL visualizer
 ~~~~~~~~~~~~~~~~~
 
+| :meth:`espressomd.visualization.openGLLive.run()` 
+
+To visually debug your simulation, ``run()`` can be used to conveniently start 
+an integration loop in a seperate thread once the visualizer is initialized::
+
+    import espressomd 
+    from espressomd import visualization 
+
+    system = espressomd.System() 
+    system.cell_system.skin = 0.4
+    system.time_step = 0.00001
+    system.box_l = [10,10,10]
+
+    system.part.add(pos = [1,1,1], v = [1,0,0]) 
+    system.part.add(pos = [9,9,9], v = [0,1,0])
+
+    visualizer = visualization.openGLLive(system, background_color = [1,1,1])
+    visualizer.run(1)
+
 :class:`espressomd.visualization.openGLLive()`
 
-The optional keywords in ``**kwargs`` to adjust the appearance of the visualization
-have suitable default values for most simulations. Colors for particles,
-bonds and constraints are specified by RGBA arrays, materials by an
-array for the ambient, diffuse and specular (ADS) components. To
-distinguish particle groups, arrays of RGBA or ADS entries are used,
-which are indexed circularly by the numerical particle type.
+The optional keywords in ``**kwargs`` are used to adjust the appearance of the visualization.
+The parameters have suitable default values for most simulations. 
 
 Required paramters:
     * `system`: The espressomd.System() object.
@@ -547,6 +563,28 @@ Optional keywords:
     * `spotlight_brightness`: Brightness (inverse constant attenuation) of the spotlight. 
     * `spotlight_focus`: Focus (spot exponent) for the spotlight from 0 (uniform) to 128. 
 
+Colors and Materials
+^^^^^^^^^^^^^^^^^^^^
+
+Colors for particles, bonds and constraints are specified by RGBA arrays.
+Materials by an array for the ambient, diffuse, specular and shininess (ADSS)
+components. To distinguish particle groups, arrays of RGBA or ADSS entries are
+used, which are indexed circularly by the numerical particle type::
+
+    # Particle type 0 is red, type 1 is blue (type 2 is red etc)..
+    visualizer = visualization.openGLLive(system, 
+                                          particle_coloring = 'type',
+                                          particle_type_colors = [[1, 0, 0, 1],[0, 0, 1, 1]])
+
+`particle_type_materials` lists the materials by type::
+
+    # Particle type 0 is gold, type 1 is blue (type 2 is gold again etc).
+    visualizer = visualization.openGLLive(system, 
+                                          particle_coloring = 'type',
+                                          particle_type_colors = [[1, 1, 1, 1],[0, 0, 1, 1]],
+                                          particle_type_materials = [gold, bright])
+
+Materials are stored in :attr:`espressomd.visualization.openGLLive().materials`. 
 
 Controls
 ^^^^^^^^
@@ -570,7 +608,7 @@ by a timer or keyboard input::
         print "foo"
 
     #Registers timed calls of foo()
-    visualizer.registerCallback(foo,interval=500)
+    visualizer.register_callback(foo,interval=500)
 
     #Callbacks to control temperature 
     temperature = 1.0
