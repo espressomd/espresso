@@ -50,6 +50,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <unordered_map>
+#include <unordered_set>
 /************************************************
  * defines
  ************************************************/
@@ -64,12 +65,11 @@
  * variables
  ************************************************/
 // List of particles for grandcanonical simulations
-TypeOfIndex Type;
-IndexOfType Index;
-TypeList *type_array;
 int number_of_type_lists;
-int GC_init;
-int Type_array_init;
+bool type_list_enable;
+std::unordered_map<int, std::unordered_set<int>> particle_type_map{};
+void remove_id_from_map(int part_id, int type);
+void add_id_to_type_map(int part_id, int type);
 
 int max_seen_particle = -1;
 int n_part = 0;
@@ -401,7 +401,7 @@ std::vector<Particle> mpi_get_particles(std::vector<int> const &ids) {
 
 void prefetch_particle_data(std::vector<int> ids) {
   /* Nothing to do on a single node. */
-  if(comm_cart.size() == 1)
+  if (comm_cart.size() == 1)
     return;
 
   /* Remove local, already cached and non-existent particles from the list. */
@@ -629,34 +629,43 @@ int set_particle_mu_E(int part, double mu_E[3]) {
   mpi_send_mu_E(pnode, part, mu_E);
   return ES_OK;
 }
+
+void get_particle_mu_E(int part, double (&mu_E)[3]) {
+  auto p = get_particle_data(part);
+
+  for (int i = 0; i < 3; i++) {
+    mu_E[i] = p->p.mu_E[i];
+  }
+}
 #endif
 
-int set_particle_type(int part, int type) {
-  auto const pnode = get_particle_node(part);
+int set_particle_type(int p_id, int type) {
+  auto const pnode = get_particle_node(p_id);
   make_particle_type_exist(type);
 
-  if (pnode == -1)
+  if (pnode == -1){
+    throw std::runtime_error("Pnode not found\n");
     return ES_ERROR;
+  }
 
-  if (Type_array_init) {
+  if (type_list_enable) {
     // check if the particle exists already and the type is changed, then remove
     // it from the list which contains it
-    auto cur_par = get_particle_data(part);
+    auto cur_par = get_particle_data(p_id);
     if (cur_par) {
       int prev_type = cur_par->p.type;
       if (prev_type != type) {
         // particle existed before so delete it from the list
-        remove_id_type_array(part, prev_type);
+        remove_id_from_map(p_id, prev_type);
       }
+    } else {
+      throw std::runtime_error("Cannot set type for non-existing particle");
     }
-
-    if (add_particle_to_list(part, type) == ES_ERROR) {
-      // Tcl_AppendResult(interp, "gc particle add failed", (char *) nullptr);
-      return ES_ERROR;
-    }
+    
+    add_id_to_type_map(p_id, type);
   }
 
-  mpi_send_type(pnode, part, type);
+  mpi_send_type(pnode, p_id, type);
 
   return ES_OK;
 }
@@ -852,27 +861,28 @@ void remove_all_particles() {
   clear_particle_node();
 }
 
-int remove_particle(int part) {
-  auto cur_par = get_particle_data(part);
-
+int remove_particle(int p_id) {
+  auto cur_par = get_particle_data(p_id);
   if (cur_par) {
-    int type = cur_par->p.type;
-    if (remove_id_type_array(part, type) == ES_ERROR)
-      return ES_ERROR;
+    if(type_list_enable==true){
+        //remove particle from its current type_list
+        int type = cur_par->p.type;
+        remove_id_from_map(p_id, type);
+    }
   } else {
-    return ES_ERROR;
+    throw std::runtime_error("Particle could not be retrieved during remove");
   }
 
-  auto const pnode = get_particle_node(part);
+  auto const pnode = get_particle_node(p_id);
 
   if (pnode == -1)
-    return ES_ERROR;
+    throw std::runtime_error("Particle node could not be retrieved");
 
-  particle_node[part] = -1;
+  particle_node[p_id] = -1;
 
-  mpi_remove_particle(pnode, part);
+  mpi_remove_particle(pnode, p_id);
 
-  if (part == max_seen_particle) {
+  if (p_id == max_seen_particle) {
     max_seen_particle--;
     mpi_bcast_parameter(FIELD_MAXPART);
   }
@@ -1253,310 +1263,38 @@ void auto_exclusions(int distance) {
 
 #endif
 
-int init_gc(void) {
-  if (type_array == (TypeList *)nullptr) {
-    // stores the number of currently available type_list's
-    number_of_type_lists = 10;
+void init_type_map(int type) {
+  type_list_enable=true;
+  if (type < 0)
+    throw std::runtime_error("Types may not be negative");
 
-    Type.max_entry = 0;
-    Index.max_entry = 0;
+  //fill particle map
+    if(particle_type_map.count(type)==0)
+        particle_type_map[type]=std::unordered_set<int>();
 
-    type_array =
-        (TypeList *)Utils::malloc(sizeof(TypeList) * number_of_type_lists);
-    if (type_array == (TypeList *)0)
-      return ES_ERROR;
-
-    GC_init = 1;
-    Type_array_init = 0;
-  }
-  return ES_OK;
-}
-
-int init_type_array(int type) {
-  if (init_gc() == ES_ERROR)
-    return ES_ERROR;
-
-  for (int i = 0; i < Index.max_entry; i++)
-    if (type == Type.index[i] && Index.type[type] != -1) {
-      // already indexed
-      return ES_OK;
-    }
-
-  int type_index = -1;
-  type_index = (Type.max_entry++);
-  if (type_index == number_of_type_lists) {
-    reallocate_global_type_list(number_of_type_lists * 2);
-  }
-
-  Type.index = Utils::realloc(Type.index, sizeof(int) * Type.max_entry);
-
-  // reallocate the array that holds the particle type and points to the type
-  // index used for the type_list
-
-  if (type >= Index.max_entry) {
-    Index.type = Utils::realloc(Index.type, (type + 1) * sizeof(int));
-    Index.max_entry = type + 1;
-  }
-  for (int i = 0; i < Type.max_entry; i++)
-    Index.type[i] = -1;
-
-  if (Type.index == (int *)0 || Index.type == (int *)0)
-    return ES_ERROR;
-
-  // allocates a list for ids for as many entries as there are particles right
-  // now
-  if (type < 0) {
-    return ES_ERROR;
-  }
-  Type.index[type_index] = type;
-  // fill in array type_index_of_type
-  for (int i = 0; i < Type.max_entry; i++) {
-    Index.type[Type.index[i]] = i;
-  }
-
-  int t_c = 0; // index
-  type_array[Index.type[type]].id_list =
-      (int *)Utils::malloc(sizeof(int) * n_part);
   for (auto const &p : partCfg()) {
     if (p.p.type == type)
-      type_array[Index.type[type]].id_list[t_c++] = p.p.identity;
-  }
-  int max_size = n_part;
-  if (t_c != 0) {
-    while (t_c < (double)max_size / 4.0) {
-      max_size = floor((double)max_size / 2.0);
-    }
-    // now the array is shrinked to at least 4 times the highest entry
-    type_array[Index.type[type]].id_list = Utils::realloc(
-        type_array[Index.type[type]].id_list, sizeof(int) * 2 * max_size);
-    type_array[Index.type[type]].max_entry = t_c;
-    type_array[Index.type[type]].cur_size = max_size * 2;
-  } else {
-    // no particles of the given type were found, so leave array size fixed at a
-    // reasonable start entry 64 ints in this case
-    type_array[Index.type[type]].id_list =
-        Utils::realloc(type_array[Index.type[type]].id_list, sizeof(int) * 64);
-    type_array[Index.type[type]].max_entry = t_c;
-    type_array[Index.type[type]].cur_size = 64;
-  }
-  // fill remaining entries with -1
-  for (int i = type_array[Index.type[type]].max_entry;
-       i < type_array[Index.type[type]].cur_size; i++) {
-    type_array[Index.type[type]].id_list[i] = -1;
-  }
-  Type_array_init = 1;
-  return ES_OK;
-}
-
-int reallocate_type_array(int type) {
-  type_array[Index.type[type]].id_list =
-      Utils::realloc(type_array[Index.type[type]].id_list,
-                     sizeof(int) * type_array[Index.type[type]].cur_size * 2);
-  if (type_array[Index.type[type]].id_list == (int *)0) {
-    return ES_ERROR;
-  }
-  type_array[Index.type[type]].cur_size =
-      type_array[Index.type[type]].cur_size * 2;
-  return ES_OK;
-}
-
-int remove_id_type_array(int part_id, int type) {
-
-  int l_err = 1;
-  for (int j = 0; j < Type.max_entry; j++) {
-    if (Type.index[j] == type) {
-      l_err = 0;
-      break;
-    }
-  }
-  if (l_err) {
-    // there is no list which contains this type
-    return ES_OK;
-  }
-  int in_type = Index.type[type];
-  int temp_id = -1;
-  int max = type_array[in_type].max_entry;
-  for (int i = 0; i < max; i++) {
-    if (type_array[in_type].id_list[i] == part_id) {
-      temp_id = i;
-      break;
-    }
-  }
-  if (temp_id == -1) {
-    // particle is not in the list
-    return ES_OK;
-  }
-  if (temp_id == max - 1) {
-    type_array[in_type].id_list[temp_id] = -1;
-  } else {
-    int temp = type_array[in_type].id_list[max - 1];
-    type_array[in_type].id_list[max - 1] = -1;
-    type_array[in_type].id_list[temp_id] = temp;
-  }
-  type_array[in_type].max_entry--;
-  return ES_OK;
-}
-
-int update_particle_array(int type) {
-  int t_c = 0;
-  for (auto const &p : partCfg()) {
-    if (p.p.type == type) {
-      type_array[Index.type[type]].id_list[t_c++] = p.p.identity;
-    }
-    if (t_c > (double)type_array[Index.type[type]].cur_size / 2.0) {
-      if (reallocate_type_array(type) == ES_ERROR)
-        return ES_ERROR;
-    }
-  }
-  type_array[Index.type[type]].max_entry = t_c;
-  for (int i = t_c; i < type_array[Index.type[type]].cur_size; i++)
-    type_array[Index.type[type]].id_list[i] = -1;
-
-  return ES_OK;
-}
-
-int reallocate_global_type_list(int size) {
-  if (size <= 0)
-    return ES_ERROR;
-  type_array = Utils::realloc(type_array, sizeof(TypeList) * size);
-  number_of_type_lists = size;
-  if (type_array == (TypeList *)0)
-    return ES_ERROR;
-
-  return ES_OK;
-}
-
-int find_particle_type(int type, int *id) {
-  int l_err = 1;
-  // type i not indexed, so no list for this particle exists
-  for (int i = 0; i < Type.max_entry; i++) {
-    if (Type.index[i] == type) {
-      l_err = 0;
-      break;
-    }
-  }
-  if (l_err) {
-    return ES_ERROR;
-  }
-  if (type_array[Index.type[type]].max_entry == 0) {
-    return ES_ERROR;
-  }
-  int rand_index = i_random(type_array[Index.type[type]].max_entry);
-  *id = type_array[Index.type[type]].id_list[rand_index];
-
-  return ES_OK;
-}
-
-int find_particle_type_id(int type, int *id, int *in_id) {
-  int l_err = 1;
-  // type i not indexed, so no list for this particle exists
-  for (int i = 0; i < Type.max_entry; i++) {
-    if (Type.index[i] == type) {
-      l_err = 0;
-      break;
-    }
-  }
-  if (l_err) {
-    return ES_ERROR;
-  }
-  if (type_array[Index.type[type]].max_entry == 0)
-    return ES_ERROR;
-
-  int rand_index = i_random(type_array[Index.type[type]].max_entry);
-  if (id == (int *)0 && in_id == (int *)0)
-    return ES_ERROR;
-  else {
-    *in_id = rand_index;
-    *id = type_array[Index.type[type]].id_list[*in_id];
-    return ES_OK;
+      particle_type_map.at(type).insert(p.p.identity);
   }
 }
 
-int add_particle_to_list(int part_id, int type) {
-  int l_err = 1;
-  int already_in = 0;
-  //	int already_in_other_list = 0;
-  // type i not indexed, so no list for this particle exists
-  for (int i = 0; i < Type.max_entry; i++) {
-    if (Type.index[i] == type) {
-      l_err = 0;
-      break;
-    }
-  }
-  if (l_err) {
-    return NOT_INDEXED;
-  }
-
-  int in_type = Index.type[type];
-  int max = type_array[in_type].max_entry;
-  for (int i = 0; i < max; i++) {
-    if (type_array[in_type].id_list[i] == part_id) {
-      already_in = 1;
-      break;
-    }
-  }
-  if (already_in) {
-    return ES_OK;
-  }
-
-  if (max >= (double)type_array[in_type].cur_size / 2.0)
-    if (reallocate_type_array(type) == ES_ERROR)
-      return ES_ERROR;
-
-  // add particle id to list:
-  type_array[in_type].id_list[max] = part_id;
-  type_array[in_type].max_entry++;
-  return ES_OK;
+void remove_id_from_map(int part_id, int type) {
+  particle_type_map.at(type).erase(part_id);
 }
 
-int gc_status(int type) {
-  int l_err = 1;
-  // type i not indexed, so no list for this particle exists
-  for (int i = 0; i < Type.max_entry; i++) {
-    if (Type.index[i] == type) {
-      l_err = 0;
-      break;
-    }
-  }
-  if (l_err) {
-    return ES_ERROR;
-  }
-  int in_type = Index.type[type];
-  for (int i = 0; i < type_array[in_type].max_entry; i++) {
-    printf("%d\n", type_array[in_type].id_list[i]);
-  }
-  return ES_OK;
+int get_random_p_id(int type){
+    if(particle_type_map.at(type).size()==0)
+        throw std::runtime_error("No particles of given type could be found");
+    int rand_index = i_random(particle_type_map.at(type).size());
+    return *std::next(particle_type_map[type].begin(),rand_index);
 }
 
-int free_particle_lists(void) {
-  if (type_array == (TypeList *)0 || Type.index == (int *)0) {
-    return ES_OK;
-  }
-  for (int i = 0; i < Type.max_entry; i++) {
-    free(type_array[i].id_list);
-  }
-  free(type_array);
-  free(Type.index);
-  free(Index.type);
-  return ES_OK;
+void add_id_to_type_map(int part_id, int type) {
+    particle_type_map.at(type).insert(part_id);
 }
 
-int number_of_particles_with_type(int type, int *number) {
-  int indexed = 0;
-  if (type_array == (TypeList *)0)
-    init_type_array(type);
-
-  for (int i = 0; i < Type.max_entry; i++) {
-    if (type == Type.index[i]) {
-      indexed = 1;
-      break;
-    }
-  }
-  if (indexed) {
-    *number = type_array[Index.type[type]].max_entry;
-    return ES_OK;
-  }
-  return NOT_INDEXED;
+int number_of_particles_with_type(int type) {
+  return static_cast<int>(particle_type_map.at(type).size());
 }
 
 // The following functions are used by the python interface to obtain

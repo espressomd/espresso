@@ -9,8 +9,6 @@ using ScriptInterface::AutoParameters;
 struct A : AutoParameters {
   A(int i_, int j_) : AutoParameters({{"i", i}, {"j", j}}), i(i_), j(j_) {}
 
-  const std::string name() const override { return "A"; }
-
   int i;
   const int j;
 };
