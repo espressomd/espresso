@@ -71,3 +71,7 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
     cdef cppclass CConstantpHEnsemble "ReactionEnsemble::ConstantpHEnsemble"(CReactionAlgorithm):
         CConstantpHEnsemble()
         double m_constant_pH
+
+    cdef cppclass CWidomInsertion "ReactionEnsemble::WidomInsertion"(CReactionAlgorithm):
+        CWidomInsertion()
+        double measure_excess_chemical_potential(int reaction_id)

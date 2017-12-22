@@ -279,40 +279,6 @@ void ReactionAlgorithm::make_reaction_attempt(
 }
 
 /**
-* Calculates the whole product of factorial expressions which occur in the
-* reaction ensemble acceptance probability
-*/
-double
-calculate_factorial_expression(SingleReaction &current_reaction,
-                               int *old_particle_numbers,
-                               ReactionAlgorithm &m_current_reaction_system) {
-  double factorial_expr = 1.0;
-  // factorial contribution of reactants
-  for (int i = 0; i < current_reaction.reactant_types.size(); i++) {
-    int nu_i = -1 * current_reaction.reactant_coefficients[i];
-    int N_i0 = old_particle_numbers[find_index_of_type(
-        current_reaction.reactant_types[i], &m_current_reaction_system)];
-    factorial_expr =
-        factorial_expr * factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
-                             N_i0, nu_i); // zeta = 1 (see smith paper) since we
-                                          // only perform one reaction at one
-                                          // call of the function
-  }
-  // factorial contribution of products
-  for (int i = 0; i < current_reaction.product_types.size(); i++) {
-    int nu_i = current_reaction.product_coefficients[i];
-    int N_i0 = old_particle_numbers[find_index_of_type(
-        current_reaction.product_types[i], &m_current_reaction_system)];
-    factorial_expr =
-        factorial_expr * factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
-                             N_i0, nu_i); // zeta = 1 (see smith paper) since we
-                                          // only perform one reaction at one
-                                          // call of the function
-  }
-  return factorial_expr;
-}
-
-/**
 * Restores the previosly stored particle properties. This funtion is invoked
 * when a reaction attempt is rejected.
 */
@@ -1914,6 +1880,43 @@ double ConstantpHEnsemble::calculate_acceptance_probability(
   return bf;
 }
 
+double WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
+    SingleReaction &current_reaction=reactions[reaction_id];
+    const double E_pot_old = calculate_current_potential_energy_of_system();
+    
+    //make reaction attempt
+  std::vector<int> p_ids_created_particles;
+  std::vector<StoredParticleProperty> hidden_particles_properties;
+  std::vector<StoredParticleProperty> changed_particles_properties;
+  const int number_of_saved_properties =
+      3; // save p_id, charge and type of the reactant particle, only thing we
+         // need to hide the particle and recover it
+  make_reaction_attempt(current_reaction, changed_particles_properties,
+                        p_ids_created_particles, hidden_particles_properties);    
+    
+    const double E_pot_new = calculate_current_potential_energy_of_system();
+
+    //reverse reaction attempt
+     // reverse reaction
+    // 1) delete created product particles
+    for (int i = 0; i < p_ids_created_particles.size(); i++) {
+      delete_particle(p_ids_created_particles[i]);
+    }
+    // 2)restore previously hidden reactant particles
+    restore_properties(hidden_particles_properties, number_of_saved_properties);
+    // 2)restore previously changed reactant particles
+    restore_properties(changed_particles_properties,
+                       number_of_saved_properties);
+                       
+                          
+    //calculate exponential
+    double exponential=exp(-1.0/temperature*(E_pot_new-E_pot_old));
+    summed_exponentials+=exponential;
+    number_of_insertions+=1;
+    double average_exponential=summed_exponentials/number_of_insertions;
+    return -temperature*log(average_exponential);
+}
+
 /////////////////////////////////////////////////////////////////free functions
 int find_index_of_type(int type, ReactionAlgorithm* m_current_reaction_system) {
   int index = -100; // initialize to invalid index
@@ -1928,4 +1931,41 @@ int find_index_of_type(int type, ReactionAlgorithm* m_current_reaction_system) {
   }
   return index;
 }
+
+
+
+/**
+* Calculates the whole product of factorial expressions which occur in the
+* reaction ensemble acceptance probability
+*/
+double
+calculate_factorial_expression(SingleReaction &current_reaction,
+                               int *old_particle_numbers,
+                               ReactionAlgorithm &m_current_reaction_system) {
+  double factorial_expr = 1.0;
+  // factorial contribution of reactants
+  for (int i = 0; i < current_reaction.reactant_types.size(); i++) {
+    int nu_i = -1 * current_reaction.reactant_coefficients[i];
+    int N_i0 = old_particle_numbers[find_index_of_type(
+        current_reaction.reactant_types[i], &m_current_reaction_system)];
+    factorial_expr =
+        factorial_expr * factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
+                             N_i0, nu_i); // zeta = 1 (see smith paper) since we
+                                          // only perform one reaction at one
+                                          // call of the function
+  }
+  // factorial contribution of products
+  for (int i = 0; i < current_reaction.product_types.size(); i++) {
+    int nu_i = current_reaction.product_coefficients[i];
+    int N_i0 = old_particle_numbers[find_index_of_type(
+        current_reaction.product_types[i], &m_current_reaction_system)];
+    factorial_expr =
+        factorial_expr * factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
+                             N_i0, nu_i); // zeta = 1 (see smith paper) since we
+                                          // only perform one reaction at one
+                                          // call of the function
+  }
+  return factorial_expr;
+}
+
 }

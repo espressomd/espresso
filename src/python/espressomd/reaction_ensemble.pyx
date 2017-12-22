@@ -634,4 +634,29 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         def __get__(self):
             return self.WLRptr.fix_polymer
 
+cdef class WidomInsertion(ReactionAlgorithm):
+    cdef CWidomInsertion* WidomInsertionPtr
+    def __init__(self, *args, **kwargs):
+        self.RE = <CReactionAlgorithm*> new CWangLandauReactionEnsemble()
+        self.WidomInsertionPtr=<CWidomInsertion*> self.RE
+        self._params = {"standard_pressure": 1,
+                        "temperature": 1,
+                        "exclusion_radius": 0}
+        for k in self._required_keys():
+            if k not in kwargs:
+                raise ValueError(
+                    "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
+            self._params[k] = kwargs[k]
 
+        for k in kwargs:
+            if k in self._valid_keys():
+                self._params[k] = kwargs[k]
+            else:
+                raise KeyError("%s is not a vaild key" % k)
+
+        self._set_params_in_es_core()    
+    def __dealloc__(self):
+        del(self.WidomInsertionPtr)
+    
+    def measure_excess_chemical_potential(self, reaction_id):
+        return self.WidomInsertionPtr.measure_excess_chemical_potential(int(reaction_id))

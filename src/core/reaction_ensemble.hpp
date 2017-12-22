@@ -136,7 +136,14 @@ protected:
   virtual void on_mc_accept(int &new_state_index){};
   virtual void on_mc_reject(int &old_state_index){};
   virtual int on_mc_use_WL_get_new_state() { return -10; };
-  
+
+  void make_reaction_attempt(
+      SingleReaction &current_reaction,
+      std::vector<StoredParticleProperty> &changed_particles_properties,
+      std::vector<int> &p_ids_created_particles,
+      std::vector<StoredParticleProperty> &hidden_particles_properties);
+  void restore_properties(std::vector<StoredParticleProperty> &property_list,
+                          const int number_of_saved_properties);  
 private:
   std::vector<int> save_old_particle_numbers(void);
   int update_type_index(
@@ -166,11 +173,7 @@ private:
 
   void append_particle_property_of_random_particle(
       int type, std::vector<StoredParticleProperty> &list_of_particles);
-  void make_reaction_attempt(
-      SingleReaction &current_reaction,
-      std::vector<StoredParticleProperty> &changed_particles_properties,
-      std::vector<int> &p_ids_created_particles,
-      std::vector<StoredParticleProperty> &hidden_particles_properties);
+
 
   virtual double calculate_acceptance_probability(
       SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
@@ -179,8 +182,6 @@ private:
     return -10;
   };
 
-  void restore_properties(std::vector<StoredParticleProperty> &property_list,
-                          const int number_of_saved_properties);
   void add_types_to_index(std::vector<int> &type_list);
   std::vector<double> add_random_vector(double const *vector, int len_vector,
                          double length_of_displacement);
@@ -318,6 +319,15 @@ public:
 
 private:
   int get_random_p_id();
+};
+
+class WidomInsertion : public ReactionAlgorithm {
+public:
+    double measure_excess_chemical_potential(int reaction_id);
+
+private:
+    int number_of_insertions=0;
+    double summed_exponentials=0.0;
 };
 
 //////////////////////////////////////////////////////////////////free functions
