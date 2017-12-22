@@ -60,7 +60,7 @@ typedef struct {
   float gamma_even;
   float friction;
   float T;
-  float bjerrumlength;
+  float prefactor;
   float lb_force[3];
   unsigned int number_of_species;
   int reaction_species[3];
@@ -164,7 +164,7 @@ int ek_set_lb_density(double lb_density);
 int ek_set_viscosity(double viscosity);
 int ek_set_friction(double friction);
 int ek_set_T(double T);
-int ek_set_bjerrumlength(double bjerrumlength);
+int ek_set_prefactor(double prefactor);
 #ifdef EK_ELECTROSTATIC_COUPLING
 int ek_set_electrostatics_coupling( bool electrostatics_coupling );
 void ek_calculate_electrostatic_coupling();

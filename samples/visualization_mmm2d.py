@@ -40,7 +40,7 @@ print("After Minimization: E_total=", energy['total'])
 
 system.thermostat.set_langevin(kT=0.1, gamma=1.0)
 
-mmm2d = electrostatics.MMM2D(bjerrum_length = 100.0, maxPWerror = 1e-3, const_pot = 1, pot_diff = 50.0)
+mmm2d = electrostatics.MMM2D(prefactor = 10.0, maxPWerror = 1e-3, const_pot = 1, pot_diff = 50.0)
 system.actors.add(mmm2d)
 
 def main():
