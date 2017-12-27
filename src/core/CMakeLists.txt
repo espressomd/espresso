@@ -31,11 +31,7 @@ add_library(EspressoCore SHARED ${EspressoCore_SRC} config-version.cpp)
 install(TARGETS EspressoCore LIBRARY DESTINATION ${LIBDIR})
 set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
 
-<<<<<<< HEAD
-target_link_libraries(EspressoCore ${LIBRARIES} Actor Bonds ObjectInFluid ImmersedBoundary Shapes Constraints Correlators Observables)
-=======
-target_link_libraries(EspressoCore EspressoConfig ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints Correlators Observables Accumulators)
->>>>>>> b9e75b7e199beff8b92bba70f618437404f71713
+target_link_libraries(EspressoCore EspressoConfig ${LIBRARIES} Actor Bonds ObjectInFluid ImmersedBoundary Shapes Constraints Correlators Observables Accumulators)
 
 if(SCAFACOS)
   include_directories(${SCAFACOS_INCLUDE_DIRS})
