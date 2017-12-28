@@ -91,52 +91,7 @@ int tabulated_bonded_set_params(int bond_type,
   tab_pot->force_tab = force;
   tab_pot->energy_tab = energy;
 
-  mpi_bcast_ia_params(bond_type, -1);
-
-
-  /* Check interval for angle and dihedral potentials.  With adding
-     ROUND_ERROR_PREC to the upper boundary we make sure, that during
-     the calculation we do not leave the defined table!
-  */
-  if(tab_type == TAB_BOND_ANGLE ) {
-    if( input_minval != 0.0 || 
-	std::abs(input_maxval-PI) > 1e-5 ) {
-      fclose(fp);
-     return 6;
-    }
-    input_maxval = PI+ROUND_ERROR_PREC;
-  }
-  /* check interval for angle and dihedral potentials */
-  if(tab_type == TAB_BOND_DIHEDRAL ) {
-    if( input_minval != 0.0 || 
-	std::abs(input_maxval-(2*PI)) > 1e-5 ) {
-      fclose(fp);
-      return 6;
-    }
-    input_maxval = (2*PI)+ROUND_ERROR_PREC;
-  }
-
-  /* calculate dependent parameters */
-  input_invstepsize = (double)(size-1)/(input_maxval-input_minval);
-
-  /* allocate force and energy tables */
-  input_f = (double*)Utils::malloc(size*sizeof(double));
-  input_e = (double*)Utils::malloc(size*sizeof(double));
-
-  /* Read in the new force and energy table data */
-  for (i =0 ; i < size ; i++) {
-    if (fscanf(fp,"%lf %lf %lf", &dummr,
-	       &input_f[i],
-	       &input_e[i]) != 3){ 
-
-      return 5;
-    }
-  }
-
-  fclose(fp);
-  /*End of NEW CODE */
-
-
+  /*
   // this structure is just for testing the code with old iaparams stuff
   switch(tab_type){
   case TAB_BOND_LENGTH:    
@@ -158,7 +113,7 @@ int tabulated_bonded_set_params(int bond_type,
     runtimeError("Unsupported tabulated bond type.");
     return 1;
   };
-
+  */
   mpi_bcast_ia_params(bond_type, -1); 
   return ES_OK;
 
