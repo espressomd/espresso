@@ -41,7 +41,7 @@ int subt_lj_set_params(int bond_type)
   mpi_bcast_ia_params(bond_type, -1);
 
   //create new bond class in bond vector with params
-  bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::SubtLj>(r));
+  bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::SubtLj>());
 
   return ES_OK;
 }
