@@ -131,7 +131,7 @@ void ReactionAlgorithm::check_reaction_ensemble() {
       std::string message =
           std::string("Forgot to assign charge to type ") +
           std::to_string(
-              charges_of_types[type_index[i]]);
+              type_index[i]);
       throw std::runtime_error(message);
     }
   }
@@ -495,6 +495,7 @@ void ReactionAlgorithm::add_types_to_index(std::vector<int> &type_list) {
         is_in_list(type_list[i], type_index);
     if (!type_i_is_known) {
       type_index.push_back(type_list[i]);
+      charges_of_types.push_back(m_invalid_charge); // increase charges_of_types length
       init_type_map(type_list[i]); // make types known in espresso
     }
   }
@@ -508,21 +509,10 @@ void ReactionAlgorithm::add_types_to_index(std::vector<int> &type_list) {
 */
 int ReactionAlgorithm::update_type_index(std::vector<int> &reactant_types,
                                          std::vector<int> &product_types) {
-  // should only be used when defining a new reaction
-  int status_gc_init = 0;
-  if (type_index.empty()) {
-    if (reactant_types.size() > 0)
-      type_index.push_back(reactant_types[0]);
-    else
-      type_index.push_back(product_types[0]);
-    init_type_map(type_index[0]); // make types known in espresso
-  }
   add_types_to_index(reactant_types);
   add_types_to_index(product_types);
 
-  // increase charges_of_types length
-  charges_of_types.push_back(m_invalid_charge);
-  return status_gc_init;
+  return 0;
 }
 
 /**
@@ -1910,10 +1900,10 @@ double WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
                        
                           
     //calculate exponential
-    double exponential=exp(-1.0/temperature*(E_pot_new-E_pot_old));
+    double const exponential=exp(-1.0/temperature*(E_pot_new-E_pot_old));
     summed_exponentials+=exponential;
     number_of_insertions+=1;
-    double average_exponential=summed_exponentials/number_of_insertions;
+    double const average_exponential=summed_exponentials/number_of_insertions;
     return -temperature*log(average_exponential);
 }
 
