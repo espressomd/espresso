@@ -9,7 +9,7 @@
     //force calculation
 int Bond::TabulatedBondDihedral::calc_bonded_four_particle_force(Particle *p1, Particle *p2, 
 								Particle *p3, Particle *p4, 
-								double force[3], double force2[3], 
+								double force1[3], double force2[3], 
 								double force3[3], double force4[3]) 
   const
 
@@ -24,17 +24,23 @@ int Bond::TabulatedBondDihedral::calc_bonded_four_particle_force(Particle *p1, P
   double fac, f1[3], f4[3];
 
   /* dihedral angle */
-  calc_dihedral_angle(p1, p2, p3, p4, v12, v23, v34, v12Xv23, &l_v12Xv23, v23Xv34, &l_v23Xv34, &cosphi, &phi);
+  calc_dihedral_angle(p1, p2, p3, p4, v12, v23, v34, v12Xv23, &l_v12Xv23,
+                      v23Xv34, &l_v23Xv34, &cosphi, &phi);
   /* dihedral angle not defined - force zero */
-  if ( phi == -1.0 ) { 
-    for(i=0;i<3;i++) { force[i] = 0.0; force2[i] = 0.0; force3[i] = 0.0; }
+  if (phi == -1.0) {
+    for (i = 0; i < 3; i++) {
+      force1[i] = 0.0;
+      force2[i] = 0.0;
+      force3[i] = 0.0;
+    }
     return 0;
   }
 
   /* calculate force components (directions) */
-  for(i=0;i<3;i++)  {
-    f1[i] = (v23Xv34[i] - cosphi*v12Xv23[i])/l_v12Xv23;;
-    f4[i] = (v12Xv23[i] - cosphi*v23Xv34[i])/l_v23Xv34;
+  for (i = 0; i < 3; i++) {
+    f1[i] = (v23Xv34[i] - cosphi * v12Xv23[i]) / l_v12Xv23;
+    ;
+    f4[i] = (v12Xv23[i] - cosphi * v23Xv34[i]) / l_v23Xv34;
   }
   vector_product(v23, f1, v23Xf1);
   vector_product(v23, f4, v23Xf4);
@@ -42,13 +48,13 @@ int Bond::TabulatedBondDihedral::calc_bonded_four_particle_force(Particle *p1, P
   vector_product(v12, f1, v12Xf1);
 
   /* table lookup */
-  fac = bonded_tab_force_lookup(phi);
+  fac = m_tab_pot.force(phi);
 
   /* store dihedral forces */
-  for(i=0;i<3;i++) {
-      force[i] = fac*v23Xf1[i];
-      force2[i] = fac*(v34Xf4[i] - v12Xf1[i] - v23Xf1[i]);
-      force3[i] = fac*(v12Xf1[i] - v23Xf4[i] - v34Xf4[i]);
+  for (i = 0; i < 3; i++) {
+    force1[i] = fac * v23Xf1[i];
+    force2[i] = fac * (v34Xf4[i] - v12Xf1[i] - v23Xf1[i]);
+    force3[i] = fac * (v12Xf1[i] - v23Xf4[i] - v34Xf4[i]);
   }
 
   return 0;
@@ -67,9 +73,10 @@ int Bond::TabulatedBondDihedral::calc_bonded_four_particle_energy(Particle *p1, 
   /* dihedral angle, cosine of the dihedral angle */
   double phi, cosphi;
 
-  calc_dihedral_angle(p1, p2, p3, p4, v12, v23, v34, v12Xv23, &l_v12Xv23, v23Xv34, &l_v23Xv34, &cosphi, &phi);
+  calc_dihedral_angle(p1, p2, p3, p4, v12, v23, v34, v12Xv23, &l_v12Xv23,
+                      v23Xv34, &l_v23Xv34, &cosphi, &phi);
 
-  *_energy = bonded_tab_energy_lookup(phi);
+  *_energy = m_tab_pot.energy(phi);
 
   return 0;
 }

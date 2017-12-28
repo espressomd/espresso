@@ -91,29 +91,22 @@ int tabulated_bonded_set_params(int bond_type,
   tab_pot->force_tab = force;
   tab_pot->energy_tab = energy;
 
-  /*
   // this structure is just for testing the code with old iaparams stuff
   switch(tab_type){
   case TAB_BOND_LENGTH:    
     bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::TabulatedBondLength>
-		     (Bond::TabulatedBondedInteraction::TAB_BOND_LENGTH, input_filename,
-		      input_minval, input_maxval, input_npoints, input_invstepsize, input_f, 
-		      input_e));
+		     (*tab_pot));
   case TAB_BOND_ANGLE:    
     bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::TabulatedBondAngle>
-		     (Bond::TabulatedBondedInteraction::TAB_BOND_ANGLE, input_filename,
-		      input_minval, input_maxval, input_npoints, input_invstepsize, input_f, 
-		      input_e));
+		     (*tab_pot));
   case TAB_BOND_DIHEDRAL:    
     bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::TabulatedBondDihedral>
-		     (Bond::TabulatedBondedInteraction::TAB_BOND_DIHEDRAL, input_filename,
-		      input_minval, input_maxval, input_npoints, input_invstepsize, input_f, 
-		      input_e));
+		     (*tab_pot));
   default:
     runtimeError("Unsupported tabulated bond type.");
     return 1;
   };
-  */
+
   mpi_bcast_ia_params(bond_type, -1); 
   return ES_OK;
 

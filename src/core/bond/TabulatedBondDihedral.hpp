@@ -8,9 +8,8 @@ namespace Bond {
   public:
 
     //constructor
-    TabulatedBondDihedral(TabulatedBondedInteraction tab_type, char* filename, double minval, 
-			double maxval, int npoints, double invstepsize, double* f, double* e) : 
-      Tabulated{tab_type, filename, minval, maxval, npoints, invstepsize, f, e} 
+    TabulatedBondDihedral(TabulatedPotential tab_pot) : 
+      Tabulated{tab_pot, TabulatedBondedInteraction::TAB_BOND_DIHEDRAL} 
     {m_bondtype = BondType::BONDED_IA_TABULATED;}
 
     //force calculation
