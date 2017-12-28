@@ -11,34 +11,32 @@ class WangLandauHasConverged(Exception):
 
 cdef class ReactionAlgorithm(object):
     """
-    This class provides the Reaction Ensemble algorithm, the Wang-Landau
-    Reaction Ensemble algorithm and the constant pH method. Initialize the
-    reaction ensemble by setting the standard pressure, temperature, and the
-    exclusion radius.
+    This class provides the following algorithms: ReactionEnsemble, ConstantpHEnsemble, and
+    WangLandauReactionEnsemble.
+    Initialize the reaction ensemble with the given algorithm by setting the
+    standard pressure, temperature, and the exclusion radius. 
 
     Parameters
     ----------
     standard_pressure : :obj:`float`
-                        The pressure in simulation units where the reactions
-                        should occur. This is an input parameter of the
-                        reaction ensemble.
+                        The standard pressure (in simulation units)
+                        at which the reaction constant was determined.
+                        Note that if you provide the reaction constant :math:`K_c`
+                        as described in the user guide, this parameter should be kept at its default value.
+                        This paramater is retained for backward compatibility with earlier
+                        implementation, where the pressure-based constaht :math:`K_p` was
+                        assumed at the input.
     temperature : :obj:`float`
                   The temperature at which the reaction is performed.
     exclusion_radius : :obj:`float`
-                       Exclusion radius is the minimal distance that a new
-                       particle must have towards another particle when the new
-                       particle is inserted. This is valid if there is some
-                       repulsive potential in the system, that brings the
-                       energy to (approximately) infinity if particles are too
-                       close and therefore :math:`\exp(-\\beta E)` gives these
-                       configurations aproximately zero contribution in the
-                       partition function. The exclusion radius needs to be set
-                       in order to avoid oppositley charged particles to be set
-                       too close to each other or in order to avoid too steep
-                       gradients from the short ranged interaction potential
-                       when using the Reaction ensemble together with a MD
-                       scheme.
-
+                       Minimal distance from any particle, whithin which new
+                       particle will not be inserted. This is useful to avoid
+                       integrator failures if particles are too close and there
+                       is a diverging repulsive interaction, or to prevent two
+                       oppositely charged particles from being placed on top of
+                       each other.  The Boltzmann factor :math:`\exp(-\\beta
+                       E)` gives these configurations a small contribution to
+                       the partition function, therefore they can be neglected. 
     """
     cdef object _params
     cdef CReactionAlgorithm* RE
@@ -120,25 +118,25 @@ cdef class ReactionAlgorithm(object):
         """
         return self.RE.volume
 
-    def acceptance_rate_configurational_moves(self):
+    def get_acceptance_rate_configurational_moves(self):
         """
-        Returns the acceptance rate for the configuration changing moves.
+        Returns the acceptance rate for the configuration moves.
 
         """
         return (1.0 * self.RE.m_accepted_configurational_MC_moves) / self.RE.m_tried_configurational_MC_moves
 
     def set_non_interacting_type(self, non_interacting_type):
         """
-        Sets a type which is assumed to be non interacting in order to hide
-        particles temporarily during a reaction trial move if they are to be
-        deleted. The default value for this non_interacting type is 100. Please
-        change this value if you intend to use a type 100 which has
-        interactions. Please also note that particles in the current
+        Sets the particle type for non-interacting particles. 
+        Default value: 100. 
+        This is used to temporarily hide
+        particles during a reaction trial move, if they are to be deleted after
+        the move is accepted. 
+        Please change this value if you intend to use the type 100 for some other
+        particle types with interactions. Please also note that particles in the current
         implementation of the Reaction Ensemble are only hidden with respect to
-        Lennard-Jones interactions and Coulomb interactions. If there is for
-        example a magnetic interaction hiding for this needs to be implemented
-        in the code.
-
+        Lennard-Jones and Coulomb interactions. Hiding of other interactions,
+        for example a magnetic, needs to be implemented in the code.
         """
         self.RE.non_interacting_type = non_interacting_type
 
@@ -149,7 +147,7 @@ cdef class ReactionAlgorithm(object):
         """
         return self.RE.non_interacting_type
 
-    def add(self, *args, **kwargs):
+    def add_reaction(self, *args, **kwargs):
         """
         Sets up a reaction in the forward and backward direction.
 
@@ -207,9 +205,8 @@ cdef class ReactionAlgorithm(object):
 
     def set_default_charges(self, *args, **kwargs):
         """
-        Sets the charges of the particle types that are created. Note that it
-        has to be called for each type that occurs in the reaction system
-        individually.
+        Sets the charges of the particle types that are created. 
+        The input of this command is a dictionary assigning a charge to each particle type involved in the reactions.
 
         """
         for k in kwargs:
@@ -400,12 +397,12 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
     def add_collective_variable_degree_of_association(self, *args, **kwargs):
         """
-        Adds a reaction coordinate of the type degree of association.
+        Adds degree of association as the collective variable (reaction coordinate) for the Wang-Landau Reaction Ensemble.
 
         Parameters
         ----------
         associated_type : :obj:`int`
-                          Type of the associated version of the species.
+                          Particle type of the associated state of the reacting species.
         min : :obj:`float`
               Minimum value of the collective variable.
         max : :obj:`float`
@@ -442,7 +439,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
     def add_collective_variable_potential_energy(self, *args, **kwargs):
         """
-        Adds a reaction coordinate of the type potential energy.
+        Adds the type potential energy as the collective variable (reaction coordinate) for the Wang Landau Reaction Ensemble.
 
         Parameters
         ----------

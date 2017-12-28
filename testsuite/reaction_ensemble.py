@@ -65,7 +65,7 @@ class ReactionEnsembleTest(ut.TestCase):
             cls.system.part.add(id=i + 1, pos=np.random.random(3) *
                                 cls.system.box_l, type=cls.type_H)
 
-        cls.RE.add(
+        cls.RE.add_reaction(
             equilibrium_constant=cls.K_HA_diss,
             reactant_types=cls.reactant_types,
             reactant_coefficients=cls.reactant_coefficients,
