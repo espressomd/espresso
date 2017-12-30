@@ -1898,8 +1898,6 @@ double WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
     restore_properties(changed_particles_properties,
                        number_of_saved_properties);
                        
-                          
-    //calculate exponential
     double const exponential=exp(-1.0/temperature*(E_pot_new-E_pot_old));
     summed_exponentials+=exponential;
     number_of_insertions+=1;

@@ -30,16 +30,18 @@ from espressomd import electrostatics
 
 # System parameters
 #############################################################
-box_l = 50 #in units of sigma
 cs_bulk=float(sys.argv[1])
+box_l=50.0
 N0=int(cs_bulk*box_l**3)
-print("real concentration", float(N0)/box_l**3)
+print("actual cs_bulk", float(N0)/box_l**3)
 
 # Integration parameters
 #############################################################
 system = espressomd.System()
 system.time_step = 0.01
 system.cell_system.skin = 0.4
+temperature=1.0
+system.thermostat.set_langevin(kT=temperature, gamma=1.0)
 system.cell_system.max_num_cells = 2744
 
 
@@ -103,16 +105,17 @@ while (i < warm_n_times ):
 system.force_cap=0
 
 unimportant_K_diss = 0.0088
-RE = reaction_ensemble.WidomInsertion(temperature=1, exclusion_radius=1.0)
-RE.add(equilibrium_constant=unimportant_K_diss, reactant_types=[], reactant_coefficients=[], product_types=[2], product_coefficients=[1,1])
-RE.set_default_charges(dictionary={"2": +1})
+RE = reaction_ensemble.WidomInsertion(temperature=temperature, exclusion_radius=1.0)
+RE.add(equilibrium_constant=unimportant_K_diss, reactant_types=[], reactant_coefficients=[], product_types=[1,2], product_coefficients=[1,1])
+RE.set_default_charges(dictionary={"1": -1,"2": +1})
 print(RE.get_status())
 system.setup_type_map([0, 1, 2])
 
 for i in range(10000):
-    for j in range(100):
+    for j in range(30):
         RE.measure_excess_chemical_potential(0) #0 for insertion reaction
-    system.integrator.run(steps=1000)
+        system.integrator.run(steps=2)
+    system.integrator.run(steps=500)
     if(i % 100 == 0):
         print(RE.measure_excess_chemical_potential(0)) #0 for insertion reaction
         print("HA", system.number_of_particles(type=0), "A-",
