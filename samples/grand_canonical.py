@@ -128,7 +128,7 @@ for i in range(10000):
         print("HA", system.number_of_particles(type=0), "A-",
               system.number_of_particles(type=1), "H+", system.number_of_particles(type=2))
         concentration_in_box=np.mean(num_As)/box_l**3
-        print("average num A", np.mean(num_As), "+/-", np.sqrt(np.var(num_As,ddof=1)/len(num_As)), "average concentration", concentration_in_box , "deviation to target concentration", (concentration_in_box-cs_bulk)/cs_bulk*100), "%"
+        print("average num A", np.mean(num_As), "+/-", np.sqrt(np.var(num_As,ddof=1)/len(num_As)), "average concentration", concentration_in_box , "deviation to target concentration", (concentration_in_box-cs_bulk)/cs_bulk*100, "%") 
         
         
               

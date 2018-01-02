@@ -11,9 +11,9 @@ class WangLandauHasConverged(Exception):
 
 cdef class ReactionAlgorithm(object):
     """
-    This class provides the Reaction Ensemble algorithm, the Wang-Landau
+    This class provides the base class for Reaction Algorithms like the Reaction Ensemble algorithm, the Wang-Landau
     Reaction Ensemble algorithm and the constant pH method. Initialize the
-    reaction ensemble by setting the standard pressure, temperature, and the
+    reaction algorithm by setting the standard pressure, temperature, and the
     exclusion radius.
 
     Parameters
@@ -297,10 +297,14 @@ cdef class ReactionAlgorithm(object):
 
 
 cdef class ReactionEnsemble(ReactionAlgorithm):
+    """
+    This class implements the Reaction Ensemble.
+    """    
+    
     cdef CReactionEnsemble* REptr
     def __init__(self, *args, **kwargs):
         self.RE = <CReactionAlgorithm*> new CReactionEnsemble()
-        self.REptr = <CReactionEnsemble*> new CReactionEnsemble()
+        self.REptr = self.RE
         self._params = {"standard_pressure": 1,
                         "temperature": 1,
                         "exclusion_radius": 0}
@@ -361,6 +365,10 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
             self.constpHptr.m_constant_pH = pH
 
 cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
+    """
+    This Class implements the Wang-Landau Reaction Ensemble.
+    """    
+    
     cdef CWangLandauReactionEnsemble* WLRptr
     def __init__(self, *args, **kwargs):
         self.RE = <CReactionAlgorithm*> new CWangLandauReactionEnsemble()
@@ -635,7 +643,13 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
             return self.WLRptr.fix_polymer
 
 cdef class WidomInsertion(ReactionAlgorithm):
+    """
+    This class implements the Widom Insertion Method for homogeneous systems, where the excess chemical potential is not depending on the location.
+    
+    """
+    
     cdef CWidomInsertion* WidomInsertionPtr
+    
     def __init__(self, *args, **kwargs):
         self.RE = <CReactionAlgorithm*> new CWangLandauReactionEnsemble()
         self.WidomInsertionPtr=<CWidomInsertion*> self.RE
@@ -654,9 +668,14 @@ cdef class WidomInsertion(ReactionAlgorithm):
             else:
                 raise KeyError("%s is not a vaild key" % k)
 
-        self._set_params_in_es_core()    
+        self._set_params_in_es_core()  
+      
     def __dealloc__(self):
         del(self.WidomInsertionPtr)
     
-    def measure_excess_chemical_potential(self, reaction_id):
+    def measure_excess_chemical_potential(self, reaction_id=0):
+        """
+        Measures the excess chemical potential in a homogeneous system.
+        
+        """
         return self.WidomInsertionPtr.measure_excess_chemical_potential(int(reaction_id))
