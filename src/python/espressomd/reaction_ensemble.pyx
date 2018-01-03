@@ -304,7 +304,7 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
     cdef CReactionEnsemble* REptr
     def __init__(self, *args, **kwargs):
         self.RE = <CReactionAlgorithm*> new CReactionEnsemble()
-        self.REptr = self.RE
+        self.REptr = <CReactionEnsemble*> self.RE
         self._params = {"standard_pressure": 1,
                         "temperature": 1,
                         "exclusion_radius": 0}
