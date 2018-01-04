@@ -101,12 +101,12 @@ using namespace std;
 namespace Communication {
 auto const &mpi_datatype_cache = boost::mpi::detail::mpi_datatype_cache();
 std::unique_ptr<boost::mpi::environment> mpi_env;
-std::unique_ptr<MpiCallbacks> m_callbacks;
 }
 
 boost::mpi::communicator comm_cart;
 
 namespace Communication {
+  std::unique_ptr<MpiCallbacks> m_callbacks;
 
 /* We use a singelton callback class for now. */
 MpiCallbacks &mpiCallbacks() {
