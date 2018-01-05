@@ -3,6 +3,7 @@ include "myconfig.pxi"
 from libcpp cimport bool
 from libcpp.vector cimport vector
 from libcpp.string cimport string
+from libcpp.map cimport map
 
 cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
 
@@ -26,9 +27,8 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         void add_reaction(double equilibrium_constant, vector[int] _reactant_types, vector[int] _reactant_coefficients, vector[int] _product_types, vector[int] _product_coefficients) except +
         
         vector[SingleReaction] reactions
-        vector[int] type_index
         int nr_different_types
-        vector[double] charges_of_types
+        map[int, double] charges_of_types
         double standard_pressure_in_simulation_units
         double temperature
         double exclusion_radius
@@ -41,8 +41,6 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         double slab_start_z
         double slab_end_z
         int non_interacting_type
-
-    int find_index_of_type(int type, CReactionAlgorithm* m_current_reaction_system) except +
 
     cdef cppclass CReactionEnsemble "ReactionEnsemble::ReactionEnsemble"(CReactionAlgorithm):
         CReactionEnsemble()

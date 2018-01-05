@@ -220,9 +220,9 @@ cdef class ReactionAlgorithm(object):
 
         self._validate_params_default_charge()
 
-        for key in self._params["dictionary"]:
-                if(find_index_of_type(int(key), self.RE) >= 0):
-                    self.RE.charges_of_types[find_index_of_type(int(key), self.RE)]=self._params["dictionary"][key]
+        for key in self._params["dictionary"]: #the keys are the types
+            self.RE.charges_of_types[int(key)]=self._params["dictionary"][key]
+
 
     def _valid_keys_default_charge(self):
         return "dictionary"

@@ -1,6 +1,10 @@
-#include "energy.hpp" //for calculate_current_potential_energy_of_system
+#ifndef REACTION_ENSEMBLE_H
+#define REACTION_ENSEMBLE_H
+
 #include "utils.hpp"
+#include "energy.hpp"
 #include <string>
+#include <map>
 
 namespace ReactionEnsemble {
 
@@ -84,8 +88,7 @@ public:
   virtual ~ReactionAlgorithm(){};
 
   std::vector<SingleReaction> reactions;
-  std::vector<int> type_index;
-  std::vector<double> charges_of_types;
+  std::map<int, double> charges_of_types;
   double standard_pressure_in_simulation_units = -10.0;
   double temperature = -10.0;
   double exclusion_radius =
@@ -145,18 +148,7 @@ protected:
   void restore_properties(std::vector<StoredParticleProperty> &property_list,
                           const int number_of_saved_properties);  
 private:
-  std::vector<int> save_old_particle_numbers(void);
-  int update_type_index(
-      std::vector<int> &reactant_types,
-      std::vector<int> &product_types); // assign different types an
-  // index in a growing list that
-  // starts at 0 and is
-  // incremented by 1 for each new
-  // type. the entry in the index
-  // at place i is the
-  // "type_value". therefore the
-  // type of type "typevalue" has
-  // the index i;
+  std::map<int, int> save_old_particle_numbers(int reaction_id);
 
   int calculate_nu_bar(
       std::vector<int> &reactant_coefficients,
@@ -177,7 +169,7 @@ private:
 
   virtual double calculate_acceptance_probability(
       SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
-      std::vector<int> &old_particle_numbers, int old_state_index,
+      std::map<int, int> &old_particle_numbers, int old_state_index,
       int new_state_index, bool only_make_configuration_changing_move) {
     return -10;
   };
@@ -197,7 +189,7 @@ class ReactionEnsemble : public ReactionAlgorithm {
 private:
   double calculate_acceptance_probability(
       SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
-      std::vector<int> &old_particle_numbers, int dummy_old_state_index,
+      std::map<int, int> &old_particle_numbers, int dummy_old_state_index,
       int dummy_new_state_index,
       bool dummy_only_make_configuration_changing_move) override;
 };
@@ -250,7 +242,7 @@ private:
   void on_end_reaction(int &accepted_state) override;
   double calculate_acceptance_probability(SingleReaction &current_reaction,
                                     double E_pot_old, double E_pot_new,
-                                    std::vector<int> &old_particle_numbers,
+                                    std::map<int, int> &old_particle_numbers,
                                     int old_state_index, int new_state_index,
                                     bool only_make_configuration_changing_move) override;
   void on_mc_rejection_directly_after_entry(int &old_state_index) override;
@@ -307,12 +299,14 @@ private:
                                                       double delta_CV);
 };
 
+
+
 class ConstantpHEnsemble : public ReactionAlgorithm {
 public:
   double m_constant_pH = -10;
   double calculate_acceptance_probability(
       SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
-      std::vector<int> &dummy_old_particle_numbers, int dummy_old_state_index,
+      std::map<int, int> &dummy_old_particle_numbers, int dummy_old_state_index,
       int dummy_new_state_index,
       bool dummy_only_make_configuration_changing_move) override;
   int do_reaction(int reaction_steps) override;
@@ -333,8 +327,7 @@ private:
 //////////////////////////////////////////////////////////////////free functions
 double
 calculate_factorial_expression(SingleReaction &current_reaction,
-                               int *old_particle_numbers,
-                               ReactionAlgorithm &m_current_reaction_system);
+                               std::map<int,int>& old_particle_numbers);
 double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
 
 /**
@@ -373,8 +366,5 @@ template <typename T> bool is_in_list(T value, std::vector<T> list) {
   return false;
 }
 
-/**
-* Finds the index of a given type.
-*/
-int find_index_of_type(int type, ReactionAlgorithm* m_current_reaction_system);
 }
+#endif

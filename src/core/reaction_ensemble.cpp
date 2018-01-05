@@ -21,7 +21,7 @@
 #include "utils.hpp" 
 #include "utils/Histogram.hpp"
 #include <fstream>
-#include <stdio.h> 
+#include <stdio.h>
 
 namespace ReactionEnsemble {
 
@@ -93,16 +93,17 @@ void ReactionAlgorithm::add_reaction(double equilibrium_constant,
   new_reaction.nu_bar = calculate_nu_bar(new_reaction.reactant_coefficients,
                                          new_reaction.product_coefficients);
 
-  // if everything is fine:
+
+  //make espresso count the particle numbers which take part in the reactions
+  for(int i=0; i< new_reaction.reactant_types.size(); ++i)
+    init_type_map(new_reaction.reactant_types[i]);
+  for(int i=0; i< new_reaction.product_types.size(); ++i)
+    init_type_map(new_reaction.product_types[i]);
+  
+  init_type_map(non_interacting_type);
+
   reactions.push_back(new_reaction);
 
-  // assign different types an index in a growing list that starts at and is
-  // incremented by 1 for each new type
-  int status = update_type_index(new_reaction.reactant_types,
-                                 new_reaction.product_types);
-  if (status == ES_ERROR)
-    throw std::runtime_error(
-        "Could not initialize gc particle list for types\n");
 }
 
 /**
@@ -125,15 +126,32 @@ void ReactionAlgorithm::check_reaction_ensemble() {
 #ifdef ELECTROSTATICS
   // check for the existence of default charges for all types that take part in
   // the reactions
-  for (int i = 0; i < type_index.size(); i++) {
-    if (charges_of_types[type_index[i]] ==
-        m_invalid_charge) {
-      std::string message =
-          std::string("Forgot to assign charge to type ") +
-          std::to_string(
-              type_index[i]);
-      throw std::runtime_error(message);
+  
+  for (int i = 0; i< reactions.size(); i++) {
+    SingleReaction current_reaction=reactions[i];
+    //check for reactants
+    for (int j=0; j< current_reaction.reactant_types.size(); j++){
+        auto it = charges_of_types.find(current_reaction.reactant_types[j]);
+        if(it==charges_of_types.end()){
+            std::string message =
+              std::string("Forgot to assign charge to type ") +
+              std::to_string(current_reaction.reactant_types[j]);
+            throw std::runtime_error(message);
+        }
+        
     }
+    //check for products
+    for (int j=0; j< current_reaction.product_types.size(); j++){
+        auto it = charges_of_types.find(current_reaction.product_types[j]);
+        if(it==charges_of_types.end()){
+            std::string message =
+              std::string("Forgot to assign charge to type ") +
+              std::to_string(current_reaction.reactant_types[j]);
+            throw std::runtime_error(message);
+        }
+        
+    }
+  
   }
 #endif
 }
@@ -199,8 +217,7 @@ void ReactionAlgorithm::append_particle_property_of_random_particle(
     int type, std::vector<StoredParticleProperty> &list_of_particles) {
   int p_id=get_random_p_id(type);
   StoredParticleProperty property_of_part = {
-      p_id, charges_of_types[find_index_of_type(
-                type, this)],
+      p_id, charges_of_types[type],
       type};
   list_of_particles.push_back(property_of_part);
 }
@@ -306,12 +323,12 @@ void ReactionAlgorithm::restore_properties(
 */
 double ReactionEnsemble::calculate_acceptance_probability(
     SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
-    std::vector<int> &old_particle_numbers, int dummy_old_state_index,
+    std::map<int, int>& old_particle_numbers, int dummy_old_state_index,
     int dummy_new_state_index,
     bool dummy_only_make_configuration_changing_move) {
   /**calculate the acceptance probability in the reaction ensemble */
   const double factorial_expr = calculate_factorial_expression(
-      current_reaction, old_particle_numbers.data(), *this);
+      current_reaction, old_particle_numbers);
 
   const double beta = 1.0 / temperature;
   // calculate boltzmann factor
@@ -321,17 +338,19 @@ double ReactionEnsemble::calculate_acceptance_probability(
          exp(-beta * (E_pot_new - E_pot_old));
 }
 
-std::vector<int> ReactionAlgorithm::save_old_particle_numbers(void) {
-  std::vector<int> old_particle_numbers;
-  for (int type_i = 0;
-       type_i < type_index.size();
-       type_i++) {
-        int particle_number=number_of_particles_with_type(type_index[type_i]);
-        old_particle_numbers.push_back(particle_number);
-        // here could be optimized by not
-        // going over all types but only
-        // the types that occur in the
-        // reaction
+std::map<int, int> ReactionAlgorithm::save_old_particle_numbers(int reaction_id) {
+  std::map<int, int> old_particle_numbers;
+  //reactants
+  for (int i=0; i<reactions[reaction_id].reactant_types.size(); ++i){
+    int type=reactions[reaction_id].reactant_types[i];
+    old_particle_numbers[type]=number_of_particles_with_type(type);
+    
+  }
+  
+  //products
+  for (int i=0; i<reactions[reaction_id].product_types.size(); ++i){
+    int type=reactions[reaction_id].product_types[i];
+    old_particle_numbers[type]=number_of_particles_with_type(type);
   }
   return old_particle_numbers;
 }
@@ -402,7 +421,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
   // recreation if step is not accepted
   // do reaction
   // save old particle_numbers
-  std::vector<int> old_particle_numbers = save_old_particle_numbers();
+  std::map<int, int> old_particle_numbers = save_old_particle_numbers(reaction_id);
 
   std::vector<int> p_ids_created_particles;
   std::vector<StoredParticleProperty> hidden_particles_properties;
@@ -484,36 +503,6 @@ int ReactionAlgorithm::calculate_nu_bar(
   return nu_bar;
 }
 
-/**
-* Adds types to an index. the index is later used inside of the Reaction
-* ensemble algorithm to determine e.g. the charge which is associated to a type.
-*/
-void ReactionAlgorithm::add_types_to_index(std::vector<int> &type_list) {
-  int len_type_list = type_list.size();
-  for (int i = 0; i < len_type_list; i++) {
-    bool type_i_is_known =
-        is_in_list(type_list[i], type_index);
-    if (!type_i_is_known) {
-      type_index.push_back(type_list[i]);
-      charges_of_types.push_back(m_invalid_charge); // increase charges_of_types length
-      init_type_map(type_list[i]); // make types known in espresso
-    }
-  }
-  init_type_map(non_interacting_type);
-}
-
-/**
-* Adds types to an index and copes with the case that no index was present
-* before. the index is later used inside of the Reaction ensemble algorithm to
-* determine e.g. the charge which is associated to a type.
-*/
-int ReactionAlgorithm::update_type_index(std::vector<int> &reactant_types,
-                                         std::vector<int> &product_types) {
-  add_types_to_index(reactant_types);
-  add_types_to_index(product_types);
-
-  return 0;
-}
 
 /**
 * Replaces a particle with the given particle id to be of a certain type. This
@@ -524,8 +513,7 @@ int ReactionAlgorithm::replace_particle(int p_id, int desired_type) {
   int err_code_q = 0.0;
 #ifdef ELECTROSTATICS
   err_code_q = set_particle_q(
-      p_id, charges_of_types[find_index_of_type(
-                desired_type, this)]);
+      p_id, charges_of_types[desired_type]);
 #endif
   return (err_code_q bitor err_code_type);
 }
@@ -689,8 +677,7 @@ int ReactionAlgorithm::create_particle(int desired_type) {
       std::pow(2 * PI * temperature, -3.0 / 2.0) *
       gaussian_random() * time_step; // scale for internal use in espresso
 #ifdef ELECTROSTATICS
-  double charge = charges_of_types[find_index_of_type(
-      desired_type, this)];
+  double charge = charges_of_types[desired_type];
 #endif
   bool particle_inserted_too_close_to_another_one = true;
   int max_insert_tries = 1000;
@@ -917,7 +904,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
 
   int new_state_index = -1;
   double bf = 1.0;
-  std::vector<int> dummy_old_particle_numbers;
+  std::map<int, int> dummy_old_particle_numbers;
   SingleReaction temp_unimportant_arbitrary_reaction;
 
   if (use_wang_landau) {
@@ -1282,7 +1269,7 @@ int WangLandauReactionEnsemble::initialize_wang_landau() {
 */
 double WangLandauReactionEnsemble::calculate_acceptance_probability(
     SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
-    std::vector<int> &old_particle_numbers, int old_state_index,
+    std::map<int, int>& old_particle_numbers, int old_state_index,
     int new_state_index, bool only_make_configuration_changing_move) {
   /**determine the acceptance probabilities of the reaction move
   * in wang landau reaction ensemble
@@ -1294,8 +1281,7 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
     bf = 1.0;
   } else {
     double factorial_expr = calculate_factorial_expression(
-        current_reaction, old_particle_numbers.data(),
-        *this);
+        current_reaction, old_particle_numbers);
     bf = std::pow(volume * beta * standard_pressure_in_simulation_units,
                   current_reaction.nu_bar) *
          current_reaction.equilibrium_constant * factorial_expr;
@@ -1841,7 +1827,7 @@ int ConstantpHEnsemble::do_reaction(int reaction_steps) {
 
 double ConstantpHEnsemble::calculate_acceptance_probability(
     SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
-    std::vector<int> &dummy_old_particle_numbers, int dummy_old_state_index,
+    std::map<int, int>& dummy_old_particle_numbers, int dummy_old_state_index,
     int dummy_new_state_index,
     bool dummy_only_make_configuration_changing_move) {
   /**
@@ -1906,20 +1892,6 @@ double WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
 }
 
 /////////////////////////////////////////////////////////////////free functions
-int find_index_of_type(int type, ReactionAlgorithm* m_current_reaction_system) {
-  int index = -100; // initialize to invalid index
-  for (int i = 0; i < m_current_reaction_system->type_index.size(); i++) {
-    if (type ==  m_current_reaction_system->type_index[i]) {
-      index = i;
-      break;
-    }
-  }
-  if (index < 0 or index >= m_current_reaction_system->type_index.size()) {
-    throw std::runtime_error("Invalid Index");
-  }
-  return index;
-}
-
 
 
 /**
@@ -1928,14 +1900,12 @@ int find_index_of_type(int type, ReactionAlgorithm* m_current_reaction_system) {
 */
 double
 calculate_factorial_expression(SingleReaction &current_reaction,
-                               int *old_particle_numbers,
-                               ReactionAlgorithm &m_current_reaction_system) {
+                               std::map<int, int>& old_particle_numbers) {
   double factorial_expr = 1.0;
   // factorial contribution of reactants
   for (int i = 0; i < current_reaction.reactant_types.size(); i++) {
     int nu_i = -1 * current_reaction.reactant_coefficients[i];
-    int N_i0 = old_particle_numbers[find_index_of_type(
-        current_reaction.reactant_types[i], &m_current_reaction_system)];
+    int N_i0 = old_particle_numbers[current_reaction.reactant_types[i]];
     factorial_expr =
         factorial_expr * factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
                              N_i0, nu_i); // zeta = 1 (see smith paper) since we
@@ -1945,8 +1915,7 @@ calculate_factorial_expression(SingleReaction &current_reaction,
   // factorial contribution of products
   for (int i = 0; i < current_reaction.product_types.size(); i++) {
     int nu_i = current_reaction.product_coefficients[i];
-    int N_i0 = old_particle_numbers[find_index_of_type(
-        current_reaction.product_types[i], &m_current_reaction_system)];
+    int N_i0 = old_particle_numbers[current_reaction.product_types[i]];
     factorial_expr =
         factorial_expr * factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
                              N_i0, nu_i); // zeta = 1 (see smith paper) since we
