@@ -34,15 +34,8 @@ IF DIPOLES == 1:
 
         Attributes
         ----------
-        bjerrum_length : :obj:`float`
-            Similar to the Bjerrum length in electrostatics.
-            Gives the separation at which the dipolar interaction energy
-            corrensponds to a thermal energy of :math:`1 k_B T`.
-            If not set, an explicit choice for the `prefactor` has to be made.
-
-        prefactor : :obj:`float`, optional
-            If given, the magnetostatic prefactor is explicitly set to
-            this value. Non-optional if `bjerrum_length` is not set.
+        prefactor : :obj:`float`
+                Magnetostatics prefactor
 
         """
 
@@ -50,44 +43,17 @@ IF DIPOLES == 1:
             """Check validity of given parameters.
 
             """
-            if not (("bjerrum_length" in self._params) ^ ("prefactor" in self._params)):
-                raise ValueError(
-                    "Either the bjerrum length or the explicit prefactor has to be given")
-
-            if "bjerrum_length" in self._params:
-                if not (self._params["bjerrum_length"] > 0.0):
-                    raise ValueError(
-                        "Bjerrum_length should be a positive double")
-            if "prefactor" in self._params:
-                if not self._params["prefactor"] > 0:
-                    raise ValueError("prefactor should be a positive double")
+            if not self._params["prefactor"] >= 0:
+                raise ValueError("prefactor should be a positive float")
 
         def set_magnetostatics_prefactor(self):
             """
-            Set the magnetostatics prefactor using either the `bjerrum_length`
-            or, if given, `prefactor`.
-
+            Set the magnetostatics prefactor 
+            
             """
-            if "bjerrum_length" in self._params:
-                if temperature == 0:
+            if dipolar_set_Dprefactor(self._params["prefactor"]):
                     raise Exception(
-                        "Bjerrum length is not defined, if temperature is zero")
-                if dipolar_set_Dbjerrum(self._params["bjerrum_length"]):
-                    raise Exception(
-                        "Could not set magnetostatic bjerrum length")
-                return True
-            if "prefactor" in self._params:
-                if temperature == 0.:
-                    if dipolar_set_Dbjerrum(self._params["prefactor"]):
-                        raise Exception(
-                            "Could not set magnetostatic prefactor")
-                else:
-                    if dipolar_set_Dbjerrum(self._params["prefactor"] / temperature):
-                        raise Exception(
-                            "Could not set magnetostatic prefactor")
-                    else:
-                        self._params["bjerrum_length"] = self._params[
-                            "prefactor"] / temperature
+                        "Could not set magnetostatic prefactor")
             # also necessary on 1 CPU or GPU, does more than just broadcasting
             mpi_bcast_coulomb_params()
 
@@ -99,7 +65,7 @@ IF DIPOLES == 1:
             return coulomb.Dmethod
 
         def _deactivate_method(self):
-            dipolar_set_Dbjerrum(0.0)
+            dipolar_set_Dprefactor(0.0)
             coulomb.Dmethod = DIPOLAR_NONE
             mpi_bcast_coulomb_params()
 
@@ -167,7 +133,7 @@ IF DP3M == 1:
                     "mesh_off should be a list of length 3 and values between 0.0 and 1.0")
 
         def valid_keys(self):
-            return "prefactor", "alpha_L", "r_cut_iL", "mesh", "mesh_off", "cao", "inter", "accuracy", "epsilon", "cao_cut", "a", "ai", "alpha", "r_cut", "inter2", "cao3", "additional_mesh", "bjerrum_length", "tune"
+            return "prefactor", "alpha_L", "r_cut_iL", "mesh", "mesh_off", "cao", "inter", "accuracy", "epsilon", "cao_cut", "a", "ai", "alpha", "r_cut", "inter2", "cao3", "additional_mesh", "tune"
 
         def required_keys(self):
             return ["accuracy", ]
@@ -278,7 +244,7 @@ IF DIPOLES == 1:
             return ()
 
         def valid_keys(self):
-            return ("bjerrum_length", "prefactor")
+            return ("prefactor",) 
 
         def _get_params_from_es_core(self):
             return {"prefactor": coulomb.Dprefactor}
@@ -313,7 +279,7 @@ IF DIPOLES == 1:
             return ("n_replica",)
 
         def valid_keys(self):
-            return ("bjerrum_length", "prefactor", "n_replica")
+            return ("prefactor", "n_replica")
 
         def _get_params_from_es_core(self):
             return {"prefactor": coulomb.Dprefactor, "n_replica": Ncut_off_magnetic_dipolar_direct_sum}
@@ -341,9 +307,8 @@ IF DIPOLES == 1:
                 Actor.__init__(self, *args, **kwargs)
 
             def _activate_method(self):
-                dipolar_set_Dbjerrum(self._params["bjerrum_length"])
+                dipolar_set_Dprefactor(self._params["prefactor"])
                 self._set_params_in_es_core()
-                mpi_bcast_coulomb_params()
             
             def _deactivate_method(self):
                 coulomb.Dmethod = DIPOLAR_NONE
@@ -371,7 +336,7 @@ IF DIPOLES == 1:
                 return ()
     
             def valid_keys(self):
-                return ("bjerrum_length", "prefactor")
+                return ("prefactor",)
     
             def _get_params_from_es_core(self):
                 return {"prefactor": coulomb.Dprefactor}
