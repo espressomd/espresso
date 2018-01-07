@@ -49,7 +49,7 @@ class VirtualSites {
     /** Back-transfer forces (and torques) to non-virtual particles */
     virtual void back_transfer_forces_and_torques() const =0;
     /** @brief Enable/disable velocity calculations for vs */
-    void set_have_velocity(bool v) { m_have_velocity=v; };
+    void set_have_velocity(const bool& v) { m_have_velocity=v; };
     const bool& have_velocity() const { return m_have_velocity; };
     /** @brief Is a ghost communication needed before position updates */
     virtual bool require_ghost_comm_before_pos_update() const =0;
