@@ -95,6 +95,11 @@ void init_energies(Observable_stat *stat) {
   case DIPOLAR_DS_GPU:
     n_dipolar = 2;
     break;
+#ifdef DIPOLAR_BARNES_HUT
+ case DIPOLAR_BH_GPU:   
+    n_dipolar = 2; 
+    break;
+#endif
   case DIPOLAR_SCAFACOS:
     n_dipolar = 2;
     break;
@@ -268,6 +273,11 @@ void calc_long_range_energies() {
   case DIPOLAR_DS_GPU:
     // Do nothing, it's an actor.
     break;
+#ifdef DIPOLAR_BARNES_HUT
+  case DIPOLAR_BH_GPU:
+    // Do nothing, it's an actor.
+    break;
+#endif // DIPOLAR_BARNES_HUT
 #ifdef SCAFACOS_DIPOLES
   case DIPOLAR_SCAFACOS:
     assert(Scafacos::dipolar());

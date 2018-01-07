@@ -386,3 +386,35 @@ IF DIPOLES == 1:
             def _set_params_in_es_core(self):
                 self.set_magnetostatics_prefactor()
                 activate_dipolar_direct_sum_gpu()
+
+    IF (DIPOLAR_BARNES_HUT == 1):
+        cdef class DipolarBarnesHutGpu(MagnetostaticInteraction):
+    
+            """Calculates magnetostatic interactions by direct summation over all
+            pairs. TODO: If the system has periodic boundaries, the minimum image
+            convention is applied."""
+    
+            def default_params(self):
+                return {"epssq": 100.0,
+                        "itolsq": 4.0}
+    
+            def required_keys(self):
+                return ()
+    
+            def valid_keys(self):
+                return ("bjerrum_length", "prefactor", "epssq", "itolsq")
+    
+            def _get_params_from_es_core(self):
+                return {"prefactor": coulomb.Dprefactor}
+    
+            def _activate_method(self):
+                self._set_params_in_es_core()
+            
+            def _deactivate_method(self):
+                super(type(self),self)._deactivate_method()
+                deactivate_dipolar_barnes_hut()
+    
+            def _set_params_in_es_core(self):
+                self.set_magnetostatics_prefactor()
+                activate_dipolar_barnes_hut(self._params["epssq"],self._params["itolsq"])
+                #activate_dipolar_barnes_hut()

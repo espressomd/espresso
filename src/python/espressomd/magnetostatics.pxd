@@ -34,6 +34,12 @@ IF DIPOLES == 1:
             void activate_dipolar_direct_sum_gpu()
             void deactivate_dipolar_direct_sum_gpu()
 
+    IF (DIPOLAR_BARNES_HUT == 1):
+        cdef extern from "actor/DipolarBarnesHut.hpp":
+            void activate_dipolar_barnes_hut(float epssq, float itolsq)
+            #void activate_dipolar_barnes_hut()
+            void deactivate_dipolar_barnes_hut()
+
 IF DP3M == 1:
     from p3m_common cimport p3m_parameter_struct
 

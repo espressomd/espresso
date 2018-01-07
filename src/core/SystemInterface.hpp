@@ -19,8 +19,13 @@
 #ifndef SYSTEMINTERFACE_H
 #define SYSTEMINTERFACE_H
 
+#include "config.hpp"
 #include "Vector.hpp"
 #include <vector>
+#ifdef DIPOLAR_BARNES_HUT
+// just for the required BH data types
+#include "actor/DipolarBarnesHut_cuda.cuh"
+#endif
 
 /** @todo: Turn needsXY in getter/setter **/
 
@@ -35,6 +40,13 @@ public:
   virtual void init() = 0;
   virtual void update() = 0;
 
+#ifdef DIPOLAR_BARNES_HUT
+  virtual unsigned int bhnnodes(void) { return 0; };
+  virtual BHBox BHboxl(void) = 0;
+  virtual BHArrays BHarrl(void) = 0;
+  virtual float *massGpuBegin(void) { return 0; };
+  virtual int blocksGpu(void) {return 0; }
+#endif
   virtual float *rGpuBegin() { return 0; };
   virtual float *rGpuEnd() { return 0; };
   virtual bool hasRGpu() { return false; };
