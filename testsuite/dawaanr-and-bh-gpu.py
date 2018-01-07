@@ -8,7 +8,7 @@ from espressomd.analyze import *
 import math
 from tests_common import *
 from numpy import linalg as la
-from numpy.random import random
+from numpy.random import random, seed
 from espressomd import assert_features, has_features, missing_features
 
 @ut.skipIf(not has_features(["DIPOLAR_BARNES_HUT"]),
@@ -33,6 +33,7 @@ class DDSGPUTest(ut.TestCase):
              self.es.part[i].omega_body = np.array([0.0,0.0,0.0])
     
     def run_test_case(self):
+        seed(1)
         print("----------------------------------------------")
         print("- Testcase dawaanr-and-bh-gpu.py")
         print("----------------------------------------------")
@@ -117,7 +118,7 @@ class DDSGPUTest(ut.TestCase):
                                 msg = 'Torques on particle do not match. i={0} dawaanr_t={1} ratio_dawaanr_dds_gpu*ddsgpu_t={2}'.format(i,np.array(dawaanr_t[i]), ratio_dawaanr_dds_gpu * np.array(ddsgpu_t[i])))
                 self.assertTrue(self.vectorsTheSame(np.array(dawaanr_f[i]),ratio_dawaanr_dds_gpu * np.array(ddsgpu_f[i])), \
                                 msg = 'Forces on particle do not match: i={0} dawaanr_f={1} ratio_dawaanr_dds_gpu*ddsgpu_f={2}'.format(i,np.array(dawaanr_f[i]), ratio_dawaanr_dds_gpu * np.array(ddsgpu_f[i])))
-            self.assertTrue(abs(dawaanr_e - ddsgpu_e * ratio_dawaanr_dds_gpu) <= abs(0.05 * dawaanr_e), \
+            self.assertTrue(abs(dawaanr_e - ddsgpu_e * ratio_dawaanr_dds_gpu) <= abs(1E-4 * dawaanr_e), \
                             msg = 'Energies for dawaanr {0} and dds_gpu {1} do not match.'.format(dawaanr_e,ratio_dawaanr_dds_gpu * ddsgpu_e))
             
             self.es.integrator.run(steps = 0,recalc_forces = True)
