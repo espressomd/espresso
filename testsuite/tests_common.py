@@ -63,9 +63,15 @@ def params_match(inParams, outParams):
         if k not in outParams:
             print(k, "missing from returned parameters")
             return False
-        if outParams[k] != inParams[k]:
-            print("Mismatch in parameter ", k, inParams[k], outParams[k])
-            return False
+        if type(inParams[k]) == float:
+          if abs(outParams[k] -inParams[k])>=1E-14:
+              print("Mismatch in parameter ", k, inParams[k], outParams[k],type(inParams[k]),type(outParams[k]),abs(inParams[k]-outParams[k]))
+              return False
+        else:
+          if outParams[k] !=inParams[k]:
+              print("Mismatch in parameter ", k, inParams[k], outParams[k],type(inParams[k]),type(outParams[k]))
+              return False
+
 
     return True
 

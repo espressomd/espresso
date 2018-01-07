@@ -1,5 +1,6 @@
 from espressomd.utils import to_char_pointer,to_str
 import numpy as np
+from espressomd.utils import is_valid_type
 
 cdef class PObjectId(object):
     cdef ObjectId id
@@ -11,15 +12,24 @@ cdef class PObjectId(object):
             raise NotImplementedError
 
 cdef class PScriptInterface(object):
-    def __init__(self, name=None, policy="GLOBAL"):
-        if name:
-            if(policy=="GLOBAL"):
-                self.sip = make_shared(to_char_pointer(name), GLOBAL)
-            else:
-                self.sip = make_shared(to_char_pointer(name), LOCAL)
-            self.parameters = self.sip.get().valid_parameters()
+    def __init__(self, name=None, policy="GLOBAL", oid=None, **kwargs):
+        cdef CreationPolicy policy_
+        cdef map[string, Variant] ctor_args
+
+        if policy == "GLOBAL":
+            policy_ = GLOBAL
+        elif policy == "LOCAL":
+            policy_ = LOCAL
         else:
-            raise Exception("the name parameter has to be set.")
+            raise Exception("Unknown policy '{}'.".format(policy))
+
+        if oid:
+            self.set_sip_via_oid(oid)
+        else:
+            self.set_sip(make_shared(to_char_pointer(name), policy_))
+
+            ctor_args = self._sanitize_params(kwargs)
+            self.sip.get().construct(ctor_args)
 
     def __richcmp__(a, b, op):
         if op == 2:
@@ -42,7 +52,7 @@ cdef class PScriptInterface(object):
             self.set_sip(ptr)
         except:
             raise Exception("Could not get sip for given_id")
-    
+
     def _valid_parameters(self):
         parameters = []
 
@@ -67,41 +77,53 @@ cdef class PScriptInterface(object):
     def name(self):
         return to_str(self.sip.get().name())
 
-    def set_params(self, **kwargs):
-        cdef ParameterType type
-        cdef map[string, Variant] parameters
+    def _serialize(self):
+        return self.sip.get().serialize()
+
+    def _unserialize(self, state):
+        cdef shared_ptr[ScriptInterfaceBase] so_ptr = ScriptInterfaceBase.unserialize(state)
+        self.set_sip(so_ptr)
+
+    cdef map[string, Variant] _sanitize_params(self, in_params):
+        cdef map[string, Variant] out_params
         cdef Variant v
 
-        for pname in kwargs:
+        for pname in in_params:
             name = to_char_pointer(pname)
 
             try:
-                type = self.parameters.at(name).type()
+                ptype = self.parameters.at(name).type()
             except:
                 raise ValueError("Unknown parameter %s" % name)
 
             # Check number of elements if applicable
-            if < int > type in [ < int > INT_VECTOR, < int > DOUBLE_VECTOR]:
+            if < int > ptype in [ < int > INT_VECTOR, < int > DOUBLE_VECTOR]:
                 n_elements = self.parameters[name].n_elements()
-                if n_elements!=0 and not (len(kwargs[pname]) == n_elements):
+                if n_elements!=0 and not (len(in_params[pname]) == n_elements):
                     raise ValueError(
                         "Value of %s expected to be %i elements" % (name, n_elements))
 
-            # We accept floats for ints (but not the other way round)
-            if <int> type == <int> DOUBLE and isinstance(kwargs[pname], int):
-                kwargs[pname] = float(kwargs[pname])
+            # We accept ints for floats (but not the other way round)
+            if <int> ptype == <int> DOUBLE and is_valid_type(in_params[pname], int):
+                in_params[pname] = float(in_params[pname])
             # We already know that the argument is an iterable of the correct length
-            elif <int> type == <int> DOUBLE_VECTOR:
-                for i in range(len(kwargs[pname])):
-                    if isinstance(kwargs[pname][i], int):
-                        kwargs[pname][i] = float(kwargs[pname][i])
+            elif <int> ptype == <int> DOUBLE_VECTOR:
+                for i in range(len(in_params[pname])):
+                    if is_valid_type(in_params[pname][i], int):
+                        in_params[pname][i] = float(in_params[pname][i])
 
-            v = self.python_object_to_variant(kwargs[pname])
+            v = self.python_object_to_variant(in_params[pname])
 
-            if v.which() == <int> type:
-                parameters[name] = v
+            if v.which() == <int> ptype:
+                out_params[name] = v
             else:
-                raise ValueError("Wrong type for parameter '%s': Expected %s, but got %s" % (pname, get_type_label(type), get_type_label(v)))
+                raise ValueError("Wrong type for parameter '%s': Expected %s, but got %s" % (pname, get_type_label(ptype), get_type_label(v)))
+
+        return out_params
+
+    def set_params(self, **kwargs):
+        cdef ParameterType type
+        cdef map[string, Variant] parameters = self._sanitize_params(kwargs)
 
         self.sip.get().set_parameters(parameters)
 
@@ -128,7 +150,6 @@ cdef class PScriptInterface(object):
             return v
         elif type(value) == str:
             return make_variant[string](to_char_pointer(value))
-        
         elif type(value) == type(True):
             return make_variant[bool](value)
         elif np.issubdtype(np.dtype(type(value)),int):
@@ -165,7 +186,7 @@ cdef class PScriptInterface(object):
                 ptr = get_instance(oid).lock()
                 if ptr != shared_ptr[ScriptInterfaceBase]():
                     so_name=to_str(ptr.get().name())
-                    # Fallback class, if nothing omre specific is registered for the script object name
+                    # Fallback class, if nothing more specific is registered for the script object name
                     pclass=ScriptInterfaceHelper
                     # Look up class
                     if so_name in _python_class_by_so_name:
@@ -202,15 +223,28 @@ cdef class PScriptInterface(object):
 
         return odict
 
+def _unpickle_so_class(so_name, state):
+    cdef shared_ptr[ScriptInterfaceBase] sip = ScriptInterfaceBase.unserialize(state)
+
+    poid=PObjectId()
+    poid.id=sip.get().id()
+
+    so = _python_class_by_so_name[so_name](oid=poid)
+    so.define_bound_methods()
+
+    return so
+
 class ScriptInterfaceHelper(PScriptInterface):
     _so_name = None
     _so_bind_methods =()
     _so_creation_policy = "GLOBAL"
 
     def __init__(self, **kwargs):
-        super(ScriptInterfaceHelper,self).__init__(self._so_name, self._so_creation_policy)
-        self.set_params(**kwargs)
+        super(ScriptInterfaceHelper,self).__init__(self._so_name, policy=self._so_creation_policy, **kwargs)
         self.define_bound_methods()
+
+    def __reduce__(self):
+        return (_unpickle_so_class , (self._so_name, self._serialize()))
 
     def __dir__(self):
         return self.__dict__.keys() + self._valid_parameters()
@@ -241,10 +275,6 @@ class ScriptInterfaceHelper(PScriptInterface):
         for method_name in self._so_bind_methods:
             setattr(self,method_name,self.generate_caller(method_name))
 
-
-
-
-
 # Map from script object names to corresponding python classes
 _python_class_by_so_name ={}
 
@@ -257,7 +287,6 @@ def script_interface_register(c):
         raise Exception("Python classes representing a script object must define an _so_name attribute at class level")
     _python_class_by_so_name[c._so_name]=c
     return c
-    
 
 def init():
     initialize()

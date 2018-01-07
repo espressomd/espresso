@@ -38,8 +38,6 @@ public:
                     {"radius", m_cylinder->rad()}});
   }
 
-  const std::string name() const override { return "Shapes::Cylinder"; }
-
   std::shared_ptr<::Shapes::Shape> shape() const override { return m_cylinder; }
 private:
   std::shared_ptr<::Shapes::Cylinder> m_cylinder;

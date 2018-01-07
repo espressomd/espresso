@@ -39,10 +39,6 @@ namespace Observables {
   public:                                                                      \
     obs_name() : m_observable(new ::Observables::obs_name()){};                \
                                                                                \
-    const std::string name() const override {                                  \
-      return "Observables::" #obs_name;                                        \
-    }                                                                          \
-                                                                               \
     std::shared_ptr<::Observables::Observable> observable() const override {   \
       return m_observable;                                                     \
     };                                                                         \
