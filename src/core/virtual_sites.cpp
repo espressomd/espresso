@@ -24,11 +24,6 @@
 
 #ifdef VIRTUAL_SITES
 
-namespace {
-std::shared_ptr<VirtualSites> m_virtual_sites = std::make_shared<VirtualSitesOff>();
-}
-std::shared_ptr<VirtualSites> virtual_sites() {  
-  return m_virtual_sites;
-}
+std::shared_ptr<VirtualSites> virtual_sites;  
 
 #endif

@@ -26,6 +26,7 @@
 #ifdef VIRTUAL_SITES_RELATIVE
 
 void VirtualSitesRelative::update(bool recalc_positions) const {
+printf("vsr.upd\n");
 if (!recalc_positions && !have_velocity()) return;
 
 for (auto p : local_cells.particles()) {

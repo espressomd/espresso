@@ -34,19 +34,18 @@ namespace VirtualSites {
 
 class ActiveVirtualSitesHandle : public AutoParameters {
 public:
-    std::shared_ptr<VirtualSites> m_active_implementation;
-  ActiveVirtualSitesHandle() : m_active_implementation(new VirtualSitesOff()) {
-      ::virtual_sites() = m_active_implementation->virtual_sites();
+  ActiveVirtualSitesHandle() {
       add_parameters({
           {"implementation", 
                      [this](Variant const &value) {
-                       this->m_active_implementation =
+                       m_active_implementation =
                            get_value<std::shared_ptr<VirtualSites>>(value);
-                       if (this->m_active_implementation) {
-                         ::virtual_sites()=this->m_active_implementation->virtual_sites();
+                       if (m_active_implementation) {
+                         printf("assigning %s\n",m_active_implementation->name().c_str());
+                         ::virtual_sites=m_active_implementation->virtual_sites();
                        }
                        else {
-                         runtimeError("the implementation has to be an instance of a sub-class of VirtualSites");
+                         throw std::runtime_error("the implementation has to be an instance of a sub-class of VirtualSites");
                        };
                      },
                      [this]() {
@@ -54,6 +53,7 @@ public:
                      }}});
          }
   private:
+    std::shared_ptr<VirtualSites> m_active_implementation;
  };
 } /* namespace VirtualSites */
 } /* namespace ScriptInterface */
