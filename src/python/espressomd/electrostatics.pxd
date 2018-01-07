@@ -23,6 +23,7 @@ include "myconfig.pxi"
 from espressomd.system cimport *
 cimport numpy as np
 from espressomd.utils cimport *
+from espressomd.utils import is_valid_type
 
 cdef extern from "SystemInterface.hpp":
     cdef cppclass SystemInterface:
@@ -58,10 +59,10 @@ IF ELECTROSTATICS:
                 COULOMB_EK, \
                 COULOMB_SCAFACOS
 
-        int coulomb_set_bjerrum(double bjerrum)
+        int coulomb_set_prefactor(double prefactor)
+        void deactivate_coulomb_method()
 
         ctypedef struct Coulomb_parameters:
-            double bjerrum
             double prefactor
             CoulombMethod method
 
@@ -145,7 +146,7 @@ IF ELECTROSTATICS:
             cao = p_cao
             alpha = p_alpha
             accuracy = p_accuracy
-            if isinstance(p_mesh, int):
+            if is_valid_type(p_mesh, int):
                 mesh[0] = p_mesh
                 mesh[1] = p_mesh
                 mesh[2] = p_mesh
@@ -167,7 +168,7 @@ IF ELECTROSTATICS:
             alpha = p_alpha
             accuracy = p_accuracy
             n_interpol = p_n_interpol
-            if isinstance(p_mesh, int):
+            if is_valid_type(p_mesh, int):
                 mesh[0] = p_mesh
                 mesh[1] = p_mesh
                 mesh[2] = p_mesh
@@ -239,7 +240,7 @@ IF ELECTROSTATICS:
         int mmm1d_tune(char **log);
 
     cdef extern from "interaction_data.hpp":
-        int coulomb_set_bjerrum(double bjerrum)
+        int coulomb_set_prefactor(double prefactor)
 
         ctypedef enum CoulombMethod :
             COULOMB_NONE, 
@@ -257,7 +258,6 @@ IF ELECTROSTATICS:
             COULOMB_EK 
 
         ctypedef struct Coulomb_parameters:
-            double bjerrum
             double prefactor
             CoulombMethod method
 

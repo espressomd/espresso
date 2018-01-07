@@ -40,9 +40,6 @@ void realloc_topology(int size) {
 
 // Parallel function for synchronising topology and particle data
 void sync_topo_part_info() {
-  int i, j;
-  Particle *p;
-
   for (unsigned molid = 0; molid < topology.size(); molid++) {
     auto const &mol = topology.at(molid);
     for (auto const &pid : mol.part) {

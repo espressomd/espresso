@@ -57,14 +57,16 @@
 #include "mpiio.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
+#include "errorhandling.hpp"
+
+#include <mpi.h>
+
 #include <cstring>
 #include <errno.h>
 #include <string>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <vector>
-
-#include <mpi.h>
 
 /** Dumps arr of size len starting from prefix pref of type T using
  * MPI_T as MPI datatype. Beware, that T and MPI_T have to match!
@@ -145,7 +147,7 @@ static void dump_info(std::string fn, unsigned fields) {
 void mpi_mpiio_common_write(const char *filename, unsigned fields) {
   std::string fnam(filename);
   int nlocalpart = cells_get_n_particles(), pref = 0, bpref = 0;
-  int rank, ret;
+  int rank;
   // Keep static buffers in order not having to allocate them on every
   // function call
   static std::vector<double> pos, vel;

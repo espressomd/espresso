@@ -475,20 +475,17 @@ The feature ``LB_GPU`` allows the use of Lees-Edwards boundary conditions. Our i
 Electrohydrodynamics
 --------------------
 
-.. note:: ELECTROHYDRODYNAMICS does not possess a Python interface, yet.
+        .. note::
+           This needs the feature LB_ELECTROHYDRODYNAMICS.
 
-::
-
-    setmd mu_E
-
-If the feature is activated, the (non-GPU) Lattice Boltzmann Code can be
+If the feature is activated, the Lattice Boltzmann Code can be
 used to implicitly model surrounding salt ions in an external electric
 field by having the charged particles create flow.
 
 For that to work, you need to set the electrophoretic mobility
-(multiplied by the external :math:`E`-field) :math:`\mu E` in all 3
-dimensions for your system. The three given parameters are float values
-and should, for a meaningful system, be less than :math:`1.0`.
+(multiplied by the external :math:`E`-field) :math:`\mu E` on the
+particles that should be subject to the field. This effectivly acts
+as an velocity offset between the particle and the LB fluid.
 
 For more information on this method and how it works, read the
 publication :cite:`hickey10a`.

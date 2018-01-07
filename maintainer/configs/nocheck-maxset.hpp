@@ -10,22 +10,18 @@
 #define CONSTRAINTS
 #define MASS
 #define EXCLUSIONS
-#define COMFORCE
-#define COMFIXED
 #define MOLFORCES
 
 #ifdef FFTW
 #define MODES
 #endif
 
-#define BOND_VIRTUAL
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
-#define ROTATION_PER_PARTICLE
 #define CATALYTIC_REACTIONS
 
 #define NEMD
-#define NPT 
+#define NPT
 #define GHMC
 
 #define LB
@@ -39,9 +35,6 @@
 #define EK_BOUNDARIES
 #define MMM1D_GPU
 #endif
-
-#define AREA_FORCE_GLOBAL   
-#define VOLUME_FORCE   
 
 #define TABULATED
 #define LENNARD_JONES
@@ -73,9 +66,6 @@
 // DEBUG Switches
 #define LJ_WARN_WHEN_CLOSE
 
-#define ADDITIONAL_CHECKS
-#define ASYNC_BARRIER
-
 #define COMM_DEBUG
 #define EVENT_DEBUG
 #define INTEG_DEBUG
@@ -87,7 +77,6 @@
 #define VERLET_DEBUG
 #define PARTICLE_DEBUG
 #define P3M_DEBUG
-#define EWALD_DEBUG
 #define FFT_DEBUG
 #define RANDOM_DEBUG
 #define FORCE_DEBUG
@@ -110,8 +99,5 @@
 #define CUDA_DEBUG
 #endif
 #define ESIF_DEBUG
-
-#define MPI_CORE
-#define FORCE_CORE
 
 #define ONEPART_DEBUG

@@ -20,12 +20,13 @@
 #ifndef UTILS_OBJECT_ID_HPP
 #define UTILS_OBJECT_ID_HPP
 
-#include <memory>
-#include <string>
-
 #include <boost/serialization/access.hpp>
 
 #include "NumeratedContainer.hpp"
+
+#include <memory>
+#include <string>
+#include <type_traits>
 
 namespace Utils {
 

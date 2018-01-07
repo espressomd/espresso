@@ -74,9 +74,7 @@ void calc_oif_global(double *area_volume,
   double VOL_partVol = 0., VOL_A, VOL_norm[3], VOL_dn, VOL_hz;
 
   /** loop over particles */
-  int c, np, i, j;
-  Cell *cell;
-  Particle *p, *p1, *p2, *p3;
+  Particle *p1, *p2, *p3;
   double p11[3], p22[3], p33[3];
   int img[3];
   double AA[3], BB[3];
@@ -87,7 +85,7 @@ void calc_oif_global(double *area_volume,
   int test = 0;
 
   for (auto &p : local_cells.particles()) {
-    j = 0;
+    int j = 0;
     p1 = &p;
     while (j < p1->bl.n) {
       /* bond type */
@@ -222,9 +220,7 @@ void add_oif_global_forces(double *area_volume,
   int k;
 
   /** loop over particles */
-  int c, np, i, j;
-  Cell *cell;
-  Particle *p, *p1, *p2, *p3;
+  Particle *p1, *p2, *p3;
   double p11[3], p22[3], p33[3];
   double AA[3], BB[3];
   int img[3];
@@ -236,7 +232,7 @@ void add_oif_global_forces(double *area_volume,
   int test = 0;
 
   for (auto &p : local_cells.particles()) {
-    j = 0;
+    int j = 0;
     p1 = &p;
     // printf("i=%d neigh=%d\n", i, p1->bl.n);
     while (j < p1->bl.n) {

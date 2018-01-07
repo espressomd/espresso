@@ -310,7 +310,7 @@ void dp3m_pre_init(void) {
   dfft_pre_init();
 }
 
-void dp3m_set_bjerrum() {
+void dp3m_set_prefactor() {
   dp3m.params.alpha = 0.0;
   dp3m.params.alpha_L = 0.0;
   dp3m.params.r_cut = 0.0;
@@ -324,13 +324,12 @@ void dp3m_set_bjerrum() {
 void dp3m_init() {
   int n;
 
-  if (coulomb.Dbjerrum == 0.0) {
-    if (coulomb.Dbjerrum == 0.0) {
+  if (coulomb.Dprefactor <= 0.0) {
       dp3m.params.r_cut = 0.0;
       dp3m.params.r_cut_iL = 0.0;
-      if (this_node == 0)
+      if (this_node == 0) {
         P3M_TRACE(
-            fprintf(stderr, "0: dp3m_init: dipolar Bjerrum length is zero.\n");
+            fprintf(stderr, "0: dp3m_init: dipolar prefactor is zero.\n");
             fprintf(stderr, "   Magnetostatics of dipoles switched off!\n"));
     }
   } else {
@@ -527,8 +526,6 @@ void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
   if (n_interpol != -1)
     dp3m.params.inter = n_interpol;
 
-  coulomb.Dprefactor =
-      (temperature > 0) ? temperature * coulomb.Dbjerrum : coulomb.Dbjerrum;
 }
 
 /*****************************************************************************/
@@ -587,11 +584,6 @@ electrical dipoles alone using the magnetic code .. */
 
 int dp3m_set_eps(double eps) {
   dp3m.params.epsilon = eps;
-
-  fprintf(stderr, ">> dp3m.params.epsilon =%lf\n", dp3m.params.epsilon);
-  fprintf(stderr, "if you are doing true MAGNETIC CALCULATIONS the value of "
-                  "Depsilon should be 1, if you change it, you go on your own "
-                  "risk ...\n");
 
   mpi_bcast_coulomb_params();
 
@@ -802,11 +794,6 @@ static void P3M_assign_torques(double prefac, int d_rs) {
   int q_m_off = (dp3m.local_mesh.dim[2] - dp3m.params.cao);
   int q_s_off =
       dp3m.local_mesh.dim[2] * (dp3m.local_mesh.dim[1] - dp3m.params.cao);
-#ifdef ONEPART_DEBUG
-  double db_fsum =
-      0; /* TODO: db_fsum was missing and code couldn't compile. Now the
-            arbitrary value of 0 is assigned to it, please check.*/
-#endif
 
   cp_cnt = 0;
   cf_cnt = 0;
@@ -1586,9 +1573,6 @@ double dp3m_perform_aliasing_sums_energy(int n[3], double nominator[1]) {
 #define P3M_TUNE_MAX_CUTS 50
 /** Tune dipolar P3M parameters to desired accuracy.
 
-    Usage:
-    \verbatim inter dipolar <bjerrum> p3m tune accuracy <value> [r_cut <value>
-   mesh <value> cao <value>] \endverbatim
 
     The parameters are tuned to obtain the desired accuracy in best
     time, by running mpi_integrate(0) for several parameter sets.
@@ -1641,8 +1625,6 @@ double dp3m_get_accuracy(int mesh, int cao, double r_cut_iL, double *_alpha_L,
 
   // Alpha cannot be zero in the dipolar case because real_space formula breaks
   // down
-  // Idem of the previous function
-  // tclcommand_inter_magnetic_dp3m_print_tune_parameters, here we do nothing
   rs_err = P3M_DIPOLAR_real_space_error(box_l[0], coulomb.Dprefactor, r_cut_iL,
                                         dp3m.sum_dip_part, dp3m.sum_mu2, 0.001);
 
@@ -1849,7 +1831,7 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
     /* the required accuracy could not be obtained, try higher caos. Therefore
        optimisation can only be
        obtained with even higher caos, but not lower ones */
-    P3M_TRACE(fprintf(stderr, "tclcommand_inter_magnetic_p3m_print_m_time: "
+    P3M_TRACE(fprintf(stderr, "dp3m_m_time: "
                               "doesn't give precision, step up\n"));
     cao++;
     final_dir = 1;
@@ -1950,7 +1932,7 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
     else if (tmp_time > best_time + P3M_TIME_GRAN)
       break;
   }
-  P3M_TRACE(fprintf(stderr, "tclcommand_inter_magnetic_p3m_print_m_time: "
+  P3M_TRACE(fprintf(stderr, "dp3m_m_time: "
                             "Dmesh=%d final Dcao=%d Dr_cut=%f time=%f\n",
                     mesh, *_cao, *_r_cut_iL, best_time));
   return best_time;
@@ -1994,9 +1976,9 @@ int dp3m_adaptive_tune(char **logger) {
   mpi_bcast_event(P3M_COUNT_DIPOLES);
 
   /* Print Status */
-  sprintf(b, "Dipolar P3M tune parameters: Accuracy goal = %.5e Bjerrum Length "
+  sprintf(b, "Dipolar P3M tune parameters: Accuracy goal = %.5e prefactor "
              "= %.5e\n",
-          dp3m.params.accuracy, coulomb.Dbjerrum);
+          dp3m.params.accuracy, coulomb.Dprefactor);
   *logger = strcat_alloc(*logger, b);
   sprintf(b, "System: box_l = %.5e # charged part = %d Sum[q_i^2] = %.5e\n",
           box_l[0], dp3m.sum_dip_part, dp3m.sum_mu2);
@@ -2152,8 +2134,7 @@ void dp3m_count_magnetic_particles() {
    tune the parameters to minimize the time with the desired accuracy.
 
 
-   This functions are called by the functions: dp3m_get_accuracy() and
-   tclcommand_inter_magnetic_dp3m_print_tune_parameters.
+   This functions are called by the functions: dp3m_get_accuracy().
 
 */
 
@@ -2564,7 +2545,8 @@ void dp3m_calc_send_mesh() {
 /************************************************/
 
 void dp3m_scaleby_box_l() {
-  if (coulomb.Dbjerrum == 0.0) {
+  if (coulomb.Dprefactor < 0.0) {
+    runtimeErrorMsg() << "Dipolar prefactor has to be >=0" ;
     return;
   }
 
