@@ -82,7 +82,7 @@ class DDSGPUTest(ut.TestCase):
             # gamma should be zero in order to avoid the noise term in force and torque
             self.es.thermostat.set_langevin(kT=1.297, gamma=0.0)
             
-            dds_cpu = DipolarDirectSumCpu(bjerrum_length = pf_dawaanr)
+            dds_cpu = DipolarDirectSumCpu(prefactor = pf_dawaanr)
             self.es.actors.add(dds_cpu)
             self.es.integrator.run(steps = 0,recalc_forces = True)
             
@@ -99,8 +99,7 @@ class DDSGPUTest(ut.TestCase):
                 self.es.actors.remove(self.es.actors.active_actors[i])
             
             self.es.integrator.run(steps = 0,recalc_forces = True)
-            dds_gpu = DipolarBarnesHutGpu(bjerrum_length = pf_dds_gpu, epssq = 100.0, itolsq = 4.0)
-            #dds_gpu = DipolarBarnesHutGpu(bjerrum_length = pf_dds_gpu)
+            dds_gpu = DipolarBarnesHutGpu(prefactor = pf_dds_gpu, epssq = 100.0, itolsq = 4.0)
             self.es.actors.add(dds_gpu)
             self.es.integrator.run(steps = 0,recalc_forces = True)
             

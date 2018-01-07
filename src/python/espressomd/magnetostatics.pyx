@@ -367,7 +367,7 @@ IF DIPOLES == 1:
                 return ()
     
             def valid_keys(self):
-                return ("bjerrum_length", "prefactor", "epssq", "itolsq")
+                return ("prefactor", "epssq", "itolsq")
     
             def _get_params_from_es_core(self):
                 return {"prefactor": coulomb.Dprefactor}
