@@ -26,10 +26,8 @@
 #ifdef VIRTUAL_SITES_RELATIVE
 
 void VirtualSitesRelative::update(bool recalc_positions) const {
-printf("vsr.upd\n");
-if (!recalc_positions && !have_velocity()) return;
 
-for (auto p : local_cells.particles()) {
+for (auto& p : local_cells.particles()) {
   if (!p.p.isVirtual) continue;
 
   if (recalc_positions)
@@ -37,7 +35,6 @@ for (auto p : local_cells.particles()) {
 
   if (have_velocity())
     update_vel(p);
-
 
 }
 
@@ -94,13 +91,10 @@ void VirtualSitesRelative::update_pos(Particle& p) const
   if (PERIODIC(i)) 
   {
     tmp =p.r.p[i] -new_pos[i];
-    //printf("%f\n",tmp);
     if (tmp > box_l[i]/2.) {
-     //printf("greater than box_l/2 %f\n",tmp);
      p.r.p[i] =new_pos[i] + box_l[i];
     }
     else if (tmp < -box_l[i]/2.) {
-     //printf("smaller than box_l/2 %f\n",tmp);
      p.r.p[i] =new_pos[i] - box_l[i];
     }
     else p.r.p[i] =new_pos[i];
@@ -191,7 +185,7 @@ int vs_relate_to(int part_num, int relate_to)
       return ES_ERROR;
     }
     
-    // get teh distance between the particles
+    // get the distance between the particles
     double d[3];
     get_mi_vector(d, p_current->r.p,p_relate_to->r.p);
     
@@ -281,6 +275,7 @@ int vs_relate_to(int part_num, int relate_to)
    
    return ES_OK;
 }
+
 
 
 // Rigid body conribution to scalar pressure and stress tensor

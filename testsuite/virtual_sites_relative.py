@@ -23,6 +23,8 @@ import unittest as ut
 import espressomd
 import numpy as np
 from espressomd.interactions import FeneBond
+from espressomd.virtual_sites import VirtualSitesRelative
+
 from tests_common import verify_lj_forces
 from numpy import random
 
@@ -32,6 +34,8 @@ from numpy import random
 class VirtualSites(ut.TestCase):
     s = espressomd.System()
     s.seed = range(s.cell_system.get_state()["n_nodes"])
+    s.virtual_sites = VirtualSitesRelative(have_velocity=True)
+    print(s.virtual_sites)
 
     @classmethod
     def setUpClass(cls):
