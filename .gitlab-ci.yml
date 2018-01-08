@@ -1,11 +1,24 @@
 image: espressomd/espresso-ubuntu-cuda:latest
 
 stages:
+  - clone
   - prepare
   - build
   - additional_checks
   - deploy
   - result
+
+variables:
+  GIT_STRATEGY: none
+
+git_clone:
+  stage: clone
+  variables:
+    GIT_STRATEGY: clone
+  artifacts:
+    paths:
+    - ${CI_PROJECT_DIR}
+    expire_in: 4 weeks
 
 status_pending:
   stage: prepare
@@ -51,8 +64,6 @@ check_sphinx:
 
 check_with_odd_no_of_processors:
   stage: additional_checks
-  variables:
-    GIT_STRATEGY: none
   when: on_success
   dependencies:
   - maxset
