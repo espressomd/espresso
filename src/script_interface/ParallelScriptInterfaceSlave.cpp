@@ -8,9 +8,21 @@
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
 
-#include "core/utils/Factory.hpp"
-
 namespace ScriptInterface {
+
+VariantMap ParallelScriptInterfaceSlave::bcast_variant_map() const {
+  VariantMap ret;
+  boost::mpi::broadcast(m_cb->comm(), ret, 0);
+
+  /* If the parameter is a object we have to tranlate it first to a
+     local id.
+  */
+  for (auto &p : ret) {
+    translate_id(p.second);
+  }
+
+  return ret;
+}
 
 ParallelScriptInterfaceSlave::ParallelScriptInterfaceSlave() {
   m_cb->add(Communication::MpiCallbacks::function_type(
@@ -24,16 +36,23 @@ ParallelScriptInterfaceSlave::get_translation_table() {
   return m_translation_table;
 }
 
-void ParallelScriptInterfaceSlave::mpi_slave(int action, int = 0) {
+void ParallelScriptInterfaceSlave::mpi_slave(int action, int) {
   switch (CallbackAction(action)) {
-  case CallbackAction::CREATE: {
+  case CallbackAction::NEW: {
     std::pair<ObjectId, std::string> what;
     boost::mpi::broadcast(m_cb->comm(), what, 0);
 
-    m_p = ScriptInterfaceBase::make_shared(what.second);
+    m_p = ScriptInterfaceBase::make_shared(
+        what.second, ScriptInterfaceBase::CreationPolicy::LOCAL);
 
     get_translation_table()[what.first] = m_p->id();
 
+    break;
+  }
+  case CallbackAction::CONSTRUCT: {
+    auto const parameters = bcast_variant_map();
+
+    m_p->construct(parameters);
     break;
   }
   case CallbackAction::SET_PARAMETER: {
@@ -48,15 +67,7 @@ void ParallelScriptInterfaceSlave::mpi_slave(int action, int = 0) {
     break;
   }
   case CallbackAction::SET_PARAMETERS: {
-    std::map<std::string, Variant> parameters;
-    boost::mpi::broadcast(m_cb->comm(), parameters, 0);
-
-    /* If the parameter is a object we have to tranlate it first to a
-       local id.
-    */
-    for (auto &p : parameters) {
-      translate_id(p.second);
-    }
+    auto parameters = bcast_variant_map();
 
     m_p->set_parameters(parameters);
 

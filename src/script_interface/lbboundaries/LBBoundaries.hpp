@@ -1,10 +1,10 @@
 #ifndef SCRIPT_INTERFACE_LBBOUNDARIES_LBBOUNDARIES_HPP
 #define SCRIPT_INTERFACE_LBBOUNDARIES_LBBOUNDARIES_HPP
 
-#include "config.hpp"
+#include "LBBoundary.hpp"
 #include "ScriptInterface.hpp"
 #include "ScriptObjectRegistry.hpp"
-#include "LBBoundary.hpp"
+#include "config.hpp"
 #include "core/lbboundaries.hpp"
 
 namespace ScriptInterface {
@@ -19,16 +19,14 @@ class LBBoundaries : public ScriptObjectRegistry<LBBoundary> {
   }
 
   virtual void remove_in_core(std::shared_ptr<LBBoundary> obj_ptr) override {
-    auto it = std::find(std::begin(::LBBoundaries::lbboundaries), std::end(::LBBoundaries::lbboundaries), obj_ptr->lbboundary());
+    auto it = std::find(std::begin(::LBBoundaries::lbboundaries),
+                        std::end(::LBBoundaries::lbboundaries),
+                        obj_ptr->lbboundary());
 
     if (it != std::end(::LBBoundaries::lbboundaries)) {
       ::LBBoundaries::lbboundaries.erase(it);
     }
-  };
-  public:
-  virtual const std::string name() const override {
-    return "LBBoundaries::LBBoundaries"; 
-  };
+  }
 };
 } /* namespace LBBoundaries */
 } /* namespace ScriptInterface */

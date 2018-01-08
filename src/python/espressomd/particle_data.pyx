@@ -613,6 +613,40 @@ cdef class ParticleHandle(object):
                 pointer_to_q(self.particle_data, x)
                 return x[0]
 
+    IF LB_ELECTROHYDRODYNAMICS:
+        property mu_E:
+            """
+            Particle electrophoretic velocity.
+
+            mu_E : :obj:`float`
+
+            This effectivly acts as a velocity offset between
+            an Lattice-Boltzmann fluid and the particle. Has only
+            an effect if LB is turned on.
+
+            .. note::
+               This needs the feature LB_ELECTROHYDRODYNAMICS.
+
+            """
+
+            def __set__(self, mu_E):
+                cdef double _mu_E[3]
+
+                check_type_or_throw_except(
+                    mu_E, 3, float, "mu_E has to be 3 floats.")
+
+                _mu_E[0] = mu_E[0]
+                _mu_E[1] = mu_E[1]
+                _mu_E[2] = mu_E[2]
+
+                set_particle_mu_E(self.id, _mu_E)
+
+            def __get__(self):
+                cdef double mu_E[3]
+                get_particle_mu_E(self.id, mu_E)
+
+                return array_locked([mu_E[0], mu_E[1], mu_E[2]])
+
     IF VIRTUAL_SITES == 1:
 
         property virtual:
@@ -1759,6 +1793,7 @@ cdef class ParticleList(object):
         else:
             return self._place_new_particle(P)
 
+
     def _place_new_particle(self, P):
         # Handling of particle id
         if not "id" in P:
@@ -1768,6 +1803,16 @@ cdef class ParticleList(object):
             if particle_exists(P["id"]):
                 raise Exception("Particle %d already exists." % P["id"])
 
+        # Prevent setting of contradicting attributes
+        IF DIPOLES:
+            if 'dip' in P and 'dipm' in P:
+                raise ValueError("Contradicting attributes: dip and dipm. Setting\
+dip is sufficient as the length of the vector defines the scalar dipole moment.")
+            IF ROTATION:
+                if 'dip' in P and 'quat' in P:
+                    raise ValueError("Contradicting attributes: dip and quat.\
+Setting dip overwrites the rotation of the particle around the dipole axis.\
+Set quat and scalar dipole moment (dipm) instead.")
 
         # The ParticleList[]-getter ist not valid yet, as the particle
         # doesn't yet exist. Hence, the setting of position has to be
@@ -1779,6 +1824,7 @@ cdef class ParticleList(object):
             mypos[i] = P["pos"][i]
         if place_particle(P["id"], mypos) == -1:
             raise Exception("particle could not be set.")
+
         # Pos is taken care of
         del P["pos"]
         id = P["id"]
@@ -1789,29 +1835,23 @@ cdef class ParticleList(object):
 
         return self[id]
 
-    def _place_new_particles(self, P):
-        if not "id" in P:
-            # Generate particle ids
-            ids = np.arange(np.array(P["pos"]).shape[
-                            0]) + max_seen_particle + 1
-        else:
-            ids = P["id"]
-            del P["id"]
+    def _place_new_particles(self, Ps):
+        # Check if all entries have the same length
+        n_parts = len(Ps["pos"])
+        if not all(np.shape(Ps[k]) and len(Ps[k]) == n_parts for k in Ps):
+            raise ValueError(
+                "When adding several particles at once, all lists of attributes have to have the same size")
 
-        # Place particles
-        cdef double mypos[3]
-        for j in range(len(P["pos"])):
-            for i in range(3):
-                mypos[i] = P["pos"][j][i]
-            if place_particle(ids[j], mypos) == -1:
-                raise Exception("Particle could not be set.")
-
-        del P["pos"]
-
-        if P != {}:
-            self[ids].update(P)
+        # Place new particles and collect ids
+        ids = []
+        for i in range(n_parts):
+            P = {}
+            for k in Ps:
+                P[k] = Ps[k][i]
+            ids.append(self._place_new_particle(P).id)
 
         return self[ids]
+
 
     # Iteration over all existing particles
     def __iter__(self):

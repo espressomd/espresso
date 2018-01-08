@@ -121,7 +121,9 @@ cdef extern from "particle_data.hpp":
     IF ELECTROSTATICS:
         int set_particle_q(int part, double q)
 
-    int set_particle_mu_E(int part, double mu_E[3])
+    IF LB_ELECTROHYDRODYNAMICS:
+        int set_particle_mu_E(int part, double mu_E[3])
+        void get_particle_mu_E(int part, double (&mu_E)[3])
 
     int set_particle_type(int part, int type)
 
