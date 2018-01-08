@@ -332,7 +332,6 @@ void dp3m_init() {
             fprintf(stderr, "0: dp3m_init: dipolar prefactor is zero.\n");
             fprintf(stderr, "   Magnetostatics of dipoles switched off!\n"));
       }
-    }
   } else {
     P3M_TRACE(fprintf(stderr, "%d: dp3m_init: \n", this_node));
 
