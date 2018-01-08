@@ -574,20 +574,24 @@ created by the system class. To perform an integration step, execute
 Debugging |es|
 --------------
 
-Exceptional situation occur in every program.  If |es| crashes with a
-segmentation fault that means that the was a memory fault in the
-simulation core.  The `pypresso` executable file is acutally not a
-program but a script which sets the Python path for you and starts the
-Python interpreter with your arguments.  Thus it is not possible to
-directly run `pypresso` in a debugger.  However, we provide some
-useful commandline options for the most common tools.
+Exceptional situations occur in every program.  If |es| crashes with a
+segmentation fault that means that there was a memory fault in the
+simulation core which requires running the program in a debugger.  The
+`pypresso` executable file is acutally not a program but a script
+which sets the Python path appropriately and starts the Python
+interpreter with your arguments.  Thus it is not possible to directly
+run `pypresso` in a debugger.  However, we provide some useful
+commandline options for the most common tools.
 
 .. code-block:: bash
 
      ./pypresso --tool <args>
 
+where ``--tool`` can be any from the following table.  You can only
+use one tool at a time.
+  
 +---------------------+----------------------------------------------+
-| Option              | Effect                                       |
+| Tool                | Effect                                       |
 +=====================+==============================================+
 | ``--gdb``           | ``gdb --args python <args>``                 |
 +---------------------+----------------------------------------------+
