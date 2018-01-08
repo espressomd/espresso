@@ -97,8 +97,10 @@ void force_calc() {
 
 // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
-  virtual_sites->update();
-  ghost_communicator(&cell_structure.update_ghost_pos_comm);
+  virtual_sites()->update();
+  if (virtual_sites()->need_ghost_comm_after_pos_update()) {
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+  }
 #endif
 
 #if defined(VIRTUAL_SITES_RELATIVE) && defined(LB)
@@ -107,8 +109,9 @@ void force_calc() {
   // to reassemble the cell lists after all position updates, also of virtual
   // particles.
   if ((lattice_switch & LATTICE_LB) &&
-      cell_structure.type == CELL_STRUCTURE_DOMDEC && (!cell_structure.use_verlet_list))
-    cells_update_ghosts();
+      cell_structure.type == CELL_STRUCTURE_DOMDEC && (!cell_structure.use_verlet_list) &&
+      (std::dynamic_pointer_cast<VirtualSitesRelative>(virtual_sites()) != nullptr))
+        cells_update_ghosts();
 #endif
 
   espressoSystemInterface.update();
@@ -188,9 +191,12 @@ void force_calc() {
 
 // VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
-  ghost_communicator(&cell_structure.collect_ghost_force_comm);
-  init_forces_ghosts();
-  virtual_sites->back_transfer_forces_and_torques();
+  if (virtual_sites()->need_ghost_comm_before_back_transfer())
+  {
+    ghost_communicator(&cell_structure.collect_ghost_force_comm);
+    init_forces_ghosts();
+  }
+  virtual_sites()->back_transfer_forces_and_torques();
 #endif
 
   // Communication Step: ghost forces

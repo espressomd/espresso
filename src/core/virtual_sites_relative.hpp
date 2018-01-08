@@ -40,10 +40,10 @@
     /** Back-transfer forces (and torques) to non-virtual particles */
     void back_transfer_forces_and_torques() const override;
     /** @brief Is a ghost communication needed before position updates */
-    bool require_ghost_comm_before_pos_update() const override { return n_nodes>1;} 
+    bool need_ghost_comm_after_pos_update() const override { return true;} 
     /** Is a ghost comm needed before a velocity update */
-    bool require_ghost_comm_before_vel_update() const override {return n_nodes>1;};
-    bool require_ghost_comm_after_vel_update() const override {return n_nodes>1;};
+    bool need_ghost_comm_before_vel_update() const override {return (n_nodes>1) && have_velocity();};
+    bool need_ghost_comm_before_back_transfer() const override {return true;};
     void pressure_and_stress_tensor_contribution(double* pressure, double* stress_tensor) const;    
     
     private:

@@ -485,8 +485,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 // VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    virtual_sites->update(false); // Recalc positions = false
+    if (virtual_sites()->need_ghost_comm_before_vel_update()) {
+      ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    }
+    virtual_sites()->update(false); // Recalc positions = false
 #endif
 
 // progagate one-step functionalities
@@ -794,7 +796,6 @@ void propagate_press_box_pos_and_rescale_npt() {
     for (auto &p : local_cells.particles()) {
 #ifdef VIRTUAL_SITES
       if (p.p.isVirtual)
-      if (p.p.isVirtual)
         continue;
 #endif
       for (int j = 0; j < 3; j++) {
@@ -877,7 +878,6 @@ void propagate_vel() {
 // Don't propagate translational degrees of freedom of vs
 #ifdef VIRTUAL_SITES
     if (p.p.isVirtual)
-    if (p.p.isVirtual)
       continue;
 #endif
     for (int j = 0; j < 3; j++) {
@@ -935,7 +935,6 @@ void propagate_pos() {
     for (auto &p : local_cells.particles()) {
 #ifdef VIRTUAL_SITES
       if (p.p.isVirtual)
-      if (p.p.isVirtual)
         continue;
 #endif
       for (int j = 0; j < 3; j++) {
@@ -977,7 +976,6 @@ void propagate_vel_pos() {
 
 // Don't propagate translational degrees of freedom of vs
 #ifdef VIRTUAL_SITES
-    if (p.p.isVirtual)
     if (p.p.isVirtual)
       continue;
 #endif

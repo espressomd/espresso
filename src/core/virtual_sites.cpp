@@ -21,9 +21,24 @@
 
 #include "config.hpp" 
 #include "virtual_sites.hpp"
-
+#include "initialize.hpp" 
+#include "statistics.hpp" 
+#include "integrate.hpp" 
 #ifdef VIRTUAL_SITES
 
-std::shared_ptr<VirtualSites> virtual_sites;  
+namespace {
+std::shared_ptr<VirtualSites> m_virtual_sites;
+}
+
+const std::shared_ptr<VirtualSites>& virtual_sites() {
+  return m_virtual_sites;
+}
+
+void set_virtual_sites(std::shared_ptr<VirtualSites> v) {
+ m_virtual_sites=v;
+ recalc_forces=1;
+ invalidate_obs();
+ on_ghost_flags_change();
+}
 
 #endif

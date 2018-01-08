@@ -39,7 +39,7 @@
 /** @brief Base class for virtual sites implementations */
 class VirtualSites {
   public:
-    VirtualSites() :  m_have_velocity(true) {};
+    VirtualSites() :  m_have_velocity(false) {};
     /** @brief Update positions and/or velocities of virtual sites 
 
     * Velocities are only updated update_velocities() return true 
@@ -51,12 +51,12 @@ class VirtualSites {
     /** @brief Enable/disable velocity calculations for vs */
     void set_have_velocity(const bool& v) { m_have_velocity=v; };
     const bool& have_velocity() const { return m_have_velocity; };
-    /** @brief Is a ghost communication needed before position updates */
-    virtual bool require_ghost_comm_before_pos_update() const =0;
+    /** @brief Is a ghost communication needed after position updates */
+    virtual bool need_ghost_comm_after_pos_update() const =0;
     /** Is a ghost comm needed before a velocity update */
-    virtual bool require_ghost_comm_before_vel_update() const =0;
-    /** Is a ghost comm needed after a velocity update */
-    virtual bool require_ghost_comm_after_vel_update() const =0;
+    virtual bool need_ghost_comm_before_vel_update() const =0;
+    /** Is a ghost comm needed before the back_transfer */
+    virtual bool need_ghost_comm_before_back_transfer() const =0;
     private:
       bool m_have_velocity;
    };
@@ -72,16 +72,16 @@ class VirtualSites {
     void update(bool recalc_positions=true) const override {};
     /** Back-transfer forces (and torques) to non-virtual particles */
     void back_transfer_forces_and_torques() const override {};
-    /** @brief Enable/disable velocity calculations for vs */
-    /** @brief Is a ghost communication needed before position updates */
-    bool require_ghost_comm_before_pos_update() const override { return false;} 
+    /** @brief Is a ghost communication needed after position updates */
+    bool need_ghost_comm_after_pos_update() const override { return false;} 
     /** Is a ghost comm needed before a velocity update */
-    bool require_ghost_comm_before_vel_update() const override {return false;};
-    /** Is a ghost comm needed after a velocity update */
-    bool require_ghost_comm_after_vel_update() const override {return false;};
+    bool need_ghost_comm_before_vel_update() const override {return false;};
+    /** Is a ghost comm needed before back_transfer */
+    bool need_ghost_comm_before_back_transfer() const override {return false;};
    };
 
-extern std::shared_ptr<VirtualSites> virtual_sites;  
+const std::shared_ptr<VirtualSites>& virtual_sites();
 
+void set_virtual_sites(std::shared_ptr<VirtualSites> v); 
 #endif
 #endif
