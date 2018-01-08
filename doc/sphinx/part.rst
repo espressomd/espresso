@@ -473,25 +473,26 @@ switches in ``myconfig.hpp``.
 
 - THERMOSTAT_IGNORE_NON_VIRTUAL specifies that the thermostat does not act on non-virtual particles
 
-Grand canonical feature
+Particle counting feature
 -----------------------
-:mod:`espressomd.grand_canonical`
 
-For using conveniently for simulations in the grand canonical ensemble,
+For using conveniently in simulations in the grand canonical ensemble,
 or other purposes, when particles of certain types are created and
-deleted frequently. Particle ids can be stored in lists for each
+deleted frequently. Particle ids can be stored in a map for each
 individual type and so random ids of particles of a certain type can be
 drawn.  ::
 
-    from espressomd import grand_canonical grand_canonical.setup([_type])
-    grand_canonical.delete_particles(_type)
-    grand_canonical.find_particle(_type)
-    grand_canonical.number_of_particles(_type)
+    import espressomd
+    system=espressomd.sytem()
+    system.setup_type_map([_type])
+    system.delete_particles(_type)
+    system.find_particle(_type)
+    system.number_of_particles(_type)
 
 If you want to keep track of particle ids of a certain type you have to
 initialize the method by calling  ::
 
-    grand_canonical.setup([_type])
+    system.setup_type_map([_type])
 
 After that will keep track of particle ids of that type. When using the
 keyword ``find`` and a particle type, the command will return a randomly
