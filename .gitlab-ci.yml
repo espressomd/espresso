@@ -43,12 +43,16 @@ clang:
 
 check_sphinx:
   stage: additional_checks
+  variables:
+    GIT_STRATEGY: none
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}; cd build && find ./ -exec touch -c -t 203901010000 {} \; && make sphinx
 
 check_with_odd_no_of_processors:
   stage: additional_checks
+  variables:
+    GIT_STRATEGY: none
   when: on_success
   dependencies:
   - maxset
