@@ -318,7 +318,7 @@ those particles, from which the virtual site was derived.
 
 There are different schemes for virtual sites, described in the
 following sections.
-To switch the active scheme, the :attr:`espressomd.system.System.virtual_sites` can be used::
+To switch the active scheme, the attribute :attr:`espressomd.system.System.virtual_sites` of the system class can be used::
 
     import espressomd
     from espressomd.virtual_sites import VirtualSitesOff, VirtualSitesRelative
@@ -328,15 +328,18 @@ To switch the active scheme, the :attr:`espressomd.system.System.virtual_sites` 
     # or
     s.virtual_sites=VirtualSitesOff()
 
-By default, :class:`espressomd.virtual_sites.VirtualSitesOff` is selected.
+By default, :class:`espressomd.virtual_sites.VirtualSitesOff` is selected. This means that virtual particles are not touched during integration.
 the `have_velocity` attribute determines, whether or not the velocity of virtual sites is calcualted, which carries a performance cost.
 
+
+
+.. _Rigid arrangements of particles:
 
 Rigid arrangements of particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The relative implementation of virtual sites allows for the simulation
-of rigid arrangements of particles. It can be used, , for extended
+of rigid arrangements of particles. It can be used, for extended
 dipoles and raspberry-particles, but also for more complex
 configurations. Position and velocity of a virtual site are obtained
 from the position and orientation of exactly one non-virtual particle,
