@@ -27,6 +27,7 @@
 #include <memory>
 
 #include "Observable.hpp"
+#include "core/observables/CylindricalDensityProfile.hpp"
 #include "core/observables/CylindricalFluxDensityProfile.hpp"
 #include "core/observables/CylindricalLBFluxDensityProfileAtParticlePositions.hpp"
 #include "core/observables/CylindricalProfileObservable.hpp"
@@ -106,6 +107,7 @@ public:
     std::shared_ptr<::Observables::obs_name> m_observable;                     \
   };
 
+NEW_CYLINDRICAL_PROFILE_OBSERVABLE(CylindricalDensityProfile)
 NEW_CYLINDRICAL_PROFILE_OBSERVABLE(CylindricalFluxDensityProfile)
 NEW_CYLINDRICAL_PROFILE_OBSERVABLE(
     CylindricalLBFluxDensityProfileAtParticlePositions)

@@ -540,11 +540,7 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
   double entry[3], exit[3]; /* the positions at which the line enters and exits the cube */
   int startx, endx;         /* x-bins in which the line starts and ends in */
   int occupiedxbins;        /* number of x-bins occuped by the line */
-  int *starty;              /* y-bins in which the line starts in for each x-bin.  This array has dimension occupiedxbins+1. */
   int totoccupiedybins;     /* total number of y-bins through which the line passes  */
-  int *occupiedybins;       /* number of occupied y-bins for each x-bin */
-  int *occupiedzbins;       /* number of occupied z-bins for each y-bin */
-  int *startz;              /* z-bins in which the line starts in for each y_bin.  This array has dimension totaloccupiedybins. */
   int xbin, ybin, zbin;     /* counters to keep track of bins x_bin goes from 0 to x_bins-1, y_bins from 0 to y_bins-1, z_bins from 0 to Z-bins-1 */
   int i ,k, l;    
   int counter;              /* keeps track of where we are in the startz array */
@@ -616,8 +612,8 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
   
     PTENSOR_TRACE(fprintf(stderr,"%d: distribute_tensors: x goes from %d to %d\n",this_node,startx, endx);)
     /* Initialise starty array */
-    starty = (int *)Utils::malloc(sizeof(int)*(occupiedxbins+1));
-    occupiedybins = (int *)Utils::malloc(sizeof(int)*occupiedxbins);
+    std::vector<int>starty(occupiedxbins+1);
+    std::vector<int> occupiedybins(occupiedxbins);
 
     /* find in which y-bins the line starts and stops for each x-bin */
     /* in xbin the line starts in y-bin number starty[xbin-startx] and ends in starty[xbin-startx+1] */
@@ -644,8 +640,8 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
     }
 
     /* Initialise startz array */
-    occupiedzbins = (int *)Utils::malloc(sizeof(int)*totoccupiedybins);
-    startz = (int *)Utils::malloc(sizeof(int)*(totoccupiedybins+1));
+    std::vector<int> occupiedzbins(totoccupiedybins);
+    std::vector<int> startz(totoccupiedybins+1);
     /* find in which z-bins the line starts and stops for each y-bin*/
     counter = 0;
     if (facein == 2) {
@@ -777,10 +773,6 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
         runtimeErrorMsg() << this_node << ": analyze stress_profile: bug in distribute tensor code - calclength is " << calclength << " and length is " << length;
       return 0;
     }
-    free(occupiedzbins);
-    free(occupiedybins);
-    free(starty);
-    free(startz);
   }
   return 1;
 } 
@@ -980,13 +972,13 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
           auto p2 = local_particles[p.bl.e[j++]];
           double dx[3];
           get_mi_vector(dx, p.r.p, p2->r.p);
-          double force[3];
-          calc_bonded_force(&p, p2, iaparams, &j, dx, force);
+          std::array<double,3> force;
+          calc_bonded_force(&p, p2, iaparams, &j, dx, force.data());
           PTENSOR_TRACE(
               fprintf(stderr, "%d: Bonded to particle %d with force %f %f %f\n",
                       this_node, p2->p.identity, force[0], force[1], force[2]));
           if ((pow(force[0], 2) + pow(force[1], 2) + pow(force[2], 2)) > 0) {
-            if (distribute_tensors(TensorInBin, force, bins, range_start, range,
+            if (distribute_tensors(TensorInBin, force.data(), bins, range_start, range,
                                    p.r.p, p2->r.p) != 1)
               return 0;
           }

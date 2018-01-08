@@ -1005,14 +1005,14 @@ void mpi_send_vs_relative_slave(int pnode, int part) {
 
 // ********************************
 
-void mpi_send_rotation(int pnode, int part, int rot) {
+void mpi_send_rotation(int pnode, int part, short int rot) {
   mpi_call(mpi_send_rotation_slave, pnode, part);
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     p->p.rotation = rot;
   } else {
-    MPI_Send(&rot, 1, MPI_INT, pnode, SOME_TAG, MPI_COMM_WORLD);
+    MPI_Send(&rot, 1, MPI_SHORT, pnode, SOME_TAG, MPI_COMM_WORLD);
   }
 
   on_particle_change();
@@ -1022,7 +1022,7 @@ void mpi_send_rotation_slave(int pnode, int part) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
-    MPI_Recv(&p->p.rotation, 1, MPI_INT, 0, SOME_TAG, MPI_COMM_WORLD, &status);
+    MPI_Recv(&p->p.rotation, 1, MPI_SHORT, 0, SOME_TAG, MPI_COMM_WORLD, &status);
   }
 
   on_particle_change();
@@ -1821,7 +1821,7 @@ int mpi_sync_topo_part_info() {
   int moltype = 0;
 
   mpi_call(mpi_sync_topo_part_info_slave, -1, 0);
-  auto n_mols = topology.size();
+  int n_mols = topology.size();
   MPI_Bcast(&n_mols, 1, MPI_INT, 0, comm_cart);
 
   for (i = 0; i < n_mols; i++) {
