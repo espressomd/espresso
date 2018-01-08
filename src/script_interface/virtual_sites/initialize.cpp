@@ -33,8 +33,10 @@ void initialize() {
 #ifdef VIRTUAL_SITES
   ScriptInterface::register_new<ScriptInterface::VirtualSites::VirtualSitesOff>(
     "VirtualSites::VirtualSitesOff");
+#ifdef VIRTUAL_SITES_RELATIVE
   ScriptInterface::register_new<ScriptInterface::VirtualSites::VirtualSitesRelative>(
     "VirtualSites::VirtualSitesRelative");
+#endif
   ScriptInterface::register_new<ScriptInterface::VirtualSites::ActiveVirtualSitesHandle>(
     "VirtualSites::ActiveVirtualSitesHandle");
 #endif    

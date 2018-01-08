@@ -28,6 +28,7 @@
 #include "core/virtual_sites.hpp"
 #include "errorhandling.hpp"
 
+#ifdef VIRTUAL_SITES
 
 namespace ScriptInterface {
 namespace VirtualSites {
@@ -56,4 +57,5 @@ public:
  };
 } /* namespace VirtualSites */
 } /* namespace ScriptInterface */
+#endif
 #endif

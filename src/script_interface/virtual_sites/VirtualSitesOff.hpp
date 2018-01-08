@@ -25,6 +25,7 @@
 #include "config.hpp"
 #include "VirtualSites.hpp"
 #include "core/virtual_sites.hpp"
+#ifdef VIRTUAL_SITES
 
 namespace ScriptInterface {
 namespace VirtualSites {
@@ -42,3 +43,5 @@ private:
 } /* namespace VirtualSites */
 } /* namespace ScriptInterface */
 #endif
+#endif
+

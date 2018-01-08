@@ -29,6 +29,7 @@
 namespace ScriptInterface {
 namespace VirtualSites {
 
+#ifdef VIRTUAL_SITES
 class VirtualSites : public AutoParameters {
 public:
   VirtualSites() {
@@ -42,6 +43,8 @@ public:
   /** Vs implementation we are wrapping */
   virtual std::shared_ptr<::VirtualSites> virtual_sites() =0;
 };
+
+#endif
 
 } /* namespace VirtualSites */
 } /* namespace ScriptInterface */
