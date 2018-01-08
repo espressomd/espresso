@@ -58,8 +58,9 @@ clang:
 
 check_sphinx:
   stage: additional_checks
-  variables:
-    GIT_STRATEGY: none
+  dependencies:
+  - git_clone
+  - maxset
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}; cd build && find ./ -exec touch -c -t 203901010000 {} \; && make sphinx
