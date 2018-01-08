@@ -1742,7 +1742,7 @@ cdef class ParticleList(object):
 
         Parameters
         ----------
-        add() takes either a dictionary or a bunch of keyword args.
+        Either a dictionary or a bunch of keyword args.
 
         Returns
         -------
