@@ -116,10 +116,10 @@ public:
 
   int delete_particle(int p_id);
   void add_reaction(double equilibrium_constant,
-                    std::vector<int> _reactant_types,
-                    std::vector<int> _reactant_coefficients,
-                    std::vector<int> _product_types,
-                    std::vector<int> _product_coefficients);
+                    const std::vector<int> & _reactant_types,
+                    const std::vector<int> & _reactant_coefficients,
+                    const std::vector<int> & _product_types,
+                    const std::vector<int> & _product_coefficients);
 
   bool do_global_mc_move_for_particles_of_type(int type, int start_id_polymer,
                                                int end_id_polymer,
@@ -207,8 +207,8 @@ public:
   void
   add_new_CV_degree_of_association(int associated_type, double CV_minimum,
                                    double CV_maximum,
-                                   std::vector<int> _corresponding_acid_types);
-  void add_new_CV_potential_energy(std::string filename, double delta_CV);
+                                   const std::vector<int> & _corresponding_acid_types);
+  void add_new_CV_potential_energy(const std::string & filename, double delta_CV);
   std::vector<std::shared_ptr<CollectiveVariable>> collective_variables;
 
   std::string output_filename = "";
@@ -225,14 +225,14 @@ public:
                                                               // reweighting
                                                               // runs
   int do_reaction(int reaction_steps) override;
-  void write_out_preliminary_energy_run_results(std::string filename);
+  void write_out_preliminary_energy_run_results(const std::string & filename);
 
   // checkpointing, only designed to reassign values of a previous simulation to
   // a new simulation with the same initialization process
-  int load_wang_landau_checkpoint(std::string identifier);
-  int write_wang_landau_checkpoint(std::string identifier);
+  int load_wang_landau_checkpoint(const std::string & identifier);
+  int write_wang_landau_checkpoint(const std::string & identifier);
   void
-  write_wang_landau_results_to_file(std::string full_path_to_output_filename);
+  write_wang_landau_results_to_file(const std::string & full_path_to_output_filename);
 
 
 private:

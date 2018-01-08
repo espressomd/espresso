@@ -208,15 +208,13 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
   double f[3] = {0, 0, 0};
   double mass = 0;
   /* number of trapped molecules on each node */
-  int *n_local_mols;
+  std::vector<int> n_local_mols(n_nodes);
   /* sum of all elements of n_local_mols */
   int sum_n_local_mols;
   /* lists of which molecules are on each node in order of ascending node number
    */
-  int *local_mols;
   MPI_Status status;
 
-  n_local_mols = (int *)Utils::malloc(n_nodes * sizeof(int));
   sum_n_local_mols = 0;
 
   /* Everyone tells me how many trapped molecules are on their node */
@@ -227,7 +225,7 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
   for (i = 1; i < n_nodes; i++) {
     sum_n_local_mols += n_local_mols[i];
   }
-  local_mols = (int *)Utils::malloc(sum_n_local_mols * sizeof(int));
+  std::vector<int>local_mols(sum_n_local_mols);
 
   /* Everyone tells me which trapped molecules are on their node */
   count = 0;
@@ -306,9 +304,6 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
       MPI_Send(topology[mol].trap_force, 3, MPI_DOUBLE, i, 99, comm_cart);
     }
   }
-
-  free(local_mols);
-  free(n_local_mols);
 }
 
 /* Send molecule information to the master node.
