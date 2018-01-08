@@ -315,8 +315,22 @@ according to their respective particle type. Before the next integration
 step, the forces accumulated on a virtual site are distributed back to
 those particles, from which the virtual site was derived.
 
-There are two distinct types of virtual sites, described in the
-following.
+
+There are different schemes for virtual sites, described in the
+following sections.
+To switch the active scheme, the :attr:`espressomd.system.System.virtual_sites` can be used::
+
+    import espressomd
+    from espressomd.virtual_sites import VirtualSitesOff, VirtualSitesRelative
+
+    s=espressomd.System()
+    s.virtual_sites=VirtualSitesRelative(have_velocity=True)
+    # or
+    s.virtual_sites=VirtualSitesOff()
+
+By default, :class:`espressomd.virtual_sites.VirtualSitesOff` is selected.
+the `have_velocity` attribute determines, whether or not the velocity of virtual sites is calcualted, which carries a performance cost.
+
 
 Rigid arrangements of particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -341,7 +355,7 @@ site is placed at a fixed distance from the non-virtual particle. When
 the non-virtual particle rotates, the virtual sites rotates on an orbit
 around the non-virtual particles center.
 
-To use this implementation of virtual sites, activate the feature VIRTUAL_SITES_RELATIVE.
+To use this implementation of virtual sites, activate the feature VIRTUAL_SITES_RELATIVE. Furthermore, an instance of :class:`espressomd.virtual_sites.VirtualSitesRelative` has to be set as the active virtual sites scheme (see above).
 To set up a virtual site,
 
 #. Place the particle to which the virtual site should be related. It
@@ -391,11 +405,6 @@ Please note:
 
 -  The presence of rigid bodies constructed by means of virtual sites
    adds a contribution to the pressure and stress tensor.
-
--  The use of virtual sites requires that the particles are numbered
-   consecutively, , the particle ids should go from zero to :math:`N-1`,
-   where :math:`N` is the number of particles.
-
 
 Virtual sites in the center of mass of a molecule
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -451,27 +460,10 @@ that order
 
    integrate 0
 
-Please note that the use of virtual sites requires that the particles
-are numbered consecutively. I.e., the particle ids should go from zero
-to :math:`N-1`, where :math:`N` is the number of particles.
-
 The type of the molecule you can choose freely, it is only used in
 certain analysis functions, namely ``energy_kinetic_mol``,
 ``pressure_mol`` and ``dipmom_mol``, which compute kinetic energy,
 pressure and dipole moment per molecule type, respectively.
-
-Additional features
-~~~~~~~~~~~~~~~~~~~
-
-The behaviour of virtual sites can be fine-tuned with the following
-switches in ``myconfig.hpp``.
-
-- VIRTUAL_SITES_NO_VELOCITY specifies that the velocity of virtual sites is not computed
-
-- VIRTUAL_SITES_THERMOSTAT specifies that the Langevin thermostat should also act on virtual
-   sites
-
-- THERMOSTAT_IGNORE_NON_VIRTUAL specifies that the thermostat does not act on non-virtual particles
 
 Grand canonical feature
 -----------------------
