@@ -136,7 +136,7 @@ Documentation
 The documentation of |es| consists of four parts:
 
   -  The users' guide and developers' guide are located in ``doc/sphinx``, and make use of the Sphinx Python package
-  -  In-code documentation for the Python interface is located in the various files in src/python/espressomd and also makes use of the Sphinx Python package. We also make use of the extensions in the numpydoc package and use the NumPy documentation style.
+  -  In-code documentation for the Python interface is located in the various files in src/python/espressomd and also makes use of the Sphinx Python package. We make use of the napolean extension and use the NumPy documentation style.
   -  In-code documentation of the C++ core is located in the .cpp and .hpp files in ``/src/core`` and its sub-directories and makes use of Doxygen.
 
 
