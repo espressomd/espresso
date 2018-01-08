@@ -38,9 +38,9 @@ public:
                     {"direction", m_ellipsoid->direction()}});
   }
 
-  const std::string name() const override { return "Shapes::Ellipsoid"; }
-
-  std::shared_ptr<::Shapes::Shape> shape() const override { return m_ellipsoid; }
+  std::shared_ptr<::Shapes::Shape> shape() const override {
+    return m_ellipsoid;
+  }
 
 private:
   std::shared_ptr<::Shapes::Ellipsoid> m_ellipsoid;
