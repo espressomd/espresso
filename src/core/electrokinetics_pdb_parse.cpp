@@ -66,6 +66,7 @@ void galloc(void** ptr, size_t size) {
     }
     else {
       free(*ptr);
+      *ptr = nullptr;
     }
   }
 }
