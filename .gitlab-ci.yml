@@ -96,10 +96,12 @@ status_success:
   stage: result
   script: bash maintainer/gh_post_status.sh success
   when: on_success
-  dependencies: []
+  dependencies:
+  - git_clone
 
 status_failure:
   stage: result
   script: bash maintainer/gh_post_status.sh failure
   when: on_failure
-  dependencies: []
+  dependencies:
+  - git_clone
