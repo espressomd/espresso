@@ -98,16 +98,15 @@
 
 using namespace std;
 
-namespace {
+namespace Communication {
+auto const &mpi_datatype_cache = boost::mpi::detail::mpi_datatype_cache();
 std::unique_ptr<boost::mpi::environment> mpi_env;
 }
 
 boost::mpi::communicator comm_cart;
 
 namespace Communication {
-namespace {
-std::unique_ptr<MpiCallbacks> m_callbacks;
-}
+  std::unique_ptr<MpiCallbacks> m_callbacks;
 
 /* We use a singelton callback class for now. */
 MpiCallbacks &mpiCallbacks() {
@@ -207,7 +206,8 @@ static int terminated = 0;
   CB(mpi_mpiio_slave)                                                          \
   CB(mpi_resort_particles_slave)                                               \
   CB(mpi_get_pairs_slave)                                                      \
-  CB(mpi_get_particles_slave)
+  CB(mpi_get_particles_slave)                                                  \
+  CB(mpi_rotate_system_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -268,11 +268,11 @@ void mpi_init() {
 #endif
 
 #ifdef BOOST_MPI_HAS_NOARG_INITIALIZATION
-  mpi_env = Utils::make_unique<boost::mpi::environment>();
+  Communication::mpi_env = Utils::make_unique<boost::mpi::environment>();
 #else
   int argc{};
   char **argv{};
-  mpi_env = Utils::make_unique<boost::mpi::environment>(argc, argv);
+  Communication::mpi_env = Utils::make_unique<boost::mpi::environment>(argc, argv);
 #endif
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
@@ -546,7 +546,7 @@ void mpi_send_mu_E_slave(int pnode, int part) {
 #ifdef LB_ELECTROHYDRODYNAMICS
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(&p->p.mu_E, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->p.mu_E, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 

@@ -310,7 +310,7 @@ void dp3m_pre_init(void) {
   dfft_pre_init();
 }
 
-void dp3m_set_bjerrum() {
+void dp3m_set_prefactor() {
   dp3m.params.alpha = 0.0;
   dp3m.params.alpha_L = 0.0;
   dp3m.params.r_cut = 0.0;
@@ -324,13 +324,12 @@ void dp3m_set_bjerrum() {
 void dp3m_init() {
   int n;
 
-  if (coulomb.Dbjerrum == 0.0) {
-    if (coulomb.Dbjerrum == 0.0) {
+  if (coulomb.Dprefactor <= 0.0) {
       dp3m.params.r_cut = 0.0;
       dp3m.params.r_cut_iL = 0.0;
       if (this_node == 0) {
         P3M_TRACE(
-            fprintf(stderr, "0: dp3m_init: dipolar Bjerrum length is zero.\n");
+            fprintf(stderr, "0: dp3m_init: dipolar prefactor is zero.\n");
             fprintf(stderr, "   Magnetostatics of dipoles switched off!\n"));
       }
     }
@@ -529,8 +528,6 @@ void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
   if (n_interpol != -1)
     dp3m.params.inter = n_interpol;
 
-  coulomb.Dprefactor =
-      (temperature > 0) ? temperature * coulomb.Dbjerrum : coulomb.Dbjerrum;
 }
 
 /*****************************************************************************/
@@ -1569,9 +1566,6 @@ double dp3m_perform_aliasing_sums_energy(int n[3], double nominator[1]) {
 #define P3M_TUNE_MAX_CUTS 50
 /** Tune dipolar P3M parameters to desired accuracy.
 
-    Usage:
-    \verbatim inter dipolar <bjerrum> p3m tune accuracy <value> [r_cut <value>
-   mesh <value> cao <value>] \endverbatim
 
     The parameters are tuned to obtain the desired accuracy in best
     time, by running mpi_integrate(0) for several parameter sets.
@@ -1975,9 +1969,9 @@ int dp3m_adaptive_tune(char **logger) {
   mpi_bcast_event(P3M_COUNT_DIPOLES);
 
   /* Print Status */
-  sprintf(b, "Dipolar P3M tune parameters: Accuracy goal = %.5e Bjerrum Length "
+  sprintf(b, "Dipolar P3M tune parameters: Accuracy goal = %.5e prefactor "
              "= %.5e\n",
-          dp3m.params.accuracy, coulomb.Dbjerrum);
+          dp3m.params.accuracy, coulomb.Dprefactor);
   *logger = strcat_alloc(*logger, b);
   sprintf(b, "System: box_l = %.5e # charged part = %d Sum[q_i^2] = %.5e\n",
           box_l[0], dp3m.sum_dip_part, dp3m.sum_mu2);
@@ -2544,7 +2538,8 @@ void dp3m_calc_send_mesh() {
 /************************************************/
 
 void dp3m_scaleby_box_l() {
-  if (coulomb.Dbjerrum == 0.0) {
+  if (coulomb.Dprefactor < 0.0) {
+    runtimeErrorMsg() << "Dipolar prefactor has to be >=0" ;
     return;
   }
 

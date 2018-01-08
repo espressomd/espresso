@@ -560,7 +560,7 @@ system. To activate the P3M electrostatics solver, execute
 ::
 
     from espressomd.electrostatics import P3M p3m=P3M(accuracy=1E-3,
-    bjerrum_length=1) system.actors.add(p3m)
+    prefactor=1) system.actors.add(p3m)
 
 The integrator uses by default the velocity verlet algorithm and is
 created by the system class. To perform an integration step, execute

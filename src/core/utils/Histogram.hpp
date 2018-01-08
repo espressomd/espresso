@@ -240,13 +240,13 @@ template <typename T> void Histogram<T>::normalize() { do_normalize(); }
 
 /**
  * \brief Histogram normalization.
- *        Divide by total number of counts times the bin volume.
+ *        Divide by the bin volume.
  */
 template <typename T> void Histogram<T>::do_normalize() {
   T bin_volume = std::accumulate(m_bin_sizes.begin(), m_bin_sizes.end(),
                                  static_cast<T>(1.0), std::multiplies<T>());
   std::transform(m_hist.begin(), m_hist.end(), m_hist.begin(),
-                 [this, bin_volume](T v) { return v / (bin_volume * static_cast<T>(m_tot_count));});
+                 [this, bin_volume](T v) { return v / bin_volume;});
 }
 
 
@@ -264,7 +264,7 @@ private:
   void do_normalize() override {
     int unravelled_index[4];
     int r_bin;
-    double min_r, r_bin_size, phi_bin_size, z_bin_size, bin_volume, norm_factor;
+    double min_r, r_bin_size, phi_bin_size, z_bin_size, bin_volume;
     // Ugly vector cast due to "unravel_index" function.
     std::vector<size_t> len_bins_u = get_n_bins();
     std::vector<int> len_bins(len_bins_u.begin(), len_bins_u.end());
@@ -282,10 +282,9 @@ private:
                     (min_r + (r_bin + 1) * r_bin_size) -
                 (min_r + r_bin * r_bin_size) * (min_r + r_bin * r_bin_size)) *
           z_bin_size * phi_bin_size / (2 * PI);
-      norm_factor = bin_volume * static_cast<T>(m_tot_count);
-      m_hist[ind] /= norm_factor;
-      m_hist[ind + 1] /= norm_factor;
-      m_hist[ind + 2] /= norm_factor;
+      m_hist[ind] /= bin_volume;
+      m_hist[ind + 1] /= bin_volume;
+      m_hist[ind + 2] /= bin_volume;
     }
   }
 };

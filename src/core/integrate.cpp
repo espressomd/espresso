@@ -1194,26 +1194,20 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
 
 /* Sanity Checks */
 #ifdef ELECTROSTATICS
-  if (nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.bjerrum > 0) {
-    fprintf(stderr, "WARNING: If electrostatics is being used you must use the "
-                    "-cubic_box option!\n");
-    fprintf(stderr,
-            "Automatically reverting to a cubic box for npt integration.\n");
-    fprintf(stderr, "Be aware though that all of the coulombic pressure is "
-                    "added to the x-direction only!\n");
-    nptiso.cubic_box = 1;
-  }
+  if (nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.prefactor > 0) {
+    runtimeErrorMsg() << "WARNING: If electrostatics is being used you must use the the cubic box npt." ;
+    integ_switch = INTEG_METHOD_NVT;
+    mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+    return ES_ERROR;
+ }
 #endif
 
 #ifdef DIPOLES
-  if (nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.Dbjerrum > 0) {
-    fprintf(stderr, "WARNING: If magnetostatics is being used you must use the "
-                    "-cubic_box option!\n");
-    fprintf(stderr,
-            "Automatically reverting to a cubic box for npt integration.\n");
-    fprintf(stderr, "Be aware though that all of the magnetostatic pressure is "
-                    "added to the x-direction only!\n");
-    nptiso.cubic_box = 1;
+  if (nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.Dprefactor > 0) {
+    runtimeErrorMsg() << "WARNING: If magnetostatics is being used you must use the the cubic box npt." ;
+    integ_switch = INTEG_METHOD_NVT;
+    mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+    return ES_ERROR;
   }
 #endif
 
