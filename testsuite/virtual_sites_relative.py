@@ -23,7 +23,7 @@ import unittest as ut
 import espressomd
 import numpy as np
 from espressomd.interactions import FeneBond
-from espressomd.virtual_sites import VirtualSitesRelative
+from espressomd.virtual_sites import VirtualSitesRelative, VirtualSitesOff
 
 from tests_common import verify_lj_forces
 from numpy import random
@@ -34,8 +34,6 @@ from numpy import random
 class VirtualSites(ut.TestCase):
     s = espressomd.System()
     s.seed = range(s.cell_system.get_state()["n_nodes"])
-    s.virtual_sites = VirtualSitesRelative(have_velocity=True)
-    print(s.virtual_sites)
 
     @classmethod
     def setUpClass(cls):
@@ -79,8 +77,19 @@ class VirtualSites(ut.TestCase):
             v_d - vs_r[1] * self.director_from_quaternion(
                 self.multiply_quaternions(rel.quat, vs_r[2]))), 1E-6)
 
+    def test_aa_method_switching(self):
+        # Virtual sites should be disabled by default
+        self.assertTrue(isinstance(self.s.virtual_sites, VirtualSitesOff))
+
+        # Switch implementation
+        self.s.virtual_sites=VirtualSitesRelative(have_velocity=False)
+        self.assertTrue(isinstance(self.s.virtual_sites, VirtualSitesRelative))
+        self.assertEqual(self.s.virtual_sites.have_velocity,False)
+
+    
     def test_pos_vel_forces(self):
         s = self.s
+        s.virtual_sites=VirtualSitesRelative(have_velocity=True)
         s.box_l = 10,10,10
         s.part.clear()
         s.time_step = 0.008
@@ -153,11 +162,25 @@ class VirtualSites(ut.TestCase):
         # Check
         self.assertLessEqual(np.linalg.norm(t_exp - t), 1E-6)
 
+
+        # Check virtual sites without velocity
+        s.virtual_sites.have_velocity=False
+
+        v2=s.part[2].v
+        s.part[1].v=17,-13.5,2
+        s.integrator.run(0,recalc_forces=True)
+        self.assertLess(np.linalg.norm(v2-s.part[2].v),1E-6)
+
+
+        
+
+
     def run_test_lj(self):
         """This fills the system with vs-based dumbells, adds a lj potential
           integrates and verifies forces. This is to make sure, that no pairs
           get lost or are outdated in the short range loop"""
         s = self.s
+        s.virtual_sites=VirtualSitesRelative(have_velocity=True)
         # Parameters
         n = 90 
         phi = 0.6

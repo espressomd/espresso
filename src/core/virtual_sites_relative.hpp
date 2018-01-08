@@ -30,7 +30,7 @@
    /** @brief Virtual sites implementation for rigid bodies */
    class VirtualSitesRelative : public VirtualSites {
     public:
-    VirtualSitesRelative() {printf("vsr instanced.\n");};
+    VirtualSitesRelative() {};
     /** @brief Update positions and/or velocities of virtual sites 
 
     * Velocities are only updated have_velocity() return true 

@@ -41,7 +41,6 @@ public:
                        m_active_implementation =
                            get_value<std::shared_ptr<VirtualSites>>(value);
                        if (m_active_implementation) {
-                         printf("assigning %s\n",m_active_implementation->name().c_str());
                          ::virtual_sites=m_active_implementation->virtual_sites();
                        }
                        else {
