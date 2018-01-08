@@ -635,13 +635,12 @@ int dd_append_particles(ParticleList *pl, int fold_dir) {
     }
 
     for (dir = 0; dir < 3; dir++) {
-      cpos[dir] =
-          (int)((pl->part[p].r.p[dir] - my_left[dir]) * dd.inv_cell_size[dir]) +
-          1;
+      auto lpos = pl->part[p].r.p[dir] - my_left[dir];
+      cpos[dir] = static_cast<int>(std::floor(lpos * dd.inv_cell_size[dir])) + 1;
 
       if (cpos[dir] < 1) {
         cpos[dir] = 1;
-        if (PERIODIC(dir)) {
+        if (PERIODIC(dir) || !boundary[2 * dir]) {
           flag = 1;
           CELL_TRACE(if (fold_coord == 2) {
             fprintf(stderr, "%d: dd_append_particles: particle %d (%f,%f,%f) "
@@ -652,7 +651,7 @@ int dd_append_particles(ParticleList *pl, int fold_dir) {
         }
       } else if (cpos[dir] > dd.cell_grid[dir]) {
         cpos[dir] = dd.cell_grid[dir];
-        if (PERIODIC(dir)) {
+        if (PERIODIC(dir) || !boundary[2 * dir + 1]) {
           flag = 1;
           CELL_TRACE(if (fold_coord == 2) {
             fprintf(stderr, "%d: dd_append_particles: particle %d (%f,%f,%f) "
@@ -665,10 +664,14 @@ int dd_append_particles(ParticleList *pl, int fold_dir) {
     }
     c = get_linear_index(cpos[0], cpos[1], cpos[2], dd.ghost_cell_grid);
     CELL_TRACE(fprintf(stderr,
-                       "%d: dd_append_particles: Appen Part id=%d to cell %d\n",
-                       this_node, pl->part[p].p.identity, c));
+                       "%d: dd_append_particles: Appen Part id=%d to cell %d cpos %d %d %d\n",
+                       this_node, pl->part[p].p.identity, c, cpos[0], cpos[1], cpos[2]));
     append_indexed_particle(&cells[c], std::move(pl->part[p]));
   }
+  CELL_TRACE(fprintf(stderr,
+                     "%d: dd_append_particles: flag=%d\n",
+                     this_node, flag));
+
   return flag;
 }
 

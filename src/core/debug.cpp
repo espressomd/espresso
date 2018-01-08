@@ -78,8 +78,8 @@ void check_particle_consistency() {
                         "mismatch for part id %d: local: %p cell: %p in cell "
                         "%d\n",
                 this_node, part[n].p.identity,
-                static_cast<void*>(local_particles[part[n].p.identity]),
-                static_cast<void*>(&part[n]), c);
+                static_cast<void *>(local_particles[part[n].p.identity]),
+                static_cast<void *>(&part[n]), c);
         errexit();
       }
     }
@@ -186,8 +186,8 @@ void check_particles() {
         fprintf(stderr, "%d: check_particles: ERROR: address mismatch for part "
                         "id %d: local: %p cell: %p in cell %d\n",
                 this_node, part[n].p.identity,
-                static_cast<void*>(local_particles[part[n].p.identity]),
-                static_cast<void*>(&part[n]), c);
+                static_cast<void *>(local_particles[part[n].p.identity]),
+                static_cast<void *>(&part[n]), c);
         errexit();
       }
     }
@@ -221,4 +221,18 @@ void check_particles() {
   }
 
   CELL_TRACE(fprintf(stderr, "%d: leaving check_particles\n", this_node));
+}
+
+void check_particle_sorting() {
+  for (int c = 0; c < local_cells.n; c++) {
+    auto cell = local_cells.cell[c];
+    for (int n = 0; n < cell->n; n++) {
+      auto p = cell->part[n];
+      if (cell_structure.position_to_cell(p.r.p) != cell) {
+        fprintf(stderr, "%d: misplaced part id %d. %p != %p\n", this_node,
+                p.p.identity, (void*)cell, (void*)cell_structure.position_to_cell(p.r.p));
+        errexit();
+      }
+    }
+  }
 }
