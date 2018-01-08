@@ -98,16 +98,15 @@
 
 using namespace std;
 
-namespace {
+namespace Communication {
+auto const &mpi_datatype_cache = boost::mpi::detail::mpi_datatype_cache();
 std::unique_ptr<boost::mpi::environment> mpi_env;
 }
 
 boost::mpi::communicator comm_cart;
 
 namespace Communication {
-namespace {
-std::unique_ptr<MpiCallbacks> m_callbacks;
-}
+  std::unique_ptr<MpiCallbacks> m_callbacks;
 
 /* We use a singelton callback class for now. */
 MpiCallbacks &mpiCallbacks() {
@@ -207,7 +206,8 @@ static int terminated = 0;
   CB(mpi_mpiio_slave)                                                          \
   CB(mpi_resort_particles_slave)                                               \
   CB(mpi_get_pairs_slave)                                                      \
-  CB(mpi_get_particles_slave)
+  CB(mpi_get_particles_slave)                                                  \
+  CB(mpi_rotate_system_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -268,11 +268,11 @@ void mpi_init() {
 #endif
 
 #ifdef BOOST_MPI_HAS_NOARG_INITIALIZATION
-  mpi_env = Utils::make_unique<boost::mpi::environment>();
+  Communication::mpi_env = Utils::make_unique<boost::mpi::environment>();
 #else
   int argc{};
   char **argv{};
-  mpi_env = Utils::make_unique<boost::mpi::environment>(argc, argv);
+  Communication::mpi_env = Utils::make_unique<boost::mpi::environment>(argc, argv);
 #endif
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
@@ -1005,14 +1005,14 @@ void mpi_send_vs_relative_slave(int pnode, int part) {
 
 // ********************************
 
-void mpi_send_rotation(int pnode, int part, int rot) {
+void mpi_send_rotation(int pnode, int part, short int rot) {
   mpi_call(mpi_send_rotation_slave, pnode, part);
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     p->p.rotation = rot;
   } else {
-    MPI_Send(&rot, 1, MPI_INT, pnode, SOME_TAG, MPI_COMM_WORLD);
+    MPI_Send(&rot, 1, MPI_SHORT, pnode, SOME_TAG, MPI_COMM_WORLD);
   }
 
   on_particle_change();
@@ -1022,7 +1022,7 @@ void mpi_send_rotation_slave(int pnode, int part) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
-    MPI_Recv(&p->p.rotation, 1, MPI_INT, 0, SOME_TAG, MPI_COMM_WORLD, &status);
+    MPI_Recv(&p->p.rotation, 1, MPI_SHORT, 0, SOME_TAG, MPI_COMM_WORLD, &status);
   }
 
   on_particle_change();
@@ -1821,7 +1821,7 @@ int mpi_sync_topo_part_info() {
   int moltype = 0;
 
   mpi_call(mpi_sync_topo_part_info_slave, -1, 0);
-  auto n_mols = topology.size();
+  int n_mols = topology.size();
   MPI_Bcast(&n_mols, 1, MPI_INT, 0, comm_cart);
 
   for (i = 0; i < n_mols; i++) {

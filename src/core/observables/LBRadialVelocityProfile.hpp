@@ -10,7 +10,7 @@ namespace Observables {
 int mpi_observable_lb_radial_velocity_profile_parallel(void *pdata_, double *A,
                                                        unsigned int n_A);
 
-void mpi_observable_lb_radial_velocity_profile_slave_implementation() {
+inline void mpi_observable_lb_radial_velocity_profile_slave_implementation() {
   radial_profile_data pdata;
   MPI_Bcast(&pdata, sizeof(radial_profile_data), MPI_BYTE, 0, comm_cart);
   unsigned int n_A = 3 * pdata.n_r_bins * pdata.n_phi_bins * pdata.n_z_bins;
@@ -20,7 +20,7 @@ void mpi_observable_lb_radial_velocity_profile_slave_implementation() {
   free(data);
 }
 
-int mpi_observable_lb_radial_velocity_profile_parallel(void *pdata_, double *A,
+inline int mpi_observable_lb_radial_velocity_profile_parallel(void *pdata_, double *A,
                                                        unsigned int n_A) {
   unsigned int i, j, k;
   unsigned int maxi, maxj, maxk;

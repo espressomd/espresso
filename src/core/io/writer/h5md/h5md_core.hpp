@@ -126,7 +126,7 @@ private:
   /**
    * @brief Method that extends datasets by the given extent.
    */
-  void ExtendDataset(std::string path, int *change_extent);
+  void ExtendDataset(const std::string & path, int *change_extent);
 
   /**
   * @brief Method that returns chunk dimensions.
