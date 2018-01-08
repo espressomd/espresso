@@ -72,7 +72,6 @@ bool steepest_descent_step(void) {
 #ifdef VIRTUAL_SITES
         // Skip positional increments of virtual particles
         if (!p.p.isVirtual)
-        if (!p.p.isVirtual)
 #endif
         {
           // Square of force on particle

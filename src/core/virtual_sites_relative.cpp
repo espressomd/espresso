@@ -144,7 +144,6 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
   for (auto &p : local_cells.particles()) {
     // We only care about virtual particles
     if (p.p.isVirtual) {
-    if (p.p.isVirtual) {
       // First obtain the real particle responsible for this virtual particle:
       Particle *p_real = local_particles[p.p.vs_relative_to_particle_id];
 
@@ -171,7 +170,7 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
     }
   }
 }
-}
+
 
 // Setup the virtual_sites_relative properties of a particle so that the given virtaul particle will follow the given real particle
 int vs_relate_to(int part_num, int relate_to)
@@ -284,7 +283,6 @@ void VirtualSitesRelative::pressure_and_stress_tensor_contribution(double* press
   // Iterate over all the particles in the local cells
 
   for (auto &p : local_cells.particles()) {
-    if (!p.p.isVirtual)
     if (!p.p.isVirtual)
       continue;
 

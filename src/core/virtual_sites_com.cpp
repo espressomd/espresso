@@ -60,7 +60,6 @@ void update_mol_pos_particle(Particle *p){
 void distribute_mol_force() {
   for (auto &p : local_cells.particles()) {
     if (p.p.isVirtual) {
-    if (p.p.isVirtual) {
       if (sqrlen(p.f.f) != 0) {
         put_mol_force_on_parts(&p);
       }
