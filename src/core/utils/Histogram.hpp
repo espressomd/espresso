@@ -120,8 +120,6 @@ public:
 private:
   // Number of bins for each dimension.
   std::vector<size_t> m_n_bins;
-  // Number of dimensions for a single data point.
-  size_t m_n_dims_data;
   // Min and max values for each dimension.
   std::vector<std::pair<T, T>> m_limits;
   // Bin sizes for each dimension.
@@ -131,6 +129,8 @@ private:
 protected:
   // Flat histogram data.
   std::vector<T> m_hist;
+  // Number of dimensions for a single data point.
+  size_t m_n_dims_data;
   // Track the number of total hits.
   size_t m_tot_count;
 };
@@ -146,7 +146,7 @@ protected:
 template <typename T>
 Histogram<T>::Histogram(std::vector<size_t> n_bins, size_t n_dims_data,
                         std::vector<std::pair<T, T>> limits)
-    : m_n_bins(n_bins), m_n_dims_data(n_dims_data), m_limits(limits), m_tot_count(0) {
+    : m_n_bins(n_bins), m_limits(limits), m_n_dims_data(n_dims_data), m_tot_count(0) {
   if (n_bins.size() != limits.size()) {
     throw std::invalid_argument("Argument for number of bins and limits do "
                                 "not have same number of dimensions!");
@@ -191,7 +191,7 @@ void Histogram<T>::update(std::vector<T> const &data,
     if (weights.size() != m_n_dims_data)
       throw std::invalid_argument("Wrong dimensions of given weights!");
     for (size_t ind = 0; ind < m_n_dims_data; ++ind) {
-      m_hist[flat_index + ind] += static_cast<T>(weights[ind]);
+      m_hist[flat_index + ind] += weights[ind];
     }
     m_tot_count += 1;
   }
@@ -259,6 +259,7 @@ public:
   using Histogram<T>::get_bin_sizes;
   using Histogram<T>::m_hist;
   using Histogram<T>::m_tot_count;
+  using Histogram<T>::m_n_dims_data;
 
 private:
   void do_normalize() override {
@@ -268,8 +269,8 @@ private:
     // Ugly vector cast due to "unravel_index" function.
     std::vector<size_t> len_bins_u = get_n_bins();
     std::vector<int> len_bins(len_bins_u.begin(), len_bins_u.end());
-    len_bins.push_back(3);
-    for (size_t ind = 0; ind < m_hist.size(); ind += 3) {
+    len_bins.push_back(m_n_dims_data);
+    for (size_t ind = 0; ind < m_hist.size(); ind += m_n_dims_data) {
       // Get the unravelled indices and calculate the bin volume.
       ::Utils::unravel_index(len_bins.data(), 4, ind, unravelled_index);
       r_bin = unravelled_index[0];
@@ -282,9 +283,9 @@ private:
                     (min_r + (r_bin + 1) * r_bin_size) -
                 (min_r + r_bin * r_bin_size) * (min_r + r_bin * r_bin_size)) *
           z_bin_size * phi_bin_size / (2 * PI);
-      m_hist[ind] /= bin_volume;
-      m_hist[ind + 1] /= bin_volume;
-      m_hist[ind + 2] /= bin_volume;
+      for (size_t dim = 0; dim < m_n_dims_data; ++dim) {
+        m_hist[ind + dim] /= bin_volume;
+      }
     }
   }
 };

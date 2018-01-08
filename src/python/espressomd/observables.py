@@ -284,6 +284,41 @@ class StressTensorAcf(Observable):
 
 
 @script_interface_register
+class CylindricalDensityProfile(Observable):
+    """Calculates the particle density in polar coordinates.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+    center : array_like of :obj:`float`
+             Position of the center of the polar coordinate system for the histogram.
+    axis : :obj:`str` (``x``, ``y``, or ``z``)
+           Orientation of the ``z``-axis of the polar coordinate system for the histogram.
+    n_r_bins : :obj:`int`
+               Number of bins in radial direction.
+    n_phi_bins : :obj:`int`
+                 Number of bins for the azimuthal direction.
+    n_z_bins : :obj:`int`
+               Number of bins in ``z`` direction.
+    min_r : :obj:`float`
+            Minimum ``r`` to consider.
+    min_phi : :obj:`float`
+              Minimum ``phi`` to consider.
+    min_z : :obj:`float`
+            Minimum ``z`` to consider.
+    max_r : :obj:`float`
+            Maximum ``r`` to consider.
+    max_phi : :obj:`float`
+              Maximum ``phi`` to consider.
+    max_z : :obj:`float`
+            Maximum ``z`` to consider.
+
+    """
+    _so_name = "Observables::CylindricalDensityProfile"
+
+
+@script_interface_register
 class CylindricalFluxDensityProfile(Observable):
     """Calculates the particle flux density in polar coordinates.
 
