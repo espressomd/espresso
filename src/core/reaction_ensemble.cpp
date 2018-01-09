@@ -78,10 +78,10 @@ int ReactionAlgorithm::do_reaction(int reaction_steps) {
 * Adds a reaction to the reaction system
 */
 void ReactionAlgorithm::add_reaction(double equilibrium_constant,
-                                     std::vector<int> _reactant_types,
-                                     std::vector<int> _reactant_coefficients,
-                                     std::vector<int> _product_types,
-                                     std::vector<int> _product_coefficients) {
+                                     const std::vector<int> & _reactant_types,
+                                     const std::vector<int> & _reactant_coefficients,
+                                     const std::vector<int> & _product_types,
+                                     const std::vector<int> & _product_coefficients) {
   SingleReaction new_reaction;
 
   new_reaction.equilibrium_constant = equilibrium_constant;
@@ -1021,7 +1021,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
 */
 void WangLandauReactionEnsemble::add_new_CV_degree_of_association(
     int associated_type, double CV_minimum, double CV_maximum,
-    std::vector<int> corresponding_acid_types) {
+    const std::vector<int> & corresponding_acid_types) {
   std::shared_ptr<DegreeOfAssociationCollectiveVariable>
       new_collective_variable =
           std::make_shared<DegreeOfAssociationCollectiveVariable>();
@@ -1040,7 +1040,7 @@ void WangLandauReactionEnsemble::add_new_CV_degree_of_association(
 * Wang-Landau sampling
 */
 void WangLandauReactionEnsemble::add_new_CV_potential_energy(
-    std::string filename, double delta_CV) {
+    const std::string & filename, double delta_CV) {
   std::shared_ptr<EnergyCollectiveVariable> new_collective_variable =
       std::make_shared<EnergyCollectiveVariable>();
   new_collective_variable->energy_boundaries_filename = filename;
@@ -1098,10 +1098,9 @@ int WangLandauReactionEnsemble::get_flattened_index_wang_landau(
     else // for degree of association collective variables (rounding conversion
          // desired)
       individual_indices[CV_i] =
-          static_cast<int>((current_state[CV_i] -
+          std::lround((current_state[CV_i] -
                  collective_variables_minimum_values[CV_i]) /
-                    delta_collective_variables_values[CV_i] +
-                0.5);
+                    delta_collective_variables_values[CV_i]);
     if (individual_indices[CV_i] < 0 or
         individual_indices[CV_i] >=
             nr_subindices_of_collective_variable
@@ -1529,7 +1528,7 @@ bool WangLandauReactionEnsemble::
 *Writes the Wang-Landau potential to file.
 */
 void WangLandauReactionEnsemble::write_wang_landau_results_to_file(
-    std::string full_path_to_output_filename) {
+    const std::string & full_path_to_output_filename) {
 
   FILE *pFile;
   pFile = fopen(full_path_to_output_filename.c_str(), "w");
@@ -1602,7 +1601,7 @@ int WangLandauReactionEnsemble::
 *preliminary energy reweighting run.
 */
 void WangLandauReactionEnsemble::write_out_preliminary_energy_run_results(
-    std::string full_path_to_output_filename) {
+    const std::string & full_path_to_output_filename) {
   FILE *pFile;
   pFile = fopen(full_path_to_output_filename.c_str(), "w");
   if (pFile == nullptr) {
@@ -1714,7 +1713,7 @@ void WangLandauReactionEnsemble::remove_bins_that_have_not_been_sampled() {
 *small, small statistical errors.
 */
 int WangLandauReactionEnsemble::write_wang_landau_checkpoint(
-    std::string identifier) {
+    const std::string & identifier) {
   std::ofstream outfile;
 
   // write current wang landau parameters (wang_landau_parameter,
@@ -1743,7 +1742,7 @@ int WangLandauReactionEnsemble::write_wang_landau_checkpoint(
 *Loads the Wang-Landau checkpoint
 */
 int WangLandauReactionEnsemble::load_wang_landau_checkpoint(
-    std::string identifier) {
+    const std::string & identifier) {
   std::ifstream infile;
 
   // restore wang landau parameters
