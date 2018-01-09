@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016,2017 The ESPResSo project
+  Copyright (C) 2016,2017,2018 The ESPResSo project
   Copyright (C) 2012 Alexander (Polyakov) Peletskyi
 
   This file is part of ESPResSo.
@@ -1154,9 +1154,6 @@ void fillConstantPointers(float* r, float* dip, BHData bh_data) {
     cuda_safe_mem(cudaMemcpyToSymbol(massd, &(bh_data.mass), sizeof(void*), 0, cudaMemcpyHostToDevice));
     cuda_safe_mem(cudaMemcpyToSymbol(maxd, &(bh_data.maxp), sizeof(void*), 0, cudaMemcpyHostToDevice));
     cuda_safe_mem(cudaMemcpyToSymbol(mind, &(bh_data.minp), sizeof(void*), 0, cudaMemcpyHostToDevice));
-
-    //cuda_safe_mem(cudaMemcpyToSymbol(xd, r, 3 * bh_data.nbodies * sizeof(float), 0, cudaMemcpyDeviceToDevice));
-    //cuda_safe_mem(cudaMemcpyToSymbol(uxd, dip, 3 * bh_data.nbodies * sizeof(float), 0, cudaMemcpyDeviceToDevice));
     cuda_safe_mem(cudaMemcpy(bh_data.r, r, 3 * bh_data.nbodies * sizeof(float), cudaMemcpyDeviceToDevice));
     cuda_safe_mem(cudaMemcpy(bh_data.u, dip, 3 * bh_data.nbodies * sizeof(float), cudaMemcpyDeviceToDevice));
 }

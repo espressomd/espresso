@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016,2017 The ESPResSo project
+  Copyright (C) 2016,2017,2018 The ESPResSo project
   Copyright (C) 2012 Alexander (Polyakov) Peletskyi
 
   This file is part of ESPResSo.
