@@ -19,7 +19,7 @@ public:
       : m_shape(std::make_shared<Shapes::NoWhere>()),
         m_reflection_type(ReflectionType::NONE), m_penetrable(false),
         m_only_positive(false), m_tuneable_slip(0), m_type(-1) {
-    reset_force();
+    ShapeBasedConstraint::reset_force();
   }
 
   virtual void add_energy(Particle *p, double *folded_pos,

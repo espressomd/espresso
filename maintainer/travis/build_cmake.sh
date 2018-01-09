@@ -43,6 +43,7 @@ function cmd {
 [ -z "$with_fftw" ] && with_fftw="true"
 [ -z "$with_python_interface" ] && with_python_interface="true"
 [ -z "$with_coverage" ] && with_coverage="false"
+[ -z "$with_static_analysis" ] && with_static_analysis="false"
 [ -z "$myconfig" ] && myconfig="default"
 [ -z "$check_procs" ] && check_procs=2
 [ -z "$build_procs" ] && build_procs=2
@@ -58,7 +59,7 @@ fi
 
 outp insource srcdir builddir \
     cmake_params with_fftw \
-    with_python_interface with_coverage myconfig check_procs build_procs
+    with_python_interface with_coverage with_static_analysis myconfig check_procs build_procs
 
 # check indentation of python files
 pep8 --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
@@ -125,6 +126,10 @@ fi
 
 if [ $with_coverage = "true" ]; then
     cmake_params="-DWITH_COVERAGE=ON $cmake_params"
+fi
+
+if [ $with_static_analysis = "true" ]; then
+    cmake_params="-DWITH_CLANG_TIDY=ON $cmake_params"
 fi
 
 MYCONFIG_DIR=$srcdir/maintainer/configs

@@ -201,8 +201,8 @@ int bcast_iccp3m_cfg(void) {
   MPI_Bcast((double *)&iccp3m_cfg.exty, 1, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast((double *)&iccp3m_cfg.extz, 1, MPI_DOUBLE, 0, comm_cart);
 
-  MPI_Bcast(&iccp3m_cfg.citeration, 1, MPI_DOUBLE, 0, comm_cart);
-  MPI_Bcast(&iccp3m_cfg.set_flag, 1, MPI_DOUBLE, 0, comm_cart);
+  MPI_Bcast(&iccp3m_cfg.citeration, 1, MPI_INT, 0, comm_cart);
+  MPI_Bcast(&iccp3m_cfg.set_flag, 1, MPI_INT, 0, comm_cart);
 
   return 0;
 }
@@ -214,7 +214,7 @@ int iccp3m_iteration() {
   int c, np;
   Particle *part;
   int i, j, id;
-  double globalmax;
+  double globalmax = 0;
   double f1, f2 = 0;
 
   iccp3m_sanity_check();
