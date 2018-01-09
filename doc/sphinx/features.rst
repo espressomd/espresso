@@ -295,7 +295,7 @@ DNA Model (Fyta DNA)
 
 Dipolar interactions on the gpu:
 
--  ``BARNES_HUT`` Enable Barnes-Hut octree sum on GPU algorithm for a dipole-dipole interaction calculation.
+-  ``DIPOLAR_BARNES_HUT`` Enable Barnes-Hut octree sum on GPU algorithm for a dipole-dipole interaction calculation.
 
 -  ``DIPOLAR_DIRECT_SUM`` Enables calculation of dipole-dipole interactions via direct summation on the gpu
 
