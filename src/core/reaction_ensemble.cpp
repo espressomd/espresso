@@ -146,7 +146,7 @@ void ReactionAlgorithm::check_reaction_ensemble() {
         if(it==charges_of_types.end()){
             std::string message =
               std::string("Forgot to assign charge to type ") +
-              std::to_string(current_reaction.reactant_types[j]);
+              std::to_string(current_reaction.product_types[j]);
             throw std::runtime_error(message);
         }
         

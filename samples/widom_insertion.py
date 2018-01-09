@@ -117,7 +117,7 @@ for i in range(10000):
         system.integrator.run(steps=2)
     system.integrator.run(steps=500)
     if(i % 100 == 0):
-        print(RE.measure_excess_chemical_potential(0)) #0 for insertion reaction
+        print("mu_ex_pair", RE.measure_excess_chemical_potential(0)) #0 for insertion reaction
         print("HA", system.number_of_particles(type=0), "A-",
               system.number_of_particles(type=1), "H+", system.number_of_particles(type=2))
               

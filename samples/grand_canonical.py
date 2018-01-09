@@ -84,7 +84,7 @@ system.setup_type_map([0, 1, 2])
 
 RE.reaction(10000) 
 
-p3m = electrostatics.P3M(prefactor=2.0, accuracy=1e-3)
+p3m = electrostatics.P3M(prefactor=0.9, accuracy=1e-3)
 system.actors.add(p3m)
 p3m_params = p3m.get_params()
 for key in list(p3m_params.keys()):
