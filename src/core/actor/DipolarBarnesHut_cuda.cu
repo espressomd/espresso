@@ -24,6 +24,7 @@
 #include "cuda.h"
 #include <curand.h>
 #include <curand_kernel.h>
+#include "../cuda_init.hpp"
 #include "../cuda_utils.hpp"
 
 typedef float dds_float ;
@@ -43,38 +44,40 @@ typedef float dds_float ;
 
 using namespace std;
 
+// CUDA blocks
+__constant__ volatile int blocks;
 // each node corresponds to a split of the cubic box in 3D space to equal cubic boxes
 // hence, 8 octant nodes per particle is a theoretical octree limit:
 // a maximal number of octree nodes is "nnodesd" and a number of particles "nbodiesd" respectively.
-__constant__ int nnodesd, nbodiesd;
+__constant__ volatile int nnodesd, nbodiesd;
 // Method performance/accuracy parameters
-__constant__ volatile float epssqd, itolsqd;
+__constant__ float epssqd, itolsqd;
 // blkcntd is a factual blocks' count.
 // bottomd is a bottom Barnes-Hut node (the division octant cell) in a linear array representation.
 // maxdepthd is a largest length of the octree "branch" till the "leaf".
 __device__ volatile int bottomd, maxdepthd, blkcntd;
-// hald edge of the BH box
+// half edge of the BH box
 __device__ volatile float radiusd;
 // particle positions on the device:
-__device__ __constant__ volatile float* xd;
+__device__ __constant__ float* xd = 0;
 // particle dipole moments on the device:
-__constant__ volatile float* uxd;
+__constant__ float* uxd = 0;
 // Not a real mass. Just a node weight coefficient.
-__constant__ volatile float* massd;
+__constant__ volatile float* massd = 0;
 // Barnes-Hut tree spatial boundaries.
-__constant__ volatile float *mind;
+__constant__ volatile float *mind = 0;
 // Barnes-Hut tree spatial boundaries.
-__constant__ volatile float *maxd;
+__constant__ volatile float *maxd = 0;
 // Error report.
-__constant__ volatile int *errd;
+__constant__ volatile int *errd = 0;
 // Indices of particles sorted according to the tree linear representation.
-__constant__ volatile int *sortd;
+__constant__ volatile int *sortd = 0;
 // The tree linear representation.
-__constant__ volatile int *childd;
+__constant__ volatile int *childd = 0;
 // Supplementary array: a tree nodes (division octant cells/particles inside) counting.
-__constant__ volatile int *countd;
+__constant__ volatile int *countd = 0;
 // Start indices for the per-cell sorting.
-__constant__ volatile int *startd;
+__constant__ volatile int *startd = 0;
 
 // The "half-convolution" multi-thread reduction.
 // The thread with a lower index will operate longer and
@@ -1066,28 +1069,96 @@ void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float*
 }
 
 // Function to set the BH method parameters.
-void setBHPrecision(float epssq, float itolsq) {
-    float epssq_loc, itolsq_loc;
-    epssq_loc = epssq;
-    itolsq_loc = itolsq;
-    cuda_safe_mem(cudaMemcpyToSymbol(epssqd, &epssq_loc, sizeof(float), 0, cudaMemcpyHostToDevice));
-    cuda_safe_mem(cudaMemcpyToSymbol(itolsqd, &itolsq_loc, sizeof(float), 0, cudaMemcpyHostToDevice));
+void setBHPrecision(float* epssq, float* itolsq) {
+    cuda_safe_mem(cudaMemcpyToSymbol(epssqd, epssq, sizeof(float), 0, cudaMemcpyHostToDevice));
+    cuda_safe_mem(cudaMemcpyToSymbol(itolsqd, itolsq, sizeof(float), 0, cudaMemcpyHostToDevice));
 }
 
-// Populating of array pointers allocated in GPU device from .cu part of the Espresso interface
-void fillConstantPointers(float* r, float* dip, int nbodies, int nnodes, BHArrays arrl, BHBox boxl, float* mass) {
-	cuda_safe_mem(cudaMemcpyToSymbol(nnodesd, &nnodes, sizeof(int), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(nbodiesd, &nbodies, sizeof(int), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(errd, &(arrl.err), sizeof(void*), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(sortd, &(arrl.sort), sizeof(void*), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(childd, &(arrl.child), sizeof(void*), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(countd, &(arrl.count), sizeof(void*), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(startd, &(arrl.start), sizeof(void*), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(xd, &r, sizeof(float*), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(uxd, &dip, sizeof(float*), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(massd, &(mass), sizeof(void*), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(maxd, &(boxl.maxp), sizeof(void*), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(mind, &(boxl.minp), sizeof(void*), 0, cudaMemcpyHostToDevice));
+// An allocation of the GPU device memory and an initialization where it is needed.
+void allocBHmemCopy(int nbodies, BHData* bh_data) {
+    bh_data->nbodies = nbodies;
+
+    int devID = -1;
+    EspressoGpuDevice dev;
+
+    devID = cuda_get_device();
+    cuda_get_device_props(devID,dev);
+
+    bh_data->blocks = dev.n_cores;
+    // Each node corresponds to a split of the cubic box in 3D space to equal cubic boxes
+    // hence, 8 nodes per particle is a theoretical octree limit:
+    bh_data->nnodes = bh_data->nbodies * 8;
+    if (bh_data->nnodes < 1024 * bh_data->blocks) bh_data->nnodes = 1024 * bh_data->blocks;
+    while ((bh_data->nnodes & (WARPSIZE - 1)) != 0) bh_data->nnodes++;
+    bh_data->nnodes--;
+
+    if (bh_data->err != 0) cuda_safe_mem(cudaFree(bh_data->err));
+    cuda_safe_mem(cudaMalloc((void **)&(bh_data->err), sizeof(int)));
+
+    if (bh_data->child != 0) cuda_safe_mem(cudaFree(bh_data->child));
+    cuda_safe_mem(cudaMalloc((void **)&(bh_data->child), sizeof(int) * (bh_data->nnodes + 1) * 8));
+
+    if (bh_data->count != 0) cuda_safe_mem(cudaFree(bh_data->count));
+    cuda_safe_mem(cudaMalloc((void **)&(bh_data->count), sizeof(int) * (bh_data->nnodes + 1)));
+
+    if (bh_data->start != 0) cuda_safe_mem(cudaFree(bh_data->start));
+    cuda_safe_mem(cudaMalloc((void **)&(bh_data->start), sizeof(int) * (bh_data->nnodes + 1)));
+
+    if (bh_data->sort != 0) cuda_safe_mem(cudaFree(bh_data->sort));
+    cuda_safe_mem(cudaMalloc((void **)&(bh_data->sort), sizeof(int) * (bh_data->nnodes + 1)));
+
+    // Weight coefficients of m_bhnnodes nodes: both particles and octant cells
+    if (bh_data->mass != 0) cuda_safe_mem(cudaFree(bh_data->mass));
+    cuda_safe_mem(cudaMalloc((void **)&(bh_data->mass), sizeof(float) * (bh_data->nnodes + 1)));
+
+    // n particles have unitary weight coefficients.
+    // Cells will be defined with -1 later.
+    float *mass_tmp = new float [bh_data->nbodies];
+    for(int i = 0; i < bh_data->nbodies; i++) {
+      mass_tmp[i] = 1.0f;
+    }
+    cuda_safe_mem(cudaMemcpy(bh_data->mass, mass_tmp, sizeof(float) * bh_data->nbodies, cudaMemcpyHostToDevice));
+    delete[] mass_tmp;
+    // (max[3*i], max[3*i+1], max[3*i+2])
+    // are the octree box dynamical spatial constraints
+    // this array is updating per each block at each interaction calculation
+    // within the boundingBoxKernel
+    if (bh_data->maxp != 0) cuda_safe_mem(cudaFree(bh_data->maxp));
+    cuda_safe_mem(cudaMalloc((void **)&(bh_data->maxp), sizeof(float) * bh_data->blocks * 3));
+    // (min[3*i], min[3*i+1], min[3*i+2])
+    // are the octree box dynamical spatial constraints
+    // this array is updating per each block at each interaction calculation
+    // within the boundingBoxKernel
+    if (bh_data->minp != 0) cuda_safe_mem(cudaFree(bh_data->minp));
+    cuda_safe_mem(cudaMalloc((void **)&(bh_data->minp), sizeof(float) * bh_data->blocks * 3));
+
+    if(bh_data->r != 0) cuda_safe_mem(cudaFree(bh_data->r));
+    cuda_safe_mem(cudaMalloc(&(bh_data->r), 3 * (bh_data->nnodes + 1) * sizeof(float)));
+
+    if(bh_data->u != 0) cuda_safe_mem(cudaFree(bh_data->u));
+    cuda_safe_mem(cudaMalloc(&(bh_data->u), 3 * (bh_data->nnodes + 1) * sizeof(float)));
+}
+
+// Populating of array pointers allocated in GPU device before.
+// Copy the particle data to the Barnes-Hut related arrays.
+void fillConstantPointers(float* r, float* dip, BHData bh_data) {
+    cuda_safe_mem(cudaMemcpyToSymbol(nnodesd, &(bh_data.nnodes), sizeof(int), 0, cudaMemcpyHostToDevice));
+    cuda_safe_mem(cudaMemcpyToSymbol(nbodiesd, &(bh_data.nbodies), sizeof(int), 0, cudaMemcpyHostToDevice));
+    cuda_safe_mem(cudaMemcpyToSymbol(errd, &(bh_data.err), sizeof(void*), 0, cudaMemcpyHostToDevice));
+    cuda_safe_mem(cudaMemcpyToSymbol(sortd, &(bh_data.sort), sizeof(void*), 0, cudaMemcpyHostToDevice));
+    cuda_safe_mem(cudaMemcpyToSymbol(childd, &(bh_data.child), sizeof(void*), 0, cudaMemcpyHostToDevice));
+    cuda_safe_mem(cudaMemcpyToSymbol(countd, &(bh_data.count), sizeof(void*), 0, cudaMemcpyHostToDevice));
+    cuda_safe_mem(cudaMemcpyToSymbol(startd, &(bh_data.start), sizeof(void*), 0, cudaMemcpyHostToDevice));
+    cuda_safe_mem(cudaMemcpyToSymbol(xd, &(bh_data.r), sizeof(float*), 0, cudaMemcpyHostToDevice));
+    cuda_safe_mem(cudaMemcpyToSymbol(uxd, &(bh_data.u), sizeof(float*), 0, cudaMemcpyHostToDevice));
+    cuda_safe_mem(cudaMemcpyToSymbol(massd, &(bh_data.mass), sizeof(void*), 0, cudaMemcpyHostToDevice));
+    cuda_safe_mem(cudaMemcpyToSymbol(maxd, &(bh_data.maxp), sizeof(void*), 0, cudaMemcpyHostToDevice));
+    cuda_safe_mem(cudaMemcpyToSymbol(mind, &(bh_data.minp), sizeof(void*), 0, cudaMemcpyHostToDevice));
+
+    //cuda_safe_mem(cudaMemcpyToSymbol(xd, r, 3 * bh_data.nbodies * sizeof(float), 0, cudaMemcpyDeviceToDevice));
+    //cuda_safe_mem(cudaMemcpyToSymbol(uxd, dip, 3 * bh_data.nbodies * sizeof(float), 0, cudaMemcpyDeviceToDevice));
+    cuda_safe_mem(cudaMemcpy(bh_data.r, r, 3 * bh_data.nbodies * sizeof(float), cudaMemcpyDeviceToDevice));
+    cuda_safe_mem(cudaMemcpy(bh_data.u, dip, 3 * bh_data.nbodies * sizeof(float), cudaMemcpyDeviceToDevice));
 }
 
 #endif // BARNES_HUT

@@ -21,10 +21,6 @@
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 #include "cuda_init.hpp"
-#ifdef DIPOLAR_BARNES_HUT
-// just for the required BH data types
-#include "actor/DipolarBarnesHut_cuda.cuh"
-#endif
 #include "errorhandling.hpp"
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
@@ -127,106 +123,18 @@ __global__ void split_kernel_quatu(CUDA_particle_data *particles, float *quatu, 
 }
 
 void EspressoSystemInterface::reallocDeviceMemory(int n) {
-#ifdef DIPOLAR_BARNES_HUT
-  if ((n != m_gpu_npart) || (m_blocks == 0) || (m_bhnnodes == 0))
-  {
-      int devID = -1;
-      EspressoGpuDevice dev;
-
-      devID = cuda_get_device();
-      cuda_get_device_props(devID,dev);
-
-      m_blocks = dev.n_cores;
-      // Each node corresponds to a split of the cubic box in 3D space to equal cubic boxes
-      // hence, 8 nodes per particle is a theoretical octree limit:
-      m_bhnnodes = n * 8;
-      if (m_bhnnodes < 1024 * m_blocks) m_bhnnodes = 1024 * m_blocks;
-      while ((m_bhnnodes & (WARPSIZE - 1)) != 0) m_bhnnodes++;
-      m_bhnnodes--;
-  }
-
-  if (m_arrl.err == 0) cuda_safe_mem(cudaMalloc((void **)&m_arrl.err, sizeof(int)));
-
-  if ((m_arrl.child == 0) || (n != m_gpu_npart))
-  {
-      if (m_arrl.child != 0) cuda_safe_mem(cudaFree(m_arrl.child));
-      cuda_safe_mem(cudaMalloc((void **)&m_arrl.child, sizeof(int) * (m_bhnnodes + 1) * 8));
-  }
-
-  if ((m_arrl.count == 0) || (n != m_gpu_npart))
-  {
-   if (m_arrl.count != 0) cuda_safe_mem(cudaFree(m_arrl.count));
-   cuda_safe_mem(cudaMalloc((void **)&m_arrl.count, sizeof(int) * (m_bhnnodes + 1)));
-  }
-
-  if ((m_arrl.start == 0) || (n != m_gpu_npart))
-  {
-   if (m_arrl.start != 0) cuda_safe_mem(cudaFree(m_arrl.start));
-   cuda_safe_mem(cudaMalloc((void **)&m_arrl.start, sizeof(int) * (m_bhnnodes + 1)));
-  }
-
-  if ((m_arrl.sort == 0) || (n != m_gpu_npart))
-  {
-   if (m_arrl.sort != 0) cuda_safe_mem(cudaFree(m_arrl.sort));
-   cuda_safe_mem(cudaMalloc((void **)&m_arrl.sort, sizeof(int) * (m_bhnnodes + 1)));
-  }
-
-  // Weight coefficients of m_bhnnodes nodes: both particles and octant cells
-  if ((m_mass == 0) || (n != m_gpu_npart))
-  {
-   if (m_mass != 0) cuda_safe_mem(cudaFree(m_mass));
-   cuda_safe_mem(cudaMalloc((void **)&m_mass, sizeof(float) * (m_bhnnodes + 1)));
-
-   // n particles have unitary weight coefficients.
-   // Cells will be defined with -1 later.
-   float *mass = new float [n];
-   for(int i = 0; i < n; i++) {
-        mass[i] = 1.0f;
-   }
-   cuda_safe_mem(cudaMemcpy(m_mass, mass, sizeof(float) * n, cudaMemcpyHostToDevice));
-   delete[] mass;
-  }
-  // (max[3*i], max[3*i+1], max[3*i+2])
-  // are the octree box dynamical spatial constraints
-  // this array is updating per each block at each interaction calculation
-  // within the boundingBoxKernel
-  if ((m_boxl.maxp == 0) || (n != m_gpu_npart))
-  {
-   if (m_boxl.maxp != 0) cuda_safe_mem(cudaFree(m_boxl.maxp));
-   cuda_safe_mem(cudaMalloc((void **)&m_boxl.maxp, sizeof(float) * m_blocks * 3));
-  }
-  // (min[3*i], min[3*i+1], min[3*i+2])
-  // are the octree box dynamical spatial constraints
-  // this array is updating per each block at each interaction calculation
-  // within the boundingBoxKernel
-  if ((m_boxl.minp == 0) || (n != m_gpu_npart))
-  {
-   if (m_boxl.minp != 0) cuda_safe_mem(cudaFree(m_boxl.minp));
-   cuda_safe_mem(cudaMalloc((void **)&m_boxl.minp, sizeof(float) * m_blocks * 3));
-  }
-#endif // DIPOLAR_BARNES_HUT
   if(m_needsRGpu && ((n != m_gpu_npart) || (m_r_gpu_begin == 0))) {
     if(m_r_gpu_begin != 0)
       cuda_safe_mem(cudaFree(m_r_gpu_begin));
-#ifndef DIPOLAR_BARNES_HUT
     cuda_safe_mem(cudaMalloc(&m_r_gpu_begin, 3*n*sizeof(float)));
     m_r_gpu_end = m_r_gpu_begin + 3*n;
-#else
-    cuda_safe_mem(cudaMalloc(&m_r_gpu_begin, 3 * (m_bhnnodes + 1) * sizeof(float)));
-    m_r_gpu_end = m_r_gpu_begin + 3 * (m_bhnnodes + 1);
-#endif // DIPOLAR_BARNES_HUT
   }
 #ifdef DIPOLES
   if(m_needsDipGpu && ((n != m_gpu_npart) || (m_dip_gpu_begin == 0))) {
     if(m_dip_gpu_begin != 0)
       cuda_safe_mem(cudaFree(m_dip_gpu_begin));
-#ifndef DIPOLAR_BARNES_HUT
     cuda_safe_mem(cudaMalloc(&m_dip_gpu_begin, 3*n*sizeof(float)));
     m_dip_gpu_end = m_dip_gpu_begin + 3*n;
-#else
-    cuda_safe_mem(cudaMalloc(&m_dip_gpu_begin, 3 * (m_bhnnodes + 1) * sizeof(float)));
-    m_dip_gpu_end = m_dip_gpu_begin + 3 * (m_bhnnodes + 1);
-#endif // DIPOLAR_BARNES_HUT
   }
 #endif
   if(m_needsVGpu && ((n != m_gpu_npart) || (m_v_gpu_begin == 0))) {

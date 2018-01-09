@@ -31,27 +31,38 @@
 
 typedef float dds_float ;
 
+typedef struct
+{
+   // CUDA blocks
+   int blocks;
+   // each node corresponds to a split of the cubic box in 3D space to equal cubic boxes
+   // hence, 8 octant nodes per particle is a theoretical octree limit:
+   // a maximal number of octree nodes is "nnodesd" and a number of particles "nbodiesd" respectively.
+   int nbodies;
+   int nnodes;
+   // particle positions on the device:
+   float* r;
+   // particle dipole moments on the device:
+   float* u;
+   // Not a real mass. Just a node weight coefficient.
+   float* mass;
+   // min positions' coordinates of the BH box.
+   float *minp;
+   // max positions' coordinates of the BH box.
+   float *maxp;
+   // Error report.
+   int *err;
+   // Indices of particles sorted according to the tree linear representation.
+   int *sort;
+   // The tree linear representation.
+   int *child;
+   // Supplementary array: a tree nodes (division octant cells/particles inside) counting.
+   int *count;
+   // Start indices for the per-cell sorting.
+   int *start;
+} BHData;
+
 #define SHARED_ARRAY_BH 512
-
-struct BHBox{
-    // min positions' coordinates of the BH box.
-	float *minp;
-	// max positions' coordinates of the BH box.
-	float *maxp;
-};
-
-struct BHArrays{
-    // Error report.
-	int *err;
-	// Indices of particles sorted according to the tree linear representation.
-	int *sort;
-	// The tree linear representation.
-	int *child;
-	// Supplementary array: a tree nodes (division octant cells/particles inside) counting.
-	int *count;
-	// Start indices for the per-cell sorting.
-	int *start;
-};
 
 // thread count for different kernels (see kernel calls from below functions).
 #define THREADS1 512	/* must be a power of 2 */
@@ -74,11 +85,14 @@ struct BHArrays{
 #define MAXDEPTH 32
 
 // Function to set the BH method parameters.
-void setBHPrecision(float epssq, float itolsq);
+void setBHPrecision(float* epssq, float* itolsq);
 
-// Populating of array pointers allocated in GPU device from .cu part of the Espresso interface
-void fillConstantPointers(float* r, float* dip,
-		int nbodies, int nnodes, BHArrays arrl, BHBox boxl, float* mass);
+// An allocation of the GPU device memory and an initialization where it is needed.
+void allocBHmemCopy(int nbodies, BHData* bh_data);
+
+// Populating of array pointers allocated in GPU device before.
+// Copy the particle data to the Barnes-Hut related arrays.
+void fillConstantPointers(float* r, float* dip, BHData bh_data);
 
 // Required BH CUDA init.
 void initBHgpu(int blocks);
@@ -105,5 +119,5 @@ void forceBH(int blocks, dds_float k, float* f, float* torque, dds_float box_l[3
 // Energy calculation.
 void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float* E);
 
+#endif // DIPOLAR_BARNES_HUT
 #endif /* DIPOLARBARNESHUT_CUH_ */
-#endif // BARNES_HUT
