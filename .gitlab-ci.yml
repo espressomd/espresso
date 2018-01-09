@@ -15,9 +15,8 @@ git_clone:
   stage: clone
   variables:
     GIT_STRATEGY: clone
-    GIT_SUBMODULE_STRATEGY: recursive
   script:
-    - echo "Cloning stage"
+    - cd ${CI_PROJECT_DIR}; git submodule update --init --recursive
   artifacts:
     paths:
     - ${CI_PROJECT_DIR}
