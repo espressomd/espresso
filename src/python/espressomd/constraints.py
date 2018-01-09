@@ -14,7 +14,10 @@ class Constraints(ScriptInterfaceHelper):
     _so_name = "Constraints::Constraints"
 
     def __getitem__(self, key):
-        return self.call_method("get_elements")[key]
+        elements = self.call_method("get_elements")[key]
+
+        for e in elements:
+            yield e
 
     def add(self, *args, **kwargs):
         """
@@ -53,7 +56,7 @@ class Constraints(ScriptInterfaceHelper):
 
         """
 
-        self.call_method("remove", constraint=constraint)
+        self.call_method("remove", object=constraint)
 
 
 class Constraint(ScriptInterfaceHelper):
