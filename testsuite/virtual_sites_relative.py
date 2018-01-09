@@ -221,7 +221,7 @@ class VirtualSites(ut.TestCase):
             self.verify_vs(s.part[3*i+1],verify_velocity=False)
             s.part[3 * i + 2].vs_auto_relate_to(3 * i)
             self.verify_vs(s.part[3*i+2],verify_velocity=False)
-        s.integrator.run(recalc_forces=True)
+        s.integrator.run(0,recalc_forces=True)
         # interactions
         s.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=eps, sigma=sigma, cutoff=cut, shift="auto")
@@ -268,6 +268,51 @@ class VirtualSites(ut.TestCase):
         self.run_test_lj()
         s.cell_system.set_domain_decomposition(use_verlet_lists=False)
         self.run_test_lj()
+
+    def test_zz_stress_tensor(self):
+        s=self.s
+        s.time_step=0.01
+        s.cell_system.skin=0.1
+        s.min_global_cut=0.2
+        # Should not have one if vs are turned off
+        s.virtual_sites=VirtualSitesOff()
+        self.assertTrue("virtual_sites" not in s.analysis.pressure())
+        self.assertTrue("virtual_sites" not in s.analysis.stress_tensor())
+
+        # vs relative contrib
+        s.virtual_sites=VirtualSitesRelative()
+        s.part.clear()
+        s.part.add(pos=(0,0,0),id=0)
+        p=s.part.add(pos=(0.1,0.1,0.1),id=1,ext_force=(1,2,3))
+        p.vs_auto_relate_to(0)
+        p=s.part.add(pos=(0.1,0,0),id=2,ext_force=(-1,0,0))
+        p.vs_auto_relate_to(0)
+        s.integrator.run(0,recalc_forces=True)
+        stress_total=s.analysis.stress_tensor()["total"]
+        stress_vs_total=s.analysis.stress_tensor()["virtual_sites"]
+        stress_vs=s.analysis.stress_tensor()["virtual_sites",0]
+        
+        p_total=s.analysis.pressure()["total"]
+        p_vs_total=s.analysis.pressure()["virtual_sites"]
+        p_vs=s.analysis.pressure()["virtual_sites",0]
+
+        # expected stress
+        s_expected =1./s.volume() * (
+           np.outer(s.part[1].ext_force,s.distance_vec(s.part[1],s.part[0]))
+          +np.outer(s.part[2].ext_force,s.distance_vec(s.part[2],s.part[0])))
+        np.testing.assert_allclose(stress_total,s_expected,atol=1E-5)
+        np.testing.assert_allclose(stress_vs,s_expected,atol=1E-5)
+        np.testing.assert_allclose(stress_vs_total,s_expected,atol=1E-5)
+        
+        # Pressure
+        self.assertAlmostEqual(p_total,np.sum(np.diag(s_expected))/3,places=5)
+        self.assertAlmostEqual(p_vs_total,np.sum(np.diag(s_expected))/3,places=5)
+        self.assertAlmostEqual(p_vs,np.sum(np.diag(s_expected))/3,places=5)
+
+
+
+
+
 
 
 

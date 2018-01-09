@@ -450,7 +450,8 @@ class Analysis(object):
             for i in range(c_analyze.total_pressure.n_virtual_sites):
                 p_vs +=  c_analyze.total_pressure.virtual_sites[i]
                 p["virtual_sites",i] = c_analyze.total_pressure.virtual_sites[0]
-            p["virtual_sites"] = p_vs
+            if c_analyze.total_pressure.n_virtual_sites:
+                p["virtual_sites"] = p_vs
 
         return p
 
@@ -564,13 +565,14 @@ class Analysis(object):
 
         # virtual sites
         IF VIRTUAL_SITES_RELATIVE == 1:
-            total_vs = np.zeros(9)
+            total_vs = np.zeros((3,3))
             for i in range(c_analyze.total_p_tensor.n_virtual_sites):
                 p["virtual_sites", i] = np.reshape(
                     create_nparray_from_double_array(
                       c_analyze.total_p_tensor.virtual_sites +9*i, 9), (3, 3) )
-                total_virtual_sites += p["virtual_sites", i]
-            p["virtual_sites"] = total_virtual_sites
+                total_vs += p["virtual_sites", i]
+            if c_analyze.total_p_tensor.n_virtual_sites:
+                p["virtual_sites"] = total_vs
 
         return p
 
