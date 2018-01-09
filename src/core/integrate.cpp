@@ -663,7 +663,6 @@ void rescale_forces_propagate_vel() {
 #ifdef VIRTUAL_SITES
     // Virtual sites are not propagated during integration
     if (p.p.isVirtual)
-    if (p.p.isVirtual)
       continue;
 #endif
     for (int j = 0; j < 3; j++) {
