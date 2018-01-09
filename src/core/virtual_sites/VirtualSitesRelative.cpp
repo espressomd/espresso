@@ -85,6 +85,7 @@ void VirtualSitesRelative::update_pos(Particle& p) const
  for (i=0;i<3;i++)
  {
   new_pos[i] =p_real->r.p[i] +director[i]/l*p.p.vs_relative_distance;
+  double old=p.r.p[i];
   // Handle the case that one of the particles had gone over the periodic
   // boundary and its coordinate has been folded
   if (PERIODIC(i)) 
@@ -99,6 +100,11 @@ void VirtualSitesRelative::update_pos(Particle& p) const
     else p.r.p[i] =new_pos[i];
    }
    else p.r.p[i] =new_pos[i];
+  // Has the vs moved by more than a skin
+  if (fabs(old- p.r.p[i]) >skin) {
+    runtimeErrorMsg() << "Virtual site "<<p.p.identity<< " has moved by more than the skin."<<old<<"->" <<p.r.p[i]; 
+  }
+  
  }
 }
 
