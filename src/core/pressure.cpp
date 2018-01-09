@@ -26,7 +26,7 @@
 #include "cells.hpp"
 #include "integrate.hpp"
 #include "initialize.hpp"
-#include "virtual_sites_relative.hpp" 
+#include "virtual_sites.hpp" 
 #include "npt.hpp"
 #include "p3m.hpp"
 #include "p3m-dipolar.hpp"
@@ -122,11 +122,8 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
 
   calc_long_range_virials();
 
-#ifdef VIRTUAL_SITES_RELATIVE  
-  std::shared_ptr<VirtualSitesRelative> vsr =std::dynamic_pointer_cast<VirtualSitesRelative>(virtual_sites());
-  if (vsr) {
-    vsr->pressure_and_stress_tensor_contribution(virials.vs_relative,p_tensor.vs_relative);
-  }
+#ifdef VIRTUAL_SITES
+  virtual_sites()->pressure_and_stress_tensor_contribution(virials.virtual_sites,p_tensor.virtual_sites);
 #endif
 
 
@@ -235,14 +232,14 @@ void init_virials(Observable_stat *stat)
 {
     // Determine number of contribution for different interaction types
     // bonded, nonbonded, coulomb, dipolar, rigid bodies
-    int n_pre, n_non_bonded, n_coulomb, n_dipolar,n_vsr;
+    int n_pre, n_non_bonded, n_coulomb, n_dipolar,n_vs;
 
   n_pre        = 1;
   n_non_bonded = (n_particle_types*(n_particle_types+1))/2;
 
   n_coulomb    = 0;
   n_dipolar    = 0;
-  n_vsr=0;
+  n_vs=0;
 
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
@@ -263,14 +260,13 @@ void init_virials(Observable_stat *stat)
       break;
   }
 #endif
-#ifdef VIRTUAL_SITES_RELATIVE
-  // rigid bodies 
-  n_vsr=1;
+#ifdef VIRTUAL_SITES
+  n_vs=virtual_sites()->n_pressure_contribs();
 #endif
 
 
   // Allocate memory for the data
-  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, n_dipolar, n_vsr, 1);
+  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, n_dipolar, n_vs, 1);
   stat->init_status = 0;
 }
 
@@ -291,7 +287,7 @@ void init_p_tensor(Observable_stat *stat)
 {
     // Determine number of contribution for different interaction types
     // bonded, nonbonded, coulomb, dipolar, rigid bodies
-    int n_pre, n_non_bonded, n_coulomb, n_dipolar,n_vsr;
+    int n_pre, n_non_bonded, n_coulomb, n_dipolar,n_vs;
 
 
   n_pre        = 1;
@@ -299,7 +295,7 @@ void init_p_tensor(Observable_stat *stat)
 
   n_coulomb = 0;
   n_dipolar = 0;
-  n_vsr=0;
+  n_vs=0;
 
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
@@ -319,12 +315,11 @@ void init_p_tensor(Observable_stat *stat)
   default: n_dipolar = 0;
   }
 #endif
-#ifdef VIRTUAL_SITES_RELATIVE
-  // rigid bodies 
-  n_vsr=1;
+#ifdef VIRTUAL_SITES
+  n_vs=virtual_sites()->n_pressure_contribs();
 #endif
 
-  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, n_dipolar, n_vsr, 9);
+  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, n_dipolar, n_vs, 9);
   stat->init_status = 0;
 }
 

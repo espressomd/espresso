@@ -24,7 +24,7 @@
 
 #include "config.hpp"
 #include "VirtualSites.hpp"
-#include "core/virtual_sites.hpp"
+#include "core/virtual_sites/VirtualSitesOff.hpp"
 #ifdef VIRTUAL_SITES
 
 namespace ScriptInterface {

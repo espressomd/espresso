@@ -741,6 +741,4 @@ void on_ghost_flags_change() {
   };
 #endif
 
-//  if (old_have_v != ghosts_have_v)
-//    cells_re_init(CELL_STRUCTURE_CURRENT);
 }

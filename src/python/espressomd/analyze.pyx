@@ -367,10 +367,7 @@ class Analysis(object):
         * "nonbonded_inter" type_i, type_j", nonboned pressure between short ranged forces between type i and j and different mol_ids
         * "coulomb", Maxwell stress, how it is calculated depends on the method
         * "dipolar", TODO
-        * "vs_relative", In case of rigid body rotation, virial contribution from torques is not included.
-           The pressure contribution for rigid bodies constructed by means of the
-           VIRTUAL\_SITES\_RELATIVE mechanism is included. On the other hand, the
-           pressure contribution for rigid bonds is not included.
+        * "virtual_sites", Stress contribution due to virtual sites
         
         """
         v_comp=int(v_comp)
@@ -448,8 +445,12 @@ class Analysis(object):
             p["dipolar"] = total_dipolar
 
         # virtual sites
-        IF VIRTUAL_SITES_RELATIVE == 1:
-            p["vs_relative"] = c_analyze.total_pressure.vs_relative[0]
+        IF VIRTUAL_SITES == 1:
+            p_vs=0.
+            for i in range(c_analyze.total_pressure.n_virtual_sites):
+                p_vs +=  c_analyze.total_pressure.virtual_sites[i]
+                p["virtual_sites",i] = c_analyze.total_pressure.virtual_sites[0]
+            p["virtual_sites"] = p_vs
 
         return p
 
@@ -471,10 +472,7 @@ class Analysis(object):
         * "nonbonded_inter type_i", type_j, nonboned stress tensor between short ranged forces between type i and j and different mol_ids
         * "coulomb", Maxwell stress tensor, how it is calculated depends on the method
         * "dipolar", TODO
-        * "vs_relative", In case of rigid body rotation, virial contribution from torques is not included.
-           The stress_tensor contribution for rigid bodies constructed by means of the
-           VIRTUAL\_SITES\_RELATIVE mechanism is included. On the other hand, the
-           pressure contribution for rigid bonds is not included.
+        * "virtual_sites", Stress tensor contribution for virtual sites
         
         """
         v_comp=int(v_comp)
@@ -566,8 +564,13 @@ class Analysis(object):
 
         # virtual sites
         IF VIRTUAL_SITES_RELATIVE == 1:
-            p["vs_relative"] = np.reshape(create_nparray_from_double_array(
-                c_analyze.total_p_tensor.vs_relative, 9), (3, 3))
+            total_vs = np.zeros(9)
+            for i in range(c_analyze.total_p_tensor.n_virtual_sites):
+                p["virtual_sites", i] = np.reshape(
+                    create_nparray_from_double_array(
+                      c_analyze.total_p_tensor.virtual_sites +9*i, 9), (3, 3) )
+                total_virtual_sites += p["virtual_sites", i]
+            p["virtual_sites"] = total_virtual_sites
 
         return p
 

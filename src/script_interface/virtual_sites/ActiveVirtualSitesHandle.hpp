@@ -41,12 +41,7 @@ public:
                      [this](Variant const &value) {
                        m_active_implementation =
                            get_value<std::shared_ptr<VirtualSites>>(value);
-                       if (m_active_implementation) {
-                         ::set_virtual_sites(m_active_implementation->virtual_sites());
-                       }
-                       else {
-                         throw std::runtime_error("the implementation has to be an instance of a sub-class of VirtualSites");
-                       };
+                       ::set_virtual_sites(m_active_implementation->virtual_sites());
                      },
                      [this]() {
                        return (this->m_active_implementation != nullptr) ? this->m_active_implementation->id() : ObjectId();

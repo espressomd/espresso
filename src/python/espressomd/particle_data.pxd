@@ -206,7 +206,7 @@ cdef extern from "particle_data.hpp":
     bool particle_exists(int part)
 
 
-cdef extern from "virtual_sites_relative.hpp":
+cdef extern from "virtual_sites.hpp":
     IF VIRTUAL_SITES_RELATIVE == 1:
         int vs_relate_to(int part_num, int relate_to)
         int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, double * vs_quat)

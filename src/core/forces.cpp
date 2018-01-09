@@ -103,17 +103,7 @@ void force_calc() {
   }
 #endif
 
-#if defined(VIRTUAL_SITES_RELATIVE) && defined(LB)
-  // This is on a workaround stage:
-  // When using virtual sites relative and LB at the same time, it is necessary
-  // to reassemble the cell lists after all position updates, also of virtual
-  // particles.
-  if ((lattice_switch & LATTICE_LB) &&
-      cell_structure.type == CELL_STRUCTURE_DOMDEC && (!cell_structure.use_verlet_list) &&
-      (std::dynamic_pointer_cast<VirtualSitesRelative>(virtual_sites()) != nullptr))
-        cells_update_ghosts();
-#endif
-
+  
   espressoSystemInterface.update();
 
 #ifdef COLLISION_DETECTION

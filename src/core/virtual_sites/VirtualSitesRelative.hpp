@@ -17,9 +17,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _VIRTUAL_SITES_RELATIVE_HPP
-#define _VIRTUAL_SITES_RELATIVE_HPP
+#ifndef VIRTUAL_SITES_VIRTUAL_SITES_RELATIVE_HPP
+#define VIRTUAL_SITES_VIRTUAL_SITES_RELATIVE_HPP
 
+#include "config.hpp" 
 #ifdef VIRTUAL_SITES_RELATIVE
 
 #include "virtual_sites.hpp"
@@ -44,14 +45,14 @@
     /** Is a ghost comm needed before a velocity update */
     bool need_ghost_comm_before_vel_update() const override {return (n_nodes>1) && have_velocity();};
     bool need_ghost_comm_before_back_transfer() const override {return true;};
-    void pressure_and_stress_tensor_contribution(double* pressure, double* stress_tensor) const;    
+    int n_pressure_contribs() const override {return 1;};
+    void pressure_and_stress_tensor_contribution(double* pressure, double* stress_tensor) const override;    
     
     private:
     void update_pos(Particle& p) const;
     void update_vel(Particle& p) const;
    };
 
-int vs_relate_to(int part_num, int relate_to);
 #endif
 
 #endif
