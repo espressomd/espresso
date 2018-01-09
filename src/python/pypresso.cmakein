@@ -7,8 +7,6 @@
 # without any warranty.
 #
 
-set -x
-
 if test -n "$PYTHONPATH"; then
   PYTHONPATH=@PYTHON_DIR@:$PYTHONPATH
 else
