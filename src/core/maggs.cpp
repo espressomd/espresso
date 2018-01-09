@@ -1646,8 +1646,9 @@ void maggs_calc_init_e_field()
   }
   /* exchange whole glue-patch region */
   maggs_exchange_surface_patch(Dfield, 3, 0);
-  if(!this_node)
+  if(!this_node) {
     MAGGS_TRACE(fprintf(stderr, "Ex = %16.12e, Ey = %15.12e, Ez = %15.12e\n", gEall[0], gEall[1], gEall[2]));
+  }
 }
 
 

@@ -38,7 +38,7 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinxcontrib.bibtex',
-    'numpydoc'
+    'sphinx.ext.napoleon'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -298,7 +298,6 @@ texinfo_documents = [
 
 # Supress warning if html is build
 # http://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
-numpydoc_show_class_members = False
 autodoc_mock_imports = ['featuredefs', 'mayavi', 'pyface.api', 'tvtk.tools', 'vtk', 'MDAnalysis']
 autodoc_default_flags = ['members',
                          'show-inheritance', 'undoc-members']
