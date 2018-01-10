@@ -1751,7 +1751,7 @@ int WangLandauReactionEnsemble::load_wang_landau_checkpoint(
   return 0;
 }
 
-int ConstantpHEnsemble::get_random_p_id() {
+int ConstantpHEnsemble::get_random_valid_p_id() {
   int random_p_id = i_random(max_seen_particle);
   while (is_in_list(random_p_id, m_empty_p_ids_smaller_than_max_seen_particle))
     random_p_id = i_random(max_seen_particle);
@@ -1786,12 +1786,9 @@ int ConstantpHEnsemble::do_reaction(int reaction_steps) {
   while (list_of_reaction_ids_with_given_reactant_type.size() ==
          0) { // avoid selecting a (e.g. salt) particle which does not take part
               // in a reaction
-    int random_p_id = get_random_p_id(); // only used to determine which
+    int random_p_id = get_random_valid_p_id(); // only used to determine which
                                          // reaction is attempted.
     auto part = get_particle_data(random_p_id);
-
-    if (part == nullptr)
-      continue;
 
     int type_of_random_p_id = part->p.type;
 
