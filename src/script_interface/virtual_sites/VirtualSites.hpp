@@ -22,8 +22,8 @@
 #ifndef SCRIPT_INTERFACE_VIRTUAL_SITES_VIRTUAL_SITES_HPP
 #define SCRIPT_INTERFACE_VIRTUAL_SITES_VIRTUAL_SITES_HPP
 
-#include "config.hpp"
 #include "auto_parameters/AutoParameters.hpp"
+#include "config.hpp"
 #include "core/virtual_sites.hpp"
 
 namespace ScriptInterface {
@@ -33,15 +33,19 @@ namespace VirtualSites {
 class VirtualSites : public AutoParameters {
 public:
   VirtualSites() {
-      add_parameters({
-          {"have_velocity", 
-            [this](const Variant& v) { this->virtual_sites()->set_have_velocity(get_value<bool>(v));},
-            [this]() { return this->virtual_sites()->have_velocity();}}
-         });
-
+    add_parameters(
+        {{"have_velocity",
+          [this](const Variant &v) {
+            virtual_sites()->set_have_velocity( // NOLINT, bug in clang-tidy-4.0
+                get_value<bool>(v));            // NOLINT, bug in clang-tidy-4.0
+          },
+          [this]() {
+            return virtual_sites() // NOLINT, bug in clang-tidy-4.0
+                ->have_velocity(); // NOLINT, bug in clang-tidy-4.0
+          }}});
   }
   /** Vs implementation we are wrapping */
-  virtual std::shared_ptr<::VirtualSites> virtual_sites() =0;
+  virtual std::shared_ptr<::VirtualSites> virtual_sites() = 0;
 };
 
 #endif
