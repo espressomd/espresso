@@ -2791,7 +2791,6 @@ class OifLocalForces(BondedInteraction):
 bonded_interaction_classes = {
     int(BONDED_IA_FENE): FeneBond,
     int(BONDED_IA_HARMONIC): HarmonicBond,
-    int(BONDED_IA_DRUDE): DrudeBond,
     int(BONDED_IA_HARMONIC_DUMBBELL): HarmonicDumbbellBond,
     int(BONDED_IA_RIGID_BOND): RigidBond,
     int(BONDED_IA_DIHEDRAL): Dihedral,
@@ -2811,7 +2810,8 @@ IF ELECTROSTATICS:
     bonded_interaction_classes[int(BONDED_IA_BONDED_COULOMB)] = BondedCoulombBond
 IF P3M:
     bonded_interaction_classes[int(BONDED_IA_BONDED_COULOMB_P3M_SR)] = BondedCoulombP3MSRBond
-
+IF DRUDE:
+    bonded_interaction_classes[int(BONDED_IA_DRUDE)] = DrudeBond
 
 class BondedInteractions(object):
     """Represents the bonded interactions.

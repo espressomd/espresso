@@ -54,6 +54,8 @@
 #define SOFT_SPHERE
 #define INTER_RF
 #define OVERLAPPED
+#define DRUDE
+#define THOLE
 
 #define BOND_ANGLE
 #define BOND_ANGLEDIST

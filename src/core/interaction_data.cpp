@@ -30,6 +30,7 @@
 #include "cos2.hpp"
 #include "debye_hueckel.hpp"
 #include "dpd.hpp"
+#include "drude.hpp"
 #include "elc.hpp"
 #include "errorhandling.hpp"
 #include "gaussian.hpp"
