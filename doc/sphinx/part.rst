@@ -474,7 +474,7 @@ switches in ``myconfig.hpp``.
 - THERMOSTAT_IGNORE_NON_VIRTUAL specifies that the thermostat does not act on non-virtual particles
 
 Particle counting feature
------------------------
+-------------------------
 
 For using conveniently in simulations in the grand canonical ensemble,
 or other purposes, when particles of certain types are created and
@@ -483,9 +483,8 @@ individual type and so random ids of particles of a certain type can be
 drawn.  ::
 
     import espressomd
-    system=espressomd.sytem()
+    system=espressomd.System()
     system.setup_type_map([_type])
-    system.delete_particles(_type)
     system.find_particle(_type)
     system.number_of_particles(_type)
 
