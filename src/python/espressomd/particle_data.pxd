@@ -121,7 +121,9 @@ cdef extern from "particle_data.hpp":
     IF ELECTROSTATICS:
         int set_particle_q(int part, double q)
 
-    int set_particle_mu_E(int part, double mu_E[3])
+    IF LB_ELECTROHYDRODYNAMICS:
+        int set_particle_mu_E(int part, double mu_E[3])
+        void get_particle_mu_E(int part, double (&mu_E)[3])
 
     int set_particle_type(int part, int type)
 
@@ -204,7 +206,7 @@ cdef extern from "particle_data.hpp":
     bool particle_exists(int part)
 
 
-cdef extern from "virtual_sites_relative.hpp":
+cdef extern from "virtual_sites.hpp":
     IF VIRTUAL_SITES_RELATIVE == 1:
         int vs_relate_to(int part_num, int relate_to)
         int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, double * vs_quat)

@@ -467,8 +467,6 @@ struct IA_parameters {
 typedef struct {
 
 #ifdef ELECTROSTATICS
-  /** Bjerrum length. */
-  double bjerrum;
   /** bjerrum length times temperature. */
   double prefactor;
 
@@ -477,7 +475,6 @@ typedef struct {
 #endif
 
 #ifdef DIPOLES
-  double Dbjerrum;
   double Dprefactor;
   DipolarInteraction Dmethod;
 #endif
@@ -852,11 +849,19 @@ extern int ia_excl;
  ************************************************/
 
 #ifdef ELECTROSTATICS
-int coulomb_set_bjerrum(double bjerrum);
+/** @brief Set the electrostatics prefactor */
+int coulomb_set_prefactor(double prefactor);
+
+
+/** @brief Deactivates the current Coulomb mhthod 
+    This was part of coulomb_set_bjerrum()
+*/
+void deactivate_coulomb_method();
 #endif
 
 #ifdef DIPOLES
-int dipolar_set_Dbjerrum(double bjerrum);
+/** @brief Set the dipolar prefactor */
+int dipolar_set_Dprefactor(double prefactor);
 #endif
 
 /** get interaction parameters between particle sorts i and j */
@@ -895,9 +900,6 @@ void realloc_ia_params(int nsize);
     electrostatic interactions is stored in max_cut_non_bonded. This
     value is used in the verlet pair list algorithm. */
 void recalc_maximal_cutoff();
-
-/** call when the temperature changes, for Bjerrum length adjusting. */
-void recalc_coulomb_prefactor();
 
 /** check whether all force calculation routines are properly initialized. */
 int interactions_sanity_checks();

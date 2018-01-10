@@ -113,7 +113,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
             self.S.periodicity=1,1,1
             self.S.box_l = (10, 10, 10)
 
-            p3m=el.P3M(bjerrum_length=1, accuracy = 1e-6,mesh=(64,64,64))
+            p3m=el.P3M(prefactor=1, accuracy = 1e-6,mesh=(64,64,64))
             
             self.S.actors.add(p3m)
             elc=el_ext.ELC(maxPWerror=1E-6,gap_size=1)
@@ -126,7 +126,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
         self.S.box_l = (10, 10, 10)
         self.S.cell_system.set_layered(n_layers=10,use_verlet_lists=False)
         self.S.periodicity=1,1,0
-        mmm2d=(el.MMM2D(bjerrum_length=1,maxPWerror=1E-7))
+        mmm2d=(el.MMM2D(prefactor=1,maxPWerror=1E-7))
             
         self.S.actors.add(mmm2d)
         self.S.integrator.run(0)
@@ -146,7 +146,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
                 self.S.box_l=10,10,10
                 
                 scafacos=el.Scafacos(
-                        bjerrum_length=1,
+                        prefactor=1,
                         method_name="p2nfft",
                         method_params={
                             "tolerance_field": 1E-5})

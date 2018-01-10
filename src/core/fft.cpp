@@ -191,7 +191,9 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
     /* DEBUG */
     for(j=0;j<n_nodes;j++) {
       /* MPI_Barrier(comm_cart); */
-      if(j==this_node) FFT_TRACE(fft_print_fft_plan(fft.plan[i]));
+      if(j==this_node) {
+        FFT_TRACE(fft_print_fft_plan(fft.plan[i]));
+      }
     }
   }
 
