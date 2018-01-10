@@ -414,6 +414,12 @@ cdef extern from "object-in-fluid/oif_global_forces.hpp":
     int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g, double V0, double kv)
 cdef extern from "object-in-fluid/oif_local_forces.hpp":
     int oif_local_forces_set_params(int bond_type, double r0, double ks, double kslin, double phi0, double kb, double A01, double A02, double kal)
+cdef extern from "drude.hpp":
+    int drude_set_params(int bond_type, double temp_com, double gamma_com, double temp_drude, double gamma_drude, double k, double r_cut)
+cdef extern from "bonded_coulomb.hpp":
+    int bonded_coulomb_set_params(int bond_type, double prefactor)
+cdef extern from "bonded_coulomb_p3m_sr.hpp":
+    int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2)
 
 IF ROTATION:
     cdef extern from "harmonic_dumbbell.hpp":

@@ -2783,7 +2783,7 @@ bonded_interaction_classes = {
     int(BONDED_IA_OIF_LOCAL_FORCES): OifLocalForces,
 }
 IF LENNARD_JONES:
-    bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = Subt_Lj
+    bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = SubtLJ
 IF ELECTROSTATICS:
     bonded_interaction_classes[int(BONDED_IA_BONDED_COULOMB)] = BondedCoulombBond
 IF P3M:

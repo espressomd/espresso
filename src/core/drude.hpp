@@ -52,7 +52,7 @@ int drude_set_params(int bond_type, double temp_com, double gamma_com, double te
 inline int calc_drude_forces(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force1[3], double force2[3])
 {
   //Bond broke?
-  double dist = utils::veclen(dx);
+  double dist = Utils::veclen(dx);
   if (iaparams->p.drude.r_cut > 0.0 && dist > iaparams->p.drude.r_cut) {
     return 1;
   }
@@ -64,11 +64,7 @@ inline int calc_drude_forces(Particle *p1, Particle *p2, Bonded_ia_parameters *i
 
   double force_p3m_sr[3] = {0,0,0}; 
 
-  
-  #ifndef NO_INTRA_NB_ALL 
-  //Excl. coulomb shortrange drude<->core only if not already done by NO_INRTA_NB_ALL. The case with NO_INTRA_NB_ALL is for drude without thole
   p3m_add_pair_force(chgfac, dx, dist*dist, dist, force_p3m_sr);
-  #endif
 
   for (int i=0; i<3; i++) {
 
