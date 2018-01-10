@@ -613,6 +613,40 @@ cdef class ParticleHandle(object):
                 pointer_to_q(self.particle_data, x)
                 return x[0]
 
+    IF LB_ELECTROHYDRODYNAMICS:
+        property mu_E:
+            """
+            Particle electrophoretic velocity.
+
+            mu_E : :obj:`float`
+
+            This effectivly acts as a velocity offset between
+            an Lattice-Boltzmann fluid and the particle. Has only
+            an effect if LB is turned on.
+
+            .. note::
+               This needs the feature LB_ELECTROHYDRODYNAMICS.
+
+            """
+
+            def __set__(self, mu_E):
+                cdef double _mu_E[3]
+
+                check_type_or_throw_except(
+                    mu_E, 3, float, "mu_E has to be 3 floats.")
+
+                _mu_E[0] = mu_E[0]
+                _mu_E[1] = mu_E[1]
+                _mu_E[2] = mu_E[2]
+
+                set_particle_mu_E(self.id, _mu_E)
+
+            def __get__(self):
+                cdef double mu_E[3]
+                get_particle_mu_E(self.id, mu_E)
+
+                return array_locked([mu_E[0], mu_E[1], mu_E[2]])
+
     IF VIRTUAL_SITES == 1:
 
         property virtual:
@@ -1708,7 +1742,7 @@ cdef class ParticleList(object):
 
         Parameters
         ----------
-        add() takes either a dictionary or a bunch of keyword args.
+        Either a dictionary or a bunch of keyword args.
 
         Returns
         -------
