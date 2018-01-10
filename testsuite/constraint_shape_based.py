@@ -69,5 +69,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
         for c in S.constraints:
             S.constraints.remove(c)
 
+        for c in S.constraints:
+            self.assertTrue(False)
+
 if __name__ == "__main__":
     ut.main()
