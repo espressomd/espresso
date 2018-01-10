@@ -75,7 +75,7 @@ void init_energies(Observable_stat *stat) {
 
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE:
-    n_dipolar = 1;
+    n_dipolar = 1; // because there may be an external magnetic field
     break;
   case DIPOLAR_MDLC_P3M:
     n_dipolar = 3;

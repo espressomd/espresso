@@ -46,6 +46,9 @@
 #include "RuntimeErrorStream.hpp"
 #include "communication.hpp"
 #include "utils.hpp"
+#include "errorhandling.hpp"
+#include "lees_edwards.hpp"
+
 #include <climits>
 
 /** Macro that tests for a coordinate being periodic or not. */

@@ -39,7 +39,7 @@
 int subt_lj_set_params(int bond_type);
 
 /** Computes the negative of the LENNARD-JONES pair forces
-    and adds this force to the particle forces (see \ref tclcommand_inter).
+    and adds this force to the particle forces.
     @param p1        Pointer to first particle.
     @param p2        Pointer to second/middle particle.
     @param iaparams  Parameters of interaction

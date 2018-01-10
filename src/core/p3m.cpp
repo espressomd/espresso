@@ -299,7 +299,7 @@ void p3m_free() {
     free(p3m.int_caf[i]);
 }
 
-void p3m_set_bjerrum() {
+void p3m_set_prefactor() {
   p3m.params.alpha = 0.0;
   p3m.params.alpha_L = 0.0;
   p3m.params.r_cut = 0.0;
@@ -311,13 +311,14 @@ void p3m_set_bjerrum() {
 }
 
 void p3m_init() {
-  if (coulomb.bjerrum == 0.0) {
+  if (coulomb.prefactor <= 0.0) {
     p3m.params.r_cut = 0.0;
     p3m.params.r_cut_iL = 0.0;
 
-    if (this_node == 0)
-      P3M_TRACE(fprintf(stderr, "0: P3M_init: Bjerrum length is "
+    if (this_node == 0) {
+      P3M_TRACE(fprintf(stderr, "0: P3M_init: prefactor is "
                                 "zero.\nElectrostatics switched off!\n"););
+    }
 
   } else {
     P3M_TRACE(fprintf(stderr, "%d: p3m_init: \n", this_node));
@@ -412,8 +413,6 @@ void p3m_set_tune_params(double r_cut, int mesh[3], int cao, double alpha,
   if (n_interpol != -1)
     p3m.params.inter = n_interpol;
 
-  coulomb.prefactor =
-      (temperature > 0) ? temperature * coulomb.bjerrum : coulomb.bjerrum;
 }
 
 /*@}*/
@@ -1748,8 +1747,8 @@ int p3m_adaptive_tune(char **log) {
   mpi_bcast_event(P3M_COUNT_CHARGES);
   /* Print Status */
   sprintf(b,
-          "P3M tune parameters: Accuracy goal = %.5e Bjerrum Length = %.5e \n",
-          p3m.params.accuracy, coulomb.bjerrum);
+          "P3M tune parameters: Accuracy goal = %.5e prefactor = %.5e \n",
+          p3m.params.accuracy, coulomb.prefactor);
   *log = strcat_alloc(*log, b);
   sprintf(b, "System: box_l = %.5e # charged part = %d Sum[q_i^2] = %.5e\n",
           box_l[0], p3m.sum_qpart, p3m.sum_q2);
@@ -1787,8 +1786,8 @@ int p3m_adaptive_tune(char **log) {
   } else if (p3m.params.mesh[1] == -1 && p3m.params.mesh[2] == -1) {
     mesh_density = mesh_density_min = mesh_density_max =
         p3m.params.mesh[0] / box_l[0];
-    p3m.params.mesh[1] = mesh_density * box_l[1] + 0.5;
-    p3m.params.mesh[2] = mesh_density * box_l[2] + 0.5;
+    p3m.params.mesh[1] = lround(mesh_density * box_l[1]);
+    p3m.params.mesh[2] = lround(mesh_density * box_l[2]);
     if (p3m.params.mesh[1] % 2 == 1)
       p3m.params.mesh[1]++; // Make sure that the mesh is even in all directions
     if (p3m.params.mesh[2] % 2 == 1)
@@ -1843,9 +1842,9 @@ int p3m_adaptive_tune(char **log) {
                       mesh_density));
 
     if (tune_mesh) {
-      tmp_mesh[0] = (int)(box_l[0] * mesh_density + 0.5);
-      tmp_mesh[1] = (int)(box_l[1] * mesh_density + 0.5);
-      tmp_mesh[2] = (int)(box_l[2] * mesh_density + 0.5);
+      tmp_mesh[0] = lround(box_l[0] * mesh_density);
+      tmp_mesh[1] = lround(box_l[1] * mesh_density);
+      tmp_mesh[2] = lround(box_l[2] * mesh_density);
     } else {
       tmp_mesh[0] = p3m.params.mesh[0];
       tmp_mesh[1] = p3m.params.mesh[1];
@@ -2296,7 +2295,8 @@ void p3m_calc_send_mesh() {
 /************************************************/
 
 void p3m_scaleby_box_l() {
-  if (coulomb.bjerrum == 0.0) {
+  if (coulomb.prefactor < 0.0) {
+    runtimeErrorMsg() << "The Coulomb prefactor has to be >=0";
     return;
   }
 

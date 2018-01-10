@@ -33,8 +33,6 @@ class NoWhere : public Shape {
 public:
   NoWhere() : m_nowhere(new ::Shapes::NoWhere()) {}
 
-  const std::string name() const override { return "Shapes::NoWhere"; }
-
   std::shared_ptr<::Shapes::Shape> shape() const override { return m_nowhere; }
 
 private:

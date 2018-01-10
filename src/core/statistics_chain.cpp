@@ -29,8 +29,7 @@
 #include "topology.hpp"
 #include "utils.hpp"
 
-/** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref
- * tclcommand_analyze) */
+/** Particles' initial positions (needed for g1(t), g2(t), g3(t)) */
 /*@{*/
 float *partCoord_g = nullptr, *partCM_g = nullptr;
 int n_part_g = 0, n_chains_g = 0;
@@ -683,14 +682,13 @@ void analyze_rdfchain(PartCfg & partCfg, double r_min, double r_max, int r_bins,
                       double **_f2, double **_f3) {
   int i, j, ind, c_i, c_j, mon;
   double bin_width, inv_bin_width, factor, r_in, r_out, bin_volume, dist,
-      chain_mass, *cm = nullptr, *min_d = nullptr, *f1 = nullptr, *f2 = nullptr, *f3 = nullptr;
+      chain_mass, *f1 = nullptr, *f2 = nullptr, *f3 = nullptr;
 
   *_f1 = f1 = Utils::realloc(f1, r_bins * sizeof(double));
   *_f2 = f2 = Utils::realloc(f2, r_bins * sizeof(double));
   *_f3 = f3 = Utils::realloc(f3, r_bins * sizeof(double));
-  cm = Utils::realloc(cm, (chain_n_chains * 3) * sizeof(double));
-  min_d = Utils::realloc(
-      min_d, (chain_n_chains * chain_n_chains) * sizeof(double));
+  std::vector<double> cm(chain_n_chains * 3);
+  std::vector<double> min_d(chain_n_chains * chain_n_chains);
   for (i = 0; i < r_bins; i++) {
     f1[i] = f2[i] = f3[i] = 0.0;
   }

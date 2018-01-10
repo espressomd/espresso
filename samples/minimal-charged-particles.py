@@ -100,7 +100,7 @@ system.force_cap = lj_cap
 
 # P3M setup after charge assigned
 #############################################################
-p3m = electrostatics.P3M(bjerrum_length=1.0, accuracy=1e-2)
+p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
 system.actors.add(p3m)
 
 

@@ -68,7 +68,7 @@
 #include "morse.hpp"
 #include "mpiio.hpp"
 #include "npt.hpp"
-#include "observables/LbRadialVelocityProfile.hpp"
+#include "observables/LBRadialVelocityProfile.hpp"
 #include "observables/Observable.hpp"
 #include "overlap.hpp"
 #include "p3m-dipolar.hpp"
@@ -89,6 +89,7 @@
 
 #include "utils.hpp"
 #include "utils/make_unique.hpp"
+#include "utils/serialization/IA_parameters.hpp"
 #include "utils/serialization/Particle.hpp"
 
 #include <boost/mpi.hpp>
@@ -97,16 +98,15 @@
 
 using namespace std;
 
-namespace {
+namespace Communication {
+auto const &mpi_datatype_cache = boost::mpi::detail::mpi_datatype_cache();
 std::unique_ptr<boost::mpi::environment> mpi_env;
 }
 
 boost::mpi::communicator comm_cart;
 
 namespace Communication {
-namespace {
-std::unique_ptr<MpiCallbacks> m_callbacks;
-}
+  std::unique_ptr<MpiCallbacks> m_callbacks;
 
 /* We use a singelton callback class for now. */
 MpiCallbacks &mpiCallbacks() {
@@ -201,12 +201,13 @@ static int terminated = 0;
   CB(mpi_gather_cuda_devices_slave)                                            \
   CB(mpi_thermalize_cpu_slave)                                                 \
   CB(mpi_scafacos_set_parameters_slave)                                        \
-  CB(mpi_scafacos_set_r_cut_and_tune_slave)                                        \
+  CB(mpi_scafacos_set_r_cut_and_tune_slave)                                    \
   CB(mpi_scafacos_free_slave)                                                  \
   CB(mpi_mpiio_slave)                                                          \
   CB(mpi_resort_particles_slave)                                               \
   CB(mpi_get_pairs_slave)                                                      \
-  CB(mpi_get_particles_slave)
+  CB(mpi_get_particles_slave)                                                  \
+  CB(mpi_rotate_system_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -267,11 +268,11 @@ void mpi_init() {
 #endif
 
 #ifdef BOOST_MPI_HAS_NOARG_INITIALIZATION
-  mpi_env = Utils::make_unique<boost::mpi::environment>();
+  Communication::mpi_env = Utils::make_unique<boost::mpi::environment>();
 #else
   int argc{};
   char **argv{};
-  mpi_env = Utils::make_unique<boost::mpi::environment>(argc, argv);
+  Communication::mpi_env = Utils::make_unique<boost::mpi::environment>(argc, argv);
 #endif
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
@@ -508,7 +509,7 @@ void mpi_send_q(int pnode, int part, double q) {
     MPI_Send(&q, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
   }
 
-  on_particle_change();
+  on_particle_charge_change();
 #endif
 }
 
@@ -519,7 +520,7 @@ void mpi_send_q_slave(int pnode, int part) {
     MPI_Recv(&p->p.q, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
   }
 
-  on_particle_change();
+  on_particle_charge_change();
 #endif
 }
 
@@ -534,7 +535,7 @@ void mpi_send_mu_E(int pnode, int part, double mu_E[3]) {
     p->p.mu_E[1] = mu_E[1];
     p->p.mu_E[2] = mu_E[2];
   } else {
-    MPI_Send(&mu_E, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+    MPI_Send(mu_E, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
   }
 
   on_particle_change();
@@ -545,7 +546,7 @@ void mpi_send_mu_E_slave(int pnode, int part) {
 #ifdef LB_ELECTROHYDRODYNAMICS
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(&p->p.mu_E, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->p.mu_E, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 
@@ -1004,14 +1005,14 @@ void mpi_send_vs_relative_slave(int pnode, int part) {
 
 // ********************************
 
-void mpi_send_rotation(int pnode, int part, int rot) {
+void mpi_send_rotation(int pnode, int part, short int rot) {
   mpi_call(mpi_send_rotation_slave, pnode, part);
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     p->p.rotation = rot;
   } else {
-    MPI_Send(&rot, 1, MPI_INT, pnode, SOME_TAG, MPI_COMM_WORLD);
+    MPI_Send(&rot, 1, MPI_SHORT, pnode, SOME_TAG, MPI_COMM_WORLD);
   }
 
   on_particle_change();
@@ -1021,7 +1022,7 @@ void mpi_send_rotation_slave(int pnode, int part) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
-    MPI_Recv(&p->p.rotation, 1, MPI_INT, 0, SOME_TAG, MPI_COMM_WORLD, &status);
+    MPI_Recv(&p->p.rotation, 1, MPI_SHORT, 0, SOME_TAG, MPI_COMM_WORLD, &status);
   }
 
   on_particle_change();
@@ -1164,19 +1165,9 @@ void mpi_bcast_ia_params(int i, int j) {
 
   if (j >= 0) {
     /* non-bonded interaction parameters */
-    /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
-    MPI_Bcast(get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE, 0,
-              comm_cart);
+    boost::mpi::broadcast(comm_cart, *get_ia_param(i, j), 0);
 
-    copy_ia_params(get_ia_param(j, i), get_ia_param(i, j));
-
-#ifdef TABULATED
-    /* If there are tabulated forces broadcast those as well */
-    if (get_ia_param(i, j)->TAB_maxval > 0) {
-      boost::mpi::broadcast(comm_cart, tabulated_forces, 0);
-      boost::mpi::broadcast(comm_cart, tabulated_energies, 0);
-    }
-#endif
+    *get_ia_param(j, i) = *get_ia_param(i, j);
   } else {
     /* bonded interaction parameters */
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
@@ -1184,9 +1175,7 @@ void mpi_bcast_ia_params(int i, int j) {
 #ifdef TABULATED
     /* For tabulated potentials we have to send the tables extra */
     if (bonded_ia_params[i].type == BONDED_IA_TABULATED) {
-      int size = bonded_ia_params[i].p.tab.npoints;
-      MPI_Bcast(bonded_ia_params[i].p.tab.f, size, MPI_DOUBLE, 0, comm_cart);
-      MPI_Bcast(bonded_ia_params[i].p.tab.e, size, MPI_DOUBLE, 0, comm_cart);
+      boost::mpi::broadcast(comm_cart, *bonded_ia_params[i].p.tab.pot, 0);
     }
 #endif
 #ifdef OVERLAPPED
@@ -1209,19 +1198,11 @@ void mpi_bcast_ia_params(int i, int j) {
 
 void mpi_bcast_ia_params_slave(int i, int j) {
   if (j >= 0) { /* non-bonded interaction parameters */
-    /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
-    MPI_Bcast(get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE, 0,
-              comm_cart);
 
-    copy_ia_params(get_ia_param(j, i), get_ia_param(i, j));
+    boost::mpi::broadcast(comm_cart, *get_ia_param(i, j), 0);
 
-#ifdef TABULATED
-    /* If there are tabulated forces broadcast those as well */
-    if (get_ia_param(i, j)->TAB_maxval > 0) {
-      boost::mpi::broadcast(comm_cart, tabulated_forces, 0);
-      boost::mpi::broadcast(comm_cart, tabulated_energies, 0);
-    }
-#endif
+    *get_ia_param(j, i) = *get_ia_param(i, j);
+
   } else {                   /* bonded interaction parameters */
     make_bond_type_exist(i); /* realloc bonded_ia_params on slave nodes! */
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
@@ -1229,14 +1210,10 @@ void mpi_bcast_ia_params_slave(int i, int j) {
 #ifdef TABULATED
     /* For tabulated potentials we have to send the tables extra */
     if (bonded_ia_params[i].type == BONDED_IA_TABULATED) {
-      int size = bonded_ia_params[i].p.tab.npoints;
-      /* alloc force and energy tables on slave nodes! */
-      bonded_ia_params[i].p.tab.f =
-          (double *)Utils::malloc(size * sizeof(double));
-      bonded_ia_params[i].p.tab.e =
-          (double *)Utils::malloc(size * sizeof(double));
-      MPI_Bcast(bonded_ia_params[i].p.tab.f, size, MPI_DOUBLE, 0, comm_cart);
-      MPI_Bcast(bonded_ia_params[i].p.tab.e, size, MPI_DOUBLE, 0, comm_cart);
+      auto *tab_pot = new TabulatedPotential();
+      boost::mpi::broadcast(comm_cart, *tab_pot, 0);
+
+      bonded_ia_params[i].p.tab.pot = tab_pot;
     }
 #endif
 #ifdef OVERLAPPED
@@ -1844,7 +1821,7 @@ int mpi_sync_topo_part_info() {
   int moltype = 0;
 
   mpi_call(mpi_sync_topo_part_info_slave, -1, 0);
-  auto n_mols = topology.size();
+  int n_mols = topology.size();
   MPI_Bcast(&n_mols, 1, MPI_INT, 0, comm_cart);
 
   for (i = 0; i < n_mols; i++) {

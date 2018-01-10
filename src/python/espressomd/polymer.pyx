@@ -21,6 +21,7 @@ from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from . cimport polymer
 import numpy as np
+from espressomd.utils import is_valid_type
 
 def validate_params(_params, default):
     if _params["N_P"] <= 0:
@@ -38,7 +39,7 @@ def validate_params(_params, default):
     if not isinstance(_params["start_pos"], np.ndarray) or len(_params["start_pos"]) != 3:
         raise ValueError(
                 "start_pos has to be an numpy array with 3 Elements" )
-    if not isinstance(_params["mode"], int):
+    if not is_valid_type(_params["mode"], int):
         raise ValueError(
                 "mode has to be a positive Integer" )
     if _params["shield"] < 0 and default["shield"] != _params["shield"]:
@@ -47,7 +48,7 @@ def validate_params(_params, default):
     if _params["max_tries"] < 0 and default["max_tries"] != _params["max_tries"]:
         raise ValueError(
                 "max_tries has to be a positive Integer")
-    if not isinstance(_params["val_poly"], float) and default["val_poly"] != _params["val_poly"]:
+    if not is_valid_type(_params["val_poly"], float) and default["val_poly"] != _params["val_poly"]:
         raise ValueError(
                 "val_poly has to be a float")
     if _params["charge_distance"] < 0:

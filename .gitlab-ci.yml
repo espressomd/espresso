@@ -1,11 +1,26 @@
 image: espressomd/espresso-ubuntu-cuda:latest
 
 stages:
+  - clone
   - prepare
   - build
-  - doc_check
+  - additional_checks
   - deploy
   - result
+
+variables:
+  GIT_STRATEGY: none
+
+git_clone:
+  stage: clone
+  variables:
+    GIT_STRATEGY: clone
+  script:
+    - cd ${CI_PROJECT_DIR}; git submodule update --init --recursive
+  artifacts:
+    paths:
+    - ${CI_PROJECT_DIR}
+    expire_in: 4 weeks
 
 status_pending:
   stage: prepare
@@ -17,6 +32,13 @@ shanchen:
     - export myconfig=shanchen with_coverage=true
     - bash maintainer/cuda_build.sh
 
+lees_edwards:
+  stage: build
+  script:
+    - export myconfig=lees-edwards with_coverage=true
+    - export run_tests=lees_edwards
+    - bash maintainer/cuda_build.sh
+
 maxset:
   stage: build
   script:
@@ -25,6 +47,14 @@ maxset:
   artifacts:
     paths:
     - build/
+    expire_in: 4 weeks
+
+clang-static-analysis:
+  stage: build
+  image: espressomd/espresso-ubuntu-clang-cuda:latest
+  script:
+    - export myconfig=maxset with_coverage=false with_static_analysis=true
+    - bash maintainer/cuda_build.sh
 
 clang:
   stage: build
@@ -34,10 +64,23 @@ clang:
     - bash maintainer/cuda_build.sh
 
 check_sphinx:
-  stage: doc_check
+  stage: additional_checks
+  dependencies:
+  - git_clone
+  - maxset
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}; cd build && find ./ -exec touch -c -t 203901010000 {} \; && make sphinx
+
+check_with_odd_no_of_processors:
+  stage: additional_checks
+  when: on_success
+  dependencies:
+  - git_clone
+  - maxset
+  script:
+    - export build_procs=3 check_procs=3
+    - bash maintainer/cuda_build.sh
 
 deploy_documentation:
   stage: deploy
@@ -61,10 +104,12 @@ status_success:
   stage: result
   script: bash maintainer/gh_post_status.sh success
   when: on_success
-  dependencies: []
+  dependencies:
+  - git_clone
 
 status_failure:
   stage: result
   script: bash maintainer/gh_post_status.sh failure
   when: on_failure
-  dependencies: []
+  dependencies:
+  - git_clone

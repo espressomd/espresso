@@ -47,7 +47,7 @@
 #include <limits>
 
 /** Previous particle configurations (needed for offline analysis and
-    correlation analysis in \ref tclcommand_analyze) */
+    correlation analysis) */
 double **configs = nullptr;
 int n_configs = 0;
 int n_part_conf = 0;
@@ -661,6 +661,7 @@ void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
 
   order2 = order * order;
   *_ff = ff = Utils::realloc(ff, 2 * order2 * sizeof(double));
+  ff[2 * order2] = 0;
   twoPI_L = 2 * PI / box_l[0];
 
   if ((n_types < 0) || (n_types > n_particle_types)) {
@@ -798,8 +799,8 @@ int calc_cylindrical_average(
   double binwd_axial = length / bins_axial;
   double binwd_radial = radius / bins_radial;
 
-  auto center = Vector3d{center_};
-  auto direction = Vector3d{direction_};
+  auto center = Vector3d{std::move(center_)};
+  auto direction = Vector3d{std::move(direction_)};
 
   // Select all particle types if the only entry in types is -1
   bool all_types = false;
@@ -1192,7 +1193,7 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
 
   // Allocate mem for the double list
   stat->data.resize(total);
-
+  
   // Number of doubles per interaction (pressure=1, stress tensor=9,...)
   stat->chunk_size = c_size;
 

@@ -35,7 +35,7 @@ cimport numpy as np
 from globals cimport n_configs, min_box_l
 from collections import OrderedDict
 from .system import System
-
+from espressomd.utils import is_valid_type
 
 class Analysis(object):
 
@@ -82,12 +82,12 @@ class Analysis(object):
             raise Exception("Both, p1 and p2 have to be specified\n" + __doc__)
         else:
             for i in range(len(p1)):
-                if not isinstance(p1[i], int):
+                if not is_valid_type(p1[i], int):
                     raise ValueError(
                         "Particle types in p1 and p2 have to be of type int: " + str(p1[i]))
 
             for i in range(len(p2)):
-                if not isinstance(p2[i], int):
+                if not is_valid_type(p2[i], int):
                     raise ValueError(
                         "Particle types in p1 and p2 have to be of type int" + str(p2[i]))
 
@@ -132,7 +132,7 @@ class Analysis(object):
         # Get position
         # If particle id specified
         if id is not None:
-            if not isinstance(id, int):
+            if not is_valid_type(id, int):
                 raise ValueError("Id has to be an integer")
             if not id in self._system.part[:].id:
                 raise ValueError("Id has to be an index of an existing particle")
@@ -1150,30 +1150,31 @@ class Analysis(object):
 
         Parameters
         ----------
-        p_type : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-                 A particle type, or list of all particle types to be considered.
+        p_type : :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
+                 A particle type
 
         Returns
         -------
         array_like
-            The output is a list of all the elements of the 3x3 matrix.
+            3x3 moment of inertia matrix.
       
         """
 
         cdef double[9] MofImatrix
 
-        if p_type is not None:
-            check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
-            if (p_type < 0 or p_type >= c_analyze.n_particle_types):
-                raise ValueError("Particle type", p_type, "does not exist!")
+        if p_type is None:
+            raise ValueError("The p_type keyword argument must be provided (particle type)")
+        check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
+        if (p_type < 0 or p_type >= c_analyze.n_particle_types):
+            raise ValueError("Particle type", p_type, "does not exist!")
+        
+        c_analyze.momentofinertiamatrix(c_analyze.partCfg(), p_type, MofImatrix)
 
-            c_analyze.momentofinertiamatrix(c_analyze.partCfg(), p_type, MofImatrix)
+        MofImatrix_np = np.empty((9))
+        for i in range(9):
+            MofImatrix_np[i] = MofImatrix[i]
 
-            MofImatrix_np = np.empty((9))
-            for i in range(9):
-                MofImatrix_np[i] = MofImatrix[i]
-
-            return MofImatrix_np
+        return MofImatrix_np.reshape((3,3))
 
     #
     # rdfchain

@@ -75,7 +75,7 @@ static double d3q18_w[18] = { 1., 1., 1., 1., 1., 1.,
 			      1./2., 1./2., 1./2., 1./2.,
 			      1./2., 1./2., 1./2., 1./2. };
 
-LB_Model d3q18_model = { 18, d3q18_lattice, d3q18_coefficients, d3q18_w, nullptr, 1./2. };
+//LB_Model d3q18_model = { 18, d3q18_lattice, d3q18_coefficients, d3q18_w, nullptr, 1./2. };
 
 #endif /* LB */
 

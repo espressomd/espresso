@@ -280,6 +280,14 @@ void on_observable_calc() {
 #endif /*ifdef ELECTROSTATICS */
 }
 
+void on_particle_charge_change() {
+  reinit_electrostatics = 1;
+  invalidate_obs();
+
+  /* the particle information is no longer valid */
+  partCfg().invalidate();
+}
+
 void on_particle_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_particle_change\n", this_node));
 
@@ -305,8 +313,6 @@ void on_particle_change() {
 void on_coulomb_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_coulomb_change\n", this_node));
   invalidate_obs();
-
-  recalc_coulomb_prefactor();
 
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
@@ -553,9 +559,6 @@ void on_temperature_change() {
   }
 #endif
 
-#ifdef ELECTROSTATICS
-  recalc_coulomb_prefactor();
-#endif
 }
 
 void on_parameter_change(int field) {

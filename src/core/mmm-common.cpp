@@ -28,6 +28,8 @@
     electrostatic interactions in 2D slab geometries", Comp. Phys. Comm., 148/3(2002),327-348.
 */
 
+#include "config.hpp"
+
 #include "mmm-common.hpp"
 #include "utils.hpp"
 

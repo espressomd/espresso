@@ -30,11 +30,11 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
         }
 
         mmm2d_param_sets = { 
-        "inert":         { "bjerrum_length": 1.0, "maxPWerror": self.acc },
-        "dielectric":    { "bjerrum_length": 1.0, "maxPWerror": self.acc, "dielectric_contrast_on": 1, "delta_mid_bot": 0.1, "delta_mid_top": 0.9 },
-        "const_pot_0":   { "bjerrum_length": 1.0, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": 0.0}, 
-        "const_pot_1":   { "bjerrum_length": 1.0, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": 1.0}, 
-        "const_pot_m1":  { "bjerrum_length": 1.0, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": -1.0} 
+        "inert":         { "prefactor": 1.0, "maxPWerror": self.acc },
+        "dielectric":    { "prefactor": 1.0, "maxPWerror": self.acc, "dielectric_contrast_on": 1, "delta_mid_bot": 0.1, "delta_mid_top": 0.9 },
+        "const_pot_0":   { "prefactor": 1.0, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": 0.0}, 
+        "const_pot_1":   { "prefactor": 1.0, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": 1.0}, 
+        "const_pot_m1":  { "prefactor": 1.0, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": -1.0} 
         }
 
         self.system.box_l = [self.box_l, self.box_l, self.box_l]
@@ -74,7 +74,7 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
         self.system.cell_system.set_domain_decomposition(use_verlet_lists = True)
         self.system.cell_system.node_grid = buf_node_grid
         self.system.periodicity = [1, 1, 1]
-        p3m = P3M(bjerrum_length=1.0, accuracy=self.acc, mesh = [16,16,24], cao = 6)
+        p3m = P3M(prefactor=1.0, accuracy=self.acc, mesh = [16,16,24], cao = 6)
         self.system.actors.add(p3m)
         
         elc = electrostatic_extensions.ELC(**elc_param_sets["inert"])

@@ -27,6 +27,7 @@
 #include <memory>
 
 #include "Observable.hpp"
+#include "core/observables/CylindricalDensityProfile.hpp"
 #include "core/observables/CylindricalFluxDensityProfile.hpp"
 #include "core/observables/CylindricalLBFluxDensityProfileAtParticlePositions.hpp"
 #include "core/observables/CylindricalProfileObservable.hpp"
@@ -36,10 +37,6 @@ namespace Observables {
 
 class CylindricalProfileObservable : public Observable {
 public:
-  const std::string name() const override {
-    return "Observables::CylindricalProfileObservable";
-  };
-
   VariantMap get_parameters() const override {
     return {{"ids", cylindrical_profile_observable()->ids()},
             {"center", cylindrical_profile_observable()->center},
@@ -53,7 +50,7 @@ public:
             {"max_r", cylindrical_profile_observable()->max_r},
             {"max_phi", cylindrical_profile_observable()->max_phi},
             {"max_z", cylindrical_profile_observable()->max_z}};
-  };
+  }
 
   ParameterMap valid_parameters() const override {
     return {{"ids", {ParameterType::INT_VECTOR, true}},
@@ -68,7 +65,7 @@ public:
             {"max_r", {ParameterType::DOUBLE, true}},
             {"max_phi", {ParameterType::DOUBLE, true}},
             {"max_z", {ParameterType::DOUBLE, true}}};
-  };
+  }
 
   void set_parameter(std::string const &name, Variant const &value) override {
     SET_PARAMETER_HELPER("ids", cylindrical_profile_observable()->ids());
@@ -86,7 +83,7 @@ public:
     SET_PARAMETER_HELPER("max_r", cylindrical_profile_observable()->max_r);
     SET_PARAMETER_HELPER("max_phi", cylindrical_profile_observable()->max_phi);
     SET_PARAMETER_HELPER("max_z", cylindrical_profile_observable()->max_z);
-  };
+  }
 
   virtual std::shared_ptr<::Observables::CylindricalProfileObservable>
   cylindrical_profile_observable() const = 0;
@@ -96,10 +93,6 @@ public:
   class obs_name : public CylindricalProfileObservable {                       \
   public:                                                                      \
     obs_name() : m_observable(new ::Observables::obs_name()){};                \
-                                                                               \
-    const std::string name() const override {                                  \
-      return "Observables::" #obs_name;                                        \
-    }                                                                          \
                                                                                \
     std::shared_ptr<::Observables::Observable> observable() const override {   \
       return m_observable;                                                     \
@@ -114,6 +107,7 @@ public:
     std::shared_ptr<::Observables::obs_name> m_observable;                     \
   };
 
+NEW_CYLINDRICAL_PROFILE_OBSERVABLE(CylindricalDensityProfile)
 NEW_CYLINDRICAL_PROFILE_OBSERVABLE(CylindricalFluxDensityProfile)
 NEW_CYLINDRICAL_PROFILE_OBSERVABLE(
     CylindricalLBFluxDensityProfileAtParticlePositions)
