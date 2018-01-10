@@ -49,7 +49,6 @@ public:
                        return (m_pc != nullptr) ? m_pc->id() : ObjectId();
                      }}});
   };
-  const std::string name() const override { return "ClusterAnalysis::ClusterStructure"; }
   virtual Variant call_method(std::string const &method,
                               VariantMap const &parameters) override {
     if (method == "get_cluster") {

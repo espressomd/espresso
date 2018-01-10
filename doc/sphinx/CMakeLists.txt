@@ -1,4 +1,6 @@
+include(ProcessorCount)
 find_package(Sphinx 1.5.2)
+ProcessorCount(N)
 if(SPHINX_FOUND) 
     # configured documentation tools and
     # intermediate build results
@@ -27,7 +29,6 @@ if(SPHINX_FOUND)
         "${CMAKE_CURRENT_SOURCE_DIR}/dg.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/ug.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/introduction.rst"
-        "${CMAKE_CURRENT_SOURCE_DIR}/firststeps.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/installation.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/part.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/inter.rst"
@@ -75,7 +76,9 @@ if(SPHINX_FOUND)
             ${EXCLUDE}
         COMMAND
         ${SPHINX_EXECUTABLE}
+            -j ${N}
             -q
+            -W
             -b html
             -c "${SPHINX_BASE}"
             -d "${SPHINX_CACHE_DIR}"

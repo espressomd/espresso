@@ -18,13 +18,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from espressomd import *
-from espressomd import electrostatics
-from espressomd.visualizationOpenGL import *
-from threading import Thread
+from espressomd import System, assert_features, electrostatics, electrostatic_extensions
+from espressomd.visualization_opengl import *
 import numpy
+from threading import Thread
+from time import sleep
 
-system = espressomd.System()
+assert_features(["ELECTROSTATICS", "MASS", "LENNARD_JONES"])
+
+system = System()
 visualizer = openGLLive(system, drag_force=5*298, background_color=[1,1,1], light_pos=[30,30,30])
 
 #Callbacks to control temperature 
@@ -33,7 +35,7 @@ def increaseTemp():
         global temperature
         temperature += 10
         system.thermostat.set_langevin(kT=temperature, gamma=1.0)
-        print temperature 
+        print(temperature)
 
 def decreaseTemp():
     global temperature
@@ -44,7 +46,7 @@ def decreaseTemp():
     else:
         temperature = 0
         system.thermostat.turn_off()
-    print temperature 
+    print(temperature)
 
 #Register buttons
 visualizer.keyboardManager.registerButton(KeyboardButtonEvent('t',KeyboardFireEvent.Hold,increaseTemp))
@@ -135,10 +137,10 @@ def main():
 
     print("\n--->Temperature Equilibration")
     system.time = 0.0
-    for i in range(num_steps_equilibration/100):
+    for i in range(int(num_steps_equilibration/100)):
         energy = system.analysis.energy()
         temp_measured = energy['kinetic'] / ((3.0 / 2.0) * n_part)
-        print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T={3:.4f}".format(system.time,
+        print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
                                            energy['total'],
                                            energy['coulomb'],
                                            temp_measured))

@@ -17,18 +17,22 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+#include "cuda_interface.hpp"
+
+#ifdef CUDA
+
+#include "utils/serialization/CUDA_particle_data.hpp"
+#include "utils/mpi/gather_buffer.hpp"
+#include "utils/mpi/scatter_buffer.hpp"
 #include "communication.hpp"
 #include "config.hpp"
-#include "cuda_interface.hpp"
 #include "debug.hpp"
 #include "energy.hpp"
 #include "grid.hpp"
 #include "interaction_data.hpp"
 #include "random.hpp"
-#include "utils/mpi/gather_buffer.hpp"
-#include "utils/mpi/scatter_buffer.hpp"
 
-#ifdef CUDA
 
 /// MPI tag for cuda particle gathering
 #define REQ_CUDAGETPARTS 0xcc01
@@ -263,8 +267,10 @@ on mpi.h. */
 void copy_CUDA_energy_to_energy(CUDA_energy energy_host) {
   energy.bonded[0] += energy_host.bonded;
   energy.non_bonded[0] += energy_host.non_bonded;
-  energy.coulomb[0] += energy_host.coulomb;
-  energy.dipolar[1] += energy_host.dipolar;
+  if (energy.n_coulomb>=1)
+    energy.coulomb[0] += energy_host.coulomb;
+  if (energy.n_dipolar >=2)
+    energy.dipolar[1] += energy_host.dipolar;
 }
 
 #endif /* ifdef CUDA */

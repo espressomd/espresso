@@ -64,7 +64,8 @@ colPos = np.ones(3)*center
 q_col = 40 # note the charge on the colloid is actually negative
 n_col_part = int(4*np.pi*np.power(radius_col,2) + 1) # Number of particles making up the raspberry (surface particles + the central particle).
 
-system.part.add(id=0, pos=colPos, type=0, q=-q_col, fix=np.ones(3,dtype=np.int)) # Create central particle
+# Place the central particle 
+system.part.add(id=0, pos=colPos, type=0, q=-q_col, fix=(1,1,1),rotation=(1,1,1)) # Create central particle
 
 # this loop create n_col_part surface beads randomly placed on a spherical shell Rvec away from the central bead
 # create surface beads uniformly distributed over surface of a sphere with radius=radius_col
@@ -78,7 +79,7 @@ print("# Number of colloid beads = {}".format(n_col_part))
 #here we let the bead positions relax. The LJ potential with the central bead combined with the
 #harmonic bond keep the monomers roughly radius_col away from the central bead. The LJ
 #between the surface beads cause them to distribute more or less evenly on the surface.
-system.non_bonded_inter.set_force_cap(1000)
+system.force_cap = 1000
 system.time_step=eq_tstep
 
 for i in range(n_cycle):
@@ -115,7 +116,7 @@ momI*=(2./3.)
 
 #note that the real particle must be at the center of mass of the colloid because of the integrator
 print("\n# moving central particle from {} to {}".format(system.part[0].pos, com))
-system.part[0].fix=np.zeros(3,dtype=np.int)
+system.part[0].fix=0,0,0
 system.part[0].pos=com
 system.part[0].mass=n_col_part
 system.part[0].rinertia=np.ones(3)*momI
@@ -199,13 +200,13 @@ for i in range(n_col_part):
 ljcap = 100
 CapSteps = 1000
 for i in range(CapSteps):
-    system.non_bonded_inter.set_force_cap(ljcap)
+    system.force_cap = ljcap
     print("\r # step {} of  {}".format(i+1, CapSteps)),
     sys.stdout.flush()
     system.integrator.run(integ_steps)
     ljcap+=5
  
-system.non_bonded_inter.set_force_cap(0)
+system.force_cap = 0
 
 #let the colloid move now that bad overlaps have been eliminated
 for i in range(n_col_part):
@@ -226,7 +227,7 @@ system.time_step=time_step
 system.galilei.kill_particle_motion()
 
 system.thermostat.turn_off()
-lb=espressomd.lb.LBFluid_GPU(dens=1., visc=3., agrid=1., tau=time_step, fric=20)
+lb=espressomd.lb.LBFluidGPU(dens=1., visc=3., agrid=1., tau=time_step, fric=20)
 system.actors.add(lb)
 
 

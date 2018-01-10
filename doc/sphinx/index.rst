@@ -14,11 +14,12 @@ espressomd package
 ==================
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
 
     modules.rst
 
 .. automodule:: espressomd
+    :noindex: espressomd.assert_features, espressomd.has_features, espressomd.missing_features
     :members: 
     :private-members:
 

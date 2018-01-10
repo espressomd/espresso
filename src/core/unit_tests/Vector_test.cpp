@@ -60,8 +60,6 @@ BOOST_AUTO_TEST_CASE(iterator_constructor) {
 }
 
 BOOST_AUTO_TEST_CASE(default_constructor_test) {
-  Vector<0, int> v1;
-  BOOST_CHECK(v1.size() == 0);
   Vector<1, int> v2;
   BOOST_CHECK(v2.size() == 1);
   Vector<2, int> v3;
@@ -110,18 +108,33 @@ BOOST_AUTO_TEST_CASE(algebraic_operators) {
 
   BOOST_CHECK(((v1 + v2) == Vector<3, int>{5, 7, 9}));
   BOOST_CHECK(((v1 - v2) == Vector<3, int>{-3, -3, -3}));
+  BOOST_CHECK(((-v1) == Vector<3, int>{-1, -2, -3}));
 
   {
     auto v3 = v1;
-    v3 += v2;
-    BOOST_CHECK(((v1 + v2) == v3));
+    BOOST_CHECK((v1 + v2) == (v3 += v2));
   }
 
   {
     auto v3 = v1;
-    v3 -= v2;
-    BOOST_CHECK(((v1 - v2) == v3));
+    BOOST_CHECK((v1 - v2) == (v3 -= v2));
   }
 
   BOOST_CHECK(((2 * v1) == Vector<3, int>{2, 4, 6}));
+  BOOST_CHECK(((v1 * 2) == Vector<3, int>{2, 4, 6}));
+
+  {
+    Vector<3, int> v1{2, 4, 6};
+    auto v2 = 2 * v1;
+    BOOST_CHECK(v2 == (v1 *= 2));
+  }
+
+  {
+    Vector<3, int> v1{2, 4, 6};
+    auto v2 = v1 / 2;
+    BOOST_CHECK(v2 == (v1 /= 2));
+  }
+
+  BOOST_CHECK((sqrt(Vector<3, double>{1., 2., 3.}) ==
+               Vector<3, double>{sqrt(1.), sqrt(2.), sqrt(3.)}));
 }

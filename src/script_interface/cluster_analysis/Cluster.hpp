@@ -33,7 +33,6 @@ namespace ClusterAnalysis {
 class Cluster : public AutoParameters {
 public:
   Cluster(){};
-  const std::string name() const override { return "ClusterAnalysis::Cluster"; }
   virtual Variant call_method(std::string const &method,
                               VariantMap const &parameters) override {
     if (method == "particle_ids") {

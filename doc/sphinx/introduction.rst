@@ -59,7 +59,7 @@ Hand-in-hand with the extensibility and readability of the code comes the
 flexibility of the whole program. On the one hand, it is provided by the
 generalized functionality of its parts, avoiding highly specialized functions.
 An example can be the implementation of the Generic Lennard-Jones potential
-described in section :ref:`generic_lennard_jones_interaction` where the user
+described in section :ref:`Generic Lennard-Jones interaction` where the user
 can change all available parameters. Where possible, default values are
 avoided, providing the user with the possibility of choice.  ESPResSo cannot be
 aware whether your particles are representing atoms or billiard balls, so it
@@ -115,11 +115,11 @@ In the "Tested" column, we note whether there is an integration test for the met
 If you believe that the status of a certain method is wrong, please
 report so to the developers.
 
-.. tabularcolumns:: |c|c|c|
+.. tabularcolumns:: |l|c|c|c|
 
 +--------------------------------+------------------------+------------------+------------+
 | **Feature**                    | **Development Status** | **Usage Status** | **Tested** |
-+================================+========================+==================+------------+
++================================+========================+==================+============+
 |             **Integrators**, **Thermostats**, **Barostats**                             |
 +--------------------------------+------------------------+------------------+------------+
 | Velocity-Verlet Integrator     | Core                   | Core             | Yes        |
@@ -256,7 +256,7 @@ In principle, any parameter which is accessible from the scripting level
 can be changed at any moment of runtime. In this way methods like
 thermodynamic integration become readily accessible.
 
-The focus of the user guide is documenting the scripting interfacce, its
+The focus of the user guide is documenting the scripting interface, its
 behaviour and use in the simulation. It only describes certain technical
 details of implementation which are necessary for understanding how the
 script interface works. Technical documentation of the code and program
@@ -336,79 +336,3 @@ As long as one remains within the same unit system throughout the whole
 ESPResSo-script, there should be no problems.
 
 
-.. _Requirements:
-
-Requirements
-------------
-
-The following tools libraries, including header files, are required to be able
-to compile and use ESPResSo:
-
-CMake
-    The build system is based on CMake
-
-C++ Compiler
-    C++11 capable C++ compiler (e.g., Gcc 4.8.1 or later)
-
-Boost
-    A number of advanced C++ features used by ESPResSo is provided by Boost.
-
-FFTW
-    For some algorithms (P:math:`^3`\ M), ESPResSo needs the FFTW library
-    version 3 or later  [1]_ for Fourier transforms, including header
-    files.
-
-MPI
-    Because ESPResSo is parallelized with MPI, you need a working MPI
-    environment that implements the MPI standard version 1.2.
-
-Python
-    ESPResSo's main user interface is via the Python scripting interface. Both, Python 2 and 3 are supported.
-
-Cython
-    Cython is used for connecting the C++ core to Python
-
-
-.. Iinstalling Requirements on ubuntu:
-
-Installing Requirements on Ubuntu 16.04 LTS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-To make ESPResSo run on Ubuntu 16.04 LTS, its dependencies can be
-installed with:
-
-.. code-block:: bash
-
-    sudo apt install build-essential cmake cython python-numpy \
-    libboost-all-dev openmpi-common
-
-Optionally the ccmake utility can be installed for easier configuration:
-
-.. code-block:: bash
-
-    $ sudo apt install cmake-curses-gui
-
-
-.. _Installing Requirements on Mac OS X:
-
-Installing Requirements on Mac OS X
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-To make ESPResSo run on Mac OS X 10.9 or higher, its dependencies can be
-installed using MacPorts. First, download the installer package
-appropriate for your Mac OS X version from
-https://www.macports.org/install.php and install it. Then, run the
-following commands:
-
-.. code-block:: bash
-
-    sudo xcode-select –install sudo xcodebuild -license accept
-    sudo port selfupdate
-    sudo port port install cmake python27 python27-cython python27-numpy \
-    openmpi-default fftw-3 +openmpi boost +openmpi +python27
-    sudo port select –set cython cython27
-    sudo port select –set python python27
-    sudo port select–set mpi openmpi-mp-fortran
-
-.. [1]
-   http://www.fftw.org/

@@ -24,31 +24,31 @@
 */
 #include "statistics.hpp"
 #include "communication.hpp"
-#include "domain_decomposition.hpp"
 #include "energy.hpp"
 #include "grid.hpp"
 #include "initialize.hpp"
 #include "interaction_data.hpp"
 #include "lb.hpp"
-#include "modes.hpp"
+#include "npt.hpp"
+#include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
+#include "short_range_loop.hpp"
 #include "statistics_chain.hpp"
 #include "statistics_cluster.hpp"
 #include "statistics_fluid.hpp"
-#include "statistics_molecule.hpp"
 #include "utils.hpp"
-#include "verlet.hpp"
+#include "utils/NoOp.hpp"
+#include "utils/list_contains.hpp"
 #include "virtual_sites.hpp"
+
 #include <cstdlib>
 #include <cstring>
-#include "npt.hpp"
-
 #include <limits>
 
 /** Previous particle configurations (needed for offline analysis and
-    correlation analysis in \ref tclcommand_analyze) */
-double **configs = NULL;
+    correlation analysis) */
+double **configs = nullptr;
 int n_configs = 0;
 int n_part_conf = 0;
 
@@ -66,11 +66,11 @@ double min_distance2(double const pos1[3], double const pos2[3]) {
  *                                 basic observables calculation
  ****************************************************************************************/
 
-double mindist(PartCfg &partCfg, IntList *set1, IntList *set2) {
+double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
   double pt[3];
-  int i, j, in_set;
+  int in_set;
 
-  auto mindist = std::numeric_limits<double>::infinity();
+  auto mindist2 = std::numeric_limits<double>::infinity();
 
   for (auto jt = partCfg.begin(); jt != (--partCfg.end()); ++jt) {
     pt[0] = jt->r.p[0];
@@ -80,9 +80,9 @@ double mindist(PartCfg &partCfg, IntList *set1, IntList *set2) {
        bit 0: set1, bit1: set2
     */
     in_set = 0;
-    if (!set1 || intlist_contains(set1, jt->p.type))
+    if (set1.empty() || list_contains(set1, jt->p.type))
       in_set = 1;
-    if (!set2 || intlist_contains(set2, jt->p.type))
+    if (set2.empty() || list_contains(set2, jt->p.type))
       in_set |= 2;
     if (in_set == 0)
       continue;
@@ -90,13 +90,12 @@ double mindist(PartCfg &partCfg, IntList *set1, IntList *set2) {
     for (auto it = std::next(jt); it != partCfg.end(); ++it)
       /* accept a pair if particle j is in set1 and particle i in set2 or vice
        * versa. */
-      if (((in_set & 1) && (!set2 || intlist_contains(set2, it->p.type))) ||
-          ((in_set & 2) && (!set1 || intlist_contains(set1, it->p.type))))
-        mindist = std::min(mindist, min_distance2(pt, it->r.p));
+      if (((in_set & 1) && (set2.empty() || list_contains(set2, it->p.type))) ||
+          ((in_set & 2) && (set1.empty() || list_contains(set1, it->p.type))))
+        mindist2 = std::min(mindist2, min_distance2(pt, it->r.p));
   }
-  mindist = std::sqrt(mindist);
 
-  return mindist;
+  return std::sqrt(mindist2);
 }
 
 void merge_aggregate_lists(int *head_list, int *agg_id_list, int p1molid,
@@ -122,80 +121,65 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
                 int f_mol_id, int *head_list, int *link_list, int *agg_id_list,
                 int *agg_num, int *agg_size, int *agg_max, int *agg_min,
                 int *agg_avg, int *agg_std, int charge) {
-  int c, np, n, i;
-  Particle *p1, *p2, **pairs;
-  double dist2;
   int target1;
-  int p1molid, p2molid;
   int *contact_num, ind;
 
   if (min_contact > 1) {
-    contact_num = (int *)Utils::malloc(n_molecules * n_molecules * sizeof(int));
-    for (i = 0; i < n_molecules * n_molecules; i++)
+    contact_num =
+        (int *)Utils::malloc(topology.size() * topology.size() * sizeof(int));
+    for (int i = 0; i < topology.size() * topology.size(); i++)
       contact_num[i] = 0;
   } else {
     contact_num = (int *)0; /* Just to keep the compiler happy */
   }
 
   on_observable_calc();
-  build_verlet_lists();
 
-  for (i = s_mol_id; i <= f_mol_id; i++) {
+  for (int i = s_mol_id; i <= f_mol_id; i++) {
     head_list[i] = i;
     link_list[i] = -1;
     agg_id_list[i] = i;
     agg_size[i] = 0;
   }
 
-  /* Loop local cells */
-  for (c = 0; c < local_cells.n; c++) {
-    /* Loop cell neighbors */
-    for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
-      pairs = dd.cell_inter[c].nList[n].vList.pair;
-      np = dd.cell_inter[c].nList[n].vList.n;
-      /* verlet list loop */
-      for (i = 0; i < 2 * np; i += 2) {
-        p1 = pairs[i];     /* pointer to particle 1 */
-        p2 = pairs[i + 1]; /* pointer to particle 2 */
-        p1molid = p1->p.mol_id;
-        p2molid = p2->p.mol_id;
-        if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) &&
-            ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
-          if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
-            dist2 = min_distance2(p1->r.p, p2->r.p);
-
+  short_range_loop(Utils::NoOp{},
+                   [&](Particle &p1, Particle &p2, Distance &d) {
+                     auto p1molid = p1.p.mol_id;
+                     auto p2molid = p2.p.mol_id;
+                     if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) &&
+                         ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
+                       if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
 #ifdef ELECTROSTATICS
-            if (charge && (p1->p.q * p2->p.q >= 0)) {
-              continue;
-            }
+                         if (charge && (p1.p.q * p2.p.q >= 0)) {
+                           return;
+                         }
 #endif
-            if (dist2 < dist_criteria2) {
-              if (p1molid > p2molid) {
-                ind = p1molid * n_molecules + p2molid;
-              } else {
-                ind = p2molid * n_molecules + p1molid;
-              }
-              if (min_contact > 1) {
-                contact_num[ind]++;
-                if (contact_num[ind] >= min_contact) {
-                  merge_aggregate_lists(head_list, agg_id_list, p1molid,
-                                        p2molid, link_list);
-                }
-              } else {
-                merge_aggregate_lists(head_list, agg_id_list, p1molid, p2molid,
-                                      link_list);
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+                         if (d.dist2 < dist_criteria2) {
+                           if (p1molid > p2molid) {
+                             ind = p1molid * topology.size() + p2molid;
+                           } else {
+                             ind = p2molid * topology.size() + p1molid;
+                           }
+                           if (min_contact > 1) {
+                             contact_num[ind]++;
+                             if (contact_num[ind] >= min_contact) {
+                               merge_aggregate_lists(head_list, agg_id_list,
+                                                     p1molid, p2molid,
+                                                     link_list);
+                             }
+                           } else {
+                             merge_aggregate_lists(head_list, agg_id_list,
+                                                   p1molid, p2molid, link_list);
+                           }
+                         }
+                       }
+                     }
+                   });
 
   /* count number of aggregates
      find aggregate size
      find max and find min size, and std */
-  for (i = s_mol_id; i <= f_mol_id; i++) {
+  for (int i = s_mol_id; i <= f_mol_id; i++) {
     if (head_list[i] != -2) {
       (*agg_num)++;
       agg_size[*agg_num - 1]++;
@@ -207,7 +191,7 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
     }
   }
 
-  for (i = 0; i < *agg_num; i++) {
+  for (int i = 0; i < *agg_num; i++) {
     *agg_avg += agg_size[i];
     *agg_std += agg_size[i] * agg_size[i];
     if (*agg_min > agg_size[i]) {
@@ -253,7 +237,7 @@ std::vector<double> calc_linear_momentum(int include_particles,
   double momentum_particles[3] = {0., 0., 0.};
   std::vector<double> linear_momentum(3, 0.0);
   if (include_particles) {
-    mpi_gather_stats(4, momentum_particles, NULL, NULL, NULL);
+    mpi_gather_stats(4, momentum_particles, nullptr, nullptr, nullptr);
     linear_momentum[0] += momentum_particles[0];
     linear_momentum[1] += momentum_particles[1];
     linear_momentum[2] += momentum_particles[2];
@@ -262,7 +246,7 @@ std::vector<double> calc_linear_momentum(int include_particles,
     double momentum_fluid[3] = {0., 0., 0.};
 #ifdef LB
     if (lattice_switch & LATTICE_LB) {
-      mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
+      mpi_gather_stats(6, momentum_fluid, nullptr, nullptr, nullptr);
     }
 #endif
 #ifdef LB_GPU
@@ -330,7 +314,7 @@ void angularmomentum(PartCfg &partCfg, int type, double *com) {
 }
 
 void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
-  int i, j, count;
+  int i, count;
   double p1[3], massi;
   std::vector<double> com(3);
   count = 0;
@@ -423,17 +407,15 @@ void calc_gyration_tensor(PartCfg &partCfg, int type, std::vector<double> &gt) {
   }
 }
 
-void nbhood(PartCfg &partCfg, double pt[3], double r, IntList *il,
-            int planedims[3]) {
-  double d[3];
+IntList nbhood(PartCfg &partCfg, double pt[3], double r, int planedims[3]) {
+  IntList ids;
+  Vector3d d;
 
   auto const r2 = r * r;
 
-  init_intlist(il);
-
   for (auto const &p : partCfg) {
     if ((planedims[0] + planedims[1] + planedims[2]) == 3) {
-      get_mi_vector(d, pt, p.r.p);
+      d = get_mi_vector(pt, p.r.p);
     } else {
       /* Calculate the in plane distance */
       for (int j = 0; j < 3; j++) {
@@ -441,12 +423,12 @@ void nbhood(PartCfg &partCfg, double pt[3], double r, IntList *il,
       }
     }
 
-    if (sqrlen(d) < r2) {
-      realloc_intlist(il, il->n + 1);
-      il->e[il->n] = p.p.identity;
-      il->n++;
+    if (d.norm2() < r2) {
+      ids.push_back(p.p.identity);
     }
   }
+
+  return ids;
 }
 
 double distto(PartCfg &partCfg, double p[3], int pid) {
@@ -459,132 +441,6 @@ double distto(PartCfg &partCfg, double p[3], int pid) {
     }
   }
   return std::sqrt(mindist);
-}
-
-void calc_cell_gpb(double xi_m, double Rc, double ro, double gacc, int maxtry,
-                   double *result) {
-  double LOG, xi_min, RM, gamma, g1, g2, gmid = 0, dg, ig, f, fmid, rtb;
-  int i;
-  LOG = log(Rc / ro);
-  xi_min = LOG / (1 + LOG);
-  if (maxtry < 1)
-    maxtry = 1;
-
-  /* determine which of the regimes we are in: */
-  if (xi_m > 1) {
-    ig = 1.0;
-    g1 = PI / LOG;
-    g2 = PI / (LOG + xi_m / (xi_m - 1.0));
-  } else if (xi_m == 1) {
-    ig = 1.0;
-    g1 = (PI / 2.0) / LOG;
-    g2 = (PI / 2.0) / (LOG + 1.0);
-  } else if (xi_m == xi_min) {
-    ig = 1.0;
-    g1 = g2 = 0.0;
-  } else if (xi_m > xi_min) {
-    ig = 1.0;
-    g1 = (PI / 2.0) / LOG;
-    g2 =
-        sqrt(3.0 * (LOG - xi_m / (1.0 - xi_m)) / (1 - pow((1.0 - xi_m), -3.0)));
-  } else if (xi_m > 0.0) {
-    ig = -1.0;
-    g1 = 1 - xi_m;
-    g2 = xi_m * (6.0 - (3.0 - xi_m) * xi_m) / (3.0 * LOG);
-  } else if (xi_m == 0.0) {
-    ig = -1.0;
-    g1 = g2 = 1 - xi_m;
-  } else {
-    result[2] = -5.0;
-    return;
-  }
-
-  /* decide which method to use (if any): */
-  if (xi_m == xi_min) {
-    gamma = 0.0;
-    RM = 0.0;
-  } else if (xi_m == 0.0) {
-    gamma = 1 - xi_m;
-    RM = -1.0;
-  } else if (ig == 1.0) {
-    /* determine gamma via a bisection-search: */
-    f = atan(1.0 / g1) + atan((xi_m - 1.0) / g1) - g1 * LOG;
-    fmid = atan(1.0 / g2) + atan((xi_m - 1.0) / g2) - g2 * LOG;
-    if (f * fmid >= 0.0) {
-      /* failed to bracket function value with intial guess - abort: */
-      result[0] = f;
-      result[1] = fmid;
-      result[2] = -3.0;
-      return;
-    }
-
-    /* orient search such that the positive part of the function lies to the
-     * right of the zero */
-    rtb = f < 0.0 ? (dg = g2 - g1, g1) : (dg = g1 - g2, g2);
-    for (i = 1; i <= maxtry; i++) {
-      gmid = rtb + (dg *= 0.5);
-      fmid = atan(1.0 / gmid) + atan((xi_m - 1.0) / gmid) - gmid * LOG;
-      if (fmid <= 0.0)
-        rtb = gmid;
-      if (fabs(dg) < gacc || fmid == 0.0)
-        break;
-    }
-
-    if (fabs(dg) > gacc) {
-      /* too many iterations without success - abort: */
-      result[0] = gmid;
-      result[1] = dg;
-      result[2] = -2.0;
-      return;
-    }
-
-    /* So, these are the values for gamma and Manning-radius: */
-    gamma = gmid;
-    RM = Rc * exp(-(1.0 / gamma) * atan(1.0 / gamma));
-  } else if (ig == -1.0) {
-    /* determine -i*gamma: */
-    f = -1.0 * (atanh(g2) + atanh(g2 / (xi_m - 1))) - g2 * LOG;
-
-    /* modified orient search, this time starting from the upper bound
-     * backwards: */
-    if (f < 0.0) {
-      rtb = g1;
-      dg = g1 - g2;
-    } else {
-      fprintf(stderr, "WARNING: Lower boundary is actually larger than "
-                      "l.hpp.s, flipping!\n");
-      rtb = g1;
-      dg = g1;
-    }
-    for (i = 1; i <= maxtry; i++) {
-      gmid = rtb - (dg *= 0.5);
-      fmid = -1.0 * (atanh(gmid) + atanh(gmid / (xi_m - 1))) - gmid * LOG;
-      if (fmid >= 0.0)
-        rtb = gmid;
-      if (fabs(dg) < gacc || fmid == 0.0)
-        break;
-    }
-
-    if (fabs(dg) > gacc) {
-      /* too many iterations without success - abort: */
-      result[0] = gmid;
-      result[1] = dg;
-      result[2] = -2.0;
-      return;
-    }
-
-    /* So, these are the values for -i*gamma and Manning-radius: */
-    gamma = gmid;
-    RM = Rc * exp(atan(1.0 / gamma) / gamma);
-  } else {
-    result[2] = -5.0;
-    return;
-  }
-
-  result[0] = gamma;
-  result[1] = RM;
-  result[2] = ig;
-  return;
 }
 
 void calc_part_distribution(PartCfg &partCfg, int *p1_types, int n_p1,
@@ -659,8 +515,8 @@ void calc_rdf(PartCfg &partCfg, std::vector<int> &p1_types,
 void calc_rdf(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
               int n_p2, double r_min, double r_max, int r_bins, double *rdf) {
   long int cnt = 0;
-  int i, j, t1, t2, ind;
-  int mixed_flag = 0, start;
+  int i, t1, t2, ind;
+  int mixed_flag = 0;
   double inv_bin_width = 0.0, bin_width = 0.0, dist;
   double volume, bin_volume, r_in, r_out;
 
@@ -721,62 +577,68 @@ void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
                  int n_p2, double r_min, double r_max, int r_bins, double *rdf,
                  int n_conf) {
   long int cnt = 0;
-  int i, j, k, l, t1, t2, ind, cnt_conf = 1;
-  int mixed_flag = 0, start;
-  double inv_bin_width = 0.0, bin_width = 0.0, dist;
+  int cnt_conf = 1;
+  int mixed_flag = 0;
+  double inv_bin_width = 0.0, bin_width = 0.0;
   double volume, bin_volume, r_in, r_out;
   double *rdf_tmp, p1[3], p2[3];
 
   rdf_tmp = (double *)Utils::malloc(r_bins * sizeof(double));
 
   if (n_p1 == n_p2) {
-    for (i = 0; i < n_p1; i++)
+    for (int i = 0; i < n_p1; i++)
       if (p1_types[i] != p2_types[i])
         mixed_flag = 1;
   } else
     mixed_flag = 1;
+
   bin_width = (r_max - r_min) / (double)r_bins;
   inv_bin_width = 1.0 / bin_width;
   volume = box_l[0] * box_l[1] * box_l[2];
-  for (l = 0; l < r_bins; l++)
+  for (int l = 0; l < r_bins; l++)
     rdf_tmp[l] = rdf[l] = 0.0;
 
   while (cnt_conf <= n_conf) {
-    for (l = 0; l < r_bins; l++)
+    for (int l = 0; l < r_bins; l++)
       rdf_tmp[l] = 0.0;
     cnt = 0;
-    k = n_configs - cnt_conf;
+    auto const k = n_configs - cnt_conf;
+    int i = 0;
     for (auto it = partCfg.begin(); it != partCfg.end(); ++it) {
-      for (t1 = 0; t1 < n_p1; t1++) {
+      for (int t1 = 0; t1 < n_p1; t1++) {
         if (it->p.type == p1_types[t1]) {
           /* distinguish mixed and identical rdf's */
           auto jt = (mixed_flag == 1) ? partCfg.begin() : std::next(it);
+          int j = (mixed_flag == 1) ? 0 : i + 1;
 
           // particle loop: p2_types
           for (; jt != partCfg.end(); ++jt) {
-            for (t2 = 0; t2 < n_p2; t2++) {
+            for (int t2 = 0; t2 < n_p2; t2++) {
               if (jt->p.type == p2_types[t2]) {
-                p1[0] = configs[k][3 * i];
+                p1[0] = configs[k][3 * i + 0];
                 p1[1] = configs[k][3 * i + 1];
                 p1[2] = configs[k][3 * i + 2];
-                p2[0] = configs[k][3 * j];
+                p2[0] = configs[k][3 * j + 0];
                 p2[1] = configs[k][3 * j + 1];
                 p2[2] = configs[k][3 * j + 2];
-                dist = min_distance(p1, p2);
+                auto const dist = min_distance(p1, p2);
                 if (dist > r_min && dist < r_max) {
-                  ind = (int)((dist - r_min) * inv_bin_width);
+                  auto const ind =
+                      static_cast<int>((dist - r_min) * inv_bin_width);
                   rdf_tmp[ind]++;
                 }
                 cnt++;
               }
             }
+            j++;
           }
         }
       }
+      i++;
     }
     // normalization
 
-    for (i = 0; i < r_bins; i++) {
+    for (int i = 0; i < r_bins; i++) {
       r_in = i * bin_width + r_min;
       r_out = r_in + bin_width;
       bin_volume =
@@ -786,92 +648,7 @@ void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
 
     cnt_conf++;
   } // cnt_conf loop
-  for (i = 0; i < r_bins; i++) {
-    rdf[i] /= (cnt_conf - 1);
-  }
-  free(rdf_tmp);
-}
-
-void calc_rdf_intermol_av(PartCfg &partCfg, std::vector<int> &p1_types,
-                          std::vector<int> &p2_types, double r_min,
-                          double r_max, int r_bins, std::vector<double> &rdf,
-                          int n_conf) {
-  calc_rdf_intermol_av(partCfg, &p1_types[0], p1_types.size(), &p2_types[0],
-                       p2_types.size(), r_min, r_max, r_bins, &rdf[0], n_conf);
-}
-
-void calc_rdf_intermol_av(PartCfg &partCfg, int *p1_types, int n_p1,
-                          int *p2_types, int n_p2, double r_min, double r_max,
-                          int r_bins, double *rdf, int n_conf) {
-  int i, j, k, l, t1, t2, ind, cnt = 0, cnt_conf = 1;
-  int mixed_flag = 0, start;
-  double inv_bin_width = 0.0, bin_width = 0.0, dist;
-  double volume, bin_volume, r_in, r_out;
-  double *rdf_tmp, p1[3], p2[3];
-
-  rdf_tmp = (double *)Utils::malloc(r_bins * sizeof(double));
-
-  if (n_p1 == n_p2) {
-    for (i = 0; i < n_p1; i++)
-      if (p1_types[i] != p2_types[i])
-        mixed_flag = 1;
-  } else
-    mixed_flag = 1;
-  bin_width = (r_max - r_min) / (double)r_bins;
-  inv_bin_width = 1.0 / bin_width;
-  volume = box_l[0] * box_l[1] * box_l[2];
-  for (l = 0; l < r_bins; l++)
-    rdf_tmp[l] = rdf[l] = 0.0;
-
-  while (cnt_conf <= n_conf) {
-    for (l = 0; l < r_bins; l++)
-      rdf_tmp[l] = 0.0;
-    cnt = 0;
-    k = n_configs - cnt_conf;
-    for (auto it = partCfg.begin(); it != partCfg.end(); ++it) {
-      for (t1 = 0; t1 < n_p1; t1++) {
-        if (it->p.type == p1_types[t1]) {
-          // distinguish mixed and identical rdf's
-          auto jt = (mixed_flag == 1) ? partCfg.begin() : std::next(it);
-
-          // particle loop: p2_types
-          for (; jt != partCfg.end(); ++jt) {
-            for (t2 = 0; t2 < n_p2; t2++) {
-              if (jt->p.type == p2_types[t2]) {
-                /*see if particles i and j belong to different molecules*/
-                if (it->p.mol_id != jt->p.mol_id) {
-                  p1[0] = configs[k][3 * i];
-                  p1[1] = configs[k][3 * i + 1];
-                  p1[2] = configs[k][3 * i + 2];
-                  p2[0] = configs[k][3 * j];
-                  p2[1] = configs[k][3 * j + 1];
-                  p2[2] = configs[k][3 * j + 2];
-                  dist = min_distance(p1, p2);
-                  if (dist > r_min && dist < r_max) {
-                    ind = (int)((dist - r_min) * inv_bin_width);
-                    rdf_tmp[ind]++;
-                  }
-                  cnt++;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    // normalization
-
-    for (i = 0; i < r_bins; i++) {
-      r_in = i * bin_width + r_min;
-      r_out = r_in + bin_width;
-      bin_volume =
-          (4.0 / 3.0) * PI * ((r_out * r_out * r_out) - (r_in * r_in * r_in));
-      rdf[i] += rdf_tmp[i] * volume / (bin_volume * cnt);
-    }
-
-    cnt_conf++;
-  } // cnt_conf loop
-  for (i = 0; i < r_bins; i++) {
+  for (int i = 0; i < r_bins; i++) {
     rdf[i] /= (cnt_conf - 1);
   }
   free(rdf_tmp);
@@ -879,21 +656,22 @@ void calc_rdf_intermol_av(PartCfg &partCfg, int *p1_types, int n_p1,
 
 void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
                           int order, double **_ff) {
-  int i, j, k, n, qi, p, t, order2;
-  double qr, twoPI_L, C_sum, S_sum, *ff = NULL;
+  int i, j, k, n, qi, t, order2;
+  double qr, twoPI_L, C_sum, S_sum, *ff = nullptr;
 
   order2 = order * order;
   *_ff = ff = Utils::realloc(ff, 2 * order2 * sizeof(double));
+  ff[2 * order2] = 0;
   twoPI_L = 2 * PI / box_l[0];
 
   if ((n_types < 0) || (n_types > n_particle_types)) {
     fprintf(stderr, "WARNING: Wrong number of particle types!");
-    fflush(NULL);
+    fflush(nullptr);
     errexit();
   } else if (order < 1) {
     fprintf(stderr,
             "WARNING: parameter \"order\" has to be a whole positive number");
-    fflush(NULL);
+    fflush(nullptr);
     errexit();
   } else {
     for (qi = 0; qi < 2 * order2; qi++) {
@@ -1010,69 +788,6 @@ void density_profile_av(PartCfg &partCfg, int n_conf, int n_bin, double density,
     rho_ave[i] /= n_conf;
 }
 
-void calc_diffusion_profile(PartCfg &partCfg, int dir, double xmin, double xmax,
-                            int nbins, int n_part, int n_conf, int time,
-                            int type, double *bins) {
-  int i, t, count, index;
-  double tcount = 0;
-  double xpos;
-  double tpos[3];
-  int img_box[3] = {0, 0, 0};
-  // double delta_x = (box_l[0])/((double) nbins);
-
-  /* create and initialize the array of bins */
-
-  // double *bins;
-
-  int *label;
-  label = (int *)Utils::malloc(n_part * sizeof(int));
-
-  /* calculation over last n_conf configurations */
-  t = n_configs - n_conf;
-
-  while (t < n_configs - time) {
-    /* check initial condition */
-    count = 0;
-
-    for (i = 0; i < n_part; i++) {
-      if (partCfg[i].p.type == type) {
-        tpos[0] = configs[t][3 * i];
-        tpos[1] = configs[t][3 * i + 1];
-        tpos[2] = configs[t][3 * i + 2];
-        fold_coordinate(tpos, img_box, dir);
-        xpos = tpos[dir];
-        if (xpos > xmin && xpos < xmax) {
-          label[count] = i;
-        } else
-          label[count] = -1;
-        count++;
-      }
-    }
-
-    /* check at time 'time' */
-    for (i = 0; i < n_part; i++) {
-      if (label[i] > 0) {
-        tpos[0] = configs[t + time][3 * label[i]];
-        tpos[1] = configs[t + time][3 * label[i] + 1];
-        tpos[2] = configs[t + time][3 * label[i] + 2];
-        fold_coordinate(tpos, img_box, dir);
-        xpos = tpos[dir];
-
-        index = (int)(xpos / box_l[dir] * nbins);
-        bins[index]++;
-      }
-    }
-    t++;
-    tcount++;
-  }
-
-  /* normalization */
-  for (i = 0; i < nbins; i++) {
-    bins[i] = bins[i] / (tcount);
-  }
-  free(label);
-}
-
 int calc_cylindrical_average(
     PartCfg &partCfg, std::vector<double> center_,
     std::vector<double> direction_, double length, double radius,
@@ -1084,8 +799,8 @@ int calc_cylindrical_average(
   double binwd_axial = length / bins_axial;
   double binwd_radial = radius / bins_radial;
 
-  auto center = Vector3d{center_};
-  auto direction = Vector3d{direction_};
+  auto center = Vector3d{std::move(center_)};
+  auto direction = Vector3d{std::move(direction_)};
 
   // Select all particle types if the only entry in types is -1
   bool all_types = false;
@@ -1190,7 +905,7 @@ int calc_radial_density_map(PartCfg &partCfg, int xbins, int ybins,
                             DoubleList *density_map,
                             DoubleList *density_profile) {
   int i, j, t;
-  int pi, bi;
+  int bi;
   int nbeadtypes;
   int beadcount;
   double vectprod[3];
@@ -1292,7 +1007,7 @@ int calc_radial_density_map(PartCfg &partCfg, int xbins, int ybins,
           if (tindex >= thetabins) {
             fprintf(stderr, "ERROR: outside density_profile array bounds in "
                             "calc_radial_density_map");
-            fflush(NULL);
+            fflush(nullptr);
             errexit();
           } else {
             density_profile[bi].e[tindex] += 1;
@@ -1317,29 +1032,21 @@ int calc_radial_density_map(PartCfg &partCfg, int xbins, int ybins,
   return ES_OK;
 }
 
-double calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
-                    int rbins, int tmax, double *msd, double **vanhove) {
+int calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
+                 int rbins, int tmax, double *msd, double **vanhove) {
   int c1, c3, c3_max, ind;
   double p1[3], p2[3], dist;
   double bin_width, inv_bin_width;
-  IntList p;
+  std::vector<int> ids;
 
-  /* create particle list */
-  init_intlist(&p);
-
-  auto const np =
-      std::count_if(partCfg.begin(), partCfg.end(),
-                    [&ptype](Particle const &p) { return p.p.type == ptype; });
-
-  if (np == 0) {
-    return 0;
-  }
-  alloc_intlist(&p, np);
-  for (auto const &part : partCfg) {
-    if (part.p.type == ptype) {
-      p.e[p.n] = part.p.identity;
-      p.n++;
+  for (auto const &p : partCfg) {
+    if (p.p.type == ptype) {
+      ids.push_back(p.p.identity);
     }
+  }
+
+  if (ids.empty()) {
+    return 0;
   }
 
   /* preparation */
@@ -1350,13 +1057,13 @@ double calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
   for (c1 = 0; c1 < n_configs; c1++) {
     c3_max = (c1 + tmax + 1) > n_configs ? n_configs : c1 + tmax + 1;
     for (c3 = (c1 + 1); c3 < c3_max; c3++) {
-      for (int i = 0; i < p.n; i++) {
-        p1[0] = configs[c1][3 * p.e[i]];
-        p1[1] = configs[c1][3 * p.e[i] + 1];
-        p1[2] = configs[c1][3 * p.e[i] + 2];
-        p2[0] = configs[c3][3 * p.e[i]];
-        p2[1] = configs[c3][3 * p.e[i] + 1];
-        p2[2] = configs[c3][3 * p.e[i] + 2];
+      for (auto const &id : ids) {
+        p1[0] = configs[c1][3 * id];
+        p1[1] = configs[c1][3 * id + 1];
+        p1[2] = configs[c1][3 * id + 2];
+        p2[0] = configs[c3][3 * id];
+        p2[1] = configs[c3][3 * id + 1];
+        p2[2] = configs[c3][3 * id + 2];
         dist = distance(p1, p2);
         if (dist > rmin && dist < rmax) {
           ind = (int)((dist - rmin) * inv_bin_width);
@@ -1370,13 +1077,12 @@ double calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
   /* normalize */
   for (c1 = 0; c1 < (tmax); c1++) {
     for (int i = 0; i < rbins; i++) {
-      vanhove[c1][i] /= (double)(n_configs - c1 - 1) * p.n;
+      vanhove[c1][i] /= (double)(n_configs - c1 - 1) * ids.size();
     }
-    msd[c1] /= (double)(n_configs - c1 - 1) * p.n;
+    msd[c1] /= (double)(n_configs - c1 - 1) * ids.size();
   }
 
-  realloc_intlist(&p, 0);
-  return np;
+  return ids.size();
 }
 
 /****************************************************************************************
@@ -1385,13 +1091,12 @@ double calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
 
 void analyze_append(PartCfg &partCfg) {
   n_part_conf = partCfg.size();
-  configs =
-      Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
+  configs = Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
   configs[n_configs] =
       (double *)Utils::malloc(3 * n_part_conf * sizeof(double));
   int i = 0;
   for (auto const &p : partCfg) {
-    configs[n_configs][3 * i] = p.r.p[0];
+    configs[n_configs][3 * i + 0] = p.r.p[0];
     configs[n_configs][3 * i + 1] = p.r.p[1];
     configs[n_configs][3 * i + 2] = p.r.p[2];
     i++;
@@ -1410,7 +1115,7 @@ void analyze_push(PartCfg &partCfg) {
 
   int i = 0;
   for (auto const &p : partCfg) {
-    configs[n_configs - 1][3 * i] = p.r.p[0];
+    configs[n_configs - 1][3 * i + 0] = p.r.p[0];
     configs[n_configs - 1][3 * i + 1] = p.r.p[1];
     configs[n_configs - 1][3 * i + 2] = p.r.p[2];
 
@@ -1423,7 +1128,7 @@ void analyze_replace(PartCfg &partCfg, int ind) {
 
   int i = 0;
   for (auto const &p : partCfg) {
-    configs[ind][3 * i] = p.r.p[0];
+    configs[ind][3 * i + 0] = p.r.p[0];
     configs[ind][3 * i + 1] = p.r.p[1];
     configs[ind][3 * i + 2] = p.r.p[2];
 
@@ -1446,8 +1151,7 @@ void analyze_remove(int ind) {
 void analyze_configs(double *tmp_config, int count) {
   int i;
   n_part_conf = count;
-  configs =
-      Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
+  configs = Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
   configs[n_configs] =
       (double *)Utils::malloc(3 * n_part_conf * sizeof(double));
   for (i = 0; i < n_part_conf; i++) {
@@ -1488,7 +1192,8 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
                         n_dipolar + n_vsr);
 
   // Allocate mem for the double list
-  realloc_doublelist(&(stat->data), stat->data.n = total);
+  stat->data.resize(total);
+  
   // Number of doubles per interaction (pressure=1, stress tensor=9,...)
   stat->chunk_size = c_size;
 
@@ -1506,45 +1211,27 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
 
   // Set all obseravables to zero
   for (i = 0; i < total; i++)
-    stat->data.e[i] = 0.0;
+    stat->data[i] = 0.0;
 }
 
 void obsstat_realloc_and_clear_non_bonded(Observable_stat_non_bonded *stat_nb,
                                           int n_nonbonded, int c_size) {
   int i, total = c_size * (n_nonbonded + n_nonbonded);
 
-  realloc_doublelist(&(stat_nb->data_nb), stat_nb->data_nb.n = total);
+  stat_nb->data_nb.resize(total);
   stat_nb->chunk_size_nb = c_size;
   stat_nb->n_nonbonded = n_nonbonded;
   stat_nb->non_bonded_intra = stat_nb->data_nb.e;
   stat_nb->non_bonded_inter = stat_nb->non_bonded_intra + c_size * n_nonbonded;
 
   for (i = 0; i < total; i++)
-    stat_nb->data_nb.e[i] = 0.0;
+    stat_nb->data_nb[i] = 0.0;
 }
 
 void invalidate_obs() {
   total_energy.init_status = 0;
   total_pressure.init_status = 0;
-}
-
-void centermass_conf(PartCfg &partCfg, int k, int type_1, double *com) {
-  int i, j;
-  double M = 0.0;
-  com[0] = com[1] = com[2] = 0.;
-
-  for (auto const &p : partCfg) {
-    if ((p.p.type == type_1) || (type_1 == -1)) {
-      for (i = 0; i < 3; i++) {
-        com[i] += configs[k][3 * j + i] * (partCfg[j]).p.mass;
-      }
-      M += (partCfg[j]).p.mass;
-    }
-  }
-  for (i = 0; i < 3; i++) {
-    com[i] /= M;
-  }
-  return;
+  total_p_tensor.init_status = 0;
 }
 
 void update_pressure(int v_comp) {

@@ -1,6 +1,7 @@
 /* maximal set of features usable at the same time */
 #define PARTIAL_PERIODIC
 #define ELECTROSTATICS
+#define COULOMB_DEBYE_HUECKEL
 #define DIPOLES
 #define ROTATION
 #define ROTATIONAL_INERTIA
@@ -9,24 +10,21 @@
 #define CONSTRAINTS
 #define MASS
 #define EXCLUSIONS
-#define COMFORCE
-#define COMFIXED
 #define MOLFORCES
 
 #ifdef FFTW
 #define MODES
 #endif
 
-#define BOND_VIRTUAL
+#define BOND_CONSTRAINT
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
-#define ROTATION_PER_PARTICLE
 #define CATALYTIC_REACTIONS
-#define REACTION_ENSEMBLE
 
 #define NEMD
 #define NPT 
 #define GHMC
+#define DPD
 
 #define LB
 #define LB_BOUNDARIES
@@ -43,9 +41,6 @@
 #define MMM1D_GPU
 #define EWALD_GPU
 #endif
-
-#define AREA_FORCE_GLOBAL   
-#define VOLUME_FORCE   
 
 #define TABULATED
 #define LENNARD_JONES

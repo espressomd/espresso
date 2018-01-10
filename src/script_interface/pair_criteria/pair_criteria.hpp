@@ -32,7 +32,6 @@ namespace PairCriteria {
 class PairCriterion : public AutoParameters {
 public:
   PairCriterion() : m_c(new ::PairCriteria::PairCriterion()) {};
-  const std::string name() const {return "PairCriteria::PairCriterion";};
   virtual std::shared_ptr<::PairCriteria::PairCriterion> pair_criterion() const  { return m_c; }
   virtual Variant call_method(std::string const &method,
                               VariantMap const &parameters) override {
@@ -61,7 +60,6 @@ public:
                      [this]() { return m_c->get_cut_off(); }}});
   }
 
-  const std::string name() const override { return "PairCriteria::DistanceCriterion"; }
   std::shared_ptr<::PairCriteria::PairCriterion> pair_criterion() const override { return m_c; }
 
 private:
@@ -79,7 +77,6 @@ public:
                      [this]() { return m_c->get_cut_off(); }}});
   }
 
-  const std::string name() const override { return "PairCriteria::EnergyCriterion"; }
   std::shared_ptr<::PairCriteria::PairCriterion> pair_criterion() const override { return m_c; }
 
 private:
@@ -97,7 +94,6 @@ public:
                      [this]() { return m_c->get_bond_type(); }}});
   }
 
-  const std::string name() const override { return "PairCriteria::BondCriterion"; }
   std::shared_ptr<::PairCriteria::PairCriterion> pair_criterion() const override { return m_c; }
 
 private:

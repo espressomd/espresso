@@ -37,7 +37,7 @@ void reduce_and_check(const boost::mpi::communicator &comm, bool local_value) {
   if (comm.rank() == 0) {
     bool total;
     boost::mpi::reduce(comm, local_value, total, std::logical_and<bool>(), 0);
-    BOOST_CHECK(total);
+    BOOST_CHECK(total); // NOLINT
   } else {
     boost::mpi::reduce(comm, local_value, std::logical_and<bool>(), 0);
   }
@@ -198,5 +198,5 @@ BOOST_AUTO_TEST_CASE(destructor) {
 int main(int argc, char **argv) {
   boost::mpi::environment mpi_env(argc, argv);
 
-  boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

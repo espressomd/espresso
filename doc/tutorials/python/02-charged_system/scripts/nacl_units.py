@@ -18,11 +18,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from espressomd import *
-from espressomd import electrostatics
+from espressomd import System, electrostatics, assert_features
 import numpy
 
-system = espressomd.System()
+assert_features(["ELECTROSTATICS", "MASS", "LENNARD_JONES"])
+
+system = System()
 
 print("\n--->Setup system")
 
@@ -37,7 +38,7 @@ gamma = 4.55917
 #l_bjerrum = 0.885^2 * e^2/(4*pi*epsilon_0*k_B*T)
 l_bjerrum = 130878.0 / temp
 
-num_steps_equilibration = 3000
+num_steps_equilibration = 9000
 num_configs = 50
 integ_steps_per_config = 500
 
@@ -106,10 +107,10 @@ system.actors.add(p3m)
 
 print("\n--->Temperature Equilibration")
 system.time = 0.0
-for i in range(num_steps_equilibration/100):
+for i in range(int(num_steps_equilibration/100)):
     energy = system.analysis.energy()
     temp_measured = energy['kinetic'] / ((3.0 / 2.0) * n_part)
-    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T={3:.4f}".format(system.time,
+    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
                                        energy['total'],
                                        energy['coulomb'],
                                        temp_measured))
@@ -120,7 +121,7 @@ system.time = 0.0
 for i in range(num_configs):
     energy = system.analysis.energy()
     temp_measured = energy['kinetic'] / ((3.0 / 2.0) * n_part)
-    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T={3:.4f}".format(system.time,
+    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
                                        energy['total'],
                                        energy['coulomb'],
                                        temp_measured))

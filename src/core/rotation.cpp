@@ -45,7 +45,6 @@
 #include "particle_data.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
-#include "verlet.hpp"
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -194,11 +193,20 @@ void propagate_omega_quat_particle(Particle *p) {
   double lambda;
 
   double Qd[4], Qdd[4], S[3], Wd[3];
-#ifdef ROTATION_PER_PARTICLE
+  // If rotation for the particle is disabled entirely, return early.
   if (!p->p.rotation)
     return;
-#endif
 
+  // Clear rotational velocity for blocked rotation axes.
+  if (! (p->p.rotation & ROTATION_X))
+    p->m.omega[0]=0;
+  if (! (p->p.rotation & ROTATION_Y))
+    p->m.omega[1]=0;
+  if (! (p->p.rotation & ROTATION_Z))
+    p->m.omega[2]=0;
+
+
+  
   define_Qdd(p, Qd, Qdd, S, Wd);
 
   lambda = 1 - S[0] * time_step_squared_half -
@@ -251,10 +259,10 @@ void convert_torques_propagate_omega() {
 #endif
 
   for (auto &p : local_cells.particles()) {
-#ifdef ROTATION_PER_PARTICLE
+    // Skip particle if rotation is turned off entirely for it.
     if (!p.p.rotation)
       continue;
-#endif
+    
     double A[9];
     define_rotation_matrix(&p, A);
 
@@ -282,17 +290,15 @@ void convert_torques_propagate_omega() {
       p.f.torque[2] = tz;
     }
 
-#ifdef ROTATION_PER_PARTICLE
-    if (!(p.p.rotation & 2))
+    if (!(p.p.rotation & ROTATION_X))
       p.f.torque[0] = 0;
 
-    if (!(p.p.rotation & 4))
+    if (!(p.p.rotation & ROTATION_Y))
       p.f.torque[1] = 0;
 
-    if (!(p.p.rotation & 8))
+    if (!(p.p.rotation & ROTATION_Z))
       p.f.torque[2] = 0;
 
-#endif
 
 #if defined(ENGINE) && (defined(LB) || defined(LB_GPU))
     double omega_swim[3] = {0, 0, 0};
@@ -390,10 +396,8 @@ void convert_initial_torques() {
 
   INTEG_TRACE(fprintf(stderr, "%d: convert_initial_torques:\n", this_node));
   for (auto &p : local_cells.particles()) {
-#ifdef ROTATION_PER_PARTICLE
     if (!p.p.rotation)
       continue;
-#endif
     double A[9];
     define_rotation_matrix(&p, A);
 
@@ -416,17 +420,15 @@ void convert_initial_torques() {
       p.f.torque[2] = tz;
     }
 
-#ifdef ROTATION_PER_PARTICLE
-    if (!(p.p.rotation & 2))
+    if (!(p.p.rotation & ROTATION_X))
       p.f.torque[0] = 0;
 
-    if (!(p.p.rotation & 4))
+    if (!(p.p.rotation & ROTATION_Y))
       p.f.torque[1] = 0;
 
-    if (!(p.p.rotation & 8))
+    if (!(p.p.rotation & ROTATION_Z))
       p.f.torque[2] = 0;
 
-#endif
 
     ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
         stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
@@ -436,7 +438,7 @@ void convert_initial_torques() {
 
 /** convert from the body-fixed frames to space-fixed coordinates */
 
-void convert_omega_body_to_space(Particle *p, double *omega) {
+void convert_omega_body_to_space(const Particle *p, double *omega) {
   double A[9];
   define_rotation_matrix(p, A);
 
@@ -448,7 +450,23 @@ void convert_omega_body_to_space(Particle *p, double *omega) {
              A[2 + 3 * 2] * p->m.omega[2];
 }
 
-void convert_torques_body_to_space(Particle *p, double *torque) {
+Vector3d convert_vector_body_to_space(const Particle& p, const Vector3d& vec) {
+  Vector3d res={0,0,0};
+  double A[9];
+  define_rotation_matrix(&p, A);
+
+  res[0] = A[0 + 3 * 0] * vec[0] + A[1 + 3 * 0] * vec[1] +
+             A[2 + 3 * 0] * vec[2];
+  res[1] = A[0 + 3 * 1] * vec[0] + A[1 + 3 * 1] * vec[1] +
+             A[2 + 3 * 1] * vec[2];
+  res[2] = A[0 + 3 * 2] * vec[0] + A[1 + 3 * 2] * vec[1] +
+             A[2 + 3 * 2] * vec[2];
+  
+  return res;
+}
+
+
+void convert_torques_body_to_space(const Particle *p, double *torque) {
   double A[9];
   define_rotation_matrix(p, A);
 
@@ -460,7 +478,7 @@ void convert_torques_body_to_space(Particle *p, double *torque) {
               A[2 + 3 * 2] * p->f.torque[2];
 }
 
-void convert_vel_space_to_body(Particle *p, double *vel_body) {
+void convert_vel_space_to_body(const Particle *p, double *vel_body) {
   double A[9];
   define_rotation_matrix(p, A);
 
@@ -482,7 +500,7 @@ void convert_vec_space_to_body(Particle *p, double *v, double *res) {
 }
 
 /** Multiply two quaternions */
-void multiply_quaternions(double a[4], double b[4], double result[4]) {
+void multiply_quaternions(double const a[4], double const b[4], double result[4]) {
   // Formula from http://www.j3d.org/matrix_faq/matrfaq_latest.html
   result[0] = a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3];
   result[1] = a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2];
@@ -497,19 +515,17 @@ void rotate_particle(Particle *p, double *aSpaceFrame, double phi) {
   double a[3];
   convert_vec_space_to_body(p, aSpaceFrame, a);
 
-// Apply restrictions from the rotation_per_particle feature
-#ifdef ROTATION_PER_PARTICLE
   //  printf("%g %g %g - ",a[0],a[1],a[2]);
   // Rotation turned off entirely?
-  if (p->p.rotation < 2)
+  if (!p->p.rotation)
     return;
 
   // Per coordinate fixing
-  if (!(p->p.rotation & 2))
+  if (!(p->p.rotation & ROTATION_X))
     a[0] = 0;
-  if (!(p->p.rotation & 4))
+  if (!(p->p.rotation & ROTATION_Y))
     a[1] = 0;
-  if (!(p->p.rotation & 8))
+  if (!(p->p.rotation & ROTATION_Z))
     a[2] = 0;
   // Re-normalize rotation axis
   double l = sqrt(sqrlen(a));
@@ -519,9 +535,6 @@ void rotate_particle(Particle *p, double *aSpaceFrame, double phi) {
 
   for (int i = 0; i < 3; i++)
     a[i] /= l;
-//  printf("%g %g %g\n",a[0],a[1],a[2]);
-
-#endif
 
   double q[4];
   q[0] = cos(phi / 2);

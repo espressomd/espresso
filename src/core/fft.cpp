@@ -191,7 +191,9 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
     /* DEBUG */
     for(j=0;j<n_nodes;j++) {
       /* MPI_Barrier(comm_cart); */
-      if(j==this_node) FFT_TRACE(fft_print_fft_plan(fft.plan[i]));
+      if(j==this_node) {
+        FFT_TRACE(fft_print_fft_plan(fft.plan[i]));
+      }
     }
   }
 
@@ -245,8 +247,8 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
 //printf("fft.plan[%d].n_ffts=%d\n",i,fft.plan[i].n_ffts);
     fft.plan[i].our_fftw_plan =
       fftw_plan_many_dft(1,&fft.plan[i].new_mesh[2],fft.plan[i].n_ffts,
-                         c_data,NULL,1,fft.plan[i].new_mesh[2],
-                         c_data,NULL,1,fft.plan[i].new_mesh[2],
+                         c_data,nullptr,1,fft.plan[i].new_mesh[2],
+                         c_data,nullptr,1,fft.plan[i].new_mesh[2],
                          fft.plan[i].dir,FFTW_PATIENT);
 
     fft.plan[i].fft_function = fftw_execute;       
@@ -260,8 +262,8 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
     if(fft.init_tag==1) fftw_destroy_plan(fft.back[i].our_fftw_plan);
     fft.back[i].our_fftw_plan =
       fftw_plan_many_dft(1,&fft.plan[i].new_mesh[2],fft.plan[i].n_ffts,
-                         c_data,NULL,1,fft.plan[i].new_mesh[2],
-                         c_data,NULL,1,fft.plan[i].new_mesh[2],
+                         c_data,nullptr,1,fft.plan[i].new_mesh[2],
+                         c_data,nullptr,1,fft.plan[i].new_mesh[2],
                          fft.back[i].dir,FFTW_PATIENT);
 
     fft.back[i].fft_function = fftw_execute;
@@ -335,7 +337,7 @@ void fft_perform_forw(double *data)
   /* REMARK: Result has to be in data. */
 }
 
-void fft_perform_back(double *data)
+void fft_perform_back(double *data, bool check_complex)
 {
   int i;
   
@@ -366,14 +368,13 @@ void fft_perform_back(double *data)
   for(i=0;i<fft.plan[1].new_size;i++) {
     fft.data_buf[i] = data[2*i]; /* real value */
     //Vincent:
-    if (data[2*i+1]>1e-5) {
+    if (check_complex && (data[2*i+1]>1e-5)) {
       printf("Complex value is not zero (i=%d,data=%g)!!!\n",i,data[2*i+1]);
       if (i>100) errexit();
       } 
   }
   /* communicate (in is fft.data_buf) */
   fft_back_grid_comm(fft.plan[1],fft.back[1],fft.data_buf,data);
-
 
   /* REMARK: Result has to be in data. */
 }

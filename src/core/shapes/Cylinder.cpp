@@ -53,10 +53,10 @@ int Cylinder::calculate_dist(const double *ppos, double *dist,
   d_par = fabs(d_par);
 
   if (m_direction == -1) {
-    /*apply force towards inside cylinder */
+    /* apply force towards inside cylinder */
     d_per = m_rad - d_per;
     d_par = half_length - d_par;
-    if (d_per < d_par) {
+    if (d_per < d_par or m_open) {
       *dist = d_per;
       for (int i = 0; i < 3; i++) {
         vec[i] = -d_per_vec[i] * d_per / (m_rad - d_per);
@@ -68,7 +68,7 @@ int Cylinder::calculate_dist(const double *ppos, double *dist,
       }
     }
   } else {
-    /*apply force towards outside cylinder */
+    /* apply force towards outside cylinder */
     d_per = d_per - m_rad;
     d_par = d_par - half_length;
     if (d_par < 0) {

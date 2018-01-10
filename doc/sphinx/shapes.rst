@@ -1,7 +1,9 @@
 .. _Setting up shapes:
 
+=================
 Setting up shapes
-*****************
+=================
+
 In order to use shapes you first have to import the :mod:`espressomd.shapes`
 module. This module provides classes for the different available shapes::
 
@@ -9,7 +11,13 @@ module. This module provides classes for the different available shapes::
 
 Shapes define geometries which can be used in |es| either as
 constraints in particle interactions or as a boundary for a
-Lattice-Boltzmann fluid.
+Lattice-Boltzmann fluid. 
+
+To avoid unexpected behaviour make sure all parts of your shape are 
+within the central box since the distance to the shape is calculated only 
+within the central box. If parts of the shape are placed 
+outside of the central box these parts are truncated by the box boundaries. This may 
+or may not be desired as for example in the case of a cylinder without or with cylinder cover. 
 
 Creating different shapes
 =========================
@@ -30,6 +38,8 @@ Available shapes are listed below.
     - :class:`espressomd.shapes.SpheroCylinder`
     - :class:`espressomd.shapes.Stomatocyte`
 
+
+.. _Using shapes as constraints:
 
 Using shapes as constraints
 ===========================
@@ -102,5 +112,3 @@ you could do the following::
     wall = espressomd.shapes.Wall(dist=5, normal=[1,0,0])
     lbb = espressomd.lbboundaries.LBBoundary(shape=wall, velocity=[0,0,0])
     system.lbboundaries.add(lbb)
-
-

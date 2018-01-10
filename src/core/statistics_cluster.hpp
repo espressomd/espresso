@@ -22,11 +22,7 @@
 #define STATISTICS_CLUSTER_H
 /** \file statistics_cluster.hpp
  *
- *  1: This file contains the necklace cluster algorithm. It can be used
- *  to identify the substructures 'pearls' and 'strings' on a linear
- *  chain.
- *
- *  2: mesh based cluster algorithm to identify hole spaces 
+ *  mesh based cluster algorithm to identify hole spaces 
  *  (see thesis chapter 3 of H. Schmitz for details) 
  */
 
@@ -71,7 +67,7 @@ typedef struct StructCluster Cluster;
 /************************************************************/
 /*@{*/
 
-/** NULL terminated linked list of elements of a cluster (indices in particle list) */
+/** nullptr terminated linked list of elements of a cluster (indices in particle list) */
 extern ClusterElement *element;
 /** Double linked list of \ref statistics_cluster::Cluster */
 extern Cluster        *cluster;
@@ -80,18 +76,7 @@ extern Cluster        *first_cluster;
 /** last cluster in list of \ref statistics_cluster::Cluster */
 extern Cluster        *last_cluster;
 
-/** parameter of necklace cluster algorithm */
-extern int    backbone_distance;
-/** parameter of necklace cluster algorithm */
-extern double space_distance2;
-/** parameter of necklace cluster algorithm */
-extern int    pearl_treshold;
-
-/*@}*/
-
-void cluster_free();
 void create_free_volume_grid(IntList mesh, int dim[3], int probe_part_type);
-int analyze_necklace(Particle *part, int np);
 int cluster_free_volume_grid(IntList mesh, int dim[3], int ***holes);
 void cluster_free_volume_surface(IntList mesh, int dim[3], int nholes, int **holes, int *surface);
 

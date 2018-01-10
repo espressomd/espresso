@@ -1,4 +1,5 @@
 set(EspressoScriptInterface_SRC
+    "${CMAKE_CURRENT_SOURCE_DIR}/accumulators/initialize.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/initialize.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/constraints/initialize.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/cluster_analysis/initialize.cpp"
@@ -15,14 +16,13 @@ set(EspressoScriptInterface_SRC
 )
 
 if(H5MD)
-    list(APPEND EspressoScriptInterface_SRC 
+    list(APPEND EspressoScriptInterface_SRC
         "${CMAKE_CURRENT_SOURCE_DIR}/h5md/initialize.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/h5md/h5md.cpp"
         )
     endif(H5MD)
 
 if( WITH_COVERAGE )
-  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage -fprofile-arcs -ftest-coverage")
   link_libraries(gcov)
 endif()
@@ -31,7 +31,6 @@ add_library(EspressoScriptInterface SHARED ${EspressoScriptInterface_SRC})
 install(TARGETS EspressoScriptInterface LIBRARY DESTINATION ${LIBDIR})
 set_target_properties(EspressoScriptInterface PROPERTIES SOVERSION ${SOVERSION})
 add_dependencies(EspressoScriptInterface EspressoConfig EspressoConfig)
-set_target_properties(EspressoScriptInterface PROPERTIES MACOSX_RPATH TRUE)
 target_link_libraries(EspressoScriptInterface EspressoCore)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

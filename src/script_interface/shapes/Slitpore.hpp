@@ -40,8 +40,6 @@ public:
          {"pore_length", m_slitpore->pore_length()}});
   }
 
-  const std::string name() const override { return "Shapes::Slitpore"; }
-
   std::shared_ptr<::Shapes::Shape> shape() const override { return m_slitpore; }
 
 private:

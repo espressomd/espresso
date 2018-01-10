@@ -58,8 +58,11 @@ __global__ void p3m_k_space_error_gpu_kernel_ik(int3 mesh, double3 meshi, double
     const double ex = exp(-(PI*alpha_L_i)*(PI*alpha_L_i)*n2);
     const double ex2 = sqr( ex );
     const double U2 = int_pow<2*cao>(csinc(meshi.x*nx)*csinc(meshi.y*ny)*csinc(meshi.z*nz));
+    auto const alias1 = ex2/n2;
+    auto const d = alias1  -  sqr(U2*ex/cs) / n2;
 
-    he_q[lind] = ex2/n2  -  sqr(U2*ex/cs) / n2;    
+    if(d > 0 && (d / alias1 > ROUND_ERROR_PREC))
+      he_q[lind] = d; 
   } else {
     he_q[lind] = 0;
   }
@@ -67,8 +70,6 @@ __global__ void p3m_k_space_error_gpu_kernel_ik(int3 mesh, double3 meshi, double
 
 __global__ void p3m_k_space_error_gpu_kernel_ad(int3 mesh, double3 meshi, int cao, double alpha_L, double * he_q)
 {
-
-
   int  nx = -mesh.x/2 + blockDim.x*blockIdx.x + threadIdx.x;
   int  ny = -mesh.y/2 + blockDim.y*blockIdx.y + threadIdx.y;
   int  nz = -mesh.z/2 + blockDim.z*blockIdx.z + threadIdx.z;
@@ -229,7 +230,7 @@ __global__ void p3m_k_space_error_gpu_kernel_ad_i(int3 mesh, double3 meshi, int 
 	   alias5 -= U2 * n2;
 	   alias6 -= U2;
 	 }
-
+      
 
 	}
       }
@@ -247,13 +248,11 @@ double p3m_k_space_error_gpu(double prefactor, int *mesh, int cao, int npart, do
   
   const size_t mesh_size = mesh[0]*mesh[1]*mesh[2];
 
-  if(mesh_size > he_q.size()) {
-    he_q.resize(mesh_size);
-  }
-  
-  dim3 grid(max(1, mesh[0]/8 + 1),
-            max(1, mesh[1]/8 + 1),
-            max(1, mesh[2]/8 + 1));
+  he_q.resize(mesh_size);
+
+  dim3 grid(std::max<int>(1, mesh[0]/8 + 1),
+            std::max<int>(1, mesh[1]/8 + 1),
+            std::max<int>(1, mesh[2]/8 + 1));
   
   dim3 block(8,8,8);
   
@@ -266,12 +265,7 @@ double p3m_k_space_error_gpu(double prefactor, int *mesh, int cao, int npart, do
   meshi.x = 1./mesh[0];
   meshi.y = 1./mesh[1];
   meshi.z = 1./mesh[2];
-
-  // printf("mesh %d %d %d, grid %d %d %d\n",
-  //        mesh3.x, mesh3.y, mesh3.z,
-  //        grid.x, grid.y, grid.z);
-
-
+  
   switch(cao) {
     case 1:
       KERNELCALL(p3m_k_space_error_gpu_kernel_ik<1>,grid,block,(mesh3, meshi, alpha_L,  thrust::raw_pointer_cast(he_q.data())));
@@ -296,7 +290,7 @@ double p3m_k_space_error_gpu(double prefactor, int *mesh, int cao, int npart, do
       break;
   }
   
-  const double he_q_final = thrust::reduce(he_q.begin(), he_q.end());
-  
+  auto const he_q_final = thrust::reduce(he_q.begin(), he_q.end());
+
   return 2.0*prefactor*sum_q2*sqrt( he_q_final / npart) / (box[1]*box[2]);
 }

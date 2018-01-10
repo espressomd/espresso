@@ -18,13 +18,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from espressomd import *
-from espressomd.shapes import *
-from espressomd import electrostatics
-from espressomd import electrostatic_extensions
+from espressomd import System, electrostatics, electrostatic_extensions, assert_features
+from espressomd.shapes import Wall
 import numpy
 
-system = espressomd.System()
+assert_features(["ELECTROSTATICS", "CONSTRAINTS", "MASS", "LENNARD_JONES"])
+
+system = System()
 
 print("\n--->Setup system")
 
@@ -40,7 +40,7 @@ l_bjerrum = 130878.0 / temp
 #[E]=k_b*K/e/A
 #Ez = U[V]/(8.61733e-5*box_l)
 #Ez=465.116 -> 1V
-Ez=6976.74
+Ez=465.116
 
 num_steps_equilibration = 3000
 num_configs = 500
@@ -75,11 +75,11 @@ system.constraints.add(shape=Wall(dist=0,normal=[0,0,1]),particle_type=types["El
 system.constraints.add(shape=Wall(dist=-box_z,normal=[0,0,-1]),particle_type=types["Electrode"])
 
 # Place particles
-for i in range(n_ionpairs):
+for i in range(int(n_ionpairs)):
     p = numpy.random.random(3)*box_l
     p[2] += lj_sigmas["Electrode"]
     system.part.add(id=len(system.part), type=types["Cl"],  pos=p, q=charges["Cl"], mass=masses["Cl"])
-for i in range(n_ionpairs):
+for i in range(int(n_ionpairs)):
     p = numpy.random.random(3)*box_l
     p[2] += lj_sigmas["Electrode"]
     system.part.add(id=len(system.part), type=types["Na"],  pos=p, q=charges["Na"], mass=masses["Na"])
@@ -108,11 +108,11 @@ for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"], ["Na", "Electrode"], ["Cl", 
 
 
 energy = system.analysis.energy()
-print "Before Minimization: E_total=", energy['total']
+print("Before Minimization: E_total=", energy['total'])
 system.minimize_energy.init(f_max = 10, gamma = 50.0, max_steps = 1000, max_displacement= 0.2)
 system.minimize_energy.minimize()
 energy = system.analysis.energy()
-print "After Minimization: E_total=", energy['total']
+print("After Minimization: E_total=", energy['total'])
 
 print("\n--->Tuning Electrostatics")
 p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-2)
@@ -125,10 +125,10 @@ for p in system.part:
 
 print("\n--->Temperature Equilibration")
 system.time = 0.0
-for i in range(num_steps_equilibration/100):
+for i in range(int(num_steps_equilibration/100)):
     energy = system.analysis.energy()
     temp_measured = energy['kinetic'] / ((3.0 / 2.0) * n_part)
-    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T={3:.4f}".format(system.time,
+    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
                                        energy['total'],
                                        energy['coulomb'],
                                        temp_measured))
@@ -144,7 +144,7 @@ cnt = 0
 
 for i in range(num_configs):
     temp_measured = system.analysis.energy()['kinetic'] / ((3.0 / 2.0) * n_part)
-    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T={3:.4f}".format(system.time,
+    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
                                        system.analysis.energy()['total'],
                                        system.analysis.energy()['coulomb'],
                                        temp_measured))

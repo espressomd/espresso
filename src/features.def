@@ -19,18 +19,13 @@ EXTERNAL_FORCES
 CONSTRAINTS
 MASS
 EXCLUSIONS
-COMFORCE
-COMFIXED
 MOLFORCES
 BOND_CONSTRAINT
 MODES                           requires FFTW
-BOND_VIRTUAL
 LANGEVIN_PER_PARTICLE
 COLLISION_DETECTION             implies GHOSTS_HAVE_BONDS
-LEES_EDWARDS                    implies DPD
 LEES_EDWARDS                    requires not ELECTROSTATICS and not LB and not PARTIAL_PERIODIC
 METADYNAMICS
-REACTION_ENSEMBLE
 NEMD
 NPT
 GHMC
@@ -42,8 +37,6 @@ PARTICLE_ANISOTROPY
 /* Rotation */
 ROTATION
 ROTATIONAL_INERTIA              implies ROTATION
-BOND_CONSTRAINT                 requires not ROTATION
-ROTATION_PER_PARTICLE           implies ROTATION
 
 /* Electrostatics */
 ELECTROSTATICS
@@ -72,15 +65,7 @@ THERMOSTAT_IGNORE_NON_VIRTUAL   implies VIRTUAL_SITES_THERMOSTAT
 
 /* DPD features */
 DPD
-TRANS_DPD                       implies DPD
-DPD_MASS_RED                    requires not DPD_MASS_LIN
-DPD_MASS_LIN                    requires not DPD_MASS_RED
-DPD_MASS                        equals DPD_MASS_RED or DPD_MASS_LIN
-DPD_MASS                        implies MASS, DPD
-TUNABLE_SLIP                    implies DPD
-
-/* Alternative implementation of DPD */
-INTER_DPD
+TUNABLE_SLIP
 
 /* Lattice-Boltzmann features */
 LB
@@ -92,8 +77,6 @@ ELECTROKINETICS                 implies LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
 ELECTROKINETICS                 requires CUDA
 EK_BOUNDARIES                   implies ELECTROKINETICS, LB_GPU, LB_BOUNDARIES_GPU, CONSTRAINTS, EXTERNAL_FORCES, ELECTROSTATICS
 EK_BOUNDARIES                   requires CUDA
-EK_REACTION                     implies ELECTROKINETICS, LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
-EK_REACTION                     requires CUDA
 EK_ELECTROSTATIC_COUPLING       implies ELECTROKINETICS, LB_GPU, ELECTROSTATICS
 EK_ELECTROSTATIC_COUPLING       requires CUDA and FFTW
 EK_DEBUG                        requires ELECTROKINETICS
@@ -102,14 +85,6 @@ LATTICE                         equals LB or LB_GPU
 SHANCHEN                        implies LB_GPU
 SHANCHEN                        requires not ELECTROKINETICS
 
-/* Stokesian-Dynamics features */
-BD
-SD                              requires CUDA
-SD                              requires ARPACK
-SD                              implies BD
-SD_FF_ONLY                      requires SD
-SD_USE_FLOAT                    requires SD
-SD_NOT_PERIODIC                 requires SD
 
 /* Interaction features */
 TABULATED
@@ -163,7 +138,7 @@ SCAFACOS_DIPOLES                requires SCAFACOS
 SCAFACOS_DIPOLES                implies DIPOLES
 SCAFACOS                        requires ELECTROSTATICS
 
-// Shape of the noise in ther (Langevin) thermostat
+// Shape of the noise in the (Langevin) thermostat
 FLATNOISE                       requires not GAUSSRANDOM and not GAUSSRANDOM_CUT
 GAUSSRANDOM                     requires not FLATNOISE and not GAUSSRANDOM_CUT
 GAUSSRANDOMCUT                  requires not GAUSSRANDOM and not FLATNOISE
@@ -180,7 +155,6 @@ GHOSTS_HAVE_BONDS               notest
 
 /* Debugging */
 ADDITIONAL_CHECKS
-ASYNC_BARRIER
 
 ESIF_DEBUG
 COMM_DEBUG
@@ -216,8 +190,6 @@ SD_DEBUG
 CUDA_DEBUG
 H5MD_DEBUG
 
-MPI_CORE
-FORCE_CORE
 
 /* Single particle debugging */
 ONEPART_DEBUG
@@ -228,7 +200,6 @@ ONEPART_DEBUG
 # Switches that are set by configure or gcc, not to be set manually
 CUDA external
 FFTW external
-TK   external
 H5MD external
 SCAFACOS external
 GSL external

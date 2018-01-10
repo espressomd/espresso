@@ -27,9 +27,12 @@
 #ifdef H5MD
 #include "h5md/initialize.hpp"
 #endif
-#include "observables/initialize.hpp" 
+#include "observables/initialize.hpp"
+#include "accumulators/initialize.hpp"
 #include "correlators/initialize.hpp" 
 #include "lbboundaries/initialize.hpp"
+
+#include "ComFixed.hpp"
 
 #include "ParallelScriptInterface.hpp"
 #include "VariantTester.hpp"
@@ -46,6 +49,7 @@ void initialize() {
 #ifdef H5MD
   Writer::initialize();
 #endif
+  Accumulators::initialize();
   Observables::initialize();
   ClusterAnalysis::initialize();
   Correlators::initialize();
@@ -53,6 +57,7 @@ void initialize() {
   PairCriteria::initialize();
 
   ScriptInterface::register_new<Testing::VariantTester>("Testing::VariantTester");
+  ScriptInterface::register_new<ComFixed>("ComFixed");
 }
 
 } /* namespace ScriptInterface */

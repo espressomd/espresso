@@ -5,11 +5,11 @@ matrix:
     - os: linux
       sudo: required
       services: docker
-      env: myconfig=default
+      env: myconfig=default with_coverage=true
     - os: linux
       sudo: required
       services: docker
-      env: myconfig=maxset
+      env: myconfig=maxset with_coverage=true
     - os: linux
       sudo: required
       services: docker
@@ -39,19 +39,15 @@ matrix:
     - os: linux
       sudo: required
       services: docker
-      env: myconfig=rest1
+      env: myconfig=rest1 with_coverage=true
     - os: linux
       sudo: required
       services: docker
-      env: myconfig=rest2
+      env: myconfig=rest2 with_coverage=true
     - os: linux
       sudo: required
       services: docker
       env: myconfig=nocheck-maxset make_check=false
-    - os: linux
-      sudo: required
-      services: docker
-      env: myconfig=maxset with_coverage=true
 
 script:
         - maintainer/travis/build_docker.sh

@@ -55,11 +55,11 @@ public:
     std::copy(std::begin(v), std::end(v), d.begin());
   }
 
-  template <typename T> explicit Vector(T const (&v)[n]) {
+  explicit Vector(Scalar const(&v)[n]) {
     std::copy(std::begin(v), std::end(v), d.begin());
   }
 
-  explicit Vector(std::initializer_list<Scalar> v) {
+  Vector(std::initializer_list<Scalar> v) {
     /* Convert to static_assert in C++14 */
     assert(v.size() == n);
     std::copy(std::begin(v), std::end(v), d.begin());
@@ -161,8 +161,9 @@ Vector<N, T> binary_op(Vector<N, T> const &a, Vector<N, T> const &b, Op op) {
 }
 
 template <size_t N, typename T, typename Op>
-void binary_op_assign(Vector<N, T> &a, Vector<N, T> const &b, Op op) {
+Vector<N, T> & binary_op_assign(Vector<N, T> &a, Vector<N, T> const &b, Op op) {
   std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(a), op);
+  return a;
 }
 
 template <size_t N, typename T, typename Op>
@@ -214,7 +215,7 @@ Vector<N, T> operator+(Vector<N, T> const &a, Vector<N, T> const &b) {
 }
 
 template <size_t N, typename T>
-void operator+=(Vector<N, T> &a, Vector<N, T> const &b) {
+Vector<N, T> & operator+=(Vector<N, T> &a, Vector<N, T> const &b) {
   return detail::binary_op_assign(a, b, std::plus<T>());
 }
 
@@ -223,8 +224,17 @@ Vector<N, T> operator-(Vector<N, T> const &a, Vector<N, T> const &b) {
   return detail::binary_op(a, b, std::minus<T>());
 }
 
+template <size_t N, typename T> Vector<N, T> operator-(Vector<N, T> const &a) {
+  Vector<N, T> ret;
+
+  std::transform(a.begin(), a.end(), ret.begin(),
+                 [](T const &v) { return -v; });
+
+  return ret;
+}
+
 template <size_t N, typename T>
-void operator-=(Vector<N, T> &a, Vector<N, T> const &b) {
+Vector<N, T> & operator-=(Vector<N, T> &a, Vector<N, T> const &b) {
   return detail::binary_op_assign(a, b, std::minus<T>());
 }
 
@@ -238,19 +248,22 @@ Vector<N, T> operator*(T const &a, Vector<N, T> const &b) {
 
   return ret;
 }
+
 template <size_t N, typename T>
-Vector<N, T> operator*(Vector<N, T> const &a, T const &b) {
+Vector<N, T> operator*(Vector<N, T> const &b, T const &a) {
   Vector<N, T> ret;
 
-  std::transform(a.begin(), a.end(), ret.begin(),
-                 [b](T const &val) { return b * val; });
+  std::transform(b.begin(), b.end(), ret.begin(),
+                 [a](T const &val) { return a * val; });
 
   return ret;
 }
 
-template <size_t N, typename T> void operator*=(T const &a, Vector<N, T> &b) {
+template <size_t N, typename T>
+Vector<N, T> &operator*=(Vector<N, T> &b, T const &a) {
   std::transform(b.begin(), b.end(), b.begin(),
                  [a](T const &val) { return a * val; });
+  return b;
 }
 
 /* Scalar division */
@@ -263,15 +276,28 @@ Vector<N, T> operator/(Vector<N, T> const &a, T const &b) {
   return ret;
 }
 
-template <size_t N, typename T> void operator/=(Vector<N, T> &a, T const &b) {
+template <size_t N, typename T>
+Vector<N, T> &operator/=(Vector<N, T> &a, T const &b) {
   std::transform(a.begin(), a.end(), a.begin(),
                  [b](T const &val) { return val / b; });
+  return a;
 }
 
 /* Scalar product */
 template <size_t N, typename T>
 T operator*(Vector<N, T> const &a, Vector<N, T> const &b) {
   return std::inner_product(a.begin(), a.end(), b.begin(), T{});
+}
+
+/* Componentwise square route */
+template <size_t N, typename T> Vector<N, T> sqrt(Vector<N, T> const &a) {
+  using std::sqrt;
+  Vector<N, T> ret;
+
+  std::transform(a.begin(), a.end(), ret.begin(),
+                 [](T const &v) { return sqrt(v); });
+
+  return ret;
 }
 
 #endif

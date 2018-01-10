@@ -28,9 +28,8 @@ cdef class GalileiTransform(object):
 
         Parameters
         ----------
-
-        rotation : integer, optional
-            Whether or not to kill the rotations too.
+        rotation : :obj:`int`, optional
+                   Whether or not to kill the rotations too.
 
         """
         mpi_kill_particle_motion(rotation)
@@ -41,9 +40,8 @@ cdef class GalileiTransform(object):
 
         Parameters
         ----------
-
-        torque :   integer, optional
-            Whether or not to kill the torques on all particles too.
+        torque : :obj:`int`, optional
+                 Whether or not to kill the torques on all particles too.
 
         """
         mpi_kill_particle_forces(torque)
@@ -53,21 +51,23 @@ cdef class GalileiTransform(object):
         Calculate the center of mass of the system. Assumes equal unit mass if the mass feature is not used.
         
         Returns
-        ----------
-        cms :  list
-            The of the center of mass position vector as a list of floats 
+        -------
+        cms : :obj:`list`
+              The of the center of mass position vector as a list of floats. 
+
         """
         mpi_system_CMS()
         return gal.cms
 
     def system_CMS_velocity(self):
         """ 
-        Calculate the center of mass velocity of the system. Assumes equal unit mass if the mass feature is not used.
+        Calculate the center of mass velocity of the system. Assumes equal unit
+        mass if the mass feature is not used.
 
         Returns
-        ----------
-        cms_vel :  list of floats
-            The of the center of mass velocity vector as a list of floats 
+        -------
+        cms_vel : :obj:`list` of :obj:`float`
+                  The of the center of mass velocity vector as a list of floats 
 
         """
 
@@ -76,7 +76,11 @@ cdef class GalileiTransform(object):
 
     def galilei_transform(self):
         """ 
-        Remove the center of mass velocity of the system. Assumes equal unit mass if the mass feature is not used. This is often used when switching from Langevin Dynamics to Lattice Boltzmann. This is due to the random nature of LD that yield a non-zero net system momentum at any given time.
+        Remove the center of mass velocity of the system. Assumes equal unit
+        mass if the mass feature is not used. This is often used when switching
+        from Langevin Dynamics to Lattice Boltzmann. This is due to the random
+        nature of LD that yield a non-zero net system momentum at any given
+        time.
 
         """
         mpi_galilei_transform()

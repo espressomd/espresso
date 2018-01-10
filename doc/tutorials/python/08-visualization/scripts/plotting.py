@@ -50,7 +50,7 @@ system.box_l = [box_l, box_l, box_l]
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
     cutoff=lj_cut, shift="auto")
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 
 # Particle setup
 #############################################################
@@ -61,7 +61,7 @@ n_part = int(volume * density)
 for i in range(n_part):
     system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
 
-system.analysis.distto(0)
+system.analysis.dist_to(0)
 act_min_dist = system.analysis.mindist()
 system.cell_system.max_num_cells = 2744
 
@@ -71,7 +71,7 @@ system.cell_system.max_num_cells = 2744
 
 # set LJ cap
 lj_cap = 20
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 
 # Warmup Integration Loop
 i = 0
@@ -83,7 +83,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
 
 #   Increase LJ cap
     lj_cap = lj_cap + 10
-    system.non_bonded_inter.set_force_cap(lj_cap)
+    system.force_cap = lj_cap
 
 #############################################################
 #      Integration                                          #
@@ -91,7 +91,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
 
 # remove force capping
 lj_cap = 0
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 
 energies = numpy.empty((int_steps,2))
 current_time = -1
@@ -99,6 +99,7 @@ pyplot.xlabel("time")
 pyplot.ylabel("energy")
 plot, = pyplot.plot([0],[0])
 pyplot.show(block=False)
+
 def update_plot():
     if current_time < 0:
         return
@@ -108,6 +109,8 @@ def update_plot():
     pyplot.xlim(0, energies[i,0])
     pyplot.ylim(energies[:i+1,1].min(), energies[:i+1,1].max())
     pyplot.draw()
+    pyplot.pause(0.01)
+
 def main():
     global current_time
     for i in range(0, int_n_times):
@@ -116,9 +119,10 @@ def main():
         energies[i] = (system.time, system.analysis.energy()['total'])
         current_time = i
         update_plot()
+
 main()
 
-print ("Average energy: %6g" % energies[:,1].mean())
+print("Average energy: %6g" % energies[:,1].mean())
 
 # terminate program
 print("\nFinished.")

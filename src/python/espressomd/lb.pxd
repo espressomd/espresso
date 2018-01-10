@@ -19,6 +19,7 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from libcpp cimport bool
+from libcpp.vector cimport vector
 from .actors cimport Actor
 
 cdef class HydrodynamicInteraction(Actor):
@@ -83,6 +84,7 @@ IF LB_GPU or LB:
         int lb_lbfluid_set_bulk_visc(double * c_bulk_visc)
         int lb_lbfluid_get_bulk_visc(double * c_bulk_visc)
         int lb_lbfluid_print_vtk_velocity(char * filename)
+        int lb_lbfluid_print_vtk_velocity(char* filename, vector[int] bb1, vector[int] bb2)
         int lb_lbfluid_print_vtk_boundary(char * filename)
         int lb_lbfluid_print_velocity(char * filename)
         int lb_lbfluid_print_boundary(char * filename)
@@ -91,6 +93,7 @@ IF LB_GPU or LB:
         int lb_set_lattice_switch(int py_switch)
         int lb_get_lattice_switch(int * py_switch)
         int lb_lbnode_get_u(int * coord, double * double_return)
+        int lb_lbnode_set_u(int *ind, double *u);
         int lb_lbnode_get_rho(int * coord, double * double_return)
         int lb_lbnode_get_pi(int * coord, double * double_return)
         int lb_lbnode_get_pi_neq(int * coord, double * double_return)
@@ -99,9 +102,11 @@ IF LB_GPU or LB:
         int lb_lbnode_get_boundary(int * coord, int * int_return)
         int lb_lbfluid_set_couple_flag(int c_couple_flag)
         int lb_lbfluid_get_couple_flag(int * c_couple_flag)
+        int lb_lbfluid_get_interpolated_velocity_global(double *p, double *v)
 
     cdef extern from "lbgpu.hpp":
-        int lb_lbfluid_remove_total_momentum();
+        int lb_lbfluid_remove_total_momentum()
+        void lb_lbfluid_get_interpolated_velocity_at_positions(double *positions, double *velocities, int length);
 
     ###############################################
     #

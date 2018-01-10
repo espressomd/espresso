@@ -1,35 +1,37 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from espressomd.utils cimport handle_errors
+from espressomd.utils import is_valid_type
 
 cdef class Diamond(object):
     """
     Class to create a diamond like network
-    """ 
+    """
+
     def __init__(self, *args, **kwargs):
         """
-        Wrapper object to create a diamond like polymer network. 
-        
-        Parameters 
+        Wrapper object to create a diamond like polymer network.
+
+        Parameters
         ----------
-        a:              float
-                        size of the unit cell
-        bond_length:    float
-                        distance between adjacent monomers in the chains
-        MPC:            int 
-                        monomers per chain
-        cM_dist:        int, optional
-                        distance between charged monomers
-        N_CI:           int, optional
-                        Number of counter ions
-        val_nodes:      float, optional
-                        charge valency of the 8 node particles (crosslinker)
-        val_cM:         float, optional
-                        valency of the charge bearing monomers
-        val_CI:         float, optional
-                        valency of the counterions
-        nonet:          int, optional 
-                        0 creates network, 1 does not crosslink the individual polymers
+        a : :obj:`float`
+            Size of the unit cell.
+        bond_length : :obj:`float`
+                      Distance between adjacent monomers in the chains.
+        MPC : :obj:`int`
+              Monomers per chain.
+        cM_dist : :obj:`int`, optional
+                  Distance between charged monomers.
+        N_CI : :obj:`int`, optional
+               Number of counter ions.
+        val_nodes : :obj:`float`, optional
+                    Charge valency of the 8 node particles (crosslinker).
+        val_cM : :obj:`float`, optional
+                 Valency of the charge bearing monomers.
+        val_CI : :obj:`float`, optional
+                 Valency of the counterions.
+        nonet : :obj:`int`, optional
+                0 creates network, 1 does not crosslink the individual polymers.
 
         """
         self._params = self.default_params()
@@ -47,7 +49,8 @@ cdef class Diamond(object):
         self._set_params_in_es_core()
 
     def default_params(self):
-        return {"a": 0.0, "bond_length": 0.0, "MPC": 0, "N_CI": 0, "val_nodes": 0.0, "val_cM": 0.0, "val_CI": 0.0, "cM_dist": 1, "nonet": 0}
+        return {"a": 0.0, "bond_length": 0.0, "MPC": 0, "N_CI": 0,
+                "val_nodes": 0.0, "val_cM": 0.0, "val_CI": 0.0, "cM_dist": 1, "nonet": 0}
 
     def required_keys(self):
         return "a", "bond_length", "MPC"
@@ -60,22 +63,22 @@ cdef class Diamond(object):
         if(self._params[valid_keys[1]] < 0):
             raise ValueError("Bond length must be positive got: ",
                              self._params[valid_keys[1]])
-        if(self._params[valid_keys[2]] < 0 or not isinstance(self._params[valid_keys[2]], int)):
+        if(self._params[valid_keys[2]] < 0 or not is_valid_type(self._params[valid_keys[2]], int)):
             raise ValueError(
                 "Monomers per chain must be positive integer got: ", self._params[valid_keys[2]])
-        if(self._params[valid_keys[3]] < 0 or not isinstance(self._params[valid_keys[3]], int)):
+        if(self._params[valid_keys[3]] < 0 or not is_valid_type(self._params[valid_keys[3]], int)):
             raise ValueError(
                 "The number of counterions must be integer got:", self._params[valid_keys[3]])
-        if(not isinstance(self._params[valid_keys[4]], float)):
+        if(not is_valid_type(self._params[valid_keys[4]], float)):
             raise ValueError(
                 "The charge of the nodes must be double got", self._params[valid_keys[4]])
-        if(not isinstance(self._params[valid_keys[5]], float)):
+        if(not is_valid_type(self._params[valid_keys[5]], float)):
             raise ValueError(
                 "The charge of the monomers must be double got", self._params[valid_keys[5]])
-        if(not isinstance(self._params[valid_keys[6]], float)):
+        if(not is_valid_type(self._params[valid_keys[6]], float)):
             raise ValueError(
                 "The charge of the counterions must be double got", self._params[valid_keys[6]])
-        if(not isinstance(self._params[valid_keys[7]], int)):
+        if(not is_valid_type(self._params[valid_keys[7]], int)):
             raise ValueError(
                 "The distance between two charged monomers' indices must be integer ", self._params[valid_keys[7]])
         if(self._params[valid_keys[7]] == "nonet"):
@@ -85,7 +88,8 @@ cdef class Diamond(object):
                 "Please define a bonded interaction [0] before setting up polymers!")
 
     def __set_params_in_es_core(self):
-        return diamondC(partCfg(), self._params["a"], self._params["bond_length"], self._params["MPC"], self._params["N_CI"], self._params["val_nodes"], self._params["val_cM"], self._params["val_CI"], self._params["cM_dist"], self._params["nonet"])
+        return diamondC(partCfg(), self._params["a"], self._params["bond_length"], self._params["MPC"], self._params["N_CI"],
+                        self._params["val_nodes"], self._params["val_cM"], self._params["val_CI"], self._params["cM_dist"], self._params["nonet"])
 
     def _set_params_in_es_core(self):
         tmp_try = self.__set_params_in_es_core()

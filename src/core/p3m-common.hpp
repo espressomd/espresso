@@ -123,6 +123,8 @@ typedef struct {
 
 /** Structure to hold P3M parameters and some dependend variables. */
 typedef struct {
+  /** Tuning or production? */
+  bool tuning;
   /** Ewald splitting parameter (0<alpha<1), rescaled to alpha_L = alpha * box_l. */
   double alpha_L;
   /** Cutoff radius for real space electrostatics (>0), rescaled to r_cut_iL = r_cut * box_l_i. */

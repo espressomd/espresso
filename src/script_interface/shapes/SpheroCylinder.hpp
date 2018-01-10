@@ -31,13 +31,12 @@ namespace Shapes {
 class SpheroCylinder : public Shape {
 public:
   SpheroCylinder() : m_spherocylinder(new ::Shapes::SpheroCylinder()) {
-    add_parameters({{"pos", m_spherocylinder->pos()},
+    add_parameters({{"center", m_spherocylinder->pos()},
                     {"axis", m_spherocylinder->axis()},
+                    {"direction", m_spherocylinder->direction()},
                     {"length", m_spherocylinder->length()},
-                    {"rad", m_spherocylinder->rad()}});
+                    {"radius", m_spherocylinder->rad()}});
   }
-
-  const std::string name() const override { return "Shapes::SpheroCylinder"; }
 
   std::shared_ptr<::Shapes::Shape> shape() const override {
     return m_spherocylinder;

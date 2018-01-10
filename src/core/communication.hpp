@@ -60,6 +60,7 @@
 /** Included needed by callbacks. */
 #include "cuda_init.hpp"
 #include "particle_data.hpp"
+
 #include "utils/serialization/array.hpp"
 
 /**************************************************
@@ -124,18 +125,8 @@ void mpi_finalize();
  * and node grid.
  */
 void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
-                              std::array<int, 3> const &periodicity = {1, 1,
-                                                                       1});
-
-/** Issue REQ_BCAST_PAR: broadcast a parameter from datafield.
-    @param i the number from \ref global.hpp "global.hpp" referencing the
-   datafield.
-    @return nonzero on error
-*/
-int mpi_bcast_parameter(int i);
-
-/** Issue REQ_WHO_HAS: ask nodes for their attached particles. */
-void mpi_who_has();
+                              std::array<int, 3> const &periodicity = {{1, 1,
+                                                                       1}});
 
 /** Issue REQ_EVENT: tells all clients of some system change.
     The events are:
@@ -268,7 +259,7 @@ void mpi_send_quat(int node, int part, double quat[4]);
     \param pnode the node it is attached to.
     \param rot the rotation flag
 */
-void mpi_send_rotation(int pnode, int part, int rot);
+void mpi_send_rotation(int pnode, int part, short int rot);
 
 /* Issue REQ_SET_LAMBDA: send particle angular velocity.
     Also calls \ref on_particle_change.
@@ -382,7 +373,7 @@ void mpi_remove_particle(int node, int id);
     \note Gets a copy of the particle data not a pointer to the actual particle
     used in integration
 */
-void mpi_recv_part(int node, int part, Particle *part_data);
+Particle mpi_recv_part(int node, int part);
 
 /** Issue REQ_INTEGRATE: start integrator.
     @param n_steps how many steps to do.
@@ -500,15 +491,15 @@ void mpi_set_particle_temperature(int pnode, int part, double _T);
 #ifndef PARTICLE_ANISOTROPY
 void mpi_set_particle_gamma(int pnode, int part, double gamma);
 #else
-void mpi_set_particle_gamma(int pnode, int part, double gamma[3]);
+void mpi_set_particle_gamma(int pnode, int part, Vector3d gamma);
 #endif
 
 #ifdef ROTATION
-#ifndef ROTATIONAL_INERTIA
+#ifndef PARTICLE_ANISOTROPY
 void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot);
 #else
-void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot[3]);
-#endif // ROTATIONAL_INERTIA
+void mpi_set_particle_gamma_rot(int pnode, int part, Vector3d gamma_rot);
+#endif // PARTICLE_ANISOTROPY
 #endif
 #endif // LANGEVIN_PER_PARTICLE
 
@@ -516,9 +507,6 @@ void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot[3]);
 /** Issue REQ_LB_BOUNDARY: set up walls for lb fluid */
 void mpi_bcast_lbboundary(int del_num);
 #endif
-
-/** Issue REQ_BCAST_LJFORCECAP: initialize force capping. */
-void mpi_cap_forces(double force_cap);
 
 /** Issue REQ_RESCALE_PART: rescales all particle positions in direction 'dir'
  * by a factor 'scale'. */
@@ -530,9 +518,6 @@ void mpi_bcast_cell_structure(int cs);
 /** Issue REQ_BCAST_NPTISO_GEOM: broadcast nptiso geometry parameter to all
  * nodes. */
 void mpi_bcast_nptiso_geom(void);
-
-/** Issue REQ_BCAST_LJANGLEFORCECAP: initialize LJANGLE force capping. */
-// void mpi_ljangle_cap_forces(double force_cap);
 
 /** Issue REQ_UPDATE_MOL_IDS: Update the molecule ids so that they are
     in sync with the topology.  Note that this only makes sense if you
@@ -644,7 +629,7 @@ void mpi_thermalize_cpu(int temp);
 /** MPI-IO output function.
  *  \param filename Filename prefix for the created files. Must be
  * null-terminated.
- *  \param fields Fields to dump (see mpiio_tcl.hpp).
+ *  \param fields Fields to dump.
  *  \param write 1 to write, 0 to read
  */
 void mpi_mpiio(const char *filename, unsigned fields, int write);

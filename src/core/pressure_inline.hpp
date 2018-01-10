@@ -46,32 +46,42 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
   int p1molid, p2molid, k, l;
   double force[3] = {0, 0, 0};
 
-  calc_non_bonded_pair_force(p1, p2,d, dist, dist2, force);
+#ifdef EXCLUSIONS
+  if (do_nonbonded(p1, p2))
+#endif
+  {
+    calc_non_bonded_pair_force(p1, p2, d, dist, dist2, force);
+    *obsstat_nonbonded(&virials, p1->p.type, p2->p.type) +=
+        d[0] * force[0] + d[1] * force[1] + d[2] * force[2];
 
-  *obsstat_nonbonded(&virials, p1->p.type, p2->p.type) += d[0]*force[0] + d[1]*force[1] + d[2]*force[2];
+    /* stress tensor part */
+    for (k = 0; k < 3; k++)
+      for (l = 0; l < 3; l++)
+        obsstat_nonbonded(&p_tensor, p1->p.type, p2->p.type)[k * 3 + l] +=
+            force[k] * d[l];
 
- /* stress tensor part */
-  for(k=0;k<3;k++)
-    for(l=0;l<3;l++)
-      obsstat_nonbonded(&p_tensor, p1->p.type, p2->p.type)[k*3 + l] += force[k]*d[l];
+    p1molid = p1->p.mol_id;
+    p2molid = p2->p.mol_id;
+    if (p1molid == p2molid) {
+      *obsstat_nonbonded_intra(&virials_non_bonded, p1->p.type, p2->p.type) +=
+          d[0] * force[0] + d[1] * force[1] + d[2] * force[2];
 
-  p1molid = p1->p.mol_id;
-  p2molid = p2->p.mol_id;
-  if ( p1molid == p2molid ) {
-    *obsstat_nonbonded_intra(&virials_non_bonded, p1->p.type, p2->p.type) += d[0]*force[0] + d[1]*force[1] + d[2]*force[2];
-    
-    for(k=0;k<3;k++)
-      for(l=0;l<3;l++)
-        obsstat_nonbonded_intra(&p_tensor_non_bonded, p1->p.type, p2->p.type)[k*3 + l] += force[k]*d[l];
-  } 
-  if ( p1molid != p2molid ) {
-    *obsstat_nonbonded_inter(&virials_non_bonded, p1->p.type, p2->p.type) += d[0]*force[0] + d[1]*force[1] + d[2]*force[2];
-    
-    for(k=0;k<3;k++)
-      for(l=0;l<3;l++)
-        obsstat_nonbonded_inter(&p_tensor_non_bonded, p1->p.type, p2->p.type)[k*3 + l] += force[k]*d[l];
+      for (k = 0; k < 3; k++)
+        for (l = 0; l < 3; l++)
+          obsstat_nonbonded_intra(&p_tensor_non_bonded, p1->p.type,
+                                  p2->p.type)[k * 3 + l] += force[k] * d[l];
+    }
+    if (p1molid != p2molid) {
+      *obsstat_nonbonded_inter(&virials_non_bonded, p1->p.type, p2->p.type) +=
+          d[0] * force[0] + d[1] * force[1] + d[2] * force[2];
+
+      for (k = 0; k < 3; k++)
+        for (l = 0; l < 3; l++)
+          obsstat_nonbonded_inter(&p_tensor_non_bonded, p1->p.type,
+                                  p2->p.type)[k * 3 + l] += force[k] * d[l];
+    }
   }
-  
+
 #ifdef ELECTROSTATICS
   /* real space coulomb */
   if (coulomb.method != COULOMB_NONE) {
@@ -201,10 +211,8 @@ inline void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters *
     case BONDED_IA_RIGID_BOND:
       force[0] = force[1] = force[2] = 0; break;
 #endif
-#ifdef BOND_VIRTUAL
     case BONDED_IA_VIRTUAL_BOND:
       force[0] = force[1] = force[2] = 0; break;
-#endif
     default :
       //      fprintf(stderr,"add_bonded_virials: WARNING: Bond type %d of atom %d unhandled\n",bonded_ia_params[type_num].type,p1->p.identity);
       fprintf(stderr,"add_bonded_virials: WARNING: Bond type %d , atom %d unhandled, Atom 2: %d\n",iaparams->type,p1->p.identity,p2->p.identity);
@@ -273,7 +281,7 @@ inline void calc_three_body_bonded_forces(Particle *p1, Particle *p2, Particle *
 */
 inline void add_bonded_virials(Particle *p1)
 {
-  double dx[3], force[3] = {0,0,0};
+  double force[3] = {0,0,0};
   //char *errtxt;
   Particle *p2;
   Bonded_ia_parameters *iaparams;
@@ -296,14 +304,23 @@ inline void add_bonded_virials(Particle *p1)
       return;
     }
 
-    get_mi_vector(dx, p1->r.p, p2->r.p);
-    calc_bonded_force(p1,p2,iaparams,&i,dx,force);
+    double a[3] = {p1->r.p[0], p1->r.p[1], p1->r.p[2]};
+    double b[3] = {p2->r.p[0], p2->r.p[1], p2->r.p[2]};
+    auto dx = get_mi_vector(a, b);
+#ifdef LEES_EDWARDS
+    double n_le_shifts = dround((a[1]-b[1]) * box_l_i[1]);
+
+    if (PERIODIC(1) == 1) {
+      dx[0] -= lees_edwards_offset * n_le_shifts;
+    }
+#endif
+    calc_bonded_force(p1,p2,iaparams,&i,dx.data(),force);
     *obsstat_bonded(&virials, type_num) += dx[0]*force[0] + dx[1]*force[1] + dx[2]*force[2];
 
  /* stress tensor part */
     for(k=0;k<3;k++)
       for(l=0;l<3;l++)
-	obsstat_bonded(&p_tensor, type_num)[k*3 + l] += force[k]*dx[l];
+        obsstat_bonded(&p_tensor, type_num)[k*3 + l] += force[k]*dx[l];
 
   }
 }
@@ -440,11 +457,9 @@ inline void add_three_body_bonded_stress(Particle *p1) {
       i = i + 2;
     }
 #endif
-#ifdef BOND_VIRTUAL
     else if(type == BONDED_IA_VIRTUAL_BOND) {
       i = i + 2;
     }
-#endif
     else {
       runtimeErrorMsg() <<"add_three_body_bonded_stress: match not found for particle " << p1->p.identity << ".\n";
     }

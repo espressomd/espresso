@@ -33,7 +33,6 @@
 #include "communication.hpp"
 #include "thermostat.hpp"
 #include "grid.hpp"
-#include "domain_decomposition.hpp"
 #include "integrate.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
@@ -41,6 +40,7 @@
 #include "lbboundaries.hpp"
 #include "cuda_interface.hpp"
 #include "statistics.hpp"
+#include "partCfg_global.hpp"
 #ifdef LB_GPU
 
 
@@ -144,9 +144,9 @@ LB_parameters_gpu lbpar_gpu = {
 };
 
 /** this is the array that stores the hydrodynamic fields for the output */
-LB_rho_v_pi_gpu *host_values = NULL;
+LB_rho_v_pi_gpu *host_values = nullptr;
 
-LB_nodes_gpu *host_nodes = NULL;
+LB_nodes_gpu *host_nodes = nullptr;
 
 /** Flag indicating momentum exchange between particles and fluid */
 int transfer_momentum_gpu = 0;
@@ -166,7 +166,7 @@ int i;
 
 
 int n_extern_nodeforces = 0;
-LB_extern_nodeforce_gpu *host_extern_nodeforces = NULL;
+LB_extern_nodeforce_gpu *host_extern_nodeforces = nullptr;
 int ek_initialized = 0;
 
 /*-----------------------------------------------------------*/
@@ -248,10 +248,10 @@ void lb_reinit_fluid_gpu() {
   only the fluid-related memory on the gpu.*/
 void lb_release_gpu(){
 
-  if(host_nodes !=NULL) { free(host_nodes); host_nodes=NULL ;} 
-  if(host_values!=NULL) { free(host_values); host_values=NULL;}
-//  if(host_forces!=NULL) free(host_forces);
-//  if(host_data  !=NULL) free(host_data);
+  if(host_nodes !=nullptr) { free(host_nodes); host_nodes=nullptr ;} 
+  if(host_values!=nullptr) { free(host_values); host_values=nullptr;}
+//  if(host_forces!=nullptr) free(host_forces);
+//  if(host_data  !=nullptr) free(host_data);
 }
 /** (Re-)initializes the fluid. */
 void lb_reinit_parameters_gpu() {
@@ -319,8 +319,8 @@ void lb_reinit_parameters_gpu() {
        * time_step comes from the discretization.
        */
   
-      lbpar_gpu.lb_coupl_pref[ii] = sqrt(12.f*2.f*lbpar_gpu.friction[ii]*(float)temperature/lbpar_gpu.time_step);
-      lbpar_gpu.lb_coupl_pref2[ii] = sqrt(2.f*lbpar_gpu.friction[ii]*(float)temperature/lbpar_gpu.time_step);
+      lbpar_gpu.lb_coupl_pref[ii] = sqrtf(12.f*2.f*lbpar_gpu.friction[ii]*(float)temperature/lbpar_gpu.time_step);
+      lbpar_gpu.lb_coupl_pref2[ii] = sqrtf(2.f*lbpar_gpu.friction[ii]*(float)temperature/lbpar_gpu.time_step);
   
     } else {
       /* no fluctuations at zero temperature */
@@ -442,24 +442,19 @@ int lb_lbfluid_load_checkpoint_wrapper(char* filename, int binary)
   return lb_lbfluid_load_checkpoint(filename, binary);
 }
 
-void lb_lbfluid_particles_add_momentum ( float momentum[3] )
-{
-  for (int i = 0; i < lbpar_gpu.number_of_particles; ++i)
-  {
-    double mass;
-#ifdef MASS
-    mass = particle_data_host[i].mass;
-#else
-    mass = 1.;
-#endif
+void lb_lbfluid_particles_add_momentum(float momentum[3]) {
+  auto & parts = partCfg();
+  auto const n_part = parts.size();
 
+  for (auto const &p : parts) {
     double new_velocity[3] = {
-      particle_data_host[i].v[0] + momentum[0] * time_step,
-      particle_data_host[i].v[1] + momentum[1] * time_step,
-      particle_data_host[i].v[2] + momentum[2] * time_step
-    };
-
-    set_particle_v( i, new_velocity );
+        p.m.v[0] +
+            momentum[0] / p.p.mass * time_step / n_part,
+        p.m.v[1] +
+            momentum[1] / p.p.mass * time_step / n_part,
+        p.m.v[2] +
+            momentum[2] / p.p.mass * time_step / n_part};
+    set_particle_v(p.p.identity, new_velocity);
   }
 }
 
