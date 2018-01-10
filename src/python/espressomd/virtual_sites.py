@@ -30,9 +30,9 @@ class VirtualSitesRelative(ScriptInterfaceHelper):
 class ActiveVirtualSitesHandle(ScriptInterfaceHelper):
     """Handle for the virtual sites implementation active in the core
 
-       This should nnot be used directly.
+       This should not be used directly.
 
-       Attribtues
+       Attributes
        ----------
        implementation : instance of a virtual sites implementation
 
