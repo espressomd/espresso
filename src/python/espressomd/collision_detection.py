@@ -105,7 +105,6 @@ class CollisionDetection(ScriptInterfaceHelper):
         super(type(self),self).set_params(**kwargs)
         self.validate()
         handle_errors("Validation of collision detection failed")
-        print(self.get_params())
 
     def get_parameter(self,name):
         #"""Gets a single parameter from the collision detection."""
