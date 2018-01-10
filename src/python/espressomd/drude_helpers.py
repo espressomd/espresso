@@ -1,6 +1,4 @@
-
 from espressomd.interactions import BondedCoulombP3MSRBond
-#import numpy as np
 
 #Dict with drude type infos
 drude_dict={}
@@ -10,17 +8,15 @@ drude_type_list=[]
 #Get core id from drude id
 core_id_from_drude_id={}
 
-def add_drude_particle_to_core(system, p_core, drude_bond, id_drude, type_drude, alpha, mass_drude, bjerrum_length, thole_damping = 2.6):
+def add_drude_particle_to_core(system, p_core, drude_bond, id_drude, type_drude, alpha, mass_drude, coulomb_prefactor, thole_damping = 2.6):
+    
+    k = drude_bond.params["k"]
     
     k=drude_bond.params["k"]
-    Tc =drude_bond.params["temp_com"]
-    inv_coulomb_prefactor = 1.0 / Tc / bjerrum_length
-    
-    k=drude_bond.params["k"]
-    q_drude =  -1.0 * pow(k * alpha * inv_coulomb_prefactor, 0.5)
+    q_drude =  -1.0 * pow(k * alpha / coulomb_prefactor, 0.5)
 
     system.part.add(id=id_drude, pos=p_core.pos, type = type_drude,  q = q_drude, mass = mass_drude, temp = 0, gamma = 0)
-    print("Adding to core", p_core.id, "drude id", id_drude, "  pol", alpha, "  core charge", p_core.q, "->", p_core.q-q_drude, "   drude charge", q_drude)
+    #print("Adding to core", p_core.id, "drude id", id_drude, "  pol", alpha, "  core charge", p_core.q, "->", p_core.q-q_drude, "   drude charge", q_drude)
 
     p_core.q -= q_drude
     p_core.mass -= mass_drude   
@@ -69,7 +65,7 @@ def add_thole_pair_damping(system, t1,t2):
     qq = drude_dict[t1]["q"] * drude_dict[t2]["q"]
     s = 0.5 * (drude_dict[t1]["thole_damping"] + drude_dict[t2]["thole_damping"]) / (drude_dict[t1]["alpha"] * drude_dict[t2]["alpha"])**(1.0/6.0) 
     system.non_bonded_inter[t1,t2].thole.set_params(scaling_coeff=s, q1q2 = qq)
-    print("Added THOLE", t1,"<->", t2, "S",s, "q1q2",qq)
+    #print("Added THOLE for types", t1,"<->", t2, "S",s, "q1q2",qq)
 
 def add_all_thole(system):
     #drude <-> drude
@@ -99,7 +95,7 @@ def setup_intramol_exclusion_bonds(system, mol_drude_types, mol_core_types, mol_
                     subtr_p3m_sr_bond = BondedCoulombP3MSRBond(q1q2 = -qd*qp)
                     system.bonded_inter.add(subtr_p3m_sr_bond)
                     drude_dict[td]["subtr_p3m_sr_bonds"][tc]=subtr_p3m_sr_bond
-                    print("Added intramolecular exclusion", subtr_p3m_sr_bond, "for drude",  qd, "<-> core", qp, "to system") 
+                    #print("Added intramolecular exclusion", subtr_p3m_sr_bond, "for drude",  qd, "<-> core", qp, "to system") 
         
 def add_intramol_exclusion_bonds(system, drude_ids, core_ids):
 
@@ -110,4 +106,5 @@ def add_intramol_exclusion_bonds(system, drude_ids, core_ids):
                 pc = system.part[core_id]
                 bond = drude_dict[pd.type]["subtr_p3m_sr_bonds"][pc.type]
                 pd.add_bond((bond, core_id))
-                print("Added subtr_p3m_sr bond", bond, "between", drude_id, "and", core_id)
+                #print("Added subtr_p3m_sr bond", bond, "between ids", drude_id, "and", core_id)
+

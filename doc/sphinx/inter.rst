@@ -903,7 +903,7 @@ and can be used to convenientely add a drude particle to a given core
 particle::
 
     from drude_functions import *
-    add_drude_particle_to_core(<system>, <core particle>, <drude bond>, <id drude>, <type drude>, <alpha>, <mass drude>, <bjerrum length>, <thole damping>)
+    add_drude_particle_to_core(<system>, <core particle>, <drude bond>, <id drude>, <type drude>, <alpha>, <mass drude>, <coulomb_prefactor>, <thole damping>)
 
 The arguments of the helper function are:
     * <system>: The espressomd.System().
@@ -914,9 +914,8 @@ The arguments of the helper function are:
      correction is used, the Drude particles of each complex should have an
      individual type (e.g. in an ionic system with Anions (type 0) and Cations
      (type 1), Drude types should be 2 and 3).
-    * <alpha>: The polarizability in units of XXX (TODO: adapt bjerrum length->coulomb prefactor change).
-    * <bjerrum_length>: (TODO: adapt bjerrum length->coulomb prefactor change)
-     The bjerrum length of the system. Used to calculate the drude charge from
+    * <alpha>: The polarizability volume.
+    * <coulomb_prefactor>: The coulomb prefactor of the system. Used to calculate the drude charge from
      the polarizability and the spring constant of the drude bond.  
     * <thole damping>: (optional) An individual thole damping parameter for the
      core-drude pair. Only relevant if thole damping is used (defaults to 2.6).
@@ -1024,8 +1023,8 @@ collected types to cover all the drude-drude, drude-core and core-core
 combinations. No further calls of ``add_drude_particle_to_core()`` should
 follow.
 
-The samples section contains a script with a fully polarizable, coarse grained
-ionic liquid where this approach is applied.
+The samples section contains the script *drude_bmimpf6.py* with a fully
+polarizable, coarse grained ionic liquid where this approach is applied.
 
 Subtracted Lennard-Jones bond
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
