@@ -28,7 +28,16 @@
 namespace Shapes {
 class Ellipsoid : public Shape {
 public:
-  Ellipsoid() : m_pos({0.0, 0.0, 0.0}), m_semiaxis_a(1.0), m_semiaxis_b(1.0), m_semiaxis_c(1.0), m_direction(1.0) {}
+  Ellipsoid() : m_pos({0.0, 0.0, 0.0}), m_semiaxis_a(1.0), m_semiaxis_b(1.0), m_direction(1.0) {
+	  /* for now only prolate ellipsoids of rotation are allowed
+	   * make sure that a is long semiaxis, b and c the short */
+	  if (m_semiaxis_a < m_semiaxis_b) {
+		  m_semiaxis_c = m_semiaxis_a;
+		  m_semiaxis_a = m_semiaxis_b;
+		  m_semiaxis_b = m_semiaxis_c;
+	  }
+	  else m_semiaxis_c = m_semiaxis_b;
+  }
 
   int calculate_dist(const double *ppos, double *dist,
                      double *vec) const override;

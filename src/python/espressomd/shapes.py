@@ -25,16 +25,19 @@ class Cylinder(ScriptInterfaceHelper):
 @script_interface_register
 class Ellipsoid(ScriptInterfaceHelper):
     """
-    An parallelepiped.
+    An ellipsoid.
+
+    For now only prolate ellipsoids of revolution are supported.
+    The long semiaxis is parallel to the x-direction.
 
     Attributes
     ----------
-    a : float
-       First semiaxis.
-    b : array_like
-       Second semiaxis.
-    c : array_like
-       Third semiaxis.
+    center : :obj:`array_like`
+       Coordinates of the center of the ellipsoid.
+    a : :obj:`float`
+       Long (axial) semiaxis.
+    b : :obj:`float`
+       Short (equatorial) semiaxis.
     direction : int
        Surface orientation, for +1 the normal points
        out of the mantel, for -1 it points inward.

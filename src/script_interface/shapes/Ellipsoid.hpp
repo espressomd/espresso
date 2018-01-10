@@ -34,7 +34,6 @@ public:
     add_parameters({{"center", m_ellipsoid->pos()},
                     {"a", m_ellipsoid->semiaxis_a()},
                     {"b", m_ellipsoid->semiaxis_b()},
-                    {"c", m_ellipsoid->semiaxis_c()},
                     {"direction", m_ellipsoid->direction()}});
   }
 
