@@ -39,14 +39,6 @@ matrix:
     - os: linux
       sudo: required
       services: docker
-      env: myconfig=rest1 with_coverage=true
-    - os: linux
-      sudo: required
-      services: docker
-      env: myconfig=rest2 with_coverage=true
-    - os: linux
-      sudo: required
-      services: docker
       env: myconfig=nocheck-maxset make_check=false
 
 script:

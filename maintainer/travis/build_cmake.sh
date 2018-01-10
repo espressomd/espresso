@@ -151,7 +151,7 @@ end "CONFIGURE"
 # BUILD
 start "BUILD"
 
-cmd "make -k -j${build_procs}" || exit $?
+cmd "make -k -j${build_procs}" || cmd "make -k -j1" || exit $?
 
 end "BUILD"
 
