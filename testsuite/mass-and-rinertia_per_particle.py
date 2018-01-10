@@ -17,9 +17,13 @@ class ThermoTest(ut.TestCase):
     es = espressomd.System()
 
     def run_test_case(self, test_case):
-        seed(1)
+        seed(2)
         # Decelleration
         self.es.time_step = 0.007
+        box = 1.0E5
+        self.es.box_l = [box, box, box]
+        if espressomd.has_features(("PARTIAL_PERIODIC")):
+            self.es.periodicity = 0, 0, 0
         # gamma_tran/gamma_rot matrix: [2 types of particless] x [3 dimensions
         # X Y Z]
         gamma_tran = np.zeros((2, 3))
@@ -159,6 +163,127 @@ class ThermoTest(ut.TestCase):
                         self.assertLess(abs(
                             self.es.part[k].omega_body[j] - math.exp(- gamma_rot_validate[k, j] * self.es.time / J[j])), tol)
             self.es.integrator.run(10)
+
+        # The drag terminal velocity tests
+        ##################################
+        #..aka the drift in case of the electrostatics
+        
+        # Isotropic reassignment is required here for the drag tests
+        gamma_global_rot = np.zeros((3))
+        gamma_global_rot[0] = np.array((0.5 + np.random.random()) * 2.0 / 3.0)
+        gamma_global_rot[1] = gamma_global_rot[0]
+        gamma_global_rot[2] = gamma_global_rot[0]
+        # Second particle already has isotropic gamma_rot
+        # A correction is needed for the 1st one:
+        gamma_rot[0, 0] = np.array((0.5 + random(1)) * 2.0 / 3.0)
+        gamma_rot[0, 1] = gamma_rot[0, 0]
+        gamma_rot[0, 2] = gamma_rot[0, 0]
+        
+        if test_case == 1 or test_case == 3:
+            gamma_tr = gamma_tran
+            gamma_rot_validate = gamma_rot
+            # A correction is needed for the 1st particle only:
+            if "ROTATION" in espressomd.features():
+                self.es.part[0].gamma_rot = gamma_rot[0, :]
+        else:
+            for k in range(2):
+                gamma_tr[k, :] = gamma_global[:]
+                if test_case != 4:
+                    gamma_rot_validate[k, :] = gamma_global[:]
+                else:
+                    gamma_rot_validate[k, :] = gamma_global_rot[:]
+
+        if test_case != 4:
+            self.es.thermostat.set_langevin(
+                kT=0.0,
+                gamma=[
+                    gamma_global[0],
+                    gamma_global[1],
+                    gamma_global[2]])
+        else:
+            self.es.thermostat.set_langevin(
+                kT=0.0,
+                gamma=[
+                    gamma_global[0],
+                    gamma_global[1],
+                    gamma_global[2]],
+                gamma_rotation=[
+                    gamma_global_rot[0],
+                    gamma_global_rot[1],
+                    gamma_global_rot[2]])
+
+        self.es.time = 0.0
+        self.es.time_step = 7E-5
+        # The terminal velocity is starting since t >> t0 = mass / gamma
+        t0_max = -1.0
+        for k in range(2):
+            t0_max = max(t0_max, max(mass / gamma_tr[k, :]), max(J[:] / gamma_rot_validate[k, :]))
+        drag_steps_0 = int(math.floor(20 * t0_max / self.es.time_step))
+        print("drag_steps_0 = {0}".format(drag_steps_0))
+
+        tol = 7E-3
+        if "EXTERNAL_FORCES" in espressomd.features():
+            for k in range(2):
+                self.es.part[k].pos = np.array([0.0, 0.0, 0.0])
+                self.es.part[k].v = np.array([0.0, 0.0, 0.0])
+                self.es.part[k].omega_body = np.array([0.0, 0.0, 0.0])
+            f0 = np.array([-1.2, 58.3578, 0.002])
+            f1 = np.array([-15.112, -2.0, 368.0])
+            self.es.part[0].ext_force = f0
+            self.es.part[1].ext_force = f1
+            if "ROTATION" in espressomd.features():
+                tor0 = np.array([12, 0.022, 87])
+                tor1 = np.array([-0.03, -174, 368])
+                self.es.part[0].ext_torque = tor0
+                self.es.part[1].ext_torque = tor1
+                # Let's set the dipole perpendicular to the torque
+                if "DIPOLES" in espressomd.features():
+                    dip0 = np.array([0.0, tor0[2], -tor0[1]])
+                    dip1 = np.array([-tor1[2], 0.0, tor1[0]])
+                    self.es.part[0].dip = dip0
+                    self.es.part[1].dip = dip1
+                    tmp_axis0 = np.cross(tor0, dip0) / (np.linalg.norm(tor0) * np.linalg.norm(dip0))
+                    tmp_axis1 = np.cross(tor1, dip1) / (np.linalg.norm(tor1) * np.linalg.norm(dip1))
+            self.es.integrator.run(drag_steps_0)
+            self.es.time = 0.0
+            for k in range(2):
+                self.es.part[k].pos = np.array([0.0, 0.0, 0.0])
+            if "DIPOLES" in espressomd.features():
+                    self.es.part[0].dip = dip0
+                    self.es.part[1].dip = dip1
+            for i in range(100):
+                self.es.integrator.run(10)
+                for k in range(3):
+                    self.assertLess(
+                        abs(self.es.part[0].v[k] - f0[k] / gamma_tr[0, k]), tol)
+                    self.assertLess(
+                        abs(self.es.part[1].v[k] - f1[k] / gamma_tr[1, k]), tol)
+                    self.assertLess(
+                        abs(self.es.part[0].pos[k] - self.es.time * f0[k] / gamma_tr[0, k]), tol)
+                    self.assertLess(
+                        abs(self.es.part[1].pos[k] - self.es.time * f1[k] / gamma_tr[1, k]), tol)
+                    if "ROTATION" in espressomd.features():
+                        self.assertLess(abs(
+                            self.es.part[0].omega_lab[k] - tor0[k] / gamma_rot_validate[0, k]), tol)
+                        self.assertLess(abs(
+                            self.es.part[1].omega_lab[k] - tor1[k] / gamma_rot_validate[1, k]), tol)
+                if "ROTATION" in espressomd.features() and "DIPOLES" in espressomd.features():
+                    cos_alpha0 = np.dot(dip0,self.es.part[0].dip) / (np.linalg.norm(dip0) * self.es.part[0].dipm)
+                    cos_alpha0_test = np.cos(self.es.time * np.linalg.norm(tor0) / gamma_rot_validate[0, 0])
+                    sgn0 = np.sign(np.dot(self.es.part[0].dip, tmp_axis0))
+                    sgn0_test = np.sign(np.sin(self.es.time * np.linalg.norm(tor0) / gamma_rot_validate[0, 0]))
+                    
+                    cos_alpha1 = np.dot(dip1,self.es.part[1].dip) / (np.linalg.norm(dip1) * self.es.part[1].dipm)
+                    cos_alpha1_test = np.cos(self.es.time * np.linalg.norm(tor1) / gamma_rot_validate[1, 0])
+                    sgn1 = np.sign(np.dot(self.es.part[1].dip, tmp_axis1))
+                    sgn1_test = np.sign(np.sin(self.es.time * np.linalg.norm(tor1) / gamma_rot_validate[1, 0]))
+                    
+                    #print("cos_alpha0 = {0}, cos_alpha0_test={1}".format(cos_alpha0, cos_alpha0_test))
+                    #print("dip0 = {0}, self.es.part[0].dip={1}".format(dip0, self.es.part[0].dip))
+                    self.assertLess(abs(cos_alpha0 - cos_alpha0_test), tol)
+                    self.assertLess(abs(cos_alpha1 - cos_alpha1_test), tol)
+                    self.assertEqual(sgn0, sgn0_test)
+                    self.assertEqual(sgn1, sgn1_test)
 
         for i in range(len(self.es.part)):
             self.es.part[i].remove()
