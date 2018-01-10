@@ -177,6 +177,7 @@ cdef class ReactionAlgorithm(object):
                 raise ValueError("At least the following keys have to be given as keyword arguments: " +
                                  self._required_keys_add().__str__() + " got " + kwargs.__str__())
             self._params[k] = kwargs[k]
+        self._check_lengths_of_arrays()
         self._set_params_in_es_core_add()
 
     def _valid_keys_add(self):
@@ -184,6 +185,12 @@ cdef class ReactionAlgorithm(object):
 
     def _required_keys_add(self):
         return ["equilibrium_constant", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients"]
+
+    def _check_lengths_of_arrays(self):
+        if(len(self._params["reactant_types"])!=len(self._params["reactant_coefficients"])):
+            raise ValueError("Reactants: Number of types and coefficients have to be equal")
+        if(len(self._params["product_types"])!=len(self._params["product_coefficients"])):
+            raise ValueError("Products: Number of types and coefficients have to be equal")
 
     def _set_params_in_es_core_add(self):
         cdef vector[int] reactant_types

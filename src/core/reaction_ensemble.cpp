@@ -458,8 +458,8 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
       int p_id = static_cast<int>(hidden_particles_properties[i].p_id);
       to_be_deleted_hidden_ids[i] = p_id;
       to_be_deleted_hidden_types[i] = hidden_particles_properties[i].type;
-      //			set_particle_type(p_id,
-      //hidden_particles_properties[i].type); //change back type otherwise the
+      set_particle_type(p_id,
+      hidden_particles_properties[i].type); //change back type otherwise the
       //bookkeeping algorithm is not working
     }
 
