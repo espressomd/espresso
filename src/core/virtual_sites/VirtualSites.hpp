@@ -39,7 +39,7 @@
 /** @brief Base class for virtual sites implementations */
 class VirtualSites {
   public:
-    VirtualSites() :  m_have_velocity(false) {};
+    VirtualSites() :  m_have_velocity(true) {};
     /** @brief Update positions and/or velocities of virtual sites 
 
     * Velocities are only updated update_velocities() return true 
