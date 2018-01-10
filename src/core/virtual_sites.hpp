@@ -10,7 +10,7 @@
 const std::shared_ptr<VirtualSites>& virtual_sites();
 
 /** @brief Set active virtual sites implementation */
-void set_virtual_sites(std::shared_ptr<VirtualSites> v);
+void set_virtual_sites(std::shared_ptr<VirtualSites> const& v);
 
 #ifdef VIRTUAL_SITES_RELATIVE
 int vs_relate_to(int part_num, int relate_to);
