@@ -37,7 +37,7 @@ void put_mol_force_on_parts(Particle *p_com);
 void update_mol_vel_particle(Particle *p){
    int j;
    double v_com[3];
-   if (ifParticleIsVirtual(p)) {
+   if (p->p.isVirtual) {
       calc_mol_vel(p,v_com);
       for (j=0;j<3;j++){
          p->m.v[j] = v_com[j];
@@ -49,7 +49,7 @@ void update_mol_vel_particle(Particle *p){
 void update_mol_pos_particle(Particle *p){
    int j;
    double r_com[3];
-   if (ifParticleIsVirtual(p)) {
+   if (p->p.isVirtual) {
       calc_mol_pos(p,r_com);
       for (j=0;j<3;j++){
          p->r.p[j] = r_com[j];
@@ -59,7 +59,7 @@ void update_mol_pos_particle(Particle *p){
 
 void distribute_mol_force() {
   for (auto &p : local_cells.particles()) {
-    if (ifParticleIsVirtual(&p)) {
+    if (p.p.isVirtual) {
       if (sqrlen(p.f.f) != 0) {
         put_mol_force_on_parts(&p);
       }
@@ -86,7 +86,7 @@ void calc_mol_vel(Particle *p_com,double v_com[3]){
          return;
       }
       #endif
-      if (ifParticleIsVirtual(p)) continue;
+      if (p->p.isVirtual) continue;
       for (j=0;j<3;j++){
          v_com[j] += (*p).p.mass*p->m.v[j];
       }
@@ -128,7 +128,7 @@ void calc_mol_pos(Particle *p_com,double r_com[3]){
          return;
       }
       #endif
-      if (ifParticleIsVirtual(p)) continue;
+      if (p->p.isVirtual) continue;
       get_mi_vector(vec12,p->r.p, p_com->r.p);
       for (j=0;j<3;j++){
           r_com[j] += (*p).p.mass*vec12[j];
@@ -172,7 +172,7 @@ void put_mol_force_on_parts(Particle *p_com){
          return;
       }
       #endif
-       if (ifParticleIsVirtual(p)) continue;
+       if (p->p.isVirtual) continue;
       M+=(*p).p.mass;
    }
 #else
@@ -186,7 +186,7 @@ void put_mol_force_on_parts(Particle *p_com){
          return;
       }
       #endif
-      if (!ifParticleIsVirtual(p)) {
+      if (!p->p.isVirtual) {
          for (j=0;j<3;j++){
             p->f.f[j]+=(*p).p.mass*force[j]/M;
          }
@@ -222,7 +222,7 @@ Particle *get_mol_com_particle(Particle *calling_p){
          return nullptr;
       }
 
-      if (ifParticleIsVirtual(p)) {
+      if (p->p.isVirtual) {
           return p;
        }
    }

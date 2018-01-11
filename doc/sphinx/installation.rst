@@ -569,6 +569,41 @@ created by the system class. To perform an integration step, execute
 
     system.integrator.run(steps=100)
 
+.. _Debugging es:
+
+Debugging |es|
+--------------
+
+Exceptional situations occur in every program.  If |es| crashes with a
+segmentation fault that means that there was a memory fault in the
+simulation core which requires running the program in a debugger.  The
+`pypresso` executable file is acutally not a program but a script
+which sets the Python path appropriately and starts the Python
+interpreter with your arguments.  Thus it is not possible to directly
+run `pypresso` in a debugger.  However, we provide some useful
+commandline options for the most common tools.
+
+.. code-block:: bash
+
+     ./pypresso --tool <args>
+
+where ``--tool`` can be any from the following table.  You can only
+use one tool at a time.
+  
++---------------------+----------------------------------------------+
+| Tool                | Effect                                       |
++=====================+==============================================+
+| ``--gdb``           | ``gdb --args python <args>``                 |
++---------------------+----------------------------------------------+
+| ``--lldb``          | ``lldb -- python <args>``                    |
++---------------------+----------------------------------------------+
+| ``--valgrind``      | ``valgrind --leak-check=full python <args>`` |
++---------------------+----------------------------------------------+
+| ``--cuda-gdb``      | ``cuda-gdb --args python <args>``            |
++---------------------+----------------------------------------------+
+| ``--cuda-memcheck`` | ``cuda-memcheck python <args>``              |
++---------------------+----------------------------------------------+
+
 
 .. [1]
    http://espressomd.org

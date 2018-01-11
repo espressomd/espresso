@@ -36,6 +36,7 @@
 #include "VariantTester.hpp"
 
 #include "core/communication.hpp"
+#include "virtual_sites/initialize.hpp"
 
 namespace ScriptInterface {
 
@@ -51,6 +52,7 @@ void initialize() {
   Observables::initialize();
   Correlators::initialize();
   LBBoundaries::initialize();
+  VirtualSites::initialize();
 
   ScriptInterface::register_new<Testing::VariantTester>("Testing::VariantTester");
   ScriptInterface::register_new<ComFixed>("ComFixed");
