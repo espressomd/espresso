@@ -25,6 +25,7 @@
 #define NPT 
 #define GHMC
 #define DPD
+#define METADYNAMICS
 
 #define LB
 #define LB_BOUNDARIES
