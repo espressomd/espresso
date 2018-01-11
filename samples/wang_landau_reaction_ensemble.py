@@ -26,8 +26,6 @@ from espressomd import reaction_ensemble
 from espressomd import grand_canonical
 import numpy as np
 
-dev = "cpu"
-
 # System parameters
 #############################################################
 box_l = 6 * np.sqrt(2)

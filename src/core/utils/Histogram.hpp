@@ -110,7 +110,7 @@ public:
                      std::vector<std::pair<T, T>> limits);
   std::vector<size_t> get_n_bins() const;
   std::vector<T> get_histogram() const;
-  size_t get_tot_count() const;
+  std::vector<size_t> get_tot_count() const;
   std::vector<std::pair<T, T>> get_limits() const;
   std::vector<T> get_bin_sizes() const;
   void update(std::vector<T> const &data);
@@ -131,8 +131,8 @@ protected:
   std::vector<T> m_hist;
   // Number of dimensions for a single data point.
   size_t m_n_dims_data;
-  // Track the number of total hits.
-  size_t m_tot_count;
+  // Track the number of total hits per bin entry.
+  std::vector<size_t> m_tot_count;
 };
 
 /**
@@ -146,7 +146,7 @@ protected:
 template <typename T>
 Histogram<T>::Histogram(std::vector<size_t> n_bins, size_t n_dims_data,
                         std::vector<std::pair<T, T>> limits)
-    : m_n_bins(n_bins), m_limits(limits), m_n_dims_data(n_dims_data), m_tot_count(0) {
+    : m_n_bins(n_bins), m_limits(limits), m_n_dims_data(n_dims_data) {
   if (n_bins.size() != limits.size()) {
     throw std::invalid_argument("Argument for number of bins and limits do "
                                 "not have same number of dimensions!");
@@ -156,6 +156,7 @@ Histogram<T>::Histogram(std::vector<size_t> n_bins, size_t n_dims_data,
       m_n_dims_data * std::accumulate(std::begin(n_bins), std::end(n_bins), 1,
                                       std::multiplies<size_t>());
   m_hist = std::vector<T>(n_bins_total);
+  m_tot_count = std::vector<size_t>(n_bins_total);
 }
 
 /**
@@ -192,8 +193,8 @@ void Histogram<T>::update(std::vector<T> const &data,
       throw std::invalid_argument("Wrong dimensions of given weights!");
     for (size_t ind = 0; ind < m_n_dims_data; ++ind) {
       m_hist[flat_index + ind] += weights[ind];
+      m_tot_count[flat_index + ind] += 1;
     }
-    m_tot_count += 1;
   }
 }
 
@@ -229,7 +230,7 @@ template <typename T> std::vector<T> Histogram<T>::get_histogram() const {
 /**
  * \brief Get the histogram count data.
  */
-template <typename T> size_t Histogram<T>::get_tot_count() const {
+template <typename T> std::vector<size_t> Histogram<T>::get_tot_count() const {
   return m_tot_count;
 }
 /**
@@ -258,7 +259,6 @@ public:
   using Histogram<T>::get_limits;
   using Histogram<T>::get_bin_sizes;
   using Histogram<T>::m_hist;
-  using Histogram<T>::m_tot_count;
   using Histogram<T>::m_n_dims_data;
 
 private:
