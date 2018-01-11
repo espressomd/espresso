@@ -111,6 +111,7 @@ class TestCylindricalObservable(ut.TestCase):
         np_hist, _ = np.histogramdd(pol_positions, bins=(self.params['n_r_bins'], self.params['n_phi_bins'], self.params['n_z_bins']),
                                     range=[(self.params['min_r'], self.params['max_r']), (self.params['min_phi'], self.params['max_phi']),
                                            (self.params['min_z'], self.params['max_z'])])
+        return np_hist
 
     def normalize_with_bin_volume(self, histogram):
         bin_volume = self.calculate_bin_volume()
@@ -172,6 +173,9 @@ class TestCylindricalObservable(ut.TestCase):
         core_hist_v_phi = core_hist[:, :, :, 1]
         core_hist_v_z = core_hist[:, :, :, 2]
         np_hist = self.calculate_numpy_histogram()
+        for x in np.nditer(np_hist, op_flags=['readwrite']):
+            if x[...] > 0.0:
+                x[...] /= x[...]
         np.testing.assert_array_almost_equal(np_hist * self.v_r, core_hist_v_r)
         np.testing.assert_array_almost_equal(np_hist * self.v_phi, core_hist_v_phi)
         np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
@@ -210,16 +214,19 @@ class TestCylindricalObservable(ut.TestCase):
 
     def test_hist_x(self):
         self.params['axis'] = 'x'
+        self.velocity_profile_test()
         self.flux_density_profile_test()
         self.density_profile_test()
 
     def test_hist_y(self):
         self.params['axis'] = 'y'
+        self.velocity_profile_test()
         self.flux_density_profile_test()
         self.density_profile_test()
 
     def test_hist_z(self):
         self.params['axis'] = 'z'
+        self.velocity_profile_test()
         self.flux_density_profile_test()
         self.density_profile_test()
 
