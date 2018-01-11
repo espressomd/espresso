@@ -104,7 +104,7 @@ HAT
 UMBRELLA
 GAY_BERNE                       implies ROTATION
 OVERLAPPED
-DRUDE                           requires P3M and MASS and LANGEVIN_PER_PARTICLE
+DRUDE                           requires P3M and LANGEVIN_PER_PARTICLE
 THOLE                           implies GHOSTS_HAVE_BONDS
 THOLE                           requires P3M
 

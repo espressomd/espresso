@@ -954,7 +954,7 @@ void set_dipolar_method_local(DipolarInteraction method);
 #endif
 
 //Checks if there is a specific bond between p_bond and p_partner, where the bond is stored on p_bond. Needs GHOSTS_HAVE_BONDS if particles are ghosts.
-inline bool are_bonded(const Particle * const p_bond, const Particle * const p_partner, BondedInteraction bond)
+inline bool check_first_particle_for_bond_between_particles(const Particle * const p_bond, const Particle * const p_partner, BondedInteraction bond)
 {
     Bonded_ia_parameters *iaparams;
     int type_num;
@@ -972,14 +972,14 @@ inline bool are_bonded(const Particle * const p_bond, const Particle * const p_p
 }
 
 //Checks both particles for a specific bond. Needs GHOSTS_HAVE_BONDS if particles are ghosts.
-inline bool bond_between_particles(const Particle * const p1, const Particle * const p2, BondedInteraction bond)
+inline bool check_for_bond_between_particles(const Particle * const p1, const Particle * const p2, BondedInteraction bond)
 {
     if (p1==p2)
         return false;
     else {
         //Check if particles have bonds (bl.n > 0) and search for the bond of interest with are_bonded().
         //Could be saved on both sides (and both could have other bonds), so we need to check both.
-        return (p1->bl.n > 0 && are_bonded(p1, p2, bond)) || (p2->bl.n > 0 && are_bonded(p2, p1, bond)); 
+        return (p1->bl.n > 0 && check_first_particle_for_bond_between_particles(p1, p2, bond)) || (p2->bl.n > 0 && check_first_particle_for_bond_between_particles(p2, p1, bond)); 
     }
 }
 

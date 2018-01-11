@@ -21,17 +21,20 @@ class Drude(ut.TestCase):
         
         S=espressomd.System()
 
+        S.seed = S.cell_system.get_state()['n_nodes'] * [1234]
+        np.random.seed(1234)
+
         #Reference Results, reproduced with LAMMPS
         #Dipole Moments
-        ref_mu0_pf6  = [ 0.0001, 0.1645, -0.0156]
-        ref_mu0_c1   = [ 0.0002, 0.1529,  0.0005]
-        ref_mu0_c2   = [-0.    , 0.1098,  0.0013]
-        ref_mu0_c3   = [-0.0007, 0.2385, -0.0538]
-        ref_mu0_bmim = [-0.0005, 0.5012, -0.052 ]
+        ref_mu0_pf6  = [ 0.00177594, 0.16480996, -0.01605161] 
+        ref_mu0_c1   = [ 0.00076652, 0.15238767,  0.00135291] 
+        ref_mu0_c2   = [-0.00020222, 0.11084197,  0.00135842] 
+        ref_mu0_c3   = [ 0.00059177, 0.23949626, -0.05238468] 
+        ref_mu0_bmim = [ 0.00115606, 0.5027259 , -0.04967335] 
 
         #Polarisation Tensor diagonals
-        ref_pol_pf6  = [4.5638, 4.756, 4.5527]
-        ref_pol_bmim = [13.1314, 14.3941, 16.8360]
+        ref_pol_pf6  = [4.5535698335873445, 4.7558611769477697, 4.5546580162000554]
+        ref_pol_bmim = [13.126868394164262, 14.392582501485913, 16.824150151623762]
 
         #TIMESTEP
         fs_to_md_time = 1.0e-2

@@ -1,5 +1,6 @@
 from __future__ import print_function
 from espressomd.interactions import BondedCoulombP3MSRBond
+from espressomd import has_features
 
 # Dict with drude type infos
 drude_dict = {}
@@ -21,8 +22,13 @@ def add_drude_particle_to_core(system, p_core, drude_bond, id_drude, type_drude,
     k = drude_bond.params["k"]
     q_drude = -1.0 * pow(k * alpha / coulomb_prefactor, 0.5)
 
+    if has_features("PARTICLE_ANISOTROPY"):
+        gamma_off = [0.0,0.0,0.0]
+    else:
+        gamma_off = 0.0
+
     system.part.add(id=id_drude, pos=p_core.pos, type=type_drude,
-                    q=q_drude, mass=mass_drude, temp=0, gamma=0)
+                    q=q_drude, mass=mass_drude, temp=0, gamma=gamma_off)
 
     if verbose:
         print("Adding to core", p_core.id, "drude id", id_drude, "  pol", alpha, "  core charge", p_core.q, "->", p_core.q-q_drude, "   drude charge", q_drude)
@@ -30,8 +36,9 @@ def add_drude_particle_to_core(system, p_core, drude_bond, id_drude, type_drude,
     p_core.q -= q_drude
     p_core.mass -= mass_drude
     p_core.add_bond((drude_bond, id_drude))
-    p_core.temp = 0
-    p_core.gamma = 0
+    
+    p_core.temp = 0.0
+    p_core.gamma = gamma_off
 
     if type_drude in drude_dict and not (drude_dict[type_drude]["q"] == q_drude and drude_dict[type_drude]["thole_damping"] == thole_damping):
         raise Exception("Drude particles with different drude charges have to have different types for THOLE")

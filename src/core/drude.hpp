@@ -70,11 +70,13 @@ inline int calc_drude_forces(Particle *p1, Particle *p2, Bonded_ia_parameters *i
 
       //Langevin thermostat for center of mass
       com_vel = mass_tot_inv * (p1->p.mass * p1->m.v[i] + p2->p.mass * p2->m.v[i]);
-      force_lv_com =  -iaparams->p.drude.gamma_com / time_step * com_vel + sqrt(2.0 * iaparams->p.drude.gamma_com / time_step * iaparams->p.drude.temp_com) * gaussian_random_cut();
+      //force_lv_com =  -iaparams->p.drude.gamma_com / time_step * com_vel + sqrt(2.0 * iaparams->p.drude.gamma_com / time_step * iaparams->p.drude.temp_com) * gaussian_random_cut();
+      force_lv_com =  -iaparams->p.drude.gamma_com / time_step * com_vel + sqrt(24.0 * iaparams->p.drude.gamma_com / time_step * iaparams->p.drude.temp_com) * (d_random()-0.5);
   
       //Langevin thermostat for distance core->drude
       dist_vel = p2->m.v[i] - p1->m.v[i];
-      force_lv_dist =  -iaparams->p.drude.gamma_drude / time_step * dist_vel + sqrt(2.0 * iaparams->p.drude.gamma_drude / time_step * iaparams->p.drude.temp_drude) * gaussian_random_cut();
+      //force_lv_dist =  -iaparams->p.drude.gamma_drude / time_step * dist_vel + sqrt(2.0 * iaparams->p.drude.gamma_drude / time_step * iaparams->p.drude.temp_drude) * gaussian_random_cut();
+      force_lv_dist =  -iaparams->p.drude.gamma_drude / time_step * dist_vel + sqrt(24.0 * iaparams->p.drude.gamma_drude / time_step * iaparams->p.drude.temp_drude) * (d_random()-0.5);
 
       //Spring
       force_harmonic = fac_harmonic * dx[i];
