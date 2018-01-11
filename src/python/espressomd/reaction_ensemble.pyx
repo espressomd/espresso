@@ -142,7 +142,7 @@ cdef class ReactionAlgorithm(object):
 
     def get_non_interacting_type(self):
         """
-        Get the type which is used for hiding particles.
+        Returns the type which is used for hiding particles.
 
         """
         return self.RE.non_interacting_type
@@ -154,18 +154,18 @@ cdef class ReactionAlgorithm(object):
         Parameters
         ----------
         equilibrium_constant : :obj:`float`
-                               Dimensionless (thermodynamic) equilibrium
-                               constant of the reaction..
+                               Dimensionless concentration-based equilibrium
+                               constant of the reaction, :math:`K_c` (see the User guide, section 6.6 for the definition).
         reactant_types : list of :obj:`int`
-                         A list of types of reactants in the reaction.
+                                List of particle types of reactants in the reaction.
         reactant_coefficients : list
-                                A list of stoichiometric coefficients of the
+                                List of stoichiometric coefficients of the
                                 reactants in the same order as the list of
                                 their types.
         product_types : list
-                        A list of product types of the reaction.
+                               List of particle types of products in the reaction.
         product_coefficients : list
-                               A list of stoichiometric coefficients of
+                               List of stoichiometric coefficients of
                                products of the reaction in the same order as
                                the list of their types
 
@@ -205,11 +205,9 @@ cdef class ReactionAlgorithm(object):
 
     def set_default_charges(self, *args, **kwargs):
         """
-        Sets the charges of the particle types that are created. 
-        The input of this command is a dictionary assigning a charge to each particle type involved in the reactions.
-
-        """
-        for k in kwargs:
+        Sets the charges of the particle types that are created in the reactions. 
+        The input of this command is a dictionary mapping a charge to each particle type involved in the reactions.
+""" for k in kwargs:
             if k in self._valid_keys_default_charge():
                 self._params[k] = kwargs[k]
             else:
@@ -397,7 +395,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
     def add_collective_variable_degree_of_association(self, *args, **kwargs):
         """
-        Adds degree of association as the collective variable (reaction coordinate) for the Wang-Landau Reaction Ensemble.
+        Adds the degree of association as a collective variable (reaction coordinate) for the Wang-Landau Reaction Ensemble.
+        Several collective variables can be set simultaneously.
 
         Parameters
         ----------
@@ -439,7 +438,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
     def add_collective_variable_potential_energy(self, *args, **kwargs):
         """
-        Adds the type potential energy as the collective variable (reaction coordinate) for the Wang Landau Reaction Ensemble.
+        Adds the potential energy as a collective variable (reaction coordinate) for the Wang Landau Reaction Ensemble.
+        Several collective variables can be set simultaneously.
 
         Parameters
         ----------
