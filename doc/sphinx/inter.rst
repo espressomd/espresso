@@ -903,7 +903,7 @@ and can be used to convenientely add a drude particle to a given core
 particle::
 
     from drude_functions import *
-    add_drude_particle_to_core(<system>, <core particle>, <drude bond>, <id drude>, <type drude>, <alpha>, <mass drude>, <coulomb_prefactor>, <thole damping>)
+    add_drude_particle_to_core(<system>, <core particle>, <drude bond>, <id drude>, <type drude>, <alpha>, <mass drude>, <coulomb_prefactor>, <thole damping>, <verbose>)
 
 The arguments of the helper function are:
     * <system>: The espressomd.System().
@@ -919,6 +919,7 @@ The arguments of the helper function are:
      the polarizability and the spring constant of the drude bond.  
     * <thole damping>: (optional) An individual thole damping parameter for the
      core-drude pair. Only relevant if thole damping is used (defaults to 2.6).
+    * <verbose>: (bool, optional) Prints out information about the added Drude particles (default: False)
 
 Canceling intramolecular electrostatics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -939,7 +940,7 @@ long-range part of the electrostatic interaction. Two helper methods assist
 with setting up this exclusion. If used, they have to be called
 after all drude particles are added to the system::
 
-    setup_intramol_exclusion_bonds(<system>, <molecule drude types>, <molecule core types>, <molecule core partial charges>)
+    setup_intramol_exclusion_bonds(<system>, <molecule drude types>, <molecule core types>, <molecule core partial charges>, <verbose>)
 
 This function creates the requires number of bonds which are later added to the
 particles. It has to be called only once. In a molecule with `N` polarizable
@@ -950,17 +951,19 @@ Parameters are:
     * <molecule drude types>: List of the drude types within the molecule.
     * <molecule core types>: List of the core types within the molecue that have partial charges.
     * <molecule core partial charges>: List of the partial charges on the cores.
+    * <verbose>: (bool, optional) Prints out information about the created bonds (default: False)
 
 After setting up the bonds, one has to add them to each molecule with the
 following method::
 
-    add_intramol_exclusion_bonds(<system>, <drude ids>, <core ids>)
+    add_intramol_exclusion_bonds(<system>, <drude ids>, <core ids>, <verbose>)
 
 This method has to be called for all molecules and needs the following parameters:
 
     * <system>: The espressomd.System().
     * <drude ids>: The ids of the drude particles within one molecule.
     * <core ids>: The ids of the core particles within one molecule.
+    * <verbose>: (bool, optional) Prints out information about the added bonds (default: False)
 
 Internally, this is done with the bond ``BondedCoulombP3MSRBond``, that
 simply adds the p3m shortrange pair-force of scale `- q_d q_{partial}` the to
@@ -1014,14 +1017,15 @@ coefficients, the helper method ``add_drude_particle_to_core()`` from the
 parameters when a drude particle is created. The user already provided all the
 information when setting up the the drude particles, so the simple call::
 
-    add_all_thole(<system>)
+    add_all_thole(<system>, <verbose>)
 
 given the espressomd.System() object, uses this information to create all
 necessary Thole interactions. The method calculates the mixed scaling
 coefficient `s` and creates the non-bonded Thole interactions between the
 collected types to cover all the drude-drude, drude-core and core-core
 combinations. No further calls of ``add_drude_particle_to_core()`` should
-follow.
+follow. Set `verbose` to `True` to print out the coefficients, charge factors
+and involved types.
 
 The samples section contains the script *drude_bmimpf6.py* with a fully
 polarizable, coarse grained ionic liquid where this approach is applied.

@@ -52,7 +52,7 @@ inline void add_thole_pair_force(const Particle * const p1, const Particle * con
     //Subtract p3m shortrange (dipole-dipole charge portion) to add damped coulomb later
     p3m_add_pair_force(-q1q2, d, dist2, dist, force);
     
-    //Calc damping function
+    //Calc damping function (see doi.org/10.1016/0301-0104(81)85176-2)
     // S(r) = 1.0 - (1.0 + thole_s*r/2.0) * exp(-thole_s*r); 
     // Calc F = - d/dr ( S(r)*q1q2/r) =  -(1/2)*(-2+(r^2*s^2+2*r*s+2)*exp(-s*r))*q1q2/r^2
     // Everything before q1q2/r^2 can be used as a factor for the p3m_add_pair_force method

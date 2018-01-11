@@ -1,15 +1,23 @@
 from __future__ import print_function
+import numpy as np
+import unittest as ut
 import espressomd
 from espressomd.electrostatics import P3M
 from espressomd.interactions import DrudeBond
-import numpy as np
 from espressomd import drude_helpers
-import unittest as ut
 
 class Drude(ut.TestCase):
 
     @ut.skipIf(not espressomd.has_features("P3M", "DRUDE", "THOLE", "LANGEVIN_PER_PARTICLE"), "Test needs P3M, DRUDE, THOLE and LANGEVIN_PER_PARTICLE")
     def test(self):
+        """
+        Sets up a BMIM PF6 pair separated in y-direction with fixed cores.
+        Adds the Drude particles and related features (intramolecular exclusion bonds, Thole screening)
+        via helper functions.
+        Calculates the induced dipole moment and the diagonals of the polarization tensor
+        and compares against reference results, which where reproduced with LAMMPS.
+
+        """
         
         S=espressomd.System()
 

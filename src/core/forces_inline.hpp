@@ -499,9 +499,6 @@ inline void add_bonded_force(Particle *p1) {
 
     /* fetch particle 2, which is always needed */
     p2 = local_particles[p1->bl.e[i++]];
-
-    //printf("BEFORE T %d F %.5f %.5f %.5f P1F %.5f %.5f %.5f\n", type, force[0], force[1], force[2],p1->f.f[0], p1->f.f[1],p1->f.f[2]);
-    //printf("BEFORE T %d F %.5f %.5f %.5f P2F %.5f %.5f %.5f\n", type, force[0], force[1], force[2],p2->f.f[0], p2->f.f[1],p2->f.f[2]);
     
     if (!p2) {
       runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
@@ -897,8 +894,6 @@ inline void add_bonded_force(Particle *p1) {
         break;
       }
     }
-    //printf("AFTER T %d F %.5f %.5f %.5f P1F %.5f %.5f %.5f\n", type, force[0], force[1], force[2],p1->f.f[0], p1->f.f[1],p1->f.f[2]);
-    //printf("AFTER T %d F %.5f %.5f %.5f P2F %.5f %.5f %.5f\n", type, force[0], force[1], force[2],p2->f.f[0], p2->f.f[1],p2->f.f[2]);
   }
 }
 

@@ -713,18 +713,18 @@ IF THOLE:
 
             Parameters
             ----------
-
-            scaling_coeff : float
+            scaling_coeff : :obj:`float`
                             The facor used in the thole damping function between 
                             polarizable particles i and j. Usually caluclated by 
                             the polarizabilities alpha_i, alpha_j and damping 
                             parameters  a_i, a_j via
                             scaling_coeff = (a_i+a_j)/2 / ((alpha_i*alpha_j)^(1/2))^(1/3)
-            q1q2: float
+            q1q2: :obj:`float`
                   charge factor of the involved charges. Has to be set because 
                   it acts only on the portion of the drude core charge that is 
                   associated to the dipole of the atom. For charged, polarizable 
                   atoms that charge is not equal to the particle charge property.
+
             """
             super(TholeInteraction, self).set_params(**kwargs)
 
@@ -1844,7 +1844,7 @@ if ELECTROSTATICS:
             Parameters
             ----------
 
-            prefactor : float
+            prefactor : :obj:`float`
                         Sets the coulomb prefactor of the bonded coulomb interaction.
             """
             super(BondedCoulombBond, self).__init__(*args, **kwargs)
@@ -1884,7 +1884,7 @@ if P3M:
             Parameters
             ----------
 
-            q1q2 : float
+            q1q2 : :obj:`float`
                    Sets the charge factor of the involved particle pair. Useful to partly subtract coulomb interaction in combination with intramolecular thole screening.
             """
             super(BondedCoulombP3MSRBond, self).__init__(*args, **kwargs)
@@ -1923,17 +1923,17 @@ if DRUDE:
             Parameters
             ----------
 
-            temp_com : float
+            temp_com : :obj:`float`
                         Sets the temerature of the Langevin thermostat for the com of the core-drude pair.
-            gamma_com: float
+            gamma_com: :obj:`float`
                         Sets the friction coefficient of the Langevin thermostat for the com of the core-drude pair.
-            temp_drude: float 
+            temp_drude: :obj:`float` 
                         Sets the temerature of the Langevin thermostat for the distance vector of the core-drude pair.
-            gamma_drude: float 
+            gamma_drude: :obj:`float` 
                          Sets the friction coefficient of the Langevin thermostat for the distance vector of the core-drude pair.
-            k: float
+            k: :obj:`float`
                Specifies the spring constant of the harmonic bond between core and drude particle.
-            r_cut: float, optional
+            r_cut: :obj:`float`, optional
                     Specifies maximum distance beyond which the bond is considered
                     broken.
             """
