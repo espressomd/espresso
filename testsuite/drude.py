@@ -187,13 +187,14 @@ class Drude(ut.TestCase):
 
         mu0_pf6, mu0_c1, mu0_c2, mu0_c3, mu0_bmim = measure_dipole_moments() 
         eA_to_Debye=4.8032047
-        tol = 1e-3
+        atol = 1e-2
+        rtol = 1e-2
 
-        np.testing.assert_allclose(ref_mu0_pf6,  eA_to_Debye * mu0_pf6, atol = tol) 
-        np.testing.assert_allclose(ref_mu0_c1,   eA_to_Debye * mu0_c1, atol = tol) 
-        np.testing.assert_allclose(ref_mu0_c2,   eA_to_Debye * mu0_c2, atol = tol) 
-        np.testing.assert_allclose(ref_mu0_c3,   eA_to_Debye * mu0_c3, atol = tol) 
-        np.testing.assert_allclose(ref_mu0_bmim, eA_to_Debye * mu0_bmim, atol = tol) 
+        np.testing.assert_allclose(ref_mu0_pf6,  eA_to_Debye * mu0_pf6, atol = atol, rtol = rtol) 
+        np.testing.assert_allclose(ref_mu0_c1,   eA_to_Debye * mu0_c1, atol = atol, rtol = rtol) 
+        np.testing.assert_allclose(ref_mu0_c2,   eA_to_Debye * mu0_c2, atol = atol, rtol = rtol) 
+        np.testing.assert_allclose(ref_mu0_c3,   eA_to_Debye * mu0_c3, atol = atol, rtol = rtol) 
+        np.testing.assert_allclose(ref_mu0_bmim, eA_to_Debye * mu0_bmim, atol = atol, rtol = rtol) 
 
         pol_pf6 = []
         pol_bmim = []
@@ -211,8 +212,8 @@ class Drude(ut.TestCase):
         pol_pf6.append(res[0])
         pol_bmim.append(res[1])
 
-        np.testing.assert_allclose(ref_pol_pf6, pol_pf6, atol = tol) 
-        np.testing.assert_allclose(ref_pol_bmim, pol_bmim, atol = tol) 
+        np.testing.assert_allclose(ref_pol_pf6, pol_pf6, atol = atol, rtol = rtol) 
+        np.testing.assert_allclose(ref_pol_bmim, pol_bmim, atol = atol, rtol = rtol ) 
 
 if __name__ == "__main__":
     ut.main()
