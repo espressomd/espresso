@@ -11,9 +11,9 @@ class WangLandauHasConverged(Exception):
 
 cdef class ReactionAlgorithm(object):
     """
-    This class provides the Reaction Ensemble algorithm, the Wang-Landau
+    This class provides the base class for Reaction Algorithms like the Reaction Ensemble algorithm, the Wang-Landau
     Reaction Ensemble algorithm and the constant pH method. Initialize the
-    reaction ensemble by setting the standard pressure, temperature, and the
+    reaction algorithm by setting the standard pressure, temperature, and the
     exclusion radius.
 
     Parameters
@@ -177,6 +177,7 @@ cdef class ReactionAlgorithm(object):
                 raise ValueError("At least the following keys have to be given as keyword arguments: " +
                                  self._required_keys_add().__str__() + " got " + kwargs.__str__())
             self._params[k] = kwargs[k]
+        self._check_lengths_of_arrays()
         self._set_params_in_es_core_add()
 
     def _valid_keys_add(self):
@@ -184,6 +185,12 @@ cdef class ReactionAlgorithm(object):
 
     def _required_keys_add(self):
         return ["equilibrium_constant", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients"]
+
+    def _check_lengths_of_arrays(self):
+        if(len(self._params["reactant_types"])!=len(self._params["reactant_coefficients"])):
+            raise ValueError("Reactants: Number of types and coefficients have to be equal")
+        if(len(self._params["product_types"])!=len(self._params["product_coefficients"])):
+            raise ValueError("Products: Number of types and coefficients have to be equal")
 
     def _set_params_in_es_core_add(self):
         cdef vector[int] reactant_types
@@ -220,9 +227,9 @@ cdef class ReactionAlgorithm(object):
 
         self._validate_params_default_charge()
 
-        for key in self._params["dictionary"]:
-                if(find_index_of_type(int(key), self.RE) >= 0):
-                    self.RE.charges_of_types[find_index_of_type(int(key), self.RE)]=self._params["dictionary"][key]
+        for key in self._params["dictionary"]: #the keys are the types
+            self.RE.charges_of_types[int(key)]=self._params["dictionary"][key]
+
 
     def _valid_keys_default_charge(self):
         return "dictionary"
@@ -297,10 +304,14 @@ cdef class ReactionAlgorithm(object):
 
 
 cdef class ReactionEnsemble(ReactionAlgorithm):
+    """
+    This class implements the Reaction Ensemble.
+    """    
+    
     cdef CReactionEnsemble* REptr
     def __init__(self, *args, **kwargs):
         self.RE = <CReactionAlgorithm*> new CReactionEnsemble()
-        self.REptr = <CReactionEnsemble*> new CReactionEnsemble()
+        self.REptr = <CReactionEnsemble*> self.RE
         self._params = {"standard_pressure": 1,
                         "temperature": 1,
                         "exclusion_radius": 0}
@@ -361,6 +372,10 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
             self.constpHptr.m_constant_pH = pH
 
 cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
+    """
+    This Class implements the Wang-Landau Reaction Ensemble.
+    """    
+    
     cdef CWangLandauReactionEnsemble* WLRptr
     def __init__(self, *args, **kwargs):
         self.RE = <CReactionAlgorithm*> new CWangLandauReactionEnsemble()
@@ -634,4 +649,40 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         def __get__(self):
             return self.WLRptr.fix_polymer
 
+cdef class WidomInsertion(ReactionAlgorithm):
+    """
+    This class implements the Widom Insertion Method for homogeneous systems, where the excess chemical potential is not depending on the location.
+    
+    """
+    
+    cdef CWidomInsertion* WidomInsertionPtr
+    
+    def __init__(self, *args, **kwargs):
+        self.RE = <CReactionAlgorithm*> new CWangLandauReactionEnsemble()
+        self.WidomInsertionPtr=<CWidomInsertion*> self.RE
+        self._params = {"standard_pressure": 1,
+                        "temperature": 1,
+                        "exclusion_radius": 0}
+        for k in self._required_keys():
+            if k not in kwargs:
+                raise ValueError(
+                    "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
+            self._params[k] = kwargs[k]
 
+        for k in kwargs:
+            if k in self._valid_keys():
+                self._params[k] = kwargs[k]
+            else:
+                raise KeyError("%s is not a vaild key" % k)
+
+        self._set_params_in_es_core()  
+      
+    def __dealloc__(self):
+        del(self.WidomInsertionPtr)
+    
+    def measure_excess_chemical_potential(self, reaction_id=0):
+        """
+        Measures the excess chemical potential in a homogeneous system.
+        
+        """
+        return self.WidomInsertionPtr.measure_excess_chemical_potential(int(reaction_id))
