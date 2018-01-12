@@ -357,7 +357,7 @@ constant :math:`K_c` for the following reaction:
 
 .. math::
 
-   \mathrm{HA \rightleftharpoons\ H^+ + A^- } \,,
+   \mathrm{HA \rightleftharpoons\ A^- + H^+} \,,
 
 For an example of how to setup
 a Constant pH simulation, see the file in the testsuite directory. 
@@ -378,7 +378,7 @@ grandcanonical simulation. Formally, this can be expressed by the reaction
 where, if :math:`\nu_A=1`, the reaction constant :math:`\Gamma` defines the chemical potential of species A.
 However, if :math:`\nu_A\neq 1`, the statistics of the reaction ensemble becomes
 equivalent to the grandcanonical only in the limit of large average number of species A in the box.
-It the reaction contains more than one product, then the reaction constant
+If the reaction contains more than one product, then the reaction constant
 :math:`\Gamma` defines only the sum of their chemical potentials but not the
 chemical potential of each product alone.
 
