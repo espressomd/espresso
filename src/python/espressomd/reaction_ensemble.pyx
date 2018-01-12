@@ -215,8 +215,9 @@ cdef class ReactionAlgorithm(object):
     def set_default_charges(self, *args, **kwargs):
         """
         Sets the charges of the particle types that are created in the reactions. 
-        The input of this command is a dictionary mapping a charge to each particle type involved in the reactions.
-""" for k in kwargs:
+        The input of this command is a dictionary mapping a charge to each particle type involved in the reactions.  
+        """
+        for k in kwargs:
             if k in self._valid_keys_default_charge():
                 self._params[k] = kwargs[k]
             else:
