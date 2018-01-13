@@ -1,6 +1,9 @@
 
 #include "config.hpp"
 
+const int MaxNumIBM = 1000;
+double VolumesCurrent[MaxNumIBM] = {0};
+
 #ifdef IMMERSED_BOUNDARY
 
 #include "particle_data.hpp"
@@ -15,8 +18,6 @@
 #include "bond/IbmVolumeConservation.hpp" // for Bond::IbmVolumeConservation
 
 // ****** Internal variables & functions ********
-const int MaxNumIBM = 1000;
-double VolumesCurrent[MaxNumIBM] = {0};
 bool VolumeInitDone = false;
 
 void CalcVolumes();

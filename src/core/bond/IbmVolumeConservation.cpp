@@ -10,7 +10,6 @@ int Bond::IbmVolumeConservation::add_bonded_force(Particle *p1, int bl_id)
   // Get second and third particle of the triangle
   Particle *p2, *p3 = NULL;
   if(auto bond_partners =  get_n_bond_partners<2>(p1, bl_id)){
-#ifdef IMMERSED_BOUNDARY
     p2 = (*bond_partners)[0];
     p3 = (*bond_partners)[1];
 
@@ -51,7 +50,7 @@ int Bond::IbmVolumeConservation::add_bonded_force(Particle *p1, int bl_id)
 			      vector_product(x2, x1, n);
 			      for (int k=0; k < 3; k++) p3->f.f[k] += fact*n[k];*/
             
-            
+
     // This is Dupin 2008. I guess the result will be very similar as the code above
     double n[3];
     vector_product(a12, a13, n);
@@ -75,7 +74,7 @@ int Bond::IbmVolumeConservation::add_bonded_force(Particle *p1, int bl_id)
 	p2->f.f[k] += force[k];
 	p3->f.f[k] += force[k];
       };
-#endif
+
   return 0;
 
   }
