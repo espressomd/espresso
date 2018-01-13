@@ -15,8 +15,12 @@ namespace Bond {
     //constructor
     BondContainer() = default;
 
+    //---insert and delete bonds---
     // insert bond in all bonds, energy and force bonds
-    void set_bond_by_type(int type, std::unique_ptr<Bond> && bond);
+    void set_bond_by_type(int bond_map_id, std::unique_ptr<Bond> && bond);
+    void delete_bond(int bond_map_id);
+
+    //---Different Loops over internal Maps of different kinds of bonds---
     // bonds with force and energy contribution
     int force_loop(Particle *p1);
     int energy_loop(Particle *p1);
@@ -34,6 +38,7 @@ namespace Bond {
     //ibm volume conservation -> volume calculation
     int ibm_vol_con_softID_loop(Particle *p1, int *softID, int *bond_map_id);
 
+    //---functions which provide access to Bond maps---
     //get Access to all bonds
     Bond* get_Bond(int bond_map_id);
     //get IBMVolCon Bond
