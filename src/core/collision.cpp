@@ -419,7 +419,7 @@ std::vector<collision_struct> gather_global_collision_queue()
     std::vector<int> counts(n_nodes);
     // Total number of collisions
     int total_collisions;
-    const int local_queue_size=local_collision_queue.size();
+    int local_queue_size=local_collision_queue.size();
     MPI_Allreduce(&local_queue_size, &total_collisions, 1, MPI_INT, MPI_SUM, comm_cart);
     
     if (total_collisions==0)
