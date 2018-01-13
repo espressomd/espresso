@@ -53,7 +53,7 @@ static std::vector<collision_struct> local_collision_queue;
 
 
 /// Parameters for collision detection
-Collision_parameters collision_params = { 0, };
+Collision_parameters collision_params;
 
 
 /** @brief Return true if a bond between the centers of the colliding particles needs to be placed. At this point, all modes need this */

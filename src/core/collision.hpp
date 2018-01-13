@@ -51,7 +51,18 @@
 #define COLLISION_MODE_BIND_THREE_PARTICLES 16 
 /*@}*/
 
-typedef struct {
+
+class Collision_parameters {
+  public: 
+  Collision_parameters() : 
+     mode(COLLISION_MODE_OFF),
+     bond_centers(-1), 
+     bond_vs(-1),
+     bond_three_particles(-1) {};
+
+  /// collision handling mode, a combination of constants COLLISION_MODE_*
+  int mode;
+
   /// bond type used between centers of colliding particles
   int bond_centers;
   /// bond type used between virtual sites 
@@ -59,8 +70,6 @@ typedef struct {
   /// particle type for virtual sites created on collision
   int vs_particle_type;
 
-  /// collision handling mode, a combination of constants COLLISION_MODE_*
-  int mode;
   /** Raise exception on collision */
   bool exception_on_collision;
 
@@ -82,16 +91,11 @@ typedef struct {
   int three_particle_angle_resolution;
   /** Placement of virtual sites for MODE_VS. 0=on same particle as related to, 1=on collision partner. 0.5=in the middle between */
   double vs_placement;
-} Collision_parameters;
+};
 
 /// Parameters for collision detection
 extern Collision_parameters collision_params;
 
-/** Detect a collision between two particles. In case of collision,
-    a bond between the particles is added as marker and the collision is
-    recorded in the queue for later processing.
-*/
-void detect_collision(const Particle* const p1, const Particle* const p2, const double& dist_betw_part);
 
 void prepare_local_collision_queue();
 
