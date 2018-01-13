@@ -49,6 +49,7 @@ from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
 from globals cimport max_seen_particle
 from espressomd.utils import array_locked, is_valid_type
+from espressomd.virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 
 import sys
 import random  # for true random numbers from os.urandom()
@@ -58,6 +59,9 @@ setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
 
 IF LEES_EDWARDS == 1:
     setable_properties.append("lees_edwards_offset")
+
+if VIRTUAL_SITES:
+    setable_properties.append("virtual_sites")
 
 cdef bool _system_created = False
 
@@ -90,6 +94,7 @@ cdef class System(object):
         __seed
         cuda_init_handle
         comfixed
+        _active_virtual_sites_handle
 
     def __init__(self):
         global _system_created
@@ -116,6 +121,8 @@ cdef class System(object):
                 self.cuda_init_handle = cuda_init.CudaInitHandle()
 
             self.comfixed = ComFixed()
+            IF VIRTUAL_SITES:
+                self._active_virtual_sites_handle=ActiveVirtualSitesHandle(implementation=VirtualSitesOff())
             _system_created = True
         else:
             raise RuntimeError(
@@ -377,6 +384,16 @@ cdef class System(object):
         # global lees_edwards_offset
                 return lees_edwards_offset
 
+    IF VIRTUAL_SITES:
+        property virtual_sites:
+            def __set__(self,v):
+                self._active_virtual_sites_handle.implementation=v
+            def __get__(self):
+                return self._active_virtual_sites_handle.implementation
+
+    
+    
+    
     def change_volume_and_rescale_particles(self, d_new, dir="xyz"):
         """Change box size and rescale particle coordinates.
 
@@ -428,6 +445,24 @@ cdef class System(object):
 
         get_mi_vector(res, b, a)
         return np.array((res[0], res[1], res[2]))
+
+    def rotate_system(self, **kwargs):
+        """Rotate the particles in the system about the center of mass.
+
+           If ROTATION is activated, the internal rotation degrees of
+           freedom are rotated accordingly.
+
+        Parameters
+        ----------
+        phi : :obj:`float`
+                Angle between the z-axis and the roation axis.
+        theta : :obj:`float`
+                Rotaton of the axis around the y-axis.
+        alpha : :obj:`float`
+                How much to rotate
+
+        """
+        rotate_system(kwargs['phi'], kwargs['theta'], kwargs['alpha'])
 
     IF EXCLUSIONS:
         def auto_exclusions(self, distance):
