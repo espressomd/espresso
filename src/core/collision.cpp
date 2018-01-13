@@ -419,14 +419,14 @@ std::vector<collision_struct> gather_global_collision_queue()
     std::vector<int> counts(n_nodes);
     // Total number of collisions
     int total_collisions;
-    int tmp=local_collision_queue.size();
-    MPI_Allreduce(&tmp, &total_collisions, 1, MPI_INT, MPI_SUM, comm_cart);
+    const int local_queue_size=local_collision_queue.size();
+    MPI_Allreduce(&local_queue_size, &total_collisions, 1, MPI_INT, MPI_SUM, comm_cart);
     
     if (total_collisions==0)
       return res;
 
     // Gather number of collisions
-    MPI_Allgather(&tmp, 1, MPI_INT, &(counts[0]), 1, MPI_INT, comm_cart);
+    MPI_Allgather(&local_queue_size, 1, MPI_INT, &(counts[0]), 1, MPI_INT, comm_cart);
 
     // initialize displacement information for all nodes
     displacements[0]=0;
@@ -454,15 +454,9 @@ std::vector<collision_struct> gather_global_collision_queue()
 // 2-particle collision. If it finds them, it performs three particle binding
 void three_particle_binding_full_search(const std::vector<collision_struct> &gathered_queue)
 {
-  // Only works on one node.
-  if (n_nodes!=1) {
-    runtimeErrorMsg() << "Collision detection three particle binding: The full search scheme only works on a single core. Please use domain decomposition in parallel simulations.";
-    return;
-  }
-  
-  // Iterate over all local particles
-  for (auto &p : local_cells.particles()) {
-    // And all pairs of particles in the collision queue
+  // Handler checking a single particle against collision queue. Used for
+  // local particles and ghosts
+  auto handle_single_particle = [&gathered_queue](Particle& p) {
     for (auto &c : gathered_queue) {
       Particle* p1 = local_particles[c.pp1];
       Particle* p2 = local_particles[c.pp2];
@@ -487,7 +481,18 @@ void three_particle_binding_full_search(const std::vector<collision_struct> &gat
       coldet_do_three_particle_bond(*p1, p, *p2);
       coldet_do_three_particle_bond(*p2, p, *p1);
     }
+  };  
+
+  // Iterate over all local particles
+  for (auto &p : local_cells.particles()) {
+    handle_single_particle(p);
+  };
+
+  // And ghosts
+  for (auto &p : ghost_cells.particles()) {
+    handle_single_particle(p);
   }
+
 }
 
 
@@ -610,9 +615,7 @@ void handle_collisions ()
   auto gathered_queue = gather_global_collision_queue();
 
   // Sync max_seen_part
-  int tmp;
-  MPI_Allreduce(&max_seen_particle, &tmp, 1, MPI_INT, MPI_MAX, comm_cart);
-  max_seen_particle=tmp;
+  MPI_Allreduce(MPI_IN_PLACE,&max_seen_particle, 1, MPI_INT, MPI_MAX, comm_cart);
   
   // Make sure, the local_particles array is long enough
   realloc_local_particles(max_seen_particle);

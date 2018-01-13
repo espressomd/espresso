@@ -421,8 +421,15 @@ class CollisionDetection(ut.TestCase):
         
         self.s.part.add(id=4,pos=e)
         self.s.part.add(id=1,pos=b)
+        self.s.cell_system.set_domain_decomposition()
         self.s.integrator.run(0,recalc_forces=True)
         self.verify_triangle_binding(cutoff,self.s.bonded_inter[2],res)
+        self.s.cell_system.set_n_square()
+        self.s.part[:].bonds=()
+        self.s.integrator.run(0,recalc_forces=True)
+        self.verify_triangle_binding(cutoff,self.s.bonded_inter[2],res)
+
+
 
     def verify_triangle_binding(self,distance,first_bond,angle_res):
         # Gather pairs
