@@ -2,11 +2,10 @@
 #ifndef IBM_VOLUME_CONSERVATION_H
 #define IBM_VOLUME_CONSERVATION_H
 
+#ifdef IMMERSED_BOUNDARY
 //global variables
 extern const int MaxNumIBM;
 extern double VolumesCurrent[];
-
-#ifdef IMMERSED_BOUNDARY
 
 // This function is used to set the parameters
 // Also calculates and stores the reference state
