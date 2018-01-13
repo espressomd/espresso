@@ -58,37 +58,37 @@ class CollisionDetection(ScriptInterfaceHelper):
 
            Parameters
            ----------
-           mode: One of "off", "bind_centers", "bind_at_point_of_collision", "bind_three_particles", "glue_to_surface"
+           mode : One of "off", "bind_centers", "bind_at_point_of_collision", "bind_three_particles", "glue_to_surface"
                Collision deteciton mode
           
-           distance: :obj:`float`
+           distance : :obj:`float`
                Distance below which a pair of particles is considered in the collision detection
           
-           bond_centers: Instance of :class:`espressomd.interactions.BondedInteraction`
+           bond_centers : Instance of :class:`espressomd.interactions.BondedInteraction`
                Bond to add between the colliding particles
           
-           bond_vs:  Instance of :class:`espressomd.interactions.BondedInteraction`
+           bond_vs :  Instance of :class:`espressomd.interactions.BondedInteraction`
                Bond to add between virtual sites (for modes using virtual sites)
            
-           part_type_vs: :obj:`int`
+           part_type_vs : :obj:`int`
                Particle type of the virtual sites being created on collision (virtual sites based modes)
            
-           part_type_to_be_glued: :obj:`int`
+           part_type_to_be_glued : :obj:`int`
                particle type for "glue_to_surface|" mode. See user guide.
            
-           part_type_to_attach_vs_to: :obj:`int`
+           part_type_to_attach_vs_to : :obj:`int`
                particle type for "glue_to_surface|" mode. See user guide.
            
-           part_type_after_glueing: :obj:`int`
+           part_type_after_glueing : :obj:`int`
                particle type for "glue_to_surface|" mode. See user guide.
            
-           distance_glued_particle_to_vs: :obj:`float`
+           distance_glued_particle_to_vs : :obj:`float`
                Distnace for "glue_to_surface" mode. See user guide.
            
-           bond_three_particles: Instance of :class:`espressomd.interactions.BondedInteraction`
+           bond_three_particles : Instance of :class:`espressomd.interactions.BondedInteraction`
                First angular bond for the "bind_three_particles" mode. See user guide
           
-          three_particle_binding_angle_resolution: :obj:`int`
+          three_particle_binding_angle_resolution : :obj:`int`
               Resolution for the angular bonds (mode "bind_three_particles"). 
               Resolution+1 bonds are needed to accomodate the case of a 180 degrees
 
@@ -127,7 +127,9 @@ class CollisionDetection(ScriptInterfaceHelper):
         res=super(type(self),self).get_params()
         for k in res.keys():
             res[k]=self._convert_param(k,res[k])
-        return res
+        
+        # Filter key-value paris according to active mode
+        return {k:res[k] for k in self._params_for_mode(res["mode"])}
 
 
     def _convert_param(self,name,value):
