@@ -421,7 +421,6 @@ void calc_oif_global(double *area_volume, int molType)
   double partArea, VOL_partVol = 0.0;
   double part_area_volume[2];
 
-  Cell *cell;
   Particle *p, *p1;
   
   for (auto &p : local_cells.particles()) {
@@ -446,7 +445,6 @@ void add_oif_global_forces(double *area_volume, int molType)
   double area = area_volume[0];
   double VOL_volume = area_volume[1];
 
-  Cell *cell;
   Particle *p, *p1;
 
   /*set area and volume for oif_global_forces- Bonds

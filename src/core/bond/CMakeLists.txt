@@ -6,7 +6,7 @@ MembraneCollision.cpp OifLocalForces.cpp Dihedral.cpp
 TabulatedBondLength.cpp TabulatedBondAngle.cpp TabulatedBondDihedral.cpp
 OverlapBondLength.cpp OverlapBondAngle.cpp OverlapBondDihedral.cpp
 EightParticleBond.cpp TwistStack.cpp IbmTribend.cpp VirtualBond.cpp
-BondContainer.cpp ThreeParticlePressureBond.cpp OifGlobalForces.cpp)
+BondContainer.cpp ThreeParticlePressureBond.cpp OifGlobalForces.cpp IbmVolumeConservation.cpp)
 install(TARGETS Bonds LIBRARY DESTINATION ${LIBDIR})
 set_target_properties(Bonds PROPERTIES SOVERSION ${SOVERSION})
 add_dependencies(Bonds EspressoConfig)
