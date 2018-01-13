@@ -86,7 +86,7 @@ void Bond::BondContainer::sort_bond_into_lists(int type)
 
   }
   else{
-    runtimeErrorMsg() << "sort_bond_into_lists(): bond type '" << type << "' is unknown!";
+    runtimeErrorMsg() << "BondContainer.sort_bond_into_lists(): bond type '" << type << "' is unknown!";
     return;
   };
   
@@ -145,3 +145,33 @@ int Bond::BondContainer::oif_global_force_loop(Particle *p1)
 
 };
 
+int Bond::BondContainer::ibm_vol_con_softID_loop(Particle *p1, int *softID, int *bond_map_id)
+{
+
+  return loop_over_bond_partners(m_ibm_vol_con_bonds, &IbmVolumeConservation::get_soft_ID, p1,
+				 softID, bond_map_id);
+
+};
+
+Bond::Bond* Bond::BondContainer::get_Bond(int bond_map_id)
+{
+
+  if(m_all_bonds.count(bond_map_id) == 0){
+    return NULL;
+  }
+  else{
+    return m_all_bonds[bond_map_id].get();
+  };
+
+};
+
+Bond::IbmVolumeConservation* Bond::BondContainer::get_IBM_Vol_Con_Bond(int bond_map_id)
+{
+
+  if(m_ibm_vol_con_bonds.count(bond_map_id) == 0){
+    return NULL;
+  }
+  else{
+    return m_ibm_vol_con_bonds[bond_map_id];
+  };
+}
