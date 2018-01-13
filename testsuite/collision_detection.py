@@ -40,7 +40,7 @@ class CollisionDetection(ut.TestCase):
     s.bonded_inter.add(H)
     s.bonded_inter.add(H2)
     s.time_step=0.001
-    s.cell_system.skin=0.2
+    s.cell_system.skin=0.05
     s.min_global_cut=0.2
 
     part_type_to_attach_vs_to=0

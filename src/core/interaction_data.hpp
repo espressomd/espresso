@@ -24,7 +24,6 @@
     Various procedures concerning interactions between particles.
 */
 
-#include "collision.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
 
@@ -931,7 +930,7 @@ void set_dipolar_method_local(DipolarInteraction method);
 * @param p          particle on which the bond may be stored
 * @param partner    bond partner 
 * @param bond_type  numerical bond type */ 
-inline bool bond_exists(const Particle* const p, const Particle* const partner, int bond_type)
+inline bool pair_bond_exists_on(const Particle* const p, const Particle* const partner, int bond_type)
 {
   // First check the bonds of p1
   if (p->bl.e) {
@@ -963,13 +962,11 @@ class VerletCriterion {
 
 public:
   VerletCriterion(double skin, double max_cut, double coulomb_cut = 0.,
-                  double dipolar_cut = 0.)
+                  double dipolar_cut = 0., double collision_detection_cutoff=0.)
       : m_skin(skin), m_eff_max_cut2(Utils::sqr(max_cut + m_skin)),
         m_eff_coulomb_cut2(Utils::sqr(coulomb_cut + m_skin)),
-        m_eff_dipolar_cut2(Utils::sqr(dipolar_cut + m_skin)) 
-#ifdef COLLISION_DETECTION
-        ,m_collision_cut2(collision_params.distance*collision_params.distance)
-#endif
+        m_eff_dipolar_cut2(Utils::sqr(dipolar_cut + m_skin)), 
+        m_collision_cut2(Utils::sqr(collision_detection_cutoff))
         {}
 
   template <typename Distance>

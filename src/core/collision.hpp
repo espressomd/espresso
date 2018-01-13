@@ -124,8 +124,6 @@ inline bool glue_to_surface_criterion(const Particle* const p1, const Particle* 
 }
 
 
-// Foward declaration 
-bool bond_exists(const Particle* const p, const Particle* const partner, int bond_type);
 
 
 /** @brief Detect (and queue) a collision between the given particles. */
@@ -149,10 +147,10 @@ inline void detect_collision(const Particle* const p1, const Particle* const p2,
 
 
   // Check, if there's already a bond between the particles
-  if (bond_exists(p1,p2, collision_params.bond_centers))
+  if (pair_bond_exists_on(p1,p2, collision_params.bond_centers))
     return;
   
-  if (bond_exists(p2,p1, collision_params.bond_centers))
+  if (pair_bond_exists_on(p2,p1, collision_params.bond_centers))
     return;
 
 
@@ -170,5 +168,12 @@ inline void detect_collision(const Particle* const p1, const Particle* const p2,
 }
 
 #endif
+
+inline double collision_detection_cutoff() {
+#ifdef COLLISION_DETECTION
+  if (collision_params.mode) return collision_params.distance;
+#endif
+  return 0.;
+}
 
 #endif
