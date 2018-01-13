@@ -207,7 +207,7 @@ class CollisionDetection(ut.TestCase):
           else:
             dist_centers=p1.pos-p2.pos
           expected_pos=self.s.part[rel_to].pos_folded+self.s.collision_detection.vs_placement *dist_centers
-          np.testing.assert_allclose(p.pos_folded,expected_pos,atol=1E-4)
+          np.testing.assert_allclose(np.copy(p.pos_folded),expected_pos,atol=1E-4)
     
     @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"),"VIRTUAL_SITES not compiled in")
     #@ut.skipIf(s.cell_system.get_state()["n_nodes"]>1,"VS based tests only on a single node")
