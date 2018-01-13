@@ -23,7 +23,6 @@ import unittest as ut
 import espressomd
 import numpy as np
 from espressomd.interactions import HarmonicBond,AngleHarmonic
-from espressomd.virtual_sites import VirtualSitesRelative
 import numpy as np
 from random import shuffle
 
@@ -32,7 +31,9 @@ class CollisionDetection(ut.TestCase):
     """Tests interface and functionality of the collision detection / dynamic binding"""
 
     s = espressomd.System()
-    s.virtual_sites=VirtualSitesRelative()
+    if espressomd.has_features("VIRTUAL_SITES"): 
+        from espressomd.virtual_sites import VirtualSitesRelative
+        s.virtual_sites=VirtualSitesRelative()
 
     H = HarmonicBond(k=5000,r_0=0.1)
     H2 = HarmonicBond(k=25000,r_0=0.02)
@@ -354,6 +355,7 @@ class CollisionDetection(ut.TestCase):
        
 
 
+    @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"),"Skipped due to missing VIRTUAL_SITES_RELATIVE")
     def test_glue_to_surface(self):
         # Single collision head node
         self.run_test_glue_to_surface_for_pos(np.array((0,0,0)))
