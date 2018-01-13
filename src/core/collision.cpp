@@ -28,7 +28,7 @@
 #include "interaction_data.hpp" 
 #include "initialize.hpp"
 #include "rotation.hpp"
-
+#include "virtual_sites/VirtualSitesRelative.hpp"
 
 
 

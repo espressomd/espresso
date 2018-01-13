@@ -21,7 +21,6 @@
 
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
-#include "virtual_sites_relative.hpp"
 #include "virtual_sites.hpp"
 #include "integrate.hpp"
 

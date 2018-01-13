@@ -37,6 +37,7 @@
 #include "VariantTester.hpp"
 
 #include "core/communication.hpp"
+#include "virtual_sites/initialize.hpp"
 
 namespace ScriptInterface {
 
@@ -52,6 +53,7 @@ void initialize() {
   Observables::initialize();
   Correlators::initialize();
   LBBoundaries::initialize();
+  VirtualSites::initialize();
 
   CollisionDetection::initialize();
  
