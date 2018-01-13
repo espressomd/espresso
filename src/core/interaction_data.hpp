@@ -24,10 +24,12 @@
     Various procedures concerning interactions between particles.
 */
 
+#include "collision.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
 
 #include "TabulatedPotential.hpp"
+
 
 /** \name Type codes of bonded interactions
     Enumeration of implemented bonded interactions.
@@ -957,13 +959,18 @@ class VerletCriterion {
   const double m_eff_max_cut2;
   const double m_eff_coulomb_cut2 = 0.;
   const double m_eff_dipolar_cut2 = 0.;
+  const double m_collision_cut2 =0.;
 
 public:
   VerletCriterion(double skin, double max_cut, double coulomb_cut = 0.,
                   double dipolar_cut = 0.)
       : m_skin(skin), m_eff_max_cut2(Utils::sqr(max_cut + m_skin)),
         m_eff_coulomb_cut2(Utils::sqr(coulomb_cut + m_skin)),
-        m_eff_dipolar_cut2(Utils::sqr(dipolar_cut + m_skin)) {}
+        m_eff_dipolar_cut2(Utils::sqr(dipolar_cut + m_skin)) 
+#ifdef COLLISION_DETECTION
+        ,m_collision_cut2(collision_params.distance*collision_params.distance)
+#endif
+        {}
 
   template <typename Distance>
   bool operator()(const Particle &p1, const Particle &p2,
@@ -982,6 +989,13 @@ public:
 #ifdef DIPOLES
     if ((dist2 <= m_eff_dipolar_cut2) && (p1.p.dipm != 0) && (p2.p.dipm != 0))
       return true;
+#endif
+
+
+// Collision detectoin
+#ifdef COLLISION_DETECTION
+if (dist2 <= m_collision_cut2)
+  return true;
 #endif
 
     // Within short-range distance (incl dpd and the like)

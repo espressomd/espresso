@@ -19,22 +19,6 @@
 #ifndef _COLLISION_H
 #define _COLLISION_H
 
-#include "particle_data.hpp"
-#include "interaction_data.hpp"
-#include "virtual_sites.hpp"
-#include "integrate.hpp"
-
-#ifdef COLLISION_DETECTION
-
-/** \name bits of possible modes for collision handling.
-    To be used with \ref collision_detection_set_params.
-    The modes can be combined by or-ing together. Not all combinations are possible.
-    COLLISION_MODE_ERROR|COLLISION_MODE_BOND.
-*/
-/*@{*/
-/** raise a background error on collision, to allow further processing in Tcl.
-    Can be combined with a bonding mode, if desired
- */
 
 #define COLLISION_MODE_OFF 0
 /// just create bond between centers of colliding particles
@@ -51,16 +35,23 @@
 /*@}*/
 
 
+
+
+
 class Collision_parameters {
   public: 
   Collision_parameters() : 
      mode(COLLISION_MODE_OFF),
+     distance(0.), 
      bond_centers(-1), 
      bond_vs(-1),
      bond_three_particles(-1) {};
 
+
   /// collision handling mode, a combination of constants COLLISION_MODE_*
   int mode;
+  /// distance at which particles are bound
+  double distance;
 
   /// bond type used between centers of colliding particles
   int bond_centers;
@@ -72,8 +63,6 @@ class Collision_parameters {
   /** Raise exception on collision */
   bool exception_on_collision;
 
-  /// distance at which particles are bound
-  double distance;
   /// For mode "glue to surface": The distance from the particle which is to be glued to the new virtual site
   double dist_glued_part_to_vs;
   /// For mode "glue to surface": The particle type being glued
@@ -91,9 +80,26 @@ class Collision_parameters {
   /** Placement of virtual sites for MODE_VS. 0=on same particle as related to, 1=on collision partner. 0.5=in the middle between */
   double vs_placement;
 };
-
 /// Parameters for collision detection
 extern Collision_parameters collision_params;
+
+#include "particle_data.hpp"
+#include "interaction_data.hpp"
+#include "virtual_sites.hpp"
+#include "integrate.hpp"
+
+#ifdef COLLISION_DETECTION
+
+/** \name bits of possible modes for collision handling.
+    To be used with \ref collision_detection_set_params.
+    The modes can be combined by or-ing together. Not all combinations are possible.
+    COLLISION_MODE_ERROR|COLLISION_MODE_BOND.
+*/
+/*@{*/
+/** raise a background error on collision, to allow further processing in Tcl.
+    Can be combined with a bonding mode, if desired
+ */
+
 
 
 void prepare_local_collision_queue();
@@ -116,6 +122,11 @@ inline bool glue_to_surface_criterion(const Particle* const p1, const Particle* 
        ((p2->p.type==collision_params.part_type_to_be_glued)
        && (p1->p.type ==collision_params.part_type_to_attach_vs_to)));
 }
+
+
+// Foward declaration 
+bool bond_exists(const Particle* const p, const Particle* const partner, int bond_type);
+
 
 /** @brief Detect (and queue) a collision between the given particles. */
 inline void detect_collision(const Particle* const p1, const Particle* const p2, const double& dist_betw_part)

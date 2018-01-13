@@ -23,6 +23,7 @@ import unittest as ut
 import espressomd
 import numpy as np
 from espressomd.interactions import HarmonicBond,AngleHarmonic
+from espressomd.virtual_sites import VirtualSitesRelative
 import numpy as np
 from random import shuffle
 
@@ -31,13 +32,14 @@ class CollisionDetection(ut.TestCase):
     """Tests interface and functionality of the collision detection / dynamic binding"""
 
     s = espressomd.System()
+    s.virtual_sites=VirtualSitesRelative()
 
     H = HarmonicBond(k=5000,r_0=0.1)
     H2 = HarmonicBond(k=25000,r_0=0.02)
     s.bonded_inter.add(H)
     s.bonded_inter.add(H2)
     s.time_step=0.001
-    s.cell_system.skin=0
+    s.cell_system.skin=0.2
     s.min_global_cut=0.2
 
     part_type_to_attach_vs_to=0

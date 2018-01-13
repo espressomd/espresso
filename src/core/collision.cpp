@@ -191,6 +191,7 @@ bool validate_collision_parameters()
     }
   
   recalc_forces = 1;
+  rebuild_verletlist =1;
 
   return true;
 }

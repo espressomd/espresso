@@ -3,6 +3,14 @@ from .utils import handle_errors,to_str
 from .interactions import BondedInteraction,BondedInteractions
 
 
+cdef extern from "collision.hpp":
+    const int COLLISION_MODE_OFF
+    const int COLLISION_MODE_BOND
+    const int COLLISION_MODE_VS 
+    const int COLLISION_MODE_GLUE_TO_SURF  
+    const int COLLISION_MODE_BIND_THREE_PARTICLES  
+    
+
 @script_interface_register
 class CollisionDetection(ScriptInterfaceHelper):
     """Inteface to the collision detection / dynamic binding.
@@ -53,7 +61,7 @@ class CollisionDetection(ScriptInterfaceHelper):
            mode: One of "off", "bind_centers", "bind_at_point_of_collision", "bind_three_particles", "glue_to_surface"
                Collision deteciton mode
           
-           distance: float
+           distance: :obj:`float`
                Distance below which a pair of particles is considered in the collision detection
           
            bond_centers: Instance of :class:`espressomd.interactions.BondedInteraction`
@@ -62,25 +70,25 @@ class CollisionDetection(ScriptInterfaceHelper):
            bond_vs:  Instance of :class:`espressomd.interactions.BondedInteraction`
                Bond to add between virtual sites (for modes using virtual sites)
            
-           part_type_vs: int
+           part_type_vs: :obj:`int`
                Particle type of the virtual sites being created on collision (virtual sites based modes)
            
-           part_type_to_be_glued: int
+           part_type_to_be_glued: :obj:`int`
                particle type for "glue_to_surface|" mode. See user guide.
            
-           part_type_to_attach_vs_to: int
+           part_type_to_attach_vs_to: :obj:`int`
                particle type for "glue_to_surface|" mode. See user guide.
            
-           part_type_after_glueing: int
+           part_type_after_glueing: :obj:`int`
                particle type for "glue_to_surface|" mode. See user guide.
            
-           distance_glued_particle_to_vs: float
+           distance_glued_particle_to_vs: :obj:`float`
                Distnace for "glue_to_surface" mode. See user guide.
            
            bond_three_particles: Instance of :class:`espressomd.interactions.BondedInteraction`
                First angular bond for the "bind_three_particles" mode. See user guide
           
-          three_particle_binding_angle_resolution: int
+          three_particle_binding_angle_resolution: :obj:`int`
               Resolution for the angular bonds (mode "bind_three_particles"). 
               Resolution+1 bonds are needed to accomodate the case of a 180 degrees
 
@@ -132,7 +140,7 @@ class CollisionDetection(ScriptInterfaceHelper):
         # Py3: Cast from binary to normal string. Don't understand, why a
         # binary string can even occur, here, but it does.
         name=to_str(name)
-        # Convert mode parameter into python enum
+        # Convert int mode parameter to string
         res=value
         if name == "mode":
             res=self._str_mode(value)
@@ -164,11 +172,11 @@ class CollisionDetection(ScriptInterfaceHelper):
             
     
     _int_mode={
-        "off":0,
-        "bind_centers":2,
-        "bind_at_point_of_collision":4,
-        "glue_to_surface":8,
-        "bind_three_particles":16}
+        "off":int(COLLISION_MODE_OFF),
+        "bind_centers":int(COLLISION_MODE_BOND),
+        "bind_at_point_of_collision":int(COLLISION_MODE_VS),
+        "glue_to_surface":int(COLLISION_MODE_GLUE_TO_SURF),
+        "bind_three_particles":int(COLLISION_MODE_BIND_THREE_PARTICLES)}
     
     def _str_mode(self,int_mode):
         """String mode name from int ones provided by the core
