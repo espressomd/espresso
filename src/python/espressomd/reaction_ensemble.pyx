@@ -171,7 +171,7 @@ cdef class ReactionAlgorithm(object):
                                products of the reaction in the same order as
                                the list of their types
         default_charges : dictionary
-                        A dictionary of default charges.
+                        A dictionary of default charges for types that occur in the provided reaction.
 
         """
         for k in self._required_keys_add():
@@ -180,13 +180,14 @@ cdef class ReactionAlgorithm(object):
                                  self._required_keys_add().__str__() + " got " + kwargs.__str__())
             self._params[k] = kwargs[k]
         self._check_lengths_of_arrays()
+        self._validate_params_default_charge()
         self._set_params_in_es_core_add()
 
     def _valid_keys_add(self):
-        return "equilibrium_constant", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients"
+        return "equilibrium_constant", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges"
 
     def _required_keys_add(self):
-        return ["equilibrium_constant", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients"]
+        return ["equilibrium_constant", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges"]
 
     def _check_lengths_of_arrays(self):
         if(len(self._params["reactant_types"])!=len(self._params["reactant_coefficients"])):
@@ -214,30 +215,12 @@ cdef class ReactionAlgorithm(object):
         self.RE.add_reaction(
             1.0 / self._params["equilibrium_constant"], product_types, product_coefficients, reactant_types, reactant_coefficients)
 
-    def set_default_charges(self, *args, **kwargs):
-        """
-        Sets the charges of the particle types that are created. Note that it
-        has to be called for each type that occurs in the reaction system
-        individually.
-
-        """
-        for k in kwargs:
-            if k in self._valid_keys_default_charge():
-                self._params[k] = kwargs[k]
-            else:
-                raise KeyError("%s is not a vaild key" % k)
-
-        self._validate_params_default_charge()
-
-        for key in self._params["dictionary"]: #the keys are the types
-            self.RE.charges_of_types[int(key)]=self._params["dictionary"][key]
-
-
-    def _valid_keys_default_charge(self):
-        return "dictionary"
+        for key in self._params["default_charges"]: #the keys are the types
+            self.RE.charges_of_types[int(key)]=self._params["default_charges"][key]
+        self.RE.check_reaction_ensemble()        
 
     def _validate_params_default_charge(self):
-        if(isinstance(self._params["dictionary"], dict) == False):
+        if(isinstance(self._params["default_charges"], dict) == False):
             raise ValueError(
                 "No dictionary for relation between types and default charges provided.")
 

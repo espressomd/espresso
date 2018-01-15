@@ -70,8 +70,7 @@ class ReactionEnsembleTest(ut.TestCase):
             reactant_types=cls.reactant_types,
             reactant_coefficients=cls.reactant_coefficients,
             product_types=cls.product_types,
-            product_coefficients=cls.product_coefficients)
-        cls.RE.set_default_charges(dictionary={"0": 0, "1": -1, "2": +1})
+            product_coefficients=cls.product_coefficients, default_charges={"0": 0, "1": -1, "2": +1})
 
     @classmethod
     def ideal_degree_of_association(cls, pK_a, pH):
