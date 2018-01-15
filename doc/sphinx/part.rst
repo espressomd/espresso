@@ -333,7 +333,6 @@ the `have_velocity` attribute determines, whether or not the velocity of virtual
 
 
 
-.. _Rigid arrangements of particles:
 
 .. _Rigid arrangements of particles: 
 
