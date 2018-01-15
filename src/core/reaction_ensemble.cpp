@@ -734,57 +734,6 @@ int ReactionAlgorithm::create_particle(int desired_type) {
   return p_id;
 }
 
-// the following 2 functions are directly taken from ABHmath.tcl
-/**
-* Calculates the normed vector of a given vector
-*/
-std::vector<double> vecnorm(std::vector<double> vec, double desired_length) {
-  for (int i = 0; i < vec.size(); i++) {
-    vec[i] = vec[i] / Utils::veclen(vec) * desired_length;
-  }
-  return vec;
-}
-
-/**
-* Calculates a uniformly distributed vector on a sphere of given radius.
-*/
-std::vector<double> vec_random(double desired_length) {
-  /**returns a random vector of length len
-  *(uniform distribution on a sphere)
-  *This is done by chosing 3 uniformly distributed random numbers [-1,1]
-  *If the length of the resulting vector is <= 1.0 the vector is taken and
-  *normalized
-  *to the desired length, otherwise the procedure is repeated until succes.
-  *On average the procedure needs 5.739 random numbers per vector.
-  *(This is probably not the most efficient way, but it works!)
-  */
-  std::vector<double> vec;
-  while (1) {
-    for (int i = 0; i < 3; i++) {
-      vec.push_back(2 * d_random() - 1.0);
-    }
-    if (Utils::veclen(vec) <= 1)
-      break;
-  }
-  vecnorm(vec, desired_length);
-  return vec;
-}
-
-/**
-* Adds a random vector of given length to the provided array named vector.
-*/
-std::vector<double> ReactionAlgorithm::add_random_vector(double const *vector, int len_vector,
-                                          double length_of_displacement) {
-  // adds a vector which is uniformly distributed on a sphere
-  std::vector<double> temp_vector(len_vector);
-  std::vector<double> random_direction_vector =
-      vec_random(length_of_displacement);
-  for (int i = 0; i < len_vector; i++) {
-    temp_vector[i]=vector[i] +random_direction_vector[i];
-  }
-  return temp_vector;
-}
-
 void WangLandauReactionEnsemble::on_mc_rejection_directly_after_entry(
     int &old_state_index) {
   if (do_energy_reweighting)
