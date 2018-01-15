@@ -654,7 +654,7 @@ int set_particle_type(int p_id, int type) {
     auto cur_par = get_particle_data(p_id);
     if (cur_par) {
       int prev_type = cur_par->p.type;
-      if (prev_type != type) {
+      if (prev_type != type and particle_type_map.find(prev_type)!=particle_type_map.end()) {
         // particle existed before so delete it from the list
         remove_id_from_map(p_id, prev_type);
       }

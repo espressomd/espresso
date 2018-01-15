@@ -893,8 +893,8 @@ A tabulated bond can be instantiated via
 :class:`espressomd.interactions.Tabulated`::
     
     from espressomd.interactions import Tabulated
-         tab = Tabulated(type = <str>, min = <min>, max = <max>,
-         energy = <energy>, force = <force> )
+    tab = Tabulated(type = <str>, min = <min>, max = <max>,
+                    energy = <energy>, force = <force>)
 
 This creates a bond type identifier with a two-body bond length, 
 three-body angle or four-body dihedral 
@@ -902,21 +902,21 @@ tabulated potential. For details of the interpolation, see :ref:`Tabulated inter
 
 The bonded interaction can be based on a distance, a bond angle or a
 dihedral angle. This is determined by the ``type`` argument, which can
-be one of ``distance``, ``angle`` or ``dihedral``.
+be one of the strings ``distance``, ``angle`` or ``dihedral``.
 
 Calculation of the force and energy
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The potential is calculated as follows:
 
--  ``type=distance``: is a two body interaction
+-  ``type="distance"``: is a two body interaction
    depending on the distance of two particles. The force acts in the
    direction of the connecting vector between the particles. The bond
    breaks above the tabulated range, but for distances smaller than the
    tabulated range, a linear extrapolation based on the first two
    tabulated force values is used.
 
--  ``type=angle``: is a three-body angle
+-  ``type="angle"``: is a three-body angle
    interaction similar to the bond angle potential.
    It is assumed that the potential is tabulated
    for all angles between 0 and :math:`\pi`, where 0 corresponds to a
@@ -928,7 +928,7 @@ The potential is calculated as follows:
    defined by the three particles. The force on the center particle
    :math:`p_2` balances the other two forces.
 
--  ``type=dihedral``: tabulates a torsional
+-  ``type="dihedral"``: tabulates a torsional
    dihedral angle potential. It is assumed
    that the potential is tabulated for all angles between 0 and
    :math:`2\pi`. *This potential is not tested yet! Use on own risk, and

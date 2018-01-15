@@ -34,7 +34,7 @@ class ReactionEnsembleTest(ut.TestCase):
     c0 = 0.00028
     type_HA = 0
     type_A = 1
-    type_H = 2
+    type_H = 5
     temperature = 1.0
     standard_pressure_in_simulation_units = 0.00108
     # avoid extreme regions in the titration curve e.g. via the choice
@@ -70,7 +70,7 @@ class ReactionEnsembleTest(ut.TestCase):
                 cls.type_HA], reactant_coefficients=[1], product_types=[
                 cls.type_A, cls.type_H], product_coefficients=[
                 1, 1])
-        cls.RE.set_default_charges(dictionary={"0": 0, "1": -1, "2": +1})
+        cls.RE.set_default_charges(dictionary={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1})
         cls.RE.constant_pH = cls.pH
 
     @classmethod

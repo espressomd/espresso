@@ -23,6 +23,8 @@ import unittest as ut
 import espressomd
 import numpy as np
 from espressomd.interactions import FeneBond
+from espressomd.virtual_sites import VirtualSitesRelative, VirtualSitesOff
+
 from tests_common import verify_lj_forces
 from numpy import random
 
@@ -50,7 +52,7 @@ class VirtualSites(ut.TestCase):
             2 * (quat[2] * quat[3] - quat[0] * quat[1]),
             (quat[0] * quat[0] - quat[1] * quat[1] - quat[2] * quat[2] + quat[3] * quat[3])))
 
-    def verify_vs(self, vs):
+    def verify_vs(self, vs,verify_velocity=True):
         """Verify vs position and (if compiled in) velocity."""
         self.assertEqual(vs.virtual, 1)
 
@@ -66,7 +68,7 @@ class VirtualSites(ut.TestCase):
         self.assertAlmostEqual(d, vs_r[1], places=6)
 
         # check velocity
-        if not espressomd.has_features("VIRTUAL_SITES_NO_VELOCITY"):
+        if verify_velocity:
             self.assertLessEqual(np.linalg.norm(
                 vs.v - rel.v - np.cross(rel.omega_lab, v_d)), 1E-6)
 
@@ -75,11 +77,23 @@ class VirtualSites(ut.TestCase):
             v_d - vs_r[1] * self.director_from_quaternion(
                 self.multiply_quaternions(rel.quat, vs_r[2]))), 1E-6)
 
+    def test_aa_method_switching(self):
+        # Virtual sites should be disabled by default
+        self.assertTrue(isinstance(self.s.virtual_sites, VirtualSitesOff))
+
+        # Switch implementation
+        self.s.virtual_sites=VirtualSitesRelative(have_velocity=False)
+        self.assertTrue(isinstance(self.s.virtual_sites, VirtualSitesRelative))
+        self.assertEqual(self.s.virtual_sites.have_velocity,False)
+
+    
     def test_pos_vel_forces(self):
         s = self.s
+        s.cell_system.skin=0.3
+        s.virtual_sites=VirtualSitesRelative(have_velocity=True)
         s.box_l = 10,10,10
         s.part.clear()
-        s.time_step = 0.008
+        s.time_step = 0.004
         s.part.clear()
         s.thermostat.turn_off()
         s.non_bonded_inter[0, 0].lennard_jones.set_params(
@@ -111,7 +125,7 @@ class VirtualSites(ut.TestCase):
             cur_id += 1
 
         # Move central particle and Check vs placement
-        s.part[1].pos = (0, 0, 0)
+        s.part[1].pos = (0.22, 0.22, 0.22)
         # linear and rotation velocity on central particle
         s.part[1].v = (0.45, 0.14, 0.447)
         s.part[1].omega_lab = (0.45, 0.14, 0.447)
@@ -149,11 +163,25 @@ class VirtualSites(ut.TestCase):
         # Check
         self.assertLessEqual(np.linalg.norm(t_exp - t), 1E-6)
 
+
+        # Check virtual sites without velocity
+        s.virtual_sites.have_velocity=False
+
+        v2=s.part[2].v
+        s.part[1].v=17,-13.5,2
+        s.integrator.run(0,recalc_forces=True)
+        self.assertLess(np.linalg.norm(v2-s.part[2].v),1E-6)
+
+
+        
+
+
     def run_test_lj(self):
         """This fills the system with vs-based dumbells, adds a lj potential
           integrates and verifies forces. This is to make sure, that no pairs
           get lost or are outdated in the short range loop"""
         s = self.s
+        s.virtual_sites=VirtualSitesRelative(have_velocity=True)
         # Parameters
         n = 90 
         phi = 0.6
@@ -172,12 +200,9 @@ class VirtualSites(ut.TestCase):
         s.min_global_cut = 0.501
         s.part.clear()
 
-        s.time_step = 0.008
+        s.time_step = 0.01
         s.thermostat.turn_off()
 
-        # interactions
-        s.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=eps, sigma=sigma, cutoff=cut, shift="auto")
 
         # Dumbells consist of 2 virtual lj spheres + central particle w/o interactions
         # For n sphers n/2 dumbells.
@@ -193,8 +218,13 @@ class VirtualSites(ut.TestCase):
                        pos=s.part[3 * i].pos - s.part[3 * i].director / 2.,
                        type=0)
             s.part[3 * i + 1].vs_auto_relate_to(3 * i)
+            self.verify_vs(s.part[3*i+1],verify_velocity=False)
             s.part[3 * i + 2].vs_auto_relate_to(3 * i)
-
+            self.verify_vs(s.part[3*i+2],verify_velocity=False)
+        s.integrator.run(0,recalc_forces=True)
+        # interactions
+        s.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=eps, sigma=sigma, cutoff=cut, shift="auto")
         # Remove overlap
         s.integrator.set_steepest_descent(
             f_max=0, gamma=0.1, max_displacement=0.1)
@@ -228,26 +258,62 @@ class VirtualSites(ut.TestCase):
         espressomd.has_features("VIRTUAL_SITES_THERMOSTAT"),
         "LJ fluid test only works when VIRTUAL_SITES_THERMOSTAT is not compiled in.")
     def test_lj(self):
-        """Run LJ fluid test for different cell systems and skins."""
+        """Run LJ fluid test for different cell systems."""
         s = self.s
 
+        s.cell_system.skin = 0.4 
         s.cell_system.set_n_square(use_verlet_lists=True)
-        s.cell_system.skin = 0
         self.run_test_lj()
-        s.cell_system.skin = 0.3
-        self.run_test_lj()
-
         s.cell_system.set_domain_decomposition(use_verlet_lists=True)
-        s.cell_system.skin = 0
         self.run_test_lj()
-        s.cell_system.skin = 0.3
+        s.cell_system.set_domain_decomposition(use_verlet_lists=False)
         self.run_test_lj()
 
-        s.cell_system.set_domain_decomposition(use_verlet_lists=False)
-        s.cell_system.skin = 0
-        self.run_test_lj()
-        s.cell_system.skin = 0.3
-        self.run_test_lj()
+    def test_zz_stress_tensor(self):
+        s=self.s
+        s.time_step=0.01
+        s.cell_system.skin=0.1
+        s.min_global_cut=0.2
+        # Should not have one if vs are turned off
+        s.virtual_sites=VirtualSitesOff()
+        self.assertTrue("virtual_sites" not in s.analysis.pressure())
+        self.assertTrue("virtual_sites" not in s.analysis.stress_tensor())
+
+        # vs relative contrib
+        s.virtual_sites=VirtualSitesRelative()
+        s.part.clear()
+        s.part.add(pos=(0,0,0),id=0)
+        p=s.part.add(pos=(0.1,0.1,0.1),id=1,ext_force=(1,2,3))
+        p.vs_auto_relate_to(0)
+        p=s.part.add(pos=(0.1,0,0),id=2,ext_force=(-1,0,0))
+        p.vs_auto_relate_to(0)
+        s.integrator.run(0,recalc_forces=True)
+        stress_total=s.analysis.stress_tensor()["total"]
+        stress_vs_total=s.analysis.stress_tensor()["virtual_sites"]
+        stress_vs=s.analysis.stress_tensor()["virtual_sites",0]
+        
+        p_total=s.analysis.pressure()["total"]
+        p_vs_total=s.analysis.pressure()["virtual_sites"]
+        p_vs=s.analysis.pressure()["virtual_sites",0]
+
+        # expected stress
+        s_expected =1./s.volume() * (
+           np.outer(s.part[1].ext_force,s.distance_vec(s.part[1],s.part[0]))
+          +np.outer(s.part[2].ext_force,s.distance_vec(s.part[2],s.part[0])))
+        np.testing.assert_allclose(stress_total,s_expected,atol=1E-5)
+        np.testing.assert_allclose(stress_vs,s_expected,atol=1E-5)
+        np.testing.assert_allclose(stress_vs_total,s_expected,atol=1E-5)
+        
+        # Pressure
+        self.assertAlmostEqual(p_total,np.sum(np.diag(s_expected))/3,places=5)
+        self.assertAlmostEqual(p_vs_total,np.sum(np.diag(s_expected))/3,places=5)
+        self.assertAlmostEqual(p_vs,np.sum(np.diag(s_expected))/3,places=5)
+
+
+
+
+
+
 
 
 if __name__ == "__main__":
