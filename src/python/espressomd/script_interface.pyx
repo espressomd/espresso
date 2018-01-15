@@ -188,6 +188,8 @@ cdef class PScriptInterface(object):
                 ptr = get_instance(oid).lock()
                 if ptr != shared_ptr[ScriptInterfaceBase]():
                     so_name=to_str(ptr.get().name())
+                    if not so_name:
+                        raise Exception("Script object without name returned from the core")
                     # Fallback class, if nothing more specific is registered for the script object name
                     pclass=ScriptInterfaceHelper
                     # Look up class
