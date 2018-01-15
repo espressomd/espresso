@@ -293,6 +293,14 @@ DNA Model (Fyta DNA)
 
 -  ``COULOMB_DEBYE_HUECKEL``
 
+Dipolar interactions on the gpu:
+
+-  ``DIPOLAR_BARNES_HUT`` Enable Barnes-Hut octree sum on GPU algorithm for a dipole-dipole interaction calculation.
+
+-  ``DIPOLAR_DIRECT_SUM`` Enables calculation of dipole-dipole interactions via direct summation on the gpu
+
+
+
 
 Miscellaneous
 -------------
