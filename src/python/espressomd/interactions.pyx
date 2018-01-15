@@ -1688,7 +1688,8 @@ cdef class BondedInteraction(object):
             for k in p.keys():
                 if k not in self.valid_keys():
                     raise ValueError(
-                        "Only the following keys are supported: " + self.valid_keys().__str__)
+                        "Key '{}' invalid! Only the following keys are supported: {}"
+                        .format(k, ", ".join(self.valid_keys())))
 
             # Initialize default values
             self.set_default_params()

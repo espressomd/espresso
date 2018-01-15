@@ -41,8 +41,6 @@
 #include "core/observables/ParticlePositions.hpp"
 #include "core/observables/ParticleVelocities.hpp"
 
-//#include "ParticleVelocities.hpp"
-//#include "ParticlePositions.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
@@ -78,11 +76,14 @@ void initialize() {
   REGISTER(ForceDensityProfile);
   REGISTER(FluxDensityProfile);
   REGISTER(LBVelocityProfile);
+  REGISTER(CylindricalDensityProfile);
+  REGISTER(CylindricalVelocityProfile);
   REGISTER(CylindricalFluxDensityProfile);
   REGISTER(CylindricalLBFluxDensityProfileAtParticlePositions);
+  REGISTER(CylindricalLBVelocityProfileAtParticlePositions);
 
 #undef REGISTER
 #undef REGISTER_PID_OBS
 }
-} /* namespace Obseravbles */
+} /* namespace Observables */
 } /* namespace ScriptInterface */

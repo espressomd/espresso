@@ -89,13 +89,19 @@ for i in range(n_cycle):
 
 system.bonded_inter[0] = interactions.HarmonicBond(k=0, r_0=0)
 
-print("\n# min dist to the center pre moving of surface beads = {}".format(analyze.Analysis(system).mindist([0],[1])))
+print("\n# min dist to the center pre moving of surface beads = {}".format(analyze.Analysis(system).min_dist([0],[1])))
 
 #this loop moves the surface beads such that they are once again exactly radius_col away from the center
 for i in range(1,n_col_part):
     pos = system.part[i].pos
     system.part[i].pos=(pos-colPos)/np.linalg.norm(pos-colPos)*radius_col+colPos
-print("# min dist to the center past moving of surface beads = {}".format(analyze.Analysis(system).mindist([0],[1])))   
+print("# min dist to the center past moving of surface beads = {}".format(analyze.Analysis(system).min_dist([0],[1])))   
+
+# Select the virtual sites scheme to VirtualSitesRelative
+from espressomd.virtual_sites import VirtualSitesRelative
+system.virtual_sites= VirtualSitesRelative(have_velocity=True)
+
+
 
 #setting min_global_cut is necessary when there is no interaction defined with a range larger than the colloid
 #such that the virtual particles are able to communicate their forces to the real particle at the center of the colloid

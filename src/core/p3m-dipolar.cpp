@@ -331,7 +331,7 @@ void dp3m_init() {
         P3M_TRACE(
             fprintf(stderr, "0: dp3m_init: dipolar prefactor is zero.\n");
             fprintf(stderr, "   Magnetostatics of dipoles switched off!\n"));
-    }
+      }
   } else {
     P3M_TRACE(fprintf(stderr, "%d: dp3m_init: \n", this_node));
 
@@ -366,8 +366,9 @@ void dp3m_init() {
     /* DEBUG */
     for (n = 0; n < n_nodes; n++) {
       /* MPI_Barrier(comm_cart); */
-      if (n == this_node)
+      if (n == this_node) {
         P3M_TRACE(p3m_p3m_print_send_mesh(dp3m.sm));
+      }
     }
 
     dp3m.send_grid =
@@ -1169,15 +1170,14 @@ double calc_surface_term(int force_flag, int energy_flag) {
                       box_l_i[2] / (2 * dp3m.params.epsilon + 1);
   double suma, a[3];
   double en;
-  double *mx = nullptr, *my = nullptr, *mz = nullptr;
 
   auto const n_local_part = local_cells.particles().size();
 
   // We put all the dipolar momenta in a the arrays mx,my,mz according to the
   // id-number of the particles
-  mx = (double *)Utils::malloc(sizeof(double) * n_local_part);
-  my = (double *)Utils::malloc(sizeof(double) * n_local_part);
-  mz = (double *)Utils::malloc(sizeof(double) * n_local_part);
+  std::vector<double> mx(n_local_part);
+  std::vector<double> my(n_local_part);
+  std::vector<double> mz(n_local_part);
 
   int ip = 0;
   for (auto const &p : local_cells.particles()) {
@@ -1216,9 +1216,9 @@ double calc_surface_term(int force_flag, int energy_flag) {
   if (force_flag) {
     // fprintf(stderr," number of particles= %d ",n_part);
 
-    double *sumix = (double *)Utils::malloc(sizeof(double) * n_local_part);
-    double *sumiy = (double *)Utils::malloc(sizeof(double) * n_local_part);
-    double *sumiz = (double *)Utils::malloc(sizeof(double) * n_local_part);
+    std::vector<double> sumix(n_local_part);
+    std::vector<double> sumiy(n_local_part);
+    std::vector<double> sumiz(n_local_part);
 
     for (int i = 0; i < n_local_part; i++) {
       sumix[i] = my[i] * a[2] - mz[i] * a[1];
@@ -1238,16 +1238,8 @@ double calc_surface_term(int force_flag, int energy_flag) {
       p.f.torque[2] -= pref * sumiz[ip];
       ip++;
     }
-
-    free(sumix);
-    free(sumiy);
-    free(sumiz);
   }
 #endif
-
-  free(mx);
-  free(my);
-  free(mz);
 
   return en;
 }

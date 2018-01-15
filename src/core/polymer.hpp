@@ -169,7 +169,7 @@ double maxwell_velocitiesC(int part_id, int N_T);
     all the bonds leading to and from each monomer (mode == 2).
     @return  Returns '0' upon success, '-2' otherwise. */
 int collectBonds(PartCfg &, int mode, int part_id, int N_P, int MPC, int type_bond,
-                 int **bond_out, int ***bonds_out);
+                 std::vector<int> bond, std::vector<std::vector<int>> bonds);
 
 /** C implementation of 'crosslink \<N_P\> \<MPC\> [options]',
     @param  N_P         = number of polymer chains

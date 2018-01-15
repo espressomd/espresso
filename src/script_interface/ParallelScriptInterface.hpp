@@ -68,13 +68,11 @@ public:
                       const VariantMap &parameters) override;
 
   /* Id mapping */
-  Variant map_local_to_parallel_id(std::string const &name,
-                                   Variant const &value) const;
-  Variant map_parallel_to_local_id(std::string const &name,
-                                   Variant const &value);
+  Variant map_local_to_parallel_id(Variant const &value) const;
+  Variant map_parallel_to_local_id(Variant const &value);
 
 private:
-  using map_t = std::map<std::string, std::shared_ptr<ParallelScriptInterface>>;
+  using map_t = std::map<ObjectId, std::shared_ptr<ParallelScriptInterface>>;
 
   VariantMap unwrap_variant_map(VariantMap const &map);
 

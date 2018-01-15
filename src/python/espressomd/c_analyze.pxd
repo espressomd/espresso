@@ -50,11 +50,12 @@ cdef extern from "statistics.hpp":
         int n_coulomb
         int n_dipolar
         int n_non_bonded
+        int n_virtual_sites
         double * bonded
         double * non_bonded
         double * coulomb
         double * dipolar
-        double * vs_relative
+        double * virtual_sites
 
 cdef extern from "statistics.hpp":
     ctypedef struct Observable_stat_non_bonded:
