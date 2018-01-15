@@ -512,12 +512,12 @@ IF LJCOS:
             super(LennardJonesCosInteraction, self).set_params(**kwargs)
 
         def _set_params_in_es_core(self):
-            if ljcos2_set_params(self._part_types[0], self._part_types[1],
-                                 self._params["epsilon"],
-                                 self._params["sigma"],
-                                 self._params["cutoff"],
-                                 self._params["offset"]):
-                raise Exception("Could not set Lennard Jones parameters")
+            if ljcos_set_params(self._part_types[0], self._part_types[1],
+                                self._params["epsilon"],
+                                self._params["sigma"],
+                                self._params["cutoff"],
+                                self._params["offset"]):
+                raise Exception("Could not set Lennard Jones Cosine parameters")
 
         def default_params(self):
             return {
@@ -555,6 +555,8 @@ IF LJCOS2:
                 raise ValueError("Lennard-Jones eps has to be >=0")
             if self._params["sigma"] < 0:
                 raise ValueError("Lennard-Jones sigma has to be >=0")
+            if self._params["width"] < 0:
+                raise ValueError("Parameter width has to be >=0")
             return True
 
         def _get_params_from_es_core(self):
@@ -595,7 +597,7 @@ IF LJCOS2:
                                  self._params["sigma"],
                                  self._params["offset"],
                                  self._params["width"]):
-                raise Exception("Could not set Lennard Jones parameters")
+                raise Exception("Could not set Lennard Jones Cosine2 parameters")
 
         def default_params(self):
             return {

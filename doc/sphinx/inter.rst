@@ -229,12 +229,12 @@ Lennard-Jones cosine interaction
 :class:`espressomd.interactions.LennardJonesCosInteraction` and
 :class:`espressomd.interactions.LennardJonesCos2Interaction` specifies
 a Lennard-Jones interaction with cosine tail :cite:`soddeman01a`
-between particles of the types *type1* and *type2* . The first variant
+between particles of the types *type1* and *type2*. The first variant
 behaves as follows: Until the minimum of the Lennard-Jones potential
 at :math:`r_\mathrm{min} = r_\mathrm{off} + 2^{\frac{1}{6}}\sigma`, it
 behaves identical to the unshifted Lennard-Jones potential
 (:math:`c_\mathrm{shift}=0`). Between :math:`r_\mathrm{min}` and :math:`r_\mathrm{cut}`, a cosine is used to
-smoothly connect the potential to 0,
+smoothly connect the potential to 0, i.e.,
 
 .. math::
 
@@ -253,7 +253,7 @@ the first variant. The potential between :math:`r_\mathrm{min}` and
 
 .. math::
 
-   V(r)=\epsilon\cos^2\left[\frac{\pi}{2\omega}(r - r_\mathrm{min})\right].
+   V(r)=-\epsilon\cos^2\left[\frac{\pi}{2\omega}(r - r_\mathrm{min})\right].
 
 For :math:`r < r_\mathrm{min}`, :math:`V(r)` is implemented as normal
 :ref:`Lennard-Jones interaction` with :math:`c_\mathrm{shift} = 0`.

@@ -137,9 +137,9 @@ cdef extern from "lj.hpp":
                                       double min)
 IF LJCOS:
     cdef extern from "ljcos.hpp":
-        cdef int lj_cos_set_params(int part_type_a, int part_type_b,
-                                   double eps, double sig,
-                                   double cut, double offset);
+        cdef int ljcos_set_params(int part_type_a, int part_type_b,
+                                  double eps, double sig,
+                                  double cut, double offset);
 
 IF LJCOS2:
     cdef extern from "ljcos2.hpp":
