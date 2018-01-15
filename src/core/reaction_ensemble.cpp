@@ -811,7 +811,7 @@ int WangLandauReactionEnsemble::on_mc_use_WL_get_new_state() {
 * Performs a global mc move for a particle of the provided type.
 */
 bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
-    int type, int start_id_polymer, int end_id_polymer,
+    int type,
     int particle_number_of_type_to_be_changed, bool use_wang_landau) {
   m_tried_configurational_MC_moves += 1;
   bool got_accepted = false;
@@ -856,7 +856,17 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   // propose new positions
   changed_particle_counter = 0;
   int max_tries =
-      100 * particle_number_of_type; // important for very dense systems
+      100 * particle_number_of_type; // important for very dense systems 
+                                     // setting of a minimal
+                                     // distance is allowed to
+                                     // avoid overlapping
+                                     // configurations if there is
+                                     // a repulsive potential.
+                                     // States with very high
+                                     // energies have a probability
+                                     // of almost zero and
+                                     // therefore do not contribute
+                                     // to ensemble averages.
   int attempts = 0;
   std::vector<double> new_pos(3);
   while (changed_particle_counter < particle_number_of_type_to_be_changed) {
@@ -865,11 +875,8 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     while (particle_inserted_too_close_to_another_one && attempts < max_tries) {
       // change particle position
       new_pos=get_random_position_in_box();
-      //new_pos=get_random_position_in_box_enhanced_proposal_of_small_radii();
-      ////enhanced proposal of small radii
+      //new_pos=get_random_position_in_box_enhanced_proposal_of_small_radii(); //enhanced proposal of small radii
       place_particle(p_id, new_pos.data());
-//      auto part = get_particle_data(p_id);
-//      printf("new pos proposed %f %f %f\n", part->r.p[0], part->r.p[1], part->r.p[2]);
       double d_min = distto(partCfg(), new_pos.data(), p_id);
       if (d_min > exclusion_radius) {
         particle_inserted_too_close_to_another_one = false;
@@ -878,25 +885,8 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     }
     changed_particle_counter += 1;
   }
-  if (attempts == max_tries) {
-    // reversing
-    // create particles again at the positions they were
-    for (int i = 0; i < particle_number_of_type_to_be_changed; i++)
-      place_particle(p_id_s_changed_particles[i], &particle_positions[3 * i]);
-  }
-
-  // change polymer conformation if start and end id are provided
-  std::vector<double> old_pos_polymer_particle(
-      3 * (end_id_polymer - start_id_polymer + 1));
-  if (start_id_polymer >= 0 && end_id_polymer >= 0) {
-
-    for (int i = start_id_polymer; i <= end_id_polymer; i++) {
-      auto part = get_particle_data(i);
-      // move particle to new position nearby
-      const double length_of_displacement = 0.05;
-      std::vector<double> new_pos_poly=add_random_vector(part->r.p, 3, length_of_displacement);
-      place_particle(i, new_pos_poly.data());
-    }
+  if (attempts >= max_tries) {
+    throw std::runtime_error("Not all particles displaced");
   }
 
   const double E_pot_new = calculate_current_potential_energy_of_system();
@@ -946,12 +936,6 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     // create particles again at the positions they were
     for (int i = 0; i < particle_number_of_type_to_be_changed; i++)
         place_particle(p_id_s_changed_particles[i], &particle_positions[3 * i]);
-        // restore polymer particle again at original position
-        if (start_id_polymer >= 0 && end_id_polymer >= 0) {
-          // place_particle(random_polymer_particle_id, old_pos_polymer_particle);
-          for (int i = start_id_polymer; i <= end_id_polymer; i++)
-            place_particle(i, &old_pos_polymer_particle[3 * i]);
-        }
   }
   return got_accepted;
 }

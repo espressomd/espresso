@@ -121,8 +121,7 @@ public:
                     const std::vector<int> & _product_types,
                     const std::vector<int> & _product_coefficients);
 
-  bool do_global_mc_move_for_particles_of_type(int type, int start_id_polymer,
-                                               int end_id_polymer,
+  bool do_global_mc_move_for_particles_of_type(int type,
                                                int particle_number_of_type,
                                                const bool use_wang_landau);
 
@@ -199,10 +198,6 @@ public:
   bool do_energy_reweighting = false;
   bool do_not_sample_reaction_partition_function = false;
   double final_wang_landau_parameter = 0.00001;
-  int polymer_start_id = -10;
-  int polymer_end_id = -10;
-  bool fix_polymer = false;
-
 
   void
   add_new_CV_degree_of_association(int associated_type, double CV_minimum,

@@ -95,7 +95,7 @@ class ReactionEnsembleTest(ut.TestCase):
             try:
                 self.RE.reaction()
                 for i in range(7):
-                    self.RE.global_mc_move_for_one_particle_of_type_wang_landau(3)
+                    self.RE.displacement_mc_move_for_particles_of_type(3)
             except reaction_ensemble.WangLandauHasConverged:  # only catch my exception
                 break
         # test as soon as wang_landau has converged (throws exception then)

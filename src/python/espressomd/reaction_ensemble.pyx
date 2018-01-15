@@ -170,6 +170,8 @@ cdef class ReactionAlgorithm(object):
                                A list of stoichiometric coefficients of
                                products of the reaction in the same order as
                                the list of their types
+        default_charges : dictionary
+                        A dictionary of default charges.
 
         """
         for k in self._required_keys_add():
@@ -251,15 +253,17 @@ cdef class ReactionAlgorithm(object):
         """
         self.RE.do_reaction(int(reaction_steps))
 
-    def global_mc_move_for_one_particle_of_type(self, type_mc):
+    def displacement_mc_move_for_particles_of_type(self, type_mc, particle_number_to_be_changed=1):
         """
-        Performs a global mc move for one particle of type type_mc. If there
+        Performs a global MC (Monte Carlo) move for particle_number_of_type_to_be_changed particle of type type_mc. If there
         are multiple types, that need to be moved, make sure to move them in a
         random order to avoid artefacts.
 
         """
+        
+        use_wang_landau=False
         self.RE.do_global_mc_move_for_particles_of_type(
-            type_mc, -10, -10, 1, False)
+            type_mc, particle_number_to_be_changed, use_wang_landau)
 
     def get_status(self):
         """
@@ -592,62 +596,18 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         self.WLRptr.write_wang_landau_results_to_file(filename)
 
 
-    def global_mc_move_for_one_particle_of_type_wang_landau(self, type_mc):
+    def displacement_mc_move_for_particles_of_type(self, type_mc, particle_number_to_be_changed=1):
         """
-        Performs a global mc move for one particle of type type_mc (depending
-        on the energy reweighting scheme) If there are multiple types, that
+        Performs an MC (Monte Carlo) move for particle_number_to_be_changed particle of type type_mc. Positions for the particles are drawn uniformly random within the box. The command takes into account the Wang-Landau terms in the acceptance probability. 
+        If there are multiple types, that
         need to be moved, make sure to move them in a random order to avoid
-        artefacts.
+        artefacts. For the Wang-Landau algorithm in the case of energy reweighting you would also need to move the monomers of the polymer with special moves for the MC part. Those polymer configuration changing moves need to be implemented in the case of using Wang-Landau with energy reweighting and a polymer in the system. Polymer configuration changing moves had been implemented before but were removed from espresso.
 
         """
+        use_wang_landau=True
         self.WLRptr.do_global_mc_move_for_particles_of_type(
-            type_mc, self.WLRptr.polymer_start_id, self.WLRptr.polymer_end_id, 1, True)
+            type_mc, particle_number_to_be_changed, use_wang_landau)
 
-    # specify information for configuration changing monte carlo move
-    property polymer_start_id:
-        """
-        Optional: since you might not want to change the configuration of your
-        polymer, e.g. if you are trying to simulate a rigid conformation. Sets
-        the start id of the polymer, optional. Should be set when you have a
-        non fixed polymer and want it to be moved by MC trail moves in order to
-        sample its configuration space. MC moves for free particles and polymer
-        particles may be very different.
-
-        """
-
-        def __set__(self, int start_id):
-            self.WLRptr.polymer_start_id = start_id
-
-        def __get__(self):
-                    return self.WLRptr.polymer_start_id
-    property polymer_end_id:
-        """
-        Optional: since you might not want to change the configuration of your
-        polymer, e.g. if you are trying to simulate a rigid conformation. Sets
-        the end id of the polymer, optional. Should be set when you have a non
-        fixed polymer and want it to be moved by MC trail moves in order to
-        sample its configuration space. MC moves for free particles and polymer
-        particles may be very different.
-
-        """
-
-        def __set__(self, int end_id):
-            self.WLRptr.polymer_end_id = end_id
-
-        def __get__(self):
-            return self.WLRptr.polymer_end_id
-
-    property fix_polymer_monomers:
-        """
-        Fixes the polymer monomers in the Monte Carlo moves.
-
-        """
-
-        def __set__(self, bool fix_polymer):
-            self.WLRptr.fix_polymer = fix_polymer
-
-        def __get__(self):
-            return self.WLRptr.fix_polymer
 
 cdef class WidomInsertion(ReactionAlgorithm):
     """
