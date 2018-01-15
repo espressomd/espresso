@@ -198,7 +198,6 @@ if (WITH_PYTHON)
     set(CYTHON_FLAGS "-3" CACHE STRING "Flags used by the Cython compiler during all build types.")
   endif()
 endif(WITH_PYTHON)
-find_python_module(enum REQUIRED)
 
 
 find_package(FFTW3)
