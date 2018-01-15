@@ -108,14 +108,16 @@ class TestCylindricalObservable(ut.TestCase):
 
     def calculate_numpy_histogram(self):
         pol_positions = self.pol_coords()
-        bin_volume = self.calculate_bin_volume()
         np_hist, _ = np.histogramdd(pol_positions, bins=(self.params['n_r_bins'], self.params['n_phi_bins'], self.params['n_z_bins']),
                                     range=[(self.params['min_r'], self.params['max_r']), (self.params['min_phi'], self.params['max_phi']),
                                            (self.params['min_z'], self.params['max_z'])])
-        # Normalization
-        for i in range(self.params['n_r_bins']):
-            np_hist[i, :, :] /= bin_volume[i]
         return np_hist
+
+    def normalize_with_bin_volume(self, histogram):
+        bin_volume = self.calculate_bin_volume()
+        for i in range(self.params['n_r_bins']):
+            histogram[i, :, :] /= bin_volume[i]
+        return histogram
 
     def density_profile_test(self):
         self.set_particles()
@@ -140,7 +142,43 @@ class TestCylindricalObservable(ut.TestCase):
             self.params['n_phi_bins'],
             self.params['n_z_bins'])
         np_hist = self.calculate_numpy_histogram()
+        np_hist = self.normalize_with_bin_volume(np_hist)
         np.testing.assert_array_almost_equal(np_hist, core_hist)
+
+
+    def velocity_profile_test(self):
+        self.set_particles()
+        # Set up the Observable.
+        obs = espressomd.observables.CylindricalVelocityProfile(
+            ids=range(
+                self.params['N']),
+            center=self.params['center'],
+            axis=self.params['axis'],
+            n_r_bins=self.params['n_r_bins'],
+            n_phi_bins=self.params['n_phi_bins'],
+            n_z_bins=self.params['n_z_bins'],
+            min_r=self.params['min_r'],
+            min_phi=self.params['min_phi'],
+            min_z=self.params['min_z'],
+            max_r=self.params['max_r'],
+            max_phi=self.params['max_phi'],
+            max_z=self.params['max_z'])
+        core_hist = np.array(
+            obs.calculate()).reshape(
+            self.params['n_r_bins'],
+            self.params['n_phi_bins'],
+            self.params['n_z_bins'],
+            3)
+        core_hist_v_r = core_hist[:, :, :, 0]
+        core_hist_v_phi = core_hist[:, :, :, 1]
+        core_hist_v_z = core_hist[:, :, :, 2]
+        np_hist = self.calculate_numpy_histogram()
+        for x in np.nditer(np_hist, op_flags=['readwrite']):
+            if x[...] > 0.0:
+                x[...] /= x[...]
+        np.testing.assert_array_almost_equal(np_hist * self.v_r, core_hist_v_r)
+        np.testing.assert_array_almost_equal(np_hist * self.v_phi, core_hist_v_phi)
+        np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
 
     def flux_density_profile_test(self):
         self.set_particles()
@@ -169,22 +207,26 @@ class TestCylindricalObservable(ut.TestCase):
         core_hist_v_phi = core_hist[:, :, :, 1]
         core_hist_v_z = core_hist[:, :, :, 2]
         np_hist = self.calculate_numpy_histogram()
+        np_hist = self.normalize_with_bin_volume(np_hist)
         np.testing.assert_array_almost_equal(np_hist * self.v_r, core_hist_v_r)
         np.testing.assert_array_almost_equal(np_hist * self.v_phi, core_hist_v_phi)
         np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
 
     def test_hist_x(self):
         self.params['axis'] = 'x'
+        self.velocity_profile_test()
         self.flux_density_profile_test()
         self.density_profile_test()
 
     def test_hist_y(self):
         self.params['axis'] = 'y'
+        self.velocity_profile_test()
         self.flux_density_profile_test()
         self.density_profile_test()
 
     def test_hist_z(self):
         self.params['axis'] = 'z'
+        self.velocity_profile_test()
         self.flux_density_profile_test()
         self.density_profile_test()
 

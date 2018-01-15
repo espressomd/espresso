@@ -712,8 +712,6 @@ void on_ghost_flags_change() {
   /* that's all we change here */
   extern int ghosts_have_v;
 
-  const int old_have_v = ghosts_have_v;
-
   ghosts_have_v = 0;
 
 /* DPD and LB need also ghost velocities */
@@ -737,10 +735,10 @@ void on_ghost_flags_change() {
     ghosts_have_v = 1;
 #endif
 #ifdef VIRTUAL_SITES
-  // VIRUTAL_SITES need v to update v of virtual sites
-  ghosts_have_v = 1;
+  // If they have velocities, VIRUTAL_SITES need v to update v of virtual sites
+  if (virtual_sites()->have_velocity()) {
+    ghosts_have_v = 1;
+  };
 #endif
 
-  if (old_have_v != ghosts_have_v)
-    cells_re_init(CELL_STRUCTURE_CURRENT);
 }

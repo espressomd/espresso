@@ -38,6 +38,7 @@
 #include "VariantTester.hpp"
 
 #include "core/communication.hpp"
+#include "virtual_sites/initialize.hpp"
 
 namespace ScriptInterface {
 
@@ -55,6 +56,7 @@ void initialize() {
   Correlators::initialize();
   LBBoundaries::initialize();
   PairCriteria::initialize();
+  VirtualSites::initialize();
 
   ScriptInterface::register_new<Testing::VariantTester>("Testing::VariantTester");
   ScriptInterface::register_new<ComFixed>("ComFixed");

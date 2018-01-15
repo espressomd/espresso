@@ -1,6 +1,6 @@
 file(GLOB EspressoCore_SRC
-          "*.cpp"
-          )
+          "*.cpp" "virtual_sites/VirtualSitesRelative.cpp")
+
 
 if( WITH_COVERAGE )
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Og --coverage -fprofile-arcs -ftest-coverage")

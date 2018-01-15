@@ -5,6 +5,7 @@ set(EspressoScriptInterface_SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/cluster_analysis/initialize.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/correlators/initialize.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/lbboundaries/initialize.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/virtual_sites/initialize.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/observables/initialize.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/pair_criteria/initialize.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/ScriptInterfaceBase.cpp"

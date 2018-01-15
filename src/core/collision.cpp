@@ -28,7 +28,7 @@
 #include "particle_data.hpp"
 #include "collision.hpp"
 #include "rotation.hpp"
-
+#include "virtual_sites/VirtualSitesRelative.hpp"
 
 using namespace std;
 
