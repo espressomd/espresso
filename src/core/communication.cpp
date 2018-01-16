@@ -199,7 +199,6 @@ static int terminated = 0;
   CB(mpi_check_runtime_errors_slave)                                           \
   CB(mpi_minimize_energy_slave)                                                \
   CB(mpi_gather_cuda_devices_slave)                                            \
-  CB(mpi_thermalize_cpu_slave)                                                 \
   CB(mpi_scafacos_set_parameters_slave)                                        \
   CB(mpi_scafacos_set_r_cut_and_tune_slave)                                    \
   CB(mpi_scafacos_free_slave)                                                  \
@@ -2400,14 +2399,6 @@ void mpi_setup_reaction_slave(int pnode, int i) {
   local_setup_reaction();
 #endif
 }
-
-/*********************** CPU Thermostat **********************/
-void mpi_thermalize_cpu(int temp) {
-  mpi_call(mpi_thermalize_cpu_slave, -1, temp);
-  set_cpu_temp(temp);
-}
-
-void mpi_thermalize_cpu_slave(int node, int temp) { set_cpu_temp(temp); }
 
 /*********************** MAIN LOOP for slaves ****************/
 
