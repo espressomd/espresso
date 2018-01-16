@@ -2,11 +2,7 @@ from .script_interface import ScriptInterfaceHelper, script_interface_register
 from .particle_data import ParticleHandle
 
 
-@script_interface_register
-class PairCriterion(ScriptInterfaceHelper):
-    """Base class for a criterion which makes a decision based on two particles"""
-    _so_name = "PairCriteria::PairCriterion"
-    _so_creation_policy="LOCAL"
+class _PairCriterion(ScriptInterfaceHelper):
 
     def decide(self, p1, p2):
         """Makes a decision based on the two particles specified.
@@ -27,7 +23,7 @@ class PairCriterion(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class DistanceCriterion(PairCriterion):
+class DistanceCriterion(_PairCriterion):
     """Pair criterion returning true, if particles are closer than a cut off.
        Periodic boundaries are treated via minimum image convention.
 
@@ -38,11 +34,12 @@ class DistanceCriterion(PairCriterion):
            distance cut off for the criterion
     """
     _so_name = "PairCriteria::DistanceCriterion"
+    _so_creation_policy="LOCAL"
     
 
 
 @script_interface_register
-class EnergyCriterion(PairCriterion):
+class EnergyCriterion(_PairCriterion):
     """Pair criterion returning true, if the short range energy between the particles is >= the cutoff
 
        Be aware that the short range energy contains the short range part of dipolar and electrostatic interactions,
@@ -55,10 +52,11 @@ class EnergyCriterion(PairCriterion):
            energy cut off for the criterion
     """
     _so_name = "PairCriteria::EnergyCriterion"
+    _so_creation_policy="LOCAL"
 
 
 @script_interface_register
-class BondCriterion(PairCriterion):
+class BondCriterion(_PairCriterion):
     """Pair criterion returning true, if a pair bond of given type exists between them
 
        The following parameters can be passed to the constructor, changed via set_params() 
@@ -68,3 +66,4 @@ class BondCriterion(PairCriterion):
            numeric type of the bond 
     """
     _so_name = "PairCriteria::BondCriterion"
+    _so_creation_policy="LOCAL"

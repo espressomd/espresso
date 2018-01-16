@@ -31,8 +31,7 @@ namespace PairCriteria {
 
 class PairCriterion : public AutoParameters {
 public:
-  PairCriterion() : m_c(new ::PairCriteria::PairCriterion()) {};
-  virtual std::shared_ptr<::PairCriteria::PairCriterion> pair_criterion() const  { return m_c; }
+  virtual std::shared_ptr<::PairCriteria::PairCriterion> pair_criterion() const  =0;
   virtual Variant call_method(std::string const &method,
                               VariantMap const &parameters) override {
       if (method == "decide") {
@@ -45,8 +44,6 @@ public:
         throw std::runtime_error("Unknown method called.");
       }
   } 
-private:
-  std::shared_ptr<::PairCriteria::PairCriterion> m_c;
 };
 
 class DistanceCriterion : public PairCriterion {

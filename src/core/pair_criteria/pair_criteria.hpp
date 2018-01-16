@@ -15,9 +15,7 @@ namespace PairCriteria {
 class PairCriterion {
   public: 
     /** @brief Make a decision based on two Particle objects */
-    virtual bool decide(const Particle& p1, const Particle& p2) const {
-     throw std::runtime_error("PairCriterion is a base class and cannot be used.");
-    };
+    virtual bool decide(const Particle& p1, const Particle& p2) const =0;
     /** @brief Make a decision based on particle ids. 
     * This can only run on the master node outside the integration loop */
     bool decide(int id1, int id2) const {
@@ -32,7 +30,7 @@ class PairCriterion {
 /** @brief True if two particles are closer than a cut off distance, respecting minimum image convention */
 class DistanceCriterion : public PairCriterion {
   public: 
-    virtual bool decide(const Particle& p1, const Particle& p2) const {
+    bool decide(const Particle& p1, const Particle& p2) const override {
       double vec21[3];
       get_mi_vector(vec21,p1.r.p, p2.r.p); 
       return sqrt(sqrlen(vec21))<= m_cut_off;
@@ -51,7 +49,7 @@ class DistanceCriterion : public PairCriterion {
 /** True if the short range energy is largern than a cut_off */
 class EnergyCriterion : public PairCriterion {
   public: 
-    virtual bool decide(const Particle& p1, const Particle& p2) const {
+    bool decide(const Particle& p1, const Particle& p2) const override {
       // Distnace between particles
       double vec21[3];
       get_mi_vector(vec21,p1.r.p, p2.r.p); 
@@ -76,7 +74,7 @@ class EnergyCriterion : public PairCriterion {
 /** True if a bond of given type exists between the two particles */
 class BondCriterion : public PairCriterion {
   public: 
-    virtual bool decide(const Particle& p1, const Particle& p2) const {
+    bool decide(const Particle& p1, const Particle& p2) const override {
       return bond_exists(&p1,&p2,m_bond_type) || bond_exists(&p2,&p1,m_bond_type);
     };
     int get_bond_type() {

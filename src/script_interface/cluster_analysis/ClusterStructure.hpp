@@ -33,8 +33,7 @@ namespace ClusterAnalysis {
 
 class ClusterStructure : public AutoParameters {
 public:
-  ClusterStructure(){
-    m_pc = make_shared<PairCriteria::PairCriterion>();
+  ClusterStructure() : m_pc(nullptr) {
     add_parameters({
                     {"pair_criterion",
                      [this](Variant const &value) {
