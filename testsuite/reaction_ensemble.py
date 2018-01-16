@@ -29,17 +29,25 @@ from espressomd import reaction_ensemble
 class ReactionEnsembleTest(ut.TestCase):
     """Test the core implementation of the reaction ensemble."""
 
+    # The reaction ensemble follows the ideal titration curve only if N>>1, 
+    # Ideal curve is derived in the grandcanionical ensemble and for low N
+    # there are systematic devations caused by differences between the
+    # ensembles. This is not an error but a fundamental difference (various
+    # ensembles are equivalent only in the thermodynamic limit N \to \infty
     N0 = 40
     c0 = 0.00028
     type_HA = 0
     type_A = 1
     type_H = 2
     temperature = 1.0
-    standard_pressure_in_simulation_units = 0.00108
     exclusion_radius = 1.0
     # could be in this test for example anywhere in the range 0.000001 ... 9,
     # chosen for example like 8.8*np.random.random()+0.2
-    K_HA_diss = 8.8 * 0.5 + 0.2
+    # FIXME choose desired alpha and then calculate Ka based on the desired alpha
+    # use alpha close to 0.5 to get good statistics in few steps, 
+    # with alpha close to 1.0 or 0.0 the reaction ensemble statistics differs from the ideal titration
+    K_HA_diss = (8.8 * 0.5 + 0.2)*0.00108; # Hard-coded numbers to reproduce the original test of Jonas
+    print("Ka:", K_HA_diss);
     reactant_types = [type_HA]
     reactant_coefficients = [1]
     product_types = [type_A, type_H]
@@ -49,9 +57,7 @@ class ReactionEnsembleTest(ut.TestCase):
     np.random.seed(69) #make reaction code fully deterministic
     system.box_l = np.ones(3) * (N0 / c0)**(1.0 / 3.0)
     system.cell_system.skin = 0.4
-    system.time_step = 0.01
     RE = reaction_ensemble.ReactionEnsemble(
-        standard_pressure=standard_pressure_in_simulation_units,
         temperature=temperature,
         exclusion_radius=exclusion_radius)
     volume = np.prod(system.box_l)  # cuboid box
@@ -84,7 +90,6 @@ class ReactionEnsembleTest(ut.TestCase):
         type_H = ReactionEnsembleTest.type_H
         type_HA = ReactionEnsembleTest.type_HA
         box_l = ReactionEnsembleTest.system.box_l
-        standard_pressure_in_simulation_units = ReactionEnsembleTest.standard_pressure_in_simulation_units
         system = ReactionEnsembleTest.system
         K_HA_diss = ReactionEnsembleTest.K_HA_diss
         RE = ReactionEnsembleTest.RE
@@ -93,28 +98,43 @@ class ReactionEnsembleTest(ut.TestCase):
 
         volume = ReactionEnsembleTest.volume
         average_NH = 0.0
+        average_NHA = 0.0
+        average_NA = 0.0
         average_degree_of_association = 0.0
         num_samples = 1000
         for i in range(num_samples):
             RE.reaction()
-            average_NH += system.number_of_particles(
-                type=type_H)
+            average_NH += system.number_of_particles( type=type_H)
+            average_NHA += system.number_of_particles( type=type_HA)
+            average_NA += system.number_of_particles( type=type_A)
             average_degree_of_association += system.number_of_particles(
                 type=type_HA) / float(N0)
         average_NH /= num_samples
+        average_NA /= num_samples
+        average_NHA /= num_samples
         average_degree_of_association /= num_samples
         pH = -np.log10(average_NH / volume)
-        K_apparent_HA_diss = K_HA_diss * standard_pressure_in_simulation_units / temperature
-        pK_a = -np.log10(K_apparent_HA_diss)
-        print(average_degree_of_association)
-        real_error_in_degree_of_association = abs(
-            average_degree_of_association - ReactionEnsembleTest.ideal_degree_of_association(
-                pK_a, pH)) / ReactionEnsembleTest.ideal_degree_of_association(
-            pK_a, pH)
+        pK_a = -np.log10(K_HA_diss)
+        #ideal=ReactionEnsembleTest.ideal_degree_of_association( pK_a, pH);
+        ideal=0.05080885682460401; # hard-coded value from the original setup by Jonas
+        target=0.05024999999999979; # hard-coded value from the original setup by Jonas
+        print("average_NH:", average_NH,
+        " average_NA:", average_NA, 
+        " average_NHA:", average_NHA, 
+        " average degree of association:", average_degree_of_association, 
+        " ideal: ",ideal)
+        rel_error_in_degree_of_association = abs(
+            average_degree_of_association - ideal )/ideal; # relative error, not real error
         self.assertLess(
-            real_error_in_degree_of_association,
+            rel_error_in_degree_of_association,
             0.07,
             msg="Deviation to ideal titration curve for the given input parameters too large.")
+        #check whether we are still getting the same numbers as before
+        self.assertAlmostEqual(
+            average_degree_of_association, 
+            target,
+            places=9,
+            msg="result not equal to target.")
 
     def test_reaction_system(self):
         RE_status = ReactionEnsembleTest.RE.get_status()
@@ -157,11 +177,6 @@ class ReactionEnsembleTest(ut.TestCase):
             places=9,
             msg="reaction ensemble volume not set correctly.")
 
-        self.assertAlmostEqual(
-            ReactionEnsembleTest.standard_pressure_in_simulation_units,
-            RE_status["standard_pressure"],
-            places=9,
-            msg="reaction ensemble standard_pressure not set correctly.")
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())
