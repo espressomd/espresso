@@ -32,7 +32,7 @@ int tabulated_set_params(int part_type_a, int part_type_b, double min,
                          std::vector<double> const &force) {
   auto data = get_ia_param_safe(part_type_a, part_type_b);
   assert(max >= min);
-  assert(force.size() > 0);
+  assert((max == min) || force.size() > 1);
   assert(force.size() == energy.size());
 
   data->TAB.maxval = max;
@@ -55,7 +55,7 @@ int tabulated_bonded_set_params(int bond_type,
     return 1;
 
   assert(max >= min);
-  assert(force.size() > 0);
+  assert((max == min) || force.size() > 1);
   assert(force.size() == energy.size());
 
   make_bond_type_exist(bond_type);
