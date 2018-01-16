@@ -135,7 +135,7 @@ void ClusterStructure::merge_clusters() {
   
   // Collect needed changes in a separate map, as doing the changes on the fly
   // would screw up the iterators
-  std::map<int,int> to_be_changed;
+  std::vector<std::pair<int,int>> to_be_changed;
   
   for (auto it : cluster_id) { 
     // particle id is in it.first and cluster id in it.second
@@ -144,7 +144,7 @@ void ClusterStructure::merge_clusters() {
     const int cid=find_id_for(it.second);
     // We note the list of changes here, so we don't modify the map
     // while iterating
-    to_be_changed[it.first]=cid;
+    to_be_changed.push_back({it.first,cid});
     // Empty cluster object
     if (clusters.find(cid)==clusters.end()) {
       clusters[cid]=std::make_shared<Cluster>();
