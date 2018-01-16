@@ -20,14 +20,6 @@ cdef class ReactionAlgorithm(object):
 
     Parameters
     ----------
-    standard_pressure : :obj:`float`
-                        The standard pressure (in simulation units)
-                        at which the reaction constant was determined.
-                        Note that if you provide the reaction constant :math:`K_c`
-                        as described in the user guide, this parameter should be kept at its default value.
-                        This paramater is retained for backward compatibility with earlier
-                        implementation, where the pressure-based constaht :math:`K_p` was
-                        assumed at the input.
     temperature : :obj:`float`
                   The temperature at which the reaction is performed.
     exclusion_radius : :obj:`float`
@@ -44,7 +36,7 @@ cdef class ReactionAlgorithm(object):
     cdef CReactionAlgorithm* RE
 
     def _valid_keys(self):
-        return "standard_pressure", "temperature", "exclusion_radius"
+        return "temperature", "exclusion_radius"
 
     def _required_keys(self):
         return "temperature", "exclusion_radius"
@@ -60,8 +52,6 @@ cdef class ReactionAlgorithm(object):
         # only contained in the volume of the cylinder)
         if(self.RE.volume < 0):
             self.RE.set_cuboid_reaction_ensemble_volume()
-        self.RE.standard_pressure_in_simulation_units = self._params[
-            "standard_pressure"]
         self.RE.exclusion_radius = self._params[
             "exclusion_radius"]
 
@@ -293,10 +283,10 @@ cdef class ReactionAlgorithm(object):
                 product_coefficients.append(
                     self.RE.reactions[single_reaction_i].product_coefficients[i])
             reaction = {"reactant_coefficients": reactant_coefficients, "reactant_types": reactant_types, "product_types": product_types, "product_coefficients":
-                        product_coefficients, "reactant_types": reactant_types, "Gamma": self.RE.reactions[single_reaction_i].equilibrium_constant}
+                        product_coefficients, "reactant_types": reactant_types, "Gamma": self.RE.reactions[single_reaction_i].Gamma}
             reactions.append(reaction)
 
-        return {"reactions": reactions, "temperature": self.RE.temperature, "exclusion_radius": self.RE.exclusion_radius, "standard_pressure": self.RE.standard_pressure_in_simulation_units}
+        return {"reactions": reactions, "temperature": self.RE.temperature, "exclusion_radius": self.RE.exclusion_radius}
 
     def delete_particle(self, p_id):
         """
@@ -317,8 +307,7 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
     def __init__(self, *args, **kwargs):
         self.RE = <CReactionAlgorithm*> new CReactionEnsemble()
         self.REptr = <CReactionEnsemble*> self.RE
-        self._params = {"standard_pressure": 1,
-                        "temperature": 1,
+        self._params = {"temperature": 1,
                         "exclusion_radius": 0}
         for k in self._required_keys():
             if k not in kwargs:
@@ -341,8 +330,7 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
     def __init__(self, *args, **kwargs):
         self.RE = <CReactionAlgorithm*> new CConstantpHEnsemble()
         self.constpHptr=<CConstantpHEnsemble*> self.RE
-        self._params = {"standard_pressure": 1,
-                        "temperature": 1,
+        self._params = {"temperature": 1,
                         "exclusion_radius": 0}
         for k in self._required_keys():
             if k not in kwargs:
@@ -385,8 +373,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
     def __init__(self, *args, **kwargs):
         self.RE = <CReactionAlgorithm*> new CWangLandauReactionEnsemble()
         self.WLRptr=<CWangLandauReactionEnsemble*> self.RE
-        self._params = {"standard_pressure": 1,
-                        "temperature": 1,
+        self._params = {"temperature": 1,
                         "exclusion_radius": 0}
         for k in self._required_keys():
             if k not in kwargs:
@@ -667,8 +654,7 @@ cdef class WidomInsertion(ReactionAlgorithm):
     def __init__(self, *args, **kwargs):
         self.RE = <CReactionAlgorithm*> new CWangLandauReactionEnsemble()
         self.WidomInsertionPtr=<CWidomInsertion*> self.RE
-        self._params = {"standard_pressure": 1,
-                        "temperature": 1,
+        self._params = {"temperature": 1,
                         "exclusion_radius": 0}
         for k in self._required_keys():
             if k not in kwargs:

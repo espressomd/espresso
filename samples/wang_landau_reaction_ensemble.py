@@ -66,7 +66,7 @@ system.part[0].add_bond((h, 1))
 
 
 RE = reaction_ensemble.WangLandauReactionEnsemble(temperature=1, exclusion_radius=0)
-RE.add_reaction(equilibrium_constant=K_diss, reactant_types=[0], reactant_coefficients=[
+RE.add_reaction(Gamma=K_diss, reactant_types=[0], reactant_coefficients=[
        1], product_types=[1, 2], product_coefficients=[1, 1])
 RE.set_default_charges(dictionary={"0": 0, "1": -1, "2": +1})
 print(RE.get_status())
