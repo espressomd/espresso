@@ -154,8 +154,8 @@ class ClusterAnalysis(ut.TestCase):
                 return
             # The fractal dimension of a line should be 1
             
-            dr=float(np.sqrt(0.01**2+0.011**2+0.012**2))
-            self.assertAlmostEqual(c.fractal_dimension(dr=dr)[0],1,delta=0.2)
+            dr=0.
+            self.assertAlmostEqual(c.fractal_dimension(dr=dr)[0],1,delta=0.05)
 
                    
                 
@@ -170,8 +170,8 @@ class ClusterAnalysis(ut.TestCase):
             self.cs.clear()
             self.cs.run_for_all_pairs()
             cid=self.cs.cluster_ids()[0]
-            df=self.cs.clusters[cid].fractal_dimension(dr=0.01)
-            self.assertAlmostEqual(df[0],2,delta=0.2)
+            df=self.cs.clusters[cid].fractal_dimension(dr=0.001)
+            self.assertAlmostEqual(df[0],2,delta=0.08)
         
           
     

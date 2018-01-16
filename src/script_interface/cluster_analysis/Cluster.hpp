@@ -49,7 +49,8 @@ public:
     }
     if (method=="fractal_dimension") {
       double mean_sq_residual; 
-      double df= m_cluster->fractal_dimension(boost::get<double>(parameters.at("dr")),mean_sq_residual);
+      double df;
+      std::tie(df,mean_sq_residual) = m_cluster->fractal_dimension(boost::get<double>(parameters.at("dr")));
       return std::vector<double>({df, mean_sq_residual});
     }
     if (method=="center_of_mass") {
