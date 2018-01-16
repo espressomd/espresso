@@ -225,7 +225,15 @@ where :math:`\Delta E=E_\mathrm{new}-E_\mathrm{old}` is the change in potential 
 and :math:`\beta=1/k_\mathrm{B}T`. 
 The extent of reaction, :math:`\xi=1` for the forward, and
 :math:`\xi=-1` for the backward direction. 
-The parameter :math:`\Gamma` proportional to the reaction constant. It is defined as
+The parameter :math:`\Gamma`  is defined as
+
+.. math::
+
+   \Gamma = \prod_i \Bigl(\frac{q_i}{\Lambda_i} \Bigr)^{\bar\nu} 
+
+where :math:`q_i` and :math:`\Lambda_i` are the single-particle partition function and
+thermal wavelength of species :math:`i`. In the absence of intermolecular interactions
+(ideal gas or ideal solution), :math:`\Gamma` proportional to the concentration-based reaction constant
 
 .. math::
 
@@ -234,7 +242,9 @@ The parameter :math:`\Gamma` proportional to the reaction constant. It is define
 where :math:`\left<N_i\right>/V` is the average number density of particles of type :math:`i`.
 Note that the dimension of :math:`\Gamma` is :math:`V^{\bar\nu}`, therefore its
 units must be consistent with the units in which Espresso measures the box volume,
-i.e. :math:`\sigma^3`.
+i.e. :math:`\sigma^3`. 
+In the presence of intermolecular interactions, the product of concentrations
+will generally differ from the vlaue of :math:`\Gamma`. 
    
 It is often convenient, and in some cases even necessary, that some particles
 representing reactants are not removed from or placed at randomly in the system

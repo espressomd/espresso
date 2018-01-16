@@ -155,9 +155,9 @@ cdef class ReactionAlgorithm(object):
 
         Parameters
         ----------
-        equilibrium_constant : :obj:`float`
-                               Dimensionless concentration-based equilibrium
-                               constant of the reaction, :math:`K_c` (see the User guide, section 6.6 for the definition).
+        Gamma : :obj:`float`
+                               Equilibrium constant of the reaction, :math:`\Gamma` 
+                               (see the User guide, section 6.6 for the definition and further details).
         reactant_types : list of :obj:`int`
                                 List of particle types of reactants in the reaction.
         reactant_coefficients : list
@@ -181,10 +181,10 @@ cdef class ReactionAlgorithm(object):
         self._set_params_in_es_core_add()
 
     def _valid_keys_add(self):
-        return "equilibrium_constant", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients"
+        return "Gamma", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients"
 
     def _required_keys_add(self):
-        return ["equilibrium_constant", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients"]
+        return ["Gamma", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients"]
 
     def _check_lengths_of_arrays(self):
         if(len(self._params["reactant_types"])!=len(self._params["reactant_coefficients"])):
@@ -208,9 +208,9 @@ cdef class ReactionAlgorithm(object):
             product_coefficients.push_back(
                 self._params["product_coefficients"][i])
         self.RE.add_reaction(
-            self._params["equilibrium_constant"], reactant_types, reactant_coefficients, product_types, product_coefficients)
+            self._params["Gamma"], reactant_types, reactant_coefficients, product_types, product_coefficients)
         self.RE.add_reaction(
-            1.0 / self._params["equilibrium_constant"], product_types, product_coefficients, reactant_types, reactant_coefficients)
+            1.0 / self._params["Gamma"], product_types, product_coefficients, reactant_types, reactant_coefficients)
 
     def set_default_charges(self, *args, **kwargs):
         """
@@ -250,10 +250,17 @@ cdef class ReactionAlgorithm(object):
         self.RE.do_reaction(int(reaction_steps))
 
     def global_mc_move_for_one_particle_of_type(self, type_mc):
+
         """
-        Performs a global mc move for one particle of type type_mc. If there
-        are multiple types, that need to be moved, make sure to move them in a
+        Perfoms a diplacemenet Monte Carlo move for particles of given type. New positions
+        of the displaced particles are chosen from the whole box with a uniform probablity distribution.
+        If there are multiple types, that are being moved in a simulation, they should be moved in a
         random order to avoid artefacts.
+        
+        Parameters
+        ----------
+        type_mc : :obj:`int`
+            particle type which should be moved
 
         """
         self.RE.do_global_mc_move_for_particles_of_type(
@@ -286,7 +293,7 @@ cdef class ReactionAlgorithm(object):
                 product_coefficients.append(
                     self.RE.reactions[single_reaction_i].product_coefficients[i])
             reaction = {"reactant_coefficients": reactant_coefficients, "reactant_types": reactant_types, "product_types": product_types, "product_coefficients":
-                        product_coefficients, "reactant_types": reactant_types, "equilibrium_constant": self.RE.reactions[single_reaction_i].equilibrium_constant}
+                        product_coefficients, "reactant_types": reactant_types, "Gamma": self.RE.reactions[single_reaction_i].equilibrium_constant}
             reactions.append(reaction)
 
         return {"reactions": reactions, "temperature": self.RE.temperature, "exclusion_radius": self.RE.exclusion_radius, "standard_pressure": self.RE.standard_pressure_in_simulation_units}
