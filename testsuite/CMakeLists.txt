@@ -113,6 +113,8 @@ python_test(FILE observable_profile.py MAX_NUM_PROC 4)
 python_test(FILE rotate_system.py MAX_NUM_PROC 4)
 python_test(FILE tabulated.py MAX_NUM_PROC 1)
 python_test(FILE lb_electrohydrodynamics.py MAX_NUM_PROC 4)
+python_test(FILE cluster_analysis.py MAX_NUM_PROC 4)
+python_test(FILE pair_criteria.py MAX_NUM_PROC 4)
 
 if(PY_H5PY)
   python_test(FILE h5md.py MAX_NUM_PROC 2)

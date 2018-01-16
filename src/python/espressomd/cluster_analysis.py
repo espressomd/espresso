@@ -33,6 +33,8 @@ class Cluster(ScriptInterfaceHelper):
     _so_bind_methods = ("particle_ids", "size", "longest_distance",
                         "radius_of_gyration", "fractal_dimension", "center_of_mass")
 
+    _so_creation_policy="LOCAL" 
+    
     def particles(self):
         return ParticleSlice(self.particle_ids())
 

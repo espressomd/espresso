@@ -55,7 +55,7 @@ public:
       
       // Note: Cluster objects are generated on the fly, to avoid having to store
       // a script interface object for all clusters (which can by thousands)
-      std::shared_ptr<Cluster> c = ScriptInterfaceBase::make_shared<Cluster>();
+      auto c = std::dynamic_pointer_cast<Cluster>(ScriptInterfaceBase::make_shared("ClusterAnalysis::Cluster",ScriptInterfaceBase::CreationPolicy::LOCAL));
       c->set_cluster(m_cluster_structure.clusters.at(boost::get<int>(parameters.at("id"))));
       
       // Store a temporary copy of the most recent cluster being returned.
@@ -65,7 +65,7 @@ public:
       //  to Python, where a new script object is construted. While it is
       // passed as ObjectId, noone holds an instance of the shared_ptr)
       m_tmp_cluster=c;
-      return Variant(m_tmp_cluster->id());
+      return m_tmp_cluster->id();
     }
     if (method == "cluster_ids") {
       std::vector<int> cluster_ids;
