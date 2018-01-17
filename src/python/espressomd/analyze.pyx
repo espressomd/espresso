@@ -559,22 +559,22 @@ class Analysis(object):
 
         # Electrostatics
         IF ELECTROSTATICS == 1:
-            total_coulomb = np.zeros(9)
+            total_coulomb = np.zeros((3,3))
             for i in range(c_analyze.total_p_tensor.n_coulomb):
                 p["coulomb", i] = np.reshape(
                     create_nparray_from_double_array(
                         c_analyze.total_p_tensor.coulomb+9*i, 9), (3, 3))
-                total_coulomb = p["coulomb", i]
+                total_coulomb += p["coulomb", i]
             p["coulomb"] = total_coulomb
 
         # Dipoles
         IF DIPOLES == 1:
-            total_dipolar = np.zeros(9)
+            total_dipolar = np.zeros((3,3))
             for i in range(c_analyze.total_p_tensor.n_dipolar):
                 p["dipolar", i] = np.reshape(
                     create_nparray_from_double_array(
                         c_analyze.total_p_tensor.dipolar+9*i, 9), (3, 3))
-                total_dipolar = p["dipolar", i]
+                total_dipolar += p["dipolar", i]
             p["dipolar"] = total_dipolar
 
         # virtual sites
