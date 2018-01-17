@@ -4,7 +4,6 @@
 #include "CylindricalProfileObservable.hpp"
 #include "utils.hpp"
 #include "utils/Histogram.hpp"
-#include "utils/coordinate_transformation.hpp"
 
 namespace Observables {
 class CylindricalFluxDensityProfile : public CylindricalProfileObservable {
@@ -26,7 +25,8 @@ public:
       histogram.update(Utils::transform_pos_to_cylinder_coordinates(
                            folded_positions[ind], axis),
                        Utils::transform_vel_to_cylinder_coordinates(
-                           velocities[ind], axis, folded_positions[ind]) / time_step);
+                           velocities[ind], axis, folded_positions[ind]) /
+                           time_step);
     }
     histogram.normalize();
     return histogram.get_histogram();

@@ -2,6 +2,7 @@
 #define UTILS_COORDINATE_TRANSFORMATION_HPP
 
 #include "global.hpp"
+#include "partCfg_global.hpp"
 #include "utils.hpp"
 
 extern double time_step;
@@ -47,7 +48,7 @@ transform_vel_to_cylinder_coordinates(const ::Vector<3, double> &vel,
     rotated_vel = vec_rotate(x_axis, PI / 2.0, vel);
     rotated_pos = vec_rotate(x_axis, PI / 2.0, pos);
   }
-  // Coordinate transform the velocities. 
+  // Coordinate transform the velocities.
   // v_r = (x * v_x + y * v_y) / sqrt(x^2 + y^2)
   v_r = (rotated_pos[0] * rotated_vel[0] + rotated_pos[1] * rotated_vel[1]) /
         std::sqrt(rotated_pos[0] * rotated_pos[0] +
@@ -57,8 +58,26 @@ transform_vel_to_cylinder_coordinates(const ::Vector<3, double> &vel,
           (rotated_pos[0] * rotated_pos[0] + rotated_pos[1] * rotated_pos[1]);
   // v_z = v_z
   v_z = rotated_vel[2];
-  return ::Vector<3, double>{v_r, v_phi,
-                             v_z};
+  return ::Vector<3, double>{v_r, v_phi, v_z};
+}
+
+inline std::vector<::Vector<3, double>>
+get_folded_positions(std::vector<int> ids) {
+  std::vector<::Vector<3, double>> folded_positions;
+  for (int id : ids) {
+    folded_positions.push_back(
+        ::Vector<3, double>(folded_position(partCfg()[id])));
+  }
+  return folded_positions;
+}
+
+inline std::vector<::Vector<3, double>> get_velocities(std::vector<int> ids) {
+  std::vector<::Vector<3, double>> velocities;
+  for (int id : ids) {
+    velocities.push_back(::Vector<3, double>{
+        {partCfg()[id].m.v[0], partCfg()[id].m.v[1], partCfg()[id].m.v[2]}});
+  }
+  return velocities;
 }
 
 } // namespace Utils

@@ -4,7 +4,6 @@
 #include "CylindricalProfileObservable.hpp"
 #include "utils.hpp"
 #include "utils/Histogram.hpp"
-#include "utils/coordinate_transformation.hpp"
 
 namespace Observables {
 class CylindricalDensityProfile : public CylindricalProfileObservable {

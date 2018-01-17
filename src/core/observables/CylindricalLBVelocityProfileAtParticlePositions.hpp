@@ -23,7 +23,6 @@
 #include "CylindricalProfileObservable.hpp"
 #include "partCfg_global.hpp"
 #include "utils/Histogram.hpp"
-#include "utils/coordinate_transformation.hpp"
 
 namespace Observables {
 class CylindricalLBVelocityProfileAtParticlePositions

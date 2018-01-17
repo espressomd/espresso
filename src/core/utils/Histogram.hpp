@@ -22,7 +22,6 @@
 
 #include "constants.hpp"
 #include "global.hpp"
-#include "partCfg_global.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -282,10 +281,9 @@ private:
       phi_bin_size = get_bin_sizes()[1];
       z_bin_size = get_bin_sizes()[2];
       bin_volume =
-          PI *
-          ((min_r + (r_bin + 1) * r_bin_size) *
-               (min_r + (r_bin + 1) * r_bin_size) -
-           (min_r + r_bin * r_bin_size) * (min_r + r_bin * r_bin_size)) *
+          PI * ((min_r + (r_bin + 1) * r_bin_size) *
+                    (min_r + (r_bin + 1) * r_bin_size) -
+                (min_r + r_bin * r_bin_size) * (min_r + r_bin * r_bin_size)) *
           z_bin_size * phi_bin_size / (2 * PI);
       for (size_t dim = 0; dim < m_n_dims_data; ++dim) {
         m_hist[ind + dim] /= bin_volume;
@@ -293,25 +291,6 @@ private:
     }
   }
 };
-
-inline std::vector<::Vector<3, double>>
-get_folded_positions(std::vector<int> ids) {
-  std::vector<::Vector<3, double>> folded_positions;
-  for (int id : ids) {
-    folded_positions.push_back(
-        ::Vector<3, double>(folded_position(partCfg()[id])));
-  }
-  return folded_positions;
-}
-
-inline std::vector<::Vector<3, double>> get_velocities(std::vector<int> ids) {
-  std::vector<::Vector<3, double>> velocities;
-  for (int id : ids) {
-    velocities.push_back(::Vector<3, double>{
-        {partCfg()[id].m.v[0], partCfg()[id].m.v[1], partCfg()[id].m.v[2]}});
-  }
-  return velocities;
-}
 
 } // Namespace Utils
 
