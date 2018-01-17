@@ -5,15 +5,24 @@ import numpy as np
 import itertools
 import collections
 
+
 class RandomPairTest(ut.TestCase):
+    """This test creates a system of random particles.
+       Then the interaction paris for a certain cutoff
+       are calculated by brute force in python (pairs_n2),
+       and compared to the pairs returned by the cell
+       systems, which should be identical. This check is
+       repeated for all valid combination of periodicities.
+
+    """
     s = espressomd.System()
 
     def setUp(self):
         s = self.s
         s.time_step = 1.
-        s.box_l = 3*[10.]
-        s.cell_system.skin=0.0
-        s.min_global_cut=1.5
+        s.box_l = 3 * [10.]
+        s.cell_system.skin = 0.0
+        s.min_global_cut = 1.5
         n_part = 500
 
         np.random.seed(2)
@@ -59,9 +68,9 @@ class RandomPairTest(ut.TestCase):
 
     def test(self):
         if espressomd.has_features("PARTIAL_PERIODIC"):
-            periods=[0, 1]
+            periods = [0, 1]
         else:
-            periods=[1]
+            periods = [1]
 
         for periodicity in itertools.product(periods, periods, periods):
             self.s.periodicity = periodicity
@@ -70,6 +79,7 @@ class RandomPairTest(ut.TestCase):
             self.check_dd(n2_pairs)
             self.check_layered(n2_pairs)
             self.check_n_squared(n2_pairs)
+
 
 if __name__ == '__main__':
     print("Features: ", espressomd.features())

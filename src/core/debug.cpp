@@ -223,6 +223,12 @@ void check_particles() {
   CELL_TRACE(fprintf(stderr, "%d: leaving check_particles\n", this_node));
 }
 
+/**
+ * @brief Check if particles are in correct cells.
+ *
+ * Check that particles are in the cells the cellsystem says
+ * they should be.
+ */
 void check_particle_sorting() {
   for (int c = 0; c < local_cells.n; c++) {
     auto cell = local_cells.cell[c];
