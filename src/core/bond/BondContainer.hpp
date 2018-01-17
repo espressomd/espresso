@@ -37,6 +37,7 @@ namespace Bond {
 
     //ibm volume conservation -> volume calculation
     int ibm_vol_con_softID_loop(Particle *p1, int *softID, int *bond_map_id);
+    void init_Vol_Con();
 
     //---functions which provide access to Bond maps---
     //get Access to all bonds

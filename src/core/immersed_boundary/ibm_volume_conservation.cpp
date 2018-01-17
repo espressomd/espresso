@@ -17,6 +17,8 @@ double VolumesCurrent[MaxNumIBM] = {0};
 #include "bond/BondType.hpp"// for Bond::BondType
 #include "bond/IbmVolumeConservation.hpp" // for Bond::IbmVolumeConservation
 
+#include "utils/make_unique.hpp" //for creating a unique ptr to a bond class object
+
 // ****** Internal variables & functions ********
 bool VolumeInitDone = false;
 
@@ -46,7 +48,7 @@ void IBM_VolumeConservation()
 /************
   IBM_InitVolumeConservation
  *************/
-
+#ifndef BOND_CLASS_DEBUG
 void IBM_InitVolumeConservation()
 {
   
@@ -82,7 +84,28 @@ void IBM_InitVolumeConservation()
   VolumeInitDone = true;
   
 }
+#endif// BOND_CLASS_DEBUG
 
+
+#ifdef BOND_CLASS_DEBUG
+void IBM_InitVolumeConservation()
+{
+  
+  // Check since this function is called at the start of every integrate loop
+  // Also check if volume has been set due to reading of a checkpoint
+  if ( !VolumeInitDone /*&& VolumesCurrent[0] == 0 */)
+  {
+    
+    // Calculate volumes
+    CalcVolumes();
+    bond_container.init_Vol_Con();
+    
+  };
+  
+  VolumeInitDone = true;
+  
+}
+#endif// BOND_CLASS_DEBUG
 
 /****************
   IBM_VolumeConservation_ResetParams
@@ -128,7 +151,10 @@ int IBM_VolumeConservation_SetParams(const int bond_type, const int softID, cons
   // NOTE: We cannot compute the reference volume here because not all interactions are setup
   // and thus we do not know which triangles belong to this softID
   // Calculate it later in the init function
-  
+
+  bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::IbmVolumeConservation>
+				  (softId, 0, kappaV));
+ 
   //Communicate this to whoever is interested
   mpi_bcast_ia_params(bond_type, -1);
   
