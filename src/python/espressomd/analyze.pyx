@@ -65,6 +65,21 @@ class Analysis(object):
     # Minimal distance between particles
     #
 
+    def min_dist2(self, p1, p2):
+        """Minimal distance between two points p1 and p2.
+
+        Parameters
+        ----------
+        p1, p2 
+    
+        """
+        cdef double p1c[3]
+        cdef double p2c[3]
+        for i in range(3):
+            p1c[i]=p1[i]
+            p2c[i]=p2[i]
+        return c_analyze.min_distance2(p1c, p2c)
+
     def min_dist(self, p1='default', p2='default'):
         """Minimal distance between two sets of particles.
 
@@ -93,9 +108,9 @@ class Analysis(object):
                     raise ValueError(
                         "Particle types in p1 and p2 have to be of type int" + str(p2[i]))
 
+
             set1 = create_int_list_from_python_object(p1)
             set2 = create_int_list_from_python_object(p2)
-
         return c_analyze.mindist(c_analyze.partCfg(), set1, set2)
 
     #
@@ -358,7 +373,7 @@ class Analysis(object):
         A dictionary with the following keys:
 
         * "total", total pressure
-        * "ideal", ideal pressure
+        * "kinetic", kinetic pressure
         * "bonded" , total bonded pressure
         * "bonded", bond_type , bonded pressure which arises from the given bond_type
         * "nonbonded", total nonbonded pressure
@@ -392,8 +407,8 @@ class Analysis(object):
 
         p["total"] = tmp
 
-        # Ideal
-        p["ideal"] = c_analyze.total_pressure.data.e[0]
+        # kinetic
+        p["kinetic"] = c_analyze.total_pressure.data.e[0]
 
         # Bonded
         cdef double total_bonded
@@ -463,7 +478,7 @@ class Analysis(object):
         a dictionary with the following keys:
 
         * "total", total stress tensor
-        * "ideal", ideal stress tensor
+        * "kinetic", kinetic stress tensor
         * "bonded" , total bonded stress tensor
         * "{bonded, bond_type}" , bonded stress tensor which arises from the given bond_type
         * "nonbonded", total nonbonded stress tensor
@@ -497,10 +512,10 @@ class Analysis(object):
 
         p["total"] = tmp.reshape((3, 3))
 
-        # Ideal
-        p["ideal"] = create_nparray_from_double_array(
+        # kinetic
+        p["kinetic"] = create_nparray_from_double_array(
             c_analyze.total_p_tensor.data.e, 9)
-        p["ideal"] = p["ideal"].reshape((3, 3))
+        p["kinetic"] = p["kinetic"].reshape((3, 3))
 
         # Bonded
         total_bonded = np.zeros((3, 3))
@@ -548,7 +563,7 @@ class Analysis(object):
             for i in range(c_analyze.total_p_tensor.n_coulomb):
                 p["coulomb", i] = np.reshape(
                     create_nparray_from_double_array(
-                        c_analyze.total_p_tensor.coulomb, 9), (3, 3))
+                        c_analyze.total_p_tensor.coulomb+9*i, 9), (3, 3))
                 total_coulomb = p["coulomb", i]
             p["coulomb"] = total_coulomb
 
@@ -558,7 +573,7 @@ class Analysis(object):
             for i in range(c_analyze.total_p_tensor.n_dipolar):
                 p["dipolar", i] = np.reshape(
                     create_nparray_from_double_array(
-                        c_analyze.total_p_tensor.dipolar, 9), (3, 3))
+                        c_analyze.total_p_tensor.dipolar+9*i, 9), (3, 3))
                 total_dipolar = p["dipolar", i]
             p["dipolar"] = total_dipolar
 
