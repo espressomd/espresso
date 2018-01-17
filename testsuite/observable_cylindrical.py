@@ -32,18 +32,18 @@ class TestCylindricalObservable(ut.TestCase):
     }
 
     def swap_axis(self, arr, axis):
-	if axis == 'x':
-	    arr = np.dot(tests_common.rotation_matrix([0, 1, 0], np.pi/2.0), arr)
-	elif axis == 'y':
-	    arr = np.dot(tests_common.rotation_matrix([1, 0, 0], -np.pi/2.0), arr)
-	return arr
+        if axis == 'x':
+            arr = np.dot(tests_common.rotation_matrix([0, 1, 0], np.pi/2.0), arr)
+        elif axis == 'y':
+            arr = np.dot(tests_common.rotation_matrix([1, 0, 0], -np.pi/2.0), arr)
+        return arr
 
     def swap_axis_inverse(self, arr, axis):
-	if axis == 'x':
-	    arr = np.dot(tests_common.rotation_matrix([0, 1, 0], -np.pi/2.0), arr)
-	elif axis == 'y':
-	    arr = np.dot(tests_common.rotation_matrix([1, 0, 0], np.pi/2.0), arr)
-	return arr
+        if axis == 'x':
+            arr = np.dot(tests_common.rotation_matrix([0, 1, 0], -np.pi/2.0), arr)
+        elif axis == 'y':
+            arr = np.dot(tests_common.rotation_matrix([1, 0, 0], np.pi/2.0), arr)
+        return arr
 
     def pol_coords(self):
         positions = np.zeros((len(self.params['ids']), 3))
