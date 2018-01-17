@@ -8,7 +8,7 @@ import tests_common
 
 class TestCylindricalObservable(ut.TestCase):
     """
-    Testcase for the CylindricalFluxDensityObservable.
+    Testcase for the cylindrical observables.
 
     """
     system = espressomd.System()
