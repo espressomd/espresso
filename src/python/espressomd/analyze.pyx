@@ -66,7 +66,7 @@ class Analysis(object):
     #
 
     def min_dist2(self, p1, p2):
-        """Minimal distance between two points p1 and p2.
+        """Minimal distance between two three dimensional coordinates p1 and p2.
 
         Parameters
         ----------
