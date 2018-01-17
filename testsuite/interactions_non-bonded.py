@@ -75,7 +75,7 @@ class InteractionsNonBondedTest(ut.TestCase):
                  b2 * numpy.power(sig / rroff, e2) + shift)
         return V
 
-    def lj_generic_force(self, r, eps, sig, cutoff, offset=0., e1=12, e2=6, b1=4., b2=4., delta=0., lam=1.):
+    def lj_generic_force(self, r, eps, sig, cutoff, offset=0., e1=12, e2=6, b1=4., b2=4., delta=0., lam=1., generic=True):
         f = 1.
         if (r >= offset + cutoff):
             f = 0.
@@ -83,7 +83,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             h = (r - offset)**2 + delta * (1. - lam) * sig**2
             f = (r - offset) * eps * lam * (
                 b1 * e1 * numpy.power(sig / numpy.sqrt(h), e1) - b2 * e2 * numpy.power(sig / numpy.sqrt(h), e2)) / h
-            if not espressomd.has_features("LJGEN_SOFTCORE"):
+            if (not espressomd.has_features("LJGEN_SOFTCORE")) and generic:
                 f *= numpy.sign(r - offset)
         return f
 
@@ -94,7 +94,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         return V
 
     def lj_force(self, r, eps, sig, cutoff, offset=0.):
-        f = self.lj_generic_force(r, eps, sig, cutoff, offset=offset)
+        f = self.lj_generic_force(r, eps, sig, cutoff, offset=offset, generic=False)
         return f
 
     # Lennard-Jones Cosine
