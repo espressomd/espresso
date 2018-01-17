@@ -26,7 +26,7 @@ public:
       histogram.update(Utils::transform_pos_to_cylinder_coordinates(
                            folded_positions[ind], axis),
                        Utils::transform_vel_to_cylinder_coordinates(
-                           velocities[ind], axis, folded_positions[ind]));
+                           velocities[ind], axis, folded_positions[ind]) / time_step);
     }
     histogram.normalize();
     return histogram.get_histogram();

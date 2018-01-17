@@ -47,9 +47,8 @@ transform_vel_to_cylinder_coordinates(const ::Vector<3, double> &vel,
     rotated_vel = vec_rotate(x_axis, PI / 2.0, vel);
     rotated_pos = vec_rotate(x_axis, PI / 2.0, pos);
   }
-  // Coordinate transform the velocities and divide core velocities by
-  // time_step to get MD units. v_r = (x * v_x + y * v_y) / sqrt(x^2 +
-  // y^2)
+  // Coordinate transform the velocities. 
+  // v_r = (x * v_x + y * v_y) / sqrt(x^2 + y^2)
   v_r = (rotated_pos[0] * rotated_vel[0] + rotated_pos[1] * rotated_vel[1]) /
         std::sqrt(rotated_pos[0] * rotated_pos[0] +
                   rotated_pos[1] * rotated_pos[1]);
@@ -58,8 +57,8 @@ transform_vel_to_cylinder_coordinates(const ::Vector<3, double> &vel,
           (rotated_pos[0] * rotated_pos[0] + rotated_pos[1] * rotated_pos[1]);
   // v_z = v_z
   v_z = rotated_vel[2];
-  return ::Vector<3, double>{v_r / time_step, v_phi / time_step,
-                             v_z / time_step};
+  return ::Vector<3, double>{v_r, v_phi,
+                             v_z};
 }
 
 } // namespace Utils
