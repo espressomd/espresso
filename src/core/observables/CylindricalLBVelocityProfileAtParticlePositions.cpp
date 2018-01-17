@@ -78,13 +78,13 @@ operator()(PartCfg &partCfg) const {
     // v_z = v_z
     double v_z = velocities[3 * index + 2];
     histogram.update(
-      std::vector<double>{{ppos_cyl[3 * index + 0], ppos_cyl[3 * index + 1],
+        std::vector<double>{{ppos_cyl[3 * index + 0], ppos_cyl[3 * index + 1],
                              ppos_cyl[3 * index + 2]}},
-      std::vector<double>{{v_r, v_phi, v_z}});
+        std::vector<double>{{v_r, v_phi, v_z}});
   }
   auto hist_tmp = histogram.get_histogram();
   auto tot_count = histogram.get_tot_count();
-  for (size_t ind=0; ind < hist_tmp.size(); ++ind) {
+  for (size_t ind = 0; ind < hist_tmp.size(); ++ind) {
     if (hist_tmp[ind] > 0.0) {
       hist_tmp[ind] /= tot_count[ind];
     }
