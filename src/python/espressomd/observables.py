@@ -365,9 +365,6 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(Observable):
              Position of the center of the polar coordinate system for the histogram.
     axis : :obj:`str` (``x``, ``y``, or ``z``)
            Orientation of the ``z``-axis of the polar coordinate system for the histogram.
-
-           .. note:: Currently only the ``z`` option is implemented!
-
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
     n_phi_bins : :obj:`int`
@@ -403,9 +400,6 @@ class CylindricalLBVelocityProfileAtParticlePositions(Observable):
              Position of the center of the polar coordinate system for the histogram.
     axis : :obj:`str` (``x``, ``y``, or ``z``)
            Orientation of the ``z``-axis of the polar coordinate system for the histogram.
-
-          .. note:: Currently only the ``z`` option is implemented!
-
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
     n_phi_bins : :obj:`int`
