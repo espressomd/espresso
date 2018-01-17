@@ -35,9 +35,12 @@ class TestCylindricalLBObservable(ut.TestCase):
         'max_phi': np.pi,
         'max_z': 10.0,
     }
-    lbf = espressomd.lb.LBFluidGPU(
+    
+    @classmethod
+    def setUpClass(self):
+        self.lbf = espressomd.lb.LBFluidGPU(
         agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01)
-    system.actors.add(lbf)
+        self.system.actors.add(self.lbf)
 
     def tearDown(self):
         self.lbf[np.floor(self.position)].velocity = [0.0, 0.0, 0.0]
