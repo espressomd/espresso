@@ -224,6 +224,7 @@ def rotation_matrix(axis, theta):
            Axis to rotate around.
     theta : :obj:`float`
             Rotation angle.
+
     """
     axis = np.asarray(axis)
     axis = axis/np.sqrt(np.dot(axis, axis))
