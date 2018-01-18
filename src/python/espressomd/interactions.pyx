@@ -1926,7 +1926,7 @@ class HarmonicBond(BondedInteraction):
         """Sets parameters that are not required to their default value.
 
         """
-        self._params = {"k'": 0., "r_0": 0., "r_cut": 0.}
+        self._params = {"k": 0., "r_0": 0., "r_cut": 0.}
 
     def _get_params_from_es_core(self):
         return \

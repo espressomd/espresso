@@ -248,7 +248,7 @@ Use numpy.copy(<ESPResSo array property>) to get a writable copy."
     def __ixor__(self, val):
         raise ValueError(array_locked.ERR_MSG)
 
-cdef handle_errors(msg):
+cpdef handle_errors(msg):
     """
     Gathers runtime errors.
 
