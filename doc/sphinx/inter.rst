@@ -217,41 +217,46 @@ on/off during a simulation.
 Lennard-Jones cosine interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. todo::
-    
-    Not implemented yet.
+.. note::
 
+   `Feature LJCOS and/or LJCOS2 required.`
 
-inter lj-cos inter lj-cos2
+.. code::
 
-specifies a Lennard-Jones interaction with cosine
-tail :cite:`soddeman01a` between particles of the types *type1* and *type2*
-. The first variant behaves as follows: Until the minimum of the
-Lennard-Jones potential at
-:math:`r_\mathrm{min} = r_\mathrm{off} +
-2^{\frac{1}{6}}\sigma`, it behaves identical to the unshifted
-Lennard-Jones potential (:math:`c_\mathrm{shift}=0`). Between and
-, a cosine is used to smoothly connect the potential to 0,
+   system.non_bonded_inter[type1, type2].lennard_jones_cos.set_params(**kwargs)
+   system.non_bonded_inter[type1, type2].lennard_jones_cos2.set_params(**kwargs)
 
-.. math:: V(r)=\frac{1}{2}\epsilon\left(cos\left[\alpha(r - r_\mathrm{off})^2 + \beta\right]-1\right),
+:class:`espressomd.interactions.LennardJonesCosInteraction` and
+:class:`espressomd.interactions.LennardJonesCos2Interaction` specifies
+a Lennard-Jones interaction with cosine tail :cite:`soddeman01a`
+between particles of the types *type1* and *type2*. The first variant
+behaves as follows: Until the minimum of the Lennard-Jones potential
+at :math:`r_\mathrm{min} = r_\mathrm{off} + 2^{\frac{1}{6}}\sigma`, it
+behaves identical to the unshifted Lennard-Jones potential
+(:math:`c_\mathrm{shift}=0`). Between :math:`r_\mathrm{min}` and :math:`r_\mathrm{cut}`, a cosine is used to
+smoothly connect the potential to 0, i.e.,
 
-where
-:math:`\alpha = \pi\left[(r_\mathrm{cut} - r_\mathrm{off})^2-(r_\mathrm{min} - r_\mathrm{off})^2\right]^{-1}`
-and
-:math:`\beta = \pi - \left(r_\mathrm{min} - r_\mathrm{off}\right)^2\alpha`.
+.. math::
+
+    V(r)=\frac{1}{2}\epsilon\left(\cos\left[\alpha(r - r_\mathrm{off})^2 + \beta\right]-1\right),
+
+where :math:`\alpha = \pi\left[(r_\mathrm{cut} -
+r_\mathrm{off})^2-(r_\mathrm{min} - r_\mathrm{off})^2\right]^{-1}` and
+:math:`\beta = \pi - \left(r_\mathrm{min} -
+r_\mathrm{off}\right)^2\alpha`.
 
 In the second variant, the cutoff radius is
 :math:`r_\mathrm{cut}=r_\mathrm{min} + \omega`, where
-:math:`r_\mathrm{min} =  r_\mathrm{off} +
-2^{\frac{1}{6}}\sigma` as in the first variant. The potential between
-:math:`r_\mathrm{min}` and :math:`r_\mathrm{cut}` is given
-by
+:math:`r_\mathrm{min} = r_\mathrm{off} + 2^{\frac{1}{6}}\sigma` as in
+the first variant. The potential between :math:`r_\mathrm{min}` and
+:math:`r_\mathrm{cut}` is given by
 
-.. math:: V(r)=\epsilon\cos^2\left[\frac{\pi}{2\omega}(r - r_\mathrm{min})\right].
+.. math::
 
-For :math:`r < r_\mathrm{min}`, :math:`V(r)` is implemented
-as normal Lennard-Jones potential, see equation [eq:lj] with
-:math:`c_\mathrm{shift} = 0`.
+   V(r)=-\epsilon\cos^2\left[\frac{\pi}{2\omega}(r - r_\mathrm{min})\right].
+
+For :math:`r < r_\mathrm{min}`, :math:`V(r)` is implemented as normal
+:ref:`Lennard-Jones interaction` with :math:`c_\mathrm{shift} = 0`.
 
 The net force on a particle can be capped by using force capping, see
 section :ref:`Capping the force during warmup`
