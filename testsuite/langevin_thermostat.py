@@ -73,7 +73,7 @@ class LangevinThermostat(ut.TestCase):
         N = 200
         s = self.s
         s.part.clear()
-        s.time_step = 0.02
+        s.time_step = 0.04
         
         # Place particles
         s.part.add(pos=np.random.random((N, 3)))
@@ -94,7 +94,7 @@ class LangevinThermostat(ut.TestCase):
         v_stored = np.zeros((N * loops, 3))
         omega_stored = np.zeros((N * loops, 3))
         for i in range(loops):
-            s.integrator.run(2)
+            s.integrator.run(1)
             v_stored[i * N:(i + 1) * N, :] = s.part[:].v
             if espressomd.has_features("ROTATION"):
                 omega_stored[i * N:(i + 1) * N, :] = s.part[:].omega_body
@@ -117,7 +117,7 @@ class LangevinThermostat(ut.TestCase):
         N = 200
         s = self.s
         s.part.clear()
-        s.time_step = 0.02
+        s.time_step = 0.04
         s.part.add(pos=np.random.random((N, 3)))
         if espressomd.has_features("ROTATION"): 
             s.part[:].rotation = 1,1,1
@@ -146,7 +146,7 @@ class LangevinThermostat(ut.TestCase):
             omega_kT2 = np.zeros((int(N / 2 * loops), 3))
 
         for i in range(loops):
-            s.integrator.run(2)
+            s.integrator.run(1)
             v_kT[int(i * N / 2):int((i + 1) * N / 2),
                  :] = s.part[:int(N / 2)].v
             v_kT2[int(i * N / 2):int((i + 1) * N / 2),
@@ -274,17 +274,17 @@ class LangevinThermostat(ut.TestCase):
 
         # linear vel
         vel_obs=ParticleVelocities(ids=s.part[:].id)
-        corr_vel = Correlator(obs1=vel_obs, tau_lin=32, tau_max=4., dt=2*dt,
+        corr_vel = Correlator(obs1=vel_obs, tau_lin=20, tau_max=1.9, dt=dt,
                 corr_operation="componentwise_product", compress1="discard1")
         s.auto_update_correlators.add(corr_vel)
         # angular vel
         if espressomd.has_features("ROTATION"):
             omega_obs=ParticleBodyAngularVelocities(ids=s.part[:].id)
-            corr_omega = Correlator(obs1=omega_obs, tau_lin=32, tau_max=4, dt=2*dt,
+            corr_omega = Correlator(obs1=omega_obs, tau_lin=40, tau_max=3.9, dt=dt,
                     corr_operation="componentwise_product", compress1="discard1")
             s.auto_update_correlators.add(corr_omega)
         
-        s.integrator.run(400000)
+        s.integrator.run(300000)
         
         s.auto_update_correlators.remove(corr_vel)
         corr_vel.finalize()
@@ -336,6 +336,7 @@ class LangevinThermostat(ut.TestCase):
         #D= int_0^infty <v(t_0)v(t_0+t)> dt     (o 1/3, since we work componentwise)
         i=p.id
         acf=c.result()[:,[0,2+3*i,2+3*i+1,2+3*i+2]]
+        np.savetxt("acf.dat",acf)
 
         #Integrate w. trapez rule
         for coord in 1,2,3:
