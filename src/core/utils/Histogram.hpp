@@ -21,7 +21,6 @@
 #define UTILS_HISTOGRAM_HPP
 
 #include "constants.hpp"
-#include "global.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -29,7 +28,6 @@
 #include <numeric>
 #include <vector>
 
-extern double time_step;
 
 namespace Utils {
 
