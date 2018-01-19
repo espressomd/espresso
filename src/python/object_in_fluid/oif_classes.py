@@ -6,7 +6,7 @@ from espressomd.interactions import OifGlobalForces
 from espressomd.interactions import OifOutDirection
 
 
-class FixedPoint:
+class FixedPoint(object):
     """
     Represents mesh points, not connected to any ESPResSo particle.
 
@@ -30,7 +30,7 @@ class FixedPoint:
         return self.id
 
 
-class PartPoint:
+class PartPoint(object):
     """
     Represents mesh points, connected to ESPResSo particle.
 
@@ -74,7 +74,7 @@ class PartPoint:
         self.part.unfix()
 
 
-class Edge:
+class Edge(object):
     """
     Represents edges in a mesh.
 
@@ -89,7 +89,7 @@ class Edge:
         return vec_distance(self.A.get_pos(), self.B.get_pos())
 
 
-class Triangle:
+class Triangle(object):
     """
     Represents triangles in a mesh.
 
@@ -106,7 +106,7 @@ class Triangle:
         return area
 
 
-class Angle:
+class Angle(object):
     """
     Represents angles in a mesh.
 
@@ -127,7 +127,7 @@ class Angle:
         return angle_size
 
 
-class ThreeNeighbors:
+class ThreeNeighbors(object):
     """
     Represents three best spatially distributed neighbors of a point in a mesh.
 
@@ -147,7 +147,7 @@ class ThreeNeighbors:
         return outer_normal
 
 
-class Mesh:
+class Mesh(object):
     """
     Represents a triangular mesh.
 
@@ -627,7 +627,7 @@ class Mesh:
         return 0
 
 
-class OifCellType:  # analogous to oif_template
+class OifCellType(object):  # analogous to oif_template
     """
     Represents a template for creating elastic objects.
 
@@ -697,7 +697,7 @@ class OifCellType:  # analogous to oif_template
         print(" ")
 
 
-class OifCell:
+class OifCell(object):
     """
     Represents a concrete elastic object.
 
