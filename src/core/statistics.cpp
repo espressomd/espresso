@@ -661,6 +661,7 @@ void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
 
   order2 = order * order;
   *_ff = ff = Utils::realloc(ff, 2 * order2 * sizeof(double));
+  ff[2 * order2] = 0;
   twoPI_L = 2 * PI / box_l[0];
 
   if ((n_types < 0) || (n_types > n_particle_types)) {
@@ -798,8 +799,8 @@ int calc_cylindrical_average(
   double binwd_axial = length / bins_axial;
   double binwd_radial = radius / bins_radial;
 
-  auto center = Vector3d{center_};
-  auto direction = Vector3d{direction_};
+  auto center = Vector3d{std::move(center_)};
+  auto direction = Vector3d{std::move(direction_)};
 
   // Select all particle types if the only entry in types is -1
   bool all_types = false;
@@ -1183,16 +1184,16 @@ void analyze_activate(PartCfg &partCfg, int ind) {
 
 void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
                                int n_non_bonded, int n_coulomb, int n_dipolar,
-                               int n_vsr, int c_size) {
+                               int n_vs, int c_size) {
 
   int i;
   // Number of doubles to store pressure in
   int total = c_size * (n_pre + n_bonded_ia + n_non_bonded + n_coulomb +
-                        n_dipolar + n_vsr);
+                        n_dipolar + n_vs);
 
   // Allocate mem for the double list
   stat->data.resize(total);
-
+  
   // Number of doubles per interaction (pressure=1, stress tensor=9,...)
   stat->chunk_size = c_size;
 
@@ -1200,13 +1201,13 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
   stat->n_coulomb = n_coulomb;
   stat->n_dipolar = n_dipolar;
   stat->n_non_bonded = n_non_bonded;
-  stat->n_vs_relative = n_vsr; // virtual sites relative (rigid bodies)
+  stat->n_virtual_sites = n_vs;
   // Pointers to the start of different contributions
   stat->bonded = stat->data.e + c_size * n_pre;
   stat->non_bonded = stat->bonded + c_size * n_bonded_ia;
   stat->coulomb = stat->non_bonded + c_size * n_non_bonded;
   stat->dipolar = stat->coulomb + c_size * n_coulomb;
-  stat->vs_relative = stat->dipolar + c_size * n_dipolar;
+  stat->virtual_sites = stat->dipolar + c_size * n_dipolar;
 
   // Set all obseravables to zero
   for (i = 0; i < total; i++)

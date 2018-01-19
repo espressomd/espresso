@@ -84,7 +84,7 @@ extern ELC_struct elc_params;
 /** set parameters for ELC.
     @param maxPWerror the required accuracy of the potential and the force. Note
    that this counts for the
-    plain 1/r contribution alone, without the Bjerrum length and the charge
+    plain 1/r contribution alone, without the prefactor and the charge
    prefactor.
     @param min_dist   the gap size.
     @param far_cut    the cutoff of the exponential sum. If -1, the cutoff is

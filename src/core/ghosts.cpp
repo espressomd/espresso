@@ -76,19 +76,14 @@ inline void add_force(ParticleForce *F_to, ParticleForce *F_add) {
 
 void prepare_comm(GhostCommunicator *comm, int data_parts, int num)
 {
-  int i;
+  assert(comm);
   comm->data_parts = data_parts;
-
-  /* if ghosts should have uptodate velocities, they have to be updated like positions
-     (except for shifting...) */
-  if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
-    comm->data_parts |= GHOSTTRANS_MOMENTUM;
 
   GHOST_TRACE(fprintf(stderr, "%d: prepare_comm, data_parts = %d\n", this_node, comm->data_parts));
 
   comm->num = num;
   comm->comm = (GhostCommunication*)Utils::malloc(num*sizeof(GhostCommunication));
-  for(i=0; i<num; i++) {
+  for(int i=0; i<num; i++) {
     comm->comm[i].shift[0]=comm->comm[i].shift[1]=comm->comm[i].shift[2]=0.0;
     comm->comm[i].n_part_lists = 0;
     comm->comm[i].part_lists = nullptr;
@@ -537,6 +532,11 @@ void ghost_communicator(GhostCommunicator *gc)
   MPI_Status status;
   int n, n2;
   int data_parts = gc->data_parts;
+  /* if ghosts should have uptodate velocities, they have to be updated like
+     positions (except for shifting...) */
+  if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
+    data_parts |= GHOSTTRANS_MOMENTUM;
+
 
   GHOST_TRACE(fprintf(stderr, "%d: ghost_comm %p, data_parts %d\n", this_node, (void*) gc, data_parts));
 

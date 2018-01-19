@@ -48,7 +48,7 @@ namespace PdbParser {
     return bb;
   }
 
-  bool PdbParser::parse_pdb_file(string filename) { 
+  bool PdbParser::parse_pdb_file(const string & filename) { 
     ifstream file;
     string tmp;
     pdb_atom a;
@@ -69,14 +69,14 @@ namespace PdbParser {
 	}
       } 
     }
-    catch (ifstream::failure e) {
+    catch (ifstream::failure e) { // NOLINT
       return false;
     }
 
     return true; 
   }
 
-  bool PdbParser::parse_itp_file(string filename) { 
+  bool PdbParser::parse_itp_file(const string & filename) { 
     ifstream file(filename.c_str());
     string tmp, buf;
     itp_atom atom;
@@ -87,7 +87,7 @@ namespace PdbParser {
 
     while(file.good()) {
       try {
-	buf = file.get();
+	buf = char(file.get());
 	/* Skipp leading whitespace */
 	if(std::isspace(buf[0]))
 	  continue;
@@ -106,14 +106,14 @@ namespace PdbParser {
 	    continue;
 
 	  std::string section = buf.substr(pos, std::string::npos);
-	  pos = section.find_first_of("]");
+	  pos = section.find_first_of(']');
 	  section = section.substr(0, pos);
 	  pos = section.find_last_not_of(" \t");
 	  section = section.substr(0, pos+1);
 	  
 	  if(section == "atoms") {
 	    while(file.good()) {
-	      buf = file.get();
+	      buf = char(file.get());
 
 	      /* Ignore leading whitespace, check for end of file (standard says EOF is "generaly" -1) */
 	      if(std::isspace(buf[0]) || (buf[0] == -1)) {
@@ -142,7 +142,7 @@ namespace PdbParser {
 	    itp_atomtype type;
 	    std::string type_name;
 	    while(file.good()) {
-	      buf = file.get();
+	      buf = char(file.get());
 
 	      /* Ignore leading whitespace */
 	      if(std::isspace(buf[0])) {
@@ -180,7 +180,7 @@ namespace PdbParser {
     return true; 
   }
 
-  bool PdbParser::parse_file(string pdb_filename, string itp_filename) {
+  bool PdbParser::parse_file(const string &  pdb_filename, const string &  itp_filename) {
     return parse_pdb_file(pdb_filename) && parse_itp_file(itp_filename);
   }
 

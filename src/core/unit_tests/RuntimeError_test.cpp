@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(def_ctor_and_assignment) {
   RuntimeError err(level, who, what, function, file, line);
 
   /** Copy ctor */
-  RuntimeError err2(err);
+  RuntimeError err2(err); // NOLINT
 
   BOOST_CHECK(level == err2.level());
   BOOST_CHECK(what == err2.what());

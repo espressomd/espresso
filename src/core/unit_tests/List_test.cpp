@@ -240,6 +240,12 @@ BOOST_AUTO_TEST_CASE(resize) {
     l.resize(127);
     BOOST_CHECK(l.size() == 127);
     BOOST_CHECK(l.capacity() == 127);
+    l.resize(42);
+    BOOST_CHECK(l.size() == 42);
+    BOOST_CHECK(l.capacity() == 42);
+    l.resize(0);
+    BOOST_CHECK(l.size() == 0);
+    BOOST_CHECK(l.capacity() == 0);
   }
 
   /* List::resize() with size > capacity */

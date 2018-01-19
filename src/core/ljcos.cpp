@@ -25,9 +25,9 @@
 #ifdef LJCOS
 #include "communication.hpp"
 
-int lj_cos_set_params(int part_type_a, int part_type_b,
-		      double eps, double sig, double cut,
-		      double offset)
+int ljcos_set_params(int part_type_a, int part_type_b,
+		     double eps, double sig, double cut,
+		     double offset)
 {
   double facsq;
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);

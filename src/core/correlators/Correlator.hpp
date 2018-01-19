@@ -178,7 +178,7 @@ public:
    */
   Correlator(int tau_lin, double tau_max, double dt,
              std::string const &compress1_, std::string const &compress2_,
-             std::string const &corr_operation, obs_ptr obs1, obs_ptr obs2)
+             std::string const &corr_operation, const obs_ptr &obs1, const obs_ptr &obs2)
       : autoupdate(0), finalized(0), t(0), m_tau_lin(tau_lin),
         m_dt(dt), m_tau_max(tau_max), compressA_name(compress1_),
         compressB_name(compress2_), corr_operation_name(corr_operation),
