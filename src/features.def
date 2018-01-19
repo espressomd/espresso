@@ -19,14 +19,11 @@ EXTERNAL_FORCES
 CONSTRAINTS
 MASS
 EXCLUSIONS
-COMFIXED
 MOLFORCES
 BOND_CONSTRAINT
 MODES                           requires FFTW
-BOND_VIRTUAL
 LANGEVIN_PER_PARTICLE
 COLLISION_DETECTION             implies GHOSTS_HAVE_BONDS
-LEES_EDWARDS                    implies DPD
 LEES_EDWARDS                    requires not ELECTROSTATICS and not LB and not PARTIAL_PERIODIC
 METADYNAMICS
 NEMD
@@ -58,24 +55,13 @@ DIPOLAR_DIRECT_SUM              requires CUDA
 DIPOLAR_DIRECT_SUM              equals DIPOLES and ROTATION and CUDA
 
 /* Virtual sites features */
-VIRTUAL_SITES_COM               requires not VIRTUAL_SITES_RELATIVE
-VIRTUAL_SITES_RELATIVE          requires not VIRTUAL_SITES_COM
+VIRTUAL_SITES_RELATIVE          implies VIRTUAL_SITES
 VIRTUAL_SITES_RELATIVE          implies ROTATION
-VIRTUAL_SITES                   equals VIRTUAL_SITES_COM or VIRTUAL_SITES_RELATIVE or IMMERSED_BOUNDARY
-VIRTUAL_SITES_NO_VELOCITY       require VIRTUAL_SITES_RELATIVE
-VIRTUAL_SITES_THERMOSTAT        require VIRTUAL_SITES_RELATIVE
-THERMOSTAT_IGNORE_NON_VIRTUAL   implies VIRTUAL_SITES_THERMOSTAT
+VIRTUAL_SITES                   
 
 /* DPD features */
 DPD
-TRANS_DPD                       implies DPD
-DPD_MASS_RED                    requires not DPD_MASS_LIN
-DPD_MASS_LIN                    requires not DPD_MASS_RED
-DPD_MASS                        equals DPD_MASS_RED or DPD_MASS_LIN
-DPD_MASS                        implies MASS, DPD
-
-/* Alternative implementation of DPD */
-INTER_DPD
+TUNABLE_SLIP
 
 /* Lattice-Boltzmann features */
 LB

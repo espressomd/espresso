@@ -598,5 +598,4 @@ int lb_lbfluid_get_interpolated_velocity_global(double *p, double *v);
 #endif
 
 #endif /* _LB_H */
-
 /*@}*/

@@ -65,7 +65,7 @@ frict = 20.0
 visco = 1.0
 densi = 1.0
 
-lbf = lb.LBFluid_GPU(agrid=agrid, dens=densi, visc=visco, tau=dt, fric=frict)
+lbf = lb.LBFluidGPU(agrid=agrid, dens=densi, visc=visco, tau=dt, fric=frict)
 system.actors.add(lbf)
 
 ################################################################################

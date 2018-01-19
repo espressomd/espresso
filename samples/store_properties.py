@@ -80,7 +80,7 @@ system.box_l = [box_l, box_l, box_l]
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
     cutoff=lj_cut, shift="auto")
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 
 print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
 
@@ -97,7 +97,7 @@ for i in range(n_part):
 print("Simulate {} particles in a cubic simulation box {} at density {}."
       .format(n_part, box_l, density).strip())
 print("Interactions:\n")
-act_min_dist = system.analysis.mindist()
+act_min_dist = system.analysis.min_dist()
 print("Start with minimal distance {}".format(act_min_dist))
 
 system.cell_system.max_num_cells = 2744
@@ -111,7 +111,7 @@ for i in range(n_part / 2 - 1):
 
 # P3M setup after charge assigned
 #############################################################
-p3m = electrostatics.P3M(bjerrum_length=1.0, accuracy=1e-2)
+p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
 system.actors.add(p3m)
 
 
@@ -127,7 +127,7 @@ Stop if minimal distance is larger than {}
 
 # set LJ cap
 lj_cap = 20
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
 
@@ -136,12 +136,12 @@ i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
     system.integrator.run(warm_steps)
     # Warmup criterion
-    act_min_dist = system.analysis.mindist()
+    act_min_dist = system.analysis.min_dist()
     i += 1
 
 #   Increase LJ cap
     lj_cap = lj_cap + 10
-    system.non_bonded_inter.set_force_cap(lj_cap)
+    system.force_cap = lj_cap
 
 
 # Just to see what else we may get from the c code

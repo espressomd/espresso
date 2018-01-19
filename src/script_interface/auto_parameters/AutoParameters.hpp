@@ -89,8 +89,8 @@ protected:
   void add_parameters(std::vector<AutoParameter> &&params) {
     for (auto const &p : params) {
       m_parameters.emplace(std::make_pair(
-          std::move(p.name),
-          Parameter{p.type, p.length, std::move(p.set), std::move(p.get)}));
+          p.name,
+          Parameter{p.type, p.length, p.set, p.get}));
     }
   }
 

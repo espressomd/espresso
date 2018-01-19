@@ -1,6 +1,7 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from espressomd.utils cimport handle_errors
+from espressomd.utils import is_valid_type
 
 cdef class Diamond(object):
     """
@@ -62,22 +63,22 @@ cdef class Diamond(object):
         if(self._params[valid_keys[1]] < 0):
             raise ValueError("Bond length must be positive got: ",
                              self._params[valid_keys[1]])
-        if(self._params[valid_keys[2]] < 0 or not isinstance(self._params[valid_keys[2]], int)):
+        if(self._params[valid_keys[2]] < 0 or not is_valid_type(self._params[valid_keys[2]], int)):
             raise ValueError(
                 "Monomers per chain must be positive integer got: ", self._params[valid_keys[2]])
-        if(self._params[valid_keys[3]] < 0 or not isinstance(self._params[valid_keys[3]], int)):
+        if(self._params[valid_keys[3]] < 0 or not is_valid_type(self._params[valid_keys[3]], int)):
             raise ValueError(
                 "The number of counterions must be integer got:", self._params[valid_keys[3]])
-        if(not isinstance(self._params[valid_keys[4]], float)):
+        if(not is_valid_type(self._params[valid_keys[4]], float)):
             raise ValueError(
                 "The charge of the nodes must be double got", self._params[valid_keys[4]])
-        if(not isinstance(self._params[valid_keys[5]], float)):
+        if(not is_valid_type(self._params[valid_keys[5]], float)):
             raise ValueError(
                 "The charge of the monomers must be double got", self._params[valid_keys[5]])
-        if(not isinstance(self._params[valid_keys[6]], float)):
+        if(not is_valid_type(self._params[valid_keys[6]], float)):
             raise ValueError(
                 "The charge of the counterions must be double got", self._params[valid_keys[6]])
-        if(not isinstance(self._params[valid_keys[7]], int)):
+        if(not is_valid_type(self._params[valid_keys[7]], int)):
             raise ValueError(
                 "The distance between two charged monomers' indices must be integer ", self._params[valid_keys[7]])
         if(self._params[valid_keys[7]] == "nonet"):

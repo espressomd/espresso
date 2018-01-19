@@ -118,7 +118,7 @@ inline void add_gb_pair_force(const Particle * const p1, const Particle * const 
       force[1] += FikY;
       force[2] += FikZ;
       
-      if (torque1 != NULL) {
+      if (torque1 != nullptr) {
       /* calculate torque:  torque = u_1 x G   */
 
       Gx = -dU_da*d[0] - dU_dc*u2x;
@@ -129,7 +129,7 @@ inline void add_gb_pair_force(const Particle * const p1, const Particle * const 
       torque1[1]+= u1z*Gx - u1x*Gz;
       torque1[2]+= u1x*Gy - u1y*Gx;
 
-      if (torque2 != NULL) {
+      if (torque2 != nullptr) {
         /* calculate torque:  torque = u_2 x G     */
         
         Gx = -dU_db*d[0] - dU_dc*u1x;

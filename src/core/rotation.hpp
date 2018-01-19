@@ -54,15 +54,15 @@ void convert_initial_torques();
 
 /** convert angular velocities and torques from the
     body-fixed frames to space-fixed coordinates */
-void convert_omega_body_to_space(Particle *p, double *omega);
-void convert_torques_body_to_space(Particle *p, double *torque);
+void convert_omega_body_to_space(const Particle *p, double *omega);
+void convert_torques_body_to_space(const Particle *p, double *torque);
 
 
 Vector3d convert_vector_body_to_space(const Particle& p, const Vector3d& v);
 
 /** convert velocity form the lab-fixed coordinates
     to the body-fixed frame */
-void convert_vel_space_to_body(Particle *p, double *vel_body);
+void convert_vel_space_to_body(const Particle *p, double *vel_body);
 
 /** Here we use quaternions to calculate the rotation matrix which
     will be used then to transform torques from the laboratory to
@@ -77,8 +77,15 @@ inline void convert_quat_to_quatu(double quat[4], double quatu[3]) {
               quat[3] * quat[3]);
 }
 
-/** Multiply two quaternions */
-void multiply_quaternions(double a[4], double b[4], double result[4]);
+/** Multiply two quaternions */ 
+inline void multiply_quaternions(const double a[4], const double b[4], double result[4])
+{
+ // Formula from http://www.j3d.org/matrix_faq/matrfaq_latest.html
+ result[0] = a[0]*b[0] - a[1]*b[1] - a[2]*b[2] - a[3]*b[3];
+ result[1] = a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2];
+ result[2] = a[0] * b[2] + a[2] * b[0] + a[3] * b[1] - a[1] * b[3]; 
+ result[3] = a[0] * b[3] + a[3] * b[0] + a[1] * b[2] - a[2] * b[1];
+}
 
 /** Convert director to quaternions */
 int convert_quatu_to_quat(double d[3], double quat[4]);

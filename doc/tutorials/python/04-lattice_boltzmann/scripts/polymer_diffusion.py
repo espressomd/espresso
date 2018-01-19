@@ -41,11 +41,11 @@ system.time_step = 0.002
 system.thermostat.set_langevin(kT=1.0, gamma=10)
 
 for i in range(100):
-    system.non_bonded_inter.set_force_cap(i)
+    system.force_cap = i
     system.integrator.run(1000)
 
 print("Warmup finished.")
-system.non_bonded_inter.set_force_cap(0)
+system.force_cap = 0
 system.integrator.run(10000)
 system.time_step = time_step
 system.integrator.run(50000)
@@ -54,7 +54,7 @@ system.thermostat.turn_off()
 
 system.part[:].v = [0,0,0]
 
-lbf = lb.LBFluid_GPU(agrid=1, dens=1, visc=5, tau=time_step, fric=5)
+lbf = lb.LBFluidGPU(agrid=1, dens=1, visc=5, tau=time_step, fric=5)
 system.actors.add(lbf)
 system.thermostat.set_lb(kT=1)
 

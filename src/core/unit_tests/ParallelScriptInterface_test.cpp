@@ -17,10 +17,7 @@ std::unique_ptr<Communication::MpiCallbacks> callbacks;
 using namespace ScriptInterface;
 
 struct TestClass : public ScriptInterfaceBase {
-  TestClass() {
-    constructed = true;
-  }
-  
+  TestClass() { constructed = true; }
   ~TestClass() { destructed = true; }
 
   void set_parameter(const std::string &name, const Variant &value) override {
@@ -51,7 +48,6 @@ struct TestClass : public ScriptInterfaceBase {
 
   std::shared_ptr<ScriptInterfaceBase> obj_param;
 
-  const std::string name() const override { return "TestClass"; }
   static bool constructed;
   static bool destructed;
 };
@@ -60,7 +56,6 @@ bool TestClass::constructed = false;
 bool TestClass::destructed = false;
 std::pair<std::string, VariantMap> TestClass::last_method_parameters;
 std::pair<std::string, Variant> TestClass::last_parameter;
-
 
 /**
  * Check that instances are created and correctly destroyed on
@@ -128,8 +123,7 @@ BOOST_AUTO_TEST_CASE(call_method) {
     callbacks->loop();
   }
 
-  auto const &last_parameters =
-    TestClass::last_method_parameters;
+  auto const &last_parameters = TestClass::last_method_parameters;
   BOOST_CHECK(last_parameters.first == method);
   BOOST_CHECK(last_parameters.second == params);
 }

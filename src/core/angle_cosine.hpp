@@ -43,11 +43,11 @@ int angle_cosine_set_params(int bond_type, double bend, double phi0);
 /************************************************************/
 
 /** Computes the three body angle interaction force and adds this
-    force to the particle forces (see \ref tclcommand_inter). 
+    force to the particle forces. 
     @param p_mid     Pointer to second/middle particle.
     @param p_left    Pointer to first/left particle.
     @param p_right   Pointer to third/right particle.
-    @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
+    @param iaparams  bond type number of the angle interaction.
     @param force1 returns force of particle 1
     @param force2 returns force of particle 2
     @return 0
@@ -153,11 +153,11 @@ inline void calc_angle_cosine_3body_forces(Particle *p_mid, Particle *p_left,
 }
 
 
-/** Computes the three body angle interaction energy (see \ref tclcommand_inter, \ref tclcommand_analyze). 
+/** Computes the three body angle interaction energy. 
     @param p_mid        Pointer to first particle.
     @param p_left        Pointer to second/middle particle.
     @param p_right        Pointer to third particle.
-    @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
+    @param iaparams  bond type number of the angle interaction.
     @param _energy   return energy pointer.
     @return 0.
 */

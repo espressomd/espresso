@@ -69,9 +69,9 @@ __constant__ mmm1dgpu_real maxPWerror = 1e-5;
 
 Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s, mmm1dgpu_real _coulomb_prefactor, mmm1dgpu_real _maxPWerror,
 	mmm1dgpu_real _far_switch_radius, int _bessel_cutoff)
-:coulomb_prefactor(_coulomb_prefactor), maxPWerror(_maxPWerror), far_switch_radius(_far_switch_radius),
-	bessel_cutoff(_bessel_cutoff), host_boxz(0), host_npart(0), pairs(-1), dev_forcePairs(NULL), dev_energyBlocks(NULL),
-	numThreads(64), need_tune(true)
+	: numThreads(64), host_boxz(0), host_npart(0), need_tune(true), pairs(-1),
+	  dev_forcePairs(nullptr), dev_energyBlocks(nullptr), coulomb_prefactor(_coulomb_prefactor),
+	  maxPWerror(_maxPWerror), far_switch_radius(_far_switch_radius), bessel_cutoff(_bessel_cutoff)
 {
 	// interface sanity checks
 	if(!s.requestFGpu())

@@ -203,8 +203,9 @@ int dfft_init(double **data, int *local_mesh_dim, int *local_mesh_margin,
     /* DEBUG */
     for (j = 0; j < n_nodes; j++) {
       /* MPI_Barrier(comm_cart); */
-      if (j == this_node)
+      if (j == this_node) {
         FFT_TRACE(fft_print_fft_plan(dfft.plan[i]));
+      }
     }
   }
 
@@ -260,7 +261,7 @@ int dfft_init(double **data, int *local_mesh_dim, int *local_mesh_margin,
     wisdom_status = FFTW_FAILURE;
     sprintf(wisdom_file_name, ".dfftw3_1d_wisdom_forw_n%d.file",
             dfft.plan[i].new_mesh[2]);
-    if ((wisdom_file = fopen(wisdom_file_name, "r")) != NULL) {
+    if ((wisdom_file = fopen(wisdom_file_name, "r")) != nullptr) {
       wisdom_status = fftw_import_wisdom_from_file(wisdom_file);
       fclose(wisdom_file);
     }
@@ -268,11 +269,11 @@ int dfft_init(double **data, int *local_mesh_dim, int *local_mesh_margin,
       fftw_destroy_plan(dfft.plan[i].our_fftw_plan);
     // printf("dfft.plan[%d].n_ffts=%d\n",i,dfft.plan[i].n_ffts);
     dfft.plan[i].our_fftw_plan = fftw_plan_many_dft(
-        1, &dfft.plan[i].new_mesh[2], dfft.plan[i].n_ffts, c_data, NULL, 1,
-        dfft.plan[i].new_mesh[2], c_data, NULL, 1, dfft.plan[i].new_mesh[2],
+        1, &dfft.plan[i].new_mesh[2], dfft.plan[i].n_ffts, c_data, nullptr, 1,
+        dfft.plan[i].new_mesh[2], c_data, nullptr, 1, dfft.plan[i].new_mesh[2],
         dfft.plan[i].dir, FFTW_PATIENT);
     if (wisdom_status == FFTW_FAILURE &&
-        (wisdom_file = fopen(wisdom_file_name, "w")) != NULL) {
+        (wisdom_file = fopen(wisdom_file_name, "w")) != nullptr) {
       fftw_export_wisdom_to_file(wisdom_file);
       fclose(wisdom_file);
     }
@@ -286,18 +287,18 @@ int dfft_init(double **data, int *local_mesh_dim, int *local_mesh_margin,
     wisdom_status = FFTW_FAILURE;
     sprintf(wisdom_file_name, ".dfftw3_1d_wisdom_back_n%d.file",
             dfft.plan[i].new_mesh[2]);
-    if ((wisdom_file = fopen(wisdom_file_name, "r")) != NULL) {
+    if ((wisdom_file = fopen(wisdom_file_name, "r")) != nullptr) {
       wisdom_status = fftw_import_wisdom_from_file(wisdom_file);
       fclose(wisdom_file);
     }
     if (dfft.init_tag == 1)
       fftw_destroy_plan(dfft.back[i].our_fftw_plan);
     dfft.back[i].our_fftw_plan = fftw_plan_many_dft(
-        1, &dfft.plan[i].new_mesh[2], dfft.plan[i].n_ffts, c_data, NULL, 1,
-        dfft.plan[i].new_mesh[2], c_data, NULL, 1, dfft.plan[i].new_mesh[2],
+        1, &dfft.plan[i].new_mesh[2], dfft.plan[i].n_ffts, c_data, nullptr, 1,
+        dfft.plan[i].new_mesh[2], c_data, nullptr, 1, dfft.plan[i].new_mesh[2],
         dfft.back[i].dir, FFTW_PATIENT);
     if (wisdom_status == FFTW_FAILURE &&
-        (wisdom_file = fopen(wisdom_file_name, "w")) != NULL) {
+        (wisdom_file = fopen(wisdom_file_name, "w")) != nullptr) {
       fftw_export_wisdom_to_file(wisdom_file);
       fclose(wisdom_file);
     }

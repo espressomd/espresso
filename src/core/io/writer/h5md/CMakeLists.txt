@@ -4,4 +4,4 @@ target_include_directories(H5mdCore PUBLIC
   "${CMAKE_SOURCE_DIR}/libs/h5xx"
   )
 add_dependencies(H5mdCore EspressoConfig)
-set_target_properties(H5mdCore PROPERTIES MACOSX_RPATH TRUE)
+

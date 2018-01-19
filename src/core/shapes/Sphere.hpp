@@ -42,6 +42,6 @@ private:
   double m_rad;
   double m_direction;
 };
-};
+}
 
 #endif
