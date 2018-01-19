@@ -1,4 +1,5 @@
 #include "Umbrella.hpp"
+#include "debug.hpp"
 
 int Bond::Umbrella::calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], 
 					  double force[3]) const {

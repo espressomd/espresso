@@ -1,8 +1,7 @@
 #include"Fene.hpp"
 #include "core/random.hpp"
-
-
-#include "core/random.hpp"
+#include "core/errorhandling.hpp"
+#include "debug.hpp"
 
 //---FENE---
 //calculating the fene bond force: virtual function

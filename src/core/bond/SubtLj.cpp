@@ -24,7 +24,7 @@ int Bond::SubtLj::calc_bonded_pair_energy(Particle *p1, Particle *p2,
   double dist = sqrt(sqrlen(dx));
 
   *_energy =
-      -lj_pair_energy(p1, p2, get_ia_param(p1->p.type, p2->p.type), dist);
+      -lj_pair_energy(p1, p2, get_ia_param(p1->p.type, p2->p.type), dx, dist);
 #endif
   return 0;
 }

@@ -2,6 +2,8 @@
 #define ABSTRACT_BOND_CLASS_H
 #include "BondType.hpp"
 #include "particle_data.hpp"
+#include "errorhandling.hpp"
+
 #include <vector> //for std::vector
 #include <array> //for std::array
 #include <boost/optional.hpp> // for boost::optional
@@ -63,7 +65,7 @@ public:
 
     };
     return bond_partners;
-  };
+  }
 
   //### BOND TYPE ###
   // get bond type

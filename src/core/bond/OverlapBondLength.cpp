@@ -1,4 +1,5 @@
 #include "OverlapBondLength.hpp"
+#include "debug.hpp"
 
 /** Computes the two body overlapped bonded force.
     Adds this force to the particle forces in forces.hpp (see \ref

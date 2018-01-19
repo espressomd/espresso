@@ -1,4 +1,5 @@
 #include "TabulatedBondLength.hpp"
+#include "debug.hpp"
 
 /** Calculate a tabulated bond length force with number type_num (see
     \ref Bonded_ia_parameters) between particles p1 and p2 and add it

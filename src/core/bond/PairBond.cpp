@@ -5,6 +5,7 @@
 #include "statistics.hpp" //obsstat_nonbonded function
 #include "pressure.hpp" // virials, p_tensor
 #include "energy.hpp"//for energy observable
+#include "debug.hpp"
 
 // force calculation
 int Bond::PairBond::add_bonded_force(Particle *p1, int bl_id){

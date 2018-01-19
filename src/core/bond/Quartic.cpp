@@ -1,4 +1,5 @@
 #include "Quartic.hpp"
+#include "debug.hpp"
 
 //---QUARTIC BOND---
 int Bond::Quartic::calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], double force[3]) const {
