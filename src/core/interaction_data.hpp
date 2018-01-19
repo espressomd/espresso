@@ -24,6 +24,8 @@
     Various procedures concerning interactions between particles.
 */
 
+#include "config.hpp"
+
 #include "particle_data.hpp"
 #include "utils.hpp"
 #include <memory> //for unique pointer -> vector of bond classes

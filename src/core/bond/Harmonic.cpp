@@ -1,5 +1,5 @@
 #include"Harmonic.hpp"
-
+#include "debug.hpp"
 #include "core/random.hpp"
 
 //---HARMONIC BOND---

@@ -1,28 +1,30 @@
 #include "SubtLj.hpp"
-#include "interaction_data.hpp" // for iaparams LJ
-#include "lj.hpp" //add_lj_pair_force(), lj_pair_energy()
+#include "lj.hpp"
 
-int Bond::SubtLj::calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], double force[3]) 
-  const {
+int Bond::SubtLj::calc_bonded_pair_force(Particle *p1, Particle *p2,
+                                         double dx[3], double force[3]) const {
+#ifdef LENNARD_JONES
+  double dist = sqrt(sqrlen(dx));
+  double lj_force[3] = {0., 0., 0.};
 
-  auto ia_params = get_ia_param(p1->p.type, p2->p.type);
+  add_lj_pair_force(p1, p2, get_ia_param(p1->p.type, p2->p.type), dx, dist,
+                    lj_force);
 
   for (int i = 0; i < 3; i++) {
-    dx[i] *= -1;
+    force[i] -= -lj_force[i];
   }
 
-  add_lj_pair_force(p1, p2, ia_params, dx, Utils::veclen(dx), force);
-
-  return ES_OK;
-
+#endif
+  return 0;
 }
 
-int Bond::SubtLj::calc_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3], double *_energy)
-  const {
+int Bond::SubtLj::calc_bonded_pair_energy(Particle *p1, Particle *p2,
+                                          double dx[3], double *_energy) const {
+#ifdef LENNARD_JONES
+  double dist = sqrt(sqrlen(dx));
 
-  auto ia_params = get_ia_param(p1->p.type, p2->p.type);
-
-  *_energy = -lj_pair_energy(p1, p2, ia_params, dx, Utils::veclen(dx));
-  return ES_OK;
-
+  *_energy =
+      -lj_pair_energy(p1, p2, get_ia_param(p1->p.type, p2->p.type), dx, dist);
+#endif
+  return 0;
 }

@@ -1,4 +1,5 @@
 #include"HarmonicDumbbell.hpp"
+#include "debug.hpp"
 #include "core/random.hpp"
 
 //---HARMONIC DUMBBELL

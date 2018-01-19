@@ -27,14 +27,6 @@
 #include "rotation.hpp" 
 #ifdef VIRTUAL_SITES
 
-#include "pressure.hpp"
-#include "cells.hpp"
-#include "immersed_boundary/ibm_main.hpp"
-
-// The following four functions are independent of the specif
-// rules used to place virtual particles
-
-
 namespace {
 std::shared_ptr<VirtualSites> m_virtual_sites;
 }
