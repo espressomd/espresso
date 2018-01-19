@@ -6,5 +6,5 @@ from oif_classes import \
     Angle, \
     ThreeNeighbors, \
     Mesh, \
-    OifCellType, \  # analogous to oif_template
+    OifCellType,\
     OifCell

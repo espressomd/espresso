@@ -601,8 +601,8 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef double * out_direction = NULL
-                pointer_to_out_direction(self.particle_data.get(), out_direction)
+                cdef const double * out_direction = NULL
+                pointer_to_out_direction(self.particle_data, out_direction)
                 return np.array([out_direction[0], out_direction[1], out_direction[2]])
 
     IF AFFINITY == 1:
@@ -621,7 +621,8 @@ cdef class ParticleHandle(object):
             def __get__(self):
                 self.update_particle_data()
                 cdef double * bond_site = NULL
-                pointer_to_bond_site(self.particle_data.get(), bond_site)
+                self.update_particle_data()
+                pointer_to_bond_site(self.particle_data, bond_site)
                 return np.array([bond_site[0], bond_site[1], bond_site[2]])
 
 

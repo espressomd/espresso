@@ -24,6 +24,7 @@
  */
 #include "membrane_collision.hpp"
 #include "../communication.hpp"
+#include "interaction_data.hpp" 
 
 #ifdef MEMBRANE_COLLISION
 
