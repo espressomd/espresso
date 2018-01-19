@@ -1,6 +1,6 @@
 #ifndef OIF_GLOBAL_FORCES_BOND_CLASS_H
 #define OIF_GLOBAL_FORCES_BOND_CLASS_H
-#include "ThreeParticleBond.hpp"
+#include "Bond.hpp"
 
 namespace Bond {
 

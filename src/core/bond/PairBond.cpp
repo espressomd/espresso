@@ -43,7 +43,7 @@ int Bond::PairBond::add_bonded_force(Particle *p1, int bl_id){
 
       // add torques to particles
 #ifdef ROTATION
-      for (int j=0;j++;j<3){
+      for (int j=0;j<3;j++){
 	p1->f.torque[j] += torque1[j];
 	p2->f.torque[j] += torque2[j];
       };
@@ -51,7 +51,7 @@ int Bond::PairBond::add_bonded_force(Particle *p1, int bl_id){
 
 #ifdef NPT
       if (integ_switch == INTEG_METHOD_NPT_ISO){
-	for (int j=0;j++;j<3){
+	for (int j=0;j<3;j++){
 	  nptiso.p_vir[j] += force[j] * dx[j];
 	};
       };

@@ -61,6 +61,7 @@
 //**special Bonds**
 #include "bond/IbmTribend.hpp" //at least fourparticlebond
 #include "bond/VirtualBond.hpp" // 2 particle bond but not a real bond!
+#include "bond/OifGlobalForces.hpp"//forces are calculated sperately and not in forces_inline.hpp
 //bond container
 #include "bond/BondContainer.hpp"
 

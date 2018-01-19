@@ -15,61 +15,82 @@ void Bond::BondContainer::set_bond_by_type(int type, std::unique_ptr<Bond> && bo
 
   m_all_bonds.insert(std::pair<int, std::unique_ptr<Bond>>(type, std::move(bond)));
   sort_bond_into_lists(type);
+
 }
 
+void Bond::BondContainer::delete_bond(int bond_map_id)
+{
+
+  m_force_loop_bonds.erase(bond_map_id);
+  m_energy_loop_bonds.erase(bond_map_id);
+  m_virial_loop_bonds.erase(bond_map_id);
+  m_three_body_pressure_bonds.erase(bond_map_id);
+  m_oif_global_forces_bonds.erase(bond_map_id);
+  m_ibm_vol_con_bonds.erase(bond_map_id);
+
+};
+
 // private function which casts base classes into concrete classes
-void Bond::BondContainer::sort_bond_into_lists(int type)
+void Bond::BondContainer::sort_bond_into_lists(int bond_map_id)
 {
 
   //try to find bond and cast it into derived classes
-  if(m_all_bonds.count(type) != 0){
+  if(m_all_bonds.count(bond_map_id) != 0){
 
     //---add Bonds with specific interface---
 
     //pairbond
-    PairBond* derived_pair_bond = cast_base_class<Bond, PairBond>(m_all_bonds[type].get());
+    PairBond* derived_pair_bond = cast_base_class<Bond, PairBond>(m_all_bonds[bond_map_id].get());
     //3_particle_pressure bond
     ThreeParticlePressureBond* derived_3_pressure_bond = cast_base_class<Bond, 
 									 ThreeParticlePressureBond>
-      (m_all_bonds[type].get());
+      (m_all_bonds[bond_map_id].get());
     //oifglobal forces
     OifGlobalForces* derived_oif_global_bond = cast_base_class<Bond,
 							       OifGlobalForces>
-      (m_all_bonds[type].get());
+      (m_all_bonds[bond_map_id].get());
+    //IbmVolumeConservation Bond
+    IbmVolumeConservation* derived_ibm_vol_con_bond = cast_base_class<Bond,
+								      IbmVolumeConservation>
+      (m_all_bonds[bond_map_id].get());
 
     //add if cast was successful
     if(derived_pair_bond){
-      m_virial_loop_bonds.insert(std::pair<int, PairBond*>(type, derived_pair_bond));
+      m_virial_loop_bonds.insert(std::pair<int, PairBond*>(bond_map_id, derived_pair_bond));
     };
     if(derived_3_pressure_bond){
       m_three_body_pressure_bonds.insert(std::pair<int, ThreeParticlePressureBond*>
-					 (type, derived_3_pressure_bond));
+					 (bond_map_id, derived_3_pressure_bond));
     };
     if(derived_oif_global_bond){
       m_oif_global_forces_bonds.insert(std::pair<int, OifGlobalForces*>
-				       (type, derived_oif_global_bond));
+				       (bond_map_id, derived_oif_global_bond));
+    };
+    if(derived_ibm_vol_con_bond){
+      m_ibm_vol_con_bonds.insert(std::pair<int, IbmVolumeConservation*>
+				 (bond_map_id, derived_ibm_vol_con_bond));
     };
 
     //---add bonds which add energies and forces---
-    Bond* insert_to = m_all_bonds[type].get();
+    Bond* insert_to = m_all_bonds[bond_map_id].get();
     BondType bond_type = insert_to->get_Bond_Type();
     //some special bonds don't contribute to forces and/or energies
     switch(bond_type){
     case BondType::BONDED_IA_IBM_TRIBEND:
       //only force contribution
-      m_force_loop_bonds.insert(std::pair<int,Bond*>(type, insert_to));
+      m_force_loop_bonds.insert(std::pair<int,Bond*>(bond_map_id, insert_to));
       break;
     case BondType::BONDED_IA_IBM_TRIEL:
       //only force contribution
-      m_force_loop_bonds.insert(std::pair<int,Bond*>(type, insert_to));
+      m_force_loop_bonds.insert(std::pair<int,Bond*>(bond_map_id, insert_to));
       break;
     case BondType::BONDED_IA_OIF_OUT_DIRECTION:
       //only force contribution
-      m_force_loop_bonds.insert(std::pair<int,Bond*>(type, insert_to));
+      m_force_loop_bonds.insert(std::pair<int,Bond*>(bond_map_id, insert_to));
       break;
     case BondType::BONDED_IA_OIF_LOCAL_FORCES:
       //only force contribution
-      m_force_loop_bonds.insert(std::pair<int,Bond*>(type, insert_to));
+      m_force_loop_bonds.insert(std::pair<int,Bond*>(bond_map_id, insert_to));
       break;
     case BondType::BONDED_IA_VIRTUAL_BOND:
       //no force and energy contribution
@@ -78,15 +99,19 @@ void Bond::BondContainer::sort_bond_into_lists(int type)
       //no energy contribution
       //force is calculated separately
       break;
+    case BondType::BONDED_IA_IBM_VOLUME_CONSERVATION:
+      //no energy contribution
+      //force is calculated separately
+      break;
     default:
-      m_force_loop_bonds.insert(std::pair<int,Bond*>(type, insert_to));
-      m_energy_loop_bonds.insert(std::pair<int,Bond*>(type, insert_to));
+      m_force_loop_bonds.insert(std::pair<int,Bond*>(bond_map_id, insert_to));
+      m_energy_loop_bonds.insert(std::pair<int,Bond*>(bond_map_id, insert_to));
       break;
     };
 
   }
   else{
-    runtimeErrorMsg() << "sort_bond_into_lists(): bond type '" << type << "' is unknown!";
+    runtimeErrorMsg() << "BondContainer.sort_bond_into_lists(): bond map id '" << bond_map_id << "' is unknown!";
     return;
   };
   
@@ -145,3 +170,33 @@ int Bond::BondContainer::oif_global_force_loop(Particle *p1)
 
 };
 
+int Bond::BondContainer::ibm_vol_con_softID_loop(Particle *p1, int *softID, int *bond_map_id)
+{
+
+  return loop_over_bond_partners(m_ibm_vol_con_bonds, &IbmVolumeConservation::get_soft_ID, p1,
+				 softID, bond_map_id);
+
+};
+
+Bond::Bond* Bond::BondContainer::get_Bond(int bond_map_id)
+{
+
+  if(m_all_bonds.count(bond_map_id) == 0){
+    return NULL;
+  }
+  else{
+    return m_all_bonds[bond_map_id].get();
+  };
+
+};
+
+Bond::IbmVolumeConservation* Bond::BondContainer::get_IBM_Vol_Con_Bond(int bond_map_id)
+{
+
+  if(m_ibm_vol_con_bonds.count(bond_map_id) == 0){
+    return NULL;
+  }
+  else{
+    return m_ibm_vol_con_bonds[bond_map_id];
+  };
+}

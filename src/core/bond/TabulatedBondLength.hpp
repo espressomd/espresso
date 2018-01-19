@@ -8,11 +8,9 @@ namespace Bond {
   public: 
     //constructor
     //using Tabulated::Tabulated; //inherit constructor
-    TabulatedBondLength(TabulatedBondedInteraction tab_type, char* filename, double minval, 
-			double maxval, int npoints, double invstepsize, double* f, double* e) : 
-      Tabulated{tab_type, filename, minval, maxval, npoints, invstepsize, f, e} 
+    TabulatedBondLength(TabulatedPotential tab_pot) : 
+      Tabulated{tab_pot, TabulatedBondedInteraction::TAB_BOND_LENGTH}
     {m_bondtype = BondType::BONDED_IA_TABULATED;}
-
     // Member function
     int calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], 
 			      double force[3]) const override;

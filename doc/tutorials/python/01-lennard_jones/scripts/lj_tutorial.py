@@ -105,10 +105,10 @@ Stop if minimal distance is larger than {}
 """.strip().format(warm_n_time, warm_steps, min_dist))
 
 i = 0
-act_min_dist = system.analysis.mindist()
+act_min_dist = system.analysis.min_dist()
 while i < warm_n_time and act_min_dist < min_dist :
     system.integrator.run(warm_steps)
-    act_min_dist = system.analysis.mindist()
+    act_min_dist = system.analysis.min_dist()
     print("run {} at time = {} (LJ cap= {} ) min dist = {}".strip().format(i, system.time, lj_cap, act_min_dist))
     i+=1
     lj_cap += 1.0

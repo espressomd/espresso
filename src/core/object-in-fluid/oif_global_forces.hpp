@@ -34,6 +34,7 @@ int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g,
 
 void add_oif_global_forces(double *area_volume, int molType);
 
+void calc_oif_global(double *area_volume, int molType);
 /************************************************************/
 
 #endif

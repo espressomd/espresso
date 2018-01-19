@@ -6,6 +6,7 @@
 #include "PairBond.hpp"
 #include "ThreeParticlePressureBond.hpp"
 #include "OifGlobalForces.hpp"
+#include "IbmVolumeConservation.hpp"
 
 namespace Bond {
 
@@ -14,8 +15,12 @@ namespace Bond {
     //constructor
     BondContainer() = default;
 
+    //---insert and delete bonds---
     // insert bond in all bonds, energy and force bonds
-    void set_bond_by_type(int type, std::unique_ptr<Bond> && bond);
+    void set_bond_by_type(int bond_map_id, std::unique_ptr<Bond> && bond);
+    void delete_bond(int bond_map_id);
+
+    //---Different Loops over internal Maps of different kinds of bonds---
     // bonds with force and energy contribution
     int force_loop(Particle *p1);
     int energy_loop(Particle *p1);
@@ -24,11 +29,20 @@ namespace Bond {
     // three body pressure bonds
     int three_body_stress_loop(Particle *p1);
     // pair bonds
-    int local_stress_tensor_loop(Particle *p1, DoubleList *TensorInBin, int bins[3]
-						   ,double range_start[3], double range[3]);
+    int local_stress_tensor_loop(Particle *p1, DoubleList *TensorInBin, int bins[3],
+				 double range_start[3], double range[3]);
     //oif_global_forces
     int oif_global_loop(Particle *p1, double* partArea, double* VOL_partVol);
     int oif_global_force_loop(Particle *p1);
+
+    //ibm volume conservation -> volume calculation
+    int ibm_vol_con_softID_loop(Particle *p1, int *softID, int *bond_map_id);
+
+    //---functions which provide access to Bond maps---
+    //get Access to all bonds
+    Bond* get_Bond(int bond_map_id);
+    //get IBMVolCon Bond
+    IbmVolumeConservation* get_IBM_Vol_Con_Bond(int bond_map_id);
     
   private:
     //---member variables---
@@ -40,6 +54,7 @@ namespace Bond {
     std::unordered_map<int, PairBond*> m_virial_loop_bonds;
     std::unordered_map<int, ThreeParticlePressureBond*> m_three_body_pressure_bonds;
     std::unordered_map<int, OifGlobalForces*> m_oif_global_forces_bonds;
+    std::unordered_map<int, IbmVolumeConservation*> m_ibm_vol_con_bonds;
     //---private functions---
     // sorts a Bond of type Bond
     //-> PairBonds, ThreeParticleBonds, etc.

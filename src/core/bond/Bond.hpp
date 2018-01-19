@@ -7,6 +7,8 @@
 #include <vector> //for std::vector
 #include <array> //for std::array
 #include <boost/optional.hpp> // for boost::optional
+#include"errorhandling.hpp"
+#include"debug.hpp"
 
 /*
 This is the base class for bonded interactions.

@@ -519,7 +519,129 @@ int does_line_go_through_cube(double pos1[3], double pos2[3], double range_start
   return 1;
 }
 
-int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], double range_start[3], double range[3], double pos1[3], double pos2[3])
+
+int reducepos(double pos[3], int bins[3], double centre[3], double range[3], int reducedpos[3]) {
+  int i;
+  double working[3];
+  get_mi_vector(working, pos, centre);
+  for (i=0;i<3;i++) {
+    reducedpos[i] = floor((working[i]+range[i]/2.0)*(double)bins[i]/range[i]);
+  }
+  return 1; 
+}
+
+int incubewithskin(double pos[3], double centre[3], double range[3])
+{
+  double working[3];
+  int i;
+  get_mi_vector(working, pos, centre);
+  for (i=0; i <3; i++) {
+    if (fabs(working[i]) > range[i]/2.0 + skin+max_cut) return 0;
+  }
+  return 1; 
+}
+
+int whichbin(double pos[3], int bins[3], double centre[3], double range[3], int *bin)
+/*calculates which bin a particle is in for local_stress_tensor */
+{
+  int reducedpos[3];
+  int i;
+  reducepos(pos, bins, centre, range, reducedpos);
+  for (i=0;i<3;i++) {
+    if ((reducedpos[i] < 0) || (reducedpos[i] >= bins[i])) {
+      *bin = -1;
+      return 1;
+    }
+  }
+  *bin = reducedpos[0]*bins[1]*bins[2] + reducedpos[1]*bins[2] + reducedpos[2];
+  return 1;
+}
+
+int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force, Distance &)
+{
+  /* returns the non_bonded interaction between two particles */
+
+  double dist2, dist;
+  double d[3];
+#ifdef ELECTROSTATICS
+  int i;
+  double eforce[3];
+#endif
+
+  force[0]=0; force[1]=0; force[2]=0; 
+  
+
+  if ((p1->p.identity != p2->p.identity)&&(checkIfParticlesInteract(p1->p.type, p2->p.type))) {
+    /* distance calculation */
+    get_mi_vector(d, p1->r.p, p2->r.p);
+    dist2 = SQR(d[0]) + SQR(d[1]) + SQR(d[2]);
+    dist  = sqrt(dist2);
+    calc_non_bonded_pair_force(p1,p2,d,dist,dist2,force);
+#ifdef ELECTROSTATICS
+    if (coulomb.method != COULOMB_NONE) {
+      switch (coulomb.method) {
+#ifdef P3M
+      case COULOMB_P3M_GPU:
+	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle GPU P3M electrostatics so it is left out\n");  
+	break;
+      case COULOMB_P3M:
+	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle P3M electrostatics so it is left out\n");  
+	break;
+#endif
+      case COULOMB_DH:
+	for (i = 0; i < 3; i++)
+	  eforce[i] = 0;
+	add_dh_coulomb_pair_force(p1,p2,d,dist, eforce);
+	for(i=0;i<3;i++)
+	  force[i] += eforce[i];
+	break;
+      case COULOMB_RF:
+	for (i = 0; i < 3; i++)
+	  eforce[i] = 0;
+	add_rf_coulomb_pair_force(p1,p2,d,dist, eforce);
+	for(i=0;i<3;i++)
+	    force[i] += eforce[i];
+	break;
+      case COULOMB_INTER_RF:
+        // this is done elsewhere
+	break;
+      case COULOMB_MMM1D:
+	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle MMM1D electrostatics so it is left out\n");  
+      default:
+	fprintf(stderr,"WARNING: Local stress tensor calculation does not recognise this electrostatic interaction\n");  
+      }
+    }
+#endif /*ifdef ELECTROSTATICS */
+
+#ifdef DIPOLES
+    if (coulomb.Dmethod != DIPOLAR_NONE) {
+      switch (coulomb.Dmethod) {
+#ifdef DP3M
+      case DIPOLAR_P3M:
+    	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle P3M magnetostatics so it is left out\n");  
+	break;
+#endif
+      case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
+    	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle DAWAANR magnetostatics so it is left out\n");  
+	break;
+      case DIPOLAR_DS:
+    	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle MAGNETIC DIPOLAR SUM magnetostatics so it is left out\n");  
+	break;
+
+      default:
+	fprintf(stderr,"WARNING: Local stress tensor calculation does not recognise this magnetostatic interaction\n");  
+      }
+    }
+#endif /*ifdef DIPOLES */
+
+
+  } /*if p1-> ... */
+  return 0;
+}
+
+} /* namespace */
+
+int distribute_tensors(DoubleList *TensorInBin, double* force, int bins[3], double range_start[3], double range[3], double pos1[3], double pos2[3])
 {
   /*calculates how to distribute a force tensor between two particles between various bins
     the amount distributed to a bin is proportional to the length of the line between the
@@ -770,128 +892,7 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
     }
   }
   return 1;
-} 
-
-int reducepos(double pos[3], int bins[3], double centre[3], double range[3], int reducedpos[3]) {
-  int i;
-  double working[3];
-  get_mi_vector(working, pos, centre);
-  for (i=0;i<3;i++) {
-    reducedpos[i] = floor((working[i]+range[i]/2.0)*(double)bins[i]/range[i]);
-  }
-  return 1; 
 }
-
-int incubewithskin(double pos[3], double centre[3], double range[3])
-{
-  double working[3];
-  int i;
-  get_mi_vector(working, pos, centre);
-  for (i=0; i <3; i++) {
-    if (fabs(working[i]) > range[i]/2.0 + skin+max_cut) return 0;
-  }
-  return 1; 
-}
-
-int whichbin(double pos[3], int bins[3], double centre[3], double range[3], int *bin)
-/*calculates which bin a particle is in for local_stress_tensor */
-{
-  int reducedpos[3];
-  int i;
-  reducepos(pos, bins, centre, range, reducedpos);
-  for (i=0;i<3;i++) {
-    if ((reducedpos[i] < 0) || (reducedpos[i] >= bins[i])) {
-      *bin = -1;
-      return 1;
-    }
-  }
-  *bin = reducedpos[0]*bins[1]*bins[2] + reducedpos[1]*bins[2] + reducedpos[2];
-  return 1;
-}
-
-int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force, Distance &)
-{
-  /* returns the non_bonded interaction between two particles */
-
-  double dist2, dist;
-  double d[3];
-#ifdef ELECTROSTATICS
-  int i;
-  double eforce[3];
-#endif
-
-  force[0]=0; force[1]=0; force[2]=0; 
-  
-
-  if ((p1->p.identity != p2->p.identity)&&(checkIfParticlesInteract(p1->p.type, p2->p.type))) {
-    /* distance calculation */
-    get_mi_vector(d, p1->r.p, p2->r.p);
-    dist2 = SQR(d[0]) + SQR(d[1]) + SQR(d[2]);
-    dist  = sqrt(dist2);
-    calc_non_bonded_pair_force(p1,p2,d,dist,dist2,force);
-#ifdef ELECTROSTATICS
-    if (coulomb.method != COULOMB_NONE) {
-      switch (coulomb.method) {
-#ifdef P3M
-      case COULOMB_P3M_GPU:
-	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle GPU P3M electrostatics so it is left out\n");  
-	break;
-      case COULOMB_P3M:
-	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle P3M electrostatics so it is left out\n");  
-	break;
-#endif
-      case COULOMB_DH:
-	for (i = 0; i < 3; i++)
-	  eforce[i] = 0;
-	add_dh_coulomb_pair_force(p1,p2,d,dist, eforce);
-	for(i=0;i<3;i++)
-	  force[i] += eforce[i];
-	break;
-      case COULOMB_RF:
-	for (i = 0; i < 3; i++)
-	  eforce[i] = 0;
-	add_rf_coulomb_pair_force(p1,p2,d,dist, eforce);
-	for(i=0;i<3;i++)
-	    force[i] += eforce[i];
-	break;
-      case COULOMB_INTER_RF:
-        // this is done elsewhere
-	break;
-      case COULOMB_MMM1D:
-	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle MMM1D electrostatics so it is left out\n");  
-      default:
-	fprintf(stderr,"WARNING: Local stress tensor calculation does not recognise this electrostatic interaction\n");  
-      }
-    }
-#endif /*ifdef ELECTROSTATICS */
-
-#ifdef DIPOLES
-    if (coulomb.Dmethod != DIPOLAR_NONE) {
-      switch (coulomb.Dmethod) {
-#ifdef DP3M
-      case DIPOLAR_P3M:
-    	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle P3M magnetostatics so it is left out\n");  
-	break;
-#endif
-      case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle DAWAANR magnetostatics so it is left out\n");  
-	break;
-      case DIPOLAR_DS:
-    	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle MAGNETIC DIPOLAR SUM magnetostatics so it is left out\n");  
-	break;
-
-      default:
-	fprintf(stderr,"WARNING: Local stress tensor calculation does not recognise this magnetostatic interaction\n");  
-      }
-    }
-#endif /*ifdef DIPOLES */
-
-
-  } /*if p1-> ... */
-  return 0;
-}
-
-} /* namespace */
 
 int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
                              int periodic[3], double range_start[3],
@@ -939,63 +940,7 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
     range_start[i] = drem_down(range_start[i], box_l[i]);
   }
 
-#ifdef BOND_CLASS_DEBUG
-  PTENSOR_TRACE(fprintf(stderr,"%d: Running stress_profile\n",this_node));
 
-  binvolume = range[0]*range[1]*range[2]/(double)bins[0]/(double)bins[1]/(double)bins[2];
-
-  /* this next bit loops over all pair of particles, calculates the force between them, and distributes it amongst the tensors */
-
-  // loop over all local cells
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    particles   = cell->part;
-    np  = cell->n;
-    // loop over all particles in this cell
-    for(i = 0; i < np; i++)  {
-      p1 = &(particles[i]);
-      whichbin(p1->r.p,bins,centre, range, &bin); 
-      if (bin >= 0) {
-	PTENSOR_TRACE(fprintf(stderr,"%d:Got particle number %d i is %d pos is %f %f %f \n",this_node,p1->p.identity,i,p1->r.p[0],p1->r.p[1],p1->r.p[2]));
-	PTENSOR_TRACE(fprintf(stderr,"%d:Ideal gas component is {",this_node));
-	for(k=0;k<3;k++) {
-	  for(l=0;l<3;l++) {
-	    TensorInBin[bin].e[k*3 + l] += (p1->m.v[k])*(p1->m.v[l])*(*p1).p.mass/time_step/time_step;
-	    PTENSOR_TRACE(fprintf(stderr,"%f ",(p1->m.v[k])*(p1->m.v[l])*(*p1).p.mass/time_step/time_step));
-	  }
-	}
-
-	PTENSOR_TRACE(fprintf(stderr,"}\n"));
-      }
-
-
-      if(bond_container.local_stress_tensor_loop(p1, TensorInBin, bins, range_start, range)==0){
-	return 0;
-      };
-      
-    }
-
-    // Loop cell neighbors
-    for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
-      pairs = dd.cell_inter[c].nList[n].vList.pair;
-      np    = dd.cell_inter[c].nList[n].vList.n;
-
-      // verlet list loop //
-      for(i=0; i<2*np; i+=2) {
-	p1 = pairs[i];                    // pointer to particle 1
-	p2 = pairs[i+1];                  // pointer to particle 2
-	if ((incubewithskin(p1->r.p,centre,range)) && (incubewithskin(p2->r.p,centre,range))) {
-	  get_nonbonded_interaction(p1,p2, force);
-	  PTENSOR_TRACE(fprintf(stderr,"%d:Looking at pair %d %d force is %f %f %f\n",this_node,p1->p.identity, p2->p.identity,force[0],force[1], force[2]));
-	  if ((pow(force[0],2)+pow(force[1],2)+pow(force[2],2)) > 0) {
-	    if (distribute_tensors(TensorInBin,force,bins,range_start,range,p1->r.p, p2->r.p) != 1) return 0;
-	  }
-	} else {
-	  // PTENSOR_TRACE(fprintf(stderr,"%d:Looking at pair %d %d not in cube with skin\n",this_node,p1->p.identity, p2->p.identity));
-	}
-#endif //BOND_CLASS_DEBUG
-
-#ifndef BOND_CLASS_DEBUG
   PTENSOR_TRACE(fprintf(stderr, "%d: Running stress_profile\n", this_node));
 
   binvolume = range[0] * range[1] * range[2] / (double)bins[0] /
@@ -1014,6 +959,18 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
     }
   };
 
+#ifdef BOND_CLASS_DEBUG
+  auto add_bonded =
+      [&](Particle &p) {
+    
+      if(bond_container.local_stress_tensor_loop(&p, TensorInBin, bins, range_start, range)==0){
+	return 0;
+      };    
+      return 0;
+  };
+#endif //BOND_CLASS_DEBUG
+
+#ifndef BOND_CLASS_DEBUG
   auto add_bonded =
       [&](Particle &p) {
         int j = 0;
@@ -1038,6 +995,7 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
         }
         return 0;
   };
+#endif //BOND_CLASS_DEBUG
 
   auto add_single_particle_contribution = [&add_ideal, &add_bonded](Particle &p) {
     add_ideal(p);
@@ -1069,7 +1027,7 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
     }
   }
 
-#endif //BOND_CLASS_DEBUG
+
   return 1;
 }
 

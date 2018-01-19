@@ -1,6 +1,9 @@
 
 #include "config.hpp"
 
+const int MaxNumIBM = 1000;
+double VolumesCurrent[MaxNumIBM] = {0};
+
 #ifdef IMMERSED_BOUNDARY
 
 #include "particle_data.hpp"
@@ -10,9 +13,11 @@
 #include "communication.hpp"
 #include "immersed_boundary/ibm_volume_conservation.hpp"
 
+#include "bond/Bond.hpp" // for Bond::Bond
+#include "bond/BondType.hpp"// for Bond::BondType
+#include "bond/IbmVolumeConservation.hpp" // for Bond::IbmVolumeConservation
+
 // ****** Internal variables & functions ********
-const int MaxNumIBM = 1000;
-double VolumesCurrent[MaxNumIBM] = {0};
 bool VolumeInitDone = false;
 
 void CalcVolumes();
@@ -64,7 +69,7 @@ void IBM_InitVolumeConservation()
         // during the integration. Then we must not reset the reference
         if ( bonded_ia_params[i].p.ibmVolConsParameters.volRef == 0 )
         {
-          const int softID =bonded_ia_params[i].p.ibmVolConsParameters.softID;
+          const int softID = bonded_ia_params[i].p.ibmVolConsParameters.softID;
           bonded_ia_params[i].p.ibmVolConsParameters.volRef = VolumesCurrent[softID];
           mpi_bcast_ia_params(i, -1);
         }
@@ -135,7 +140,7 @@ int IBM_VolumeConservation_SetParams(const int bond_type, const int softID, cons
 Calculate partial volumes on all compute nodes
 and call MPI to sum up
 ****************/
-
+#ifndef BOND_CLASS_DEBUG
 void CalcVolumes()
 {
   
@@ -258,12 +263,89 @@ void CalcVolumes()
   MPI_Allreduce(tempVol, VolumesCurrent, MaxNumIBM, MPI_DOUBLE, MPI_SUM, comm_cart);
   
 }
+#endif
+
+#ifdef BOND_CLASS_DEBUG
+void CalcVolumes()
+{
+  
+  // Partial volumes for each soft particle, to be summed up
+  double tempVol[MaxNumIBM] = {0};
+  
+  // Loop over all particles on local node
+  for (int c = 0; c < local_cells.n; c++)
+  {
+    const Cell *const cell = local_cells.cell[c];
+    
+    for (int i = 0; i < cell->n; i++)
+    {
+      Particle &p1 = cell->part[i];
+      
+      // Check if particle has a BONDED_IA_IBM_TRIEL and a BONDED_IA_IBM_VOLUME_CONSERVATION
+      // Basically this loops over all triangles, not all particles
+      // First round to check for volume conservation and virtual
+      // Loop over all bonds of this particle
+      // Actually j loops over the bond-list, i.e. the bond partners (see particle_data.hpp)
+      int softID = -1;
+      int ibm_vol_con_bl_id = -1;
+      //loop over ibmvolcon and get softid
+      if(bond_container.ibm_vol_con_softID_loop(&p1, &softID, &ibm_vol_con_bl_id) == 2){
+	exit(1);
+      };
+      // Second round for triel
+      if ( softID > -1 && ibm_vol_con_bl_id > -1)
+      {
+	int j = 0;
+        while ( j < p1.bl.n)
+        {
+          int bond_map_id = p1.bl.e[j];
+	  Bond::Bond* current_bond = bond_container.get_Bond(bond_map_id);
+	  //if bond cannot be found -> exit
+	  if(current_bond == NULL){
+	    runtimeErrorMsg() << "IBMVolConservation: bond type of atom "
+			      << p1.p.identity << " unknown\n";
+	    exit(1);
+	  }
+	  else{
+	    int n_partners = current_bond->get_number_of_bond_partners();
+	    Bond::BondType type = current_bond->get_Bond_Type();
+	    if (type == Bond::BondType::BONDED_IA_IBM_TRIEL){
+	      Bond::IbmVolumeConservation* IbmVolConBond = bond_container.get_IBM_Vol_Con_Bond(ibm_vol_con_bl_id);
+	      //if bond cannot be found -> exit
+	      if(IbmVolConBond == NULL){
+		runtimeErrorMsg() << "IBMVolConservation: IBMVolCon_bond type of atom "
+				  << p1.p.identity << " unknown\n";
+		exit(1);
+	      }
+	      else{
+		//if bond partners don't exist -> exit
+		// give now bond map id of ibm triel bond for getting bond partners of ibm triel
+		if(IbmVolConBond->calc_volumes(&p1, bond_map_id, tempVol)==2){
+		  exit(1);
+		};
+	      };
+	    };
+	    // Iterate, increase by the number of partners of this bond + 1 for bond type
+	    j += n_partners+1;
+	  };//else
+	};//while j < p1
+      };//if softID
+    };//for cell
+  
+  for (int i = 0; i < MaxNumIBM; i++) VolumesCurrent[i] = 0;
+  
+  // Sum up and communicate
+  MPI_Allreduce(tempVol, VolumesCurrent, MaxNumIBM, MPI_DOUBLE, MPI_SUM, comm_cart);
+  
+  };//for
+}
+#endif
 
 /*****************
   CalcVolumeForce
 Calculate and add the volume force to each node
 *******************/
-
+#ifndef BOND_CLASS_DEBUG
 void CalcVolumeForce()
 {
   // Loop over all particles on local node
@@ -387,6 +469,63 @@ void CalcVolumeForce()
     }
   }
 }
+#endif
+
+#ifdef BOND_CLASS_DEBUG
+void CalcVolumeForce()
+{
+  // Loop over all particles on local node
+  for (int c = 0; c < local_cells.n; c++)
+  {
+    const Cell *const cell = local_cells.cell[c];
+    
+    for (int i = 0; i < cell->n; i++)
+    {
+      Particle &p1 = cell->part[i];
+      
+      // Check if particle has a BONDED_IA_IBM_TRIEL and a BONDED_IA_IBM_VOLUME_CONSERVATION
+      // Basically this loops over all triangles, not all particles
+      // First round to check for volume conservation and virtual
+      // Loop over all bonds of this particle
+      // Actually j loops over the bond-list, i.e. the bond partners (see particle_data.hpp)
+      int softID = -1;
+      int ibm_vol_con_bl_id = -1;
+      //loop over ibmvolcon and get softid
+      if(bond_container.ibm_vol_con_softID_loop(&p1, &softID, &ibm_vol_con_bl_id) == 2){
+	exit(1);
+      };      
+      // Second round for triel
+      if ( softID > -1 && ibm_vol_con_bl_id > -1)
+      {
+	int j = 0;
+        while ( j < p1.bl.n)
+        {
+          const int bond_map_id = p1.bl.e[j];
+	  Bond::Bond* current_bond = bond_container.get_Bond(bond_map_id);
+	  //if bond cannot be found -> exit
+	  if(current_bond == NULL){
+	    runtimeErrorMsg() << "IBMVolConservation: bond type of atom "
+			      << p1.p.identity << " unknown\n";
+	    exit(1);
+	  };
+	  int n_partners = current_bond->get_number_of_bond_partners();
+	  Bond::BondType type = current_bond->get_Bond_Type();
+          if ( type == Bond::BondType::BONDED_IA_IBM_TRIEL )
+          {
+            //take bond_map_id of ibm triel and not ibmvolcon for bond partners
+	    if(current_bond->add_bonded_force(&p1, bond_map_id)==2){
+	      exit(1);
+	    };
+            
+          }
+          // Iterate, increase by the number of partners of this bond + 1 for bond type
+          j += n_partners+1;
+        }//while
+      }//if soft id
+    }//for cell
+  }// for cells
+}
+#endif //BOND_CLASS_DEBUG
 
 
 #endif
