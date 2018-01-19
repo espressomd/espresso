@@ -51,6 +51,9 @@ from globals cimport max_seen_particle
 from espressomd.utils import array_locked, is_valid_type
 from espressomd.virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 
+IF COLLISION_DETECTION == 1:
+    from .collision_detection import CollisionDetection
+
 import sys
 import random  # for true random numbers from os.urandom()
 
@@ -91,6 +94,7 @@ cdef class System(object):
         constraints
         lbboundaries
         ekboundaries
+        collision_detection
         __seed
         cuda_init_handle
         comfixed
@@ -117,6 +121,8 @@ cdef class System(object):
             if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
                 self.lbboundaries = LBBoundaries()
                 self.ekboundaries = EKBoundaries()
+            IF COLLISION_DETECTION==1:
+                self.collision_detection = CollisionDetection()
             IF CUDA:
                 self.cuda_init_handle = cuda_init.CudaInitHandle()
 
