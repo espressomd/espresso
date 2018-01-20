@@ -104,6 +104,8 @@ int Bond::OifGlobalForces::calc_oif_global(Particle* p1, int bl_id, double* part
   else{
     return 2;
   };
+
+  return 1;
 }
 
 int Bond::OifGlobalForces::add_bonded_energy(Particle *p1, int bl_id)
@@ -260,7 +262,8 @@ int Bond::OifGlobalForces::add_bonded_force(Particle *p1, int bl_id)
   else{
     return 2;
   };
-  
+
+  return 1;
 }
 
 

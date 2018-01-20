@@ -185,6 +185,9 @@ int overlapped_bonded_set_params(int bond_type, OverlappedBondedInteraction over
         bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::OverlapBondDihedral>
 		     (input_filename, Bond::OverlappedBondedInteraction::OVERLAP_BOND_DIHEDRAL, 
 		      input_maxval, input_noverlaps, input_para_a, input_para_b, input_para_c));
+
+  case OVERLAP_UNKNOWN:
+    return 0;
   };
 
 
