@@ -107,7 +107,7 @@ __device__ void dds_sumReduction_BH(dds_float *input, dds_float *sum)
 
 __global__ void initializationKernel()
 {
-	register int ind;
+	int ind;
 	ind = IND;
 	if (ind == 0) {
 		*errd = 0;
@@ -124,10 +124,10 @@ __global__
 __launch_bounds__(THREADS1, FACTOR1)
 void boundingBoxKernel()
 {
-	register int i, j, k, l, t, inc, n_blocks;
-	register float val;
+	int i, j, k, l, t, inc, n_blocks;
+	float val;
 	// min/max positions per the thread:
-	register float minp[3], maxp[3];
+	float minp[3], maxp[3];
 	// min/max positions per block:
 	__shared__ volatile float smin[3*THREADS1], smax[3*THREADS1];
 	for (l = 0; l < 3; l++) {
@@ -237,13 +237,13 @@ __launch_bounds__(THREADS2, FACTOR2)
 void treeBuildingKernel()
 {
     //
-	register int i, j, k, l, depth, localmaxdepth, skip, inc;
-	register float r;
-	register float pos[3];
-	register float p[3];
-	register int ch, n, cell, locked, patch;
-	register float radius;
-	register float root[3];
+	int i, j, k, l, depth, localmaxdepth, skip, inc;
+	float r;
+	float pos[3];
+	float p[3];
+	int ch, n, cell, locked, patch;
+	float radius;
+	float root[3];
 
 	// Radius is determined in boundingBoxKernel
 	radius = radiusd;
@@ -448,12 +448,12 @@ __global__
 __launch_bounds__(THREADS3, FACTOR3)
 void summarizationKernel()
 {
-	register int i, j, k, l, ch, inc, missing, cnt, bottom;
+	int i, j, k, l, ch, inc, missing, cnt, bottom;
 	// the node "mass" and its count respectively:
-	register float m, cm;
+	float m, cm;
 	// position of equivalent total dipole and its magnitude:
 	// (like a mass and the center of mass)
-	register float p[3], u[3];
+	float p[3], u[3];
 	// Per-block BH tree cashing:
 	__shared__ volatile int child[THREADS3 * 8];
 
@@ -585,7 +585,7 @@ __global__
 __launch_bounds__(THREADS4, FACTOR4)
 void sortKernel()
 {
-	register int i, k, ch, dec, start, bottom;
+	int i, k, ch, dec, start, bottom;
 
 	bottom = bottomd;
 	dec = blockDim.x * gridDim.x;
@@ -636,12 +636,12 @@ __launch_bounds__(THREADS5, FACTOR5)
 void forceCalculationKernel(dds_float pf,
 	     float *force, float* torque, dds_float box_l[3], int periodic[3])
 {
-	register int i, j, k, l, n, depth, base, sbase, diff, t;
-	register float tmp;
+	int i, j, k, l, n, depth, base, sbase, diff, t;
+	float tmp;
 	// dr is a distance between particles.
 	// f,h, and N are a target force, field, and torque respectively.
 	// u and uc are dipole moments of two particles.
-	register float dr[3], f[3], h[3], u[3], uc[3], N[3];
+	float dr[3], f[3], h[3], u[3], uc[3], N[3];
 	// Shared memory aggregates of each warp-specific stacks
 	// with the MAXDEPTH size per each warp:
 	// "node" is the BH octant sub-cell in the stack.
@@ -651,7 +651,6 @@ void forceCalculationKernel(dds_float pf,
 	__shared__ float dq[MAXDEPTH * THREADS5/WARPSIZE];
 	float b, b2, d1, dd5;
 	float bb2d7, umd5;
-	float pow3s2d2, flj;
 
 	// Zero thread of the block initialize shared data for all warps.
 	if (0 == threadIdx.x) {
@@ -835,16 +834,15 @@ void energyCalculationKernel(dds_float pf,
 {
     // NOTE: the algorithm of this kernel is almost identical to forceCalculationKernel. See comments there.
 
-	register int i, j, k, l, n, depth, base, sbase, diff, t;
-	register float tmp;
-	register float dr[3], h[3], u[3], uc[3];
+	int i, j, k, l, n, depth, base, sbase, diff, t;
+	float tmp;
+	float dr[3], h[3], u[3], uc[3];
 	__shared__ volatile int pos[MAXDEPTH * THREADS5/WARPSIZE], node[MAXDEPTH * THREADS5/WARPSIZE];
 	__shared__ float dq[MAXDEPTH * THREADS5/WARPSIZE];
 	dds_float sum=0.0;
 	extern __shared__ dds_float res[];
 
 	float b, d1, dd5;
-	float pow3s2d2, flj;
 
 	if (0 == threadIdx.x) {
 		tmp = radiusd;
@@ -950,54 +948,56 @@ void energyCalculationKernel(dds_float pf,
 	// the Barnes-Hut algorithm, probably, does not allow to avoid this /2 cause it is not symmetric:
     sum /= 2.0f;
     // Save per thread result into block shared mem
-    res[threadIdx.x] =sum;
+    res[threadIdx.x] = sum;
     // Sum results within a block
     __syncthreads(); // Wait til all threads in block are done
     dds_sumReduction_BH(res,&(energySum[blockIdx.x]));
 }
 
-
-// Cuda-specific error handling wrapper
-static void CudaTest(char *msg) {
-	cudaError_t e;
-
-	cudaThreadSynchronize();
-	if (cudaSuccess != (e = cudaGetLastError())) {
-		fprintf(stderr, "%s: %d\n", msg, e);
-		fprintf(stderr, "%s\n", cudaGetErrorString(e));
-		exit(-1);
-	}
-}
-
 // Required BH CUDA init.
 void initBHgpu(int blocks) {
-	initializationKernel<<<blocks * FACTOR5, THREADS5>>>();
-	CudaTest("init kernel launch failed");
+    dim3 grid(1,1,1);
+    dim3 block(1,1,1);
+
+    grid.x = blocks * FACTOR5;
+    block.x = THREADS5;
+
+	KERNELCALL(initializationKernel,grid,block,());
 
 	// According to the experimental performance optimization:
-	cudaFuncSetCacheConfig(boundingBoxKernel, cudaFuncCachePreferShared);
 	cudaFuncSetCacheConfig(boundingBoxKernel, cudaFuncCachePreferShared);
 	cudaFuncSetCacheConfig(treeBuildingKernel, cudaFuncCachePreferL1);
 	cudaFuncSetCacheConfig(summarizationKernel, cudaFuncCachePreferShared);
 	cudaFuncSetCacheConfig(sortKernel, cudaFuncCachePreferL1);
 	cudaFuncSetCacheConfig(forceCalculationKernel, cudaFuncCachePreferL1);
+	cudaFuncSetCacheConfig(energyCalculationKernel, cudaFuncCachePreferL1);
 
 	cudaGetLastError();	// reset error value
 }
 
 // Building Barnes-Hut spatial min/max position box
 void buildBoxBH(int blocks) {
-	cudaThreadSynchronize();
-	boundingBoxKernel<<<blocks * FACTOR1, THREADS1>>>();
-	CudaTest("kernel 1 launch failed");
+    dim3 grid(1,1,1);
+    dim3 block(1,1,1);
+
+    grid.x = blocks * FACTOR1;
+    block.x = THREADS1;
+
+    cudaThreadSynchronize();
+	KERNELCALL(boundingBoxKernel,grid,block,());
 	cudaThreadSynchronize();
 }
 
 // Building Barnes-Hut tree in a linear childd array representation
 // of octant cells and particles inside.
 void buildTreeBH(int blocks) {
-	treeBuildingKernel<<<blocks * FACTOR2, THREADS2>>>();
-	CudaTest("kernel 2 launch failed");
+    dim3 grid(1,1,1);
+    dim3 block(1,1,1);
+
+    grid.x = blocks * FACTOR2;
+    block.x = THREADS2;
+
+	KERNELCALL(treeBuildingKernel,grid,block,());
 	cudaThreadSynchronize();
 }
 
@@ -1005,16 +1005,26 @@ void buildTreeBH(int blocks) {
 // Determine cells centers of mass and total dipole moments
 // on all possible levels of the BH tree.
 void summarizeBH(int blocks) {
-	summarizationKernel<<<blocks * FACTOR3, THREADS3>>>();
-	CudaTest("kernel 3 launch failed");
+    dim3 grid(1,1,1);
+    dim3 block(1,1,1);
+
+    grid.x = blocks * FACTOR3;
+    block.x = THREADS3;
+
+    KERNELCALL(summarizationKernel,grid,block,());
 	cudaThreadSynchronize();
 }
 
 // Sort particle indexes according to the BH tree representation.
 // Crucial for the per-warp perfomance tuning of forceCalculationKernel and energyCalculationKernel.
 void sortBH(int blocks) {
-	sortKernel<<<blocks * FACTOR4, THREADS4>>>();
-	CudaTest("kernel 4 launch failed");
+    dim3 grid(1,1,1);
+    dim3 block(1,1,1);
+
+    grid.x = blocks * FACTOR4;
+    block.x = THREADS4;
+
+	KERNELCALL(sortKernel,grid,block,());
 	cudaThreadSynchronize();
 }
 
@@ -1022,17 +1032,21 @@ void sortBH(int blocks) {
 void forceBH(int blocks, dds_float k, float* f, float* torque, dds_float box_l[3],int periodic[3]) {
 	dds_float* box_l_gpu;
 	int* periodic_gpu;
+	dim3 grid(1,1,1);
+	dim3 block(1,1,1);
+
+	grid.x = blocks * FACTOR5;
+	block.x = THREADS5;
 	cuda_safe_mem(cudaMalloc((void**)&box_l_gpu,3*sizeof(dds_float)));
 	cuda_safe_mem(cudaMalloc((void**)&periodic_gpu,3*sizeof(int)));
 	cuda_safe_mem(cudaMemcpy(box_l_gpu,box_l,3*sizeof(dds_float),cudaMemcpyHostToDevice));
 	cuda_safe_mem(cudaMemcpy(periodic_gpu,periodic,3*sizeof(int),cudaMemcpyHostToDevice));
 
-	forceCalculationKernel<<<blocks * FACTOR5, THREADS5>>>(k, f, torque, box_l_gpu, periodic_gpu);
-	CudaTest("kernel 5 launch failed");
+	KERNELCALL(forceCalculationKernel,grid,block,(k, f, torque, box_l_gpu, periodic_gpu));
 	cudaThreadSynchronize();
 
-	cudaFree(box_l_gpu);
-	cudaFree(periodic_gpu);
+	cuda_safe_mem(cudaFree(box_l_gpu));
+	cuda_safe_mem(cudaFree(periodic_gpu));
 }
 
 // Energy calculation.
@@ -1053,8 +1067,7 @@ void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float*
 	dds_float *energySum;
 	cuda_safe_mem(cudaMalloc(&energySum,(int)(sizeof(dds_float)*grid.x)));
 
-	energyCalculationKernel<<<grid, block, THREADS5*sizeof(dds_float)>>>(k, box_l_gpu, periodic_gpu,energySum);
-	CudaTest("kernel 6 launch failed");
+	KERNELCALL_shared(energyCalculationKernel,grid,block,block.x*sizeof(dds_float),(k, box_l_gpu, periodic_gpu,energySum));
 	cudaThreadSynchronize();
 
 	// Sum the results of all blocks

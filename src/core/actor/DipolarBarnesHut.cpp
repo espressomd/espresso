@@ -31,7 +31,7 @@
 void activate_dipolar_barnes_hut(float epssq, float itolsq)
 {
     if (dipolarBarnesHut)
-        free(dipolarBarnesHut);
+        delete dipolarBarnesHut;
 
     // also necessary on 1 CPU or GPU, does more than just broadcasting
     mpi_bcast_coulomb_params();
