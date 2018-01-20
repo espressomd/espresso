@@ -233,7 +233,7 @@ The parameter :math:`\Gamma`  is defined as
 
 where :math:`q_i` and :math:`\Lambda_i` are the single-particle partition function and
 thermal wavelength of species :math:`i`. In the absence of intermolecular interactions
-(ideal gas or ideal solution), :math:`\Gamma` proportional to the concentration-based reaction constant
+(ideal gas or ideal solution), :math:`\Gamma` the concentration-based reaction constant.
 
 .. math::
 

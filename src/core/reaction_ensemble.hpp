@@ -89,8 +89,6 @@ public:
 
   std::vector<SingleReaction> reactions;
   std::map<int, double> charges_of_types;
-  //double standard_pressure_in_simulation_units = -10.0;
-  //double standard_pressure_in_simulation_units = 1.0;
   double temperature = -10.0;
   double exclusion_radius =
       0.0; // this is used as a kind of hard sphere radius, if

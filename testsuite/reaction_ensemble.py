@@ -42,9 +42,7 @@ class ReactionEnsembleTest(ut.TestCase):
     temperature = 1.0
     exclusion_radius = 1.0
     # could be in this test for example anywhere in the range 0.000001 ... 9,
-    # chosen for example like 8.8*np.random.random()+0.2
-    # FIXME choose desired alpha and then calculate Ka based on the desired alpha
-    # use alpha close to 0.5 to get good statistics in few steps, 
+    # use alpha not too far from 0.5 to get good statistics in few steps, 
     # with alpha close to 1.0 or 0.0 the reaction ensemble statistics differs from the ideal titration
     K_HA_diss = (8.8 * 0.5 + 0.2)*0.00108; # Hard-coded numbers to reproduce the original test of Jonas
     print("Ka:", K_HA_diss);

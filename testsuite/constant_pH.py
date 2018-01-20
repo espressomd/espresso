@@ -37,17 +37,12 @@ class ReactionEnsembleTest(ut.TestCase):
     type_H = 5
     temperature = 1.0
     # avoid extreme regions in the titration curve e.g. via the choice
-    # (np.random.random()-0.5)
-#    target_alpha=0.5; # choose target alpha close to 0.5 to get good statistics in a small number of steps
-#    Ka=target_alpha*target_alpha/(1.0-target_alpha)*c0; # determine Ka which corresponds to the desired c0 and alpha
-#    pKa=-np.log10(Ka);
+    # choose target alpha not too far from 0.5 to get good statistics in a small number of steps
     pKa_minus_pH = 1
+    pH = pKa_minus_pH  # or randomly via: 4*np.random.random()
     pH = 2  # or randomly via: 4*np.random.random()
     pKa = pKa_minus_pH + pH
-    # could be in this test for example anywhere in the range 0.000001 ... 9
     K_HA_diss_apparent = 10**(-pKa)
-    #K_HA_diss_apparent = 10**(-pKa)*0.00108; # first, ensure that by removing standard pressure we obtain the same hard-coded numbers as before
-    #print("pKa:", pKa, "pk_pKa:", -np.log10(K_HA_diss_pk));
     box_l = (N0 / c0)**(1.0 / 3.0)
     system = espressomd.System()
     system.seed = system.cell_system.get_state()['n_nodes'] * [2]
