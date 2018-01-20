@@ -103,7 +103,7 @@ int Bond::IbmVolumeConservation::get_soft_ID(Particle *p1, int bl_id, int *softI
     return 2; // see BondContainer loop -> it return immediately and we can call exit(1)
   };
 
-};
+}
 
 int Bond::IbmVolumeConservation::calc_volumes(Particle *p1, int bl_id, double *tempVol)
 {
@@ -158,4 +158,4 @@ int Bond::IbmVolumeConservation::calc_volumes(Particle *p1, int bl_id, double *t
     return 2;
   };
 
-};
+}

@@ -29,7 +29,7 @@ void Bond::BondContainer::delete_bond(int bond_map_id)
   m_oif_global_forces_bonds.erase(bond_map_id);
   m_ibm_vol_con_bonds.erase(bond_map_id);
 
-};
+}
 
 // private function which casts base classes into concrete classes
 void Bond::BondContainer::sort_bond_into_lists(int bond_map_id)
@@ -161,7 +161,7 @@ int Bond::BondContainer::oif_global_loop(Particle *p1, double* partArea, double*
   return loop_over_bond_partners(m_oif_global_forces_bonds, &OifGlobalForces::calc_oif_global,
 				 p1, partArea, VOL_partVol);
 
-};
+}
 
 int Bond::BondContainer::oif_global_force_loop(Particle *p1)
 {
@@ -169,7 +169,7 @@ int Bond::BondContainer::oif_global_force_loop(Particle *p1)
   return loop_over_bond_partners(m_oif_global_forces_bonds, &OifGlobalForces::add_bonded_force,
 				 p1);
 
-};
+}
 
 int Bond::BondContainer::ibm_vol_con_softID_loop(Particle *p1, int *softID, int *bond_map_id)
 {
@@ -177,7 +177,7 @@ int Bond::BondContainer::ibm_vol_con_softID_loop(Particle *p1, int *softID, int 
   return loop_over_bond_partners(m_ibm_vol_con_bonds, &IbmVolumeConservation::get_soft_ID, p1,
 				 softID, bond_map_id);
 
-};
+}
 
 Bond::Bond* Bond::BondContainer::get_Bond(int bond_map_id)
 {
@@ -189,7 +189,7 @@ Bond::Bond* Bond::BondContainer::get_Bond(int bond_map_id)
     return m_all_bonds[bond_map_id].get();
   };
 
-};
+}
 
 Bond::IbmVolumeConservation* Bond::BondContainer::get_IBM_Vol_Con_Bond(int bond_map_id)
 {

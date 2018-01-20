@@ -238,4 +238,6 @@ int Bond::IbmTriel::ResetParams(double k1, double l0){
   m_b1 = b1;
   m_b2 = b2;
 
+  return 0;
+
 }
