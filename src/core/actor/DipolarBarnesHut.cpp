@@ -48,12 +48,12 @@ void deactivate_dipolar_barnes_hut()
     {
         forceActors.remove(dipolarBarnesHut);
         energyActors.remove(dipolarBarnesHut);
-        delete(dipolarBarnesHut);
-        dipolarBarnesHut=NULL;
+        delete dipolarBarnesHut;
+        dipolarBarnesHut = nullptr;
     }
 }
 
-DipolarBarnesHut *dipolarBarnesHut=0;
+DipolarBarnesHut *dipolarBarnesHut = nullptr;
 
 #endif
 
