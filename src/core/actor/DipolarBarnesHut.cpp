@@ -30,12 +30,11 @@
 
 void activate_dipolar_barnes_hut(float epssq, float itolsq)
 {
-    if (dipolarBarnesHut)
-        delete dipolarBarnesHut;
-
+    delete dipolarBarnesHut;
+    dipolarBarnesHut = nullptr;
     // also necessary on 1 CPU or GPU, does more than just broadcasting
     mpi_bcast_coulomb_params();
-    dipolarBarnesHut =new DipolarBarnesHut(espressoSystemInterface, epssq, itolsq);
+    dipolarBarnesHut = new DipolarBarnesHut(espressoSystemInterface, epssq, itolsq);
     forceActors.push_back(dipolarBarnesHut);
     energyActors.push_back(dipolarBarnesHut);
 
@@ -48,9 +47,9 @@ void deactivate_dipolar_barnes_hut()
     {
         forceActors.remove(dipolarBarnesHut);
         energyActors.remove(dipolarBarnesHut);
+    }
         delete dipolarBarnesHut;
         dipolarBarnesHut = nullptr;
-    }
 }
 
 DipolarBarnesHut *dipolarBarnesHut = nullptr;
