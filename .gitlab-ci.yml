@@ -53,7 +53,7 @@ maxset-osx:
   stage: build
   script:
     - export myconfig=maxset with_coverage=true
-    - bash maintainer/cuda_build.sh
+    - bash maintainer/travis/build_cmake.sh
   tags:
     - mac
 
