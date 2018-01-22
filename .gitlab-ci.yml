@@ -52,7 +52,7 @@ maxset:
 maxset-osx:
   stage: build
   script:
-    - export myconfig=maxset with_coverage=true
+    - export myconfig=maxset
     - bash maintainer/travis/build_cmake.sh
   tags:
     - mac
