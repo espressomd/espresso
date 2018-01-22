@@ -16,7 +16,11 @@ public:
         {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
          std::make_pair(min_z, max_z)}};
     Utils::CylindricalHistogram<double> histogram(n_bins, 1, limits);
-    auto folded_positions = Utils::get_folded_positions(ids());
+    std::vector<::Vector<3, double>> folded_positions;
+    std::transform(ids().begin(), ids().end(),
+                   std::back_inserter(folded_positions), [&partCfg](int id) {
+                     return ::Vector<3, double>(folded_position(partCfg[id]));
+                   });
     for (auto &p : folded_positions) {
       p -= center;
       histogram.update(Utils::transform_pos_to_cylinder_coordinates(p, axis));

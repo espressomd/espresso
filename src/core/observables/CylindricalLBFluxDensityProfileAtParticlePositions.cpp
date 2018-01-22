@@ -37,7 +37,11 @@ operator()(PartCfg &partCfg) const {
 #ifdef LB_GPU
   // First collect all positions (since we want to call the LB function to
   // get the fluid velocities only once).
-  auto folded_positions = Utils::get_folded_positions(ids());
+  std::vector<::Vector<3, double>> folded_positions;
+  std::transform(ids().begin(), ids().end(),
+                 std::back_inserter(folded_positions), [&partCfg](int id) {
+                   return ::Vector<3, double>(folded_position(partCfg[id]));
+                 });
   std::vector<double> ppos(3 * ids().size());
   for (auto it = folded_positions.begin(); it != folded_positions.end(); ++it) {
     size_t ind = std::distance(folded_positions.begin(), it);

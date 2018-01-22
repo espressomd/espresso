@@ -61,24 +61,5 @@ transform_vel_to_cylinder_coordinates(const ::Vector<3, double> &vel,
   return ::Vector<3, double>{v_r, v_phi, v_z};
 }
 
-inline std::vector<::Vector<3, double>>
-get_folded_positions(std::vector<int> ids) {
-  std::vector<::Vector<3, double>> folded_positions;
-  for (int id : ids) {
-    folded_positions.push_back(
-        ::Vector<3, double>(folded_position(partCfg()[id])));
-  }
-  return folded_positions;
-}
-
-inline std::vector<::Vector<3, double>> get_velocities(std::vector<int> ids) {
-  std::vector<::Vector<3, double>> velocities;
-  for (int id : ids) {
-    velocities.push_back(::Vector<3, double>{
-        {partCfg()[id].m.v[0], partCfg()[id].m.v[1], partCfg()[id].m.v[2]}});
-  }
-  return velocities;
-}
-
 } // namespace Utils
 #endif
