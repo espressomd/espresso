@@ -49,6 +49,14 @@ maxset:
     - build/
     expire_in: 4 weeks
 
+maxset:
+  stage: build
+  script:
+    - export myconfig=maxset with_coverage=true
+    - bash maintainer/cuda_build.sh
+  tags:
+    - mac
+
 clang-static-analysis:
   stage: build
   image: espressomd/espresso-ubuntu-clang-cuda:latest
