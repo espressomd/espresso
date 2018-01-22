@@ -1,5 +1,5 @@
 from __future__ import print_function
-from espressomd.interactions import BondedCoulombP3MSRBond
+import espressomd.interactions 
 from espressomd import has_features
 
 # Dict with drude type infos
@@ -126,7 +126,7 @@ def setup_intramol_exclusion_bonds(system, mol_drude_types, mol_core_types, mol_
             #...excluding the drude core partner
             if drude_dict[td]["core_type"] != tc:
                 qd = drude_dict[td]["q"]  # Drude charge
-                subtr_p3m_sr_bond = BondedCoulombP3MSRBond(q1q2=-qd * qp)
+                subtr_p3m_sr_bond = espressomd.interactions.BondedCoulombP3MSRBond(q1q2=-qd * qp)
                 system.bonded_inter.add(subtr_p3m_sr_bond)
                 drude_dict[td]["subtr_p3m_sr_bonds"][tc] = subtr_p3m_sr_bond
                 if verbose:
