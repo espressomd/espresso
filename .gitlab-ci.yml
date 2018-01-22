@@ -49,7 +49,7 @@ maxset:
     - build/
     expire_in: 4 weeks
 
-maxset:
+maxset-osx:
   stage: build
   script:
     - export myconfig=maxset with_coverage=true
