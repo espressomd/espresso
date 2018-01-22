@@ -139,6 +139,7 @@ else
     myconfig_file=$MYCONFIG_DIR/$myconfig.hpp
     if [ ! -e "$myconfig_file" ]; then
         echo "$myconfig_file does not exist!"
+        ls $MYCONFIG_DIR
         exit 1
     fi
     echo "Copying $myconfig.hpp to $builddir/myconfig.hpp..."
