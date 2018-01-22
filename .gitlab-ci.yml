@@ -51,8 +51,6 @@ maxset:
 
 maxset-osx:
   stage: build
-  variables:
-    GIT_STRATEGY: clone
   script:
     - export myconfig=maxset with_coverage=true
     - bash maintainer/cuda_build.sh
