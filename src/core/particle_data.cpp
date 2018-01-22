@@ -928,7 +928,8 @@ void local_remove_particle(int part) {
   pl->n--;
 }
 
-void local_place_particle(int part, double p[3], int _new) {
+void local_place_particle(int part, const double p[3], int _new)
+{
   Cell *cell;
   double pp[3];
   int i[3], rl;

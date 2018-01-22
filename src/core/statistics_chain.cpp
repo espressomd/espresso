@@ -197,7 +197,7 @@ void calc_rh(PartCfg & partCfg, double **_rh) {
   *_rh = rh = Utils::realloc(rh, 2 * sizeof(double));
 
   prefac = 0.5 * chain_length *
-           chain_length; /* 1/N^2 is not a normalization factor */
+           (chain_length -1 ); /* 1/N^2 is not a normalization factor */
   for (p = 0; p < chain_n_chains; p++) {
     ri = 0.0;
     for (i = chain_start + chain_length * p;
@@ -226,7 +226,7 @@ void calc_rh_av(double **_rh) {
   double dx, dy, dz, r_H = 0.0, r_H2 = 0.0, *rh = nullptr, ri = 0.0, prefac, tmp;
   *_rh = rh = Utils::realloc(rh, 2 * sizeof(double));
 
-  prefac = 0.5 * chain_length * chain_length;
+  prefac = 0.5 * chain_length * (chain_length - 1);
   for (k = 0; k < n_configs; k++) {
     for (p = 0; p < chain_n_chains; p++) {
       ri = 0.0;

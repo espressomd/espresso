@@ -26,10 +26,13 @@ class AnalyzeEnergy(ut.TestCase):
         self.system.non_bonded_inter[1, 1].lennard_jones.set_params(
             epsilon=1.0, sigma=1.0,
             cutoff=2**(1. / 6.), shift="auto")
-        self.system.part.add(id=0, pos=[1, 2, 2], type=0)
-        self.system.part.add(id=1, pos=[5, 2, 2], type=0)
         self.system.thermostat.set_langevin(kT=0., gamma=1.)
         self.system.bonded_inter.add(self.harmonic)
+
+    def setUp(self):
+        self.system.part.clear()
+        self.system.part.add(id=0, pos=[1, 2, 2], type=0)
+        self.system.part.add(id=1, pos=[5, 2, 2], type=0)
 
     def test_kinetic(self):
         self.system.part[0].pos = [1, 2, 2]
@@ -89,7 +92,7 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["bonded"], 6, delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 0., delta=1e-7)
         # two bonds
-        self.system.part[0].add_bond((self.harmonic, 1))
+        self.system.part[1].add_bond((self.harmonic, 0))
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["total"], 12, delta=1e-7)
         self.assertAlmostEqual(energy["kinetic"], 0., delta=1e-7)
@@ -97,6 +100,7 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["non_bonded"], 0., delta=1e-7)
         # bonds deleted
         self.system.part[0].delete_all_bonds()
+        self.system.part[1].delete_all_bonds()
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["total"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["kinetic"], 0., delta=1e-7)
@@ -116,7 +120,7 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["bonded"], 3. / 2., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 1., delta=1e-7)
         # two bonds
-        self.system.part[0].add_bond((self.harmonic, 1))
+        self.system.part[1].add_bond((self.harmonic, 0))
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["total"], 50. + 3 + 1., delta=1e-7)
         self.assertAlmostEqual(energy["kinetic"], 50., delta=1e-7)
