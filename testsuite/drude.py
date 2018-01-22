@@ -112,12 +112,12 @@ class Drude(ut.TestCase):
 
         S.thermostat.set_langevin(kT=temperature_com, gamma=gamma_com)
 
-        p3m=electrostatics.P3M(prefactor=coulomb_prefactor, accuracy=1e-4, mesh = [18,18,18], cao = 5)
+        p3m=espressomd.electrostatics.P3M(prefactor=coulomb_prefactor, accuracy=1e-4, mesh = [18,18,18], cao = 5)
 
         S.actors.add(p3m)
 
         #Drude Bond
-        drude_bond = interactions.DrudeBond(temp_com = temperature_com, gamma_com = gamma_com, temp_drude = temperature_drude, gamma_drude = gamma_drude, k = k_drude, r_cut = 1.0)
+        drude_bond = espressomd.interactions.DrudeBond(temp_com = temperature_com, gamma_com = gamma_com, temp_drude = temperature_drude, gamma_drude = gamma_drude, k = k_drude, r_cut = 1.0)
         S.bonded_inter.add(drude_bond)
 
         drude_helpers.add_drude_particle_to_core(S, S.part[0], drude_bond, 1, types["PF6_D"], polarizations["PF6"], mass_drude, coulomb_prefactor, 2.0)

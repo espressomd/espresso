@@ -45,7 +45,7 @@ inline void add_thole_pair_force(const Particle * const p1, const Particle * con
   double thole_s = ia_params->THOLE_scaling_coeff;
 
 #ifdef DRUDE
-  if (thole_s != 0 && thole_q1q2 != 0 && dist < p3m.params.r_cut && !(check_for_bond_between_particles(p1,p2, BONDED_IA_DRUDE))) {
+  if (thole_s != 0 && thole_q1q2 != 0 && dist < p3m.params.r_cut && !(pair_bond_enum_exists_between(p1,p2, BONDED_IA_DRUDE))) {
 #else
   if (thole_s != 0 && thole_q1q2 != 0 && dist < p3m.params.r_cut) {
 #endif
@@ -61,7 +61,7 @@ inline void add_thole_pair_force(const Particle * const p1, const Particle * con
     // Everything before q1q2/r^2 can be used as a factor for the p3m_add_pair_force method
     double sr = thole_s * dist;
     double dS_r = 0.5 * (  2.0 - ( exp(-sr) * (sr * (sr + 2.0) + 2.0) ) ); 
-    //Add damped p3m shortrange of diploe term
+    //Add damped p3m shortrange of dipole term
     p3m_add_pair_force(thole_q1q2*dS_r, d, dist2, dist, force);
     
 
@@ -81,7 +81,7 @@ inline double thole_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_pa
     double thole_q1q2 = ia_params->THOLE_q1q2;
 
     #ifdef DRUDE
-      if (thole_s != 0 && thole_q1q2 != 0 && dist < p3m.params.r_cut && !(check_for_bond_between_particles(p1,p2, BONDED_IA_DRUDE))) {
+      if (thole_s != 0 && thole_q1q2 != 0 && dist < p3m.params.r_cut && !(pair_bond_enum_exists_between(p1,p2, BONDED_IA_DRUDE))) {
     #else
       if (thole_s != 0 && thole_q1q2 != 0 && dist < p3m.params.r_cut) {
     #endif

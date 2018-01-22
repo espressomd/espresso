@@ -1034,6 +1034,20 @@ and involved types.
 
 The samples section contains the script *drude_bmimpf6.py* with a fully
 polarizable, coarse grained ionic liquid where this approach is applied.
+To use the script, compile espresso with the following features::
+
+    #define EXTERNAL_FORCES
+    #define MASS
+    #define LANGEVIN_PER_PARTICLE
+    #define ROTATION
+    #define ROTATIONAL_INERTIA
+    #define ELECTROSTATICS
+    #define VIRTUAL_SITES_RELATIVE
+    #define LENNARD_JONES
+    #define DRUDE
+    #define THOLE
+    #define GHOSTS_HAVE_BONDS
+
 
 Subtracted Lennard-Jones bond
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

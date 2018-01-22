@@ -102,8 +102,6 @@ enum BondedInteraction {
   BONDED_IA_UMBRELLA,
   /** Type of bonded interaction is drude. */
   BONDED_IA_DRUDE,
-  /** Type of bonded interaction is a BONDED_COULOMB */
-  BONDED_IA_BONDED_COULOMB,
   /** Type of bonded interaction is a BONDED_COULOMB_P3M_SR */
   BONDED_IA_BONDED_COULOMB_P3M_SR,
 };
@@ -987,20 +985,41 @@ inline bool pair_bond_exists_on(const Particle* const p, const Particle* const p
 * 
 * @param P
 * @param p1          particle on which the bond may be stored
+* @param p2    	     bond partner
+* @param bond        enum bond type */ 
+inline bool pair_bond_enum_exists_on(const Particle * const p_bond, const Particle * const p_partner, BondedInteraction bond)
+{
+    Bonded_ia_parameters *iaparams;
+    int type_num;
+    int i = 0;
+    while (i < p_bond->bl.n) {
+        type_num = p_bond->bl.e[i];
+        iaparams = &bonded_ia_params[type_num];
+        if (iaparams->type == (int)bond && p_bond->bl.e[i+1] == p_partner->p.identity) {
+            return true;
+        } else {
+            i+= iaparams->num + 1;
+        }
+    }
+    return false;
+}
+
+/** @brief Checks both particle for a specific bond. Needs GHOSTS_HAVE_BONDS if particles are ghosts.  
+* 
+* @param P
+* @param p1          particle on which the bond may be stored
 * @param p2    	     particle on which the bond may be stored
 * @param bond_type   numerical bond type */ 
-inline bool pair_bond_exists_between(const Particle * const p1, const Particle * const p2, int bond_type)
+inline bool pair_bond_enum_exists_between(const Particle * const p1, const Particle * const p2, BondedInteraction bond)
 {
     if (p1==p2)
         return false;
     else {
         //Check if particles have bonds (bl.n > 0) and search for the bond of interest with are_bonded().
         //Could be saved on both sides (and both could have other bonds), so we need to check both.
-        return (p1->bl.n > 0 && pair_bond_exists_on(p1, p2, bond_type)) || (p2->bl.n > 0 && pair_bond_exists_on(p2, p1, bond_type)); 
+        return (p1->bl.n > 0 && pair_bond_enum_exists_on(p1, p2, bond)) || (p2->bl.n > 0 && pair_bond_enum_exists_on(p2, p1, bond)); 
     }
 }
-
-
 
 #include "utils/math/sqr.hpp"
 

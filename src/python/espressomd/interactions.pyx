@@ -2077,6 +2077,62 @@ if DRUDE:
             drude_set_params(
                 self._bond_id,  self._params["temp_com"],  self._params["gamma_com"],  self._params["temp_drude"],  self._params["gamma_drude"], self._params["k"], self._params["r_cut"])
 
+IF THOLE:
+    cdef class TholeInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
+            return {
+                "scaling_coeff": ia_params.THOLE_scaling_coeff,
+                "q1q2": ia_params.THOLE_q1q2
+            }
+
+        def is_active(self):
+            return (self._params["scaling_coeff"] != 0)
+
+        def set_params(self, **kwargs):
+            """ Set parameters for the Thole interaction.
+
+            Parameters
+            ----------
+            scaling_coeff : :obj:`float`
+                            The facor used in the thole damping function between 
+                            polarizable particles i and j. Usually caluclated by 
+                            the polarizabilities alpha_i, alpha_j and damping 
+                            parameters  a_i, a_j via
+                            scaling_coeff = (a_i+a_j)/2 / ((alpha_i*alpha_j)^(1/2))^(1/3)
+            q1q2: :obj:`float`
+                  charge factor of the involved charges. Has to be set because 
+                  it acts only on the portion of the drude core charge that is 
+                  associated to the dipole of the atom. For charged, polarizable 
+                  atoms that charge is not equal to the particle charge property.
+
+            """
+            super(TholeInteraction, self).set_params(**kwargs)
+
+        def _set_params_in_es_core(self):
+            # Handle the case of shift="auto"
+            if thole_set_params(self._part_types[0], self._part_types[1],
+                                        self._params["scaling_coeff"],
+                                        self._params["q1q2"]):
+                raise Exception("Could not set Thole parameters")
+
+        def default_params(self):
+            return {"scaling_coeff": 0., "q1q2": 0.}
+
+        def type_name(self):
+            return "Thole"
+
+        def valid_keys(self):
+            return "scaling_coeff", "q1q2"
+
+        def required_keys(self):
+            return "scaling_coeff", "q1q2"
+
 IF ROTATION:
     class HarmonicDumbbellBond(BondedInteraction):
 
