@@ -97,7 +97,6 @@ S.cell_system.skin=0.4
 
 #FORCEFIELD
 types           = {"PF6":          0, "BMIM_C1":           1, "BMIM_C2":         2, "BMIM_C3":          3, "BMIM_COM":  4, "PF6_D": 5, "BMIM_C1_D": 6, "BMIM_C2_D": 7, "BMIM_C3_D": 8}
-inv_types = {v: k for k, v in types.iteritems()}
 charges         = {"PF6":      -0.78, "BMIM_C1":      0.4374, "BMIM_C2":    0.1578, "BMIM_C3":     0.1848, "BMIM_COM":  0}
 polarizations   = {"PF6":      4.653, "BMIM_C1":       5.693, "BMIM_C2":     2.103, "BMIM_C3":      7.409} 
 masses          = {"PF6":     144.96, "BMIM_C1":       67.07, "BMIM_C2":     15.04, "BMIM_C3":      57.12, "BMIM_COM":  0}

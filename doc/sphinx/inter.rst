@@ -1032,7 +1032,7 @@ combinations. No further calls of ``add_drude_particle_to_core()`` should
 follow. Set `verbose` to `True` to print out the coefficients, charge factors
 and involved types.
 
-The samples section contains the script *drude_bmimpf6.py* with a fully
+The samples folder contains the script *drude_bmimpf6.py* with a fully
 polarizable, coarse grained ionic liquid where this approach is applied.
 To use the script, compile espresso with the following features::
 
