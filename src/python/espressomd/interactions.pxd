@@ -161,10 +161,6 @@ IF THOLE:
     cdef extern from "thole.hpp":
         int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff, double q1q2);
 
-cdef extern from "forcecap.hpp":
-    double force_cap
-    int forcecap_set_params(double forcecap)
-
 cdef extern from "ljgen.hpp":
     IF LJGEN_SOFTCORE:
         cdef int ljgen_set_params(int part_type_a, int part_type_b,

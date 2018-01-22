@@ -913,18 +913,21 @@ particle::
 The arguments of the helper function are:
     * <system>: The espressomd.System().
     * <core particle>: The core particle on which the drude particle is added.
-    * <drude bond>: The drude bond, usually a single drude bond type can be used for all core-drude pairs if the parameters don't change.
+    * <drude bond>: The drude bond, usually a single drude bond type can be
+      used for all core-drude pairs if the parameters don't change.
     * <id drude>: The user-defined id of the drude particle that is created.
     * <type drude>: The user-defined type of the drude particle. If the Thole
-     correction is used, the Drude particles of each complex should have an
-     individual type (e.g. in an ionic system with Anions (type 0) and Cations
-     (type 1), Drude types should be 2 and 3).
+      correction is used, the Drude particles of each complex should have an
+      individual type (e.g. in an ionic system with Anions (type 0) and Cations
+      (type 1), Drude types should be 2 and 3).
     * <alpha>: The polarizability volume.
-    * <coulomb_prefactor>: The coulomb prefactor of the system. Used to calculate the drude charge from
-     the polarizability and the spring constant of the drude bond.  
+    * <coulomb_prefactor>: The coulomb prefactor of the system. Used to
+      calculate the drude charge from the polarizability and the spring constant
+      of the drude bond.  
     * <thole damping>: (optional) An individual thole damping parameter for the
-     core-drude pair. Only relevant if thole damping is used (defaults to 2.6).
-    * <verbose>: (bool, optional) Prints out information about the added Drude particles (default: False)
+      core-drude pair. Only relevant if thole damping is used (defaults to 2.6).
+    * <verbose>: (bool, optional) Prints out information about the added Drude
+      particles (default: False)
 
 Canceling intramolecular electrostatics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

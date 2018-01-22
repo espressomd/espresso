@@ -21,8 +21,8 @@ class Drude(ut.TestCase):
         
         S=espressomd.System()
 
-        S.seed = S.cell_system.get_state()['n_nodes'] * [1234]
-        np.random.seed(1234)
+        S.seed = S.cell_system.get_state()['n_nodes'] * [12]
+        np.random.seed(12)
 
         #Reference Results, reproduced with LAMMPS
         #Dipole Moments
