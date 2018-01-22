@@ -2,8 +2,8 @@ from __future__ import print_function
 import numpy as np
 import unittest as ut
 import espressomd
-from espressomd.electrostatics import P3M
-from espressomd.interactions import DrudeBond
+import espressomd.electrostatics 
+import espressomd.interactions
 from espressomd import drude_helpers
 
 class Drude(ut.TestCase):
@@ -88,7 +88,6 @@ class Drude(ut.TestCase):
 
         #Forcefield
         types           = {"PF6":          0, "BMIM_C1":           1, "BMIM_C2":         2, "BMIM_C3":          3, "BMIM_COM":  4, "PF6_D": 5, "BMIM_C1_D": 6, "BMIM_C2_D": 7, "BMIM_C3_D": 8}
-        inv_types = {v: k for k, v in types.iteritems()}
         charges         = {"PF6":      -0.78, "BMIM_C1":      0.4374, "BMIM_C2":    0.1578, "BMIM_C3":     0.1848, "BMIM_COM":  0}
         polarizations   = {"PF6":      4.653, "BMIM_C1":       5.693, "BMIM_C2":     2.103, "BMIM_C3":      7.409} 
         masses          = {"PF6":     144.96, "BMIM_C1":       67.07, "BMIM_C2":     15.04, "BMIM_C3":      57.12, "BMIM_COM":  0}
@@ -113,12 +112,12 @@ class Drude(ut.TestCase):
 
         S.thermostat.set_langevin(kT=temperature_com, gamma=gamma_com)
 
-        p3m=P3M(prefactor=coulomb_prefactor, accuracy=1e-4, mesh = [18,18,18], cao = 5)
+        p3m=electrostatics.P3M(prefactor=coulomb_prefactor, accuracy=1e-4, mesh = [18,18,18], cao = 5)
 
         S.actors.add(p3m)
 
         #Drude Bond
-        drude_bond = DrudeBond(temp_com = temperature_com, gamma_com = gamma_com, temp_drude = temperature_drude, gamma_drude = gamma_drude, k = k_drude, r_cut = 1.0)
+        drude_bond = interactions.DrudeBond(temp_com = temperature_com, gamma_com = gamma_com, temp_drude = temperature_drude, gamma_drude = gamma_drude, k = k_drude, r_cut = 1.0)
         S.bonded_inter.add(drude_bond)
 
         drude_helpers.add_drude_particle_to_core(S, S.part[0], drude_bond, 1, types["PF6_D"], polarizations["PF6"], mass_drude, coulomb_prefactor, 2.0)

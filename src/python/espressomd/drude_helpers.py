@@ -117,7 +117,7 @@ def setup_intramol_exclusion_bonds(system, mol_drude_types, mol_core_types, mol_
 
     """
 
-     # All drude types need...
+    # All drude types need...
     for td in mol_drude_types:
         drude_dict[td]["subtr_p3m_sr_bonds"] = {}
 
