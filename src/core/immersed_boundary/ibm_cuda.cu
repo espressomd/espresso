@@ -16,9 +16,9 @@
 #include "immersed_boundary/ibm_main.hpp"
 #include "immersed_boundary/ibm_cuda_interface.hpp"
 
-#if defined(OMPI_MPI_H) || defined(_MPI_H)
-#error CU-file includes mpi.h! This should not happen!
-#endif
+// To avoid include of communication.hpp in cuda file
+extern int this_node;
+
 
 // ****** Kernel functions for internal use ********
 __global__ void ResetLBForces_Kernel(LB_node_force_gpu node_f, const LB_parameters_gpu *const paraP);

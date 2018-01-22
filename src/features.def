@@ -126,8 +126,7 @@ COULOMB_DEBYE_HUECKEL           requires ELECTROSTATICS
 
 /* Immersed-Boundary Bayreuth version */
 IMMERSED_BOUNDARY
-IMMERSED_BOUNDARY               requires not VIRTUAL_SITES_RELATIVE
-IMMERSED_BOUNDARY               requires not VIRTUAL_SITES_COM
+IMMERSED_BOUNDARY               requires VIRTUAL_SITES
 IMMERSED_BOUNDARY               requires not SHANCHEN
 IMMERSED_BOUNDARY               requires not ELECTROKINETICS
 SCAFACOS_DIPOLES                requires SCAFACOS
