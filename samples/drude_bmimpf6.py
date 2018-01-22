@@ -11,6 +11,7 @@ from espressomd.visualization_opengl import *
 from threading import Thread
 from time import sleep
 from espressomd import drude_helpers
+from espressomd.virtual_sites import VirtualSitesRelative
 
 print("\nThis script demonstrates particle polarization with cold drude\n\
 oscillators. It is a coarse grained simulation of the ionic liquid BMIM PF6.\n\
@@ -38,12 +39,12 @@ print("\nArguments:", args)
 
 
 S=espressomd.System()
+S.virtual_sites=VirtualSitesRelative(have_velocity=True)
 
 if args.visu:
-    a = 0.2
-    d_scale= 0.4
+    d_scale= 0.988*0.5
     c_ani = [1,0,0,1]
-    c_dru = [0,0,1,a]
+    c_dru = [0,0,1,1]
     c_com = [0,0,0,1]
     c_cat = [0,1,0,1]
     visualizer = openGLLive(S, 
@@ -62,7 +63,7 @@ if not os.path.exists(args.path):
 
 #TIMESTEP
 fs_to_md_time = 1.0e-2
-time_step_fs = 2.0
+time_step_fs = 1.0
 time_step_ns = time_step_fs*1e-6
 dt = time_step_fs * fs_to_md_time
 S.time_step=dt
@@ -112,7 +113,7 @@ for t in lj_sigmas:
     lj_cuts[t] = cutoff_sigmafactor * lj_sigmas[t] 
 
 #NUM PARTICLES AND BOX
-n_ionpairs= 50
+n_ionpairs= 100
 n_part = n_ionpairs*2
 density_si = 0.5 ;#g/cm^3
 rho_factor_bmim_pf6 = 0.003931
@@ -168,7 +169,7 @@ for i in range(n_ionpairs):
     cation_com_ids.append(rid)
     com_id = rid
     rid+=1
-    S.part.add(id = rid, type = types["BMIM_C1"], pos = pos_com + [0, -0.527, 1.365], q = charges["BMIM_C1"], virtual = 1)
+    S.part.add(id = rid, type = types["BMIM_C1"], pos = pos_com + [0, -0.527, 1.365], q = charges["BMIM_C1"])
     S.part[rid].vs_auto_relate_to(com_id)
     cation_c1_ids.append(rid)
     cation_sites_ids.append(rid)
@@ -176,7 +177,7 @@ for i in range(n_ionpairs):
         rid += 2
     else:
         rid += 1
-    S.part.add(id = rid, type = types["BMIM_C2"], pos = pos_com + [0, 1.641, 2.987], q = charges["BMIM_C2"], virtual = 1)
+    S.part.add(id = rid, type = types["BMIM_C2"], pos = pos_com + [0, 1.641, 2.987], q = charges["BMIM_C2"])
     S.part[rid].vs_auto_relate_to(com_id)
     cation_c2_ids.append(rid)
     cation_sites_ids.append(rid)
@@ -184,7 +185,7 @@ for i in range(n_ionpairs):
         rid += 2
     else:
         rid += 1
-    S.part.add(id = rid, type = types["BMIM_C3"], pos = pos_com + [0, 0.187, -2.389], q = charges["BMIM_C3"], virtual = 1)
+    S.part.add(id = rid, type = types["BMIM_C3"], pos = pos_com + [0, 0.187, -2.389], q = charges["BMIM_C3"])
     S.part[rid].vs_auto_relate_to(com_id)
     cation_c3_ids.append(rid)
     cation_sites_ids.append(rid)
@@ -196,12 +197,12 @@ for i in range(n_ionpairs):
 #ENERGY MINIMIZATION
 print("\n-->E minimization")
 print("Before:",S.analysis.energy()["total"])
-S.minimize_energy.init(f_max = 10.0, gamma = 0.01, max_steps = 10000, max_displacement= 0.01)
+S.minimize_energy.init(f_max = 5.0, gamma = 0.01, max_steps = 100000, max_displacement= 0.01)
 S.minimize_energy.minimize()
 print("After:",S.analysis.energy()["total"])
 
 #ACTORS
-S.thermostat.set_langevin(kT=temperature_com, gamma=gamma_com)
+#S.thermostat.set_langevin(kT=temperature_com, gamma=gamma_com)
 
 if args.gpup3m:
     print("\n-->Tune P3M GPU")
@@ -227,19 +228,25 @@ if args.drude:
         drude_helpers.add_drude_particle_to_core(S, S.part[i], drude_bond, i+1, types["BMIM_C3_D"], polarizations["BMIM_C3"], args.mass_drude, coulomb_prefactor)
 
     if args.thole:
+    	print("-->Adding Thole interactions")
         drude_helpers.add_all_thole(S)
 
     if args.intra_ex:
         #SETUP BONDS ONCE
+    	print("-->Adding intramolecular exclusions")
         drude_helpers.setup_intramol_exclusion_bonds(S, [types["BMIM_C1_D"], types["BMIM_C2_D"], types["BMIM_C3_D"]], [types["BMIM_C1"], types["BMIM_C2"], types["BMIM_C3"]], [charges["BMIM_C1"], charges["BMIM_C2"], charges["BMIM_C3"]])
 
         #ADD SR EX BONDS PER MOLECULE
         for i in cation_c1_ids:
             drude_helpers.add_intramol_exclusion_bonds(S, [i+1,i+3,i+5], [i,i+2,i+4])
 
+#print("\n-->Tune skin")
+#S.cell_system.tune_skin(min_skin = 0.2, max_skin = 1.0, tol = 1e-4, int_steps = 500)
+#print("skin=",S.cell_system.skin)
+
 print("\n-->Short equilibration with smaller time step")
 S.time_step = 0.1 * fs_to_md_time
-S.integrator.run(100)
+S.integrator.run(1000)
 S.time_step = time_step_fs * fs_to_md_time
 
 
@@ -252,7 +259,7 @@ ns_per_day = 24.0 * ns_per_hour
 print("Yield:", ns_per_day, "ns/day")
 
 if args.visu:
-    visualizer.run(1)
+    visualizer.run(10)
 else:
     print("\n-->Equilibration")
     n_int_steps = 10
@@ -264,7 +271,7 @@ else:
 
     print("\n-->Integration")
 
-    n_int_steps = 100
+    n_int_steps = 1000
     n_int_cycles = int(args.walltime * 3600.0 / time_per_step / n_int_steps)
     print("Simulating for", args.walltime, "h, which is", n_int_cycles, "cycles x", n_int_steps, "steps, which is", args.walltime*ns_per_hour, "ns simulation time")
 
