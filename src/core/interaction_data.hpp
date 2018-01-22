@@ -29,6 +29,7 @@
 
 #include "TabulatedPotential.hpp"
 
+
 /** \name Type codes of bonded interactions
     Enumeration of implemented bonded interactions.
 */
@@ -47,6 +48,8 @@ enum BondedInteraction {
   BONDED_IA_HARMONIC_DUMBBELL,
   /** Type of bonded interaction is a QUARTIC potential. */
   BONDED_IA_QUARTIC,
+  /** Type of bonded interaction is a BONDED_COULOMB */
+  BONDED_IA_BONDED_COULOMB,
   /** Type of bonded interaction is a bond angle potential. */
   BONDED_IA_ANGLE_OLD,
   /** Type of bonded interaction is a dihedral potential. */
@@ -953,35 +956,51 @@ int virtual_set_params(int bond_type);
 void set_dipolar_method_local(DipolarInteraction method);
 #endif
 
-//Checks if there is a specific bond between p_bond and p_partner, where the bond is stored on p_bond. Needs GHOSTS_HAVE_BONDS if particles are ghosts.
-inline bool check_first_particle_for_bond_between_particles(const Particle * const p_bond, const Particle * const p_partner, BondedInteraction bond)
+
+/** @brief Checks if particle has a pair bond with a given partner  
+*  Note that bonds are stored only on one of the two particles in Espresso
+* 
+* @param P
+* @param p          particle on which the bond may be stored
+* @param partner    bond partner 
+* @param bond_type  numerical bond type */ 
+inline bool pair_bond_exists_on(const Particle* const p, const Particle* const partner, int bond_type)
 {
-    Bonded_ia_parameters *iaparams;
-    int type_num;
+  // First check the bonds of p1
+  if (p->bl.e) {
     int i = 0;
-    while (i < p_bond->bl.n) {
-        type_num = p_bond->bl.e[i];
-        iaparams = &bonded_ia_params[type_num];
-        if (iaparams->type == (int)bond && p_bond->bl.e[i+1] == p_partner->p.identity) {
-            return true;
-        } else {
-            i+= iaparams->num + 1;
-        }
+    while(i < p->bl.n) {
+      int size = bonded_ia_params[p->bl.e[i]].num;
+      
+      if (p->bl.e[i] == bond_type &&
+          p->bl.e[i + 1] == partner->p.identity) {
+        // There's a bond, already. Nothing to do for these particles
+        return true;
+      }
+      i += size + 1;
     }
-    return false;
+  }
+  return false;
 }
 
-//Checks both particles for a specific bond. Needs GHOSTS_HAVE_BONDS if particles are ghosts.
-inline bool check_for_bond_between_particles(const Particle * const p1, const Particle * const p2, BondedInteraction bond)
+/** @brief Checks both particle for a specific bond. Needs GHOSTS_HAVE_BONDS if particles are ghosts.  
+* 
+* @param P
+* @param p1          particle on which the bond may be stored
+* @param p2    	     particle on which the bond may be stored
+* @param bond_type   numerical bond type */ 
+inline bool pair_bond_exists_between(const Particle * const p1, const Particle * const p2, int bond_type)
 {
     if (p1==p2)
         return false;
     else {
         //Check if particles have bonds (bl.n > 0) and search for the bond of interest with are_bonded().
         //Could be saved on both sides (and both could have other bonds), so we need to check both.
-        return (p1->bl.n > 0 && check_first_particle_for_bond_between_particles(p1, p2, bond)) || (p2->bl.n > 0 && check_first_particle_for_bond_between_particles(p2, p1, bond)); 
+        return (p1->bl.n > 0 && pair_bond_exists_on(p1, p2, bond_type)) || (p2->bl.n > 0 && pair_bond_exists_on(p2, p1, bond_type)); 
     }
 }
+
+
 
 #include "utils/math/sqr.hpp"
 
@@ -992,13 +1011,16 @@ class VerletCriterion {
   const double m_eff_max_cut2;
   const double m_eff_coulomb_cut2 = 0.;
   const double m_eff_dipolar_cut2 = 0.;
+  const double m_collision_cut2 =0.;
 
 public:
   VerletCriterion(double skin, double max_cut, double coulomb_cut = 0.,
-                  double dipolar_cut = 0.)
+                  double dipolar_cut = 0., double collision_detection_cutoff=0.)
       : m_skin(skin), m_eff_max_cut2(Utils::sqr(max_cut + m_skin)),
         m_eff_coulomb_cut2(Utils::sqr(coulomb_cut + m_skin)),
-        m_eff_dipolar_cut2(Utils::sqr(dipolar_cut + m_skin)) {}
+        m_eff_dipolar_cut2(Utils::sqr(dipolar_cut + m_skin)), 
+        m_collision_cut2(Utils::sqr(collision_detection_cutoff))
+        {}
 
   template <typename Distance>
   bool operator()(const Particle &p1, const Particle &p2,
@@ -1017,6 +1039,13 @@ public:
 #ifdef DIPOLES
     if ((dist2 <= m_eff_dipolar_cut2) && (p1.p.dipm != 0) && (p2.p.dipm != 0))
       return true;
+#endif
+
+
+// Collision detectoin
+#ifdef COLLISION_DETECTION
+if (dist2 <= m_collision_cut2)
+  return true;
 #endif
 
     // Within short-range distance (incl dpd and the like)
