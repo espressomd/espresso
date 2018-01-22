@@ -84,7 +84,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         return func
 
     if espressomd.has_features("ELECTROSTATICS", "PARTIAL_PERIODIC"):
-        test_mmm1d = generateTestForElectrostaticInteraction(MMM1D, dict(bjerrum_length=2.0,
+        test_mmm1d = generateTestForElectrostaticInteraction(MMM1D, dict(prefactor=2.0,
                                                                     maxPWerror= 0.001, 
                                                                     far_switch_radius = 3, 
                                                                     tune=False))

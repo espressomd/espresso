@@ -48,7 +48,6 @@
 #define THERMO_NPT_ISO    4
 #define THERMO_LB         8
 #define THERMO_GHMC       32
-#define THERMO_CPU        64
 /*@}*/
 
 namespace Thermostat {
@@ -119,11 +118,6 @@ void thermo_heat_up();
 
 /** pendant to \ref thermo_heat_up */
 void thermo_cool_down();
-/** Get current temperature for CPU thermostat */
-int get_cpu_temp();
-
-/** Start the CPU thermostat */
-void set_cpu_temp(int temp);
 
 #ifdef ROTATION
 inline void thermo_define_rotation_matrix(Particle *p, double A[9]) {
@@ -251,7 +245,7 @@ inline void friction_thermo_langevin(Particle *p) {
 #ifdef VIRTUAL_SITES
 #ifndef VIRTUAL_SITES_THERMOSTAT
   // In this case, virtual sites are NOT thermostated
-  if (ifParticleIsVirtual(p)) {
+  if (p->p.isVirtual) {
     for (j = 0; j < 3; j++)
       p->f.f[j] = 0;
 
@@ -260,7 +254,7 @@ inline void friction_thermo_langevin(Particle *p) {
 #endif /* VIRTUAL_SITES_THERMOSTAT */
 #ifdef THERMOSTAT_IGNORE_NON_VIRTUAL
   // In this case NON-virtual particles are NOT thermostated
-  if (!ifParticleIsVirtual(p)) {
+  if (!p->p.isVirtual) {
     for (j = 0; j < 3; j++)
       p->f.f[j] = 0;
 

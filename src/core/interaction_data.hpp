@@ -29,6 +29,7 @@
 
 #include "TabulatedPotential.hpp"
 
+
 /** \name Type codes of bonded interactions
     Enumeration of implemented bonded interactions.
 */
@@ -467,8 +468,6 @@ struct IA_parameters {
 typedef struct {
 
 #ifdef ELECTROSTATICS
-  /** Bjerrum length. */
-  double bjerrum;
   /** bjerrum length times temperature. */
   double prefactor;
 
@@ -477,7 +476,6 @@ typedef struct {
 #endif
 
 #ifdef DIPOLES
-  double Dbjerrum;
   double Dprefactor;
   DipolarInteraction Dmethod;
 #endif
@@ -849,11 +847,19 @@ extern int ia_excl;
  ************************************************/
 
 #ifdef ELECTROSTATICS
-int coulomb_set_bjerrum(double bjerrum);
+/** @brief Set the electrostatics prefactor */
+int coulomb_set_prefactor(double prefactor);
+
+
+/** @brief Deactivates the current Coulomb mhthod 
+    This was part of coulomb_set_bjerrum()
+*/
+void deactivate_coulomb_method();
 #endif
 
 #ifdef DIPOLES
-int dipolar_set_Dbjerrum(double bjerrum);
+/** @brief Set the dipolar prefactor */
+int dipolar_set_Dprefactor(double prefactor);
 #endif
 
 /** get interaction parameters between particle sorts i and j */
@@ -893,9 +899,6 @@ void realloc_ia_params(int nsize);
     value is used in the verlet pair list algorithm. */
 void recalc_maximal_cutoff();
 
-/** call when the temperature changes, for Bjerrum length adjusting. */
-void recalc_coulomb_prefactor();
-
 /** check whether all force calculation routines are properly initialized. */
 int interactions_sanity_checks();
 
@@ -916,6 +919,33 @@ int virtual_set_params(int bond_type);
 void set_dipolar_method_local(DipolarInteraction method);
 #endif
 
+
+/** @brief Checks if particle has a pair bond with a given partner  
+*  Note that bonds are stored only on one of the two particles in Espresso
+* 
+* @param P
+* @param p          particle on which the bond may be stored
+* @param partner    bond partner 
+* @param bond_type  numerical bond type */ 
+inline bool pair_bond_exists_on(const Particle* const p, const Particle* const partner, int bond_type)
+{
+  // First check the bonds of p1
+  if (p->bl.e) {
+    int i = 0;
+    while(i < p->bl.n) {
+      int size = bonded_ia_params[p->bl.e[i]].num;
+      
+      if (p->bl.e[i] == bond_type &&
+          p->bl.e[i + 1] == partner->p.identity) {
+        // There's a bond, already. Nothing to do for these particles
+        return true;
+      }
+      i += size + 1;
+    }
+  }
+  return false;
+}
+
 #include "utils/math/sqr.hpp"
 
 /** Returns true if the particles are to be considered for short range
@@ -925,13 +955,16 @@ class VerletCriterion {
   const double m_eff_max_cut2;
   const double m_eff_coulomb_cut2 = 0.;
   const double m_eff_dipolar_cut2 = 0.;
+  const double m_collision_cut2 =0.;
 
 public:
   VerletCriterion(double skin, double max_cut, double coulomb_cut = 0.,
-                  double dipolar_cut = 0.)
+                  double dipolar_cut = 0., double collision_detection_cutoff=0.)
       : m_skin(skin), m_eff_max_cut2(Utils::sqr(max_cut + m_skin)),
         m_eff_coulomb_cut2(Utils::sqr(coulomb_cut + m_skin)),
-        m_eff_dipolar_cut2(Utils::sqr(dipolar_cut + m_skin)) {}
+        m_eff_dipolar_cut2(Utils::sqr(dipolar_cut + m_skin)), 
+        m_collision_cut2(Utils::sqr(collision_detection_cutoff))
+        {}
 
   template <typename Distance>
   bool operator()(const Particle &p1, const Particle &p2,
@@ -950,6 +983,13 @@ public:
 #ifdef DIPOLES
     if ((dist2 <= m_eff_dipolar_cut2) && (p1.p.dipm != 0) && (p2.p.dipm != 0))
       return true;
+#endif
+
+
+// Collision detectoin
+#ifdef COLLISION_DETECTION
+if (dist2 <= m_collision_cut2)
+  return true;
 #endif
 
     // Within short-range distance (incl dpd and the like)

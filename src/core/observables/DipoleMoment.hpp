@@ -11,7 +11,7 @@ class DipoleMoment : public PidObservable {
 public:
   virtual int n_values() const override { return 3; };
   virtual std::vector<double> operator()(PartCfg &partCfg) const override {
-    std::vector<double> res(n_values());
+    std::vector<double> res(n_values(), 0.0);
     for (int i = 0; i < ids().size(); i++) {
 #ifdef ELECTROSTATICS
       double charge = partCfg[ids()[i]].p.q;

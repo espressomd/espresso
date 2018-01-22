@@ -315,14 +315,32 @@ according to their respective particle type. Before the next integration
 step, the forces accumulated on a virtual site are distributed back to
 those particles, from which the virtual site was derived.
 
-There are two distinct types of virtual sites, described in the
-following.
+
+There are different schemes for virtual sites, described in the
+following sections.
+To switch the active scheme, the attribute :attr:`espressomd.system.System.virtual_sites` of the system class can be used::
+
+    import espressomd
+    from espressomd.virtual_sites import VirtualSitesOff, VirtualSitesRelative
+
+    s=espressomd.System()
+    s.virtual_sites=VirtualSitesRelative(have_velocity=True)
+    # or
+    s.virtual_sites=VirtualSitesOff()
+
+By default, :class:`espressomd.virtual_sites.VirtualSitesOff` is selected. This means that virtual particles are not touched during integration.
+the `have_velocity` attribute determines, whether or not the velocity of virtual sites is calcualted, which carries a performance cost.
+
+
+
+
+.. _Rigid arrangements of particles: 
 
 Rigid arrangements of particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The relative implementation of virtual sites allows for the simulation
-of rigid arrangements of particles. It can be used, , for extended
+of rigid arrangements of particles. It can be used, for extended
 dipoles and raspberry-particles, but also for more complex
 configurations. Position and velocity of a virtual site are obtained
 from the position and orientation of exactly one non-virtual particle,
@@ -341,7 +359,7 @@ site is placed at a fixed distance from the non-virtual particle. When
 the non-virtual particle rotates, the virtual sites rotates on an orbit
 around the non-virtual particles center.
 
-To use this implementation of virtual sites, activate the feature VIRTUAL_SITES_RELATIVE.
+To use this implementation of virtual sites, activate the feature VIRTUAL_SITES_RELATIVE. Furthermore, an instance of :class:`espressomd.virtual_sites.VirtualSitesRelative` has to be set as the active virtual sites scheme (see above).
 To set up a virtual site,
 
 #. Place the particle to which the virtual site should be related. It
@@ -391,11 +409,6 @@ Please note:
 
 -  The presence of rigid bodies constructed by means of virtual sites
    adds a contribution to the pressure and stress tensor.
-
--  The use of virtual sites requires that the particles are numbered
-   consecutively, , the particle ids should go from zero to :math:`N-1`,
-   where :math:`N` is the number of particles.
-
 
 Virtual sites in the center of mass of a molecule
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -451,10 +464,6 @@ that order
 
    integrate 0
 
-Please note that the use of virtual sites requires that the particles
-are numbered consecutively. I.e., the particle ids should go from zero
-to :math:`N-1`, where :math:`N` is the number of particles.
-
 The type of the molecule you can choose freely, it is only used in
 certain analysis functions, namely ``energy_kinetic_mol``,
 ``pressure_mol`` and ``dipmom_mol``, which compute kinetic energy,
@@ -473,25 +482,27 @@ switches in ``myconfig.hpp``.
 
 - THERMOSTAT_IGNORE_NON_VIRTUAL specifies that the thermostat does not act on non-virtual particles
 
+
 Grand canonical feature
 -----------------------
 :mod:`espressomd.grand_canonical`
 
-For using conveniently for simulations in the grand canonical ensemble,
+For using conveniently in simulations in the grand canonical ensemble,
 or other purposes, when particles of certain types are created and
-deleted frequently. Particle ids can be stored in lists for each
+deleted frequently. Particle ids can be stored in a map for each
 individual type and so random ids of particles of a certain type can be
 drawn.  ::
 
-    from espressomd import grand_canonical grand_canonical.setup([_type])
-    grand_canonical.delete_particles(_type)
-    grand_canonical.find_particle(_type)
-    grand_canonical.number_of_particles(_type)
+    import espressomd
+    system=espressomd.System()
+    system.setup_type_map([_type])
+    system.find_particle(_type)
+    system.number_of_particles(_type)
 
 If you want to keep track of particle ids of a certain type you have to
 initialize the method by calling  ::
 
-    grand_canonical.setup([_type])
+    system.setup_type_map([_type])
 
 After that will keep track of particle ids of that type. When using the
 keyword ``find`` and a particle type, the command will return a randomly

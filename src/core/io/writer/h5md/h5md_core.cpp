@@ -337,13 +337,13 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
   }
 
   if (write_vel) {
+    // Scale the stored velocity with 1./dt to get MD units.
     vel[0][particle_index][0] = current_particle.m.v[0] / time_step;
     vel[0][particle_index][1] = current_particle.m.v[1] / time_step;
     vel[0][particle_index][2] = current_particle.m.v[2] / time_step;
   }
   if (write_force) {
-    /* Scale the stored force with m/(0.5*dt**2.0) to get a real
-     * world force. */
+    // Scale the stored force with m/(0.5*dt**2.0) to get MD units.
     double fac = current_particle.p.mass / (0.5 * time_step * time_step);
     f[0][particle_index][0] = current_particle.f.f[0] * fac;
     f[0][particle_index][1] = current_particle.f.f[1] * fac;
@@ -525,7 +525,7 @@ void File::Write(int write_dat, PartCfg &partCfg) {
   }
 }
 
-void File::ExtendDataset(std::string path, int *change_extent) {
+void File::ExtendDataset(const std::string & path, int *change_extent) {
   /* Until now the h5xx does not support dataset extending, so we
      have to use the lower level hdf5 library functions. */
   auto &dataset = datasets[path];
@@ -537,7 +537,7 @@ void File::ExtendDataset(std::string path, int *change_extent) {
   H5Sclose(ds);
   /* Extend the dataset for another timestep (extent = 1) */
   for (int i = 0; i < rank; i++) {
-    dims[i] += change_extent[i];
+    dims[i] += change_extent[i]; // NOLINT
   }
   H5Dset_extent(dataset.hid(), dims.data()); // extend all dims is collective
 }

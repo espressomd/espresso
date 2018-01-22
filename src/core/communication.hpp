@@ -259,7 +259,7 @@ void mpi_send_quat(int node, int part, double quat[4]);
     \param pnode the node it is attached to.
     \param rot the rotation flag
 */
-void mpi_send_rotation(int pnode, int part, int rot);
+void mpi_send_rotation(int pnode, int part, short int rot);
 
 /* Issue REQ_SET_LAMBDA: send particle angular velocity.
     Also calls \ref on_particle_change.
@@ -622,9 +622,6 @@ void mpi_external_potential_sum_energies_slave();
 /** Gather CUDA devices from all nodes */
 std::vector<EspressoGpuDevice> mpi_gather_cuda_devices();
 #endif
-
-/** CPU Thermostat */
-void mpi_thermalize_cpu(int temp);
 
 /** MPI-IO output function.
  *  \param filename Filename prefix for the created files. Must be

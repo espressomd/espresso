@@ -58,9 +58,9 @@ namespace PdbParser {
 
   class PdbParser {
   public:
-    bool parse_pdb_file(std::string filename);
-    bool parse_itp_file(std::string filename);
-    bool parse_file(std::string pdb_filename, std::string itp_filename);
+    bool parse_pdb_file(const std::string & filename);
+    bool parse_itp_file(const std::string & filename);
+    bool parse_file(const std::string & pdb_filename, const std::string & itp_filename);
     BoundingBox calc_bounding_box() const;
     std::vector<pdb_atom> pdb_atoms;
     std::map<int, itp_atom> itp_atoms;

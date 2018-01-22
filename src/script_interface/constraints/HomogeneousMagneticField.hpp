@@ -39,8 +39,6 @@ public:
                      [this]() {return m_constraint->H(); }}});
   }
 
-  const std::string name() const override { return "Constraints::HomogeneousMagneticField"; }
-
   std::shared_ptr<::Constraints::Constraint> constraint() override {
     return std::static_pointer_cast<::Constraints::Constraint>(m_constraint);
   }
