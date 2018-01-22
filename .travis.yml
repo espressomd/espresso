@@ -32,9 +32,6 @@ matrix:
       env: myconfig=maxset image=centos make_check=false
     - os: osx
       osx_image: xcode8
-      env: myconfig=maxset
-    - os: osx
-      osx_image: xcode8
       env: myconfig=maxset image=python3
     - os: linux
       sudo: required
