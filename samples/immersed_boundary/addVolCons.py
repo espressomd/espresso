@@ -9,4 +9,4 @@ def AddVolCons(system, kV ):
     
     # loop over particles and add
     for i in range(len(system.part)):
-        system.part[i].add_bond((volCons, i))
+        system.part[i].add_bond((volCons,))

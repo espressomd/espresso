@@ -3,12 +3,13 @@
 # with and without volume conservation
 from espressomd import System, lb, shapes, lbboundaries
 import numpy as np
+from espressomd.virtual_sites import VirtualSitesInertialessTracers
 
 # System setup
 system = System()
 system.time_step = 1/6.
 system.cell_system.skin = 0.1
-
+system.virtual_sites =VirtualSitesInertialessTracers()
 print "Parallelization: " + str(system.cell_system.node_grid)
 #system.cell_system.node_grid = [2, 2, 2]
 #print system.cell_system.node_grid
@@ -17,7 +18,7 @@ boxZ = 20
 system.box_l = [20, 20, boxZ]
 
 force = 0.001
-lbf = lb.LBFluid_GPU(agrid=1, dens=1, visc=1, tau= system.time_step, ext_force=[force, 0, 0], fric = 1)
+lbf = lb.LBFluid(agrid=1, dens=1, visc=1, tau= system.time_step, ext_force=[force, 0, 0], fric = 1)
 system.actors.add(lbf)
 
 system.thermostat.set_lb(kT=0)
