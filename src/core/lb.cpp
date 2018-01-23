@@ -2724,7 +2724,7 @@ inline void lb_collide_stream() {
 #endif // LB_BOUNDARIES
   
   
-#ifdef IMMERSED_BOUNDARY
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 // Safeguard the node forces so that we can later use them for the IBM particle update
 // In the following loop the lbfields[XX].force are reset to zero
   for (int i = 0; i<lblattice.halo_grid_volume; ++i)
@@ -2866,7 +2866,7 @@ inline void lb_stream_collide() {
     lbpar.resend_halo = 1;
   
   // Re-reset the node forces to include also the halo nodes
-#ifdef IMMERSED_BOUNDARY
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
   IBM_ResetLBForces_CPU();
 #endif
 }

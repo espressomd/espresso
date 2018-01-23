@@ -1,5 +1,5 @@
 file(GLOB EspressoCore_SRC
-          "*.cpp" "virtual_sites/VirtualSitesRelative.cpp")
+          "*.cpp" "virtual_sites/VirtualSitesRelative.cpp" "virtual_sites/VirtualSitesInertialessTracers.cpp")
 
 
 if( WITH_COVERAGE )

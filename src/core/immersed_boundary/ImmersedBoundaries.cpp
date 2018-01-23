@@ -10,15 +10,13 @@
 #include "communication.hpp"
 #include "immersed_boundary/ibm_volume_conservation.hpp"
 
+
+
 // ****** Internal variables & functions ********
 const int MaxNumIBM = 1000;
 double VolumesCurrent[MaxNumIBM] = {0};
 bool VolumeInitDone = false;
 
-void CalcVolumes();
-void CalcVolumeForce();
-
-using std::ostringstream;
 
 /************
   IBM_VolumeConservation
@@ -26,7 +24,7 @@ Calculate (1) volumes, (2) volume force and (3) add it to each virtual particle
 This function is called from integrate_vv
  **************/
 
-void IBM_VolumeConservation()
+void ImmersedBoundaries::volume_conservation()
 {
   // Calculate volumes
   CalcVolumes();
@@ -42,7 +40,7 @@ void IBM_VolumeConservation()
   IBM_InitVolumeConservation
  *************/
 
-void IBM_InitVolumeConservation()
+void ImmersedBoundaries::init_volume_conservation()
 {
   
   // Check since this function is called at the start of every integrate loop
@@ -83,7 +81,7 @@ void IBM_InitVolumeConservation()
   IBM_VolumeConservation_ResetParams
  *****************/
 
-int IBM_VolumeConservation_ResetParams(const int bond_type, const double volRef)
+int ImmersedBoundaries::volume_conservation_reset_params(const int bond_type, const double volRef)
 {
   
   // Check if bond exists and is of correct type
@@ -104,7 +102,7 @@ int IBM_VolumeConservation_ResetParams(const int bond_type, const double volRef)
    IBM_VolumeConservation_SetParams
 ************/
 
-int IBM_VolumeConservation_SetParams(const int bond_type, const int softID, const double kappaV)
+int ImmersedBoundaries::volume_conservation_set_params(const int bond_type, const int softID, const double kappaV)
 {
   // Create bond
   make_bond_type_exist(bond_type);
@@ -136,7 +134,7 @@ Calculate partial volumes on all compute nodes
 and call MPI to sum up
 ****************/
 
-void CalcVolumes()
+void ImmersedBoundaries::calc_vlumes()
 {
   
   // Partial volumes for each soft particle, to be summed up
@@ -264,7 +262,7 @@ void CalcVolumes()
 Calculate and add the volume force to each node
 *******************/
 
-void CalcVolumeForce()
+void ImmersedBoundaries::calc_volume_force()
 {
   // Loop over all particles on local node
   for (int c = 0; c < local_cells.n; c++)

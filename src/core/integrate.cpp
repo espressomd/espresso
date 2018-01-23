@@ -64,6 +64,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <mpi.h>
+#include "immersed_boundaries.hpp" 
 
 #ifdef VALGRIND_INSTRUMENTATION
 #include <callgrind.h>
@@ -227,12 +228,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
   // Here we initialize volume conservation
   // This function checks if the reference volumes have been set and if
   // necessary calculates them
-  IBM_InitVolumeConservation();
+  immersed_boundaries.init_volume_conservation();
 #endif
-
-  /* if any method vetoes (P3M not initialized), immediately bail out */
-  if (check_runtime_errors())
-    return;
 
 #ifdef MULTI_TIMESTEP
   if (smaller_time_step > 0.) {
@@ -442,16 +439,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
     force_calc();
 
-// IMMERSED_BOUNDARY
-#ifdef IMMERSED_BOUNDARY
-    // Now the forces are computed and need to go into the LB fluid
-    if (lattice_switch & LATTICE_LB)
-      IBM_ForcesIntoFluid_CPU();
-#ifdef LB_GPU
-    if (lattice_switch & LATTICE_LB_GPU)
-      IBM_ForcesIntoFluid_GPU(local_cells.particles());
+#ifdef VIRTUAL_SITES
+    virtual_sites()->after_force_calc();
 #endif
-#endif
+
 
 #ifdef CATALYTIC_REACTIONS
     integrate_reaction();
@@ -512,27 +503,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 #endif // LB_GPU
 
-// IMMERSED_BOUNDARY
-#ifdef IMMERSED_BOUNDARY
-
-    IBM_UpdateParticlePositions(local_cells.particles());
-// We reset all since otherwise the halo nodes may not be reset
-// NB: the normal Espresso reset is also done after applying the forces
-//    if (lattice_switch & LATTICE_LB) IBM_ResetLBForces_CPU();
-#ifdef LB_GPU
-// if (lattice_switch & LATTICE_LB_GPU) IBM_ResetLBForces_GPU();
+#ifdef VIRTUAL_SITES
+virtual_sites()->after_lb_propagation();
 #endif
 
-    if (check_runtime_errors())
-      break;
-
-    // Ghost positions are now out-of-date
-    // We should update.
-    // Actually we seem to get the same results whether we do this here or not,
-    // but it is safer to do it
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-
-#endif // IMMERSED_BOUNDARY
 
 #ifdef ELECTROSTATICS
     if (coulomb.method == COULOMB_MAGGS) {
@@ -556,12 +530,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
       /* Propagate time: t = t+dt */
       sim_time += time_step;
     }
+}
 #ifdef COLLISION_DETECTION
     handle_collisions();
 #endif
-    if (check_runtime_errors())
-      break;
-  }
 
 #ifdef VALGRIND_INSTRUMENTATION
   CALLGRIND_STOP_INSTRUMENTATION;

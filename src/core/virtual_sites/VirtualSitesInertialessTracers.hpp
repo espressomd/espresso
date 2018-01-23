@@ -7,6 +7,7 @@
 #include "VirtualSites.hpp" 
 
 
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 /** @brief Virtual sites which are advected with an lb fuid. Forces on them are instantaneously transferred to the fluid */
    class VirtualSitesInertialessTracers : public VirtualSites {
     /** @brief Update positions and/or velocities of virtual sites 
@@ -17,6 +18,8 @@
     void update(bool recalc_positions=true) const override {};
     /** Back-transfer forces (and torques) to non-virtual particles */
     void back_transfer_forces_and_torques() const override {};
+    void after_force_calc();
+    void after_lb_propagation();
     /** @brief Is a ghost communication needed after position updates */
     bool need_ghost_comm_after_pos_update() const override { return false;} 
     /** Is a ghost comm needed before a velocity update */
@@ -27,4 +30,4 @@
 
 #endif
 #endif
-
+#endif

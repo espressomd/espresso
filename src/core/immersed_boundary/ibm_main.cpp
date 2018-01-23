@@ -3,7 +3,7 @@
 
 #include "config.hpp"
 
-#ifdef IMMERSED_BOUNDARY
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
 #include "particle_data.hpp"
 #include "lb.hpp"
@@ -47,7 +47,7 @@ void IBM_ForcesIntoFluid_CPU()
   }
   
   // Update the forces on the ghost particles
-  ghost_communicator(&cell_structure.ibm_ghost_force_comm);
+  ghost_communicator(&cell_structure.vs_inertialess_tracers_ghost_force_comm);
   
   
   // Loop over local cells

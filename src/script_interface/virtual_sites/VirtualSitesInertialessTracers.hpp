@@ -25,7 +25,7 @@
 #include "config.hpp"
 #include "VirtualSites.hpp"
 #include "core/virtual_sites/VirtualSitesInertialessTracers.hpp"
-#ifdef VIRTUAL_SITES
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
 namespace ScriptInterface {
 namespace VirtualSites {
