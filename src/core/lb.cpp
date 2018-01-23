@@ -31,6 +31,7 @@
 #include <cassert>
 #include <cstdio>
 #include <iostream>
+#include "config.hpp" 
 #include "utils.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
@@ -3278,7 +3279,7 @@ void calc_particle_lattice_ia() {
     /* local cells */
     for (auto &p : local_cells.particles()) {
 
-#ifdef IMMERSED_BOUNDARY
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
       // Virtual particles for IBM must not be coupled
       if (!p.p.isVirtual)
 #endif
@@ -3312,7 +3313,7 @@ void calc_particle_lattice_ia() {
           fprintf(stderr, "%d: OPT: LB coupling of ghost particle:\n",
                   this_node);
         });
-#ifdef IMMERSED_BOUNDARY
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
         // Virtual particles for IBM must not be coupled
         if (!p.p.isVirtual)
 #endif

@@ -6,7 +6,7 @@
 
 #include "config.hpp"
 
-#ifdef IMMERSED_BOUNDARY
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
 #include "lbgpu.hpp"
 #include "lbboundaries.hpp"

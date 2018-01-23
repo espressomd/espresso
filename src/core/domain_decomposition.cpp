@@ -897,7 +897,7 @@ void dd_topology_release() {
   free_comm(&cell_structure.ghost_swimming_comm);
 #endif
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-  free_comm(&cell_structure.ibm_ghost_force_comm);
+  free_comm(&cell_structure.vs_inertialess_tracers_ghost_force_comm);
 #endif
 }
 
