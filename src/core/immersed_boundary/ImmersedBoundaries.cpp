@@ -105,7 +105,7 @@ int ImmersedBoundaries::volume_conservation_set_params(const int bond_type, cons
   
   // General bond parameters
   bonded_ia_params[bond_type].type = BONDED_IA_IBM_VOLUME_CONSERVATION;
-  bonded_ia_params[bond_type].num = 1;        // This means that Espresso requires one bond partner. Here we simply ignore it, but Espresso cannot handle 0.
+  bonded_ia_params[bond_type].num = 0;        // This means that Espresso requires one bond partner. Here we simply ignore it, but Espresso cannot handle 0.
   
   // Specific stuff
   if ( softID > MaxNumIBM) { printf("Error: softID (%d) is larger than MaxNumIBM (%d)\n", softID, MaxNumIBM); return ES_ERROR; }
