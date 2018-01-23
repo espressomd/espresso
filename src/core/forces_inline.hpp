@@ -88,7 +88,6 @@
 #include "immersed_boundary/ibm_main.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
-#include "immersed_boundary/ibm_volume_conservation.hpp"
 #endif
 #ifdef DPD
 #include "dpd.hpp"

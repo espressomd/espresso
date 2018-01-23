@@ -18,6 +18,7 @@
 #
 include "myconfig.pxi"
 from libcpp cimport bool
+from interactions cimport ImmersedBoundaries
 
 cdef extern from "global.hpp":
     int FIELD_BOXL
@@ -164,3 +165,6 @@ cdef extern from "reaction.hpp":
         int swap
 
     cdef extern reaction_struct reaction
+
+cdef extern from "immersed_boundaries.hpp":
+     extern ImmersedBoundaries immersed_boundaries

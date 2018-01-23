@@ -20,6 +20,8 @@ from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from . import utils
 from espressomd.utils import is_valid_type
+from globals cimport immersed_boundaries
+
 
 
 # Non-bonded interactions
@@ -2764,7 +2766,7 @@ IF IMMERSED_BOUNDARY == 1:
             return {}
 
         def _set_params_in_es_core(self):
-            IBM_VolumeConservation_SetParams(self._bond_id,self._params["softID"],self._params["kappaV"])
+            immersed_boundaries.volume_conservation_set_params(self._bond_id,self._params["softID"],self._params["kappaV"])
 ELSE:
     class IBM_VolCons(BondedInteractionNotDefined):
         name = "IBM_VOLCONS"

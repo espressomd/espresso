@@ -1,6 +1,6 @@
 #include "immersed_boundaries.hpp" 
 
-#ifdef IMMERSED_BOUNDARIES
+#ifdef IMMERSED_BOUNDARY
 
 ImmersedBoundaries immersed_boundaries;
 

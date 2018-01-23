@@ -2,16 +2,17 @@
 #define IMMERSED_BOUNDARY_IMMERSED_BOUNDARIES_HPP
 
 #include "config.hpp" 
+#include <vector>
 
 
-#define IMMERSED_BOUNDARIES_HPP
 
 
-#ifdef IMMERSED_BOUNDARIES
+#ifdef IMMERSED_BOUNDARY
 class ImmersedBoundaries {
   public:
     ImmersedBoundaries() : 
-      NaxNumIBM(1000) 
+      MaxNumIBM(1000),
+      VolumeInitDone(false)
       {
         VolumesCurrent.resize(MaxNumIBM);
       }
@@ -19,11 +20,11 @@ class ImmersedBoundaries {
     void volume_conservation();
     int volume_conservation_reset_params(const int bond_type, const double volRef);
     int volume_conservation_set_params(const int bond_type, const int softID, const double kappaV);
-    calc_volumes();
+    void calc_volumes();
     void calc_volume_force();
   private:
      const int MaxNumIBM;
-     double stde::vector<double> VolumesCurrent;
+     std::vector<double> VolumesCurrent;
      bool VolumeInitDone = false;
 };
 

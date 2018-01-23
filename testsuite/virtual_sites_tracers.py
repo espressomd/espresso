@@ -29,8 +29,8 @@ from tests_common import verify_lj_forces
 from numpy import random
 
 
-@ut.skipIf(not espressomd.has_features("VIRTUAL_SITES" ),
-           "Test requires VIRTUAL_SITES")
+@ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_INERTIALESS_TRACERS" ),
+           "Test requires VIRTUAL_SITES_INERTIALESS_TRACERS")
 class VirtualSitesTracers(ut.TestCase):
     s = espressomd.System()
     s.seed = range(s.cell_system.get_state()["n_nodes"])

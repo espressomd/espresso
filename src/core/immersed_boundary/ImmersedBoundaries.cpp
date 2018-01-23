@@ -8,14 +8,10 @@
 #include "grid.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "immersed_boundary/ibm_volume_conservation.hpp"
+#include "ImmersedBoundaries.hpp" 
 
 
 
-// ****** Internal variables & functions ********
-const int MaxNumIBM = 1000;
-double VolumesCurrent[MaxNumIBM] = {0};
-bool VolumeInitDone = false;
 
 
 /************
@@ -27,9 +23,9 @@ This function is called from integrate_vv
 void ImmersedBoundaries::volume_conservation()
 {
   // Calculate volumes
-  CalcVolumes();
+  calc_volumes();
   
-  CalcVolumeForce();
+  calc_volume_force();
   
   // Center-of-mass output
   //if ( numWriteCOM > 0 )
@@ -49,7 +45,7 @@ void ImmersedBoundaries::init_volume_conservation()
   {
     
     // Calculate volumes
-    CalcVolumes();
+    calc_volumes();
     
     //numWriteCOM = 0;
     
@@ -129,12 +125,12 @@ int ImmersedBoundaries::volume_conservation_set_params(const int bond_type, cons
 }
 
 /****************
-   CalcVolumes
+   calc_volumes
 Calculate partial volumes on all compute nodes
 and call MPI to sum up
 ****************/
 
-void ImmersedBoundaries::calc_vlumes()
+void ImmersedBoundaries::calc_volumes()
 {
   
   // Partial volumes for each soft particle, to be summed up
@@ -188,19 +184,15 @@ void ImmersedBoundaries::calc_vlumes()
             Particle *p2 = local_particles[p1.bl.e[j+1]];
             if (!p2)
             {
-              ostringstream msg;
-              msg << "{IBM_CalcVolumes: 078 bond broken between particles "
+              runtimeErrorMsg() << "{IBM_calc_volumes: 078 bond broken between particles "
                 << p1.p.identity << " and " << p1.bl.e[j+1] << " (particles not stored on the same node)} ";
-              runtimeError(msg);
               return;
             }
             Particle *p3 = local_particles[p1.bl.e[j+2]];
             if (!p3)
             {
-              ostringstream msg;
-              msg << "{IBM_CalcVolumes: 078 bond broken between particles "
+              runtimeErrorMsg() << "{IBM_calc_volumes: 078 bond broken between particles "
                 << p1.p.identity << " and " << p1.bl.e[j+2] << " (particles not stored on the same node)} ";
-              runtimeError(msg);
               return;
             }
             
@@ -253,12 +245,12 @@ void ImmersedBoundaries::calc_vlumes()
   for (int i = 0; i < MaxNumIBM; i++) VolumesCurrent[i] = 0;
   
   // Sum up and communicate
-  MPI_Allreduce(tempVol, VolumesCurrent, MaxNumIBM, MPI_DOUBLE, MPI_SUM, comm_cart);
+  MPI_Allreduce(tempVol, &(VolumesCurrent.front()), MaxNumIBM, MPI_DOUBLE, MPI_SUM, comm_cart);
   
 }
 
 /*****************
-  CalcVolumeForce
+  calc_volume_force
 Calculate and add the volume force to each node
 *******************/
 
