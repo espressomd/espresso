@@ -2440,10 +2440,10 @@ int ek_init() {
   if( ek_parameters.agrid < 0.0 ||
       ek_parameters.viscosity < 0.0 ||
       ek_parameters.T < 0.0 ||
-      ek_parameters.bjerrumlength < 0.0 ) 
+      ek_parameters.prefactor < 0.0 ) 
   {
       
-    fprintf( stderr, "ERROR: invalid agrid, viscosity, T or bjerrum_length\n" );
+    fprintf( stderr, "ERROR: invalid agrid, viscosity, T or prefactor\n" );
     
     return 1;
   }
@@ -2557,7 +2557,7 @@ int ek_init() {
     if(electrostatics != nullptr)
       delete electrostatics;
 
-    FdElectrostatics::InputParameters es_parameters = {ek_parameters.bjerrumlength, ek_parameters.T, int(ek_parameters.dim_x), int(ek_parameters.dim_y), int(ek_parameters.dim_z), ek_parameters.agrid};
+    FdElectrostatics::InputParameters es_parameters = {ek_parameters.prefactor, int(ek_parameters.dim_x), int(ek_parameters.dim_y), int(ek_parameters.dim_z), ek_parameters.agrid};
     try {
       electrostatics = new FdElectrostatics(es_parameters, stream[0]);
     }
@@ -3362,7 +3362,7 @@ void ek_print_parameters() {
   printf( "  float gamma_even = %f;\n",                 ek_parameters.gamma_even );
   printf( "  float friction = %f;\n",                   ek_parameters.friction );
   printf( "  float T = %f;\n",                          ek_parameters.T );
-  printf( "  float bjerrumlength = %f;\n",              ek_parameters.bjerrumlength );
+  printf( "  float prefactor = %f;\n",              ek_parameters.prefactor );
   printf( "  float lb_force[] = {%f, %f, %f};\n",       ek_parameters.lb_force[0], 
                                                         ek_parameters.lb_force[1], 
                                                         ek_parameters.lb_force[2] );
@@ -3494,9 +3494,9 @@ int ek_set_lb_density( double lb_density ) {
 }
 
 
-int ek_set_bjerrumlength( double bjerrumlength ) {
+int ek_set_prefactor( double prefactor ) {
 
-  ek_parameters.bjerrumlength = bjerrumlength;
+  ek_parameters.prefactor = prefactor;
   return 0;
 }
 #ifdef EK_ELECTROSTATIC_COUPLING

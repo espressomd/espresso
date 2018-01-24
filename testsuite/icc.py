@@ -55,7 +55,7 @@ class test_icc(ut.TestCase):
         S.part.add(pos=[b2, b2, b2 + q_dist / 2], q=-q_test, fix=[1, 1, 1])
 
         # Actors
-        p3m = P3M(bjerrum_length=1, mesh=32, cao=7, accuracy=1e-5)
+        p3m = P3M(prefactor=1, mesh=32, cao=7, accuracy=1e-5)
         icc = ICC(
             n_icc=nicc_tot,
             convergence=1e-6,

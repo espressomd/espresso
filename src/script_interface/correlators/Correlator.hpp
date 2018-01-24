@@ -23,92 +23,63 @@
 #define SCRIPT_INTERFACE_CORRELATORS_CORRELATOR_HPP
 
 #include "ScriptInterface.hpp"
+#include "auto_parameters/AutoParameters.hpp"
+
 #include "core/correlators/Correlator.hpp"
-#include "core/utils/Factory.hpp"
 #include "observables/Observable.hpp"
+
+#include "core/utils/as_const.hpp"
 
 #include <memory>
 
 namespace ScriptInterface {
 namespace Correlators {
 
-class Correlator : public ScriptInterfaceBase {
+class Correlator : public AutoParameters {
+  using CoreCorr = ::Correlators::Correlator;
+
 public:
-  Correlator()
-      : m_correlator(new ::Correlators::Correlator()), m_obs1(nullptr),
-        m_obs2(nullptr) {}
-
-  const std::string name() const override { return "Correlators::Correlator"; }
-
-  VariantMap get_parameters() const override {
-    return {{"tau_lin", (int)m_correlator->tau_lin},
-            {"tau_max", (int)m_correlator->tau_max},
-            {"dt", m_correlator->dt},
-            {"compress1", m_correlator->compressA_name},
-            {"compress2", m_correlator->compressB_name},
-            {"corr_operation", m_correlator->corr_operation_name},
-            {"args", m_correlator->correlation_args},
-            {"obs1", (m_obs1 != nullptr) ? m_obs1->id() : ObjectId()},
-            {"obs2", (m_obs2 != nullptr) ? m_obs2->id() : ObjectId()}};
+  Correlator() {
+    using Utils::as_const;
+    /* Only args can be changed after construction. */
+    add_parameters(
+        {{"tau_lin", m_correlator, &CoreCorr::tau_lin},
+         {"tau_max", m_correlator, &CoreCorr::tau_max},
+         {"dt", m_correlator, &CoreCorr::dt},
+         {"compress1", m_correlator, &CoreCorr::compress1},
+         {"compress2", m_correlator, &CoreCorr::compress2},
+         {"corr_operation", m_correlator, &CoreCorr::correlation_operation},
+         {"args", m_correlator, &CoreCorr::set_correlation_args,
+          &CoreCorr::correlation_args},
+         {"dim_corr", m_correlator, &CoreCorr::dim_corr},
+         {"obs1", as_const(m_obs1)},
+         {"obs2", as_const(m_obs2)},
+         {"n_result", m_correlator, &CoreCorr::n_result}});
   }
 
-  ParameterMap valid_parameters() const override {
-    return {{"tau_lin", {ParameterType::INT, true}},
-            {"tau_max", {ParameterType::DOUBLE, true}},
-            {"dt", {ParameterType::DOUBLE, true}},
-            {"obs1", {ParameterType::OBJECTID, true}},
-            {"obs2", {ParameterType::OBJECTID, true}},
-            {"compress1", {ParameterType::STRING, true}},
-            {"compress2", {ParameterType::STRING, true}},
-            {"args", {ParameterType::DOUBLE_VECTOR, true}},
-            {"corr_operation", {ParameterType::STRING, true}}};
+  void construct(VariantMap const &args) override {
+    set_from_args(m_obs1, args, "obs1");
+    if (args.count("obs2"))
+      set_from_args(m_obs2, args, "obs2");
+    else
+      m_obs2 = m_obs1;
+
+    m_correlator = std::make_shared<CoreCorr>(
+        get_value<int>(args, "tau_lin"), get_value<double>(args, "tau_max"),
+        get_value<double>(args, "dt"),
+        /* These two are optional */
+        get_value_or<std::string>(args, "compess1", ""),
+        get_value_or<std::string>(args, "compess2", ""),
+        get_value<std::string>(args, "corr_operation"), m_obs1->observable(),
+        m_obs2->observable());
   }
-
-  void set_parameter(std::string const &name, Variant const &value) override {
-    if (m_correlator->initialized) {
-      throw std::runtime_error(
-          "Correlator cannot be changed after initial setup");
-    }
-    if ((name == "obs1") || (name == "obs2")) {
-      auto obs_ptr = get_value<std::shared_ptr<Observables::Observable>>(value);
-
-      /* We are expecting a ScriptInterface::Observables::Observable here,
-         throw if not. That means the assigned object had the wrong type. */
-      if (obs_ptr != nullptr) {
-        if (name == "obs1") {
-          m_correlator->A_obs = obs_ptr->observable();
-          m_obs1 = obs_ptr;
-        }
-        if (name == "obs2") {
-          m_correlator->B_obs = obs_ptr->observable();
-          m_obs2 = obs_ptr;
-        }
-      }
-    }
-
-    SET_PARAMETER_HELPER("tau_lin", m_correlator->tau_lin);
-    SET_PARAMETER_HELPER("tau_max", m_correlator->tau_max);
-    SET_PARAMETER_HELPER("dt", m_correlator->dt);
-    SET_PARAMETER_HELPER("args", m_correlator->correlation_args);
-    SET_PARAMETER_HELPER("corr_operation", m_correlator->corr_operation_name);
-    SET_PARAMETER_HELPER("compress1", m_correlator->compressA_name);
-    SET_PARAMETER_HELPER("compress2", m_correlator->compressB_name);
-  }
-  virtual void set_parameters(const VariantMap &p) override {
-    ScriptInterfaceBase::set_parameters(p);
-    m_correlator->initialize();
-  };
 
   std::shared_ptr<::Correlators::Correlator> correlator() {
     return m_correlator;
   }
-  void check_if_initialized() {
-    if (!m_correlator->initialized)
-      throw std::runtime_error("The correlator has not yet been initialied.");
-  }
+
   virtual Variant call_method(std::string const &method,
                               VariantMap const &parameters) override {
-    check_if_initialized();
     if (method == "update") {
       if (m_correlator->autoupdate) {
         throw std::runtime_error(
@@ -126,19 +97,28 @@ public:
     if (method == "get_correlation") {
       return m_correlator->get_correlation();
     }
-    if (method == "n_results")
-      return m_correlator->n_result;
-    if (method == "dim_corr")
-      return m_correlator->dim_corr;
-    if (method == "hierarchy_depth")
-      return m_correlator->hierarchy_depth;
 
     return {};
   }
 
+  Variant get_state() const override {
+    std::vector<Variant> state(2);
+    state[0] = ScriptInterfaceBase::get_state();
+    state[1] = m_correlator->get_internal_state();
+
+    return state;
+  }
+
 private:
+  void set_state(Variant const &state) override {
+    auto const &state_vec = boost::get<std::vector<Variant>>(state);
+
+    ScriptInterfaceBase::set_state(state_vec.at(0));
+    m_correlator->set_internal_state(boost::get<std::string>(state_vec.at(1)));
+  }
+
   /* The actual correlator */
-  std::shared_ptr<::Correlators::Correlator> m_correlator;
+  std::shared_ptr<CoreCorr> m_correlator;
 
   std::shared_ptr<Observables::Observable> m_obs1;
   std::shared_ptr<Observables::Observable> m_obs2;

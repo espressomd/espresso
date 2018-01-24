@@ -14,7 +14,7 @@ import numpy as np
 tol = 1.0e-13
 
 # analytical result for convective stress
-def stress_ideal(vel, box_l):
+def stress_kinetic(vel, box_l):
   return np.einsum('ij,ik->jk', vel, vel) / box_l**3
 
 # analytical result for stress originating from bond force
@@ -106,7 +106,7 @@ class stress_test(ut.TestCase):
     pos = system.part[:].pos
     vel = system.part[:].v
 
-    sim_stress_ideal = system.analysis.stress_tensor()['ideal']
+    sim_stress_kinetic = system.analysis.stress_tensor()['kinetic']
     sim_stress_bonded = system.analysis.stress_tensor()['bonded']
     sim_stress_bonded_harmonic = system.analysis.stress_tensor()['bonded', len(system.bonded_inter)-1]
     sim_stress_nonbonded = system.analysis.stress_tensor()['non_bonded']
@@ -115,7 +115,7 @@ class stress_test(ut.TestCase):
     sim_stress_nonbonded_intra = system.analysis.stress_tensor()['non_bonded_intra']
     sim_stress_nonbonded_intra00 = system.analysis.stress_tensor()['non_bonded_intra', 0, 0]
     sim_stress_total = system.analysis.stress_tensor()['total']
-    sim_pressure_ideal = system.analysis.pressure()['ideal']
+    sim_pressure_kinetic = system.analysis.pressure()['kinetic']
     sim_pressure_bonded = system.analysis.pressure()['bonded']
     sim_pressure_bonded_harmonic = system.analysis.pressure()['bonded', len(system.bonded_inter)-1]
     sim_pressure_nonbonded = system.analysis.pressure()['non_bonded']
@@ -125,28 +125,28 @@ class stress_test(ut.TestCase):
     sim_pressure_nonbonded_intra00 = system.analysis.pressure()['non_bonded_intra', 0, 0]
     sim_pressure_total = system.analysis.pressure()['total']
 
-    anal_stress_ideal = stress_ideal(vel, box_l)
+    anal_stress_kinetic = stress_kinetic(vel, box_l)
     anal_stress_bonded = stress_bonded(pos, box_l)
     anal_stress_nonbonded = stress_nonbonded(system.part.pairs(), box_l)
     anal_stress_nonbonded_inter = stress_nonbonded_inter(system.part.pairs(), box_l)
     anal_stress_nonbonded_intra = stress_nonbonded_intra(system.part.pairs(), box_l)
-    anal_stress_total = anal_stress_ideal + anal_stress_bonded + anal_stress_nonbonded
-    anal_pressure_ideal = np.einsum('ii', anal_stress_ideal)/3.0
+    anal_stress_total = anal_stress_kinetic + anal_stress_bonded + anal_stress_nonbonded
+    anal_pressure_kinetic = np.einsum('ii', anal_stress_kinetic)/3.0
     anal_pressure_bonded = np.einsum('ii', anal_stress_bonded)/3.0
     anal_pressure_nonbonded = np.einsum('ii', anal_stress_nonbonded)/3.0
     anal_pressure_nonbonded_inter = np.einsum('ii', anal_stress_nonbonded_inter)/3.0
     anal_pressure_nonbonded_intra = np.einsum('ii', anal_stress_nonbonded_intra)/3.0
-    anal_pressure_total = anal_pressure_ideal + anal_pressure_bonded + anal_pressure_nonbonded
+    anal_pressure_total = anal_pressure_kinetic + anal_pressure_bonded + anal_pressure_nonbonded
 
     print('particle positions')
     print(pos)
     print('particle velocities')
     print(vel)
 
-    print('\nsimulated ideal pressure=')
-    print(sim_pressure_ideal)
-    print('analytical ideal pressure=')
-    print(anal_pressure_ideal)
+    print('\nsimulated kinetic pressure=')
+    print(sim_pressure_kinetic)
+    print('analytical kinetic pressure=')
+    print(anal_pressure_kinetic)
 
     print('\nsimulated bonded pressure=')
     print(sim_pressure_bonded)
@@ -188,10 +188,10 @@ class stress_test(ut.TestCase):
     print('analytic total pressure=')
     print(anal_pressure_total)
 
-    print('\nsimulated ideal stress=')
-    print(sim_stress_ideal)
-    print('analytic ideal stress=')
-    print(anal_stress_ideal)
+    print('\nsimulated kinetic stress=')
+    print(sim_stress_kinetic)
+    print('analytic kinetic stress=')
+    print(anal_stress_kinetic)
 
     print('\nsimulated bonded stress=')
     print(sim_stress_bonded)
@@ -235,7 +235,7 @@ class stress_test(ut.TestCase):
 
     system.part.clear()
 
-    self.assertTrue(np.max(np.abs(sim_stress_ideal-anal_stress_ideal)) < tol, 'ideal stress does not match analytical result')
+    self.assertTrue(np.max(np.abs(sim_stress_kinetic-anal_stress_kinetic)) < tol, 'kinetic stress does not match analytical result')
     self.assertTrue(np.max(np.abs(sim_stress_bonded-anal_stress_bonded)) < tol, 'bonded stress does not match analytical result')
     self.assertTrue(np.max(np.abs(sim_stress_bonded_harmonic-anal_stress_bonded)) < tol, 'bonded stress harmonic bond does not match analytical result')
     self.assertTrue(np.max(np.abs(sim_stress_nonbonded-anal_stress_nonbonded)) < tol, 'non-bonded stress does not match analytical result')
@@ -244,7 +244,7 @@ class stress_test(ut.TestCase):
     self.assertTrue(np.max(np.abs(sim_stress_nonbonded_intra-anal_stress_nonbonded_intra)) < tol, 'non-bonded intramolecular stress does not match analytical result')
     self.assertTrue(np.max(np.abs(sim_stress_nonbonded_intra00-anal_stress_nonbonded_intra)) < tol, 'non-bonded intramolecular stress molecule 0 does not match analytical result')
     self.assertTrue(np.max(np.abs(sim_stress_total-anal_stress_total)) < tol, 'total stress does not match analytical result')
-    self.assertTrue(np.abs(sim_pressure_ideal-anal_pressure_ideal) < tol, 'ideal pressure does not match analytical result')
+    self.assertTrue(np.abs(sim_pressure_kinetic-anal_pressure_kinetic) < tol, 'kinetic pressure does not match analytical result')
     self.assertTrue(np.abs(sim_pressure_bonded-anal_pressure_bonded) < tol, 'bonded pressure does not match analytical result')
     self.assertTrue(np.abs(sim_pressure_bonded_harmonic-anal_pressure_bonded) < tol, 'bonded pressure harmonic bond does not match analytical result')
     self.assertTrue(np.abs(sim_pressure_nonbonded-anal_pressure_nonbonded) < tol, 'non-bonded pressure does not match analytical result')
@@ -300,7 +300,7 @@ class stress_lees_edwards_test(ut.TestCase):
     pos = system.part[:].pos
     vel = system.part[:].v
 
-    sim_stress_ideal = system.analysis.stress_tensor()['ideal']
+    sim_stress_kinetic = system.analysis.stress_tensor()['kinetic']
     sim_stress_bonded = system.analysis.stress_tensor()['bonded']
     sim_stress_bonded_harmonic = system.analysis.stress_tensor()['bonded', len(system.bonded_inter)-1]
     sim_stress_nonbonded = system.analysis.stress_tensor()['non_bonded']
@@ -309,7 +309,7 @@ class stress_lees_edwards_test(ut.TestCase):
     sim_stress_nonbonded_intra = system.analysis.stress_tensor()['non_bonded_intra']
     sim_stress_nonbonded_intra00 = system.analysis.stress_tensor()['non_bonded_intra', 0, 0]
     sim_stress_total = system.analysis.stress_tensor()['total']
-    sim_pressure_ideal = system.analysis.pressure()['ideal']
+    sim_pressure_kinetic = system.analysis.pressure()['kinetic']
     sim_pressure_bonded = system.analysis.pressure()['bonded']
     sim_pressure_bonded_harmonic = system.analysis.pressure()['bonded', len(system.bonded_inter)-1]
     sim_pressure_nonbonded = system.analysis.pressure()['non_bonded']
@@ -319,18 +319,18 @@ class stress_lees_edwards_test(ut.TestCase):
     sim_pressure_nonbonded_intra00 = system.analysis.pressure()['non_bonded_intra', 0, 0]
     sim_pressure_total = system.analysis.pressure()['total']
 
-    anal_stress_ideal = stress_ideal(vel, box_l)
+    anal_stress_kinetic = stress_kinetic(vel, box_l)
     anal_stress_bonded = stress_bonded(pos, box_l)
     anal_stress_nonbonded = stress_nonbonded(system.part.pairs(), box_l)
     anal_stress_nonbonded_inter = stress_nonbonded_inter(system.part.pairs(), box_l)
     anal_stress_nonbonded_intra = stress_nonbonded_intra(system.part.pairs(), box_l)
-    anal_stress_total = anal_stress_ideal + anal_stress_bonded + anal_stress_nonbonded
-    anal_pressure_ideal = np.einsum('ii', anal_stress_ideal)/3.0
+    anal_stress_total = anal_stress_kinetic + anal_stress_bonded + anal_stress_nonbonded
+    anal_pressure_kinetic = np.einsum('ii', anal_stress_kinetic)/3.0
     anal_pressure_bonded = np.einsum('ii', anal_stress_bonded)/3.0
     anal_pressure_nonbonded = np.einsum('ii', anal_stress_nonbonded)/3.0
     anal_pressure_nonbonded_inter = np.einsum('ii', anal_stress_nonbonded_inter)/3.0
     anal_pressure_nonbonded_intra = np.einsum('ii', anal_stress_nonbonded_intra)/3.0
-    anal_pressure_total = anal_pressure_ideal + anal_pressure_bonded + anal_pressure_nonbonded
+    anal_pressure_total = anal_pressure_kinetic + anal_pressure_bonded + anal_pressure_nonbonded
 
     print('le_offset = {}'.format(system.lees_edwards_offset))
 
@@ -339,10 +339,10 @@ class stress_lees_edwards_test(ut.TestCase):
     print('particle velocities')
     print(vel)
 
-    print('\nsimulated ideal pressure=')
-    print(sim_pressure_ideal)
-    print('analytical ideal pressure=')
-    print(anal_pressure_ideal)
+    print('\nsimulated kinetic pressure=')
+    print(sim_pressure_kinetic)
+    print('analytical kinetic pressure=')
+    print(anal_pressure_kinetic)
 
     print('\nsimulated bonded pressure=')
     print(sim_pressure_bonded)
@@ -384,10 +384,10 @@ class stress_lees_edwards_test(ut.TestCase):
     print('analytic total pressure=')
     print(anal_pressure_total)
 
-    print('\nsimulated ideal stress=')
-    print(sim_stress_ideal)
-    print('analytic ideal stress=')
-    print(anal_stress_ideal)
+    print('\nsimulated kinetic stress=')
+    print(sim_stress_kinetic)
+    print('analytic kinetic stress=')
+    print(anal_stress_kinetic)
 
     print('\nsimulated bonded stress=')
     print(sim_stress_bonded)
@@ -431,7 +431,7 @@ class stress_lees_edwards_test(ut.TestCase):
 
     system.part.clear()
 
-    self.assertTrue(np.max(np.abs(sim_stress_ideal-anal_stress_ideal)) < tol, 'ideal stress does not match analytical result')
+    self.assertTrue(np.max(np.abs(sim_stress_kinetic-anal_stress_kinetic)) < tol, 'kinetic stress does not match analytical result')
     self.assertTrue(np.max(np.abs(sim_stress_bonded-anal_stress_bonded)) < tol, 'bonded stress does not match analytical result')
     self.assertTrue(np.max(np.abs(sim_stress_bonded_harmonic-anal_stress_bonded)) < tol, 'bonded stress harmonic bond does not match analytical result')
     self.assertTrue(np.max(np.abs(sim_stress_nonbonded-anal_stress_nonbonded)) < tol, 'non-bonded stress does not match analytical result')
@@ -440,7 +440,7 @@ class stress_lees_edwards_test(ut.TestCase):
     self.assertTrue(np.max(np.abs(sim_stress_nonbonded_intra-anal_stress_nonbonded_intra)) < tol, 'non-bonded intramolecular stress does not match analytical result')
     self.assertTrue(np.max(np.abs(sim_stress_nonbonded_intra00-anal_stress_nonbonded_intra)) < tol, 'non-bonded intramolecular stress molecule 0 does not match analytical result')
     self.assertTrue(np.max(np.abs(sim_stress_total-anal_stress_total)) < tol, 'total stress does not match analytical result')
-    self.assertTrue(np.abs(sim_pressure_ideal-anal_pressure_ideal) < tol, 'ideal pressure does not match analytical result')
+    self.assertTrue(np.abs(sim_pressure_kinetic-anal_pressure_kinetic) < tol, 'kinetic pressure does not match analytical result')
     self.assertTrue(np.abs(sim_pressure_bonded-anal_pressure_bonded) < tol, 'bonded pressure does not match analytical result')
     self.assertTrue(np.abs(sim_pressure_bonded_harmonic-anal_pressure_bonded) < tol, 'bonded pressure harmonic bond does not match analytical result')
     self.assertTrue(np.abs(sim_pressure_nonbonded-anal_pressure_nonbonded) < tol, 'non-bonded pressure does not match analytical result')

@@ -462,7 +462,7 @@ def main_loop():
         plt1_x_data[-plot_max_data_len + 1:], system.time)
     if show_real_system_temperature:
         plt1_y_data = numpy.append(plt1_y_data[-plot_max_data_len + 1:], 2. / (
-            3. * len(system.part)) * system.analysis.energy()["ideal"])
+            3. * len(system.part)) * system.analysis.energy()["kinetic"])
     else:
         plt1_y_data = numpy.append(
             plt1_y_data[-plot_max_data_len + 1:], (system.part[:].v**2).sum())
@@ -539,8 +539,8 @@ def calculate_kinetic_energy():
         tmp_kin_energy += 1. / 2. * numpy.linalg.norm(system.part[i].v)**2.0
 
     print("tmp_kin_energy={}".format(tmp_kin_energy))
-    print("system.analysis.energy()['ideal']={}".format(
-        system.analysis.energy(system)["ideal"]))
+    print("system.analysis.energy()['kinetic']={}".format(
+        system.analysis.energy(system)["kinetic"]))
 
 
 def rotate_scene():

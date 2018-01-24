@@ -156,7 +156,7 @@ if os.path.isfile("p3m_checkpoint") and read_checkpoint == True:
     print("reading p3m from file")
     p3m = pickle.load(open("p3m_checkpoint", "r"))
 else:
-    p3m = electrostatics.P3M(bjerrum_length=1.0, accuracy=1e-2)
+    p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
     print("Tuning P3M")
 
 system.actors.add(p3m)

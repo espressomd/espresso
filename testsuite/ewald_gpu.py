@@ -32,7 +32,7 @@ class ewald_GPU_test(ut.TestCase):
 
         es = espressomd.System(box_l=[1.0, 1.0, 1.0])
         test_params = {}
-        test_params["bjerrum_length"] = 2
+        test_params["prefactor"] = 2
         test_params["num_kx"] = 2
         test_params["num_ky"] = 2
         test_params["num_kz"] = 2

@@ -1,5 +1,6 @@
 from __future__ import print_function, absolute_import
 from .script_interface import ScriptInterfaceHelper, script_interface_register
+from espressomd.utils import is_valid_type
 
 
 @script_interface_register
@@ -14,6 +15,11 @@ class Constraints(ScriptInterfaceHelper):
 
     def __getitem__(self, key):
         return self.call_method("get_elements")[key]
+
+    def __iter__(self):
+        elements = self.call_method("get_elements")
+        for e in elements:
+            yield e
 
     def add(self, *args, **kwargs):
         """
@@ -52,7 +58,7 @@ class Constraints(ScriptInterfaceHelper):
 
         """
 
-        self.call_method("remove", constraint=constraint)
+        self.call_method("remove", object=constraint)
 
 
 class Constraint(ScriptInterfaceHelper):

@@ -121,7 +121,7 @@ int dp3m_set_eps(double eps);
  */
 void dp3m_init(void);
 
-void dp3m_set_bjerrum(void);
+void dp3m_set_prefactor(void);
 
 /** Updates \ref p3m_parameter_struct::alpha and \ref
  * p3m_parameter_struct::r_cut if \ref box_l changed. */
@@ -136,8 +136,8 @@ int dp3m_sanity_checks();
     Dcur_ca_frac. */
 void dp3m_dipole_assign(void);
 
-/** set bjerrum length for dipolar p3m */
-void dp3m_set_bjerrum(void);
+/** set prefactor for dipolar p3m */
+void dp3m_set_prefactor(void);
 
 int dp3m_adaptive_tune(char **log);
 

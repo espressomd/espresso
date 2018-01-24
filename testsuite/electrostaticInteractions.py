@@ -49,7 +49,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         u = np.zeros_like(r)
         # r<r_cut
         i = np.where(r < df_params['r_cut'])[0]
-        u[i] = df_params['bjerrum_length'] * kT * q1 * \
+        u[i] = df_params['prefactor'] * kT * q1 * \
             q2 * np.exp(-df_params['kappa'] * r[i]) / r[i]
         return u
 
@@ -71,7 +71,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
                  r_cut=8.906249999999998,
                  alpha=0.387611049779351,
                  tune=False))
-        p3m = espressomd.electrostatics.P3M(bjerrum_length=1.0,
+        p3m = espressomd.electrostatics.P3M(prefactor=1.0,
                                             accuracy=9.910945054074526e-08,
                                             mesh=[22, 22, 22],
                                             cao=7,
@@ -83,16 +83,16 @@ class ElectrostaticInteractionsTests(ut.TestCase):
                                p3m_energy)
         # need to update forces
         self.system.integrator.run(0)
-        self.assertTrue(np.allclose(self.system.part[0].f,
-                                    [p3m_force, 0, 0]))
-        self.assertTrue(np.allclose(self.system.part[1].f,
-                                    [-p3m_force, 0, 0]))
+        np.testing.assert_allclose(np.copy(self.system.part[0].f),
+                                    [p3m_force, 0, 0],atol=1E-5)
+        np.testing.assert_allclose(np.copy(self.system.part[1].f),
+                                    [-p3m_force, 0, 0],atol=1E-10)
         self.system.actors.remove(p3m)
 
     @ut.skipIf( espressomd.has_features(["COULOMB_DEBYE_HUECKEL"]),
            "Features not available, skipping test!")
     def test_dh(self):
-        dh_params = dict(bjerrum_length=1.0,
+        dh_params = dict(prefactor=1.0,
                          kappa=2.0,
                          r_cut=2.0)
         test_DH = generate_test_for_class(
@@ -100,8 +100,8 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             electrostatics.DH,
             dh_params)
         dh = espressomd.electrostatics.DH(
-            bjerrum_length=dh_params[
-                'bjerrum_length'],
+            prefactor=dh_params[
+                'prefactor'],
                                            kappa=dh_params['kappa'],
                                            r_cut=dh_params['r_cut'])
         self.system.actors.add(dh)
@@ -124,12 +124,12 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             u_dh_core[i] = self.system.analysis.energy()['coulomb']
             f_dh_core[i] = self.system.part[0].f[0]
 
-        self.assertTrue(np.allclose(u_dh_core,
+        np.testing.assert_allclose(u_dh_core,
                                     u_dh,
-                                    atol=1e-7))
-        self.assertTrue(np.allclose(f_dh_core,
+                                    atol=1e-7)
+        np.testing.assert_allclose(f_dh_core,
                                     -f_dh,
-                                    atol=1e-2))
+                                    atol=1e-2)
         self.system.actors.remove(dh)
 
 

@@ -149,9 +149,20 @@ class ParticleProperties(ut.TestCase):
             self.assertEqual(res[0], 0, "vs_relative: " + res.__str__())
             self.assertEqual(res[1], 5.0, "vs_relative: " + res.__str__())
             np.testing.assert_allclose(
-                res[2], np.array(
-                    (0.5, -0.5, -0.5, -0.5)), err_msg="vs_relative: " + res.__str__(), atol=self.tol)
-
+    res[2], np.array(
+         (0.5, -0.5, -0.5, -0.5)), err_msg="vs_relative: " + res.__str__(), atol=self.tol)
+    
+    @ut.skipIf(not espressomd.has_features("DIPOLES"),
+        "Features not available, skipping test!")
+    def test_contradicting_properties_dip_dipm(self):
+        with self.assertRaises(ValueError):
+            self.system.part.add(pos = [0, 0, 0], dip=[1, 1, 1], dipm=1.0)
+    
+    @ut.skipIf(not espressomd.has_features("DIPOLES", "ROTATION"),
+        "Features not available, skipping test!")
+    def test_contradicting_properties_dip_quat(self):
+        with self.assertRaises(ValueError):
+            self.system.part.add(pos = [0, 0, 0], dip=[1, 1, 1], quat=[1.0,1.0,1.0,1.0])
 
     @ut.skipIf(not espressomd.has_features("ELECTROSTATICS"), "Test needs ELECTROSTATICS")
     def test_zz_particle_selection(self):
@@ -191,7 +202,7 @@ class ParticleProperties(ut.TestCase):
         res = s.part.select(lambda p: p.pos[0] < 0.5)
         self.assertEqual(tuple(sorted(res.id)),(0,1,2,3,4,5,6,7))
 
-        
+
 if __name__ == "__main__":
     #print("Features: ", espressomd.features())
     ut.main()

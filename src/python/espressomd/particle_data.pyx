@@ -31,8 +31,7 @@ from globals cimport max_seen_particle, time_step, smaller_time_step, box_l, n_p
 import collections
 import functools
 import types
-from espressomd.utils import nesting_level
-from espressomd.utils import array_locked
+from espressomd.utils import nesting_level, array_locked, is_valid_type
 
 PARTICLE_EXT_FORCE = 1
 
@@ -98,7 +97,7 @@ cdef class ParticleHandle(object):
 
         def __set__(self, _type):
 
-            if isinstance(_type, int) and _type >= 0:
+            if is_valid_type(_type, int) and _type >= 0:
                 if set_particle_type(self.id, _type) == 1:
                     raise Exception("Set particle position first.")
             else:
@@ -125,7 +124,7 @@ cdef class ParticleHandle(object):
         """
 
         def __set__(self, _mol_id):
-            if isinstance(_mol_id, int) and _mol_id >= 0:
+            if is_valid_type(_mol_id, int) and _mol_id >= 0:
                 if set_particle_mol_id(self.id, _mol_id) == 1:
                     raise Exception("Set particle position first.")
             else:
@@ -614,6 +613,40 @@ cdef class ParticleHandle(object):
                 pointer_to_q(self.particle_data, x)
                 return x[0]
 
+    IF LB_ELECTROHYDRODYNAMICS:
+        property mu_E:
+            """
+            Particle electrophoretic velocity.
+
+            mu_E : :obj:`float`
+
+            This effectivly acts as a velocity offset between
+            an Lattice-Boltzmann fluid and the particle. Has only
+            an effect if LB is turned on.
+
+            .. note::
+               This needs the feature LB_ELECTROHYDRODYNAMICS.
+
+            """
+
+            def __set__(self, mu_E):
+                cdef double _mu_E[3]
+
+                check_type_or_throw_except(
+                    mu_E, 3, float, "mu_E has to be 3 floats.")
+
+                _mu_E[0] = mu_E[0]
+                _mu_E[1] = mu_E[1]
+                _mu_E[2] = mu_E[2]
+
+                set_particle_mu_E(self.id, _mu_E)
+
+            def __get__(self):
+                cdef double mu_E[3]
+                get_particle_mu_E(self.id, mu_E)
+
+                return array_locked([mu_E[0], mu_E[1], mu_E[2]])
+
     IF VIRTUAL_SITES == 1:
 
         property virtual:
@@ -629,7 +662,7 @@ cdef class ParticleHandle(object):
             """
 
             def __set__(self, _v):
-                if isinstance(_v, int):
+                if is_valid_type(_v, int):
                     if set_particle_virtual(self.id, _v) == 1:
                         raise Exception("Set particle position first.")
                 else:
@@ -669,7 +702,7 @@ cdef class ParticleHandle(object):
                 for i in range(4):
                     _q[i] = q[i]
 
-                if isinstance(_relto, int) and isinstance(_dist, float) and all(isinstance(fq,float) for fq in q):
+                if is_valid_type(_relto, int) and is_valid_type(_dist, float) and all(is_valid_type(fq,float) for fq in q):
                     if set_particle_vs_relative(self.id, _relto, _dist, _q) == 1:
                         raise Exception("Set particle position first.")
                 else:
@@ -1355,7 +1388,7 @@ cdef class ParticleHandle(object):
 
         # Bond type or numerical bond id
         if not isinstance(bond[0], BondedInteraction):
-            if isinstance(bond[0], int):
+            if is_valid_type(bond[0], int):
                 bond[0] = BondedInteractions()[bond[0]]
             else:
                 raise Exception(
@@ -1378,7 +1411,7 @@ cdef class ParticleHandle(object):
 
         # Type check on partners
         for i in range(1, len(bond)):
-            if not isinstance(bond[i], int):
+            if not is_valid_type(bond[i], int):
                 if not isinstance(bond[i], ParticleHandle):
                     raise ValueError(
                         "Bond partners have to be of type integer or ParticleHandle.")
@@ -1709,7 +1742,7 @@ cdef class ParticleList(object):
 
         Parameters
         ----------
-        add() takes either a dictionary or a bunch of keyword args.
+        Either a dictionary or a bunch of keyword args.
 
         Returns
         -------
@@ -1760,6 +1793,7 @@ cdef class ParticleList(object):
         else:
             return self._place_new_particle(P)
 
+
     def _place_new_particle(self, P):
         # Handling of particle id
         if not "id" in P:
@@ -1769,6 +1803,16 @@ cdef class ParticleList(object):
             if particle_exists(P["id"]):
                 raise Exception("Particle %d already exists." % P["id"])
 
+        # Prevent setting of contradicting attributes
+        IF DIPOLES:
+            if 'dip' in P and 'dipm' in P:
+                raise ValueError("Contradicting attributes: dip and dipm. Setting\
+dip is sufficient as the length of the vector defines the scalar dipole moment.")
+            IF ROTATION:
+                if 'dip' in P and 'quat' in P:
+                    raise ValueError("Contradicting attributes: dip and quat.\
+Setting dip overwrites the rotation of the particle around the dipole axis.\
+Set quat and scalar dipole moment (dipm) instead.")
 
         # The ParticleList[]-getter ist not valid yet, as the particle
         # doesn't yet exist. Hence, the setting of position has to be
@@ -1780,6 +1824,7 @@ cdef class ParticleList(object):
             mypos[i] = P["pos"][i]
         if place_particle(P["id"], mypos) == -1:
             raise Exception("particle could not be set.")
+
         # Pos is taken care of
         del P["pos"]
         id = P["id"]
@@ -1790,29 +1835,23 @@ cdef class ParticleList(object):
 
         return self[id]
 
-    def _place_new_particles(self, P):
-        if not "id" in P:
-            # Generate particle ids
-            ids = np.arange(np.array(P["pos"]).shape[
-                            0]) + max_seen_particle + 1
-        else:
-            ids = P["id"]
-            del P["id"]
+    def _place_new_particles(self, Ps):
+        # Check if all entries have the same length
+        n_parts = len(Ps["pos"])
+        if not all(np.shape(Ps[k]) and len(Ps[k]) == n_parts for k in Ps):
+            raise ValueError(
+                "When adding several particles at once, all lists of attributes have to have the same size")
 
-        # Place particles
-        cdef double mypos[3]
-        for j in range(len(P["pos"])):
-            for i in range(3):
-                mypos[i] = P["pos"][j][i]
-            if place_particle(ids[j], mypos) == -1:
-                raise Exception("Particle could not be set.")
-
-        del P["pos"]
-
-        if P != {}:
-            self[ids].update(P)
+        # Place new particles and collect ids
+        ids = []
+        for i in range(n_parts):
+            P = {}
+            for k in Ps:
+                P[k] = Ps[k][i]
+            ids.append(self._place_new_particle(P).id)
 
         return self[ids]
+
 
     # Iteration over all existing particles
     def __iter__(self):
@@ -1821,7 +1860,7 @@ cdef class ParticleList(object):
                 yield self[i]
 
     def exists(self, idx):
-        if isinstance(idx, int) or issubclass(type(idx), np.integer):
+        if is_valid_type(idx, int):
             return particle_exists(idx)
         if isinstance(idx, slice) or isinstance(idx, tuple) or isinstance(idx, list) or isinstance(idx, np.ndarray):
             tf_array = np.zeros(len(idx), dtype=np.bool)

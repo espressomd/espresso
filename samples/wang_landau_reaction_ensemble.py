@@ -26,8 +26,6 @@ from espressomd import reaction_ensemble
 from espressomd import grand_canonical
 import numpy as np
 
-dev = "cpu"
-
 # System parameters
 #############################################################
 box_l = 6 * np.sqrt(2)
@@ -68,7 +66,7 @@ system.bonded_inter[0] = h
 system.part[0].add_bond((h, 1))
 
 
-RE = reaction_ensemble.reaction_ensemble(
+RE = reaction_ensemble.ReactionEnsemble(
     standard_pressure=0.00108, temperature=1, exclusion_radius=0)
 RE.add(equilibrium_constant=K_diss, reactant_types=[0], reactant_coefficients=[
        1], product_types=[1, 2], product_coefficients=[1, 1])

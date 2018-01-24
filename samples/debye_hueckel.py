@@ -115,15 +115,15 @@ for i in range(n_part / 2):
 #    print("Particle {} has charge {} and is of type {}.".format(i,system.part[i].q,system.part[i].type))
 
 # Activating the Debye-Hueckel interaction
-# The Bjerrum length is set to one. Assuming the solvent is water, this
+# The Coulomb prefactor is set to one. Assuming the solvent is water, this
 # means that lj_sig is 0.714 nm in SI units.
-l_B = 1
+coulomb_prefactor =1
 # inverse Debye length for 1:1 electrolyte in water at room temperature (nm)
 dh_kappa = numpy.sqrt(mol_dens) / 0.304
 # convert to MD units
 dh_kappa = dh_kappa / 0.714
 dh = electrostatics.DH(
-    bjerrum_length=l_B, kappa=dh_kappa, r_cut=int(5 / dh_kappa))
+    prefactor=coulomb_prefactor, kappa=dh_kappa, r_cut=int(5 / dh_kappa))
 system.actors.add(dh)
 print(system.actors)
 

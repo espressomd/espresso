@@ -32,7 +32,7 @@ class P3MGPU_test(ut.TestCase):
 
         es = espressomd.System(box_l=[1.0, 1.0, 1.0])
         test_params = {}
-        test_params["bjerrum_length"] = 2
+        test_params["prefactor"] = 2
         test_params["cao"] = 2
         test_params["r_cut"] = 0.9
         test_params["accuracy"] = 1e-1

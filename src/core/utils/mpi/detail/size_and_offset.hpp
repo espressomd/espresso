@@ -34,7 +34,7 @@ namespace detail {
 
 template <typename T>
 int size_and_offset(std::vector<int> &sizes, std::vector<int> &displ,
-                    int n_elem, boost::mpi::communicator comm, int root = 0) {
+                    int n_elem, const boost::mpi::communicator &comm, int root = 0) {
   sizes.resize(comm.size());
   displ.resize(comm.size());
 
@@ -52,7 +52,7 @@ int size_and_offset(std::vector<int> &sizes, std::vector<int> &displ,
   return total_size;
 }
 
-inline void size_and_offset(int n_elem, boost::mpi::communicator comm, int root = 0) {
+inline void size_and_offset(int n_elem, const boost::mpi::communicator &comm, int root = 0) {
   /* Send local size */
   boost::mpi::gather(comm, n_elem, root);
 }

@@ -22,6 +22,7 @@ from . cimport integrate
 from globals cimport *
 import numpy as np
 from espressomd.utils cimport handle_errors
+from espressomd.utils import is_valid_type
 
 cdef class CellSystem(object):
     def set_domain_decomposition(self, use_verlet_lists=True):
@@ -79,7 +80,7 @@ cdef class CellSystem(object):
         cell_structure.use_verlet_list = use_verlet_lists
 
         if n_layers:
-            if not isinstance(n_layers, int):
+            if not is_valid_type(n_layers, int):
                 raise ValueError("layer height should be positive")
 
             if not n_layers > 0:

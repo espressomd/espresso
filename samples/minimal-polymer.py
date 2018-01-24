@@ -46,7 +46,6 @@ system.bonded_inter.add(fene)
 
 polymer.create_polymer(N_P=1, bond_length=1.0, MPC=50, bond=fene)
 
-
 #############################################################
 #      Integration                                          #
 #############################################################
