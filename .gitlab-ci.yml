@@ -19,6 +19,8 @@ check_permission:
     - /.*external.*/
   when:
     - manual
+  script:
+    - echo "External user please trigger the build manually."
 
 git_clone:
   stage: clone
