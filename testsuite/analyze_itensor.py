@@ -8,12 +8,11 @@ import espressomd
 class AnalyzeITensor(ut.TestCase):
     """Test the inertia tensor analysis"""
     
-    system = espressomd.System()
+    box_l = 50.0
+    system = espressomd.System(box_l = [box_l, box_l, box_l])
 
     @classmethod
     def setUpClass(self):
-        box_l = 50.0
-        self.system.box_l = [box_l, box_l, box_l]
         self.system.cell_system.skin = 0.4
         self.system.time_step = 0.01
         self.system.thermostat.turn_off()
