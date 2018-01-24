@@ -5,11 +5,10 @@ from espressomd.visualization_opengl import *
 from threading import Thread
 import numpy
 
-system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-
-
 box_l = 50
-system.box_l = [box_l, box_l, box_l]
+system = espressomd.System(box_l=[50.0]*3)
+
+
 system.time_step = 0.0001
 system.cell_system.skin = 0.3
 

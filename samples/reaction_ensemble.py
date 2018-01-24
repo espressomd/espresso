@@ -33,7 +33,7 @@ box_l = 35
 
 # Integration parameters
 #############################################################
-system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+system = espressomd.System(box_l=[box_l]*3)
 system.time_step = 0.02
 system.cell_system.skin = 0.4
 system.cell_system.max_num_cells = 2744
@@ -44,10 +44,6 @@ system.cell_system.max_num_cells = 2744
 #############################################################
 mode="reaction_ensemble"
 #mode="constant_pH_ensemble"
-
-# Interaction setup
-#############################################################
-system.box_l = [box_l, box_l, box_l]
 
 # Particle setup
 #############################################################

@@ -11,13 +11,12 @@ import numpy as np
 # System parameters
 #############################################################
 
-system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+system = espressomd.System(box_l=[50.0, 50.0, 50.0])
 
 # if no seed is provided espresso generates a seed
 
 system.time_step = 0.01
 system.cell_system.skin = 10.0
-system.box_l = [50, 50, 50]
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 system.cell_system.set_n_square(use_verlet_lists=False)
 

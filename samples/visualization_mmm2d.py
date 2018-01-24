@@ -7,12 +7,11 @@ from threading import Thread
 from math import *
 from espressomd.visualization_opengl import *
 
-system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+box_l = 20
+system = espressomd.System(box_l=[box_l]*3)
 visualizer = openGLLive(system, constraint_type_colors= [[1,1,1,1]], camera_position = [50,15,15], camera_right = [0,0,-1] )
 
 
-box_l = 20
-system.box_l = [box_l, box_l, box_l]
 system.time_step = 0.02
 system.cell_system.skin = 0.4
 system.cell_system.set_layered(n_layers=5,use_verlet_lists = False)

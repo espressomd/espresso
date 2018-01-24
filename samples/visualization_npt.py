@@ -5,13 +5,13 @@ from espressomd.visualization_opengl import *
 import numpy
 from threading import Thread
 
-system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+box_l = 10
+system = espressomd.System(box_l=[box_l]*3)
 visualizer = openGLLive(system, background_color=[1, 1, 1])
 
 system.time_step = 0.005
 system.cell_system.skin = 0.4
 
-box_l = 10
 system.box_l = [box_l, box_l, box_l]
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
