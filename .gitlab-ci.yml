@@ -20,7 +20,7 @@ check_permission:
   when: manual
   allow_failure: false
   script:
-    - echo "External user please trigger the build manually."
+    - echo "PR of external user - please trigger the build manually."
 
 git_clone:
   stage: clone
