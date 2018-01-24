@@ -28,40 +28,37 @@
 namespace Shapes {
 class Ellipsoid : public Shape {
 public:
-  Ellipsoid() : m_pos({0.0, 0.0, 0.0}), m_semiaxis_a(1.0), m_semiaxis_b(1.0), m_direction(1.0) {
-	  /* for now only prolate ellipsoids of rotation are allowed
-	   * make sure that a is long semiaxis, b and c the short */
-	  if (m_semiaxis_a < m_semiaxis_b) {
-		  m_semiaxis_c = m_semiaxis_a;
-		  m_semiaxis_a = m_semiaxis_b;
-		  m_semiaxis_b = m_semiaxis_c;
-	  }
-	  else m_semiaxis_c = m_semiaxis_b;
-  }
+  Ellipsoid()
+      : m_pos({0.0, 0.0, 0.0}), m_semiaxes({1.0, 1.0, 1.0}), m_direction(1.0) {}
 
   int calculate_dist(const double *ppos, double *dist,
                      double *vec) const override;
 
+  void set_semiaxis_a(const double &value) { m_semiaxes[0] = value; }
+
+  void set_semiaxis_b(const double &value) {
+    m_semiaxes[1] = value;
+    m_semiaxes[2] = value;
+  }
+
+  // not exposed to via interface, used in core unit test
+  void set_semiaxis_c(const double &value) { m_semiaxes[2] = value; }
+
   Vector3d &pos() { return m_pos; }
-  double &semiaxis_a() { return m_semiaxis_a; }
-  double &semiaxis_b() { return m_semiaxis_b; }
-  double &semiaxis_c() { return m_semiaxis_c; }
+  double &semiaxis_a() { return m_semiaxes[0]; }
+  double &semiaxis_b() { return m_semiaxes[1]; }
+  double &semiaxis_c() { return m_semiaxes[2]; }
   double &direction() { return m_direction; }
 
 private:
-  Vector3d ClosestEllipsoidPoint(Vector3d ppos) const;
-  double GetRoot(const double r0, const double r1, const double z0, const double z1, const double z2, double g) const;
-  double GetRoot(const double r0, const double z0, const double z1, double g) const;
-  double DistancePointEllipse(const double e0, const double e1, const double y0, const double y1, double& x0, double& d1) const;
-  double RobustLength(const double v0, const double v1, const double v2) const;
-  double RobustLength(const double v0, const double v1) const;
+  bool inside_ellipsoid(const Vector3d ppos) const;
+  double lagrangian(const Vector3d ppos, const double l) const;
+  double lagrangian_derivative(const Vector3d ppos, const double l) const;
 
   Vector3d m_pos;
-  double m_semiaxis_a;
-  double m_semiaxis_b;
-  double m_semiaxis_c;
+  Vector3d m_semiaxes;
   double m_direction;
 };
-}
+} // namespace Shapes
 
 #endif

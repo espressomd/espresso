@@ -31,17 +31,19 @@
 bool check_distance_function(const Shapes::Shape &s) {
   double semiaxes[3] = {3.1, 2.2, 1.3};
 
-  for (int i = 0; i < 100; i++) {
-    for (int j = 0; j < 100; j++) {
-      double theta = acos(2. * j * 1e-2 - 1.);
+  int N = 100;
+  for (int i = 0; i < N; i++) {
+    for (int j = 0; j < N; j++) {
+      double theta = 2. * i / N * M_PI;
+      double v = j / (N - 1);
 
       double dist[3];
       double d;
 
       /* pos part of surface */
-      double pos[3] = {semiaxes[0] * sqrt(1. - i * i * 1e-4) * cos(theta),
-                       semiaxes[1] * sqrt(1. - i * i * 1e-4) * sin(theta),
-                       semiaxes[2] * i * 1e-2};
+      double pos[3] = {semiaxes[0] * sqrt(1. - v * v) * cos(theta),
+                       semiaxes[1] * sqrt(1. - v * v) * sin(theta),
+                       semiaxes[2] * v};
 
       /* check that points on ellipsoid yield zero distance */
       s.calculate_dist(pos, &d, dist);
@@ -65,9 +67,9 @@ bool check_distance_function(const Shapes::Shape &s) {
 
 BOOST_AUTO_TEST_CASE(dist_function) {
   Shapes::Ellipsoid e;
-  e.semiaxis_a() = 3.1;
-  e.semiaxis_b() = 2.2;
-  e.semiaxis_c() = 1.3;
+  e.set_semiaxis_a(3.1);
+  e.set_semiaxis_b(2.2);
+  e.set_semiaxis_c(1.3);
 
   BOOST_CHECK(check_distance_function(e));
 }

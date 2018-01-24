@@ -32,8 +32,16 @@ class Ellipsoid : public Shape {
 public:
   Ellipsoid() : m_ellipsoid(new ::Shapes::Ellipsoid()) {
     add_parameters({{"center", m_ellipsoid->pos()},
-                    {"a", m_ellipsoid->semiaxis_a()},
-                    {"b", m_ellipsoid->semiaxis_b()},
+                    {"a",
+		     [this](Variant const &v) {
+		       m_ellipsoid->set_semiaxis_a(get_value<double>(v));
+		     },
+		     [this]() { return m_ellipsoid->semiaxis_a(); }},
+                    {"b",
+		     [this](Variant const &v) {
+		       m_ellipsoid->set_semiaxis_b(get_value<double>(v));
+		     },
+		     [this]() { return m_ellipsoid->semiaxis_b(); }},
                     {"direction", m_ellipsoid->direction()}});
   }
 
