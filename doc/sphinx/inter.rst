@@ -407,15 +407,12 @@ calculations should be used with great caution.
 Membrane-collision interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. todo::
-    
-    Not implemented yet.
-
-inter membrane
+.. note::
+     `Feature MEMBRANE_COLLISION required.`
 
 This defines a membrane collision interaction between particles of the
-types *type1* and *type2*, where particle of belongs to one OIF or OIF-like object and
-particle of belongs to another such object.
+types *type1* and *type2*, where particle of *type1* belongs to one OIF or OIF-like object and
+particle of *type2* belongs to another such object.
 
 It is very similar to soft-sphere interaction, but it takes into account
 the local outward normal vectors on the surfaces of the two objects to
@@ -424,8 +421,8 @@ the two membranes are intersected). It is inversely proportional to the
 distance of nodes of membranes that are not crossed and saturating with
 growing distance of nodes of crossed membranes.
 
-In order to work with the OIF objects, both of them need to be created
-using templates with keyword , because this implicitly sets up the
+In order to work with the OIF objects, both OIF objects need to be created
+using OifCellType class with keyword *normal=1*, because this implicitly sets up the
 bonded out-direction interaction, which computes the outward normal
 vector.
 
@@ -957,9 +954,9 @@ displayed in the visualization.
 Object-in-fluid interactions
 ----------------------------
 
-Please cite :cite:`cimrak` when using the interactions in this section in order to
+Please cite :cite:`Cimrak2014` when using the interactions in this section in order to
 simulate extended objects embedded in a LB fluid. For more details also
-see the documentation at http://cell-in-fluid.fri.uniza.sk/oif-documentation.
+see the documentation at http://cell-in-fluid.fri.uniza.sk/en/content/oif-espresso.
 
 The following interactions are implemented in order to mimic the
 mechanics of elastic or rigid objects immersed in the LB fluid flow.
@@ -970,10 +967,14 @@ modeling objects are described in section :ref:`Object-in-fluid`.
 OIF local forces
 ~~~~~~~~~~~~~~~~
 
+.. note::
+    
+    required OIF_GLOBAL_FORCES feature.
+
+
 OIF local forces are available through the :class:`espressomd.interactions.OifLocalForces` class.
 
-This type of interaction is available for closed 3D immersed objects as
-well as for 2D sheet flowing in the 3D flow.
+This type of interaction is available for closed 3D immersed objects flowing in the LB flow.
 
 This interaction comprises three different concepts. The local
 elasticity of biological membranes can be captured by three different
@@ -998,7 +999,7 @@ stretching force between :math:`A` and :math:`B` is calculated using
 
 .. math:: F_s(A,B) = (k_s\kappa(\lambda_{AB}) + k_{s,\mathrm{lin}})\Delta L_{AB}n_{AB}.
 
-Here, :math:`n_{AB}` is the unit vector pointing from :math:`A` to :math:`B`, `k_s` is the
+Here, :math:`n_{AB}` is the unit vector pointing from :math:`A` to :math:`B`, :math:`k_s` is the
 constant for nonlinear stretching, :math:`k_{s,\mathrm{lin}}` is the constant for 
 linear stretching, :math:`\lambda_{AB} = L_{AB}/L_{AB}^0`, and :math:`\kappa`
 is a nonlinear function that resembles neo-Hookean behavior
@@ -1027,7 +1028,7 @@ inner angle. The deviation of this angle
 :math:`\Delta \theta = \theta - \theta^0` defines two bending forces for
 two triangles :math:`A_1BC` and :math:`A_2BC`
 
-.. math:: F_{bi}(A_iBC) = k_b\frac{\Delta \theta}{\theta^0} n_{A_iBC}
+.. math:: F_{bi}(A_iBC) = k_b \Delta \theta  n_{A_iBC}
 
 Here, :math:`n_{A_iBC}` is the unit normal vector to the triangle :math:`A_iBC`.
 The force :math:`F_{bi}(A_iBC)` is assigned
@@ -1042,34 +1043,28 @@ Local area conservation
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 This interaction conserves the area of the triangles in the
-triangulation.
+triangulation. The area constraint assigns the following shrinking/expanding force to 
+vertex :math:`A`
 
-The deviation of the triangle surface :math:`S_{ABC}` is computed from the triangle
-surface in the resting shape
-:math:`\Delta S_{ABC} = S_{ABC} - S_{ABC}^0`. The area
-constraint assigns the following shrinking/expanding force to every
-vertex
+.. math:: F_{AT} = k_{al} \vec{AT}\frac{\Delta S_\triangle}{t_a^2 + t_b^2 + t_c^2}
 
-.. math:: F_{al}(A) = -k_{al}\frac{\Delta S_{ABC}}{\sqrt{S_{ABC}}}w_{A}
-
-where :math:`k_{al}` is the area constraint coefficient, and :math:`w_{A}` is the unit vector
-pointing from the centroid of triangle :math:`ABC` to the vertex :math:`A`. Similarly the
+where :math:`\Delta S_\triangle` is the difference between current :math:`S_\triangle` and area :math:`S^0` of the triangle in relaxed state, :math:`T` is the centroid of the triangle, and :math:`t_a, t_b, t_c` are the lengths of segments :math:`AT, BT, CT`, respectively. Similarly the
 analogical forces are assigned to :math:`B` and :math:`C`.
 
-.. todo:: Rest of this section is still Tcl syntax
 
 OIF local force is asymmetric. After creating the interaction
 
 ::
 
-    inter 33 oif_local_force 1.0 0.5 0.0 1.7 0.6 0.2 0.3 1.1
+    local_inter = OifLocalForces(r0=1.0, ks=0.5, kslin=0.0, phi0=1.7, kb=0.6, A01=0.2, A02=0.3,
+                                                       kal=1.1, kvisc=0.7)
 
 it is important how the bond is created. Particles need to be mentioned
 in the correct order. Command
 
 ::
 
-    part 0 bond 33 1 2 3
+    p1.add_bond((local_inter, p0.part_id, p2.part_id, p3.part_id))
 
 creates a bond related to the triangles 012 and 123. The particle 0
 corresponds to point A1, particle 1 to C, particle 2 to B and particle 3
@@ -1091,8 +1086,16 @@ area of triangle 012 being 0.2 and relaxed area of triangle 123 being
 Notice that also concave objects can be defined. If :math:`\theta_0` is
 larger than :math:`\pi`, then the inner angle is concave.
 
+|image4|
+
+
 OIF global forces
 ~~~~~~~~~~~~~~~~~
+
+.. note::
+    
+    required OIF_GLOBAL:_FORCES feature.
+
 
 OIF global forces are available through the
 :class:`espressomd.interactions.OifGlobalForces` class.
@@ -1112,15 +1115,13 @@ Global area conservation
 
 The global area conservation force is defined as
 
-.. math:: F_{ag}(A) = - k_{ag}\frac{\Delta S}{S}w_{A},
 
-where :math:`S` denotes the current surface of the immersed object, :math:`S_0` the surface in
-the relaxed state and :math:`\Delta S = S - S_0`.
+.. math:: F_{ag}(A) = k_{ag} \frac{S^{c} - S^{c}_0}{S^{c}_0} \cdot S_{ABC} \cdot \frac{t_{a}}{|t_a|^2 + |t_b|^2 + |t_c|^2},
 
-Here, the above mentioned force divided by 3 is added to all three
-particles.
+where :math:`S^c` denotes the current surface of the immersed object, :math:`S^c_0` the surface in
+the relaxed state, :math:`S_{ABC}` is the surface of the triangle, :math:`T` is the centroid of the triangle, and :math:`t_a, t_b, t_c` are the lengths of segments :math:`AT, BT, CT`, respectively.
 
-|image3|
+
 
 Volume conservation
 ^^^^^^^^^^^^^^^^^^^
@@ -1143,23 +1144,20 @@ normal vector from the centroid of triangle :math:`ABC` to any plane which does 
 cross the cell. The force :math:`F_v(ABC)` is equally distributed to all three vertices
 :math:`A, B, C.`
 
-|image4|
-
-.. todo:: Rest of section still Tcl syntax
 
 This interaction is symmetric. After the definition of the interaction
 by
 
 ::
 
-    inter 22 oif_global_force 65.3 3.0 57.0 2.0
+    global_force_interaction = OifGlobalForces(A0_g=65.3, ka_g=3.0, V0=57.0, kv=2.0)
 
 the order of vertices is crucial. By the following command the bonds are
 defined
 
 ::
 
-    part 0 bond 22 1 2
+    p0.add_bond((global_force_interaction, p1.part_id, p2.part_id))
 
 Triangle 012 must have correct orientation, that is the normal vector
 defined by a vector product :math:`01\times02`. The orientation must
@@ -1168,21 +1166,24 @@ point inside the immersed object.
 Out direction
 ~~~~~~~~~~~~~
 
-inter oif_out_direction
+OIF out direction is available through the
+:class:`espressomd.interactions.OifOutDirection` class.
+
+
 
 This type of interaction is primarily for closed 3D immersed objects to
 compute the input for membrane collision. After creating the interaction
 
 ::
 
-    inter 66 oif_out_direction
+    out_direction_interaction = OifOutDirection()
 
 it is important how the bond is created. Particles need to be mentioned
 in the correct order. Command
 
 ::
 
-    part 0 bond 66 1 2 3
+    p0.add_bond((out_direction_interaction, p1.part_id, p2.part_id, p3.part_id))
 
 calculates the outward normal vector of triangle defined by particles 1,
 2, 3 (these should be selected in such a way that particle 0 lies

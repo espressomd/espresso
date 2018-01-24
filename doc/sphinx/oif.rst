@@ -38,15 +38,14 @@ Configuring
   since this file is created automatically by and is used only if no
   other myconfig file is found.
 
-.. note:: `The following features are required 
 
-		LB, 
-		
-		LB_BOUNDARIES, 
-		
-		EXTERNAL_FORCES, 
-		MASS, CONSTRAINTS, OIF_LOCAL_FORCES, 
-		OIF_GLOBAL_FORCES, SOFT_SPHERE, MEMBRANE_COLLISION`
+.. note:: 
+
+    `The following features are required 
+    LB, LB_BOUNDARIES, 
+    EXTERNAL_FORCES, 
+    MASS, CONSTRAINTS, OIF_LOCAL_FORCES, 
+    OIF_GLOBAL_FORCES, SOFT_SPHERE, MEMBRANE_COLLISION`
 
 
 To check, what features are currently compiled into your , use the
@@ -119,7 +118,7 @@ Specification of immersed objects
 
     cell_type = OifCellType(nodesfile=“input/rbc374nodes.dat”,
         trianglesfile=“input/rbc374triangles.dat”, system = system, 
-        ks=0.02, kb=0.016, kal=0.02, kag=0.9, kv=0.5, stretch=[2.0,2.0,2.0])
+        ks=0.02, kb=0.016, kal=0.02, kag=0.9, kv=0.5, resize=[2.0,2.0,2.0])
 
 We do not create elastic objects directly but rather each one has to
 correspond to a template, ``cell_type``, that has been created first.
@@ -238,10 +237,10 @@ visualisation:
 
 ::
 
-    OutputVtkRhomboid(corner=[0.0,0.0,0.0], a=[boxX,0.0,0.0], \ 
-    b=[0.0,boxY,0.0], c=[0.0,0.0,1.0], outFile="output/sim1/wallBack.vtk")
-    OutputVtkCylinder(center=[11.0,2.0,7.0], axis=[0.0,0.0,1.0], length=7.0, \
-    radius=2.0, n=20, outFile="output/sim1/obstacle.vtk")
+    output_vtk_rhomboid(corner=[0.0,0.0,0.0], a=[boxX,0.0,0.0], \ 
+    b=[0.0,boxY,0.0], c=[0.0,0.0,1.0], out_file="output/sim1/wallBack.vtk")
+    output_vtk_cylinder(center=[11.0,2.0,7.0], axis=[0.0,0.0,1.0], length=7.0, \
+    radius=2.0, n=20, out_file="output/sim1/obstacle.vtk")
 
 | Note that the method for cylinder output also has an argument ``n``.
   This specifies number of rectangular faces on the side.
@@ -295,7 +294,7 @@ end:
 
     for i in range(1,101):
         system.integrator.run(steps=500)
-        cell.OutputVtkPosFolded(filename="output/sim1/cell_" \
+        cell.output_vtk_pos_folded(filename="output/sim1/cell_" \
         + str(i) + ".vtk")
         print "time: ", str(i*time_step)
     print "Simulation completed."
@@ -351,7 +350,7 @@ In the script, we have used the commands such as
 
 ::
 
-    cell.OutputVtkPosFolded(filename="output/sim1/cell_" + str(i) + ".vtk")
+    cell.output_vtk_pos_folded(filename="output/sim1/cell_" + str(i) + ".vtk")
 
 to output the information about cell in in every pass of the simulation
 loop. These files can then be used for inspection in ParaView and
@@ -595,8 +594,8 @@ bonds are created here.
 
 ::
 
-    OifCellType.PrintInfo()
-    OifCellType.mesh.OutputMeshTriangles(filename)
+    OifCellType.print_info()
+    OifCellType.mesh.output_mesh_triangles(filename)
 
 | ``nodesfile=``\ *nodes.dat* - input file. Each line contains three
   real numbers. These are the :math:`x, y, z` coordinates of individual
@@ -643,7 +642,7 @@ bonds are created here.
 
 | Note: At least one of the elastic moduli should be set.
 
-| ``stretch=``\ (*x, y, z*) - coefficients, by which the coordinates
+| ``resize=``\ (*x, y, z*) - coefficients, by which the coordinates
   stored in :math:`nodesfile` will be stretched in the :math:`x, y, z`
   direction. The default value is (1.0, 1.0, 1.0).
 
@@ -658,7 +657,7 @@ bonds are created here.
   option enabled, the membrane collision (and thus cell-cell
   interactions) will not work.
 
-| ``checkOrientation`` - by default set to :math:`True`. This options
+| ``check_orientation`` - by default set to :math:`True`. This options
   performs a check, whether the supplied :math:`trianglesfile` contains
   triangles with correct orientation. If not, it corrects the
   orientation and created cells with corrected triangles. It is useful
@@ -685,47 +684,47 @@ bonds are created here.
   ``CellType.mesh.OutputMeshTriangles``\ (:math:`filename`), so that the
   check does not have to be used repeatedly.
 
-| ``CellType.mesh.OutputMeshTriangles``\ (:math:`filename`) - this is
+| ``CellType.mesh.output_mesh_triangles``\ (:math:`filename`) - this is
   useful after checking orientation, if any of the triangles where
   corrected. This method saves the current triangles into a file that
   can be used as input in the next simulations.
 
-| ``CellType.PrintInfo()`` - prints the information about the template.
+| ``CellType.print_info()`` - prints the information about the template.
 
 
 class OifCell
 ~~~~~~~~~~~~~
 ::
 
-    OifCell.SetOrigin([x,y,z])
-    OifCell.GetOrigin()
-    OifCell.GetOriginFolded()
-    OifCell.GetApproxOrigin()
-    OifCell.GetApproxOriginFolded()
-    OifCell.GetVelocity()
-    OifCell.SetVelocity([x,y,z])
-    OifCell.PosBounds()
-    OifCell.Surface()
-    OifCell.Volume()
-    OifCell.GetDiameter()
-    OifCell.GetNNodes()
-    OifCell.SetForce([x,y,z])
-    OifCell.KillMotion()
-    OifCell.UnkillMotion()
-    OifCell.OutputVtkPos(filename.vtk)
-    OifCell.OutputVtkPosFolded(filename.vtk)
-    OifCell.OutputPointDataToVtk(filename.vtk, dataname, data, firstAppend)
-    OifCell.OutputRawData(filename, rawdata)
-    OifCell.OutputMeshNodes(filename)
-    OifCell.SetMeshNodes(filename)
-    OifCell.ElasticForces(elasticforces, fmetric, vtkfile, rawdatafile)
-    OifCell.PrintInfo()
+    OifCell.set_origin([x,y,z])
+    OifCell.get_origin()
+    OifCell.get_origin_folded()
+    OifCell.get_approx_origin()
+    OifCell.get_approx_origin_folded()
+    OifCell.get_velocity()
+    OifCell.set_velocity([x,y,z])
+    OifCell.pos_bounds()
+    OifCell.surface()
+    OifCell.volume()
+    OifCell.get_diameter()
+    OifCell.get_n_nodes()
+    OifCell.set_force([x,y,z])
+    OifCell.kill_motion()
+    OifCell.unkill_motion()
+    OifCell.output_vtk_pos(filename.vtk)
+    OifCell.output_vtk_pos_folded(filename.vtk)
+    OifCell.append_point_data_to_vtk(filename.vtk, dataname, data, firstAppend)
+    OifCell.output_raw_data(filename, rawdata)
+    OifCell.output_mesh_nodes(filename)
+    OifCell.set_mesh_nodes(filename)
+    OifCell.elastic_forces(elasticforces, fmetric, vtkfile, rawdatafile)
+    OifCell.print_info()
 
-| ``cellType`` - object will be created using nodes, triangle
+| ``cell_type`` - object will be created using nodes, triangle
   incidences, elasticity parameters and initial stretching saved in this
   cellType.
 
-| ``partType``\ =\ *type* - must start at 0 for the first cell and
+| ``part_type``\ =\ *type* - must start at 0 for the first cell and
   increase consecutively for different cells. Volume calculation of
   individual objects and interactions between objects are set up using
   these types.
@@ -741,72 +740,72 @@ class OifCell
 
 | ``mass``\ =\ *m* - mass of one particle. Default value is 1.0.
 
-| ``OifCell.SetOrigin``\ (**o**) - moves the object such that the origin
+| ``OifCell.set_origin``\ (**o**) - moves the object such that the origin
   has coordinates **o**\ =(\ *x, y, z*).
 
-| ``OifCell.GetOrigin()`` - outputs the location of the center of the
+| ``OifCell.get_origin()`` - outputs the location of the center of the
   object.
 
-| ``OifCell.GetOriginFolded()`` - outputs the location of the center of
+| ``OifCell.get_origin_folded()`` - outputs the location of the center of
   the object. For periodical movements the coordinates are folded
   (always within the computational box).
 
-| ``OifCell.GetApproxOrigin()`` - outputs the approximate location of
+| ``OifCell.get_approx_origin()`` - outputs the approximate location of
   the center of the object. It is computed as average of 6 mesh points
   that have extremal :math:`x, y` and :math:`z` coordinates at the time
   of object loading.
 
-| ``OifCell.GetApproxOriginFolded()`` - outputs the approximate location
+| ``OifCell.get_approx_origin_folded()`` - outputs the approximate location
   of the center of the object. It is computed as average of 6 mesh
   points that have extremal :math:`x, y` and :math:`z` coordinates at
   the time of object loading. For periodical movements the coordinates
   are folded (always within the computational box). TODO: this is not
   implemented yet, but it should be
 
-| ``OifCell.GetVelocity()`` - outputs the average velocity of the
+| ``OifCell.get_velocity()`` - outputs the average velocity of the
   object. Runs over all mesh points and outputs their average velocity.
 
-| ``OifCell.SetVelocity``\ (**v**) - sets the velocities of all mesh
+| ``OifCell.set_velocity``\ (**v**) - sets the velocities of all mesh
   points to **v**\ =(\ :math:`v_x`, :math:`v_y`, :math:`v_z`).
 
-| ``OifCell.PosBounds()`` - computes six extremal coordinates of the
+| ``OifCell.pos_bounds()`` - computes six extremal coordinates of the
   object. More precisely, runs through the all mesh points and returns
   the minimal and maximal :math:`x`-coordinate, :math:`y`-coordinate and
   :math:`z`-coordinate in the order (:math:`x_{max}`, :math:`x_{min}`,
   :math:`y_{max}`, :math:`y_{min}`, :math:`z_{max}`, :math:`z_{min}`).
 
-| ``OifCell.Surface()`` - outputs the surface of the object.
+| ``OifCell.surface()`` - outputs the surface of the object.
 
-| ``OifCell.Volume()`` - outputs the volume of the object.
+| ``OifCell.volume()`` - outputs the volume of the object.
 
-| ``OifCell.GetDiameter()`` - outputs the largest diameter of the
+| ``OifCell.get_diameter()`` - outputs the largest diameter of the
   object.
 
-| ``OifCell.GetNNodes()`` - returns the number of mesh nodes.
+| ``OifCell.get_n_nodes()`` - returns the number of mesh nodes.
 
-| ``OifCell.SetForce``\ (**f**) - sets the external force vector
+| ``OifCell.set_force``\ (**f**) - sets the external force vector
   **f**\ =(\ :math:`f_x`, :math:`f_y`, :math:`f_z`) to all mesh nodes of
-  the object. Setting is done using command ``p.SetForce``\ (**f**).
+  the object. Setting is done using command ``p.set_force``\ (**f**).
   Note, that this command sets the external force in each integration
   step. So if you want to use the external force only in one iteration,
   you need to set zero external force in the following integration step.
 
-| ``OifCell.KillMotion()`` - stops all the particles in the object
-  (analogue to the command ``p.KillMotion()``).
+| ``OifCell.kill_motion()`` - stops all the particles in the object
+  (analogue to the command ``p.kill_motion()``).
 
-| ``OifCell.UnkillMotion()`` - enables the movement of all the particles
-  in the object (analogue to the command ``p.UnkillMotion()``).
+| ``OifCell.unkill_motion()`` - enables the movement of all the particles
+  in the object (analogue to the command ``p.unkill_motion()``).
 
-| ``OifCell.OutputVtkPos``\ (*filename.vtk*) - outputs the mesh of the
+| ``OifCell.output_vtk_pos``\ (*filename.vtk*) - outputs the mesh of the
   object to the desired *filename.vtk*. ParaView can directly visualize
   this file.
 
-| ``OifCell.OutputVtkPosFolded``\ (*filename.vtk*) - outputs the mesh of
+| ``OifCell.output_vtk_pos_folded``\ (*filename.vtk*) - outputs the mesh of
   the object to the desired *filename.vtk*. ParaView can directly
   visualize this file. For periodical movements the coordinates are
   folded (always within the computational box).
 
-| ``OifCell.OutputPointDataToVtk``\ (*filename.vtk*, *dataname*,
+| ``OifCell.append_point_data_to_vtk``\ (*filename.vtk*, *dataname*,
   **data**, *firstAppend*) - outputs the specified scalar **data** to an
   existing :math:`filename.vtk`. This is useful for ParaView
   visualisation of local velocity magnitudes, magnitudes of forces, etc.
@@ -818,25 +817,25 @@ class OifCell
   :math:`False`. This is to ensure the proper structure of the output
   file.
 
-| ``OifCell.OutputRawData``\ (*filename*, **rawdata**) - outputs the
+| ``OifCell.output_raw_data``\ (*filename*, **rawdata**) - outputs the
   vector **rawdata** about the object into the *filename*.
 
-| ``OifCell.OutputMeshNodes``\ (*filename*) - outputs the positions of
+| ``OifCell.output_mesh_nodes``\ (*filename*) - outputs the positions of
   the mesh nodes to *filename*. In fact, this command creates a new
   *nodes.dat* file that can be used by the method
-  ``OifCell.SetMeshNodes``\ (*nodes.dat*). The center of the object is
+  ``OifCell.set_mesh_nodes``\ (*nodes.dat*). The center of the object is
   located at point (0.0, 0.0, 0.0). This command is aimed to store the
   deformed shape in order to be loaded later.
 
-| ``OifCell.SetMeshNodes``\ (*filename*) - deforms the object in such a
+| ``OifCell.set_mesh_nodes``\ (*filename*) - deforms the object in such a
   way that its origin stays unchanged, however the relative positions of
   the mesh points are taken from file *filename*. The *filename* should
   contain the coordinates of the mesh points with the origin location at
   (0.0, 0.0, 0.0). The procedure also checks whether number of lines in
   the *filename* is the same as the corresponding value from
-  ``OifCell.GetNNodes()``.
+  ``OifCell.get_n_nodes()``.
 
-| ``OifCell.ElasticForces``\ (**elasticforces**, **fmetric**, *vtkfile*,
+| ``OifCell.elastic_forces``\ (**elasticforces**, **fmetric**, *vtkfile*,
   *rawdatafile*) - this method can be used in two different ways. One is
   to compute the elastic forces locally for each mesh node and the other
   is to compute the f-metric, which is an approximation of elastic
@@ -867,49 +866,49 @@ class OifCell
   energy” computed as a sum of magnitudes of respective elastic forces
   over all nodes of the object.
 
-| ``OifCell.PrintInfo()`` - prints the information about the elastic
+| ``OifCell.print_info()`` - prints the information about the elastic
   object.
 
 
 Short utility procedures
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-| ``GetNTriangle``\ (:math:`\mathbf{a,b,c}`) - returns the normal **n**
+| ``get_n_triangle``\ (:math:`\mathbf{a,b,c}`) - returns the normal **n**
   to the triangle given by points (**a, b, c**).
 
-| ``Norm``\ (:math:`\mathbf{v}`) - returns the norm of the vector **v**.
+| ``norm``\ (:math:`\mathbf{v}`) - returns the norm of the vector **v**.
 
-| ``Distance``\ (:math:`\mathbf{a,b}`) - returns the distance between
+| ``distance``\ (:math:`\mathbf{a,b}`) - returns the distance between
   points **a** and **b**.
 
-| ``AreaTriangle``\ (:math:`\mathbf{a,b,c}`) - returns the area of the
+| ``area_triangle``\ (:math:`\mathbf{a,b,c}`) - returns the area of the
   given triangle (**a, b, c**).
 
-| ``AngleBtwTriangles``\ (:math:`\mathbf{p}_1`, :math:`\mathbf{p}_2`,
+| ``angle_btw_triangles``\ (:math:`\mathbf{p}_1`, :math:`\mathbf{p}_2`,
   :math:`\mathbf{p}_3`, :math:`\mathbf{p}_4` - returns the angle
   :math:`\phi` between two triangles: (:math:`\mathbf{p}_1`,
   :math:`\mathbf{p}_2`, :math:`\mathbf{p}_3`) and (:math:`\mathbf{p}_3`,
   :math:`\mathbf{p}_2`, :math:`\mathbf{p}_4`) that have a common edge
   (:math:`\mathbf{p}_2`, :math:`\mathbf{p}_3`).
 
-| ``DiscardEpsilon``\ (:math:`x`) - needed for rotation; discards very
+| ``discard_epsilon``\ (:math:`x`) - needed for rotation; discards very
   small numbers *x*.
 
-| ``KS``\ (:math:`\lambda`) - nonlinearity for neo-Hookean stretching
+| ``oif_neo_hookean_nonlin``\ (:math:`\lambda`) - nonlinearity for neo-Hookean stretching
 
-| ``CalcStretchingForce``\ (:math:`k_s,\ \mathbf{p}_A,\ \mathbf{p}_B,\ dist_0,\ dist`)
+| ``calc_stretching_force``\ (:math:`k_s,\ \mathbf{p}_A,\ \mathbf{p}_B,\ dist_0,\ dist`)
   - computes the nonlinear stretching force with given :math:`k_s` for
   points :math:`\mathbf{p}_A` and :math:`\mathbf{p}_B` given by their
   coordinates, whose initial distance was *dist0* and current distance
   is *dist*.
 
-| ``CalcLinearStretchingForce``\ (:math:`k_s,\ \mathbf{p}_A,\ \mathbf{p}_B,\ dist_0,\ dist`)
+| ``calc_linear_stretching_force``\ (:math:`k_s,\ \mathbf{p}_A,\ \mathbf{p}_B,\ dist_0,\ dist`)
   - computes the linear stretching force with given :math:`k_s` for
   points :math:`\mathbf{p}_A` and :math:`\mathbf{p}_B` given by their
   coordinates, whose initial distance was *dist0* and current distance
   is *dist*.
 
-| ``CalcBendingForce``\ (:math:`k_b,\ \mathbf{p}_A,\ \mathbf{p}_B,\ \mathbf{p}_C,\ \mathbf{p}_D,\ \phi_0,\ \phi`)
+| ``calc_bending_force``\ (:math:`k_b,\ \mathbf{p}_A,\ \mathbf{p}_B,\ \mathbf{p}_C,\ \mathbf{p}_D,\ \phi_0,\ \phi`)
   - computes the bending force with given :math:`k_b` for points
   :math:`\mathbf{p}_A`, :math:`\mathbf{p}_B`, :math:`\mathbf{p}_C` and
   :math:`\mathbf{p}_D` (:math:`\triangle_1`\ =BAC;
@@ -917,36 +916,33 @@ Short utility procedures
   angle for these two triangles was :math:`\phi_0`, the current angle is
   :math:`\phi`.
 
-| ``CalcLocalAreaForce``\ (:math:`k_{al},\ \mathbf{p}_A,\ \mathbf{p}_B,\ \mathbf{p}_C,\ A_0,\ A`)
+| ``calc_local_area_force``\ (:math:`k_{al},\ \mathbf{p}_A,\ \mathbf{p}_B,\ \mathbf{p}_C,\ A_0,\ A`)
   - computes the local area force with given :math:`k_{al}` for points
   :math:`\mathbf{p}_A`, :math:`\mathbf{p}_B` and :math:`\mathbf{p}_C`
   given by their coordinates; the initial area of triangle ABC was
   :math:`A_0`, the current area is :math:`A`.
 
-| ``CalcGlobalAreaForce``\ (:math:`k_{ag},\ \mathbf{p}_A,\ \mathbf{p}_B,\ \mathbf{p}_C,\ A_{g0},\ A_g`)
+| ``calc_global_area_force``\ (:math:`k_{ag},\ \mathbf{p}_A,\ \mathbf{p}_B,\ \mathbf{p}_C,\ A_{g0},\ A_g`)
   - computes the global area force with given :math:`k_{ag}` for points
   :math:`\mathbf{p}_A`, :math:`\mathbf{p}_B` and :math:`\mathbf{p}_C`
   given by their coordinates; the initial surface area of the object was
   :math:`A_{g0}`, the current surface area of the object is :math:`A_g`.
 
-| ``CalcVolumeForce``\ (:math:`k_v,\ \mathbf{p}_A,\ \mathbf{p}_B,\ \mathbf{p}_C,\ V_0\ V`)
+| ``calc_volume_force``\ (:math:`k_v,\ \mathbf{p}_A,\ \mathbf{p}_B,\ \mathbf{p}_C,\ V_0\ V`)
   - computes the volume force with given :math:`k_v` for points
   :math:`\mathbf{p}_A`, :math:`\mathbf{p}_B` and :math:`\mathbf{p}_C`
   given by their coordinates; the initial volume of the object was
   :math:`V_0`, the current volume of the object is :math:`V`.
 
-| ``OutputVtkRhomboid``\ (:math:`\mathbf{corner}, \mathbf{a}, \mathbf{b}, \mathbf{c}, outFile.vtk`)
+| ``output_vtk_rhomboid``\ (:math:`\mathbf{corner}, \mathbf{a}, \mathbf{b}, \mathbf{c}, outFile.vtk`)
   - outputs rhomboid boundary for later visualisation in ParaView.
 
-| ``OutputVtkCylinder``\ (:math:`\mathbf{center}, \mathbf{normal}, L, r, n, outFile.vtk`)
+| ``output_vtk_cylinder``\ (:math:`\mathbf{center}, \mathbf{normal}, L, r, n, outFile.vtk`)
   - outputs cylinder boundary for later visualisation in ParaView.
 
-| ``OutputVtkLines``\ (:math:`lines, outFile.vtk`) - outputs a set of
+| ``output_vtk_lines``\ (:math:`lines, outFile.vtk`) - outputs a set of
   line segments for later visualisation in ParaView.
 
-| ``GetInterpolatedVelocity``\ (:math:`\mathbf{position}, lbf`) -
-  returns interpolated fluid velocity at given position. Warning: this
-  is only correct for agrid = 1.
 
 Description of helper classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
