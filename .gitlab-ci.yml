@@ -18,6 +18,7 @@ check_permission:
   only:
     - /.*external.*/
   when: manual
+  allow_failure: false
   script:
     - echo "External user please trigger the build manually."
 
