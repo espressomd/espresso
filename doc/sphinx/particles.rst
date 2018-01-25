@@ -152,7 +152,7 @@ You can iterate over all particles or over a subset of particles as follows::
 You can iterate over all pairs of particles using::
     
     for pair in system.part.pairs():
-        print(pair[1].id,pair[2].id)
+        print(pair[0].id,pair[1].id)
 
         
 .. _Exclusions:

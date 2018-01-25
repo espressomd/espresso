@@ -606,7 +606,7 @@ IF ELECTROSTATICS:
     cdef class MMM1D(ElectrostaticInteraction):
         """
         Electrostatics solver for Systems with one periodic direction.
-        See :ref:`mmm1d_guide` for more details.
+        See :ref:`MMM1D Theory` for more details.
 
         Parameters
         ----------
@@ -678,7 +678,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
     cdef class MMM1DGPU(ElectrostaticInteraction):
         """
         Electrostatics solver for Systems with one periodic direction.
-        See :ref:`mmm1d_guide` for more details.
+        See :ref:`MMM1D Theory` for more details.
 
         Parameters
         ----------
@@ -761,7 +761,7 @@ IF ELECTROSTATICS:
     cdef class MMM2D(ElectrostaticInteraction):
         """
         Electrostatics solver for systems with two periodic dimensions. 
-        More detail are in the user guide :ref:`mmm2d_guide`
+        More detail are in the user guide :ref:`MMM2D Theory`
 
         Parameters
         ----------

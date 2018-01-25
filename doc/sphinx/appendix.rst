@@ -136,8 +136,7 @@ argument does not hold.
 
 To obtain the :math:`O(N\log N)` scaling, some algorithm tricks are
 needed, which are not used in MMM1D, MMM2D or ELC and are therefore not
-discussed here. For details, see :cite:`strebel99a`. MMM is
-not implemented in .
+discussed here. For details, see :cite:`strebel99a`. 
 
 .. _MMM2D theory:
 
@@ -175,7 +174,7 @@ and the near formula is
 As said before, the energy obtained from these potentials is equal to
 the electrostatic energy obtained by the spherical summation limit. The
 deeper reason for this is that in some sense the electrostatic sum is
-absolutely convergent :cite:`mmm2d`.
+absolutely convergent :cite:`arnold02a`.
 
 The near formula is used for particles with a small distance along the z
 axis, for all other particles the far formula is used. Below is shown,
@@ -295,7 +294,7 @@ In pseudo code, the far formula algorithm looks like:
          :math:`\xi^{(+,s/c,s/c)}_j\Xi^{(l,s/c,s/c)}_s` and
          :math:`\xi^{(-,s/c,s/c)}_j\Xi^{(h,s/c,s/c)}_s`
 
-For further details, see :cite:`mmm2d,arnold02b,arnold02c`.
+For further details, see :cite:`arnold02a,arnold02b,arnold02c`.
 
 .. _Dielectric contrast:
 
@@ -369,7 +368,7 @@ neither the near nor far formula allow a product decomposition or
 similar tricks. MMM1D has to be implemented as a simple NxN loop.
 However, the formulas can be evaluated efficiently, so that MMM1D can
 still be used reasonably for up to 400 particles on a single processor
-:cite:`mmm1d`.
+:cite:`arnold05a`.
 
 .. _ELC theory:
 

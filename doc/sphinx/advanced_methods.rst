@@ -266,10 +266,10 @@ varying over a finite wavelength determined by the box. For a planar
 Couette flow (constant shear, infinite wavelength), consider using
 Lees-Edwards boundary conditions (see ) to drive the shear.
 
-.. _Lees-Edwards boundary condition: Setting up a shear flow:
+.. _Lees-Edwards boundary conditions:
 
-Lees-Edwards boundary condition: Setting up a shear flow
---------------------------------------------------------
+Lees-Edwards boundary conditions
+--------------------------------
 
 To use the Lees-Edwards boundary conditions, the feature ``LEES_EDWARDS`` is required.
 

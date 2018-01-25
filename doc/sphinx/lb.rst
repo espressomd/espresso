@@ -331,10 +331,10 @@ you could do the following::
     lbb = espressomd.lbboundaries.LBBoundary(shape=wall, velocity=[0,0,0])
     system.lbboundaries.add(lbb)
 
-.. _Slip velocity usage example:
+.. _Setting up boundary conditions:
 
-Slip velocity usage example
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Setting up boundary conditions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The following example sets up a system consisting of a spherical boundary in the center of the simulation box acting as a no-slip boundary for the LB fluid that is driven by 4 walls with a slip velocity::
 

@@ -277,7 +277,7 @@ possible, it is not recommended to activate all features, because this
 will negatively effect |es| ’s performance.
 
 Features can be activated in the configuration header ``myconfig.hpp`` (see
-section :ref:`myconifg.hpp\: Activating and deactivating features`). To
+section :ref:`myconfig.hpp\: Activating and deactivating features`). To
 activate ``FEATURE``, add the following line to the header file:
 
 ::
