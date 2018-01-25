@@ -1066,6 +1066,8 @@ void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float*
 
 	dds_float *energySum;
 	cuda_safe_mem(cudaMalloc(&energySum,(int)(sizeof(dds_float)*grid.x)));
+	// cleanup the memory for the energy sum
+	cuda_safe_mem(cudaMemset(energySum, 0, (int)(sizeof(dds_float)*grid.x)));
 
 	KERNELCALL_shared(energyCalculationKernel,grid,block,block.x*sizeof(dds_float),(k, box_l_gpu, periodic_gpu,energySum));
 	cudaThreadSynchronize();
@@ -1097,7 +1099,7 @@ void allocBHmemCopy(int nbodies, BHData* bh_data) {
     devID = cuda_get_device();
     cuda_get_device_props(devID,dev);
 
-    bh_data->blocks = 4 * dev.n_cores;
+    bh_data->blocks = dev.n_cores;
     // Each node corresponds to a split of the cubic box in 3D space to equal cubic boxes
     // hence, 8 nodes per particle is a theoretical octree limit:
     bh_data->nnodes = bh_data->nbodies * 8;
