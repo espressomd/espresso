@@ -31,14 +31,14 @@ add_subdirectory(09-catalytic_reactions)
 
 
 ### here: add the appropriate tutorial target after DEPENDS
-add_custom_target(tutorials_py
+add_custom_target(tutorials
   DEPENDS
-  tutorials_py_00
-  tutorials_py_01
-  tutorials_py_02
-  tutorials_py_04
-  tutorials_py_05
-  tutorials_py_06
-  tutorials_py_07
-  tutorials_py_08
-  tutorials_py_09)
+  tutorials_00
+  tutorials_01
+  tutorials_02
+  tutorials_04
+  tutorials_05
+  tutorials_06
+  tutorials_07
+  tutorials_08
+  tutorials_09)
