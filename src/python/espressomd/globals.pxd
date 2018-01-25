@@ -44,7 +44,7 @@ cdef extern from "global.hpp":
         int FIELD_NPTISO_GV
 
     void mpi_bcast_parameter(int p)
-        
+
 cdef extern from "communication.hpp":
     extern int n_nodes
     void mpi_set_smaller_time_step(double smaller_time_step)
@@ -77,7 +77,7 @@ cdef extern from "particle_data.hpp":
     extern int n_part
 
 cdef extern from "lees_edwards.hpp":
-    double lees_edwards_offset    
+    double lees_edwards_offset
 
 cdef extern from "interaction_data.hpp":
     double dpd_gamma
@@ -167,4 +167,4 @@ cdef extern from "reaction.hpp":
     cdef extern reaction_struct reaction
 
 cdef extern from "immersed_boundaries.hpp":
-     extern ImmersedBoundaries immersed_boundaries
+    extern ImmersedBoundaries immersed_boundaries
