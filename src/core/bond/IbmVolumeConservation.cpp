@@ -93,7 +93,8 @@ int Bond::IbmVolumeConservation::add_bonded_energy(Particle *p1, int bl_id)
 int Bond::IbmVolumeConservation::get_soft_ID(Particle *p1, int bl_id, int *softID, int *bond_map_id)
 {
 
-  if ( p1->p.isVirtual){
+#ifdef IMMERSED_BOUNDARY
+  if( p1->p.isVirtual){
     *softID = m_softID;
     *bond_map_id = bl_id;
     return 0;
@@ -102,7 +103,11 @@ int Bond::IbmVolumeConservation::get_soft_ID(Particle *p1, int bl_id, int *softI
     printf("Error. Encountered non-virtual particle with VOLUME_CONSERVATION_IBM\n");
     return 2; // see BondContainer loop -> it return immediately and we can call exit(1)
   };
-
+#endif
+#ifndef IMMERSED_BOUNDARY
+  return 0;
+#endif
+  
 }
 
 int Bond::IbmVolumeConservation::calc_volumes(Particle *p1, int bl_id, double *tempVol)
