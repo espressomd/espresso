@@ -99,8 +99,10 @@ version only) is extended to a two-component Shan-Chen (SC) method.
   make it easier to calculate flow profiles independent of the lattice
   constant.
 
-Checkpointing
--------------
+.. _Checkpointing LB:
+
+Checkpointing LB
+----------------
 
 ::
 
@@ -127,6 +129,8 @@ load in the particles with the correct forces, and use::
     
 upon the first call to :ref:`run <Integrator>`. This causes the
 old forces to be reused and thus conserves momentum.
+
+.. _LB as a thermostat:
 
 LB as a thermostat
 ------------------
@@ -163,6 +167,238 @@ fluctuations can be switched off by setting the temperature to 0.
 
 Regarding the unit of the temperature, please refer to
 Section :ref:`On units`.
+
+.. _Reading and setting properties of single lattice nodes:
+
+Reading and setting properties of single lattice nodes
+------------------------------------------------------
+
+Appending three indices to the ``lb`` object returns an object that represents the selected LB grid node and allows one to access all of its properties::
+
+    lb[x,y,z].density    #fluid density (one scalar for LB and LB_GPU, two scalars for SHAN_CHEN)
+    lb[x,y,z].velocity   #fluid velocity (a numpy array of three floats)
+    lb[x,y,z].pi         #fluid pressure tensor (a symmetric 3x3 numpy array of floats)
+    lb[x,y,z].pi_neq     #nonequilbrium part of the pressure tensor (as above)
+    lb[x,y,z].boundary   #flag indicating whether the node is fluid  or boundary (fluid: boundary=0, boundary: boundary != 0)
+    lb[x,y,z].population #19 LB populations (a numpy array of 19 floats, check order from the source code)
+
+All of these properties can be read and used in further calculations. Only the property ``population`` can be modified. The indices ``x,y,z`` are integers and enumerate the LB nodes in the three directions, starts with 0. To modify ``boundary``, refer to :ref:`Setting up boundary conditions`.
+
+Examples::
+
+    print(lb[0,0,0].velocity)
+
+    lb[0,0,0].density = 1.2
+
+The first line prints the fluid velocity at node 0 0 0 to the screen. The second line sets this fluid node's density to the value ``1.2``.
+
+.. _Removing total fluid momentum:
+
+Removing total fluid momentum
+-----------------------------
+
+.. note:: Only available for LB_GPU and SHAN_CHEN
+
+Some simulations require the net momentum of the system to vanish. Even if the physics of the system fulfills this condition, numerical errors can introduce drift. Simulations that frequently suffer from this effect are for example free energy profile calculations using ``SHAN_CHEN``, where it might be useful to prevent interface motion, or electrophoretic mobility calculations for mobile objects. Removing the total momentum of the fluid can be achieved using::
+
+    lb.remove_momentum()
+
+.. _Output for visualization:
+
+Output for visualization
+------------------------
+
+|es| implements a number of commands to output fluid field data of the whole fluid into a file at once.::
+
+    lb.print_vtk_velocity(path)
+    lb.print_vtk_boundary(path)
+    lb.print_velocity(path)
+    lb.print_boundary(path)
+
+Currently supported fluid properties are the velocity, and boundary flag in ASCII VTK as well as Gnuplot compatible ASCII output.
+
+The VTK format is readable by visualization software such as Paraview [1]_
+or mayavi2 [2]_. If you plan to use Paraview for visualization, note that also the particle
+positions can be exported using the VTK format (see :meth:`espressomd.particle_data.ParticleList.writevtk`).
+
+The variant
+
+::
+
+   lb.print_vtk_velocity(path, bb1, bb2) 
+
+allows you to only output part of the flow field by specifiying an axis aligned
+bounding box through the coordinates ``bb1`` and ``bb1`` (lists of three ints) of two of its corners. This
+bounding box can be used to output a slice of the flow field. As an
+example, executing
+
+::
+
+    lb.print_vtk_velocity(path, [0,0,5], [10,10,5])
+
+will output the cross-section of the velocity field in a plane
+perpendicular to the :math:`z`-axis at :math:`z = 5` (assuming the box
+size is 10 in the :math:`x`- and :math:`y`-direction).
+
+.. If the bicomponent fluid is used, two filenames have to be supplied when exporting the density field, to save both components.
+
+
+.. _Choosing between the GPU and CPU implementations:
+
+Choosing between the GPU and CPU implementations
+------------------------------------------------
+
+.. note:: Feature LB_GPU required
+
+Espresso contains an implementation of the LBM for NVIDIA
+GPUs using the CUDA framework. On CUDA-supporting machines this can be
+activated by compiling with the feature ``LB_GPU``. Within the
+Python script, the ``LBFluid`` object can be substituted with the ``LBFluidGPU`` object to switch from CPU based to GPU based execution. For further
+information on CUDA support see section :ref:`GPU Acceleration with CUDA`.
+
+The following minimal example demonstrates how to use the GPU implementation of the LBM in analogy to the example for the CPU given in section :ref:`Setting up a LB fluid`::
+
+    import espressomd
+    sys = espressomd.System()
+    sys.box_l = [10, 20, 30]
+    sys.time_step = 0.01
+    sys.cell_system.skin = 0.4
+    lb = espressomd.lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=0.01)
+    sys.actors.add(lb)
+    sys.integrator.run(100)
+
+For boundary conditions analogous to the CPU
+implementation, the feature ``LB_BOUNDARIES_GPU`` has to be activated.
+The feature ``LB_GPU`` allows the use of Lees-Edwards boundary conditions. Our implementation follows the the paper of :cite:`wagner02`. Note, that there is no extra python interface for the use of Lees-Edwards boundary conditions with the LB algorithm. All information are rather internally derived from the set of the Lees-Edwards offset in the system class. For further information Lees-Edwards boundary conditions please refer to section :ref:`Lees-Edwards boundary conditions`
+
+.. _Electrohydrodynamics:
+
+Electrohydrodynamics
+--------------------
+
+        .. note::
+           This needs the feature LB_ELECTROHYDRODYNAMICS.
+
+If the feature is activated, the Lattice Boltzmann Code can be
+used to implicitly model surrounding salt ions in an external electric
+field by having the charged particles create flow.
+
+For that to work, you need to set the electrophoretic mobility
+(multiplied by the external :math:`E`-field) :math:`\mu E` on the
+particles that should be subject to the field. This effectivly acts
+as an velocity offset between the particle and the LB fluid.
+
+For more information on this method and how it works, read the
+publication :cite:`hickey10a`.
+
+
+.. _Using shapes as Lattice-Boltzmann boundary:
+
+Using shapes as Lattice-Boltzmann boundary
+------------------------------------------
+
+.. note::
+    `Feature LB_BOUNDARIES required`
+
+Lattice-Boltzmann boundaries are implemented in the module
+:mod:`espressomd.lbboundaries`. You might want to take a look
+at the classes :class:`espressomd.lbboundaries.LBBoundary`
+and :class:`espressomd.lbboundaries.LBBoundaries` for more information.
+
+Adding a shape based boundary is straightforward::
+
+    lbb = espressomd.lbboundaries.LBBoundary(shape=my_shape, velocity=[0,0,0])
+    system.lbboundaries.add(lbb)
+
+or::
+
+    lbb = espressomd.lbboundaries.LBBoundary()
+    lbb.shape = my_shape
+    lbb.velocity = [0,0,0]
+    system.lbboundaries.add(lbb)
+
+.. _Minimal usage example:
+
+Minimal usage example
+~~~~~~~~~~~~~~~~~~~~~
+
+.. note:: Feature LB_BOUNDARIES or LB_BOUNDARIES_GPU required
+
+In order to add a wall as boundary for a Lattice-Boltzmann fluid
+you could do the following::
+
+    wall = espressomd.shapes.Wall(dist=5, normal=[1,0,0])
+    lbb = espressomd.lbboundaries.LBBoundary(shape=wall, velocity=[0,0,0])
+    system.lbboundaries.add(lbb)
+
+.. _Slip velocity usage example:
+
+Slip velocity usage example
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following example sets up a system consisting of a spherical boundary in the center of the simulation box acting as a no-slip boundary for the LB fluid that is driven by 4 walls with a slip velocity::
+
+    from espressomd import System, lb, lbboundaries, shapes
+
+    sys = System()
+    sys.box_l = [64, 64, 64]
+    sys.time_step = 0.01
+    sys.cell_system.skin = 0.4
+    
+    lb = lb.LBFluid(agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=0.01)
+    sys.actors.add(lb)
+
+    v = [0, 0, 0.01]  #the boundary slip
+    walls = [None] * 4
+    
+    wall_shape = shapes.Wall(normal=[1,0,0], dist=1)
+    walls[0] = lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
+
+    wall_shape = shapes.Wall(normal=[-1,0,0], dist=-63)
+    walls[1] = lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
+    
+    wall_shape = shapes.Wall(normal=[0,1,0], dist=1)
+    walls[2] = lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
+    
+    wall_shape = shapes.Wall(normal=[0,-1,0], dist=-63)
+    walls[3] = lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
+
+    for wall in walls:
+        system.lbboundaries.add(wall)
+
+    sphere_shape = shapes.Sphere(radius=5.5, center=[33,33,33], direction=1)
+    sphere = lbboundaries.LBBoundary(shape=sphere_shape)
+    sys.lbboundaries.add(sphere)
+
+    sys.integrator.run(4000)
+
+    print(sphere.get_force())
+
+After integrating the system for a sufficient time to reach the steady state, the hydrodynamic drag force exerted on the sphere is evaluated.
+
+The LB boundaries use the same ``shapes`` objects to specify their geometry as ``constraints`` for particles do. This allows the user to quickly set up a system with boundary conditions that simultaneously act on the fluid and particles. For a complete description of all of the available shapes, refer to :meth:`espressomd.shapes`.
+
+Intersecting boundaries are in principle possible but must be treated
+with care. In the current implementation, all nodes that are
+within at least one boundary are treated as boundary nodes.
+
+Currently, only the so called “link-bounce-back” algorithm for wall
+nodes is available. This creates a boundary that is located
+approximately midway between the lattice nodes, so in the above example ``wall[0]``
+corresponds to a boundary at :math:`x=1.5`. Note that the
+location of the boundary is unfortunately not entirely independent of
+the viscosity. This can be seen when using the sample script with a high
+viscosity.
+
+The bounce back boundary conditions permit it to set the velocity at the boundary
+to a nonzero value via the ``v`` property of an ``LBBoundary`` object. This allows to create shear flow and boundaries
+moving relative to each other. The velocity boundary conditions are
+implemented according to :cite:`succi01a` eq. 12.58. Using
+this implementation as a blueprint for the boundary treatment, an
+implementation of the Ladd-Coupling should be relatively
+straightforward. The ``LBBoundary`` object furthermore possesses a property ``force``, which keeps track of the hydrodynamic drag force exerted onto the boundary by the moving fluid.
+
+.. _The Shan Chen bicomponent fluid:
 
 The Shan Chen bicomponent fluid
 -------------------------------
@@ -247,7 +483,7 @@ through the global variable ``lb_components``.
 .. _SC as a thermostat:
 
 SC as a thermostat
-------------------
+~~~~~~~~~~~~~~~~~~
 
 .. note:: The Shan-Chen LB currently does not possess a Python interface.
 
@@ -293,7 +529,7 @@ coupling scheme can be found in :cite:`sega13c`.
 .. _SC component-dependent interactions between particles:
 
 SC component-dependent interactions between particles
------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note:: The Shan-Chen LB currently does not possess a Python interface.
 
@@ -308,187 +544,6 @@ as a modifier to other interactions. So far only the Lennard-Jones
 interaction is changed by the ``affinity``, so that it switches in a continuous way
 (after the potential minimum) from the full interaction to the WCA one.
 For more information see :ref:`Lennard-Jones interaction` and :ref:`Affinity interaction`.
-
-Reading and setting properties of single lattice nodes
-------------------------------------------------------
-
-Appending three indices to the ``lb`` object returns an object that represents the selected LB grid node and allows one to access all of its properties::
-
-    lb[x,y,z].density    #fluid density (one scalar for LB and LB_GPU, two scalars for SHAN_CHEN)
-    lb[x,y,z].velocity   #fluid velocity (a numpy array of three floats)
-    lb[x,y,z].pi         #fluid pressure tensor (a symmetric 3x3 numpy array of floats)
-    lb[x,y,z].pi_neq     #nonequilbrium part of the pressure tensor (as above)
-    lb[x,y,z].boundary   #flag indicating whether the node is fluid  or boundary (fluid: boundary=0, boundary: boundary != 0)
-    lb[x,y,z].population #19 LB populations (a numpy array of 19 floats, check order from the source code)
-
-All of these properties can be read and used in further calculations. Only the property ``population`` can be modified. The indices ``x,y,z`` are integers and enumerate the LB nodes in the three directions, starts with 0. To modify ``boundary``, refer to :ref:`Setting up boundary conditions`.
-
-Examples::
-
-    print(lb[0,0,0].velocity)
-
-    lb[0,0,0].density = 1.2
-
-The first line prints the fluid velocity at node 0 0 0 to the screen. The second line sets this fluid node's density to the value ``1.2``.
-
-Removing total fluid momentum
------------------------------
-
-.. note:: Only available for LB_GPU and SHAN_CHEN
-
-Some simulations require the net momentum of the system to vanish. Even if the physics of the system fulfills this condition, numerical errors can introduce drift. Simulations that frequently suffer from this effect are for example free energy profile calculations using ``SHAN_CHEN``, where it might be useful to prevent interface motion, or electrophoretic mobility calculations for mobile objects. Removing the total momentum of the fluid can be achieved using::
-
-    lb.remove_momentum()
-
-Visualization
--------------
-
-|es| implements a number of commands to output fluid field data of the whole fluid into a file at once.::
-
-    lb.print_vtk_velocity(path)
-    lb.print_vtk_boundary(path)
-    lb.print_velocity(path)
-    lb.print_boundary(path)
-
-Currently supported fluid properties are the velocity, and boundary flag in ASCII VTK as well as Gnuplot compatible ASCII output.
-
-The VTK format is readable by visualization software such as Paraview [1]_
-or mayavi2 [2]_. If you plan to use Paraview for visualization, note that also the particle
-positions can be exported using the VTK format (see :meth:`espressomd.particle_data.ParticleList.writevtk`).
-
-The variant
-
-::
-
-   lb.print_vtk_velocity(path, bb1, bb2) 
-
-allows you to only output part of the flow field by specifiying an axis aligned
-bounding box through the coordinates ``bb1`` and ``bb1`` (lists of three ints) of two of its corners. This
-bounding box can be used to output a slice of the flow field. As an
-example, executing
-
-::
-
-    lb.print_vtk_velocity(path, [0,0,5], [10,10,5])
-
-will output the cross-section of the velocity field in a plane
-perpendicular to the :math:`z`-axis at :math:`z = 5` (assuming the box
-size is 10 in the :math:`x`- and :math:`y`-direction).
-
-.. If the bicomponent fluid is used, two filenames have to be supplied when exporting the density field, to save both components.
-
-.. _Setting up boundary conditions:
-
-Setting up boundary conditions
-------------------------------
-
-.. note:: Feature LB_BOUNDARIES or LB_BOUNDARIES_GPU required
-
-The following example sets up a system consisting of a spherical boundary in the center of the simulation box acting as a no-slip boundary for the LB fluid that is driven by 4 walls with a slip velocity::
-
-    from espressomd import System, lb, lbboundaries, shapes
-
-    sys = System()
-    sys.box_l = [64, 64, 64]
-    sys.time_step = 0.01
-    sys.cell_system.skin = 0.4
-    
-    lb = lb.LBFluid(agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=0.01)
-    sys.actors.add(lb)
-
-    v = [0, 0, 0.01]  #the boundary slip
-    walls = [None] * 4
-    
-    wall_shape = shapes.Wall(normal=[1,0,0], dist=1)
-    walls[0] = lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
-
-    wall_shape = shapes.Wall(normal=[-1,0,0], dist=-63)
-    walls[1] = lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
-    
-    wall_shape = shapes.Wall(normal=[0,1,0], dist=1)
-    walls[2] = lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
-    
-    wall_shape = shapes.Wall(normal=[0,-1,0], dist=-63)
-    walls[3] = lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
-
-    for wall in walls:
-        system.lbboundaries.add(wall)
-
-    sphere_shape = shapes.Sphere(radius=5.5, center=[33,33,33], direction=1)
-    sphere = lbboundaries.LBBoundary(shape=sphere_shape)
-    sys.lbboundaries.add(sphere)
-
-    sys.integrator.run(4000)
-
-    print(sphere.get_force())
-
-After integrating the system for a sufficient time to reach the steady state, the hydrodynamic drag force exerted on the sphere is evaluated.
-
-The LB boundaries use the same ``shapes`` objects to specify their geometry as ``constraints`` for particles do. This allows the user to quickly set up a system with boundary conditions that simultaneously act on the fluid and particles. For a complete description of all of the available shapes, refer to :meth:`espressomd.shapes`.
-
-Intersecting boundaries are in principle possible but must be treated
-with care. In the current implementation, all nodes that are
-within at least one boundary are treated as boundary nodes.
-
-Currently, only the so called “link-bounce-back” algorithm for wall
-nodes is available. This creates a boundary that is located
-approximately midway between the lattice nodes, so in the above example ``wall[0]``
-corresponds to a boundary at :math:`x=1.5`. Note that the
-location of the boundary is unfortunately not entirely independent of
-the viscosity. This can be seen when using the sample script with a high
-viscosity.
-
-The bounce back boundary conditions permit it to set the velocity at the boundary
-to a nonzero value via the ``v`` property of an ``LBBoundary`` object. This allows to create shear flow and boundaries
-moving relative to each other. The velocity boundary conditions are
-implemented according to :cite:`succi01a` eq. 12.58. Using
-this implementation as a blueprint for the boundary treatment, an
-implementation of the Ladd-Coupling should be relatively
-straightforward. The ``LBBoundary`` object furthermore possesses a property ``force``, which keeps track of the hydrodynamic drag force exerted onto the boundary by the moving fluid.
-
-Choosing between the GPU and CPU implementations
-------------------------------------------------
-
-.. note:: Feature LB_GPU required
-
-Espresso contains an implementation of the LBM for NVIDIA
-GPUs using the CUDA framework. On CUDA-supporting machines this can be
-activated by compiling with the feature ``LB_GPU``. Within the
-Python script, the ``LBFluid`` object can be substituted with the ``LBFluidGPU`` object to switch from CPU based to GPU based execution. For further
-information on CUDA support see section :ref:`GPU Acceleration with CUDA`.
-
-The following minimal example demonstrates how to use the GPU implementation of the LBM in analogy to the example for the CPU given in section :ref:`Setting up a LB fluid`::
-
-    import espressomd
-    sys = espressomd.System()
-    sys.box_l = [10, 20, 30]
-    sys.time_step = 0.01
-    sys.cell_system.skin = 0.4
-    lb = espressomd.lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=0.01)
-    sys.actors.add(lb)
-    sys.integrator.run(100)
-
-For boundary conditions analogous to the CPU
-implementation, the feature ``LB_BOUNDARIES_GPU`` has to be activated.
-The feature ``LB_GPU`` allows the use of Lees-Edwards boundary conditions. Our implementation follows the the paper of :cite:`wagner02`. Note, that there is no extra python interface for the use of Lees-Edwards boundary conditions with the LB algorithm. All information are rather internally derived from the set of the Lees-Edwards offset in the system class. For further information Lees-Edwards boundary conditions please refer to section :ref:`Lees-Edwards boundary conditions`
-
-Electrohydrodynamics
---------------------
-
-        .. note::
-           This needs the feature LB_ELECTROHYDRODYNAMICS.
-
-If the feature is activated, the Lattice Boltzmann Code can be
-used to implicitly model surrounding salt ions in an external electric
-field by having the charged particles create flow.
-
-For that to work, you need to set the electrophoretic mobility
-(multiplied by the external :math:`E`-field) :math:`\mu E` on the
-particles that should be subject to the field. This effectivly acts
-as an velocity offset between the particle and the LB fluid.
-
-For more information on this method and how it works, read the
-publication :cite:`hickey10a`.
 
 .. [1]
    http://www.paraview.org/

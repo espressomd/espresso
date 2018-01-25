@@ -1,5 +1,7 @@
-Userguide
-=========
+.. _Users' guide:
+
+Users' guide
+============
 
 .. toctree::
     :numbered:
@@ -7,24 +9,22 @@ Userguide
 
     introduction.rst
     installation.rst
-    part.rst
-    inter.rst
-    setup.rst
-    run.rst
-    analysis.rst
-    analysis-core.rst
-    io.rst
+    system_setup.rst
+    particles.rst
+    running.rst
+    inter_non-bonded.rst
+    inter_bonded.rst
+    electrostatics.rst
+    magnetostatics.rst
+    system_manipulation.rst
+    constraints.rst
     lb.rst
-    electrokinetics.rst
-    oif.rst
-    ibm.rst
-    internal.rst
+    analysis.rst
+    io.rst
+    visualization.rst
+    advanced_methods.rst
+    under_the_hood.rst
     contributing.rst
-    features.rst
-    examples.rst
-    memd.rst
-    mmm.rst
-    cuda.rst
-    shapes.rst
+    appendix.rst
 
 .. bibliography:: zrefs.bib

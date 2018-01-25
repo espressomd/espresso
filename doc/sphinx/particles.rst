@@ -1,8 +1,9 @@
 .. _Setting up particles:
 
-====================
 Setting up particles
 ====================
+
+.. _Overview of the relevant Python classes:
 
 Overview of the relevant Python classes
 ---------------------------------------
@@ -16,6 +17,7 @@ in almost no case have these classes to be instanced explicitly by the user.
 Rather, access is provided via the :attr:`espressomd.system.System.part` attribute.
 The details are explained in the following sections.
 
+.. _Adding particles:
 
 Adding particles
 ----------------
@@ -42,6 +44,7 @@ Furthermore, the :meth:`espressomd.particle_data.ParticleList.add` method return
 
 Note that the instance of :class:`espressomd.particle_data.ParticleHandle` returned by :meth:`espressomd.particle_data.ParticleList.add` are handles for the live particles in the simulation, rather than offline copies. Changing their properties will affect the simulation.
 
+.. _Accessing particle properties:
 
 Accessing particle properties
 -----------------------------
@@ -63,6 +66,8 @@ Similarly, the position can be set::
 
 Note that the index and the property ID are not necessarily the same.
 
+.. _Vectorial properties:
+
 Vectorial properties
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -72,6 +77,8 @@ This behavior is inherited, so the same applies to ``a`` after ``a =
 system.part[0].pos``. If you want to use an vectorial property for further
 calculations, you should explicity make a copy e.g. via
 ``a = numpy.copy(system.part[0].pos)``.
+
+.. _Interacting with groups of particles:
 
 Interacting with groups of particles
 ------------------------------------
@@ -116,6 +123,7 @@ The above code snippet would lead the the same exclusions as the one before.
 The same accounts for the ``bonds`` property by interchanging the integer entries of the exclusion list with 
 the tuple ``(bond, partners)``. 
 
+.. _Deleting particles:
 
 Deleting particles
 ------------------
@@ -128,6 +136,8 @@ For example, to delete all particles with particle index greater than 10, run::
 To delete all particles, use::
 
     system.part.clear()
+
+.. _Iterating over particles and pairs of particles:
 
 Iterating over particles and pairs of particles
 -----------------------------------------------
@@ -145,10 +155,10 @@ You can iterate over all pairs of particles using::
         print(pair[1].id,pair[2].id)
 
         
+.. _Exclusions:
+
 Exclusions
 ----------
-
-        :todo: `Perhaps this does not need its own section.`
 
 Particles can have an exclusion list of all other particles where nonbonded interactions are ignored.
 This is typically used in atomistic simulations, 
@@ -172,11 +182,15 @@ To delete the exclusion, simply use
 See :attr:`espressomd.particle_data.ParticleHandle.exclusions`
 
 
+.. _Create particular particle configurations:
+
 Create particular particle configurations
 -----------------------------------------
 
-``polymer``: Setting up polymer chains
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _Setting up polymer chains:
+
+Setting up polymer chains
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
@@ -214,9 +228,11 @@ The polymer can be created using several different random walk modes (via the pa
     that is closer to another particle than ``shield``, a new attempt of setting
     up the whole chain is done, up to ``max_tries`` times.
 
+.. _Setting up diamond polymer networks:
 
-``diamond``: Setting up diamond polymer networks
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Setting up diamond polymer networks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 ::
 
     from espressomd import Diamond
@@ -239,8 +255,11 @@ interaction :math:`0` is taken which must be a two-particle bond.
 
 See :meth:`espressomd.diamond.Diamond` for more details.
 
-``icosaeder``: Setting up an icosaeder
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _Setting up an icosaeder:
+
+Setting up an icosaeder
+~~~~~~~~~~~~~~~~~~~~~~~
+
 :todo: `This feature is not yet implemented in Python.`
 
 Creates a modified icosaeder to model a fullerene (or soccer ball). The
@@ -271,8 +290,10 @@ Specifies the distance between two charged monomer along the edge. If
 :math:`d_\mathrm{charged} > 1` the remaining monomers are
 uncharged.
 
-``crosslink``: Cross-linking polymers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _Cross-linking polymers:
+
+Cross-linking polymers
+~~~~~~~~~~~~~~~~~~~~~~
 
         :todo: `This is not implemented in Python` 
 
@@ -330,9 +351,6 @@ To switch the active scheme, the attribute :attr:`espressomd.system.System.virtu
 
 By default, :class:`espressomd.virtual_sites.VirtualSitesOff` is selected. This means that virtual particles are not touched during integration.
 the `have_velocity` attribute determines, whether or not the velocity of virtual sites is calcualted, which carries a performance cost.
-
-
-
 
 .. _Rigid arrangements of particles: 
 
@@ -410,8 +428,11 @@ Please note:
 -  The presence of rigid bodies constructed by means of virtual sites
    adds a contribution to the pressure and stress tensor.
 
+.. _Virtual sites in the center of mass of a molecule:
+
 Virtual sites in the center of mass of a molecule
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 :todo: `This is not implemented in Python, yet`
 
 To activate this implementation, enable the feature VIRTUAL_SITES_COM in myconfig.hpp. Virtual sites are then placed in the center of mass of
@@ -469,6 +490,8 @@ certain analysis functions, namely ``energy_kinetic_mol``,
 ``pressure_mol`` and ``dipmom_mol``, which compute kinetic energy,
 pressure and dipole moment per molecule type, respectively.
 
+.. _Additional features:
+
 Additional features
 ~~~~~~~~~~~~~~~~~~~
 
@@ -482,9 +505,11 @@ switches in ``myconfig.hpp``.
 
 - THERMOSTAT_IGNORE_NON_VIRTUAL specifies that the thermostat does not act on non-virtual particles
 
+.. _Grand canonical feature:
 
 Grand canonical feature
 -----------------------
+
 :mod:`espressomd.grand_canonical`
 
 For using conveniently in simulations in the grand canonical ensemble,
@@ -511,6 +536,8 @@ chosen particle id, for a particle of the given type. The keyword
 similarly giving ``number`` as argument will return the number of
 particles which share the given type.
 
+.. _Self-propelled swimmers:
+
 Self-propelled swimmers
 -----------------------
 
@@ -522,6 +549,8 @@ Self-propelled swimmers
 .. seealso::
 
     :class:`espressomd.particle_data.ParticleHandle.swimming`
+
+.. _Langevin swimmers:
 
 Langevin swimmers
 ~~~~~~~~~~~~~~~~~
@@ -547,6 +576,8 @@ friction coefficient. You may only set one of the possibilities ``v_swim`` *or*
 same time. Note that there is no real difference between ``v_swim`` and
 ``f_swim``, since the latter may always be chosen such that the same terminal
 velocity is achieved for a given friction coefficient.
+
+.. _Lattice-Boltzmann (LB) swimmers:
 
 Lattice-Boltzmann (LB) swimmers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
