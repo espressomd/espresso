@@ -36,7 +36,6 @@
 #include "ghmc.hpp"
 #include "ghosts.hpp"
 #include "grid.hpp"
-#include "immersed_boundary/ibm_main.hpp"
 #include "initialize.hpp"
 #include "interaction_data.hpp"
 #include "lattice.hpp"

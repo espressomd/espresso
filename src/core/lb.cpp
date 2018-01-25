@@ -41,7 +41,7 @@
 #include "lb-d3q19.hpp"
 #include "lbboundaries.hpp"
 #include "lb.hpp"
-#include "immersed_boundary/ibm_main.hpp"
+#include "virtual_sites/lb_inertialess_tracers.hpp"
 
 #include "cuda_interface.hpp"
 

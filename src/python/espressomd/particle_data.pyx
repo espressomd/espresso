@@ -1405,7 +1405,6 @@ cdef class ParticleHandle(object):
             raise ValueError("The bond type", bond._bond_id, "does not exist.")
 
         # Number of partners
-        print(len(bond))
         if bonded_ia_params[bond[0]._bond_id].num != len(bond) - 1:
             raise ValueError("Bond of type", bond._bond_id, "needs", bonded_ia_params[
                              bond[0]._bond_id], "partners.")

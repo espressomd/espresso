@@ -1,7 +1,7 @@
 #include "config.hpp" 
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-#include "immersed_boundary/ibm_main.hpp"
+#include "virtual_sites/lb_inertialess_tracers.hpp"
 #include "errorhandling.hpp" 
 #include "VirtualSitesInertialessTracers.hpp" 
 #include "lattice.hpp" 
@@ -23,7 +23,7 @@ void VirtualSitesInertialessTracers::after_force_calc() {
     }
 #endif
 runtimeErrorMsg() << "Inertialess Tracers: No LB method was active.";
-};
+}
 
 
 

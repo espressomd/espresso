@@ -11,8 +11,8 @@
 #include "integrate.hpp"
 #include "halo.hpp"
 #include "lbboundaries.hpp"
-#include "immersed_boundary/ibm_main.hpp"
-#include "immersed_boundary/ibm_cuda_interface.hpp"
+#include "virtual_sites/lb_inertialess_tracers.hpp"
+#include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
 
 // ****** Functions for internal use ********
 

@@ -85,9 +85,8 @@
 #include "scafacos.hpp"
 #endif
 #ifdef IMMERSED_BOUNDARY
-#include "immersed_boundary/ibm_main.hpp"
-#include "immersed_boundary/ibm_tribend.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
+#include "immersed_boundary/ibm_tribend.hpp"
 #endif
 #ifdef DPD
 #include "dpd.hpp"
