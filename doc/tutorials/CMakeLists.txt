@@ -17,9 +17,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-add_subdirectory(python)
 
-get_filename_component(test ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+### Here: add new directory
+add_subdirectory(00-building_espresso)
+add_subdirectory(01-lennard_jones)
+add_subdirectory(02-charged_system)
+add_subdirectory(04-lattice_boltzmann)
+add_subdirectory(05-raspberry_electrophoresis)
+add_subdirectory(06-active_matter)
+add_subdirectory(07-electrokinetics)
+add_subdirectory(08-visualization)
+add_subdirectory(09-catalytic_reactions)
 
 
-add_custom_target(tutorials DEPENDS tutorials_tcl tutorials_py)
+### here: add the appropriate tutorial target after DEPENDS
+add_custom_target(tutorials_py
+  DEPENDS
+  tutorials_py_00
+  tutorials_py_01
+  tutorials_py_02
+  tutorials_py_04
+  tutorials_py_05
+  tutorials_py_06
+  tutorials_py_07
+  tutorials_py_08
+  tutorials_py_09)
