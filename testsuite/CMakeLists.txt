@@ -121,6 +121,7 @@ python_test(FILE analyze_distribution.py MAX_NUM_PROC 1)
 python_test(FILE observable_profile.py MAX_NUM_PROC 4)
 python_test(FILE rotate_system.py MAX_NUM_PROC 4)
 python_test(FILE tabulated.py MAX_NUM_PROC 1)
+python_test(FILE random_pairs.py MAX_NUM_PROC 4)
 python_test(FILE lb_electrohydrodynamics.py MAX_NUM_PROC 4)
 
 if(PY_H5PY)
