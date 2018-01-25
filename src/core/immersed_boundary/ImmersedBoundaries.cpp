@@ -133,7 +133,7 @@ void ImmersedBoundaries::calc_volumes()
 {
   
   // Partial volumes for each soft particle, to be summed up
-  double tempVol[MaxNumIBM] = {0};
+  std::vector<double> tempVol(MaxNumIBM);
   
   // Loop over all particles on local node
   for (int c = 0; c < local_cells.n; c++)
@@ -244,7 +244,7 @@ void ImmersedBoundaries::calc_volumes()
   for (int i = 0; i < MaxNumIBM; i++) VolumesCurrent[i] = 0;
   
   // Sum up and communicate
-  MPI_Allreduce(tempVol, &(VolumesCurrent.front()), MaxNumIBM, MPI_DOUBLE, MPI_SUM, comm_cart);
+  MPI_Allreduce(&(tempVol.front()), &(VolumesCurrent.front()), MaxNumIBM, MPI_DOUBLE, MPI_SUM, comm_cart);
   
 }
 
