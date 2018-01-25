@@ -41,7 +41,7 @@ void ImmersedBoundaries::init_volume_conservation()
   
   // Check since this function is called at the start of every integrate loop
   // Also check if volume has been set due to reading of a checkpoint
-  if ( !VolumeInitDone /*&& VolumesCurrent[0] == 0 */)
+  if ( !VolumeInitDone )
   {
     
     // Calculate volumes

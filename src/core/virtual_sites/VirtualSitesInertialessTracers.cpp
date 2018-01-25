@@ -10,13 +10,17 @@
 
 void VirtualSitesInertialessTracers::after_force_calc() {
     // Now the forces are computed and need to go into the LB fluid
-    if (lattice_switch & LATTICE_LB)
+#ifdef LB
+    if (lattice_switch & LATTICE_LB) {
       IBM_ForcesIntoFluid_CPU();
-    return;
+      return;
+    }
+#endif
 #ifdef LB_GPU
-    if (lattice_switch & LATTICE_LB_GPU)
+    if (lattice_switch & LATTICE_LB_GPU) {
       IBM_ForcesIntoFluid_GPU(local_cells.particles());
-    return;
+      return;
+    }
 #endif
 runtimeErrorMsg() << "Inertialess Tracers: No LB method was active.";
 };
