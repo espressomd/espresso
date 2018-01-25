@@ -60,7 +60,6 @@ void ImmersedBoundaries::init_volume_conservation()
         {
           const int softID =bonded_ia_params[i].p.ibmVolConsParameters.softID;
           bonded_ia_params[i].p.ibmVolConsParameters.volRef = VolumesCurrent[softID];
-          mpi_bcast_ia_params(i, -1);
         }
       }
       
