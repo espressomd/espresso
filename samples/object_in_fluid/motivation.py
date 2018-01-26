@@ -14,25 +14,28 @@ from espressomd.interactions import OifOutDirection
 import numpy as np
 import os, sys
 
-from object_in_fluid import \
-   OifCellType, OifCell, Edge, Triangle, PartPoint, FixedPoint
-
+import object_in_fluid as oif
 from object_in_fluid.oif_utils import output_vtk_rhomboid, output_vtk_cylinder
 
 simNo = sys.argv[1]
 os.mkdir("output/sim" + str(simNo))
 
+boxX = 22.0
+boxY = 14.0
+boxZ = 15.0
+time_step = 0.1
+
 system = espressomd.System()
-system.time_step = 0.1
-system.box_l = [22.0, 14.0, 15.0]
+system.time_step = time_step
+system.box_l = [boxX, boxY, boxZ]
 system.cell_system.skin = 0.2
 
 # creating the template for RBCs
-cell_type = OifCellType(nodes_file="input/rbc374nodes.dat", triangles_file="input/rbc374triangles.dat", system = system, ks=0.04, kb=0.016, kal=0.02, kag=0.9, kv=1.0, check_orientation=False,resize=(2.0,2.0,2.0))
+cell_type = oif.OifCellType(nodes_file="input/rbc374nodes.dat", triangles_file="input/rbc374triangles.dat", system = system, ks=0.04, kb=0.016, kal=0.02, kag=0.9, kv=1.0, check_orientation=False,resize=(2.0,2.0,2.0))
 
 # creating the RBCs
-cell0 = OifCell(cell_type=cell_type, part_type=0, origin=[5.0,5.0,3.0])
-cell1 = OifCell(cell_type=cell_type, part_type=1, origin=[5.0,5.0,7.0])
+cell0 = oif.OifCell(cell_type=cell_type, part_type=0, origin=[5.0,5.0,3.0])
+cell1 = oif.OifCell(cell_type=cell_type, part_type=1, origin=[5.0,5.0,7.0])
 
 # fluid
 lbf = espressomd.lb.LBFluid(agrid = 1, dens = 1.0, visc = 1.5, tau = 0.1, fric = 1.5 , ext_force = [0.002, 0.0, 0.0])
@@ -41,14 +44,10 @@ system.actors.add(lbf)
 # creating boundaries and obstacles in the channel
 # OutputVtk writes a file
 # lbboundaries created boundaries for fluid
-# contraints created aboundaries for the cells
+# constraints created boundaries for the cells
 
 boundaries = []
 
-boxX = 22.0
-boxY = 14.0
-boxZ = 15.0
-time_step = 0.1
 
 # bottom of the channel
 boundaries.append(shapes.Rhomboid(corner=[0.0,0.0,0.0], a=[boxX,0.0,0.0], b=[0.0,boxY,0.0], c=[0.0,0.0,1.0], direction = 1))
