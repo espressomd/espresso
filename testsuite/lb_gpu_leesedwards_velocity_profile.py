@@ -10,8 +10,6 @@ from espressomd import lb
 
 @ut.skipIf(not md.has_features(['LB_GPU', 'LEES_EDWARDS']),
   'Features not available, skipping test!')
-
-
 class LBGPULeesEdwardsTest(ut.TestCase):
   def test(self):
 
@@ -27,7 +25,6 @@ class LBGPULeesEdwardsTest(ut.TestCase):
     # Systemclass
     system = md.System()
 
-    # allowed deviation from analytical results
     tol = 1.0e-5
 
     # LB parameter
@@ -62,7 +59,7 @@ class LBGPULeesEdwardsTest(ut.TestCase):
         w = lb[0, i, 0].velocity
         x_vel[i] = w[0]
 
-      # Compare results
+      # Compare deviation
       quad_dev = 0.0
       dev = U - x_vel
 
@@ -71,7 +68,6 @@ class LBGPULeesEdwardsTest(ut.TestCase):
 
       self.assertTrue(quad_dev < tol)
 
-      # Integrate
       system.integrator.run(1)
       system.lees_edwards_offset += v * time_step
 

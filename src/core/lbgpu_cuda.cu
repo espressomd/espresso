@@ -631,8 +631,12 @@ __device__ void update_rho_v(float *mode, unsigned int index, LB_node_force_gpu 
 
 /** This function computes the equilibrium modes as needed by the LB and
 * and the LB-LeesEdwards implementation
-* equilibrium part of the stress modes (eq13 schiller)*/
-
+* equilibrium part of the stress modes (eq13 schiller)
+* @param ii                          LB components
+* @param rho                         density
+* @param u                           velocity (for LE uncluding the LE rate)
+* @param mode_from_pi_equilibium     pointer to equilibroum modes(output)
+*/
 __device__ inline void equilibrium_modes(int ii, float rho, float *u, float *modes_from_pi_eq){
 
   float j[3];
@@ -1043,11 +1047,14 @@ __device__ void calc_n_from_modes_push(LB_nodes_gpu n_b, float *mode, unsigned i
   }
 }
 
-
 /*-------------------------------------------------------*/
-/**backtransformation from modespace to desityspace and streaming with the push method using pbc
- * This time for the boundary nodes of the Lees-Edwards layers. 
- * @param *nodes_LE_upper, nodes_LE_lower: Nodes of the upper and lowe LE boudary
+/**backtransformation from modespace to densityspace and streaming with the push method using pbc
+ * This time for the boundary nodes of the Lees-Edwards layers.
+ * @param n_front         nodes for doublebuffering
+ * @param n_back          nodes for doublebuffering
+ * @param nodes_LE_upper  nodes of the upper LE boundary
+ * @param nodes_LE_lower  nodes of the lower LE boundary 
+ * @param index            index of the corresponding nodes
 */
 
 __device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_front, LB_nodes_gpu n_back, LB_nodes_gpu nodes_LE_upper, LB_nodes_gpu nodes_LE_lower, int index){
@@ -2130,8 +2137,12 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared, int *number_o
   }
 }
 
-// Calculating the xyz-position of the left node a particle
- __device__ __inline__ void calculation_xyz_nearest_nodes(float* delta, float* particle_position, int* x, int* y, int* z)  {
+/** Calculating the xyz-position of the left node a particle
+  * @param delta               Weight for particle position within a cell (Input)
+  * @param particle_position   Particle position for each particle (Input)
+  * @param x,y,z               xyz of corresponding lower, left nodes (Output)
+*/
+ __device__ __inline__ void calculate_xyz_nearest_nodes(float* delta, float* particle_position, int* x, int* y, int* z)  {
 
   int   left_node_index[3];
   float temp_delta[6];
@@ -2165,8 +2176,12 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared, int *number_o
   *z = left_node_index[2] + para.dim_z;
 }
 
-// The nearest 8 nodes for every particle is calculated based on the xyz-postion of the left node of a particle 
-__device__ __inline__ void calculation_nearest_nodes(int x, int y, int z, LB_nodes_gpu n_a, unsigned int* node_index) {
+/** The nearest 8 nodes for every particle are calculated based on the xyz-postion of the left node of a particle 
+  * @param x,y,z         xyz of corresponding lower, left nodes (Input)
+  * @param n_a           Local nodes of array a (Input)
+  * @param node_index    The eight nodes around each particle (Output)
+*/
+__device__ __inline__ void calculate_nearest_nodes(int x, int y, int z, LB_nodes_gpu n_a, unsigned int* node_index) {
 
   node_index[0] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
   node_index[1] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
@@ -2192,15 +2207,11 @@ __device__ __inline__ void calculation_nearest_nodes(int x, int y, int z, LB_nod
  * @param *delta                Pointer for the weighting of particle position (Output)
  * @param *interpolated_u       Pointer to the interpolated velocity (Output)
 */
-
 __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, float *particle_position, unsigned int* node_index, float* mode, LB_rho_v_gpu *d_v, float* delta, float *interpolated_u ) {
-  
-  int x;
-  int y;
-  int z;
+  int x, y, z;
 
-  calculation_xyz_nearest_nodes(delta, particle_position, &x, &y, &z);
-  calculation_nearest_nodes(x, y, z, n_a, node_index);
+  calculate_xyz_nearest_nodes(delta, particle_position, &x, &y, &z);
+  calculate_nearest_nodes(x, y, z, n_a, node_index);
 
   interpolated_u[0] = 0.0f;
   interpolated_u[1] = 0.0f;
@@ -2243,12 +2254,12 @@ __device__ __inline__ void interpolation_two_point_coupling_LE( LB_nodes_gpu n_a
   int y;
   int z;
 
-  calculation_xyz_nearest_nodes(delta, particle_position, &x, &y, &z);
-  calculation_nearest_nodes(x, y, z, n_a, node_index);
+  calculate_xyz_nearest_nodes(delta, particle_position, &x, &y, &z);
+  calculate_nearest_nodes(x, y, z, n_a, node_index);
 
   // Calculate new indices for nodes at the boundaries 
   particle_position[0] = le_position;
-  calculation_xyz_nearest_nodes(delta, particle_position, &x, &y, &z);
+  calculate_xyz_nearest_nodes(delta, particle_position, &x, &y, &z);
 
   if(particle_position[1] > para.dim_y- 0.5 * para.agrid){
     
@@ -3241,6 +3252,13 @@ __global__ void reset_boundaries(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
     n_a.boundary[index] = n_b.boundary[index] = 0;
 }
 
+/**Calculate the difference of the modes with and without LE velocity offset
+ * @param index                   index of node (Input)
+ * @param d_v                     local devide values (Input)
+ * @param lees_edwards_velocity   velocity based on the current LE rate (Input)
+ * @param nodes_LE_upper          Top nodes with the updated LE information  (Output)
+ * @param ndoes_LE_lower          Bottom nodes with the updated LE information (Output)
+*/
 __device__ void calculate_LE_mode_delta(int index, LB_rho_v_gpu *d_v, float lees_edwards_velocity, LB_nodes_gpu nodes_LE_upper, LB_nodes_gpu nodes_LE_lower){
   
   float rho = d_v[index].rho[0];
@@ -3327,6 +3345,14 @@ __device__ void calculate_LE_mode_delta(int index, LB_rho_v_gpu *d_v, float lees
   }
 }
 
+/** Calculates the difference of modes with an without LE velocity shift and writes them to the current nodes 
+ * @param n_front                nodes for dpuble buffering (Input)
+ * @param n_back                 nodes for double buffering (Input)
+ * @param nodes_LE_upper         Top nodes with the updated LE information (Input)
+ * @param nodes_LE_lower         Bottom nodes with the updated LE information (Input)
+ * @param d_v                    local device values (Input)
+ * @param lees_edwards_velocity  velocity based on the current LE rate (Input)
+*/
 __global__ void apply_LE_velocity_shift(LB_nodes_gpu n_front, LB_nodes_gpu n_back, LB_nodes_gpu nodes_LE_upper, LB_nodes_gpu nodes_LE_lower, LB_rho_v_gpu *d_v, float lees_edwards_velocity) {
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   
@@ -3343,7 +3369,6 @@ __global__ void apply_LE_velocity_shift(LB_nodes_gpu n_front, LB_nodes_gpu n_bac
  * @param node_f  Pointer to local node force (Input)
  * @param ek_parameters_gpu  Pointer to the parameters for the electrokinetics (Input)
 */
-
 __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v, LB_node_force_gpu node_f, EK_parameters* ek_parameters_gpu) {
   /**every node is connected to a thread via the index*/
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
@@ -3366,7 +3391,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
     }
 #if  defined(EXTERNAL_FORCES)  ||   defined (SHANCHEN)  
     /**if external force is used apply node force */
-apply_forces(index, mode, node_f,d_v);
+    apply_forces(index, mode, node_f,d_v);
 #else
     /**if particles are used apply node forces*/
     if (para.number_of_particles) apply_forces(index, mode, node_f,d_v); 
@@ -4199,7 +4224,7 @@ void lb_integrate_GPU() {
   /**call of fluid step*/
   /* NOTE: if pi is needed at every integration step, one should call an extended version 
            of the integrate kernel, or pass also device_rho_v_pi and make sure that either 
-           it or device_rho_v are NULL depending on extended_values_flag */ 
+           it or device_rho_v are nullptr depending on extended_values_flag */ 
   if (intflag == 1)
   {
     n_back = &nodes_a;
