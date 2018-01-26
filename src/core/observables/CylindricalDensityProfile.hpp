@@ -16,23 +16,14 @@ public:
         {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
          std::make_pair(min_z, max_z)}};
     Utils::CylindricalHistogram<double> histogram(n_bins, 1, limits);
-    for (int id : ids()) {
-      auto const ppos = ::Vector<3, double>(folded_position(partCfg[id]));
-      ::Vector<3, double> ppos_shifted;
-      ppos_shifted = ppos - center;
-      if (axis == "x") {
-        // x' = -z, y' = y, z'= x
-        ppos_shifted = ::Vector<3, double>{-ppos_shifted[2], ppos_shifted[1],
-                                           ppos_shifted[0]};
-      } else if (axis == "y") {
-        // x' = x, y' = -z, z' = y
-        ppos_shifted = ::Vector<3, double>{ppos_shifted[0], -ppos_shifted[2],
-                                           ppos_shifted[1]};
-      }
-
-      auto const ppos_cyl =
-          Utils::transform_to_cylinder_coordinates(ppos_shifted);
-      histogram.update(ppos_cyl);
+    std::vector<::Vector<3, double>> folded_positions;
+    std::transform(ids().begin(), ids().end(),
+                   std::back_inserter(folded_positions), [&partCfg](int id) {
+                     return ::Vector<3, double>(folded_position(partCfg[id]));
+                   });
+    for (auto &p : folded_positions) {
+      p -= center;
+      histogram.update(Utils::transform_pos_to_cylinder_coordinates(p, axis));
     }
     histogram.normalize();
     return histogram.get_histogram();

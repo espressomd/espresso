@@ -16,43 +16,27 @@ public:
         {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
          std::make_pair(min_z, max_z)}};
     Utils::CylindricalHistogram<double> histogram(n_bins, 3, limits);
-    for (int id : ids()) {
-      auto const ppos = ::Vector<3, double>(folded_position(partCfg[id]));
-      ::Vector<3, double> ppos_shifted;
-      ppos_shifted = ppos - center;
-      ::Vector<3, double> vel = {partCfg[id].m.v[0], partCfg[id].m.v[1],
-                                 partCfg[id].m.v[2]};
-      if (axis == "x") {
-        // x' = -z, y' = y, z'= x
-        ppos_shifted = ::Vector<3, double>{-ppos_shifted[2], ppos_shifted[1],
-                                           ppos_shifted[0]};
-        vel = {-vel[2], vel[1], vel[0]};
-      } else if (axis == "y") {
-        // x' = x, y' = -z, z' = y
-        ppos_shifted = ::Vector<3, double>{ppos_shifted[0], -ppos_shifted[2],
-                                           ppos_shifted[1]};
-        vel = {vel[0], -vel[2], vel[1]};
-      }
-
-      auto const ppos_cyl =
-          Utils::transform_to_cylinder_coordinates(ppos_shifted);
-
-      // Coordinate transform the velocities and divide core velocities by
-      // time_step to get MD units. v_r = (x * v_x + y * v_y) / sqrt(x^2 +
-      // y^2)
-      double v_r = (ppos_shifted[0] * vel[0] / time_step +
-                    ppos_shifted[1] * vel[1] / time_step) /
-                   std::sqrt(ppos_shifted[0] * ppos_shifted[0] +
-                             ppos_shifted[1] * ppos_shifted[1]);
-      // v_phi = (x * v_y - y * v_x ) / (x^2 + y^2)
-      double v_phi = (ppos_shifted[0] * vel[1] / time_step -
-                      ppos_shifted[1] * vel[0] / time_step) /
-                     (ppos_shifted[0] * ppos_shifted[0] +
-                      ppos_shifted[1] * ppos_shifted[1]);
-      // v_z = v_z
-      double v_z = vel[2] / time_step;
-      // Write data to the histogram.
-      histogram.update(ppos_cyl, std::vector<double>{{v_r, v_phi, v_z}});
+    std::vector<::Vector<3, double>> folded_positions;
+    std::transform(ids().begin(), ids().end(),
+                   std::back_inserter(folded_positions), [&partCfg](int id) {
+                     return ::Vector<3, double>(folded_position(partCfg[id]));
+                   });
+    std::vector<::Vector<3, double>> velocities;
+    std::transform(ids().begin(), ids().end(), std::back_inserter(velocities),
+                   [&partCfg](int id) {
+                     return ::Vector<3, double>{{partCfg[id].m.v[0],
+                                                 partCfg[id].m.v[1],
+                                                 partCfg[id].m.v[2]}};
+                   });
+    for (auto &p : folded_positions)
+      p -= center;
+    // Write data to the histogram
+    for (size_t ind = 0; ind < ids().size(); ++ind) {
+      histogram.update(Utils::transform_pos_to_cylinder_coordinates(
+                           folded_positions[ind], axis),
+                       Utils::transform_vel_to_cylinder_coordinates(
+                           velocities[ind], axis, folded_positions[ind]) /
+                           time_step);
     }
     histogram.normalize();
     return histogram.get_histogram();
