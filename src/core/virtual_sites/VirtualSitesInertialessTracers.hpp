@@ -18,8 +18,8 @@
     void update(bool recalc_positions=true) const override {};
     /** Back-transfer forces (and torques) to non-virtual particles */
     void back_transfer_forces_and_torques() const override {};
-    void after_force_calc();
-    void after_lb_propagation();
+    void after_force_calc() override;
+    void after_lb_propagation() override;
     /** @brief Is a ghost communication needed after position updates */
     bool need_ghost_comm_after_pos_update() const override { return false;} 
     /** Is a ghost comm needed before a velocity update */
