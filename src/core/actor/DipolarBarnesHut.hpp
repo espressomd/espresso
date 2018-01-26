@@ -57,40 +57,22 @@ public:
   };
 
   void computeForces(SystemInterface &s) {
-    dds_float box[3];
-    int per[3];
-
-    for (int i=0;i<3;i++)
-    {
-     box[i]=s.box()[i];
-     per[i] = (PERIODIC(i));
-    }
-
     fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(), m_bh_data);
     initBHgpu(m_bh_data.blocks);
 	buildBoxBH(m_bh_data.blocks);
 	buildTreeBH(m_bh_data.blocks);
 	summarizeBH(m_bh_data.blocks);
 	sortBH(m_bh_data.blocks);
-	forceBH(m_bh_data.blocks,k,s.fGpuBegin(),s.torqueGpuBegin(),box,per);
+	forceBH(m_bh_data.blocks,k,s.fGpuBegin(),s.torqueGpuBegin());
   };
   void computeEnergy(SystemInterface &s) {
-    dds_float box[3];
-    int per[3];
-
-    for (int i=0;i<3;i++)
-    {
-     box[i]=s.box()[i];
-     per[i] = (PERIODIC(i));
-    }
-
     fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(), m_bh_data);
     initBHgpu(m_bh_data.blocks);
     buildBoxBH(m_bh_data.blocks);
     buildTreeBH(m_bh_data.blocks);
     summarizeBH(m_bh_data.blocks);
     sortBH(m_bh_data.blocks);
-    energyBH(m_bh_data.blocks,k,box,per,(&(((CUDA_energy*)s.eGpu())->dipolar)));
+    energyBH(m_bh_data.blocks,k,(&(((CUDA_energy*)s.eGpu())->dipolar)));
  };
 
 protected:

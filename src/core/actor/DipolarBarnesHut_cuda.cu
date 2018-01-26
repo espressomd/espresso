@@ -586,6 +586,8 @@ __launch_bounds__(THREADS4, FACTOR4)
 void sortKernel()
 {
 	int i, k, ch, dec, start, bottom;
+	int all_continue_flag; // all threads in the block loop continuation flag
+	int this_thread_done;
 
 	bottom = bottomd;
 	dec = blockDim.x * gridDim.x;
@@ -596,34 +598,41 @@ void sortKernel()
 	// made by treeBuildingKernel.
 	k = nnodesd + 1 - dec + threadIdx.x + blockIdx.x * blockDim.x;
 
+	all_continue_flag = 1;
+	this_thread_done = 0;
 	// iterate over all cells assigned to thread
-	while (k >= bottom) {
-		start = startd[k];
-		// Let's start from the root which has only startd=0 defined
-		// in boundingBoxKernel. All other bodies and cells have -1.
-		if (start >= 0) {
-			for (i = 0; i < 8; i++) {
-				ch = childd[k * 8 + i];
-				  if (ch >= nbodiesd) {
-                    // child is a cell
-                    startd[ch] = start;	    // set start ID of child
-                    start += countd[ch];	// add # of bodies in subtree
-				  } else if (ch >= 0) {
-			        // Child is a body.
-				    // This particle should be saved with a stepping over
-				    // a count of particles in the cells.
-				    // treeBuildingKernel already has ordered cells in a
-				    // linear array way. The sortKernel just order random particle
-				    // indices in the same order. Hence, they will be much faster accessed
-				    // by forceCalculationKernel and energyCalculationKernel.
-			        sortd[start] = ch;	    // record body in 'sorted' array
-			        start++;
-				  }
-			}
-			k -= dec;	// move on to next cell
-		} else k = bottom - 1;
+	do {
+	    // do we need a sorting within the given thread or just bypass a loop till the throttle?
+	    if ((k >= bottom) && (k <= nnodesd)) {
+	      __threadfence();
+          start = startd[k];
+          // Let's start from the root which has only startd=0 defined
+          // in boundingBoxKernel. All other bodies and cells have -1.
+          if (start >= 0) {
+              for (i = 0; i < 8; i++) {
+                  ch = childd[k * 8 + i];
+                    if (ch >= nbodiesd) {
+                      // child is a cell
+                      startd[ch] = start;	    // set start ID of child
+                      start += countd[ch];	// add # of bodies in subtree
+                    } else if (ch >= 0) {
+                      // Child is a body.
+                      // This particle should be saved with a stepping over
+                      // a count of particles in the cells.
+                      // treeBuildingKernel already has ordered cells in a
+                      // linear array way. The sortKernel just order random particle
+                      // indices in the same order. Hence, they will be much faster accessed
+                      // by forceCalculationKernel and energyCalculationKernel.
+                      sortd[start] = ch;	    // record body in 'sorted' array
+                      start++;
+                    }
+              }
+              k -= dec;	// move on to next cell
+          }// else this_thread_done = 1;
+	    } else this_thread_done = 1;
 		__syncthreads();	// throttle
-	}
+		if (__all(this_thread_done == 1)) all_continue_flag = 0;
+	} while (all_continue_flag);
 }
 
 
@@ -634,7 +643,7 @@ void sortKernel()
 __global__
 __launch_bounds__(THREADS5, FACTOR5)
 void forceCalculationKernel(dds_float pf,
-	     float *force, float* torque, dds_float box_l[3], int periodic[3])
+	     float *force, float* torque)
 {
 	int i, j, k, l, n, depth, base, sbase, diff, t;
 	float tmp;
@@ -829,8 +838,7 @@ void forceCalculationKernel(dds_float pf,
 
 __global__
 __launch_bounds__(THREADS5, FACTOR5)
-void energyCalculationKernel(dds_float pf,
-	     dds_float box_l[3], int periodic[3],dds_float* energySum)
+void energyCalculationKernel(dds_float pf, dds_float* energySum)
 {
     // NOTE: the algorithm of this kernel is almost identical to forceCalculationKernel. See comments there.
 
@@ -1029,47 +1037,32 @@ void sortBH(int blocks) {
 }
 
 // Force calculation.
-void forceBH(int blocks, dds_float k, float* f, float* torque, dds_float box_l[3],int periodic[3]) {
-	dds_float* box_l_gpu;
-	int* periodic_gpu;
+void forceBH(int blocks, dds_float k, float* f, float* torque) {
 	dim3 grid(1,1,1);
 	dim3 block(1,1,1);
 
 	grid.x = blocks * FACTOR5;
 	block.x = THREADS5;
-	cuda_safe_mem(cudaMalloc((void**)&box_l_gpu,3*sizeof(dds_float)));
-	cuda_safe_mem(cudaMalloc((void**)&periodic_gpu,3*sizeof(int)));
-	cuda_safe_mem(cudaMemcpy(box_l_gpu,box_l,3*sizeof(dds_float),cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpy(periodic_gpu,periodic,3*sizeof(int),cudaMemcpyHostToDevice));
 
-	KERNELCALL(forceCalculationKernel,grid,block,(k, f, torque, box_l_gpu, periodic_gpu));
+	KERNELCALL(forceCalculationKernel,grid,block,(k, f, torque));
 	cudaThreadSynchronize();
-
-	cuda_safe_mem(cudaFree(box_l_gpu));
-	cuda_safe_mem(cudaFree(periodic_gpu));
 }
 
 // Energy calculation.
-void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float* E) {
-	dds_float* box_l_gpu;
-	int* periodic_gpu;
+void energyBH(int blocks, dds_float k, float* E) {
 	dim3 grid(1,1,1);
 	dim3 block(1,1,1);
 
 	grid.x = blocks * FACTOR5;
 	block.x = THREADS5;
 
-	cuda_safe_mem(cudaMalloc((void**)&box_l_gpu,3*sizeof(dds_float)));
-	cuda_safe_mem(cudaMalloc((void**)&periodic_gpu,3*sizeof(int)));
-	cuda_safe_mem(cudaMemcpy(box_l_gpu,box_l,3*sizeof(float),cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpy(periodic_gpu,periodic,3*sizeof(int),cudaMemcpyHostToDevice));
 
 	dds_float *energySum;
 	cuda_safe_mem(cudaMalloc(&energySum,(int)(sizeof(dds_float)*grid.x)));
 	// cleanup the memory for the energy sum
 	cuda_safe_mem(cudaMemset(energySum, 0, (int)(sizeof(dds_float)*grid.x)));
 
-	KERNELCALL_shared(energyCalculationKernel,grid,block,block.x*sizeof(dds_float),(k, box_l_gpu, periodic_gpu,energySum));
+	KERNELCALL_shared(energyCalculationKernel,grid,block,block.x*sizeof(dds_float),(k, energySum));
 	cudaThreadSynchronize();
 
 	// Sum the results of all blocks
@@ -1079,8 +1072,6 @@ void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float*
 	cuda_safe_mem(cudaMemcpy(E,&x,sizeof(float),cudaMemcpyHostToDevice));
 
 	cuda_safe_mem(cudaFree(energySum));
-	cuda_safe_mem(cudaFree(box_l_gpu));
-	cuda_safe_mem(cudaFree(periodic_gpu));
 }
 
 // Function to set the BH method parameters.

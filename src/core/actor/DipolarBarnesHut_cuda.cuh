@@ -114,10 +114,10 @@ void summarizeBH(int blocks);
 void sortBH(int blocks);
 
 // Force calculation.
-void forceBH(int blocks, dds_float k, float* f, float* torque, dds_float box_l[3],int periodic[3]);
+void forceBH(int blocks, dds_float k, float* f, float* torque);
 
 // Energy calculation.
-void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float* E);
+void energyBH(int blocks, dds_float k, float* E);
 
 #endif // DIPOLAR_BARNES_HUT
 #endif /* DIPOLARBARNESHUT_CUH_ */
