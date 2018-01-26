@@ -65,11 +65,18 @@ typedef struct
 #define SHARED_ARRAY_BH 512
 
 // thread count for different kernels (see kernel calls from below functions).
-#define THREADS1 512	/* must be a power of 2 */
+/*#define THREADS1 512
 #define THREADS2 1024
 #define THREADS3 1024
 #define THREADS4 256
-#define THREADS5 128	//256
+#define THREADS5 128*/	//256
+
+#define THREADS1 8192    /* must be a power of 2 */
+#define THREADS2 16384
+#define THREADS3 16384
+#define THREADS4 4096
+#define THREADS5 2048    //256
+
 
 // block count = factor * #SMs
 // for different kernels (see kernel calls from below functions).
