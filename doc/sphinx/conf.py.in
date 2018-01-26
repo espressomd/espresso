@@ -126,7 +126,7 @@ html_theme = 'classic'
 #html_theme_options = {}
 html_theme_options = {
     "stickysidebar": "true",
-    "sidebarwidth": 300,
+    "sidebarwidth": 320,
 }
 
 
@@ -170,7 +170,6 @@ html_last_updated_fmt = '%b %d, %Y'
 # Custom sidebar templates, maps document names to template names.
 #html_sidebars = {}
 html_sidebars = { 
-    'ug': ['globaltoc.html','searchbox.html'],
     '**': ['localtoc.html','searchbox.html'] 
 }
 
@@ -310,10 +309,15 @@ texinfo_documents = [
 autodoc_mock_imports = ['featuredefs', 'mayavi', 'pyface.api', 'tvtk.tools', 'vtk', 'MDAnalysis', 'electrostatics']
 autodoc_default_flags = ['members',
                          'show-inheritance', 'undoc-members']
-# Replacements
+# For sidebar toc depth
+rst_prolog = """
+:tocdepth: 2
+"""
+# Style ESPResSo
 rst_epilog = """
 .. |es| replace:: `ESPResSo`
 """
+
 # see http://opendreamkit.org/2017/06/09/CythonSphinx/ why this is needed
 def isfunction(obj):
     return hasattr(type(obj), "__code__")

@@ -91,56 +91,57 @@ Two arrays are returned corresponding to the normalized distribution and the bin
     >>> print(count)
     [ 1.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
 
+..
+    .. _Radial density map:
 
-.. _Radial density map:
+    Radial density map
+    ~~~~~~~~~~~~~~~~~~
+    .. todo:: This feature is not implemented
 
-Radial density map
-~~~~~~~~~~~~~~~~~~
-.. todo:: This feature is not implemented
+    analyze radial\_density\_map
 
-analyze radial\_density\_map
+    Returns the radial density of particles around a given axis. Parameters
+    are:
 
-Returns the radial density of particles around a given axis. Parameters
-are:
+    -  histogram bins in x direction.
 
--  histogram bins in x direction.
+    -  histogram bins in y direction.
 
--  histogram bins in y direction.
+    -  range for analysis in x direction.
 
--  range for analysis in x direction.
+    -  range for analysis in y direction.
 
--  range for analysis in y direction.
+    -  rotate around given axis. (x, y, or z)
 
--  rotate around given axis. (x, y, or z)
+    -  rotate around given point.
 
--  rotate around given point.
+    -  only analyze beads of given types.
 
--  only analyze beads of given types.
+    -  histogram bins in angle theta.
 
--  histogram bins in angle theta.
+    This command does not do what you might expect. Here is an overview of
+    the currently identified properties.
 
-This command does not do what you might expect. Here is an overview of
-the currently identified properties.
+    #. is the number of bins along the axis of rotation.
 
-#. is the number of bins along the axis of rotation.
+    #. is the number of bins in the radial direction.
 
-#. is the number of bins in the radial direction.
+    #. The centre point () of the cylinder is located in the lower cap,
+       i.e., is the height of the cylinder with respect to this centre
+       point.
 
-#. The centre point () of the cylinder is located in the lower cap,
-   i.e., is the height of the cylinder with respect to this centre
-   point.
+    #. The bins are distributed along starting from 0 ().
 
-#. The bins are distributed along starting from 0 ().
-
-#. The seem to average with respect to the centre of mass of the
-   particles in the individual bins rather than with respect to the
-   central axis, which one would think is natural.
+    #. The seem to average with respect to the centre of mass of the
+       particles in the individual bins rather than with respect to the
+       central axis, which one would think is natural.
 
 
 .. _Cylindrical average:
 
 Cylindrical Average
 ~~~~~~~~~~~~~~~~~~~
+
 :meth:`espressomd.analyze.Analysis.cylindrical_average`
 
 Calculates the particle distribution using cylindrical binning.
@@ -228,37 +229,37 @@ Returns the spherically averaged structure factor :math:`S(q)` of
 particles specified in . :math:`S(q)` is calculated for all possible
 wave vectors, :math:`\frac{2\pi}{L} <= q <= \frac{2\pi}{L}` `order`.
 
+..
+    .. _Van-Hove autocorrelation function:
 
-.. _Van-Hove autocorrelation function:
+    Van-Hove autocorrelation function :math:`G(r,t)`
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. todo:: This feature is not implemented
 
-Van-Hove autocorrelation function :math:`G(r,t)`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. todo:: This feature is not implemented
+    analyze vanhove
 
-analyze vanhove
+    Returns the van Hove auto correlation function :math:`G(r,t)` and the
+    mean square displacement :math:`msd(t)` for particles of type for the
+    configurations stored in the array configs. This tool assumes that the
+    configurations stored with (see section ) are stored at equidistant time
+    intervals. :math:`G(r,t)` is calculated for each multiple of this time
+    intervals. For each time t the distribution of particle displacements is
+    calculated according to the specification given by , and . Optional
+    argument defines the maximum value of :math:`t` for which :math:`G(r,t)`
+    is calculated. If it is omitted or set to zero, maximum possible value
+    is used. If the particles perform a random walk (a normal diffusion
+    process) :math:`G(r,t)/r^2` is a Gaussian distribution for all times.
+    Deviations of this behavior hint on another diffusion process or on the
+    fact that your system has not reached the diffusive regime. In this case
+    it is also very questionable to calculate a diffusion constant from the
+    mean square displacement via the Stokes-Einstein relation.
 
-Returns the van Hove auto correlation function :math:`G(r,t)` and the
-mean square displacement :math:`msd(t)` for particles of type for the
-configurations stored in the array configs. This tool assumes that the
-configurations stored with (see section ) are stored at equidistant time
-intervals. :math:`G(r,t)` is calculated for each multiple of this time
-intervals. For each time t the distribution of particle displacements is
-calculated according to the specification given by , and . Optional
-argument defines the maximum value of :math:`t` for which :math:`G(r,t)`
-is calculated. If it is omitted or set to zero, maximum possible value
-is used. If the particles perform a random walk (a normal diffusion
-process) :math:`G(r,t)/r^2` is a Gaussian distribution for all times.
-Deviations of this behavior hint on another diffusion process or on the
-fact that your system has not reached the diffusive regime. In this case
-it is also very questionable to calculate a diffusion constant from the
-mean square displacement via the Stokes-Einstein relation.
+    The output corresponds to the blockfile format (see section ):
 
-The output corresponds to the blockfile format (see section ):
+    { msd { …} } { vanhove { { …} { …} } }
 
-{ msd { …} } { vanhove { { …} { …} } }
-
-The :math:`G(r,t)` are normalized such that the integral over space
-always yields :math:`1`.
+    The :math:`G(r,t)` are normalized such that the integral over space
+    always yields :math:`1`.
 
 
 .. _Center of mass:
@@ -287,60 +288,60 @@ Gyration tensor
 
 Analyze the gyration tensor of particles of a given type, or of all particles in the system if no type is given. Returns a dictionary containing the squared radius of gyration, three shape descriptors (asphericity, acylindricity, and relative shape anisotropy), eigenvalues of the gyration tensor and their corresponding eigenvectors. The eigenvalues are sorted in descending order.
 
+..
+    .. _Aggregation:
 
-.. _Aggregation:
+    Aggregation
+    ~~~~~~~~~~~
+    .. todo:: This feature is not implemented
 
-Aggregation
-~~~~~~~~~~~
-.. todo:: This feature is not implemented
+    analyze aggregation
 
-analyze aggregation
+    Returns the aggregate size distribution for the molecules in the
+    molecule id range to . If any monomers in two different molecules are
+    closer than they are considered to be in the same aggregate. One can use
+    the optional parameter to specify a minimum number of contacts such that
+    only molecules having at least contacts will be considered to be in the
+    same aggregate. The second optional parameter enables one to consider
+    aggregation state of only oppositely charged particles.
 
-Returns the aggregate size distribution for the molecules in the
-molecule id range to . If any monomers in two different molecules are
-closer than they are considered to be in the same aggregate. One can use
-the optional parameter to specify a minimum number of contacts such that
-only molecules having at least contacts will be considered to be in the
-same aggregate. The second optional parameter enables one to consider
-aggregation state of only oppositely charged particles.
+    .. _Finding holes:
 
-.. _Finding holes:
+    Finding holes
+    ~~~~~~~~~~~~~
+    .. todo:: This feature is not implemented
 
-Finding holes
-~~~~~~~~~~~~~
-.. todo:: This feature is not implemented
+    analyze holes
 
-analyze holes
+    Function for the calculation of the unoccupied volume (often also called
+    free volume) in a system. Details can be found in
+    :cite:`schmitz00a`. It identifies free space in the
+    simulation box via a mesh based cluster algorithm. Free space is defined
+    via a probe particle and its interactions with other particles which
+    have to be defined through LJ interactions with the other existing
+    particle types via the inter command before calling this routine. A
+    point of the mesh is counted as free space if the distance of the point
+    is larger than LJ\_cut+LJ\_offset to any particle as defined by the LJ
+    interaction parameters between the probe particle type and other
+    particle types.How to use this function: Define interactions between all
+    (or the ones you are interested in) particle types in your system and a
+    fictitious particle type. Practically one uses the van der Waals radius
+    of the particles plus the size of the probe you want to use as the
+    Lennard Jones cutoff. The mesh spacing is the box length divided by the
+    .
 
-Function for the calculation of the unoccupied volume (often also called
-free volume) in a system. Details can be found in
-:cite:`schmitz00a`. It identifies free space in the
-simulation box via a mesh based cluster algorithm. Free space is defined
-via a probe particle and its interactions with other particles which
-have to be defined through LJ interactions with the other existing
-particle types via the inter command before calling this routine. A
-point of the mesh is counted as free space if the distance of the point
-is larger than LJ\_cut+LJ\_offset to any particle as defined by the LJ
-interaction parameters between the probe particle type and other
-particle types.How to use this function: Define interactions between all
-(or the ones you are interested in) particle types in your system and a
-fictitious particle type. Practically one uses the van der Waals radius
-of the particles plus the size of the probe you want to use as the
-Lennard Jones cutoff. The mesh spacing is the box length divided by the
-.
+    { { } { } { } }
 
-{ { } { } { } }
-
-A hole is defined as a continuous cluster of mesh elements that belong
-to the unoccupied volume. Since the function is quite rudimentary it
-gives back the whole information suitable for further processing on the
-script level. and are given in number of mesh points, which means you
-have to calculate the actual size via the corresponding volume or
-surface elements yourself. The complete information is given in the
-element\_lists for each hole. The element numbers give the position of a
-mesh point in the linear representation of the 3D grid (coordinates are
-in the order x, y, z). Attention: the algorithm assumes a cubic box.
-Surface results have not been tested. .
+    A hole is defined as a continuous cluster of mesh elements that belong
+    to the unoccupied volume. Since the function is quite rudimentary it
+    gives back the whole information suitable for further processing on the
+    script level. and are given in number of mesh points, which means you
+    have to calculate the actual size via the corresponding volume or
+    surface elements yourself. The complete information is given in the
+    element\_lists for each hole. The element numbers give the position of a
+    mesh point in the linear representation of the 3D grid (coordinates are
+    in the order x, y, z). Attention: the algorithm assumes a cubic box.
+    Surface results have not been tested. .
 
 
 .. _Temperature of the lb fluid:

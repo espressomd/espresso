@@ -1,6 +1,3 @@
-=================
-Developer's Guide
-=================
 .. warning::
    The information found in this version of the Developer's Guide is
    outdated.  Please see the section :ref:`Contact the Developers` and

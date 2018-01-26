@@ -255,70 +255,36 @@ interaction :math:`0` is taken which must be a two-particle bond.
 
 See :meth:`espressomd.diamond.Diamond` for more details.
 
-.. _Setting up an icosaeder:
+..
+    .. _Cross-linking polymers:
 
-Setting up an icosaeder
-~~~~~~~~~~~~~~~~~~~~~~~
+    Cross-linking polymers
+    ~~~~~~~~~~~~~~~~~~~~~~
 
-:todo: `This feature is not yet implemented in Python.`
+            :todo: `This is not implemented in Python` 
 
-Creates a modified icosaeder to model a fullerene (or soccer ball). The
-edges are modeled by polymer chains connected at the corners of the
-icosaeder. For inter-particle bonds interaction :math:`0` is taken which
-must be a two-particle bond. Two particle types are used for the
-pentagons and the interconnecting links. For an example, see figure
-[fullerene].
+    crosslink
 
-.. _fullerene:
-.. figure:: figures/fullerene.png
-   :alt: Icosaeder with =15.
-   :align: center
-   :height: 6.00000cm
+    Attempts to end-crosslink the current configuration of equally long
+    polymers with monomers each, returning how many ends are successfully
+    connected.
 
-   Icosaeder with =15.
+    specifies the first monomer of the chains to be linked. It has to be
+    specified if the polymers do not start at id 0.
 
-Length of the links. Defines the size of the icosaeder.
+    Set the radius around each monomer which is searched for possible new
+    monomers to connect to. defaults to :math:`1.9`.
 
-Specifies the number of chain monomers along one edge.
+    The minimal distance of two interconnecting links. It defaults to
+    :math:`2`.
 
-Specifies the number of counterions to be placed into the system.
+    The minimal distance for an interconnection along the same chain. It
+    defaults to :math:`0`. If set to , no interchain connections are
+    created.
 
-Set the charges of the monomers to and the charges of the counterions to
-.
+    Sets the bond type for the connections to .
 
-Specifies the distance between two charged monomer along the edge. If
-:math:`d_\mathrm{charged} > 1` the remaining monomers are
-uncharged.
-
-.. _Cross-linking polymers:
-
-Cross-linking polymers
-~~~~~~~~~~~~~~~~~~~~~~
-
-        :todo: `This is not implemented in Python` 
-
-crosslink
-
-Attempts to end-crosslink the current configuration of equally long
-polymers with monomers each, returning how many ends are successfully
-connected.
-
-specifies the first monomer of the chains to be linked. It has to be
-specified if the polymers do not start at id 0.
-
-Set the radius around each monomer which is searched for possible new
-monomers to connect to. defaults to :math:`1.9`.
-
-The minimal distance of two interconnecting links. It defaults to
-:math:`2`.
-
-The minimal distance for an interconnection along the same chain. It
-defaults to :math:`0`. If set to , no interchain connections are
-created.
-
-Sets the bond type for the connections to .
-
-If not specified, defaults to :math:`30000`.
+    If not specified, defaults to :math:`30000`.
 
 .. _Virtual sites:
 
@@ -428,82 +394,83 @@ Please note:
 -  The presence of rigid bodies constructed by means of virtual sites
    adds a contribution to the pressure and stress tensor.
 
-.. _Virtual sites in the center of mass of a molecule:
+..
+    .. _Virtual sites in the center of mass of a molecule:
 
-Virtual sites in the center of mass of a molecule
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Virtual sites in the center of mass of a molecule
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:todo: `This is not implemented in Python, yet`
+    :todo: `This is not implemented in Python, yet`
 
-To activate this implementation, enable the feature VIRTUAL_SITES_COM in myconfig.hpp. Virtual sites are then placed in the center of mass of
-a set of particles (as defined below). Their velocity will also be that
-of the center of mass. Forces accumulating on the virtual sites are
-distributed back to the particles which form the molecule. To place a
-virtual site at the center of a molecule, perform the following steps in
-that order
+    To activate this implementation, enable the feature VIRTUAL_SITES_COM in myconfig.hpp. Virtual sites are then placed in the center of mass of
+    a set of particles (as defined below). Their velocity will also be that
+    of the center of mass. Forces accumulating on the virtual sites are
+    distributed back to the particles which form the molecule. To place a
+    virtual site at the center of a molecule, perform the following steps in
+    that order
 
-#. Create a particle of the desired type for each molecule. It should be
-   placed at least roughly in the center of the molecule to make sure,
-   its on the same node as the other particles forming the molecule, in
-   a simulation with more than one CPU.
+    #. Create a particle of the desired type for each molecule. It should be
+       placed at least roughly in the center of the molecule to make sure,
+       its on the same node as the other particles forming the molecule, in
+       a simulation with more than one CPU.
 
-#. Make it a virtual site using
+    #. Make it a virtual site using
 
-   part virtual 1
+       part virtual 1
 
-#. Declare the list of molecules and the particles they consist of:
+    #. Declare the list of molecules and the particles they consist of:
 
-   analyze set { ...} ...
+       analyze set { ...} ...
 
-   The lists of particles in a molecule comprise the non-virtual
-   particles as well as the virtual site. The id of this molecule is its
-   index in this list. For example,
+       The lists of particles in a molecule comprise the non-virtual
+       particles as well as the virtual site. The id of this molecule is its
+       index in this list. For example,
 
-   analyze set {0 1 2 3 4} {0 5 6 7 8} {1 9 10 11}
+       analyze set {0 1 2 3 4} {0 5 6 7 8} {1 9 10 11}
 
-   declares three molecules, of which the first two consist of three
-   particles and a virtual site each (particles 14 and 58,
-   respectively). The third molecule has type 1 and consists of two
-   particles and a virtual site. The virtual sites were determined
-   before by setting the flag. You can choose freely one out of each
-   molecule, for example particles 1, 5, and 9.
+       declares three molecules, of which the first two consist of three
+       particles and a virtual site each (particles 14 and 58,
+       respectively). The third molecule has type 1 and consists of two
+       particles and a virtual site. The virtual sites were determined
+       before by setting the flag. You can choose freely one out of each
+       molecule, for example particles 1, 5, and 9.
 
-#. Assign to all particles that belong to the same molecule the
-   molecules id
+    #. Assign to all particles that belong to the same molecule the
+       molecules id
 
-   part mol
+       part mol
 
-   The molid is the index of the particle in the above list, so you
-   would assign 0 to particles 1-4, 1 to particles 5-8 and 2 to
-   particles 9-11. Alternatively, you can call
+       The molid is the index of the particle in the above list, so you
+       would assign 0 to particles 1-4, 1 to particles 5-8 and 2 to
+       particles 9-11. Alternatively, you can call
 
-   analyze set topo\_part\_sync
+       analyze set topo\_part\_sync
 
-   to set the s from the molecule declarations.
+       to set the s from the molecule declarations.
 
-#. Update the position of all virtual particles (optional)
+    #. Update the position of all virtual particles (optional)
 
-   integrate 0
+       integrate 0
 
-The type of the molecule you can choose freely, it is only used in
-certain analysis functions, namely ``energy_kinetic_mol``,
-``pressure_mol`` and ``dipmom_mol``, which compute kinetic energy,
-pressure and dipole moment per molecule type, respectively.
+    The type of the molecule you can choose freely, it is only used in
+    certain analysis functions, namely ``energy_kinetic_mol``,
+    ``pressure_mol`` and ``dipmom_mol``, which compute kinetic energy,
+    pressure and dipole moment per molecule type, respectively.
 
-.. _Additional features:
+    .. _Additional features:
 
-Additional features
-~~~~~~~~~~~~~~~~~~~
+    Additional features
+    ~~~~~~~~~~~~~~~~~~~
 
-The behaviour of virtual sites can be fine-tuned with the following
-switches in ``myconfig.hpp``.
+    The behaviour of virtual sites can be fine-tuned with the following
+    switches in ``myconfig.hpp``.
 
-- VIRTUAL_SITES_NO_VELOCITY specifies that the velocity of virtual sites is not computed
+    - VIRTUAL_SITES_NO_VELOCITY specifies that the velocity of virtual sites is not computed
 
-- VIRTUAL_SITES_THERMOSTAT specifies that the Langevin thermostat should also act on virtual
-   sites
+    - VIRTUAL_SITES_THERMOSTAT specifies that the Langevin thermostat should also act on virtual
+       sites
 
-- THERMOSTAT_IGNORE_NON_VIRTUAL specifies that the thermostat does not act on non-virtual particles
+    - THERMOSTAT_IGNORE_NON_VIRTUAL specifies that the thermostat does not act on non-virtual particles
 
 .. _Grand canonical feature:
 

@@ -316,8 +316,7 @@ General features
 
    .. seealso:: 
    
-       :ref:`Dipolar interaction`
-       :ref:`Magnetostatics`
+       :ref:`Magnetostatics / Dipolar interactions`
        :ref:`Electrostatics`
 
 -  ``SCAFACOS_DIPOLES``
@@ -415,10 +414,10 @@ General features
 In addition, there are switches that enable additional features in the
 integrator or thermostat:
 
+..
+    -  ``NEMD`` Enables the non-equilbrium (shear) MD support.
 
--  ``NEMD`` Enables the non-equilbrium (shear) MD support.
-
-   .. seealso:: :ref:`\`\`nemd\`\`\: Setting up non-equilibirum MD`
+       .. seealso:: :ref:`\`\`nemd\`\`\: Setting up non-equilibirum MD`
 
 -  ``NPT`` Enables an on–the–fly NPT integration scheme.
    

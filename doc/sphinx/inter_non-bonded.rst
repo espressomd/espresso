@@ -617,85 +617,83 @@ momentum.
 
 Anisotropic non-bonded interactions
 -----------------------------------
-.. todo::
-    
-    Not implemented yet.
 
-.. _Directional Lennard-Jones interactiony:
+..
+    .. _Directional Lennard-Jones interaction:
 
-Directional Lennard-Jones interaction
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Directional Lennard-Jones interaction
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. todo::
-    
-    Not implemented yet.
+    .. todo::
+        
+        Not implemented yet.
 
-inter lj-angle
+    inter lj-angle
 
-|image_directional_lj|
+    |image_directional_lj|
 
-Specifies a 12-10 Lennard-Jones interaction with angular dependence
-between particles of the types *type1* and *type2*. These two particles need two bonded
-partners oriented in a symmetric way. They define an orientation for the
-central particle. The purpose of using bonded partners is to avoid
-dealing with torques, therefore the interaction does *not* need the
-ROTATION feature. The angular part of the potential minimizes the system
-when the two central beads are oriented along the vector formed by these
-two particles. The shaded beads on the image are virtual particles that
-are formed from the orientation of the bonded partners, connected to the
-central beads. They are used to define angles. The potential is of the
-form
+    Specifies a 12-10 Lennard-Jones interaction with angular dependence
+    between particles of the types *type1* and *type2*. These two particles need two bonded
+    partners oriented in a symmetric way. They define an orientation for the
+    central particle. The purpose of using bonded partners is to avoid
+    dealing with torques, therefore the interaction does *not* need the
+    ROTATION feature. The angular part of the potential minimizes the system
+    when the two central beads are oriented along the vector formed by these
+    two particles. The shaded beads on the image are virtual particles that
+    are formed from the orientation of the bonded partners, connected to the
+    central beads. They are used to define angles. The potential is of the
+    form
 
-.. math::
+    .. math::
 
-   U(r_{ik},\theta_{jik},\theta_{ikn})=
-     \epsilon\left[5\left(\frac{\sigma}r\right)^{12} - 
-       6\left(\frac{\sigma}{r}\right)^{10}\right]
-     \cos^2\theta_{jik}\cos^2\theta_{ikn},
+       U(r_{ik},\theta_{jik},\theta_{ikn})=
+         \epsilon\left[5\left(\frac{\sigma}r\right)^{12} - 
+           6\left(\frac{\sigma}{r}\right)^{10}\right]
+         \cos^2\theta_{jik}\cos^2\theta_{ikn},
 
-where :math:`r_{ik}` is the distance between the two central beads, and
-each angle defines the orientation between the direction of a central
-bead (determined from the two bonded partners) and the vector
-:math:`\mathbf{r_{ik}}`. Note that the potential is turned off if one of
-the angle is more than :math:`\pi/2`. This way we don’t end up creating
-a minimum for an anti-parallel configuration.
+    where :math:`r_{ik}` is the distance between the two central beads, and
+    each angle defines the orientation between the direction of a central
+    bead (determined from the two bonded partners) and the vector
+    :math:`\mathbf{r_{ik}}`. Note that the potential is turned off if one of
+    the angle is more than :math:`\pi/2`. This way we don’t end up creating
+    a minimum for an anti-parallel configuration.
 
-Unfortunately, the bonded partners are not sought dynamically. One has
-to keep track of the relative positions of the particle IDs. This can be
-done by setting the parameters , , , and . Say the first bead has
-particle ID , then one should set the simulation such as its two bonded
-partners have particle IDs and , respectively. On a linear chain, for
-example, one would typically have and such that the central bead and its
-two bonded partners have position IDs , , and , respectively. This is
-surely not optimized, but once the simulation is set correctly the
-algorithm is very fast.
+    Unfortunately, the bonded partners are not sought dynamically. One has
+    to keep track of the relative positions of the particle IDs. This can be
+    done by setting the parameters , , , and . Say the first bead has
+    particle ID , then one should set the simulation such as its two bonded
+    partners have particle IDs and , respectively. On a linear chain, for
+    example, one would typically have and such that the central bead and its
+    two bonded partners have position IDs , , and , respectively. This is
+    surely not optimized, but once the simulation is set correctly the
+    algorithm is very fast.
 
-It might turn out to be useful in some
-cases to keep force capping during the whole simulation. This is due to
-the very sharp angular dependence for small distance, compared to
-:math:`\sigma`. Two beads might come very close to each other while
-having unfavorable angles such that the interaction is turned off. Then
-a change in the angle might suddenly turn on the interaction and the
-system will blow up (the potential is so steep that one would need
-extremely small time steps to deal with it, which is not very clever for
-such rare events).
+    It might turn out to be useful in some
+    cases to keep force capping during the whole simulation. This is due to
+    the very sharp angular dependence for small distance, compared to
+    :math:`\sigma`. Two beads might come very close to each other while
+    having unfavorable angles such that the interaction is turned off. Then
+    a change in the angle might suddenly turn on the interaction and the
+    system will blow up (the potential is so steep that one would need
+    extremely small time steps to deal with it, which is not very clever for
+    such rare events).
 
-For instance, when modeling hydrogen bonds (N-H...O=C), one can avoid
-simulating hydrogens and oxygens by using this potential. This comes
-down to implementing a HBond potential between N and C atoms.
+    For instance, when modeling hydrogen bonds (N-H...O=C), one can avoid
+    simulating hydrogens and oxygens by using this potential. This comes
+    down to implementing a HBond potential between N and C atoms.
 
-The four other optional
-parameters (, , , ) describe a different interaction strength for a
-subset of the simulation box. The box is divided through the plane in
-two different regions: region 1 which creates an interaction with
-strength , region 2 with interaction strength . The 2nd region is
-defined by its -midplane , its total thickness , and the interface width
-. Therefore, the interaction strength is everywhere except for the
-region of the box :math:`z_0-\delta z/2<z<z_0+\delta z/2`. The interface
-width smoothly interpolates between the two regions to avoid
-discontinuities. As an example, one can think of modeling hydrogen bonds
-in two different environments: water, where the interaction is rather
-weak, and in a lipid bilayer, where it is comparatively stronger.
+    The four other optional
+    parameters (, , , ) describe a different interaction strength for a
+    subset of the simulation box. The box is divided through the plane in
+    two different regions: region 1 which creates an interaction with
+    strength , region 2 with interaction strength . The 2nd region is
+    defined by its -midplane , its total thickness , and the interface width
+    . Therefore, the interaction strength is everywhere except for the
+    region of the box :math:`z_0-\delta z/2<z<z_0+\delta z/2`. The interface
+    width smoothly interpolates between the two regions to avoid
+    discontinuities. As an example, one can think of modeling hydrogen bonds
+    in two different environments: water, where the interaction is rather
+    weak, and in a lipid bilayer, where it is comparatively stronger.
 
 .. _Gay-Berne interaction:
 
