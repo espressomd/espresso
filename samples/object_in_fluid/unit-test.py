@@ -12,7 +12,7 @@ from espressomd.interactions import OifOutDirection
 import numpy as np
 import os, sys
 
-from object_in_fluid import *
+import object_in_fluid as oif
 
 system = espressomd.System()
 system.time_step = 0.1
@@ -20,10 +20,10 @@ system.box_l = [10.0, 10.0, 10.0]
 system.cell_system.skin = 0.2
 
 # creating the template for OIF object
-cell_type = OifCellType(nodes_file="input/sphere393nodes.dat", triangles_file="input/sphere393triangles.dat", system = system, ks=1.0, kb=1.0, kal=1.0, kag=0.1, kv=0.1, check_orientation=False, resize=(3.0,3.0,3.0))
+cell_type = oif.OifCellType(nodes_file="input/sphere393nodes.dat", triangles_file="input/sphere393triangles.dat", system = system, ks=1.0, kb=1.0, kal=1.0, kag=0.1, kv=0.1, check_orientation=False, resize=(3.0,3.0,3.0))
 
 # creating the OIF object
-cell0 = OifCell(cell_type=cell_type, part_type=0, origin=[5.0,5.0,5.0])
+cell0 = oif.OifCell(cell_type=cell_type, part_type=0, origin=[5.0,5.0,5.0])
 # cell0.output_vtk_pos_folded(file_name="cell0_0.vtk")
 
 
@@ -55,7 +55,7 @@ print("stretched diameter = " + str(diameter_stretched))
 # OIF object is let to relax into relaxed shape of the sphere
 for i in range(1,maxCycle):
     system.integrator.run(steps=10)
-#    cell0.output_vtk_pos_folded(file_name="cell0_" + str(i) + ".vtk")
+#    oif.cell0.output_vtk_pos_folded(file_name="cell0_" + str(i) + ".vtk")
 
 
 # final diameter is measured and compared to initial diameter
