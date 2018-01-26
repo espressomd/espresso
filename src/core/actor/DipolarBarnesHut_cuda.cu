@@ -621,7 +621,7 @@ void sortKernel()
 				  }
 			}
 			k -= dec;	// move on to next cell
-		}
+		} else k = bottom - 1;
 		__syncthreads();	// throttle
 	}
 }
