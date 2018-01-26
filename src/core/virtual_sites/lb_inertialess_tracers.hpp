@@ -2,8 +2,8 @@
 /// \brief Main of the Bayreuth Immersed-Boundary implementation
 
 
-#ifndef IBM_MAIN_HPP
-#define IBM_MAIN_HPP
+#ifndef VIRTUAL_SITES_LB_INERTIALESS_TRACERS_HPP
+#define VIRTUAL_SITES_LB_INERTIALESS_TRACERS_HPP
 
 #include "config.hpp"
 

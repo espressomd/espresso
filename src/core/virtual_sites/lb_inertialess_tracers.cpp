@@ -5,6 +5,7 @@
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
+#include "config.hpp" 
 #include "particle_data.hpp"
 #include "lb.hpp"
 #include "cells.hpp"

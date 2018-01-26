@@ -53,10 +53,11 @@ class VirtualSitesTracers(ut.TestCase):
         system.time_step = 0.05
         system.cell_system.skin = 0.1
         
-        box_l = 9. 
-        system.box_l = [box_l] * 3
+        box_height = 10. 
+        box_lw=8
+        system.box_l = box_lw,box_lw,box_height
         
-        lbf = lb.LBFluid(agrid=1, dens=1, visc=10, tau= system.time_step, ext_force=[0.1, 0, 0], fric = 1)
+        lbf = lb.LBFluid(agrid=1, dens=1, visc=2, tau= system.time_step, ext_force=[0.1, 0, 0], fric = 1)
         system.actors.add(lbf)
         
         system.thermostat.set_lb(kT=0)
@@ -64,16 +65,18 @@ class VirtualSitesTracers(ut.TestCase):
         # Setup boundaries
         walls = [lbboundaries.LBBoundary() for k in range(2)]
         walls[0].set_params(shape=shapes.Wall(normal=[0,0,1], dist = 0.5))
-        walls[1].set_params(shape=shapes.Wall(normal=[0,0,-1], dist = -box_l-0.5))
+        walls[1].set_params(shape=shapes.Wall(normal=[0,0,-1], dist = -box_height-0.5))
         
         for wall in walls:
             system.lbboundaries.add(wall)
         
-        system.part.add(id=0, pos=[0,box_l/2,box_l/2], virtual=1)    
         # Establish steady state flow field
-        system.integrator.run(100)
+        system.part.add(id=0, pos=(0,5.5,5.5),virtual=1)
+        system.integrator.run(500)
             
-        system.part[0].pos=[0,box_l/2,box_l/2]
+        # 
+        # 
+        system.part[0].pos=(0,5.5,5.5)
         
         system.time=0
         ## Perform integration
@@ -82,9 +85,9 @@ class VirtualSitesTracers(ut.TestCase):
         for i in range(10):
             system.integrator.run(100)
             # compute expected position
-            X = lbf[0,int(box_l/2),int(box_l/2)].velocity[0] * system.time
-            print( system.time, system.part[0].pos[0],X)
-            self.assertAlmostEqual(system.part[0].pos[0],X,delta=0.02)
+            X = lbf[0,5,5].velocity[0]*system.time
+            print( system.time, system.part[0].pos[0],X,system.part[0].pos[0]-X)
+            self.assertAlmostEqual(system.part[0].pos[0]/X-1,0,delta=0.005)
 
         
         
