@@ -93,7 +93,7 @@ struct CUDA_particle_data {
 
   unsigned int fixed;
 
-#if defined(IMMERSED_BOUNDARY) || defined(VIRTUAL_SITES_COM)
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
   bool isVirtual;
 #endif
 

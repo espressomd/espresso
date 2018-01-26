@@ -37,6 +37,7 @@
 #include "partCfg_global.hpp"
 #include "forcecap.hpp"
 #include "short_range_loop.hpp"
+#include "immersed_boundaries.hpp" 
 
 #include <cassert>
 
@@ -162,7 +163,7 @@ void force_calc() {
 
 #ifdef IMMERSED_BOUNDARY
   // Must be done here. Forces need to be ghost-communicated
-  IBM_VolumeConservation();
+  immersed_boundaries.volume_conservation();
 #endif
 
 #ifdef LB

@@ -31,6 +31,7 @@
 #include <cassert>
 #include <cstdio>
 #include <iostream>
+#include "config.hpp" 
 #include "utils.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
@@ -40,7 +41,7 @@
 #include "lb-d3q19.hpp"
 #include "lbboundaries.hpp"
 #include "lb.hpp"
-#include "immersed_boundary/ibm_main.hpp"
+#include "virtual_sites/lb_inertialess_tracers.hpp"
 
 #include "cuda_interface.hpp"
 
@@ -2724,7 +2725,7 @@ inline void lb_collide_stream() {
 #endif // LB_BOUNDARIES
   
   
-#ifdef IMMERSED_BOUNDARY
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 // Safeguard the node forces so that we can later use them for the IBM particle update
 // In the following loop the lbfields[XX].force are reset to zero
   for (int i = 0; i<lblattice.halo_grid_volume; ++i)
@@ -2866,7 +2867,7 @@ inline void lb_stream_collide() {
     lbpar.resend_halo = 1;
   
   // Re-reset the node forces to include also the halo nodes
-#ifdef IMMERSED_BOUNDARY
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
   IBM_ResetLBForces_CPU();
 #endif
 }
@@ -3278,7 +3279,7 @@ void calc_particle_lattice_ia() {
     /* local cells */
     for (auto &p : local_cells.particles()) {
 
-#ifdef IMMERSED_BOUNDARY
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
       // Virtual particles for IBM must not be coupled
       if (!p.p.isVirtual)
 #endif
@@ -3312,7 +3313,7 @@ void calc_particle_lattice_ia() {
           fprintf(stderr, "%d: OPT: LB coupling of ghost particle:\n",
                   this_node);
         });
-#ifdef IMMERSED_BOUNDARY
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
         // Virtual particles for IBM must not be coupled
         if (!p.p.isVirtual)
 #endif

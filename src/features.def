@@ -55,9 +55,13 @@ DIPOLAR_DIRECT_SUM              requires CUDA
 DIPOLAR_DIRECT_SUM              equals DIPOLES and ROTATION and CUDA
 
 /* Virtual sites features */
+VIRTUAL_SITES                   
 VIRTUAL_SITES_RELATIVE          implies VIRTUAL_SITES
 VIRTUAL_SITES_RELATIVE          implies ROTATION
-VIRTUAL_SITES                   
+
+VIRTUAL_SITES_INERTIALESS_TRACERS
+VIRTUAL_SITES_INERTIALESS_TRACERS implies VIRTUAL_SITES
+VIRTUAL_SITES_INERTIALESS_TRACERS requires LB or LB_GPU
 
 /* DPD features */
 DPD
@@ -126,8 +130,7 @@ COULOMB_DEBYE_HUECKEL           requires ELECTROSTATICS
 
 /* Immersed-Boundary Bayreuth version */
 IMMERSED_BOUNDARY
-IMMERSED_BOUNDARY               requires not VIRTUAL_SITES_RELATIVE
-IMMERSED_BOUNDARY               requires not VIRTUAL_SITES_COM
+IMMERSED_BOUNDARY               requires VIRTUAL_SITES
 IMMERSED_BOUNDARY               requires not SHANCHEN
 IMMERSED_BOUNDARY               requires not ELECTROKINETICS
 SCAFACOS_DIPOLES                requires SCAFACOS

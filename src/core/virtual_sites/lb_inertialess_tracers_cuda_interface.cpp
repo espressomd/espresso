@@ -7,14 +7,16 @@
 
 #include "config.hpp"
 
-#ifdef IMMERSED_BOUNDARY
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
 #include "communication.hpp"
 #include "debug.hpp"
 #include "grid.hpp"
-#include "immersed_boundary/ibm_cuda_interface.hpp"
+#include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
+#include "utils/serialization/ibm_cuda_particle_velocities_input.hpp"
+
 #include "utils/mpi/gather_buffer.hpp"
 #include "utils/mpi/scatter_buffer.hpp"
 

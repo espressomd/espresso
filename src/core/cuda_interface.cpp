@@ -71,7 +71,7 @@ static void pack_particles(ParticleRange particles,
     buffer[i].v[0] = static_cast<float>(part.m.v[0]);
     buffer[i].v[1] = static_cast<float>(part.m.v[1]);
     buffer[i].v[2] = static_cast<float>(part.m.v[2]);
-#ifdef IMMERSED_BOUNDARY
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
     buffer[i].isVirtual = part.p.isVirtual;
 #endif
 

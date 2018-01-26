@@ -85,10 +85,8 @@
 #include "scafacos.hpp"
 #endif
 #ifdef IMMERSED_BOUNDARY
-#include "immersed_boundary/ibm_main.hpp"
-#include "immersed_boundary/ibm_tribend.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
-#include "immersed_boundary/ibm_volume_conservation.hpp"
+#include "immersed_boundary/ibm_tribend.hpp"
 #endif
 #ifdef DPD
 #include "dpd.hpp"
@@ -487,13 +485,16 @@ inline void add_bonded_force(Particle *p1) {
     type = iaparams->type;
     n_partners = iaparams->num;
 
-    /* fetch particle 2, which is always needed */
-    p2 = local_particles[p1->bl.e[i++]];
-    if (!p2) {
-      runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
+    if (n_partners) 
+    {
+      /* fetch particle 2, which is always needed */
+      p2 = local_particles[p1->bl.e[i++]];
+      if (!p2) {
+        runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
                         << " and " << p1->bl.e[i - 1]
                         << " (particles are not stored on the same node)";
-      return;
+        return;
+      }
     }
 
     /* fetch particle 3 eventually */

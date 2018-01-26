@@ -6,19 +6,19 @@
 
 #include "config.hpp"
 
-#ifdef IMMERSED_BOUNDARY
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
 #include "lbgpu.hpp"
 #include "lbboundaries.hpp"
 #include "particle_data.hpp"
 #include "cuda_utils.hpp"
 #include "cuda_interface.hpp"
-#include "immersed_boundary/ibm_main.hpp"
-#include "immersed_boundary/ibm_cuda_interface.hpp"
+#include "virtual_sites/lb_inertialess_tracers.hpp"
+#include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
 
-#if defined(OMPI_MPI_H) || defined(_MPI_H)
-#error CU-file includes mpi.h! This should not happen!
-#endif
+// To avoid include of communication.hpp in cuda file
+extern int this_node;
+
 
 // ****** Kernel functions for internal use ********
 __global__ void ResetLBForces_Kernel(LB_node_force_gpu node_f, const LB_parameters_gpu *const paraP);
@@ -129,20 +129,38 @@ void InitCUDA_IBM(const int numParticles)
     // Copy boundary velocities to the GPU
     // First put them into correct format
 #ifdef LB_BOUNDARIES_GPU
-    float* host_lb_boundary_velocity = new float[3*(n_lb_boundaries+1)];
+//    float* host_lb_boundary_velocity = new float[3*(n_lb_boundaries+1)];
+    float* host_lb_boundary_velocity = new float[3*(LBBoundaries::lbboundaries.size()+1)];
 
-    for (int n=0; n<n_lb_boundaries; n++)
+//    for (int n=0; n<n_lb_boundaries; n++)
+    for (int n=0; n<LBBoundaries::lbboundaries.size(); n++)
     {
-      host_lb_boundary_velocity[3*n+0]=lb_boundaries[n].velocity[0];
+
+/*      host_lb_boundary_velocity[3*n+0]=lb_boundaries[n].velocity[0];
       host_lb_boundary_velocity[3*n+1]=lb_boundaries[n].velocity[1];
-      host_lb_boundary_velocity[3*n+2]=lb_boundaries[n].velocity[2];
+      host_lb_boundary_velocity[3*n+2]=lb_boundaries[n].velocity[2];*/
+
+
+      host_lb_boundary_velocity[3*n+0] = LBBoundaries::lbboundaries[n]->velocity()[0];
+      host_lb_boundary_velocity[3*n+1] = LBBoundaries::lbboundaries[n]->velocity()[1];
+      host_lb_boundary_velocity[3*n+2] = LBBoundaries::lbboundaries[n]->velocity()[2];
+
     }
 
-    host_lb_boundary_velocity[3*n_lb_boundaries+0] = 0.0f;
+/*    host_lb_boundary_velocity[3*n_lb_boundaries+0] = 0.0f;
     host_lb_boundary_velocity[3*n_lb_boundaries+1] = 0.0f;
-    host_lb_boundary_velocity[3*n_lb_boundaries+2] = 0.0f;
-    cuda_safe_mem(cudaMalloc((void**)&lb_boundary_velocity_IBM, 3*n_lb_boundaries*sizeof(float)));
-    cuda_safe_mem(cudaMemcpy(lb_boundary_velocity_IBM, host_lb_boundary_velocity, 3*n_lb_boundaries*sizeof(float), cudaMemcpyHostToDevice));
+    host_lb_boundary_velocity[3*n_lb_boundaries+2] = 0.0f;*/
+
+    host_lb_boundary_velocity[3*LBBoundaries::lbboundaries.size()+0] = 0.0f;
+    host_lb_boundary_velocity[3*LBBoundaries::lbboundaries.size()+1] = 0.0f;
+    host_lb_boundary_velocity[3*LBBoundaries::lbboundaries.size()+2] = 0.0f;
+
+//    cuda_safe_mem(cudaMalloc((void**)&lb_boundary_velocity_IBM, 3*n_lb_boundaries*sizeof(float)));
+//    cuda_safe_mem(cudaMemcpy(lb_boundary_velocity_IBM, host_lb_boundary_velocity, 3*n_lb_boundaries*sizeof(float), cudaMemcpyHostToDevice));
+
+    cuda_safe_mem(cudaMalloc((void**)&lb_boundary_velocity_IBM, 3*LBBoundaries::lbboundaries.size()*sizeof(float)));
+    cuda_safe_mem(cudaMemcpy(lb_boundary_velocity_IBM, host_lb_boundary_velocity, 3*LBBoundaries::lbboundaries.size()*sizeof(float), cudaMemcpyHostToDevice));
+
     delete[] host_lb_boundary_velocity;
 #endif
   }

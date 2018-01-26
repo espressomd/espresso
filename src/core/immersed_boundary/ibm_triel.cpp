@@ -237,20 +237,19 @@ int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, con
   // Create bond
   make_bond_type_exist(bond_type);
 
-  //Get data (especially location) of three particles
-  Particle part1, part2, part3;
-  get_particle_data(ind1,&part1);
-  get_particle_data(ind2,&part2);
-  get_particle_data(ind3,&part3);
-  
+  // Get data (especially location) of three particles
+  auto part1 = get_particle_data(ind1);
+  auto part2 = get_particle_data(ind2);
+  auto part3 = get_particle_data(ind3);
+
   // Calculate equilibrium lenghts and angle; Note the sequence of the points!
   // lo = lenght between 1 and 3
   double templo[3];
-  get_mi_vector(templo, part3.r.p, part1.r.p);
+  get_mi_vector(templo, part3->r.p, part1->r.p);
   const double l0 = sqrt (sqrlen(templo));
   // lpo = lenght between 1 and 2
   double templpo[3];
-  get_mi_vector(templpo, part2.r.p, part1.r.p);
+  get_mi_vector(templpo, part2->r.p, part1->r.p);
   const double lp0 = sqrt (sqrlen(templpo));
 
   // cospo / sinpo angle functions between these vectors; calculated directly via the products
@@ -258,18 +257,18 @@ int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, con
   double vecpro[3];
   vector_product(templo, templpo, vecpro);
   const double sinPhi0 = sqrt(sqrlen(vecpro))/(l0*lp0);
-  
+
   // Use the values determined above for further constants of the stretch-force calculation
   const double area2 = l0 * lp0 * sinPhi0;
   const double a1 = -(l0*sinPhi0)/area2;
   const double a2 = - a1;
   const double b1 = (l0*cosPhi0 - lp0)/area2;
   const double b2 = -(l0*cosPhi0)/area2;
-  
+
   // General stuff
   bonded_ia_params[bond_type].type = BONDED_IA_IBM_TRIEL;
   bonded_ia_params[bond_type].num = 2;
-  
+
   // Specific stuff
   bonded_ia_params[bond_type].p.ibm_triel.a1 = a1;
   bonded_ia_params[bond_type].p.ibm_triel.a2 = a2;
@@ -285,16 +284,10 @@ int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, con
   // Always store two constants, for NeoHookean only k1 is used
   bonded_ia_params[bond_type].p.ibm_triel.k1 = k1;
   bonded_ia_params[bond_type].p.ibm_triel.k2 = k2;
-  
+
   //Communicate this to whoever is interested
   mpi_bcast_ia_params(bond_type, -1);
-  
-  // Free particles's allocated memory
-  // This was in Wolfgang's code, but probably should not be here since particles are local variables
-//  free_particle(&part1);
-//  free_particle(&part2);
-//  free_particle(&part3);
-  
+
   return ES_OK;
 }
 

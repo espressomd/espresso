@@ -48,6 +48,9 @@ class VirtualSites {
     virtual void update(bool recalc_positions=true) const =0;
     /** Back-transfer forces (and torques) to non-virtual particles */
     virtual void back_transfer_forces_and_torques() const =0;
+    /** @brief Called after force calculation (and before rattle/shake) */
+    virtual void after_force_calc() {};
+    virtual void after_lb_propagation() {};
     /** @brief Number of pressure contributions */
     virtual int n_pressure_contribs() const {return 0;};
     /** @brief Pressure contribution() */

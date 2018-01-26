@@ -128,7 +128,7 @@ typedef struct {
 
   /** local force density */
   double force[3];
-#ifdef IMMERSED_BOUNDARY
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
   // For particle update, we need the force on the nodes in LBM
   // Yet, Espresso resets the force immediately after the LBM update
   // Therefore we save it here
