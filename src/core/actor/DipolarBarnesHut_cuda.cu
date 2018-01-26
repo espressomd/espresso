@@ -1099,7 +1099,7 @@ void allocBHmemCopy(int nbodies, BHData* bh_data) {
     devID = cuda_get_device();
     cuda_get_device_props(devID,dev);
 
-    bh_data->blocks = 16 * dev.n_cores;
+    bh_data->blocks = dev.n_cores;
     // Each node corresponds to a split of the cubic box in 3D space to equal cubic boxes
     // hence, 8 nodes per particle is a theoretical octree limit:
     bh_data->nnodes = bh_data->nbodies * 8;
