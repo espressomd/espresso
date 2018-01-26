@@ -3897,11 +3897,20 @@ void lb_calc_particle_lattice_ia_gpu(){
 
     if ( lbpar_gpu.lb_couple_switch & LB_COUPLE_TWO_POINT )
     {
+#ifndef LEES_EDWARDS
+      KERNELCALL( calc_fluid_particle_ia, dim_grid_particles, threads_per_block_particles, 
+                  ( *current_nodes, gpu_get_particle_pointer(), 
+                    gpu_get_particle_force_pointer(), gpu_get_fluid_composition_pointer(),
+                    node_f, gpu_get_particle_seed_pointer(), device_rho_v)
+                );
+#endif
+#ifdef LEES_EDWARDS      
       KERNELCALL( calc_fluid_particle_ia, dim_grid_particles, threads_per_block_particles, 
                   ( *current_nodes, gpu_get_particle_pointer(), 
                     gpu_get_particle_force_pointer(), gpu_get_fluid_composition_pointer(),
                     node_f, gpu_get_particle_seed_pointer(), device_rho_v, lees_edwards_offset)
                 );
+#endif
     }
     else { /** only other option is the three point coupling scheme */
 #ifdef SHANCHEN
