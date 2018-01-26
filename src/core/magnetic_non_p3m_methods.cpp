@@ -136,7 +136,6 @@ double calc_dipole_dipole_ia(Particle *p1, Particle *p2, int force_flag) {
 
 double dawaanr_calculations(int force_flag, int energy_flag) {
   double u;
-  int i, j, c, cc;
 
   if (n_nodes != 1) {
     fprintf(stderr, "error:  DAWAANR is just for one cpu .... \n");
@@ -203,14 +202,11 @@ int magnetic_dipolar_direct_sum_sanity_checks() {
 
 double magnetic_dipolar_direct_sum_calculations(int force_flag,
                                                 int energy_flag) {
-  Cell *cell;
-  Particle *part;
-  int i, c, np;
-  double *x = nullptr, *y = nullptr, *z = nullptr;
-  double *mx = nullptr, *my = nullptr, *mz = nullptr;
-  double *fx = nullptr, *fy = nullptr, *fz = nullptr;
+  std::vector<double> x, y, z;
+  std::vector<double> mx, my, mz;
+  std::vector<double> fx, fy, fz;
 #ifdef ROTATION
-  double *tx = nullptr, *ty = nullptr, *tz = nullptr;
+  std::vector<double> tx, ty, tz;
 #endif
   int dip_particles, dip_particles2;
   double ppos[3];
@@ -227,23 +223,23 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
     return 0;
   }
 
-  x = (double *)Utils::malloc(sizeof(double) * n_part);
-  y = (double *)Utils::malloc(sizeof(double) * n_part);
-  z = (double *)Utils::malloc(sizeof(double) * n_part);
+  x.resize(n_part);
+  y.resize(n_part);
+  z.resize(n_part);
 
-  mx = (double *)Utils::malloc(sizeof(double) * n_part);
-  my = (double *)Utils::malloc(sizeof(double) * n_part);
-  mz = (double *)Utils::malloc(sizeof(double) * n_part);
+  mx.resize(n_part);
+  my.resize(n_part);
+  mz.resize(n_part);
 
   if (force_flag) {
-    fx = (double *)Utils::malloc(sizeof(double) * n_part);
-    fy = (double *)Utils::malloc(sizeof(double) * n_part);
-    fz = (double *)Utils::malloc(sizeof(double) * n_part);
+    fx.resize(n_part);
+    fy.resize(n_part);
+    fz.resize(n_part);
 
 #ifdef ROTATION
-    tx = (double *)Utils::malloc(sizeof(double) * n_part);
-    ty = (double *)Utils::malloc(sizeof(double) * n_part);
-    tz = (double *)Utils::malloc(sizeof(double) * n_part);
+    tx.resize(n_part);
+    ty.resize(n_part);
+    tz.resize(n_part);
 #endif
   }
 
@@ -398,26 +394,6 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
       }
     }
   } /*of if force_flag */
-
-  /* free memory used */
-
-  free(x);
-  free(y);
-  free(z);
-  free(mx);
-  free(my);
-  free(mz);
-
-  if (force_flag) {
-    free(fx);
-    free(fy);
-    free(fz);
-#ifdef ROTATION
-    free(tx);
-    free(ty);
-    free(tz);
-#endif
-  }
 
   return 0.5 * coulomb.Dprefactor * u;
 }

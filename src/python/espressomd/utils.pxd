@@ -28,7 +28,7 @@ cdef extern from "stdlib.h":
     void * malloc(size_t size)
     void * realloc(void * ptr, size_t size)
 
-cdef extern from "utils.hpp":
+cdef extern from "utils/List.hpp":
     cppclass int_list "IntList":
         int_list()
         int_list(int)
@@ -37,7 +37,7 @@ cdef extern from "utils.hpp":
         int& operator[](int)
         void resize(int)
         void push_back(int)
-        
+
         int * e
         unsigned n
 
@@ -78,7 +78,7 @@ cdef extern from "RuntimeError.hpp" namespace "ErrorHandling":
 cdef extern from "errorhandling.hpp" namespace "ErrorHandling":
     cdef vector[RuntimeError] mpi_gather_runtime_errors()
 
-cdef handle_errors(msg)
+cpdef handle_errors(msg)
 
 # https://github.com/cython/cython/blob/master/Cython/Includes/libcpp/limits.pxd
 cdef extern from "<limits>" namespace "std" nogil:

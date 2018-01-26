@@ -280,6 +280,14 @@ void on_observable_calc() {
 #endif /*ifdef ELECTROSTATICS */
 }
 
+void on_particle_charge_change() {
+  reinit_electrostatics = 1;
+  invalidate_obs();
+
+  /* the particle information is no longer valid */
+  partCfg().invalidate();
+}
+
 void on_particle_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_particle_change\n", this_node));
 
@@ -305,8 +313,6 @@ void on_particle_change() {
 void on_coulomb_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_coulomb_change\n", this_node));
   invalidate_obs();
-
-  recalc_coulomb_prefactor();
 
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
@@ -553,9 +559,6 @@ void on_temperature_change() {
   }
 #endif
 
-#ifdef ELECTROSTATICS
-  recalc_coulomb_prefactor();
-#endif
 }
 
 void on_parameter_change(int field) {
@@ -709,8 +712,6 @@ void on_ghost_flags_change() {
   /* that's all we change here */
   extern int ghosts_have_v;
 
-  const int old_have_v = ghosts_have_v;
-
   ghosts_have_v = 0;
 
 /* DPD and LB need also ghost velocities */
@@ -734,10 +735,10 @@ void on_ghost_flags_change() {
     ghosts_have_v = 1;
 #endif
 #ifdef VIRTUAL_SITES
-  // VIRUTAL_SITES need v to update v of virtual sites
-  ghosts_have_v = 1;
+  // If they have velocities, VIRUTAL_SITES need v to update v of virtual sites
+  if (virtual_sites()->have_velocity()) {
+    ghosts_have_v = 1;
+  };
 #endif
 
-  if (old_have_v != ghosts_have_v)
-    cells_re_init(CELL_STRUCTURE_CURRENT);
 }

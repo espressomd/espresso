@@ -97,24 +97,17 @@ void force_calc() {
 
 // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
-  update_mol_vel_pos();
-  ghost_communicator(&cell_structure.update_ghost_pos_comm);
+  virtual_sites()->update();
+  if (virtual_sites()->need_ghost_comm_after_pos_update()) {
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+  }
 #endif
 
-#if defined(VIRTUAL_SITES_RELATIVE) && defined(LB)
-  // This is on a workaround stage:
-  // When using virtual sites relative and LB at the same time, it is necessary
-  // to reassemble the cell lists after all position updates, also of virtual
-  // particles.
-  if ((lattice_switch & LATTICE_LB) &&
-      cell_structure.type == CELL_STRUCTURE_DOMDEC && (!cell_structure.use_verlet_list))
-    cells_update_ghosts();
-#endif
-
+  
   espressoSystemInterface.update();
 
 #ifdef COLLISION_DETECTION
-  prepare_collision_queue();
+  prepare_local_collision_queue();
 #endif
 
 #ifdef LB_GPU
@@ -188,9 +181,12 @@ void force_calc() {
 
 // VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
-  ghost_communicator(&cell_structure.collect_ghost_force_comm);
-  init_forces_ghosts();
-  distribute_mol_force();
+  if (virtual_sites()->need_ghost_comm_before_back_transfer())
+  {
+    ghost_communicator(&cell_structure.collect_ghost_force_comm);
+    init_forces_ghosts();
+  }
+  virtual_sites()->back_transfer_forces_and_torques();
 #endif
 
   // Communication Step: ghost forces
@@ -341,7 +337,7 @@ void calc_non_bonded_pair_force_from_partcfg_simple(Particle const *p1,
                                                     double dist2,
                                                     double force[3]) {
   IA_parameters *ia_params = get_ia_param(p1->p.type, p2->p.type);
-  double torque1[3], torque2[3];
+  double torque1[3] = {0,0,0}, torque2[3] = {0,0,0};
   calc_non_bonded_pair_force_from_partcfg(p1, p2, ia_params, d, dist, dist2,
                                           force, torque1, torque2);
 }

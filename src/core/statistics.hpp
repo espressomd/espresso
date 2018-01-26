@@ -57,7 +57,7 @@ typedef struct {
   /** number of non bonded interactions */
   int n_non_bonded;
   /** Number of virtual sites relative (rigid body) conributions */
-  int n_vs_relative;
+  int n_virtual_sites;
 
   /** start of bonded interactions. Right after the special ones */
   double *bonded;
@@ -68,7 +68,7 @@ typedef struct {
   /** start of observables for coulomb interaction. */
   double *dipolar;
   /** Start of observables for virtual sites relative (rigid bodies) */
-  double *vs_relative;
+  double *virtual_sites;
 
   /** number of doubles per data item */
   int chunk_size;
@@ -104,7 +104,7 @@ typedef struct {
 
 /** \name Exported Variables
     Previous particle configurations (needed for offline analysis
-    and correlation analysis in \ref tclcommand_analyze)
+    and correlation analysis)
 */
 /************************************************************/
 /*@{*/
@@ -437,7 +437,7 @@ void invalidate_obs();
 
 void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
                                int n_non_bonded, int n_coulomb, int n_dipolar,
-                               int n_vsr, int chunk_size);
+                               int n_vs, int chunk_size);
 
 void obsstat_realloc_and_clear_non_bonded(Observable_stat_non_bonded *stat_nb,
                                           int n_nonbonded, int chunk_size_nb);

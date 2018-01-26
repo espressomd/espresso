@@ -28,55 +28,16 @@
  *
 */
 
+#include "Vector.hpp"
+#include "utils/constants.hpp"
+#include "utils/math/sqr.hpp"
+#include "utils/memory.hpp"
+
 #include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <exception>
 #include <vector>
-
-#include "config.hpp"
-
-#include "Vector.hpp"
-#include "debug.hpp"
-#include "errorhandling.hpp"
-#include "lees_edwards.hpp"
-#include "utils/List.hpp"
-#include "utils/math/sqr.hpp"
-#include "utils/memory.hpp"
-
-/*************************************************************/
-/** \name Mathematical, physical and chemical constants.     */
-/*************************************************************/
-/*@{*/
-/** Pi. */
-#define PI 3.14159265358979323846264338328
-/** Square root of Pi */
-#define wupi 1.77245385090551602729816748334
-/** One over square root of Pi. */
-#define wupii 0.56418958354775627928034964498
-/** Pi to the power 1/3. */
-#define driwu2 1.25992104989487316476721060728
-
-/// error code if no error occured
-#define ES_OK 0
-/// error code if an error occured
-#define ES_ERROR 1
-
-/** space necessary for an (64-bit) integer with sprintf.
-    Analog to Tcl
- */
-#define ES_INTEGER_SPACE 24
-/** space necessary for an double with sprintf. Precision
-    is 17 digits, plus sign, dot, e, sign of exponent and
-    3 digits exponent etc. Analog to Tcl
-*/
-#define ES_DOUBLE_SPACE 27
-
-/*@}*/
-
-/************************************************
- * data types
- ************************************************/
 
 namespace Utils {
 /**
@@ -114,13 +75,6 @@ inline ::Vector<3, double>
   return ::Vector<3, double>{r, phi, pos[2]};
 }
 } // Namespace Utils
-
-/*************************************************************/
-/** \name List operations .                                  */
-/*************************************************************/
-/*@{*/
-
-/*@}*/
 
 /*************************************************************/
 /** \name Mathematical functions.                            */
@@ -560,25 +514,21 @@ inline void get_n_triangle(double *p1, double *p2, double *p3, double *n) {
   n[2] = (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0]);
 }
 
-/** This function returns the angle btw the triangle p1,p2,p3 and p2,p3,p4.
- *  Be careful, the angle depends on the orientation of the trianlges!
- *  You need to be sure that the orientation (direction of normal vector)
- *  of p1p2p3 is given by the cross product p2p1 x p2p3.
- *  The orientation of p2p3p4 must be given by p2p3 x p2p4.
+/** This function returns the angle btw the triangle p1,p2,p3 and p2,p3,p4.  Be
+ * careful, the angle depends on the orientation of the trianlges!  You need to
+ * be sure that the orientation (direction of normal vector) of p1p2p3 is given
+ * by the cross product p2p1 x p2p3.  The orientation of p2p3p4 must be given
+ * by p2p3 x p2p4.
  *
- *  Example: p1 = (0,0,1), p2 = (0,0,0), p3=(1,0,0), p4=(0,1,0).
- *  The orientation of p1p2p3 should be in the direction (0,1,0)
- *  and indeed: p2p1 x p2p3 = (0,0,1)x(1,0,0) = (0,1,0)
- *  This function is called in the beginning of the simulation when creating
- *  bonds depending on the angle btw the triangles, the bending_force.
- *  Here, we determine the orientations by looping over the triangles
- *  and checking the correct orientation. So when defining the bonds by tcl
- * command
- *  "part p2 bond xxxx p1 p3 p4", we correctly input the particle id's.
- *  So if you have the access to the order of particles, you are safe to call
- * this
+ *  Example: p1 = (0,0,1), p2 = (0,0,0), p3=(1,0,0), p4=(0,1,0).  The
+ *  orientation of p1p2p3 should be in the direction (0,1,0) and indeed: p2p1 x
+ *  p2p3 = (0,0,1)x(1,0,0) = (0,1,0) This function is called in the beginning
+ *  of the simulation when creating bonds depending on the angle btw the
+ *  triangles, the bending_force.  Here, we determine the orientations by
+ *  looping over the triangles and checking the correct orientation.  So if you
+ *  have the access to the order of particles, you are safe to call this
  *  function with exactly this order. Otherwise you need to check the
- * orientations. */
+ *  orientations. */
 inline double angle_btw_triangles(double *P1, double *P2, double *P3,
                                   double *P4) {
   double phi;

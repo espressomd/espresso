@@ -154,7 +154,7 @@ typedef struct {
 /*******************************/
 
 /* create system structure with all zeros. Filled in maggs_set_parameters(); */
-MAGGS_struct maggs = { 1, 0, 1.0, 1.0, 0. , 0. , 0. , 0. , 0. , 0 , 0. , 0. , {{0.},{0.}}};
+MAGGS_struct maggs = { 1, 0, 1.0, 1.0, 0. , 0. , 0. , 0. ,  0 , 0. , 0. , {{0.},{0.}}};
 
 /* local mesh. */
 static lattice_parameters lparams;
@@ -195,7 +195,7 @@ static t_dirs* neighbor;
 // void maggs_update_plaquette(int mue, int nue, int* Neighbor, int index, double delta); /* update fields on plaquette */
 
 /****** setup everything: ******/
-// int maggs_set_parameters(double bjerrum, double f_mass, int mesh); /* set the system parameters */
+// int maggs_set_parameters(double prefactor, double f_mass, int mesh); /* set the system parameters */
 // void maggs_setup_neighbors(); /* setup the site neighbors */
 // void maggs_setup_local_lattice(); /* set lattice parameters */
 // void maggs_calc_surface_patches(t_surf_patch* surface_patch); /* prepare for communication */
@@ -393,8 +393,8 @@ int maggs_sanity_checks()
 
   FOR3D(d) if(node_grid[d] > max_node_grid) max_node_grid = node_grid[d];
 	
-  if (maggs.bjerrum == 0.) {
-      runtimeErrorMsg() <<"MEMD: bjerrum length is zero.";
+  if (maggs.prefactor == 0.) {
+      runtimeErrorMsg() <<"MEMD: prefactor is zero.";
     ret = -1;
   }
   else if ( (box_l[0] != box_l[1]) || (box_l[1] != box_l[2]) ) {
@@ -443,9 +443,8 @@ int maggs_sanity_checks()
 
 void maggs_compute_dipole_correction() {
   /*
-  maggs.prefactor  = sqrt(4. * M_PI * maggs.bjerrum * temperature);
+  maggs.pref1  = sqrt(4. * M_PI * maggs.prefactor);
                    = sqrt(1/epsilon)
-  maggs.pref2      = maggs.bjerrum * temperature;
                    = 1/4*pi*epsilon
   */
 
@@ -476,7 +475,7 @@ void maggs_compute_dipole_correction() {
 /****** setup everything: ******/
 /*******************************/
 
-int maggs_set_parameters(double bjerrum, double f_mass, int mesh, int finite_epsilon_flag, double epsilon_infty)
+int maggs_set_parameters(double prefactor, double f_mass, int mesh, int finite_epsilon_flag, double epsilon_infty)
 {
   if (f_mass <=0.) {
     return -1;
@@ -488,7 +487,7 @@ int maggs_set_parameters(double bjerrum, double f_mass, int mesh, int finite_eps
   maggs.mesh           = mesh;
   maggs.finite_epsilon_flag  = finite_epsilon_flag;
   maggs.epsilon_infty  = epsilon_infty;
-  maggs.bjerrum        = bjerrum;
+  maggs.prefactor        = prefactor;
   maggs.f_mass         = f_mass; 
   maggs.invsqrt_f_mass = 1./sqrt(f_mass); 	
 	
@@ -733,7 +732,7 @@ int maggs_get_mesh_1D()
  @param node_y              index of the node in y direction
  @param node_z              index of the node in z direction
  @param direction           direction in which the link points from the node. 0 is for x, 1 is for y, 2 is for z
- @param relative_epsilon    permittivity to set, relative to the background permittivity set by the bjerrum length
+ @param relative_epsilon    permittivity to set, relative to the background permittivity set by via the prefactor
  */
 double maggs_set_permittivity(int node_x, int node_y, int node_z, int direction, double relative_epsilon)
 {
@@ -1070,7 +1069,6 @@ void maggs_accumulate_charge_from_ghosts() {
 /** finds current lattice site of each particle.
     calculates charge interpolation on cube. */
 void maggs_distribute_particle_charges() {
-  int np;
   int first[SPACE_DIM];
   double q;
   double pos[SPACE_DIM], rel[SPACE_DIM];
@@ -1189,7 +1187,7 @@ void maggs_calc_self_energy_coeffs()
 
   factor = M_PI / maggs.mesh;
   prefac = 1. / maggs.mesh;
-  prefac = 0.5 * prefac * prefac * prefac * SQR(maggs.prefactor);
+  prefac = 0.5 * prefac * prefac * prefac * SQR(maggs.pref1);
   
   for(i=0;i<8;i++) 
     {
@@ -1424,13 +1422,13 @@ void maggs_calc_init_e_field()
 
     MPI_Allreduce(&localqz, &qz, 1, MPI_DOUBLE, MPI_SUM, zplane);
     qz = qz/(maggs.mesh*maggs.mesh);
-    qplane = qz*maggs.prefactor*invasq;
+    qplane = qz*maggs.pref1*invasq;
     /*    if(fabs(qplane) >= 0.01*ROUND_ERROR_PREC) { */
     for(iy=lparams.inner_left_down[1];iy<lparams.inner_up_right[1];iy++) {
       for(ix=lparams.inner_left_down[0];ix<lparams.inner_up_right[0];ix++) {  
 	index = maggs_get_linear_index(ix, iy, iz, lparams.dim);
 	Dfield[3*index+ZPLUS]  = Dfield[3*neighbor[index][ZMINUS]+ZPLUS] + qplane;
-	/*	    + qz*maggs.prefactor*invasq; */
+	/*	    + qz*maggs.pref1*invasq; */
       }
     }
     /*    } */
@@ -1467,12 +1465,12 @@ void maggs_calc_init_e_field()
       MPI_Allreduce(&localqy, &qy, 1, MPI_DOUBLE, MPI_SUM, yline);
 			
       qy = qy/maggs.mesh;
-      qline = (qy-qz)*maggs.prefactor*invasq;
+      qline = (qy-qz)*maggs.pref1*invasq;
       /*      if(fabs(qy-qz)>=ROUND_ERROR_PREC) { */
       for(ix=lparams.inner_left_down[0];ix<lparams.inner_up_right[0];ix++) {  
 	index = maggs_get_linear_index(ix, iy, iz, lparams.dim);
 	Dfield[3*index+YPLUS]  = Dfield[3*neighbor[index][YMINUS]+YPLUS] + qline;
-	/*	    (qy-qz)*maggs.prefactor*invasq; */
+	/*	    (qy-qz)*maggs.pref1*invasq; */
       }
       /*      } */
 			
@@ -1498,7 +1496,7 @@ void maggs_calc_init_e_field()
 	index = maggs_get_linear_index(ix, iy, iz, lparams.dim);
 	qx = lattice[index].charge / lattice[index].permittivity[0]; 
 	Dfield[3*index+XPLUS] = Dfield[3*neighbor[index][XMINUS]+XPLUS] + 
-	  (qx-qy)*maggs.prefactor*invasq;
+	  (qx-qy)*maggs.pref1*invasq;
       }
 			
       if(ix>=lparams.inner_up_right[0]-1) {
@@ -1648,8 +1646,9 @@ void maggs_calc_init_e_field()
   }
   /* exchange whole glue-patch region */
   maggs_exchange_surface_patch(Dfield, 3, 0);
-  if(!this_node)
+  if(!this_node) {
     MAGGS_TRACE(fprintf(stderr, "Ex = %16.12e, Ey = %15.12e, Ez = %15.12e\n", gEall[0], gEall[1], gEall[2]));
+  }
 }
 
 
@@ -1676,7 +1675,7 @@ void maggs_calc_charge_fluxes_1D(double q, double *help, double *flux, int dir)
   int l,m; 
   double q_scaled;
 	
-  q_scaled = q * maggs.prefactor*maggs.inva;
+  q_scaled = q * maggs.pref1*maggs.inva;
   index = 0;
 	
   maggs_calc_directions(dir, &dir1, &dir2);   
@@ -2138,7 +2137,7 @@ void maggs_calc_self_influence(Particle* P)
   FOR3D(k) {
     local_force[k] = pow(((0.5 - relative_position[k])*SELF_FACTOR_1), 3.0) +
       (0.5 - relative_position[k]) * SELF_FACTOR_2;
-    local_force[k] *= maggs.bjerrum;
+    local_force[k] *= maggs.prefactor;
     local_force[k] *= particle_charge * particle_charge;
     local_force[k] *= invasq;
   }
@@ -2199,7 +2198,7 @@ void maggs_calc_part_link_forces(Particle *p, int index, double *grad)
   }  
   /* Attention! Here, the INTERLACING is done! */
   FOR3D(j){
-    p->f.f[j] += maggs.prefactor * local_force[j];
+    p->f.f[j] += maggs.pref1 * local_force[j];
   }
 }
 
@@ -2212,7 +2211,7 @@ void maggs_calc_forces()
 { 
   static int init = 1;
   static int Npart_old;
-  int i, c, np, d, index, Npart, ip; 
+  int d, index, Npart, ip; 
   double q;
   /* position of a particle in local lattice units */
   double pos[SPACE_DIM];
@@ -2326,17 +2325,10 @@ void maggs_init()
 {
     maggs.inva  = (double) maggs.mesh/box_l[0]; 
     maggs.a     = 1.0/maggs.inva;
-    if (temperature>0.0) {
-      maggs.prefactor  = sqrt(4. * M_PI * maggs.bjerrum * temperature);
-      maggs.pref2      = maggs.bjerrum * temperature;
-    } else {
-      maggs.prefactor  = sqrt(4. * M_PI * maggs.bjerrum);
-      maggs.pref2      = maggs.bjerrum;
-    }			
+    maggs.pref1  = sqrt(4. * M_PI * maggs.prefactor);
     
     if (maggs_sanity_checks()) {
-      maggs.bjerrum = 0.0;
-      coulomb.bjerrum = 0.0;
+      runtimeErrorMsg() << "MEMD sanity checks failed.";
       return;
     }
     		

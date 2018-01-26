@@ -24,6 +24,13 @@ from espressomd.system cimport *
 cimport numpy as np
 from espressomd.utils cimport *
 
+cdef extern from "TabulatedPotential.hpp":
+    struct TabulatedPotential:
+        double maxval
+        double minval
+        vector[double] energy_tab
+        vector[double] force_tab
+
 cdef extern from "interaction_data.hpp":
     ctypedef struct ia_parameters "IA_parameters":
         double LJ_eps
@@ -32,6 +39,16 @@ cdef extern from "interaction_data.hpp":
         double LJ_shift
         double LJ_offset
         double LJ_min
+
+        double LJCOS_eps
+        double LJCOS_sig
+        double LJCOS_cut
+        double LJCOS_offset
+
+        double LJCOS2_eps
+        double LJCOS2_sig
+        double LJCOS2_offset
+        double LJCOS2_w
 
         double LJGEN_eps
         double LJGEN_sig
@@ -45,13 +62,7 @@ cdef extern from "interaction_data.hpp":
         double LJGEN_lambda
         double LJGEN_softrad
 
-        int TAB_npoints
-        int TAB_startindex
-        double TAB_minval
-        double TAB_minval2
-        double TAB_maxval
-        double TAB_stepsize
-        char TAB_filename[256]
+        TabulatedPotential TAB
 
         double GB_eps
         double GB_sig
@@ -60,7 +71,7 @@ cdef extern from "interaction_data.hpp":
         double GB_k2
         double GB_mu
         double GB_nu
-        
+
         double SmSt_eps
         double SmSt_sig
         double SmSt_cut
@@ -124,6 +135,17 @@ cdef extern from "lj.hpp":
                                       double eps, double sig, double cut,
                                       double shift, double offset,
                                       double min)
+IF LJCOS:
+    cdef extern from "ljcos.hpp":
+        cdef int ljcos_set_params(int part_type_a, int part_type_b,
+                                  double eps, double sig,
+                                  double cut, double offset);
+
+IF LJCOS2:
+    cdef extern from "ljcos2.hpp":
+        cdef int ljcos2_set_params(int part_type_a, int part_type_b,
+                                   double eps, double sig, double offset,
+                                   double w)
 
 IF GAY_BERNE:
     cdef extern from "gb.hpp":
@@ -197,7 +219,10 @@ IF HAT:
 
 IF TABULATED==1:
     cdef extern from "tab.hpp":
-        int tabulated_set_params(int part_type_a, int part_type_b, char* filename);
+        int tabulated_set_params(int part_type_a, int part_type_b,
+                                 double min, double max,
+                                 vector[double] energy,
+                                 vector[double] force);
 
 cdef extern from "interaction_data.hpp":
     ctypedef struct Fene_bond_parameters:
@@ -275,14 +300,8 @@ cdef extern from "interaction_data.hpp":
 
 #* Parameters for n-body tabulated potential (n=2,3,4). */
     ctypedef struct Tabulated_bond_parameters:
-        char * filename
         int    type
-        int    npoints
-        double minval
-        double maxval
-        double invstepsize
-        double * f
-        double * e
+        TabulatedPotential * pot
 
 #* Parameters for n-body overlapped potential (n=2,3,4). */
     ctypedef struct Overlap_bond_parameters:
@@ -393,7 +412,7 @@ IF TABULATED == 1:
         cdef enum TabulatedBondedInteraction:
             TAB_UNKNOWN = 0, TAB_BOND_LENGTH, TAB_BOND_ANGLE, TAB_BOND_DIHEDRAL
     cdef extern from "tab.hpp":
-        int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_type, char * filename)
+        int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_type, double min, double max, vector[double] energy, vector[double] force)
 
 IF BOND_ENDANGLEDIST == 1:
     cdef extern from "endangledist.hpp":

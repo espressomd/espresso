@@ -26,7 +26,7 @@
 #include "cells.hpp"
 #include "integrate.hpp"
 #include "initialize.hpp"
-#include "virtual_sites_relative.hpp" 
+#include "virtual_sites.hpp" 
 #include "npt.hpp"
 #include "p3m.hpp"
 #include "p3m-dipolar.hpp"
@@ -122,8 +122,8 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
 
   calc_long_range_virials();
 
-#ifdef VIRTUAL_SITES_RELATIVE  
-  vs_relative_pressure_and_stress_tensor(virials.vs_relative,p_tensor.vs_relative);
+#ifdef VIRTUAL_SITES
+  virtual_sites()->pressure_and_stress_tensor_contribution(virials.virtual_sites,p_tensor.virtual_sites);
 #endif
 
 
@@ -167,7 +167,6 @@ void calc_long_range_virials()
     fprintf(stderr, "WARNING: pressure calculated, but GPU P3M pressure not implemented\n");
     break;
   case COULOMB_P3M: {
-    int k;
     p3m_charge_assign();
     virials.coulomb[1] = p3m_calc_kspace_forces(0,1);
     p3m_charge_assign();
@@ -233,14 +232,14 @@ void init_virials(Observable_stat *stat)
 {
     // Determine number of contribution for different interaction types
     // bonded, nonbonded, coulomb, dipolar, rigid bodies
-    int n_pre, n_non_bonded, n_coulomb, n_dipolar,n_vsr;
+    int n_pre, n_non_bonded, n_coulomb, n_dipolar,n_vs;
 
   n_pre        = 1;
   n_non_bonded = (n_particle_types*(n_particle_types+1))/2;
 
   n_coulomb    = 0;
   n_dipolar    = 0;
-  n_vsr=0;
+  n_vs=0;
 
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
@@ -261,14 +260,13 @@ void init_virials(Observable_stat *stat)
       break;
   }
 #endif
-#ifdef VIRTUAL_SITES_RELATIVE
-  // rigid bodies 
-  n_vsr=1;
+#ifdef VIRTUAL_SITES
+  n_vs=virtual_sites()->n_pressure_contribs();
 #endif
 
 
   // Allocate memory for the data
-  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, n_dipolar, n_vsr, 1);
+  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, n_dipolar, n_vs, 1);
   stat->init_status = 0;
 }
 
@@ -289,7 +287,7 @@ void init_p_tensor(Observable_stat *stat)
 {
     // Determine number of contribution for different interaction types
     // bonded, nonbonded, coulomb, dipolar, rigid bodies
-    int n_pre, n_non_bonded, n_coulomb, n_dipolar,n_vsr;
+    int n_pre, n_non_bonded, n_coulomb, n_dipolar,n_vs;
 
 
   n_pre        = 1;
@@ -297,7 +295,7 @@ void init_p_tensor(Observable_stat *stat)
 
   n_coulomb = 0;
   n_dipolar = 0;
-  n_vsr=0;
+  n_vs=0;
 
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
@@ -317,12 +315,11 @@ void init_p_tensor(Observable_stat *stat)
   default: n_dipolar = 0;
   }
 #endif
-#ifdef VIRTUAL_SITES_RELATIVE
-  // rigid bodies 
-  n_vsr=1;
+#ifdef VIRTUAL_SITES
+  n_vs=virtual_sites()->n_pressure_contribs();
 #endif
 
-  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, n_dipolar, n_vsr, 9);
+  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, n_dipolar, n_vs, 9);
   stat->init_status = 0;
 }
 
@@ -538,11 +535,7 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
   double entry[3], exit[3]; /* the positions at which the line enters and exits the cube */
   int startx, endx;         /* x-bins in which the line starts and ends in */
   int occupiedxbins;        /* number of x-bins occuped by the line */
-  int *starty;              /* y-bins in which the line starts in for each x-bin.  This array has dimension occupiedxbins+1. */
   int totoccupiedybins;     /* total number of y-bins through which the line passes  */
-  int *occupiedybins;       /* number of occupied y-bins for each x-bin */
-  int *occupiedzbins;       /* number of occupied z-bins for each y-bin */
-  int *startz;              /* z-bins in which the line starts in for each y_bin.  This array has dimension totaloccupiedybins. */
   int xbin, ybin, zbin;     /* counters to keep track of bins x_bin goes from 0 to x_bins-1, y_bins from 0 to y_bins-1, z_bins from 0 to Z-bins-1 */
   int i ,k, l;    
   int counter;              /* keeps track of where we are in the startz array */
@@ -614,8 +607,8 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
   
     PTENSOR_TRACE(fprintf(stderr,"%d: distribute_tensors: x goes from %d to %d\n",this_node,startx, endx);)
     /* Initialise starty array */
-    starty = (int *)Utils::malloc(sizeof(int)*(occupiedxbins+1));
-    occupiedybins = (int *)Utils::malloc(sizeof(int)*occupiedxbins);
+    std::vector<int>starty(occupiedxbins+1);
+    std::vector<int> occupiedybins(occupiedxbins);
 
     /* find in which y-bins the line starts and stops for each x-bin */
     /* in xbin the line starts in y-bin number starty[xbin-startx] and ends in starty[xbin-startx+1] */
@@ -642,8 +635,8 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
     }
 
     /* Initialise startz array */
-    occupiedzbins = (int *)Utils::malloc(sizeof(int)*totoccupiedybins);
-    startz = (int *)Utils::malloc(sizeof(int)*(totoccupiedybins+1));
+    std::vector<int> occupiedzbins(totoccupiedybins);
+    std::vector<int> startz(totoccupiedybins+1);
     /* find in which z-bins the line starts and stops for each y-bin*/
     counter = 0;
     if (facein == 2) {
@@ -775,10 +768,6 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
         runtimeErrorMsg() << this_node << ": analyze stress_profile: bug in distribute tensor code - calclength is " << calclength << " and length is " << length;
       return 0;
     }
-    free(occupiedzbins);
-    free(occupiedybins);
-    free(starty);
-    free(startz);
   }
   return 1;
 } 
@@ -921,12 +910,6 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
   double binvolume;
   double centre[3];
 
-  double force[3];
-  int k, l;
-  int type_num;
-  Bonded_ia_parameters *iaparams;
-  double dx[3];
-
   for (int i = 0; i < 3; i++) {
     if (periodic[i]) {
       range[i] = box_l[i];
@@ -984,13 +967,13 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
           auto p2 = local_particles[p.bl.e[j++]];
           double dx[3];
           get_mi_vector(dx, p.r.p, p2->r.p);
-          double force[3];
-          calc_bonded_force(&p, p2, iaparams, &j, dx, force);
+          std::array<double,3> force;
+          calc_bonded_force(&p, p2, iaparams, &j, dx, force.data());
           PTENSOR_TRACE(
               fprintf(stderr, "%d: Bonded to particle %d with force %f %f %f\n",
                       this_node, p2->p.identity, force[0], force[1], force[2]));
           if ((pow(force[0], 2) + pow(force[1], 2) + pow(force[2], 2)) > 0) {
-            if (distribute_tensors(TensorInBin, force, bins, range_start, range,
+            if (distribute_tensors(TensorInBin, force.data(), bins, range_start, range,
                                    p.r.p, p2->r.p) != 1)
               return 0;
           }
@@ -1095,10 +1078,10 @@ void update_stress_tensor (int v_comp) {
 
 int analyze_local_stress_tensor(int* periodic, double* range_start, double* range, int* bins, DoubleList* TensorInBin)
 {
-	PTENSOR_TRACE(fprintf(stderr,"%d: Running tclcommand_analyze_parse_local_stress_tensor\n",this_node));
+	PTENSOR_TRACE(fprintf(stderr,"%d: Running analyze_local_stress_tensor\n",this_node));
 
 	mpi_local_stress_tensor(TensorInBin, bins, periodic,range_start, range);
-	PTENSOR_TRACE(fprintf(stderr,"%d: tclcommand_analyze_parse_local_stress_tensor: finished mpi_local_stress_tensor \n",this_node));
+	PTENSOR_TRACE(fprintf(stderr,"%d: analyze_local_stress_tensor: finished mpi_local_stress_tensor \n",this_node));
 
 	return ES_OK;
 }

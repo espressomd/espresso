@@ -14,8 +14,7 @@ namespace Utils {
 /** List.
     Use the functions specified in list operations. */
 template <typename T, typename SizeType = uint32_t> class List {
-  static_assert(std::is_pod<T>::value, "");
-  static_assert(std::is_unsigned<SizeType>::value, "");
+  static_assert(std::is_unsigned<SizeType>::value, "SizeType needs to be unsigned.");
 
 public:
   using value_type = T;
@@ -60,11 +59,11 @@ public:
   List(List &&rhs) noexcept : List() { move(std::move(rhs)); }
   List &operator=(List const &rhs) {
     copy(rhs);
-    return *this;
+    return *this; // NOLINT
   }
   List &operator=(List &&rhs) noexcept {
     move(std::move(rhs));
-    return *this;
+    return *this; // NOLINT
   }
 
   T *begin() { return e; }

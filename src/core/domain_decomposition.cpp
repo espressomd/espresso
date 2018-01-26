@@ -252,7 +252,7 @@ void dd_create_cell_grid() {
   CELL_TRACE(fprintf(
       stderr, "%d: dd_create_cell_grid, n_cells=%lu, local_cells.n=%d, "
               "ghost_cells.n=%d, dd.ghost_cell_grid=(%d,%d,%d)\n",
-      this_node, (unsigned long) cells.size(), local_cells.n, ghost_cells.n,
+      this_node, (unsigned long)cells.size(), local_cells.n, ghost_cells.n,
       dd.ghost_cell_grid[0], dd.ghost_cell_grid[1], dd.ghost_cell_grid[2]));
 }
 
@@ -635,13 +635,20 @@ int dd_append_particles(ParticleList *pl, int fold_dir) {
     }
 
     for (dir = 0; dir < 3; dir++) {
+      auto lpos = pl->part[p].r.p[dir] - my_left[dir];
       cpos[dir] =
-          (int)((pl->part[p].r.p[dir] - my_left[dir]) * dd.inv_cell_size[dir]) +
-          1;
+          static_cast<int>(std::floor(lpos * dd.inv_cell_size[dir])) + 1;
 
+      /* If the calculated cell for the particle does not belong to
+         this node, (cpos < 1 or cpos > dd.cell_grid), we still keep them
+         if the system is not periodic in dir and we are at the boundary.
+         These are particles that have left the box in a non-periodic direction,
+         which are kept on the boundary node. Otherwise we set flag = 1 to keep
+         sorting, these particles are the send to the left or right neighbor
+         of this node in the next round. */
       if (cpos[dir] < 1) {
         cpos[dir] = 1;
-        if (PERIODIC(dir)) {
+        if (PERIODIC(dir) || !boundary[2 * dir]) {
           flag = 1;
           CELL_TRACE(if (fold_coord == 2) {
             fprintf(stderr, "%d: dd_append_particles: particle %d (%f,%f,%f) "
@@ -652,7 +659,7 @@ int dd_append_particles(ParticleList *pl, int fold_dir) {
         }
       } else if (cpos[dir] > dd.cell_grid[dir]) {
         cpos[dir] = dd.cell_grid[dir];
-        if (PERIODIC(dir)) {
+        if (PERIODIC(dir) || !boundary[2 * dir + 1]) {
           flag = 1;
           CELL_TRACE(if (fold_coord == 2) {
             fprintf(stderr, "%d: dd_append_particles: particle %d (%f,%f,%f) "
@@ -664,11 +671,15 @@ int dd_append_particles(ParticleList *pl, int fold_dir) {
       }
     }
     c = get_linear_index(cpos[0], cpos[1], cpos[2], dd.ghost_cell_grid);
-    CELL_TRACE(fprintf(stderr,
-                       "%d: dd_append_particles: Appen Part id=%d to cell %d\n",
-                       this_node, pl->part[p].p.identity, c));
+    CELL_TRACE(fprintf(
+        stderr,
+        "%d: dd_append_particles: Append Part id=%d to cell %d cpos %d %d %d\n",
+        this_node, pl->part[p].p.identity, c, cpos[0], cpos[1], cpos[2]));
     append_indexed_particle(&cells[c], std::move(pl->part[p]));
   }
+  CELL_TRACE(
+      fprintf(stderr, "%d: dd_append_particles: flag=%d\n", this_node, flag));
+
   return flag;
 }
 
@@ -880,7 +891,6 @@ void dd_topology_init(CellPList *old) {
 
 /************************************************************/
 void dd_topology_release() {
-  int i, j;
   CELL_TRACE(fprintf(stderr, "%d: dd_topology_release:\n", this_node));
   /* release cell interactions */
 

@@ -130,8 +130,6 @@ static double fluidstep=0.0;
 #ifdef ADDITIONAL_CHECKS
 /** counts the random numbers drawn for fluctuating LB and the coupling */
 static int rancounter=0;
-/** counts the occurences of negative populations due to fluctuations */
-static int failcounter=0;
 #endif // ADDITIONAL_CHECKS
 
 /***********************************************************************/
@@ -1054,10 +1052,10 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
         if (!cpfile) {
             return ES_ERROR;
         }
-        float* host_checkpoint_vd = (float *) Utils::malloc(lbpar_gpu.number_of_nodes * 19 * sizeof(float));
-        unsigned int* host_checkpoint_seed = (unsigned int *) Utils::malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
-        unsigned int* host_checkpoint_boundary = (unsigned int *) Utils::malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
-        lbForceFloat* host_checkpoint_force = (lbForceFloat *) Utils::malloc(lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat));
+        std::vector<float> host_checkpoint_vd(lbpar_gpu.number_of_nodes * 19);
+        std::vector<unsigned int> host_checkpoint_seed(lbpar_gpu.number_of_nodes);
+        std::vector<unsigned int> host_checkpoint_boundary(lbpar_gpu.number_of_nodes);
+        std::vector<lbForceFloat> host_checkpoint_force(lbpar_gpu.number_of_nodes * 3);
 
         if (!binary) {
             for (int n=0; n<(19*int(lbpar_gpu.number_of_nodes)); n++) {
@@ -1078,21 +1076,17 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
         }
         else
         {
-          if(fread(host_checkpoint_vd, sizeof(float), 19*int(lbpar_gpu.number_of_nodes), cpfile) != (unsigned int) (19*lbpar_gpu.number_of_nodes))
+          if(fread(host_checkpoint_vd.data(), sizeof(float), 19*int(lbpar_gpu.number_of_nodes), cpfile) != (unsigned int) (19*lbpar_gpu.number_of_nodes))
             return ES_ERROR;
-          if(fread(host_checkpoint_seed, sizeof(int), int(lbpar_gpu.number_of_nodes), cpfile) != (unsigned int) lbpar_gpu.number_of_nodes)
+          if(fread(host_checkpoint_seed.data(), sizeof(int), int(lbpar_gpu.number_of_nodes), cpfile) != (unsigned int) lbpar_gpu.number_of_nodes)
             return ES_ERROR;
-          if(fread(host_checkpoint_boundary, sizeof(int), int(lbpar_gpu.number_of_nodes), cpfile) != (unsigned int) lbpar_gpu.number_of_nodes)
+          if(fread(host_checkpoint_boundary.data(), sizeof(int), int(lbpar_gpu.number_of_nodes), cpfile) != (unsigned int) lbpar_gpu.number_of_nodes)
             return ES_ERROR;
-          if(fread(host_checkpoint_force, sizeof(lbForceFloat), 3*int(lbpar_gpu.number_of_nodes), cpfile) != (unsigned int) (3*lbpar_gpu.number_of_nodes))
+          if(fread(host_checkpoint_force.data(), sizeof(lbForceFloat), 3*int(lbpar_gpu.number_of_nodes), cpfile) != (unsigned int) (3*lbpar_gpu.number_of_nodes))
             return ES_ERROR;
         }
-        lb_load_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_seed, host_checkpoint_boundary, host_checkpoint_force);
+        lb_load_checkpoint_GPU(host_checkpoint_vd.data(), host_checkpoint_seed.data(), host_checkpoint_boundary.data(), host_checkpoint_force.data());
         fclose(cpfile);
-        free(host_checkpoint_vd);
-        free(host_checkpoint_seed);
-        free(host_checkpoint_boundary);
-        free(host_checkpoint_force);
 #endif // LB_GPU
     }
     else if(lattice_switch & LATTICE_LB) {
@@ -2576,7 +2570,7 @@ inline void lb_calc_n_from_modes(Lattice::index_t index, double *mode)
   double m[19];
   
   /* normalization factors enter in the back transformation */
-  for (int i = 0; i < lbmodel.n_veloc; i++) 
+  for (int i = 0; i < 19; i++) 
     m[i] = (1./e[19][i])*mode[i];
 
   lbfluid[0][ 0][index] = m[0] - m[4] + m[16];
@@ -3286,7 +3280,7 @@ void calc_particle_lattice_ia() {
 
 #ifdef IMMERSED_BOUNDARY
       // Virtual particles for IBM must not be coupled
-      if (!ifParticleIsVirtual(&p))
+      if (!p.p.isVirtual)
 #endif
       {
         lb_viscous_coupling(&p, force);
@@ -3320,7 +3314,7 @@ void calc_particle_lattice_ia() {
         });
 #ifdef IMMERSED_BOUNDARY
         // Virtual particles for IBM must not be coupled
-        if (!ifParticleIsVirtual(&p))
+        if (!p.p.isVirtual)
 #endif
         {
           lb_viscous_coupling(&p, force);
@@ -3375,7 +3369,7 @@ void lb_calc_average_rho() {
 #ifdef ADDITIONAL_CHECKS
 static int compare_buffers(double *buf1, double *buf2, int size) {
     int ret;
-    if (memcmp(buf1,buf2,size)) {
+    if (memcmp(buf1,buf2,size) != 0) {
         runtimeErrorMsg() <<"Halo buffers are not identical";
         ret = 1;
     } else {
@@ -3563,6 +3557,9 @@ static void lb_check_halo_regions() {
          lb_check_negative_n
       */
 #ifdef ADDITIONAL_CHECKS
+/** counts the occurences of negative populations due to fluctuations */
+static int failcounter=0;
+
 static void lb_lattice_sum() {
 
     double *w   = lbmodel.w;

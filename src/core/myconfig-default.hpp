@@ -35,7 +35,6 @@
 #define CONSTRAINTS
 #define MASS
 #define EXCLUSIONS
-#define COMFIXED
 #define NPT
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE

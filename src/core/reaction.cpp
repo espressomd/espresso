@@ -225,14 +225,15 @@ bool in_lower_half_space(Particle p1, Particle p2) {
 }
 
 void integrate_reaction_swap() {
-  int np, check_catalyzer;
+  int np;
   Particle *p_local, *p_neigh;
-  int pairs;
   Cell *cell;
-  double dist2, vec21[3], ct_ratexp, eq_ratexp, rand;
+  double dist2, vec21[3], ct_ratexp, rand;
   int n_reactions;
 
+#ifdef ELECTROSTATICS
   double product_q = 0.0, reactant_q = 0.0;
+#endif
   std::vector<int> catalyzers, reactants, products;
 
   // To randomize the lists of cells below we need a random number

@@ -47,7 +47,7 @@
 #include <limits>
 
 /** Previous particle configurations (needed for offline analysis and
-    correlation analysis in \ref tclcommand_analyze) */
+    correlation analysis) */
 double **configs = nullptr;
 int n_configs = 0;
 int n_part_conf = 0;
@@ -314,7 +314,7 @@ void angularmomentum(PartCfg &partCfg, int type, double *com) {
 }
 
 void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
-  int i, j, count;
+  int i, count;
   double p1[3], massi;
   std::vector<double> com(3);
   count = 0;
@@ -515,8 +515,8 @@ void calc_rdf(PartCfg &partCfg, std::vector<int> &p1_types,
 void calc_rdf(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
               int n_p2, double r_min, double r_max, int r_bins, double *rdf) {
   long int cnt = 0;
-  int i, j, t1, t2, ind;
-  int mixed_flag = 0, start;
+  int i, t1, t2, ind;
+  int mixed_flag = 0;
   double inv_bin_width = 0.0, bin_width = 0.0, dist;
   double volume, bin_volume, r_in, r_out;
 
@@ -578,7 +578,7 @@ void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
                  int n_conf) {
   long int cnt = 0;
   int cnt_conf = 1;
-  int mixed_flag = 0, start;
+  int mixed_flag = 0;
   double inv_bin_width = 0.0, bin_width = 0.0;
   double volume, bin_volume, r_in, r_out;
   double *rdf_tmp, p1[3], p2[3];
@@ -656,11 +656,12 @@ void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
 
 void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
                           int order, double **_ff) {
-  int i, j, k, n, qi, p, t, order2;
+  int i, j, k, n, qi, t, order2;
   double qr, twoPI_L, C_sum, S_sum, *ff = nullptr;
 
   order2 = order * order;
   *_ff = ff = Utils::realloc(ff, 2 * order2 * sizeof(double));
+  ff[2 * order2] = 0;
   twoPI_L = 2 * PI / box_l[0];
 
   if ((n_types < 0) || (n_types > n_particle_types)) {
@@ -798,8 +799,8 @@ int calc_cylindrical_average(
   double binwd_axial = length / bins_axial;
   double binwd_radial = radius / bins_radial;
 
-  auto center = Vector3d{center_};
-  auto direction = Vector3d{direction_};
+  auto center = Vector3d{std::move(center_)};
+  auto direction = Vector3d{std::move(direction_)};
 
   // Select all particle types if the only entry in types is -1
   bool all_types = false;
@@ -904,7 +905,7 @@ int calc_radial_density_map(PartCfg &partCfg, int xbins, int ybins,
                             DoubleList *density_map,
                             DoubleList *density_profile) {
   int i, j, t;
-  int pi, bi;
+  int bi;
   int nbeadtypes;
   int beadcount;
   double vectprod[3];
@@ -1183,16 +1184,16 @@ void analyze_activate(PartCfg &partCfg, int ind) {
 
 void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
                                int n_non_bonded, int n_coulomb, int n_dipolar,
-                               int n_vsr, int c_size) {
+                               int n_vs, int c_size) {
 
   int i;
   // Number of doubles to store pressure in
   int total = c_size * (n_pre + n_bonded_ia + n_non_bonded + n_coulomb +
-                        n_dipolar + n_vsr);
+                        n_dipolar + n_vs);
 
   // Allocate mem for the double list
   stat->data.resize(total);
-
+  
   // Number of doubles per interaction (pressure=1, stress tensor=9,...)
   stat->chunk_size = c_size;
 
@@ -1200,13 +1201,13 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
   stat->n_coulomb = n_coulomb;
   stat->n_dipolar = n_dipolar;
   stat->n_non_bonded = n_non_bonded;
-  stat->n_vs_relative = n_vsr; // virtual sites relative (rigid bodies)
+  stat->n_virtual_sites = n_vs;
   // Pointers to the start of different contributions
   stat->bonded = stat->data.e + c_size * n_pre;
   stat->non_bonded = stat->bonded + c_size * n_bonded_ia;
   stat->coulomb = stat->non_bonded + c_size * n_non_bonded;
   stat->dipolar = stat->coulomb + c_size * n_coulomb;
-  stat->vs_relative = stat->dipolar + c_size * n_dipolar;
+  stat->virtual_sites = stat->dipolar + c_size * n_dipolar;
 
   // Set all obseravables to zero
   for (i = 0; i < total; i++)

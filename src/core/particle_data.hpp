@@ -28,6 +28,9 @@
 #include "Vector.hpp"
 #include "config.hpp"
 #include "utils.hpp"
+
+#include "utils/List.hpp"
+
 #include <memory>
 
 /************************************************
@@ -548,7 +551,7 @@ void update_local_particles(ParticleList *pl);
 void clear_particle_node();
 
 /** Realloc \ref local_particles. */
-void realloc_local_particles();
+void realloc_local_particles(int part);
 
 /**
  * @brief Get particle data.
@@ -672,19 +675,22 @@ int set_particle_smaller_timestep(int part, int small_timestep);
 */
 int set_particle_q(int part, double q);
 
+#ifdef LB_ELECTROHYDRODYNAMICS
 /** Call only on the master node: set particle electrophoretic mobility.
     @param part the particle.
     @param mu_E its new mobility.
     @return ES_OK if particle existed
 */
 int set_particle_mu_E(int part, double mu_E[3]);
+void get_particle_mu_E(int part, double (&mu_E)[3]);
+#endif
 
 /** Call only on the master node: set particle type.
     @param part the particle.
     @param type its new type.
     @return ES_OK if particle existed
 */
-int set_particle_type(int part, int type);
+int set_particle_type(int p_id, int type);
 
 /** Call only on the master node: set particle's molecule id.
     @param part the particle.
@@ -865,7 +871,7 @@ void remove_all_bonds_to(int part);
     @param p    its new position
     @param _new  if true, the particle is allocated, else has to exists already
 */
-void local_place_particle(int part, double p[3], int _new);
+void local_place_particle(int part, const double p[3], int _new);
 
 /** Used by \ref mpi_place_particle, should not be used elsewhere.
     Called if on a different node a new particle was added.
@@ -950,70 +956,11 @@ void try_add_exclusion(Particle *part, int part2);
  of particles, you should avoid this function and setup exclusions manually. */
 void auto_exclusions(int distance);
 
-// value that is returned in the case there was no error, but the type was not
-// yet indexed
-#define NOT_INDEXED -3
-// struct that associates the index used for the type_list and the real particle
-// type
-typedef struct {
-  int max_entry;
-  int *type;
-} IndexOfType;
-
-// and the other way round
-typedef struct {
-  int max_entry;
-  int *index;
-} TypeOfIndex;
-
-typedef struct {
-  int max_entry;
-  int cur_size;
-  int *id_list;
-} TypeList;
-
-// undefined array size
-extern TypeList *type_array;
-extern int number_of_type_lists;
-
-extern TypeOfIndex Type;
-extern IndexOfType Index;
-
-// flag indicating init_gc was called
-extern int GC_init;
-
-// flag that indicates that the function init_type_array was called already
-extern int Type_array_init;
-
-int init_gc(void);
-
-/** init particle lists		*/
-int init_type_array(int type);
-
-/** resize the array for the list of ids for a certain type */
-int reallocate_type_array(int type);
-
-/** make more type_arrays available */
-int reallocate_global_type_list(int size);
-
-/** free particle lists		*/
-int free_particle_lists(void);
-
-// update particle list
-int update_particle_array(int type);
+void init_type_map(int type);
 
 /* find a particle of given type and return its id */
-int find_particle_type(int type, int *id);
-
-/** return an array with real particle id and the corresponding index of
- * typelist */
-int find_particle_type_id(int type, int *id, int *in_id);
-
-int remove_id_type_array(int part_id, int type);
-int add_particle_to_list(int part_id, int type);
-// print out a list of currently indexed ids
-int gc_status(int type);
-int number_of_particles_with_type(int type, int *number);
+int get_random_p_id(int type);
+int number_of_particles_with_type(int type);
 
 // The following functions are used by the python interface to obtain
 // properties of a particle, which are only compiled in in some configurations
