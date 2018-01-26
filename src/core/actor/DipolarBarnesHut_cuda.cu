@@ -45,39 +45,39 @@ typedef float dds_float ;
 using namespace std;
 
 // CUDA blocks
-__constant__ volatile int blocks;
+__constant__  int blocks;
 // each node corresponds to a split of the cubic box in 3D space to equal cubic boxes
 // hence, 8 octant nodes per particle is a theoretical octree limit:
 // a maximal number of octree nodes is "nnodesd" and a number of particles "nbodiesd" respectively.
-__constant__ volatile int nnodesd, nbodiesd;
+__constant__  int nnodesd, nbodiesd;
 // Method performance/accuracy parameters
 __constant__ float epssqd, itolsqd;
 // blkcntd is a factual blocks' count.
 // bottomd is a bottom Barnes-Hut node (the division octant cell) in a linear array representation.
 // maxdepthd is a largest length of the octree "branch" till the "leaf".
-__device__ volatile int bottomd, maxdepthd, blkcntd;
+__device__  int bottomd, maxdepthd, blkcntd;
 // half edge of the BH box
-__device__ volatile float radiusd;
+__device__  float radiusd;
 // particle positions on the device:
 __device__ __constant__ float* xd = 0;
 // particle dipole moments on the device:
 __constant__ float* uxd = 0;
 // Not a real mass. Just a node weight coefficient.
-__constant__ volatile float* massd = 0;
+__constant__  float* massd = 0;
 // Barnes-Hut tree spatial boundaries.
-__constant__ volatile float *mind = 0;
+__constant__  float *mind = 0;
 // Barnes-Hut tree spatial boundaries.
-__constant__ volatile float *maxd = 0;
+__constant__  float *maxd = 0;
 // Error report.
-__constant__ volatile int *errd = 0;
+__constant__  int *errd = 0;
 // Indices of particles sorted according to the tree linear representation.
-__constant__ volatile int *sortd = 0;
+__constant__  int *sortd = 0;
 // The tree linear representation.
-__constant__ volatile int *childd = 0;
+__constant__  int *childd = 0;
 // Supplementary array: a tree nodes (division octant cells/particles inside) counting.
-__constant__ volatile int *countd = 0;
+__constant__  int *countd = 0;
 // Start indices for the per-cell sorting.
-__constant__ volatile int *startd = 0;
+__constant__  int *startd = 0;
 
 // The "half-convolution" multi-thread reduction.
 // The thread with a lower index will operate longer and
@@ -129,7 +129,7 @@ void boundingBoxKernel()
 	// min/max positions per the thread:
 	float minp[3], maxp[3];
 	// min/max positions per block:
-	__shared__ volatile float smin[3*THREADS1], smax[3*THREADS1];
+	__shared__  float smin[3*THREADS1], smax[3*THREADS1];
 	for (l = 0; l < 3; l++) {
 	  minp[l] = maxp[l] = xd[l];
 	}
@@ -455,7 +455,7 @@ void summarizationKernel()
 	// (like a mass and the center of mass)
 	float p[3], u[3];
 	// Per-block BH tree cashing:
-	__shared__ volatile int child[THREADS3 * 8];
+	__shared__  int child[THREADS3 * 8];
 
 	bottom = bottomd;
 	// Increment towards other particles assigned to the given thread:
@@ -647,7 +647,7 @@ void forceCalculationKernel(dds_float pf,
 	// "node" is the BH octant sub-cell in the stack.
 	// "pos"=0..7 - which octant we are examining now in the stack.
 	// dq is an array used to determine that the given BH cell is far enough.
-	__shared__ volatile int pos[MAXDEPTH * THREADS5/WARPSIZE], node[MAXDEPTH * THREADS5/WARPSIZE];
+	__shared__  int pos[MAXDEPTH * THREADS5/WARPSIZE], node[MAXDEPTH * THREADS5/WARPSIZE];
 	__shared__ float dq[MAXDEPTH * THREADS5/WARPSIZE];
 	float b, b2, d1, dd5;
 	float bb2d7, umd5;
@@ -837,7 +837,7 @@ void energyCalculationKernel(dds_float pf,
 	int i, j, k, l, n, depth, base, sbase, diff, t;
 	float tmp;
 	float dr[3], h[3], u[3], uc[3];
-	__shared__ volatile int pos[MAXDEPTH * THREADS5/WARPSIZE], node[MAXDEPTH * THREADS5/WARPSIZE];
+	__shared__  int pos[MAXDEPTH * THREADS5/WARPSIZE], node[MAXDEPTH * THREADS5/WARPSIZE];
 	__shared__ float dq[MAXDEPTH * THREADS5/WARPSIZE];
 	dds_float sum=0.0;
 	extern __shared__ dds_float res[];
