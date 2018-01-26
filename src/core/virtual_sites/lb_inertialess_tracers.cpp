@@ -410,7 +410,7 @@ void ParticleVelocitiesFromLB_CPU()
         if (p[j].p.isVirtual)
         {
           double dummy[3];
-          double force[3]; // The force stemming from the ghost particle
+          double force[3]={0,0,0}; // The force stemming from the ghost particle
           GetIBMInterpolatedVelocity(p[j].r.p, dummy, force);
           
           // Rescale and store in the force field of the particle (for communication, see below)
