@@ -450,7 +450,6 @@ void File::Write(int write_dat, PartCfg &partCfg) {
   hsize_t count_3d[3] = {1, (hsize_t)num_particles_to_be_written, 3};
 
   // calculate the change of the extent for fluctuating particle numbers
-  int n_part = max_seen_particle + 1;
   int old_max_n_part =
       std::max(m_max_n_part, (int)dims_id[1]); // check that dataset is not
                                                // shrinked: take into account

@@ -344,7 +344,6 @@ std::map<int, int> ReactionAlgorithm::save_old_particle_numbers(int reaction_id)
   for (int i=0; i<reactions[reaction_id].reactant_types.size(); ++i){
     int type=reactions[reaction_id].reactant_types[i];
     old_particle_numbers[type]=number_of_particles_with_type(type);
-    
   }
   
   //products
@@ -554,20 +553,21 @@ int ReactionAlgorithm::delete_particle(int p_id) {
 */
 
   /**deletes the particle with the provided id  */
-  if (p_id == max_seen_particle) {
+  int old_max_seen_id= max_seen_particle;
+  if (p_id == old_max_seen_id) {
     // last particle, just delete
     remove_particle(p_id);
     // remove all saved empty p_ids which are greater than the max_seen_particle
     // this is needed in order to avoid the creation of holes
     for (auto p_id_iter = m_empty_p_ids_smaller_than_max_seen_particle.begin();
          p_id_iter != m_empty_p_ids_smaller_than_max_seen_particle.end();) {
-      if ((*p_id_iter) >= max_seen_particle)
+      if ((*p_id_iter) >= old_max_seen_id)
         p_id_iter = m_empty_p_ids_smaller_than_max_seen_particle.erase(
             p_id_iter); // update iterator after container was modified
       else
         ++p_id_iter;
     }
-  } else if (p_id <= max_seen_particle) {
+  } else if (p_id <= old_max_seen_id) {
     remove_particle(p_id);
     m_empty_p_ids_smaller_than_max_seen_particle.push_back(p_id);
   } else {
@@ -1637,10 +1637,7 @@ int WangLandauReactionEnsemble::load_wang_landau_checkpoint(
     }
     infile.close();
   } else {
-    std::cout << "Exception opening "
-              << std::string("checkpoint_wang_landau_parameters_") + identifier
-              << "\n"
-              << std::flush;
+    throw std::runtime_error("Exception opening"+std::string("checkpoint_wang_landau_parameters_") + identifier);
   }
 
   // restore histogram
@@ -1654,10 +1651,7 @@ int WangLandauReactionEnsemble::load_wang_landau_checkpoint(
     }
     infile.close();
   } else {
-    std::cout << "Exception opening/ reading "
-              << std::string("checkpoint_wang_landau_histogram_") + identifier
-              << "\n"
-              << std::flush;
+    throw std::runtime_error("Exception opening/ reading "+std::string("checkpoint_wang_landau_histogram_") + identifier);
   }
 
   // restore wang landau potential
@@ -1671,10 +1665,7 @@ int WangLandauReactionEnsemble::load_wang_landau_checkpoint(
     }
     infile.close();
   } else {
-    std::cout << "Exception opening "
-              << std::string("checkpoint_wang_landau_potential_") + identifier
-              << "\n"
-              << std::flush;
+    throw std::runtime_error("Exception opening "+std::string("checkpoint_wang_landau_potential_") + identifier);
   }
 
   // possible task: restore state in which the system was when the checkpoint
