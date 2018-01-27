@@ -425,7 +425,7 @@ class CylindricalLBVelocityProfileAtParticlePositions(Observable):
 
 @script_interface_register
 class CylindricalVelocityProfile(Observable):
-    """Calculates the LB particle velocity profile in polar coordinates.
+    """Calculates the particle velocity profile in polar coordinates.
 
     Parameters
     ----------
