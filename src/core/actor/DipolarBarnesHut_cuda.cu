@@ -586,7 +586,7 @@ __launch_bounds__(THREADS4, FACTOR4)
 void sortKernel()
 {
 	int i, k, ch, dec, start, bottom, loops_calc;
-	int all_continue_flag; // all threads in the block loop continuation flag
+	//int all_continue_flag; // all threads in the block loop continuation flag
 	int this_thread_done;
 
 	bottom = bottomd;
@@ -598,7 +598,7 @@ void sortKernel()
 	// made by treeBuildingKernel.
 	k = nnodesd + 1 - dec + threadIdx.x + blockIdx.x * blockDim.x;
 
-	all_continue_flag = 1;
+	//all_continue_flag = 1;
 	this_thread_done = 0;
 	loops_calc = 0;
 	// iterate over all cells assigned to thread
@@ -634,8 +634,8 @@ void sortKernel()
           }
 	    } else this_thread_done = 1;
 		__syncthreads();	// throttle
-		if (__all(this_thread_done == 1)) all_continue_flag = 0;
-	} while (all_continue_flag);
+		//if (__all(this_thread_done == 1)) all_continue_flag = 0;
+	} while (!this_thread_done);
 }
 
 
