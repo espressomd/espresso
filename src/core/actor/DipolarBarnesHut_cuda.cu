@@ -457,6 +457,8 @@ void summarizationKernel()
 	// Per-block BH tree cashing:
 	__shared__  int child[THREADS3 * 8];
 
+	// no children by default:
+	for (i = 0; i < 8; i++) child[i * THREADS3 + threadIdx.x] = -1;
 	bottom = bottomd;
 	// Increment towards other particles assigned to the given thread:
 	inc = blockDim.x * gridDim.x;
@@ -565,10 +567,11 @@ void summarizationKernel()
 				  xd[3 * k + l] = p[l] * m;
 				  uxd[3 * k + l] = u[l];
 				}
-			//__threadfence();	// make sure data are visible before setting mass
+			__threadfence();	// make sure data are visible before setting mass
 			massd[k] = cm;
 			k += inc;	// move on to next cell
 		}
+		__syncthreads();    // throttle
 	}	//while
 }
 
