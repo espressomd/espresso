@@ -585,7 +585,7 @@ __global__
 __launch_bounds__(THREADS4, FACTOR4)
 void sortKernel()
 {
-	int i, k, ch, dec, start, bottom;
+	int i, k, ch, dec, start, bottom, loops_calc;
 	int all_continue_flag; // all threads in the block loop continuation flag
 	int this_thread_done;
 
@@ -600,6 +600,7 @@ void sortKernel()
 
 	all_continue_flag = 1;
 	this_thread_done = 0;
+	loops_calc = 0;
 	// iterate over all cells assigned to thread
 	do {
 	    // do we need a sorting within the given thread or just bypass a loop till the throttle?
@@ -628,7 +629,9 @@ void sortKernel()
                     }
               }
               k -= dec;	// move on to next cell
-          }// else this_thread_done = 1;
+          } else {
+              if (loops_calc++ >= maxdepthd) this_thread_done = 1;
+          }
 	    } else this_thread_done = 1;
 		__syncthreads();	// throttle
 		if (__all(this_thread_done == 1)) all_continue_flag = 0;
