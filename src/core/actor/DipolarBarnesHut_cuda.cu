@@ -633,7 +633,7 @@ void sortKernel()
               if (loops_calc++ >= maxdepthd) this_thread_done = 1;
           }
 	    } else this_thread_done = 1;
-		__syncthreads();	// throttle
+		//__syncthreads();	// throttle
 		//if (__all(this_thread_done == 1)) all_continue_flag = 0;
 	} while (!this_thread_done);
 }
