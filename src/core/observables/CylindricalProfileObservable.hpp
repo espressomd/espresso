@@ -7,6 +7,7 @@
 #include "Vector.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
+#include "utils/coordinate_transformation.hpp"
 
 namespace Observables {
 
