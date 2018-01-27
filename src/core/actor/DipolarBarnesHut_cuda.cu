@@ -565,7 +565,7 @@ void summarizationKernel()
 				  xd[3 * k + l] = p[l] * m;
 				  uxd[3 * k + l] = u[l];
 				}
-			__threadfence();	// make sure data are visible before setting mass
+			//__threadfence();	// make sure data are visible before setting mass
 			massd[k] = cm;
 			k += inc;	// move on to next cell
 		}
