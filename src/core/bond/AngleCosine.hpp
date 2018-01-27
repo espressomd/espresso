@@ -2,7 +2,6 @@
 #define ANGLE_COSINE_BOND_CLASS_H
 #include "ThreeParticlePressureBond.hpp"
 #include "Angle.hpp"
-#include "grid.hpp" // get_mi_vector
 
 namespace Bond {
 
