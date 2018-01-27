@@ -96,12 +96,15 @@ int tabulated_bonded_set_params(int bond_type,
   case TAB_BOND_LENGTH:    
     bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::TabulatedBondLength>
 		     (*tab_pot));
+    break;
   case TAB_BOND_ANGLE:    
     bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::TabulatedBondAngle>
 		     (*tab_pot));
+    break;
   case TAB_BOND_DIHEDRAL:    
     bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::TabulatedBondDihedral>
 		     (*tab_pot));
+    break;
   default:
     runtimeError("Unsupported tabulated bond type.");
     return 1;
