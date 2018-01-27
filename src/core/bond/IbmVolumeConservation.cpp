@@ -93,7 +93,7 @@ int Bond::IbmVolumeConservation::add_bonded_energy(Particle *p1, int bl_id)
 int Bond::IbmVolumeConservation::get_soft_ID(Particle *p1, int bl_id, int *softID, int *bond_map_id)
 {
 
-#ifdef IMMERSED_BOUNDARY
+#ifdef VIRTUAL_SITES
   if( p1->p.isVirtual){
     *softID = m_softID;
     *bond_map_id = bl_id;
@@ -104,7 +104,7 @@ int Bond::IbmVolumeConservation::get_soft_ID(Particle *p1, int bl_id, int *softI
     return 2; // see BondContainer loop -> it return immediately and we can call exit(1)
   };
 #endif
-#ifndef IMMERSED_BOUNDARY
+#ifndef VIRTUAL_SITES
   return 0;
 #endif
   
