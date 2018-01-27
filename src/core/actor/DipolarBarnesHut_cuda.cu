@@ -605,7 +605,7 @@ void sortKernel()
 	do {
 	    // do we need a sorting within the given thread or just bypass a loop till the throttle?
 	    if ((k >= bottom) && (k <= nnodesd)) {
-	      __threadfence();
+	      //__threadfence();
           start = startd[k];
           // Let's start from the root which has only startd=0 defined
           // in boundingBoxKernel. All other bodies and cells have -1.
