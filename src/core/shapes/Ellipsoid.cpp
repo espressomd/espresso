@@ -20,10 +20,8 @@
 */
 
 #include "Ellipsoid.hpp"
+#include "errorhandling.hpp"
 #include <cmath>
-#include <iostream>
-
-using namespace std;
 
 #define SQR(A) ((A) * (A))
 
@@ -31,39 +29,41 @@ namespace Shapes {
 int Ellipsoid::calculate_dist(const double *ppos, double *dist,
                               double *vec) const {
 
-  Vector3d ppos_e;
-  double l0;
-  double l = 0.;
-  double eps = 10.;
-  int step = 0;
-  double distance = 0.;
-
   // get particle position in reference frame of ellipsoid
-  for (int i = 0; i < 3; i++) {
-    ppos_e[i] = ppos[i] - m_pos[i];
-  }
+  Vector3d const ppos_e = Vector3d(ppos, ppos + 3) - m_center;
 
   // set appropriate initial point for Newton's method
+  double l0, l = 0.;
+  int distance_prefactor = -1;
   if (not inside_ellipsoid(ppos_e)) {
     l = *std::max_element(m_semiaxes.begin(), m_semiaxes.end()) * ppos_e.norm();
+    distance_prefactor = 1;
   }
 
   // find root via Newton's method
-  while ((eps >= 1e-12) and (step < 10000)) {
+  double eps = 10.;
+  int step = 0;
+  while ((eps >= 1e-12) and (step < 100)) {
     l0 = l;
-    l -= lagrangian(ppos_e, l0) / lagrangian_derivative(ppos_e, l0);
+    l -= newton_term(ppos_e, l0);
     eps = std::abs(l - l0);
     step++;
   }
 
+  if (step == 100) {
+    runtimeWarning("Maximum number of Newton steps exceeded while calculating "
+                   "distance to Ellipsoid.");
+  }
+
+  /* calulate dist and vec */
+  double distance = 0.;
   for (int i = 0; i < 3; i++) {
     vec[i] =
-        -m_direction *
-        (SQR(m_semiaxes[i]) * ppos_e[i] / (l + SQR(m_semiaxes[i])) - ppos_e[i]);
+        (ppos_e[i] - SQR(m_semiaxes[i]) * ppos_e[i] / (l + SQR(m_semiaxes[i])));
     distance += SQR(vec[i]);
   }
 
-  *dist = sqrt(distance);
+  *dist = distance_prefactor * m_direction * std::sqrt(distance);
 
   return 0;
 }
@@ -74,40 +74,25 @@ bool Ellipsoid::inside_ellipsoid(const Vector3d ppos) const {
           SQR(ppos[2] / m_semiaxes[2]) <=
       1)
     is_inside = true;
+
   return is_inside;
 }
 
-double Ellipsoid::lagrangian(const Vector3d ppos, const double l) const {
-  return SQR(m_semiaxes[0]) * SQR(ppos[0]) * SQR(l + SQR(m_semiaxes[1])) *
-             SQR(l + SQR(m_semiaxes[2])) +
-         SQR(m_semiaxes[1]) * SQR(ppos[1]) * SQR(l + SQR(m_semiaxes[0])) *
-             SQR(l + SQR(m_semiaxes[2])) +
-         SQR(m_semiaxes[2]) * SQR(ppos[2]) * SQR(l + SQR(m_semiaxes[0])) *
-             SQR(l + SQR(m_semiaxes[1])) -
-         SQR(l + SQR(m_semiaxes[0])) * SQR(l + SQR(m_semiaxes[1])) *
-             SQR(l + SQR(m_semiaxes[2]));
-}
+double Ellipsoid::newton_term(const Vector3d ppos, const double l) const {
+  Vector3d axpos, lax, lax2;
+  for (int i = 0; i < 3; i++) {
+    axpos[i] = SQR(m_semiaxes[i]) * SQR(ppos[i]);
+    lax[i] = l + SQR(m_semiaxes[i]);
+    lax2[i] = SQR(lax[i]);
+  }
 
-double Ellipsoid::lagrangian_derivative(const Vector3d ppos,
-                                        const double l) const {
-  return 2.0 * (SQR(m_semiaxes[0]) * SQR(ppos[0]) * (l + SQR(m_semiaxes[1])) *
-                    SQR(l + SQR(m_semiaxes[2])) +
-                SQR(m_semiaxes[0]) * SQR(ppos[0]) *
-                    SQR(l + SQR(m_semiaxes[1])) * (l + SQR(m_semiaxes[2])) +
-                SQR(m_semiaxes[1]) * SQR(ppos[1]) * (l + SQR(m_semiaxes[0])) *
-                    SQR(l + SQR(m_semiaxes[2])) +
-                SQR(m_semiaxes[1]) * SQR(ppos[1]) *
-                    SQR(l + SQR(m_semiaxes[0])) * (l + SQR(m_semiaxes[2])) +
-                SQR(m_semiaxes[2]) * SQR(ppos[2]) * (l + SQR(m_semiaxes[0])) *
-                    SQR(l + SQR(m_semiaxes[1])) +
-                SQR(m_semiaxes[2]) * SQR(ppos[2]) *
-                    SQR(l + SQR(m_semiaxes[0])) * (l + SQR(m_semiaxes[1])) -
-                (l + SQR(m_semiaxes[0])) * SQR(l + SQR(m_semiaxes[1])) *
-                    SQR(l + SQR(m_semiaxes[2])) -
-                SQR(l + SQR(m_semiaxes[0])) * (l + SQR(m_semiaxes[1])) *
-                    SQR(l + SQR(m_semiaxes[2])) -
-                SQR(l + SQR(m_semiaxes[0])) * SQR(l + SQR(m_semiaxes[1])) *
-                    (l + SQR(m_semiaxes[2])));
+  return (axpos[0] * lax2[1] * lax2[2] + axpos[1] * lax2[2] * lax2[0] +
+          axpos[2] * lax2[0] * lax2[1] - lax2[0] * lax2[1] * lax2[2]) /
+         (2 * (axpos[0] * lax[1] * lax2[2] + axpos[1] * lax[2] * lax2[0] +
+               axpos[2] * lax[0] * lax2[1] + axpos[0] * lax2[1] * lax[2] +
+               axpos[1] * lax2[2] * lax[0] + axpos[2] * lax2[0] * lax[1] -
+               lax[0] * lax2[1] * lax2[2] - lax2[0] * lax[1] * lax2[2] -
+               lax2[0] * lax2[1] * lax[2]));
 }
 
 } // namespace Shapes

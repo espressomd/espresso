@@ -31,7 +31,7 @@ namespace Shapes {
 class Ellipsoid : public Shape {
 public:
   Ellipsoid() : m_ellipsoid(new ::Shapes::Ellipsoid()) {
-    add_parameters({{"center", m_ellipsoid->pos()},
+    add_parameters({{"center", m_ellipsoid->center()},
                     {"a",
 		     [this](Variant const &v) {
 		       m_ellipsoid->set_semiaxis_a(get_value<double>(v));

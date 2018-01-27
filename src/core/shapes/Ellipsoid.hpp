@@ -29,22 +29,21 @@ namespace Shapes {
 class Ellipsoid : public Shape {
 public:
   Ellipsoid()
-      : m_pos({0.0, 0.0, 0.0}), m_semiaxes({1.0, 1.0, 1.0}), m_direction(1.0) {}
+      : m_center({0.0, 0.0, 0.0}), m_semiaxes({1.0, 1.0, 1.0}), m_direction(1.0) { }
 
   int calculate_dist(const double *ppos, double *dist,
                      double *vec) const override;
 
   void set_semiaxis_a(const double &value) { m_semiaxes[0] = value; }
-
   void set_semiaxis_b(const double &value) {
     m_semiaxes[1] = value;
     m_semiaxes[2] = value;
   }
 
-  // not exposed to via interface, used in core unit test
+  // not exposed via interface; used in core unit test
   void set_semiaxis_c(const double &value) { m_semiaxes[2] = value; }
 
-  Vector3d &pos() { return m_pos; }
+  Vector3d &center() { return m_center; }
   double &semiaxis_a() { return m_semiaxes[0]; }
   double &semiaxis_b() { return m_semiaxes[1]; }
   double &semiaxis_c() { return m_semiaxes[2]; }
@@ -52,10 +51,9 @@ public:
 
 private:
   bool inside_ellipsoid(const Vector3d ppos) const;
-  double lagrangian(const Vector3d ppos, const double l) const;
-  double lagrangian_derivative(const Vector3d ppos, const double l) const;
+  double newton_term(const Vector3d ppos, const double l) const;
 
-  Vector3d m_pos;
+  Vector3d m_center;
   Vector3d m_semiaxes;
   double m_direction;
 };
