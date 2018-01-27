@@ -466,9 +466,10 @@ void summarizationKernel()
 	// which is a minimal index of the last created cell.
 	// Starting "k" value should be aligned using the warp size
 	// according to the designed threads performance.
-	k = (bottom & (-WARPSIZE)) + threadIdx.x + blockIdx.x * blockDim.x;
+	//k = (bottom & (-WARPSIZE)) + threadIdx.x + blockIdx.x * blockDim.x;
+	k = bottom + threadIdx.x + blockIdx.x * blockDim.x;
 	// Threads below the bottom line could proceed to their next cells.
-	if (k < bottom) k += inc;
+	//if (k < bottom) k += inc;
 
 	// Assume no missing children:
 	missing = 0;
