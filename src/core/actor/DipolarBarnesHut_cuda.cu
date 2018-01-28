@@ -473,7 +473,7 @@ void summarizationKernel()
 
 	// Assume no missing children:
 	missing = 0;
-	__syncthreads();    // throttle
+	//__syncthreads();    // throttle
 	// Iterate over all cells (not particles) assigned to the thread:
 	while (k <= nnodesd) {
 		//iteration++;
@@ -530,7 +530,7 @@ void summarizationKernel()
 			cnt += j;
 		}
 
-		__syncthreads();    // throttle
+		//__syncthreads();    // throttle
 
 		if (missing != 0) {
 			do {
