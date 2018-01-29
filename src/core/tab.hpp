@@ -103,8 +103,8 @@ inline void add_tabulated_pair_force(const Particle *const p1,
 /** Add a non-bonded pair energy by linear interpolation from a table.
     Needs feature TABULATED compiled in (see \ref config.hpp). */
 inline double tabulated_pair_energy(Particle const *, Particle const *,
-                                    IA_parameters const *ia_params, double d[3],
-                                    double dist) {
+                                    IA_parameters const *ia_params,
+                                    const double d[3], double dist) {
   if (dist < ia_params->TAB.cutoff()) {
     return ia_params->TAB.energy(dist);
   } else {
