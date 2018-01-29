@@ -79,6 +79,8 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
   std::vector<std::pair<int, int>> ret;
   auto const cutoff2 = distance * distance;
 
+  cells_update_ghosts();
+
   auto pair_kernel = [&ret, &cutoff2](Particle const &p1, Particle const &p2,
                                       double dist2) {
     if (dist2 < cutoff2)
@@ -324,6 +326,7 @@ void cells_resort_particles(int global_flag) {
 #ifdef ADDITIONAL_CHECKS
   /* at the end of the day, everything should be consistent again */
   check_particle_consistency();
+  check_particle_sorting();
 #endif
 
   ghost_communicator(&cell_structure.ghost_cells_comm);

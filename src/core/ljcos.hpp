@@ -35,8 +35,8 @@
 #include "particle_data.hpp"
 #include "utils.hpp"
 
-int lj_cos_set_params(int part_type_a, int part_type_b, double eps, double sig,
-                      double cut, double offset);
+int ljcos_set_params(int part_type_a, int part_type_b, double eps, double sig,
+                     double cut, double offset);
 
 inline void add_ljcos_pair_force(const Particle *const p1,
                                  const Particle *const p2,
@@ -89,9 +89,9 @@ inline void add_ljcos_pair_force(const Particle *const p1,
   }
 }
 
-inline double ljcos_pair_energy(Particle *p1, Particle *p2,
-                                IA_parameters *ia_params, double d[3],
-                                double dist) {
+inline double ljcos_pair_energy(const Particle *p1, const Particle *p2,
+                                const IA_parameters *ia_params,
+                                const double d[3], double dist) {
   double r_off, frac2, frac6;
 
   if ((dist < ia_params->LJCOS_cut + ia_params->LJCOS_offset)) {

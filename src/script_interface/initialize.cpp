@@ -31,6 +31,7 @@
 #include "accumulators/initialize.hpp"
 #include "correlators/initialize.hpp" 
 #include "lbboundaries/initialize.hpp"
+#include "collision_detection/initialize.hpp"
 
 #include "ComFixed.hpp"
 
@@ -57,6 +58,9 @@ void initialize() {
   LBBoundaries::initialize();
   PairCriteria::initialize();
   VirtualSites::initialize();
+
+  CollisionDetection::initialize();
+ 
 
   ScriptInterface::register_new<Testing::VariantTester>("Testing::VariantTester");
   ScriptInterface::register_new<ComFixed>("ComFixed");

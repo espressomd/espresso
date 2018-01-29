@@ -623,9 +623,6 @@ void mpi_external_potential_sum_energies_slave();
 std::vector<EspressoGpuDevice> mpi_gather_cuda_devices();
 #endif
 
-/** CPU Thermostat */
-void mpi_thermalize_cpu(int temp);
-
 /** MPI-IO output function.
  *  \param filename Filename prefix for the created files. Must be
  * null-terminated.

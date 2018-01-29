@@ -21,6 +21,7 @@
 cmake_minimum_required(VERSION 3.0)
 include(FeatureSummary)
 project(ESPResSo)
+include(cmake/FindPythonModule.cmake)
 
 enable_language(CXX)
 
