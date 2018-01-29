@@ -311,7 +311,7 @@ autodoc_default_flags = ['members',
                          'show-inheritance', 'undoc-members']
 # For sidebar toc depth
 rst_prolog = """
-:tocdepth: 2
+:tocdepth: 3
 """
 # Style ESPResSo
 rst_epilog = """
