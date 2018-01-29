@@ -57,6 +57,14 @@ maxset-osx:
   tags:
     - mac
 
+maxset-osx-python3:
+  stage: build
+  script:
+    - export myconfig=maxset python_version=3
+    - bash maintainer/travis/build_cmake.sh
+  tags:
+    - mac
+
 clang-static-analysis:
   stage: build
   image: espressomd/espresso-ubuntu-clang-cuda:latest

@@ -48,8 +48,9 @@ function cmd {
 [ -z "$check_procs" ] && check_procs=2
 [ -z "$build_procs" ] && build_procs=2
 [ -z "$make_check" ] && make_check="true"
+[ -z "$python_version" ] && python_version="2"
 
-cmake_params="-DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params"
+cmake_params="-DPYTHON_EXECUTABLE=$(which python$python_version) -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params"
 
 if $insource; then
     builddir=$srcdir
@@ -59,7 +60,7 @@ fi
 
 outp insource srcdir builddir \
     cmake_params with_fftw \
-    with_python_interface with_coverage with_static_analysis myconfig check_procs build_procs
+    with_python_interface with_coverage with_static_analysis myconfig check_procs build_procs python_version
 
 # check indentation of python files
 pep8 --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
