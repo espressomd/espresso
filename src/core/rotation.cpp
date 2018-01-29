@@ -275,7 +275,7 @@ void convert_torques_propagate_omega() {
 
     if (thermo_switch & THERMO_LANGEVIN) {
 #if defined(VIRTUAL_SITES) && defined(THERMOSTAT_IGNORE_NON_VIRTUAL)
-      if (!ifParticleIsVirtual(&p))
+      if (!p.p.isVirtual)
 #endif
       {
         friction_thermo_langevin_rotation(&p);
@@ -438,7 +438,7 @@ void convert_initial_torques() {
 
 /** convert from the body-fixed frames to space-fixed coordinates */
 
-void convert_omega_body_to_space(Particle *p, double *omega) {
+void convert_omega_body_to_space(const Particle *p, double *omega) {
   double A[9];
   define_rotation_matrix(p, A);
 
@@ -466,7 +466,7 @@ Vector3d convert_vector_body_to_space(const Particle& p, const Vector3d& vec) {
 }
 
 
-void convert_torques_body_to_space(Particle *p, double *torque) {
+void convert_torques_body_to_space(const Particle *p, double *torque) {
   double A[9];
   define_rotation_matrix(p, A);
 
@@ -478,7 +478,7 @@ void convert_torques_body_to_space(Particle *p, double *torque) {
               A[2 + 3 * 2] * p->f.torque[2];
 }
 
-void convert_vel_space_to_body(Particle *p, double *vel_body) {
+void convert_vel_space_to_body(const Particle *p, double *vel_body) {
   double A[9];
   define_rotation_matrix(p, A);
 
@@ -499,14 +499,6 @@ void convert_vec_space_to_body(Particle *p, double *v, double *res) {
   res[2] = A[2 + 3 * 0] * v[0] + A[2 + 3 * 1] * v[1] + A[2 + 3 * 2] * v[2];
 }
 
-/** Multiply two quaternions */
-void multiply_quaternions(double a[4], double b[4], double result[4]) {
-  // Formula from http://www.j3d.org/matrix_faq/matrfaq_latest.html
-  result[0] = a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3];
-  result[1] = a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2];
-  result[2] = a[0] * b[2] + a[2] * b[0] + a[3] * b[1] - a[1] * b[3];
-  result[3] = a[0] * b[3] + a[3] * b[0] + a[1] * b[2] - a[2] * b[1];
-}
 
 /** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi
  */

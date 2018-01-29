@@ -10,7 +10,13 @@ The global variables in Python are controlled via the
 :class:`espressomd.system.System` class.
 Global system variables can be read and set in Python simply by accessing the
 attribute of the corresponding Python object. Those variables that are already
-available in the Python interface are listed in the following.
+available in the Python interface are listed in the following. Note that for the
+vectorial properties ``box_l`` and ``periodicity``, component-wise manipulation
+like ``system.box_l[0] = 1`` or in-place operators like ``+=`` or ``*=`` are not
+allowed and result in an error. This behavior is inherited, so the same applies
+to ``a`` after ``a = system.box_l``. If you want to use an vectorial property
+for further calculations, you should explicity make a copy e.g. via
+``a = numpy.copy(system.box_l)``.
 
 * :py:attr:`~espressomd.system.System.box_l`
 
@@ -19,7 +25,7 @@ available in the Python interface are listed in the following.
     particle coordinates will remain the same, i.e., the particle stay in
     the same image box, but at the same relative position in their image
     box. If you want to scale the positions, use the command
-    :py:func:`~espressomd.system.System.change_volume_and_rescale_particles`
+    :py:func:`~espressomd.system.System.change_volume_and_rescale_particles`.
 
 * :py:attr:`~espressomd.system.System.periodicity`
 
@@ -32,7 +38,7 @@ available in the Python interface are listed in the following.
     is obtained by [0,0,1]. Caveat: Be aware of the fact that making a
     dimension non-periodic does not hinder particles from leaving the box in
     this direction. In this case for keeping particles in the simulation box
-    a constraint has to be set.
+    a constraint has to be set. 
 
 * :py:attr:`~espressomd.system.System.time_step`
 
@@ -119,7 +125,7 @@ same temperature.
 Langevin thermostat
 ~~~~~~~~~~~~~~~~~~~
 
-In order to activate the langevin thermostat the memberfunction
+In order to activate the Langevin thermostat the member function
 :py:attr:`~espressomd.thermostat.Thermostat.set_langevin` of the thermostat
 class :class:`espressomd.thermostat.Thermostat` has to be invoked.
 Best explained in an example:::
@@ -161,7 +167,7 @@ can be useful, for instance, in high Péclet number active matter systems, where
 one only wants to thermalize the rotational degrees of freedom and
 translational motion is effected by the self-propulsion.
 
-Using the Langevin thermostat, it is posible to set a temperature and a
+Using the Langevin thermostat, it is possible to set a temperature and a
 friction coefficient for every particle individually via the feature
 ``LANGEVIN_PER_PARTICLE``.  Consult the reference of the ``part`` command
 (chapter :ref:`Setting up particles`) for information on how to achieve this.
@@ -202,13 +208,13 @@ Dissipative Particle Dynamics (DPD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To realize a complete DPD fluid model, three parts are needed:
-The DPD thermostat, which controlls the temperatur, a dissipative
+The DPD thermostat, which controls the temperate, a dissipative
 interaction between the particles that make up the fluid,
 see :ref:`DPD interaction`, and a repulsive conservative force.
 
 The DPD thermostat can be invoked by the function:
 :py:attr:`espressomd.thermostat.Thermostat.set_dpd`
-which takes :math:`k_\mathrm{B} T` as the only agument.
+which takes :math:`k_\mathrm{B} T` as the only argument.
 
 The friction coefficients and cutoff are controlled via the
 :ref:`DPD interaction` on a per type-pair basis. For details see
@@ -296,7 +302,7 @@ step the largest positive x-components of the velocity in the middle
 slab are selected and exchanged with the largest negative x-components
 of the velocity in the top slab.
 
-Variant chooses the shear-rate method. In this method, the targetted
+Variant chooses the shear-rate method. In this method, the targeted
 x-component of the mean velocity in the top and middle slabs are given
 by
 
@@ -320,10 +326,50 @@ where :math:`F` is the mean force (momentum transfer per unit time)
 acting on the slab, :math:`L_x L_y` is the area of the slab and
 :math:`\dot{\gamma}` is the shearrate.
 
-NEMD as implemented generates a Pouseille flow, with shear flow rate
+NEMD as implemented generates a Poiseuille flow, with shear flow rate
 varying over a finite wavelength determined by the box. For a planar
 Couette flow (constant shear, infinite wavelength), consider using
 Lees-Edwards boundary conditions (see ) to drive the shear.
+
+.. _Lees-Edwards boundary conditions:
+
+Lees-Edwards boundary condition: Setting up a shear flow
+-------------------------------------------------------------
+
+To use the Lees-Edwards boundary conditions, the feature ``LEES_EDWARDS`` is required.
+
+Lees-Edwards boundary conditions can be used to introduce a shear flow to the MD simulation. An introduction can be found in :cite:`lees72`. Compared to NEMD simulations they have two big advantages: First, the bulk behavior of the system remains unchanged. Second, the image boxes are moved, whereas the flow within the primary simulation box has to develop on its own. Hence, this allows two additional phenomena: Shear banding can occur as well as non-linear shear profiles can be observed. This makes Lees-Edwards boundary conditions suitable for comparison with rheological experiments. 
+
+Lees-Edwards boundary conditions impose a shear flow of speed :math:`\dot\gamma` by moving the periodic image boxes along the x-direction according to:
+
+.. math:: v_{\text{x, unfolded}} = v_{\text{x, folded}} + \dot\gamma \cdot y_{\text{imagecount}}
+
+:math:`v_{\text{x, unfolded}}` refers to the velocity of a particle outside the main simulation box, :math:`y_{\text{imagecount}}` is the amount of periodic boundaries crossed in the  :math:`y`-direction. 
+
+The absolute offset of the periodic images can be set via
+
+* :py:attr:`~espressomd.System().lees_edwards_offset`
+
+The following example introduces the usage::
+    
+    import espressomd
+    system = espressomd.System()
+    absolute_offset = 0.2
+    system.lees_edwards_offset = absolute_offset
+
+Lees-Edwards boundary conditions can be used to obtain the shear modulus :math:`G = \frac{\tau}{\gamma}` or the shear viscosity :math:`\eta = \frac{\tau}{\dot\gamma}` outside the linear regime, where Green-Kubo relations are not valid anymore. For this purpose a lees_edwards_offset is set followed by one integration step for multiple times. Strain, strain rate and the shear stress need to be recorded for the calculation. Alternatively a sinusoidal lees_edwards_offset series can be used to carry out oscillatory experiments to calculate viscoelastic moduli (:math:`G', G''`). Furthermore a lees_edwards_offset can be set followed by many integration steps obtain the relaxation behaviour of a system. 
+
+When applying a constant shear rate :math:`\dot\gamma` the velocity of the particles changes from :math:`-\frac{\dot\gamma}{2}` at the bottom of the box to :math:`\frac{\dot\gamma}{2}` at the top of the box. 
+
+Physical meaningful values for systems where hydrodynamics play a major role, can only be obtained by including hydrodynamic interactions. Lees-Edwards boundary conditions are implemented in the :ref:`Lattice-Boltzmann` algorithms. For this algorithm the feature ``LB_GPU`` is required. Please refer to chapter :ref:`Lattice-Boltzmann` for more information. 
+
+Lees-Edwards boundary conditions work with the DPD thermostat. In order to correctly observe transport properties, symmetry-breaking or entropy production in relation to shear flow is probably better to use the DPD thermostat (:ref:`Dissipative Particle Dynamics (DPD)`) once the initial heat-up has been carried out. The DPD thermostat removes kinetic energy from the system based on a frictional term defined relative to a local reference frame of a given particle-pair, without enforcing any specific flow pattern apriori. At high rates of dissipation, this can however lead to an artefactual shear-banding type effect at the periodic boundaries, such that the bulk fluid is nearly stationary. y. This effect is removed using the modification proposed to the DPD thermostat by Chatterjee :cite:`chatterjee2007` to allow treatment of systems with high dissipation rates, which is applied automatically if ``LEES_EDWARDS`` is compiled in. Chatterjee’s modification is just to skip calculation of DPD forces (both dissipative and random) for particle pairs which cross a boundary in y.
+
+The command::
+
+  print(system.lees_edwards_offset)
+
+returns the current value of the offset. If ``LEES_EDWARDS`` is compiled in, then coordinates are folded into the primary simulation box as the integration progresses, to prevent a numerical overflow.
 
 .. _cellsystem:
 
@@ -445,7 +491,7 @@ selects the layered cell system, which is specifically designed for
 the needs of the MMM2D algorithm. Basically it consists of a nsquared
 algorithm in x and y, but a domain decomposition along z, i. e. the
 system is cut into equally sized layers along the z axis. The current
-implementation allows for the cpus to align only along the z axis,
+implementation allows for the CPUs to align only along the z axis,
 therefore the processor grid has to have the form 1x1xN. However, each
 processor may be responsible for several layers, which is determined by
 ``n_layers``, i. e. the system is split into N\* layers along the z axis. Since in x
@@ -475,99 +521,106 @@ available, but load-independent.::
 The first invocation in the sample above return the id of the set graphics card, the second one sets the 
 device id.
 
+.. _Creating bonds when particles collide:
+
 Creating bonds when particles collide
 -------------------------------------
 
-.. todo::
-    This is not yet implemented for the python interface. 
 
-Please cite  when using dynamic bonding.
+Please cite :cite:`espresso2` when using dynamic bonding.
 
-on\_collision on\_collision off on\_collision bind\_centers
-on\_collision bind\_at\_point\_of\_collision on\_collision
-glue\_to\_surface on\_collision bind\_three\_particles
-
-With the help of the feature , bonds between particles can be created
+With the help of this feature, bonds between particles can be created
 automatically during the simulation, every time two particles collide.
 This is useful for simulations of chemical reactions and irreversible
-adhesion processes.
+adhesion processes. Both, sliding and non-sliding contacts can be created.
 
-Two methods of binding are available:
+The collision detection is controlled via the :attr:`espressomd.system.System.collision_detection` attribute, which is an instance of the class :class:`espressomd.collision_detection.CollisionDetection`.
 
--  adds a bonded interaction between the colliding particles at the
-   first collision. This leads to the distance between the particles
-   being fixed, the particles can, however still slide around each
-   other.
+Several modes are available for different types of binding.
 
-   The parameters are as follows: is the distance at which the bond is
-   created. denotes a pair bond and is the type of the bond created
-   between the colliding particles. Particles that are already bound by
-   a bond of this type do not get a new bond, in order to avoid creating
-   multiple bonds.
+* "bind_centers": adds a pair-bond between two particles at their first collision. By making the bonded interaction `stiff` enough, the particles can be held together after the collision. Note that the particles can still slide on each others' surface, as the pair bond is not directional. This mode is set up as follows::
+    import espressomd
+    from espressomd.interactions import HarmonicBond
+    
+    system=espressomd.System()
+    bond_centers=HarmonicBond(k=1000,r_0=<CUTOFF>)
+    system.bonded_inter.add(bond_centers)
+    system.collision_detection.set_params(mode="bind_centers",distance=<CUTOFF>, bond_centers=bond_centers)
+  
+  The parameters are as follows:
+  
+    * `distance` is the distance between two particles at which the binding is triggered. This cutoff distance, `<CUTOFF>` in the example above, is typically chosen slightly larger than the particle diameter. It is also a good choice for the equilibrium length of the bond.
+    * `bond_centers` is the bonded interaction (an instance of :class:espressomd.interactions.BondedInteraction`) to be created between the particles. No guarantees are made regarding which of the two colliding particles gets the bond. Once there is a bond of this type on any of the colliding particles, no further binding occurs for this pair of particles.
 
--  prevents sliding of the particles at the contact. This is achieved by
-   creating two virtual sites at the point of collision. They are
-   rigidly connected to the colliding particles, respectively. A bond is
-   then created between the virtual sites, or an angular bond between
-   the two real particles and the virtual particles. In the latter case,
-   the virtual particles are the centers of the angle potentials
-   (particle 2 in the description of the angle potential, see
-   [sec:angle]). Due to the rigid connection between each of the
-   particles in the collision and its respective virtual site, a sliding
-   at the contact point is no longer possible. See the documentation on
-   rigid bodies for details. In addition to the bond between the virtual
-   sites, the bond between the colliding particles is also created. You
-   can either use a real bonded interaction to prevent wobbling around
-   the point of contact or you can use a virtual bond to prevent
-   additional force contributions, at the expense of RATTLE, see
-   [sec:rattle].
+* "bind_at_point_of_collision": this mode prevents sliding of the colliding particles at the contact. This is achieved by
+  creating two virtual sites at the point of collision. They are
+  rigidly connected to the colliding particles, respectively. A bond is
+  then created between the virtual sites, or an angular bond between
+  the two colliding particles and the virtual particles. In the latter case,
+  the virtual particles are the centers of the angle potentials
+  (particle 2 in the description of the angle potential (see :ref:`Bond-angle interactions`).
+  Due to the rigid connection between each of the
+  particles in the collision and its respective virtual site, a sliding
+  at the contact point is no longer possible. See the documentation on
+  :ref:`Rigid arrangements of particles` for details. In addition to the bond between the virtual
+  sites, the bond between the colliding particles is also created, i.e., the "bind_at_point_of_collision" mode implicitly includes the "bind_centers" mode. You
+  can either use a real bonded interaction to prevent wobbling around
+  the point of contact or you can use :class:`espressomd.interactions.Virtual` which acts as a marker, only.
+  The method is setup as follows::
+     
+     system.collision_detection.set_params(mode="bind_at_point_of_collision", distance=<CUTOFF>, bond_centers=<BOND_CENTERS>, bond_vs=<BOND_VS>, part_type_vs=<PART_TYPE_VS>, vs_placement=<VS_PLACEMENT>)
 
-   The parameters and are the same as for the method. determines the
-   type of the bond created between the virtual sites (if applicable),
-   and can be either a pair or a triple (angle) bond. If it is a pair
-   bond, it connects the two virtual particles, otherwise it constraints
-   the angle between the two real particles around the virtual ones.
-   denotes the particle type of the virtual sites created at the point
-   of collision (if applicable). Be sure not to define a short-ranged
-   interaction for this particle type, as two particles will be
-   generated in the same place.
+  
+  The parameters `distance` and `bond_centers` have the same meaning as in the `bind_centers` mode. The remaining parameters are as follows:
+    
+    * `bond_vs` is the bond to be added between the two virtual sites created on collision. This is either a pair-bond with an equilibrium length matching the distance between the virtual sites, or an angle bond fully stretched in its equilibrium configuration.
+    * `part_type_vs` is the particle type assigned to the virtual sites created on collision. In nearly all cases, no non-bonded interactions should be defined for this particle type.
+    * `vs_placement` controls, where on the line connecting the centers of the colliding particles, the virtual sites are placed. A value of 0 means that the virtual sites are placed at the same position as the colliding particles on which they are based. A value of 0.5 will result in the virtual sites being placed ad the mid-point between the two colliding particles. A value of 1 will result the virtual site associated to the first colliding particle to be placed at the position of the second colliding particle. In most cases, 0.5, is a good choice. Then, the bond connecting the virtual sites should have an equilibrium length of zero.
 
--  is used to fix a particle of type onto the surface of a particle of
-   type . This is achieved by creating a virtual site (particle type )
-   which is rigidly connected to the particle of . A bond of type is
-   then created between the virtual site and the particle of .
-   Additionally, a bond of type between the colliding particles is also
-   created. After the collision, the particle of type is changed to type
-   .
+* "glue_to_surface": This mode is used to irreversibly attach small particles to the surface of a big particle. It is asymmetric in that several small particles can be bound to a big particle but not vice versa. The small particles can change type after collision to make them `inert`. On collision, a single virtual site is placed and related to the big particle. Then, a bond (`bond_centers`) connects the big and the small particle. A second bond (`bond_vs`) connects the virtual site and the small particle. Further required parameters are:
+  
+  * `part_type_to_attach_vs_to`: Type of the particle to which the virtual site is attached, i.e., the `big` particle.
+  * `part_type_to_be_glued`: Type of the particle bound to the virtual site (the `small` particle).
+  * `part_type_after_glueing`: The type assigned to the particle bound to the virtual site (`small` particle) after the collision.
+  * `part_type_vs`: Particle type assigned to the virtual site created during the collision. 
+  * `distance_glued_particle_to_vs`: Distance of the virtual site to the particle being bound to it (`small` particle).
 
--  allows for the creation of agglomerates which maintain their shape
-   similarly to those create by the method. The present approach works
-   without virtual sites. Instead, for each two-particle collision, the
-   surrounding is searched for a third particle. If one is found,
-   angular bonds are placed on each of the three particles in addition
-   to the distance based bonds between the particle centers. The id of
-   the angular bonds is determined from the angle between the particles.
-   Zero degrees corresponds to bond id , whereas 180 degrees corresponds
-   to bond id +. This method das not depend on the particles’ rotational
-   degrees of freedom being integrated. Virtual sites are also not
-   required, and the method is implemented to run on more than one cpu
-   core.
 
-The code can throw an exception (background error) in case two particles
-collide for the first time, if the keyword is added to the invocation.
-In conjunction with the command of Tcl, this can be used to intercept
-the collision:
+
+
+- "bind_three_particles" allows for the creation of agglomerates which maintain their shape
+  similarly to those create by the mode "bind_at_point_of_collision". The present approach works
+  without virtual sites. Instead, for each two-particle collision, the
+  surrounding is searched for a third particle. If one is found,
+  angular bonds are placed to maintain the local shape.
+  If all three particles are within the cutoff distance, an angle bond is added
+  on each of the three particles in addition
+  to the distance based bonds between the particle centers. 
+  If two particles are within the cutoff of a centrla particle (e.g., chain of three particles)
+  an angle bond is placed on the central particle.
+  The angular bonds being added are determined from the angle between the particles.
+  This method does not depend on the particles’ rotational
+  degrees of freedom being integrated. Virtual sites are also not
+  required.
+  The method, along with the corresponding bonds are setup as follows::
+        
+        n_anlge_bonds=181 # 0 to 180 degrees in one degree steps
+        for i in range(0,res,1):
+           self.s.bonded_inter[i]=Angle_Harmonic(bend=1,phi0=float(i)/(res-1)*np.pi)
+        
+        # Create the bond passed to bond_centers here and add it to the system
+        
+        self.s.collision_detection.set_params(mode="bind_three_particles",bond_centers=<BOND_CENTERS>,bond_three_particles=0,three_particle_binding_angle_resolution=res,distance=<CUTOFF>)
+
+  Important: The bonds for the angles are mapped via their numerical bond ids. In this example, ids from 0 to 180 are used. All other bonds required for the simulation need to be added to the system after those bonds. In particular, this applies to the bonded interaction passed via `bond_centers` 
+
 
 The following limitations currently apply for the collision detection:
+* No distinction is currently made between different particle types for the `bind_centers` method.
+* The “bind at point of collision” and "glue to surface"  approaches require the feature `VIRTUAL_SITES_RELATIVE` to be activated in `myconfig.hpp`.
 
--  The method is currently limited to simulations with a single cpu
-
--  No distinction is currently made between different particle types
-
--  The “bind at point of collision” approach requires the feature
-
--  The “bind at point of collision” approach cannot handle collisions
-   between virtual sites
+* The “bind at point of collision” approach cannot handle collisions
+  between virtual sites
 
 Catalytic Reactions
 -------------------
@@ -583,7 +636,7 @@ For a Janus swimmer consisting of platinum on one hemisphere and gold on the oth
       \mathrm{2 H^{+} + 2 e^{-} + H_2 O_2} &\xrightarrow{\text{Au}} \mathrm{2 H_2 O}
     \end{aligned}
 
-That is, catalytic surfaces induce a reactions that produce charged species by consuming hydrogen peroxide. It is the change in distribution of charged species that leads to motion of the swimmer, a process refered to as self-electrophoresis. A minimal model for this would be
+That is, catalytic surfaces induce a reactions that produce charged species by consuming hydrogen peroxide. It is the change in distribution of charged species that leads to motion of the swimmer, a process referred to as self-electrophoresis. A minimal model for this would be
 
 .. math::
 
@@ -691,7 +744,7 @@ The centre of mass of the system
     gt.system_CMS()
 
 Returns the center of mass of the whole system. It currently does not
-factor in the density fluctuations of the Lattice-Boltzman fluid.
+factor in the density fluctuations of the Lattice-Boltzmann fluid.
 
 The centre-of-mass velocity
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -709,7 +762,7 @@ The Galilei transform
 
     gt.galilei_transform()
 
-Substracts the velocity of the center of mass of the whole system from
+Subtracts the velocity of the center of mass of the whole system from
 every particle’s velocity, thereby performing a Galilei transform into
 the reference frame of the center of mass of the system. This
 transformation is useful for example in combination with the DPD

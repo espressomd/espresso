@@ -75,7 +75,7 @@ system.non_bonded_inter[1, 2].lennard_jones.set_params(
 # fene = interactions.FeneBond(k=10, d_r_max=2)
 # system.bonded_inter.add(fene)
 harmonic = interactions.HarmonicBond(k=10, r_0=2)
-harmonicangle = interactions.Angle_Harmonic(bend=10, phi0=np.pi)
+harmonicangle = interactions.AngleHarmonic(bend=10, phi0=np.pi)
 system.bonded_inter.add(harmonic)
 system.bonded_inter.add(harmonicangle)
 
@@ -156,7 +156,7 @@ if os.path.isfile("p3m_checkpoint") and read_checkpoint == True:
     print("reading p3m from file")
     p3m = pickle.load(open("p3m_checkpoint", "r"))
 else:
-    p3m = electrostatics.P3M(bjerrum_length=1.0, accuracy=1e-2)
+    p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
     print("Tuning P3M")
 
 system.actors.add(p3m)

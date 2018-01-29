@@ -26,6 +26,8 @@
 #include "lattice.hpp"
 #include "npt.hpp"
 #include "ghmc.hpp"
+#include "lb.hpp"
+
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
@@ -81,7 +83,6 @@ static GammaType langevin_pref2_small_buffer;
    system,
     and require a magical heat up whenever reentering the integrator. */
 static GammaType langevin_pref2_buffer;
-
 static GammaType langevin_pref2_rotation_buffer;
 
 #ifdef NPT
@@ -121,6 +122,20 @@ void thermo_init_langevin() {
   langevin_pref2_rotation =
       sqrt(24.0 * temperature * langevin_gamma_rotation / time_step);
 
+#ifdef PARTICLE_ANISOTROPY
+#ifdef ROTATION
+  THERMO_TRACE(
+      fprintf(stderr, "%d: thermo_init_langevin: langevin_gamma_rotation=(%f,%f,%f), "
+                      "langevin_pref2_rotation=(%f,%f,%f)",
+              this_node, langevin_gamma_rotation[0], langevin_gamma_rotation[1],
+              langevin_gamma_rotation[2], langevin_pref2_rotation[0],
+              langevin_pref2_rotation[1], langevin_pref2_rotation[2]));
+#endif
+  THERMO_TRACE(fprintf(
+      stderr, "%d: thermo_init_langevin: langevin_pref1=(%f,%f,%f), langevin_pref2=(%f,%f,%f)",
+      this_node, langevin_pref1[0], langevin_pref1[1], langevin_pref1[2],
+      langevin_pref2[0], langevin_pref2[1], langevin_pref2[2]));
+#else
 #ifdef ROTATION
   THERMO_TRACE(
       fprintf(stderr, "%d: thermo_init_langevin: langevin_gamma_rotation=%f, "
@@ -130,6 +145,7 @@ void thermo_init_langevin() {
   THERMO_TRACE(fprintf(
       stderr, "%d: thermo_init_langevin: langevin_pref1=%f, langevin_pref2=%f",
       this_node, langevin_pref1, langevin_pref2));
+#endif
 }
 
 #ifdef NPT
@@ -219,30 +235,4 @@ void thermo_cool_down() {
     dpd_cool_down();
   }
 #endif
-}
-
-int get_cpu_temp() {
-  std::ifstream f("/sys/class/thermal/thermal_zone0/temp");
-  int temp;
-  f >> temp;
-  f.close();
-  return (temp + 273150) / 1000;
-}
-
-static int volatile cpu_temp_count = 0;
-void set_cpu_temp(int temp) {
-  while (temp != get_cpu_temp()) {
-    if (temp < get_cpu_temp()) {
-      // printf("Cooling down CPU from %dK to %dK\n", get_cpu_temp(), temp);
-      // pause for 1 second to give the CPU time to cool down
-      usleep(1e6);
-    } else {
-      // printf("Heating up CPU from %dK to %dK\n", get_cpu_temp(), temp);
-      // crunch some numbers to heat up the CPU
-      cpu_temp_count = 0;
-      for (int i = 0; i < 1e9; ++i) {
-        cpu_temp_count += i;
-      }
-    }
-  }
 }

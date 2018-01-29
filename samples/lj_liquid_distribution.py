@@ -116,7 +116,7 @@ for i in range(n_part):
 print("Simulate {} particles in a cubic simulation box {} at density {}."
       .format(n_part, box_l, density).strip())
 print("Interactions:\n")
-act_min_dist = system.analysis.mindist()
+act_min_dist = system.analysis.min_dist()
 print("Start with minimal distance {}".format(act_min_dist))
 
 system.cell_system.max_num_cells = 2744
@@ -148,7 +148,7 @@ i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
     system.integrator.run(warm_steps)
     # Warmup criterion
-    act_min_dist = system.analysis.mindist()
+    act_min_dist = system.analysis.min_dist()
 #  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,system.time,lj_cap,act_min_dist), end=' ')
     i += 1
 

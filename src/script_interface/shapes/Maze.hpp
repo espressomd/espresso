@@ -37,8 +37,6 @@ public:
                     {"cylrad", m_maze->cylrad()}});
   }
 
-  const std::string name() const override { return "Shapes::Maze"; }
-
   std::shared_ptr<::Shapes::Shape> shape() const override { return m_maze; }
 
 private:

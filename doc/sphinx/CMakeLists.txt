@@ -78,8 +78,8 @@ if(SPHINX_FOUND)
         ${SPHINX_EXECUTABLE}
             -j ${N}
             -q
-            -b html
             -W
+            -b html
             -c "${SPHINX_BASE}"
             -d "${SPHINX_CACHE_DIR}"
             "${CMAKE_CURRENT_BINARY_DIR}"

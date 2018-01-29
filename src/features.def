@@ -22,7 +22,6 @@ EXCLUSIONS
 MOLFORCES
 BOND_CONSTRAINT
 MODES                           requires FFTW
-BOND_VIRTUAL
 LANGEVIN_PER_PARTICLE
 COLLISION_DETECTION             implies GHOSTS_HAVE_BONDS
 LEES_EDWARDS                    requires not ELECTROSTATICS and not LB and not PARTIAL_PERIODIC
@@ -56,13 +55,9 @@ DIPOLAR_DIRECT_SUM              requires CUDA
 DIPOLAR_DIRECT_SUM              equals DIPOLES and ROTATION and CUDA
 
 /* Virtual sites features */
-VIRTUAL_SITES_COM               requires not VIRTUAL_SITES_RELATIVE
-VIRTUAL_SITES_RELATIVE          requires not VIRTUAL_SITES_COM
+VIRTUAL_SITES_RELATIVE          implies VIRTUAL_SITES
 VIRTUAL_SITES_RELATIVE          implies ROTATION
-VIRTUAL_SITES                   equals VIRTUAL_SITES_COM or VIRTUAL_SITES_RELATIVE or IMMERSED_BOUNDARY
-VIRTUAL_SITES_NO_VELOCITY       require VIRTUAL_SITES_RELATIVE
-VIRTUAL_SITES_THERMOSTAT        require VIRTUAL_SITES_RELATIVE
-THERMOSTAT_IGNORE_NON_VIRTUAL   implies VIRTUAL_SITES_THERMOSTAT
+VIRTUAL_SITES                   
 
 /* DPD features */
 DPD
@@ -71,8 +66,8 @@ TUNABLE_SLIP
 /* Lattice-Boltzmann features */
 LB
 LB_GPU                          requires CUDA
-LB_BOUNDARIES                   implies LB, CONSTRAINTS
-LB_BOUNDARIES_GPU               implies LB_GPU, CONSTRAINTS
+LB_BOUNDARIES                   requires LB
+LB_BOUNDARIES_GPU               requires LB_GPU
 LB_ELECTROHYDRODYNAMICS         implies LB
 ELECTROKINETICS                 implies LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
 ELECTROKINETICS                 requires CUDA

@@ -25,9 +25,11 @@
 #ifdef H5MD
 #include "h5md/initialize.hpp"
 #endif
-#include "observables/initialize.hpp" 
+#include "observables/initialize.hpp"
+#include "accumulators/initialize.hpp"
 #include "correlators/initialize.hpp" 
 #include "lbboundaries/initialize.hpp"
+#include "collision_detection/initialize.hpp"
 
 #include "ComFixed.hpp"
 
@@ -35,6 +37,7 @@
 #include "VariantTester.hpp"
 
 #include "core/communication.hpp"
+#include "virtual_sites/initialize.hpp"
 
 namespace ScriptInterface {
 
@@ -46,12 +49,17 @@ void initialize() {
 #ifdef H5MD
   Writer::initialize();
 #endif
+  Accumulators::initialize();
   Observables::initialize();
   Correlators::initialize();
   LBBoundaries::initialize();
+  VirtualSites::initialize();
+
+  CollisionDetection::initialize();
+ 
 
   ScriptInterface::register_new<Testing::VariantTester>("Testing::VariantTester");
-  ScriptInterface::register_new<ComFixed>();
+  ScriptInterface::register_new<ComFixed>("ComFixed");
 }
 
 } /* namespace ScriptInterface */

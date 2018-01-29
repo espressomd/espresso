@@ -86,8 +86,8 @@ calc_non_bonded_pair_force_from_partcfg(Particle const *p1, Particle const *p2,
                                         IA_parameters *ia_params,
                                         double d[3], double dist, double dist2,
                                         double force[3],
-                                        double torque1[3] = NULL, 
-                                        double torque2[3] = NULL);
+                                        double torque1[3] = nullptr, 
+                                        double torque2[3] = nullptr);
 
 void
 calc_non_bonded_pair_force_from_partcfg_simple(Particle const *p1, Particle const *p2,

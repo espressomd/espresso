@@ -114,18 +114,21 @@ class ParticleProperties(ut.TestCase):
 
     if espressomd.has_features(["BOND_ANGLE"]):
         test_angle_harm = generateTestForBondParams(
-            0, Angle_Harmonic, {"bend": 5.2, "phi0": 3.2})
+            0, AngleHarmonic, {"bend": 5.2, "phi0": 3.2})
         test_angle_cos = generateTestForBondParams(
-            0, Angle_Cosine, {"bend": 5.2, "phi0": 3.2})
+            0, AngleCosine, {"bend": 5.2, "phi0": 3.2})
         test_angle_cossquare = generateTestForBondParams(
-            0, Angle_Cossquare, {"bend": 5.2, "phi0": 0.})
+            0, AngleCossquare, {"bend": 5.2, "phi0": 0.})
     if espressomd.has_features(["LENNARD_JONES"]):
         test_subt_lj = generateTestForBondParams(
-            0, Subt_Lj, {})
+            0, SubtLJ, {})
 
     if espressomd.has_features(["TABULATED"]):
-        test_tabulated = generateTestForBondParams(
-            0, Tabulated, {"type": "distance", "filename": abspath("data/lj1.tab")})
+        test_tabulated = generateTestForBondParams(0, Tabulated, {"type": "distance",
+                                                                  "min": 1.,
+                                                                  "max": 2.,
+                                                                  "energy": [1.,2.,3.],
+                                                                  "force": [3.,4.,5.]})
 
 
 if __name__ == "__main__":

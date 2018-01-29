@@ -77,7 +77,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         ah_bend = 1.
         ah_phi0 = 0.4327 * numpy.pi
 
-        angle_harmonic = espressomd.interactions.Angle_Harmonic(
+        angle_harmonic = espressomd.interactions.AngleHarmonic(
             bend=ah_bend, phi0=ah_phi0)
         self.system.bonded_inter.add(angle_harmonic)
         self.system.part[0].add_bond((angle_harmonic, 1, 2))

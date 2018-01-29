@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <vector>
 
 #include "cells.hpp"
 #include "grid.hpp"
@@ -12,7 +13,7 @@
 #include "tuning.hpp"
 #include "partCfg_global.hpp"
 
-#define DEBUG(A) std::cout << #A << ": " << A << std::endl;
+#define DEBUG(A) std::cout << #A << ": " << (A) << std::endl;
 
 typedef ewaldgpu_real real;
 extern Ewaldgpu_params ewaldgpu_params;
@@ -107,8 +108,8 @@ int EwaldgpuForce::set_params_tune(double accuracy, double precision, int K_max,
 int EwaldgpuForce::adaptive_tune(char **log, SystemInterface &s) {
   ewaldgpu_params.isTuned = false;
   int Kmax = ewaldgpu_params.K_max;
-  double alpha_array[Kmax]; //  All computed alpha in dependence of K
-  double rcut_array[Kmax];  //  All computed r_cut in dependence of all computed
+  std::vector<double> alpha_array(Kmax); //  All computed alpha in dependence of K
+  std::vector<double> rcut_array(Kmax);  //  All computed r_cut in dependence of all computed
                             //  alpha
 
   // Squared charge
@@ -273,6 +274,9 @@ int EwaldgpuForce::determine_calc_time_steps() {
   auto const sum_qpart = std::count_if(
       local_cells.particles().begin(), local_cells.particles().end(),
       [](Particle const &p) { return p.p.q != 0.0; });
+
+  if (sum_qpart == 0)
+    return 0;
 
   return (1999 + sum_qpart) / sum_qpart;
 }

@@ -16,7 +16,7 @@
 /* Add user requested Lennard-Jones interactions */
 static void  add_lj_interaction(std::set<PdbParser::itp_atomtype, PdbParser::itp_atomtype_compare> &types, std::vector<PdbLJInteraction> interactions, const double rel_cutoff) {
   for(std::vector<PdbLJInteraction>::const_iterator it = interactions.begin(); it != interactions.end(); ++it) {
-    for(std::set<PdbParser::itp_atomtype>::const_iterator jt = types.begin(); jt != types.end(); ++jt) {
+    for(std::set<PdbParser::itp_atomtype, PdbParser::itp_atomtype_compare>::const_iterator jt = types.begin(); jt != types.end(); ++jt) {
       const double epsilon_ij = sqrt(it->epsilon * jt->epsilon);
       const double sigma_ij = 0.5*(it->sigma+10.*jt->sigma);
       const double cutoff_ij = rel_cutoff*sigma_ij;
@@ -35,13 +35,13 @@ static void  add_lj_interaction(std::set<PdbParser::itp_atomtype, PdbParser::itp
 
 /* Add Lennard-Jones interactions between particles added from pdb/itp file */
 static void add_lj_internal(std::set<PdbParser::itp_atomtype, PdbParser::itp_atomtype_compare> &types, const double rel_cutoff, bool only_diagonal) {
-  for(std::set<PdbParser::itp_atomtype>::const_iterator it = types.begin(); it != types.end(); ++it) {
-    for(std::set<PdbParser::itp_atomtype>::const_iterator jt = types.begin(); jt != types.end(); ++jt) {
+  for(std::set<PdbParser::itp_atomtype, PdbParser::itp_atomtype_compare>::const_iterator it = types.begin(); it != types.end(); ++it) {
+    for(std::set<PdbParser::itp_atomtype, PdbParser::itp_atomtype_compare>::const_iterator jt = types.begin(); jt != types.end(); ++jt) {
       if(it->espresso_id > jt->espresso_id)
 	continue;
       if(only_diagonal && (it->espresso_id != jt->espresso_id))
 	continue;
-      const double epsilon_ij = sqrt(it->epsilon * jt->epsilon);
+      const double epsilon_ij = sqrtf(it->epsilon * jt->epsilon);
       const double sigma_ij = 0.5*(10.*it->sigma+10.*jt->sigma);
       const double cutoff_ij = rel_cutoff*sigma_ij;
       const double shift_ij = -pow(sigma_ij/cutoff_ij,12) - pow(sigma_ij/cutoff_ij,6);
@@ -106,7 +106,7 @@ static int add_particles(PdbParser::PdbParser &parser, int first_id, int default
       if(entry != parser.itp_atoms.end()) {
 	PdbParser::itp_atomtype itp_atomtype = parser.itp_atomtypes[entry->second.type];
 	/* See if we have seen that type before */
-	std::set<PdbParser::itp_atomtype>::iterator type_iterator = seen_types.find(itp_atomtype);
+	std::set<PdbParser::itp_atomtype, PdbParser::itp_atomtype_compare>::iterator type_iterator = seen_types.find(itp_atomtype);
 	if(type_iterator == seen_types.end()) {
 	  itp_atomtype.espresso_id=last_type++;
 	  type_iterator = seen_types.insert(itp_atomtype).first;

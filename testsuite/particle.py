@@ -18,9 +18,9 @@
 #
 # Tests particle property setters/getters
 from __future__ import print_function
+import numpy as np
 import unittest as ut
 import espressomd
-import numpy as np
 from espressomd.interactions import FeneBond
 
 
@@ -33,34 +33,17 @@ class ParticleProperties(ut.TestCase):
     tol = 1E-9
 
     # Handle for espresso system
-    es = espressomd.System()
+    system = espressomd.System()
+    system.box_l = [10.0] * 3
 
     f1 = FeneBond(k=1, d_r_max=5)
-    es.bonded_inter.add(f1)
+    system.bonded_inter.add(f1)
     f2 = FeneBond(k=1, d_r_max=5)
-    es.bonded_inter.add(f2)
-
-    def arraysNearlyEqual(self, a, b):
-        """Test, if the magnitude of the difference between two arrays is smaller than the tolerance"""
-
-        # Check length
-        if len(a) != len(b):
-            return False
-
-        # We have to use a loop, since we can't be sure, we're getting numpy
-        # arrays
-        sum = 0.
-        for i in range(len(a)):
-            sum += abs(a[i] - b[i])
-
-        if sum > self.tol:
-            return False
-
-        return True
+    system.bonded_inter.add(f2)
 
     def setUp(self):
-        if not self.es.part.exists(self.pid):
-            self.es.part.add(id=self.pid, pos=(0, 0, 0))
+        if not self.system.part.exists(self.pid):
+            self.system.part.add(id=self.pid, pos=(0, 0, 0))
 
     def generateTestForVectorProperty(_propName, _value):
         """Generates test cases for vectorial particle properties such as
@@ -76,9 +59,9 @@ class ParticleProperties(ut.TestCase):
             # This code is run at the execution of the generated function.
             # It will use the state of the variables in the outer function,
             # which was there, when the outer function was called
-            setattr(self.es.part[self.pid], propName, value)
-            self.assertTrue(self.arraysNearlyEqual(getattr(self.es.part[
-                            self.pid], propName), value), propName + ": value set and value gotten back differ.")
+            setattr(self.system.part[self.pid], propName, value)
+            np.testing.assert_allclose(np.array(getattr(self.system.part[
+                self.pid], propName)), value, err_msg=propName + ": value set and value gotten back differ.", atol=self.tol)
 
         return func
 
@@ -96,8 +79,8 @@ class ParticleProperties(ut.TestCase):
             # This code is run at the execution of the generated function.
             # It will use the state of the variables in the outer function,
             # which was there, when the outer function was called
-            setattr(self.es.part[self.pid], propName, value)
-            self.assertEqual(getattr(self.es.part[self.pid], propName),
+            setattr(self.system.part[self.pid], propName, value)
+            self.assertEqual(getattr(self.system.part[self.pid], propName),
                              value, propName + ": value set and value gotten back differ.")
 
         return func
@@ -115,12 +98,12 @@ class ParticleProperties(ut.TestCase):
         test_mass = generateTestForScalarProperty("mass", 1.3)
 
     if espressomd.has_features(["ROTATION"]):
-        
-        for x in 0,1:
-            for y in 0,1:
-                for z in 0,1:
+
+        for x in 0, 1:
+            for y in 0, 1:
+                for z in 0, 1:
                     test_rotation = generateTestForVectorProperty(
-                        "rotation", np.array([x,y,z],dtype=int))
+                        "rotation", np.array([x, y, z], dtype=int))
 
         test_omega_lab = generateTestForVectorProperty(
             "omega_lab", np.array([4., 2., 1.]))
@@ -158,15 +141,66 @@ class ParticleProperties(ut.TestCase):
     if espressomd.has_features(["VIRTUAL_SITES"]):
         test_virtual = generateTestForScalarProperty("virtual", 1)
     if espressomd.has_features(["VIRTUAL_SITES_RELATIVE"]):
-        def test_zz_vs_relative(self):
-            self.es.part.add(id=0, pos=(0, 0, 0))
-            self.es.part.add(id=1, pos=(0, 0, 0))
-            self.es.part[1].vs_relative = (0, 5.0, (0.5, -0.5, -0.5, -0.5))
-            res = self.es.part[1].vs_relative
+        def test_yy_vs_relative(self):
+            self.system.part.add(id=0, pos=(0, 0, 0))
+            self.system.part.add(id=1, pos=(0, 0, 0))
+            self.system.part[1].vs_relative = (0, 5.0, (0.5, -0.5, -0.5, -0.5))
+            res = self.system.part[1].vs_relative
             self.assertEqual(res[0], 0, "vs_relative: " + res.__str__())
             self.assertEqual(res[1], 5.0, "vs_relative: " + res.__str__())
-            self.assertTrue(self.arraysNearlyEqual(res[2], np.array(
-                (0.5, -0.5, -0.5, -0.5))), "vs_relative: " + res.__str__())
+            np.testing.assert_allclose(
+    res[2], np.array(
+         (0.5, -0.5, -0.5, -0.5)), err_msg="vs_relative: " + res.__str__(), atol=self.tol)
+    
+    @ut.skipIf(not espressomd.has_features("DIPOLES"),
+        "Features not available, skipping test!")
+    def test_contradicting_properties_dip_dipm(self):
+        with self.assertRaises(ValueError):
+            self.system.part.add(pos = [0, 0, 0], dip=[1, 1, 1], dipm=1.0)
+    
+    @ut.skipIf(not espressomd.has_features("DIPOLES", "ROTATION"),
+        "Features not available, skipping test!")
+    def test_contradicting_properties_dip_quat(self):
+        with self.assertRaises(ValueError):
+            self.system.part.add(pos = [0, 0, 0], dip=[1, 1, 1], quat=[1.0,1.0,1.0,1.0])
+
+    @ut.skipIf(not espressomd.has_features("ELECTROSTATICS"), "Test needs ELECTROSTATICS")
+    def test_zz_particle_selection(self):
+        s=self.system
+        s.part.clear()
+        positions = ((0.2, 0.3, 0.4), (0.4, 0.2, 0.3), (0.7, 0.7, 0.7))
+        charges = 0, 1E-6, -1, 1
+        
+        # Place particles
+        i=0
+        for pos in positions:
+            for q in charges:
+                s.part.add(pos=pos, q=q,id=i)
+                i+=1
+        
+        # Scalar property
+        res = s.part.select(q=0)
+        self.assertEqual(len(res.id), len(positions))
+        for p in res:
+            self.assertAlmostEqual(p.q,0,places=13)
+        
+        # Vectorial property
+        res = s.part.select(pos=(0.2, 0.3, 0.4))
+        self.assertEqual(len(res.id) , len(charges))
+        for p in res:
+            np.testing.assert_allclose((0.2, 0.3, 0.4), np.copy(p.pos), atol=1E-12)
+        
+        
+        # Two criteria
+        res = s.part.select(pos=(0.2, 0.3, 0.4),q=0)
+        self.assertEqual(tuple(res.id),(0,))
+
+        # Emtpy result
+        res=s.part.select(q=17)
+        self.assertEqual(tuple(res.id),())
+        # User-specified criterion
+        res = s.part.select(lambda p: p.pos[0] < 0.5)
+        self.assertEqual(tuple(sorted(res.id)),(0,1,2,3,4,5,6,7))
 
 
 if __name__ == "__main__":

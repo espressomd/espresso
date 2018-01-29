@@ -63,9 +63,15 @@ def params_match(inParams, outParams):
         if k not in outParams:
             print(k, "missing from returned parameters")
             return False
-        if outParams[k] != inParams[k]:
-            print("Mismatch in parameter ", k, inParams[k], outParams[k])
-            return False
+        if type(inParams[k]) == float:
+          if abs(outParams[k] -inParams[k])>=1E-14:
+              print("Mismatch in parameter ", k, inParams[k], outParams[k],type(inParams[k]),type(outParams[k]),abs(inParams[k]-outParams[k]))
+              return False
+        else:
+          if outParams[k] !=inParams[k]:
+              print("Mismatch in parameter ", k, inParams[k], outParams[k],type(inParams[k]),type(outParams[k]))
+              return False
+
 
     return True
 
@@ -110,9 +116,9 @@ def lj_force(v_d, d, lj_params):
     Supports epsilon and cutoff."""
 
     if d >= lj_params["cutoff"]:
-        return np.array((0., 0., 0.))
+        return np.zeros(3)
 
-    return 4. * lj_params["epsilon"] * v_d / d * (-12 * d**-13 + 6 * d**-7)
+    return 4. * lj_params["epsilon"] * v_d * (-12.0 * d**-14 + 6.0 * d**-8)
 
 
 def verify_lj_forces(system, tolerance, ids_to_skip=[]):
@@ -126,23 +132,36 @@ def verify_lj_forces(system, tolerance, ids_to_skip=[]):
     for id in system.part[:].id:
         f_expected[id] = np.zeros(3)
 
+    # Cache some stuff to speed up pair loop
+    dist_vec=system.distance_vec
+    norm=np.linalg.norm
+    non_bonded_inter=system.non_bonded_inter
+    # lj parameters
+    lj_params={}
+    all_types=np.unique(system.part[:].type)
+    for i in all_types:
+        for j in all_types:
+            lj_params[i,j]=non_bonded_inter[int(i),int(j)].lennard_jones.get_params()
+            
+
+
+      
+
     # Go over all pairs of particles
     for pair in system.part.pairs():
-        if pair[0].id in ids_to_skip or pair[1].id in ids_to_skip:
+        p0=pair[0]
+        p1=pair[1]
+        if p0.id in ids_to_skip or p1.id in ids_to_skip:
             continue
 
         # Distance and distance vec
-        v_d = system.distance_vec(pair[0], pair[1])
-        d = system.distance(pair[0], pair[1])
-
-        # get lj params for the type combination from system
-        lj_params = system.non_bonded_inter[pair[0].type,
-                                            pair[1].type].lennard_jones.get_params()
+        v_d = dist_vec(p0,p1)
+        d = norm(v_d)
 
         # calc and add expected lj force
-        f = lj_force(v_d, d, lj_params)
-        f_expected[pair[0].id] += f
-        f_expected[pair[1].id] -= f
+        f = lj_force(v_d, d, lj_params[p0.type,p1.type])
+        f_expected[p0.id] += f
+        f_expected[p1.id] -= f
     # Check actual forces agaisnt expected
     for id in system.part[:].id:
         if id in ids_to_skip:
@@ -158,3 +177,110 @@ def verify_lj_forces(system, tolerance, ids_to_skip=[]):
 
 def abspath(path):
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), path)
+
+
+def transform_pos_from_cartesian_to_polar_coordinates(pos):
+    """Transform the given cartesian coordinates to polar coordinates.
+
+    Parameters
+    ----------
+    pos : array_like :obj:`float`
+          ``x``, ``y``, and ``z``-component of the cartesian position.
+
+    Returns
+    -------
+    array_like
+        The given position in polar coordinates.
+
+    """
+    return np.array([np.sqrt(pos[0]**2.0 + pos[1]**2.0), np.arctan2(pos[1], pos[0]), pos[2]])
+
+def transform_vel_from_cartesian_to_polar_coordinates(pos, vel):
+    """Transform the given cartesian velocities to polar velocities.
+    
+    Parameters
+    ----------
+    pos : array_like :obj:`float`
+          ``x``, ``y``, and ``z``-component of the cartesian position.
+    vel : array_like :obj:`float`
+          ``x``, ``y``, and ``z``-component of the cartesian velocity.
+
+    """
+    return np.array([
+        (pos[0] * vel[0] + pos[1] *
+         vel[1]) / np.sqrt(pos[0]**2.0 + pos[1]**2.0),\
+        (pos[0] * vel[1] - pos[1] *
+         vel[0]) / (pos[0]**2.0 + pos[1]**2.0),\
+        vel[2]])
+
+def rotation_matrix(axis, theta):
+    """
+    Return the rotation matrix associated with counterclockwise rotation about
+    the given axis by theta radians.
+
+    Parameters
+    ----------
+    axis : array_like :obj:`float`
+           Axis to rotate around.
+    theta : :obj:`float`
+            Rotation angle.
+
+    """
+    axis = np.asarray(axis)
+    axis = axis/np.sqrt(np.dot(axis, axis))
+    a = np.cos(theta/2.0)
+    b, c, d = -axis*np.sin(theta/2.0)
+    aa, bb, cc, dd = a*a, b*b, c*c, d*d
+    bc, ad, ac, ab, bd, cd = b*c, a*d, a*c, a*b, b*d, c*d
+    return np.array([[aa+bb-cc-dd, 2*(bc+ad), 2*(bd-ac)],
+                     [2*(bc-ad), aa+cc-bb-dd, 2*(cd+ab)],
+                     [2*(bd+ac), 2*(cd-ab), aa+dd-bb-cc]])
+
+def get_cylindrical_bin_volume(
+        n_r_bins,
+        n_phi_bins,
+        n_z_bins,
+        min_r,
+        max_r,
+        min_phi,
+        max_phi,
+        min_z,
+        max_z):
+    """
+    Return the bin volumes for a cylindrical histogram.
+
+    Parameters
+    ----------
+    n_r_bins : :obj:`float`
+               Number of bins in ``r`` direction.
+    n_phi_bins : :obj:`float`
+               Number of bins in ``phi`` direction.
+    n_z_bins : :obj:`float`
+               Number of bins in ``z`` direction.
+    min_r : :obj:`float`
+            Minimum considered value in ``r`` direction.
+    max_r : :obj:`float`
+            Maximum considered value in ``r`` direction.
+    min_phi : :obj:`float`
+              Minimum considered value in ``phi`` direction.
+    max_phi : :obj:`float`
+              Maximum considered value in ``phi`` direction.
+    min_z : :obj:`float`
+            Minimum considered value in ``z`` direction.
+    max_z : :obj:`float`
+            Maximum considered value in ``z`` direction.
+
+    Returns
+    -------
+    array_like : Bin volumes.
+
+    """
+    bin_volume = np.zeros(n_r_bins)
+    r_bin_size = (max_r - min_r) / n_r_bins
+    phi_bin_size = (max_phi - min_phi) / n_phi_bins
+    z_bin_size = (max_z - min_z) / n_z_bins
+    for i in range(n_r_bins):
+        bin_volume[i] = np.pi * ((min_r + r_bin_size * (i + 1))**2.0 -
+                                 (min_r + r_bin_size * i)**2.0) * \
+            phi_bin_size / (2.0 * np.pi) * z_bin_size
+    return bin_volume

@@ -60,6 +60,7 @@
 /** Included needed by callbacks. */
 #include "cuda_init.hpp"
 #include "particle_data.hpp"
+
 #include "utils/serialization/array.hpp"
 
 /**************************************************
@@ -124,8 +125,8 @@ void mpi_finalize();
  * and node grid.
  */
 void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
-                              std::array<int, 3> const &periodicity = {1, 1,
-                                                                       1});
+                              std::array<int, 3> const &periodicity = {{1, 1,
+                                                                       1}});
 
 /** Issue REQ_EVENT: tells all clients of some system change.
     The events are:
@@ -258,7 +259,7 @@ void mpi_send_quat(int node, int part, double quat[4]);
     \param pnode the node it is attached to.
     \param rot the rotation flag
 */
-void mpi_send_rotation(int pnode, int part, int rot);
+void mpi_send_rotation(int pnode, int part, short int rot);
 
 /* Issue REQ_SET_LAMBDA: send particle angular velocity.
     Also calls \ref on_particle_change.
@@ -372,7 +373,7 @@ void mpi_remove_particle(int node, int id);
     \note Gets a copy of the particle data not a pointer to the actual particle
     used in integration
 */
-void mpi_recv_part(int node, int part, Particle *part_data);
+Particle mpi_recv_part(int node, int part);
 
 /** Issue REQ_INTEGRATE: start integrator.
     @param n_steps how many steps to do.
@@ -622,13 +623,10 @@ void mpi_external_potential_sum_energies_slave();
 std::vector<EspressoGpuDevice> mpi_gather_cuda_devices();
 #endif
 
-/** CPU Thermostat */
-void mpi_thermalize_cpu(int temp);
-
 /** MPI-IO output function.
  *  \param filename Filename prefix for the created files. Must be
  * null-terminated.
- *  \param fields Fields to dump (see mpiio_tcl.hpp).
+ *  \param fields Fields to dump.
  *  \param write 1 to write, 0 to read
  */
 void mpi_mpiio(const char *filename, unsigned fields, int write);
