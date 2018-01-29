@@ -325,9 +325,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
     ghmc_init();
 #endif
 
-  if (thermo_switch & THERMO_CPU)
-    mpi_thermalize_cpu(temperature);
-
   if (check_runtime_errors())
     return;
 

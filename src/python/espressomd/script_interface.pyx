@@ -152,9 +152,9 @@ cdef class PScriptInterface(object):
             return make_variant[string](to_char_pointer(value))
         elif type(value) == type(True):
             return make_variant[bool](value)
-        elif np.issubdtype(np.dtype(type(value)),int):
+        elif np.issubdtype(np.dtype(type(value)), np.signedinteger):
             return make_variant[int](value)
-        elif np.issubdtype(np.dtype(type(value)),float):
+        elif np.issubdtype(np.dtype(type(value)), np.floating):
             return make_variant[float](value)
         else:
             raise TypeError("Unkown type for conversion to Variant")

@@ -66,14 +66,6 @@ template <unsigned n, typename T> inline T int_pow(T x) {
 /** Calculate signum of val, if supported by T */
 template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
 
-/** \brief Transform the given 3D Vector to cylinder coordinates.
- */
-inline ::Vector<3, double>
-    transform_to_cylinder_coordinates(::Vector<3, double> const &pos) {
-  double r = std::sqrt(pos[0] * pos[0] + pos[1] * pos[1]);
-  double phi = std::atan2(pos[1], pos[0]);
-  return ::Vector<3, double>{r, phi, pos[2]};
-}
 } // Namespace Utils
 
 /*************************************************************/
@@ -136,7 +128,7 @@ inline double AS_erfc_part(double d) {
  * PI^10/39916800 * x^10 = 0.2346...*x^12).  This expansion should
  * also save time, since it reduces the number of function calls to
  * sin().
-*/
+ */
 inline double sinc(double d) {
   constexpr double epsi = 0.1;
 
@@ -242,6 +234,14 @@ inline void vec_rotate(double *axis, double alpha, double *vector,
               (cosa + SQR(a[2]) * (1 - cosa)) * vector[2];
 
   return;
+}
+
+/** rotates vector around axis by alpha */
+inline ::Vector<3, double> vec_rotate(::Vector<3, double> axis, double alpha,
+                                      ::Vector<3, double> vector) {
+  ::Vector<3, double> result;
+  vec_rotate(axis.data(), alpha, vector.data(), result.data());
+  return result;
 }
 
 /** Calc eigevalues of a 3x3 matrix stored in q as a 9x1 array*/
@@ -442,7 +442,7 @@ inline void get_grid_pos(int i, int *a, int *b, int *c, int adim[3]) {
 /** returns the distance between two position.
  *  \param pos1 Position one.
  *  \param pos2 Position two.
-*/
+ */
 inline double distance(double pos1[3], double pos2[3]) {
   return sqrt(SQR(pos1[0] - pos2[0]) + SQR(pos1[1] - pos2[1]) +
               SQR(pos1[2] - pos2[2]));
@@ -451,7 +451,7 @@ inline double distance(double pos1[3], double pos2[3]) {
 /** returns the distance between two positions squared.
  *  \param pos1 Position one.
  *  \param pos2 Position two.
-*/
+ */
 inline double distance2(double const pos1[3], double const pos2[3]) {
   return SQR(pos1[0] - pos2[0]) + SQR(pos1[1] - pos2[1]) +
          SQR(pos1[2] - pos2[2]);
@@ -706,7 +706,7 @@ template <typename T> int sign(T value) {
   return (T(0) < value) - (value < T(0));
 }
 
-} // namespace utils
+} // namespace Utils
 
 /*@}*/
 
