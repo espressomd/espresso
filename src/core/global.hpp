@@ -152,7 +152,8 @@ enum Fields {
   FIELD_LANGEVIN_ROT_SWITCH,
   /** index of \ref langevin_gamma_rotation in  \ref #fields */
   FIELD_LANGEVIN_GAMMA_ROTATION,
-  FIELD_FORCE_CAP
+  FIELD_FORCE_CAP,
+  FIELD_MAX_OIF_OBJECTS // soft objects as per the object-in-fluid method
 };
 /*@}*/
 

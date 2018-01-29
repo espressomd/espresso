@@ -37,6 +37,7 @@
 #include "rattle.hpp"
 #include "tuning.hpp"
 #include "utils/mpi/all_compare.hpp"
+#include "object-in-fluid/oif_global_forces.hpp" 
 
 #include <boost/functional/hash.hpp>
 
@@ -228,8 +229,13 @@ const std::unordered_map<int, Datafield> fields{
       {langevin_gamma_rotation.data(), Datafield::Type::DOUBLE, 3, "gamma_rot",
        1}}, /* 55 from thermostat.cpp */
 #endif
-     {FIELD_FORCE_CAP,
-      {&force_cap, Datafield::Type::DOUBLE, 1, "force_cap", 1}}}};
+#ifdef OIF_GLOBAL_FORCES
+     {FIELD_MAX_OIF_OBJECTS,
+       {&max_oif_objects, Datafield::Type::INT, 1, "max_oif_objects"}},
+#endif
+    {FIELD_FORCE_CAP,
+      {&force_cap, Datafield::Type::DOUBLE, 1, "force_cap", 1}}}
+      };
 
 std::size_t hash_value(Datafield const &field) {
   using boost::hash_range;

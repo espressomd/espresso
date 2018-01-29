@@ -716,6 +716,7 @@ class OifCell(object):
             raise TypeError("Rotate must be list of three floats.")
 
         self.cell_type = cell_type
+        self.cell_type.system.max_oif_objects =self.cell_type.system.max_oif_objects+1
         self.mesh = cell_type.mesh.copy(origin=origin, part_type=part_type, part_mass=part_mass, rotate=rotate)
         self.part_mass = part_mass
         self.part_type = part_type
@@ -756,7 +757,7 @@ class OifCell(object):
                                  self.mesh.neighbors[p.id].B.part_id, self.mesh.neighbors[p.id].C.part_id))
 
 
-
+    
     def get_origin(self):
         center = np.array([0.0, 0.0, 0.0])
         for p in self.mesh.points:

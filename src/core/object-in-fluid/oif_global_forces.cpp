@@ -357,3 +357,4 @@ void add_oif_global_forces(double *area_volume,
 }
 
 
+int max_oif_objects=0;

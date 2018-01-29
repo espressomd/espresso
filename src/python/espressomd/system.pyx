@@ -66,6 +66,10 @@ IF LEES_EDWARDS == 1:
 if VIRTUAL_SITES:
     setable_properties.append("virtual_sites")
 
+
+if OIF_GLOBAL_FORCES:
+    setable_properties.append("max_oif_objects")
+
 cdef bool _system_created = False
 
 cdef class System(object):
@@ -144,7 +148,6 @@ cdef class System(object):
     def __setstate__(self, params):
         for property_ in params.keys():
             System.__setattr__(self, property_, params[property_])
-
     property box_l:
         """
         Array like, list of three floats
@@ -398,7 +401,20 @@ cdef class System(object):
                 return self._active_virtual_sites_handle.implementation
 
     
-    
+    IF OIF_GLOBAL_FORCES:
+        property max_oif_objects:
+            """Maximum number of objects as per the object_in_fluid method.
+
+            """
+            
+            def __get__(self):
+                return max_oif_objects
+
+            def __set__(self,v):
+                global max_oif_objects
+                max_oif_objects=v
+                mpi_bcast_parameter(FIELD_MAX_OIF_OBJECTS)
+
     
     def change_volume_and_rescale_particles(self, d_new, dir="xyz"):
         """Change box size and rescale particle coordinates.

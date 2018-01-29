@@ -33,4 +33,5 @@ void add_oif_global_forces(double *area_volume, int molType);
 
 /************************************************************/
 
+extern int max_oif_objects;
 #endif
