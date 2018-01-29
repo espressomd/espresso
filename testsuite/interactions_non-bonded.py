@@ -218,7 +218,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
-            f1_ref = self.axis * tests_common.lj_cos_force((i + 1) * self.step_width,
+            f1_ref = self.axis * tests_common.lj_cos_force(espressomd, (i + 1) * self.step_width,
                                                    eps=ljcos_eps, sig=ljcos_sig, cutoff=ljcos_cut, offset=ljcos_offset)
 
             # Check that energies match, ...
@@ -257,7 +257,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
             f1_ref = self.axis * \
-                tests_common.lj_cos2_force(
+                tests_common.lj_cos2_force(espressomd, 
                     r=(i + 1) * self.step_width, eps=ljcos2_eps, sig=ljcos2_sig, offset=ljcos2_offset, width=ljcos2_width)
 
             # Check that energies match, ...

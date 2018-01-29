@@ -1,7 +1,7 @@
 # Tests if shape based constraints can be added to a system both by
 #  (1) defining a constraint object which is then added
 #  (2) and via keyword arguments.
-# Checks, that (Wall-)constraints with LJ interactions exert forces
+# Checks, that cylinder constraint with LJ interactions exert forces
 # on a test particle (that is, the constraints do what they should).
 
 from __future__ import division, print_function

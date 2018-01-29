@@ -148,7 +148,7 @@ def verify_lj_forces(system, tolerance, ids_to_skip=[]):
         d = norm(v_d)
 
         # calc and add expected lj force
-        f = lj_force(v_d, d, lj_params[p0.type,p1.type])
+        f = lj_force(espressomd, v_d, d, lj_params[p0.type,p1.type])
         f_expected[p0.id] += f
         f_expected[p1.id] -= f
     # Check actual forces agaisnt expected
@@ -330,12 +330,12 @@ def lj_cos_potential(r, eps, sig, cutoff, offset):
             (np.cos(alpha * np.power(r - offset, 2) + beta) - 1.)
     return V
 
-def lj_cos_force(r, eps, sig, cutoff, offset):
+def lj_cos_force(espressomd, r, eps, sig, cutoff, offset):
     f = 0.
     r_min = offset + np.power(2., 1. / 6.) * sig
     r_cut = cutoff + offset
     if (r < r_min):
-        f = lj_force(r, eps=eps, sig=sig,
+        f = lj_force(espressomd, r, eps=eps, sig=sig,
                           cutoff=cutoff, offset=offset)
     elif (r < r_cut):
         alpha = np.pi / \
@@ -358,12 +358,12 @@ def lj_cos2_potential(r, eps, sig, offset, width):
                                          (2. * width) * (r - r_min)), 2)
     return V
 
-def lj_cos2_force(r, eps, sig, offset, width):
+def lj_cos2_force(espressomd, r, eps, sig, offset, width):
     f = 0.
     r_min = offset + np.power(2., 1. / 6.) * sig
     r_cut = r_min + width
     if (r < r_min):
-        f = lj_force(r, eps=eps, sig=sig, cutoff=r_cut, offset=offset)
+        f = lj_force(espressomd, r, eps=eps, sig=sig, cutoff=r_cut, offset=offset)
     elif (r < r_cut):
         f = - np.pi * eps * \
             np.sin(np.pi * (r - r_min) / width) / (2. * width)
@@ -424,7 +424,7 @@ def morse_force(r, eps, alpha, cutoff, rmin=0):
 def buckingham_potential(r, a, b, c, d, cutoff, discont, shift):
     V = 0.
     if (r < discont):
-        m = - self.buckingham_force(
+        m = - buckingham_force(
             discont, a, b, c, d, cutoff, discont, shift)
         c = buckingham_potential(
             discont, a, b, c, d, cutoff, discont, shift) - m * discont
