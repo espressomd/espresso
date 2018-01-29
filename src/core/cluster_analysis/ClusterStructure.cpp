@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include "partCfg_global.hpp" 
+#include "utils/for_each_pair.hpp" 
 
 namespace ClusterAnalysis {
 
@@ -30,23 +31,16 @@ void ClusterStructure::run_for_all_pairs()
   // clear data structs
   clear();
   
-  // Iteraeover pairs
-  for (int i=0;i<=max_seen_particle;i++) {
-    if (! particle_exists(i)) continue;
-    for (int j=i+1;j<=max_seen_particle;j++) {
-      if (! particle_exists(j)) continue;
-      add_pair(partCfg()[i],partCfg()[j]); 
-    }
-  }
+  // Iterate over pairs
+  Utils::for_each_pair(partCfg().begin(),partCfg().end(),
+    [this](const Particle& p1, const Particle& p2) {this->add_pair(p1,p2);});
   merge_clusters();
 }
 
 void ClusterStructure::run_for_bonded_particles() {
 clear();
 partCfg().update_bonds();
-for (int i=0;i<=max_seen_particle;i++) {
-  if (particle_exists(i)) {
-    auto p=partCfg()[i];
+for (auto p : partCfg()) {
     int j=0;
     while (j<p.bl.n) {
       int bond_type=p.bl.e[j];
@@ -57,7 +51,7 @@ for (int i=0;i<=max_seen_particle;i++) {
       }
       // We are only here if bond has one partner
       add_pair(p,partCfg()[p.bl.e[j+1]]);
-      j+=2; // Type id + one prtner
+      j+=2; // Type id + one partner
     }
   }
 }
