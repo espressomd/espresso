@@ -2,6 +2,8 @@
 #define ANGLE_DIST_BOND_CLASS_H
 #include "ThreeParticleBond.hpp"
 
+#ifdef BOND_ANGLEDIST
+
 namespace Bond {
 
   class AngleDist : public ThreeParticleBond {
@@ -31,5 +33,7 @@ namespace Bond {
   };
 
 }
+
+#endif //BOND_ANGLE_DIST
 
 #endif
