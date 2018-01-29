@@ -58,7 +58,7 @@ class EnergyCriterion : public PairCriterion {
       // Interaction parameters for particle types
       IA_parameters *ia_params = get_ia_param(p1.p.type, p2.p.type);
       
-      return (calc_non_bonded_pair_energy(const_cast<Particle*>(&p1), const_cast<Particle*>(&p2), ia_params,
+      return (calc_non_bonded_pair_energy(&p1,&p2, ia_params,
                        vec21, dist_betw_part,dist_betw_part*dist_betw_part)) >= m_cut_off;
     };
     double get_cut_off() {
@@ -75,7 +75,7 @@ class EnergyCriterion : public PairCriterion {
 class BondCriterion : public PairCriterion {
   public: 
     bool decide(const Particle& p1, const Particle& p2) const override {
-      return bond_exists(&p1,&p2,m_bond_type) || bond_exists(&p2,&p1,m_bond_type);
+      return pair_bond_exists_on(&p1,&p2,m_bond_type) || pair_bond_exists_on(&p2,&p1,m_bond_type);
     };
     int get_bond_type() {
       return m_bond_type;
