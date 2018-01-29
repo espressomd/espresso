@@ -12,6 +12,7 @@ import espressomd
 
 from espressomd import interactions
 import espressomd.shapes as shapes
+import tests_common
 
 
 @ut.skipIf(not espressomd.has_features(["CONSTRAINTS", "LENNARD_JONES"]),
@@ -30,10 +31,6 @@ class ShapeBasedConstraintTest(ut.TestCase):
             epsilon=1.0, sigma=1.0, cutoff=2.0, shift=0)
         system.non_bonded_inter[0, 2].lennard_jones.set_params(
             epsilon=1.5, sigma=1.0, cutoff=2.0, shift=0)
-
-    def lj_force(self, eps, sig, r):
-        f_lj = 24.0 * eps * (2.0 * sig**12 / r**13 - sig**6 / r**7)
-        return f_lj
 
     def test_wall(self):
         system = espressomd.System()
@@ -61,15 +58,15 @@ class ShapeBasedConstraintTest(ut.TestCase):
         f_part = system.part[0].f
 
         self.assertEqual(f_part[0], 0.)
-        self.assertAlmostEqual(f_part[1], self.lj_force(
+        self.assertAlmostEqual(f_part[1], tests_common.lj_force(espressomd, cutoff=2.0, offset=0.,
             eps=1.0, sig=1.0, r=1.21), places=10)
-        self.assertAlmostEqual(f_part[2], self.lj_force(
+        self.assertAlmostEqual(f_part[2], tests_common.lj_force(espressomd, cutoff=2.0, offset=0.,
             eps=1.5, sig=1.0, r=0.83), places=10)
 
         #test forces on walls
-        self.assertAlmostEqual(-1.0*wall_xz.total_force()[1], self.lj_force(
+        self.assertAlmostEqual(-1.0*wall_xz.total_force()[1], tests_common.lj_force(espressomd, cutoff=2.0, offset=0.,
             eps=1.0, sig=1.0, r=1.21), places=10) #minus for newtons thrid law        
-        self.assertAlmostEqual(-1.0*wall_xy.total_force()[2], self.lj_force(
+        self.assertAlmostEqual(-1.0*wall_xy.total_force()[2], tests_common.lj_force(espressomd, cutoff=2.0, offset=0.,
             eps=1.5, sig=1.0, r=0.83), places=10)        
 
 

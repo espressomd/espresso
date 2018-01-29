@@ -12,7 +12,7 @@ import espressomd
 
 from espressomd import interactions
 import espressomd.shapes as shapes
-
+import tests_common
 
 @ut.skipIf(not espressomd.has_features(["CONSTRAINTS", "LENNARD_JONES"]),
            "Features not available, skipping test!")
@@ -31,10 +31,6 @@ class ShapeBasedConstraintTest(ut.TestCase):
         system.non_bonded_inter[0, 2].lennard_jones.set_params(
             epsilon=1.5, sigma=1.0, cutoff=2.0, shift=0)
 
-    def lj_force(self, eps, sig, r):
-        f_lj = 24.0 * eps * (2.0 * sig**12 / r**13 - sig**6 / r**7)
-        return f_lj
-
     def test_cylinder(self):
         system = espressomd.System()
         self.prepare(system)
@@ -49,7 +45,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
         system.integrator.run(0) #update forces
 
         #test forces on walls
-        self.assertAlmostEqual(-1.0*outer_cylinder_wall.total_force()[1], self.lj_force(
+        self.assertAlmostEqual(-1.0*outer_cylinder_wall.total_force()[1], tests_common.lj_force(espressomd, cutoff=2.0, offset=0.,
             eps=1.0, sig=1.0, r=1.02), places=10)  #minus for newtons thrid law   
 
 
