@@ -110,6 +110,16 @@ def generate_test_for_class(_system, _interClass, _params):
 
     return func
 
+def lj_force_vector(v_d, d, lj_params):
+    """Returns lj force for distance d and distance vecotr v_d based on the given lj_params.
+    Supports epsilon and cutoff."""
+
+    if d >= lj_params["cutoff"]:
+        return np.zeros(3)
+
+    return 4. * lj_params["epsilon"] * v_d * (-12.0 * d**-14 + 6.0 * d**-8)
+
+
 def verify_lj_forces(system, tolerance, ids_to_skip=[]):
     """Goes over all pairs of paritcles in system and compares the forces on them
        to what would be expected based on the systems lj parametes.
@@ -148,7 +158,7 @@ def verify_lj_forces(system, tolerance, ids_to_skip=[]):
         d = norm(v_d)
 
         # calc and add expected lj force
-        f = lj_force(espressomd, v_d, d, lj_params[p0.type,p1.type])
+        f = lj_force_vector(v_d, d, lj_params[p0.type,p1.type])
         f_expected[p0.id] += f
         f_expected[p1.id] -= f
     # Check actual forces agaisnt expected
