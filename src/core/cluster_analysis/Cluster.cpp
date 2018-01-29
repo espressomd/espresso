@@ -149,6 +149,7 @@ std::pair<double,double> Cluster::fractal_dimension(double dr) {
   return {c1,mean_sq_residual};
 #else
   runtimeErrorMsg()<< "GSL (gnu scientific library) is required for fractal dimension calculation.";
+  return {0,0};
 #endif
 }
 
