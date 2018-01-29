@@ -174,17 +174,24 @@ cdef class ReactionAlgorithm(object):
                         A dictionary of default charges for types that occur in the provided reaction.
 
         """
+        self._params["check_for_electroneutrality"]=True
         for k in self._required_keys_add():
             if k not in kwargs:
                 raise ValueError("At least the following keys have to be given as keyword arguments: " +
                                  self._required_keys_add().__str__() + " got " + kwargs.__str__())
             self._params[k] = kwargs[k]
+        
+        for k in self._valid_keys_add():
+            try:
+                self._params[k] = kwargs[k]
+            except:
+                pass    
         self._check_lengths_of_arrays()
         self._validate_params_default_charge()
         self._set_params_in_es_core_add()
 
     def _valid_keys_add(self):
-        return "equilibrium_constant", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges"
+        return "equilibrium_constant", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges", "check_for_electroneutrality"
 
     def _required_keys_add(self):
         return ["equilibrium_constant", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges"]
@@ -223,6 +230,16 @@ cdef class ReactionAlgorithm(object):
         if(isinstance(self._params["default_charges"], dict) == False):
             raise ValueError(
                 "No dictionary for relation between types and default charges provided.")
+        #check electroneutrality of the provided reaction
+        if(self._params["check_for_electroneutrality"]== True):
+            total_charge_change=0.0
+            for i in range(len(self._params["reactant_coefficients"])):
+                type=self._params["reactant_types"][i]
+                total_charge_change+=self._params["reactant_coefficients"][i]*self._params["default_charges"][type]
+            for j in range(len(self._params["product_coefficients"])):
+                total_charge_change+=self._params["product_coefficients"][j]*self._params["default_charges"][self._params["product_types"][j]]            
+            if abs(total_charge_change)>1e-10:
+                raise ValueError("Reaction system is not charge neutral")
 
     def reaction(self, reaction_steps=1):
         """
