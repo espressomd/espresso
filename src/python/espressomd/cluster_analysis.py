@@ -25,8 +25,10 @@ class Cluster(ScriptInterfaceHelper):
 
     fractal_dimension(dr=None):
         estimates the cluster's fractal dimension by fitting the number of particles
-        N(r) in a sphere of radius r by c*r^d, where d is the fractal dimensoin.
-        dr: increment for the radius when sampling N(r)
+        :math:`n` in spheres of growing radius around the cetner of mass
+        to :math:`c*r_g^d`, where :math:`r_g` is the radius of gyration of the particles 
+        witin the sphere, and :math:`d` is the fractal dimensoin.
+        `dr`: Minimum increment for the radius of the spheres. 
         Return value: (fractal_dimension, mean_square_residual)
     """
     _so_name = "ClusterAnalysis::Cluster"
@@ -43,8 +45,8 @@ class Cluster(ScriptInterfaceHelper):
 class ClusterStructure(ScriptInterfaceHelper):
     """Cluster structure of a simulation system, and access to cluster anaylsis
 
-    Attributes and methods:
-    ----------------------
+    Attributes
+    ----------
     pair_criterion: Instance of PairCriterion or derived classes
         Criterion to decide whether two particles are neighbors.
 
@@ -55,6 +57,8 @@ class ClusterStructure(ScriptInterfaceHelper):
         for pair in clusters:
         where pair contains the numeric id and the corresponding cluster object.
 
+    Methods 
+    -------
     cluster_ids()
         List of all cluster ids of the clusters in the structure
 

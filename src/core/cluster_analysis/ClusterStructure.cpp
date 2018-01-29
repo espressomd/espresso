@@ -53,7 +53,6 @@ for (auto p : partCfg()) {
       add_pair(p,partCfg()[p.bl.e[j+1]]);
       j+=2; // Type id + one partner
     }
-  }
 }
 merge_clusters();
 }

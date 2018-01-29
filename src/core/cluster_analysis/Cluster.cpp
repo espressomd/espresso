@@ -90,13 +90,13 @@ double Cluster::radius_of_gyration_subcluster(std::vector<int> &subcl_particle_i
 }
 
 template <typename T>
-std::vector<std::size_t> sort_indexes(const std::vector<T> &v) {
+std::vector<std::size_t> sort_indices(const std::vector<T> &v) {
 
-  // initialize original index locations
+  // Unsorted for unsorted vector (0..n-1)
   std::vector<std::size_t> idx(v.size());
   std::iota(idx.begin(), idx.end(), 0);
 
-  // sort indexes based on comparing values in v
+  // sort indices based on comparing values in v
   std::sort(idx.begin(), idx.end(),
        [&v](std::size_t i1, std::size_t i2) {return v[i1] < v[i2];});
   return idx;
@@ -106,8 +106,9 @@ std::vector<std::size_t> sort_indexes(const std::vector<T> &v) {
 std::pair<double,double> Cluster::fractal_dimension(double dr) {
 #ifdef GSL
   Vector3d com = center_of_mass();  
-// calculate Df using linear regression on the logarithms of diameters [__std::vector<double> diameters__] and num of particles [__std::vector<int> pcounts__] within the diameters
+// calculate Df using linear regression on the logarithms of the radii of gyration against the number of particles in sub-clusters. Particles are included step by step from the center of mass outwards
 
+  // Distnaces of particles from the center of mass
   std::vector<double> distances;
 
 
@@ -115,16 +116,18 @@ std::pair<double,double> Cluster::fractal_dimension(double dr) {
     double dist[3];
     get_mi_vector(dist, com.begin(), partCfg()[it].r.p); 
     distances.push_back(sqrt(sqrlen(dist))); //add distance from the current particle to the com in the distances vectors
-    // all_ids.push_back(partCfg[it].r.identity);
   }
 
 
-  auto particle_indices=sort_indexes(distances);
+  // Get particle indices in the cluster which yield distances  sorted in ascending order from center of mass.
+  auto particle_indices=sort_indices(distances);
 
 
+  // Particle ids in the current sub-cluster
   std::vector<int> subcluster_ids;
-  std::vector<double> log_pcounts;
-  std::vector<double> log_diameters;
+  
+  std::vector<double> log_pcounts; // particle count
+  std::vector<double> log_diameters; // corresponding radii of gyration
   double last_dist=0;
   for (auto const idx : particle_indices) {
     subcluster_ids.push_back(particles[idx]);
@@ -136,7 +139,7 @@ std::pair<double,double> Cluster::fractal_dimension(double dr) {
       continue;
     double current_rg=radius_of_gyration_subcluster(subcluster_ids);
     log_pcounts.push_back(log(subcluster_ids.size())); 
-    log_diameters.push_back(log(current_rg*2.0)); // this is not correct, rg should be instead of subcluster radii
+    log_diameters.push_back(log(current_rg*2.0));
   }
 // usage: Function: int gsl_fit_linear (const double * x, const size_t xstride, const double * y, const size_t ystride, size_t n, double * c0, double * c1, double * cov00, double * cov01, double * cov11, double * sumsq) 
   const int n=log_pcounts.size();
