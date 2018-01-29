@@ -216,7 +216,7 @@ void Bond::BondContainer::init_Vol_Con()
       m_ibm_vol_con_bonds[i]->m_volRef = VolumesCurrent[softID];
       mpi_bcast_ia_params(i, -1);
     };
-  };
-};
+  }; 
+}
 
 
