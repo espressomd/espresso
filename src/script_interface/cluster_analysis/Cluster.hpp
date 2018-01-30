@@ -59,7 +59,7 @@ public:
     }
     return false;
   }                              
-  void set_cluster(std::shared_ptr<::ClusterAnalysis::Cluster> c) {
+  void set_cluster(std::shared_ptr<::ClusterAnalysis::Cluster> &c) {
     m_cluster=c;
   }
 private:
