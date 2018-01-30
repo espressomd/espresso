@@ -49,7 +49,7 @@ class DDSGPUTest(ut.TestCase):
         
         part_dip = np.zeros((3))
         
-        for n in [ 110, 111, 540, 541 ]:
+        for n in [ 110, 111, 540, 541, 5946 ]:
             print("{0} particles".format(n))
             dipole_modulus = 1.3
             for i in range(n):
