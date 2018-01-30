@@ -5,34 +5,6 @@ matrix:
     - os: linux
       sudo: required
       services: docker
-      env: myconfig=default with_coverage=true
-    - os: linux
-      sudo: required
-      services: docker
-      env: myconfig=maxset with_coverage=true
-    - os: linux
-      sudo: required
-      services: docker
-      env: myconfig=maxset image=ubuntu-python3 python_version=3
-    - os: linux
-      sudo: required
-      services: docker
-      env: myconfig=maxset image=debian make_check=false
-    - os: linux
-      sudo: required
-      services: docker
-      env: myconfig=maxset image=ubuntu-cuda make_check=false
-    - os: linux
-      sudo: required
-      services: docker
-      env: myconfig=maxset image=opensuse make_check=false
-    - os: linux
-      sudo: required
-      services: docker
-      env: myconfig=maxset image=centos make_check=false
-    - os: linux
-      sudo: required
-      services: docker
       env: myconfig=nocheck-maxset make_check=false
 
 script:

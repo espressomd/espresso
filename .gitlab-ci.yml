@@ -11,6 +11,12 @@ stages:
 variables:
   GIT_STRATEGY: none
 
+.job_no_cuda: &no_cuda_job
+  stage: build
+  script:
+    - export with_cuda=false
+    - bash maintainer/travis/build_cmake.sh
+
 git_clone:
   stage: clone
   variables:
@@ -25,6 +31,45 @@ git_clone:
 status_pending:
   stage: prepare
   script: bash maintainer/gh_post_status.sh pending
+
+
+no_cuda_default:
+  script:
+    - export myconfig=default with_coverage=true
+  <<: *no_cuda_job
+
+no_cuda_maxset:
+  script:
+    - export myconfig=maxset with_coverage=true
+  <<: *no_cuda_job
+
+no_cuda_maxset_python3:
+  script:
+    - export myconfig=maxset python_version=3
+  <<: *no_cuda_job
+
+no_cuda_maxset_debian:
+  image: espressomd/espresso-debian:latest
+  script:
+    - export myconfig=maxset make_check=false
+  <<: *no_cuda_job
+
+no_cuda_maxset_opensuse:
+  image: espressomd/espresso-opensuse:latest
+  script:
+    - export myconfig=maxset make_check=false
+  <<: *no_cuda_job
+
+no_cuda_maxset_centos:
+  image: espressomd/espresso-centos:latest
+  script:
+    - export myconfig=maxset make_check=false
+  <<: *no_cuda_job
+
+no_cuda_nocheckmaxset:
+  script:
+    - export myconfig=nocheck-maxset make_check=false
+  <<: *no_cuda_job
 
 shanchen:
   stage: build
