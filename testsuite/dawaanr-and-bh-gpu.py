@@ -103,7 +103,7 @@ class BHGPUTest(ut.TestCase):
                 self.es.actors.remove(self.es.actors.active_actors[i])
             
             self.es.integrator.run(steps = 0,recalc_forces = True)
-            dds_gpu = DipolarBarnesHutGpu(prefactor = pf_dds_gpu, epssq = 100.0, itolsq = 8.0)
+            dds_gpu = DipolarBarnesHutGpu(prefactor = pf_dds_gpu, epssq = 200.0, itolsq = 8.0)
             self.es.actors.add(dds_gpu)
             self.es.integrator.run(steps = 0,recalc_forces = True)
             
