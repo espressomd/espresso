@@ -11,6 +11,7 @@ class RotationalInertia(ut.TestCase):
     longMessage = True
     # Handle for espresso system
     es = espressomd.System()
+    es.cell_system.skin = 0
 
     def define_rotation_matrix(self, part):
         A = np.zeros((3, 3))
@@ -40,9 +41,9 @@ class RotationalInertia(ut.TestCase):
         return self.es.part[part].omega_body[:] * \
             self.es.part[part].rinertia[:]
 
-    def test(self):
-        self.es.cell_system.skin = 0
-        self.es.part.add(pos=np.array([0.0, 0.0, 0.0]), id=0)
+    def test_stability(self):
+        self.es.part.clear()
+        self.es.part.add(pos=np.array([0.0, 0.0, 0.0]), id=0,rotation=(1,1,1))
 
         # Inertial motion around the stable and unstable axes
 
@@ -151,6 +152,29 @@ class RotationalInertia(ut.TestCase):
                         L_0_lab[k],
                         L_lab[k]))
             self.es.integrator.run(10)
+
+
+    
+    def energy(self,p):
+        return 0.5*np.dot(p.rinertia , p.omega_body**2)
+    def momentum(self,p):
+        return np.linalg.norm(p.rinertia * p.omega_body)
+
+    def test_energy_and_momentum_conservation(self):
+        es=self.es
+        es.part.clear()
+        es.thermostat.turn_off()
+        p=es.part.add(pos=(0,0,0),rinertia=(1.1,1.3,1.5),rotation=(1,1,1),omega_body=(2,1,4))
+        E0=self.energy(p)
+        m0=self.momentum(p)
+        es.time_step=0.001
+        for i in range(1000):
+            es.integrator.run(100)
+            self.assertAlmostEqual(self.energy(p),E0,places=3)
+            self.assertAlmostEqual(self.momentum(p),m0,places=3)
+
+        
+
 
 
 if __name__ == '__main__':

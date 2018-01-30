@@ -65,6 +65,7 @@ class RescaleTest(ut.TestCase):
                 max_diff = np.max(np.abs(new_pos[:, i] / old_pos[:, i] - scale))
             else:
                 max_diff = np.max(np.abs(new_pos[:, i] - old_pos[:, i]))
+
             self.assertAlmostEqual(0., max_diff, places=10)
 
     def test_x(self):

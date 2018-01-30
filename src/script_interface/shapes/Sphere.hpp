@@ -36,8 +36,6 @@ public:
                     {"direction", m_sphere->direction()}});
   }
 
-  const std::string name() const override { return "Shapes::Sphere"; }
-
   std::shared_ptr<::Shapes::Shape> shape() const override { return m_sphere; }
 
 private:

@@ -16,7 +16,7 @@ IF DIPOLES == 1:
             DIPOLAR_MDLC_DS,
             DIPOLAR_SCAFACOS
 
-        int dipolar_set_Dbjerrum(double bjerrum)
+        int dipolar_set_Dprefactor(double prefactor)
 
         ctypedef struct coulomb_parameters "Coulomb_parameters":
             double Dprefactor

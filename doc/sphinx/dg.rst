@@ -45,7 +45,7 @@ Required Development Tools
 -  To be able to access the development version of |es|, you will need
    the distributed versioning control system git_. 
 
--  The documentation is currently being converted from LaTeX to Sphinx. To build the old user and developer guides, you will need LaTeX. For building the sphinx documentation, you will need the Python packages listed in ``requirements.txt`` in the top-level source directory. To install them, issue::
+-  To build the sphinx documentation, you will need the Python packages listed in ``requirements.txt`` in the top-level source directory. To install them, issue::
       pip install --upgrade --user -r requirements.txt
 
    Note, that some distributions now use ``pip`` for Python3 and ``pip2`` for Python 2. 
@@ -136,7 +136,7 @@ Documentation
 The documentation of |es| consists of four parts:
 
   -  The users' guide and developers' guide are located in ``doc/sphinx``, and make use of the Sphinx Python package
-  -  In-code documentation for the Python interface is located in the various files in src/python/espressomd and also makes use of the Sphinx Python package. We also make use of the extensions in the numpydoc package and use the NumPy documentation style.
+  -  In-code documentation for the Python interface is located in the various files in src/python/espressomd and also makes use of the Sphinx Python package. We make use of the napolean extension and use the NumPy documentation style.
   -  In-code documentation of the C++ core is located in the .cpp and .hpp files in ``/src/core`` and its sub-directories and makes use of Doxygen.
 
 

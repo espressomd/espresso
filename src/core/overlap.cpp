@@ -59,7 +59,7 @@ int overlapped_bonded_set_params(int bond_type, OverlappedBondedInteraction over
   /* copy filename */
   size = strlen(filename);
   bonded_ia_params[bond_type].p.overlap.filename = (char*)Utils::malloc((size+1)*sizeof(char));
-  strcpy(bonded_ia_params[bond_type].p.overlap.filename,filename);
+  strncpy(bonded_ia_params[bond_type].p.overlap.filename,filename, size+1);
 
   fp = fopen( filename , "r");
   if ( !fp )

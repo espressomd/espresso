@@ -63,13 +63,13 @@ int meta_xi_num_bins = 100;
 double meta_xi_step = 1;
 
 /** Accumulated force array */
-double *meta_acc_force = NULL;
+double *meta_acc_force = nullptr;
 /** Accumulated free energy profile */
-double *meta_acc_fprofile = NULL;
+double *meta_acc_fprofile = nullptr;
 
-double *meta_cur_xi = NULL;
+double *meta_cur_xi = nullptr;
 double meta_val_xi = 0.;
-double *meta_apply_direction = NULL;
+double *meta_apply_direction = nullptr;
 
 void meta_init() {
   if (meta_switch == META_OFF)
@@ -77,7 +77,7 @@ void meta_init() {
 
   /* Initialize arrays if they're empty. These get freed upon calling the Tcl
    * parser */
-  if (meta_acc_force == NULL || meta_acc_fprofile == NULL) {
+  if (meta_acc_force == nullptr || meta_acc_fprofile == nullptr) {
     meta_acc_force = (double *)calloc(meta_xi_num_bins * sizeof *meta_acc_force,
                                       sizeof *meta_acc_force);
     meta_acc_fprofile =
@@ -109,8 +109,8 @@ void meta_perform() {
     return;
 
   double ppos1[3] = {0, 0, 0}, ppos2[3] = {0, 0, 0}, factor;
-  int img1[3], img2[3], c, i, np, flag1 = 0, flag2 = 0;
-  Particle *p, *p1 = NULL, *p2 = NULL;
+  int img1[3], img2[3], flag1 = 0, flag2 = 0;
+  Particle *p1 = nullptr, *p2 = nullptr;
 
   for (auto &p : local_cells.particles()) {
     if (p.p.identity == meta_pid1) {
@@ -151,7 +151,7 @@ void meta_perform() {
   * Marsili etal., J Comp. Chem, 31 (2009).
   * Instead of gaussians, we use so-called Lucy's functions */
 
-  for (i = 0; i < meta_xi_num_bins; ++i) {
+  for (int i = 0; i < meta_xi_num_bins; ++i) {
     if (meta_switch == META_DIST) {
       // reaction coordinate value
       meta_val_xi = sqrt(sqrlen(meta_cur_xi));
@@ -197,7 +197,7 @@ void meta_perform() {
     factor = meta_f_bound * (meta_val_xi - meta_xi_max) / meta_xi_step;
   } else {
     // within the RC interval
-    i = (int)dround((meta_val_xi - meta_xi_min) / meta_xi_step);
+    int i = (int)dround((meta_val_xi - meta_xi_min) / meta_xi_step);
     if (i < 0)
       i = 0;
     if (i >= meta_xi_num_bins)
@@ -206,7 +206,7 @@ void meta_perform() {
   }
 
   /* cancel previous force to external force of particle */
-  for (i = 0; i < 3; ++i) {
+  for (int i = 0; i < 3; ++i) {
     p1->f.f[i] += factor * meta_apply_direction[i];
     p2->f.f[i] += -1. * factor * meta_apply_direction[i];
   }

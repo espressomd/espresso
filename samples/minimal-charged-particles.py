@@ -62,7 +62,7 @@ int_n_times = 10
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
     cutoff=lj_cut, shift="auto")
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 
 
 # Particle setup
@@ -84,23 +84,23 @@ for i in range(n_part / 2 - 1):
 #############################################################
 
 lj_cap = 20
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 i = 0
-act_min_dist = system.analysis.mindist()
+act_min_dist = system.analysis.min_dist()
 while (i < warm_n_times and act_min_dist < min_dist):
     system.integrator.run(warm_steps)
     # Warmup criterion
-    act_min_dist = system.analysis.mindist()
+    act_min_dist = system.analysis.min_dist()
     i += 1
     lj_cap = lj_cap + 10
-    system.non_bonded_inter.set_force_cap(lj_cap)
+    system.force_cap = lj_cap
 
 lj_cap = 0
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 
 # P3M setup after charge assigned
 #############################################################
-p3m = electrostatics.P3M(bjerrum_length=1.0, accuracy=1e-2)
+p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
 system.actors.add(p3m)
 
 
