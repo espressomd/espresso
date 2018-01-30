@@ -69,8 +69,8 @@ TUNABLE_SLIP
 /* Lattice-Boltzmann features */
 LB
 LB_GPU                          requires CUDA
-LB_BOUNDARIES                   implies LB, CONSTRAINTS
-LB_BOUNDARIES_GPU               implies LB_GPU, CONSTRAINTS
+LB_BOUNDARIES                   requires LB
+LB_BOUNDARIES_GPU               requires LB_GPU
 LB_ELECTROHYDRODYNAMICS         implies LB
 ELECTROKINETICS                 implies LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
 ELECTROKINETICS                 requires CUDA

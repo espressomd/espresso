@@ -90,9 +90,9 @@ inline void add_ljcos2_pair_force(const Particle *const p1,
 }
 
 /** calculate lj-cos2 energy between particle p1 and p2. */
-inline double ljcos2_pair_energy(Particle *p1, Particle *p2,
-                                 IA_parameters *ia_params, double d[3],
-                                 double dist) {
+inline double ljcos2_pair_energy(const Particle *p1, const Particle *p2,
+                                 const IA_parameters *ia_params,
+                                 const double d[3], double dist) {
   double r_off, frac2, frac6;
 
   if ((dist < ia_params->LJCOS2_cut + ia_params->LJCOS2_offset)) {
