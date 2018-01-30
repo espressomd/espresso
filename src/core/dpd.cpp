@@ -29,20 +29,6 @@
 #include "random.hpp"
 #include "thermostat.hpp"
 
-#ifdef LEES_EDWARDS
-/** Chatterjee 2007 proposes that for DPD with Lees Edwards BCs,
- *  it is better not to count interactions with Ghost particles. */
-static bool le_chatterjee_test_pair(Particle *p1, Particle *p2) {
-  /* cannot assume that we have a flag set to mark ghost particles,
-   * but can assume (for LE) that non-ghost
-   * particle y-coords are always imaged inside the box */
-  if (p2->l.ghost or p1->l.ghost)
-    return false;
-  else
-    return true;
-}
-#endif
-
 void dpd_heat_up() {
   double pref_scale = sqrt(3);
   dpd_update_params(pref_scale);
@@ -138,11 +124,6 @@ void add_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
          noise_vec[3];
   double f_D[3], f_R[3];
   double tmp;
-
-#ifdef LEES_EDWARDS
-  if (le_chatterjee_test_pair(p1, p2))
-    return;
-#endif
 
   auto const dist_inv = 1.0 / dist;
 
