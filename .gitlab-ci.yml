@@ -33,21 +33,21 @@ no_cuda_default:
   script:
     - export with_cuda=false
     - export myconfig=default with_coverage=true
-    - bash maintainer/travis/build_cmake.sh
+    - bash maintainer/CI/build_cmake.sh
 
 no_cuda_maxset:
   stage: build
   script:
     - export with_cuda=false
     - export myconfig=maxset with_coverage=true
-    - bash maintainer/travis/build_cmake.sh
+    - bash maintainer/CI/build_cmake.sh
 
 no_cuda_maxset_python3:
   stage: build
   script:
     - export with_cuda=false
     - export myconfig=maxset python_version=3
-    - bash maintainer/travis/build_cmake.sh
+    - bash maintainer/CI/build_cmake.sh
 
 no_cuda_maxset_debian:
   stage: build
@@ -55,7 +55,7 @@ no_cuda_maxset_debian:
   script:
     - export with_cuda=false
     - export myconfig=maxset make_check=false
-    - bash maintainer/travis/build_cmake.sh
+    - bash maintainer/CI/build_cmake.sh
 
 no_cuda_maxset_opensuse:
   stage: build
@@ -63,7 +63,7 @@ no_cuda_maxset_opensuse:
   script:
     - export with_cuda=false
     - export myconfig=maxset make_check=false
-    - bash maintainer/travis/build_cmake.sh
+    - bash maintainer/CI/build_cmake.sh
 
 no_cuda_maxset_centos:
   stage: build
@@ -71,14 +71,14 @@ no_cuda_maxset_centos:
   script:
     - export with_cuda=false
     - export myconfig=maxset make_check=false
-    - bash maintainer/travis/build_cmake.sh
+    - bash maintainer/CI/build_cmake.sh
 
 no_cuda_nocheckmaxset:
   stage: build
   script:
     - export with_cuda=false
     - export myconfig=nocheck-maxset make_check=false
-    - bash maintainer/travis/build_cmake.sh
+    - bash maintainer/CI/build_cmake.sh
 
 shanchen:
   stage: build
@@ -107,7 +107,7 @@ osx:
   stage: build
   script:
     - export myconfig=maxset with_cuda=false
-    - bash maintainer/travis/build_cmake.sh
+    - bash maintainer/CI/build_cmake.sh
   tags:
     - mac
 
@@ -115,7 +115,7 @@ osx-python3:
   stage: build
   script:
     - export myconfig=maxset with_cuda=false python_version=3
-    - bash maintainer/travis/build_cmake.sh
+    - bash maintainer/CI/build_cmake.sh
   tags:
     - mac
 
@@ -123,7 +123,7 @@ osx-cuda:
   stage: build
   script:
     - export myconfig=maxset with_cuda=true make_check=false
-    - bash maintainer/travis/build_cmake.sh
+    - bash maintainer/CI/build_cmake.sh
   tags:
     - mac
 

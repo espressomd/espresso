@@ -54,7 +54,7 @@ function cmd {
 [ -z "$with_cuda" ] && with_cuda="true"
 
 if [[ ! -z ${with_coverage+x} ]]; then
-  bash <(curl -s https://codecov.io/env)
+  bash <(curl -s https://codecov.io/env) &> /dev/null;
 fi
 
 cmake_params="-DPYTHON_EXECUTABLE=$(which python$python_version) -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params"
@@ -65,7 +65,7 @@ elif [ -z "$builddir" ]; then
     builddir=$srcdir/build
 fi
 
-outp insource srcdir builddir \
+outp insource srcdir builddir make_check \
     cmake_params with_fftw \
     with_python_interface with_coverage \
     with_static_analysis myconfig \
