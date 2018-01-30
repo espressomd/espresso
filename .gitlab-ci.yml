@@ -44,6 +44,7 @@ no_cuda_maxset:
 
 no_cuda_maxset_python3:
   stage: build
+  image: espressomd/espresso-ubuntu-python3
   script:
     - export with_cuda=false
     - export myconfig=maxset python_version=3
