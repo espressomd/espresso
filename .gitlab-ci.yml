@@ -11,11 +11,6 @@ stages:
 variables:
   GIT_STRATEGY: none
 
-.job_no_cuda: &no_cuda_job
-  stage: build
-  script:
-    - export with_cuda=false
-    - bash maintainer/travis/build_cmake.sh
 
 git_clone:
   stage: clone
@@ -34,41 +29,56 @@ status_pending:
 
 
 no_cuda_default:
+  stage: build
   script:
+    - export with_cuda=false
     - export myconfig=default with_coverage=true
-  <<: *no_cuda_job
+    - bash maintainer/travis/build_cmake.sh
 
 no_cuda_maxset:
+  stage: build
   script:
+    - export with_cuda=false
     - export myconfig=maxset with_coverage=true
-  <<: *no_cuda_job
+    - bash maintainer/travis/build_cmake.sh
 
 no_cuda_maxset_python3:
+  stage: build
   script:
+    - export with_cuda=false
     - export myconfig=maxset python_version=3
-  <<: *no_cuda_job
+    - bash maintainer/travis/build_cmake.sh
 
 no_cuda_maxset_debian:
+  stage: build
   image: espressomd/espresso-debian:latest
   script:
+    - export with_cuda=false
     - export myconfig=maxset make_check=false
-  <<: *no_cuda_job
+    - bash maintainer/travis/build_cmake.sh
 
 no_cuda_maxset_opensuse:
+  stage: build
   image: espressomd/espresso-opensuse:latest
   script:
+    - export with_cuda=false
     - export myconfig=maxset make_check=false
-  <<: *no_cuda_job
+    - bash maintainer/travis/build_cmake.sh
 
 no_cuda_maxset_centos:
+  stage: build
   image: espressomd/espresso-centos:latest
-  <<: *no_cuda_job
+  script:
+    - export with_cuda=false
     - export myconfig=maxset make_check=false
+    - bash maintainer/travis/build_cmake.sh
 
 no_cuda_nocheckmaxset:
+  stage: build
   script:
+    - export with_cuda=false
     - export myconfig=nocheck-maxset make_check=false
-  <<: *no_cuda_job
+    - bash maintainer/travis/build_cmake.sh
 
 shanchen:
   stage: build
