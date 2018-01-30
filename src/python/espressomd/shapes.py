@@ -27,17 +27,17 @@ class Ellipsoid(ScriptInterfaceHelper):
     """
     An ellipsoid.
 
-    For now only prolate ellipsoids of revolution are supported.
-    The long semiaxis is parallel to the x-direction.
+    For now only ellipsoids of revolution are supported.
+    The symmetry axis is aligned parallel to the x-direction.
 
     Attributes
     ----------
     center : :obj:`array_like`
        Coordinates of the center of the ellipsoid.
     a : :obj:`float`
-       Long (axial) semiaxis.
+       Semiaxis along the axis of rotational symmetry.
     b : :obj:`float`
-       Short (equatorial) semiaxis.
+       Equatorial semiaxes.
     direction : int
        Surface orientation, for +1 the normal points
        out of the mantel, for -1 it points inward.

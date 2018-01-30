@@ -45,6 +45,7 @@ create a wall shape you could do::
 Available shapes are listed below.
 
     - :class:`espressomd.shapes.Cylinder`
+    - :class:`espressomd.shapes.Ellipsoid`
     - :class:`espressomd.shapes.HollowCone`
     - :class:`espressomd.shapes.Maze`
     - :class:`espressomd.shapes.Pore`
@@ -223,6 +224,25 @@ Pictured is an example cosntraint with a ``Sphere`` shape created with ::
   
     sphere = Sphere(center=[25,25,25], radius = 15, direction = 1 )
     system.constraints.add(shape=sphere, particle_type=0)
+
+
+:class:`espressomd.shapes.Ellipsoid`
+    An ellipsoid.
+
+The resulting surface is an ellipsoid of revolution with center ``center``, semiaxis ``a`` along the symmetry axis. and equatorial semiaxes ``b``. The symmetry axis is aligned parallel to the x-axis.
+The direction ``direction`` determines the force direction, ``-1`` or for inward and ``+1`` for outward. The distance to the surface is determined iteratively via Newton's method.
+
+.. _shape-ellipsoid:
+
+.. figure:: figures/shape-ellipsoid.png
+   :alt: Example constraint with an ``Ellipsoid`` shape.
+   :align: center
+   :height: 6.00000cm
+
+Pictured is an example constraint with an ``Ellipsoid`` shape created with ::
+
+    ellipsoid = Ellipsoid(center=[25,25,25], a=25, b=15)
+    system.constraints.add(shape=ellipsoid, particle_type=0)
 
 
 :class:`espressomd.shapes.Cylinder`

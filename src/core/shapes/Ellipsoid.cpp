@@ -29,10 +29,10 @@ namespace Shapes {
 int Ellipsoid::calculate_dist(const double *ppos, double *dist,
                               double *vec) const {
 
-  // get particle position in reference frame of ellipsoid
+  /* get particle position in reference frame of ellipsoid */
   Vector3d const ppos_e = Vector3d(ppos, ppos + 3) - m_center;
 
-  // set appropriate initial point for Newton's method
+  /* set appropriate initial point for Newton's method */
   double l0, l = 0.;
   int distance_prefactor = -1;
   if (not inside_ellipsoid(ppos_e)) {
@@ -40,7 +40,7 @@ int Ellipsoid::calculate_dist(const double *ppos, double *dist,
     distance_prefactor = 1;
   }
 
-  // find root via Newton's method
+  /* find root via Newton's method */
   double eps = 10.;
   int step = 0;
   while ((eps >= 1e-12) and (step < 100)) {
@@ -55,7 +55,7 @@ int Ellipsoid::calculate_dist(const double *ppos, double *dist,
                    "distance to Ellipsoid.");
   }
 
-  /* calulate dist and vec */
+  /* calculate dist and vec */
   double distance = 0.;
   for (int i = 0; i < 3; i++) {
     vec[i] =
