@@ -41,7 +41,7 @@ class BHGPUTest(ut.TestCase):
         pf_dds_gpu = 2.34
         pf_dawaanr = 3.524
         ratio_dawaanr_bh_gpu = pf_dawaanr / pf_dds_gpu
-        l = 15
+        l = 30
         self.es.box_l = [l, l, l]
         self.es.periodicity = [0, 0, 0]
         self.es.time_step = 1E-4
