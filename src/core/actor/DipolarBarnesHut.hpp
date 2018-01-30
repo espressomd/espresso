@@ -21,6 +21,7 @@
 
 #ifdef DIPOLAR_BARNES_HUT
 
+#include "errorhandling.hpp"
 #include "SystemInterface.hpp"
 #include "EspressoSystemInterface.hpp"
 #include <iostream>
@@ -63,7 +64,10 @@ public:
 	buildTreeBH(m_bh_data.blocks);
 	summarizeBH(m_bh_data.blocks);
 	sortBH(m_bh_data.blocks);
-	forceBH(m_bh_data.blocks,k,s.fGpuBegin(),s.torqueGpuBegin());
+	if (forceBH(&m_bh_data,k,s.fGpuBegin(),s.torqueGpuBegin())) {
+	     fprintf(stderr, "forceBH: some of kernels encounter the algorithm functional error");
+	     errexit();
+	}
   };
   void computeEnergy(SystemInterface &s) {
     fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(), m_bh_data);
@@ -72,7 +76,10 @@ public:
     buildTreeBH(m_bh_data.blocks);
     summarizeBH(m_bh_data.blocks);
     sortBH(m_bh_data.blocks);
-    energyBH(m_bh_data.blocks,k,(&(((CUDA_energy*)s.eGpu())->dipolar)));
+    if (energyBH(&m_bh_data,k,(&(((CUDA_energy*)s.eGpu())->dipolar)))) {
+             fprintf(stderr, "energyBH: some of kernels encounter the algorithm functional error");
+             errexit();
+    }
  };
 
 protected:

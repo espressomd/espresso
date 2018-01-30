@@ -312,7 +312,8 @@ void treeBuildingKernel()
 			// until other threads will unlock this cell for either a body insertion and/or new octant level cells creation.
 				if (ch == -2) {
 				    // Cannot be here..
-					printf("Error: ch = -2\n");
+					//printf("Error: ch = -2\n");
+				    *errd = 1;
 					break;
 				}
 				if (ch == -1) {
@@ -354,7 +355,7 @@ void treeBuildingKernel()
 						r *= 0.5f;
 
 						// Init the node weight coefficients.
-						// Note: particles has mass=1.0 defined in the Espresso System Interface.
+						// Note: particles has mass=1.0 is defined in allocBHmemCopy().
 						massd[cell] = -1.0f;
 
 						// The startd array is crucial for the sortKernel.
@@ -1035,23 +1036,28 @@ void sortBH(int blocks) {
 }
 
 // Force calculation.
-void forceBH(int blocks, dds_float k, float* f, float* torque) {
-	dim3 grid(1,1,1);
+int forceBH(BHData* bh_data, dds_float k, float* f, float* torque) {
+    int error_code = 0;
+    dim3 grid(1,1,1);
 	dim3 block(1,1,1);
 
-	grid.x = blocks * FACTOR5;
+	grid.x = bh_data->blocks * FACTOR5;
 	block.x = THREADS5;
 
 	KERNELCALL(forceCalculationKernel,grid,block,(k, f, torque));
 	cuda_safe_mem(cudaThreadSynchronize());
+
+    cuda_safe_mem(cudaMemcpy(&error_code,bh_data->err,sizeof(int),cudaMemcpyDeviceToHost));
+    return error_code;
 }
 
 // Energy calculation.
-void energyBH(int blocks, dds_float k, float* E) {
+int energyBH(BHData* bh_data, dds_float k, float* E) {
+    int error_code = 0;
 	dim3 grid(1,1,1);
 	dim3 block(1,1,1);
 
-	grid.x = blocks * FACTOR5;
+	grid.x = bh_data->blocks * FACTOR5;
 	block.x = THREADS5;
 
 
@@ -1070,6 +1076,8 @@ void energyBH(int blocks, dds_float k, float* E) {
 	cuda_safe_mem(cudaMemcpy(E,&x,sizeof(float),cudaMemcpyHostToDevice));
 
 	cuda_safe_mem(cudaFree(energySum));
+	cuda_safe_mem(cudaMemcpy(&error_code,bh_data->err,sizeof(int),cudaMemcpyDeviceToHost));
+	return error_code;
 }
 
 // Function to set the BH method parameters.
