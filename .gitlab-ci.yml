@@ -1,6 +1,7 @@
 image: espressomd/espresso-ubuntu-cuda:latest
 
 stages:
+  - permission
   - clone
   - prepare
   - build
@@ -11,6 +12,14 @@ stages:
 variables:
   GIT_STRATEGY: none
 
+check_permission:
+  stage: permission
+  only:
+    - /.*external.*/
+  when: manual
+  allow_failure: false
+  script:
+    - exit 0
 
 git_clone:
   stage: clone
