@@ -54,7 +54,7 @@ function cmd {
 [ -z "$with_cuda" ] && with_cuda="true"
 
 if [[ ! -z ${with_coverage+x} ]]; then
-  bash <(curl -s https://codecov.io/env)`
+  bash <(curl -s https://codecov.io/env)
 fi
 
 cmake_params="-DPYTHON_EXECUTABLE=$(which python$python_version) -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params"
