@@ -62,9 +62,8 @@ no_cuda_maxset_opensuse:
 
 no_cuda_maxset_centos:
   image: espressomd/espresso-centos:latest
-  script:
-    - export myconfig=maxset make_check=false
   <<: *no_cuda_job
+    - export myconfig=maxset make_check=false
 
 no_cuda_nocheckmaxset:
   script:
