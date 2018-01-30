@@ -249,7 +249,7 @@ int p3m_set_ninterpol(int n);
 
 
 /** Calculate real space contribution of coulomb pair energy. */
-inline double p3m_pair_energy(double chgfac, double *d,double dist2,double dist)
+inline double p3m_pair_energy(double chgfac, double dist)
 {
   double adist, erfc_part_ri;
 

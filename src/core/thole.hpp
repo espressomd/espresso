@@ -72,8 +72,8 @@ inline void add_thole_pair_force(const Particle * const p1, const Particle * con
 }
 
 
-inline double thole_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
-        double d[3], double dist)
+inline double thole_pair_energy(const Particle *p1, const Particle *p2, const IA_parameters *ia_params,
+        const double d[3], double dist)
 {
     double e_thole = 0;
 
@@ -90,12 +90,12 @@ inline double thole_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_pa
         double chgfac = p1->p.q*p2->p.q;
 
         //Subtract p3m shortrange energy
-        e_thole += p3m_pair_energy(-chgfac, d, dist2, dist);
+        e_thole += p3m_pair_energy(-chgfac, dist);
 
         //Add damped p3m shortrange energy
         double sd = thole_s*dist;
         double S_r = 1.0 - (1.0 + sd/2.0) * exp(-sd); 
-        e_thole += p3m_pair_energy(thole_q1q2*S_r, d, dist2, dist);
+        e_thole += p3m_pair_energy(thole_q1q2*S_r, dist);
     }
     return e_thole;
 

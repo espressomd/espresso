@@ -72,7 +72,7 @@ inline int bonded_coulomb_p3m_sr_pair_energy(Particle *p1, Particle *p2, Bonded_
 {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
-  *_energy = p3m_pair_energy(iaparams->p.bonded_coulomb_p3m_sr.q1q2, dx, dist2, dist);
+  *_energy = p3m_pair_energy(iaparams->p.bonded_coulomb_p3m_sr.q1q2, dist);
 
   return 0;
 }

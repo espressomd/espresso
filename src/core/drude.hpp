@@ -94,7 +94,7 @@ inline int calc_drude_forces(Particle *p1, Particle *p2, Bonded_ia_parameters *i
 }
 
 
-inline int drude_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double *_energy)
+inline int drude_energy(const Particle *p1, const Particle *p2, const Bonded_ia_parameters *iaparams, double dx[3], double *_energy)
 {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
@@ -103,7 +103,7 @@ inline int drude_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *iapara
   if (iaparams->p.drude.r_cut > 0.0 && dist > iaparams->p.drude.r_cut) 
     return 1;
    //Harmonic, subtract drude-core shortrange energy
-  *_energy = 0.5*iaparams->p.drude.k*dist2 + p3m_pair_energy(-chgfac, dx, dist2, dist);
+  *_energy = 0.5*iaparams->p.drude.k*dist2 + p3m_pair_energy(-chgfac, dist);
   
   return 0;
 }

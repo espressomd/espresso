@@ -95,8 +95,8 @@
     @param dist2     distance squared between p1 and p2.
     @return the short ranged interaction energy between the two particles
 */
-inline double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
-                                          IA_parameters *ia_params, double d[3],
+inline double calc_non_bonded_pair_energy(const Particle *p1, const Particle *p2,
+                                          const IA_parameters *ia_params, const double d[3],
                                           double dist, double dist2) {
   double ret = 0;
 
@@ -220,10 +220,10 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 #ifdef P3M
     case COULOMB_P3M_GPU:
     case COULOMB_P3M:
-      ret = p3m_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
+      ret = p3m_pair_energy(p1->p.q * p2->p.q, dist);
       break;
     case COULOMB_ELC_P3M:
-      ret = p3m_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
+      ret = p3m_pair_energy(p1->p.q * p2->p.q, dist);
       if (elc_params.dielectric_contrast_on)
         ret += 0.5 * ELC_P3M_dielectric_layers_energy_contribution(p1, p2);
       break;
