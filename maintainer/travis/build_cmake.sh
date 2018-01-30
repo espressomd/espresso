@@ -49,6 +49,7 @@ function cmd {
 [ -z "$build_procs" ] && build_procs=2
 [ -z "$make_check" ] && make_check="true"
 [ -z "$python_version" ] && python_version="2"
+[ -z "$with_cuda" ] && with_cuda="true"
 
 cmake_params="-DPYTHON_EXECUTABLE=$(which python$python_version) -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params"
 
@@ -97,12 +98,10 @@ if ! $insource; then
     if [ ! -d $builddir ]; then
         echo "Creating $builddir..."
         mkdir -p $builddir
+        cd $builddir
     fi
 fi
 
-if ! $insource; then
-    cd $builddir
-fi
 
 # load MPI module if necessary
 if [ -f "/etc/os-release" ]; then
@@ -114,7 +113,7 @@ fi
 start "CONFIGURE"
 
 if [ $with_fftw = "true" ]; then
-    cmake_params="$cmake_params"
+    :
 else
     cmake_params="-DCMAKE_DISABLE_FIND_PACKAGE_FFTW3=ON $cmake_params"
 fi
@@ -131,6 +130,12 @@ fi
 
 if [ $with_static_analysis = "true" ]; then
     cmake_params="-DWITH_CLANG_TIDY=ON $cmake_params"
+fi
+
+if [ $with_cuda = "true" ]; then
+    :
+else
+    cmake_params="-DWITH_CUDA=OFF $cmake_params"
 fi
 
 MYCONFIG_DIR=$srcdir/maintainer/configs
