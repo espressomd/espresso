@@ -142,7 +142,7 @@ void boundingBoxKernel()
 	i = threadIdx.x;
 	inc = THREADS1 * gridDim.x;
 	// j is an absolute index of the particle.
-	// It is shiftd over a count of the passed block threads behind: blockIdx.x * THREADS1.
+	// It is shifted over a count of the passed block threads behind: blockIdx.x * THREADS1.
 	// NOTE: this loop is extrema search among all particles of the given thread
 	// in the present block. However, one is not among all threads of this block.
 	for (j = i + blockIdx.x * THREADS1; j < nbodiesd; j += inc)

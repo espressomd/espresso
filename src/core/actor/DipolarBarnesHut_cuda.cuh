@@ -62,8 +62,6 @@ typedef struct
    int *start;
 } BHData;
 
-#define SHARED_ARRAY_BH 512
-
 // thread count for different kernels (see kernel calls from below functions).
 #define THREADS1 512
 #define THREADS2 1024
