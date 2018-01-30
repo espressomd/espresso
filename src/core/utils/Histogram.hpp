@@ -23,14 +23,16 @@
 #include "constants.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <functional>
 #include <numeric>
 #include <vector>
-#include <cmath>
+
 
 namespace Utils {
 
-inline size_t calculate_bin_index(double value, double bin_size, double offset) {
+inline size_t calculate_bin_index(double value, double bin_size,
+                                  double offset) {
   return std::floor((value - offset) / bin_size);
 }
 
@@ -247,12 +249,10 @@ template <typename T> void Histogram<T>::do_normalize() {
   T bin_volume = std::accumulate(m_bin_sizes.begin(), m_bin_sizes.end(),
                                  static_cast<T>(1.0), std::multiplies<T>());
   std::transform(m_hist.begin(), m_hist.end(), m_hist.begin(),
-                 [this, bin_volume](T v) { return v / bin_volume;});
+                 [this, bin_volume](T v) { return v / bin_volume; });
 }
 
-
-template <typename T>
-class CylindricalHistogram : public Histogram<T> {
+template <typename T> class CylindricalHistogram : public Histogram<T> {
 public:
   using Histogram<T>::Histogram;
   using Histogram<T>::get_n_bins;

@@ -344,7 +344,6 @@ std::map<int, int> ReactionAlgorithm::save_old_particle_numbers(int reaction_id)
   for (int i=0; i<reactions[reaction_id].reactant_types.size(); ++i){
     int type=reactions[reaction_id].reactant_types[i];
     old_particle_numbers[type]=number_of_particles_with_type(type);
-    
   }
   
   //products
@@ -554,20 +553,21 @@ int ReactionAlgorithm::delete_particle(int p_id) {
 */
 
   /**deletes the particle with the provided id  */
-  if (p_id == max_seen_particle) {
+  int old_max_seen_id= max_seen_particle;
+  if (p_id == old_max_seen_id) {
     // last particle, just delete
     remove_particle(p_id);
     // remove all saved empty p_ids which are greater than the max_seen_particle
     // this is needed in order to avoid the creation of holes
     for (auto p_id_iter = m_empty_p_ids_smaller_than_max_seen_particle.begin();
          p_id_iter != m_empty_p_ids_smaller_than_max_seen_particle.end();) {
-      if ((*p_id_iter) >= max_seen_particle)
+      if ((*p_id_iter) >= old_max_seen_id)
         p_id_iter = m_empty_p_ids_smaller_than_max_seen_particle.erase(
             p_id_iter); // update iterator after container was modified
       else
         ++p_id_iter;
     }
-  } else if (p_id <= max_seen_particle) {
+  } else if (p_id <= old_max_seen_id) {
     remove_particle(p_id);
     m_empty_p_ids_smaller_than_max_seen_particle.push_back(p_id);
   } else {
@@ -734,57 +734,6 @@ int ReactionAlgorithm::create_particle(int desired_type) {
   return p_id;
 }
 
-// the following 2 functions are directly taken from ABHmath.tcl
-/**
-* Calculates the normed vector of a given vector
-*/
-std::vector<double> vecnorm(std::vector<double> vec, double desired_length) {
-  for (int i = 0; i < vec.size(); i++) {
-    vec[i] = vec[i] / Utils::veclen(vec) * desired_length;
-  }
-  return vec;
-}
-
-/**
-* Calculates a uniformly distributed vector on a sphere of given radius.
-*/
-std::vector<double> vec_random(double desired_length) {
-  /**returns a random vector of length len
-  *(uniform distribution on a sphere)
-  *This is done by chosing 3 uniformly distributed random numbers [-1,1]
-  *If the length of the resulting vector is <= 1.0 the vector is taken and
-  *normalized
-  *to the desired length, otherwise the procedure is repeated until succes.
-  *On average the procedure needs 5.739 random numbers per vector.
-  *(This is probably not the most efficient way, but it works!)
-  */
-  std::vector<double> vec;
-  while (1) {
-    for (int i = 0; i < 3; i++) {
-      vec.push_back(2 * d_random() - 1.0);
-    }
-    if (Utils::veclen(vec) <= 1)
-      break;
-  }
-  vecnorm(vec, desired_length);
-  return vec;
-}
-
-/**
-* Adds a random vector of given length to the provided array named vector.
-*/
-std::vector<double> ReactionAlgorithm::add_random_vector(double const *vector, int len_vector,
-                                          double length_of_displacement) {
-  // adds a vector which is uniformly distributed on a sphere
-  std::vector<double> temp_vector(len_vector);
-  std::vector<double> random_direction_vector =
-      vec_random(length_of_displacement);
-  for (int i = 0; i < len_vector; i++) {
-    temp_vector[i]=vector[i] +random_direction_vector[i];
-  }
-  return temp_vector;
-}
-
 void WangLandauReactionEnsemble::on_mc_rejection_directly_after_entry(
     int &old_state_index) {
   if (do_energy_reweighting)
@@ -811,7 +760,7 @@ int WangLandauReactionEnsemble::on_mc_use_WL_get_new_state() {
 * Performs a global mc move for a particle of the provided type.
 */
 bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
-    int type, int start_id_polymer, int end_id_polymer,
+    int type,
     int particle_number_of_type_to_be_changed, bool use_wang_landau) {
   m_tried_configurational_MC_moves += 1;
   bool got_accepted = false;
@@ -856,7 +805,17 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   // propose new positions
   changed_particle_counter = 0;
   int max_tries =
-      100 * particle_number_of_type; // important for very dense systems
+      100 * particle_number_of_type; // important for very dense systems 
+                                     // setting of a minimal
+                                     // distance is allowed to
+                                     // avoid overlapping
+                                     // configurations if there is
+                                     // a repulsive potential.
+                                     // States with very high
+                                     // energies have a probability
+                                     // of almost zero and
+                                     // therefore do not contribute
+                                     // to ensemble averages.
   int attempts = 0;
   std::vector<double> new_pos(3);
   while (changed_particle_counter < particle_number_of_type_to_be_changed) {
@@ -865,11 +824,8 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     while (particle_inserted_too_close_to_another_one && attempts < max_tries) {
       // change particle position
       new_pos=get_random_position_in_box();
-      //new_pos=get_random_position_in_box_enhanced_proposal_of_small_radii();
-      ////enhanced proposal of small radii
+      //new_pos=get_random_position_in_box_enhanced_proposal_of_small_radii(); //enhanced proposal of small radii
       place_particle(p_id, new_pos.data());
-//      auto part = get_particle_data(p_id);
-//      printf("new pos proposed %f %f %f\n", part->r.p[0], part->r.p[1], part->r.p[2]);
       double d_min = distto(partCfg(), new_pos.data(), p_id);
       if (d_min > exclusion_radius) {
         particle_inserted_too_close_to_another_one = false;
@@ -878,25 +834,8 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     }
     changed_particle_counter += 1;
   }
-  if (attempts == max_tries) {
-    // reversing
-    // create particles again at the positions they were
-    for (int i = 0; i < particle_number_of_type_to_be_changed; i++)
-      place_particle(p_id_s_changed_particles[i], &particle_positions[3 * i]);
-  }
-
-  // change polymer conformation if start and end id are provided
-  std::vector<double> old_pos_polymer_particle(
-      3 * (end_id_polymer - start_id_polymer + 1));
-  if (start_id_polymer >= 0 && end_id_polymer >= 0) {
-
-    for (int i = start_id_polymer; i <= end_id_polymer; i++) {
-      auto part = get_particle_data(i);
-      // move particle to new position nearby
-      const double length_of_displacement = 0.05;
-      std::vector<double> new_pos_poly=add_random_vector(part->r.p, 3, length_of_displacement);
-      place_particle(i, new_pos_poly.data());
-    }
+  if (attempts >= max_tries) {
+    throw std::runtime_error("Not all particles displaced");
   }
 
   const double E_pot_new = calculate_current_potential_energy_of_system();
@@ -946,12 +885,6 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     // create particles again at the positions they were
     for (int i = 0; i < particle_number_of_type_to_be_changed; i++)
         place_particle(p_id_s_changed_particles[i], &particle_positions[3 * i]);
-        // restore polymer particle again at original position
-        if (start_id_polymer >= 0 && end_id_polymer >= 0) {
-          // place_particle(random_polymer_particle_id, old_pos_polymer_particle);
-          for (int i = start_id_polymer; i <= end_id_polymer; i++)
-            place_particle(i, &old_pos_polymer_particle[3 * i]);
-        }
   }
   return got_accepted;
 }
@@ -1704,10 +1637,7 @@ int WangLandauReactionEnsemble::load_wang_landau_checkpoint(
     }
     infile.close();
   } else {
-    std::cout << "Exception opening "
-              << std::string("checkpoint_wang_landau_parameters_") + identifier
-              << "\n"
-              << std::flush;
+    throw std::runtime_error("Exception opening"+std::string("checkpoint_wang_landau_parameters_") + identifier);
   }
 
   // restore histogram
@@ -1721,10 +1651,7 @@ int WangLandauReactionEnsemble::load_wang_landau_checkpoint(
     }
     infile.close();
   } else {
-    std::cout << "Exception opening/ reading "
-              << std::string("checkpoint_wang_landau_histogram_") + identifier
-              << "\n"
-              << std::flush;
+    throw std::runtime_error("Exception opening/ reading "+std::string("checkpoint_wang_landau_histogram_") + identifier);
   }
 
   // restore wang landau potential
@@ -1738,10 +1665,7 @@ int WangLandauReactionEnsemble::load_wang_landau_checkpoint(
     }
     infile.close();
   } else {
-    std::cout << "Exception opening "
-              << std::string("checkpoint_wang_landau_potential_") + identifier
-              << "\n"
-              << std::flush;
+    throw std::runtime_error("Exception opening "+std::string("checkpoint_wang_landau_potential_") + identifier);
   }
 
   // possible task: restore state in which the system was when the checkpoint

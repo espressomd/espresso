@@ -1,6 +1,3 @@
-=================
-Developer's Guide
-=================
 .. warning::
    The information found in this version of the Developer's Guide is
    outdated.  Please see the section :ref:`Contact the Developers` and
@@ -24,9 +21,6 @@ Before you start a development project
 --------------------------------------
 Before you start a development project for |es|, please always write to the developers mailing list and describe the project. 
 This is to avoid that several people work on the same thing at the same time. Also, implementation details can be discussed in advance. In many cases, existing developers can point to re-usable code and simpler solutions.
-
-
-
 
 
 .. _Development Environment:
@@ -108,8 +102,6 @@ need to look at the CMakeList.txt in the directory where the file is located.
                    coulomb_cloud_wall.py)
 
   In that case, add the new file to the list.
-   
-
 
 Testsuite
 ---------
@@ -138,8 +130,6 @@ The documentation of |es| consists of four parts:
   -  The users' guide and developers' guide are located in ``doc/sphinx``, and make use of the Sphinx Python package
   -  In-code documentation for the Python interface is located in the various files in src/python/espressomd and also makes use of the Sphinx Python package. We make use of the napolean extension and use the NumPy documentation style.
   -  In-code documentation of the C++ core is located in the .cpp and .hpp files in ``/src/core`` and its sub-directories and makes use of Doxygen.
-
-
 
 Doxygen Code Documentation
 --------------------------
