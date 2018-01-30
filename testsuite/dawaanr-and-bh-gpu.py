@@ -22,7 +22,7 @@ class BHGPUTest(ut.TestCase):
         tol = 5E-2
         vec_len = la.norm(a - b)
         rel = 2 * vec_len / (la.norm(a) + la.norm(b))
-        if vec_len <= tol:
+        if rel <= tol:
             return True
         else:
             return False
