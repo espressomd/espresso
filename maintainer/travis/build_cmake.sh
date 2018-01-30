@@ -101,8 +101,8 @@ if ! $insource; then
     if [ ! -d $builddir ]; then
         echo "Creating $builddir..."
         mkdir -p $builddir
-        cd $builddir
     fi
+    cd $builddir
 fi
 
 
