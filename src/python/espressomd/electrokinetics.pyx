@@ -296,6 +296,12 @@ IF ELECTROKINETICS:
         def print_vtk_flux(self, path):
             ek_print_vtk_flux(self.id, utils.to_char_pointer(path))
 
+        def print_vtk_flux_fluc(self, path):
+            ek_print_vtk_flux_fluc(self.id, utils.to_char_pointer(path))
+
+        def print_vtk_flux_link(self, path):
+            ek_print_vtk_flux_link(self.id, utils.to_char_pointer(path))
+
 
 
     cdef class SpecieRoutines(object):

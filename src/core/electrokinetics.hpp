@@ -89,6 +89,7 @@ typedef struct {
   float* charge_potential;
   ekfloat* j;
   float* lb_force_previous;
+  ekfloat* j_fluc;
   ekfloat* rho[MAX_NUMBER_OF_SPECIES];
   int species_index[MAX_NUMBER_OF_SPECIES];
   float density[MAX_NUMBER_OF_SPECIES];
@@ -159,6 +160,8 @@ void lb_set_ek_pointer(EK_parameters* pointeradress);
 unsigned int ek_calculate_boundary_mass();
 int ek_print_vtk_density(int species, char* filename);
 int ek_print_vtk_flux(int species, char* filename);
+int ek_print_vtk_flux_fluc(int species, char* filename);
+int ek_print_vtk_flux_link(int species, char* filename);
 int ek_print_vtk_potential(char* filename);
 #ifdef EK_ELECTROSTATIC_COUPLING
 int ek_print_vtk_particle_potential( char* filename );
