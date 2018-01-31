@@ -20,7 +20,7 @@ class BHGPUPerfTest(ut.TestCase):
     es = espressomd.System()
     
     def vectorsTheSame(self,a,b):
-        tol = 5E-2
+        tol = 15E-2
         vec_len = la.norm(a - b)
         rel = 2 * vec_len / (la.norm(a) + la.norm(b))
         if rel <= tol:
@@ -108,7 +108,7 @@ class BHGPUPerfTest(ut.TestCase):
                 self.es.actors.remove(self.es.actors.active_actors[i])
             
             self.es.integrator.run(steps = 0,recalc_forces = True)
-            dds_gpu = DipolarBarnesHutGpu(prefactor = pf_dds_gpu, epssq = 200.0, itolsq = 8.0)
+            dds_gpu = DipolarBarnesHutGpu(prefactor = pf_dds_gpu, epssq = 400.0, itolsq = 36.0)
             self.es.actors.add(dds_gpu)
             t1 = tm.time()
             self.es.integrator.run(steps = 0,recalc_forces = True)
