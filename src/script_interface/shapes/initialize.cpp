@@ -20,6 +20,7 @@
 #include "initialize.hpp"
 #include "Cylinder.hpp"
 #include "Ellipsoid.hpp"
+#include "HollowCone.hpp"
 #include "Maze.hpp"
 #include "NoWhere.hpp"
 #include "Pore.hpp"

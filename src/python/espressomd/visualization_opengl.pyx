@@ -486,7 +486,7 @@ class openGLLive(object):
             pos = np.array(s[0].get_parameter('center'))
             a = np.array(s[0].get_parameter('a'))
             b = np.array(s[0].get_parameter('b'))
-            c = np.array(s[0].get_parameter('c'))
+            c = np.array(s[0].get_parameter('b'))
             self.shapes['Shapes::Ellipsoid'].append([pos, a, b, c, s[1]])
 
         for s in coll_shape_obj['Shapes::Sphere']:
@@ -1337,9 +1337,9 @@ def rotation_helper(d):
 
     return ax, rx, ry
 
-def _drawEllipsoid(pos, semiaxis_a, semiaxis_b, semiaxis_c, color, material, quality):
-    _setSolidMaterial(color[0], color[1], color[2], color[3],
-                      material[0], material[1], material[2])
+def draw_ellipsoid(pos, semiaxis_a, semiaxis_b, semiaxis_c, color, material, quality):
+    set_solid_material(color[0], color[1], color[2], color[3],
+                       material[0], material[1], material[2])
     glPushMatrix()
     glTranslatef(pos[0], pos[1], pos[2])
     glScalef(semiaxis_a, semiaxis_b, semiaxis_c)
