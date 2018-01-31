@@ -31,7 +31,7 @@ General usage
 
 The recommended usage of both tools is similar: Create the visualizer of
 your choice and pass it the ``espressomd.System()`` object. Then write
-your integration loop in a seperate function, which is started in a
+your integration loop in a separate function, which is started in a
 non-blocking thread. Whenever needed, call ``update()`` to synchronize
 the renderer with your system. Finally start the blocking visualization
 window with ``start()``. See the following minimal code example::
@@ -69,14 +69,14 @@ Common methods for openGL and mayavi
 | :meth:`espressomd.visualization.mayaviLive.update()` 
 | :meth:`espressomd.visualization.openGLLive.update()`
 
-``update()`` synchonizes system and visualizer, handles keyboard events for
+``update()`` synchronizes system and visualizer, handles keyboard events for
 openGLLive.
 
 | :meth:`espressomd.visualization.mayaviLive.start()` 
 | :meth:`espressomd.visualization.openGLLive.start()`
 
 ``start()`` starts the blocking visualizer window. 
-Should be called after a seperate thread containing ``update()`` has been started.
+Should be called after a separate thread containing ``update()`` has been started.
 
 | :meth:`espressomd.visualization.mayaviLive.register_callback()`
 | :meth:`espressomd.visualization.openGLLive.register_callback()`
@@ -93,7 +93,7 @@ The mayavi visualizer is created with the following syntax:
 
 :class:`espressomd.visualization.mayaviLive()`
 
-Required paramters:
+Required parameters:
     * `system`: The espressomd.System() object.
 Optional keywords:
     * `particle_sizes`:
@@ -109,7 +109,7 @@ OpenGL visualizer
 | :meth:`espressomd.visualization.openGLLive.run()` 
 
 To visually debug your simulation, ``run()`` can be used to conveniently start 
-an integration loop in a seperate thread once the visualizer is initialized::
+an integration loop in a separate thread once the visualizer is initialized::
 
     import espressomd 
     from espressomd import visualization 
@@ -130,7 +130,7 @@ an integration loop in a seperate thread once the visualizer is initialized::
 The optional keywords in ``**kwargs`` are used to adjust the appearance of the visualization.
 The parameters have suitable default values for most simulations. 
 
-Required paramters:
+Required parameters:
     * `system`: The espressomd.System() object.
 Optional keywords:
     * `window_size`: Size of the visualizer window in pixels.
@@ -145,7 +145,7 @@ Optional keywords:
     * `quality_constraints`: The number of subdivisions for primitive constraints.
     * `close_cut_distance`: The distance from the viewer to the near clipping plane.
     * `far_cut_distance`: The distance from the viewer to the far clipping plane.
-    * `camera_position`: Initial camera position. `auto` (default) for shiftet position in z-direction. 
+    * `camera_position`: Initial camera position. `auto` (default) for shifted position in z-direction. 
     * `camera_target`: Initial camera target. `auto` (default) to look towards the system center.
     * `camera_right`: Camera right vector in system coordinates. Default is [1, 0, 0] 
     * `particle_sizes`:     
@@ -163,7 +163,7 @@ Optional keywords:
     * `rasterize_pointsize`: Point size for the rasterization dots.
     * `rasterize_resolution`: Accuracy of the rasterization.
     * `quality_constraints`: The number of subdivisions for primitive constraints.
-    * `constraint_type_colors`: Colors of the constaints by type.
+    * `constraint_type_colors`: Colors of the constraints by type.
     * `constraint_type_materials`: Materials of the constraints by type.
     * `draw_bonds`: Enables bond visualization.
     * `bond_type_radius`: Radii of bonds by type.

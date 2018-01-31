@@ -559,7 +559,7 @@ DPD interaction
     `Feature DPD required.`
 
 This is a special interaction that is to be used in conjunction with the
-`Dissipative Particle Dynamics (DPD)` thermostat, for a genral description
+`Dissipative Particle Dynamics (DPD)` thermostat, for a general description
 of the algorithm see there. The parameters can be set via::
 
     system.non_bonded_inter[type1, type2].dpd.set_params(**kwargs)
@@ -588,7 +588,7 @@ and random weight function are related by the dissipation-fluctuation theorem:
 
 .. math:: (\sigma w^R (r_{ij}))^2=\zeta w^D (r_{ij}) \text{k}_\text{B} T
 
-The possible values for weight_function are 0 and 1, correcpoding to the
+The possible values for weight_function are 0 and 1, corresponding to the
 order of :math:`w^D`:
 
 .. math::

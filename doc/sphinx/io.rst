@@ -120,7 +120,7 @@ To give an example::
     checkpoint.register("p3m")
 
 will register the user variables ``skin`` and ``myvar``, system properties, a
-langevin thermostat, non-bonded interactions, particle properties and a p3m
+Langevin thermostat, non-bonded interactions, particle properties and a p3m
 object for checkpointing. It is important to note that the checkpointing of
 |es| will only save basic system properties. This excludes for example the
 system thermostat or the particle data. For this reason one has to explicitly

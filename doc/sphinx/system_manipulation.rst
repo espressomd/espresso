@@ -86,7 +86,7 @@ Force capping can be activated via  :class:`espressomd.system.System`::
     system.force_cap = F_max
 
 This command will limit the magnitude of the force to :math:`r F_\mathrm{max}`.
-Enegies are not affected by the capping, so the energy can be used to
+Energies are not affected by the capping, so the energy can be used to
 identify the remaining overlap. The force capping is switched off by setting
 :math:`F_\mathrm{max}=0`.
 
@@ -122,7 +122,7 @@ This command sets all forces on the particles to zero, as well as all
 torques if the option ``torque`` is specified and the feature ROTATION
 has been compiled in.
 
-* The centre of mass of the system
+* The center of mass of the system
 
 ::
 
@@ -131,7 +131,7 @@ has been compiled in.
 Returns the center of mass of the whole system. It currently does not
 factor in the density fluctuations of the Lattice-Boltzmann fluid.
 
-* The centre-of-mass velocity
+* The center-of-mass velocity
 
 ::
     
