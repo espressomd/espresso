@@ -3,7 +3,7 @@ from libcpp.vector cimport vector
 from libcpp.string cimport string
 from libc.string cimport strdup
 from utils import to_char_pointer
-
+import numpy as np
 
 class WangLandauHasConverged(Exception):
     pass
@@ -237,8 +237,10 @@ cdef class ReactionAlgorithm(object):
                 type=self._params["reactant_types"][i]
                 total_charge_change+=self._params["reactant_coefficients"][i]*self._params["default_charges"][type]
             for j in range(len(self._params["product_coefficients"])):
-                total_charge_change+=self._params["product_coefficients"][j]*self._params["default_charges"][self._params["product_types"][j]]            
-            if abs(total_charge_change)>1e-10:
+                total_charge_change+=self._params["product_coefficients"][j]*self._params["default_charges"][self._params["product_types"][j]]
+            charges=np.array(self._params["default_charges"].values())
+            min_abs_nonzero_charge = np.min(np.abs(charges[np.nonzero(charges)]))
+            if abs(total_charge_change)/min_abs_nonzero_charge>1e-10:
                 raise ValueError("Reaction system is not charge neutral")
 
     def reaction(self, reaction_steps=1):
