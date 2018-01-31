@@ -75,7 +75,7 @@ For vectorial particle properties, component-wise manipulation like ``system.par
 = 1`` or in-place operators like ``+=`` or ``*=`` are not allowed and result in an error.
 This behavior is inherited, so the same applies to ``a`` after ``a =
 system.part[0].pos``. If you want to use an vectorial property for further
-calculations, you should explicity make a copy e.g. via
+calculations, you should explicitly make a copy e.g. via
 ``a = numpy.copy(system.part[0].pos)``.
 
 .. _Interacting with groups of particles:
@@ -103,7 +103,7 @@ Setting slices can be done by
 
     system.part[0:3].ext_force = [[1, 0, 0], [2, 0, 0], [3, 0, 0]]
 
-For list properties that have no fixed length like ``exculsions`` or ``bonds``, some care has to be taken.
+For list properties that have no fixed length like ``exclusions`` or ``bonds``, some care has to be taken.
 There, *single value* assignment also accepts lists/tuples just like setting the property of an individual particle. For example::
 
     system.part[0].exclusions = [1, 2]
@@ -160,9 +160,9 @@ You can iterate over all pairs of particles using::
 Exclusions
 ----------
 
-Particles can have an exclusion list of all other particles where nonbonded interactions are ignored.
+Particles can have an exclusion list of all other particles where non-bonded interactions are ignored.
 This is typically used in atomistic simulations, 
-where nearest and next nearest neighbour interactions along the chain have to be omitted since they are included in the bonding potentials.
+where nearest and next nearest neighbor interactions along the chain have to be omitted since they are included in the bonding potentials.
 Be aware that currently, exclusions also remove the short range part of electrostatics and dipolar interactions. Hence, exclusions should not be applied to pairs of particles which are charged or carry a dipole.
 
 
@@ -316,7 +316,7 @@ To switch the active scheme, the attribute :attr:`espressomd.system.System.virtu
     s.virtual_sites=VirtualSitesOff()
 
 By default, :class:`espressomd.virtual_sites.VirtualSitesOff` is selected. This means that virtual particles are not touched during integration.
-the `have_velocity` attribute determines, whether or not the velocity of virtual sites is calcualted, which carries a performance cost.
+the `have_velocity` attribute determines, whether or not the velocity of virtual sites is calculated, which carries a performance cost.
 
 .. _Rigid arrangements of particles: 
 
@@ -462,7 +462,7 @@ Please note:
     Additional features
     ~~~~~~~~~~~~~~~~~~~
 
-    The behaviour of virtual sites can be fine-tuned with the following
+    The behavior of virtual sites can be fine-tuned with the following
     switches in ``myconfig.hpp``.
 
     - VIRTUAL_SITES_NO_VELOCITY specifies that the velocity of virtual sites is not computed

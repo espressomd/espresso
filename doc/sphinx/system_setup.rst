@@ -17,7 +17,7 @@ vectorial properties ``box_l`` and ``periodicity``, component-wise manipulation
 like ``system.box_l[0] = 1`` or in-place operators like ``+=`` or ``*=`` are not
 allowed and result in an error. This behavior is inherited, so the same applies
 to ``a`` after ``a = system.box_l``. If you want to use an vectorial property
-for further calculations, you should explicity make a copy e.g. via
+for further calculations, you should explicitly make a copy e.g. via
 ``a = numpy.copy(system.box_l)``.
 
 * :py:attr:`~espressomd.system.System.box_l`
@@ -419,7 +419,7 @@ See this code snippet for the two commands::
 
 Be aware that this feature is neither properly examined for all systems
 nor is it maintained regularly. If you use it and notice strange
-behaviour, please contribute to solving the problem.
+behavior, please contribute to solving the problem.
 
 .. _CUDA:
 
