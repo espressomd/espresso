@@ -76,7 +76,7 @@ for type_1 in types:
             cutoff=lj_cut, shift="auto")
 
 RE = reaction_ensemble.ReactionEnsemble(temperature=temperature, exclusion_radius=1.0, standard_pressure=1.0)
-RE.add(equilibrium_constant=cs_bulk**2*np.exp(excess_chemical_potential_pair/temperature), reactant_types=[], reactant_coefficients=[], product_types=[1, 2], product_coefficients=[1, 1], default_charges={"1": -1, "2": +1})
+RE.add(equilibrium_constant=cs_bulk**2*np.exp(excess_chemical_potential_pair/temperature), reactant_types=[], reactant_coefficients=[], product_types=[1, 2], product_coefficients=[1, 1], default_charges={1: -1, 2: +1})
 print(RE.get_status())
 system.setup_type_map([0, 1, 2])
 
