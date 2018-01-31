@@ -22,34 +22,5 @@ if [ -z "$image" ]; then
 	image=ubuntu
 fi
 
-if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-	image=espressomd/espresso-$image:latest
-	docker run $ci_env -u espresso --env-file $ENV_FILE -v ${PWD}:/travis -it $image /bin/bash -c "cp -r /travis .; cd travis && maintainer/travis/build_cmake.sh" || exit 1
-elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
-	brew install cmake || brew upgrade cmake
-	case "$image" in
-		python3)
-			brew install python3
-			pip3 install h5py
-			pip3 install cython
-			pip3 install numpy
-			pip3 install pep8
-			pip3 install pylint
-			PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}' | awk -F . '{print $1"."$2}')
-			export cmake_params="-DPYTHON_EXECUTABLE=$(which python3) $cmake_params"
-		;;
-		*)
-			pip install h5py
-			pip install cython
-			pip install numpy
-			pip install pep8
-            pip install pylint
-		;;
-	esac
-	brew install boost-mpi
-	brew install fftw
-	travis_wait brew install hdf5 --with-mpi
-
-	export TMPDIR=/tmp
-	maintainer/travis/build_cmake.sh || exit 1
-fi
+image=espressomd/espresso-$image:latest
+docker run $ci_env -u espresso --env-file $ENV_FILE -v ${PWD}:/travis -it $image /bin/bash -c "cp -r /travis .; cd travis && maintainer/CI/build_cmake.sh" || exit 1
