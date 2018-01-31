@@ -53,6 +53,8 @@ class BHGPUPerfTest(ut.TestCase):
         
         for n in [ 26487, 147543 ]:
             print("{0} particles".format(n))
+            force_mag_average = 0.0
+            torque_mag_average = 0.0
             dipole_modulus = 1.3
             # scale the box for a large number of particles:
             if n > 1000:
@@ -123,12 +125,23 @@ class BHGPUPerfTest(ut.TestCase):
                 bhgpu_t.append(self.es.part[i].torque_lab)
             bhgpu_e = Analysis(self.es).energy()["total"]
             
+            for i in range(n):
+                force_mag_average += la.norm(dds_gpu_f[i])
+                torque_mag_average += la.norm(dds_gpu_t[i])
+            
+            force_mag_average /= n
+            torque_mag_average /= n
+            
+            cutoff = 1E-2
+            
             # compare
             for i in range(n):
-                self.assertTrue(self.vectorsTheSame(np.array(dds_gpu_t[i]),ratio_dds_gpu_bh_gpu * np.array(bhgpu_t[i])), \
-                                msg = 'Torques on particle do not match. i={0} dds_gpu_t={1} ratio_dds_gpu_bh_gpu*bhgpu_t={2}'.format(i,np.array(dds_gpu_t[i]), ratio_dds_gpu_bh_gpu * np.array(bhgpu_t[i])))
-                self.assertTrue(self.vectorsTheSame(np.array(dds_gpu_f[i]),ratio_dds_gpu_bh_gpu * np.array(bhgpu_f[i])), \
-                                msg = 'Forces on particle do not match: i={0} dds_gpu_f={1} ratio_dds_gpu_bh_gpu*bhgpu_f={2}'.format(i,np.array(dds_gpu_f[i]), ratio_dds_gpu_bh_gpu * np.array(bhgpu_f[i])))
+                if la.norm(dds_gpu_t[i]) > cutoff * torque_mag_average:
+                    self.assertTrue(self.vectorsTheSame(np.array(dds_gpu_t[i]),ratio_dds_gpu_bh_gpu * np.array(bhgpu_t[i])), \
+                                    msg = 'Torques on particle do not match. i={0} dds_gpu_t={1} ratio_dds_gpu_bh_gpu*bhgpu_t={2}'.format(i,np.array(dds_gpu_t[i]), ratio_dds_gpu_bh_gpu * np.array(bhgpu_t[i])))
+                if la.norm(dds_gpu_f[i]) > cutoff * force_mag_average:
+                    self.assertTrue(self.vectorsTheSame(np.array(dds_gpu_f[i]),ratio_dds_gpu_bh_gpu * np.array(bhgpu_f[i])), \
+                                    msg = 'Forces on particle do not match: i={0} dds_gpu_f={1} ratio_dds_gpu_bh_gpu*bhgpu_f={2}'.format(i,np.array(dds_gpu_f[i]), ratio_dds_gpu_bh_gpu * np.array(bhgpu_f[i])))
             self.assertTrue(abs(dds_gpu_e - bhgpu_e * ratio_dds_gpu_bh_gpu) <= abs(1E-3 * dds_gpu_e), \
                             msg = 'Energies for dawaanr {0} and dds_gpu {1} do not match.'.format(dds_gpu_e,ratio_dds_gpu_bh_gpu * bhgpu_e))
             
