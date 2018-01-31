@@ -1,6 +1,7 @@
 #include "BondContainer.hpp"
 #include "energy.hpp"//for energy observable
 #include "pressure.hpp"//distribute_tensors->local_Stress_tensor arguments
+#include "immersed_boundary/ibm_volume_conservation.hpp" //VolumesCurrent[]>
 
 //cast base class into a derived class
 template<class BaseClass, class DerivedClass>
@@ -200,3 +201,22 @@ Bond::IbmVolumeConservation* Bond::BondContainer::get_IBM_Vol_Con_Bond(int bond_
     return m_ibm_vol_con_bonds[bond_map_id];
   };
 }
+
+void Bond::BondContainer::init_Vol_Con()
+{
+
+  size_t size = m_ibm_vol_con_bonds.size();
+  if(size == 0){return;};
+  // Loop through all bonded interactions and check if we need to set the reference volume
+  for(int i=0;i<size;i++){
+    // This check is important because InitVolumeConservation may be called accidentally
+    // during the integration. Then we must not reset the reference
+    if(m_ibm_vol_con_bonds[i]->m_volRef == 0){
+      int softID = m_ibm_vol_con_bonds[i]->m_softID;
+      m_ibm_vol_con_bonds[i]->m_volRef = VolumesCurrent[softID];
+      mpi_bcast_ia_params(i, -1);
+    };
+  }; 
+}
+
+

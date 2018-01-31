@@ -1,4 +1,8 @@
 #include "AngleDist.hpp"
+
+#ifdef BOND_ANGLEDIST
+
+#include "communication.hpp"
 #include "grid.hpp" //for get_mi_vector
 #include "constraints.hpp" // for constraints stuff
 #include "constraints/ShapeBasedConstraint.hpp"
@@ -161,3 +165,5 @@ double Bond::AngleDist::calc_angledist_param(Particle *p1, Particle *p2,
   }
 
 }
+
+#endif //BOND_ANGLE_DIST
