@@ -58,7 +58,7 @@ class BHGPUPerfTest(ut.TestCase):
             dipole_modulus = 1.3
             # scale the box for a large number of particles:
             if n > 1000:
-                l *= (n / 541) ** (1 / 3.0)
+                l *= 1.5 * (n / 541) ** (1 / 3.0)
             for i in range(n):
                 part_pos = np.array(random(3)) * l
                 costheta = 2 * random() - 1
