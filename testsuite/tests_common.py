@@ -110,9 +110,8 @@ def generate_test_for_class(_system, _interClass, _params):
 
     return func
 
-
-def lj_force(v_d, d, lj_params):
-    """Returns lj force for distnace d and distance vecotr v_d based on the given lj_params.
+def lj_force_vector(v_d, d, lj_params):
+    """Returns lj force for distance d and distance vecotr v_d based on the given lj_params.
     Supports epsilon and cutoff."""
 
     if d >= lj_params["cutoff"]:
@@ -159,7 +158,7 @@ def verify_lj_forces(system, tolerance, ids_to_skip=[]):
         d = norm(v_d)
 
         # calc and add expected lj force
-        f = lj_force(v_d, d, lj_params[p0.type,p1.type])
+        f = lj_force_vector(v_d, d, lj_params[p0.type,p1.type])
         f_expected[p0.id] += f
         f_expected[p1.id] -= f
     # Check actual forces agaisnt expected
@@ -284,3 +283,213 @@ def get_cylindrical_bin_volume(
                                  (min_r + r_bin_size * i)**2.0) * \
             phi_bin_size / (2.0 * np.pi) * z_bin_size
     return bin_volume
+    
+#
+# Analytical Expressions for interactions
+#
+
+# Generic Lennard-Jones
+def lj_generic_potential(r, eps, sig, cutoff, offset=0., shift=0., e1=12., e2=6., b1=4., b2=4., delta=0., lam=1.):
+    V = 0.
+    if (r >= offset + cutoff):
+        V = 0.
+    else:
+        # LJGEN_SOFTCORE transformations
+        rroff = np.sqrt(
+            np.power(r - offset, 2) + (1 - lam) * delta * sig**2)
+        V = eps * lam * \
+            (b1 * np.power(sig / rroff, e1) -
+             b2 * np.power(sig / rroff, e2) + shift)
+    return V
+
+def lj_generic_force(espressomd, r, eps, sig, cutoff, offset=0., e1=12, e2=6, b1=4., b2=4., delta=0., lam=1., generic=True):
+    f = 1.
+    if (r >= offset + cutoff):
+        f = 0.
+    else:
+        h = (r - offset)**2 + delta * (1. - lam) * sig**2
+        f = (r - offset) * eps * lam * (
+            b1 * e1 * np.power(sig / np.sqrt(h), e1) - b2 * e2 * np.power(sig / np.sqrt(h), e2)) / h
+        if (not espressomd.has_features("LJGEN_SOFTCORE")) and generic:
+            f *= np.sign(r - offset)
+    return f
+
+# Lennard-Jones
+def lj_potential(r, eps, sig, cutoff, shift, offset=0.):
+    V = lj_generic_potential(
+        r, eps, sig, cutoff, offset=offset, shift=shift * 4.)
+    return V
+
+def lj_force(espressomd, r, eps, sig, cutoff, offset=0.):
+    f = lj_generic_force(espressomd, r, eps, sig, cutoff, offset=offset, generic=False)
+    return f
+
+# Lennard-Jones Cosine
+def lj_cos_potential(r, eps, sig, cutoff, offset):
+    V = 0.
+    r_min = offset + np.power(2., 1. / 6.) * sig
+    r_cut = cutoff + offset
+    if (r < r_min):
+        V = lj_potential(r, eps=eps, sig=sig,
+                              cutoff=cutoff, offset=offset, shift=0.)
+    elif (r < r_cut):
+        alpha = np.pi / \
+            (np.power(r_cut - offset, 2) - np.power(r_min - offset, 2))
+        beta = np.pi - np.power(r_min - offset, 2) * alpha
+        V = 0.5 * eps * \
+            (np.cos(alpha * np.power(r - offset, 2) + beta) - 1.)
+    return V
+
+def lj_cos_force(espressomd, r, eps, sig, cutoff, offset):
+    f = 0.
+    r_min = offset + np.power(2., 1. / 6.) * sig
+    r_cut = cutoff + offset
+    if (r < r_min):
+        f = lj_force(espressomd, r, eps=eps, sig=sig,
+                          cutoff=cutoff, offset=offset)
+    elif (r < r_cut):
+        alpha = np.pi / \
+            (np.power(r_cut - offset, 2) - np.power(r_min - offset, 2))
+        beta = np.pi - np.power(r_min - offset, 2) * alpha
+        f = (r - offset) * alpha * eps * \
+            np.sin(alpha * np.power(r - offset, 2) + beta)
+    return f
+
+# Lennard-Jones Cosine^2
+def lj_cos2_potential(r, eps, sig, offset, width):
+    V = 0.
+    r_min = offset + np.power(2., 1. / 6.) * sig
+    r_cut = r_min + width
+    if (r < r_min):
+        V = lj_potential(r, eps=eps, sig=sig,
+                              offset=offset, cutoff=r_cut, shift=0.)
+    elif (r < r_cut):
+        V = -eps * np.power(np.cos(np.pi /
+                                         (2. * width) * (r - r_min)), 2)
+    return V
+
+def lj_cos2_force(espressomd, r, eps, sig, offset, width):
+    f = 0.
+    r_min = offset + np.power(2., 1. / 6.) * sig
+    r_cut = r_min + width
+    if (r < r_min):
+        f = lj_force(espressomd, r, eps=eps, sig=sig, cutoff=r_cut, offset=offset)
+    elif (r < r_cut):
+        f = - np.pi * eps * \
+            np.sin(np.pi * (r - r_min) / width) / (2. * width)
+    return f
+
+# Smooth-Step
+def smooth_step_potential(r, eps, sig, cutoff, d, n, k0):
+    V = 0.
+    if (r < cutoff):
+        V = np.power(d / r, n) + eps / \
+            (1 + np.exp(2 * k0 * (r - sig)))
+    return V
+
+def smooth_step_force(r, eps, sig, cutoff, d, n, k0):
+    f = 0.
+    if (r < cutoff):
+        f = n * d / r**2 * np.power(d / r, n - 1) + 2 * k0 * eps * np.exp(
+            2 * k0 * (r - sig)) / (1 + np.exp(2 * k0 * (r - sig))**2)
+    return f
+
+# BMHTF
+def bmhtf_potential(r, a, b, c, d, sig, cutoff):
+    V = 0.
+    if (r == cutoff):
+        V = a * np.exp(b * (sig - r)) - c * np.power(
+            r, -6) - d * np.power(r, -8)
+    if (r < cutoff):
+        V = a * np.exp(b * (sig - r)) - c * np.power(
+            r, -6) - d * np.power(r, -8)
+        V -= bmhtf_potential(cutoff, a, b, c, d, sig, cutoff)
+    return V
+
+def bmhtf_force(r, a, b, c, d, sig, cutoff):
+    f = 0.
+    if (r < cutoff):
+        f = a * b * np.exp(b * (sig - r)) - 6 * c * np.power(
+            r, -7) - 8 * d * np.power(r, -9)
+    return f
+
+# Morse
+def morse_potential(r, eps, alpha, cutoff, rmin=0):
+    V = 0.
+    if (r < cutoff):
+        V = eps * (np.exp(-2. * alpha * (r - rmin)) -
+                   2 * np.exp(-alpha * (r - rmin)))
+        V -= eps * (np.exp(-2. * alpha * (cutoff - rmin)
+                              ) - 2 * np.exp(-alpha * (cutoff - rmin)))
+    return V
+
+def morse_force(r, eps, alpha, cutoff, rmin=0):
+    f = 0.
+    if (r < cutoff):
+        f = 2. * np.exp((rmin - r) * alpha) * \
+            (np.exp((rmin - r) * alpha) - 1) * alpha * eps
+    return f
+
+#  Buckingham
+def buckingham_potential(r, a, b, c, d, cutoff, discont, shift):
+    V = 0.
+    if (r < discont):
+        m = - buckingham_force(
+            discont, a, b, c, d, cutoff, discont, shift)
+        c = buckingham_potential(
+            discont, a, b, c, d, cutoff, discont, shift) - m * discont
+        V = m * r + c
+    if (r >= discont) and (r < cutoff):
+        V = a * np.exp(- b * r) - c * np.power(
+            r, -6) - d * np.power(r, -4) + shift
+    return V
+
+def buckingham_force( r, a, b, c, d, cutoff, discont, shift):
+    f = 0.
+    if (r < discont):
+        f = buckingham_force(
+            discont, a, b, c, d, cutoff, discont, shift)
+    if (r >= discont) and (r < cutoff):
+        f = a * b * np.exp(- b * r) - 6 * c * np.power(
+            r, -7) - 4 * d * np.power(r, -5)
+    return f
+
+# Soft-sphere
+def soft_sphere_potential(r, a, n, cutoff, offset=0):
+    V = 0.
+    if (r < offset + cutoff):
+        V = a * np.power(r - offset, -n)
+    return V
+
+def soft_sphere_force(r, a, n, cutoff, offset=0):
+    f = 0.
+    if ((r > offset) and (r < offset + cutoff)):
+        f = n * a * np.power(r - offset, -(n + 1))
+    return f
+
+# Hertzian
+def hertzian_potential(r, eps, sig):
+    V = 0.
+    if (r < sig):
+        V = eps * np.power(1 - r / sig, 5. / 2.)
+    return V
+
+def hertzian_force(r, eps, sig):
+    f = 0.
+    if (r < sig):
+        f = 5. / 2. * eps / sig * np.power(1 - r / sig, 3. / 2.)
+    return f
+
+# Gaussian
+def gaussian_potential(r, eps, sig, cutoff):
+    V = 0.
+    if (r < cutoff):
+        V = eps * np.exp(-np.power(r / sig, 2) / 2)
+    return V
+
+def gaussian_force(r, eps, sig, cutoff):
+    f = 0.
+    if (r < cutoff):
+        f = eps * r / sig**2 * np.exp(-np.power(r / sig, 2) / 2)
+    return f
+

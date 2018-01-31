@@ -43,6 +43,7 @@
 #include "tuning.hpp"
 #include "communication.hpp" 
 #include "global.hpp" 
+#include "utils.hpp" 
 
 /** This file contains the c-like interface for Scafacos */
 
@@ -122,7 +123,7 @@ void ScafacosData::update_particle_forces() const {
       // field
       // So, the torques are given by m \times B
       double t[3];
-      utils::cross_product(p.r.dip, &(potentials[it_p]), t);
+      Utils::cross_product(p.r.dip, &(potentials[it_p]), t);
       // The force is given by G m, where G is a matrix
       // which comes from teh "fields" output of scafacos like this
       // 0 1 2
@@ -403,7 +404,7 @@ void set_parameters(const std::string &method, const std::string &params,
 bool dipolar() {
   if (scafacos)
     return scafacos->dipolar();
-  runtimeErrorMsg() << "Scafacos not initialized";
+  throw std::runtime_error("Scafacos not initialized");
 }
 
 void set_dipolar(bool d) {
