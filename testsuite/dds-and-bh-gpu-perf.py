@@ -40,9 +40,9 @@ class BHGPUPerfTest(ut.TestCase):
         print("- Testcase dds-and-bh-gpu-perf.py")
         print("----------------------------------------------")
         
-        pf_dds_gpu = 2.34
-        pf_dawaanr = 3.524
-        ratio_dds_gpu_bh_gpu = pf_dawaanr / pf_dds_gpu
+        pf_bh_gpu = 2.34
+        pf_dds_gpu = 3.524
+        ratio_dds_gpu_bh_gpu = pf_dds_gpu / pf_bh_gpu
         l = 15
         self.es.box_l = [l, l, l]
         self.es.periodicity = [0, 0, 0]
@@ -90,7 +90,7 @@ class BHGPUPerfTest(ut.TestCase):
             # gamma should be zero in order to avoid the noise term in force and torque
             self.es.thermostat.set_langevin(kT=1.297, gamma=0.0)
             
-            dds_gpu = DipolarDirectSumGpu(prefactor = pf_dawaanr)
+            dds_gpu = DipolarDirectSumGpu(prefactor = pf_dds_gpu)
             self.es.actors.add(dds_gpu)
             t1 = tm.time()
             self.es.integrator.run(steps = 0,recalc_forces = True)
@@ -110,8 +110,8 @@ class BHGPUPerfTest(ut.TestCase):
                 self.es.actors.remove(self.es.actors.active_actors[i])
             
             self.es.integrator.run(steps = 0,recalc_forces = True)
-            dds_gpu = DipolarBarnesHutGpu(prefactor = pf_dds_gpu, epssq = 400.0, itolsq = 36.0)
-            self.es.actors.add(dds_gpu)
+            bh_gpu = DipolarBarnesHutGpu(prefactor = pf_bh_gpu, epssq = 400.0, itolsq = 36.0)
+            self.es.actors.add(bh_gpu)
             t1 = tm.time()
             self.es.integrator.run(steps = 0,recalc_forces = True)
             t2 = tm.time()
@@ -151,7 +151,7 @@ class BHGPUPerfTest(ut.TestCase):
             
             self.es.integrator.run(steps = 0,recalc_forces = True)
             
-            del dds_gpu
+            del bh_gpu
             for i in range(len(self.es.actors.active_actors)):
                 self.es.actors.remove(self.es.actors.active_actors[i])
             self.es.part.clear()
