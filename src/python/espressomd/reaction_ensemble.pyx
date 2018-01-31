@@ -234,12 +234,13 @@ cdef class ReactionAlgorithm(object):
         if(self._params["check_for_electroneutrality"]== True):
             total_charge_change=0.0
             for i in range(len(self._params["reactant_coefficients"])):
-                type=self._params["reactant_types"][i]
-                total_charge_change-=self._params["reactant_coefficients"][i]*self._params["default_charges"][type]
+                type_here=self._params["reactant_types"][i]
+                total_charge_change-=self._params["reactant_coefficients"][i]*self._params["default_charges"][type_here]
             for j in range(len(self._params["product_coefficients"])):
-                total_charge_change+=self._params["product_coefficients"][j]*self._params["default_charges"][self._params["product_types"][j]]
-            charges=np.array(self._params["default_charges"].values())
-            min_abs_nonzero_charge = np.min(np.abs(charges[np.nonzero(charges)]))
+                type_here=self._params["product_types"][j]
+                total_charge_change+=self._params["product_coefficients"][j]*self._params["default_charges"][type_here]
+            charges=np.array(list(self._params["default_charges"].values()))
+            min_abs_nonzero_charge = np.min(np.abs(charges[np.nonzero(charges)[0]]))
             if abs(total_charge_change)/min_abs_nonzero_charge>1e-10:
                 raise ValueError("Reaction system is not charge neutral")
 
