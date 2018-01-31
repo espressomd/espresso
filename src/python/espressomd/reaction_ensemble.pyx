@@ -235,7 +235,7 @@ cdef class ReactionAlgorithm(object):
             total_charge_change=0.0
             for i in range(len(self._params["reactant_coefficients"])):
                 type=self._params["reactant_types"][i]
-                total_charge_change+=self._params["reactant_coefficients"][i]*self._params["default_charges"][type]
+                total_charge_change-=self._params["reactant_coefficients"][i]*self._params["default_charges"][type]
             for j in range(len(self._params["product_coefficients"])):
                 total_charge_change+=self._params["product_coefficients"][j]*self._params["default_charges"][self._params["product_types"][j]]
             charges=np.array(self._params["default_charges"].values())
