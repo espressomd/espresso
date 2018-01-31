@@ -5,7 +5,7 @@ matrix:
     - os: linux
       sudo: required
       services: docker
-      env: myconfig=maxset with_coverage=true python_version=2
+      env: myconfig=maxset python_version=2
     - os: linux
       sudo: required
       services: docker

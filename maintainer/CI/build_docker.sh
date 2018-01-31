@@ -2,11 +2,6 @@
 
 ENV_FILE=$(mktemp esXXXXXXX.env)
 
-ci_env=""
-if [[ ! -z ${with_coverage+x} ]]; then 
-  ci_env=`bash <(curl -s https://codecov.io/env)`
-fi
-
 cat > $ENV_FILE <<EOF
 insource=$insource
 cmake_params=$cmake_params
@@ -24,4 +19,4 @@ if [ -z "$image" ]; then
 fi
 
 image=espressomd/espresso-$image:latest
-docker run $ci_env -u espresso --env-file $ENV_FILE -v ${PWD}:/travis -it $image /bin/bash -c "cp -r /travis .; cd travis && maintainer/CI/build_cmake.sh" || exit 1
+docker run -u espresso --env-file $ENV_FILE -v ${PWD}:/travis -it $image /bin/bash -c "cp -r /travis .; cd travis && maintainer/CI/build_cmake.sh" || exit 1
