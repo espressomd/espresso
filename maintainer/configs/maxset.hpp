@@ -75,3 +75,5 @@
 #define FLATNOISE
 
 #define ADDITIONAL_CHECKS
+
+#define BOND_CLASS_DEBUG
