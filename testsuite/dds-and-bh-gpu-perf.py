@@ -52,7 +52,7 @@ class BHGPUPerfTest(ut.TestCase):
         part_dip = np.zeros((3))
         
         #for n in [ 26487, 147543 ]:
-        for n in [ 147543 ]:
+        for n in [ 107543 ]:
             print("{0} particles".format(n))
             force_mag_average = 0.0
             torque_mag_average = 0.0
