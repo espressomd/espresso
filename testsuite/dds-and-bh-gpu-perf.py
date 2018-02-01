@@ -44,7 +44,6 @@ class BHGPUPerfTest(ut.TestCase):
         pf_dds_gpu = 3.524
         ratio_dds_gpu_bh_gpu = pf_dds_gpu / pf_bh_gpu
         l = 15
-        self.es.box_l = [l, l, l]
         self.es.periodicity = [0, 0, 0]
         self.es.time_step = 1E-4
         self.es.cell_system.skin = 0.1
@@ -59,6 +58,7 @@ class BHGPUPerfTest(ut.TestCase):
             # scale the box for a large number of particles:
             if n > 1000:
                 l *= 1.5 * (n / 541) ** (1 / 3.0)
+            self.es.box_l = [l, l, l]
             for i in range(n):
                 part_pos = np.array(random(3)) * l
                 costheta = 2 * random() - 1
