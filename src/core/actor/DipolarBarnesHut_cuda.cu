@@ -576,7 +576,7 @@ void summarizationKernel()
 			massd[k] = cm;
 			k += inc;	// move on to next cell
 		}
-		//__syncthreads();    // throttle
+		__syncthreads();    // throttle
 	}	//while
 }
 
