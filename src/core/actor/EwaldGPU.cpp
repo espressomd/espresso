@@ -20,6 +20,8 @@ extern Ewaldgpu_params ewaldgpu_params;
 
 // Compute reciprocal space vectors k
 void EwaldgpuForce::compute_num_k() {
+  using Utils::sqr;
+
   int Index = 0; // Arrayindex
 
   for (long long ix = 0; ix <= m_num_kx; ix++) {
@@ -28,13 +30,11 @@ void EwaldgpuForce::compute_num_k() {
         if (ix * (2 * m_num_ky + 1) * (2 * m_num_kz + 1) +
                     iy * (2 * m_num_kz + 1) + iz >=
                 0 // Half m_k-space
-            and Utils::sqr(ix) * Utils::sqr(m_num_ky) * Utils::sqr(m_num_kz) +
-                        Utils::sqr(iy) * Utils::sqr(m_num_kx) *
-                            Utils::sqr(m_num_kz) +
-                        Utils::sqr(iz) * Utils::sqr(m_num_kx) *
-                            Utils::sqr(m_num_ky) <=
-                    Utils::sqr(m_num_kx) * Utils::sqr(m_num_ky) *
-                        Utils::sqr(m_num_kz)) // m_k-space ellipsoid
+            and sqr(ix) * sqr(m_num_ky) * sqr(m_num_kz) +
+                        sqr(iy) * sqr(m_num_kx) * sqr(m_num_kz) +
+                        sqr(iz) * sqr(m_num_kx) * sqr(m_num_ky) <=
+                    sqr(m_num_kx) * sqr(m_num_ky) *
+                        sqr(m_num_kz)) // m_k-space ellipsoid
         {
           Index += 1;
         }
@@ -44,6 +44,8 @@ void EwaldgpuForce::compute_num_k() {
   m_num_k = Index;
 }
 void EwaldgpuForce::compute_k_AND_influence_factor() {
+  using Utils::sqr;
+
   real k_sqr;    // Absolute square of m_k-vector
   int Index = 0; // Arrayindex
 
@@ -54,23 +56,21 @@ void EwaldgpuForce::compute_k_AND_influence_factor() {
         if (ix * (2 * m_num_ky + 1) * (2 * m_num_kz + 1) +
                     iy * (2 * m_num_kz + 1) + iz >=
                 0 // Half m_k-space
-            and Utils::sqr(ix) * Utils::sqr(m_num_ky) * Utils::sqr(m_num_kz) +
-                        Utils::sqr(iy) * Utils::sqr(m_num_kx) *
-                            Utils::sqr(m_num_kz) +
-                        Utils::sqr(iz) * Utils::sqr(m_num_kx) *
-                            Utils::sqr(m_num_ky) <=
-                    Utils::sqr(m_num_kx) * Utils::sqr(m_num_ky) *
-                        Utils::sqr(m_num_kz)) // m_k-space ellipsoid
+            and sqr(ix) * sqr(m_num_ky) * sqr(m_num_kz) +
+                        sqr(iy) * sqr(m_num_kx) * sqr(m_num_kz) +
+                        sqr(iz) * sqr(m_num_kx) * sqr(m_num_ky) <=
+                    sqr(m_num_kx) * sqr(m_num_ky) *
+                        sqr(m_num_kz)) // m_k-space ellipsoid
         {
           // m_k vectors
           m_k[Index] = 2 * M_PI / m_box_l[0] * ix;
           m_k[Index + m_num_k] = 2 * M_PI / m_box_l[1] * iy;
           m_k[Index + 2 * m_num_k] = 2 * M_PI / m_box_l[2] * iz;
           // Influence factor
-          k_sqr = Utils::sqr(m_k[Index]) + Utils::sqr(m_k[Index + m_num_k]) +
-                  Utils::sqr(m_k[Index + 2 * m_num_k]);
+          k_sqr = sqr(m_k[Index]) + sqr(m_k[Index + m_num_k]) +
+                  sqr(m_k[Index + 2 * m_num_k]);
           m_infl_factor[Index] =
-              8 * M_PI / m_V * expf(-k_sqr / (4 * Utils::sqr(m_alpha))) / k_sqr;
+              8 * M_PI / m_V * expf(-k_sqr / (4 * sqr(m_alpha))) / k_sqr;
           // Index
           Index += 1;
         }
