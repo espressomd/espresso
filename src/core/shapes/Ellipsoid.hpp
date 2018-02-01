@@ -50,8 +50,8 @@ public:
   double &direction() { return m_direction; }
 
 private:
-  bool inside_ellipsoid(const Vector3d ppos) const;
-  double newton_term(const Vector3d ppos, const double l) const;
+  bool inside_ellipsoid(const Vector3d &ppos) const;
+  double newton_term(const Vector3d &ppos, const double &l) const;
 
   Vector3d m_center;
   Vector3d m_semiaxes;

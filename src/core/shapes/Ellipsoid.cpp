@@ -21,9 +21,8 @@
 
 #include "Ellipsoid.hpp"
 #include "errorhandling.hpp"
+#include "utils.hpp"
 #include <cmath>
-
-#define SQR(A) ((A) * (A))
 
 namespace Shapes {
 int Ellipsoid::calculate_dist(const double *ppos, double *dist,
@@ -58,9 +57,9 @@ int Ellipsoid::calculate_dist(const double *ppos, double *dist,
   /* calculate dist and vec */
   double distance = 0.;
   for (int i = 0; i < 3; i++) {
-    vec[i] =
-        (ppos_e[i] - SQR(m_semiaxes[i]) * ppos_e[i] / (l + SQR(m_semiaxes[i])));
-    distance += SQR(vec[i]);
+    vec[i] = (ppos_e[i] - Utils::sqr(m_semiaxes[i]) * ppos_e[i] /
+                              (l + Utils::sqr(m_semiaxes[i])));
+    distance += Utils::sqr(vec[i]);
   }
 
   *dist = distance_prefactor * m_direction * std::sqrt(distance);
@@ -68,22 +67,23 @@ int Ellipsoid::calculate_dist(const double *ppos, double *dist,
   return 0;
 }
 
-bool Ellipsoid::inside_ellipsoid(const Vector3d ppos) const {
+bool Ellipsoid::inside_ellipsoid(const Vector3d &ppos) const {
   bool is_inside = false;
-  if (SQR(ppos[0] / m_semiaxes[0]) + SQR(ppos[1] / m_semiaxes[1]) +
-          SQR(ppos[2] / m_semiaxes[2]) <=
+  if (Utils::sqr(ppos[0] / m_semiaxes[0]) +
+          Utils::sqr(ppos[1] / m_semiaxes[1]) +
+          Utils::sqr(ppos[2] / m_semiaxes[2]) <=
       1)
     is_inside = true;
 
   return is_inside;
 }
 
-double Ellipsoid::newton_term(const Vector3d ppos, const double l) const {
+double Ellipsoid::newton_term(const Vector3d &ppos, const double &l) const {
   Vector3d axpos, lax, lax2;
   for (int i = 0; i < 3; i++) {
-    axpos[i] = SQR(m_semiaxes[i]) * SQR(ppos[i]);
-    lax[i] = l + SQR(m_semiaxes[i]);
-    lax2[i] = SQR(lax[i]);
+    axpos[i] = Utils::sqr(m_semiaxes[i]) * Utils::sqr(ppos[i]);
+    lax[i] = l + Utils::sqr(m_semiaxes[i]);
+    lax2[i] = Utils::sqr(lax[i]);
   }
 
   return (axpos[0] * lax2[1] * lax2[2] + axpos[1] * lax2[2] * lax2[0] +

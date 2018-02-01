@@ -13,6 +13,10 @@ import numpy
 @ut.skipIf(not espressomd.has_features(["CONSTRAINTS", "LENNARD_JONES_GENERIC"]),
            "Features not available, skipping test!")
 class EllipsoidTest(ut.TestCase):
+    """Checks that distance of particles on the ellipsoid constraint's surface is zero.
+    For the case of a spherical ellipsoid, also several non-zero distances are tested.
+
+    """
 
     box_l = 30.
 

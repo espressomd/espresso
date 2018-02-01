@@ -1,9 +1,3 @@
-# Tests if shape based constraints can be added to a system both by
-#  (1) defining a constraint object which is then added
-#  (2) and via keyword arguments.
-# Checks, that cylinder constraints with LJ interactions exert forces
-# on a test particle (that is, the constraints do what they should).
-
 from __future__ import division, print_function
 
 import unittest as ut
@@ -18,6 +12,14 @@ import tests_common
 @ut.skipIf(not espressomd.has_features(["CONSTRAINTS", "LENNARD_JONES"]),
            "Features not available, skipping test!")
 class ShapeBasedConstraintTest(ut.TestCase):
+    """Tests if shape based constraints can be added to a system both by
+    (1) defining a constraint object which is then added
+    (2) and via keyword arguments.
+    Checks that cylinder constraints with LJ interactions exert forces
+    on a test particle (that is, the constraints do what they should).
+
+    """
+
     box_l = 10.
 
     def prepare(self, system):

@@ -1,5 +1,6 @@
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 
+
 @script_interface_register
 class Cylinder(ScriptInterfaceHelper):
     """
@@ -22,6 +23,7 @@ class Cylinder(ScriptInterfaceHelper):
     """
     _so_name = "Shapes::Cylinder"
 
+
 @script_interface_register
 class Ellipsoid(ScriptInterfaceHelper):
     """
@@ -38,11 +40,12 @@ class Ellipsoid(ScriptInterfaceHelper):
        Semiaxis along the axis of rotational symmetry.
     b : :obj:`float`
        Equatorial semiaxes.
-    direction : int
+    direction : :obj:`int`
        Surface orientation, for +1 the normal points
        out of the mantel, for -1 it points inward.
     """
     _so_name = "Shapes::Ellipsoid"
+
 
 @script_interface_register
 class HollowCone(ScriptInterfaceHelper):
@@ -78,6 +81,7 @@ class HollowCone(ScriptInterfaceHelper):
     """
     _so_name = "Shapes::HollowCone"
 
+
 @script_interface_register
 class Maze(ScriptInterfaceHelper):
     """
@@ -97,6 +101,7 @@ class Maze(ScriptInterfaceHelper):
 
     """
     _so_name = "Shapes::Maze"
+
 
 @script_interface_register
 class Pore(ScriptInterfaceHelper):
@@ -214,6 +219,7 @@ class SpheroCylinder(ScriptInterfaceHelper):
     """
     _so_name = "Shapes::SpheroCylinder"
 
+
 @script_interface_register
 class Stomatocyte(ScriptInterfaceHelper):
     """
@@ -259,6 +265,7 @@ class Wall(ScriptInterfaceHelper):
 
     """
     _so_name = "Shapes::Wall"
+
 
 @script_interface_register
 class SimplePore(ScriptInterfaceHelper):
