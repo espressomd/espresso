@@ -81,7 +81,8 @@ class ReactionEnsembleTest(ut.TestCase):
             reactant_types=cls.reactant_types,
             reactant_coefficients=cls.reactant_coefficients,
             product_types=cls.product_types,
-            product_coefficients=cls.product_coefficients, default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1}, check_for_electroneutrality=True)
+            product_coefficients=cls.product_coefficients, 
+            default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1}, check_for_electroneutrality=True)
 
     @classmethod
     def ideal_alpha(cls, Gamma,N0,V,nubar):
@@ -108,42 +109,34 @@ class ReactionEnsembleTest(ut.TestCase):
         #chemical warmup - get close to chemical equilibrium before we start sampling
         RE.reaction(5*N0)
 
-        nrep=20; # number of repetitions
-        alphas=[]; # list of resultant alphas
-        for rep in range(0,nrep):
-            system.seed = system.cell_system.get_state()['n_nodes'] * [np.random.randint(5)]
-            average_NH = 0.0
-            average_NHA = 0.0
-            average_NA = 0.0
-            num_samples = 1000
-            for i in range(num_samples):
-                RE.reaction(10); # do one reaction attempt per particle (on average)
-                average_NH += system.number_of_particles( type=type_H)
-                average_NHA += system.number_of_particles( type=type_HA)
-                average_NA += system.number_of_particles( type=type_A)
-            average_NH /= num_samples
-            average_NA /= num_samples
-            average_NHA /= num_samples
-            average_alpha = average_NA / float(N0)
-            print("average_NH:", average_NH,
-            " average_NA:", average_NA, 
-            " average_NHA:", average_NHA, 
-            " average alpha:", average_alpha,
-            " target_alpha: ",target_alpha)
-            alphas.append(average_alpha);
-        alphas=np.array(alphas);
-        avg=np.average(alphas);
-        std=np.std(alphas);
-        print ("alphas:", alphas, "avg:", avg, "std:", std)
-        # Note: with 40 particles, alpha=0.5 and 10*1000 reactions, standard
-        # deviation of average alpha is about 0.0023 (determined from 40
-        # repeated simulations).  We set the desired accuracy to 3*std = 0.007,
+        system.seed = system.cell_system.get_state()['n_nodes'] * [np.random.randint(5)]
+        average_NH = 0.0
+        average_NHA = 0.0
+        average_NA = 0.0
+        num_samples = 500
+        for i in range(num_samples):
+            RE.reaction(10); 
+            average_NH += system.number_of_particles( type=type_H)
+            average_NHA += system.number_of_particles( type=type_HA)
+            average_NA += system.number_of_particles( type=type_A)
+        average_NH /= num_samples
+        average_NA /= num_samples
+        average_NHA /= num_samples
+        average_alpha = average_NA / float(N0)
+        print("average_NH:", average_NH,
+        " average_NA:", average_NA, 
+        " average_NHA:", average_NHA, 
+        " average alpha:", average_alpha,
+        " target_alpha: ",target_alpha)
+        # Note: with 40 particles, alpha=0.5 and 500*10 reactions, standard
+        # deviation of average alpha is about 0.005 (determined from 40
+        # repeated simulations).  We set the desired accuracy to 3*std = 0.015,
         # and require that the results agree within three digits
         rel_error_alpha = abs(
             average_alpha - target_alpha )/target_alpha; # relative error
         self.assertLess(
             rel_error_alpha,
-            0.07,
+            0.015,
             msg="Deviation from ideal titration curve is too big for the given input parameters.")
 
     def test_reaction_system(self):

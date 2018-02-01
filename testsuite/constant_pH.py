@@ -38,15 +38,15 @@ class ReactionEnsembleTest(ut.TestCase):
     temperature = 1.0
     # avoid extreme regions in the titration curve e.g. via the choice
     # choose target alpha not too far from 0.5 to get good statistics in a small number of steps
-    pKa_minus_pH = 1
-    pH = pKa_minus_pH  # or randomly via: 4*np.random.random()
-    pH = 2  # or randomly via: 4*np.random.random()
+    pKa_minus_pH = 0
+    pH = pKa_minus_pH  
+    pH = 2  
     pKa = pKa_minus_pH + pH
-    K_HA_diss_apparent = 10**(-pKa)
+    Ka = 10**(-pKa)
     box_l = (N0 / c0)**(1.0 / 3.0)
     system = espressomd.System()
     system.seed = system.cell_system.get_state()['n_nodes'] * [2]
-    np.random.seed(69) #make reaction code fully deterministic
+    np.random.seed(69) #make reaction code deterministic
     system.box_l = [box_l, box_l, box_l]
     system.cell_system.skin = 0.4
     system.time_step = 0.01
@@ -64,14 +64,14 @@ class ReactionEnsembleTest(ut.TestCase):
                                 cls.system.box_l, type=cls.type_H)
 
         cls.RE.add_reaction(
-            Gamma=cls.K_HA_diss_apparent, reactant_types=[
+            Gamma=cls.Ka, reactant_types=[
                 cls.type_HA], reactant_coefficients=[1], product_types=[
                 cls.type_A, cls.type_H], product_coefficients=[
                 1, 1], default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1})
         cls.RE.constant_pH = cls.pH
 
     @classmethod
-    def ideal_degree_of_association(cls, pH):
+    def ideal_alpha(cls, pH):
         return 1 - 1.0 / (1 + 10**(cls.pKa - pH))
 
     def test_ideal_titration_curve(self):
@@ -83,47 +83,41 @@ class ReactionEnsembleTest(ut.TestCase):
         box_l = ReactionEnsembleTest.system.box_l
         system = ReactionEnsembleTest.system
         RE = ReactionEnsembleTest.RE
-        """ chemical warmup in order to get to chemical equilibrium before starting to calculate the observable "degree of association" """
-        for i in range(40 * N0):
-            r = RE.reaction()
+        #chemical warmup - get close to chemical equilibrium before we start sampling
+        RE.reaction(5*N0)
 
         volume = np.prod(self.system.box_l)  # cuboid box
         average_NH = 0.0
         average_NHA = 0.0
         average_NA = 0.0
-        average_degree_of_association = 0.0
         num_samples = 1000
         for i in range(num_samples):
-            RE.reaction()
+            RE.reaction(1)
             average_NH += system.number_of_particles( type=type_H)
             average_NHA += system.number_of_particles( type=type_HA)
             average_NA += system.number_of_particles( type=type_A)
-            average_degree_of_association += system.number_of_particles(
-                type=type_HA) / float(N0)
         average_NH /= num_samples
         average_NA /= num_samples
         average_NHA /= num_samples
-        average_degree_of_association /= num_samples
+        average_alpha = average_NA / float(N0)
         # note you cannot calculate the pH via -log10(<NH>/volume) in the
         # constant pH ensemble, since the volume is totally arbitrary and does
         # not influence the average number of protons
         pH = ReactionEnsembleTest.pH
-        pK_a = -np.log10(self.K_HA_diss_apparent)
-        ideal=ReactionEnsembleTest.ideal_degree_of_association(pH);
+        pK_a = -np.log10(self.Ka)
+        target_alpha=ReactionEnsembleTest.ideal_alpha(pH);
         print("average_NH:", average_NH,
         " average_NA:", average_NA, 
         " average_NHA:", average_NHA, 
-        " average degree of association:", average_degree_of_association, 
-        " ideal: ",ideal)
-        real_error_in_degree_of_association = abs(
-            average_degree_of_association - ReactionEnsembleTest.ideal_degree_of_association(
-                ReactionEnsembleTest.pH)) / ReactionEnsembleTest.ideal_degree_of_association(
-            ReactionEnsembleTest.pH)
-        print(average_degree_of_association)
+        " average alpha:", average_alpha,
+        " target_alpha: ",target_alpha)
+        rel_error_alpha = abs(
+            average_alpha - target_alpha )/target_alpha; # relative error
+        print("average alpha:", average_alpha)
         self.assertLess(
-            real_error_in_degree_of_association,
+            rel_error_alpha,
             0.07,
-            msg="Deviation to ideal titration curve for the given input parameters too large.")
+            msg="Deviation from ideal titration curve is too big for the given input parameters.")
 
 
 if __name__ == "__main__":
