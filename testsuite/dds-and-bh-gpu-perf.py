@@ -20,7 +20,7 @@ class BHGPUPerfTest(ut.TestCase):
     es = espressomd.System()
     
     def vectorsTheSame(self,a,b):
-        tol = 5E-2
+        tol = 15E-2
         vec_len = la.norm(a - b)
         rel = 2 * vec_len / (la.norm(a) + la.norm(b))
         if rel <= tol:
@@ -40,23 +40,25 @@ class BHGPUPerfTest(ut.TestCase):
         print("- Testcase dds-and-bh-gpu-perf.py")
         print("----------------------------------------------")
         
-        pf_dds_gpu = 2.34
-        pf_dawaanr = 3.524
-        ratio_dds_gpu_bh_gpu = pf_dawaanr / pf_dds_gpu
+        pf_bh_gpu = 2.34
+        pf_dds_gpu = 3.524
+        ratio_dds_gpu_bh_gpu = pf_dds_gpu / pf_bh_gpu
         l = 15
-        self.es.box_l = [l, l, l]
         self.es.periodicity = [0, 0, 0]
         self.es.time_step = 1E-4
         self.es.cell_system.skin = 0.1
         
         part_dip = np.zeros((3))
         
-        for n in [ 26487, 147543 ]:
+        for n in [ 26487, 147543, 1001987 ]:
             print("{0} particles".format(n))
+            force_mag_average = 0.0
+            torque_mag_average = 0.0
             dipole_modulus = 1.3
             # scale the box for a large number of particles:
             if n > 1000:
-                l *= (n / 541) ** (1 / 3.0)
+                l *= 1.5 * (n / 541) ** (1 / 3.0)
+            self.es.box_l = [l, l, l]
             for i in range(n):
                 part_pos = np.array(random(3)) * l
                 costheta = 2 * random() - 1
@@ -88,7 +90,7 @@ class BHGPUPerfTest(ut.TestCase):
             # gamma should be zero in order to avoid the noise term in force and torque
             self.es.thermostat.set_langevin(kT=1.297, gamma=0.0)
             
-            dds_gpu = DipolarDirectSumGpu(prefactor = pf_dawaanr)
+            dds_gpu = DipolarDirectSumGpu(prefactor = pf_dds_gpu)
             self.es.actors.add(dds_gpu)
             t1 = tm.time()
             self.es.integrator.run(steps = 0,recalc_forces = True)
@@ -108,8 +110,8 @@ class BHGPUPerfTest(ut.TestCase):
                 self.es.actors.remove(self.es.actors.active_actors[i])
             
             self.es.integrator.run(steps = 0,recalc_forces = True)
-            dds_gpu = DipolarBarnesHutGpu(prefactor = pf_dds_gpu, epssq = 200.0, itolsq = 8.0)
-            self.es.actors.add(dds_gpu)
+            bh_gpu = DipolarBarnesHutGpu(prefactor = pf_bh_gpu, epssq = 400.0, itolsq = 36.0)
+            self.es.actors.add(bh_gpu)
             t1 = tm.time()
             self.es.integrator.run(steps = 0,recalc_forces = True)
             t2 = tm.time()
@@ -123,12 +125,23 @@ class BHGPUPerfTest(ut.TestCase):
                 bhgpu_t.append(self.es.part[i].torque_lab)
             bhgpu_e = Analysis(self.es).energy()["total"]
             
+            for i in range(n):
+                force_mag_average += la.norm(dds_gpu_f[i])
+                torque_mag_average += la.norm(dds_gpu_t[i])
+            
+            force_mag_average /= n
+            torque_mag_average /= n
+            
+            cutoff = 1E-2
+            
             # compare
             for i in range(n):
-                self.assertTrue(self.vectorsTheSame(np.array(dds_gpu_t[i]),ratio_dds_gpu_bh_gpu * np.array(bhgpu_t[i])), \
-                                msg = 'Torques on particle do not match. i={0} dds_gpu_t={1} ratio_dds_gpu_bh_gpu*bhgpu_t={2}'.format(i,np.array(dds_gpu_t[i]), ratio_dds_gpu_bh_gpu * np.array(bhgpu_t[i])))
-                self.assertTrue(self.vectorsTheSame(np.array(dds_gpu_f[i]),ratio_dds_gpu_bh_gpu * np.array(bhgpu_f[i])), \
-                                msg = 'Forces on particle do not match: i={0} dds_gpu_f={1} ratio_dds_gpu_bh_gpu*bhgpu_f={2}'.format(i,np.array(dds_gpu_f[i]), ratio_dds_gpu_bh_gpu * np.array(bhgpu_f[i])))
+                if la.norm(dds_gpu_t[i]) > cutoff * torque_mag_average:
+                    self.assertTrue(self.vectorsTheSame(np.array(dds_gpu_t[i]),ratio_dds_gpu_bh_gpu * np.array(bhgpu_t[i])), \
+                                    msg = 'Torques on particle do not match. i={0} dds_gpu_t={1} ratio_dds_gpu_bh_gpu*bhgpu_t={2}'.format(i,np.array(dds_gpu_t[i]), ratio_dds_gpu_bh_gpu * np.array(bhgpu_t[i])))
+                if la.norm(dds_gpu_f[i]) > cutoff * force_mag_average:
+                    self.assertTrue(self.vectorsTheSame(np.array(dds_gpu_f[i]),ratio_dds_gpu_bh_gpu * np.array(bhgpu_f[i])), \
+                                    msg = 'Forces on particle do not match: i={0} dds_gpu_f={1} ratio_dds_gpu_bh_gpu*bhgpu_f={2}'.format(i,np.array(dds_gpu_f[i]), ratio_dds_gpu_bh_gpu * np.array(bhgpu_f[i])))
             self.assertTrue(abs(dds_gpu_e - bhgpu_e * ratio_dds_gpu_bh_gpu) <= abs(1E-3 * dds_gpu_e), \
                             msg = 'Energies for dawaanr {0} and dds_gpu {1} do not match.'.format(dds_gpu_e,ratio_dds_gpu_bh_gpu * bhgpu_e))
             
@@ -138,7 +151,7 @@ class BHGPUPerfTest(ut.TestCase):
             
             self.es.integrator.run(steps = 0,recalc_forces = True)
             
-            del dds_gpu
+            del bh_gpu
             for i in range(len(self.es.actors.active_actors)):
                 self.es.actors.remove(self.es.actors.active_actors[i])
             self.es.part.clear()

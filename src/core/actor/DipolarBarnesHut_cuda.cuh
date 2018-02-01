@@ -66,7 +66,7 @@ typedef struct
 #define THREADS1 512
 #define THREADS2 1024
 #define THREADS3 1024
-#define THREADS4 1024
+#define THREADS4 256
 #define THREADS5 128	//256
 
 
