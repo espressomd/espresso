@@ -39,7 +39,7 @@ class ReactionEnsembleTest(ut.TestCase):
     type_HA = 0
     type_A = 1
     type_H = 2
-    target_alpha=0.5; 
+    target_alpha=0.6; 
     # We get best statistics at alpha=0.5 Then the test is least sensistive to # the exact sequence of random numbers and does not require hard-coded
     # output values
     temperature = 1.0
@@ -62,7 +62,6 @@ class ReactionEnsembleTest(ut.TestCase):
     # Gamma = prod_i (N_i / V) = alpha^2 N0 / (1-alpha)*V**(-nubar)
     # degree of dissociation alpha = N_A / N_HA = N_H / N_0
     Gamma=target_alpha**2/(1.-target_alpha)*N0/(volume**nubar)
-    print("Gamma:", Gamma);
     RE = reaction_ensemble.ReactionEnsemble(
         temperature=temperature,
         exclusion_radius=exclusion_radius)
@@ -123,13 +122,8 @@ class ReactionEnsembleTest(ut.TestCase):
         average_NA /= num_samples
         average_NHA /= num_samples
         average_alpha = average_NA / float(N0)
-        print("average_NH:", average_NH,
-        " average_NA:", average_NA, 
-        " average_NHA:", average_NHA, 
-        " average alpha:", average_alpha,
-        " target_alpha: ",target_alpha)
         # Note: with 40 particles, alpha=0.5 and 500*10 reactions, standard
-        # deviation of average alpha is about 0.005 (determined from 40
+        # deviation of average alpha is about 0.01 (determined from 40
         # repeated simulations).  We set the desired accuracy to 3*std = 0.015,
         # and require that the results agree within three digits
         rel_error_alpha = abs(
@@ -137,7 +131,15 @@ class ReactionEnsembleTest(ut.TestCase):
         self.assertLess(
             rel_error_alpha,
             0.015,
-            msg="Deviation from ideal titration curve is too big for the given input parameters.")
+            msg="\nDeviation from ideal titration curve is too big for the given input parameters.\n"
+            +"  Gamma: {0:.3e}, ".format(Gamma)
+            +"  average_NH: {0:.4e}".format(average_NH)
+            +"  average_NA: {0:.4e}".format(average_NA) 
+            +"  average_NHA:{0:.4e}".format(average_NHA) 
+            +"  average alpha: {0:.4e}".format(average_alpha)
+            +"  target_alpha: {0:.4e}".format(target_alpha)
+            +"  rel_error: {0:.4e}".format(rel_error_alpha)
+            )
 
     def test_reaction_system(self):
         RE_status = ReactionEnsembleTest.RE.get_status()

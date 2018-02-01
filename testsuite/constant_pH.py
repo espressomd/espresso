@@ -38,8 +38,7 @@ class ReactionEnsembleTest(ut.TestCase):
     temperature = 1.0
     # avoid extreme regions in the titration curve e.g. via the choice
     # choose target alpha not too far from 0.5 to get good statistics in a small number of steps
-    pKa_minus_pH = 0
-    pH = pKa_minus_pH  
+    pKa_minus_pH = -0.2
     pH = 2  
     pKa = pKa_minus_pH + pH
     Ka = 10**(-pKa)
@@ -72,7 +71,7 @@ class ReactionEnsembleTest(ut.TestCase):
 
     @classmethod
     def ideal_alpha(cls, pH):
-        return 1 - 1.0 / (1 + 10**(cls.pKa - pH))
+        return 1.0 / (1 + 10**(cls.pKa - pH))
 
     def test_ideal_titration_curve(self):
         N0 = ReactionEnsembleTest.N0
@@ -92,7 +91,7 @@ class ReactionEnsembleTest(ut.TestCase):
         average_NA = 0.0
         num_samples = 1000
         for i in range(num_samples):
-            RE.reaction(1)
+            RE.reaction(5)
             average_NH += system.number_of_particles( type=type_H)
             average_NHA += system.number_of_particles( type=type_HA)
             average_NA += system.number_of_particles( type=type_A)
@@ -104,20 +103,23 @@ class ReactionEnsembleTest(ut.TestCase):
         # constant pH ensemble, since the volume is totally arbitrary and does
         # not influence the average number of protons
         pH = ReactionEnsembleTest.pH
-        pK_a = -np.log10(self.Ka)
+        pKa = ReactionEnsembleTest.pKa
         target_alpha=ReactionEnsembleTest.ideal_alpha(pH);
-        print("average_NH:", average_NH,
-        " average_NA:", average_NA, 
-        " average_NHA:", average_NHA, 
-        " average alpha:", average_alpha,
-        " target_alpha: ",target_alpha)
         rel_error_alpha = abs(
             average_alpha - target_alpha )/target_alpha; # relative error
-        print("average alpha:", average_alpha)
         self.assertLess(
             rel_error_alpha,
             0.07,
-            msg="Deviation from ideal titration curve is too big for the given input parameters.")
+            msg="\nDeviation from ideal titration curve is too big for the given input parameters.\n"
+            +"  pH: {0:.3e}, ".format(pH)
+            +"  pKa: {0:.3e}, ".format(pKa)
+            +"  average_NH: {0:.4e}".format(average_NH)
+            +"  average_NA: {0:.4e}".format(average_NA) 
+            +"  average_NHA:{0:.4e}".format(average_NHA) 
+            +"  average alpha: {0:.4e}".format(average_alpha)
+            +"  target_alpha: {0:.4e}".format(target_alpha)
+            +"  rel_error: {0:.4e}".format(rel_error_alpha)
+            )
 
 
 if __name__ == "__main__":
