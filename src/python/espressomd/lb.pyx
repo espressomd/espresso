@@ -138,7 +138,7 @@ IF LB_GPU or LB:
             if not self._params["couple"] == default_params["couple"]:
                 if python_lbfluid_set_couple_flag(self._params["couple"]):
                     raise Exception("lb_lbfluid_set_couple_flag error")
-            utils.handle_errors("LB actiavion")
+            utils.handle_errors("LB activation")
 
         # function that calls wrapper functions which get the parameters from C-Level
         ####################################################
