@@ -152,7 +152,8 @@ class ArrayPropertyTest(ut.TestCase):
         self.locked_operators(self.system.part[0].rotation)
         self.locked_operators(self.system.part[0].omega_body)
         self.locked_operators(self.system.part[0].torque_lab)
-        self.locked_operators(self.system.part[0].ext_torque)
+        if espressomd.has_features("EXTERNAL_FORCES"):
+            self.locked_operators(self.system.part[0].ext_torque)
         
         # Check (allowed) setter
         # Particle 
@@ -171,8 +172,9 @@ class ArrayPropertyTest(ut.TestCase):
         self.system.part[0].torque_lab  = [2,2,2]
         self.assertTrue( (self.system.part[0].torque_lab == [2,2,2]).all() )
 
-        self.system.part[0].ext_torque  = [2,2,2]
-        self.assertTrue( (self.system.part[0].ext_torque == [2,2,2]).all() )
+        if espressomd.has_features("EXTERNAL_FORCES"):
+            self.system.part[0].ext_torque  = [2,2,2]
+            self.assertTrue( (self.system.part[0].ext_torque == [2,2,2]).all() )
         
         # Check if copy is settable
         # Particle
@@ -181,7 +183,8 @@ class ArrayPropertyTest(ut.TestCase):
         self.set_copy(self.system.part[0].rotation)  
         self.set_copy(self.system.part[0].omega_body)
         self.set_copy(self.system.part[0].torque_lab)
-        self.set_copy(self.system.part[0].ext_torque)
+        if espressomd.has_features("EXTERNAL_FORCES"):
+            self.set_copy(self.system.part[0].ext_torque)
     
     @ut.skipIf(not espressomd.has_features(["ROTATIONAL_INERTIA"]),
            "Features not available, skipping test!")

@@ -66,8 +66,7 @@ system.part[0].add_bond((h, 1))
 RE = reaction_ensemble.ReactionEnsemble(
     standard_pressure=0.00108, temperature=1, exclusion_radius=0)
 RE.add(equilibrium_constant=K_diss, reactant_types=[0], reactant_coefficients=[
-       1], product_types=[1, 2], product_coefficients=[1, 1])
-RE.set_default_charges(dictionary={"0": 0, "1": -1, "2": +1})
+       1], product_types=[1, 2], product_coefficients=[1, 1], default_charges={0: 0, 1: -1, 2: +1})
 print(RE.get_status())
 grand_canonical.setup([0, 1, 2, 3])
 
@@ -87,4 +86,4 @@ RE.set_wang_landau_parameters(final_wang_landau_parameter=1e-3, wang_landau_step
 i = 0
 while True:
     RE.reaction_wang_landau()
-    RE.global_mc_move_for_one_particle_of_type_wang_landau(3)
+    RE.displacement_mc_move_for_particles_of_type(3)

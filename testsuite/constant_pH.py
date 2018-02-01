@@ -68,8 +68,7 @@ class ReactionEnsembleTest(ut.TestCase):
             equilibrium_constant=cls.K_HA_diss_apparent, reactant_types=[
                 cls.type_HA], reactant_coefficients=[1], product_types=[
                 cls.type_A, cls.type_H], product_coefficients=[
-                1, 1])
-        cls.RE.set_default_charges(dictionary={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1})
+                1, 1], default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1})
         cls.RE.constant_pH = cls.pH
 
     @classmethod
