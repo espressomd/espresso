@@ -43,7 +43,7 @@ class TestCylindricalLBObservable(ut.TestCase):
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
-        self.lbf[np.array(self.position,dtype=int)].velocity = [0.0, 0.0, 0.0]
+        self.lbf[np.array(self.position, dtype=int)].velocity = [0.0, 0.0, 0.0]
 
     def swap_axis(self, arr, axis):
         if axis == 'x':
@@ -92,7 +92,7 @@ class TestCylindricalLBObservable(ut.TestCase):
             self.position = self.swap_axis(position, self.params['axis'])
             self.position += np.array(self.params['center'])
             self.system.part.add(id=i, pos=self.position)
-            self.lbf[np.array(self.position,dtype=int)].velocity = velocity
+            self.lbf[np.array(self.position, dtype=int)].velocity = velocity
 
     def normalize_with_bin_volume(self, histogram):
         bin_volume = tests_common.get_cylindrical_bin_volume(
