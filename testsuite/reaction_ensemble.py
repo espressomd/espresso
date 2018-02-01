@@ -81,8 +81,7 @@ class ReactionEnsembleTest(ut.TestCase):
             reactant_types=cls.reactant_types,
             reactant_coefficients=cls.reactant_coefficients,
             product_types=cls.product_types,
-            product_coefficients=cls.product_coefficients)
-        cls.RE.set_default_charges(dictionary={"0": 0, "1": -1, "2": +1})
+            product_coefficients=cls.product_coefficients, default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1}, check_for_electroneutrality=True)
 
     @classmethod
     def ideal_alpha(cls, Gamma,N0,V,nubar):

@@ -61,6 +61,7 @@ cdef extern from "statistics.hpp":
     ctypedef struct Observable_stat_non_bonded:
         pass
     cdef double mindist(PartCfg &, const int_list & set1, const int_list & set2)
+    cdef double min_distance2(double pos1[3], double pos2[3])
     cdef int_list nbhood(PartCfg &, double pos[3], double r_catch, int planedims[3])
     cdef double distto(PartCfg &, double pos[3], int pid)
     cdef double * obsstat_bonded(Observable_stat * stat, int j)

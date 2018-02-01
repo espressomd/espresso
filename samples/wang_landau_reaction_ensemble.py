@@ -66,9 +66,8 @@ system.part[0].add_bond((h, 1))
 
 
 RE = reaction_ensemble.WangLandauReactionEnsemble(temperature=1, exclusion_radius=0)
-RE.add_reaction(Gamma=K_diss, reactant_types=[0], reactant_coefficients=[
-       1], product_types=[1, 2], product_coefficients=[1, 1])
-RE.set_default_charges(dictionary={"0": 0, "1": -1, "2": +1})
+RE.add(Gamma=K_diss, reactant_types=[0], reactant_coefficients=[
+       1], product_types=[1, 2], product_coefficients=[1, 1], default_charges={0: 0, 1: -1, 2: +1})
 print(RE.get_status())
 system.setup_type_map([0, 1, 2, 3])
 
@@ -86,5 +85,5 @@ RE.set_wang_landau_parameters(final_wang_landau_parameter=1e-3, do_not_sample_re
 
 i = 0
 while True:
-    RE.reaction()
-    RE.global_mc_move_for_one_particle_of_type_wang_landau(3)
+    RE.reaction_wang_landau()
+    RE.displacement_mc_move_for_particles_of_type(3)
