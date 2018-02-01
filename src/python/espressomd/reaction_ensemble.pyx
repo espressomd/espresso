@@ -184,7 +184,6 @@ cdef class ReactionAlgorithm(object):
         return "Gamma", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges", "check_for_electroneutrality"
 
     def _required_keys_add(self):
-        return ["Gamma", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients"]
         return ["Gamma", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges"]
 
     def _check_lengths_of_arrays(self):
@@ -247,7 +246,7 @@ cdef class ReactionAlgorithm(object):
         """
         self.RE.do_reaction(int(reaction_steps))
 
-    def global_mc_move_for_one_particle_of_type(self, type_mc):
+    def displacement_move_for_one_particle_of_type(self, type_mc,particle_number_to_be_changed=1):
 
         """
         Perfoms a diplacemenet Monte Carlo move for particles of given type. New positions
