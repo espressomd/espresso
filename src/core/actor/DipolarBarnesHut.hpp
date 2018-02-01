@@ -21,6 +21,7 @@
 
 #ifdef DIPOLAR_BARNES_HUT
 
+#include "errorhandling.hpp"
 #include "SystemInterface.hpp"
 #include "EspressoSystemInterface.hpp"
 #include <iostream>
@@ -57,40 +58,28 @@ public:
   };
 
   void computeForces(SystemInterface &s) {
-    dds_float box[3];
-    int per[3];
-
-    for (int i=0;i<3;i++)
-    {
-     box[i]=s.box()[i];
-     per[i] = (PERIODIC(i));
-    }
-
     fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(), m_bh_data);
     initBHgpu(m_bh_data.blocks);
 	buildBoxBH(m_bh_data.blocks);
 	buildTreeBH(m_bh_data.blocks);
 	summarizeBH(m_bh_data.blocks);
 	sortBH(m_bh_data.blocks);
-	forceBH(m_bh_data.blocks,k,s.fGpuBegin(),s.torqueGpuBegin(),box,per);
+	if (forceBH(&m_bh_data,k,s.fGpuBegin(),s.torqueGpuBegin())) {
+	     fprintf(stderr, "forceBH: some of kernels encounter the algorithm functional error");
+	     errexit();
+	}
   };
   void computeEnergy(SystemInterface &s) {
-    dds_float box[3];
-    int per[3];
-
-    for (int i=0;i<3;i++)
-    {
-     box[i]=s.box()[i];
-     per[i] = (PERIODIC(i));
-    }
-
     fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(), m_bh_data);
     initBHgpu(m_bh_data.blocks);
     buildBoxBH(m_bh_data.blocks);
     buildTreeBH(m_bh_data.blocks);
     summarizeBH(m_bh_data.blocks);
     sortBH(m_bh_data.blocks);
-    energyBH(m_bh_data.blocks,k,box,per,(&(((CUDA_energy*)s.eGpu())->dipolar)));
+    if (energyBH(&m_bh_data,k,(&(((CUDA_energy*)s.eGpu())->dipolar)))) {
+             fprintf(stderr, "energyBH: some of kernels encounter the algorithm functional error");
+             errexit();
+    }
  };
 
 protected:

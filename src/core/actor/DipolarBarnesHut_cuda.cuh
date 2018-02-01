@@ -62,14 +62,13 @@ typedef struct
    int *start;
 } BHData;
 
-#define SHARED_ARRAY_BH 512
-
 // thread count for different kernels (see kernel calls from below functions).
-#define THREADS1 512	/* must be a power of 2 */
+#define THREADS1 512
 #define THREADS2 1024
 #define THREADS3 1024
 #define THREADS4 256
 #define THREADS5 128	//256
+
 
 // block count = factor * #SMs
 // for different kernels (see kernel calls from below functions).
@@ -114,10 +113,10 @@ void summarizeBH(int blocks);
 void sortBH(int blocks);
 
 // Force calculation.
-void forceBH(int blocks, dds_float k, float* f, float* torque, dds_float box_l[3],int periodic[3]);
+int forceBH(BHData* bh_data, dds_float k, float* f, float* torque);
 
 // Energy calculation.
-void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float* E);
+int energyBH(BHData* bh_data, dds_float k, float* E);
 
 #endif // DIPOLAR_BARNES_HUT
 #endif /* DIPOLARBARNESHUT_CUH_ */

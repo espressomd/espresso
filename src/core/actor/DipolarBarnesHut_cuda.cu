@@ -45,39 +45,39 @@ typedef float dds_float ;
 using namespace std;
 
 // CUDA blocks
-__constant__ volatile int blocks;
+__constant__  int blocks;
 // each node corresponds to a split of the cubic box in 3D space to equal cubic boxes
 // hence, 8 octant nodes per particle is a theoretical octree limit:
 // a maximal number of octree nodes is "nnodesd" and a number of particles "nbodiesd" respectively.
-__constant__ volatile int nnodesd, nbodiesd;
+__constant__  int nnodesd, nbodiesd;
 // Method performance/accuracy parameters
 __constant__ float epssqd, itolsqd;
 // blkcntd is a factual blocks' count.
 // bottomd is a bottom Barnes-Hut node (the division octant cell) in a linear array representation.
 // maxdepthd is a largest length of the octree "branch" till the "leaf".
-__device__ volatile int bottomd, maxdepthd, blkcntd;
+__device__  int bottomd, maxdepthd, blkcntd;
 // half edge of the BH box
-__device__ volatile float radiusd;
+__device__  float radiusd;
 // particle positions on the device:
 __device__ __constant__ float* xd = 0;
 // particle dipole moments on the device:
 __constant__ float* uxd = 0;
 // Not a real mass. Just a node weight coefficient.
-__constant__ volatile float* massd = 0;
+__constant__  float* massd = 0;
 // Barnes-Hut tree spatial boundaries.
-__constant__ volatile float *mind = 0;
+__constant__  float *mind = 0;
 // Barnes-Hut tree spatial boundaries.
-__constant__ volatile float *maxd = 0;
+__constant__  float *maxd = 0;
 // Error report.
-__constant__ volatile int *errd = 0;
+__constant__  int *errd = 0;
 // Indices of particles sorted according to the tree linear representation.
-__constant__ volatile int *sortd = 0;
+__constant__  int *sortd = 0;
 // The tree linear representation.
-__constant__ volatile int *childd = 0;
+__constant__  int *childd = 0;
 // Supplementary array: a tree nodes (division octant cells/particles inside) counting.
-__constant__ volatile int *countd = 0;
+__constant__  int *countd = 0;
 // Start indices for the per-cell sorting.
-__constant__ volatile int *startd = 0;
+__constant__  int *startd = 0;
 
 // The "half-convolution" multi-thread reduction.
 // The thread with a lower index will operate longer and
@@ -129,7 +129,7 @@ void boundingBoxKernel()
 	// min/max positions per the thread:
 	float minp[3], maxp[3];
 	// min/max positions per block:
-	__shared__ volatile float smin[3*THREADS1], smax[3*THREADS1];
+	__shared__  float smin[3*THREADS1], smax[3*THREADS1];
 	for (l = 0; l < 3; l++) {
 	  minp[l] = maxp[l] = xd[l];
 	}
@@ -142,7 +142,7 @@ void boundingBoxKernel()
 	i = threadIdx.x;
 	inc = THREADS1 * gridDim.x;
 	// j is an absolute index of the particle.
-	// It is shiftd over a count of the passed block threads behind: blockIdx.x * THREADS1.
+	// It is shifted over a count of the passed block threads behind: blockIdx.x * THREADS1.
 	// NOTE: this loop is extrema search among all particles of the given thread
 	// in the present block. However, one is not among all threads of this block.
 	for (j = i + blockIdx.x * THREADS1; j < nbodiesd; j += inc)
@@ -312,7 +312,8 @@ void treeBuildingKernel()
 			// until other threads will unlock this cell for either a body insertion and/or new octant level cells creation.
 				if (ch == -2) {
 				    // Cannot be here..
-					printf("Error: ch = -2\n");
+					//printf("Error: ch = -2\n");
+				    *errd = 1;
 					break;
 				}
 				if (ch == -1) {
@@ -354,7 +355,7 @@ void treeBuildingKernel()
 						r *= 0.5f;
 
 						// Init the node weight coefficients.
-						// Note: particles has mass=1.0 defined in the Espresso System Interface.
+						// Note: particles has mass=1.0 is defined in allocBHmemCopy().
 						massd[cell] = -1.0f;
 
 						// The startd array is crucial for the sortKernel.
@@ -455,8 +456,10 @@ void summarizationKernel()
 	// (like a mass and the center of mass)
 	float p[3], u[3];
 	// Per-block BH tree cashing:
-	__shared__ volatile int child[THREADS3 * 8];
+	__shared__  int child[THREADS3 * 8];
 
+	// no children by default:
+	for (i = 0; i < 8; i++) child[i * THREADS3 + threadIdx.x] = -1;
 	bottom = bottomd;
 	// Increment towards other particles assigned to the given thread:
 	inc = blockDim.x * gridDim.x;
@@ -464,12 +467,14 @@ void summarizationKernel()
 	// which is a minimal index of the last created cell.
 	// Starting "k" value should be aligned using the warp size
 	// according to the designed threads performance.
-	k = (bottom & (-WARPSIZE)) + threadIdx.x + blockIdx.x * blockDim.x;
+	//k = (bottom & (-WARPSIZE)) + threadIdx.x + blockIdx.x * blockDim.x;
+	k = bottom + threadIdx.x + blockIdx.x * blockDim.x;
 	// Threads below the bottom line could proceed to their next cells.
-	if (k < bottom) k += inc;
+	//if (k < bottom) k += inc;
 
 	// Assume no missing children:
 	missing = 0;
+	//__syncthreads();    // throttle
 	// Iterate over all cells (not particles) assigned to the thread:
 	while (k <= nnodesd) {
 		//iteration++;
@@ -526,6 +531,8 @@ void summarizationKernel()
 			cnt += j;
 		}
 
+		//__syncthreads();    // throttle
+
 		if (missing != 0) {
 			do {
 				// poll missing child
@@ -565,10 +572,11 @@ void summarizationKernel()
 				  xd[3 * k + l] = p[l] * m;
 				  uxd[3 * k + l] = u[l];
 				}
-			__threadfence();	// make sure data are visible before setting mass
+			//__threadfence();	// make sure data are visible before setting mass
 			massd[k] = cm;
 			k += inc;	// move on to next cell
 		}
+		__syncthreads();    // throttle
 	}	//while
 }
 
@@ -634,7 +642,7 @@ void sortKernel()
 __global__
 __launch_bounds__(THREADS5, FACTOR5)
 void forceCalculationKernel(dds_float pf,
-	     float *force, float* torque, dds_float box_l[3], int periodic[3])
+	     float *force, float* torque)
 {
 	int i, j, k, l, n, depth, base, sbase, diff, t;
 	float tmp;
@@ -647,7 +655,7 @@ void forceCalculationKernel(dds_float pf,
 	// "node" is the BH octant sub-cell in the stack.
 	// "pos"=0..7 - which octant we are examining now in the stack.
 	// dq is an array used to determine that the given BH cell is far enough.
-	__shared__ volatile int pos[MAXDEPTH * THREADS5/WARPSIZE], node[MAXDEPTH * THREADS5/WARPSIZE];
+	__shared__  int pos[MAXDEPTH * THREADS5/WARPSIZE], node[MAXDEPTH * THREADS5/WARPSIZE];
 	__shared__ float dq[MAXDEPTH * THREADS5/WARPSIZE];
 	float b, b2, d1, dd5;
 	float bb2d7, umd5;
@@ -829,15 +837,14 @@ void forceCalculationKernel(dds_float pf,
 
 __global__
 __launch_bounds__(THREADS5, FACTOR5)
-void energyCalculationKernel(dds_float pf,
-	     dds_float box_l[3], int periodic[3],dds_float* energySum)
+void energyCalculationKernel(dds_float pf, dds_float* energySum)
 {
     // NOTE: the algorithm of this kernel is almost identical to forceCalculationKernel. See comments there.
 
 	int i, j, k, l, n, depth, base, sbase, diff, t;
 	float tmp;
 	float dr[3], h[3], u[3], uc[3];
-	__shared__ volatile int pos[MAXDEPTH * THREADS5/WARPSIZE], node[MAXDEPTH * THREADS5/WARPSIZE];
+	__shared__  int pos[MAXDEPTH * THREADS5/WARPSIZE], node[MAXDEPTH * THREADS5/WARPSIZE];
 	__shared__ float dq[MAXDEPTH * THREADS5/WARPSIZE];
 	dds_float sum=0.0;
 	extern __shared__ dds_float res[];
@@ -985,7 +992,7 @@ void buildBoxBH(int blocks) {
 
     cudaThreadSynchronize();
 	KERNELCALL(boundingBoxKernel,grid,block,());
-	cudaThreadSynchronize();
+	cuda_safe_mem(cudaThreadSynchronize());
 }
 
 // Building Barnes-Hut tree in a linear childd array representation
@@ -998,7 +1005,7 @@ void buildTreeBH(int blocks) {
     block.x = THREADS2;
 
 	KERNELCALL(treeBuildingKernel,grid,block,());
-	cudaThreadSynchronize();
+	cuda_safe_mem(cudaThreadSynchronize());
 }
 
 // Calculate octant cells masses and cell index counts.
@@ -1012,7 +1019,7 @@ void summarizeBH(int blocks) {
     block.x = THREADS3;
 
     KERNELCALL(summarizationKernel,grid,block,());
-	cudaThreadSynchronize();
+    cuda_safe_mem(cudaThreadSynchronize());
 }
 
 // Sort particle indexes according to the BH tree representation.
@@ -1025,52 +1032,42 @@ void sortBH(int blocks) {
     block.x = THREADS4;
 
 	KERNELCALL(sortKernel,grid,block,());
-	cudaThreadSynchronize();
+	cuda_safe_mem(cudaThreadSynchronize());
 }
 
 // Force calculation.
-void forceBH(int blocks, dds_float k, float* f, float* torque, dds_float box_l[3],int periodic[3]) {
-	dds_float* box_l_gpu;
-	int* periodic_gpu;
-	dim3 grid(1,1,1);
+int forceBH(BHData* bh_data, dds_float k, float* f, float* torque) {
+    int error_code = 0;
+    dim3 grid(1,1,1);
 	dim3 block(1,1,1);
 
-	grid.x = blocks * FACTOR5;
+	grid.x = bh_data->blocks * FACTOR5;
 	block.x = THREADS5;
-	cuda_safe_mem(cudaMalloc((void**)&box_l_gpu,3*sizeof(dds_float)));
-	cuda_safe_mem(cudaMalloc((void**)&periodic_gpu,3*sizeof(int)));
-	cuda_safe_mem(cudaMemcpy(box_l_gpu,box_l,3*sizeof(dds_float),cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpy(periodic_gpu,periodic,3*sizeof(int),cudaMemcpyHostToDevice));
 
-	KERNELCALL(forceCalculationKernel,grid,block,(k, f, torque, box_l_gpu, periodic_gpu));
-	cudaThreadSynchronize();
+	KERNELCALL(forceCalculationKernel,grid,block,(k, f, torque));
+	cuda_safe_mem(cudaThreadSynchronize());
 
-	cuda_safe_mem(cudaFree(box_l_gpu));
-	cuda_safe_mem(cudaFree(periodic_gpu));
+    cuda_safe_mem(cudaMemcpy(&error_code,bh_data->err,sizeof(int),cudaMemcpyDeviceToHost));
+    return error_code;
 }
 
 // Energy calculation.
-void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float* E) {
-	dds_float* box_l_gpu;
-	int* periodic_gpu;
+int energyBH(BHData* bh_data, dds_float k, float* E) {
+    int error_code = 0;
 	dim3 grid(1,1,1);
 	dim3 block(1,1,1);
 
-	grid.x = blocks * FACTOR5;
+	grid.x = bh_data->blocks * FACTOR5;
 	block.x = THREADS5;
 
-	cuda_safe_mem(cudaMalloc((void**)&box_l_gpu,3*sizeof(dds_float)));
-	cuda_safe_mem(cudaMalloc((void**)&periodic_gpu,3*sizeof(int)));
-	cuda_safe_mem(cudaMemcpy(box_l_gpu,box_l,3*sizeof(float),cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpy(periodic_gpu,periodic,3*sizeof(int),cudaMemcpyHostToDevice));
 
 	dds_float *energySum;
 	cuda_safe_mem(cudaMalloc(&energySum,(int)(sizeof(dds_float)*grid.x)));
 	// cleanup the memory for the energy sum
 	cuda_safe_mem(cudaMemset(energySum, 0, (int)(sizeof(dds_float)*grid.x)));
 
-	KERNELCALL_shared(energyCalculationKernel,grid,block,block.x*sizeof(dds_float),(k, box_l_gpu, periodic_gpu,energySum));
-	cudaThreadSynchronize();
+	KERNELCALL_shared(energyCalculationKernel,grid,block,block.x*sizeof(dds_float),(k, energySum));
+	cuda_safe_mem(cudaThreadSynchronize());
 
 	// Sum the results of all blocks
 	// One energy part per block in the prev kernel
@@ -1079,8 +1076,8 @@ void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float*
 	cuda_safe_mem(cudaMemcpy(E,&x,sizeof(float),cudaMemcpyHostToDevice));
 
 	cuda_safe_mem(cudaFree(energySum));
-	cuda_safe_mem(cudaFree(box_l_gpu));
-	cuda_safe_mem(cudaFree(periodic_gpu));
+	cuda_safe_mem(cudaMemcpy(&error_code,bh_data->err,sizeof(int),cudaMemcpyDeviceToHost));
+	return error_code;
 }
 
 // Function to set the BH method parameters.
@@ -1139,13 +1136,13 @@ void allocBHmemCopy(int nbodies, BHData* bh_data) {
     // this array is updating per each block at each interaction calculation
     // within the boundingBoxKernel
     if (bh_data->maxp != 0) cuda_safe_mem(cudaFree(bh_data->maxp));
-    cuda_safe_mem(cudaMalloc((void **)&(bh_data->maxp), sizeof(float) * bh_data->blocks * 3));
+    cuda_safe_mem(cudaMalloc((void **)&(bh_data->maxp), sizeof(float) * bh_data->blocks * FACTOR1 * 3));
     // (min[3*i], min[3*i+1], min[3*i+2])
     // are the octree box dynamical spatial constraints
     // this array is updating per each block at each interaction calculation
     // within the boundingBoxKernel
     if (bh_data->minp != 0) cuda_safe_mem(cudaFree(bh_data->minp));
-    cuda_safe_mem(cudaMalloc((void **)&(bh_data->minp), sizeof(float) * bh_data->blocks * 3));
+    cuda_safe_mem(cudaMalloc((void **)&(bh_data->minp), sizeof(float) * bh_data->blocks * FACTOR1 * 3));
 
     if(bh_data->r != 0) cuda_safe_mem(cudaFree(bh_data->r));
     cuda_safe_mem(cudaMalloc(&(bh_data->r), 3 * (bh_data->nnodes + 1) * sizeof(float)));

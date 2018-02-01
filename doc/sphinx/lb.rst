@@ -77,10 +77,11 @@ relaxation parameters for the kinetic modes. These fluid parameters do not corre
 Before running a simulation at least the following parameters must be
 set up: ``agrid``, ``tau``, ``visc``, ``dens``, ``fric``. For the other parameters, the following are taken: ``bulk_visc=0``, ``gamma_odd=0``, ``gamma_even=0``, ``ext_force=[0,0,0]``.
 
-If the feature ``SHANCHEN`` is activated, the Lattice Boltzmann code (so far GPU
-version only) is extended to a two-component Shan-Chen (SC) method.
+..
+    If the feature ``SHANCHEN`` is activated, the Lattice Boltzmann code (so far GPU
+    version only) is extended to a two-component Shan-Chen (SC) method.
 
-.. note:: The Shan-Chen LB currently does not possess a Python interface.
+    .. note:: The Shan-Chen LB currently does not possess a Python interface.
 
 ..
   The command requires in this case to supply two values, for the respective
@@ -99,8 +100,10 @@ version only) is extended to a two-component Shan-Chen (SC) method.
   make it easier to calculate flow profiles independent of the lattice
   constant.
 
-Checkpointing
--------------
+.. _Checkpointing LB:
+
+Checkpointing LB
+----------------
 
 ::
 
@@ -128,6 +131,8 @@ load in the particles with the correct forces, and use::
 upon the first call to :ref:`run <Integrator>`. This causes the
 old forces to be reused and thus conserves momentum.
 
+.. _LB as a thermostat:
+
 LB as a thermostat
 ------------------
 
@@ -146,9 +151,9 @@ fluid using a linear interpolation scheme, to preserve total momentum.
 In the GPU implementation the force can alternatively be interpolated
 using a three point scheme which couples the particles to the nearest 27
 LB nodes. This can be called using “lbfluid 3pt” and is described in
-Dünweg and Ladd by equation 301 :cite:`duenweg08a`. Note that
-the three point coupling scheme is incompatible with the Shan Chen
-Lattice Boltzmann. The frictional force tends to decrease the relative
+Dünweg and Ladd by equation 301 :cite:`duenweg08a`. 
+.. Note that the three point coupling scheme is incompatible with the Shan Chen Lattice Boltzmann. 
+The frictional force tends to decrease the relative
 velocity between the fluid and the particle whereas the random forces
 are chosen so large that the average kinetic energy per particle
 corresponds to the given temperature, according to a fluctuation
@@ -164,150 +169,7 @@ fluctuations can be switched off by setting the temperature to 0.
 Regarding the unit of the temperature, please refer to
 Section :ref:`On units`.
 
-The Shan Chen bicomponent fluid
--------------------------------
-
-.. note:: The Shan-Chen LB currently does not possess a Python interface.
-
-.. note:: Please cite :cite:`sega13c` if you use the Shan Chen implementation described below.
-
-The Lattice Boltzmann variant of Shan and
-Chen :cite:`shan93a` is widely used as it is simple and yet
-very effective in reproducing the most important traits of
-multicomponent or multiphase fluids. The version of the Shan-Chen method
-implemented in is an extension to bi-component fluids of the
-multi-relaxation-times Lattice Boltzmann with fluctuations applied to
-all modes, that is already present in |es|. It features, in addition,
-coupling with particles :cite:`sega13c` and
-component-dependent particle interactions (see sections
-:ref:`SC as a thermostat` and :ref:`SC component-dependent interactions between particles`).
-
-The Shan-Chen fluid is set up using the command ``lbfluid``, supplying two values
-(one per component) to the option ``density``. Optionally, two values can be set for
-each of the usual transport coefficients (shear and bulk viscosity), and
-for the ghost modes. It is possible to set a relaxation time also for
-the momentum modes, since they are not conserved quantities in the
-Shan-Chen method, by using the option ``mobility``. The mobility transport
-coefficient expresses the propensity of the two components to mutually
-diffuse, and, differently from other transport coefficients, only one
-value is needed, as it characterizes the mixture as a whole. When
-thermal fluctuations are switched on, a random noise is added, in
-addition, also to the momentum modes. Differently from the other modes,
-a correlated noise is added to the momentum ones, in order to preserve
-the *total* momentum.
-
-The fluctuating hydrodynamic equations that are simulated using the
-Shan-Chen approach are
-
-.. math::
-
-   \label{eq:shanchen-NS}
-   \rho \left(\frac{\partial }{\partial  t} {\vec {u}} + ({\vec {u}}\cdot {\vec {\nabla}})  {\vec {u}} \right)=-{\vec {\nabla}} p+{\vec {\nabla}} \cdot ({\vec {\Pi}}+\hat{{\vec {\sigma}}})+\sum_{\zeta} {\vec {g}}_{\zeta},
-
-.. math::
-
-   \label{eq:shanchen-cont}
-   \frac{\partial }{\partial  t} \rho_{\zeta}+{\vec {\nabla}} \cdot (\rho_{\zeta} {\vec {u}}) = {\vec {\nabla}} \cdot  ({\vec {D}}_{\zeta}+\hat{{\vec {\xi}}}_{\zeta}),
-
-.. math::
-
-   \label{eq:shanchen-globalcont}
-   \partial_t \rho+{\vec {\nabla}} \cdot (\rho {\vec {u}}) = 0,
-
-where the index :math:`\zeta=1,2` specifies the component,
-:math:`\vec{u}` is the fluid (baricentric) velocity,
-:math:`\rho=\sum_\zeta\rho_\zeta` is the total density, and
-:math:`p=\sum_{\zeta} p_{\zeta}=\sum_{\zeta} c_s^2
-\rho_{\zeta}` is the internal pressure of the mixture (:math:`c_s` being
-the sound speed). Two fluctuating terms :math:`\hat{{\vec{\sigma}}}` and
-:math:`\hat{{\vec{\xi}}}_{\zeta}` are associated, respectively, to the
-diffusive current :math:`{\vec{D}}_{\zeta}` and to the viscous stress
-tensor :math:`{\vec{\Pi}}`.
-
-The coupling between the fluid components is realized by the force
-
-.. math::
-
-   \vec{g}_{\zeta}(\vec{r}) =  - \rho_{\zeta}(\vec{r})
-    \sum_{\vec{r}'}\sum_{\zeta'}  g_{\zeta \zeta'} \rho_{\zeta'}
-    (\vec{r}') (\vec{r}'-\vec{r}),
-
-that acts on the component :math:`\zeta` at node position
-:math:`\vec{r}`, and depends on the densities on the neighboring nodes
-located at :math:`\vec{r}'`. The width of the interfacial regions
-between two components, that can be obtained with the Shan-Chen method
-is usually 5-10 lattice units. The coupling matrix
-:math:`g_{\zeta \zeta'}` is in general symmetric, so in the present
-implementation only three real values need to be specified with the
-option ``sc_coupling``. The ``lbfluid`` command sets the density of the two components to the
-values specified by the option , and these can be modified with the
-``lbnode`` command. Note that the number of active fluid components can be accessed
-through the global variable ``lb_components``.
-
-.. _SC as a thermostat:
-
-SC as a thermostat
-------------------
-
-.. note:: The Shan-Chen LB currently does not possess a Python interface.
-
-The coupling of particle dynamics to the Shan-Chen fluid has been
-conceived as an extension of the Ahlrichs and Dünweg’s point coupling,
-with the force acting on a particle given by
-
-.. math:: \vec{F} = -\frac{\sum_\zeta \gamma_\zeta \rho_\zeta(\vec{r})}{\sum_\zeta \rho_\zeta(\vec{r}_\zeta)} \left(\vec{v}-\vec{u}\right) + \vec{F}_R + \vec{F}^{ps},
-
-where :math:`\zeta` identifies the component,
-:math:`\rho_\zeta(\vec{r})` is a linear interpolation of the component
-density on the nodes surrounding the particle, :math:`\gamma_\zeta` is
-the component-dependent friction coefficient, :math:`\vec{F}_R` is the
-usual random force, and
-
-.. math:: \vec{F}^{\mathrm{ps}}= -  \sum_{\zeta} \kappa_{\zeta} \nabla \rho_{\zeta}(\vec{r}).
-
-This is an effective solvation force, that can drive the particle
-towards density maxima or minima of each component, depending on the
-sign of the constant :math:`\kappa_\zeta`. Note that by setting the
-coupling constant to the same negative value for both components will,
-in absence of other forces, push the particle to the interfacial region.
-
-In addition to the solvation force acting on particles, another one that
-acts on the fluid components is present, representing the solvation
-force of particles on the fluid.
-
-.. math:: \vec{F}_{\zeta}^{\mathrm{fs}}(\vec{r}) = -\lambda_{\zeta} \rho_{\zeta}(\vec{r}) \sum_i \sum_{\vec{r}'} \Theta \left[\frac{(\vec{r}_i-\vec{r})}{\|\vec{r}_i-\vec{r}\|} \cdot \frac{(\vec{r}'-\vec{r})}{\|\vec{r}'-\vec{r}\|} \right] \frac{\vec{r}'-\vec{r}}{\|\vec{r}'-\vec{r}\|^2},
-
-where :math:`\Theta(x)=1` if :math:`0<x<1`, and 0 otherwise, the sum
-over lattice nodes is performed on the neighboring sites of
-:math:`\vec{r}` and the index :math:`i` runs over all particles. Note
-that a dependence on the particle index :math:`i` is assumed for
-:math:`\kappa_\zeta` and :math:`\lambda_\zeta`. This force has the
-effect of raising or lowering (depending on the sign of the coupling
-constant :math:`\lambda_\zeta`) the density in the eight nodes around a
-particle. The particle property (Chap. [chap:part]) sets the coupling
-constants :math:`\lambda_A`,\ :math:`\kappa_A`,\ :math:`\lambda_B` and
-:math:`\kappa_B`, where :math:`A` and :math:`B` denote the first and
-second fluid component, respectively. A complete description of the
-coupling scheme can be found in :cite:`sega13c`.
-
-.. _SC component-dependent interactions between particles:
-
-SC component-dependent interactions between particles
------------------------------------------------------
-
-.. note:: The Shan-Chen LB currently does not possess a Python interface.
-
-Often particle properties depend on the type of solvent in which they
-are. For example, a polymer chain swells in a good solvent, and
-collapses in a bad one. One of the possible ways to model the good or
-bad solvent condition in coarse-grained models is to employ a WCA or a
-LJ (attractive) potential, respectively. If one wants to model the two
-components of the SC fluid as good/bad solvent, it is possible to do it
-using the argument of the ``inter`` command. This non-bonded interaction type acts
-as a modifier to other interactions. So far only the Lennard-Jones
-interaction is changed by the ``affinity``, so that it switches in a continuous way
-(after the potential minimum) from the full interaction to the WCA one.
-For more information see :ref:`Lennard-Jones interaction` and :ref:`Affinity interaction`.
+.. _Reading and setting properties of single lattice nodes:
 
 Reading and setting properties of single lattice nodes
 ------------------------------------------------------
@@ -331,6 +193,8 @@ Examples::
 
 The first line prints the fluid velocity at node 0 0 0 to the screen. The second line sets this fluid node's density to the value ``1.2``.
 
+.. _Removing total fluid momentum:
+
 Removing total fluid momentum
 -----------------------------
 
@@ -340,8 +204,10 @@ Some simulations require the net momentum of the system to vanish. Even if the p
 
     lb.remove_momentum()
 
-Visualization
--------------
+.. _Output for visualization:
+
+Output for visualization
+------------------------
 
 |es| implements a number of commands to output fluid field data of the whole fluid into a file at once.::
 
@@ -377,12 +243,99 @@ size is 10 in the :math:`x`- and :math:`y`-direction).
 
 .. If the bicomponent fluid is used, two filenames have to be supplied when exporting the density field, to save both components.
 
+
+.. _Choosing between the GPU and CPU implementations:
+
+Choosing between the GPU and CPU implementations
+------------------------------------------------
+
+.. note:: Feature LB_GPU required
+
+Espresso contains an implementation of the LBM for NVIDIA
+GPUs using the CUDA framework. On CUDA-supporting machines this can be
+activated by compiling with the feature ``LB_GPU``. Within the
+Python script, the ``LBFluid`` object can be substituted with the ``LBFluidGPU`` object to switch from CPU based to GPU based execution. For further
+information on CUDA support see section :ref:`GPU Acceleration with CUDA`.
+
+The following minimal example demonstrates how to use the GPU implementation of the LBM in analogy to the example for the CPU given in section :ref:`Setting up a LB fluid`::
+
+    import espressomd
+    sys = espressomd.System()
+    sys.box_l = [10, 20, 30]
+    sys.time_step = 0.01
+    sys.cell_system.skin = 0.4
+    lb = espressomd.lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=0.01)
+    sys.actors.add(lb)
+    sys.integrator.run(100)
+
+For boundary conditions analogous to the CPU
+implementation, the feature ``LB_BOUNDARIES_GPU`` has to be activated.
+The feature ``LB_GPU`` allows the use of Lees-Edwards boundary conditions. Our implementation follows the the paper of :cite:`wagner02`. Note, that there is no extra python interface for the use of Lees-Edwards boundary conditions with the LB algorithm. All information are rather internally derived from the set of the Lees-Edwards offset in the system class. For further information Lees-Edwards boundary conditions please refer to section :ref:`Lees-Edwards boundary conditions`
+
+.. _Electrohydrodynamics:
+
+Electrohydrodynamics
+--------------------
+
+        .. note::
+           This needs the feature LB_ELECTROHYDRODYNAMICS.
+
+If the feature is activated, the Lattice Boltzmann Code can be
+used to implicitly model surrounding salt ions in an external electric
+field by having the charged particles create flow.
+
+For that to work, you need to set the electrophoretic mobility
+(multiplied by the external :math:`E`-field) :math:`\mu E` on the
+particles that should be subject to the field. This effectivly acts
+as an velocity offset between the particle and the LB fluid.
+
+For more information on this method and how it works, read the
+publication :cite:`hickey10a`.
+
+
+.. _Using shapes as Lattice-Boltzmann boundary:
+
+Using shapes as Lattice-Boltzmann boundary
+------------------------------------------
+
+.. note::
+    `Feature LB_BOUNDARIES required`
+
+Lattice-Boltzmann boundaries are implemented in the module
+:mod:`espressomd.lbboundaries`. You might want to take a look
+at the classes :class:`espressomd.lbboundaries.LBBoundary`
+and :class:`espressomd.lbboundaries.LBBoundaries` for more information.
+
+Adding a shape based boundary is straightforward::
+
+    lbb = espressomd.lbboundaries.LBBoundary(shape=my_shape, velocity=[0,0,0])
+    system.lbboundaries.add(lbb)
+
+or::
+
+    lbb = espressomd.lbboundaries.LBBoundary()
+    lbb.shape = my_shape
+    lbb.velocity = [0,0,0]
+    system.lbboundaries.add(lbb)
+
+.. _Minimal usage example:
+
+Minimal usage example
+~~~~~~~~~~~~~~~~~~~~~
+
+.. note:: Feature LB_BOUNDARIES or LB_BOUNDARIES_GPU required
+
+In order to add a wall as boundary for a Lattice-Boltzmann fluid
+you could do the following::
+
+    wall = espressomd.shapes.Wall(dist=5, normal=[1,0,0])
+    lbb = espressomd.lbboundaries.LBBoundary(shape=wall, velocity=[0,0,0])
+    system.lbboundaries.add(lbb)
+
 .. _Setting up boundary conditions:
 
 Setting up boundary conditions
-------------------------------
-
-.. note:: Feature LB_BOUNDARIES or LB_BOUNDARIES_GPU required
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The following example sets up a system consisting of a spherical boundary in the center of the simulation box acting as a no-slip boundary for the LB fluid that is driven by 4 walls with a slip velocity::
 
@@ -446,49 +399,153 @@ this implementation as a blueprint for the boundary treatment, an
 implementation of the Ladd-Coupling should be relatively
 straightforward. The ``LBBoundary`` object furthermore possesses a property ``force``, which keeps track of the hydrodynamic drag force exerted onto the boundary by the moving fluid.
 
-Choosing between the GPU and CPU implementations
-------------------------------------------------
+..
+    .. _The Shan Chen bicomponent fluid:
 
-.. note:: Feature LB_GPU required
+    The Shan Chen bicomponent fluid
+    -------------------------------
 
-Espresso contains an implementation of the LBM for NVIDIA
-GPUs using the CUDA framework. On CUDA-supporting machines this can be
-activated by compiling with the feature ``LB_GPU``. Within the
-Python script, the ``LBFluid`` object can be substituted with the ``LBFluidGPU`` object to switch from CPU based to GPU based execution. For further
-information on CUDA support see section :ref:`GPU Acceleration with CUDA`.
+    .. note:: The Shan-Chen LB currently does not possess a Python interface.
 
-The following minimal example demonstrates how to use the GPU implementation of the LBM in analogy to the example for the CPU given in section :ref:`Setting up a LB fluid`::
+    .. note:: Please cite :cite:`sega13c` if you use the Shan Chen implementation described below.
 
-    import espressomd
-    sys = espressomd.System()
-    sys.box_l = [10, 20, 30]
-    sys.time_step = 0.01
-    sys.cell_system.skin = 0.4
-    lb = espressomd.lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=0.01)
-    sys.actors.add(lb)
-    sys.integrator.run(100)
+    The Lattice Boltzmann variant of Shan and
+    Chen :cite:`shan93a` is widely used as it is simple and yet
+    very effective in reproducing the most important traits of
+    multicomponent or multiphase fluids. The version of the Shan-Chen method
+    implemented in is an extension to bi-component fluids of the
+    multi-relaxation-times Lattice Boltzmann with fluctuations applied to
+    all modes, that is already present in |es|. It features, in addition,
+    coupling with particles :cite:`sega13c` and
+    component-dependent particle interactions (see sections
+    :ref:`SC as a thermostat` and :ref:`SC component-dependent interactions between particles`).
 
-For boundary conditions analogous to the CPU
-implementation, the feature ``LB_BOUNDARIES_GPU`` has to be activated.
-The feature ``LB_GPU`` allows the use of Lees-Edwards boundary conditions. Our implementation follows the the paper of :cite:`wagner02`. Note, that there is no extra python interface for the use of Lees-Edwards boundary conditions with the LB algorithm. All information are rather internally derived from the set of the Lees-Edwards offset in the system class. For further information Lees-Edwards boundary conditions please refer to section :ref:`Lees-Edwards boundary conditions`
+    The Shan-Chen fluid is set up using the command ``lbfluid``, supplying two values
+    (one per component) to the option ``density``. Optionally, two values can be set for
+    each of the usual transport coefficients (shear and bulk viscosity), and
+    for the ghost modes. It is possible to set a relaxation time also for
+    the momentum modes, since they are not conserved quantities in the
+    Shan-Chen method, by using the option ``mobility``. The mobility transport
+    coefficient expresses the propensity of the two components to mutually
+    diffuse, and, differently from other transport coefficients, only one
+    value is needed, as it characterizes the mixture as a whole. When
+    thermal fluctuations are switched on, a random noise is added, in
+    addition, also to the momentum modes. Differently from the other modes,
+    a correlated noise is added to the momentum ones, in order to preserve
+    the *total* momentum.
 
-Electrohydrodynamics
---------------------
+    The fluctuating hydrodynamic equations that are simulated using the
+    Shan-Chen approach are
 
-        .. note::
-           This needs the feature LB_ELECTROHYDRODYNAMICS.
+    .. math::
 
-If the feature is activated, the Lattice Boltzmann Code can be
-used to implicitly model surrounding salt ions in an external electric
-field by having the charged particles create flow.
+       \label{eq:shanchen-NS}
+       \rho \left(\frac{\partial }{\partial  t} {\vec {u}} + ({\vec {u}}\cdot {\vec {\nabla}})  {\vec {u}} \right)=-{\vec {\nabla}} p+{\vec {\nabla}} \cdot ({\vec {\Pi}}+\hat{{\vec {\sigma}}})+\sum_{\zeta} {\vec {g}}_{\zeta},
 
-For that to work, you need to set the electrophoretic mobility
-(multiplied by the external :math:`E`-field) :math:`\mu E` on the
-particles that should be subject to the field. This effectivly acts
-as an velocity offset between the particle and the LB fluid.
+    .. math::
 
-For more information on this method and how it works, read the
-publication :cite:`hickey10a`.
+       \label{eq:shanchen-cont}
+       \frac{\partial }{\partial  t} \rho_{\zeta}+{\vec {\nabla}} \cdot (\rho_{\zeta} {\vec {u}}) = {\vec {\nabla}} \cdot  ({\vec {D}}_{\zeta}+\hat{{\vec {\xi}}}_{\zeta}),
+
+    .. math::
+
+       \label{eq:shanchen-globalcont}
+       \partial_t \rho+{\vec {\nabla}} \cdot (\rho {\vec {u}}) = 0,
+
+    where the index :math:`\zeta=1,2` specifies the component,
+    :math:`\vec{u}` is the fluid (baricentric) velocity,
+    :math:`\rho=\sum_\zeta\rho_\zeta` is the total density, and
+    :math:`p=\sum_{\zeta} p_{\zeta}=\sum_{\zeta} c_s^2
+    \rho_{\zeta}` is the internal pressure of the mixture (:math:`c_s` being
+    the sound speed). Two fluctuating terms :math:`\hat{{\vec{\sigma}}}` and
+    :math:`\hat{{\vec{\xi}}}_{\zeta}` are associated, respectively, to the
+    diffusive current :math:`{\vec{D}}_{\zeta}` and to the viscous stress
+    tensor :math:`{\vec{\Pi}}`.
+
+    The coupling between the fluid components is realized by the force
+
+    .. math::
+
+       \vec{g}_{\zeta}(\vec{r}) =  - \rho_{\zeta}(\vec{r})
+        \sum_{\vec{r}'}\sum_{\zeta'}  g_{\zeta \zeta'} \rho_{\zeta'}
+        (\vec{r}') (\vec{r}'-\vec{r}),
+
+    that acts on the component :math:`\zeta` at node position
+    :math:`\vec{r}`, and depends on the densities on the neighboring nodes
+    located at :math:`\vec{r}'`. The width of the interfacial regions
+    between two components, that can be obtained with the Shan-Chen method
+    is usually 5-10 lattice units. The coupling matrix
+    :math:`g_{\zeta \zeta'}` is in general symmetric, so in the present
+    implementation only three real values need to be specified with the
+    option ``sc_coupling``. The ``lbfluid`` command sets the density of the two components to the
+    values specified by the option , and these can be modified with the
+    ``lbnode`` command. Note that the number of active fluid components can be accessed
+    through the global variable ``lb_components``.
+
+    .. _SC as a thermostat:
+
+    SC as a thermostat
+    ~~~~~~~~~~~~~~~~~~
+
+    .. note:: The Shan-Chen LB currently does not possess a Python interface.
+
+    The coupling of particle dynamics to the Shan-Chen fluid has been
+    conceived as an extension of the Ahlrichs and Dünweg’s point coupling,
+    with the force acting on a particle given by
+
+    .. math:: \vec{F} = -\frac{\sum_\zeta \gamma_\zeta \rho_\zeta(\vec{r})}{\sum_\zeta \rho_\zeta(\vec{r}_\zeta)} \left(\vec{v}-\vec{u}\right) + \vec{F}_R + \vec{F}^{ps},
+
+    where :math:`\zeta` identifies the component,
+    :math:`\rho_\zeta(\vec{r})` is a linear interpolation of the component
+    density on the nodes surrounding the particle, :math:`\gamma_\zeta` is
+    the component-dependent friction coefficient, :math:`\vec{F}_R` is the
+    usual random force, and
+
+    .. math:: \vec{F}^{\mathrm{ps}}= -  \sum_{\zeta} \kappa_{\zeta} \nabla \rho_{\zeta}(\vec{r}).
+
+    This is an effective solvation force, that can drive the particle
+    towards density maxima or minima of each component, depending on the
+    sign of the constant :math:`\kappa_\zeta`. Note that by setting the
+    coupling constant to the same negative value for both components will,
+    in absence of other forces, push the particle to the interfacial region.
+
+    In addition to the solvation force acting on particles, another one that
+    acts on the fluid components is present, representing the solvation
+    force of particles on the fluid.
+
+    .. math:: \vec{F}_{\zeta}^{\mathrm{fs}}(\vec{r}) = -\lambda_{\zeta} \rho_{\zeta}(\vec{r}) \sum_i \sum_{\vec{r}'} \Theta \left[\frac{(\vec{r}_i-\vec{r})}{\|\vec{r}_i-\vec{r}\|} \cdot \frac{(\vec{r}'-\vec{r})}{\|\vec{r}'-\vec{r}\|} \right] \frac{\vec{r}'-\vec{r}}{\|\vec{r}'-\vec{r}\|^2},
+
+    where :math:`\Theta(x)=1` if :math:`0<x<1`, and 0 otherwise, the sum
+    over lattice nodes is performed on the neighboring sites of
+    :math:`\vec{r}` and the index :math:`i` runs over all particles. Note
+    that a dependence on the particle index :math:`i` is assumed for
+    :math:`\kappa_\zeta` and :math:`\lambda_\zeta`. This force has the
+    effect of raising or lowering (depending on the sign of the coupling
+    constant :math:`\lambda_\zeta`) the density in the eight nodes around a
+    particle. The particle property (Chap. [chap:part]) sets the coupling
+    constants :math:`\lambda_A`,\ :math:`\kappa_A`,\ :math:`\lambda_B` and
+    :math:`\kappa_B`, where :math:`A` and :math:`B` denote the first and
+    second fluid component, respectively. A complete description of the
+    coupling scheme can be found in :cite:`sega13c`.
+
+    .. _SC component-dependent interactions between particles:
+
+    SC component-dependent interactions between particles
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. note:: The Shan-Chen LB currently does not possess a Python interface.
+
+    Often particle properties depend on the type of solvent in which they
+    are. For example, a polymer chain swells in a good solvent, and
+    collapses in a bad one. One of the possible ways to model the good or
+    bad solvent condition in coarse-grained models is to employ a WCA or a
+    LJ (attractive) potential, respectively. If one wants to model the two
+    components of the SC fluid as good/bad solvent, it is possible to do it
+    using the argument of the ``inter`` command. This non-bonded interaction type acts
+    as a modifier to other interactions. So far only the Lennard-Jones
+    interaction is changed by the ``affinity``, so that it switches in a continuous way
+    (after the potential minimum) from the full interaction to the WCA one.
+    For more information see :ref:`Lennard-Jones interaction` and :ref:`Affinity interaction`.
 
 .. [1]
    http://www.paraview.org/
