@@ -826,7 +826,7 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force, Distanc
   if ((p1->p.identity != p2->p.identity)&&(checkIfParticlesInteract(p1->p.type, p2->p.type))) {
     /* distance calculation */
     get_mi_vector(d, p1->r.p, p2->r.p);
-    dist2 = SQR(d[0]) + SQR(d[1]) + SQR(d[2]);
+    dist2 = Utils::sqr(d[0]) + Utils::sqr(d[1]) + Utils::sqr(d[2]);
     dist  = sqrt(dist2);
     calc_non_bonded_pair_force(p1,p2,d,dist,dist2,force);
 #ifdef ELECTROSTATICS

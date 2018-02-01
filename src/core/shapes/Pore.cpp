@@ -26,7 +26,6 @@
 
 using namespace std;
 
-#define SQR(A) ((A) * (A))
 
 namespace Shapes {
 int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
@@ -98,9 +97,9 @@ int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
                 sqrt(slope * slope / (1 + slope * slope)) * m_smoothing_radius;
 
   c1_r = m_rad_left + slope * (z_left + half_length) +
-         sqrt(m_smoothing_radius * m_smoothing_radius - SQR(z_left - c1_z));
+         sqrt(m_smoothing_radius * m_smoothing_radius - Utils::sqr(z_left - c1_z));
   c2_r = m_rad_left + slope * (z_right + half_length) +
-         sqrt(m_smoothing_radius * m_smoothing_radius - SQR(z_right - c2_z));
+         sqrt(m_smoothing_radius * m_smoothing_radius - Utils::sqr(z_right - c2_z));
   c1_r = m_rad_left + m_smoothing_radius;
   c2_r = m_rad_right + m_smoothing_radius;
 

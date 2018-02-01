@@ -109,8 +109,8 @@ inline void init_ghost_force(Particle *part) {
     part->f.torque[2] = 0;
 
     /* and rescale quaternion, so it is exactly of unit length */
-    scale = sqrt(SQR(part->r.quat[0]) + SQR(part->r.quat[1]) +
-                 SQR(part->r.quat[2]) + SQR(part->r.quat[3]));
+    scale = sqrt(Utils::sqr(part->r.quat[0]) + Utils::sqr(part->r.quat[1]) +
+                 Utils::sqr(part->r.quat[2]) + Utils::sqr(part->r.quat[3]));
     part->r.quat[0] /= scale;
     part->r.quat[1] /= scale;
     part->r.quat[2] /= scale;
@@ -164,8 +164,8 @@ inline void init_local_particle_force(Particle *part) {
 #endif
 
     /* and rescale quaternion, so it is exactly of unit length */
-    scale = sqrt(SQR(part->r.quat[0]) + SQR(part->r.quat[1]) +
-                 SQR(part->r.quat[2]) + SQR(part->r.quat[3]));
+    scale = sqrt(Utils::sqr(part->r.quat[0]) + Utils::sqr(part->r.quat[1]) +
+                 Utils::sqr(part->r.quat[2]) + Utils::sqr(part->r.quat[3]));
     part->r.quat[0] /= scale;
     part->r.quat[1] /= scale;
     part->r.quat[2] /= scale;

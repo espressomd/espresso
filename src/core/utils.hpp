@@ -167,7 +167,7 @@ inline double normr(double v[3]) {
   double d2 = 0.0;
   int i;
   for (i = 0; i < 3; i++)
-    d2 += SQR(v[i]);
+    d2 += Utils::sqr(v[i]);
   d2 = sqrtf(d2);
   return d2;
 }
@@ -177,7 +177,7 @@ template <typename T> double sqrlen(T const &v) {
   double d2 = 0.0;
   int i;
   for (i = 0; i < 3; i++)
-    d2 += SQR(v[i]);
+    d2 += Utils::sqr(v[i]);
   return d2;
 }
 
@@ -223,15 +223,15 @@ inline void vec_rotate(double *axis, double alpha, double *vector,
   a[1] = axis[1] / absa;
   a[2] = axis[2] / absa;
 
-  result[0] = (cosa + SQR(a[0]) * (1 - cosa)) * vector[0] +
+  result[0] = (cosa + Utils::sqr(a[0]) * (1 - cosa)) * vector[0] +
               (a[0] * a[1] * (1 - cosa) - a[2] * sina) * vector[1] +
               (a[0] * a[2] * (1 - cosa) + a[1] * sina) * vector[2];
   result[1] = (a[0] * a[1] * (1 - cosa) + a[2] * sina) * vector[0] +
-              (cosa + SQR(a[1]) * (1 - cosa)) * vector[1] +
+              (cosa + Utils::sqr(a[1]) * (1 - cosa)) * vector[1] +
               (a[1] * a[2] * (1 - cosa) - a[0] * sina) * vector[2];
   result[2] = (a[0] * a[2] * (1 - cosa) - a[1] * sina) * vector[0] +
               (a[1] * a[2] * (1 - cosa) + a[0] * sina) * vector[1] +
-              (cosa + SQR(a[2]) * (1 - cosa)) * vector[2];
+              (cosa + Utils::sqr(a[2]) * (1 - cosa)) * vector[2];
 
   return;
 }
@@ -444,8 +444,8 @@ inline void get_grid_pos(int i, int *a, int *b, int *c, int adim[3]) {
  *  \param pos2 Position two.
  */
 inline double distance(double pos1[3], double pos2[3]) {
-  return sqrt(SQR(pos1[0] - pos2[0]) + SQR(pos1[1] - pos2[1]) +
-              SQR(pos1[2] - pos2[2]));
+  return sqrt(Utils::sqr(pos1[0] - pos2[0]) + Utils::sqr(pos1[1] - pos2[1]) +
+              Utils::sqr(pos1[2] - pos2[2]));
 }
 
 /** returns the distance between two positions squared.
@@ -453,8 +453,8 @@ inline double distance(double pos1[3], double pos2[3]) {
  *  \param pos2 Position two.
  */
 inline double distance2(double const pos1[3], double const pos2[3]) {
-  return SQR(pos1[0] - pos2[0]) + SQR(pos1[1] - pos2[1]) +
-         SQR(pos1[2] - pos2[2]);
+  return Utils::sqr(pos1[0] - pos2[0]) + Utils::sqr(pos1[1] - pos2[1]) +
+         Utils::sqr(pos1[2] - pos2[2]);
 }
 
 /** Returns the distance between two positions squared and stores the
@@ -469,7 +469,7 @@ inline double distance2vec(double const pos1[3], double const pos2[3],
   vec[0] = pos1[0] - pos2[0];
   vec[1] = pos1[1] - pos2[1];
   vec[2] = pos1[2] - pos2[2];
-  return SQR(vec[0]) + SQR(vec[1]) + SQR(vec[2]);
+  return Utils::sqr(vec[0]) + Utils::sqr(vec[1]) + Utils::sqr(vec[2]);
 }
 
 /*@}*/
