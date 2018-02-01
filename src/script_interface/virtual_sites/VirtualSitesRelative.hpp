@@ -33,7 +33,16 @@ namespace VirtualSites {
 class VirtualSitesRelative : public VirtualSites {
 public:
   VirtualSitesRelative()
-      : m_virtual_sites(new ::VirtualSitesRelative()) {};
+      : m_virtual_sites(new ::VirtualSitesRelative()) {
+    add_parameters(
+            {{"have_quaternion",
+            [this](const Variant &v) {
+              virtual_sites()->set_have_quaternion(get_value<bool>(v));
+            },
+            [this]() {
+              return virtual_sites()->get_have_quaternion();
+            }}});
+  };
   /** Vs implementation we are wrapping */
   std::shared_ptr<::VirtualSites> virtual_sites() override { return m_virtual_sites;};
 private:
