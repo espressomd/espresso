@@ -20,38 +20,48 @@
 #ifndef VIRTUAL_SITES_VIRTUAL_SITES_RELATIVE_HPP
 #define VIRTUAL_SITES_VIRTUAL_SITES_RELATIVE_HPP
 
-#include "config.hpp" 
+#include "config.hpp"
 #ifdef VIRTUAL_SITES_RELATIVE
 
-#include "virtual_sites.hpp"
-#include "particle_data.hpp"
 #include "communication.hpp"
+#include "particle_data.hpp"
+#include "virtual_sites.hpp"
 
+/** @brief Virtual sites implementation for rigid bodies */
+class VirtualSitesRelative : public VirtualSites {
+public:
+  VirtualSitesRelative(){};
+  /** @brief Update positions and/or velocities of virtual sites
 
-   /** @brief Virtual sites implementation for rigid bodies */
-   class VirtualSitesRelative : public VirtualSites {
-    public:
-    VirtualSitesRelative() {};
-    /** @brief Update positions and/or velocities of virtual sites 
+  * Velocities are only updated have_velocity() return true
+  * @param recalc_positions can be used to skip the reculation of positions
+  */
+  void update(bool recalc_positions = true) const override;
+  /** Back-transfer forces (and torques) to non-virtual particles */
+  void back_transfer_forces_and_torques() const override;
+  /** @brief Is a ghost communication needed before position updates */
+  bool need_ghost_comm_after_pos_update() const override { return true; }
+  /** Is a ghost comm needed before a velocity update */
+  bool need_ghost_comm_before_vel_update() const override {
+    return (n_nodes > 1) && have_velocity();
+  };
+  bool need_ghost_comm_before_back_transfer() const override { return true; };
+  int n_pressure_contribs() const override { return 1; };
+  void
+  pressure_and_stress_tensor_contribution(double *pressure,
+                                          double *stress_tensor) const override;
+  void set_have_quaternion(bool have_quaternion);
+  bool get_have_quaternion() const;
 
-    * Velocities are only updated have_velocity() return true 
-    * @param recalc_positions can be used to skip the reculation of positions 
-    */
-    void update(bool recalc_positions=true) const override;
-    /** Back-transfer forces (and torques) to non-virtual particles */
-    void back_transfer_forces_and_torques() const override;
-    /** @brief Is a ghost communication needed before position updates */
-    bool need_ghost_comm_after_pos_update() const override { return true;} 
-    /** Is a ghost comm needed before a velocity update */
-    bool need_ghost_comm_before_vel_update() const override {return (n_nodes>1) && have_velocity();};
-    bool need_ghost_comm_before_back_transfer() const override {return true;};
-    int n_pressure_contribs() const override {return 1;};
-    void pressure_and_stress_tensor_contribution(double* pressure, double* stress_tensor) const override;    
-    
-    private:
-    void update_pos(Particle& p) const;
-    void update_vel(Particle& p) const;
-   };
+private:
+  void update_pos(Particle &p) const;
+  void update_vel(Particle &p) const;
+  /** @brief Update the orientation of the virtual particles with respect to the
+   * real particle.
+   */
+  void update_virtual_particle_quaternion(Particle &p) const;
+  bool m_have_quaternion = false;
+};
 
 #endif
 

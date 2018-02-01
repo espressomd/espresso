@@ -41,6 +41,25 @@ for (auto& p : local_cells.particles()) {
 
 
 
+void VirtualSitesRelative::update_virtual_particle_orientation(Particle& p) const {
+ const Particle *p_real = local_particles[p.p.vs_relative_to_particle_id];
+ if (!p_real)
+ {
+   throw runtime_error("virtual_sites_relative.cpp - update_mol_pos_particle(): No real particle associated with virtual site.\n");
+   return;
+ }
+ double director[3];
+ convert_quat_to_quatu(p_real->r.quat, director);
+ double r, phi, theta;
+ r = sqrt(sqrlen(director));
+ theta = std::acos(director[2]/r);
+ phi = std::atan2(director[1], director[0]);
+ if (director[1] < 0)  phi += 2.0 * PI;
+ double theta_virtual = theta + 
+  
+  
+}
+
 
 
 // This is the "relative" implementation for virtual sites.
