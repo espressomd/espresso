@@ -66,7 +66,7 @@
 #include "mmm2d.hpp"
 #include "molforces.hpp"
 #include "morse.hpp"
-#include "mpiio.hpp"
+#include "io/mpiio/mpiio.hpp"
 #include "npt.hpp"
 #include "observables/LBRadialVelocityProfile.hpp"
 #include "observables/Observable.hpp"
@@ -2505,9 +2505,9 @@ void mpi_mpiio(const char *filename, unsigned fields, int write) {
   MPI_Bcast(&fields, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
   MPI_Bcast(&write, 1, MPI_INT, 0, MPI_COMM_WORLD);
   if (write)
-    mpi_mpiio_common_write(filename, fields);
+    Mpiio::mpi_mpiio_common_write(filename, fields);
   else
-    mpi_mpiio_common_read(filename, fields);
+    Mpiio::mpi_mpiio_common_read(filename, fields);
 }
 
 void mpi_mpiio_slave(int dummy, int flen) {
@@ -2518,9 +2518,9 @@ void mpi_mpiio_slave(int dummy, int flen) {
   MPI_Bcast(&fields, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
   MPI_Bcast(&write, 1, MPI_INT, 0, MPI_COMM_WORLD);
   if (write)
-    mpi_mpiio_common_write(filename, fields);
+    Mpiio::mpi_mpiio_common_write(filename, fields);
   else
-    mpi_mpiio_common_read(filename, fields);
+    Mpiio::mpi_mpiio_common_read(filename, fields);
   delete[] filename;
 }
 

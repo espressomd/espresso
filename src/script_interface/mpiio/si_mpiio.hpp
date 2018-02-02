@@ -26,7 +26,7 @@
 #include "ScriptInterface.hpp"
 #include "auto_parameters/AutoParameters.hpp"
 #include "get_value.hpp"
-#include "mpiio.hpp"
+#include "io/mpiio/mpiio.hpp"
 
 #define field_value(use, v) ((use)? (v): 0u)
 
@@ -48,15 +48,15 @@ public:
     auto typ = get_value<bool>(parameters.at("typ"));
     auto bond = get_value<bool>(parameters.at("bond"));
 
-    unsigned v = field_value(pos, MPIIO_OUT_POS)
-                 | field_value(vel, MPIIO_OUT_VEL)
-                 | field_value(typ, MPIIO_OUT_TYP)
-                 | field_value(bond, MPIIO_OUT_BND);
+    unsigned v = field_value(pos, Mpiio::MPIIO_OUT_POS)
+                 | field_value(vel, Mpiio::MPIIO_OUT_VEL)
+                 | field_value(typ, Mpiio::MPIIO_OUT_TYP)
+                 | field_value(bond, Mpiio::MPIIO_OUT_BND);
 
     if (name == "write")
-      mpi_mpiio_common_write(pref.c_str(), v);
+      Mpiio::mpi_mpiio_common_write(pref.c_str(), v);
     else if (name == "read")
-      mpi_mpiio_common_read(pref.c_str(), v);
+      Mpiio::mpi_mpiio_common_read(pref.c_str(), v);
 
     return {};
   }

@@ -68,6 +68,8 @@
 #include <unistd.h>
 #include <vector>
 
+namespace Mpiio {
+
 /** Dumps arr of size len starting from prefix pref of type T using
  * MPI_T as MPI datatype. Beware, that T and MPI_T have to match!
  *
@@ -451,4 +453,6 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
   on_particle_change();
   // Out of box particles might be accepted by the cell system.
   set_resort_particles(Cells::RESORT_GLOBAL);
+}
+
 }
