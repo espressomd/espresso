@@ -123,6 +123,12 @@ The above code snippet would lead the the same exclusions as the one before.
 The same accounts for the ``bonds`` property by interchanging the integer entries of the exclusion list with 
 the tuple ``(bond, partners)``. 
 
+You can select a subset of particles via using the select method. For example you can obtain a list of particles with charge -1 via using ::
+
+    system.part.select(q=-1)
+
+For further information on how to use selections see :meth:`espressomd.particle_data.ParticleList.select()`.
+
 .. _Deleting particles:
 
 Deleting particles
@@ -504,7 +510,7 @@ particles which have the given type. For counting the number of particles of a g
     import espressomd
     system=espressomd.System()
     ...
-    selection=system.part.select(type=type)
+    number_of_particles=len(system.part.select(type=type))
 
 However calling select(type=type) results in looping over all particles. Therefore calling select() is slow compared to using ``system.number_of_particles(type)`` which directly can return the number of particles with that type.
 
