@@ -9,7 +9,7 @@ Analysis
   online-calculation of specialized local and global observables with 
   calculation and data accumulation performed in the core.
 - :ref:`Observables and correlators`: This provides a more flexible concept of 
-  in-core analysis, where the a certain observable (:ref:`Available observables`), 
+  in-core analysis, where a certain observable (:ref:`Available observables`), 
   a rule for data accumulation (ref Accumulators) and/or correlation (:ref:`Correlations`) can be defined.
 
 
