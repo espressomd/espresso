@@ -27,7 +27,13 @@ from espressomd.utils cimport handle_errors
 
 IF ELECTROSTATICS and P3M:
     cdef class ElectrostaticExtensions(actors.Actor):
-        pass
+        def _check_for_electroneutrality(self):
+            if(len(self.system.part[:].q)>0 and self._params["check_for_electroneutrality"]==True):
+                charges=self.system.part[:].q
+                total_charge=np.sum(charges)
+                min_abs_nonzero_charge = np.min(np.abs(charges[np.nonzero(charges)[0]]))
+                if abs(total_charge)/min_abs_nonzero_charge>1e-10:
+                    raise ValueError("The system is not charge neutral. Please neutralize the system before adding a new actor via adding the corresponding counterions to the system. Alternatively you can turn off the electroneutrality check via supplying check_for_electroneutrality=False when creating the actor. In this case you may be simulating a non-neutral system which will affect physical observables like e.g. the pressure, the chemical potentials of charged species or potential energies of the system. Since simulations of non charge neutral systems are special please make sure you know what you are doing.")
 
     cdef class ELC(ElectrostaticExtensions):
         """
@@ -97,7 +103,7 @@ IF ELECTROSTATICS and P3M:
                 self._params["neutralize"], 1, type(True), "")
 
         def valid_keys(self):
-            return "maxPWerror", "gap_size", "far_cut", "neutralize", "delta_mid_top", "delta_mid_bot", "const_pot", "pot_diff"
+            return "maxPWerror", "gap_size", "far_cut", "neutralize", "delta_mid_top", "delta_mid_bot", "const_pot", "pot_diff", "check_for_electroneutrality"
 
         def required_keys(self):
             return ["maxPWerror", "gap_size"]
@@ -110,7 +116,8 @@ IF ELECTROSTATICS and P3M:
                     "delta_mid_bot": 0,
                     "const_pot": 0,
                     "pot_diff": 0.0,
-                    "neutralize": True}
+                    "neutralize": True,
+                    "check_for_electroneutrality": True}
 
         def _get_params_from_es_core(self):
             params = {}
@@ -138,6 +145,7 @@ IF ELECTROSTATICS and P3M:
                 handle_errors("ELC tuning failed, ELC is not set up to work with the GPU P3M")
 
         def _activate_method(self):
+            self._check_for_electroneutrality()
             self._set_params_in_es_core()
 
         def _deactivate_method(self):
@@ -204,7 +212,7 @@ IF ELECTROSTATICS and P3M:
                 self._params["epsilons"] = np.zeros(self._params["n_icc"])
 
         def valid_keys(self):
-            return "n_icc", "convergence", "relaxation", "ext_field", "max_iterations", "first_id", "eps_out", "normals", "areas", "sigmas", "epsilons"
+            return "n_icc", "convergence", "relaxation", "ext_field", "max_iterations", "first_id", "eps_out", "normals", "areas", "sigmas", "epsilons", "check_for_electroneutrality"
 
         def required_keys(self):
             return ["n_icc", "normals", "areas"]
@@ -220,7 +228,8 @@ IF ELECTROSTATICS and P3M:
                     "normals": [],
                     "areas": [],
                     "sigmas": [],
-                    "epsilons": []}
+                    "epsilons": [],
+                    "check_for_electroneutrality": True}
 
         def _get_params_from_es_core(self):
             params = {}
@@ -286,6 +295,7 @@ IF ELECTROSTATICS and P3M:
             mpi_iccp3m_init(0)
 
         def _activate_method(self):
+            self._check_for_electroneutrality()
             self._set_params_in_es_core()
 
         def _deactivate_method(self):

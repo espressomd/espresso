@@ -1,7 +1,7 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from .highlander import ThereCanOnlyBeOne
-
+import numpy as np
 
 cdef class Actor(object):
 
@@ -176,7 +176,7 @@ class Actors(object):
             actor._activate()
         else:
             raise ThereCanOnlyBeOne(actor)
-            
+
     def remove(self, actor):
         """
         Parameters

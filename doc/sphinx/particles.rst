@@ -472,12 +472,10 @@ Please note:
 
     - THERMOSTAT_IGNORE_NON_VIRTUAL specifies that the thermostat does not act on non-virtual particles
 
-.. _Grand canonical feature:
+.. _Particle number counting feature:
 
-Grand canonical feature
------------------------
-
-:mod:`espressomd.grand_canonical`
+Particle number counting feature
+--------------------------------
 
 For using conveniently in simulations in the grand canonical ensemble,
 or other purposes, when particles of certain types are created and
@@ -496,12 +494,19 @@ initialize the method by calling  ::
 
     system.setup_type_map([_type])
 
-After that will keep track of particle ids of that type. When using the
-keyword ``find`` and a particle type, the command will return a randomly
+After that will keep track of particle ids of that type. Keeping track of particles of a given type is not enabled by default since it requires memory.
+When using the
+keyword ``find_particle`` and a particle type, the command will return a randomly
 chosen particle id, for a particle of the given type. The keyword
-``status`` will return a list with all particles with the given type,
-similarly giving ``number`` as argument will return the number of
-particles which share the given type.
+``number_of_particles`` as argument will return the number of
+particles which have the given type. For counting the number of particles of a given type you could also use ::
+
+    import espressomd
+    system=espressomd.System()
+    ...
+    selection=system.part.select(type=type)
+
+However calling select(type=type) results in looping over all particles. Therefore calling select() is slow compared to using ``system.number_of_particles(type)`` which directly can return the number of particles with that type.
 
 .. _Self-propelled swimmers:
 

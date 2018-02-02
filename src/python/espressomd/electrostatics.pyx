@@ -38,7 +38,15 @@ IF ELECTROSTATICS == 1:
         def _set_params_in_es_core(self):
             raise Exception(
                 "Subclasses of ElectrostaticInteraction must define the _set_params_in_es_core() method.")
-    
+
+        def _check_for_electroneutrality(self):
+            if(len(self.system.part[:].q)>0 and self._params["check_for_electroneutrality"]==True):
+                charges=self.system.part[:].q
+                total_charge=np.sum(charges)
+                min_abs_nonzero_charge = np.min(np.abs(charges[np.nonzero(charges)[0]]))
+                if abs(total_charge)/min_abs_nonzero_charge>1e-10:
+                    raise ValueError("The system is not charge neutral. Please neutralize the system before adding a new actor via adding the corresponding counterions to the system. Alternatively you can turn off the electroneutrality check via supplying check_for_electroneutrality=False when creating the actor. In this case you may be simulating a non-neutral system which will affect physical observables like e.g. the pressure, the chemical potentials of charged species or potential energies of the system. Since simulations of non charge neutral systems are special please make sure you know what you are doing.")
+       
         def _deactivate_method(self):
             deactivate_coulomb_method()
             handle_errors("Coulom method deactivation")
@@ -108,7 +116,7 @@ IF COULOMB_DEBYE_HUECKEL:
                 raise ValueError("alpha should be a non-negative double")
 
         def valid_keys(self):
-            return "prefactor", "kappa", "r_cut", "eps_int", "eps_ext", "r0", "r1", "alpha"
+            return "prefactor", "kappa", "r_cut", "eps_int", "eps_ext", "r0", "r1", "alpha", "check_for_electroneutrality"
 
         def required_keys(self):
             return "prefactor", "kappa", "r_cut", "eps_int", "eps_ext", "r0", "r1", "alpha"
@@ -135,7 +143,8 @@ IF COULOMB_DEBYE_HUECKEL:
                     "eps_ext": -1,
                     "r0": -1,
                     "r1": -1,
-                    "alpha": -1}
+                    "alpha": -1,
+                    "check_for_electroneutrality": True}
 
 ELSE:
     IF ELECTROSTATICS:
@@ -164,7 +173,7 @@ ELSE:
                     raise ValueError("r_cut should be a non-negative double")
 
             def valid_keys(self):
-                return "prefactor", "kappa", "r_cut"
+                return "prefactor", "kappa", "r_cut", "check_for_electroneutrality"
 
             def required_keys(self):
                 return "prefactor", "kappa", "r_cut"
@@ -185,7 +194,8 @@ ELSE:
             def default_params(self):
                 return {"prefactor": -1,
                         "kappa": -1,
-                        "r_cut": -1}
+                        "r_cut": -1,
+                        "check_for_electroneutrality": True}
 
 
 IF P3M == 1:
@@ -278,7 +288,7 @@ IF P3M == 1:
                     "alpha should be positive")
 
         def valid_keys(self):
-            return "mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut", "prefactor", "tune"
+            return "mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut", "prefactor", "tune", "check_for_electroneutrality"
 
         def required_keys(self):
             return ["prefactor", "accuracy"]
@@ -292,7 +302,8 @@ IF P3M == 1:
                     "mesh": [0, 0, 0],
                     "epsilon": 0.0,
                     "mesh_off": [-1, -1, -1],
-                    "tune": True}
+                    "tune": True,
+                    "check_for_electroneutrality": True}
 
         def _get_params_from_es_core(self):
             params = {}
@@ -328,6 +339,7 @@ IF P3M == 1:
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
+            self._check_for_electroneutrality()
             if self._params["tune"]:
                 self._tune()
             self._set_params_in_es_core()
@@ -417,7 +429,7 @@ IF P3M == 1:
                         "mesh_off should be a list of length 3 and values between 0.0 and 1.0")
 
             def valid_keys(self):
-                return "mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut", "prefactor", "tune"
+                return "mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut", "prefactor", "tune", "check_for_electroneutrality"
 
             def required_keys(self):
                 return ["prefactor", "accuracy"]
@@ -431,7 +443,8 @@ IF P3M == 1:
                         "mesh": [0, 0, 0],
                         "epsilon": 0.0,
                         "mesh_off": [-1, -1, -1],
-                        "tune": True}
+                        "tune": True,
+                        "check_for_electroneutrality": True}
 
             def _get_params_from_es_core(self):
                 params = {}
@@ -451,6 +464,7 @@ IF P3M == 1:
                 self._params.update(self._get_params_from_es_core())
 
             def _activate_method(self):
+                self._check_for_electroneutrality()
                 python_p3m_gpu_init(self._params)
                 coulomb.method = COULOMB_P3M_GPU
                 if self._params["tune"]:
@@ -519,7 +533,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             del self.thisptr
 
         def valid_keys(self):
-            return "prefactor", "rcut", "num_kx", "num_ky", "num_kz",  "K_max", "alpha", "accuracy", "precision", "time_calc_steps"
+            return "prefactor", "rcut", "num_kx", "num_ky", "num_kz",  "K_max", "alpha", "accuracy", "precision", "time_calc_steps", "check_for_electroneutrality"
 
         def default_params(self):
             return {"prefactor": -1,
@@ -533,7 +547,8 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
                     "isTuned": False,
                     "isTunedFlag": False,
                     "K_max": -1,
-                    "time_calc_steps": -1}
+                    "time_calc_steps": -1,
+                    "check_for_electroneutrality": True}
 
         def validate_params(self):
             default_params = self.default_params()
@@ -594,6 +609,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             return params
 
         def _activate_method(self):
+            self._check_for_electroneutrality()
             self._set_params_in_es_core()
             coulomb.method = COULOMB_EWALD_GPU
             if not self._params["isTuned"]:
@@ -637,10 +653,11 @@ IF ELECTROSTATICS:
                     "maxPWerror": -1,
                     "far_switch_radius": -1,
                     "bessel_cutoff": -1,
-                    "tune": True}
+                    "tune": True,
+                    "check_for_electroneutrality": True}
 
         def valid_keys(self):
-            return "prefactor", "maxPWerror", "far_switch_radius", "bessel_cutoff", "tune"
+            return "prefactor", "maxPWerror", "far_switch_radius", "bessel_cutoff", "tune", "check_for_electroneutrality"
 
         def required_keys(self):
             return ["prefactor", "maxPWerror"]
@@ -667,6 +684,7 @@ IF ELECTROSTATICS:
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
+            self._check_for_electroneutrality()
             coulomb.method = COULOMB_MMM1D
             self._set_params_in_es_core()
             if self._params["tune"]:
@@ -723,10 +741,11 @@ IF ELECTROSTATICS and MMM1D_GPU:
                     "maxPWerror": -1.0,
                     "far_switch_radius": -1.0,
                     "bessel_cutoff": -1,
-                    "tune": True}
+                    "tune": True,
+                    "check_for_electroneutrality": True}
 
         def valid_keys(self):
-            return "prefactor", "maxPWerror", "far_switch_radius", "bessel_cutoff", "tune"
+            return "prefactor", "maxPWerror", "far_switch_radius", "bessel_cutoff", "tune", "check_for_electroneutrality"
 
         def required_keys(self):
             return ["prefactor", "maxPWerror"]
@@ -750,6 +769,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
                               "maxPWerror"], self._params["far_switch_radius"], self._params["bessel_cutoff"])
 
         def _activate_method(self):
+            self._check_for_electroneutrality()
             self._set_params_in_es_core()
             coulomb.method = COULOMB_MMM1D_GPU
             if self._params["tune"]:
@@ -837,13 +857,14 @@ IF ELECTROSTATICS:
                     "const_pot": 0,
                     "delta_mid_top": 0,
                     "delta_mid_bot": 0,
-                    "pot_diff": 0}
+                    "pot_diff": 0,
+                    "check_for_electroneutrality": True}
 
         def required_keys(self):
             return ["prefactor", "maxPWerror"]
 
         def valid_keys(self):
-            return "prefactor", "maxPWerror", "top", "mid", "bot", "delta_mid_top", "delta_mid_bot", "pot_diff", "dielectric", "dielectric_contrast_on", "const_pot", "far_cut"
+            return "prefactor", "maxPWerror", "top", "mid", "bot", "delta_mid_top", "delta_mid_bot", "pot_diff", "dielectric", "dielectric_contrast_on", "const_pot", "far_cut", "check_for_electroneutrality"
 
         def _get_params_from_es_core(self):
             params = {}
@@ -875,6 +896,7 @@ IF ELECTROSTATICS:
                 raise Exception("MMM2D setup failed")
 
         def _activate_method(self):
+            self._check_for_electroneutrality()
             coulomb.method = COULOMB_MMM2D
             self._set_params_in_es_core()
             MMM2D_init()
