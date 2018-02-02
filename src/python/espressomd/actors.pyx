@@ -1,7 +1,6 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from .highlander import ThereCanOnlyBeOne
-import numpy as np
 
 cdef class Actor(object):
 

@@ -28,7 +28,6 @@
 #define LB_GPU
 #define LB_BOUNDARIES_GPU
 #define MMM1D_GPU
-#define EWALD_GPU
 #endif
 
 #define TABULATED
