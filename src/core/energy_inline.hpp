@@ -506,13 +506,13 @@ inline void add_kinetic_energy(Particle *p1) {
   //   if (p1->p.smaller_timestep==1) {
   //     ostringstream msg;
   //     msg << "SMALL TIME STEP";
-  //     energy.data.e[0] += SQR(smaller_time_step/time_step) *
-  //       (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*(*p1).p.mass;
+  //     energy.data.e[0] += Utils::sqr(smaller_time_step/time_step) *
+  //       (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) + Utils::sqr(p1->m.v[2]))*(*p1).p.mass;
   //   }
   //   else
   // #endif
   energy.data.e[0] +=
-      (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2])) * (*p1).p.mass;
+      (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) + Utils::sqr(p1->m.v[2])) * (*p1).p.mass;
 
 #ifdef ROTATION
   if (p1->p.rotation)
@@ -520,9 +520,9 @@ inline void add_kinetic_energy(Particle *p1) {
     /* the rotational part is added to the total kinetic energy;
        Here we use the rotational inertia  */
 
-    energy.data.e[0] += (SQR(p1->m.omega[0]) * p1->p.rinertia[0] +
-                         SQR(p1->m.omega[1]) * p1->p.rinertia[1] +
-                         SQR(p1->m.omega[2]) * p1->p.rinertia[2]) *
+    energy.data.e[0] += (Utils::sqr(p1->m.omega[0]) * p1->p.rinertia[0] +
+                         Utils::sqr(p1->m.omega[1]) * p1->p.rinertia[1] +
+                         Utils::sqr(p1->m.omega[2]) * p1->p.rinertia[2]) *
                         time_step * time_step;
   }
 #endif
