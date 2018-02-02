@@ -21,6 +21,9 @@ visualizer = openGLLive(system, background_color=[1, 1, 1], drag_enabled=True, r
 # Sphere
 #system.constraints.add(shape=Sphere(center=[25, 25, 25], radius=15, direction=1), particle_type=0, penetrable=1)
 
+# Ellipsoid
+#system.constraints.add(shape=Ellipsoid(center=[25, 25, 25], a=25, b=15, direction=1), particle_type=0, penetrable=1)
+
 # Cylinder
 #system.constraints.add(shape=Cylinder(center=[25, 25, 25], axis=[1, 0, 0], direction=1, radius=10, length=30), particle_type=0, penetrable=1)
 

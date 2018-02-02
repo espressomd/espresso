@@ -25,6 +25,29 @@ class Cylinder(ScriptInterfaceHelper):
 
 
 @script_interface_register
+class Ellipsoid(ScriptInterfaceHelper):
+    """
+    An ellipsoid.
+
+    For now only ellipsoids of revolution are supported.
+    The symmetry axis is aligned parallel to the x-direction.
+
+    Attributes
+    ----------
+    center : :obj:`array_like`
+       Coordinates of the center of the ellipsoid.
+    a : :obj:`float`
+       Semiaxis along the axis of rotational symmetry.
+    b : :obj:`float`
+       Equatorial semiaxes.
+    direction : :obj:`int`
+       Surface orientation, for +1 the normal points
+       out of the mantel, for -1 it points inward.
+    """
+    _so_name = "Shapes::Ellipsoid"
+
+
+@script_interface_register
 class HollowCone(ScriptInterfaceHelper):
     """
     A hollow cone shape.
