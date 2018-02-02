@@ -42,11 +42,10 @@ class Mpiio(object):
         """
 
         if prefix is None:
-            print "[MPI-IO] Need to supply output prefix via 'prefix' kwarg."
-            return
+            raise ValueError("Need to supply output prefix via 'prefix' kwarg.")
         if not positions and not velocities and not types and not bonds:
-            print "[MPI-IO] No output fields chosen. Not performing any write."
-            return
+            raise ValueError("No output fields chosen.")
+
         self._instance.call_method("write", prefix=prefix, pos=positions, vel=velocities, typ=types, bond=bonds)
 
     def read(self, prefix=None, positions=False, velocities=False, types=False, bonds=False):
@@ -61,11 +60,10 @@ class Mpiio(object):
             architecture (otherwise, this might silently fail).
         """
         if prefix is None:
-            print "[MPI-IO] Need to supply output prefix via 'prefix' kwarg."
-            return
+            raise ValueError("Need to supply output prefix via 'prefix' kwarg.")
         if not positions and not velocities and not types and not bonds:
-            print "[MPI-IO] No output fields chosen. Not performing any read."
-            return
+            raise ValueError("No output fields chosen.")
+
         self._instance.call_method("read", prefix=prefix, pos=positions, vel=velocities, typ=types, bond=bonds)
 
 mpiio = Mpiio()
