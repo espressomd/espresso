@@ -117,7 +117,7 @@ void p3m_add_block(double *in, double *out, int start[3], int size[3], int dim[3
 double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao)
 {
   double c, res=0.0;
-  c = SQR(cos(PI*mesh_i*(double)n));
+  c = Utils::sqr(cos(PI*mesh_i*(double)n));
 
   switch (cao) {
   case 1 : { 
@@ -166,9 +166,9 @@ double p3m_caf(int i, double x, int cao_value) {
   } 
   case 3 : { 
     switch (i) {
-    case 0: return 0.5*SQR(0.5 - x);
-    case 1: return 0.75 - SQR(x);
-    case 2: return 0.5*SQR(0.5 + x);
+    case 0: return 0.5*Utils::sqr(0.5 - x);
+    case 1: return 0.75 - Utils::sqr(x);
+    case 2: return 0.5*Utils::sqr(0.5 + x);
     default:
       fprintf(stderr,"%d: Tried to access charge assignment function of degree %d in scheme of order %d.\n",this_node,i,cao_value);
       return 0.0;

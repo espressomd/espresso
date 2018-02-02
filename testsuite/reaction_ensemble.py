@@ -44,10 +44,9 @@ class ReactionEnsembleTest(ut.TestCase):
     reactant_coefficients = [1]
     product_types = [type_A, type_H]
     product_coefficients = [1, 1]
-    system = espressomd.System()
+    system = espressomd.System(box_l=np.ones(3) * (N0 / c0)**(1.0 / 3.0))
     system.seed = system.cell_system.get_state()['n_nodes'] * [2]
     np.random.seed(69) #make reaction code fully deterministic
-    system.box_l = np.ones(3) * (N0 / c0)**(1.0 / 3.0)
     system.cell_system.skin = 0.4
     system.time_step = 0.01
     RE = reaction_ensemble.ReactionEnsemble(

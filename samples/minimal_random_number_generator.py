@@ -25,7 +25,7 @@ import sys
 # System parameters
 #############################################################
 
-system = espressomd.System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
 n_nodes = 1  # for MPI
 system.seed = numpy.random.randint(low=1, high=2**31 - 1, size=n_nodes)
