@@ -96,7 +96,7 @@ double buf_mindist4(double pos[3], int n_add, double *add) {
     dy -= dround(dy / box_l[1]) * box_l[1];
     dz = pos[2] - add[3 * i + 2];
     dz -= dround(dz / box_l[2]) * box_l[2];
-    mindist = std::min(mindist, SQR(dx) + SQR(dy) + SQR(dz));
+    mindist = std::min(mindist, Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
   }
   if (mindist < 30000.0)
     return (sqrt(mindist));
@@ -204,8 +204,8 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
         pos[1] = posed2[1];
         pos[2] = posed2[2];
         /* calculate preceding monomer so that bond_length is correct */
-        absc = sqrt(SQR(pos[0] - poz[0]) + SQR(pos[1] - poz[1]) +
-                    SQR(pos[2] - poz[2]));
+        absc = sqrt(Utils::sqr(pos[0] - poz[0]) + Utils::sqr(pos[1] - poz[1]) +
+                    Utils::sqr(pos[2] - poz[2]));
         poz[0] = pos[0] + (poz[0] - pos[0]) * bond_length / absc;
         poz[1] = pos[1] + (poz[1] - pos[1]) * bond_length / absc;
         poz[2] = pos[2] + (poz[2] - pos[2]) * bond_length / absc;
@@ -215,7 +215,7 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
         /* randomly place 2nd monomer */
         for (cnt1 = 0; cnt1 < max_try; cnt1++) {
           zz = (2.0 * d_random() - 1.0) * bond_length;
-          rr = sqrt(SQR(bond_length) - SQR(zz));
+          rr = sqrt(Utils::sqr(bond_length) - Utils::sqr(zz));
           phi = 2.0 * PI * d_random();
           pos[0] = poz[0] + rr * cos(phi);
           pos[1] = poz[1] + rr * sin(phi);
@@ -322,7 +322,7 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
 
           } else {
             zz = (2.0 * d_random() - 1.0) * bond_length;
-            rr = sqrt(SQR(bond_length) - SQR(zz));
+            rr = sqrt(Utils::sqr(bond_length) - Utils::sqr(zz));
             phi = 2.0 * PI * d_random();
             pos[0] = poz[0] + rr * cos(phi);
             pos[1] = poz[1] + rr * sin(phi);
@@ -330,7 +330,7 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
           }
 
 // POLY_TRACE(/* printf("a=(%f,%f,%f) absa=%f M=(%f,%f,%f) c=(%f,%f,%f) absMc=%f
-// a*c=%f)\n",a[0],a[1],a[2],sqrt(SQR(a[0])+SQR(a[1])+SQR(a[2])),M[0],M[1],M[2],c[0],c[1],c[2],sqrt(SQR(M[0]+c[0])+SQR(M[1]+c[1])+SQR(M[2]+c[2])),a[0]*c[0]+a[1]*c[1]+a[2]*c[2])
+// a*c=%f)\n",a[0],a[1],a[2],sqrt(Utils::sqr(a[0])+Utils::sqr(a[1])+Utils::sqr(a[2])),M[0],M[1],M[2],c[0],c[1],c[2],sqrt(Utils::sqr(M[0]+c[0])+Utils::sqr(M[1]+c[1])+Utils::sqr(M[2]+c[2])),a[0]*c[0]+a[1]*c[1]+a[2]*c[2])
 // */);
 // POLY_TRACE(/* printf("placed Monomer %d at
 // (%f,%f,%f)\n",n,pos[0],pos[1],pos[2]) */);
@@ -583,7 +583,7 @@ int icosaederC(PartCfg & partCfg, double ico_a, int MPC, int N_CI, double val_cM
         for (l = 0; l < 3; l++)
           vec[l] =
               (ico_coord[ico_NN[i][0]][l] - ico_coord[ico_NN[i][4]][l]) / 3.;
-      vec_l = sqrt(SQR(vec[0]) + SQR(vec[1]) + SQR(vec[2]));
+      vec_l = sqrt(Utils::sqr(vec[0]) + Utils::sqr(vec[1]) + Utils::sqr(vec[2]));
       for (l = 0; l < 3; l++)
         e_vec[l] = vec[l] / vec_l;
 
@@ -617,7 +617,7 @@ int icosaederC(PartCfg & partCfg, double ico_a, int MPC, int N_CI, double val_cM
       if (i < ico_NN[i][j]) {
         for (l = 0; l < 3; l++)
           vec[l] = (ico_coord[ico_NN[i][j]][l] - ico_coord[i][l]) / 3.;
-        vec_l = sqrt(SQR(vec[0]) + SQR(vec[1]) + SQR(vec[2]));
+        vec_l = sqrt(Utils::sqr(vec[0]) + Utils::sqr(vec[1]) + Utils::sqr(vec[2]));
         for (l = 0; l < 3; l++)
           e_vec[l] = vec[l] / vec_l;
 

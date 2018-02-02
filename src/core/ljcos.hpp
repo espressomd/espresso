@@ -50,13 +50,13 @@ inline void add_ljcos_pair_force(const Particle *const p1,
     /* cos part of ljcos potential. */
     if (dist > ia_params->LJCOS_rmin + ia_params->LJCOS_offset) {
       fac = (r_off / dist) * ia_params->LJCOS_alfa * ia_params->LJCOS_eps *
-            (sin(ia_params->LJCOS_alfa * SQR(r_off) + ia_params->LJCOS_beta));
+            (sin(ia_params->LJCOS_alfa * Utils::sqr(r_off) + ia_params->LJCOS_beta));
       for (j = 0; j < 3; j++)
         force[j] += fac * d[j];
     }
     /* lennard-jones part of the potential. */
     else if (dist > 0) {
-      frac2 = SQR(ia_params->LJCOS_sig / r_off);
+      frac2 = Utils::sqr(ia_params->LJCOS_sig / r_off);
       frac6 = frac2 * frac2 * frac2;
       fac =
           48.0 * ia_params->LJCOS_eps * frac6 * (frac6 - 0.5) / (r_off * dist);
@@ -99,14 +99,14 @@ inline double ljcos_pair_energy(const Particle *p1, const Particle *p2,
     /* lennard-jones part of the potential. */
     if (dist < (ia_params->LJCOS_rmin + ia_params->LJCOS_offset)) {
       // printf("this is nomal ,  %.3e \n",r_off);
-      frac2 = SQR(ia_params->LJCOS_sig / r_off);
+      frac2 = Utils::sqr(ia_params->LJCOS_sig / r_off);
       frac6 = frac2 * frac2 * frac2;
-      return 4.0 * ia_params->LJCOS_eps * (SQR(frac6) - frac6);
+      return 4.0 * ia_params->LJCOS_eps * (Utils::sqr(frac6) - frac6);
     }
     /* cosine part of the potential. */
     else if (dist < (ia_params->LJCOS_cut + ia_params->LJCOS_offset)) {
       return .5 * ia_params->LJCOS_eps *
-             (cos(ia_params->LJCOS_alfa * SQR(r_off) + ia_params->LJCOS_beta) -
+             (cos(ia_params->LJCOS_alfa * Utils::sqr(r_off) + ia_params->LJCOS_beta) -
               1.);
     }
     /* this should not happen! */

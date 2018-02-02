@@ -54,7 +54,7 @@ inline void add_lj_pair_force(const Particle *const p1,
   if ((dist < ia_params->LJ_cut + ia_params->LJ_offset) &&
       (dist > ia_params->LJ_min + ia_params->LJ_offset)) {
     r_off = dist - ia_params->LJ_offset;
-    frac2 = SQR(ia_params->LJ_sig / r_off);
+    frac2 = Utils::sqr(ia_params->LJ_sig / r_off);
     frac6 = frac2 * frac2 * frac2;
     fac = 48.0 * ia_params->LJ_eps * frac6 * (frac6 - 0.5) / (r_off * dist);
 #ifdef SHANCHEN
@@ -109,9 +109,9 @@ inline double lj_pair_energy(const Particle *p1, const Particle *p2,
   if ((dist < ia_params->LJ_cut + ia_params->LJ_offset) &&
       (dist > ia_params->LJ_min + ia_params->LJ_offset)) {
     r_off = dist - ia_params->LJ_offset;
-    frac2 = SQR(ia_params->LJ_sig / r_off);
+    frac2 = Utils::sqr(ia_params->LJ_sig / r_off);
     frac6 = frac2 * frac2 * frac2;
-    return 4.0 * ia_params->LJ_eps * (SQR(frac6) - frac6 + ia_params->LJ_shift);
+    return 4.0 * ia_params->LJ_eps * (Utils::sqr(frac6) - frac6 + ia_params->LJ_shift);
   }
   return 0.0;
 }
