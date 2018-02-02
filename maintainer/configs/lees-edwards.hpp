@@ -9,9 +9,6 @@
 #define MOLFORCES
 #define LEES_EDWARDS
 
-#ifdef FFTW
-#define MODES
-#endif
 
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE

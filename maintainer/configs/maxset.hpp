@@ -12,9 +12,6 @@
 #define EXCLUSIONS
 #define MOLFORCES
 
-#ifdef FFTW
-#define MODES
-#endif
 
 #define BOND_CONSTRAINT
 #define COLLISION_DETECTION

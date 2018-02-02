@@ -12,9 +12,6 @@
 #define EXCLUSIONS
 #define MOLFORCES
 
-#ifdef FFTW
-#define MODES
-#endif
 
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE

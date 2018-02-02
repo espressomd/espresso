@@ -21,7 +21,6 @@ MASS
 EXCLUSIONS
 MOLFORCES
 BOND_CONSTRAINT
-MODES                           requires FFTW
 LANGEVIN_PER_PARTICLE
 COLLISION_DETECTION             implies GHOSTS_HAVE_BONDS
 LEES_EDWARDS                    requires not ELECTROSTATICS and not LB and not PARTIAL_PERIODIC
@@ -45,7 +44,6 @@ INTER_RF                        implies ELECTROSTATICS
 MMM1D_GPU                       requires CUDA and PARTIAL_PERIODIC and ELECTROSTATICS
 EWALD_GPU                       requires CUDA and ELECTROSTATICS
 _P3M_GPU_FLOAT                  requires CUDA and ELECTROSTATICS
-_P3M_GPU_DOUBLE                 requires CUDA and ELECTROSTATICS
 
 
 /* Magnetostatics */
@@ -182,7 +180,6 @@ PTENSOR_DEBUG
 MAGGS_DEBUG
 LB_DEBUG
 VIRTUAL_SITES_DEBUG
-SD_DEBUG
 CUDA_DEBUG
 H5MD_DEBUG
 
