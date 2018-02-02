@@ -96,8 +96,9 @@ void set_velocities(ParticleRange particles,
                     IBM_CUDA_ParticleDataOutput *buffer) {
   int i = 0;
   for (auto &part : particles) {
-    for (int j = 0; j < 3; j++)
-      part.m.v[j] = buffer[i].v[j];
+    if ( part.p.isVirtual )
+      for (int j = 0; j < 3; j++)
+        part.m.v[j] = buffer[i].v[j];
 
     i++;
   }
