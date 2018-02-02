@@ -1,4 +1,6 @@
 /* maximal set of features usable at the same time */
+#define EXPERIMENTAL_FEATURES
+
 #define DIPOLES
 #define ROTATION
 #define ROTATIONAL_INERTIA
