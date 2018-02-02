@@ -462,7 +462,7 @@ class openGLLive(object):
                 t = c.get_parameter('particle_type')
                 s = c.get_parameter('shape')
                 n = s.name()
-                if n in ['Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Sphere', 'Shapes::SpheroCylinder']:
+                if n in ['Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Ellipsoid', 'Shapes::Sphere', 'Shapes::SpheroCylinder']:
                     coll_shape_obj[n].append([s, t])
                 else:
                     coll_shape_obj['Shapes::Misc'].append([s, t])
@@ -481,6 +481,13 @@ class openGLLive(object):
             r = s[0].get_parameter('radius')
             self.shapes['Shapes::Cylinder'].append(
                 [pos - a * l * 0.5, pos + a * l * 0.5, r, s[1]])
+
+        for s in coll_shape_obj['Shapes::Ellipsoid']:
+            pos = np.array(s[0].get_parameter('center'))
+            a = np.array(s[0].get_parameter('a'))
+            b = np.array(s[0].get_parameter('b'))
+            c = np.array(s[0].get_parameter('b'))
+            self.shapes['Shapes::Ellipsoid'].append([pos, a, b, c, s[1]])
 
         for s in coll_shape_obj['Shapes::Sphere']:
             pos = np.array(s[0].get_parameter('center'))
@@ -571,6 +578,10 @@ class openGLLive(object):
         for i in range(6):
             glEnable(GL_CLIP_PLANE0 + i)
             glClipPlane(GL_CLIP_PLANE0 + i, self.box_eqn[i])
+
+        for s in self.shapes['Shapes::Ellipsoid']:
+            draw_ellipsoid(s[0], s[1], s[2], s[3], self.modulo_indexing(self.specs['constraint_type_colors'], s[4]),
+                          self.materials[self.modulo_indexing(self.specs['constraint_type_materials'], s[4])], self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::Sphere']:
             draw_sphere(s[0], s[1], self.modulo_indexing(self.specs['constraint_type_colors'], s[2]), self.materials[self.modulo_indexing(
@@ -1325,6 +1336,15 @@ def rotation_helper(d):
     ry = d[0] * d[2]
 
     return ax, rx, ry
+
+def draw_ellipsoid(pos, semiaxis_a, semiaxis_b, semiaxis_c, color, material, quality):
+    set_solid_material(color[0], color[1], color[2], color[3],
+                       material[0], material[1], material[2])
+    glPushMatrix()
+    glTranslatef(pos[0], pos[1], pos[2])
+    glScalef(semiaxis_a, semiaxis_b, semiaxis_c)
+    glutSolidSphere(1, quality, quality)
+    glPopMatrix()
 
 
 def draw_sphero_cylinder(posA, posB, radius, color, material, quality):

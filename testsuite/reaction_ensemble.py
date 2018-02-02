@@ -44,10 +44,9 @@ class ReactionEnsembleTest(ut.TestCase):
     reactant_coefficients = [1]
     product_types = [type_A, type_H]
     product_coefficients = [1, 1]
-    system = espressomd.System()
+    system = espressomd.System(box_l=np.ones(3) * (N0 / c0)**(1.0 / 3.0))
     system.seed = system.cell_system.get_state()['n_nodes'] * [2]
     np.random.seed(69) #make reaction code fully deterministic
-    system.box_l = np.ones(3) * (N0 / c0)**(1.0 / 3.0)
     system.cell_system.skin = 0.4
     system.time_step = 0.01
     RE = reaction_ensemble.ReactionEnsemble(
@@ -70,7 +69,7 @@ class ReactionEnsembleTest(ut.TestCase):
             reactant_types=cls.reactant_types,
             reactant_coefficients=cls.reactant_coefficients,
             product_types=cls.product_types,
-            product_coefficients=cls.product_coefficients, default_charges={0: 0, 1: -1, 2: +1}, check_for_electroneutrality=True)
+            product_coefficients=cls.product_coefficients, default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1}, check_for_electroneutrality=True)
 
     @classmethod
     def ideal_degree_of_association(cls, pK_a, pH):

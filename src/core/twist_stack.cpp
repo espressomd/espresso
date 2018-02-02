@@ -22,14 +22,13 @@
 #include "twist_stack.hpp"
 #include "communication.hpp"
 #include "utils/make_unique.hpp" //for creating a unique ptr to a bond class object
+#include "utils.hpp"
 
 #ifdef TWIST_STACK
 
 // extrema for cos(theta), used for the force calculations that involve angles
 #define COS_MAX (0.99999999)
 #define COS_MIN (-0.99999999)
-
-#define SQR(x) ((x)*(x))
 
 /* @TODO: Remove code duplication, use vector class */
 
@@ -48,7 +47,7 @@ inline void cross(double *x1, double *x2, double *x3)
 }
 
 inline double norm2(double *x) {
-  return SQR(x[0]) + SQR(x[1]) + SQR(x[2]);
+  return Utils::sqr(x[0]) + Utils::sqr(x[1]) + Utils::sqr(x[2]);
 }
 
 inline double norm(double *x) {
@@ -161,7 +160,7 @@ int calc_twist_stack_energy(Particle *si1, Particle *bi1, Particle *bi2, Particl
   double pot_stack;
 
   const double ir = 1. / r;
-  const double ir2 =SQR(ir);        
+  const double ir2 =Utils::sqr(ir);        
   const double ir5 = ir2*ir2*ir;
   const double ir6 = ir5*ir;
 
@@ -191,7 +190,7 @@ int calc_twist_stack_energy(Particle *si1, Particle *bi1, Particle *bi2, Particl
   const double rcci_l = norm(rcci);
   const double rccj_l = norm(rccj);
 
-  const double rccj_p_l2 = SQR(rccj_l) - SQR(rccj_parallel);
+  const double rccj_p_l2 = Utils::sqr(rccj_l) - Utils::sqr(rccj_parallel);
   const double rccj_p_l = sqrt(rccj_p_l2);
 
   double cos1 = dot(rccj_p, rcci)/(rccj_p_l * rcci_l);
@@ -201,7 +200,7 @@ int calc_twist_stack_energy(Particle *si1, Particle *bi1, Particle *bi2, Particl
 
   cross(rcci, rccj_p, vec1);
 
-  const double sin1 = (dot(vec1, n1) < 0.) ? -sqrt(1.-SQR(cos1)) : sqrt(1.-SQR(cos1));
+  const double sin1 = (dot(vec1, n1) < 0.) ? -sqrt(1.-Utils::sqr(cos1)) : sqrt(1.-Utils::sqr(cos1));
 
   // Evaluation of cos(n*theta) by Chebyshev polynomials
   const double cos2 = 2.*cos1*cos1 - 1.;
@@ -322,7 +321,7 @@ int calc_twist_stack_force(Particle *si1, Particle *bi1, Particle *bi2, Particle
   double pot_stack;
 
   const double ir = 1. / r;
-  const double ir2 =SQR(ir);        
+  const double ir2 =Utils::sqr(ir);        
   const double ir5 = ir2*ir2*ir;
   const double ir6 = ir5*ir;
 
@@ -392,7 +391,7 @@ int calc_twist_stack_force(Particle *si1, Particle *bi1, Particle *bi2, Particle
   const double rcci_l = norm(rcci);
   const double rccj_l = norm(rccj);
 
-  const double rccj_p_l2 = SQR(rccj_l) - SQR(rccj_parallel);
+  const double rccj_p_l2 = Utils::sqr(rccj_l) - Utils::sqr(rccj_parallel);
   const double rccj_p_l = sqrt(rccj_p_l2);
 
   double cos1 = dot(rccj_p, rcci)/(rccj_p_l * rcci_l);
@@ -415,7 +414,7 @@ int calc_twist_stack_force(Particle *si1, Particle *bi1, Particle *bi2, Particle
 
   cross(rcci, rccj_p, vec1);
 
-  const double sin1 = (dot(vec1, n1) < 0.) ? -sqrt(1.-SQR(cos1)) : sqrt(1.-SQR(cos1));
+  const double sin1 = (dot(vec1, n1) < 0.) ? -sqrt(1.-Utils::sqr(cos1)) : sqrt(1.-Utils::sqr(cos1));
 
   // Evaluation of cos(n*theta) by Chebyshev polynomials
   const double cos2 = 2.*cos1*cos1 - 1.;
@@ -446,7 +445,7 @@ int calc_twist_stack_force(Particle *si1, Particle *bi1, Particle *bi2, Particle
   dot01 = dot(u1, rcci)/n1_l;
   dot11 = dot(u1, rcb1)/n1_l;
   double factor1 = fmag/(rcci_l*rccj_p_l);
-  double factor2 = fmag*cos1/SQR(rcci_l);
+  double factor2 = fmag*cos1/Utils::sqr(rcci_l);
   double factor3 = fmag*cos1/rccj_p_l2;
   const double factor4 = factor3*rccj_parallel;
 

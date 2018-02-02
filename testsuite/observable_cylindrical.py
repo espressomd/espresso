@@ -11,7 +11,7 @@ class TestCylindricalObservable(ut.TestCase):
     Testcase for the cylindrical observables.
 
     """
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.time_step = 0.01
     system.box_l = [15.0, 15.0, 15.0]
     system.cell_system.skin = 0.4

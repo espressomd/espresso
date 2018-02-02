@@ -39,7 +39,7 @@ int fene_set_params(int bond_type, double k, double drmax, double r0)
   bonded_ia_params[bond_type].p.fene.drmax = drmax;
   bonded_ia_params[bond_type].p.fene.r0 = r0;
 
-  bonded_ia_params[bond_type].p.fene.drmax2 = SQR(bonded_ia_params[bond_type].p.fene.drmax);
+  bonded_ia_params[bond_type].p.fene.drmax2 = Utils::sqr(bonded_ia_params[bond_type].p.fene.drmax);
   bonded_ia_params[bond_type].p.fene.drmax2i = 1.0/bonded_ia_params[bond_type].p.fene.drmax2;
 
   bonded_ia_params[bond_type].type = BONDED_IA_FENE;

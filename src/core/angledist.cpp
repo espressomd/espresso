@@ -205,7 +205,7 @@ int angledist_energy(Particle *p_mid, Particle *p_left, Particle *p_right,
     double phi;
     double phi0 = calc_angledist_param(p_mid, p_left, p_right, iaparams);
     phi = acos(-cosine);
-    *_energy = 0.5 * iaparams->p.angledist.bend * SQR(phi - phi0);
+    *_energy = 0.5 * iaparams->p.angledist.bend * Utils::sqr(phi - phi0);
   }
 #endif
 

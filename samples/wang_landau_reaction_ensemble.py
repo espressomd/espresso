@@ -32,7 +32,7 @@ box_l = 6 * np.sqrt(2)
 
 # Integration parameters
 #############################################################
-system = espressomd.System()
+system = espressomd.System(box_l=[box_l]*3)
 system.time_step = 0.02
 system.cell_system.skin = 0.4
 system.cell_system.max_num_cells = 2744
@@ -42,9 +42,6 @@ system.cell_system.max_num_cells = 2744
 #  Setup System                                             #
 #############################################################
 
-# Interaction setup
-#############################################################
-system.box_l = [box_l, box_l, box_l]
 
 # Particle setup
 #############################################################
@@ -69,7 +66,7 @@ system.part[0].add_bond((h, 1))
 RE = reaction_ensemble.ReactionEnsemble(
     standard_pressure=0.00108, temperature=1, exclusion_radius=0)
 RE.add(equilibrium_constant=K_diss, reactant_types=[0], reactant_coefficients=[
-       1], product_types=[1, 2], product_coefficients=[1, 1], default_charges={"0": 0, "1": -1, "2": +1})
+       1], product_types=[1, 2], product_coefficients=[1, 1], default_charges={0: 0, 1: -1, 2: +1})
 print(RE.get_status())
 grand_canonical.setup([0, 1, 2, 3])
 

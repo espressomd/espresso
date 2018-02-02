@@ -128,53 +128,6 @@ with only single precision which limits the maximum precision. The algorithm
 does not work in combination with the electrostatic extensions :ref:`Dielectric interfaces with the ICC algorithm` 
 and :ref:`Electrostatic Layer Correction (ELC)`.
 
-.. _Coulomb Ewald GPU:
-
-Coulomb Ewald GPU
------------------
-
-Required parameters:
-    * prefactor
-    * accuracy
-    * precision
-    * K_max
-
-This uses the Ewald method to compute the electrostatic interactions between
-charged particles. The far field is computed by the GPU with single precision
-and the near field by the CPU with double precision. It only works for the case
-of cubic boxes. See :attr:`espressomd.electrostatics.EwaldGpu` for detailed parameter list.
-
-.. todo::
-
-    * Check python interface:
-        * Clean up parameters
-        * missing tunealpha method (from usersguide)
-        * Test automatic / manual tuning
-
-    * Add to coulomb_cloud_wall testcase
-    
-
-.. _Tuning Ewald GPU:
-
-Tuning Ewald GPU
-~~~~~~~~~~~~~~~~
-
-The tuning algorithm first computes the optimal and for every between one and as
-described in :cite:`kolafa92`. Then the performance for all those  (``K_cut,
-r_cut, alpha``) triplets will be measured via a short test simulation and the
-fastest will be chosen.
-
-.. _Tuning Alpha Ewald GPU:
-
-Tuning Alpha Ewald GPU
-~~~~~~~~~~~~~~~~~~~~~~
-
-inter coulomb ewaldgpu tunealpha
-
-If and are given by the user, then computes the optimal with the chosen
-as described in :cite:`kolafa92`. But in general tune should be
-chosen for tuning.
-
 .. _Debye-Hückel potential:
 
 Debye-Hückel potential

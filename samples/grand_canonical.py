@@ -36,7 +36,7 @@ box_l=50.0
 
 # Integration parameters
 #############################################################
-system = espressomd.System()
+system = espressomd.System(box_l = [box_l, box_l, box_l])
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 temperature=1.0
@@ -47,10 +47,6 @@ system.cell_system.max_num_cells = 2744
 #############################################################
 #  Setup System                                             #
 #############################################################
-
-# Interaction setup
-#############################################################
-system.box_l = [box_l, box_l, box_l]
 
 # Particle setup
 #############################################################
@@ -76,7 +72,7 @@ for type_1 in types:
             cutoff=lj_cut, shift="auto")
 
 RE = reaction_ensemble.ReactionEnsemble(temperature=temperature, exclusion_radius=1.0, standard_pressure=1.0)
-RE.add(equilibrium_constant=cs_bulk**2*np.exp(excess_chemical_potential_pair/temperature), reactant_types=[], reactant_coefficients=[], product_types=[1, 2], product_coefficients=[1, 1], default_charges={"1": -1, "2": +1})
+RE.add(equilibrium_constant=cs_bulk**2*np.exp(excess_chemical_potential_pair/temperature), reactant_types=[], reactant_coefficients=[], product_types=[1, 2], product_coefficients=[1, 1], default_charges={1: -1, 2: +1})
 print(RE.get_status())
 system.setup_type_map([0, 1, 2])
 

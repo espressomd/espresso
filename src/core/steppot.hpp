@@ -52,7 +52,7 @@ inline void add_SmSt_pair_force(const Particle *const p1,
   er = exp(2. * ia_params->SmSt_k0 * (dist - ia_params->SmSt_sig));
   fac = (ia_params->SmSt_n * fracP +
          2. * ia_params->SmSt_eps * ia_params->SmSt_k0 * dist * er /
-             SQR(1.0 + er)) /
+             Utils::sqr(1.0 + er)) /
         dist2;
 
   for (j = 0; j < 3; j++)

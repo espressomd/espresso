@@ -11,9 +11,6 @@
 #define EXCLUSIONS
 #define MOLFORCES
 
-#ifdef FFTW
-#define MODES
-#endif
 
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
@@ -31,7 +28,6 @@
 #define LB_GPU
 #define LB_BOUNDARIES_GPU
 #define MMM1D_GPU
-#define EWALD_GPU
 #endif
 
 #define TABULATED

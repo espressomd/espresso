@@ -40,10 +40,10 @@ int ljcos_set_params(int part_type_a, int part_type_b,
   data->LJCOS_offset = offset;
 
   /* Calculate dependent parameters */
-  facsq = driwu2*SQR(sig);
+  facsq = driwu2*Utils::sqr(sig);
   data->LJCOS_rmin = sqrt(driwu2)*sig;
-  data->LJCOS_alfa = PI/(SQR(data->LJCOS_cut)-facsq);
-  data->LJCOS_beta = PI*(1.-(1./(SQR(data->LJCOS_cut)/facsq-1.)));
+  data->LJCOS_alfa = PI/(Utils::sqr(data->LJCOS_cut)-facsq);
+  data->LJCOS_beta = PI*(1.-(1./(Utils::sqr(data->LJCOS_cut)/facsq-1.)));
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);

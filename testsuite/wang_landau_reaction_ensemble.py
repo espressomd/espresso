@@ -48,15 +48,13 @@ class ReactionEnsembleTest(ut.TestCase):
 
     # Integration parameters
     #
-    system = espressomd.System()
+    system = espressomd.System(box_l = [box_l, box_l, box_l])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
 
     #
     # Setup System
     #
-
-    system.box_l = [box_l, box_l, box_l]
 
     N0 = 1  # number of titratable units
     K_diss = 0.0088

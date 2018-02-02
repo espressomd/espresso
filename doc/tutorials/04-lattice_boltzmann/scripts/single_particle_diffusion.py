@@ -1,4 +1,4 @@
-from espressomd import System, lb
+from espressomd import lb
 from espressomd.observables import ParticlePositions
 from espressomd.correlators import Correlator
 
@@ -18,10 +18,9 @@ except:
     raise ValueError("Input argument cannot be transformed to float.")
 
 # System setup
-system = System()
+system = espressomd.System(box_l=[box_l, box_l, box_l])
 system.time_step = time_step
 system.cell_system.skin = 0.4
-system.box_l = [box_l] * 3
 
 
 lbf = lb.LBFluidGPU(agrid=1, dens=1, visc=5, tau=0.01, fric=lb_friction)
