@@ -35,7 +35,7 @@ IF DIPOLES == 1:
         Attributes
         ----------
         prefactor : :obj:`float`
-                Magnetostatics prefactor
+                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
 
         """
 
@@ -75,6 +75,8 @@ IF DP3M == 1:
 
         Attributes
         ----------
+        prefactor : :obj:`float`
+                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
         accuracy : :obj:`float`
                    P3M tunes its parameters to provide this target accuracy.
         alpha : :obj:`float`
@@ -234,6 +236,12 @@ IF DIPOLES == 1:
 
         If the system has periodic boundaries, the minimum image convention is applied
         in the respective directions.
+        
+        Attributes
+        ----------
+        
+        prefactor : :obj:`float`
+                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
 
         """
 
@@ -267,6 +275,8 @@ IF DIPOLES == 1:
 
         Attributes
         ----------
+        prefactor : :obj:`float`
+                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
         n_replica : :obj:`int`
                     Number of replicas to be taken into account at periodic boundaries.
 
@@ -297,6 +307,14 @@ IF DIPOLES == 1:
         class Scafacos(ScafacosConnector, MagnetostaticInteraction):
             """
             Calculates dipolar interactions using dipoles-capable method from the SCAFACOs library.
+            prefactor : :obj:`float`
+                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+            method_name : :obj:`str`
+                Name of the method as defined in Scafacos
+            method_params : :obj:`dict`
+                Dictionary with the key-value pairs of the method parameters as defined in Scafacos. Note that the values are cast to strings to match Scafacos' interface
+
+
             
             """
 
@@ -325,7 +343,12 @@ IF DIPOLES == 1:
             If the system has periodic boundaries, the minimum image convention is applied
             in the respective directions.
 
-            GPU version of :class:`espressomd.magnetostatics.DipolarDirectSumCpu`.
+            This is the GPU version of :class:`espressomd.magnetostatics.DipolarDirectSumCpu` but uses floating point precision.
+            
+            Attributes
+            ----------
+            prefactor : :obj:`float`
+                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
 
             """
 
