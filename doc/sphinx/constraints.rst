@@ -288,25 +288,17 @@ Pictured is an example constraint with a ``Maze`` shape created with ::
     Two parallel infinite planes, connected by a cylindrical orfice. The cylinder is connected to the
     planes by torus segments with an adjustable radius.
   
-The pore openings are smoothed with torus segment. The outer radius can be chosen such that it is bigger than the box, to get a wall with a pore. The resulting surface is a cylindrical pore similar to :class:`espressomd.shapes::Cylinder` with a center ``center`` and radius ``radius``.
 
-The ``length`` parameter is half of the cylinder length.
-The parameter ``axis`` is a vector along the cylinder axis, which is normalized in the program.
-Optionally the outer radius ``outer_rad_left`` and ``outer_rad_right`` of the pore can be specified.
-By default these are (numerical) infinity and thus results in an infinite wall with one pore.
-The argument radius ``radius`` can be replaced by the argument ``rad_left`` and ``rad_right`` 
-to obtain a pore with a conical shape and corresponding opening radii. 
-The first radius ``radius_left`` is in the direction opposite to the axis vector.
-The same applies for ``outer_radius`` which can be replaced with ``outer_rad_left`` and ``outer_rad_right``.
-Per default sharp edges are replaced by circles of unit radius.
-The radius of this smoothing can be set with the optional keyword ``smoothing_radius``.
+Length and radius of the cylindrical pore can be set via the corresponding parameters (``length`` and ``radius``). The parameter ``center`` defines the central point of the pore. The orientation of the pore is given by the vector ``axis``, which points along the cylinder's symmetry axis.
+The pore openings are smoothed with torus segments, the radius of which can be set using the parameter ``smoothing_radius``.
+
 
 .. figure:: figures/shape-simplepore.png
-   :alt: Example constraint with a ``Pore`` shape.
+   :alt: Example constraint with a ``SimplePore`` shape.
    :align: center
    :height: 6.00000cm
 
-Pictured is an example constraint with a ``Pore`` shape created with ::
+Pictured is an example constraint with a ``SimplePore`` shape created with ::
 
     pore=SimplePore(axis=[1, 0, 0], length=15, radius=12.5, smoothing_radius=2, center=[25, 25, 25])
     system.constraints.add(shape=pore, particle_type = 0, penetrable  = 1)
