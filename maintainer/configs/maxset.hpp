@@ -1,7 +1,6 @@
 /* maximal set of features usable at the same time */
 #define PARTIAL_PERIODIC
 #define ELECTROSTATICS
-#define DEBYE_HUECKEL
 #define DIPOLES
 #define ROTATION
 #define ROTATIONAL_INERTIA
@@ -67,6 +66,9 @@
 #define BOND_ANGLEDIST_HARMONIC
 #define BOND_ENDANGLEDIST
 #define BOND_ENDANGLEDIST_HARMONIC
+
+#define EXPERIMENTAL_FEATURES
+
 
 #define VIRTUAL_SITES_RELATIVE
 #define FLATNOISE

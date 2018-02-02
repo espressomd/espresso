@@ -60,6 +60,7 @@
 
 #define VIRTUAL_SITES_RELATIVE
 
+#define EXPERIMENTAL_FEATURES
 // DEBUG Switches
 #define LJ_WARN_WHEN_CLOSE
 
