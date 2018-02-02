@@ -1,9 +1,3 @@
-# Tests if shape based constraints can be added to a system both by
-#  (1) defining a constraint object which is then added
-#  (2) and via keyword arguments.
-# Checks, that cylinder constraint with LJ interactions exert forces
-# on a test particle (that is, the constraints do what they should).
-
 from __future__ import division, print_function
 
 import unittest as ut
@@ -18,7 +12,15 @@ import tests_common
 @ut.skipIf(not espressomd.has_features(["CONSTRAINTS", "LENNARD_JONES"]),
            "Features not available, skipping test!")
 class ShapeBasedConstraintTest(ut.TestCase):
-    box_l=10.
+    """Tests if shape based constraints can be added to a system both by
+    (1) defining a constraint object which is then added
+    (2) and via keyword arguments.
+    Checks that wall constraints with LJ interactions exert forces
+    on a test particle (that is, the constraints do what they should).
+
+    """
+
+    box_l = 10.
 
     def prepare(self, system):
         system.box_l = [self.box_l, self.box_l, self.box_l]
@@ -34,8 +36,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
 
     def test(self):
-        S = espressomd.System(box_l=[1.0, 1.0, 1.0])
-        self.prepare(S)
+        system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+        self.prepare(system)
 
         wy = shapes.Wall(normal=[0., 1., 0.], dist=0.)
         wz = shapes.Wall(normal=[0., 0., 1.], dist=0.)
@@ -43,39 +45,38 @@ class ShapeBasedConstraintTest(ut.TestCase):
         # (1)
         constraint_wy = espressomd.constraints.ShapeBasedConstraint(
             shape=wy, particle_type=1)
-        wall_xz=S.constraints.add(constraint_wy)
+        wall_xz = system.constraints.add(constraint_wy)
 
         # (3)
-        wall_xy=S.constraints.add(shape=wz, particle_type=2)
+        wall_xy = system.constraints.add(shape=wz, particle_type=2)
 
         # Check forces
-        f_part = S.part[0].f
+        f_part = system.part[0].f
 
         self.assertEqual(f_part[0], 0.)
         self.assertEqual(f_part[1], 0.)
         self.assertEqual(f_part[2], 0.)
 
-        S.integrator.run(0) #update forces
-        f_part = S.part[0].f
+        system.integrator.run(0)  # update forces
+        f_part = system.part[0].f
 
         self.assertEqual(f_part[0], 0.)
         self.assertAlmostEqual(f_part[1], tests_common.lj_force(espressomd, cutoff=2.0, offset=0.,
-            eps=1.0, sig=1.0, r=1.21), places=10)
+                                                                eps=1.0, sig=1.0, r=1.21), places=10)
         self.assertAlmostEqual(f_part[2], tests_common.lj_force(espressomd, cutoff=2.0, offset=0.,
-            eps=1.5, sig=1.0, r=0.83), places=10)
+                                                                eps=1.5, sig=1.0, r=0.83), places=10)
 
-        #test forces on walls
-        self.assertAlmostEqual(-1.0*wall_xz.total_force()[1], tests_common.lj_force(espressomd, cutoff=2.0, offset=0.,
-            eps=1.0, sig=1.0, r=1.21), places=10) #minus for newtons thrid law        
-        self.assertAlmostEqual(-1.0*wall_xy.total_force()[2], tests_common.lj_force(espressomd, cutoff=2.0, offset=0.,
-            eps=1.5, sig=1.0, r=0.83), places=10)        
-
+        # test forces on walls
+        self.assertAlmostEqual(-1.0 * wall_xz.total_force()[1], tests_common.lj_force(espressomd, cutoff=2.0, offset=0.,
+                                                                                      eps=1.0, sig=1.0, r=1.21), places=10)  # minus for newtons thrid law
+        self.assertAlmostEqual(-1.0 * wall_xy.total_force()[2], tests_common.lj_force(espressomd, cutoff=2.0, offset=0.,
+                                                                                      eps=1.5, sig=1.0, r=0.83), places=10)
 
         # Check removal
-        for c in S.constraints:
-            S.constraints.remove(c)
+        for c in system.constraints:
+            system.constraints.remove(c)
 
-        for c in S.constraints:
+        for c in system.constraints:
             self.assertTrue(False)
 
 if __name__ == "__main__":
