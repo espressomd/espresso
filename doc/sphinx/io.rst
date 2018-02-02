@@ -194,8 +194,7 @@ details). Currently |es| supports some basic functions for writing simulation
 data to H5MD files. The implementation is MPI-parallelized and is capable
 of dealing with varying numbers of particles.
 
-To write data in a hdf5-file according to the H5MD proposal (see
-http://nongnu.org/h5md/), first an object of the class
+To write data in a hdf5-file according to the H5MD proposal [1]_, first an object of the class
 :class:`espressomd.io.writer.h5md.H5md` has to be created and linked to the
 respective hdf5-file. This may, for example, look like:
 
@@ -240,8 +239,11 @@ dataset for the ids to track which position/velocity/force/type/mass
 entry belongs to which particle. To write data to the hdf5 file, simply
 call the H5md objects write method without any arguments.
 
-h5.write()
+.. code:: python
 
+    h5.write()
+
+    
 After the last write call, you have to call the close() method to remove
 the backup file and to close the datasets etc.
 
@@ -265,27 +267,28 @@ structure block and at least one coordinate block is required.
 
 Files in the VSF format contain a single structure block, files in the
 VCF format contain at least one coordinate block, while files in the VTF
-format contain a single structure block first and an arbitrary number of
-coordinate blocks afterwards, thus allowing to store all information for
+format contain a single structure block (usually as a header) and an arbitrary number of
+coordinate blocks (time frames) afterwards, thus allowing to store all information for
 a whole simulation in a single file. For more details on the format,
-refer to the homepage of the format .
+refer to the VTF homepage [2]_.
 
-Creating files in these formats from within is supported by the commands
-and , that write a structure respectively a coordinate block to the
-given Tcl channel. To create a VTF file, first use at the beginning of
-the simulation, and then ``writevcf`` after each timestep to generate a
-trajectory of the whole simulation.
+Creating files in these formats from within is supported by the commands ``writevsf``
+and ``writevcf``, that write a structure and coordinate block (respectively ) to the
+given file. To create a standalone VTF file, first use ``writevsf`` at the beginning of
+the simulation to write the particle definitions as a header, and then ``writevcf`` 
+to generate a timeframe of the simulation state.
 
 The structure definitions in the VTF/VSF formats are incremental, a user
 can easily add further structure lines to the VTF/VSF file after a
 structure block has been written to specify further particle properties
 for visualization.
 
-Note that the ids of the particles in and VMD may differ. VMD requires
+Note that the ``ids`` of the particles in and VMD may differ. VMD requires
 the particle ids to be enumerated continuously without any holes, while
-this is not required in . When using and , the particle ids are
+this is not required in |es|. When using ``writevsf``
+and ``writevcf``, the particle ids are
 automatically translated into VMD particle ids. The function allows the
-user to get the VMD particle id for a given particle id.
+user to get the VMD particle id for a given |es| particle id.
 
 Also note, that these formats can not be used to write trajectories
 where the number of particles or their types varies between the
@@ -295,29 +298,32 @@ timesteps. This is a restriction of VMD itself, not of the format.
 
 ``writevsf``: Writing the topology
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:meth:`espressomd.io.writer.vtf.writevsf`
 
-writevsf(fp,types)
+Writes a structure block describing the system’s structure to the given channel.
+for example
 
+.. code:: python
+    import espressomd
+    from espressomd.io.writer import vtf
+    system = espressomd.System()
+        with open('trajectory.vsf', mode='w+t') as fp:    
+    vtf.writevsf(cls.system, fp, types='all')
 
-Writes a structure block describing the system’s structure to the
-channel given by `fp`. `fp` must be an identifier for an open channel such as the
-return value of an invocation of `open`. The output of this command can be
+The output of this command can be
 used for a standalone VSF file, or at the beginning of a VTF file that
 contains a trajectory of a whole simulation.
 
+One can specify the coordinates of which particles should be written using ``types``.
+If ``types='all'`` is used, all coordinates will be written (in the ordered timestep format).
+Otherwise, has to be a list specifying the pids of the particles.
 
-Specify the coordinates of which particles should be written. If `types` is
-used, all coordinates will be written (in the ordered timestep format).
-Otherwise, has to be a Tcl-list specifying the pids of the particles.
-The default is `types="all"`. 
-Example
-`pids =[0, 23, 42]`
-`pids="all"`
 
 .. _writevcf\: Writing the coordinates:
 
 ``writevcf``: Writing the coordinates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:meth:`espressomd.io.writer.vtf.writevcf`
 
 ``writevcf(fp, types)``
 
@@ -409,3 +415,9 @@ Parsing PDB Files
 
 The feature allows the user to parse simple PDB files, a file format introduced by the protein database to encode molecular structures. Together with a topology file (here ) the structure gets interpolated to the grid. For the input you will need to prepare a PDB file with a force field to generate the topology file. Normally the PDB file extension is , the topology file extension is . Obviously the PDB file is placed instead of and the topology file instead of .
 
+.. [1]
+   http://nongnu.org/h5md/
+
+.. [2]
+   https://github.com/olenz/vtfplugin/wiki
+    
