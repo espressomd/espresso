@@ -47,8 +47,8 @@ Available shapes are listed below.
     - :class:`espressomd.shapes.Cylinder`
     - :class:`espressomd.shapes.HollowCone`
     - :class:`espressomd.shapes.Maze`
-    - :class:`espressomd.shapes.Pore`
     - :class:`espressomd.shapes.Rhomboid`
+    - :class:`espressomd.shapes.SimplePore`
     - :class:`espressomd.shapes.Slitpore`
     - :class:`espressomd.shapes.Sphere`
     - :class:`espressomd.shapes.SpheroCylinder`
@@ -90,7 +90,7 @@ the direction of the normal vector.
 If we wanted to add a non-penetrable pore constraint to our simulation,
 we could do the following::
 
-    pore = espressomd.shapes.Pore(axis=[1,0,0], length=2, pos=[15,15,15], smoothing_radius=0.5)
+    pore = espressomd.shapes.SimplePore(axis=[1,0,0], length=2, pos=[15,15,15], radius=1, smoothing_radius=0.5)
     pore_constraint = espressomd.constraints.ShapeBasedConstraint(shape=pore, penetrable=0, particle_type=1)
     system.constraints.add(pore_constraint)
 
@@ -284,11 +284,10 @@ Pictured is an example constraint with a ``Maze`` shape created with ::
     system.constraints.add(shape=maze, particle_type = 0, penetrable = 1)
 
 
-:class:`espressomd.shapes.Pore`
-    A cylinder with a conical pore between the faces.
+:class:`espressomd.shapes.SimplePore`
+    Two parallel infinite planes, connected by a cylindrical orfice. The cylinder is connected to the
+    planes by torus segments with an adjustable radius.
   
-:todo: `This shape is currently broken. Please do not use.`
-    
 The pore openings are smoothed with torus segment. The outer radius can be chosen such that it is bigger than the box, to get a wall with a pore. The resulting surface is a cylindrical pore similar to :class:`espressomd.shapes::Cylinder` with a center ``center`` and radius ``radius``.
 
 The ``length`` parameter is half of the cylinder length.
@@ -302,14 +301,14 @@ The same applies for ``outer_radius`` which can be replaced with ``outer_rad_lef
 Per default sharp edges are replaced by circles of unit radius.
 The radius of this smoothing can be set with the optional keyword ``smoothing_radius``.
 
-.. figure:: figures/shape-pore1.png
+.. figure:: figures/shape-simplepore.png
    :alt: Example constraint with a ``Pore`` shape.
    :align: center
    :height: 6.00000cm
 
 Pictured is an example constraint with a ``Pore`` shape created with ::
 
-    pore=Pore(axis = [1,0,0], length = 70, outer_rad_left = 20, outer_rad_right = 30, pos = [50,50,50], rad_left = 10, rad_right = 20, smoothing_radius = 5)
+    pore=SimplePore(axis=[1, 0, 0], length=15, radius=12.5, smoothing_radius=2, center=[25, 25, 25])
     system.constraints.add(shape=pore, particle_type = 0, penetrable  = 1)
 
     
