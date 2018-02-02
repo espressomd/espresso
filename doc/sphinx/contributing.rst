@@ -71,7 +71,7 @@ working on the problem or has a solution at hand.
 Building the Developer's guide
 ------------------------------
 
-Besides the User guide, |es| also contains a Developers’ guide which is a
+Besides the User's guide, |es| also contains a Developer's guide which is a
 programmer documentation automatically built from comments in the source
 code and using Doxygen. It provides a cross-referenced documentation of
 all functions and data structures available in source code. It can be
