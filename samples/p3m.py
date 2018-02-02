@@ -32,8 +32,6 @@ print("""
 Program Information:""")
 print(espressomd.features())
 
-dev = "cpu"
-
 # System parameters
 #############################################################
 
@@ -51,10 +49,9 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System()
+system = espressomd.System(box_l=[box_l]*3)
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-#es._espressoHandle.Tcl_Eval('thermostat langevin 1.0 1.0')
 thermostat.Thermostat().set_langevin(1.0, 1.0)
 
 # warmup integration (with capped LJ potential)
@@ -75,7 +72,6 @@ int_n_times = 10
 # Interaction setup
 #############################################################
 
-system.box_l = [box_l, box_l, box_l]
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,

@@ -3,8 +3,7 @@ import espressomd
 import numpy as np
 
 # Set up the box and time step
-s = espressomd.System()
-s.box_l = 3 * [10]
+s = espressomd.System(box_l = 3 * [10])
 s.time_step = 0.01
 s.cell_system.skin=0.4
 

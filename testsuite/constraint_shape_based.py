@@ -32,9 +32,10 @@ class ShapeBasedConstraintTest(ut.TestCase):
         system.non_bonded_inter[0, 2].lennard_jones.set_params(
             epsilon=1.5, sigma=1.0, cutoff=2.0, shift=0)
 
-    def test_wall(self):
-        system = espressomd.System()
-        self.prepare(system)
+
+    def test(self):
+        S = espressomd.System(box_l=[1.0, 1.0, 1.0])
+        self.prepare(S)
 
         wy = shapes.Wall(normal=[0., 1., 0.], dist=0.)
         wz = shapes.Wall(normal=[0., 0., 1.], dist=0.)
@@ -42,20 +43,20 @@ class ShapeBasedConstraintTest(ut.TestCase):
         # (1)
         constraint_wy = espressomd.constraints.ShapeBasedConstraint(
             shape=wy, particle_type=1)
-        wall_xz=system.constraints.add(constraint_wy)
+        wall_xz=S.constraints.add(constraint_wy)
 
         # (3)
-        wall_xy=system.constraints.add(shape=wz, particle_type=2)
+        wall_xy=S.constraints.add(shape=wz, particle_type=2)
 
         # Check forces
-        f_part = system.part[0].f
+        f_part = S.part[0].f
 
         self.assertEqual(f_part[0], 0.)
         self.assertEqual(f_part[1], 0.)
         self.assertEqual(f_part[2], 0.)
 
-        system.integrator.run(0) #update forces
-        f_part = system.part[0].f
+        S.integrator.run(0) #update forces
+        f_part = S.part[0].f
 
         self.assertEqual(f_part[0], 0.)
         self.assertAlmostEqual(f_part[1], tests_common.lj_force(espressomd, cutoff=2.0, offset=0.,
@@ -71,10 +72,10 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
 
         # Check removal
-        for c in system.constraints:
-            system.constraints.remove(c)
+        for c in S.constraints:
+            S.constraints.remove(c)
 
-        for c in system.constraints:
+        for c in S.constraints:
             self.assertTrue(False)
 
 if __name__ == "__main__":
