@@ -45,10 +45,9 @@ class ReactionEnsembleTest(ut.TestCase):
     # could be in this test for example anywhere in the range 0.000001 ... 9
     K_HA_diss_apparent = 10**(-pKa)
     box_l = (N0 / c0)**(1.0 / 3.0)
-    system = espressomd.System()
+    system = espressomd.System(box_l=[box_l, box_l, box_l])
     system.seed = system.cell_system.get_state()['n_nodes'] * [2]
     np.random.seed(69) #make reaction code fully deterministic
-    system.box_l = [box_l, box_l, box_l]
     system.cell_system.skin = 0.4
     system.time_step = 0.01
     RE = reaction_ensemble.ConstantpHEnsemble(
@@ -69,8 +68,7 @@ class ReactionEnsembleTest(ut.TestCase):
             equilibrium_constant=cls.K_HA_diss_apparent, reactant_types=[
                 cls.type_HA], reactant_coefficients=[1], product_types=[
                 cls.type_A, cls.type_H], product_coefficients=[
-                1, 1])
-        cls.RE.set_default_charges(dictionary={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1})
+                1, 1], default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1})
         cls.RE.constant_pH = cls.pH
 
     @classmethod

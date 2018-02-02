@@ -55,9 +55,9 @@ For example, ::
     1.0
     
 
-.. _Particles in the neighbourhood:
+.. _Particles in the neighborhood:
 
-Particles in the neighbourhood
+Particles in the neighborhood
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :meth:`espressomd.analyze.Analysis.nbhood`
@@ -126,13 +126,13 @@ Two arrays are returned corresponding to the normalized distribution and the bin
 
     #. is the number of bins in the radial direction.
 
-    #. The centre point () of the cylinder is located in the lower cap,
-       i.e., is the height of the cylinder with respect to this centre
+    #. The center point () of the cylinder is located in the lower cap,
+       i.e., is the height of the cylinder with respect to this center
        point.
 
     #. The bins are distributed along starting from 0 ().
 
-    #. The seem to average with respect to the centre of mass of the
+    #. The seem to average with respect to the center of mass of the
        particles in the individual bins rather than with respect to the
        central axis, which one would think is natural.
 
@@ -511,7 +511,7 @@ molecule, defined as
 
 where :math:`\vec r_i` are position vectors of individual particles
 constituting a molecule and :math:`\vec r_{\mathrm{cm}}` is the position
-vector of its centre of mass. The sum runs over all :math:`N` particles
+vector of its center of mass. The sum runs over all :math:`N` particles
 comprising the molecule. For more information see any polymer science
 book, e.g. :cite:`rubinstein03a`.
 
@@ -552,7 +552,7 @@ configurations (see section ).
 { … }
 
 The index corresponds to the number of beads between the two monomers
-considered (0 = next neighbours, 1 = one monomer in between, …).
+considered (0 = next neighbors, 1 = one monomer in between, …).
 
 
 .. _Internal distances II (specific monomer):

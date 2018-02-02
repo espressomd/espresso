@@ -1221,7 +1221,7 @@ static void add_force_contribution(int p, int q)
     checkpoint("************distri q", 0, q, 2);
   }
   else {
-    omega = C_2PI*sqrt(SQR(ux*p) + SQR(uy*q));
+    omega = C_2PI*sqrt(Utils::sqr(ux*p) + Utils::sqr(uy*q));
     fac = exp(-omega*layer_h);
     setup_PQ(p, q, omega, fac);
     if (mmm2d_params.dielectric_contrast_on)
@@ -1273,7 +1273,7 @@ static double energy_contribution(int p, int q)
     checkpoint("************distri q", 0, q, 2);
   }
   else {
-    omega = C_2PI*sqrt(SQR(ux*p) + SQR(uy*q));
+    omega = C_2PI*sqrt(Utils::sqr(ux*p) + Utils::sqr(uy*q));
     fac = exp(-omega*layer_h);
     setup_PQ(p, q, omega, fac);
     if (mmm2d_params.dielectric_contrast_on)
@@ -1313,7 +1313,7 @@ double MMM2D_add_far(int f, int e)
     if (p == 0)
       q =  n_scycache;
     else {
-      q2 = mmm2d_params.far_cut2 - SQR(ux*(p - 1));
+      q2 = mmm2d_params.far_cut2 - Utils::sqr(ux*(p - 1));
       if (q2 > 0)
 	q = 1 + (int)ceil(box_l[1]*sqrt(q2));
       else
@@ -1329,7 +1329,7 @@ double MMM2D_add_far(int f, int e)
   for(R = mmm2d_params.far_cut; R > 0; R -= dR) {
     for (p = n_scxcache; p >= 0; p--) {
       for (q = undone[p]; q >= 0; q--) {
-	if (ux2*SQR(p)  + uy2*SQR(q) < SQR(R))
+	if (ux2*Utils::sqr(p)  + uy2*Utils::sqr(q) < Utils::sqr(R))
 	  break;
 	if (f)
 	  add_force_contribution(p, q);
@@ -1374,7 +1374,7 @@ static int MMM2D_tune_far(double error)
     return ERROR_FARC;
   // fprintf(stderr, "far cutoff %g %g %g\n", mmm2d_params.far_cut, err, min_far);
   mmm2d_params.far_cut -= min_inv_boxl;
-  mmm2d_params.far_cut2 = SQR(mmm2d_params.far_cut);
+  mmm2d_params.far_cut2 = Utils::sqr(mmm2d_params.far_cut);
   return 0;
 }
 
@@ -1437,7 +1437,7 @@ static int MMM2D_tune_near(double error)
 
   /* polygamma, determine order */
   n = 1;
-  uxrhomax2 = SQR(ux*box_l[1])/2;
+  uxrhomax2 = Utils::sqr(ux*box_l[1])/2;
   uxrho2m2max = 1.0;
   do {
     create_mod_psi_up_to(n+1);
@@ -1801,7 +1801,7 @@ void MMM2D_self_energy() {
   auto parts = local_cells.particles();
   self_energy = std::accumulate(
       parts.begin(), parts.end(), 0.0,
-      [seng](double sum, Particle const &p) { return sum + seng * SQR(p.p.q); });
+      [seng](double sum, Particle const &p) { return sum + seng * Utils::sqr(p.p.q); });
 }
 
 /****************************************
@@ -1857,7 +1857,7 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double
   }
   else {
     mmm2d_params.far_cut = far_cut;
-    mmm2d_params.far_cut2 = SQR(far_cut);
+    mmm2d_params.far_cut2 = Utils::sqr(far_cut);
     if (mmm2d_params.far_cut > 0)
       mmm2d_params.far_calculated = 0;
     else {

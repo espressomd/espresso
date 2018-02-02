@@ -194,7 +194,7 @@ invocation is implementation dependent, but in many cases, such as
 
     mpirun -n <N> ./pypresso <SCRIPT>
 
-where ``<N>`` is the number of prcessors to be used.
+where ``<N>`` is the number of processors to be used.
 
 
 .. _Configuring:
@@ -417,7 +417,7 @@ integrator or thermostat:
 ..
     -  ``NEMD`` Enables the non-equilbrium (shear) MD support.
 
-       .. seealso:: :ref:`\`\`nemd\`\`\: Setting up non-equilibirum MD`
+       .. seealso:: :ref:`\`\`nemd\`\`\: Setting up non-equilibrium MD`
 
 -  ``NPT`` Enables an on–the–fly NPT integration scheme.
    
@@ -706,7 +706,7 @@ platforms as you want.
 
 When the source directory is ``srcdir`` (the files where unpacked to this
 directory), then the user can create a build directory ``build`` below that
-path by calling ``mkdir srcdir/build``. In the build direcotry `cmake` is to be
+path by calling ``mkdir srcdir/build``. In the build directory `cmake` is to be
 executed, followed by a call of make. None of the files in the source directory
 is ever modified when by the build process.
 
@@ -730,7 +730,7 @@ to configure |es| interactively.
 **Example:**
 
 Alternatively to the previous example instead of , the executable is
-called in the build direcotry to configure ESPResSo previous to its
+called in the build directory to configure ESPResSo previous to its
 compilation followed by a call of make:
 
 .. code-block:: bash
@@ -756,7 +756,7 @@ Fig. :ref:`ccmake-figure` shows the interactive ccmake UI.
 Options and Variables
 ^^^^^^^^^^^^^^^^^^^^^
 
-The behaviour of |es| can be controlled by the means of options and variables
+The behavior of |es| can be controlled by the means of options and variables
 in the CMakeLists.txt file. Also options are defined there. The following
 options are available:
 
@@ -772,7 +772,7 @@ options are available:
   markers
 
 When the value in the CMakeLists.txt file is set to ON the corresponding
-option is created if the value of the opition is set to OFF the
+option is created if the value of the option is set to OFF the
 corresponding option is not created. These options can also be modified
 by calling cmake with the command line argument ``-D``::
 
@@ -872,7 +872,7 @@ Debugging |es|
 Exceptional situations occur in every program.  If |es| crashes with a
 segmentation fault that means that there was a memory fault in the
 simulation core which requires running the program in a debugger.  The
-`pypresso` executable file is acutally not a program but a script
+`pypresso` executable file is actually not a program but a script
 which sets the Python path appropriately and starts the Python
 interpreter with your arguments.  Thus it is not possible to directly
 run `pypresso` in a debugger.  However, we provide some useful

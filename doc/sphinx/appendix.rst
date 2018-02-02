@@ -65,7 +65,7 @@ Ewald sum, and MMM1D and MMM2D do not require a dipole correction.
 
 Starting from this convergence factor approach, Strebel constructed a
 method of computational order :math:`O(N\log N)`, which is called MMM
-:cite:`strebel99a`. The favourable scaling is obtained,
+:cite:`strebel99a`. The favorable scaling is obtained,
 very much like in the Ewald case, by technical tricks in the calculation
 of the far formula. The far formula has a product decomposition and can
 be evaluated hierarchically similarly to the fast multipole methods.
@@ -96,7 +96,7 @@ exponentials on the left side and on the right side and multiply them
 together, which can be done in :math:`O(N)` computation time. As can be
 seen easily, the convergence of the series is excellent as long as z is
 sufficiently large. By symmetry one can choose the coordinate with the
-largest distance as z to optimise the convergence. Similar to the Lekner
+largest distance as z to optimize the convergence. Similar to the Lekner
 sum, we need a different formula if all coordinates are small, i. e. for
 particles close to each other. For sufficiently small :math:`u_y\rho`
 and :math:`u_xx` we obtain the near formula as
@@ -455,7 +455,7 @@ where
        - 1)}\cos(\omega_q y). \end{array}
 
 The implementation is very similar to MMM2d, except that the separation
-between slices closeby, and above and below is not necessary.
+between slices close by, and above and below is not necessary.
 
 .. _Errors:
 
@@ -474,9 +474,9 @@ estimates is of little importance here, for details see
 :cite:`arnold02c`.
 
 One important aspect is that the error estimates are also exponential in
-the non-periodic coordinate. Since the number of closeby and far away
+the non-periodic coordinate. Since the number of close by and far away
 particles is different for particles near the border and in the center
-of the system, the error distribution is highly non–homogenous. This is
+of the system, the error distribution is highly non–homogeneous. This is
 unproblematic as long as the maximal error is really much smaller than
 the thermal energy. However, one cannot interpret the error simply as an
 additional error source.
@@ -488,7 +488,7 @@ additional error source.
 
 Figure [fig:ELC-error] shows the error distribution of the ELC method
 for a gap size of :math:`10\%` of the total system height. For MMM2D and
-MMM1D the error distribution is less homogenous, however, also here it
+MMM1D the error distribution is less homogeneous, however, also here it
 is always better to have some extra precision, especially since it is
 computationally cheap.
 
@@ -512,7 +512,7 @@ computationally cheap.
 
     Denoting the particle masses with :math:`m_i`, their charges with
     :math:`q_i`, their coordinates and momentum with :math:`\vec r_i` and
-    :math:`\vec p_i` respectively, the interparticle potential (of
+    :math:`\vec p_i` respectively, the inter-particle potential (of
     *non*-electromagnetic type) with :math:`U`, for the coupled system of
     charges and fields we write the following equations of motion
 
@@ -576,7 +576,7 @@ computationally cheap.
     Initialization of the algorithm
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    The algorithm as it is implemented only calculates stepwise time updates
+    The algorithm as it is implemented only calculates step-wise time updates
     of the exact field solution. Therefore in order to start the simulation
     for the given random distribution of charges we have to calculate the
     initial electrostatic field, i. e. the exact solution of the
@@ -732,11 +732,11 @@ computationally cheap.
     -  Only 3D periodic systems are possible for now.
 
     -  With the given interpolation scheme, the short-range part of the
-       potential is highy underestimated when two particles are in the same
+       potential is highly underestimated when two particles are in the same
        lattice cube!
 
     -  The initialization routine scales with :math:`\mathcal{O}(N^3)` and
-       takes a long time for larger (and also inhomogenous) systems.
+       takes a long time for larger (and also inhomogeneous) systems.
 
     -  The algorithm is a local update scheme and spatially varying
        properties can be applied (in the future).
@@ -781,7 +781,7 @@ chemical reactions which can be represented by the general equation:
        \label{general-eq}
 
 where :math:`\nu_i` is the stoichiometric coefficient of species
-:math:`S_i`. By convention, stoichiometric coefficents of the
+:math:`S_i`. By convention, stoichiometric coefficients of the
 species on the left-hand side of the reaction (*reactants*) attain
 negative values, and those on the right-hand side (*products*) attain
 positive values, so that the reaction can be equivalently written as
@@ -807,7 +807,7 @@ Here :math:`k_B` is the Boltzmann constant, :math:`T` is temperature,
 of the reaction, and :math:`\mu_i^{\ominus}` the standard chemical
 potential (per particle) of species :math:`i`. Note that thermodynamic equilibrium is
 independent of the direction in which we write the reaction. If it is
-written with left and righ-hand side swapped, 
+written with left and right-hand side swapped, 
 both :math:`\Delta_{\mathrm{r}}G^{\ominus}` and the stoichiometric
 coefficients attain opposite signs, and the equilibrium constant attains the inverse value. 
 Further, note that the equilibrium constant :math:`K` is the
@@ -818,7 +818,7 @@ defined as
 
    K(c^{\ominus}) = (c^{\ominus})^{-\bar\nu} \prod_i (c_i)^{\nu_i}
 
-wher :math:`\bar\nu=\sum_i \nu_i`, and :math:`c^{\ominus}` is the reference concentration,
+where :math:`\bar\nu=\sum_i \nu_i`, and :math:`c^{\ominus}` is the reference concentration,
 at which the standard chemical potential :math:`\Delta_{\mathrm{r}}G^{\ominus}` was determined.
 In practice, this constant is often used with the dimension of :math:`(c^{\ominus})^{\bar\nu}`
 
@@ -831,7 +831,7 @@ the reaction ensemble consists of two types of moves: the *reaction move*
 and the *configuration move*. The configuration move changes the configuration
 of the system. It is not performed by the Reaction Ensemble module, and can be
 performed by a suitable molecular dynamics or a Monte Carlo scheme. The
-``reacton_ensemble`` command takes care only of the reaction moves.
+``reactant_ensemble`` command takes care only of the reaction moves.
 In the *forward* reaction, the appropriate number of reactants (given by
 :math:`\nu_i`) is removed from the system, and the concomitant number of
 products is inserted into the system. In the *backward* reaction,
@@ -891,7 +891,7 @@ value of :math:`K_c` has to be converted as
    \Bigl( N_{\mathrm{A}}\bigl(\frac{\sigma}{\mathrm{dm}}\bigr)^3\Bigr)^{\bar\nu}
    
 where :math:`N_{\mathrm{A}}` is the Avogardo number.  For gas-phase reactions,
-the pressure-based eaction constant, :math:`K_p` is often used, which can
+the pressure-based reaction constant, :math:`K_p` is often used, which can
 be converted to :math:`K_c` as
 
 .. math::

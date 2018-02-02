@@ -153,7 +153,7 @@ void add_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
       omega = dist_inv - 1.0 / ia_params->dpd_r_cut;
     }
 
-    omega2 = SQR(omega);
+    omega2 = Utils::sqr(omega);
     // DPD part
     // friction force prefactor
     for (j = 0; j < 3; j++)
@@ -174,7 +174,7 @@ void add_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
       omega = dist_inv - 1.0 / ia_params->dpd_tr_cut;
     }
 
-    omega2 = SQR(omega);
+    omega2 = Utils::sqr(omega);
 
     for (i = 0; i < 3; i++) {
       // noise vector

@@ -39,7 +39,7 @@ class EllipsoidTest(ut.TestCase):
         return pos + center
 
     def test_distance(self):
-        system = espressomd.System()
+        system = espressomd.System(box_l=[1., 1., 1.])
         self.prepare(system)
 
         N = 10

@@ -16,7 +16,7 @@ where
    :label: coulomb_prefactor
     
 is a prefactor which can be set by the user. 
-The commonly used Bjerrum length :math:`l_B = e_o^2 / (4 \pi \e\epsilon k_B T)` is the length at which the Coulomb energy between two unit charges is equal to the thermal energy :math:`k_B T`.
+The commonly used Bdrm length :math:`l_B = e_o^2 / (4 \pi \e\epsilon k_B T)` is the length at which the Coulomb energy between two unit charges is equal to the thermal energy :math:`k_B T`.
 Based on the this length, the prefactor is given by :math:`C=l_B *k_B T`.
 
 Computing electrostatic interactions is computationally very expensive.
@@ -239,7 +239,7 @@ actor and can be activated via::
 	icc=ICC(<See the following list of ICC parameters>)
 	system.actors.add(icc)
 
-Paremters are:
+Parameters are:
 
 	* first_id: 
 		ID of the first ICC Particle.
@@ -366,11 +366,11 @@ using it.
     leads to the following rule of thumb for the parameter choices:
 
     -  The lattice should be of the size of your particle size (i.e. the
-       lennard jones epsilon). That means: 
+       Lennard Jones epsilon). That means: 
        :math:`\text{mesh} \approx \text{box_l} / \text{lj_sigma}`
 
     -  The integration timestep should be in a range where no particle moves
-       more than one lattice box (i.e. lennard jones sigma) per timestep.
+       more than one lattice box (i.e. Lennard Jones sigma) per timestep.
 
     -  The speed of light should satisfy the stability criterion
        :math:`c\ll a/dt`, where :math:`a` is the lattice spacing and
@@ -533,12 +533,12 @@ MMM2D
 
 MMM2D is an electrostatics solver for explicit 2D periodic systems.
 It can account for different dielectric jumps on both sides of the 
-nonperiodic direction. MMM2D coulomb method needs periodicity 1 1 0 and the
+non-periodic direction. MMM2D coulomb method needs periodicity 1 1 0 and the
 layered cell system. The performance of the method depends on the number of
 slices of the cell system, which has to be tuned manually. It is
 automatically ensured that the maximal pairwise error is smaller than
-the given bound. Note thate the user has to take care that the particles don't
-leave the box in the nonperiodic z-direction e.g. with constraints. By default,
+the given bound. Note that the user has to take care that the particles don't
+leave the box in the non-periodic z-direction e.g. with constraints. By default,
 no dielectric contrast is set and it is used as::
 
 	mmm2d = electrostatics.MMM2D(prefactor=C, maxPWerror = 1e-3)
@@ -632,9 +632,9 @@ Parameters are:
         forces/energies in *ELC* and is therefore only possible with the
         ``const_pot_on`` option.
     * const_pot_on: 
-        As descibed, setting this to ``1`` leads to fully metallic boundaries and
-        behaves just like the mmm2d parameter of the same name: It maintaines a
-        constant potential ``pot_diff`` by countering the total dipol moment of
+        As described, setting this to ``1`` leads to fully metallic boundaries and
+        behaves just like the mmm2d parameter of the same name: It maintains a
+        constant potential ``pot_diff`` by countering the total dipole moment of
         the system and adding a homogeneous electric field according to
         ``pot_diff``.
     * pot_diff:

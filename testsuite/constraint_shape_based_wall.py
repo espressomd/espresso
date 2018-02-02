@@ -34,8 +34,9 @@ class ShapeBasedConstraintTest(ut.TestCase):
         system.non_bonded_inter[0, 2].lennard_jones.set_params(
             epsilon=1.5, sigma=1.0, cutoff=2.0, shift=0)
 
-    def test_wall(self):
-        system = espressomd.System()
+
+    def test(self):
+        system = espressomd.System(box_l=[1.0, 1.0, 1.0])
         self.prepare(system)
 
         wy = shapes.Wall(normal=[0., 1., 0.], dist=0.)

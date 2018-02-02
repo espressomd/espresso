@@ -23,7 +23,6 @@ class ShapeBasedConstraintTest(ut.TestCase):
     box_l = 10.
 
     def prepare(self, system):
-        system.box_l = [self.box_l, self.box_l, self.box_l]
         system.time_step = 0.01
         system.cell_system.skin = 0.4
 
@@ -35,7 +34,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
             epsilon=1.5, sigma=1.0, cutoff=2.0, shift=0)
 
     def test_cylinder(self):
-        system = espressomd.System()
+        system = espressomd.System(box_l=3*[self.box_l])
         self.prepare(system)
 
         # check force calculation of cylinder constraint

@@ -2,16 +2,16 @@
 
 #ifdef EWALD_GPU
 
-#include <iostream>
 #include <algorithm>
+#include <iostream>
 #include <vector>
 
 #include "cells.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "interaction_data.hpp"
-#include "tuning.hpp"
 #include "partCfg_global.hpp"
+#include "tuning.hpp"
 
 #define DEBUG(A) std::cout << #A << ": " << (A) << std::endl;
 
@@ -20,6 +20,8 @@ extern Ewaldgpu_params ewaldgpu_params;
 
 // Compute reciprocal space vectors k
 void EwaldgpuForce::compute_num_k() {
+  using Utils::sqr;
+
   int Index = 0; // Arrayindex
 
   for (long long ix = 0; ix <= m_num_kx; ix++) {
@@ -28,12 +30,11 @@ void EwaldgpuForce::compute_num_k() {
         if (ix * (2 * m_num_ky + 1) * (2 * m_num_kz + 1) +
                     iy * (2 * m_num_kz + 1) + iz >=
                 0 // Half m_k-space
-            and
-            SQR(ix) * SQR(m_num_ky) * SQR(m_num_kz) +
-                    SQR(iy) * SQR(m_num_kx) * SQR(m_num_kz) +
-                    SQR(iz) * SQR(m_num_kx) * SQR(m_num_ky) <=
-                SQR(m_num_kx) * SQR(m_num_ky) *
-                    SQR(m_num_kz)) // m_k-space ellipsoid
+            and sqr(ix) * sqr(m_num_ky) * sqr(m_num_kz) +
+                        sqr(iy) * sqr(m_num_kx) * sqr(m_num_kz) +
+                        sqr(iz) * sqr(m_num_kx) * sqr(m_num_ky) <=
+                    sqr(m_num_kx) * sqr(m_num_ky) *
+                        sqr(m_num_kz)) // m_k-space ellipsoid
         {
           Index += 1;
         }
@@ -43,6 +44,8 @@ void EwaldgpuForce::compute_num_k() {
   m_num_k = Index;
 }
 void EwaldgpuForce::compute_k_AND_influence_factor() {
+  using Utils::sqr;
+
   real k_sqr;    // Absolute square of m_k-vector
   int Index = 0; // Arrayindex
 
@@ -53,22 +56,21 @@ void EwaldgpuForce::compute_k_AND_influence_factor() {
         if (ix * (2 * m_num_ky + 1) * (2 * m_num_kz + 1) +
                     iy * (2 * m_num_kz + 1) + iz >=
                 0 // Half m_k-space
-            and
-            SQR(ix) * SQR(m_num_ky) * SQR(m_num_kz) +
-                    SQR(iy) * SQR(m_num_kx) * SQR(m_num_kz) +
-                    SQR(iz) * SQR(m_num_kx) * SQR(m_num_ky) <=
-                SQR(m_num_kx) * SQR(m_num_ky) *
-                    SQR(m_num_kz)) // m_k-space ellipsoid
+            and sqr(ix) * sqr(m_num_ky) * sqr(m_num_kz) +
+                        sqr(iy) * sqr(m_num_kx) * sqr(m_num_kz) +
+                        sqr(iz) * sqr(m_num_kx) * sqr(m_num_ky) <=
+                    sqr(m_num_kx) * sqr(m_num_ky) *
+                        sqr(m_num_kz)) // m_k-space ellipsoid
         {
           // m_k vectors
           m_k[Index] = 2 * M_PI / m_box_l[0] * ix;
           m_k[Index + m_num_k] = 2 * M_PI / m_box_l[1] * iy;
           m_k[Index + 2 * m_num_k] = 2 * M_PI / m_box_l[2] * iz;
           // Influence factor
-          k_sqr = SQR(m_k[Index]) + SQR(m_k[Index + m_num_k]) +
-                  SQR(m_k[Index + 2 * m_num_k]);
+          k_sqr = sqr(m_k[Index]) + sqr(m_k[Index + m_num_k]) +
+                  sqr(m_k[Index + 2 * m_num_k]);
           m_infl_factor[Index] =
-              8 * M_PI / m_V * expf(-k_sqr / (4 * SQR(m_alpha))) / k_sqr;
+              8 * M_PI / m_V * expf(-k_sqr / (4 * sqr(m_alpha))) / k_sqr;
           // Index
           Index += 1;
         }
@@ -108,9 +110,11 @@ int EwaldgpuForce::set_params_tune(double accuracy, double precision, int K_max,
 int EwaldgpuForce::adaptive_tune(char **log, SystemInterface &s) {
   ewaldgpu_params.isTuned = false;
   int Kmax = ewaldgpu_params.K_max;
-  std::vector<double> alpha_array(Kmax); //  All computed alpha in dependence of K
-  std::vector<double> rcut_array(Kmax);  //  All computed r_cut in dependence of all computed
-                            //  alpha
+  std::vector<double> alpha_array(
+      Kmax); //  All computed alpha in dependence of K
+  std::vector<double> rcut_array(
+      Kmax); //  All computed r_cut in dependence of all computed
+             //  alpha
 
   // Squared charge
   auto const q_sqr = std::accumulate(
@@ -289,8 +293,8 @@ double EwaldgpuForce::compute_E_error_estimate_r(double alpha, double rcut,
   double std_deviation;
   std_deviation = q_sqr *
                   pow(rcut / (2.0 * box_l[0] * box_l[1] * box_l[2]), 0.5) *
-                  exp(-SQR(alpha) * SQR(rcut)) /
-                  (SQR(alpha * rcut)); // Kolafa-Perram, eq. 18
+                  exp(-Utils::sqr(alpha) * Utils::sqr(rcut)) /
+                  (Utils::sqr(alpha * rcut)); // Kolafa-Perram, eq. 18
 
   return std_deviation;
 }
@@ -300,10 +304,10 @@ double EwaldgpuForce::compute_E_error_estimate_k(double alpha, int num_kx,
                                                  double box_l[3]) {
   // Compute the r space part of the force error estimate
   double std_deviation;
-  std_deviation =
-      q_sqr * alpha * pow(M_PI, -2.0) * pow(num_kx, -1.5) *
-      exp(-(SQR(M_PI * num_kx / (alpha * (box_l[0] + box_l[1] + box_l[2]) /
-                                 3.0)))); // Kolafa Perram, eq. 32
+  std_deviation = q_sqr * alpha * pow(M_PI, -2.0) * pow(num_kx, -1.5) *
+                  exp(-(Utils::sqr(M_PI * num_kx /
+                                   (alpha * (box_l[0] + box_l[1] + box_l[2]) /
+                                    3.0)))); // Kolafa Perram, eq. 32
   return std_deviation;
 }
 double EwaldgpuForce::E_estimate_error(double rcut, int num_kx, int num_ky,
@@ -362,7 +366,7 @@ double EwaldgpuForce::compute_q_sqare(Particle *particle) {
   double q_sqr = 0;
 
   for (int i = 0; i < n_part; i++) {
-    q_sqr += SQR(particle[i].p.q);
+    q_sqr += Utils::sqr(particle[i].p.q);
   }
   return q_sqr;
 }

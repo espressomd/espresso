@@ -104,38 +104,6 @@ class Maze(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class Pore(ScriptInterfaceHelper):
-    """
-    A cylinder with a conical pore between the faces. The pore openings
-    are smoothed with torus segment. The outer radius can be chosen such
-    that it is bigger than the box, to get a wall with a pore.
-
-    Attributes
-    ----------
-    axis : array_like :obj:`int`
-           Orientation of the pore.
-    length : :obj:`float`
-             Length of the pore.
-    outer_rad_left : :obj:`float`
-                     Radius of the left (with respect to the axis) bounding
-                     cylinder.
-    outer_rad_right : :obj:`float`
-                      Radius of the right (with respect to the axis) bounding
-                      cylinder.
-    pos : array_like :obj:`float`
-          Position of the center of the pore
-    rad_left : :obj:`float`
-               Radius of the left (with respect to the axis) opening.
-    rad_right : :obj:`float`
-                Radius of the right (with respect to the axis) opening.
-    smoothing_radius : :obj:`float`
-                       Radius of the smoothing at the opening.
-
-    """
-    _so_name = "Shapes::Pore"
-
-
-@script_interface_register
 class Rhomboid(ScriptInterfaceHelper):
     """
     An parallelepiped.

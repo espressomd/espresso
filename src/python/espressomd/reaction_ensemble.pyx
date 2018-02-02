@@ -3,7 +3,7 @@ from libcpp.vector cimport vector
 from libcpp.string cimport string
 from libc.string cimport strdup
 from utils import to_char_pointer
-
+import numpy as np
 
 class WangLandauHasConverged(Exception):
     pass
@@ -170,21 +170,31 @@ cdef class ReactionAlgorithm(object):
                                A list of stoichiometric coefficients of
                                products of the reaction in the same order as
                                the list of their types
+        default_charges : dictionary
+                        A dictionary of default charges for types that occur in the provided reaction.
 
         """
+        self._params["check_for_electroneutrality"]=True
         for k in self._required_keys_add():
             if k not in kwargs:
                 raise ValueError("At least the following keys have to be given as keyword arguments: " +
                                  self._required_keys_add().__str__() + " got " + kwargs.__str__())
             self._params[k] = kwargs[k]
+        
+        for k in self._valid_keys_add():
+            try:
+                self._params[k] = kwargs[k]
+            except:
+                pass    
         self._check_lengths_of_arrays()
+        self._validate_params_default_charge()
         self._set_params_in_es_core_add()
 
     def _valid_keys_add(self):
-        return "equilibrium_constant", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients"
+        return "equilibrium_constant", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges", "check_for_electroneutrality"
 
     def _required_keys_add(self):
-        return ["equilibrium_constant", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients"]
+        return ["equilibrium_constant", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges"]
 
     def _check_lengths_of_arrays(self):
         if(len(self._params["reactant_types"])!=len(self._params["reactant_coefficients"])):
@@ -212,32 +222,27 @@ cdef class ReactionAlgorithm(object):
         self.RE.add_reaction(
             1.0 / self._params["equilibrium_constant"], product_types, product_coefficients, reactant_types, reactant_coefficients)
 
-    def set_default_charges(self, *args, **kwargs):
-        """
-        Sets the charges of the particle types that are created. Note that it
-        has to be called for each type that occurs in the reaction system
-        individually.
-
-        """
-        for k in kwargs:
-            if k in self._valid_keys_default_charge():
-                self._params[k] = kwargs[k]
-            else:
-                raise KeyError("%s is not a vaild key" % k)
-
-        self._validate_params_default_charge()
-
-        for key in self._params["dictionary"]: #the keys are the types
-            self.RE.charges_of_types[int(key)]=self._params["dictionary"][key]
-
-
-    def _valid_keys_default_charge(self):
-        return "dictionary"
+        for key in self._params["default_charges"]: #the keys are the types
+            self.RE.charges_of_types[int(key)]=self._params["default_charges"][key]
+        self.RE.check_reaction_ensemble()        
 
     def _validate_params_default_charge(self):
-        if(isinstance(self._params["dictionary"], dict) == False):
+        if(isinstance(self._params["default_charges"], dict) == False):
             raise ValueError(
                 "No dictionary for relation between types and default charges provided.")
+        #check electroneutrality of the provided reaction
+        if(self._params["check_for_electroneutrality"]== True):
+            total_charge_change=0.0
+            for i in range(len(self._params["reactant_coefficients"])):
+                type_here=self._params["reactant_types"][i]
+                total_charge_change-=self._params["reactant_coefficients"][i]*self._params["default_charges"][type_here]
+            for j in range(len(self._params["product_coefficients"])):
+                type_here=self._params["product_types"][j]
+                total_charge_change+=self._params["product_coefficients"][j]*self._params["default_charges"][type_here]
+            charges=np.array(list(self._params["default_charges"].values()))
+            min_abs_nonzero_charge = np.min(np.abs(charges[np.nonzero(charges)[0]]))
+            if abs(total_charge_change)/min_abs_nonzero_charge>1e-10:
+                raise ValueError("Reaction system is not charge neutral")
 
     def reaction(self, reaction_steps=1):
         """
@@ -251,15 +256,17 @@ cdef class ReactionAlgorithm(object):
         """
         self.RE.do_reaction(int(reaction_steps))
 
-    def global_mc_move_for_one_particle_of_type(self, type_mc):
+    def displacement_mc_move_for_particles_of_type(self, type_mc, particle_number_to_be_changed=1):
         """
-        Performs a global mc move for one particle of type type_mc. If there
+        Performs a global MC (Monte Carlo) move for particle_number_of_type_to_be_changed particle of type type_mc. If there
         are multiple types, that need to be moved, make sure to move them in a
         random order to avoid artefacts.
 
         """
+        
+        use_wang_landau=False
         self.RE.do_global_mc_move_for_particles_of_type(
-            type_mc, -10, -10, 1, False)
+            type_mc, particle_number_to_be_changed, use_wang_landau)
 
     def get_status(self):
         """
@@ -592,62 +599,18 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         self.WLRptr.write_wang_landau_results_to_file(filename)
 
 
-    def global_mc_move_for_one_particle_of_type_wang_landau(self, type_mc):
+    def displacement_mc_move_for_particles_of_type(self, type_mc, particle_number_to_be_changed=1):
         """
-        Performs a global mc move for one particle of type type_mc (depending
-        on the energy reweighting scheme) If there are multiple types, that
+        Performs an MC (Monte Carlo) move for particle_number_to_be_changed particle of type type_mc. Positions for the particles are drawn uniformly random within the box. The command takes into account the Wang-Landau terms in the acceptance probability. 
+        If there are multiple types, that
         need to be moved, make sure to move them in a random order to avoid
-        artefacts.
+        artefacts. For the Wang-Landau algorithm in the case of energy reweighting you would also need to move the monomers of the polymer with special moves for the MC part. Those polymer configuration changing moves need to be implemented in the case of using Wang-Landau with energy reweighting and a polymer in the system. Polymer configuration changing moves had been implemented before but were removed from espresso.
 
         """
+        use_wang_landau=True
         self.WLRptr.do_global_mc_move_for_particles_of_type(
-            type_mc, self.WLRptr.polymer_start_id, self.WLRptr.polymer_end_id, 1, True)
+            type_mc, particle_number_to_be_changed, use_wang_landau)
 
-    # specify information for configuration changing monte carlo move
-    property polymer_start_id:
-        """
-        Optional: since you might not want to change the configuration of your
-        polymer, e.g. if you are trying to simulate a rigid conformation. Sets
-        the start id of the polymer, optional. Should be set when you have a
-        non fixed polymer and want it to be moved by MC trail moves in order to
-        sample its configuration space. MC moves for free particles and polymer
-        particles may be very different.
-
-        """
-
-        def __set__(self, int start_id):
-            self.WLRptr.polymer_start_id = start_id
-
-        def __get__(self):
-                    return self.WLRptr.polymer_start_id
-    property polymer_end_id:
-        """
-        Optional: since you might not want to change the configuration of your
-        polymer, e.g. if you are trying to simulate a rigid conformation. Sets
-        the end id of the polymer, optional. Should be set when you have a non
-        fixed polymer and want it to be moved by MC trail moves in order to
-        sample its configuration space. MC moves for free particles and polymer
-        particles may be very different.
-
-        """
-
-        def __set__(self, int end_id):
-            self.WLRptr.polymer_end_id = end_id
-
-        def __get__(self):
-            return self.WLRptr.polymer_end_id
-
-    property fix_polymer_monomers:
-        """
-        Fixes the polymer monomers in the Monte Carlo moves.
-
-        """
-
-        def __set__(self, bool fix_polymer):
-            self.WLRptr.fix_polymer = fix_polymer
-
-        def __get__(self):
-            return self.WLRptr.fix_polymer
 
 cdef class WidomInsertion(ReactionAlgorithm):
     """

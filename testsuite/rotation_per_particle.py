@@ -31,7 +31,7 @@ from numpy import random
 @ut.skipIf(not espressomd.has_features("ROTATION"),
            "Test requires ROTATION")
 class Rotation(ut.TestCase):
-    s = espressomd.System()
+    s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     s.cell_system.skin=0
     s.time_step=0.01
 

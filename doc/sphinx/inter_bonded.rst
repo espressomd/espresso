@@ -305,7 +305,7 @@ The parameter ``bond_angle`` is a bond type identifier of three possible bond-an
     .. math:: V(\phi) = \frac{K}{2} \left(\phi - \phi_0\right)^2.
 
     :math:`K` is the bending constant,
-    and the optional parameter :math:`\phi_0` is the equilibirum bond angle in
+    and the optional parameter :math:`\phi_0` is the equilibrium bond angle in
     radians ranging from 0 to :math:`\pi`.
 
     If this parameter is not given, it defaults to :math:`\phi_0 = \pi`,
@@ -329,7 +329,7 @@ The parameter ``bond_angle`` is a bond type identifier of three possible bond-an
     .. math:: V(\phi) = K \left[1 - \cos(\phi - \phi0)\right]
 
     :math:`K` is the bending constant,
-    and the optional parameter :math:`\phi_0` is the equilibirum bond angle in
+    and the optional parameter :math:`\phi_0` is the equilibrium bond angle in
     radians ranging from 0 to :math:`\pi`.
 
     If this parameter is not given, it defaults to :math:`\phi_0 = \pi`,
