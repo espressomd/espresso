@@ -22,7 +22,6 @@
 #include "HollowCone.hpp"
 #include "Maze.hpp"
 #include "NoWhere.hpp"
-#include "Pore.hpp"
 #include "Rhomboid.hpp"
 #include "ScriptInterface.hpp"
 #include "SimplePore.hpp"
@@ -47,7 +46,6 @@ void initialize() {
   ScriptInterface::register_new<ScriptInterface::Shapes::Maze>("Shapes::Maze");
   ScriptInterface::register_new<ScriptInterface::Shapes::HollowCone>(
       "Shapes::HollowCone");
-  ScriptInterface::register_new<ScriptInterface::Shapes::Pore>("Shapes::Pore");
   ScriptInterface::register_new<ScriptInterface::Shapes::Rhomboid>(
       "Shapes::Rhomboid");
   ScriptInterface::register_new<ScriptInterface::Shapes::Slitpore>(
