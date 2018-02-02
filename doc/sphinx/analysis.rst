@@ -915,3 +915,39 @@ the case of mean square displacement the difference is always positive,
 resulting in a non-negligible systematic error. A more general
 discussion is presented in Ref. :cite:`ramirez10a`.
 
+.. _Accumulators:
+
+Accumulators
+------------
+
+.. _Observable accumulator:
+
+Observable accumulator
+~~~~~~~~~~~~~~~~~~~~~~
+
+The observable accumulator :class:`espressomd.accumulators.Accumulator` can
+be used to calculate the mean and variance of an observable (
+:mod:`espressomd.observables`) in the core::
+
+    import espressomd
+    import espressomd.observables
+    import espressomd.accumulators
+
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.cell_system.skin = 0.4
+    system.time_step = 0.01
+    system.part.add(id=0, pos=[5.0, 5.0, 5.0])
+    position_observable = espressomd.observables.ParticlePositions(ids=(0,))
+    system.auto_update_observables.add(position_observable)
+    accumulator = espressomd.accumulators.Accumulator(obs=position_observable)
+    system.auto_update_accumulators.add(accumulator)
+    # Perform integration (not shown)
+    print accumulator.get_mean()
+    print accumulator.get_variance()
+
+In the example above the automatic update of the accumulator is used. However, 
+it's also possible to manually update the accumulator by calling
+:meth:`espressomd.accumulators.Accumulator.update`.
+Please note that the current core implementation of the accumulator is not
+serializable and therefore can not be checkpointed.
+
