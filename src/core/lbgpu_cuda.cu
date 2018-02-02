@@ -2142,7 +2142,7 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared, int *number_o
   * @param particle_position   Particle position for each particle (Input)
   * @param x,y,z               xyz of corresponding lower, left nodes (Output)
 */
- __device__ __inline__ void calculate_xyz_nearest_nodes(float* delta, float* particle_position, int* x, int* y, int* z)  {
+__device__ __inline__ void calculate_xyz_nearest_nodes(float* delta, float* particle_position, int* x, int* y, int* z)  {
 
   int   left_node_index[3];
   float temp_delta[6];
@@ -2169,6 +2169,31 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared, int *number_o
   delta[5] = temp_delta[3] * temp_delta[1] * temp_delta[5];
   delta[6] = temp_delta[0] * temp_delta[4] * temp_delta[5];
   delta[7] = temp_delta[3] * temp_delta[4] * temp_delta[5];
+
+  // modulo for negative numbers is strange at best, shift to make sure we are positive
+  *x = left_node_index[0] + para.dim_x;
+  *y = left_node_index[1] + para.dim_y;
+  *z = left_node_index[2] + para.dim_z;
+}
+
+__device__ __inline__ void calculate_xyz_nearest_nodes_LE(float* particle_position, int* x, int* y, int* z)  {
+
+  int   left_node_index[3];
+  float temp_delta[6];
+  float temp_delta_half[6];
+
+  // see ahlrichs + duenweg page 8227 equ (10) and (11)
+#pragma unroll
+  for(int i=0; i<3; ++i)
+  {
+    float scaledpos = particle_position[i]/para.agrid - 0.5f;
+    left_node_index[i] = (int)(floorf(scaledpos));
+    temp_delta[3+i] = scaledpos - left_node_index[i];
+    temp_delta[i] = 1.0f - temp_delta[3+i];
+    // further value used for interpolation of fluid velocity at part pos near boundaries
+    temp_delta_half[3+i] = (scaledpos - left_node_index[i])*2.0f;
+    temp_delta_half[i] = 2.0f - temp_delta_half[3+i];
+  }
 
   // modulo for negative numbers is strange at best, shift to make sure we are positive
   *x = left_node_index[0] + para.dim_x;
@@ -2248,34 +2273,41 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
   }
 }
 
-__device__ __inline__ void interpolation_two_point_coupling_LE( LB_nodes_gpu n_a, float *particle_position, unsigned int* node_index, float* mode, LB_rho_v_gpu *d_v, float* delta, float lees_edwards_offset, float le_position, float *interpolated_u ) {
+__device__ __inline__ void interpolation_two_point_coupling_LE( LB_nodes_gpu n_a, float *particle_position, unsigned int* node_index, float* mode, LB_rho_v_gpu *d_v, float* delta, float le_position, float *interpolated_u ) {
+  printf("Function call \n");
+  printf("LE position %f, Particle position %f %f %f \n", le_position,  particle_position[0], particle_position[1], particle_position[2] );
   
-  int x;
-  int y;
-  int z;
+  int x, y, z;
 
   calculate_xyz_nearest_nodes(delta, particle_position, &x, &y, &z);
   calculate_nearest_nodes(x, y, z, n_a, node_index);
-
+  printf("Node: %d, %d, %d \n", x, y, z);
+  printf("Deltas: %f %f %f %f %f %f %f %f \n", delta[0], delta[1], delta[2], delta[3], delta[4], delta[5], delta[6], delta[7]);
   // Calculate new indices for nodes at the boundaries 
+  
   particle_position[0] = le_position;
-  calculate_xyz_nearest_nodes(delta, particle_position, &x, &y, &z);
-
-  if(particle_position[1] > para.dim_y- 0.5 * para.agrid){
-    
+  calculate_xyz_nearest_nodes_LE(particle_position, &x, &y, &z);
+  
+  printf("Deltas: %f %f %f %f %f %f %f %f \n", delta[0], delta[1], delta[2], delta[3], delta[4], delta[5], delta[6], delta[7]);
+  
+  if(particle_position[1] > para.dim_y*para.agrid - 0.5f * para.agrid){
     node_index[2] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[3] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[6] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
     node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-   
+    printf("Upper nodes \n");
+    printf("LE position %f, Particle position %f %f %f \n", le_position, particle_position[0], particle_position[1], particle_position[2] );
+    printf("Node: %d, %d, %d \n", x, y, z);
     }
   
-  if(particle_position[1] < 0.5 * para.agrid){
+  if(particle_position[1] < 0.5f * para.agrid){
     node_index[0] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[1] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[4] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
     node_index[5] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-   
+    printf("Lower nodes \n");
+    printf("LE position %f, Particle position %f %f %f \n", le_position, particle_position[0], particle_position[1], particle_position[2] );
+    printf("Node: %d, %d, %d \n", x, y, z);
     }
 
   interpolated_u[0] = 0.0f;
@@ -2361,16 +2393,20 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   position[2] = particle_data[part_index].p[2];
   
 #ifdef LEES_EDWARDS
-  
   float le_position;
 
- if(position[1] > para.dim_y-para.agrid) {
-    le_position = fmodf(position[0] - lees_edwards_offset + para.dim_x*para.agrid, para.dim_x*para.agrid);
+  if(position[1] > para.dim_y - 0.5f * para.agrid) {
+    le_position = position[0] - lees_edwards_offset;
+    //le_position = fmodf(position[0] - lees_edwards_offset + para.dim_x*para.agrid, para.dim_x*para.agrid);
     }
- if(position[1] < para.agrid) {
-    le_position = fmodf(position[0] + lees_edwards_offset + para.dim_x*para.agrid, para.dim_x*para.agrid);
+  if(position[1] < 0.5f * para.agrid) {
+    le_position = position[0] + lees_edwards_offset;
+    //le_position = fmodf(position[0] + lees_edwards_offset + para.dim_x*para.agrid, para.dim_x*para.agrid); 
     }
 #endif
+
+//TODO: delete
+printf("LE position %f, LE offset %f, Particle position in x-direction %f \n", le_position, lees_edwards_offset, position[0]);
 
   float velocity[3];
   velocity[0] = particle_data[part_index].v[0];
@@ -2389,11 +2425,12 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
 
   // Do the velocity interpolation
   
-#ifndef LEES_EDWARDS  
   interpolation_two_point_coupling(n_a, position, node_index, mode, d_v, delta, interpolated_u);
-#endif
 #ifdef LEES_EDWARDS
-  interpolation_two_point_coupling_LE(n_a, position, node_index, mode, d_v, delta, lees_edwards_offset, le_position, interpolated_u);
+  //float ttt = para.dim_y*para.agrid - 0.5f * para.agrid;
+  //printf("Upper boundary %f \n", ttt);
+  if((position[1] < 0.5f * para.agrid) || (position[1] > para.dim_y*para.agrid - 0.5f * para.agrid))
+    interpolation_two_point_coupling_LE(n_a, position, node_index, mode, d_v, delta, le_position, interpolated_u);
 #endif
 
 #ifdef ENGINE
