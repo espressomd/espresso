@@ -483,9 +483,16 @@ Please note:
 Particle number counting feature
 --------------------------------
 
-For using conveniently in simulations in the grand canonical ensemble,
+
+.. note::
+
+    Do not use these methods with the :mod:`espressomd.collision_detection` module since the collision detection may create or delete particles without the particle number counting feature being aware of this. Therefore also the :mod:`espressomd.reaction_ensemble` module may not be used with the collision detection.
+
+
+
+Knowing the number of particles of a certain type in simulations in the grand canonical ensemble,
 or other purposes, when particles of certain types are created and
-deleted frequently. Particle ids can be stored in a map for each
+deleted frequently is often of interest. Particle ids can be stored in a map for each
 individual type and so random ids of particles of a certain type can be
 drawn.  ::
 
@@ -505,14 +512,14 @@ When using the
 keyword ``find_particle`` and a particle type, the command will return a randomly
 chosen particle id, for a particle of the given type. The keyword
 ``number_of_particles`` as argument will return the number of
-particles which have the given type. For counting the number of particles of a given type you could also use ::
+particles which have the given type. For counting the number of particles of a given type you could also use :meth:`espressomd.particle_data.ParticleList.select` ::
 
     import espressomd
     system=espressomd.System()
     ...
     number_of_particles=len(system.part.select(type=type))
 
-However calling select(type=type) results in looping over all particles. Therefore calling select() is slow compared to using ``system.number_of_particles(type)`` which directly can return the number of particles with that type.
+However calling select(type=type) results in looping over all particles. Therefore calling select() is slow compared to using :meth:`espressomd.system.System.number_of_particles` which directly can return the number of particles with that type.
 
 .. _Self-propelled swimmers:
 
