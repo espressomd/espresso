@@ -1,6 +1,8 @@
 from ..script_interface import PScriptInterface
 
+
 class Mpiio(object):
+
     """MPI-IO object.
 
     Used to output particle data using MPI-IO to binary files.
@@ -8,8 +10,10 @@ class Mpiio(object):
     .. note::
         See the write and read methods for documentation.
     """
+
     def __init__(self):
-        self._instance = PScriptInterface("ScriptInterface::MPIIO::MPIIOScript")
+        self._instance = PScriptInterface(
+            "ScriptInterface::MPIIO::MPIIOScript")
 
     def write(self, prefix=None, positions=False, velocities=False, types=False, bonds=False):
         """MPI-IO write.
@@ -30,23 +34,30 @@ class Mpiio(object):
         Parameters
         ----------
         prefix : :obj:`str`
-                   Common prefix for the filenames.
+            Common prefix for the filenames.
         positions : :obj:`bool`, optional
-                    Indicates if positions should be dumped.
+            Indicates if positions should be dumped.
         velocities : :obj:`bool`, optional
-                    Indicates if velocities should be dumped.
+            Indicates if velocities should be dumped.
         types : :obj:`bool`, optional
-                      Indicates if types should be dumped.
+            Indicates if types should be dumped.
         bonds : :obj:`bool`, optional
-                     Indicates if bonds should be dumped.
+            Indicates if bonds should be dumped.
+
+        Raises
+        ------
+        ValueError
+            If no prefix was given or none of the output fields are chosen.
         """
 
         if prefix is None:
-            raise ValueError("Need to supply output prefix via 'prefix' kwarg.")
+            raise ValueError(
+                "Need to supply output prefix via 'prefix' kwarg.")
         if not positions and not velocities and not types and not bonds:
             raise ValueError("No output fields chosen.")
 
-        self._instance.call_method("write", prefix=prefix, pos=positions, vel=velocities, typ=types, bond=bonds)
+        self._instance.call_method(
+            "write", prefix=prefix, pos=positions, vel=velocities, typ=types, bond=bonds)
 
     def read(self, prefix=None, positions=False, velocities=False, types=False, bonds=False):
         """MPI-IO read.
@@ -60,10 +71,12 @@ class Mpiio(object):
             architecture (otherwise, this might silently fail).
         """
         if prefix is None:
-            raise ValueError("Need to supply output prefix via 'prefix' kwarg.")
+            raise ValueError(
+                "Need to supply output prefix via 'prefix' kwarg.")
         if not positions and not velocities and not types and not bonds:
             raise ValueError("No output fields chosen.")
 
-        self._instance.call_method("read", prefix=prefix, pos=positions, vel=velocities, typ=types, bond=bonds)
+        self._instance.call_method(
+            "read", prefix=prefix, pos=positions, vel=velocities, typ=types, bond=bonds)
 
 mpiio = Mpiio()
