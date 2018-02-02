@@ -305,8 +305,6 @@ General features
 
 -  ``MMM1D_GPU``
 
--  ``EWALD_GPU``
-
 -  ``_P3M_GPU_FLOAT``
 
 -  ``_P3M_GPU_DOUBLE``

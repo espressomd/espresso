@@ -40,7 +40,6 @@
 #define EK_BOUNDARIES
 #define EK_ELECTROSTATIC_COUPLING
 #define MMM1D_GPU
-#define EWALD_GPU
 #endif
 
 #define TABULATED
