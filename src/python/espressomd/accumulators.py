@@ -8,16 +8,25 @@ class Accumulator(ScriptInterfaceHelper):
     """
     Accumulates results from observables.
 
-    Parameters
+    Attributes
     ----------
     obs : Instances of :class:`espressomd.observables.Observable`.
+
+    Methods
+    -------
+    update
+        Update the accumulator (get the current values from the observable).
+    get_mean
+        Returns the samples mean values of the respective observable with which the
+        accumulator was initialized.
+    get_variance
+        Returns the samples variance for the observable.
 
     """
 
     _so_name = "Accumulators::Accumulator"
     _so_bind_methods = (
         "update",
-        "auto_update",
         "get_mean",
         "get_variance"
     )
