@@ -145,6 +145,13 @@ IF ELECTROSTATICS and P3M:
                 "Unable to remove ELC as the state of the underlying electrostatics method will remain unclear.")
 
     cdef class ICC(ElectrostaticExtensions):
+        """
+        Interface to the induced charge calculatino scheme for dielectric interfaces
+        
+        See :ref:`Dielectric interfaces with the ICC algorithm`
+
+        """
+
 
         def validate_params(self):
             default_params = self.default_params()

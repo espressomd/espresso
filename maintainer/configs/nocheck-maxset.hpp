@@ -12,9 +12,6 @@
 #define EXCLUSIONS
 #define MOLFORCES
 
-#ifdef FFTW
-#define MODES
-#endif
 
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
@@ -63,6 +60,7 @@
 
 #define VIRTUAL_SITES_RELATIVE
 
+#define EXPERIMENTAL_FEATURES
 // DEBUG Switches
 #define LJ_WARN_WHEN_CLOSE
 

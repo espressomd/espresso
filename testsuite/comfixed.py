@@ -13,7 +13,7 @@ class ComFixed(ut.TestCase):
         dt = 0.01
         skin = 0.4
 
-        s = espressomd.System()
+        s = espressomd.System(box_l=[1.0, 1.0, 1.0])
         s.box_l = [10, 10, 10]
         s.time_step = dt
         s.cell_system.skin = skin

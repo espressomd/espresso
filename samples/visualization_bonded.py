@@ -10,12 +10,11 @@ from threading import Thread
 box_l = 50
 n_part = 200
 
-system = espressomd.System()
+system = espressomd.System(box_l=[box_l]*3)
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 system.thermostat.set_langevin(kT=0.1, gamma=20.0)
 
-system.box_l = [box_l, box_l, box_l]
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=0, sigma=1,

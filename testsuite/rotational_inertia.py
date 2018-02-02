@@ -10,7 +10,7 @@ import math
 class RotationalInertia(ut.TestCase):
     longMessage = True
     # Handle for espresso system
-    es = espressomd.System()
+    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
     es.cell_system.skin = 0
 
     def define_rotation_matrix(self, part):

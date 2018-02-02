@@ -325,13 +325,13 @@ void dp3m_init() {
   int n;
 
   if (coulomb.Dprefactor <= 0.0) {
-      dp3m.params.r_cut = 0.0;
-      dp3m.params.r_cut_iL = 0.0;
-      if (this_node == 0) {
-        P3M_TRACE(
-            fprintf(stderr, "0: dp3m_init: dipolar prefactor is zero.\n");
-            fprintf(stderr, "   Magnetostatics of dipoles switched off!\n"));
-      }
+    dp3m.params.r_cut = 0.0;
+    dp3m.params.r_cut_iL = 0.0;
+    if (this_node == 0) {
+      P3M_TRACE(
+          fprintf(stderr, "0: dp3m_init: dipolar prefactor is zero.\n");
+          fprintf(stderr, "   Magnetostatics of dipoles switched off!\n"));
+    }
   } else {
     P3M_TRACE(fprintf(stderr, "%d: dp3m_init: \n", this_node));
 
@@ -388,25 +388,24 @@ void dp3m_init() {
                       dp3m.pos_shift));
 
     /* FFT */
-    P3M_TRACE(
-        fprintf(stderr, "%d: dp3m.rs_mesh ADR=%p\n", this_node, (void*) dp3m.rs_mesh));
+    P3M_TRACE(fprintf(stderr, "%d: dp3m.rs_mesh ADR=%p\n", this_node,
+                      (void *)dp3m.rs_mesh));
 
     int ca_mesh_size =
         dfft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim, dp3m.local_mesh.margin,
                   dp3m.params.mesh, dp3m.params.mesh_off, &dp3m.ks_pnum);
-    dp3m.ks_mesh =
-        Utils::realloc(dp3m.ks_mesh, ca_mesh_size * sizeof(double));
+    dp3m.ks_mesh = Utils::realloc(dp3m.ks_mesh, ca_mesh_size * sizeof(double));
 
     for (n = 0; n < 3; n++)
-      dp3m.rs_mesh_dip[n] = Utils::realloc(
-          dp3m.rs_mesh_dip[n], ca_mesh_size * sizeof(double));
+      dp3m.rs_mesh_dip[n] =
+          Utils::realloc(dp3m.rs_mesh_dip[n], ca_mesh_size * sizeof(double));
 
     P3M_TRACE(fprintf(stderr, "%d: dp3m.rs_mesh_dip[0] ADR=%p\n", this_node,
-                      (void*) dp3m.rs_mesh_dip[0]));
+                      (void *)dp3m.rs_mesh_dip[0]));
     P3M_TRACE(fprintf(stderr, "%d: dp3m.rs_mesh_dip[1] ADR=%p\n", this_node,
-                      (void*) dp3m.rs_mesh_dip[1]));
+                      (void *)dp3m.rs_mesh_dip[1]));
     P3M_TRACE(fprintf(stderr, "%d: dp3m.rs_mesh_dip[2] ADR=%p\n", this_node,
-                      (void*) dp3m.rs_mesh_dip[2]));
+                      (void *)dp3m.rs_mesh_dip[2]));
 
     /* k-space part: */
 
@@ -461,9 +460,10 @@ double dp3m_average_dipolar_self_energy(double box_l, int mesh) {
           node_phi += 0.0;
         else {
           U2 = dp3m_perform_aliasing_sums_dipolar_self_energy(n);
-          node_phi += dp3m.g_energy[ind] * U2 *
-                      (SQR(dp3m.d_op[n[0]]) + SQR(dp3m.d_op[n[1]]) +
-                       SQR(dp3m.d_op[n[2]]));
+          node_phi +=
+              dp3m.g_energy[ind] * U2 *
+              (Utils::sqr(dp3m.d_op[n[0]]) + Utils::sqr(dp3m.d_op[n[1]]) +
+               Utils::sqr(dp3m.d_op[n[2]]));
         }
       }
     }
@@ -526,7 +526,6 @@ void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
 
   if (n_interpol != -1)
     dp3m.params.inter = n_interpol;
-
 }
 
 /*****************************************************************************/
@@ -613,8 +612,9 @@ void dp3m_interpolate_dipole_assignment_function() {
   if (dp3m.params.inter == 0)
     return;
 
-  P3M_TRACE(fprintf(stderr, "dipolar %d - interpolating (%d) the order-%d "
-                            "charge assignment function\n",
+  P3M_TRACE(fprintf(stderr,
+                    "dipolar %d - interpolating (%d) the order-%d "
+                    "charge assignment function\n",
                     this_node, dp3m.params.inter, dp3m.params.cao));
 
   dp3m.params.inter2 = 2 * dp3m.params.inter + 1;
@@ -843,8 +843,8 @@ static void P3M_assign_torques(double prefac, int d_rs) {
       cp_cnt++;
 
       ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
-          stderr, "%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d\n",
-          this_node, p.f.f[0], p.f.f[1], p.f.f[2], d_rs));
+          stderr, "%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d\n", this_node,
+          p.f.f[0], p.f.f[1], p.f.f[2], d_rs));
     }
   }
 }
@@ -883,8 +883,8 @@ static void dp3m_assign_forces_dip(double prefac, int d_rs) {
       cp_cnt++;
 
       ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
-          stderr, "%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d\n",
-          this_node, p.f.f[0], p.f.f[1], p.f.f[2], d_rs));
+          stderr, "%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d\n", this_node,
+          p.f.f[0], p.f.f[1], p.f.f[2], d_rs));
     }
   }
 }
@@ -943,18 +943,18 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
           for (j[2] = 0; j[2] < dfft.plan[3].new_mesh[2]; j[2]++) {
             node_k_space_energy_dip +=
                 dp3m.g_energy[i] *
-                (SQR(dp3m.rs_mesh_dip[0][ind] *
-                         dp3m.d_op[j[2] + dfft.plan[3].start[2]] +
-                     dp3m.rs_mesh_dip[1][ind] *
-                         dp3m.d_op[j[0] + dfft.plan[3].start[0]] +
-                     dp3m.rs_mesh_dip[2][ind] *
-                         dp3m.d_op[j[1] + dfft.plan[3].start[1]]) +
-                 SQR(dp3m.rs_mesh_dip[0][ind + 1] *
-                         dp3m.d_op[j[2] + dfft.plan[3].start[2]] +
-                     dp3m.rs_mesh_dip[1][ind + 1] *
-                         dp3m.d_op[j[0] + dfft.plan[3].start[0]] +
-                     dp3m.rs_mesh_dip[2][ind + 1] *
-                         dp3m.d_op[j[1] + dfft.plan[3].start[1]]));
+                (Utils::sqr(dp3m.rs_mesh_dip[0][ind] *
+                                dp3m.d_op[j[2] + dfft.plan[3].start[2]] +
+                            dp3m.rs_mesh_dip[1][ind] *
+                                dp3m.d_op[j[0] + dfft.plan[3].start[0]] +
+                            dp3m.rs_mesh_dip[2][ind] *
+                                dp3m.d_op[j[1] + dfft.plan[3].start[1]]) +
+                 Utils::sqr(dp3m.rs_mesh_dip[0][ind + 1] *
+                                dp3m.d_op[j[2] + dfft.plan[3].start[2]] +
+                            dp3m.rs_mesh_dip[1][ind + 1] *
+                                dp3m.d_op[j[0] + dfft.plan[3].start[0]] +
+                            dp3m.rs_mesh_dip[2][ind + 1] *
+                                dp3m.d_op[j[1] + dfft.plan[3].start[1]]));
             ind += 2;
             i++;
           }
@@ -1349,8 +1349,8 @@ void dp3m_realloc_ca_fields(int newsize) {
       "%d: p3m_realloc_ca_fields: dipolar,  old_size=%d -> new_size=%d\n",
       this_node, dp3m.ca_num, newsize));
   dp3m.ca_num = newsize;
-  dp3m.ca_frac = Utils::realloc(
-      dp3m.ca_frac, dp3m.params.cao3 * dp3m.ca_num * sizeof(double));
+  dp3m.ca_frac = Utils::realloc(dp3m.ca_frac, dp3m.params.cao3 * dp3m.ca_num *
+                                                  sizeof(double));
   dp3m.ca_fmp = Utils::realloc(dp3m.ca_fmp, dp3m.ca_num * sizeof(int));
 }
 
@@ -1360,8 +1360,8 @@ void dp3m_calc_meshift(void) {
   int i;
   double dmesh;
   dmesh = (double)dp3m.params.mesh[0];
-  dp3m.meshift = Utils::realloc(dp3m.meshift,
-                                          dp3m.params.mesh[0] * sizeof(double));
+  dp3m.meshift =
+      Utils::realloc(dp3m.meshift, dp3m.params.mesh[0] * sizeof(double));
   for (i = 0; i < dp3m.params.mesh[0]; i++)
     dp3m.meshift[i] = i - dround(i / dmesh) * dmesh;
 }
@@ -1373,8 +1373,7 @@ void dp3m_calc_differential_operator() {
   double dmesh;
 
   dmesh = (double)dp3m.params.mesh[0];
-  dp3m.d_op =
-      Utils::realloc(dp3m.d_op, dp3m.params.mesh[0] * sizeof(double));
+  dp3m.d_op = Utils::realloc(dp3m.d_op, dp3m.params.mesh[0] * sizeof(double));
 
   for (i = 0; i < dp3m.params.mesh[0]; i++)
     dp3m.d_op[i] = (double)i - dround((double)i / dmesh) * dmesh;
@@ -1418,10 +1417,11 @@ void dp3m_calc_influence_function_force() {
         else {
           denominator = dp3m_perform_aliasing_sums_force(n, nominator);
           fak2 = nominator[0];
-          fak2 /= pow(SQR(dp3m.d_op[n[0]]) + SQR(dp3m.d_op[n[1]]) +
-                          SQR(dp3m.d_op[n[2]]),
-                      3) *
-                  SQR(denominator);
+          fak2 /=
+              pow(Utils::sqr(dp3m.d_op[n[0]]) + Utils::sqr(dp3m.d_op[n[1]]) +
+                      Utils::sqr(dp3m.d_op[n[2]]),
+                  3) *
+              Utils::sqr(denominator);
           dp3m.g_force[ind] = fak1 * fak2;
         }
       }
@@ -1440,7 +1440,7 @@ double dp3m_perform_aliasing_sums_force(int n[3], double nominator[1]) {
   nominator[0] = 0.0;
 
   f1 = 1.0 / (double)dp3m.params.mesh[0];
-  f2 = SQR(PI / (dp3m.params.alpha_L));
+  f2 = Utils::sqr(PI / (dp3m.params.alpha_L));
 
   for (mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
     nmx = dp3m.meshift[n[0]] + dp3m.params.mesh[0] * mx;
@@ -1452,7 +1452,7 @@ double dp3m_perform_aliasing_sums_force(int n[3], double nominator[1]) {
         nmz = dp3m.meshift[n[2]] + dp3m.params.mesh[0] * mz;
         sz = sy * pow(sinc(f1 * nmz), 2.0 * dp3m.params.cao);
 
-        nm2 = SQR(nmx) + SQR(nmy) + SQR(nmz);
+        nm2 = Utils::sqr(nmx) + Utils::sqr(nmy) + Utils::sqr(nmz);
         expo = f2 * nm2;
         f3 = (expo < limit) ? sz * exp(-expo) / nm2 : 0.0;
 
@@ -1483,8 +1483,7 @@ void dp3m_calc_influence_function_energy() {
     size *= dfft.plan[3].new_mesh[i];
     end[i] = dfft.plan[3].start[i] + dfft.plan[3].new_mesh[i];
   }
-  dp3m.g_energy =
-      Utils::realloc(dp3m.g_energy, size * sizeof(double));
+  dp3m.g_energy = Utils::realloc(dp3m.g_energy, size * sizeof(double));
   fak1 = dp3m.params.mesh[0] * dp3m.params.mesh[0] * dp3m.params.mesh[0] * 2.0 /
          (box_l[0] * box_l[0]);
 
@@ -1505,10 +1504,11 @@ void dp3m_calc_influence_function_energy() {
         else {
           denominator = dp3m_perform_aliasing_sums_energy(n, nominator);
           fak2 = nominator[0];
-          fak2 /= pow(SQR(dp3m.d_op[n[0]]) + SQR(dp3m.d_op[n[1]]) +
-                          SQR(dp3m.d_op[n[2]]),
-                      2) *
-                  SQR(denominator);
+          fak2 /=
+              pow(Utils::sqr(dp3m.d_op[n[0]]) + Utils::sqr(dp3m.d_op[n[1]]) +
+                      Utils::sqr(dp3m.d_op[n[2]]),
+                  2) *
+              Utils::sqr(denominator);
           dp3m.g_energy[ind] = fak1 * fak2;
         }
       }
@@ -1527,7 +1527,7 @@ double dp3m_perform_aliasing_sums_energy(int n[3], double nominator[1]) {
   nominator[0] = 0.0;
 
   f1 = 1.0 / (double)dp3m.params.mesh[0];
-  f2 = SQR(PI / (dp3m.params.alpha_L));
+  f2 = Utils::sqr(PI / (dp3m.params.alpha_L));
 
   for (mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
     nmx = dp3m.meshift[n[0]] + dp3m.params.mesh[0] * mx;
@@ -1539,7 +1539,7 @@ double dp3m_perform_aliasing_sums_energy(int n[3], double nominator[1]) {
         nmz = dp3m.meshift[n[2]] + dp3m.params.mesh[0] * mz;
         sz = sy * pow(sinc(f1 * nmz), 2.0 * dp3m.params.cao);
 
-        nm2 = SQR(nmx) + SQR(nmy) + SQR(nmz);
+        nm2 = Utils::sqr(nmx) + Utils::sqr(nmy) + Utils::sqr(nmz);
         expo = f2 * nm2;
         f3 = (expo < limit) ? sz * exp(-expo) / nm2 : 0.0;
 
@@ -1554,13 +1554,13 @@ double dp3m_perform_aliasing_sums_energy(int n[3], double nominator[1]) {
   return denominator;
 }
 
-/*****************************************************************************/
+  /*****************************************************************************/
 
-/************************************************
- * Functions for dipoloar P3M Parameter tuning
- * This tuning is based on the P3M tuning of the charges
- which in turn is based on the P3M_tune by M. Deserno
- ************************************************/
+  /************************************************
+   * Functions for dipoloar P3M Parameter tuning
+   * This tuning is based on the P3M tuning of the charges
+   which in turn is based on the P3M_tune by M. Deserno
+   ************************************************/
 
 #define P3M_TUNE_MAX_CUTS 50
 /** Tune dipolar P3M parameters to desired accuracy.
@@ -1647,7 +1647,7 @@ double dp3m_get_accuracy(int mesh, int cao, double r_cut_iL, double *_alpha_L,
   *_ks_err = ks_err;
   P3M_TRACE(fprintf(stderr, "dipolar tuning resulting: %f -> %f %f\n", alpha_L,
                     rs_err, ks_err));
-  return sqrt(SQR(rs_err) + SQR(ks_err));
+  return sqrt(Utils::sqr(rs_err) + Utils::sqr(ks_err));
 }
 
 /*****************************************************************************/
@@ -1924,8 +1924,9 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
     else if (tmp_time > best_time + P3M_TIME_GRAN)
       break;
   }
-  P3M_TRACE(fprintf(stderr, "dp3m_m_time: "
-                            "Dmesh=%d final Dcao=%d Dr_cut=%f time=%f\n",
+  P3M_TRACE(fprintf(stderr,
+                    "dp3m_m_time: "
+                    "Dmesh=%d final Dcao=%d Dr_cut=%f time=%f\n",
                     mesh, *_cao, *_r_cut_iL, best_time));
   return best_time;
 }
@@ -1968,8 +1969,9 @@ int dp3m_adaptive_tune(char **logger) {
   mpi_bcast_event(P3M_COUNT_DIPOLES);
 
   /* Print Status */
-  sprintf(b, "Dipolar P3M tune parameters: Accuracy goal = %.5e prefactor "
-             "= %.5e\n",
+  sprintf(b,
+          "Dipolar P3M tune parameters: Accuracy goal = %.5e prefactor "
+          "= %.5e\n",
           dp3m.params.accuracy, coulomb.Dprefactor);
   *logger = strcat_alloc(*logger, b);
   sprintf(b, "System: box_l = %.5e # charged part = %d Sum[q_i^2] = %.5e\n",
@@ -2110,7 +2112,8 @@ void dp3m_count_magnetic_particles() {
 
   for (auto const &p : local_cells.particles()) {
     if (p.p.dipm != 0.0) {
-      node_sums[0] += SQR(p.r.dip[0]) + SQR(p.r.dip[1]) + SQR(p.r.dip[2]);
+      node_sums[0] += Utils::sqr(p.r.dip[0]) + Utils::sqr(p.r.dip[1]) +
+                      Utils::sqr(p.r.dip[2]);
       node_sums[1] += 1.0;
     }
   }
@@ -2143,13 +2146,13 @@ static double dp3m_k_space_error(double box_size, double prefac, int mesh,
     for (ny = -mesh / 2; ny < mesh / 2; ny++)
       for (nz = -mesh / 2; nz < mesh / 2; nz++)
         if ((nx != 0) || (ny != 0) || (nz != 0)) {
-          n2 = SQR(nx) + SQR(ny) + SQR(nz);
+          n2 = Utils::sqr(nx) + Utils::sqr(ny) + Utils::sqr(nz);
           cs = p3m_analytic_cotangent_sum(nx, mesh_i, cao) *
                p3m_analytic_cotangent_sum(ny, mesh_i, cao) *
                p3m_analytic_cotangent_sum(nz, mesh_i, cao);
           dp3m_tune_aliasing_sums(nx, ny, nz, mesh, mesh_i, cao, alpha_L_i,
                                   &alias1, &alias2);
-          double d = alias1 - SQR(alias2 / cs) / (n2 * n2 * n2);
+          double d = alias1 - Utils::sqr(alias2 / cs) / (n2 * n2 * n2);
           /* at high precisions, d can become negative due to extinction;
              also, don't take values that have no significant digits left*/
           if (d > 0 && (fabs(d / alias1) > ROUND_ERROR_PREC))
@@ -2169,7 +2172,7 @@ void dp3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh, double mesh_i,
 
   double ex, ex2, nm2, U2, factor1;
 
-  factor1 = SQR(PI * alpha_L_i);
+  factor1 = Utils::sqr(PI * alpha_L_i);
 
   *alias1 = *alias2 = 0.0;
   for (mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
@@ -2179,8 +2182,8 @@ void dp3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh, double mesh_i,
       for (mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
         fnmz = mesh_i * (nmz = nz + mz * mesh);
 
-        nm2 = SQR(nmx) + SQR(nmy) + SQR(nmz);
-        ex2 = SQR(ex = exp(-factor1 * nm2));
+        nm2 = Utils::sqr(nmx) + Utils::sqr(nmy) + Utils::sqr(nmz);
+        ex2 = Utils::sqr(ex = exp(-factor1 * nm2));
 
         U2 = pow(sinc(fnmx) * sinc(fnmy) * sinc(fnmz), 2.0 * cao);
 
@@ -2223,9 +2226,9 @@ double P3M_DIPOLAR_real_space_error(double box_size, double prefac,
   d_con = 1.0 / sqrt(box_size * box_size * box_size * d_a2 * d_a2 * d_rcut2 *
                      d_rcut2 * d_rcut2 * d_rcut2 * d_RCUT * (double)n_c_part);
 
-  d_error_f =
-      d_c * d_con * sqrt((13. / 6.) * d_cc * d_cc + (2. / 15.) * d_dc * d_dc -
-                         (13. / 15.) * d_cc * d_dc);
+  d_error_f = d_c * d_con *
+              sqrt((13. / 6.) * d_cc * d_cc + (2. / 15.) * d_dc * d_dc -
+                   (13. / 15.) * d_cc * d_dc);
 
   return d_error_f;
 }
@@ -2538,7 +2541,7 @@ void dp3m_calc_send_mesh() {
 
 void dp3m_scaleby_box_l() {
   if (coulomb.Dprefactor < 0.0) {
-    runtimeErrorMsg() << "Dipolar prefactor has to be >=0" ;
+    runtimeErrorMsg() << "Dipolar prefactor has to be >=0";
     return;
   }
 
@@ -2576,8 +2579,8 @@ void dp3m_compute_constants_energy_dipolar() {
   dp3m.energy_correction = -dp3m.sum_mu2 * (Ukp3m + Eself + 2. * PI / 3.);
 }
 
-/*****************************************************************************/
+  /*****************************************************************************/
 
-/*****************************************************************************/
+  /*****************************************************************************/
 
 #endif /* DP3M */
