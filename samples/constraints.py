@@ -28,7 +28,7 @@ num_part = 30
 
 # create random posiitons in the box
 ran_pos = np.random.random((num_part, 3)) * system.box_l
-system.part.add(id=np.arange(num_part), pos=ran_pos)
+system.part.add(id=np.arange(num_part), pos=ran_pos, type=np.zeros(num_part,dtype=int))
 
 # bottom wall, normal pointing in the +z direction, layed on z=0.1
 floor = shapes.Wall(normal=[0, 0, 1], dist=0.1)
