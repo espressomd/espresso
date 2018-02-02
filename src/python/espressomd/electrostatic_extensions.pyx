@@ -24,17 +24,12 @@ from espressomd cimport actors
 from . import actors
 import numpy as np
 from espressomd.utils cimport handle_errors
+from espressomd.electrostatics import _check_for_electroneutrality
 
 IF ELECTROSTATICS and P3M:
     cdef class ElectrostaticExtensions(actors.Actor):
-        def _check_for_electroneutrality(self):
-            if(len(self.system.part[:].q)>0 and self._params["check_for_electroneutrality"]==True):
-                charges=self.system.part[:].q
-                total_charge=np.sum(charges)
-                min_abs_nonzero_charge = np.min(np.abs(charges[np.nonzero(charges)[0]]))
-                if abs(total_charge)/min_abs_nonzero_charge>1e-10:
-                    raise ValueError("The system is not charge neutral. Please neutralize the system before adding a new actor via adding the corresponding counterions to the system. Alternatively you can turn off the electroneutrality check via supplying check_for_electroneutrality=False when creating the actor. In this case you may be simulating a non-neutral system which will affect physical observables like e.g. the pressure, the chemical potentials of charged species or potential energies of the system. Since simulations of non charge neutral systems are special please make sure you know what you are doing.")
-
+        pass
+        
     cdef class ELC(ElectrostaticExtensions):
         """
         Electrostatics solver for systems with two periodic dimensions. 
@@ -145,7 +140,7 @@ IF ELECTROSTATICS and P3M:
                 handle_errors("ELC tuning failed, ELC is not set up to work with the GPU P3M")
 
         def _activate_method(self):
-            self._check_for_electroneutrality()
+            _check_for_electroneutrality(self.system, self._params)
             self._set_params_in_es_core()
 
         def _deactivate_method(self):
@@ -302,7 +297,7 @@ IF ELECTROSTATICS and P3M:
             mpi_iccp3m_init(0)
 
         def _activate_method(self):
-            self._check_for_electroneutrality()
+            _check_for_electroneutrality(self.system, self._params)
             self._set_params_in_es_core()
 
         def _deactivate_method(self):
