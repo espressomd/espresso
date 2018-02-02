@@ -256,7 +256,7 @@ Writing VTF files
 The formats VTF (**V**\ TF **T**\ rajectory **F**\ ormat), VSF
 (**V**\ TF **S**\ tructure **F**\ ormat) and VCF (**V**\ TF
 **C**\ oordinate **F**\ ormat) are formats for the visualization
-software VMD: ``cite:humphrey96a``. They are intended to
+software VMD: :cite:`humphrey96a`. They are intended to
 be human-readable and easy to produce automatically and modify.
 
 The format distinguishes between *structure blocks* that contain the
