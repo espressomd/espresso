@@ -29,7 +29,7 @@ class ParticleProperties(ut.TestCase):
     #  def __init__(self,particleId):
     #    self.pid=particleId
     # the system which will be tested
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     # Particle id to work on
     pid = 17

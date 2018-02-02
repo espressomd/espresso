@@ -1,5 +1,5 @@
 # Initializing espresso modules and the numpy package
-from espressomd import System, electrokinetics, shapes
+from espressomd import electrokinetics, shapes
 import numpy as np
 import sys
 
@@ -13,8 +13,7 @@ width = 50
 padding = 1
 box_z = width + 2*padding
 
-system = System()
-system.box_l = [box_x, box_y, box_z]
+system = espressomd.System(box_l=[box_x, box_y, box_z])
 
 # Set the electrokinetic parameters
 

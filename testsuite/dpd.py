@@ -28,7 +28,7 @@ class DPDThermostat(ut.TestCase):
     """Tests the velocity distribution created by the dpd thermostat against 
        the single component Maxwell distribution."""
 
-    s = espressomd.System()
+    s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     s.box_l = 3 * [10]
     s.time_step = 0.01
     s.cell_system.skin=0.4
