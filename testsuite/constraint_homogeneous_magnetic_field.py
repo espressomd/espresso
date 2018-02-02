@@ -11,7 +11,7 @@ import sys
            "Feature CONSTRAINTS not available, skipping test!")
 class HomogeneousMagneticFieldTest(ut.TestCase):
 
-    S = espressomd.System()
+    S = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     def setUp(self):
         self.S.box_l = [3.0, 3.0, 3.0]

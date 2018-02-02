@@ -25,14 +25,14 @@
 
 from __future__ import print_function
 
-from espressomd import System
-from espressomd.observables import ParticlePositions
-from espressomd.correlators import Correlator
-
 import numpy as np
 import os
 import sys
 import time
+
+from espressomd.observables import ParticlePositions
+from espressomd.correlators import Correlator
+
 
 # create an output folder
 
@@ -47,23 +47,22 @@ except:
 # Read in the active velocity from the command prompt
 
 if len(sys.argv) != 2:
-    print("Usage:",sys.argv[0],"<vel> (0 <= vel < 10.0)")
+    print("Usage:", sys.argv[0], "<vel> (0 <= vel < 10.0)")
     exit()
 
 vel = float(sys.argv[1])
 
 # Set the basic simulation parameters
 
-sampsteps  = 5000
+sampsteps = 5000
 samplength = 1000
-tstep      = 0.01
-
-system = System()
+tstep = 0.01
 
 ## Exercise 2 ##
 # Why can we get away with such a small box?
 # Could it be even smaller?
-system.box_l = [10.0, 10.0, 10.0]
+system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+
 
 system.cell_system.skin = 0.3
 system.time_step = tstep
@@ -84,9 +83,9 @@ system.time_step = tstep
 for ...:
     # Set up a random seed (a new one for each run)
 
-## Exercise 1 ##
-# Explain the choice of the random seed
-    system.seed = np.random.randint(0,2**31-1)
+    ## Exercise 1 ##
+    # Explain the choice of the random seed
+    system.seed = np.random.randint(0, 2**31 - 1)
 
     # Use the Langevin thermostat (no hydrodynamics)
 
@@ -94,28 +93,29 @@ for ...:
 
     # Place a single active particle (that can rotate freely! rotation=[1,1,1])
 
-    system.part.add(pos=[5.0, 5.0, 5.0],swimming={ 'v_swim' : vel },rotation=[1,1,1])
+    system.part.add(pos=[5.0, 5.0, 5.0], swimming={
+                    'v_swim': vel}, rotation=[1, 1, 1])
 
     # Initialize the mean squared displacement (MSD) correlator
 
-    tmax = tstep*sampsteps
+    tmax = tstep * sampsteps
 
     pos_id = ParticlePositions(ids=[0])
-    msd    = Correlator(obs1=pos_id,
-                        corr_operation="square_distance_componentwise",
-                        dt=tstep,
-                        tau_max=tmax,
-                        tau_lin=16)
+    msd = Correlator(obs1=pos_id,
+                     corr_operation="square_distance_componentwise",
+                     dt=tstep,
+                     tau_max=tmax,
+                     tau_lin=16)
     system.auto_update_correlators.add(msd)
 
 ## Exercise 3 ##
 # Construct the auto-correlators for the VACF and AVACF,
 # using the example of the MSD
-    
+
     # Initialize the velocity auto-correlation function (VACF) correlator
 
     ...
-    
+
     # Initialize the angular velocity auto-correlation function (AVACF) correlator
 
     ...
@@ -129,7 +129,7 @@ for ...:
 
     system.auto_update_correlators.remove(msd)
     msd.finalize()
-    np.savetxt("{}/msd_{}_{}.dat".format(outdir,vel,run),msd.result())
+    np.savetxt("{}/msd_{}_{}.dat".format(outdir, vel, run), msd.result())
 
     ...
 
