@@ -374,7 +374,7 @@ void cells_on_geometry_change(int flags) {
 /*************************************************/
 
 void check_resort_particles() {
-  const double skin2 = SQR(skin / 2.0);
+  const double skin2 = Utils::sqr(skin / 2.0);
 
   resort_particles |= (std::any_of(local_cells.particles().begin(),
                                    local_cells.particles().end(),

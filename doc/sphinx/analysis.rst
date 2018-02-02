@@ -3,33 +3,120 @@
 Analysis
 ========
 
+|es| provides two concepts of system analysis:
+
+- :ref:`Direct analysis routines`: The :mod:`espressomd.analyze` module provides 
+  online-calculation of specialized local and global observables with 
+  calculation and data accumulation performed in the core.
+- :ref:`Observables and correlators`: This provides a more flexible concept of 
+  in-core analysis, where a certain observable (:ref:`Available observables`), 
+  a rule for data accumulation (ref Accumulators) and/or correlation (:ref:`Correlations`) can be defined.
+
+
 .. _Direct analysis routines:
 
 Direct analysis routines
 ------------------------
 
-.. todo:: Remove TCL reference and update
+The direct analysis commands can be classified into two types: 
 
-The :mod:`espressomd.analyze` module provides online-calculation of local and global observables.
-These exist for convenience and historical reasons.
-Since arithmetic in TCL was quite painful to perform, there exists a series of common analysis routines which can be used whenever possible.
-They usually have parts of the calculations performed in the core.
+- Instantaneous analysis routines, that only take into account the current configuration of the system:
+
+    - :ref:`Energies`
+    - :ref:`Pressure`
+    - :ref:`Momentum of the System`
+    - :ref:`Minimal distances between particles`
+    - :ref:`Particles in the neighborhood`
+    - :ref:`Particle distribution`
+    - :ref:`Cylindrical Average`
+    - :ref:`Radial distribution function` with ``rdf_type='rdf'``
+    - :ref:`Structure factor`
+    - :ref:`Center of mass`
+    - :ref:`Moment of inertia matrix`
+    - :ref:`Gyration tensor`
+    - :ref:`Stress Tensor`
+    - :ref:`Local Stress Tensor`
+
+- Analysis on stored configurations, added by :meth:`espressomd.analyze.append()`:
+    - :ref:`Radial distribution function` with ``rdf_type='<rdf>'``
+    - :ref:`Chains`
+
+.. _Energies:
+
+Energies
+~~~~~~~~
+:meth:`espressomd.analyze.Analysis.energy`
+
+Returns the energies of the system.
+The the different energetic contributions to the total energy can also be obtained (kinetic, bonded,non-bonded, coublomb))
+
+For example, ::
+
+>>> energy = system.analysis.energy()
+>>> print(energy["total"])
+>>> print(energy["kinetic"])
+>>> print(energy["bonded"])
+>>> print(energy["non_bonded"])
 
 
-On the other hand, some observables are computed and stored in the
-C-core of during a call to the function , while they are set up and
-their results are collected from the script level. These observables are
-more complex to implement and offer less flexibility, while they are
-significantly faster and more memory efficient, and they can be set up
-to be computed every few time steps. The observables in this class are
-described in chapter :ref:`Observables and correlators`.
+.. _Pressure:
+
+Pressure
+~~~~~~~~
+
+:meth:`espressomd.analyze.Analysis.pressure`
+
+Computes the pressure and its contributions in the system. It
+returns all the contributions to the total pressure (see :meth:`espressomd.analyze.Analysis.pressure`).
+
+The pressure is calculated (if there are no electrostatic interactions)
+by
+
+.. math::
+     p = \frac{2E_{kinetic}}{Vf} + \frac{\sum_{j>i} {F_{ij}r_{ij}}}{3V}
+     :label: eqptens
+
+where :math:`f=3` is the number of translational degrees of freedom of
+each particle, :math:`V` is the volume of the system,
+:math:`E_{kinetic}` is the kinetic energy, :math:`F_{ij}` the force
+between particles i and j, and :math:`r_{ij}` is the distance between
+them. The kinetic energy divided by the degrees of freedom is
+
+.. math:: \frac{2E_{kinetic}}{f} = \frac{1}{3}\sum_{i} {m_{i}v_{i}^{2}}.
+
+Note that Equation :eq:`eqptens` can only be applied to pair potentials and
+central forces. Description of how contributions from other interactions
+are calculated is beyond the scope of this manual. Three body potentials
+are implemented following the procedure in
+Ref. :cite:`thompson09a`. A different formula is used to
+calculate contribution from electrostatic interactions in P3M. For
+electrostatic interactions, the :math:`k`-space contribution is not well
+tested, so use with caution! Anything outside that is currently not
+implemented. Four-body dihedral potentials are not included. Except of 
+VIRTUAL\_SITES\_RELATIVE constraints all other
+constraints of any kind are not currently accounted for in the pressure
+calculations. The pressure is no longer correct, e.g., when particles
+are confined to a plane.
+
+The command is implemented in parallel.
+
+.. _Momentum of the system:
+
+Momentum of the System
+~~~~~~~~~~~~~~~~~~~~~~
+:meth:`espressomd.analyze.Analysis.analyze_linear_momentum`
+
+This command returns the total linear momentum of the particles and the
+lattice-Boltzmann (LB) fluid, if one exists. Giving the optional
+parameters either causes the command to ignore the contribution of LB or
+of the particles.
 
 .. _Minimal distances between particles:
 
 Minimal distances between particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:meth:`espressomd.analyze.Analysis.mindist`
+:meth:`espressomd.analyze.Analysis.min_dist`
 Returns the minimal distance between all particles in the system.
 
 When used with type-lists as arguments, then the minimal distance between particles of only those types is determined.
@@ -63,6 +150,9 @@ Particles in the neighborhood
 :meth:`espressomd.analyze.Analysis.nbhood`
  
 Returns a list of the particle ids of that fall within a given radius of a target position.
+For example, ::
+
+    idlist = system.analysis.nbhood(pos = system.box_l*0.5, r_catch=5.0)
 
 .. _Particle distribution:
 
@@ -187,25 +277,24 @@ The order of appearance corresponds to the order of the types in the argument `t
 For example if was set to `types=[0, 1]` then the first triple is associated to type 0 and
 the second triple to type 1.
 
-.. _Modes:
+..
+	.. _Vkappa:
 
-.. _Vkappa:
+	Vkappa
+	~~~~~~
+	:meth:`espressomd.analyze.Analysis.v_kappa`
 
-Vkappa
-~~~~~~
-:meth:`espressomd.analyze.Analysis.v_kappa`
+	.. todo:: Implementation appears to be incomplete
 
-.. todo:: Implementation appears to be incomplete
-
-Calculates the compressibility :math:`V \times \kappa_T` through the
-Volume fluctuations
-:math:`V \times \kappa_T = \beta \left(\langle V^2\rangle - \langle V \rangle^2\right)`
-:cite:`kolb99a`. Given no arguments this function calculates
-and returns the current value of the running average for the volume
-fluctuations.The `mode=reset` argument clears the currently stored values. With `mode=read` the
-cumulative mean volume, cumulative mean squared volume and how many
-samples were used can be retrieved. Likewise the option `mode=set` enables you to
-set those.
+	Calculates the compressibility :math:`V \times \kappa_T` through the
+	Volume fluctuations
+	:math:`V \times \kappa_T = \beta \left(\langle V^2\rangle - \langle V \rangle^2\right)`
+	:cite:`kolb99a`. Given no arguments this function calculates
+	and returns the current value of the running average for the volume
+	fluctuations.The `mode=reset` argument clears the currently stored values. With `mode=read` the
+	cumulative mean volume, cumulative mean squared volume and how many
+	samples were used can be retrieved. Likewise the option `mode=set` enables you to
+	set those.
 
 
 .. _Radial distribution function:
@@ -214,7 +303,20 @@ Radial distribution function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 :meth:`espressomd.analyze.Analysis.rdf`
 
-Calculates a radial distribution function.
+Calculates a radial distribution function for given particle type and binning.
+The `rdf_type` defines if the analysis is performed on the current configuration (`rdf_type='rdf'`)
+or on averaged configurations stored with `analyze.append()` (`rdf_type='<rdf>'`).
+
+For example, ::
+
+	rdf_bins = 100
+	r_min  = 0.0
+	r_max  = system.box_l[0]/2.0
+	r, rdf_01 = S.analysis.rdf(rdf_type='<rdf>', type_list_a=[0], type_list_b=[1], r_min=r_min, r_max=r_max, r_bins=rdf_bins)
+	rdf_fp = open("rdf.dat", 'w')
+	for i in range(rdf_bins):
+		rdf_fp.write("%1.5e %1.5e %1.5e %1.5e\n" % (r[i], rdf_01[i]))
+	rdf_fp.close()
 
 
 .. _Structure factor:
@@ -343,81 +445,17 @@ Analyze the gyration tensor of particles of a given type, or of all particles in
     in the order x, y, z). Attention: the algorithm assumes a cubic box.
     Surface results have not been tested. .
 
+	.. _Temperature of the lb fluid:
 
-.. _Temperature of the lb fluid:
+	Temperature of the LB fluid
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	.. todo:: This feature is not implemented
 
-Temperature of the LB fluid
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. todo:: This feature is not implemented
+	This command returns the temperature of the lattice-Boltzmann (LB)
+	fluid, see Chapter [sec:lb], by averaging over the fluid nodes. In case
+	or are compiled in and boundaries are defined, only the available fluid
+	volume is taken into account.
 
-This command returns the temperature of the lattice-Boltzmann (LB)
-fluid, see Chapter [sec:lb], by averaging over the fluid nodes. In case
-or are compiled in and boundaries are defined, only the available fluid
-volume is taken into account.
-
-
-.. _Momentum of the system:
-
-Momentum of the System
-~~~~~~~~~~~~~~~~~~~~~~
-:meth:`espressomd.analyze.Analysis.analyze_linear_momentum`
-
-This command returns the total linear momentum of the particles and the
-lattice-Boltzmann (LB) fluid, if one exists. Giving the optional
-parameters either causes the command to ignore the contribution of LB or
-of the particles.
-
-
-.. _Energies:
-
-Energies
-~~~~~~~~
-:meth:`espressomd.analyze.Analysis.energy`
-
-Returns the energies of the system.
-The the different energetic contributions to the total energy can also be obtained (kinetic, bonded,non-bonded, coublomb)).
-
-
-.. _Pressure:
-
-Pressure
-~~~~~~~~
-
-:meth:`espressomd.analyze.Analysis.pressure`
-
-Computes the pressure and its contributions in the system. It
-returns all the contributions to the total pressure (see :meth:`espressomd.analyze.Analysis.pressure`).
-
-The pressure is calculated (if there are no electrostatic interactions)
-by
-
-.. math::
-     p = \frac{2E_{kinetic}}{Vf} + \frac{\sum_{j>i} {F_{ij}r_{ij}}}{3V}
-     :label: eqptens
-
-where :math:`f=3` is the number of translational degrees of freedom of
-each particle, :math:`V` is the volume of the system,
-:math:`E_{kinetic}` is the kinetic energy, :math:`F_{ij}` the force
-between particles i and j, and :math:`r_{ij}` is the distance between
-them. The kinetic energy divided by the degrees of freedom is
-
-.. math:: \frac{2E_{kinetic}}{f} = \frac{1}{3}\sum_{i} {m_{i}v_{i}^{2}}.
-
-Note that Equation :eq:`eqptens` can only be applied to pair potentials and
-central forces. Description of how contributions from other interactions
-are calculated is beyond the scope of this manual. Three body potentials
-are implemented following the procedure in
-Ref. :cite:`thompson09a`. A different formula is used to
-calculate contribution from electrostatic interactions in P3M. For
-electrostatic interactions, the :math:`k`-space contribution is not well
-tested, so use with caution! Anything outside that is currently not
-implemented. Four-body dihedral potentials are not included. Except of 
-VIRTUAL\_SITES\_RELATIVE constraints all other
-constraints of any kind are not currently accounted for in the pressure
-calculations. The pressure is no longer correct, e.g., when particles
-are confined to a plane.
-
-The command is implemented in parallel.
 
 .. _Stress Tensor:
 
@@ -446,8 +484,10 @@ The command is implemented in parallel.
 
 Local Stress Tensor
 ~~~~~~~~~~~~~~~~~~~
+
+.. todo:: This feature is not tested.
+
 :meth:`espressomd.analyze.Analysis.local_stress_tensor`
-.. todo:: This feature is not implemented
 
 A cuboid is defined in the system and divided into bins.
 For each of these bins a stress tensor is calculated using the Irving Kirkwood method.
@@ -468,8 +508,6 @@ The command is implemented in parallel.
 { { LocalStressTensor } { { } { } } }
 
 specifying the local pressure tensor in each bin.
-
-
 
 .. _Chains:
 
@@ -536,87 +574,87 @@ in :cite:`doi86a`.
 Note that the hydrodynamic radius is sometimes defined in a similar fashion but with a denominator of :math:`N^2` instead of :math:`N(N-1)` in the prefactor.
 Both versions are equivalent in the :math:`N\rightarrow \infty` limit but give numerically different values for finite polymers.
 
+..
+	.. _Internal distances:
 
-.. _Internal distances:
+	Internal distances
+	^^^^^^^^^^^^^^^^^^
+	.. todo:: This feature is not implemented
 
-Internal distances
-^^^^^^^^^^^^^^^^^^
-.. todo:: This feature is not implemented
+	analyze
 
-analyze
+	Returns the averaged internal distances within the chains (over all
+	pairs of particles). If is used, the values are averaged over all stored
+	configurations (see section ).
 
-Returns the averaged internal distances within the chains (over all
-pairs of particles). If is used, the values are averaged over all stored
-configurations (see section ).
+	{ … }
 
-{ … }
-
-The index corresponds to the number of beads between the two monomers
-considered (0 = next neighbors, 1 = one monomer in between, …).
-
-
-.. _Internal distances II (specific monomer):
-
-Internal distances II (specific monomer)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. todo:: This feature is not implemented
-
-analyze
-
-In contrast to , it does not average over the whole chain, but rather
-takes the chain monomer at position (default: :math:`0`, the first
-monomer on the chain) to be the reference point to which all internal
-distances are calculated. If is used, the values will be averaged over
-all stored configurations (see section ).
-
-{ … }
+	The index corresponds to the number of beads between the two monomers
+	considered (0 = next neighbors, 1 = one monomer in between, …).
 
 
-.. _Bond lengths:
+	.. _Internal distances II (specific monomer):
 
-Bond lengths
-^^^^^^^^^^^^
-.. todo:: This feature is not implemented
+	Internal distances II (specific monomer)
+	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+	.. todo:: This feature is not implemented
 
-analyze
+	analyze
 
-Analyzes the bond lengths of the chains in the system. Returns its
-average, the standard deviation, the maximum and the minimum. If you
-want to look only at specific chains, use the optional arguments,
-:math:`\var{chain\_start} =
-2*\var{MPC}` and :math:`\var{n\_chains} = 1` to only include the third
-chain’s monomers. If is used, the value will be averaged over all stored
-configurations (see section ). This function assumes linear chain
-topology and does not check if the bonds really exist!
+	In contrast to , it does not average over the whole chain, but rather
+	takes the chain monomer at position (default: :math:`0`, the first
+	monomer on the chain) to be the reference point to which all internal
+	distances are calculated. If is used, the values will be averaged over
+	all stored configurations (see section ).
 
-{ }
+	{ … }
 
 
-.. _Form factor:
+	.. _Bond lengths:
 
-Form factor
-^^^^^^^^^^^
-.. todo:: This feature is not implemented
+	Bond lengths
+	^^^^^^^^^^^^
+	.. todo:: This feature is not implemented
 
-| analyze
+	analyze
 
-Computes the spherically averaged form factor of a single chain, which
-is defined by
+	Analyzes the bond lengths of the chains in the system. Returns its
+	average, the standard deviation, the maximum and the minimum. If you
+	want to look only at specific chains, use the optional arguments,
+	:math:`\var{chain\_start} =
+	2*\var{MPC}` and :math:`\var{n\_chains} = 1` to only include the third
+	chain’s monomers. If is used, the value will be averaged over all stored
+	configurations (see section ). This function assumes linear chain
+	topology and does not check if the bonds really exist!
 
-.. math::
+	{ }
 
-   S(q) = \frac{1}{\var{chain\_length}} \sum_{i,j=1}^{\var{chain\_length}}
-     \frac{\sin(q r_{ij})}{q r_{ij}}
 
-of a single chain, averaged over all chains for :math:`\var{qbin}+1`
-logarithmically spaced q-vectors :math:`\var{qmin}, \dots ,\var{qmax}`
-where :math:`\var{qmin}>0` and :math:`\var{qmax}>\var{qmin}`. If is
-used, the form factor will be averaged over all stored configurations
-(see section ).
+	.. _Form factor:
 
-{ { } }
+	Form factor
+	^^^^^^^^^^^
+	.. todo:: This feature is not implemented
 
-with :math:`q \in \{\var{qmin},\dots,\var{qmax}\}`.
+	| analyze
+
+	Computes the spherically averaged form factor of a single chain, which
+	is defined by
+
+	.. math::
+
+	   S(q) = \frac{1}{\var{chain\_length}} \sum_{i,j=1}^{\var{chain\_length}}
+		 \frac{\sin(q r_{ij})}{q r_{ij}}
+
+	of a single chain, averaged over all chains for :math:`\var{qbin}+1`
+	logarithmically spaced q-vectors :math:`\var{qmin}, \dots ,\var{qmax}`
+	where :math:`\var{qmin}>0` and :math:`\var{qmax}>\var{qmin}`. If is
+	used, the form factor will be averaged over all stored configurations
+	(see section ).
+
+	{ { } }
+
+	with :math:`q \in \{\var{qmin},\dots,\var{qmax}\}`.
 
 
 .. _Chain radial distribution function:
@@ -743,6 +781,8 @@ The following observables are available:
    -  LBVelocityProfile
 
 
+.. _Correlations:
+
 Correlations
 ~~~~~~~~~~~~
 
@@ -777,7 +817,7 @@ respective autocorrelation times. The correlator provides the same
 functionality as a by-product of computing the correlation function.
 
 An example of the usage of observables and correlations is provided in
-the script in the samples directory.
+the script ``samples/observables_correlators.py``.
 
 .. _Creating a correlation:
 
@@ -816,16 +856,16 @@ To obtain the velocity auto-correlation function of particle 0, use::
     c_vel = Correlator(obs1=vel_obs, tau_lin=16, tau_max=20., dt=dt,
         corr_operation="scalar_product", compress1="discard1")
 
-The full example can be found in `samples/diffusion_coefficient.py`.
+The full example can be found in ``samples/diffusion_coefficient.py``.
 
 
-.. _The correlation algorithm\: multiple tau correlator:
+.. _Details of the multiple tau correlation algorithm:
 
-The correlation algorithm: multiple tau correlator
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Details of the multiple tau correlation algorithm
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here we briefly describe the multiple tau correlator which is
-implemented in . For a more detailed description and discussion of its
+implemented in |es|. For a more detailed description and discussion of its
 behavior with respect to statistical and systematic errors, please read
 the cited literature. This type of correlator has been in use for years
 in the analysis of dynamic light
@@ -835,7 +875,8 @@ found its way to the Fluorescence Correlation Spectroscopy
 Smit :cite:`frenkel02b` describes its application for the
 special case of the velocity autocorrelation function.
 
-.. figure:: figures/correlator_scheme.pdf
+.. figure:: figures/correlator_scheme.png
+   :scale: 50 %
    :alt: Schematic representation of buffers in the correlator.
 
    Schematic representation of buffers in the correlator.
@@ -914,4 +955,40 @@ different contributions cancel each other. On the other hand, in the of
 the case of mean square displacement the difference is always positive,
 resulting in a non-negligible systematic error. A more general
 discussion is presented in Ref. :cite:`ramirez10a`.
+
+.. _Accumulators:
+
+Accumulators
+------------
+
+.. _Observable accumulator:
+
+Observable accumulator
+~~~~~~~~~~~~~~~~~~~~~~
+
+The observable accumulator :class:`espressomd.accumulators.Accumulator` can
+be used to calculate the mean and variance of an observable (
+:mod:`espressomd.observables`) in the core::
+
+    import espressomd
+    import espressomd.observables
+    import espressomd.accumulators
+
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.cell_system.skin = 0.4
+    system.time_step = 0.01
+    system.part.add(id=0, pos=[5.0, 5.0, 5.0])
+    position_observable = espressomd.observables.ParticlePositions(ids=(0,))
+    system.auto_update_observables.add(position_observable)
+    accumulator = espressomd.accumulators.Accumulator(obs=position_observable)
+    system.auto_update_accumulators.add(accumulator)
+    # Perform integration (not shown)
+    print accumulator.get_mean()
+    print accumulator.get_variance()
+
+In the example above the automatic update of the accumulator is used. However, 
+it's also possible to manually update the accumulator by calling
+:meth:`espressomd.accumulators.Accumulator.update`.
+Please note that the current core implementation of the accumulator is not
+serializable and therefore can not be checkpointed.
 

@@ -2549,6 +2549,12 @@ ELSE:
 
 IF BOND_ANGLE == 1:
     class AngleHarmonic(BondedInteraction):
+        """
+        Bond angle dependent harmonic potential.
+
+        See :ref:`Bond-angle interactions`
+
+        """
 
         def type_number(self):
             return BONDED_IA_ANGLE_HARMONIC
@@ -2591,6 +2597,12 @@ ELSE:
 
 IF BOND_ANGLE == 1:
     class AngleCosine(BondedInteraction):
+        """
+        Bond angle dependent ine potential.
+
+        See :ref:`Bond-angle interactions`
+
+        """
 
         def type_number(self):
             return BONDED_IA_ANGLE_COSINE
@@ -2633,6 +2645,12 @@ ELSE:
 
 IF BOND_ANGLE == 1:
     class AngleCossquare(BondedInteraction):
+        """
+        Bond angle dependent cos^2 potential.
+
+        See :ref:`Bond-angle interactions`
+
+        """
 
         def type_number(self):
             return BONDED_IA_ANGLE_COSSQUARE
@@ -2675,6 +2693,11 @@ ELSE:
 
 
 class OifGlobalForces(BondedInteraction):
+    """
+    Part of the :ref:`Object-in-fluid` method.
+
+    """
+
 
     def type_number(self):
         return BONDED_IA_OIF_GLOBAL_FORCES
@@ -2716,6 +2739,10 @@ class OifGlobalForces(BondedInteraction):
 
 
 class OifLocalForces(BondedInteraction):
+    """
+    Part of the :ref:`Object-in-fluid` method.
+
+    """
 
     def type_number(self):
         return BONDED_IA_OIF_LOCAL_FORCES
