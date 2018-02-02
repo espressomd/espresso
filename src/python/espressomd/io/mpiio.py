@@ -18,15 +18,17 @@ class Mpiio(object):
     def write(self, prefix=None, positions=False, velocities=False, types=False, bonds=False):
         """MPI-IO write.
 
-        Outputs binary data using MPI-IO to files named "prefix.*" where * in:
-         - head: Information about fields that are dumped,
-         - pref: Information about processes: 1 int per process,
-         - id: Particle ids: 1 int per particle,
-         - pos: Position information (if dumped): 3 doubles per particle,
-         - vel: Velocity information (if dumped): 3 doubles per particle,
-         - typ: Type information (if dumped): 1 int per particle,
-         - bond: Bond information (if dumped): variable amount of data,
-         - boff: Bond offset information (if bonds are dumped): 1 int per particle.
+        Outputs binary data using MPI-IO to several files starting with prefix.
+        Suffixes are:
+
+            - head: Information about fields that are dumped,
+            - pref: Information about processes: 1 int per process,
+            - id: Particle ids: 1 int per particle,
+            - pos: Position information (if dumped): 3 doubles per particle,
+            - vel: Velocity information (if dumped): 3 doubles per particle,
+            - typ: Type information (if dumped): 1 int per particle,
+            - bond: Bond information (if dumped): variable amount of data,
+            - boff: Bond offset information (if bonds are dumped): 1 int per particle.
 
         .. note::
             Do not read the files on a machine with a different architecture!
@@ -62,7 +64,7 @@ class Mpiio(object):
     def read(self, prefix=None, positions=False, velocities=False, types=False, bonds=False):
         """MPI-IO read.
 
-        This function reads data dumped by `write'. See the write documentation
+        This function reads data dumped by `write`. See the write documentation
         for details.
 
         .. note::

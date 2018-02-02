@@ -242,11 +242,11 @@ the backup file and to close the datasets etc.
 Writing MPI-IO binary files
 ---------------------------
 
-This method also outputs binary data in parallel and is, thus, suitable for
+This method outputs binary data in parallel and is, thus, also suitable for
 large-scale simulations. Generally, H5MD is the preferred method because the
 data is easier accessible. In contrast to H5MD, the MPI-IO functionality
-outputs data in a *machine format* but has write and read capabilities. The
-usage is quite simple:
+outputs data in a *machine dependant format* but has write and read
+capabilities. The usage is quite simple:
 
 .. code:: python
 
@@ -269,8 +269,8 @@ folder `/tmp`:
     - mydata.bond
 
 Depending on the chosen output, not all of these files might be created.
-To read these in again, simply call :function:`mpiio.read`. It has the same
-signature as :function:`mpiio.write`.
+To read these in again, simply call ``mpiio.read``. It has the same signature as
+``mpiio.write``.
 There exists a legacy python script in the `tools` directory which can convert
 MPI-IO data to the now unsupported blockfile format. Check it out if you want
 to post-process the data without ESPResSo.
