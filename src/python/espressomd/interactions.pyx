@@ -1938,6 +1938,45 @@ class HarmonicBond(BondedInteraction):
         harmonic_set_params(
             self._bond_id, self._params["k"], self._params["r_0"], self._params["r_cut"])
 
+if ELECTROSTATICS:
+    class BondedCoulomb(BondedInteraction):
+
+        def __init__(self, *args, **kwargs):
+            """ 
+            BondedCoulombBond initialiser. Used to instatiate a BondedCoulombBond identifier
+            with a given set of parameters. 
+
+            Parameters
+            ----------
+
+            prefactor : :obj:`float`
+                        Sets the coulomb prefactor of the bonded coulomb interaction.
+            """
+            super(BondedCoulomb, self).__init__(*args, **kwargs)
+
+
+        def type_number(self):
+            return BONDED_IA_BONDED_COULOMB
+
+        def type_name(self):
+            return "BONDED_COULOMB"
+
+        def valid_keys(self):
+            return {"prefactor"}
+
+        def required_keys(self):
+            return {"prefactor"}
+
+        def set_default_params(self):
+            self._params = {"prefactor": 1.}
+
+        def _get_params_from_es_core(self):
+            return \
+                {"prefactor": bonded_ia_params[self._bond_id].p.bonded_coulomb.prefactor}
+
+        def _set_params_in_es_core(self):
+            bonded_coulomb_set_params(
+                self._bond_id,  self._params["prefactor"])
 
 IF ROTATION:
     class HarmonicDumbbellBond(BondedInteraction):
@@ -2779,6 +2818,8 @@ bonded_interaction_classes = {
 }
 IF LENNARD_JONES:
     bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = SubtLJ
+IF ELECTROSTATICS:
+    bonded_interaction_classes[int(BONDED_IA_BONDED_COULOMB)] = BondedCoulomb
 
 
 class BondedInteractions(object):
