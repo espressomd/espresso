@@ -18,7 +18,7 @@
 #
 from __future__ import print_function
 import numpy
-import espressomd._system as es
+import espressomd.system as es
 import espressomd
 from espressomd import thermostat
 from espressomd import electrostatics
