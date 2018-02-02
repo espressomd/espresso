@@ -1,7 +1,6 @@
 /* maximal set of features usable at the same time */
 #define PARTIAL_PERIODIC
 #define ELECTROSTATICS
-#define COULOMB_DEBYE_HUECKEL
 #define DIPOLES
 #define ROTATION
 #define ROTATIONAL_INERTIA
@@ -12,9 +11,6 @@
 #define EXCLUSIONS
 #define MOLFORCES
 
-#ifdef FFTW
-#define MODES
-#endif
 
 #define BOND_CONSTRAINT
 #define COLLISION_DETECTION
@@ -70,6 +66,9 @@
 #define BOND_ANGLEDIST_HARMONIC
 #define BOND_ENDANGLEDIST
 #define BOND_ENDANGLEDIST_HARMONIC
+
+#define EXPERIMENTAL_FEATURES
+
 
 #define VIRTUAL_SITES_RELATIVE
 #define FLATNOISE

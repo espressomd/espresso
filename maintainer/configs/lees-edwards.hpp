@@ -1,4 +1,6 @@
 /* maximal set of features usable at the same time */
+#define EXPERIMENTAL_FEATURES
+
 #define DIPOLES
 #define ROTATION
 #define ROTATIONAL_INERTIA
@@ -9,9 +11,6 @@
 #define MOLFORCES
 #define LEES_EDWARDS
 
-#ifdef FFTW
-#define MODES
-#endif
 
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
