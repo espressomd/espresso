@@ -33,7 +33,7 @@ class ParticleProperties(ut.TestCase):
     tol = 1E-9
 
     # Handle for espresso system
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.box_l = [10.0] * 3
 
     f1 = FeneBond(k=1, d_r_max=5)

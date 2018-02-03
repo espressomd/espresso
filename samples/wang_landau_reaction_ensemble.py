@@ -31,7 +31,7 @@ box_l = 6 * np.sqrt(2)
 
 # Integration parameters
 #############################################################
-system = espressomd.System()
+system = espressomd.System(box_l=[box_l]*3)
 system.time_step = 0.02
 system.cell_system.skin = 0.4
 system.cell_system.max_num_cells = 2744
@@ -41,9 +41,6 @@ system.cell_system.max_num_cells = 2744
 #  Setup System                                             #
 #############################################################
 
-# Interaction setup
-#############################################################
-system.box_l = [box_l, box_l, box_l]
 
 # Particle setup
 #############################################################

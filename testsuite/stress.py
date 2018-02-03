@@ -60,7 +60,7 @@ def stress_nonbonded_intra(particle_pairs, box_l):
       stress += np.einsum('i,j', f, r) / box_l**3
   return stress
 
-system = espressomd.System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
 @ut.skipIf(not espressomd.has_features(['LENNARD_JONES']),
 'Features not available, skipping test!')

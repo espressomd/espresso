@@ -25,10 +25,11 @@
 
 from __future__ import print_function
 
-from espressomd import assert_features, lb, System
-
 import numpy as np
 import os
+
+from espressomd import assert_features, lb
+
 
 ## Exercise 1 ##
 # Create a routine to read in the hydrodynamic type
@@ -39,7 +40,7 @@ import os
 ...
 
 mode = ...
-pos  = ...
+pos = ...
 
 ################################################################################
 
@@ -56,13 +57,12 @@ except:
 
 # System parameters
 
-length      = 25.0
-prod_steps  = 1000
+length = 25.0
+prod_steps = 1000
 prod_length = 50
-dt          = 0.01
+dt = 0.01
 
-system = System()
-system.box_l = [length, length, length]
+system = espressomd.System(box_l=[length, length, length])
 system.cell_system.skin = 0.3
 system.time_step = dt
 system.min_global_cut = 1.0
@@ -73,7 +73,7 @@ system.min_global_cut = 1.0
 
 ## Exercise 3 ##
 # Determine the initial position of the particle, which
-# should be in the center of the box, and shifted by 
+# should be in the center of the box, and shifted by
 # the value of 'pos' in the direction of the z-axis
 
 x0 = ...
@@ -84,19 +84,19 @@ z0 = ...
 
 sph_size = 0.5
 sph_mass = 4.8
-Ixyz     = 4.8
-force    = 0.1 
+Ixyz = 4.8
+force = 0.1
 
 ## Exercise 4 ##
 # Why is the sphere size set to 0.5 (this value is
 # an approximation for the real value)? What happens when you
-# change the mass and rotational inertia? Why is the value of 
+# change the mass and rotational inertia? Why is the value of
 # the force chosen to be low.
 
 # Setup the particle particle
 
-system.part.add(pos=[x0,y0,z0],type=0,mass=sph_mass, rinertia=[Ixyz,Ixyz,Ixyz],
-                swimming={'f_swim':force, 'mode':mode, 'dipole_length':sph_size + 0.5})
+system.part.add(pos=[x0, y0, z0], type=0, mass=sph_mass, rinertia=[Ixyz, Ixyz, Ixyz],
+                swimming={'f_swim': force, 'mode': mode, 'dipole_length': sph_size + 0.5})
 
 ## Exercise 5 ##
 # Why is the dipole_length chosen in this way?
@@ -112,9 +112,10 @@ vskin = 0.1
 frict = 20.0
 visco = 1.0
 densi = 1.0
-temp  = 0.0
+temp = 0.0
 
-lbf = lb.LBFluidGPU(agrid=agrid, dens=densi, visc=visco, tau=dt, fric=frict, couple='3pt')
+lbf = lb.LBFluidGPU(agrid=agrid, dens=densi, visc=visco,
+                    tau=dt, fric=frict, couple='3pt')
 ## Exercise 6 ##
 # What does 'couple 3pt' imply?
 # Can the particle rotate in the flow field?
@@ -125,10 +126,10 @@ system.thermostat.set_lb(kT=temp)
 
 # Output the coordinates
 
-with open("{}/trajectory.dat".format(outdir),'w') as outfile:
-    print("####################################################",file=outfile)
-    print("#        time        position       velocity       #",file=outfile)
-    print("####################################################",file=outfile)
+with open("{}/trajectory.dat".format(outdir), 'w') as outfile:
+    print("####################################################", file=outfile)
+    print("#        time        position       velocity       #", file=outfile)
+    print("####################################################", file=outfile)
 
     # Production run
 
@@ -139,10 +140,11 @@ with open("{}/trajectory.dat".format(outdir),'w') as outfile:
               file=outfile)
 
         # Output 50 simulations
-        if k % (prod_steps/50) == 0:
-            num = k/(prod_steps/50)
-            lbf.print_vtk_velocity("{}/lb_velocity_{}.vtk".format(outdir,num))
-            system.part.writevtk("{}/position_{}.vtk".format(outdir,num),types=[0])
+        if k % (prod_steps / 50) == 0:
+            num = k / (prod_steps / 50)
+            lbf.print_vtk_velocity("{}/lb_velocity_{}.vtk".format(outdir, num))
+            system.part.writevtk(
+                "{}/position_{}.vtk".format(outdir, num), types=[0])
 
         system.integrator.run(prod_length)
 

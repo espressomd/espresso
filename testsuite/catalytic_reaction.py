@@ -1,16 +1,17 @@
-from espressomd import has_features, System
-if(has_features(["CATALYTIC_REACTIONS"])):
-    from espressomd.reaction import Reaction
 import unittest as ut
 import numpy as np
+
+import espressomd
+from espressomd import has_features
+if(has_features(["CATALYTIC_REACTIONS"])):
+    from espressomd.reaction import Reaction
 
 @ut.skipIf(not has_features(["CATALYTIC_REACTIONS"]),
            "Features missing")
 class ReactionTest(ut.TestCase):
 
     def test_reaction(self):
-        system = System()
-        system.box_l = [10,10,10]
+        system = espressomd.System(box_l=[10.0, 10.0, 10.0])
         system.cell_system.skin = 0.1
         system.time_step = 0.01
 

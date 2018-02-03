@@ -25,13 +25,14 @@
 
 from __future__ import print_function
 
-from espressomd import assert_features, System
-from espressomd.shapes import Cylinder, Wall, HollowCone
-
 from math import cos, pi, sin
 import numpy as np
 import os
 import sys
+
+from espressomd import assert_features
+from espressomd.shapes import Cylinder, Wall, HollowCone
+
 
 assert_features(["ENGINE","CONSTRAINTS","LENNARD_JONES","ROTATION","MASS"])
 
@@ -88,7 +89,7 @@ dt          = 0.01
 
 # Setup the MD parameters 
 
-system = System()
+system = espressomd.System(box_l=[length, diameter + 4, diameter + 4])
 system.box_l = [length, diameter + 4, diameter + 4]
 system.cell_system.skin = 0.1
 system.time_step = dt

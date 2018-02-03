@@ -1,4 +1,4 @@
-from espressomd import System, interactions, lb, polymer
+from espressomd import interactions, lb, polymer
 from espressomd.observables import ComPosition
 from espressomd.correlators import Correlator
 
@@ -11,8 +11,7 @@ loops = 50000
 step_per_loop = 100
 
 # System setup
-system = System()
-system.box_l = [32, 32, 32]
+system = espressomd.System(box_l=[32, 32, 32])
 system.cell_system.skin = 0.4
 
 try:

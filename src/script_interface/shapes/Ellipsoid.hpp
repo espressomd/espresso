@@ -19,33 +19,38 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef SCRIPT_INTERFACE_SHAPES_PORE_HPP
-#define SCRIPT_INTERFACE_SHAPES_PORE_HPP
+#ifndef SCRIPT_INTERFACE_SHAPES_ELLIPSOID_HPP
+#define SCRIPT_INTERFACE_SHAPES_ELLIPSOID_HPP
 
 #include "Shape.hpp"
-#include "core/shapes/Pore.hpp"
+#include "core/shapes/Ellipsoid.hpp"
 
 namespace ScriptInterface {
 namespace Shapes {
 
-class Pore : public Shape {
+class Ellipsoid : public Shape {
 public:
-  Pore() : m_pore(new ::Shapes::Pore()) {
-
-    add_parameters({{"pos", m_pore->pos()},
-                    {"axis", m_pore->axis()},
-                    {"rad_left", m_pore->rad_left()},
-                    {"rad_right", m_pore->rad_right()},
-                    {"smoothing_radius", m_pore->smoothing_radius()},
-                    {"length", m_pore->length()},
-                    {"outer_rad_left", m_pore->outer_rad_left()},
-                    {"outer_rad_right", m_pore->outer_rad_right()}});
+  Ellipsoid() : m_ellipsoid(new ::Shapes::Ellipsoid()) {
+    add_parameters({{"center", m_ellipsoid->center()},
+                    {"a",
+		     [this](Variant const &v) {
+		       m_ellipsoid->set_semiaxis_a(get_value<double>(v));
+		     },
+		     [this]() { return m_ellipsoid->semiaxis_a(); }},
+                    {"b",
+		     [this](Variant const &v) {
+		       m_ellipsoid->set_semiaxis_b(get_value<double>(v));
+		     },
+		     [this]() { return m_ellipsoid->semiaxis_b(); }},
+                    {"direction", m_ellipsoid->direction()}});
   }
 
-  std::shared_ptr<::Shapes::Shape> shape() const override { return m_pore; }
+  std::shared_ptr<::Shapes::Shape> shape() const override {
+    return m_ellipsoid;
+  }
 
 private:
-  std::shared_ptr<::Shapes::Pore> m_pore;
+  std::shared_ptr<::Shapes::Ellipsoid> m_ellipsoid;
 };
 
 } /* namespace Shapes */
