@@ -120,10 +120,9 @@ class ReactionEnsembleTest(ut.TestCase):
         average_NA /= num_samples
         average_NHA /= num_samples
         average_alpha = average_NA / float(N0)
-        # Note: with 40 particles, alpha=0.5 and 500*10 reactions, standard
-        # deviation of average alpha is about 0.01 (determined from 40
-        # repeated simulations).  We set the desired accuracy to 3*std = 0.015,
-        # and require that the results agree within three digits
+        # Note: with 40 particles, alpha=0.5 and 1000*10 reactions, standard
+        # deviation of average alpha is about 0.003 (determined from 40
+        # repeated simulations).  We set the desired accuracy to 5*std = 0.015
         rel_error_alpha = abs(
             average_alpha - target_alpha )/target_alpha; # relative error
         self.assertLess(
@@ -136,7 +135,6 @@ class ReactionEnsembleTest(ut.TestCase):
             +"  average_NHA:{0:.4e}".format(average_NHA) 
             +"  average alpha: {0:.4e}".format(average_alpha)
             +"  target_alpha: {0:.4e}".format(target_alpha)
-            +"  rel_error: {0:.4e}".format(rel_error_alpha)
             )
 
     def test_reaction_system(self):
