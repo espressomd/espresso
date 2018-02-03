@@ -603,12 +603,9 @@ inline void add_three_body_bonded_stress(Particle *p1) {
     }
   }
 }
-<<<<<<< HEAD
-#endif //BOND_CLASS_DEBUG
- 
-=======
 
->>>>>>> 647325edbd6fd6b85df4d6e3995f4c0a256bade1
+#endif //BOND_CLASS_DEBUG
+
 /** Calculate kinetic pressure (aka energy) for one particle.
     @param p1 particle for which to calculate pressure
     @param v_comp flag which enables (1) compensation of the velocities required

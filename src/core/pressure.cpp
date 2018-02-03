@@ -554,87 +554,7 @@ int whichbin(double pos[3], int bins[3], double centre[3], double range[3], int 
   return 1;
 }
 
-int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force, Distance &)
-{
-  /* returns the non_bonded interaction between two particles */
 
-  double dist2, dist;
-  double d[3];
-#ifdef ELECTROSTATICS
-  int i;
-  double eforce[3];
-#endif
-
-  force[0]=0; force[1]=0; force[2]=0; 
-  
-
-  if ((p1->p.identity != p2->p.identity)&&(checkIfParticlesInteract(p1->p.type, p2->p.type))) {
-    /* distance calculation */
-    get_mi_vector(d, p1->r.p, p2->r.p);
-    dist2 = SQR(d[0]) + SQR(d[1]) + SQR(d[2]);
-    dist  = sqrt(dist2);
-    calc_non_bonded_pair_force(p1,p2,d,dist,dist2,force);
-#ifdef ELECTROSTATICS
-    if (coulomb.method != COULOMB_NONE) {
-      switch (coulomb.method) {
-#ifdef P3M
-      case COULOMB_P3M_GPU:
-	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle GPU P3M electrostatics so it is left out\n");  
-	break;
-      case COULOMB_P3M:
-	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle P3M electrostatics so it is left out\n");  
-	break;
-#endif
-      case COULOMB_DH:
-	for (i = 0; i < 3; i++)
-	  eforce[i] = 0;
-	add_dh_coulomb_pair_force(p1,p2,d,dist, eforce);
-	for(i=0;i<3;i++)
-	  force[i] += eforce[i];
-	break;
-      case COULOMB_RF:
-	for (i = 0; i < 3; i++)
-	  eforce[i] = 0;
-	add_rf_coulomb_pair_force(p1,p2,d,dist, eforce);
-	for(i=0;i<3;i++)
-	    force[i] += eforce[i];
-	break;
-      case COULOMB_INTER_RF:
-        // this is done elsewhere
-	break;
-      case COULOMB_MMM1D:
-	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle MMM1D electrostatics so it is left out\n");  
-      default:
-	fprintf(stderr,"WARNING: Local stress tensor calculation does not recognise this electrostatic interaction\n");  
-      }
-    }
-#endif /*ifdef ELECTROSTATICS */
-
-#ifdef DIPOLES
-    if (coulomb.Dmethod != DIPOLAR_NONE) {
-      switch (coulomb.Dmethod) {
-#ifdef DP3M
-      case DIPOLAR_P3M:
-    	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle P3M magnetostatics so it is left out\n");  
-	break;
-#endif
-      case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle DAWAANR magnetostatics so it is left out\n");  
-	break;
-      case DIPOLAR_DS:
-    	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle MAGNETIC DIPOLAR SUM magnetostatics so it is left out\n");  
-	break;
-
-      default:
-	fprintf(stderr,"WARNING: Local stress tensor calculation does not recognise this magnetostatic interaction\n");  
-      }
-    }
-#endif /*ifdef DIPOLES */
-
-
-  } /*if p1-> ... */
-  return 0;
-}
 
 } /* namespace */
 
@@ -971,9 +891,7 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force, Distanc
 
   } /*if p1-> ... */
   return 0;
-}
-
-} /* namespace */
+}  /* namespace */
 
 
 int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],

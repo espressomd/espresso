@@ -46,7 +46,7 @@ int fene_set_params(int bond_type, double k, double drmax, double r0)
   bonded_ia_params[bond_type].num  = 1;
 
   bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::Fene>
-				  (r0, drmax, SQR(drmax), 1./SQR(drmax), k));
+				  (r0, drmax, Utils::sqr(drmax), 1./Utils::sqr(drmax), k));
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(bond_type, -1); 

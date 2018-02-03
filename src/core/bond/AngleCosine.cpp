@@ -35,7 +35,7 @@ int Bond::AngleCosine::calc_bonded_three_particle_force(Particle *p1, Particle *
 
   if ( cosine >  TINY_COS_VALUE ) cosine = TINY_COS_VALUE;
   if ( cosine < -TINY_COS_VALUE)  cosine = -TINY_COS_VALUE;
-  fac *= m_sin_phi0 * (cosine/sqrt(1-SQR(cosine))) + m_cos_phi0;
+  fac *= m_sin_phi0 * (cosine/sqrt(1-Utils::sqr(cosine))) + m_cos_phi0;
   
   for(j=0;j<3;j++) {
     f1               = fac * (cosine * vec1[j] - vec2[j]) * d1i;
@@ -79,7 +79,7 @@ int Bond::AngleCosine::calc_bonded_three_particle_energy(Particle *p1, Particle 
   if ( cosine < -TINY_COS_VALUE)  cosine = -TINY_COS_VALUE;
   /* bond angle energy */
 
-  *_energy = m_bend*(cosine*m_cos_phi0 - sqrt(1-SQR(cosine))*m_sin_phi0+1);
+  *_energy = m_bend*(cosine*m_cos_phi0 - sqrt(1-Utils::sqr(cosine))*m_sin_phi0+1);
 
   return 0;
 }
@@ -117,7 +117,7 @@ int Bond::AngleCosine::calc_3body_forces(Particle *p_mid, Particle *p_left,
   vec31_sqr = sqrlen(vec31);
   vec31_magn = sqrt(vec31_sqr);
   cos_phi = scalar(vec21, vec31) / (vec21_magn * vec31_magn);
-  sin_phi = sqrt(1.0 - SQR(cos_phi));
+  sin_phi = sqrt(1.0 - Utils::sqr(cos_phi));
 
   /* uncomment this block if interested in the angle 
   if(cos_phi < -1.0) cos_phi = -TINY_COS_VALUE;

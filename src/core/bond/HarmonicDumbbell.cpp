@@ -1,6 +1,7 @@
 #include"HarmonicDumbbell.hpp"
 #include "debug.hpp"
 #include "core/random.hpp"
+#include "utils.hpp"
 
 //---HARMONIC DUMBBELL
 int Bond::HarmonicDumbbell::calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], double force[3]) const {
@@ -82,7 +83,7 @@ int Bond::HarmonicDumbbell::calc_bonded_pair_energy(Particle *p1, Particle *p2, 
   diff[1] = dhat[1] - p1->r.quatu[1];
   diff[2] = dhat[2] - p1->r.quatu[2];
 
-  *_energy = 0.5*m_k1*SQR(dist - m_r)
+  *_energy = 0.5*m_k1*Utils::sqr(dist - m_r)
            + 0.5*m_k2*(torque[0]*diff[0] + torque[1]*diff[1] + torque[2]*diff[2]);
   #endif
   return 0;

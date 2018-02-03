@@ -30,13 +30,14 @@ int Bond::PairBond::add_bonded_force(Particle *p1, int bl_id){
 
       bond_broken = calc_bonded_pair_force(p1, p2, dx, force);
 
-      if (bond_broken) {
-	runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
+      if (bond_broken==1) {
+	runtimeErrorMsg() << "Pairbond: bond broken between particles " << p1->p.identity
 			  << " and " << p2->p.identity
 			  << ". Distance vector: " << dx[0] << " " << dx[1]
-			  << " " << dx[2];
+			  << " " << dx[2] << "\t Bondtype: " << int(m_bondtype);
+	
 	return bond_broken;
-      }
+      };
 
       // add forces to particles
       write_force_to_particle(p1, p2, force);

@@ -51,10 +51,10 @@ int Bond::IbmTriel::calc_bonded_three_particle_force(Particle *p1, Particle *p2,
   const double Dyy = l/l0*sinPhi / sinPhi0;
   
   // Tensor G: (C.12)
-  const double Gxx = SQR(Dxx)+SQR(Dyx);
+  const double Gxx = Utils::sqr(Dxx)+Utils::sqr(Dyx);
   const double Gxy = Dxx*Dxy + Dyx*Dyy;
   const double Gyx = Dxx*Dxy + Dyy*Dyx;   // = Gxy because of symmetry
-  const double Gyy = SQR(Dxy) + SQR(Dyy);
+  const double Gyy = Utils::sqr(Dxy) + Utils::sqr(Dyy);
   
   // Strain invariants, C.11 and C.12
   const double i1 = (Gxx + Gyy) - 2;

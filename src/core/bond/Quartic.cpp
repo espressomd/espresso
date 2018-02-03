@@ -38,8 +38,8 @@ int Bond::Quartic::calc_bonded_pair_energy(Particle *p1, Particle *p2, double dx
       (dist > m_r_cut)) 
     return 1;
  
-  double dr2 = SQR(dist -m_r);
+  double dr2 = Utils::sqr(dist -m_r);
 
-  *_energy = 0.5*m_k0*dr2 + 0.25 * m_k1 * SQR(dr2);
+  *_energy = 0.5*m_k0*dr2 + 0.25 * m_k1 * Utils::sqr(dr2);
   return 0;
 }

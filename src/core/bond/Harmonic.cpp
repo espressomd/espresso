@@ -1,6 +1,7 @@
 #include"Harmonic.hpp"
 #include "debug.hpp"
 #include "core/random.hpp"
+#include "utils.hpp"
 
 //---HARMONIC BOND---
 int Bond::Harmonic::calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], double force[3]) const {
@@ -38,10 +39,12 @@ int Bond::Harmonic::calc_bonded_pair_energy(Particle *p1, Particle *p2, double d
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
 
-  if ((m_r_cut > 0.0) && 
-      (dist > m_r_cut)) 
+  if ((m_r_cut > 0.0) && (dist > m_r_cut)){
+    runtimeErrorMsg() <<"Harmonic bond broken between particles "<< p1->p.identity <<
+      " and " << p2->p.identity;
     return 1;
+  };
 
-  *_energy = 0.5*m_k*SQR(dist - m_r);
+  *_energy = 0.5*m_k*Utils::sqr(dist - m_r);
   return 0;
 }

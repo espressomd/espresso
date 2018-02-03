@@ -13,8 +13,10 @@ int Bond::Fene::calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3],
   const double len = sqrt(len2);
   const double dr = len - m_r0;
 
-  if (dr >= m_drmax) return 1;
-
+  if (dr >= m_drmax){
+    return 1;
+  };
+  
   double fac = -m_k * dr / ((1.0 - dr*dr*m_drmax2i));
   if (fabs(dr) > ROUND_ERROR_PREC) {
      if(len > ROUND_ERROR_PREC) {  /* Regular case */
@@ -47,7 +49,7 @@ int Bond::Fene::calc_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3]
   if(dr >= m_drmax) {
     runtimeErrorMsg() <<"FENE bond broken between particles "<< p1->p.identity << " and " << p2->p.identity;
     return 1;
-  }
+  };
 
   double energy = -0.5*m_k*m_drmax2;
   energy *= log((1.0 - dr*dr*m_drmax2i));

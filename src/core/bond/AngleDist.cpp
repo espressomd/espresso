@@ -91,7 +91,7 @@ int Bond::AngleDist::calc_bonded_three_particle_energy(Particle *p1, Particle *p
     double phi;
     double phi0 = calc_angledist_param(p1, p2, p3);
     phi = acos(-cosine);
-    *_energy = 0.5 * m_bend * SQR(phi - phi0);
+    *_energy = 0.5 * m_bend * Utils::sqr(phi - phi0);
   }
 #endif
 

@@ -21,7 +21,7 @@ int Bond::Umbrella::calc_bonded_pair_energy(Particle *p1, Particle *p2, double d
 					   double *_energy) const {
   double distn;
   distn = dx[m_dir];  
-  *_energy = 0.5 * m_k * SQR(distn - m_r);
+  *_energy = 0.5 * m_k * Utils::sqr(distn - m_r);
   return 0;
 
 }
