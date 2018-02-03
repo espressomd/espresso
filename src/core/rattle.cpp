@@ -32,6 +32,8 @@
 #include <cstring>
 #include <mpi.h>
 
+#include "utils/make_unique.hpp" //for creating a unique ptr to a bond class object
+
 int n_rigidbonds = 0;
 
 #ifdef BOND_CONSTRAINT
@@ -103,6 +105,22 @@ void init_correction_vector() {
     reset_force(p);
 }
 
+#ifdef BOND_CLASS_DEBUG
+/**Compute positional corrections*/
+void compute_pos_corr_vec(int *repeat_) {
+  int cnt = -1;
+  Particle *p1;
+
+  for (auto &p : local_cells.particles()) {
+    p1 = &p;
+    if(bond_container.RB_pos_corr(p1, repeat_, cnt) == 2){
+      return;
+    };
+  };
+}
+#endif
+
+#ifndef BOND_CLASS_DEBUG
 /**Compute positional corrections*/
 void compute_pos_corr_vec(int *repeat_) {
   Bonded_ia_parameters *ia_params;
@@ -151,6 +169,7 @@ void compute_pos_corr_vec(int *repeat_) {
     } // while loop
   }   // for i loop
 }
+#endif
 
 /**Apply corrections to each particle**/
 void app_pos_correction() {
@@ -212,6 +231,24 @@ void transfer_force_init_vel() {
     copy_reset(p);
 }
 
+#ifdef BOND_CLASS_DEBUG
+/** Velocity correction vectors are computed*/
+void compute_vel_corr_vec(int *repeat_) {
+  Bonded_ia_parameters *ia_params;
+  int j, k;
+  Particle *p1, *p2;
+  double v_ij[3], r_ij[3], K, vel_corr;
+
+  for (auto &p : local_cells.particles()) {
+    p1 = &p;
+    if(bond_container.RB_vel_corr(p1, repeat_) == 2){
+      return;
+    };
+  };   // for i loop
+}
+#endif
+
+#ifndef BOND_CLASS_DEBUG
 /** Velocity correction vectors are computed*/
 void compute_vel_corr_vec(int *repeat_) {
   Bonded_ia_parameters *ia_params;
@@ -254,6 +291,7 @@ void compute_vel_corr_vec(int *repeat_) {
     } // while loop
   }   // for i loop
 }
+#endif
 
 /**Apply velocity corrections*/
 void apply_vel_corr() {
@@ -327,9 +365,13 @@ int rigid_bond_set_params(int bond_type, double d, double p_tol, double v_tol) {
   bonded_ia_params[bond_type].type = BONDED_IA_RIGID_BOND;
   bonded_ia_params[bond_type].num = 1;
   n_rigidbonds += 1;
+
+  bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::RigidBond>
+				  (d, p_tol, v_tol*time_step, d*d));
+  
   mpi_bcast_ia_params(bond_type, -1);
   mpi_bcast_parameter(FIELD_RIGIDBONDS);
-
+  
   return ES_OK;
 }
 

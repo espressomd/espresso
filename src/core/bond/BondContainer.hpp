@@ -7,6 +7,7 @@
 #include "ThreeParticlePressureBond.hpp"
 #include "OifGlobalForces.hpp"
 #include "IbmVolumeConservation.hpp"
+#include "RigidBond.hpp"
 /// h5md search bonded ia uind ersetzen 
 
 namespace Bond {
@@ -39,12 +40,15 @@ namespace Bond {
     //ibm volume conservation -> volume calculation
     int ibm_vol_con_softID_loop(Particle *p1, int *softID, int *bond_map_id);
     void init_Vol_Con();
-
     //---functions which provide access to Bond maps---
     //get Access to all bonds
     Bond* get_Bond(int bond_map_id);
     //get IBMVolCon Bond
     IbmVolumeConservation* get_IBM_Vol_Con_Bond(int bond_map_id);
+
+    //rigid bond
+    int RB_pos_corr(Particle *p1, int* repeat, int &cnt);
+    int RB_vel_corr(Particle *p1, int* repeat);
     
   private:
     //---member variables---
@@ -57,6 +61,7 @@ namespace Bond {
     std::unordered_map<int, ThreeParticlePressureBond*> m_three_body_pressure_bonds;
     std::unordered_map<int, OifGlobalForces*> m_oif_global_forces_bonds;
     std::unordered_map<int, IbmVolumeConservation*> m_ibm_vol_con_bonds;
+    std::unordered_map<int, RigidBond*> m_rigid_bonds;
     //---private functions---
     // sorts a Bond of type Bond
     //-> PairBonds, ThreeParticleBonds, etc.

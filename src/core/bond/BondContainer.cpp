@@ -3,6 +3,7 @@
 #include "pressure.hpp"//distribute_tensors->local_Stress_tensor arguments
 #include "immersed_boundary/ibm_volume_conservation.hpp" //VolumesCurrent[]>
 
+//help function
 //cast base class into a derived class
 template<class BaseClass, class DerivedClass>
 DerivedClass* cast_base_class(BaseClass* base_class){
@@ -11,6 +12,7 @@ DerivedClass* cast_base_class(BaseClass* base_class){
 
 }
 
+//insert bond
 void Bond::BondContainer::set_bond_by_type(int type, std::unique_ptr<Bond> && bond)
 {
 
@@ -19,6 +21,7 @@ void Bond::BondContainer::set_bond_by_type(int type, std::unique_ptr<Bond> && bo
 
 }
 
+//delete bond 
 void Bond::BondContainer::delete_bond(int bond_map_id)
 {
 
@@ -28,7 +31,7 @@ void Bond::BondContainer::delete_bond(int bond_map_id)
   m_three_body_pressure_bonds.erase(bond_map_id);
   m_oif_global_forces_bonds.erase(bond_map_id);
   m_ibm_vol_con_bonds.erase(bond_map_id);
-
+  m_rigid_bonds.erase(bond_map_id);
 }
 
 // private function which casts base classes into concrete classes
@@ -55,6 +58,10 @@ void Bond::BondContainer::sort_bond_into_lists(int bond_map_id)
 								      IbmVolumeConservation>
       (m_all_bonds[bond_map_id].get());
 
+    //rigid bond
+    RigidBond* derived_rigid_bond = cast_base_class<Bond,
+						    RigidBond>(m_all_bonds[bond_map_id].get());
+
     //add if cast was successful
     if(derived_pair_bond){
       m_virial_loop_bonds.insert(std::pair<int, PairBond*>(bond_map_id, derived_pair_bond));
@@ -70,6 +77,9 @@ void Bond::BondContainer::sort_bond_into_lists(int bond_map_id)
     if(derived_ibm_vol_con_bond){
       m_ibm_vol_con_bonds.insert(std::pair<int, IbmVolumeConservation*>
 				 (bond_map_id, derived_ibm_vol_con_bond));
+    };
+    if(derived_rigid_bond){
+      m_rigid_bonds.insert(std::pair<int, RigidBond*>(bond_map_id, derived_rigid_bond));
     };
 
     //---add bonds which add energies and forces---
@@ -104,6 +114,9 @@ void Bond::BondContainer::sort_bond_into_lists(int bond_map_id)
       //no energy contribution
       //force is calculated separately
       break;
+    case BondType::BONDED_IA_RIGID_BOND:
+      //neither direct energy nor force
+      break;
     default:
       m_force_loop_bonds.insert(std::pair<int,Bond*>(bond_map_id, insert_to));
       m_energy_loop_bonds.insert(std::pair<int,Bond*>(bond_map_id, insert_to));
@@ -118,6 +131,7 @@ void Bond::BondContainer::sort_bond_into_lists(int bond_map_id)
   
 }
 
+//force and energy calculation
 int Bond::BondContainer::force_loop(Particle *p1)
 {
 
@@ -131,6 +145,7 @@ int Bond::BondContainer::energy_loop(Particle *p1)
 
 }
 
+//pressure and stress tensor calculation
 int Bond::BondContainer::virial_loop(Particle* p1)
 {
 
@@ -155,6 +170,7 @@ int Bond::BondContainer::local_stress_tensor_loop(Particle *p1, DoubleList *Tens
 
 }
 
+//oif global forces
 int Bond::BondContainer::oif_global_loop(Particle *p1, double* partArea, double* VOL_partVol)
 {
 
@@ -171,6 +187,7 @@ int Bond::BondContainer::oif_global_force_loop(Particle *p1)
 
 }
 
+//ibm volume conservation
 int Bond::BondContainer::ibm_vol_con_softID_loop(Particle *p1, int *softID, int *bond_map_id)
 {
 
@@ -219,4 +236,13 @@ void Bond::BondContainer::init_Vol_Con()
   }; 
 }
 
+//rigid bond
+int Bond::BondContainer::RB_pos_corr(Particle *p1, int* repeat, int &cnt)
+{
+  return loop_over_bond_partners(m_rigid_bonds, &RigidBond::pos_corr, p1, repeat, cnt);
+}
 
+int Bond::BondContainer::RB_vel_corr(Particle *p1, int* repeat)
+{
+  return loop_over_bond_partners(m_rigid_bonds, &RigidBond::vel_corr, p1, repeat);
+}
