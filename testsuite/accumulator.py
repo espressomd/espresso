@@ -38,7 +38,7 @@ class AccumulatorTest(ut.TestCase):
     def setUp(self):
         np.random.seed(seed=162)
         self.system = espressomd.System(box_l = [10.0] * 3)
-        self.system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+        self.system.seed = self.system.cell_system.get_state()['n_nodes'] * [1234]
         self.system.cell_system.skin = 0.4
         self.system.time_step = 0.01
         self.system.part.add(id=0, pos=[0.0, 0.0, 0.0])

@@ -14,8 +14,8 @@ class ComFixed(ut.TestCase):
         skin = 0.4
 
         s = espressomd.System(box_l=[1.0, 1.0, 1.0])
-        s.seed  = system.cell_s.get_state()['n_nodes'] * [1234]
-        numpy.random.seed(seed=s.seed)
+        s.seed  = s.cell_system.get_state()['n_nodes'] * [1234]
+        np.random.seed(seed=s.seed)
 
         s.box_l = [10, 10, 10]
         s.time_step = dt

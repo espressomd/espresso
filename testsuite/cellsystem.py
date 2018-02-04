@@ -27,7 +27,7 @@ import numpy as np
 class CellSystem(ut.TestCase):
     S = espressomd.System(box_l=[1.0, 1.0, 1.0])
     S.seed  = S.cell_system.get_state()['n_nodes'] * [1234]
-    numpy.random.seed(S.seed)
+    np.random.seed(seed=S.seed)
 
 
     def test_cell_system(self):

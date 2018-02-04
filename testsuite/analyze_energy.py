@@ -11,7 +11,7 @@ from espressomd.interactions import HarmonicBond
 class AnalyzeEnergy(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
-    numpy.random.seed(system.seed)
+    np.random.seed(seed=system.seed)
 
     harmonic = HarmonicBond(r_0=0.0, k=3)
 
