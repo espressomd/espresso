@@ -6,7 +6,7 @@ def vtf_pid_map(system, types='all'):
     Parameters
     ----------
     system: espressomd.System() object
-    types : str
+    types : :obj:`str`
             Specifies the particle types. The id mapping depends on which 
             particles are going to be printed. This should be the same as 
             the one used in writevsf() and writevsf(). 
@@ -35,7 +35,7 @@ def writevsf(system, fp, types='all'):
     Parameters
     ----------
     system: espressomd.System() object
-    types : str
+    types : :obj:`str`
             Specifies the particle types. The string 'all' will write all particles
     fp : file
                File pointer to write to.
@@ -63,7 +63,7 @@ def writevcf(system, fp, types='all'):
     Parameters
     ----------
     system: espressomd.System() object
-    types : str
+    types : :obj:`str`
             Specifies the particle types. The string 'all' will write all particles
     fp : file
                File pointer to write to.

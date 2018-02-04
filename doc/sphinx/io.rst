@@ -101,8 +101,8 @@ To give an example::
     checkpoint.register("myvar")
     checkpoint.register("skin")
 
-    system = espressomd.System()
-    # ... set system properties like box_l or timestep here ... 
+    system = espressomd.System(box_l=[100.0, 100.0, 100.0])
+    # ... set system properties like time_step here ... 
     checkpoint.register("system")
 
     system.thermostat.set_langevin(kT=1.0, gamma=1.0)
@@ -164,7 +164,7 @@ restores the state of all checkpointed objects and registers a signal.
     checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")
     checkpoint.load()
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[100.0, 100.0, 100.0])
     system.cell_system.skin = skin
     system.actors.add(p3m)
 
@@ -202,7 +202,7 @@ respective hdf5-file. This may, for example, look like:
 .. code:: python
 
     from espressomd.io.writer import h5md
-    system = espressomd.System()
+    system = espressomd.System(box_l=[100.0, 100.0, 100.0])
     # ... add particles here
     h5 = h5md.H5md(filename="trajectory.h5", write_pos=True, write_vel=True)
 
@@ -238,7 +238,7 @@ simulation please keep in mind that the sequence of particles in general
 changes from timestep to timestep. Therefore you have to always use the
 dataset for the ids to track which position/velocity/force/type/mass
 entry belongs to which particle. To write data to the hdf5 file, simply
-call the H5md objects write method without any arguments.
+call the H5md objects :meth:`espressomd.io.writer.h5md.H5md.write` method without any arguments.
 
 .. code:: python
 
@@ -273,8 +273,8 @@ coordinate blocks (time frames) afterwards, thus allowing to store all informati
 a whole simulation in a single file. For more details on the format,
 refer to the VTF homepage (https://github.com/olenz/vtfplugin/wiki).
 
-Creating files in these formats from within is supported by the commands ``writevsf``
-and ``writevcf``, that write a structure and coordinate block (respectively ) to the
+Creating files in these formats from within is supported by the commands :meth:`espressomd.io.writer.vtf.writevsf`
+and :meth:`espressomd.io.writer.vtf.writevcf`, that write a structure and coordinate block (respectively ) to the
 given file. To create a standalone VTF file, first use ``writevsf`` at the beginning of
 the simulation to write the particle definitions as a header, and then ``writevcf`` 
 to generate a timeframe of the simulation state. For example:
@@ -285,7 +285,7 @@ A standalone VTF file can simply be
 
     import espressomd
     from espressomd.io.writer import vtf
-    system = espressomd.System()
+    system = espressomd.System(box_l=[100.0, 100.0, 100.0])
     fp = open('trajectory.vtf', mode='w+t')
 
     # ... add particles here
@@ -317,7 +317,6 @@ One can specify the coordinates of which particles should be written using ``typ
 If ``types='all'`` is used, all coordinates will be written (in the ordered timestep format).
 Otherwise, has to be a list specifying the pids of the particles.
 
-
 Also note, that these formats can not be used to write trajectories
 where the number of particles or their types varies between the
 timesteps. This is a restriction of VMD itself, not of the format.
@@ -335,7 +334,7 @@ for example
 
     import espressomd
     from espressomd.io.writer import vtf
-    system = espressomd.System()
+    system = espressomd.System(box_l=[100.0, 100.0, 100.0])
     # ... add particles here
     fp = open('trajectory.vsf', mode='w+t')
     vtf.writevsf(system, fp, types='all')
@@ -357,7 +356,7 @@ the system’s particles.
 
     import espressomd
     from espressomd.io.writer import vtf
-    system = espressomd.System()
+    system = espressomd.System(box_l=[100.0, 100.0, 100.0])
     # ... add particles here
     fp = open('trajectory.vcf', mode='w+t')    
     vtf.writevcf(system, fp, types='all')  
@@ -374,7 +373,7 @@ requires increasing and continuous indexing. The |es| ``id`` can be used as *key
 
     import espressomd
     from espressomd.io.writer import vtf
-    system = espressomd.System()
+    system = espressomd.System(box_l=[100.0, 100.0, 100.0])
     system.part.add(id=5, pos=[0,0,0])
     system.part.add(id=3, pos=[0,0,0])
     vtf_index = vtf.vtf_pid_map(system)
@@ -402,7 +401,7 @@ using MDAnalysis. A simple example is the following:
     import espressomd
     import MDAnalysis as mda
     from espressomd import MDA_ESP
-    system = espressomd.System()
+    system = espressomd.System(box_l=[100.0, 100.0, 100.0])
     # ... add particles here
     eos = MDA_ESP.Stream(system) # create the stream
     u =  mda.Universe( eos.topology, eos.trajectory ) # create the MDA universe
