@@ -17,7 +17,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with this program.  If not, see < http: // www.gnu.org / licenses / >.
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifndef SCRIPT_INTERFACE_SHAPES_STOMATOCYTE_HPP
@@ -31,7 +31,7 @@ namespace Shapes {
 
 class Stomatocyte : public Shape {
 public:
-  Stomatocyte() : m_stomatocyte(new ::Shapes : : Stomatocyte()) {
+  Stomatocyte() : m_stomatocyte(new ::Shapes::Stomatocyte()) {
     add_parameters({{"position",
                      [this](Variant const &v) {
                        m_stomatocyte->set_position(get_value<Vector3d>(v));
@@ -48,16 +48,16 @@ public:
                     {"direction", m_stomatocyte->direction()}});
   }
 
-  std : : shared_ptr< : : Shapes : : Shape> shape() const override {
+  std::shared_ptr<::Shapes::Shape> shape() const override {
     return m_stomatocyte;
   }
 
 private:
-  std::shared_ptr< : : Shapes : : Stomatocyte> m_stomatocyte;
+  std::shared_ptr<::Shapes::Stomatocyte> m_stomatocyte;
 };
 }
-/ *namespace Shapes * /
+/* namespace Shapes */
 }
-/ *namespace ScriptInterface * /
+/* namespace ScriptInterface */
 
 #endif
