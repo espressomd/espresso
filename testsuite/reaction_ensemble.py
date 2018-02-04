@@ -129,12 +129,12 @@ class ReactionEnsembleTest(ut.TestCase):
             rel_error_alpha,
             0.015,
             msg="\nDeviation from ideal titration curve is too big for the given input parameters.\n"
-            +"  Gamma: {0:.3e}, ".format(Gamma)
-            +"  average_NH: {0:.4e}".format(average_NH)
-            +"  average_NA: {0:.4e}".format(average_NA) 
-            +"  average_NHA:{0:.4e}".format(average_NHA) 
-            +"  average alpha: {0:.4e}".format(average_alpha)
-            +"  target_alpha: {0:.4e}".format(target_alpha)
+            +"  Gamma: "+str(Gamma)
+            +"  average_NH: "+str(average_NH)
+            +"  average_NA: "+str(average_NA) 
+            +"  average_NHA:"+str(average_NHA) 
+            +"  average alpha: "+str(average_alpha)
+            +"  target_alpha: "+str(target_alpha)
             )
 
     def test_reaction_system(self):
