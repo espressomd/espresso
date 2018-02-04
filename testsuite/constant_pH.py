@@ -108,7 +108,7 @@ class ReactionEnsembleTest(ut.TestCase):
             average_alpha - target_alpha )/target_alpha; # relative error
         self.assertLess(
             rel_error_alpha,
-            0.0007,
+            0.07,
             msg="\nDeviation from ideal titration curve is too big for the given input parameters.\n"
             +"  pH: "+str(pH)
             +"  pKa: "+str(pKa)
