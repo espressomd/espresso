@@ -63,6 +63,7 @@ unit_test(NAME RuntimeErrorCollector_test SRC RuntimeErrorCollector_test.cpp ../
 
 unit_test(NAME ScriptInterface_test SRC ScriptInterface_test.cpp ../MpiCallbacks.cpp ../../script_interface/ScriptInterfaceBase.cpp ../../script_interface/ParallelScriptInterface.cpp ../../script_interface/ParallelScriptInterfaceSlave.cpp ../../script_interface/Variant.cpp)
 unit_test(NAME Wall_test SRC Wall_test.cpp ../shapes/Wall.cpp)
+unit_test(NAME Ellipsoid_test SRC Ellipsoid_test.cpp ../shapes/Ellipsoid.cpp ../errorhandling.cpp ../MpiCallbacks.cpp ../RuntimeError.cpp ../RuntimeErrorCollector.cpp ../RuntimeErrorStream.cpp)
 unit_test(NAME Factory_test SRC Factory_test.cpp)
 unit_test(NAME NumeratedContainer_test SRC NumeratedContainer_test.cpp)
 

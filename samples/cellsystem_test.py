@@ -35,7 +35,7 @@ def profile():
                                                                                    n_steps, tf - ti, n_steps * 1. / (tf - ti)))
 
 
-S = es.System()
+S = es.System(box_l = [100, 100, 100])
 cs = S.cell_system
 
 
@@ -45,7 +45,6 @@ cs.set_domain_decomposition(True)
 cs.set_domain_decomposition(use_verlet_lists=True)
 
 S.thermostat.set_langevin(kT=1.0, gamma=1.0)
-S.box_l = [100, 100, 100]
 S.time_step = 0.01
 
 

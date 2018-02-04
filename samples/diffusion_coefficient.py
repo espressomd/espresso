@@ -17,7 +17,7 @@ from espressomd.correlators import Correlator
 from espressomd.observables import ParticlePositions, ParticleVelocities
 import numpy as np
 
-s=espressomd.System()
+s=espressomd.System(box_l=[1.0, 1.0, 1.0])
 p=s.part.add(pos=(0,0,0),id=0)
 s.time_step=dt
 s.thermostat.set_langevin(kT=kT,gamma=gamma)

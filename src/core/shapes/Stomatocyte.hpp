@@ -37,17 +37,11 @@ public:
   Vector3d const &position() const { return m_position; }
   void set_position(Vector3d const &position) {
       m_position = position;
-      m_position_x = position[0];
-      m_position_y = position[1];
-      m_position_z = position[2];
   }
 
   Vector3d const &orientation() const { return m_orientation; }
   void set_orientation(Vector3d const &orientation) {
       m_orientation = orientation;
-      m_orientation_x = orientation[0];
-      m_orientation_y = orientation[1];
-      m_orientation_z = orientation[2];
   }
 
   double  &outer_radius()  { return m_outer_radius; }
@@ -57,18 +51,11 @@ public:
   double  &direction()  { return m_direction; }
 
 private:
-  Vector3d m_position;
-  Vector3d m_orientation;
-
   /** Stomatocyte position. */
-  double m_position_x;
-  double m_position_y;
-  double m_position_z;
+  Vector3d m_position;
 
   /** Stomatocyte orientation. */
-  double m_orientation_x;
-  double m_orientation_y;
-  double m_orientation_z;
+  Vector3d m_orientation;
 
   /** Stomatocyte dimensions. */
   double m_outer_radius;

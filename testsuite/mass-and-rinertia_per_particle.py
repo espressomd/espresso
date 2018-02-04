@@ -14,7 +14,7 @@ import math
 class ThermoTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
-    es = espressomd.System()
+    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     def run_test_case(self, test_case):
         seed(1)

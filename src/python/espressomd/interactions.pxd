@@ -264,6 +264,10 @@ cdef extern from "interaction_data.hpp":
         double r
         double r_cut
 
+#* Parameters for Bonded coulomb */
+    ctypedef struct Bonded_coulomb_bond_parameters:
+        double prefactor
+
 #* Parameters for three body angular potential (bond-angle potentials).
     ctypedef struct Angle_bond_parameters:
         double bend
@@ -365,6 +369,7 @@ cdef extern from "interaction_data.hpp":
         Angle_harmonic_bond_parameters angle_harmonic
         Angle_cosine_bond_parameters angle_cosine
         Angle_cossquare_bond_parameters angle_cossquare
+        Bonded_coulomb_bond_parameters bonded_coulomb
         Dihedral_bond_parameters dihedral
         Tabulated_bond_parameters tab
         Overlap_bond_parameters overlap
@@ -427,6 +432,11 @@ IF OVERLAPPED == 1:
         int overlapped_bonded_set_params(int bond_type, OverlappedBondedInteraction overlap_type,
                                          char * filename)
 
+IF ELECTROSTATICS == 1:
+    cdef extern from "bonded_coulomb.hpp":
+        int bonded_coulomb_set_params(int bond_type, double prefactor)
+    
+
 cdef extern from "interaction_data.hpp":
     int virtual_set_params(int bond_type)
 
@@ -437,7 +447,6 @@ cdef extern from "interaction_data.hpp":
         BONDED_IA_FENE,
         BONDED_IA_HARMONIC,
         BONDED_IA_HARMONIC_DUMBBELL,
-        BONDED_IA_QUARTIC,
         BONDED_IA_BONDED_COULOMB,
         BONDED_IA_ANGLE_OLD,
         BONDED_IA_DIHEDRAL,
