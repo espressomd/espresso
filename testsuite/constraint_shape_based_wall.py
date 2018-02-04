@@ -37,6 +37,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
     def test(self):
         system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+        system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
         self.prepare(system)
 
         wy = shapes.Wall(normal=[0., 1., 0.], dist=0.)

@@ -27,6 +27,9 @@ from time import sleep
 assert_features(["ELECTROSTATICS", "MASS", "LENNARD_JONES"])
 
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
+numpy.random.seed(system.seed)
+
 visualizer = openGLLive(system, drag_force=5 * 298,
                         background_color=[1, 1, 1], light_pos=[30, 30, 30])
 

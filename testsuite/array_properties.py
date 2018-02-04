@@ -63,6 +63,7 @@ class ArrayLockedTest(ut.TestCase):
 
 class ArrayPropertyTest(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
     system.box_l = [12.0,12.0,12.0]
     system.time_step = 0.01
     system.cell_system.skin = 0.01

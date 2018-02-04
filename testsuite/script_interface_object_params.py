@@ -31,6 +31,5 @@ class ScriptInterfaceObjectParams(ut.TestCase):
         # Test parameter retrieval
         self.assertAlmostEqual(c.shape.radius, 1, places=8)
 
-
 if __name__ == "__main__":
     ut.main()

@@ -9,6 +9,7 @@ class ParticleSliceTest(ut.TestCase):
 
     state = [[0, 0, 0], [0, 0, 1]]
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
     system.box_l = 10,10,10
 
     def __init__(self, *args, **kwargs):

@@ -26,6 +26,7 @@ import numpy as np
            "Skipped because of not EXCLUSIONS")
 class AutoExclusions(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
     def setUp(self):
         self.system.part.clear()

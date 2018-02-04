@@ -26,7 +26,7 @@ import numpy as np
 
 class DomainDecomposition(ut.TestCase):
     S = espressomd.System(box_l=[1.0, 1.0, 1.0])
-
+    S.seed  = S.cell_system.get_state()['n_nodes'] * [1234]
     def setUp(self):
         self.S.part.clear()
         self.S.cell_system.set_domain_decomposition(use_verlet_lists=False)

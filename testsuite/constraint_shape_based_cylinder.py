@@ -35,6 +35,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
     def test_cylinder(self):
         system = espressomd.System(box_l=3*[self.box_l])
+        system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
         self.prepare(system)
 
         # check force calculation of cylinder constraint

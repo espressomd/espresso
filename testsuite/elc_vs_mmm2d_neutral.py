@@ -12,6 +12,7 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
     # Handle to espresso system
 
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
     acc = 1e-6
     elc_gap = 5.0
     box_l = 10.0

@@ -26,6 +26,7 @@ import numpy as np
            "Skipped because of not LENNARD_JONES")
 class SubtLjTest(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
     system.box_l = 3*[10]
     system.time_step = 1.
 

@@ -20,6 +20,7 @@ class LeesEdwardsTest(ut.TestCase):
 
     # Systemclass
     system = espressomd.System(box_l=[5.0, 5.0, 5.0])
+    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
     # allowed deviation from analytical results
     tol = 10e-15

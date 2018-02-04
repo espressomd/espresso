@@ -40,6 +40,7 @@ class EllipsoidTest(ut.TestCase):
 
     def test_distance(self):
         system = espressomd.System(box_l=[1., 1., 1.])
+        system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
         self.prepare(system)
 
         N = 10

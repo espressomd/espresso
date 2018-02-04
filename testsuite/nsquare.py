@@ -26,6 +26,7 @@ import numpy as np
 
 class NSquare(ut.TestCase):
     S = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    S.seed = S.cell_system.get_state()['n_nodes'] * [1234]
 
     def setUp(self):
         self.S.part.clear()

@@ -28,6 +28,7 @@ if espressomd.has_features("ELECTROSTATICS", "PARTIAL_PERIODIC"):
 class ElectrostaticInteractionsTests(ut.TestCase):
     # Handle to espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
     def paramsMatch(self, inParams, outParams):
         """Check, if the parameters set and gotten back match.

@@ -33,6 +33,7 @@ class Observables(ut.TestCase):
 
     # Handle for espresso system
     es = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
 
     def setUp(self):
         if not len(self.es.part):

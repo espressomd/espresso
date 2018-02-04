@@ -30,6 +30,7 @@ class Non_bonded_interactionsTests(ut.TestCase):
 
     # Handle to espresso system
     es = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
 
     def intersMatch(self, inType, outType, inParams, outParams):
         """Check, if the interaction type set and gotten back as well as the bond

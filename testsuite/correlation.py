@@ -30,6 +30,9 @@ import pickle
 class Observables(ut.TestCase):
     # Handle for espresso system
     es = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    es.seed  = es.cell_system.get_state()['n_nodes'] * [1234]
+    np.random.seed(es.seed)
+
 
     def test_corr(self):
         s = self.es
@@ -47,7 +50,6 @@ class Observables(ut.TestCase):
         s.integrator.run(1000)
         s.auto_update_correlators.add(C2)
         s.integrator.run(20000)
-
 
         corr = C2.result()
 

@@ -12,6 +12,7 @@ class TestCylindricalObservable(ut.TestCase):
 
     """
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
     system.time_step = 0.01
     system.box_l = [15.0, 15.0, 15.0]
     system.cell_system.skin = 0.4
