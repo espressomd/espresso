@@ -142,8 +142,7 @@ class VCFTestType(CommonTests):
     def setUpClass(cls):
         """Prepare a testsystem."""
         cls.types_to_write = [2, 23]
-#        with tempfile.TemporaryFile(mode='w+') as fp:
-        with open('test.vtf', mode='w+') as fp:
+        with tempfile.TemporaryFile(mode='w+') as fp:
 
             vtf.writevcf(cls.system, fp, types=cls.types_to_write)
             fp.flush()
