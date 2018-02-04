@@ -23,7 +23,6 @@
  */
 #include "interaction_data.hpp"
 #include "actor/DipolarDirectSum.hpp"
-#include "actor/EwaldGPU.hpp"
 #include "buckingham.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -233,10 +232,6 @@ double calc_electrostatics_cutoff() {
   case COULOMB_P3M:
     /* do not use precalculated r_cut here, might not be set yet */
     return p3m.params.r_cut_iL * box_l[0];
-#endif
-#ifdef EWALD_GPU
-  case COULOMB_EWALD_GPU:
-    return ewaldgpu_params.rcut;
 #endif
   case COULOMB_DH:
     return dh_params.r_cut;

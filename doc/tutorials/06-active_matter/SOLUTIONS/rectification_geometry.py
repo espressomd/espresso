@@ -25,14 +25,15 @@
 
 from __future__ import print_function
 
-from espressomd import assert_features, lb, System
-from espressomd.lbboundaries import LBBoundary
-from espressomd.shapes import Cylinder, Wall, HollowCone
-
 from math import cos, pi, sin
 import numpy as np
 import os
 import sys
+
+from espressomd import assert_features, lb
+from espressomd.lbboundaries import LBBoundary
+from espressomd.shapes import Cylinder, Wall, HollowCone
+
 
 assert_features(["LB_GPU","LB_BOUNDARIES_GPU"])
 
@@ -53,8 +54,7 @@ dt       = 0.01
 
 # Setup the MD parameters 
 
-system = System()
-system.box_l = [length, diameter + 4, diameter + 4]
+system = espressomd.System(box_l=[length, dieameter+4, diameter+4])
 system.cell_system.skin = 0.1
 system.time_step = dt
 system.min_global_cut = 0.5

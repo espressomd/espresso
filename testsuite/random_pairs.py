@@ -15,12 +15,11 @@ class RandomPairTest(ut.TestCase):
        repeated for all valid combination of periodicities.
 
     """
-    s = espressomd.System()
-
+    s = espressomd.System(box_l = 3 * [10.])
+        
     def setUp(self):
         s = self.s
         s.time_step = 1.
-        s.box_l = 3 * [10.]
         s.cell_system.skin = 0.0
         s.min_global_cut = 1.5
         n_part = 500

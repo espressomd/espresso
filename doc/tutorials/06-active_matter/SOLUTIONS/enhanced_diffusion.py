@@ -25,14 +25,15 @@
 
 from __future__ import print_function
 
-from espressomd import assert_features, System
-from espressomd.observables import ParticlePositions, ParticleVelocities, ParticleAngularVelocities
-from espressomd.correlators import Correlator
-
 import numpy as np
 import os
 import sys
 import time
+
+from espressomd import assert_features
+from espressomd.observables import ParticlePositions, ParticleVelocities, ParticleAngularVelocities
+from espressomd.correlators import Correlator
+
 
 assert_features(["ENGINE","ROTATION"])
 
@@ -60,8 +61,7 @@ sampsteps  = 5000
 samplength = 1000
 tstep      = 0.01
 
-system = System()
-system.box_l = [10.0, 10.0, 10.0]
+system = espressomd.System(box_l=[10.0, 10.0, 10.0])
 system.cell_system.skin = 0.3
 system.time_step = tstep
 
