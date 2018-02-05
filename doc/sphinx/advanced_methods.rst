@@ -79,7 +79,7 @@ Several modes are available for different types of binding.
   If all three particles are within the cutoff distance, an angle bond is added
   on each of the three particles in addition
   to the distance based bonds between the particle centers. 
-  If two particles are within the cutoff of a centrla particle (e.g., chain of three particles)
+  If two particles are within the cutoff of a central particle (e.g., chain of three particles)
   an angle bond is placed on the central particle.
   The angular bonds being added are determined from the angle between the particles.
   This method does not depend on the particles’ rotational
@@ -87,7 +87,7 @@ Several modes are available for different types of binding.
   required.
   The method, along with the corresponding bonds are setup as follows::
         
-        n_anlge_bonds=181 # 0 to 180 degrees in one degree steps
+        n_angle_bonds=181 # 0 to 180 degrees in one degree steps
         for i in range(0,res,1):
            self.s.bonded_inter[i]=Angle_Harmonic(bend=1,phi0=float(i)/(res-1)*np.pi)
         
@@ -135,7 +135,7 @@ That is, catalytic surfaces induce a reactions that produce charged species by c
 
 where on the upper half of the catalyst :math:`C^{+}` a species :math:`A` is converted into :math:`B`, and on the lower half :math:`C^{-}` the opposite reaction takes place. Note that when :math:`A` and :math:`B` are charged, this reaction conserves charge, provided the rates are equal.
 
-In |es| the orientation of a catalyzer particle is used to define hemispheres; half spaces going through the particle's center. The reaction region is bounded by the *reaction range*: :math:`r`. Inside the reaction range, we react only rectant-product pairs. The particles in a pair are swapped from hemisphere to another with a rate prescribed by
+In |es| the orientation of a catalyzer particle is used to define hemispheres; half spaces going through the particle's center. The reaction region is bounded by the *reaction range*: :math:`r`. Inside the reaction range, we react only reactant-product pairs. The particles in a pair are swapped from hemisphere to another with a rate prescribed by
 
 .. math::
 
@@ -224,7 +224,7 @@ current implementation with the ``COLLISION_DETECTION`` feature.
     shear with help of an unphysical momentum change in two slabs in the
     system.
 
-    Variants and will initialise NEMD. Two distinct methods exist. Both
+    Variants and will initialize NEMD. Two distinct methods exist. Both
     methods divide the simulation box into slabs that lie parallel to the
     x-y-plane and apply a shear in x direction. The shear is applied in the
     top and the middle slabs. Note, that the methods should be used with a
@@ -293,7 +293,7 @@ The following example introduces the usage::
     absolute_offset = 0.2
     system.lees_edwards_offset = absolute_offset
 
-Lees-Edwards boundary conditions can be used to obtain the shear modulus :math:`G = \frac{\tau}{\gamma}` or the shear viscosity :math:`\eta = \frac{\tau}{\dot\gamma}` outside the linear regime, where Green-Kubo relations are not valid anymore. For this purpose a lees_edwards_offset is set followed by one integration step for multiple times. Strain, strain rate and the shear stress need to be recorded for the calculation. Alternatively a sinusoidal lees_edwards_offset series can be used to carry out oscillatory experiments to calculate viscoelastic moduli (:math:`G', G''`). Furthermore a lees_edwards_offset can be set followed by many integration steps obtain the relaxation behaviour of a system. 
+Lees-Edwards boundary conditions can be used to obtain the shear modulus :math:`G = \frac{\tau}{\gamma}` or the shear viscosity :math:`\eta = \frac{\tau}{\dot\gamma}` outside the linear regime, where Green-Kubo relations are not valid anymore. For this purpose a lees_edwards_offset is set followed by one integration step for multiple times. Strain, strain rate and the shear stress need to be recorded for the calculation. Alternatively a sinusoidal lees_edwards_offset series can be used to carry out oscillatory experiments to calculate viscoelastic moduli (:math:`G', G''`). Furthermore a lees_edwards_offset can be set followed by many integration steps obtain the relaxation behavior of a system. 
 
 When applying a constant shear rate :math:`\dot\gamma` the velocity of the particles changes from :math:`-\frac{\dot\gamma}{2}` at the bottom of the box to :math:`\frac{\dot\gamma}{2}` at the top of the box. 
 
@@ -367,7 +367,7 @@ ibm\_triel, ibm\_tribend and ibm\_volCons:
 
    where , , and are four marker points corresponding to two neighboring
    triangles. The indices and contain the shared edge. Note that the
-   marker points within a triangle must be labelled such that the normal
+   marker points within a triangle must be labeled such that the normal
    vector
    :math:`\vec{n} = (\vec{r}_\text{ind2} - \vec{r}_\text{ind1}) \times (\vec{r}_\text{ind3} - \vec{r}_\text{ind1})`
    points outward of the elastic object.
@@ -416,7 +416,7 @@ are declared in as particles. The edges of the mesh define elastic
 forces keeping the shape of the object. The movement of object is
 achieved by adding forces to the mesh points.
 
-Modelled elastic or rigid objects are immersed in the LB fluid flow. The
+Modeled elastic or rigid objects are immersed in the LB fluid flow. The
 fluid interacts with an elastic object resulting in its deformation;
 this immediately generates forces acting back on the fluid. The aim is
 to describe the immersed object using the notion of particles, and to
@@ -431,7 +431,7 @@ triangulation defines interacting particles distributed on the surface
 of the immersed object :cite:`dupin07`:
 
 -  between two particles, corresponding to the edges in the
-   triangulation (modelling the stretching of the membrane),
+   triangulation (modeling the stretching of the membrane),
 
 -  between three particles, corresponding to the triangles of the
    triangulation (local area, or local surface preservation of the
@@ -472,10 +472,10 @@ be calibrated according to the intended application.
    the dynamics.
 
 -  Friction coefficient. The main parameter describing the
-   fluid-particle interaction is the ``riction \ parameter ``\ rom the
+   fluid-particle interaction is the ``friction \ parameter ``\ rom the
    command ``bf``\ uid .
 
--  Parameters of elastic moduli. Elastic behaviour can be described by
+-  Parameters of elastic moduli. Elastic behavior can be described by
    five different elastic moduli: hyperelastic stretching, linear
    stretching, bending, local and global area preservation and volume
    preservation. Each of them has its own scaling parameter:
@@ -522,7 +522,7 @@ The IDs are assigned in the same order as in the ``mesh-nodes.dat``
 file.
 
 The ``mesh-triangles.dat`` contains ``mesh_ntriangle`` lines with three
-nonnegative integers separated by blank space. Each line represents one
+non-negative integers separated by blank space. Each line represents one
 triangle in the triangulation. For algorithmic purposes it is crucial to
 have defined a correct orientation of the triangle. The orientation is
 defined using the normal vector associated with the triangle. The
@@ -756,7 +756,7 @@ Output information about specific object
 object-id
 
 This command is used to output information about the object that can be
-used for visualisation or as input for other simulations.
+used for visualization or as input for other simulations.
 
 - the id of the object
 

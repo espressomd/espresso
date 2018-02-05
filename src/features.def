@@ -19,18 +19,17 @@ EXTERNAL_FORCES
 CONSTRAINTS
 MASS
 EXCLUSIONS
-MOLFORCES
+MOLFORCES                       requires EXPERIMENTAL_FEATURES
 BOND_CONSTRAINT
-MODES                           requires FFTW
 LANGEVIN_PER_PARTICLE
 COLLISION_DETECTION             implies GHOSTS_HAVE_BONDS
-LEES_EDWARDS                    requires not ELECTROSTATICS and not LB and not PARTIAL_PERIODIC
+LEES_EDWARDS                    requires not ELECTROSTATICS and not LB and not PARTIAL_PERIODIC and EXPERIMENTAL_FEATURES
 METADYNAMICS
 NEMD
 NPT
 GHMC
 CATALYTIC_REACTIONS
-MULTI_TIMESTEP                  requires not GAUSSRANDOMCUT and not GAUSSRANDOM
+MULTI_TIMESTEP                  requires not GAUSSRANDOMCUT and not GAUSSRANDOM and EXPERIMENTAL_FEATURES
 ENGINE                          implies ROTATION, EXTERNAL_FORCES
 PARTICLE_ANISOTROPY
 
@@ -45,7 +44,6 @@ INTER_RF                        implies ELECTROSTATICS
 MMM1D_GPU                       requires CUDA and PARTIAL_PERIODIC and ELECTROSTATICS
 EWALD_GPU                       requires CUDA and ELECTROSTATICS
 _P3M_GPU_FLOAT                  requires CUDA and ELECTROSTATICS
-_P3M_GPU_DOUBLE                 requires CUDA and ELECTROSTATICS
 
 
 /* Magnetostatics */
@@ -61,7 +59,7 @@ VIRTUAL_SITES
 
 /* DPD features */
 DPD
-TUNABLE_SLIP
+TUNABLE_SLIP                    requires EXPERIMENTAL_FEATURES
 
 /* Lattice-Boltzmann features */
 LB
@@ -79,7 +77,7 @@ EK_DEBUG                        requires ELECTROKINETICS
 EK_DOUBLE_PREC                  requires ELECTROKINETICS
 LATTICE                         equals LB or LB_GPU
 SHANCHEN                        implies LB_GPU
-SHANCHEN                        requires not ELECTROKINETICS
+SHANCHEN                        requires not ELECTROKINETICS and EXPERIMENTAL_FEATURES
 
 
 /* Interaction features */
@@ -101,8 +99,9 @@ MORSE
 BUCKINGHAM
 SOFT_SPHERE
 HAT
-UMBRELLA
+UMBRELLA                           requires EXPERIMENTAL_FEATURES 
 GAY_BERNE                       implies ROTATION
+GAY_BERNE                       requires EXPERIMENTAL_FEATURES
 OVERLAPPED
 DRUDE                           requires P3M and LANGEVIN_PER_PARTICLE
 THOLE                           implies GHOSTS_HAVE_BONDS
@@ -125,7 +124,7 @@ BOND_ENDANGLEDIST_HARMONIC      implies BOND_ENDANGLEDIST, CONSTRAINTS
 CG_DNA                          implies TWIST_STACK, HYDROGEN_BOND, COULOMB_DEBYE_HUECKEL
 TWIST_STACK
 HYDROGEN_BOND
-COULOMB_DEBYE_HUECKEL           requires ELECTROSTATICS
+COULOMB_DEBYE_HUECKEL           requires ELECTROSTATICS and EXPERIMENTAL_FEATURES
 
 /* Immersed-Boundary Bayreuth version */
 IMMERSED_BOUNDARY
@@ -136,6 +135,8 @@ IMMERSED_BOUNDARY               requires not ELECTROKINETICS
 SCAFACOS_DIPOLES                requires SCAFACOS
 SCAFACOS_DIPOLES                implies DIPOLES
 SCAFACOS                        requires ELECTROSTATICS
+
+EXPERIMENTAL_FEATURES
 
 // Shape of the noise in the (Langevin) thermostat
 FLATNOISE                       requires not GAUSSRANDOM and not GAUSSRANDOM_CUT
@@ -187,7 +188,6 @@ PTENSOR_DEBUG
 MAGGS_DEBUG
 LB_DEBUG
 VIRTUAL_SITES_DEBUG
-SD_DEBUG
 CUDA_DEBUG
 H5MD_DEBUG
 ICC_DEBUG

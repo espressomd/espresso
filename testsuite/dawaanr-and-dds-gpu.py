@@ -20,7 +20,7 @@ from espressomd import has_features
 class DDSGPUTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
-    es = espressomd.System()
+    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     def vectorsTheSame(self, a, b):
         tol = 3E-3

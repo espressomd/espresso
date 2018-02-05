@@ -26,9 +26,7 @@ import numpy as np
 import espressomd  # pylint: disable=import-error
 
 class RotateSystemTest(ut.TestCase):
-    s = espressomd.System()
-    s.box_l = 3 * [10.]
-
+    s = espressomd.System(box_l = 3 * [10.])
     def tearDown(self):
         self.s.part.clear()
 

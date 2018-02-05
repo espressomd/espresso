@@ -112,7 +112,7 @@ can be changed at any moment of runtime. In this way methods like
 thermodynamic integration become readily accessible.
 
 The focus of the user guide is documenting the scripting interface, its
-behaviour and use in the simulation. It only describes certain technical
+behavior and use in the simulation. It only describes certain technical
 details of implementation which are necessary for understanding how the
 script interface works. Technical documentation of the code and program
 structure is contained in the Developers’ guide (see section [sec:dg]).
@@ -355,7 +355,7 @@ Several scripts that can serve as usage examples can be found in the directory `
     Visualization for poisseuille flow with Lattice-Boltzmann.
 
 * ``visualization_constraints.py``
-    Constraint visualization with opengl with all avaiable constraints (commented out).
+    Constraint visualization with opengl with all available constraints (commented out).
 
 * ``visualization_mmm2d.py``
     A visual sample for a constant potential plate capacitor simulated with mmm2d.
@@ -500,8 +500,6 @@ report so to the developers.
 | P3M on GPU                     | Single                 | Single           | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 | Dipolar P3M                    | Group                  | Good             | No         |
-+--------------------------------+------------------------+------------------+------------+
-| Ewald on GPU                   | Single                 | Single           | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 | MMM1D                          | Single                 | Good             | No         |
 +--------------------------------+------------------------+------------------+------------+

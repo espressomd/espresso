@@ -1941,9 +1941,8 @@ class HarmonicBond(BondedInteraction):
         harmonic_set_params(
             self._bond_id, self._params["k"], self._params["r_0"], self._params["r_cut"])
 
-
 if ELECTROSTATICS:
-    class BondedCoulombBond(BondedInteraction):
+    class BondedCoulomb(BondedInteraction):
 
         def __init__(self, *args, **kwargs):
             """ 
@@ -1956,7 +1955,7 @@ if ELECTROSTATICS:
             prefactor : :obj:`float`
                         Sets the coulomb prefactor of the bonded coulomb interaction.
             """
-            super(BondedCoulombBond, self).__init__(*args, **kwargs)
+            super(BondedCoulomb, self).__init__(*args, **kwargs)
 
 
         def type_number(self):
@@ -2739,6 +2738,12 @@ ELSE:
 
 IF BOND_ANGLE == 1:
     class AngleHarmonic(BondedInteraction):
+        """
+        Bond angle dependent harmonic potential.
+
+        See :ref:`Bond-angle interactions`
+
+        """
 
         def type_number(self):
             return BONDED_IA_ANGLE_HARMONIC
@@ -2781,6 +2786,12 @@ ELSE:
 
 IF BOND_ANGLE == 1:
     class AngleCosine(BondedInteraction):
+        """
+        Bond angle dependent ine potential.
+
+        See :ref:`Bond-angle interactions`
+
+        """
 
         def type_number(self):
             return BONDED_IA_ANGLE_COSINE
@@ -2823,6 +2834,12 @@ ELSE:
 
 IF BOND_ANGLE == 1:
     class AngleCossquare(BondedInteraction):
+        """
+        Bond angle dependent cos^2 potential.
+
+        See :ref:`Bond-angle interactions`
+
+        """
 
         def type_number(self):
             return BONDED_IA_ANGLE_COSSQUARE
@@ -2865,6 +2882,11 @@ ELSE:
 
 
 class OifGlobalForces(BondedInteraction):
+    """
+    Part of the :ref:`Object-in-fluid` method.
+
+    """
+
 
     def type_number(self):
         return BONDED_IA_OIF_GLOBAL_FORCES
@@ -2906,6 +2928,10 @@ class OifGlobalForces(BondedInteraction):
 
 
 class OifLocalForces(BondedInteraction):
+    """
+    Part of the :ref:`Object-in-fluid` method.
+
+    """
 
     def type_number(self):
         return BONDED_IA_OIF_LOCAL_FORCES
@@ -2971,7 +2997,7 @@ bonded_interaction_classes = {
 IF LENNARD_JONES:
     bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = SubtLJ
 IF ELECTROSTATICS:
-    bonded_interaction_classes[int(BONDED_IA_BONDED_COULOMB)] = BondedCoulombBond
+    bonded_interaction_classes[int(BONDED_IA_BONDED_COULOMB)] = BondedCoulomb
 IF P3M:
     bonded_interaction_classes[int(BONDED_IA_BONDED_COULOMB_P3M_SR)] = BondedCoulombP3MSRBond
 

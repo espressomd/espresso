@@ -459,6 +459,11 @@ IF OVERLAPPED == 1:
         int overlapped_bonded_set_params(int bond_type, OverlappedBondedInteraction overlap_type,
                                          char * filename)
 
+IF ELECTROSTATICS == 1:
+    cdef extern from "bonded_coulomb.hpp":
+        int bonded_coulomb_set_params(int bond_type, double prefactor)
+    
+
 cdef extern from "interaction_data.hpp":
     int virtual_set_params(int bond_type)
 
@@ -469,7 +474,6 @@ cdef extern from "interaction_data.hpp":
         BONDED_IA_FENE,
         BONDED_IA_HARMONIC,
         BONDED_IA_HARMONIC_DUMBBELL,
-        BONDED_IA_QUARTIC,
         BONDED_IA_BONDED_COULOMB,
         BONDED_IA_BONDED_COULOMB_P3M_SR,
         BONDED_IA_ANGLE_OLD,
