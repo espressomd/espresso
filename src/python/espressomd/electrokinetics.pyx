@@ -125,18 +125,16 @@ IF ELECTROKINETICS:
         def set_density(self, species=None, density=None, node=None):
             """
             Sets the density of a species at a speciffic node.
-            If no node is given the density will be set global for the species
+            If no node is given the density will be set global for the species.
             
             Parameters
             ----------
             species : :obj:`integer`
                       species for which the density will apply.
-            
             density : :obj:`float`
                       The value to which the density will be set to.
-            
             node : numpy-array of type :obj:`integer` of length (3)
-                   If set the density will be only applied on tis specific node.
+                   If set the density will be only applied on this specific node.
             """
 
             if species == None or density == None:
@@ -350,7 +348,10 @@ IF ELECTROKINETICS:
                 raise Exception("Not implemented.")
 
     class Species(object):
-        """Creates a species object that is passed to the ek instance"""
+        """
+        Creates a species object that is passed to the ek instance.
+        """
+
         py_number_of_species = 0
         id = -1
         _params = {}
@@ -383,21 +384,21 @@ IF ELECTROKINETICS:
 
         def valid_keys(self):
             """
-            Returns the valid keys for the species
+            Returns the valid keys for the species.
             """
 
             return "density", "D", "valency", "ext_force"
 
         def required_keys(self):
             """
-            Returns the required keys for the species
+            Returns the required keys for the species.
             """
 
             return ["density", "D", "valency"]
 
         def default_params(self):
             """
-            Returns the default parameters for the species
+            Returns the default parameters for the species.
             """
 
             return {"ext_force": [0, 0, 0]}
@@ -421,7 +422,7 @@ IF ELECTROKINETICS:
 
         def get_params(self):
             """
-            Returns the parameters of the species
+            Returns the parameters of the species.
             """
 
             self._params.update(self._get_params_from_es_core())
