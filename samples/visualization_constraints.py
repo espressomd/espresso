@@ -12,7 +12,7 @@ system = espressomd.System(box_l=[box_l] * 3)
 system.time_step = 0.0001
 system.cell_system.skin = 0.3
 
-visualizer = openGLLive(system, background_color=[1, 1, 1], drag_enabled=True, rasterize_resolution=20.0,
+visualizer = openGLLive(system, background_color=[1, 1, 1], drag_enabled=True, rasterize_resolution=50.0,
                         rasterize_pointsize=5, camera_position=[150, 25, 25], camera_right=[0, 0, -1])
 
 # Wall
