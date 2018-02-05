@@ -103,7 +103,6 @@ UMBRELLA                           requires EXPERIMENTAL_FEATURES
 GAY_BERNE                       implies ROTATION
 GAY_BERNE                       requires EXPERIMENTAL_FEATURES
 OVERLAPPED
-DRUDE                           requires P3M and LANGEVIN_PER_PARTICLE
 THOLE                           implies GHOSTS_HAVE_BONDS
 THOLE                           requires P3M
 
@@ -150,8 +149,6 @@ OLD_DIHEDRAL                    notest
 /* turn off certain nonbonded interactions within molecules */
 NO_INTRA_NB                     notest
 /* turn off all nonbonded interactions within molecules */
-NO_INTRA_NB_ALL                 notest
-/* ghost particles also have the bond information. */
 GHOSTS_HAVE_BONDS               notest
 
 
