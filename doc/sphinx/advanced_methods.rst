@@ -1108,17 +1108,13 @@ oif_global_forces interaction).
 Electrokinetics
 ---------------
 
-The electrokinetics setup in allows for the description of
+The electrokinetics setup in |es| allows for the description of
 electro-hydrodynamic systems on the level of ion density distributions
 coupled to a Lattice-Boltzmann (LB) fluid. The ion density distributions
 may also interact with explicit charged particles, which are
 interpolated on the LB grid. In the following paragraph we briefly
-explain the electrokinetic model implemented in , before we come to the
+explain the electrokinetic model implemented in |es|, before we come to the
 description of the interface.
-
-If you are interested in using the electrokinetic implementation in for
-scientific purposes, please contact G. Rempfer before you start your
-project.
 
 .. _Electrokinetic Equations:
 
@@ -1129,7 +1125,7 @@ In the electrokinetics code we solve the following system of coupled
 continuity, diffusion-advection, Poisson, and Navier-Stokes equations:
 
 .. math::
-
+   
    \begin{aligned}
    \label{eq:ek-model-continuity} \frac{\partial n_k}{\partial t} & = & -\, \nabla \cdot \vec{j}_k \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
    \label{eq:ek-model-fluxes} \vec{j}_{k} & = & -D_k \nabla n_k - \nu_k \, q_k n_k\, \nabla \Phi + n_k \vec{v}_{\mathrm{fl}} \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
@@ -1183,7 +1179,7 @@ and input parameters
 The temperature :math:`T`, and diffusion constants :math:`D_k` and
 mobilities :math:`\nu_k` of individual species are linked through the
 Einstein-Smoluchowski relation :math:`D_k /
-\nu_k = {k_\mathrm{B}T}`. The system of equations described in Eqs. -,
+\nu_k = {k_\mathrm{B}T}`. This system of equations
 combining diffusion-advection, electrostatics, and hydrodynamics is
 conventionally referred to as the *Electrokinetic Equations*.
 
@@ -1247,8 +1243,7 @@ Initialization
 ::
 
     import espressomd
-    sys = espressomd.System()
-    sys.box_l = [10, 20, 30]
+    sys = espressomd.System(box_l = [10.0,10.0,10.0])
     sys.time_step = 0.0
     sys.cell_system.skin = 0.4
     ek = espressomd.electrokinetics.Electrokinetics(agrid = 1.0, lb_density = 1.0, 
@@ -1260,7 +1255,7 @@ Initialization
 The above is a minimal example how to initialize the LB fluid, and
 it is very similar to the Lattice-Boltzmann command in set-up. We
 therefore refer the reader to Chapter :ref:`Lattice-Boltzmann` for details on the
-implementation of LB in and describe only the major differences here.
+implementation of LB in |es| and describe only the major differences here.
 
 The first major difference with the LB implementation is that the
 electrokinetics set-up is a Graphics Processing Unit (GPU) only
@@ -1275,7 +1270,7 @@ least the following options: ``agrid``, ``lb_density``, ``viscosity``, ``frictio
 used to modify the behavior of the LB fluid. Note that the command does
 not allow the user to set the time step parameter as is the case for the
 Lattice-Boltzmann command, this parameter is instead taken directly from the value set for
-``espressomd.System().time_step``. The LB `mass density` is set independently from the
+:attr:`espressomd.system.System.time_step`. The LB `mass density` is set independently from the
 electrokinetic `number densities`, since the LB fluid serves only as a
 medium through which hydrodynamic interactions are propagated, as will
 be explained further in the next paragraph. If no ``lb_density`` is specified, then our
@@ -1306,7 +1301,7 @@ electric field which is in turn calculated from the potential via finite
 differences. This only includes interactions between the species and
 boundaries and MD particles, not between MD particles and MD particles.
 To get complete electrostatic interactions a particles Coulomb method
-like Ewald or P3M has to be activate too.
+like Ewald or P3M has to be activated too.
 
 .. _Diffusive Species:
 
@@ -1347,11 +1342,8 @@ used for the LB fluid. The major difference with the LB command is given
 by the option ``charge_density``, with which a boundary can be endowed with a volume
 charge density. To create a surface charge density, a combination of two
 oppositely charged boundaries, one inside the other, can be used.
-However, care should be taken to maintain the surface charge density
-when the value of is changed. Currently, the following shapes are available:
-wall, sphere, cylinder, rhomboid, pore, stomatocyte, hollow\_cone, and
-spherocylinder. We refer to the documentation of the lbboundary command
-(Chapter :ref:`Using shapes as Lattice-Boltzmann boundary`) for information on the options associated to these shapes. In order to properly set up the boundaries, the ``charge_density`` and ``shape``
+However, care should be taken to maintain the surface charge density when the value of ``agrid``
+is changed. Examples for possible shapes are wall, sphere, ellipsoid, cylinder, rhomboid and hollowcone. We refer to the documentation of the :class:`espressomd.shapes` module for more possible shapes and information on the options associated to these shapes. In order to properly set up the boundaries, the ``charge_density`` and ``shape``
 must be specified.
 
 .. _Output:
