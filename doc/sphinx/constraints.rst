@@ -423,9 +423,9 @@ The resulting surface is a section of a hollow cone.
 The parameters ``inner_radius`` and ``outer_radius`` specifies the two radii .
 The parameter ``opening_angle`` specifies the opening angle of the cone (in radians, between 0 and:math:`\pi/2` ), and thus also determines the length.
 
-The orientation of the (cylindrically symmetric) cone is specified with the parameters ``orientation_x``, ``orientation_y`` and ``orientation_z``. It points in the direction of the symmetry axis, and does not need to be normalized.
+The orientation of the (cylindrically symmetric) cone is specified with the array_like parameter ``orientation``. It points in the direction of the symmetry axis, and does not need to be normalized.
 
-The position is specified with ``position_x``, ``position_y`` and ``position_z`` can be any point in the simulation box.
+The position is specified with ``position`` and can be any point in the simulation box.
 
 The ``width`` specifies the width.
 This shape supports the ``direction`` parameter, +1 the normal points out of the mantel, -1 for when points inward.
@@ -438,8 +438,8 @@ This shape supports the ``direction`` parameter, +1 the normal points out of the
 
 Pictured is an example constraint with a ``Hollowcone`` shape created with ::
   
-    hollowcone=Hollowcone(HollowCone(inner_radius = 5, outer_radius = 20, opening_angle = np.pi/4.0, orientation_x = 1.0, orientation_y = 0.0, orientation_z = 0.0, position_x = 25, position_y = 25, positi    on_z = 25, width = 2,direction = 1)
-    system.constraints.add(shape=hollowcone, particle_type = 0, penetrable = 1)
+    hollowcone=Hollowcone(HollowCone(inner_radius=5, outer_radius=20, opening_angle=np.pi/4.0, orientation=[1.0, 0.0, 0.0], position=[25, 25, 25], width=2, direction=1)
+    system.constraints.add(shape=hollowcone, particle_type=0, penetrable=1)
 
 
 For the shapes ``wall``; ``sphere``; ``cylinder``; ``rhomboid``; ``maze``; ``pore`` and ``stomatocyte``, constraints are able to be penetrated if ``penetrable`` is set to ``True``.

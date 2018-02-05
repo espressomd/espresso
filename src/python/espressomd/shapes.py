@@ -60,18 +60,10 @@ class HollowCone(ScriptInterfaceHelper):
                     Outer radius of the cone.
     opening_angle  : :obj:`float`
                      Opening angle of the cone (in rad).
-    orientation_x  : :obj:`float`
-                     x component of the orientation of the cone.
-    orientation_y  : :obj:`float`
-                     y component of the orientation of the cone.
-    orientation_z  : :obj:`float`
-                     z component of the orientation of the cone.
-    position_x  : :obj:`float`
-                  x component of the position of the cone.
-    position_y  : :obj:`float`
-                  y component of the position of the cone.
-    position_z  : :obj:`float`
-                  z component of the position of the cone.
+    orientation  : array_like :obj:`float`
+                   Orientation of the cone.
+    position  : array_like :obj:`float`
+                Position of the cone.
     width : :obj:`float`
             Wall thickness of the cone.
     direction : :obj:`int`
