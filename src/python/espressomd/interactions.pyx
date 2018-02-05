@@ -1994,7 +1994,7 @@ if P3M:
             ----------
 
             q1q2 : :obj:`float`
-                   Sets the charge factor of the involved particle pair. Useful to partly subtract coulomb interaction in combination with intramolecular thole screening.
+                   Sets the charge factor of the involved particle pair. Not the particle charges are used to allow e.g. only partial subtraction of the involved charges.
             """
             super(BondedCoulombP3MSRBond, self).__init__(*args, **kwargs)
 
@@ -2021,61 +2021,57 @@ if P3M:
         def _set_params_in_es_core(self):
             bonded_coulomb_p3m_sr_set_params(
                 self._bond_id,  self._params["q1q2"])
-if DRUDE:
-    class DrudeBond(BondedInteraction):
+    
+    class ThermalizedBond(BondedInteraction):
 
         def __init__(self, *args, **kwargs):
             """ 
-            DrudeBond initialiser. Used to instatiate a DrudeBond identifier
+            ThermalizedBond initialiser. Used to instatiate a ThermalizedBond identifier
             with a given set of parameters. 
 
             Parameters
             ----------
 
             temp_com : :obj:`float`
-                        Sets the temerature of the Langevin thermostat for the com of the core-drude pair.
+                        Sets the temerature of the Langevin thermostat for the com of the particle pair.
             gamma_com: :obj:`float`
-                        Sets the friction coefficient of the Langevin thermostat for the com of the core-drude pair.
-            temp_drude: :obj:`float` 
-                        Sets the temerature of the Langevin thermostat for the distance vector of the core-drude pair.
-            gamma_drude: :obj:`float` 
-                         Sets the friction coefficient of the Langevin thermostat for the distance vector of the core-drude pair.
-            k: :obj:`float`
-               Specifies the spring constant of the harmonic bond between core and drude particle.
+                        Sets the friction coefficient of the Langevin thermostat for the com of the particle pair.
+            temp_distance: :obj:`float` 
+                        Sets the temerature of the Langevin thermostat for the distance vector of the particle pair.
+            gamma_distance: :obj:`float` 
+                         Sets the friction coefficient of the Langevin thermostat for the distance vector of the particle pair.
             r_cut: :obj:`float`, optional
-                    Specifies maximum distance beyond which the bond is considered
-                    broken.
+                    Specifies maximum distance beyond which the bond is considered broken.
             """
-            super(DrudeBond, self).__init__(*args, **kwargs)
+            super(ThermalizedBond, self).__init__(*args, **kwargs)
 
 
         def type_number(self):
-            return BONDED_IA_DRUDE
+            return BONDED_IA_THERMALIZED_DIST
 
         def type_name(self):
-            return "DRUDE"
+            return "THERMALIZED_DIST"
 
         def valid_keys(self):
-            return "temp_com", "gamma_com", "temp_drude", "gamma_drude", "k", "r_cut"
+            return "temp_com", "gamma_com", "temp_distance", "gamma_distance", "r_cut"
 
         def required_keys(self):
-            return "temp_com", "gamma_com", "temp_drude", "gamma_drude", "k"
+            return "temp_com", "gamma_com", "temp_distance", "gamma_distance"
 
         def set_default_params(self):
-            self._params = {"temp_com": 1., "gamma_com": 1., "temp_drude": 1., "gamma_drude": 1., "k": 1., "r_cut": 0.}
+            self._params = {"temp_com": 1., "gamma_com": 1., "temp_distance": 1., "gamma_distance": 1., "r_cut": 0.}
 
         def _get_params_from_es_core(self):
             return \
-                {"temp_com": bonded_ia_params[self._bond_id].p.drude.temp_com,
-                 "gamma_com": bonded_ia_params[self._bond_id].p.drude.gamma_com,
-                 "temp_drude": bonded_ia_params[self._bond_id].p.drude.temp_drude,
-                 "gamma_drude": bonded_ia_params[self._bond_id].p.drude.gamma_drude,
-                 "k": bonded_ia_params[self._bond_id].p.drude.k,
-                 "r_cut": bonded_ia_params[self._bond_id].p.drude.r_cut}
+                {"temp_com": bonded_ia_params[self._bond_id].p.thermalized_bond.temp_com,
+                 "gamma_com": bonded_ia_params[self._bond_id].p.thermalized_bond.gamma_com,
+                 "temp_distance": bonded_ia_params[self._bond_id].p.thermalized_bond.temp_distance,
+                 "gamma_distance": bonded_ia_params[self._bond_id].p.thermalized_bond.gamma_distance,
+                 "r_cut": bonded_ia_params[self._bond_id].p.thermalized_bond.r_cut}
 
         def _set_params_in_es_core(self):
-            drude_set_params(
-                self._bond_id,  self._params["temp_com"],  self._params["gamma_com"],  self._params["temp_drude"],  self._params["gamma_drude"], self._params["k"], self._params["r_cut"])
+            thermalized_bond_set_params(
+                self._bond_id,  self._params["temp_com"],  self._params["gamma_com"],  self._params["temp_distance"],  self._params["gamma_distance"], self._params["r_cut"])
 
 IF THOLE:
     cdef class TholeInteraction(NonBondedInteraction):
@@ -2970,6 +2966,7 @@ bonded_interaction_classes = {
     int(BONDED_IA_ANGLE_COSSQUARE): AngleCossquare,
     int(BONDED_IA_OIF_GLOBAL_FORCES): OifGlobalForces,
     int(BONDED_IA_OIF_LOCAL_FORCES): OifLocalForces,
+    int(BONDED_IA_THERMALIZED_DIST): ThermalizedBond
 }
 IF LENNARD_JONES:
     bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = SubtLJ
@@ -2977,8 +2974,6 @@ IF ELECTROSTATICS:
     bonded_interaction_classes[int(BONDED_IA_BONDED_COULOMB)] = BondedCoulombBond
 IF P3M:
     bonded_interaction_classes[int(BONDED_IA_BONDED_COULOMB_P3M_SR)] = BondedCoulombP3MSRBond
-IF DRUDE:
-    bonded_interaction_classes[int(BONDED_IA_DRUDE)] = DrudeBond
 
 class BondedInteractions(object):
     """Represents the bonded interactions.

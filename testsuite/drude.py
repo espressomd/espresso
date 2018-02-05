@@ -8,7 +8,7 @@ from espressomd import drude_helpers
 
 class Drude(ut.TestCase):
 
-    @ut.skipIf(not espressomd.has_features("P3M", "DRUDE", "THOLE", "LANGEVIN_PER_PARTICLE"), "Test needs P3M, DRUDE, THOLE and LANGEVIN_PER_PARTICLE")
+    @ut.skipIf(not espressomd.has_features("P3M", "THOLE", "LANGEVIN_PER_PARTICLE"), "Test needs P3M, THOLE and LANGEVIN_PER_PARTICLE")
     def test(self):
         """
         Sets up a BMIM PF6 pair separated in y-direction with fixed cores.
@@ -116,14 +116,20 @@ class Drude(ut.TestCase):
 
         S.actors.add(p3m)
 
-        #Drude Bond
-        drude_bond = espressomd.interactions.DrudeBond(temp_com = temperature_com, gamma_com = gamma_com, temp_drude = temperature_drude, gamma_drude = gamma_drude, k = k_drude, r_cut = 1.0)
-        S.bonded_inter.add(drude_bond)
+        #Drude related Bonds
 
-        drude_helpers.add_drude_particle_to_core(S, S.part[0], drude_bond, 1, types["PF6_D"], polarizations["PF6"], mass_drude, coulomb_prefactor, 2.0)
-        drude_helpers.add_drude_particle_to_core(S, S.part[2], drude_bond, 3, types["BMIM_C1_D"], polarizations["BMIM_C1"], mass_drude, coulomb_prefactor, 2.0)
-        drude_helpers.add_drude_particle_to_core(S, S.part[4], drude_bond, 5, types["BMIM_C2_D"], polarizations["BMIM_C2"], mass_drude, coulomb_prefactor, 2.0)
-        drude_helpers.add_drude_particle_to_core(S, S.part[6], drude_bond, 7, types["BMIM_C3_D"], polarizations["BMIM_C3"], mass_drude, coulomb_prefactor, 2.0)
+        thermalized_dist_bond = espressomd.interactions.ThermalizedBond(temp_com = temperature_com, gamma_com = gamma_com, temp_distance = temperature_drude, gamma_distance = gamma_drude, r_cut = 1.0)
+        harmonic_bond = espressomd.interactions.HarmonicBond(k = k_drude, r_0 = 0.0, r_cut = 1.0)
+        S.bonded_inter.add(thermalized_dist_bond)
+        S.bonded_inter.add(harmonic_bond)
+
+        drude_helpers.add_drude_particle_to_core(S, harmonic_bond, thermalized_dist_bond, S.part[0], 1, types["PF6_D"], polarizations["PF6"], mass_drude, coulomb_prefactor, 2.0)
+        drude_helpers.add_drude_particle_to_core(S, harmonic_bond, thermalized_dist_bond, S.part[2], 3, types["BMIM_C1_D"], polarizations["BMIM_C1"], mass_drude, coulomb_prefactor, 2.0)
+        drude_helpers.add_drude_particle_to_core(S, harmonic_bond, thermalized_dist_bond, S.part[4], 5, types["BMIM_C2_D"], polarizations["BMIM_C2"], mass_drude, coulomb_prefactor, 2.0)
+        drude_helpers.add_drude_particle_to_core(S, harmonic_bond, thermalized_dist_bond, S.part[6], 7, types["BMIM_C3_D"], polarizations["BMIM_C3"], mass_drude, coulomb_prefactor, 2.0)
+
+        #Setup and add Drude-Core SR exclusion bonds
+        drude_helpers.setup_and_add_drude_exclusion_bonds(S)
 
         #Setup intramol SR exclusion bonds once
         drude_helpers.setup_intramol_exclusion_bonds(S, [6,7,8],[1,2,3], [charges["BMIM_C1"], charges["BMIM_C2"], charges["BMIM_C3"]])

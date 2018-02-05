@@ -18,37 +18,38 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file drude.cpp
+/** \file thermalized_bond.cpp
  *
- *  Implementation of \ref drude.hpp
+ *  Implementation of \ref thermalized_bond.hpp
  */
 
-#include "drude.hpp"
+#include "thermalized_bond.hpp"
 #include "communication.hpp"
+#include "global.hpp"
 
-#ifdef DRUDE
+int n_thermalized_bonds = 0;
 
-int drude_set_params(int bond_type, double temp_com, double gamma_com, double temp_drude, double gamma_drude, double k, double r_cut)
+int thermalized_bond_set_params(int bond_type, double temp_com, double gamma_com, double temp_distance, double gamma_distance, double r_cut)
 {
-  if(bond_type < 0)
+  if (bond_type < 0)
     return ES_ERROR;
 
   make_bond_type_exist(bond_type);
 
-  bonded_ia_params[bond_type].p.drude.temp_com = temp_com;
-  bonded_ia_params[bond_type].p.drude.gamma_com = gamma_com;
-  bonded_ia_params[bond_type].p.drude.temp_drude = temp_drude;
-  bonded_ia_params[bond_type].p.drude.gamma_drude = gamma_drude;
-  bonded_ia_params[bond_type].p.drude.k = k;
-  bonded_ia_params[bond_type].p.drude.r_cut = r_cut;
+  bonded_ia_params[bond_type].p.thermalized_bond.temp_com = temp_com;
+  bonded_ia_params[bond_type].p.thermalized_bond.gamma_com = gamma_com;
+  bonded_ia_params[bond_type].p.thermalized_bond.temp_distance = temp_distance;
+  bonded_ia_params[bond_type].p.thermalized_bond.gamma_distance = gamma_distance;
+  bonded_ia_params[bond_type].p.thermalized_bond.r_cut = r_cut;
 
-  bonded_ia_params[bond_type].type = BONDED_IA_DRUDE;
+  bonded_ia_params[bond_type].type = BONDED_IA_THERMALIZED_DIST;
 
   bonded_ia_params[bond_type].num = 1;
 
+  n_thermalized_bonds += 1;
   mpi_bcast_ia_params(bond_type, -1); 
+  mpi_bcast_parameter(FIELD_THERMALIZEDBONDS);
 
   return ES_OK;
 }
 
-#endif

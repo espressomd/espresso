@@ -151,6 +151,27 @@ where and are the charges of the bound particles. There is no cutoff,
 the Bjerrum length of other coulomb interactions is not taken into
 account.
 
+.. _Subtract P3M short-range bond:
+
+Subtract P3M short-range bond
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+
+    requires the P3M feature.
+
+This bond can be instantiated via
+:class:`espressomd.interactions.BondedCoulombP3MSRBond`::
+    
+    from espressomd.interactions import BondedCoulombP3MSRBond
+    subtr_p3m_sr = BondedCoulombP3MSRBond(q1q2 = <float>)
+
+The parameter `q1q2` sets the charge factor of the short-range P3M interaction.
+It can differ from the actual partice charges.  This specialized bond can be
+used to cancel or add **only the short-range** electrostatic part 
+of the P3M solver. A use case is descibed in :ref:`Particle polarizability with
+thermalized cold Drude oszillators`.
+
 .. _Subtracted Lennard-Jones bond:
 
 Subtracted Lennard-Jones bond
@@ -391,144 +412,30 @@ mimic a large number of atomic torsion potentials.
 
 .. |image_dihedral| image:: figures/dihedral-angle.pdf
 
-.. _Drude bond:
 
-Drude bond
-----------
+.. _Thermalized distance bond:
 
-.. note::
+Thermalized distance bond
+-------------------------
 
-    Requires features DRUDE, THOLE, ELECTROSTATICS, LANGEVIN_PER_PARTICLE.
+This bond can be used to apply Langevin thermalization on the centre of mass
+and the distance of a particle pair.  Each thermostat can have it's own
+temperature and friction coefficient. 
 
-.. note::
+The bond is configured with::
 
-    DRUDE is only implemented for the P3M electrostatics solver and the Langevin thermostat.
-
-This bond implements **thermalized cold drude oszillators** and can be used to
-simulate polarizable particles.  The basic idea is to add a
-'charge-on-a-spring' (Drude charge) to a particle (Drude core) that mimics an
-electron cloud which can be elongated to create a dynamically inducible dipole.
-The energetic minimum of the Drude charge can be obtained self-consistently,
-which requires several iterations of the system's electrostatics and is usually
-considered computational expensive. However, with thermalized cold Drude
-oszillators, the distance between Drude charge and core is coupled to a
-thermostat so that it fluctuates around the SCF solution. This thermostat is
-kept at a low temperature compared to the global temperature to minimize the
-heat flow into the system. A second thermostat is applied on the centre of mass
-of the Drude charge + core system to maintain the global temperature. The
-downside of this approach is that usually a smaller time step has to be used to
-resolve the high frequency oscillations of the spring to get a stable system.
-
-In |es|, the *Drude bond* takes care of the harmonic bond and the 
-thermalization of the Drude complex. The system-wide thermostat has to be
-applied to the centre of mass and not to the core particle directly. Therefore,
-the particles have to be excluded from global thermostating.  With
-``LANGEVIN_PER_PARTICLE`` enabled, we set the temperature and friction
-coefficient of the Drude complex to zero, which allows to still use a global
-Langevin thermostat for non-polarizable particles. Additionally, the
-short-range electrostatic interaction between Drude charge and core is
-subtracted by the *Drude bond*.
-
-A Drude bond is configured with::
-
-    from espressomd.interactions import DrudeBond
-    drude_bond = DrudeBond(temp_com = <float>, gamma_com = <float>, temp_drude = <float>, gamma_drude = <float>, k = <float>, r_cut = <float>)
+    from espressomd.interactions import ThermalizedBond
+    thermalized_bond = ThermalizedBond(temp_com = <float>, gamma_com = <float>, temp_distancedrude = <float>, gamma_drude = <float>, k = <float>, r_cut = <float>)
     system.bonded_inter.add(drude_bond)
 
 The parameters are:
 
-    * temp_com : Temerature of the Langevin thermostat for the COM of the core-drude pair.
-    * gamma_com: Friction coefficient of the Langevin thermostat for the COM of the core-drude pair.
-    * temp_drude: Temerature of the Langevin thermostat for the distance vector of the core-drude pair.
-    * gamma_drude: Friction coefficient of the Langevin thermostat for the distance vector of the core-drude pair.
-    * k: Spring constant of the harmonic bond between core and drude charge.
+    * temp_com : Temerature of the Langevin thermostat for the COM of the particle pair.
+    * gamma_com: Friction coefficient of the Langevin thermostat for the COM of the particle pair.
+    * temp_distance: Temerature of the Langevin thermostat for the distance vector of the particle pair.
+    * gamma_distance: Friction coefficient of the Langevin thermostat for the distance vector of the particle pair.
     * r_cut:  Specifies maximum distance beyond which the bond is considered broken.
 
-As the Drude charge should not alter the *charge* or *mass* of the Drude
-complex, both properties have to be subtracted from the core when adding the
-drude particle. In the following convention, we assume that the Drude charge is
-**always negative**. It is calculated via the spring constant :math:`k` and
-polarizability :math:`\alpha` (in units of inverse volume) with :math:`q_d =
--\sqrt{k \cdot \alpha}`.
+The bond is closely related to simulating :ref:`Particle polarizability with
+thermalized cold Drude oszillators`. 
 
-The following helper method takes into account all the preceding considerations
-and can be used to convenientely add a drude particle to a given core
-particle::
-
-    from drude_functions import *
-    add_drude_particle_to_core(<system>, <core particle>, <drude bond>, <id drude>, <type drude>, <alpha>, <mass drude>, <coulomb_prefactor>, <thole damping>, <verbose>)
-
-The arguments of the helper function are:
-    * <system>: The espressomd.System().
-    * <core particle>: The core particle on which the drude particle is added.
-    * <drude bond>: The drude bond, usually a single drude bond type can be
-      used for all core-drude pairs if the parameters don't change.
-    * <id drude>: The user-defined id of the drude particle that is created.
-    * <type drude>: The user-defined type of the drude particle. If the Thole
-      correction is used, the Drude particles of each complex should have an
-      individual type (e.g. in an ionic system with Anions (type 0) and Cations
-      (type 1), Drude types should be 2 and 3).
-    * <alpha>: The polarizability volume.
-    * <coulomb_prefactor>: The coulomb prefactor of the system. Used to
-      calculate the drude charge from the polarizability and the spring constant
-      of the drude bond.  
-    * <thole damping>: (optional) An individual thole damping parameter for the
-      core-drude pair. Only relevant if thole damping is used (defaults to 2.6).
-    * <verbose>: (bool, optional) Prints out information about the added Drude
-      particles (default: False)
-
-.. _Canceling intramolecular electrostatics:
-
-Canceling intramolecular electrostatics
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Note that for polarizable molecules (i.e. connected particles, coarse grained
-models etc.) with partial charges on the molecule sites, the drude charges will
-have electrostatic interaction with other cores of the molecule.  Often, this
-is unwanted, as it might be already part of the force-field (via. partial
-charges or parametrization of the covalent bonds). Without any further
-measures, the elongation of the drude particles will be greatly affected be the
-close-by partial charges of the molecule. To prevent this, one has to cancel
-the interaction of the drude charge with the partial charges of the cores
-within the molecule. This can be done with special bonds that subtracts the P3M
-short-range interaction of the charge portion `q_d q_{partial}`. This ensures
-that only the *dipolar interaction* inside the molecule remains. It should be
-considered that the error of this approximation increases with the share of the
-long-range part of the electrostatic interaction. Two helper methods assist
-with setting up this exclusion. If used, they have to be called
-after all drude particles are added to the system::
-
-    setup_intramol_exclusion_bonds(<system>, <molecule drude types>, <molecule core types>, <molecule core partial charges>, <verbose>)
-
-This function creates the requires number of bonds which are later added to the
-particles. It has to be called only once. In a molecule with `N` polarizable
-sites, `N*(N-1)` bond types are needed to cover all the combinations.
-Parameters are:
-
-    * <system>: The espressomd.System().
-    * <molecule drude types>: List of the drude types within the molecule.
-    * <molecule core types>: List of the core types within the molecue that have partial charges.
-    * <molecule core partial charges>: List of the partial charges on the cores.
-    * <verbose>: (bool, optional) Prints out information about the created bonds (default: False)
-
-After setting up the bonds, one has to add them to each molecule with the
-following method::
-
-    add_intramol_exclusion_bonds(<system>, <drude ids>, <core ids>, <verbose>)
-
-This method has to be called for all molecules and needs the following parameters:
-
-    * <system>: The espressomd.System().
-    * <drude ids>: The ids of the drude particles within one molecule.
-    * <core ids>: The ids of the core particles within one molecule.
-    * <verbose>: (bool, optional) Prints out information about the added bonds (default: False)
-
-Internally, this is done with the bond ``BondedCoulombP3MSRBond``, that
-simply adds the p3m shortrange pair-force of scale `- q_d q_{partial}` the to
-bonded particles.
-
-.. seealso:: 
-
-    Often used in conjunction with Drude oscillators is the :ref:`Thole correction`
-    to damp dipole-dipole interactions on short distances. It is available in |es| 
-    as a non-bonded interaction.

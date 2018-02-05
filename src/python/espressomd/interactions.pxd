@@ -271,13 +271,12 @@ cdef extern from "interaction_data.hpp":
         double r
         double r_cut
 
-#* Parameters for drude bond */
-    ctypedef struct Drude_bond_parameters:
+#* Parameters for thermalized  bond */
+    ctypedef struct Thermalized_bond_parameters:
         double temp_com
         double gamma_com
-        double temp_drude
-        double gamma_drude
-        double k
+        double temp_distance
+        double gamma_distance
         double r_cut
 
 #* Parameters for Bonded coulomb */
@@ -383,7 +382,7 @@ cdef extern from "interaction_data.hpp":
         Fene_bond_parameters fene
         Oif_global_forces_bond_parameters oif_global_forces
         Oif_local_forces_bond_parameters oif_local_forces
-        Drude_bond_parameters drude
+        Thermalized_bond_parameters thermalized_bond
         Bonded_coulomb_bond_parameters bonded_coulomb
         Bonded_coulomb_p3m_sr_bond_parameters bonded_coulomb_p3m_sr
         Harmonic_bond_parameters harmonic
@@ -429,8 +428,8 @@ cdef extern from "object-in-fluid/oif_global_forces.hpp":
     int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g, double V0, double kv)
 cdef extern from "object-in-fluid/oif_local_forces.hpp":
     int oif_local_forces_set_params(int bond_type, double r0, double ks, double kslin, double phi0, double kb, double A01, double A02, double kal)
-cdef extern from "drude.hpp":
-    int drude_set_params(int bond_type, double temp_com, double gamma_com, double temp_drude, double gamma_drude, double k, double r_cut)
+cdef extern from "thermalized_bond.hpp":
+    int thermalized_bond_set_params(int bond_type, double temp_com, double gamma_com, double temp_distance, double gamma_distance, double r_cut)
 cdef extern from "bonded_coulomb.hpp":
     int bonded_coulomb_set_params(int bond_type, double prefactor)
 cdef extern from "bonded_coulomb_p3m_sr.hpp":
@@ -494,4 +493,4 @@ cdef extern from "interaction_data.hpp":
         BONDED_IA_IBM_VOLUME_CONSERVATION,
         BONDED_IA_IBM_TRIBEND,
         BONDED_IA_UMBRELLA,
-        BONDED_IA_DRUDE
+        BONDED_IA_THERMALIZED_DIST

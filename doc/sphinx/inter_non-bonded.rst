@@ -626,18 +626,19 @@ Thole correction
 
     THOLE is only implemented for the P3M electrostatics solver.
 
-The Thole correction is closely related to simulations with polarizable particles
-and the :ref:`Drude bond`. In this context, it is used to correct for overestimation
-of induced dipoles at short distances. Ultimately, it alters the short-range
-electrostatics of P3M to result in a damped coulomb interaction potential 
-:math:`V(r) = \frac{q_1 q_2}{r} \cdot (1- e^{-s r} (1 + \frac{s r}{2}) )`.
-The thole scaling coefficient :math:`s` is related to the polarizabilies :math:`\alpha`
-and thole damping parameters :math:`a` of the interacting species via 
-:math:`s = \frac{ (a_i + a_j) / 2 }{ (\alpha_i \alpha_j)^{1/6} }`.
+The Thole correction is closely related to simulations involving 
+:ref:`Particle polarizability with thermalized cold Drude oszillators`.
+In this context, it is used to correct for overestimation of
+induced dipoles at short distances. Ultimately, it alters the short-range
+electrostatics of P3M to result in a damped coulomb interaction potential
+:math:`V(r) = \frac{q_1 q_2}{r} \cdot (1- e^{-s r} (1 + \frac{s r}{2}) )`.  The
+thole scaling coefficient :math:`s` is related to the polarizabilies
+:math:`\alpha` and thole damping parameters :math:`a` of the interacting
+species via :math:`s = \frac{ (a_i + a_j) / 2 }{ (\alpha_i \alpha_j)^{1/6} }`.
 Note that for the Drude oszillators, the Thole correction should be applied
 only for the dipole part :math:`\pm q_d` added by the Drude charge and not on
-the total core charge, which can be different for polarizable ions. Also note that
-the Thole correction acts between all dipoles, intra- and intermolecular.
+the total core charge, which can be different for polarizable ions. Also note
+that the Thole correction acts between all dipoles, intra- and intermolecular.
 Again, the accuracy is related to the P3M accuracy and the split between
 short-range and long-range electrostatics interaction. It is configured by::
 
@@ -656,10 +657,11 @@ cores, except the one it's connected to.  This exeption is handeled internally
 by disabling Thole interaction between particles connected via Drude bonds.
 Also, each Drude core has a Thole correction interaction with all other Drude
 cores and Drude charges. To assist with the bookkeeping of mixed scaling
-coefficients, the helper method ``add_drude_particle_to_core()`` from the
-*Drude bond* section collects all core types, drude types and relevant
-parameters when a drude particle is created. The user already provided all the
-information when setting up the the drude particles, so the simple call::
+coefficients, the helper method ``add_drude_particle_to_core()`` (see 
+:ref:`Particle polarizability with thermalized cold Drude oszillators`) 
+collects all core types, drude types and relevant parameters when a drude 
+particle is created. The user already provided all the information when 
+setting up the the drude particles, so the simple call::
 
     add_all_thole(<system>, <verbose>)
 
@@ -683,10 +685,8 @@ To use the script, compile espresso with the following features::
     #define ELECTROSTATICS
     #define VIRTUAL_SITES_RELATIVE
     #define LENNARD_JONES
-    #define DRUDE
     #define THOLE
     #define GHOSTS_HAVE_BONDS
-
 
 .. _Anisotropic non-bonded interactions:
 

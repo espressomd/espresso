@@ -100,8 +100,8 @@ enum BondedInteraction {
   BONDED_IA_IBM_TRIBEND,
   /** Type of bonded interaction is umbrella. */
   BONDED_IA_UMBRELLA,
-  /** Type of bonded interaction is drude. */
-  BONDED_IA_DRUDE,
+  /** Type of bonded interaction is thermalized distance bond. */
+  BONDED_IA_THERMALIZED_DIST,
   /** Type of bonded interaction is a BONDED_COULOMB_P3M_SR */
   BONDED_IA_BONDED_COULOMB_P3M_SR,
 };
@@ -578,17 +578,14 @@ typedef struct {
   double r_cut;
 } Harmonic_bond_parameters;
 
-#ifdef DRUDE
-/** Parameters for drude bond **/
+/** Parameters for Thermalized bond **/
 typedef struct {
     double temp_com;
     double gamma_com;
-    double temp_drude;
-    double gamma_drude;
-    double k;
+    double temp_distance;
+    double gamma_distance;
     double r_cut;
-} Drude_parameters;
-#endif
+} Thermalized_bond_parameters;
 
 #ifdef ROTATION
 /** Parameters for harmonic dumbbell bond Potential */
@@ -811,9 +808,7 @@ typedef union {
 #ifdef UMBRELLA
   Umbrella_bond_parameters umbrella;
 #endif
-#ifdef DRUDE
-    Drude_parameters drude;
-#endif
+  Thermalized_bond_parameters thermalized_bond;
 #ifdef P3M
   Bonded_coulomb_p3m_sr_bond_parameters bonded_coulomb_p3m_sr;
 #endif

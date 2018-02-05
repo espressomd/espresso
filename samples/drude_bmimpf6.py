@@ -3,7 +3,7 @@ import sys
 import time
 import espressomd
 from espressomd.electrostatics import P3M, P3MGPU
-from espressomd.interactions import DrudeBond
+from espressomd.interactions import ThermalizedBond, HarmonicBond
 import os
 import numpy as np
 import argparse
@@ -217,18 +217,22 @@ else:
 S.actors.add(p3m)
 
 if args.drude:
-    print("-->Adding Drude bonds")
-    drude_bond = DrudeBond(temp_com = temperature_com, gamma_com = gamma_com, temp_drude = temperature_drude, gamma_drude = gamma_drude, k = k_drude, r_cut = min(lj_sigmas.values())*0.5)
-    S.bonded_inter.add(drude_bond)
+    print("-->Adding Drude related bonds")
+    thermalized_dist_bond = ThermalizedBond(temp_com = temperature_com, gamma_com = gamma_com, temp_distance = temperature_drude, gamma_distance = gamma_drude, r_cut = min(lj_sigmas.values())*0.5)
+    harmonic_bond = HarmonicBond(k = k_drude, r_0 = 0.0, r_cut = 1.0)
+    S.bonded_inter.add(thermalized_dist_bond)
+    S.bonded_inter.add(harmonic_bond)
 
     for i in anion_ids:
-        drude_helpers.add_drude_particle_to_core(S, S.part[i], drude_bond, i+1, types["PF6_D"], polarizations["PF6"], args.mass_drude, coulomb_prefactor)
+        drude_helpers.add_drude_particle_to_core(S, harmonic_bond, thermalized_dist_bond, S.part[i], i+1, types["PF6_D"], polarizations["PF6"], args.mass_drude, coulomb_prefactor)
     for i in cation_c1_ids:
-        drude_helpers.add_drude_particle_to_core(S, S.part[i], drude_bond, i+1, types["BMIM_C1_D"], polarizations["BMIM_C1"], args.mass_drude, coulomb_prefactor)
+        drude_helpers.add_drude_particle_to_core(S, harmonic_bond, thermalized_dist_bond, S.part[i], i+1, types["BMIM_C1_D"], polarizations["BMIM_C1"], args.mass_drude, coulomb_prefactor)
     for i in cation_c2_ids:
-        drude_helpers.add_drude_particle_to_core(S, S.part[i], drude_bond, i+1, types["BMIM_C2_D"], polarizations["BMIM_C2"], args.mass_drude, coulomb_prefactor)
+        drude_helpers.add_drude_particle_to_core(S, harmonic_bond, thermalized_dist_bond, S.part[i], i+1, types["BMIM_C2_D"], polarizations["BMIM_C2"], args.mass_drude, coulomb_prefactor)
     for i in cation_c3_ids:
-        drude_helpers.add_drude_particle_to_core(S, S.part[i], drude_bond, i+1, types["BMIM_C3_D"], polarizations["BMIM_C3"], args.mass_drude, coulomb_prefactor)
+        drude_helpers.add_drude_particle_to_core(S, harmonic_bond, thermalized_dist_bond, S.part[i], i+1, types["BMIM_C3_D"], polarizations["BMIM_C3"], args.mass_drude, coulomb_prefactor)
+
+    drude_helpers.setup_and_add_drude_exclusion_bonds(S)
 
     if args.thole:
     	print("-->Adding Thole interactions")

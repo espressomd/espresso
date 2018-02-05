@@ -44,11 +44,7 @@ inline void add_thole_pair_force(const Particle * const p1, const Particle * con
   double thole_q1q2 = ia_params->THOLE_q1q2;
   double thole_s = ia_params->THOLE_scaling_coeff;
 
-#ifdef DRUDE
-  if (thole_s != 0 && thole_q1q2 != 0 && dist < p3m.params.r_cut && !(pair_bond_enum_exists_between(p1,p2, BONDED_IA_DRUDE))) {
-#else
-  if (thole_s != 0 && thole_q1q2 != 0 && dist < p3m.params.r_cut) {
-#endif
+  if (thole_s != 0 && thole_q1q2 != 0 && dist < p3m.params.r_cut && !(pair_bond_enum_exists_between(p1,p2, BONDED_IA_THERMALIZED_DIST))) {
 
     double dist2 = dist*dist;
     
@@ -80,11 +76,7 @@ inline double thole_pair_energy(const Particle *p1, const Particle *p2, const IA
     double thole_s = ia_params->THOLE_scaling_coeff;
     double thole_q1q2 = ia_params->THOLE_q1q2;
 
-    #ifdef DRUDE
-      if (thole_s != 0 && thole_q1q2 != 0 && dist < p3m.params.r_cut && !(pair_bond_enum_exists_between(p1,p2, BONDED_IA_DRUDE))) {
-    #else
-      if (thole_s != 0 && thole_q1q2 != 0 && dist < p3m.params.r_cut) {
-    #endif
+      if (thole_s != 0 && thole_q1q2 != 0 && dist < p3m.params.r_cut && !(pair_bond_enum_exists_between(p1,p2, BONDED_IA_THERMALIZED_DIST))) {
 
         double dist2 = dist*dist;
         double chgfac = p1->p.q*p2->p.q;
