@@ -329,8 +329,8 @@ Pictured is an example constraint with a ``SimplePore`` shape created with ::
 
 The resulting surface is a stomatocyte shaped boundary. 
 This command should be used with care. 
-The position can be any point in the simulation box, 
-and the orientation of the (cylindrically symmetric) stomatocyte is given by a vector, 
+The ``position`` can be any point in the simulation box,
+and the ``orientation`` of the (cylindrically symmetric) stomatocyte is given by a vector,
 which points in the direction of the symmetry axis, 
 it does not need to be normalized. 
 The parameters: ``outer_radius``, ``inner_radius``, and ``layer_width``, specify the shape of the stomatocyte.
@@ -355,8 +355,8 @@ but the combination 7:3:1 is a good point to start from when trying to modify th
    
 Pictured is an example constraint with a ``Stomatocyte`` shape (with a closeup of the internal structure) created with ::
   
-    stomatocyte=Stomatocyte(inner_radius = 3, outer_radius = 7, orientation_x = 1.0, orientation_y = 0.0,orientation_z = 0.0, position_x = 25, position_y = 25, position_z = 25, layer_width = 3,    direction = 1)
-    system.constraints.add(shape=stomatocyte, particle_type = 0, penetrable = 1)
+    stomatocyte=Stomatocyte(inner_radius=3, outer_radius=7, orientation=[1.0, 0.0, 0.0], position=[25, 25, 25], layer_width=3, direction=1)
+    system.constraints.add(shape=stomatocyte, particle_type=0, penetrable=1)
 
     
 

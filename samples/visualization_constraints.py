@@ -5,17 +5,18 @@ from espressomd.visualization_opengl import *
 from threading import Thread
 import numpy
 
-system = espressomd.System()
+box_l = 50
+system = espressomd.System(box_l=[box_l] * 3)
 
 
 system.time_step = 0.0001
 system.cell_system.skin = 0.3
 
-visualizer = openGLLive(system, background_color=[1, 1, 1], drag_enabled=True, rasterize_resolution=50.0,
+visualizer = openGLLive(system, background_color=[1, 1, 1], drag_enabled=True, rasterize_resolution=20.0,
                         rasterize_pointsize=5, camera_position=[150, 25, 25], camera_right=[0, 0, -1])
 
 # Wall
-#system.constraints.add(shape=Wall(dist=20, normal=[0.1, 0.0, 1]), particle_type=0, penetrable=1)
+system.constraints.add(shape=Wall(dist=20, normal=[0.1, 0.0, 1]), particle_type=0, penetrable=1)
 
 # Sphere
 #system.constraints.add(shape=Sphere(center=[25, 25, 25], radius=15, direction=1), particle_type=0, penetrable=1)

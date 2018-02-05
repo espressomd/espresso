@@ -194,22 +194,15 @@ class Stomatocyte(ScriptInterfaceHelper):
     Attributes
     ----------
     inner_radius : :obj:`float`
-                   Inner radius of the cone.
+                   Inner radius of the stomatocyte.
     outer_radius : :obj:`float`
-                   Outer radius of the cone.
-    orientation_x : :obj:`float`
-                    x component of the orientation of the cone.
-    orientation_y : :obj:`float`
-                    y component of the orientation of the cone.
-    orientation_z : :obj:`float`
-                    z component of the orientation of the cone.
-    position_x : :obj:`float`
-                 x component of the position of the cone.
-    position_y : :obj:`float`
-                 y component of the position of the cone.
-    position_z : :obj:`float`
-                 z component of the position of the cone.
+                   Outer radius of the stomatocyte.
+    orientation: array_like :obj:`float`
+                 Orientation of the stomatocyte.
+    position : array_like :obj:`float`
+               Position of the stomatocyte.
     layer_width : :obj:`float`
+                  Scaling parameter.
     direction : :obj:`int`
                 Surface orientation, for +1 the normal points
                 out of the mantel, for -1 it points inward.
