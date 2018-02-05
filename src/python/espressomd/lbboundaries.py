@@ -9,6 +9,7 @@ if any(i in espressomd.code_info.features() for i in ["LB_BOUNDARIES", "LB_BOUND
         """
         Creates a set of lattice Boltzmann boundaries.
         """
+
         _so_name = "LBBoundaries::LBBoundaries"
 
         def add(self, *args, **kwargs):
@@ -17,6 +18,7 @@ if any(i in espressomd.code_info.features() for i in ["LB_BOUNDARIES", "LB_BOUND
             Either a valid boundary is an argument,
             or a valid set of parameters to create a boundary.
             """
+
             if len(args) == 1:
                 if isinstance(args[0], LBBoundary):
                     lbboundary = args[0]
@@ -34,9 +36,10 @@ if any(i in espressomd.code_info.features() for i in ["LB_BOUNDARIES", "LB_BOUND
             
             Parameters
             ----------
-            lbboundary : :obj: `LBBoundary`
+            lbboundary : :obj:`LBBoundary`
                          The boundary to be removed from the set.
             """
+
             self.call_method("remove", lbboundary=lbboundary)
 
 
@@ -45,5 +48,6 @@ if any(i in espressomd.code_info.features() for i in ["LB_BOUNDARIES", "LB_BOUND
         """
         Creates a LB boundary.
         """
+
         _so_name = "LBBoundaries::LBBoundary"
         _so_bind_methods = ("get_force",)

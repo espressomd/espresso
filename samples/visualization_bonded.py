@@ -10,12 +10,11 @@ from threading import Thread
 box_l = 50
 n_part = 200
 
-system = espressomd.System()
+system = espressomd.System(box_l=[box_l]*3)
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 system.thermostat.set_langevin(kT=0.1, gamma=20.0)
 
-system.box_l = [box_l, box_l, box_l]
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=0, sigma=1,
@@ -35,7 +34,6 @@ visualizer = visualization.openGLLive(system, bond_type_radius=[0.3])
 system.minimize_energy.init(
     f_max=10, gamma=50.0, max_steps=1000, max_displacement=0.2)
 system.minimize_energy.minimize()
-
 
 def main():
     while True:

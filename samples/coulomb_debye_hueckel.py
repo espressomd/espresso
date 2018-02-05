@@ -62,7 +62,7 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System()
+system = espressomd.System(box_l=[box_l]*3)
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 
@@ -86,12 +86,10 @@ int_n_times = 10
 # Interaction setup
 #############################################################
 
-system.box_l = [box_l, box_l, box_l]
-
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
     cutoff=lj_cut, shift="auto")
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 
 
 print("LJ-parameters:")
@@ -113,14 +111,14 @@ for i in range(n_part / 2):
 #    print("Particle {} has charge {} and is of type {}.".format(i,system.part[i].q,system.part[i].type))
 
 # Activating the Debye-Hueckel interaction
-# The Bjerrum length is set to one. Assuming the solvent is water, this
+# The Coulomb prefactor is set to one. Assuming the solvent is water, this
 # means that lj_sig is 0.714 nm in SI units.
-l_B = 1
+coulomb_prefactor = 1
 # inverse Debye length for 1:1 electrolyte in water at room temperature (nm)
 dh_kappa = numpy.sqrt(mol_dens) / 0.304
 # convert to MD units
 dh_kappa = dh_kappa / 0.714
-dh = electrostatics.CDH(bjerrum_length=l_B, kappa=dh_kappa,
+dh = electrostatics.CDH(prefactor=coulomb_prefactor, kappa=dh_kappa,
                         r_cut=5 / dh_kappa, eps_int=1, eps_ext=1, r0=0.5, r1=1, alpha=1)
 system.actors.add(dh)
 print(system.actors)
@@ -129,7 +127,7 @@ print(system.actors)
 print("Simulate monovalent salt in a cubic simulation box {} at molar concentration {}."
       .format(box_l, mol_dens).strip())
 print("Interactions:\n")
-act_min_dist = system.analysis.mindist()
+act_min_dist = system.analysis.min_dist()
 print("Start with minimal distance {}".format(act_min_dist))
 
 system.cell_system.max_num_cells = 2744
@@ -153,7 +151,7 @@ Stop if minimal distance is larger than {}
 
 # set LJ cap
 lj_cap = 20
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
 # Warmup Integration Loop
@@ -161,7 +159,7 @@ i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
     system.integrator.run(steps=warm_steps)
     # Warmup criterion
-    act_min_dist = system.analysis.mindist()
+    act_min_dist = system.analysis.min_dist()
 #  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,system.time,lj_cap,act_min_dist), end=' ')
     i += 1
 
@@ -170,7 +168,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
 
 #   Increase LJ cap
     lj_cap = lj_cap + 10
-    system.non_bonded_inter.set_force_cap(lj_cap)
+    system.force_cap = lj_cap
 
 # Just to see what else we may get from the c code
 import pprint
@@ -192,7 +190,7 @@ print("\nStart integration: run %d times %d steps" % (int_n_times, int_steps))
 
 # remove force capping
 lj_cap = 0
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
 # print(initial energies)

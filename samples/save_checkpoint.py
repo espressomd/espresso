@@ -19,10 +19,9 @@ checkpoint.register("skin")
 # test for "system"
 box_l = 10.7437
 
-system = espressomd.System()
+system = espressomd.System(box_l=[box_l]*3)
 system.time_step = 0.01
 system.cell_system.skin = skin
-system.box_l = [box_l, box_l, box_l]
 
 checkpoint.register("system")
 
@@ -42,7 +41,7 @@ lj_cap = 20
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
     cutoff=lj_cut, shift="auto")
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 
 checkpoint.register("system.non_bonded_inter")
 
@@ -59,7 +58,7 @@ checkpoint.register("system.part")
 for i in range(n_part / 2 - 1):
     system.part[2 * i].q = -1.0
     system.part[2 * i + 1].q = 1.0
-p3m = electrostatics.P3M(bjerrum_length=1.0, accuracy=1e-2)
+p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
 system.actors.add(p3m)
 
 checkpoint.register("p3m")

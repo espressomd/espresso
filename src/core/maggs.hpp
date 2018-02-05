@@ -67,12 +67,9 @@ typedef struct {
   double f_mass;
   /** inverse of square root of f_mass. */
   double invsqrt_f_mass;
-  /** prefactor to convert field to force. */
   double prefactor;
-  /** prefactor / (4*pi) */
-  double pref2;
-  /** bjerrum length of the system. */
-  double bjerrum;
+  /** prefactor to convert field to force. */
+  double pref1;
   /** mesh size in one dimension */
   int    mesh;
   /** = 1/a = mesh / box_length */
@@ -97,13 +94,13 @@ extern MAGGS_struct maggs;
 void maggs_init(); /** called from: initialize.cpp */
 
 /** set the main parameters for the algorithm.
-    @param bjerrum   Bjerrum length for the system
+    @param prefactor   Electrostatics prefactor for the system
     @param f_mass    parameter to tune the speed of light (1/c^2)
     @param mesh      Mesh size in one dimension
     @param finite_epsilon_flag whether to do epsilon-at-infinity-correction
     @param epsilon_infty epsilon-at-infinity
  */
-int maggs_set_parameters(double bjerrum, double f_mass, int mesh, int finite_epsilon_flag, double epsilon_infty);
+int maggs_set_parameters(double prefactor, double f_mass, int mesh, int finite_epsilon_flag, double epsilon_infty);
 
 /** get lattice size in one dimension
  @return mesh in 1D
@@ -115,7 +112,7 @@ int maggs_get_mesh_1D();
  @param node_y              index of the node in y direction
  @param node_z              index of the node in z direction
  @param direction           direction in which the link points from the node. 0 is for x, 1 is for y, 2 is for z
- @param relative_epsilon    permittivity to set, relative to the background permittivity set by the bjerrum length
+ @param relative_epsilon    permittivity to set, relative to the background permittivity set by the electrostatics prefactor
  */
 double maggs_set_permittivity(int node_x, int node_y, int node_z, int direction, double relative_epsilon);
 

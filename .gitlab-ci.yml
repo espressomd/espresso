@@ -1,9 +1,37 @@
 image: espressomd/espresso-ubuntu-cuda:latest
 
 stages:
+  - permission
+  - clone
   - prepare
   - build
+  - additional_checks
   - deploy
+  - result
+
+
+variables:
+  GIT_STRATEGY: none
+
+check_permission:
+  stage: permission
+  only:
+    - /.*external.*/
+  when: manual
+  allow_failure: false
+  script:
+    - exit 0
+
+git_clone:
+  stage: clone
+  variables:
+    GIT_STRATEGY: clone
+  script:
+    - cd ${CI_PROJECT_DIR}; git submodule update --init --recursive
+  artifacts:
+    paths:
+    - ${CI_PROJECT_DIR}
+    expire_in: 4 weeks
 
 status_pending:
   stage: prepare
@@ -12,29 +40,60 @@ status_pending:
 shanchen:
   stage: build
   script:
-    - export myconfig=shanchen
+    - export myconfig=shanchen with_coverage=true
+    - bash maintainer/cuda_build.sh
+
+lees_edwards:
+  stage: build
+  script:
+    - export myconfig=lees-edwards with_coverage=true
+    - export run_tests=lees_edwards
     - bash maintainer/cuda_build.sh
 
 maxset:
   stage: build
   script:
-    - export myconfig=maxset
+    - export myconfig=maxset with_coverage=true
     - bash maintainer/cuda_build.sh
   artifacts:
     paths:
     - build/
+    expire_in: 4 weeks
 
-status_success:
-  stage: deploy
-  script: bash maintainer/gh_post_status.sh success
+clang-static-analysis:
+  stage: build
+  image: espressomd/espresso-ubuntu-clang-cuda:latest
+  script:
+    - export myconfig=maxset with_coverage=false with_static_analysis=true
+    - bash maintainer/cuda_build.sh
+
+clang:
+  stage: build
+  image: espressomd/espresso-ubuntu-clang-cuda:latest
+  script:
+    - export myconfig=maxset with_coverage=false
+    - bash maintainer/cuda_build.sh
+
+check_sphinx:
+  stage: additional_checks
+  dependencies:
+  - git_clone
+  - maxset
   when: on_success
+  script:
+    - cd ${CI_PROJECT_DIR}; cd build && find ./ -exec touch -c -t 203901010000 {} \; && make sphinx
 
-status_failure:
-  stage: deploy
-  script: bash maintainer/gh_post_status.sh failure
-  when: on_failure
+check_with_odd_no_of_processors:
+  stage: additional_checks
+  when: on_success
+  dependencies:
+  - git_clone
+  - maxset
+  script:
+    - export build_procs=3 check_procs=3
+    - bash maintainer/cuda_build.sh
 
-sphinx_documentation:
+deploy_documentation:
   stage: deploy
   only:
     - doc
@@ -42,12 +101,26 @@ sphinx_documentation:
     - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
     - eval $(ssh-agent -s)
     - ssh-add <(echo "$SSH_PRIVATE_KEY")
-    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/espresso_rsa && chmod 600 ~/.ssh/espresso_rsa
-    - echo "$SSH_PUBLIC_KEY" > ~/.ssh/espresso_rsa.pub && chmod 600 ~/.ssh/espresso_rsa.pub
+    - mkdir -p ${HOME}/.ssh && chmod 700 ${HOME}/.ssh
+    - echo "$SSH_PRIVATE_KEY" > ${HOME}/.ssh/espresso_rsa && chmod 600 ${HOME}/.ssh/espresso_rsa
+    - echo "$SSH_PUBLIC_KEY" > ${HOME}/.ssh/espresso_rsa.pub && chmod 600 ${HOME}/.ssh/espresso_rsa.pub
     - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
   script:
-    - cd ${CI_PROJECT_DIR}; cd build && find ./ -exec touch -c -t 203901010000 {} \; && make sphinx && make doxygen && cd doc/sphinx/html && 
-      rsync -avz --delete -e "ssh -i ~/.ssh/espresso_rsa" ./* espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/doc
+    - cd ${CI_PROJECT_DIR}/build && find ./ -exec touch -c -t 203901010000 {} \; && make sphinx && make doxygen && cd doc/sphinx/html &&
+      rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./* espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/doc
     - cd ../../doxygen/html &&
-      rsync -avz --delete -e "ssh -i ~/.ssh/espresso_rsa" ./* espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox
+      rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./* espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox
+
+status_success:
+  stage: result
+  script: bash maintainer/gh_post_status.sh success
+  when: on_success
+  dependencies:
+  - git_clone
+
+status_failure:
+  stage: result
+  script: bash maintainer/gh_post_status.sh failure
+  when: on_failure
+  dependencies:
+  - git_clone

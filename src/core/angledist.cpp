@@ -63,7 +63,7 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
                                    Bonded_ia_parameters *iaparams) {
   double vec1[3], vec2[3], d2i = 0.0, dist2 = 0.0;
 
-  double normal, folded_pos[3];
+  double folded_pos[3];
 
   int img[3];
 
@@ -202,7 +202,7 @@ int angledist_energy(Particle *p_mid, Particle *p_left, Particle *p_right,
     double phi;
     double phi0 = calc_angledist_param(p_mid, p_left, p_right, iaparams);
     phi = acos(-cosine);
-    *_energy = 0.5 * iaparams->p.angledist.bend * SQR(phi - phi0);
+    *_energy = 0.5 * iaparams->p.angledist.bend * Utils::sqr(phi - phi0);
   }
 #endif
 

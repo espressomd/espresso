@@ -27,7 +27,6 @@
 #include "utils.hpp"
 #include "cells.hpp"
 #include "integrate.hpp"
-#include "verlet.hpp"
 #include "thermostat.hpp"
 
 /** \name Switches and state flags for Lees Edwards */

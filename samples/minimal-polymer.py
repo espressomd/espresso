@@ -27,7 +27,7 @@ import numpy
 # System parameters
 #############################################################
 
-system = espressomd.System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
 # if no seed is provided espresso generates a seed
 
@@ -45,7 +45,6 @@ fene = interactions.FeneBond(k=10, d_r_max=2)
 system.bonded_inter.add(fene)
 
 polymer.create_polymer(N_P=1, bond_length=1.0, MPC=50, bond=fene)
-
 
 #############################################################
 #      Integration                                          #

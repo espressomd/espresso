@@ -2,13 +2,13 @@ from __future__ import print_function
 import espressomd
 import espressomd.lb
 
-S = espressomd.System()
+S = espressomd.System(box_l=[1.0, 1.0, 1.0])
 S.box_l = [16, 16, 16]
 S.cell_system.skin = 0.4
 S.time_step = 0.01
 
 print("Setup LB")
-lb = espressomd.lb.LBFluid_GPU(
+lb = espressomd.lb.LBFluidGPU(
     dens=0.5,
     agrid=1.0,
     visc=0.8,

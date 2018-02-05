@@ -23,8 +23,8 @@
 #define REQ_CUDAIBMGETPART 0xcc04
 
 // Variables for communication
-IBM_CUDA_ParticleDataInput *IBM_ParticleDataInput_host = NULL;
-IBM_CUDA_ParticleDataOutput *IBM_ParticleDataOutput_host = NULL;
+IBM_CUDA_ParticleDataInput *IBM_ParticleDataInput_host = nullptr;
+IBM_CUDA_ParticleDataOutput *IBM_ParticleDataOutput_host = nullptr;
 
 /*****************
    IBM_cuda_mpi_get_particles

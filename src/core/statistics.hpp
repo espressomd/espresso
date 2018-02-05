@@ -57,7 +57,7 @@ typedef struct {
   /** number of non bonded interactions */
   int n_non_bonded;
   /** Number of virtual sites relative (rigid body) conributions */
-  int n_vs_relative;
+  int n_virtual_sites;
 
   /** start of bonded interactions. Right after the special ones */
   double *bonded;
@@ -68,7 +68,7 @@ typedef struct {
   /** start of observables for coulomb interaction. */
   double *dipolar;
   /** Start of observables for virtual sites relative (rigid bodies) */
-  double *vs_relative;
+  double *virtual_sites;
 
   /** number of doubles per data item */
   int chunk_size;
@@ -104,7 +104,7 @@ typedef struct {
 
 /** \name Exported Variables
     Previous particle configurations (needed for offline analysis
-    and correlation analysis in \ref tclcommand_analyze)
+    and correlation analysis)
 */
 /************************************************************/
 /*@{*/
@@ -121,7 +121,7 @@ extern int n_part_conf;
     @param set1 types of particles
     @param set2 types of particles
     @return the minimal distance of two particles */
-double mindist(PartCfg &, IntList *set1, IntList *set2);
+double mindist(PartCfg &, IntList const& set1, IntList const& set2);
 
 /** calculate the aggregate distribution for molecules.
     @param dist_criteria2 distance criteria squared
@@ -147,10 +147,11 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
 /** returns all particles within a given radius r_catch around a position.
     @param pos position of sphere of point
     @param r_catch the radius around the position
-    @param il the list where to store the particles indices
     @param planedims orientation of coordinate system
+
+    @return List of ids close to pos.
 */
-void nbhood(PartCfg & partCfg, double pos[3], double r_catch, IntList *il, int planedims[3]);
+IntList nbhood(PartCfg & partCfg, double pos[3], double r_catch, int planedims[3]);
 
 /** minimal distance to point.
     @param pos point
@@ -161,32 +162,6 @@ void nbhood(PartCfg & partCfg, double pos[3], double r_catch, IntList *il, int p
     @return the minimal distance of a particle to coordinates (\<posx\>,
    \<posy\>, \<posz\>). */
 double distto(PartCfg &, double pos[3], int pid);
-
-/** numerical solution for the integration constant \f$\gamma\f$ in the cell
-   model, determined by
-    \f[\gamma\,\ln\frac{R}{r_0}=\arctan\frac{1}{\gamma}+\arctan\frac{\xi_M-1}{\gamma}\f]
-    from which the second integration constant, the Manning radius \f$R_M\f$,
-   follows to
-    \f[R_M =
-   R\cdot\exp\left(-\frac{1}{\gamma}\cdot\arctan\frac{1}{\gamma}\right)\f]
-    Any value \f$\xi_M\geq 0\f$ is allowed, the function will automatically
-   ensure the
-    analytical continuation required for \f$\xi_M<\ln(R/r_0)/(1+\ln(R/r_0))\f$,
-   in which case
-    \f$\gamma\f$ becomes imaginary.
-    @param xi_m   Manning parameter \f$\xi_M=\ell_B/a\f$ (with Bjerrum-length
-   \f$\ell_B\f$ and charge distance \f$a\f$)
-    @param Rc     outer radius \f$R_C\f$ of the cylindrical cell around each
-   polyelectrolyte
-    @param ro     inner radius \f$r_0\f$ of the cylindrical cell around each
-   polyelectrolyte
-    @param gacc   the accuracy up to which \f$\gamma\f$ should be determined
-    @param maxtry maximum number of interations to find a solution
-    @param result pointer to double array containing \f$\gamma\f$ and \f$R_M\f$,
-                  and a third entry which is -1.0 if \f$\gamma\f$ is imaginary,
-   +1.0 else. */
-void calc_cell_gpb(double xi_m, double Rc, double ro, double gacc, int maxtry,
-                   double *result);
 
 /** appends particles' positions in 'partCfg' to onfigs */
 void analyze_append(PartCfg &);
@@ -310,7 +285,7 @@ void calc_rdf_av(PartCfg & partCfg, std::vector<int> &p1_types, std::vector<int>
     @param vanhove  array to store G(r,t) (size (n_configs-1)*(rbins))
 
 */
-double calc_vanhove(PartCfg &, int ptype, double rmin, double rmax, int rbins, int tmax,
+int calc_vanhove(PartCfg &, int ptype, double rmin, double rmax, int rbins, int tmax,
                     double *msd, double **vanhove);
 
 /** Calculates the spherically averaged structure factor.
@@ -355,10 +330,6 @@ int calc_radial_density_map(int xbins, int ybins, int thetabins, double xrange,
                             IntList *beadids, DoubleList *density_map,
                             DoubleList *density_profile);
 
-void calc_diffusion_profile(int dir, double xmin, double xmax, int nbins,
-                            int n_part, int n_conf, int time, int type,
-                            double *bins);
-
 /** returns the minimal squared distance between two positions in the perhaps
  periodic
     simulation box.
@@ -399,7 +370,6 @@ void angularmomentum(PartCfg &, int type, double *com);
  *  \param type_1  type of the particle, -1 for all
  *  \param com     center of mass position
  */
-void centermass_conf(int k, int type_1, double *com);
 
 void momentofinertiamatrix(PartCfg & partCfg, int type, double *MofImatrix);
 void calc_gyration_tensor(PartCfg & partCfg, int type, std::vector<double> &gt);
@@ -467,7 +437,7 @@ void invalidate_obs();
 
 void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
                                int n_non_bonded, int n_coulomb, int n_dipolar,
-                               int n_vsr, int chunk_size);
+                               int n_vs, int chunk_size);
 
 void obsstat_realloc_and_clear_non_bonded(Observable_stat_non_bonded *stat_nb,
                                           int n_nonbonded, int chunk_size_nb);

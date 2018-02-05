@@ -7,6 +7,7 @@ class EKBoundaries(ScriptInterfaceHelper):
     """
     Creates a set of electrokinetics boundaries.
     """
+
     _so_name = "LBBoundaries::LBBoundaries"
 
     def add(self, *args, **kwargs):
@@ -15,6 +16,7 @@ class EKBoundaries(ScriptInterfaceHelper):
         Either a valid boundary is an argument,
         or a valid set of parameters to create a boundary.
         """
+
         if len(args) == 1:
             if isinstance(args[0], EKBoundary):
                 ekboundary = args[0]
@@ -32,9 +34,10 @@ class EKBoundaries(ScriptInterfaceHelper):
         
         Parameters
         ----------
-        ekboundary : :obj: `EKBoundary`
+        ekboundary : :obj:`EKBoundary`
                      The boundary to be removed from the set.
         """
+
         self.call_method("remove", ekboundary=ekboundary)
 
 
@@ -43,4 +46,5 @@ class EKBoundary(ScriptInterfaceHelper):
     """
     Creates a EK boundary.
     """
+
     _so_name = "LBBoundaries::LBBoundary"

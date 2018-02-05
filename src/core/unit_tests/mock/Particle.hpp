@@ -1,7 +1,7 @@
 #ifndef CORE_UNIT_TESTS_MOCK_PARTICLE_HPP
 #define CORE_UNIT_TESTS_MOCK_PARTICLE_HPP
 
-#include <vector>
+#include <array>
 
 namespace Testing {
 class Particle {
@@ -13,6 +13,13 @@ public:
   int identity() const { return m_id; }
 
   unsigned m_id;
+};
+
+class Position {
+  std::array<double, 3> m_pos;
+
+public:
+  std::array<double, 3> &position() { return m_pos; }
 };
 }
 

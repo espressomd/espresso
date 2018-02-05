@@ -462,8 +462,8 @@ inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
 
   /* equilibrium part of the stress modes */
   modes_from_pi_eq[0] = scalar(j, j) / *rho;
-  modes_from_pi_eq[1] = (SQR(j[0]) - SQR(j[1])) / *rho;
-  modes_from_pi_eq[2] = (scalar(j, j) - 3.0 * SQR(j[2])) / *rho;
+  modes_from_pi_eq[1] = (Utils::sqr(j[0]) - Utils::sqr(j[1])) / *rho;
+  modes_from_pi_eq[2] = (scalar(j, j) - 3.0 * Utils::sqr(j[2])) / *rho;
   modes_from_pi_eq[3] = j[0] * j[1] / *rho;
   modes_from_pi_eq[4] = j[0] * j[2] / *rho;
   modes_from_pi_eq[5] = j[1] * j[2] / *rho;
@@ -598,5 +598,4 @@ int lb_lbfluid_get_interpolated_velocity_global(double *p, double *v);
 #endif
 
 #endif /* _LB_H */
-
 /*@}*/

@@ -25,11 +25,7 @@ import unittest as ut
 import numpy as np
 import espressomd  # pylint: disable=import-error
 from espressomd import reaction_ensemble
-from espressomd import grand_canonical
 
-
-@ut.skipIf('REACTION_ENSEMBLE' not in espressomd.code_info.features(),
-           "REACTION_ENSEMBLE not compiled in, can not check functionality.")
 class ReactionEnsembleTest(ut.TestCase):
     """Test the core implementation of the reaction ensemble."""
 
@@ -48,12 +44,12 @@ class ReactionEnsembleTest(ut.TestCase):
     reactant_coefficients = [1]
     product_types = [type_A, type_H]
     product_coefficients = [1, 1]
-    system = espressomd.System()
-    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-    system.box_l = np.ones(3) * (N0 / c0)**(1.0 / 3.0)
+    system = espressomd.System(box_l=np.ones(3) * (N0 / c0)**(1.0 / 3.0))
+    system.seed = system.cell_system.get_state()['n_nodes'] * [2]
+    np.random.seed(69) #make reaction code fully deterministic
     system.cell_system.skin = 0.4
     system.time_step = 0.01
-    RE = reaction_ensemble.reaction_ensemble(
+    RE = reaction_ensemble.ReactionEnsemble(
         standard_pressure=standard_pressure_in_simulation_units,
         temperature=temperature,
         exclusion_radius=exclusion_radius)
@@ -73,8 +69,7 @@ class ReactionEnsembleTest(ut.TestCase):
             reactant_types=cls.reactant_types,
             reactant_coefficients=cls.reactant_coefficients,
             product_types=cls.product_types,
-            product_coefficients=cls.product_coefficients)
-        cls.RE.set_default_charges(dictionary={"0": 0, "1": -1, "2": +1})
+            product_coefficients=cls.product_coefficients, default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1}, check_for_electroneutrality=True)
 
     @classmethod
     def ideal_degree_of_association(cls, pK_a, pH):
@@ -97,18 +92,19 @@ class ReactionEnsembleTest(ut.TestCase):
         volume = ReactionEnsembleTest.volume
         average_NH = 0.0
         average_degree_of_association = 0.0
-        num_samples = 10000
+        num_samples = 1000
         for i in range(num_samples):
             RE.reaction()
-            average_NH += grand_canonical.number_of_particles(
-                current_type=type_H)
-            average_degree_of_association += grand_canonical.number_of_particles(
-                current_type=type_HA) / float(N0)
+            average_NH += system.number_of_particles(
+                type=type_H)
+            average_degree_of_association += system.number_of_particles(
+                type=type_HA) / float(N0)
         average_NH /= num_samples
         average_degree_of_association /= num_samples
         pH = -np.log10(average_NH / volume)
         K_apparent_HA_diss = K_HA_diss * standard_pressure_in_simulation_units / temperature
         pK_a = -np.log10(K_apparent_HA_diss)
+        print(average_degree_of_association)
         real_error_in_degree_of_association = abs(
             average_degree_of_association - ReactionEnsembleTest.ideal_degree_of_association(
                 pK_a, pH)) / ReactionEnsembleTest.ideal_degree_of_association(
@@ -151,14 +147,19 @@ class ReactionEnsembleTest(ut.TestCase):
             ReactionEnsembleTest.exclusion_radius,
             RE_status["exclusion_radius"],
             places=9,
-            msg="reaction ensemble temperature not set correctly.")
+            msg="reaction ensemble exclusion radius not set correctly.")
 
         self.assertAlmostEqual(
             ReactionEnsembleTest.volume,
             ReactionEnsembleTest.RE.get_volume(),
             places=9,
-            msg="reaction ensemble temperature not set correctly.")
+            msg="reaction ensemble volume not set correctly.")
 
+        self.assertAlmostEqual(
+            ReactionEnsembleTest.standard_pressure_in_simulation_units,
+            RE_status["standard_pressure"],
+            places=9,
+            msg="reaction ensemble standard_pressure not set correctly.")
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())

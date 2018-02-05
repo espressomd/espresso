@@ -38,7 +38,7 @@
 
 #define LE_TRACE(x)
 #ifdef LE_DEBUG
-FILE *comms_log = NULL;
+FILE *comms_log = nullptr;
 int comms_count = 0;
 #endif
 
@@ -48,28 +48,17 @@ int comms_count = 0;
  * algorithm (see verlet.cpp) to build the verlet lists.
  */
 void le_dd_init_cell_interactions() {
-  int m, n, o, p, q, r, ind1, ind2, c_cnt = 0, n_cnt = 0;
+  int m, n, o, p, q, r, ind1, ind2;
   int extra_cells = 0;
-
-  /* initialize cell neighbor structures */
-  dd.cell_inter = (IA_Neighbor_List *)Utils::realloc(
-      dd.cell_inter, local_cells.n * sizeof(IA_Neighbor_List));
-  for (m = 0; m < local_cells.n; m++) {
-    dd.cell_inter[m].nList = NULL;
-    dd.cell_inter[m].n_neighbors = 0;
-  }
 
   /* loop over non-ghost cells */
   for (o = 1; o <= dd.cell_grid[2]; o++) {
     for (n = 1; n <= dd.cell_grid[1]; n++) {
       for (m = 1; m <= dd.cell_grid[0]; m++) {
 
-        /* plenty for most cases */
-        dd.cell_inter[c_cnt].nList = (IA_Neighbor *)Utils::realloc(
-            dd.cell_inter[c_cnt].nList, 14 * sizeof(IA_Neighbor));
-
-        n_cnt = 0;
         ind1 = get_linear_index(m, n, o, dd.ghost_cell_grid);
+
+        cells[ind1].m_neighbors.reserve(14);
 
         /* loop all 'conventional' neighbor cells */
         for (p = o - 1; p <= o + 1; p++) {     /*z-loop*/
@@ -81,9 +70,6 @@ void le_dd_init_cell_interactions() {
                   (q == dd.cell_grid[1] + 1 &&
                    node_pos[1] == node_grid[1] - 1)) {
                 extra_cells++;
-                dd.cell_inter[c_cnt].nList = (IA_Neighbor *)Utils::realloc(
-                    dd.cell_inter[c_cnt].nList,
-                    (extra_cells + 14) * sizeof(IA_Neighbor));
               } else {
                 if (r == m + 2)
                   continue;
@@ -92,57 +78,15 @@ void le_dd_init_cell_interactions() {
               ind2 = get_linear_index(r, q, p, dd.ghost_cell_grid);
 
               if (ind2 >= ind1) {
-                dd.cell_inter[c_cnt].nList[n_cnt].cell_ind = ind2;
-                dd.cell_inter[c_cnt].nList[n_cnt].pList = &cells[ind2];
-                init_pairList(&dd.cell_inter[c_cnt].nList[n_cnt].vList);
-#ifdef LE_DEBUG
-                dd.cell_inter[c_cnt].nList[n_cnt].my_pos[0] =
-                    my_left[0] + r * dd.cell_size[0];
-                dd.cell_inter[c_cnt].nList[n_cnt].my_pos[1] =
-                    my_left[1] + q * dd.cell_size[1];
-                dd.cell_inter[c_cnt].nList[n_cnt].my_pos[2] =
-                    my_left[2] + p * dd.cell_size[2];
-#endif
-                n_cnt++;
+                cells[ind1].m_neighbors.push_back(std::ref(cells[ind2]));
               }
             }
           }
         }
-        dd.cell_inter[c_cnt].n_neighbors = n_cnt;
-        c_cnt++;
+        cells[ind1].m_neighbors.shrink_to_fit();
       }
     }
   }
-
-#ifdef LE_DEBUG
-  FILE *cells_fp;
-  char cLogName[64];
-  int c, nn, this_n;
-  double myPos[3];
-  sprintf(cLogName, "cells_map%i.dat", this_node);
-  cells_fp = fopen(cLogName, "w");
-
-  /* print out line segments showing the vector from each cell to each neighbour
-   * cell*/
-  for (c = 0; c < c_cnt; c++) {
-    myPos[0] = my_left[0] + dd.cell_size[0] * (1 + c % dd.cell_grid[0]);
-    myPos[1] = my_left[1] +
-               dd.cell_size[1] * (1 + (c / dd.cell_grid[0]) % dd.cell_grid[1]);
-    myPos[2] =
-        my_left[2] +
-        dd.cell_size[2] * (1 + (c / (dd.cell_grid[0] * dd.cell_grid[1])));
-
-    for (nn = 0; nn < dd.cell_inter[c].n_neighbors; nn++) {
-
-      this_n = dd.cell_inter[c].nList[nn].cell_ind;
-      fprintf(cells_fp, "%i %i %i %f %f %f %f %f %f\n", c, nn, this_n, myPos[0],
-              myPos[1], myPos[2], dd.cell_inter[c].nList[nn].my_pos[0],
-              dd.cell_inter[c].nList[nn].my_pos[1],
-              dd.cell_inter[c].nList[nn].my_pos[2]);
-    }
-  }
-  fclose(cells_fp);
-#endif
 }
 
 /** update the 'shift' member of those GhostCommunicators, which use
@@ -374,9 +318,9 @@ void le_dd_prepare_comm(le_dd_comms_manager *mgr, GhostCommunicator *comm,
   int lc[3], hc[3], neighbor_index;
 
 #ifdef LE_DEBUG
-  if (comms_log != NULL) {
+  if (comms_log != nullptr) {
     fclose(comms_log);
-    comms_log = NULL;
+    comms_log = nullptr;
   }
   char vLogName[64];
   sprintf(vLogName, "%i_comms_%i.dat", comms_count++, this_node);
@@ -487,8 +431,8 @@ void le_dd_prepare_comm(le_dd_comms_manager *mgr, GhostCommunicator *comm,
       }
 
       /* Buffer has to contain both Send and Recv cells -> factor 2 */
-      comm->comm[cnt].part_lists = (ParticleList **)Utils::malloc(
-          2 * n_comm_cells[dir] * sizeof(ParticleList *));
+      comm->comm[cnt].part_lists = (Cell **)Utils::malloc(
+          2 * n_comm_cells[dir] * sizeof(Cell *));
 
       switch (dir) {
       // send the single-thickness x-ghost layer, and then parts of the
@@ -606,8 +550,8 @@ void le_dd_prepare_comm(le_dd_comms_manager *mgr, GhostCommunicator *comm,
             lc[dir] = 1;
             hc[dir] = 1;
           }
-          comm->comm[cnt].part_lists = (ParticleList **)Utils::malloc(
-              n_comm_cells[dir] * sizeof(ParticleList *));
+          comm->comm[cnt].part_lists = (Cell **)Utils::malloc(
+              n_comm_cells[dir] * sizeof(Cell *));
 
           switch (dir) {
           case 0:
@@ -680,8 +624,8 @@ void le_dd_prepare_comm(le_dd_comms_manager *mgr, GhostCommunicator *comm,
             lc[dir] = 0;
             hc[dir] = 0;
           }
-          comm->comm[cnt].part_lists = (ParticleList **)Utils::malloc(
-              n_comm_cells[dir] * sizeof(ParticleList *));
+          comm->comm[cnt].part_lists = (Cell **)Utils::malloc(
+              n_comm_cells[dir] * sizeof(Cell *));
 
           switch (dir) {
           case 0:
@@ -749,9 +693,9 @@ void le_dd_prepare_comm(le_dd_comms_manager *mgr, GhostCommunicator *comm,
 
 #ifdef LE_DEBUG
   printAllComms(comms_log, comm, 0);
-  if (comms_log != NULL) {
+  if (comms_log != nullptr) {
     fclose(comms_log);
-    comms_log = NULL;
+    comms_log = nullptr;
   }
 #endif
 }
@@ -765,9 +709,9 @@ void le_dd_dynamic_update_comm(le_dd_comms_manager *mgr,
   int lc[3], hc[3], neighbor_index;
 
 #ifdef LE_DEBUG
-  if (comms_log != NULL) {
+  if (comms_log != nullptr) {
     fclose(comms_log);
-    comms_log = NULL;
+    comms_log = nullptr;
   }
   char vLogName[64];
   sprintf(vLogName, "%i_recomm_%i.dat", comms_count++, this_node);
@@ -902,7 +846,7 @@ void le_dd_dynamic_update_comm(le_dd_comms_manager *mgr,
         /* exchange the send and receive parts of the comm */
         int nlist2 = comm->comm[cnt].n_part_lists / 2;
         for (int j = 0; j < nlist2; j++) {
-          ParticleList *tmplist = comm->comm[cnt].part_lists[j];
+          Cell *tmplist = comm->comm[cnt].part_lists[j];
           comm->comm[cnt].part_lists[j] =
               comm->comm[cnt].part_lists[j + nlist2];
           comm->comm[cnt].part_lists[j + nlist2] = tmplist;
@@ -985,9 +929,9 @@ void le_dd_dynamic_update_comm(le_dd_comms_manager *mgr,
   }
 #ifdef LE_DEBUG
   printAllComms(comms_log, comm, backwards);
-  if (comms_log != NULL) {
+  if (comms_log != nullptr) {
     fclose(comms_log);
-    comms_log = NULL;
+    comms_log = nullptr;
   }
 #endif
 }

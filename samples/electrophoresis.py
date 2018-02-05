@@ -38,10 +38,9 @@ np.random.seed(42)
 # System parameters
 #############################################################
 
-system = espressomd.System()
+system = espressomd.System(box_l=[100.0, 100.0, 100.0])
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-system.box_l = [100, 100, 100]
 system.periodicity = [1, 1, 1]
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 # system.cell_system.set_n_square(use_verlet_lists=False)
@@ -75,7 +74,7 @@ system.non_bonded_inter[1, 2].lennard_jones.set_params(
 # fene = interactions.FeneBond(k=10, d_r_max=2)
 # system.bonded_inter.add(fene)
 harmonic = interactions.HarmonicBond(k=10, r_0=2)
-harmonicangle = interactions.Angle_Harmonic(bend=10, phi0=np.pi)
+harmonicangle = interactions.AngleHarmonic(bend=10, phi0=np.pi)
 system.bonded_inter.add(harmonic)
 system.bonded_inter.add(harmonicangle)
 
@@ -132,15 +131,15 @@ print("Q_tot:", np.sum(system.part[:].q))
 #      Warmup                                               #
 #############################################################
 
-system.non_bonded_inter.set_force_cap(10)
+system.force_cap = 10
 
 for i in range(1000):
     sys.stdout.write("\rWarmup: %03i" % i)
     sys.stdout.flush()
     system.integrator.run(steps=1)
-    system.non_bonded_inter.set_force_cap(10 * i)
+    system.force_cap = 10*i
 
-system.non_bonded_inter.set_force_cap(0)
+system.force_cap = 0
 
 print("\nWarmup finished!\n")
 
@@ -156,7 +155,7 @@ if os.path.isfile("p3m_checkpoint") and read_checkpoint == True:
     print("reading p3m from file")
     p3m = pickle.load(open("p3m_checkpoint", "r"))
 else:
-    p3m = electrostatics.P3M(bjerrum_length=1.0, accuracy=1e-2)
+    p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
     print("Tuning P3M")
 
 system.actors.add(p3m)

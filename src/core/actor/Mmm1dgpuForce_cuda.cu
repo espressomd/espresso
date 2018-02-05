@@ -69,9 +69,9 @@ __constant__ mmm1dgpu_real maxPWerror = 1e-5;
 
 Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s, mmm1dgpu_real _coulomb_prefactor, mmm1dgpu_real _maxPWerror,
 	mmm1dgpu_real _far_switch_radius, int _bessel_cutoff)
-:coulomb_prefactor(_coulomb_prefactor), maxPWerror(_maxPWerror), far_switch_radius(_far_switch_radius),
-	bessel_cutoff(_bessel_cutoff), host_boxz(0), host_npart(0), pairs(-1), dev_forcePairs(NULL), dev_energyBlocks(NULL),
-	numThreads(64), need_tune(true)
+	: numThreads(64), host_boxz(0), host_npart(0), need_tune(true), pairs(-1),
+	  dev_forcePairs(nullptr), dev_energyBlocks(nullptr), coulomb_prefactor(_coulomb_prefactor),
+	  maxPWerror(_maxPWerror), far_switch_radius(_far_switch_radius), bessel_cutoff(_bessel_cutoff)
 {
 	// interface sanity checks
 	if(!s.requestFGpu())
@@ -314,7 +314,7 @@ void Mmm1dgpuForce::set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefa
 	// The changed parameters in mmm1d_params do not need to be broadcast: they are only accessed by the TCL print function (on node 0) when you call inter coulomb. The CUDA code only runs on node 0, so other nodes do not need the parameters. We couldn't broadcast from here anyway because set_params() might be called from inside computeForces() which is not a time at which the MPI loop on the slave nodes is waiting for broadcasts.
 }
 
-__global__ void forcesKernel(const __restrict__ mmm1dgpu_real *r, const __restrict__ mmm1dgpu_real *q, __restrict__ mmm1dgpu_real *force, int N, int pairs, int tStart = 0, int tStop = -1)
+__global__ void forcesKernel(const mmm1dgpu_real * __restrict__ r, const mmm1dgpu_real * __restrict__ q, mmm1dgpu_real * __restrict__ force, int N, int pairs, int tStart = 0, int tStop = -1)
 {
 	if (tStop < 0)
 		tStop = N*N;
@@ -408,7 +408,7 @@ __global__ void forcesKernel(const __restrict__ mmm1dgpu_real *r, const __restri
 	}
 }
 
-__global__ void energiesKernel(const __restrict__ mmm1dgpu_real *r, const __restrict__ mmm1dgpu_real *q, __restrict__ mmm1dgpu_real *energy, int N, int pairs, int tStart = 0, int tStop = -1)
+__global__ void energiesKernel(const mmm1dgpu_real * __restrict__ r, const mmm1dgpu_real * __restrict__ q, mmm1dgpu_real * __restrict__ energy, int N, int pairs, int tStart = 0, int tStop = -1)
 {
 	if (tStop < 0)
 		tStop = N*N;

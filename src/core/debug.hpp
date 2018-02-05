@@ -41,10 +41,14 @@ void check_particle_consistency();
 */
 void check_particles();
 
+void check_particle_sorting();
+
 /** Print all particle positions contained in \ref cells::cells array. */
 void print_particle_positions();
 /** Print all particle forces contained in \ref cells::cells array. */
 void print_particle_forces();
+
+extern int this_node;
 
 /** by setting this variable to 1, a regular exit is
     indicated. In that case, no core dump is generated.

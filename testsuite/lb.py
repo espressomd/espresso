@@ -19,7 +19,7 @@ class LBTest(ut.TestCase):
     3) measure temperature of colloid and fluid
 
     """
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     n_nodes = system.cell_system.get_state()["n_nodes"]
     system.seed = range(n_nodes)
 
@@ -66,7 +66,9 @@ class LBTest(ut.TestCase):
             pos = particle[3:6]
             f = particle[9:]
             v = particle[6:9]
-            self.system.part.add(id=int(id), pos=pos, v=v, type=int(typ), rotation=[1,1,1])
+            p=self.system.part.add(id=int(id), pos=pos, v=v, type=int(typ))
+            if espressomd.has_features("ROTATION"): 
+                p.rotation=[1,1,1]
 
         self.n_col_part = len(self.system.part)
 
