@@ -245,7 +245,7 @@ Writing MPI-IO binary files
 This method outputs binary data in parallel and is, thus, also suitable for
 large-scale simulations. Generally, H5MD is the preferred method because the
 data is easier accessible. In contrast to H5MD, the MPI-IO functionality
-outputs data in a *machine dependant format* but has write and read
+outputs data in a *machine dependent format* but has write and read
 capabilities. The usage is quite simple:
 
 .. code:: python
