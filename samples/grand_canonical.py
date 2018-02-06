@@ -36,7 +36,7 @@ box_l=50.0
 
 # Integration parameters
 #############################################################
-system = espressomd.System()
+system = espressomd.System(box_l = [box_l, box_l, box_l])
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 temperature=1.0
@@ -47,10 +47,6 @@ system.cell_system.max_num_cells = 2744
 #############################################################
 #  Setup System                                             #
 #############################################################
-
-# Interaction setup
-#############################################################
-system.box_l = [box_l, box_l, box_l]
 
 # Particle setup
 #############################################################

@@ -65,7 +65,7 @@ lj_cap = 5
 
 # System setup
 #############################################################
-system              = espressomd.System()
+system              = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
 if not os.path.exists('data') :
     os.mkdir('data')

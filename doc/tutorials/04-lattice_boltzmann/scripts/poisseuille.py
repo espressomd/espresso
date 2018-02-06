@@ -1,11 +1,11 @@
 ## A script to simulate planar Poisseuille flow in Espresso
-from espressomd import System, lb, shapes, lbboundaries
+from espressomd import lb, shapes, lbboundaries
 import numpy as np
 
 
 
 # System setup
-system = System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 system.time_step = 0.01
 system.cell_system.skin = 0.2
 
