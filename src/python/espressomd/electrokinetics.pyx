@@ -10,6 +10,7 @@ IF ELECTROKINETICS:
     cdef class Electrokinetics(HydrodynamicInteraction):
         """
         Creates the electrokinetic method using the GPU unit.
+        
         """
 
         species_list = []
@@ -25,6 +26,7 @@ IF ELECTROKINETICS:
         def validate_params(self):
             """
             Checks if the parameters for "stencil" and "fluid_coupling" are valid.
+            
             """
 
             default_params = self.default_params()
@@ -39,6 +41,7 @@ IF ELECTROKINETICS:
         def valid_keys(self):
             """
             Returns the valid options used for the electrokinetic method.
+            
             """
 
             return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "prefactor", "stencil", "advection", "fluid_coupling"
@@ -46,6 +49,7 @@ IF ELECTROKINETICS:
         def required_keys(self):
             """
             Returns the nessesary options to initialize the electokinetic method.
+            
             """
 
             return ["agrid", "lb_density", "viscosity", "friction", "T", "prefactor"]
@@ -53,6 +57,7 @@ IF ELECTROKINETICS:
         def default_params(self):
             """
             Returns the default paramters.
+            
             """
 
             return {"agrid": -1,
@@ -135,6 +140,7 @@ IF ELECTROKINETICS:
                       The value to which the density will be set to.
             node : numpy-array of type :obj:`integer` of length (3)
                    If set the density will be only applied on this specific node.
+                   
             """
 
             if species == None or density == None:
@@ -172,6 +178,7 @@ IF ELECTROKINETICS:
                    The species must be charged to begin with.
                    If the neutralization would lead to a negative species density
                    an exeption will be raised.
+                   
             """
 
             err = ek_neutralize_system(species.id)
@@ -192,6 +199,7 @@ IF ELECTROKINETICS:
             """
             Initializes the electrikinetic system.
             This automatically initializes the lattice Boltzman method on the GPU.
+            
             """
 
             err = ek_init()
@@ -209,6 +217,7 @@ IF ELECTROKINETICS:
             ----------
             species : :obj:`integer`
                       Species to be initialized.
+
             """
 
             self.species_list.append(species)
@@ -216,6 +225,7 @@ IF ELECTROKINETICS:
         def get_params(self):
             """
             Prints out the parameters of the electrokinetic system.
+            
             """
 
             self._params.update(self._get_params_from_es_core())
@@ -229,6 +239,7 @@ IF ELECTROKINETICS:
             ----------
             path : :obj:`string`
                    The path and vtk-file name the boundary is written to.
+                   
             """
 
             lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
@@ -241,6 +252,7 @@ IF ELECTROKINETICS:
             ----------
             path : :obj:`string`
                    The path and vtk-file name the velocity is written to.
+                   
             """
 
             ek_lb_print_vtk_velocity(utils.to_char_pointer(path))
@@ -253,6 +265,7 @@ IF ELECTROKINETICS:
             ----------
             path : :obj:`string`
                    The path and vtk-file name the LB density is written to.
+                   
             """
 
             ek_lb_print_vtk_density(utils.to_char_pointer(path))
@@ -265,6 +278,7 @@ IF ELECTROKINETICS:
             ----------
             path : :obj:`string`
                    The path and vtk-file name the electrostatic potential is written to.
+                   
             """
 
             ek_print_vtk_potential(utils.to_char_pointer(path))
@@ -277,6 +291,7 @@ IF ELECTROKINETICS:
             ----------
             path : :obj:`string`
                    The path and vtk-file name the LB force is written to.
+                   
             """
 
             ek_print_vtk_lbforce(utils.to_char_pointer(path))
@@ -291,6 +306,7 @@ IF ELECTROKINETICS:
                    The path and vtk-file name the electrostatic potential is written to.
             
             note : This only works if 'EK_ELECTROSTATIC_COUPLING' is active.
+            
             """
 
             IF EK_ELECTROSTATIC_COUPLING:
@@ -350,6 +366,7 @@ IF ELECTROKINETICS:
     class Species(object):
         """
         Creates a species object that is passed to the ek instance.
+        
         """
 
         py_number_of_species = 0
@@ -385,6 +402,7 @@ IF ELECTROKINETICS:
         def valid_keys(self):
             """
             Returns the valid keys for the species.
+            
             """
 
             return "density", "D", "valency", "ext_force"
@@ -392,6 +410,7 @@ IF ELECTROKINETICS:
         def required_keys(self):
             """
             Returns the required keys for the species.
+            
             """
 
             return ["density", "D", "valency"]
@@ -399,6 +418,7 @@ IF ELECTROKINETICS:
         def default_params(self):
             """
             Returns the default parameters for the species.
+            
             """
 
             return {"ext_force": [0, 0, 0]}
@@ -423,6 +443,7 @@ IF ELECTROKINETICS:
         def get_params(self):
             """
             Returns the parameters of the species.
+            
             """
 
             self._params.update(self._get_params_from_es_core())
@@ -436,6 +457,7 @@ IF ELECTROKINETICS:
             ----------
             path : :obj:`string`
                    The path and vtk-file name the species density is written to.
+                   
             """
 
             ek_print_vtk_density(self.id, utils.to_char_pointer(path))
@@ -448,6 +470,7 @@ IF ELECTROKINETICS:
             ----------
             path : :obj:`string`
                    The path and vtk-file name the species flux is written to.
+                   
             """
 
             ek_print_vtk_flux(self.id, utils.to_char_pointer(path))
