@@ -16,7 +16,7 @@ from espressomd import assert_features, has_features, missing_features
 class BHGPUTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
-    es = espressomd.System()
+    es = espressomd.System(box_l=[1,1,1])
     
     def vectorsTheSame(self,a,b):
         tol = 5E-2
