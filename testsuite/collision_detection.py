@@ -21,7 +21,6 @@
 from __future__ import print_function
 import unittest as ut
 import espressomd
-import numpy as np
 from espressomd.interactions import HarmonicBond,AngleHarmonic
 import numpy as np
 from random import shuffle
@@ -31,6 +30,8 @@ class CollisionDetection(ut.TestCase):
     """Tests interface and functionality of the collision detection / dynamic binding"""
 
     s = espressomd.System(box_l = [10.0, 10.0, 10.0])
+    s.seed  = s.cell_system.get_state()['n_nodes'] * [1234]
+    np.random.seed(seed=s.seed)
     if espressomd.has_features("VIRTUAL_SITES"): 
         from espressomd.virtual_sites import VirtualSitesRelative
         s.virtual_sites=VirtualSitesRelative()
