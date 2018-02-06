@@ -29,7 +29,7 @@ class Non_bonded_interactionsTests(ut.TestCase):
     #    self.pid=particleId
 
     # Handle to espresso system
-    es = espressomd.System()
+    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     def intersMatch(self, inType, outType, inParams, outParams):
         """Check, if the interaction type set and gotten back as well as the bond

@@ -1,3 +1,5 @@
+.. _Under the hood:
+
 Under the hood
 ==============
 
@@ -5,8 +7,7 @@ Under the hood
 
 -  Main loop in pseudo code (for comparison)
 
-
-.. _internal_particle_org:
+.. _Internal particle organization:
 
 Internal particle organization
 ------------------------------
@@ -14,22 +15,22 @@ Internal particle organization
 Since basically all major parts of the main MD integration have to
 access the particle data, efficient access to the particle data is
 crucial for a fast MD code. Therefore the particle data needs some more
-elaborate organisation, which will be presented here. A particle itself
+elaborate organization, which will be presented here. A particle itself
 is represented by a structure (Particle) consisting of several
 substructures (e. g. ParticlePosition, ParticleForce or
 ParticleProperties), which in turn represent basic physical properties
-such as position, force or charge. The particles are organised in one or
+such as position, force or charge. The particles are organized in one or
 more particle lists on each node, called Cell cells. The cells are
 arranged by several possible systems, the cellsystems as described
 above. A cell system defines a way the particles are stored in , i. e.
 how they are distributed onto the processor nodes and how they are
-organised on each of them. Moreover a cell system also defines
+organized on each of them. Moreover a cell system also defines
 procedures to efficiently calculate the force, energy and pressure for
-the short ranged interactions, since these can be heavily optimised
+the short ranged interactions, since these can be heavily optimized
 depending on the cell system. For example, the domain decomposition
 cellsystem allows an order N interactions evaluation.
 
-Technically, a cell is organised as a dynamically growing array, not as
+Technically, a cell is organized as a dynamically growing array, not as
 a list. This ensures that the data of all particles in a cell is stored
 contiguously in the memory. The particle data is accessed transparently
 through a set of methods common to all cell systems, which allocate the
@@ -50,13 +51,13 @@ a :math:`10\times 20\times 20` box. If the maximal interaction range is
 coordinate, allowing for a small skin of 0.05. If one chooses only 6
 boxes in the first coordinate, the skin depth increases to 0.467. In
 this example we assume that the number of cells in the first coordinate
-was chosen to be 6 and that the cells are cubic. would then organise the
+was chosen to be 6 and that the cells are cubic. would then organize the
 cells on each node in a :math:`6\times
-12\times 12` cell grid embedded at the centre of a
+12\times 12` cell grid embedded at the center of a
 :math:`8\times 14 \times
 14` grid. The additional cells around the cells containing the particles
 represent the ghost shell in which the information of the ghost
-particles from the neighbouring nodes is stored. Therefore the particle
+particles from the neighboring nodes is stored. Therefore the particle
 information stored on each node resides in 1568 particle lists of which
 864 cells contain particles assigned to the node, the rest contain
 information of particles from other nodes.a
@@ -80,16 +81,16 @@ double data rate (DDR) RAM transfers up to 3.2GB/s at this clock speed
 (at each edge of the clock signal 8 bytes are transferred). But in
 addition to the data transfer speed, DDR RAM has some latency for
 fetching the data, which can be up to 50ns in the worst case. Memory is
-organised internally in pages or rows of typically 8KB size. The full
+organized internally in pages or rows of typically 8KB size. The full
 :math:`2\times 200` MHz data rate can only be achieved if the access is
 within the same memory page (page hit), otherwise some latency has to be
 added (page miss). The actual latency depends on some other aspects of
-the memory organisation which will not be discussed here, but the
+the memory organization which will not be discussed here, but the
 penalty is at least 10ns, resulting in an effective memory transfer rate
 of only 800MB/s. To remedy this, modern processors have a small amount
 of low latency memory directly attached to the processor, the cache.
 
-The processor cache is organised in different levels. The level 1 (L1)
+The processor cache is organized in different levels. The level 1 (L1)
 cache is built directly into the processor core, has no latency and
 delivers the data immediately on demand, but has only a small size of
 around 128KB. This is important since modern processors can issue
@@ -102,11 +103,11 @@ In a typical implementation of the link cell scheme the order of the
 particles is fairly random, determined e. g. by the order in which the
 particles are set up or have been communicated across the processor
 boundaries. The force loop therefore accesses the particle array in
-arbitrary order, resulting in a lot of unfavourable page misses. In the
-memory organisation of , the particles are accessed in a virtually
+arbitrary order, resulting in a lot of unfavorable page misses. In the
+memory organization of , the particles are accessed in a virtually
 linear order. Because the force calculation goes through the cells in a
 linear fashion, all accesses to a single cell occur close in time, for
-the force calculation of the cell itself as well as for its neighbours.
+the force calculation of the cell itself as well as for its neighbors.
 Using the domain decomposition cell scheme, two cell layers have to be
 kept in the processor cache. For 10000 particles and a typical cell grid
 size of 20, these two cell layers consume roughly 200 KBytes, which

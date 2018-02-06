@@ -48,15 +48,13 @@ class ReactionEnsembleTest(ut.TestCase):
 
     # Integration parameters
     #
-    system = espressomd.System()
+    system = espressomd.System(box_l = [box_l, box_l, box_l])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
 
     #
     # Setup System
     #
-
-    system.box_l = [box_l, box_l, box_l]
 
     N0 = 1  # number of titratable units
     K_diss = 0.0088
@@ -73,8 +71,7 @@ class ReactionEnsembleTest(ut.TestCase):
     RE = reaction_ensemble.WangLandauReactionEnsemble(
         standard_pressure=0.00108, temperature=temperature, exclusion_radius=0)
     RE.add(equilibrium_constant=K_diss, reactant_types=[0], reactant_coefficients=[
-           1], product_types=[1, 2], product_coefficients=[1, 1])
-    RE.set_default_charges(dictionary={"0": 0, "1": -1, "2": +1})
+           1], product_types=[1, 2], product_coefficients=[1, 1], default_charges={0: 0, 1: -1, 2: +1})
     system.setup_type_map([0, 1, 2, 3])
     # initialize wang_landau
     # generate preliminary_energy_run_results here, this should be done in a
@@ -95,7 +92,7 @@ class ReactionEnsembleTest(ut.TestCase):
             try:
                 self.RE.reaction()
                 for i in range(7):
-                    self.RE.global_mc_move_for_one_particle_of_type_wang_landau(3)
+                    self.RE.displacement_mc_move_for_particles_of_type(3)
             except reaction_ensemble.WangLandauHasConverged:  # only catch my exception
                 break
         # test as soon as wang_landau has converged (throws exception then)

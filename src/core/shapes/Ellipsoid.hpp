@@ -19,46 +19,44 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __PORE_HPP
-#define __PORE_HPP
+#ifndef __ELLIPSOID_HPP
+#define __ELLIPSOID_HPP
 
 #include "Shape.hpp"
 #include "Vector.hpp"
 
 namespace Shapes {
-class Pore : public Shape {
+class Ellipsoid : public Shape {
 public:
-  Pore()
-      : m_pos({0.0, 0.0, 0.0}), m_axis({0.0, 0.0, 0.0}), m_rad_left(0.0),
-        m_rad_right(0.0), m_smoothing_radius(0.0), m_length(0.0),
-        m_outer_rad_left(0.0), m_outer_rad_right(0.0) {}
+  Ellipsoid()
+      : m_center({0.0, 0.0, 0.0}), m_semiaxes({1.0, 1.0, 1.0}), m_direction(1.0) { }
 
   int calculate_dist(const double *ppos, double *dist,
                      double *vec) const override;
 
-  Vector3d &pos() { return m_pos; }
-  Vector3d &axis() { return m_axis; }
-  double &rad_left() { return m_rad_left; }
-  double &rad_right() { return m_rad_right; }
-  double &smoothing_radius() { return m_smoothing_radius; }
-  double &length() { return m_length; }
-  double &outer_rad_left() { return m_outer_rad_left; }
-  double &outer_rad_right() { return m_outer_rad_right; }
+  void set_semiaxis_a(const double &value) { m_semiaxes[0] = value; }
+  void set_semiaxis_b(const double &value) {
+    m_semiaxes[1] = value;
+    m_semiaxes[2] = value;
+  }
+
+  // not exposed via interface; used in core unit test
+  void set_semiaxis_c(const double &value) { m_semiaxes[2] = value; }
+
+  Vector3d &center() { return m_center; }
+  double &semiaxis_a() { return m_semiaxes[0]; }
+  double &semiaxis_b() { return m_semiaxes[1]; }
+  double &semiaxis_c() { return m_semiaxes[2]; }
+  double &direction() { return m_direction; }
 
 private:
-  /** center of the cylinder. */
-  Vector3d m_pos;
-  /** Axis of the cylinder .*/
-  Vector3d m_axis;
-  /** cylinder radius. */
-  double m_rad_left;
-  double m_rad_right;
-  double m_smoothing_radius;
-  /** cylinder length. **/
-  double m_length;
-  double m_outer_rad_left;
-  double m_outer_rad_right;
+  bool inside_ellipsoid(const Vector3d &ppos) const;
+  double newton_term(const Vector3d &ppos, const double &l) const;
+
+  Vector3d m_center;
+  Vector3d m_semiaxes;
+  double m_direction;
 };
-}
+} // namespace Shapes
 
 #endif

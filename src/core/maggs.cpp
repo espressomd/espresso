@@ -1187,7 +1187,7 @@ void maggs_calc_self_energy_coeffs()
 
   factor = M_PI / maggs.mesh;
   prefac = 1. / maggs.mesh;
-  prefac = 0.5 * prefac * prefac * prefac * SQR(maggs.pref1);
+  prefac = 0.5 * prefac * prefac * prefac * Utils::sqr(maggs.pref1);
   
   for(i=0;i<8;i++) 
     {
@@ -1580,7 +1580,7 @@ void maggs_calc_init_e_field()
   sqrE = 0.;
   FORALL_INNER_SITES(ix, iy, iz) {
     i = maggs_get_linear_index(ix, iy, iz, lparams.dim);
-    FOR3D(k) sqrE += SQR(Dfield[3*i+k]);
+    FOR3D(k) sqrE += Utils::sqr(Dfield[3*i+k]);
   }
 
   MPI_Allreduce(&sqrE,&gsqrE,1,MPI_DOUBLE,MPI_SUM,comm_cart); 
@@ -1599,7 +1599,7 @@ void maggs_calc_init_e_field()
 		
     FORALL_INNER_SITES(ix, iy, iz) {
       i = maggs_get_linear_index(ix, iy, iz, lparams.dim);
-      FOR3D(k) sqrE += SQR(Dfield[3*i+k]);
+      FOR3D(k) sqrE += Utils::sqr(Dfield[3*i+k]);
     }
     MPI_Allreduce(&sqrE,&gsqrE,1,MPI_DOUBLE,MPI_SUM,comm_cart); 
     gsqrE = gsqrE/(SPACE_DIM*maggs.mesh*maggs.mesh*maggs.mesh);  
@@ -1962,7 +1962,7 @@ void maggs_add_transverse_field(double dt)
   int offset, xoffset, yoffset;
   double help;
 	
-  invasq = SQR(maggs.inva);
+  invasq = Utils::sqr(maggs.inva);
   help = dt * invasq * maggs.invsqrt_f_mass;
 	
   /***calculate e-field***/ 
@@ -2285,7 +2285,7 @@ double maggs_electric_energy()
   FORALL_INNER_SITES(x, y, z) {
     i = maggs_get_linear_index(x, y, z, lparams.dim);	  
     FOR3D(k){
-      localresult += SQR(Dfield[i*3+k]) / lattice[i].permittivity[k];
+      localresult += Utils::sqr(Dfield[i*3+k]) / lattice[i].permittivity[k];
     }
   }
   localresult *= 0.5*maggs.a;
@@ -2307,7 +2307,7 @@ double maggs_magnetic_energy()
 	
   FORALL_INNER_SITES(x, y, z) {
     i = maggs_get_linear_index(x, y, z, lparams.dim);	  
-    result += SQR(Bfield[i*3]) + SQR(Bfield[i*3+1]) + SQR(Bfield[i*3+2]);
+    result += Utils::sqr(Bfield[i*3]) + Utils::sqr(Bfield[i*3+1]) + Utils::sqr(Bfield[i*3+2]);
   }
   /* B is rescaled !!! ATTENTION!!! */
   result *= 0.5*maggs.a;

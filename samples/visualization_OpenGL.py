@@ -33,12 +33,11 @@ def decreaseTemp():
         print("T = 0")
 
 
-system = espressomd.System()
+box_l = 10
+system = espressomd.System(box_l=[box_l]*3)
 
 system.time_step = 0.00001
 system.cell_system.skin = 0.4
-box_l = 10
-system.box_l = [box_l, box_l, box_l]
 
 for i in range(10):
     rpos = numpy.random.random(3) * box_l

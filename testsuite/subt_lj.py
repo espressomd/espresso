@@ -25,7 +25,7 @@ import numpy as np
 @ut.skipIf(not espressomd.has_features("LENNARD_JONES"),
            "Skipped because of not LENNARD_JONES")
 class SubtLjTest(ut.TestCase):
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.box_l = 3*[10]
     system.time_step = 1.
 
