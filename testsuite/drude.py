@@ -19,7 +19,8 @@ class Drude(ut.TestCase):
 
         """
         
-        S=espressomd.System()
+        box_l = 50
+        S=espressomd.System(box_l = [box_l]*3)
 
         S.seed = S.cell_system.get_state()['n_nodes'] * [12]
         np.random.seed(12)
@@ -93,9 +94,7 @@ class Drude(ut.TestCase):
         masses          = {"PF6":     144.96, "BMIM_C1":       67.07, "BMIM_C2":     15.04, "BMIM_C3":      57.12, "BMIM_COM":  0}
         masses["BMIM_COM"] = masses["BMIM_C1"] +  masses["BMIM_C2"] +  masses["BMIM_C3"]
 
-        box_l = 50
         box_center = 0.5*np.array(3*[box_l])
-        S.box_l=[box_l,box_l,box_l]
         S.min_global_cut = 3.5
 
         #Place Particles

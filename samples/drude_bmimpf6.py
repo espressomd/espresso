@@ -37,8 +37,16 @@ args = parser.parse_args()
 
 print("\nArguments:", args)
 
+#NUM PARTICLES AND BOX
+n_ionpairs= 100
+n_part = n_ionpairs*2
+density_si = 0.5 ;#g/cm^3
+rho_factor_bmim_pf6 = 0.003931
+box_volume = n_ionpairs/rho_factor_bmim_pf6/density_si
+box_l = box_volume**(1. / 3.)
+print("\n-->Ion pairs:", n_ionpairs, "Box size:", box_l)
 
-S=espressomd.System()
+S=espressomd.System(box_l=[box_l,box_l,box_l])
 S.virtual_sites=VirtualSitesRelative(have_velocity=True)
 
 if args.visu:
@@ -113,15 +121,6 @@ lj_cuts = {}
 for t in lj_sigmas:
     lj_cuts[t] = cutoff_sigmafactor * lj_sigmas[t] 
 
-#NUM PARTICLES AND BOX
-n_ionpairs= 100
-n_part = n_ionpairs*2
-density_si = 0.5 ;#g/cm^3
-rho_factor_bmim_pf6 = 0.003931
-box_volume = n_ionpairs/rho_factor_bmim_pf6/density_si
-box_l = box_volume**(1. / 3.)
-print("\n-->Ion pairs:", n_ionpairs, "Box size:", box_l)
-S.box_l=[box_l,box_l,box_l]
 S.min_global_cut = 3.5
 
 def combination_rule_epsilon(rule, eps1, eps2):
