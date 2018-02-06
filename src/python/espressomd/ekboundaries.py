@@ -15,6 +15,7 @@ class EKBoundaries(ScriptInterfaceHelper):
         Adds a boundary to the set.
         Either a valid boundary is an argument,
         or a valid set of parameters to create a boundary.
+        
         """
 
         if len(args) == 1:
@@ -36,6 +37,7 @@ class EKBoundaries(ScriptInterfaceHelper):
         ----------
         ekboundary : :obj:`EKBoundary`
                      The boundary to be removed from the set.
+                     
         """
 
         self.call_method("remove", ekboundary=ekboundary)
@@ -45,6 +47,7 @@ class EKBoundaries(ScriptInterfaceHelper):
 class EKBoundary(ScriptInterfaceHelper):
     """
     Creates a EK boundary.
+    
     """
 
     _so_name = "LBBoundaries::LBBoundary"
