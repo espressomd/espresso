@@ -14,6 +14,7 @@ padding = 1
 box_z = width + 2*padding
 
 system = espressomd.System(box_l=[box_x, box_y, box_z])
+system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
 
 # Set the electrokinetic parameters
 

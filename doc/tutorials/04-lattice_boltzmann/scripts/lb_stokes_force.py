@@ -15,6 +15,7 @@ import numpy as np
 import sys
 # System setup
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
 agrid = 1
 radius = 5.5
 box_width = 64
