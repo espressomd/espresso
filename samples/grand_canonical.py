@@ -28,8 +28,14 @@ from espressomd.interactions import *
 from espressomd import reaction_ensemble
 from espressomd import electrostatics
 
+# print help message if proper command-line arguments are not provided
+if (len(sys.argv) != 3):
+    print("\nGot ", str(len(sys.argv)-1), " arguments, need 2\n\nusage:"+sys.argv[0]+" [cs_bulk] [excess_chemical_potential/kT]\n");
+    sys.exit();
+
 # System parameters
 #############################################################
+
 cs_bulk=float(sys.argv[1])
 excess_chemical_potential_pair=float(sys.argv[2]) #from widom insertion simulation of pair insertion
 box_l=50.0
@@ -71,8 +77,8 @@ for type_1 in types:
             epsilon=lj_eps, sigma=lj_sig,
             cutoff=lj_cut, shift="auto")
 
-RE = reaction_ensemble.ReactionEnsemble(temperature=temperature, exclusion_radius=1.0, standard_pressure=1.0)
-RE.add(equilibrium_constant=cs_bulk**2*np.exp(excess_chemical_potential_pair/temperature), reactant_types=[], reactant_coefficients=[], product_types=[1, 2], product_coefficients=[1, 1], default_charges={1: -1, 2: +1})
+RE = reaction_ensemble.ReactionEnsemble(temperature=temperature, exclusion_radius=1.0)
+RE.add(Gamma=cs_bulk**2*np.exp(excess_chemical_potential_pair/temperature), reactant_types=[], reactant_coefficients=[], product_types=[1, 2], product_coefficients=[1, 1], default_charges={1: -1, 2: +1})
 print(RE.get_status())
 system.setup_type_map([0, 1, 2])
 
