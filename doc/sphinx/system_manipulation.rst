@@ -13,7 +13,7 @@ This is implemented in
 with the parameters ``d_new`` for the new length and ``dir`` for the
 coordinates to work on and ``"xyz"`` for isotropic.
 
-,Changes the volume of either a cubic simulation box to the new volume or
+Changes the volume of either a cubic simulation box to the new volume or
 its given x-/y-/z-/xyz-extension to the new box-length, and
 isotropically adjusts the particles coordinates as well. The function
 returns the new volume of the deformed simulation box.
