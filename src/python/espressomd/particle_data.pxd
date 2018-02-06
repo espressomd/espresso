@@ -171,7 +171,7 @@ cdef extern from "particle_data.hpp":
             void pointer_to_gamma_rot(const particle * p, const double * & res)
 
     IF VIRTUAL_SITES_RELATIVE:
-        void pointer_to_vs_relative(const particle * P, const int * & res1, const double * & res2, const double * & res3)
+        void pointer_to_vs_relative(const particle * P, const int * & res1, const double * & res2, const double * & res3, const double * & res4)
 
     IF ELECTROSTATICS:
         void pointer_to_q(const particle * P, const double * & res)

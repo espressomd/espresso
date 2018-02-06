@@ -588,14 +588,14 @@ int set_particle_virtual(int part, int isVirtual) {
 
 #ifdef VIRTUAL_SITES_RELATIVE
 int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
-                             double *rel_ori) {
+                             double *rel_ori, double *vs_quat) {
   auto const pnode = get_particle_node(part);
 
   if (pnode == -1)
     return ES_ERROR;
 
   // Send the stuff
-  mpi_send_vs_relative(pnode, part, vs_relative_to, vs_distance, rel_ori);
+  mpi_send_vs_relative(pnode, part, vs_relative_to, vs_distance, rel_ori, vs_quat);
   return ES_OK;
 }
 #endif
@@ -1331,10 +1331,11 @@ void pointer_to_virtual(Particle const *p, int const *&res) {
 
 #ifdef VIRTUAL_SITES_RELATIVE
 void pointer_to_vs_relative(Particle const *p, int const *&res1,
-                            double const *&res2, double const *&res3) {
+                            double const *&res2, double const *&res3, double const *&res4) {
   res1 = &(p->p.vs_relative_to_particle_id);
   res2 = &(p->p.vs_relative_distance);
   res3 = (p->p.vs_relative_rel_orientation);
+  res4 = (p->p.vs_virtual_site_quaternion);
 }
 #endif
 

@@ -37,10 +37,10 @@ public:
     add_parameters(
             {{"have_quaternion",
             [this](const Variant &v) {
-              virtual_sites()->set_have_quaternion(get_value<bool>(v));
+              m_virtual_sites->set_have_quaternion(get_value<bool>(v));
             },
             [this]() {
-              return virtual_sites()->get_have_quaternion();
+              return m_virtual_sites->get_have_quaternion();
             }}});
   };
   /** Vs implementation we are wrapping */

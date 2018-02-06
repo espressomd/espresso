@@ -307,7 +307,7 @@ void mpi_send_virtual(int node, int part, int isVirtual);
 
 #ifdef VIRTUAL_SITES_RELATIVE
 void mpi_send_vs_relative(int node, int part, int vs_relative_to,
-                          double vs_distance, double *rel_ori);
+                          double vs_distance, double* rel_ori, double* vs_quat);
 #endif
 
 #ifdef MULTI_TIMESTEP

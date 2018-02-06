@@ -714,9 +714,10 @@ cdef class ParticleHandle(object):
                 cdef const int * rel_to = NULL
                 cdef const double * dist = NULL
                 cdef const double * q = NULL
+                cdef const double * vs_q = NULL
                 pointer_to_vs_relative(
-                    self.particle_data, rel_to, dist, q)
-                return (rel_to[0], dist[0], np.array((q[0], q[1], q[2], q[3])))
+                    self.particle_data, rel_to, dist, q, vs_q)
+                return (rel_to[0], dist[0], np.array((q[0], q[1], q[2], q[3])), np.array([vs_q[0], vs_q[1], vs_q[2], vs_q[3]]))
 
         # vs_auto_relate_to
         def vs_auto_relate_to(self, _relto):

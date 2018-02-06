@@ -154,6 +154,8 @@ struct ParticleProperties {
   double vs_relative_distance = 0;
   // Store relative position of the virtual site
   double vs_relative_rel_orientation[4] = {0., 0., 0., 0};
+  // Store the orientation of the virtual particle in the body fixed frame
+  double vs_virtual_site_quaternion[4] = {0., 0., 0., 0.};
 #endif
 #endif
 
@@ -987,7 +989,7 @@ void pointer_to_virtual(Particle const *p, int const *&res);
 
 #ifdef VIRTUAL_SITES_RELATIVE
 void pointer_to_vs_relative(Particle const *p, int const *&res1,
-                            double const *&res2, double const *&res3);
+                            double const *&res2, double const *&res3, double const *&res4);
 #endif
 
 #ifdef MULTI_TIMESTEP
