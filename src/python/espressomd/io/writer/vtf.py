@@ -45,11 +45,11 @@ def writevsf(system, fp, types='all'):
     vtf_index = vtf_pid_map(system, types)
     fp.write("unitcell {} {} {}\n".format(*(system.box_l)))
 
-    for pid, vtf_id, in vtf_index.iteritems():
+    for pid, vtf_id, in vtf_index.items():
         fp.write("atom {} radius 1 name {} type {} \n".format(vtf_id,
                                                               system.part[pid].type,
                                                               system.part[pid].type))
-    for pid, vtf_id, in vtf_index.iteritems():
+    for pid, vtf_id, in vtf_index.items():
         for b in system.part[pid].bonds:
             if (system.part[b[1]].id in vtf_index ):
                 fp.write("bond {}:{}\n".format(vtf_id, vtf_index[system.part[b[1]].id]))
@@ -71,5 +71,5 @@ def writevcf(system, fp, types='all'):
     """
     vtf_index = vtf_pid_map(system, types)
     fp.write("\ntimestep indexed\n")
-    for pid, vtf_id, in vtf_index.iteritems():
+    for pid, vtf_id, in vtf_index.items():
         fp.write("{} {} {} {}\n".format(vtf_id, *(system.part[pid].pos)))
