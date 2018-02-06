@@ -329,10 +329,9 @@ Pictured is an example constraint with a ``SimplePore`` shape created with ::
 
 The resulting surface is a stomatocyte shaped boundary. 
 This command should be used with care. 
-The ``position`` can be any point in the simulation box,
-and the ``orientation`` of the (cylindrically symmetric) stomatocyte is given by a vector,
-which points in the direction of the symmetry axis, 
-it does not need to be normalized. 
+The position can be any point in the simulation box and is set via the array_like parameter ``center``.
+The orientation of the (cylindrically symmetric) stomatocyte is given by an array_like ``axis``,
+which points in the direction of the symmetry axis and does not need to be normalized.
 The parameters: ``outer_radius``, ``inner_radius``, and ``layer_width``, specify the shape of the stomatocyte.
 Here inappropriate choices of these parameters can yield undesired results. 
 The width ``layer_width`` is used as a scaling parameter.
@@ -355,7 +354,7 @@ but the combination 7:3:1 is a good point to start from when trying to modify th
    
 Pictured is an example constraint with a ``Stomatocyte`` shape (with a closeup of the internal structure) created with ::
   
-    stomatocyte=Stomatocyte(inner_radius=3, outer_radius=7, orientation=[1.0, 0.0, 0.0], position=[25, 25, 25], layer_width=3, direction=1)
+    stomatocyte=Stomatocyte(inner_radius=3, outer_radius=7, axis=[1.0, 0.0, 0.0], center=[25, 25, 25], layer_width=3, direction=1)
     system.constraints.add(shape=stomatocyte, particle_type=0, penetrable=1)
 
     
@@ -423,9 +422,10 @@ The resulting surface is a section of a hollow cone.
 The parameters ``inner_radius`` and ``outer_radius`` specifies the two radii .
 The parameter ``opening_angle`` specifies the opening angle of the cone (in radians, between 0 and:math:`\pi/2` ), and thus also determines the length.
 
-The orientation of the (cylindrically symmetric) cone is specified with the array_like parameter ``orientation``. It points in the direction of the symmetry axis, and does not need to be normalized.
+The orientation of the (cylindrically symmetric) cone is specified with the array_like parameter ``axis``,
+which points in the direction of the symmetry axis, and does not need to be normalized.
 
-The position is specified with ``position`` and can be any point in the simulation box.
+The position is specified via the array_like parameter ``center`` and can be any point in the simulation box.
 
 The ``width`` specifies the width.
 This shape supports the ``direction`` parameter, +1 the normal points out of the mantel, -1 for when points inward.
@@ -438,7 +438,7 @@ This shape supports the ``direction`` parameter, +1 the normal points out of the
 
 Pictured is an example constraint with a ``Hollowcone`` shape created with ::
   
-    hollowcone=Hollowcone(HollowCone(inner_radius=5, outer_radius=20, opening_angle=np.pi/4.0, orientation=[1.0, 0.0, 0.0], position=[25, 25, 25], width=2, direction=1)
+    hollowcone=Hollowcone(HollowCone(inner_radius=5, outer_radius=20, opening_angle=np.pi/4.0, axis=[1.0, 0.0, 0.0], center=[25, 25, 25], width=2, direction=1)
     system.constraints.add(shape=hollowcone, particle_type=0, penetrable=1)
 
 

@@ -31,12 +31,12 @@ namespace Shapes {
 class HollowCone : public Shape {
 public:
   HollowCone() : m_hollowcone(new ::Shapes::HollowCone()) {
-    add_parameters({{"position",
+    add_parameters({{"center",
                      [this](Variant const &v) {
                        m_hollowcone->set_position(get_value<Vector3d>(v));
                      },
                      [this]() { return m_hollowcone->position(); }},
-                    {"orientation",
+                    {"axis",
                      [this](Variant const &v) {
                        m_hollowcone->set_orientation(get_value<Vector3d>(v));
                      },
