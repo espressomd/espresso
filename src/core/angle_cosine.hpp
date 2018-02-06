@@ -75,7 +75,7 @@ inline int calc_angle_cosine_force(Particle *p_mid, Particle *p_left, Particle *
 
   if ( cosine >  TINY_COS_VALUE ) cosine = TINY_COS_VALUE;
   if ( cosine < -TINY_COS_VALUE)  cosine = -TINY_COS_VALUE;
-  fac *= iaparams->p.angle_cosine.sin_phi0 * (cosine/sqrt(1-SQR(cosine))) + iaparams->p.angle_cosine.cos_phi0;
+  fac *= iaparams->p.angle_cosine.sin_phi0 * (cosine/sqrt(1-Utils::sqr(cosine))) + iaparams->p.angle_cosine.cos_phi0;
   
   for(j=0;j<3;j++) {
     f1               = fac * (cosine * vec1[j] - vec2[j]) * d1i;
@@ -118,7 +118,7 @@ inline void calc_angle_cosine_3body_forces(Particle *p_mid, Particle *p_left,
   vec31_sqr = sqrlen(vec31);
   vec31_magn = sqrt(vec31_sqr);
   cos_phi = scalar(vec21, vec31) / (vec21_magn * vec31_magn);
-  sin_phi = sqrt(1.0 - SQR(cos_phi));
+  sin_phi = sqrt(1.0 - Utils::sqr(cos_phi));
 
   /* uncomment this block if interested in the angle 
   if(cos_phi < -1.0) cos_phi = -TINY_COS_VALUE;
@@ -184,7 +184,7 @@ inline int angle_cosine_energy(Particle *p_mid, Particle *p_left, Particle *p_ri
   if ( cosine < -TINY_COS_VALUE)  cosine = -TINY_COS_VALUE;
   /* bond angle energy */
 
-  *_energy = iaparams->p.angle_cosine.bend*(cosine*iaparams->p.angle_cosine.cos_phi0 - sqrt(1-SQR(cosine))*iaparams->p.angle_cosine.sin_phi0+1);
+  *_energy = iaparams->p.angle_cosine.bend*(cosine*iaparams->p.angle_cosine.cos_phi0 - sqrt(1-Utils::sqr(cosine))*iaparams->p.angle_cosine.sin_phi0+1);
 
   return 0;
 }

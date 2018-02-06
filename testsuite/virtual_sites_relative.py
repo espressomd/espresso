@@ -32,7 +32,7 @@ from numpy import random
 @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"),
            "Test requires VIRTUAL_SITES_RELATIVE")
 class VirtualSites(ut.TestCase):
-    s = espressomd.System()
+    s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     s.seed = range(s.cell_system.get_state()["n_nodes"])
 
     @classmethod

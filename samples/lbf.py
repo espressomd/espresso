@@ -34,11 +34,10 @@ Program Information:""")
 print(espressomd.features())
 
 
-system = espressomd.System()
+box_l = 50
+system = espressomd.System(box_l=[box_l]*3)
 system.time_step = 0.01
 system.cell_system.skin = 0.1
-box_l = 50
-system.box_l = [box_l, box_l, box_l]
 
 system.part.add(id=0, pos=[box_l / 2.0, box_l /
                            2.0, box_l / 2.0], fix=[1, 1, 1])
