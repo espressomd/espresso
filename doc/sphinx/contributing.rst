@@ -66,7 +66,7 @@ It is also generally a good idea to contact the mailing lists before you
 start major coding projects. It might be that someone else is already
 working on the problem or has a solution at hand.
 
-.. _Building the Developers guide:
+.. _Building the Developer's guide:
 
 Building the Developer's guide
 ------------------------------
@@ -85,7 +85,7 @@ of the build directory: ``doc/doxygen/html/index.html``.
 A recent version of this guide can also be found on the homepage
 http://espressomd.org/html/dox/.
 
-.. _Building the Users guide:
+.. _Building the User's guide:
 
 Building the User's guide
 -------------------------
