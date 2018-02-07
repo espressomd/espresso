@@ -30,7 +30,7 @@
 int smooth_step_set_params(int part_type_a, int part_type_b,
 			   double d, int n, double eps,
 			   double k0, double sig,
-			   double cut)
+			   double cut, double shift)
 {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
   
@@ -42,6 +42,7 @@ int smooth_step_set_params(int part_type_a, int part_type_b,
   data->SmSt_d      = d;
   data->SmSt_n      = n;
   data->SmSt_k0     = k0;
+  data->SmSt_shift  = shift;
  
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
