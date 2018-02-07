@@ -60,7 +60,7 @@ inline double gaussian_pair_energy(const Particle *p1, const Particle *p2,
                                    double dist2) {
   if ((dist < ia_params->Gaussian_cut)) {
     return ia_params->Gaussian_eps *
-           exp(-0.5 * Utils::sqr(dist / ia_params->Gaussian_sig)) - ia_params->Gaussian_shift;
+           exp(-0.5 * Utils::sqr(dist / ia_params->Gaussian_sig)) + ia_params->Gaussian_shift;
   }
   return 0.0;
 }
