@@ -22,6 +22,7 @@ import unittest as ut
 import espressomd
 import numpy as np
 
+@ut.skipIf(not espressomd.has_features(["MASS"]), "Features not available, skipping test!")
 class ThermalizedBond(ut.TestCase):
     """Tests the two velocity distributions for COM and distance created by the thermalized bond independently against 
 the single component Maxwell distribution. Adapted from langevin_thermostat testcase."""
