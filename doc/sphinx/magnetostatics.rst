@@ -8,14 +8,10 @@ Magnetostatics / Dipolar interactions
 Dipolar interaction
 -------------------
 
-inter magnetic 0.0 inter magnetic inter magnetic
-
-These commands can be used to set up magnetostatic interactions, which
-is defined as follows:
-
+|es| contains methods to calculate the interactions between point dipoles
 .. math::
 
-   U^{D-P3M}(\vec{r}) = D \cdot \left( \frac{(\vec{\mu}_i \cdot \vec{\mu}_j)}{r^3} 
+   U^{Dip}(\vec{r}) = D \cdot \left( \frac{(\vec{\mu}_i \cdot \vec{\mu}_j)}{r^3} 
      - \frac{3  (\vec{\mu}_i \cdot \vec{r})  (\vec{\mu}_j \cdot \vec{r}) }{r^5} \right)
 
 where :math:`r=|\vec{r}|`.
@@ -25,90 +21,76 @@ The prefactor :math:`D` is can be set by the user and is given by
 
   D =\frac{\mu_0 \mu}{4\pi}
 
-Computing magnetostatic interactions is computationally very expensive.
-features some state-of-the-art algorithms to deal with these
-interactions as efficiently as possible, but almost all of them require
+where :math:`\mu_0` and :math:`\mu` are the vacuum permittivity and the relative permittivity of the background material, respectively.
+
+Magnetostatic interactions are activated via the actor framework::
+
+    from espressomd.magnetostatics import DipolarDirectSumCpu
+
+    direct_sum=DipolarDirectSumCpu(prefactor=1)
+    system.actors.add(direct_sum)
+    #...
+    system.actors.remove(direct_sum)
+
+The magnetostatics algorithms for periodic boundary conditions require
 some knowledge to use them properly. Uneducated use can result in
 completely unphysical simulations.
 
-The commands above work as their counterparts for the electrostatic
-interactions (see section ). Variant disables dipolar interactions.
-Variant returns the current parameters of the dipolar interaction as a
-Tcl-list using the same syntax as used to setup the method,
 
-coulomb 1.0 p3m 7.75 8 5 0.1138 0.0 coulomb epsilon 0.1 n_interpol
-32768 mesh_off 0.5 0.5 0.5
-
-Variant is the generic syntax to set up a specific method or its
-parameters, the details of which are described in the following
-subsections. Note that using the magnetostatic interaction also requires
-assigning dipole moments to the particles. This is done using the
-``part`` command to set the dipole moment ``dip``,
-
-inter coulomb 1.0 p3m tune accuracy 1e-4 part 0 dip 1 0 0; part 1 dip 0
-0 1
 
 .. _Dipolar P3M:
 
 Dipolar P3M
 ~~~~~~~~~~~
-
-inter magnetic p3m
-
-This command activates the P3M method to compute the dipolar
-interactions between charged particles. The different parameters are
-described in more detail in :cite:`cerda08a`.
-
-    The real space cutoff as a positive floating point number.
-
-    The number of mesh points, as a single positive integer.
-
-    The *charge-assignment order*, an integer between :math:`0` and
-    :math:`7`.
-
-    The Ewald parameter as a positive floating point number.
+This is the dipolar version of the P3M algorithm, described in :cite:`cerda08d`.
+It is interfaced via :class:`espressomd.magnetostatics.DipolarP3M`.
 
 Make sure that you know the relevance of the P3M parameters before using
 P3M! If you are not sure, read the following references
-:cite:`ewald21,hockney88,kolafa92,deserno98,deserno98a,deserno00,deserno00a`.
 
 Note that dipolar P3M does not work with non-cubic boxes.
 
-.. _Tuning dipolar P3M:
 
-Tuning dipolar P3M
-^^^^^^^^^^^^^^^^^^
+The parameters of the dipolar P3M method can be tuned automatically, by providing `accuracy=<TARGET_ACCURACY>` to the method. 
+It is also possible to pass a subset of the method parameters such as `mesh`. In that case, only the omitted parameters are tuned::
 
-| inter magnetic p3m accuracy
 
-Tuning dipolar P3M works exactly as tuning Coulomb P3M. Therefore, for
-details on how to tune the algorithm, refer to the documentation of
-Coulomb P3M (see section ).
+    import espressomd.magnetostatics as magnetostatics        
+    p3m = magnetostatics.DipolarP3M(prefactor=1, mesh=32, accuracy=1E-4)
+    system.actors.add(p3m)
 
-For the magnetic case, the expressions of the error estimate are given
-in :cite:`cerda08a`.
+It is important to note that the error estimates given in :cite:`cerda08a` used in the tuning contain assumptions about the system. In particular, a homogeneous system is assumed. If this is no longer the case during the simulation, actual force and torque errors can be significantly larger.
 
 .. _Dipolar Layer Correction (DLC):
 
+
 Dipolar Layer Correction (DLC)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:class:`espressomd.magnetostatic_extensions.DLC` 
 
-inter magnetic mdlc
+The dipolar layer correction (DLC) is used in conjunction with the dipolar P3M method to calculate dipolar interactions in a 2D-periodic system.
+It is based on :cite:`brodka04a` and the dipolar version of 
+:ref:`Electrostatic Layer Correction (ELC)`.
 
-Like ELC but applied to the case of magnetic dipoles, but here the
-accuracy is the one you wish for computing the energy. is set to a value
-that, assuming all dipoles to be as larger as the largest of the dipoles
-in the system, the error for the energy would be smaller than the value
-given by accuracy. At this moment you cannot compute the accuracy for
-the forces, or torques, nonetheless, usually you will have an error for
-forces and torques smaller than for energies. Thus, the error for the
-energies is an upper boundary to all errors in the calculations.
+Usage notes:
 
-At present, the program assumes that the gap without particles is along
-the z-direction. The gap-size is the length along the z-direction of the
-volume where particles are not allowed to enter.
+  * The non-periodic direction is always the `z`-direction.
+  
+  * The method relies on a slab of the simulation box perpendicular to the z-direction not to contain particles. The size in z-direction of this slab is controlled by the `gap_size` parameter. The user has to ensure that no particles enter this region by menas of constraints or by fixing the particles' z-coordinate. When there is no empty slab of the specified size, the method will silently produce wrong results.
 
-As a reference for the DLC method, see :cite:`brodka04a`.
+  * The method can be tuned using the `accuracy` parameter. In contrast to the elctrostatic method, it refers to the energy. Furthermore, it is assumed that all dipole moment are as larger as the largest of the dipoles in the system. 
+
+The method is used as follows::
+
+    import espressomd.magnetostatics as magnetostatics
+    import espressomd.magnetostatic_extensions as magnetostatic_extensions
+    
+    p3m = magnetostatics.DipolarP3M(prefactor=1, accuracy=1E-4)
+    dlc = magnetostatic_extensions.DLC(maxPWerror=1E-5, gap_size=2.)
+    system.actors.add(p3m)
+    system.actors.add(dlc)
+
+
 
 .. _Dipolar all-with-all and no replicas (DAWAANR):
 
