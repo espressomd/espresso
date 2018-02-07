@@ -879,7 +879,8 @@ IF SMOOTH_STEP == 1:
                 "eps": ia_params.SmSt_eps,
                 "k0": ia_params.SmSt_k0,
                 "sig": ia_params.SmSt_sig,
-                "cutoff": ia_params.SmSt_cut
+                "cutoff": ia_params.SmSt_cut,
+                "shift": ia_params.SmSt_shift
             }
 
         def is_active(self):
@@ -895,7 +896,8 @@ IF SMOOTH_STEP == 1:
                                       self._params["eps"],
                                       self._params["k0"],
                                       self._params["sig"],
-                                      self._params["cutoff"]):
+                                      self._params["cutoff"],
+                                      self._params["shift"]):
                 raise Exception("Could not set smooth-step parameters")
 
         def default_params(self):
@@ -908,7 +910,8 @@ IF SMOOTH_STEP == 1:
                 "eps": 0.,
                 "k0": 0.,
                 "sig": 0.,
-                "cutoff": 0.}
+                "cutoff": 0.,
+                "shift": 0.}
 
         def type_name(self):
             """Name of interaction type.
@@ -934,6 +937,8 @@ IF SMOOTH_STEP == 1:
                   Length scale of second (soft) repulsion.
             cutoff : :obj:`float`
                 Cutoff distance of the interaction.
+            shift : :obj:`float`, string
+                Constant shift of the potential.
 
             """
             super(SmoothStepInteraction, self).set_params(**kwargs)
@@ -942,7 +947,7 @@ IF SMOOTH_STEP == 1:
             """All parameters that can be set.
 
             """
-            return "d", "n", "eps", "k0", "sig", "cutoff"
+            return "d", "n", "eps", "k0", "sig", "cutoff", "shift"
 
         def required_keys(self):
             """Parameters that have to be set.
@@ -1277,6 +1282,7 @@ IF SOFT_SPHERE == 1:
                 "n": ia_params.soft_n,
                 "cutoff": ia_params.soft_cut,
                 "offset": ia_params.soft_offset
+                "shift": ia_params.soft_shift
             }
 
         def is_active(self):
@@ -1290,7 +1296,8 @@ IF SOFT_SPHERE == 1:
                                       self._params["a"],
                                       self._params["n"],
                                       self._params["cutoff"],
-                                      self._params["offset"]):
+                                      self._params["offset"],
+                                      self._params["shift"]):
                 raise Exception("Could not set Soft-sphere parameters")
 
         def default_params(self):
@@ -1301,7 +1308,8 @@ IF SOFT_SPHERE == 1:
                 "a": 0.,
                 "n": 0.,
                 "cutoff": 0.,
-                "offset": 0.}
+                "offset": 0.,
+                "shift": 0.}
 
         def type_name(self):
             """Name of interaction type.
@@ -1323,6 +1331,8 @@ IF SOFT_SPHERE == 1:
                      Cutoff distance of the interaction.
             offset : :obj:`float`, optional
                      Offset distance of the interaction.
+            shift : :obj:`float`, string, optional
+                Constant shift of the potential.
 
             """
             super(SoftSphereInteraction, self).set_params(**kwargs)
@@ -1331,7 +1341,7 @@ IF SOFT_SPHERE == 1:
             """All parameters that can be set.
 
             """
-            return "a", "n", "cutoff", "offset"
+            return "a", "n", "cutoff", "offset", "shift"
 
         def required_keys(self):
             """Parameters that have to be set.
@@ -1443,7 +1453,8 @@ IF GAUSSIAN == 1:
             return {
                 "eps": ia_params.Gaussian_eps,
                 "sig": ia_params.Gaussian_sig,
-                "cutoff": ia_params.Gaussian_cut
+                "cutoff": ia_params.Gaussian_cut,
+                "shift": ia_params.Gaussian_shift
             }
 
         def is_active(self):
@@ -1456,7 +1467,8 @@ IF GAUSSIAN == 1:
             if gaussian_set_params(self._part_types[0], self._part_types[1],
                                    self._params["eps"],
                                    self._params["sig"],
-                                   self._params["cutoff"]):
+                                   self._params["cutoff"],
+                                   self._params["shift"]):
                 raise Exception(
                     "Could not set Gaussian interaction parameters")
 
@@ -1467,7 +1479,8 @@ IF GAUSSIAN == 1:
             return {
                 "eps": 0.,
                 "sig": 1.,
-                "cutoff": 0.}
+                "cutoff": 0.
+                "shift": 0.}
 
         def type_name(self):
             """Name of interaction type.
@@ -1487,6 +1500,8 @@ IF GAUSSIAN == 1:
                   Variance sigma of the Gaussian interactin.
             cutoff : :obj:`float`
                      Cutoff distance of the interaction.
+            shift : :obj:`float`, string, optional
+                Constant shift of the potential.
 
             """
             super(GaussianInteraction, self).set_params(**kwargs)
@@ -1495,7 +1510,7 @@ IF GAUSSIAN == 1:
             """All parameters that can be set.
 
             """
-            return "eps", "sig", "cutoff"
+            return "eps", "sig", "cutoff", "shift"
 
         def required_keys(self):
             """Parameters that have to be set.
