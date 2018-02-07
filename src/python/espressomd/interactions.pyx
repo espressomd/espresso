@@ -2021,56 +2021,56 @@ if P3M:
             bonded_coulomb_p3m_sr_set_params(
                 self._bond_id,  self._params["q1q2"])
     
-    class ThermalizedBond(BondedInteraction):
+class ThermalizedBond(BondedInteraction):
 
-        def __init__(self, *args, **kwargs):
-            """ 
-            ThermalizedBond initialiser. Used to instatiate a ThermalizedBond identifier
-            with a given set of parameters. 
+    def __init__(self, *args, **kwargs):
+        """ 
+        ThermalizedBond initialiser. Used to instatiate a ThermalizedBond identifier
+        with a given set of parameters. 
 
-            Parameters
-            ----------
+        Parameters
+        ----------
 
-            temp_com : :obj:`float`
-                        Sets the temerature of the Langevin thermostat for the com of the particle pair.
-            gamma_com: :obj:`float`
-                        Sets the friction coefficient of the Langevin thermostat for the com of the particle pair.
-            temp_distance: :obj:`float` 
-                        Sets the temerature of the Langevin thermostat for the distance vector of the particle pair.
-            gamma_distance: :obj:`float` 
-                         Sets the friction coefficient of the Langevin thermostat for the distance vector of the particle pair.
-            r_cut: :obj:`float`, optional
-                    Specifies maximum distance beyond which the bond is considered broken.
-            """
-            super(ThermalizedBond, self).__init__(*args, **kwargs)
+        temp_com : :obj:`float`
+                    Sets the temerature of the Langevin thermostat for the com of the particle pair.
+        gamma_com: :obj:`float`
+                    Sets the friction coefficient of the Langevin thermostat for the com of the particle pair.
+        temp_distance: :obj:`float` 
+                    Sets the temerature of the Langevin thermostat for the distance vector of the particle pair.
+        gamma_distance: :obj:`float` 
+                     Sets the friction coefficient of the Langevin thermostat for the distance vector of the particle pair.
+        r_cut: :obj:`float`, optional
+                Specifies maximum distance beyond which the bond is considered broken.
+        """
+        super(ThermalizedBond, self).__init__(*args, **kwargs)
 
 
-        def type_number(self):
-            return BONDED_IA_THERMALIZED_DIST
+    def type_number(self):
+        return BONDED_IA_THERMALIZED_DIST
 
-        def type_name(self):
-            return "THERMALIZED_DIST"
+    def type_name(self):
+        return "THERMALIZED_DIST"
 
-        def valid_keys(self):
-            return "temp_com", "gamma_com", "temp_distance", "gamma_distance", "r_cut"
+    def valid_keys(self):
+        return "temp_com", "gamma_com", "temp_distance", "gamma_distance", "r_cut"
 
-        def required_keys(self):
-            return "temp_com", "gamma_com", "temp_distance", "gamma_distance"
+    def required_keys(self):
+        return "temp_com", "gamma_com", "temp_distance", "gamma_distance"
 
-        def set_default_params(self):
-            self._params = {"temp_com": 1., "gamma_com": 1., "temp_distance": 1., "gamma_distance": 1., "r_cut": 0.}
+    def set_default_params(self):
+        self._params = {"temp_com": 1., "gamma_com": 1., "temp_distance": 1., "gamma_distance": 1., "r_cut": 0.}
 
-        def _get_params_from_es_core(self):
-            return \
-                {"temp_com": bonded_ia_params[self._bond_id].p.thermalized_bond.temp_com,
-                 "gamma_com": bonded_ia_params[self._bond_id].p.thermalized_bond.gamma_com,
-                 "temp_distance": bonded_ia_params[self._bond_id].p.thermalized_bond.temp_distance,
-                 "gamma_distance": bonded_ia_params[self._bond_id].p.thermalized_bond.gamma_distance,
-                 "r_cut": bonded_ia_params[self._bond_id].p.thermalized_bond.r_cut}
+    def _get_params_from_es_core(self):
+        return \
+            {"temp_com": bonded_ia_params[self._bond_id].p.thermalized_bond.temp_com,
+             "gamma_com": bonded_ia_params[self._bond_id].p.thermalized_bond.gamma_com,
+             "temp_distance": bonded_ia_params[self._bond_id].p.thermalized_bond.temp_distance,
+             "gamma_distance": bonded_ia_params[self._bond_id].p.thermalized_bond.gamma_distance,
+             "r_cut": bonded_ia_params[self._bond_id].p.thermalized_bond.r_cut}
 
-        def _set_params_in_es_core(self):
-            thermalized_bond_set_params(
-                self._bond_id,  self._params["temp_com"],  self._params["gamma_com"],  self._params["temp_distance"],  self._params["gamma_distance"], self._params["r_cut"])
+    def _set_params_in_es_core(self):
+        thermalized_bond_set_params(
+            self._bond_id,  self._params["temp_com"],  self._params["gamma_com"],  self._params["temp_distance"],  self._params["gamma_distance"], self._params["r_cut"])
 
 IF THOLE:
     cdef class TholeInteraction(NonBondedInteraction):
