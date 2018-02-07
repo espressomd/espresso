@@ -893,9 +893,9 @@ IF SMOOTH_STEP == 1:
             # Handle the case of shift="auto"
             if self._params["shift"] == "auto":
                 # Calc shift
-                self._params["shift"] = (self._params["sigma"] / self._params["cutoff"])**self._params["n"] 
+                self._params["shift"] = - ((self._params["sigma"] / self._params["cutoff"])**self._params["n"] 
                                          - (self._params["eps"] / (1. + 2.718281828459045**(2*self._params["k0"] * 
-                                                                  (self._params["cutoff"]-self._params["sig"]))))
+                                                                  (self._params["cutoff"]-self._params["sig"])))))
                                             # used value of e to 15 dp.
             
             if smooth_step_set_params(self._part_types[0], self._part_types[1],
@@ -1303,7 +1303,7 @@ IF SOFT_SPHERE == 1:
             # Handle the case of shift="auto"
             if self._params["shift"] == "auto":
                 # Calc shift
-                self._params["shift"] = self._params["a"]*(self._params["cutoff"]-self._params["offset"])**(-self._params["n"])                              
+                self._params["shift"] = - self._params["a"]*(self._params["cutoff"]-self._params["offset"])**(-self._params["n"])                              
                                             
             if soft_sphere_set_params(self._part_types[0], self._part_types[1],
                                       self._params["a"],
@@ -1480,7 +1480,7 @@ IF GAUSSIAN == 1:
             # Handle the case of shift="auto"
             if self._params["shift"] == "auto":
                 # Calc shift
-                self._params["shift"] = self._params["eps"]*2.718281828459045**(- (self._params["cutoff"]
+                self._params["shift"] = - self._params["eps"]*2.718281828459045**(- (self._params["cutoff"]
                                                                                  /self._params["sig"])**2 * 0.5 )
                                                                                 
             if gaussian_set_params(self._part_types[0], self._part_types[1],
