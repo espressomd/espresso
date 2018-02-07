@@ -78,6 +78,7 @@ cdef extern from "interaction_data.hpp":
         double SmSt_d
         int SmSt_n
         double SmSt_k0
+        double SmSt_shift
 
         double BMHTF_A;
         double BMHTF_B;
@@ -104,6 +105,7 @@ cdef extern from "interaction_data.hpp":
         double soft_n
         double soft_cut
         double soft_offset
+        double soft_shift
 
         double Hertzian_eps
         double Hertzian_sig
@@ -111,6 +113,7 @@ cdef extern from "interaction_data.hpp":
         double Gaussian_eps
         double Gaussian_sig
         double Gaussian_cut
+        double Gaussian_shift
 
         int dpd_wf
         int dpd_twf
@@ -172,7 +175,7 @@ IF SMOOTH_STEP:
         int smooth_step_set_params(int part_type_a, int part_type_b,
                                    double d, int n, double eps,
                                    double k0, double sig,
-                                   double cut);
+                                   double cut, double shift);
 IF BMHTF_NACL:
     cdef extern from "bmhtf-nacl.hpp":
         int BMHTF_set_params(int part_type_a, int part_type_b,
@@ -194,7 +197,7 @@ IF BUCKINGHAM:
 IF SOFT_SPHERE:
     cdef extern from "soft_sphere.hpp":
         int soft_sphere_set_params(int part_type_a, int part_type_b,
-                                   double a, double n, double cut, double offset);
+                                   double a, double n, double cut, double offset, double shift);
 
 IF HERTZIAN:
     cdef extern from "hertzian.hpp":
@@ -204,7 +207,7 @@ IF HERTZIAN:
 IF GAUSSIAN:
     cdef extern from "gaussian.hpp":
         int gaussian_set_params(int part_type_a, int part_type_b,
-                                double eps, double sig, double cut);
+                                double eps, double sig, double cut, double shift);
 
 IF DPD:
     cdef extern from "dpd.hpp":
