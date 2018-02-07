@@ -72,7 +72,7 @@ inline double SmSt_pair_energy(const Particle *p1, const Particle *p2,
   fracP = pow(frac, ia_params->SmSt_n);
   er = exp(2. * ia_params->SmSt_k0 * (dist - ia_params->SmSt_sig));
 
-  return fracP + ia_params->SmSt_eps / (1.0 + er) - ia_params->SmSt_shift;
+  return fracP + ia_params->SmSt_eps / (1.0 + er) + ia_params->SmSt_shift;
 }
 
 #endif /* ifdef SMOOTH_STEP */
