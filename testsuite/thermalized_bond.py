@@ -31,8 +31,6 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
     s.cell_system.set_n_square()
     s.cell_system.skin = 0.3
     s.seed = range(s.cell_system.get_state()["n_nodes"])
-    if espressomd.has_features("PARTIAL_PERIODIC"):
-        s.periodicity = 0,0,0
 
     @classmethod
     def setUpClass(cls):
@@ -68,6 +66,9 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
         s = self.s
         s.part.clear()
         s.time_step = 0.02
+        
+        if espressomd.has_features("PARTIAL_PERIODIC"):
+            s.periodicity = 0,0,0
         
         m1 = 1.0
         m2 = 10.0
@@ -112,6 +113,7 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
         s = self.s
         s.part.clear()
         s.time_step = 0.02
+        s.periodicity = 1,1,1
         
         m1 = 1.0
         m2 = 10.0
@@ -125,7 +127,7 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
         t_com = 0.0
         g_com = 0.0
        
-        thermalized_dist_bond = espressomd.interactions.ThermalizedBond(temp_com = t_com, gamma_com = g_com, temp_distance = t_dist, gamma_distance = g_dist, r_cut = 8.7)
+        thermalized_dist_bond = espressomd.interactions.ThermalizedBond(temp_com = t_com, gamma_com = g_com, temp_distance = t_dist, gamma_distance = g_dist, r_cut = 9)
         s.bonded_inter.add(thermalized_dist_bond)
 
         for i in range(0,N,2):
