@@ -529,7 +529,7 @@ cdef class System(object):
         Returns
         -------
         :obj:`int`
-            The number of particles which share the given type.
+            The number of particles which have the given type.
 
         """
         self.check_valid_type( type)
