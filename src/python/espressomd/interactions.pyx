@@ -895,7 +895,7 @@ IF SMOOTH_STEP == 1:
                 # Calc shift
                 self._params["shift"] = (self._params["sigma"] / self._params["cutoff"])**self._params["n"] 
                                          - (self._params["eps"] / (1. + 2.718281828459045**(2*self._params["k0"] * 
-                                                                  (self._params["cutoff"]-self._params["sig"])))
+                                                                  (self._params["cutoff"]-self._params["sig"]))))
                                             # used value of e to 15 dp.
             
             if smooth_step_set_params(self._part_types[0], self._part_types[1],
@@ -1289,7 +1289,7 @@ IF SOFT_SPHERE == 1:
                 "a": ia_params.soft_a,
                 "n": ia_params.soft_n,
                 "cutoff": ia_params.soft_cut,
-                "offset": ia_params.soft_offset
+                "offset": ia_params.soft_offset,
                 "shift": ia_params.soft_shift
             }
 
@@ -1480,7 +1480,7 @@ IF GAUSSIAN == 1:
             # Handle the case of shift="auto"
             if self._params["shift"] == "auto":
                 # Calc shift
-                self._params["shift"] = self._params["eps"]*2.718281828459045**(((self._params["cutoff"]-self._params["offset"])
+                self._params["shift"] = self._params["eps"]*2.718281828459045**(- (self._params["cutoff"]
                                                                                  /self._params["sig"])**2 * 0.5 )
                                                                                 
             if gaussian_set_params(self._part_types[0], self._part_types[1],
@@ -1498,7 +1498,7 @@ IF GAUSSIAN == 1:
             return {
                 "eps": 0.,
                 "sig": 1.,
-                "cutoff": 0.
+                "cutoff": 0.,
                 "shift": 0.}
 
         def type_name(self):
