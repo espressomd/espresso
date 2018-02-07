@@ -1,8 +1,9 @@
 .. _Setting up particles:
 
-====================
 Setting up particles
 ====================
+
+.. _Overview of the relevant Python classes:
 
 Overview of the relevant Python classes
 ---------------------------------------
@@ -16,6 +17,7 @@ in almost no case have these classes to be instanced explicitly by the user.
 Rather, access is provided via the :attr:`espressomd.system.System.part` attribute.
 The details are explained in the following sections.
 
+.. _Adding particles:
 
 Adding particles
 ----------------
@@ -42,6 +44,7 @@ Furthermore, the :meth:`espressomd.particle_data.ParticleList.add` method return
 
 Note that the instance of :class:`espressomd.particle_data.ParticleHandle` returned by :meth:`espressomd.particle_data.ParticleList.add` are handles for the live particles in the simulation, rather than offline copies. Changing their properties will affect the simulation.
 
+.. _Accessing particle properties:
 
 Accessing particle properties
 -----------------------------
@@ -63,6 +66,8 @@ Similarly, the position can be set::
 
 Note that the index and the property ID are not necessarily the same.
 
+.. _Vectorial properties:
+
 Vectorial properties
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -70,8 +75,10 @@ For vectorial particle properties, component-wise manipulation like ``system.par
 = 1`` or in-place operators like ``+=`` or ``*=`` are not allowed and result in an error.
 This behavior is inherited, so the same applies to ``a`` after ``a =
 system.part[0].pos``. If you want to use an vectorial property for further
-calculations, you should explicity make a copy e.g. via
+calculations, you should explicitly make a copy e.g. via
 ``a = numpy.copy(system.part[0].pos)``.
+
+.. _Interacting with groups of particles:
 
 Interacting with groups of particles
 ------------------------------------
@@ -96,7 +103,7 @@ Setting slices can be done by
 
     system.part[0:3].ext_force = [[1, 0, 0], [2, 0, 0], [3, 0, 0]]
 
-For list properties that have no fixed length like ``exculsions`` or ``bonds``, some care has to be taken.
+For list properties that have no fixed length like ``exclusions`` or ``bonds``, some care has to be taken.
 There, *single value* assignment also accepts lists/tuples just like setting the property of an individual particle. For example::
 
     system.part[0].exclusions = [1, 2]
@@ -116,6 +123,7 @@ The above code snippet would lead the the same exclusions as the one before.
 The same accounts for the ``bonds`` property by interchanging the integer entries of the exclusion list with 
 the tuple ``(bond, partners)``. 
 
+.. _Deleting particles:
 
 Deleting particles
 ------------------
@@ -128,6 +136,8 @@ For example, to delete all particles with particle index greater than 10, run::
 To delete all particles, use::
 
     system.part.clear()
+
+.. _Iterating over particles and pairs of particles:
 
 Iterating over particles and pairs of particles
 -----------------------------------------------
@@ -142,17 +152,17 @@ You can iterate over all particles or over a subset of particles as follows::
 You can iterate over all pairs of particles using::
     
     for pair in system.part.pairs():
-        print(pair[1].id,pair[2].id)
+        print(pair[0].id,pair[1].id)
 
         
+.. _Exclusions:
+
 Exclusions
 ----------
 
-        :todo: `Perhaps this does not need its own section.`
-
-Particles can have an exclusion list of all other particles where nonbonded interactions are ignored.
+Particles can have an exclusion list of all other particles where non-bonded interactions are ignored.
 This is typically used in atomistic simulations, 
-where nearest and next nearest neighbour interactions along the chain have to be omitted since they are included in the bonding potentials.
+where nearest and next nearest neighbor interactions along the chain have to be omitted since they are included in the bonding potentials.
 Be aware that currently, exclusions also remove the short range part of electrostatics and dipolar interactions. Hence, exclusions should not be applied to pairs of particles which are charged or carry a dipole.
 
 
@@ -172,11 +182,15 @@ To delete the exclusion, simply use
 See :attr:`espressomd.particle_data.ParticleHandle.exclusions`
 
 
+.. _Create particular particle configurations:
+
 Create particular particle configurations
 -----------------------------------------
 
-``polymer``: Setting up polymer chains
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _Setting up polymer chains:
+
+Setting up polymer chains
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
@@ -214,9 +228,11 @@ The polymer can be created using several different random walk modes (via the pa
     that is closer to another particle than ``shield``, a new attempt of setting
     up the whole chain is done, up to ``max_tries`` times.
 
+.. _Setting up diamond polymer networks:
 
-``diamond``: Setting up diamond polymer networks
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Setting up diamond polymer networks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 ::
 
     from espressomd import Diamond
@@ -239,65 +255,36 @@ interaction :math:`0` is taken which must be a two-particle bond.
 
 See :meth:`espressomd.diamond.Diamond` for more details.
 
-``icosaeder``: Setting up an icosaeder
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-:todo: `This feature is not yet implemented in Python.`
+..
+    .. _Cross-linking polymers:
 
-Creates a modified icosaeder to model a fullerene (or soccer ball). The
-edges are modeled by polymer chains connected at the corners of the
-icosaeder. For inter-particle bonds interaction :math:`0` is taken which
-must be a two-particle bond. Two particle types are used for the
-pentagons and the interconnecting links. For an example, see figure
-[fullerene].
+    Cross-linking polymers
+    ~~~~~~~~~~~~~~~~~~~~~~
 
-.. _fullerene:
-.. figure:: figures/fullerene.png
-   :alt: Icosaeder with =15.
-   :align: center
-   :height: 6.00000cm
+            :todo: `This is not implemented in Python` 
 
-   Icosaeder with =15.
+    crosslink
 
-Length of the links. Defines the size of the icosaeder.
+    Attempts to end-crosslink the current configuration of equally long
+    polymers with monomers each, returning how many ends are successfully
+    connected.
 
-Specifies the number of chain monomers along one edge.
+    specifies the first monomer of the chains to be linked. It has to be
+    specified if the polymers do not start at id 0.
 
-Specifies the number of counterions to be placed into the system.
+    Set the radius around each monomer which is searched for possible new
+    monomers to connect to. defaults to :math:`1.9`.
 
-Set the charges of the monomers to and the charges of the counterions to
-.
+    The minimal distance of two interconnecting links. It defaults to
+    :math:`2`.
 
-Specifies the distance between two charged monomer along the edge. If
-:math:`d_\mathrm{charged} > 1` the remaining monomers are
-uncharged.
+    The minimal distance for an interconnection along the same chain. It
+    defaults to :math:`0`. If set to , no interchain connections are
+    created.
 
-``crosslink``: Cross-linking polymers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Sets the bond type for the connections to .
 
-        :todo: `This is not implemented in Python` 
-
-crosslink
-
-Attempts to end-crosslink the current configuration of equally long
-polymers with monomers each, returning how many ends are successfully
-connected.
-
-specifies the first monomer of the chains to be linked. It has to be
-specified if the polymers do not start at id 0.
-
-Set the radius around each monomer which is searched for possible new
-monomers to connect to. defaults to :math:`1.9`.
-
-The minimal distance of two interconnecting links. It defaults to
-:math:`2`.
-
-The minimal distance for an interconnection along the same chain. It
-defaults to :math:`0`. If set to , no interchain connections are
-created.
-
-Sets the bond type for the connections to .
-
-If not specified, defaults to :math:`30000`.
+    If not specified, defaults to :math:`30000`.
 
 .. _Virtual sites:
 
@@ -329,10 +316,7 @@ To switch the active scheme, the attribute :attr:`espressomd.system.System.virtu
     s.virtual_sites=VirtualSitesOff()
 
 By default, :class:`espressomd.virtual_sites.VirtualSitesOff` is selected. This means that virtual particles are not touched during integration.
-the `have_velocity` attribute determines, whether or not the velocity of virtual sites is calcualted, which carries a performance cost.
-
-
-
+the `have_velocity` attribute determines, whether or not the velocity of virtual sites is calculated, which carries a performance cost.
 
 .. _Rigid arrangements of particles: 
 
@@ -410,81 +394,89 @@ Please note:
 -  The presence of rigid bodies constructed by means of virtual sites
    adds a contribution to the pressure and stress tensor.
 
-Virtual sites in the center of mass of a molecule
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-:todo: `This is not implemented in Python, yet`
+..
+    .. _Virtual sites in the center of mass of a molecule:
 
-To activate this implementation, enable the feature VIRTUAL_SITES_COM in myconfig.hpp. Virtual sites are then placed in the center of mass of
-a set of particles (as defined below). Their velocity will also be that
-of the center of mass. Forces accumulating on the virtual sites are
-distributed back to the particles which form the molecule. To place a
-virtual site at the center of a molecule, perform the following steps in
-that order
+    Virtual sites in the center of mass of a molecule
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#. Create a particle of the desired type for each molecule. It should be
-   placed at least roughly in the center of the molecule to make sure,
-   its on the same node as the other particles forming the molecule, in
-   a simulation with more than one CPU.
+    :todo: `This is not implemented in Python, yet`
 
-#. Make it a virtual site using
+    To activate this implementation, enable the feature VIRTUAL_SITES_COM in myconfig.hpp. Virtual sites are then placed in the center of mass of
+    a set of particles (as defined below). Their velocity will also be that
+    of the center of mass. Forces accumulating on the virtual sites are
+    distributed back to the particles which form the molecule. To place a
+    virtual site at the center of a molecule, perform the following steps in
+    that order
 
-   part virtual 1
+    #. Create a particle of the desired type for each molecule. It should be
+       placed at least roughly in the center of the molecule to make sure,
+       its on the same node as the other particles forming the molecule, in
+       a simulation with more than one CPU.
 
-#. Declare the list of molecules and the particles they consist of:
+    #. Make it a virtual site using
 
-   analyze set { ...} ...
+       part virtual 1
 
-   The lists of particles in a molecule comprise the non-virtual
-   particles as well as the virtual site. The id of this molecule is its
-   index in this list. For example,
+    #. Declare the list of molecules and the particles they consist of:
 
-   analyze set {0 1 2 3 4} {0 5 6 7 8} {1 9 10 11}
+       analyze set { ...} ...
 
-   declares three molecules, of which the first two consist of three
-   particles and a virtual site each (particles 14 and 58,
-   respectively). The third molecule has type 1 and consists of two
-   particles and a virtual site. The virtual sites were determined
-   before by setting the flag. You can choose freely one out of each
-   molecule, for example particles 1, 5, and 9.
+       The lists of particles in a molecule comprise the non-virtual
+       particles as well as the virtual site. The id of this molecule is its
+       index in this list. For example,
 
-#. Assign to all particles that belong to the same molecule the
-   molecules id
+       analyze set {0 1 2 3 4} {0 5 6 7 8} {1 9 10 11}
 
-   part mol
+       declares three molecules, of which the first two consist of three
+       particles and a virtual site each (particles 14 and 58,
+       respectively). The third molecule has type 1 and consists of two
+       particles and a virtual site. The virtual sites were determined
+       before by setting the flag. You can choose freely one out of each
+       molecule, for example particles 1, 5, and 9.
 
-   The molid is the index of the particle in the above list, so you
-   would assign 0 to particles 1-4, 1 to particles 5-8 and 2 to
-   particles 9-11. Alternatively, you can call
+    #. Assign to all particles that belong to the same molecule the
+       molecules id
 
-   analyze set topo\_part\_sync
+       part mol
 
-   to set the s from the molecule declarations.
+       The molid is the index of the particle in the above list, so you
+       would assign 0 to particles 1-4, 1 to particles 5-8 and 2 to
+       particles 9-11. Alternatively, you can call
 
-#. Update the position of all virtual particles (optional)
+       analyze set topo\_part\_sync
 
-   integrate 0
+       to set the s from the molecule declarations.
 
-The type of the molecule you can choose freely, it is only used in
-certain analysis functions, namely ``energy_kinetic_mol``,
-``pressure_mol`` and ``dipmom_mol``, which compute kinetic energy,
-pressure and dipole moment per molecule type, respectively.
+    #. Update the position of all virtual particles (optional)
 
-Additional features
-~~~~~~~~~~~~~~~~~~~
+       integrate 0
 
-The behaviour of virtual sites can be fine-tuned with the following
-switches in ``myconfig.hpp``.
+    The type of the molecule you can choose freely, it is only used in
+    certain analysis functions, namely ``energy_kinetic_mol``,
+    ``pressure_mol`` and ``dipmom_mol``, which compute kinetic energy,
+    pressure and dipole moment per molecule type, respectively.
 
-- VIRTUAL_SITES_NO_VELOCITY specifies that the velocity of virtual sites is not computed
+    .. _Additional features:
 
-- VIRTUAL_SITES_THERMOSTAT specifies that the Langevin thermostat should also act on virtual
-   sites
+    Additional features
+    ~~~~~~~~~~~~~~~~~~~
 
-- THERMOSTAT_IGNORE_NON_VIRTUAL specifies that the thermostat does not act on non-virtual particles
+    The behavior of virtual sites can be fine-tuned with the following
+    switches in ``myconfig.hpp``.
 
+    - VIRTUAL_SITES_NO_VELOCITY specifies that the velocity of virtual sites is not computed
+
+    - VIRTUAL_SITES_THERMOSTAT specifies that the Langevin thermostat should also act on virtual
+       sites
+
+    - THERMOSTAT_IGNORE_NON_VIRTUAL specifies that the thermostat does not act on non-virtual particles
+
+.. _Grand canonical feature:
 
 Grand canonical feature
 -----------------------
+
 :mod:`espressomd.grand_canonical`
 
 For using conveniently in simulations in the grand canonical ensemble,
@@ -511,6 +503,8 @@ chosen particle id, for a particle of the given type. The keyword
 similarly giving ``number`` as argument will return the number of
 particles which share the given type.
 
+.. _Self-propelled swimmers:
+
 Self-propelled swimmers
 -----------------------
 
@@ -522,6 +516,8 @@ Self-propelled swimmers
 .. seealso::
 
     :class:`espressomd.particle_data.ParticleHandle.swimming`
+
+.. _Langevin swimmers:
 
 Langevin swimmers
 ~~~~~~~~~~~~~~~~~
@@ -547,6 +543,8 @@ friction coefficient. You may only set one of the possibilities ``v_swim`` *or*
 same time. Note that there is no real difference between ``v_swim`` and
 ``f_swim``, since the latter may always be chosen such that the same terminal
 velocity is achieved for a given friction coefficient.
+
+.. _Lattice-Boltzmann (LB) swimmers:
 
 Lattice-Boltzmann (LB) swimmers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

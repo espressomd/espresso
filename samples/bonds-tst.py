@@ -2,7 +2,7 @@ from __future__ import print_function
 import espressomd
 from espressomd.interactions import *
 
-S = espressomd.System()
+S = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
 h = HarmonicBond(r_0=0, k=1)
 f = FeneBond(k=1, d_r_max=1)
