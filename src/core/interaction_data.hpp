@@ -280,7 +280,7 @@ struct IA_parameters {
   double Gaussian_eps = 0.0;
   double Gaussian_sig = 1.0;
   double Gaussian_cut = INACTIVE_CUTOFF;
-  double Gaussian_shift = 1.0;
+  double Gaussian_shift = 0.0;
 /*@}*/
 #endif
 
