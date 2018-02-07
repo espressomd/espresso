@@ -32,7 +32,6 @@
 #include "errorhandling.hpp"
 
 #include "EspressoSystemInterface.hpp"
-#include "actor/EwaldGPU.hpp"
 #include "buckingham.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
@@ -1551,12 +1550,6 @@ void mpi_bcast_coulomb_params_slave(int node, int parm) {
   case COULOMB_MAGGS:
     MPI_Bcast(&maggs, sizeof(MAGGS_struct), MPI_BYTE, 0, comm_cart);
     break;
-#ifdef EWALD_GPU
-  case COULOMB_EWALD_GPU:
-    MPI_Bcast(&ewaldgpu_params, sizeof(Ewaldgpu_params), MPI_BYTE, 0,
-              comm_cart);
-    break;
-#endif
   case COULOMB_RF:
   case COULOMB_INTER_RF:
     MPI_Bcast(&rf_params, sizeof(Reaction_field_params), MPI_BYTE, 0,
@@ -1593,6 +1586,10 @@ void mpi_bcast_coulomb_params_slave(int node, int parm) {
     break;
   case DIPOLAR_DS_GPU:
     break;
+#ifdef DIPOLAR_BARNES_HUT
+  case DIPOLAR_BH_GPU:
+    break;
+#endif
   case DIPOLAR_SCAFACOS:
     break;
   default:
