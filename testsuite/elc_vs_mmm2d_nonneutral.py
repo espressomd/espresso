@@ -22,14 +22,14 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
     def test_elc_vs_mmm2d(self):
         
         elc_param_sets = { 
-        "inert":        { "gap_size": self.elc_gap, "maxPWerror": self.acc, "neutralize": False, "check_for_electroneutrality": False }, 
+        "inert":        { "gap_size": self.elc_gap, "maxPWerror": self.acc, "neutralize": False, "check_neutrality": False }, 
         "const_pot_0":   { "gap_size": self.elc_gap, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": 0.0},
         "const_pot_1":   { "gap_size": self.elc_gap, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": 1.0},
         "const_pot_m1":  { "gap_size": self.elc_gap, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": -1.0}
         }
 
         mmm2d_param_sets = { 
-        "inert":         { "prefactor": 1.0, "maxPWerror": self.acc, "check_for_electroneutrality": False },
+        "inert":         { "prefactor": 1.0, "maxPWerror": self.acc, "check_neutrality": False },
         "const_pot_0":   { "prefactor": 1.0, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": 0.0}, 
         "const_pot_1":   { "prefactor": 1.0, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": 1.0}, 
         "const_pot_m1":  { "prefactor": 1.0, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": -1.0} 
@@ -68,7 +68,7 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
         self.system.cell_system.set_domain_decomposition(use_verlet_lists = True)
         self.system.cell_system.node_grid = buf_node_grid
         self.system.periodicity = [1, 1, 1]
-        p3m = P3M(prefactor=1.0, accuracy=self.acc, mesh = [20,20,32], cao = 7, check_for_electroneutrality=False)
+        p3m = P3M(prefactor=1.0, accuracy=self.acc, mesh = [20,20,32], cao = 7, check_neutrality=False)
         self.system.actors.add(p3m)
         
         elc = electrostatic_extensions.ELC(**elc_param_sets["inert"])
