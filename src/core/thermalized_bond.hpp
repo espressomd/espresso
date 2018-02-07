@@ -39,6 +39,11 @@ extern int n_thermalized_bonds;
 // Set the parameters for the thermalized bond
 int thermalized_bond_set_params(int bond_type, double temp_com, double gamma_com, double temp_distance, double gamma_distance, double r_cut);
 
+void thermalized_bond_heat_up();
+void thermalized_bond_cool_down();
+void thermalized_bond_update_params(double pref_scale);
+void thermalized_bond_init();
+
 /** Seperately thermalizes the com and distance of a particle pair
     and adds this force to the particle forces. 
     @param p1        Pointer to first particle.
@@ -58,17 +63,21 @@ inline int calc_thermalized_bond_forces(Particle *p1, Particle *p2, Bonded_ia_pa
     }
 
     double force_lv_com, force_lv_dist, com_vel, dist_vel;
-    double mass_tot_inv = 1.0 / (p1->p.mass + p2->p.mass);
+    double mass_tot = p1->p.mass + p2->p.mass;
+    double mass_tot_inv = 1.0 / mass_tot;
+    double sqrt_mass_tot = sqrt(mass_tot);
+    double sqrt_mass_red = sqrt(p1->p.mass * p2->p.mass / mass_tot);
 
+    //printf("forcecalc pref1 %f pref2 %f\n", iaparams->p.thermalized_bond.pref1_com, iaparams->p.thermalized_bond.pref2_com);
     for (int i=0; i<3; i++) {
 
         //Langevin thermostat for center of mass
         com_vel = mass_tot_inv * (p1->p.mass * p1->m.v[i] + p2->p.mass * p2->m.v[i]);
-        force_lv_com =  -iaparams->p.thermalized_bond.gamma_com / time_step * com_vel + sqrt(24.0 * iaparams->p.thermalized_bond.gamma_com / time_step * iaparams->p.thermalized_bond.temp_com) * (d_random()-0.5);
+        force_lv_com = -iaparams->p.thermalized_bond.pref1_com * com_vel + sqrt_mass_tot * iaparams->p.thermalized_bond.pref2_com * (d_random()-0.5);
 
         //Langevin thermostat for distance p1->p2
         dist_vel = p2->m.v[i] - p1->m.v[i];
-        force_lv_dist =  -iaparams->p.thermalized_bond.gamma_distance / time_step * dist_vel + sqrt(24.0 * iaparams->p.thermalized_bond.gamma_distance / time_step * iaparams->p.thermalized_bond.temp_distance) * (d_random()-0.5);
+        force_lv_dist =  -iaparams->p.thermalized_bond.pref1_dist * dist_vel + sqrt_mass_red * iaparams->p.thermalized_bond.pref2_dist * (d_random()-0.5);
 
         //Add forces
         force1[i] = p1->p.mass * mass_tot_inv * force_lv_com - force_lv_dist; 

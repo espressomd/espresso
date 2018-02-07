@@ -584,6 +584,10 @@ typedef struct {
     double temp_distance;
     double gamma_distance;
     double r_cut;
+    double pref1_com;
+    double pref2_com;
+    double pref1_dist;
+    double pref2_dist;
 } Thermalized_bond_parameters;
 
 #ifdef ROTATION

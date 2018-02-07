@@ -26,6 +26,7 @@
 #include "thermalized_bond.hpp"
 #include "communication.hpp"
 #include "global.hpp"
+#include "interaction_data.hpp"
 
 int n_thermalized_bonds = 0;
 
@@ -41,6 +42,11 @@ int thermalized_bond_set_params(int bond_type, double temp_com, double gamma_com
   bonded_ia_params[bond_type].p.thermalized_bond.temp_distance = temp_distance;
   bonded_ia_params[bond_type].p.thermalized_bond.gamma_distance = gamma_distance;
   bonded_ia_params[bond_type].p.thermalized_bond.r_cut = r_cut;
+ 
+  bonded_ia_params[bond_type].p.thermalized_bond.pref1_com = gamma_com / time_step;
+  bonded_ia_params[bond_type].p.thermalized_bond.pref2_com = sqrt(24.0 * gamma_com / time_step * temp_com);
+  bonded_ia_params[bond_type].p.thermalized_bond.pref1_dist = gamma_distance / time_step;
+  bonded_ia_params[bond_type].p.thermalized_bond.pref2_dist = sqrt(24.0 * gamma_distance / time_step * temp_distance);
 
   bonded_ia_params[bond_type].type = BONDED_IA_THERMALIZED_DIST;
 
@@ -53,3 +59,38 @@ int thermalized_bond_set_params(int bond_type, double temp_com, double gamma_com
   return ES_OK;
 }
 
+void thermalized_bond_heat_up() {
+  double pref_scale = sqrt(3);
+  thermalized_bond_update_params(pref_scale);
+}
+
+void thermalized_bond_cool_down() {
+  double pref_scale = 1.0 / sqrt(3);
+  thermalized_bond_update_params(pref_scale);
+}
+
+void thermalized_bond_init()
+{
+
+  for (int i = 0; i < n_bonded_ia; i++) {
+     if (bonded_ia_params[i].type == BONDED_IA_THERMALIZED_DIST) {
+        Thermalized_bond_parameters &t = bonded_ia_params[i].p.thermalized_bond;
+        t.pref1_com = t.gamma_com / time_step;
+        t.pref2_com = sqrt(24.0 * t.gamma_com / time_step * t.temp_com);
+        t.pref1_dist = t.gamma_distance / time_step;
+        t.pref2_dist = sqrt(24.0 * t.gamma_distance / time_step * t.temp_distance);
+    }
+  }
+}
+
+
+void thermalized_bond_update_params(double pref_scale) {
+  
+  for (int i = 0; i < n_bonded_ia; i++) {
+     if (bonded_ia_params[i].type == BONDED_IA_THERMALIZED_DIST) {
+        Thermalized_bond_parameters &t = bonded_ia_params[i].p.thermalized_bond;
+        t.pref2_com *= pref_scale;
+        t.pref2_dist *= pref_scale;
+    }
+  }
+}
