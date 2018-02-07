@@ -98,7 +98,7 @@ inline double soft_pair_energy(const Particle *p1, const Particle *p2,
     r_off = dist - ia_params->soft_offset;
     /* normal case: resulting force/energy smaller than zero. */
 
-    return soft_energy_r(ia_params->soft_a, ia_params->soft_n, r_off) - ia_params->soft_shift;
+    return soft_energy_r(ia_params->soft_a, ia_params->soft_n, r_off) + ia_params->soft_shift;
   }
   return 0.0;
 }
