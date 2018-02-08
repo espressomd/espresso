@@ -191,7 +191,9 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
     /* DEBUG */
     for(j=0;j<n_nodes;j++) {
       /* MPI_Barrier(comm_cart); */
-      if(j==this_node) FFT_TRACE(fft_print_fft_plan(fft.plan[i]));
+      if(j==this_node) {
+        FFT_TRACE(fft_print_fft_plan(fft.plan[i]));
+      }
     }
   }
 
@@ -245,8 +247,8 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
 //printf("fft.plan[%d].n_ffts=%d\n",i,fft.plan[i].n_ffts);
     fft.plan[i].our_fftw_plan =
       fftw_plan_many_dft(1,&fft.plan[i].new_mesh[2],fft.plan[i].n_ffts,
-                         c_data,NULL,1,fft.plan[i].new_mesh[2],
-                         c_data,NULL,1,fft.plan[i].new_mesh[2],
+                         c_data,nullptr,1,fft.plan[i].new_mesh[2],
+                         c_data,nullptr,1,fft.plan[i].new_mesh[2],
                          fft.plan[i].dir,FFTW_PATIENT);
 
     fft.plan[i].fft_function = fftw_execute;       
@@ -260,8 +262,8 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
     if(fft.init_tag==1) fftw_destroy_plan(fft.back[i].our_fftw_plan);
     fft.back[i].our_fftw_plan =
       fftw_plan_many_dft(1,&fft.plan[i].new_mesh[2],fft.plan[i].n_ffts,
-                         c_data,NULL,1,fft.plan[i].new_mesh[2],
-                         c_data,NULL,1,fft.plan[i].new_mesh[2],
+                         c_data,nullptr,1,fft.plan[i].new_mesh[2],
+                         c_data,nullptr,1,fft.plan[i].new_mesh[2],
                          fft.back[i].dir,FFTW_PATIENT);
 
     fft.back[i].fft_function = fftw_execute;

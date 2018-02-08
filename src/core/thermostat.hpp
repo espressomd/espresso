@@ -42,19 +42,18 @@
 /************************************************************/
 /*@{*/
 
-#define THERMO_OFF 0
-#define THERMO_LANGEVIN 1
-#define THERMO_DPD 2
-#define THERMO_NPT_ISO 4
-#define THERMO_LB 8
-#define THERMO_INTER_DPD 16
-#define THERMO_GHMC 32
-#define THERMO_CPU 64
+#define THERMO_OFF        0
+#define THERMO_LANGEVIN   1
+#define THERMO_DPD        2
+#define THERMO_NPT_ISO    4
+#define THERMO_LB         8
+#define THERMO_GHMC       32
+#define THERMO_CPU        64
 #define THERMO_BROWNIAN 128
 /*@}*/
 
 namespace Thermostat {
-auto noise = []() { return (d_random() - 0.5); };
+static auto noise = []() { return (d_random() - 0.5); };
 #ifdef BROWNIAN_DYNAMICS
 // Only Gaussian noise is allowed for the BD, otherwise the Maxwell distribution will fail.
 auto noise_g = []() { return gaussian_random(); };
@@ -240,8 +239,6 @@ inline void friction_thermo_langevin(Particle *p) {
   extern Thermostat::GammaType langevin_pref1, langevin_pref2;
   Thermostat::GammaType langevin_pref1_temp, langevin_pref2_temp;
 
-  double particle_force[3] = {0.0, 0.0, 0.0};
-
 #ifdef MULTI_TIMESTEP
   extern double langevin_pref1_small;
 #ifndef LANGEVIN_PER_PARTICLE
@@ -250,7 +247,6 @@ inline void friction_thermo_langevin(Particle *p) {
 #endif /* MULTI_TIMESTEP */
 
   int j;
-  int aniso_flag = 1; // particle anisotropy flag
   double switch_trans = 1.0;
   if (langevin_trans == false) {
     switch_trans = 0.0;
@@ -260,7 +256,7 @@ inline void friction_thermo_langevin(Particle *p) {
 #ifdef VIRTUAL_SITES
 #ifndef VIRTUAL_SITES_THERMOSTAT
   // In this case, virtual sites are NOT thermostated
-  if (ifParticleIsVirtual(p)) {
+  if (p->p.isVirtual) {
     for (j = 0; j < 3; j++)
       p->f.f[j] = 0;
 
@@ -269,7 +265,7 @@ inline void friction_thermo_langevin(Particle *p) {
 #endif /* VIRTUAL_SITES_THERMOSTAT */
 #ifdef THERMOSTAT_IGNORE_NON_VIRTUAL
   // In this case NON-virtual particles are NOT thermostated
-  if (!ifParticleIsVirtual(p)) {
+  if (!p->p.isVirtual) {
     for (j = 0; j < 3; j++)
       p->f.f[j] = 0;
 
@@ -279,7 +275,7 @@ inline void friction_thermo_langevin(Particle *p) {
 #endif /* VIRTUAL_SITES */
 
   // Get velocity effective in the thermostatting
-  double velocity[3], velocity_body[3] = {0.0, 0.0, 0.0};
+  double velocity[3];
   for (int i = 0; i < 3; i++) {
     // Particle velocity
     velocity[i] = p->m.v[i];
@@ -345,12 +341,14 @@ inline void friction_thermo_langevin(Particle *p) {
 
 #ifdef PARTICLE_ANISOTROPY
   // Particle frictional isotropy check
-  aniso_flag = (langevin_pref1_temp[0] != langevin_pref1_temp[1]) ||
+  auto aniso_flag = (langevin_pref1_temp[0] != langevin_pref1_temp[1]) ||
                (langevin_pref1_temp[1] != langevin_pref1_temp[2]) ||
                (langevin_pref2_temp[0] != langevin_pref2_temp[1]) ||
                (langevin_pref2_temp[1] != langevin_pref2_temp[2]);
-  if (aniso_flag)
-    thermo_convert_vel_space_to_body(p, velocity, velocity_body);
+  double velocity_body[3] = {0.0, 0.0, 0.0};
+  if (aniso_flag) {
+     thermo_convert_vel_space_to_body(p, velocity, velocity_body);
+  }
 #endif
 
   // Do the actual thermostatting
@@ -381,6 +379,8 @@ inline void friction_thermo_langevin(Particle *p) {
 
 #ifdef PARTICLE_ANISOTROPY
   if (aniso_flag) {
+    double particle_force[3] = {0.0, 0.0, 0.0};
+
     thermo_convert_forces_body_to_space(p, particle_force);
     for (j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES

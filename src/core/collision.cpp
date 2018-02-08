@@ -17,6 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
+#include <vector>
+
 #include "collision.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -24,7 +26,7 @@
 #include "grid.hpp"
 #include "domain_decomposition.hpp"
 #include "rotation.hpp"
-
+#include "virtual_sites/VirtualSitesRelative.hpp"
 
 using namespace std;
 
@@ -192,8 +194,8 @@ void detect_collision(Particle* p1, Particle* p2)
 {
   // The check, whether collision detection is actually turned on is performed in forces.hpp
 
-  int part1, part2, size;
-  int counts[n_nodes];
+  int part1, part2;
+  std::vector<int> counts(n_nodes);
   //TRACE(printf("%d: consider particles %d and %d\n", this_node, p1->p.identity, p2->p.identity));
 
   double vec21[3];
@@ -290,6 +292,7 @@ void detect_collision(Particle* p1, Particle* p2)
        }
        else
        {
+        c = 0.0;
         printf("Something is wrong %s: %d\n", __FILE__, __LINE__);
        }
      }
@@ -474,7 +477,7 @@ void glue_to_surface_bind_vs_to_pp1(int i)
 
 void gather_collision_queue(int* counts)
 {
-    int displacements[n_nodes];                   // offsets into collisions
+    std::vector<int> displacements(n_nodes);                   // offsets into collisions
   
     // Initialize number of collisions gathered from all processors
     for (int a=0;a<n_nodes;a++)
@@ -493,7 +496,7 @@ void gather_collision_queue(int* counts)
     displacements[0]=0;
   
     // Find where to place collision information for each processor
-    int byte_counts[n_nodes];
+    std::vector<int> byte_counts(n_nodes);
     for (int k=1; k<n_nodes; k++)
         displacements[k]=displacements[k-1]+(counts[k-1])*sizeof(collision_struct);
     
@@ -506,7 +509,7 @@ void gather_collision_queue(int* counts)
     gathered_queue = (collision_struct *) malloc(total_collisions * sizeof(collision_struct));
 
     // Gather collision informtion from all nodes and send it to all nodes
-    MPI_Allgatherv(collision_queue, byte_counts[this_node], MPI_BYTE, gathered_queue, byte_counts, displacements, MPI_BYTE, comm_cart);
+    MPI_Allgatherv(collision_queue, byte_counts[this_node], MPI_BYTE, gathered_queue, byte_counts.data(), displacements.data(), MPI_BYTE, comm_cart);
 
     return;
 }
@@ -569,7 +572,7 @@ void three_particle_binding_domain_decomposition()
   for (int id=0;id<total_collisions;id++) {
 
       // Get first cell Idx
-      if ((local_particles[gathered_queue[id].pp1] != NULL) && (local_particles[gathered_queue[id].pp2] != NULL)) {
+      if ((local_particles[gathered_queue[id].pp1] != nullptr) && (local_particles[gathered_queue[id].pp2] != nullptr)) {
 
         Particle* p1=local_particles[gathered_queue[id].pp1];
         Particle* p2=local_particles[gathered_queue[id].pp2];
@@ -713,8 +716,8 @@ void handle_collisions ()
 
 
   if (collision_params.mode & (COLLISION_MODE_BIND_THREE_PARTICLES)) {
-  int counts[n_nodes];
-  gather_collision_queue(counts);
+  std::vector<int> counts(n_nodes);
+  gather_collision_queue(counts.data());
 
     if (counts[this_node]>0) {
 

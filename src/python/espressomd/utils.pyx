@@ -18,8 +18,10 @@
 #
 from __future__ import print_function, absolute_import
 cimport numpy as np
+cimport cython
 import numpy as np
 from cpython.version cimport PY_MAJOR_VERSION
+from libcpp.vector cimport vector
 
 cdef extern from "stdlib.h":
     void free(void * ptr)
@@ -29,7 +31,7 @@ cdef extern from "stdlib.h":
 cdef np.ndarray create_nparray_from_int_list(int_list * il):
     """
     Returns a numpy array from an int list struct which is provided as argument.
-    
+
     Parameters
     ----------
     int_list : int_list* which is to be converted
@@ -53,25 +55,22 @@ cdef np.ndarray create_nparray_from_double_list(double_list * dl):
         numpyArray[i] = dl.e[i]
     return numpyArray
 
-cdef int_list * create_int_list_from_python_object(obj):
+cdef int_list create_int_list_from_python_object(obj):
     """
     Returns a int list pointer from a python object which supports subscripts.
-    
+
     Parameters
     ----------
     obj : python object which supports subscripts
 
     """
-    cdef int_list * il
-    il = <int_list * > malloc(sizeof(int_list))
-    init_intlist(il)
+    cdef int_list il
+    il.resize(len(obj))
 
-    alloc_intlist(il, len(obj))
     for i in range(len(obj)):
         il.e[i] = obj[i]
-    il.n = len(obj)
-    return il
 
+    return il
 
 cdef check_type_or_throw_except(x, n, t, msg):
     """
@@ -86,7 +85,7 @@ cdef check_type_or_throw_except(x, n, t, msg):
         if hasattr(x, "__getitem__"):
             for i in range(len(x)):
                 if not isinstance(x[i], t):
-                    if not ((t == float and isinstance(x[i], int)) 
+                    if not ((t == float and is_valid_type(x[i], int))
                       or (t == float and issubclass(type(x[i]), np.integer))) \
                       and not (t == int and issubclass(type(x[i]), np.integer)):
                         raise ValueError(
@@ -98,14 +97,14 @@ cdef check_type_or_throw_except(x, n, t, msg):
     else:
         # N=1 and a single value
         if not isinstance(x, t):
-            if not (t == float and isinstance(x, int)) and not (t == int and issubclass(type(x), np.integer)):
+            if not (t == float and is_valid_type(x, int)) and not (t == int and issubclass(type(x), np.integer)):
                 raise ValueError(msg + " -- Got an " + type(x).__name__)
 
 
 cdef np.ndarray create_nparray_from_double_array(double * x, int len_x):
     """
     Returns a numpy array from double array
-    
+
     Parameters
     ----------
     x : double* which is to be converted
@@ -122,7 +121,7 @@ cdef check_range_or_except(D, name, v_min, incl_min, v_max, incl_max):
     Checks that x is in range [v_min,v_max] (inlude boundaries via
     inlc_min/incl_max = true) or throws a ValueError. v_min/v_max = 'inf' to
     disable limit.
-    
+
     """
     x = D[name]
 
@@ -141,42 +140,118 @@ cdef check_range_or_except(D, name, v_min, incl_min, v_max, incl_max):
             raise ValueError("In " + name + ": Value " + str(x) + " is out of range " + ("[" if incl_min else "]") +
                              str(v_min) + "," + str(v_max) + ("]" if incl_max else "["))
 
+
 def to_char_pointer(s):
     """
     Returns a char pointer which contains the information of the provided python string.
-    
+
     Parameters
     ----------
     s : :obj:`str`
 
     """
     if isinstance(s, unicode):
-        s = (<unicode>s).encode('utf8')
+        s = ( < unicode > s).encode('utf8')
     return s
+
 
 def to_str(s):
     """
     Returns a python string.
-    
+
     Parameters
     ----------
     s : char*
 
     """
     if type(s) is unicode:
-        return <unicode>s
+        return < unicode > s
     elif PY_MAJOR_VERSION >= 3 and isinstance(s, bytes):
-        return (<bytes>s).decode('ascii')
+        return ( < bytes > s).decode('ascii')
     elif isinstance(s, unicode):
         return unicode(s)
     else:
         return s
 
 
+class array_locked(np.ndarray):
+    """
+    Returns a non-writable numpy.ndarray with a special error message upon usage
+    of __setitem__  or in-place operators. Cast return in __get__ of array
+    properties to array_locked to prevent these operations. 
+
+    """
+
+    ERR_MSG = "ESPResSo array properties return non-writable arrays \
+and can only be modified as a whole, not in-place or component-wise. \
+Use numpy.copy(<ESPResSo array property>) to get a writable copy."
+
+    def __new__(cls, input_array):
+        obj = np.asarray(input_array).view(cls)
+        obj.flags.writeable = False
+        return obj
+
+    def __add__(self, other):
+        return np.copy(self) + other
+
+    def __radd__(self, other):
+        return other + np.copy(self)
+
+    def __sub__(self, other):
+        return np.copy(self) - other
+
+    def __rsub__(self, other):
+        return other - np.copy(self)
+
+    def __repr__(self):
+        return repr(np.array(self))
+
+    def __setitem__(self, i, val):
+        raise ValueError(array_locked.ERR_MSG)
+
+    def __iadd__(self, val):
+        raise ValueError(array_locked.ERR_MSG)
+
+    def __isub__(self, val):
+        raise ValueError(array_locked.ERR_MSG)
+
+    def __imul__(self, val):
+        raise ValueError(array_locked.ERR_MSG)
+
+    def __idiv__(self, val):
+        raise ValueError(array_locked.ERR_MSG)
+
+    def __itruediv__(self, val):
+        raise ValueError(array_locked.ERR_MSG)
+
+    def __ifloordiv__(self, val):
+        raise ValueError(array_locked.ERR_MSG)
+
+    def __imod__(self, val):
+        raise ValueError(array_locked.ERR_MSG)
+
+    def __ipow__(self, val):
+        raise ValueError(array_locked.ERR_MSG)
+
+    def __ilshift__(self, val):
+        raise ValueError(array_locked.ERR_MSG)
+
+    def __irshift__(self, val):
+        raise ValueError(array_locked.ERR_MSG)
+
+    def __iand__(self, val):
+        raise ValueError(array_locked.ERR_MSG)
+
+    def __ior__(self, val):
+        raise ValueError(array_locked.ERR_MSG)
+
+    def __ixor__(self, val):
+        raise ValueError(array_locked.ERR_MSG)
+
 cdef handle_errors(msg):
     """
     Gathers runtime errors.
-    
+
     Parameters
     ----------
     msg: :obj:`str`
@@ -189,5 +264,69 @@ cdef handle_errors(msg):
 
     for err in errors:
     # Cast because cython does not support typed enums completely
-        if <int> err.level() == <int> ERROR:
+        if < int > err.level() == <int > ERROR:
             raise Exception(msg)
+
+def get_unravelled_index(len_dims, n_dims, flattened_index):
+    """
+    Getting the unravelled index for a given flattened index in ``n_dims`` dimensions.
+
+    Parameters
+    ----------
+    len_dims : array_like :obj:`int`
+               The length of each of the ``n_dims`` dimensions.
+    n_dims : :obj:`int`
+             The number of dimensions.
+    flattened_index : :obj:`int`
+                      The flat index that should be converted back to an
+                      ``n_dims`` dimensional index.
+
+    Returns
+    -------
+    unravelled_index : array_like :obj:`int`
+                       An array containing the index for each dimension.
+
+    """
+    cdef vector[int] c_len_dims
+    for i in range(len(len_dims)):
+        c_len_dims.push_back(len_dims[i])
+    cdef int c_n_dims = n_dims
+    cdef int c_flattened_index = flattened_index
+    cdef vector[int] unravelled_index_out
+    unravelled_index_out.assign(n_dims, 0)
+    unravel_index(c_len_dims.data(), c_n_dims, c_flattened_index, unravelled_index_out.data())
+    out = np.empty(n_dims)
+    for i in range(n_dims):
+        out[i] = unravelled_index_out[i]
+    return out
+   
+def nesting_level(obj):
+    """
+    Returns the maximal nesting level of an object.
+
+    """
+
+    if not isinstance(obj, (list,tuple)):
+        return 0
+
+    obj=list(obj)
+
+    max_level = 0
+    for item in obj: 
+        max_level = max(max_level, nesting_level(item))
+
+    return max_level + 1
+ 
+def is_valid_type(value, t):
+    """
+    Extended checks for numpy int and float types.
+
+    """
+
+    if t == int:
+        return isinstance(value, (int, np.integer, np.long))
+    elif t == float:
+        return isinstance(value, (float, np.float16, np.float32, np.float64, np.float128, np.longdouble))
+    else:
+        return isinstance(value, t)
+

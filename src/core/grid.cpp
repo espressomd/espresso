@@ -62,6 +62,7 @@ int boundary[6] = {0, 0, 0, 0, 0, 0};
 int periodic = 7;
 
 double box_l[3] = {1, 1, 1};
+double half_box_l[3] = {.5, .5, .5};
 double box_l_i[3] = {1, 1, 1};
 double min_box_l;
 double local_box_l[3] = {1, 1, 1};
@@ -262,6 +263,7 @@ void grid_changed_box_l() {
     my_left[i] = node_pos[i] * local_box_l[i];
     my_right[i] = (node_pos[i] + 1) * local_box_l[i];
     box_l_i[i] = 1 / box_l[i];
+    half_box_l[i] = 0.5 * box_l[i];
   }
 
   calc_minimal_box_dimensions();
@@ -279,8 +281,8 @@ void grid_changed_box_l() {
 void grid_changed_n_nodes() {
   GRID_TRACE(fprintf(stderr, "%d: grid_changed_n_nodes:\n", this_node));
 
-  mpi_reshape_communicator({node_grid[0], node_grid[1], node_grid[2]},
-                           { 1, 1, 1});
+  mpi_reshape_communicator({{node_grid[0], node_grid[1], node_grid[2]}},
+                           {{ 1, 1, 1}});
 
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 

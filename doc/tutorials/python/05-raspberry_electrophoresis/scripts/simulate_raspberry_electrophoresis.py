@@ -79,7 +79,7 @@ print("# Number of colloid beads = {}".format(n_col_part))
 #here we let the bead positions relax. The LJ potential with the central bead combined with the
 #harmonic bond keep the monomers roughly radius_col away from the central bead. The LJ
 #between the surface beads cause them to distribute more or less evenly on the surface.
-system.non_bonded_inter.set_force_cap(1000)
+system.force_cap = 1000
 system.time_step=eq_tstep
 
 for i in range(n_cycle):
@@ -89,13 +89,19 @@ for i in range(n_cycle):
 
 system.bonded_inter[0] = interactions.HarmonicBond(k=0, r_0=0)
 
-print("\n# min dist to the center pre moving of surface beads = {}".format(analyze.Analysis(system).mindist([0],[1])))
+print("\n# min dist to the center pre moving of surface beads = {}".format(analyze.Analysis(system).min_dist([0],[1])))
 
 #this loop moves the surface beads such that they are once again exactly radius_col away from the center
 for i in range(1,n_col_part):
     pos = system.part[i].pos
     system.part[i].pos=(pos-colPos)/np.linalg.norm(pos-colPos)*radius_col+colPos
-print("# min dist to the center past moving of surface beads = {}".format(analyze.Analysis(system).mindist([0],[1])))   
+print("# min dist to the center past moving of surface beads = {}".format(analyze.Analysis(system).min_dist([0],[1])))   
+
+# Select the virtual sites scheme to VirtualSitesRelative
+from espressomd.virtual_sites import VirtualSitesRelative
+system.virtual_sites= VirtualSitesRelative(have_velocity=True)
+
+
 
 #setting min_global_cut is necessary when there is no interaction defined with a range larger than the colloid
 #such that the virtual particles are able to communicate their forces to the real particle at the center of the colloid
@@ -200,13 +206,13 @@ for i in range(n_col_part):
 ljcap = 100
 CapSteps = 1000
 for i in range(CapSteps):
-    system.non_bonded_inter.set_force_cap(ljcap)
+    system.force_cap = ljcap
     print("\r # step {} of  {}".format(i+1, CapSteps)),
     sys.stdout.flush()
     system.integrator.run(integ_steps)
     ljcap+=5
  
-system.non_bonded_inter.set_force_cap(0)
+system.force_cap = 0
 
 #let the colloid move now that bad overlaps have been eliminated
 for i in range(n_col_part):
@@ -227,7 +233,7 @@ system.time_step=time_step
 system.galilei.kill_particle_motion()
 
 system.thermostat.turn_off()
-lb=espressomd.lb.LBFluid_GPU(dens=1., visc=3., agrid=1., tau=time_step, fric=20)
+lb=espressomd.lb.LBFluidGPU(dens=1., visc=3., agrid=1., tau=time_step, fric=20)
 system.actors.add(lb)
 
 

@@ -39,7 +39,6 @@
 #include "bmhtf-nacl.hpp"
 #include "buckingham.hpp"
 #include "collision.hpp"
-#include "comfixed.hpp"
 #include "constraints.hpp"
 #include "dihedral.hpp"
 #include "elc.hpp"
@@ -90,6 +89,9 @@
 #include "immersed_boundary/ibm_tribend.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
 #include "immersed_boundary/ibm_volume_conservation.hpp"
+#endif
+#ifdef DPD
+#include "dpd.hpp"
 #endif
 
 /** initialize the forces for a ghost particle */
@@ -175,7 +177,7 @@ inline void init_local_particle_force(Particle *part) {
 inline void calc_non_bonded_pair_force_parts(
     const Particle *const p1, const Particle *const p2,
     IA_parameters *ia_params, double d[3], double dist, double dist2,
-    double force[3], double torque1[3] = NULL, double torque2[3] = NULL) {
+    double force[3], double torque1[3] = nullptr, double torque2[3] = nullptr) {
 #ifdef NO_INTRA_NB
   if (p1->p.mol_id == p2->p.mol_id)
     return;
@@ -249,8 +251,8 @@ inline void calc_non_bonded_pair_force(Particle *p1, Particle *p2,
                                        IA_parameters *ia_params, double d[3],
                                        double dist, double dist2,
                                        double force[3],
-                                       double torque1[3] = NULL,
-                                       double torque2[3] = NULL) {
+                                       double torque1[3] = nullptr,
+                                       double torque2[3] = nullptr) {
     calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist, dist2, force,
                                      torque1, torque2);
 }
@@ -293,28 +295,15 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node,
                       p1->p.identity, p2->p.identity, dist));
 
-/***********************************************/
-/* thermostat                                  */
-/***********************************************/
-
-#ifdef DPD
-  /* DPD thermostat forces */
-  if (thermo_switch & THERMO_DPD)
-    add_dpd_thermo_pair_force(p1, p2, d, dist, dist2);
-#endif
-
-/** The inter dpd force should not be part of the virial */
-
-#ifdef INTER_DPD
-  add_inter_dpd_pair_force(p1, p2, ia_params, d, dist, dist2);
-#endif
-
   /***********************************************/
   /* non bonded pair potentials                  */
   /***********************************************/
 
-  calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2, force, torque1,
-                             torque2);
+#ifdef EXCLUSIONS
+  if (do_nonbonded(p1, p2))
+#endif
+    calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2, force,
+                               torque1, torque2);
 
 /***********************************************/
 /* short range electrostatics                  */
@@ -336,6 +325,17 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   for (j = 0; j < 3; j++)
     if (integ_switch == INTEG_METHOD_NPT_ISO)
       nptiso.p_vir[j] += force[j] * d[j];
+#endif
+
+/***********************************************/
+/* thermostat                                  */
+/***********************************************/
+
+/** The inter dpd force should not be part of the virial */
+#ifdef DPD
+  if (thermo_switch & THERMO_DPD) {
+    add_dpd_pair_force(p1, p2, ia_params, d, dist, dist2);
+  }
 #endif
 
 /***********************************************/
@@ -470,13 +470,13 @@ inline void add_bonded_force(Particle *p1) {
   double force7[3] = {0., 0., 0.};
   double force8[3] = {0., 0., 0.};
 
-  Particle *p5 = NULL, *p6 = NULL, *p7 = NULL, *p8 = NULL;
+  Particle *p5 = nullptr, *p6 = nullptr, *p7 = nullptr, *p8 = nullptr;
 #endif
 #ifdef ROTATION
   double torque1[3] = {0., 0., 0.};
   double torque2[3] = {0., 0., 0.};
 #endif
-  Particle *p2 = NULL, *p3 = NULL, *p4 = NULL;
+  Particle *p2 = nullptr, *p3 = nullptr, *p4 = nullptr;
   Bonded_ia_parameters *iaparams;
   int i, j, type_num, type, n_partners, bond_broken;
 
@@ -739,12 +739,10 @@ inline void add_bonded_force(Particle *p1) {
       bond_broken = calc_umbrella_pair_force(p1, p2, iaparams, dx, force);
       break;
 #endif
-#ifdef BOND_VIRTUAL
     case BONDED_IA_VIRTUAL_BOND:
       bond_broken = 0;
       force[0] = force[1] = force[2] = 0.0;
       break;
-#endif
     default:
       runtimeErrorMsg() << "add_bonded_force: bond type of atom "
                         << p1->p.identity << " unknown\n";

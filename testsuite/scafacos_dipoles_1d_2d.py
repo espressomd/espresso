@@ -60,11 +60,11 @@ class Scafacos1d2d(ut.TestCase):
 
             # Read reference data
             if dim == 2:
-                file_prefix = "mdlc"
+                file_prefix = "data/mdlc"
                 s.periodicity = 1, 1, 0
             else:
                 s.periodicity = 1, 0, 0
-                file_prefix = "scafacos_dipoles_1d"
+                file_prefix = "data/scafacos_dipoles_1d"
 
             f = open(tests_common.abspath(
                 file_prefix + "_reference_data_energy.dat"))
@@ -75,11 +75,11 @@ class Scafacos1d2d(ut.TestCase):
             data = np.genfromtxt(tests_common.abspath(
                 file_prefix + "_reference_data_forces_torques.dat"))
             for p in data[:, :]:
-                s.part.add(id=int(p[0]), pos=p[1:4], dip=p[4:7])
+                s.part.add(id=int(p[0]), pos=p[1:4], dip=p[4:7],rotation=(1,1,1))
 
             if dim == 2:
                 scafacos = magnetostatics.Scafacos(
-                    bjerrum_length=1,
+                    prefactor=1,
                     method_name="p2nfft",
                     method_params={
                         "p2nfft_verbose_tuning": 0,
@@ -100,7 +100,7 @@ class Scafacos1d2d(ut.TestCase):
                 if dim == 1:
                     # 1d periodic in x
                     scafacos = magnetostatics.Scafacos(
-                        bjerrum_length=1,
+                        prefactor=1,
                         method_name="p2nfft",
                         method_params={
                             "p2nfft_verbose_tuning": 1,

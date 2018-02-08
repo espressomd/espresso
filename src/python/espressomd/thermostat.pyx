@@ -99,8 +99,8 @@ cdef class Thermostat(object):
             if thmst["type"] == "NPT_ISO":
                 self.set_npt(kT=thmst["kT"], p_diff=thmst[
                              "p_diff"], piston=thmst["piston"])
-            if thmst["type"] == "DPD" or thmst["type"] == "INTER_DPD":
-                pass
+            if thmst["type"] == "DPD":
+                self.set_dpd(kT=thmst["kt"])
             if thmst["type"] == "BROWNIAN":
                 self.set_brownian(kT=thmst["kT"], gamma=thmst[
                                   "gamma"], gamma_rotation=thmst["gamma_rotation"])
@@ -154,19 +154,10 @@ cdef class Thermostat(object):
             # thermo_dict["piston"] = nptiso.piston
             # thermo_dict["p_diff"] = nptiso.p_diff
             thermo_list.append(npt_dict)
-        if (thermo_switch & THERMO_DPD) or (thermo_switch & THERMO_INTER_DPD):
+        if (thermo_switch & THERMO_DPD):
             dpd_dict = {}
-            if (thermo_switch & THERMO_DPD):
-                dpd_dict["type"] = "DPD"
-            else:
-                dpd_dict["type"] = "INTER_DPD"
+            dpd_dict["type"] = "DPD"
             dpd_dict["kT"] = temperature
-            dpd_dict["gamma"] = dpd_gamma
-            dpd_dict["r_cut"] = dpd_r_cut
-            dpd_dict["wf"] = dpd_wf
-            dpd_dict["tgamma"] = dpd_tgamma
-            dpd_dict["tr_cut"] = dpd_tr_cut
-            dpd_dict["twf"] = dpd_twf
             thermo_list.append(dpd_dict)
         return thermo_list
 
@@ -393,36 +384,31 @@ cdef class Thermostat(object):
             mpi_bcast_parameter(FIELD_NPTISO_G0)
             mpi_bcast_parameter(FIELD_NPTISO_GV)
 
-    IF DPD or INTER_DPD:
-        @AssertThermostatType(THERMO_DPD, THERMO_INTER_DPD)
-        def set_dpd(self, **kwargs):
+    IF DPD:
+        def set_dpd(self, kT=None):
             """
-            Sets the DPD thermostat with required parameters ``kT``,  ``gamma`` and ``r_cut``.
+            Sets the DPD thermostat with required parameters 'kT'.
+            This also activates the DPD interactions.
 
             Parameters
             ----------
-            kT : :obj`float`
-                 Thermal energy of the heat bath, floating point number.
-            gamma : :obj:`float`
-                    Friction the particles experience in the bath, floating
-                    point number.
-            r_cut : :obj:`float`
-                    Cut off value, floating point number.
-            wf : :obj:`int`, optional
-                 Integer value zero or one, affects scaling of the random forces.
-            tgamma : :obj:`float`, optional
-                     Friction coefficient for the transverse DPD algorithm.
-            tr_cut : :obj:`float`, optional
-                     Cut off radius for the transverse DPD.
-            twf : :obj:`int`
-                  Integer value zero or one, affects the scaling of the random forces
-                  in the transverse DPD algorithm.
+            'kT' : float
+                Thermal energy of the heat bath, floating point number
 
             """
-            req = ["kT", "gamma", "r_cut"]
-            valid = ["kT", "gamma", "r_cut", "tgamma", "tr_cut", "wf", "twf"]
-            raise Exception("Not implemented yet.")
-    
+            if kT is None:
+                raise ValueError(
+                    "kT has to be given as keyword args")
+            if not isinstance(kT, float):
+                raise ValueError("temperature must be a positive number")
+            global temperature
+            temperature = float(kT)
+            global thermo_switch
+            thermo_switch = (thermo_switch | THERMO_DPD)
+
+            mpi_bcast_parameter(FIELD_THERMO_SWITCH)
+            mpi_bcast_parameter(FIELD_TEMPERATURE)
+
     IF BROWNIAN_DYNAMICS:
         @AssertThermostatType(THERMO_BROWNIAN)
         def set_brownian(self, kT=None, gamma=None, gamma_rotation=None):

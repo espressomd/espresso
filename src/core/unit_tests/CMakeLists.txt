@@ -19,7 +19,7 @@
 
 # Build tests only when testing
 set_directory_properties(PROPERTIES EXCLUDE_FROM_ALL ON)
-  
+
 # Target for the unit tests
 add_custom_target(check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure)
 
@@ -35,6 +35,12 @@ function(UNIT_TEST)
 
   # If NUM_PROC is given, set up MPI parallel test case
   if( TEST_NUM_PROC )
+    if(DEFINED TEST_NP)
+      if(${TEST_NUM_PROC} GREATER ${TEST_NP})
+        set(TEST_NUM_PROC ${TEST_NP})
+      endif()
+    endif()
+
     add_test(${TEST_NAME} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${TEST_NUM_PROC} ${TEST_NAME})
   else( )
     add_test(${TEST_NAME} ${TEST_NAME})
@@ -49,7 +55,7 @@ unit_test(NAME RuntimeError_test SRC RuntimeError_test.cpp)
 unit_test(NAME RunningAverage_test SRC RunningAverage_test.cpp)
 unit_test(NAME RuntimeErrorCollector_test SRC RuntimeErrorCollector_test.cpp ../RuntimeErrorCollector.cpp ../RuntimeError.cpp)
 
-unit_test(NAME ScriptInterface_test SRC ScriptInterface_test.cpp)
+unit_test(NAME ScriptInterface_test SRC ScriptInterface_test.cpp ../MpiCallbacks.cpp ../../script_interface/ScriptInterfaceBase.cpp ../../script_interface/ParallelScriptInterface.cpp ../../script_interface/ParallelScriptInterfaceSlave.cpp ../../script_interface/Variant.cpp)
 unit_test(NAME Wall_test SRC Wall_test.cpp ../shapes/Wall.cpp)
 unit_test(NAME Factory_test SRC Factory_test.cpp)
 unit_test(NAME NumeratedContainer_test SRC NumeratedContainer_test.cpp)
@@ -62,7 +68,7 @@ unit_test(NAME ParallelScriptInterface_test SRC ParallelScriptInterface_test.cpp
 
 unit_test(NAME gather_buffer_test SRC gather_buffer_test.cpp NUM_PROC 4)
 unit_test(NAME scatter_buffer_test SRC scatter_buffer_test.cpp NUM_PROC 4)
-unit_test(NAME AutoParameters_test SRC AutoParameters_test.cpp)
+unit_test(NAME AutoParameters_test SRC AutoParameters_test.cpp ../MpiCallbacks.cpp ../../script_interface/ScriptInterfaceBase.cpp ../../script_interface/ParallelScriptInterface.cpp ../../script_interface/ParallelScriptInterfaceSlave.cpp ../../script_interface/Variant.cpp)
 unit_test(NAME make_function_test SRC make_function_test.cpp)
 unit_test(NAME AutoParameter_test SRC AutoParameter_test.cpp ../../script_interface/Variant.cpp)
 unit_test(NAME Variant_test SRC Variant_test.cpp ../../script_interface/Variant.cpp)
@@ -78,3 +84,6 @@ unit_test(NAME Particle_test SRC Particle_test.cpp)
 unit_test(NAME for_each_pair_test SRC for_each_pair_test.cpp)
 unit_test(NAME all_compare_test SRC all_compare_test.cpp NUM_PROC 3)
 unit_test(NAME None_test SRC None_test.cpp)
+unit_test(NAME keys_test SRC keys_test.cpp)
+unit_test(NAME Cache_test SRC Cache_test.cpp)
+unit_test(NAME histogram SRC histogram.cpp)

@@ -65,6 +65,12 @@ class ShapeBasedConstraintTest(ut.TestCase):
         self.assertAlmostEqual(f_part[2], self.lj_force(
             eps=1.5, sig=1.0, r=0.83), places=10)
 
+        # Check removal
+        for c in S.constraints:
+            S.constraints.remove(c)
+
+        for c in S.constraints:
+            self.assertTrue(False)
 
 if __name__ == "__main__":
     ut.main()

@@ -42,8 +42,6 @@ public:
                     {"outer_rad_right", m_pore->outer_rad_right()}});
   }
 
-  const std::string name() const override { return "Shapes::Pore"; }
-
   std::shared_ptr<::Shapes::Shape> shape() const override { return m_pore; }
 
 private:

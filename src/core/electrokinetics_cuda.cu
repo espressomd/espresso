@@ -99,7 +99,7 @@ extern EK_parameters* lb_ek_parameters_gpu;
   unsigned int old_number_of_species = 0;
   unsigned int old_number_of_boundaries = 0;
 
-  FdElectrostatics* electrostatics = NULL;
+  FdElectrostatics* electrostatics = nullptr;
 
   bool initialized = false;
   
@@ -2440,10 +2440,10 @@ int ek_init() {
   if( ek_parameters.agrid < 0.0 ||
       ek_parameters.viscosity < 0.0 ||
       ek_parameters.T < 0.0 ||
-      ek_parameters.bjerrumlength < 0.0 ) 
+      ek_parameters.prefactor < 0.0 ) 
   {
       
-    fprintf( stderr, "ERROR: invalid agrid, viscosity, T or bjerrum_length\n" );
+    fprintf( stderr, "ERROR: invalid agrid, viscosity, T or prefactor\n" );
     
     return 1;
   }
@@ -2554,10 +2554,10 @@ int ek_init() {
     }
    
     //initialize electrostatics
-    if(electrostatics != NULL)
+    if(electrostatics != nullptr)
       delete electrostatics;
 
-    FdElectrostatics::InputParameters es_parameters = {ek_parameters.bjerrumlength, ek_parameters.T, int(ek_parameters.dim_x), int(ek_parameters.dim_y), int(ek_parameters.dim_z), ek_parameters.agrid};
+    FdElectrostatics::InputParameters es_parameters = {ek_parameters.prefactor, int(ek_parameters.dim_x), int(ek_parameters.dim_y), int(ek_parameters.dim_z), ek_parameters.agrid};
     try {
       electrostatics = new FdElectrostatics(es_parameters, stream[0]);
     }
@@ -2695,7 +2695,7 @@ int ek_lb_print_vtk_velocity( char* filename ) {
 
   FILE* fp = fopen( filename, "w" );
 
-  if( fp == NULL ) 
+  if( fp == nullptr ) 
   {  
     return 1;
   }
@@ -2757,7 +2757,7 @@ int ek_lb_print_vtk_density( char* filename ) {
 
   FILE* fp = fopen( filename, "w" );
 
-  if( fp == NULL ) 
+  if( fp == nullptr ) 
   {
     return 1;
   }
@@ -2800,7 +2800,7 @@ int ek_print_vtk_density( int species, char* filename ) {
 
   FILE* fp = fopen( filename, "w" );
 
-  if( fp == NULL ){
+  if( fp == nullptr ){
     return 1;
   }
 
@@ -3026,7 +3026,7 @@ int ek_print_vtk_flux( int species, char* filename ) {
 
   unsigned int coord[3];
 
-  if( fp == NULL ){
+  if( fp == nullptr ){
     return 1;
   }
 
@@ -3189,7 +3189,7 @@ int ek_print_vtk_potential( char* filename ) {
 
   FILE* fp = fopen( filename, "w" );
 
-  if( fp == NULL ) 
+  if( fp == nullptr ) 
   {  
     return 1;
   }
@@ -3240,7 +3240,7 @@ int ek_print_vtk_particle_potential( char* filename ) {
 
   FILE* fp = fopen( filename, "w" );
 
-  if( fp == NULL ) 
+  if( fp == nullptr ) 
   {  
     return 1;
   }
@@ -3294,7 +3294,7 @@ int ek_print_vtk_lbforce( char* filename ) {
 
   FILE* fp = fopen( filename, "w" );
 
-  if( fp == NULL ) 
+  if( fp == nullptr ) 
   {
     return 1;
   }
@@ -3362,7 +3362,7 @@ void ek_print_parameters() {
   printf( "  float gamma_even = %f;\n",                 ek_parameters.gamma_even );
   printf( "  float friction = %f;\n",                   ek_parameters.friction );
   printf( "  float T = %f;\n",                          ek_parameters.T );
-  printf( "  float bjerrumlength = %f;\n",              ek_parameters.bjerrumlength );
+  printf( "  float prefactor = %f;\n",              ek_parameters.prefactor );
   printf( "  float lb_force[] = {%f, %f, %f};\n",       ek_parameters.lb_force[0], 
                                                         ek_parameters.lb_force[1], 
                                                         ek_parameters.lb_force[2] );
@@ -3376,13 +3376,13 @@ void ek_print_parameters() {
   printf( "  float reaction_ct_rate = %f;\n",           ek_parameters.reaction_ct_rate); 
   printf( "  float reaction_fraction_0 = %f;\n",        ek_parameters.reaction_fraction_0);
   printf( "  float reaction_fraction_1 = %f;\n",        ek_parameters.reaction_fraction_0);
-  printf( "  float* j = %p;\n",                         ek_parameters.j );
+  printf( "  float* j = %p;\n",                         (void*) ek_parameters.j );
   
   printf( "  float* rho[] = {%p, %p, %p, %p, %p, %p, %p, %p, %p, %p};\n",
-          ek_parameters.rho[0], ek_parameters.rho[1], ek_parameters.rho[2],
-          ek_parameters.rho[3], ek_parameters.rho[4], ek_parameters.rho[5],
-          ek_parameters.rho[6], ek_parameters.rho[7], ek_parameters.rho[8],
-          ek_parameters.rho[9]                                              );
+          (void*) ek_parameters.rho[0], (void*) ek_parameters.rho[1], (void*) ek_parameters.rho[2],
+          (void*) ek_parameters.rho[3], (void*) ek_parameters.rho[4], (void*) ek_parameters.rho[5],
+          (void*) ek_parameters.rho[6], (void*) ek_parameters.rho[7], (void*) ek_parameters.rho[8],
+          (void*) ek_parameters.rho[9]                                              );
   
   printf( "  int species_index[] = {%d, %d, %d, %d, %d, %d, %d, %d, %d, %d};\n",
           ek_parameters.species_index[0], ek_parameters.species_index[1],
@@ -3494,9 +3494,9 @@ int ek_set_lb_density( double lb_density ) {
 }
 
 
-int ek_set_bjerrumlength( double bjerrumlength ) {
+int ek_set_prefactor( double prefactor ) {
 
-  ek_parameters.bjerrumlength = bjerrumlength;
+  ek_parameters.prefactor = prefactor;
   return 0;
 }
 #ifdef EK_ELECTROSTATIC_COUPLING

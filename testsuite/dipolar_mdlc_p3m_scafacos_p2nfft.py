@@ -159,10 +159,10 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         # Particles
         data = np.genfromtxt(abspath("data/p3m_magnetostatics_system.data"))
         for p in data[:, :]:
-            s.part.add(id=int(p[0]), pos=p[1:4], dip=p[4:7])
+            s.part.add(id=int(p[0]), pos=p[1:4], dip=p[4:7],rotation=(1,1,1))
 
         scafacos = magnetostatics.Scafacos(
-            bjerrum_length=1,
+            prefactor=1,
             method_name="p2nfft",
             method_params={
                 "p2nfft_verbose_tuning": 0,
@@ -176,7 +176,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
                 "p2nfft_alpha": "0.31"})
         s.actors.add(scafacos)
         s.integrator.run(0)
-        expected = np.genfromtxt(abspath("p3m_magnetostatics_expected.data"))[:, 1:]
+        expected = np.genfromtxt(abspath("data/p3m_magnetostatics_expected.data"))[:, 1:]
         err_f = np.sum(np.sqrt(
             np.sum((s.part[:].f - expected[:, 0:3])**2, 1)), 0) / np.sqrt(data.shape[0])
         err_t = np.sum(np.sqrt(np.sum(

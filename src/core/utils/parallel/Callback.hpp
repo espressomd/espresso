@@ -35,7 +35,7 @@ namespace Parallel {
 class Callback {
 public:
   Callback(Communication::MpiCallbacks &cb,
-           Communication::MpiCallbacks::function_type callback) : m_cb(cb) {
+           const Communication::MpiCallbacks::function_type &callback) : m_cb(cb) {
     m_callback_id = m_cb.add(callback);
   }
 

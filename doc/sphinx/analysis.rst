@@ -6,7 +6,7 @@ Analysis
 The :mod:`espressomd.analyze` module provides online-calculation of local and global observables.
 These exist for convenience and historical reasons.
 Since arithmetic in TCL was quite painful to perform, there exists a series of common analysis routines which can be used whenever possible.
-They usualy have parts of the calculations performed in the core.
+They usually have parts of the calculations performed in the core.
 
 
 On the other hand, some observables are computed and stored in the
@@ -14,7 +14,7 @@ C-core of during a call to the function , while they are set up and
 their results are collected from the script level. These observables are
 more complex to implement and offer less flexibility, while they are
 significantly faster and more memory efficient, and they can be set up
-to be computed every few timesteps. The observables in this class are
+to be computed every few time steps. The observables in this class are
 described in chapter :ref:`Analysis in the core`:
 .
 
@@ -34,7 +34,7 @@ Returns the minimal distance between all particles in the system.
 When used with type-lists as arguments, then the minimal distance between particles of only those types is determined.
 
 
-:meth:`espressomd.analyze.Analysis.distto()`
+:meth:`espressomd.analyze.Analysis.dist_to()`
 
 Returns the minimal distance of all particles to either a particle (when used with an argument `id`) 
 or a position coordinate when used with a vector `pos`.
@@ -46,9 +46,9 @@ For example, ::
     >>> system.box_l = [100, 100, 100]
     >>> for i in range(10):
     >>>     system.part.add(id=i, pos=[1.0, 1.0, i**2], type=0)
-    >>> system.analysis.distto(id=4)
+    >>> system.analysis.dist_to(id=4)
     7.0
-    >>> system.analysis.distto(pos=[0,0,0])
+    >>> system.analysis.dist_to(pos=[0,0,0])
     1.4142135623730951
     >>> system.analysis.mindist()
     1.0
@@ -136,7 +136,7 @@ the currently identified properties.
    central axis, which one would think is natural.
 
 
-.. _Cylndrical average:
+.. _Cylindrical average:
 
 Cylindrical Average
 ~~~~~~~~~~~~~~~~~~~
@@ -187,66 +187,11 @@ the second triple to type 1.
 
 .. _Modes:
 
-Modes
-~~~~~
-.. todo:: This feature is not implemented
-
-analyze modes2d
-
-Analyzes the modes of a configuration. Requires that a grid is set and
-that the system contains more than two particles. Output are four
-numbers in the order:
-
-.. math:: ht_{RE}\qquad ht_{IM}\qquad \theta_{RE}\qquad \theta_{IM}
-
-
-.. _Lipid orientation:
-
-Lipid orientation
-~~~~~~~~~~~~~~~~~
-.. todo:: This feature is not implemented
-
-analyze get\_lipid\_orients analyze lipid\_orient\_order
-
-
-.. _Bilayers:
-
-Bilayers
-~~~~~~~~
-.. todo:: This feature is not implemented
-
-analyze bilayer\_set analyze bilayer\_density\_profile
-
-
-.. _GPB:
-
-GPB
-~~~
-.. todo:: This feature is not implemented
-
-analyze cell\_gpb
-
-
-.. _Get folded positions:
-
-Get folded positions
-~~~~~~~~~~~~~~~~~~~~
-.. todo:: This feature is not implemented
-
-analyze get\_folded\_positions
-
-Outputs the folded positions of particles. Without any parameters, the
-positions of all particles are given, folded to the box length. The
-optional parameter ensures that molecules (particle groups) are kept
-intact. The optional shift parameters can be used to shift the not
-separated molecules if needed.
-
-
 .. _Vkappa:
 
 Vkappa
 ~~~~~~
-:meth:`espressomd.analyze.Analysis.Vkappa`
+:meth:`espressomd.analyze.Analysis.v_kappa`
 
 .. todo:: Implementation appears to be incomplete
 
@@ -319,7 +264,7 @@ always yields :math:`1`.
 
 Center of mass
 ~~~~~~~~~~~~~~
-:meth:`espressomd.analyze.Analysis.centermass`
+:meth:`espressomd.analyze.Analysis.center_of_mass`
 
 Returns the center of mass of particles of the given type given by `part_type`.
 
@@ -328,9 +273,9 @@ Returns the center of mass of particles of the given type given by `part_type`.
 
 Moment of inertia matrix
 ~~~~~~~~~~~~~~~~~~~~~~~~
-:meth:`espressomd.analyze.Analysis.momentofinertiamatrix`
+:meth:`espressomd.analyze.Analysis.moment_of_inertia_matrix`
 
-Returns the 3x3 moment of interia matrix for particles of a given type.
+Returns the 3x3 moment of inertia matrix for particles of a given type.
 
 
 .. _Gyration tensor:
@@ -360,26 +305,6 @@ aggregation state of only oppositely charged particles.
 
 
 .. _Identifying pearl necklace structures:
-
-Identifying pearl-necklace structures
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. todo:: This feature is not implemented
-analyze necklace
-
-Algorithm for identifying pearl necklace structures for polyelectrolytes
-in poor solvent :cite:`limbach03a`. The first three
-parameters are tuning parameters for the algorithm: is the minimal
-number of monomers in a pearl. is the number of monomers along the chain
-backbone which are excluded from the space distance criterion to form
-clusters. is the distance between two monomers up to which they are
-considered to belong to the same clusters. The three parameters may be
-connected by scaling arguments. Make sure that your results are only
-weakly dependent on the exact choice of your parameters. For the
-algorithm the coordinates stored in partCfg are used. The chain itself
-is defined by the identity first of its first monomer and the chain
-length length. Attention: This function is very specific to the problem
-and might not give useful results for other cases with similar
-structures.
 
 
 .. _Finding holes:
@@ -611,7 +536,7 @@ The above-mentioned formula is only valid under certain assumptions. For
 more information, see Chapter 4 and equation 4.102
 in :cite:`doi86a`.
 Note that the hydrodynamic radius is sometimes defined in a similar fashion but with a denominator of :math:`N(N-1)` instead of :math:`N^2` in the prefactor.
-Both versions are equivalent in the :math:`N\rightarrow \infty` limit but give numericaly different values for finite polymers.
+Both versions are equivalent in the :math:`N\rightarrow \infty` limit but give numerically different values for finite polymers.
 
 
 .. _Internal distances:
@@ -701,7 +626,7 @@ with :math:`q \in \{\var{qmin},\dots,\var{qmax}\}`.
 Chain radial distribution function
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:meth:`espressomd.analyze.Analysis.rdfchain`
+:meth:`espressomd.analyze.Analysis.rdf_chain`
 
 Returns three radial distribution functions (rdf) for the chains.
 The first rdf is calculated for monomers belonging to different chains,
