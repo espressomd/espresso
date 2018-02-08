@@ -13,7 +13,7 @@ matrix:
     - os: linux
       sudo: required
       services: docker
-      env: myconfig=maxset image=ubuntu-python3
+      env: myconfig=maxset image=ubuntu-python3 python_version=3
     - os: linux
       sudo: required
       services: docker
@@ -30,12 +30,6 @@ matrix:
       sudo: required
       services: docker
       env: myconfig=maxset image=centos make_check=false
-    - os: osx
-      osx_image: xcode8
-      env: myconfig=maxset
-    - os: osx
-      osx_image: xcode8
-      env: myconfig=maxset image=python3
     - os: linux
       sudo: required
       services: docker

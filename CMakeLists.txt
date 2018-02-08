@@ -172,7 +172,7 @@ if (WITH_CUDA)
       endif()
       SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
 
-      if (APPLE)
+      if (CMAKE_OSX_SYSROOT)
         set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -isysroot -Xcompiler ${CMAKE_OSX_SYSROOT}")
       endif()
     endif(CUDA_FOUND)
