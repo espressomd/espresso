@@ -25,7 +25,7 @@ import numpy as np
 
 
 class CellSystem(ut.TestCase):
-    S = espressomd.System()
+    S = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     def test_cell_system(self):
         self.S.cell_system.set_n_square(use_verlet_lists=False)

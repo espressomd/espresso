@@ -30,7 +30,7 @@ from random import shuffle
 class CollisionDetection(ut.TestCase):
     """Tests interface and functionality of the collision detection / dynamic binding"""
 
-    s = espressomd.System()
+    s = espressomd.System(box_l = [10.0, 10.0, 10.0])
     if espressomd.has_features("VIRTUAL_SITES"): 
         from espressomd.virtual_sites import VirtualSitesRelative
         s.virtual_sites=VirtualSitesRelative()

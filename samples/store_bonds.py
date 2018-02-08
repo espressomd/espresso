@@ -3,7 +3,7 @@ import espressomd
 from espressomd.interactions import *
 from samples_common import open
 
-system = espressomd.System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 f = FeneBond(k=1, d_r_max=1)
 f2 = FeneBond(k=2, d_r_max=1.5)
 h = HarmonicBond(r_0=0, k=1)

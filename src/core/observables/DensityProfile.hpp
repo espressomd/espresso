@@ -1,9 +1,9 @@
 #ifndef OBSERVABLES_DENSITYPROFILE_HPP
 #define OBSERVABLES_DENSITYPROFILE_HPP
 
-#include <vector>
 #include "ProfileObservable.hpp"
 #include "utils/Histogram.hpp"
+#include <vector>
 
 namespace Observables {
 

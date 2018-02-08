@@ -145,7 +145,6 @@ enum CoulombMethod {
   COULOMB_P3M_GPU,   //< Coulomb method is P3M with GPU based long range part
                      // calculation
   COULOMB_MMM1D_GPU, //< Coulomb method is one-dimensional MMM running on GPU
-  COULOMB_EWALD_GPU, //< Coulomb method is Ewald running on GPU
   COULOMB_EK,        //< Coulomb method is electrokinetics
   COULOMB_SCAFACOS,  //< Coulomb method is scafacos
 };
@@ -175,9 +174,12 @@ enum DipolarInteraction {
   DIPOLAR_MDLC_DS,
   /** Direct summation on gpu */
   DIPOLAR_DS_GPU,
+#ifdef DIPOLAR_BARNES_HUT
+  /** Direct summation on gpu by Barnes-Hut algorithm */
+  DIPOLAR_BH_GPU,
+#endif
   /** Scafacos library */
   DIPOLAR_SCAFACOS
-
 };
 #endif
 

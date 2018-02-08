@@ -2,7 +2,7 @@ from __future__ import print_function
 import espressomd
 import espressomd.lb
 
-S = espressomd.System()
+S = espressomd.System(box_l=[1.0, 1.0, 1.0])
 S.box_l = [16, 16, 16]
 S.cell_system.skin = 0.4
 S.time_step = 0.01

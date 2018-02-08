@@ -17,7 +17,7 @@ from espressomd.shapes import *
 print('8Ball BILLARD - An Espresso Visualizer Demo\nControls:\nNumpad 4/6: Adjust Angle\nNumpad 2/8: Adjust Impulse\nNumpad 5: Shoot')
 
 #ESPRESSO
-system = espressomd.System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 table_dim = [2.24,1.12]
 system.box_l = [table_dim[0], 3, table_dim[1]]
 

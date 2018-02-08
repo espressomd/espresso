@@ -205,8 +205,13 @@ void File::create_datasets(bool only_load) {
       auto dims = create_dims(descr.dim, creation_size_dataset);
       auto chunk_dims = create_chunk_dims(descr.dim, chunk_size, 1);
       auto maxdims = create_maxdims(descr.dim);
-      auto storage = h5xx::policy::storage::chunked(chunk_dims)
-                         .set(h5xx::policy::storage::fill_value(-10));
+      auto storage = h5xx::policy::storage::chunked(chunk_dims);
+      if(descr.type.get_type_id()==H5T_NATIVE_INT)
+        storage.set(h5xx::policy::storage::fill_value(static_cast<int>(-10)));
+      else if(descr.type.get_type_id()==H5T_NATIVE_DOUBLE)
+        storage.set(h5xx::policy::storage::fill_value(static_cast<double>(-10)));
+      else
+        throw std::runtime_error("H5MD writing dataset of this type is not implemented\n");
       auto dataspace = h5xx::dataspace(dims, maxdims);
       hid_t lcpl_id = H5Pcreate(H5P_LINK_CREATE);
       H5Pset_create_intermediate_group(lcpl_id, 1);
@@ -450,7 +455,6 @@ void File::Write(int write_dat, PartCfg &partCfg) {
   hsize_t count_3d[3] = {1, (hsize_t)num_particles_to_be_written, 3};
 
   // calculate the change of the extent for fluctuating particle numbers
-  int n_part = max_seen_particle + 1;
   int old_max_n_part =
       std::max(m_max_n_part, (int)dims_id[1]); // check that dataset is not
                                                // shrinked: take into account

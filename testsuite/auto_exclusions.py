@@ -25,7 +25,7 @@ import numpy as np
 @ut.skipIf(not espressomd.has_features("EXCLUSIONS"),
            "Skipped because of not EXCLUSIONS")
 class AutoExclusions(ut.TestCase):
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     def setUp(self):
         self.system.part.clear()

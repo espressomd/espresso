@@ -8,15 +8,16 @@ import tests_common
 
 class TestCylindricalObservable(ut.TestCase):
     """
-    Testcase for the CylindricalFluxDensityObservable.
+    Testcase for the cylindrical observables.
 
     """
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.time_step = 0.01
     system.box_l = [15.0, 15.0, 15.0]
     system.cell_system.skin = 0.4
 
     params = {
+        'ids': range(100),
         'center': [7.5, 7.5, 7.5],  # center of the histogram
         'axis': 'y',
         'n_r_bins': 4,  # number of bins in r
@@ -28,48 +29,29 @@ class TestCylindricalObservable(ut.TestCase):
         'max_r': 5.0,
         'max_phi': np.pi,
         'max_z': 5.0,
-        'N': 100  # number of particles
     }
-
 
     def swap_axis(self, arr, axis):
         if axis == 'x':
-            arr = np.array([arr[2], arr[1], -arr[0]])
+            arr = np.dot(tests_common.rotation_matrix([0, 1, 0], np.pi/2.0), arr)
         elif axis == 'y':
-            arr = np.array([arr[0], arr[2], -arr[1]])
+            arr = np.dot(tests_common.rotation_matrix([1, 0, 0], -np.pi/2.0), arr)
         return arr
 
     def swap_axis_inverse(self, arr, axis):
         if axis == 'x':
-            arr = np.array([-arr[2], arr[1], arr[0]])
+            arr = np.dot(tests_common.rotation_matrix([0, 1, 0], -np.pi/2.0), arr)
         elif axis == 'y':
-            arr = np.array([arr[0], -arr[2], arr[1]])
+            arr = np.dot(tests_common.rotation_matrix([1, 0, 0], np.pi/2.0), arr)
         return arr
 
-
     def pol_coords(self):
-        positions = np.zeros((self.params['N'], 3))
-        velocities = np.zeros((self.params['N'], 3))
+        positions = np.zeros((len(self.params['ids']), 3))
         for i, p in enumerate(self.system.part):
             tmp = p.pos - np.array(self.params['center'])
             tmp = self.swap_axis_inverse(tmp, self.params['axis'])
             positions[i, :] = tests_common.transform_pos_from_cartesian_to_polar_coordinates(tmp)
         return positions
-
-    def calculate_bin_volume(self):
-        # Calculate the histogram normalization.
-        bin_volume = np.zeros(self.params['n_r_bins'])
-        r_bin_size = (
-            self.params['max_r'] - self.params['min_r']) / self.params['n_r_bins']
-        phi_bin_size = (
-            self.params['max_phi'] - self.params['min_phi']) / self.params['n_phi_bins']
-        z_bin_size = (
-            self.params['max_z'] - self.params['min_z']) / self.params['n_z_bins']
-        for i in range(self.params['n_r_bins']):
-            bin_volume[i] = np.pi * ((self.params['min_r'] + r_bin_size * (i + 1))**2.0 -
-                                     (self.params['min_r'] + r_bin_size * i)**2.0) * \
-                phi_bin_size / (2.0 * np.pi) * z_bin_size
-        return bin_volume
 
     def set_particles(self):
         self.system.part.clear()
@@ -81,20 +63,20 @@ class TestCylindricalObservable(ut.TestCase):
         self.v_r = .75
         self.v_phi = 2.5
         self.v_z = 1.5
-        for i in range(self.params['N']):
+        for i in range(len(self.params['ids'])):
             position = np.array([a *
                                  np.cos(i *
                                         2.0 *
                                         np.pi /
-                                        (self.params['N'] +
+                                        (len(self.params['ids']) +
                                          1)), b *
                                  np.sin(i *
                                         2.0 *
                                         np.pi /
-                                        (self.params['N'] +
+                                        (len(self.params['ids']) +
                                          1)), i *
                                   (self.params['max_z'] - self.params['min_z'])/
-                                 (self.params['N'] +
+                                 (len(self.params['ids']) +
                                      1) - self.params['center'][2]])
             v_y = (position[0] * np.sqrt(position[0]**2.0 + position[1]**2.0) * \
                    self.v_phi + position[1] * self.v_r) / np.sqrt(position[0]**2.0 + position[1]**2.0)
@@ -114,7 +96,16 @@ class TestCylindricalObservable(ut.TestCase):
         return np_hist
 
     def normalize_with_bin_volume(self, histogram):
-        bin_volume = self.calculate_bin_volume()
+        bin_volume = tests_common.get_cylindrical_bin_volume(
+            self.params['n_r_bins'],
+            self.params['n_phi_bins'],
+            self.params['n_z_bins'],
+            self.params['min_r'],
+            self.params['max_r'],
+            self.params['min_phi'],
+            self.params['max_phi'],
+            self.params['min_z'],
+            self.params['max_z'])
         for i in range(self.params['n_r_bins']):
             histogram[i, :, :] /= bin_volume[i]
         return histogram
@@ -122,20 +113,7 @@ class TestCylindricalObservable(ut.TestCase):
     def density_profile_test(self):
         self.set_particles()
         # Set up the Observable.
-        obs = espressomd.observables.CylindricalDensityProfile(
-            ids=range(
-                self.params['N']),
-            center=self.params['center'],
-            axis=self.params['axis'],
-            n_r_bins=self.params['n_r_bins'],
-            n_phi_bins=self.params['n_phi_bins'],
-            n_z_bins=self.params['n_z_bins'],
-            min_r=self.params['min_r'],
-            min_phi=self.params['min_phi'],
-            min_z=self.params['min_z'],
-            max_r=self.params['max_r'],
-            max_phi=self.params['max_phi'],
-            max_z=self.params['max_z'])
+        obs = espressomd.observables.CylindricalDensityProfile(**self.params)
         core_hist = np.array(
             obs.calculate()).reshape(
             self.params['n_r_bins'],
@@ -149,20 +127,7 @@ class TestCylindricalObservable(ut.TestCase):
     def velocity_profile_test(self):
         self.set_particles()
         # Set up the Observable.
-        obs = espressomd.observables.CylindricalVelocityProfile(
-            ids=range(
-                self.params['N']),
-            center=self.params['center'],
-            axis=self.params['axis'],
-            n_r_bins=self.params['n_r_bins'],
-            n_phi_bins=self.params['n_phi_bins'],
-            n_z_bins=self.params['n_z_bins'],
-            min_r=self.params['min_r'],
-            min_phi=self.params['min_phi'],
-            min_z=self.params['min_z'],
-            max_r=self.params['max_r'],
-            max_phi=self.params['max_phi'],
-            max_z=self.params['max_z'])
+        obs = espressomd.observables.CylindricalVelocityProfile(**self.params)
         core_hist = np.array(
             obs.calculate()).reshape(
             self.params['n_r_bins'],
@@ -183,20 +148,7 @@ class TestCylindricalObservable(ut.TestCase):
     def flux_density_profile_test(self):
         self.set_particles()
         # Set up the Observable.
-        obs = espressomd.observables.CylindricalFluxDensityProfile(
-            ids=range(
-                self.params['N']),
-            center=self.params['center'],
-            axis=self.params['axis'],
-            n_r_bins=self.params['n_r_bins'],
-            n_phi_bins=self.params['n_phi_bins'],
-            n_z_bins=self.params['n_z_bins'],
-            min_r=self.params['min_r'],
-            min_phi=self.params['min_phi'],
-            min_z=self.params['min_z'],
-            max_r=self.params['max_r'],
-            max_phi=self.params['max_phi'],
-            max_z=self.params['max_z'])
+        obs = espressomd.observables.CylindricalFluxDensityProfile(**self.params)
         core_hist = np.array(
             obs.calculate()).reshape(
             self.params['n_r_bins'],
