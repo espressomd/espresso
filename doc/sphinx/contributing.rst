@@ -66,12 +66,12 @@ It is also generally a good idea to contact the mailing lists before you
 start major coding projects. It might be that someone else is already
 working on the problem or has a solution at hand.
 
-.. _Developers guide:
+.. _Building the Developer's guide:
 
-Developers’ guide
------------------
+Building the Developer's guide
+------------------------------
 
-Besides the User guide, also contains a Developers’ guide which is a
+Besides the User's guide, |es| also contains a Developer's guide which is a
 programmer documentation automatically built from comments in the source
 code and using Doxygen. It provides a cross-referenced documentation of
 all functions and data structures available in source code. It can be
@@ -85,10 +85,10 @@ of the build directory: ``doc/doxygen/html/index.html``.
 A recent version of this guide can also be found on the homepage
 http://espressomd.org/html/dox/.
 
-.. _Users guide:
+.. _Building the User's guide:
 
-Users’ guide
---------------------
+Building the User's guide
+-------------------------
 
 If, while reading this documentation, you notice any mistakes or badly (if
 at all) described features or commands, you are very welcome to

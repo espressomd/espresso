@@ -40,8 +40,6 @@ from espressomd.utils import is_valid_type
 
 class Analysis(object):
 
-    _systemp = None
-
     def __init__(self, system):
         if not isinstance(system, System):
             raise TypeError("An instance of System is required as argument")
