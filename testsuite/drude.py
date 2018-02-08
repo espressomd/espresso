@@ -20,7 +20,7 @@ class Drude(ut.TestCase):
         """
         
         box_l = 50
-        S=espressomd.System(box_l = [box_l]*3)
+        S=espressomd.System(box_l = [box_l, box_l, box_l])
 
         S.seed = S.cell_system.get_state()['n_nodes'] * [12]
         np.random.seed(12)
