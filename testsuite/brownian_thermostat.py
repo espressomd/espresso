@@ -25,9 +25,9 @@ from time import time
 from espressomd.correlators import Correlator
 from espressomd.observables import ParticleVelocities, ParticleBodyAngularVelocities
 
-@ut.skipIf(espressomd.has_features("THERMOSTAT_IGNORE_NON_VIRTUAL") and
+@ut.skipIf(espressomd.has_features("THERMOSTAT_IGNORE_NON_VIRTUAL") or
            not espressomd.has_features("BROWNIAN_DYNAMICS"),
-           "Skipped because of THERMOSTAT_IGNORE_NON_VIRTUAL")
+           "Skipped because of the features set")
 class BrownianThermostat(ut.TestCase):
     """Tests the velocity distribution created by the Brownian thermostat against
        the single component Maxwell distribution."""
