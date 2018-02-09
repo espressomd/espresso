@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "Constraint.hpp"
+#include "partCfg_global.hpp"
 #include "energy.hpp"
 #include "particle_data.hpp"
 #include "shapes/NoWhere.hpp"
@@ -27,6 +28,11 @@ public:
 
   virtual void add_force(Particle *p, double *folded_pos) override;
 
+  /* finds the minimum distance to all particles */
+  double mindist(PartCfg &partCfg, IntList const &set1);
+  void dummy();
+
+  
   /* Calculate distance from the constraint */
   int calc_dist(const double *pos, double *dist, double *vec) const {
     return m_shape->calculate_dist(pos, dist, vec);
