@@ -15,6 +15,50 @@ class ThermoTest(ut.TestCase):
     # Handle for espresso system
     es = espressomd.System()
     rot_flag = 0
+    
+    def set_thermo_all(self, test_case, kT, gamma_global, gamma_global_rot):
+        if test_case < 4:
+            self.es.thermostat.set_langevin(
+                kT=kT,
+                gamma=[
+                    gamma_global[0],
+                    gamma_global[1],
+                    gamma_global[2]])
+        elif test_case == 4 and self.rot_flag == 1:
+            self.es.thermostat.set_langevin(
+                kT=kT,
+                gamma=[
+                    gamma_global[0],
+                    gamma_global[1],
+                    gamma_global[2]],
+                gamma_rotation=[
+                    gamma_global_rot[0],
+                    gamma_global_rot[1],
+                    gamma_global_rot[2]])
+        elif test_case < 8 + self.rot_flag:
+            if "BROWNIAN_DYNAMICS" in espressomd.features():
+                # Brownian thermostat activation
+                self.es.thermostat.turn_off()
+                self.es.thermostat.set_brownian(
+                    kT=kT,
+                    gamma=[
+                        gamma_global[0],
+                        gamma_global[1],
+                        gamma_global[2]])
+        elif test_case == 9:
+            if "BROWNIAN_DYNAMICS" in espressomd.features():
+                # Brownian thermostat activation
+                self.es.thermostat.turn_off()
+                self.es.thermostat.set_brownian(
+                    kT=kT,
+                    gamma=[
+                        gamma_global[0],
+                        gamma_global[1],
+                        gamma_global[2]],
+                    gamma_rotation=[
+                        gamma_global_rot[0],
+                        gamma_global_rot[1],
+                        gamma_global_rot[2]])
 
     def run_test_case(self, test_case):
         seed(2)
@@ -62,49 +106,8 @@ class ThermoTest(ut.TestCase):
         gamma_rot[1, 0] = np.array((0.5 + np.random.random()) * 2.0 / 3.0)
         gamma_rot[1, 1] = gamma_rot[1, 0]
         gamma_rot[1, 2] = gamma_rot[1, 0]
-
-        if test_case < 4:
-            self.es.thermostat.set_langevin(
-                kT=0.0,
-                gamma=[
-                    gamma_global[0],
-                    gamma_global[1],
-                    gamma_global[2]])
-        elif test_case == 4 and self.rot_flag == 1:
-            self.es.thermostat.set_langevin(
-                kT=0.0,
-                gamma=[
-                    gamma_global[0],
-                    gamma_global[1],
-                    gamma_global[2]],
-                gamma_rotation=[
-                    gamma_global_rot[0],
-                    gamma_global_rot[1],
-                    gamma_global_rot[2]])
-        elif test_case < 8 + self.rot_flag:
-            if "BROWNIAN_DYNAMICS" in espressomd.features():
-                # Brownian thermostat activation
-                self.es.thermostat.turn_off()
-                self.es.thermostat.set_brownian(
-                    kT=0.0,
-                    gamma=[
-                        gamma_global[0],
-                        gamma_global[1],
-                        gamma_global[2]])
-        elif test_case == 9:
-            if "BROWNIAN_DYNAMICS" in espressomd.features():
-                # Brownian thermostat activation
-                self.es.thermostat.turn_off()
-                self.es.thermostat.set_brownian(
-                    kT=0.0,
-                    gamma=[
-                        gamma_global[0],
-                        gamma_global[1],
-                        gamma_global[2]],
-                    gamma_rotation=[
-                        gamma_global_rot[0],
-                        gamma_global_rot[1],
-                        gamma_global_rot[2]])
+        
+        self.set_thermo_all(test_case, 0.0, gamma_global, gamma_global_rot)
 
         self.es.cell_system.skin = 5.0
         mass = 12.74
@@ -284,48 +287,7 @@ class ThermoTest(ut.TestCase):
                 else:
                     gamma_rot_validate[k, :] = gamma_global[:]
 
-        if test_case < 4:
-            self.es.thermostat.set_langevin(
-                kT=0.0,
-                gamma=[
-                    gamma_global[0],
-                    gamma_global[1],
-                    gamma_global[2]])
-        elif test_case == 4 and self.rot_flag == 1:
-            self.es.thermostat.set_langevin(
-                kT=0.0,
-                gamma=[
-                    gamma_global[0],
-                    gamma_global[1],
-                    gamma_global[2]],
-                gamma_rotation=[
-                    gamma_global_rot[0],
-                    gamma_global_rot[1],
-                    gamma_global_rot[2]])
-        elif test_case < 8 + self.rot_flag:
-            if "BROWNIAN_DYNAMICS" in espressomd.features():
-                # Brownian thermostat activation
-                #self.es.thermostat.turn_off()
-                self.es.thermostat.set_brownian(
-                    kT=0.0,
-                    gamma=[
-                        gamma_global[0],
-                        gamma_global[1],
-                        gamma_global[2]])
-        elif test_case == 9:
-            if "BROWNIAN_DYNAMICS" in espressomd.features():
-                # Brownian thermostat activation
-                #self.es.thermostat.turn_off()
-                self.es.thermostat.set_brownian(
-                    kT=0.0,
-                    gamma=[
-                        gamma_global[0],
-                        gamma_global[1],
-                        gamma_global[2]],
-                    gamma_rotation=[
-                        gamma_global_rot[0],
-                        gamma_global_rot[1],
-                        gamma_global_rot[2]])
+        self.set_thermo_all(test_case, 0.0, gamma_global, gamma_global_rot)
 
         self.es.time = 0.0
         self.es.time_step = 7E-5
@@ -438,48 +400,7 @@ class ThermoTest(ut.TestCase):
         for k in range(2):
             D_tr[k, :] = 2.0 * halfkT[k] / gamma_tr[k, :]
 
-        if test_case < 4:
-            self.es.thermostat.set_langevin(
-                kT=kT,
-                gamma=[
-                    gamma_global[0],
-                    gamma_global[1],
-                    gamma_global[2]])
-        elif test_case == 4 and self.rot_flag == 1:
-            self.es.thermostat.set_langevin(
-                kT=kT,
-                gamma=[
-                    gamma_global[0],
-                    gamma_global[1],
-                    gamma_global[2]],
-                gamma_rotation=[
-                    gamma_global_rot[0],
-                    gamma_global_rot[1],
-                    gamma_global_rot[2]])
-        elif test_case < 8 + self.rot_flag:
-            if "BROWNIAN_DYNAMICS" in espressomd.features():
-                # Brownian thermostat activation
-                self.es.thermostat.turn_off()
-                self.es.thermostat.set_brownian(
-                    kT=kT,
-                    gamma=[
-                        gamma_global[0],
-                        gamma_global[1],
-                        gamma_global[2]])
-        elif test_case == 9:
-            if "BROWNIAN_DYNAMICS" in espressomd.features():
-                # Brownian thermostat activation
-                self.es.thermostat.turn_off()
-                self.es.thermostat.set_brownian(
-                    kT=kT,
-                    gamma=[
-                        gamma_global[0],
-                        gamma_global[1],
-                        gamma_global[2]],
-                    gamma_rotation=[
-                        gamma_global_rot[0],
-                        gamma_global_rot[1],
-                        gamma_global_rot[2]])
+        self.set_thermo_all(test_case, kT, gamma_global, gamma_global_rot)
 
         # no need to rebuild Verlet lists, avoid it
         self.es.cell_system.skin = 5.0
