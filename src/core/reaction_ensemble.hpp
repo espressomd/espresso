@@ -14,7 +14,7 @@ struct SingleReaction {
   std::vector<int> reactant_coefficients;
   std::vector<int> product_types;
   std::vector<int> product_coefficients;
-  double equilibrium_constant;
+  double Gamma;
   // calculated values that are stored for performance reasons
   int nu_bar;
 };
@@ -89,7 +89,6 @@ public:
 
   std::vector<SingleReaction> reactions;
   std::map<int, double> charges_of_types;
-  double standard_pressure_in_simulation_units = -10.0;
   double temperature = -10.0;
   double exclusion_radius =
       0.0; // this is used as a kind of hard sphere radius, if
@@ -115,7 +114,7 @@ public:
   void check_reaction_ensemble();
 
   int delete_particle(int p_id);
-  void add_reaction(double equilibrium_constant,
+  void add_reaction(double Gamma,
                     const std::vector<int> & _reactant_types,
                     const std::vector<int> & _reactant_coefficients,
                     const std::vector<int> & _product_types,
