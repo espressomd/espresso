@@ -115,11 +115,7 @@ class ShapeBasedConstraint(Constraint):
 
     def mindist(self):
         """
-        Calculates the minimum distance to all particles
-
-        Parameters
-        ----------
-        TODO
+        Calculates the minimum distance to all interacting particles.
         
         Returns
         ----------

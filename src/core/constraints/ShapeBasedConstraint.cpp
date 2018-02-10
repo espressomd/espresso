@@ -6,8 +6,6 @@
 #include "errorhandling.hpp"
 #include "forces_inline.hpp"
 #include "interaction_data.hpp"
-#include "utils/list_contains.hpp"
-#include "partCfg_global.hpp"
 
 
 namespace Constraints {

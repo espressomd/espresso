@@ -30,8 +30,6 @@ public:
 
   /* finds the minimum distance to all particles */
   double mindist();
-  void dummy();
-
   
   /* Calculate distance from the constraint */
   int calc_dist(const double *pos, double *dist, double *vec) const {
