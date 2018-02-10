@@ -517,15 +517,6 @@ void convert_vec_body_to_space(Particle *p, double *v,double* res)
   res[2] = A[0 + 3*2]*v[0] + A[1 + 3*2]*v[1] + A[2 + 3*2]*v[2];
 }
 
-/** Multiply two quaternions */
-void multiply_quaternions(double const a[4], double const b[4], double result[4]) {
-  // Formula from http://www.j3d.org/matrix_faq/matrfaq_latest.html
-  result[0] = a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3];
-  result[1] = a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2];
-  result[2] = a[0] * b[2] + a[2] * b[0] + a[3] * b[1] - a[1] * b[3];
-  result[3] = a[0] * b[3] + a[3] * b[0] + a[1] * b[2] - a[2] * b[1];
-}
-
 /** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi
  */
 void rotate_particle(Particle *p, double *aSpaceFrame, double phi) {

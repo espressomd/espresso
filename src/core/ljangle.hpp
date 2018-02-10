@@ -171,7 +171,7 @@ inline void add_ljangle_force(Particle *p1, Particle *p2,
         }
       }
 
-      frac2 = SQR(ia_params->LJANGLE_sig / dist);
+      frac2 = Utils::sqr(ia_params->LJANGLE_sig / dist);
       frac10 = frac2 * frac2 * frac2 * frac2 * frac2;
       rad = effective_eps * frac10 * (5.0 * frac2 - 6.0);
       radprime = 60.0 * effective_eps * frac10 * (1.0 - frac2) / dist;
@@ -231,8 +231,8 @@ inline void add_ljangle_force(Particle *p1, Particle *p2,
 }
 
 /** calculate Lennard jones energy between particle p1 and p2. */
-inline double ljangle_pair_energy(Particle *p1, Particle *p2,
-                                  IA_parameters *ia_params, double d[3],
+inline double ljangle_pair_energy(const Particle *p1, const Particle *p2,
+                                  const IA_parameters *ia_params, const double d[3],
                                   double dist) {
   if (!(dist < ia_params->LJANGLE_cut))
     return 0.0;
@@ -327,7 +327,7 @@ inline double ljangle_pair_energy(Particle *p1, Particle *p2,
         }
       }
 
-      frac2 = SQR(ia_params->LJANGLE_sig / dist);
+      frac2 = Utils::sqr(ia_params->LJANGLE_sig / dist);
       frac10 = frac2 * frac2 * frac2 * frac2 * frac2;
       return effective_eps * frac10 * (5.0 * frac2 - 6.0) * angular_jik *
              angular_ikn;

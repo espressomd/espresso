@@ -51,6 +51,9 @@ from globals cimport max_seen_particle
 from espressomd.utils import array_locked, is_valid_type
 from espressomd.virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 
+IF COLLISION_DETECTION == 1:
+    from .collision_detection import CollisionDetection
+
 import sys
 import random  # for true random numbers from os.urandom()
 
@@ -91,14 +94,22 @@ cdef class System(object):
         constraints
         lbboundaries
         ekboundaries
+        collision_detection
         __seed
         cuda_init_handle
         comfixed
         _active_virtual_sites_handle
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         global _system_created
         if (not _system_created):
+            if 'box_l' not in kwargs:
+                raise ValueError("Required argument box_l not provided.")
+            for arg in kwargs:
+                if arg in setable_properties:
+                    System.__setattr__(self, arg, kwargs.get(arg))
+                else:
+                    raise ValueError("Property {} can not be set via argument to System class.".format(arg))
             self.part = particle_data.ParticleList()
             self.non_bonded_inter = interactions.NonBondedInteractions()
             self.bonded_inter = interactions.BondedInteractions()
@@ -117,6 +128,8 @@ cdef class System(object):
             if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
                 self.lbboundaries = LBBoundaries()
                 self.ekboundaries = EKBoundaries()
+            IF COLLISION_DETECTION==1:
+                self.collision_detection = CollisionDetection()
             IF CUDA:
                 self.cuda_init_handle = cuda_init.CudaInitHandle()
 
@@ -516,7 +529,7 @@ cdef class System(object):
         Returns
         -------
         :obj:`int`
-            The number of particles which share the given type.
+            The number of particles which have the given type.
 
         """
         self.check_valid_type( type)

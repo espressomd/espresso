@@ -1,7 +1,6 @@
 from espressomd import System, shapes, electrokinetics
 import sys
-system = System()
-system.box_l = [10, 10, 10]
+system = System(box_l = [10, 10, 10])
 system.cell_system.skin = 0.4
 system.time_step = 0.1
 

@@ -54,7 +54,6 @@
 #ifdef ELECTROSTATICS
 #include "bonded_coulomb.hpp"
 #endif
-#include "actor/EwaldGPU_ShortRange.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
 #include "angle_harmonic.hpp"
@@ -90,8 +89,8 @@
     @param dist2     distance squared between p1 and p2.
     @return the short ranged interaction energy between the two particles
 */
-inline double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
-                                          IA_parameters *ia_params, double d[3],
+inline double calc_non_bonded_pair_energy(const Particle *p1, const Particle *p2,
+                                          const IA_parameters *ia_params, const double d[3],
                                           double dist, double dist2) {
   double ret = 0;
 
@@ -239,11 +238,6 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
     case COULOMB_MMM2D:
       ret = mmm2d_coulomb_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
       break;
-#ifdef EWALD_GPU
-    case COULOMB_EWALD_GPU:
-      ret = ewaldgpu_coulomb_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
-      break;
-#endif
     default:
       ret = 0.;
     }
@@ -506,13 +500,13 @@ inline void add_kinetic_energy(Particle *p1) {
   //   if (p1->p.smaller_timestep==1) {
   //     ostringstream msg;
   //     msg << "SMALL TIME STEP";
-  //     energy.data.e[0] += SQR(smaller_time_step/time_step) *
-  //       (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*(*p1).p.mass;
+  //     energy.data.e[0] += Utils::sqr(smaller_time_step/time_step) *
+  //       (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) + Utils::sqr(p1->m.v[2]))*(*p1).p.mass;
   //   }
   //   else
   // #endif
   energy.data.e[0] +=
-      (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2])) * (*p1).p.mass;
+      (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) + Utils::sqr(p1->m.v[2])) * (*p1).p.mass;
 
 #ifdef ROTATION
   if (p1->p.rotation)
@@ -520,9 +514,9 @@ inline void add_kinetic_energy(Particle *p1) {
     /* the rotational part is added to the total kinetic energy;
        Here we use the rotational inertia  */
 
-    energy.data.e[0] += (SQR(p1->m.omega[0]) * p1->p.rinertia[0] +
-                         SQR(p1->m.omega[1]) * p1->p.rinertia[1] +
-                         SQR(p1->m.omega[2]) * p1->p.rinertia[2]) *
+    energy.data.e[0] += (Utils::sqr(p1->m.omega[0]) * p1->p.rinertia[0] +
+                         Utils::sqr(p1->m.omega[1]) * p1->p.rinertia[1] +
+                         Utils::sqr(p1->m.omega[2]) * p1->p.rinertia[2]) *
                         time_step * time_step;
   }
 #endif

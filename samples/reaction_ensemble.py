@@ -33,7 +33,7 @@ box_l = 35
 
 # Integration parameters
 #############################################################
-system = espressomd.System()
+system = espressomd.System(box_l=[box_l]*3)
 system.time_step = 0.02
 system.cell_system.skin = 0.4
 system.cell_system.max_num_cells = 2744
@@ -44,10 +44,6 @@ system.cell_system.max_num_cells = 2744
 #############################################################
 mode="reaction_ensemble"
 #mode="constant_pH_ensemble"
-
-# Interaction setup
-#############################################################
-system.box_l = [box_l, box_l, box_l]
 
 # Particle setup
 #############################################################
@@ -65,14 +61,12 @@ for i in range(N0, 2 * N0):
 
 RE=None
 if(mode=="reaction_ensemble"):
-    RE = reaction_ensemble.ReactionEnsemble(
-    standard_pressure=0.00108, temperature=1, exclusion_radius=1)
+    RE = reaction_ensemble.ReactionEnsemble(temperature=1, exclusion_radius=1)
 elif(mode == "constant_pH_ensemble"):
     RE = reaction_ensemble.ConstantpHEnsemble(temperature=1, exclusion_radius=1)
     RE.constant_pH=2
-RE.add(equilibrium_constant=K_diss, reactant_types=[0], reactant_coefficients=[
-       1], product_types=[1, 2], product_coefficients=[1, 1])
-RE.set_default_charges(dictionary={"0": 0, "1": -1, "2": +1})
+RE.add(Gamma=K_diss, reactant_types=[0], reactant_coefficients=[
+       1], product_types=[1, 2], product_coefficients=[1, 1], default_charges={"0": 0, "1": -1, "2": +1})
 print(RE.get_status())
 system.setup_type_map([0, 1, 2])
 

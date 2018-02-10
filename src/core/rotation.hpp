@@ -80,8 +80,15 @@ inline void convert_quat_to_quatu(double quat[4], double quatu[3]) {
               quat[3] * quat[3]);
 }
 
-/** Multiply two quaternions */
-void multiply_quaternions(double const a[4], double const b[4], double result[4]);
+/** Multiply two quaternions */ 
+inline void multiply_quaternions(const double a[4], const double b[4], double result[4])
+{
+ // Formula from http://www.j3d.org/matrix_faq/matrfaq_latest.html
+ result[0] = a[0]*b[0] - a[1]*b[1] - a[2]*b[2] - a[3]*b[3];
+ result[1] = a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2];
+ result[2] = a[0] * b[2] + a[2] * b[0] + a[3] * b[1] - a[1] * b[3]; 
+ result[3] = a[0] * b[3] + a[3] * b[0] + a[1] * b[2] - a[2] * b[1];
+}
 
 /** Convert director to quaternions */
 int convert_quatu_to_quat(double d[3], double quat[4]);

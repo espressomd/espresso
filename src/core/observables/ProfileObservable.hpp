@@ -22,7 +22,9 @@ public:
   int n_y_bins;
   int n_z_bins;
   std::vector<double> container;
-  virtual int n_values() const override { return n_x_bins * n_y_bins * n_z_bins; };
+  virtual int n_values() const override {
+    return n_x_bins * n_y_bins * n_z_bins;
+  };
 };
 
 } // Namespace Observables

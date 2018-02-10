@@ -87,7 +87,7 @@ class SwimmerTest(ut.TestCase):
         self.new_configuration = False
         self.sampsteps = 2000
 
-        S = espressomd.System()
+        S = espressomd.System(box_l=[1.0, 1.0, 1.0])
         self.prepare(S)
 
         lbm = espressomd.lb.LBFluid(

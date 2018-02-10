@@ -32,7 +32,6 @@
 #include "errorhandling.hpp"
 
 #include "EspressoSystemInterface.hpp"
-#include "actor/EwaldGPU.hpp"
 #include "buckingham.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
@@ -199,7 +198,6 @@ static int terminated = 0;
   CB(mpi_check_runtime_errors_slave)                                           \
   CB(mpi_minimize_energy_slave)                                                \
   CB(mpi_gather_cuda_devices_slave)                                            \
-  CB(mpi_thermalize_cpu_slave)                                                 \
   CB(mpi_scafacos_set_parameters_slave)                                        \
   CB(mpi_scafacos_set_r_cut_and_tune_slave)                                    \
   CB(mpi_scafacos_free_slave)                                                  \
@@ -1552,12 +1550,6 @@ void mpi_bcast_coulomb_params_slave(int node, int parm) {
   case COULOMB_MAGGS:
     MPI_Bcast(&maggs, sizeof(MAGGS_struct), MPI_BYTE, 0, comm_cart);
     break;
-#ifdef EWALD_GPU
-  case COULOMB_EWALD_GPU:
-    MPI_Bcast(&ewaldgpu_params, sizeof(Ewaldgpu_params), MPI_BYTE, 0,
-              comm_cart);
-    break;
-#endif
   case COULOMB_RF:
   case COULOMB_INTER_RF:
     MPI_Bcast(&rf_params, sizeof(Reaction_field_params), MPI_BYTE, 0,
@@ -1594,6 +1586,10 @@ void mpi_bcast_coulomb_params_slave(int node, int parm) {
     break;
   case DIPOLAR_DS_GPU:
     break;
+#ifdef DIPOLAR_BARNES_HUT
+  case DIPOLAR_BH_GPU:
+    break;
+#endif
   case DIPOLAR_SCAFACOS:
     break;
   default:
@@ -2400,14 +2396,6 @@ void mpi_setup_reaction_slave(int pnode, int i) {
   local_setup_reaction();
 #endif
 }
-
-/*********************** CPU Thermostat **********************/
-void mpi_thermalize_cpu(int temp) {
-  mpi_call(mpi_thermalize_cpu_slave, -1, temp);
-  set_cpu_temp(temp);
-}
-
-void mpi_thermalize_cpu_slave(int node, int temp) { set_cpu_temp(temp); }
 
 /*********************** MAIN LOOP for slaves ****************/
 
