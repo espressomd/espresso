@@ -69,11 +69,11 @@ def fire():
         system.part[0].fix = [0,1,0]
         system.part[0].ext_force = [0,0,0]
 
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('4',KeyboardFireEvent.Hold,decreaseAngle))
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('6',KeyboardFireEvent.Hold,increaseAngle))
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('2',KeyboardFireEvent.Hold,decreaseImpulse))
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('8',KeyboardFireEvent.Hold,increaseImpulse))
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('5',KeyboardFireEvent.Pressed,fire))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('4',KeyboardFireEvent.Hold,decreaseAngle))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('6',KeyboardFireEvent.Hold,increaseAngle))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('2',KeyboardFireEvent.Hold,decreaseImpulse))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('8',KeyboardFireEvent.Hold,increaseImpulse))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('5',KeyboardFireEvent.Pressed,fire))
 
 def main():
     global stopped
