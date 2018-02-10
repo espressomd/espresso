@@ -45,13 +45,14 @@ class ShapeBasedConstraintTest(ut.TestCase):
         # (1)
         constraint_wy = espressomd.constraints.ShapeBasedConstraint(
             shape=wy, particle_type=1)
-        wall_xz = system.constraints.add(constraint_wy)
+        wall_xy = system.constraints.add(constraint_wy)
 
         # (3)
-        wall_xy = system.constraints.add(shape=wz, particle_type=2)
+        wall_xz = system.constraints.add(shape=wz, particle_type=2)
 
         # Check forces
         f_part = system.part[0].f
+
 
         self.assertEqual(f_part[0], 0.)
         self.assertEqual(f_part[1], 0.)
@@ -67,10 +68,15 @@ class ShapeBasedConstraintTest(ut.TestCase):
                                                                 eps=1.5, sig=1.0, r=0.83), places=10)
 
         # test forces on walls
-        self.assertAlmostEqual(-1.0 * wall_xz.total_force()[1], tests_common.lj_force(espressomd, cutoff=2.0, offset=0.,
+        self.assertAlmostEqual(-1.0 * wall_xy.total_force()[1], tests_common.lj_force(espressomd, cutoff=2.0, offset=0.,
                                                                                       eps=1.0, sig=1.0, r=1.21), places=10)  # minus for newtons thrid law
-        self.assertAlmostEqual(-1.0 * wall_xy.total_force()[2], tests_common.lj_force(espressomd, cutoff=2.0, offset=0.,
+        self.assertAlmostEqual(-1.0 * wall_xz.total_force()[2], tests_common.lj_force(espressomd, cutoff=2.0, offset=0.,
                                                                                       eps=1.5, sig=1.0, r=0.83), places=10)
+        # this one is closer and should get the mindist()
+        system.part.add(pos=[5., 1.20, 0.82], type=0)
+        self.assertAlmostEqual(constraint_wy.mindist(), system.part[1].pos[1])
+        self.assertAlmostEqual(wall_xy.mindist(), system.part[1].pos[1])
+        self.assertAlmostEqual(wall_xz.mindist(), system.part[1].pos[2])
 
         # Check removal
         for c in system.constraints:

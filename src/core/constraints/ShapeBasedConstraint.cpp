@@ -25,18 +25,15 @@ double ShapeBasedConstraint::mindist() {
   double pt[3];
   double vec[3];
   double dist;
-  double mindist;
+  double mindist = std::numeric_limits<double>::infinity();
   Particle part_rep;
   part_rep.p.type = m_type;
   IA_parameters *ia_params ;
   auto & parts = partCfg();
-
-  for (auto jt = parts.begin(); jt != (--parts.end()); ++jt) {
+  for (auto jt = parts.begin(); jt != (parts.end()); jt++) {
     pt[0] = jt->r.p[0];
     pt[1] = jt->r.p[1];
     pt[2] = jt->r.p[2];
-
-    mindist = std::numeric_limits<double>::infinity();
     ia_params = get_ia_param(jt->p.type, part_rep.p.type);
     if (checkIfInteraction(ia_params)) {
         m_shape->calculate_dist(pt, &dist, vec);
