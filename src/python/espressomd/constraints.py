@@ -112,11 +112,8 @@ class ShapeBasedConstraint(Constraint):
 
     _so_name = "Constraints::ShapeBasedConstraint"
 
-    def dummy(self):
-        self.call_method("dummy", object=self)
 
-
-    def mindist(self, p1):
+    def mindist(self):
         """
         Calculates the minimum distance to all particles
 
@@ -128,21 +125,7 @@ class ShapeBasedConstraint(Constraint):
         ----------
         :obj:float: The minimum distance
         """
-         #cdef int_list set1
-
-         #if p1 == 'default':
-             #pass
-         #else:
-             #for i in range(len(p1)):
-                 #if not is_valid_type(p1[i], int):
-                     #raise ValueError(
-                         #"Particle types in p1 have to be of type int: " + str(p1[i]))
-
-        #set1 = create_int_list_from_python_object(p1)
-
-        
-        
-        return self.call_method("mindist", constraint=self)#, c_analyze.partCfg() set1)
+        return self.call_method("mindist", object=self)#, c_analyze.partCfg() set1)
 
 
     def total_force(self):

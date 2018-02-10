@@ -1,13 +1,13 @@
 #include <boost/mpi/collectives.hpp>
 
 #include "ShapeBasedConstraint.hpp"
-#include "partCfg_global.hpp"
 #include "communication.hpp"
 #include "energy_inline.hpp"
 #include "errorhandling.hpp"
 #include "forces_inline.hpp"
 #include "interaction_data.hpp"
 #include "utils/list_contains.hpp"
+#include "partCfg_global.hpp"
 
 
 namespace Constraints {
@@ -20,43 +20,28 @@ Vector3d ShapeBasedConstraint::total_force() const {
     return total_force;
 }
 
-void ShapeBasedConstraint::dummy(){
- printf("I got called!\n");
-}
 
-double ShapeBasedConstraint::mindist(PartCfg &partCfg, IntList const &set1) {
+double ShapeBasedConstraint::mindist() {
   double pt[3];
   double vec[3];
-  int in_set;
   double dist;
+  double mindist;
   Particle part_rep;
   part_rep.p.type = m_type;
   IA_parameters *ia_params ;
-  
-  auto mindist = std::numeric_limits<double>::infinity();
+  auto & parts = partCfg();
 
-  for (auto jt = partCfg.begin(); jt != (--partCfg.end()); ++jt) {
+  for (auto jt = parts.begin(); jt != (--parts.end()); ++jt) {
     pt[0] = jt->r.p[0];
     pt[1] = jt->r.p[1];
     pt[2] = jt->r.p[2];
-    /* check which sets particle j belongs to
-       bit 0: set1, bit1: set2
-    */
-    in_set = 0;
-    if (set1.empty() || list_contains(set1, jt->p.type))
-      in_set = 1;
-    if (in_set == 0)
-      continue;
-    
-    auto mindist = std::numeric_limits<double>::infinity();
 
-    for (auto it = std::next(jt); it != partCfg.end(); ++it)
-        ia_params = get_ia_param(jt->p.type, part_rep.p.type);
-
-        if (checkIfInteraction(ia_params)) {
-            m_shape->calculate_dist(pt, &dist, vec);
-            mindist = std::min(mindist, dist);
-        }
+    mindist = std::numeric_limits<double>::infinity();
+    ia_params = get_ia_param(jt->p.type, part_rep.p.type);
+    if (checkIfInteraction(ia_params)) {
+        m_shape->calculate_dist(pt, &dist, vec);
+        mindist = std::min(mindist, dist);
+    }
   }
   return mindist;
 }

@@ -29,7 +29,7 @@ public:
   virtual void add_force(Particle *p, double *folded_pos) override;
 
   /* finds the minimum distance to all particles */
-  double mindist(PartCfg &partCfg, IntList const &set1);
+  double mindist();
   void dummy();
 
   
