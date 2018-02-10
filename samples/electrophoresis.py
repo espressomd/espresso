@@ -89,25 +89,24 @@ init_polymer_pos = np.dstack((np.arange(n_monomers), np.zeros(n_monomers), np.ze
 system.part.add(pos=init_polymer_pos)
 
 
-system.part[:-1].add_bond((harmonic, np.arange(n_monomers)[1:]))
-system.part[1:-1].add_bond((harmonicangle, np.arange(n_monomers)
-                            [:-2], np.arange(n_monomers)[2:]))
+# system.part[:-1].add_bond((harmonic, np.arange(n_monomers)[1:]))
+# system.part[1:-1].add_bond((harmonicangle, np.arange(n_monomers)[:-2], np.arange(n_monomers)[2:]))
 
 # Particle creation with loops:
-# for i in range(n_monomers):
-#     if i > 0:
-#         system.part[i].add_bond((harmonic, i - 1))
+for i in range(n_monomers):
+    if i > 0:
+        system.part[i].add_bond((harmonic, i - 1))
 
-# for i in range(1,n_monomers-1):
-#     system.part[i].add_bond((harmonicangle,i - 1, i + 1))
+for i in range(1,n_monomers-1):
+    system.part[i].add_bond((harmonicangle,i - 1, i + 1))
 
 system.part[:n_monomers].q = -np.ones(n_monomers)
 
 # Create counterions
 ###################################################################
 system.part.add(pos=np.random.random((n_monomers, 3)) * system.box_l,
-                q=1,
-                type=1)
+                q=np.ones(n_monomers,dtype=int),
+                type=np.ones(n_monomers,dtype=int))
 
 # Create ions
 ###############################################################
