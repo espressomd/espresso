@@ -488,10 +488,7 @@ class ThermoTest(ut.TestCase):
         dt0 = mass / gamma_tr
         dt0_rot = J / gamma_rot_validate
 
-        if test_case in [3,(7 + self.rot_flag)]:
-           loops = 5000
-        else:
-            loops = 1250
+        loops = 1250
         print("Thermalizing...")
         therm_steps = 150
         self.es.integrator.run(therm_steps)
@@ -529,7 +526,7 @@ class ThermoTest(ut.TestCase):
                     # Rotational diffusion variance.
                     if i >= fraction_i * loops:
                         # let's limit test cases to speed this test..
-                        if test_case in [3,(7 + self.rot_flag)]:
+                        if test_case in [(7 + self.rot_flag)]:
                             dt -= self.es.time_step * (1 + therm_steps + fraction_i * loops)
                             # First, let's identify principal axes in the lab reference frame.
                             alpha2[k] = 0.0
