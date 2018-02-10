@@ -478,7 +478,11 @@ class ThermoTest(ut.TestCase):
         dt0 = mass / gamma_tr
         dt0_rot = J / gamma_rot
 
-        loops = 1250
+        #if test_case in [3,(7 + self.rot_flag)]:
+        #   loops = 5000
+        #else:
+        #    loops = 1250
+        loops = 5000
         print("Thermalizing...")
         therm_steps = 150
         self.es.integrator.run(therm_steps)
@@ -516,38 +520,38 @@ class ThermoTest(ut.TestCase):
                     # Rotational diffusion variance.
                     if i >= fraction_i * loops:
                         # let's limit test cases to speed this test..
-                        if test_case == 3:
-                            dt -= self.es.time_step * (1 + therm_steps + fraction_i * loops)
-                            # First, let's identify principal axes in the lab reference frame.
-                            alpha2[k] = 0.0
-                            sigma2_alpha[k] = 0.0
-                            for j in range(3):
-                                for j1 in range(3):
-                                    pa_body[j1] = 0.0
-                                pa_body[j] = 1.0
-                                vec = tc.convert_vec_body_to_space(self.es, ind, pa_body)
-                                pa_lab[j, :] = vec[:]
-                                
-                                if i >= fraction_i * loops + 1:
-                                    # Around which axis we rotates?
-                                    for j1 in range(3):
-                                        # Calc a rotational diffusion within the spherical trigonometry
-                                        vec2 = vec
-                                        vec1[:] = prev_pa_lab[k, p, j, :]
-                                        for j2 in range(3):
-                                            ref_lab[j2] = 0.0
-                                        ref_lab[j1] = 1.0
-                                        dalpha = np.arccos(np.dot(vec2, vec1) / (np.linalg.norm(vec2) * np.linalg.norm(vec1)))
-                                        rot_projection = np.dot(np.cross(vec2, vec1), ref_lab) / np.linalg.norm(np.cross(vec2, vec1))
-                                        theta = np.arccos(np.dot(vec2, ref_lab) / (np.linalg.norm(vec2) * np.linalg.norm(ref_lab)))
-                                        alpha[k, p, j, j1] += dalpha * rot_projection / np.sin(theta)
-                                        alpha2[k] += alpha[k, p, j, j1]**2
-                                        sigma2_alpha[k] += D_rot[k, j] * (2.0 * dt + dt0_rot[k, j] * (- 3.0 +
-                                                                                        4.0 * math.exp(- dt / dt0_rot[k, j]) 
-                                                                                        - math.exp(- 2.0 * dt / dt0_rot[k, j])))
-                                prev_pa_lab[k, p, j, :] = pa_lab[j, :]
+                        #if test_case in [3,(7 + self.rot_flag)]:
+                        dt -= self.es.time_step * (1 + therm_steps + fraction_i * loops)
+                        # First, let's identify principal axes in the lab reference frame.
+                        alpha2[k] = 0.0
+                        sigma2_alpha[k] = 0.0
+                        for j in range(3):
+                            for j1 in range(3):
+                                pa_body[j1] = 0.0
+                            pa_body[j] = 1.0
+                            vec = tc.convert_vec_body_to_space(self.es, ind, pa_body)
+                            pa_lab[j, :] = vec[:]
+                            
                             if i >= fraction_i * loops + 1:
-                                alpha_norm[k] += (alpha2[k] - sigma2_alpha[k]) / sigma2_alpha[k]
+                                # Around which axis we rotates?
+                                for j1 in range(3):
+                                    # Calc a rotational diffusion within the spherical trigonometry
+                                    vec2 = vec
+                                    vec1[:] = prev_pa_lab[k, p, j, :]
+                                    for j2 in range(3):
+                                        ref_lab[j2] = 0.0
+                                    ref_lab[j1] = 1.0
+                                    dalpha = np.arccos(np.dot(vec2, vec1) / (np.linalg.norm(vec2) * np.linalg.norm(vec1)))
+                                    rot_projection = np.dot(np.cross(vec2, vec1), ref_lab) / np.linalg.norm(np.cross(vec2, vec1))
+                                    theta = np.arccos(np.dot(vec2, ref_lab) / (np.linalg.norm(vec2) * np.linalg.norm(ref_lab)))
+                                    alpha[k, p, j, j1] += dalpha * rot_projection / np.sin(theta)
+                                    alpha2[k] += alpha[k, p, j, j1]**2
+                                    sigma2_alpha[k] += D_rot[k, j] * (2.0 * dt + dt0_rot[k, j] * (- 3.0 +
+                                                                                    4.0 * math.exp(- dt / dt0_rot[k, j]) 
+                                                                                    - math.exp(- 2.0 * dt / dt0_rot[k, j])))
+                            prev_pa_lab[k, p, j, :] = pa_lab[j, :]
+                        if i >= fraction_i * loops + 1:
+                            alpha_norm[k] += (alpha2[k] - sigma2_alpha[k]) / sigma2_alpha[k]
 
         tolerance = 0.15
         Ev = 0.5 * mass * v2 / (n * loops)
