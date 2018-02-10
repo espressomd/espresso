@@ -126,10 +126,10 @@ inline void normalize_quaternion(double *q) {
 
 #ifdef BROWNIAN_DYNAMICS
 
-/** Propagate quaternions: viscous drift driven by conservative torques.*/
-void bd_drift_rot(Particle *p, double dt);
-/** Set angular velocity: viscous drift driven by conservative torques.*/
-void bd_drift_vel_rot(Particle *p, double dt);
+/** Propagate quaternions: viscous drag driven by conservative torques.*/
+void bd_drag_rot(Particle *p, double dt);
+/** Set the terminal angular velocity driven by the conservative torques drag.*/
+void bd_drag_vel_rot(Particle *p, double dt);
 
 /** Propagate quaternion: random walk part.*/
 void bd_random_walk_rot(Particle *p, double dt);

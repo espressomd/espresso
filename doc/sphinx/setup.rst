@@ -280,7 +280,7 @@ Brownian thermostat
 Brownian thermostat is a formal name of a thermostat enabling the
 Brownian Dynamics feature (see :cite:`schlick2010`).
 
-In order to activate the Brownian thermostat the memberfunction
+In order to activate the Brownian thermostat the member function
 :py:attr:`~espressomd.thermostat.Thermostat.set_brownian` of the thermostat
 class :class:`espressomd.thermostat.Thermostat` has to be invoked.
 Best explained in an example:::
@@ -291,43 +291,47 @@ Best explained in an example:::
 
     therm.set_brownian(kT=1.0, gamma=1.0)
 
-In terms of Python interface and setup, Brownian thermostat derives most 
+In terms of the Python interface and setup, Brownian thermostat derives most 
 properties of the :ref:`Langevin thermostat`. Same feature
-``LANGEVIN_PER_PARTICLE`` is using to control the per-particle
+``LANGEVIN_PER_PARTICLE`` is using to be able to control the per-particle
 temperature and the friction coefficient setup. Major differences are
 its internal integrator implementation and other temporal constraints.
-The integrator is still symplectic Velocity Verlet-like integrator.
-It is implemented via a drift part and a random walk of both position and
+The integrator is still a symplectic Velocity Verlet-like integrator.
+It is implemented via a viscous drag part and a random walk of both the position and
 velocity. Due to a nature of the Brownian Dynamics method, ``time_step``
 should be large enough compare to the relaxation time
-:math:`\text{MASS}/\text{gamma}`. Note, that with all similarities of
+:math:`\text{MASS}/\text{gamma}`. This requirement is just a conceptual one
+without specific implementation technical restrictions.
+Note, that with all similarities of
 Langevin and Brownian Dynamics, the Langevin thermostat temporal constraint
-is opposite. Hence, a velocity is restarting from zero at every step,
-velocity at the beginning of the the ``time_step`` interval is dissipated
-and does not contribute to the final one. Another temporal constrain
+is opposite. Hence, a velocity is restarting from zero at every step.
+The velocity at the beginning of the the ``time_step`` interval is dissipated
+and does not contribute to the end one as well as to the positional random walk.
+
+Another temporal constraint
 which is valid for both Langevin and Brownian Dynamics: conservative forces
 should not change significantly over the ``time_step`` interval.
 
-The position :math:`\Delta_r` and velocity :math:`\Delta_v`
-drift are driven by conservative forces:
+The viscous terminal velocity :math:`\Delta_v` and corresponding positional
+drag :math:`\Delta_r` are fully driven by conservative forces:
 
 .. math:: \Delta r = \frac{\text{F} \cdot \text{time_step}}{\text{gamma}}
 
 .. math:: \Delta v = \frac{\text{F}}{\text{gamma}}
 
-Position random walk variance of each coordinate :math:`\sigma_p^2`
+A positional random walk variance of each coordinate :math:`\sigma_p^2`
 corresponds to a diffusion within the Wiener process:
 
 .. math:: \sigma_p^2 = 2 D \Delta t
 
-Velocity component random walk variance :math:`\sigma_v^2` is defined by a heat
-velocity component: 
+Each velocity component random walk variance :math:`\sigma_v^2` is defined by the heat
+component: 
 
 .. math:: \sigma_v^2 = \frac{\text{temperature}}{\text{MASS}}
 
 A rotational motion is implemented similarly. The Velocity Verlet quaternion
-based rotational method implementation is still used, however, modified
-for a larger ``time_step``.
+based rotational method implementation is still used, however, had been modified
+for the larger ``time_step`` case to be consistent and still the Velocity Verlet-compliant.
 
 .. _\`\`nemd\`\`\: Setting up non-equilibirum MD:
 

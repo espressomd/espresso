@@ -352,7 +352,7 @@ void convert_torques_propagate_omega() {
 
 #ifdef BROWNIAN_DYNAMICS
     if (thermo_switch & THERMO_BROWNIAN) {
-      bd_drift_vel_rot(&p,0.5 * time_step);
+      bd_drag_vel_rot(&p,0.5 * time_step);
       bd_random_walk_vel_rot(&p,0.5 * time_step);
     } else
 #endif // BROWNIAN_DYNAMICS
@@ -632,7 +632,8 @@ void rotate_particle_body_j(Particle* p, int j, double phi)
 
 #ifdef BROWNIAN_DYNAMICS
 
-void bd_drift_rot(Particle *p, double dt) {
+/** Propagate quaternions: viscous drag driven by conservative torques.*/
+void bd_drag_rot(Particle *p, double dt) {
   int j;
   double a[3];
   double dphi[3], dphi_u[3];
@@ -678,7 +679,8 @@ void bd_drift_rot(Particle *p, double dt) {
   }
 }
 
-void bd_drift_vel_rot(Particle *p, double dt) {
+/** Set the terminal angular velocity driven by the conservative torques drag.*/
+void bd_drag_vel_rot(Particle *p, double dt) {
   int j;
   double m_dphi;
   double a[3];
@@ -717,7 +719,7 @@ void bd_drift_vel_rot(Particle *p, double dt) {
   }
 }
 
-/** Propagate the positions: random walk part.*/
+/** Propagate the quaternions: random walk part.*/
 void bd_random_walk_rot(Particle *p, double dt) {
   double a[3];
   double dphi[3];
@@ -831,7 +833,7 @@ void bd_random_walk_vel_rot(Particle *p, double dt) {
     if (!(p->p.ext_flag & COORD_FIXED(j)))
 #endif
     {
-      // velocity is added here. It is assigned in the drift part.
+      // velocity is added here. It is already initialized in the terminal drag part.
       p->m.omega[j] += a[j] * brown_sigma_vel_temp * Thermostat::noise_g() / sqrt(p->p.rinertia[j]);
     }
   }

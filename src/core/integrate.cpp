@@ -137,10 +137,10 @@ void finalize_p_inst_npt();
 
 #ifdef BROWNIAN_DYNAMICS
 
-/** Propagate position: viscous drift driven by conservative forces.*/
-void bd_drift(Particle *p, double dt);
-/** Set velocity: viscous drift driven by conservative forces.*/
-void bd_drift_vel(Particle *p, double dt);
+/** Propagate position: viscous drag driven by conservative forces.*/
+void bd_drag(Particle *p, double dt);
+/** Set the terminal velocity driven by the conservative forces drag.*/
+void bd_drag_vel(Particle *p, double dt);
 
 /** Propagate position: random walk part.*/
 void bd_random_walk(Particle *p, double dt);
@@ -681,7 +681,7 @@ void rescale_forces_propagate_vel() {
 #endif
 #ifdef BROWNIAN_DYNAMICS
       if (thermo_switch & THERMO_BROWNIAN) {
-        bd_drift_vel(&p,0.5 * time_step);
+        bd_drag_vel(&p,0.5 * time_step);
         bd_random_walk_vel(&p,0.5 * time_step);
       }
 #endif // BROWNIAN_DYNAMICS
@@ -913,8 +913,8 @@ void propagate_vel() {
 #endif
 #ifdef BROWNIAN_DYNAMICS
     if (thermo_switch & THERMO_BROWNIAN) {
-      bd_drift_vel(&p,0.5 * time_step);
-      bd_drift_vel_rot(&p,0.5 * time_step);
+      bd_drag_vel(&p,0.5 * time_step);
+      bd_drag_vel_rot(&p,0.5 * time_step);
       bd_random_walk_vel(&p,0.5 * time_step);
       bd_random_walk_vel_rot(&p,0.5 * time_step);
     }
@@ -985,8 +985,8 @@ void propagate_pos() {
 #endif
 #ifdef BROWNIAN_DYNAMICS
       if (thermo_switch & THERMO_BROWNIAN) {
-        bd_drift(&p, time_step);
-        bd_drift_rot(&p, time_step);
+        bd_drag(&p, time_step);
+        bd_drag_rot(&p, time_step);
         bd_random_walk(&p, time_step);
         bd_random_walk_rot(&p, time_step);
       }
@@ -1044,12 +1044,12 @@ void propagate_vel_pos() {
 #endif
 #ifdef BROWNIAN_DYNAMICS
       if (thermo_switch & THERMO_BROWNIAN) {
-        bd_drift_vel(&p,0.5 * time_step);
-        bd_drift_vel_rot(&p,0.5 * time_step);
+        bd_drag_vel(&p,0.5 * time_step);
+        bd_drag_vel_rot(&p,0.5 * time_step);
         bd_random_walk_vel(&p,0.5 * time_step);
         bd_random_walk_vel_rot(&p,0.5 * time_step);
-        bd_drift(&p, time_step);
-        bd_drift_rot(&p, time_step);
+        bd_drag(&p, time_step);
+        bd_drag_rot(&p, time_step);
         bd_random_walk(&p, time_step);
         bd_random_walk_rot(&p, time_step);
       }
@@ -1323,7 +1323,8 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
 
 #ifdef BROWNIAN_DYNAMICS
 
-void bd_drift(Particle *p, double dt) {
+/** Propagate position: viscous drag driven by conservative forces.*/
+void bd_drag(Particle *p, double dt) {
   int j;
   double scale_f;
   Thermostat::GammaType local_gamma;
@@ -1349,7 +1350,8 @@ void bd_drift(Particle *p, double dt) {
   }
 }
 
-void bd_drift_vel(Particle *p, double dt) {
+/** Set the terminal velocity driven by the conservative forces drag.*/
+void bd_drag_vel(Particle *p, double dt) {
   int j;
   double scale_f;
   Thermostat::GammaType local_gamma;
@@ -1498,7 +1500,7 @@ void bd_random_walk_vel(Particle *p, double dt) {
     if (!(p->p.ext_flag & COORD_FIXED(j)))
 #endif
     {
-      // velocity is added here. It is assigned in the drift part.
+      // velocity is added here. It is already initialized in the terminal drag part.
       p->m.v[j] += brown_sigma_vel_temp * Thermostat::noise_g() / sqrt(p->p.mass);
     }
   }
