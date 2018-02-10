@@ -3,6 +3,7 @@ include "myconfig.pxi"
 from libcpp cimport bool
 from libcpp.vector cimport vector
 from libcpp.string cimport string
+from libcpp.map cimport map
 
 cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
 
@@ -12,24 +13,22 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         vector[int] reactant_coefficients
         vector[int] product_types
         vector[int] product_coefficients
-        double equilibrium_constant
+        double Gamma
         int nu_bar
 
     cdef cppclass CReactionAlgorithm "ReactionEnsemble::ReactionAlgorithm":
         int do_reaction(int reaction_steps) except +
-        bool do_global_mc_move_for_particles_of_type(int type, int start_id_polymer, int end_id_polymer, int particle_number_of_type, bool use_wang_landau)
+        bool do_global_mc_move_for_particles_of_type(int type, int particle_number_of_type, bool use_wang_landau)
         void set_cuboid_reaction_ensemble_volume()
         int check_reaction_ensemble() except +
         int m_accepted_configurational_MC_moves
         int m_tried_configurational_MC_moves
         int delete_particle (int p_id)
-        void add_reaction(double equilibrium_constant, vector[int] _reactant_types, vector[int] _reactant_coefficients, vector[int] _product_types, vector[int] _product_coefficients) except +
+        void add_reaction(double Gamma, vector[int] _reactant_types, vector[int] _reactant_coefficients, vector[int] _product_types, vector[int] _product_coefficients) except +
         
         vector[SingleReaction] reactions
-        vector[int] type_index
         int nr_different_types
-        vector[double] charges_of_types
-        double standard_pressure_in_simulation_units
+        map[int, double] charges_of_types
         double temperature
         double exclusion_radius
         double volume
@@ -41,8 +40,6 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         double slab_start_z
         double slab_end_z
         int non_interacting_type
-
-    int find_index_of_type(int type, CReactionAlgorithm* m_current_reaction_system) except +
 
     cdef cppclass CReactionEnsemble "ReactionEnsemble::ReactionEnsemble"(CReactionAlgorithm):
         CReactionEnsemble()
@@ -56,9 +53,6 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         string output_filename
         vector[double] minimum_energies_at_flat_index
         vector[double] maximum_energies_at_flat_index
-        int polymer_start_id
-        int polymer_end_id
-        bool fix_polymer
         bool do_not_sample_reaction_partition_function
         void add_new_CV_degree_of_association(int associated_type, double CV_minimum, double CV_maximum, vector[int] corresponding_acid_types)
         void add_new_CV_potential_energy(string filename, double delta_CV)
@@ -71,3 +65,7 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
     cdef cppclass CConstantpHEnsemble "ReactionEnsemble::ConstantpHEnsemble"(CReactionAlgorithm):
         CConstantpHEnsemble()
         double m_constant_pH
+
+    cdef cppclass CWidomInsertion "ReactionEnsemble::WidomInsertion"(CReactionAlgorithm):
+        CWidomInsertion()
+        double measure_excess_chemical_potential(int reaction_id)

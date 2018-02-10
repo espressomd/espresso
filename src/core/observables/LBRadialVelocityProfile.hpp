@@ -20,8 +20,9 @@ inline void mpi_observable_lb_radial_velocity_profile_slave_implementation() {
   free(data);
 }
 
-inline int mpi_observable_lb_radial_velocity_profile_parallel(void *pdata_, double *A,
-                                                       unsigned int n_A) {
+inline int
+mpi_observable_lb_radial_velocity_profile_parallel(void *pdata_, double *A,
+                                                   unsigned int n_A) {
   unsigned int i, j, k;
   unsigned int maxi, maxj, maxk;
   double roffset, phioffset, zoffset;
@@ -86,10 +87,12 @@ inline int mpi_observable_lb_radial_velocity_profile_parallel(void *pdata_, doub
         if (pdata->n_z_bins > 1)
           linear_index += k;
         if (r > 0) {
-          v_r = 1 / r * ((p[0] - pdata->center[0]) * v[0] +
-                         (p[1] - pdata->center[1]) * v[1]);
-          v_phi = 1 / r / r * ((p[0] - pdata->center[0]) * v[1] -
-                               (p[1] - pdata->center[1]) * v[0]);
+          v_r = 1 / r *
+                ((p[0] - pdata->center[0]) * v[0] +
+                 (p[1] - pdata->center[1]) * v[1]);
+          v_phi = 1 / r / r *
+                  ((p[0] - pdata->center[0]) * v[1] -
+                   (p[1] - pdata->center[1]) * v[0]);
         } else {
           v_r = 0;
           v_phi = 0;

@@ -55,7 +55,6 @@ IF ELECTROSTATICS:
                 COULOMB_INTER_RF, \
                 COULOMB_P3M_GPU, \
                 COULOMB_MMM1D_GPU, \
-                COULOMB_EWALD_GPU, \
                 COULOMB_EK, \
                 COULOMB_SCAFACOS
 
@@ -195,36 +194,6 @@ IF ELECTROSTATICS:
         int dh_set_params(double kappa, double r_cut)
         int dh_set_params_cdh(double kappa, double r_cut, double eps_int, double eps_ext, double r0, double r1, double alpha)
 
-IF ELECTROSTATICS and CUDA and EWALD_GPU:
-    cdef extern from "actor/EwaldGPU.hpp":
-        cdef cppclass EwaldgpuForce:
-            EwaldgpuForce(EspressoSystemInterface & s, double r_cut, int num_kx, int num_ky, int num_kz, double alpha)
-            int set_params(double rcut, int num_kx, int num_ky, int num_kz, double alpha)
-            int set_params_tune(double accuracy, double precision, int K_max, int time_calc_steps)
-            int adaptive_tune(char ** log, EspressoSystemInterface & s)
-            double tune_alpha(double accuracy, double precision, int K, double V, double q_sqr, int N)
-            double tune_rcut(double accuracy, double precision, double alpha, double V, double q_sqr, int N)
-            int determine_calc_time_steps()
-
-        ctypedef struct Ewaldgpu_params:
-            double rcut
-            int num_kx
-            int num_ky
-            int num_kz
-            double alpha
-            double accuracy
-            double precision
-            bint isTuned  # Tuning is over
-            bint isTunedFlag  # Flag tuning is over
-            int K_max  # Maximal reciprocal K-vector in tuning
-            int time_calc_steps  # Steps in time_force_calc function
-
-        cdef extern Ewaldgpu_params ewaldgpu_params
-
-        # ctypedef extern class EwaldgpuForce ewaldgpuForce
-#    cdef extern from "EspressoSystemInterface.cpp":
-#        cdef cppclass extern EspressoSystemInterface *EspressoSystemInterface;
-
 IF ELECTROSTATICS:
     cdef extern from "mmm1d.hpp":
         ctypedef struct MMM1D_struct:
@@ -254,7 +223,6 @@ IF ELECTROSTATICS:
             COULOMB_INTER_RF, 
             COULOMB_P3M_GPU,
             COULOMB_MMM1D_GPU,
-            COULOMB_EWALD_GPU,
             COULOMB_EK 
 
         ctypedef struct Coulomb_parameters:

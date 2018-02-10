@@ -17,7 +17,7 @@ from tests_common import abspath
            "Features not available, skipping test!")
 class TestLBGPU(ut.TestCase):
 
-    es = espressomd.System()
+    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
     n_nodes = es.cell_system.get_state()["n_nodes"]
     es.seed = range(n_nodes)
 

@@ -41,7 +41,13 @@ function(UNIT_TEST)
       endif()
     endif()
 
-    add_test(${TEST_NAME} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${TEST_NUM_PROC} ${TEST_NAME})
+    # OpenMPI 3.0 and higher checks the number of processes against the number of CPUs
+    execute_process(COMMAND ${MPIEXEC} --version RESULT_VARIABLE mpi_version_result OUTPUT_VARIABLE mpi_version_output ERROR_VARIABLE mpi_version_output)
+    if (mpi_version_result EQUAL 0 AND mpi_version_output MATCHES "\\(Open(RTE| MPI)\\) ([3-9]\\.|1[0-9])")
+      add_test(${TEST_NAME} ${MPIEXEC} -oversubscribe ${MPIEXEC_NUMPROC_FLAG} ${TEST_NUM_PROC} ${TEST_NAME})
+    else()
+      add_test(${TEST_NAME} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${TEST_NUM_PROC} ${TEST_NAME})
+    endif()
   else( )
     add_test(${TEST_NAME} ${TEST_NAME})
   endif( )
@@ -57,6 +63,7 @@ unit_test(NAME RuntimeErrorCollector_test SRC RuntimeErrorCollector_test.cpp ../
 
 unit_test(NAME ScriptInterface_test SRC ScriptInterface_test.cpp ../MpiCallbacks.cpp ../../script_interface/ScriptInterfaceBase.cpp ../../script_interface/ParallelScriptInterface.cpp ../../script_interface/ParallelScriptInterfaceSlave.cpp ../../script_interface/Variant.cpp)
 unit_test(NAME Wall_test SRC Wall_test.cpp ../shapes/Wall.cpp)
+unit_test(NAME Ellipsoid_test SRC Ellipsoid_test.cpp ../shapes/Ellipsoid.cpp ../errorhandling.cpp ../MpiCallbacks.cpp ../RuntimeError.cpp ../RuntimeErrorCollector.cpp ../RuntimeErrorStream.cpp)
 unit_test(NAME Factory_test SRC Factory_test.cpp)
 unit_test(NAME NumeratedContainer_test SRC NumeratedContainer_test.cpp)
 

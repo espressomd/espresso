@@ -23,10 +23,7 @@ from espressomd import analyze
 from espressomd import integrate
 from espressomd.interactions import *
 from espressomd import reaction_ensemble
-from espressomd import grand_canonical
 import numpy as np
-
-dev = "cpu"
 
 # System parameters
 #############################################################
@@ -34,7 +31,7 @@ box_l = 6 * np.sqrt(2)
 
 # Integration parameters
 #############################################################
-system = espressomd.System()
+system = espressomd.System(box_l=[box_l]*3)
 system.time_step = 0.02
 system.cell_system.skin = 0.4
 system.cell_system.max_num_cells = 2744
@@ -44,9 +41,6 @@ system.cell_system.max_num_cells = 2744
 #  Setup System                                             #
 #############################################################
 
-# Interaction setup
-#############################################################
-system.box_l = [box_l, box_l, box_l]
 
 # Particle setup
 #############################################################
@@ -68,13 +62,11 @@ system.bonded_inter[0] = h
 system.part[0].add_bond((h, 1))
 
 
-RE = reaction_ensemble.ReactionEnsemble(
-    standard_pressure=0.00108, temperature=1, exclusion_radius=0)
-RE.add(equilibrium_constant=K_diss, reactant_types=[0], reactant_coefficients=[
-       1], product_types=[1, 2], product_coefficients=[1, 1])
-RE.set_default_charges(dictionary={"0": 0, "1": -1, "2": +1})
+RE = reaction_ensemble.WangLandauReactionEnsemble(temperature=1, exclusion_radius=0)
+RE.add(Gamma=K_diss, reactant_types=[0], reactant_coefficients=[
+       1], product_types=[1, 2], product_coefficients=[1, 1], default_charges={0: 0, 1: -1, 2: +1})
 print(RE.get_status())
-grand_canonical.setup([0, 1, 2, 3])
+system.setup_type_map([0, 1, 2, 3])
 
 
 # initialize wang_landau
@@ -86,10 +78,9 @@ RE.add_collective_variable_degree_of_association(
     associated_type=0, min=0, max=1, corresponding_acid_types=[0, 1])
 RE.add_collective_variable_potential_energy(
     filename="energy_boundaries.dat", delta=0.05)
-RE.set_wang_landau_parameters(final_wang_landau_parameter=1e-3, wang_landau_steps=1,
-                              do_not_sample_reaction_partition_function=True, full_path_to_output_filename="WL_potential_out.dat")
+RE.set_wang_landau_parameters(final_wang_landau_parameter=1e-3, do_not_sample_reaction_partition_function=True, full_path_to_output_filename="WL_potential_out.dat")
 
 i = 0
 while True:
     RE.reaction_wang_landau()
-    RE.global_mc_move_for_one_particle_of_type_wang_landau(3)
+    RE.displacement_mc_move_for_particles_of_type(3)

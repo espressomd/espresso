@@ -77,8 +77,10 @@ void initialize() {
   REGISTER(FluxDensityProfile);
   REGISTER(LBVelocityProfile);
   REGISTER(CylindricalDensityProfile);
+  REGISTER(CylindricalVelocityProfile);
   REGISTER(CylindricalFluxDensityProfile);
   REGISTER(CylindricalLBFluxDensityProfileAtParticlePositions);
+  REGISTER(CylindricalLBVelocityProfileAtParticlePositions);
 
 #undef REGISTER
 #undef REGISTER_PID_OBS

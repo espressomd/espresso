@@ -20,7 +20,7 @@ from espressomd import has_features
 class DDSGPUTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
-    es = espressomd.System()
+    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     def vectorsTheSame(self, a, b):
         tol = 3E-3
@@ -150,7 +150,7 @@ class DDSGPUTest(ut.TestCase):
                 dawaanr_e,
                 ddsgpu_e *
                 ratio_dawaanr_dds_gpu,
-                places=3,
+                places=2,
                 msg='Energies for dawaanr {0} and dds_gpu {1} do not match.'.format(
                     dawaanr_e,
                     ratio_dawaanr_dds_gpu *

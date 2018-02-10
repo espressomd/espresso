@@ -40,6 +40,16 @@ cdef extern from "interaction_data.hpp":
         double LJ_offset
         double LJ_min
 
+        double LJCOS_eps
+        double LJCOS_sig
+        double LJCOS_cut
+        double LJCOS_offset
+
+        double LJCOS2_eps
+        double LJCOS2_sig
+        double LJCOS2_offset
+        double LJCOS2_w
+
         double LJGEN_eps
         double LJGEN_sig
         double LJGEN_cut
@@ -125,6 +135,17 @@ cdef extern from "lj.hpp":
                                       double eps, double sig, double cut,
                                       double shift, double offset,
                                       double min)
+IF LJCOS:
+    cdef extern from "ljcos.hpp":
+        cdef int ljcos_set_params(int part_type_a, int part_type_b,
+                                  double eps, double sig,
+                                  double cut, double offset);
+
+IF LJCOS2:
+    cdef extern from "ljcos2.hpp":
+        cdef int ljcos2_set_params(int part_type_a, int part_type_b,
+                                   double eps, double sig, double offset,
+                                   double w)
 
 IF GAY_BERNE:
     cdef extern from "gb.hpp":
@@ -243,6 +264,10 @@ cdef extern from "interaction_data.hpp":
         double r
         double r_cut
 
+#* Parameters for Bonded coulomb */
+    ctypedef struct Bonded_coulomb_bond_parameters:
+        double prefactor
+
 #* Parameters for three body angular potential (bond-angle potentials).
     ctypedef struct Angle_bond_parameters:
         double bend
@@ -344,6 +369,7 @@ cdef extern from "interaction_data.hpp":
         Angle_harmonic_bond_parameters angle_harmonic
         Angle_cosine_bond_parameters angle_cosine
         Angle_cossquare_bond_parameters angle_cossquare
+        Bonded_coulomb_bond_parameters bonded_coulomb
         Dihedral_bond_parameters dihedral
         Tabulated_bond_parameters tab
         Overlap_bond_parameters overlap
@@ -406,6 +432,11 @@ IF OVERLAPPED == 1:
         int overlapped_bonded_set_params(int bond_type, OverlappedBondedInteraction overlap_type,
                                          char * filename)
 
+IF ELECTROSTATICS == 1:
+    cdef extern from "bonded_coulomb.hpp":
+        int bonded_coulomb_set_params(int bond_type, double prefactor)
+    
+
 cdef extern from "interaction_data.hpp":
     int virtual_set_params(int bond_type)
 
@@ -416,7 +447,6 @@ cdef extern from "interaction_data.hpp":
         BONDED_IA_FENE,
         BONDED_IA_HARMONIC,
         BONDED_IA_HARMONIC_DUMBBELL,
-        BONDED_IA_QUARTIC,
         BONDED_IA_BONDED_COULOMB,
         BONDED_IA_ANGLE_OLD,
         BONDED_IA_DIHEDRAL,

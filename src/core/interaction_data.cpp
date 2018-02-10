@@ -23,7 +23,6 @@
  */
 #include "interaction_data.hpp"
 #include "actor/DipolarDirectSum.hpp"
-#include "actor/EwaldGPU.hpp"
 #include "buckingham.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -47,6 +46,12 @@
 #include "maggs.hpp"
 #include "magnetic_non_p3m_methods.hpp"
 #include "mdlc_correction.hpp"
+#include "initialize.hpp"
+#include "interaction_data.hpp"
+#include "actor/DipolarDirectSum.hpp"
+#ifdef DIPOLAR_BARNES_HUT
+#include "actor/DipolarBarnesHut.hpp"
+#endif
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
 #include "morse.hpp"
@@ -233,10 +238,6 @@ double calc_electrostatics_cutoff() {
   case COULOMB_P3M:
     /* do not use precalculated r_cut here, might not be set yet */
     return p3m.params.r_cut_iL * box_l[0];
-#endif
-#ifdef EWALD_GPU
-  case COULOMB_EWALD_GPU:
-    return ewaldgpu_params.rcut;
 #endif
   case COULOMB_DH:
     return dh_params.r_cut;
@@ -575,6 +576,12 @@ void set_dipolar_method_local(DipolarInteraction method) {
     deactivate_dipolar_direct_sum_gpu();
   }
 #endif
+#ifdef DIPOLAR_BARNES_HUT
+if ((coulomb.Dmethod == DIPOLAR_BH_GPU) && (method != DIPOLAR_BH_GPU))
+{
+ deactivate_dipolar_barnes_hut();
+}
+#endif // BARNES_HUT
   coulomb.Dmethod = method;
 }
 #endif

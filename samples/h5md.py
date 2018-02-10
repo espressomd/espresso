@@ -10,8 +10,7 @@ from espressomd import polymer
 from espressomd import interactions
 
 
-sys = espressomd.System()
-sys.box_l = [100.0, 100.0, 100.0]
+sys = espressomd.System(box_l=[100.0, 100.0, 100.0])
 sys.time_step = 0.01
 sys.thermostat.set_langevin(kT=1.0, gamma=1.0)
 sys.cell_system.skin = 0.4

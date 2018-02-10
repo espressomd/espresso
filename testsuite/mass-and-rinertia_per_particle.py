@@ -14,7 +14,7 @@ import tests_common as tc
 class ThermoTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
-    es = espressomd.System()
+    es = espressomd.System(box_l=[1.0E5, 1.0E5, 1.0E5])
     rot_flag = 0
     
     def set_thermo_all(self, test_case, kT, gamma_global, gamma_global_rot):
@@ -398,11 +398,21 @@ class ThermoTest(ut.TestCase):
             for k in range(2):
                 gamma_tr[k, :] = gamma_global[:]
 
-        # translational diffusion
+        if test_case in [1,3,(5+self.rot_flag),(7+self.rot_flag)]:
+            gamma_tr = gamma_tran
+            gamma_rot_validate = gamma_rot
+        else:
+            for k in range(2):
+                gamma_tr[k, :] = gamma_global[:]
+                if (test_case == 4 or test_case == 9) and self.rot_flag == 1:
+                    gamma_rot_validate[k, :] = gamma_global_rot[:]
+                else:
+                    gamma_rot_validate[k, :] = gamma_global[:]
+
+        # translational and rotational diffusion
         for k in range(2):
             D_tr[k, :] = 2.0 * halfkT[k] / gamma_tr[k, :]
-            if test_case == 1 or test_case == 3:
-                D_rot[k, :] = 2.0 * halfkT[k] / gamma_rot[k, :]
+            D_rot[k, :] = 2.0 * halfkT[k] / gamma_rot_validate[k, :]
 
         self.set_thermo_all(test_case, kT, gamma_global, gamma_global_rot)
 
@@ -476,13 +486,12 @@ class ThermoTest(ut.TestCase):
                 ind = p + k * n
                 pos0[ind, :] = self.es.part[ind].pos
         dt0 = mass / gamma_tr
-        dt0_rot = J / gamma_rot
+        dt0_rot = J / gamma_rot_validate
 
-        #if test_case in [3,(7 + self.rot_flag)]:
-        #   loops = 5000
-        #else:
-        #    loops = 1250
-        loops = 5000
+        if test_case in [3,(7 + self.rot_flag)]:
+           loops = 5000
+        else:
+            loops = 1250
         print("Thermalizing...")
         therm_steps = 150
         self.es.integrator.run(therm_steps)
@@ -520,38 +529,38 @@ class ThermoTest(ut.TestCase):
                     # Rotational diffusion variance.
                     if i >= fraction_i * loops:
                         # let's limit test cases to speed this test..
-                        #if test_case in [3,(7 + self.rot_flag)]:
-                        dt -= self.es.time_step * (1 + therm_steps + fraction_i * loops)
-                        # First, let's identify principal axes in the lab reference frame.
-                        alpha2[k] = 0.0
-                        sigma2_alpha[k] = 0.0
-                        for j in range(3):
-                            for j1 in range(3):
-                                pa_body[j1] = 0.0
-                            pa_body[j] = 1.0
-                            vec = tc.convert_vec_body_to_space(self.es, ind, pa_body)
-                            pa_lab[j, :] = vec[:]
-                            
-                            if i >= fraction_i * loops + 1:
-                                # Around which axis we rotates?
+                        if test_case in [3,(7 + self.rot_flag)]:
+                            dt -= self.es.time_step * (1 + therm_steps + fraction_i * loops)
+                            # First, let's identify principal axes in the lab reference frame.
+                            alpha2[k] = 0.0
+                            sigma2_alpha[k] = 0.0
+                            for j in range(3):
                                 for j1 in range(3):
-                                    # Calc a rotational diffusion within the spherical trigonometry
-                                    vec2 = vec
-                                    vec1[:] = prev_pa_lab[k, p, j, :]
-                                    for j2 in range(3):
-                                        ref_lab[j2] = 0.0
-                                    ref_lab[j1] = 1.0
-                                    dalpha = np.arccos(np.dot(vec2, vec1) / (np.linalg.norm(vec2) * np.linalg.norm(vec1)))
-                                    rot_projection = np.dot(np.cross(vec2, vec1), ref_lab) / np.linalg.norm(np.cross(vec2, vec1))
-                                    theta = np.arccos(np.dot(vec2, ref_lab) / (np.linalg.norm(vec2) * np.linalg.norm(ref_lab)))
-                                    alpha[k, p, j, j1] += dalpha * rot_projection / np.sin(theta)
-                                    alpha2[k] += alpha[k, p, j, j1]**2
-                                    sigma2_alpha[k] += D_rot[k, j] * (2.0 * dt + dt0_rot[k, j] * (- 3.0 +
-                                                                                    4.0 * math.exp(- dt / dt0_rot[k, j]) 
-                                                                                    - math.exp(- 2.0 * dt / dt0_rot[k, j])))
-                            prev_pa_lab[k, p, j, :] = pa_lab[j, :]
-                        if i >= fraction_i * loops + 1:
-                            alpha_norm[k] += (alpha2[k] - sigma2_alpha[k]) / sigma2_alpha[k]
+                                    pa_body[j1] = 0.0
+                                pa_body[j] = 1.0
+                                vec = tc.convert_vec_body_to_space(self.es, ind, pa_body)
+                                pa_lab[j, :] = vec[:]
+                                
+                                if i >= fraction_i * loops + 1:
+                                    # Around which axis we rotates?
+                                    for j1 in range(3):
+                                        # Calc a rotational diffusion within the spherical trigonometry
+                                        vec2 = vec
+                                        vec1[:] = prev_pa_lab[k, p, j, :]
+                                        for j2 in range(3):
+                                            ref_lab[j2] = 0.0
+                                        ref_lab[j1] = 1.0
+                                        dalpha = np.arccos(np.dot(vec2, vec1) / (np.linalg.norm(vec2) * np.linalg.norm(vec1)))
+                                        rot_projection = np.dot(np.cross(vec2, vec1), ref_lab) / np.linalg.norm(np.cross(vec2, vec1))
+                                        theta = np.arccos(np.dot(vec2, ref_lab) / (np.linalg.norm(vec2) * np.linalg.norm(ref_lab)))
+                                        alpha[k, p, j, j1] += dalpha * rot_projection / np.sin(theta)
+                                        alpha2[k] += alpha[k, p, j, j1]**2
+                                        sigma2_alpha[k] += D_rot[k, j] * (2.0 * dt + dt0_rot[k, j] * (- 3.0 +
+                                                                                        4.0 * math.exp(- dt / dt0_rot[k, j]) 
+                                                                                        - math.exp(- 2.0 * dt / dt0_rot[k, j])))
+                                prev_pa_lab[k, p, j, :] = pa_lab[j, :]
+                            if i >= fraction_i * loops + 3:
+                                alpha_norm[k] += (alpha2[k] - sigma2_alpha[k]) / sigma2_alpha[k]
 
         tolerance = 0.15
         Ev = 0.5 * mass * v2 / (n * loops)
@@ -564,7 +573,7 @@ class ThermoTest(ut.TestCase):
             do[k] = sum(Eo[k, :]) / (3.0 * halfkT[k]) - 1.0
             do_vec[k, :] = Eo[k, :] / halfkT[k] - 1.0
         dr_norm = dr_norm / (n * loops)
-        alpha_norm = alpha_norm / (n * (1 - fraction_i) * loops)
+        alpha_norm = alpha_norm / (n * (1 - fraction_i) * loops - 2)
         
         for k in range(2):
             print("\n")
@@ -573,8 +582,8 @@ class ThermoTest(ut.TestCase):
             print("gamma_tr = {0} {1} {2}".format(
                 gamma_tr[k, 0], gamma_tr[k, 1], gamma_tr[k, 2]))
             if test_case in [1,5,3,7]:
-                print("gamma_rot = {0} {1} {2}".format(
-                    gamma_rot[k, 0], gamma_rot[k, 1], gamma_rot[k, 2]))
+                print("gamma_rot_validate = {0} {1} {2}".format(
+                    gamma_rot_validate[k, 0], gamma_rot_validate[k, 1], gamma_rot_validate[k, 2]))
             else:
                 print("gamma_global = {0} {1} {2}".format(
                     gamma_global[0], gamma_global[1], gamma_global[2]))

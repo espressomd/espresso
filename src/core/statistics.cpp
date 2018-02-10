@@ -451,7 +451,7 @@ void calc_part_distribution(PartCfg &partCfg, int *p1_types, int n_p1,
   double inv_bin_width = 0.0;
   double min_dist, min_dist2 = 0.0, start_dist2, act_dist2;
 
-  start_dist2 = SQR(box_l[0] + box_l[1] + box_l[2]);
+  start_dist2 = Utils::sqr(box_l[0] + box_l[1] + box_l[2]);
   /* bin preparation */
   *low = 0.0;
   for (int i = 0; i < r_bins; i++)
