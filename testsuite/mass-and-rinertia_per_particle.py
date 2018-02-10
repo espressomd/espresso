@@ -488,13 +488,13 @@ class ThermoTest(ut.TestCase):
         dt0 = mass / gamma_tr
         dt0_rot = J / gamma_rot_validate
 
-        loops = 1250
+        loops = 200
         print("Thermalizing...")
         therm_steps = 150
         self.es.integrator.run(therm_steps)
         print("Measuring...")
 
-        int_steps = 1
+        int_steps = 5
         fraction_i = 0.65
         for i in range(loops):
             self.es.integrator.run(int_steps)
