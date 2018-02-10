@@ -209,7 +209,7 @@ def update_plot():
 t = Thread(target=main_thread)
 t.daemon = True
 t.start()
-visualizer.registerCallback(update_plot, interval=1000)
+visualizer.register_callback(update_plot, interval=1000)
 visualizer.start()
 
 # terminate program
