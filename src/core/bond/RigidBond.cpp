@@ -20,7 +20,7 @@ int Bond::RigidBond::add_bonded_force(Particle *p1, int bl_id)
 //functions which called by BondContainer
 int Bond::RigidBond::pos_corr(Particle *p1, int bl_id, int* repeat, int &cnt)
 {
-  
+#ifdef BOND_CONSTRAINT  
   double r_ij_t[3], r_ij[3], r_ij_dot, G, pos_corr, r_ij2;
   
   cnt++;
@@ -53,12 +53,13 @@ int Bond::RigidBond::pos_corr(Particle *p1, int bl_id, int* repeat, int &cnt)
   else{
     return 2;
   };
+#endif
   return 0;
 }
 
 int Bond::RigidBond::vel_corr(Particle *p1, int bl_id, int* repeat)
 {
-
+#ifdef BOND_CONSTRAINT
   double v_ij[3], r_ij[3], K, vel_corr;
   
   //get bond partner
@@ -87,5 +88,6 @@ int Bond::RigidBond::vel_corr(Particle *p1, int bl_id, int* repeat)
   else{
     return 2;
   };
+#endif
   return 0;
 }
