@@ -48,7 +48,7 @@ class LeesEdwardsCouplingTest(ut.TestCase):
     system.part.add(pos=[4.5, 8.9, 4.5], id=0, type=0)
     system.part[0].v = [0, 0.1, 0]
 
-    system.integrator.run(1)
+    system.integrator.run(10)
 
     node_list_pos_v = np.empty([1, 6])
 
