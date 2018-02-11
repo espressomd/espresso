@@ -48,8 +48,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
         outer_cylinder_wall = system.constraints.add(outer_cylinder_constraint)
         system.integrator.run(0)  # update forces
 
-
-        self.assertAlmostEqual(outer_cylinder_constraint.mindist(), 1.02)
+        self.assertAlmostEqual(outer_cylinder_constraint.min_dist(), 1.02)
 
         # test forces on walls
         self.assertAlmostEqual(-1.0 * outer_cylinder_wall.total_force()[1], tests_common.lj_force(espressomd, cutoff=2.0, offset=0.,

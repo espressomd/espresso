@@ -20,25 +20,23 @@ Vector3d ShapeBasedConstraint::total_force() const {
 
 
 double ShapeBasedConstraint::min_dist() {
-  double pt[3];
-  double vec[3];
-  double dist;
-  double mindist = std::numeric_limits<double>::infinity();
-  Particle part_rep;
-  part_rep.p.type = m_type;
-  IA_parameters *ia_params ;
-  auto & parts = partCfg();
-  for (auto jt = parts.begin(); jt != (parts.end()); jt++) {
-    pt[0] = jt->r.p[0];
-    pt[1] = jt->r.p[1];
-    pt[2] = jt->r.p[2];
-    ia_params = get_ia_param(jt->p.type, part_rep.p.type);
+  double global_mindist;
+  auto parts = local_cells.particles();
+
+  auto const local_mindist = std::accumulate(
+        parts.begin(), parts.end(), std::numeric_limits<double>::infinity(),
+        [this](double min, Particle const& p) {
+    IA_parameters *ia_params;
+    ia_params = get_ia_param(p.p.type, m_type);
     if (checkIfInteraction(ia_params)) {
-        m_shape->calculate_dist(pt, &dist, vec);
-        mindist = std::min(mindist, dist);
+        double vec[3], dist;
+        m_shape->calculate_dist(folded_position(p).data(), &dist, vec);
+        return std::min(min, dist);
     }
-  }
-  return mindist;
+    else return min;
+    });
+  boost::mpi::reduce(comm_cart, local_mindist, global_mindist, boost::mpi::minimum<double>(), 0);
+  return global_mindist;
 }
 
 

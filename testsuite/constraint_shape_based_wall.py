@@ -74,9 +74,9 @@ class ShapeBasedConstraintTest(ut.TestCase):
                                                                                       eps=1.5, sig=1.0, r=0.83), places=10)
         # this one is closer and should get the mindist()
         system.part.add(pos=[5., 1.20, 0.82], type=0)
-        self.assertAlmostEqual(constraint_wy.mindist(), system.part[1].pos[1])
-        self.assertAlmostEqual(wall_xy.mindist(), system.part[1].pos[1])
-        self.assertAlmostEqual(wall_xz.mindist(), system.part[1].pos[2])
+        self.assertAlmostEqual(constraint_wy.min_dist(), system.part[1].pos[1])
+        self.assertAlmostEqual(wall_xy.min_dist(), system.part[1].pos[1])
+        self.assertAlmostEqual(wall_xz.min_dist(), system.part[1].pos[2])
 
         # Check removal
         for c in system.constraints:

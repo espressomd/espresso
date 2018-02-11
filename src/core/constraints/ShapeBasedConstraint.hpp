@@ -4,7 +4,6 @@
 #include <memory>
 
 #include "Constraint.hpp"
-#include "partCfg_global.hpp"
 #include "energy.hpp"
 #include "particle_data.hpp"
 #include "shapes/NoWhere.hpp"
