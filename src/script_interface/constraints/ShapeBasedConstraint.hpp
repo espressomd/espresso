@@ -60,7 +60,7 @@ public:
       return shape_based_constraint()->total_force();
     }
     if (name == "mindist") {
-      return shape_based_constraint()->mindist();
+      return shape_based_constraint()->min_dist();
     }
 
     return none;

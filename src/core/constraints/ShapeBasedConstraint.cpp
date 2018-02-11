@@ -19,7 +19,7 @@ Vector3d ShapeBasedConstraint::total_force() const {
 }
 
 
-double ShapeBasedConstraint::mindist() {
+double ShapeBasedConstraint::min_dist() {
   double pt[3];
   double vec[3];
   double dist;

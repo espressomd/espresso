@@ -113,7 +113,7 @@ class ShapeBasedConstraint(Constraint):
     _so_name = "Constraints::ShapeBasedConstraint"
 
 
-    def mindist(self):
+    def min_dist(self):
         """
         Calculates the minimum distance to all interacting particles.
         
@@ -121,7 +121,7 @@ class ShapeBasedConstraint(Constraint):
         ----------
         :obj:float: The minimum distance
         """
-        return self.call_method("mindist", object=self)#, c_analyze.partCfg() set1)
+        return self.call_method("min_dist", object=self)
 
 
     def total_force(self):

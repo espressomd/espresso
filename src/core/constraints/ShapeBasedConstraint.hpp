@@ -29,7 +29,7 @@ public:
   virtual void add_force(Particle *p, double *folded_pos) override;
 
   /* finds the minimum distance to all particles */
-  double mindist();
+  double min_dist();
   
   /* Calculate distance from the constraint */
   int calc_dist(const double *pos, double *dist, double *vec) const {

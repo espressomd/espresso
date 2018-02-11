@@ -146,7 +146,7 @@ For example the pressure from wall ::
 Getting the minimal distance to a constraint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:meth:`espressomd.system.constraints.mindist`
+:meth:`espressomd.system.constraints.min_dist`
 
 Calculates the smallest distance to all interacting
 constraints that can be repulsive (wall, cylinder, sphere, rhomboid,
