@@ -2176,8 +2176,9 @@ __device__ __inline__ void calculate_xyz_nearest_nodes(float* delta, float* part
   *z = left_node_index[2] + para.dim_z;
 }
 
-__device__ __inline__ void calculate_xyz_nearest_nodes_LE(float* particle_position, int* x, int* y, int* z)  {
+__device__ __inline__ void calculate_xyz_nearest_nodes_LE(float* delta_LE, float* particle_position, int* x, int* y, int* z)  {
 
+  //float delta_LE[8];
   int   left_node_index[3];
   float temp_delta[6];
   float temp_delta_half[6];
@@ -2195,6 +2196,17 @@ __device__ __inline__ void calculate_xyz_nearest_nodes_LE(float* particle_positi
     temp_delta_half[i] = 2.0f - temp_delta_half[3+i];
   }
 
+  delta_LE[0] = temp_delta[0] * temp_delta[1] * temp_delta[2];
+  delta_LE[1] = temp_delta[3] * temp_delta[1] * temp_delta[2];
+  delta_LE[2] = temp_delta[0] * temp_delta[4] * temp_delta[2];
+  delta_LE[3] = temp_delta[3] * temp_delta[4] * temp_delta[2];
+  delta_LE[4] = temp_delta[0] * temp_delta[1] * temp_delta[5];
+  delta_LE[5] = temp_delta[3] * temp_delta[1] * temp_delta[5];
+  delta_LE[6] = temp_delta[0] * temp_delta[4] * temp_delta[5];
+  delta_LE[7] = temp_delta[3] * temp_delta[4] * temp_delta[5];
+  
+  //printf("Deltas_LE: %f %f %f %f %f %f %f %f \n", delta_LE[0], delta_LE[1], delta_LE[2], delta_LE[3], delta_LE[4], delta_LE[5], delta_LE[6], delta_LE[7]);
+  
   // modulo for negative numbers is strange at best, shift to make sure we are positive
   *x = left_node_index[0] + para.dim_x;
   *y = left_node_index[1] + para.dim_y;
@@ -2274,30 +2286,36 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
 }
 
 __device__ __inline__ void interpolation_two_point_coupling_LE( LB_nodes_gpu n_a, float *particle_position, unsigned int* node_index, float* mode, LB_rho_v_gpu *d_v, float* delta, float le_position, float *interpolated_u ) {
-  printf("Function call \n");
-  printf("LE position %f, Particle position %f %f %f \n", le_position,  particle_position[0], particle_position[1], particle_position[2] );
+  //printf("Function call \n");
+  //printf("LE position %f, Particle position %f %f %f \n", le_position,  particle_position[0], particle_position[1], particle_position[2] );
   
   int x, y, z;
-
+  float delta_LE[8];
+  
   calculate_xyz_nearest_nodes(delta, particle_position, &x, &y, &z);
   calculate_nearest_nodes(x, y, z, n_a, node_index);
-  printf("Node: %d, %d, %d \n", x, y, z);
-  printf("Deltas: %f %f %f %f %f %f %f %f \n", delta[0], delta[1], delta[2], delta[3], delta[4], delta[5], delta[6], delta[7]);
+  //printf("Node: %d, %d, %d \n", x, y, z);
+  //printf("Deltas: %f %f %f %f %f %f %f %f \n", delta[0], delta[1], delta[2], delta[3], delta[4], delta[5], delta[6], delta[7]);
   // Calculate new indices for nodes at the boundaries 
   
   particle_position[0] = le_position;
-  calculate_xyz_nearest_nodes_LE(particle_position, &x, &y, &z);
-  
-  printf("Deltas: %f %f %f %f %f %f %f %f \n", delta[0], delta[1], delta[2], delta[3], delta[4], delta[5], delta[6], delta[7]);
+  calculate_xyz_nearest_nodes_LE(delta_LE, particle_position, &x, &y, &z);
+ 
+  //printf("Deltas_LE: %f %f %f %f %f %f %f %f \n", delta_LE[0], delta_LE[1], delta_LE[2], delta_LE[3], delta_LE[4], delta_LE[5], delta_LE[6], delta_LE[7]);
+  //printf("Deltas: %f %f %f %f %f %f %f %f \n", delta[0], delta[1], delta[2], delta[3], delta[4], delta[5], delta[6], delta[7]);
   
   if(particle_position[1] > para.dim_y*para.agrid - 0.5f * para.agrid){
     node_index[2] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[3] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[6] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
     node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-    printf("Upper nodes \n");
-    printf("LE position %f, Particle position %f %f %f \n", le_position, particle_position[0], particle_position[1], particle_position[2] );
-    printf("Node: %d, %d, %d \n", x, y, z);
+    //printf("Upper nodes \n");
+    //printf("LE position %f, Particle position %f %f %f \n", le_position, particle_position[0], particle_position[1], particle_position[2] );
+    //printf("Node: %d, %d, %d \n", x, y, z);
+    delta[2]=delta_LE[2];
+    delta[3]=delta_LE[3];
+    delta[6]=delta_LE[6];
+    delta[7]=delta_LE[7];
     }
   
   if(particle_position[1] < 0.5f * para.agrid){
@@ -2305,9 +2323,13 @@ __device__ __inline__ void interpolation_two_point_coupling_LE( LB_nodes_gpu n_a
     node_index[1] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[4] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
     node_index[5] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-    printf("Lower nodes \n");
-    printf("LE position %f, Particle position %f %f %f \n", le_position, particle_position[0], particle_position[1], particle_position[2] );
-    printf("Node: %d, %d, %d \n", x, y, z);
+    //printf("Lower nodes \n");
+    //printf("LE position %f, Particle position %f %f %f \n", le_position, particle_position[0], particle_position[1], particle_position[2] );
+    //printf("Node: %d, %d, %d \n", x, y, z);
+    delta[0]=delta_LE[0];
+    delta[1]=delta_LE[1];
+    delta[4]=delta_LE[4];
+    delta[5]=delta_LE[5];
     }
 
   interpolated_u[0] = 0.0f;
@@ -2406,7 +2428,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
 #endif
 
 //TODO: delete
-printf("LE position %f, LE offset %f, Particle position in x-direction %f \n", le_position, lees_edwards_offset, position[0]);
+//printf("LE position %f, LE offset %f, Particle position in x-direction %f \n", le_position, lees_edwards_offset, position[0]);
 
   float velocity[3];
   velocity[0] = particle_data[part_index].v[0];
