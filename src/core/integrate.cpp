@@ -261,7 +261,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
   /* Verlet list criterion */
-  skin2 = SQR(0.5 * skin);
+  skin2 = Utils::sqr(0.5 * skin);
 
   INTEG_TRACE(fprintf(
       stderr, "%d: integrate_vv: integrating %d steps (recalc_forces=%d)\n",
@@ -324,9 +324,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
   if (thermo_switch & THERMO_GHMC)
     ghmc_init();
 #endif
-
-  if (thermo_switch & THERMO_CPU)
-    mpi_thermalize_cpu(temperature);
 
   if (check_runtime_errors())
     return;
@@ -672,7 +669,7 @@ void rescale_forces_propagate_vel() {
 #ifdef NPT
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
-          nptiso.p_vel[j] += SQR(p.m.v[j]) * p.p.mass;
+          nptiso.p_vel[j] += Utils::sqr(p.m.v[j]) * p.p.mass;
 #ifdef MULTI_TIMESTEP
           if (smaller_time_step > 0. && current_time_step_is_small == 1)
             p.m.v[j] += p.f.f[j];
@@ -712,10 +709,10 @@ void finalize_p_inst_npt() {
       if (nptiso.geometry & nptiso.nptgeom_dir[i]) {
 #ifdef MULTI_TIMESTEP
         if (smaller_time_step > 0.)
-          nptiso.p_vel[i] /= SQR(smaller_time_step);
+          nptiso.p_vel[i] /= Utils::sqr(smaller_time_step);
         else
 #endif
-          nptiso.p_vel[i] /= SQR(time_step);
+          nptiso.p_vel[i] /= Utils::sqr(time_step);
         nptiso.p_inst += nptiso.p_vir[i] + nptiso.p_vel[i];
       }
     }
@@ -750,7 +747,7 @@ void propagate_press_box_pos_and_rescale_npt() {
       if (smaller_time_step < 0. || current_time_step_is_small == 0)
 #endif
         nptiso.volume += nptiso.inv_piston * nptiso.p_diff * 0.5 * time_step;
-      scal[2] = SQR(box_l[nptiso.non_const_dim]) /
+      scal[2] = Utils::sqr(box_l[nptiso.non_const_dim]) /
                 pow(nptiso.volume, 2.0 / nptiso.dimension);
 #ifdef MULTI_TIMESTEP
       if (smaller_time_step < 0. || current_time_step_is_small == 0)
@@ -893,7 +890,7 @@ void propagate_vel() {
           else
 #endif
             p.m.v[j] += p.f.f[j] + friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
-          nptiso.p_vel[j] += SQR(p.m.v[j]) * p.p.mass;
+          nptiso.p_vel[j] += Utils::sqr(p.m.v[j]) * p.p.mass;
         } else
 #endif
           /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
@@ -1050,8 +1047,8 @@ void propagate_vel_pos() {
 #endif
 
     /* Verlet criterion check*/
-    if (SQR(p.r.p[0] - p.l.p_old[0]) + SQR(p.r.p[1] - p.l.p_old[1]) +
-            SQR(p.r.p[2] - p.l.p_old[2]) >
+    if (Utils::sqr(p.r.p[0] - p.l.p_old[0]) + Utils::sqr(p.r.p[1] - p.l.p_old[1]) +
+            Utils::sqr(p.r.p[2] - p.l.p_old[2]) >
         skin2)
       set_resort_particles(Cells::RESORT_LOCAL);
   }

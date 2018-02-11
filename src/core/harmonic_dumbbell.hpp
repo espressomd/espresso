@@ -126,7 +126,7 @@ inline int harmonic_dumbbell_pair_energy(Particle *p1, Particle *p2, Bonded_ia_p
   diff[1] = dhat[1] - p1->r.quatu[1];
   diff[2] = dhat[2] - p1->r.quatu[2];
 
-  *_energy = 0.5*iaparams->p.harmonic_dumbbell.k1*SQR(dist - iaparams->p.harmonic.r)
+  *_energy = 0.5*iaparams->p.harmonic_dumbbell.k1*Utils::sqr(dist - iaparams->p.harmonic.r)
            + 0.5*iaparams->p.harmonic_dumbbell.k2*(torque[0]*diff[0] + torque[1]*diff[1] + torque[2]*diff[2]);
   return 0;
 }

@@ -17,7 +17,7 @@ from espressomd.shapes import *
 print('8Ball BILLARD - An Espresso Visualizer Demo\nControls:\nNumpad 4/6: Adjust Angle\nNumpad 2/8: Adjust Impulse\nNumpad 5: Shoot')
 
 #ESPRESSO
-system = espressomd.System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 table_dim = [2.24,1.12]
 system.box_l = [table_dim[0], 3, table_dim[1]]
 
@@ -69,11 +69,11 @@ def fire():
         system.part[0].fix = [0,1,0]
         system.part[0].ext_force = [0,0,0]
 
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('4',KeyboardFireEvent.Hold,decreaseAngle))
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('6',KeyboardFireEvent.Hold,increaseAngle))
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('2',KeyboardFireEvent.Hold,decreaseImpulse))
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('8',KeyboardFireEvent.Hold,increaseImpulse))
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('5',KeyboardFireEvent.Pressed,fire))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('4',KeyboardFireEvent.Hold,decreaseAngle))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('6',KeyboardFireEvent.Hold,increaseAngle))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('2',KeyboardFireEvent.Hold,decreaseImpulse))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('8',KeyboardFireEvent.Hold,increaseImpulse))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('5',KeyboardFireEvent.Pressed,fire))
 
 def main():
     global stopped

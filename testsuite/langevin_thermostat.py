@@ -32,7 +32,7 @@ class LangevinThermostat(ut.TestCase):
     """Tests the velocity distribution created by the Langevin thermostat against
        the single component Maxwell distribution."""
 
-    s = espressomd.System()
+    s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     s.cell_system.set_n_square()
     s.cell_system.skin = 0.3
     s.seed = range(s.cell_system.get_state()["n_nodes"])

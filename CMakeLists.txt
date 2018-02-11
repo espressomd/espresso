@@ -21,6 +21,7 @@
 cmake_minimum_required(VERSION 3.0)
 include(FeatureSummary)
 project(ESPResSo)
+include(cmake/FindPythonModule.cmake)
 
 enable_language(CXX)
 
@@ -197,6 +198,7 @@ if (WITH_PYTHON)
     set(CYTHON_FLAGS "-3" CACHE STRING "Flags used by the Cython compiler during all build types.")
   endif()
 endif(WITH_PYTHON)
+
 
 find_package(FFTW3)
 if (FFTW3_FOUND)

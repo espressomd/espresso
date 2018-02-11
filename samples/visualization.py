@@ -52,7 +52,7 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System()
+system = espressomd.System(box_l=[box_l]*3)
 system.time_step = 0.001
 system.cell_system.skin = 0.4
 #es._espressoHandle.Tcl_Eval('thermostat langevin 1.0 1.0')
@@ -75,9 +75,6 @@ int_n_times = 50000
 
 # Interaction setup
 #############################################################
-
-system.box_l = [box_l, box_l, box_l]
-
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
     cutoff=lj_cut, shift="auto")
@@ -212,7 +209,7 @@ def update_plot():
 t = Thread(target=main_thread)
 t.daemon = True
 t.start()
-visualizer.registerCallback(update_plot, interval=1000)
+visualizer.register_callback(update_plot, interval=1000)
 visualizer.start()
 
 # terminate program

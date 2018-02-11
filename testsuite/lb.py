@@ -19,7 +19,7 @@ class LBTest(ut.TestCase):
     3) measure temperature of colloid and fluid
 
     """
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     n_nodes = system.cell_system.get_state()["n_nodes"]
     system.seed = range(n_nodes)
 

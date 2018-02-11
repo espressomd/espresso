@@ -52,7 +52,7 @@ inline void add_ljcos2_pair_force(const Particle *const p1,
   if ((dist < ia_params->LJCOS2_cut + ia_params->LJCOS2_offset)) {
     r_off = dist - ia_params->LJCOS2_offset;
     if (r_off < ia_params->LJCOS2_rchange) {
-      frac2 = SQR(ia_params->LJCOS2_sig / r_off);
+      frac2 = Utils::sqr(ia_params->LJCOS2_sig / r_off);
       frac6 = frac2 * frac2 * frac2;
       fac =
           48.0 * ia_params->LJCOS2_eps * frac6 * (frac6 - 0.5) / (r_off * dist);
@@ -90,17 +90,17 @@ inline void add_ljcos2_pair_force(const Particle *const p1,
 }
 
 /** calculate lj-cos2 energy between particle p1 and p2. */
-inline double ljcos2_pair_energy(Particle *p1, Particle *p2,
-                                 IA_parameters *ia_params, double d[3],
-                                 double dist) {
+inline double ljcos2_pair_energy(const Particle *p1, const Particle *p2,
+                                 const IA_parameters *ia_params,
+                                 const double d[3], double dist) {
   double r_off, frac2, frac6;
 
   if ((dist < ia_params->LJCOS2_cut + ia_params->LJCOS2_offset)) {
     r_off = dist - ia_params->LJCOS2_offset;
     if (r_off < ia_params->LJCOS2_rchange) {
-      frac2 = SQR(ia_params->LJCOS2_sig / r_off);
+      frac2 = Utils::sqr(ia_params->LJCOS2_sig / r_off);
       frac6 = frac2 * frac2 * frac2;
-      return 4.0 * ia_params->LJCOS2_eps * (SQR(frac6) - frac6);
+      return 4.0 * ia_params->LJCOS2_eps * (Utils::sqr(frac6) - frac6);
     } else if (r_off < ia_params->LJCOS2_rchange + ia_params->LJCOS2_w) {
       return -ia_params->LJCOS2_eps / 2 *
              (cos(M_PI * (r_off - ia_params->LJCOS2_rchange) /
