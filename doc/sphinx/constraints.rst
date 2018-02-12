@@ -145,13 +145,14 @@ For example the pressure from wall ::
 
 Getting the minimal distance to a constraint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-:todo: `This feature is not yet implemented .`
 
-calculates the smallest distance to all non-penetrable
-constraints, that can be repulsive (wall, cylinder, sphere, rhomboid,
+:meth:`espressomd.system.constraints.min_dist`
+
+Calculates the smallest distance to all interacting
+constraints that can be repulsive (wall, cylinder, sphere, rhomboid,
 maze, pore, slitpore). Negative distances mean that the position is
 within the area that particles should not access. Helpful to find
-initial configurations.)
+initial configurations.
 
 .. _Available Shapes:
 

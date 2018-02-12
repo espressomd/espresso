@@ -59,6 +59,9 @@ public:
     if (name == "total_force") {
       return shape_based_constraint()->total_force();
     }
+    if (name == "min_dist") {
+      return shape_based_constraint()->min_dist();
+    }
 
     return none;
   }
