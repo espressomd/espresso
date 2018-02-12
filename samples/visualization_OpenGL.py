@@ -2,7 +2,7 @@ from __future__ import print_function
 import espressomd
 from espressomd import thermostat
 from espressomd import integrate
-import numpy
+import numpy as np
 from threading import Thread
 from math import *
 from espressomd.visualization_opengl import *
@@ -35,12 +35,15 @@ def decreaseTemp():
 
 box_l = 10
 system = espressomd.System(box_l=[box_l]*3)
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
 
 system.time_step = 0.00001
 system.cell_system.skin = 0.4
 
 for i in range(10):
-    rpos = numpy.random.random(3) * box_l
+    rpos = np.random.random(3) * box_l
     system.part.add(id=i, pos=rpos)
 
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)

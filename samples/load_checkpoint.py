@@ -6,6 +6,8 @@ checkpoint.load()
 
 # necessary for using e.g. system.actors, since explicit checkpointing of actors is not implemented yet
 system = espressomd.System(box_l=[10.7437, 10.7437, 10.7437])
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
 # test user variable
 print "\n### user variable test ###"

@@ -10,13 +10,16 @@ from espressomd import polymer
 from espressomd import interactions
 
 
-sys = espressomd.System(box_l=[100.0, 100.0, 100.0])
-sys.time_step = 0.01
-sys.thermostat.set_langevin(kT=1.0, gamma=1.0)
-sys.cell_system.skin = 0.4
+system = espressomd.System(box_l=[100.0, 100.0, 100.0])
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+
+system.time_step = 0.01
+system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.cell_system.skin = 0.4
 
 fene = interactions.FeneBond(k=10, d_r_max=2)
-sys.bonded_inter.add(fene)
+system.bonded_inter.add(fene)
 polymer.create_polymer(N_P=5, bond_length=1.0, MPC=50, bond=fene)
 
 sys.integrator.run(steps=0)

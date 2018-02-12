@@ -19,7 +19,7 @@
 #
 from __future__ import print_function
 import espressomd
-import numpy
+import numpy as np
 import sys
 
 # System parameters

@@ -2,11 +2,15 @@ from __future__ import print_function
 import espressomd
 from espressomd import thermostat
 from espressomd.visualization_opengl import *
-import numpy
+import numpy as np
 from threading import Thread
 
 box_l = 10
 system = espressomd.System(box_l=[box_l]*3)
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
+
 visualizer = openGLLive(system, background_color=[1, 1, 1])
 
 system.time_step = 0.005
@@ -19,7 +23,7 @@ system.non_bonded_inter[0, 0].lennard_jones.set_params(
     cutoff=2**(1. / 6.), shift="auto")
 
 for i in range(100):
-    system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
+    system.part.add(id=i, pos=np.random.random(3) * system.box_l)
 
 print("E before minimization:", system.analysis.energy()["total"])
 system.minimize_energy.init(f_max=0.0, gamma=30.0,
