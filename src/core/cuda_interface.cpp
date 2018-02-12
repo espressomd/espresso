@@ -72,7 +72,7 @@ static void pack_particles(ParticleRange particles,
     buffer[i].v[1] = static_cast<float>(part.m.v[1]);
     buffer[i].v[2] = static_cast<float>(part.m.v[2]);
 #ifdef IMMERSED_BOUNDARY
-    buffer[i].isVirtual = part.p.isVirtual;
+    buffer[i].is_virtual = part.p.is_virtual;
 #endif
 
 #ifdef DIPOLES

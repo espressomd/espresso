@@ -53,7 +53,7 @@ void pack_particles(ParticleRange particles,
     buffer[i].f[1] = (float)part.f.f[1];
     buffer[i].f[2] = (float)part.f.f[2];
 
-    buffer[i].isVirtual = part.p.isVirtual;
+    buffer[i].is_virtual = part.p.is_virtual;
 
     i++;
   }

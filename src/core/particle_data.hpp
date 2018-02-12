@@ -141,8 +141,8 @@ struct ParticleProperties {
 #ifdef VIRTUAL_SITES
   /** is particle virtual
       0 = real particle
-      else = virual particle */
-  int isVirtual = 0;
+      else = virtual particle */
+  int is_virtual = 0;
 #ifdef VIRTUAL_SITES_RELATIVE
   /** In case, the "relative" implementation of virtual sites is enabled, the
   following properties define, with respect to which real particle a virtual
@@ -755,10 +755,10 @@ int set_particle_dipm(int part, double dipm);
 #ifdef VIRTUAL_SITES
 /** Call only on the master node: set particle dipole moment (absolut value).
     @param part the particle.
-    @param isVirtual its new dipole moment.
+    @param is_virtual its new is_virtual.
     @return ES_OK if particle existed
 */
-int set_particle_virtual(int part, int isVirtual);
+int set_particle_virtual(int part, int is_virtual);
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
 int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,

@@ -64,7 +64,7 @@ void IBM_ForcesIntoFluid_CPU()
     const int np = cell->n ;
     
     for (int i = 0; i < np; i++)
-      if (p[i].p.isVirtual)
+      if (p[i].p.is_virtual)
         CoupleIBMParticleToFluid(&p[i]);
   }
   
@@ -88,7 +88,7 @@ void IBM_ForcesIntoFluid_CPU()
           && p[i].r.p[2] < my_right[2]+0.5*lblattice.agrid[2])
       {
         
-        if (p[i].p.isVirtual)
+        if (p[i].p.is_virtual)
           CoupleIBMParticleToFluid(&p[i]);
       }
     }
@@ -142,7 +142,7 @@ void IBM_UpdateParticlePositions(ParticleRange particles)
     const Cell *const cell = local_cells.cell[c];
     Particle *const p  = cell->part;
     for(int j = 0; j < cell->n; j++)
-      if (p[j].p.isVirtual)
+      if (p[j].p.is_virtual)
       {
         if ( !( p[j].p.ext_flag & 2 ) )
           p[j].r.p[0] = p[j].r.p[0] + p[j].m.v[0]*time_step;
@@ -387,7 +387,7 @@ void ParticleVelocitiesFromLB_CPU()
     const Cell *const cell = local_cells.cell[c];
     Particle *const p  = cell->part;
     for(int j = 0; j < cell->n; j++)
-      if (p[j].p.isVirtual)
+      if (p[j].p.is_virtual)
       {
         double dummy[3];
         // Get interpolated velocity and store in the force (!) field
@@ -412,7 +412,7 @@ void ParticleVelocitiesFromLB_CPU()
           && p[j].r.p[2] >= my_left[2]-0.5*lblattice.agrid[2]
           && p[j].r.p[2] < my_right[2]+0.5*lblattice.agrid[2])
       {
-        if (p[j].p.isVirtual)
+        if (p[j].p.is_virtual)
         {
           double dummy[3];
           double force[3]; // The force stemming from the ghost particle
@@ -443,7 +443,7 @@ void ParticleVelocitiesFromLB_CPU()
     const Cell *const cell = local_cells.cell[c];
     Particle *const p  = cell->part;
     for(int j = 0; j < cell->n; j++)
-      if (p[j].p.isVirtual)
+      if (p[j].p.is_virtual)
       {
         p[j].m.v[0] = p[j].f.f[0];
         p[j].m.v[1] = p[j].f.f[1];

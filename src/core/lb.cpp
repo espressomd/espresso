@@ -3408,7 +3408,7 @@ void calc_particle_lattice_ia() {
 
 #ifdef IMMERSED_BOUNDARY
       // Virtual particles for IBM must not be coupled
-      if (!p.p.isVirtual)
+      if (!p.p.is_virtual)
 #endif
       {
         lb_viscous_coupling(&p, force);
@@ -3442,7 +3442,7 @@ void calc_particle_lattice_ia() {
         });
 #ifdef IMMERSED_BOUNDARY
         // Virtual particles for IBM must not be coupled
-        if (!p.p.isVirtual)
+        if (!p.p.is_virtual)
 #endif
         {
           lb_viscous_coupling(&p, force);

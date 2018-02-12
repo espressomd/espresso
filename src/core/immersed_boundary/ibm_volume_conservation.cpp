@@ -165,7 +165,7 @@ void CalcVolumes()
         const int type = iaparams.type;
         if ( type == BONDED_IA_IBM_VOLUME_CONSERVATION )
         {
-          if ( p1.p.isVirtual) softID = iaparams.p.ibmVolConsParameters.softID;
+          if ( p1.p.is_virtual) softID = iaparams.p.ibmVolConsParameters.softID;
           else { printf("Error. Encountered non-virtual particle with VOLUME_CONSERVATION_IBM\n"); exit(1); }
         }
         // Iterate, increase by the number of partners of this bond + 1 for bond type
@@ -290,7 +290,7 @@ void CalcVolumeForce()
         const int type = iaparams.type;
         if ( type == BONDED_IA_IBM_VOLUME_CONSERVATION )
         {
-          if ( !p1.p.isVirtual) { printf("Error. Encountered non-virtual particle with VOLUME_CONSERVATION_IBM\n"); exit(1); }
+          if ( !p1.p.is_virtual) { printf("Error. Encountered non-virtual particle with VOLUME_CONSERVATION_IBM\n"); exit(1); }
           softID = iaparams.p.ibmVolConsParameters.softID;
           volRef = iaparams.p.ibmVolConsParameters.volRef;
           kappaV = iaparams.p.ibmVolConsParameters.kappaV;
