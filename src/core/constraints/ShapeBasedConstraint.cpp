@@ -20,7 +20,7 @@ Vector3d ShapeBasedConstraint::total_force() const {
 
 
 double ShapeBasedConstraint::min_dist() {
-  double global_mindist;
+  double global_mindist = std::numeric_limits<double>::infinity();
   auto parts = local_cells.particles();
 
   auto const local_mindist = std::accumulate(
