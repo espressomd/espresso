@@ -155,7 +155,9 @@ struct ParticleProperties {
   // Store relative position of the virtual site
   double vs_relative_rel_orientation[4] = {0., 0., 0., 0};
 #endif
-#endif
+#else /* VIRTUAL_SITES */
+  static constexpr const int is_virtual = 0;
+#endif /* VIRTUAL_SITES */
 
 #ifdef LANGEVIN_PER_PARTICLE
   double T = -1.;
