@@ -213,12 +213,6 @@ const std::unordered_map<int, Datafield> fields{
      {FIELD_SMALLERTIMESTEP,
       {&smaller_time_step, Datafield::Type::DOUBLE, 1, "smaller_time_step",
        5}}, /* 52 from integrate.cpp */
-     {FIELD_LANGEVIN_TRANS_SWITCH,
-      {&langevin_trans, Datafield::Type::BOOL, 1, "langevin_trans_switch",
-       1}}, /* 53 from thermostat.cpp */
-     {FIELD_LANGEVIN_ROT_SWITCH,
-      {&langevin_rotate, Datafield::Type::BOOL, 1, "langevin_rotate_switch",
-       1}}, /* 54 from thermostat.cpp */
 #ifndef PARTICLE_ANISOTROPY
      {FIELD_LANGEVIN_GAMMA_ROTATION,
       {&langevin_gamma_rotation, Datafield::Type::DOUBLE, 1, "gamma_rot",

@@ -79,12 +79,6 @@ extern Thermostat::GammaType langevin_gamma;
 /** Langevin friction coefficient gamma. */
 extern Thermostat::GammaType langevin_gamma_rotation;
 
-/** Langevin for translations */
-extern bool langevin_trans;
-
-/** Langevin for rotations */
-extern bool langevin_rotate;
-
 /** Friction coefficient for nptiso-thermostat's inline-function
  * friction_therm0_nptiso */
 extern double nptiso_gamma0;
@@ -236,10 +230,6 @@ inline void friction_thermo_langevin(Particle *p) {
 #endif /* MULTI_TIMESTEP */
 
   int j;
-  double switch_trans = 1.0;
-  if (langevin_trans == false) {
-    switch_trans = 0.0;
-  }
 
 // Virtual sites related decision making
 #ifdef VIRTUAL_SITES
@@ -352,16 +342,16 @@ inline void friction_thermo_langevin(Particle *p) {
 // Apply the force
 #ifndef PARTICLE_ANISOTROPY
       p->f.f[j] = langevin_pref1_temp * velocity[j] +
-                  switch_trans * langevin_pref2_temp * Thermostat::noise();
+                  langevin_pref2_temp * Thermostat::noise();
 #else
       // In case of anisotropic particle: body-fixed reference frame. Otherwise:
       // lab-fixed reference frame.
       if (aniso_flag)
         p->f.f[j] = langevin_pref1_temp[j] * velocity_body[j] +
-                    switch_trans * langevin_pref2_temp[j] * Thermostat::noise();
+                    langevin_pref2_temp[j] * Thermostat::noise();
       else
         p->f.f[j] = langevin_pref1_temp[j] * velocity[j] +
-                    switch_trans * langevin_pref2_temp[j] * Thermostat::noise();
+                    langevin_pref2_temp[j] * Thermostat::noise();
 #endif
     }
   } // END LOOP OVER ALL COMPONENTS
@@ -400,11 +390,6 @@ inline void friction_thermo_langevin(Particle *p) {
 inline void friction_thermo_langevin_rotation(Particle *p) {
   extern Thermostat::GammaType langevin_pref2_rotation;
   Thermostat::GammaType langevin_pref1_temp, langevin_pref2_temp;
-
-  double switch_rotate = 1.0;
-  if (langevin_rotate == false) {
-    switch_rotate = 0.0;
-  }
 
   langevin_pref1_temp = langevin_gamma_rotation;
   langevin_pref2_temp = langevin_pref2_rotation;
@@ -446,7 +431,7 @@ inline void friction_thermo_langevin_rotation(Particle *p) {
 #ifdef PARTICLE_ANISOTROPY
     p->f.torque[j] =
         -langevin_pref1_temp[j] * p->m.omega[j] +
-        switch_rotate * langevin_pref2_temp[j] * Thermostat::noise();
+        langevin_pref2_temp[j] * Thermostat::noise();
 #else
     p->f.torque[j] = -langevin_pref1_temp * p->m.omega[j] +
                      switch_rotate * langevin_pref2_temp * Thermostat::noise();

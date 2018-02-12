@@ -57,11 +57,6 @@ GammaType langevin_pref1;
 GammaType langevin_pref2;
 GammaType langevin_pref2_rotation;
 
-/* Langevin for translations */
-bool langevin_trans = true;
-/* Langevin for rotations */
-bool langevin_rotate = true;
-
 /* NPT ISOTROPIC THERMOSTAT */
 // INSERT COMMENT
 double nptiso_gamma0 = 0.0;

@@ -146,10 +146,6 @@ enum Fields {
   FIELD_WARNINGS,
   /** index of \ref smaller_timestep in \ref #fields */
   FIELD_SMALLERTIMESTEP,
-  /** index of \ref langevin_trans in \ref #fields */
-  FIELD_LANGEVIN_TRANS_SWITCH,
-  /** index of \ref langevin_rotate in \ref #fields */
-  FIELD_LANGEVIN_ROT_SWITCH,
   /** index of \ref langevin_gamma_rotation in  \ref #fields */
   FIELD_LANGEVIN_GAMMA_ROTATION,
   FIELD_FORCE_CAP
