@@ -3,11 +3,13 @@ from espressomd import *
 from espressomd.shapes import *
 from espressomd.visualization_opengl import *
 from threading import Thread
-import numpy
+import numpy as np
 
 box_l = 50
-system = espressomd.System(box_l=[50.0] * 3)
-
+system = espressomd.System(box_l=[50.0]*3)
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
 
 system.time_step = 0.0001
 system.cell_system.skin = 0.3
@@ -49,7 +51,7 @@ system.constraints.add(shape=Wall(dist=20, normal=[0.1, 0.0, 1]), particle_type=
 system.thermostat.set_langevin(kT=10.0, gamma=10)
 
 for i in range(100):
-    rpos = numpy.random.random(3) * box_l
+    rpos = np.random.random(3) * box_l
     system.part.add(pos=rpos, type=1)
 
 system.non_bonded_inter[1, 1].lennard_jones.set_params(
