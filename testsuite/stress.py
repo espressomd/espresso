@@ -246,6 +246,7 @@ class stress_test(ut.TestCase):
     self.assertTrue(np.max(np.abs(sim_stress_nonbonded_intra-anal_stress_nonbonded_intra)) < tol, 'non-bonded intramolecular stress does not match analytical result')
     self.assertTrue(np.max(np.abs(sim_stress_nonbonded_intra00-anal_stress_nonbonded_intra)) < tol, 'non-bonded intramolecular stress molecule 0 does not match analytical result')
     self.assertTrue(np.max(np.abs(sim_stress_total-anal_stress_total)) < tol, 'total stress does not match analytical result')
+    self.assertTrue(np.max(np.abs(sim_stress_total-sim_stress_kinetic-sim_stress_bonded-sim_stress_nonbonded)) < tol, 'total stress is not given as the sum of all major stress components')
     self.assertTrue(np.abs(sim_pressure_kinetic-anal_pressure_kinetic) < tol, 'kinetic pressure does not match analytical result')
     self.assertTrue(np.abs(sim_pressure_bonded-anal_pressure_bonded) < tol, 'bonded pressure does not match analytical result')
     self.assertTrue(np.abs(sim_pressure_bonded_harmonic-anal_pressure_bonded) < tol, 'bonded pressure harmonic bond does not match analytical result')
@@ -255,6 +256,7 @@ class stress_test(ut.TestCase):
     self.assertTrue(np.abs(sim_pressure_nonbonded_intra-anal_pressure_nonbonded_intra) < tol, 'non-bonded intramolecular pressure does not match analytical result')
     self.assertTrue(np.abs(sim_pressure_nonbonded_intra00-anal_pressure_nonbonded_intra) < tol, 'non-bonded intramolecular pressure molecule 0 does not match analytical result')
     self.assertTrue(np.abs(sim_pressure_total-anal_pressure_total) < tol, 'total pressure does not match analytical result')
+    self.assertTrue(np.max(np.abs(sim_pressure_total-sim_pressure_kinetic-sim_pressure_bonded-sim_pressure_nonbonded)) < tol, 'total pressure is not given as the sum of all major pressure components')
 
 
 class stress_test_fene(ut.TestCase):
@@ -295,8 +297,12 @@ class stress_test_fene(ut.TestCase):
         sim_stress_bonded = system.analysis.stress_tensor()['bonded']
         sim_stress_fene=system.analysis.stress_tensor()['bonded',len(system.bonded_inter)-1]
         anal_stress_fene=self.get_anal_stress_fene(system.part[0].pos, system.part[1].pos, k, d_r_max, r_0)
-        self.assertTrue(np.max(np.abs(sim_stress_bonded-anal_stress_fene)) < tol, 'bonded stress for not match analytical result')
-        self.assertTrue(np.max(np.abs(sim_stress_fene-anal_stress_fene)) < tol, 'bonded stress for not match analytical result')
+        self.assertTrue(np.max(np.abs(sim_stress_bonded-anal_stress_fene)) < tol, 'bonded stress does not match analytical result')
+        self.assertTrue(np.max(np.abs(sim_stress_fene-anal_stress_fene)) < tol, 'bonded stress for fene  does not match analytical result')
+        
+        sim_pressure_fene=system.analysis.pressure()['bonded',len(system.bonded_inter)-1]
+        anal_pressure_fene=np.einsum("ii",anal_stress_fene)/3.0
+        self.assertTrue(np.max(np.abs(sim_pressure_fene-anal_pressure_fene)) < tol, 'bonded pressure for fene does not match analytical result')
         
         system.part.clear()
     
