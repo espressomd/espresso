@@ -5,8 +5,10 @@ from __future__ import print_function
 import unittest as ut
 import espressomd
 from espressomd.interactions import HarmonicBond
+from espressomd.interactions import FeneBond
 from espressomd import analyze
 import itertools
+from tests_common import fene_force, fene_potential, fene_force2
 
 import numpy as np
 
@@ -15,7 +17,7 @@ tol = 1.0e-13
 
 # analytical result for convective stress
 def stress_kinetic(vel, box_l):
-  return np.einsum('ij,ik->jk', vel, vel) / box_l**3
+  return np.einsum('ij,ik->jk', vel, vel) / np.prod(system.box_l)
 
 # analytical result for stress originating from bond force
 def stress_bonded(pos, box_l):
@@ -23,7 +25,7 @@ def stress_bonded(pos, box_l):
   for p1, p2 in zip(pos[0::2], pos[1::2]):
     r = p1 - p2
     f = -1.0e4*r
-    stress += np.einsum('i,j', f, r) / box_l**3
+    stress += np.einsum('i,j', f, r) / np.prod(system.box_l)
   return stress
 
 # analytical result for stress originating from non-bonded force
@@ -35,7 +37,7 @@ def stress_nonbonded(particle_pairs, box_l):
       r = np.sqrt(np.sum(d**2))
       r_hat = d/r
       f = (24.0 * 1.0 * (2.0*1.0**12/r**13 - 1.0**6/r**7)) * r_hat
-      stress += np.einsum('i,j', f, d) / box_l**3
+      stress += np.einsum('i,j', f, d) / np.prod(system.box_l)
   return stress
 
 def stress_nonbonded_inter(particle_pairs, box_l):
@@ -46,7 +48,7 @@ def stress_nonbonded_inter(particle_pairs, box_l):
       d = np.sqrt(np.sum(r**2))
       r_hat = r/d
       f = (24.0 * 1.0 * (2.0*1.0**12/d**13 - 1.0**6/d**7)) * r_hat
-      stress += np.einsum('i,j', f, r) / box_l**3
+      stress += np.einsum('i,j', f, r) / np.prod(system.box_l)
   return stress
 
 def stress_nonbonded_intra(particle_pairs, box_l):
@@ -57,7 +59,7 @@ def stress_nonbonded_intra(particle_pairs, box_l):
       d = np.sqrt(np.sum(r**2))
       r_hat = r/d
       f = (24.0 * 1.0 * (2.0*1.0**12/d**13 - 1.0**6/d**7)) * r_hat
-      stress += np.einsum('i,j', f, r) / box_l**3
+      stress += np.einsum('i,j', f, r) / np.prod(system.box_l)
   return stress
 
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
@@ -253,6 +255,53 @@ class stress_test(ut.TestCase):
     self.assertTrue(np.abs(sim_pressure_nonbonded_intra-anal_pressure_nonbonded_intra) < tol, 'non-bonded intramolecular pressure does not match analytical result')
     self.assertTrue(np.abs(sim_pressure_nonbonded_intra00-anal_pressure_nonbonded_intra) < tol, 'non-bonded intramolecular pressure molecule 0 does not match analytical result')
     self.assertTrue(np.abs(sim_pressure_total-anal_pressure_total) < tol, 'total pressure does not match analytical result')
+
+
+class stress_test_fene(ut.TestCase):
+    
+    def get_anal_stress_fene(self, pos_1, pos_2, k, d_r_max, r_0):
+      stress = np.zeros([3,3])
+      vec_r = pos_1 - pos_2
+      f = -fene_force2(vec_r, k, d_r_max, r_0)
+      stress += np.einsum('i,j', f, vec_r) / np.prod(system.box_l)
+      return stress    
+
+    def test_fene(self):
+        # system parameters
+        box_l        = 10.0
+        system.box_l = [box_l, box_l, box_l]
+        skin        = 0.4
+        time_step   = 0.01
+        system.time_step = time_step
+
+        # thermostat and cell system
+        system.cell_system.skin = skin
+        system.periodicity = [1,1,1]
+
+        # particles and bond
+        system.part.add(id=0, pos=[9.9,9.75,9.9], type=0, mol_id=0,fix=[1,1,1])
+        system.part.add(id=1, pos=[9.9,10.25,9.9], type=0, mol_id=0,fix=[1,1,1])
+        
+        bond_vector=system.part[1].pos-system.part[0].pos
+        k=1e4
+        d_r_max=1.5
+        r_0=0.1
+
+        fene=FeneBond(k=k,d_r_max=d_r_max, r_0=r_0)
+        system.bonded_inter.add(fene)
+        system.part[0].add_bond((fene, 1))
+        system.integrator.run(steps=0)
+        
+        
+        sim_stress_bonded = system.analysis.stress_tensor()['bonded']
+        sim_stress_fene=system.analysis.stress_tensor()['bonded',len(system.bonded_inter)-1]
+        anal_stress_fene=self.get_anal_stress_fene(system.part[0].pos, system.part[1].pos, k, d_r_max, r_0)
+        bond_vector = (system.part[0].pos-system.part[1].pos)
+        self.assertTrue(np.max(np.abs(sim_stress_bonded-anal_stress_fene)) < tol, 'bonded stress for not match analytical result')
+        self.assertTrue(np.max(np.abs(sim_stress_fene-anal_stress_fene)) < tol, 'bonded stress for not match analytical result')
+        
+        system.part.clear()
+    
 
 @ut.skipIf(not espressomd.has_features(['LEES_EDWARDS', 'LENNARD_JONES']),
 'Features not available, skipping test!')
