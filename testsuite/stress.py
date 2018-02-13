@@ -296,9 +296,16 @@ class stress_test_fene(ut.TestCase):
         
         sim_stress_bonded = system.analysis.stress_tensor()['bonded']
         sim_stress_fene=system.analysis.stress_tensor()['bonded',len(system.bonded_inter)-1]
+        
+        total_bonded_stresses=np.zeros([3,3])
+        for i in range(len(system.bonded_inter)):
+            total_bonded_stresses=np.add(total_bonded_stresses,system.analysis.stress_tensor()['bonded',i])
+        
+        
         anal_stress_fene=self.get_anal_stress_fene(system.part[0].pos, system.part[1].pos, k, d_r_max, r_0)
         self.assertTrue(np.max(np.abs(sim_stress_bonded-anal_stress_fene)) < tol, 'bonded stress does not match analytical result')
         self.assertTrue(np.max(np.abs(sim_stress_fene-anal_stress_fene)) < tol, 'bonded stress for fene  does not match analytical result')
+        self.assertTrue(np.max(np.abs(sim_stress_bonded-total_bonded_stresses)) < tol, 'bonded stresses do not sum up to the total value')
         
         sim_pressure_fene=system.analysis.pressure()['bonded',len(system.bonded_inter)-1]
         anal_pressure_fene=np.einsum("ii",anal_stress_fene)/3.0
