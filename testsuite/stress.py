@@ -282,7 +282,6 @@ class stress_test_fene(ut.TestCase):
         system.part.add(id=0, pos=[9.9,9.75,9.9], type=0, mol_id=0,fix=[1,1,1])
         system.part.add(id=1, pos=[9.9,10.25,9.9], type=0, mol_id=0,fix=[1,1,1])
         
-        bond_vector=system.part[1].pos-system.part[0].pos
         k=1e4
         d_r_max=1.5
         r_0=0.1
@@ -296,7 +295,6 @@ class stress_test_fene(ut.TestCase):
         sim_stress_bonded = system.analysis.stress_tensor()['bonded']
         sim_stress_fene=system.analysis.stress_tensor()['bonded',len(system.bonded_inter)-1]
         anal_stress_fene=self.get_anal_stress_fene(system.part[0].pos, system.part[1].pos, k, d_r_max, r_0)
-        bond_vector = (system.part[0].pos-system.part[1].pos)
         self.assertTrue(np.max(np.abs(sim_stress_bonded-anal_stress_fene)) < tol, 'bonded stress for not match analytical result')
         self.assertTrue(np.max(np.abs(sim_stress_fene-anal_stress_fene)) < tol, 'bonded stress for not match analytical result')
         
