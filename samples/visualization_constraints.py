@@ -18,7 +18,7 @@ visualizer = openGLLive(system, background_color=[1, 1, 1], drag_enabled=True, r
                         rasterize_pointsize=5, camera_position=[150, 25, 25], camera_right=[0, 0, -1])
 
 # Wall
-#system.constraints.add(shape=Wall(dist=20, normal=[0.1, 0.0, 1]), particle_type=0, penetrable=1)
+system.constraints.add(shape=Wall(dist=20, normal=[0.1, 0.0, 1]), particle_type=0, penetrable=1)
 
 # Sphere
 #system.constraints.add(shape=Sphere(center=[25, 25, 25], radius=15, direction=1), particle_type=0, penetrable=1)
@@ -36,7 +36,7 @@ visualizer = openGLLive(system, background_color=[1, 1, 1], drag_enabled=True, r
 #system.constraints.add(shape=Maze(cylrad=3, dim=2, nsphere=2, sphrad=8), particle_type=0, penetrable=1)
 
 # Stomatocyte
-#system.constraints.add(shape=Stomatocyte(inner_radius=3, outer_radius=7, orientation_x=1.0, orientation_y=0.0, orientation_z=0.0, position_x=25, position_y=25, position_z=25, layer_width=3, direction=1), particle_type=0, penetrable=1)
+#system.constraints.add(shape=Stomatocyte(inner_radius=3, outer_radius=7, axis=[1.0, 0.0, 0.0], center=[25, 25, 25], layer_width=3, direction=1), particle_type=0, penetrable=1)
 
 # SimplePore
 #system.constraints.add(shape=SimplePore(center=[25, 25, 25], axis=[1, 0, 0], length=15, radius=12.5, smoothing_radius=2), particle_type=0, penetrable=1)
@@ -45,7 +45,7 @@ visualizer = openGLLive(system, background_color=[1, 1, 1], drag_enabled=True, r
 #system.constraints.add(shape=Slitpore(channel_width=15, lower_smoothing_radius=3, upper_smoothing_radius=3, pore_length=20, pore_mouth=30, pore_width=5), particle_type=0, penetrable=1)
 
 # HollowCone
-#system.constraints.add(shape=HollowCone(inner_radius=5, outer_radius=20, opening_angle=np.pi/4.0, orientation_x=1.0, orientation_y=0.0, orientation_z=0.0, position_x=25, position_y=25, position_z=25, width=2, direction=1), particle_type=0, penetrable=1)
+#system.constraints.add(shape=HollowCone(inner_radius=5, outer_radius=20, opening_angle=np.pi/4.0, axis=[1.0, 0.0, 0.0], center=[25, 25, 25], width=2, direction=1), particle_type=0, penetrable=1)
 
 
 system.thermostat.set_langevin(kT=10.0, gamma=10)
