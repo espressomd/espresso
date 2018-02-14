@@ -277,8 +277,8 @@ folder `/tmp`:
     - mydata.bond
 
 Depending on the chosen output, not all of these files might be created.
-To read these in again, simply call :mod:`espressomd.io.mpiio.Mpiio.read`. It has the same signature as
-:mod:`espressomd.io.mpiio.Mpiio.write`.
+To read these in again, simply call :meth:`espressomd.io.mpiio.Mpiio.read`. It has the same signature as
+:meth:`espressomd.io.mpiio.Mpiio.write`.
 There exists a legacy python script in the `tools` directory which can convert
 MPI-IO data to the now unsupported blockfile format. Check it out if you want
 to post-process the data without ESPResSo.
