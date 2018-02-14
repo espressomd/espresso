@@ -91,5 +91,5 @@ if(SPHINX_FOUND)
             "${CMAKE_CURRENT_BINARY_DIR}"
             "${SPHINX_HTML_DIR}"
         DEPENDS sphinx
-        COMMENT "Perform doctests within the Sphinx documentation.")
+        COMMENT "Performing doctests within the Sphinx documentation.")
 endif(SPHINX_FOUND) 
