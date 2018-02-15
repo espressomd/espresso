@@ -71,12 +71,12 @@ class CommonTests(ut.TestCase):
 
     def test_metadata(self):
         """Test if the H5MD metadata has been written properly."""
-        self.assertTrue(self.py_file['h5md'].attrs['version'][0] == 1)
-        self.assertTrue(self.py_file['h5md'].attrs['version'][1] == 1)
+        self.assertEqual(self.py_file['h5md'].attrs['version'][0], 1)
+        self.assertEqual(self.py_file['h5md'].attrs['version'][1], 1)
         self.assertTrue('creator' in self.py_file['h5md'])
         self.assertTrue('name' in self.py_file['h5md/creator'].attrs)
         self.assertTrue('version' in self.py_file['h5md/creator'].attrs)
-        self.assertTrue(self.py_file['h5md/creator'].attrs['name'][:] == b'ESPResSo')
+        self.assertEqual(self.py_file['h5md/creator'].attrs['name'][:], b'ESPResSo')
         self.assertTrue('author' in self.py_file['h5md'])
         self.assertTrue('name' in self.py_file['h5md/author'].attrs)
 
