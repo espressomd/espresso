@@ -36,14 +36,12 @@ class ReactionEnsembleTest(ut.TestCase):
     type_A = 1
     type_H = 5
     temperature = 1.0
-    standard_pressure_in_simulation_units = 0.00108
     # avoid extreme regions in the titration curve e.g. via the choice
-    # (np.random.random()-0.5)
-    pKa_minus_pH = 1
-    pH = 2  # or randomly via: 4*np.random.random()
+    # choose target alpha not too far from 0.5 to get good statistics in a small number of steps
+    pKa_minus_pH = -0.2
+    pH = 2  
     pKa = pKa_minus_pH + pH
-    # could be in this test for example anywhere in the range 0.000001 ... 9
-    K_HA_diss_apparent = 10**(-pKa)
+    Ka = 10**(-pKa)
     box_l = (N0 / c0)**(1.0 / 3.0)
     system = espressomd.System(box_l=[box_l, box_l, box_l])
     system.seed = system.cell_system.get_state()['n_nodes'] * [2]
@@ -51,7 +49,6 @@ class ReactionEnsembleTest(ut.TestCase):
     system.cell_system.skin = 0.4
     system.time_step = 0.01
     RE = reaction_ensemble.ConstantpHEnsemble(
-        standard_pressure=standard_pressure_in_simulation_units,
         temperature=1.0,
         exclusion_radius=1)
 
@@ -64,16 +61,16 @@ class ReactionEnsembleTest(ut.TestCase):
             cls.system.part.add(id=i + 1, pos=np.random.random(3) *
                                 cls.system.box_l, type=cls.type_H)
 
-        cls.RE.add(
-            equilibrium_constant=cls.K_HA_diss_apparent, reactant_types=[
+        cls.RE.add_reaction(
+            Gamma=cls.Ka, reactant_types=[
                 cls.type_HA], reactant_coefficients=[1], product_types=[
                 cls.type_A, cls.type_H], product_coefficients=[
                 1, 1], default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1})
         cls.RE.constant_pH = cls.pH
 
     @classmethod
-    def ideal_degree_of_association(cls, pH):
-        return 1 - 1.0 / (1 + 10**(cls.pKa - pH))
+    def ideal_alpha(cls, pH):
+        return 1.0 / (1 + 10**(cls.pKa - pH))
 
     def test_ideal_titration_curve(self):
         N0 = ReactionEnsembleTest.N0
@@ -84,35 +81,44 @@ class ReactionEnsembleTest(ut.TestCase):
         box_l = ReactionEnsembleTest.system.box_l
         system = ReactionEnsembleTest.system
         RE = ReactionEnsembleTest.RE
-        """ chemical warmup in order to get to chemical equilibrium before starting to calculate the observable "degree of association" """
-        for i in range(40 * N0):
-            r = RE.reaction()
+        #chemical warmup - get close to chemical equilibrium before we start sampling
+        RE.reaction(5*N0)
 
         volume = np.prod(self.system.box_l)  # cuboid box
         average_NH = 0.0
-        average_degree_of_association = 0.0
+        average_NHA = 0.0
+        average_NA = 0.0
         num_samples = 1000
         for i in range(num_samples):
-            RE.reaction()
-            average_NH += system.number_of_particles(
-                type=type_H)
-            average_degree_of_association += system.number_of_particles(
-                type=type_HA) / float(N0)
+            RE.reaction(5)
+            average_NH += system.number_of_particles( type=type_H)
+            average_NHA += system.number_of_particles( type=type_HA)
+            average_NA += system.number_of_particles( type=type_A)
         average_NH /= num_samples
-        average_degree_of_association /= num_samples
+        average_NA /= num_samples
+        average_NHA /= num_samples
+        average_alpha = average_NA / float(N0)
         # note you cannot calculate the pH via -log10(<NH>/volume) in the
         # constant pH ensemble, since the volume is totally arbitrary and does
         # not influence the average number of protons
         pH = ReactionEnsembleTest.pH
-        real_error_in_degree_of_association = abs(
-            average_degree_of_association - ReactionEnsembleTest.ideal_degree_of_association(
-                ReactionEnsembleTest.pH)) / ReactionEnsembleTest.ideal_degree_of_association(
-            ReactionEnsembleTest.pH)
-        print(average_degree_of_association)
+        pKa = ReactionEnsembleTest.pKa
+        target_alpha=ReactionEnsembleTest.ideal_alpha(pH);
+        rel_error_alpha = abs(
+            average_alpha - target_alpha )/target_alpha; # relative error
         self.assertLess(
-            real_error_in_degree_of_association,
+            rel_error_alpha,
             0.07,
-            msg="Deviation to ideal titration curve for the given input parameters too large.")
+            msg="\nDeviation from ideal titration curve is too big for the given input parameters.\n"
+            +"  pH: "+str(pH)
+            +"  pKa: "+str(pKa)
+            +"  average_NH: "+str(average_NH)
+            +"  average_NA: "+str(average_NA) 
+            +"  average_NHA:"+str(average_NHA) 
+            +"  average alpha: "+str(average_alpha)
+            +"  target_alpha: "+str(target_alpha)
+            +"  rel_error: "+str(rel_error_alpha)
+            )
 
 
 if __name__ == "__main__":

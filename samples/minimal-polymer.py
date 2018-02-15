@@ -22,14 +22,13 @@ import espressomd
 from espressomd import thermostat
 from espressomd import interactions
 from espressomd import polymer
-import numpy
 
 # System parameters
 #############################################################
 
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-
-# if no seed is provided espresso generates a seed
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4

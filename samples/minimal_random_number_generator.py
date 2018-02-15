@@ -19,7 +19,7 @@
 #
 from __future__ import print_function
 import espressomd
-import numpy
+import numpy as np
 import sys
 
 # System parameters
@@ -28,7 +28,7 @@ import sys
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
 n_nodes = 1  # for MPI
-system.seed = numpy.random.randint(low=1, high=2**31 - 1, size=n_nodes)
+system.seed = np.random.randint(low=1, high=2**31 - 1, size=n_nodes)
 # if no seed is provided espresso generates a seed
 print("seed ", system.seed)
 rng_state_read1 = system.random_number_generator_state

@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function
-import numpy
+import numpy as np
 from matplotlib import pyplot
 from threading import Thread
 import espressomd
@@ -53,6 +53,10 @@ lj_cap = 20
 # Integration parameters
 #############################################################
 system = espressomd.System(box_l=[box_l]*3)
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
+
 system.time_step = 0.001
 system.cell_system.skin = 0.4
 #es._espressoHandle.Tcl_Eval('thermostat langevin 1.0 1.0')
@@ -90,7 +94,7 @@ volume = box_l * box_l * box_l
 n_part = int(volume * density)
 
 for i in range(n_part):
-    system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
+    system.part.add(id=i, pos=np.random.random(3) * system.box_l)
 
 system.analysis.dist_to(0)
 
@@ -183,8 +187,8 @@ def main_loop():
     visualizer.update()
 
     energies = system.analysis.energy()
-    plot.set_xdata(numpy.append(plot.get_xdata(), system.time))
-    plot.set_ydata(numpy.append(plot.get_ydata(), energies['total']))
+    plot.set_xdata(np.append(plot.get_xdata(), system.time))
+    plot.set_ydata(np.append(plot.get_ydata(), energies['total']))
 
 def main_thread():
     for i in range(0, int_n_times):
@@ -209,7 +213,7 @@ def update_plot():
 t = Thread(target=main_thread)
 t.daemon = True
 t.start()
-visualizer.registerCallback(update_plot, interval=1000)
+visualizer.register_callback(update_plot, interval=1000)
 visualizer.start()
 
 # terminate program

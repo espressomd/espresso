@@ -12,6 +12,8 @@ import numpy as np
 #############################################################
 
 system = espressomd.System(box_l=[50.0, 50.0, 50.0])
+system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
 
 # if no seed is provided espresso generates a seed
 
@@ -26,9 +28,9 @@ system.non_bonded_inter[0, 0].lennard_jones.set_params(
 
 num_part = 30
 
-# create random posiitons in the box
-ran_pos = np.random.random((num_part, 3)) * system.box_l
-system.part.add(id=np.arange(num_part), pos=ran_pos, type=0)
+# create random positions in the box sufficiently away from the walls
+ran_pos = np.random.uniform(low=1, high=49, size=(num_part,3))
+system.part.add(id=np.arange(num_part), pos=ran_pos, type=np.zeros(num_part,dtype=int))
 
 # bottom wall, normal pointing in the +z direction, layed on z=0.1
 floor = shapes.Wall(normal=[0, 0, 1], dist=0.1)
@@ -36,7 +38,7 @@ c1 = system.constraints.add(
     particle_type=0, penetrable=0, only_positive=0, shape=floor)
 
 # top wall, normal pointing in the -z direction, layed on z=49.9, since the normal direction points down, dist is -49.9
-ceil = shapes.Wall(normal=[0, 0, -1], dist=-49.99)
+ceil = shapes.Wall(normal=[0, 0, -1], dist=-49.9)
 c2 = system.constraints.add(
     particle_type=0, penetrable=0, only_positive=0, shape=ceil)
 
@@ -65,7 +67,7 @@ act_min_dist = system.analysis.min_dist()
 system.thermostat.set_langevin(kT=0.0, gamma=5.0)
 
 # warmp with zero temperature to remove overlaps
-while (i < warm_n_times and act_min_dist < min_dist):
+while ( act_min_dist < min_dist or c1.mindist()<min_dist or c2.mindist()<min_dist):
     system.integrator.run(warm_steps + lj_cap)
     # Warmup criterion
     act_min_dist = system.analysis.min_dist()
@@ -89,5 +91,5 @@ system.integrator.run(warm_steps)
 
 for t in range(300):
     system.integrator.run(1000)
-    # print the position to see if it stays in z in (0,100)
+    # print the position to see if it stays within imposed constraints
     print(system.part[0].pos)
