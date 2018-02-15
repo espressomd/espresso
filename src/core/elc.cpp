@@ -1344,7 +1344,7 @@ void ELC_P3M_self_forces() {
       get_mi_vector(d, p.r.p, pos);
       dist2 = sqrlen(d);
       dist = sqrt(dist2);
-      p3m_add_pair_force(q, d, dist2, dist, p.f.f);
+      p3m_add_pair_force(q, d, dist2, dist, p.f.f.data());
     }
     if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
       q = elc_params.delta_mid_top * p.p.q * p.p.q;
@@ -1354,7 +1354,7 @@ void ELC_P3M_self_forces() {
       get_mi_vector(d, p.r.p, pos);
       dist2 = sqrlen(d);
       dist = sqrt(dist2);
-      p3m_add_pair_force(q, d, dist2, dist, p.f.f);
+      p3m_add_pair_force(q, d, dist2, dist, p.f.f.data());
     }
   }
 }

@@ -476,7 +476,7 @@ int set_particle_swimming(int part, ParticleParametersSwimming swim) {
 }
 #endif
 
-int set_particle_f(int part, double F[3]) {
+int set_particle_f(int part, const Vector3d &F) {
   auto const pnode = get_particle_node(part);
 
   if (pnode == -1)

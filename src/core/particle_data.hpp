@@ -238,7 +238,7 @@ struct ParticlePosition {
     collected and added up to the force of the original particle. */
 struct ParticleForce {
   /** force. */
-  double f[3] = {0., 0., 0.};
+  Vector3d f = {0., 0., 0.};
 
 #ifdef ROTATION
   /** torque */
@@ -607,7 +607,7 @@ int set_particle_swimming(int part, ParticleParametersSwimming swim);
     @param F its new force.
     @return ES_OK if particle existed
 */
-int set_particle_f(int part, double F[3]);
+int set_particle_f(int part, const Vector3d &F);
 
 /** Call only on the master node: set particle mass.
     @param part the particle.

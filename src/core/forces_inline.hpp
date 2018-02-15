@@ -365,7 +365,8 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
       // forces from the virtual charges
       // they go directly onto the particles, since they are not pairwise forces
       if (elc_params.dielectric_contrast_on)
-        ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f, p2->f.f);
+        ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f.data(),
+                                                     p2->f.f.data());
     }
     break;
   }
