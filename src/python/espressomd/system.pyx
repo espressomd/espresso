@@ -330,7 +330,7 @@ cdef class System(object):
             for j in range(_state_size_plus_one + 1):
                 states_on_node_i.append(
                     rng.randint(0, numeric_limits[int].max()))
-            states[i] = " ".join(map(str, states_on_node_i))
+            states[i] = (" ".join(map(str, states_on_node_i))).encode('utf-8')
         mpi_random_set_stat(states)
 
     property seed:

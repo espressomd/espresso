@@ -30,7 +30,7 @@ A minimal working example is the following:
 <Universe with 1 atoms>
 
 """
-import cStringIO
+from six import StringIO
 import numpy as np
 import MDAnalysis
 
@@ -102,7 +102,7 @@ class Stream(object):
             _xyz+=str(_p.v)+'\n'
         for _p in self.system.part:
             _xyz+=str(_p.f)+'\n'
-        return  NamedStream(cStringIO.StringIO(_xyz), "__.ESP")
+        return  NamedStream(StringIO(_xyz), "__.ESP")
 
 class ESPParser(TopologyReaderBase):
     """
@@ -202,7 +202,7 @@ class ESPReader(SingleFrameReaderBase):
                     self.ts = ts = self._Timestep(self.n_atoms, **self._ts_kwargs)
                     self.ts.time = time
                 elif(pos==-1):
-                    self.ts._unitcell[:3] = np.array(map(float,line[1:-2].split()))
+                    self.ts._unitcell[:3] = np.array(list(map(float,line[1:-2].split())))
                 elif(pos < n_atoms):
                     positions[pos] = np.array(list(map(float, line[1:-2].split())))
                 elif(pos < 2*n_atoms):
