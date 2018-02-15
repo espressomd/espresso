@@ -69,6 +69,11 @@ class CommonTests(ut.TestCase):
             os.remove('test.h5')
         cls.py_file = cls.py_pos = cls.py_vel = cls.py_f = cls.py_id = cls.py_img = None
 
+    def test_metadata(self):
+        """Test if the H5MD metadata has been written properly."""
+        self.assertTrue(self.py_file['h5md'].attrs['version'][0] == 1)
+        self.assertTrue(self.py_file['h5md'].attrs['version'][1] == 1)
+
     def test_pos(self):
         """Test if positions have been written properly."""
         self.assertTrue(
