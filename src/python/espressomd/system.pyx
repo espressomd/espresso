@@ -369,14 +369,15 @@ cdef class System(object):
             if(len(rng_state) == n_nodes * _state_size_plus_one):
                 states = string_vec(n_nodes)
                 for i in range(n_nodes):
-                    states[i] = " ".join(
-                        map(str, rng_state[i * _state_size_plus_one:(i + 1) * _state_size_plus_one]))
+                    states[i] = (" ".join(map(str,
+                                 rng_state[i*_state_size_plus_one:(i+1)*_state_size_plus_one])
+                                 )).encode('utf-8')
                 mpi_random_set_stat(states)
             else:
                 raise ValueError("Wrong # of args: Usage: 'random_number_generator_state \"<state(1)> ... <state(n_nodes*(state_size+1))>, where each <state(i)> is an integer. The state size of the PRNG can be obtained by calling _get_PRNG_state_size().")
 
         def __get__(self):
-            rng_state = map(int, (mpi_random_get_stat().c_str()).split())
+            rng_state = list(map(int, (mpi_random_get_stat().c_str()).split()))
             return rng_state
 
     IF LEES_EDWARDS == 1:
