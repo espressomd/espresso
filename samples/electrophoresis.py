@@ -31,14 +31,18 @@ import os
 
 print(espressomd.features())
 
-# Seed
-#############################################################
-np.random.seed(42)
 
 # System parameters
 #############################################################
 
 system = espressomd.System(box_l=[100.0, 100.0, 100.0])
+
+# Seed
+#############################################################
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
+
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 system.periodicity = [1, 1, 1]
@@ -260,7 +264,7 @@ ax = fig1.add_subplot(111)
 for i in range(3):
     ax.plot(COM[:-500, i], label="COM pos %s" % direction[i])
 ax.legend(loc="best")
-ax.set_xlabel("time_step")
+ax.set_xlabel("time step")
 ax.set_ylabel("r")
 
 fig2 = pp.figure()
@@ -268,7 +272,7 @@ ax = fig2.add_subplot(111)
 for i in range(3):
     ax.plot(COM_v[:-500, i], label="COM v %s" % direction[i])
 ax.legend(loc="best")
-ax.set_xlabel("time_step")
+ax.set_xlabel("time step")
 ax.set_ylabel("v")
 
 if float(np.version.version.split(".")[1]) >= 10:
@@ -278,7 +282,7 @@ if float(np.version.version.split(".")[1]) >= 10:
     ax.plot(c_length, decay(c_length, fit[0]), label="fit")
     ax.legend(loc="best")
     ax.set_xlabel("contour length")
-    ax.set_ylabel("<cos(theta)>")
+    ax.set_ylabel(r"$\langle \cos(\theta) \rangle$")
 
 pp.show()
 
