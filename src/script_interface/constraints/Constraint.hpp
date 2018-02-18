@@ -24,17 +24,12 @@
 
 #include "ScriptInterface.hpp"
 #include "core/constraints/Constraint.hpp"
-#include "core/utils/Factory.hpp"
 
 namespace ScriptInterface {
 namespace Constraints {
 
 class Constraint : public AutoParameters {
 public:
-  Constraint(){};
-
-  const std::string name() const override { return "Constraints::Constraint"; }
-
   virtual std::shared_ptr<const ::Constraints::Constraint>
   constraint() const = 0;
   virtual std::shared_ptr<::Constraints::Constraint> constraint() = 0;

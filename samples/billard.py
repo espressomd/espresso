@@ -8,7 +8,7 @@ from espressomd import integrate
 from espressomd import electrostatics
 from espressomd import minimize_energy
 from espressomd.interactions import *
-import numpy
+import numpy as np
 from threading import Thread
 from math import *
 from espressomd.visualization_opengl import *
@@ -17,7 +17,8 @@ from espressomd.shapes import *
 print('8Ball BILLARD - An Espresso Visualizer Demo\nControls:\nNumpad 4/6: Adjust Angle\nNumpad 2/8: Adjust Impulse\nNumpad 5: Shoot')
 
 #ESPRESSO
-system = espressomd.System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 table_dim = [2.24,1.12]
 system.box_l = [table_dim[0], 3, table_dim[1]]
 
@@ -34,7 +35,7 @@ visualizer = openGLLive(system,
         light_brightness = 5.0)
 
 stopped = True
-angle = numpy.pi*0.5
+angle = np.pi*0.5
 impulse = 10.0
 
 def decreaseAngle():
@@ -65,15 +66,15 @@ def fire():
     global stopped
     if stopped:
         stopped = False
-        system.part[0].v += impulse * np.array([sin(angle),0,cos(angle)])
+        system.part[0].v = system.part[0].v + impulse * np.array([sin(angle),0,cos(angle)])
         system.part[0].fix = [0,1,0]
         system.part[0].ext_force = [0,0,0]
 
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('4',KeyboardFireEvent.Hold,decreaseAngle))
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('6',KeyboardFireEvent.Hold,increaseAngle))
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('2',KeyboardFireEvent.Hold,decreaseImpulse))
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('8',KeyboardFireEvent.Hold,increaseImpulse))
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('5',KeyboardFireEvent.Pressed,fire))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('4',KeyboardFireEvent.Hold,decreaseAngle))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('6',KeyboardFireEvent.Hold,increaseAngle))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('2',KeyboardFireEvent.Hold,decreaseImpulse))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('8',KeyboardFireEvent.Hold,increaseImpulse))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('5',KeyboardFireEvent.Pressed,fire))
 
 def main():
     global stopped
@@ -159,7 +160,7 @@ def main():
     ball.fix = [1,1,1]
     system.thermostat.set_langevin(kT=0, gamma=0.8)
     #ELECTROSTATICS
-    #	p3m = electrostatics.P3M(bjerrum_length=50, accuracy=1e-2)
+    #	p3m = electrostatics.P3M(prefactor=50, accuracy=1e-2)
     #	system.actors.add(p3m)
 
     cleared_balls= [0,0]
@@ -168,7 +169,7 @@ def main():
 
         vsum = 0
         for p in system.part:
-            vsum += numpy.linalg.norm(p.v)
+            vsum += np.linalg.norm(p.v)
 
             for h in hole_pos:
                 

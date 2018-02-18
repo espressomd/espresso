@@ -16,16 +16,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
+from __future__ import print_function, absolute_import, division
 include "myconfig.pxi"
+import os
+import cython
 import numpy as np
+cimport numpy as np
 from .actors cimport Actor
 from . cimport cuda_init
 from . import cuda_init
 from globals cimport *
 from copy import deepcopy
 from . import utils
-import os
+from espressomd.utils import array_locked, is_valid_type
 
 # Actor class
 ####################################################
@@ -64,7 +67,7 @@ IF LB_GPU or LB:
                 if self._params["dens"] == default_params["dens"]:
                     raise Exception("LB_FLUID density not set")
                 else:
-                    if not (self._params["dens"] > 0.0 and (isinstance(self._params["dens"], float) or isinstance(self._params["dens"], int))):
+                    if not (self._params["dens"] > 0.0 and (is_valid_type(self._params["dens"], float) or is_valid_type(self._params["dens"], int))):
                         raise ValueError("Density must be one positive double")
 
         # list of valid keys for parameters
@@ -211,7 +214,7 @@ IF LB_GPU or LB:
                 raise Exception("lb_set_lattice_switch error")
 
 IF LB_GPU:
-    cdef class LBFluid_GPU(LBFluid):
+    cdef class LBFluidGPU(LBFluid):
         """
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the GPU.
 
@@ -252,6 +255,33 @@ IF LB_GPU:
             lb_lbfluid_get_interpolated_velocity_global(p, v)
             return v
 
+        @cython.boundscheck(False)
+        @cython.wraparound(False)
+        def get_interpolated_fluid_velocity_at_positions(self, np.ndarray[double, ndim=2, mode="c"] positions not None):
+            """Calculate the fluid velocity at given positions.
+
+            Parameters
+            ----------
+            positions : numpy-array of type :obj:`float` of shape (N,3)
+                        The 3-dimensional positions.
+
+            Returns
+            -------
+            velocities : numpy-array of type :obj:`float` of shape (N,3)
+                         The 3-dimensional LB fluid velocities.
+
+            Raises
+            ------
+            AssertionError
+                If shape of ``positions`` not (N,3).
+
+            """
+            assert positions.shape[1] == 3, "The input array must have shape (N,3)"
+            cdef int length
+            length = positions.shape[0]
+            velocities = np.empty_like(positions)
+            lb_lbfluid_get_interpolated_velocity_at_positions(<double *>np.PyArray_GETPTR2(positions, 0, 0), <double *>np.PyArray_GETPTR2(velocities, 0, 0), length)
+            return velocities
 
 IF LB or LB_GPU:
     cdef class LBFluidRoutines(object):
@@ -265,48 +295,57 @@ IF LB or LB_GPU:
             def __get__(self):
                 cdef double[3] double_return
                 lb_lbnode_get_u(self.node, double_return)
-                return double_return
+                return array_locked(double_return)
 
-            def __set__(self, value):
-                raise Exception("Not implemented.")
+            IF LB_GPU:
+                def __set__(self, value):
+                    cdef double[3] host_velocity
+                    if all(is_valid_type(v, float) for v in value) and len(value) == 3:
+                        host_velocity = value
+                        lb_lbnode_set_u(self.node, host_velocity)
+                    else:
+                        raise ValueError("Velocity has to be of shape 3 and type float.")
+            ELSE:
+                def __set__(self, value):
+                    raise NotImplementedError("Not implemented for CPU LB.")
 
         property density:
             def __get__(self):
                 cdef double[3] double_return
                 lb_lbnode_get_rho(self.node, double_return)
-                return double_return
+                return array_locked(double_return)
 
             def __set__(self, value):
-                raise Exception("Not implemented.")
+                raise NotImplementedError
 
 
         property pi:
             def __get__(self):
                 cdef double[6] pi
                 lb_lbnode_get_pi(self.node, pi)
-                return np.array([[pi[0],pi[1],pi[3]],
-                                 [pi[1],pi[2],pi[4]],
-                                 [pi[3],pi[4],pi[5]]])
+                return array_locked(np.array([[pi[0],pi[1],pi[3]],
+                                              [pi[1],pi[2],pi[4]],
+                                              [pi[3],pi[4],pi[5]]]))
 
             def __set__(self, value):
-                raise Exception("Not implemented.")
+                raise NotImplementedError
 
         property pi_neq:
             def __get__(self):
                 cdef double[6] pi
                 lb_lbnode_get_pi_neq(self.node, pi)
-                return np.array([[pi[0],pi[1],pi[3]],
-                                 [pi[1],pi[2],pi[4]],
-                                 [pi[3],pi[4],pi[5]]])
+                return array_locked(np.array([[pi[0],pi[1],pi[3]],
+                                              [pi[1],pi[2],pi[4]],
+                                              [pi[3],pi[4],pi[5]]]))
 
             def __set__(self, value):
-                raise Exception("Not implemented.")
+                raise NotImplementedError
 
         property population:
             def __get__(self):
                 cdef double[19] double_return
                 lb_lbnode_get_pop(self.node, double_return)
-                return double_return
+                return array_locked(double_return)
 
             def __set__(self, value):
                 cdef double[19] double_return = value
@@ -319,4 +358,4 @@ IF LB or LB_GPU:
                 return int_return
 
             def __set__(self, value):
-                raise Exception("Not implemented.")
+                raise NotImplementedError

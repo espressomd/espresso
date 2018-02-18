@@ -5,18 +5,19 @@
 # 3) measure temperature of colloid and fluid  
 
 from __future__ import print_function
+import sys
+import numpy as np
 import unittest as ut
 import espressomd
 import espressomd.lb
 from espressomd import *
-import numpy as np
 from tests_common import abspath
 
-@ut.skipIf(not espressomd.has_features(["LB_GPU","LENNARD_JONES"]),
+@ut.skipIf(not espressomd.has_features(["LB_GPU","LENNARD_JONES"]) or espressomd.has_features("SHANCHEN"),
            "Features not available, skipping test!")
-class lb_test(ut.TestCase):
+class TestLBGPU(ut.TestCase):
 
-    es = espressomd.System()
+    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
     n_nodes = es.cell_system.get_state()["n_nodes"]
     es.seed = range(n_nodes)
 
@@ -76,7 +77,7 @@ class lb_test(ut.TestCase):
             system.part[i].v=[0.0,0.0,0.0]
         system.thermostat.turn_off()
         
-        lbf = lb.LBFluid_GPU(visc=viscosity, dens=dens, agrid=agrid, tau=system.time_step, fric=friction)
+        lbf = lb.LBFluidGPU(visc=viscosity, dens=dens, agrid=agrid, tau=system.time_step, fric=friction)
         system.actors.add(lbf)
         system.thermostat.set_lb(kT=temp)
         #give particles a push
@@ -156,4 +157,7 @@ class lb_test(ut.TestCase):
 
         
 if __name__ == "__main__":
-    ut.main()
+    suite = ut.TestSuite()
+    suite.addTests(ut.TestLoader().loadTestsFromTestCase(TestLBGPU))
+    result = ut.TextTestRunner(verbosity=4).run(suite)
+    sys.exit(not result.wasSuccessful())

@@ -43,12 +43,13 @@ function cmd {
 [ -z "$with_fftw" ] && with_fftw="true"
 [ -z "$with_python_interface" ] && with_python_interface="true"
 [ -z "$with_coverage" ] && with_coverage="false"
+[ -z "$with_static_analysis" ] && with_static_analysis="false"
 [ -z "$myconfig" ] && myconfig="default"
 [ -z "$check_procs" ] && check_procs=2
 [ -z "$build_procs" ] && build_procs=2
 [ -z "$make_check" ] && make_check="true"
 
-cmake_params="-DTEST_NP:INT=$check_procs $cmake_params"
+cmake_params="-D CMAKE_BUILD_TYPE=Debug -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params"
 
 if $insource; then
     builddir=$srcdir
@@ -58,7 +59,7 @@ fi
 
 outp insource srcdir builddir \
     cmake_params with_fftw \
-    with_python_interface with_coverage myconfig check_procs build_procs
+    with_python_interface with_coverage with_static_analysis myconfig check_procs build_procs
 
 # check indentation of python files
 pep8 --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
@@ -103,8 +104,10 @@ if ! $insource; then
 fi
 
 # load MPI module if necessary
-grep -q suse /etc/os-release && source /etc/profile.d/modules.sh && module load gnu-openmpi
-grep -q rhel /etc/os-release && source /etc/profile.d/modules.sh && module load mpi
+if [ -f "/etc/os-release" ]; then
+    grep -q suse /etc/os-release && source /etc/profile.d/modules.sh && module load gnu-openmpi
+    grep -q rhel /etc/os-release && source /etc/profile.d/modules.sh && module load mpi
+fi
 
 # CONFIGURE
 start "CONFIGURE"
@@ -123,6 +126,10 @@ fi
 
 if [ $with_coverage = "true" ]; then
     cmake_params="-DWITH_COVERAGE=ON $cmake_params"
+fi
+
+if [ $with_static_analysis = "true" ]; then
+    cmake_params="-DWITH_CLANG_TIDY=ON $cmake_params"
 fi
 
 MYCONFIG_DIR=$srcdir/maintainer/configs
@@ -144,14 +151,21 @@ end "CONFIGURE"
 # BUILD
 start "BUILD"
 
-cmd "make -j${build_procs}" || exit $?
+cmd "make -k -j${build_procs}" || cmd "make -k -j1" || exit $?
 
 end "BUILD"
 
 if $make_check; then
     start "TEST"
 
-    cmd "make -j${build_procs} check_python $make_params" || exit 1
+    if [ -z "$run_tests" ]; then
+        cmd "make -j${build_procs} check_python $make_params" || exit 1
+    else
+        cmd "make python_tests $make_params"
+        for t in $run_tests; do
+            cmd "ctest --output-on-failure -R $t" || exit 1
+        done
+    fi
     cmd "make -j${build_procs} check_unit_tests $make_params" || exit 1
 
     end "TEST"

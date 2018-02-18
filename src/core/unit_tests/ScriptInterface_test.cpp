@@ -39,9 +39,7 @@ namespace Testing {
  * @brief Mock to test ScriptInterface.
  */
 struct ScriptInterfaceTest : public ScriptInterface::ScriptInterfaceBase {
-  const string name() const { return string("ScriptInterfaceTest"); }
-
-  map<string, Variant> get_parameters() const {
+  map<string, Variant> get_parameters() const override {
     map<string, Variant> ret;
 
     ret["bool_opt"] = bool_opt;
@@ -56,7 +54,7 @@ struct ScriptInterfaceTest : public ScriptInterface::ScriptInterfaceBase {
   /* Not needed for testing */
   map<string, Parameter> valid_parameters() const override { return {}; }
 
-  void set_parameter(const string &name, const Variant &value) {
+  void set_parameter(const string &name, const Variant &value) override {
     SET_PARAMETER_HELPER("bool_opt", bool_opt);
     SET_PARAMETER_HELPER("integer", integer);
     SET_PARAMETER_HELPER("bool_req", bool_req);
@@ -79,7 +77,6 @@ struct ScriptInterfaceTest : public ScriptInterface::ScriptInterfaceBase {
   vector<double> vec_double;
   vector<int> vec_int;
 };
-
 } /* namespace Testing */
 
 using namespace Testing;

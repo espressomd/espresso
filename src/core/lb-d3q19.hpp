@@ -29,6 +29,7 @@
 
 #ifdef LB
 #include "lb.hpp"
+
 /** Velocity sub-lattice of the D3Q19 model */
 static double d3q19_lattice[19][3] = { {  0.,  0.,  0. },
                                        {  1.,  0.,  0. },
@@ -103,7 +104,7 @@ static double d3q19_modebase[20][19] = {
   { 1.0, 1./3., 1./3., 1./3., 2./3., 4./9., 4./3., 1./9., 1./9., 1./9., 2./3., 2./3., 2./3., 2./9., 2./9., 2./9., 2.0, 4./9., 4./3. }
 };
 
-//LB_Model d3q19_model = { 19, d3q19_lattice, d3q19_coefficients, d3q19_w, NULL, 1./3. };
+//LB_Model d3q19_model = { 19, d3q19_lattice, d3q19_coefficients, d3q19_w, nullptr, 1./3. };
 
 #endif /* LB */
 

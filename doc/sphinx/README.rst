@@ -9,10 +9,6 @@ How to get started with SPHINX
 
     pip2 install sphinxcontrib-bibtex --user --upgrade
 
-#. Install the numpydoc extension to Sphinx::
-
-    pip2 install numpydoc --user --upgrade
-
 #. Compile the ``sphinx`` target in your build directory (that can take some time
    since we depend on finishing the build of the interface)::
 

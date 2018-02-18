@@ -61,10 +61,10 @@ typedef struct {
   int dielectric_contrast_on;
 
   /// dielectric prefactors
-  double di_mid_top, di_mid_bot;
+  double delta_mid_top, delta_mid_bot;
 
   /// const. potential parameters
-  int const_pot_on;
+  int const_pot;
   double pot_diff;
 
   /** minimal distance of two charges for which the far formula is used. For
@@ -84,7 +84,7 @@ extern ELC_struct elc_params;
 /** set parameters for ELC.
     @param maxPWerror the required accuracy of the potential and the force. Note
    that this counts for the
-    plain 1/r contribution alone, without the Bjerrum length and the charge
+    plain 1/r contribution alone, without the prefactor and the charge
    prefactor.
     @param min_dist   the gap size.
     @param far_cut    the cutoff of the exponential sum. If -1, the cutoff is
@@ -94,12 +94,12 @@ extern ELC_struct elc_params;
    background exerts forces, which
     are dependent on the simulation box; especially the gap size enters into the
    value of the forces.
-    @param top dielectric constant of upper part
-    @param mid dielectric constant of center part
+    @param delta_mid_top dielectric constant of upper part
+    @param delta_mid_bot dielectric constant of center part
     @param bottom  dielectric constant of lower part
 */
 int ELC_set_params(double maxPWerror, double min_dist, double far_cut,
-                   int neutralize, double top, double bottom, int const_pot_on,
+                   int neutralize, double delta_mid_top, double delta_mid_bot, int const_pot,
                    double pot_diff);
 
 /// the force calculation

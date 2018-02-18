@@ -11,7 +11,7 @@ class test_icc(ut.TestCase):
         from espressomd.electrostatics import P3M
         from espressomd.electrostatic_extensions import ICC
 
-        S = espressomd.System()
+        S = espressomd.System(box_l=[1.0, 1.0, 1.0])
         # Parameters
         box_l = 20.0
         nicc = 10
@@ -55,7 +55,7 @@ class test_icc(ut.TestCase):
         S.part.add(pos=[b2, b2, b2 + q_dist / 2], q=-q_test, fix=[1, 1, 1])
 
         # Actors
-        p3m = P3M(bjerrum_length=1, mesh=32, cao=7, accuracy=1e-5)
+        p3m = P3M(prefactor=1, mesh=32, cao=7, accuracy=1e-5)
         icc = ICC(
             n_icc=nicc_tot,
             convergence=1e-6,

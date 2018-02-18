@@ -1,6 +1,3 @@
-=================
-Developer's Guide
-=================
 .. warning::
    The information found in this version of the Developer's Guide is
    outdated.  Please see the section :ref:`Contact the Developers` and
@@ -24,9 +21,6 @@ Before you start a development project
 --------------------------------------
 Before you start a development project for |es|, please always write to the developers mailing list and describe the project. 
 This is to avoid that several people work on the same thing at the same time. Also, implementation details can be discussed in advance. In many cases, existing developers can point to re-usable code and simpler solutions.
-
-
-
 
 
 .. _Development Environment:
@@ -108,14 +102,12 @@ need to look at the CMakeList.txt in the directory where the file is located.
                    coulomb_cloud_wall.py)
 
   In that case, add the new file to the list.
-   
-
 
 Testsuite
 ---------
 
 -  New or significantly changed features will only be accepted, if they have a test case. 
-   This is to make sure, the feature is not broken by future changes to |es|, and so other users can get an impression of what behaviour is guaranteed to work.
+   This is to make sure, the feature is not broken by future changes to |es|, and so other users can get an impression of what behavior is guaranteed to work.
 -  There are two kinds of tests:
 
   -  C++-unit tests, testing individual C++ functions and classes. They make use of the boost unit test framework and reside in ``src/core/unit_tests``
@@ -136,10 +128,8 @@ Documentation
 The documentation of |es| consists of four parts:
 
   -  The users' guide and developers' guide are located in ``doc/sphinx``, and make use of the Sphinx Python package
-  -  In-code documentation for the Python interface is located in the various files in src/python/espressomd and also makes use of the Sphinx Python package. We also make use of the extensions in the numpydoc package and use the NumPy documentation style.
+  -  In-code documentation for the Python interface is located in the various files in src/python/espressomd and also makes use of the Sphinx Python package. We make use of the napoleon extension and use the NumPy documentation style.
   -  In-code documentation of the C++ core is located in the .cpp and .hpp files in ``/src/core`` and its sub-directories and makes use of Doxygen.
-
-
 
 Doxygen Code Documentation
 --------------------------
@@ -181,7 +171,7 @@ description of the most common commands we need:
 -  | ``\param`` *name* *description*
    | Document the parameter of a function.
 
--  | ``\return`` *decription*
+-  | ``\return`` *description*
    | Document the return value of a function.
 
 .. _Programmers's Guide:
@@ -252,7 +242,7 @@ Using an instance of MpiCallback
 * Write the callback slave function, which will be executed on all nodes except the head node (0)::
 
     void my_callback(int p1, int p2) {
-      // Do something. The two int-parameters can be usued for anything
+      // Do something. The two int-parameters can be used for anything
     }
 
 * On all nodes, the callback has to be registered::
@@ -332,7 +322,7 @@ Use these two files as templates for your interaction.
 
 Notes:
 
-* The names of function arguments mentioned below are taken from the FENE bond in ``src/core/feine.cpp`` and ``src/core/fene.hpp``. It is recommended to use the same names for the corresponding functions for your interaction. 
+* The names of function arguments mentioned below are taken from the FENE bond in ``src/core/fene.cpp`` and ``src/core/fene.hpp``. It is recommended to use the same names for the corresponding functions for your interaction. 
 * The recommended signatures of the force and energy functions are::
 
     inline int calc_fene_pair_force(Particle *p1, Particle *p2, 
@@ -399,7 +389,7 @@ Including the bonded interaction in the force calculation and the energy and pre
   implement a custom solution for virial calculation.
 
 
-Adding the bonded interaciton in the Python interface
+Adding the bonded interaction in the Python interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Please note that the following is Cython code (www.cython.org), rather than pure Python.
@@ -443,7 +433,7 @@ Please note that the following is Cython code (www.cython.org), rather than pure
         
             def __init__(self, *args, **kwargs):
                 """ 
-                FeneBond initialiser. Used to instatiate a FeneBond identifier
+                FeneBond initializer. Used to instantiate a FeneBond identifier
                 with a given set of parameters.
         
                 Parameters
@@ -502,7 +492,7 @@ Please note that the following is Cython code (www.cython.org), rather than pure
 Outdated: Adding New Nonbonded Interactions 
 -------------------------------------------
 
-Writing nonbonded interactions is similar to writing nonbonded
+Writing non-bonded interactions is similar to writing non-bonded
 interactions. Again we start with ``interaction_data.h``, where the
 parameter structure has to be set up. Just add your parameters *with
 reasonable names* to ``IA_parameters``. Note that there must be a
@@ -701,7 +691,7 @@ that your errormessage will automatically be added to the
 your errors an unique 3-digit errorcode (for already used errorcodes
 have a look at the “runtime-errors resolved”-page), have the curled
 braces around your message and the space at the end, otherwise the final
-error message will look awful and will propably not automatically be
+error message will look awful and will probably not automatically be
 added to our error-page. Typically, this looks like this::
 
     if (some_error_code != OK) {

@@ -144,9 +144,9 @@ LB_parameters_gpu lbpar_gpu = {
 };
 
 /** this is the array that stores the hydrodynamic fields for the output */
-LB_rho_v_pi_gpu *host_values = NULL;
+LB_rho_v_pi_gpu *host_values = nullptr;
 
-LB_nodes_gpu *host_nodes = NULL;
+LB_nodes_gpu *host_nodes = nullptr;
 
 /** Flag indicating momentum exchange between particles and fluid */
 int transfer_momentum_gpu = 0;
@@ -166,7 +166,7 @@ int i;
 
 
 int n_extern_nodeforces = 0;
-LB_extern_nodeforce_gpu *host_extern_nodeforces = NULL;
+LB_extern_nodeforce_gpu *host_extern_nodeforces = nullptr;
 int ek_initialized = 0;
 
 /*-----------------------------------------------------------*/
@@ -248,10 +248,10 @@ void lb_reinit_fluid_gpu() {
   only the fluid-related memory on the gpu.*/
 void lb_release_gpu(){
 
-  if(host_nodes !=NULL) { free(host_nodes); host_nodes=NULL ;} 
-  if(host_values!=NULL) { free(host_values); host_values=NULL;}
-//  if(host_forces!=NULL) free(host_forces);
-//  if(host_data  !=NULL) free(host_data);
+  if(host_nodes !=nullptr) { free(host_nodes); host_nodes=nullptr ;} 
+  if(host_values!=nullptr) { free(host_values); host_values=nullptr;}
+//  if(host_forces!=nullptr) free(host_forces);
+//  if(host_data  !=nullptr) free(host_data);
 }
 /** (Re-)initializes the fluid. */
 void lb_reinit_parameters_gpu() {
@@ -319,8 +319,8 @@ void lb_reinit_parameters_gpu() {
        * time_step comes from the discretization.
        */
   
-      lbpar_gpu.lb_coupl_pref[ii] = sqrt(12.f*2.f*lbpar_gpu.friction[ii]*(float)temperature/lbpar_gpu.time_step);
-      lbpar_gpu.lb_coupl_pref2[ii] = sqrt(2.f*lbpar_gpu.friction[ii]*(float)temperature/lbpar_gpu.time_step);
+      lbpar_gpu.lb_coupl_pref[ii] = sqrtf(12.f*2.f*lbpar_gpu.friction[ii]*(float)temperature/lbpar_gpu.time_step);
+      lbpar_gpu.lb_coupl_pref2[ii] = sqrtf(2.f*lbpar_gpu.friction[ii]*(float)temperature/lbpar_gpu.time_step);
   
     } else {
       /* no fluctuations at zero temperature */

@@ -25,7 +25,7 @@ import numpy as np
 @ut.skipIf(not espressomd.has_features("LENNARD_JONES"),
            "Skipped because of not LENNARD_JONES")
 class SubtLjTest(ut.TestCase):
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.box_l = 3*[10]
     system.time_step = 1.
 
@@ -46,13 +46,15 @@ class SubtLjTest(ut.TestCase):
 
         self.assertGreater(f, 10.)
 
-        subt = espressomd.interactions.Subt_Lj()
+        subt = espressomd.interactions.SubtLJ()
         s.bonded_inter.add(subt)
 
         s.part[0].add_bond((subt, 1))
 
         s.integrator.run(0)
         f = np.sum(s.part[:].f**2)
+
+        print(s.analysis.energy())
 
         self.assertAlmostEqual(f, 0, places=10)
         self.assertAlmostEqual(s.analysis.energy()['total'] , 0, places=10)

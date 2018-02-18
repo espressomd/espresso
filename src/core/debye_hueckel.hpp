@@ -57,7 +57,7 @@ int dh_set_params_cdh(double kappa, double r_cut, double eps_int,
                       double eps_ext, double r0, double r1, double alpha);
 
 /** Computes the Debye_Hueckel pair force and adds this
-    force to the particle forces (see \ref tclcommand_inter).
+    force to the particle forces.
     @param p1        Pointer to first particle.
     @param p2        Pointer to second/middle particle.
     @param d         Vector pointing from p1 to p2.
@@ -84,7 +84,7 @@ inline void add_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
           (dh_params.eps_ext * dist * dist * dist) * (1.0 + kappa_dist);
   } else if (dist > dh_params.r0)
     fac = coulomb.prefactor * q1 * q2 *
-          exp(dh_params.alpha * (dist - dh_params.r0)) /
+          exp(dh_params.alpha * (dh_params.r0 - dist)) /
           (dh_params.eps_int * dist * dist * dist) *
           (1. - dh_params.alpha * dist);
   else
@@ -143,7 +143,7 @@ inline double dh_coulomb_pair_energy(Particle *p1, Particle *p2, double dist) {
       return fac / (dh_params.eps_int * dist);
     }
     if (dist < dh_params.r1) {
-      return fac * exp(dh_params.alpha * (dist - dh_params.r0)) /
+      return fac * exp(dh_params.alpha * (dh_params.r0 - dist)) /
              (dh_params.eps_int * dist);
     }
     return fac * exp(-dh_params.kappa * dist) / (dh_params.eps_ext * dist);

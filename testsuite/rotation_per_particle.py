@@ -31,7 +31,7 @@ from numpy import random
 @ut.skipIf(not espressomd.has_features("ROTATION"),
            "Test requires ROTATION")
 class Rotation(ut.TestCase):
-    s = espressomd.System()
+    s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     s.cell_system.skin=0
     s.time_step=0.01
 
@@ -57,6 +57,7 @@ class Rotation(ut.TestCase):
             #self.assertEqual(self.s.part[0].torque_body[coord],0)
             self.assertEqual(self.s.part[0].omega_body[coord],0)
 
+    @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"),"Requires EXTERNAL_FORCES")
     def test_axes_changes(self):
         """Verifies that rotation axes in body and space frame stay the same and other axes dont"""
         s=self.s

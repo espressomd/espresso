@@ -20,7 +20,7 @@ from __future__ import print_function
 import unittest as ut
 import espressomd
 import numpy as np
-from espressomd.electrostatics import *
+from espressomd import electrostatics
 from tests_common import *
 
 
@@ -28,46 +28,109 @@ from tests_common import *
            "Features not available, skipping test!")
 class ElectrostaticInteractionsTests(ut.TestCase):
     # Handle to espresso system
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
     def setUp(self):
-        self.system.box_l = 10, 10, 10
+        self.system.box_l = [20, 20, 20]
+        self.system.time_step = 0.01
+
         if not self.system.part.exists(0):
-            self.system.part.add(id=0, pos=(2.0, 2.0, 2.0), q=1)
+            self.system.part.add(id=0, pos=(1.0, 2.0, 2.0), q=1)
         if not self.system.part.exists(1):
-            self.system.part.add(id=1, pos=(8.0, 8.0, 8.0), q=-1)
+            self.system.part.add(
+                id=1, pos=(3.0, 2.0, 2.0), q=-1)
         print("ut.TestCase setUp")
 
-    if espressomd.has_features(["P3M"]):
-        test_P3M = generate_test_for_class(
-            system,
-            P3M,
-            dict(
-                bjerrum_length=1.0,
-                epsilon=0.0,
-                r_cut=2.4,
-                mesh=[
-                    2,
-                    2,
-                    2],
-                cao=1,
-                alpha=12,
-                accuracy=0.01,
-                tune=False))
+    def calc_dh_potential(self, r, df_params):
+        kT = 1.0
+        q1 = self.system.part[0].q
+        q2 = self.system.part[1].q
+        u = np.zeros_like(r)
+        # r<r_cut
+        i = np.where(r < df_params['r_cut'])[0]
+        u[i] = df_params['prefactor'] * kT * q1 * \
+            q2 * np.exp(-df_params['kappa'] * r[i]) / r[i]
+        return u
 
-    if espressomd.has_features(["COULOMB_DEBYE_HUECKEL"]):
-        test_CDH = generate_test_for_class(
-            system,
-            CDH,
+    @ut.skipIf(not espressomd.has_features(["P3M"]),
+               "Features not available, skipping test!")
+    def test_p3m(self):
+        self.system.part[0].pos = [1.0, 2.0, 2.0]
+        self.system.part[1].pos = [3.0, 2.0, 2.0]
+        # results,
+        p3m_energy = -0.501062398379
+        p3m_force = 2.48921612e-01
+        test_P3M = generate_test_for_class(
+            self.system,
+            electrostatics.P3M,
             dict(
-                bjerrum_length=1.0,
-                kappa=2.3,
-                r_cut=2,
-                r0=1,
-                r1=1.9,
-                eps_int=0.8,
-                eps_ext=1,
-                alpha=2))
+                accuracy=9.910945054074526e-08,
+                 mesh=[22, 22, 22],
+                 cao=7,
+                 r_cut=8.906249999999998,
+                 alpha=0.387611049779351,
+                 tune=False))
+        p3m = espressomd.electrostatics.P3M(prefactor=1.0,
+                                            accuracy=9.910945054074526e-08,
+                                            mesh=[22, 22, 22],
+                                            cao=7,
+                                            r_cut=8.906249999999998,
+                                            alpha=0.387611049779351,
+                                            tune=False)
+        self.system.actors.add(p3m)
+        self.assertAlmostEqual(self.system.analysis.energy()['coulomb'],
+                               p3m_energy)
+        # need to update forces
+        self.system.integrator.run(0)
+        np.testing.assert_allclose(np.copy(self.system.part[0].f),
+                                    [p3m_force, 0, 0],atol=1E-5)
+        np.testing.assert_allclose(np.copy(self.system.part[1].f),
+                                    [-p3m_force, 0, 0],atol=1E-10)
+        self.system.actors.remove(p3m)
+
+    @ut.skipIf( espressomd.has_features(["COULOMB_DEBYE_HUECKEL"]),
+           "Features not available, skipping test!")
+    def test_dh(self):
+        dh_params = dict(prefactor=1.0,
+                         kappa=2.0,
+                         r_cut=2.0)
+        test_DH = generate_test_for_class(
+            self.system,
+            electrostatics.DH,
+            dh_params)
+        dh = espressomd.electrostatics.DH(
+            prefactor=dh_params[
+                'prefactor'],
+                                           kappa=dh_params['kappa'],
+                                           r_cut=dh_params['r_cut'])
+        self.system.actors.add(dh)
+        dr = 0.001
+        r = np.arange(.5, 1.01 * dh_params['r_cut'], dr)
+        u_dh = self.calc_dh_potential(r, dh_params)
+        f_dh = -np.gradient(u_dh, dr)
+        # zero the discontinuity, and re-evaluate the derivitive as a backwards
+        # difference
+        i_cut = np.argmin((dh_params['r_cut'] - r)**2)
+        f_dh[i_cut] = 0
+        f_dh[i_cut - 1] = (u_dh[i_cut - 2] - u_dh[i_cut - 1]) / dr
+
+        u_dh_core = np.zeros_like(r)
+        f_dh_core = np.zeros_like(r)
+        # need to update forces
+        for i, ri in enumerate(r):
+            self.system.part[1].pos = self.system.part[0].pos + [ri, 0, 0]
+            self.system.integrator.run(0)
+            u_dh_core[i] = self.system.analysis.energy()['coulomb']
+            f_dh_core[i] = self.system.part[0].f[0]
+
+        np.testing.assert_allclose(u_dh_core,
+                                    u_dh,
+                                    atol=1e-7)
+        np.testing.assert_allclose(f_dh_core,
+                                    -f_dh,
+                                    atol=1e-2)
+        self.system.actors.remove(dh)
 
 
 if __name__ == "__main__":

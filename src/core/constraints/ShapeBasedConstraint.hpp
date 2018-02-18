@@ -19,7 +19,7 @@ public:
       : m_shape(std::make_shared<Shapes::NoWhere>()),
         m_reflection_type(ReflectionType::NONE), m_penetrable(false),
         m_only_positive(false), m_tuneable_slip(0), m_type(-1) {
-    reset_force();
+    ShapeBasedConstraint::reset_force();
   }
 
   virtual void add_energy(Particle *p, double *folded_pos,
@@ -27,6 +27,9 @@ public:
 
   virtual void add_force(Particle *p, double *folded_pos) override;
 
+  /* finds the minimum distance to all particles */
+  double min_dist();
+  
   /* Calculate distance from the constraint */
   int calc_dist(const double *pos, double *dist, double *vec) const {
     return m_shape->calculate_dist(pos, dist, vec);
@@ -44,6 +47,12 @@ public:
   int &only_positive() { return m_only_positive; }
   int &penetrable() { return m_penetrable; }
   int &type() { return m_type; }
+  
+  void set_type(const int &type) {
+    m_type = type;
+    make_particle_type_exist(m_type);
+  }
+
   Vector3d total_force() const;
 
 private:

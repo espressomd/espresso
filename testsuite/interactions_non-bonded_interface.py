@@ -29,7 +29,7 @@ class Non_bonded_interactionsTests(ut.TestCase):
     #    self.pid=particleId
 
     # Handle to espresso system
-    es = espressomd.System()
+    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     def intersMatch(self, inType, outType, inParams, outParams):
         """Check, if the interaction type set and gotten back as well as the bond
@@ -138,11 +138,6 @@ class Non_bonded_interactionsTests(ut.TestCase):
             {"eps": 1.0, "sig": 1.0, "cut": 4.0, "k1": 3.0,
                 "k2": 5.0, "mu": 2.0, "nu": 1.0},
             "gay_berne")
-
-    def test_forcecap(self):
-        self.es.non_bonded_inter.set_force_cap(17.5)
-        self.assertEqual(self.es.non_bonded_inter.get_force_cap(), 17.5)
-
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())

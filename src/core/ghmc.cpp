@@ -144,9 +144,9 @@ double calc_local_temp() {
 
   for (auto &p : local_cells.particles()) {
     for (int j = 0; j < 3; j++) {
-      temp += p.p.mass * SQR(p.m.v[j] / time_step);
+      temp += p.p.mass * Utils::sqr(p.m.v[j] / time_step);
 #ifdef ROTATION
-      temp += SQR(p.m.omega[j]);
+      temp += Utils::sqr(p.m.omega[j]);
 #endif
     }
   }
@@ -163,18 +163,18 @@ void calc_kinetic(double *ek_trans, double *ek_rot) {
 
   for (auto &p : local_cells.particles()) {
 #ifdef VIRTUAL_SITES
-    if (ifParticleIsVirtual(&p))
+    if (p.p.isVirtual)
       continue;
 #endif
 
     /* kinetic energy */
-    et += (SQR(p.m.v[0]) + SQR(p.m.v[1]) + SQR(p.m.v[2])) * (p).p.mass;
+    et += (Utils::sqr(p.m.v[0]) + Utils::sqr(p.m.v[1]) + Utils::sqr(p.m.v[2])) * (p).p.mass;
 
 /* rotational energy */
 #ifdef ROTATION
-    er += SQR(p.m.omega[0]) * p.p.rinertia[0] +
-          SQR(p.m.omega[1]) * p.p.rinertia[1] +
-          SQR(p.m.omega[2]) * p.p.rinertia[2];
+    er += Utils::sqr(p.m.omega[0]) * p.p.rinertia[0] +
+          Utils::sqr(p.m.omega[1]) * p.p.rinertia[1] +
+          Utils::sqr(p.m.omega[2]) * p.p.rinertia[2];
 #endif
   }
 
@@ -236,7 +236,7 @@ void tscale_momentum_update() {
 
   for (auto &p : local_cells.particles()) {
 #ifdef VIRTUAL_SITES
-    if (ifParticleIsVirtual(&p))
+    if (p.p.isVirtual)
       continue;
 #endif
 
@@ -258,7 +258,7 @@ void simple_momentum_update() {
 
   for (auto &p : local_cells.particles()) {
 #ifdef VIRTUAL_SITES
-    if (ifParticleIsVirtual(&p))
+    if (p.p.isVirtual)
       continue;
 #endif
 

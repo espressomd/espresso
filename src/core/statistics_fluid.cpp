@@ -106,7 +106,7 @@ void lb_calc_fluid_temp(double *result) {
 	if ( !lbfields[index].boundary )
 #endif
 	  {
-	    lb_calc_local_fields(index, &rho, j, NULL);
+	    lb_calc_local_fields(index, &rho, j, nullptr);
 	    temp += scalar(j,j);
 	    number_of_non_boundary_nodes++;
 	  }
@@ -143,7 +143,7 @@ void lb_calc_densprof(double *result, int *params) {
 
   int index, dir[3], grid[3];
   int newroot=0, subrank, involved=0;
-  double *profile;
+  double *profile = nullptr;
   MPI_Comm slice_comm;
   MPI_Status status;
 
@@ -169,9 +169,6 @@ void lb_calc_densprof(double *result, int *params) {
 
   MPI_Comm_split(comm_cart, involved, this_node, &slice_comm);
   MPI_Comm_rank(slice_comm, &subrank);
-
-  if (this_node == newroot)
-    result = Utils::realloc(result,box_l[pdir]/lblattice.agrid[pdir]*sizeof(double));
 
   if (involved) {
 
@@ -206,7 +203,6 @@ void lb_calc_densprof(double *result, int *params) {
   if (newroot != 0) {
     if (this_node == newroot) {
       MPI_Send(result, lblattice.grid[pdir]*node_grid[pdir], MPI_DOUBLE, 0, REQ_DENSPROF, comm_cart);
-      free(result);
     }
     if (this_node == 0) {
       MPI_Recv(result, lblattice.grid[pdir]*node_grid[pdir], MPI_DOUBLE, newroot, REQ_DENSPROF, comm_cart, &status);
@@ -256,9 +252,6 @@ void lb_calc_velprof(double *result, int *params) {
   MPI_Comm_split(comm_cart, involved, this_node, &slice_comm);
   MPI_Comm_rank(slice_comm, &subrank);
 
-  if (this_node == newroot) 
-    result = Utils::realloc(result,box_l[pdir]/lblattice.agrid[pdir]*sizeof(double));
-
   //fprintf(stderr,"%d (%d,%d): result=%p vcomp=%d pdir=%d x1=%d x2=%d involved=%d\n",this_node,subrank,newroot,result,vcomp,pdir,x1,x2,involved);
 
   if (involved) {
@@ -270,14 +263,14 @@ void lb_calc_velprof(double *result, int *params) {
     for (dir[pdir]=1;dir[pdir]<=lblattice.grid[pdir];dir[pdir]++) {
       
       index = get_linear_index(dir[0],dir[1],dir[2],lblattice.halo_grid);
-      lb_calc_local_fields(index, &rho, j, NULL);
+      lb_calc_local_fields(index, &rho, j, nullptr);
       
       //fprintf(stderr,"%p %d %.12e %.12e %d\n",lbfluid[0],index,rho,j[0],vcomp);
 
       if (rho < ROUND_ERROR_PREC) {
 	velprof[dir[pdir]-1] = 0.0;
       } else {
-	//velprof[dir[pdir]-1] = local_j / (SQR(lbpar.agrid)*lbpar.tau);
+	//velprof[dir[pdir]-1] = local_j / (Utils::sqr(lbpar.agrid)*lbpar.tau);
 	velprof[dir[pdir]-1] = j[vcomp]/rho * lbpar.agrid/lbpar.tau;
 	//fprintf(stderr,"%f %f %f\n",velprof[dir[pdir]-1],local_j,local_rho);
       }
@@ -304,7 +297,6 @@ void lb_calc_velprof(double *result, int *params) {
   if (newroot != 0) {
     if (this_node == newroot) {
       MPI_Send(result, lblattice.grid[pdir]*node_grid[pdir], MPI_DOUBLE, 0, REQ_VELPROF, comm_cart);
-      free(result);
     }
     if (this_node == 0) {
       //fprintf(stderr,"%d: I'm just here!\n",this_node);

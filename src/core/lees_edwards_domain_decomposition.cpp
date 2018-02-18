@@ -38,7 +38,7 @@
 
 #define LE_TRACE(x)
 #ifdef LE_DEBUG
-FILE *comms_log = NULL;
+FILE *comms_log = nullptr;
 int comms_count = 0;
 #endif
 
@@ -48,7 +48,7 @@ int comms_count = 0;
  * algorithm (see verlet.cpp) to build the verlet lists.
  */
 void le_dd_init_cell_interactions() {
-  int m, n, o, p, q, r, ind1, ind2, c_cnt = 0, n_cnt = 0;
+  int m, n, o, p, q, r, ind1, ind2;
   int extra_cells = 0;
 
   /* loop over non-ghost cells */
@@ -314,13 +314,13 @@ void printAllComms(FILE *ofile, GhostCommunicator *comm, int backwards) {
 void le_dd_prepare_comm(le_dd_comms_manager *mgr, GhostCommunicator *comm,
                         int data_parts) {
   static int le_cells_state_physical = 1;
-  int dir, lr, i, cnt, num, n_comm_cells[3], send_rec, thisCommCount;
+  int dir, lr, i, cnt, num, n_comm_cells[3], send_rec, thisCommCount = 0;
   int lc[3], hc[3], neighbor_index;
 
 #ifdef LE_DEBUG
-  if (comms_log != NULL) {
+  if (comms_log != nullptr) {
     fclose(comms_log);
-    comms_log = NULL;
+    comms_log = nullptr;
   }
   char vLogName[64];
   sprintf(vLogName, "%i_comms_%i.dat", comms_count++, this_node);
@@ -550,8 +550,8 @@ void le_dd_prepare_comm(le_dd_comms_manager *mgr, GhostCommunicator *comm,
             lc[dir] = 1;
             hc[dir] = 1;
           }
-          comm->comm[cnt].part_lists = (ParticleList **)Utils::malloc(
-              n_comm_cells[dir] * sizeof(ParticleList *));
+          comm->comm[cnt].part_lists = (Cell **)Utils::malloc(
+              n_comm_cells[dir] * sizeof(Cell *));
 
           switch (dir) {
           case 0:
@@ -624,8 +624,8 @@ void le_dd_prepare_comm(le_dd_comms_manager *mgr, GhostCommunicator *comm,
             lc[dir] = 0;
             hc[dir] = 0;
           }
-          comm->comm[cnt].part_lists = (ParticleList **)Utils::malloc(
-              n_comm_cells[dir] * sizeof(ParticleList *));
+          comm->comm[cnt].part_lists = (Cell **)Utils::malloc(
+              n_comm_cells[dir] * sizeof(Cell *));
 
           switch (dir) {
           case 0:
@@ -693,9 +693,9 @@ void le_dd_prepare_comm(le_dd_comms_manager *mgr, GhostCommunicator *comm,
 
 #ifdef LE_DEBUG
   printAllComms(comms_log, comm, 0);
-  if (comms_log != NULL) {
+  if (comms_log != nullptr) {
     fclose(comms_log);
-    comms_log = NULL;
+    comms_log = nullptr;
   }
 #endif
 }
@@ -709,9 +709,9 @@ void le_dd_dynamic_update_comm(le_dd_comms_manager *mgr,
   int lc[3], hc[3], neighbor_index;
 
 #ifdef LE_DEBUG
-  if (comms_log != NULL) {
+  if (comms_log != nullptr) {
     fclose(comms_log);
-    comms_log = NULL;
+    comms_log = nullptr;
   }
   char vLogName[64];
   sprintf(vLogName, "%i_recomm_%i.dat", comms_count++, this_node);
@@ -846,7 +846,7 @@ void le_dd_dynamic_update_comm(le_dd_comms_manager *mgr,
         /* exchange the send and receive parts of the comm */
         int nlist2 = comm->comm[cnt].n_part_lists / 2;
         for (int j = 0; j < nlist2; j++) {
-          ParticleList *tmplist = comm->comm[cnt].part_lists[j];
+          Cell *tmplist = comm->comm[cnt].part_lists[j];
           comm->comm[cnt].part_lists[j] =
               comm->comm[cnt].part_lists[j + nlist2];
           comm->comm[cnt].part_lists[j + nlist2] = tmplist;
@@ -929,9 +929,9 @@ void le_dd_dynamic_update_comm(le_dd_comms_manager *mgr,
   }
 #ifdef LE_DEBUG
   printAllComms(comms_log, comm, backwards);
-  if (comms_log != NULL) {
+  if (comms_log != nullptr) {
     fclose(comms_log);
-    comms_log = NULL;
+    comms_log = nullptr;
   }
 #endif
 }

@@ -7,15 +7,16 @@ from threading import Thread
 from math import *
 from espressomd.visualization_opengl import *
 
-system = espressomd.System()
+box_l = 20
+system = espressomd.System(box_l=[box_l]*3)
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
 visualizer = openGLLive(system, constraint_type_colors= [[1,1,1,1]], camera_position = [50,15,15], camera_right = [0,0,-1] )
 
-
-box_l = 20
-system.box_l = [box_l, box_l, box_l]
 system.time_step = 0.02
 system.cell_system.skin = 0.4
-system.cell_system.set_layered(n_layers=5)
+system.cell_system.set_layered(n_layers=5,use_verlet_lists = False)
 system.periodicity = [1, 1, 0]
 
 qion = 1
@@ -40,7 +41,7 @@ print("After Minimization: E_total=", energy['total'])
 
 system.thermostat.set_langevin(kT=0.1, gamma=1.0)
 
-mmm2d = electrostatics.MMM2D(bjerrum_length = 100.0, maxPWerror = 1e-3, capacitor = 1, pot_diff = 50.0)
+mmm2d = electrostatics.MMM2D(prefactor = 10.0, maxPWerror = 1e-3, const_pot = 1, pot_diff = 50.0)
 system.actors.add(mmm2d)
 
 def main():

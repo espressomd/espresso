@@ -7,6 +7,7 @@
 #include "forces_inline.hpp"
 #include "interaction_data.hpp"
 
+
 namespace Constraints {
 
 Vector3d ShapeBasedConstraint::total_force() const {
@@ -16,6 +17,28 @@ Vector3d ShapeBasedConstraint::total_force() const {
 
     return total_force;
 }
+
+
+double ShapeBasedConstraint::min_dist() {
+  double global_mindist = std::numeric_limits<double>::infinity();
+  auto parts = local_cells.particles();
+
+  auto const local_mindist = std::accumulate(
+        parts.begin(), parts.end(), std::numeric_limits<double>::infinity(),
+        [this](double min, Particle const& p) {
+    IA_parameters *ia_params;
+    ia_params = get_ia_param(p.p.type, m_type);
+    if (checkIfInteraction(ia_params)) {
+        double vec[3], dist;
+        m_shape->calculate_dist(folded_position(p).data(), &dist, vec);
+        return std::min(min, dist);
+    }
+    else return min;
+    });
+  boost::mpi::reduce(comm_cart, local_mindist, global_mindist, boost::mpi::minimum<double>(), 0);
+  return global_mindist;
+}
+
 
 void ShapeBasedConstraint::reflect_particle(Particle *p, const double *distance_vector,
                                   const double *folded_pos) const {

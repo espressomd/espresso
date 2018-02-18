@@ -20,7 +20,7 @@ from __future__ import print_function, division
 import espressomd
 from espressomd import thermostat
 from espressomd import visualization
-import numpy
+import numpy as np
 import matplotlib
 matplotlib.use('WXAgg')
 from matplotlib import pyplot
@@ -78,7 +78,10 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
@@ -108,7 +111,7 @@ system.box_l = [box_l, box_l, box_l]
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
     cutoff=lj_cut, shift="auto")
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 
 # Particle setup
 #############################################################
@@ -117,11 +120,11 @@ volume = box_l * box_l * box_l
 n_part = int(volume * density)
 
 for i in range(n_part):
-    system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
+    system.part.add(id=i, pos=np.random.random(3) * system.box_l)
 
-system.analysis.distto(0)
+system.analysis.dist_to(0)
 
-act_min_dist = system.analysis.mindist()
+act_min_dist = system.analysis.min_dist()
 system.cell_system.max_num_cells = 2744
 
 mayavi = visualization.mayaviLive(system)
@@ -271,8 +274,8 @@ class Controls(HasTraits):
         status = self.MIDI_NUM_PRESSURE
 
         if pressure_log_flag:
-            data1 = limit_range(int(127 * (numpy.log(self.pressure) - numpy.log(self.min_press)) / (
-                numpy.log(self.max_press) - numpy.log(self.min_press))), minval=0, maxval=127)
+            data1 = limit_range(int(127 * (np.log(self.pressure) - np.log(self.min_press)) / (
+                np.log(self.max_press) - np.log(self.min_press))), minval=0, maxval=127)
         else:
             data1 = limit_range(int((self.pressure - self.min_press) /
                                     (self.max_press - self.min_press) * 127), minval=0, maxval=127)
@@ -303,19 +306,19 @@ class Controls(HasTraits):
 
 # set LJ cap
 lj_cap = 20
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 
 # # Warmup Integration Loop
 # i = 0
 # while (i < warm_n_times and act_min_dist < min_dist):
 #     system.integrator.run(warm_steps)
 #     # Warmup criterion
-#     act_min_dist = system.analysis.mindist()
+#     act_min_dist = system.analysis.min_dist()
 #     i += 1
 #
 # #   Increase LJ cap
 #     lj_cap = lj_cap + 10
-#     system.non_bonded_inter.set_force_cap(lj_cap)
+#     system.force_cap = lj_cap
 #     mayavi.update()
 
 #############################################################
@@ -324,7 +327,7 @@ system.non_bonded_inter.set_force_cap(lj_cap)
 
 # remove force capping
 #lj_cap = 0
-# system.non_bonded_inter.set_force_cap(lj_cap)
+# system.force_cap = lj_cap
 
 # get initial observables
 pressure = system.analysis.pressure()
@@ -339,13 +342,13 @@ pyplot.xlabel("Temperature")
 pyplot.ylabel("Pressure")
 pyplot.xlim(0.5, 2.0)
 pyplot.ylim(5e-5, 2e1)
-xx = numpy.linspace(0.5, 0.7, 200)
+xx = np.linspace(0.5, 0.7, 200)
 pyplot.plot(xx, -6.726 * xx**4 + 16.92 * xx**3 -
             15.85 * xx**2 + 6.563 * xx - 1.015, 'k-')
-xx = numpy.linspace(0.7, 1.3, 600)
+xx = np.linspace(0.7, 1.3, 600)
 pyplot.plot(xx, -0.5002 * xx**4 + 2.233 * xx**3 -
             3.207 * xx**2 + 1.917 * xx - 0.4151, 'k-')
-xx = numpy.linspace(0.6, 2.2, 1500)
+xx = np.linspace(0.6, 2.2, 1500)
 pyplot.plot(xx, 16.72 * xx**4 - 88.28 * xx**3 +
             168 * xx**2 - 122.4 * xx + 29.79, 'k-')
 
@@ -368,10 +371,10 @@ pyplot.ylabel("Pressure")
 # pyplot.legend()
 pyplot.show(block=False)
 
-plt1_x_data = numpy.zeros(1)
-plt1_y_data = numpy.zeros(1)
-plt2_x_data = numpy.zeros(1)
-plt2_y_data = numpy.zeros(1)
+plt1_x_data = np.zeros(1)
+plt1_y_data = np.zeros(1)
+plt2_x_data = np.zeros(1)
+plt2_y_data = np.zeros(1)
 
 
 def limit_range(val, minval=0., maxval=1.):
@@ -437,8 +440,8 @@ def main_loop():
         system.integrator.set_nvt()
         controls.pressure = pressure['total']
 
-        new_box = numpy.ones(3) * controls.volume**(1. / 3.)
-        if numpy.any(numpy.array(system.box_l) != new_box):
+        new_box = np.ones(3) * controls.volume**(1. / 3.)
+        if np.any(np.array(system.box_l) != new_box):
             for i in range(len(system.part)):
                 system.part[i].pos *= new_box / system.box_l[0]
         system.box_l = new_box
@@ -446,7 +449,7 @@ def main_loop():
     new_part = controls.number_of_particles
     if new_part > len(system.part):
         for i in range(len(system.part), new_part):
-            system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
+            system.part.add(id=i, pos=np.random.random(3) * system.box_l)
     elif new_part < len(system.part):
         for i in range(new_part, len(system.part)):
             system.part[i].remove()
@@ -458,17 +461,17 @@ def main_loop():
     plt2_x_data = plot2.get_xdata()
     plt2_y_data = plot2.get_ydata()
 
-    plt1_x_data = numpy.append(
+    plt1_x_data = np.append(
         plt1_x_data[-plot_max_data_len + 1:], system.time)
     if show_real_system_temperature:
-        plt1_y_data = numpy.append(plt1_y_data[-plot_max_data_len + 1:], 2. / (
-            3. * len(system.part)) * system.analysis.energy()["ideal"])
+        plt1_y_data = np.append(plt1_y_data[-plot_max_data_len + 1:], 2. / (
+            3. * len(system.part)) * system.analysis.energy()["kinetic"])
     else:
-        plt1_y_data = numpy.append(
+        plt1_y_data = np.append(
             plt1_y_data[-plot_max_data_len + 1:], (system.part[:].v**2).sum())
-    plt2_x_data = numpy.append(
+    plt2_x_data = np.append(
         plt2_x_data[-plot_max_data_len + 1:], system.time)
-    plt2_y_data = numpy.append(
+    plt2_y_data = np.append(
         plt2_y_data[-plot_max_data_len + 1:], pressure['total'])
 
 
@@ -536,11 +539,11 @@ last_plotted = 0
 def calculate_kinetic_energy():
     tmp_kin_energy = 0.
     for i in range(len(system.part)):
-        tmp_kin_energy += 1. / 2. * numpy.linalg.norm(system.part[i].v)**2.0
+        tmp_kin_energy += 1. / 2. * np.linalg.norm(system.part[i].v)**2.0
 
     print("tmp_kin_energy={}".format(tmp_kin_energy))
-    print("system.analysis.energy()['ideal']={}".format(
-        system.analysis.energy(system)["ideal"]))
+    print("system.analysis.energy()['kinetic']={}".format(
+        system.analysis.energy(system)["kinetic"]))
 
 
 def rotate_scene():
@@ -569,7 +572,7 @@ def update_plot():
     # rotate_scene()
     zoom_scene()
 
-    data_len = numpy.array([len(plt1_x_data), len(
+    data_len = np.array([len(plt1_x_data), len(
         plt1_y_data), len(plt2_x_data), len(plt2_y_data)]).min()
     plot1.set_xdata(plt1_x_data[:data_len])
     plot1.set_ydata(plt1_y_data[:data_len])

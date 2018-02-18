@@ -19,21 +19,17 @@ EXTERNAL_FORCES
 CONSTRAINTS
 MASS
 EXCLUSIONS
-COMFIXED
-MOLFORCES
+MOLFORCES                       requires EXPERIMENTAL_FEATURES
 BOND_CONSTRAINT
-MODES                           requires FFTW
-BOND_VIRTUAL
 LANGEVIN_PER_PARTICLE
 COLLISION_DETECTION             implies GHOSTS_HAVE_BONDS
-LEES_EDWARDS                    implies DPD
-LEES_EDWARDS                    requires not ELECTROSTATICS and not LB and not PARTIAL_PERIODIC
+LEES_EDWARDS                    requires not ELECTROSTATICS and not LB and not PARTIAL_PERIODIC and EXPERIMENTAL_FEATURES
 METADYNAMICS
 NEMD
 NPT
 GHMC
 CATALYTIC_REACTIONS
-MULTI_TIMESTEP                  requires not GAUSSRANDOMCUT and not GAUSSRANDOM
+MULTI_TIMESTEP                  requires not GAUSSRANDOMCUT and not GAUSSRANDOM and EXPERIMENTAL_FEATURES
 ENGINE                          implies ROTATION, EXTERNAL_FORCES
 PARTICLE_ANISOTROPY
 
@@ -48,7 +44,6 @@ INTER_RF                        implies ELECTROSTATICS
 MMM1D_GPU                       requires CUDA and PARTIAL_PERIODIC and ELECTROSTATICS
 EWALD_GPU                       requires CUDA and ELECTROSTATICS
 _P3M_GPU_FLOAT                  requires CUDA and ELECTROSTATICS
-_P3M_GPU_DOUBLE                 requires CUDA and ELECTROSTATICS
 
 
 /* Magnetostatics */
@@ -57,31 +52,23 @@ DP3M                            equals DIPOLES and FFTW
 DIPOLAR_DIRECT_SUM              requires CUDA
 DIPOLAR_DIRECT_SUM              equals DIPOLES and ROTATION and CUDA
 
+DIPOLAR_BARNES_HUT              requires CUDA
+DIPOLAR_BARNES_HUT              equals DIPOLES and ROTATION and CUDA
+
 /* Virtual sites features */
-VIRTUAL_SITES_COM               requires not VIRTUAL_SITES_RELATIVE
-VIRTUAL_SITES_RELATIVE          requires not VIRTUAL_SITES_COM
+VIRTUAL_SITES_RELATIVE          implies VIRTUAL_SITES
 VIRTUAL_SITES_RELATIVE          implies ROTATION
-VIRTUAL_SITES                   equals VIRTUAL_SITES_COM or VIRTUAL_SITES_RELATIVE or IMMERSED_BOUNDARY
-VIRTUAL_SITES_NO_VELOCITY       require VIRTUAL_SITES_RELATIVE
-VIRTUAL_SITES_THERMOSTAT        require VIRTUAL_SITES_RELATIVE
-THERMOSTAT_IGNORE_NON_VIRTUAL   implies VIRTUAL_SITES_THERMOSTAT
+VIRTUAL_SITES                   
 
 /* DPD features */
 DPD
-TRANS_DPD                       implies DPD
-DPD_MASS_RED                    requires not DPD_MASS_LIN
-DPD_MASS_LIN                    requires not DPD_MASS_RED
-DPD_MASS                        equals DPD_MASS_RED or DPD_MASS_LIN
-DPD_MASS                        implies MASS, DPD
-
-/* Alternative implementation of DPD */
-INTER_DPD
+TUNABLE_SLIP                    requires EXPERIMENTAL_FEATURES
 
 /* Lattice-Boltzmann features */
 LB
 LB_GPU                          requires CUDA
-LB_BOUNDARIES                   implies LB, CONSTRAINTS
-LB_BOUNDARIES_GPU               implies LB_GPU, CONSTRAINTS
+LB_BOUNDARIES                   requires LB
+LB_BOUNDARIES_GPU               requires LB_GPU
 LB_ELECTROHYDRODYNAMICS         implies LB
 ELECTROKINETICS                 implies LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
 ELECTROKINETICS                 requires CUDA
@@ -93,7 +80,7 @@ EK_DEBUG                        requires ELECTROKINETICS
 EK_DOUBLE_PREC                  requires ELECTROKINETICS
 LATTICE                         equals LB or LB_GPU
 SHANCHEN                        implies LB_GPU
-SHANCHEN                        requires not ELECTROKINETICS
+SHANCHEN                        requires not ELECTROKINETICS and EXPERIMENTAL_FEATURES
 
 
 /* Interaction features */
@@ -115,8 +102,9 @@ MORSE
 BUCKINGHAM
 SOFT_SPHERE
 HAT
-UMBRELLA
+UMBRELLA                           requires EXPERIMENTAL_FEATURES 
 GAY_BERNE                       implies ROTATION
+GAY_BERNE                       requires EXPERIMENTAL_FEATURES
 OVERLAPPED
 
 /* Fluid-Structure Interactions (object in fluid) */
@@ -136,7 +124,7 @@ BOND_ENDANGLEDIST_HARMONIC      implies BOND_ENDANGLEDIST, CONSTRAINTS
 CG_DNA                          implies TWIST_STACK, HYDROGEN_BOND, COULOMB_DEBYE_HUECKEL
 TWIST_STACK
 HYDROGEN_BOND
-COULOMB_DEBYE_HUECKEL           requires ELECTROSTATICS
+COULOMB_DEBYE_HUECKEL           requires ELECTROSTATICS and EXPERIMENTAL_FEATURES
 
 /* Immersed-Boundary Bayreuth version */
 IMMERSED_BOUNDARY
@@ -147,6 +135,8 @@ IMMERSED_BOUNDARY               requires not ELECTROKINETICS
 SCAFACOS_DIPOLES                requires SCAFACOS
 SCAFACOS_DIPOLES                implies DIPOLES
 SCAFACOS                        requires ELECTROSTATICS
+
+EXPERIMENTAL_FEATURES
 
 // Shape of the noise in the (Langevin) thermostat
 FLATNOISE                       requires not GAUSSRANDOM and not GAUSSRANDOM_CUT
@@ -196,7 +186,6 @@ PTENSOR_DEBUG
 MAGGS_DEBUG
 LB_DEBUG
 VIRTUAL_SITES_DEBUG
-SD_DEBUG
 CUDA_DEBUG
 H5MD_DEBUG
 
