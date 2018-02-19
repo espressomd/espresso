@@ -3,7 +3,6 @@ include "myconfig.pxi"
 from .highlander import ThereCanOnlyBeOne
 
 cdef class Actor(object):
-
     # Keys in active_list have to match the method name.
     active_list = dict(ElectrostaticInteraction=False,
                        MagnetostaticInteraction=False,
@@ -73,8 +72,9 @@ cdef class Actor(object):
         """Get interaction parameters"""
         # If this instance refers to an actual interaction defined in the es core, load
         # current parameters from there
-        update = self._get_params_from_es_core()
-        self._params.update(update)
+        if self.is_active():
+            update = self._get_params_from_es_core()
+            self._params.update(update)
         return self._params
 
     def set_params(self, **p):
