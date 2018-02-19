@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from espressomd import System, assert_features, electrostatics, electrostatic_extensions
+from espressomd import assert_features, electrostatics, electrostatic_extensions
 from espressomd.visualization_opengl import *
 import numpy
 from threading import Thread
@@ -26,16 +26,20 @@ from time import sleep
 
 assert_features(["ELECTROSTATICS", "MASS", "LENNARD_JONES"])
 
-system = System()
-visualizer = openGLLive(system, drag_force=5*298, background_color=[1,1,1], light_pos=[30,30,30])
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+visualizer = openGLLive(system, drag_force=5 * 298,
+                        background_color=[1, 1, 1], light_pos=[30, 30, 30])
 
-#Callbacks to control temperature 
+# Callbacks to control temperature
 temperature = 298.0
+
+
 def increaseTemp():
-        global temperature
-        temperature += 10
-        system.thermostat.set_langevin(kT=temperature, gamma=1.0)
-        print(temperature)
+    global temperature
+    temperature += 10
+    system.thermostat.set_langevin(kT=temperature, gamma=1.0)
+    print(temperature)
+
 
 def decreaseTemp():
     global temperature
@@ -48,9 +52,12 @@ def decreaseTemp():
         system.thermostat.turn_off()
     print(temperature)
 
-#Register buttons
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('t',KeyboardFireEvent.Hold,increaseTemp))
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('g',KeyboardFireEvent.Hold,decreaseTemp))
+
+# Register buttons
+visualizer.keyboardManager.registerButton(
+    KeyboardButtonEvent('t', KeyboardFireEvent.Hold, increaseTemp))
+visualizer.keyboardManager.registerButton(
+    KeyboardButtonEvent('g', KeyboardFireEvent.Hold, decreaseTemp))
 
 
 def main():
@@ -60,7 +67,7 @@ def main():
 # System parameters
     n_ppside = 10
     n_part = int(n_ppside**3)
-    n_ionpairs = n_part/2
+    n_ionpairs = n_part / 2
     density = 1.5736
     time_step = 0.001823
     temp = 298.0
@@ -73,16 +80,16 @@ def main():
     integ_steps_per_config = 500
 
 # Particle parameters
-    types       = {"Cl":          0, "Na": 1}
-    numbers     = {"Cl": n_ionpairs, "Na": n_ionpairs}
-    charges     = {"Cl":       -1.0, "Na": 1.0}
-    lj_sigmas   = {"Cl":       3.85, "Na": 2.52}
+    types = {"Cl":          0, "Na": 1}
+    numbers = {"Cl": n_ionpairs, "Na": n_ionpairs}
+    charges = {"Cl": -1.0, "Na": 1.0}
+    lj_sigmas = {"Cl":       3.85, "Na": 2.52}
     lj_epsilons = {"Cl":     192.45, "Na": 17.44}
 
-    lj_cuts     = {"Cl":  3.0 * lj_sigmas["Cl"], 
-                   "Na": 3.0 * lj_sigmas["Na"]}
+    lj_cuts = {"Cl":  3.0 * lj_sigmas["Cl"],
+               "Na": 3.0 * lj_sigmas["Na"]}
 
-    masses      = {"Cl":        35.453, "Na": 22.99}
+    masses = {"Cl":        35.453, "Na": 22.99}
 
 # Setup System
     box_l = (n_ionpairs * sum(masses.values()) / density)**(1. / 3.)
@@ -98,37 +105,41 @@ def main():
     for i in range(n_ppside):
         for j in range(n_ppside):
             for k in range(n_ppside):
-                p = numpy.array([i,j,k])*l
+                p = numpy.array([i, j, k]) * l
                 if q < 0:
-                    system.part.add(id=len(system.part), type=types["Cl"],  pos=p, q=charges["Cl"], mass=masses["Cl"])
+                    system.part.add(id=len(
+                        system.part), type=types["Cl"],  pos=p, q=charges["Cl"], mass=masses["Cl"])
                 else:
-                    system.part.add(id=len(system.part), type=types["Na"],  pos=p, q=charges["Na"], mass=masses["Na"])
-                    
+                    system.part.add(id=len(
+                        system.part), type=types["Na"],  pos=p, q=charges["Na"], mass=masses["Na"])
+
                 q *= -1
             q *= -1
         q *= -1
 
     def combination_rule_epsilon(rule, eps1, eps2):
-        if rule=="Lorentz":
-            return (eps1*eps2)**0.5
+        if rule == "Lorentz":
+            return (eps1 * eps2)**0.5
         else:
             return ValueError("No combination rule defined")
 
     def combination_rule_sigma(rule, sig1, sig2):
-        if rule=="Berthelot":
-            return (sig1+sig2)*0.5
+        if rule == "Berthelot":
+            return (sig1 + sig2) * 0.5
         else:
             return ValueError("No combination rule defined")
 
-# Lennard-Jones interactions parameters 
+# Lennard-Jones interactions parameters
     for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"]]:
-            lj_sig = combination_rule_sigma("Berthelot",lj_sigmas[s[0]], lj_sigmas[s[1]])
-            lj_cut = combination_rule_sigma("Berthelot", lj_cuts[s[0]], lj_cuts[s[1]])
-            lj_eps = combination_rule_epsilon("Lorentz", lj_epsilons[s[0]],lj_epsilons[s[1]])
+        lj_sig = combination_rule_sigma(
+            "Berthelot", lj_sigmas[s[0]], lj_sigmas[s[1]])
+        lj_cut = combination_rule_sigma(
+            "Berthelot", lj_cuts[s[0]], lj_cuts[s[1]])
+        lj_eps = combination_rule_epsilon(
+            "Lorentz", lj_epsilons[s[0]], lj_epsilons[s[1]])
 
-            system.non_bonded_inter[types[s[0]], types[s[1]]].lennard_jones.set_params(
-                epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
-
+        system.non_bonded_inter[types[s[0]], types[s[1]]].lennard_jones.set_params(
+            epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
     print("\n--->Tuning Electrostatics")
     #p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-2, mesh=[84,84,84], cao=6)
@@ -137,13 +148,13 @@ def main():
 
     print("\n--->Temperature Equilibration")
     system.time = 0.0
-    for i in range(int(num_steps_equilibration/100)):
+    for i in range(int(num_steps_equilibration / 100)):
         energy = system.analysis.energy()
         temp_measured = energy['kinetic'] / ((3.0 / 2.0) * n_part)
         print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
-                                           energy['total'],
-                                           energy['coulomb'],
-                                           temp_measured))
+                                                                                    energy['total'],
+                                                                                    energy['coulomb'],
+                                                                                    temp_measured))
         system.integrator.run(100)
         visualizer.update()
 
@@ -153,10 +164,11 @@ def main():
         system.integrator.run(1)
         visualizer.update()
 
-#Start simulation in seperate thread
+
+# Start simulation in seperate thread
 t = Thread(target=main)
 t.daemon = True
 t.start()
 
-#Start blocking visualizer
+# Start blocking visualizer
 visualizer.start()

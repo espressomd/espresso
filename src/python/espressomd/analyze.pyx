@@ -40,8 +40,6 @@ from espressomd.utils import is_valid_type
 
 class Analysis(object):
 
-    _systemp = None
-
     def __init__(self, system):
         if not isinstance(system, System):
             raise TypeError("An instance of System is required as argument")
@@ -400,12 +398,11 @@ class Analysis(object):
 
         # Total pressure
         cdef int i
-        cdef double tmp
-        tmp = 0
+        total = 0
         for i in range(c_analyze.total_pressure.data.n):
-            tmp += c_analyze.total_pressure.data.e[i]
+            total += c_analyze.total_pressure.data.e[i]
 
-        p["total"] = tmp
+        p["total"] = total
 
         # kinetic
         p["kinetic"] = c_analyze.total_pressure.data.e[0]
@@ -414,7 +411,7 @@ class Analysis(object):
         cdef double total_bonded
         total_bonded = 0
         for i in range(c_analyze.n_bonded_ia):
-            if (bonded_ia_params[i].type != 0):
+            if (bonded_ia_params[i].type != BONDED_IA_NONE):
                 p["bonded", i] = c_analyze.obsstat_bonded( & c_analyze.total_pressure, i)[0]
                 total_bonded += c_analyze.obsstat_bonded(& c_analyze.total_pressure, i)[0]
         p["bonded"] = total_bonded
@@ -505,12 +502,12 @@ class Analysis(object):
 
         # Total pressure
         cdef int i
-        tmp = np.zeros(9)
+        total = np.zeros(9)
         for i in range(9):
             for k in range(c_analyze.total_p_tensor.data.n // 9):
-                tmp[i] += c_analyze.total_p_tensor.data.e[9 * k + i]
+                total[i] += c_analyze.total_p_tensor.data.e[9 * k + i]
 
-        p["total"] = tmp.reshape((3, 3))
+        p["total"] = total.reshape((3, 3))
 
         # kinetic
         p["kinetic"] = create_nparray_from_double_array(
@@ -520,7 +517,7 @@ class Analysis(object):
         # Bonded
         total_bonded = np.zeros((3, 3))
         for i in range(c_analyze.n_bonded_ia):
-            if (bonded_ia_params[i].type != 0):
+            if (bonded_ia_params[i].type != BONDED_IA_NONE):
                 p["bonded", i] = np.reshape(create_nparray_from_double_array(
                     c_analyze.obsstat_bonded( & c_analyze.total_p_tensor, i), 9),
                     (3, 3))
@@ -698,11 +695,10 @@ class Analysis(object):
 
         # Total energy
         cdef int i
-        cdef double tmp
-        tmp = c_analyze.total_energy.data.e[0]
-        tmp += calculate_current_potential_energy_of_system()
+        total = c_analyze.total_energy.data.e[0] #kinetic energy
+        total += calculate_current_potential_energy_of_system()
 
-        e["total"] = tmp
+        e["total"] = total
 
         # Kinetic energy
         e["kinetic"] = c_analyze.total_energy.data.e[0]

@@ -29,7 +29,7 @@ import pickle
 
 class Observables(ut.TestCase):
     # Handle for espresso system
-    es = espressomd.System()
+    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     def test_corr(self):
         s = self.es

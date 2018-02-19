@@ -1,7 +1,8 @@
 # Initializing espresso modules and the numpy package
-from espressomd import System, electrokinetics, shapes
+from espressomd import electrokinetics, shapes
 import numpy as np
 import sys
+import espressomd
 
 # Set the slit pore geometry the width is the non-periodic part of the geometry
 # the padding is used to ensure that there is no field outside the slit
@@ -13,8 +14,7 @@ width = 50
 padding = 1
 box_z = width + 2*padding
 
-system = System()
-system.box_l = [box_x, box_y, box_z]
+system = espressomd.System(box_l=[box_x, box_y, box_z])
 
 # Set the electrokinetic parameters
 
@@ -40,7 +40,7 @@ integration_length = int(2e3)
 viscosity_kinematic = viscosity_dynamic / density_water
 ek = electrokinetics.Electrokinetics(agrid = agrid, lb_density = density_water,
                                      viscosity = viscosity_kinematic, friction = 1.0,
-                                     T = kT, bjerrum_length = bjerrum_length)
+                                     T = kT, prefactor = bjerrum_length)
 
 # Set up the charged and neutral species
 density_counterions  = -2.0 * sigma / width

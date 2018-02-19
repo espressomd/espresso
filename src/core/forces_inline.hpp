@@ -78,7 +78,6 @@
 #include "twist_stack.hpp"
 #include "umbrella.hpp"
 #ifdef ELECTROSTATICS
-#include "actor/EwaldGPU_ShortRange.hpp"
 #include "bonded_coulomb.hpp"
 #include "debye_hueckel.hpp"
 #include "reaction_field.hpp"
@@ -109,8 +108,8 @@ inline void init_ghost_force(Particle *part) {
     part->f.torque[2] = 0;
 
     /* and rescale quaternion, so it is exactly of unit length */
-    scale = sqrt(SQR(part->r.quat[0]) + SQR(part->r.quat[1]) +
-                 SQR(part->r.quat[2]) + SQR(part->r.quat[3]));
+    scale = sqrt(Utils::sqr(part->r.quat[0]) + Utils::sqr(part->r.quat[1]) +
+                 Utils::sqr(part->r.quat[2]) + Utils::sqr(part->r.quat[3]));
     part->r.quat[0] /= scale;
     part->r.quat[1] /= scale;
     part->r.quat[2] /= scale;
@@ -164,8 +163,8 @@ inline void init_local_particle_force(Particle *part) {
 #endif
 
     /* and rescale quaternion, so it is exactly of unit length */
-    scale = sqrt(SQR(part->r.quat[0]) + SQR(part->r.quat[1]) +
-                 SQR(part->r.quat[2]) + SQR(part->r.quat[3]));
+    scale = sqrt(Utils::sqr(part->r.quat[0]) + Utils::sqr(part->r.quat[1]) +
+                 Utils::sqr(part->r.quat[2]) + Utils::sqr(part->r.quat[3]));
     part->r.quat[0] /= scale;
     part->r.quat[1] /= scale;
     part->r.quat[2] /= scale;
@@ -393,12 +392,6 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
     if (q1q2)
       add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, force);
     break;
-#ifdef EWALD_GPU
-  case COULOMB_EWALD_GPU:
-    if (q1q2)
-      add_ewald_gpu_coulomb_pair_force(p1, p2, d, dist, force);
-    break;
-#endif
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
     if (q1q2) {

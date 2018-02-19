@@ -68,7 +68,7 @@ inline int umbrella_pair_energy(Particle *p1, Particle *p2, Bonded_ia_parameters
 { 
   double distn;
   distn = d[ia_params->p.umbrella.dir];  
-  *_energy = 0.5 * ia_params->p.umbrella.k * SQR(distn - ia_params->p.umbrella.r);
+  *_energy = 0.5 * ia_params->p.umbrella.k * Utils::sqr(distn - ia_params->p.umbrella.r);
   return 0;
 }
 
