@@ -28,7 +28,7 @@ class DPDThermostat(ut.TestCase):
     """Tests the velocity distribution created by the dpd thermostat against 
        the single component Maxwell distribution."""
 
-    s = espressomd.System()
+    s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     s.box_l = 3 * [10]
     s.time_step = 0.01
     s.cell_system.skin=0.4
@@ -73,7 +73,7 @@ class DPDThermostat(ut.TestCase):
             weight_function=0, gamma=gamma, r_cut=1.5,
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
         s.integrator.run(100)
-        loops=6000
+        loops=1000
         v_stored=np.zeros((N*loops,3))
         for i in range(loops):
             s.integrator.run(5)
@@ -104,7 +104,7 @@ class DPDThermostat(ut.TestCase):
             weight_function=0, gamma=gamma, r_cut=1.5,
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
         s.integrator.run(100)
-        loops=6000
+        loops=1000
         v_stored=np.zeros((N*loops,3))
         for i in range(loops):
             s.integrator.run(5)
@@ -147,7 +147,7 @@ class DPDThermostat(ut.TestCase):
         # Reset velocities for faster convergence
         s.part[:].v = [0.,0.,0.]
 
-        loops=6000
+        loops=1000
         v_stored=np.zeros((N*loops,3))
         for i in range(loops):
             s.integrator.run(5)

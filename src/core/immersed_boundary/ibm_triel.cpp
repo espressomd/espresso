@@ -65,10 +65,10 @@ int IBM_Triel_CalcForce(Particle *p1,Particle *p2, Particle *p3, Bonded_ia_param
   const double Dyy = l/l0*sinPhi / sinPhi0;
   
   // Tensor G: (C.12)
-  const double Gxx = SQR(Dxx)+SQR(Dyx);
+  const double Gxx = Utils::sqr(Dxx) + Utils::sqr(Dyx);
   const double Gxy = Dxx*Dxy + Dyx*Dyy;
   const double Gyx = Dxx*Dxy + Dyy*Dyx;   // = Gxy because of symmetry
-  const double Gyy = SQR(Dxy) + SQR(Dyy);
+  const double Gyy = Utils::sqr(Dxy) + Utils::sqr(Dyy);
   
   // Strain invariants, C.11 and C.12
   const double i1 = (Gxx + Gyy) - 2;

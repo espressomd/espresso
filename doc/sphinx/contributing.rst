@@ -1,5 +1,7 @@
-Getting involved
-================
+.. _Contributing:
+
+Contributing
+============
 
 Up to date information about the development of can be found at the web
 page http://espressomd.org As the important information can change in
@@ -18,6 +20,8 @@ information about the following topics there:
 -  Registering to mailing lists
 
 -  Submitting a bug report
+
+.. _Community support and mailing lists:
 
 Community support and mailing lists
 -----------------------------------
@@ -46,6 +50,8 @@ Please remember that this is a community mailing list. It is other users
 and developers who are answering your questions. They do it in their
 free time and are not paid for doing it.
 
+.. _Contributing your own code:
+
 Contributing your own code
 --------------------------
 
@@ -60,10 +66,12 @@ It is also generally a good idea to contact the mailing lists before you
 start major coding projects. It might be that someone else is already
 working on the problem or has a solution at hand.
 
-Developers’ guide
------------------
+.. _Building the Developer's guide:
 
-Besides the User guide, also contains a Developers’ guide which is a
+Building the Developer's guide
+------------------------------
+
+Besides the User's guide, |es| also contains a Developer's guide which is a
 programmer documentation automatically built from comments in the source
 code and using Doxygen. It provides a cross-referenced documentation of
 all functions and data structures available in source code. It can be
@@ -77,15 +85,17 @@ of the build directory: ``doc/doxygen/html/index.html``.
 A recent version of this guide can also be found on the homepage
 http://espressomd.org/html/dox/.
 
-User’s guide
-------------
+.. _Building the User's guide:
 
-If, while reading this user guide, you notice any mistakes or badly (if
+Building the User's guide
+-------------------------
+
+If, while reading this documentation, you notice any mistakes or badly (if
 at all) described features or commands, you are very welcome to
 contribute to the guide and have others benefit from your knowledge.
 
 For this, you should also checkout the development version as described
-on the homepage. You can then build the user guide by typing
+on the homepage. You can then build the documentation by typing
 
 make sphinx
 

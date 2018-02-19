@@ -14,7 +14,7 @@ from espressomd.shapes import SimplePore,Cylinder
            "Features not available, skipping test!")
 class SimplePoreConstraint(ut.TestCase):
     def test(self):
-        s = espressomd.System()
+        s = espressomd.System(box_l=[1.0, 1.0, 1.0])
         box_yz = 15.
         box_x = 20.
         s.box_l = [box_x, box_yz, box_yz]

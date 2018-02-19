@@ -130,7 +130,7 @@ void IBM_UpdateParticlePositions(ParticleRange particles)
   
   
   // Do update: Euler
-  const double skin2 = SQR(0.5 * skin);
+  const double skin2 = Utils::sqr(0.5 * skin);
   // Loop over particles in local cells
   for (int c = 0; c < local_cells.n; c++)
   {

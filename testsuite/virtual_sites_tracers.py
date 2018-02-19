@@ -32,7 +32,9 @@ from numpy import random
 @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_INERTIALESS_TRACERS","LB"),
            "Test requires VIRTUAL_SITES_INERTIALESS_TRACERS")
 class VirtualSitesTracers(ut.TestCase):
-    s = espressomd.System()
+    box_height = 10. 
+    box_lw=8
+    s = espressomd.System(box_l=(box_lw,box_lw,box_height))
     s.seed = range(s.cell_system.get_state()["n_nodes"])
     
     def test_aa_method_switching(self):
@@ -49,13 +51,13 @@ class VirtualSitesTracers(ut.TestCase):
 
         # System setup
         system = self.s
+        box_lw=self.box_lw
+        box_height = self.box_height
+
         system.virtual_sites=VirtualSitesInertialessTracers()
         system.time_step = 0.05
         system.cell_system.skin = 0.1
         
-        box_height = 10. 
-        box_lw=8
-        system.box_l = box_lw,box_lw,box_height
         
         lbf = lb.LBFluid(agrid=1, dens=1, visc=2, tau= system.time_step, ext_force=[0.1, 0, 0], fric = 1)
         system.actors.add(lbf)

@@ -4,18 +4,21 @@ from espressomd import thermostat
 from espressomd import integrate
 from espressomd.interactions import HarmonicBond
 from espressomd import visualization
-import numpy
+import numpy as np
 from threading import Thread
 
 box_l = 50
 n_part = 200
 
-system = espressomd.System()
+system = espressomd.System(box_l=[box_l]*3)
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
+
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 system.thermostat.set_langevin(kT=0.1, gamma=20.0)
 
-system.box_l = [box_l, box_l, box_l]
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=0, sigma=1,
@@ -24,7 +27,7 @@ system.bonded_inter[0] = HarmonicBond(k=0.5, r_0=1.0)
 system.bonded_inter[1] = HarmonicBond(k=0.5, r_0=1.0)
 
 for i in range(n_part):
-    system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
+    system.part.add(id=i, pos=np.random.random(3) * system.box_l)
 
 for i in range(n_part - 1):
     system.part[i].add_bond((system.bonded_inter[0], system.part[i + 1].id))
