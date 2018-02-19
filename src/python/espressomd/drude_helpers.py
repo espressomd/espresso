@@ -34,7 +34,7 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond, p_core, 
             The polarizability in units of inverse volume. Related to the charge of the drude particle.
     mass_drude : :obj:`float`
                  The mass of the newly created drude particle
-    coulomb_prefactor : :obj:`float
+    coulomb_prefactor : :obj:`float`
                         `Required to calculate the charge of the drude particle.
     thole_damping : :obj:`float`
                     Thole damping factor of the drude pair. Comes to effect if add_all_thole() method is used.
