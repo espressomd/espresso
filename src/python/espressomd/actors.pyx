@@ -41,9 +41,11 @@ cdef class Actor(object):
 
     def _activate(self):
         inter = self._get_interaction_type()
-        if Actor.active_list[inter]:
-            raise ThereCanOnlyBeOne(self.__class__.__bases__[0])
-        Actor.active_list[inter] = True
+        if inter in Actor.active_list:
+            if Actor.active_list[inter]:
+                raise ThereCanOnlyBeOne(self.__class__.__bases__[0])
+            Actor.active_list[inter] = True
+
         self.validate_params()
         self._activate_method()
         self._isactive = True
@@ -52,10 +54,11 @@ cdef class Actor(object):
         self._deactivate_method()
         self._isactive = False
         inter = self._get_interaction_type()
-        if not Actor.active_list[inter]:
-            raise Exception(
-                "Class not registerd in Actor.active_list " + self.__class__.__bases__[0])
-        Actor.active_list[inter] = False
+        if inter in Actor.active_list:
+            if not Actor.active_list[inter]:
+                raise Exception(
+                    "Class not registerd in Actor.active_list " + self.__class__.__bases__[0])
+            Actor.active_list[inter] = False
 
     def is_valid(self):
         """Check, if the data stored in the instance still matches what is in Espresso"""
