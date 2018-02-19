@@ -19,6 +19,7 @@
 #ifndef SYSTEMINTERFACE_H
 #define SYSTEMINTERFACE_H
 
+#include "config.hpp"
 #include "Vector.hpp"
 #include <vector>
 

@@ -77,14 +77,14 @@ int ReactionAlgorithm::do_reaction(int reaction_steps) {
 /**
 * Adds a reaction to the reaction system
 */
-void ReactionAlgorithm::add_reaction(double equilibrium_constant,
+void ReactionAlgorithm::add_reaction(double Gamma,
                                      const std::vector<int> & _reactant_types,
                                      const std::vector<int> & _reactant_coefficients,
                                      const std::vector<int> & _product_types,
                                      const std::vector<int> & _product_coefficients) {
   SingleReaction new_reaction;
 
-  new_reaction.equilibrium_constant = equilibrium_constant;
+  new_reaction.Gamma = Gamma;
   new_reaction.reactant_types = _reactant_types;
   new_reaction.reactant_coefficients = _reactant_coefficients;
   new_reaction.product_types = _product_types;
@@ -332,9 +332,9 @@ double ReactionEnsemble::calculate_acceptance_probability(
 
   const double beta = 1.0 / temperature;
   // calculate boltzmann factor
-  return std::pow(volume * beta * standard_pressure_in_simulation_units,
+  return std::pow(volume * beta,
                   current_reaction.nu_bar) *
-         current_reaction.equilibrium_constant * factorial_expr *
+         current_reaction.Gamma * factorial_expr *
          exp(-beta * (E_pot_new - E_pot_old));
 }
 
@@ -1214,9 +1214,9 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
   } else {
     double factorial_expr = calculate_factorial_expression(
         current_reaction, old_particle_numbers);
-    bf = std::pow(volume * beta * standard_pressure_in_simulation_units,
+    bf = std::pow(volume * beta ,
                   current_reaction.nu_bar) *
-         current_reaction.equilibrium_constant * factorial_expr;
+         current_reaction.Gamma * factorial_expr;
   }
 
   if (!do_energy_reweighting) {
@@ -1758,11 +1758,11 @@ double ConstantpHEnsemble::calculate_acceptance_probability(
   double pKa;
   const double beta = 1.0 / temperature;
   if (current_reaction.nu_bar > 0) { // deprotonation of monomer
-    pKa = -log10(current_reaction.equilibrium_constant);
+    pKa = -log10(current_reaction.Gamma);
     ln_bf =
         (E_pot_new - E_pot_old) - 1.0 / beta * log(10) * (m_constant_pH - pKa);
   } else { // protonation of monomer (yields neutral monomer)
-    pKa = -(-log10(current_reaction.equilibrium_constant)); // additional minus,
+    pKa = -(-log10(current_reaction.Gamma)); // additional minus,
                                                             // since in this
                                                             // case 1/Ka is
                                                             // stored in the
