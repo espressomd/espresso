@@ -120,72 +120,74 @@ contained in the :ref:`Developers guide`.
 Basic python simulation script
 ------------------------------
 
-In this section, a brief overview is given over the most important
-components of the Python interface and their usage is illustrated by
-short examples. The interface is contained in the espressomd Python
-module, which needs to be imported, before anything related can be done.
+In this section, a brief overview is given over the most important components
+of the Python interfacei. Their usage is illustrated by short examples, which
+can be put together to a demo script. 
+
+As usual, the Python script starts by importing the necessary modules.  The
+|es| interface is contained in the espressomd Python module, which needs to be
+imported, before anything related can be done.
 
 ::
 
     import espressomd
 
+This should be followed by further necessary imports::
+
+    from espressomd.interactions import HarmonicBond
+    from espressomd.electrostatics import P3M 
+
 Access to the simulation system is provided via the System class. As a
-first step, an instance of the class needs to be created
+first step, an instance of this class needs to be created
 
 ::
 
-    system=espressomd.System()
+    system = espressomd.System(box_l = [10,10,10])
 
 Note that only one instance of the System class can be created, due to
-limitations in the simulation core. Properties of the System class are
-used to access the parameters concerning the simulation system as a
-whole, , the box geometry and the time step
+limitations in the simulation core. :ref:`Properties of the System
+class<Setting global variables in Python>` are used to access the parameters
+concerning the simulation system such as box geometry or time step::
 
-::
+    print(system.box_l)
+    system.time_step = 0.01
+    system.skin = 0.4
 
-    system.box_l =(10.0,10.0,15.0) print system.time_step
+The particles in the simulation are accessed via the ParticleList class. Use
+the add method to :ref:`create new particles<Adding particles>`::
 
-The particles in the simulation are accessed via the ParticleList class.
-It is used to retrieve individual particles of the simulation as well as
-for adding particles. An instance of the class is provided as the part
-attribute of the System class. Individual particles can be retrieved by
-their numerical id by using angular brackets
+    system.part.add(id = 0, pos = [1.0, 1.0, 1.0], type = 0) 
+    system.part.add(id = 1, pos = [5.0, 5.0, 5.0], type = 0) 
 
-::
+Individual particles can be retrieved by their numerical id using angular
+brackets::
+    
+    system.part[0].pos = [3.0, 3.0, 3.0]
 
-    p=system.part[0]
+It is also possible to loop :ref:`loop<Iterating over particles and pairs of
+particles>` over all particles::
 
-It is also possible to loop over all particles
-
-::
-
-    for p in system.part: ...
-
-Particles are added via the add method
-
-::
-
-    p=system.part.add(id=1,pos=(3.0,0.5,1.0),q=1)
+    for p in system.part:
+        print(p.id, p.type)
 
 An individual particle is represented by an instance of ParticleHandle.
-The properties of the particle are implemented as Python properties:
+The properties of the particle are implemented as Python properties::
 
-::
+    particle = system.part[0]
+    particle.type = 0
+    print(particle.pos)
 
-    p=system.part[0] p.pos=(0,0,0) print p.id,p.pos system.part[0].q=-1
+:ref:`Properties of several particles<Interacting with groups of particles>`
+can be accessed by using Python slices::
 
-Properties of several particles can be accessed by using Python ranges
-
-::
-
-    v=system.part[:].v
+    positions = system.part[:].pos
 
 Interactions between particles fall in three categories:
 
 -  Non-bonded interactions are short-ranged interactions between *all*
    pairs of particles of specified types. An example is the
    Lennard-Jones interaction mimicking overlap repulsion and van der
-   Wals attraction.
+   Waals attraction.
 
 -  Bonded interactions act only between two specific particles. An
    example is the harmonic bond between adjacent particles in a polymer
@@ -199,43 +201,77 @@ Non-bonded interactions are represented as subclasses of
 :class:`espressomd.interactions.NonBondedInteraction`, e.g.
 :class:`espressomd.interactions.LennardJonesInteraction`.
 Instances of these classes for a given pair of particle types are accessed via
-the non_bonded_inter attribute of the System class. Parameters are set as
-follows
+the non_bonded_inter attribute of the System class. This sets up a Lennard Jones
+interaction between all particles of type 0 with the given parameters:
 
 ::
 
-    system.non_bonded_inter[0,0].lennard_jones.set_params(epsilon=1,sigma=1,cutoff=1.5,shift=“auto”)
+    system.non_bonded_inter[0,0].lennard_jones.set_params(epsilon = 1, sigma = 1, cutoff = 1.5, shift = “auto”)
 
-Bonded interactions are represented by subclasses of BondedInteraction.
+Next, we add another pair of partices with a different type to later add 
+a harmonic bond between them: ::
+
+    system.part.add(id = 2, pos = [7.0, 7.0, 7.0], type = 1) 
+    system.part.add(id = 3, pos = [7.0, 7.0, 8.0], type = 1) 
+
 To set up a bonded interaction, first an instance of the appropriate
-class is created with the desired parameters. Then, the bonded
-interaction is registered with the simulation core. Finally, the bond
-can be added to particles using the add_bond()-method of ParticleHandle
-with the instance of the bond class and the id of the bond partner
-particle.
+class is created with the desired parameters: ::
+    
+    harmonic = HarmonicBond(k = 1.0, r_0 = 0.5)
 
-::
+Then, the bonded interaction is registered in the simulation core
+by adding the instance to `bonded_inter`: ::
+    
+    system.bonded_inter.add(harmonic)
 
-    from espressomd.interactions import HarmonicBond
-    harmonic=HarmonicBond(k=1,r_0=1) system.bonded_inter.add(harmonic)
-    system.part[0].add_bond((harmonic,1))
-    system.part[1].add_bond((harmonic,2))
+Finally, the bond can be added to particles using the add_bond()-method of
+ParticleHandle with the instance of the bond class and the id of the bond
+partner particle: ::
+    
+    system.part[2].add_bond((harmonic, 3))
 
-Long-range interactions are subclasses of Actor. They are used by first
-creating an instance of the desired actor and then adding it to the
-system. To activate the P3M electrostatics solver, execute
+Now we want to setup a pair of charged particles treated by the P3M
+electrostatics solver. We start by adding a pair of charged particles to the
+system: ::
+    
+    system.part.add(id = 4, pos = [4.0, 1.0, 1.0], type = 2, q = 1.0) 
+    system.part.add(id = 5, pos = [6.0, 1.0, 1.0], type = 2, q = -1.0) 
 
-::
+Long-range interactions and other interactions that might be mutually exclusive
+are treated as so-called *actors*. They are used by first creating an instance
+of the desired actor::
+    
+    p3m = P3M(accuracy = 1e-3, prefactor = 1.0) 
 
-    from espressomd.electrostatics import P3M p3m=P3M(accuracy=1E-3,
-    prefactor=1) system.actors.add(p3m)
+and then adding it to the system::
+    
+    system.actors.add(p3m)
 
-The integrator uses by default the velocity verlet algorithm and is
-created by the system class. To perform an integration step, execute
 
-::
+So far we just *added* particles and interactions, but did not propagate the
+system. This is done by the `integrator`.  It uses by default the velocity
+verlet algorithm and is already created by the system class. To perform an
+integration step, just execute::
 
-    system.integrator.run(steps=100)
+    system.integrator.run(1)
+
+Usually, the system is propagated for a number of steps in a loop alongside
+with some analysis. In this last snippet, the different energy contributions
+of the system are printed: ::
+
+    num_configs = 10
+    num_steps = 1000
+
+    for i in range(num_configs):
+
+        system.integrator.run(num_steps)
+
+        energy = system.analysis.energy()
+        
+        print("System time:", system.time)
+        print("Energy of the LJ interaction:", energy["non_bonded"])
+        print("Energy of the harmonic bond:", energy["bonded"])
+        print("Energy of the Coulomb interaction:", energy["coulomb"])
 
 .. _Tutorials:
 
