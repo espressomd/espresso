@@ -24,7 +24,7 @@ void deactivate_dipolar_direct_sum_gpu() {
   if (dipolarDirectSum) {
     forceActors.remove(dipolarDirectSum.get());
     energyActors.remove(dipolarDirectSum.get());
-    dipolarDirectSum = nullptr;
+    dipolarDirectSum.reset();
   }
 }
 
