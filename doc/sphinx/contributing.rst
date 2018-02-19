@@ -66,24 +66,8 @@ It is also generally a good idea to contact the mailing lists before you
 start major coding projects. It might be that someone else is already
 working on the problem or has a solution at hand.
 
-.. _Building the Developer's guide:
-
-Building the Developer's guide
-------------------------------
-
-Besides the User's guide, |es| also contains a Developer's guide which is a
-programmer documentation automatically built from comments in the source
-code and using Doxygen. It provides a cross-referenced documentation of
-all functions and data structures available in source code. It can be
-built by typing
-
-make doxygen
-
-in the build directory. Afterwards it can be found in the subdirectory
-of the build directory: ``doc/doxygen/html/index.html``.
-
-A recent version of this guide can also be found on the homepage
-http://espressomd.org/html/dox/.
+You find more detailed information on our developement processes in the
+:ref:`Developers guide`.
 
 .. _Building the User's guide:
 
