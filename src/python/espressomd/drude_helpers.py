@@ -19,6 +19,28 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond, p_core, 
     Checks if different Drude particles have different types.
     Collects types/charges/polarizations/Thole factors for intramol. core-Drude short-range exculsion and Thole interaction.
 
+    Attributes
+    ----------
+
+    system : Instance of :attr:`espressomd.System`
+    harmonic_bond: This method adds this harmonic bond to between drude particle and core
+    thermalized_bond: This method adds this thermalizerd_bond to between drude particle and core
+    p_core: The existing core particle
+    id_drude: :obj:`int`
+              This method creates the drude particle and assigns this id.
+    type_drude: :obj:`int`
+                The type of the newly created drude particle
+    alpha : :obj:`float`
+            The polarizability in units of inverse volume. Related to the charge of the drude particle.
+    mass_drude : :obj:`float`
+                 The mass of the newly created drude particle
+    coulomb_prefactor : :obj:`float
+                        `Required to calculate the charge of the drude particle.
+    thole_damping : :obj:`float`
+                    Thole damping factor of the drude pair. Comes to effect if add_all_thole() method is used.
+    verbose : :obj:`bool`
+             Turns on verbosity.
+
     """
 
     k = harmonic_bond.params["k"]
@@ -83,6 +105,17 @@ def add_thole_pair_damping(system, t1, t2, verbose = False):
     Calculates mixed Thole factors depending on Thole damping and polarization.
     Adds non-bonded Thole interactions to the system.
 
+    Attributes
+    ----------
+
+    system : Instance of :attr:`espressomd.System`
+    t1 : :obj:`int`
+        Type 1 
+    t2 : :obj:`int`
+        Type 2
+    verbose : :obj:`bool`
+             Turns on verbosity.
+
     """
 
     qq = drude_dict[t1]["q"] * drude_dict[t2]["q"]
@@ -99,6 +132,13 @@ def add_all_thole(system, verbose = False):
     """
     Calls add_thole_pair_damping() for all necassary combinations to create the interactions.
 
+    Attributes
+    ----------
+
+    system : Instance of :attr:`espressomd.System`
+    verbose : :obj:`bool`
+             Turns on verbosity.
+    
     """
 
     # drude <-> drude
@@ -121,6 +161,13 @@ def setup_and_add_drude_exclusion_bonds(system, verbose = False):
     Creates electrostatic short-range exclusion bonds for global exclusion 
     between Drude particles and core charges and adds the bonds to the cores. 
     Has to be called once after all Drude particles have been created.
+
+    Attributes
+    ----------
+
+    system : Instance of :attr:`espressomd.System`
+    verbose: :obj:`bool`
+             Turns on verbosity.
 
     """
 
@@ -152,6 +199,16 @@ def setup_intramol_exclusion_bonds(system, mol_drude_types, mol_core_types, mol_
     between Drude particles and partial charges of the cores. Has to be called once
     after all Drude particles have been created.
 
+    Attributes
+    ----------
+
+    system : Instance of :attr:`espressomd.System`
+    mol_drude_types : List of types of drude particles within the molecule
+    mol_core_types : List of types of core particles within the molecule
+    mol_core_partial_charges : List of partial charges of core particles within the molecule
+    verbose : :obj:`bool`
+             Turns on verbosity.
+
     """
 
     # All drude types need...
@@ -174,6 +231,15 @@ def add_intramol_exclusion_bonds(system, drude_ids, core_ids, verbose = False):
     """
     Applies electrostatic short-range exclusion bonds for the given ids.
     Has to be applied for all molecules.
+    
+    Attributes
+    ----------
+
+    system : Instance of :attr:`espressomd.System`
+    drude_ids : IDs of Drude particles within a molecule. 
+    core_ids : IDs of core particles within a molecule. 
+    verbose : :obj:`bool`
+             Turns on verbosity.
 
     """
 

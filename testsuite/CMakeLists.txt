@@ -126,6 +126,7 @@ python_test(FILE random_pairs.py MAX_NUM_PROC 4)
 python_test(FILE lb_electrohydrodynamics.py MAX_NUM_PROC 4)
 python_test(FILE drude.py MAX_NUM_PROC 2)
 python_test(FILE thermalized_bond.py MAX_NUM_PROC 4)
+python_test(FILE thole.py MAX_NUM_PROC 4)
 
 if(PY_H5PY)
   python_test(FILE h5md.py MAX_NUM_PROC 2)
