@@ -65,6 +65,7 @@
 #include "scafacos.hpp"
 #include "statistics.hpp"
 #include "thermostat.hpp"
+#include "thermalized_bond.hpp"
 #include "utils.hpp"
 #include "global.hpp"
 #include "utils/mpi/all_compare.hpp" 
@@ -670,6 +671,14 @@ void on_parameter_change(int field) {
     invalidate_obs();
     recalc_forces = 1;
     break;
+  case FIELD_RIGIDBONDS:
+    /* Rattle bonds needs ghost velocities */
+    on_ghost_flags_change();
+    break;
+  case FIELD_THERMALIZEDBONDS:
+    /* Thermalized distance bonds needs ghost velocities */
+    on_ghost_flags_change();
+    break;
   }
 }
 
@@ -740,5 +749,8 @@ void on_ghost_flags_change() {
     ghosts_have_v = 1;
   };
 #endif
+  //THERMALIZED_DIST_BOND needs v to calculate v_com and v_dist for thermostats
+  if (n_thermalized_bonds)
+    ghosts_have_v = 1;
 
 }
