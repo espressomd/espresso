@@ -25,6 +25,8 @@
 #ifndef _MPIIO_HPP
 #define _MPIIO_HPP
 
+namespace Mpiio {
+
 /** Constants which indicate what to output. To indicate the output of
  *  multiple fields, OR the corresponding values.
  *
@@ -51,5 +53,7 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields);
  * \param fields Specifier which fields to read.
  */
 void mpi_mpiio_common_read(const char *filename, unsigned fields);
+
+}
 
 #endif

@@ -83,5 +83,13 @@ if(SPHINX_FOUND)
             "${CMAKE_CURRENT_BINARY_DIR}"
             "${SPHINX_HTML_DIR}"
         DEPENDS espressomd pypresso 
-        COMMENT "Building HTML documentation with Sphinx")
+        COMMENT "Building HTML documentation with Sphinx.")
+    add_custom_target(doctest
+        ${SPHINX_EXECUTABLE}
+            -b doctest
+            -d "${SPHINX_CACHE_DIR}"
+            "${CMAKE_CURRENT_BINARY_DIR}"
+            "${SPHINX_HTML_DIR}"
+        DEPENDS sphinx
+        COMMENT "Performing doctests within the Sphinx documentation.")
 endif(SPHINX_FOUND) 
