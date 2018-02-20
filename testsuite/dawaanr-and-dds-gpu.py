@@ -150,7 +150,7 @@ class DDSGPUTest(ut.TestCase):
                 dawaanr_e,
                 ddsgpu_e *
                 ratio_dawaanr_dds_gpu,
-                places=3,
+                places=2,
                 msg='Energies for dawaanr {0} and dds_gpu {1} do not match.'.format(
                     dawaanr_e,
                     ratio_dawaanr_dds_gpu *

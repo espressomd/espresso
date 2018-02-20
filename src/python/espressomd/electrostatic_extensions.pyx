@@ -24,11 +24,12 @@ from espressomd cimport actors
 from . import actors
 import numpy as np
 from espressomd.utils cimport handle_errors
+from espressomd.electrostatics import check_neutrality
 
 IF ELECTROSTATICS and P3M:
     cdef class ElectrostaticExtensions(actors.Actor):
         pass
-
+        
     cdef class ELC(ElectrostaticExtensions):
         """
         Electrostatics solver for systems with two periodic dimensions. 
@@ -97,7 +98,7 @@ IF ELECTROSTATICS and P3M:
                 self._params["neutralize"], 1, type(True), "")
 
         def valid_keys(self):
-            return "maxPWerror", "gap_size", "far_cut", "neutralize", "delta_mid_top", "delta_mid_bot", "const_pot", "pot_diff"
+            return "maxPWerror", "gap_size", "far_cut", "neutralize", "delta_mid_top", "delta_mid_bot", "const_pot", "pot_diff", "check_neutrality"
 
         def required_keys(self):
             return ["maxPWerror", "gap_size"]
@@ -110,7 +111,8 @@ IF ELECTROSTATICS and P3M:
                     "delta_mid_bot": 0,
                     "const_pot": 0,
                     "pot_diff": 0.0,
-                    "neutralize": True}
+                    "neutralize": True,
+                    "check_neutrality": True}
 
         def _get_params_from_es_core(self):
             params = {}
@@ -138,6 +140,7 @@ IF ELECTROSTATICS and P3M:
                 handle_errors("ELC tuning failed, ELC is not set up to work with the GPU P3M")
 
         def _activate_method(self):
+            check_neutrality(self.system, self._params)
             self._set_params_in_es_core()
 
         def _deactivate_method(self):
@@ -211,7 +214,7 @@ IF ELECTROSTATICS and P3M:
                 self._params["epsilons"] = np.zeros(self._params["n_icc"])
 
         def valid_keys(self):
-            return "n_icc", "convergence", "relaxation", "ext_field", "max_iterations", "first_id", "eps_out", "normals", "areas", "sigmas", "epsilons"
+            return "n_icc", "convergence", "relaxation", "ext_field", "max_iterations", "first_id", "eps_out", "normals", "areas", "sigmas", "epsilons", "check_neutrality"
 
         def required_keys(self):
             return ["n_icc", "normals", "areas"]
@@ -227,7 +230,8 @@ IF ELECTROSTATICS and P3M:
                     "normals": [],
                     "areas": [],
                     "sigmas": [],
-                    "epsilons": []}
+                    "epsilons": [],
+                    "check_neutrality": True}
 
         def _get_params_from_es_core(self):
             params = {}
@@ -293,6 +297,7 @@ IF ELECTROSTATICS and P3M:
             mpi_iccp3m_init(0)
 
         def _activate_method(self):
+            check_neutrality(self.system, self._params)
             self._set_params_in_es_core()
 
         def _deactivate_method(self):

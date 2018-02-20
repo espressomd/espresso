@@ -1,6 +1,8 @@
 ESPResSo documentation
 ======================
 
+.. _Users Guide:
+
 User's Guide
 ------------
 
@@ -8,6 +10,8 @@ User's Guide
     :maxdepth: 1
 
     ug.rst
+
+.. _Developers Guide:
 
 Developer's Guide
 -----------------

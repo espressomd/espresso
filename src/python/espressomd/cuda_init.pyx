@@ -51,8 +51,7 @@ cdef class CudaInitHandle(object):
                     Set the device id of the graphics card to use.
 
             """
-            if cuda_set_device(_dev):
-                raise Exception("cuda device set error")
+            cuda_set_device(_dev)
 
     IF CUDA == 1:
         @property
