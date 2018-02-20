@@ -124,92 +124,100 @@ In this section, a brief overview is given over the most important components
 of the Python interfacei. Their usage is illustrated by short examples, which
 can be put together to a demo script. 
 
+.. rubric:: Imports
+
 As usual, the Python script starts by importing the necessary modules.  The
 |es| interface is contained in the espressomd Python module, which needs to be
-imported, before anything related can be done.
-
-::
+imported, before anything related can be done. ::
 
     import espressomd
 
-This should be followed by further necessary imports::
+This should be followed by further necessary imports: ::
 
     from espressomd.interactions import HarmonicBond
     from espressomd.electrostatics import P3M 
 
-Access to the simulation system is provided via the System class. As a
-first step, an instance of this class needs to be created
+.. rubric:: espressomd.System
 
-::
+Access to the simulation system is provided via the System class. As a
+first step, an instance of this class needs to be created. ::
 
     system = espressomd.System(box_l = [10,10,10])
 
-Note that only one instance of the System class can be created, due to
+Note that only one instance of the System class can be created due to
 limitations in the simulation core. :ref:`Properties of the System
 class<Setting global variables in Python>` are used to access the parameters
-concerning the simulation system such as box geometry or time step::
+concerning the simulation system such as box geometry, time step or :ref:`cell-system<Cellsystems>`: ::
 
-    print(system.box_l)
+    print("The box dimensions are {}".format(system.box_l))
     system.time_step = 0.01
-    system.skin = 0.4
+    system.cellsystem.skin = 0.4
+
+.. rubric:: Particles
 
 The particles in the simulation are accessed via the ParticleList class. Use
-the add method to :ref:`create new particles<Adding particles>`::
+the `add` method to :ref:`create new particles<Adding particles>`: ::
 
     system.part.add(id = 0, pos = [1.0, 1.0, 1.0], type = 0) 
-    system.part.add(id = 1, pos = [5.0, 5.0, 5.0], type = 0) 
+    system.part.add(id = 1, pos = [1.0, 1.0, 2.0], type = 0) 
 
 Individual particles can be retrieved by their numerical id using angular
 brackets::
     
-    system.part[0].pos = [3.0, 3.0, 3.0]
+    system.part[1].pos = [1.0, 1.0, 2.0]
 
-It is also possible to loop :ref:`loop<Iterating over particles and pairs of
+It is also possible to :ref:`loop<Iterating over particles and pairs of
 particles>` over all particles::
 
     for p in system.part:
-        print(p.id, p.type)
+        print("Particle id {}, type {}".format(p.id, p.type))
 
 An individual particle is represented by an instance of ParticleHandle.
-The properties of the particle are implemented as Python properties::
+The properties of the particle (see
+:class:`espressomd.particle_data.ParticleHandle`) are implemented as Python
+properties. ::
 
     particle = system.part[0]
     particle.type = 0
-    print(particle.pos)
+    print("Position of particle 0: {}".format(particle.pos))
 
 :ref:`Properties of several particles<Interacting with groups of particles>`
-can be accessed by using Python slices::
+can be accessed by using Python slices: ::
 
     positions = system.part[:].pos
 
-Interactions between particles fall in three categories:
+.. rubric:: Interactions
 
--  Non-bonded interactions are short-ranged interactions between *all*
+Interactions between particles usually fall in three categories:
+
+-  :ref:`Non-bonded interactions` are short-ranged interactions between *all*
    pairs of particles of specified types. An example is the
    Lennard-Jones interaction mimicking overlap repulsion and van der
    Waals attraction.
 
--  Bonded interactions act only between two specific particles. An
+-  :ref:`Bonded interactions` act only between two specific particles. An
    example is the harmonic bond between adjacent particles in a polymer
    chain.
 
 -  Long-range interactions act between all particles with specific
-   properties in the entire system. An example is the coulomb
-   interaction.
+   properties in the entire system. An example is the :ref:`coulomb
+   interaction<Electrostatics>`.
+
+.. rubric:: Non-bonded interaction
 
 Non-bonded interactions are represented as subclasses of
 :class:`espressomd.interactions.NonBondedInteraction`, e.g.
 :class:`espressomd.interactions.LennardJonesInteraction`.
 Instances of these classes for a given pair of particle types are accessed via
 the non_bonded_inter attribute of the System class. This sets up a Lennard Jones
-interaction between all particles of type 0 with the given parameters:
+interaction between all particles of type 0 with the given parameters: ::
 
-::
+    system.non_bonded_inter[0,0].lennard_jones.set_params(epsilon = 1, sigma = 1, cutoff = 5.0, shift = "auto")
 
-    system.non_bonded_inter[0,0].lennard_jones.set_params(epsilon = 1, sigma = 1, cutoff = 1.5, shift = “auto”)
+.. rubric:: Bonded interaction
 
 Next, we add another pair of partices with a different type to later add 
-a harmonic bond between them: ::
+a :ref:`harmonic bond<Harmonic bond>` between them: ::
 
     system.part.add(id = 2, pos = [7.0, 7.0, 7.0], type = 1) 
     system.part.add(id = 3, pos = [7.0, 7.0, 8.0], type = 1) 
@@ -230,6 +238,8 @@ partner particle: ::
     
     system.part[2].add_bond((harmonic, 3))
 
+.. rubric:: Charges
+
 Now we want to setup a pair of charged particles treated by the P3M
 electrostatics solver. We start by adding a pair of charged particles to the
 system: ::
@@ -237,16 +247,18 @@ system: ::
     system.part.add(id = 4, pos = [4.0, 1.0, 1.0], type = 2, q = 1.0) 
     system.part.add(id = 5, pos = [6.0, 1.0, 1.0], type = 2, q = -1.0) 
 
-Long-range interactions and other interactions that might be mutually exclusive
+Long-range interactions and other methods that might be mutually exclusive
 are treated as so-called *actors*. They are used by first creating an instance
 of the desired actor::
     
     p3m = P3M(accuracy = 1e-3, prefactor = 1.0) 
 
-and then adding it to the system::
-    
+and then adding it to the system: ::
+   
+    print("Tuning p3m...")
     system.actors.add(p3m)
 
+.. rubric:: Integration
 
 So far we just *added* particles and interactions, but did not propagate the
 system. This is done by the `integrator`.  It uses by default the velocity
@@ -266,26 +278,37 @@ of the system are printed: ::
 
         system.integrator.run(num_steps)
 
-        energy = system.analysis.energy()
-        
-        print("System time:", system.time)
-        print("Energy of the LJ interaction:", energy["non_bonded"])
-        print("Energy of the harmonic bond:", energy["bonded"])
-        print("Energy of the Coulomb interaction:", energy["coulomb"])
+    	energy = system.analysis.energy()
+        print("System time: {}".format(system.time))
+        print("Energy of the LJ interaction: {}".format(energy["non_bonded"])) 
+        print("Energy of the harmonic bond: {}".format(energy["bonded"])) 
+        print("Energy of the Coulomb interaction: {}".format(energy["coulomb"])) 
 
 .. _Tutorials:
 
 Tutorials
 ---------
 
-There is a number of tutorials that guide you in creating simulations using a number of different features of |es|. You can find them in the directory ``/doc/tutorials``.
+There is a number of tutorials that guide you through the different features of |es|:
+
+* `Building |es|						  <https://github.com/espressomd/espresso/blob/python/doc/tutorials/00-building_espresso/00-building_espresso.pdf>`_
+* `Simulate a simple Lennard-Jones liquid <https://github.com/espressomd/espresso/blob/python/doc/tutorials/01-lennard_jones/01-lennard_jones.pdf>`_
+* `Charged systems                        <https://github.com/espressomd/espresso/blob/python/doc/tutorials/02-charged_system/02-charged_system.pdf>`_
+* `Lattice Boltzmann                      <https://github.com/espressomd/espresso/blob/python/doc/tutorials/04-lattice_boltzmann/04-lattice_boltzmann.pdf>`_
+* `Raspberry electrophoresis              <https://github.com/espressomd/espresso/blob/python/doc/tutorials/05-raspberry_electrophoresis/05-raspberry_electrophoresis.pdf>`_
+* `Electrokinetics                        <https://github.com/espressomd/espresso/blob/python/doc/tutorials/07-electrokinetics/07-electrokinetics.pdf>`_
+* `Visualization                          <https://github.com/espressomd/espresso/blob/python/doc/tutorials/08-visualization/08-visualization.pdf>`_
+* `Catalytic reactions                    <https://github.com/espressomd/espresso/blob/python/doc/tutorials/09-catalytic_reactions/09-catalytic_reactions.pdf>`_
+
+You can also find the tutorials and related scripts in the directory ``/doc/tutorials``.
 
 .. _Sample scripts:
 
 Sample scripts
 --------------
 
-Several scripts that can serve as usage examples can be found in the directory ``/samples``
+Several scripts that can serve as usage examples can be found in the directory ``/samples``,
+or in the `git repository <https://github.com/espressomd/espresso/blob/python/samples/>`_.
 
 * ``billard.py`` 
     A simple billard game, needs the Python ``pypopengl`` module
