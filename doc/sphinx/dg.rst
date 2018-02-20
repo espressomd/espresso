@@ -52,10 +52,11 @@ systems.
 Getting the Development Code
 ----------------------------
 We use Github for storing the source code and its history, and for managing the development process. 
-The repository is located at
-http://github.com/espressomd/espresso
-To get the current development code, run
-git clone git://github.com/espressomd/espresso
+The repository is located at http://github.com/espressomd/espresso.
+To get the current development code, run::
+
+  git clone git://github.com/espressomd/espresso
+
 This will create a directory named "espresso" which contains the code.
 The build process does not differ from the one for release versions described in the users' guide.
 

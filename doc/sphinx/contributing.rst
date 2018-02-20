@@ -60,7 +60,10 @@ your own code which could be useful to others, you are very welcome to
 contribute it to the community. Before you start making any changes to
 the code, you should obtain the current development version of it. For
 more information about how to obtain the development version, refer to
-the homepage http://espressomd.org.
+the :ref:`Developers guide`.
+
+If you are looking for good ways to get started with contributing, please
+have a look on the information available on github_.
 
 It is also generally a good idea to contact the mailing lists before you
 start major coding projects. It might be that someone else is already
@@ -68,6 +71,8 @@ working on the problem or has a solution at hand.
 
 You find more detailed information on our developement processes in the
 :ref:`Developers guide`.
+
+.. _github: https://github.com/espressomd/espresso/blob/python/CONTRIBUTING.md
 
 .. _Building the User's guide:
 
