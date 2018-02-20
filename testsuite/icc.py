@@ -71,6 +71,7 @@ class test_icc(ut.TestCase):
             areas=iccAreas,
             sigmas=iccSigmas,
             epsilons=iccEpsilons)
+        
         S.actors.add(p3m)
         S.actors.add(icc)
 
