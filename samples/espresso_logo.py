@@ -5,9 +5,11 @@ from espressomd.visualization_opengl import openGLLive
 import numpy as np
 from math import *
 
-system = espressomd.System()
 box_l = 50
-system.box_l = [box_l, 15, box_l]
+system = espressomd.System(box_l = [box_l, 15, box_l])
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
 
 yoff = 3
 

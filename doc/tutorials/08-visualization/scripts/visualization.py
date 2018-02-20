@@ -1,9 +1,11 @@
 from __future__ import print_function
-import espressomd
-from espressomd import visualization
+
 import numpy
 from matplotlib import pyplot
 from threading import Thread
+
+import espressomd
+from espressomd import visualization
 
 # System parameters
 #############################################################
@@ -22,7 +24,7 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System()
+system = espressomd.System(box_l=[box_l, box_l, box_l])
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
@@ -44,8 +46,6 @@ int_n_times = 100
 
 # Interaction setup
 #############################################################
-
-system.box_l = [box_l, box_l, box_l]
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,

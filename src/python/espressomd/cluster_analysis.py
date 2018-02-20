@@ -56,35 +56,48 @@ class ClusterStructure(ScriptInterfaceHelper):
         or via iteration:
         for pair in clusters:
         where pair contains the numeric id and the corresponding cluster object.
-
-    Methods 
-    -------
-    cluster_ids()
-        List of all cluster ids of the clusters in the structure
-
-    cid_for_particle(p): where p is an instace of ParticleHandle or aparticle id
-        returns the id of the clsuter to which the particle belongs,
-        or None if it does not belong to a cluster.
-
-    clear():
-        Clears the cluster structure
-
-    run_for_all_pairs: 
-        Runs the clsuter analysis, considering all pairs of particles in the system
-
-    run_for_bonded_particles():
-        Runts the cluster analysis, considering only pairs of particles connected 
-        by a pairwise bonded potential
+    
     """
     _so_name = "ClusterAnalysis::ClusterStructure"
-    _so_bind_methods = ("run_for_bonded_particles",
-                        "run_for_all_pairs", "clear", "cluster_ids")
     _so_creation_policy="LOCAL"
 
     def __init__(self, *args, **kwargs):
         super(type(self), self).__init__(*args, **kwargs)
         self._clusters = Clusters(self)
 
+    def run_for_all_pairs(self):
+        """
+        Runs the clsuter analysis, considering all pairs of particles in the system
+
+        """
+        return self.call_method("run_for_all_pairs")
+    
+    def run_for_bonded_particles(self):
+        """
+        Runts the cluster analysis, considering only pairs of particles connected ba a pair-bond.
+
+        """
+        return self.call_method("run_for_bonded_particles")
+
+    def clear(self):
+        """
+        Clears the cluster structure.
+
+        """
+        return self.call_method("clear")
+    
+    
+    def cluster_ids(self):
+        """returns a list of all cluster ids of the clusters in the structure
+
+        """
+        return self.call_method("cluster_ids")
+
+
+
+
+
+    
     def cid_for_particle(self, p):
         """Returns cluster id for the particle (passed as ParticleHandle or particle id)"""
         if isinstance(p, ParticleHandle):

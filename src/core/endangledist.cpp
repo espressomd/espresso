@@ -194,7 +194,7 @@ int calc_endangledist_pair_force(Particle *p1, Particle *p2,
 //#ifdef BOND_ENDANGLEDIST_HARMONIC
 //    /* Force = -dU/dr_i= k*smooth*(phi-phi0)/sin(phi)(cosphi*vec + n)/|vec| */
 //    fac_a = bend * (phi - phieq) / sinphi;
-//    fac_b = 0.5 * bend * SQR(phi - phieq);
+//    fac_b = 0.5 * bend * Utils::sqr(phi - phieq);
 //    for (i = 0; i < 3; i++) {
 //      gradharm1 = -1.0 * fac_a *
 //                  (cosphi * vec[i] - constraints[clconstr].c.wal.n[i]) * di;
@@ -265,7 +265,7 @@ int endangledist_pair_energy(Particle *p1, Particle *p2,
 //    /*fprintf(stdout,"clconstr=%d smooth=%f\n",clconstr,smooth);*/
 //    bend = iaparams->p.endangledist.bend;
 //    phieq = iaparams->p.endangledist.phi0;
-//    *_energy = 0.5 * bend * smooth * SQR(phi - phieq);
+//    *_energy = 0.5 * bend * smooth * Utils::sqr(phi - phieq);
 //  } else if (distwallmin >= distmx) {
 //    *_energy = 0.0;
 //  }

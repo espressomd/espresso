@@ -249,11 +249,11 @@ int p3m_set_ninterpol(int n);
 
 
 /** Calculate real space contribution of coulomb pair energy. */
-inline double p3m_pair_energy(double chgfac, double *d,double dist2,double dist)
+inline double p3m_pair_energy(double chgfac, double dist)
 {
   double adist, erfc_part_ri;
 
-  if(dist < p3m.params.r_cut) {
+  if(dist < p3m.params.r_cut && dist != 0) {
     adist = p3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
     erfc_part_ri = AS_erfc_part(adist) / dist;

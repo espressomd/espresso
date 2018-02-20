@@ -19,14 +19,14 @@ class LBTest(ut.TestCase):
     3) measure temperature of colloid and fluid
 
     """
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     n_nodes = system.cell_system.get_state()["n_nodes"]
     system.seed = range(n_nodes)
 
     def setUp(self):
-        self.params = {'int_steps': 100,
+        self.params = {'int_steps': 50,
                        'int_times': 20,
-                       'time_step': 0.005,
+                       'time_step': 0.01,
                        'tau': 0.02,
                        'agrid': 0.5,
                        'box_l': 12.0,
@@ -74,7 +74,7 @@ class LBTest(ut.TestCase):
 
         self.system.thermostat.set_langevin(
             kT=self.params['temp'], gamma=self.params['gamma'])
-        self.system.integrator.run(1000)
+        self.system.integrator.run(100)
         # kill particle motion
         for i in range(self.n_col_part):
             self.system.part[i].v = [0.0, 0.0, 0.0]
@@ -97,7 +97,7 @@ class LBTest(ut.TestCase):
         for i in range(self.n_col_part):
             self.tot_mom = self.tot_mom + self.system.part[i].v
 
-        self.system.integrator.run(1000)
+        self.system.integrator.run(100)
 
         self.max_dmass = 0.0
         self.max_dm = [0, 0, 0]

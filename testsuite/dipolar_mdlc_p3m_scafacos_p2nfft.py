@@ -38,7 +38,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
        2d: as long as this test AND the scafacos_dipolar_1d_2d test passes, we are save.
        3d: As long as the independently written p3m and p2nfft agree, we are save.
     """
-    s = espressomd.System()
+    s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     s.time_step = 0.01
     s.cell_system.skin = .4
     s.periodicity = 1, 1, 1

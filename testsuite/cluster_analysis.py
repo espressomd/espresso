@@ -29,7 +29,7 @@ from espressomd.cluster_analysis import ClusterStructure
 class ClusterAnalysis(ut.TestCase):
     """Tests the cluster analysis"""
 
-    es = espressomd.System()
+    es = espressomd.System(box_l=(1,1,1))
     
 
     f = FeneBond(k=1, d_r_max=0.05)
