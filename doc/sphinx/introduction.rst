@@ -121,7 +121,7 @@ Basic python simulation script
 ------------------------------
 
 In this section, a brief overview is given over the most important components
-of the Python interfacei. Their usage is illustrated by short examples, which
+of the Python interface. Their usage is illustrated by short examples, which
 can be put together to a demo script. 
 
 .. rubric:: Imports
@@ -192,8 +192,7 @@ Interactions between particles usually fall in three categories:
 
 -  :ref:`Non-bonded interactions` are short-ranged interactions between *all*
    pairs of particles of specified types. An example is the
-   Lennard-Jones interaction mimicking overlap repulsion and van der
-   Waals attraction.
+   Lennard-Jones interaction mimicking overlap repulsion and van-der-Waals attraction.
 
 -  :ref:`Bonded interactions` act only between two specific particles. An
    example is the harmonic bond between adjacent particles in a polymer
@@ -241,8 +240,7 @@ partner particle: ::
 .. rubric:: Charges
 
 Now we want to setup a pair of charged particles treated by the P3M
-electrostatics solver. We start by adding a pair of charged particles to the
-system: ::
+electrostatics solver. We start by adding the particles: ::
     
     system.part.add(id = 4, pos = [4.0, 1.0, 1.0], type = 2, q = 1.0) 
     system.part.add(id = 5, pos = [6.0, 1.0, 1.0], type = 2, q = -1.0) 
