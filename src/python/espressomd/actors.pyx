@@ -1,6 +1,7 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from .highlander import ThereCanOnlyBeOne
+from .utils import handle_errors
 
 cdef class Actor(object):
 
@@ -46,10 +47,12 @@ cdef class Actor(object):
         Actor.active_list[inter] = True
         self.validate_params()
         self._activate_method()
+        handle_errors("Activation of an actor")
         self._isactive = True
 
     def _deactivate(self):
         self._deactivate_method()
+        handle_errors("Deactivation of an actor")
         self._isactive = False
         inter = self._get_interaction_type()
         if not Actor.active_list[inter]:
