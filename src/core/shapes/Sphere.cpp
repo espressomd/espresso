@@ -20,11 +20,11 @@
 */
 
 #include "Sphere.hpp"
+#include "utils.hpp"
 #include <cmath>
 
 using namespace std;
 
-#define SQR(A) ((A) * (A))
 
 namespace Shapes {
 int Sphere::calculate_dist(const double *ppos, double *dist,
@@ -35,7 +35,7 @@ int Sphere::calculate_dist(const double *ppos, double *dist,
   c_dist = 0.0;
   for (i = 0; i < 3; i++) {
     vec[i] = m_pos[i] - ppos[i];
-    c_dist += SQR(vec[i]);
+    c_dist += Utils::sqr(vec[i]);
   }
   c_dist = sqrt(c_dist);
 

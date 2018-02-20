@@ -34,11 +34,13 @@ Program Information:""")
 print(espressomd.features())
 
 
-system = espressomd.System()
+box_l = 50
+system = espressomd.System(box_l=[box_l]*3)
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+
 system.time_step = 0.01
 system.cell_system.skin = 0.1
-box_l = 50
-system.box_l = [box_l, box_l, box_l]
 
 system.part.add(id=0, pos=[box_l / 2.0, box_l /
                            2.0, box_l / 2.0], fix=[1, 1, 1])
@@ -63,9 +65,9 @@ f_list = np.array(f_list)
 
 fig1 = plt.figure()
 ax = fig1.add_subplot(111)
-ax.plot(f_list[:, 0], label="F_x")
-ax.plot(f_list[:, 1], label="F_y")
-ax.plot(f_list[:, 2], label="F_z")
+ax.plot(f_list[:, 0], label=r"$F_x$")
+ax.plot(f_list[:, 1], label=r"$F_y$")
+ax.plot(f_list[:, 2], label=r"$F_z$")
 ax.legend()
 ax.set_xlabel("t")
 ax.set_ylabel("F")

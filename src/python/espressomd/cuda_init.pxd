@@ -18,7 +18,7 @@
 #
 from __future__ import print_function, absolute_import
 cdef extern from "cuda_init.hpp":
-    int cuda_set_device(int dev)
+    int cuda_set_device(int dev) except +
     int cuda_get_device()
     int cuda_get_n_gpus()
     void cuda_get_gpu_name(int dev, char name[64])

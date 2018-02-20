@@ -20,7 +20,6 @@ from __future__ import print_function
 import espressomd
 from espressomd import electrostatics
 from espressomd import electrostatic_extensions
-import numpy
 try:
     import cPickle as pickle
 except ImportError:
@@ -54,7 +53,11 @@ lj_cap = 20
 
 # Import system properties
 #############################################################
-system = espressomd.System()
+system = espressomd.System(box_l=[box_l]*3)
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+
+
 with open("system_save", "r") as system_save:
     pickle.load(system_save)
 

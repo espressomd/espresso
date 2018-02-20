@@ -3,7 +3,6 @@ include "myconfig.pxi"
 from .highlander import ThereCanOnlyBeOne
 from .utils import handle_errors
 
-
 cdef class Actor(object):
 
     # Keys in active_list have to match the method name.
@@ -179,7 +178,7 @@ class Actors(object):
             actor._activate()
         else:
             raise ThereCanOnlyBeOne(actor)
-            
+
     def remove(self, actor):
         """
         Parameters
