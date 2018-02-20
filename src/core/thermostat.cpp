@@ -27,6 +27,7 @@
 #include "npt.hpp"
 #include "ghmc.hpp"
 #include "lb.hpp"
+#include "thermalized_bond.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -176,6 +177,12 @@ void thermo_init_npt_isotropic() {
 #endif
 
 void thermo_init() {
+
+  // Init thermalized bond despite of thermostat 
+  if (n_thermalized_bonds) {
+    thermalized_bond_init();
+  }
+
   if (thermo_switch == THERMO_OFF) {
     return;
   }
@@ -215,6 +222,10 @@ void thermo_heat_up() {
     dpd_heat_up();
   }
 #endif
+  if (n_thermalized_bonds) {
+    thermalized_bond_heat_up();
+  }
+
 }
 
 void langevin_cool_down() {
@@ -235,4 +246,7 @@ void thermo_cool_down() {
     dpd_cool_down();
   }
 #endif
+  if (n_thermalized_bonds) {
+    thermalized_bond_cool_down();
+  }
 }

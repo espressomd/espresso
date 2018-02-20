@@ -41,6 +41,7 @@
 #include "collision.hpp"
 #include "constraints.hpp"
 #include "dihedral.hpp"
+#include "thermalized_bond.hpp"
 #include "elc.hpp"
 #include "endangledist.hpp"
 #include "fene.hpp"
@@ -75,6 +76,7 @@
 #include "steppot.hpp"
 #include "subt_lj.hpp"
 #include "tab.hpp"
+#include "thole.hpp"
 #include "twist_stack.hpp"
 #include "umbrella.hpp"
 #ifdef ELECTROSTATICS
@@ -82,6 +84,9 @@
 #include "debye_hueckel.hpp"
 #include "reaction_field.hpp"
 #include "scafacos.hpp"
+#endif
+#ifdef P3M
+#include "bonded_coulomb_p3m_sr.hpp"
 #endif
 #ifdef IMMERSED_BOUNDARY
 #include "immersed_boundary/ibm_triel.hpp"
@@ -231,6 +236,10 @@ inline void calc_non_bonded_pair_force_parts(
 #ifdef LJCOS2
   add_ljcos2_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
+/* thole damping */
+#ifdef THOLE
+  add_thole_pair_force(p1, p2, ia_params, d, dist, force);
+#endif
 /* tabulated */
 #ifdef TABULATED
   add_tabulated_pair_force(p1, p2, ia_params, d, dist, force);
@@ -269,6 +278,7 @@ inline void calc_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
     @param dist2     distance squared between p1 and p2. */
 inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
                                       double dist, double dist2) {
+
   IA_parameters *ia_params = get_ia_param(p1->p.type, p2->p.type);
   double force[3] = {0., 0., 0.};
   double torque1[3] = {0., 0., 0.};
@@ -556,9 +566,17 @@ inline void add_bonded_force(Particle *p1) {
     case BONDED_IA_QUARTIC:
       bond_broken = calc_quartic_pair_force(p1, p2, iaparams, dx, force);
       break;
+    case BONDED_IA_THERMALIZED_DIST:
+      bond_broken = calc_thermalized_bond_forces(p1, p2, iaparams, dx, force, force2);
+      break;
 #ifdef ELECTROSTATICS
     case BONDED_IA_BONDED_COULOMB:
       bond_broken = calc_bonded_coulomb_pair_force(p1, p2, iaparams, dx, force);
+      break;
+#endif
+#ifdef P3M
+    case BONDED_IA_BONDED_COULOMB_P3M_SR:
+      bond_broken = calc_bonded_coulomb_p3m_sr_pair_force(p1, p2, iaparams, dx, force);
       break;
 #endif
 #ifdef HYDROGEN_BOND
@@ -761,6 +779,10 @@ inline void add_bonded_force(Particle *p1) {
           p2->f.f[j] += force2[j];
           break;
 #endif // BOND_ENDANGLEDIST
+	    case BONDED_IA_THERMALIZED_DIST:
+          p1->f.f[j] += force[j];
+          p2->f.f[j] += force2[j];
+	      break;
         default:
           p1->f.f[j] += force[j];
           p2->f.f[j] -= force[j];
