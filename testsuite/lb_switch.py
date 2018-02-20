@@ -36,7 +36,7 @@ class LBSwitchActor(ut.TestCase):
 
         system.integrator.run(1)
 
-        np.testing.assert_allclose(system.part[0].f, [-gamma_1, 0.0, 0.0])
+        np.testing.assert_allclose(np.copy(system.part[0].f), [-gamma_1, 0.0, 0.0])
 
         system.integrator.run(100)
         self.assertNotAlmostEqual(lb_fluid_1[3,3,3].velocity[0], 0.0)
@@ -49,14 +49,15 @@ class LBSwitchActor(ut.TestCase):
         np.testing.assert_allclose(system.part[0].f, 0.0)
 
         system.actors.add(lb_fluid_2)
+
         for p in product(range(5), range(5), range(5)):
-            np.testing.assert_allclose(lb_fluid_2[p].velocity, np.zeros((3,)))
+            np.testing.assert_allclose(np.copy(lb_fluid_2[p].velocity), np.zeros((3,)))
 
         system.part[0].v = [1,0,0]
 
         system.integrator.run(1)
 
-        np.testing.assert_allclose(system.part[0].f, [-gamma_2, 0.0, 0.0])
+        np.testing.assert_allclose(np.copy(system.part[0].f), [-gamma_2, 0.0, 0.0])
 
 if __name__ == "__main__":
     ut.main()
