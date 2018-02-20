@@ -650,8 +650,8 @@ cdef class ParticleHandle(object):
     IF VIRTUAL_SITES == 1:
 
         property virtual:
-            """
-            Virtual flag.
+            """ Virtual flag.
+
             Declares the particles as virtual (1) or non-virtual (0, default).
 
             virtual : integer
@@ -675,6 +675,34 @@ cdef class ParticleHandle(object):
                 return x[0]
 
     IF VIRTUAL_SITES_RELATIVE == 1:
+        property vs_quat:
+            """ Virtual site quaternion.
+
+            This quaternion describes the virtual particles orientation in the body
+            fixed frame of the related real particle.
+
+            vs_quat : array_like of :obj:`float`
+
+            .. note::
+               This needs the feature VIRTUAL_SITES_RELATIVE.
+
+            """
+            def __set__(self, q):
+                if len(q) != 4:
+                    raise ValueError("vs_quat has to be an array-like of length 4.")
+                if not self.virtual:
+                    raise ValueError("Setting of vs_quat for a non-virtual particle is not allowed.")
+                cdef double _q[4]
+                for i in range(4):
+                    _q[i] = q[i]
+                set_particle_vs_quat(self.id, _q)
+
+            def __get__(self):
+                self.update_particle_data()
+                cdef const double *q = NULL
+                pointer_to_vs_quat(self.particle_data, q)
+                return np.array([q[0], q[1], q[2], q[3]])
+
         property vs_relative:
             """
             Virtual sites relative parameters.
@@ -692,7 +720,7 @@ cdef class ParticleHandle(object):
             """
 
             def __set__(self, x):
-                if len(x) != 3:
+                if len(x) < 3:
                     raise ValueError(
                         "vs_relative needs input like id,distance,(q1,q2,q3,q4).")
                 _relto = x[0]
@@ -714,10 +742,9 @@ cdef class ParticleHandle(object):
                 cdef const int * rel_to = NULL
                 cdef const double * dist = NULL
                 cdef const double * q = NULL
-                cdef const double * vs_q = NULL
                 pointer_to_vs_relative(
-                    self.particle_data, rel_to, dist, q, vs_q)
-                return (rel_to[0], dist[0], np.array((q[0], q[1], q[2], q[3])), np.array([vs_q[0], vs_q[1], vs_q[2], vs_q[3]]))
+                    self.particle_data, rel_to, dist, q)
+                return (rel_to[0], dist[0], np.array((q[0], q[1], q[2], q[3])))
 
         # vs_auto_relate_to
         def vs_auto_relate_to(self, _relto):

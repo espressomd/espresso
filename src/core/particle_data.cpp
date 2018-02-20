@@ -171,7 +171,7 @@ void build_particle_node() { mpi_who_has(); }
 */
 int get_particle_node(int id) {
   if ((id < 0) or (id > max_seen_particle))
-    return -1;
+    throw std::runtime_error("Invalid particle id!");
 
   if (particle_node.empty())
     build_particle_node();
@@ -316,9 +316,10 @@ Utils::Cache<int, Particle> particle_fetch_cache(max_cache_size);
 void invalidate_fetch_cache() { particle_fetch_cache.invalidate(); }
 
 const Particle *get_particle_data(int part) {
-  auto const pnode = get_particle_node(part);
-  /* Check if particle exists at all. */
-  if (-1 == pnode) {
+  int pnode;
+  try {
+    pnode = get_particle_node(part);
+  } catch (...) {
     return nullptr;
   }
 
@@ -434,11 +435,12 @@ int place_particle(int part, double p[3]) {
   int retcode = ES_PART_OK;
 
   if (part < 0)
-    return ES_PART_ERROR;
-
-  auto pnode = (part <= max_seen_particle) ? get_particle_node(part) : -1;
-
-  if (pnode == -1) {
+    throw std::runtime_error("Particle id has to be >= 0!");
+  int pnode;
+  if (part <= max_seen_particle) {
+    pnode = get_particle_node(part);
+    mpi_place_particle(pnode, part, p);
+  } else  {
     /* new particle, node by spatial position */
     pnode = cell_structure.position_to_node(p);
 
@@ -448,9 +450,6 @@ int place_particle(int part, double p[3]) {
     retcode = ES_PART_CREATED;
 
     mpi_place_new_particle(pnode, part, p);
-
-  } else {
-    mpi_place_particle(pnode, part, p);
   }
 
   return retcode;
@@ -459,8 +458,6 @@ int place_particle(int part, double p[3]) {
 int set_particle_v(int part, double v[3]) {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
   mpi_send_v(pnode, part, v);
   return ES_OK;
 }
@@ -469,8 +466,6 @@ int set_particle_v(int part, double v[3]) {
 int set_particle_swimming(int part, ParticleParametersSwimming swim) {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
   mpi_send_swimming(pnode, part, swim);
   return ES_OK;
 }
@@ -479,8 +474,6 @@ int set_particle_swimming(int part, ParticleParametersSwimming swim) {
 int set_particle_f(int part, double F[3]) {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
   mpi_send_f(pnode, part, F);
   return ES_OK;
 }
@@ -489,8 +482,6 @@ int set_particle_f(int part, double F[3]) {
 int set_particle_solvation(int part, double *solvation) {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
   mpi_send_solvation(pnode, part, solvation);
   return ES_OK;
 }
@@ -501,8 +492,6 @@ int set_particle_solvation(int part, double *solvation) {
 int set_particle_mass(int part, double mass) {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
   mpi_send_mass(pnode, part, mass);
   return ES_OK;
 }
@@ -514,8 +503,6 @@ constexpr double ParticleProperties::mass;
 int set_particle_rotational_inertia(int part, double rinertia[3]) {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
   mpi_send_rotational_inertia(pnode, part, rinertia);
   return ES_OK;
 }
@@ -524,8 +511,6 @@ int set_particle_rotational_inertia(int part, double rinertia[3]) {
 int set_particle_rotation(int part, int rot) {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
   mpi_send_rotation(pnode, part, rot);
   return ES_OK;
 }
@@ -535,8 +520,6 @@ int set_particle_rotation(int part, int rot) {
 int set_particle_affinity(int part, double bond_site[3]) {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
   mpi_send_affinity(pnode, part, bond_site);
   return ES_OK;
 }
@@ -546,8 +529,6 @@ int set_particle_affinity(int part, double bond_site[3]) {
 int set_particle_out_direction(int part, double out_direction[3]) {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
   mpi_send_out_direction(pnode, part, out_direction);
   return ES_OK;
 }
@@ -557,8 +538,6 @@ int set_particle_out_direction(int part, double out_direction[3]) {
 int set_particle_dipm(int part, double dipm) {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
   mpi_send_dipm(pnode, part, dipm);
   return ES_OK;
 }
@@ -566,8 +545,6 @@ int set_particle_dipm(int part, double dipm) {
 int set_particle_dip(int part, double dip[3]) {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
   mpi_send_dip(pnode, part, dip);
 
   return ES_OK;
@@ -579,23 +556,23 @@ int set_particle_dip(int part, double dip[3]) {
 int set_particle_virtual(int part, int isVirtual) {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
   mpi_send_virtual(pnode, part, isVirtual);
   return ES_OK;
 }
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
+void set_particle_vs_quat(int part, double *vs_quat) {
+  auto const pnode = get_particle_node(part);
+  mpi_send_vs_quat(pnode, part, vs_quat);
+}
+
 int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
-                             double *rel_ori, double *vs_quat) {
+                             double *rel_ori) {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
-
   // Send the stuff
-  mpi_send_vs_relative(pnode, part, vs_relative_to, vs_distance, rel_ori, vs_quat);
+  mpi_send_vs_relative(pnode, part, vs_relative_to, vs_distance, rel_ori);
   return ES_OK;
 }
 #endif
@@ -604,8 +581,6 @@ int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
 int set_particle_smaller_timestep(int part, int smaller_timestep) {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
   mpi_send_smaller_timestep_flag(pnode, part, smaller_timestep);
   return ES_OK;
 }
@@ -614,8 +589,6 @@ int set_particle_smaller_timestep(int part, int smaller_timestep) {
 int set_particle_q(int part, double q) {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
   mpi_send_q(pnode, part, q);
   return ES_OK;
 }
@@ -624,8 +597,6 @@ int set_particle_q(int part, double q) {
 int set_particle_mu_E(int part, double mu_E[3]) {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
   mpi_send_mu_E(pnode, part, mu_E);
   return ES_OK;
 }
@@ -643,10 +614,6 @@ int set_particle_type(int p_id, int type) {
   auto const pnode = get_particle_node(p_id);
   make_particle_type_exist(type);
 
-  if (pnode == -1){
-    throw std::runtime_error("Pnode not found\n");
-    return ES_ERROR;
-  }
 
   if (type_list_enable) {
     // check if the particle exists already and the type is changed, then remove
@@ -673,8 +640,6 @@ int set_particle_type(int p_id, int type) {
 int set_particle_mol_id(int part, int mid) {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
   mpi_send_mol_id(pnode, part, mid);
   return ES_OK;
 }
@@ -683,8 +648,6 @@ int set_particle_mol_id(int part, int mid) {
 int set_particle_quat(int part, double quat[4]) {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
   mpi_send_quat(pnode, part, quat);
   return ES_OK;
 }
@@ -717,9 +680,6 @@ int set_particle_omega_lab(int part, double omega_lab[3]) {
 
 int set_particle_omega_body(int part, double omega[3]) {
   auto const pnode = get_particle_node(part);
-
-  if (pnode == -1)
-    return ES_ERROR;
   mpi_send_omega(pnode, part, omega);
   return ES_OK;
 }
@@ -755,8 +715,6 @@ int set_particle_torque_body(int part, double torque[3]) {
 
   /* Nothing to be done but pass, since the coordinates
      are already in the proper frame */
-  if (pnode == -1)
-    return ES_ERROR;
 
   mpi_send_torque(pnode, part, torque);
   return ES_OK;
@@ -780,9 +738,6 @@ int set_particle_gamma(int part, Vector3d gamma)
 {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
-
   mpi_set_particle_gamma(pnode, part, gamma);
   return ES_OK;
 }
@@ -795,9 +750,6 @@ int set_particle_gamma_rot(int part, Vector3d gamma_rot)
 {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
-
   mpi_set_particle_gamma_rot(pnode, part, gamma_rot);
   return ES_OK;
 }
@@ -809,9 +761,6 @@ int set_particle_gamma_rot(int part, Vector3d gamma_rot)
 int set_particle_ext_torque(int part, int flag, double torque[3]) {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
-
   mpi_send_ext_torque(pnode, part, flag, PARTICLE_EXT_TORQUE, torque);
   return ES_OK;
 }
@@ -820,9 +769,6 @@ int set_particle_ext_torque(int part, int flag, double torque[3]) {
 int set_particle_ext_force(int part, int flag, double force[3]) {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
-
   mpi_send_ext_force(pnode, part, flag, PARTICLE_EXT_FORCE, force);
   return ES_OK;
 }
@@ -830,8 +776,6 @@ int set_particle_ext_force(int part, int flag, double force[3]) {
 int set_particle_fix(int part, int flag) {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
   mpi_send_ext_force(pnode, part, flag, COORDS_FIX_MASK, nullptr);
   return ES_OK;
 }
@@ -841,8 +785,6 @@ int set_particle_fix(int part, int flag) {
 int change_particle_bond(int part, int *bond, int _delete) {
   auto const pnode = get_particle_node(part);
 
-  if (pnode == -1)
-    return ES_ERROR;
   if (_delete != 0 || bond == nullptr)
     _delete = 1;
 
@@ -874,9 +816,6 @@ int remove_particle(int p_id) {
   }
 
   auto const pnode = get_particle_node(p_id);
-
-  if (pnode == -1)
-    throw std::runtime_error("Particle node could not be retrieved");
 
   particle_node[p_id] = -1;
 
@@ -1330,12 +1269,15 @@ void pointer_to_virtual(Particle const *p, int const *&res) {
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
+void pointer_to_vs_quat(Particle const *p, double const *&res) {
+  res = (p->p.vs_quat);
+}
+
 void pointer_to_vs_relative(Particle const *p, int const *&res1,
-                            double const *&res2, double const *&res3, double const *&res4) {
+                            double const *&res2, double const *&res3) {
   res1 = &(p->p.vs_relative_to_particle_id);
   res2 = &(p->p.vs_relative_distance);
   res3 = (p->p.vs_relative_rel_orientation);
-  res4 = (p->p.vs_virtual_site_quaternion);
 }
 #endif
 
@@ -1412,4 +1354,11 @@ void pointer_to_rotational_inertia(Particle const *p, double const *&res) {
 }
 #endif
 
-bool particle_exists(int part) { return get_particle_node(part) != -1; }
+bool particle_exists(int part) {
+  try {
+    get_particle_node(part);
+  } catch (...) {
+    return false;
+  }
+  return true;
+}

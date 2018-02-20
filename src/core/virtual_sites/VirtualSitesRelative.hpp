@@ -43,15 +43,13 @@ public:
   bool need_ghost_comm_after_pos_update() const override { return true; }
   /** Is a ghost comm needed before a velocity update */
   bool need_ghost_comm_before_vel_update() const override {
-    return (n_nodes > 1) && have_velocity();
+    return (n_nodes > 1) && get_have_velocity();
   };
   bool need_ghost_comm_before_back_transfer() const override { return true; };
   int n_pressure_contribs() const override { return 1; };
   void
   pressure_and_stress_tensor_contribution(double *pressure,
                                           double *stress_tensor) const override;
-  void set_have_quaternion(bool have_quaternion);
-  bool get_have_quaternion() const;
 
 private:
   void update_pos(Particle &p) const;
@@ -60,7 +58,6 @@ private:
    * real particle.
    */
   void update_virtual_particle_quaternion(Particle &p) const;
-  bool m_have_quaternion = false;
 };
 
 #endif

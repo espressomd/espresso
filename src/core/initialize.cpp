@@ -745,7 +745,7 @@ void on_ghost_flags_change() {
 #endif
 #ifdef VIRTUAL_SITES
   // If they have velocities, VIRUTAL_SITES need v to update v of virtual sites
-  if (virtual_sites()->have_velocity()) {
+  if (virtual_sites()->get_have_velocity()) {
     ghosts_have_v = 1;
   };
 #endif

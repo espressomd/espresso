@@ -152,10 +152,10 @@ struct ParticleProperties {
   */
   int vs_relative_to_particle_id = 0;
   double vs_relative_distance = 0;
-  // Store relative position of the virtual site
+  // Store relative position of the virtual site.
   double vs_relative_rel_orientation[4] = {0., 0., 0., 0};
-  // Store the orientation of the virtual particle in the body fixed frame
-  double vs_virtual_site_quaternion[4] = {0., 0., 0., 0.};
+  // Store the orientation of the virtual particle in the body fixed frame.
+  double vs_quat[4] = {0., 0., 0., 0.};
 #endif
 #endif
 
@@ -763,6 +763,7 @@ int set_particle_dipm(int part, double dipm);
 int set_particle_virtual(int part, int isVirtual);
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
+void set_particle_vs_quat(int part, double *vs_quat);
 int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
                              double *rel_ori);
 #endif
@@ -988,8 +989,9 @@ void pointer_to_virtual(Particle const *p, int const *&res);
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
+void pointer_to_vs_quat(Particle const *p, double const *&res);
 void pointer_to_vs_relative(Particle const *p, int const *&res1,
-                            double const *&res2, double const *&res3, double const *&res4);
+                            double const *&res2, double const *&res3);
 #endif
 
 #ifdef MULTI_TIMESTEP

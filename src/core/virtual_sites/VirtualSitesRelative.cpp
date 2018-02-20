@@ -32,7 +32,7 @@ for (auto& p : local_cells.particles()) {
   if (recalc_positions)
     update_pos(p);
 
-  if (have_velocity())
+  if (get_have_velocity())
     update_vel(p);
 
 }

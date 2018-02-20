@@ -171,7 +171,10 @@ cdef extern from "particle_data.hpp":
             void pointer_to_gamma_rot(const particle * p, const double * & res)
 
     IF VIRTUAL_SITES_RELATIVE:
-        void pointer_to_vs_relative(const particle * P, const int * & res1, const double * & res2, const double * & res3, const double * & res4)
+        void pointer_to_vs_relative(const particle * P, const int * & res1, const double * & res2, const double * & res3)
+        void pointer_to_vs_quat(const particle *P, const double *& res)
+        int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, double *rel_ori)
+        void set_particle_vs_quat(int part, double *vs_quat)
 
     IF ELECTROSTATICS:
         void pointer_to_q(const particle * P, const double * & res)
@@ -209,7 +212,6 @@ cdef extern from "particle_data.hpp":
 cdef extern from "virtual_sites.hpp":
     IF VIRTUAL_SITES_RELATIVE == 1:
         int vs_relate_to(int part_num, int relate_to)
-        int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, double * vs_quat)
 
 cdef extern from "rotation.hpp":
     void convert_omega_body_to_space(const particle * p, double * omega)
