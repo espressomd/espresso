@@ -38,7 +38,7 @@
 
 ///
 int soft_sphere_set_params(int part_type_a, int part_type_b, double a, double n,
-                           double cut, double offset);
+                           double cut, double offset, double shift);
 
 /** Resultant Force due to a soft-sphere potential between two
     particles at interatomic separation r */
@@ -98,7 +98,7 @@ inline double soft_pair_energy(const Particle *p1, const Particle *p2,
     r_off = dist - ia_params->soft_offset;
     /* normal case: resulting force/energy smaller than zero. */
 
-    return soft_energy_r(ia_params->soft_a, ia_params->soft_n, r_off);
+    return soft_energy_r(ia_params->soft_a, ia_params->soft_n, r_off) + ia_params->soft_shift;
   }
   return 0.0;
 }

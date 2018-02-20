@@ -35,7 +35,7 @@
 
 ///
 int smooth_step_set_params(int part_type_a, int part_type_b, double d, int n,
-                           double eps, double k0, double sig, double cut);
+                           double eps, double k0, double sig, double cut, double shift);
 
 /** Calculate smooth step force between particle p1 and p2 */
 inline void add_SmSt_pair_force(const Particle *const p1,
@@ -72,7 +72,7 @@ inline double SmSt_pair_energy(const Particle *p1, const Particle *p2,
   fracP = pow(frac, ia_params->SmSt_n);
   er = exp(2. * ia_params->SmSt_k0 * (dist - ia_params->SmSt_sig));
 
-  return fracP + ia_params->SmSt_eps / (1.0 + er);
+  return fracP + ia_params->SmSt_eps / (1.0 + er) + ia_params->SmSt_shift;
 }
 
 #endif /* ifdef SMOOTH_STEP */

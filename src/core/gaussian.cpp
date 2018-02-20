@@ -28,7 +28,8 @@
 #ifdef GAUSSIAN
 
 int gaussian_set_params(int part_type_a, int part_type_b,
-			double eps, double sig, double cut)
+			double eps, double sig, double cut,
+		        double shift)
 {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
   
@@ -37,6 +38,7 @@ int gaussian_set_params(int part_type_a, int part_type_b,
   data->Gaussian_eps = eps;
   data->Gaussian_sig = sig;
   data->Gaussian_cut = cut;
+  data->Gaussian_shift = shift;
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);

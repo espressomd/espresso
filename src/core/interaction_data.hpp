@@ -266,6 +266,7 @@ struct IA_parameters {
   double SmSt_d = 0.0;
   int SmSt_n = 0.0;
   double SmSt_k0 = 0.0;
+  double SmSt_shift = 0.0;
 /*@}*/
 #endif
 
@@ -283,6 +284,7 @@ struct IA_parameters {
   double Gaussian_eps = 0.0;
   double Gaussian_sig = 1.0;
   double Gaussian_cut = INACTIVE_CUTOFF;
+  double Gaussian_shift = 0.0;
 /*@}*/
 #endif
 
@@ -332,6 +334,7 @@ struct IA_parameters {
   double soft_n = 0.0;
   double soft_cut = INACTIVE_CUTOFF;
   double soft_offset = 0.0;
+  double soft_shift = 0.0;
 /*@}*/
 #endif
 
