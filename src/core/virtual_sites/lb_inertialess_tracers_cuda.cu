@@ -32,6 +32,7 @@ void InitCUDA_IBM(const int numParticles);
 // ***** Our own global variables ********
 IBM_CUDA_ParticleDataInput *IBM_ParticleDataInput_device = nullptr;
 IBM_CUDA_ParticleDataOutput *IBM_ParticleDataOutput_device = nullptr;
+int IBM_numParticlesCache = -1;     // To detect a change in particle number which requires reallocation of memory
 
 // ****** These variables are defined in lbgpu_cuda.cu, but we also want them here ****
 extern LB_node_force_gpu node_f;
@@ -78,7 +79,8 @@ void IBM_ForcesIntoFluid_GPU(ParticleRange particles)
   const int numParticles = gpu_get_global_particle_vars_pointer_host()->number_of_particles;
 
   // Storage only needed on master and allocated only once at the first time step
-  if ( IBM_ParticleDataInput_host == nullptr && this_node == 0 )
+  //if ( IBM_ParticleDataInput_host == nullptr && this_node == 0 )
+  if ( IBM_ParticleDataInput_host == NULL || numParticles != IBM_numParticlesCache )
     InitCUDA_IBM(numParticles);
 
   // We gather particle positions and forces from all nodes
@@ -113,6 +115,17 @@ void InitCUDA_IBM(const int numParticles)
   if ( this_node == 0)    // GPU only on master
   {
 
+    // Check if we have to delete
+    if ( IBM_ParticleDataInput_host != NULL )
+    {
+      delete []IBM_ParticleDataInput_host;
+      delete []IBM_ParticleDataOutput_host;
+      cuda_safe_mem( cudaFree( IBM_ParticleDataInput_device) );
+      cuda_safe_mem( cudaFree( IBM_ParticleDataOutput_device) );
+      cuda_safe_mem( cudaFree( paraIBM ) );
+      cuda_safe_mem( cudaFree( lb_boundary_velocity_IBM ) );
+    }
+
     // Back and forth communication of positions and velocities
     IBM_ParticleDataInput_host = new IBM_CUDA_ParticleDataInput[numParticles];
     cuda_safe_mem(cudaMalloc((void**)&IBM_ParticleDataInput_device, numParticles*sizeof(IBM_CUDA_ParticleDataInput)));
@@ -129,40 +142,27 @@ void InitCUDA_IBM(const int numParticles)
     // Copy boundary velocities to the GPU
     // First put them into correct format
 #ifdef LB_BOUNDARIES_GPU
-//    float* host_lb_boundary_velocity = new float[3*(n_lb_boundaries+1)];
     float* host_lb_boundary_velocity = new float[3*(LBBoundaries::lbboundaries.size()+1)];
 
-//    for (int n=0; n<n_lb_boundaries; n++)
     for (int n=0; n<LBBoundaries::lbboundaries.size(); n++)
     {
-
-/*      host_lb_boundary_velocity[3*n+0]=lb_boundaries[n].velocity[0];
-      host_lb_boundary_velocity[3*n+1]=lb_boundaries[n].velocity[1];
-      host_lb_boundary_velocity[3*n+2]=lb_boundaries[n].velocity[2];*/
-
-
       host_lb_boundary_velocity[3*n+0] = LBBoundaries::lbboundaries[n]->velocity()[0];
       host_lb_boundary_velocity[3*n+1] = LBBoundaries::lbboundaries[n]->velocity()[1];
       host_lb_boundary_velocity[3*n+2] = LBBoundaries::lbboundaries[n]->velocity()[2];
 
     }
 
-/*    host_lb_boundary_velocity[3*n_lb_boundaries+0] = 0.0f;
-    host_lb_boundary_velocity[3*n_lb_boundaries+1] = 0.0f;
-    host_lb_boundary_velocity[3*n_lb_boundaries+2] = 0.0f;*/
-
     host_lb_boundary_velocity[3*LBBoundaries::lbboundaries.size()+0] = 0.0f;
     host_lb_boundary_velocity[3*LBBoundaries::lbboundaries.size()+1] = 0.0f;
     host_lb_boundary_velocity[3*LBBoundaries::lbboundaries.size()+2] = 0.0f;
-
-//    cuda_safe_mem(cudaMalloc((void**)&lb_boundary_velocity_IBM, 3*n_lb_boundaries*sizeof(float)));
-//    cuda_safe_mem(cudaMemcpy(lb_boundary_velocity_IBM, host_lb_boundary_velocity, 3*n_lb_boundaries*sizeof(float), cudaMemcpyHostToDevice));
 
     cuda_safe_mem(cudaMalloc((void**)&lb_boundary_velocity_IBM, 3*LBBoundaries::lbboundaries.size()*sizeof(float)));
     cuda_safe_mem(cudaMemcpy(lb_boundary_velocity_IBM, host_lb_boundary_velocity, 3*LBBoundaries::lbboundaries.size()*sizeof(float), cudaMemcpyHostToDevice));
 
     delete[] host_lb_boundary_velocity;
 #endif
+
+    IBM_numParticlesCache = numParticles;
   }
 }
 
@@ -453,8 +453,6 @@ __global__ void ResetLBForces_Kernel(LB_node_force_gpu node_f, const LB_paramete
 /************
    atomicadd
 This is a copy of the atomicadd from lbgpu_cuda.cu
-It seems that this function is re-implemented in all CUDA files: lbgpu_cuda, electrokinetics_cuda,...
-Why is it not in a header?
 *************/
 
 __device__ inline void atomicadd( float* address, float value)
