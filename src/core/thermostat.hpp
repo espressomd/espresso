@@ -26,17 +26,14 @@
 
 #include "config.hpp"
 
-#include <cmath>
 #include "debug.hpp"
 #include "particle_data.hpp"
 #include "random.hpp"
-#include "global.hpp"
 #include "integrate.hpp"
-#include "cells.hpp"
-#include "lb.hpp"
-#include "dpd.hpp"
-#include "virtual_sites.hpp"
+
 #include "Vector.hpp"
+
+#include <cmath>
 
 /** \name Thermostat switches*/
 /************************************************************/

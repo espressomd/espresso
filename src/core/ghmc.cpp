@@ -37,6 +37,7 @@
 #include "random.hpp"
 #include "statistics.hpp"
 #include "virtual_sites.hpp"
+#include "global.hpp"
 
 /************************************************************/
 

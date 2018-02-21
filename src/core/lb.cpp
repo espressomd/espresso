@@ -28,6 +28,9 @@
  */
 
 #include "lb.hpp"
+
+#ifdef LB
+
 #include "communication.hpp"
 #include "grid.hpp"
 #include "halo.hpp"
@@ -37,17 +40,15 @@
 #include "lbboundaries.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
+#include "global.hpp"
+#include "cells.hpp"
+
 #include <cassert>
 #include <cstdio>
 #include <iostream>
 #include <mpi.h>
 
 #include "cuda_interface.hpp"
-
-// global variable holding the number of fluid components (see global.cpp)
-int lb_components = LB_COMPONENTS;
-
-#ifdef LB
 
 #ifdef ADDITIONAL_CHECKS
 static void lb_check_halo_regions();

@@ -199,9 +199,6 @@ const std::unordered_map<int, Datafield> fields{
      {FIELD_GHMC_SCALE,
       {&ghmc_tscale, Datafield::Type::INT, 1,
        "ghmc_tscale"}}, /* 48 from ghmc.cpp */
-     {FIELD_LB_COMPONENTS,
-      {&lb_components, Datafield::Type::INT, 1,
-       "lb_components"}}, /* 49 from ghmc.cpp */
      {FIELD_WARNINGS,
       {&warnings, Datafield::Type::INT, 1,
        "warnings"}}, /* 50 from global.cpp */

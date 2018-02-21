@@ -37,6 +37,7 @@
 #include "partCfg_global.hpp"
 #include "forcecap.hpp"
 #include "short_range_loop.hpp"
+#include "lb.hpp"
 
 #include <cassert>
 

@@ -59,6 +59,8 @@
 #include "virtual_sites.hpp"
 #include "npt.hpp"
 #include "collision.hpp"
+#include "global.hpp"
+
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>

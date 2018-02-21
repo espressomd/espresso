@@ -41,10 +41,11 @@
 #include "initialize.hpp"
 #include "integrate.hpp"
 #include "interaction_data.hpp"
-#include "p3m.hpp"
 #include "particle_data.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
+#include "lb.hpp"
+
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>

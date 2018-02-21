@@ -20,21 +20,25 @@
 */
 
 #include "rattle.hpp"
-#include "domain_decomposition.hpp"
+
+int n_rigidbonds = 0;
+
+#ifdef BOND_CONSTRAINT
+
 #include "global.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
+#include "errorhandling.hpp"
+#include "communication.hpp"
+#include "grid.hpp"
+#include "cells.hpp"
 
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <mpi.h>
-
-int n_rigidbonds = 0;
-
-#ifdef BOND_CONSTRAINT
 
 /** \name Private functions */
 /************************************************************/

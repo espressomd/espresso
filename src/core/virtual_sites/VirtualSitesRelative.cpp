@@ -21,6 +21,8 @@
 #include "VirtualSitesRelative.hpp"
 #include "rotation.hpp"
 #include "errorhandling.hpp" 
+#include "grid.hpp"
+#include "cells.hpp"
 
 #ifdef VIRTUAL_SITES_RELATIVE
 

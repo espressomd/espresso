@@ -28,6 +28,7 @@
 #include "ghmc.hpp"
 #include "lb.hpp"
 #include "thermalized_bond.hpp"
+#include "dpd.hpp"
 
 #include <iostream>
 #include <fstream>
