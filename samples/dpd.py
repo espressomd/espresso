@@ -1,4 +1,5 @@
 # A minimal DPD fluid
+from __future__ import print_function
 import espressomd
 import numpy as np
 
@@ -50,4 +51,4 @@ for V in range(100, 1000, 100):
     # And std
     p_std = np.std(p_samples)
 
-    print 'rho {:.2f} p {:.2f} ({:.2f})'.format(float(n_part) / V, p_avg, p_std)
+    print('rho {:.2f} p {:.2f} ({:.2f})'.format(float(n_part) / V, p_avg, p_std))
