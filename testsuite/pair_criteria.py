@@ -28,7 +28,7 @@ from espressomd.pair_criteria import *
 class PairCriteria(ut.TestCase):
     """Tests interface and implmentation of pair criteria"""   
 
-    es = espressomd.System()
+    es = espressomd.System(box_l=[1.,1.,1.])
 
     f1 = FeneBond(k=1, d_r_max=0.05)
     es.bonded_inter.add(f1)
