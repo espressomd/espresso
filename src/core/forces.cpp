@@ -122,7 +122,7 @@ void force_calc() {
   // this_node==0 makes sure it is the master node where the gpu exists
   if (lattice_switch & LATTICE_LB_GPU && transfer_momentum_gpu &&
       (this_node == 0))
-    lb_calc_particle_lattice_ia_gpu();
+    lb_calc_particle_lattice_ia_gpu(thermo_virtual);
 #endif // LB_GPU
 
 #ifdef ELECTROSTATICS
