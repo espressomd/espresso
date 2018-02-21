@@ -314,6 +314,7 @@ cdef class Thermostat(object):
         mpi_bcast_parameter(FIELD_TEMPERATURE)
         mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA)
 
+        global thermo_virtual
         thermo_virtual = act_on_virtual
         mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
 
@@ -352,6 +353,7 @@ cdef class Thermostat(object):
             mpi_bcast_parameter(FIELD_THERMO_SWITCH)
             mpi_bcast_parameter(FIELD_TEMPERATURE)
 
+            global thermo_virtual
             thermo_virtual = act_on_virtual
             mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
 
