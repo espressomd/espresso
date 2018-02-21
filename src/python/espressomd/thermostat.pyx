@@ -161,7 +161,7 @@ cdef class Thermostat(object):
     def turn_off(self):
         """
         Turns off all the thermostat and sets all the thermostat variables to zero.
-        
+
         """
 
         global temperature
@@ -190,7 +190,7 @@ cdef class Thermostat(object):
         return True
 
     @AssertThermostatType(THERMO_LANGEVIN)
-    def set_langevin(self, kT=None, gamma=None, gamma_rotation=None):
+    def set_langevin(self, kT=None, gamma=None, gamma_rotation=None, act_on_virtual=False):
         """
         Sets the Langevin thermostat with required parameters 'kT' 'gamma'
         and optional parameter 'gamma_rotation'.
@@ -207,6 +207,8 @@ cdef class Thermostat(object):
                          The same applies to 'gamma_rotation', which requires the feature
                          'ROTATION' to work properly. But also accepts three floating point numbers
                          if 'PARTICLE_ANISOTROPY' is also compiled in.
+        act_on_virtual : :obj:`bool`, optional
+                If true the thermostat will act on virtual sites, default is off.
 
         """
 
@@ -311,13 +313,17 @@ cdef class Thermostat(object):
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
         mpi_bcast_parameter(FIELD_TEMPERATURE)
         mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA)
+
+        thermo_virtual = act_on_virtual
+        mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
+
         IF ROTATION:
             mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION)
         return True
 
     IF LB_GPU or LB:
         @AssertThermostatType(THERMO_LB)
-        def set_lb(self, kT=None):
+        def set_lb(self, kT=None, act_on_virtual=False):
             """
             Sets the LB thermostat with required parameter 'kT'.
 
@@ -327,6 +333,8 @@ cdef class Thermostat(object):
             ----------
             kT : :obj:`float`
                  Specifies the thermal energy of the heat bath.
+            act_on_virtual : :obj:`bool`, optional
+                If true the thermostat will act on virtual sites, default is off.
 
             """
 
@@ -343,6 +351,10 @@ cdef class Thermostat(object):
             thermo_switch = (thermo_switch or THERMO_LB)
             mpi_bcast_parameter(FIELD_THERMO_SWITCH)
             mpi_bcast_parameter(FIELD_TEMPERATURE)
+
+            thermo_virtual = act_on_virtual
+            mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
+
             return True
 
     IF NPT:

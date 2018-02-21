@@ -34,6 +34,7 @@ cdef extern from "global.hpp":
     int FIELD_LEES_EDWARDS_OFFSET
     int FIELD_TEMPERATURE
     int FIELD_THERMO_SWITCH
+    int FIELD_THERMO_VIRTUAL
     int FIELD_TEMPERATURE
     int FIELD_LANGEVIN_GAMMA
     IF ROTATION:
@@ -43,7 +44,7 @@ cdef extern from "global.hpp":
         int FIELD_NPTISO_GV
 
     void mpi_bcast_parameter(int p)
-        
+
 cdef extern from "communication.hpp":
     extern int n_nodes
     void mpi_set_smaller_time_step(double smaller_time_step)
