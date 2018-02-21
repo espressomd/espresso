@@ -2894,8 +2894,8 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *par
   LB_randomnr_gpu rng_part;
   if(part_index<para.number_of_particles)
   {
-#if defined(IMMERSED_BOUNDARY) || defined(VIRTUAL_SITES_COM)
-    if ( !particle_data[part_index].isVirtual )
+#if defined(VIRTUAL_SITES)
+    if ( !particle_data[part_index].is_virtual )
 #endif
     {
       rng_part.seed = part[part_index].seed;
