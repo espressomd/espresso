@@ -46,7 +46,7 @@ class LBSwitchActor(ut.TestCase):
         system.part[0].v = [1,0,0]
         system.integrator.run(0)
 
-        np.testing.assert_allclose(system.part[0].f, 0.0)
+        np.testing.assert_allclose(np.copy(system.part[0].f), 0.0)
 
         system.actors.add(lb_fluid_2)
 
