@@ -150,7 +150,8 @@ enum Fields {
   FIELD_LANGEVIN_GAMMA_ROTATION,
   /** index of \ref n_thermalized_bonds in \ref #fields */
   FIELD_THERMALIZEDBONDS,
-  FIELD_FORCE_CAP
+  FIELD_FORCE_CAP,
+  FIELD_THERMO_VIRTUAL
 };
 /*@}*/
 

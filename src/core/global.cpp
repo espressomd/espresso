@@ -227,7 +227,9 @@ const std::unordered_map<int, Datafield> fields{
       {&n_thermalized_bonds, Datafield::Type::INT, 1, "n_thermalized_bonds",
        5}}, /* 56 from thermalized_bond.cpp */
      {FIELD_FORCE_CAP,
-      {&force_cap, Datafield::Type::DOUBLE, 1, "force_cap", 1}}}};
+      {&force_cap, Datafield::Type::DOUBLE, 1, "force_cap", 1}},
+     {FIELD_THERMO_VIRTUAL,
+      {&thermo_virtual, Datafield::Type::BOOL, 1, "thermo_virtual", 1}}}};
 
 std::size_t hash_value(Datafield const &field) {
   using boost::hash_range;

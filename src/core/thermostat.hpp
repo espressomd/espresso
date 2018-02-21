@@ -74,6 +74,9 @@ extern int thermo_switch;
 /** temperature. */
 extern double temperature;
 
+/** True if the thermostat should acton on virtual particles. */
+extern bool thermo_virtual;
+
 /** Langevin friction coefficient gamma. */
 extern Thermostat::GammaType langevin_gamma;
 /** Langevin friction coefficient gamma. */
@@ -229,29 +232,12 @@ inline void friction_thermo_langevin(Particle *p) {
 #endif /* LANGEVIN_PER_PARTICLE */
 #endif /* MULTI_TIMESTEP */
 
-  int j;
-
-// Virtual sites related decision making
-#ifdef VIRTUAL_SITES
-#ifndef VIRTUAL_SITES_THERMOSTAT
-  // In this case, virtual sites are NOT thermostated
-  if (p->p.is_virtual) {
-    for (j = 0; j < 3; j++)
+  if (p->p.is_virtual && !thermo_virtual) {
+    for (int j = 0; j < 3; j++)
       p->f.f[j] = 0;
 
     return;
   }
-#endif /* VIRTUAL_SITES_THERMOSTAT */
-#ifdef THERMOSTAT_IGNORE_NON_VIRTUAL
-  // In this case NON-virtual particles are NOT thermostated
-  if (!p->p.is_virtual) {
-    for (j = 0; j < 3; j++)
-      p->f.f[j] = 0;
-
-    return;
-  }
-#endif /* THERMOSTAT_IGNORE_NON_VIRTUAL */
-#endif /* VIRTUAL_SITES */
 
   // Get velocity effective in the thermostatting
   double velocity[3];
@@ -331,7 +317,7 @@ inline void friction_thermo_langevin(Particle *p) {
 #endif
 
   // Do the actual thermostatting
-  for (j = 0; j < 3; j++) {
+  for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     // If individual coordinates are fixed, set force to 0.
     if ((p->p.ext_flag & COORD_FIXED(j)))
@@ -361,7 +347,7 @@ inline void friction_thermo_langevin(Particle *p) {
     double particle_force[3] = {0.0, 0.0, 0.0};
 
     thermo_convert_forces_body_to_space(p, particle_force);
-    for (j = 0; j < 3; j++) {
+    for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
       if (!(p->p.ext_flag & COORD_FIXED(j)))
 #endif
