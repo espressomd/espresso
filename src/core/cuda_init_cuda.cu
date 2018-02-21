@@ -113,7 +113,7 @@ int cuda_set_device(int dev)
   
   if (error != cudaSuccess) {
     cuda_error = cudaGetErrorString(error);
-    return ES_ERROR;
+    throw std::runtime_error(cuda_error);
   }
   
   return ES_OK;

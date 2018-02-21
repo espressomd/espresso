@@ -205,8 +205,13 @@ void File::create_datasets(bool only_load) {
       auto dims = create_dims(descr.dim, creation_size_dataset);
       auto chunk_dims = create_chunk_dims(descr.dim, chunk_size, 1);
       auto maxdims = create_maxdims(descr.dim);
-      auto storage = h5xx::policy::storage::chunked(chunk_dims)
-                         .set(h5xx::policy::storage::fill_value(-10));
+      auto storage = h5xx::policy::storage::chunked(chunk_dims);
+      if(descr.type.get_type_id()==H5T_NATIVE_INT)
+        storage.set(h5xx::policy::storage::fill_value(static_cast<int>(-10)));
+      else if(descr.type.get_type_id()==H5T_NATIVE_DOUBLE)
+        storage.set(h5xx::policy::storage::fill_value(static_cast<double>(-10)));
+      else
+        throw std::runtime_error("H5MD writing dataset of this type is not implemented\n");
       auto dataspace = h5xx::dataspace(dims, maxdims);
       hid_t lcpl_id = H5Pcreate(H5P_LINK_CREATE);
       H5Pset_create_intermediate_group(lcpl_id, 1);
@@ -276,6 +281,15 @@ void File::create_new_file(const std::string &filename) {
   /* Create a new h5xx file object. */
   m_h5md_file =
       h5xx::file(filename, m_hdf5_comm, MPI_INFO_NULL, h5xx::file::out);
+
+  auto h5md_group = h5xx::group(m_h5md_file, "h5md");
+  std::vector<int> h5md_version = {1, 1};
+  h5xx::write_attribute(h5md_group, "version", h5md_version);
+  auto h5md_creator_group = h5xx::group(h5md_group, "creator");
+  h5xx::write_attribute(h5md_creator_group, "name", "ESPResSo");
+  h5xx::write_attribute(h5md_creator_group, "version", ESPRESSO_VERSION);
+  auto h5md_author_group = h5xx::group(h5md_group, "author");
+  h5xx::write_attribute(h5md_author_group, "name", "N/A");
 
   bool only_load = false;
   create_datasets(only_load);
@@ -450,7 +464,6 @@ void File::Write(int write_dat, PartCfg &partCfg) {
   hsize_t count_3d[3] = {1, (hsize_t)num_particles_to_be_written, 3};
 
   // calculate the change of the extent for fluctuating particle numbers
-  int n_part = max_seen_particle + 1;
   int old_max_n_part =
       std::max(m_max_n_part, (int)dims_id[1]); // check that dataset is not
                                                // shrinked: take into account

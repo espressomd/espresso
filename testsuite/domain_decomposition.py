@@ -25,7 +25,7 @@ import numpy as np
 
 
 class DomainDecomposition(ut.TestCase):
-    S = espressomd.System()
+    S = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     def setUp(self):
         self.S.part.clear()

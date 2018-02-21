@@ -837,8 +837,8 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
 
     for (i = 0; i < fft.plan[3].new_size; i++) {
       // Use the energy optimized influence function for energy!
-      node_k_space_energy += p3m.g_energy[i] * (SQR(p3m.rs_mesh[2 * i]) +
-                                                SQR(p3m.rs_mesh[2 * i + 1]));
+      node_k_space_energy += p3m.g_energy[i] * (Utils::sqr(p3m.rs_mesh[2 * i]) +
+                                                Utils::sqr(p3m.rs_mesh[2 * i + 1]));
     }
     node_k_space_energy *= force_prefac;
 
@@ -851,7 +851,7 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
       /* net charge correction */
       k_space_energy -=
           coulomb.prefactor * p3m.square_sum_q * PI /
-          (2.0 * box_l[0] * box_l[1] * box_l[2] * SQR(p3m.params.alpha));
+          (2.0 * box_l[0] * box_l[1] * box_l[2] * Utils::sqr(p3m.params.alpha));
     }
 
   } /* if (energy_flag) */
@@ -960,7 +960,7 @@ double p3m_calc_dipole_term(int force_flag, int energy_flag) {
   MPI_Allreduce(lcl_dm, gbl_dm, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
 
   if (energy_flag)
-    en = 0.5 * pref * (SQR(gbl_dm[0]) + SQR(gbl_dm[1]) + SQR(gbl_dm[2]));
+    en = 0.5 * pref * (Utils::sqr(gbl_dm[0]) + Utils::sqr(gbl_dm[1]) + Utils::sqr(gbl_dm[2]));
   else
     en = 0;
   if (force_flag) {
@@ -1139,7 +1139,7 @@ inline double perform_aliasing_sums_force(int n[3], double numerator[3]) {
   for (i = 0; i < 3; i++)
     numerator[i] = 0.0;
 
-  f1 = SQR(PI / (p3m.params.alpha));
+  f1 = Utils::sqr(PI / (p3m.params.alpha));
 
   for (mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
     nmx = p3m.meshift_x[n[KX]] + p3m.params.mesh[RX] * mx;
@@ -1152,7 +1152,7 @@ inline double perform_aliasing_sums_force(int n[3], double numerator[3]) {
         sz = sy * int_pow<2 * cao>(sinc(nmz / (double)p3m.params.mesh[RZ]));
 
         nm2 =
-            SQR(nmx / box_l[RX]) + SQR(nmy / box_l[RY]) + SQR(nmz / box_l[RZ]);
+            Utils::sqr(nmx / box_l[RX]) + Utils::sqr(nmy / box_l[RY]) + Utils::sqr(nmz / box_l[RZ]);
         expo = f1 * nm2;
         f2 = (expo < limit) ? sz * exp(-expo) / nm2 : 0.0;
 
@@ -1211,11 +1211,11 @@ template <int cao> void calc_influence_function_force() {
           fak1 = p3m.d_op[RX][n[KX]] * nominator[RX] / box_l[RX] +
                  p3m.d_op[RY][n[KY]] * nominator[RY] / box_l[RY] +
                  p3m.d_op[RZ][n[KZ]] * nominator[RZ] / box_l[RZ];
-          fak2 = SQR(p3m.d_op[RX][n[KX]] / box_l[RX]) +
-                 SQR(p3m.d_op[RY][n[KY]] / box_l[RY]) +
-                 SQR(p3m.d_op[RZ][n[KZ]] / box_l[RZ]);
+          fak2 = Utils::sqr(p3m.d_op[RX][n[KX]] / box_l[RX]) +
+                 Utils::sqr(p3m.d_op[RY][n[KY]] / box_l[RY]) +
+                 Utils::sqr(p3m.d_op[RZ][n[KZ]] / box_l[RZ]);
 
-          fak3 = fak1 / (fak2 * SQR(denominator));
+          fak3 = fak1 / (fak2 * Utils::sqr(denominator));
           p3m.g_force[ind] = 2 * fak3 / (PI);
         }
       }
@@ -1260,7 +1260,7 @@ template <int cao> inline double perform_aliasing_sums_energy(int n[3]) {
   double sx, sy, sz, f1, f2, mx, my, mz, nmx, nmy, nmz, nm2, expo;
   double limit = 30;
 
-  f1 = SQR(PI / (p3m.params.alpha));
+  f1 = Utils::sqr(PI / (p3m.params.alpha));
 
   for (mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
     nmx = p3m.meshift_x[n[KX]] + p3m.params.mesh[RX] * mx;
@@ -1273,7 +1273,7 @@ template <int cao> inline double perform_aliasing_sums_energy(int n[3]) {
         sz = sy * int_pow<2 * cao>(sinc(nmz / (double)p3m.params.mesh[RZ]));
         /* k = 2*pi * (nx/lx, ny/ly, nz/lz); expo = -k^2 / 4*alpha^2 */
         nm2 =
-            SQR(nmx / box_l[RX]) + SQR(nmy / box_l[RY]) + SQR(nmz / box_l[RZ]);
+            Utils::sqr(nmx / box_l[RX]) + Utils::sqr(nmy / box_l[RY]) + Utils::sqr(nmz / box_l[RZ]);
         expo = f1 * nm2;
         f2 = (expo < limit) ? sz * exp(-expo) / nm2 : 0.0;
 
@@ -1283,7 +1283,7 @@ template <int cao> inline double perform_aliasing_sums_energy(int n[3]) {
     }
   }
 
-  return numerator / SQR(denominator);
+  return numerator / Utils::sqr(denominator);
 }
 
 template <int cao> void calc_influence_function_energy() {
@@ -1408,8 +1408,8 @@ static double p3m_get_accuracy(int mesh[3], int cao, double r_cut_iL,
   *_ks_err = ks_err;
   P3M_TRACE(fprintf(
       stderr, "resulting: alpha_L %g -> rs_err: %g, ks_err %g, total_err %g\n",
-      alpha_L, rs_err, ks_err, sqrt(SQR(rs_err) + SQR(ks_err))));
-  return sqrt(SQR(rs_err) + SQR(ks_err));
+      alpha_L, rs_err, ks_err, sqrt(Utils::sqr(rs_err) + Utils::sqr(ks_err))));
+  return sqrt(Utils::sqr(rs_err) + Utils::sqr(ks_err));
 }
 
 /** get the optimal alpha and the corresponding computation time for fixed
@@ -1426,13 +1426,15 @@ static double p3m_mcr_time(int mesh[3], int cao, double r_cut_iL,
       coulomb.method != COULOMB_P3M_GPU)
     coulomb.method = COULOMB_P3M;
 
+  p3m.params.r_cut = r_cut_iL * box_l[0];
   p3m.params.r_cut_iL = r_cut_iL;
   p3m.params.mesh[0] = mesh[0];
   p3m.params.mesh[1] = mesh[1];
   p3m.params.mesh[2] = mesh[2];
   p3m.params.cao = cao;
   p3m.params.alpha_L = alpha_L;
-  p3m_scaleby_box_l();
+  p3m.params.alpha = p3m.params.alpha_L * box_l_i[0];
+
   /* initialize p3m structures */
   mpi_bcast_coulomb_params();
   /* perform force calculation test */
@@ -1907,12 +1909,14 @@ int p3m_adaptive_tune(char **log) {
 
   /* set tuned p3m parameters */
   p3m.params.tuning = false;
+  p3m.params.r_cut = r_cut_iL * box_l[0];
   p3m.params.r_cut_iL = r_cut_iL;
   p3m.params.mesh[0] = mesh[0];
   p3m.params.mesh[1] = mesh[1];
   p3m.params.mesh[2] = mesh[2];
   p3m.params.cao = cao;
   p3m.params.alpha_L = alpha_L;
+  p3m.params.alpha = p3m.params.alpha_L * box_l_i[0];
   p3m.params.accuracy = accuracy;
   /* broadcast tuned p3m parameters */
   P3M_TRACE(fprintf(stderr, "%d: Broadcasting P3M parameters: mesh: (%d %d "
@@ -1945,7 +1949,7 @@ void p3m_count_charged_particles() {
   for (auto const &p : local_cells.particles()) {
     if (p.p.q != 0.0) {
       node_sums[0] += 1.0;
-      node_sums[1] += SQR(p.p.q);
+      node_sums[1] += Utils::sqr(p.p.q);
       node_sums[2] += p.p.q;
     }
   }
@@ -1953,7 +1957,7 @@ void p3m_count_charged_particles() {
   MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
   p3m.sum_qpart = (int)(tot_sums[0] + 0.1);
   p3m.sum_q2 = tot_sums[1];
-  p3m.square_sum_q = SQR(tot_sums[2]);
+  p3m.square_sum_q = Utils::sqr(tot_sums[2]);
 
   P3M_TRACE(fprintf(
       stderr, "%d: p3m.sum_qpart: %d, p3m.sum_q2: %lf, total_charge %lf\n",
@@ -1962,7 +1966,7 @@ void p3m_count_charged_particles() {
 
 double p3m_real_space_error(double prefac, double r_cut_iL, int n_c_part,
                             double sum_q2, double alpha_L) {
-  return (2.0 * prefac * sum_q2 * exp(-SQR(r_cut_iL * alpha_L))) /
+  return (2.0 * prefac * sum_q2 * exp(-Utils::sqr(r_cut_iL * alpha_L))) /
          sqrt((double)n_c_part * r_cut_iL * box_l[0] * box_l[0] * box_l[1] *
               box_l[2]);
 }
@@ -1981,12 +1985,12 @@ double p3m_k_space_error(double prefac, int mesh[3], int cao, int n_c_part,
       ctan_y = ctan_x * p3m_analytic_cotangent_sum(ny, mesh_i[1], cao);
       for (nz = -mesh[2] / 2; nz < mesh[2] / 2; nz++) {
         if ((nx != 0) || (ny != 0) || (nz != 0)) {
-          n2 = SQR(nx) + SQR(ny) + SQR(nz);
+          n2 = Utils::sqr(nx) + Utils::sqr(ny) + Utils::sqr(nz);
           cs = p3m_analytic_cotangent_sum(nz, mesh_i[2], cao) * ctan_y;
           p3m_tune_aliasing_sums(nx, ny, nz, mesh, mesh_i, cao, alpha_L_i,
                                  &alias1, &alias2);
 
-          double d = alias1 - SQR(alias2 / cs) / n2;
+          double d = alias1 - Utils::sqr(alias2 / cs) / n2;
           /* at high precisions, d can become negative due to extinction;
              also, don't take values that have no significant digits left*/
           if (d > 0 && (fabs(d / alias1) > ROUND_ERROR_PREC))
@@ -2009,7 +2013,7 @@ void p3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh[3],
 
   double ex, ex2, nm2, U2, factor1;
 
-  factor1 = SQR(PI * alpha_L_i);
+  factor1 = Utils::sqr(PI * alpha_L_i);
 
   *alias1 = *alias2 = 0.0;
   for (mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
@@ -2019,8 +2023,8 @@ void p3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh[3],
       for (mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
         fnmz = mesh_i[2] * (nmz = nz + mz * mesh[2]);
 
-        nm2 = SQR(nmx) + SQR(nmy) + SQR(nmz);
-        ex2 = SQR(ex = exp(-factor1 * nm2));
+        nm2 = Utils::sqr(nmx) + Utils::sqr(nmy) + Utils::sqr(nmz);
+        ex2 = Utils::sqr(ex = exp(-factor1 * nm2));
 
         U2 = pow(sinc(fnmx) * sinc(fnmy) * sinc(fnmz), 2.0 * cao);
 
@@ -2340,19 +2344,19 @@ void p3m_calc_kspace_stress(double *stress) {
                box_l[RY];
           kz = 2.0 * PI * p3m.d_op[RZ][j[KZ] + fft.plan[3].start[KZ]] /
                box_l[RZ];
-          sqk = SQR(kx) + SQR(ky) + SQR(kz);
+          sqk = Utils::sqr(kx) + Utils::sqr(ky) + Utils::sqr(kz);
           if (sqk == 0) {
             node_k_space_energy = 0.0;
             vterm = 0.0;
           } else {
-            vterm = -2.0 * (1 / sqk + SQR(1.0 / 2.0 / p3m.params.alpha));
+            vterm = -2.0 * (1 / sqk + Utils::sqr(1.0 / 2.0 / p3m.params.alpha));
             node_k_space_energy =
                 p3m.g_energy[ind] *
-                (SQR(p3m.rs_mesh[2 * ind]) + SQR(p3m.rs_mesh[2 * ind + 1]));
+                (Utils::sqr(p3m.rs_mesh[2 * ind]) + Utils::sqr(p3m.rs_mesh[2 * ind + 1]));
           }
           ind++;
           node_k_space_stress[0] +=
-              node_k_space_energy * (1.0 + vterm * SQR(kx)); /* sigma_xx */
+              node_k_space_energy * (1.0 + vterm * Utils::sqr(kx)); /* sigma_xx */
           node_k_space_stress[1] +=
               node_k_space_energy * (vterm * kx * ky); /* sigma_xy */
           node_k_space_stress[2] +=
@@ -2361,7 +2365,7 @@ void p3m_calc_kspace_stress(double *stress) {
           node_k_space_stress[3] +=
               node_k_space_energy * (vterm * kx * ky); /* sigma_yx */
           node_k_space_stress[4] +=
-              node_k_space_energy * (1.0 + vterm * SQR(ky)); /* sigma_yy */
+              node_k_space_energy * (1.0 + vterm * Utils::sqr(ky)); /* sigma_yy */
           node_k_space_stress[5] +=
               node_k_space_energy * (vterm * ky * kz); /* sigma_yz */
 
@@ -2370,7 +2374,7 @@ void p3m_calc_kspace_stress(double *stress) {
           node_k_space_stress[7] +=
               node_k_space_energy * (vterm * ky * kz); /* sigma_zy */
           node_k_space_stress[8] +=
-              node_k_space_energy * (1.0 + vterm * SQR(kz)); /* sigma_zz */
+              node_k_space_energy * (1.0 + vterm * Utils::sqr(kz)); /* sigma_zz */
         }
       }
     }

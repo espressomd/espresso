@@ -1532,6 +1532,8 @@ class NonBondedInteractionHandle(object):
     gay_berne = None
     dpd = None
     hat = None
+    thole = None
+
 
     def __init__(self, _type1, _type2):
         """Takes two particle types as argument"""
@@ -1573,7 +1575,8 @@ class NonBondedInteractionHandle(object):
             self.dpd = DPDInteraction(_type1, _type2)
         IF HAT:
             self.hat = HatInteraction(_type1, _type2)
-
+        IF THOLE:
+            self.thole = TholeInteraction(_type1, _type2)
 
 cdef class NonBondedInteractions(object):
     """
@@ -1940,6 +1943,192 @@ class HarmonicBond(BondedInteraction):
         harmonic_set_params(
             self._bond_id, self._params["k"], self._params["r_0"], self._params["r_cut"])
 
+if ELECTROSTATICS:
+    class BondedCoulomb(BondedInteraction):
+
+        def __init__(self, *args, **kwargs):
+            """ 
+            BondedCoulombBond initialiser. Used to instatiate a BondedCoulombBond identifier
+            with a given set of parameters. 
+
+            Parameters
+            ----------
+
+            prefactor : :obj:`float`
+                        Sets the coulomb prefactor of the bonded coulomb interaction.
+            """
+            super(BondedCoulomb, self).__init__(*args, **kwargs)
+
+
+        def type_number(self):
+            return BONDED_IA_BONDED_COULOMB
+
+        def type_name(self):
+            return "BONDED_COULOMB"
+
+        def valid_keys(self):
+            return {"prefactor"}
+
+        def required_keys(self):
+            return {"prefactor"}
+
+        def set_default_params(self):
+            self._params = {"prefactor": 1.}
+
+        def _get_params_from_es_core(self):
+            return \
+                {"prefactor": bonded_ia_params[self._bond_id].p.bonded_coulomb.prefactor}
+
+        def _set_params_in_es_core(self):
+            bonded_coulomb_set_params(
+                self._bond_id,  self._params["prefactor"])
+
+if P3M:
+    class BondedCoulombP3MSRBond(BondedInteraction):
+
+        def __init__(self, *args, **kwargs):
+            """ 
+            BondedCoulombP3MSRBond initialiser. Used to instatiate a BondedCoulombP3MSRBond identifier
+            with a given set of parameters. Calculates ony the P3M shortrange part.
+
+            Parameters
+            ----------
+
+            q1q2 : :obj:`float`
+                   Sets the charge factor of the involved particle pair. Not the particle charges are used to allow e.g. only partial subtraction of the involved charges.
+            """
+            super(BondedCoulombP3MSRBond, self).__init__(*args, **kwargs)
+
+
+        def type_number(self):
+            return BONDED_IA_BONDED_COULOMB_P3M_SR
+
+        def type_name(self):
+            return "BONDED_COULOMB_P3M_SR"
+
+        def valid_keys(self):
+            return {"q1q2"}
+
+        def required_keys(self):
+            return {"q1q2"}
+
+        def set_default_params(self):
+            self._params = {"q1q2": 1.}
+
+        def _get_params_from_es_core(self):
+            return \
+                {"q1q2": bonded_ia_params[self._bond_id].p.bonded_coulomb_p3m_sr.q1q2}
+
+        def _set_params_in_es_core(self):
+            bonded_coulomb_p3m_sr_set_params(
+                self._bond_id,  self._params["q1q2"])
+    
+class ThermalizedBond(BondedInteraction):
+
+    def __init__(self, *args, **kwargs):
+        """ 
+        ThermalizedBond initialiser. Used to instatiate a ThermalizedBond identifier
+        with a given set of parameters. 
+
+        Parameters
+        ----------
+
+        temp_com : :obj:`float`
+                    Sets the temerature of the Langevin thermostat for the com of the particle pair.
+        gamma_com: :obj:`float`
+                    Sets the friction coefficient of the Langevin thermostat for the com of the particle pair.
+        temp_distance: :obj:`float` 
+                    Sets the temerature of the Langevin thermostat for the distance vector of the particle pair.
+        gamma_distance: :obj:`float` 
+                     Sets the friction coefficient of the Langevin thermostat for the distance vector of the particle pair.
+        r_cut: :obj:`float`, optional
+                Specifies maximum distance beyond which the bond is considered broken.
+        """
+        super(ThermalizedBond, self).__init__(*args, **kwargs)
+
+
+    def type_number(self):
+        return BONDED_IA_THERMALIZED_DIST
+
+    def type_name(self):
+        return "THERMALIZED_DIST"
+
+    def valid_keys(self):
+        return "temp_com", "gamma_com", "temp_distance", "gamma_distance", "r_cut"
+
+    def required_keys(self):
+        return "temp_com", "gamma_com", "temp_distance", "gamma_distance"
+
+    def set_default_params(self):
+        self._params = {"temp_com": 1., "gamma_com": 1., "temp_distance": 1., "gamma_distance": 1., "r_cut": 0.}
+
+    def _get_params_from_es_core(self):
+        return \
+            {"temp_com": bonded_ia_params[self._bond_id].p.thermalized_bond.temp_com,
+             "gamma_com": bonded_ia_params[self._bond_id].p.thermalized_bond.gamma_com,
+             "temp_distance": bonded_ia_params[self._bond_id].p.thermalized_bond.temp_distance,
+             "gamma_distance": bonded_ia_params[self._bond_id].p.thermalized_bond.gamma_distance,
+             "r_cut": bonded_ia_params[self._bond_id].p.thermalized_bond.r_cut}
+
+    def _set_params_in_es_core(self):
+        thermalized_bond_set_params(
+            self._bond_id,  self._params["temp_com"],  self._params["gamma_com"],  self._params["temp_distance"],  self._params["gamma_distance"], self._params["r_cut"])
+
+IF THOLE:
+    cdef class TholeInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
+            return {
+                "scaling_coeff": ia_params.THOLE_scaling_coeff,
+                "q1q2": ia_params.THOLE_q1q2
+            }
+
+        def is_active(self):
+            return (self._params["scaling_coeff"] != 0)
+
+        def set_params(self, **kwargs):
+            """ Set parameters for the Thole interaction.
+
+            Parameters
+            ----------
+            scaling_coeff : :obj:`float`
+                            The facor used in the thole damping function between 
+                            polarizable particles i and j. Usually caluclated by 
+                            the polarizabilities alpha_i, alpha_j and damping 
+                            parameters  a_i, a_j via
+                            scaling_coeff = (a_i+a_j)/2 / ((alpha_i*alpha_j)^(1/2))^(1/3)
+            q1q2: :obj:`float`
+                  charge factor of the involved charges. Has to be set because 
+                  it acts only on the portion of the drude core charge that is 
+                  associated to the dipole of the atom. For charged, polarizable 
+                  atoms that charge is not equal to the particle charge property.
+
+            """
+            super(TholeInteraction, self).set_params(**kwargs)
+
+        def _set_params_in_es_core(self):
+            # Handle the case of shift="auto"
+            if thole_set_params(self._part_types[0], self._part_types[1],
+                                        self._params["scaling_coeff"],
+                                        self._params["q1q2"]):
+                raise Exception("Could not set Thole parameters")
+
+        def default_params(self):
+            return {"scaling_coeff": 0., "q1q2": 0.}
+
+        def type_name(self):
+            return "Thole"
+
+        def valid_keys(self):
+            return "scaling_coeff", "q1q2"
+
+        def required_keys(self):
+            return "scaling_coeff", "q1q2"
 
 IF ROTATION:
     class HarmonicDumbbellBond(BondedInteraction):
@@ -2551,6 +2740,12 @@ ELSE:
 
 IF BOND_ANGLE == 1:
     class AngleHarmonic(BondedInteraction):
+        """
+        Bond angle dependent harmonic potential.
+
+        See :ref:`Bond-angle interactions`
+
+        """
 
         def type_number(self):
             return BONDED_IA_ANGLE_HARMONIC
@@ -2593,6 +2788,12 @@ ELSE:
 
 IF BOND_ANGLE == 1:
     class AngleCosine(BondedInteraction):
+        """
+        Bond angle dependent ine potential.
+
+        See :ref:`Bond-angle interactions`
+
+        """
 
         def type_number(self):
             return BONDED_IA_ANGLE_COSINE
@@ -2635,6 +2836,12 @@ ELSE:
 
 IF BOND_ANGLE == 1:
     class AngleCossquare(BondedInteraction):
+        """
+        Bond angle dependent cos^2 potential.
+
+        See :ref:`Bond-angle interactions`
+
+        """
 
         def type_number(self):
             return BONDED_IA_ANGLE_COSSQUARE
@@ -2829,6 +3036,11 @@ ELSE:
         name = "IBM_VOLCONS"
 
 class OifGlobalForces(BondedInteraction):
+    """
+    Part of the :ref:`Object-in-fluid` method.
+
+    """
+
 
     def type_number(self):
         return BONDED_IA_OIF_GLOBAL_FORCES
@@ -2870,6 +3082,10 @@ class OifGlobalForces(BondedInteraction):
 
 
 class OifLocalForces(BondedInteraction):
+    """
+    Part of the :ref:`Object-in-fluid` method.
+
+    """
 
     def type_number(self):
         return BONDED_IA_OIF_LOCAL_FORCES
@@ -2932,10 +3148,14 @@ bonded_interaction_classes = {
     int(BONDED_IA_OIF_LOCAL_FORCES): OifLocalForces,
     int(BONDED_IA_IBM_TRIEL): IBM_Triel,
     int(BONDED_IA_IBM_TRIBEND): IBM_Tribend,
+    int(BONDED_IA_THERMALIZED_DIST): ThermalizedBond
 }
 IF LENNARD_JONES:
     bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = SubtLJ
-
+IF ELECTROSTATICS:
+    bonded_interaction_classes[int(BONDED_IA_BONDED_COULOMB)] = BondedCoulomb
+IF P3M:
+    bonded_interaction_classes[int(BONDED_IA_BONDED_COULOMB_P3M_SR)] = BondedCoulombP3MSRBond
 
 class BondedInteractions(object):
     """Represents the bonded interactions.

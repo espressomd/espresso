@@ -24,71 +24,36 @@ from espressomd import System, lb, shapes, lbboundaries
 import numpy as np
 from espressomd.interactions import FeneBond
 from espressomd.virtual_sites import VirtualSitesInertialessTracers, VirtualSitesOff
+from espressomd.utils import handle_errors
 
 from tests_common import verify_lj_forces
 from numpy import random
+from virtual_sites_tracers_common import VirtualSitesTracersCommon
 
 
 @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_INERTIALESS_TRACERS","LB_GPU"),
            "Test requires VIRTUAL_SITES_INERTIALESS_TRACERS")
-class VirtualSitesTracers(ut.TestCase):
-    s = espressomd.System()
-    s.seed = range(s.cell_system.get_state()["n_nodes"])
-    
-    def test_aa_method_switching(self):
-        # Virtual sites should be disabled by default
-        self.assertTrue(isinstance(self.s.virtual_sites, VirtualSitesOff))
+class VirtualSitesTracers(ut.TestCase,VirtualSitesTracersCommon):
+    box_height = 10. 
+    box_lw=10.
+    system = espressomd.System(box_l=(box_lw,box_lw,box_height))
+    system.seed = range(system.cell_system.get_state()["n_nodes"])
+    system.time_step = 0.04
+    system.cell_system.skin = 0.1
+    lbf = lb.LBFluidGPU(agrid=1, dens=1, visc=2, tau= system.time_step, fric = 1)
+    system.actors.add(lbf)
+    system.thermostat.set_lb(kT=0)
+       
+    # Setup boundaries
+    walls = [lbboundaries.LBBoundary() for k in range(2)]
+    walls[0].set_params(shape=shapes.Wall(normal=[0,0,1], dist = 0.5))
+    walls[1].set_params(shape=shapes.Wall(normal=[0,0,-1], dist = -box_height-0.5))
+        
+    for wall in walls:
+       system.lbboundaries.add(wall)
+        
+    handle_errors("setup") 
 
-        # Switch implementation
-        self.s.virtual_sites=VirtualSitesInertialessTracers()
-        self.assertTrue(isinstance(self.s.virtual_sites, VirtualSitesInertialessTracers))
-        self.assertEqual(self.s.virtual_sites.have_velocity,True)
-
-
-    def test_advection(self):
-
-        # System setup
-        system = self.s
-        system.virtual_sites=VirtualSitesInertialessTracers()
-        system.time_step = 0.05
-        system.cell_system.skin = 0.1
-        
-        box_l = 9. 
-        system.box_l = [box_l] * 3
-        
-        lbf = lb.LBFluidGPU(agrid=1, dens=1, visc=10, tau= system.time_step, ext_force=[0.1, 0, 0], fric = 1)
-        system.actors.add(lbf)
-        
-        system.thermostat.set_lb(kT=0)
-        
-        # Setup boundaries
-        walls = [lbboundaries.LBBoundary() for k in range(2)]
-        walls[0].set_params(shape=shapes.Wall(normal=[0,0,1], dist = 0.5))
-        walls[1].set_params(shape=shapes.Wall(normal=[0,0,-1], dist = -box_l-0.5))
-        
-        for wall in walls:
-            system.lbboundaries.add(wall)
-        
-        system.part.add(id=0, pos=[0,box_l/2,box_l/2], virtual=1)    
-        # Establish steady state flow field
-        system.integrator.run(100)
-            
-        system.part[0].pos=[0,box_l/2,box_l/2]
-        
-        system.time=0
-        ## Perform integration
-        
-        print("time, actual position, expected position")
-        for i in range(10):
-            system.integrator.run(100)
-            # compute expected position
-            X = lbf[0,int(box_l/2),int(box_l/2)].velocity[0] * system.time
-            print( system.time, system.part[0].pos[0],X)
-            self.assertAlmostEqual(system.part[0].pos[0],X,delta=0.02)
-
-        
-        
-            
 if __name__ == "__main__":
     #print("Features: ", espressomd.features())
     ut.main()
