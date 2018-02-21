@@ -35,6 +35,9 @@ for (auto& p : local_cells.particles()) {
   if (get_have_velocity())
     update_vel(p);
 
+  if (get_have_quaternion())
+    update_virtual_particle_quaternion(p);
+
 }
 
 }
@@ -47,17 +50,7 @@ void VirtualSitesRelative::update_virtual_particle_quaternion(Particle& p) const
  {
    throw std::runtime_error("virtual_sites_relative.cpp - update_mol_pos_particle(): No real particle associated with virtual site.\n");
  }
- /*
- double director[3];
- convert_quat_to_quatu(p_real->r.quat, director);
- double r, phi, theta;
- r = sqrt(sqrlen(director));
- theta = std::acos(director[2]/r);
- phi = std::atan2(director[1], director[0]);
- if (director[1] < 0)  phi += 2.0 * PI;
- double theta_virtual;
- */ 
-  
+ multiply_quaternions(p_real->r.quat, p.p.vs_quat, p.r.quat);
 }
 
 
