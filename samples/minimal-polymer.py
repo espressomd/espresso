@@ -22,6 +22,7 @@ import espressomd
 from espressomd import thermostat
 from espressomd import interactions
 from espressomd import polymer
+from espressomd.io.writer import vtf  # pylint: disable=import-error
 
 # System parameters
 #############################################################
@@ -35,7 +36,8 @@ system.cell_system.skin = 0.4
 system.box_l = [100, 100, 100]
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 system.cell_system.set_n_square(use_verlet_lists=False)
-i
+outfile = open('polymer.vtf', 'w')
+
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=1, sigma=1,
     cutoff=2**(1. / 6), shift="auto")
@@ -45,8 +47,6 @@ system.bonded_inter.add(fene)
 
 
 polymer.create_polymer(N_P=1, bond_length=1.0, type_poly_neutral=0, type_poly_charged=0, MPC=50, bond=fene)
-
-outfile = open('polymer.vtf', 'w')
 vtf.writevsf(system, outfile)
 
 
