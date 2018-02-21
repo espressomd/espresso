@@ -60,7 +60,7 @@ fi
 
 outp insource srcdir builddir \
     cmake_params with_fftw \
-    with_python_interface with_coverage with_static_analysis myconfig check_procs build_procs
+    with_python_interface with_coverage with_static_analysis myconfig check_procs build_procs check_odd_only
 
 # check indentation of python files
 pep8 --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
