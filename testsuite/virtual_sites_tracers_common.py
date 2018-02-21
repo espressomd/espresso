@@ -192,7 +192,7 @@ class VirtualSitesTracersCommon(object):
         ## Add triel, strong modulus for 6-8
         triStrong = IBM_Triel(ind1=6, ind2=7, ind3=8, elasticLaw="Skalak", k1=15, k2=0, maxDist = 2.4)
         system.bonded_inter.add(triStrong)
-        system.part[6].add_bond((1, 7, 8))
+        system.part[6].add_bond((triStrong, 7, 8))
         ## Perform integration
         system.integrator.run(1)
         system.part[3:].pos =system.part[3:].pos +random.random((6,3)) -.5
