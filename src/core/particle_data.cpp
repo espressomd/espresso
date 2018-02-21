@@ -178,7 +178,13 @@ int get_particle_node(int id) {
 
   auto const needle = particle_node.find(id);
 
-  return (needle != particle_node.end()) ? needle->second : -1;
+  // Check if particle has a node, if not, we assume it does not exist.
+  int pnode = (needle != particle_node.end()) ? needle->second : -1;
+  if (pnode == -1) {
+    throw std::runtime_error("Particle node not found!");
+  } else {
+    return pnode;
+  }
 }
 
 void clear_particle_node() { particle_node.clear(); }
@@ -408,9 +414,13 @@ void prefetch_particle_data(std::vector<int> ids) {
   /* Remove local, already cached and non-existent particles from the list. */
   ids.erase(std::remove_if(ids.begin(), ids.end(),
                            [](int id) {
-                             auto const pnode = get_particle_node(id);
-                             return (pnode < 0) || (pnode == this_node) ||
-                                    particle_fetch_cache.has(id);
+                             if (not particle_exists(id)) {
+                               return true;
+                             } else {
+                               auto const pnode = get_particle_node(id);
+                               return (pnode == this_node) ||
+                                      particle_fetch_cache.has(id);
+                             }
                            }),
             ids.end());
 
@@ -434,13 +444,11 @@ void prefetch_particle_data(std::vector<int> ids) {
 int place_particle(int part, double p[3]) {
   int retcode = ES_PART_OK;
 
-  if (part < 0)
-    throw std::runtime_error("Particle id has to be >= 0!");
   int pnode;
-  if (part <= max_seen_particle) {
+  if (particle_exists(part)) {
     pnode = get_particle_node(part);
     mpi_place_particle(pnode, part, p);
-  } else  {
+  } else {
     /* new particle, node by spatial position */
     pnode = cell_structure.position_to_node(p);
 
@@ -614,21 +622,21 @@ int set_particle_type(int p_id, int type) {
   auto const pnode = get_particle_node(p_id);
   make_particle_type_exist(type);
 
-
   if (type_list_enable) {
     // check if the particle exists already and the type is changed, then remove
     // it from the list which contains it
     auto cur_par = get_particle_data(p_id);
     if (cur_par) {
       int prev_type = cur_par->p.type;
-      if (prev_type != type and particle_type_map.find(prev_type)!=particle_type_map.end()) {
+      if (prev_type != type and
+          particle_type_map.find(prev_type) != particle_type_map.end()) {
         // particle existed before so delete it from the list
         remove_id_from_map(p_id, prev_type);
       }
     } else {
       throw std::runtime_error("Cannot set type for non-existing particle");
     }
-    
+
     add_id_to_type_map(p_id, type);
   }
 
@@ -806,10 +814,10 @@ void remove_all_particles() {
 int remove_particle(int p_id) {
   auto cur_par = get_particle_data(p_id);
   if (cur_par) {
-    if(type_list_enable==true){
-        //remove particle from its current type_list
-        int type = cur_par->p.type;
-        remove_id_from_map(p_id, type);
+    if (type_list_enable == true) {
+      // remove particle from its current type_list
+      int type = cur_par->p.type;
+      remove_id_from_map(p_id, type);
     }
   } else {
     throw std::runtime_error("Particle could not be retrieved during remove");
@@ -867,8 +875,7 @@ void local_remove_particle(int part) {
   pl->n--;
 }
 
-void local_place_particle(int part, const double p[3], int _new)
-{
+void local_place_particle(int part, const double p[3], int _new) {
   Cell *cell;
   double pp[3];
   int i[3], rl;
@@ -1204,13 +1211,13 @@ void auto_exclusions(int distance) {
 #endif
 
 void init_type_map(int type) {
-  type_list_enable=true;
+  type_list_enable = true;
   if (type < 0)
     throw std::runtime_error("Types may not be negative");
 
-  //fill particle map
-    if(particle_type_map.count(type)==0)
-        particle_type_map[type]=std::unordered_set<int>();
+  // fill particle map
+  if (particle_type_map.count(type) == 0)
+    particle_type_map[type] = std::unordered_set<int>();
 
   for (auto const &p : partCfg()) {
     if (p.p.type == type)
@@ -1222,15 +1229,15 @@ void remove_id_from_map(int part_id, int type) {
   particle_type_map.at(type).erase(part_id);
 }
 
-int get_random_p_id(int type){
-    if(particle_type_map.at(type).size()==0)
-        throw std::runtime_error("No particles of given type could be found");
-    int rand_index = i_random(particle_type_map.at(type).size());
-    return *std::next(particle_type_map[type].begin(),rand_index);
+int get_random_p_id(int type) {
+  if (particle_type_map.at(type).size() == 0)
+    throw std::runtime_error("No particles of given type could be found");
+  int rand_index = i_random(particle_type_map.at(type).size());
+  return *std::next(particle_type_map[type].begin(), rand_index);
 }
 
 void add_id_to_type_map(int part_id, int type) {
-    particle_type_map.at(type).insert(part_id);
+  particle_type_map.at(type).insert(part_id);
 }
 
 int number_of_particles_with_type(int type) {
@@ -1354,11 +1361,11 @@ void pointer_to_rotational_inertia(Particle const *p, double const *&res) {
 }
 #endif
 
-bool particle_exists(int part) {
+bool particle_exists(int part_id) noexcept {
   try {
-    get_particle_node(part);
+    get_particle_node(part_id);
+    return true;
   } catch (...) {
     return false;
   }
-  return true;
 }
