@@ -48,6 +48,7 @@ function cmd {
 [ -z "$check_procs" ] && check_procs=2
 [ -z "$build_procs" ] && build_procs=2
 [ -z "$make_check" ] && make_check="true"
+[ -z "check_odd_only" ] && check_odd_only="false"
 
 cmake_params="-D CMAKE_BUILD_TYPE=Debug -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params"
 
@@ -159,7 +160,11 @@ if $make_check; then
     start "TEST"
 
     if [ -z "$run_tests" ]; then
-        cmd "make -j${build_procs} check_python $make_params" || exit 1
+        if $check_odd_only; then
+            cmd "make -j${build_procs} check_python_parallel_odd $make_params" || exit 1
+        else
+            cmd "make -j${build_procs} check_python $make_params" || exit 1
+        fi
     else
         cmd "make python_tests $make_params"
         for t in $run_tests; do
