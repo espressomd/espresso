@@ -623,14 +623,6 @@ void mpi_external_potential_sum_energies_slave();
 std::vector<EspressoGpuDevice> mpi_gather_cuda_devices();
 #endif
 
-/** MPI-IO output function.
- *  \param filename Filename prefix for the created files. Must be
- * null-terminated.
- *  \param fields Fields to dump.
- *  \param write 1 to write, 0 to read
- */
-void mpi_mpiio(const char *filename, unsigned fields, int write);
-
 /**
  * @brief Resort the particles.
  *

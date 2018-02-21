@@ -35,6 +35,7 @@
 #include "lees_edwards.hpp"
 #include "npt.hpp"
 #include "rattle.hpp"
+#include "thermalized_bond.hpp"
 #include "tuning.hpp"
 #include "utils/mpi/all_compare.hpp"
 
@@ -222,6 +223,9 @@ const std::unordered_map<int, Datafield> fields{
       {langevin_gamma_rotation.data(), Datafield::Type::DOUBLE, 3, "gamma_rot",
        1}}, /* 55 from thermostat.cpp */
 #endif
+     {FIELD_THERMALIZEDBONDS,
+      {&n_thermalized_bonds, Datafield::Type::INT, 1, "n_thermalized_bonds",
+       5}}, /* 56 from thermalized_bond.cpp */
      {FIELD_FORCE_CAP,
       {&force_cap, Datafield::Type::DOUBLE, 1, "force_cap", 1}}}};
 

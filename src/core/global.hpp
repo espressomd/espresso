@@ -148,6 +148,8 @@ enum Fields {
   FIELD_SMALLERTIMESTEP,
   /** index of \ref langevin_gamma_rotation in  \ref #fields */
   FIELD_LANGEVIN_GAMMA_ROTATION,
+  /** index of \ref n_thermalized_bonds in \ref #fields */
+  FIELD_THERMALIZEDBONDS,
   FIELD_FORCE_CAP
 };
 /*@}*/
