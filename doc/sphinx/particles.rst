@@ -169,7 +169,7 @@ Exclusions
 Particles can have an exclusion list of all other particles where non-bonded interactions are ignored.
 This is typically used in atomistic simulations, 
 where nearest and next nearest neighbor interactions along the chain have to be omitted since they are included in the bonding potentials.
-Exclusions do not apply to the short range part of electrstatics and magnetostatics methods, e.g. to P3M.
+Exclusions do not apply to the short range part of electrostatics and magnetostatics methods, e.g. to P3M.
 
   ::
 
