@@ -690,8 +690,6 @@ cdef class ParticleHandle(object):
             def __set__(self, q):
                 if len(q) != 4:
                     raise ValueError("vs_quat has to be an array-like of length 4.")
-                if not self.virtual:
-                    raise ValueError("Setting of vs_quat for a non-virtual particle is not allowed.")
                 cdef double _q[4]
                 for i in range(4):
                     _q[i] = q[i]
