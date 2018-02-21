@@ -30,7 +30,12 @@ A minimal working example is the following:
 <Universe with 1 atoms>
 
 """
-from six import StringIO
+
+try:
+    import cStringIO as StringIO
+except ImportError:
+    from io import StringIO
+
 import numpy as np
 import MDAnalysis
 
