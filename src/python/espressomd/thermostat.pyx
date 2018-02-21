@@ -93,9 +93,9 @@ cdef class Thermostat(object):
                 self.turn_off()
             if thmst["type"] == "LANGEVIN":
                 self.set_langevin(kT=thmst["kT"], gamma=thmst[
-                                  "gamma"], gamma_rotation=thmst["gamma_rotation"])
+                                  "gamma"], gamma_rotation=thmst["gamma_rotation"], act_on_virtual=thmst["act_on_virtual"])
             if thmst["type"] == "LB":
-                self.set_lb(kT=thmst["kT"])
+                self.set_lb(kT=thmst["kT"], act_on_virtual=thmst["act_on_virtual"])
             if thmst["type"] == "NPT_ISO":
                 self.set_npt(kT=thmst["kT"], p_diff=thmst[
                              "p_diff"], piston=thmst["piston"])
@@ -116,6 +116,7 @@ cdef class Thermostat(object):
             lang_dict = {}
             lang_dict["type"] = "LANGEVIN"
             lang_dict["kT"] = temperature
+            lang_dict["act_on_virtual"] = thermo_virtual
             IF PARTICLE_ANISOTROPY:
                 lang_dict["gamma"] = [langevin_gamma[0],
                                       langevin_gamma[1],
@@ -137,6 +138,7 @@ cdef class Thermostat(object):
             lb_dict = {}
             lb_dict["type"] = "LB"
             lb_dict["kT"] = temperature
+            lb_dict["act_on_virtual"] = thermo_virtual
             thermo_list.append(lb_dict)
         if thermo_switch & THERMO_NPT_ISO:
             npt_dict = {}
