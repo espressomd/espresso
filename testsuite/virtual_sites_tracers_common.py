@@ -163,7 +163,7 @@ class VirtualSitesTracersCommon(object):
     def test_triel(self):
         system=self.system
         system.virtual_sites=VirtualSitesInertialessTracers()
-        self.lbf.set_params(ext_force=(0.0,0.,0.)) 
+        self.lbf.set_params(ext_force=(0.1,0.,0.)) 
         self.stop_fluid()
         system.virtual_sites=VirtualSitesInertialessTracers()
         #system.integrator.run(1000)
@@ -194,8 +194,8 @@ class VirtualSitesTracersCommon(object):
         system.bonded_inter.add(triStrong)
         system.part[6].add_bond((triStrong, 7, 8))
         ## Perform integration
-        system.integrator.run(1)
-        system.part[3:].pos =system.part[3:].pos +random.random((6,3)) -.5
+#        system.integrator.run(1)
+#        system.part[3:].pos =system.part[3:].pos +random.random((6,3)) -.5
         
         
         system.integrator.run(15000)
@@ -213,13 +213,17 @@ class VirtualSitesTracersCommon(object):
         print( "** Distances: non-bonded, weak, strong, expected")
         print( str(dist1non) + "    " + str(dist1weak) + "     " + str(dist1strong) + "    1")
         print( str(dist2non) + "    " + str(dist2weak) + "     " + str(dist2strong) + "    1.414")
-        #self.assertAlmostEqual(dist1non,1,delta=0.03)
-        self.assertAlmostEqual(dist1weak,1,delta=0.03)
+
+        # test:
+        # non-bonded should move apart by the flow (control group)
+        # weakly-bonded should stretch somewhat
+        # strongly-bonded should basically not stretch
+        self.assertGreater(dist1non, 2)
+        self.assertAlmostEqual(dist1weak,1, delta=0.3)
         self.assertAlmostEqual(dist1strong,1,delta=0.03)
         
-        #self.assertAlmostEqual(dist2non,np.sqrt(2),delta=0.03)
-        self.assertAlmostEqual(dist2weak,np.sqrt(2),delta=0.03)
-        self.assertAlmostEqual(dist2strong,np.sqrt(2),delta=0.03)
-
+        self.assertGreater(dist2non, 2)
+        self.assertAlmostEqual(dist2weak, np.sqrt(2) , delta=0.3)
+        self.assertAlmostEqual(dist2strong, np.sqrt(2) ,delta=0.1)
     
         
