@@ -955,7 +955,6 @@ int virtual_set_params(int bond_type);
 void set_dipolar_method_local(DipolarInteraction method);
 #endif
 
-
 /** @brief Checks if particle has a pair bond with a given partner  
 *  Note that bonds are stored only on one of the two particles in Espresso
 * 

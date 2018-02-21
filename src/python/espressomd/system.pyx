@@ -56,6 +56,8 @@ IF COLLISION_DETECTION == 1:
 
 import sys
 import random  # for true random numbers from os.urandom()
+cimport tuning
+
 
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
                       "time_step", "timings", "force_cap"]
