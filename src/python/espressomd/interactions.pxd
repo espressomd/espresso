@@ -371,7 +371,7 @@ cdef extern from "interaction_data.hpp":
         double a2
         double b1
         double b2
-        double maxdist
+        double maxDist
         tElasticLaw elasticLaw
         double k1
         double k2
@@ -407,7 +407,7 @@ cdef extern from "interaction_data.hpp":
         Endangledist_bond_parameters endangledist
         IBM_Triel_Parameters ibm_triel
         IBM_Tribend_Parameters ibm_tribend
-        IBM_VolCons_Parameters ibm_volCons
+        IBM_VolCons_Parameters ibmVolConsParameters
 
     ctypedef struct bonded_ia_parameters:
         int type

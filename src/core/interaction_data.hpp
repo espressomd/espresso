@@ -729,7 +729,7 @@ typedef struct {
   // These are interaction parameters
   // k1 is used for Neo-Hookean
   // k1 and k2 are used Skalak
-  double maxdist;
+  double maxDist;
   tElasticLaw elasticLaw;
   double k1;
   double k2;

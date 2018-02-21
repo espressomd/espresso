@@ -40,8 +40,8 @@ int IBM_Triel_CalcForce(Particle *p1,Particle *p2, Particle *p3, Bonded_ia_param
   const double sinPhi = sqrt(sqrlen(vecpro))/(l*lp);
   
   // Check for sanity
-  if(    (lp-iaparams->p.ibm_triel.lp0 > iaparams->p.ibm_triel.maxdist)
-     ||  (l-iaparams->p.ibm_triel.l0 > iaparams->p.ibm_triel.maxdist))
+  if(    (lp-iaparams->p.ibm_triel.lp0 > iaparams->p.ibm_triel.maxDist)
+     ||  (l-iaparams->p.ibm_triel.l0 > iaparams->p.ibm_triel.maxDist))
   {
     return 1;
   }
@@ -232,7 +232,7 @@ int IBM_Triel_ResetParams(const int bond_type, const double k1, const double l0)
    IBM_Triel_SetParams
 ************/
 
-int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const double max, const tElasticLaw elasticLaw, const double k1, const double k2)
+int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const double maxDist, const tElasticLaw elasticLaw, const double k1, const double k2)
 {
   // Create bond
   make_bond_type_exist(bond_type);
@@ -279,7 +279,7 @@ int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, con
   bonded_ia_params[bond_type].p.ibm_triel.sinPhi0 = sinPhi0;
   bonded_ia_params[bond_type].p.ibm_triel.cosPhi0 = cosPhi0;
   bonded_ia_params[bond_type].p.ibm_triel.area0 = 0.5*area2;
-  bonded_ia_params[bond_type].p.ibm_triel.maxdist = max;
+  bonded_ia_params[bond_type].p.ibm_triel.maxDist = maxDist;
   bonded_ia_params[bond_type].p.ibm_triel.elasticLaw = elasticLaw;
   // Always store two constants, for NeoHookean only k1 is used
   bonded_ia_params[bond_type].p.ibm_triel.k1 = k1;

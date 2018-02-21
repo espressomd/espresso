@@ -2679,6 +2679,27 @@ ELSE:
 IF IMMERSED_BOUNDARY == 1:
     class IBM_Triel(BondedInteraction):
 
+        def __init__(self, *args, **kwargs):
+            """
+            IBM_Triel initializer. Used to instatiate an IBM_Triel identifier
+            with a given set of parameters.
+
+            Parameters
+            ----------
+            indX : :obj:`int`
+                  Specify first, second and third bonding partner. Used for initializing reference state
+            k1 : :obj:`float`
+                  Specifies shear elasticity for Skalak and Neo-Hookean
+            k2 : :obj:`float`
+                  Specifies area resistance for Skalak
+            maxDist : :obj:`float`
+                  Gives an error if an edge becomes longer than maxDist
+            elasticLaw : :obj:`string`
+                  Specify NeoHookean or Skalak
+    
+            """
+            super(IBM_Triel, self).__init__(*args, **kwargs)
+
         def type_number(self):
             return BONDED_IA_IBM_TRIEL
 
@@ -2686,20 +2707,20 @@ IF IMMERSED_BOUNDARY == 1:
             return "IBM_Triel"
 
         def valid_keys(self):
-            return "ind1", "ind2", "ind3", "k1","k2","elasticLaw", "maxDist"
+            return "ind1", "ind2", "ind3", "k1","k2", "maxDist", "elasticLaw"
 
         def required_keys(self):
-            return "ind1", "ind2", "ind3","k1", "elasticLaw", "maxDist"
+            return "ind1", "ind2", "ind3","k1", "maxDist", "elasticLaw"
 
         def set_default_params(self):
             self._params = {"k2":0}
 
         def _get_params_from_es_core(self):
-            return {}
-#               {"maxdist":bonded_ia_params[self._bond_id].p.ibm_triel.maxDist,\
-#                 "k1":bonded_ia_params[self._bond_id].p.ibm_triel.k1,\
-#                 "k2":bonded_ia_params[self._bond_id].p.ibm_triel.k2,\
-#                 "elasticLaw":bonded_ia_params[self._bond_id].p.ibm_triel.elasticLaw}
+            return \
+               {"maxDist": bonded_ia_params[self._bond_id].p.ibm_triel.maxDist,
+                 "k1": bonded_ia_params[self._bond_id].p.ibm_triel.k1,
+                 "k2": bonded_ia_params[self._bond_id].p.ibm_triel.k2,
+                 "elasticLaw": bonded_ia_params[self._bond_id].p.ibm_triel.elasticLaw}
 
         def _set_params_in_es_core(self):
             if self._params["elasticLaw"] == "NeoHookean":
@@ -2714,6 +2735,23 @@ ELSE:
 # IBM tribend
 IF IMMERSED_BOUNDARY == 1:
     class IBM_Tribend(BondedInteraction):
+
+        def __init__(self, *args, **kwargs):
+            """
+            IBM_Tribend initializer. Used to instatiate an IBM_Tribend identifier
+            with a given set of parameters.
+
+            Parameters
+            ----------
+            indX : :obj:`int`
+                  Specify first, second, third and fourth bonding partner. Used for initializing reference state
+            kb : :obj:`float`
+                  Specifies bending modulus
+            refShape : :obj:`string`
+                  Flat or Initial
+
+            """
+            super(IBM_Tribend, self).__init__(*args, **kwargs)
 
         def type_number(self):
             return BONDED_IA_IBM_TRIBEND
@@ -2731,7 +2769,9 @@ IF IMMERSED_BOUNDARY == 1:
             self._params = {"flat":False}
 
         def _get_params_from_es_core(self):
-            return {}
+            return \
+               {"kb": bonded_ia_params[self._bond_id].p.ibm_tribend.kb,
+                "theta0": bonded_ia_params[self._bond_id].p.ibm_tribend.theta0}
 
         def _set_params_in_es_core(self):
             if self._params["refShape"] == "Flat":
@@ -2746,6 +2786,21 @@ ELSE:
 # IBM VolCons
 IF IMMERSED_BOUNDARY == 1:
     class IBM_VolCons(BondedInteraction):
+
+        def __init__(self, *args, **kwargs):
+            """
+            IBM_VolCons initializer. Used to instatiate an IBM_VolCons identifier
+            with a given set of parameters.
+
+            Parameters
+            ----------
+            softID : :obj:`int`
+                  Used to identify the object to which this bond belongs. Each object (cell) needs its own ID
+            kappaV : :obj:`float`
+                  Modulus for volume force
+
+            """
+            super(IBM_VolCons, self).__init__(*args, **kwargs)
 
         def type_number(self):
             return BONDED_IA_IBM_VOLUME_CONSERVATION
@@ -2763,7 +2818,9 @@ IF IMMERSED_BOUNDARY == 1:
             self._params = {}
 
         def _get_params_from_es_core(self):
-            return {}
+            return \
+              {"softID": bonded_ia_params[self._bond_id].p.ibmVolConsParameters.softID,
+               "kappaV": bonded_ia_params[self._bond_id].p.ibmVolConsParameters.kappaV}
 
         def _set_params_in_es_core(self):
             immersed_boundaries.volume_conservation_set_params(self._bond_id,self._params["softID"],self._params["kappaV"])
