@@ -132,7 +132,7 @@ imported, before anything related can be done. ::
 
     import espressomd
 
-This should be followed by further necessary imports: ::
+This should be followed by further necessary imports of the example at hand: ::
 
     from espressomd.interactions import HarmonicBond
     from espressomd.electrostatics import P3M 
@@ -155,7 +155,7 @@ concerning the simulation system such as box geometry, time step or :ref:`cell-s
 
 .. rubric:: Particles
 
-The particles in the simulation are accessed via the ParticleList class. Use
+The particles in the simulation are accessed via ``system.part``, an instance of the ParticleList class. Use
 the `add` method to :ref:`create new particles<Adding particles>`: ::
 
     system.part.add(id = 0, pos = [1.0, 1.0, 1.0], type = 0) 
