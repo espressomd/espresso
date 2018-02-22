@@ -56,7 +56,7 @@ class LBBoundaryTehrmoVirtualTest(ut.TestCase):
                "Features not available, skipping test.")
     def test_lb_cpu(self):
         lb_fluid = espressomd.lb.LBFluid(
-            agrid=2.0, dens=1.0, visc=1.0, fric=1.0, tau=1.0)
+            agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=1.0)
         self.system.actors.add(lb_fluid)
 
         self.check_virtual()
