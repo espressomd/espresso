@@ -427,7 +427,7 @@ The bond is configured with::
 
     from espressomd.interactions import ThermalizedBond
     thermalized_bond = ThermalizedBond(temp_com = <float>, gamma_com = <float>, temp_distance = <float>, gamma_distance = <float>, r_cut = <float>)
-    system.bonded_inter.add(drude_bond)
+    system.bonded_inter.add(thermalized_bond)
 
 The parameters are:
 
