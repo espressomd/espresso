@@ -48,7 +48,7 @@ function cmd {
 [ -z "$check_procs" ] && check_procs=2
 [ -z "$build_procs" ] && build_procs=2
 [ -z "$make_check" ] && make_check="true"
-[ -z "check_odd_only" ] && check_odd_only="false"
+[ -z "$check_odd_only" ] && check_odd_only="false"
 
 cmake_params="-D CMAKE_BUILD_TYPE=Debug -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params"
 
