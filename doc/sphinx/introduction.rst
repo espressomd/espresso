@@ -188,7 +188,7 @@ can be accessed by using Python slices: ::
 
 .. rubric:: Interactions
 
-Interactions between particles usually fall in three categories:
+In |es|, interactions between particles usually fall in three categories:
 
 -  :ref:`Non-bonded interactions` are short-ranged interactions between *all*
    pairs of particles of specified types. An example is the
