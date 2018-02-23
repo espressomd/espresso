@@ -105,7 +105,7 @@ print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
 for i in range(n_part):
     system.part.add(id=i, pos=np.random.random(3) * system.box_l)
 
-for i in range(n_part / 2):
+for i in range(n_part // 2):
     system.part[2 * i].q = -1.0
     system.part[2 * i].type = 1
     system.part[2 * i + 1].q = 1.0
