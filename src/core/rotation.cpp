@@ -114,7 +114,9 @@ int convert_quatu_to_quat(double d[3], double quat[4]) {
 
 /** Here we use quaternions to calculate the rotation matrix which
     will be used then to transform torques from the laboratory to
-    the body-fixed frames */  
+    the body-fixed frames.
+    Taken from "Goldstein - Classical Mechanics" (Chapter 4.6 Eq. 4.47).
+*/
 void define_rotation_matrix(Particle const *p, double A[9])
 {
   double q0q0 =p->r.quat[0];
@@ -147,6 +149,7 @@ void define_rotation_matrix(Particle const *p, double A[9])
 void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3],
                 double Wd[3]) {
   /* calculate the first derivative of the quaternion */
+  /* Taken from "An improved algorithm for molecular dynamics simulation of rigid molecules", Sonnenschein, Roland (1985), Eq. 4.*/
   Qd[0] = 0.5 * (-p->r.quat[1] * p->m.omega[0] - p->r.quat[2] * p->m.omega[1] -
                  p->r.quat[3] * p->m.omega[2]);
 
@@ -159,13 +162,15 @@ void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3],
   Qd[3] = 0.5 * (-p->r.quat[2] * p->m.omega[0] + p->r.quat[1] * p->m.omega[1] +
                  p->r.quat[0] * p->m.omega[2]);
 
-  /* calculate the second derivative of the quaternion */  
+  /* calculate the second derivative of the quaternion
+     Taken from "An improved algorithm for molecular dynamics simulation of rigid molecules", Sonnenschein, Roland (1985), Eq. 5.*/
   Wd[0] =  (p->f.torque[0] + p->m.omega[1]*p->m.omega[2]*(p->p.rinertia[1]-p->p.rinertia[2]))/p->p.rinertia[0];
   Wd[1] =  (p->f.torque[1] + p->m.omega[2]*p->m.omega[0]*(p->p.rinertia[2]-p->p.rinertia[0]))/p->p.rinertia[1];
   Wd[2] =  (p->f.torque[2] + p->m.omega[0]*p->m.omega[1]*(p->p.rinertia[0]-p->p.rinertia[1]))/p->p.rinertia[2];
 
   auto const S1 = Qd[0] * Qd[0] + Qd[1] * Qd[1] + Qd[2] * Qd[2] + Qd[3] * Qd[3];
 
+  /* Taken from "An improved algorithm for molecular dynamics simulation of rigid molecules", Sonnenschein, Roland (1985), Eq. 8.*/
   Qdd[0] = 0.5 * (-p->r.quat[1] * Wd[0] - p->r.quat[2] * Wd[1] -
                   p->r.quat[3] * Wd[2]) -
            p->r.quat[0] * S1;
