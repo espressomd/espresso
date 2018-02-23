@@ -210,6 +210,10 @@ IF LB_GPU or LB:
             ELSE:
                 raise Exception("LB not compiled in")
 
+        def _deactivate_method(self):
+            if lb_set_lattice_switch(0):
+                raise Exception("lb_set_lattice_switch error")
+
 IF LB_GPU:
     cdef class LBFluidGPU(LBFluid):
         """
