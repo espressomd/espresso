@@ -111,68 +111,90 @@ friction needs to be present for it to relax.
 The roles of the parameters :math:`k1, r_0, r_\mathrm{cut}` are exactly the same as for the
 harmonic bond.
 
-.. _Quartic bond:
+..
+    .. _Quartic bond:
 
-Quartic bond
-~~~~~~~~~~~~
+    Quartic bond
+    ~~~~~~~~~~~~
 
-.. todo::
-    Not implemented.
+    .. todo::
+        Not implemented.
 
 
-inter quartic
+    inter quartic
 
-This creates a bond type with identificator with a quartic potential.
-The potential is minimal at particle distance :math:`r=R`. It is given
-by
+    This creates a bond type with identificator with a quartic potential.
+    The potential is minimal at particle distance :math:`r=R`. It is given
+    by
 
-.. math:: V(r) = \frac{1}{2} K_0 \left( r - R \right)^2 + \frac{1}{4} K_1 \left( r - R \right)^4
+    .. math:: V(r) = \frac{1}{2} K_0 \left( r - R \right)^2 + \frac{1}{4} K_1 \left( r - R \right)^4
 
-The fourth, optional, parameter defines a cutoff radius. Whenever a
-quartic bond gets longer than , the bond will be reported as broken, and
-a background error will be raised.
+    The fourth, optional, parameter defines a cutoff radius. Whenever a
+    quartic bond gets longer than , the bond will be reported as broken, and
+    a background error will be raised.
 
 .. _Bonded coulomb:
 
 Bonded coulomb
 ~~~~~~~~~~~~~~
 
-.. todo::
-    Not implemented.
+.. note::
 
-inter bonded_coulomb
+    Require ELECTROSTAICS feature.
 
-This creates a bond type with identificator with a coulomb pair
-potential. It is given by
+A pairwise Coulomb interaction can be instantiated via 
+:class:`espressomd.interactions.BondedCoulomb`::
+
+    bonded_coulomb = espressomd.interactions.BondedCoulomb(prefactor = 1.0)
+    system.bonded_inter.add(bonded_coulomb)
+    system.part[0].add_bond((bonded_coulomb, 1))
+
+This creates a bond with a Coulomb pair potential between particles `0` and `1`. 
+It is given by
 
 .. math:: V(r) = \frac{\alpha q_1 q_2}{r},
 
-where and are the charges of the bound particles. There is no cutoff,
-the Bjerrum length of other coulomb interactions is not taken into
-account.
+where `q1` and `q2` are the charges of the bound particles and `alpha` is the
+Coulomb prefactor. This interaction has no cutoff and acts independently of other
+Coulomb interactions.
+
+.. _Subtract P3M short-range bond:
+
+Subtract P3M short-range bond
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+
+    requires the P3M feature.
+
+This bond can be instantiated via
+:class:`espressomd.interactions.BondedCoulombP3MSRBond`::
+    
+    from espressomd.interactions import BondedCoulombP3MSRBond
+    subtr_p3m_sr = BondedCoulombP3MSRBond(q1q2 = <float>)
+
+The parameter `q1q2` sets the charge factor of the short-range P3M interaction.
+It can differ from the actual partice charges.  This specialized bond can be
+used to cancel or add **only the short-range** electrostatic part 
+of the P3M solver. A use case is descibed in :ref:`Particle polarizability with
+thermalized cold Drude oszillators`.
 
 .. _Subtracted Lennard-Jones bond:
 
 Subtracted Lennard-Jones bond
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. todo::
-    Not implemented.
+:class:`espressomd.interactions.SubtLJ` can be used to exclude certain particle 
+pairs from the non-bonded :ref:`Lennard-Jones interaction`:: 
 
-inter subt_lj
+    subtLJ = espressomd.interactions.SubtLJ()
+    system.bonded_inter.add(subtLJ)
+    system.part[0].add_bond((subt, 1))
 
-This creates a "bond” type with identificator , which acts between two
-particles and actually subtracts the Lennard-Jones interaction between
-the involved particles. The first parameter, is a dummy just kept for
-compatibility reasons. The second parameter, , is used as a check: if
-any bond length in the system exceeds this value, the program
-terminates. When using this interaction, it is worthwhile to consider
-capping the Lennard-Jones potential appropriately so that round-off
-errors can be avoided.
-
-This interaction is useful when using other bond potentials which
-already include the short-ranged repulsion. This often the case for
-force fields or in general tabulated potentials.
+This bond subtracts the type-pair specific Lennard-Jones interaction between
+the involved particles. This interaction is useful when using other bond
+potentials which already include the short-ranged repulsion. This often the
+case for force fields or in general tabulated potentials.
 
 .. _Rigid bonds:
 
@@ -181,7 +203,7 @@ Rigid bonds
 
 .. note::
 
-    required BOND_CONSTRAINT feature.
+    Requires BOND_CONSTRAINT feature.
 
 
 A rigid bond can be instantiated via
@@ -390,3 +412,31 @@ Together with appropriate Lennard-Jones interactions, this potential can
 mimic a large number of atomic torsion potentials.
 
 .. |image_dihedral| image:: figures/dihedral-angle.pdf
+
+
+.. _Thermalized distance bond:
+
+Thermalized distance bond
+-------------------------
+
+This bond can be used to apply Langevin thermalization on the centre of mass
+and the distance of a particle pair.  Each thermostat can have it's own
+temperature and friction coefficient. 
+
+The bond is configured with::
+
+    from espressomd.interactions import ThermalizedBond
+    thermalized_bond = ThermalizedBond(temp_com = <float>, gamma_com = <float>, temp_distance = <float>, gamma_distance = <float>, r_cut = <float>)
+    system.bonded_inter.add(thermalized_bond)
+
+The parameters are:
+
+    * temp_com : Temerature of the Langevin thermostat for the COM of the particle pair.
+    * gamma_com: Friction coefficient of the Langevin thermostat for the COM of the particle pair.
+    * temp_distance: Temerature of the Langevin thermostat for the distance vector of the particle pair.
+    * gamma_distance: Friction coefficient of the Langevin thermostat for the distance vector of the particle pair.
+    * r_cut:  Specifies maximum distance beyond which the bond is considered broken.
+
+The bond is closely related to simulating :ref:`Particle polarizability with
+thermalized cold Drude oszillators`. 
+

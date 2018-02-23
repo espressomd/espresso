@@ -1426,13 +1426,15 @@ static double p3m_mcr_time(int mesh[3], int cao, double r_cut_iL,
       coulomb.method != COULOMB_P3M_GPU)
     coulomb.method = COULOMB_P3M;
 
+  p3m.params.r_cut = r_cut_iL * box_l[0];
   p3m.params.r_cut_iL = r_cut_iL;
   p3m.params.mesh[0] = mesh[0];
   p3m.params.mesh[1] = mesh[1];
   p3m.params.mesh[2] = mesh[2];
   p3m.params.cao = cao;
   p3m.params.alpha_L = alpha_L;
-  p3m_scaleby_box_l();
+  p3m.params.alpha = p3m.params.alpha_L * box_l_i[0];
+
   /* initialize p3m structures */
   mpi_bcast_coulomb_params();
   /* perform force calculation test */
@@ -1907,12 +1909,14 @@ int p3m_adaptive_tune(char **log) {
 
   /* set tuned p3m parameters */
   p3m.params.tuning = false;
+  p3m.params.r_cut = r_cut_iL * box_l[0];
   p3m.params.r_cut_iL = r_cut_iL;
   p3m.params.mesh[0] = mesh[0];
   p3m.params.mesh[1] = mesh[1];
   p3m.params.mesh[2] = mesh[2];
   p3m.params.cao = cao;
   p3m.params.alpha_L = alpha_L;
+  p3m.params.alpha = p3m.params.alpha_L * box_l_i[0];
   p3m.params.accuracy = accuracy;
   /* broadcast tuned p3m parameters */
   P3M_TRACE(fprintf(stderr, "%d: Broadcasting P3M parameters: mesh: (%d %d "

@@ -64,7 +64,7 @@ clang-static-analysis:
   stage: build
   image: espressomd/espresso-ubuntu-clang-cuda:latest
   script:
-    - export myconfig=maxset with_coverage=false with_static_analysis=true
+    - export myconfig=maxset with_coverage=false with_static_analysis=true make_check=false
     - bash maintainer/cuda_build.sh
 
 clang:
