@@ -132,6 +132,7 @@ IF COULOMB_DEBYE_HUECKEL:
             return params
 
         def _activate_method(self):
+            check_neutrality(self.system, self._params)
             coulomb.method = COULOMB_DH
             self._set_params_in_es_core()
 
@@ -188,6 +189,7 @@ ELSE:
                 return params
 
             def _activate_method(self):
+                check_neutrality(self.system, self._params)
                 coulomb.method = COULOMB_DH
                 self._set_params_in_es_core()
 
@@ -339,6 +341,7 @@ IF P3M == 1:
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
+            check_neutrality(self.system, self._params)
             if self._params["tune"]:
                 self._tune()
             self._set_params_in_es_core()
@@ -781,6 +784,7 @@ IF ELECTROSTATICS:
                 actors.Actor.__init__(self, *args, **kwargs)
 
             def _activate_method(self):
+                check_neutrality(self.system, self._params)
                 coulomb_set_prefactor(self._params["prefactor"])
                 self._set_params_in_es_core()
                 mpi_bcast_coulomb_params()
