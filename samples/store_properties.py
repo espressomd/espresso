@@ -108,7 +108,7 @@ system.cell_system.max_num_cells = 2744
 
 
 # Assingn charge to particles
-for i in range(n_part / 2 - 1):
+for i in range(n_part // 2 - 1):
     system.part[2 * i].q = -1.0
     system.part[2 * i + 1].q = 1.0
 

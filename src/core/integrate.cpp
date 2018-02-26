@@ -90,15 +90,6 @@ int recalc_forces = 1;
 double verlet_reuse = 0.0;
 
 double smaller_time_step = -1.0;
-#ifdef MULTI_TIMESTEP
-int current_time_step_is_small = 0;
-int mts_index = 0;
-int mts_max = 0;
-#ifdef NPT
-double scal_store[3] = {0., 0., 0.};
-double virial_store[3] = {0., 0., 0.};
-#endif
-#endif
 
 #ifdef ADDITIONAL_CHECKS
 double db_max_force = 0.0, db_max_vel = 0.0;
@@ -234,32 +225,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
   if (check_runtime_errors())
     return;
 
-#ifdef MULTI_TIMESTEP
-  if (smaller_time_step > 0.) {
-    mts_max = time_step / smaller_time_step;
-#ifdef NPT
-    if (integ_switch == INTEG_METHOD_NPT_ISO) {
-      current_time_step_is_small = 1;
-      // Compute forces for small timestep -> get virial contribution.
-      if (recalc_forces)
-        thermo_heat_up();
-      force_calc();
-      thermo_cool_down();
-      ghost_communicator(&cell_structure.collect_ghost_force_comm);
-      current_time_step_is_small = 0;
-      // Store virial
-      for (int j = 0; j < 3; ++j)
-        virial_store[j] = nptiso.p_vir[j];
-      thermo_heat_up();
-      force_calc();
-      thermo_cool_down();
-      ghost_communicator(&cell_structure.collect_ghost_force_comm);
-      rescale_forces();
-    }
-#endif
-  }
-#endif
-
   /* Verlet list criterion */
   skin2 = Utils::sqr(0.5 * skin);
 
@@ -307,14 +272,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
     thermo_cool_down();
 
-#ifdef MULTI_TIMESTEP
-#ifdef NPT
-    if (smaller_time_step > 0. && integ_switch == INTEG_METHOD_NPT_ISO)
-      for (int j = 0; j < 3; ++j)
-        nptiso.p_vir[j] += virial_store[j];
-#endif
-#endif
-
 #ifdef COLLISION_DETECTION
     handle_collisions();
 #endif
@@ -339,8 +296,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
     INTEG_TRACE(fprintf(stderr, "%d: STEP %d\n", this_node, step));
 
 #ifdef BOND_CONSTRAINT
-  if (n_rigidbonds)
-    save_old_pos();
+    if (n_rigidbonds)
+      save_old_pos();
 
 #endif
 
@@ -376,56 +333,16 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #ifdef BOND_CONSTRAINT
     /**Correct those particle positions that participate in a rigid/constrained
      * bond */
-  if (n_rigidbonds) {
-    cells_update_ghosts();
+    if (n_rigidbonds) {
+      cells_update_ghosts();
 
-    correct_pos_shake();
-  }
+      correct_pos_shake();
+    }
 #endif
 
 #ifdef ELECTROSTATICS
     if (coulomb.method == COULOMB_MAGGS) {
       maggs_propagate_B_field(0.5 * time_step);
-    }
-#endif
-
-
-#ifdef MULTI_TIMESTEP
-    if (smaller_time_step > 0) {
-      current_time_step_is_small = 1;
-      /* Calculate the forces */
-      thermo_heat_up();
-      force_calc();
-      thermo_cool_down();
-      ghost_communicator(&cell_structure.collect_ghost_force_comm);
-      rescale_forces();
-      for (mts_index = 0; mts_index < mts_max; ++mts_index) {
-        /* Small integration steps */
-        /* Propagate velocities and positions */
-        /* Assumes: not NEMD_METHOD_OFF; NPT not updated during small steps */
-        if (integ_switch == INTEG_METHOD_NPT_ISO ||
-            nemd_method != NEMD_METHOD_OFF) {
-          propagate_vel();
-          propagate_pos();
-        } else
-          propagate_vel_pos();
-        cells_update_ghosts();
-        force_calc();
-        ghost_communicator(&cell_structure.collect_ghost_force_comm);
-#ifdef NPT
-        // Store virial
-        for (int j = 0; j < 3; ++j)
-          virial_store[j] = nptiso.p_vir[j];
-#endif
-        rescale_forces_propagate_vel();
-      }
-      current_time_step_is_small = 0;
-      thermo_heat_up();
-      force_calc();
-      thermo_cool_down();
-      ghost_communicator(&cell_structure.collect_ghost_force_comm);
-      rescale_forces();
-      recalc_forces = 0;
     }
 #endif
 
@@ -457,14 +374,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
     integrate_reaction();
 #endif
 
-
-#ifdef MULTI_TIMESTEP
-#ifdef NPT
-    if (smaller_time_step > 0. && integ_switch == INTEG_METHOD_NPT_ISO)
-      for (int j = 0; j < 3; ++j)
-        nptiso.p_vir[j] += virial_store[j];
-#endif
-#endif
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
@@ -475,10 +384,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 // SHAKE velocity updates
 #ifdef BOND_CONSTRAINT
-  if (n_rigidbonds) {
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    correct_vel_shake();
-  }
+    if (n_rigidbonds) {
+      ghost_communicator(&cell_structure.update_ghost_pos_comm);
+      correct_vel_shake();
+    }
 #endif
 // VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
@@ -611,17 +520,7 @@ void rescale_velocities(double scale) {
 /************************************************************/
 
 namespace {
-double calc_scale() {
-#ifdef MULTI_TIMESTEP
-  if (smaller_time_step > 0.) {
-    if (current_time_step_is_small)
-      return 0.5 * smaller_time_step * smaller_time_step;
-    else
-      return 0.5 * smaller_time_step * time_step;
-  }
-#endif
-  return 0.5 * time_step * time_step;
-}
+double calc_scale() { return 0.5 * time_step * time_step; }
 }
 
 void rescale_forces() {
@@ -697,10 +596,7 @@ void rescale_forces_propagate_vel() {
   }
 
 #ifdef NPT
-#ifdef MULTI_TIMESTEP
-  if (smaller_time_step < 0. || current_time_step_is_small == 0)
-#endif
-    finalize_p_inst_npt();
+  finalize_p_inst_npt();
 #endif
 }
 
@@ -739,11 +635,8 @@ void propagate_press_box_pos_and_rescale_npt() {
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
     double scal[3] = {0., 0., 0.}, L_new = 0.0;
 
-/* finalize derivation of p_inst */
-#ifdef MULTI_TIMESTEP
-    if (smaller_time_step < 0. || current_time_step_is_small == 0)
-#endif
-      finalize_p_inst_npt();
+    /* finalize derivation of p_inst */
+    finalize_p_inst_npt();
 
     /* adjust \ref nptiso_struct::nptiso.volume; prepare pos- and
      * vel-rescaling
@@ -755,10 +648,7 @@ void propagate_press_box_pos_and_rescale_npt() {
         nptiso.volume += nptiso.inv_piston * nptiso.p_diff * 0.5 * time_step;
       scal[2] = Utils::sqr(box_l[nptiso.non_const_dim]) /
                 pow(nptiso.volume, 2.0 / nptiso.dimension);
-#ifdef MULTI_TIMESTEP
-      if (smaller_time_step < 0. || current_time_step_is_small == 0)
-#endif
-        nptiso.volume += nptiso.inv_piston * nptiso.p_diff * 0.5 * time_step;
+      nptiso.volume += nptiso.inv_piston * nptiso.p_diff * 0.5 * time_step;
       if (nptiso.volume < 0.0) {
 
         runtimeErrorMsg()
@@ -776,21 +666,6 @@ void propagate_press_box_pos_and_rescale_npt() {
 
       scal[1] = L_new / box_l[nptiso.non_const_dim];
       scal[0] = 1 / scal[1];
-#ifdef MULTI_TIMESTEP
-      if (smaller_time_step > 0.) {
-        if (current_time_step_is_small == 1) {
-          // load scal variable
-          scal[0] = scal_store[0];
-          scal[1] = scal_store[1];
-          scal[2] = scal_store[2];
-        } else {
-          // save scal variable
-          scal_store[0] = scal[0];
-          scal_store[1] = scal[1];
-          scal_store[2] = scal[2];
-        }
-      }
-#endif
     }
     MPI_Bcast(scal, 3, MPI_DOUBLE, 0, comm_cart);
 
@@ -805,30 +680,14 @@ void propagate_press_box_pos_and_rescale_npt() {
         if (!(p.p.ext_flag & COORD_FIXED(j))) {
 #endif
           if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
-#ifdef MULTI_TIMESTEP
-            if (smaller_time_step > 0.) {
-              if (current_time_step_is_small == 1) {
-                if (mts_index == mts_max - 1) {
-                  p.r.p[j] = scal[1] * (p.r.p[j] + scal[2] * p.m.v[j]);
-                  p.l.p_old[j] *= scal[1];
-                  p.m.v[j] *= scal[0];
-                } else
-                  p.r.p[j] += p.m.v[j];
-              }
-            } else
-#endif
             {
               p.r.p[j] = scal[1] * (p.r.p[j] + scal[2] * p.m.v[j]);
               p.l.p_old[j] *= scal[1];
               p.m.v[j] *= scal[0];
             }
           } else {
-#ifdef MULTI_TIMESTEP
-            if (smaller_time_step < 0. || current_time_step_is_small == 1)
-#endif
-              p.r.p[j] += p.m.v[j];
+            p.r.p[j] += p.m.v[j];
           }
-
 #ifdef EXTERNAL_FORCES
         }
 #endif
@@ -840,7 +699,6 @@ void propagate_press_box_pos_and_rescale_npt() {
                         fprintf(stderr, "%d: OPT:PPOS p=(%.3f,%.3f,%.3f)\n",
                                 this_node, p.r.p[0], p.r.p[1], p.r.p[2]));
     }
-
 
     set_resort_particles(Cells::RESORT_LOCAL);
 
@@ -989,12 +847,9 @@ void propagate_vel_pos() {
         /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
         p.m.v[j] += p.f.f[j];
 
-#ifdef MULTI_TIMESTEP
-        if (smaller_time_step < 0. || current_time_step_is_small == 1)
-#endif
-          /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
-           * v(t+0.5*dt) */
-          p.r.p[j] += p.m.v[j];
+        /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
+         * v(t+0.5*dt) */
+        p.r.p[j] += p.m.v[j];
       }
     }
 
@@ -1112,7 +967,7 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
           << "cannot automatically determine skin, please set it manually";
       return ES_ERROR;
     }
-    skin = std::min(0.4 * max_cut,max_skin);
+    skin = std::min(0.4 * max_cut, max_skin);
     mpi_bcast_parameter(FIELD_SKIN);
   }
 
@@ -1200,16 +1055,18 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
 /* Sanity Checks */
 #ifdef ELECTROSTATICS
   if (nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.prefactor > 0) {
-    runtimeErrorMsg() << "WARNING: If electrostatics is being used you must use the the cubic box npt." ;
+    runtimeErrorMsg() << "WARNING: If electrostatics is being used you must "
+                         "use the the cubic box npt.";
     integ_switch = INTEG_METHOD_NVT;
     mpi_bcast_parameter(FIELD_INTEG_SWITCH);
     return ES_ERROR;
- }
+  }
 #endif
 
 #ifdef DIPOLES
   if (nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.Dprefactor > 0) {
-    runtimeErrorMsg() << "WARNING: If magnetostatics is being used you must use the the cubic box npt." ;
+    runtimeErrorMsg() << "WARNING: If magnetostatics is being used you must "
+                         "use the the cubic box npt.";
     integ_switch = INTEG_METHOD_NVT;
     mpi_bcast_parameter(FIELD_INTEG_SWITCH);
     return ES_ERROR;
