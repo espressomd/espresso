@@ -604,7 +604,7 @@ int set_particle_mu_E(int part, double mu_E[3]) {
 }
 
 void get_particle_mu_E(int part, double (&mu_E)[3]) {
-  auto p = get_particle_data(part);
+  auto const &p = get_particle_data(part);
 
   for (int i = 0; i < 3; i++) {
     mu_E[i] = p.p.mu_E[i];
@@ -619,7 +619,7 @@ int set_particle_type(int p_id, int type) {
   if (type_list_enable) {
     // check if the particle exists already and the type is changed, then remove
     // it from the list which contains it
-    auto cur_par = get_particle_data(p_id);
+    auto const &cur_par = get_particle_data(p_id);
     int prev_type = cur_par.p.type;
     if (prev_type != type and
         particle_type_map.find(prev_type) != particle_type_map.end()) {
@@ -651,7 +651,7 @@ int set_particle_quat(int part, double quat[4]) {
 }
 
 int set_particle_omega_lab(int part, double omega_lab[3]) {
-  auto particle = get_particle_data(part);
+  auto const &particle = get_particle_data(part);
 
   /* Internal functions require the body coordinates
      so we need to convert to these from the lab frame */
@@ -680,7 +680,7 @@ int set_particle_omega_body(int part, double omega[3]) {
 }
 
 int set_particle_torque_lab(int part, double torque_lab[3]) {
-  auto particle = get_particle_data(part);
+  auto const &particle = get_particle_data(part);
 
   /* Internal functions require the body coordinates
      so we need to convert to these from the lab frame */
@@ -796,7 +796,7 @@ void remove_all_particles() {
 }
 
 int remove_particle(int p_id) {
-  auto cur_par = get_particle_data(p_id);
+  auto const &cur_par = get_particle_data(p_id);
   if (type_list_enable == true) {
     // remove particle from its current type_list
     int type = cur_par.p.type;
