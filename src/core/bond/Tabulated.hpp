@@ -10,13 +10,13 @@ namespace Bond {
   public:
     //constructor
     Tabulated(TabulatedPotential tab_pot, TabulatedBondedInteraction tab_type) : 
-      m_tab_pot{tab_pot}, m_tab_type{tab_type} {}
+      m_tab_pot{std::move(tab_pot)}, m_tab_type{tab_type} {}
 
     virtual ~Tabulated() = default;
 
     //functions
     TabulatedBondedInteraction get_tab_type(){return m_tab_type;};
-
+    
     //variables
     TabulatedPotential m_tab_pot;
     TabulatedBondedInteraction m_tab_type;

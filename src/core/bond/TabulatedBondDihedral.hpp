@@ -9,7 +9,7 @@ namespace Bond {
 
     //constructor
     TabulatedBondDihedral(TabulatedPotential tab_pot) : 
-      Tabulated{tab_pot, TabulatedBondedInteraction::TAB_BOND_DIHEDRAL} 
+      Tabulated{std::move(tab_pot), TabulatedBondedInteraction::TAB_BOND_DIHEDRAL} 
     {m_bondtype = BondType::BONDED_IA_TABULATED;}
 
     //force calculation

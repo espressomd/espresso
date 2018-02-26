@@ -88,11 +88,10 @@ add_subdirectory(lbboundaries)
 add_subdirectory(object-in-fluid)
 add_subdirectory(shapes)
 add_subdirectory(constraints)
-<<<<<<< HEAD
+
 add_subdirectory(bond)
-=======
+
 add_subdirectory(cluster_analysis)
->>>>>>> 3bd7e4db8a4171833e9446c91a21d6e367c1bf7f
 
 if(SCAFACOS)
   add_subdirectory(scafacos)

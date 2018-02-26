@@ -9,7 +9,7 @@ namespace Bond {
 
     //constructor
     TabulatedBondAngle(TabulatedPotential tab_pot) : 
-      Tabulated{tab_pot,       TabulatedBondedInteraction::TAB_BOND_ANGLE } 
+      Tabulated{std::move(tab_pot), TabulatedBondedInteraction::TAB_BOND_ANGLE}
     {m_bondtype = BondType::BONDED_IA_TABULATED;}
 
     //force *

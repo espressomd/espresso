@@ -73,9 +73,12 @@ Calculate the bending force and add it to the particles
 
 void Bond::IbmTribend::IBM_Tribend_CalcForce(Particle *p1, Particle **const partners) const
 {
-
-  if (m_method == tBendingMethod::NodeNeighbors ) CalcForceGompper(p1, partners);
-  if (m_method == tBendingMethod::TriangleNormals )
+#ifdef IMMERSED_BOUNDARY
+  if(m_method == tBendingMethod::NodeNeighbors){
+    CalcForceGompper(p1, partners);
+  };
+  
+  if(m_method == tBendingMethod::TriangleNormals)
   {
     // move to separate function
     if ( m_numNeighbors != 3 ) { 
@@ -187,6 +190,7 @@ void Bond::IbmTribend::IBM_Tribend_CalcForce(Particle *p1, Particle **const part
     vector_product(tmp,v2, term1);
     for (int i = 0; i < 3; i++) p4->f.f[i] += Pre*(term1[i]/Aj);
   }
+#endif
 }
 
 void Bond::IbmTribend::CalcForceGompper(Particle *xi, Particle **const neighbors) const

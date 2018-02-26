@@ -9,7 +9,7 @@ namespace Bond {
     //constructor
     //using Tabulated::Tabulated; //inherit constructor
     TabulatedBondLength(TabulatedPotential tab_pot) : 
-      Tabulated{tab_pot, TabulatedBondedInteraction::TAB_BOND_LENGTH}
+      Tabulated{std::move(tab_pot), TabulatedBondedInteraction::TAB_BOND_LENGTH}
     {m_bondtype = BondType::BONDED_IA_TABULATED;}
     // Member function
     int calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], 
