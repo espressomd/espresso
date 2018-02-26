@@ -91,7 +91,7 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
       force[1] = 0.0;
       force[2] = 0.0;
       p3m_add_pair_force(p1->p.q * p2->p.q, d, dist2, dist, force);
-      virials.coulomb[0] += p3m_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
+      virials.coulomb[0] += p3m_pair_energy(p1->p.q * p2->p.q, dist);
       for (k = 0; k < 3; k++)
         for (l = 0; l < 3; l++)
           p_tensor.coulomb[k * 3 + l] += force[k] * d[l];
