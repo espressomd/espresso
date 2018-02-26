@@ -562,7 +562,7 @@ void realloc_local_particles(int part);
  *   @return Pointer to copy of particle if it exists,
  *          nullptr otherwise;
 */
-const Particle *get_particle_data(int part);
+const Particle &get_particle_data(int part);
 
 /**
  * @brief Fetch a range of particle into the fetch cache.

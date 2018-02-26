@@ -20,9 +20,9 @@ class PairCriterion {
     * This can only run on the master node outside the integration loop */
     bool decide(int id1, int id2) const {
       // Retrieve particle data
-      auto p1=get_particle_data(id1);
-      auto p2 =get_particle_data(id2);
-      const bool res =decide(*p1,*p2);
+      auto p1= get_particle_data(id1);
+      auto p2 = get_particle_data(id2);
+      const bool res = decide(p1, p2);
       return res;
     }
 };

@@ -117,31 +117,31 @@ int convert_quatu_to_quat(double d[3], double quat[4]) {
     the body-fixed frames.
     Taken from "Goldstein - Classical Mechanics" (Chapter 4.6 Eq. 4.47).
 */
-void define_rotation_matrix(Particle const *p, double A[9])
+void define_rotation_matrix(Particle const &p, double A[9])
 {
-  double q0q0 =p->r.quat[0];
+  double q0q0 =p.r.quat[0];
   q0q0 *=q0q0;
 
-  double q1q1 =p->r.quat[1];
+  double q1q1 =p.r.quat[1];
   q1q1 *=q1q1;
 
-  double q2q2 =p->r.quat[2];
+  double q2q2 =p.r.quat[2];
   q2q2 *=q2q2;
 
-  double q3q3 =p->r.quat[3];
+  double q3q3 =p.r.quat[3];
   q3q3 *=q3q3;
 
   A[0 + 3*0] = q0q0 + q1q1 - q2q2 - q3q3;
   A[1 + 3*1] = q0q0 - q1q1 + q2q2 - q3q3;
   A[2 + 3*2] = q0q0 - q1q1 - q2q2 + q3q3;
 
-  A[0 + 3*1] = 2*(p->r.quat[1]*p->r.quat[2] + p->r.quat[0]*p->r.quat[3]);
-  A[0 + 3*2] = 2*(p->r.quat[1]*p->r.quat[3] - p->r.quat[0]*p->r.quat[2]);
-  A[1 + 3*0] = 2*(p->r.quat[1]*p->r.quat[2] - p->r.quat[0]*p->r.quat[3]);
+  A[0 + 3*1] = 2*(p.r.quat[1]*p.r.quat[2] + p.r.quat[0]*p.r.quat[3]);
+  A[0 + 3*2] = 2*(p.r.quat[1]*p.r.quat[3] - p.r.quat[0]*p.r.quat[2]);
+  A[1 + 3*0] = 2*(p.r.quat[1]*p.r.quat[2] - p.r.quat[0]*p.r.quat[3]);
 
-  A[1 + 3*2] = 2*(p->r.quat[2]*p->r.quat[3] + p->r.quat[0]*p->r.quat[1]);
-  A[2 + 3*0] = 2*(p->r.quat[1]*p->r.quat[3] + p->r.quat[0]*p->r.quat[2]);
-  A[2 + 3*1] = 2*(p->r.quat[2]*p->r.quat[3] - p->r.quat[0]*p->r.quat[1]);
+  A[1 + 3*2] = 2*(p.r.quat[2]*p.r.quat[3] + p.r.quat[0]*p.r.quat[1]);
+  A[2 + 3*0] = 2*(p.r.quat[1]*p.r.quat[3] + p.r.quat[0]*p.r.quat[2]);
+  A[2 + 3*1] = 2*(p.r.quat[2]*p.r.quat[3] - p.r.quat[0]*p.r.quat[1]);
 }
 
 /** calculate the second derivative of the quaternion of a given particle
@@ -281,7 +281,7 @@ void convert_torques_propagate_omega() {
       continue;
     
     double A[9];
-    define_rotation_matrix(&p, A);
+    define_rotation_matrix(p, A);
 
     tx = A[0 + 3 * 0] * p.f.torque[0] + A[0 + 3 * 1] * p.f.torque[1] +
          A[0 + 3 * 2] * p.f.torque[2];
@@ -416,7 +416,7 @@ void convert_initial_torques() {
     if (!p.p.rotation)
       continue;
     double A[9];
-    define_rotation_matrix(&p, A);
+    define_rotation_matrix(p, A);
 
     tx = A[0 + 3 * 0] * p.f.torque[0] + A[0 + 3 * 1] * p.f.torque[1] +
          A[0 + 3 * 2] * p.f.torque[2];
@@ -457,7 +457,7 @@ void convert_initial_torques() {
 
 void convert_omega_body_to_space(const Particle *p, double *omega) {
   double A[9];
-  define_rotation_matrix(p, A);
+  define_rotation_matrix(*p, A);
 
   omega[0] = A[0 + 3 * 0] * p->m.omega[0] + A[1 + 3 * 0] * p->m.omega[1] +
              A[2 + 3 * 0] * p->m.omega[2];
@@ -470,7 +470,7 @@ void convert_omega_body_to_space(const Particle *p, double *omega) {
 Vector3d convert_vector_body_to_space(const Particle& p, const Vector3d& vec) {
   Vector3d res={0,0,0};
   double A[9];
-  define_rotation_matrix(&p, A);
+  define_rotation_matrix(p, A);
 
   res[0] = A[0 + 3 * 0] * vec[0] + A[1 + 3 * 0] * vec[1] +
              A[2 + 3 * 0] * vec[2];
@@ -485,7 +485,7 @@ Vector3d convert_vector_body_to_space(const Particle& p, const Vector3d& vec) {
 
 void convert_torques_body_to_space(const Particle *p, double *torque) {
   double A[9];
-  define_rotation_matrix(p, A);
+  define_rotation_matrix(*p, A);
 
   torque[0] = A[0 + 3 * 0] * p->f.torque[0] + A[1 + 3 * 0] * p->f.torque[1] +
               A[2 + 3 * 0] * p->f.torque[2];
@@ -497,7 +497,7 @@ void convert_torques_body_to_space(const Particle *p, double *torque) {
 
 void convert_vel_space_to_body(const Particle *p, double *vel_body) {
   double A[9];
-  define_rotation_matrix(p, A);
+  define_rotation_matrix(*p, A);
 
   vel_body[0] = A[0 + 3 * 0] * p->m.v[0] + A[0 + 3 * 1] * p->m.v[1] +
                 A[0 + 3 * 2] * p->m.v[2];
@@ -509,7 +509,7 @@ void convert_vel_space_to_body(const Particle *p, double *vel_body) {
 
 void convert_vec_space_to_body(Particle *p, double *v, double *res) {
   double A[9];
-  define_rotation_matrix(p, A);
+  define_rotation_matrix(*p, A);
 
   res[0] = A[0 + 3 * 0] * v[0] + A[0 + 3 * 1] * v[1] + A[0 + 3 * 2] * v[2];
   res[1] = A[1 + 3 * 0] * v[0] + A[1 + 3 * 1] * v[1] + A[1 + 3 * 2] * v[2];

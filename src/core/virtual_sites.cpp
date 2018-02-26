@@ -133,14 +133,10 @@ int vs_relate_to(int part_num, int relate_to)
     // it to.
     auto p_current = get_particle_data(part_num);
     auto p_relate_to = get_particle_data(relate_to);
-    if (!p_current || !p_relate_to) {
-        runtimeErrorMsg() <<"Could not retrieve particle data for the given id";
-      return ES_ERROR;
-    }
     
     double quat[4];
     double l;
-    calculate_vs_relate_to_params(*p_current, *p_relate_to, l, quat);
+    calculate_vs_relate_to_params(p_current, p_relate_to, l, quat);
     
     // Set the particle id of the particle we want to relate to, the distance
     // and the relative orientation

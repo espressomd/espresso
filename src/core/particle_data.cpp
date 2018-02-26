@@ -179,11 +179,10 @@ int get_particle_node(int id) {
   auto const needle = particle_node.find(id);
 
   // Check if particle has a node, if not, we assume it does not exist.
-  int pnode = (needle != particle_node.end()) ? needle->second : -1;
-  if (pnode == -1) {
+  if (needle == particle_node.end()) {
     throw std::runtime_error("Particle node not found!");
   } else {
-    return pnode;
+    return needle->second;
   }
 }
 
@@ -321,30 +320,25 @@ Utils::Cache<int, Particle> particle_fetch_cache(max_cache_size);
 
 void invalidate_fetch_cache() { particle_fetch_cache.invalidate(); }
 
-const Particle *get_particle_data(int part) {
-  int pnode;
-  try {
-    pnode = get_particle_node(part);
-  } catch (...) {
-    return nullptr;
-  }
+const Particle &get_particle_data(int part) {
+  auto const pnode = get_particle_node(part);
 
   if (pnode == this_node) {
     assert(local_particles[part]);
-    return local_particles[part];
+    return *local_particles[part];
   }
 
   /* Query the cache */
   auto const p_ptr = particle_fetch_cache.get(part);
   if (p_ptr) {
-    return p_ptr;
+    return *p_ptr;
   }
 
   /* Cache miss, fetch the particle,
   * put it into the cache and return a pointer into the cache. */
   auto const cache_ptr =
       particle_fetch_cache.put(part, mpi_recv_part(pnode, part));
-  return cache_ptr;
+  return *cache_ptr;
 }
 
 void mpi_get_particles_slave(int, int) {
@@ -613,7 +607,7 @@ void get_particle_mu_E(int part, double (&mu_E)[3]) {
   auto p = get_particle_data(part);
 
   for (int i = 0; i < 3; i++) {
-    mu_E[i] = p->p.mu_E[i];
+    mu_E[i] = p.p.mu_E[i];
   }
 }
 #endif
@@ -626,15 +620,11 @@ int set_particle_type(int p_id, int type) {
     // check if the particle exists already and the type is changed, then remove
     // it from the list which contains it
     auto cur_par = get_particle_data(p_id);
-    if (cur_par) {
-      int prev_type = cur_par->p.type;
-      if (prev_type != type and
-          particle_type_map.find(prev_type) != particle_type_map.end()) {
-        // particle existed before so delete it from the list
-        remove_id_from_map(p_id, prev_type);
-      }
-    } else {
-      throw std::runtime_error("Cannot set type for non-existing particle");
+    int prev_type = cur_par.p.type;
+    if (prev_type != type and
+        particle_type_map.find(prev_type) != particle_type_map.end()) {
+      // particle existed before so delete it from the list
+      remove_id_from_map(p_id, prev_type);
     }
 
     add_id_to_type_map(p_id, type);
@@ -662,9 +652,6 @@ int set_particle_quat(int part, double quat[4]) {
 
 int set_particle_omega_lab(int part, double omega_lab[3]) {
   auto particle = get_particle_data(part);
-
-  if (!particle)
-    return ES_ERROR;
 
   /* Internal functions require the body coordinates
      so we need to convert to these from the lab frame */
@@ -694,9 +681,6 @@ int set_particle_omega_body(int part, double omega[3]) {
 
 int set_particle_torque_lab(int part, double torque_lab[3]) {
   auto particle = get_particle_data(part);
-
-  if (!particle)
-    return ES_ERROR;
 
   /* Internal functions require the body coordinates
      so we need to convert to these from the lab frame */
@@ -813,14 +797,10 @@ void remove_all_particles() {
 
 int remove_particle(int p_id) {
   auto cur_par = get_particle_data(p_id);
-  if (cur_par) {
-    if (type_list_enable == true) {
-      // remove particle from its current type_list
-      int type = cur_par->p.type;
-      remove_id_from_map(p_id, type);
-    }
-  } else {
-    throw std::runtime_error("Particle could not be retrieved during remove");
+  if (type_list_enable == true) {
+    // remove particle from its current type_list
+    int type = cur_par.p.type;
+    remove_id_from_map(p_id, type);
   }
 
   auto const pnode = get_particle_node(p_id);
