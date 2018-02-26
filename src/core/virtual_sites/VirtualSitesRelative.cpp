@@ -51,6 +51,7 @@ void VirtualSitesRelative::update_virtual_particle_quaternion(Particle& p) const
    throw std::runtime_error("virtual_sites_relative.cpp - update_mol_pos_particle(): No real particle associated with virtual site.\n");
  }
  multiply_quaternions(p_real->r.quat, p.p.vs_quat, p.r.quat);
+ convert_quat_to_quatu(p.r.quat, p.r.quatu);
 }
 
 
