@@ -44,7 +44,7 @@ for (auto p : partCfg()) {
     int j=0;
     while (j<p.bl.n) {
       int bond_type=p.bl.e[j];
-      int partners =bonded_ia_params[bond_type].num;
+      int partners = bond_container.get_num_partners(bond_type);
       if (partners!=1) {
         j+=1+partners;
         continue;

@@ -34,20 +34,9 @@ int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r, 
   if(bond_type < 0)
     return ES_ERROR;
 
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.harmonic_dumbbell.k1     = k1;
-  bonded_ia_params[bond_type].p.harmonic_dumbbell.k2     = k2;
-  bonded_ia_params[bond_type].p.harmonic_dumbbell.r      = r;
-  bonded_ia_params[bond_type].p.harmonic_dumbbell.r_cut  = r_cut;
-  bonded_ia_params[bond_type].type = BONDED_IA_HARMONIC_DUMBBELL;
-  bonded_ia_params[bond_type].num  = 1;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1); 
-
-  //create new bond class in bond vector with params
-  bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::HarmonicDumbbell>(k1, k2, r, r_cut));
+  //create bond class
+  bond_container.set_bond_by_type(bond_type,
+				  Utils::make_unique<Bond::HarmonicDumbbell>(k1, k2, r, r_cut));
 
   return ES_OK;
 }

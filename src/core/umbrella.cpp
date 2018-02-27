@@ -34,18 +34,7 @@ int umbrella_set_params(int bond_type, double k,
   if(bond_type < 0)
     return ES_ERROR;
 
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.umbrella.k = k;
-  bonded_ia_params[bond_type].p.umbrella.dir = dir;
-  bonded_ia_params[bond_type].p.umbrella.r = r;
-  bonded_ia_params[bond_type].type = BONDED_IA_UMBRELLA;
-  bonded_ia_params[bond_type].num  = 1;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1);
-
-  //create new bond class in bond vector with params
+  //create bond class
   bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::Umbrella>(k, dir, r));
 
   return ES_OK;

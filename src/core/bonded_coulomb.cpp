@@ -33,16 +33,7 @@ int bonded_coulomb_set_params(int bond_type, double prefactor)
   if(bond_type < 0)
     return ES_ERROR;
 
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.bonded_coulomb.prefactor = prefactor;
-  bonded_ia_params[bond_type].type = BONDED_IA_BONDED_COULOMB;
-  bonded_ia_params[bond_type].num  = 1;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1); 
-
-  //create new bond class in bond vector with params
+  //create bond class
   bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::BondedCoulomb>(prefactor));
 
   return ES_OK;

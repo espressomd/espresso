@@ -641,42 +641,26 @@ int calc_twist_stack_force(Particle *si1, Particle *bi1, Particle *bi2, Particle
 }
 
 int twist_stack_set_params(int bond_type, DoubleList *params) {
+  
   if(bond_type < 0)
     return ES_ERROR;
-
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.twist_stack.rm = params->e[0];
-  bonded_ia_params[bond_type].p.twist_stack.epsilon = params->e[1];
-
-  for(int i = 0; i < 8; i++)
-    bonded_ia_params[bond_type].p.twist_stack.a[i] = params->e[2+i];
-
-  for(int i = 0; i < 7; i++)
-    bonded_ia_params[bond_type].p.twist_stack.b[i] = params->e[10+i];
   
   const double dt = PI*36./180.;
-  const double *a = bonded_ia_params[bond_type].p.twist_stack.a;
-  const double *b = bonded_ia_params[bond_type].p.twist_stack.b;
   
-  double ref_pot = a[0] + a[1] * cos(dt) + a[2] * cos(2*dt) + a[3] * cos(3*dt) + a[4] * cos(4*dt) + a[5] * cos(5*dt) + a[6] * cos(6*dt) + a[7] * cos(7*dt) + b[0] * sin(dt) + b[1] * sin(2*dt) + b[2] * sin(3*dt) + b[3] * sin(4*dt) + b[5] * sin(5*dt) + b[6] * sin(6*dt);
-
-  bonded_ia_params[bond_type].p.twist_stack.ref_pot = ref_pot;
-  bonded_ia_params[bond_type].type = BONDED_IA_CG_DNA_STACKING;
-  bonded_ia_params[bond_type].num = 7;
-
-  double input_a[8], input_b[7];
+  double a[8], b[7];
 
   for(int i = 0; i < 8; i++)
-    input_a[i] = params->e[2+i];
+    a[i] = params->e[2+i];
 
   for(int i = 0; i < 7; i++)
-    input_b[i] = params->e[10+i];
+    b[i] = params->e[10+i];
 
+  double ref_pot = a[0] + a[1] * cos(dt) + a[2] * cos(2*dt) + a[3] * cos(3*dt) + a[4] * cos(4*dt) + a[5] * cos(5*dt) + a[6] * cos(6*dt) + a[7] * cos(7*dt) + b[0] * sin(dt) + b[1] * sin(2*dt) + b[2] * sin(3*dt) + b[3] * sin(4*dt) + b[5] * sin(5*dt) + b[6] * sin(6*dt);
+
+  //create bond class
   bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::TwistStack>
-		   (params->e[0], params->e[1], ref_pot, input_a, input_b));
+				  (params->e[0], params->e[1], ref_pot, a, b));
 
-  mpi_bcast_ia_params(bond_type, -1);
 
   return ES_OK;
 }

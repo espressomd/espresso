@@ -41,21 +41,10 @@ int angledist_set_params(int bond_type, double bend, double phimin,
   if (bond_type < 0)
     return ES_ERROR;
 
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.angledist.bend = bend;
-  bonded_ia_params[bond_type].p.angledist.phimin = phimin;
-  bonded_ia_params[bond_type].p.angledist.distmin = distmin;
-  bonded_ia_params[bond_type].p.angledist.phimax = phimax;
-  bonded_ia_params[bond_type].p.angledist.distmax = distmax;
-  bonded_ia_params[bond_type].type = BONDED_IA_ANGLEDIST;
-  bonded_ia_params[bond_type].num = 2;
-
-  bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::AngleDist>(bend, phimin, distmin, phimax, distmax));
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1);
-
+  //create bond
+  bond_container.set_bond_by_type(bond_type,
+				  Utils::make_unique<Bond::AngleDist>(bend, phimin,
+								      distmin, phimax, distmax));
   return ES_OK;
 }
 

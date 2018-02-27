@@ -31,19 +31,7 @@ int quartic_set_params(int bond_type, double k0, double k1, double r,double r_cu
   if(bond_type < 0)
     return ES_ERROR;
 
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.quartic.k0 = k0;
-  bonded_ia_params[bond_type].p.quartic.k1 = k1;
-  bonded_ia_params[bond_type].p.quartic.r = r;
-  bonded_ia_params[bond_type].p.quartic.r_cut = r_cut;
-  bonded_ia_params[bond_type].type = BONDED_IA_QUARTIC;
-  bonded_ia_params[bond_type].num  = 1;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1); 
-
-  //create new bond class in bond vector with params
+  //create bond_class
   bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::Quartic>(k0, k1, r, r_cut));
 
   return ES_OK;

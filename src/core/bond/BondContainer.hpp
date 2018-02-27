@@ -45,7 +45,9 @@ namespace Bond {
     Bond* get_Bond(int bond_map_id);
     //get IBMVolCon Bond
     IbmVolumeConservation* get_IBM_Vol_Con_Bond(int bond_map_id);
-
+    //get number of bond partners
+    int get_num_partners(int bond_map_id);
+    
     //rigid bond
     int RB_pos_corr(Particle *p1, int* repeat, int &cnt);
     int RB_vel_corr(Particle *p1, int* repeat);
@@ -97,8 +99,7 @@ namespace Bond {
 	bond_map_id = p1->bl.e[bond_list_id];
 
 	//now the number of partners can be determined
-	//try to find bond
-	//+++++unnoetig nur interface class bond map
+	//try to find bond -> will be removed
 	if(m_all_bonds.count(bond_map_id)==0){
 	  runtimeErrorMsg() << "BondContainer - Loop: bond type of atom "
 			    << p1->p.identity << " unknown\n";

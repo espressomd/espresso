@@ -156,7 +156,7 @@ int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_i
 
   std::vector<double> poly(3 * MPC);
 
-  bond_size = bonded_ia_params[type_bond].num;
+  bond_size = bond_container.get_num_partners(type_bond);
   std::vector<int> bond(bond_size + 1);
   bond[0] = type_bond;
 

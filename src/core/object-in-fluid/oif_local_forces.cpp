@@ -34,23 +34,10 @@ int oif_local_forces_set_params(int bond_type, double r0, double ks, double ksli
   if(bond_type < 0)
     return ES_ERROR;
 
-  make_bond_type_exist(bond_type);
-  
-  bonded_ia_params[bond_type].p.oif_local_forces.phi0 = phi0;
-  bonded_ia_params[bond_type].p.oif_local_forces.kb = kb;
-  bonded_ia_params[bond_type].p.oif_local_forces.r0 = r0;
-  bonded_ia_params[bond_type].p.oif_local_forces.ks = ks;
-  bonded_ia_params[bond_type].p.oif_local_forces.kslin = kslin;
-  bonded_ia_params[bond_type].p.oif_local_forces.A01 = A01;
-  bonded_ia_params[bond_type].p.oif_local_forces.A02 = A02;
-  bonded_ia_params[bond_type].p.oif_local_forces.kal = kal;
-    
-  bonded_ia_params[bond_type].type = BONDED_IA_OIF_LOCAL_FORCES;
-  bonded_ia_params[bond_type].num  = 3;
-
-  bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::OifLocalForces>(phi0, kb, r0, ks, kslin, A01, A02, kal));
-
-  mpi_bcast_ia_params(bond_type, -1); 
+  //create bond class
+  bond_container.set_bond_by_type(bond_type,
+				  Utils::make_unique<Bond::OifLocalForces>(phi0, kb, r0, ks, kslin,
+									   A01, A02, kal));
 
   return ES_OK;
 }

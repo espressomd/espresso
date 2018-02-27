@@ -340,6 +340,9 @@ int Bond::IbmTribend::ResetParams(const double kb)
     printf("kb does not match while reading tribend checkpoint. It is %.12e and read was %.12e\n", 
 	   m_kb, kb); 
     return ES_ERROR; 
+  }
+  else{
+    m_kb = kb;
   };
   return ES_OK;
 }

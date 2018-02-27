@@ -38,19 +38,8 @@ int angle_cosine_set_params(int bond_type, double bend, double phi0)
   if(bond_type < 0)
     return ES_ERROR;
 
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.angle_cosine.bend = bend;
-  bonded_ia_params[bond_type].p.angle_cosine.phi0 = phi0;
-  bonded_ia_params[bond_type].p.angle_cosine.cos_phi0 = cos(phi0);
-  bonded_ia_params[bond_type].p.angle_cosine.sin_phi0 = sin(phi0);
-  bonded_ia_params[bond_type].type = BONDED_IA_ANGLE_COSINE;
-  bonded_ia_params[bond_type].num = 2;
-
+  //create bond class
   bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::AngleCosine>(bend, phi0));
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1); 
 
   return ES_OK;
 }

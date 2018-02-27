@@ -374,7 +374,7 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
     for (auto it = current_particle.bl.begin();
          it != current_particle.bl.end();) {
 
-      auto const n_partners = bonded_ia_params[*it++].num;
+      auto const n_partners = bond_container.get_num_partners(*it++);
 
       if (1 == n_partners) {
         bond.resize(boost::extents[1][nbonds_local + 1][2]);

@@ -970,33 +970,6 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
   };
 #endif //BOND_CLASS_DEBUG
 
-#ifndef BOND_CLASS_DEBUG
-  auto add_bonded =
-      [&](Particle &p) {
-        int j = 0;
-        while (j < p.bl.n) {
-          auto type_num = p.bl.e[j++];
-          auto iaparams = &bonded_ia_params[type_num];
-
-          /* fetch particle 2 */
-          auto p2 = local_particles[p.bl.e[j++]];
-          double dx[3];
-          get_mi_vector(dx, p.r.p, p2->r.p);
-          std::array<double,3> force;
-          calc_bonded_force(&p, p2, iaparams, &j, dx, force.data());
-          PTENSOR_TRACE(
-              fprintf(stderr, "%d: Bonded to particle %d with force %f %f %f\n",
-                      this_node, p2->p.identity, force[0], force[1], force[2]));
-          if ((pow(force[0], 2) + pow(force[1], 2) + pow(force[2], 2)) > 0) {
-            if (distribute_tensors(TensorInBin, force.data(), bins, range_start, range,
-                                   p.r.p, p2->r.p) != 1)
-              return 0;
-          }
-        }
-        return 0;
-  };
-#endif //BOND_CLASS_DEBUG
-
   auto add_single_particle_contribution = [&add_ideal, &add_bonded](Particle &p) {
     add_ideal(p);
     add_bonded(p);

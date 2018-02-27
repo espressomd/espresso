@@ -33,14 +33,8 @@ int out_direction_set_params(int bond_type)
   if(bond_type < 0)
     return ES_ERROR;
 
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].type = BONDED_IA_OIF_OUT_DIRECTION;
-  bonded_ia_params[bond_type].num  = 3;
-
+  //create bond classs
   bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::MembraneCollision>());
-
-  mpi_bcast_ia_params(bond_type, -1); 
 
   return ES_OK;
 }

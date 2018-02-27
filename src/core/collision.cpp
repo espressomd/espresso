@@ -130,7 +130,7 @@ bool validate_collision_parameters() {
   // If the bond type to bind particle centers is not a pair bond...
   // Check that the bonds have the right number of partners
   if ((collision_params.mode & COLLISION_MODE_BOND) &&
-      (bonded_ia_params[collision_params.bond_centers].num != 1)) {
+      (bond_container.get_num_partners(collision_params.bond_centers) != 1)) {
     runtimeErrorMsg() << "The bond type to be used for binding particle "
                          "centers needs to be a pair bond";
     return false;
@@ -138,8 +138,8 @@ bool validate_collision_parameters() {
 
   // The bond between the virtual sites can be pair or triple
   if ((collision_params.mode & COLLISION_MODE_VS) &&
-      !(bonded_ia_params[collision_params.bond_vs].num == 1 ||
-        bonded_ia_params[collision_params.bond_vs].num == 2)) {
+      !(bond_container.get_num_partners(collision_params.bond_vs) == 1 ||
+        bond_container.get_num_partners(collision_params.bond_vs) == 2)) {
     runtimeErrorMsg() << "The bond type to be used for binding virtual sites "
                          "needs to be a pair or three-particle bond";
     return false;
@@ -158,7 +158,7 @@ bool validate_collision_parameters() {
          i < collision_params.bond_three_particles +
                  collision_params.three_particle_angle_resolution;
          i++) {
-      if (bonded_ia_params[i].num != 2) {
+      if (bond_container.get_num_partners(i) != 2) {
         runtimeErrorMsg()
             << "The bonds for three particle binding need to be angle bonds.";
         return false;
@@ -287,7 +287,7 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   if (p.bl.e) {
     int b = 0;
     while (b < p.bl.n) {
-      int size = bonded_ia_params[p.bl.e[b]].num;
+      int size = bond_container.get_num_partners(p.bl.e[b]);
 
       if (size == 2) {
         // Check if the bond type is within the range used by the collision
@@ -387,7 +387,7 @@ void bind_at_poc_create_bond_between_vs(const int current_vs_pid,
                                         const collision_struct &c) {
   int bondG[3];
 
-  switch (bonded_ia_params[collision_params.bond_vs].num) {
+  switch (bond_container.get_num_partners(collision_params.bond_vs)) {
   case 1: {
     // Create bond between the virtual particles
     bondG[0] = collision_params.bond_vs;

@@ -474,34 +474,17 @@ int hydrogen_bond_set_params(int bond_type, DoubleList *params) {
   if(bond_type < 0)
     return ES_ERROR;
 
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.hydrogen_bond.r0 = params->e[0];
-  bonded_ia_params[bond_type].p.hydrogen_bond.alpha = params->e[1];
-  bonded_ia_params[bond_type].p.hydrogen_bond.E0 = params->e[2];
-  bonded_ia_params[bond_type].p.hydrogen_bond.kd = params->e[3];
-  bonded_ia_params[bond_type].p.hydrogen_bond.sigma1 = params->e[4];
-  bonded_ia_params[bond_type].p.hydrogen_bond.sigma2 = params->e[5];
-  bonded_ia_params[bond_type].p.hydrogen_bond.psi10 = params->e[6];
-  bonded_ia_params[bond_type].p.hydrogen_bond.psi20 = params->e[7];
-  bonded_ia_params[bond_type].p.hydrogen_bond.E0sb = params->e[8];
-  bonded_ia_params[bond_type].p.hydrogen_bond.r0sb = params->e[9];
-  bonded_ia_params[bond_type].p.hydrogen_bond.alphasb = params->e[10];
-  bonded_ia_params[bond_type].p.hydrogen_bond.f2 = params->e[11];
-  bonded_ia_params[bond_type].p.hydrogen_bond.f3 = params->e[12];  
-
-  bonded_ia_params[bond_type].type = BONDED_IA_CG_DNA_BASEPAIR;
-  bonded_ia_params[bond_type].num = 3;
-
-  bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::HydrogenBond>(params->e[0], params->e[1], 
-								     params->e[2], params->e[3], 
-								     params->e[4], params->e[5], 
-								     params->e[6], params->e[7], 
-								     params->e[8], params->e[9], 
-								     params->e[10], params->e[11], 
-								     params->e[12]));
-
-  mpi_bcast_ia_params(bond_type, -1);
+  //create bond
+  bond_container.set_bond_by_type(bond_type,
+				  Utils::make_unique<Bond::HydrogenBond>(params->e[0],
+									 params->e[1], 
+									 params->e[2], params->e[3], 
+									 params->e[4], params->e[5], 
+									 params->e[6], params->e[7], 
+									 params->e[8], params->e[9], 
+									 params->e[10],
+									 params->e[11], 
+									 params->e[12]));
 
   return ES_OK;
 }

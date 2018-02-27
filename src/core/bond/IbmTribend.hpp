@@ -16,7 +16,7 @@ namespace Bond {
     int add_bonded_force(Particle *p1, int bl_id) override;
     int add_bonded_energy(Particle *p1, int bl_id) override;
     //reset function
-    int ResetParams(const double kb); // for later.... now this function is not called
+    int ResetParams(const double kb);
 
   private:
     //internal functions

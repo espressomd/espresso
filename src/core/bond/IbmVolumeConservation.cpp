@@ -164,3 +164,9 @@ int Bond::IbmVolumeConservation::calc_volumes(Particle *p1, int bl_id, double *t
   };
 
 }
+
+void Bond::IbmVolumeConservation::ResetParams(double VolRef){
+
+  m_volRef = VolRef;
+  
+}

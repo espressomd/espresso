@@ -361,7 +361,7 @@ struct Particle {
   /** bonded interactions list. The format is pretty simple:
       Just the bond type, and then the particle ids. The number of particle ids
      can be determined
-      easily from the bonded_ia_params entry for the type. */
+      easily from the bond_map_id entry for the type. */
   IntList bl;
 
   IntList &bonds() { return bl; }

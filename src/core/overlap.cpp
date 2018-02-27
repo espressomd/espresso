@@ -41,75 +41,6 @@ int overlapped_bonded_set_params(int bond_type, OverlappedBondedInteraction over
   int i, scan_success = 0, size;
   FILE* fp;
 
-
-  // OLD CODE
-  // will be replaced by new code
-
-  if(bond_type < 0)
-    return 1;
-  
-  make_bond_type_exist(bond_type);
-
-  /* set types */
-  bonded_ia_params[bond_type].type       = BONDED_IA_OVERLAPPED;
-  bonded_ia_params[bond_type].p.overlap.type = overlap_type;
-
-  /* set number of interaction partners */
-  if(overlap_type == OVERLAP_BOND_LENGTH)   bonded_ia_params[bond_type].num = 1;
-  if(overlap_type == OVERLAP_BOND_ANGLE) bonded_ia_params[bond_type].num = 2;
-  if(overlap_type == OVERLAP_BOND_DIHEDRAL) bonded_ia_params[bond_type].num = 3;
-
-  /* set max bondlength of between two beads, in Unit Angstrom */
-  bonded_ia_params[bond_type].p.overlap.maxval = 6.0;
-
-  /* copy filename */
-  size = strlen(filename);
-  bonded_ia_params[bond_type].p.overlap.filename = (char*)Utils::malloc((size+1)*sizeof(char));
-  strncpy(bonded_ia_params[bond_type].p.overlap.filename,filename, size+1);
-
-  fp = fopen( filename , "r");
-  if ( !fp )
-    return 2;
-  
-  /* Read in size of overlapps from file */
-  scan_success = fscanf( fp , "%d ", &size);
-  if ( scan_success < 1 ) { 
-    fclose(fp);
-    return 3;
-  } 
-
-  bonded_ia_params[bond_type].p.overlap.noverlaps = size;
-
-  /* allocate overlapped funciton parameter arrays */
-  bonded_ia_params[bond_type].p.overlap.para_a = (double*)Utils::malloc(size*sizeof(double));
-  bonded_ia_params[bond_type].p.overlap.para_b = (double*)Utils::malloc(size*sizeof(double));
-  bonded_ia_params[bond_type].p.overlap.para_c = (double*)Utils::malloc(size*sizeof(double));
-
-   /* Read in the overlapped funciton parameter data */
-  for (i=0; i<size; i++) {
-  	scan_success = fscanf(fp, "%lg ", &bonded_ia_params[bond_type].p.overlap.para_a[i]);
-  	if ( scan_success < 1 ) { 
-    		fclose(fp);
-    		return 3;
-  	} 
-  	scan_success = fscanf( fp, "%lg ", &bonded_ia_params[bond_type].p.overlap.para_b[i]);
-  	if ( scan_success < 1 ) { 
-    		fclose(fp);
-    		return 3;
-  	} 
-	scan_success = fscanf( fp, "%lg ", &bonded_ia_params[bond_type].p.overlap.para_c[i]);
-  	if ( scan_success < 1 ) { 
-    		fclose(fp);
-    		return 3;
-  	} 
-  }
-  fclose(fp);
-
-  //End of OLD CODE
-
-
-  //New Code
-
   //parameters to initialize classes
   char* input_filename;
   double input_maxval;
@@ -117,7 +48,6 @@ int overlapped_bonded_set_params(int bond_type, OverlappedBondedInteraction over
   double* input_para_a;
   double* input_para_b;
   double* input_para_c;
-
 
   if(bond_type < 0)
     return 1;
@@ -168,8 +98,6 @@ int overlapped_bonded_set_params(int bond_type, OverlappedBondedInteraction over
   }
   fclose(fp);
 
-  //End of new code
-
   //create bond classes
   // in old style -> OverlappedBondedInteraction is now enum class
   switch(overlap_type){
@@ -189,9 +117,6 @@ int overlapped_bonded_set_params(int bond_type, OverlappedBondedInteraction over
   case OVERLAP_UNKNOWN:
     return 0;
   };
-
-
-  mpi_bcast_ia_params(bond_type, -1); 
 
   return 0;
 }

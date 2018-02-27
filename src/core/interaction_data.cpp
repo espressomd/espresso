@@ -680,16 +680,8 @@ int virtual_set_params(int bond_type) {
   if (bond_type < 0)
     return ES_ERROR;
 
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].type = BONDED_IA_VIRTUAL_BOND;
-  bonded_ia_params[bond_type].num = 1;
-
   //create new bond class in bond vector with params
   bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::VirtualBond>());
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1);
 
   return ES_OK;
 }

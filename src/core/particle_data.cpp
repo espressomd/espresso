@@ -1028,7 +1028,7 @@ int local_change_bond(int part, int *bond, int _delete) {
   if (_delete)
     return try_delete_bond(p, bond);
 
-  auto const bond_size = bonded_ia_params[bond[0]].num + 1;
+  auto const bond_size = bond_container.get_num_partners(bond[0]) + 1;
 
   std::copy_n(bond, bond_size, std::back_inserter(p->bl));
 
@@ -1049,7 +1049,7 @@ int try_delete_bond(Particle *part, int *bond) {
   // Go over the bond list to find the bond to delete
   for (i = 0; i < bl->n;) {
     type = bl->e[i];
-    partners = bonded_ia_params[type].num;
+    partners = bond_container.get_num_partners(bond[0]);
 
     // If the bond type does not match the one, we want to delete, skip
     if (type != bond[0])
@@ -1082,7 +1082,7 @@ void remove_all_bonds_to(int identity) {
     int i, j, partners;
 
     for (i = 0; i < bl->n;) {
-      partners = bonded_ia_params[bl->e[i]].num;
+      partners = bond_container.get_num_partners(bl->e[i]);
       for (j = 1; j <= partners; j++)
         if (bl->e[i + j] == identity)
           break;
@@ -1199,7 +1199,6 @@ void remove_all_exclusions() { mpi_send_exclusion(-1, -1, 1); }
 
 void auto_exclusions(int distance) {
   int count, p, i, j, p1, p2, p3, dist1, dist2;
-  Bonded_ia_parameters *ia_params;
 
   /* partners is a list containing the currently found excluded particles for
      each particle, and their distance, as a interleaved list */
@@ -1212,8 +1211,8 @@ void auto_exclusions(int distance) {
   for (auto const &part1 : partCfg()) {
     p1 = part1.p.identity;
     for (i = 0; i < part1.bl.n;) {
-      ia_params = &bonded_ia_params[part1.bl.e[i++]];
-      if (ia_params->num == 1) {
+      int num_partners = bond_container.get_num_partners(part1.bl.e[i++]);
+      if (num_partners == 1) {
         p2 = part1.bl.e[i++];
         /* you never know what the user does, may bond a particle to itself...?
          */
@@ -1222,7 +1221,7 @@ void auto_exclusions(int distance) {
           add_partner(&partners[p2], p2, p1, 1);
         }
       } else
-        i += ia_params->num;
+        i += num_partners;
     }
   }
 

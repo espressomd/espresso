@@ -35,6 +35,7 @@ int endangledist_set_params(int bond_type, double bend, double phi0,
   if (bond_type < 0)
     return ES_ERROR;
 
+  /*
   make_bond_type_exist(bond_type);
 
   bonded_ia_params[bond_type].p.endangledist.bend = bend;
@@ -42,15 +43,14 @@ int endangledist_set_params(int bond_type, double bend, double phi0,
   bonded_ia_params[bond_type].p.endangledist.distmin = distmin;
   bonded_ia_params[bond_type].p.endangledist.distmax = distmax;
 
-  bonded_ia_params[bond_type].type = BONDED_IA_ENDANGLEDIST;
+  bonded_ia_params[bond_type].type = BONDED_IA_ENDANGLEDIST;*/
   /* Normally LENGTH=1 ANGLE=2 DIHEDRAL=3
    * Here angle only requires one particle (other reference is wall constraint)
    */
-  bonded_ia_params[bond_type].num = 1;
+  //bonded_ia_params[bond_type].num = 1;
 
   /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1);
-
+  //mpi_bcast_ia_params(bond_type, -1);
   return ES_OK;
 }
 

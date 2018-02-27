@@ -22,6 +22,7 @@ namespace Bond{
     int get_soft_ID(Particle *p1, int bl_id, int *softID, int *bond_map_id);
     //to be called directly without BondContainer
     int calc_volumes(Particle *p1, int bl_id, double *tempVol);//bl_id is here now the id for a IBM_Triel_Bend_Bond!
+    void ResetParams(double VolRef);
 
     int m_softID; // ID of the large soft particle to which this node belongs
     // Reference volume

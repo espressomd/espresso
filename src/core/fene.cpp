@@ -33,23 +33,9 @@ int fene_set_params(int bond_type, double k, double drmax, double r0)
   if(bond_type < 0)
     return ES_ERROR;
 
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.fene.k = k;
-  bonded_ia_params[bond_type].p.fene.drmax = drmax;
-  bonded_ia_params[bond_type].p.fene.r0 = r0;
-
-  bonded_ia_params[bond_type].p.fene.drmax2 = Utils::sqr(bonded_ia_params[bond_type].p.fene.drmax);
-  bonded_ia_params[bond_type].p.fene.drmax2i = 1.0/bonded_ia_params[bond_type].p.fene.drmax2;
-
-  bonded_ia_params[bond_type].type = BONDED_IA_FENE;
-  bonded_ia_params[bond_type].num  = 1;
-
+  //create bond class
   bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::Fene>
 				  (r0, drmax, Utils::sqr(drmax), 1./Utils::sqr(drmax), k));
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1); 
 
   return ES_OK;
 }

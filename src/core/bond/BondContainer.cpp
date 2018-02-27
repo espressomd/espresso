@@ -246,3 +246,9 @@ int Bond::BondContainer::RB_vel_corr(Particle *p1, int* repeat)
 {
   return loop_over_bond_partners(m_rigid_bonds, &RigidBond::vel_corr, p1, repeat);
 }
+
+int Bond::BondContainer::get_num_partners(int bond_map_id){
+
+  return m_all_bonds[bond_map_id]->get_number_of_bond_partners();
+  
+}

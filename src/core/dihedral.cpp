@@ -30,20 +30,9 @@ int dihedral_set_params(int bond_type, int mult, double bend, double phase)
 {
   if(bond_type < 0)
     return ES_ERROR;
-
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].type = BONDED_IA_DIHEDRAL;
-  bonded_ia_params[bond_type].num  = 3;
-  bonded_ia_params[bond_type].p.dihedral.mult = mult;
-  bonded_ia_params[bond_type].p.dihedral.bend = bend;
-  bonded_ia_params[bond_type].p.dihedral.phase = phase;
-
   
+  //create bond
   bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::Dihedral>(mult, bend, phase));
-  bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::Dihedral>(mult, bend, phase));
-
-  mpi_bcast_ia_params(bond_type, -1); 
 
   return ES_OK;
 }

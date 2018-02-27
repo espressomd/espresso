@@ -177,6 +177,11 @@ int Bond::IbmTriel::calc_bonded_three_particle_energy(Particle *p1, Particle *p2
 }
 
 // internal function
+/** Rotate calculated trielastic forces in the 2d plane back to the 3d plane
+ *Use knowledge that the x-axis in rotated system is parallel to r(p1->p2) in original system;
+ *To find the corresponding unit vector to y in the rotated system, construct vector perpendicular to r(p1->p2);
+ * note that f3 is not calculated here but is implicitly calculated by f3 = -(f1+f2) which is consistent with the literature
+ */
 void Bond::IbmTriel::RotateForces(const double f1_rot[2], const double f2_rot[2], double f1[3], double f2[3], double v12[3], double v13[3]) const {
 
   // fRot is in the rotated system, i.e. in a system where the side lPrime of the triangle (i.e. v12) is parallel to the x-axis, and the y-axis is perpendicular to the x-axis (cf. Krueger, Fig. 7.1c).
@@ -216,10 +221,15 @@ void Bond::IbmTriel::RotateForces(const double f1_rot[2], const double f2_rot[2]
 int Bond::IbmTriel::ResetParams(double k1, double l0){
  
 // Check if k1 is correct
-  if ( fabs( m_k1 - k1) > 1e-9 ) { printf("k1 does not match while reading triel checkpoint!\n"); return ES_ERROR; }
+  if ( fabs( m_k1 - k1) > 1e-9 ) {
+    printf("k1 does not match while reading triel checkpoint!\n");
+    return ES_ERROR;
+  }
   
   // Check if l0 is correct
-  if ( fabs( m_l0 - l0) > 1e-9 ) { printf("l0 does not match while reading triel checkpoint!\n"); return ES_ERROR; }
+  if ( fabs( m_l0 - l0) > 1e-9 ) {
+    printf("l0 does not match while reading triel checkpoint!\n");
+    return ES_ERROR; }
 
   // Compute cache values a1, a2, b1, b2
   const double area0 = m_area0;
