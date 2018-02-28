@@ -349,16 +349,8 @@ inline void add_bonded_virials(Particle *p1) {
       return;
     }
 
-    double a[3] = {p1->r.p[0], p1->r.p[1], p1->r.p[2]};
-    double b[3] = {p2->r.p[0], p2->r.p[1], p2->r.p[2]};
-    auto dx = get_mi_vector(a, b);
-#ifdef LEES_EDWARDS
-    double n_le_shifts = dround((a[1] - b[1]) * box_l_i[1]);
+    auto dx = get_mi_vector(p1->r.p, p2->r.p);
 
-    if (PERIODIC(1) == 1) {
-      dx[0] -= lees_edwards_offset * n_le_shifts;
-    }
-#endif
     calc_bonded_force(p1, p2, iaparams, &i, dx.data(), force);
     *obsstat_bonded(&virials, type_num) +=
         dx[0] * force[0] + dx[1] * force[1] + dx[2] * force[2];

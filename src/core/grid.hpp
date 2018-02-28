@@ -199,6 +199,13 @@ inline void get_mi_vector(T &res, U const &a, V const &b) {
     if (std::fabs(res[i]) > half_box_l[i] && PERIODIC(i))
       res[i] -= dround(res[i] * box_l_i[i]) * box_l[i];
   }
+
+#ifdef LEES_EDWARDS
+  if ((PERIODIC(1) == 1) && (lees_edwards_offset != 0.)) {
+    double n_le_shifts = dround((a[1] - b[1]) * box_l_i[1]);
+    res[0] -= lees_edwards_offset * n_le_shifts;
+  }
+#endif
 }
 
 template <typename T, typename U>
