@@ -86,7 +86,39 @@ class VirtualSites(ut.TestCase):
         self.assertTrue(isinstance(self.system.virtual_sites, VirtualSitesRelative))
         self.assertEqual(self.system.virtual_sites.have_velocity, False)
 
-    
+
+
+    def test_vs_quat(self):
+        self.system.part.clear()
+        # First check that quaternion of virtual particle is unchanged if
+        # have_quaterion is false.
+        self.system.virtual_sites = VirtualSitesRelative(have_quaternion=False)
+        self.assertEqual(self.system.virtual_sites.have_quaternion, False)
+        self.system.part.add(id=0, pos=[1, 1, 1], rotation=[1, 1, 1], omega_lab=[1, 1, 1])
+        self.system.part.add(id=1, pos=[1, 1, 1], rotation=[1, 1, 1])
+        self.system.part[1].vs_auto_relate_to(0)
+        np.testing.assert_array_equal(self.system.part[1].quat, [1, 0, 0, 0])
+        self.system.integrator.run(1)
+        np.testing.assert_array_equal(self.system.part[1].quat, [1, 0, 0, 0])
+        # Now check that quaternion of the virtual particle gets updated. 
+        self.system.virtual_sites = VirtualSitesRelative(have_quaternion=True)
+        self.system.integrator.run(1)
+        np.testing.assert_raises(AssertionError, np.testing.assert_array_equal, self.system.part[1].quat, [1, 0, 0, 0])
+        # Construct a quaternion with perpendicular orientation.
+        p0 = np.cos(np.pi/4.0)
+        p = np.array([0, np.sin(np.pi/4.0), 0])
+        q0 = 1.0
+        q = np.array([0, 0, 0])
+        r0 = p0*q0
+        r = -np.dot(q, p) + np.cross(q, p) + p0*q + q0*p
+        self.system.part[1].vs_quat = [r0, r[0], r[1], r[2]]
+        # Check for orthogonality.
+        self.assertEqual(np.dot(self.system.part[0].director, self.system.part[1].director), 0.0)
+        # Check if still true after integration.
+        self.system.integrator.run(1)
+        self.assertAlmostEqual(np.dot(self.system.part[0].director, self.system.part[1].director), 0.0)
+
+
     def test_pos_vel_forces(self):
         system = self.system
         system.cell_system.skin=0.3
