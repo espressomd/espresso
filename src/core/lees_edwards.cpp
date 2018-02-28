@@ -46,7 +46,7 @@ void lees_edwards_step_boundaries(){
  
  while( lees_edwards_offset >  0.5*box_l[0]) { lees_edwards_count++; lees_edwards_offset -= box_l[0];}
  while( lees_edwards_offset < -0.5*box_l[0]) { lees_edwards_count--; lees_edwards_offset += box_l[0];}
-   
+
  /* update the apparent shear rate */
  if( sim_time - lees_edwards_prev_set_at > 0.0 )
     lees_edwards_rate     = delta * time_step / (sim_time - lees_edwards_prev_set_at);

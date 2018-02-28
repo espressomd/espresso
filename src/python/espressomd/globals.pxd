@@ -76,7 +76,8 @@ cdef extern from "particle_data.hpp":
     extern int n_part
 
 cdef extern from "lees_edwards.hpp":
-    double lees_edwards_offset    
+    double lees_edwards_offset
+    double lees_edwards_rate
 
 cdef extern from "interaction_data.hpp":
     double dpd_gamma
