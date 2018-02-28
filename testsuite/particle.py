@@ -145,6 +145,8 @@ class ParticleProperties(ut.TestCase):
             self.system.part.add(id=0, pos=(0, 0, 0))
             self.system.part.add(id=1, pos=(0, 0, 0))
             self.system.part[1].vs_relative = (0, 5.0, (0.5, -0.5, -0.5, -0.5))
+            self.system.part[1].vs_quat = [1, 2, 3, 4]
+            np.testing.assert_array_equal(self.system.part[1].vs_quat, [1, 2, 3, 4])
             res = self.system.part[1].vs_relative
             self.assertEqual(res[0], 0, "vs_relative: " + res.__str__())
             self.assertEqual(res[1], 5.0, "vs_relative: " + res.__str__())
