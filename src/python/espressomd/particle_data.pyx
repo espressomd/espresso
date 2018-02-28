@@ -1338,7 +1338,7 @@ cdef class ParticleHandle(object):
         """
 
         if remove_particle(self.id):
-            raise Exception("Could not delete particle.")
+            raise Exception("Could not remove particle.")
         del self
 
     # Bond related methods
@@ -1776,7 +1776,7 @@ cdef class ParticleList(object):
 
         See Also
         --------
-        remove
+        :meth:`espressomd.particle_data.ParticleHandle.remove`
 
         Examples
         --------
@@ -1901,7 +1901,7 @@ Set quat and scalar dipole moment (dipm) instead.")
         See Also
         --------
         add
-        remove
+        :meth:`espressomd.particle_data.ParticleHandle.remove`
 
         """
 
