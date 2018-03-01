@@ -48,6 +48,7 @@ function cmd {
 [ -z "$check_procs" ] && check_procs=2
 [ -z "$build_procs" ] && build_procs=2
 [ -z "$make_check" ] && make_check="true"
+[ -z "$check_odd_only" ] && check_odd_only="false"
 
 cmake_params="-D CMAKE_BUILD_TYPE=Debug -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params"
 
@@ -59,7 +60,7 @@ fi
 
 outp insource srcdir builddir \
     cmake_params with_fftw \
-    with_python_interface with_coverage with_static_analysis myconfig check_procs build_procs
+    with_python_interface with_coverage with_static_analysis myconfig check_procs build_procs check_odd_only
 
 # check indentation of python files
 pep8 --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
@@ -159,7 +160,11 @@ if $make_check; then
     start "TEST"
 
     if [ -z "$run_tests" ]; then
-        cmd "make -j${build_procs} check_python $make_params" || exit 1
+        if $check_odd_only; then
+            cmd "make -j${build_procs} check_python_parallel_odd $make_params" || exit 1
+        else
+            cmd "make -j${build_procs} check_python $make_params" || exit 1
+        fi
     else
         cmd "make python_tests $make_params"
         for t in $run_tests; do

@@ -90,7 +90,7 @@ check_with_odd_no_of_processors:
   - git_clone
   - maxset
   script:
-    - export build_procs=3 check_procs=3
+    - export build_procs=3 check_procs=3 check_odd_only=true
     - bash maintainer/cuda_build.sh
 
 deploy_documentation:
