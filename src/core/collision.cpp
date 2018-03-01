@@ -378,7 +378,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
   memmove(local_particles[current_vs_pid]->r.p, pos, 3 * sizeof(double));
   local_vs_relate_to(current_vs_pid, relate_to);
 
-  (local_particles[max_seen_particle])->p.isVirtual = 1;
+  (local_particles[max_seen_particle])->p.is_virtual = 1;
   (local_particles[max_seen_particle])->p.type =
       collision_params.vs_particle_type;
 }

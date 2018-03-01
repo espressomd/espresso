@@ -28,6 +28,9 @@
  */
 
 #include "lb.hpp"
+
+#ifdef LB
+
 #include "communication.hpp"
 #include "grid.hpp"
 #include "halo.hpp"
@@ -37,17 +40,15 @@
 #include "lbboundaries.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
+#include "global.hpp"
+#include "cells.hpp"
+
 #include <cassert>
 #include <cstdio>
 #include <iostream>
 #include <mpi.h>
 
 #include "cuda_interface.hpp"
-
-// global variable holding the number of fluid components (see global.cpp)
-int lb_components = LB_COMPONENTS;
-
-#ifdef LB
 
 #ifdef ADDITIONAL_CHECKS
 static void lb_check_halo_regions();
@@ -3408,11 +3409,7 @@ void calc_particle_lattice_ia() {
 
     /* local cells */
     for (auto &p : local_cells.particles()) {
-
-#ifdef IMMERSED_BOUNDARY
-      // Virtual particles for IBM must not be coupled
-      if (!p.p.isVirtual)
-#endif
+      if (!p.p.is_virtual || thermo_virtual)
       {
         lb_viscous_coupling(&p, force);
 
@@ -3443,10 +3440,8 @@ void calc_particle_lattice_ia() {
           fprintf(stderr, "%d: OPT: LB coupling of ghost particle:\n",
                   this_node);
         });
-#ifdef IMMERSED_BOUNDARY
-        // Virtual particles for IBM must not be coupled
-        if (!p.p.isVirtual)
-#endif
+
+        if (!p.p.is_virtual || thermo_virtual)
         {
           lb_viscous_coupling(&p, force);
         }

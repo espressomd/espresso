@@ -68,11 +68,14 @@ static void pack_particles(ParticleRange particles,
     buffer[i].p[1] = static_cast<float>(pos[1]);
     buffer[i].p[2] = static_cast<float>(pos[2]);
 
+#ifdef LB_GPU
     buffer[i].v[0] = static_cast<float>(part.m.v[0]);
     buffer[i].v[1] = static_cast<float>(part.m.v[1]);
     buffer[i].v[2] = static_cast<float>(part.m.v[2]);
-#ifdef IMMERSED_BOUNDARY
-    buffer[i].isVirtual = part.p.isVirtual;
+#endif
+
+#if defined(LB_GPU) && defined(VIRTUAL_SITES)
+    buffer[i].is_virtual = part.p.is_virtual;
 #endif
 
 #ifdef DIPOLES

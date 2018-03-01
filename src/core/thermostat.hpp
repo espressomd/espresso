@@ -26,17 +26,14 @@
 
 #include "config.hpp"
 
-#include <cmath>
 #include "debug.hpp"
 #include "particle_data.hpp"
 #include "random.hpp"
-#include "global.hpp"
 #include "integrate.hpp"
-#include "cells.hpp"
-#include "lb.hpp"
-#include "dpd.hpp"
-#include "virtual_sites.hpp"
+
 #include "Vector.hpp"
+
+#include <cmath>
 
 /** \name Thermostat switches*/
 /************************************************************/
@@ -74,16 +71,13 @@ extern int thermo_switch;
 /** temperature. */
 extern double temperature;
 
+/** True if the thermostat should acton on virtual particles. */
+extern bool thermo_virtual;
+
 /** Langevin friction coefficient gamma. */
 extern Thermostat::GammaType langevin_gamma;
 /** Langevin friction coefficient gamma. */
 extern Thermostat::GammaType langevin_gamma_rotation;
-
-/** Langevin for translations */
-extern bool langevin_trans;
-
-/** Langevin for rotations */
-extern bool langevin_rotate;
 
 /** Friction coefficient for nptiso-thermostat's inline-function
  * friction_therm0_nptiso */
@@ -235,33 +229,12 @@ inline void friction_thermo_langevin(Particle *p) {
 #endif /* LANGEVIN_PER_PARTICLE */
 #endif /* MULTI_TIMESTEP */
 
-  int j;
-  double switch_trans = 1.0;
-  if (langevin_trans == false) {
-    switch_trans = 0.0;
-  }
-
-// Virtual sites related decision making
-#ifdef VIRTUAL_SITES
-#ifndef VIRTUAL_SITES_THERMOSTAT
-  // In this case, virtual sites are NOT thermostated
-  if (p->p.isVirtual) {
-    for (j = 0; j < 3; j++)
+  if (p->p.is_virtual && !thermo_virtual) {
+    for (int j = 0; j < 3; j++)
       p->f.f[j] = 0;
 
     return;
   }
-#endif /* VIRTUAL_SITES_THERMOSTAT */
-#ifdef THERMOSTAT_IGNORE_NON_VIRTUAL
-  // In this case NON-virtual particles are NOT thermostated
-  if (!p->p.isVirtual) {
-    for (j = 0; j < 3; j++)
-      p->f.f[j] = 0;
-
-    return;
-  }
-#endif /* THERMOSTAT_IGNORE_NON_VIRTUAL */
-#endif /* VIRTUAL_SITES */
 
   // Get velocity effective in the thermostatting
   double velocity[3];
@@ -341,7 +314,7 @@ inline void friction_thermo_langevin(Particle *p) {
 #endif
 
   // Do the actual thermostatting
-  for (j = 0; j < 3; j++) {
+  for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     // If individual coordinates are fixed, set force to 0.
     if ((p->p.ext_flag & COORD_FIXED(j)))
@@ -352,16 +325,16 @@ inline void friction_thermo_langevin(Particle *p) {
 // Apply the force
 #ifndef PARTICLE_ANISOTROPY
       p->f.f[j] = langevin_pref1_temp * velocity[j] +
-                  switch_trans * langevin_pref2_temp * Thermostat::noise();
+                  langevin_pref2_temp * Thermostat::noise();
 #else
       // In case of anisotropic particle: body-fixed reference frame. Otherwise:
       // lab-fixed reference frame.
       if (aniso_flag)
         p->f.f[j] = langevin_pref1_temp[j] * velocity_body[j] +
-                    switch_trans * langevin_pref2_temp[j] * Thermostat::noise();
+                    langevin_pref2_temp[j] * Thermostat::noise();
       else
         p->f.f[j] = langevin_pref1_temp[j] * velocity[j] +
-                    switch_trans * langevin_pref2_temp[j] * Thermostat::noise();
+                    langevin_pref2_temp[j] * Thermostat::noise();
 #endif
     }
   } // END LOOP OVER ALL COMPONENTS
@@ -371,7 +344,7 @@ inline void friction_thermo_langevin(Particle *p) {
     double particle_force[3] = {0.0, 0.0, 0.0};
 
     thermo_convert_forces_body_to_space(p, particle_force);
-    for (j = 0; j < 3; j++) {
+    for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
       if (!(p->p.ext_flag & COORD_FIXED(j)))
 #endif
@@ -400,11 +373,6 @@ inline void friction_thermo_langevin(Particle *p) {
 inline void friction_thermo_langevin_rotation(Particle *p) {
   extern Thermostat::GammaType langevin_pref2_rotation;
   Thermostat::GammaType langevin_pref1_temp, langevin_pref2_temp;
-
-  double switch_rotate = 1.0;
-  if (langevin_rotate == false) {
-    switch_rotate = 0.0;
-  }
 
   langevin_pref1_temp = langevin_gamma_rotation;
   langevin_pref2_temp = langevin_pref2_rotation;
@@ -446,7 +414,7 @@ inline void friction_thermo_langevin_rotation(Particle *p) {
 #ifdef PARTICLE_ANISOTROPY
     p->f.torque[j] =
         -langevin_pref1_temp[j] * p->m.omega[j] +
-        switch_rotate * langevin_pref2_temp[j] * Thermostat::noise();
+        langevin_pref2_temp[j] * Thermostat::noise();
 #else
     p->f.torque[j] = -langevin_pref1_temp * p->m.omega[j] +
                      switch_rotate * langevin_pref2_temp * Thermostat::noise();

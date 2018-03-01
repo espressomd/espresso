@@ -24,6 +24,9 @@
 #include "integrate.hpp"
 #include "rotation.hpp"
 #include "utils.hpp"
+#include "communication.hpp"
+#include "cells.hpp"
+
 #include <algorithm>
 #include <limits>
 
@@ -71,7 +74,7 @@ bool steepest_descent_step(void) {
 #endif
 #ifdef VIRTUAL_SITES
         // Skip positional increments of virtual particles
-        if (!p.p.isVirtual)
+        if (!p.p.is_virtual)
 #endif
         {
           // Square of force on particle
