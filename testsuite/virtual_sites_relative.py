@@ -97,13 +97,13 @@ class VirtualSites(ut.TestCase):
         self.system.part.add(id=0, pos=[1, 1, 1], rotation=[1, 1, 1], omega_lab=[1, 1, 1])
         self.system.part.add(id=1, pos=[1, 1, 1], rotation=[1, 1, 1])
         self.system.part[1].vs_auto_relate_to(0)
-        np.testing.assert_array_equal(self.system.part[1].quat, [1, 0, 0, 0])
+        np.testing.assert_array_equal(np.copy(self.system.part[1].quat), [1, 0, 0, 0])
         self.system.integrator.run(1)
-        np.testing.assert_array_equal(self.system.part[1].quat, [1, 0, 0, 0])
+        np.testing.assert_array_equal(np.copy(self.system.part[1].quat), [1, 0, 0, 0])
         # Now check that quaternion of the virtual particle gets updated. 
         self.system.virtual_sites = VirtualSitesRelative(have_quaternion=True)
         self.system.integrator.run(1)
-        np.testing.assert_raises(AssertionError, np.testing.assert_array_equal, self.system.part[1].quat, [1, 0, 0, 0])
+        self.assertRaises(AssertionError, np.testing.assert_array_equal, np.copy(self.system.part[1].quat), [1, 0, 0, 0])
         # Construct a quaternion with perpendicular orientation.
         p0 = np.cos(np.pi/4.0)
         p = np.array([0, np.sin(np.pi/4.0), 0])

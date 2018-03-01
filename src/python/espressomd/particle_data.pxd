@@ -85,7 +85,7 @@ cdef extern from "particle_data.hpp":
                 double v_swim
 
     # Setter/getter/modifier functions functions
-    const particle& get_particle_data(int part) except +
+    const particle* get_particle_data_ptr(int part) except +
     void prefetch_particle_data(vector[int] ids)
 
     int place_particle(int part, double p[3])

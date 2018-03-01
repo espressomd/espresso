@@ -59,9 +59,7 @@ cdef class ParticleHandle(object):
         self.id = _id
 
     cdef int update_particle_data(self) except -1:
-        cdef particle tmp
-        tmp = get_particle_data(self.id)
-        self.particle_data = &tmp
+        self.particle_data = get_particle_data_ptr(self.id)
         if not self.particle_data:
             raise Exception(
                 "Particle with id " + str(self.id) + " does not exist.")
