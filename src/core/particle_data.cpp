@@ -1346,10 +1346,5 @@ void pointer_to_rotational_inertia(Particle const *p, double const *&res) {
 #endif
 
 bool particle_exists(int part_id) noexcept {
-  try {
-    get_particle_node(part_id);
-    return true;
-  } catch (...) {
-    return false;
-  }
+  return particle_node.count(part_id);
 }
