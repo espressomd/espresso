@@ -2,20 +2,16 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from OpenGL.GL import *
 from math import *
-import math
 import numpy as np
 import os
 import time
-import espressomd
 import collections
 import sys
 from threading import Thread
-
 import scipy.spatial
 include "myconfig.pxi"
-
 from copy import deepcopy
-
+import espressomd
 
 class openGLLive(object):
 
@@ -203,7 +199,7 @@ class openGLLive(object):
             'window_size': [800, 800],
             'name': 'Espresso Visualization',
             'background_color': [0, 0, 0],
-            'update_fps': 30.0,
+            'draw_fps': False,
             'periodic_images': [0, 0, 0],
             'draw_box': True,
             'draw_axis': True,
@@ -265,7 +261,7 @@ class openGLLive(object):
             'light_brightness': 1.0,
             'light_size': 'auto',
 
-            'spotlight_enabled': True,
+            'spotlight_enabled': False,
             'spotlight_colors': [[0.2, 0.2, 0.3, 1.0], [0.5, 0.5, 0.5, 1.0], [1.0, 1.0, 1.0, 1.0]],
             'spotlight_angle': 45,
             'spotlight_focus': 1,
@@ -305,7 +301,15 @@ class openGLLive(object):
         # CALC INVERSE BACKGROUND COLOR FOR BOX
         self.invBackgroundCol = np.array([1 - self.specs['background_color'][0], 1 -
                                           self.specs['background_color'][1], 1 - self.specs['background_color'][2]])
+
+        # HAS PERIODIC IMAGES
+        self.has_images = any(i != 0 for i in self.specs['periodic_images'])
+
         # INITS
+        self.last_T = -1
+        self.fps_last = 0 
+        self.fps = 0
+        self.fps_count = 0
         self.system = system
         self.started = False
         self.quit_savely = False
@@ -349,40 +353,17 @@ class openGLLive(object):
         self.init_controls()
         self.init_callbacks()
 
-        # POST DISPLAY WITH 60FPS
-        def timed_update_redraw(data):
-            glutPostRedisplay()
+        # HANDLE INPUT WITH 60FPS
+        def timed_handle_input(data):
+            #glutPostRedisplay()
             self.keyboardManager.handle_input()
-            glutTimerFunc(17, timed_update_redraw, -1)
-
-        # PLACE LIGHT AT PARTICLE CENTER, DAMPED SPRING FOR SMOOTH POSITION
-        # CHANGE, CALL WITH 10FPS
-        def timed_update_centerLight(data):
-            if self.hasParticleData:
-                ldt = 0.8
-                cA = (self.particle_COM - self.smooth_light_pos) * \
-                    0.1 - self.smooth_light_posV * 1.8
-                self.smooth_light_posV += ldt * cA
-                self.smooth_light_pos += ldt * self.smooth_light_posV
-                self.updateLightPos = True
-            glutTimerFunc(100, timed_update_centerLight, -1)
-
-        # AVERAGE PARTICLE COM ONLY EVERY 2sec
-        def timed_update_particleCOM(data):
-            if self.hasParticleData:
-                if len(self.particles['pos']) > 0:
-                    self.particle_COM = np.average(
-                        self.particles['pos'], axis=0)
-            glutTimerFunc(2000, timed_update_particleCOM, -1)
+            glutTimerFunc(17, timed_handle_input, -1)
 
         self.started = True
         self.hasParticleData = False
 
-        glutTimerFunc(17, timed_update_redraw, -1)
-
-        if self.specs['light_pos'] == 'auto':
-            glutTimerFunc(2000, timed_update_particleCOM, -1)
-            glutTimerFunc(60, timed_update_centerLight, -1)
+        glutTimerFunc(17, timed_handle_input, -1)
+        
         # START THE BLOCKING MAIN LOOP
         glutMainLoop()
 
@@ -403,10 +384,8 @@ class openGLLive(object):
                     self.update_constraints()
                 self.hasParticleData = True
 
-            # IF CALLED TOO OFTEN, ONLY UPDATE WITH GIVEN FREQ
-            self.elapsedTime += (time.time() - self.measureTimeBeforeIntegrate)
-            if self.elapsedTime > 1.0 / self.specs['update_fps']:
-                self.elapsedTime = 0
+            if self.last_T is None or not self.last_T == self.system.time:
+                self.last_T = self.system.time
                 self.update_particles()
                 if self.specs['LB']:
                     self.update_lb()
@@ -416,7 +395,6 @@ class openGLLive(object):
                     c()
                 self.keyboardManager.userCallbackStack = []
 
-            self.measureTimeBeforeIntegrate = time.time()
 
             IF EXTERNAL_FORCES:
                 if self.triggerSetParticleDrag == True and self.dragId != -1:
@@ -434,7 +412,7 @@ class openGLLive(object):
 
     # GET THE PARTICLE DATA
     def update_particles(self):
-        
+
         self.particles['pos'] = self.system.part[:].pos_folded
         self.particles['type'] = self.system.part[:].type
 
@@ -571,6 +549,12 @@ class openGLLive(object):
                     for p in b[1:]:
                         self.bonds.append([i, p, t])
 
+    def draw_text(self, x,  y, text, color, font = GLUT_BITMAP_9_BY_15):
+        glColor(color)
+        glWindowPos2f(x, y)
+        for ch in text :
+            glutBitmapCharacter( font , ctypes.c_int( ord(ch) ) )
+
     # DRAW CALLED AUTOMATICALLY FROM GLUT DISPLAY FUNC
     def draw(self):
 
@@ -589,10 +573,9 @@ class openGLLive(object):
             draw_arrow([0, 0, 0], [0, 0, self.system.box_l[2] * axis_fac], axis_r, [
                        0, 0, 1, 1], self.materials['chrome'], self.specs['quality_arrows'])
 
-        if self.hasParticleData:
-            self.draw_system_particles()
-            if self.specs['draw_bonds']:
-                self.draw_bonds()
+        self.draw_system_particles()
+        if self.specs['draw_bonds']:
+            self.draw_bonds()
 
         IF CONSTRAINTS:
             if self.specs['draw_constraints']:
@@ -661,40 +644,48 @@ class openGLLive(object):
                 radius = self.radiusByLJ(ptype)
         return radius
 
-    def draw_system_particles(self):
+    def draw_system_particles(self, dragging = False):
         pIds = range(len(self.particles['pos']))
+        ptype = -1
+        reset_material = False
+
         for pid in pIds:
+            ptype_last = ptype
             ptype = int(self.particles['type'][pid])
-            radius = self.determine_radius(ptype)
 
-            m = self.modulo_indexing(
-                self.specs['particle_type_materials'], ptype)
-            material = self.materials[m]
+            # Only change material if type has changed, dragmode or material was resetted by arrows
+            if reset_material or dragging or not ptype == ptype_last:
+                radius = self.determine_radius(ptype)
 
-            if self.specs['particle_coloring'] == 'id':
-                color = self.id_to_fcolor(pid)
-                glColor(color)
-            elif self.specs['particle_coloring'] == 'auto':
-                # Color auto: Charge then Type
-                if self.particles['charge'][pid] != 0:
+                m = self.modulo_indexing(self.specs['particle_type_materials'], ptype)
+                material = self.materials[m]
+
+                if self.specs['particle_coloring'] == 'id':
+                    color = self.id_to_fcolor(pid)
+                    glColor(color)
+                elif self.specs['particle_coloring'] == 'auto':
+                    # Color auto: Charge then Type
+                    if self.particles['charge'][pid] != 0:
+                        color = self.color_by_charge(self.particles['charge'][pid])
+                    else:
+                        color = self.modulo_indexing(
+                            self.specs['particle_type_colors'], ptype)
+                elif self.specs['particle_coloring'] == 'charge':
                     color = self.color_by_charge(self.particles['charge'][pid])
-                else:
+                elif self.specs['particle_coloring'] == 'type':
                     color = self.modulo_indexing(
                         self.specs['particle_type_colors'], ptype)
-            elif self.specs['particle_coloring'] == 'charge':
-                color = self.color_by_charge(self.particles['charge'][pid])
-            elif self.specs['particle_coloring'] == 'type':
-                color = self.modulo_indexing(
-                    self.specs['particle_type_colors'], ptype)
 
-            draw_sphere(self.particles['pos'][pid], radius, color, material,
-                        self.specs['quality_particles'])
-            for imx in range(-self.specs['periodic_images'][0], self.specs['periodic_images'][0] + 1):
-                for imy in range(-self.specs['periodic_images'][1], self.specs['periodic_images'][1] + 1):
-                    for imz in range(-self.specs['periodic_images'][2], self.specs['periodic_images'][2] + 1):
-                        if imx != 0 or imy != 0 or imz != 0:
-                            redraw_sphere(
-                                self.particles['pos'][pid] + (imx * self.imPos[0] + imy * self.imPos[1] + imz * self.imPos[2]), radius, self.specs['quality_particles'])
+                set_solid_material(color[0], color[1], color[2], color[3], material[0], material[1], material[2], material[3])
+
+            redraw_sphere(self.particles['pos'][pid], radius, self.specs['quality_particles'])
+            if self.has_images:
+                for imx in range(-self.specs['periodic_images'][0], self.specs['periodic_images'][0] + 1):
+                    for imy in range(-self.specs['periodic_images'][1], self.specs['periodic_images'][1] + 1):
+                        for imz in range(-self.specs['periodic_images'][2], self.specs['periodic_images'][2] + 1):
+                            if imx != 0 or imy != 0 or imz != 0:
+                                redraw_sphere(
+                                    self.particles['pos'][pid] + (imx * self.imPos[0] + imy * self.imPos[1] + imz * self.imPos[2]), radius, self.specs['quality_particles'])
 
             IF EXTERNAL_FORCES:
                 if self.specs['ext_force_arrows'] or pid == self.dragId:
@@ -704,19 +695,23 @@ class openGLLive(object):
                         else:
                             sc = self.modulo_indexing(self.specs['ext_force_arrows_type_scale'], ptype)
                         if sc > 0:
-                            col = self.modulo_indexing(self.specs['ext_force_arrows_type_colors'], ptype)
-                            radius = self.modulo_indexing(self.specs['ext_force_arrows_type_radii'], ptype)
-                            draw_arrow(self.particles['pos'][pid], np.array(self.particles['ext_force'][pid]) * sc, radius
-                                       , col, self.materials['chrome'], self.specs['quality_arrows'])
+                            arrow_col = self.modulo_indexing(self.specs['ext_force_arrows_type_colors'], ptype)
+                            arrow_radius = self.modulo_indexing(self.specs['ext_force_arrows_type_radii'], ptype)
+                            draw_arrow(self.particles['pos'][pid], np.array(self.particles['ext_force'][pid]) * sc, arrow_radius
+                                       ,arrow_col, self.materials['chrome'], self.specs['quality_arrows'])
+                            reset_material = True
             
             if self.specs['velocity_arrows']:
                 self.draw_arrow_property(pid, ptype, self.specs['velocity_arrows_type_scale'], self.specs['velocity_arrows_type_colors'], self.specs['velocity_arrows_type_radii'], 'velocity')
+                reset_material = True
             
             if self.specs['force_arrows']:
                 self.draw_arrow_property(pid, ptype, self.specs['force_arrows_type_scale'], self.specs['force_arrows_type_colors'], self.specs['force_arrows_type_radii'], 'force')
+                reset_material = True
             
             if self.specs['director_arrows']:
                 self.draw_arrow_property(pid, ptype, self.specs['director_arrows_type_scale'], self.specs['director_arrows_type_colors'], self.specs['director_arrows_type_radii'], 'director')
+                reset_material = True
 
     def draw_arrow_property(self, pid, ptype, type_scale, type_colors, type_radii, prop):
         sc = self.modulo_indexing(type_scale, ptype)
@@ -829,15 +824,25 @@ class openGLLive(object):
         # OpenGl Callbacks
         def display():
             if self.hasParticleData:
+
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
                 glLoadMatrixf(self.camera.modelview)
 
-                if self.updateLightPos:
-                    self.set_light_pos()
-                    self.updateLightPos = False
+                self.set_camera_spotlight()
 
                 self.draw()
+                
+                if self.specs['draw_fps']:
+                    t = time.time()
+                    if t - self.fps_last > 1.0:
+                        self.fps_last = t
+                        self.fps = self.fps_count
+                        self.fps_count = 0
+
+                    self.draw_text(10, 10, "{} fps".format(self.fps), [0, 1, 0, 1])
+                    self.draw_text(10, 30, "{} ms/frame".format(1000.0/self.fps), [0, 1, 0, 1])
+                    self.fps_count += 1
 
                 glutSwapBuffers()
             return
@@ -862,7 +867,8 @@ class openGLLive(object):
             self.mouseManager.mouse_move(x, y)
             return
 
-        def idle_update():
+        def redraw_on_idle():
+            glutPostRedisplay()
             return
 
         # CALLED ION WINDOW POSITION/SIZE CHANGE
@@ -895,7 +901,7 @@ class openGLLive(object):
         glutMotionFunc(motion)
         glutWMCloseFunc(close_window)
 
-        glutIdleFunc(idle_update)
+        glutIdleFunc(redraw_on_idle)
 
         index = 0
         for t in self.timers:
@@ -931,7 +937,7 @@ class openGLLive(object):
         glDisable(GL_LIGHT0)
         if self.specs['spotlight_enabled']:
             glDisable(GL_LIGHT1)
-        self.draw_system_particles()
+        self.draw_system_particles(dragging = True)
         viewport = glGetIntegerv(GL_VIEWPORT)
 
         readPixel = glReadPixelsui(
@@ -1021,8 +1027,6 @@ class openGLLive(object):
 
             self.update_lb()
 
-        self.elapsedTime = 0
-        self.measureTimeBeforeIntegrate = 0
 
         self.box_size_dependence()
 
@@ -1099,22 +1103,12 @@ class openGLLive(object):
 
     # ASYNCHRONOUS PARALLEL CALLS OF glLight CAUSES SEG FAULTS, SO ONLY CHANGE
     # LIGHT AT CENTRAL display METHOD AND TRIGGER CHANGES
-    def set_light_pos(self):
-        if self.specs['light_pos'] == 'auto':
-            glLightfv(GL_LIGHT0, GL_POSITION, [
-                      self.smooth_light_pos[0], self.smooth_light_pos[1], self.smooth_light_pos[2], 0.6])
-
-        self.set_camera_spotlight()
-
     def set_camera_spotlight(self):
         # p = np.linalg.norm(self.camera.state_pos) * self.camera.state_target
         p = self.camera.camPos
         fp = [p[0], p[1], p[2], 1]
         glLightfv(GL_LIGHT1, GL_POSITION, fp)
         glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, self.camera.state_target)
-
-    def trigger_light_pos_update(self):
-        self.updateLightPos = True
 
     def init_camera(self):
         b = np.array(self.system.box_l)
@@ -1133,12 +1127,8 @@ class openGLLive(object):
         cr = np.array(self.specs['camera_right'])
 
         self.camera = Camera(camPos=np.array(cp), camTarget=ct, camRight=cr, moveSpeed=0.5 *
-                              box_diag / 17.0,  center=box_center, updateLights=self.trigger_light_pos_update)
-        self.smooth_light_pos = np.copy(box_center)
-        self.smooth_light_posV = np.array([0.0, 0.0, 0.0])
-        self.particle_COM = np.copy(box_center)
+                              box_diag / 17.0,  center=box_center)
         self.set_camera_spotlight()
-        self.updateLightPos = True
 
     def init_opengl(self):
         glutInit(self.specs['name'])
@@ -1156,15 +1146,15 @@ class openGLLive(object):
 
         glEnable(GL_BLEND)
 
-        # glEnable(GL_CULL_FACE)
+        glEnable(GL_CULL_FACE)
+        glCullFace(GL_BACK)
 
         glLineWidth(2.0)
         glutIgnoreKeyRepeat(1)
 
         # setup lighting
         if self.specs['light_size'] == 'auto':
-            box_diag = pow(pow(self.system.box_l[0], 2) + pow(
-                self.system.box_l[1], 2) + pow(self.system.box_l[1], 2), 0.5)
+            box_diag = pow(pow(self.system.box_l[0], 2) + pow(self.system.box_l[1], 2) + pow(self.system.box_l[1], 2), 0.5)
             self.specs['light_size'] = box_diag * 2.0
 
         glEnable(GL_DEPTH_TEST)
@@ -1172,16 +1162,9 @@ class openGLLive(object):
 
         # LIGHT0
         if self.specs['light_pos'] != 'auto':
-            glLightfv(
-                GL_LIGHT0, GL_POSITION, np.array(
-                    self.specs['light_pos']).tolist())
+            glLightfv(GL_LIGHT0, GL_POSITION, np.array(self.specs['light_pos']).tolist())
         else:
-            glLightfv(
-                GL_LIGHT0,
-                GL_POSITION,
-                (np.array(
-                    self.system.box_l) *
-                    0.5).tolist())
+            glLightfv(GL_LIGHT0, GL_POSITION, (np.array(self.system.box_l) * 1.1).tolist())
 
         glLightfv(GL_LIGHT0, GL_AMBIENT, self.specs['light_colors'][0])
         glLightfv(GL_LIGHT0, GL_DIFFUSE, self.specs['light_colors'][1])
@@ -1605,13 +1588,12 @@ class KeyboardManager(object):
 
 class Camera(object):
 
-    def __init__(self, camPos=np.array([0, 0, 1]), camTarget=np.array([0, 0, 0]), camRight=np.array([1.0, 0.0, 0.0]), moveSpeed=0.5, rotSpeed=0.001, globalRotSpeed=3.0, center=np.array([0, 0, 0]), updateLights=None):
+    def __init__(self, camPos=np.array([0, 0, 1]), camTarget=np.array([0, 0, 0]), camRight=np.array([1.0, 0.0, 0.0]), moveSpeed=0.5, rotSpeed=0.001, globalRotSpeed=3.0, center=np.array([0, 0, 0])):
         self.moveSpeed = moveSpeed
         self.lookSpeed = rotSpeed
         self.globalRotSpeed = globalRotSpeed
 
         self.center = center
-        self.updateLights = updateLights
 
         self.modelview = np.identity(4, np.float32)
 
@@ -1768,7 +1750,6 @@ class Camera(object):
             np.mat(self.modelview[3, :3]).T
         self.camPos = np.array([cXYZ[0, 0], cXYZ[1, 0], cXYZ[2, 0]])
 
-        self.updateLights()
 
 
 class Quaternion:
