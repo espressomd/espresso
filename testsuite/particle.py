@@ -204,6 +204,13 @@ class ParticleProperties(ut.TestCase):
         res = s.part.select(lambda p: p.pos[0] < 0.5)
         self.assertEqual(tuple(sorted(res.id)),(0,1,2,3,4,5,6,7))
 
+    def test_accessing_invalid_id_raises(self):
+        self.system.part.clear()
+        handle_to_non_existing_particle = self.system.part[42]
+        def get_pos_prop(handle):
+            return handle.pos
+        self.assertRaises(RuntimeError, get_pos_prop, handle_to_non_existing_particle)
+
 
 if __name__ == "__main__":
     #print("Features: ", espressomd.features())
