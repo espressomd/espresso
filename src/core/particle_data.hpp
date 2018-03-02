@@ -1035,6 +1035,6 @@ void pointer_to_swimming(Particle const *p,
 void pointer_to_rotational_inertia(Particle const *p, double const *&res);
 #endif
 
-bool particle_exists(int part) noexcept;
+bool particle_exists(int part);
 
 #endif
