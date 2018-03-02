@@ -203,6 +203,22 @@ cdef class ParticleHandle(object):
 
             return array_locked([ret[0], ret[1], ret[2]])
 
+    property image_box:
+        """
+        The image box the particles is in.
+
+        This is the number of times
+        the particle position has been folded by the box length in each
+        direction.
+        """
+
+        def __get__(self):
+            self.update_particle_data()
+
+            return array_locked([self.particle_data.l.i[0],
+                                 self.particle_data.l.i[1],
+                                 self.particle_data.l.i[2]])
+
     # Velocity
     property v:
         """

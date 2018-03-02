@@ -202,6 +202,14 @@ class ParticleProperties(ut.TestCase):
         res = s.part.select(lambda p: p.pos[0] < 0.5)
         self.assertEqual(tuple(sorted(res.id)),(0,1,2,3,4,5,6,7))
 
+    def test_image_box(self):
+        s=self.system
+        s.part.clear()
+
+        pos = 1.5 * s.box_l
+
+        part = s.part.add(pos=pos)
+        np.testing.assert_equal(np.copy(part.image_box), [1,1,1])
 
 if __name__ == "__main__":
     #print("Features: ", espressomd.features())
