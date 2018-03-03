@@ -205,7 +205,4 @@ FFTW external
 H5MD external
 SCAFACOS external
 
-/*bond classes*/
-BOND_CLASS_DEBUG
-
 GSL external

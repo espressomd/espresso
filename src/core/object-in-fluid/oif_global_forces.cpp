@@ -56,10 +56,10 @@ int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g,
  *
  *  !!! loop over particles from domain_decomposition !!!
  */
-#ifdef BOND_CLASS_DEBUG
 void calc_oif_global(double *area_volume, int molType)
 {
-  double partArea, VOL_partVol = 0.0;
+  double partArea, VOL_partVol;
+  partArea = VOL_partVol = 0.0;
   double part_area_volume[2];
 
   Particle *p, *p1;
@@ -77,9 +77,7 @@ void calc_oif_global(double *area_volume, int molType)
   MPI_Allreduce(part_area_volume, area_volume, 2, MPI_DOUBLE, MPI_SUM,
                 MPI_COMM_WORLD);
 }
-#endif //#ifdef BOND_CLASS_DEBUG
 
-#ifdef BOND_CLASS_DEBUG
 void add_oif_global_forces(double *area_volume, int molType) 
 {
 
@@ -99,4 +97,3 @@ void add_oif_global_forces(double *area_volume, int molType)
     };
   }//for
 }
-#endif //#ifdef BOND_CLASS_DEBUG

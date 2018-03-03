@@ -100,5 +100,3 @@
 #define ESIF_DEBUG
 
 #define ONEPART_DEBUG
-
-#define BOND_CLASS_DEBUG

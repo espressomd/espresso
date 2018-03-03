@@ -125,17 +125,13 @@ static void dump_info(const std::string & fn, unsigned fields) {
     errexit();
   }
   success = (fwrite(&fields, sizeof(fields), 1, f) == 1);
-  // Pack the necessary information of bonded_ia_params:
   // The number of partners. This is needed to interpret the bond IntList.
   if (n_bonded_ia > npartners.size())
     npartners.resize(n_bonded_ia);
 
   for (int i = 0; i < n_bonded_ia; ++i) {
-    if (bonded_ia_params[i].type == BONDED_IA_NONE)
-      npartners[i] = 0;
-    else
-      npartners[i] = bonded_ia_params[i].num;
-  }
+    npartners[i] = bond_container.get_num_partners(i);
+  };
   success = success && (fwrite(&n_bonded_ia, sizeof(int), 1, f) == 1);
   success = success && (fwrite(npartners.data(), sizeof(int), n_bonded_ia, f) ==
                         n_bonded_ia);

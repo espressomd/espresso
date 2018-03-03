@@ -274,7 +274,6 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 #endif
 }
 
-#ifdef BOND_CLASS_DEBUG
 /**New add_bonded_energy function for bond classes**/
 inline void add_bonded_energy(Particle *p1)
 {
@@ -282,7 +281,6 @@ inline void add_bonded_energy(Particle *p1)
   if(bond_broken == 2)
     return;
 }
-#endif //BOND_CLASS_DEBUG
 
 /** Calculate kinetic energies for one particle.
     @param p1 particle for which to calculate energies

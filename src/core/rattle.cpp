@@ -105,7 +105,6 @@ void init_correction_vector() {
     reset_force(p);
 }
 
-#ifdef BOND_CLASS_DEBUG
 /**Compute positional corrections*/
 void compute_pos_corr_vec(int *repeat_) {
   int cnt = -1;
@@ -118,7 +117,6 @@ void compute_pos_corr_vec(int *repeat_) {
     };
   };
 }
-#endif
 
 /**Apply corrections to each particle**/
 void app_pos_correction() {
@@ -180,7 +178,6 @@ void transfer_force_init_vel() {
     copy_reset(p);
 }
 
-#ifdef BOND_CLASS_DEBUG
 /** Velocity correction vectors are computed*/
 void compute_vel_corr_vec(int *repeat_) {
   int j, k;
@@ -194,7 +191,6 @@ void compute_vel_corr_vec(int *repeat_) {
     };
   };   // for i loop
 }
-#endif
 
 /**Apply velocity corrections*/
 void apply_vel_corr() {

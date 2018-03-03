@@ -45,8 +45,6 @@ void IBM_VolumeConservation()
 //    IBM_CalcCentroids(frameNum, simTime);
 }
 
-
-#ifdef BOND_CLASS_DEBUG
 void IBM_InitVolumeConservation()
 {
   
@@ -64,7 +62,6 @@ void IBM_InitVolumeConservation()
   VolumeInitDone = true;
   
 }
-#endif// BOND_CLASS_DEBUG
 
 /****************
   IBM_VolumeConservation_ResetParams
@@ -120,7 +117,6 @@ int IBM_VolumeConservation_SetParams(const int bond_type, const int softID, cons
 }
 
 
-#ifdef BOND_CLASS_DEBUG
 void CalcVolumes()
 {
   
@@ -194,9 +190,7 @@ void CalcVolumes()
   
   };//for
 }
-#endif
 
-#ifdef BOND_CLASS_DEBUG
 void CalcVolumeForce()
 {
   // Loop over all particles on local node
@@ -250,7 +244,6 @@ void CalcVolumeForce()
     }//for cell
   }// for cells
 }
-#endif //BOND_CLASS_DEBUG
 
 
 #endif

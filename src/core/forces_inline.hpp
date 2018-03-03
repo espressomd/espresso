@@ -456,7 +456,6 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 }
 
 
-#ifdef BOND_CLASS_DEBUG
 /**New add_bonded_force function for bond classes**/
 inline void add_bonded_force(Particle *p1)
 {
@@ -466,7 +465,6 @@ inline void add_bonded_force(Particle *p1)
     return;
 
 }
-#endif //BOND_CLASS_DEBUG
 
 inline void check_particle_force(Particle *part) {
   for (int i = 0; i < 3; i++) {

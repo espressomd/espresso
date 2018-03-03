@@ -42,6 +42,8 @@
 #include "bond/Umbrella.hpp"
 #include "bond/TabulatedBondLength.hpp"
 #include "bond/OverlapBondLength.hpp"
+#include "bond/ThermalizedBond.hpp"
+#include "bond/BondedCoulombP3MSR.hpp"
 //**three particle bonds**
 #include "bond/IbmTriel.hpp"
 #include "bond/AngleHarmonic.hpp"
@@ -63,6 +65,7 @@
 #include "bond/IbmTribend.hpp" //at least fourparticlebond
 #include "bond/VirtualBond.hpp" // 2 particle bond but not a real bond!
 #include "bond/OifGlobalForces.hpp"//forces are calculated sperately and not in forces_inline.hpp
+#include "bond/IbmVolumeConservation.hpp"
 //bond container
 #include "bond/BondContainer.hpp"
 
@@ -970,9 +973,6 @@ void make_particle_type_exist(int type);
     no initialization done here. 2: Use only in connection with
     creating new or overwriting old bond types*/
 void make_bond_type_exist(int type);
-
-/** create new bond in bond class vector **/
-void set_bond_by_type(int type, std::unique_ptr<Bond::Bond> && bond);
 
 /** This function increases the LOCAL ia_params field
     to the given size. Better use

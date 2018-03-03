@@ -959,7 +959,7 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
     }
   };
 
-#ifdef BOND_CLASS_DEBUG
+
   auto add_bonded =
       [&](Particle &p) {
     
@@ -968,7 +968,6 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
       };    
       return 0;
   };
-#endif //BOND_CLASS_DEBUG
 
   auto add_single_particle_contribution = [&add_ideal, &add_bonded](Particle &p) {
     add_ideal(p);

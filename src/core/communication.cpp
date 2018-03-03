@@ -1044,7 +1044,7 @@ int mpi_send_bond(int pnode, int part, int *bond, int _delete) {
 
   mpi_call(mpi_send_bond_slave, pnode, part);
 
-  bond_size = (bond) ? bonded_ia_params[bond[0]].num + 1 : 0;
+  bond_size = 0; //(bond) ? bonded_ia_params[bond[0]].num + 1 : 0;
 
   if (pnode == this_node) {
     stat = local_change_bond(part, bond, _delete);
@@ -1166,18 +1166,18 @@ void mpi_bcast_ia_params(int i, int j) {
 
     *get_ia_param(j, i) = *get_ia_param(i, j);
   } else {
-    /* bonded interaction parameters */
+    /*
+    //bonded interaction parameters
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
               comm_cart);
 #ifdef TABULATED
-    /* For tabulated potentials we have to send the tables extra */
+    //For tabulated potentials we have to send the tables extra
     if (bonded_ia_params[i].type == BONDED_IA_TABULATED) {
       boost::mpi::broadcast(comm_cart, *bonded_ia_params[i].p.tab.pot, 0);
     }
 #endif
 #ifdef OVERLAPPED
-    /* For overlapped potentials we have to send the ovelapped-functions extra
-     */
+    // For overlapped potentials we have to send the ovelapped-functions extra
     if (bonded_ia_params[i].type == BONDED_IA_OVERLAPPED) {
       int size = bonded_ia_params[i].p.overlap.noverlaps;
       MPI_Bcast(bonded_ia_params[i].p.overlap.para_a, size, MPI_DOUBLE, 0,
@@ -1188,6 +1188,7 @@ void mpi_bcast_ia_params(int i, int j) {
                 comm_cart);
     }
 #endif
+    */
   }
 
   on_short_range_ia_change();
@@ -1200,12 +1201,15 @@ void mpi_bcast_ia_params_slave(int i, int j) {
 
     *get_ia_param(j, i) = *get_ia_param(i, j);
 
-  } else {                   /* bonded interaction parameters */
-    make_bond_type_exist(i); /* realloc bonded_ia_params on slave nodes! */
+  } else {
+
+    /*
+    // bonded interaction parameters
+    make_bond_type_exist(i); // realloc bonded_ia_params on slave nodes!
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
               comm_cart);
 #ifdef TABULATED
-    /* For tabulated potentials we have to send the tables extra */
+    // For tabulated potentials we have to send the tables extra
     if (bonded_ia_params[i].type == BONDED_IA_TABULATED) {
       auto *tab_pot = new TabulatedPotential();
       boost::mpi::broadcast(comm_cart, *tab_pot, 0);
@@ -1214,11 +1218,10 @@ void mpi_bcast_ia_params_slave(int i, int j) {
     }
 #endif
 #ifdef OVERLAPPED
-    /* For overlapped potentials we have to send the ovelapped-functions extra
-     */
+    // For overlapped potentials we have to send the ovelapped-functions extra
     if (bonded_ia_params[i].type == BONDED_IA_OVERLAPPED) {
       int size = bonded_ia_params[i].p.overlap.noverlaps;
-      /* alloc overlapped parameter arrays on slave nodes! */
+      // alloc overlapped parameter arrays on slave nodes!
       bonded_ia_params[i].p.overlap.para_a =
           (double *)Utils::malloc(size * sizeof(double));
       bonded_ia_params[i].p.overlap.para_b =
@@ -1233,6 +1236,7 @@ void mpi_bcast_ia_params_slave(int i, int j) {
                 comm_cart);
     }
 #endif
+    */
   }
 
   on_short_range_ia_change();

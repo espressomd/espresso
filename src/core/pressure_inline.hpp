@@ -143,7 +143,6 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
 
 /*New add_bonded_virials function*/
 // only pair bonds contribute in this function
-#ifdef BOND_CLASS_DEBUG
 inline void add_bonded_virials(Particle *p1)
 {
 
@@ -153,12 +152,10 @@ inline void add_bonded_virials(Particle *p1)
   };
 
 }
-#endif // BOND_CLASS_DEBUG
 
 
 /*New add_bonded_virials function*/
 // only pair bonds contribute in this function
-#ifdef BOND_CLASS_DEBUG
 inline void add_three_body_bonded_stress(Particle *p1)
 {
 
@@ -168,7 +165,6 @@ inline void add_three_body_bonded_stress(Particle *p1)
   };
 
 }
-#endif // BOND_CLASS_DEBUG
 
 
 /** Calculate kinetic pressure (aka energy) for one particle.

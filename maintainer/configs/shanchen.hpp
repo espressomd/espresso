@@ -5,4 +5,3 @@
 #define SHANCHEN
 #define EXTERNAL_FORCES
 #define PARTIAL_PERIODIC
-#define BOND_CLASS_DEBUG

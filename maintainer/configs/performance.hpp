@@ -1,2 +1,1 @@
 #define LENNARD_JONES
-#define BOND_CLASS_DEBUG
