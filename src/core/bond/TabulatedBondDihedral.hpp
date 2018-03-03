@@ -2,14 +2,16 @@
 #define TABULATED_BOND_DIHEDRAL_BOND_CLASS_H
 #include "FourParticleBond.hpp"
 #include "Tabulated.hpp"
+#include "CutoffBond.hpp"
 
 namespace Bond {
-  class TabulatedBondDihedral : public FourParticleBond, public Tabulated {
+  class TabulatedBondDihedral : public FourParticleBond, public Tabulated, public CutoffBond {
   public:
 
     //constructor
     TabulatedBondDihedral(TabulatedPotential tab_pot) : 
-      Tabulated{std::move(tab_pot), TabulatedBondedInteraction::TAB_BOND_DIHEDRAL} 
+      Tabulated{std::move(tab_pot), TabulatedBondedInteraction::TAB_BOND_DIHEDRAL},
+      CutoffBond(0.0)
     {m_bondtype = BondType::BONDED_IA_TABULATED;}
 
     //force calculation

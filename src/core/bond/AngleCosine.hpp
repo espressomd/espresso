@@ -12,15 +12,16 @@ namespace Bond {
     {m_bondtype = BondType::BONDED_IA_ANGLE_COSINE;}
 
     //force *
-    int calc_bonded_three_particle_force(Particle *p1, Particle *p2, Particle *p3, double force[3], double force2[3]) const override;
+    int calc_bonded_three_particle_force(Particle *p1, Particle *p2, Particle *p3, double force[3],
+					 double force2[3]) const override;
     //energy *
     int calc_bonded_three_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
-						 double *_energy) const override;
+					  double *_energy) const override;
     //virtual function from Angle
     int calc_3body_forces(Particle *p_mid, Particle *p_left,
-				 Particle *p_right, double force1[3],
-				 double force2[3], double force3[3]) const override;
-
+			  Particle *p_right, double force1[3],
+			  double force2[3], double force3[3]) const override;
+    
     //variables
   private:
     double m_cos_phi0 = cos(m_phi0);

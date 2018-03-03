@@ -1,7 +1,8 @@
+
 /*
   Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
+  Max-Planck-Institute for Polymer Research, Theory Group
 
   This file is part of ESPResSo.
 
@@ -1020,8 +1021,7 @@ inline bool pair_bond_exists_on(const Particle* const p, const Particle* const p
   if (p->bl.e) {
     int i = 0;
     while(i < p->bl.n) {
-      int size = bonded_ia_params[p->bl.e[i]].num;
-      
+      int size = bond_container.get_num_partners(p->bl.e[i]);
       if (p->bl.e[i] == bond_type &&
           p->bl.e[i + 1] == partner->p.identity) {
         // There's a bond, already. Nothing to do for these particles
@@ -1041,16 +1041,15 @@ inline bool pair_bond_exists_on(const Particle* const p, const Particle* const p
 * @param bond        enum bond type */ 
 inline bool pair_bond_enum_exists_on(const Particle * const p_bond, const Particle * const p_partner, BondedInteraction bond)
 {
-    Bonded_ia_parameters *iaparams;
     int type_num;
     int i = 0;
     while (i < p_bond->bl.n) {
         type_num = p_bond->bl.e[i];
-        iaparams = &bonded_ia_params[type_num];
-        if (iaparams->type == (int)bond && p_bond->bl.e[i+1] == p_partner->p.identity) {
-            return true;
+	auto bond_class = bond_container.get_Bond(type_num);
+	if (int(bond_class->get_Bond_Type()) == (int)bond && p_bond->bl.e[i+1] == p_partner->p.identity) {
+	  return true;
         } else {
-            i+= iaparams->num + 1;
+	  i+= bond_class->get_number_of_bond_partners() + 1;
         }
     }
     return false;

@@ -8,7 +8,8 @@
 #include "OifGlobalForces.hpp"
 #include "IbmVolumeConservation.hpp"
 #include "RigidBond.hpp"
-/// h5md search bonded ia uind ersetzen 
+#include "CutoffBond.hpp"
+#include "ThermalizedBond.hpp"
 
 namespace Bond {
 
@@ -16,7 +17,8 @@ namespace Bond {
   public:
     //constructor
     BondContainer() = default;
-
+    ~BondContainer() = default;
+    
     //---insert and delete bonds---
     // insert bond in all bonds, energy and force bonds
     void set_bond_by_type(int bond_map_id, std::unique_ptr<Bond> && bond);
@@ -37,9 +39,21 @@ namespace Bond {
     int oif_global_loop(Particle *p1, double* partArea, double* VOL_partVol);
     int oif_global_force_loop(Particle *p1);
 
+    //rigid bond
+    int RB_pos_corr(Particle *p1, int* repeat, int &cnt);
+    int RB_vel_corr(Particle *p1, int* repeat);
+
     //ibm volume conservation -> volume calculation
     int ibm_vol_con_softID_loop(Particle *p1, int *softID, int *bond_map_id);
     void init_Vol_Con();
+
+    //maximal cutoff
+    double get_max_cutoff();
+
+    //thermalized bonds
+    void thermalized_bond_update_params(double pref_scale);
+    void thermalized_bond_init();
+      
     //---functions which provide access to Bond maps---
     //get Access to all bonds
     Bond* get_Bond(int bond_map_id);
@@ -48,9 +62,6 @@ namespace Bond {
     //get number of bond partners
     int get_num_partners(int bond_map_id);
     
-    //rigid bond
-    int RB_pos_corr(Particle *p1, int* repeat, int &cnt);
-    int RB_vel_corr(Particle *p1, int* repeat);
     
   private:
     //---member variables---
@@ -64,6 +75,8 @@ namespace Bond {
     std::unordered_map<int, OifGlobalForces*> m_oif_global_forces_bonds;
     std::unordered_map<int, IbmVolumeConservation*> m_ibm_vol_con_bonds;
     std::unordered_map<int, RigidBond*> m_rigid_bonds;
+    std::unordered_map<int, CutoffBond*> m_cutoff_bonds;
+    std::unordered_map<int, ThermalizedBond*> m_th_bonds;
     //---private functions---
     // sorts a Bond of type Bond
     //-> PairBonds, ThreeParticleBonds, etc.

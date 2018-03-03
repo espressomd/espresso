@@ -147,90 +147,10 @@ IA_parameters *get_ia_param_safe(int i, int j) {
 }
 
 static void recalc_maximal_cutoff_bonded() {
-  int i;
-  double max_cut_tmp;
 
-  max_cut_bonded = 0.0;
+  //cutoff is determined in bond container
+  max_cut_bonded = bond_container.get_max_cutoff();
 
-  for (i = 0; i < n_bonded_ia; i++) {
-    switch (bonded_ia_params[i].type) {
-    case BONDED_IA_FENE:
-      max_cut_tmp =
-          bonded_ia_params[i].p.fene.r0 + bonded_ia_params[i].p.fene.drmax;
-      if (max_cut_bonded < max_cut_tmp)
-        max_cut_bonded = max_cut_tmp;
-      break;
-    case BONDED_IA_HARMONIC:
-      if ((bonded_ia_params[i].p.harmonic.r_cut > 0) &&
-          (max_cut_bonded < bonded_ia_params[i].p.harmonic.r_cut))
-        max_cut_bonded = bonded_ia_params[i].p.harmonic.r_cut;
-      break;
-    case BONDED_IA_THERMALIZED_DIST:
-      if ((bonded_ia_params[i].p.thermalized_bond.r_cut > 0) && 
-	  (max_cut_bonded < bonded_ia_params[i].p.thermalized_bond.r_cut))
-    	max_cut_bonded = bonded_ia_params[i].p.thermalized_bond.r_cut;
-      break;
-    case BONDED_IA_RIGID_BOND:
-      if (max_cut_bonded < sqrt(bonded_ia_params[i].p.rigid_bond.d2))
-        max_cut_bonded = sqrt(bonded_ia_params[i].p.rigid_bond.d2);
-      break;
-#ifdef TABULATED
-    case BONDED_IA_TABULATED:
-      if (bonded_ia_params[i].p.tab.type == TAB_BOND_LENGTH &&
-          max_cut_bonded < bonded_ia_params[i].p.tab.pot->cutoff())
-        max_cut_bonded = bonded_ia_params[i].p.tab.pot->cutoff();
-      break;
-#endif
-#ifdef OVERLAPPED
-    case BONDED_IA_OVERLAPPED:
-      /* in UNIT Angstrom */
-      if (bonded_ia_params[i].p.overlap.type == OVERLAP_BOND_LENGTH &&
-          max_cut_bonded < bonded_ia_params[i].p.overlap.maxval)
-        max_cut_bonded = bonded_ia_params[i].p.overlap.maxval;
-      break;
-#endif
-#ifdef IMMERSED_BOUNDARY
-    case BONDED_IA_IBM_TRIEL:
-      if (max_cut_bonded < bonded_ia_params[i].p.ibm_triel.maxdist)
-        max_cut_bonded = bonded_ia_params[i].p.ibm_triel.maxdist;
-      break;
-#endif
-    default:
-      break;
-    }
-  }
-
-  /* Bond angle and dihedral potentials do not contain a cutoff
-     intrinsically. The cutoff for these potentials depends on the
-     bond length potentials. For bond angle potentials nothing has to
-     be done (it is assumed, that particles participating in a bond
-     angle or dihedral potential are bound to each other by some bond
-     length potential (FENE, Harmonic or tabulated)). For dihedral
-     potentials (both normal and tabulated ones) it follows, that the
-     cutoff is TWO TIMES the maximal cutoff! That's what the following
-     lines assure. */
-  max_cut_tmp = 2.0 * max_cut_bonded;
-  for (i = 0; i < n_bonded_ia; i++) {
-    switch (bonded_ia_params[i].type) {
-    case BONDED_IA_DIHEDRAL:
-      max_cut_bonded = max_cut_tmp;
-      break;
-#ifdef TABULATED
-    case BONDED_IA_TABULATED:
-      if (bonded_ia_params[i].p.tab.type == TAB_BOND_DIHEDRAL)
-        max_cut_bonded = max_cut_tmp;
-      break;
-#endif
-#ifdef OVERLAPPED
-    case BONDED_IA_OVERLAPPED:
-      if (bonded_ia_params[i].p.overlap.type == OVERLAP_BOND_DIHEDRAL)
-        max_cut_bonded = max_cut_tmp;
-      break;
-#endif
-    default:
-      break;
-    }
-  }
 }
 
 double calc_electrostatics_cutoff() {

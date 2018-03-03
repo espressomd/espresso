@@ -15,10 +15,10 @@ namespace Bond{
     // in concrete classes
     // force calculation
     virtual int calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], 
-			       double force[3]) const=0;
+				       double force[3]) const=0;
     //energy calculation
     virtual int calc_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3], 
-				double *_energy) const=0;
+					double *_energy) const=0;
     
     // function, which writes forces to particles
     // there is a default implementation of this function
@@ -34,7 +34,7 @@ namespace Bond{
     int add_virial(Particle *p1, int bl_id);
     // for calculating stress tensor in pressure.cpp: int local_stress_tensor_calc()
     int add_local_stress_tensor(Particle *p1, int bl_id, DoubleList *TensorInBin, 
-					    int bins[3], double range_start[3], double range[3]);
+				int bins[3], double range_start[3], double range[3]);
 
 
     // general bond calculation functions of abstract class

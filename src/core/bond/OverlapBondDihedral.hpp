@@ -2,15 +2,17 @@
 #define OVERLAP_BOND_DIHEDRAL_BOND_CLASS_H
 #include "FourParticleBond.hpp"
 #include "Overlap.hpp"
+#include "CutoffBond.hpp"
 
 namespace Bond {
-  class OverlapBondDihedral : public FourParticleBond, public Overlap {
+  class OverlapBondDihedral : public FourParticleBond, public Overlap, public CutoffBond {
   public:
 
     // constructor
     OverlapBondDihedral(char* filename, OverlappedBondedInteraction type, double maxval, 
-		      int noverlaps, double* para_a, double* para_b, double* para_c) : 
-      Overlap{filename, type, maxval, noverlaps, para_a, para_b, para_c} 
+		      int noverlaps, double* para_a, double* para_b, double* para_c) :
+      Overlap{filename, type, maxval, noverlaps, para_a, para_b, para_c},
+      CutoffBond(0.0)
     {m_bondtype = BondType::BONDED_IA_OVERLAPPED;}
 
     //force calculation

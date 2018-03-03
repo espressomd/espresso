@@ -66,7 +66,11 @@ namespace Bond {
    /** Type of bonded interaction is bending force (immersed boundary). */
    BONDED_IA_IBM_TRIBEND,
    /** Type of bonded interaction is umbrella. */
-   BONDED_IA_UMBRELLA
+     BONDED_IA_UMBRELLA,
+  /** Type of bonded interaction is thermalized distance bond. */
+  BONDED_IA_THERMALIZED_DIST,
+  /** Type of bonded interaction is a BONDED_COULOMB_P3M_SR */
+  BONDED_IA_BONDED_COULOMB_P3M_SR
      
   };
 

@@ -1,14 +1,16 @@
 #ifndef DIHEDRAL_BOND_CLASS_H
 #define DIHEDRAL_BOND_CLASS_H
 #include "FourParticleBond.hpp"
+#include "CutoffBond.hpp"
 
 namespace Bond {
 
-  class Dihedral : public FourParticleBond {
+  class Dihedral : public FourParticleBond, public CutoffBond {
     
   public:
     //constructor
-    Dihedral(int mult, double bend, double phase) : 
+    Dihedral(int mult, double bend, double phase) :
+      CutoffBond(0.0),
       m_mult{mult}, m_bend{bend}, m_phase{phase} 
     {m_bondtype = BondType::BONDED_IA_DIHEDRAL;}
     
