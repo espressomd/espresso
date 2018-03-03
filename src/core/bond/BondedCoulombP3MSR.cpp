@@ -42,7 +42,7 @@ int Bond::BondedCoulombP3MSR::calc_bonded_pair_energy(Particle *p1, Particle *p2
 #ifdef P3M
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
-  *_energy = p3m_pair_energy(iaparams->p.bonded_coulomb_p3m_sr.q1q2, dist);
+  *_energy = p3m_pair_energy(m_q1q2, dist);
 #endif
   return 0;
   

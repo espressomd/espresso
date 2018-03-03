@@ -7,7 +7,7 @@ namespace Bond{
   class BondedCoulombP3MSR : public PairBond{
 
   public:
-    BondedCoulombP3MSR(double q1q2) : PairBond(), m_q1q2{q1q2}
+    BondedCoulombP3MSR(double q1q2) : m_q1q2{q1q2}
     {m_bondtype = BondType::BONDED_IA_BONDED_COULOMB_P3M_SR;}
 
     // Member function
