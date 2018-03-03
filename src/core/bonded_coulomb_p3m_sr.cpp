@@ -22,8 +22,10 @@
  *
  *  Implementation of \ref bonded_coulomb.hpp
  */
+
 #include "bonded_coulomb_p3m_sr.hpp"
 #include "communication.hpp"
+#include "utils/make_unique.hpp" //for creating a unique ptr to a bond class object
 
 #ifdef ELECTROSTATICS
 
@@ -32,14 +34,8 @@ int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2)
   if(bond_type < 0)
     return ES_ERROR;
 
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.bonded_coulomb_p3m_sr.q1q2 = q1q2;
-  bonded_ia_params[bond_type].type = BONDED_IA_BONDED_COULOMB_P3M_SR;
-  bonded_ia_params[bond_type].num  = 1;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1); 
+  //create bond class
+  bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::BondedCoulombP3MSR>(q1q2));
 
   return ES_OK;
 }
