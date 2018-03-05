@@ -109,8 +109,8 @@ Alternatively, you can use Homebrew.
     sudo xcode-select --install
     sudo xcodebuild -license accept
     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-    brew install cmake python@2 cython boost boost-mpi fftw
-    brew install numpy --without-python3
+    brew install cmake python@3 cython boost boost-mpi fftw
+    brew install numpy --without-python@2
     ln -s /usr/local/bin/python2 /usr/local/bin/python
 
 Note: If both MacPorts and Homebrew are installed, you will not be able to
