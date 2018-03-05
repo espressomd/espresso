@@ -39,12 +39,12 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 		;;
 		*)
 			brew install python@2 || brew upgrade python@2
-			pip install h5py
-			pip install cython
-			pip install numpy
-			pip install pep8
+			pip2 install h5py
+			pip2 install cython
+			pip2 install numpy
+			pip2 install pep8
+			pip2 install pylint
 			export cmake_params="-DPYTHON_EXECUTABLE=$(which python2) $cmake_params"
-            pip install pylint
 		;;
 	esac
 	brew install boost-mpi
