@@ -40,7 +40,7 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 		*)
 			brew uninstall --ignore-dependencies python
 			brew install python@2 || brew upgrade python@2
-			export PATH="/usr/local/opt/python@2/libexec/bin:$PATH"
+			export PATH="/usr/local/opt/python@2/bin:$PATH"
 			pip2 install h5py
 			pip2 install cython
 			pip2 install numpy
