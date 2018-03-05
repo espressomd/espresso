@@ -32,6 +32,7 @@
 #include "core/observables/CylindricalFluxDensityProfile.hpp"
 #include "core/observables/CylindricalLBFluxDensityProfileAtParticlePositions.hpp"
 #include "core/observables/CylindricalLBVelocityProfileAtParticlePositions.hpp"
+#include "core/observables/CylindricalLBVelocityProfile.hpp"
 #include "core/observables/CylindricalProfileObservable.hpp"
 
 namespace ScriptInterface {
@@ -116,6 +117,8 @@ NEW_CYLINDRICAL_PROFILE_OBSERVABLE(
     CylindricalLBFluxDensityProfileAtParticlePositions)
 NEW_CYLINDRICAL_PROFILE_OBSERVABLE(
     CylindricalLBVelocityProfileAtParticlePositions)
+NEW_CYLINDRICAL_PROFILE_OBSERVABLE(
+    CylindricalLBVelocityProfile)
 
 } /* namespace Observables */
 } /* namespace ScriptInterface */
