@@ -29,20 +29,21 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 	brew install cmake || brew upgrade cmake
 	case "$image" in
 		python3)
-			brew install python3
+			brew install python@3 || brew upgrade python@3
 			pip3 install h5py
 			pip3 install cython
 			pip3 install numpy
 			pip3 install pep8
 			pip3 install pylint
-			PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}' | awk -F . '{print $1"."$2}')
 			export cmake_params="-DPYTHON_EXECUTABLE=$(which python3) $cmake_params"
 		;;
 		*)
+			brew install python@2 || brew upgrade python@2
 			pip install h5py
 			pip install cython
 			pip install numpy
 			pip install pep8
+			export cmake_params="-DPYTHON_EXECUTABLE=$(which python2) $cmake_params"
             pip install pylint
 		;;
 	esac
