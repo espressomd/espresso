@@ -109,7 +109,7 @@ Alternatively, you can use Homebrew.
     sudo xcode-select --install
     sudo xcodebuild -license accept
     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-    brew install cmake python cython boost boost-mpi fftw
+    brew install cmake python@2 cython boost boost-mpi fftw
     brew install numpy --without-python3
     ln -s /usr/local/bin/python2 /usr/local/bin/python
 
