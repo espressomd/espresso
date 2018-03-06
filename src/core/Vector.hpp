@@ -27,8 +27,8 @@
 #include <functional>
 #include <initializer_list>
 #include <iterator>
-#include <vector>
 #include <numeric>
+#include <vector>
 
 #include "utils/serialization/array.hpp"
 
@@ -55,7 +55,7 @@ public:
     std::copy(std::begin(v), std::end(v), d.begin());
   }
 
-  explicit Vector(Scalar const(&v)[n]) {
+  explicit Vector(Scalar const (&v)[n]) {
     std::copy(std::begin(v), std::end(v), d.begin());
   }
 
@@ -119,6 +119,17 @@ public:
     }
   }
 
+  /**
+   * @brief Create a vector that has all entries set to
+   *         one value.
+   */
+  static Vector<n, Scalar> broadcast(const Scalar &s) {
+    Vector<n, Scalar> ret;
+    std::fill(ret.begin(), ret.end(), s);
+
+    return ret;
+  }
+
   static void cross(const Vector<3, Scalar> &a, const Vector<3, Scalar> &b,
                     Vector<3, Scalar> &c) {
     c[0] = a[1] * b[2] - a[2] * b[1];
@@ -137,6 +148,7 @@ public:
     return cross(*this, a);
   }
 
+private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, const unsigned int /* version */) {
@@ -161,7 +173,7 @@ Vector<N, T> binary_op(Vector<N, T> const &a, Vector<N, T> const &b, Op op) {
 }
 
 template <size_t N, typename T, typename Op>
-Vector<N, T> & binary_op_assign(Vector<N, T> &a, Vector<N, T> const &b, Op op) {
+Vector<N, T> &binary_op_assign(Vector<N, T> &a, Vector<N, T> const &b, Op op) {
   std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(a), op);
   return a;
 }
@@ -215,7 +227,7 @@ Vector<N, T> operator+(Vector<N, T> const &a, Vector<N, T> const &b) {
 }
 
 template <size_t N, typename T>
-Vector<N, T> & operator+=(Vector<N, T> &a, Vector<N, T> const &b) {
+Vector<N, T> &operator+=(Vector<N, T> &a, Vector<N, T> const &b) {
   return detail::binary_op_assign(a, b, std::plus<T>());
 }
 
@@ -234,7 +246,7 @@ template <size_t N, typename T> Vector<N, T> operator-(Vector<N, T> const &a) {
 }
 
 template <size_t N, typename T>
-Vector<N, T> & operator-=(Vector<N, T> &a, Vector<N, T> const &b) {
+Vector<N, T> &operator-=(Vector<N, T> &a, Vector<N, T> const &b) {
   return detail::binary_op_assign(a, b, std::minus<T>());
 }
 
@@ -289,7 +301,7 @@ T operator*(Vector<N, T> const &a, Vector<N, T> const &b) {
   return std::inner_product(a.begin(), a.end(), b.begin(), T{});
 }
 
-/* Componentwise square route */
+/* Componentwise square root */
 template <size_t N, typename T> Vector<N, T> sqrt(Vector<N, T> const &a) {
   using std::sqrt;
   Vector<N, T> ret;

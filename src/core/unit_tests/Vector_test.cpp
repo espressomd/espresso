@@ -138,3 +138,12 @@ BOOST_AUTO_TEST_CASE(algebraic_operators) {
   BOOST_CHECK((sqrt(Vector<3, double>{1., 2., 3.}) ==
                Vector<3, double>{sqrt(1.), sqrt(2.), sqrt(3.)}));
 }
+
+BOOST_AUTO_TEST_CASE(broadcast) {
+  const auto fives = Vector<11, int>::broadcast(5);
+
+  BOOST_CHECK(fives.size() == 11);
+  for (auto const &e : fives) {
+    BOOST_CHECK(5 == e);
+  }
+}
