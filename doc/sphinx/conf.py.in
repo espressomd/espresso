@@ -307,7 +307,7 @@ texinfo_documents = [
 
 # Supress warning if html is build
 # http://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
-autodoc_mock_imports = ['featuredefs', 'mayavi', 'pyface.api', 'tvtk.tools', 'vtk', 'MDAnalysis', 'electrostatics']
+autodoc_mock_imports = ['featuredefs', 'mayavi', 'pyface', 'tvtk.tools', 'vtk', 'MDAnalysis', 'electrostatics']
 autodoc_default_flags = ['members',
                          'show-inheritance', 'undoc-members']
 # For sidebar toc depth
