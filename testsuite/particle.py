@@ -145,6 +145,8 @@ class ParticleProperties(ut.TestCase):
             self.system.part.add(id=0, pos=(0, 0, 0))
             self.system.part.add(id=1, pos=(0, 0, 0))
             self.system.part[1].vs_relative = (0, 5.0, (0.5, -0.5, -0.5, -0.5))
+            self.system.part[1].vs_quat = [1, 2, 3, 4]
+            np.testing.assert_array_equal(self.system.part[1].vs_quat, [1, 2, 3, 4])
             res = self.system.part[1].vs_relative
             self.assertEqual(res[0], 0, "vs_relative: " + res.__str__())
             self.assertEqual(res[1], 5.0, "vs_relative: " + res.__str__())
@@ -201,6 +203,13 @@ class ParticleProperties(ut.TestCase):
         # User-specified criterion
         res = s.part.select(lambda p: p.pos[0] < 0.5)
         self.assertEqual(tuple(sorted(res.id)),(0,1,2,3,4,5,6,7))
+
+    def test_accessing_invalid_id_raises(self):
+        self.system.part.clear()
+        handle_to_non_existing_particle = self.system.part[42]
+        def get_pos_prop(handle):
+            return handle.pos
+        self.assertRaises(RuntimeError, get_pos_prop, handle_to_non_existing_particle)
 
 
 if __name__ == "__main__":
