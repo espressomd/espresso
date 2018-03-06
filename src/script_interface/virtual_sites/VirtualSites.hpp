@@ -40,8 +40,18 @@ public:
                 get_value<bool>(v));            // NOLINT, bug in clang-tidy-4.0
           },
           [this]() {
-            return virtual_sites() // NOLINT, bug in clang-tidy-4.0
-                ->have_velocity(); // NOLINT, bug in clang-tidy-4.0
+            return virtual_sites()     // NOLINT, bug in clang-tidy-4.0
+                ->get_have_velocity(); // NOLINT, bug in clang-tidy-4.0
+          }},
+         {"have_quaternion",
+          [this](const Variant &v) {
+            virtual_sites()              // NOLINT, bug in clang-tidy-4.0
+                ->set_have_quaternion(   // NOLINT, bug in clang-tidy-4.0
+                    get_value<bool>(v)); // NOLINT, bug in clang-tidy-4.0
+          },
+          [this]() {
+            return virtual_sites()       // NOLINT, bug in clang-tidy-4.0
+                ->get_have_quaternion(); // NOLINT, bug in clang-tidy-4.0
           }}});
   }
   /** Vs implementation we are wrapping */

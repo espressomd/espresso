@@ -32,14 +32,27 @@ for (auto& p : local_cells.particles()) {
   if (recalc_positions)
     update_pos(p);
 
-  if (have_velocity())
+  if (get_have_velocity())
     update_vel(p);
 
-}
+  if (get_have_quaternion())
+    update_virtual_particle_quaternion(p);
 
 }
 
+}
 
+
+
+void VirtualSitesRelative::update_virtual_particle_quaternion(Particle& p) const {
+ const Particle *p_real = local_particles[p.p.vs_relative_to_particle_id];
+ if (!p_real)
+ {
+   throw std::runtime_error("virtual_sites_relative.cpp - update_mol_pos_particle(): No real particle associated with virtual site.\n");
+ }
+ multiply_quaternions(p_real->r.quat, p.p.vs_quat, p.r.quat);
+ convert_quat_to_quatu(p.r.quat, p.r.quatu);
+}
 
 
 
