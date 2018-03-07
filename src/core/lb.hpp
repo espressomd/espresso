@@ -252,25 +252,6 @@ void lb_reinit_forces();
 /** Checks if all LB parameters are meaningful */
 int lb_sanity_checks();
 
-/** Sets the density and momentum on a local lattice site.
- * @param node  Pointer to the Node of the lattice site within the local domain
- * (Input)
- * @param rho   Local density of the fluid (Input)
- * @param v     Local momentum of the fluid (Input)
- * @param pi    Local pressure of the fluid (Input)
- */
-void lb_set_local_fields(LB_FluidNode *node, const double rho, const double *v,
-                         const double *pi);
-
-/** Returns the mass, momentum and stress of a local lattice site.
- * @param node  The index of the lattice site within the local domain (Input)
- * @param rho   Local density of the fluid (Output)
- * @param j     Local momentum of the fluid (Output)
- * @param pi    Local stress tensor of the fluid (Output)
- */
-void lb_get_local_fields(LB_FluidNode *node, double *rho, double *j,
-                         double *pi);
-
 /** Calculates the equilibrium distributions.
     @param index Index of the local site
     @param rho local fluid density
