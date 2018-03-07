@@ -54,6 +54,7 @@ cdef extern from "integrate.hpp":
     extern double sim_time
     extern double verlet_reuse
     extern double skin
+    extern bool set_py_interrupt
 
 cdef extern from "lattice.hpp":
     extern int lattice_switch
