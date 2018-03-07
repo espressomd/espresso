@@ -31,7 +31,6 @@
 #include "initialize.hpp"
 #include "interaction_data.hpp"
 #include "layered.hpp"
-#include "lb.hpp"
 #include "lees_edwards.hpp"
 #include "npt.hpp"
 #include "rattle.hpp"
@@ -205,9 +204,6 @@ const std::unordered_map<int, Datafield> fields{
      {FIELD_GHMC_SCALE,
       {&ghmc_tscale, Datafield::Type::INT, 1, "ghmc_tscale",
        6}}, /* 48 from ghmc.cpp */
-     {FIELD_LB_COMPONENTS,
-      {&lb_components, Datafield::Type::INT, 1, "lb_components",
-       2}}, /* 49 from ghmc.cpp */
      {FIELD_WARNINGS,
       {&warnings, Datafield::Type::INT, 1, "warnings",
        1}}, /* 50 from global.cpp */

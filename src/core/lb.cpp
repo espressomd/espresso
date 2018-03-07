@@ -44,9 +44,6 @@
 
 #include "cuda_interface.hpp"
 
-// global variable holding the number of fluid components (see global.cpp)
-int lb_components = LB_COMPONENTS;
-
 #ifdef LB
 
 #ifdef ADDITIONAL_CHECKS
@@ -2120,7 +2117,6 @@ void lb_reinit_fluid() {
     // calculate equilibrium distribution
     lb_calc_n_from_rho_j_pi(index, rho, j, pi);
 
-    lbfields[index].recalc_fields = 1;
 #ifdef LB_BOUNDARIES
     lbfields[index].boundary = 0;
 #endif // LB_BOUNDARIES
@@ -3371,10 +3367,6 @@ void calc_particle_lattice_ia() {
 
       /* halo is valid now */
       lbpar.resend_halo = 0;
-
-      /* all fields have to be recalculated */
-      for (int i = 0; i < lblattice.halo_grid_volume; ++i)
-        lbfields[i].recalc_fields = 1;
     }
 
     /* draw random numbers for local particles */

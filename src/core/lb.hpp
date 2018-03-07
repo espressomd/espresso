@@ -30,9 +30,6 @@
 #include "lattice_inline.hpp"
 #include "utils.hpp"
 
-extern int
-    lb_components; // global variable holding the number of fluid components
-
 #ifdef LB
 
 /* For the D3Q19 model most functions have a separate implementation
@@ -107,9 +104,6 @@ typedef struct {
 
 /** Data structure for fluid on a local lattice site */
 typedef struct {
-
-  /** flag indicating whether fields have to be recomputed */
-  int recalc_fields;
 
   /** local density */
   double rho[1];
