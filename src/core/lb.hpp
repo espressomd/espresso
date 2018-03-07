@@ -103,20 +103,7 @@ typedef struct {
 } LB_Model;
 
 /** Data structure for fluid on a local lattice site */
-typedef struct {
-
-  /** local density */
-  double rho[1];
-
-  /** local momentum */
-  double j[3];
-
-  /** local stress tensor */
-  double pi[6];
-
-  /* local populations of the velocity directions
-   *  are stored seperately to achieve higher performance */
-
+struct LB_FluidNode {
   /** flag indicating whether a force is acting on the node */
   int has_force;
 
@@ -132,12 +119,9 @@ typedef struct {
 #ifdef LB_BOUNDARIES
   /** flag indicating whether this site belongs to a boundary */
   int boundary;
-
-  /** normal vector of the boundary surface */
-  double *nvec; // doesn't work like that any more, I think (georg, 17.08.10)
 #endif          // LB_BOUNDARIES
 
-} LB_FluidNode;
+};
 
 /** Data structure holding the parameters for the Lattice Boltzmann system. */
 typedef struct {

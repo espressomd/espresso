@@ -1926,7 +1926,7 @@ static void lb_realloc_fluid() {
     lbfluid[1][i] = lbfluid[1][0] + i * lblattice.halo_grid_volume;
   }
 
-  lbfields = (LB_FluidNode *)Utils::realloc(
+  lbfields = Utils::realloc(
       lbfields, lblattice.halo_grid_volume * sizeof(*lbfields));
 }
 
