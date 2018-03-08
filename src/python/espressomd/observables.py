@@ -462,6 +462,10 @@ class CylindricalVelocityProfile(Observable):
 class CylindricalLBVelocityProfile(Observable):
     """Calculates the LB fluid velocity profile in polar coordinates.
 
+    This observable samples the fluid in on a regular grid defined by the variables
+    ``sampling*``. Note that a small delta leads to a large number of sample
+    points and carries a performance cost.
+
     Parameters
     ----------
     center : array_like of :obj:`float`
@@ -486,6 +490,20 @@ class CylindricalLBVelocityProfile(Observable):
               Maximum ``phi`` to consider.
     max_z : :obj:`float`
             Maximum ``z`` to consider.
+    sampling_delta_x : :obj:`float`, default=1.0
+        Spacing for the sampling grid in ``x``-direction.
+    sampling_delta_y : :obj:`float`, default=1.0
+        Spacing for the sampling grid in ``y``-direction.
+    sampling_delta_z : :obj:`float`, default=1.0
+        Spacing for the sampling grid in ``z``-direction.
+    sampling_offset_x : :obj:`float`, default=0.0
+        Offset for the sampling grid in ``x``-direction.
+    sampling_offset_y : :obj:`float`, default=0.0
+        Offset for the sampling grid in ``y``-direction.
+    sampling_offset_z : :obj:`float`, default=0.0
+        Offset for the sampling grid in ``z``-direction.
+    allow_empty_bins : :obj:`bool`, default=False
+        Wether or not to allow bins that will not be sampled at all.
 
     """
     _so_name = "Observables::CylindricalLBVelocityProfile"
