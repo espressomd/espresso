@@ -58,7 +58,7 @@
 #include "pressure.hpp"
 #include "random.hpp"
 #include "rattle.hpp"
-#include "reaction.hpp"
+#include "swimmer_reaction.hpp"
 #include "reaction_ensemble.hpp"
 #include "reaction_field.hpp"
 #include "rotation.hpp"
@@ -117,7 +117,7 @@ void on_program_start() {
   lb_pre_init();
 #endif
 
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
   reaction.eq_rate = 0.0;
   reaction.sing_mult = 0;
   reaction.swap = 0;
@@ -148,7 +148,7 @@ void on_integration_start() {
   integrator_npt_sanity_checks();
 #endif
   interactions_sanity_checks();
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
   reactions_sanity_checks();
 #endif
 #ifdef LB

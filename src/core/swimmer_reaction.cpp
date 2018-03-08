@@ -22,7 +22,7 @@
  *
  */
 
-#include "reaction.hpp"
+#include "swimmer_reaction.hpp"
 #include "cells.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
@@ -39,7 +39,7 @@
 
 reaction_struct reaction;
 
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
 
 void reactions_sanity_checks() {
   if (reaction.ct_rate != 0.0) {

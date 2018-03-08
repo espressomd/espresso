@@ -4,7 +4,7 @@ import numpy as np
 import espressomd
 from espressomd import has_features
 if(has_features(["CATALYTIC_REACTIONS"])):
-    from espressomd.reaction import Reaction
+    from espressomd.swimmer_reaction import Reaction
 
 @ut.skipIf(not has_features(["CATALYTIC_REACTIONS"]),
            "Features missing")

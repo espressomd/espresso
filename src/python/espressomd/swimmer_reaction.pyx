@@ -1,12 +1,12 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 cimport globals
-from . cimport reaction
+from . cimport swimmer_reaction
 from . cimport utils
 from .highlander import ThereCanOnlyBeOne
 from espressomd.utils import is_valid_type
 
-IF CATALYTIC_REACTIONS:
+IF SWIMMER_REACTIONS:
     __reaction_is_initiated = False
 
     cdef class Reaction(object):

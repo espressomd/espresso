@@ -10,7 +10,7 @@ Advanced Methods
 Creating bonds when particles collide
 -------------------------------------
 
-Please cite :cite:`espresso2` when using dynamic bonding.
+Please cite :cite:`espresso2` when using dynamic bonding.
 
 With the help of this feature, bonds between particles can be created
 automatically during the simulation, every time two particles collide.
@@ -105,10 +105,10 @@ The following limitations currently apply for the collision detection:
 * The “bind at point of collision” approach cannot handle collisions
   between virtual sites
 
-.. _Catalytic Reactions:
+.. _Swimmer Reactions:
 
-Catalytic Reactions
--------------------
+Swimmer Reactions
+-----------------
 
 
 With the help of the feature ``CATALYTIC_REACTIONS``, one can define three particle types to act as reactant (e.g. :math:`\mathrm{H_2 O_2}`), catalyzer (e.g. platinum), and product (e.g. :math:`\mathrm{O_2}` and :math:`\mathrm{H_2 O}`). The current setup allows one to simulate active swimmers and their chemical propulsion.
@@ -131,7 +131,7 @@ That is, catalytic surfaces induce a reactions that produce charged species by c
       B &\xrightarrow{C^{-}} A
     \end{aligned}
 
-where on the upper half of the catalyst :math:`C^{+}` a species :math:`A` is converted into :math:`B`, and on the lower half :math:`C^{-}` the opposite reaction takes place. Note that when :math:`A` and :math:`B` are charged, this reaction conserves charge, provided the rates are equal.
+where on the upper half of the catalyst :math:`C^{+}` a species :math:`A` is converted into :math:`B`, and on the lower half :math:`C^{-}` the opposite reaction takes place. Note that when :math:`A` and :math:`B` are charged, this reaction conserves charge, provided the rates are equal. Note that this feature uses the word catalyst in a meaning which cannot be brought into agreement with the definition of a catalyst. If the catalyst :math:`C^{+}` catalyzes (on average) the reaction, where :math:`A` is converted to :math:`B`, then it is impossible that a catalyst :math:`C^{-}` perfoms (on average) the reverse reaction. For the example with hydrogen peroxide this would mean that hydrogen peroxide is created spontaneously using a catalyst (under the same environment where another catalyst wants to split hydrogen peroxide). This is chemically impossible. What is meant to be modeled is that hydrogen peroxide is constantly flowing into the system from the bulk and therfore it is not depleted. This behaviour cannot be modeled using a catalyst (in the defined meaning of the word catalyst).
 
 In |es| the orientation of a catalyzer particle is used to define hemispheres; half spaces going through the particle's center. The reaction region is bounded by the *reaction range*: :math:`r`. Inside the reaction range, we react only reactant-product pairs. The particles in a pair are swapped from hemisphere to another with a rate prescribed by
 
@@ -317,7 +317,7 @@ This section describes an alternative way to include soft elastic
 objects somewhat different from the previous chapter. In the Immersed
 Boundary Method (IBM), soft particles are considered as an infinitely
 thin shell filled with liquid (see e.g.
- :cite:`Peskin2002,Crowl2010,KruegerThesis`). When the
+ :cite:`Peskin2002,Crowl2010,KruegerThesis`). When the
 shell is deformed by an external flow it responds by elastic restoring
 forces which are transmitted into the fluid. In the present case, the
 inner and outer liquid are of the same type and are simulated using
@@ -397,7 +397,7 @@ ibm\_triel, ibm\_tribend and ibm\_volCons:
 Object-in-fluid
 ---------------
 
-Please cite  if you use the object-in-fluid implementation described
+Please cite  if you use the object-in-fluid implementation described
 below. For more details also see the documentation at
 http://cell-in-fluid.fri.uniza.sk/oif-documentation or contact the
 Cell-in-fluid Research Group at University of Žilina.
@@ -575,7 +575,7 @@ The following example shows an interaction.
      inter 106 oif_local_force 1.0 0.5 0.0 1.7 0.6 0.2 0.3 1.1 
 
 This command (“invisible” for the user who executes the
-``cript``/object\_in\_fluid.tcl  script) takes care of stretching,
+``cript``/object\_in\_fluid.tcl  script) takes care of stretching,
 bending and local area conservation all in one interaction with ID 106.
 Detailed description of the available types of interactions is presented
 in Section [sec:inter-bonded-oif].
@@ -588,7 +588,7 @@ Available commands
 In order to use the object-in-fluid (OIF) commands and work with
 immersed objects, the following features need to be compiled in:
 ``ASS, \ \verb EXTERNAL_FORCES . We do not specifically require \verb LB, \ \verb LB_BOUNDARIES, \ \verb CONSTRAINTS, \ \verb SOFT_SPHERE, \ \verb ``\ EMBRANE\_COLLISION,
- ``IF_L``\ CAL\_FORCES,  ``IF_GL``\ BAL\_FORCES.  They are most likely
+ ``IF_L``\ CAL\_FORCES,  ``IF_GL``\ BAL\_FORCES.  They are most likely
 to be used (for objects immersed in fluid and interacting with
 boundaries and each other), but they are not necessary for the following
 commands. For up-to-date overview of available oif commands see the OIF

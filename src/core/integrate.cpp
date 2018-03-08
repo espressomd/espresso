@@ -52,7 +52,7 @@
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "rattle.hpp"
-#include "reaction.hpp"
+#include "swimmer_reaction.hpp"
 #include "rotation.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
@@ -370,7 +370,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 #endif
 
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
     integrate_reaction();
 #endif
 
