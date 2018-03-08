@@ -30,7 +30,7 @@ namespace ScriptInterface {
 namespace VirtualSites {
 
 #ifdef VIRTUAL_SITES
-class VirtualSites : public AutoParameters {
+class VirtualSites : public AutoParameters<VirtualSites> {
 public:
   VirtualSites() {
     add_parameters(

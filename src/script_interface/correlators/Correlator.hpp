@@ -35,7 +35,7 @@
 namespace ScriptInterface {
 namespace Correlators {
 
-class Correlator : public AutoParameters {
+class Correlator : public AutoParameters<Correlator> {
   using CoreCorr = ::Correlators::Correlator;
 
 public:
