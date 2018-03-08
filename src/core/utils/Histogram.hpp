@@ -100,7 +100,7 @@ inline bool check_limits(std::vector<T> const &data,
   }
   bool within_range = true;
   for (size_t i = 0; i < data.size(); ++i) {
-    if (data[i] < limits[i].first or data[i] > limits[i].second)
+    if (data[i] < limits[i].first or data[i] >= limits[i].second)
       within_range = false;
   }
   return within_range;
