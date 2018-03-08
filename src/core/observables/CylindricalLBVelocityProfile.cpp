@@ -35,31 +35,30 @@ operator()(PartCfg &partCfg) const {
 #ifdef LB_GPU
   // First collect all positions (since we want to call the LB function to
   // get the fluid velocities only once).
-  std::vector<double> velocities(m_node_positions.size());
+  std::vector<double> velocities(m_sample_positions.size());
   lb_lbfluid_get_interpolated_velocity_at_positions(
-      m_node_positions.data(), velocities.data(), m_node_positions.size() / 3);
+      m_sample_positions.data(), velocities.data(),
+      m_sample_positions.size() / 3);
   ::Vector<3, double> pos_shifted, pos_cyl, velocity;
-  for (size_t ind = 0; ind < m_node_positions.size() / 3; ind+=3) {
-    //printf("pos: %f %f %f\n", m_node_positions[ind+0], m_node_positions[ind+1], m_node_positions[ind+2]);
-    pos_shifted = {{m_node_positions[ind + 0] - center[0],
-                    m_node_positions[ind + 1] - center[1],
-                    m_node_positions[ind + 2] - center[2]}};
+  for (size_t ind = 0; ind < m_sample_positions.size(); ind += 3) {
+    pos_shifted = {{m_sample_positions[ind + 0] - center[0],
+                    m_sample_positions[ind + 1] - center[1],
+                    m_sample_positions[ind + 2] - center[2]}};
     pos_cyl = Utils::transform_pos_to_cylinder_coordinates(pos_shifted, axis);
-    //printf("pos: %f %f %f\n", pos_shifted[0], pos_shifted[1], pos_shifted[2]);
-    //printf("pos_cyl: %f %f %f\n", pos_cyl[0], pos_cyl[1], pos_cyl[2]);
-    velocity = {{velocities[ind + 0],
-                 velocities[ind + 1],
-                 velocities[ind + 2]}};
-    histogram.update(Utils::transform_pos_to_cylinder_coordinates(
-                         pos_shifted,
-                         axis),
-                     Utils::transform_vel_to_cylinder_coordinates(
-                         velocity,
-                         axis, pos_shifted));
+    velocity = {
+        {velocities[ind + 0], velocities[ind + 1], velocities[ind + 2]}};
+    histogram.update(pos_cyl, Utils::transform_vel_to_cylinder_coordinates(
+                                  velocity, axis, pos_shifted));
   }
   auto hist_tmp = histogram.get_histogram();
   auto tot_count = histogram.get_tot_count();
   for (size_t ind = 0; ind < hist_tmp.size(); ++ind) {
+    if (tot_count[ind] == 0 and not allow_empty_bins)
+      throw std::runtime_error("Decrease sampling delta(s), bin without hit "
+                               "found! Current deltas: " +
+                               std::to_string(sampling_delta_x) + ", " +
+                               std::to_string(sampling_delta_y) + ", " +
+                               std::to_string(sampling_delta_z));
     if (hist_tmp[ind] > 0.0) {
       hist_tmp[ind] /= tot_count[ind];
     }
@@ -69,24 +68,6 @@ operator()(PartCfg &partCfg) const {
 #ifndef LB_GPU
   return histogram.get_histogram();
 #endif
-}
-
-void CylindricalLBVelocityProfile::calculate_node_positions() {
-  m_node_positions.clear();
-  if (lbpar_gpu.agrid == 0.0)
-    throw std::runtime_error("LB GPU fluid has to be initialized first.");
-  size_t n_nodes_x = box_l[0] / lbpar_gpu.agrid;
-  size_t n_nodes_y = box_l[1] / lbpar_gpu.agrid;
-  size_t n_nodes_z = box_l[2] / lbpar_gpu.agrid;
-  for (size_t x = 0; x < n_nodes_x; ++x) {
-    for (size_t y = 0; y < n_nodes_y; ++y) {
-      for (size_t z = 0; z < n_nodes_z; ++z) {
-        m_node_positions.push_back(0.5 * lbpar_gpu.agrid + (x * lbpar_gpu.agrid));
-        m_node_positions.push_back(0.5 * lbpar_gpu.agrid + (y * lbpar_gpu.agrid));
-        m_node_positions.push_back(0.5 * lbpar_gpu.agrid + (z * lbpar_gpu.agrid));
-      }
-    }
-  }
 }
 
 } // namespace Observables

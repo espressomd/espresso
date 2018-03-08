@@ -20,26 +20,19 @@
 #ifndef OBSERVABLES_CYLINDRICALLBVELOCITYPROFILE_HPP
 #define OBSERVABLES_CYLINDRICALLBVELOCITYPROFILE_HPP
 
-#include "CylindricalProfileObservable.hpp"
+#include "CylindricalLBProfileObservable.hpp"
+#include "grid.hpp"
 #include "lbgpu.hpp"
 #include "partCfg_global.hpp"
 #include "utils/Histogram.hpp"
-#include "grid.hpp"
 
 namespace Observables {
-class CylindricalLBVelocityProfile
-    : public CylindricalProfileObservable {
+class CylindricalLBVelocityProfile : public CylindricalLBProfileObservable {
 public:
-  CylindricalLBVelocityProfile() {
-    calculate_node_positions();
-  }
   virtual std::vector<double> operator()(PartCfg &partCfg) const override;
   virtual int n_values() const override {
     return 3 * n_r_bins * n_phi_bins * n_z_bins;
   }
-private:
-  void calculate_node_positions();
-  std::vector<double> m_node_positions;
 };
 
 } // Namespace Observables
