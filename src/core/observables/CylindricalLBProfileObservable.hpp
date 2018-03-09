@@ -20,7 +20,7 @@ public:
   std::vector<double> m_sample_positions;
 };
 
-void CylindricalLBProfileObservable::calculate_sample_positions() {
+inline void CylindricalLBProfileObservable::calculate_sample_positions() {
   m_sample_positions.clear();
   if (sampling_delta_x == 0 or sampling_delta_y == 0 or sampling_delta_z == 0)
     throw std::runtime_error("Parameter delta_x/y/z must not be zero!");
