@@ -25,13 +25,13 @@ namespace Observables {
 
 std::vector<double> CylindricalLBVelocityProfile::
 operator()(PartCfg &partCfg) const {
-  std::vector<size_t> n_bins{{static_cast<size_t>(n_r_bins),
+  std::array<size_t, 3> n_bins{{static_cast<size_t>(n_r_bins),
                               static_cast<size_t>(n_phi_bins),
                               static_cast<size_t>(n_z_bins)}};
-  std::vector<std::pair<double, double>> limits{
+  std::array<std::pair<double, double>, 3> limits{
       {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
        std::make_pair(min_z, max_z)}};
-  Utils::CylindricalHistogram<double> histogram(n_bins, 3, limits);
+  Utils::CylindricalHistogram<double, 3> histogram(n_bins, 3, limits);
 #ifdef LB_GPU
   // First collect all positions (since we want to call the LB function to
   // get the fluid velocities only once).
@@ -39,13 +39,12 @@ operator()(PartCfg &partCfg) const {
   lb_lbfluid_get_interpolated_velocity_at_positions(
       m_sample_positions.data(), velocities.data(),
       m_sample_positions.size() / 3);
-  ::Vector<3, double> pos_shifted, pos_cyl, velocity;
   for (size_t ind = 0; ind < m_sample_positions.size(); ind += 3) {
-    pos_shifted = {{m_sample_positions[ind + 0] - center[0],
+    const Vector3d pos_shifted = {{m_sample_positions[ind + 0] - center[0],
                     m_sample_positions[ind + 1] - center[1],
                     m_sample_positions[ind + 2] - center[2]}};
-    pos_cyl = Utils::transform_pos_to_cylinder_coordinates(pos_shifted, axis);
-    velocity = {
+    const Vector3d pos_cyl = Utils::transform_pos_to_cylinder_coordinates(pos_shifted, axis);
+    const Vector3d velocity = {
         {velocities[ind + 0], velocities[ind + 1], velocities[ind + 2]}};
     histogram.update(pos_cyl, Utils::transform_vel_to_cylinder_coordinates(
                                   velocity, axis, pos_shifted));
@@ -55,10 +54,7 @@ operator()(PartCfg &partCfg) const {
   for (size_t ind = 0; ind < hist_tmp.size(); ++ind) {
     if (tot_count[ind] == 0 and not allow_empty_bins)
       throw std::runtime_error("Decrease sampling delta(s), bin without hit "
-                               "found! Current deltas: " +
-                               std::to_string(sampling_delta_x) + ", " +
-                               std::to_string(sampling_delta_y) + ", " +
-                               std::to_string(sampling_delta_z));
+                               "found!");
     if (hist_tmp[ind] > 0.0) {
       hist_tmp[ind] /= tot_count[ind];
     }
