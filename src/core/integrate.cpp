@@ -973,7 +973,6 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
 
   /* perform integration */
   if (!Correlators::auto_update_enabled() &&
-      !Observables::auto_update_enabled() &&
       !Accumulators::auto_update_enabled()) {
     if (mpi_integrate(n_steps, reuse_forces))
       return ES_ERROR;
@@ -982,7 +981,6 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
       if (mpi_integrate(1, reuse_forces))
         return ES_ERROR;
       reuse_forces = 1;
-      Observables::auto_update();
       Correlators::auto_update();
       Accumulators::auto_update();
 
