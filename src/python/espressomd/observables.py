@@ -2,26 +2,6 @@ from __future__ import print_function, absolute_import
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 
-@script_interface_register
-class AutoUpdateObservables(ScriptInterfaceHelper):
-    _so_name = "Observables::AutoUpdateObservables"
-    _so_creation_policy = "LOCAL"
-
-    def add(self, *args, **kwargs):
-        if len(args) == 1:
-            if isinstance(args[0], Observable):
-                observable = args[0]
-            else:
-                raise TypeError(
-                    "Either a Observable object or key-value pairs for the parameters of a Observable object need to be passed.")
-        else:
-            observable = Observable(**kwargs)
-        self.call_method("add", object=observable)
-        return observable
-
-    def remove(self, observable):
-        self.call_method("remove", object=observable)
-
 
 @script_interface_register
 class Observable(ScriptInterfaceHelper):
