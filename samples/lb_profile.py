@@ -41,7 +41,6 @@ system.lbboundaries.add(cylinder_boundary)
 system.integrator.run(1000)
 
 
-system.auto_update_observables.add(fluid_obs)
 accumulator = espressomd.accumulators.Accumulator(obs=fluid_obs)
 system.auto_update_accumulators.add(accumulator)
 system.integrator.run(500)
