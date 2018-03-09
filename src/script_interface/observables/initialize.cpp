@@ -20,8 +20,6 @@
 #include "initialize.hpp"
 #include "ScriptInterface.hpp"
 
-#include "AutoUpdateObservables.hpp"
-
 #include "CylindricalProfileObservable.hpp"
 #include "CylindricalLBProfileObservable.hpp"
 #include "ParamlessObservable.hpp"
@@ -63,7 +61,6 @@ void initialize() {
   //  ScriptInterface::register_new<ScriptInterface::Observables::ParticleVelocities>::
   //    register_new("Observables::ParticleVelocities");
 
-  REGISTER(AutoUpdateObservables);
   REGISTER(StressTensor);
   REGISTER_PID_OBS(ParticlePositions);
   REGISTER_PID_OBS(ParticleVelocities);

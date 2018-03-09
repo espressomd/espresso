@@ -46,7 +46,6 @@
 #include "maggs.hpp"
 #include "minimize_energy.hpp"
 #include "nemd.hpp"
-#include "observables.hpp"
 #include "accumulators.hpp"
 #include "p3m.hpp"
 #include "particle_data.hpp"
@@ -983,10 +982,6 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
       reuse_forces = 1;
       Correlators::auto_update();
       Accumulators::auto_update();
-
-      if (Observables::auto_write_enabled()) {
-        Observables::auto_write();
-      }
     }
     if (n_steps == 0) {
       if (mpi_integrate(0, reuse_forces))
