@@ -6,16 +6,16 @@
 #include "utils/Histogram.hpp"
 
 BOOST_AUTO_TEST_CASE(histogram) {
-  std::vector<size_t> n_bins{10, 10};
-  std::vector<std::pair<double, double>> limits{
+  std::array<size_t, 2> n_bins{10, 10};
+  std::array<std::pair<double, double>, 2> limits{
       {std::make_pair(1.0, 20.0), std::make_pair(5.0, 10.0)}};
   size_t n_dims_data = 2;
-  auto hist = Utils::Histogram<double>(n_bins, n_dims_data, limits);
+  auto hist = Utils::Histogram<double, 2>(n_bins, n_dims_data, limits);
   // Check getters.
   BOOST_CHECK(hist.get_limits() == limits);
   BOOST_CHECK(hist.get_n_bins() == n_bins);
   BOOST_CHECK(
-      (hist.get_bin_sizes() == std::vector<double>{{19.0 / 10.0, 5.0 / 10.0}}));
+      (hist.get_bin_sizes() == std::array<double, 2>{{19.0 / 10.0, 5.0 / 10.0}}));
   // Check that histogram is initialized to zero.
   BOOST_CHECK(hist.get_histogram() ==
               std::vector<double>(n_dims_data * n_bins[0] * n_bins[1], 0.0));
