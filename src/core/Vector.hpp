@@ -76,9 +76,11 @@ public:
 
   iterator begin() { return d.begin(); }
   const_iterator begin() const { return d.begin(); }
+  const_iterator cbegin() const { return d.cbegin(); }
 
   iterator end() { return d.end(); }
   const_iterator end() const { return d.end(); }
+  const_iterator cend() const { return d.cend(); }
 
   reference front() { return d.front(); }
   reference back() { return d.back(); }

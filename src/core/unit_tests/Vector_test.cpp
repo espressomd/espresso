@@ -59,6 +59,22 @@ BOOST_AUTO_TEST_CASE(iterator_constructor) {
   BOOST_CHECK(std::equal(v.begin(), v.end(), test_numbers));
 }
 
+BOOST_AUTO_TEST_CASE(const_iterator_constructor) {
+  /* {begin,end}() const variant */
+  {
+    const Vector<n_test_numbers, int> v(std::begin(test_numbers),
+                                        std::end(test_numbers));
+    BOOST_CHECK(std::equal(v.begin(), v.end(), test_numbers));
+  }
+
+  /* {cbegin,cend}() const variant */
+  {
+    Vector<n_test_numbers, int> v(std::begin(test_numbers),
+                                  std::end(test_numbers));
+    BOOST_CHECK(std::equal(v.cbegin(), v.cend(), test_numbers));
+  }
+}
+
 BOOST_AUTO_TEST_CASE(default_constructor_test) {
   Vector<1, int> v2;
   BOOST_CHECK(v2.size() == 1);
