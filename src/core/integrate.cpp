@@ -1322,16 +1322,16 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
 
 /** Propagate position: viscous drag driven by conservative forces.*/
 void bd_drag(Particle *p, double dt) {
-  int j;
-  double scale_f;
   Thermostat::GammaType local_gamma;
 
-  scale_f = 0.5 * time_step * time_step / p->p.mass;
+  if(p->p.gamma >= Thermostat::GammaType{}) {
+    local_gamma = p->p.gamma;
+  } else {
+    local_gamma = langevin_gamma;
+  }
 
-  if(p->p.gamma >= Thermostat::GammaType{}) local_gamma = p->p.gamma;
-  else local_gamma = langevin_gamma;
-
-  for (j = 0; j < 3; j++) {
+  double scale_f = 0.5 * time_step * time_step / p->p.mass;
+  for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p->p.ext_flag & COORD_FIXED(j)))
 #endif
@@ -1349,16 +1349,16 @@ void bd_drag(Particle *p, double dt) {
 
 /** Set the terminal velocity driven by the conservative forces drag.*/
 void bd_drag_vel(Particle *p, double dt) {
-  int j;
-  double scale_f;
   Thermostat::GammaType local_gamma;
 
-  scale_f = 0.5 * time_step * time_step / p->p.mass;
+  if(p->p.gamma >= Thermostat::GammaType{}) {
+    local_gamma = p->p.gamma;
+  } else {
+    local_gamma = langevin_gamma;
+  }
 
-  if(p->p.gamma >= Thermostat::GammaType{}) local_gamma = p->p.gamma;
-  else local_gamma = langevin_gamma;
-
-  for (j = 0; j < 3; j++) {
+  double scale_f = 0.5 * time_step * time_step / p->p.mass;
+  for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (p->p.ext_flag & COORD_FIXED(j)) {
       p->m.v[j] = 0.0;
@@ -1380,16 +1380,9 @@ void bd_drag_vel(Particle *p, double dt) {
 
 /** Propagate the positions: random walk part.*/
 void bd_random_walk(Particle *p, double dt) {
-  int j;
   extern Thermostat::GammaType brown_sigma_pos_inv;
-  Thermostat::GammaType brown_sigma_pos_temp_inv;
-#ifdef PARTICLE_ANISOTROPY
-  double delta_pos_body[3] = { 0.0, 0.0, 0.0 }, delta_pos_lab[3] = { 0.0, 0.0, 0.0 };
-#endif
-  int aniso_flag = 1; // particle anisotropy flag
-
   // first, set defaults
-  brown_sigma_pos_temp_inv = brown_sigma_pos_inv;
+  Thermostat::GammaType brown_sigma_pos_temp_inv = brown_sigma_pos_inv;;
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
@@ -1417,11 +1410,14 @@ void bd_random_walk(Particle *p, double dt) {
         brown_sigma_pos_temp_inv = sqrt(langevin_gamma / (langevin_temp_coeff * p->p.T));
       else
         brown_sigma_pos_temp_inv = -1.0 * sqrt(langevin_gamma); // just an indication of the infinity; negative sign has no sense here
-    } else
+    } else {
     // Defaut values for both
       brown_sigma_pos_temp_inv = brown_sigma_pos_inv;
+    }
   }
 #endif /* LANGEVIN_PER_PARTICLE */
+
+  int aniso_flag = 1; // particle anisotropy flag
 
 #ifdef PARTICLE_ANISOTROPY
   // Particle frictional isotropy check.
@@ -1429,7 +1425,11 @@ void bd_random_walk(Particle *p, double dt) {
       || (brown_sigma_pos_temp_inv[1] != brown_sigma_pos_temp_inv[2]);
 #endif
 
-  for (j = 0; j < 3; j++) {
+#ifdef PARTICLE_ANISOTROPY
+  double delta_pos_body[3] = { 0.0, 0.0, 0.0 }, delta_pos_lab[3] = { 0.0, 0.0, 0.0 };
+#endif
+
+  for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p->p.ext_flag & COORD_FIXED(j)))
 #endif
@@ -1451,7 +1451,7 @@ void bd_random_walk(Particle *p, double dt) {
   if (aniso_flag) {
     convert_vec_body_to_space(p, delta_pos_body, delta_pos_lab);
 
-    for (j = 0; j < 3; j++) {
+    for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
       if (!(p->p.ext_flag & COORD_FIXED(j)))
 #endif
@@ -1461,7 +1461,7 @@ void bd_random_walk(Particle *p, double dt) {
     }
   } else {
     // in order to save a calculation performance:
-    for (j = 0; j < 3; j++) {
+    for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
       if (!(p->p.ext_flag & COORD_FIXED(j)))
 #endif
@@ -1474,25 +1474,23 @@ void bd_random_walk(Particle *p, double dt) {
 
 /** Determine the velocities: random walk part.*/
 void bd_random_walk_vel(Particle *p, double dt) {
-  int j;
   extern double brown_sigma_vel;
-  double brown_sigma_vel_temp;
-
   // first, set defaults
-  brown_sigma_vel_temp = brown_sigma_vel;
+  double brown_sigma_vel_temp = brown_sigma_vel;
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
   auto const constexpr langevin_temp_coeff = 1.0;
   // Is a particle-specific temperature specified?
   // here, the time_step is used only to align with Espresso default dimensionless model
-  if (p->p.T >= 0.)
+  if (p->p.T >= 0.) {
     brown_sigma_vel_temp = sqrt(langevin_temp_coeff * p->p.T) * time_step;
-  else
+  } else {
     brown_sigma_vel_temp = brown_sigma_vel;
+  }
 #endif /* LANGEVIN_PER_PARTICLE */
 
-  for (j = 0; j < 3; j++) {
+  for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p->p.ext_flag & COORD_FIXED(j)))
 #endif

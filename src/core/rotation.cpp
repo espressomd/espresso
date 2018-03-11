@@ -625,10 +625,8 @@ void rotate_particle_body_j(Particle* p, int j, double phi)
 
 /** Propagate quaternions: viscous drag driven by conservative torques.*/
 void bd_drag_rot(Particle *p, double dt) {
-  int j;
   double a[3];
-  double dphi[3], dphi_u[3];
-  double dphi_m;
+  double dphi[3];
   Thermostat::GammaType local_gamma;
 
   a[0] = a[1] = a[2] = 1.0;
@@ -643,11 +641,14 @@ void bd_drag_rot(Particle *p, double dt) {
     a[2] = 0.0;
 #endif
 
-  if(p->p.gamma_rot >= Thermostat::GammaType{}) local_gamma = p->p.gamma_rot;
-  else local_gamma = langevin_gamma_rotation;
+  if(p->p.gamma_rot >= Thermostat::GammaType{}) {
+    local_gamma = p->p.gamma_rot;
+  } else {
+    local_gamma = langevin_gamma_rotation;
+  }
 
   dphi[0] = dphi[1] = dphi[2] = 0.0;
-  for (j = 0; j < 3; j++) {
+  for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p->p.ext_flag & COORD_FIXED(j)))
 #endif
@@ -661,19 +662,18 @@ void bd_drag_rot(Particle *p, double dt) {
       //rotate_particle_body_j(p, j, dphi[j]);
     }
   } //j
-  dphi_m = 0.0;
-  for (j = 0; j < 3; j++) dphi_m += pow(dphi[j], 2);
+  double dphi_m = 0.0;
+  for (int j = 0; j < 3; j++) dphi_m += pow(dphi[j], 2);
   dphi_m = sqrt(dphi_m);
+  double dphi_u[3];
   if (dphi_m) {
-    for (j = 0; j < 3; j++) dphi_u[j] = dphi[j] / dphi_m;
+    for (int j = 0; j < 3; j++) dphi_u[j] = dphi[j] / dphi_m;
     rotate_particle_body(p, dphi_u, dphi_m);
   }
 }
 
 /** Set the terminal angular velocity driven by the conservative torques drag.*/
 void bd_drag_vel_rot(Particle *p, double dt) {
-  int j;
-  double m_dphi;
   double a[3];
   Thermostat::GammaType local_gamma;
 
@@ -689,10 +689,13 @@ void bd_drag_vel_rot(Particle *p, double dt) {
     a[2] = 0.0;
 #endif
 
-  if(p->p.gamma_rot >= Thermostat::GammaType{}) local_gamma = p->p.gamma_rot;
-  else local_gamma = langevin_gamma_rotation;
+  if(p->p.gamma_rot >= Thermostat::GammaType{}) {
+    local_gamma = p->p.gamma_rot;
+  } else {
+    local_gamma = langevin_gamma_rotation;
+  }
 
-  for (j = 0; j < 3; j++) {
+  for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (p->p.ext_flag & COORD_FIXED(j)) {
       p->m.omega[j] = 0.0;
@@ -713,10 +716,9 @@ void bd_drag_vel_rot(Particle *p, double dt) {
 /** Propagate the quaternions: random walk part.*/
 void bd_random_walk_rot(Particle *p, double dt) {
   double a[3];
-  double dphi[3];
-  int j;
   extern Thermostat::GammaType brown_sigma_pos_rotation_inv;
-  Thermostat::GammaType brown_sigma_pos_temp_inv;
+  // first, set defaults
+  Thermostat::GammaType brown_sigma_pos_temp_inv = brown_sigma_pos_rotation_inv;
 
   a[0] = a[1] = a[2] = 1.0;
 #ifdef ROTATION_PER_PARTICLE
@@ -729,9 +731,6 @@ void bd_random_walk_rot(Particle *p, double dt) {
   if (!(p->p.rotation & 8))
     a[2] = 0.0;
 #endif
-
-  // first, set defaults
-  brown_sigma_pos_temp_inv = brown_sigma_pos_rotation_inv;
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
@@ -759,13 +758,15 @@ void bd_random_walk_rot(Particle *p, double dt) {
         brown_sigma_pos_temp_inv = sqrt(langevin_gamma_rotation / (langevin_temp_coeff * p->p.T));
       else
         brown_sigma_pos_temp_inv = -1.0 * sqrt(langevin_gamma_rotation); // just an indication of the infinity; negative sign has no sense here
-    } else
+    } else {
     // Defaut values for both
       brown_sigma_pos_temp_inv = brown_sigma_pos_rotation_inv;
+    }
   }
 #endif /* LANGEVIN_PER_PARTICLE */
 
-  for (j = 0; j < 3; j++) {
+  double dphi[3];
+  for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p->p.ext_flag & COORD_FIXED(j)))
 #endif
@@ -789,10 +790,10 @@ void bd_random_walk_rot(Particle *p, double dt) {
 
 /** Determine the angular velocities: random walk part.*/
 void bd_random_walk_vel_rot(Particle *p, double dt) {
-  int j;
   double a[3];
   extern double brown_sigma_vel_rotation;
-  double brown_sigma_vel_temp;
+  // first, set defaults
+  double brown_sigma_vel_temp = brown_sigma_vel_rotation;
 
   a[0] = a[1] = a[2] = 1.0;
 #ifdef ROTATION_PER_PARTICLE
@@ -806,20 +807,18 @@ void bd_random_walk_vel_rot(Particle *p, double dt) {
     a[2] = 0.0;
 #endif
 
-  // first, set defaults
-  brown_sigma_vel_temp = brown_sigma_vel_rotation;
-
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
   auto const constexpr langevin_temp_coeff = 1.0;
   // Is a particle-specific temperature specified?
-  if (p->p.T >= 0.)
+  if (p->p.T >= 0.) {
     brown_sigma_vel_temp = sqrt(langevin_temp_coeff * p->p.T);
-  else
+  } else {
     brown_sigma_vel_temp = brown_sigma_vel_rotation;
+  }
 #endif /* LANGEVIN_PER_PARTICLE */
 
-  for (j = 0; j < 3; j++) {
+  for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p->p.ext_flag & COORD_FIXED(j)))
 #endif

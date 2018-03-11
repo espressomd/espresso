@@ -48,6 +48,7 @@ Vector3d sentinel(Vector3d) { return {-1.0, -1.0, -1.0}; }
 }
 
 /* LANGEVIN THERMOSTAT */
+
 /* Langevin friction coefficient gamma for translation. */
 GammaType langevin_gamma = sentinel(GammaType{});
 /* Friction coefficient gamma for rotation. */
@@ -186,29 +187,30 @@ void thermo_init_npt_isotropic() {
 // brown_sigma_pos determines here the BD position random walk dispersion
 // default particle mass is assumed to be unitary in this global parameters
 void thermo_init_brownian() {
-    int j;
-    // Dispersions correspond to the Gaussian noise only which is only valid for the BD.
-    // here, the time_step is used only to align with Espresso default dimensionless model (translational velocity only)
-    brown_sigma_vel = sqrt(temperature) * time_step;
-    if (temperature > 0.0)
-      brown_sigma_pos_inv = sqrt(langevin_gamma / (2.0 * temperature));
-    else
-      brown_sigma_pos_inv = -1.0 * sqrt(langevin_gamma); // just an indication of the infinity; negative sign has no sense here
-  #ifdef ROTATION
-    // Note: the BD thermostat assigns the langevin viscous parameters as well
-    /* If gamma_rotation is not set explicitly,
-       use the linear one. */
-    if (langevin_gamma_rotation < GammaType{}) {
-      langevin_gamma_rotation = langevin_gamma;
-    }
-    brown_sigma_vel_rotation = sqrt(temperature);
-    if (temperature > 0.0)
-      brown_sigma_pos_rotation_inv = sqrt(langevin_gamma / (2.0 * temperature));
-    else
-      brown_sigma_pos_rotation_inv = -1.0 * sqrt(langevin_gamma); // just an indication of the infinity; negative sign has no sense here
-    THERMO_TRACE(fprintf(stderr,"%d: thermo_init_bd: brown_sigma_vel_rotation=%f, brown_sigma_pos_rotation=%f",this_node, brown_sigma_vel_rotation,brown_sigma_pos_rotation_inv));
-  #endif // ROTATION
-    THERMO_TRACE(fprintf(stderr,"%d: thermo_init_bd: brown_sigma_vel=%f, brown_sigma_pos=%f",this_node,brown_sigma_vel,brown_sigma_pos_inv));
+  // Dispersions correspond to the Gaussian noise only which is only valid for the BD.
+  // here, the time_step is used only to align with Espresso default dimensionless model (translational velocity only)
+  brown_sigma_vel = sqrt(temperature) * time_step;
+  if (temperature > 0.0) {
+    brown_sigma_pos_inv = sqrt(langevin_gamma / (2.0 * temperature));
+  } else {
+    brown_sigma_pos_inv = -1.0 * sqrt(langevin_gamma); // just an indication of the infinity; negative sign has no sense here
+  }
+#ifdef ROTATION
+  // Note: the BD thermostat assigns the langevin viscous parameters as well
+  /* If gamma_rotation is not set explicitly,
+     use the linear one. */
+  if (langevin_gamma_rotation < GammaType{}) {
+    langevin_gamma_rotation = langevin_gamma;
+  }
+  brown_sigma_vel_rotation = sqrt(temperature);
+  if (temperature > 0.0) {
+    brown_sigma_pos_rotation_inv = sqrt(langevin_gamma / (2.0 * temperature));
+  } else {
+    brown_sigma_pos_rotation_inv = -1.0 * sqrt(langevin_gamma); // just an indication of the infinity; negative sign has no sense here
+  }
+  THERMO_TRACE(fprintf(stderr,"%d: thermo_init_bd: brown_sigma_vel_rotation=%f, brown_sigma_pos_rotation=%f",this_node, brown_sigma_vel_rotation,brown_sigma_pos_rotation_inv));
+#endif // ROTATION
+  THERMO_TRACE(fprintf(stderr,"%d: thermo_init_bd: brown_sigma_vel=%f, brown_sigma_pos=%f",this_node,brown_sigma_vel,brown_sigma_pos_inv));
 }
 #endif // BROWNIAN_DYNAMICS
 

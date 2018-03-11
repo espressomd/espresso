@@ -153,10 +153,8 @@ class BrownianThermostat(ut.TestCase):
                   :] = s.part[int(N / 2):].v
            
             if espressomd.has_features("ROTATION"):
-               omega_kT[int(i * N / 2):int((i + 1) * N / 2),
-                   :] = s.part[:int(N / 2)].omega_body
-               omega_kT2[int(i * N / 2):int((i + 1) * N / 2),
-                    :] = s.part[int(N / 2):].omega_body
+                omega_kT[int(i * N / 2):int((i + 1) * N / 2),:] = s.part[:int(N / 2)].omega_body
+                omega_kT2[int(i * N / 2):int((i + 1) * N / 2),:] = s.part[int(N / 2):].omega_body
         v_minmax = 5
         bins = 5
         error_tol = 0.014
@@ -219,11 +217,11 @@ class BrownianThermostat(ut.TestCase):
             if espressomd.has_features("PARTICLE_ANISOTROPY"):
                 p_gamma.gamma =per_part_gamma,per_part_gamma,per_part_gamma
                 if espressomd.has_features("ROTATION"):
-                   p_gamma.gamma_rot=per_part_gamma_rot_a
+                    p_gamma.gamma_rot=per_part_gamma_rot_a
             else:
                 p_gamma.gamma =per_part_gamma
                 if espressomd.has_features("ROTATION"):
-                   p_gamma.gamma_rot=per_part_gamma_rot_i
+                    p_gamma.gamma_rot=per_part_gamma_rot_i
 
             p_kT=s.part.add(pos=(0,0,0))
             self.setup_diff_mass_rinertia(p_kT)
@@ -235,11 +233,11 @@ class BrownianThermostat(ut.TestCase):
             if espressomd.has_features("PARTICLE_ANISOTROPY"):
                 p_both.gamma =per_part_gamma,per_part_gamma,per_part_gamma
                 if espressomd.has_features("ROTATION"):
-                   p_both.gamma_rot=per_part_gamma_rot_a
+                    p_both.gamma_rot=per_part_gamma_rot_a
             else:
                 p_both.gamma =per_part_gamma
                 if espressomd.has_features("ROTATION"):
-                   p_both.gamma_rot=per_part_gamma_rot_i
+                    p_both.gamma_rot=per_part_gamma_rot_i
 
 
         
