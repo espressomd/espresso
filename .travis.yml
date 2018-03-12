@@ -17,10 +17,6 @@ matrix:
     - os: linux
       sudo: required
       services: docker
-      env: myconfig=maxset-bd image=ubuntu-python3
-    - os: linux
-      sudo: required
-      services: docker
       env: myconfig=maxset image=debian make_check=false
     - os: linux
       sudo: required
