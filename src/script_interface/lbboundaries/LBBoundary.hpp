@@ -8,7 +8,7 @@
 
 namespace ScriptInterface {
 namespace LBBoundaries {
-class LBBoundary : public AutoParameters {
+class LBBoundary : public AutoParameters<LBBoundary> {
 public:
   LBBoundary() : m_lbboundary(new ::LBBoundaries::LBBoundary()) {
     add_parameters({{"velocity", m_lbboundary->velocity()},

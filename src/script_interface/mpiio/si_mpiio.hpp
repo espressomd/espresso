@@ -33,7 +33,7 @@
 namespace ScriptInterface {
 namespace MPIIO {
 
-class MPIIOScript : public AutoParameters {
+class MPIIOScript : public AutoParameters<MPIIOScript> {
 public:
   MPIIOScript() {
     add_parameters({});

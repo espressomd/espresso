@@ -17,15 +17,13 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "CylindricalLBFluxDensityProfileAtParticlePositions.hpp"
-#include "lbgpu.hpp"
+#include "CylindricalLBVelocityProfile.hpp"
 #include "utils.hpp"
 #include "utils/Histogram.hpp"
-#include "utils/coordinate_transformation.hpp"
 
 namespace Observables {
 
-std::vector<double> CylindricalLBFluxDensityProfileAtParticlePositions::
+std::vector<double> CylindricalLBVelocityProfile::
 operator()(PartCfg &partCfg) const {
   std::array<size_t, 3> n_bins{{static_cast<size_t>(n_r_bins),
                               static_cast<size_t>(n_phi_bins),
@@ -37,34 +35,35 @@ operator()(PartCfg &partCfg) const {
 #ifdef LB_GPU
   // First collect all positions (since we want to call the LB function to
   // get the fluid velocities only once).
-  std::vector<::Vector<3, double>> folded_positions;
-  std::transform(ids().begin(), ids().end(),
-                 std::back_inserter(folded_positions), [&partCfg](int id) {
-                   return ::Vector<3, double>(folded_position(partCfg[id]));
-                 });
-  std::vector<double> ppos(3 * ids().size());
-  for (auto it = folded_positions.begin(); it != folded_positions.end(); ++it) {
-    size_t ind = std::distance(folded_positions.begin(), it);
-    ppos[3 * ind + 0] = (*it)[0];
-    ppos[3 * ind + 1] = (*it)[1];
-    ppos[3 * ind + 2] = (*it)[2];
-  }
-  std::vector<double> velocities(3 * ids().size());
+  std::vector<double> velocities(m_sample_positions.size());
   lb_lbfluid_get_interpolated_velocity_at_positions(
-      ppos.data(), velocities.data(), ids().size());
-  for (auto &p : folded_positions)
-    p -= center;
-  for (int ind = 0; ind < ids().size(); ++ind) {
-    histogram.update(Utils::transform_pos_to_cylinder_coordinates(
-                         folded_positions[ind], axis),
-                     Utils::transform_vel_to_cylinder_coordinates(
-                         ::Vector<3, double>{{velocities[3 * ind + 0],
-                                              velocities[3 * ind + 1],
-                                              velocities[3 * ind + 2]}},
-                         axis, folded_positions[ind]));
+      m_sample_positions.data(), velocities.data(),
+      m_sample_positions.size() / 3);
+  for (size_t ind = 0; ind < m_sample_positions.size(); ind += 3) {
+    const Vector3d pos_shifted = {{m_sample_positions[ind + 0] - center[0],
+                    m_sample_positions[ind + 1] - center[1],
+                    m_sample_positions[ind + 2] - center[2]}};
+    const Vector3d pos_cyl = Utils::transform_pos_to_cylinder_coordinates(pos_shifted, axis);
+    const Vector3d velocity = {
+        {velocities[ind + 0], velocities[ind + 1], velocities[ind + 2]}};
+    histogram.update(pos_cyl, Utils::transform_vel_to_cylinder_coordinates(
+                                  velocity, axis, pos_shifted));
   }
-  histogram.normalize();
+  auto hist_tmp = histogram.get_histogram();
+  auto tot_count = histogram.get_tot_count();
+  for (size_t ind = 0; ind < hist_tmp.size(); ++ind) {
+    if (tot_count[ind] == 0 and not allow_empty_bins)
+      throw std::runtime_error("Decrease sampling delta(s), bin without hit "
+                               "found!");
+    if (hist_tmp[ind] > 0.0) {
+      hist_tmp[ind] /= tot_count[ind];
+    }
+  }
+  return hist_tmp;
 #endif // LB_GPU
+#ifndef LB_GPU
   return histogram.get_histogram();
+#endif
 }
+
 } // namespace Observables
