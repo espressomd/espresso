@@ -45,9 +45,14 @@ namespace {
      set yet. */
 constexpr double sentinel(double) { return -1.0; }
 Vector3d sentinel(Vector3d) { return {-1.0, -1.0, -1.0}; }
+#ifdef BROWNIAN_DYNAMICS
+constexpr double set_nan(double) { return NAN; }
+Vector3d set_nan(Vector3d) { return {NAN, NAN, NAN}; }
+#endif // BROWNIAN_DYNAMICS
 }
 
 /* LANGEVIN THERMOSTAT */
+
 /* Langevin friction coefficient gamma for translation. */
 GammaType langevin_gamma = sentinel(GammaType{});
 /* Friction coefficient gamma for rotation. */
@@ -59,6 +64,7 @@ GammaType langevin_pref2_rotation;
 // Brownian position random walk standard deviation
 GammaType brown_sigma_pos_inv = sentinel(GammaType{});
 GammaType brown_sigma_pos_rotation_inv = sentinel(GammaType{});
+GammaType brown_gammatype_nan = set_nan(GammaType{});
 double brown_sigma_vel;
 double brown_sigma_vel_rotation;
 #endif // BROWNIAN_DYNAMICS
@@ -186,29 +192,38 @@ void thermo_init_npt_isotropic() {
 // brown_sigma_pos determines here the BD position random walk dispersion
 // default particle mass is assumed to be unitary in this global parameters
 void thermo_init_brownian() {
-    int j;
-    // Dispersions correspond to the Gaussian noise only which is only valid for the BD.
-    // here, the time_step is used only to align with Espresso default dimensionless model (translational velocity only)
-    brown_sigma_vel = sqrt(temperature) * time_step;
-    if (temperature > 0.0)
-      brown_sigma_pos_inv = sqrt(langevin_gamma / (2.0 * temperature));
-    else
-      brown_sigma_pos_inv = -1.0 * sqrt(langevin_gamma); // just an indication of the infinity; negative sign has no sense here
-  #ifdef ROTATION
-    // Note: the BD thermostat assigns the langevin viscous parameters as well
-    /* If gamma_rotation is not set explicitly,
-       use the linear one. */
-    if (langevin_gamma_rotation < GammaType{}) {
-      langevin_gamma_rotation = langevin_gamma;
-    }
-    brown_sigma_vel_rotation = sqrt(temperature);
-    if (temperature > 0.0)
-      brown_sigma_pos_rotation_inv = sqrt(langevin_gamma / (2.0 * temperature));
-    else
-      brown_sigma_pos_rotation_inv = -1.0 * sqrt(langevin_gamma); // just an indication of the infinity; negative sign has no sense here
-    THERMO_TRACE(fprintf(stderr,"%d: thermo_init_bd: brown_sigma_vel_rotation=%f, brown_sigma_pos_rotation=%f",this_node, brown_sigma_vel_rotation,brown_sigma_pos_rotation_inv));
-  #endif // ROTATION
-    THERMO_TRACE(fprintf(stderr,"%d: thermo_init_bd: brown_sigma_vel=%f, brown_sigma_pos=%f",this_node,brown_sigma_vel,brown_sigma_pos_inv));
+  // Dispersions correspond to the Gaussian noise only which is only valid for the BD.
+  // here, the time_step is used only to align with Espresso default dimensionless model (translational velocity only).
+  // Just a square root of kT, see (10.2.17) and comments in 2 paragraphs afterwards, Pottier2010 https://doi.org/10.1007/s10955-010-0114-6
+  brown_sigma_vel = sqrt(temperature) * time_step;
+  // Position dispersion is defined by the second eq. (14.38) of Schlick2010 https://doi.org/10.1007/978-1-4419-6351-2.
+  // Its time interval factor will be added in the Brownian Dynamics functions.
+  // Its square root is the standard deviation. A multiplicative inverse of the position standard deviation:
+  if (temperature > 0.0) {
+    brown_sigma_pos_inv = sqrt(langevin_gamma / (2.0 * temperature));
+  } else {
+    brown_sigma_pos_inv = brown_gammatype_nan; // just an indication of the infinity
+  }
+#ifdef ROTATION
+  // Note: the BD thermostat assigns the langevin viscous parameters as well.
+  // They correspond to the friction tensor Z from the eq. (14.31) of Schlick2010:
+  /* If gamma_rotation is not set explicitly,
+     we use the translational one. */
+  if (langevin_gamma_rotation < GammaType{}) {
+    langevin_gamma_rotation = langevin_gamma;
+  }
+  brown_sigma_vel_rotation = sqrt(temperature);
+  // Position dispersion is defined by the second eq. (14.38) of Schlick2010.
+  // Its time interval factor will be added in the Brownian Dynamics functions.
+  // Its square root is the standard deviation. A multiplicative inverse of the position standard deviation:
+  if (temperature > 0.0) {
+    brown_sigma_pos_rotation_inv = sqrt(langevin_gamma / (2.0 * temperature));
+  } else {
+    brown_sigma_pos_rotation_inv = brown_gammatype_nan; // just an indication of the infinity
+  }
+  THERMO_TRACE(fprintf(stderr,"%d: thermo_init_bd: brown_sigma_vel_rotation=%f, brown_sigma_pos_rotation=%f",this_node, brown_sigma_vel_rotation,brown_sigma_pos_rotation_inv));
+#endif // ROTATION
+  THERMO_TRACE(fprintf(stderr,"%d: thermo_init_bd: brown_sigma_vel=%f, brown_sigma_pos=%f",this_node,brown_sigma_vel,brown_sigma_pos_inv));
 }
 #endif // BROWNIAN_DYNAMICS
 
