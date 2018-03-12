@@ -18,6 +18,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <cuda_runtime_api.h>
 #include "config.hpp"
 #include "thrust/reduce.h"
 #include "thrust/device_ptr.h"
@@ -766,7 +767,11 @@ void forceCalculationKernel(dds_float pf,
 					    // The pos, node and dq array fragments are shared between all threads of the whole warp.
 
 					    // Check if all threads agree that cell is far enough away (or is a body, i.e. n < nbodiesd).
+#if CUDA_VERSION >= 9000
 						if ((n < nbodiesd) || __all_sync(__activemask(), tmp >= dq[depth])) {
+#else
+						if ((n < nbodiesd) || __all(tmp >= dq[depth])) {
+#endif
 							if (n != i) {
 
 							    d1 = sqrtf(tmp/*, 0.5f*/);
@@ -911,7 +916,11 @@ void energyCalculationKernel(dds_float pf, dds_float* energySum)
 					      dr[l] = -xd[3 * n + l] + xd[3 * i + l];
 					      tmp += dr[l] * dr[l];
 					    }
+#if CUDA_VERSION >= 9000
 						if ((n < nbodiesd) || __all_sync(__activemask(), tmp >= dq[depth])) {	// check if all threads agree that cell is far enough away (or is a body)
+#else
+						if ((n < nbodiesd) || __all(tmp >= dq[depth])) {	// check if all threads agree that cell is far enough away (or is a body)
+#endif
 							if (n != i) {
 								d1 = sqrtf(tmp/*, 0.5f*/);
 								dd5 = __fdividef(1.0f, tmp * tmp * d1);
