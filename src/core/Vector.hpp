@@ -50,6 +50,12 @@ public:
   Vector(Vector const &) = default;
   Vector &operator=(Vector const &) = default;
 
+  void swap(Vector &rhs) {
+    auto tmp = rhs;
+    rhs = *this;
+    *this = tmp;
+  }
+
   template <typename Container> explicit Vector(Container v) {
     assert(std::distance(std::begin(v), std::end(v)) == n);
     std::copy(std::begin(v), std::end(v), d.begin());

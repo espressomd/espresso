@@ -163,3 +163,16 @@ BOOST_AUTO_TEST_CASE(broadcast) {
     BOOST_CHECK(5 == e);
   }
 }
+
+BOOST_AUTO_TEST_CASE(swap) {
+  const auto cv1 = Vector<3, int>{1, 2, 3};
+  const auto cv2 = Vector<3, int>{4, 5, 6};
+
+  auto v1 = cv1;
+  auto v2 = cv2;
+
+  v1.swap(v2);
+
+  BOOST_CHECK(v1 == cv2);
+  BOOST_CHECK(v2 == cv1);
+}
