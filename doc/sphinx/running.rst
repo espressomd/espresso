@@ -75,7 +75,7 @@ and can be called from there (second variant)::
     system.minimize_energy.minimize()
 
 This command runs a steepest descent energy minimization on the system.
-Please note that the behaviour is undefined if either a thermostat,
+Please note that the behavior is undefined if either a thermostat,
 Maggs electrostatics or Lattice-Boltzmann is activated. It runs a simple
 steepest descent algorithm:
 
@@ -141,7 +141,7 @@ Notes:
 * The space-frame direction of the particle's z-axis in its body frame is accessible through the `espressomd.particle_data.ParticleHandle.director` property.
 * Any other vector can be converted from body to space fixed frame using the `espressomd.particle_data.ParticleHandle.convert_vector_body_to_space` method.
 * When DIPOLES are compiled in, the particles dipole moment is always co-aligned with the z-axis in the body-fixed frame.
-* Changing the particles dipole moment and director will re-orient the particle such that its z-axis in space frame is aligned parallel to the given vector. No guarantees are made for the other two axes after setting the direcotr or the dipole moment.
+* Changing the particles dipole moment and director will re-orient the particle such that its z-axis in space frame is aligned parallel to the given vector. No guarantees are made for the other two axes after setting the director or the dipole moment.
 
 
 The following particle properties are related to rotation:

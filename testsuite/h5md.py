@@ -35,7 +35,7 @@ class CommonTests(ut.TestCase):
     """
     Class that holds common test methods.
     """
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     # avoid particles to be set outside of the main box, otherwise particle
     # positions are folded in the core when writing out and we cannot directly
     # compare positions in the dataset and where particles were set. One would
@@ -68,6 +68,17 @@ class CommonTests(ut.TestCase):
         if os.path.isfile('test.h5'):
             os.remove('test.h5')
         cls.py_file = cls.py_pos = cls.py_vel = cls.py_f = cls.py_id = cls.py_img = None
+
+    def test_metadata(self):
+        """Test if the H5MD metadata has been written properly."""
+        self.assertEqual(self.py_file['h5md'].attrs['version'][0], 1)
+        self.assertEqual(self.py_file['h5md'].attrs['version'][1], 1)
+        self.assertIn('creator', self.py_file['h5md'])
+        self.assertIn('name', self.py_file['h5md/creator'].attrs)
+        self.assertIn('version', self.py_file['h5md/creator'].attrs)
+        self.assertEqual(self.py_file['h5md/creator'].attrs['name'][:], b'ESPResSo')
+        self.assertIn('author', self.py_file['h5md'])
+        self.assertIn('name', self.py_file['h5md/author'].attrs)
 
     def test_pos(self):
         """Test if positions have been written properly."""

@@ -31,7 +31,7 @@ General usage
 
 The recommended usage of both tools is similar: Create the visualizer of
 your choice and pass it the ``espressomd.System()`` object. Then write
-your integration loop in a seperate function, which is started in a
+your integration loop in a separate function, which is started in a
 non-blocking thread. Whenever needed, call ``update()`` to synchronize
 the renderer with your system. Finally start the blocking visualization
 window with ``start()``. See the following minimal code example::
@@ -69,14 +69,14 @@ Common methods for openGL and mayavi
 | :meth:`espressomd.visualization.mayaviLive.update()` 
 | :meth:`espressomd.visualization.openGLLive.update()`
 
-``update()`` synchonizes system and visualizer, handles keyboard events for
+``update()`` synchronizes system and visualizer, handles keyboard events for
 openGLLive.
 
 | :meth:`espressomd.visualization.mayaviLive.start()` 
 | :meth:`espressomd.visualization.openGLLive.start()`
 
 ``start()`` starts the blocking visualizer window. 
-Should be called after a seperate thread containing ``update()`` has been started.
+Should be called after a separate thread containing ``update()`` has been started.
 
 | :meth:`espressomd.visualization.mayaviLive.register_callback()`
 | :meth:`espressomd.visualization.openGLLive.register_callback()`
@@ -93,7 +93,7 @@ The mayavi visualizer is created with the following syntax:
 
 :class:`espressomd.visualization.mayaviLive()`
 
-Required paramters:
+Required parameters:
     * `system`: The espressomd.System() object.
 Optional keywords:
     * `particle_sizes`:
@@ -109,7 +109,7 @@ OpenGL visualizer
 | :meth:`espressomd.visualization.openGLLive.run()` 
 
 To visually debug your simulation, ``run()`` can be used to conveniently start 
-an integration loop in a seperate thread once the visualizer is initialized::
+an integration loop in a separate thread once the visualizer is initialized::
 
     import espressomd 
     from espressomd import visualization 
@@ -130,58 +130,10 @@ an integration loop in a seperate thread once the visualizer is initialized::
 The optional keywords in ``**kwargs`` are used to adjust the appearance of the visualization.
 The parameters have suitable default values for most simulations. 
 
-Required paramters:
+Required parameters:
     * `system`: The espressomd.System() object.
 Optional keywords:
-    * `window_size`: Size of the visualizer window in pixels.
-    * `name`: The name of the visualizer window.
-    * `background_color`: RGB of the background.
-    * `periodic_images`: Periodic repetitions on both sides of the box in xyzdirection.
-    * `draw_box`: Draw wireframe boundaries.
-    * `draw_axis`: Draws xyz system axes.
-    * `quality_particles`: The number of subdivisions for particle spheres.
-    * `quality_bonds`: The number of subdivisions for cylindrical bonds.
-    * `quality_arrows`: The number of subdivisions for external force arrows.
-    * `quality_constraints`: The number of subdivisions for primitive constraints.
-    * `close_cut_distance`: The distance from the viewer to the near clipping plane.
-    * `far_cut_distance`: The distance from the viewer to the far clipping plane.
-    * `camera_position`: Initial camera position. `auto` (default) for shiftet position in z-direction. 
-    * `camera_target`: Initial camera target. `auto` (default) to look towards the system center.
-    * `camera_right`: Camera right vector in system coordinates. Default is [1, 0, 0] 
-    * `particle_sizes`:     
-        * `auto` (default)`: The Lennard-Jones sigma value of the self-interaction is used for the particle diameter.
-        * `callable`: A lambda function with one argument. Internally, the numerical particle type is passed to the lambda function to determine the particle radius.
-        * `list`: A list of particle radii, indexed by the particle type.
-    * `particle_coloring`:  
-        * `auto` (default)`: Colors of charged particles are specified by particle_charge_colors, neutral particles by particle_type_colors
-        * `charge`: Minimum and maximum charge of all particles is determined by the visualizer. All particles are colored by a linear interpolation of the two colors given by particle_charge_colors according to their charge.
-        * `type`: Particle colors are specified by particle_type_colors, indexed by their numerical particle type.
-    * `particle_type_colors`: Colors for particle types.
-    * `particle_type_materials`: Materials of the particle types.
-    * `particle_charge_colors`: Two colors for min/max charged particles.
-    * `draw_constraints`: Enables constraint visualization. For simple constraints (planes, spheres and cylinders), OpenGL primitives are used. Otherwise, visualization by rasterization is used.
-    * `rasterize_pointsize`: Point size for the rasterization dots.
-    * `rasterize_resolution`: Accuracy of the rasterization.
-    * `quality_constraints`: The number of subdivisions for primitive constraints.
-    * `constraint_type_colors`: Colors of the constaints by type.
-    * `constraint_type_materials`: Materials of the constraints by type.
-    * `draw_bonds`: Enables bond visualization.
-    * `bond_type_radius`: Radii of bonds by type.
-    * `bond_type_colors`: Color of bonds by type.
-    * `bond_type_materials`: Materials of bonds by type.
-    * `ext_force_arrows`: Enables external force visualization.
-    * `ext_force_arrows_scale`: Scale factor for external force arrows.
-    * `drag_enabled`: Enables mouse-controlled particles dragging (Default`: False)
-    * `drag_force`: Factor for particle dragging
-    * `light_pos`: If `auto` (default) is used, the light is placed dynamically in the particle barycenter of the system. Otherwise, a fixed coordinate can be set.
-    * `light_colors`: Three lists to specify ambient, diffuse and specular light colors.
-    * `light_brightness`: Brightness (inverse constant attenuation) of the light. 
-    * `light_size`: Size (inverse linear attenuation) of the light. If `auto` (default) is used, the light size will be set to a reasonable value according to the box size at start.
-    * `spotlight_enabled`: If set to ``True`` (default), it enables a spotlight on the camera position pointing in look direction.
-    * `spotlight_colors`: Three lists to specify ambient, diffuse and specular spotlight colors.
-    * `spotlight_angle`: The spread angle of the spotlight in degrees (from 0 to 90).
-    * `spotlight_brightness`: Brightness (inverse constant attenuation) of the spotlight. 
-    * `spotlight_focus`: Focus (spot exponent) for the spotlight from 0 (uniform) to 128. 
+    * Have a look at the attribute list in :class:`espressomd.visualization.openGLLive()`
 
 .. _Colors and Materials:
 
@@ -207,6 +159,60 @@ used, which are indexed circularly by the numerical particle type::
                                           particle_type_materials = [gold, bright])
 
 Materials are stored in :attr:`espressomd.visualization.openGLLive().materials`. 
+
+.. _Visualize vectorial properties:
+
+Visualize vectorial properties
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Most vectorial particle properties can be visualized by 3D-arrows on the
+particles: 
+
+    * `ext_force`: An external force. Activate with the keyword ``ext_force_arrows = True``.
+    * `f`: The force acting on the particle. Activate with the keyword ``force_arrows = True``.
+    * `v`: The velocity of the particle. Activate with the keyword ``velocity_arrows = True``.
+    * `director`: A vector associated with the orientation of the particle. Activate with the keyword ``director_arrows = True``.
+
+Arrow colors, scales and radii can be adjusted. Again, the lists specifying
+these quantities are indexed circularly by the numerical particle type. The
+following code snippet demonstrates the visualization of the director property
+and individual settings for two particle types (requires the ROTATION
+feature)::
+
+	from __future__ import print_function
+	import numpy
+	from espressomd import *
+	from espressomd.visualization_opengl import *
+
+	box_l = 10
+	system = espressomd.System(box_l=[box_l, box_l, box_l])
+	system.cell_system.skin = 0.4
+
+	system.time_step = 0.00001
+
+	visualizer = openGLLive(system, 
+	                        director_arrows = True,
+	                        director_arrows_type_scale = [1.5, 1.0], 
+	                        director_arrows_type_radii = [0.1, 0.4], 
+	                        director_arrows_type_colors = [[1.0, 0, 0, 1.0], [0, 1.0, 0, 0.5]])
+
+	for i in range(10):
+		system.part.add(pos = numpy.random.random(3) * box_l, 
+		                rotation = [1, 1, 1], 
+		                ext_torque = [5, 0, 0], 
+		                v = [10, 0, 0], 
+		                type = 0)
+						
+		system.part.add(pos = numpy.random.random(3) * box_l, 
+		                rotation = [1, 1, 1], 
+		                ext_torque = [0, 5, 0], 
+		                v = [-10, 0, 0], 
+		                type = 1)
+
+	visualizer.run(1)
+																									
+
+
 
 .. _Controls:
 

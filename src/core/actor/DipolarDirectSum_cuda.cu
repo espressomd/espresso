@@ -284,19 +284,20 @@ __global__ void DipolarDirectSum_kernel_energy(dds_float pf,
   // to global memory at the end.
 
   
+  if (i < n) {
+    // Summation for particle i
+    for (int j=i+1;j<n;j++)
+    {
+        sum+=dipole_ia_energy(i,pf,pos+3*i,pos+3*j,dip+3*i,dip+3*j,box_l,periodic);
+    }
 
-  // Summation for particle i
-  for (int j=i+1;j<n;j++)
-  {
-      sum+=dipole_ia_energy(i,pf,pos+3*i,pos+3*j,dip+3*i,dip+3*j,box_l,periodic);
-  }
-
-  // Save per thread result into block shared mem
-  res[threadIdx.x] =sum;
-  //globalRes[i]=sum;
+    // Save per thread result into block shared mem
+    res[threadIdx.x] = sum;
+    //globalRes[i]=sum;
+  } else res[threadIdx.x] = 0;
 
   // Sum results within a block
-  __syncthreads(); // Wait til all threads in block are done
+  __syncthreads(); // Wait till all threads in block are done
   dds_sumReduction(res,&(energySum[blockIdx.x]));
 //  if (threadIdx.x==0)
 //   printf("Block sum %d %f\n",blockIdx.x,energySum[blockIdx.x]);
@@ -373,11 +374,9 @@ void DipolarDirectSum_kernel_wrapper_energy(dds_float k, int n, float *pos, floa
   //printf(" Still here after energy kernel\n");
   // Sum the results of all blocks
   // One thread per block in the prev kernel
-  block.x=grid.x;
-  grid.x=1;
   //KERNELCALL(sumKernel,1,1,(energySum,block.x,E));
   thrust::device_ptr<dds_float> t(energySum);
-  float x=thrust::reduce(t,t+block.x);
+  float x=thrust::reduce(t,t+grid.x);
   cuda_safe_mem(cudaMemcpy(E,&x,sizeof(float),cudaMemcpyHostToDevice));
 
 

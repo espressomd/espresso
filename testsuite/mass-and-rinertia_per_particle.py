@@ -14,12 +14,13 @@ import math
 class ThermoTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
-    es = espressomd.System()
+    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     def run_test_case(self, test_case):
         seed(1)
         # Decelleration
         self.es.time_step = 0.007
+        self.es.part.clear()
         # gamma_tran/gamma_rot matrix: [2 types of particless] x [3 dimensions
         # X Y Z]
         gamma_tran = np.zeros((2, 3))

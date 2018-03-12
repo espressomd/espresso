@@ -109,8 +109,8 @@ Alternatively, you can use Homebrew.
     sudo xcode-select --install
     sudo xcodebuild -license accept
     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-    brew install cmake python cython boost boost-mpi fftw
-    brew install numpy --without-python3
+    brew install cmake python@3 cython boost boost-mpi fftw
+    brew install numpy --without-python@2
     ln -s /usr/local/bin/python2 /usr/local/bin/python
 
 Note: If both MacPorts and Homebrew are installed, you will not be able to
@@ -135,6 +135,7 @@ command in |es| 's source directory:
 
     pip install -r requirements.txt --user --upgrade
 
+Please note that on some systems, `pip` has to be replaced by `pip2` to install Python 2 versions of the packages.
 
 .. _Quick installation:
 
@@ -194,7 +195,7 @@ invocation is implementation dependent, but in many cases, such as
 
     mpirun -n <N> ./pypresso <SCRIPT>
 
-where ``<N>`` is the number of prcessors to be used.
+where ``<N>`` is the number of processors to be used.
 
 
 .. _Configuring:
@@ -305,11 +306,8 @@ General features
 
 -  ``MMM1D_GPU``
 
--  ``EWALD_GPU``
-
 -  ``_P3M_GPU_FLOAT``
 
--  ``_P3M_GPU_DOUBLE``
 
 -  ``DIPOLES`` This activates the dipole-moment property of particles; In addition,
    the various magnetostatics algorithms, such as P3M are switched on.
@@ -356,11 +354,9 @@ General features
 
    .. seealso:: :attr:`espressomd.particle_data.ParticleHandle.exclude`
 
--  ``COMFORCE`` Allows to pull apart groups of particles
-
 -  ``COMFIXED`` Allows to fix the center of mass of all particles of a certain type.
 
--  ``MOLFORCES``
+-  ``MOLFORCES`` (EXPERIMENTAL)
 
 -  ``BOND_CONSTRAINT`` Turns on the RATTLE integrator which allows for fixed lengths bonds
    between particles.
@@ -379,18 +375,6 @@ General features
    feature allows for rigid arrangements of particles.
 
    .. seealso:: :ref:`Virtual sites` 
-
--  ``VIRTUAL_SITES_NO_VELOCITY``
-
-   .. seealso:: :ref:`Virtual sites` 
-
--  ``VIRTUAL_SITES_THERMOSTAT``
-
-   .. seealso:: :ref:`Virtual sites` 
-
--  ``THERMOSTAT_IGNORE_NON_VIRTUAL``
-
--  ``MODES``
 
 -  ``METADYNAMICS``
 
@@ -417,7 +401,7 @@ integrator or thermostat:
 ..
     -  ``NEMD`` Enables the non-equilbrium (shear) MD support.
 
-       .. seealso:: :ref:`\`\`nemd\`\`\: Setting up non-equilibirum MD`
+       .. seealso:: :ref:`\`\`nemd\`\`\: Setting up non-equilibrium MD`
 
 -  ``NPT`` Enables an on–the–fly NPT integration scheme.
    
@@ -426,19 +410,20 @@ integrator or thermostat:
 
 -  ``MEMBRANE_COLLISION``
 
--  ``LEES_EDWARDS``
+-  ``LEES_EDWARDS`` (experimental)
 
 -  ``REACTION_ENSEMBLE``
 
 -  ``GHMC``
 
--  ``MULTI_TIMESTEP``
+-  ``MULTI_TIMESTEP`` (experimental)
 
 -  ``ENGINE``
 
 -  ``PARTICLE_ANISOTROPY``
 
 .. _Fluid dynamics and fluid structure interaction:
+
 
 Fluid dynamics and fluid structure interaction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -463,7 +448,7 @@ Fluid dynamics and fluid structure interaction
 
 -  ``LB_BOUNDARIES_GPU``
 
--  ``SHANCHEN`` Enables the Shan Chen bicomponent fluid code on the GPU.
+-  ``SHANCHEN`` (experimental) Enables the Shan Chen bicomponent fluid code on the GPU.
 
 -  ``AFFINITY``
 
@@ -509,7 +494,7 @@ section :ref:`Isotropic non-bonded interactions`):
 
 -  ``LJ_ANGLE`` Enable the directional Lennard–Jones potential.
 
--  ``GAY_BERNE``
+-  ``GAY_BERNE`` (experimental)
 
 -  ``HERTZIAN``
 
@@ -558,7 +543,7 @@ following features.
 
 -  ``HAT``
 
--  ``UMBRELLA``
+-  ``UMBRELLA`` (experimental)
 
 
 .. _DNA Model:
@@ -579,13 +564,15 @@ DNA Model
 Miscellaneous
 ^^^^^^^^^^^^^
 
+-  ``TUNABLE_SLIP`` (experimental)
+
 -  ``FLATNOISE`` Shape of the noise in ther (Langevin) thermostat.
 
 -  ``GAUSSRANDOM`` Shape of the noise in ther (Langevin) thermostat.
 
 -  ``GAUSSRANDOMCUT`` Shape of the noise in ther (Langevin) thermostat.
 
--  ``GHOSTS_HAVE_BONDS`` Ghost particles also have the bond information.
+
 
 .. _Debug messages:
 
@@ -686,6 +673,14 @@ looking directly at the code.
 -  ``ONEPART_DEBUG_ID`` Use this define to supply a particle ID for which to output debug messages. For example: ``#define ONEPART_DEBUG_ID 13``
 
 
+
+
+Features marked as experimental
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Some of the above features are marked as EXPERIMENTAL. Activating these features can have unexpected side effects and some of them have known issues. If you activate any of these features, you should understand the corresponding source code and do extensive testing. Furthermore, it is necessary to define `EXPERIMENTAL_FEATURES` in myconfig.hpp.
+
+
+
 .. _cmake:
 
 cmake
@@ -706,7 +701,7 @@ platforms as you want.
 
 When the source directory is ``srcdir`` (the files where unpacked to this
 directory), then the user can create a build directory ``build`` below that
-path by calling ``mkdir srcdir/build``. In the build direcotry `cmake` is to be
+path by calling ``mkdir srcdir/build``. In the build directory `cmake` is to be
 executed, followed by a call of make. None of the files in the source directory
 is ever modified when by the build process.
 
@@ -730,7 +725,7 @@ to configure |es| interactively.
 **Example:**
 
 Alternatively to the previous example instead of , the executable is
-called in the build direcotry to configure ESPResSo previous to its
+called in the build directory to configure ESPResSo previous to its
 compilation followed by a call of make:
 
 .. code-block:: bash
@@ -756,7 +751,7 @@ Fig. :ref:`ccmake-figure` shows the interactive ccmake UI.
 Options and Variables
 ^^^^^^^^^^^^^^^^^^^^^
 
-The behaviour of |es| can be controlled by the means of options and variables
+The behavior of |es| can be controlled by the means of options and variables
 in the CMakeLists.txt file. Also options are defined there. The following
 options are available:
 
@@ -772,7 +767,7 @@ options are available:
   markers
 
 When the value in the CMakeLists.txt file is set to ON the corresponding
-option is created if the value of the opition is set to OFF the
+option is created if the value of the option is set to OFF the
 corresponding option is not created. These options can also be modified
 by calling cmake with the command line argument ``-D``::
 
@@ -872,7 +867,7 @@ Debugging |es|
 Exceptional situations occur in every program.  If |es| crashes with a
 segmentation fault that means that there was a memory fault in the
 simulation core which requires running the program in a debugger.  The
-`pypresso` executable file is acutally not a program but a script
+`pypresso` executable file is actually not a program but a script
 which sets the Python path appropriately and starts the Python
 interpreter with your arguments.  Thus it is not possible to directly
 run `pypresso` in a debugger.  However, we provide some useful

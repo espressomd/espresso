@@ -169,6 +169,27 @@ To use the method, create an instance of :attr:`espressomd.magnetostatics.Dipola
   dds=DipolarDirectSumGpu(bjerrum_length=1)
   system.actors.add(dds)
 
+.. _Barnes-Hut octree sum on gpu:
+
+Barnes-Hut octree sum on gpu
+----------------------------
+
+This interaction calculates energies and forces between dipoles by
+summing over the spatial octree cells (aka ``leaves``).
+Far enough cells are considered as a single dipole with a cumulative
+vector in the cell center of mass. Parameters which determine that the
+cell is far enough are :math:`I_{\mathrm{tol}}^2` and
+:math:`\varepsilon^2` which define a fraction of the cell and
+an additive distance respectively. For the detailed description of the
+Barnes-Hut method application to the dipole-dipole interactions, please
+refer to :cite:`Polyakov2013`.
+
+To use the method, create an instance of :attr:`espressomd.magnetostatics.DipolarBarnesHutGpu` and add it to the system's list of active actors::
+  
+  from espressomd.magnetostatics import DipolarBarnesHutGpu
+  bh=DipolarBarnesHutGpu(prefactor = pf_dds_gpu, epssq = 200.0, itolsq = 8.0)
+  system.actors.add(bh)
+
 .. _Scafacos Magnetostatics:
 
 Scafacos Magnetostatics

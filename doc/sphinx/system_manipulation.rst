@@ -43,10 +43,8 @@ the :class:`espressomd.system.System` instance as
 Fixing the center of mass
 -------------------------
 
-inter comfixed
-
-This interaction type applies a constraint on particles of type such
-that during the integration the center of mass of these particles is
+This interaction type applies a constraint on particles of the specified
+types such that during the integration the center of mass of these particles is
 fixed. This is accomplished as follows: The sum of all the forces acting
 on particles of type are calculated. These include all the forces due to
 other interaction types and also the thermostat. Next a force equal in
@@ -56,14 +54,9 @@ their respective mass. Under periodic boundary conditions, this fixes
 the itinerant center of mass, that is, the one obtained from the
 unfolded coordinates.
 
-Note that the syntax of the declaration of comfixed interaction requires
-the same particle type to be input twice. If different particle types
-are given in the input, the program exits with an error message. can be
-set to 1 (which turns on the interaction) or 0 (to turn off the
-interaction).
+Center of mass fixing can be activated via  :class:`espressomd.system.System`::
 
-Since the necessary communication is lacking at present, this
-interaction only works on a single node.
+    system.comfixed.types = list_of_types_to_fix
 
 .. _Capping the force during warmup:
 
@@ -86,7 +79,7 @@ Force capping can be activated via  :class:`espressomd.system.System`::
     system.force_cap = F_max
 
 This command will limit the magnitude of the force to :math:`r F_\mathrm{max}`.
-Enegies are not affected by the capping, so the energy can be used to
+Energies are not affected by the capping, so the energy can be used to
 identify the remaining overlap. The force capping is switched off by setting
 :math:`F_\mathrm{max}=0`.
 
@@ -122,7 +115,7 @@ This command sets all forces on the particles to zero, as well as all
 torques if the option ``torque`` is specified and the feature ROTATION
 has been compiled in.
 
-* The centre of mass of the system
+* The center of mass of the system
 
 ::
 
@@ -131,7 +124,7 @@ has been compiled in.
 Returns the center of mass of the whole system. It currently does not
 factor in the density fluctuations of the Lattice-Boltzmann fluid.
 
-* The centre-of-mass velocity
+* The center-of-mass velocity
 
 ::
     

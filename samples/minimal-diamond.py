@@ -22,17 +22,17 @@ import espressomd
 from espressomd import thermostat
 from espressomd import interactions
 from espressomd import diamond
-import numpy
 import sys
 
 # System parameters
 #############################################################
 
-system = espressomd.System()
+system = espressomd.System(box_l=[100.0, 100.0, 100.0])
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-system.box_l = [100, 100, 100]
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 system.cell_system.set_n_square(use_verlet_lists=False)
 

@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function
-import numpy
+import numpy as np
 import espressomd
 from espressomd import thermostat
 from espressomd import electrostatics
@@ -62,7 +62,11 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System()
+system = espressomd.System(box_l=[box_l]*3)
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
+
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 
@@ -86,8 +90,6 @@ int_n_times = 10
 # Interaction setup
 #############################################################
 
-system.box_l = [box_l, box_l, box_l]
-
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
     cutoff=lj_cut, shift="auto")
@@ -101,9 +103,9 @@ print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
 #############################################################
 
 for i in range(n_part):
-    system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
+    system.part.add(id=i, pos=np.random.random(3) * system.box_l)
 
-for i in range(n_part / 2):
+for i in range(n_part // 2):
     system.part[2 * i].q = -1.0
     system.part[2 * i].type = 1
     system.part[2 * i + 1].q = 1.0
@@ -117,7 +119,7 @@ for i in range(n_part / 2):
 # means that lj_sig is 0.714 nm in SI units.
 coulomb_prefactor = 1
 # inverse Debye length for 1:1 electrolyte in water at room temperature (nm)
-dh_kappa = numpy.sqrt(mol_dens) / 0.304
+dh_kappa = np.sqrt(mol_dens) / 0.304
 # convert to MD units
 dh_kappa = dh_kappa / 0.714
 dh = electrostatics.CDH(prefactor=coulomb_prefactor, kappa=dh_kappa,

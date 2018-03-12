@@ -36,8 +36,6 @@ function cmd {
     eval $1
 }
 
-
-
 # handle environment variables
 [ -z "$insource" ] && insource="false"
 [ -z "$srcdir" ] && srcdir=`pwd`
@@ -50,6 +48,7 @@ function cmd {
 [ -z "$check_procs" ] && check_procs=2
 [ -z "$build_procs" ] && build_procs=2
 [ -z "$make_check" ] && make_check="true"
+[ -z "$check_odd_only" ] && check_odd_only="false"
 [ -z "$python_version" ] && python_version="2"
 [ -z "$with_cuda" ] && with_cuda="true"
 
@@ -67,7 +66,7 @@ fi
 
 outp insource srcdir builddir make_check \
     cmake_params with_fftw \
-    with_python_interface with_coverage \
+    with_python_interface with_coverage with_static_analysis myconfig check_procs build_procs  check_odd_only \
     with_static_analysis myconfig \
     check_procs build_procs \
     python_version with_cuda
@@ -108,9 +107,11 @@ if ! $insource; then
         echo "Creating $builddir..."
         mkdir -p $builddir
     fi
-    cd $builddir
 fi
 
+if ! $insource; then
+    cd $builddir
+fi
 
 # load MPI module if necessary
 if [ -f "/etc/os-release" ]; then
@@ -174,7 +175,11 @@ if $make_check; then
     start "TEST"
 
     if [ -z "$run_tests" ]; then
-        cmd "make -j${build_procs} check_python $make_params" || exit 1
+        if $check_odd_only; then
+            cmd "make -j${build_procs} check_python_parallel_odd $make_params" || exit 1
+        else
+            cmd "make -j${build_procs} check_python $make_params" || exit 1
+        fi
     else
         cmd "make python_tests $make_params"
         for t in $run_tests; do

@@ -75,7 +75,7 @@ For vectorial particle properties, component-wise manipulation like ``system.par
 = 1`` or in-place operators like ``+=`` or ``*=`` are not allowed and result in an error.
 This behavior is inherited, so the same applies to ``a`` after ``a =
 system.part[0].pos``. If you want to use an vectorial property for further
-calculations, you should explicity make a copy e.g. via
+calculations, you should explicitly make a copy e.g. via
 ``a = numpy.copy(system.part[0].pos)``.
 
 .. _Interacting with groups of particles:
@@ -103,7 +103,7 @@ Setting slices can be done by
 
     system.part[0:3].ext_force = [[1, 0, 0], [2, 0, 0], [3, 0, 0]]
 
-For list properties that have no fixed length like ``exculsions`` or ``bonds``, some care has to be taken.
+For list properties that have no fixed length like ``exclusions`` or ``bonds``, some care has to be taken.
 There, *single value* assignment also accepts lists/tuples just like setting the property of an individual particle. For example::
 
     system.part[0].exclusions = [1, 2]
@@ -122,6 +122,12 @@ by the length of the input, as slice length and input length can be equal. Here,
 The above code snippet would lead the the same exclusions as the one before.
 The same accounts for the ``bonds`` property by interchanging the integer entries of the exclusion list with 
 the tuple ``(bond, partners)``. 
+
+You can select a subset of particles via using the select method. For example you can obtain a list of particles with charge -1 via using ::
+
+    system.part.select(q=-1)
+
+For further information on how to use selections see :meth:`espressomd.particle_data.ParticleList.select()`.
 
 .. _Deleting particles:
 
@@ -160,11 +166,10 @@ You can iterate over all pairs of particles using::
 Exclusions
 ----------
 
-Particles can have an exclusion list of all other particles where nonbonded interactions are ignored.
+Particles can have an exclusion list of all other particles where non-bonded interactions are ignored.
 This is typically used in atomistic simulations, 
-where nearest and next nearest neighbour interactions along the chain have to be omitted since they are included in the bonding potentials.
-Be aware that currently, exclusions also remove the short range part of electrostatics and dipolar interactions. Hence, exclusions should not be applied to pairs of particles which are charged or carry a dipole.
-
+where nearest and next nearest neighbor interactions along the chain have to be omitted since they are included in the bonding potentials.
+Exclusions do not apply to the short range part of electrostatics and magnetostatics methods, e.g. to P3M.
 
   ::
 
@@ -311,12 +316,15 @@ To switch the active scheme, the attribute :attr:`espressomd.system.System.virtu
     from espressomd.virtual_sites import VirtualSitesOff, VirtualSitesRelative
 
     s=espressomd.System()
-    s.virtual_sites=VirtualSitesRelative(have_velocity=True)
+    s.virtual_sites=VirtualSitesRelative(have_velocity=True, have_quaternion=False)
     # or
     s.virtual_sites=VirtualSitesOff()
 
 By default, :class:`espressomd.virtual_sites.VirtualSitesOff` is selected. This means that virtual particles are not touched during integration.
-the `have_velocity` attribute determines, whether or not the velocity of virtual sites is calcualted, which carries a performance cost.
+The `have_velocity` parameter determines whether or not the velocity of virtual sites is calculated, which carries a performance cost.
+The `have_quaternion` parameter determines whether the quaternion of the virtual particle is updated (usefull in combination with the
+:attr:`espressomd.particle_data.ParticleHandle.vs_quat` property of the virtual particle which defines the orientation of the virtual particle
+in the body fixed frame of the related real particle.
 
 .. _Rigid arrangements of particles: 
 
@@ -462,7 +470,7 @@ Please note:
     Additional features
     ~~~~~~~~~~~~~~~~~~~
 
-    The behaviour of virtual sites can be fine-tuned with the following
+    The behavior of virtual sites can be fine-tuned with the following
     switches in ``myconfig.hpp``.
 
     - VIRTUAL_SITES_NO_VELOCITY specifies that the velocity of virtual sites is not computed
@@ -472,16 +480,21 @@ Please note:
 
     - THERMOSTAT_IGNORE_NON_VIRTUAL specifies that the thermostat does not act on non-virtual particles
 
-.. _Grand canonical feature:
+.. _Particle number counting feature:
 
-Grand canonical feature
------------------------
+Particle number counting feature
+--------------------------------
 
-:mod:`espressomd.grand_canonical`
 
-For using conveniently in simulations in the grand canonical ensemble,
+.. note::
+
+    Do not use these methods with the :mod:`espressomd.collision_detection` module since the collision detection may create or delete particles without the particle number counting feature being aware of this. Therefore also the :mod:`espressomd.reaction_ensemble` module may not be used with the collision detection.
+
+
+
+Knowing the number of particles of a certain type in simulations in the grand canonical ensemble,
 or other purposes, when particles of certain types are created and
-deleted frequently. Particle ids can be stored in a map for each
+deleted frequently is often of interest. Particle ids can be stored in a map for each
 individual type and so random ids of particles of a certain type can be
 drawn.  ::
 
@@ -496,12 +509,19 @@ initialize the method by calling  ::
 
     system.setup_type_map([_type])
 
-After that will keep track of particle ids of that type. When using the
-keyword ``find`` and a particle type, the command will return a randomly
+After that will keep track of particle ids of that type. Keeping track of particles of a given type is not enabled by default since it requires memory.
+When using the
+keyword ``find_particle`` and a particle type, the command will return a randomly
 chosen particle id, for a particle of the given type. The keyword
-``status`` will return a list with all particles with the given type,
-similarly giving ``number`` as argument will return the number of
-particles which share the given type.
+``number_of_particles`` as argument will return the number of
+particles which have the given type. For counting the number of particles of a given type you could also use :meth:`espressomd.particle_data.ParticleList.select` ::
+
+    import espressomd
+    system=espressomd.System()
+    ...
+    number_of_particles=len(system.part.select(type=type))
+
+However calling select(type=type) results in looping over all particles. Therefore calling select() is slow compared to using :meth:`espressomd.system.System.number_of_particles` which directly can return the number of particles with that type.
 
 .. _Self-propelled swimmers:
 

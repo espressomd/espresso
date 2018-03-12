@@ -79,7 +79,7 @@ Several modes are available for different types of binding.
   If all three particles are within the cutoff distance, an angle bond is added
   on each of the three particles in addition
   to the distance based bonds between the particle centers. 
-  If two particles are within the cutoff of a centrla particle (e.g., chain of three particles)
+  If two particles are within the cutoff of a central particle (e.g., chain of three particles)
   an angle bond is placed on the central particle.
   The angular bonds being added are determined from the angle between the particles.
   This method does not depend on the particles’ rotational
@@ -87,7 +87,7 @@ Several modes are available for different types of binding.
   required.
   The method, along with the corresponding bonds are setup as follows::
         
-        n_anlge_bonds=181 # 0 to 180 degrees in one degree steps
+        n_angle_bonds=181 # 0 to 180 degrees in one degree steps
         for i in range(0,res,1):
            self.s.bonded_inter[i]=Angle_Harmonic(bend=1,phi0=float(i)/(res-1)*np.pi)
         
@@ -111,8 +111,6 @@ Catalytic Reactions
 -------------------
 
 
-:ref:`Catalytic Reaction theory`
-
 With the help of the feature ``CATALYTIC_REACTIONS``, one can define three particle types to act as reactant (e.g. :math:`\mathrm{H_2 O_2}`), catalyzer (e.g. platinum), and product (e.g. :math:`\mathrm{O_2}` and :math:`\mathrm{H_2 O}`). The current setup allows one to simulate active swimmers and their chemical propulsion.
 
 For a Janus swimmer consisting of platinum on one hemisphere and gold on the other hemisphere, both surfaces catalytically induce a reaction. We assume an initial abundance of hydrogen peroxide and absence of products, so that back (recombination) reactions seldomly occur at the surface. A typical model for the propulsion of such a particle assumes
@@ -135,7 +133,7 @@ That is, catalytic surfaces induce a reactions that produce charged species by c
 
 where on the upper half of the catalyst :math:`C^{+}` a species :math:`A` is converted into :math:`B`, and on the lower half :math:`C^{-}` the opposite reaction takes place. Note that when :math:`A` and :math:`B` are charged, this reaction conserves charge, provided the rates are equal.
 
-In |es| the orientation of a catalyzer particle is used to define hemispheres; half spaces going through the particle's center. The reaction region is bounded by the *reaction range*: :math:`r`. Inside the reaction range, we react only rectant-product pairs. The particles in a pair are swapped from hemisphere to another with a rate prescribed by
+In |es| the orientation of a catalyzer particle is used to define hemispheres; half spaces going through the particle's center. The reaction region is bounded by the *reaction range*: :math:`r`. Inside the reaction range, we react only reactant-product pairs. The particles in a pair are swapped from hemisphere to another with a rate prescribed by
 
 .. math::
 
@@ -224,7 +222,7 @@ current implementation with the ``COLLISION_DETECTION`` feature.
     shear with help of an unphysical momentum change in two slabs in the
     system.
 
-    Variants and will initialise NEMD. Two distinct methods exist. Both
+    Variants and will initialize NEMD. Two distinct methods exist. Both
     methods divide the simulation box into slabs that lie parallel to the
     x-y-plane and apply a shear in x direction. The shear is applied in the
     top and the middle slabs. Note, that the methods should be used with a
@@ -293,7 +291,7 @@ The following example introduces the usage::
     absolute_offset = 0.2
     system.lees_edwards_offset = absolute_offset
 
-Lees-Edwards boundary conditions can be used to obtain the shear modulus :math:`G = \frac{\tau}{\gamma}` or the shear viscosity :math:`\eta = \frac{\tau}{\dot\gamma}` outside the linear regime, where Green-Kubo relations are not valid anymore. For this purpose a lees_edwards_offset is set followed by one integration step for multiple times. Strain, strain rate and the shear stress need to be recorded for the calculation. Alternatively a sinusoidal lees_edwards_offset series can be used to carry out oscillatory experiments to calculate viscoelastic moduli (:math:`G', G''`). Furthermore a lees_edwards_offset can be set followed by many integration steps obtain the relaxation behaviour of a system. 
+Lees-Edwards boundary conditions can be used to obtain the shear modulus :math:`G = \frac{\tau}{\gamma}` or the shear viscosity :math:`\eta = \frac{\tau}{\dot\gamma}` outside the linear regime, where Green-Kubo relations are not valid anymore. For this purpose a lees_edwards_offset is set followed by one integration step for multiple times. Strain, strain rate and the shear stress need to be recorded for the calculation. Alternatively a sinusoidal lees_edwards_offset series can be used to carry out oscillatory experiments to calculate viscoelastic moduli (:math:`G', G''`). Furthermore a lees_edwards_offset can be set followed by many integration steps obtain the relaxation behavior of a system. 
 
 When applying a constant shear rate :math:`\dot\gamma` the velocity of the particles changes from :math:`-\frac{\dot\gamma}{2}` at the bottom of the box to :math:`\frac{\dot\gamma}{2}` at the top of the box. 
 
@@ -367,7 +365,7 @@ ibm\_triel, ibm\_tribend and ibm\_volCons:
 
    where , , and are four marker points corresponding to two neighboring
    triangles. The indices and contain the shared edge. Note that the
-   marker points within a triangle must be labelled such that the normal
+   marker points within a triangle must be labeled such that the normal
    vector
    :math:`\vec{n} = (\vec{r}_\text{ind2} - \vec{r}_\text{ind1}) \times (\vec{r}_\text{ind3} - \vec{r}_\text{ind1})`
    points outward of the elastic object.
@@ -416,7 +414,7 @@ are declared in as particles. The edges of the mesh define elastic
 forces keeping the shape of the object. The movement of object is
 achieved by adding forces to the mesh points.
 
-Modelled elastic or rigid objects are immersed in the LB fluid flow. The
+Modeled elastic or rigid objects are immersed in the LB fluid flow. The
 fluid interacts with an elastic object resulting in its deformation;
 this immediately generates forces acting back on the fluid. The aim is
 to describe the immersed object using the notion of particles, and to
@@ -431,7 +429,7 @@ triangulation defines interacting particles distributed on the surface
 of the immersed object :cite:`dupin07`:
 
 -  between two particles, corresponding to the edges in the
-   triangulation (modelling the stretching of the membrane),
+   triangulation (modeling the stretching of the membrane),
 
 -  between three particles, corresponding to the triangles of the
    triangulation (local area, or local surface preservation of the
@@ -472,10 +470,10 @@ be calibrated according to the intended application.
    the dynamics.
 
 -  Friction coefficient. The main parameter describing the
-   fluid-particle interaction is the ``riction \ parameter ``\ rom the
+   fluid-particle interaction is the ``friction \ parameter ``\ rom the
    command ``bf``\ uid .
 
--  Parameters of elastic moduli. Elastic behaviour can be described by
+-  Parameters of elastic moduli. Elastic behavior can be described by
    five different elastic moduli: hyperelastic stretching, linear
    stretching, bending, local and global area preservation and volume
    preservation. Each of them has its own scaling parameter:
@@ -522,7 +520,7 @@ The IDs are assigned in the same order as in the ``mesh-nodes.dat``
 file.
 
 The ``mesh-triangles.dat`` contains ``mesh_ntriangle`` lines with three
-nonnegative integers separated by blank space. Each line represents one
+non-negative integers separated by blank space. Each line represents one
 triangle in the triangulation. For algorithmic purposes it is crucial to
 have defined a correct orientation of the triangle. The orientation is
 defined using the normal vector associated with the triangle. The
@@ -756,7 +754,7 @@ Output information about specific object
 object-id
 
 This command is used to output information about the object that can be
-used for visualisation or as input for other simulations.
+used for visualization or as input for other simulations.
 
 - the id of the object
 
@@ -1105,7 +1103,453 @@ with respect to the underlying object, the triangle 123 needs to be
 properly oriented (as explained in the section on volume in
 oif_global_forces interaction).
 
+.. _Electrokinetics:
+
+Electrokinetics
+---------------
+
+The electrokinetics setup in |es| allows for the description of
+electro-hydrodynamic systems on the level of ion density distributions
+coupled to a Lattice-Boltzmann (LB) fluid. The ion density distributions
+may also interact with explicit charged particles, which are
+interpolated on the LB grid. In the following paragraph we briefly
+explain the electrokinetic model implemented in |es|, before we come to the
+description of the interface.
+
+.. _Electrokinetic Equations:
+
+Electrokinetic Equations
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the electrokinetics code we solve the following system of coupled
+continuity, diffusion-advection, Poisson, and Navier-Stokes equations:
+
+.. math::
+   
+   \begin{aligned}
+   \label{eq:ek-model-continuity} \frac{\partial n_k}{\partial t} & = & -\, \nabla \cdot \vec{j}_k \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
+   \label{eq:ek-model-fluxes} \vec{j}_{k} & = & -D_k \nabla n_k - \nu_k \, q_k n_k\, \nabla \Phi + n_k \vec{v}_{\mathrm{fl}} \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
+   \label{eq:ek-model-poisson} \Delta \Phi & = & -4 \pi \, {l_\mathrm{B}}\, {k_\mathrm{B}T}\sum_k q_k n_k \vphantom{\left(\frac{\partial}{\partial}\right)}; \\
+   \nonumber \left(\frac{\partial \vec{v}_{\mathrm{fl}}}{\partial t} + \vec{v}_{\mathrm{fl}} \cdot \vec{\nabla} \vec{v}_{\mathrm{fl}} \right) \rho_\mathrm{fl} & = & -{k_\mathrm{B}T}\, \nabla \rho_\mathrm{fl} - q_k n_k \nabla \Phi \\
+   \label{eq:ek-model-velocity} & & +\, \eta \vec{\Delta} \vec{v}_{\mathrm{fl}} + (\eta / 3 + \eta_{\text{b}}) \nabla (\nabla \cdot \vec{v}_{\mathrm{fl}}) \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
+   \label{eq:ek-model-continuity-fl} \frac{\partial \rho_\mathrm{fl}}{\partial t} & = & -\,\nabla\cdot\left( \rho_\mathrm{fl} \vec{v}_{\mathrm{fl}} \right) \vphantom{\left(\frac{\partial}{\partial}\right)} , \end{aligned}
+
+which define relations between the following observables
+
+:math:`n_k`
+    the number density of the particles of species :math:`k`,
+
+:math:`\vec{j}_k`
+    the number density flux of the particles of species :math:`k`,
+
+:math:`\Phi`
+    the electrostatic potential,
+
+:math:`\rho_{\mathrm{fl}}`
+    the mass density of the fluid,
+
+:math:`\vec{v}_{\mathrm{fl}}`
+    the advective velocity of the fluid,
+
+and input parameters
+
+:math:`D_k`
+    the diffusion constant of species :math:`k`,
+
+:math:`\nu_k`
+    the mobility of species :math:`k`,
+
+:math:`q_k`
+    the charge of a single particle of species :math:`k`,
+
+:math:`{l_\mathrm{B}}`
+    the Bjerrum length,
+
+:math:`{k_\mathrm{B}T}`
+    | the thermal energy given by the product of Boltzmann’s constant
+      :math:`k_\text{B}`
+    | and the temperature :math:`T`,
+
+:math:`\eta`
+    the dynamic viscosity of the fluid,
+
+:math:`\eta_{\text{b}}`
+    the bulk viscosity of the fluid.
+
+The temperature :math:`T`, and diffusion constants :math:`D_k` and
+mobilities :math:`\nu_k` of individual species are linked through the
+Einstein-Smoluchowski relation :math:`D_k /
+\nu_k = {k_\mathrm{B}T}`. This system of equations
+combining diffusion-advection, electrostatics, and hydrodynamics is
+conventionally referred to as the *Electrokinetic Equations*.
+
+The electrokinetic equations have the following properties:
+
+-  On the coarse time and length scale of the model, the dynamics of the
+   particle species can be described in terms of smooth density
+   distributions and potentials as opposed to the microscale where
+   highly localized densities cause singularities in the potential.
+
+   In most situations, this restricts the application of the model to
+   species of monovalent ions, since ions of higher valency typically
+   show strong condensation and correlation effects – the localization
+   of individual ions in local potential minima and the subsequent
+   correlated motion with the charges causing this minima.
+
+-  Only the entropy of an ideal gas and electrostatic interactions are
+   accounted for. In particular, there is no excluded volume.
+
+   This restricts the application of the model to monovalent ions and
+   moderate charge densities. At higher valencies or densities,
+   overcharging and layering effects can occur, which lead to
+   non-monotonic charge densities and potentials, that can not be
+   covered by a mean-field model such as Poisson-Boltzmann or this one.
+
+   Even in salt free systems containing only counter ions, the
+   counter-ion densities close to highly charged objects can be
+   overestimated when neglecting excluded volume effects. Decades of the
+   application of Poisson-Boltzmann theory to systems of electrolytic
+   solutions, however, show that those conditions are fulfilled for
+   monovalent salt ions (such as sodium chloride or potassium chloride)
+   at experimentally realizable concentrations.
+
+-  Electrodynamic and magnetic effects play no role. Electrolytic
+   solutions fulfill those conditions as long as they don’t contain
+   magnetic particles.
+
+-  The diffusion coefficient is a scalar, which means there can not be
+   any cross-diffusion. Additionally, the diffusive behavior has been
+   deduced using a formalism relying on the notion of a local
+   equilibrium. The resulting diffusion equation, however, is known to
+   be valid also far from equilibrium.
+
+-  The temperature is constant throughout the system.
+
+-  The density fluxes instantaneously relax to their local equilibrium
+   values. Obviously one can not extract information about processes on
+   length and time scales not covered by the model, such as dielectric
+   spectra at frequencies, high enough that they correspond to times
+   faster than the diffusive time scales of the charged species.
+
+.. _Setup:
+
+Setup
+~~~~~
+
+.. _Initialization:
+
+Initialization
+^^^^^^^^^^^^^^
+::
+
+    import espressomd
+    sys = espressomd.System(box_l = [10.0,10.0,10.0])
+    sys.time_step = 0.0
+    sys.cell_system.skin = 0.4
+    ek = espressomd.electrokinetics.Electrokinetics(agrid = 1.0, lb_density = 1.0, 
+    viscosity = 1.0, friction = 1.0, T =1.0, prefactor = 1.0, stencil = 'linkcentered', advection = True, fluid_coupling = 'friction')
+    sys.actors.add(ek)
+
+.. note:: `Feature ELECTROKINETICS and LB_GPU required`
+
+The above is a minimal example how to initialize the LB fluid, and
+it is very similar to the Lattice-Boltzmann command in set-up. We
+therefore refer the reader to Chapter :ref:`Lattice-Boltzmann` for details on the
+implementation of LB in |es| and describe only the major differences here.
+
+The first major difference with the LB implementation is that the
+electrokinetics set-up is a Graphics Processing Unit (GPU) only
+implementation. There is no Central Processing Unit (CPU) version, and
+at this time there are no plans to make a CPU version available in the
+future. To use the electrokinetics features it is therefore imperative
+that your computer contains a CUDA capable GPU which is sufficiently
+modern.
+
+To set up a proper LB fluid using this command one has to specify at
+least the following options: ``agrid``, ``lb_density``, ``viscosity``, ``friction``, ``T``, and ``prefactor``. The other options can be
+used to modify the behavior of the LB fluid. Note that the command does
+not allow the user to set the time step parameter as is the case for the
+Lattice-Boltzmann command, this parameter is instead taken directly from the value set for
+:attr:`espressomd.system.System.time_step`. The LB `mass density` is set independently from the
+electrokinetic `number densities`, since the LB fluid serves only as a
+medium through which hydrodynamic interactions are propagated, as will
+be explained further in the next paragraph. If no ``lb_density`` is specified, then our
+algorithm assumes ``lb_density= 1.0``. The two ‘new’ parameters are the temperature ``T`` at
+which the diffusive species are simulated and the ``prefactor``
+associated with the electrostatic properties of the medium. See the
+above description of the electrokinetic equations for an explanation of
+the introduction of a temperature, which does not come in directly via a
+thermostat that produces thermal fluctuations.
+
+``advection`` can be set to `True` or `False`. It controls whether there should be an
+advective contribution to the diffusive species’ fluxes. Default is
+`True`.
+
+``fluid_coulping`` can be set to `friction` or `estatics`. This option determines the force
+term acting on the fluid. The former specifies the force term to be the
+sum of the species fluxes divided by their respective mobilities while
+the latter simply uses the electrostatic force density acting on all
+species. Note that this switching is only possible for the linkcentered
+stencil. For all other stencils, this choice is hardcoded. The default
+is `friction`.
+
+
+The feature `EK_ELECTROSTATIC_COUPLING` enables the action of the electrostatic potential due to the
+electrokinetics species and charged boundaries on the MD particles. The
+forces on the particles are calculated by interpolation from the
+electric field which is in turn calculated from the potential via finite
+differences. This only includes interactions between the species and
+boundaries and MD particles, not between MD particles and MD particles.
+To get complete electrostatic interactions a particles Coulomb method
+like Ewald or P3M has to be activated too.
+
+.. _Diffusive Species:
+
+Diffusive Species
+^^^^^^^^^^^^^^^^^
+::
+
+    species = electrokinetics.Species(density=density, D=D, valency=valency, ext_force=ext_force)
+
+:class:`espressomd.electrokinetics.Species` is used to initialize a diffusive species. Here the
+options specify: the number density ``density``, the diffusion coefficient ``D``, the
+valency of the particles of that species ``valency``, and an optional external
+(electric) force which is applied to the diffusive species. As mentioned
+before, the LB density is completely decoupled from the electrokinetic
+densities. This has the advantage that greater freedom can be achieved
+in matching the internal parameters to an experimental system. Moreover,
+it is possible to choose parameters for which the LB is more stable. The species has to be added to a LB fluid::
+
+    ek.add_species(species)
+
+The LB fluid must be set up before using :class:`espressomd.electrokinetics.Electrokinetics` as shown above, before a diffusive species can be added. The variables ``density``, ``D``, and ``valency`` must be set to properly initialize the diffusive species; the ``ext_force`` is
+optional.
+
+.. _Boundaries:
+
+Boundaries
+^^^^^^^^^^
+::
+
+    ek_boundary = espressomd.electrokinetics.EKBoundary(charge_density=1.0, shape=my_shape)
+    system.ekboundaries.add(ek_boundary)
+
+.. note:: `Feature EK_BOUNDARIES required`
+
+The EKBoundary command allows one to set up (internal or external) boundaries for
+the electrokinetics algorithm in much the same way as the command is
+used for the LB fluid. The major difference with the LB command is given
+by the option ``charge_density``, with which a boundary can be endowed with a volume
+charge density. To create a surface charge density, a combination of two
+oppositely charged boundaries, one inside the other, can be used.
+However, care should be taken to maintain the surface charge density when the value of ``agrid``
+is changed. Examples for possible shapes are wall, sphere, ellipsoid, cylinder, rhomboid and hollowcone. We refer to the documentation of the :class:`espressomd.shapes` module for more possible shapes and information on the options associated to these shapes. In order to properly set up the boundaries, the ``charge_density`` and ``shape``
+must be specified.
+
+.. _Output:
+
+Output
+~~~~~~
+
+.. _Fields:
+
+Fields
+^^^^^^
+
+::
+
+    ek.print_vtk_boundary(path)
+    ek.print_vtk_density(path)
+    ek.print_vtk_velocity(path)
+    ek.print_vtk_potential(path)
+
+A property of the fluid field can be exported into a
+file in one go. Currently supported
+are: density, velocity, potential and boundary, which give the LB fluid density, the LB fluid velocity,
+the electrostatic potential, and the location and type of the
+boundaries, respectively. The boundaries can only be printed when the
+``EK_BOUNDARIES`` is compiled in. The output is a vtk-file, which is readable by
+visualization software such as paraview [5]_ and mayavi2 [6]_.
+
+::
+
+    species.print_vtk_flux(path)
+    species.print_vtk_density(path)
+
+These commands are similar to the above. They enable the
+export of diffusive species properties, namely: `density` and `flux`, which specify the
+number density and flux of species `species`, respectively.
+
+.. _Local Quantities:
+
+Local Quantities
+^^^^^^^^^^^^^^^^
+
+::
+
+    ek[0,0,0].velocity
+    ek[0,0,0].potential
+    ek[0,0,0].pressure
+
+A single node can be addressed using three integer values
+which run from 0 to `dim_x/agrid`, `dim_y/agrid`, and `dim_z/agrid`, respectively. The
+velocity, electrostatic potential and the pressure of a LB fluid node can be obtained this way.
+
+The local `density` and `flux` of a species can be obtained in the same fashion:
+
+::
+
+    species[0,0,0].density
+    species[0,0,0].flux
+
+.. [5]
+   http://www.paraview.org/
+.. [6]
+   http://code.enthought.com/projects/mayavi/
+
 .. |image_oif_streching| image:: figures/stretching.png
 .. |image_oif_bending| image:: figures/bending.png
 .. |image_oif_area| image:: figures/arealocal.png
 .. |image_oif_volume| image:: figures/volume.png
+
+.. _Particle polarizability with thermalized cold Drude oszillators:
+
+Particle polarizability with thermalized cold Drude oszillators
+---------------------------------------------------------------
+
+.. note::
+
+    Requires features THOLE, P3M, LANGEVIN_PER_PARTICLE.
+
+.. note::
+
+    Drude is only available for the P3M electrostatics solver and the Langevin thermostat.
+
+**Thermalized cold drude oszillators** can be used to simulate
+polarizable particles.  The basic idea is to add a 'charge-on-a-spring' (Drude
+charge) to a particle (Drude core) that mimics an electron cloud which can be
+elongated to create a dynamically inducible dipole. The energetic minimum of
+the Drude charge can be obtained self-consistently, which requires several
+iterations of the system's electrostatics and is usually considered
+computational expensive. However, with thermalized cold Drude oszillators, the
+distance between Drude charge and core is coupled to a thermostat so that it
+fluctuates around the SCF solution. This thermostat is kept at a low
+temperature compared to the global temperature to minimize the heat flow into
+the system. A second thermostat is applied on the centre of mass of the Drude
+charge + core system to maintain the global temperature. The downside of this
+approach is that usually a smaller time step has to be used to resolve the high
+frequency oscillations of the spring to get a stable system.
+
+In |es|, the basic ingredients to simulate such a system are split into three bonds:
+
+1. A :ref:`Harmonic Bond` to account for the spring.
+2. A :ref:`Thermalized distance bond` with a cold thermostat on the Drude-Core distance.
+3. A :ref:`Subtract P3M short-range bond` to cancel the electrostatic interaction between Drude and core particles.
+
+The system-wide thermostat has to be applied to the centre of mass and not to
+the core particle directly. Therefore, the particles have to be excluded from
+global thermostating.  With ``LANGEVIN_PER_PARTICLE`` enabled, we set the
+temperature and friction coefficient of the Drude complex to zero, which allows
+to still use a global Langevin thermostat for non-polarizable particles.
+
+As the Drude charge should not alter the *charge* or *mass* of the Drude
+complex, both properties have to be subtracted from the core when adding the
+drude particle. In the following convention, we assume that the Drude charge is
+**always negative**. It is calculated via the spring constant :math:`k` and
+polarizability :math:`\alpha` (in units of inverse volume) with :math:`q_d =
+-\sqrt{k \cdot \alpha}`.
+
+The following helper method takes into account all the preceding considerations
+and can be used to convenientely add a drude particle to a given core particle.
+As it also adds the first two bonds between Drude and core, these bonds have to
+be created beforehand::
+
+    from drude_functions import *
+    add_drude_particle_to_core(<system>, <harmonic_bond>, <thermalized_bond>, <core particle>, <id drude>, <type drude>, <alpha>, <mass drude>, <coulomb_prefactor>, <thole damping>, <verbose>)
+
+The arguments of the helper function are:
+    * <system>: The espressomd.System().
+    * <harmonic_bond>: The harmonic bond of the charge-on-a-spring. This is
+      added between core and newly generated Drude particle 
+    * <thermalized_bond>: The thermalized distance bond for the cold and hot
+      thermostats.
+    * <core particle>: The core particle on which the drude particle is added.
+    * <id drude>: The user-defined id of the drude particle that is created.
+    * <type drude>: The user-defined type of the drude particle. 
+      Each drude particle of each complex should have an
+      individual type (e.g. in an ionic system with Anions (type 0) and Cations
+      (type 1), two new, individual Drude types have to be assigned).
+    * <alpha>: The polarizability volume.
+    * <coulomb_prefactor>: The coulomb prefactor of the system. Used to
+      calculate the drude charge from the polarizability and the spring constant
+      of the drude bond.  
+    * <thole damping>: (optional) An individual thole damping parameter for the
+      core-drude pair. Only relevant if thole damping is used (defaults to 2.6).
+    * <verbose>: (bool, optional) Prints out information about the added Drude
+      particles (default: False)
+
+What is still missing is the short-range exclusion bond between all Drude-core pairs.
+One bond type of this kind is needed per Drude type. The above helper function also 
+tracks particle types, ids and charges of Drude and core particles, so a simple call of
+another helper function:: 
+
+    drude_helpers.setup_and_add_drude_exclusion_bonds(S)
+
+will use this data to create a :ref:`Subtract P3M short-range bond` per Drude type
+and set it up it between all Drude and core particles collected in calls of ``add_drude_particle_to_core()``.
+
+.. _Canceling intramolecular electrostatics:
+
+Canceling intramolecular electrostatics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Note that for polarizable **molecules** (i.e. connected particles, coarse grained
+models etc.) with partial charges on the molecule sites, the drude charges will
+have electrostatic interaction with other cores of the molecule. Often, this
+is unwanted, as it might be already part of the force-field (via. partial
+charges or parametrization of the covalent bonds). Without any further
+measures, the elongation of the drude particles will be greatly affected be the
+close-by partial charges of the molecule. To prevent this, one has to cancel
+the interaction of the drude charge with the partial charges of the cores
+within the molecule. This can be done with special bonds that subtracts the P3M
+short-range interaction of the charge portion `q_d q_{partial}`. This ensures
+that only the *dipolar interaction* inside the molecule remains. It should be
+considered that the error of this approximation increases with the share of the
+long-range part of the electrostatic interaction. Two helper methods assist
+with setting up this exclusion. If used, they have to be called
+after all drude particles are added to the system::
+
+    setup_intramol_exclusion_bonds(<system>, <molecule drude types>, <molecule core types>, <molecule core partial charges>, <verbose>)
+
+This function creates the requires number of bonds which are later added to the
+particles. It has to be called only once. In a molecule with `N` polarizable
+sites, `N*(N-1)` bond types are needed to cover all the combinations.
+Parameters are:
+
+    * <system>: The espressomd.System().
+    * <molecule drude types>: List of the drude types within the molecule.
+    * <molecule core types>: List of the core types within the molecue that have partial charges.
+    * <molecule core partial charges>: List of the partial charges on the cores.
+    * <verbose>: (bool, optional) Prints out information about the created bonds (default: False)
+
+After setting up the bonds, one has to add them to each molecule with the
+following method::
+
+    add_intramol_exclusion_bonds(<system>, <drude ids>, <core ids>, <verbose>)
+
+This method has to be called for all molecules and needs the following parameters:
+
+    * <system>: The espressomd.System().
+    * <drude ids>: The ids of the drude particles within one molecule.
+    * <core ids>: The ids of the core particles within one molecule.
+    * <verbose>: (bool, optional) Prints out information about the added bonds (default: False)
+
+Internally, this is done with the bond descibed in  :ref:`Subtract P3M short-range bond`, that
+simply adds the p3m shortrange pair-force of scale `- q_d q_{partial}` the to
+bonded particles.
+
+.. seealso:: 
+
+    Often used in conjunction with Drude oscillators is the :ref:`Thole correction`
+    to damp dipole-dipole interactions on short distances. It is available in |es| 
+    as a non-bonded interaction.
