@@ -6,7 +6,7 @@
 #include "utils/Histogram.hpp"
 
 BOOST_AUTO_TEST_CASE(histogram) {
-  std::array<size_t, 2> n_bins{10, 10};
+  std::array<size_t, 2> n_bins{{10, 10}};
   std::array<std::pair<double, double>, 2> limits{
       {std::make_pair(1.0, 20.0), std::make_pair(5.0, 10.0)}};
   size_t n_dims_data = 2;
