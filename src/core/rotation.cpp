@@ -45,6 +45,9 @@
 #include "particle_data.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
+#ifdef BROWNIAN_DYNAMICS
+#include "brownian_inline.hpp"
+#endif // BROWNIAN_DYNAMICS
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -352,8 +355,8 @@ void convert_torques_propagate_omega() {
 
 #ifdef BROWNIAN_DYNAMICS
     if (thermo_switch & THERMO_BROWNIAN) {
-      bd_drag_vel_rot(&p,0.5 * time_step);
-      bd_random_walk_vel_rot(&p,0.5 * time_step);
+      bd_drag_vel_rot(p,0.5 * time_step);
+      bd_random_walk_vel_rot(p,0.5 * time_step);
     } else
 #endif // BROWNIAN_DYNAMICS
     {
@@ -498,7 +501,7 @@ void convert_vel_space_to_body(const Particle *p, double *vel_body) {
                 A[2 + 3 * 2] * p->m.v[2];
 }
 
-void convert_vec_space_to_body(Particle *p, double *v, double *res) {
+void convert_vec_space_to_body(Particle *p, double const *v, double *res) {
   double A[9];
   define_rotation_matrix(p, A);
 
@@ -507,7 +510,7 @@ void convert_vec_space_to_body(Particle *p, double *v, double *res) {
   res[2] = A[2 + 3 * 0] * v[0] + A[2 + 3 * 1] * v[1] + A[2 + 3 * 2] * v[2];
 }
 
-void convert_vec_body_to_space(Particle *p, double *v,double* res)
+void convert_vec_body_to_space(Particle *p, double const *v,double* res)
 {
   double A[9];
   define_rotation_matrix(p, A);
@@ -545,12 +548,12 @@ void rotate_particle(Particle *p, double *aSpaceFrame, double phi) {
   for (int i = 0; i < 3; i++)
     a[i] /= l;
 
-  double q[4];
-  q[0] = cos(phi / 2);
-  double tmp = sin(phi / 2);
-  q[1] = tmp * a[0];
-  q[2] = tmp * a[1];
-  q[3] = tmp * a[2];
+  double q[] = {
+        cos(phi / 2),
+        sin(phi / 2) * a[0],
+        sin(phi / 2) * a[1],
+        sin(phi / 2) * a[2]
+  };
 
   // Normalize
   normalize_quaternion(q);
@@ -589,12 +592,12 @@ void rotate_particle_body(Particle* p, double* a, double phi)
 
 #endif
 
-  double q[4];
-  q[0]=cos(phi/2);
-  double tmp=sin(phi/2);
-  q[1]=tmp*a[0];
-  q[2]=tmp*a[1];
-  q[3]=tmp*a[2];
+  double q[] = {
+      cos(phi / 2),
+      sin(phi / 2) * a[0],
+      sin(phi / 2) * a[1],
+      sin(phi / 2) * a[2]
+  };
 
   // Normalize
   normalize_quaternion(q);
@@ -615,7 +618,7 @@ void rotate_particle_body(Particle* p, double* a, double phi)
 void rotate_particle_body_j(Particle* p, int j, double phi)
 {
   double u_dphi[3] = {0.0, 0.0, 0.0};
-  if (phi) {
+  if (phi != 0.0) {
     u_dphi[j] = 1.0;
     rotate_particle_body(p, u_dphi, phi);
   }
@@ -624,25 +627,32 @@ void rotate_particle_body_j(Particle* p, int j, double phi)
 #ifdef BROWNIAN_DYNAMICS
 
 /** Propagate quaternions: viscous drag driven by conservative torques.*/
-void bd_drag_rot(Particle *p, double dt) {
+/*********************************************************/
+/** \name bd_drag_rot */
+/*********************************************************/
+/**(An analogy of eq. (14.39) T. Schlick, https://doi.org/10.1007/978-1-4419-6351-2 (2010))
+ * @param &p              Reference to the particle (Input)
+ * @param dt              Time interval (Input)
+ */
+void bd_drag_rot(Particle &p, double dt) {
   double a[3];
   double dphi[3];
   Thermostat::GammaType local_gamma;
 
   a[0] = a[1] = a[2] = 1.0;
 #ifdef ROTATION_PER_PARTICLE
-  if (!p->p.rotation)
+  if (!p.p.rotation)
     return;
-  if (!(p->p.rotation & 2))
+  if (!(p.p.rotation & 2))
     a[0] = 0.0;
-  if (!(p->p.rotation & 4))
+  if (!(p.p.rotation & 4))
     a[1] = 0.0;
-  if (!(p->p.rotation & 8))
+  if (!(p.p.rotation & 8))
     a[2] = 0.0;
 #endif
 
-  if(p->p.gamma_rot >= Thermostat::GammaType{}) {
-    local_gamma = p->p.gamma_rot;
+  if(p.p.gamma_rot >= Thermostat::GammaType{}) {
+    local_gamma = p.p.gamma_rot;
   } else {
     local_gamma = langevin_gamma_rotation;
   }
@@ -650,14 +660,14 @@ void bd_drag_rot(Particle *p, double dt) {
   dphi[0] = dphi[1] = dphi[2] = 0.0;
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
-    if (!(p->p.ext_flag & COORD_FIXED(j)))
+    if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
     {
       // only a conservative part of the torque is used here
 #ifndef PARTICLE_ANISOTROPY
-      dphi[j] = a[j] * p->f.torque[j] * dt / (local_gamma);
+      dphi[j] = a[j] * p.f.torque[j] * dt / (local_gamma);
 #else
-      dphi[j] = a[j] * p->f.torque[j] * dt / (local_gamma[j]);
+      dphi[j] = a[j] * p.f.torque[j] * dt / (local_gamma[j]);
 #endif // ROTATIONAL_INERTIA
       //rotate_particle_body_j(p, j, dphi[j]);
     }
@@ -668,67 +678,82 @@ void bd_drag_rot(Particle *p, double dt) {
   double dphi_u[3];
   if (dphi_m) {
     for (int j = 0; j < 3; j++) dphi_u[j] = dphi[j] / dphi_m;
-    rotate_particle_body(p, dphi_u, dphi_m);
+    rotate_particle_body(&(p), dphi_u, dphi_m);
   }
 }
 
 /** Set the terminal angular velocity driven by the conservative torques drag.*/
-void bd_drag_vel_rot(Particle *p, double dt) {
+/*********************************************************/
+/** \name bd_drag_vel_rot */
+/*********************************************************/
+/**(An analogy of the 1st term of the eq. (14.34) T. Schlick, https://doi.org/10.1007/978-1-4419-6351-2 (2010))
+ * @param &p              Reference to the particle (Input)
+ * @param dt              Time interval (Input)
+ */
+void bd_drag_vel_rot(Particle &p, double dt) {
   double a[3];
   Thermostat::GammaType local_gamma;
 
   a[0] = a[1] = a[2] = 1.0;
 #ifdef ROTATION_PER_PARTICLE
-  if (!p->p.rotation)
+  if (!p.p.rotation)
     return;
-  if (!(p->p.rotation & 2))
+  if (!(p.p.rotation & 2))
     a[0] = 0.0;
-  if (!(p->p.rotation & 4))
+  if (!(p.p.rotation & 4))
     a[1] = 0.0;
-  if (!(p->p.rotation & 8))
+  if (!(p.p.rotation & 8))
     a[2] = 0.0;
 #endif
 
-  if(p->p.gamma_rot >= Thermostat::GammaType{}) {
-    local_gamma = p->p.gamma_rot;
+  if(p.p.gamma_rot >= Thermostat::GammaType{}) {
+    local_gamma = p.p.gamma_rot;
   } else {
     local_gamma = langevin_gamma_rotation;
   }
 
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
-    if (p->p.ext_flag & COORD_FIXED(j)) {
-      p->m.omega[j] = 0.0;
+    if (p.p.ext_flag & COORD_FIXED(j)) {
+      p.m.omega[j] = 0.0;
     } else
 #endif
     {
       // only conservative part of the force is used here
       // NOTE: velocity is assigned here and propagated by thermal part further on top of it
 #ifndef PARTICLE_ANISOTROPY
-      p->m.omega[j] = a[j] * p->f.torque[j] / (local_gamma);
+      p.m.omega[j] = a[j] * p.f.torque[j] / (local_gamma);
 #else
-      p->m.omega[j] = a[j] * p->f.torque[j] / (local_gamma[j]);
+      p.m.omega[j] = a[j] * p.f.torque[j] / (local_gamma[j]);
 #endif // ROTATIONAL_INERTIA
     }
   }
 }
 
 /** Propagate the quaternions: random walk part.*/
-void bd_random_walk_rot(Particle *p, double dt) {
+/*********************************************************/
+/** \name bd_random_walk_rot */
+/*********************************************************/
+/**(An analogy of eq. (14.37) T. Schlick, https://doi.org/10.1007/978-1-4419-6351-2 (2010))
+ * @param &p              Reference to the particle (Input)
+ * @param dt              Time interval (Input)
+ */
+void bd_random_walk_rot(Particle &p, double dt) {
   double a[3];
   extern Thermostat::GammaType brown_sigma_pos_rotation_inv;
+  extern Thermostat::GammaType brown_gammatype_nan;
   // first, set defaults
   Thermostat::GammaType brown_sigma_pos_temp_inv = brown_sigma_pos_rotation_inv;
 
   a[0] = a[1] = a[2] = 1.0;
 #ifdef ROTATION_PER_PARTICLE
-  if (!p->p.rotation)
+  if (!p.p.rotation)
     return;
-  if (!(p->p.rotation & 2))
+  if (!(p.p.rotation & 2))
     a[0] = 0.0;
-  if (!(p->p.rotation & 4))
+  if (!(p.p.rotation & 4))
     a[1] = 0.0;
-  if (!(p->p.rotation & 8))
+  if (!(p.p.rotation & 8))
     a[2] = 0.0;
 #endif
 
@@ -736,28 +761,27 @@ void bd_random_walk_rot(Particle *p, double dt) {
 #ifdef LANGEVIN_PER_PARTICLE
   auto const constexpr langevin_temp_coeff = 2.0;
 
-  if(p->p.gamma_rot >= Thermostat::GammaType{})
-  {
+  if(p.p.gamma_rot >= Thermostat::GammaType{}) {
     // Is a particle-specific temperature also specified?
-    if(p->p.T >= 0.)
+    if(p.p.T >= 0.)
     {
-      if (p->p.T > 0.0)
-        brown_sigma_pos_temp_inv = sqrt(p->p.gamma_rot / (langevin_temp_coeff * p->p.T) );
-      else
-        brown_sigma_pos_temp_inv = -1.0 * sqrt(p->p.gamma_rot); // just an indication of the infinity; negative sign has no sense here
+      if (p.p.T > 0.0) {
+        brown_sigma_pos_temp_inv = sqrt(p.p.gamma_rot / (langevin_temp_coeff * p.p.T) );
+      } else {
+        brown_sigma_pos_temp_inv = brown_gammatype_nan; // just an indication of the infinity
+      }
     } else
     // Default temperature but particle-specific gamma
-      brown_sigma_pos_temp_inv = sqrt(p->p.gamma_rot / (langevin_temp_coeff * temperature));
+      brown_sigma_pos_temp_inv = sqrt(p.p.gamma_rot / (langevin_temp_coeff * temperature));
   } // particle specific gamma
-  else
-  {
+  else {
     // No particle-specific gamma, but is there particle-specific temperature
-    if(p->p.T >= 0.)
-    {
-      if (p->p.T > 0.0)
-        brown_sigma_pos_temp_inv = sqrt(langevin_gamma_rotation / (langevin_temp_coeff * p->p.T));
-      else
-        brown_sigma_pos_temp_inv = -1.0 * sqrt(langevin_gamma_rotation); // just an indication of the infinity; negative sign has no sense here
+    if(p.p.T >= 0.) {
+      if (p.p.T > 0.0) {
+        brown_sigma_pos_temp_inv = sqrt(langevin_gamma_rotation / (langevin_temp_coeff * p.p.T));
+      } else {
+        brown_sigma_pos_temp_inv = brown_gammatype_nan; // just an indication of the infinity
+      }
     } else {
     // Defaut values for both
       brown_sigma_pos_temp_inv = brown_sigma_pos_rotation_inv;
@@ -768,28 +792,37 @@ void bd_random_walk_rot(Particle *p, double dt) {
   double dphi[3];
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
-    if (!(p->p.ext_flag & COORD_FIXED(j)))
+    if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
     {
       dphi[0] = dphi[1] = dphi[2] = 0.0;
 #ifndef PARTICLE_ANISOTROPY
-      if (brown_sigma_pos_temp_inv > 0.0)
+      if (brown_sigma_pos_temp_inv > 0.0) {
         dphi[j] = a[j] * Thermostat::noise_g() * (1.0 / brown_sigma_pos_temp_inv) * sqrt(dt);
-      else
+      } else {
         dphi[j] = 0.0;
+      }
 #else
-      if (brown_sigma_pos_temp_inv[j] > 0.0)
+      if (brown_sigma_pos_temp_inv[j] > 0.0) {
         dphi[j] = a[j] * Thermostat::noise_g() * (1.0 / brown_sigma_pos_temp_inv[j]) * sqrt(dt);
-      else
+      } else {
         dphi[j] = 0.0;
+      }
 #endif // ROTATIONAL_INERTIA
-      rotate_particle_body_j(p, j, dphi[j]);
+      rotate_particle_body_j(&(p), j, dphi[j]);
     }
   }
 }
 
 /** Determine the angular velocities: random walk part.*/
-void bd_random_walk_vel_rot(Particle *p, double dt) {
+/*********************************************************/
+/** \name bd_random_walk_vel_rot */
+/*********************************************************/
+/**(An analogy of eq. (10.2.16) N. Pottier, https://doi.org/10.1007/s10955-010-0114-6 (2010))
+ * @param &p              Reference to the particle (Input)
+ * @param dt              Time interval (Input)
+ */
+void bd_random_walk_vel_rot(Particle &p, double dt) {
   double a[3];
   extern double brown_sigma_vel_rotation;
   // first, set defaults
@@ -797,13 +830,13 @@ void bd_random_walk_vel_rot(Particle *p, double dt) {
 
   a[0] = a[1] = a[2] = 1.0;
 #ifdef ROTATION_PER_PARTICLE
-  if (!p->p.rotation)
+  if (!p.p.rotation)
     return;
-  if (!(p->p.rotation & 2))
+  if (!(p.p.rotation & 2))
     a[0] = 0.0;
-  if (!(p->p.rotation & 4))
+  if (!(p.p.rotation & 4))
     a[1] = 0.0;
-  if (!(p->p.rotation & 8))
+  if (!(p.p.rotation & 8))
     a[2] = 0.0;
 #endif
 
@@ -811,8 +844,8 @@ void bd_random_walk_vel_rot(Particle *p, double dt) {
 #ifdef LANGEVIN_PER_PARTICLE
   auto const constexpr langevin_temp_coeff = 1.0;
   // Is a particle-specific temperature specified?
-  if (p->p.T >= 0.) {
-    brown_sigma_vel_temp = sqrt(langevin_temp_coeff * p->p.T);
+  if (p.p.T >= 0.) {
+    brown_sigma_vel_temp = sqrt(langevin_temp_coeff * p.p.T);
   } else {
     brown_sigma_vel_temp = brown_sigma_vel_rotation;
   }
@@ -820,11 +853,11 @@ void bd_random_walk_vel_rot(Particle *p, double dt) {
 
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
-    if (!(p->p.ext_flag & COORD_FIXED(j)))
+    if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
     {
       // velocity is added here. It is already initialized in the terminal drag part.
-      p->m.omega[j] += a[j] * brown_sigma_vel_temp * Thermostat::noise_g() / sqrt(p->p.rinertia[j]);
+      p.m.omega[j] += a[j] * brown_sigma_vel_temp * Thermostat::noise_g() / sqrt(p.p.rinertia[j]);
     }
   }
 }

@@ -59,6 +59,9 @@
 #include "virtual_sites.hpp"
 #include "npt.hpp"
 #include "collision.hpp"
+#ifdef BROWNIAN_DYNAMICS
+#include "brownian_inline.hpp"
+#endif // BROWNIAN_DYNAMICS
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -137,15 +140,13 @@ void finalize_p_inst_npt();
 
 #ifdef BROWNIAN_DYNAMICS
 
-/** Propagate position: viscous drag driven by conservative forces.*/
-void bd_drag(Particle *p, double dt);
 /** Set the terminal velocity driven by the conservative forces drag.*/
-void bd_drag_vel(Particle *p, double dt);
+void bd_drag_vel(Particle &p, double dt);
 
 /** Propagate position: random walk part.*/
-void bd_random_walk(Particle *p, double dt);
+void bd_random_walk(Particle &p, double dt);
 /** Thermalize velocity: random walk part.*/
-void bd_random_walk_vel(Particle *p, double dt);
+void bd_random_walk_vel(Particle &p, double dt);
 
 #endif // BROWNIAN_DYNAMICS
 
@@ -678,8 +679,8 @@ void rescale_forces_propagate_vel() {
 #endif
 #ifdef BROWNIAN_DYNAMICS
       if (thermo_switch & THERMO_BROWNIAN) {
-        bd_drag_vel(&p,0.5 * time_step);
-        bd_random_walk_vel(&p,0.5 * time_step);
+        bd_drag_vel(p,0.5 * time_step);
+        bd_random_walk_vel(p,0.5 * time_step);
       }
 #endif // BROWNIAN_DYNAMICS
       for (int j = 0; j < 3; j++) {
@@ -910,10 +911,10 @@ void propagate_vel() {
 #endif
 #ifdef BROWNIAN_DYNAMICS
     if (thermo_switch & THERMO_BROWNIAN) {
-      bd_drag_vel(&p,0.5 * time_step);
-      bd_drag_vel_rot(&p,0.5 * time_step);
-      bd_random_walk_vel(&p,0.5 * time_step);
-      bd_random_walk_vel_rot(&p,0.5 * time_step);
+      bd_drag_vel(p,0.5 * time_step);
+      bd_drag_vel_rot(p,0.5 * time_step);
+      bd_random_walk_vel(p,0.5 * time_step);
+      bd_random_walk_vel_rot(p,0.5 * time_step);
     }
 #endif // BROWNIAN_DYNAMICS
       for (int j = 0; j < 3; j++) {
@@ -982,10 +983,10 @@ void propagate_pos() {
 #endif
 #ifdef BROWNIAN_DYNAMICS
       if (thermo_switch & THERMO_BROWNIAN) {
-        bd_drag(&p, time_step);
-        bd_drag_rot(&p, time_step);
-        bd_random_walk(&p, time_step);
-        bd_random_walk_rot(&p, time_step);
+        bd_drag(p, time_step);
+        bd_drag_rot(p, time_step);
+        bd_random_walk(p, time_step);
+        bd_random_walk_rot(p, time_step);
       }
 #endif // BROWNIAN_DYNAMICS
       for (int j = 0; j < 3; j++) {
@@ -1041,14 +1042,14 @@ void propagate_vel_pos() {
 #endif
 #ifdef BROWNIAN_DYNAMICS
       if (thermo_switch & THERMO_BROWNIAN) {
-        bd_drag_vel(&p,0.5 * time_step);
-        bd_drag_vel_rot(&p,0.5 * time_step);
-        bd_random_walk_vel(&p,0.5 * time_step);
-        bd_random_walk_vel_rot(&p,0.5 * time_step);
-        bd_drag(&p, time_step);
-        bd_drag_rot(&p, time_step);
-        bd_random_walk(&p, time_step);
-        bd_random_walk_rot(&p, time_step);
+        bd_drag_vel(p,0.5 * time_step);
+        bd_drag_vel_rot(p,0.5 * time_step);
+        bd_random_walk_vel(p,0.5 * time_step);
+        bd_random_walk_vel_rot(p,0.5 * time_step);
+        bd_drag(p, time_step);
+        bd_drag_rot(p, time_step);
+        bd_random_walk(p, time_step);
+        bd_random_walk_rot(p, time_step);
       }
 #endif // BROWNIAN_DYNAMICS
       for (int j = 0; j < 3; j++) {
@@ -1320,96 +1321,90 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
 
 #ifdef BROWNIAN_DYNAMICS
 
-/** Propagate position: viscous drag driven by conservative forces.*/
-void bd_drag(Particle *p, double dt) {
-  Thermostat::GammaType local_gamma;
-
-  if(p->p.gamma >= Thermostat::GammaType{}) {
-    local_gamma = p->p.gamma;
-  } else {
-    local_gamma = langevin_gamma;
-  }
-
-  double scale_f = 0.5 * time_step * time_step / p->p.mass;
-  for (int j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
-    if (!(p->p.ext_flag & COORD_FIXED(j)))
-#endif
-    {
-      // scale_f is required to be aligned with rescaled forces
-      // only a conservative part of the force is used here
-#ifndef PARTICLE_ANISOTROPY
-      p->r.p[j] += p->f.f[j] * dt / (local_gamma * scale_f);
-#else
-      p->r.p[j] += p->f.f[j] * dt / (local_gamma[j] * scale_f);
-#endif // PARTICLE_ANISOTROPY
-    }
-  }
-}
-
 /** Set the terminal velocity driven by the conservative forces drag.*/
-void bd_drag_vel(Particle *p, double dt) {
+/*********************************************************/
+/** \name bd_drag_vel */
+/*********************************************************/
+/**(Eq. (14.34) T. Schlick, https://doi.org/10.1007/978-1-4419-6351-2 (2010))
+ * @param &p              Reference to the particle (Input)
+ * @param dt              Time interval (Input)
+ */
+void bd_drag_vel(Particle &p, double dt) {
+  // The friction tensor Z from the eq. (14.31) of Schlick2010:
   Thermostat::GammaType local_gamma;
 
-  if(p->p.gamma >= Thermostat::GammaType{}) {
-    local_gamma = p->p.gamma;
+  if(p.p.gamma >= Thermostat::GammaType{}) {
+    local_gamma = p.p.gamma;
   } else {
     local_gamma = langevin_gamma;
   }
 
-  double scale_f = 0.5 * time_step * time_step / p->p.mass;
+  double scale_f = 0.5 * time_step * time_step / p.p.mass;
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
-    if (p->p.ext_flag & COORD_FIXED(j)) {
-      p->m.v[j] = 0.0;
+    if (p.p.ext_flag & COORD_FIXED(j)) {
+      p.m.v[j] = 0.0;
     } else
 #endif
     {
-      // here, the additional time_step is used only to align with Espresso default dimensionless model
+      // First (deterministic) term of the eq. (14.34) of Schlick2010 taking into account eq. (14.35).
+      // here, the additional time_step is used only to align with ESPResSo default dimensionless model
       // scale_f is required to be aligned with rescaled forces
       // only conservative part of the force is used here
       // NOTE: velocity is assigned here and propagated by thermal part further on top of it
 #ifndef PARTICLE_ANISOTROPY
-      p->m.v[j] = p->f.f[j] * time_step / (local_gamma * scale_f);
+      p.m.v[j] = p.f.f[j] * time_step / (local_gamma * scale_f);
 #else
-      p->m.v[j] = p->f.f[j] * time_step / (local_gamma[j] * scale_f);
+      p.m.v[j] = p.f.f[j] * time_step / (local_gamma[j] * scale_f);
 #endif // PARTICLE_ANISOTROPY
     }
   }
 }
 
 /** Propagate the positions: random walk part.*/
-void bd_random_walk(Particle *p, double dt) {
+/*********************************************************/
+/** \name bd_drag_vel */
+/*********************************************************/
+/**(Eq. (14.37) T. Schlick, https://doi.org/10.1007/978-1-4419-6351-2 (2010))
+ * @param &p              Reference to the particle (Input)
+ * @param dt              Time interval (Input)
+ */
+void bd_random_walk(Particle &p, double dt) {
+  // Position dispersion is defined by the second eq. (14.38) of Schlick2010 taking into account eq. (14.35).
+  // Its time interval factor will be added at the end of this function.
+  // Its square root is the standard deviation. A multiplicative inverse of the position standard deviation:
   extern Thermostat::GammaType brown_sigma_pos_inv;
+  // Just a NAN setter, technical variable:
+  extern Thermostat::GammaType brown_gammatype_nan;
   // first, set defaults
-  Thermostat::GammaType brown_sigma_pos_temp_inv = brown_sigma_pos_inv;;
+  Thermostat::GammaType brown_sigma_pos_temp_inv = brown_sigma_pos_inv;
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
   auto const constexpr langevin_temp_coeff = 2.0;
 
-  if(p->p.gamma >= Thermostat::GammaType{})
-  {
+  if(p.p.gamma >= Thermostat::GammaType{}) {
     // Is a particle-specific temperature also specified?
-    if(p->p.T >= 0.)
+    if(p.p.T >= 0.)
     {
-      if (p->p.T > 0.0)
-        brown_sigma_pos_temp_inv = sqrt(p->p.gamma / (langevin_temp_coeff * p->p.T));
-      else
-        brown_sigma_pos_temp_inv = -1.0 * sqrt(p->p.gamma); // just an indication of the infinity; negative sign has no sense here
+      if (p.p.T > 0.0) {
+        brown_sigma_pos_temp_inv = sqrt(p.p.gamma / (langevin_temp_coeff * p.p.T));
+      } else {
+        brown_sigma_pos_temp_inv = brown_gammatype_nan; // just an indication of the infinity
+      }
     } else
     // Default temperature but particle-specific gamma
-      brown_sigma_pos_temp_inv = sqrt(p->p.gamma / (langevin_temp_coeff * temperature));
+      brown_sigma_pos_temp_inv = sqrt(p.p.gamma / (langevin_temp_coeff * temperature));
   } // particle specific gamma
   else
   {
     // No particle-specific gamma, but is there particle-specific temperature
-    if(p->p.T >= 0.)
-    {
-      if(p->p.T > 0.0)
-        brown_sigma_pos_temp_inv = sqrt(langevin_gamma / (langevin_temp_coeff * p->p.T));
-      else
-        brown_sigma_pos_temp_inv = -1.0 * sqrt(langevin_gamma); // just an indication of the infinity; negative sign has no sense here
+    if(p.p.T >= 0.) {
+      if(p.p.T > 0.0) {
+        brown_sigma_pos_temp_inv = sqrt(langevin_gamma / (langevin_temp_coeff * p.p.T));
+      } else {
+        brown_sigma_pos_temp_inv = brown_gammatype_nan; // just an indication of the infinity
+      }
     } else {
     // Defaut values for both
       brown_sigma_pos_temp_inv = brown_sigma_pos_inv;
@@ -1417,7 +1412,7 @@ void bd_random_walk(Particle *p, double dt) {
   }
 #endif /* LANGEVIN_PER_PARTICLE */
 
-  int aniso_flag = 1; // particle anisotropy flag
+  bool aniso_flag = true; // particle anisotropy flag
 
 #ifdef PARTICLE_ANISOTROPY
   // Particle frictional isotropy check.
@@ -1429,51 +1424,52 @@ void bd_random_walk(Particle *p, double dt) {
   double delta_pos_body[3] = { 0.0, 0.0, 0.0 }, delta_pos_lab[3] = { 0.0, 0.0, 0.0 };
 #endif
 
+  // Eq. (14.37) is factored by the Gaussian noise (12.22) with its squared magnitude defined in the second eq. (14.38), Schlick2010.
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
-    if (!(p->p.ext_flag & COORD_FIXED(j)))
+    if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
     {
 #ifndef PARTICLE_ANISOTROPY
-      if (brown_sigma_pos_temp_inv > 0.0)
+      if (brown_sigma_pos_temp_inv > 0.0) {
         delta_pos_body[j] = (1.0 / brown_sigma_pos_temp_inv) * sqrt(dt) * Thermostat::noise_g();
-      else
+      } else {
         delta_pos_body[j] = 0.0;
+      }
 #else
-      if (brown_sigma_pos_temp_inv[j] > 0.0)
+      if (brown_sigma_pos_temp_inv[j] > 0.0) {
         delta_pos_body[j] = (1.0 / brown_sigma_pos_temp_inv[j]) * sqrt(dt) * Thermostat::noise_g();
-      else
+      } else {
         delta_pos_body[j] = 0.0;
+      }
 #endif // PARTICLE_ANISOTROPY
     }
   }
 
   if (aniso_flag) {
-    convert_vec_body_to_space(p, delta_pos_body, delta_pos_lab);
+    convert_vec_body_to_space(&(p), delta_pos_body, delta_pos_lab);
+  }
 
-    for (int j = 0; j < 3; j++) {
+  for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
-      if (!(p->p.ext_flag & COORD_FIXED(j)))
+    if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
-      {
-        p->r.p[j] += delta_pos_lab[j];
-      }
-    }
-  } else {
-    // in order to save a calculation performance:
-    for (int j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
-      if (!(p->p.ext_flag & COORD_FIXED(j)))
-#endif
-      {
-        p->r.p[j] += delta_pos_body[j];
-      }
+    {
+        p.r.p[j] += aniso_flag ? delta_pos_lab[j] : delta_pos_body[j];
     }
   }
 }
 
 /** Determine the velocities: random walk part.*/
-void bd_random_walk_vel(Particle *p, double dt) {
+/*********************************************************/
+/** \name bd_random_walk_vel */
+/*********************************************************/
+/**(Eq. (10.2.16) N. Pottier, https://doi.org/10.1007/s10955-010-0114-6 (2010))
+ * @param &p              Reference to the particle (Input)
+ * @param dt              Time interval (Input)
+ */
+void bd_random_walk_vel(Particle &p, double dt) {
+  // Just a square root of kT, see eq. (10.2.17) and comments in 2 paragraphs afterwards, Pottier2010
   extern double brown_sigma_vel;
   // first, set defaults
   double brown_sigma_vel_temp = brown_sigma_vel;
@@ -1482,9 +1478,9 @@ void bd_random_walk_vel(Particle *p, double dt) {
 #ifdef LANGEVIN_PER_PARTICLE
   auto const constexpr langevin_temp_coeff = 1.0;
   // Is a particle-specific temperature specified?
-  // here, the time_step is used only to align with Espresso default dimensionless model
-  if (p->p.T >= 0.) {
-    brown_sigma_vel_temp = sqrt(langevin_temp_coeff * p->p.T) * time_step;
+  // here, the time_step is used only to align with ESPResSo default dimensionless model
+  if (p.p.T >= 0.) {
+    brown_sigma_vel_temp = sqrt(langevin_temp_coeff * p.p.T) * time_step;
   } else {
     brown_sigma_vel_temp = brown_sigma_vel;
   }
@@ -1492,11 +1488,15 @@ void bd_random_walk_vel(Particle *p, double dt) {
 
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
-    if (!(p->p.ext_flag & COORD_FIXED(j)))
+    if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
     {
-      // velocity is added here. It is already initialized in the terminal drag part.
-      p->m.v[j] += brown_sigma_vel_temp * Thermostat::noise_g() / sqrt(p->p.mass);
+      // Random (heat) velocity is added here. It is already initialized in the terminal drag part.
+      // See eq. (10.2.16) taking into account eq. (10.2.18) and (10.2.29), Pottier2010.
+      // Note, that the Pottier2010 units system (see Eq. (10.1.1) there) has been adapted towards the ESPResSo and the referenced above Schlick2010 one,
+      // which is defined by the eq. (14.31) of Schlick2010. A difference is the mass factor to the friction tensor.
+      // The noise is Gaussian according to the convention at p. 237 (last paragraph), Pottier2010.
+      p.m.v[j] += brown_sigma_vel_temp * Thermostat::noise_g() / sqrt(p.p.mass);
     }
   }
 }
