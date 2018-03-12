@@ -43,6 +43,9 @@ struct AutoParameter {
   /* Exception types */
   struct WriteError {};
 
+  /* Tag types */
+  struct ReadOnly {};
+
   /**
    * @brief read-write parameter that is bound to an object
    *        with setter and getter that are member functions.
@@ -189,6 +192,17 @@ struct AutoParameter {
                 VariantType type = infer_type<R>(),
                 size_t length = infer_length<R>())
       : name(name), type(type), length(length), set(Utils::make_function(set)),
+        get(Utils::make_function(get)) {}
+
+  template <typename G,
+            /* Try to guess the type from the return type of the getter */
+            typename R = typename decltype(
+                Utils::make_function(std::declval<G>()))::result_type>
+  AutoParameter(std::string const &name, ReadOnly, G const &get,
+                VariantType type = infer_type<R>(),
+                size_t length = infer_length<R>())
+      : name(name), type(type), length(length),
+        set([](Variant const &) { throw WriteError{}; }),
         get(Utils::make_function(get)) {}
 
   /** The interface name. */
