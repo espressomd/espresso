@@ -654,7 +654,7 @@ class openGLLive(object):
             ptype_last = ptype
             ptype = int(self.particles['type'][pid])
 
-            # Only change material if type has changed, dragmode or material was resetted by arrows
+            # Only change material if type/charge has changed, dragmode or material was resetted by arrows
             if reset_material or dragging or not ptype == ptype_last:
                 radius = self.determine_radius(ptype)
 
@@ -666,13 +666,15 @@ class openGLLive(object):
                     glColor(color)
                 elif self.specs['particle_coloring'] == 'auto':
                     # Color auto: Charge then Type
-                    if self.particles['charge'][pid] != 0:
+                    if self.has_particle_data['charge'] and self.particles['charge'][pid] != 0:
                         color = self.color_by_charge(self.particles['charge'][pid])
+                        reset_material = True
                     else:
                         color = self.modulo_indexing(
                             self.specs['particle_type_colors'], ptype)
                 elif self.specs['particle_coloring'] == 'charge':
                     color = self.color_by_charge(self.particles['charge'][pid])
+                    reset_material = True
                 elif self.specs['particle_coloring'] == 'type':
                     color = self.modulo_indexing(
                         self.specs['particle_type_colors'], ptype)
@@ -1137,7 +1139,6 @@ class openGLLive(object):
         glutInitWindowSize(self.specs['window_size'][
                            0], self.specs['window_size'][1])
 
-        # glutCreateWindow(bytes(self.specs['name'], encoding='ascii'))
         glutCreateWindow(b"ESPResSo visualization")
 
         glClearColor(self.specs['background_color'][0], self.specs[
@@ -1147,8 +1148,8 @@ class openGLLive(object):
 
         glEnable(GL_BLEND)
 
-        glEnable(GL_CULL_FACE)
-        glCullFace(GL_BACK)
+        #glEnable(GL_CULL_FACE)
+        #glCullFace(GL_BACK)
 
         glLineWidth(2.0)
         glutIgnoreKeyRepeat(1)
