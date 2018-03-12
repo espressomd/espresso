@@ -46,7 +46,6 @@
 #include "maggs.hpp"
 #include "minimize_energy.hpp"
 #include "nemd.hpp"
-#include "observables.hpp"
 #include "accumulators.hpp"
 #include "p3m.hpp"
 #include "particle_data.hpp"
@@ -475,6 +474,12 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #ifdef VALGRIND_INSTRUMENTATION
   CALLGRIND_STOP_INSTRUMENTATION;
 #endif
+
+  /* Steepest descent operatates on unscaled forces,
+     so we have to scale them back now. */
+  if(integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
+    rescale_forces();
+  }
 
   /* verlet list statistics */
   if (n_verlet_updates > 0)
@@ -967,7 +972,6 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
 
   /* perform integration */
   if (!Correlators::auto_update_enabled() &&
-      !Observables::auto_update_enabled() &&
       !Accumulators::auto_update_enabled()) {
     if (mpi_integrate(n_steps, reuse_forces))
       return ES_ERROR;
@@ -976,13 +980,8 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
       if (mpi_integrate(1, reuse_forces))
         return ES_ERROR;
       reuse_forces = 1;
-      Observables::auto_update();
       Correlators::auto_update();
       Accumulators::auto_update();
-
-      if (Observables::auto_write_enabled()) {
-        Observables::auto_write();
-      }
     }
     if (n_steps == 0) {
       if (mpi_integrate(0, reuse_forces))

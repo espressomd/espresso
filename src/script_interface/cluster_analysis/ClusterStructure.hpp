@@ -31,7 +31,7 @@
 namespace ScriptInterface {
 namespace ClusterAnalysis {
 
-class ClusterStructure : public AutoParameters {
+class ClusterStructure : public AutoParameters<ClusterStructure> {
 public:
   ClusterStructure() : m_pc(nullptr) {
     add_parameters({

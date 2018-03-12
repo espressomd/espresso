@@ -786,9 +786,9 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
 
     auto part = get_particle_data(p_id);
 
-    particle_positions[3 * changed_particle_counter] = part->r.p[0];
-    particle_positions[3 * changed_particle_counter + 1] = part->r.p[1];
-    particle_positions[3 * changed_particle_counter + 2] = part->r.p[2];
+    particle_positions[3 * changed_particle_counter] = part.r.p[0];
+    particle_positions[3 * changed_particle_counter + 1] = part.r.p[1];
+    particle_positions[3 * changed_particle_counter + 2] = part.r.p[2];
     p_id_s_changed_particles.push_back(p_id);
     changed_particle_counter += 1;
   }
@@ -1707,7 +1707,7 @@ int ConstantpHEnsemble::do_reaction(int reaction_steps) {
                                                  // reaction is attempted.
       auto part = get_particle_data(random_p_id);
 
-      int type_of_random_p_id = part->p.type;
+      int type_of_random_p_id = part.p.type;
 
       // construct list of reactions with the above reactant type
       for (int reaction_i = 0; reaction_i < reactions.size(); reaction_i++) {

@@ -67,7 +67,9 @@ namespace ScriptInterface {
  * (this has to be caputerd in the lambdas to have acces to the member functions
  * of the class).
  */
-class AutoParameters : public ScriptInterfaceBase {
+template<typename Derived, typename Base=ScriptInterfaceBase>
+class AutoParameters : public Base {
+  static_assert(std::is_base_of<ScriptInterfaceBase, Base>::value, "");
 public:
   /* Exceptions */
   struct UnknownParameter : public std::runtime_error {

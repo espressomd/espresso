@@ -30,7 +30,7 @@
 namespace ScriptInterface {
 namespace CollisionDetection {
 
-class CollisionDetection : public AutoParameters {
+class CollisionDetection : public AutoParameters<CollisionDetection> {
 public:
   CollisionDetection() {
     add_parameters({
