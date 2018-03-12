@@ -24,8 +24,8 @@ class TestLBGPU(ut.TestCase):
     def test(self):
         #setup parameters
         system = self.system
-        int_steps = 10
-        int_times = 10
+        int_steps = 5
+        int_times = 1
         time_step = 0.005
         tau = 0.02
         agrid = 1.0
@@ -69,7 +69,7 @@ class TestLBGPU(ut.TestCase):
 
         system.time_step = time_step
         system.thermostat.set_langevin(kT=temp, gamma=gamma)
-        system.integrator.run(1000)
+        system.integrator.run(100)
         #kill particle motion
         for i in range(n_col_part): 
             system.part[i].v=[0.0,0.0,0.0]
@@ -87,7 +87,7 @@ class TestLBGPU(ut.TestCase):
         for i in range(n_col_part):
             tot_mom=tot_mom + system.part[i].v
 
-        system.integrator.run(1000)
+        system.integrator.run(100)
 
         max_dmass = 0.0
         max_dm = [0,0,0]
