@@ -766,7 +766,7 @@ void forceCalculationKernel(dds_float pf,
 					    // The pos, node and dq array fragments are shared between all threads of the whole warp.
 
 					    // Check if all threads agree that cell is far enough away (or is a body, i.e. n < nbodiesd).
-						if ((n < nbodiesd) || __all(tmp >= dq[depth])) {
+						if ((n < nbodiesd) || __all_sync(__activemask(), tmp >= dq[depth])) {
 							if (n != i) {
 
 							    d1 = sqrtf(tmp/*, 0.5f*/);
@@ -911,7 +911,7 @@ void energyCalculationKernel(dds_float pf, dds_float* energySum)
 					      dr[l] = -xd[3 * n + l] + xd[3 * i + l];
 					      tmp += dr[l] * dr[l];
 					    }
-						if ((n < nbodiesd) || __all(tmp >= dq[depth])) {	// check if all threads agree that cell is far enough away (or is a body)
+						if ((n < nbodiesd) || __all_sync(__activemask(), tmp >= dq[depth])) {	// check if all threads agree that cell is far enough away (or is a body)
 							if (n != i) {
 								d1 = sqrtf(tmp/*, 0.5f*/);
 								dd5 = __fdividef(1.0f, tmp * tmp * d1);
