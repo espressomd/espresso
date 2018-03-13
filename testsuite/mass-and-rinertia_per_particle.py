@@ -287,78 +287,73 @@ class ThermoTest(ut.TestCase):
 
         self.set_thermo_all(test_case, 0.0, gamma_global, gamma_global_rot)
 
-        self.es.time = 0.0
-        self.es.time_step = 7E-5
-        # The terminal velocity is starting since t >> t0 = mass / gamma
-        t0_max = -1.0
-        for k in range(2):
-            t0_max = max(t0_max, max(mass / gamma_tr[k, :]), max(J[:] / gamma_rot_validate[k, :]))
-        drag_steps_0 = int(math.floor(15 * t0_max / self.es.time_step))
-        print("drag_steps_0 = {0}".format(drag_steps_0))
-
-        tol = 7E-3
-        if "EXTERNAL_FORCES" in espressomd.features():
-            for k in range(2):
-                self.es.part[k].pos = np.array([0.0, 0.0, 0.0])
-                self.es.part[k].v = np.array([0.0, 0.0, 0.0])
-                self.es.part[k].omega_body = np.array([0.0, 0.0, 0.0])
-            f0 = np.array([-1.2, 58.3578, 0.002])
-            f1 = np.array([-15.112, -2.0, 368.0])
-            self.es.part[0].ext_force = f0
-            self.es.part[1].ext_force = f1
-            if "ROTATION" in espressomd.features():
-                tor0 = np.array([12, 0.022, 87])
-                tor1 = np.array([-0.03, -174, 368])
-                self.es.part[0].ext_torque = tor0
-                self.es.part[1].ext_torque = tor1
-                # Let's set the dipole perpendicular to the torque
-                if "DIPOLES" in espressomd.features():
-                    dip0 = np.array([0.0, tor0[2], -tor0[1]])
-                    dip1 = np.array([-tor1[2], 0.0, tor1[0]])
-                    self.es.part[0].dip = dip0
-                    self.es.part[1].dip = dip1
-                    tmp_axis0 = np.cross(tor0, dip0) / (np.linalg.norm(tor0) * np.linalg.norm(dip0))
-                    tmp_axis1 = np.cross(tor1, dip1) / (np.linalg.norm(tor1) * np.linalg.norm(dip1))
-            self.es.integrator.run(drag_steps_0)
+        if test_case >= 4 + self.rot_flag:
+        # Brownian thermostat only.
             self.es.time = 0.0
-            for k in range(2):
-                self.es.part[k].pos = np.array([0.0, 0.0, 0.0])
-            if "DIPOLES" in espressomd.features():
-                    self.es.part[0].dip = dip0
-                    self.es.part[1].dip = dip1
-            for i in range(7):
-                self.es.integrator.run(3)
-                for k in range(3):
-                    self.assertLess(
-                        abs(self.es.part[0].v[k] - f0[k] / gamma_tr[0, k]), tol)
-                    self.assertLess(
-                        abs(self.es.part[1].v[k] - f1[k] / gamma_tr[1, k]), tol)
-                    self.assertLess(
-                        abs(self.es.part[0].pos[k] - self.es.time * f0[k] / gamma_tr[0, k]), tol)
-                    self.assertLess(
-                        abs(self.es.part[1].pos[k] - self.es.time * f1[k] / gamma_tr[1, k]), tol)
-                    if "ROTATION" in espressomd.features():
-                        self.assertLess(abs(
-                            self.es.part[0].omega_lab[k] - tor0[k] / gamma_rot_validate[0, k]), tol)
-                        self.assertLess(abs(
-                            self.es.part[1].omega_lab[k] - tor1[k] / gamma_rot_validate[1, k]), tol)
-                if "ROTATION" in espressomd.features() and "DIPOLES" in espressomd.features():
-                    cos_alpha0 = np.dot(dip0,self.es.part[0].dip) / (np.linalg.norm(dip0) * self.es.part[0].dipm)
-                    cos_alpha0_test = np.cos(self.es.time * np.linalg.norm(tor0) / gamma_rot_validate[0, 0])
-                    sgn0 = np.sign(np.dot(self.es.part[0].dip, tmp_axis0))
-                    sgn0_test = np.sign(np.sin(self.es.time * np.linalg.norm(tor0) / gamma_rot_validate[0, 0]))
-                    
-                    cos_alpha1 = np.dot(dip1,self.es.part[1].dip) / (np.linalg.norm(dip1) * self.es.part[1].dipm)
-                    cos_alpha1_test = np.cos(self.es.time * np.linalg.norm(tor1) / gamma_rot_validate[1, 0])
-                    sgn1 = np.sign(np.dot(self.es.part[1].dip, tmp_axis1))
-                    sgn1_test = np.sign(np.sin(self.es.time * np.linalg.norm(tor1) / gamma_rot_validate[1, 0]))
-                    
-                    #print("cos_alpha0 = {0}, cos_alpha0_test={1}".format(cos_alpha0, cos_alpha0_test))
-                    #print("dip0 = {0}, self.es.part[0].dip={1}".format(dip0, self.es.part[0].dip))
-                    self.assertLess(abs(cos_alpha0 - cos_alpha0_test), tol)
-                    self.assertLess(abs(cos_alpha1 - cos_alpha1_test), tol)
-                    self.assertEqual(sgn0, sgn0_test)
-                    self.assertEqual(sgn1, sgn1_test)
+            self.es.time_step = 1E-4
+            tol = 7E-3
+            if "EXTERNAL_FORCES" in espressomd.features():
+                for k in range(2):
+                    self.es.part[k].pos = np.array([0.0, 0.0, 0.0])
+                    self.es.part[k].v = np.array([0.0, 0.0, 0.0])
+                    self.es.part[k].omega_body = np.array([0.0, 0.0, 0.0])
+                f0 = np.array([-1.2, 58.3578, 0.002])
+                f1 = np.array([-15.112, -2.0, 368.0])
+                self.es.part[0].ext_force = f0
+                self.es.part[1].ext_force = f1
+                if "ROTATION" in espressomd.features():
+                    tor0 = np.array([12, 0.022, 87])
+                    tor1 = np.array([-0.03, -174, 368])
+                    self.es.part[0].ext_torque = tor0
+                    self.es.part[1].ext_torque = tor1
+                    # Let's set the dipole perpendicular to the torque
+                    if "DIPOLES" in espressomd.features():
+                        dip0 = np.array([0.0, tor0[2], -tor0[1]])
+                        dip1 = np.array([-tor1[2], 0.0, tor1[0]])
+                        self.es.part[0].dip = dip0
+                        self.es.part[1].dip = dip1
+                        tmp_axis0 = np.cross(tor0, dip0) / (np.linalg.norm(tor0) * np.linalg.norm(dip0))
+                        tmp_axis1 = np.cross(tor1, dip1) / (np.linalg.norm(tor1) * np.linalg.norm(dip1))
+                self.es.integrator.run(7)
+                self.es.time = 0.0
+                for k in range(2):
+                    self.es.part[k].pos = np.array([0.0, 0.0, 0.0])
+                if "DIPOLES" in espressomd.features():
+                        self.es.part[0].dip = dip0
+                        self.es.part[1].dip = dip1
+                for i in range(3):
+                    self.es.integrator.run(2)
+                    for k in range(3):
+                        self.assertLess(
+                            abs(self.es.part[0].v[k] - f0[k] / gamma_tr[0, k]), tol)
+                        self.assertLess(
+                            abs(self.es.part[1].v[k] - f1[k] / gamma_tr[1, k]), tol)
+                        self.assertLess(
+                            abs(self.es.part[0].pos[k] - self.es.time * f0[k] / gamma_tr[0, k]), tol)
+                        self.assertLess(
+                            abs(self.es.part[1].pos[k] - self.es.time * f1[k] / gamma_tr[1, k]), tol)
+                        if "ROTATION" in espressomd.features():
+                            self.assertLess(abs(
+                                self.es.part[0].omega_lab[k] - tor0[k] / gamma_rot_validate[0, k]), tol)
+                            self.assertLess(abs(
+                                self.es.part[1].omega_lab[k] - tor1[k] / gamma_rot_validate[1, k]), tol)
+                    if "ROTATION" in espressomd.features() and "DIPOLES" in espressomd.features():
+                        cos_alpha0 = np.dot(dip0,self.es.part[0].dip) / (np.linalg.norm(dip0) * self.es.part[0].dipm)
+                        cos_alpha0_test = np.cos(self.es.time * np.linalg.norm(tor0) / gamma_rot_validate[0, 0])
+                        sgn0 = np.sign(np.dot(self.es.part[0].dip, tmp_axis0))
+                        sgn0_test = np.sign(np.sin(self.es.time * np.linalg.norm(tor0) / gamma_rot_validate[0, 0]))
+                        
+                        cos_alpha1 = np.dot(dip1,self.es.part[1].dip) / (np.linalg.norm(dip1) * self.es.part[1].dipm)
+                        cos_alpha1_test = np.cos(self.es.time * np.linalg.norm(tor1) / gamma_rot_validate[1, 0])
+                        sgn1 = np.sign(np.dot(self.es.part[1].dip, tmp_axis1))
+                        sgn1_test = np.sign(np.sin(self.es.time * np.linalg.norm(tor1) / gamma_rot_validate[1, 0]))
+                        
+                        #print("cos_alpha0 = {0}, cos_alpha0_test={1}".format(cos_alpha0, cos_alpha0_test))
+                        #print("dip0 = {0}, self.es.part[0].dip={1}".format(dip0, self.es.part[0].dip))
+                        self.assertLess(abs(cos_alpha0 - cos_alpha0_test), tol)
+                        self.assertLess(abs(cos_alpha1 - cos_alpha1_test), tol)
+                        self.assertEqual(sgn0, sgn0_test)
+                        self.assertEqual(sgn1, sgn1_test)
 
         for i in range(len(self.es.part)):
             self.es.part[i].remove()
