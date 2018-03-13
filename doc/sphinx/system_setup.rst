@@ -274,9 +274,7 @@ Best explained in an example:::
     
     import espressomd
     system = espressomd.System()
-    therm  = system.Thermostat()
-
-    therm.set_langevin(kT=1.0, gamma=1.0)
+    system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
 As explained before the temperature is set as thermal energy :math:`k_\mathrm{B} T`. 
 The Langevin thermostat consists of a friction and noise term coupled
@@ -421,6 +419,8 @@ Be aware that this feature is neither properly examined for all systems
 nor is it maintained regularly. If you use it and notice strange
 behavior, please contribute to solving the problem.
 
+.. _Brownian thermostat:
+
 Brownian thermostat
 ~~~~~~~~~~~~~~~~~~~
 
@@ -430,59 +430,58 @@ Brownian Dynamics feature (see :cite:`schlick2010`).
 In order to activate the Brownian thermostat the member function
 :py:attr:`~espressomd.thermostat.Thermostat.set_brownian` of the thermostat
 class :class:`espressomd.thermostat.Thermostat` has to be invoked.
-Best explained in an example:::
+Best explained in an example::
     
     import espressomd
     system = espressomd.System()
-    therm  = system.Thermostat()
+    system.thermostat.set_brownian(kT=1.0, gamma=1.0)
 
-    therm.set_brownian(kT=1.0, gamma=1.0)
-
+where ``gamma`` (hereinafter :math:`\gamma`) is a viscous friction coefficient.
 In terms of the Python interface and setup, Brownian thermostat derives most 
 properties of the :ref:`Langevin thermostat`. Same feature
 ``LANGEVIN_PER_PARTICLE`` is using to be able to control the per-particle
 temperature and the friction coefficient setup. Major differences are
 its internal integrator implementation and other temporal constraints.
-The integrator is still a symplectic Velocity Verlet-like integrator.
+The integrator is still a symplectic Velocity Verlet-like one.
 It is implemented via a viscous drag part and a random walk of both the position and
-velocity. Due to a nature of the Brownian Dynamics method, ``time_step``
+velocity. Due to a nature of the Brownian Dynamics method, its time step :math:`\Delta t`
 should be large enough compare to the relaxation time
-:math:`\text{MASS}/\text{gamma}`. This requirement is just a conceptual one
+:math:`m/\gamma` where :math:`m` is the particle mass.
+This requirement is just a conceptual one
 without specific implementation technical restrictions.
 Note, that with all similarities of
 Langevin and Brownian Dynamics, the Langevin thermostat temporal constraint
 is opposite. A velocity is restarting from zero at every step.
-Formally, the previous step velocity at the beginning of the the ``time_step`` interval
+Formally, the previous step velocity at the beginning of the the :math:`\Delta t` interval
 is dissipated further
 and does not contribute to the end one as well as to the positional random walk.
-
 Another temporal constraint
 which is valid for both Langevin and Brownian Dynamics: conservative forces
-should not change significantly over the ``time_step`` interval.
+should not change significantly over the :math:`\Delta t` interval.
 
 The viscous terminal velocity :math:`\Delta v` and corresponding positional
-drag :math:`\Delta r` are fully driven by conservative forces:
+step :math:`\Delta r` are fully driven by conservative forces :math:`F`:
 
-.. math:: \Delta r = \frac{\text{F} \cdot \text{time_step}}{\text{gamma}}
+.. math:: \Delta r = \frac{F \cdot \Delta t}{\gamma}
 
-.. math:: \Delta v = \frac{\text{F}}{\text{gamma}}
+.. math:: \Delta v = \frac{F}{\gamma}
 
 A positional random walk variance of each coordinate :math:`\sigma_p^2`
 corresponds to a diffusion within the Wiener process:
 
-.. math:: \sigma_p^2 = 2 D \cdot \text{time_step}
+.. math:: \sigma_p^2 = 2 D \cdot \Delta t
 
-with the diffusion coefficient defined in the :ref:`Langevin thermostat` section.
+with the diffusion coefficient :math:`D` defined in the :ref:`Langevin thermostat` section.
 Each velocity component random walk variance :math:`\sigma_v^2` is defined by the heat
 component: 
 
-.. math:: \sigma_v^2 = \frac{\text{temperature}}{\text{MASS}}
+.. math:: \sigma_v^2 = \frac{kT}{m}
 
 Note, that the velocity random walk is propagated from zero at each step.
 
 A rotational motion is implemented similarly. The Velocity Verlet quaternion
 based rotational method implementation is still used, however, had been modified
-for the larger ``time_step`` case to be consistent and still the Velocity Verlet-compliant.
+for the larger :math:`\Delta t` case to be consistent and still the Velocity Verlet-compliant.
 
 .. _CUDA:
 

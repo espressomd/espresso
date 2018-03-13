@@ -12,6 +12,8 @@ import numpy as np
 #############################################################
 
 system = espressomd.System(box_l=[50.0, 50.0, 50.0])
+system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
 
 # if no seed is provided espresso generates a seed
 
@@ -65,7 +67,7 @@ act_min_dist = system.analysis.min_dist()
 system.thermostat.set_langevin(kT=0.0, gamma=5.0)
 
 # warmp with zero temperature to remove overlaps
-while (i < warm_n_times and act_min_dist < min_dist):
+while ( act_min_dist < min_dist or c1.min_dist()<min_dist or c2.min_dist()<min_dist):
     system.integrator.run(warm_steps + lj_cap)
     # Warmup criterion
     act_min_dist = system.analysis.min_dist()

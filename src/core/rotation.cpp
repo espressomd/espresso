@@ -45,6 +45,7 @@
 #include "particle_data.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
+#include "brownian_inline.hpp"
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -114,32 +115,34 @@ int convert_quatu_to_quat(double d[3], double quat[4]) {
 
 /** Here we use quaternions to calculate the rotation matrix which
     will be used then to transform torques from the laboratory to
-    the body-fixed frames */  
-void define_rotation_matrix(Particle const *p, double A[9])
+    the body-fixed frames.
+    Taken from "Goldstein - Classical Mechanics" (Chapter 4.6 Eq. 4.47).
+*/
+void define_rotation_matrix(Particle const &p, double A[9])
 {
-  double q0q0 =p->r.quat[0];
+  double q0q0 =p.r.quat[0];
   q0q0 *=q0q0;
 
-  double q1q1 =p->r.quat[1];
+  double q1q1 =p.r.quat[1];
   q1q1 *=q1q1;
 
-  double q2q2 =p->r.quat[2];
+  double q2q2 =p.r.quat[2];
   q2q2 *=q2q2;
 
-  double q3q3 =p->r.quat[3];
+  double q3q3 =p.r.quat[3];
   q3q3 *=q3q3;
 
   A[0 + 3*0] = q0q0 + q1q1 - q2q2 - q3q3;
   A[1 + 3*1] = q0q0 - q1q1 + q2q2 - q3q3;
   A[2 + 3*2] = q0q0 - q1q1 - q2q2 + q3q3;
 
-  A[0 + 3*1] = 2*(p->r.quat[1]*p->r.quat[2] + p->r.quat[0]*p->r.quat[3]);
-  A[0 + 3*2] = 2*(p->r.quat[1]*p->r.quat[3] - p->r.quat[0]*p->r.quat[2]);
-  A[1 + 3*0] = 2*(p->r.quat[1]*p->r.quat[2] - p->r.quat[0]*p->r.quat[3]);
+  A[0 + 3*1] = 2*(p.r.quat[1]*p.r.quat[2] + p.r.quat[0]*p.r.quat[3]);
+  A[0 + 3*2] = 2*(p.r.quat[1]*p.r.quat[3] - p.r.quat[0]*p.r.quat[2]);
+  A[1 + 3*0] = 2*(p.r.quat[1]*p.r.quat[2] - p.r.quat[0]*p.r.quat[3]);
 
-  A[1 + 3*2] = 2*(p->r.quat[2]*p->r.quat[3] + p->r.quat[0]*p->r.quat[1]);
-  A[2 + 3*0] = 2*(p->r.quat[1]*p->r.quat[3] + p->r.quat[0]*p->r.quat[2]);
-  A[2 + 3*1] = 2*(p->r.quat[2]*p->r.quat[3] - p->r.quat[0]*p->r.quat[1]);
+  A[1 + 3*2] = 2*(p.r.quat[2]*p.r.quat[3] + p.r.quat[0]*p.r.quat[1]);
+  A[2 + 3*0] = 2*(p.r.quat[1]*p.r.quat[3] + p.r.quat[0]*p.r.quat[2]);
+  A[2 + 3*1] = 2*(p.r.quat[2]*p.r.quat[3] - p.r.quat[0]*p.r.quat[1]);
 }
 
 /** calculate the second derivative of the quaternion of a given particle
@@ -147,6 +150,7 @@ void define_rotation_matrix(Particle const *p, double A[9])
 void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3],
                 double Wd[3]) {
   /* calculate the first derivative of the quaternion */
+  /* Taken from "An improved algorithm for molecular dynamics simulation of rigid molecules", Sonnenschein, Roland (1985), Eq. 4.*/
   Qd[0] = 0.5 * (-p->r.quat[1] * p->m.omega[0] - p->r.quat[2] * p->m.omega[1] -
                  p->r.quat[3] * p->m.omega[2]);
 
@@ -159,13 +163,25 @@ void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3],
   Qd[3] = 0.5 * (-p->r.quat[2] * p->m.omega[0] + p->r.quat[1] * p->m.omega[1] +
                  p->r.quat[0] * p->m.omega[2]);
 
-  /* calculate the second derivative of the quaternion */  
-  Wd[0] =  (p->f.torque[0] + p->m.omega[1]*p->m.omega[2]*(p->p.rinertia[1]-p->p.rinertia[2]))/p->p.rinertia[0];
-  Wd[1] =  (p->f.torque[1] + p->m.omega[2]*p->m.omega[0]*(p->p.rinertia[2]-p->p.rinertia[0]))/p->p.rinertia[1];
-  Wd[2] =  (p->f.torque[2] + p->m.omega[0]*p->m.omega[1]*(p->p.rinertia[0]-p->p.rinertia[1]))/p->p.rinertia[2];
+  /* Calculate the angular acceleration. */
+  /* Taken from "An improved algorithm for molecular dynamics simulation of rigid molecules", Sonnenschein, Roland (1985), Eq. 5.*/
+  if (p->p.rotation & ROTATION_X)
+    Wd[0] =  (p->f.torque[0] + p->m.omega[1]*p->m.omega[2]*(p->p.rinertia[1]-p->p.rinertia[2]))/p->p.rinertia[0];
+  else
+    Wd[0] = 0.0;
+  if (p->p.rotation & ROTATION_Y)
+    Wd[1] =  (p->f.torque[1] + p->m.omega[2]*p->m.omega[0]*(p->p.rinertia[2]-p->p.rinertia[0]))/p->p.rinertia[1];
+  else
+    Wd[1] = 0.0;
+  if (p->p.rotation & ROTATION_Z)
+    Wd[2] =  (p->f.torque[2] + p->m.omega[0]*p->m.omega[1]*(p->p.rinertia[0]-p->p.rinertia[1]))/p->p.rinertia[2];
+  else
+    Wd[2] = 0.0;
 
   auto const S1 = Qd[0] * Qd[0] + Qd[1] * Qd[1] + Qd[2] * Qd[2] + Qd[3] * Qd[3];
 
+  /* Calculate the second derivative of the quaternion. */
+  /* Taken from "An improved algorithm for molecular dynamics simulation of rigid molecules", Sonnenschein, Roland (1985), Eq. 8.*/
   Qdd[0] = 0.5 * (-p->r.quat[1] * Wd[0] - p->r.quat[2] * Wd[1] -
                   p->r.quat[3] * Wd[2]) -
            p->r.quat[0] * S1;
@@ -209,6 +225,8 @@ void propagate_omega_quat_particle(Particle *p) {
   
   define_Qdd(p, Qd, Qdd, S, Wd);
 
+  /* Taken from "On the numerical integration of motion for rigid polyatomics:
+   * The modified quaternion approach", Omeylan, Igor (1998), Eq. 12.*/
   lambda = 1 - S[0] * time_step_squared_half -
            sqrt(1 -
                 time_step_squared *
@@ -264,7 +282,7 @@ void convert_torques_propagate_omega() {
       continue;
     
     double A[9];
-    define_rotation_matrix(&p, A);
+    define_rotation_matrix(p, A);
 
     tx = A[0 + 3 * 0] * p.f.torque[0] + A[0 + 3 * 1] * p.f.torque[1] +
          A[0 + 3 * 2] * p.f.torque[2];
@@ -352,8 +370,8 @@ void convert_torques_propagate_omega() {
 
 #ifdef BROWNIAN_DYNAMICS
     if (thermo_switch & THERMO_BROWNIAN) {
-      bd_drag_vel_rot(&p,0.5 * time_step);
-      bd_random_walk_vel_rot(&p,0.5 * time_step);
+      bd_drag_vel_rot(p,0.5 * time_step);
+      bd_random_walk_vel_rot(p,0.5 * time_step);
     } else
 #endif // BROWNIAN_DYNAMICS
     {
@@ -407,7 +425,7 @@ void convert_initial_torques() {
     if (!p.p.rotation)
       continue;
     double A[9];
-    define_rotation_matrix(&p, A);
+    define_rotation_matrix(p, A);
 
     tx = A[0 + 3 * 0] * p.f.torque[0] + A[0 + 3 * 1] * p.f.torque[1] +
          A[0 + 3 * 2] * p.f.torque[2];
@@ -448,7 +466,7 @@ void convert_initial_torques() {
 
 void convert_omega_body_to_space(const Particle *p, double *omega) {
   double A[9];
-  define_rotation_matrix(p, A);
+  define_rotation_matrix(*p, A);
 
   omega[0] = A[0 + 3 * 0] * p->m.omega[0] + A[1 + 3 * 0] * p->m.omega[1] +
              A[2 + 3 * 0] * p->m.omega[2];
@@ -461,7 +479,7 @@ void convert_omega_body_to_space(const Particle *p, double *omega) {
 Vector3d convert_vector_body_to_space(const Particle& p, const Vector3d& vec) {
   Vector3d res={0,0,0};
   double A[9];
-  define_rotation_matrix(&p, A);
+  define_rotation_matrix(p, A);
 
   res[0] = A[0 + 3 * 0] * vec[0] + A[1 + 3 * 0] * vec[1] +
              A[2 + 3 * 0] * vec[2];
@@ -476,7 +494,7 @@ Vector3d convert_vector_body_to_space(const Particle& p, const Vector3d& vec) {
 
 void convert_torques_body_to_space(const Particle *p, double *torque) {
   double A[9];
-  define_rotation_matrix(p, A);
+  define_rotation_matrix(*p, A);
 
   torque[0] = A[0 + 3 * 0] * p->f.torque[0] + A[1 + 3 * 0] * p->f.torque[1] +
               A[2 + 3 * 0] * p->f.torque[2];
@@ -488,7 +506,7 @@ void convert_torques_body_to_space(const Particle *p, double *torque) {
 
 void convert_vel_space_to_body(const Particle *p, double *vel_body) {
   double A[9];
-  define_rotation_matrix(p, A);
+  define_rotation_matrix(*p, A);
 
   vel_body[0] = A[0 + 3 * 0] * p->m.v[0] + A[0 + 3 * 1] * p->m.v[1] +
                 A[0 + 3 * 2] * p->m.v[2];
@@ -498,19 +516,19 @@ void convert_vel_space_to_body(const Particle *p, double *vel_body) {
                 A[2 + 3 * 2] * p->m.v[2];
 }
 
-void convert_vec_space_to_body(Particle *p, double *v, double *res) {
+void convert_vec_space_to_body(Particle *p, double const *v, double *res) {
   double A[9];
-  define_rotation_matrix(p, A);
+  define_rotation_matrix(*p, A);
 
   res[0] = A[0 + 3 * 0] * v[0] + A[0 + 3 * 1] * v[1] + A[0 + 3 * 2] * v[2];
   res[1] = A[1 + 3 * 0] * v[0] + A[1 + 3 * 1] * v[1] + A[1 + 3 * 2] * v[2];
   res[2] = A[2 + 3 * 0] * v[0] + A[2 + 3 * 1] * v[1] + A[2 + 3 * 2] * v[2];
 }
 
-void convert_vec_body_to_space(Particle *p, double *v,double* res)
+void convert_vec_body_to_space(Particle *p, double const *v,double* res)
 {
   double A[9];
-  define_rotation_matrix(p, A);
+  define_rotation_matrix(*p, A);
 
   res[0] = A[0 + 3*0]*v[0] + A[1 + 3*0]*v[1] + A[2 + 3*0]*v[2];
   res[1] = A[0 + 3*1]*v[0] + A[1 + 3*1]*v[1] + A[2 + 3*1]*v[2];
@@ -545,12 +563,12 @@ void rotate_particle(Particle *p, double *aSpaceFrame, double phi) {
   for (int i = 0; i < 3; i++)
     a[i] /= l;
 
-  double q[4];
-  q[0] = cos(phi / 2);
-  double tmp = sin(phi / 2);
-  q[1] = tmp * a[0];
-  q[2] = tmp * a[1];
-  q[3] = tmp * a[2];
+  double q[] = {
+        cos(phi / 2),
+        sin(phi / 2) * a[0],
+        sin(phi / 2) * a[1],
+        sin(phi / 2) * a[2]
+  };
 
   // Normalize
   normalize_quaternion(q);
@@ -589,12 +607,12 @@ void rotate_particle_body(Particle* p, double* a, double phi)
 
 #endif
 
-  double q[4];
-  q[0]=cos(phi/2);
-  double tmp=sin(phi/2);
-  q[1]=tmp*a[0];
-  q[2]=tmp*a[1];
-  q[3]=tmp*a[2];
+  double q[] = {
+      cos(phi / 2),
+      sin(phi / 2) * a[0],
+      sin(phi / 2) * a[1],
+      sin(phi / 2) * a[2]
+  };
 
   // Normalize
   normalize_quaternion(q);
@@ -615,7 +633,7 @@ void rotate_particle_body(Particle* p, double* a, double phi)
 void rotate_particle_body_j(Particle* p, int j, double phi)
 {
   double u_dphi[3] = {0.0, 0.0, 0.0};
-  if (phi) {
+  if (phi != 0.0) {
     u_dphi[j] = 1.0;
     rotate_particle_body(p, u_dphi, phi);
   }
@@ -624,208 +642,237 @@ void rotate_particle_body_j(Particle* p, int j, double phi)
 #ifdef BROWNIAN_DYNAMICS
 
 /** Propagate quaternions: viscous drag driven by conservative torques.*/
-void bd_drag_rot(Particle *p, double dt) {
-  int j;
+/*********************************************************/
+/** \name bd_drag_rot */
+/*********************************************************/
+/**(An analogy of eq. (14.39) T. Schlick, https://doi.org/10.1007/978-1-4419-6351-2 (2010))
+ * @param &p              Reference to the particle (Input)
+ * @param dt              Time interval (Input)
+ */
+void bd_drag_rot(Particle &p, double dt) {
   double a[3];
-  double dphi[3], dphi_u[3];
-  double dphi_m;
+  double dphi[3];
   Thermostat::GammaType local_gamma;
 
   a[0] = a[1] = a[2] = 1.0;
 #ifdef ROTATION_PER_PARTICLE
-  if (!p->p.rotation)
+  if (!p.p.rotation)
     return;
-  if (!(p->p.rotation & 2))
+  if (!(p.p.rotation & 2))
     a[0] = 0.0;
-  if (!(p->p.rotation & 4))
+  if (!(p.p.rotation & 4))
     a[1] = 0.0;
-  if (!(p->p.rotation & 8))
+  if (!(p.p.rotation & 8))
     a[2] = 0.0;
 #endif
 
-  if(p->p.gamma_rot >= Thermostat::GammaType{}) local_gamma = p->p.gamma_rot;
-  else local_gamma = langevin_gamma_rotation;
+  if(p.p.gamma_rot >= Thermostat::GammaType{}) {
+    local_gamma = p.p.gamma_rot;
+  } else {
+    local_gamma = langevin_gamma_rotation;
+  }
 
   dphi[0] = dphi[1] = dphi[2] = 0.0;
-  for (j = 0; j < 3; j++) {
+  for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
-    if (!(p->p.ext_flag & COORD_FIXED(j)))
+    if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
     {
       // only a conservative part of the torque is used here
 #ifndef PARTICLE_ANISOTROPY
-      dphi[j] = a[j] * p->f.torque[j] * dt / (local_gamma);
+      dphi[j] = a[j] * p.f.torque[j] * dt / (local_gamma);
 #else
-      dphi[j] = a[j] * p->f.torque[j] * dt / (local_gamma[j]);
+      dphi[j] = a[j] * p.f.torque[j] * dt / (local_gamma[j]);
 #endif // ROTATIONAL_INERTIA
       //rotate_particle_body_j(p, j, dphi[j]);
     }
   } //j
-  dphi_m = 0.0;
-  for (j = 0; j < 3; j++) dphi_m += pow(dphi[j], 2);
+  double dphi_m = 0.0;
+  for (int j = 0; j < 3; j++) dphi_m += pow(dphi[j], 2);
   dphi_m = sqrt(dphi_m);
+  double dphi_u[3];
   if (dphi_m) {
-    for (j = 0; j < 3; j++) dphi_u[j] = dphi[j] / dphi_m;
-    rotate_particle_body(p, dphi_u, dphi_m);
+    for (int j = 0; j < 3; j++) dphi_u[j] = dphi[j] / dphi_m;
+    rotate_particle_body(&(p), dphi_u, dphi_m);
   }
 }
 
 /** Set the terminal angular velocity driven by the conservative torques drag.*/
-void bd_drag_vel_rot(Particle *p, double dt) {
-  int j;
-  double m_dphi;
+/*********************************************************/
+/** \name bd_drag_vel_rot */
+/*********************************************************/
+/**(An analogy of the 1st term of the eq. (14.34) T. Schlick, https://doi.org/10.1007/978-1-4419-6351-2 (2010))
+ * @param &p              Reference to the particle (Input)
+ * @param dt              Time interval (Input)
+ */
+void bd_drag_vel_rot(Particle &p, double dt) {
   double a[3];
   Thermostat::GammaType local_gamma;
 
   a[0] = a[1] = a[2] = 1.0;
 #ifdef ROTATION_PER_PARTICLE
-  if (!p->p.rotation)
+  if (!p.p.rotation)
     return;
-  if (!(p->p.rotation & 2))
+  if (!(p.p.rotation & 2))
     a[0] = 0.0;
-  if (!(p->p.rotation & 4))
+  if (!(p.p.rotation & 4))
     a[1] = 0.0;
-  if (!(p->p.rotation & 8))
+  if (!(p.p.rotation & 8))
     a[2] = 0.0;
 #endif
 
-  if(p->p.gamma_rot >= Thermostat::GammaType{}) local_gamma = p->p.gamma_rot;
-  else local_gamma = langevin_gamma_rotation;
+  if(p.p.gamma_rot >= Thermostat::GammaType{}) {
+    local_gamma = p.p.gamma_rot;
+  } else {
+    local_gamma = langevin_gamma_rotation;
+  }
 
-  for (j = 0; j < 3; j++) {
+  for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
-    if (p->p.ext_flag & COORD_FIXED(j)) {
-      p->m.omega[j] = 0.0;
+    if (p.p.ext_flag & COORD_FIXED(j)) {
+      p.m.omega[j] = 0.0;
     } else
 #endif
     {
       // only conservative part of the force is used here
       // NOTE: velocity is assigned here and propagated by thermal part further on top of it
 #ifndef PARTICLE_ANISOTROPY
-      p->m.omega[j] = a[j] * p->f.torque[j] / (local_gamma);
+      p.m.omega[j] = a[j] * p.f.torque[j] / (local_gamma);
 #else
-      p->m.omega[j] = a[j] * p->f.torque[j] / (local_gamma[j]);
+      p.m.omega[j] = a[j] * p.f.torque[j] / (local_gamma[j]);
 #endif // ROTATIONAL_INERTIA
     }
   }
 }
 
 /** Propagate the quaternions: random walk part.*/
-void bd_random_walk_rot(Particle *p, double dt) {
+/*********************************************************/
+/** \name bd_random_walk_rot */
+/*********************************************************/
+/**(An analogy of eq. (14.37) T. Schlick, https://doi.org/10.1007/978-1-4419-6351-2 (2010))
+ * @param &p              Reference to the particle (Input)
+ * @param dt              Time interval (Input)
+ */
+void bd_random_walk_rot(Particle &p, double dt) {
   double a[3];
-  double dphi[3];
-  int j;
   extern Thermostat::GammaType brown_sigma_pos_rotation_inv;
-  Thermostat::GammaType brown_sigma_pos_temp_inv;
+  extern Thermostat::GammaType brown_gammatype_nan;
+  // first, set defaults
+  Thermostat::GammaType brown_sigma_pos_temp_inv = brown_sigma_pos_rotation_inv;
 
   a[0] = a[1] = a[2] = 1.0;
 #ifdef ROTATION_PER_PARTICLE
-  if (!p->p.rotation)
+  if (!p.p.rotation)
     return;
-  if (!(p->p.rotation & 2))
+  if (!(p.p.rotation & 2))
     a[0] = 0.0;
-  if (!(p->p.rotation & 4))
+  if (!(p.p.rotation & 4))
     a[1] = 0.0;
-  if (!(p->p.rotation & 8))
+  if (!(p.p.rotation & 8))
     a[2] = 0.0;
 #endif
-
-  // first, set defaults
-  brown_sigma_pos_temp_inv = brown_sigma_pos_rotation_inv;
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
   auto const constexpr langevin_temp_coeff = 2.0;
 
-  if(p->p.gamma_rot >= Thermostat::GammaType{})
-  {
+  if(p.p.gamma_rot >= Thermostat::GammaType{}) {
     // Is a particle-specific temperature also specified?
-    if(p->p.T >= 0.)
+    if(p.p.T >= 0.)
     {
-      if (p->p.T > 0.0)
-        brown_sigma_pos_temp_inv = sqrt(p->p.gamma_rot / (langevin_temp_coeff * p->p.T) );
-      else
-        brown_sigma_pos_temp_inv = -1.0 * sqrt(p->p.gamma_rot); // just an indication of the infinity; negative sign has no sense here
+      if (p.p.T > 0.0) {
+        brown_sigma_pos_temp_inv = sqrt(p.p.gamma_rot / (langevin_temp_coeff * p.p.T) );
+      } else {
+        brown_sigma_pos_temp_inv = brown_gammatype_nan; // just an indication of the infinity
+      }
     } else
     // Default temperature but particle-specific gamma
-      brown_sigma_pos_temp_inv = sqrt(p->p.gamma_rot / (langevin_temp_coeff * temperature));
+      brown_sigma_pos_temp_inv = sqrt(p.p.gamma_rot / (langevin_temp_coeff * temperature));
   } // particle specific gamma
-  else
-  {
+  else {
     // No particle-specific gamma, but is there particle-specific temperature
-    if(p->p.T >= 0.)
-    {
-      if (p->p.T > 0.0)
-        brown_sigma_pos_temp_inv = sqrt(langevin_gamma_rotation / (langevin_temp_coeff * p->p.T));
-      else
-        brown_sigma_pos_temp_inv = -1.0 * sqrt(langevin_gamma_rotation); // just an indication of the infinity; negative sign has no sense here
-    } else
+    if(p.p.T >= 0.) {
+      if (p.p.T > 0.0) {
+        brown_sigma_pos_temp_inv = sqrt(langevin_gamma_rotation / (langevin_temp_coeff * p.p.T));
+      } else {
+        brown_sigma_pos_temp_inv = brown_gammatype_nan; // just an indication of the infinity
+      }
+    } else {
     // Defaut values for both
       brown_sigma_pos_temp_inv = brown_sigma_pos_rotation_inv;
+    }
   }
 #endif /* LANGEVIN_PER_PARTICLE */
 
-  for (j = 0; j < 3; j++) {
+  double dphi[3];
+  for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
-    if (!(p->p.ext_flag & COORD_FIXED(j)))
+    if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
     {
       dphi[0] = dphi[1] = dphi[2] = 0.0;
 #ifndef PARTICLE_ANISOTROPY
-      if (brown_sigma_pos_temp_inv > 0.0)
+      if (brown_sigma_pos_temp_inv > 0.0) {
         dphi[j] = a[j] * Thermostat::noise_g() * (1.0 / brown_sigma_pos_temp_inv) * sqrt(dt);
-      else
+      } else {
         dphi[j] = 0.0;
+      }
 #else
-      if (brown_sigma_pos_temp_inv[j] > 0.0)
+      if (brown_sigma_pos_temp_inv[j] > 0.0) {
         dphi[j] = a[j] * Thermostat::noise_g() * (1.0 / brown_sigma_pos_temp_inv[j]) * sqrt(dt);
-      else
+      } else {
         dphi[j] = 0.0;
+      }
 #endif // ROTATIONAL_INERTIA
-      rotate_particle_body_j(p, j, dphi[j]);
+      rotate_particle_body_j(&(p), j, dphi[j]);
     }
   }
 }
 
 /** Determine the angular velocities: random walk part.*/
-void bd_random_walk_vel_rot(Particle *p, double dt) {
-  int j;
+/*********************************************************/
+/** \name bd_random_walk_vel_rot */
+/*********************************************************/
+/**(An analogy of eq. (10.2.16) N. Pottier, https://doi.org/10.1007/s10955-010-0114-6 (2010))
+ * @param &p              Reference to the particle (Input)
+ * @param dt              Time interval (Input)
+ */
+void bd_random_walk_vel_rot(Particle &p, double dt) {
   double a[3];
   extern double brown_sigma_vel_rotation;
-  double brown_sigma_vel_temp;
+  // first, set defaults
+  double brown_sigma_vel_temp = brown_sigma_vel_rotation;
 
   a[0] = a[1] = a[2] = 1.0;
 #ifdef ROTATION_PER_PARTICLE
-  if (!p->p.rotation)
+  if (!p.p.rotation)
     return;
-  if (!(p->p.rotation & 2))
+  if (!(p.p.rotation & 2))
     a[0] = 0.0;
-  if (!(p->p.rotation & 4))
+  if (!(p.p.rotation & 4))
     a[1] = 0.0;
-  if (!(p->p.rotation & 8))
+  if (!(p.p.rotation & 8))
     a[2] = 0.0;
 #endif
-
-  // first, set defaults
-  brown_sigma_vel_temp = brown_sigma_vel_rotation;
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
   auto const constexpr langevin_temp_coeff = 1.0;
   // Is a particle-specific temperature specified?
-  if (p->p.T >= 0.)
-    brown_sigma_vel_temp = sqrt(langevin_temp_coeff * p->p.T);
-  else
+  if (p.p.T >= 0.) {
+    brown_sigma_vel_temp = sqrt(langevin_temp_coeff * p.p.T);
+  } else {
     brown_sigma_vel_temp = brown_sigma_vel_rotation;
+  }
 #endif /* LANGEVIN_PER_PARTICLE */
 
-  for (j = 0; j < 3; j++) {
+  for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
-    if (!(p->p.ext_flag & COORD_FIXED(j)))
+    if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
     {
       // velocity is added here. It is already initialized in the terminal drag part.
-      p->m.omega[j] += a[j] * brown_sigma_vel_temp * Thermostat::noise_g() / sqrt(p->p.rinertia[j]);
+      p.m.omega[j] += a[j] * brown_sigma_vel_temp * Thermostat::noise_g() / sqrt(p.p.rinertia[j]);
     }
   }
 }

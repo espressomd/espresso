@@ -62,13 +62,9 @@ class ThermoTest(ut.TestCase):
                         gamma_global_rot[2]])
 
     def run_test_case(self, test_case):
-        seed(2)
-        # Decelleration
+        seed(8)
         self.es.time_step = 0.007
-        box = 1.0E5
-        self.es.box_l = [box, box, box]
-        if espressomd.has_features(("PARTIAL_PERIODIC")):
-            self.es.periodicity = 0, 0, 0
+        self.es.part.clear()
         # gamma_tran/gamma_rot matrix: [2 types of particless] x [3 dimensions
         # X Y Z]
         gamma_tran = np.zeros((2, 3))
@@ -243,7 +239,7 @@ class ThermoTest(ut.TestCase):
                     gamma_rot_validate[k, :] = gamma_global[:]
 
         if test_case < 4 + self.rot_flag:
-        # Langevin thermostat only. Brownian thermostat is defined
+        # Decelleration test. Langevin thermostat only. Brownian thermostat is defined
         # over larger time-step by its concept.
             self.es.time = 0.0
             tol = 1.25E-4
@@ -290,78 +286,73 @@ class ThermoTest(ut.TestCase):
 
         self.set_thermo_all(test_case, 0.0, gamma_global, gamma_global_rot)
 
-        self.es.time = 0.0
-        self.es.time_step = 7E-5
-        # The terminal velocity is starting since t >> t0 = mass / gamma
-        t0_max = -1.0
-        for k in range(2):
-            t0_max = max(t0_max, max(mass / gamma_tr[k, :]), max(J[:] / gamma_rot_validate[k, :]))
-        drag_steps_0 = int(math.floor(20 * t0_max / self.es.time_step))
-        print("drag_steps_0 = {0}".format(drag_steps_0))
-
-        tol = 7E-3
-        if "EXTERNAL_FORCES" in espressomd.features():
-            for k in range(2):
-                self.es.part[k].pos = np.array([0.0, 0.0, 0.0])
-                self.es.part[k].v = np.array([0.0, 0.0, 0.0])
-                self.es.part[k].omega_body = np.array([0.0, 0.0, 0.0])
-            f0 = np.array([-1.2, 58.3578, 0.002])
-            f1 = np.array([-15.112, -2.0, 368.0])
-            self.es.part[0].ext_force = f0
-            self.es.part[1].ext_force = f1
-            if "ROTATION" in espressomd.features():
-                tor0 = np.array([12, 0.022, 87])
-                tor1 = np.array([-0.03, -174, 368])
-                self.es.part[0].ext_torque = tor0
-                self.es.part[1].ext_torque = tor1
-                # Let's set the dipole perpendicular to the torque
-                if "DIPOLES" in espressomd.features():
-                    dip0 = np.array([0.0, tor0[2], -tor0[1]])
-                    dip1 = np.array([-tor1[2], 0.0, tor1[0]])
-                    self.es.part[0].dip = dip0
-                    self.es.part[1].dip = dip1
-                    tmp_axis0 = np.cross(tor0, dip0) / (np.linalg.norm(tor0) * np.linalg.norm(dip0))
-                    tmp_axis1 = np.cross(tor1, dip1) / (np.linalg.norm(tor1) * np.linalg.norm(dip1))
-            self.es.integrator.run(drag_steps_0)
+        if test_case >= 4 + self.rot_flag:
+        # Brownian thermostat only.
             self.es.time = 0.0
-            for k in range(2):
-                self.es.part[k].pos = np.array([0.0, 0.0, 0.0])
-            if "DIPOLES" in espressomd.features():
-                    self.es.part[0].dip = dip0
-                    self.es.part[1].dip = dip1
-            for i in range(100):
-                self.es.integrator.run(10)
-                for k in range(3):
-                    self.assertLess(
-                        abs(self.es.part[0].v[k] - f0[k] / gamma_tr[0, k]), tol)
-                    self.assertLess(
-                        abs(self.es.part[1].v[k] - f1[k] / gamma_tr[1, k]), tol)
-                    self.assertLess(
-                        abs(self.es.part[0].pos[k] - self.es.time * f0[k] / gamma_tr[0, k]), tol)
-                    self.assertLess(
-                        abs(self.es.part[1].pos[k] - self.es.time * f1[k] / gamma_tr[1, k]), tol)
-                    if "ROTATION" in espressomd.features():
-                        self.assertLess(abs(
-                            self.es.part[0].omega_lab[k] - tor0[k] / gamma_rot_validate[0, k]), tol)
-                        self.assertLess(abs(
-                            self.es.part[1].omega_lab[k] - tor1[k] / gamma_rot_validate[1, k]), tol)
-                if "ROTATION" in espressomd.features() and "DIPOLES" in espressomd.features():
-                    cos_alpha0 = np.dot(dip0,self.es.part[0].dip) / (np.linalg.norm(dip0) * self.es.part[0].dipm)
-                    cos_alpha0_test = np.cos(self.es.time * np.linalg.norm(tor0) / gamma_rot_validate[0, 0])
-                    sgn0 = np.sign(np.dot(self.es.part[0].dip, tmp_axis0))
-                    sgn0_test = np.sign(np.sin(self.es.time * np.linalg.norm(tor0) / gamma_rot_validate[0, 0]))
-                    
-                    cos_alpha1 = np.dot(dip1,self.es.part[1].dip) / (np.linalg.norm(dip1) * self.es.part[1].dipm)
-                    cos_alpha1_test = np.cos(self.es.time * np.linalg.norm(tor1) / gamma_rot_validate[1, 0])
-                    sgn1 = np.sign(np.dot(self.es.part[1].dip, tmp_axis1))
-                    sgn1_test = np.sign(np.sin(self.es.time * np.linalg.norm(tor1) / gamma_rot_validate[1, 0]))
-                    
-                    #print("cos_alpha0 = {0}, cos_alpha0_test={1}".format(cos_alpha0, cos_alpha0_test))
-                    #print("dip0 = {0}, self.es.part[0].dip={1}".format(dip0, self.es.part[0].dip))
-                    self.assertLess(abs(cos_alpha0 - cos_alpha0_test), tol)
-                    self.assertLess(abs(cos_alpha1 - cos_alpha1_test), tol)
-                    self.assertEqual(sgn0, sgn0_test)
-                    self.assertEqual(sgn1, sgn1_test)
+            self.es.time_step = 1E-4
+            tol = 7E-3
+            if "EXTERNAL_FORCES" in espressomd.features():
+                for k in range(2):
+                    self.es.part[k].pos = np.array([0.0, 0.0, 0.0])
+                    self.es.part[k].v = np.array([0.0, 0.0, 0.0])
+                    self.es.part[k].omega_body = np.array([0.0, 0.0, 0.0])
+                f0 = np.array([-1.2, 58.3578, 0.002])
+                f1 = np.array([-15.112, -2.0, 368.0])
+                self.es.part[0].ext_force = f0
+                self.es.part[1].ext_force = f1
+                if "ROTATION" in espressomd.features():
+                    tor0 = np.array([12, 0.022, 87])
+                    tor1 = np.array([-0.03, -174, 368])
+                    self.es.part[0].ext_torque = tor0
+                    self.es.part[1].ext_torque = tor1
+                    # Let's set the dipole perpendicular to the torque
+                    if "DIPOLES" in espressomd.features():
+                        dip0 = np.array([0.0, tor0[2], -tor0[1]])
+                        dip1 = np.array([-tor1[2], 0.0, tor1[0]])
+                        self.es.part[0].dip = dip0
+                        self.es.part[1].dip = dip1
+                        tmp_axis0 = np.cross(tor0, dip0) / (np.linalg.norm(tor0) * np.linalg.norm(dip0))
+                        tmp_axis1 = np.cross(tor1, dip1) / (np.linalg.norm(tor1) * np.linalg.norm(dip1))
+                self.es.integrator.run(7)
+                self.es.time = 0.0
+                for k in range(2):
+                    self.es.part[k].pos = np.array([0.0, 0.0, 0.0])
+                if "DIPOLES" in espressomd.features():
+                        self.es.part[0].dip = dip0
+                        self.es.part[1].dip = dip1
+                for i in range(3):
+                    self.es.integrator.run(2)
+                    for k in range(3):
+                        self.assertLess(
+                            abs(self.es.part[0].v[k] - f0[k] / gamma_tr[0, k]), tol)
+                        self.assertLess(
+                            abs(self.es.part[1].v[k] - f1[k] / gamma_tr[1, k]), tol)
+                        self.assertLess(
+                            abs(self.es.part[0].pos[k] - self.es.time * f0[k] / gamma_tr[0, k]), tol)
+                        self.assertLess(
+                            abs(self.es.part[1].pos[k] - self.es.time * f1[k] / gamma_tr[1, k]), tol)
+                        if "ROTATION" in espressomd.features():
+                            self.assertLess(abs(
+                                self.es.part[0].omega_lab[k] - tor0[k] / gamma_rot_validate[0, k]), tol)
+                            self.assertLess(abs(
+                                self.es.part[1].omega_lab[k] - tor1[k] / gamma_rot_validate[1, k]), tol)
+                    if "ROTATION" in espressomd.features() and "DIPOLES" in espressomd.features():
+                        cos_alpha0 = np.dot(dip0,self.es.part[0].dip) / (np.linalg.norm(dip0) * self.es.part[0].dipm)
+                        cos_alpha0_test = np.cos(self.es.time * np.linalg.norm(tor0) / gamma_rot_validate[0, 0])
+                        sgn0 = np.sign(np.dot(self.es.part[0].dip, tmp_axis0))
+                        sgn0_test = np.sign(np.sin(self.es.time * np.linalg.norm(tor0) / gamma_rot_validate[0, 0]))
+                        
+                        cos_alpha1 = np.dot(dip1,self.es.part[1].dip) / (np.linalg.norm(dip1) * self.es.part[1].dipm)
+                        cos_alpha1_test = np.cos(self.es.time * np.linalg.norm(tor1) / gamma_rot_validate[1, 0])
+                        sgn1 = np.sign(np.dot(self.es.part[1].dip, tmp_axis1))
+                        sgn1_test = np.sign(np.sin(self.es.time * np.linalg.norm(tor1) / gamma_rot_validate[1, 0]))
+                        
+                        #print("cos_alpha0 = {0}, cos_alpha0_test={1}".format(cos_alpha0, cos_alpha0_test))
+                        #print("dip0 = {0}, self.es.part[0].dip={1}".format(dip0, self.es.part[0].dip))
+                        self.assertLess(abs(cos_alpha0 - cos_alpha0_test), tol)
+                        self.assertLess(abs(cos_alpha1 - cos_alpha1_test), tol)
+                        self.assertEqual(sgn0, sgn0_test)
+                        self.assertEqual(sgn1, sgn1_test)
 
         for i in range(len(self.es.part)):
             self.es.part[i].remove()
@@ -419,7 +410,7 @@ class ThermoTest(ut.TestCase):
         # no need to rebuild Verlet lists, avoid it
         self.es.cell_system.skin = 5.0
         if test_case < 4 + self.rot_flag:
-            self.es.time_step = 0.03
+            self.es.time_step = 0.04
         else:
             self.es.time_step = 10
         n = 200
@@ -463,23 +454,6 @@ class ThermoTest(ut.TestCase):
         sigma2_tr = np.zeros((2))
         dr_norm = np.zeros((2))
         
-        # Total curve within a spherical trigonometry.
-        # [particle_index, which principal axis, around which lab axis]
-        alpha = np.zeros((2, n, 3, 3))
-        alpha_norm = np.zeros((2))
-        sigma2_alpha = np.zeros((2))
-        alpha2 = np.zeros((2))
-        # Previous directions of the principal axes:
-        # [particle_index, which principal axis, its lab coordinate]
-        prev_pa_lab = np.zeros((2, n, 3, 3))
-        pa_body = np.zeros((3))
-        pa_lab = np.zeros((3, 3))
-        ref_lab = np.zeros((3))
-        vec = np.zeros((3))
-        vec1 = np.zeros((3))
-        vec2 = np.zeros((3))
-        #vec_diag = np.ones((3))
-
         pos0 = np.zeros((2 * n, 3))
         for p in range(n):
             for k in range(2):
@@ -490,12 +464,11 @@ class ThermoTest(ut.TestCase):
 
         loops = 200
         print("Thermalizing...")
-        therm_steps = 150
+        therm_steps = 20
         self.es.integrator.run(therm_steps)
         print("Measuring...")
 
         int_steps = 5
-        fraction_i = 0.65
         for i in range(loops):
             self.es.integrator.run(int_steps)
             # Get kinetic energy in each degree of freedom for all particles
@@ -522,42 +495,6 @@ class ThermoTest(ut.TestCase):
                                                                                                                                                 j])))
                     dr_norm[k] = dr_norm[k] + \
                         (sum(dr2[k, :]) - sigma2_tr[k]) / sigma2_tr[k]
-                    
-                    # Rotational diffusion variance.
-                    if i >= fraction_i * loops:
-                        # let's limit test cases to speed this test..
-                        if test_case in [(7 + self.rot_flag)]:
-                            dt -= self.es.time_step * (1 + therm_steps + fraction_i * loops)
-                            # First, let's identify principal axes in the lab reference frame.
-                            alpha2[k] = 0.0
-                            sigma2_alpha[k] = 0.0
-                            for j in range(3):
-                                for j1 in range(3):
-                                    pa_body[j1] = 0.0
-                                pa_body[j] = 1.0
-                                vec = tc.convert_vec_body_to_space(self.es, ind, pa_body)
-                                pa_lab[j, :] = vec[:]
-                                
-                                if i >= fraction_i * loops + 1:
-                                    # Around which axis we rotates?
-                                    for j1 in range(3):
-                                        # Calc a rotational diffusion within the spherical trigonometry
-                                        vec2 = vec
-                                        vec1[:] = prev_pa_lab[k, p, j, :]
-                                        for j2 in range(3):
-                                            ref_lab[j2] = 0.0
-                                        ref_lab[j1] = 1.0
-                                        dalpha = np.arccos(np.dot(vec2, vec1) / (np.linalg.norm(vec2) * np.linalg.norm(vec1)))
-                                        rot_projection = np.dot(np.cross(vec2, vec1), ref_lab) / np.linalg.norm(np.cross(vec2, vec1))
-                                        theta = np.arccos(np.dot(vec2, ref_lab) / (np.linalg.norm(vec2) * np.linalg.norm(ref_lab)))
-                                        alpha[k, p, j, j1] += dalpha * rot_projection / np.sin(theta)
-                                        alpha2[k] += alpha[k, p, j, j1]**2
-                                        sigma2_alpha[k] += D_rot[k, j] * (2.0 * dt + dt0_rot[k, j] * (- 3.0 +
-                                                                                        4.0 * math.exp(- dt / dt0_rot[k, j]) 
-                                                                                        - math.exp(- 2.0 * dt / dt0_rot[k, j])))
-                                prev_pa_lab[k, p, j, :] = pa_lab[j, :]
-                            if i >= fraction_i * loops + 3:
-                                alpha_norm[k] += (alpha2[k] - sigma2_alpha[k]) / sigma2_alpha[k]
 
         tolerance = 0.15
         Ev = 0.5 * mass * v2 / (n * loops)
@@ -570,7 +507,6 @@ class ThermoTest(ut.TestCase):
             do[k] = sum(Eo[k, :]) / (3.0 * halfkT[k]) - 1.0
             do_vec[k, :] = Eo[k, :] / halfkT[k] - 1.0
         dr_norm = dr_norm / (n * loops)
-        alpha_norm = alpha_norm / (n * (1 - fraction_i) * loops - 2)
         
         for k in range(2):
             print("\n")
@@ -599,9 +535,6 @@ class ThermoTest(ut.TestCase):
             print(
                 "Deviation in translational diffusion: {0} ".format(
                     dr_norm[k]))
-            print(
-                "Deviation in rotational diffusion: {0} ".format(
-                    alpha_norm))
 
             self.assertLessEqual(
                 abs(
@@ -628,13 +561,6 @@ class ThermoTest(ut.TestCase):
                 tolerance,
                 msg='Relative deviation in translational diffusion is too large: {0}'.format(
                     dr_norm[k]))
-            if test_case in (1, 3):
-                self.assertLessEqual(
-                    abs(
-                        alpha_norm[k]),
-                    tolerance,
-                    msg='Relative deviation in rotational diffusion is too large: {0}'.format(
-                        alpha_norm[k]))
 
     def test(self):
         if "ROTATION" in espressomd.features():

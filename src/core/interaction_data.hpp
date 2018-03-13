@@ -99,7 +99,11 @@ enum BondedInteraction {
   /** Type of bonded interaction is bending force (immersed boundary). */
   BONDED_IA_IBM_TRIBEND,
   /** Type of bonded interaction is umbrella. */
-  BONDED_IA_UMBRELLA
+  BONDED_IA_UMBRELLA,
+  /** Type of bonded interaction is thermalized distance bond. */
+  BONDED_IA_THERMALIZED_DIST,
+  /** Type of bonded interaction is a BONDED_COULOMB_P3M_SR */
+  BONDED_IA_BONDED_COULOMB_P3M_SR,
 };
 
 /** Specify tabulated bonded interactions  */
@@ -439,6 +443,11 @@ struct IA_parameters {
   int rf_on = 0;
 #endif
 
+#ifdef THOLE
+  double THOLE_scaling_coeff;
+  double THOLE_q1q2;
+#endif
+
 #ifdef TUNABLE_SLIP
   double TUNABLE_SLIP_temp = 0.0;
   double TUNABLE_SLIP_gamma = 0.0;
@@ -571,6 +580,19 @@ typedef struct {
   double r_cut;
 } Harmonic_bond_parameters;
 
+/** Parameters for Thermalized bond **/
+typedef struct {
+    double temp_com;
+    double gamma_com;
+    double temp_distance;
+    double gamma_distance;
+    double r_cut;
+    double pref1_com;
+    double pref2_com;
+    double pref1_dist;
+    double pref2_dist;
+} Thermalized_bond_parameters;
+
 #ifdef ROTATION
 /** Parameters for harmonic dumbbell bond Potential */
 typedef struct {
@@ -590,6 +612,11 @@ typedef struct {
 
 /** Parameters for coulomb bond Potential */
 typedef struct { double prefactor; } Bonded_coulomb_bond_parameters;
+
+#ifdef P3M
+/** Parameters for coulomb bond p3m shortrange Potential */
+typedef struct { double q1q2; } Bonded_coulomb_p3m_sr_bond_parameters;
+#endif
 
 /** Parameters for three body angular potential (bond-angle potentials).
         ATTENTION: Note that there are different implementations of the bond
@@ -787,6 +814,10 @@ typedef union {
 #ifdef UMBRELLA
   Umbrella_bond_parameters umbrella;
 #endif
+  Thermalized_bond_parameters thermalized_bond;
+#ifdef P3M
+  Bonded_coulomb_p3m_sr_bond_parameters bonded_coulomb_p3m_sr;
+#endif
   Subt_lj_bond_parameters subt_lj;
   Rigid_bond_parameters rigid_bond;
   Angledist_bond_parameters angledist;
@@ -879,10 +910,13 @@ inline IA_parameters *get_ia_param(int i, int j) {
     yet present particle types*/
 IA_parameters *get_ia_param_safe(int i, int j);
 
+bool is_new_particle_type(int type);
 /** Makes sure that ia_params is large enough to cover interactions
     for this particle type. The interactions are initialized with values
     such that no physical interaction occurs. */
 void make_particle_type_exist(int type);
+
+void make_particle_type_exist_local(int type);
 
 /** Makes sure that \ref bonded_ia_params is large enough to cover the
     parameters for the bonded interaction type. Attention: 1: There is
@@ -924,7 +958,6 @@ int virtual_set_params(int bond_type);
 void set_dipolar_method_local(DipolarInteraction method);
 #endif
 
-
 /** @brief Checks if particle has a pair bond with a given partner  
 *  Note that bonds are stored only on one of the two particles in Espresso
 * 
@@ -949,6 +982,46 @@ inline bool pair_bond_exists_on(const Particle* const p, const Particle* const p
     }
   }
   return false;
+}
+
+/** @brief Checks both particle for a specific bond. Needs GHOSTS_HAVE_BONDS if particles are ghosts.  
+* 
+* @param P
+* @param p1          particle on which the bond may be stored
+* @param p2    	     bond partner
+* @param bond        enum bond type */ 
+inline bool pair_bond_enum_exists_on(const Particle * const p_bond, const Particle * const p_partner, BondedInteraction bond)
+{
+    Bonded_ia_parameters *iaparams;
+    int type_num;
+    int i = 0;
+    while (i < p_bond->bl.n) {
+        type_num = p_bond->bl.e[i];
+        iaparams = &bonded_ia_params[type_num];
+        if (iaparams->type == (int)bond && p_bond->bl.e[i+1] == p_partner->p.identity) {
+            return true;
+        } else {
+            i+= iaparams->num + 1;
+        }
+    }
+    return false;
+}
+
+/** @brief Checks both particle for a specific bond. Needs GHOSTS_HAVE_BONDS if particles are ghosts.  
+* 
+* @param P
+* @param p1          particle on which the bond may be stored
+* @param p2    	     particle on which the bond may be stored
+* @param bond_type   numerical bond type */ 
+inline bool pair_bond_enum_exists_between(const Particle * const p1, const Particle * const p2, BondedInteraction bond)
+{
+    if (p1==p2)
+        return false;
+    else {
+        //Check if particles have bonds (bl.n > 0) and search for the bond of interest with are_bonded().
+        //Could be saved on both sides (and both could have other bonds), so we need to check both.
+        return (p1->bl.n > 0 && pair_bond_enum_exists_on(p1, p2, bond)) || (p2->bl.n > 0 && pair_bond_enum_exists_on(p2, p1, bond)); 
+    }
 }
 
 #include "utils/math/sqr.hpp"

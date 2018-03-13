@@ -309,13 +309,13 @@ cdef class Thermostat(object):
                 ELSE:
                     langevin_gamma_rotation = langevin_gamma
 
+        global thermo_switch
+        thermo_switch = (thermo_switch | THERMO_LANGEVIN)
+        mpi_bcast_parameter(FIELD_THERMO_SWITCH)
         mpi_bcast_parameter(FIELD_TEMPERATURE)
         mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA)
         IF ROTATION:
             mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION)
-        global thermo_switch
-        thermo_switch = (thermo_switch | THERMO_LANGEVIN)
-        mpi_bcast_parameter(FIELD_THERMO_SWITCH)
         return True
 
     IF LB_GPU or LB:

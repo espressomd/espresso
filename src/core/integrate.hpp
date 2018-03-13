@@ -115,3 +115,4 @@ void integrate_set_nvt();
 int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir, int ydir, int zdir, bool cubic_box);
 
 #endif
+

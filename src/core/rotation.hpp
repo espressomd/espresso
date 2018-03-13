@@ -65,12 +65,12 @@ Vector3d convert_vector_body_to_space(const Particle& p, const Vector3d& v);
 void convert_vel_space_to_body(const Particle *p, double *vel_body);
 
 /** convert a vector from the body-fixed frames to space-fixed coordinates */
-void convert_vec_body_to_space(Particle *p, double *v,double* res);
+void convert_vec_body_to_space(Particle *p, double const *v,double* res);
 
 /** Here we use quaternions to calculate the rotation matrix which
     will be used then to transform torques from the laboratory to
     the body-fixed frames */  
-void define_rotation_matrix(Particle const * p, double A[9]);
+void define_rotation_matrix(Particle const &p, double A[9]);
 
 inline void convert_quat_to_quatu(double quat[4], double quatu[3]) {
   /* director */
@@ -131,18 +131,14 @@ inline void normalize_quaternion(double *q) {
   q[3] /= tmp;
 }
 
-#ifdef BROWNIAN_DYNAMICS
-
 /** Propagate quaternions: viscous drag driven by conservative torques.*/
-void bd_drag_rot(Particle *p, double dt);
+void bd_drag_rot(Particle &p, double dt);
 /** Set the terminal angular velocity driven by the conservative torques drag.*/
-void bd_drag_vel_rot(Particle *p, double dt);
+void bd_drag_vel_rot(Particle &p, double dt);
 
 /** Propagate quaternion: random walk part.*/
-void bd_random_walk_rot(Particle *p, double dt);
+void bd_random_walk_rot(Particle &p, double dt);
 /** Thermalize angular velocity: random walk part.*/
-void bd_random_walk_vel_rot(Particle *p, double dt);
-
-#endif // BROWNIAN_DYNAMICS
+void bd_random_walk_vel_rot(Particle &p, double dt);
 
 #endif

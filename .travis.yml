@@ -13,15 +13,7 @@ matrix:
     - os: linux
       sudo: required
       services: docker
-      env: myconfig=maxset-bd with_coverage=true
-    - os: linux
-      sudo: required
-      services: docker
       env: myconfig=maxset image=ubuntu-python3
-    - os: linux
-      sudo: required
-      services: docker
-      env: myconfig=maxset-bd image=ubuntu-python3
     - os: linux
       sudo: required
       services: docker
@@ -33,7 +25,7 @@ matrix:
     - os: linux
       sudo: required
       services: docker
-      env: myconfig=maxset image=opensuse make_check=false
+      env: myconfig=nocheck-maxset image=opensuse make_check=false
     - os: linux
       sudo: required
       services: docker
@@ -44,10 +36,6 @@ matrix:
     - os: osx
       osx_image: xcode8
       env: myconfig=maxset image=python3
-    - os: linux
-      sudo: required
-      services: docker
-      env: myconfig=nocheck-maxset make_check=false
 
 script:
         - maintainer/travis/build_docker.sh

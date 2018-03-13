@@ -29,7 +29,7 @@
 
 namespace ScriptInterface {
 
-class ComFixed : public AutoParameters {
+class ComFixed : public AutoParameters<ComFixed> {
 public:
   ComFixed() {
     add_parameters({{"types",

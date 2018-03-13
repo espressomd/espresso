@@ -46,7 +46,6 @@
 #include "maggs.hpp"
 #include "minimize_energy.hpp"
 #include "nemd.hpp"
-#include "observables.hpp"
 #include "accumulators.hpp"
 #include "p3m.hpp"
 #include "particle_data.hpp"
@@ -59,6 +58,7 @@
 #include "virtual_sites.hpp"
 #include "npt.hpp"
 #include "collision.hpp"
+#include "brownian_inline.hpp"
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -90,15 +90,6 @@ int recalc_forces = 1;
 double verlet_reuse = 0.0;
 
 double smaller_time_step = -1.0;
-#ifdef MULTI_TIMESTEP
-int current_time_step_is_small = 0;
-int mts_index = 0;
-int mts_max = 0;
-#ifdef NPT
-double scal_store[3] = {0., 0., 0.};
-double virial_store[3] = {0., 0., 0.};
-#endif
-#endif
 
 #ifdef ADDITIONAL_CHECKS
 double db_max_force = 0.0, db_max_vel = 0.0;
@@ -135,19 +126,8 @@ void force_and_velocity_display();
 
 void finalize_p_inst_npt();
 
-#ifdef BROWNIAN_DYNAMICS
-
-/** Propagate position: viscous drag driven by conservative forces.*/
-void bd_drag(Particle *p, double dt);
-/** Set the terminal velocity driven by the conservative forces drag.*/
-void bd_drag_vel(Particle *p, double dt);
-
 /** Propagate position: random walk part.*/
-void bd_random_walk(Particle *p, double dt);
-/** Thermalize velocity: random walk part.*/
-void bd_random_walk_vel(Particle *p, double dt);
-
-#endif // BROWNIAN_DYNAMICS
+void bd_random_walk(Particle &p, double dt);
 
 /*@}*/
 
@@ -248,32 +228,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
   if (check_runtime_errors())
     return;
 
-#ifdef MULTI_TIMESTEP
-  if (smaller_time_step > 0.) {
-    mts_max = time_step / smaller_time_step;
-#ifdef NPT
-    if (integ_switch == INTEG_METHOD_NPT_ISO) {
-      current_time_step_is_small = 1;
-      // Compute forces for small timestep -> get virial contribution.
-      if (recalc_forces)
-        thermo_heat_up();
-      force_calc();
-      thermo_cool_down();
-      ghost_communicator(&cell_structure.collect_ghost_force_comm);
-      current_time_step_is_small = 0;
-      // Store virial
-      for (int j = 0; j < 3; ++j)
-        virial_store[j] = nptiso.p_vir[j];
-      thermo_heat_up();
-      force_calc();
-      thermo_cool_down();
-      ghost_communicator(&cell_structure.collect_ghost_force_comm);
-      rescale_forces();
-    }
-#endif
-  }
-#endif
-
   /* Verlet list criterion */
   skin2 = Utils::sqr(0.5 * skin);
 
@@ -321,14 +275,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
     thermo_cool_down();
 
-#ifdef MULTI_TIMESTEP
-#ifdef NPT
-    if (smaller_time_step > 0. && integ_switch == INTEG_METHOD_NPT_ISO)
-      for (int j = 0; j < 3; ++j)
-        nptiso.p_vir[j] += virial_store[j];
-#endif
-#endif
-
 #ifdef COLLISION_DETECTION
     handle_collisions();
 #endif
@@ -353,8 +299,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
     INTEG_TRACE(fprintf(stderr, "%d: STEP %d\n", this_node, step));
 
 #ifdef BOND_CONSTRAINT
-  if (n_rigidbonds)
-    save_old_pos();
+    if (n_rigidbonds)
+      save_old_pos();
 
 #endif
 
@@ -390,56 +336,16 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #ifdef BOND_CONSTRAINT
     /**Correct those particle positions that participate in a rigid/constrained
      * bond */
-  if (n_rigidbonds) {
-    cells_update_ghosts();
+    if (n_rigidbonds) {
+      cells_update_ghosts();
 
-    correct_pos_shake();
-  }
+      correct_pos_shake();
+    }
 #endif
 
 #ifdef ELECTROSTATICS
     if (coulomb.method == COULOMB_MAGGS) {
       maggs_propagate_B_field(0.5 * time_step);
-    }
-#endif
-
-
-#ifdef MULTI_TIMESTEP
-    if (smaller_time_step > 0) {
-      current_time_step_is_small = 1;
-      /* Calculate the forces */
-      thermo_heat_up();
-      force_calc();
-      thermo_cool_down();
-      ghost_communicator(&cell_structure.collect_ghost_force_comm);
-      rescale_forces();
-      for (mts_index = 0; mts_index < mts_max; ++mts_index) {
-        /* Small integration steps */
-        /* Propagate velocities and positions */
-        /* Assumes: not NEMD_METHOD_OFF; NPT not updated during small steps */
-        if (integ_switch == INTEG_METHOD_NPT_ISO ||
-            nemd_method != NEMD_METHOD_OFF) {
-          propagate_vel();
-          propagate_pos();
-        } else
-          propagate_vel_pos();
-        cells_update_ghosts();
-        force_calc();
-        ghost_communicator(&cell_structure.collect_ghost_force_comm);
-#ifdef NPT
-        // Store virial
-        for (int j = 0; j < 3; ++j)
-          virial_store[j] = nptiso.p_vir[j];
-#endif
-        rescale_forces_propagate_vel();
-      }
-      current_time_step_is_small = 0;
-      thermo_heat_up();
-      force_calc();
-      thermo_cool_down();
-      ghost_communicator(&cell_structure.collect_ghost_force_comm);
-      rescale_forces();
-      recalc_forces = 0;
     }
 #endif
 
@@ -471,14 +377,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
     integrate_reaction();
 #endif
 
-
-#ifdef MULTI_TIMESTEP
-#ifdef NPT
-    if (smaller_time_step > 0. && integ_switch == INTEG_METHOD_NPT_ISO)
-      for (int j = 0; j < 3; ++j)
-        nptiso.p_vir[j] += virial_store[j];
-#endif
-#endif
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
@@ -489,10 +387,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 // SHAKE velocity updates
 #ifdef BOND_CONSTRAINT
-  if (n_rigidbonds) {
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    correct_vel_shake();
-  }
+    if (n_rigidbonds) {
+      ghost_communicator(&cell_structure.update_ghost_pos_comm);
+      correct_vel_shake();
+    }
 #endif
 // VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
@@ -581,6 +479,12 @@ void integrate_vv(int n_steps, int reuse_forces) {
   CALLGRIND_STOP_INSTRUMENTATION;
 #endif
 
+  /* Steepest descent operatates on unscaled forces,
+     so we have to scale them back now. */
+  if(integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
+    rescale_forces();
+  }
+
   /* verlet list statistics */
   if (n_verlet_updates > 0)
     verlet_reuse = n_steps / (double)n_verlet_updates;
@@ -619,17 +523,7 @@ void rescale_velocities(double scale) {
 /************************************************************/
 
 namespace {
-double calc_scale() {
-#ifdef MULTI_TIMESTEP
-  if (smaller_time_step > 0.) {
-    if (current_time_step_is_small)
-      return 0.5 * smaller_time_step * smaller_time_step;
-    else
-      return 0.5 * smaller_time_step * time_step;
-  }
-#endif
-  return 0.5 * time_step * time_step;
-}
+double calc_scale() { return 0.5 * time_step * time_step; }
 }
 
 void rescale_forces() {
@@ -678,8 +572,8 @@ void rescale_forces_propagate_vel() {
 #endif
 #ifdef BROWNIAN_DYNAMICS
       if (thermo_switch & THERMO_BROWNIAN) {
-        bd_drag_vel(&p,0.5 * time_step);
-        bd_random_walk_vel(&p,0.5 * time_step);
+        bd_drag_vel(p,0.5 * time_step);
+        bd_random_walk_vel(p,0.5 * time_step);
       }
 #endif // BROWNIAN_DYNAMICS
       for (int j = 0; j < 3; j++) {
@@ -718,10 +612,7 @@ void rescale_forces_propagate_vel() {
   }
 
 #ifdef NPT
-#ifdef MULTI_TIMESTEP
-  if (smaller_time_step < 0. || current_time_step_is_small == 0)
-#endif
-    finalize_p_inst_npt();
+  finalize_p_inst_npt();
 #endif
 }
 
@@ -760,11 +651,8 @@ void propagate_press_box_pos_and_rescale_npt() {
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
     double scal[3] = {0., 0., 0.}, L_new = 0.0;
 
-/* finalize derivation of p_inst */
-#ifdef MULTI_TIMESTEP
-    if (smaller_time_step < 0. || current_time_step_is_small == 0)
-#endif
-      finalize_p_inst_npt();
+    /* finalize derivation of p_inst */
+    finalize_p_inst_npt();
 
     /* adjust \ref nptiso_struct::nptiso.volume; prepare pos- and
      * vel-rescaling
@@ -776,10 +664,7 @@ void propagate_press_box_pos_and_rescale_npt() {
         nptiso.volume += nptiso.inv_piston * nptiso.p_diff * 0.5 * time_step;
       scal[2] = Utils::sqr(box_l[nptiso.non_const_dim]) /
                 pow(nptiso.volume, 2.0 / nptiso.dimension);
-#ifdef MULTI_TIMESTEP
-      if (smaller_time_step < 0. || current_time_step_is_small == 0)
-#endif
-        nptiso.volume += nptiso.inv_piston * nptiso.p_diff * 0.5 * time_step;
+      nptiso.volume += nptiso.inv_piston * nptiso.p_diff * 0.5 * time_step;
       if (nptiso.volume < 0.0) {
 
         runtimeErrorMsg()
@@ -797,21 +682,6 @@ void propagate_press_box_pos_and_rescale_npt() {
 
       scal[1] = L_new / box_l[nptiso.non_const_dim];
       scal[0] = 1 / scal[1];
-#ifdef MULTI_TIMESTEP
-      if (smaller_time_step > 0.) {
-        if (current_time_step_is_small == 1) {
-          // load scal variable
-          scal[0] = scal_store[0];
-          scal[1] = scal_store[1];
-          scal[2] = scal_store[2];
-        } else {
-          // save scal variable
-          scal_store[0] = scal[0];
-          scal_store[1] = scal[1];
-          scal_store[2] = scal[2];
-        }
-      }
-#endif
     }
     MPI_Bcast(scal, 3, MPI_DOUBLE, 0, comm_cart);
 
@@ -826,30 +696,14 @@ void propagate_press_box_pos_and_rescale_npt() {
         if (!(p.p.ext_flag & COORD_FIXED(j))) {
 #endif
           if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
-#ifdef MULTI_TIMESTEP
-            if (smaller_time_step > 0.) {
-              if (current_time_step_is_small == 1) {
-                if (mts_index == mts_max - 1) {
-                  p.r.p[j] = scal[1] * (p.r.p[j] + scal[2] * p.m.v[j]);
-                  p.l.p_old[j] *= scal[1];
-                  p.m.v[j] *= scal[0];
-                } else
-                  p.r.p[j] += p.m.v[j];
-              }
-            } else
-#endif
             {
               p.r.p[j] = scal[1] * (p.r.p[j] + scal[2] * p.m.v[j]);
               p.l.p_old[j] *= scal[1];
               p.m.v[j] *= scal[0];
             }
           } else {
-#ifdef MULTI_TIMESTEP
-            if (smaller_time_step < 0. || current_time_step_is_small == 1)
-#endif
-              p.r.p[j] += p.m.v[j];
+            p.r.p[j] += p.m.v[j];
           }
-
 #ifdef EXTERNAL_FORCES
         }
 #endif
@@ -861,7 +715,6 @@ void propagate_press_box_pos_and_rescale_npt() {
                         fprintf(stderr, "%d: OPT:PPOS p=(%.3f,%.3f,%.3f)\n",
                                 this_node, p.r.p[0], p.r.p[1], p.r.p[2]));
     }
-
 
     set_resort_particles(Cells::RESORT_LOCAL);
 
@@ -910,10 +763,10 @@ void propagate_vel() {
 #endif
 #ifdef BROWNIAN_DYNAMICS
     if (thermo_switch & THERMO_BROWNIAN) {
-      bd_drag_vel(&p,0.5 * time_step);
-      bd_drag_vel_rot(&p,0.5 * time_step);
-      bd_random_walk_vel(&p,0.5 * time_step);
-      bd_random_walk_vel_rot(&p,0.5 * time_step);
+      bd_drag_vel(p,0.5 * time_step);
+      bd_drag_vel_rot(p,0.5 * time_step);
+      bd_random_walk_vel(p,0.5 * time_step);
+      bd_random_walk_vel_rot(p,0.5 * time_step);
     }
 #endif // BROWNIAN_DYNAMICS
       for (int j = 0; j < 3; j++) {
@@ -982,10 +835,10 @@ void propagate_pos() {
 #endif
 #ifdef BROWNIAN_DYNAMICS
       if (thermo_switch & THERMO_BROWNIAN) {
-        bd_drag(&p, time_step);
-        bd_drag_rot(&p, time_step);
-        bd_random_walk(&p, time_step);
-        bd_random_walk_rot(&p, time_step);
+        bd_drag(p, time_step);
+        bd_drag_rot(p, time_step);
+        bd_random_walk(p, time_step);
+        bd_random_walk_rot(p, time_step);
       }
 #endif // BROWNIAN_DYNAMICS
       for (int j = 0; j < 3; j++) {
@@ -1041,14 +894,14 @@ void propagate_vel_pos() {
 #endif
 #ifdef BROWNIAN_DYNAMICS
       if (thermo_switch & THERMO_BROWNIAN) {
-        bd_drag_vel(&p,0.5 * time_step);
-        bd_drag_vel_rot(&p,0.5 * time_step);
-        bd_random_walk_vel(&p,0.5 * time_step);
-        bd_random_walk_vel_rot(&p,0.5 * time_step);
-        bd_drag(&p, time_step);
-        bd_drag_rot(&p, time_step);
-        bd_random_walk(&p, time_step);
-        bd_random_walk_rot(&p, time_step);
+        bd_drag_vel(p,0.5 * time_step);
+        bd_drag_vel_rot(p,0.5 * time_step);
+        bd_random_walk_vel(p,0.5 * time_step);
+        bd_random_walk_vel_rot(p,0.5 * time_step);
+        bd_drag(p, time_step);
+        bd_drag_rot(p, time_step);
+        bd_random_walk(p, time_step);
+        bd_random_walk_rot(p, time_step);
       }
 #endif // BROWNIAN_DYNAMICS
       for (int j = 0; j < 3; j++) {
@@ -1062,19 +915,10 @@ void propagate_vel_pos() {
           {
             /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
             p.m.v[j] += p.f.f[j];
-          }
-#ifdef MULTI_TIMESTEP
-          if (smaller_time_step < 0. || current_time_step_is_small == 1)
-#endif
-          {
-#ifdef BROWNIAN_DYNAMICS
-            if (!(thermo_switch & THERMO_BROWNIAN))
-#endif // BROWNIAN_DYNAMICS
-            {
-              /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
-               * v(t+0.5*dt) */
-              p.r.p[j] += p.m.v[j];
-            }
+
+            /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
+             * v(t+0.5*dt) */
+            p.r.p[j] += p.m.v[j];
           }
         }
       }
@@ -1193,13 +1037,12 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
           << "cannot automatically determine skin, please set it manually";
       return ES_ERROR;
     }
-    skin = std::min(0.4 * max_cut,max_skin);
+    skin = std::min(0.4 * max_cut, max_skin);
     mpi_bcast_parameter(FIELD_SKIN);
   }
 
   /* perform integration */
   if (!Correlators::auto_update_enabled() &&
-      !Observables::auto_update_enabled() &&
       !Accumulators::auto_update_enabled()) {
     if (mpi_integrate(n_steps, reuse_forces))
       return ES_ERROR;
@@ -1208,13 +1051,8 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
       if (mpi_integrate(1, reuse_forces))
         return ES_ERROR;
       reuse_forces = 1;
-      Observables::auto_update();
       Correlators::auto_update();
       Accumulators::auto_update();
-
-      if (Observables::auto_write_enabled()) {
-        Observables::auto_write();
-      }
     }
     if (n_steps == 0) {
       if (mpi_integrate(0, reuse_forces))
@@ -1281,16 +1119,18 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
 /* Sanity Checks */
 #ifdef ELECTROSTATICS
   if (nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.prefactor > 0) {
-    runtimeErrorMsg() << "WARNING: If electrostatics is being used you must use the the cubic box npt." ;
+    runtimeErrorMsg() << "WARNING: If electrostatics is being used you must "
+                         "use the the cubic box npt.";
     integ_switch = INTEG_METHOD_NVT;
     mpi_bcast_parameter(FIELD_INTEG_SWITCH);
     return ES_ERROR;
- }
+  }
 #endif
 
 #ifdef DIPOLES
   if (nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.Dprefactor > 0) {
-    runtimeErrorMsg() << "WARNING: If magnetostatics is being used you must use the the cubic box npt." ;
+    runtimeErrorMsg() << "WARNING: If magnetostatics is being used you must "
+                         "use the the cubic box npt.";
     integ_switch = INTEG_METHOD_NVT;
     mpi_bcast_parameter(FIELD_INTEG_SWITCH);
     return ES_ERROR;
@@ -1319,109 +1159,58 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
 }
 
 #ifdef BROWNIAN_DYNAMICS
-
-/** Propagate position: viscous drag driven by conservative forces.*/
-void bd_drag(Particle *p, double dt) {
-  int j;
-  double scale_f;
-  Thermostat::GammaType local_gamma;
-
-  scale_f = 0.5 * time_step * time_step / p->p.mass;
-
-  if(p->p.gamma >= Thermostat::GammaType{}) local_gamma = p->p.gamma;
-  else local_gamma = langevin_gamma;
-
-  for (j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
-    if (!(p->p.ext_flag & COORD_FIXED(j)))
-#endif
-    {
-      // scale_f is required to be aligned with rescaled forces
-      // only a conservative part of the force is used here
-#ifndef PARTICLE_ANISOTROPY
-      p->r.p[j] += p->f.f[j] * dt / (local_gamma * scale_f);
-#else
-      p->r.p[j] += p->f.f[j] * dt / (local_gamma[j] * scale_f);
-#endif // PARTICLE_ANISOTROPY
-    }
-  }
-}
-
-/** Set the terminal velocity driven by the conservative forces drag.*/
-void bd_drag_vel(Particle *p, double dt) {
-  int j;
-  double scale_f;
-  Thermostat::GammaType local_gamma;
-
-  scale_f = 0.5 * time_step * time_step / p->p.mass;
-
-  if(p->p.gamma >= Thermostat::GammaType{}) local_gamma = p->p.gamma;
-  else local_gamma = langevin_gamma;
-
-  for (j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
-    if (p->p.ext_flag & COORD_FIXED(j)) {
-      p->m.v[j] = 0.0;
-    } else
-#endif
-    {
-      // here, the additional time_step is used only to align with Espresso default dimensionless model
-      // scale_f is required to be aligned with rescaled forces
-      // only conservative part of the force is used here
-      // NOTE: velocity is assigned here and propagated by thermal part further on top of it
-#ifndef PARTICLE_ANISOTROPY
-      p->m.v[j] = p->f.f[j] * time_step / (local_gamma * scale_f);
-#else
-      p->m.v[j] = p->f.f[j] * time_step / (local_gamma[j] * scale_f);
-#endif // PARTICLE_ANISOTROPY
-    }
-  }
-}
-
 /** Propagate the positions: random walk part.*/
-void bd_random_walk(Particle *p, double dt) {
-  int j;
+/*********************************************************/
+/** \name bd_drag_vel */
+/*********************************************************/
+/**(Eq. (14.37) T. Schlick, https://doi.org/10.1007/978-1-4419-6351-2 (2010))
+ * @param &p              Reference to the particle (Input)
+ * @param dt              Time interval (Input)
+ */
+void bd_random_walk(Particle &p, double dt) {
+  // Position dispersion is defined by the second eq. (14.38) of Schlick2010 taking into account eq. (14.35).
+  // Its time interval factor will be added at the end of this function.
+  // Its square root is the standard deviation. A multiplicative inverse of the position standard deviation:
   extern Thermostat::GammaType brown_sigma_pos_inv;
-  Thermostat::GammaType brown_sigma_pos_temp_inv;
-#ifdef PARTICLE_ANISOTROPY
-  double delta_pos_body[3] = { 0.0, 0.0, 0.0 }, delta_pos_lab[3] = { 0.0, 0.0, 0.0 };
-#endif
-  int aniso_flag = 1; // particle anisotropy flag
-
+  // Just a NAN setter, technical variable:
+  extern Thermostat::GammaType brown_gammatype_nan;
   // first, set defaults
-  brown_sigma_pos_temp_inv = brown_sigma_pos_inv;
+  Thermostat::GammaType brown_sigma_pos_temp_inv = brown_sigma_pos_inv;
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
   auto const constexpr langevin_temp_coeff = 2.0;
 
-  if(p->p.gamma >= Thermostat::GammaType{})
-  {
+  if(p.p.gamma >= Thermostat::GammaType{}) {
     // Is a particle-specific temperature also specified?
-    if(p->p.T >= 0.)
+    if(p.p.T >= 0.)
     {
-      if (p->p.T > 0.0)
-        brown_sigma_pos_temp_inv = sqrt(p->p.gamma / (langevin_temp_coeff * p->p.T));
-      else
-        brown_sigma_pos_temp_inv = -1.0 * sqrt(p->p.gamma); // just an indication of the infinity; negative sign has no sense here
+      if (p.p.T > 0.0) {
+        brown_sigma_pos_temp_inv = sqrt(p.p.gamma / (langevin_temp_coeff * p.p.T));
+      } else {
+        brown_sigma_pos_temp_inv = brown_gammatype_nan; // just an indication of the infinity
+      }
     } else
     // Default temperature but particle-specific gamma
-      brown_sigma_pos_temp_inv = sqrt(p->p.gamma / (langevin_temp_coeff * temperature));
+      brown_sigma_pos_temp_inv = sqrt(p.p.gamma / (langevin_temp_coeff * temperature));
   } // particle specific gamma
   else
   {
     // No particle-specific gamma, but is there particle-specific temperature
-    if(p->p.T >= 0.)
-    {
-      if(p->p.T > 0.0)
-        brown_sigma_pos_temp_inv = sqrt(langevin_gamma / (langevin_temp_coeff * p->p.T));
-      else
-        brown_sigma_pos_temp_inv = -1.0 * sqrt(langevin_gamma); // just an indication of the infinity; negative sign has no sense here
-    } else
+    if(p.p.T >= 0.) {
+      if(p.p.T > 0.0) {
+        brown_sigma_pos_temp_inv = sqrt(langevin_gamma / (langevin_temp_coeff * p.p.T));
+      } else {
+        brown_sigma_pos_temp_inv = brown_gammatype_nan; // just an indication of the infinity
+      }
+    } else {
     // Defaut values for both
       brown_sigma_pos_temp_inv = brown_sigma_pos_inv;
+    }
   }
 #endif /* LANGEVIN_PER_PARTICLE */
+
+  bool aniso_flag = true; // particle anisotropy flag
 
 #ifdef PARTICLE_ANISOTROPY
   // Particle frictional isotropy check.
@@ -1429,76 +1218,42 @@ void bd_random_walk(Particle *p, double dt) {
       || (brown_sigma_pos_temp_inv[1] != brown_sigma_pos_temp_inv[2]);
 #endif
 
-  for (j = 0; j < 3; j++) {
+#ifdef PARTICLE_ANISOTROPY
+  double delta_pos_body[3] = { 0.0, 0.0, 0.0 }, delta_pos_lab[3] = { 0.0, 0.0, 0.0 };
+#endif
+
+  // Eq. (14.37) is factored by the Gaussian noise (12.22) with its squared magnitude defined in the second eq. (14.38), Schlick2010.
+  for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
-    if (!(p->p.ext_flag & COORD_FIXED(j)))
+    if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
     {
 #ifndef PARTICLE_ANISOTROPY
-      if (brown_sigma_pos_temp_inv > 0.0)
+      if (brown_sigma_pos_temp_inv > 0.0) {
         delta_pos_body[j] = (1.0 / brown_sigma_pos_temp_inv) * sqrt(dt) * Thermostat::noise_g();
-      else
+      } else {
         delta_pos_body[j] = 0.0;
+      }
 #else
-      if (brown_sigma_pos_temp_inv[j] > 0.0)
+      if (brown_sigma_pos_temp_inv[j] > 0.0) {
         delta_pos_body[j] = (1.0 / brown_sigma_pos_temp_inv[j]) * sqrt(dt) * Thermostat::noise_g();
-      else
+      } else {
         delta_pos_body[j] = 0.0;
+      }
 #endif // PARTICLE_ANISOTROPY
     }
   }
 
   if (aniso_flag) {
-    convert_vec_body_to_space(p, delta_pos_body, delta_pos_lab);
-
-    for (j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
-      if (!(p->p.ext_flag & COORD_FIXED(j)))
-#endif
-      {
-        p->r.p[j] += delta_pos_lab[j];
-      }
-    }
-  } else {
-    // in order to save a calculation performance:
-    for (j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
-      if (!(p->p.ext_flag & COORD_FIXED(j)))
-#endif
-      {
-        p->r.p[j] += delta_pos_body[j];
-      }
-    }
+    convert_vec_body_to_space(&(p), delta_pos_body, delta_pos_lab);
   }
-}
 
-/** Determine the velocities: random walk part.*/
-void bd_random_walk_vel(Particle *p, double dt) {
-  int j;
-  extern double brown_sigma_vel;
-  double brown_sigma_vel_temp;
-
-  // first, set defaults
-  brown_sigma_vel_temp = brown_sigma_vel;
-
-  // Override defaults if per-particle values for T and gamma are given
-#ifdef LANGEVIN_PER_PARTICLE
-  auto const constexpr langevin_temp_coeff = 1.0;
-  // Is a particle-specific temperature specified?
-  // here, the time_step is used only to align with Espresso default dimensionless model
-  if (p->p.T >= 0.)
-    brown_sigma_vel_temp = sqrt(langevin_temp_coeff * p->p.T) * time_step;
-  else
-    brown_sigma_vel_temp = brown_sigma_vel;
-#endif /* LANGEVIN_PER_PARTICLE */
-
-  for (j = 0; j < 3; j++) {
+  for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
-    if (!(p->p.ext_flag & COORD_FIXED(j)))
+    if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
     {
-      // velocity is added here. It is already initialized in the terminal drag part.
-      p->m.v[j] += brown_sigma_vel_temp * Thermostat::noise_g() / sqrt(p->p.mass);
+        p.r.p[j] += aniso_flag ? delta_pos_lab[j] : delta_pos_body[j];
     }
   }
 }
