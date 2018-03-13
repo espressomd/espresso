@@ -402,6 +402,7 @@ class openGLLive(object):
                 if not self.last_T == self.system.time:
                     self.last_T = self.system.time
                     self.update_particles()
+                    
                     # KEYBOARD CALLBACKS MAY CHANGE ESPRESSO SYSTEM PROPERTIES,
                     # ONLY SAVE TO CHANGE HERE
                     for c in self.keyboardManager.userCallbackStack:
@@ -612,7 +613,7 @@ class openGLLive(object):
                           self.materials[self.modulo_indexing(self.specs['constraint_type_materials'], s[4])], self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::Sphere']:
-            draw_sphere(s[0], s[1], self.modulo_indexing(self.specs['constraint_type_colors'], s[2]), self.materials[self.modulo_indexing(
+            self.draw_sphere(s[0], s[1], self.modulo_indexing(self.specs['constraint_type_colors'], s[2]), self.materials[self.modulo_indexing(
                 self.specs['constraint_type_materials'], s[2])], self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::SpheroCylinder']:
@@ -697,13 +698,18 @@ class openGLLive(object):
 
                 set_solid_material(color[0], color[1], color[2], color[3], material[0], material[1], material[2], material[3])
 
-            redraw_sphere(self.particles['pos'][pid], radius, self.specs['quality_particles'])
+                glNewList(self.dl_sphere, GL_COMPILE)
+                glutSolidSphere(radius, self.specs['quality_particles'], self.specs['quality_particles'])
+                glEndList()
+
+            self.redraw_sphere(self.particles['pos'][pid], radius, self.specs['quality_particles'])
+
             if self.has_images:
                 for imx in range(-self.specs['periodic_images'][0], self.specs['periodic_images'][0] + 1):
                     for imy in range(-self.specs['periodic_images'][1], self.specs['periodic_images'][1] + 1):
                         for imz in range(-self.specs['periodic_images'][2], self.specs['periodic_images'][2] + 1):
                             if imx != 0 or imy != 0 or imz != 0:
-                                redraw_sphere(
+                                self.redraw_sphere(
                                     self.particles['pos'][pid] + (imx * self.imPos[0] + imy * self.imPos[1] + imz * self.imPos[2]), radius, self.specs['quality_particles'])
 
             IF EXTERNAL_FORCES:
@@ -797,6 +803,12 @@ class openGLLive(object):
                                               self.imPos[dim], radius, col, mat, self.specs['quality_bonds'])
                                 draw_cylinder(self.particles['pos'][b[1]] + im * self.imPos[dim], s1 + im *
                                               self.imPos[dim], radius, col, mat, self.specs['quality_bonds'])
+
+    def redraw_sphere(self, pos, radius, quality):
+        glPushMatrix()
+        glTranslatef(pos[0], pos[1], pos[2])
+        glCallList(self.dl_sphere)
+        glPopMatrix()
 
     # HELPER TO DRAW PERIODIC BONDS
     def is_inside_box(self, p):
@@ -1213,6 +1225,9 @@ class openGLLive(object):
             glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.0)
             glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 0.0)
             glEnable(GL_LIGHT1)
+	   
+        self.dl_sphere = glGenLists(1)
+    
 
 # END OF MAIN CLASS
 
@@ -1257,23 +1272,6 @@ def draw_box(p0, s, color):
     glEnd()
     # glutWireCube(size)
     glPopMatrix()
-
-
-def draw_sphere(pos, radius, color, material, quality):
-    glPushMatrix()
-    glTranslatef(pos[0], pos[1], pos[2])
-    set_solid_material(color[0], color[1], color[2], color[
-                      3], material[0], material[1], material[2], material[3])
-    glutSolidSphere(radius, quality, quality)
-    glPopMatrix()
-
-
-def redraw_sphere(pos, radius, quality):
-    glPushMatrix()
-    glTranslatef(pos[0], pos[1], pos[2])
-    glutSolidSphere(radius, quality, quality)
-    glPopMatrix()
-
 
 def draw_plane(edges, color, material):
 
