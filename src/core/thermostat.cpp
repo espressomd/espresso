@@ -46,10 +46,8 @@ namespace {
      set yet. */
 constexpr double sentinel(double) { return -1.0; }
 Vector3d sentinel(Vector3d) { return {-1.0, -1.0, -1.0}; }
-#ifdef BROWNIAN_DYNAMICS
 constexpr double set_nan(double) { return NAN; }
 Vector3d set_nan(Vector3d) { return {NAN, NAN, NAN}; }
-#endif // BROWNIAN_DYNAMICS
 }
 
 /* LANGEVIN THERMOSTAT */
