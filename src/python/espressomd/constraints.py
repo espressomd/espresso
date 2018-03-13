@@ -60,6 +60,15 @@ class Constraints(ScriptInterfaceHelper):
 
         self.call_method("remove", object=constraint)
 
+    def clear(self):
+        """
+        Remove all constraints.
+
+        """
+        constraints = self.call_method("get_elements")
+        for c in constraints:
+            self.remove(c)
+
 
 class Constraint(ScriptInterfaceHelper):
     """
