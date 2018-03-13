@@ -27,13 +27,13 @@ namespace Observables {
 
 std::vector<double> CylindricalLBFluxDensityProfileAtParticlePositions::
 operator()(PartCfg &partCfg) const {
-  std::vector<size_t> n_bins{{static_cast<size_t>(n_r_bins),
+  std::array<size_t, 3> n_bins{{static_cast<size_t>(n_r_bins),
                               static_cast<size_t>(n_phi_bins),
                               static_cast<size_t>(n_z_bins)}};
-  std::vector<std::pair<double, double>> limits{
+  std::array<std::pair<double, double>, 3> limits{
       {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
        std::make_pair(min_z, max_z)}};
-  Utils::CylindricalHistogram<double> histogram(n_bins, 3, limits);
+  Utils::CylindricalHistogram<double, 3> histogram(n_bins, 3, limits);
 #ifdef LB_GPU
   // First collect all positions (since we want to call the LB function to
   // get the fluid velocities only once).

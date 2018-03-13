@@ -32,6 +32,9 @@ box_l = 6 * np.sqrt(2)
 # Integration parameters
 #############################################################
 system = espressomd.System(box_l=[box_l]*3)
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
 system.time_step = 0.02
 system.cell_system.skin = 0.4
 system.cell_system.max_num_cells = 2744

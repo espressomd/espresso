@@ -310,33 +310,6 @@ void lb_init_boundaries() {
         }
       }
     }
-    // SET VOXEL BOUNDARIES DIRECTLY
-    
-    /* TODO implement as shape
-    int xxx, yyy, zzz = 0;
-    char line[80];
-    for (n = 0; n < n_lb_boundaries; n++) {
-      switch (lb_boundaries[n].type) {
-      case LB_BOUNDARY_VOXEL:
-        FILE *fp;
-        fp = fopen(lb_boundaries[n].c.voxel.filename, "r");
-
-        while (fgets(line, 80, fp) != nullptr) {
-          // get a line, up to 80 chars from fp,  done if nullptr 
-          sscanf(line, "%d %d %d", &xxx, &yyy, &zzz);
-
-          lbfields[get_linear_index(xxx, yyy, zzz, lblattice.halo_grid)]
-              .boundary = n + 1;
-        }
-        fclose(fp);
-
-        break;
-
-      default:
-        break;
-      }
-    }
-    */
 #endif
   }
 }
@@ -421,7 +394,7 @@ void lb_bounce_back() {
                    9, 12, 11, 14, 13, 16, 15, 18, 17};
 
   /* bottom-up sweep */
-  //  for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume;k++) 
+  //  for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume;k++)
   for (z = 0; z < lblattice.grid[2] + 2; z++) {
     for (y = 0; y < lblattice.grid[1] + 2; y++) {
       for (x = 0; x < lblattice.grid[0] + 2; x++) {
@@ -434,10 +407,10 @@ void lb_bounce_back() {
             population_shift = 0;
             for (l = 0; l < 3; l++) {
               population_shift -=
-                  lbpar.agrid * lbpar.agrid * lbpar.agrid *
-                  lbpar.rho * 2 * lbmodel.c[i][l] *
-                  lbmodel.w[i] *
-		(*LBBoundaries::lbboundaries[lbfields[k].boundary - 1]).velocity()[l] / //TODO
+                  lbpar.agrid * lbpar.agrid * lbpar.agrid * lbpar.rho * 2 *
+                  lbmodel.c[i][l] * lbmodel.w[i] *
+                  (*LBBoundaries::lbboundaries[lbfields[k].boundary - 1])
+                .velocity()[l] * (lbpar.tau / lbpar.agrid) / // TODO
                   lbmodel.c_sound_sq;
             }
 
@@ -449,7 +422,8 @@ void lb_bounce_back() {
                 z - lbmodel.c[i][2] < lblattice.grid[2] + 1) {
               if (!lbfields[k - next[i]].boundary) {
                 for (l = 0; l < 3; l++) {
-		  (*LBBoundaries::lbboundaries[lbfields[k].boundary - 1]).force()[l] +=   //TODO
+                  (*LBBoundaries::lbboundaries[lbfields[k].boundary - 1])
+                      .force()[l] += // TODO
                       (2 * lbfluid[1][i][k] + population_shift) *
                       lbmodel.c[i][l];
                 }

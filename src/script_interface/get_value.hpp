@@ -35,10 +35,44 @@ template <typename T, typename = void> struct get_value_helper {
   T operator()(Variant const &v) const { return boost::get<T>(v); }
 };
 
-/* Vector case */
+/* Vector<N,T> case */
 template <size_t N, typename T> struct get_value_helper<Vector<N, T>, void> {
   Vector<N, T> operator()(Variant const &v) const {
     return Vector<N, T>(boost::get<std::vector<double>>(v));
+  }
+};
+
+template <typename T>
+struct GetVectorOrEmpty : boost::static_visitor<std::vector<T>> {
+  /* Catch all case -> wrong type. */
+  template <typename U> std::vector<T> operator()(U const &) const {
+    throw boost::bad_get{};
+  }
+
+  /* Standard case, correct type */
+  std::vector<T> operator()(std::vector<T> const &v) const { return v; }
+  /* Variant is an empty vector<Variant> -> return empty vector<T> instead,
+   *  else throw wrong type. */
+  std::vector<T> operator()(std::vector<Variant> const &vv) const {
+    if (vv.empty()) {
+      return {};
+    } else {
+      throw boost::bad_get{};
+    }
+  }
+};
+
+/* std::vector cases
+* We implicitly transform an empty vector<Variant> into a empty vector<T>. */
+template <> struct get_value_helper<std::vector<int>, void> {
+  std::vector<int> operator()(Variant const &v) const {
+    return boost::apply_visitor(GetVectorOrEmpty<int>{}, v);
+  }
+};
+
+template <> struct get_value_helper<std::vector<double>, void> {
+  std::vector<double> operator()(Variant const &v) const {
+    return boost::apply_visitor(GetVectorOrEmpty<double>{}, v);
   }
 };
 
@@ -75,7 +109,7 @@ struct get_value_helper<
       if (t_ptr) {
         return t_ptr;
       } else {
-        throw std::runtime_error("Wrong type.");
+        throw std::runtime_error("Wrong type: " + so_ptr->name());
       }
     }
   }
