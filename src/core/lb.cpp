@@ -46,9 +46,7 @@
 
 #ifdef LB
 
-#ifdef ADDITIONAL_CHECKS
-static void lb_check_halo_regions();
-#endif // ADDITIONAL_CHECKS
+void lb_check_halo_regions();
 
 /** Flag indicating momentum exchange between particles and fluid */
 int transfer_momentum = 0;
@@ -145,7 +143,7 @@ static int rancounter = 0;
  * set lattice switch on C-level
  */
 int lb_set_lattice_switch(int py_switch) {
-  switch(py_switch) {
+  switch (py_switch) {
   case 0:
     lattice_switch = LATTICE_OFF;
     mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
@@ -647,11 +645,10 @@ int lb_lbfluid_print_vtk_boundary(char *filename) {
 
     int j;
     /** print of the calculated phys values */
-    fprintf(fp,
-            "# vtk DataFile Version 2.0\nlbboundaries\n"
-            "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\n"
-            "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\n"
-            "SCALARS boundary float 1\nLOOKUP_TABLE default\n",
+    fprintf(fp, "# vtk DataFile Version 2.0\nlbboundaries\n"
+                "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\n"
+                "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\n"
+                "SCALARS boundary float 1\nLOOKUP_TABLE default\n",
             lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z,
             lbpar_gpu.agrid * 0.5, lbpar_gpu.agrid * 0.5, lbpar_gpu.agrid * 0.5,
             lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid,
@@ -672,11 +669,10 @@ int lb_lbfluid_print_vtk_boundary(char *filename) {
     gridsize[1] = box_l[1] / lbpar.agrid;
     gridsize[2] = box_l[2] / lbpar.agrid;
 
-    fprintf(fp,
-            "# vtk DataFile Version 2.0\nlbboundaries\n"
-            "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
-            "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
-            "SCALARS boundary float 1\nLOOKUP_TABLE default\n",
+    fprintf(fp, "# vtk DataFile Version 2.0\nlbboundaries\n"
+                "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
+                "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
+                "SCALARS boundary float 1\nLOOKUP_TABLE default\n",
             gridsize[0], gridsize[1], gridsize[2], lblattice.agrid[0] * 0.5,
             lblattice.agrid[1] * 0.5, lblattice.agrid[2] * 0.5,
             lblattice.agrid[0], lblattice.agrid[1], lblattice.agrid[2],
@@ -716,11 +712,10 @@ int lb_lbfluid_print_vtk_density(char **filename) {
       host_values = (LB_rho_v_pi_gpu *)Utils::malloc(size_of_values);
       lb_get_values_GPU(host_values);
 
-      fprintf(fp,
-              "# vtk DataFile Version 2.0\nlbfluid_gpu\nASCII\nDATASET "
-              "STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f "
-              "%f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS density float "
-              "1\nLOOKUP_TABLE default\n",
+      fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\nASCII\nDATASET "
+                  "STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f "
+                  "%f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS density float "
+                  "1\nLOOKUP_TABLE default\n",
               lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z,
               lbpar_gpu.agrid * 0.5, lbpar_gpu.agrid * 0.5,
               lbpar_gpu.agrid * 0.5, lbpar_gpu.agrid, lbpar_gpu.agrid,
@@ -784,11 +779,10 @@ int lb_lbfluid_print_vtk_velocity(char *filename, std::vector<int> bb1,
     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
     host_values = (LB_rho_v_pi_gpu *)Utils::malloc(size_of_values);
     lb_get_values_GPU(host_values);
-    fprintf(fp,
-            "# vtk DataFile Version 2.0\nlbfluid_gpu\n"
-            "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
-            "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
-            "SCALARS velocity float 3\nLOOKUP_TABLE default\n",
+    fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\n"
+                "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
+                "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
+                "SCALARS velocity float 3\nLOOKUP_TABLE default\n",
             bb_high[0] - bb_low[0] + 1, bb_high[1] - bb_low[1] + 1,
             bb_high[2] - bb_low[2] + 1, (bb_low[0] + 0.5) * lbpar_gpu.agrid,
             (bb_low[1] + 0.5) * lbpar_gpu.agrid,
@@ -810,11 +804,10 @@ int lb_lbfluid_print_vtk_velocity(char *filename, std::vector<int> bb1,
 #ifdef LB
     double u[3];
 
-    fprintf(fp,
-            "# vtk DataFile Version 2.0\nlbfluid_cpu\n"
-            "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
-            "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
-            "SCALARS velocity float 3\nLOOKUP_TABLE default\n",
+    fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_cpu\n"
+                "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
+                "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
+                "SCALARS velocity float 3\nLOOKUP_TABLE default\n",
             bb_high[0] - bb_low[0] + 1, bb_high[1] - bb_low[1] + 1,
             bb_high[2] - bb_low[2] + 1, (bb_low[0] + 0.5) * lblattice.agrid[0],
             (bb_low[1] + 0.5) * lblattice.agrid[1],
@@ -1926,8 +1919,8 @@ static void lb_realloc_fluid() {
     lbfluid[1][i] = lbfluid[1][0] + i * lblattice.halo_grid_volume;
   }
 
-  lbfields = Utils::realloc(
-      lbfields, lblattice.halo_grid_volume * sizeof(*lbfields));
+  lbfields =
+      Utils::realloc(lbfields, lblattice.halo_grid_volume * sizeof(*lbfields));
 }
 
 /** Sets up the structures for exchange of the halo regions.
@@ -1988,17 +1981,19 @@ void lb_reinit_parameters() {
   if (lbpar.viscosity > 0.0) {
     /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
     // unit conversion: viscosity
-    lbpar.gamma_shear = 1. - 2. / (6. * lbpar.viscosity * lbpar.tau /
-                                       (lbpar.agrid * lbpar.agrid) +
-                                   1.);
+    lbpar.gamma_shear =
+        1. -
+        2. / (6. * lbpar.viscosity * lbpar.tau / (lbpar.agrid * lbpar.agrid) +
+              1.);
   }
 
   if (lbpar.bulk_viscosity > 0.0) {
     /* Eq. (81) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
     // unit conversion: viscosity
-    lbpar.gamma_bulk = 1. - 2. / (9. * lbpar.bulk_viscosity * lbpar.tau /
-                                      (lbpar.agrid * lbpar.agrid) +
-                                  1.);
+    lbpar.gamma_bulk = 1. -
+                       2. / (9. * lbpar.bulk_viscosity * lbpar.tau /
+                                 (lbpar.agrid * lbpar.agrid) +
+                             1.);
   }
 
   if (lbpar.is_TRT) {
@@ -2030,7 +2025,7 @@ void lb_reinit_parameters() {
      * Note that the modes are not normalized as in the paper here! */
     mu = temperature / lbmodel.c_sound_sq * lbpar.tau * lbpar.tau /
          (lbpar.agrid * lbpar.agrid);
-    // mu *= agrid*agrid*agrid;  // Marcello's conjecture
+// mu *= agrid*agrid*agrid;  // Marcello's conjecture
 #ifdef D3Q19
     double(*e)[19] = d3q19_modebase;
 #else  // D3Q19
@@ -2064,12 +2059,11 @@ void lb_reinit_parameters() {
     lb_coupl_pref = 0.0;
     lb_coupl_pref2 = 0.0;
   }
-  LB_TRACE(
-      fprintf(stderr,
-              "%d: lbpar.gamma_shear=%lf lbpar.gamma_bulk=%lf shear_fluct=%lf "
+  LB_TRACE(fprintf(
+      stderr, "%d: lbpar.gamma_shear=%lf lbpar.gamma_bulk=%lf shear_fluct=%lf "
               "bulk_fluct=%lf mu=%lf, bulkvisc=%lf, visc=%lf\n",
-              this_node, lbpar.gamma_shear, lbpar.gamma_bulk, lbpar.phi[9],
-              lbpar.phi[4], mu, lbpar.bulk_viscosity, lbpar.viscosity));
+      this_node, lbpar.gamma_shear, lbpar.gamma_bulk, lbpar.phi[9],
+      lbpar.phi[4], mu, lbpar.bulk_viscosity, lbpar.viscosity));
 }
 
 /** Resets the forces on the fluid nodes */
@@ -2387,9 +2381,9 @@ inline void lb_relax_modes(Lattice::index_t index, double *mode) {
   j[1] = mode[2];
   j[2] = mode[3];
 
-  /* if forces are present, the momentum density is redefined to
-   * include one half-step of the force action.  See the
-   * Chapman-Enskog expansion in [Ladd & Verberg]. */
+/* if forces are present, the momentum density is redefined to
+ * include one half-step of the force action.  See the
+ * Chapman-Enskog expansion in [Ladd & Verberg]. */
 #ifndef EXTERNAL_FORCES
   if (lbfields[index].has_force || local_cells.particles().size())
 #endif // !EXTERNAL_FORCES
@@ -2498,7 +2492,7 @@ inline void lb_thermalize_modes(Lattice::index_t index, double *mode) {
   mode[16] += rootrho * lbpar.phi[16] * (d_random() - 0.5);
   mode[17] += rootrho * lbpar.phi[17] * (d_random() - 0.5);
   mode[18] += rootrho * lbpar.phi[18] * (d_random() - 0.5);
-#else  // GAUSSRANDOM
+#else // GAUSSRANDOM
 #error No noise type defined for the CPU LB
 #endif // GAUSSRANDOM
 
@@ -2543,7 +2537,7 @@ inline void lb_apply_forces(Lattice::index_t index, double *mode) {
   mode[8] += C[3];
   mode[9] += C[4];
 
-  /* reset force */
+/* reset force */
 #ifdef EXTERNAL_FORCES
   // unit conversion: force density
   lbfields[index].force[0] =
@@ -2719,7 +2713,7 @@ inline void lb_collide_stream() {
   int x, y, z;
   double modes[19];
 
-  /* loop over all lattice cells (halo excluded) */
+/* loop over all lattice cells (halo excluded) */
 #ifdef LB_BOUNDARIES
   for (auto it = LBBoundaries::lbboundaries.begin();
        it != LBBoundaries::lbboundaries.end(); ++it) {
@@ -2742,8 +2736,8 @@ inline void lb_collide_stream() {
   for (z = 1; z <= lblattice.grid[2]; z++) {
     for (y = 1; y <= lblattice.grid[1]; y++) {
       for (x = 1; x <= lblattice.grid[0]; x++) {
-      // as we only want to apply this to non-boundary nodes we can throw out
-      // the if-clause if we have a non-bounded domain
+// as we only want to apply this to non-boundary nodes we can throw out
+// the if-clause if we have a non-bounded domain
 #ifdef LB_BOUNDARIES
         if (!lbfields[index].boundary)
 #endif // LB_BOUNDARIES
@@ -2759,7 +2753,7 @@ inline void lb_collide_stream() {
           if (lbpar.fluct)
             lb_thermalize_modes(index, modes);
 
-            /* apply forces */
+/* apply forces */
 #ifdef EXTERNAL_FORCES
           lb_apply_forces(index, modes);
 #else  // EXTERNAL_FORCES
@@ -2770,14 +2764,7 @@ inline void lb_collide_stream() {
           /* transform back to populations and streaming */
           lb_calc_n_from_modes_push(index, modes);
         }
-        //  #ifdef LB_BOUNDARIES
-        //           else {
-        //      // Here collision in the boundary nodes
-        //      // can be included, if this is necessary
-        //             //                     lb_boundary_collisions(index,
-        //             modes);
-        //           }
-        // #endif // LB_BOUNDARIES
+
         ++index; /* next node */
       }
       index += 2; /* skip halo region */
@@ -2859,9 +2846,8 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   lblattice.map_position_to_lattice(p->r.p, node_index, delta);
 
   ONEPART_TRACE(if (p->p.identity == check_id) {
-    fprintf(stderr,
-            "%d: OPT: LB delta=(%.3f,%.3f,%.3f,%.3f,%.3f,%.3f) "
-            "pos=(%.3f,%.3f,%.3f)\n",
+    fprintf(stderr, "%d: OPT: LB delta=(%.3f,%.3f,%.3f,%.3f,%.3f,%.3f) "
+                    "pos=(%.3f,%.3f,%.3f)\n",
             this_node, delta[0], delta[1], delta[2], delta[3], delta[4],
             delta[5], p->r.p[0], p->r.p[1], p->r.p[2]);
   });
@@ -2949,7 +2935,7 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
     }
   }
 
-    // map_position_to_lattice: position ... not inside a local plaquette in ...
+// map_position_to_lattice: position ... not inside a local plaquette in ...
 
 #ifdef ENGINE
   if (p->swim.swimming) {
@@ -3172,9 +3158,10 @@ void calc_particle_lattice_ia() {
 
       /* exchange halo regions (for fluid-particle coupling) */
       halo_communication(&update_halo_comm, (char *)**lbfluid);
+
 #ifdef ADDITIONAL_CHECKS
       lb_check_halo_regions();
-#endif // ADDITIONAL_CHECKS
+#endif
 
       /* halo is valid now */
       lbpar.resend_halo = 0;
@@ -3298,9 +3285,8 @@ void lb_calc_average_rho() {
   lbpar.rho = sum_rho / (box_l[0] * box_l[1] * box_l[2]);
 }
 
-  /*@}*/
+/*@}*/
 
-#ifdef ADDITIONAL_CHECKS
 static int compare_buffers(double *buf1, double *buf2, int size) {
   int ret;
   if (memcmp(buf1, buf2, size) != 0) {
@@ -3316,7 +3302,7 @@ static int compare_buffers(double *buf1, double *buf2, int size) {
     This function can be used as an additional check. It test whether the
     halo regions have been exchanged correctly.
 */
-static void lb_check_halo_regions() {
+void lb_check_halo_regions() {
   Lattice::index_t index;
   int i, x, y, z, s_node, r_node, count = lbmodel.n_veloc;
   double *s_buffer, *r_buffer;
@@ -3507,11 +3493,10 @@ static void lb_check_halo_regions() {
   // if (check_runtime_errors());
   // else fprintf(stderr,"halo check successful\n");
 }
-#endif /* ADDITIONAL_CHECKS */
 
 #if 0 /* These debug functions are used nowhere. If you need it, here they     \
-         are. Remove this comment line and the matching #endif. The functions                                                                 \
-         in question are: lb_lattice_sum lb_check_mode_transformation                                                  \
+         are. Remove this comment line and the matching #endif. The functions  \
+         in question are: lb_lattice_sum lb_check_mode_transformation          \
          lb_init_mode_transformation                                           \
          lb_check_negative_n                                                   \
       */
@@ -3895,6 +3880,6 @@ static int lb_check_negative_n(Lattice::index_t index)
 }
 #endif /* ADDITIONAL_CHECKS */
 #endif /* #if 0 */
-  /* Here, the unused "ADDITIONAL_CHECKS functions end. */
+/* Here, the unused "ADDITIONAL_CHECKS functions end. */
 
 #endif // LB
