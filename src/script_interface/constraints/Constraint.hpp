@@ -28,7 +28,7 @@
 namespace ScriptInterface {
 namespace Constraints {
 
-class Constraint : public AutoParameters {
+class Constraint : public AutoParameters<Constraint> {
 public:
   virtual std::shared_ptr<const ::Constraints::Constraint>
   constraint() const = 0;

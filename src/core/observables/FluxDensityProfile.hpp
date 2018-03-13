@@ -12,13 +12,13 @@ public:
     return 3 * n_x_bins * n_y_bins * n_z_bins;
   }
   virtual std::vector<double> operator()(PartCfg &partCfg) const override {
-    std::vector<size_t> n_bins{{static_cast<size_t>(n_x_bins),
+    std::array<size_t, 3> n_bins{{static_cast<size_t>(n_x_bins),
                                 static_cast<size_t>(n_y_bins),
                                 static_cast<size_t>(n_z_bins)}};
-    std::vector<std::pair<double, double>> limits{
+    std::array<std::pair<double, double>, 3> limits{
         {std::make_pair(min_x, max_x), std::make_pair(min_y, max_y),
          std::make_pair(min_z, max_z)}};
-    Utils::Histogram<double> histogram(n_bins, 3, limits);
+    Utils::Histogram<double, 3> histogram(n_bins, 3, limits);
     for (int id : ids) {
       auto const ppos = ::Vector<3, double>(folded_position(partCfg[id]));
       histogram.update(ppos,

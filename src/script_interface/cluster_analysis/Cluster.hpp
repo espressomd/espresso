@@ -30,7 +30,7 @@
 namespace ScriptInterface {
 namespace ClusterAnalysis {
 
-class Cluster : public AutoParameters {
+class Cluster : public AutoParameters<Cluster> {
 public:
   Cluster(){};
   virtual Variant call_method(std::string const &method,

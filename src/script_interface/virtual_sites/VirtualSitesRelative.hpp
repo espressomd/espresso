@@ -33,7 +33,8 @@ namespace VirtualSites {
 class VirtualSitesRelative : public VirtualSites {
 public:
   VirtualSitesRelative()
-      : m_virtual_sites(new ::VirtualSitesRelative()) {};
+      : m_virtual_sites(new ::VirtualSitesRelative()) {
+  };
   /** Vs implementation we are wrapping */
   std::shared_ptr<::VirtualSites> virtual_sites() override { return m_virtual_sites;};
 private:

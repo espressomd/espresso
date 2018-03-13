@@ -316,12 +316,15 @@ To switch the active scheme, the attribute :attr:`espressomd.system.System.virtu
     from espressomd.virtual_sites import VirtualSitesOff, VirtualSitesRelative
 
     s=espressomd.System()
-    s.virtual_sites=VirtualSitesRelative(have_velocity=True)
+    s.virtual_sites=VirtualSitesRelative(have_velocity=True, have_quaternion=False)
     # or
     s.virtual_sites=VirtualSitesOff()
 
 By default, :class:`espressomd.virtual_sites.VirtualSitesOff` is selected. This means that virtual particles are not touched during integration.
-the `have_velocity` attribute determines, whether or not the velocity of virtual sites is calculated, which carries a performance cost.
+The `have_velocity` parameter determines whether or not the velocity of virtual sites is calculated, which carries a performance cost.
+The `have_quaternion` parameter determines whether the quaternion of the virtual particle is updated (usefull in combination with the
+:attr:`espressomd.particle_data.ParticleHandle.vs_quat` property of the virtual particle which defines the orientation of the virtual particle
+in the body fixed frame of the related real particle.
 
 .. _Rigid arrangements of particles: 
 

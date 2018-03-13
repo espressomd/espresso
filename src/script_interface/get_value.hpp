@@ -109,7 +109,7 @@ struct get_value_helper<
       if (t_ptr) {
         return t_ptr;
       } else {
-        throw std::runtime_error("Wrong type.");
+        throw std::runtime_error("Wrong type: " + so_ptr->name());
       }
     }
   }
