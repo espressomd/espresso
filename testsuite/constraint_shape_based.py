@@ -9,25 +9,30 @@ import espressomd.shapes
 import tests_common
 
 
-
 @ut.skipIf(not espressomd.has_features(["CONSTRAINTS", "LENNARD_JONES_GENERIC"]),
            "Features not available, skipping test!")
 class ShapeBasedConstraintTest(ut.TestCase):
 
     box_l = 30.
-    system = espressomd.System(box_l=3*[box_l])
+    system = espressomd.System(box_l=3 * [box_l])
 
     def tearDown(self):
         self.system.part.clear()
         self.system.constraints.clear()
 
-
-    def pos_on_surface(self, theta, v, semiaxis0, semiaxis1, semiaxis2, center=numpy.array([15, 15, 15])):
+    def pos_on_surface(self, theta, v, semiaxis0, semiaxis1,
+                       semiaxis2, center=numpy.array([15, 15, 15])):
         """Return postion on ellipsoid surface."""
-        pos = numpy.array([semiaxis0 * numpy.sqrt(1. - v * v) * numpy.cos(theta),
-                           semiaxis1 *
-                           numpy.sqrt(1. - v * v) * numpy.sin(theta),
-                           semiaxis2 * v])
+        pos = numpy.array([semiaxis0 *
+                           numpy.sqrt(1. -
+                                      v *
+                                      v) *
+                           numpy.cos(theta), semiaxis1 *
+                           numpy.sqrt(1. -
+                                      v *
+                                      v) *
+                           numpy.sin(theta), semiaxis2 *
+                           v])
         return pos + center
 
     def test_ellipsoid(self):
@@ -49,8 +54,14 @@ class ShapeBasedConstraintTest(ut.TestCase):
         # check oblate ellipsoid
 
         semiaxes = [2.18, 5.45]
-        e = espressomd.shapes.Ellipsoid(a=semiaxes[0], b=semiaxes[1],
-                      center=[self.box_l / 2., self.box_l / 2., self.box_l / 2.], direction=+1)
+        e = espressomd.shapes.Ellipsoid(
+            a=semiaxes[0],
+            b=semiaxes[1],
+            center=[
+                self.box_l / 2.,
+                self.box_l / 2.,
+                self.box_l / 2.],
+            direction=+1)
 
         constraint_e = espressomd.constraints.ShapeBasedConstraint(
             shape=e, particle_type=1, penetrable=1)
@@ -72,8 +83,14 @@ class ShapeBasedConstraintTest(ut.TestCase):
         # check prolate ellipsoid
 
         semiaxes = [3.61, 2.23]
-        e = espressomd.shapes.Ellipsoid(a=semiaxes[0], b=semiaxes[1],
-                      center=[self.box_l / 2., self.box_l / 2., self.box_l / 2.], direction=+1)
+        e = espressomd.shapes.Ellipsoid(
+            a=semiaxes[0],
+            b=semiaxes[1],
+            center=[
+                self.box_l / 2.,
+                self.box_l / 2.,
+                self.box_l / 2.],
+            direction=+1)
 
         constraint_e = espressomd.constraints.ShapeBasedConstraint(
             shape=e, particle_type=1, penetrable=1)
@@ -129,8 +146,23 @@ class ShapeBasedConstraintTest(ut.TestCase):
         # check force calculation of cylinder constraint
         system.part[0].pos = [self.box_l / 2.0, 1.02, self.box_l / 2.0]
         interactio_dir = -1  # constraint is directed inwards
-        cylinder_shape = espressomd.shapes.Cylinder(center=[self.box_l / 2.0, self.box_l / 2.0, self.box_l / 2.0], axis=[
-                                         0, 0, 1], direction=interactio_dir, radius=self.box_l / 2.0, length=self.box_l + 5)  # +5 in order to have no top or bottom
+        cylinder_shape = espressomd.shapes.Cylinder(
+            center=[
+                self.box_l /
+                2.0,
+                self.box_l /
+                2.0,
+                self.box_l /
+                2.0],
+            axis=[
+                0,
+                0,
+                1],
+            direction=interactio_dir,
+            radius=self.box_l /
+            2.0,
+            length=self.box_l +
+            5)  # +5 in order to have no top or bottom
         penetrability = 0  # inpenetrable
         outer_cylinder_constraint = espressomd.constraints.ShapeBasedConstraint(
             shape=cylinder_shape, particle_type=1, penetrable=penetrability)
@@ -144,8 +176,16 @@ class ShapeBasedConstraintTest(ut.TestCase):
         self.assertAlmostEqual(outer_cylinder_constraint.min_dist(), 1.02)
 
         # test forces on walls
-        self.assertAlmostEqual(-1.0 * outer_cylinder_wall.total_force()[1], tests_common.lj_force(espressomd, cutoff=2.0, offset=0.,
-                                                                                                  eps=1.0, sig=1.0, r=1.02), places=10)  # minus for newtons thrid law
+        self.assertAlmostEqual(
+            -1.0 * outer_cylinder_wall.total_force()[1],
+            tests_common.lj_force(
+                espressomd,
+                cutoff=2.0,
+                offset=0.,
+                eps=1.0,
+                sig=1.0,
+                r=1.02),
+            places=10)  # minus for newtons thrid law
         # Reset
         system.non_bonded_inter[0, 1].lennard_jones.set_params(
             epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0)
@@ -182,7 +222,6 @@ class ShapeBasedConstraintTest(ut.TestCase):
         # Check forces
         f_part = system.part[0].f
 
-
         self.assertEqual(f_part[0], 0.)
         self.assertEqual(f_part[1], 0.)
         self.assertEqual(f_part[2], 0.)
@@ -191,16 +230,48 @@ class ShapeBasedConstraintTest(ut.TestCase):
         f_part = system.part[0].f
 
         self.assertEqual(f_part[0], 0.)
-        self.assertAlmostEqual(f_part[1], tests_common.lj_force(espressomd, cutoff=2.0, offset=0.,
-                                                                eps=1.0, sig=1.0, r=1.21), places=10)
-        self.assertAlmostEqual(f_part[2], tests_common.lj_force(espressomd, cutoff=2.0, offset=0.,
-                                                                eps=1.5, sig=1.0, r=0.83), places=10)
+        self.assertAlmostEqual(
+            f_part[1],
+            tests_common.lj_force(
+                espressomd,
+                cutoff=2.0,
+                offset=0.,
+                eps=1.0,
+                sig=1.0,
+                r=1.21),
+            places=10)
+        self.assertAlmostEqual(
+            f_part[2],
+            tests_common.lj_force(
+                espressomd,
+                cutoff=2.0,
+                offset=0.,
+                eps=1.5,
+                sig=1.0,
+                r=0.83),
+            places=10)
 
         # test forces on walls
-        self.assertAlmostEqual(-1.0 * wall_xz.total_force()[1], tests_common.lj_force(espressomd, cutoff=2.0, offset=0.,
-                                                                                      eps=1.0, sig=1.0, r=1.21), places=10)  # minus for newtons thrid law
-        self.assertAlmostEqual(-1.0 * wall_xy.total_force()[2], tests_common.lj_force(espressomd, cutoff=2.0, offset=0.,
-                                                                                      eps=1.5, sig=1.0, r=0.83), places=10)
+        self.assertAlmostEqual(
+            -1.0 * wall_xz.total_force()[1],
+            tests_common.lj_force(
+                espressomd,
+                cutoff=2.0,
+                offset=0.,
+                eps=1.0,
+                sig=1.0,
+                r=1.21),
+            places=10)  # minus for newtons thrid law
+        self.assertAlmostEqual(
+            -1.0 * wall_xy.total_force()[2],
+            tests_common.lj_force(
+                espressomd,
+                cutoff=2.0,
+                offset=0.,
+                eps=1.5,
+                sig=1.0,
+                r=0.83),
+            places=10)
         # this one is closer and should get the mindist()
         system.part.add(pos=[5., 1.20, 0.82], type=0)
         self.assertAlmostEqual(constraint_xz.min_dist(), system.part[1].pos[1])
@@ -211,6 +282,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
             epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0)
         system.non_bonded_inter[0, 2].lennard_jones.set_params(
             epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0)
+
 
 if __name__ == "__main__":
     ut.main()
