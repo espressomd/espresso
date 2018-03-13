@@ -88,13 +88,6 @@ LB_Parameters lbpar = {
 /** The DnQm model to be used. */
 LB_Model lbmodel = {19,      d3q19_lattice, d3q19_coefficients,
                     d3q19_w, nullptr,       1. / 3.};
-/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- * ! MAKE SURE THAT D3Q19 is #undefined WHEN USING OTHER MODELS !
- * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-/* doesn't work yet */
-#ifndef D3Q19
-#error The implementation only works for D3Q19 so far!
-#endif // D3Q19
 
 #if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
 #define FLATNOISE
@@ -2025,12 +2018,9 @@ void lb_reinit_parameters() {
      * Note that the modes are not normalized as in the paper here! */
     mu = temperature / lbmodel.c_sound_sq * lbpar.tau * lbpar.tau /
          (lbpar.agrid * lbpar.agrid);
-// mu *= agrid*agrid*agrid;  // Marcello's conjecture
-#ifdef D3Q19
+    // mu *= agrid*agrid*agrid;  // Marcello's conjecture
     double(*e)[19] = d3q19_modebase;
-#else  // D3Q19
-    double **e = lbmodel.e;
-#endif // D3Q19
+
     for (i = 0; i < 4; i++)
       lbpar.phi[i] = 0.0;
     lbpar.phi[4] =
@@ -2203,7 +2193,6 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
 
   trace = local_pi[0] + local_pi[2] + local_pi[5];
 
-#ifdef D3Q19
   double rho_times_coeff;
   double tmp1, tmp2;
 
@@ -2276,34 +2265,12 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
   lbfluid[0][18][index] = rho_times_coeff -
                           1. / 12. * (local_j[1] - local_j[2]) +
                           1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-
-#else  // D3Q19
-
-  int i;
-  double tmp = 0.0;
-  double(*c)[3] = lbmodel.c;
-  double(*coeff)[4] = lbmodel.coeff;
-
-  for (i = 0; i < lbmodel.n_veloc; i++) {
-    tmp = local_pi[0] * Utils::sqr(c[i][0]) +
-          (2.0 * local_pi[1] * c[i][0] + local_pi[2] * c[i][1]) * c[i][1] +
-          (2.0 * (local_pi[3] * c[i][0] + local_pi[4] * c[i][1]) +
-           local_pi[5] * c[i][2]) *
-              c[i][2];
-
-    lbfluid[0][i][index] = coeff[i][0] * (local_rho - avg_rho);
-    lbfluid[0][i][index] += coeff[i][1] * scalar(local_j, c[i]);
-    lbfluid[0][i][index] += coeff[i][2] * tmp;
-    lbfluid[0][i][index] += coeff[i][3] * trace;
-  }
-#endif // D3Q19
 }
 
 /*@}*/
 
 /** Calculation of hydrodynamic modes */
 void lb_calc_modes(Lattice::index_t index, double *mode) {
-#ifdef D3Q19
   double n0, n1p, n1m, n2p, n2m, n3p, n3m, n4p, n4m, n5p, n5m, n6p, n6m, n7p,
       n7m, n8p, n8m, n9p, n9m;
 
@@ -2357,16 +2324,6 @@ void lb_calc_modes(Lattice::index_t index, double *mode) {
   mode[16] = n0 + n4p + n5p + n6p + n7p + n8p + n9p - 2. * (n1p + n2p + n3p);
   mode[17] = -n1p + n2p + n6p + n7p - n8p - n9p;
   mode[18] = -n1p - n2p - n6p - n7p - n8p - n9p + 2. * (n3p + n4p + n5p);
-
-#else  // D3Q19
-  int i, j;
-  for (i = 0; i < lbmodel.n_veloc; i++) {
-    mode[i] = 0.0;
-    for (j = 0; j < lbmodel.n_veloc; j++) {
-      mode[i] += lbmodel.e[i][j] * lbfluid[0][i][index];
-    }
-  }
-#endif // D3Q19
 }
 
 inline void lb_relax_modes(Lattice::index_t index, double *mode) {
@@ -2557,8 +2514,6 @@ inline void lb_apply_forces(Lattice::index_t index, double *mode) {
 inline void lb_calc_n_from_modes(Lattice::index_t index, double *mode) {
 
   double *w = lbmodel.w;
-
-#ifdef D3Q19
   double(*e)[19] = d3q19_modebase;
   double m[19];
 
@@ -2605,21 +2560,9 @@ inline void lb_calc_n_from_modes(Lattice::index_t index, double *mode) {
   /* weights enter in the back transformation */
   for (int i = 0; i < lbmodel.n_veloc; i++)
     lbfluid[0][i][index] *= w[i];
-
-#else  // D3Q19
-  double **e = lbmodel.e;
-  for (int i = 0; i < lbmodel.n_veloc; i++) {
-    lbfluid[0][i][index] = 0.0;
-    for (int j = 0; j < lbmodel.n_veloc; j++)
-      lbfluid[0][i][index] += mode[j] * e[j][i] / e[19][j];
-
-    lbfluid[0][i][index] *= w[i];
-  }
-#endif // D3Q19
 }
 
 inline void lb_calc_n_from_modes_push(Lattice::index_t index, double *m) {
-#ifdef D3Q19
   int yperiod = lblattice.halo_grid[0];
   int zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
   Lattice::index_t next[19];
@@ -2694,17 +2637,6 @@ inline void lb_calc_n_from_modes_push(Lattice::index_t index, double *m) {
   /* weights enter in the back transformation */
   for (int i = 0; i < lbmodel.n_veloc; i++)
     lbfluid[1][i][next[i]] *= lbmodel.w[i];
-#else  // D3Q19
-  double **e = lbmodel.e;
-  Lattice::index_t next[lbmodel.n_veloc];
-  for (int i = 0; i < lbmodel.n_veloc; i++) {
-    next[i] = get_linear_index(c[i][0], c[i][1], c[i][2], lblattic.halo_grid);
-    lbfluid[1][i][next[i]] = 0.0;
-    for (int j = 0; j < lbmodel.n_veloc; j++)
-      lbfluid[1][i][next[i]] += mode[j] * e[j][i] / e[19][j];
-    lbfluid[1][i][index] *= w[i];
-  }
-#endif // D3Q19
 }
 
 /* Collisions and streaming (push scheme) */
@@ -3198,7 +3130,6 @@ void calc_particle_lattice_ia() {
 
     /* local cells */
     for (auto &p : local_cells.particles()) {
-
 #ifdef IMMERSED_BOUNDARY
       // Virtual particles for IBM must not be coupled
       if (!p.p.isVirtual)
@@ -3652,7 +3583,6 @@ static void lb_check_mode_transformation(Lattice::index_t index, double *mode) {
 }
 
 static void lb_init_mode_transformation() {
-#ifdef D3Q19
     int i, j, k, l;
     int n_veloc = 14;
     double w[14]    = { 7./18.,
@@ -3774,85 +3704,6 @@ static void lb_init_mode_transformation() {
         fprintf(stderr,"\n");
 
     }
-
-    //proj = 0.0;
-    //for (k=0;k<n_veloc;k++) {
-    //  proj += c[k][2] * w[k] * 1;
-    //}
-    //fprintf(stderr,"%.6f",proj);
-    //
-    //proj = 0.0;
-    //for (k=0;k<n_veloc;k++) {
-    //  proj += c[k][2] * w[k] * c[k][2];
-    //}
-    //fprintf(stderr," %.6f",proj);
-    //
-    //proj = 0.0;
-    //for (k=0;k<n_veloc;k++) {
-    //  proj += c[k][2] * w[k] * c[k][2] * c[k][2];
-    //}
-    //fprintf(stderr," %.6f",proj);
-    //
-    //fprintf(stderr,"\n");
-
-#else /* not D3Q19 */
-    int i, j, k, l;
-    double b[9][9];
-    double e[9][9];
-    double proj, norm[9];
-
-    double c[9][2] = { { 0, 0 },
-                       { 1, 0 },
-                       {-1, 0 },
-                       { 0, 1 },
-                       { 0,-1 },
-                       { 1, 1 },
-                       {-1,-1 },
-                       { 1,-1 },
-                       {-1, 1 } };
-
-    double w[9] = { 4./9, 1./9, 1./9, 1./9, 1./9, 1./36, 1./36, 1./36, 1./36 };
-
-    n_veloc = 9;
-
-    /* construct polynomials from the discrete velocity vectors */
-    for (i=0;i<n_veloc;i++) {
-        b[0][i] = 1;
-        b[1][i] = c[i][0];
-        b[2][i] = c[i][1];
-        b[3][i] = 3*(Utils::sqr(c[i][0]) + Utils::sqr(c[i][1]));
-        b[4][i] = c[i][0]*c[i][0]-c[i][1]*c[i][1];
-        b[5][i] = c[i][0]*c[i][1];
-        b[6][i] = 3*(Utils::sqr(c[i][0])+Utils::sqr(c[i][1]))*c[i][0];
-        b[7][i] = 3*(Utils::sqr(c[i][0])+Utils::sqr(c[i][1]))*c[i][1];
-        b[8][i] = (b[3][i]-5)*b[3][i]/2;
-    }
-
-    /* Gram-Schmidt orthogonalization procedure */
-    for (j=0;j<n_veloc;j++) {
-        for (i=0;i<n_veloc;i++) e[j][i] = b[j][i];
-        for (k=0;k<j;k++) {
-            proj = 0.0;
-            for (l=0;l<n_veloc;l++) {
-                proj += w[l]*e[k][l]*b[j][l];
-            }
-            for (i=0;i<n_veloc;i++) e[j][i] -= proj/norm[k]*e[k][i];
-        }
-        norm[j] = 0.0;
-        for (i=0;i<n_veloc;i++) norm[j] += w[i]*Utils::sqr(e[j][i]);
-    }
-
-    fprintf(stderr,"e[%d][%d] = {\n",n_veloc,n_veloc);
-    for (i=0;i<n_veloc;i++) {
-        fprintf(stderr,"{ % .1f",e[i][0]);
-        for (j=1;j<n_veloc;j++) {
-            fprintf(stderr,", % .1f",e[i][j]);
-        }
-        fprintf(stderr," } %.2f\n",norm[i]);
-    }
-    fprintf(stderr,"};\n");
-
-#endif // D3Q19
 }
 #endif /* ADDITIONAL_CHECKS */
 
