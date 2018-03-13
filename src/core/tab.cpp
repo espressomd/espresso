@@ -32,6 +32,7 @@
 int tabulated_set_params(int part_type_a, int part_type_b, double min,
                          double max, std::vector<double> const &energy,
                          std::vector<double> const &force) {
+  
   auto data = get_ia_param_safe(part_type_a, part_type_b);
   assert(max >= min);
   assert((max == min) || force.size() > 1);

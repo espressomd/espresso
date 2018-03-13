@@ -1,6 +1,7 @@
 #include "RigidBond.hpp"
 #include "debug.hpp"
 #include "grid.hpp" //get_mi_vector
+#include "interaction_data.hpp"
 
 //there is neither a direct force or energy contribution
 int Bond::RigidBond::add_bonded_energy(Particle *p1, int bl_id)
@@ -91,3 +92,12 @@ int Bond::RigidBond::vel_corr(Particle *p1, int bl_id, int* repeat)
 #endif
   return 0;
 }
+
+boost::any Bond::RigidBond::get_bond_parameters_from_bond() const
+{
+
+  Rigid_bond_parameters params = {m_d2, m_p_tol, m_v_tol};
+  return boost::any(params);
+  
+}
+

@@ -31,6 +31,19 @@ cdef extern from "TabulatedPotential.hpp":
         vector[double] energy_tab
         vector[double] force_tab
 
+
+cdef extern from "bond/BondContainer.hpp" namespace "Bond":
+     cdef cppclass BondContainer:
+         #constructor
+         BondContainer() except +
+         #methods for cython interface
+         int get_num_partners(int bond_map_id)
+         int get_bond_type(int bond_map_id)
+         bond_parameter get_bond_parameters[bond_parameter](int bond_map_id)
+         #other functions are not needed
+         pass
+
+        
 cdef extern from "interaction_data.hpp":
     ctypedef struct ia_parameters "IA_parameters":
         double LJ_eps
@@ -131,7 +144,6 @@ cdef extern from "interaction_data.hpp":
 
     cdef ia_parameters * get_ia_param(int i, int j)
     cdef ia_parameters * get_ia_param_safe(int i, int j)
-    cdef void make_bond_type_exist(int type)
 
 cdef extern from "lj.hpp":
     cdef int lennard_jones_set_params(int part_type_a, int part_type_b,
@@ -399,13 +411,7 @@ cdef extern from "interaction_data.hpp":
         Angledist_bond_parameters angledist
         Endangledist_bond_parameters endangledist
 
-    ctypedef struct bonded_ia_parameters:
-        int type
-        int num
-        #* union to store the different bonded interaction parameters. */
-        bond_parameters p
-
-    bonded_ia_parameters * bonded_ia_params
+    BondContainer bond_container
     cdef int n_bonded_ia
 
 cdef extern from "fene.hpp":

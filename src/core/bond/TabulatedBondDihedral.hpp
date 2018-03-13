@@ -22,6 +22,8 @@ namespace Bond {
     int calc_bonded_four_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
 					Particle *p4, double *_energy) const override;
 
+    boost::any get_bond_parameters_from_bond() const override;
+    
   private:  
     //internal function
     void calc_dihedral_angle(Particle *p1, Particle *p2, Particle *p3, Particle *p4, 

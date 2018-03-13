@@ -18,7 +18,9 @@ namespace Bond {
 			      double force[3]) const override;
     int calc_bonded_pair_energy(Particle *p1, Particle *p2, 
 			       double dx[3], double *_energy) const override;
-
+    
+    boost::any get_bond_parameters_from_bond() const override;
+    
   };
 }
 

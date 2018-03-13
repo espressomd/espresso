@@ -1,5 +1,6 @@
 #include "OverlapBondAngle.hpp"
 #include "grid.hpp" //get_mi_vector
+#include "interaction_data.hpp"
 
 //force *
 /** Computes the three body overlapped angle interaction force.
@@ -137,4 +138,13 @@ int Bond::OverlapBondAngle::calc_bonded_three_particle_energy(Particle *p1, Part
 
   return 0;
 
+}
+
+boost::any Bond::OverlapBondAngle::get_bond_parameters_from_bond() const
+{
+
+  Overlap_bond_parameters params = {m_filename, OVERLAP_BOND_ANGLE, m_maxval, m_noverlaps,
+				    m_para_a, m_para_b, m_para_c};
+  return boost::any(params);
+  
 }

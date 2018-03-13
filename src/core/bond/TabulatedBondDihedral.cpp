@@ -1,6 +1,7 @@
 #include "TabulatedBondDihedral.hpp"
 #include "grid.hpp" //get_mi_vector
 #include "utils.hpp" //vector_product
+#include "interaction_data.hpp"
 
 /** Calculate a tabulated dihedral force with number type_num (see
     \ref Bonded_ia_parameters) between particles p1. p2, p3 and p4 and
@@ -125,4 +126,12 @@ void Bond::TabulatedBondDihedral::calc_dihedral_angle(Particle *p1, Particle *p2
   *phi = acos(*cosphi);
   if( scalar(aXb, c) < 0.0 ) *phi = (2.0*PI) - *phi;
 
+}
+
+boost::any Bond::TabulatedBondDihedral::get_bond_parameters_from_bond() const
+{
+
+  TabulatedPotential *pot = new TabulatedPotential(m_tab_pot);
+  Tabulated_bond_parameters params = {TAB_BOND_DIHEDRAL, pot};
+  return boost::any(params);
 }

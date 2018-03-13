@@ -47,3 +47,11 @@ int Bond::BondedCoulombP3MSR::calc_bonded_pair_energy(Particle *p1, Particle *p2
   return 0;
   
 }
+
+boost::any Bond::BondedCoulombP3MSR::get_bond_parameters_from_bond() const
+{
+
+  Bonded_coulomb_p3m_sr_bond_parameters params = {m_q1q2};
+  return boost::any(params);
+  
+}

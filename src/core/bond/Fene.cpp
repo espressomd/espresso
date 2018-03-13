@@ -2,6 +2,7 @@
 #include "core/random.hpp"
 #include "core/errorhandling.hpp"
 #include "debug.hpp"
+#include "interaction_data.hpp" //fene bond parameters
 
 //---FENE---
 //calculating the fene bond force: virtual function
@@ -56,4 +57,12 @@ int Bond::Fene::calc_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3]
   *_energy = energy;
   return 0;
 
+}
+
+boost::any Bond::Fene::get_bond_parameters_from_bond() const
+{
+
+  Fene_bond_parameters params = {m_k, m_drmax, m_r0, m_drmax2, m_drmax2i};
+  return boost::any(params);
+  
 }

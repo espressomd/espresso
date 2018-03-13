@@ -411,7 +411,7 @@ class Analysis(object):
         cdef double total_bonded
         total_bonded = 0
         for i in range(c_analyze.n_bonded_ia):
-            if (bonded_ia_params[i].type != BONDED_IA_NONE):
+            if (bond_container.get_bond_type(i) != BONDED_IA_NONE):
                 p["bonded", i] = c_analyze.obsstat_bonded( & c_analyze.total_pressure, i)[0]
                 total_bonded += c_analyze.obsstat_bonded(& c_analyze.total_pressure, i)[0]
         p["bonded"] = total_bonded
@@ -517,7 +517,7 @@ class Analysis(object):
         # Bonded
         total_bonded = np.zeros((3, 3))
         for i in range(c_analyze.n_bonded_ia):
-            if (bonded_ia_params[i].type != BONDED_IA_NONE):
+            if (bond_container.get_bond_type(i) != BONDED_IA_NONE):
                 p["bonded", i] = np.reshape(create_nparray_from_double_array(
                     c_analyze.obsstat_bonded( & c_analyze.total_p_tensor, i), 9),
                     (3, 3))
@@ -707,7 +707,7 @@ class Analysis(object):
         cdef double total_bonded
         total_bonded = 0
         for i in range(c_analyze.n_bonded_ia):
-            if (bonded_ia_params[i].type != BONDED_IA_NONE):
+            if (bond_container.get_bond_type(i) != BONDED_IA_NONE):
                 e["bonded", i] = c_analyze.obsstat_bonded( & c_analyze.total_energy, i)[0]
                 total_bonded += c_analyze.obsstat_bonded(& c_analyze.total_energy, i)[0]
         e["bonded"] = total_bonded

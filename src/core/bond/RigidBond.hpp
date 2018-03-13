@@ -18,10 +18,12 @@ namespace Bond{
     
     //virtual functions
     // return value: 0: ok, 1: bond broken, 2: return from "add_bonded_force" in forces_inline.cpp
-    virtual int add_bonded_force(Particle *p1, int bl_id) override;
+    int add_bonded_force(Particle *p1, int bl_id) override;
     //energy calculation
     // return value: 0: ok, 1: bond broken, 2: return from "add_bonded_force" in forces_inline.cpp
-    virtual int add_bonded_energy(Particle *p1, int bl_id) override;
+    int add_bonded_energy(Particle *p1, int bl_id) override;
+
+    boost::any get_bond_parameters_from_bond() const override;
 
   private:
     //member variables

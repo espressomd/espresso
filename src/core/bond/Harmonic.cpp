@@ -2,6 +2,7 @@
 #include "debug.hpp"
 #include "core/random.hpp"
 #include "utils.hpp"
+#include "interaction_data.hpp" //Harmonic_bond_parameters
 
 //---HARMONIC BOND---
 int Bond::Harmonic::calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], double force[3]) const {
@@ -47,4 +48,12 @@ int Bond::Harmonic::calc_bonded_pair_energy(Particle *p1, Particle *p2, double d
 
   *_energy = 0.5*m_k*Utils::sqr(dist - m_r);
   return 0;
+}
+
+boost::any Bond::Harmonic::get_bond_parameters_from_bond() const
+{
+
+  Harmonic_bond_parameters params = {m_k,  m_r,  m_r_cut};
+  return boost::any(params);
+  
 }

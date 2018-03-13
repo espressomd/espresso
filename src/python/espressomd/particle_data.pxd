@@ -217,15 +217,24 @@ cdef extern from "rotation.hpp":
     void convert_omega_body_to_space(const particle * p, double * omega)
     void convert_torques_body_to_space(const particle * p, double * torque)
     Vector3d convert_vector_body_to_space(const particle& p,const Vector3d& v)
-
-# The bonded_ia_params stuff has to be included here, because the setter/getter
+    
+# The bond_container stuff has to be included here, because the setter/getter
 # of the particles' bond property needs to now about the correct number of
 # bond partners
+
+cdef extern from "bond/BondContainer.hpp" namespace "Bond":
+    cdef cppclass BondContainer:
+    #constructor
+         BondContainer() except +
+         #methods for cython interface
+         int get_num_partners(int bond_map_id)
+         int get_bond_type(int bond_map_id)
+         bond_parameter get_bond_parameters[bond_parameter](int bond_map_id)
+         #other functions are not needed
+         pass
+
 cdef extern from "interaction_data.hpp":
-    ctypedef struct bonded_ia_parameters "Bonded_ia_parameters":
-        int num
-        pass
-    bonded_ia_parameters * bonded_ia_params
+    BondContainer bond_container
     cdef int n_bonded_ia
 
 cdef class ParticleHandle(object):

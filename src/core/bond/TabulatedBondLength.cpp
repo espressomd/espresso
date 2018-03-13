@@ -1,5 +1,6 @@
 #include "TabulatedBondLength.hpp"
 #include "debug.hpp"
+#include "interaction_data.hpp"
 
 /** Calculate a tabulated bond length force with number type_num (see
     \ref Bonded_ia_parameters) between particles p1 and p2 and add it
@@ -46,4 +47,12 @@ int Bond::TabulatedBondLength::calc_bonded_pair_energy(Particle *p1, Particle *p
     return 1;
   }
 
+}
+
+boost::any Bond::TabulatedBondLength::get_bond_parameters_from_bond() const
+{
+
+  TabulatedPotential *pot = new TabulatedPotential(m_tab_pot);
+  Tabulated_bond_parameters params = {TAB_BOND_LENGTH, pot};
+  return boost::any(params);
 }

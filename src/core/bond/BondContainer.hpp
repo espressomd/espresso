@@ -61,7 +61,20 @@ namespace Bond {
     IbmVolumeConservation* get_IBM_Vol_Con_Bond(int bond_map_id);
     //get number of bond partners
     int get_num_partners(int bond_map_id);
-    
+    //get bond parameters
+    template<typename bond_parameter_type>
+    bond_parameter_type get_bond_parameters(int bond_map_id){
+      return m_all_bonds[bond_map_id]->get_bond_parameters<bond_parameter_type>();
+    }
+    //get bond type as int
+    int get_bond_type(int bond_map_id){
+      try{
+	return int(m_all_bonds.at(bond_map_id)->m_bondtype);
+      }
+      catch(const std::out_of_range &oor){
+	return -1;
+      };
+    }
     
   private:
     //---member variables---

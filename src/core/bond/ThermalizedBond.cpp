@@ -90,3 +90,13 @@ void Bond::ThermalizedBond::write_force_to_particle(Particle *p1, Particle *p2, 
   return;
   
 }
+
+boost::any Bond::ThermalizedBond::get_bond_parameters_from_bond() const
+{
+
+  Thermalized_bond_parameters params = {m_temp_com, m_gamma_com, m_temp_distance, m_gamma_distance,
+					m_r_cut, m_pref1_com, m_pref2_com, m_pref1_dist,
+					m_pref2_dist};
+  return boost::any(params);
+  
+}

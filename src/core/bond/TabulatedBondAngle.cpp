@@ -1,5 +1,6 @@
 #include "TabulatedBondAngle.hpp"
 #include "grid.hpp" //get_mi_vector
+#include "interaction_data.hpp"
 
 //force *
 /** Calculate a tabulated bond angle force with number type_num (see
@@ -153,4 +154,12 @@ int Bond::TabulatedBondAngle::calc_3body_forces(Particle *p_mid, Particle *p_lef
   
   return 0;
 
+}
+
+boost::any Bond::TabulatedBondAngle::get_bond_parameters_from_bond() const
+{
+
+  TabulatedPotential *pot = new TabulatedPotential(m_tab_pot);
+  Tabulated_bond_parameters params = {TAB_BOND_ANGLE, pot};
+  return boost::any(params);
 }

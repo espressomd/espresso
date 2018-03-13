@@ -104,7 +104,6 @@ double field_applied;
 #endif
 
 int n_bonded_ia = 0;
-Bonded_ia_parameters *bonded_ia_params = nullptr;
 
 /** definition of BondContainer with all bonds**/
 Bond::BondContainer bond_container;
@@ -415,33 +414,6 @@ void make_particle_type_exist(int type) {
   if (ns <= n_particle_types)
     return;
   mpi_bcast_n_particle_types(ns);
-}
-
-void make_bond_type_exist(int type) {
-  int i, ns = type + 1;
-
-  if (ns <= n_bonded_ia) {
-#ifdef OVERLAPPED
-    if (bonded_ia_params[type].type == BONDED_IA_OVERLAPPED &&
-        bonded_ia_params[type].p.overlap.noverlaps > 0) {
-      free(bonded_ia_params[type].p.overlap.para_a);
-      free(bonded_ia_params[type].p.overlap.para_b);
-      free(bonded_ia_params[type].p.overlap.para_c);
-      bonded_ia_params[type].p.overlap.para_a = nullptr;
-      bonded_ia_params[type].p.overlap.para_b = nullptr;
-      bonded_ia_params[type].p.overlap.para_c = nullptr;
-    }
-#endif
-    return;
-  }
-  /* else allocate new memory */
-  bonded_ia_params = (Bonded_ia_parameters *)Utils::realloc(
-      bonded_ia_params, ns * sizeof(Bonded_ia_parameters));
-  /* set bond types not used as undefined */
-  for (i = n_bonded_ia; i < ns; i++)
-    bonded_ia_params[i].type = BONDED_IA_NONE;
-
-  n_bonded_ia = ns;
 }
 
 int interactions_sanity_checks() {

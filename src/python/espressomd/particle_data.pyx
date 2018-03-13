@@ -344,7 +344,7 @@ cdef class ParticleHandle(object):
                 bond_id = self.particle_data.bl.e[i]
                 bond.append(BondedInteractions()[bond_id])
                 # Number of partners
-                nPartners = bonded_ia_params[bond_id].num
+                nPartners = bond_container.get_num_partners(bond_id)
 
                 i += 1
 
@@ -1444,12 +1444,12 @@ cdef class ParticleHandle(object):
 
         # Validity of the numeric id
         if bond[0]._bond_id >= n_bonded_ia:
-            raise ValueError("The bond type", bond._bond_id, "does not exist.")
+            raise ValueError("The bond type", bond[0]._bond_id, "does not exist.")
 
         # Number of partners
-        if bonded_ia_params[bond[0]._bond_id].num != len(bond) - 1:
-            raise ValueError("Bond of type", bond._bond_id, "needs", bonded_ia_params[
-                             bond[0]._bond_id], "partners.")
+        if bond_container.get_num_partners(bond[0]._bond_id) != len(bond) - 1:
+            raise ValueError("Bond of type", bond[0]._bond_id, "needs",
+                             bond_container.get_num_partners(bond[0]._bond_id), "partners.")
 
         # Type check on partners
         for i in range(1, len(bond)):

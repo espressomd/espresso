@@ -1,6 +1,7 @@
 #include "OifLocalForces.hpp"
 #include "grid.hpp" // get_mi_vector
 #include "utils.hpp" // unfold position
+#include "interaction_data.hpp"
 
 inline double KS(double lambda){ // Defined by (19) from Dupin2007
     double res;
@@ -220,4 +221,12 @@ void Bond::OifLocalForces::write_force_to_particle(Particle *p1, Particle *p2, P
     p3->f.f[j] += force3[j];
     p4->f.f[j] += force4[j];
   }
+}
+
+boost::any Bond::OifLocalForces::get_bond_parameters_from_bond() const
+{
+
+  Oif_local_forces_bond_parameters params = {m_r0, m_ks, m_kslin, m_phi0, m_kb, m_A01, m_A02, m_kal};
+  return boost::any(params);
+  
 }

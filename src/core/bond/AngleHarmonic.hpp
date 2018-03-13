@@ -20,6 +20,9 @@ namespace Bond {
 			   Particle *p_right, double force1[3], 
 			   double force2[3], double force3[3]) const override;
 
+    boost::any get_bond_parameters_from_bond() const override;
+
+    
   };
 
 }

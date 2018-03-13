@@ -11,10 +11,16 @@ only possible to inherit public from abstact class!
 namespace Bond {
 class HarmonicDumbbell : public PairBond {
 public: 
-  HarmonicDumbbell(double k1_i, double k_2_i, double r_i, double r_cut_i) : m_k1{k1_i}, m_k2{k_2_i}, m_r{r_i}, m_r_cut{r_cut_i} {m_bondtype = BondType::BONDED_IA_HARMONIC_DUMBBELL;}
-    // Member function
-  int calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], double force[3]) const override;
-  int calc_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3], double *_energy) const override;
+  HarmonicDumbbell(double k1_i, double k_2_i, double r_i, double r_cut_i)
+    : m_k1{k1_i}, m_k2{k_2_i}, m_r{r_i}, m_r_cut{r_cut_i}
+  {m_bondtype = BondType::BONDED_IA_HARMONIC_DUMBBELL;}
+  // Member function
+  int calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], double force[3])
+    const override;
+  int calc_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3], double *_energy)
+    const override;
+
+  boost::any get_bond_parameters_from_bond() const override;
 
   //bond parameters
 private:

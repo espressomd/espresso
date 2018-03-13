@@ -897,8 +897,6 @@ extern Coulomb_parameters coulomb;
 
 /** number of bonded interactions. Not used so far. */
 extern int n_bonded_ia;
-/** Field containing the paramters of the bonded ia types */
-extern Bonded_ia_parameters *bonded_ia_params;
 
 /*Bond Container for managing and storing bonds*/
 /*map for bonds: unique pointers because bond is an abstract class */
@@ -967,12 +965,6 @@ IA_parameters *get_ia_param_safe(int i, int j);
     for this particle type. The interactions are initialized with values
     such that no physical interaction occurs. */
 void make_particle_type_exist(int type);
-
-/** Makes sure that \ref bonded_ia_params is large enough to cover the
-    parameters for the bonded interaction type. Attention: 1: There is
-    no initialization done here. 2: Use only in connection with
-    creating new or overwriting old bond types*/
-void make_bond_type_exist(int type);
 
 /** This function increases the LOCAL ia_params field
     to the given size. Better use

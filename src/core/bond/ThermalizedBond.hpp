@@ -20,7 +20,7 @@ namespace Bond {
 			       double force[3]) const override;
     int calc_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3],
 				double *_energy) const override;
-
+    
     //force is written to particles in calc_bonded_pair_force
     void write_force_to_particle(Particle *p1, Particle *p2, double force[3]) const override;
     
@@ -28,6 +28,8 @@ namespace Bond {
     void thermalized_bond_cool_down();
     void thermalized_bond_update_params(double pref_scale);
     void thermalized_bond_init();
+
+    boost::any get_bond_parameters_from_bond() const override;
     
   private:
     double m_temp_com;

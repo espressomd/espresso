@@ -1639,7 +1639,7 @@ cdef class BondedInteraction(object):
             bond_id = args[0]
             # Check, if the bond in Espresso core is really defined as a FENE
             # bond
-            if bonded_ia_params[bond_id].type != self.type_number():
+            if bond_container.get_bond_type(bond_id) != self.type_number():
                 raise Exception(
                     "The bond with this id is not defined as a " + self.type_name() + " bond in the Espresso core.")
 
@@ -1672,7 +1672,7 @@ cdef class BondedInteraction(object):
         """
         # Check if the bond type in Espresso still matches the bond type saved
         # in this class
-        if bonded_ia_params[self._bond_id].type != self.type_number():
+        if bond_container.get_bond_type(self._bond_id) != self.type_number():
             return False
 
         # check, if the bond parameters saved in the class still match those
@@ -1874,10 +1874,11 @@ class FeneBond(BondedInteraction):
         # Everything else has to be supplied by the user, anyway
 
     def _get_params_from_es_core(self):
+        params = bond_container.get_bond_parameters[Fene_bond_parameters](self._bond_id)
         return \
-            {"k": bonded_ia_params[self._bond_id].p.fene.k,
-             "d_r_max": bonded_ia_params[self._bond_id].p.fene.drmax,
-             "r_0": bonded_ia_params[self._bond_id].p.fene.r0}
+            {"k": params['k'],
+             "d_r_max": params['drmax'],
+             "r_0": params['r0']}
 
     def _set_params_in_es_core(self):
         fene_set_params(
@@ -1932,10 +1933,12 @@ class HarmonicBond(BondedInteraction):
         self._params = {"k": 0., "r_0": 0., "r_cut": 0.}
 
     def _get_params_from_es_core(self):
+        params = bond_container.get_bond_parameters[Harmonic_bond_parameters](self._bond_id)
         return \
-            {"k": bonded_ia_params[self._bond_id].p.harmonic.k,
-             "r_0": bonded_ia_params[self._bond_id].p.harmonic.r,
-             "r_cut": bonded_ia_params[self._bond_id].p.harmonic.r_cut}
+            {"k": params['k'],
+             "r_0": params['r'],
+             "r_cut": params['r_cut']
+            }
 
     def _set_params_in_es_core(self):
         harmonic_set_params(
@@ -1974,8 +1977,7 @@ if ELECTROSTATICS:
             self._params = {"prefactor": 1.}
 
         def _get_params_from_es_core(self):
-            return \
-                {"prefactor": bonded_ia_params[self._bond_id].p.bonded_coulomb.prefactor}
+            return bond_container.get_bond_parameters[Bonded_coulomb_bond_parameters](self._bond_id)
 
         def _set_params_in_es_core(self):
             bonded_coulomb_set_params(
@@ -2014,8 +2016,7 @@ if P3M:
             self._params = {"q1q2": 1.}
 
         def _get_params_from_es_core(self):
-            return \
-                {"q1q2": bonded_ia_params[self._bond_id].p.bonded_coulomb_p3m_sr.q1q2}
+            return bond_container.get_bond_parameters[Bonded_coulomb_p3m_sr_bond_parameters](self._bond_id)
 
         def _set_params_in_es_core(self):
             bonded_coulomb_p3m_sr_set_params(
@@ -2061,12 +2062,7 @@ class ThermalizedBond(BondedInteraction):
         self._params = {"temp_com": 1., "gamma_com": 1., "temp_distance": 1., "gamma_distance": 1., "r_cut": 0.}
 
     def _get_params_from_es_core(self):
-        return \
-            {"temp_com": bonded_ia_params[self._bond_id].p.thermalized_bond.temp_com,
-             "gamma_com": bonded_ia_params[self._bond_id].p.thermalized_bond.gamma_com,
-             "temp_distance": bonded_ia_params[self._bond_id].p.thermalized_bond.temp_distance,
-             "gamma_distance": bonded_ia_params[self._bond_id].p.thermalized_bond.gamma_distance,
-             "r_cut": bonded_ia_params[self._bond_id].p.thermalized_bond.r_cut}
+        return bond_container.get_bond_parameters[Thermalized_bond_parameters](self._bond_id)
 
     def _set_params_in_es_core(self):
         thermalized_bond_set_params(
@@ -2139,7 +2135,7 @@ IF ROTATION:
             Parameters
             ----------
             k1 : :obj:`float`
-                Specifies the magnitude of the bond interaction.
+                Specicfies the magnitude of the bond interaction.
             k2 : :obj:`float`
                 Specifies the magnitude of the angular interaction.
             r_0 : :obj:`float`
@@ -2179,11 +2175,13 @@ IF ROTATION:
             self._params = {"r_cut": 0.}
 
         def _get_params_from_es_core(self):
+            params = bond_container.get_bond_parameters[Harmonic_dumbbell_bond_parameters](self._bond_id)
             return \
-                {"k1": bonded_ia_params[self._bond_id].p.harmonic_dumbbell.k1,
-                 "k2": bonded_ia_params[self._bond_id].p.harmonic_dumbbell.k2,
-                 "r_0": bonded_ia_params[self._bond_id].p.harmonic_dumbbell.r,
-                 "r_cut": bonded_ia_params[self._bond_id].p.harmonic_dumbbell.r_cut}
+                {"k1": params['k1'],
+                 "k2": params['k2'],
+                 "r_0": params['r'],
+                 "r_cut": params['r_cut']
+                }
 
         def _set_params_in_es_core(self):
             harmonic_dumbbell_set_params(
@@ -2306,7 +2304,13 @@ IF BOND_CONSTRAINT == 1:
                             "vtol": 0.001}
 
         def _get_params_from_es_core(self):
-            return {"r": bonded_ia_params[self._bond_id].p.rigid_bond.d2**0.5, "ptol": bonded_ia_params[self._bond_id].p.rigid_bond.p_tol, "vtol": bonded_ia_params[self._bond_id].p.rigid_bond.v_tol}
+            params = bond_container.get_bond_parameters[Rigid_bond_parameters](self._bond_id)
+            return \
+        {
+            "r": params['d2']**0.5,
+            "ptol": params['p_tol'],
+            "vtol": params['v_tol']
+        }
 
         def _set_params_in_es_core(self):
             rigid_bond_set_params(
@@ -2346,10 +2350,7 @@ class Dihedral(BondedInteraction):
         self._params = {"mult'": 1., "bend": 0., "phase": 0.}
 
     def _get_params_from_es_core(self):
-        return \
-            {"mult": bonded_ia_params[self._bond_id].p.dihedral.mult,
-             "bend": bonded_ia_params[self._bond_id].p.dihedral.bend,
-             "phase": bonded_ia_params[self._bond_id].p.dihedral.phase}
+        return bond_container.get_bond_parameters[Dihedral_bond_parameters](self._bond_id)
 
     def _set_params_in_es_core(self):
         dihedral_set_params(
@@ -2412,13 +2413,14 @@ IF TABULATED == 1:
             self._params = {'min': -1., 'max': -1., 'energy': [], 'force': []}
 
         def _get_params_from_es_core(self):
-            make_bond_type_exist(self._bond_id)
+            cdef Tabulated_bond_parameters params = bond_container.get_bond_parameters\
+                                                    [Tabulated_bond_parameters](self._bond_id)
             res = \
-                {"type": bonded_ia_params[self._bond_id].p.tab.type,
-                 "min": bonded_ia_params[self._bond_id].p.tab.pot.minval,
-                 "max": bonded_ia_params[self._bond_id].p.tab.pot.maxval,
-                 "energy": bonded_ia_params[self._bond_id].p.tab.pot.energy_tab,
-                 "force": bonded_ia_params[self._bond_id].p.tab.pot.force_tab
+                {"type": params.type,
+                 "min": params.pot.minval,
+                 "max": params.pot.maxval,
+                 "energy": params.pot.energy_tab,
+                 "force": params.pot.force_tab
                 }
             if res["type"] == 1:
                 res["type"] = "distance"
@@ -2675,12 +2677,8 @@ IF BOND_ENDANGLEDIST == 1:
             self._params = {"bend": 0, "phi0": 0, "distmin": 0, "distmax": 1}
 
         def _get_params_from_es_core(self):
-            return \
-                {"bend": bonded_ia_params[self._bond_id].p.endangledist.bend,
-                 "phi0": bonded_ia_params[self._bond_id].p.endangledist.phi0,
-                 "distmin":
-                     bonded_ia_params[self._bond_id].p.endangledist.distmin,
-                 "distmax": bonded_ia_params[self._bond_id].p.endangledist.distmax}
+            # old code has to be removed!!!!
+            return {}
 
         def _set_params_in_es_core(self):
             endangledist_set_params(
@@ -2723,10 +2721,13 @@ IF OVERLAPPED == 1:
             self._params = {"overlap_type": 0, "filename": ""}
 
         def _get_params_from_es_core(self):
-            make_bond_type_exist(self._bond_id)
+            cdef Overlap_bond_parameters params = bond_container.get_bond_parameters\
+                                                  [Overlap_bond_parameters](self._bond_id)
+            
             return \
-                {"bend": bonded_ia_params[self._bond_id].p.overlap.type,
-                 "phi0": utils.to_str(bonded_ia_params[self._bond_id].p.overlap.filename)}
+                {"bend": params.type,
+                 "phi0": utils.to_str(params.filename)
+                }
 
         def _set_params_in_es_core(self):
             overlapped_bonded_set_params(
@@ -2773,9 +2774,7 @@ IF BOND_ANGLE == 1:
             self._params = {"bend": 0, "phi0": 0}
 
         def _get_params_from_es_core(self):
-            return \
-                {"bend": bonded_ia_params[self._bond_id].p.angle_harmonic.bend,
-                 "phi0": bonded_ia_params[self._bond_id].p.angle_harmonic.phi0}
+            return bond_container.get_bond_parameters[Angle_harmonic_bond_parameters](self._bond_id)
 
         def _set_params_in_es_core(self):
             angle_harmonic_set_params(
@@ -2821,9 +2820,7 @@ IF BOND_ANGLE == 1:
             self._params = {"bend": 0, "phi0": 0}
 
         def _get_params_from_es_core(self):
-            return \
-                {"bend": bonded_ia_params[self._bond_id].p.angle_cosine.bend,
-                 "phi0": bonded_ia_params[self._bond_id].p.angle_cosine.phi0}
+            return bond_container.get_bond_parameters[Angle_cosine_bond_parameters](self._bond_id)
 
         def _set_params_in_es_core(self):
             angle_cosine_set_params(
@@ -2869,9 +2866,8 @@ IF BOND_ANGLE == 1:
             self._params = {"bend": 0, "phi0": 0}
 
         def _get_params_from_es_core(self):
-            return \
-                {"bend": bonded_ia_params[self._bond_id].p.angle_cossquare.bend,
-                 "phi0": bonded_ia_params[self._bond_id].p.angle_cossquare.phi0}
+            return bond_container.get_bond_parameters[Angle_cossquare_bond_parameters]\
+                (self._bond_id)
 
         def _set_params_in_es_core(self):
             angle_cossquare_set_params(
@@ -2916,11 +2912,7 @@ class OifGlobalForces(BondedInteraction):
         self._params = {"A0_g": 1., "ka_g": 0., "V0": 1., "kv": 0.}
 
     def _get_params_from_es_core(self):
-        return \
-            {"A0_g": bonded_ia_params[self._bond_id].p.oif_global_forces.A0_g,
-             "ka_g": bonded_ia_params[self._bond_id].p.oif_global_forces.ka_g,
-             "V0": bonded_ia_params[self._bond_id].p.oif_global_forces.V0,
-             "kv": bonded_ia_params[self._bond_id].p.oif_global_forces.kv}
+        return bond_container.get_bond_parameters[Oif_global_forces_bond_parameters](self._bond_id)
 
     def _set_params_in_es_core(self):
         oif_global_forces_set_params(
@@ -2962,15 +2954,7 @@ class OifLocalForces(BondedInteraction):
                         "phi0": 0., "kb": 0., "A01": 0., "A02": 0., "kal": 0.}
 
     def _get_params_from_es_core(self):
-        return \
-            {"r0": bonded_ia_params[self._bond_id].p.oif_local_forces.r0,
-             "ks": bonded_ia_params[self._bond_id].p.oif_local_forces.ks,
-             "kslin": bonded_ia_params[self._bond_id].p.oif_local_forces.kslin,
-             "phi0": bonded_ia_params[self._bond_id].p.oif_local_forces.phi0,
-             "kb": bonded_ia_params[self._bond_id].p.oif_local_forces.kb,
-             "A01": bonded_ia_params[self._bond_id].p.oif_local_forces.A01,
-             "A02": bonded_ia_params[self._bond_id].p.oif_local_forces.A02,
-             "kal": bonded_ia_params[self._bond_id].p.oif_local_forces.kal}
+        return bond_container.get_bond_parameters[Oif_local_forces_bond_parameters](self._bond_id)
 
     def _set_params_in_es_core(self):
         oif_local_forces_set_params(
@@ -3017,7 +3001,7 @@ class BondedInteractions(object):
         if key >= n_bonded_ia:
             raise IndexError(
                 "Index to BondedInteractions[] out of range")
-        bond_type = bonded_ia_params[key].type
+        bond_type = bond_container.get_bond_type(key)
 
         # Check if the bonded interaction exists in Espresso core
         if bond_type == -1:
@@ -3056,7 +3040,7 @@ class BondedInteractions(object):
     # Support iteration over active bonded interactions
     def __iter__(self):
         for i in range(n_bonded_ia):
-            if bonded_ia_params[i].type != -1:
+            if bond_container.get_bond_type(i) != -1:
                 yield self[i]
 
     def add(self, bonded_ia):

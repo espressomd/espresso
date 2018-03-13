@@ -1,5 +1,6 @@
 #include "AngleCosSquare.hpp"
 #include "grid.hpp" //get_mi_vector
+#include "interaction_data.hpp"
 
 /************************************************************/
 
@@ -144,4 +145,12 @@ int Bond::AngleCosSquare::calc_3body_forces(Particle *p_mid, Particle *p_left,
   }
 
   return 0;
+}
+
+boost::any Bond::AngleCosSquare::get_bond_parameters_from_bond() const
+{
+
+  Angle_cossquare_bond_parameters params = {m_bend, m_phi0, m_cos_phi0};
+  return boost::any(params);
+  
 }

@@ -5,7 +5,7 @@ namespace Bond {
 
   enum class BondType {
    /** This bonded interaction was not set. */
-   BONDED_IA_NONE,
+   BONDED_IA_NONE=-1,
    /** Type of bonded interaction is a FENE potential
        (to be combined with Lennard Jones). */
    BONDED_IA_FENE,

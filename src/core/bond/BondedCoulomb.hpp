@@ -6,16 +6,23 @@ The definition of the concrete classes.
 only possible to inherit public from abstact class!
 */
 namespace Bond {
+  
 class BondedCoulomb : public PairBond {
 public:
-  BondedCoulomb(double prefactor_i) : m_prefactor{prefactor_i} {m_bondtype = BondType::BONDED_IA_BONDED_COULOMB;}
+  BondedCoulomb(double prefactor_i) : m_prefactor{prefactor_i}
+  {m_bondtype = BondType::BONDED_IA_BONDED_COULOMB;}
     // Member function
-  int calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], double force[3]) const override;
-  int calc_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3], double *_energy) const override;
+  int calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], double force[3])
+    const override;
+  int calc_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3], double *_energy)
+    const override;
+
+  boost::any get_bond_parameters_from_bond() const override;
 
   //bond parameters
 private:
   double m_prefactor;
 };
+  
 }
 #endif

@@ -20,6 +20,8 @@ namespace Bond {
     int add_bonded_energy(Particle *p1, int bl_id) override;
     //set the static variables for calculating the force acting on the particles
     static void set_area_VOL(double area, double Vol){m_area=area;m_VOL_volume=Vol;};
+    
+    boost::any get_bond_parameters_from_bond() const override;
 
   private:
     /*for every force m_area and Vol has to be calculated for all bonds

@@ -18,6 +18,7 @@ namespace Bond {
     int calc_bonded_three_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
 						 double *_energy) const override;
 
+    boost::any get_bond_parameters_from_bond() const override;
   };
 }
 #endif

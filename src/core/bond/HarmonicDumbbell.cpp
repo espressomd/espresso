@@ -2,6 +2,7 @@
 #include "debug.hpp"
 #include "core/random.hpp"
 #include "utils.hpp"
+#include "interaction_data.hpp"
 
 //---HARMONIC DUMBBELL
 int Bond::HarmonicDumbbell::calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], double force[3]) const {
@@ -88,4 +89,12 @@ int Bond::HarmonicDumbbell::calc_bonded_pair_energy(Particle *p1, Particle *p2, 
   #endif
   return 0;
 
+}
+
+boost::any Bond::HarmonicDumbbell::get_bond_parameters_from_bond() const
+{
+
+  Harmonic_dumbbell_bond_parameters params = {m_k1, m_k2, m_r, m_r_cut};
+  return boost::any(params);
+  
 }

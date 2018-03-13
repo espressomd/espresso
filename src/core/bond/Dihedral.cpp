@@ -1,6 +1,7 @@
 #include "Dihedral.hpp"
 #include "grid.hpp" //for get_mi_vector
 #include "utils.hpp" // for vector_product 
+#include "interaction_data.hpp"
 
 // for dihedral forces has to be added in a different way
 void Bond::Dihedral::write_force_to_particle(Particle *p1, Particle *p2, Particle *p3, 
@@ -164,4 +165,12 @@ int Bond::Dihedral::calc_bonded_four_particle_energy(Particle *p2, Particle *p1,
 
   return 0;
 
+}
+
+boost::any Bond::Dihedral::get_bond_parameters_from_bond() const
+{
+
+  Dihedral_bond_parameters params = {m_mult, m_bend, m_phase};
+  return boost::any(params);
+  
 }

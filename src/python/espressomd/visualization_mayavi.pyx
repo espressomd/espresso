@@ -187,7 +187,7 @@ cdef class mayaviLive(object):
                 t = p.bl.e[k]
                 k += 1
                 # Iterate over bond partners and store each connection
-                for l in range(bonded_ia_params[t].num):
+                for l in range(bond_container.get_num_partners(t)):
                     bonds.push_back(i)
                     bonds.push_back(p.bl.e[k])
                     bonds.push_back(t)

@@ -1,5 +1,6 @@
 #include "BondedCoulomb.hpp"
 #include "debug.hpp"
+#include "interaction_data.hpp"
 
 //---BONDED_COULOMB---
 int Bond::BondedCoulomb::calc_bonded_pair_force(Particle *p1, Particle *p2,
@@ -37,4 +38,11 @@ int Bond::BondedCoulomb::calc_bonded_pair_energy(Particle *p1, Particle *p2,
   *_energy = m_prefactor * p1->p.q * p2->p.q / dist;
 #endif
   return 0;
+}
+
+boost::any Bond::BondedCoulomb::get_bond_parameters_from_bond() const{
+
+  Bonded_coulomb_bond_parameters params = {m_prefactor};
+  return boost::any(params);
+  
 }

@@ -28,6 +28,8 @@ namespace Bond {
 				 double force3[3], double force4[3]) const override;
 
 
+    boost::any get_bond_parameters_from_bond() const override;
+    
   private:  
     double m_phi0;
     double m_kb;

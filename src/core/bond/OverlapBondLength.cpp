@@ -1,5 +1,6 @@
 #include "OverlapBondLength.hpp"
 #include "debug.hpp"
+#include "interaction_data.hpp"
 
 /** Computes the two body overlapped bonded force.
     Adds this force to the particle forces in forces.hpp (see \ref
@@ -99,4 +100,13 @@ int Bond::OverlapBondLength::calc_bonded_pair_energy(Particle *p1, Particle *p2,
 
   return 0;
 
+}
+
+boost::any Bond::OverlapBondLength::get_bond_parameters_from_bond() const
+{
+
+  Overlap_bond_parameters params = {m_filename, OVERLAP_BOND_LENGTH, m_maxval, m_noverlaps,
+				    m_para_a, m_para_b, m_para_c};
+  return boost::any(params);
+  
 }

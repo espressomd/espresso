@@ -16,9 +16,14 @@ DerivedClass* cast_base_class(BaseClass* base_class){
 //insert bond
 void Bond::BondContainer::set_bond_by_type(int type, std::unique_ptr<Bond> && bond)
 {
-
+  //add bond to bond map of all bonds
   m_all_bonds.insert(std::pair<int, std::unique_ptr<Bond>>(type, std::move(bond)));
-  n_bonded_ia = int(m_all_bonds.size());
+  //number of bonds n_bonded_ia is actually not the real number of bonds!
+  //it has to be greather than the largest bond_map_id -> see python interface
+  if(type + 1 > n_bonded_ia){
+    n_bonded_ia = type + 1;
+  };
+  //sort bond into different list which provide access to concrete classes
   sort_bond_into_lists(type);
 
 }

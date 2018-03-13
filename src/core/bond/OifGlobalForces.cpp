@@ -1,5 +1,6 @@
 #include"OifGlobalForces.hpp"
 #include "grid.hpp" // get_mi_vector //unfold_position
+#include "interaction_data.hpp"
 
 //---Static Variables---
 //initialize the static variables for bonds
@@ -266,5 +267,10 @@ int Bond::OifGlobalForces::add_bonded_force(Particle *p1, int bl_id)
   return 1;
 }
 
+boost::any Bond::OifGlobalForces::get_bond_parameters_from_bond() const
+{
 
-
+  Oif_global_forces_bond_parameters params = {m_A0_g, m_ka_g, m_V0, m_kv};
+  return boost::any(params);
+  
+}

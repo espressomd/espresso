@@ -32,7 +32,8 @@ int dihedral_set_params(int bond_type, int mult, double bend, double phase)
     return ES_ERROR;
   
   //create bond
-  bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::Dihedral>(mult, bend, phase));
+  bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::Dihedral>(double(mult),
+										bend, phase));
 
   return ES_OK;
 }

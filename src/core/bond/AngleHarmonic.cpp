@@ -1,5 +1,6 @@
 #include "AngleHarmonic.hpp"
 #include "grid.hpp" // get_mi_vector
+#include "interaction_data.hpp"
 
 /************************************************************/
 
@@ -162,4 +163,12 @@ int Bond::AngleHarmonic::calc_3body_forces(Particle *p_mid, Particle *p_left,
   }
 
   return 0;
+}
+
+boost::any Bond::AngleHarmonic::get_bond_parameters_from_bond() const
+{
+
+  Angle_harmonic_bond_parameters params = {m_bend, m_phi0};
+  return boost::any(params);
+  
 }
