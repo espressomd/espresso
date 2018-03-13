@@ -45,9 +45,7 @@
 #include "particle_data.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
-#ifdef BROWNIAN_DYNAMICS
 #include "brownian_inline.hpp"
-#endif // BROWNIAN_DYNAMICS
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>

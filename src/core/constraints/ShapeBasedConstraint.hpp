@@ -50,7 +50,7 @@ public:
   
   void set_type(const int &type) {
     m_type = type;
-    make_particle_type_exist(m_type);
+    make_particle_type_exist_local(m_type);
   }
 
   Vector3d total_force() const;

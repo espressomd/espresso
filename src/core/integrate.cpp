@@ -58,9 +58,7 @@
 #include "virtual_sites.hpp"
 #include "npt.hpp"
 #include "collision.hpp"
-#ifdef BROWNIAN_DYNAMICS
 #include "brownian_inline.hpp"
-#endif // BROWNIAN_DYNAMICS
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -128,10 +126,8 @@ void force_and_velocity_display();
 
 void finalize_p_inst_npt();
 
-#ifdef BROWNIAN_DYNAMICS
 /** Propagate position: random walk part.*/
 void bd_random_walk(Particle &p, double dt);
-#endif // BROWNIAN_DYNAMICS
 
 /*@}*/
 
