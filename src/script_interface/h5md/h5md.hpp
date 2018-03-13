@@ -32,7 +32,7 @@
 namespace ScriptInterface {
 namespace Writer {
 
-class H5mdScript : public AutoParameters {
+class H5mdScript : public AutoParameters<H5mdScript> {
 public:
   H5mdScript() : m_h5md(new ::Writer::H5md::File()) {
     add_parameters({{"filename", m_h5md->filename()},

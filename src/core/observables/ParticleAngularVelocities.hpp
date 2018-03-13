@@ -18,7 +18,7 @@ public:
 
       double RMat[9];
       double omega[3];
-      define_rotation_matrix(&partCfg[ids()[i]], RMat);
+      define_rotation_matrix(partCfg[ids()[i]], RMat);
       omega[0] = RMat[0 + 3 * 0] * partCfg[ids()[i]].m.omega[0] +
                  RMat[1 + 3 * 0] * partCfg[ids()[i]].m.omega[1] +
                  RMat[2 + 3 * 0] * partCfg[ids()[i]].m.omega[2];

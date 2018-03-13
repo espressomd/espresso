@@ -1,9 +1,9 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from .highlander import ThereCanOnlyBeOne
+from .utils import handle_errors
 
 cdef class Actor(object):
-
     # Keys in active_list have to match the method name.
     active_list = dict(ElectrostaticInteraction=False,
                        MagnetostaticInteraction=False,
@@ -41,21 +41,26 @@ cdef class Actor(object):
 
     def _activate(self):
         inter = self._get_interaction_type()
-        if Actor.active_list[inter]:
-            raise ThereCanOnlyBeOne(self.__class__.__bases__[0])
-        Actor.active_list[inter] = True
+        if inter in Actor.active_list:
+            if Actor.active_list[inter]:
+                raise ThereCanOnlyBeOne(self.__class__.__bases__[0])
+            Actor.active_list[inter] = True
+
         self.validate_params()
         self._activate_method()
+        handle_errors("Activation of an actor")
         self._isactive = True
 
     def _deactivate(self):
         self._deactivate_method()
+        handle_errors("Deactivation of an actor")
         self._isactive = False
         inter = self._get_interaction_type()
-        if not Actor.active_list[inter]:
-            raise Exception(
-                "Class not registerd in Actor.active_list " + self.__class__.__bases__[0])
-        Actor.active_list[inter] = False
+        if inter in Actor.active_list:
+            if not Actor.active_list[inter]:
+                raise Exception(
+                    "Class not registerd in Actor.active_list " + self.__class__.__bases__[0])
+            Actor.active_list[inter] = False
 
     def is_valid(self):
         """Check, if the data stored in the instance still matches what is in Espresso"""
@@ -70,8 +75,9 @@ cdef class Actor(object):
         """Get interaction parameters"""
         # If this instance refers to an actual interaction defined in the es core, load
         # current parameters from there
-        update = self._get_params_from_es_core()
-        self._params.update(update)
+        if self.is_active():
+            update = self._get_params_from_es_core()
+            self._params.update(update)
         return self._params
 
     def set_params(self, **p):
@@ -94,7 +100,8 @@ cdef class Actor(object):
         # vaidate updated parameters
         self.validate_params()
         # Put in values given by the user
-        self._set_params_in_es_core()
+        if self.is_active():
+            self._set_params_in_es_core()
 
     def __str__(self):
         return self.__class__.__name__ + "(" + str(self.get_params()) + ")"

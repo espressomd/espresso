@@ -65,10 +65,7 @@ class ThermoTest(ut.TestCase):
         seed(2)
         # Decelleration
         self.es.time_step = 0.007
-        box = 1.0E5
-        self.es.box_l = [box, box, box]
-        if espressomd.has_features(("PARTIAL_PERIODIC")):
-            self.es.periodicity = 0, 0, 0
+        self.es.part.clear()
         # gamma_tran/gamma_rot matrix: [2 types of particless] x [3 dimensions
         # X Y Z]
         gamma_tran = np.zeros((2, 3))

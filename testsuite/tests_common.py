@@ -311,6 +311,27 @@ def get_cylindrical_bin_volume(
 # Analytical Expressions for interactions
 #
 
+# Harmonic bond
+
+def harmonic_potential(scalar_r, k, r_0, r_cut):
+    return 0.5 * k * (scalar_r - r_0)**2
+
+def harmonic_force(scalar_r, k, r_0, r_cut):
+    return -k * (scalar_r - r_0)
+
+# FENE bond
+
+def fene_potential(scalar_r, k, d_r_max, r_0):
+    return -0.5 * k * d_r_max**2 * np.log(1 - ((scalar_r - r_0) / d_r_max)**2)
+
+def fene_force(scalar_r, k, d_r_max, r_0):
+    return k * (scalar_r - r_0) * d_r_max**2 / ((scalar_r - r_0)**2 - d_r_max**2)
+
+def fene_force2(bond_vector, k, d_r_max, r_0):
+    r=np.linalg.norm(bond_vector)
+    return k*(r-r_0)/(r*(1-((r-r_0)/d_r_max)**2))*np.array(bond_vector)
+
+
 # Generic Lennard-Jones
 def lj_generic_potential(r, eps, sig, cutoff, offset=0., shift=0., e1=12., e2=6., b1=4., b2=4., delta=0., lam=1.):
     V = 0.
