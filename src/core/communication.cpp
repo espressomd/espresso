@@ -65,7 +65,7 @@
 #include "mmm2d.hpp"
 #include "molforces.hpp"
 #include "morse.hpp"
-#include "mpiio.hpp"
+#include "io/mpiio/mpiio.hpp"
 #include "npt.hpp"
 #include "observables/LBRadialVelocityProfile.hpp"
 #include "observables/Observable.hpp"
@@ -177,6 +177,7 @@ static int terminated = 0;
   CB(mpi_send_out_direction_slave)                                             \
   CB(mpi_send_mu_E_slave)                                                      \
   CB(mpi_bcast_max_mu_slave)                                                   \
+  CB(mpi_send_vs_quat_slave)                                                   \
   CB(mpi_send_vs_relative_slave)                                               \
   CB(mpi_recv_fluid_populations_slave)                                         \
   CB(mpi_send_fluid_populations_slave)                                         \
@@ -201,7 +202,6 @@ static int terminated = 0;
   CB(mpi_scafacos_set_parameters_slave)                                        \
   CB(mpi_scafacos_set_r_cut_and_tune_slave)                                    \
   CB(mpi_scafacos_free_slave)                                                  \
-  CB(mpi_mpiio_slave)                                                          \
   CB(mpi_resort_particles_slave)                                               \
   CB(mpi_get_pairs_slave)                                                      \
   CB(mpi_get_particles_slave)                                                  \
@@ -961,6 +961,32 @@ void mpi_send_virtual_slave(int pnode, int part) {
 }
 
 /********************* REQ_SET_BOND ********/
+void mpi_send_vs_quat(int pnode, int part, double *vs_quat) {
+#ifdef VIRTUAL_SITES_RELATIVE
+  mpi_call(mpi_send_vs_quat_slave, pnode, part);
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    for (int i=0; i<4; ++i) {
+      p->p.vs_quat[i] = vs_quat[i];
+    }
+  } else {
+    MPI_Send(vs_quat, 4, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+  }
+
+  on_particle_change();
+#endif
+}
+void mpi_send_vs_quat_slave(int pnode, int part) {
+#ifdef VIRTUAL_SITES_RELATIVE
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Recv(p->p.vs_quat, 4, MPI_DOUBLE, 0, SOME_TAG,
+             comm_cart, MPI_STATUS_IGNORE);
+  }
+
+  on_particle_change();
+#endif
+}
 
 void mpi_send_vs_relative(int pnode, int part, int vs_relative_to,
                           double vs_distance, double *rel_ori) {
@@ -973,8 +999,9 @@ void mpi_send_vs_relative(int pnode, int part, int vs_relative_to,
     Particle *p = local_particles[part];
     p->p.vs_relative_to_particle_id = vs_relative_to;
     p->p.vs_relative_distance = vs_distance;
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++) {
       p->p.vs_relative_rel_orientation[i] = rel_ori[i];
+    }
   } else {
     MPI_Send(&vs_relative_to, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
     MPI_Send(&vs_distance, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
@@ -2489,36 +2516,6 @@ void mpi_gather_cuda_devices_slave(int dummy1, int dummy2) {
 #ifdef CUDA
   cuda_gather_gpus();
 #endif
-}
-
-void mpi_mpiio(const char *filename, unsigned fields, int write) {
-  size_t flen = strlen(filename) + 1;
-  if (flen + 5 > INT_MAX) {
-    fprintf(stderr, "Seriously?\n");
-    errexit();
-  }
-  mpi_call(mpi_mpiio_slave, -1, (int)flen);
-  MPI_Bcast((void *)filename, (int)flen, MPI_CHAR, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&fields, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&write, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  if (write)
-    mpi_mpiio_common_write(filename, fields);
-  else
-    mpi_mpiio_common_read(filename, fields);
-}
-
-void mpi_mpiio_slave(int dummy, int flen) {
-  char *filename = new char[flen];
-  unsigned fields;
-  int write;
-  MPI_Bcast((void *)filename, flen, MPI_CHAR, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&fields, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&write, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  if (write)
-    mpi_mpiio_common_write(filename, fields);
-  else
-    mpi_mpiio_common_read(filename, fields);
-  delete[] filename;
 }
 
 std::vector<int> mpi_resort_particles(int global_flag) {

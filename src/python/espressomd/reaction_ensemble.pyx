@@ -246,7 +246,7 @@ cdef class ReactionAlgorithm(object):
         """
         self.RE.do_reaction(int(reaction_steps))
 
-    def displacement_mc_move_for_one_particle_of_type(self, type_mc,particle_number_to_be_changed=1):
+    def displacement_mc_move_for_particles_of_type(self, type_mc,particle_number_to_be_changed=1):
 
         """
         Perfoms a diplacemenet Monte Carlo move for particles of given type. New positions

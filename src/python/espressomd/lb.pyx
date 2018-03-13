@@ -138,6 +138,7 @@ IF LB_GPU or LB:
             if not self._params["couple"] == default_params["couple"]:
                 if python_lbfluid_set_couple_flag(self._params["couple"]):
                     raise Exception("lb_lbfluid_set_couple_flag error")
+            utils.handle_errors("LB activation")
 
         # function that calls wrapper functions which get the parameters from C-Level
         ####################################################
@@ -208,6 +209,10 @@ IF LB_GPU or LB:
                 return
             ELSE:
                 raise Exception("LB not compiled in")
+
+        def _deactivate_method(self):
+            if lb_set_lattice_switch(0):
+                raise Exception("lb_set_lattice_switch error")
 
 IF LB_GPU:
     cdef class LBFluidGPU(LBFluid):
@@ -283,6 +288,7 @@ IF LB or LB_GPU:
     cdef class LBFluidRoutines(object):
         cdef int node[3]
         def __init__(self, key):
+            utils.check_type_or_throw_except(key,3,int, "The index of an lb fluid node consists of three integers.")
             self.node[0] = key[0]
             self.node[1] = key[1]
             self.node[2] = key[2]

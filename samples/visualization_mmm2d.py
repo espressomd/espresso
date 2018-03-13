@@ -9,8 +9,10 @@ from espressomd.visualization_opengl import *
 
 box_l = 20
 system = espressomd.System(box_l=[box_l]*3)
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
 visualizer = openGLLive(system, constraint_type_colors= [[1,1,1,1]], camera_position = [50,15,15], camera_right = [0,0,-1] )
-
 
 system.time_step = 0.02
 system.cell_system.skin = 0.4

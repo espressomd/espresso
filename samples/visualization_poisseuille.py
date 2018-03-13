@@ -8,6 +8,10 @@ from espressomd.visualization_opengl import *
 # System setup
 box_l = 16
 system = System(box_l = [box_l] * 3)
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
+
 system.time_step = 0.01
 system.cell_system.skin = 0.2
 
@@ -19,8 +23,8 @@ visualizer = openGLLive(system,
                         LB_plane_ngrid = 15, 
                         camera_position = [8,16,50], 
                         velocity_arrows=True, 
-                        velocity_arrows_scale=[20.], 
-                        arrows_radius= 0.1, 
+                        velocity_arrows_type_scale=[20.], 
+                        velocity_arrows_type_radii = [0.1], 
                         velocity_arrows_type_colors=[[0,1,0,0.5]] )
 
 lbf = lb.LBFluid(agrid=1.0, fric = 1.0, dens=1.0, visc=1.0, tau=0.1, ext_force=[0, 0.003, 0])

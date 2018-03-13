@@ -20,7 +20,7 @@ from __future__ import print_function
 import espressomd
 from espressomd import thermostat
 from espressomd import electrostatics
-import numpy
+import numpy as np
 
 # System parameters
 #############################################################
@@ -39,6 +39,10 @@ lj_cap = 20
 # Integration parameters
 #############################################################
 system = espressomd.System(box_l=[box_l]*3)
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
+
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 thermostat.Thermostat().set_langevin(1.0, 1.0)
@@ -71,10 +75,10 @@ volume = box_l * box_l * box_l
 n_part = int(volume * density)
 
 for i in range(n_part):
-    system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
+    system.part.add(id=i, pos=np.random.random(3) * system.box_l)
 
 # Assingn charge to particles
-for i in range(n_part / 2 - 1):
+for i in range(n_part // 2 - 1):
     system.part[2 * i].q = -1.0
     system.part[2 * i + 1].q = 1.0
 

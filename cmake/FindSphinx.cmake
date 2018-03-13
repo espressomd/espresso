@@ -17,9 +17,20 @@ find_program(SPHINX_API_DOC_EXE NAMES sphinx-apidoc sphinx-apidoc-${PYTHON_VERSI
 
 if(Sphinx_FIND_VERSION)
   execute_process(COMMAND "${SPHINX_EXECUTABLE}" --version
-                  OUTPUT_VARIABLE QUERY_VERSION
-                  RESULT_VARIABLE QUERY_VERSION_RESULT
-                  ERROR_QUIET)
+    OUTPUT_VARIABLE QUERY_VERSION_OUT
+    ERROR_VARIABLE QUERY_VERSION_ERR
+    RESULT_VARIABLE QUERY_VERSION_RESULT)
+
+  # Sphinx switched at some point from returning ther version
+  # on stdout to printing it at stderr. Since we do not know
+  # ther version yet, we use stdout if it matches a version
+  # regex, or stderr otherwise.
+  if(QUERY_VERSION_OUT MATCHES "[0-9.]+")
+    set(QUERY_VERSION "${QUERY_VERSION_OUT}")
+  else()
+    set(QUERY_VERSION "${QUERY_VERSION_ERR}")
+  endif()
+
   if(NOT QUERY_VERSION_RESULT)
     string(REGEX MATCH "[0-9.]+" AVAILABLE_VERSION "${QUERY_VERSION}")
   endif( )
