@@ -910,7 +910,7 @@ inline IA_parameters *get_ia_param(int i, int j) {
     yet present particle types*/
 IA_parameters *get_ia_param_safe(int i, int j);
 
-bool check_if_new_particle_type(int type);
+bool is_new_particle_type(int type);
 /** Makes sure that ia_params is large enough to cover interactions
     for this particle type. The interactions are initialized with values
     such that no physical interaction occurs. */
