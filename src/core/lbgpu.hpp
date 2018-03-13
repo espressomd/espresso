@@ -314,7 +314,7 @@ void lb_lbfluid_particles_add_momentum(float velocity[3]);
 void lb_lbfluid_set_population(int[3], float[LBQ], int);
 void lb_lbfluid_get_population(int[3], float[LBQ], int);
 
-void lb_lbfluid_get_interpolated_velocity_at_positions(double *positions, double *velocities, int length);
+void lb_lbfluid_get_interpolated_velocity_at_positions(double const *positions, double *velocities, int length);
 
 /*@{*/
 

@@ -18,9 +18,11 @@
 #
 # Tests particle property setters/getters
 from __future__ import print_function
-import unittest as ut
-import espressomd
+
 import numpy as np
+import unittest as ut
+
+import espressomd
 
 @ut.skipIf(not espressomd.has_features(["MASS"]), "Features not available, skipping test!")
 class ThermalizedBond(ut.TestCase):
@@ -28,10 +30,10 @@ class ThermalizedBond(ut.TestCase):
 the single component Maxwell distribution. Adapted from langevin_thermostat testcase."""
 
     box_l = 10.0
-    s = espressomd.System(box_l=[box_l]*3)
-    s.cell_system.set_n_square()
-    s.cell_system.skin = 0.3
-    s.seed = range(s.cell_system.get_state()["n_nodes"])
+    system = espressomd.System(box_l=[box_l]*3)
+    system.cell_system.set_n_square()
+    system.cell_system.skin = 0.3
+    system.seed = range(system.cell_system.get_state()["n_nodes"])
 
     @classmethod
     def setUpClass(cls):
@@ -64,19 +66,18 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
 
         N = 100
         N2 = int(N/2)
-        s = self.s
-        s.part.clear()
-        s.time_step = 0.02
+        self.system.part.clear()
+        self.system.time_step = 0.02
         
         if espressomd.has_features("PARTIAL_PERIODIC"):
-            s.periodicity = 0,0,0
+            self.system.periodicity = 0,0,0
         
         m1 = 1.0
         m2 = 10.0
         # Place particles
         for i in range(0,N,2):
-            s.part.add(pos=np.random.random(3), mass = m1)
-            s.part.add(pos=np.random.random(3), mass = m2)
+            self.system.part.add(pos=np.random.random(3), mass = m1)
+            self.system.part.add(pos=np.random.random(3), mass = m2)
 
         t_dist = 0
         g_dist = 0
@@ -84,20 +85,20 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
         g_com = 4.0
        
         thermalized_dist_bond = espressomd.interactions.ThermalizedBond(temp_com = t_com, gamma_com = g_com, temp_distance = t_dist, gamma_distance = g_dist, r_cut = 2.0)
-        s.bonded_inter.add(thermalized_dist_bond)
+        self.system.bonded_inter.add(thermalized_dist_bond)
 
         for i in range(0,N,2):
-            s.part[i].add_bond((thermalized_dist_bond,i+1))
+            self.system.part[i].add_bond((thermalized_dist_bond,i+1))
         
         # Warmup
-        s.integrator.run(50)
+        self.system.integrator.run(50)
         
         # Sampling
-        loops = 16000
+        loops = 160
         v_stored = np.zeros((N2 * loops, 3))
         for i in range(loops):
-            s.integrator.run(2)
-            v_com = 1.0/(m1+m2)*(m1*s.part[::2].v+m2*s.part[1::2].v)
+            self.system.integrator.run(2)
+            v_com = 1.0/(m1+m2)*(m1*self.system.part[::2].v+m2*self.system.part[1::2].v)
             v_stored[i * N2:(i + 1) * N2, :] = v_com 
 
         v_minmax = 5
@@ -111,17 +112,16 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
 
         N = 100
         N2 = int(N/2)
-        s = self.s
-        s.part.clear()
-        s.time_step = 0.02
-        s.periodicity = 1,1,1
+        self.system.part.clear()
+        self.system.time_step = 0.02
+        self.system.periodicity = 1,1,1
         
         m1 = 1.0
         m2 = 10.0
         # Place particles
         for i in range(0,N,2):
-            s.part.add(pos=np.random.random(3), mass = m1)
-            s.part.add(pos=np.random.random(3), mass = m2)
+            self.system.part.add(pos=np.random.random(3), mass = m1)
+            self.system.part.add(pos=np.random.random(3), mass = m2)
 
         t_dist = 2.0
         g_dist = 4.0
@@ -129,20 +129,20 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
         g_com = 0.0
        
         thermalized_dist_bond = espressomd.interactions.ThermalizedBond(temp_com = t_com, gamma_com = g_com, temp_distance = t_dist, gamma_distance = g_dist, r_cut = 9)
-        s.bonded_inter.add(thermalized_dist_bond)
+        self.system.bonded_inter.add(thermalized_dist_bond)
 
         for i in range(0,N,2):
-            s.part[i].add_bond((thermalized_dist_bond,i+1))
+            self.system.part[i].add_bond((thermalized_dist_bond,i+1))
         
         # Warmup
-        s.integrator.run(50)
+        self.system.integrator.run(50)
         
         # Sampling
-        loops = 16000
+        loops = 160
         v_stored = np.zeros((N2 * loops, 3))
         for i in range(loops):
-            s.integrator.run(2)
-            v_dist = s.part[1::2].v - s.part[::2].v 
+            self.system.integrator.run(2)
+            v_dist = self.system.part[1::2].v - self.system.part[::2].v 
             v_stored[i * N2:(i + 1) * N2, :] = v_dist 
 
         v_minmax = 5
