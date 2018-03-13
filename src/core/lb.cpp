@@ -2493,16 +2493,18 @@ inline void lb_apply_forces(Lattice::index_t index, double *mode) {
   mode[7] += C[1];
   mode[8] += C[3];
   mode[9] += C[4];
+}
 
+inline void lb_reset_forces(Lattice::index_t index) {
 /* reset force */
 #ifdef EXTERNAL_FORCES
   // unit conversion: force density
   lbfields[index].force[0] =
-      lbpar.ext_force[0] * pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
+      lbpar.ext_force[0] * lbpar.agrid * lbpar.agrid * lbpar.tau * lbpar.tau;
   lbfields[index].force[1] =
-      lbpar.ext_force[1] * pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
+      lbpar.ext_force[1] * lbpar.agrid * lbpar.agrid * lbpar.tau * lbpar.tau;
   lbfields[index].force[2] =
-      lbpar.ext_force[2] * pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
+      lbpar.ext_force[2] * lbpar.agrid * lbpar.agrid * lbpar.tau * lbpar.tau;
 #else  // EXTERNAL_FORCES
   lbfields[index].force[0] = 0.0;
   lbfields[index].force[1] = 0.0;
@@ -2642,7 +2644,6 @@ inline void lb_calc_n_from_modes_push(Lattice::index_t index, double *m) {
 /* Collisions and streaming (push scheme) */
 inline void lb_collide_stream() {
   Lattice::index_t index;
-  int x, y, z;
   double modes[19];
 
 /* loop over all lattice cells (halo excluded) */
@@ -2665,16 +2666,15 @@ inline void lb_collide_stream() {
 #endif
 
   index = lblattice.halo_offset;
-  for (z = 1; z <= lblattice.grid[2]; z++) {
-    for (y = 1; y <= lblattice.grid[1]; y++) {
-      for (x = 1; x <= lblattice.grid[0]; x++) {
+  for (int z = 1; z <= lblattice.grid[2]; z++) {
+    for (int y = 1; y <= lblattice.grid[1]; y++) {
+      for (int x = 1; x <= lblattice.grid[0]; x++) {
 // as we only want to apply this to non-boundary nodes we can throw out
 // the if-clause if we have a non-bounded domain
 #ifdef LB_BOUNDARIES
         if (!lbfields[index].boundary)
 #endif // LB_BOUNDARIES
         {
-
           /* calculate modes locally */
           lb_calc_modes(index, modes);
 
@@ -2685,13 +2685,10 @@ inline void lb_collide_stream() {
           if (lbpar.fluct)
             lb_thermalize_modes(index, modes);
 
-/* apply forces */
-#ifdef EXTERNAL_FORCES
+          /* apply forces */
           lb_apply_forces(index, modes);
-#else  // EXTERNAL_FORCES
-          if (lbfields[index].has_force || local_cells.particles().size())
-            lb_apply_forces(index, modes);
-#endif // EXTERNAL_FORCES
+
+          lb_reset_forces(index);
 
           /* transform back to populations and streaming */
           lb_calc_n_from_modes_push(index, modes);
