@@ -28,7 +28,7 @@
 namespace ScriptInterface {
 namespace Shapes {
 
-class Shape : public AutoParameters {
+class Shape : public AutoParameters<Shape> {
 public:
   /**
    * @brief Return the Shape that we are wrapping.

@@ -20,9 +20,9 @@ class Drude(ut.TestCase):
         """
         
         box_l = 50
-        S=espressomd.System(box_l = [box_l, box_l, box_l])
+        system=espressomd.System(box_l = [box_l, box_l, box_l])
 
-        S.seed = S.cell_system.get_state()['n_nodes'] * [12]
+        system.seed = system.cell_system.get_state()['n_nodes'] * [12]
         np.random.seed(12)
 
         #Reference Results, reproduced with LAMMPS
@@ -84,8 +84,8 @@ class Drude(ut.TestCase):
         #Thermostat relaxation time should be similar to T_spring
         gamma_drude = mass_red_drude/T_spring
 
-        S.cell_system.skin=0.4
-        S.time_step=dt
+        system.cell_system.skin=0.4
+        system.time_step=dt
 
         #Forcefield
         types           = {"PF6":          0, "BMIM_C1":           1, "BMIM_C2":         2, "BMIM_C3":          3, "BMIM_COM":  4, "PF6_D": 5, "BMIM_C1_D": 6, "BMIM_C2_D": 7, "BMIM_C3_D": 8}
@@ -95,53 +95,53 @@ class Drude(ut.TestCase):
         masses["BMIM_COM"] = masses["BMIM_C1"] +  masses["BMIM_C2"] +  masses["BMIM_C3"]
 
         box_center = 0.5*np.array(3*[box_l])
-        S.min_global_cut = 3.5
+        system.min_global_cut = 3.5
 
         #Place Particles
         dmol = 5.0
 
         #Test Anion
         pos_pf6 = box_center + np.array([0,dmol,0])
-        S.part.add(id=0, type=types["PF6"],  pos = pos_pf6, q=charges["PF6"], mass = masses["PF6"], fix = [1,1,1])
+        system.part.add(id=0, type=types["PF6"],  pos = pos_pf6, q=charges["PF6"], mass = masses["PF6"], fix = [1,1,1])
 
         pos_com = box_center - np.array([0,dmol,0])
-        S.part.add(id = 2, type = types["BMIM_C1"], pos = pos_com + [0, -0.527, 1.365], q = charges["BMIM_C1"], mass=masses["BMIM_C1"], fix = [1,1,1])
-        S.part.add(id = 4, type = types["BMIM_C2"], pos = pos_com + [0, 1.641, 2.987], q = charges["BMIM_C2"], mass=masses["BMIM_C2"], fix = [1,1,1])
-        S.part.add(id = 6, type = types["BMIM_C3"], pos = pos_com + [0, 0.187, -2.389], q = charges["BMIM_C3"], mass=masses["BMIM_C3"], fix = [1,1,1])
+        system.part.add(id = 2, type = types["BMIM_C1"], pos = pos_com + [0, -0.527, 1.365], q = charges["BMIM_C1"], mass=masses["BMIM_C1"], fix = [1,1,1])
+        system.part.add(id = 4, type = types["BMIM_C2"], pos = pos_com + [0, 1.641, 2.987], q = charges["BMIM_C2"], mass=masses["BMIM_C2"], fix = [1,1,1])
+        system.part.add(id = 6, type = types["BMIM_C3"], pos = pos_com + [0, 0.187, -2.389], q = charges["BMIM_C3"], mass=masses["BMIM_C3"], fix = [1,1,1])
 
-        S.thermostat.set_langevin(kT=temperature_com, gamma=gamma_com)
+        system.thermostat.set_langevin(kT=temperature_com, gamma=gamma_com)
 
         p3m=espressomd.electrostatics.P3M(prefactor=coulomb_prefactor, accuracy=1e-4, mesh = [18,18,18], cao = 5)
 
-        S.actors.add(p3m)
+        system.actors.add(p3m)
 
         #Drude related Bonds
 
         thermalized_dist_bond = espressomd.interactions.ThermalizedBond(temp_com = temperature_com, gamma_com = gamma_com, temp_distance = temperature_drude, gamma_distance = gamma_drude, r_cut = 1.0)
         harmonic_bond = espressomd.interactions.HarmonicBond(k = k_drude, r_0 = 0.0, r_cut = 1.0)
-        S.bonded_inter.add(thermalized_dist_bond)
-        S.bonded_inter.add(harmonic_bond)
+        system.bonded_inter.add(thermalized_dist_bond)
+        system.bonded_inter.add(harmonic_bond)
 
-        drude_helpers.add_drude_particle_to_core(S, harmonic_bond, thermalized_dist_bond, S.part[0], 1, types["PF6_D"], polarizations["PF6"], mass_drude, coulomb_prefactor, 2.0)
-        drude_helpers.add_drude_particle_to_core(S, harmonic_bond, thermalized_dist_bond, S.part[2], 3, types["BMIM_C1_D"], polarizations["BMIM_C1"], mass_drude, coulomb_prefactor, 2.0)
-        drude_helpers.add_drude_particle_to_core(S, harmonic_bond, thermalized_dist_bond, S.part[4], 5, types["BMIM_C2_D"], polarizations["BMIM_C2"], mass_drude, coulomb_prefactor, 2.0)
-        drude_helpers.add_drude_particle_to_core(S, harmonic_bond, thermalized_dist_bond, S.part[6], 7, types["BMIM_C3_D"], polarizations["BMIM_C3"], mass_drude, coulomb_prefactor, 2.0)
+        drude_helpers.add_drude_particle_to_core(system, harmonic_bond, thermalized_dist_bond, system.part[0], 1, types["PF6_D"], polarizations["PF6"], mass_drude, coulomb_prefactor, 2.0)
+        drude_helpers.add_drude_particle_to_core(system, harmonic_bond, thermalized_dist_bond, system.part[2], 3, types["BMIM_C1_D"], polarizations["BMIM_C1"], mass_drude, coulomb_prefactor, 2.0)
+        drude_helpers.add_drude_particle_to_core(system, harmonic_bond, thermalized_dist_bond, system.part[4], 5, types["BMIM_C2_D"], polarizations["BMIM_C2"], mass_drude, coulomb_prefactor, 2.0)
+        drude_helpers.add_drude_particle_to_core(system, harmonic_bond, thermalized_dist_bond, system.part[6], 7, types["BMIM_C3_D"], polarizations["BMIM_C3"], mass_drude, coulomb_prefactor, 2.0)
 
         #Setup and add Drude-Core SR exclusion bonds
-        drude_helpers.setup_and_add_drude_exclusion_bonds(S)
+        drude_helpers.setup_and_add_drude_exclusion_bonds(system)
 
         #Setup intramol SR exclusion bonds once
-        drude_helpers.setup_intramol_exclusion_bonds(S, [6,7,8],[1,2,3], [charges["BMIM_C1"], charges["BMIM_C2"], charges["BMIM_C3"]])
+        drude_helpers.setup_intramol_exclusion_bonds(system, [6,7,8],[1,2,3], [charges["BMIM_C1"], charges["BMIM_C2"], charges["BMIM_C3"]])
 
         #Add bonds per molecule
-        drude_helpers.add_intramol_exclusion_bonds(S, [3,5,7], [2,4,6])
+        drude_helpers.add_intramol_exclusion_bonds(system, [3,5,7], [2,4,6])
 
         #Thole
-        drude_helpers.add_all_thole(S)
+        drude_helpers.add_all_thole(system)
 
         def dipole_moment(id_core, id_drude):
-            pc = S.part[id_core]
-            pd = S.part[id_drude]
+            pc = system.part[id_core]
+            pd = system.part[id_drude]
             v = pd.pos - pc.pos
             return pd.q * v
 
@@ -151,10 +151,10 @@ class Drude(ut.TestCase):
             dm_C2 = []
             dm_C3 = []
             
-            S.integrator.run(1000)
+            system.integrator.run(100)
             
-            for i in range(2000): 
-                S.integrator.run(1)
+            for i in range(100): 
+                system.integrator.run(1)
                 
                 dm_pf6.append(dipole_moment(0,1))
                 dm_C1.append(dipole_moment(2,3))
@@ -173,7 +173,7 @@ class Drude(ut.TestCase):
 
         def setElectricField(E):
             E=np.array(E)
-            for p in S.part:
+            for p in system.part:
                 p.ext_force = p.q*E
 
         def calc_pol(mu0, muE, E):

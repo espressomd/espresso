@@ -20,6 +20,7 @@ class ThermoTest(ut.TestCase):
         seed(1)
         # Decelleration
         self.es.time_step = 0.007
+        self.es.part.clear()
         # gamma_tran/gamma_rot matrix: [2 types of particless] x [3 dimensions
         # X Y Z]
         gamma_tran = np.zeros((2, 3))
@@ -158,7 +159,6 @@ class ThermoTest(ut.TestCase):
                     if "ROTATION" in espressomd.features():
                         self.assertLess(abs(
                             self.es.part[k].omega_body[j] - math.exp(- gamma_rot_validate[k, j] * self.es.time / J[j])), tol)
-            self.es.integrator.run(10)
 
         for i in range(len(self.es.part)):
             self.es.part[i].remove()
@@ -267,7 +267,7 @@ class ThermoTest(ut.TestCase):
 
         loops = 200
         print("Thermalizing...")
-        therm_steps = 150
+        therm_steps = 20
         self.es.integrator.run(therm_steps)
         print("Measuring...")
 

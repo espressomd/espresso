@@ -20,9 +20,8 @@
 #include "initialize.hpp"
 #include "ScriptInterface.hpp"
 
-#include "AutoUpdateObservables.hpp"
-
 #include "CylindricalProfileObservable.hpp"
+#include "CylindricalLBProfileObservable.hpp"
 #include "ParamlessObservable.hpp"
 #include "PidObservable.hpp"
 #include "ProfileObservable.hpp"
@@ -40,6 +39,7 @@
 #include "core/observables/ParticleForces.hpp"
 #include "core/observables/ParticlePositions.hpp"
 #include "core/observables/ParticleVelocities.hpp"
+#include "core/observables/CylindricalLBVelocityProfile.hpp"
 
 
 namespace ScriptInterface {
@@ -52,12 +52,15 @@ namespace Observables {
   ScriptInterface::register_new<PidObservable<::Observables::name>>(           \
       "Observables::" #name "");
 
+#define REGISTER_CYLLB_OBS(name)                                                 \
+  ScriptInterface::register_new<CylindricalLBProfileObservable<::Observables::name>>(           \
+      "Observables::" #name "");
+
 void initialize() {
   // Manual registration:
   //  ScriptInterface::register_new<ScriptInterface::Observables::ParticleVelocities>::
   //    register_new("Observables::ParticleVelocities");
 
-  REGISTER(AutoUpdateObservables);
   REGISTER(StressTensor);
   REGISTER_PID_OBS(ParticlePositions);
   REGISTER_PID_OBS(ParticleVelocities);
@@ -81,6 +84,7 @@ void initialize() {
   REGISTER(CylindricalFluxDensityProfile);
   REGISTER(CylindricalLBFluxDensityProfileAtParticlePositions);
   REGISTER(CylindricalLBVelocityProfileAtParticlePositions);
+  REGISTER_CYLLB_OBS(CylindricalLBVelocityProfile);
 
 #undef REGISTER
 #undef REGISTER_PID_OBS

@@ -29,21 +29,24 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 	brew install cmake || brew upgrade cmake
 	case "$image" in
 		python3)
-			brew install python3
+			brew install python@3 || brew upgrade python@3
 			pip3 install h5py
 			pip3 install cython
 			pip3 install numpy
 			pip3 install pep8
 			pip3 install pylint
-			PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}' | awk -F . '{print $1"."$2}')
 			export cmake_params="-DPYTHON_EXECUTABLE=$(which python3) $cmake_params"
 		;;
 		*)
-			pip install h5py
-			pip install cython
-			pip install numpy
-			pip install pep8
-            pip install pylint
+			brew uninstall --ignore-dependencies python
+			brew install python@2 || brew upgrade python@2
+			export PATH="/usr/local/opt/python@2/bin:$PATH"
+			pip2 install h5py
+			pip2 install cython
+			pip2 install numpy
+			pip2 install pep8
+			pip2 install pylint
+			export cmake_params="-DPYTHON_EXECUTABLE=$(which python2) $cmake_params"
 		;;
 	esac
 	brew install boost-mpi
