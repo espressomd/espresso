@@ -355,7 +355,7 @@ class ParticleSliceTest(ut.TestCase):
         self.assertEqual(len(self.system.part[0:1]), 1)
         self.assertEqual(len(self.system.part[0:2]), 2)
 
-    def test_non_exising_property(self):
+    def test_non_existing_property(self):
         with self.assertRaises(AttributeError):
             self.system.part[:].thispropertydoesnotexist = 1.0
 
