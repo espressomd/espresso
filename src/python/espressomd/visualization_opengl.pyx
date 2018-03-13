@@ -199,17 +199,25 @@ class openGLLive(object):
         self.specs = {
             'window_size': [800, 800],
             'name': 'Espresso Visualization',
+            
             'background_color': [0, 0, 0],
+            
             'draw_fps': False,
-            'periodic_images': [0, 0, 0],
             'draw_box': True,
             'draw_axis': True,
+            
+            'update_fps': 30, 
+            
+            'periodic_images': [0, 0, 0],
+            
             'quality_particles': 20,
             'quality_bonds': 16,
             'quality_arrows': 16,
             'quality_constraints': 32,
+            
             'close_cut_distance': 0.1,
             'far_cut_distance': 5,
+
             'camera_position': 'auto',
             'camera_target': 'auto',
             'camera_right': [1.0, 0.0, 0.0],
@@ -318,6 +326,8 @@ class openGLLive(object):
         self.mouseManager = MouseManager()
         self.timers = []
         self.particles = {}
+        self.elapsedTime_update = 0
+        self.measureTimeBeforeIntegrate = 0
 
     def register_callback(self, cb, interval=1000):
         """Register timed callbacks.
@@ -385,17 +395,24 @@ class openGLLive(object):
                     self.update_constraints()
                 self.hasParticleData = True
 
-            if self.last_T is None or not self.last_T == self.system.time:
-                self.last_T = self.system.time
-                self.update_particles()
-                if self.specs['LB']:
-                    self.update_lb()
-                # KEYBOARD CALLBACKS MAY CHANGE ESPRESSO SYSTEM PROPERTIES,
-                # ONLY SAVE TO CHANGE HERE
-                for c in self.keyboardManager.userCallbackStack:
-                    c()
-                self.keyboardManager.userCallbackStack = []
+            # UPDATES
+            self.elapsedTime_update += (time.time() - self.measureTimeBeforeIntegrate)
+            if self.elapsedTime_update > 1.0 / self.specs['update_fps']:
+                self.elapsedTime_update = 0
+                if not self.last_T == self.system.time:
+                    self.last_T = self.system.time
+                    self.update_particles()
+                    # KEYBOARD CALLBACKS MAY CHANGE ESPRESSO SYSTEM PROPERTIES,
+                    # ONLY SAVE TO CHANGE HERE
+                    for c in self.keyboardManager.userCallbackStack:
+                        c()
+                    self.keyboardManager.userCallbackStack = []
 
+                    # LB UPDATE
+                    if self.specs['LB']:
+                        self.update_lb()
+            
+            self.measureTimeBeforeIntegrate = time.time()
 
             IF EXTERNAL_FORCES:
                 if self.triggerSetParticleDrag == True and self.dragId != -1:
@@ -542,7 +559,6 @@ class openGLLive(object):
         if self.specs['draw_bonds']:
             self.bonds = []
             for i in range(len(self.system.part)):
-
                 bs = self.system.part[i].bonds
                 for b in bs:
                     t = b[0].type_number()
