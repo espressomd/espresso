@@ -486,12 +486,23 @@ void realloc_ia_params(int nsize) {
   std::swap(ia_params, new_params);
 }
 
-void make_particle_type_exist(int type) {
-  int ns = type + 1;
-  if (ns <= n_particle_types)
-    return;
-  mpi_bcast_n_particle_types(ns);
+bool is_new_particle_type(int type) {
+  if ((type + 1) <= n_particle_types)
+    return false;
+  else
+    return true;
 }
+
+void make_particle_type_exist(int type) {
+  if (is_new_particle_type(type))
+    mpi_bcast_n_particle_types(type + 1);
+}
+
+void make_particle_type_exist_local(int type) {
+  if (is_new_particle_type(type))
+    realloc_ia_params(type + 1);
+}
+
 
 void make_bond_type_exist(int type) {
   int i, ns = type + 1;

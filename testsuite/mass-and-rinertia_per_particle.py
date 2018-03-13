@@ -62,8 +62,7 @@ class ThermoTest(ut.TestCase):
                         gamma_global_rot[2]])
 
     def run_test_case(self, test_case):
-        seed(2)
-        # Decelleration
+        seed(8)
         self.es.time_step = 0.007
         self.es.part.clear()
         # gamma_tran/gamma_rot matrix: [2 types of particless] x [3 dimensions
@@ -240,7 +239,7 @@ class ThermoTest(ut.TestCase):
                     gamma_rot_validate[k, :] = gamma_global[:]
 
         if test_case < 4 + self.rot_flag:
-        # Langevin thermostat only. Brownian thermostat is defined
+        # Decelleration test. Langevin thermostat only. Brownian thermostat is defined
         # over larger time-step by its concept.
             self.es.time = 0.0
             tol = 1.25E-4
@@ -465,7 +464,7 @@ class ThermoTest(ut.TestCase):
 
         loops = 200
         print("Thermalizing...")
-        therm_steps = 150
+        therm_steps = 20
         self.es.integrator.run(therm_steps)
         print("Measuring...")
 
