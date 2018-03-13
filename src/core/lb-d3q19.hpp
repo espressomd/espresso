@@ -73,11 +73,10 @@ static double d3q19_coefficients[19][4] = { { 1./3.,  1.,     3./2., -1./2.  },
 					    { 1./36., 1./12., 1./8., -1./24. } };
 
 /** Coefficients in the functional for the equilibrium distribution */
-static double d3q19_w[19] = { 1./3., 
-			      1./18., 1./18., 1./18., 1./18., 1./18., 1./18.,
-			      1./36., 1./36., 1./36., 1./36., 
-			      1./36., 1./36., 1./36., 1./36.,
-			      1./36., 1./36., 1./36., 1./36. };
+static double d3q19_w[19] = {1. / 3.,  1. / 18., 1. / 18., 1. / 18., 1. / 18.,
+                             1. / 18., 1. / 18., 1. / 36., 1. / 36., 1. / 36.,
+                             1. / 36., 1. / 36., 1. / 36., 1. / 36., 1. / 36.,
+                             1. / 36., 1. / 36., 1. / 36., 1. / 36.};
 
 /** Basis of the mode space as described in [Duenweg, Schiller, Ladd] */
 static double d3q19_modebase[20][19] = {

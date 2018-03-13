@@ -2375,89 +2375,6 @@ void lb_calc_modes(Lattice::index_t index, double *mode) {
 #endif // D3Q19
 }
 
-/** Streaming and calculation of modes (pull scheme) */
-inline void lb_pull_calc_modes(Lattice::index_t index, double *mode) {
-
-  int yperiod = lblattice.halo_grid[0];
-  int zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
-
-  double n[19];
-  n[0] = lbfluid[0][0][index];
-  n[1] = lbfluid[0][1][index - 1];
-  n[2] = lbfluid[0][2][index + 1];
-  n[3] = lbfluid[0][3][index - yperiod];
-  n[4] = lbfluid[0][4][index + yperiod];
-  n[5] = lbfluid[0][5][index - zperiod];
-  n[6] = lbfluid[0][6][index + zperiod];
-  n[7] = lbfluid[0][7][index - (1 + yperiod)];
-  n[8] = lbfluid[0][8][index + (1 + yperiod)];
-  n[9] = lbfluid[0][9][index - (1 - yperiod)];
-  n[10] = lbfluid[0][10][index + (1 - yperiod)];
-  n[11] = lbfluid[0][11][index - (1 + zperiod)];
-  n[12] = lbfluid[0][12][index + (1 + zperiod)];
-  n[13] = lbfluid[0][13][index - (1 - zperiod)];
-  n[14] = lbfluid[0][14][index + (1 - zperiod)];
-  n[15] = lbfluid[0][15][index - (yperiod + zperiod)];
-  n[16] = lbfluid[0][16][index + (yperiod + zperiod)];
-  n[17] = lbfluid[0][17][index - (yperiod - zperiod)];
-  n[18] = lbfluid[0][18][index + (yperiod - zperiod)];
-
-#ifdef D3Q19
-  /* mass mode */
-  mode[0] = n[0] + n[1] + n[2] + n[3] + n[4] + n[5] + n[6] + n[7] + n[8] +
-            n[9] + n[10] + n[11] + n[12] + n[13] + n[14] + n[15] + n[16] +
-            n[17] + n[18];
-
-  /* momentum modes */
-  mode[1] =
-      n[1] - n[2] + n[7] - n[8] + n[9] - n[10] + n[11] - n[12] + n[13] - n[14];
-  mode[2] =
-      n[3] - n[4] + n[7] - n[8] - n[9] + n[10] + n[15] - n[16] + n[17] - n[18];
-  mode[3] = n[5] - n[6] + n[11] - n[12] - n[13] + n[14] + n[15] - n[16] -
-            n[17] + n[18];
-
-  /* stress modes */
-  mode[4] = -n[0] + n[7] + n[8] + n[9] + n[10] + n[11] + n[12] + n[13] + n[14] +
-            n[15] + n[16] + n[17] + n[18];
-  mode[5] = n[1] + n[2] - n[3] - n[4] + n[11] + n[12] + n[13] + n[14] - n[15] -
-            n[16] - n[17] - n[18];
-  mode[6] = n[1] + n[2] + n[3] + n[4] - n[11] - n[12] - n[13] - n[14] - n[15] -
-            n[16] - n[17] - n[18] -
-            2. * (n[5] + n[6] - n[7] - n[8] - n[9] - n[10]);
-  mode[7] = n[7] + n[8] - n[9] - n[10];
-  mode[8] = n[11] + n[12] - n[13] - n[14];
-  mode[9] = n[15] + n[16] - n[17] - n[18];
-
-  /* kinetic modes */
-  mode[10] = 2. * (n[2] - n[1]) + n[7] - n[8] + n[9] - n[10] + n[11] - n[12] +
-             n[13] - n[14];
-  mode[11] = 2. * (n[4] - n[3]) + n[7] - n[8] - n[9] + n[10] + n[15] - n[16] +
-             n[17] - n[18];
-  mode[12] = 2. * (n[6] - n[5]) + n[11] - n[12] - n[13] + n[14] + n[15] -
-             n[16] - n[17] + n[18];
-  mode[13] = n[7] - n[8] + n[9] - n[10] - n[11] + n[12] - n[13] + n[14];
-  mode[14] = n[7] - n[8] - n[9] + n[10] - n[15] + n[16] - n[17] + n[18];
-  mode[15] = n[11] - n[12] - n[13] + n[14] - n[15] + n[16] + n[17] - n[18];
-  mode[16] = n[0] + n[7] + n[8] + n[9] + n[10] + n[11] + n[12] + n[13] + n[14] +
-             n[15] + n[16] + n[17] + n[18] -
-             2. * (n[1] + n[2] + n[3] + n[4] + n[5] + n[6]);
-  mode[17] = n[3] + n[4] - n[1] - n[2] + n[11] + n[12] + n[13] + n[14] - n[15] -
-             n[16] - n[17] - n[18];
-  mode[18] = -n[1] - n[2] - n[3] - n[4] - n[11] - n[12] - n[13] - n[14] -
-             n[15] - n[16] - n[17] - n[18] +
-             2. * (n[5] + n[6] + n[7] + n[8] + n[9] + n[10]);
-#else  // D3Q19
-  int i, j;
-  double **e = lbmodel.e;
-  for (i = 0; i < lbmodel.n_veloc; i++) {
-    mode[i] = 0.0;
-    for (j = 0; j < lbmodel.n_veloc; j++) {
-      mode[i] += e[i][j] * n[j];
-    }
-  }
-#endif // D3Q19
-}
-
 inline void lb_relax_modes(Lattice::index_t index, double *mode) {
   double rho, j[3], pi_eq[6];
 
@@ -2886,77 +2803,6 @@ inline void lb_collide_stream() {
   lbpar.resend_halo = 1;
 }
 
-/** Streaming and collisions (pull scheme) */
-inline void lb_stream_collide() {
-  Lattice::index_t index;
-  int x, y, z;
-  double modes[19];
-
-  /* exchange halo regions */
-  halo_communication(&update_halo_comm, (char *)**lbfluid);
-
-#ifdef ADDITIONAL_CHECKS
-  lb_check_halo_regions();
-#endif // ADDITIONAL_CHECKS
-
-  /* loop over all lattice cells (halo excluded) */
-  index = lblattice.halo_offset;
-  for (z = 1; z <= lblattice.grid[2]; z++) {
-    for (y = 1; y <= lblattice.grid[1]; y++) {
-      for (x = 1; x <= lblattice.grid[0]; x++) {
-      // as we only want to apply this to non-boundary nodes we can throw out
-      // the if-clause if we have a non-bounded domain
-#ifdef LB_BOUNDARIES
-        if (!lbfields[index].boundary)
-#endif // LB_BOUNDARIES
-        {
-
-          /* stream (pull) and calculate modes */
-          lb_pull_calc_modes(index, modes);
-
-          /* deterministic collisions */
-          lb_relax_modes(index, modes);
-
-          /* fluctuating hydrodynamics */
-          if (lbpar.fluct)
-            lb_thermalize_modes(index, modes);
-
-          /* apply forces */
-          if (lbfields[index].has_force || local_cells.particles().size())
-            lb_apply_forces(index, modes);
-
-          /* calculate new particle populations */
-          lb_calc_n_from_modes(index, modes);
-        }
-        // Here collision in the boundary nodes
-        // can be included, if this is necessary
-        // #ifdef LB_BOUNDARIES
-        //                 else {
-        //                     lb_boundary_collisions(index, modes);
-        //                 }
-        // #endif // LB_BOUNDARIES
-        ++index; /* next node */
-      }
-      index += 2; /* skip halo region */
-    }
-    index += 2 * lblattice.halo_grid[0]; /* skip halo region */
-  }
-
-  /* swap the pointers for old and new population fields */
-  // fprintf(stderr,"swapping pointers\n");
-  double **tmp = lbfluid[0];
-  lbfluid[0] = lbfluid[1];
-  lbfluid[1] = tmp;
-
-  /* halo region is invalid after update */
-  lbpar.resend_halo = 1;
-
-  // Re-reset the node forces to include also the halo nodes
-#ifdef IMMERSED_BOUNDARY
-  IBM_ResetLBForces_CPU();
-#endif
-}
-
 /***********************************************************************/
 /** \name Update step for the lattice Boltzmann fluid                  */
 /***********************************************************************/
@@ -2975,11 +2821,8 @@ void lattice_boltzmann_update() {
   fluidstep += 1;
   if (fluidstep >= factor) {
     fluidstep = 0;
-#ifdef PULL
-    lb_stream_collide();
-#else  // PULL
+
     lb_collide_stream();
-#endif // PULL
   }
 }
 
