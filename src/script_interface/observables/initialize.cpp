@@ -20,10 +20,11 @@
 #include "initialize.hpp"
 #include "ScriptInterface.hpp"
 
-#include "CylindricalProfileObservable.hpp"
+#include "CylindricalPidProfileObservable.hpp"
 #include "CylindricalLBProfileObservable.hpp"
 #include "ParamlessObservable.hpp"
 #include "PidObservable.hpp"
+#include "PidProfileObservable.hpp"
 #include "ProfileObservable.hpp"
 
 #include "core/observables/ComForce.hpp"
@@ -48,8 +49,20 @@ namespace Observables {
 #define REGISTER(name)                                                         \
   ScriptInterface::register_new<name>("Observables::" #name "");
 
+#define REGISTER_PROFILE_OBS(name)                                                 \
+  ScriptInterface::register_new<ProfileObservable<::Observables::name>>(           \
+      "Observables::" #name "");
+
 #define REGISTER_PID_OBS(name)                                                 \
   ScriptInterface::register_new<PidObservable<::Observables::name>>(           \
+      "Observables::" #name "");
+
+#define REGISTER_PID_PROFILE_OBS(name)                                                 \
+  ScriptInterface::register_new<PidProfileObservable<::Observables::name>>(           \
+      "Observables::" #name "");
+
+#define REGISTER_CYLPID_PROFILE_OBS(name)                                                 \
+  ScriptInterface::register_new<CylindricalPidProfileObservable<::Observables::name>>(           \
       "Observables::" #name "");
 
 #define REGISTER_CYLLB_OBS(name)                                                 \
@@ -75,15 +88,15 @@ void initialize() {
   REGISTER_PID_OBS(ComPosition);
   REGISTER_PID_OBS(ComVelocity);
   REGISTER_PID_OBS(ComForce);
-  REGISTER(DensityProfile);
-  REGISTER(ForceDensityProfile);
-  REGISTER(FluxDensityProfile);
-  REGISTER(LBVelocityProfile);
-  REGISTER(CylindricalDensityProfile);
-  REGISTER(CylindricalVelocityProfile);
-  REGISTER(CylindricalFluxDensityProfile);
-  REGISTER(CylindricalLBFluxDensityProfileAtParticlePositions);
-  REGISTER(CylindricalLBVelocityProfileAtParticlePositions);
+  REGISTER_PID_PROFILE_OBS(DensityProfile);
+  REGISTER_PID_PROFILE_OBS(ForceDensityProfile);
+  REGISTER_PID_PROFILE_OBS(FluxDensityProfile);
+  REGISTER_PROFILE_OBS(LBVelocityProfile);
+  REGISTER_CYLPID_PROFILE_OBS(CylindricalDensityProfile);
+  REGISTER_CYLPID_PROFILE_OBS(CylindricalVelocityProfile);
+  REGISTER_CYLPID_PROFILE_OBS(CylindricalFluxDensityProfile);
+  REGISTER_CYLPID_PROFILE_OBS(CylindricalLBFluxDensityProfileAtParticlePositions);
+  REGISTER_CYLPID_PROFILE_OBS(CylindricalLBVelocityProfileAtParticlePositions);
   REGISTER_CYLLB_OBS(CylindricalLBVelocityProfile);
 
 #undef REGISTER
