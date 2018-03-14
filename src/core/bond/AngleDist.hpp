@@ -12,11 +12,12 @@ namespace Bond {
     AngleDist(double bend, double phimin, double distmin, double phimax, double distmax) : m_bend{bend}, m_phimin{phimin}, m_distmin{distmin}, m_phimax{phimax}, m_distmax{distmax} {m_bondtype = BondType::BONDED_IA_ANGLEDIST;}
 
     //force *
-    int calc_bonded_three_particle_force(Particle *p1, Particle *p2, Particle *p3, double force[3], double force2[3]) const override;
+    int calc_bonded_three_particle_force(Particle *p1, Particle *p2, Particle *p3, double force[3],
+					 double force2[3]) const override;
 
     //energy *
     int calc_bonded_three_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
-						 double *_energy) const override;
+					  double *_energy) const override;
    
   private:
     /** Function to calculate wall distance and phi0(dist).

@@ -2062,7 +2062,8 @@ class ThermalizedBond(BondedInteraction):
         self._params = {"temp_com": 1., "gamma_com": 1., "temp_distance": 1., "gamma_distance": 1., "r_cut": 0.}
 
     def _get_params_from_es_core(self):
-        return bond_container.get_bond_parameters[Thermalized_bond_parameters](self._bond_id)
+        params = bond_container.get_bond_parameters[Thermalized_bond_parameters](self._bond_id)
+        return {key: params[key] for key in self.required_keys()}
 
     def _set_params_in_es_core(self):
         thermalized_bond_set_params(
@@ -2350,7 +2351,8 @@ class Dihedral(BondedInteraction):
         self._params = {"mult'": 1., "bend": 0., "phase": 0.}
 
     def _get_params_from_es_core(self):
-        return bond_container.get_bond_parameters[Dihedral_bond_parameters](self._bond_id)
+        params = bond_container.get_bond_parameters[Dihedral_bond_parameters](self._bond_id)
+        return {key: params[key] for key in self.required_keys()}
 
     def _set_params_in_es_core(self):
         dihedral_set_params(
@@ -2440,7 +2442,6 @@ IF TABULATED == 1:
             else:
                 raise ValueError(
                     "Tabulated type needs to be distance, angle, or diherdal")
-
             res = tabulated_bonded_set_params(
                 self._bond_id, < TabulatedBondedInteraction > type_num,
                 self._params["min"],
@@ -2774,8 +2775,9 @@ IF BOND_ANGLE == 1:
             self._params = {"bend": 0, "phi0": 0}
 
         def _get_params_from_es_core(self):
-            return bond_container.get_bond_parameters[Angle_harmonic_bond_parameters](self._bond_id)
-
+            params = bond_container.get_bond_parameters[Angle_harmonic_bond_parameters]\
+                     (self._bond_id)
+            return {key: params[key] for key in self.required_keys()}
         def _set_params_in_es_core(self):
             angle_harmonic_set_params(
                 self._bond_id, self._params["bend"], self._params["phi0"])
@@ -2820,7 +2822,8 @@ IF BOND_ANGLE == 1:
             self._params = {"bend": 0, "phi0": 0}
 
         def _get_params_from_es_core(self):
-            return bond_container.get_bond_parameters[Angle_cosine_bond_parameters](self._bond_id)
+            params = bond_container.get_bond_parameters[Angle_cosine_bond_parameters](self._bond_id)
+            return {key: params[key] for key in self.required_keys()}
 
         def _set_params_in_es_core(self):
             angle_cosine_set_params(
@@ -2866,8 +2869,9 @@ IF BOND_ANGLE == 1:
             self._params = {"bend": 0, "phi0": 0}
 
         def _get_params_from_es_core(self):
-            return bond_container.get_bond_parameters[Angle_cossquare_bond_parameters]\
-                (self._bond_id)
+            params = bond_container.get_bond_parameters[Angle_cossquare_bond_parameters]\
+                     (self._bond_id)
+            return {key: params[key] for key in self.required_keys()}
 
         def _set_params_in_es_core(self):
             angle_cossquare_set_params(

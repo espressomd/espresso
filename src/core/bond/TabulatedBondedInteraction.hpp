@@ -5,9 +5,10 @@ namespace Bond {
 
   enum class TabulatedBondedInteraction {
     
-    TAB_BOND_LENGTH,
-    TAB_BOND_ANGLE,
-    TAB_BOND_DIHEDRAL
+    TAB_UNKNOWN = 0,
+    TAB_BOND_LENGTH = 1,
+    TAB_BOND_ANGLE = 2,
+    TAB_BOND_DIHEDRAL = 3
       
   };
 

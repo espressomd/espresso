@@ -41,6 +41,18 @@ public:
   template<typename bond_parameters>
   bond_parameters get_bond_parameters(){
     return boost::any_cast<bond_parameters>(get_bond_parameters_from_bond());
+    /*
+    try {
+      
+      return boost::any_cast<bond_parameters>(get_bond_parameters_from_bond());
+
+    }
+    catch(boost::bad_any_cast &e){
+      runtimeErrorMsg() << "BondContainer: any_cast failed of bondtype:"
+			<< int(m_bondtype) << "\n";
+      bond_parameters* params = new bond_parameters();
+      return *params;
+      };*/
   }
   //getting bond parameters -> virtual function
   //returns only parameters if they are needed in cython interface otherwise it
