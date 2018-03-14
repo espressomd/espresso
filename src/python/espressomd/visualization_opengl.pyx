@@ -12,6 +12,7 @@ import scipy.spatial
 include "myconfig.pxi"
 from copy import deepcopy
 import espressomd
+from espressomd.particle_data import ParticleHandle
 
 class openGLLive(object):
 
@@ -307,6 +308,14 @@ class openGLLive(object):
             self.has_particle_data['charge'] = False
         self.has_particle_data['director'] = self.specs['director_arrows']
 
+        # FULL PARTICLE INFO OF HIGHLIGHTED PARTICLE
+        self.highlighted_particle = {}
+        self.particle_attributes = []
+        for d in dir(ParticleHandle):
+            if type(getattr(ParticleHandle, d)) == type(ParticleHandle.pos):
+                if not d in ["pos_folded"]:
+                    self.particle_attributes.append(d)
+
         # CALC INVERSE BACKGROUND COLOR FOR BOX
         self.invBackgroundCol = np.array([1 - self.specs['background_color'][0], 1 -
                                           self.specs['background_color'][1], 1 - self.specs['background_color'][2]])
@@ -415,7 +424,8 @@ class openGLLive(object):
             
             self.measureTimeBeforeIntegrate = time.time()
 
-            IF EXTERNAL_FORCES:
+            # DRAG PARTICLES
+            if self.specs['drag_enabled']:
                 if self.triggerSetParticleDrag == True and self.dragId != -1:
                     self.system.part[self.dragId].ext_force = self.dragExtForce
                     self.triggerSetParticleDrag = False
@@ -449,6 +459,10 @@ class openGLLive(object):
         
         if self.has_particle_data['director']:
             self.particles['director'] = self.system.part[:].director
+
+        if self.infoId != -1:
+            for attr in self.particle_attributes:
+                self.highlighted_particle[attr] = getattr(self.system.part[self.infoId], attr)
 
     def update_lb(self):
         agrid = self.lb_params['agrid']
@@ -662,7 +676,7 @@ class openGLLive(object):
                 radius = self.radiusByLJ(ptype)
         return radius
 
-    def draw_system_particles(self, dragging = False):
+    def draw_system_particles(self, colorById = False):
         pIds = range(len(self.particles['pos']))
         ptype = -1
         reset_material = False
@@ -671,33 +685,42 @@ class openGLLive(object):
             ptype_last = ptype
             ptype = int(self.particles['type'][pid])
 
-            # Only change material if type/charge has changed, dragmode or material was resetted by arrows
-            if reset_material or dragging or not ptype == ptype_last:
+            # Only change material if type/charge has changed, colorById or material was resetted by arrows
+            if reset_material or colorById or not ptype == ptype_last or pid == self.dragId or pid == self.infoId:
+                reset_material = False
+                
                 radius = self.determine_radius(ptype)
 
                 m = self.modulo_indexing(self.specs['particle_type_materials'], ptype)
                 material = self.materials[m]
 
-                if self.specs['particle_coloring'] == 'id':
+                if colorById:
                     color = self.id_to_fcolor(pid)
                     glColor(color)
-                elif self.specs['particle_coloring'] == 'auto':
-                    # Color auto: Charge then Type
-                    if self.has_particle_data['charge'] and self.particles['charge'][pid] != 0:
+                else:
+                    if self.specs['particle_coloring'] == 'auto':
+                        # Color auto: Charge then Type
+                        if self.has_particle_data['charge'] and self.particles['charge'][pid] != 0:
+                            color = self.color_by_charge(self.particles['charge'][pid])
+                            reset_material = True
+                        else:
+                            color = self.modulo_indexing(
+                                self.specs['particle_type_colors'], ptype)
+                    elif self.specs['particle_coloring'] == 'charge':
                         color = self.color_by_charge(self.particles['charge'][pid])
                         reset_material = True
-                    else:
+                    elif self.specs['particle_coloring'] == 'type':
                         color = self.modulo_indexing(
                             self.specs['particle_type_colors'], ptype)
-                elif self.specs['particle_coloring'] == 'charge':
-                    color = self.color_by_charge(self.particles['charge'][pid])
-                    reset_material = True
-                elif self.specs['particle_coloring'] == 'type':
-                    color = self.modulo_indexing(
-                        self.specs['particle_type_colors'], ptype)
 
+                    # Invert color of highlighted particle
+                    if pid == self.dragId or pid == self.infoId:
+                        reset_material = True
+                        color = [1 - color[0], 1 - color[1], 1 - color[2], color[3]] 
+                
                 set_solid_material(color[0], color[1], color[2], color[3], material[0], material[1], material[2], material[3])
 
+                # Create a new display list, used until next material/color change
                 glNewList(self.dl_sphere, GL_COMPILE)
                 glutSolidSphere(radius, self.specs['quality_particles'], self.specs['quality_particles'])
                 glEndList()
@@ -871,9 +894,17 @@ class openGLLive(object):
                         self.fps = self.fps_count
                         self.fps_count = 0
 
-                    self.draw_text(10, 10, "{} fps".format(self.fps), [0, 1, 0, 1])
-                    self.draw_text(10, 30, "{} ms/frame".format(1000.0/self.fps), [0, 1, 0, 1])
+                    self.draw_text(10, 10, "{} fps".format(self.fps), self.invBackgroundCol)
+                    self.draw_text(10, 30, "{} ms/frame".format(1000.0/self.fps),  self.invBackgroundCol)
                     self.fps_count += 1
+
+                if self.infoId != -1:
+                    y = 0
+                    for k, v in self.highlighted_particle.items():
+                        txt = "{}  {}".format(k, v) 
+                        self.draw_text(10, self.specs['window_size'][1] - 10 - 15 * y, txt, self.invBackgroundCol)
+                        y += 1
+                    
 
                 glutSwapBuffers()
             return
@@ -942,7 +973,7 @@ class openGLLive(object):
     # CLICKED ON PARTICLE: DRAG; CLICKED ON BACKGROUND: CAMERA
     def mouse_motion(self, mousePos, mousePosOld, mouseButtonState):
 
-        if self.dragId != -1:
+        if self.specs['drag_enabled'] and self.dragId != -1:
             ppos = self.particles['pos'][self.dragId]
             viewport = glGetIntegerv(GL_VIEWPORT)
             mouseWorld = gluUnProject(
@@ -955,34 +986,27 @@ class openGLLive(object):
             self.camera.rotate_camera(mousePos, mousePosOld, mouseButtonState)
 
     # DRAW SCENE AGAIN WITHOUT LIGHT TO IDENTIFY PARTICLE ID BY PIXEL COLOR
-    def set_particle_drag(self, pos, pos_old):
+    def get_particle_id(self, pos, pos_old):
 
         glClearColor(0.0, 0.0, 0.0, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         glLoadMatrixf(self.camera.modelview)
 
-        oldColMode = self.specs['particle_coloring']
-        self.specs['particle_coloring'] = 'id'
         glDisable(GL_LIGHTING)
         glDisable(GL_LIGHT0)
         if self.specs['spotlight_enabled']:
             glDisable(GL_LIGHT1)
-        self.draw_system_particles(dragging = True)
+        self.draw_system_particles(colorById = True)
         viewport = glGetIntegerv(GL_VIEWPORT)
 
         readPixel = glReadPixelsui(
             pos[0], viewport[3] - pos[1], 1, 1, GL_RGB, GL_FLOAT)[0][0]
         depth = glReadPixelsf(
             pos[0], viewport[3] - pos[1], 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT)[0][0]
+        
         pid = self.fcolor_to_id(readPixel)
 
-        self.dragId = pid
-        if pid != -1:
-            self.dragPosInitial = self.particles['pos'][self.dragId]
-            self.extForceOld = self.particles['ext_force'][self.dragId][:]
-            self.depth = depth
-        self.specs['particle_coloring'] = oldColMode
         glEnable(GL_LIGHTING)
         glEnable(GL_LIGHT0)
         if self.specs['spotlight_enabled']:
@@ -991,9 +1015,7 @@ class openGLLive(object):
                      self.specs['background_color'][1],
                      self.specs['background_color'][2], 1.)
 
-    def reset_particle_drag(self, pos, pos_old):
-        if self.dragId != -1:
-            self.triggerResetParticleDrag = True
+        return pid, depth
 
     def id_to_fcolor(self, pid):
         pid += 1
@@ -1005,12 +1027,30 @@ class openGLLive(object):
         else:
             return 256 * 256 * int(fcol[0] * 255) + 256 * int(fcol[1] * 255) + int(fcol[2] * 255) - 1
 
+    def set_particle_drag(self, pos, pos_old):
+        pid, depth = self.get_particle_id(pos, pos_old)
+        self.dragId = pid
+        
+        if pid != -1:
+            self.dragPosInitial = self.particles['pos'][self.dragId]
+            self.extForceOld = self.particles['ext_force'][self.dragId][:]
+            self.depth = depth
+
+    def reset_particle_drag(self, pos, pos_old):
+        if self.dragId != -1:
+            self.triggerResetParticleDrag = True
+
+    def get_particle_info(self, pos, pos_old):
+        pid, depth = self.get_particle_id(pos, pos_old)
+        self.infoId = pid
+
     # ALL THE INITS
     def init_espresso_visualization(self):
         self.maxq = 0
         self.minq = 0
 
         self.dragId = -1
+        self.infoId = -1
         self.dragPosInitial = []
         self.extForceOld = []
         self.dragExtForceOld = []
@@ -1083,6 +1123,7 @@ class openGLLive(object):
 
     # DEFAULT CONTROLS
     def init_controls(self):
+
         # MOUSE LOOK/ROTATE/DRAG
         self.mouseManager.register_button(MouseButtonEvent(
             None, MouseFireEvent.FreeMotion, self.mouse_motion))
@@ -1099,6 +1140,11 @@ class openGLLive(object):
                 GLUT_LEFT_BUTTON, MouseFireEvent.ButtonPressed, self.set_particle_drag, True))
             self.mouseManager.register_button(MouseButtonEvent(
                 GLUT_LEFT_BUTTON, MouseFireEvent.ButtonReleased, self.reset_particle_drag, True))
+   
+        # PARTICLE INFORMATION
+        self.mouseManager.register_button(MouseButtonEvent(
+            GLUT_LEFT_BUTTON, MouseFireEvent.DoubleClick, self.get_particle_info, True))
+
 
         # KEYBOARD BUTTONS
         self.keyboardManager.register_button(KeyboardButtonEvent(
@@ -1436,6 +1482,7 @@ class MouseFireEvent(object):
     FreeMotion = 1
     ButtonMotion = 2
     ButtonReleased = 3
+    DoubleClick = 4
 
 
 class MouseButtonEvent(object):
@@ -1464,10 +1511,20 @@ class MouseManager(object):
         self.mouseEventsFreeMotion = []
         self.mouseEventsButtonMotion = []
         self.mouseEventsReleased = []
+        self.mouseEventsDoubleClick = []
         self.mouseState = {}
         self.mouseState[GLUT_LEFT_BUTTON] = GLUT_UP
         self.mouseState[GLUT_MIDDLE_BUTTON] = GLUT_UP
         self.mouseState[GLUT_RIGHT_BUTTON] = GLUT_UP
+        self.pressedTime = {}
+        self.pressedTime[GLUT_LEFT_BUTTON] = 0
+        self.pressedTime[GLUT_MIDDLE_BUTTON] = 0
+        self.pressedTime[GLUT_RIGHT_BUTTON] = 0
+        self.pressedTimeOld = {}
+        self.pressedTimeOld[GLUT_LEFT_BUTTON] = 0
+        self.pressedTimeOld[GLUT_MIDDLE_BUTTON] = 0
+        self.pressedTimeOld[GLUT_RIGHT_BUTTON] = 0
+
 
     def register_button(self, mouseEvent):
         """Register mouse input callbacks.
@@ -1481,6 +1538,8 @@ class MouseManager(object):
             self.mouseEventsFreeMotion.append(mouseEvent)
         elif mouseEvent.fireEvent == MouseFireEvent.ButtonMotion:
             self.mouseEventsButtonMotion.append(mouseEvent)
+        elif mouseEvent.fireEvent == MouseFireEvent.DoubleClick:
+            self.mouseEventsDoubleClick.append(mouseEvent)
 
     def mouse_click(self, button, state, x, y):
         self.mousePosOld = self.mousePos
@@ -1496,6 +1555,17 @@ class MouseManager(object):
                     me.callback()
         for me in self.mouseEventsReleased:
             if me.button == button and state == GLUT_UP:
+                if me.positional:
+                    me.callback(self.mousePos, self.mousePosOld)
+                else:
+                    me.callback()
+
+        if state == GLUT_DOWN:
+            self.pressedTimeOld[button] = self.pressedTime[button] 
+            self.pressedTime[button] = time.time() 
+
+        for me in self.mouseEventsDoubleClick:
+            if me.button == button and state == GLUT_DOWN and self.pressedTime[button] - self.pressedTimeOld[button] < 0.25:
                 if me.positional:
                     me.callback(self.mousePos, self.mousePosOld)
                 else:
