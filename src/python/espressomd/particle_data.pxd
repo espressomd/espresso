@@ -224,14 +224,14 @@ cdef extern from "rotation.hpp":
 
 cdef extern from "bond/BondContainer.hpp" namespace "Bond":
     cdef cppclass BondContainer:
-    #constructor
-         BondContainer() except +
-         #methods for cython interface
-         int get_num_partners(int bond_map_id)
-         int get_bond_type(int bond_map_id)
-         bond_parameter get_bond_parameters[bond_parameter](int bond_map_id)
-         #other functions are not needed
-         pass
+        #constructor
+        BondContainer() except +
+        #methods for cython interface
+        int get_num_partners(int bond_map_id)
+        int get_bond_type(int bond_map_id)
+        bond_parameter get_bond_parameters[bond_parameter](int bond_map_id)
+        #other functions are not needed
+        pass
 
 cdef extern from "interaction_data.hpp":
     BondContainer bond_container
