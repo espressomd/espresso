@@ -129,33 +129,6 @@ private:
   std::shared_ptr<CoreObs> m_observable;
 };
 
-/*
-#define NEW_CYLINDRICAL_PID_PROFILE_OBSERVABLE(obs_name)                       \
-  class obs_name : public CylindricalPidProfileObservable {                    \
-  public:                                                                      \
-    obs_name() : m_observable(new ::Observables::obs_name()){};                \
-                                                                               \
-    std::shared_ptr<::Observables::Observable> observable() const override {   \
-      return m_observable;                                                     \
-    }                                                                          \
-                                                                               \
-    std::shared_ptr<::Observables::CylindricalPidProfileObservable>            \
-    cylindrical_pid_profile_observable() const override {                      \
-      return m_observable;                                                     \
-    }                                                                          \
-                                                                               \
-  private:                                                                     \
-    std::shared_ptr<::Observables::obs_name> m_observable;                     \
-  };
-
-NEW_CYLINDRICAL_PID_PROFILE_OBSERVABLE(CylindricalDensityProfile)
-NEW_CYLINDRICAL_PID_PROFILE_OBSERVABLE(CylindricalVelocityProfile)
-NEW_CYLINDRICAL_PID_PROFILE_OBSERVABLE(CylindricalFluxDensityProfile)
-NEW_CYLINDRICAL_PID_PROFILE_OBSERVABLE(
-    CylindricalLBFluxDensityProfileAtParticlePositions)
-NEW_CYLINDRICAL_PID_PROFILE_OBSERVABLE(
-    CylindricalLBVelocityProfileAtParticlePositions)
-*/
 } /* namespace Observables */
 } /* namespace ScriptInterface */
 
