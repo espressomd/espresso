@@ -98,7 +98,9 @@ void force_calc() {
 // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
   virtual_sites()->update();
-  set_resort_particles(Cells::RESORT_LOCAL);
+  #ifdef LEES_EDWARDS
+      set_resort_particles(Cells::RESORT_LOCAL);
+    #endif
   if (virtual_sites()->need_ghost_comm_after_pos_update()) {
     cells_update_ghosts();
   }
