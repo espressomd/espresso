@@ -31,39 +31,44 @@ class LeesEdwardsTest(ut.TestCase):
         print("normal particles")
         s=self.system
         bond=self.bond
+        
+        s.lees_edwards_offset=0.0
 
         s.part.clear()
         s.part.add(id=0,pos=(0.5,0.9,0.5))
         s.part.add(id=1,pos=(0.5,0.1,0.5),bonds=(bond,0))
+        print(s.part[1].pos,s.part[1].bare_position,s.part[1].image_box)
         s.integrator.run(0)
         np.testing.assert_allclose(s.part[0].f,[0,0.2,0])
 
         s.lees_edwards_offset=0.1
         s.integrator.run(0)
+        print(s.part[1].pos,s.part[1].bare_position,s.part[1].image_box)
         np.testing.assert_allclose(s.part[0].f,[0.1,0.2,0])
-        print(s.part[1].pos,s.part[1].pos_folded,s.part[1].image_box)
     
     def test_vs(self):
         print("VS")
         s=self.system
         bond=self.bond
 
-        s.lees_edwards_offset=0
+        s.lees_edwards_offset=0.1
         s.part.clear()
         s.part.add(id=0,pos=(0.5,0.9,0.5))
         s.part.add(id=1,pos=(0.5,0.8,0.5))
         s.part.add(id=2,pos=(0.5,0.9,0.5),bonds=(bond,0))
         s.part[2].vs_auto_relate_to(1)
-        s.integrator.run(0)
-        np.testing.assert_allclose(s.part[0].f,[0,0.0,0])
+        #s.integrator.run(0)
+        #np.testing.assert_allclose(s.part[0].f,[0,0.0,0])
         
         s.part[1].pos=0.5,0.95,0.5
         s.integrator.run(0)
-        np.testing.assert_allclose(s.part[0].f,[0.0,0.15,0])
+        print(s.part[2].pos,s.part[2].bare_position,s.part[2].image_box)
+        s.cell_system.resort()
+        #np.testing.assert_allclose(s.part[0].f,[0.0,0.15,0])
 
 
-        s.lees_edwards_offset=0.1
-        s.integrator.run(0)
+        #s.lees_edwards_offset=0.1
+        #s.integrator.run(0)
         print(s.part[2].pos,s.part[2].bare_position,s.part[2].image_box)
         np.testing.assert_allclose(s.part[0].f,[0.1,0.15,0])
 

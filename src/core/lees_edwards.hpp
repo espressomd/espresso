@@ -28,12 +28,14 @@
 
 #include "config.hpp"
 
+
 extern double lees_edwards_offset, lees_edwards_rate;
 extern int    lees_edwards_count;
 
 #ifdef LEES_EDWARDS
 
 void lees_edwards_step_boundaries();
+
 
 #endif //LEES_EDWARDS
 

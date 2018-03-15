@@ -548,6 +548,9 @@ inline void add_bonded_force(Particle *p1) {
          not needed,
          and the pressure calculation not yet clear. */
       get_mi_vector(dx, p1->r.p, p2->r.p);
+      #ifdef LEES_EDWARDS
+          dx[0]+=(p1->l.i[1]-p2->l.i[1]) * lees_edwards_offset;
+      #endif
     }
 
     switch (type) {

@@ -820,46 +820,8 @@ void propagate_pos() {
   announce_resort_particles();
 }
 
-void propagate_vel_pos() {
-  INTEG_TRACE(fprintf(stderr, "%d: propagate_vel_pos:\n", this_node));
-
-#ifdef ADDITIONAL_CHECKS
-  db_max_force = db_max_vel = 0;
-  db_maxf_id = db_maxv_id = -1;
-#endif
-
-  for (auto &p : local_cells.particles()) {
-#ifdef ROTATION
-    propagate_omega_quat_particle(&p);
-#endif
-
-// Don't propagate translational degrees of freedom of vs
-#ifdef VIRTUAL_SITES
-    if (p.p.isVirtual)
-      continue;
-#endif
-    for (int j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
-      if (!(p.p.ext_flag & COORD_FIXED(j)))
-#endif
-      {
-        /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
-        p.m.v[j] += p.f.f[j];
-
-        /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
-         * v(t+0.5*dt) */
-        p.r.p[j] += p.m.v[j];
-      }
-    }
-
-    ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
-        stderr, "%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n", this_node, p.m.v[0],
-        p.m.v[1], p.m.v[2]));
-    ONEPART_TRACE(if (p.p.identity == check_id)
-                      fprintf(stderr, "%d: OPT: PPOS p = (%.3e,%.3e,%.3e)\n",
-                              this_node, p.r.p[0], p.r.p[1], p.r.p[2]));
-
 #ifdef LEES_EDWARDS
+inline void lees_edwards_boundary_crossing_and_folding(Particle& p) {
     /* test for crossing of a y-pbc: requires adjustment of velocity.*/
     {
       int b1, delta_box;
@@ -904,7 +866,52 @@ void propagate_vel_pos() {
         p.l.i[2]--;
       }
     }
+}
 #endif
+
+void propagate_vel_pos() {
+  INTEG_TRACE(fprintf(stderr, "%d: propagate_vel_pos:\n", this_node));
+
+#ifdef ADDITIONAL_CHECKS
+  db_max_force = db_max_vel = 0;
+  db_maxf_id = db_maxv_id = -1;
+#endif
+
+  for (auto &p : local_cells.particles()) {
+#ifdef ROTATION
+    propagate_omega_quat_particle(&p);
+#endif
+
+// Don't propagate translational degrees of freedom of vs
+#ifdef VIRTUAL_SITES
+    if (p.p.isVirtual)
+      continue;
+#endif
+    for (int j = 0; j < 3; j++) {
+#ifdef EXTERNAL_FORCES
+      if (!(p.p.ext_flag & COORD_FIXED(j)))
+#endif
+      {
+        /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
+        p.m.v[j] += p.f.f[j];
+
+        /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
+         * v(t+0.5*dt) */
+        p.r.p[j] += p.m.v[j];
+      }
+    }
+
+    ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
+        stderr, "%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n", this_node, p.m.v[0],
+        p.m.v[1], p.m.v[2]));
+    ONEPART_TRACE(if (p.p.identity == check_id)
+                      fprintf(stderr, "%d: OPT: PPOS p = (%.3e,%.3e,%.3e)\n",
+                              this_node, p.r.p[0], p.r.p[1], p.r.p[2]));
+
+#ifdef LEES_EDWARDS
+    lees_edwards_boundary_crossing_and_folding(p);
+#endif
+
 
     /* Verlet criterion check*/
     if (Utils::sqr(p.r.p[0] - p.l.p_old[0]) + Utils::sqr(p.r.p[1] - p.l.p_old[1]) +
