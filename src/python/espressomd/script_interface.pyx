@@ -104,7 +104,6 @@ cdef class PScriptInterface(object):
                 if n_elements!=0 and not (len(in_params[pname]) == n_elements):
                     raise ValueError(
                         "Value of %s expected to be %i elements" % (name, n_elements))
-                    return -1
 
             # We accept ints for floats (but not the other way round)
             if <int> ptype == <int> DOUBLE and is_valid_type(in_params[pname], int):
