@@ -67,8 +67,6 @@
 #include "morse.hpp"
 #include "io/mpiio/mpiio.hpp"
 #include "npt.hpp"
-#include "observables/LBRadialVelocityProfile.hpp"
-#include "observables/Observable.hpp"
 #include "overlap.hpp"
 #include "p3m-dipolar.hpp"
 #include "p3m.hpp"
@@ -195,7 +193,6 @@ static int terminated = 0;
   CB(mpi_external_potential_broadcast_slave)                                   \
   CB(mpi_external_potential_tabulated_read_potential_file_slave)               \
   CB(mpi_external_potential_sum_energies_slave)                                \
-  CB(mpi_observable_lb_radial_velocity_profile_slave)                          \
   CB(mpi_check_runtime_errors_slave)                                           \
   CB(mpi_minimize_energy_slave)                                                \
   CB(mpi_gather_cuda_devices_slave)                                            \
@@ -1053,17 +1050,6 @@ void mpi_send_rotation_slave(int pnode, int part) {
   on_particle_change();
 }
 
-void mpi_observable_lb_radial_velocity_profile() {
-#ifdef LB
-  mpi_call(mpi_observable_lb_radial_velocity_profile_slave, 0, 0);
-#endif
-}
-
-void mpi_observable_lb_radial_velocity_profile_slave(int pnode, int part) {
-#ifdef LB
-  Observables::mpi_observable_lb_radial_velocity_profile_slave_implementation();
-#endif
-}
 
 /********************* REQ_SET_BOND ********/
 
