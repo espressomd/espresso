@@ -107,6 +107,11 @@ struct LB_FluidNode {
   /** flag indicating whether a force is acting on the node */
   int has_force;
 
+#ifdef LB_BOUNDARIES
+  /** flag indicating whether this site belongs to a boundary */
+  int boundary;
+#endif // LB_BOUNDARIES
+
   /** local force density */
   double force[3];
 #ifdef IMMERSED_BOUNDARY
@@ -115,12 +120,6 @@ struct LB_FluidNode {
   // Therefore we save it here
   double force_buf[3];
 #endif
-
-#ifdef LB_BOUNDARIES
-  /** flag indicating whether this site belongs to a boundary */
-  int boundary;
-#endif          // LB_BOUNDARIES
-
 };
 
 /** Data structure holding the parameters for the Lattice Boltzmann system. */
@@ -457,7 +456,8 @@ inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
 }
 
 #ifdef LB_BOUNDARIES
-inline void lb_local_fields_get_boundary_flag(Lattice::index_t index, int *boundary) {
+inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
+                                              int *boundary) {
 
   if (!(lattice_switch & LATTICE_LB)) {
     runtimeErrorMsg() << "Error in lb_local_fields_get_boundary_flag in "
@@ -478,16 +478,14 @@ inline void lb_local_fields_get_boundary_flag(Lattice::index_t index, int *bound
 inline void lb_get_populations(Lattice::index_t index, double *pop) {
   int i = 0;
   for (i = 0; i < 19; i++) {
-    pop[i] =
-        lbfluid[0][i][index] + lbmodel.coeff[i % 19][0] * lbpar.rho;
+    pop[i] = lbfluid[0][i][index] + lbmodel.coeff[i % 19][0] * lbpar.rho;
   }
 }
 
 inline void lb_set_populations(Lattice::index_t index, double *pop) {
   int i = 0;
   for (i = 0; i < 19; i++) {
-    lbfluid[0][i][index] =
-        pop[i] - lbmodel.coeff[i % 19][0] * lbpar.rho;
+    lbfluid[0][i][index] = pop[i] - lbmodel.coeff[i % 19][0] * lbpar.rho;
   }
 }
 #endif
