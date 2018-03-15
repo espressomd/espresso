@@ -51,7 +51,13 @@ int Bond::BondedCoulombP3MSR::calc_bonded_pair_energy(Particle *p1, Particle *p2
 boost::any Bond::BondedCoulombP3MSR::get_bond_parameters_from_bond() const
 {
 
+#ifdef P3M
   Bonded_coulomb_p3m_sr_bond_parameters params = {m_q1q2};
   return boost::any(params);
+#endif
+  
+#ifndef P3M
+  return boost::any(-1);
+#endif
   
 }
