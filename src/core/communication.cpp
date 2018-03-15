@@ -1145,21 +1145,10 @@ void mpi_minimize_energy_slave(int a, int b) { minimize_energy(); }
 
 /********************* REQ_INTEGRATE ********/
 int mpi_integrate(int n_steps, int reuse_forces) {
-  if (!Correlators::auto_update_enabled()) {
-    mpi_call(mpi_integrate_slave, n_steps, reuse_forces);
-    integrate_vv(n_steps, reuse_forces);
-    COMM_TRACE(
+  mpi_call(mpi_integrate_slave, n_steps, reuse_forces);
+  integrate_vv(n_steps, reuse_forces);
+  COMM_TRACE(
         fprintf(stderr, "%d: integration task %d done.\n", this_node, n_steps));
-  } else {
-    for (int i = 0; i < n_steps; i++) {
-      mpi_call(mpi_integrate_slave, 1, reuse_forces);
-      integrate_vv(1, reuse_forces);
-      reuse_forces = 0; // makes even less sense after the first time step
-      COMM_TRACE(
-          fprintf(stderr, "%d: integration task %d done.\n", this_node, i));
-      Correlators::auto_update();
-    }
-  }
   return mpi_check_runtime_errors();
 }
 
