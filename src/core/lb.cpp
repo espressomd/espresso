@@ -2476,57 +2476,6 @@ inline void lb_reset_forces(Lattice::index_t index) {
 #endif // EXTERNAL_FORCES
 }
 
-inline void lb_calc_n_from_modes(Lattice::index_t index, double *mode) {
-
-  double *w = lbmodel.w;
-  double(*e)[19] = d3q19_modebase;
-  double m[19];
-
-  /* normalization factors enter in the back transformation */
-  for (int i = 0; i < 19; i++)
-    m[i] = (1. / e[19][i]) * mode[i];
-
-  lbfluid[0][0][index] = m[0] - m[4] + m[16];
-  lbfluid[0][1][index] =
-      m[0] + m[1] + m[5] + m[6] - m[17] - m[18] - 2. * (m[10] + m[16]);
-  lbfluid[0][2][index] =
-      m[0] - m[1] + m[5] + m[6] - m[17] - m[18] + 2. * (m[10] - m[16]);
-  lbfluid[0][3][index] =
-      m[0] + m[2] - m[5] + m[6] + m[17] - m[18] - 2. * (m[11] + m[16]);
-  lbfluid[0][4][index] =
-      m[0] - m[2] - m[5] + m[6] + m[17] - m[18] + 2. * (m[11] - m[16]);
-  lbfluid[0][5][index] = m[0] + m[3] - 2. * (m[6] + m[12] + m[16] - m[18]);
-  lbfluid[0][6][index] = m[0] - m[3] - 2. * (m[6] - m[12] + m[16] - m[18]);
-  lbfluid[0][7][index] = m[0] + m[1] + m[2] + m[4] + 2. * m[6] + m[7] + m[10] +
-                         m[11] + m[13] + m[14] + m[16] + 2. * m[18];
-  lbfluid[0][8][index] = m[0] - m[1] - m[2] + m[4] + 2. * m[6] + m[7] - m[10] -
-                         m[11] - m[13] - m[14] + m[16] + 2. * m[18];
-  lbfluid[0][9][index] = m[0] + m[1] - m[2] + m[4] + 2. * m[6] - m[7] + m[10] -
-                         m[11] + m[13] - m[14] + m[16] + 2. * m[18];
-  lbfluid[0][10][index] = m[0] - m[1] + m[2] + m[4] + 2. * m[6] - m[7] - m[10] +
-                          m[11] - m[13] + m[14] + m[16] + 2. * m[18];
-  lbfluid[0][11][index] = m[0] + m[1] + m[3] + m[4] + m[5] - m[6] + m[8] +
-                          m[10] + m[12] - m[13] + m[15] + m[16] + m[17] - m[18];
-  lbfluid[0][12][index] = m[0] - m[1] - m[3] + m[4] + m[5] - m[6] + m[8] -
-                          m[10] - m[12] + m[13] - m[15] + m[16] + m[17] - m[18];
-  lbfluid[0][13][index] = m[0] + m[1] - m[3] + m[4] + m[5] - m[6] - m[8] +
-                          m[10] - m[12] - m[13] - m[15] + m[16] + m[17] - m[18];
-  lbfluid[0][14][index] = m[0] - m[1] + m[3] + m[4] + m[5] - m[6] - m[8] -
-                          m[10] + m[12] + m[13] + m[15] + m[16] + m[17] - m[18];
-  lbfluid[0][15][index] = m[0] + m[2] + m[3] + m[4] - m[5] - m[6] + m[9] +
-                          m[11] + m[12] - m[14] - m[15] + m[16] - m[17] - m[18];
-  lbfluid[0][16][index] = m[0] - m[2] - m[3] + m[4] - m[5] - m[6] + m[9] -
-                          m[11] - m[12] + m[14] + m[15] + m[16] - m[17] - m[18];
-  lbfluid[0][17][index] = m[0] + m[2] - m[3] + m[4] - m[5] - m[6] - m[9] +
-                          m[11] - m[12] - m[14] + m[15] + m[16] - m[17] - m[18];
-  lbfluid[0][18][index] = m[0] - m[2] + m[3] + m[4] - m[5] - m[6] - m[9] -
-                          m[11] + m[12] + m[14] - m[15] + m[16] - m[17] - m[18];
-
-  /* weights enter in the back transformation */
-  for (int i = 0; i < lbmodel.n_veloc; i++)
-    lbfluid[0][i][index] *= w[i];
-}
-
 inline void lb_calc_n_from_modes_push(Lattice::index_t index, double *m) {
   int yperiod = lblattice.halo_grid[0];
   int zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
@@ -2673,10 +2622,7 @@ inline void lb_collide_stream() {
 #endif // LB_BOUNDARIES
 
   /* swap the pointers for old and new population fields */
-  double **tmp;
-  tmp = lbfluid[0];
-  lbfluid[0] = lbfluid[1];
-  lbfluid[1] = tmp;
+  std::swap(lbfluid[0], lbfluid[1]);
 
   /* halo region is invalid after update */
   lbpar.resend_halo = 1;
