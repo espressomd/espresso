@@ -86,7 +86,7 @@ cdef class PScriptInterface(object):
         cdef shared_ptr[ScriptInterfaceBase] so_ptr = ScriptInterfaceBase.unserialize(state)
         self.set_sip(so_ptr)
 
-    cdef map[string, Variant] _sanitize_params(self, in_params):
+    cdef map[string, Variant] _sanitize_params(self, in_params) except *:
         cdef map[string, Variant] out_params
         cdef Variant v
 
@@ -104,6 +104,7 @@ cdef class PScriptInterface(object):
                 if n_elements!=0 and not (len(in_params[pname]) == n_elements):
                     raise ValueError(
                         "Value of %s expected to be %i elements" % (name, n_elements))
+                    return -1
 
             # We accept ints for floats (but not the other way round)
             if <int> ptype == <int> DOUBLE and is_valid_type(in_params[pname], int):
