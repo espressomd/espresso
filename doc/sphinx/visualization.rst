@@ -227,6 +227,9 @@ The camera can be controlled via mouse and keyboard:
     * mouse wheel / key pair TG: zoom
     * WASD-Keyboard control (WS: move forwards/backwards, AD: move sidewards)
     * Key pairs QE, RF, ZC: rotate the system 
+    * Double click on a particle: Show particle information
+    * Double click in empty space: Disable particle information
+    * Left/Right arrows: Cycle through particles
 
 Additional input functionality for mouse and keyboard is possible by assigning
 callbacks to specified keyboard or mouse buttons. This may be useful for

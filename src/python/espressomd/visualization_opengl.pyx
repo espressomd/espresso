@@ -315,6 +315,7 @@ class openGLLive(object):
             if type(getattr(ParticleHandle, d)) == type(ParticleHandle.pos):
                 if not d in ["pos_folded"]:
                     self.particle_attributes.append(d)
+        self.max_len_attr = max([len(a) for a in self.particle_attributes])
 
         # CALC INVERSE BACKGROUND COLOR FOR BOX
         self.invBackgroundCol = np.array([1 - self.specs['background_color'][0], 1 -
@@ -901,7 +902,7 @@ class openGLLive(object):
                 if self.infoId != -1:
                     y = 0
                     for k, v in self.highlighted_particle.items():
-                        txt = "{}  {}".format(k, v) 
+                        txt = "{} {} {}".format(k, (self.max_len_attr-len(k)) * ' ',  v) 
                         self.draw_text(10, self.specs['window_size'][1] - 10 - 15 * y, txt, self.invBackgroundCol)
                         y += 1
                     
@@ -959,6 +960,8 @@ class openGLLive(object):
         glutMouseFunc(mouse)
         glutKeyboardFunc(keyboard_down)
         glutKeyboardUpFunc(keyboard_up)
+        glutSpecialFunc(keyboard_down)
+        glutSpecialUpFunc(keyboard_up)
         glutReshapeFunc(reshape_window)
         glutMotionFunc(motion)
         glutWMCloseFunc(close_window)
@@ -1043,6 +1046,13 @@ class openGLLive(object):
     def get_particle_info(self, pos, pos_old):
         pid, depth = self.get_particle_id(pos, pos_old)
         self.infoId = pid
+    
+    def next_particle_info(self):
+        self.infoId = (self.infoId + 1) % len(self.particles['pos']) 
+    
+    def previous_particle_info(self):
+        self.infoId = (self.infoId - 1) % len(self.particles['pos']) 
+
 
     # ALL THE INITS
     def init_espresso_visualization(self):
@@ -1145,6 +1155,11 @@ class openGLLive(object):
         self.mouseManager.register_button(MouseButtonEvent(
             GLUT_LEFT_BUTTON, MouseFireEvent.DoubleClick, self.get_particle_info, True))
 
+        # CYCLE THROUGH PARTICLES
+        self.keyboardManager.register_button(KeyboardButtonEvent(
+            GLUT_KEY_LEFT, KeyboardFireEvent.Pressed, self.previous_particle_info, False))
+        self.keyboardManager.register_button(KeyboardButtonEvent(
+            GLUT_KEY_RIGHT, KeyboardFireEvent.Pressed, self.next_particle_info, False))
 
         # KEYBOARD BUTTONS
         self.keyboardManager.register_button(KeyboardButtonEvent(
