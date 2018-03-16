@@ -302,6 +302,40 @@ int cells_get_n_particles() {
 
 /*************************************************/
 
+ParticleList sort_local_parts(const CellStructure &cs, CellPList cells) {
+  ParticleList displaced_parts;
+
+  for (auto &c : cells) {
+    for (int i = 0; i < c->n; i++) {
+      auto &p = c->part[i];
+      if (this_node != cs.position_to_node(p.r.p)) {
+        move_indexed_particle(&displaced_parts, c, i);
+
+        if (i < c->n) {
+          i--;
+        }
+      } else {
+        fold_position(p.r.p, p.l.i);
+        auto target_cell = cs.position_to_cell(p.r.p);
+
+        if (c != target_cell) {
+          if (target_cell) {
+            move_indexed_particle(target_cell, c, i);
+          } else {
+            move_indexed_particle(&displaced_parts, c, i);
+          }
+
+          if (i < c->n) {
+            i--;
+          }
+        }
+      }
+    }
+  }
+
+  return displaced_parts;
+}
+
 void cells_resort_particles(int global_flag) {
   CELL_TRACE(fprintf(stderr, "%d: entering cells_resort_particles %d\n",
                      this_node, global_flag));
@@ -319,7 +353,23 @@ void cells_resort_particles(int global_flag) {
     nsq_balance_particles(global_flag);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    dd_exchange_and_sort_particles(global_flag);
+    if (global_flag) {
+      auto displaced_parts = sort_local_parts(cell_structure, local_cells);
+
+      while (true) {
+        dd_exchange_and_sort_particles(&displaced_parts);
+
+        auto left_over = boost::mpi::all_reduce(comm_cart, displaced_parts.n,
+                                                std::plus<int>());
+
+        fprintf(stderr, "%d: left_over %d\n", this_node, left_over);
+        if (left_over == 0)
+          break;
+      }
+    } else {
+      auto displaced_parts = sort_local_parts(cell_structure, local_cells);
+      dd_exchange_and_sort_particles(&displaced_parts);
+    }
     break;
   }
 

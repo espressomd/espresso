@@ -621,6 +621,12 @@ int dd_append_particles(ParticleList *pl, int fold_dir) {
   CELL_TRACE(fprintf(stderr, "%d: dd_append_particles %d\n", this_node, pl->n));
 
   for (p = 0; p < pl->n; p++) {
+    // auto pos = folded_position(pl->part[p]);
+    if (this_node != cell_structure.position_to_node(pl->part[p].r.p)) {
+      printf("%d: part %d does not belong here.", this_node,
+             pl->part[p].identity());
+    }
+
     if (boundary[fold_dir] != 0) {
       fold_coordinate(pl->part[p].r.p, pl->part[p].m.v, pl->part[p].l.i,
                       fold_coord);
@@ -904,6 +910,93 @@ void dd_topology_release() {
 #endif
 }
 
+void dd_exchange_and_sort_particles(ParticleList *pl) {
+  ParticleList send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
+
+  for (int dir = 0; dir < 3; dir++) {
+    /* Single node direction, no action needed. */
+    if (node_grid[dir] == 1) {
+      continue;
+    }
+
+    for (int i = 0; i < pl->n; i++) {
+      auto &part = pl->part[i];
+
+      if (part.r.p[dir] - my_left[dir] < -0.5 * ROUND_ERROR_PREC * box_l[dir]) {
+        if (PERIODIC(dir) || (boundary[2 * dir] == 0)) {
+          CELL_TRACE(fprintf(stderr,
+                             "%d: dd_ex_and_sort_p: send part left %d\n",
+                             this_node, part.p.identity));
+          move_indexed_particle(&send_buf_l, pl, i);
+          if (i < pl->n)
+            i--;
+        }
+      }
+      /* Move particles to the right side */
+      // Factor 0.5 see above
+      else if (part.r.p[dir] - my_right[dir] >=
+               0.5 * ROUND_ERROR_PREC * box_l[dir]) {
+        if (PERIODIC(dir) || (boundary[2 * dir + 1] == 0)) {
+          CELL_TRACE(fprintf(stderr,
+                             "%d: dd_ex_and_sort_p: send part right %d\n",
+                             this_node, part.p.identity));
+          move_indexed_particle(&send_buf_r, pl, i);
+          if (i < pl->n)
+            i--;
+        }
+      }
+    }
+
+    CELL_TRACE(fprintf(stderr, "%d: send receive %d\n", this_node, dir));
+
+    if (node_pos[dir] % 2 == 0) {
+      send_particles(&send_buf_l, node_neighbors[2 * dir]);
+      recv_particles(&recv_buf_r, node_neighbors[2 * dir + 1]);
+      send_particles(&send_buf_r, node_neighbors[2 * dir + 1]);
+      recv_particles(&recv_buf_l, node_neighbors[2 * dir]);
+    } else {
+      recv_particles(&recv_buf_r, node_neighbors[2 * dir + 1]);
+      send_particles(&send_buf_l, node_neighbors[2 * dir]);
+      recv_particles(&recv_buf_l, node_neighbors[2 * dir]);
+      send_particles(&send_buf_r, node_neighbors[2 * dir + 1]);
+    }
+
+    for (int i = 0; i < recv_buf_l.n; i++) {
+      auto &part = recv_buf_l.part[i];
+
+      if (this_node != cell_structure.position_to_node(part.r.p)) {
+        move_indexed_particle(pl, &recv_buf_l, i);
+      } else {
+        fold_position(part.r.p, part.l.i);
+        move_indexed_particle(dd_save_position_to_cell(part.r.p), &recv_buf_l,
+                              i);
+      }
+
+      if (i < recv_buf_l.n)
+        i--;
+    }
+
+    assert(recv_buf_l.n == 0);
+
+    for (int i = 0; i < recv_buf_r.n; i++) {
+      auto &part = recv_buf_r.part[i];
+
+      if (this_node != cell_structure.position_to_node(part.r.p)) {
+        move_indexed_particle(pl, &recv_buf_r, i);
+      } else {
+        fold_position(part.r.p, part.l.i);
+        move_indexed_particle(dd_save_position_to_cell(part.r.p), &recv_buf_r,
+                              i);
+      }
+
+      if (i < recv_buf_r.n)
+        i--;
+    }
+
+    assert(recv_buf_r.n == 0);
+  }
+}
+
 /************************************************************/
 void dd_exchange_and_sort_particles(int global_flag) {
   int dir, c, p, i, finished = 0;
@@ -961,35 +1054,6 @@ void dd_exchange_and_sort_particles(int global_flag) {
                 move_indexed_particle(&send_buf_r, cell, p);
                 if (p < cell->n)
                   p--;
-              }
-            }
-            /* Sort particles in cells of this node during last direction */
-            else if (dir == 2) {
-              sort_cell = dd_save_position_to_cell(part->r.p);
-              if (sort_cell != cell) {
-                if (sort_cell == nullptr) {
-                  CELL_TRACE(fprintf(
-                      stderr,
-                      "%d: dd_exchange_and_sort_particles: Take another loop",
-                      this_node));
-                  CELL_TRACE(fprintf(stderr, "%d: "
-                                             "dd_exchange_and_sort_particles: "
-                                             "CP1 Particle %d (%f,%f,%f) not "
-                                             "inside node domain.\n",
-                                     this_node, part->p.identity, part->r.p[0],
-                                     part->r.p[1], part->r.p[2]));
-                  finished = 0;
-                  sort_cell = local_cells.cell[0];
-                  if (sort_cell != cell) {
-                    move_indexed_particle(sort_cell, cell, p);
-                    if (p < cell->n)
-                      p--;
-                  }
-                } else {
-                  move_indexed_particle(sort_cell, cell, p);
-                  if (p < cell->n)
-                    p--;
-                }
               }
             }
           }
@@ -1063,12 +1127,12 @@ void dd_exchange_and_sort_particles(int global_flag) {
               sort_cell = dd_save_position_to_cell(part->r.p);
               if (sort_cell != cell) {
                 if (sort_cell == nullptr) {
-                  CELL_TRACE(fprintf(stderr, "%d: "
-                                             "dd_exchange_and_sort_particles: "
-                                             "CP2 Particle %d (%f,%f,%f) not "
-                                             "inside node domain.\n",
-                                     this_node, part->p.identity, part->r.p[0],
-                                     part->r.p[1], part->r.p[2]));
+                  fprintf(stderr, "%d: "
+                                  "dd_exchange_and_sort_particles: "
+                                  "CP2 Particle %d (%f,%f,%f) not "
+                                  "inside node domain.\n",
+                          this_node, part->p.identity, part->r.p[0],
+                          part->r.p[1], part->r.p[2]);
                   finished = 0;
                   sort_cell = local_cells.cell[0];
                   if (sort_cell != cell) {
@@ -1077,10 +1141,10 @@ void dd_exchange_and_sort_particles(int global_flag) {
                       p--;
                   }
                 } else {
-                  CELL_TRACE(fprintf(stderr, "%d: "
-                                             "dd_exchange_and_sort_particles: "
-                                             "move particle id %d\n",
-                                     this_node, part->p.identity));
+                  fprintf(stderr, "%d: "
+                                  "dd_exchange_and_sort_particles: "
+                                  "move particle id %d\n",
+                          this_node, part->p.identity);
                   move_indexed_particle(sort_cell, cell, p);
                   if (p < cell->n)
                     p--;
@@ -1135,10 +1199,6 @@ void dd_exchange_and_sort_particles(int global_flag) {
   realloc_particlelist(&recv_buf_l, 0);
   realloc_particlelist(&recv_buf_r, 0);
 
-#ifdef ADDITIONAL_CHECKS
-  check_particle_consistency();
-#endif
-
   CELL_TRACE(fprintf(stderr, "%d: dd_exchange_and_sort_particles finished\n",
                      this_node));
 }
@@ -1161,7 +1221,6 @@ int calc_processor_min_num_cells() {
 
 /************************************************************/
 
-int dd_full_shell_neigh(int cellidx, int neigh)
-{
-    return cellidx + dd_fs_neigh[neigh];
+int dd_full_shell_neigh(int cellidx, int neigh) {
+  return cellidx + dd_fs_neigh[neigh];
 }
