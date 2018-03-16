@@ -1,4 +1,4 @@
-image: espressomd/espresso-ubuntu-cuda:latest
+image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-cuda:latest
 
 stages:
   - permission
@@ -53,7 +53,7 @@ no_cuda_maxset:
 
 no_cuda_maxset_python3:
   stage: build
-  image: espressomd/espresso-ubuntu-python3
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:latest
   script:
     - export with_cuda=false
     - export myconfig=maxset python_version=3
@@ -61,7 +61,7 @@ no_cuda_maxset_python3:
 
 no_cuda_maxset_debian:
   stage: build
-  image: espressomd/espresso-debian:latest
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/debian:latest
   script:
     - export with_cuda=false
     - export myconfig=maxset make_check=false
@@ -69,7 +69,7 @@ no_cuda_maxset_debian:
 
 no_cuda_maxset_opensuse:
   stage: build
-  image: espressomd/espresso-opensuse:latest
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/opensuse:latest
   script:
     - export with_cuda=false
     - export myconfig=maxset make_check=false
@@ -77,7 +77,7 @@ no_cuda_maxset_opensuse:
 
 no_cuda_maxset_centos:
   stage: build
-  image: espressomd/espresso-centos:latest
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/centos:latest
   script:
     - export with_cuda=false
     - export myconfig=maxset make_check=false
@@ -139,9 +139,16 @@ osx-cuda:
 
 clang-static-analysis:
   stage: build
-  image: espressomd/espresso-ubuntu-clang-cuda:latest
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-clang-cuda:latest
   script:
     - export myconfig=maxset with_coverage=false with_static_analysis=true
+    - bash maintainer/cuda_build.sh
+
+intel:
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-intel:latest
+  script:
+    - export myconfig=maxset with_coverage=false
     - bash maintainer/cuda_build.sh
 
 check_sphinx:
