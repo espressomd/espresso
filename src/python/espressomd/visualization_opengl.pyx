@@ -76,6 +76,7 @@ class openGLLive(object):
                         particle_charge_colors according to their charge. type:
                         Particle colors are specified by particle_type_colors,
                         indexed by their numerical particle type.
+                        node: Color according to the node the particle is on.
     particle_type_colors : array_like :obj:`float`, optional
                            Colors for particle types.
     particle_type_materials : :obj:`str`, optional
@@ -301,6 +302,7 @@ class openGLLive(object):
         ELSE: 
             self.has_particle_data['charge'] = False
         self.has_particle_data['director'] = self.specs['director_arrows']
+        self.has_particle_data['node'] = self.specs['particle_coloring'] == 'node'
 
         # CALC INVERSE BACKGROUND COLOR FOR BOX
         self.invBackgroundCol = np.array([1 - self.specs['background_color'][0], 1 -
@@ -434,13 +436,13 @@ class openGLLive(object):
 
     # GET THE PARTICLE DATA
     def update_particles(self):
-        
+
         self.particles['pos'] = self.system.part[:].pos_folded
         self.particles['type'] = self.system.part[:].type
 
         if self.has_particle_data['velocity']:
             self.particles['velocity'] = self.system.part[:].v
-        
+
         if self.has_particle_data['force']:
             self.particles['force'] = self.system.part[:].f
 
@@ -449,9 +451,12 @@ class openGLLive(object):
 
         if self.has_particle_data['charge']:
             self.particles['charge'] = self.system.part[:].q
-        
+
         if self.has_particle_data['director']:
             self.particles['director'] = self.system.part[:].director
+
+        if self.has_particle_data['node']:
+            self.particles['node'] = self.system.part[:].node
 
     def update_lb(self):
         agrid = self.lb_params['agrid']
@@ -686,6 +691,8 @@ class openGLLive(object):
             elif self.specs['particle_coloring'] == 'type':
                 color = self.modulo_indexing(
                     self.specs['particle_type_colors'], ptype)
+            elif self.specs['particle_coloring'] == 'node':
+                color = self.modulo_indexing(self.specs['particle_type_colors'], self.particles['node'][pid])
 
             draw_sphere(self.particles['pos'][pid], radius, color, material,
                         self.specs['quality_particles'])
