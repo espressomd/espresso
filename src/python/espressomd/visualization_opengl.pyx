@@ -47,8 +47,6 @@ class openGLLive(object):
                     The number of subdivisions for cylindrical bonds.
     quality_arrows : :obj:`int`, optional
                      The number of subdivisions for external force arrows.
-    arrows_radius : :obj:`float`, optional
-                    Arrow radius for velocity, force and ext_force arrows
     quality_constraints : :obj:`int`, optional
                           The number of subdivisions for primitive constraints.
     close_cut_distance : :obj:`float`, optional
@@ -78,6 +76,7 @@ class openGLLive(object):
                         particle_charge_colors according to their charge. type:
                         Particle colors are specified by particle_type_colors,
                         indexed by their numerical particle type.
+                        node: Color according to the node the particle is on.
     particle_type_colors : array_like :obj:`float`, optional
                            Colors for particle types.
     particle_type_materials : :obj:`str`, optional
@@ -108,22 +107,36 @@ class openGLLive(object):
                           Materials of bonds by type.
     ext_force_arrows : :obj:`bool`, optional
                        Enables external force visualization.
-    ext_force_arrows_scale : :obj:`float`, optional
-                             Scale factor of external force arrows for different particle types.
+    ext_force_arrows_type_scale : array_like :obj:`float`, optional
+                                  List of scale factors of external force arrows for different particle types.
     ext_force_arrows_type_colors : array_like :obj:`float`, optional
                                    Colors of ext_force arrows for different particle types.
+    ext_force_arrows_type_radii : array_like :obj:`float`, optional
+                                   List of arrow radii for different particle types.
     force_arrows : :obj:`bool`, optional
                    Enables particle force visualization.
-    force_arrows_scale : :obj:`float`, optional
-                         Scale factor of particle force arrows for different particle types.
+    force_arrows_type_scale : array_like :obj:`float`, optional
+                              List of scale factors of particle force arrows for different particle types.
     force_arrows_type_colors : array_like :obj:`float`, optional
                                Colors of particle force arrows for different particle types.
+    force_arrows_type_radii : array_like :obj:`float`, optional
+                               List of arrow radii for different particle types.
     velocity_arrows : :obj:`bool`, optional
                        Enables particle velocity visualization.
-    velocity_arrows_scale : :obj:`float`, optional
-                             Scale factor of particle velocity arrows for different particle types.
+    velocity_arrows_type_scale : array_like :obj:`float`, optional
+                                 List of scale factors of particle velocity arrows for different particle types.
     velocity_arrows_type_colors : array_like :obj:`float`, optional
                                   Colors of particle velocity arrows for different particle types.
+    velocity_arrows_type_radii : array_like :obj:`float`, optional
+                                  List of arrow radii for different particle types.
+    director_arrows : :obj:`bool`, optional
+                       Enables particle director visualization.
+    director_arrows_type_scale : :obj:`float`, optional
+                             Scale factor of particle director arrows for different particle types.
+    director_arrows_type_colors : array_like :obj:`float`, optional
+                                  Colors of particle director arrows for different particle types.
+    director_arrows_type_radii : array_like :obj:`float`, optional
+                                  List of arrow radii for different particle types.
     drag_enabled : :obj:`bool`, optional
                    Enables mouse-controlled particles dragging (Default: False)
     drag_force : :obj:`bool`, optional
@@ -198,7 +211,6 @@ class openGLLive(object):
             'quality_particles': 20,
             'quality_bonds': 16,
             'quality_arrows': 16,
-            'arrows_radius': 0.25,
             'quality_constraints': 32,
             'close_cut_distance': 0.1,
             'far_cut_distance': 5,
@@ -224,16 +236,24 @@ class openGLLive(object):
             'bond_type_materials': ['medium'],
 
             'ext_force_arrows': False,
-            'ext_force_arrows_scale': [1.0],
+            'ext_force_arrows_type_scale': [1.0],
             'ext_force_arrows_type_colors': [[1, 1, 1, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
+            'ext_force_arrows_type_radii': [0.2],
             
             'velocity_arrows': False,
-            'velocity_arrows_scale': [1.0],
+            'velocity_arrows_type_scale': [1.0],
             'velocity_arrows_type_colors': [[1, 1, 1, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
+            'velocity_arrows_type_radii': [0.2],
             
             'force_arrows': False,
-            'force_arrows_scale': [1.0],
+            'force_arrows_type_scale': [1.0],
             'force_arrows_type_colors': [[1, 1, 1, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
+            'force_arrows_type_radii': [0.2],
+
+            'director_arrows': False,
+            'director_arrows_type_scale': [1.0],
+            'director_arrows_type_colors': [[1, 1, 1, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
+            'director_arrows_type_radii': [0.2],
 
             'LB': False,
             'LB_plane_axis': 2,
@@ -267,16 +287,34 @@ class openGLLive(object):
         # DEPENDENCIES
         IF not EXTERNAL_FORCES:
             self.specs['drag_enabled'] = False
+            self.specs['ext_force_arrows'] = False
 
+        IF not ROTATION:
+            self.specs['director_arrows'] = False
+
+        # CONTENT OF PARTICLE DATA
+        self.has_particle_data = {}
+        self.has_particle_data['velocity'] = self.specs['velocity_arrows']
+        self.has_particle_data['force'] = self.specs['force_arrows']
+        self.has_particle_data['ext_force'] = self.specs['ext_force_arrows'] or self.specs['drag_enabled']
+        IF ELECTROSTATICS:
+            self.has_particle_data['charge'] = self.specs['particle_coloring'] == 'auto' or self.specs['particle_coloring'] == 'charge' 
+        ELSE: 
+            self.has_particle_data['charge'] = False
+        self.has_particle_data['director'] = self.specs['director_arrows']
+        self.has_particle_data['node'] = self.specs['particle_coloring'] == 'node'
+
+        # CALC INVERSE BACKGROUND COLOR FOR BOX
         self.invBackgroundCol = np.array([1 - self.specs['background_color'][0], 1 -
                                           self.specs['background_color'][1], 1 - self.specs['background_color'][2]])
-
+        # INITS
         self.system = system
         self.started = False
         self.quit_savely = False
         self.keyboardManager = KeyboardManager()
         self.mouseManager = MouseManager()
         self.timers = []
+        self.particles = {}
 
     def register_callback(self, cb, interval=1000):
         """Register timed callbacks.
@@ -285,7 +323,7 @@ class openGLLive(object):
         self.timers.append((int(interval), cb))
 
     def run(self, integ_steps=1):
-        """Convenience method wiwith a simple integration thread.
+        """Convenience method with a simple integration thread.
         """
 
         def main():
@@ -293,7 +331,8 @@ class openGLLive(object):
                 try:
                     self.system.integrator.run(integ_steps)
                     self.update()
-                except:
+                except Exception as e:
+                    print(e)
                     os._exit(1)
 
         t = Thread(target=main)
@@ -333,9 +372,9 @@ class openGLLive(object):
         # AVERAGE PARTICLE COM ONLY EVERY 2sec
         def timed_update_particleCOM(data):
             if self.hasParticleData:
-                if len(self.particles['coords']) > 0:
+                if len(self.particles['pos']) > 0:
                     self.particle_COM = np.average(
-                        self.particles['coords'], axis=0)
+                        self.particles['pos'], axis=0)
             glutTimerFunc(2000, timed_update_particleCOM, -1)
 
         self.started = True
@@ -359,7 +398,8 @@ class openGLLive(object):
             # UPDATE ON STARTUP
             if not self.hasParticleData:
                 self.update_particles()
-                self.update_charge_color_range()
+                if self.has_particle_data['charge']:
+                    self.update_charge_color_range()
                 self.update_bonds()
                 IF CONSTRAINTS:
                     self.update_constraints()
@@ -396,34 +436,27 @@ class openGLLive(object):
 
     # GET THE PARTICLE DATA
     def update_particles(self):
-        IF EXTERNAL_FORCES and ELECTROSTATICS:
-            self.particles = {'coords': self.system.part[:].pos_folded,
-                              'velocities': self.system.part[:].v if self.specs['velocity_arrows'] else [0, 0, 0] * len(self.system.part),
-                              'forces': self.system.part[:].f if self.specs['force_arrows'] else [0, 0, 0] * len(self.system.part),
-                              'types': self.system.part[:].type,
-                              'ext_forces': self.system.part[:].ext_force,
-                              'charges': self.system.part[:].q}
-        ELIF EXTERNAL_FORCES and not ELECTROSTATICS:
-            self.particles = {'coords': self.system.part[:].pos_folded,
-                              'velocities': self.system.part[:].v if self.specs['velocity_arrows'] else [0, 0, 0] * len(self.system.part),
-                              'forces': self.system.part[:].f if self.specs['force_arrows'] else [0, 0, 0] * len(self.system.part),
-                              'types': self.system.part[:].type,
-                              'ext_forces': self.system.part[:].ext_force,
-                              'charges': [0] * len(self.system.part)}
-        ELIF not EXTERNAL_FORCES and ELECTROSTATICS:
-            self.particles = {'coords': self.system.part[:].pos_folded,
-                              'velocities': self.system.part[:].v if self.specs['velocity_arrows'] else [0, 0, 0] * len(self.system.part),
-                              'forces': self.system.part[:].f if self.specs['force_arrows'] else [0, 0, 0] * len(self.system.part),
-                              'types': self.system.part[:].type,
-                              'ext_forces': [0, 0, 0] * len(self.system.part),
-                              'charges': self.system.part[:].q}
-        ELIF not EXTERNAL_FORCES and not ELECTROSTATICS:
-            self.particles = {'coords': self.system.part[:].pos_folded,
-                              'velocities': self.system.part[:].v if self.specs['velocity_arrows'] else [0, 0, 0] * len(self.system.part),
-                              'forces': self.system.part[:].f if self.specs['force_arrows'] else [0, 0, 0] * len(self.system.part),
-                              'types': self.system.part[:].type,
-                              'ext_forces': [0, 0, 0] * len(self.system.part),
-                              'charges': [0] * len(self.system.part)}
+
+        self.particles['pos'] = self.system.part[:].pos_folded
+        self.particles['type'] = self.system.part[:].type
+
+        if self.has_particle_data['velocity']:
+            self.particles['velocity'] = self.system.part[:].v
+
+        if self.has_particle_data['force']:
+            self.particles['force'] = self.system.part[:].f
+
+        if self.has_particle_data['ext_force']:
+            self.particles['ext_force'] = self.system.part[:].ext_force
+
+        if self.has_particle_data['charge']:
+            self.particles['charge'] = self.system.part[:].q
+
+        if self.has_particle_data['director']:
+            self.particles['director'] = self.system.part[:].director
+
+        if self.has_particle_data['node']:
+            self.particles['node'] = self.system.part[:].node
 
     def update_lb(self):
         agrid = self.lb_params['agrid']
@@ -462,7 +495,7 @@ class openGLLive(object):
                 t = c.get_parameter('particle_type')
                 s = c.get_parameter('shape')
                 n = s.name()
-                if n in ['Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Sphere', 'Shapes::SpheroCylinder']:
+                if n in ['Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Ellipsoid', 'Shapes::Sphere', 'Shapes::SpheroCylinder']:
                     coll_shape_obj[n].append([s, t])
                 else:
                     coll_shape_obj['Shapes::Misc'].append([s, t])
@@ -481,6 +514,13 @@ class openGLLive(object):
             r = s[0].get_parameter('radius')
             self.shapes['Shapes::Cylinder'].append(
                 [pos - a * l * 0.5, pos + a * l * 0.5, r, s[1]])
+
+        for s in coll_shape_obj['Shapes::Ellipsoid']:
+            pos = np.array(s[0].get_parameter('center'))
+            a = np.array(s[0].get_parameter('a'))
+            b = np.array(s[0].get_parameter('b'))
+            c = np.array(s[0].get_parameter('b'))
+            self.shapes['Shapes::Ellipsoid'].append([pos, a, b, c, s[1]])
 
         for s in coll_shape_obj['Shapes::Sphere']:
             pos = np.array(s[0].get_parameter('center'))
@@ -554,10 +594,10 @@ class openGLLive(object):
             draw_arrow([0, 0, 0], [0, 0, self.system.box_l[2] * axis_fac], axis_r, [
                        0, 0, 1, 1], self.materials['chrome'], self.specs['quality_arrows'])
 
-        self.draw_system_particles()
-
-        if self.specs['draw_bonds']:
-            self.draw_bonds()
+        if self.hasParticleData:
+            self.draw_system_particles()
+            if self.specs['draw_bonds']:
+                self.draw_bonds()
 
         IF CONSTRAINTS:
             if self.specs['draw_constraints']:
@@ -571,6 +611,10 @@ class openGLLive(object):
         for i in range(6):
             glEnable(GL_CLIP_PLANE0 + i)
             glClipPlane(GL_CLIP_PLANE0 + i, self.box_eqn[i])
+
+        for s in self.shapes['Shapes::Ellipsoid']:
+            draw_ellipsoid(s[0], s[1], s[2], s[3], self.modulo_indexing(self.specs['constraint_type_colors'], s[4]),
+                          self.materials[self.modulo_indexing(self.specs['constraint_type_materials'], s[4])], self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::Sphere']:
             draw_sphere(s[0], s[1], self.modulo_indexing(self.specs['constraint_type_colors'], s[2]), self.materials[self.modulo_indexing(
@@ -623,14 +667,9 @@ class openGLLive(object):
         return radius
 
     def draw_system_particles(self):
-        coords = self.particles['coords']
-        pIds = range(len(coords))
+        pIds = range(len(self.particles['pos']))
         for pid in pIds:
-            pos = coords[pid]
-            q = self.particles['charges'][pid]
-            ptype = int(self.particles['types'][pid])
-            ext_f = self.particles['ext_forces'][pid]
-
+            ptype = int(self.particles['type'][pid])
             radius = self.determine_radius(ptype)
 
             m = self.modulo_indexing(
@@ -642,59 +681,61 @@ class openGLLive(object):
                 glColor(color)
             elif self.specs['particle_coloring'] == 'auto':
                 # Color auto: Charge then Type
-                if q != 0:
-                    color = self.color_by_charge(q)
+                if self.particles['charge'][pid] != 0:
+                    color = self.color_by_charge(self.particles['charge'][pid])
                 else:
                     color = self.modulo_indexing(
                         self.specs['particle_type_colors'], ptype)
             elif self.specs['particle_coloring'] == 'charge':
-                color = self.color_by_charge(q)
+                color = self.color_by_charge(self.particles['charge'][pid])
             elif self.specs['particle_coloring'] == 'type':
                 color = self.modulo_indexing(
                     self.specs['particle_type_colors'], ptype)
+            elif self.specs['particle_coloring'] == 'node':
+                color = self.modulo_indexing(self.specs['particle_type_colors'], self.particles['node'][pid])
 
-            draw_sphere(pos, radius, color, material,
+            draw_sphere(self.particles['pos'][pid], radius, color, material,
                         self.specs['quality_particles'])
             for imx in range(-self.specs['periodic_images'][0], self.specs['periodic_images'][0] + 1):
                 for imy in range(-self.specs['periodic_images'][1], self.specs['periodic_images'][1] + 1):
                     for imz in range(-self.specs['periodic_images'][2], self.specs['periodic_images'][2] + 1):
                         if imx != 0 or imy != 0 or imz != 0:
                             redraw_sphere(
-                                pos + (imx * self.imPos[0] + imy * self.imPos[1] + imz * self.imPos[2]), radius, self.specs['quality_particles'])
+                                self.particles['pos'][pid] + (imx * self.imPos[0] + imy * self.imPos[1] + imz * self.imPos[2]), radius, self.specs['quality_particles'])
 
             IF EXTERNAL_FORCES:
                 if self.specs['ext_force_arrows'] or pid == self.dragId:
-                    if ext_f[0] != 0 or ext_f[1] != 0 or ext_f[2] != 0:
+                    if any(v != 0 for v in self.particles['ext_force'][pid]):
                         if pid == self.dragId:
                             sc = 1
                         else:
-                            sc = self.modulo_indexing(
-                                self.specs['ext_force_arrows_scale'], ptype)
+                            sc = self.modulo_indexing(self.specs['ext_force_arrows_type_scale'], ptype)
                         if sc > 0:
                             col = self.modulo_indexing(self.specs['ext_force_arrows_type_colors'], ptype)
-                            draw_arrow(pos, np.array(ext_f) * sc, self.specs['arrows_radius']
+                            radius = self.modulo_indexing(self.specs['ext_force_arrows_type_radii'], ptype)
+                            draw_arrow(self.particles['pos'][pid], np.array(self.particles['ext_force'][pid]) * sc, radius
                                        , col, self.materials['chrome'], self.specs['quality_arrows'])
             
             if self.specs['velocity_arrows']:
-                sc = self.modulo_indexing(self.specs['velocity_arrows_scale'], ptype)
-                if sc > 0:
-                    v = self.particles['velocities'][pid]
-                    col = self.modulo_indexing(self.specs['velocity_arrows_type_colors'], ptype)
-                    draw_arrow(pos, np.array(v) * sc, self.specs['arrows_radius']
-                               , col, self.materials['chrome'], self.specs['quality_arrows'])
+                self.draw_arrow_property(pid, ptype, self.specs['velocity_arrows_type_scale'], self.specs['velocity_arrows_type_colors'], self.specs['velocity_arrows_type_radii'], 'velocity')
             
             if self.specs['force_arrows']:
-                sc = self.modulo_indexing(self.specs['force_arrows_scale'], ptype)
-                if sc > 0:
-                    v = self.particles['forces'][pid]
-                    col = self.modulo_indexing(self.specs['force_arrows_type_colors'], ptype)
-                    draw_arrow(pos, np.array(v) * sc, self.specs['arrows_radius']
-                               , col, self.materials['chrome'], self.specs['quality_arrows'])
-                
+                self.draw_arrow_property(pid, ptype, self.specs['force_arrows_type_scale'], self.specs['force_arrows_type_colors'], self.specs['force_arrows_type_radii'], 'force')
+            
+            if self.specs['director_arrows']:
+                self.draw_arrow_property(pid, ptype, self.specs['director_arrows_type_scale'], self.specs['director_arrows_type_colors'], self.specs['director_arrows_type_radii'], 'director')
+
+    def draw_arrow_property(self, pid, ptype, type_scale, type_colors, type_radii, prop):
+        sc = self.modulo_indexing(type_scale, ptype)
+        if sc > 0:
+            v = self.particles[prop][pid]
+            col = self.modulo_indexing(type_colors, ptype)
+            radius = self.modulo_indexing(type_radii, ptype)
+            draw_arrow(self.particles['pos'][pid], np.array(v) * sc, radius, col, self.materials['chrome'], self.specs['quality_arrows'])
+
 
     def draw_bonds(self):
-        coords = self.particles['coords']
-        pIds = range(len(coords))
+        pIds = range(len(self.particles['pos']))
         b2 = self.system.box_l[0] / 2.0
         box_l2_sqr = pow(b2, 2.0)
         for b in self.bonds:
@@ -703,22 +744,22 @@ class openGLLive(object):
                 self.specs['bond_type_materials'], b[2])]
             radius = self.modulo_indexing(
                 self.specs['bond_type_radius'], b[2])
-            d = coords[b[0]] - coords[b[1]]
+            d = self.particles['pos'][b[0]] - self.particles['pos'][b[1]]
             bondLen_sqr = d[0] * d[0] + d[1] * d[1] + d[2] * d[2]
 
             if bondLen_sqr < box_l2_sqr:
-                draw_cylinder(coords[b[0]], coords[b[1]], radius,
+                draw_cylinder(self.particles['pos'][b[0]], self.particles['pos'][b[1]], radius,
                               col, mat, self.specs['quality_bonds'])
                 for imx in range(-self.specs['periodic_images'][0], self.specs['periodic_images'][0] + 1):
                     for imy in range(-self.specs['periodic_images'][1], self.specs['periodic_images'][1] + 1):
                         for imz in range(-self.specs['periodic_images'][2], self.specs['periodic_images'][2] + 1):
                             if imx != 0 or imy != 0 or imz != 0:
                                 im = np.array([imx, imy, imz])
-                                draw_cylinder(coords[b[0]] + im * self.imPos[dim], coords[b[1]] +
+                                draw_cylinder(self.particles['pos'][b[0]] + im * self.imPos[dim], self.particles['pos'][b[1]] +
                                               im * self.imPos[dim], radius, col, mat, self.specs['quality_bonds'])
             else:
-                l = coords[b[0]] - coords[b[1]]
-                l0 = coords[b[0]]
+                l = self.particles['pos'][b[0]] - self.particles['pos'][b[1]]
+                l0 = self.particles['pos'][b[0]]
                 hits = 0
                 for i in range(6):
                     lineBoxNDot = float(np.dot(l, self.box_n[i]))
@@ -735,9 +776,9 @@ class openGLLive(object):
                         hits += 1
                         if hits >= 2:
                             break
-                draw_cylinder(coords[b[0]], s0, radius, col,
+                draw_cylinder(self.particles['pos'][b[0]], s0, radius, col,
                               mat, self.specs['quality_bonds'])
-                draw_cylinder(coords[b[1]], s1, radius, col,
+                draw_cylinder(self.particles['pos'][b[1]], s1, radius, col,
                               mat, self.specs['quality_bonds'])
 
                 for imx in range(-self.specs['periodic_images'][0], self.specs['periodic_images'][0] + 1):
@@ -745,9 +786,9 @@ class openGLLive(object):
                         for imz in range(-self.specs['periodic_images'][2], self.specs['periodic_images'][2] + 1):
                             if imx != 0 or imy != 0 or imz != 0:
                                 im = np.array([imx, imy, imz])
-                                draw_cylinder(coords[b[0]] + im * self.imPos[dim], s0 + im *
+                                draw_cylinder(self.particles['pos'][b[0]] + im * self.imPos[dim], s0 + im *
                                               self.imPos[dim], radius, col, mat, self.specs['quality_bonds'])
-                                draw_cylinder(coords[b[1]] + im * self.imPos[dim], s1 + im *
+                                draw_cylinder(self.particles['pos'][b[1]] + im * self.imPos[dim], s1 + im *
                                               self.imPos[dim], radius, col, mat, self.specs['quality_bonds'])
 
     # HELPER TO DRAW PERIODIC BONDS
@@ -786,9 +827,9 @@ class openGLLive(object):
 
     # ON INITIALIZATION, CHECK q_max/q_min
     def update_charge_color_range(self):
-        if len(self.particles['charges'][:]) > 0:
-            self.minq = min(self.particles['charges'][:])
-            self.maxq = max(self.particles['charges'][:])
+        if len(self.particles['charge'][:]) > 0:
+            self.minq = min(self.particles['charge'][:])
+            self.maxq = max(self.particles['charge'][:])
 
     # INITS FOR GLUT FUNCTIONS
     def init_callbacks(self):
@@ -872,7 +913,7 @@ class openGLLive(object):
     def mouse_motion(self, mousePos, mousePosOld, mouseButtonState):
 
         if self.dragId != -1:
-            ppos = self.particles['coords'][self.dragId]
+            ppos = self.particles['pos'][self.dragId]
             viewport = glGetIntegerv(GL_VIEWPORT)
             mouseWorld = gluUnProject(
                 mousePos[0], viewport[3] - mousePos[1], self.depth)
@@ -908,8 +949,8 @@ class openGLLive(object):
 
         self.dragId = pid
         if pid != -1:
-            self.dragPosInitial = self.particles['coords'][self.dragId]
-            self.extForceOld = self.particles['ext_forces'][self.dragId][:]
+            self.dragPosInitial = self.particles['pos'][self.dragId]
+            self.extForceOld = self.particles['ext_force'][self.dragId][:]
             self.depth = depth
         self.specs['particle_coloring'] = oldColMode
         glEnable(GL_LIGHTING)
@@ -1325,6 +1366,15 @@ def rotation_helper(d):
     ry = d[0] * d[2]
 
     return ax, rx, ry
+
+def draw_ellipsoid(pos, semiaxis_a, semiaxis_b, semiaxis_c, color, material, quality):
+    set_solid_material(color[0], color[1], color[2], color[3],
+                       material[0], material[1], material[2])
+    glPushMatrix()
+    glTranslatef(pos[0], pos[1], pos[2])
+    glScalef(semiaxis_a, semiaxis_b, semiaxis_c)
+    glutSolidSphere(1, quality, quality)
+    glPopMatrix()
 
 
 def draw_sphero_cylinder(posA, posB, radius, color, material, quality):

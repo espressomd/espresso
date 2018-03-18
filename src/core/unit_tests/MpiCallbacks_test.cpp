@@ -22,8 +22,6 @@
  *
 */
 
-#include <boost/mpi.hpp>
-
 #define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE MpiCallbacks test
 #define BOOST_TEST_ALTERNATIVE_INIT_API
@@ -31,6 +29,8 @@
 #include <boost/test/unit_test.hpp>
 
 #include "../MpiCallbacks.hpp"
+
+#include <boost/mpi.hpp>
 
 namespace Testing {
 void reduce_and_check(const boost::mpi::communicator &comm, bool local_value) {
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE(add_dynamic_callback) {
 }
 
 /**
- * Check wether remoing a dynamic callback
+ * Check wether removing a dynamic callback
  * works.
  */
 BOOST_AUTO_TEST_CASE(remove_dynamic_callback) {
@@ -174,6 +174,22 @@ BOOST_AUTO_TEST_CASE(remove_dynamic_callback) {
   }
 
   Testing::reduce_and_check(world, called);
+}
+
+BOOST_AUTO_TEST_CASE(root_check) {
+  communicator world;
+  MpiCallbacks callbacks(world, true);
+
+  auto cb = [](int, int) -> void {};
+  auto const id = callbacks.add(std::function<void(int, int)>{cb});
+
+  /* Exception on non-root */
+  if (world.rank() != 0) {
+    BOOST_CHECK_THROW(callbacks.call(id), std::logic_error);
+    callbacks.loop();
+  } else {
+    BOOST_CHECK_NO_THROW(callbacks.call(id));
+  }
 }
 
 /* Check that the destructor calls abort */

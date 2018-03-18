@@ -62,6 +62,9 @@ int max_num_cells = CELLS_MAX_NUM_CELLS;
 int min_num_cells = 1;
 double max_skin = 0.0;
 
+// Full shell neighbor index offsets for dd_full_shell_neigh()
+std::vector<int> dd_fs_neigh;
+
 /*@}*/
 
 /************************************************************/
@@ -252,7 +255,7 @@ void dd_create_cell_grid() {
   CELL_TRACE(fprintf(
       stderr, "%d: dd_create_cell_grid, n_cells=%lu, local_cells.n=%d, "
               "ghost_cells.n=%d, dd.ghost_cell_grid=(%d,%d,%d)\n",
-      this_node, (unsigned long) cells.size(), local_cells.n, ghost_cells.n,
+      this_node, (unsigned long)cells.size(), local_cells.n, ghost_cells.n,
       dd.ghost_cell_grid[0], dd.ghost_cell_grid[1], dd.ghost_cell_grid[2]));
 }
 
@@ -544,6 +547,12 @@ void dd_update_communicators_w_boxl() {
 void dd_init_cell_interactions() {
   int m, n, o, p, q, r, ind1, ind2;
 
+  dd_fs_neigh.clear();
+  for (p = -1; p <= 1; p++)
+    for (q = -1; q <= 1; q++)
+      for (r = -1; r <= 1; r++)
+        dd_fs_neigh.push_back(get_linear_index(r, q, p, dd.ghost_cell_grid));
+
   /* loop all local cells */
   DD_LOCAL_CELLS_LOOP(m, n, o) {
 
@@ -601,23 +610,6 @@ Cell *dd_save_position_to_cell(double pos[3]) {
   return &(cells[i]);
 }
 
-void dd_position_to_cell_indices(double pos[3], int *idx) {
-  int i;
-  double lpos;
-
-  for (i = 0; i < 3; i++) {
-    lpos = pos[i] - my_left[i];
-
-    idx[i] = (int)(lpos * dd.inv_cell_size[i]) + 1;
-
-    if (idx[i] < 1) {
-      idx[i] = 1;
-    } else if (idx[i] > dd.cell_grid[i]) {
-      idx[i] = dd.cell_grid[i];
-    }
-  }
-}
-
 /*************************************************/
 
 /** Append the particles in pl to \ref local_cells and update \ref
@@ -635,13 +627,20 @@ int dd_append_particles(ParticleList *pl, int fold_dir) {
     }
 
     for (dir = 0; dir < 3; dir++) {
+      auto lpos = pl->part[p].r.p[dir] - my_left[dir];
       cpos[dir] =
-          (int)((pl->part[p].r.p[dir] - my_left[dir]) * dd.inv_cell_size[dir]) +
-          1;
+          static_cast<int>(std::floor(lpos * dd.inv_cell_size[dir])) + 1;
 
+      /* If the calculated cell for the particle does not belong to
+         this node, (cpos < 1 or cpos > dd.cell_grid), we still keep them
+         if the system is not periodic in dir and we are at the boundary.
+         These are particles that have left the box in a non-periodic direction,
+         which are kept on the boundary node. Otherwise we set flag = 1 to keep
+         sorting, these particles are the send to the left or right neighbor
+         of this node in the next round. */
       if (cpos[dir] < 1) {
         cpos[dir] = 1;
-        if (PERIODIC(dir)) {
+        if (PERIODIC(dir) || !boundary[2 * dir]) {
           flag = 1;
           CELL_TRACE(if (fold_coord == 2) {
             fprintf(stderr, "%d: dd_append_particles: particle %d (%f,%f,%f) "
@@ -652,7 +651,7 @@ int dd_append_particles(ParticleList *pl, int fold_dir) {
         }
       } else if (cpos[dir] > dd.cell_grid[dir]) {
         cpos[dir] = dd.cell_grid[dir];
-        if (PERIODIC(dir)) {
+        if (PERIODIC(dir) || !boundary[2 * dir + 1]) {
           flag = 1;
           CELL_TRACE(if (fold_coord == 2) {
             fprintf(stderr, "%d: dd_append_particles: particle %d (%f,%f,%f) "
@@ -664,11 +663,15 @@ int dd_append_particles(ParticleList *pl, int fold_dir) {
       }
     }
     c = get_linear_index(cpos[0], cpos[1], cpos[2], dd.ghost_cell_grid);
-    CELL_TRACE(fprintf(stderr,
-                       "%d: dd_append_particles: Appen Part id=%d to cell %d\n",
-                       this_node, pl->part[p].p.identity, c));
+    CELL_TRACE(fprintf(
+        stderr,
+        "%d: dd_append_particles: Append Part id=%d to cell %d cpos %d %d %d\n",
+        this_node, pl->part[p].p.identity, c, cpos[0], cpos[1], cpos[2]));
     append_indexed_particle(&cells[c], std::move(pl->part[p]));
   }
+  CELL_TRACE(
+      fprintf(stderr, "%d: dd_append_particles: flag=%d\n", this_node, flag));
+
   return flag;
 }
 
@@ -1157,3 +1160,8 @@ int calc_processor_min_num_cells() {
 }
 
 /************************************************************/
+
+int dd_full_shell_neigh(int cellidx, int neigh)
+{
+    return cellidx + dd_fs_neigh[neigh];
+}

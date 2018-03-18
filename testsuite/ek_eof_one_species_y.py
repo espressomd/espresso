@@ -97,7 +97,7 @@ def hydrostatic_pressure(
            "Features not available, skipping test!")
 class ek_eof_one_species_x(ut.TestCase):
 
-    es = espressomd.System()
+    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     def test(self):
         system = self.es
@@ -132,7 +132,7 @@ class ek_eof_one_species_x(ut.TestCase):
         system.time_step = dt
         system.cell_system.skin = 0.1
         system.thermostat.turn_off()
-        integration_length = 40000
+        integration_length = 20000
 
 # Output density, velocity, and pressure tensor profiles
 

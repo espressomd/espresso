@@ -60,6 +60,15 @@ class Constraints(ScriptInterfaceHelper):
 
         self.call_method("remove", object=constraint)
 
+    def clear(self):
+        """
+        Remove all constraints.
+
+        """
+        constraints = self.call_method("get_elements")
+        for c in constraints:
+            self.remove(c)
+
 
 class Constraint(ScriptInterfaceHelper):
     """
@@ -111,6 +120,18 @@ class ShapeBasedConstraint(Constraint):
     """
 
     _so_name = "Constraints::ShapeBasedConstraint"
+
+
+    def min_dist(self):
+        """
+        Calculates the minimum distance to all interacting particles.
+        
+        Returns
+        ----------
+        :obj:float: The minimum distance
+        """
+        return self.call_method("min_dist", object=self)
+
 
     def total_force(self):
         """

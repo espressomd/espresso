@@ -8,7 +8,7 @@ from espressomd import polymer
 
 @ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "Skipped because LENNARD_JONES turned off.")
 class AnalyzeChain(ut.TestCase):
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
     np.random.seed(1234)
     num_poly=2
@@ -70,9 +70,9 @@ class AnalyzeChain(ut.TestCase):
             ij = np.triu_indices(len(r), k=1)
             r_ij = r[ij[0]] - r[ij[1]]
             dist = np.sqrt(np.sum(r_ij**2, axis=1))
-            rh.append(self.num_mono*self.num_mono*0.5/(np.sum(1./dist)))
+            #rh.append(self.num_mono*self.num_mono*0.5/(np.sum(1./dist)))
             # the other way do it, with the proper prefactor of N(N-1)
-            #rh.append(np.mean(1./dist))
+            rh.append(1./np.mean(1./dist))
         rh = np.array(rh)
         return np.mean(rh), np.std(rh)
 
