@@ -205,7 +205,7 @@ The source tree has the following structure:
 
   * configs: Collection of myconfig.hpp files which activate different sets of features for testing.
   * docker: Definitions of the docker images for various distributions used for continuous integration testing
-  * travis: Support files for the continuous integration testing run on the Travis-CI service.
+  * CI: Support files for the continuous integration testing run on the Travis-CI service.
   * jenkins: Outdated support files for the Jenkins continuous integration testing
 		
 

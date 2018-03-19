@@ -49,8 +49,14 @@ function cmd {
 [ -z "$build_procs" ] && build_procs=2
 [ -z "$make_check" ] && make_check="true"
 [ -z "$check_odd_only" ] && check_odd_only="false"
+[ -z "$python_version" ] && python_version="2"
+[ -z "$with_cuda" ] && with_cuda="true"
 
-cmake_params="-D CMAKE_BUILD_TYPE=Debug -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params"
+if [[ ! -z ${with_coverage+x} ]]; then
+  bash <(curl -s https://codecov.io/env) &> /dev/null;
+fi
+
+cmake_params="-DPYTHON_EXECUTABLE=$(which python$python_version) -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params"
 
 if $insource; then
     builddir=$srcdir
@@ -58,9 +64,12 @@ elif [ -z "$builddir" ]; then
     builddir=$srcdir/build
 fi
 
-outp insource srcdir builddir \
+outp insource srcdir builddir make_check \
     cmake_params with_fftw \
-    with_python_interface with_coverage with_static_analysis myconfig check_procs build_procs check_odd_only
+    with_python_interface with_coverage with_static_analysis myconfig check_procs build_procs  check_odd_only \
+    with_static_analysis myconfig \
+    check_procs build_procs \
+    python_version with_cuda
 
 # check indentation of python files
 pep8 --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
@@ -114,7 +123,7 @@ fi
 start "CONFIGURE"
 
 if [ $with_fftw = "true" ]; then
-    cmake_params="$cmake_params"
+    :
 else
     cmake_params="-DCMAKE_DISABLE_FIND_PACKAGE_FFTW3=ON $cmake_params"
 fi
@@ -131,6 +140,12 @@ fi
 
 if [ $with_static_analysis = "true" ]; then
     cmake_params="-DWITH_CLANG_TIDY=ON $cmake_params"
+fi
+
+if [ $with_cuda = "true" ]; then
+    :
+else
+    cmake_params="-DWITH_CUDA=OFF $cmake_params"
 fi
 
 MYCONFIG_DIR=$srcdir/maintainer/configs

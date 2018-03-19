@@ -38,6 +38,8 @@ class openGLLive(object):
                Draw wireframe boundaries.
     draw_axis : :obj:`bool`, optional
                 Draws xyz system axes.
+    draw_nodes : :obj:`bool`, optional
+                Draws node boxes.
     quality_particles : :obj:`int`, optional
                         The number of subdivisions for particle spheres.
     quality_bonds : :obj:`int`, optional
@@ -73,6 +75,7 @@ class openGLLive(object):
                         particle_charge_colors according to their charge. type:
                         Particle colors are specified by particle_type_colors,
                         indexed by their numerical particle type.
+                        node: Color according to the node the particle is on.
     particle_type_colors : array_like :obj:`float`, optional
                            Colors for particle types.
     particle_type_materials : :obj:`str`, optional
@@ -206,6 +209,7 @@ class openGLLive(object):
             'draw_fps': False,
             'draw_box': True,
             'draw_axis': True,
+            'draw_nodes': False,
             
             'update_fps': 30, 
             
@@ -307,6 +311,18 @@ class openGLLive(object):
         ELSE: 
             self.has_particle_data['charge'] = False
         self.has_particle_data['director'] = self.specs['director_arrows']
+        self.has_particle_data['node'] = self.specs['particle_coloring'] == 'node'
+        
+        # NODE BOXES
+        if self.specs['draw_nodes']:
+            self.node_box_origins = [] 
+            self.local_box_l = system.cell_system.get_state()['local_box_l']
+            n_ori = np.zeros(3)
+            for i in range(system.cell_system.node_grid[0]):
+                for j in range(system.cell_system.node_grid[1]):
+                    for k in range(system.cell_system.node_grid[2]):
+                        self.node_box_origins.append(np.array([i,j,k]) * self.local_box_l)
+
 
         # FULL PARTICLE INFO OF HIGHLIGHTED PARTICLE
         self.highlighted_particle = {}
@@ -332,12 +348,15 @@ class openGLLive(object):
         self.system = system
         self.started = False
         self.quit_savely = False
+        self.paused = False
         self.keyboardManager = KeyboardManager()
         self.mouseManager = MouseManager()
         self.timers = []
         self.particles = {}
-        self.elapsedTime_update = 0
-        self.measureTimeBeforeIntegrate = 0
+        self.update_elapsed = 0
+        self.update_timer = 0
+        self.draw_elapsed = 0
+        self.draw_timer = 0
 
     def register_callback(self, cb, interval=1000):
         """Register timed callbacks.
@@ -351,12 +370,17 @@ class openGLLive(object):
 
         def main():
             while True:
-                try:
-                    self.system.integrator.run(integ_steps)
-                    self.update()
-                except Exception as e:
-                    print(e)
-                    os._exit(1)
+                
+                self.update()
+
+                if self.paused:
+                    time.sleep(0)
+                else:
+                    try:
+                        self.system.integrator.run(integ_steps)
+                    except Exception as e:
+                        print(e)
+                        os._exit(1)
 
         t = Thread(target=main)
         t.daemon = True
@@ -406,24 +430,26 @@ class openGLLive(object):
                 self.hasParticleData = True
 
             # UPDATES
-            self.elapsedTime_update += (time.time() - self.measureTimeBeforeIntegrate)
-            if self.elapsedTime_update > 1.0 / self.specs['update_fps']:
-                self.elapsedTime_update = 0
-                if not self.last_T == self.system.time:
+            self.update_elapsed += (time.time() - self.update_timer)
+            if self.update_elapsed > 1.0 / self.specs['update_fps']:
+                self.update_elapsed = 0
+
+                # ES UPDATES WHEN SYSTEM HAS PROPAGATED. ALSO UPDATE ON PAUSE FOR PARTICLE INFO
+                if self.paused or not self.last_T == self.system.time:
                     self.last_T = self.system.time
                     self.update_particles()
-                    
-                    # KEYBOARD CALLBACKS MAY CHANGE ESPRESSO SYSTEM PROPERTIES,
-                    # ONLY SAVE TO CHANGE HERE
-                    for c in self.keyboardManager.userCallbackStack:
-                        c()
-                    self.keyboardManager.userCallbackStack = []
 
                     # LB UPDATE
                     if self.specs['LB']:
                         self.update_lb()
+
+                # KEYBOARD CALLBACKS MAY CHANGE ESPRESSO SYSTEM PROPERTIES,
+                # ONLY SAVE TO CHANGE HERE
+                for c in self.keyboardManager.userCallbackStack:
+                    c()
+                self.keyboardManager.userCallbackStack = []
             
-            self.measureTimeBeforeIntegrate = time.time()
+            self.update_timer = time.time()
 
             # DRAG PARTICLES
             if self.specs['drag_enabled']:
@@ -439,6 +465,7 @@ class openGLLive(object):
         # main thread
         if self.quit_savely:
             os._exit(1)
+        
 
     # GET THE PARTICLE DATA
     def update_particles(self):
@@ -448,7 +475,7 @@ class openGLLive(object):
 
         if self.has_particle_data['velocity']:
             self.particles['velocity'] = self.system.part[:].v
-        
+
         if self.has_particle_data['force']:
             self.particles['force'] = self.system.part[:].f
 
@@ -457,9 +484,12 @@ class openGLLive(object):
 
         if self.has_particle_data['charge']:
             self.particles['charge'] = self.system.part[:].q
-        
+
         if self.has_particle_data['director']:
             self.particles['director'] = self.system.part[:].director
+
+        if self.has_particle_data['node']:
+            self.particles['node'] = self.system.part[:].node
 
         if self.infoId != -1:
             for attr in self.particle_attributes:
@@ -590,11 +620,12 @@ class openGLLive(object):
 
     # DRAW CALLED AUTOMATICALLY FROM GLUT DISPLAY FUNC
     def draw(self):
-
         if self.specs['LB']:
             self.draw_lb_vel()
         if self.specs['draw_box']:
             self.draw_system_box()
+        if self.specs['draw_nodes']:
+            self.draw_nodes()
 
         if self.specs['draw_axis']:
             axis_fac = 0.2
@@ -616,6 +647,10 @@ class openGLLive(object):
 
     def draw_system_box(self):
         draw_box([0, 0, 0], self.system.box_l, self.invBackgroundCol)
+    
+    def draw_nodes(self):
+        for n in self.node_box_origins:
+            draw_box(n, self.local_box_l, self.invBackgroundCol*0.7)
 
     def draw_constraints(self):
 
@@ -687,7 +722,7 @@ class openGLLive(object):
             ptype = int(self.particles['type'][pid])
 
             # Only change material if type/charge has changed, colorById or material was resetted by arrows
-            if reset_material or colorById or not ptype == ptype_last or pid == self.dragId or pid == self.infoId:
+            if reset_material or colorById or not ptype == ptype_last or pid == self.dragId or pid == self.infoId or self.specs['particle_coloring'] == 'node':
                 reset_material = False
                 
                 radius = self.determine_radius(ptype)
@@ -713,6 +748,9 @@ class openGLLive(object):
                     elif self.specs['particle_coloring'] == 'type':
                         color = self.modulo_indexing(
                             self.specs['particle_type_colors'], ptype)
+                    elif self.specs['particle_coloring'] == 'node':
+                        color = self.modulo_indexing(self.specs['particle_type_colors'], self.particles['node'][pid])
+
 
                     # Invert color of highlighted particle
                     if pid == self.dragId or pid == self.infoId:
@@ -761,6 +799,7 @@ class openGLLive(object):
             if self.specs['director_arrows']:
                 self.draw_arrow_property(pid, ptype, self.specs['director_arrows_type_scale'], self.specs['director_arrows_type_colors'], self.specs['director_arrows_type_radii'], 'director')
                 reset_material = True
+
 
     def draw_arrow_property(self, pid, ptype, type_scale, type_colors, type_radii, prop):
         sc = self.modulo_indexing(type_scale, ptype)
@@ -931,7 +970,13 @@ class openGLLive(object):
             return
 
         def redraw_on_idle():
-            glutPostRedisplay()
+            
+            # DONT REPOST FASTER THAN 60 FPS  
+            self.draw_elapsed += (time.time() - self.draw_timer)
+            if self.draw_elapsed > 1.0 / 60.0:
+                self.draw_elapsed = 0
+                glutPostRedisplay()
+            self.draw_timer = time.time()
             return
 
         # CALLED ION WINDOW POSITION/SIZE CHANGE
@@ -1163,6 +1208,8 @@ class openGLLive(object):
 
         # KEYBOARD BUTTONS
         self.keyboardManager.register_button(KeyboardButtonEvent(
+            ' ', KeyboardFireEvent.Pressed, self.pause, True))
+        self.keyboardManager.register_button(KeyboardButtonEvent(
             '\x1b', KeyboardFireEvent.Pressed, self.quit, True))
         self.keyboardManager.register_button(KeyboardButtonEvent(
             'w', KeyboardFireEvent.Hold, self.camera.move_up, True))
@@ -1192,6 +1239,9 @@ class openGLLive(object):
     # CALLED ON ESCAPE PRESSED. TRIGGERS sys.exit() after ES is done
     def quit(self):
         self.quit_savely = True
+    
+    def pause(self):
+        self.paused = not self.paused
 
     # ASYNCHRONOUS PARALLEL CALLS OF glLight CAUSES SEG FAULTS, SO ONLY CHANGE
     # LIGHT AT CENTRAL display METHOD AND TRIGGER CHANGES

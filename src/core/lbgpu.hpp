@@ -28,7 +28,6 @@
 
 #include "utils.hpp"
 #include "config.hpp"
-#include "observables/profiles.hpp" 
 #ifdef LB_GPU
 
 /* For the D3Q19 model most functions have a separate implementation

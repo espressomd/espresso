@@ -98,5 +98,5 @@ cdef class PScriptInterface:
     cdef set_sip(self, shared_ptr[ScriptInterfaceBase] sip)
     cdef variant_to_python_object(self, Variant value)  except +
     cdef Variant python_object_to_variant(self, value)
-    cdef map[string, Variant] _sanitize_params(self, in_params)
+    cdef map[string, Variant] _sanitize_params(self, in_params) except *
 

@@ -30,7 +30,6 @@
 #include "core/observables/Observable.hpp"
 #include "core/observables/StressTensor.hpp"
 
-
 namespace ScriptInterface {
 namespace Observables {
 
