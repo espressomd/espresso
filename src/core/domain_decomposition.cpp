@@ -582,32 +582,29 @@ void dd_init_cell_interactions() {
     the position is in the nodes spatial domain otherwise a nullptr
     pointer. */
 Cell *dd_save_position_to_cell(double pos[3]) {
-  int i, cpos[3];
-  double lpos;
+  int cpos[3];
 
-  for (i = 0; i < 3; i++) {
-    lpos = pos[i] - my_left[i];
+  for (int i = 0; i < 3; i++) {
+    auto const lpos = pos[i] - my_left[i];
 
     cpos[i] = static_cast<int>(std::floor(lpos * dd.inv_cell_size[i])) + 1;
 
     /* particles outside our box. Still take them if
        VERY close or nonperiodic boundary */
     if (cpos[i] < 1) {
-      if (lpos > -ROUND_ERROR_PREC * box_l[i] ||
-          (!PERIODIC(i) && boundary[2 * i]))
+      if (!PERIODIC(i) && boundary[2 * i])
         cpos[i] = 1;
       else
         return nullptr;
     } else if (cpos[i] > dd.cell_grid[i]) {
-      if (lpos < local_box_l[i] + ROUND_ERROR_PREC * box_l[i] ||
-          (!PERIODIC(i) && boundary[2 * i + 1]))
+      if (!PERIODIC(i) && boundary[2 * i + 1])
         cpos[i] = dd.cell_grid[i];
       else
         return nullptr;
     }
   }
-  i = get_linear_index(cpos[0], cpos[1], cpos[2], dd.ghost_cell_grid);
-  return &(cells[i]);
+  auto const ind = get_linear_index(cpos[0], cpos[1], cpos[2], dd.ghost_cell_grid);
+  return &(cells[ind]);
 }
 
 /*************************************************/
@@ -922,7 +919,7 @@ void dd_exchange_and_sort_particles(ParticleList *pl) {
     for (int i = 0; i < pl->n; i++) {
       auto &part = pl->part[i];
 
-      if (part.r.p[dir] - my_left[dir] < -0.5 * ROUND_ERROR_PREC * box_l[dir]) {
+      if (part.r.p[dir] - my_left[dir] < 0.0) {
         if (PERIODIC(dir) || (boundary[2 * dir] == 0)) {
           CELL_TRACE(fprintf(stderr,
                              "%d: dd_ex_and_sort_p: send part left %d\n",
@@ -931,11 +928,7 @@ void dd_exchange_and_sort_particles(ParticleList *pl) {
           if (i < pl->n)
             i--;
         }
-      }
-      /* Move particles to the right side */
-      // Factor 0.5 see above
-      else if (part.r.p[dir] - my_right[dir] >=
-               0.5 * ROUND_ERROR_PREC * box_l[dir]) {
+      } else if (part.r.p[dir] - my_right[dir] >= 0.0) {
         if (PERIODIC(dir) || (boundary[2 * dir + 1] == 0)) {
           CELL_TRACE(fprintf(stderr,
                              "%d: dd_ex_and_sort_p: send part right %d\n",
