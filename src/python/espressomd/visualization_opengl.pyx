@@ -495,7 +495,7 @@ class openGLLive(object):
                 t = c.get_parameter('particle_type')
                 s = c.get_parameter('shape')
                 n = s.name()
-                if n in ['Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Ellipsoid', 'Shapes::Sphere', 'Shapes::SpheroCylinder']:
+                if n in ['Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Ellipsoid', 'Shapes::SimplePore', 'Shapes::Sphere', 'Shapes::SpheroCylinder']:
                     coll_shape_obj[n].append([s, t])
                 else:
                     coll_shape_obj['Shapes::Misc'].append([s, t])
@@ -521,6 +521,14 @@ class openGLLive(object):
             b = np.array(s[0].get_parameter('b'))
             c = np.array(s[0].get_parameter('b'))
             self.shapes['Shapes::Ellipsoid'].append([pos, a, b, c, s[1]])
+
+        for s in coll_shape_obj['Shapes::SimplePore']:
+            center = np.array(s[0].get_parameter('center'))
+            axis = np.array(s[0].get_parameter('axis'))
+            length = np.array(s[0].get_parameter('length'))
+            radius = np.array(s[0].get_parameter('radius'))
+            smoothing_radius = np.array(s[0].get_parameter('smoothing_radius'))
+            self.shapes['Shapes::SimplePore'].append([center, axis, length, radius, smoothing_radius, s[1]])
 
         for s in coll_shape_obj['Shapes::Sphere']:
             pos = np.array(s[0].get_parameter('center'))
@@ -615,6 +623,10 @@ class openGLLive(object):
         for s in self.shapes['Shapes::Ellipsoid']:
             draw_ellipsoid(s[0], s[1], s[2], s[3], self.modulo_indexing(self.specs['constraint_type_colors'], s[4]),
                           self.materials[self.modulo_indexing(self.specs['constraint_type_materials'], s[4])], self.specs['quality_constraints'])
+
+        for s in self.shapes['Shapes::SimplePore']:
+            draw_simple_pore(s[0], s[1], s[2], s[3], s[4], max(self.system.box_l), self.modulo_indexing(self.specs['constraint_type_colors'], s[5]),
+                          self.materials[self.modulo_indexing(self.specs['constraint_type_materials'], s[5])], self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::Sphere']:
             draw_sphere(s[0], s[1], self.modulo_indexing(self.specs['constraint_type_colors'], s[2]), self.materials[self.modulo_indexing(
@@ -1376,6 +1388,39 @@ def draw_ellipsoid(pos, semiaxis_a, semiaxis_b, semiaxis_c, color, material, qua
     glutSolidSphere(1, quality, quality)
     glPopMatrix()
 
+def draw_simple_pore(center, axis, length, radius, smoothing_radius, max_box_l, color, material, quality):
+    set_solid_material(color[0], color[1], color[2], color[3],
+                       material[0], material[1], material[2])
+    glPushMatrix()
+    quadric = gluNewQuadric()
+
+    # basic position and orientation
+    glTranslate(center[0], center[1], center[2])
+    ax, rx, ry = rotation_helper(axis)
+    glRotatef(ax, rx, ry, 0.0)
+    # cylinder
+    glTranslate(0, 0, -0.5 * length + smoothing_radius)
+    gluCylinder(quadric, radius, radius, length - 2*smoothing_radius, quality, quality)
+    # torus segment
+    clip_plane = GL_CLIP_PLANE0+6
+    glEnable(clip_plane)
+    glClipPlane(clip_plane, (0, 0, -1, 0))
+    glutSolidTorus(smoothing_radius, (radius + smoothing_radius), quality, quality)
+    glDisable(clip_plane)
+    # wall
+    glTranslate(0, 0, -smoothing_radius)
+    gluPartialDisk(quadric, radius + smoothing_radius, 2.0 * max_box_l, quality, 1, 0, 360)
+    # torus segment
+    glTranslate(0, 0, length - smoothing_radius)
+    glEnable(clip_plane)
+    glClipPlane(clip_plane, (0, 0, 1, 0))
+    glutSolidTorus(smoothing_radius, (radius + smoothing_radius), quality, quality)
+    glDisable(clip_plane)
+    # wall
+    glTranslate(0, 0, smoothing_radius)
+    gluPartialDisk(quadric, radius + smoothing_radius, 2. * max_box_l, quality, 1, 0, 360)
+
+    glPopMatrix()
 
 def draw_sphero_cylinder(posA, posB, radius, color, material, quality):
     set_solid_material(color[0], color[1], color[
