@@ -297,7 +297,7 @@ same value as that for the translation.
 
 A separate rotational diffusion coefficient can be set by inputting
 ``gamma_rotate``.  This also allows one to properly match the translational and
-rotational diffusion coefficients of a sphere. ``ROTATIONAL_INERTIA`` Feature
+rotational diffusion coefficients of a sphere. ``PARTICLE_ANISOTROPY`` Feature
 enables an anisotropic rotational diffusion coefficient tensor through
 corresponding friction coefficients. 
 
@@ -482,6 +482,8 @@ Note, that the velocity random walk is propagated from zero at each step.
 A rotational motion is implemented similarly. The Velocity Verlet quaternion
 based rotational method implementation is still used, however, had been modified
 for the larger :math:`\Delta t` case to be consistent and still the Velocity Verlet-compliant.
+Note: this Brownian dynamics implementation is compatible with particles which have
+the isotropic moment of inertia tensor only.
 
 .. _CUDA:
 
