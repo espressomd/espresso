@@ -317,6 +317,7 @@ void fold_and_reset(Particle &p) {
  *  - Remove p_old reset from sr loop.
  *  - Switch to unindexed particles.
  *  - Swtich to async comm.
+ *  - Force global sort for Lees-Edwards.
  */
 
 ParticleList sort_local_parts(const CellStructure &cs, CellPList cells) {
