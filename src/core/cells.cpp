@@ -353,23 +353,36 @@ void cells_resort_particles(int global_flag) {
     nsq_balance_particles(global_flag);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    if (global_flag) {
-      auto displaced_parts = sort_local_parts(cell_structure, local_cells);
+    auto displaced_parts = sort_local_parts(cell_structure, local_cells);
 
-      while (true) {
+    if (global_flag) {
+      /* Worst case we need node_grid - 1 rounds per direction. */
+      int rounds_left = node_grid[0] + node_grid[1] + node_grid[2] - 3;
+      while (rounds_left--) {
         dd_exchange_and_sort_particles(&displaced_parts);
 
         auto left_over = boost::mpi::all_reduce(comm_cart, displaced_parts.n,
                                                 std::plus<int>());
 
         fprintf(stderr, "%d: left_over %d\n", this_node, left_over);
-        if (left_over == 0)
+        if (left_over == 0) {
           break;
+        } else {
+          fprintf(stderr, "%d: parts %d\n", this_node, displaced_parts.n);
+          if (displaced_parts.n) {
+            auto &part = displaced_parts.part[0];
+            fprintf(stderr, "%d: pos %e %e %e id %d\n", this_node, part.r.p[0],
+                    part.r.p[1], part.r.p[2], part.identity());
+            fprintf(stderr, "%d: node %d\n", this_node,
+                    cell_structure.position_to_node(part.r.p));
+          }
+        }
       }
     } else {
-      auto displaced_parts = sort_local_parts(cell_structure, local_cells);
       dd_exchange_and_sort_particles(&displaced_parts);
     }
+
+    assert(0 == displaced_parts.n);
     break;
   }
 
