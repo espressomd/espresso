@@ -239,12 +239,12 @@ class openGLLive(object):
             'ext_force_arrows_type_scale': [1.0],
             'ext_force_arrows_type_colors': [[1, 1, 1, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
             'ext_force_arrows_type_radii': [0.2],
-            
+
             'velocity_arrows': False,
             'velocity_arrows_type_scale': [1.0],
             'velocity_arrows_type_colors': [[1, 1, 1, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
             'velocity_arrows_type_radii': [0.2],
-            
+
             'force_arrows': False,
             'force_arrows_type_scale': [1.0],
             'force_arrows_type_colors': [[1, 1, 1, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
@@ -296,13 +296,16 @@ class openGLLive(object):
         self.has_particle_data = {}
         self.has_particle_data['velocity'] = self.specs['velocity_arrows']
         self.has_particle_data['force'] = self.specs['force_arrows']
-        self.has_particle_data['ext_force'] = self.specs['ext_force_arrows'] or self.specs['drag_enabled']
+        self.has_particle_data['ext_force'] = self.specs[
+            'ext_force_arrows'] or self.specs['drag_enabled']
         IF ELECTROSTATICS:
-            self.has_particle_data['charge'] = self.specs['particle_coloring'] == 'auto' or self.specs['particle_coloring'] == 'charge' 
-        ELSE: 
+            self.has_particle_data['charge'] = self.specs[
+                'particle_coloring'] == 'auto' or self.specs['particle_coloring'] == 'charge'
+        ELSE:
             self.has_particle_data['charge'] = False
         self.has_particle_data['director'] = self.specs['director_arrows']
-        self.has_particle_data['node'] = self.specs['particle_coloring'] == 'node'
+        self.has_particle_data['node'] = self.specs[
+            'particle_coloring'] == 'node'
 
         # CALC INVERSE BACKGROUND COLOR FOR BOX
         self.invBackgroundCol = np.array([1 - self.specs['background_color'][0], 1 -
@@ -465,7 +468,7 @@ class openGLLive(object):
         for xi in xrange(ng):
             for xj in xrange(ng):
                 pp = np.copy((self.lb_plane_p + xi * 1.0 / ng * self.lb_plane_b1 +
-                      xj * 1.0 / ng * self.lb_plane_b2) % self.system.box_l)
+                              xj * 1.0 / ng * self.lb_plane_b2) % self.system.box_l)
                 i, j, k = (int(ppp / agrid) for ppp in pp)
                 lb_vel = np.copy(self.lb[i, j, k].velocity)
                 self.lb_plane_vel.append([pp, lb_vel])
@@ -528,7 +531,8 @@ class openGLLive(object):
             length = np.array(s[0].get_parameter('length'))
             radius = np.array(s[0].get_parameter('radius'))
             smoothing_radius = np.array(s[0].get_parameter('smoothing_radius'))
-            self.shapes['Shapes::SimplePore'].append([center, axis, length, radius, smoothing_radius, s[1]])
+            self.shapes['Shapes::SimplePore'].append(
+                [center, axis, length, radius, smoothing_radius, s[1]])
 
         for s in coll_shape_obj['Shapes::Sphere']:
             pos = np.array(s[0].get_parameter('center'))
@@ -622,11 +626,11 @@ class openGLLive(object):
 
         for s in self.shapes['Shapes::Ellipsoid']:
             draw_ellipsoid(s[0], s[1], s[2], s[3], self.modulo_indexing(self.specs['constraint_type_colors'], s[4]),
-                          self.materials[self.modulo_indexing(self.specs['constraint_type_materials'], s[4])], self.specs['quality_constraints'])
+                           self.materials[self.modulo_indexing(self.specs['constraint_type_materials'], s[4])], self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::SimplePore']:
             draw_simple_pore(s[0], s[1], s[2], s[3], s[4], max(self.system.box_l), self.modulo_indexing(self.specs['constraint_type_colors'], s[5]),
-                          self.materials[self.modulo_indexing(self.specs['constraint_type_materials'], s[5])], self.specs['quality_constraints'])
+                             self.materials[self.modulo_indexing(self.specs['constraint_type_materials'], s[5])], self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::Sphere']:
             draw_sphere(s[0], s[1], self.modulo_indexing(self.specs['constraint_type_colors'], s[2]), self.materials[self.modulo_indexing(
@@ -636,13 +640,13 @@ class openGLLive(object):
             draw_sphero_cylinder(
                 s[0], s[1], s[2], self.modulo_indexing(
                     self.specs['constraint_type_colors'], s[3]),
-                               self.materials[self.modulo_indexing(self.specs['constraint_type_materials'], s[3])], self.specs['quality_constraints'])
+                self.materials[self.modulo_indexing(self.specs['constraint_type_materials'], s[3])], self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::Wall']:
             draw_plane(
                 s[0], self.modulo_indexing(
                     self.specs['constraint_type_colors'], s[1]),
-                      self.materials[self.modulo_indexing(self.specs['constraint_type_materials'], s[1])])
+                self.materials[self.modulo_indexing(self.specs['constraint_type_materials'], s[1])])
 
         for s in self.shapes['Shapes::Cylinder']:
             draw_cylinder(s[0], s[1], s[2], self.modulo_indexing(self.specs['constraint_type_colors'], s[3]), self.materials[self.modulo_indexing(
@@ -704,7 +708,8 @@ class openGLLive(object):
                 color = self.modulo_indexing(
                     self.specs['particle_type_colors'], ptype)
             elif self.specs['particle_coloring'] == 'node':
-                color = self.modulo_indexing(self.specs['particle_type_colors'], self.particles['node'][pid])
+                color = self.modulo_indexing(
+                    self.specs['particle_type_colors'], self.particles['node'][pid])
 
             draw_sphere(self.particles['pos'][pid], radius, color, material,
                         self.specs['quality_particles'])
@@ -721,21 +726,27 @@ class openGLLive(object):
                         if pid == self.dragId:
                             sc = 1
                         else:
-                            sc = self.modulo_indexing(self.specs['ext_force_arrows_type_scale'], ptype)
+                            sc = self.modulo_indexing(
+                                self.specs['ext_force_arrows_type_scale'], ptype)
                         if sc > 0:
-                            col = self.modulo_indexing(self.specs['ext_force_arrows_type_colors'], ptype)
-                            radius = self.modulo_indexing(self.specs['ext_force_arrows_type_radii'], ptype)
-                            draw_arrow(self.particles['pos'][pid], np.array(self.particles['ext_force'][pid]) * sc, radius
-                                       , col, self.materials['chrome'], self.specs['quality_arrows'])
-            
+                            col = self.modulo_indexing(
+                                self.specs['ext_force_arrows_type_colors'], ptype)
+                            radius = self.modulo_indexing(
+                                self.specs['ext_force_arrows_type_radii'], ptype)
+                            draw_arrow(self.particles['pos'][pid], np.array(self.particles['ext_force'][
+                                       pid]) * sc, radius, col, self.materials['chrome'], self.specs['quality_arrows'])
+
             if self.specs['velocity_arrows']:
-                self.draw_arrow_property(pid, ptype, self.specs['velocity_arrows_type_scale'], self.specs['velocity_arrows_type_colors'], self.specs['velocity_arrows_type_radii'], 'velocity')
-            
+                self.draw_arrow_property(pid, ptype, self.specs['velocity_arrows_type_scale'], self.specs[
+                                         'velocity_arrows_type_colors'], self.specs['velocity_arrows_type_radii'], 'velocity')
+
             if self.specs['force_arrows']:
-                self.draw_arrow_property(pid, ptype, self.specs['force_arrows_type_scale'], self.specs['force_arrows_type_colors'], self.specs['force_arrows_type_radii'], 'force')
-            
+                self.draw_arrow_property(pid, ptype, self.specs['force_arrows_type_scale'], self.specs[
+                                         'force_arrows_type_colors'], self.specs['force_arrows_type_radii'], 'force')
+
             if self.specs['director_arrows']:
-                self.draw_arrow_property(pid, ptype, self.specs['director_arrows_type_scale'], self.specs['director_arrows_type_colors'], self.specs['director_arrows_type_radii'], 'director')
+                self.draw_arrow_property(pid, ptype, self.specs['director_arrows_type_scale'], self.specs[
+                                         'director_arrows_type_colors'], self.specs['director_arrows_type_radii'], 'director')
 
     def draw_arrow_property(self, pid, ptype, type_scale, type_colors, type_radii, prop):
         sc = self.modulo_indexing(type_scale, ptype)
@@ -743,8 +754,8 @@ class openGLLive(object):
             v = self.particles[prop][pid]
             col = self.modulo_indexing(type_colors, ptype)
             radius = self.modulo_indexing(type_radii, ptype)
-            draw_arrow(self.particles['pos'][pid], np.array(v) * sc, radius, col, self.materials['chrome'], self.specs['quality_arrows'])
-
+            draw_arrow(self.particles['pos'][pid], np.array(
+                v) * sc, radius, col, self.materials['chrome'], self.specs['quality_arrows'])
 
     def draw_bonds(self):
         pIds = range(len(self.particles['pos']))
@@ -1014,16 +1025,16 @@ class openGLLive(object):
 
             if self.specs['LB_plane_axis'] == 0:
                 pn = [1.0, 0.0, 0.0]
-                self.lb_plane_b1 = [0.0,1.0,0.0]
-                self.lb_plane_b2 = [0.0,0.0,1.0]
+                self.lb_plane_b1 = [0.0, 1.0, 0.0]
+                self.lb_plane_b2 = [0.0, 0.0, 1.0]
             elif self.specs['LB_plane_axis'] == 1:
                 pn = [0.0, 1.0, 0.0]
-                self.lb_plane_b1 = [1.0,0.0,0.0]
-                self.lb_plane_b2 = [0.0,0.0,1.0]
+                self.lb_plane_b1 = [1.0, 0.0, 0.0]
+                self.lb_plane_b2 = [0.0, 0.0, 1.0]
             else:
                 pn = [0.0, 0.0, 1.0]
-                self.lb_plane_b1 = [1.0,0.0,0.0]
-                self.lb_plane_b2 = [0.0,1.0,0.0]
+                self.lb_plane_b1 = [1.0, 0.0, 0.0]
+                self.lb_plane_b2 = [0.0, 1.0, 0.0]
 
             self.lb_plane_b1 *= self.system.box_l
             self.lb_plane_b2 *= self.system.box_l
@@ -1152,7 +1163,7 @@ class openGLLive(object):
         cr = np.array(self.specs['camera_right'])
 
         self.camera = Camera(camPos=np.array(cp), camTarget=ct, camRight=cr, moveSpeed=0.5 *
-                              box_diag / 17.0,  center=box_center, updateLights=self.trigger_light_pos_update)
+                             box_diag / 17.0,  center=box_center, updateLights=self.trigger_light_pos_update)
         self.smooth_light_pos = np.copy(box_center)
         self.smooth_light_posV = np.array([0.0, 0.0, 0.0])
         self.particle_COM = np.copy(box_center)
@@ -1281,7 +1292,7 @@ def draw_sphere(pos, radius, color, material, quality):
     glPushMatrix()
     glTranslatef(pos[0], pos[1], pos[2])
     set_solid_material(color[0], color[1], color[2], color[
-                      3], material[0], material[1], material[2], material[3])
+        3], material[0], material[1], material[2], material[3])
     glutSolidSphere(radius, quality, quality)
     glPopMatrix()
 
@@ -1320,7 +1331,7 @@ def draw_triangles(triangles, color, material):
         color = np.random.random(3).tolist()
         color.append(1)
         set_solid_material(color[0], color[1], color[2],
-                          color[3], material[0], material[1], material[2], material[3])
+                           color[3], material[0], material[1], material[2], material[3])
         for p in t:
             glVertex3f(p[0], p[1], p[2])
     glEnd()
@@ -1328,7 +1339,7 @@ def draw_triangles(triangles, color, material):
 
 def draw_points(points, pointsize, color, material):
     set_solid_material(color[0], color[1], color[2], color[3],
-                      material[0], material[1], material[2], material[3])
+                       material[0], material[1], material[2], material[3])
     glEnable(GL_POINT_SMOOTH)
 
     glPointSize(pointsize)
@@ -1340,7 +1351,7 @@ def draw_points(points, pointsize, color, material):
 
 def draw_cylinder(posA, posB, radius, color, material, quality, draw_caps=False):
     set_solid_material(color[0], color[1], color[2], color[3],
-                      material[0], material[1], material[2], material[3])
+                       material[0], material[1], material[2], material[3])
     glPushMatrix()
     quadric = gluNewQuadric()
 
@@ -1379,6 +1390,7 @@ def rotation_helper(d):
 
     return ax, rx, ry
 
+
 def draw_ellipsoid(pos, semiaxis_a, semiaxis_b, semiaxis_c, color, material, quality):
     set_solid_material(color[0], color[1], color[2], color[3],
                        material[0], material[1], material[2])
@@ -1387,6 +1399,7 @@ def draw_ellipsoid(pos, semiaxis_a, semiaxis_b, semiaxis_c, color, material, qua
     glScalef(semiaxis_a, semiaxis_b, semiaxis_c)
     glutSolidSphere(1, quality, quality)
     glPopMatrix()
+
 
 def draw_simple_pore(center, axis, length, radius, smoothing_radius, max_box_l, color, material, quality):
     set_solid_material(color[0], color[1], color[2], color[3],
@@ -1400,27 +1413,33 @@ def draw_simple_pore(center, axis, length, radius, smoothing_radius, max_box_l, 
     glRotatef(ax, rx, ry, 0.0)
     # cylinder
     glTranslate(0, 0, -0.5 * length + smoothing_radius)
-    gluCylinder(quadric, radius, radius, length - 2*smoothing_radius, quality, quality)
+    gluCylinder(quadric, radius, radius, length - 2 *
+                smoothing_radius, quality, quality)
     # torus segment
-    clip_plane = GL_CLIP_PLANE0+6
+    clip_plane = GL_CLIP_PLANE0 + 6
     glEnable(clip_plane)
     glClipPlane(clip_plane, (0, 0, -1, 0))
-    glutSolidTorus(smoothing_radius, (radius + smoothing_radius), quality, quality)
+    glutSolidTorus(smoothing_radius, (radius +
+                                      smoothing_radius), quality, quality)
     glDisable(clip_plane)
     # wall
     glTranslate(0, 0, -smoothing_radius)
-    gluPartialDisk(quadric, radius + smoothing_radius, 2.0 * max_box_l, quality, 1, 0, 360)
+    gluPartialDisk(quadric, radius + smoothing_radius,
+                   2.0 * max_box_l, quality, 1, 0, 360)
     # torus segment
     glTranslate(0, 0, length - smoothing_radius)
     glEnable(clip_plane)
     glClipPlane(clip_plane, (0, 0, 1, 0))
-    glutSolidTorus(smoothing_radius, (radius + smoothing_radius), quality, quality)
+    glutSolidTorus(smoothing_radius, (radius +
+                                      smoothing_radius), quality, quality)
     glDisable(clip_plane)
     # wall
     glTranslate(0, 0, smoothing_radius)
-    gluPartialDisk(quadric, radius + smoothing_radius, 2. * max_box_l, quality, 1, 0, 360)
+    gluPartialDisk(quadric, radius + smoothing_radius,
+                   2.0 * max_box_l, quality, 1, 0, 360)
 
     glPopMatrix()
+
 
 def draw_sphero_cylinder(posA, posB, radius, color, material, quality):
     set_solid_material(color[0], color[1], color[
@@ -1447,7 +1466,7 @@ def draw_sphero_cylinder(posA, posB, radius, color, material, quality):
     glRotatef(ax, rx, ry, 0.0)
 
     # First hemispherical cap
-    clip_plane = GL_CLIP_PLANE0+6
+    clip_plane = GL_CLIP_PLANE0 + 6
     glEnable(clip_plane)
     glClipPlane(clip_plane, (0, 0, -1, 0))
     gluSphere(quadric, radius, quality, quality)
