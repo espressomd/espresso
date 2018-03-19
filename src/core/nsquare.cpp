@@ -26,9 +26,9 @@
 #include "nsquare.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
+#include "debug.hpp"
 #include "ghosts.hpp"
 #include "utils.hpp"
-#include "debug.hpp"
 
 #include <cstring>
 #include <mpi.h>
@@ -36,6 +36,7 @@
 Cell *local;
 
 Cell *nsq_position_to_cell(double pos[3]) { return local; }
+int nsq_position_to_node(double[3]) { return this_node; }
 
 void nsq_topology_release() {
   CELL_TRACE(fprintf(stderr, "%d: nsq_topology_release:\n", this_node));
@@ -72,7 +73,7 @@ void nsq_topology_init(CellPList *old) {
   CELL_TRACE(fprintf(stderr, "%d: nsq_topology_init, %d\n", this_node, old->n));
 
   cell_structure.type = CELL_STRUCTURE_NSQUARE;
-  cell_structure.position_to_node = map_position_node_array;
+  cell_structure.position_to_node = nsq_position_to_node;
   cell_structure.position_to_cell = nsq_position_to_cell;
 
   realloc_cells(n_nodes);
@@ -229,8 +230,7 @@ void nsq_balance_particles(int global_flag) {
 #ifdef ADDITIONAL_CHECKS
       check_particle_consistency();
 #endif
-    }
-    else if (l_node == this_node) {
+    } else if (l_node == this_node) {
       ParticleList recv_buf{};
 
       recv_particles(&recv_buf, s_node);
