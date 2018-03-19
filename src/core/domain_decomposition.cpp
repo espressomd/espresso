@@ -958,12 +958,12 @@ void dd_exchange_and_sort_particles(ParticleList *pl) {
     for (int i = 0; i < recv_buf_l.n; i++) {
       auto &part = recv_buf_l.part[i];
 
-      if (this_node != cell_structure.position_to_node(part.r.p)) {
-        move_indexed_particle(pl, &recv_buf_l, i);
+      auto target_cell = dd_save_position_to_cell(part.r.p);
+
+      if (target_cell) {
+        move_indexed_particle(target_cell, &recv_buf_l, i);
       } else {
-        fold_position(part.r.p, part.l.i);
-        move_indexed_particle(dd_save_position_to_cell(part.r.p), &recv_buf_l,
-                              i);
+        move_indexed_particle(pl, &recv_buf_l, i);
       }
 
       if (i < recv_buf_l.n)
@@ -975,12 +975,12 @@ void dd_exchange_and_sort_particles(ParticleList *pl) {
     for (int i = 0; i < recv_buf_r.n; i++) {
       auto &part = recv_buf_r.part[i];
 
-      if (this_node != cell_structure.position_to_node(part.r.p)) {
-        move_indexed_particle(pl, &recv_buf_r, i);
+      auto target_cell = dd_save_position_to_cell(part.r.p);
+
+      if (target_cell) {
+        move_indexed_particle(target_cell, &recv_buf_r, i);
       } else {
-        fold_position(part.r.p, part.l.i);
-        move_indexed_particle(dd_save_position_to_cell(part.r.p), &recv_buf_r,
-                              i);
+        move_indexed_particle(pl, &recv_buf_r, i);
       }
 
       if (i < recv_buf_r.n)

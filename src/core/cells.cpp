@@ -312,6 +312,13 @@ void fold_and_reset(Particle &p) {
 }
 }
 
+/**
+ * @TODO:
+ *  - Remove p_old reset from sr loop.
+ *  - Switch to unindexed particles.
+ *  - Swtich to async comm.
+ */
+
 ParticleList sort_local_parts(const CellStructure &cs, CellPList cells) {
   ParticleList displaced_parts;
 
@@ -319,27 +326,21 @@ ParticleList sort_local_parts(const CellStructure &cs, CellPList cells) {
     for (int i = 0; i < c->n; i++) {
       auto &p = c->part[i];
 
-      fold_position(p.r.p, p.l.i);
+      fold_and_reset(p);
 
-      if (this_node != cs.position_to_node(p.r.p)) {
+      auto target_cell = cs.position_to_cell(p.r.p);
+
+      if (target_cell == nullptr) {
         move_indexed_particle(&displaced_parts, c, i);
 
         if (i < c->n) {
           i--;
         }
-      } else {
-        auto target_cell = cs.position_to_cell(p.r.p);
+      } else if (target_cell != c) {
+        move_indexed_particle(target_cell, c, i);
 
-        if (c != target_cell) {
-          if (target_cell) {
-            move_indexed_particle(target_cell, c, i);
-          } else {
-            move_indexed_particle(&displaced_parts, c, i);
-          }
-
-          if (i < c->n) {
-            i--;
-          }
+        if (i < c->n) {
+          i--;
         }
       }
     }
@@ -376,18 +377,8 @@ void cells_resort_particles(int global_flag) {
         auto left_over = boost::mpi::all_reduce(comm_cart, displaced_parts.n,
                                                 std::plus<int>());
 
-        fprintf(stderr, "%d: left_over %d\n", this_node, left_over);
         if (left_over == 0) {
           break;
-        } else {
-          fprintf(stderr, "%d: parts %d\n", this_node, displaced_parts.n);
-          if (displaced_parts.n) {
-            auto &part = displaced_parts.part[0];
-            fprintf(stderr, "%d: pos %e %e %e id %d\n", this_node, part.r.p[0],
-                    part.r.p[1], part.r.p[2], part.identity());
-            fprintf(stderr, "%d: node %d\n", this_node,
-                    cell_structure.position_to_node(part.r.p));
-          }
         }
       }
     } else {
