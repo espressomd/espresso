@@ -302,12 +302,25 @@ int cells_get_n_particles() {
 
 /*************************************************/
 
+namespace {
+void fold_and_reset(Particle &p) {
+  fold_position(p.r.p, p.l.i);
+
+  for (int i = 0; i < 3; i++) {
+    p.l.p_old[i] = p.r.p[i];
+  }
+}
+}
+
 ParticleList sort_local_parts(const CellStructure &cs, CellPList cells) {
   ParticleList displaced_parts;
 
   for (auto &c : cells) {
     for (int i = 0; i < c->n; i++) {
       auto &p = c->part[i];
+
+      fold_position(p.r.p, p.l.i);
+
       if (this_node != cs.position_to_node(p.r.p)) {
         move_indexed_particle(&displaced_parts, c, i);
 
@@ -315,7 +328,6 @@ ParticleList sort_local_parts(const CellStructure &cs, CellPList cells) {
           i--;
         }
       } else {
-        fold_position(p.r.p, p.l.i);
         auto target_cell = cs.position_to_cell(p.r.p);
 
         if (c != target_cell) {

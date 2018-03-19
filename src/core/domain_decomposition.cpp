@@ -590,7 +590,7 @@ Cell *dd_save_position_to_cell(double pos[3]) {
     cpos[i] = static_cast<int>(std::floor(lpos * dd.inv_cell_size[i])) + 1;
 
     /* particles outside our box. Still take them if
-       VERY close or nonperiodic boundary */
+       nonperiodic boundary */
     if (cpos[i] < 1) {
       if (!PERIODIC(i) && boundary[2 * i])
         cpos[i] = 1;
@@ -603,7 +603,8 @@ Cell *dd_save_position_to_cell(double pos[3]) {
         return nullptr;
     }
   }
-  auto const ind = get_linear_index(cpos[0], cpos[1], cpos[2], dd.ghost_cell_grid);
+  auto const ind =
+      get_linear_index(cpos[0], cpos[1], cpos[2], dd.ghost_cell_grid);
   return &(cells[ind]);
 }
 
@@ -919,7 +920,7 @@ void dd_exchange_and_sort_particles(ParticleList *pl) {
     for (int i = 0; i < pl->n; i++) {
       auto &part = pl->part[i];
 
-      if (part.r.p[dir] - my_left[dir] < 0.0) {
+      if (get_mi_coord(part.r.p[dir], my_left[dir], dir) < 0.0) {
         if (PERIODIC(dir) || (boundary[2 * dir] == 0)) {
           CELL_TRACE(fprintf(stderr,
                              "%d: dd_ex_and_sort_p: send part left %d\n",
@@ -928,7 +929,7 @@ void dd_exchange_and_sort_particles(ParticleList *pl) {
           if (i < pl->n)
             i--;
         }
-      } else if (part.r.p[dir] - my_right[dir] >= 0.0) {
+      } else if (get_mi_coord(part.r.p[dir], my_right[dir], dir) >= 0.0) {
         if (PERIODIC(dir) || (boundary[2 * dir + 1] == 0)) {
           CELL_TRACE(fprintf(stderr,
                              "%d: dd_ex_and_sort_p: send part right %d\n",

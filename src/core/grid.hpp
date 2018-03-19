@@ -45,9 +45,9 @@
 */
 #include "RuntimeErrorStream.hpp"
 #include "communication.hpp"
-#include "utils.hpp"
 #include "errorhandling.hpp"
 #include "lees_edwards.hpp"
+#include "utils.hpp"
 
 #include <climits>
 
@@ -183,6 +183,15 @@ int map_3don2d_grid(int g3d[3], int g2d[3], int mult[3]);
  * the particles accordingly */
 void rescale_boxl(int dir, double d_new);
 
+inline double get_mi_coord(double a, double b, int dir) {
+  auto dx = a - b;
+
+  if (PERIODIC(dir) && std::fabs(dx) > half_box_l[dir])
+    dx -= dround(dx * box_l_i[dir]) * box_l[dir];
+
+  return dx;
+}
+
 /** get the minimal distance vector of two vectors in the current bc.
   *  \ref LEES_EDWARDS note: there is no need to add the le_offset here,
   *  any offset should already have been added when the image particle was
@@ -196,7 +205,7 @@ template <typename T, typename U, typename V>
 inline void get_mi_vector(T &res, U const &a, V const &b) {
   for (int i = 0; i < 3; i++) {
     res[i] = a[i] - b[i];
-    if (std::fabs(res[i]) > half_box_l[i] && PERIODIC(i))
+    if (PERIODIC(i) && std::fabs(res[i]) > half_box_l[i])
       res[i] -= dround(res[i] * box_l_i[i]) * box_l[i];
   }
 }
@@ -332,7 +341,8 @@ inline void fold_position(Vector3d &pos, Vector<3, int> &image_box) {
 */
 inline void unfold_position(double pos[3], double vel[3], int image_box[3]) {
 #ifdef LEES_EDWARDS
-  auto const y_img_count = static_cast<int>(floor(pos[1] * box_l_i[1] + image_box[1]));
+  auto const y_img_count =
+      static_cast<int>(floor(pos[1] * box_l_i[1] + image_box[1]));
 
   pos[0] += image_box[0] * box_l[0] + y_img_count * lees_edwards_offset;
   pos[1] += image_box[1] * box_l[1];
@@ -353,11 +363,11 @@ inline void unfold_position(double pos[3], double vel[3], int image_box[3]) {
 #endif
 }
 
-template<typename Particle>
-Vector3d unfolded_position(const Particle * p) {
+template <typename Particle> Vector3d unfolded_position(const Particle *p) {
   Vector3d pos{p->r.p};
 #ifdef LEES_EDWARDS
-  auto const y_img_count = static_cast<int>(floor(pos[1] * box_l_i[1] + p->l.i[1]));
+  auto const y_img_count =
+      static_cast<int>(floor(pos[1] * box_l_i[1] + p->l.i[1]));
 
   pos[0] += p->l.i[0] * box_l[0] + y_img_count * lees_edwards_offset;
   pos[1] += p->l.i[1] * box_l[1];

@@ -103,7 +103,6 @@ void force_calc() {
   }
 #endif
 
-  
   espressoSystemInterface.update();
 
 #ifdef COLLISION_DETECTION
