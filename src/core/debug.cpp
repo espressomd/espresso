@@ -234,6 +234,13 @@ void check_particle_sorting() {
     auto cell = local_cells.cell[c];
     for (int n = 0; n < cell->n; n++) {
       auto p = cell->part[n];
+
+      if (cell_structure.position_to_node(p.r.p) != this_node) {
+        fprintf(stderr, "%d: misplaced part id %d on wrong node.\n", this_node,
+                p.identity());
+        errexit();
+      }
+
       if (cell_structure.position_to_cell(p.r.p) != cell) {
         fprintf(stderr, "%d: misplaced part id %d. %p != %p\n", this_node,
                 p.p.identity, (void *)cell,
@@ -241,8 +248,8 @@ void check_particle_sorting() {
         auto folded_pos = folded_position(p);
         fprintf(stderr, "%d: misplaced folded cell %p\n", this_node,
                 (void *)cell_structure.position_to_cell(folded_pos.data()));
-        fprintf(stderr, "%d: misplaced pos %e %e %e\n", this_node,
-                p.r.p[0], p.r.p[1], p.r.p[2]);
+        fprintf(stderr, "%d: misplaced pos %e %e %e\n", this_node, p.r.p[0],
+                p.r.p[1], p.r.p[2]);
         fprintf(stderr, "%d: misplaced folded_pos %e %e %e\n", this_node,
                 folded_pos[0], folded_pos[1], folded_pos[2]);
         fprintf(stderr, "%d: misplaced part node %d\n", this_node,
