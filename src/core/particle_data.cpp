@@ -389,7 +389,7 @@ std::vector<Particle> mpi_get_particles(std::vector<int> const &ids) {
   /* Copy local particles */
   std::transform(node_ids[this_node].cbegin(), node_ids[this_node].cend(),
                  parts.begin(), [](int id) {
-                   assert(id);
+                   assert(local_particles[id]);
                    return *local_particles[id];
                  });
 
