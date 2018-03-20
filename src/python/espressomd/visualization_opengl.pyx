@@ -1581,14 +1581,20 @@ class MouseManager(object):
         self.mouseState[GLUT_LEFT_BUTTON] = GLUT_UP
         self.mouseState[GLUT_MIDDLE_BUTTON] = GLUT_UP
         self.mouseState[GLUT_RIGHT_BUTTON] = GLUT_UP
+        self.mouseState['3'] = GLUT_UP #WHEEL
+        self.mouseState['4'] = GLUT_UP #WHEEL
         self.pressedTime = {}
         self.pressedTime[GLUT_LEFT_BUTTON] = 0
         self.pressedTime[GLUT_MIDDLE_BUTTON] = 0
         self.pressedTime[GLUT_RIGHT_BUTTON] = 0
+        self.pressedTime[3] = 0
+        self.pressedTime[4] = 0
         self.pressedTimeOld = {}
         self.pressedTimeOld[GLUT_LEFT_BUTTON] = 0
         self.pressedTimeOld[GLUT_MIDDLE_BUTTON] = 0
         self.pressedTimeOld[GLUT_RIGHT_BUTTON] = 0
+        self.pressedTimeOld[3] = 0
+        self.pressedTimeOld[4] = 0
 
 
     def register_button(self, mouseEvent):
