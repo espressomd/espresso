@@ -75,7 +75,7 @@ invoke the :meth:`espressomd.constraints.add` method::
 All previously listed shapes can be added to the system's constraints 
 by passing a initialized shape object to :meth:`system.constraints.add`, returning a constraint object ::
   
-    misshaped = Wall( dist=20, normal=[0.1, 0.0, 1] )
+    misshaped = Wall(dist=20, normal=[0.1, 0.0, 1])
     myConstraint = system.constraints.add(shape = myShape, particle_type=p_type)
 
 The extra argument ``particle_type`` specifies the non-bonded interaction to be used with
@@ -195,7 +195,7 @@ Therefore negative distances are quite common!
    
 Pictured is an example constraint with a ``Wall`` shape created with ::
 
-    wall = Wall( dist=20, normal=[0.1,0.0,1] )
+    wall = Wall(dist=20, normal=[0.1,0.0,1])
     system.constraints.add(shape=wall, particle_type=0)
     
 In variant (1) if the only_positive flag is set to 1, interactions are only calculated if
@@ -223,7 +223,7 @@ The direction ``direction`` determines the force direction, ``-1`` or for inward
    
 Pictured is an example constraint with a ``Sphere`` shape created with ::
   
-    sphere = Sphere(center=[25,25,25], radius = 15, direction = 1 )
+    sphere = Sphere(center=[25,25,25], radius=15, direction=1)
     system.constraints.add(shape=sphere, particle_type=0)
 
 
@@ -263,8 +263,8 @@ The direction ``direction`` determines the force direction, ``-1`` or for inward
    
 Pictured is an example constraint with a ``Cylinder`` shape created with ::
 
-    cylinder=Cylinder(center=[25, 25, 25], axis = [1, 0, 0], direction = 1, radius = 10, length = 30)
-    system.constraints.add(shape=cylinder, particle_type = 0)
+    cylinder = Cylinder(center=[25, 25, 25], axis=[1, 0, 0], direction=1, radius=10, length=30)
+    system.constraints.add(shape=cylinder, particle_type=0)
 
 :class:`espressomd.shapes.Rhomboid`
     A rhomboid or parallelpiped.
@@ -280,6 +280,7 @@ The direction ``direction`` determines the force direction, ``-1`` or for inward
  ::
 
     rhomboid = Rhomboid(pos=[5.0, 5.0, 5.0], a=[1.0, 1.0, 0.0], b=[0.0, 0.0, 1.0], c=[0.0, 1.0, 0.0], direction=1)
+    system.constraints.add(shape=rhomboid, particle_type=0, penetrable=1)
 
 creates a rhomboid defined by one corner located at ``[5.0, 5.0, 5.0]`` and three
 adjacent edges, defined by the three vectors connecting the corner with its three neighboring corners, ``(1,1,0)`` , ``(0,0,1)`` and ``(0,1,0)``.
@@ -301,8 +302,8 @@ Dimension of the maze can be controlled by ``dim``: 0 for one dimensional, 1 for
 
 Pictured is an example constraint with a ``Maze`` shape created with ::
 
-    maze=Maze(cylrad = 2, dim = 2, nsphere = 5, sphrad = 6)
-    system.constraints.add(shape=maze, particle_type = 0, penetrable = 1)
+    maze = Maze(cylrad=2, dim=2, nsphere=5, sphrad=6)
+    system.constraints.add(shape=maze, particle_type=0, penetrable=1)
 
 
 :class:`espressomd.shapes.SimplePore`
@@ -321,8 +322,8 @@ The pore openings are smoothed with torus segments, the radius of which can be s
 
 Pictured is an example constraint with a ``SimplePore`` shape created with ::
 
-    pore=SimplePore(axis=[1, 0, 0], length=15, radius=12.5, smoothing_radius=2, center=[25, 25, 25])
-    system.constraints.add(shape=pore, particle_type = 0, penetrable  = 1)
+    pore = SimplePore(axis=[1, 0, 0], length=15, radius=12.5, smoothing_radius=2, center=[25, 25, 25])
+    system.constraints.add(shape=pore, particle_type=0, penetrable=1)
 
     
 :class:`espressomd.shapes.Stomatocyte`
@@ -355,7 +356,7 @@ but the combination 7:3:1 is a good point to start from when trying to modify th
    
 Pictured is an example constraint with a ``Stomatocyte`` shape (with a closeup of the internal structure) created with ::
   
-    stomatocyte=Stomatocyte(inner_radius=3, outer_radius=7, axis=[1.0, 0.0, 0.0], center=[25, 25, 25], layer_width=3, direction=1)
+    stomatocyte = Stomatocyte(inner_radius=3, outer_radius=7, axis=[1.0, 0.0, 0.0], center=[25, 25, 25], layer_width=3, direction=1)
     system.constraints.add(shape=stomatocyte, particle_type=0, penetrable=1)
 
     
@@ -391,8 +392,8 @@ The meaning of the geometrical parameters can be inferred from the schematic in 
   
 Pictured is an example constraint with a ``Slitpore`` shape created with ::
   
-    slitpore=Slitpore(Slitpore(channel_width = 30, lower_smoothing_radius = 3, upper_smoothing_radius = 3, pore_length = 40, pore_mouth = 60, pore_width = 10)
-    system.constraints.add(shape=slitpore, particle_type = 0, penetrable = 1)
+    slitpore = Slitpore(channel_width=30, lower_smoothing_radius=3, upper_smoothing_radius=3, pore_length=40, pore_mouth=60, pore_width=10)
+    system.constraints.add(shape=slitpore, particle_type=0, penetrable=1)
 
 
 :class:`espressomd.shapes.SpheroCylinder`
@@ -412,8 +413,8 @@ The direction ``direction`` determines the force direction, ``-1`` or for inward
    
 Pictured is an example constraint with a ``SpheroCylinder`` shape created with ::
 
-    spherocylinder = SpheroCylinder(center=[25, 25, 25], axis = [1, 0, 0], direction = 1, radius = 10, length = 30)
-    system.constraints.add(shape=spherocylinder, particle_type = 0)
+    spherocylinder = SpheroCylinder(center=[25, 25, 25], axis=[1, 0, 0], direction=1, radius=10, length=30)
+    system.constraints.add(shape=spherocylinder, particle_type=0)
 
 
 :class:`espressomd.shapes.Hollowcone`
@@ -439,7 +440,7 @@ This shape supports the ``direction`` parameter, +1 the normal points out of the
 
 Pictured is an example constraint with a ``Hollowcone`` shape created with ::
   
-    hollowcone=Hollowcone(HollowCone(inner_radius=5, outer_radius=20, opening_angle=np.pi/4.0, axis=[1.0, 0.0, 0.0], center=[25, 25, 25], width=2, direction=1)
+    hollowcone = HollowCone(inner_radius=5, outer_radius=20, opening_angle=np.pi/4.0, axis=[1.0, 0.0, 0.0], center=[25, 25, 25], width=2, direction=1)
     system.constraints.add(shape=hollowcone, particle_type=0, penetrable=1)
 
 
