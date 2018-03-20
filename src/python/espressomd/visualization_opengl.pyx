@@ -37,9 +37,11 @@ class openGLLive(object):
     draw_box : :obj:`bool`, optional
                Draw wireframe boundaries.
     draw_axis : :obj:`bool`, optional
-                Draws xyz system axes.
+                Draw xyz system axes.
     draw_nodes : :obj:`bool`, optional
-                Draws node boxes.
+                Draw node boxes.
+    draw_cells : :obj:`bool`, optional
+                Draw cell boxes.
     quality_particles : :obj:`int`, optional
                         The number of subdivisions for particle spheres.
     quality_bonds : :obj:`int`, optional
@@ -210,6 +212,7 @@ class openGLLive(object):
             'draw_box': True,
             'draw_axis': True,
             'draw_nodes': False,
+            'draw_cells': True,
             
             'update_fps': 30, 
             
@@ -301,6 +304,15 @@ class openGLLive(object):
         IF not ROTATION:
             self.specs['director_arrows'] = False
 
+        IF not CONSTRAINTS:
+            self.specs['draw_constraints'] = False
+
+        # ESPRESSO RELATED INITS THAT ARE KNOWN ONLY WHEN RUNNING THE
+        # INTEGRATION LOOP ARE CALLED ONCE IN UPDATE LOOP: 
+        # CONSTRAINTS, NODE BOXES, CELL BOXES, CHARGE RANGE, BONDS
+
+        # ESPRESSO RELATED INITS THAT ARE KNOWN ON INSTANTIATION GO HERE:
+        
         # CONTENT OF PARTICLE DATA
         self.has_particle_data = {}
         self.has_particle_data['velocity'] = self.specs['velocity_arrows']
@@ -313,18 +325,7 @@ class openGLLive(object):
         self.has_particle_data['director'] = self.specs['director_arrows']
         self.has_particle_data['node'] = self.specs['particle_coloring'] == 'node'
         
-        # NODE BOXES
-        if self.specs['draw_nodes']:
-            self.node_box_origins = [] 
-            self.local_box_l = system.cell_system.get_state()['local_box_l']
-            n_ori = np.zeros(3)
-            for i in range(system.cell_system.node_grid[0]):
-                for j in range(system.cell_system.node_grid[1]):
-                    for k in range(system.cell_system.node_grid[2]):
-                        self.node_box_origins.append(np.array([i,j,k]) * self.local_box_l)
-
-
-        # FULL PARTICLE INFO OF HIGHLIGHTED PARTICLE
+        # PARTICLE INFO OF HIGHLIGHTED PARTICLE: COLLECT PARTICLE ATTRIBUTES
         self.highlighted_particle = {}
         self.particle_attributes = []
         for d in dir(ParticleHandle):
@@ -333,9 +334,26 @@ class openGLLive(object):
                     self.particle_attributes.append(d)
         self.max_len_attr = max([len(a) for a in self.particle_attributes])
 
-        # CALC INVERSE BACKGROUND COLOR FOR BOX
+        # FIXED COLORS FROM INVERSE BACKGROUND COLOR FOR GOOD CONTRAST
         self.invBackgroundCol = np.array([1 - self.specs['background_color'][0], 1 -
-                                          self.specs['background_color'][1], 1 - self.specs['background_color'][2]])
+                                          self.specs['background_color'][1], 1 - self.specs['background_color'][2],1.0])
+        
+        self.node_box_color = np.copy(self.invBackgroundCol)
+        self.node_box_color[0] += 0.5 * (0.5 - self.node_box_color[0]) 
+        self.node_box_color[3] = 0.6 
+        
+        self.cell_box_color = np.copy(self.invBackgroundCol)
+        self.cell_box_color[1] += 0.5 * (0.5 - self.cell_box_color[1]) 
+        self.cell_box_color[3] = 0.4 
+
+        self.text_color = np.copy(self.invBackgroundCol)
+
+        # INCREASE LINE THICKNESS IF NODE/CELL BOX IS ENABLED
+        self.line_width_fac = 1.0
+        if self.specs['draw_nodes']:
+            self.line_width_fac += 0.5
+        if self.specs['draw_cells']:
+            self.line_width_fac += 0.5
 
         # HAS PERIODIC IMAGES
         self.has_images = any(i != 0 for i in self.specs['periodic_images'])
@@ -374,7 +392,8 @@ class openGLLive(object):
                 self.update()
 
                 if self.paused:
-                    time.sleep(0)
+                    # sleep(0) is worse
+                    time.sleep(0.0001)
                 else:
                     try:
                         self.system.integrator.run(integ_steps)
@@ -425,8 +444,13 @@ class openGLLive(object):
                 if self.has_particle_data['charge']:
                     self.update_charge_color_range()
                 self.update_bonds()
-                IF CONSTRAINTS:
+                if self.specs['draw_constraints']:
                     self.update_constraints()
+                if self.specs['draw_cells'] or self.specs['draw_nodes']:
+                    self.update_nodes()
+                if self.specs['draw_cells']:
+                    self.update_cells()
+
                 self.hasParticleData = True
 
             # UPDATES
@@ -516,6 +540,23 @@ class openGLLive(object):
         edges.append(p - diag * v1)
         edges.append(p - diag * v2)
         return edges
+
+    def update_cells(self):
+        self.cell_box_origins = [] 
+        cell_system_state = self.system.cell_system.get_state()
+        self.cell_size = cell_system_state['cell_size']
+        for i in range(cell_system_state['cell_grid'][0]):
+            for j in range(cell_system_state['cell_grid'][1]):
+                for k in range(cell_system_state['cell_grid'][2]):
+                    self.cell_box_origins.append(np.array([i,j,k]) * self.cell_size)
+
+    def update_nodes(self):
+        self.node_box_origins = [] 
+        self.local_box_l = self.system.cell_system.get_state()['local_box_l']
+        for i in range(self.system.cell_system.node_grid[0]):
+            for j in range(self.system.cell_system.node_grid[1]):
+                for k in range(self.system.cell_system.node_grid[2]):
+                    self.node_box_origins.append(np.array([i,j,k]) * self.local_box_l)
 
     # GET THE update_constraints DATA
     def update_constraints(self):
@@ -626,6 +667,8 @@ class openGLLive(object):
             self.draw_system_box()
         if self.specs['draw_nodes']:
             self.draw_nodes()
+        if self.specs['draw_cells']:
+            self.draw_cells()
 
         if self.specs['draw_axis']:
             axis_fac = 0.2
@@ -641,16 +684,20 @@ class openGLLive(object):
         if self.specs['draw_bonds']:
             self.draw_bonds()
 
-        IF CONSTRAINTS:
-            if self.specs['draw_constraints']:
-                self.draw_constraints()
+        if self.specs['draw_constraints']:
+            self.draw_constraints()
 
     def draw_system_box(self):
-        draw_box([0, 0, 0], self.system.box_l, self.invBackgroundCol)
+        draw_box([0, 0, 0], self.system.box_l, self.invBackgroundCol, 2.0* self.line_width_fac)
     
     def draw_nodes(self):
         for n in self.node_box_origins:
-            draw_box(n, self.local_box_l, self.invBackgroundCol*0.7)
+            draw_box(n, self.local_box_l, self.node_box_color, 1.5 * self.line_width_fac)
+    
+    def draw_cells(self):
+        for n in self.node_box_origins:
+            for c in self.cell_box_origins:
+                draw_box(c + n, self.cell_size, self.cell_box_color, 0.75 * self.line_width_fac)
 
     def draw_constraints(self):
 
@@ -927,6 +974,7 @@ class openGLLive(object):
 
                 self.draw()
                 
+                # DRAW FPS TEXT
                 if self.specs['draw_fps']:
                     t = time.time()
                     if t - self.fps_last > 1.0:
@@ -934,15 +982,16 @@ class openGLLive(object):
                         self.fps = self.fps_count
                         self.fps_count = 0
 
-                    self.draw_text(10, 10, "{} fps".format(self.fps), self.invBackgroundCol)
-                    self.draw_text(10, 30, "{} ms/frame".format(1000.0/self.fps),  self.invBackgroundCol)
+                    self.draw_text(10, 10, "{} fps".format(self.fps), self.text_color)
+                    self.draw_text(10, 30, "{} ms/frame".format(1000.0/self.fps),  self.text_color)
                     self.fps_count += 1
 
+                # DRAW PARTICLE INFO
                 if self.infoId != -1:
                     y = 0
                     for k, v in self.highlighted_particle.items():
                         txt = "{} {} {}".format(k, (self.max_len_attr-len(k)) * ' ',  v) 
-                        self.draw_text(10, self.specs['window_size'][1] - 10 - 15 * y, txt, self.invBackgroundCol)
+                        self.draw_text(10, self.specs['window_size'][1] - 10 - 15 * y, txt, self.text_color)
                         y += 1
                     
 
@@ -1206,11 +1255,15 @@ class openGLLive(object):
         self.keyboardManager.register_button(KeyboardButtonEvent(
             GLUT_KEY_RIGHT, KeyboardFireEvent.Pressed, self.next_particle_info, False))
 
-        # KEYBOARD BUTTONS
+        # <SPACE> PAUSE INTEGRATION THREAD
         self.keyboardManager.register_button(KeyboardButtonEvent(
             ' ', KeyboardFireEvent.Pressed, self.pause, True))
+        
+        # <ESCAPE> QUIT
         self.keyboardManager.register_button(KeyboardButtonEvent(
             '\x1b', KeyboardFireEvent.Pressed, self.quit, True))
+
+        # CAMERA CONTROL VIA KEYBOARD
         self.keyboardManager.register_button(KeyboardButtonEvent(
             'w', KeyboardFireEvent.Hold, self.camera.move_up, True))
         self.keyboardManager.register_button(KeyboardButtonEvent(
@@ -1283,10 +1336,14 @@ class openGLLive(object):
         glClearColor(self.specs['background_color'][0], self.specs[
                      'background_color'][1], self.specs['background_color'][2], 1.)
 
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
+        glEnable(GL_POINT_SMOOTH)
+        glEnable(GL_LINE_SMOOTH)
+
+        #BAD FOR TRANSPARENT PARTICLES
         #glEnable(GL_CULL_FACE)
         #glCullFace(GL_BACK)
 
@@ -1355,8 +1412,9 @@ def set_solid_material(r, g, b, a=1.0, ambient=[0.6, 0.6, 0.6], diffuse=[1.0, 1.
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, int(shininess * 128))
 
 
-def draw_box(p0, s, color):
-    set_solid_material(color[0], color[1], color[2])
+def draw_box(p0, s, color, width):
+    glLineWidth(width)
+    set_solid_material(color[0], color[1], color[2], color[3])
     glPushMatrix()
     glTranslatef(p0[0], p0[1], p0[2])
     glBegin(GL_LINE_LOOP)
@@ -1420,8 +1478,6 @@ def draw_triangles(triangles, color, material):
 def draw_points(points, pointsize, color, material):
     set_solid_material(color[0], color[1], color[2], color[3],
                       material[0], material[1], material[2], material[3])
-    glEnable(GL_POINT_SMOOTH)
-
     glPointSize(pointsize)
     glBegin(GL_POINTS)
     for p in points:
