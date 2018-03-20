@@ -391,8 +391,8 @@ The meaning of the geometrical parameters can be inferred from the schematic in 
   
 Pictured is an example constraint with a ``Slitpore`` shape created with ::
   
-    slitpore=Slitpore(Slitpore(channel_width = 30, lower_smoothing_radius = 3, upper_smoothing_radius = 3, pore_length = 40, pore_mouth = 60, pore_width = 10)
-    system.constraints.add(shape=slitpore, particle_type = 0, penetrable = 1)
+    slitpore = Slitpore(channel_width=30, lower_smoothing_radius=3, upper_smoothing_radius=3, pore_length=40, pore_mouth=60, pore_width=10)
+    system.constraints.add(shape=slitpore, particle_type=0, penetrable=1)
 
 
 :class:`espressomd.shapes.SpheroCylinder`
@@ -439,7 +439,7 @@ This shape supports the ``direction`` parameter, +1 the normal points out of the
 
 Pictured is an example constraint with a ``Hollowcone`` shape created with ::
   
-    hollowcone=Hollowcone(HollowCone(inner_radius=5, outer_radius=20, opening_angle=np.pi/4.0, axis=[1.0, 0.0, 0.0], center=[25, 25, 25], width=2, direction=1)
+    hollowcone = HollowCone(inner_radius=5, outer_radius=20, opening_angle=np.pi/4.0, axis=[1.0, 0.0, 0.0], center=[25, 25, 25], width=2, direction=1)
     system.constraints.add(shape=hollowcone, particle_type=0, penetrable=1)
 
 
