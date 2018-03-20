@@ -845,9 +845,10 @@ void move_if_local(ParticleList &src, ParticleList &rest) {
     auto target_cell = dd_save_position_to_cell(part.r.p);
 
     if (target_cell) {
-      move_indexed_particle(target_cell, &src, i);
+      auto new_part = move_unindexed_particle(target_cell, &src, i);
+      local_particles[new_part->identity()] = new_part;
     } else {
-      move_indexed_particle(&rest, &src, i);
+      move_unindexed_particle(&rest, &src, i);
     }
 
     if (i < src.n)
@@ -866,7 +867,7 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
       if (PERIODIC(dir) || (boundary[2 * dir] == 0)) {
         CELL_TRACE(fprintf(stderr, "%d: dd_ex_and_sort_p: send part left %d\n",
                            this_node, part.p.identity));
-        move_indexed_particle(&left, &src, i);
+        move_unindexed_particle(&left, &src, i);
         if (i < src.n)
           i--;
       }
@@ -874,7 +875,7 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
       if (PERIODIC(dir) || (boundary[2 * dir + 1] == 0)) {
         CELL_TRACE(fprintf(stderr, "%d: dd_ex_and_sort_p: send part right %d\n",
                            this_node, part.p.identity));
-        move_indexed_particle(&right, &src, i);
+        move_unindexed_particle(&right, &src, i);
         if (i < src.n)
           i--;
       }
@@ -894,8 +895,6 @@ void dd_exchange_and_sort_particles(ParticleList *pl) {
       ParticleList send_buf, recv_buf;
       move_left_or_right(*pl, send_buf, send_buf, dir);
 
-      CELL_TRACE(fprintf(stderr, "%d: send receive %d\n", this_node, dir));
-
       if (node_pos[dir] % 2 == 0) {
         send_particles(&send_buf, node_neighbors[2 * dir]);
         recv_particles(&recv_buf, node_neighbors[2 * dir + 1]);
@@ -909,8 +908,6 @@ void dd_exchange_and_sort_particles(ParticleList *pl) {
       ParticleList send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
 
       move_left_or_right(*pl, send_buf_l, send_buf_r, dir);
-
-      CELL_TRACE(fprintf(stderr, "%d: send receive %d\n", this_node, dir));
 
       if (node_pos[dir] % 2 == 0) {
         send_particles(&send_buf_l, node_neighbors[2 * dir]);
