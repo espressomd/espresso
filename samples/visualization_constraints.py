@@ -64,17 +64,4 @@ system.non_bonded_inter[0, 1].lennard_jones.set_params(
 
 system.force_cap = 1000.0
 
-
-def main():
-
-    while True:
-        system.integrator.run(1)
-        visualizer.update()
-
-# Start simulation in seperate thread
-t = Thread(target=main)
-t.daemon = True
-t.start()
-
-# Start blocking visualizer
-visualizer.start()
+visualizer.run(1)

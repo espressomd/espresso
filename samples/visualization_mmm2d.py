@@ -20,7 +20,7 @@ system.cell_system.set_layered(n_layers=5,use_verlet_lists = False)
 system.periodicity = [1, 1, 0]
 
 qion = 1
-for i in range(300):
+for i in range(200):
     rpos = numpy.random.random(3) * box_l
     system.part.add(pos=rpos, type = 0, q = qion)
     qion *= -1
@@ -44,17 +44,4 @@ system.thermostat.set_langevin(kT=0.1, gamma=1.0)
 mmm2d = electrostatics.MMM2D(prefactor = 10.0, maxPWerror = 1e-3, const_pot = 1, pot_diff = 50.0)
 system.actors.add(mmm2d)
 
-def main():
-
-    while True:
-        system.integrator.run(1)
-        visualizer.update()
-
-
-# Start simulation in seperate thread
-t = Thread(target=main)
-t.daemon = True
-t.start()
-
-# Start blocking visualizer
-visualizer.start()
+visualizer.run(1)

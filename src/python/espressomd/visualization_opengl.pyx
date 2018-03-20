@@ -359,11 +359,12 @@ class openGLLive(object):
         self.has_images = any(i != 0 for i in self.specs['periodic_images'])
 
         # INITS
+        self.system = system
         self.last_T = -1
+        self.last_box_l = self.system.box_l
         self.fps_last = 0 
         self.fps = 0
         self.fps_count = 0
-        self.system = system
         self.started = False
         self.quit_savely = False
         self.paused = False
@@ -466,6 +467,15 @@ class openGLLive(object):
                     # LB UPDATE
                     if self.specs['LB']:
                         self.update_lb()
+
+                    # CELLSYSTEM UPDATE 
+                    if self.specs['draw_cells'] or self.specs['draw_nodes']:
+                        if not (self.last_box_l == self.system.box_l).all():
+                            self.last_box_l = np.copy(self.system.box_l)
+                            self.update_nodes()
+                            if self.specs['draw_cells']:
+                                self.update_cells()
+                        
 
                 # KEYBOARD CALLBACKS MAY CHANGE ESPRESSO SYSTEM PROPERTIES,
                 # ONLY SAVE TO CHANGE HERE

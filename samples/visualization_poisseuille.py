@@ -42,14 +42,4 @@ for i in range(100):
 for wall in walls:
     system.lbboundaries.add(wall)
 
-def main():
-    while True:
-        system.integrator.run(1)
-        visualizer.update()
-
-# Start simulation in seperate thread
-t = Thread(target=main)
-t.daemon = True
-t.start()
-
-visualizer.start()
+visualizer.run(1)

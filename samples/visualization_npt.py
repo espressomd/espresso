@@ -38,11 +38,16 @@ system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
 def main():
     p = 1.0
     b = system.box_l
+    cnt = 0
     while True:
         system.integrator.run(1)
-        print("Pressure:", system.analysis.pressure()
-              ['total'], "Box:", system.box_l)
+        if cnt > 1000:
+            print("Pressure:", system.analysis.pressure()
+                  ['total'], "Box:", system.box_l)
+            cnt = 0
+
         visualizer.update()
+        cnt += 1
 
 
 # Start simulation in seperate thread
