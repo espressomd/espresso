@@ -212,7 +212,7 @@ class openGLLive(object):
             'draw_box': True,
             'draw_axis': True,
             'draw_nodes': False,
-            'draw_cells': True,
+            'draw_cells': False,
             
             'update_fps': 30, 
             
