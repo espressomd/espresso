@@ -315,12 +315,13 @@ void fold_and_reset(Particle &p) {
 /**
  * @TODO:
  *  - Remove p_old reset from sr loop.
+ *  - Adapt layered
  *  - Switch to unindexed particles.
  *  - Swtich to async comm.
  *  - Force global sort for Lees-Edwards.
  */
 
-ParticleList sort_local_parts(const CellStructure &cs, CellPList cells) {
+ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells) {
   ParticleList displaced_parts;
 
   for (auto &c : cells) {
@@ -367,7 +368,7 @@ void cells_resort_particles(int global_flag) {
     nsq_balance_particles(global_flag);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    auto displaced_parts = sort_local_parts(cell_structure, local_cells);
+    auto displaced_parts = sort_and_fold_parts(cell_structure, local_cells);
 
     if (global_flag) {
       /* Worst case we need node_grid - 1 rounds per direction. */

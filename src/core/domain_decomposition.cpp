@@ -837,86 +837,96 @@ void dd_topology_release() {
 #endif
 }
 
-void dd_exchange_and_sort_particles(ParticleList *pl) {
-  ParticleList send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
+namespace {
+void move_if_local(ParticleList &src, ParticleList &rest) {
+  for (int i = 0; i < src.n; i++) {
+    auto &part = src.part[i];
 
+    auto target_cell = dd_save_position_to_cell(part.r.p);
+
+    if (target_cell) {
+      move_indexed_particle(target_cell, &src, i);
+    } else {
+      move_indexed_particle(&rest, &src, i);
+    }
+
+    if (i < src.n)
+      i--;
+  }
+
+  assert(src.n == 0);
+}
+
+void move_left_or_right(ParticleList &src, ParticleList &left,
+                        ParticleList &right, int dir) {
+  for (int i = 0; i < src.n; i++) {
+    auto &part = src.part[i];
+
+    if (get_mi_coord(part.r.p[dir], my_left[dir], dir) < 0.0) {
+      if (PERIODIC(dir) || (boundary[2 * dir] == 0)) {
+        CELL_TRACE(fprintf(stderr, "%d: dd_ex_and_sort_p: send part left %d\n",
+                           this_node, part.p.identity));
+        move_indexed_particle(&left, &src, i);
+        if (i < src.n)
+          i--;
+      }
+    } else if (get_mi_coord(part.r.p[dir], my_right[dir], dir) >= 0.0) {
+      if (PERIODIC(dir) || (boundary[2 * dir + 1] == 0)) {
+        CELL_TRACE(fprintf(stderr, "%d: dd_ex_and_sort_p: send part right %d\n",
+                           this_node, part.p.identity));
+        move_indexed_particle(&right, &src, i);
+        if (i < src.n)
+          i--;
+      }
+    }
+  }
+}
+}
+
+void dd_exchange_and_sort_particles(ParticleList *pl) {
   for (int dir = 0; dir < 3; dir++) {
     /* Single node direction, no action needed. */
     if (node_grid[dir] == 1) {
       continue;
-    }
+      /* In this (common) case left and right neighbors are
+         the same, and we need only one communication */
+    } else if (node_grid[dir] == 2) {
+      ParticleList send_buf, recv_buf;
+      move_left_or_right(*pl, send_buf, send_buf, dir);
 
-    for (int i = 0; i < pl->n; i++) {
-      auto &part = pl->part[i];
+      CELL_TRACE(fprintf(stderr, "%d: send receive %d\n", this_node, dir));
 
-      if (get_mi_coord(part.r.p[dir], my_left[dir], dir) < 0.0) {
-        if (PERIODIC(dir) || (boundary[2 * dir] == 0)) {
-          CELL_TRACE(fprintf(stderr,
-                             "%d: dd_ex_and_sort_p: send part left %d\n",
-                             this_node, part.p.identity));
-          move_indexed_particle(&send_buf_l, pl, i);
-          if (i < pl->n)
-            i--;
-        }
-      } else if (get_mi_coord(part.r.p[dir], my_right[dir], dir) >= 0.0) {
-        if (PERIODIC(dir) || (boundary[2 * dir + 1] == 0)) {
-          CELL_TRACE(fprintf(stderr,
-                             "%d: dd_ex_and_sort_p: send part right %d\n",
-                             this_node, part.p.identity));
-          move_indexed_particle(&send_buf_r, pl, i);
-          if (i < pl->n)
-            i--;
-        }
+      if (node_pos[dir] % 2 == 0) {
+        send_particles(&send_buf, node_neighbors[2 * dir]);
+        recv_particles(&recv_buf, node_neighbors[2 * dir + 1]);
+      } else {
+        recv_particles(&recv_buf, node_neighbors[2 * dir + 1]);
+        send_particles(&send_buf, node_neighbors[2 * dir]);
       }
-    }
 
-    CELL_TRACE(fprintf(stderr, "%d: send receive %d\n", this_node, dir));
-
-    if (node_pos[dir] % 2 == 0) {
-      send_particles(&send_buf_l, node_neighbors[2 * dir]);
-      recv_particles(&recv_buf_r, node_neighbors[2 * dir + 1]);
-      send_particles(&send_buf_r, node_neighbors[2 * dir + 1]);
-      recv_particles(&recv_buf_l, node_neighbors[2 * dir]);
+      move_if_local(recv_buf, *pl);
     } else {
-      recv_particles(&recv_buf_r, node_neighbors[2 * dir + 1]);
-      send_particles(&send_buf_l, node_neighbors[2 * dir]);
-      recv_particles(&recv_buf_l, node_neighbors[2 * dir]);
-      send_particles(&send_buf_r, node_neighbors[2 * dir + 1]);
-    }
+      ParticleList send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
 
-    for (int i = 0; i < recv_buf_l.n; i++) {
-      auto &part = recv_buf_l.part[i];
+      move_left_or_right(*pl, send_buf_l, send_buf_r, dir);
 
-      auto target_cell = dd_save_position_to_cell(part.r.p);
+      CELL_TRACE(fprintf(stderr, "%d: send receive %d\n", this_node, dir));
 
-      if (target_cell) {
-        move_indexed_particle(target_cell, &recv_buf_l, i);
+      if (node_pos[dir] % 2 == 0) {
+        send_particles(&send_buf_l, node_neighbors[2 * dir]);
+        recv_particles(&recv_buf_r, node_neighbors[2 * dir + 1]);
+        send_particles(&send_buf_r, node_neighbors[2 * dir + 1]);
+        recv_particles(&recv_buf_l, node_neighbors[2 * dir]);
       } else {
-        move_indexed_particle(pl, &recv_buf_l, i);
+        recv_particles(&recv_buf_r, node_neighbors[2 * dir + 1]);
+        send_particles(&send_buf_l, node_neighbors[2 * dir]);
+        recv_particles(&recv_buf_l, node_neighbors[2 * dir]);
+        send_particles(&send_buf_r, node_neighbors[2 * dir + 1]);
       }
 
-      if (i < recv_buf_l.n)
-        i--;
+      move_if_local(recv_buf_l, *pl);
+      move_if_local(recv_buf_r, *pl);
     }
-
-    assert(recv_buf_l.n == 0);
-
-    for (int i = 0; i < recv_buf_r.n; i++) {
-      auto &part = recv_buf_r.part[i];
-
-      auto target_cell = dd_save_position_to_cell(part.r.p);
-
-      if (target_cell) {
-        move_indexed_particle(target_cell, &recv_buf_r, i);
-      } else {
-        move_indexed_particle(pl, &recv_buf_r, i);
-      }
-
-      if (i < recv_buf_r.n)
-        i--;
-    }
-
-    assert(recv_buf_r.n == 0);
   }
 }
 
