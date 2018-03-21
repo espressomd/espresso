@@ -27,152 +27,141 @@
 #include <memory>
 
 #include "Observable.hpp"
-#include "core/observables/CylindricalLBVelocityProfile.hpp"
 #include "core/observables/CylindricalLBProfileObservable.hpp"
+#include "core/observables/CylindricalLBVelocityProfile.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
 
 template <typename CoreCylLBObs>
-class CylindricalLBProfileObservable : public AutoParameters<CylindricalLBProfileObservable<CoreCylLBObs>, Observable> {
+class CylindricalLBProfileObservable
+    : public AutoParameters<CylindricalLBProfileObservable<CoreCylLBObs>,
+                            Observable> {
 public:
-  static_assert(
-      std::is_base_of<::Observables::CylindricalLBProfileObservable, CoreCylLBObs>::value, "");
-  CylindricalLBProfileObservable() : m_observable(std::make_shared<CoreCylLBObs>()) {
+  static_assert(std::is_base_of<::Observables::CylindricalLBProfileObservable,
+                                CoreCylLBObs>::value,
+                "");
+  CylindricalLBProfileObservable()
+      : m_observable(std::make_shared<CoreCylLBObs>()) {
     this->add_parameters(
         {{"center",
           [this](const Variant &v) {
-            cylindrical_profile_observable()->center = get_value<::Vector<3, double>>(v);
+            cylindrical_profile_observable()->center =
+                get_value<::Vector<3, double>>(v);
           },
-          [this]() {
-            return cylindrical_profile_observable()->center;
-        }},
-        {"axis",
+          [this]() { return cylindrical_profile_observable()->center; }},
+         {"axis",
           [this](const Variant &v) {
             cylindrical_profile_observable()->axis = get_value<std::string>(v);
           },
-          [this]() {
-            return cylindrical_profile_observable()->axis;
-        }},
-        {"n_r_bins",
+          [this]() { return cylindrical_profile_observable()->axis; }},
+         {"n_r_bins",
           [this](const Variant &v) {
             cylindrical_profile_observable()->n_r_bins = get_value<int>(v);
           },
-          [this]() {
-            return cylindrical_profile_observable()->n_r_bins;
-        }},
-        {"n_phi_bins",
+          [this]() { return cylindrical_profile_observable()->n_r_bins; }},
+         {"n_phi_bins",
           [this](const Variant &v) {
             cylindrical_profile_observable()->n_phi_bins = get_value<int>(v);
           },
-          [this]() {
-            return cylindrical_profile_observable()->n_phi_bins;
-        }},
-        {"n_z_bins",
+          [this]() { return cylindrical_profile_observable()->n_phi_bins; }},
+         {"n_z_bins",
           [this](const Variant &v) {
             cylindrical_profile_observable()->n_z_bins = get_value<int>(v);
           },
-          [this]() {
-            return cylindrical_profile_observable()->n_z_bins;
-        }},
-        {"min_r",
+          [this]() { return cylindrical_profile_observable()->n_z_bins; }},
+         {"min_r",
           [this](const Variant &v) {
             cylindrical_profile_observable()->min_r = get_value<double>(v);
           },
-          [this]() {
-            return cylindrical_profile_observable()->min_r;
-        }},
-        {"min_phi",
+          [this]() { return cylindrical_profile_observable()->min_r; }},
+         {"min_phi",
           [this](const Variant &v) {
             cylindrical_profile_observable()->min_phi = get_value<double>(v);
           },
-          [this]() {
-            return cylindrical_profile_observable()->min_phi;
-        }},
-        {"min_z",
+          [this]() { return cylindrical_profile_observable()->min_phi; }},
+         {"min_z",
           [this](const Variant &v) {
             cylindrical_profile_observable()->min_z = get_value<double>(v);
           },
-          [this]() {
-            return cylindrical_profile_observable()->min_z;
-        }},
-        {"max_r",
+          [this]() { return cylindrical_profile_observable()->min_z; }},
+         {"max_r",
           [this](const Variant &v) {
             cylindrical_profile_observable()->max_r = get_value<double>(v);
           },
-          [this]() {
-            return cylindrical_profile_observable()->max_r;
-        }},
-        {"max_phi",
+          [this]() { return cylindrical_profile_observable()->max_r; }},
+         {"max_phi",
           [this](const Variant &v) {
             cylindrical_profile_observable()->max_phi = get_value<double>(v);
           },
-          [this]() {
-            return cylindrical_profile_observable()->max_phi;
-        }},
-        {"max_z",
+          [this]() { return cylindrical_profile_observable()->max_phi; }},
+         {"max_z",
           [this](const Variant &v) {
             cylindrical_profile_observable()->max_z = get_value<double>(v);
           },
-          [this]() {
-            return cylindrical_profile_observable()->max_z;
-        }},
-        {"sampling_delta_x",
+          [this]() { return cylindrical_profile_observable()->max_z; }},
+         {"sampling_delta_x",
           [this](const Variant &v) {
-            cylindrical_profile_observable()->sampling_delta_x = get_value<double>(v);
+            cylindrical_profile_observable()->sampling_delta_x =
+                get_value<double>(v);
             cylindrical_profile_observable()->calculate_sample_positions();
           },
           [this]() {
             return cylindrical_profile_observable()->sampling_delta_x;
-        }},
-        {"sampling_delta_y",
+          }},
+         {"sampling_delta_y",
           [this](const Variant &v) {
-            cylindrical_profile_observable()->sampling_delta_y = get_value<double>(v);
+            cylindrical_profile_observable()->sampling_delta_y =
+                get_value<double>(v);
             cylindrical_profile_observable()->calculate_sample_positions();
           },
           [this]() {
             return cylindrical_profile_observable()->sampling_delta_y;
-        }},
-        {"sampling_delta_z",
+          }},
+         {"sampling_delta_z",
           [this](const Variant &v) {
-            cylindrical_profile_observable()->sampling_delta_z = get_value<double>(v);
+            cylindrical_profile_observable()->sampling_delta_z =
+                get_value<double>(v);
             cylindrical_profile_observable()->calculate_sample_positions();
           },
           [this]() {
             return cylindrical_profile_observable()->sampling_delta_z;
-        }},
-        {"sampling_offset_x",
+          }},
+         {"sampling_offset_x",
           [this](const Variant &v) {
-            cylindrical_profile_observable()->sampling_offset_x = get_value<double>(v);
+            cylindrical_profile_observable()->sampling_offset_x =
+                get_value<double>(v);
             cylindrical_profile_observable()->calculate_sample_positions();
           },
           [this]() {
             return cylindrical_profile_observable()->sampling_offset_x;
-        }},
-        {"sampling_offset_y",
+          }},
+         {"sampling_offset_y",
           [this](const Variant &v) {
-            cylindrical_profile_observable()->sampling_offset_y = get_value<double>(v);
+            cylindrical_profile_observable()->sampling_offset_y =
+                get_value<double>(v);
             cylindrical_profile_observable()->calculate_sample_positions();
           },
           [this]() {
             return cylindrical_profile_observable()->sampling_offset_y;
-        }},
-        {"sampling_offset_z",
+          }},
+         {"sampling_offset_z",
           [this](const Variant &v) {
-            cylindrical_profile_observable()->sampling_offset_z = get_value<double>(v);
+            cylindrical_profile_observable()->sampling_offset_z =
+                get_value<double>(v);
             cylindrical_profile_observable()->calculate_sample_positions();
           },
           [this]() {
             return cylindrical_profile_observable()->sampling_offset_z;
-        }},
-        {"allow_empty_bins",
+          }},
+         {"allow_empty_bins",
           [this](const Variant &v) {
-            cylindrical_profile_observable()->allow_empty_bins = get_value<bool>(v);
+            cylindrical_profile_observable()->allow_empty_bins =
+                get_value<bool>(v);
           },
           [this]() {
             return cylindrical_profile_observable()->allow_empty_bins;
-        }}
-        });
+          }}});
   }
 
   virtual Variant call_method(std::string const &method,
@@ -183,7 +172,8 @@ public:
     return {};
   }
 
-  virtual std::shared_ptr<::Observables::Observable> observable() const override {
+  virtual std::shared_ptr<::Observables::Observable>
+  observable() const override {
     return m_observable;
   }
 
@@ -191,6 +181,7 @@ public:
   cylindrical_profile_observable() const {
     return m_observable;
   }
+
 private:
   std::shared_ptr<CoreCylLBObs> m_observable;
 };
