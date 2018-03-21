@@ -152,11 +152,6 @@ void nsq_topology_init(CellPList *old) {
 void nsq_balance_particles(int global_flag) {
   int i, n, surplus, s_node, tmp, lack, l_node, transfer;
 
-  /* Refold positions in any case, this is always safe. */
-  for (auto &p : local_cells.particles()) {
-    fold_position(p.r.p, p.l.i);
-  }
-
   /* we don't have the concept of neighbors, and therefore don't need that.
      However, if global particle changes happen, we might want to rebalance. */
   if (global_flag != CELL_GLOBAL_EXCHANGE)
@@ -227,9 +222,6 @@ void nsq_balance_particles(int global_flag) {
       update_local_particles(local);
 
       send_particles(&send_buf, l_node);
-#ifdef ADDITIONAL_CHECKS
-      check_particle_consistency();
-#endif
     } else if (l_node == this_node) {
       ParticleList recv_buf{};
 
@@ -239,10 +231,6 @@ void nsq_balance_particles(int global_flag) {
       }
 
       realloc_particlelist(&recv_buf, 0);
-
-#ifdef ADDITIONAL_CHECKS
-      check_particle_consistency();
-#endif
     }
     ppnode[s_node] -= transfer;
     ppnode[l_node] += transfer;

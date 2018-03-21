@@ -153,8 +153,7 @@ void dd_topology_release();
     Molecular dynamics, or any other integration scheme using only local
     particle moves)
 */
-void dd_exchange_and_sort_particles(int global_flag);
-void dd_exchange_and_sort_particles(ParticleList *pl);
+void dd_exchange_and_sort_particles(int global, ParticleList *pl);
 
 /** calculate physical (processor) minimal number of cells */
 int calc_processor_min_num_cells();

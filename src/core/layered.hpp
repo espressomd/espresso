@@ -34,9 +34,6 @@ extern int n_layers, determine_n_layers;
 /** height of the layers, i. e. box_l[2]/n_nodes */
 extern double layer_h, layer_h_i;
 
-/** map a position to a cell, if on this node, else returns nullptr. */
-Cell *layered_position_to_cell(double pos[3]);
-
 /// free all data structure that belong to this cell system
 void layered_topology_release();
 
@@ -44,16 +41,7 @@ void layered_topology_release();
 void layered_topology_init(CellPList *local);
 
 /// distribute all particles such that they are in their dedicated cell
-void layered_exchange_and_sort_particles(int global_flag);
-
-/// calculate short ranged forces
-void layered_calculate_ia();
-
-/// calculate short ranged energy
-void layered_calculate_energies();
-
-/// calculate short ranged virials
-void layered_calculate_virials(int v_comp);
+void layered_exchange_and_sort_particles(int global_flag, ParticleList *displaced_parts);
 
 /// calculate the minimum image vector
 void layered_get_mi_vector(double res[3], double a[3], double b[3]);

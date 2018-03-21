@@ -315,8 +315,6 @@ void fold_and_reset(Particle &p) {
 /**
  * @TODO:
  *  - Remove p_old reset from sr loop.
- *  - Adapt layered
- *  - Switch to unindexed particles.
  *  - Swtich to async comm.
  *  - Force global sort for Lees-Edwards.
  */
@@ -363,36 +361,21 @@ void cells_resort_particles(int global_flag) {
   clear_particle_node();
   n_verlet_updates++;
 
+  auto displaced_parts = sort_and_fold_parts(cell_structure, local_cells);
+
   switch (cell_structure.type) {
-  case CELL_STRUCTURE_LAYERED:
-    layered_exchange_and_sort_particles(global_flag);
-    break;
+  case CELL_STRUCTURE_LAYERED: {
+    layered_exchange_and_sort_particles(global_flag, &displaced_parts);
+  } break;
   case CELL_STRUCTURE_NSQUARE:
     nsq_balance_particles(global_flag);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    auto displaced_parts = sort_and_fold_parts(cell_structure, local_cells);
-
-    if (global_flag) {
-      /* Worst case we need node_grid - 1 rounds per direction. */
-      int rounds_left = node_grid[0] + node_grid[1] + node_grid[2] - 3;
-      while (rounds_left--) {
-        dd_exchange_and_sort_particles(&displaced_parts);
-
-        auto left_over = boost::mpi::all_reduce(comm_cart, displaced_parts.n,
-                                                std::plus<int>());
-
-        if (left_over == 0) {
-          break;
-        }
-      }
-    } else {
-      dd_exchange_and_sort_particles(&displaced_parts);
-    }
-
-    assert(0 == displaced_parts.n);
+    dd_exchange_and_sort_particles(global_flag, &displaced_parts);
     break;
   }
+
+  assert(0 == displaced_parts.n);
 
 #ifdef ADDITIONAL_CHECKS
   /* at the end of the day, everything should be consistent again */
