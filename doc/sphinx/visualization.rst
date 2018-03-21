@@ -124,7 +124,7 @@ Optional keywords:
 Running the visualizer
 ~~~~~~~~~~~~~~~~~~~~~~
 
-| :meth:`espressomd.visualization.openGLLive.run(n)` 
+| :meth:`espressomd.visualization.openGLLive.run()` 
 
 To visually debug your simulation, ``run(n)`` can be used to conveniently start 
 an integration loop with `n` integration steps in a separate thread once the
@@ -149,11 +149,10 @@ visualizer is initialized::
 Screenshots
 ~~~~~~~~~~~
 
+| :meth:`espressomd.visualization.openGLLive.screenshot()`
+
 The openGL visualizer can also be used for offline rendering.
-After creating the visualizer object, call
-
-| :meth:`espressomd.visualization.openGLLive.screenshot(path)`
-
+After creating the visualizer object, call ``screenshot(path)``
 to save a png image of your simulation to `path`. 
 The image size is determined by the keyword argument `window_size` of the
 visualizer. This method can be used to create screenshots
