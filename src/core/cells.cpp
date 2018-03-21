@@ -333,8 +333,10 @@ ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells) {
       auto target_cell = cs.position_to_cell(p.r.p);
 
       if (target_cell == nullptr) {
-        local_particles[p.identity()] = nullptr;
-        move_unindexed_particle(&displaced_parts, c, i);
+        auto const id = p.identity();
+        move_indexed_particle(&displaced_parts, c, i);
+
+        local_particles[id] = nullptr;
 
         if (i < c->n) {
           i--;

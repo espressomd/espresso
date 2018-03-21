@@ -845,8 +845,8 @@ void move_if_local(ParticleList &src, ParticleList &rest) {
     auto target_cell = dd_save_position_to_cell(part.r.p);
 
     if (target_cell) {
-      auto new_part = move_unindexed_particle(target_cell, &src, i);
-      local_particles[new_part->identity()] = new_part;
+      move_indexed_particle(target_cell, &src, i);
+      //local_particles[new_part->identity()] = new_part;
     } else {
       move_unindexed_particle(&rest, &src, i);
     }
@@ -884,6 +884,8 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
 }
 }
 
+#include "utils/serialization/ParticleList.hpp"
+
 void dd_exchange_and_sort_particles(ParticleList *pl) {
   for (int dir = 0; dir < 3; dir++) {
     /* Single node direction, no action needed. */
@@ -897,9 +899,11 @@ void dd_exchange_and_sort_particles(ParticleList *pl) {
 
       if (node_pos[dir] % 2 == 0) {
         send_particles(&send_buf, node_neighbors[2 * dir]);
-        recv_particles(&recv_buf, node_neighbors[2 * dir + 1]);
+        // recv_particles(&recv_buf, node_neighbors[2 * dir + 1]);
+        comm_cart.recv(node_neighbors[2 * dir], 0xaa, recv_buf);
       } else {
-        recv_particles(&recv_buf, node_neighbors[2 * dir + 1]);
+        // recv_particles(&recv_buf, node_neighbors[2 * dir + 1]);
+        comm_cart.recv(node_neighbors[2 * dir], 0xaa, recv_buf);
         send_particles(&send_buf, node_neighbors[2 * dir]);
       }
 
