@@ -32,6 +32,7 @@
 #include "lees_edwards.hpp"
 #include "lees_edwards_comms_manager.hpp"
 #include "lees_edwards_domain_decomposition.hpp"
+#include "grid.hpp"
 
 /** Returns pointer to the cell which corresponds to the position if
     the position is in the nodes spatial domain otherwise a nullptr

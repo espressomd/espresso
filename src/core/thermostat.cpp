@@ -28,6 +28,7 @@
 #include "ghmc.hpp"
 #include "lb.hpp"
 #include "thermalized_bond.hpp"
+#include "dpd.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -37,6 +38,9 @@
 int thermo_switch = THERMO_OFF;
 /** Temperature */
 double temperature = 0.0;
+
+/** True if the thermostat should acton on virtual particles. */
+bool thermo_virtual = false;
 
 using Thermostat::GammaType;
 
@@ -57,11 +61,6 @@ GammaType langevin_gamma_rotation = sentinel(GammaType{});
 GammaType langevin_pref1;
 GammaType langevin_pref2;
 GammaType langevin_pref2_rotation;
-
-/* Langevin for translations */
-bool langevin_trans = true;
-/* Langevin for rotations */
-bool langevin_rotate = true;
 
 /* NPT ISOTROPIC THERMOSTAT */
 // INSERT COMMENT

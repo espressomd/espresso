@@ -17,6 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, absolute_import
+
+from libcpp cimport bool as cbool
+
 include "myconfig.pxi"
 
 cdef extern from "Vector.hpp":
@@ -26,6 +29,7 @@ cdef extern from "Vector.hpp":
 cdef extern from "thermostat.hpp":
     double temperature
     int thermo_switch
+    cbool thermo_virtual
     int THERMO_OFF
     int THERMO_LANGEVIN
     int THERMO_LB

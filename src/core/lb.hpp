@@ -27,6 +27,8 @@
 #ifndef LB_H
 #define LB_H
 
+#include "config.hpp"
+
 #include "lattice_inline.hpp"
 #include "utils.hpp"
 

@@ -559,10 +559,12 @@ int set_particle_dip(int part, double dip[3]) {
 #endif
 
 #ifdef VIRTUAL_SITES
-int set_particle_virtual(int part, int isVirtual) {
+int set_particle_virtual(int part, int is_virtual) {
   auto const pnode = get_particle_node(part);
 
-  mpi_send_virtual(pnode, part, isVirtual);
+  if (pnode == -1)
+    return ES_ERROR;
+  mpi_send_virtual(pnode, part, is_virtual);
   return ES_OK;
 }
 #endif
@@ -1255,7 +1257,7 @@ void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }
 
 #ifdef VIRTUAL_SITES
 void pointer_to_virtual(Particle const *p, int const *&res) {
-  res = &(p->p.isVirtual);
+  res = &(p->p.is_virtual);
 }
 #endif
 

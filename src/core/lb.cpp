@@ -34,6 +34,9 @@
 #include "config.hpp" 
 #include "utils.hpp"
 #include "lb.hpp"
+
+#ifdef LB
+
 #include "communication.hpp"
 #include "grid.hpp"
 #include "halo.hpp"
@@ -44,6 +47,9 @@
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
+#include "global.hpp"
+#include "cells.hpp"
+
 #include <cassert>
 #include <cstdio>
 #include <iostream>
@@ -51,9 +57,9 @@
 
 #include "cuda_interface.hpp"
 
-#ifdef LB
-
-void lb_check_halo_regions();
+#ifdef ADDITIONAL_CHECKS
+static void lb_check_halo_regions();
+#endif // ADDITIONAL_CHECKS
 
 /** Flag indicating momentum exchange between particles and fluid */
 int transfer_momentum = 0;
@@ -3046,10 +3052,7 @@ void calc_particle_lattice_ia() {
 
     /* local cells */
     for (auto &p : local_cells.particles()) {
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-      // Virtual particles for IBM must not be coupled
-      if (!p.p.isVirtual)
-#endif
+      if (!p.p.is_virtual || thermo_virtual)
       {
         lb_viscous_coupling(&p, force);
 
@@ -3080,10 +3083,7 @@ void calc_particle_lattice_ia() {
           fprintf(stderr, "%d: OPT: LB coupling of ghost particle:\n",
                   this_node);
         });
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-        // Virtual particles for IBM must not be coupled
-        if (!p.p.isVirtual)
-#endif
+        if (!p.p.is_virtual || thermo_virtual)
         {
           lb_viscous_coupling(&p, force);
         }

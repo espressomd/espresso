@@ -22,12 +22,11 @@
  * C file for the Lattice Boltzmann implementation on GPUs.
  * Header file for \ref lbgpu.hpp.
  */
-//#include <mpi.h>
-#include <cstdio>
-#include <cmath>
-#include <cstdlib>
-#include <ctime>
-#include <cstring>
+
+#include "config.hpp"
+
+#ifdef LB_GPU
+
 #include "lbgpu.hpp"
 #include "utils.hpp"
 #include "communication.hpp"
@@ -41,8 +40,13 @@
 #include "cuda_interface.hpp"
 #include "statistics.hpp"
 #include "partCfg_global.hpp"
-#ifdef LB_GPU
+#include "lb.hpp"
 
+#include <cstdio>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include <cstring>
 
 #ifndef D3Q19
 #error The implementation only works for D3Q19 so far!

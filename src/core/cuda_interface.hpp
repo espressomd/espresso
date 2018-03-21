@@ -68,8 +68,11 @@ struct CUDA_particle_data {
 
   /** particle position given from md part*/
   float p[3];
+
+#ifdef LB_GPU
   /** particle momentum struct velocity p.m->v*/
   float v[3];
+#endif
 
 #ifdef ROTATION
   float quatu[3];
@@ -79,7 +82,7 @@ struct CUDA_particle_data {
   float solvation[2 * LB_COMPONENTS];
 #endif
 
-#ifdef LB_ELECTROHYDRODYNAMICS
+#if defined(LB_ELECTROHYDRODYNAMICS) && defined(LB_GPU)
   float mu_E[3];
 #endif
 
@@ -94,13 +97,12 @@ struct CUDA_particle_data {
   unsigned int fixed;
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-  bool isVirtual;
+  bool is_virtual;
 #endif
 
 #ifdef DIPOLES
   float dip[3];
 #endif
-
 };
 
 /** data structure for the different kinds of energies */

@@ -283,7 +283,7 @@ void lb_init_boundaries_GPU(int n_lb_boundaries, int number_of_boundnodes, int* 
 #endif
 void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_gpu *host_extern_nodeforces, LB_parameters_gpu *lbpar_gpu);
 
-void lb_calc_particle_lattice_ia_gpu();
+void lb_calc_particle_lattice_ia_gpu(bool couple_virtual);
 
 void lb_calc_fluid_mass_GPU(double* mass);
 void lb_calc_fluid_momentum_GPU(double* host_mom);

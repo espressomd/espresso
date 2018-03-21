@@ -257,7 +257,7 @@ __global__ void ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const p
   const unsigned int particleIndex = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   const LB_parameters_gpu &para = *paraP;
 
-  if (particleIndex < para.number_of_particles && particle_input[particleIndex].isVirtual)
+  if (particleIndex < para.number_of_particles && particle_input[particleIndex].is_virtual)
   {
 
     const float factor = powf( para.agrid,2)*para.tau*para.tau;
@@ -323,7 +323,7 @@ __global__ void  ParticleVelocitiesFromLB_Kernel(LB_nodes_gpu n_curr, const IBM_
 
   const LB_parameters_gpu &para = *paraP;
 
-  if (particleIndex < para.number_of_particles && particles_input[particleIndex].isVirtual)
+  if (particleIndex < para.number_of_particles && particles_input[particleIndex].is_virtual)
   {
 
     // Get position

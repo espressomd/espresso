@@ -930,15 +930,15 @@ void mpi_send_dipm_slave(int pnode, int part) {
 
 /********************* REQ_SET_ISVI ********/
 
-void mpi_send_virtual(int pnode, int part, int isVirtual) {
+void mpi_send_virtual(int pnode, int part, int is_virtual) {
 #ifdef VIRTUAL_SITES
   mpi_call(mpi_send_virtual_slave, pnode, part);
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->p.isVirtual = isVirtual;
+    p->p.is_virtual = is_virtual;
   } else {
-    MPI_Send(&isVirtual, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
+    MPI_Send(&is_virtual, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
   }
 
   on_particle_change();
@@ -949,7 +949,7 @@ void mpi_send_virtual_slave(int pnode, int part) {
 #ifdef VIRTUAL_SITES
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(&(p->p.isVirtual), 1, MPI_INT, 0, SOME_TAG, comm_cart,
+    MPI_Recv(&(p->p.is_virtual), 1, MPI_INT, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 

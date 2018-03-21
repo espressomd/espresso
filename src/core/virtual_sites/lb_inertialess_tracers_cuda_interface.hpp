@@ -25,7 +25,7 @@ void ParticleVelocitiesFromLB_GPU(ParticleRange particles);
 typedef struct {
   float pos[3];
   float f[3];
-  bool isVirtual;
+  bool is_virtual;
 } IBM_CUDA_ParticleDataInput;
 
 typedef struct {

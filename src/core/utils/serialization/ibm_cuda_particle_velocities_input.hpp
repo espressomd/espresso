@@ -10,7 +10,7 @@ void serialize(Archive &ar, IBM_CUDA_ParticleDataInput &d,
                const unsigned int /* version */) {
   ar &d.pos;
   ar &d.f;
-  ar &d.isVirtual;
+  ar &d.is_virtual;
 }
 
 template <class Archive>
