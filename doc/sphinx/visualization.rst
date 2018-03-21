@@ -118,7 +118,13 @@ Required parameters:
 Optional keywords:
     * Have a look at the attribute list in :class:`espressomd.visualization.openGLLive()`
 
-| :meth:`espressomd.visualization.openGLLive.run()` 
+
+.. _Running the visualizer:
+
+Running the visualizer
+~~~~~~~~~~~~~~~~~~~~~~
+
+| :meth:`espressomd.visualization.openGLLive.run(n)` 
 
 To visually debug your simulation, ``run(n)`` can be used to conveniently start 
 an integration loop with `n` integration steps in a separate thread once the
@@ -127,16 +133,56 @@ visualizer is initialized::
     import espressomd 
     from espressomd import visualization 
 
-    system = espressomd.System() 
+    system = espressomd.System(box_l = [10,10,10]) 
     system.cell_system.skin = 0.4
     system.time_step = 0.00001
-    system.box_l = [10,10,10]
 
     system.part.add(pos = [1,1,1], v = [1,0,0]) 
     system.part.add(pos = [9,9,9], v = [0,1,0])
 
     visualizer = visualization.openGLLive(system, background_color = [1,1,1])
     visualizer.run(1)
+
+
+.. _Screenshots:
+
+Screenshots
+~~~~~~~~~~~
+
+The openGL visualizer can also be used for offline rendering.
+After creating the visualizer object, call
+
+| :meth:`espressomd.visualization.openGLLive.screenshot(path)`
+
+to save a png image of your simulation to `path`. 
+The image size is determined by the keyword argument `window_size` of the
+visualizer. This method can be used to create screenshots
+without blocking the simulation script::
+
+    import espressomd
+    from espressomd import visualization
+
+    system = espressomd.System(box_l = [10,10,10])
+    system.cell_system.skin = 1.0
+    system.time_step = 0.1
+
+    for i in range(1000):
+        system.part.add(pos = [5,5,5])
+
+    system.thermostat.set_langevin(kT=1, gamma=1) 
+
+    visualizer = visualization.openGLLive(system, window_size = [500,500])
+
+    for i in range(100):
+        system.integrator.run(1)
+        visualizer.screenshot('screenshot_{}.png'.format(i))
+
+    #You may consider creating a video with ffmpeg:
+    #ffmpeg -f image2 -framerate 30 -i 'screenshot_%d.png' output.mp4
+
+It is also possible to create a snapshot during online visualization.
+Simply press the *enter* key to create a snapshot of the current window,
+which saves it to `<scriptname>_n.png` (with incrementing `n`).
 
 .. _Colors and Materials:
 
@@ -234,6 +280,7 @@ The camera can be controlled via mouse and keyboard:
     * Double click in empty space: Disable particle information
     * Left/Right arrows: Cycle through particles
     * Space: If started with `run(n)`, this pauses the simulation
+    * Enter: Creates a snapshot of the current window and saves it to `<scriptname>_n.png` (with incrementing `n`)
 
 Additional input functionality for mouse and keyboard is possible by assigning
 callbacks to specified keyboard or mouse buttons. This may be useful for

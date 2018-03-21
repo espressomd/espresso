@@ -362,25 +362,33 @@ class openGLLive(object):
 
         # INITS
         self.system = system
+
         self.last_T = -1
         self.last_box_l = self.system.box_l
         self.fps_last = 0
         self.fps = 0
         self.fps_count = 0
-        self.started = False
+
+        self.glutMainLoop_started = False
         self.screenshot_initialized = False
         self.hasParticleData = False
         self.quit_savely = False
         self.paused = False
         self.take_screenshot = False
+
         self.keyboardManager = KeyboardManager()
         self.mouseManager = MouseManager()
+        self.camera = Camera()
+        self.init_camera()
+
         self.timers = []
         self.particles = {}
+
         self.update_elapsed = 0
         self.update_timer = 0
         self.draw_elapsed = 0
         self.draw_timer = 0
+
 
     def register_callback(self, cb, interval=1000):
         """Register timed callbacks.
@@ -388,10 +396,11 @@ class openGLLive(object):
 
         self.timers.append((int(interval), cb))
 
-    def screenshot(self, filename):
+    def screenshot(self, path):
         """Renders the current state and into a png with dimensions of
         specs['window_size'].  """
 
+        # ON FIRST CALL: INIT AND CREATE BUFFERS
         if not self.screenshot_initialized:
             self.screenshot_initialized = True
             self.init_opengl()
@@ -400,13 +409,11 @@ class openGLLive(object):
             # FRAME BUFFER
             fbo = glGenFramebuffers(1)
             glBindFramebuffer(GL_FRAMEBUFFER, fbo )
-
             # COLOR BUFFER
             rbo = glGenRenderbuffers(1)
             glBindRenderbuffer(GL_RENDERBUFFER, rbo)
-            glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, self.specs['window_size'][0], self.specs['window_size'][1]);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB, self.specs['window_size'][0], self.specs['window_size'][1]);
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbo)
-            
             # DEPTH BUFFER
             dbo = glGenRenderbuffers(1)
             glBindRenderbuffer(GL_RENDERBUFFER, dbo)
@@ -418,25 +425,24 @@ class openGLLive(object):
 
         # INIT AND UPDATE ESPRESSO
         self.init_espresso_visualization()
-        self.init_camera()
-        self.initial_updates()
+        self.initial_espresso_updates()
        
         # DRAW
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadMatrixf(self.camera.modelview)
-        self.draw()
+        self.draw_system()
         
         # READ THE PIXES
         glReadBuffer(GL_COLOR_ATTACHMENT0)
-        data = glReadPixels(0, 0, self.specs['window_size'][0], self.specs['window_size'][1], GL_RGBA, GL_FLOAT)
+        data = glReadPixels(0, 0, self.specs['window_size'][0], self.specs['window_size'][1], GL_RGB, GL_FLOAT)
 
         # RESHAPE THE DATA
-        data = np.flipud(data.reshape((data.shape[1],data.shape[0],4)))
+        data = np.flipud(data.reshape((data.shape[1],data.shape[0],3)))
 
         # SAVE TO IMAGE
-        imsave(filename, data)
+        imsave(path, data)
 
-        print("Saved screenshot {}".format(filename))
+        print("Saved screenshot {}".format(path))
  
 
     def run(self, integ_steps=1):
@@ -470,24 +476,16 @@ class openGLLive(object):
 
         self.init_opengl()
         self.init_espresso_visualization()
-        self.init_camera()
         self.init_controls()
-        self.init_callbacks()
-
-        # HANDLE INPUT WITH 60FPS
-        def timed_handle_input(data):
-            # glutPostRedisplay()
-            self.keyboardManager.handle_input()
-            glutTimerFunc(17, timed_handle_input, -1)
-
-        self.started = True
-
-        glutTimerFunc(17, timed_handle_input, -1)
+        self.init_openGL_callbacks()
+        self.init_timers()
+        self.init_camera()
 
         # START THE BLOCKING MAIN LOOP
+        self.glutMainLoop_started = True
         glutMainLoop()
 
-    def initial_updates(self):
+    def initial_espresso_updates(self):
         self.update_particles()
         if self.has_particle_data['charge']:
             self.update_charge_color_range()
@@ -505,11 +503,11 @@ class openGLLive(object):
         Changes of espresso system can only happen here.
 
         """
-        if self.started:
+        if self.glutMainLoop_started:
 
             # UPDATE ON STARTUP
             if not self.hasParticleData:
-                self.initial_updates()
+                self.initial_espresso_updates()
                 self.hasParticleData = True
 
             # UPDATES
@@ -729,7 +727,7 @@ class openGLLive(object):
             glutBitmapCharacter(font, ctypes.c_int(ord(ch)))
 
     # DRAW CALLED AUTOMATICALLY FROM GLUT DISPLAY FUNC
-    def draw(self):
+    def draw_system(self):
         if self.specs['LB']:
             self.draw_lb_vel()
 
@@ -1048,8 +1046,6 @@ class openGLLive(object):
     def handle_screenshot(self):
         if self.take_screenshot:
             self.take_screenshot = False
-            #glPixelStorei(GL_PACK_ALIGNMENT, 1)
-            #glReadBuffer(GL_BACK)
             data = glReadPixels(0, 0, self.specs['window_size'][0], self.specs['window_size'][1], GL_RGB, GL_FLOAT)
             basename = os.path.basename(__file__)[:-3]
             
@@ -1064,14 +1060,13 @@ class openGLLive(object):
 
     def display_all(self):
 
-
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
             glLoadMatrixf(self.camera.modelview)
 
             self.set_camera_spotlight()
 
-            self.draw()
+            self.draw_system()
 
             # DRAW FPS TEXT
             if self.specs['draw_fps']:
@@ -1115,13 +1110,12 @@ class openGLLive(object):
         glMatrixMode(GL_MODELVIEW)
         self.specs['window_size'][0] = w
         self.specs['window_size'][1] = h
-        print("reshape",w,h)
 
     # INITS FOR GLUT FUNCTIONS
-    def init_callbacks(self):
+    def init_openGL_callbacks(self):
         # OpenGl Callbacks
         def display():
-            if self.hasParticleData and self.started:
+            if self.hasParticleData and self.glutMainLoop_started:
                 self.display_all()
             return
 
@@ -1160,10 +1154,6 @@ class openGLLive(object):
         def close_window():
             os._exit(1)
 
-        # TIMERS FOR register_callback
-        def dummy_timer(index):
-            self.timers[index][1]()
-            glutTimerFunc(self.timers[index][0], dummy_timer, index)
 
         glutDisplayFunc(display)
         glutMouseFunc(mouse)
@@ -1177,10 +1167,24 @@ class openGLLive(object):
 
         glutIdleFunc(redraw_on_idle)
 
+    def init_timers(self):
+
+        # TIMERS FOR register_callback
+        def dummy_timer(index):
+            self.timers[index][1]()
+            glutTimerFunc(self.timers[index][0], dummy_timer, index)
+
         index = 0
         for t in self.timers:
             glutTimerFunc(t[0], dummy_timer, index)
             index += 1
+        
+        # HANDLE INPUT WITH 60FPS
+        def timed_handle_input(data):
+            self.keyboardManager.handle_input()
+            glutTimerFunc(17, timed_handle_input, -1)
+
+        glutTimerFunc(17, timed_handle_input, -1)
 
     # CLICKED ON PARTICLE: DRAG; CLICKED ON BACKGROUND: CAMERA
     def mouse_motion(self, mousePos, mousePosOld, mouseButtonState):
@@ -1441,7 +1445,7 @@ class openGLLive(object):
 
         cr = np.array(self.specs['camera_right'])
 
-        self.camera = Camera(camPos=np.array(cp), camTarget=ct, camRight=cr, moveSpeed=0.5 *
+        self.camera.set_camera(camPos=np.array(cp), camTarget=ct, camRight=cr, moveSpeed=0.5 *
                              box_diag / 17.0,  center=box_center)
         self.set_camera_spotlight()
 
@@ -1928,7 +1932,10 @@ class KeyboardManager(object):
 
 class Camera(object):
 
-    def __init__(self, camPos=np.array([0, 0, 1]), camTarget=np.array([0, 0, 0]), camRight=np.array([1.0, 0.0, 0.0]), moveSpeed=0.5, rotSpeed=0.001, globalRotSpeed=3.0, center=np.array([0, 0, 0])):
+    def __init__(self):
+        pass
+
+    def set_camera(self, camPos=np.array([0, 0, 1]), camTarget=np.array([0, 0, 0]), camRight=np.array([1.0, 0.0, 0.0]), moveSpeed=0.5, rotSpeed=0.001, globalRotSpeed=3.0, center=np.array([0, 0, 0])):
         self.moveSpeed = moveSpeed
         self.lookSpeed = rotSpeed
         self.globalRotSpeed = globalRotSpeed
@@ -1973,38 +1980,38 @@ class Camera(object):
         self.update_modelview()
 
     def rotate_system_XL(self):
-        self.rotate_camera_H(0.01 * self.globalRotSpeed)
+        self.rotate_system_y(0.01 * self.globalRotSpeed)
 
     def rotate_system_XR(self):
-        self.rotate_camera_H(-0.01 * self.globalRotSpeed)
+        self.rotate_system_y(-0.01 * self.globalRotSpeed)
 
     def rotate_system_YL(self):
-        self.rotate_camera_R(0.01 * self.globalRotSpeed)
+        self.rotate_system_z(0.01 * self.globalRotSpeed)
 
     def rotate_system_YR(self):
-        self.rotate_camera_R(-0.01 * self.globalRotSpeed)
+        self.rotate_system_z(-0.01 * self.globalRotSpeed)
 
     def rotate_system_ZL(self):
-        self.rotate_camera_V(0.01 * self.globalRotSpeed)
+        self.rotate_system_x(0.01 * self.globalRotSpeed)
 
     def rotate_system_ZR(self):
-        self.rotate_camera_V(-0.01 * self.globalRotSpeed)
+        self.rotate_system_x(-0.01 * self.globalRotSpeed)
 
     def rotate_camera(self, mousePos, mousePosOld, mouseButtonState):
         dm = mousePos - mousePosOld
 
         if mouseButtonState[GLUT_LEFT_BUTTON] == GLUT_DOWN:
             if dm[0] != 0:
-                self.rotate_camera_H(dm[0] * 0.001 * self.globalRotSpeed)
+                self.rotate_system_y(dm[0] * 0.001 * self.globalRotSpeed)
             if dm[1] != 0:
-                self.rotate_camera_V(dm[1] * 0.001 * self.globalRotSpeed)
+                self.rotate_system_x(dm[1] * 0.001 * self.globalRotSpeed)
         elif mouseButtonState[GLUT_RIGHT_BUTTON] == GLUT_DOWN:
             self.state_pos[0] -= 0.05 * dm[0] * self.moveSpeed
             self.state_pos[1] += 0.05 * dm[1] * self.moveSpeed
             self.update_modelview()
         elif mouseButtonState[GLUT_MIDDLE_BUTTON] == GLUT_DOWN:
             self.state_pos[2] += 0.05 * dm[1] * self.moveSpeed
-            self.rotate_camera_R(dm[0] * 0.001 * self.globalRotSpeed)
+            self.rotate_system_z(dm[0] * 0.001 * self.globalRotSpeed)
 
     def normalize(self, vec):
         vec = self.normalized(vec)
@@ -2047,17 +2054,17 @@ class Camera(object):
         vec[1] = w[1]
         vec[2] = w[2]
 
-    def rotate_camera_R(self, da):
+    def rotate_system_z(self, da):
         self.rotate_vector(self.state_right, da, self.state_target)
         self.rotate_vector(self.state_up, da, self.state_target)
         self.update_modelview()
 
-    def rotate_camera_V(self, da):
+    def rotate_system_x(self, da):
         self.rotate_vector(self.state_target, da, self.state_right)
         self.state_up = np.cross(self.state_right, self.state_target)
         self.update_modelview()
 
-    def rotate_camera_H(self, da):
+    def rotate_system_y(self, da):
         self.rotate_vector(self.state_target, da, self.state_up)
         self.state_right = np.cross(self.state_target, self.state_up)
         self.update_modelview()
