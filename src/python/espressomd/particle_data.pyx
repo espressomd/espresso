@@ -356,6 +356,15 @@ cdef class ParticleHandle(object):
 
             return tuple(bonds)
 
+    property node:
+        """
+        The node the particle is on, identified by its MPI rank.
+        """
+
+        def __get__(self):
+            return get_particle_node(self.id)
+
+
     # Properties that exist only when certain features are activated
     # MULTI_TIMESTEP
     IF MULTI_TIMESTEP == 1:

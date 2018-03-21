@@ -1,5 +1,5 @@
-#ifndef OBSERVABLES_PROFILEOBSERVABLE_HPP
-#define OBSERVABLES_PROFILEOBSERVABLE_HPP
+#ifndef OBSERVABLES_PIDPROFILEOBSERVABLE_HPP
+#define OBSERVABLES_PIDPROFILEOBSERVABLE_HPP
 
 #include "Observable.hpp"
 #include "integrate.hpp"
@@ -9,7 +9,7 @@
 namespace Observables {
 
 // Observable which acts on a given list of particle ids
-class ProfileObservable : public Observable {
+class PidProfileObservable : public PidObservable {
 public:
   double min_x, max_x;
   double min_y, max_y;

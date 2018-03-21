@@ -37,7 +37,6 @@
 #include "lbgpu.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
-#include "observables/profiles.hpp"
 #include "errorhandling.hpp"
 #include "debug.hpp"
 

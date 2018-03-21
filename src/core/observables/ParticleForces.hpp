@@ -23,6 +23,7 @@ public:
     }
     return res;
   };
+  virtual int n_values() const override { return 3 * ids().size(); }
 };
 
 } // Namespace Observables

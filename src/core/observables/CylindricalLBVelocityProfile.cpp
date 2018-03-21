@@ -26,8 +26,8 @@ namespace Observables {
 std::vector<double> CylindricalLBVelocityProfile::
 operator()(PartCfg &partCfg) const {
   std::array<size_t, 3> n_bins{{static_cast<size_t>(n_r_bins),
-                              static_cast<size_t>(n_phi_bins),
-                              static_cast<size_t>(n_z_bins)}};
+                                static_cast<size_t>(n_phi_bins),
+                                static_cast<size_t>(n_z_bins)}};
   std::array<std::pair<double, double>, 3> limits{
       {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
        std::make_pair(min_z, max_z)}};
@@ -41,9 +41,10 @@ operator()(PartCfg &partCfg) const {
       m_sample_positions.size() / 3);
   for (size_t ind = 0; ind < m_sample_positions.size(); ind += 3) {
     const Vector3d pos_shifted = {{m_sample_positions[ind + 0] - center[0],
-                    m_sample_positions[ind + 1] - center[1],
-                    m_sample_positions[ind + 2] - center[2]}};
-    const Vector3d pos_cyl = Utils::transform_pos_to_cylinder_coordinates(pos_shifted, axis);
+                                   m_sample_positions[ind + 1] - center[1],
+                                   m_sample_positions[ind + 2] - center[2]}};
+    const Vector3d pos_cyl =
+        Utils::transform_pos_to_cylinder_coordinates(pos_shifted, axis);
     const Vector3d velocity = {
         {velocities[ind + 0], velocities[ind + 1], velocities[ind + 2]}};
     histogram.update(pos_cyl, Utils::transform_vel_to_cylinder_coordinates(
