@@ -23,7 +23,10 @@ import espressomd
 from espressomd import System, lb, shapes, lbboundaries
 import numpy as np
 from espressomd.interactions import FeneBond
-from espressomd.virtual_sites import VirtualSitesInertialessTracers, VirtualSitesOff
+try:
+    from espressomd.virtual_sites import VirtualSitesInertialessTracers, VirtualSitesOff
+except:
+    pass
 from espressomd.utils import handle_errors
 
 from tests_common import verify_lj_forces

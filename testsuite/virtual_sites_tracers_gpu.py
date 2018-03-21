@@ -23,7 +23,6 @@ import espressomd
 from espressomd import System, lb, shapes, lbboundaries
 import numpy as np
 from espressomd.interactions import FeneBond
-from espressomd.virtual_sites import VirtualSitesInertialessTracers, VirtualSitesOff
 from espressomd.utils import handle_errors
 
 from tests_common import verify_lj_forces
@@ -31,29 +30,31 @@ from numpy import random
 from virtual_sites_tracers_common import VirtualSitesTracersCommon
 
 
-@ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_INERTIALESS_TRACERS","LB_GPU"),
+required_features ="VIRTUAL_SITES_INERTIALESS_TRACERS","LB_GPU"
+@ut.skipIf(not espressomd.has_features(required_features),
            "Test requires VIRTUAL_SITES_INERTIALESS_TRACERS")
 class VirtualSitesTracers(ut.TestCase,VirtualSitesTracersCommon):
-    box_height = 10. 
-    box_lw=10.
-    system = espressomd.System(box_l=(box_lw,box_lw,box_height))
-    system.seed = range(system.cell_system.get_state()["n_nodes"])
-    system.time_step = 0.04
-    system.cell_system.skin = 0.1
-    lbf = lb.LBFluidGPU(agrid=1, dens=1, visc=2, tau= system.time_step, fric = 1)
-    system.actors.add(lbf)
-    system.thermostat.set_lb(kT=0,act_on_virtual=False)
-       
-    # Setup boundaries
-    walls = [lbboundaries.LBBoundary() for k in range(2)]
-    walls[0].set_params(shape=shapes.Wall(normal=[0,0,1], dist = 0.5))
-    walls[1].set_params(shape=shapes.Wall(normal=[0,0,-1], dist = -box_height-0.5))
-        
-    for wall in walls:
-       system.lbboundaries.add(wall)
-        
-    handle_errors("setup") 
-
+    if espressomd.has_features(required_features):
+        box_height = 10. 
+        box_lw=10.
+        system = espressomd.System(box_l=(box_lw,box_lw,box_height))
+        system.seed = range(system.cell_system.get_state()["n_nodes"])
+        system.time_step = 0.04
+        system.cell_system.skin = 0.1
+        lbf = lb.LBFluidGPU(agrid=1, dens=1, visc=2, tau= system.time_step, fric = 1)
+        system.actors.add(lbf)
+        system.thermostat.set_lb(kT=0,act_on_virtual=False)
+           
+        # Setup boundaries
+        walls = [lbboundaries.LBBoundary() for k in range(2)]
+        walls[0].set_params(shape=shapes.Wall(normal=[0,0,1], dist = 0.5))
+        walls[1].set_params(shape=shapes.Wall(normal=[0,0,-1], dist = -box_height-0.5))
+            
+        for wall in walls:
+           system.lbboundaries.add(wall)
+            
+        handle_errors("setup") 
+    
 if __name__ == "__main__":
     #print("Features: ", espressomd.features())
     ut.main()
