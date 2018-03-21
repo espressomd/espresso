@@ -49,7 +49,7 @@ function cmd {
 [ -z "$build_procs" ] && build_procs=2
 [ -z "$make_check" ] && make_check="true"
 
-cmake_params="-DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params"
+cmake_params="-D CMAKE_BUILD_TYPE=Debug -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params"
 
 if $insource; then
     builddir=$srcdir

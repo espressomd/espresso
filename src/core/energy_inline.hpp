@@ -29,6 +29,7 @@
 #include "bmhtf-nacl.hpp"
 #include "buckingham.hpp"
 #include "dihedral.hpp"
+#include "thermalized_bond.hpp"
 #include "fene.hpp"
 #include "gaussian.hpp"
 #include "gb.hpp"
@@ -49,12 +50,15 @@
 #include "statistics.hpp"
 #include "steppot.hpp"
 #include "tab.hpp"
+#include "thole.hpp"
 #include "thermostat.hpp"
 #include "umbrella.hpp"
 #ifdef ELECTROSTATICS
 #include "bonded_coulomb.hpp"
 #endif
-#include "actor/EwaldGPU_ShortRange.hpp"
+#ifdef P3M
+#include "bonded_coulomb_p3m_sr.hpp"
+#endif
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
 #include "angle_harmonic.hpp"
@@ -160,6 +164,11 @@ inline double calc_non_bonded_pair_energy(const Particle *p1, const Particle *p2
   ret += ljcos2_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
+#ifdef THOLE
+  /* thole damping */
+  ret += thole_pair_energy(p1, p2, ia_params, d, dist);
+#endif
+
 #ifdef TABULATED
   /* tabulated */
   ret += tabulated_pair_energy(p1, p2, ia_params, d, dist);
@@ -210,10 +219,10 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 #ifdef P3M
     case COULOMB_P3M_GPU:
     case COULOMB_P3M:
-      ret = p3m_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
+      ret = p3m_pair_energy(p1->p.q * p2->p.q, dist);
       break;
     case COULOMB_ELC_P3M:
-      ret = p3m_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
+      ret = p3m_pair_energy(p1->p.q * p2->p.q, dist);
       if (elc_params.dielectric_contrast_on)
         ret += 0.5 * ELC_P3M_dielectric_layers_energy_contribution(p1, p2);
       break;
@@ -239,11 +248,6 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
     case COULOMB_MMM2D:
       ret = mmm2d_coulomb_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
       break;
-#ifdef EWALD_GPU
-    case COULOMB_EWALD_GPU:
-      ret = ewaldgpu_coulomb_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
-      break;
-#endif
     default:
       ret = 0.;
     }
@@ -359,9 +363,17 @@ inline void add_bonded_energy(Particle *p1) {
     case BONDED_IA_QUARTIC:
       bond_broken = quartic_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
+    case BONDED_IA_THERMALIZED_DIST:
+      bond_broken = thermalized_bond_energy(p1, p2, iaparams, dx, &ret);
+      break;
 #ifdef ELECTROSTATICS
     case BONDED_IA_BONDED_COULOMB:
       bond_broken = bonded_coulomb_pair_energy(p1, p2, iaparams, dx, &ret);
+      break;
+#endif
+#ifdef P3M
+    case BONDED_IA_BONDED_COULOMB_P3M_SR:
+      bond_broken = bonded_coulomb_p3m_sr_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #endif
 #ifdef LENNARD_JONES
@@ -506,13 +518,13 @@ inline void add_kinetic_energy(Particle *p1) {
   //   if (p1->p.smaller_timestep==1) {
   //     ostringstream msg;
   //     msg << "SMALL TIME STEP";
-  //     energy.data.e[0] += SQR(smaller_time_step/time_step) *
-  //       (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*(*p1).p.mass;
+  //     energy.data.e[0] += Utils::sqr(smaller_time_step/time_step) *
+  //       (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) + Utils::sqr(p1->m.v[2]))*(*p1).p.mass;
   //   }
   //   else
   // #endif
   energy.data.e[0] +=
-      (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2])) * (*p1).p.mass;
+      (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) + Utils::sqr(p1->m.v[2])) * (*p1).p.mass;
 
 #ifdef ROTATION
   if (p1->p.rotation)
@@ -520,9 +532,9 @@ inline void add_kinetic_energy(Particle *p1) {
     /* the rotational part is added to the total kinetic energy;
        Here we use the rotational inertia  */
 
-    energy.data.e[0] += (SQR(p1->m.omega[0]) * p1->p.rinertia[0] +
-                         SQR(p1->m.omega[1]) * p1->p.rinertia[1] +
-                         SQR(p1->m.omega[2]) * p1->p.rinertia[2]) *
+    energy.data.e[0] += (Utils::sqr(p1->m.omega[0]) * p1->p.rinertia[0] +
+                         Utils::sqr(p1->m.omega[1]) * p1->p.rinertia[1] +
+                         Utils::sqr(p1->m.omega[2]) * p1->p.rinertia[2]) *
                         time_step * time_step;
   }
 #endif

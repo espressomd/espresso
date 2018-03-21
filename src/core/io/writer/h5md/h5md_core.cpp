@@ -282,6 +282,15 @@ void File::create_new_file(const std::string &filename) {
   m_h5md_file =
       h5xx::file(filename, m_hdf5_comm, MPI_INFO_NULL, h5xx::file::out);
 
+  auto h5md_group = h5xx::group(m_h5md_file, "h5md");
+  std::vector<int> h5md_version = {1, 1};
+  h5xx::write_attribute(h5md_group, "version", h5md_version);
+  auto h5md_creator_group = h5xx::group(h5md_group, "creator");
+  h5xx::write_attribute(h5md_creator_group, "name", "ESPResSo");
+  h5xx::write_attribute(h5md_creator_group, "version", ESPRESSO_VERSION);
+  auto h5md_author_group = h5xx::group(h5md_group, "author");
+  h5xx::write_attribute(h5md_author_group, "name", "N/A");
+
   bool only_load = false;
   create_datasets(only_load);
 

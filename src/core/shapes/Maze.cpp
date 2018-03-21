@@ -38,7 +38,7 @@ int Maze::calculate_dist(const double *ppos, double *dist, double *vec) const {
   for (i = 0; i < 3; i++) {
     cursph[i] = (int)(ppos[i] / diasph);
     sph_vec[i] = (cursph[i] + 0.5) * diasph - (ppos[i]);
-    c_dist += SQR(sph_vec[i]);
+    c_dist += Utils::sqr(sph_vec[i]);
   }
   c_dist = sqrt(c_dist);
   sph_dist = m_sphrad - c_dist;

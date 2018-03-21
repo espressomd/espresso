@@ -40,6 +40,7 @@
 #include "fd-electrostatics.hpp"
 #include "lbboundaries.hpp"
 #include "lbgpu.hpp"
+#include "random.hpp"
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
@@ -1475,7 +1476,7 @@ __device__ void ek_add_advection_to_flux(unsigned int index, unsigned int *neigh
                dx[0] * dx[1] * dx[2] * not_boundary );
 }
 
-__device__ void ek_add_fluctuations_to_flux(unsigned int index, unsigned int species_index, unsigned int *neighborindex) {
+__device__ void ek_add_fluctuations_to_flux(unsigned int index, unsigned int species_index, unsigned int *neighborindex, LB_nodes_gpu lb_node) {
   if(index < ek_parameters_gpu.number_of_nodes)
   {
     float density = ek_parameters_gpu.rho[species_index][index];
@@ -1499,43 +1500,23 @@ __device__ void ek_add_fluctuations_to_flux(unsigned int index, unsigned int spe
         float HN = 0.0f;
         float neighbor_density = ek_parameters_gpu.rho[species_index][neighborindex[i]];
 
-        if(density <= 0.0f)
-        {
-            H = 0.0f;
-        }
-        else if(density >= 1.0f)
-        {
-            H = 1.0f;
-        }
-        else
-        {
-            H = density;
-        }
-
-        if(neighbor_density <= 0.0f)
-        {
-            HN = 0.0f;
-        }
-        else if(neighbor_density >= 1.0f)
-        {
-            HN = 1.0f;
-        }
-        else
-        {
-            HN = neighbor_density;
-        }
+	H = (density >= 0.0f) * min(density, 1.0f);
+        HN = (neighbor_density >= 0.0f) * min(neighbor_density, 1.0f);
+        
 
         float average_density = H * HN * (density+ek_parameters_gpu.rho[species_index][neighborindex[i]])/2.0f;
 
         if(i > 2)
         {
             fluc = 1.0f * powf(2.0f * average_density * diffusion * time_step / (agrid * agrid), 0.5f) * random * ek_parameters_gpu.fluctuation_amplitude / (sqrt(3.0f) * sqrt(2.0f));
+            fluc *= !(lb_node.boundary[index] || lb_node.boundary[neighborindex[i]]);
             flux_fluc[jindex_getByRhoLinear(index, i)] = fluc;
             flux[jindex_getByRhoLinear(index, i)] += fluc;
         }
         else
         {
             fluc = 1.0f * powf(2.0f * average_density * diffusion * time_step / (agrid * agrid), 0.5f) * random * ek_parameters_gpu.fluctuation_amplitude / sqrt(3.0f);
+            fluc *= !(lb_node.boundary[index] || lb_node.boundary[neighborindex[i]]);
             flux_fluc[jindex_getByRhoLinear(index, i)] = fluc;
             flux[jindex_getByRhoLinear(index, i)] += fluc;
         }
@@ -1717,7 +1698,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
 
     /* fluctuation contribution to flux */
     if(ek_parameters_gpu.fluctuations)
-      ek_add_fluctuations_to_flux(index, species_index, neighborindex);
+      ek_add_fluctuations_to_flux(index, species_index, neighborindex, lb_node);
   }
 }
 
@@ -2612,8 +2593,17 @@ int ek_init() {
     cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
 
     //initializing random number generator states
-    srand(time(NULL));
-    unsigned long long seed = (unsigned int) rand();
+    //srand(time(NULL));
+
+/*
+    unsigned long long seed1 = (unsigned long long)(i_random(std::numeric_limits));
+    unsigned long long seed2 = static_cast<unsigned long long> (i_random());
+    printf("Seed1: %llu \n",seed1);    
+    printf("Seed2: %llu \n",seed2);
+*/
+
+    auto seed = random_integral<unsigned long long>();
+    printf("Seed: %llu",seed);
     //seed = 0;
     blocks_per_grid_x =
       ( ek_parameters.dim_z * ek_parameters.dim_y * (ek_parameters.dim_x ) +

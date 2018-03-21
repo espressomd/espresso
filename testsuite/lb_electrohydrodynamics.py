@@ -6,13 +6,12 @@ import numpy as np
            "Features not available, skipping test!")
 class LBEHTest(ut.TestCase):
     from espressomd import lb
-    s = espressomd.System()
+    s = espressomd.System(box_l=[6.0, 6.0, 6.0])
 
     def setUp(self):
         self.params = {'time_step': 0.005,
                        'tau': 0.02,
                        'agrid': 0.5,
-                       'box_l': 6.0,
                        'dens': 0.85,
                        'viscosity': 30.0,
                        'friction': 3.0,
@@ -20,10 +19,6 @@ class LBEHTest(ut.TestCase):
                        'skin': 0.2,
                        'muE': [0.1, 0.2, 0.3]}
 
-        self.s.box_l = [
-            self.params['box_l'],
-            self.params['box_l'],
-            self.params['box_l']]
         self.s.periodicity = [1, 1, 1]
         self.s.time_step = self.params['time_step']
         self.s.cell_system.skin = self.params['skin']

@@ -116,7 +116,7 @@ inline void calc_angle_cossquare_3body_forces(Particle *p_mid, Particle *p_left,
   vec31_sqr = sqrlen(vec31);
   vec31_magn = sqrt(vec31_sqr);
   cos_phi = scalar(vec21, vec31) / (vec21_magn * vec31_magn);
-  sin_phi = sqrt(1.0 - SQR(cos_phi));
+  sin_phi = sqrt(1.0 - Utils::sqr(cos_phi));
 
   /* uncomment this block if interested in the angle 
   if(cos_phi < -1.0) cos_phi = -TINY_COS_VALUE;
@@ -178,7 +178,7 @@ inline int angle_cossquare_energy(Particle *p_mid, Particle *p_left, Particle *p
   if ( cosine >  TINY_COS_VALUE)  cosine = TINY_COS_VALUE;
   if ( cosine < -TINY_COS_VALUE)  cosine = -TINY_COS_VALUE;
   /* bond angle energy */
-  *_energy = 0.5*iaparams->p.angle_cossquare.bend*SQR(cosine + iaparams->p.angle_cossquare.cos_phi0);
+  *_energy = 0.5*iaparams->p.angle_cossquare.bend*Utils::sqr(cosine + iaparams->p.angle_cossquare.cos_phi0);
   return 0;
 }
 

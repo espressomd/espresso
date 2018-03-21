@@ -48,15 +48,13 @@ class ReactionEnsembleTest(ut.TestCase):
 
     # Integration parameters
     #
-    system = espressomd.System()
+    system = espressomd.System(box_l = [box_l, box_l, box_l])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
 
     #
     # Setup System
     #
-
-    system.box_l = [box_l, box_l, box_l]
 
     N0 = 1  # number of titratable units
     K_diss = 0.0088
@@ -70,9 +68,8 @@ class ReactionEnsembleTest(ut.TestCase):
     h = HarmonicBond(r_0=0, k=1)
     system.bonded_inter[0] = h
     system.part[0].add_bond((h, 1))
-    RE = reaction_ensemble.WangLandauReactionEnsemble(
-        standard_pressure=0.00108, temperature=temperature, exclusion_radius=0)
-    RE.add(equilibrium_constant=K_diss, reactant_types=[0], reactant_coefficients=[
+    RE = reaction_ensemble.WangLandauReactionEnsemble(temperature=temperature, exclusion_radius=0)
+    RE.add_reaction(Gamma=K_diss, reactant_types=[0], reactant_coefficients=[
            1], product_types=[1, 2], product_coefficients=[1, 1], default_charges={0: 0, 1: -1, 2: +1})
     system.setup_type_map([0, 1, 2, 3])
     # initialize wang_landau

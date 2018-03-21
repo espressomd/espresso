@@ -16,9 +16,8 @@ class TestCylindricalLBObservable(ut.TestCase):
     Testcase for the CylindricalFluxDensityObservable.
 
     """
-    system = espressomd.System()
+    system = espressomd.System(box_l=(10,10,10))
     system.time_step = 0.01
-    system.box_l = [10.0, 10.0, 10.0]
     system.cell_system.skin = 0.4
 
     params = {
@@ -43,7 +42,7 @@ class TestCylindricalLBObservable(ut.TestCase):
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
-        self.lbf[np.floor(self.position)].velocity = [0.0, 0.0, 0.0]
+        self.lbf[np.array(self.position, dtype=int)].velocity = [0.0, 0.0, 0.0]
 
     def swap_axis(self, arr, axis):
         if axis == 'x':
@@ -92,7 +91,7 @@ class TestCylindricalLBObservable(ut.TestCase):
             self.position = self.swap_axis(position, self.params['axis'])
             self.position += np.array(self.params['center'])
             self.system.part.add(id=i, pos=self.position)
-            self.lbf[np.floor(self.position)].velocity = velocity
+            self.lbf[np.array(self.position, dtype=int)].velocity = velocity
 
     def normalize_with_bin_volume(self, histogram):
         bin_volume = tests_common.get_cylindrical_bin_volume(
