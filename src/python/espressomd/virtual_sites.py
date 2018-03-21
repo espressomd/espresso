@@ -28,8 +28,6 @@ class VirtualSitesRelative(ScriptInterfaceHelper):
        keyword arguments.
 
     """
-
-       
     _so_name = "VirtualSites::VirtualSitesRelative"
 
 @script_interface_register

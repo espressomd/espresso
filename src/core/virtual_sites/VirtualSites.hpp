@@ -39,33 +39,37 @@
 /** @brief Base class for virtual sites implementations */
 class VirtualSites {
   public:
-    VirtualSites() :  m_have_velocity(true) {};
+    VirtualSites() :  m_have_velocity(true), m_have_quaternion(false) {};
     /** @brief Update positions and/or velocities of virtual sites 
 
-    * Velocities are only updated update_velocities() return true 
-    * @param recalc_positions can be used to skip the reculation of positions 
+    * Velocities are only updated if have_velocity() returns true.
+    * @param recalc_positions can be used to skip the reculation of positions.
     */
     virtual void update(bool recalc_positions=true) const =0;
-    /** Back-transfer forces (and torques) to non-virtual particles */
+    /** Back-transfer forces (and torques) to non-virtual particles. */
     virtual void back_transfer_forces_and_torques() const =0;
     /** @brief Called after force calculation (and before rattle/shake) */
     virtual void after_force_calc() {};
     virtual void after_lb_propagation() {};
     /** @brief Number of pressure contributions */
     virtual int n_pressure_contribs() const {return 0;};
-    /** @brief Pressure contribution() */
+    /** @brief Pressure contribution(). */
     virtual void pressure_and_stress_tensor_contribution(double* pressure, double* stress_tensor) const {};    
-    /** @brief Enable/disable velocity calculations for vs */
+    /** @brief Enable/disable velocity calculations for vs. */
     void set_have_velocity(const bool& v) { m_have_velocity=v; };
-    const bool& have_velocity() const { return m_have_velocity; };
+    const bool& get_have_velocity() const { return m_have_velocity; };
+    /** @brief Enable/disable quaternion calculations for vs.*/
+    void set_have_quaternion(const bool& have_quaternion) { m_have_quaternion=have_quaternion; };
+    bool get_have_quaternion() const { return m_have_quaternion; };
     /** @brief Is a ghost communication needed after position updates */
     virtual bool need_ghost_comm_after_pos_update() const =0;
     /** Is a ghost comm needed before a velocity update */
     virtual bool need_ghost_comm_before_vel_update() const =0;
     /** Is a ghost comm needed before the back_transfer */
     virtual bool need_ghost_comm_before_back_transfer() const =0;
-    private:
-      bool m_have_velocity;
+  private:
+    bool m_have_velocity;
+    bool m_have_quaternion;
    };
 
 

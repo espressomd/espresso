@@ -245,11 +245,11 @@ int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, con
   // Calculate equilibrium lenghts and angle; Note the sequence of the points!
   // lo = lenght between 1 and 3
   double templo[3];
-  get_mi_vector(templo, part3->r.p, part1->r.p);
+  get_mi_vector(templo, part3.r.p, part1.r.p);
   const double l0 = sqrt (sqrlen(templo));
   // lpo = lenght between 1 and 2
   double templpo[3];
-  get_mi_vector(templpo, part2->r.p, part1->r.p);
+  get_mi_vector(templpo, part2.r.p, part1.r.p);
   const double lp0 = sqrt (sqrlen(templpo));
 
   // cospo / sinpo angle functions between these vectors; calculated directly via the products

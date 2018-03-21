@@ -37,7 +37,6 @@
 #include "lbgpu.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
-#include "observables/profiles.hpp"
 #include "errorhandling.hpp"
 #include "debug.hpp"
 
@@ -3904,7 +3903,7 @@ struct two_point_interpolation {
 	} 
 };
 
-void lb_lbfluid_get_interpolated_velocity_at_positions(double *positions, double *velocities, int length) {
+void lb_lbfluid_get_interpolated_velocity_at_positions(double const *positions, double *velocities, int length) {
     thrust::host_vector<float3> positions_host(length);
     for (int p=0; p < 3 * length; p+=3) {
         // Cast double coming from python to float.

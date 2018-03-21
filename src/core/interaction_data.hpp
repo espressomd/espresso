@@ -907,10 +907,13 @@ inline IA_parameters *get_ia_param(int i, int j) {
     yet present particle types*/
 IA_parameters *get_ia_param_safe(int i, int j);
 
+bool is_new_particle_type(int type);
 /** Makes sure that ia_params is large enough to cover interactions
     for this particle type. The interactions are initialized with values
     such that no physical interaction occurs. */
 void make_particle_type_exist(int type);
+
+void make_particle_type_exist_local(int type);
 
 /** Makes sure that \ref bonded_ia_params is large enough to cover the
     parameters for the bonded interaction type. Attention: 1: There is
@@ -951,7 +954,6 @@ int virtual_set_params(int bond_type);
 #ifdef DIPOLES
 void set_dipolar_method_local(DipolarInteraction method);
 #endif
-
 
 /** @brief Checks if particle has a pair bond with a given partner  
 *  Note that bonds are stored only on one of the two particles in Espresso

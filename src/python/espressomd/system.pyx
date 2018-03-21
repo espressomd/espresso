@@ -41,7 +41,6 @@ if CONSTRAINTS == 1:
     from .constraints import Constraints
 
 from .correlators import AutoUpdateCorrelators
-from .observables import AutoUpdateObservables
 from .accumulators import AutoUpdateAccumulators
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
@@ -56,6 +55,8 @@ IF COLLISION_DETECTION == 1:
 
 import sys
 import random  # for true random numbers from os.urandom()
+cimport tuning
+
 
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
                       "time_step", "timings", "force_cap"]
@@ -88,7 +89,6 @@ cdef class System(object):
         analysis
         galilei
         integrator
-        auto_update_observables
         auto_update_correlators
         auto_update_accumulators
         constraints
@@ -120,7 +120,6 @@ cdef class System(object):
             self.analysis = Analysis(self)
             self.galilei = GalileiTransform()
             self.integrator = integrate.Integrator()
-            self.auto_update_observables = AutoUpdateObservables()
             self.auto_update_correlators = AutoUpdateCorrelators()
             self.auto_update_accumulators = AutoUpdateAccumulators()
             if CONSTRAINTS:
@@ -330,14 +329,14 @@ cdef class System(object):
             for j in range(_state_size_plus_one + 1):
                 states_on_node_i.append(
                     rng.randint(0, numeric_limits[int].max()))
-            states[i] = " ".join(map(str, states_on_node_i))
+            states[i] = (" ".join(map(str, states_on_node_i))).encode('utf-8')
         mpi_random_set_stat(states)
 
     property seed:
         """
         Sets the seed of the pseudo random number with a list of seeds which is as long as the number of used nodes.
         """
-        
+
         def __set__(self, _seed):
             cdef vector[int] seed_array
             self.__seed = _seed
@@ -369,14 +368,15 @@ cdef class System(object):
             if(len(rng_state) == n_nodes * _state_size_plus_one):
                 states = string_vec(n_nodes)
                 for i in range(n_nodes):
-                    states[i] = " ".join(
-                        map(str, rng_state[i * _state_size_plus_one:(i + 1) * _state_size_plus_one]))
+                    states[i] = (" ".join(map(str,
+                                 rng_state[i*_state_size_plus_one:(i+1)*_state_size_plus_one])
+                                 )).encode('utf-8')
                 mpi_random_set_stat(states)
             else:
                 raise ValueError("Wrong # of args: Usage: 'random_number_generator_state \"<state(1)> ... <state(n_nodes*(state_size+1))>, where each <state(i)> is an integer. The state size of the PRNG can be obtained by calling _get_PRNG_state_size().")
 
         def __get__(self):
-            rng_state = map(int, (mpi_random_get_stat().c_str()).split())
+            rng_state = list(map(int, (mpi_random_get_stat().c_str()).split()))
             return rng_state
 
     IF LEES_EDWARDS == 1:

@@ -2,31 +2,11 @@ from __future__ import print_function, absolute_import
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 
-@script_interface_register
-class AutoUpdateObservables(ScriptInterfaceHelper):
-    _so_name = "Observables::AutoUpdateObservables"
-    _so_creation_policy = "LOCAL"
-
-    def add(self, *args, **kwargs):
-        if len(args) == 1:
-            if isinstance(args[0], Observable):
-                observable = args[0]
-            else:
-                raise TypeError(
-                    "Either a Observable object or key-value pairs for the parameters of a Observable object need to be passed.")
-        else:
-            observable = Observable(**kwargs)
-        self.call_method("add", object=observable)
-        return observable
-
-    def remove(self, observable):
-        self.call_method("remove", object=observable)
-
 
 @script_interface_register
 class Observable(ScriptInterfaceHelper):
     _so_name = "Observables::Observable"
-    _so_bind_methods = ("value", "calculate", "update", "auto_write_to")
+    _so_bind_methods = ("calculate",)
     _so_creation_policy = "LOCAL"
 
 
@@ -456,3 +436,54 @@ class CylindricalVelocityProfile(Observable):
 
     """
     _so_name = "Observables::CylindricalVelocityProfile"
+
+
+@script_interface_register
+class CylindricalLBVelocityProfile(Observable):
+    """Calculates the LB fluid velocity profile in polar coordinates.
+
+    This observable samples the fluid in on a regular grid defined by the variables
+    ``sampling*``. Note that a small delta leads to a large number of sample
+    points and carries a performance cost.
+
+    Parameters
+    ----------
+    center : array_like of :obj:`float`
+             Position of the center of the polar coordinate system for the histogram.
+    axis : :obj:`str` (``x``, ``y``, or ``z``)
+           Orientation of the ``z``-axis of the polar coordinate system for the histogram.
+    n_r_bins : :obj:`int`
+               Number of bins in radial direction.
+    n_phi_bins : :obj:`int`
+                 Number of bins for the azimuthal direction.
+    n_z_bins : :obj:`int`
+               Number of bins in ``z`` direction.
+    min_r : :obj:`float`
+            Minimum ``r`` to consider.
+    min_phi : :obj:`float`
+              Minimum ``phi`` to consider.
+    min_z : :obj:`float`
+            Minimum ``z`` to consider.
+    max_r : :obj:`float`
+            Maximum ``r`` to consider.
+    max_phi : :obj:`float`
+              Maximum ``phi`` to consider.
+    max_z : :obj:`float`
+            Maximum ``z`` to consider.
+    sampling_delta_x : :obj:`float`, default=1.0
+        Spacing for the sampling grid in ``x``-direction.
+    sampling_delta_y : :obj:`float`, default=1.0
+        Spacing for the sampling grid in ``y``-direction.
+    sampling_delta_z : :obj:`float`, default=1.0
+        Spacing for the sampling grid in ``z``-direction.
+    sampling_offset_x : :obj:`float`, default=0.0
+        Offset for the sampling grid in ``x``-direction.
+    sampling_offset_y : :obj:`float`, default=0.0
+        Offset for the sampling grid in ``y``-direction.
+    sampling_offset_z : :obj:`float`, default=0.0
+        Offset for the sampling grid in ``z``-direction.
+    allow_empty_bins : :obj:`bool`, default=False
+        Wether or not to allow bins that will not be sampled at all.
+
+    """
+    _so_name = "Observables::CylindricalLBVelocityProfile"

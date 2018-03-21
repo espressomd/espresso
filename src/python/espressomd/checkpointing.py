@@ -68,7 +68,7 @@ class Checkpointing(object):
         """
         names = name.split('.')
 
-        for i in xrange(len(names)-1):
+        for i in range(len(names)-1):
             obj = getattr(obj, names[i], default)
 
         return getattr(obj, names[-1], default)
@@ -83,7 +83,7 @@ class Checkpointing(object):
         """
         names = name.split('.')
         tmp_obj = obj
-        for i in xrange(len(names)-1):
+        for i in range(len(names)-1):
             obj = getattr(obj, names[i], None)
 
         if obj == None:
@@ -97,7 +97,7 @@ class Checkpointing(object):
         
         """
         names = name.split('.')
-        for i in xrange(len(names)-1):
+        for i in range(len(names)-1):
             obj = getattr(obj, names[i], None)
 
         return hasattr(obj, names[-1])
@@ -180,7 +180,7 @@ class Checkpointing(object):
         filename = os.path.join(self.checkpoint_dir, "{}.checkpoint".format(checkpoint_index))
 
         tmpname = filename + ".__tmp__"
-        with open(tmpname,"w") as checkpoint_file:
+        with open(tmpname,"wb") as checkpoint_file:
             pickle.dump(checkpoint_data, checkpoint_file, -1)
         os.rename(tmpname, filename)
 
@@ -195,7 +195,7 @@ class Checkpointing(object):
             checkpoint_index = self.get_last_checkpoint_index()
 
         filename = os.path.join(self.checkpoint_dir, "{}.checkpoint".format(checkpoint_index))
-        with open(filename,"r") as checkpoint_file:
+        with open(filename,"rb") as checkpoint_file:
             checkpoint_data = pickle.load(checkpoint_file)
 
         for key in checkpoint_data:
@@ -233,6 +233,7 @@ class Checkpointing(object):
         Writes the given signal integer signum to the signal file.
         
         """
+        signum = int(signum)
         if not is_valid_type(signum, int):
             raise ValueError("Signal must be an integer number.")
 

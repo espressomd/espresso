@@ -33,12 +33,24 @@ add_library(EspressoCore SHARED ${EspressoCore_SRC} config-version.cpp)
 install(TARGETS EspressoCore LIBRARY DESTINATION ${LIBDIR})
 set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
 
-target_link_libraries(EspressoCore EspressoConfig ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints Correlators Observables Accumulators VirtualSites)
+target_link_libraries(EspressoCore EspressoConfig ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints Correlators Observables Accumulators VirtualSites cluster_analysis)
 
 if(SCAFACOS)
   include_directories(${SCAFACOS_INCLUDE_DIRS})
   target_link_libraries(EspressoCore Scafacos)
 endif(SCAFACOS)
+if(GSL)
+  include_directories(${GSL_INCLUDE_DIRS})
+endif(GSL)
+
+
+if(GSL)
+  target_link_libraries(EspressoCore gsl gslcblas)
+endif(GSL)
+
+if(GSL)
+  target_link_libraries(EspressoCore gsl gslcblas)
+endif(GSL)
 
 if(CUDA)
   file(GLOB EspressoCuda_SRC
@@ -77,6 +89,7 @@ add_subdirectory(lbboundaries)
 add_subdirectory(object-in-fluid)
 add_subdirectory(shapes)
 add_subdirectory(constraints)
+add_subdirectory(cluster_analysis)
 
 if(SCAFACOS)
   add_subdirectory(scafacos)

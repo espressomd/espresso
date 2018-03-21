@@ -23,8 +23,8 @@ visualizer = openGLLive(system,
                         LB_plane_ngrid = 15, 
                         camera_position = [8,16,50], 
                         velocity_arrows=True, 
-                        velocity_arrows_scale=[20.], 
-                        arrows_radius= 0.1, 
+                        velocity_arrows_type_scale=[20.], 
+                        velocity_arrows_type_radii = [0.1], 
                         velocity_arrows_type_colors=[[0,1,0,0.5]] )
 
 lbf = lb.LBFluid(agrid=1.0, fric = 1.0, dens=1.0, visc=1.0, tau=0.1, ext_force=[0, 0.003, 0])

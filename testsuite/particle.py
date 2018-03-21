@@ -45,6 +45,9 @@ class ParticleProperties(ut.TestCase):
         if not self.system.part.exists(self.pid):
             self.system.part.add(id=self.pid, pos=(0, 0, 0))
 
+    def tearDown(self):
+        self.system.part.clear()
+
     def generateTestForVectorProperty(_propName, _value):
         """Generates test cases for vectorial particle properties such as
         position, velocity...
@@ -145,63 +148,82 @@ class ParticleProperties(ut.TestCase):
             self.system.part.add(id=0, pos=(0, 0, 0))
             self.system.part.add(id=1, pos=(0, 0, 0))
             self.system.part[1].vs_relative = (0, 5.0, (0.5, -0.5, -0.5, -0.5))
+            self.system.part[1].vs_quat = [1, 2, 3, 4]
+            np.testing.assert_array_equal(self.system.part[1].vs_quat, [1, 2, 3, 4])
             res = self.system.part[1].vs_relative
             self.assertEqual(res[0], 0, "vs_relative: " + res.__str__())
             self.assertEqual(res[1], 5.0, "vs_relative: " + res.__str__())
             np.testing.assert_allclose(
-    res[2], np.array(
-         (0.5, -0.5, -0.5, -0.5)), err_msg="vs_relative: " + res.__str__(), atol=self.tol)
-    
+                res[2], np.array(
+                    (0.5, -0.5, -0.5, -0.5)), err_msg="vs_relative: " + res.__str__(), atol=self.tol)
+
     @ut.skipIf(not espressomd.has_features("DIPOLES"),
-        "Features not available, skipping test!")
+               "Features not available, skipping test!")
     def test_contradicting_properties_dip_dipm(self):
         with self.assertRaises(ValueError):
-            self.system.part.add(pos = [0, 0, 0], dip=[1, 1, 1], dipm=1.0)
-    
+            self.system.part.add(pos=[0, 0, 0], dip=[1, 1, 1], dipm=1.0)
+
     @ut.skipIf(not espressomd.has_features("DIPOLES", "ROTATION"),
-        "Features not available, skipping test!")
+               "Features not available, skipping test!")
     def test_contradicting_properties_dip_quat(self):
         with self.assertRaises(ValueError):
-            self.system.part.add(pos = [0, 0, 0], dip=[1, 1, 1], quat=[1.0,1.0,1.0,1.0])
+            self.system.part.add(pos=[0, 0, 0], dip=[
+                                 1, 1, 1], quat=[1.0, 1.0, 1.0, 1.0])
 
     @ut.skipIf(not espressomd.has_features("ELECTROSTATICS"), "Test needs ELECTROSTATICS")
-    def test_zz_particle_selection(self):
-        s=self.system
+    def test_particle_selection(self):
+        s = self.system
         s.part.clear()
         positions = ((0.2, 0.3, 0.4), (0.4, 0.2, 0.3), (0.7, 0.7, 0.7))
         charges = 0, 1E-6, -1, 1
-        
+
         # Place particles
-        i=0
+        i = 0
         for pos in positions:
             for q in charges:
-                s.part.add(pos=pos, q=q,id=i)
-                i+=1
-        
+                s.part.add(pos=pos, q=q, id=i)
+                i += 1
+
         # Scalar property
         res = s.part.select(q=0)
         self.assertEqual(len(res.id), len(positions))
         for p in res:
-            self.assertAlmostEqual(p.q,0,places=13)
-        
+            self.assertAlmostEqual(p.q, 0, places=13)
+
         # Vectorial property
         res = s.part.select(pos=(0.2, 0.3, 0.4))
-        self.assertEqual(len(res.id) , len(charges))
+        self.assertEqual(len(res.id), len(charges))
         for p in res:
-            np.testing.assert_allclose((0.2, 0.3, 0.4), np.copy(p.pos), atol=1E-12)
-        
-        
+            np.testing.assert_allclose(
+                (0.2, 0.3, 0.4), np.copy(p.pos), atol=1E-12)
+
         # Two criteria
-        res = s.part.select(pos=(0.2, 0.3, 0.4),q=0)
-        self.assertEqual(tuple(res.id),(0,))
+        res = s.part.select(pos=(0.2, 0.3, 0.4), q=0)
+        self.assertEqual(tuple(res.id), (0,))
 
         # Emtpy result
-        res=s.part.select(q=17)
-        self.assertEqual(tuple(res.id),())
+        res = s.part.select(q=17)
+        self.assertEqual(tuple(res.id), ())
         # User-specified criterion
         res = s.part.select(lambda p: p.pos[0] < 0.5)
-        self.assertEqual(tuple(sorted(res.id)),(0,1,2,3,4,5,6,7))
+        self.assertEqual(tuple(sorted(res.id)), (0, 1, 2, 3, 4, 5, 6, 7))
 
+    def test_image_box(self):
+        s = self.system
+        s.part.clear()
+
+        pos = 1.5 * s.box_l
+
+        s.part.add(pos=pos)
+
+        np.testing.assert_equal(np.copy(s.part[0].image_box), [1, 1, 1])
+
+    def test_accessing_invalid_id_raises(self):
+        self.system.part.clear()
+        handle_to_non_existing_particle = self.system.part[42]
+        def get_pos_prop(handle):
+            return handle.pos
+        self.assertRaises(RuntimeError, get_pos_prop, handle_to_non_existing_particle)
 
 if __name__ == "__main__":
     #print("Features: ", espressomd.features())

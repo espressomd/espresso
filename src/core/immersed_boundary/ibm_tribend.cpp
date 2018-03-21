@@ -175,9 +175,9 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, c
       
       //Get vectors of triangles
       double dx1[3], dx2[3], dx3[3];
-      get_mi_vector(dx1, p1->r.p, p3->r.p);
-      get_mi_vector(dx2, p2->r.p, p3->r.p);
-      get_mi_vector(dx3, p4->r.p, p3->r.p);
+      get_mi_vector(dx1, p1.r.p, p3.r.p);
+      get_mi_vector(dx2, p2.r.p, p3.r.p);
+      get_mi_vector(dx3, p4.r.p, p3.r.p);
       
       //Get normals on triangle; pointing outwards by definition of indices sequence
       double n1l[3], n2l[3];

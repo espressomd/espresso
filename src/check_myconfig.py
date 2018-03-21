@@ -83,6 +83,8 @@ def check_myconfig(compiler, feature_file, myconfig, pre_header = None):
         print("External feature '{}' can not be defined in myconfig.".format(e))
 
     for u in (my_features - defs.features):
+        if u.startswith('__'):
+            continue
         error_state = True
         handle_unkown(u, defs.features)
 

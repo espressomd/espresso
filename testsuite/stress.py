@@ -259,6 +259,8 @@ class stress_test(ut.TestCase):
     self.assertTrue(np.max(np.abs(sim_pressure_total-sim_pressure_kinetic-sim_pressure_bonded-sim_pressure_nonbonded)) < tol, 'total pressure is not given as the sum of all major pressure components')
 
 
+@ut.skipIf(not espressomd.has_features(['EXTERNAL_FORCES']),
+'Features not available, skipping test!')
 class stress_test_fene(ut.TestCase):
     
     def get_anal_stress_fene(self, pos_1, pos_2, k, d_r_max, r_0):
