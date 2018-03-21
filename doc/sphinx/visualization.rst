@@ -153,10 +153,11 @@ Screenshots
 
 The openGL visualizer can also be used for offline rendering.
 After creating the visualizer object, call ``screenshot(path)``
-to save a png image of your simulation to `path`. 
-The image size is determined by the keyword argument `window_size` of the
-visualizer. This method can be used to create screenshots
-without blocking the simulation script::
+to save an image of your simulation to `path`. Internally, the image is saved
+with `matplotlib.pyplot.imsave`, so the file format is specified by the
+extension of the filename.  The image size is determined by the keyword
+argument `window_size` of the visualizer. This method can be used to create
+screenshots without blocking the simulation script::
 
     import espressomd
     from espressomd import visualization
@@ -174,10 +175,10 @@ without blocking the simulation script::
 
     for i in range(100):
         system.integrator.run(1)
-        visualizer.screenshot('screenshot_{}.png'.format(i))
+        visualizer.screenshot('screenshot_{}.jpg'.format(i))
 
     #You may consider creating a video with ffmpeg:
-    #ffmpeg -f image2 -framerate 30 -i 'screenshot_%d.png' output.mp4
+    #ffmpeg -f image2 -framerate 30 -i 'screenshot_%d.jpg' output.mp4
 
 It is also possible to create a snapshot during online visualization.
 Simply press the *enter* key to create a snapshot of the current window,

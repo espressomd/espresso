@@ -397,7 +397,7 @@ class openGLLive(object):
         self.timers.append((int(interval), cb))
 
     def screenshot(self, path):
-        """Renders the current state and into a png with dimensions of
+        """Renders the current state and into an image file at path with dimensions of
         specs['window_size'].  """
 
         # ON FIRST CALL: INIT AND CREATE BUFFERS
