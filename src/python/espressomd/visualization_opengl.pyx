@@ -372,7 +372,6 @@ class openGLLive(object):
         self.hasParticleData = False
         self.quit_savely = False
         self.paused = False
-        self.screenshot_mode = False
         self.take_screenshot = False
         self.keyboardManager = KeyboardManager()
         self.mouseManager = MouseManager()
@@ -393,19 +392,52 @@ class openGLLive(object):
         """Renders the current state and into a png with dimensions of
         specs['window_size'].  """
 
-        self.screenshot_filename = filename
-        self.screenshot_mode = True
-
         if not self.screenshot_initialized:
             self.screenshot_initialized = True
             self.init_opengl()
+            
+            # CREATE BUFFERS THAT CAN BE LARGER THAN THE SCREEN
+            # FRAME BUFFER
+            fbo = glGenFramebuffers(1)
+            glBindFramebuffer(GL_FRAMEBUFFER, fbo )
+
+            # COLOR BUFFER
+            rbo = glGenRenderbuffers(1)
+            glBindRenderbuffer(GL_RENDERBUFFER, rbo)
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, self.specs['window_size'][0], self.specs['window_size'][1]);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbo)
+            
+            # DEPTH BUFFER
+            dbo = glGenRenderbuffers(1)
+            glBindRenderbuffer(GL_RENDERBUFFER, dbo)
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, self.specs['window_size'][0], self.specs['window_size'][1])
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, dbo)
+
             self.reshape_window(self.specs['window_size'][0], self.specs['window_size'][1])
             glutHideWindow()
 
+        # INIT AND UPDATE ESPRESSO
         self.init_espresso_visualization()
         self.init_camera()
         self.initial_updates()
-        self.display_all()
+       
+        # DRAW
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glLoadMatrixf(self.camera.modelview)
+        self.draw()
+        
+        # READ THE PIXES
+        glReadBuffer(GL_COLOR_ATTACHMENT0)
+        data = glReadPixels(0, 0, self.specs['window_size'][0], self.specs['window_size'][1], GL_RGBA, GL_FLOAT)
+
+        # RESHAPE THE DATA
+        data = np.flipud(data.reshape((data.shape[1],data.shape[0],4)))
+
+        # SAVE TO IMAGE
+        imsave(filename, data)
+
+        print("Saved screenshot {}".format(filename))
+ 
 
     def run(self, integ_steps=1):
         """Convenience method with a simple integration thread.
@@ -1014,19 +1046,18 @@ class openGLLive(object):
             self.maxq = max(self.particles['charge'][:])
 
     def handle_screenshot(self):
-        if self.take_screenshot or self.screenshot_mode:
+        if self.take_screenshot:
             self.take_screenshot = False
-            glPixelStorei(GL_PACK_ALIGNMENT, 1)
+            #glPixelStorei(GL_PACK_ALIGNMENT, 1)
+            #glReadBuffer(GL_BACK)
             data = glReadPixels(0, 0, self.specs['window_size'][0], self.specs['window_size'][1], GL_RGB, GL_FLOAT)
             basename = os.path.basename(__file__)[:-3]
             
-            if self.screenshot_mode:
-                fname = self.screenshot_filename
-            else:
-                i = 0
-                while os.path.exists("{}_{}.png".format(basename, i)):
-                    i += 1
-                fname = "{}_{}.png".format(basename, i)
+            i = 0
+            while os.path.exists("{}_{}.png".format(basename, i)):
+                i += 1
+            fname = "{}_{}.png".format(basename, i)
+            
             data = np.flipud(data.reshape((data.shape[1],data.shape[0],3)))
             imsave(fname, data)
             print("Saved screenshot {}".format(fname))
@@ -1066,9 +1097,10 @@ class openGLLive(object):
                         10, self.specs['window_size'][1] - 10 - 15 * y, txt, self.text_color)
                     y += 1
 
-            self.handle_screenshot()
             
             glutSwapBuffers()
+
+            self.handle_screenshot()
 
 
     # CALLED ION WINDOW POSITION/SIZE CHANGE
@@ -1083,6 +1115,7 @@ class openGLLive(object):
         glMatrixMode(GL_MODELVIEW)
         self.specs['window_size'][0] = w
         self.specs['window_size'][1] = h
+        print("reshape",w,h)
 
     # INITS FOR GLUT FUNCTIONS
     def init_callbacks(self):
@@ -1113,18 +1146,16 @@ class openGLLive(object):
             return
 
         def redraw_on_idle():
-            if not self.screenshot_mode:
             # DONT REPOST FASTER THAN 60 FPS
-                self.draw_elapsed += (time.time() - self.draw_timer)
-                if self.draw_elapsed > 1.0 / 60.0:
-                    self.draw_elapsed = 0
-                    glutPostRedisplay()
-                self.draw_timer = time.time()
+            self.draw_elapsed += (time.time() - self.draw_timer)
+            if self.draw_elapsed > 1.0 / 60.0:
+                self.draw_elapsed = 0
+                glutPostRedisplay()
+            self.draw_timer = time.time()
             return
 
         def reshape_callback(w, h):
-            if not self.screenshot_mode:
-                self.reshape_window(w, h)
+            self.reshape_window(w, h)
 
         def close_window():
             os._exit(1)
@@ -1422,6 +1453,7 @@ class openGLLive(object):
                            0], self.specs['window_size'][1])
 
         glutCreateWindow(b"ESPResSo visualization")
+
 
         glClearColor(self.specs['background_color'][0], self.specs[
                      'background_color'][1], self.specs['background_color'][2], 1.)
