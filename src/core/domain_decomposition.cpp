@@ -899,10 +899,8 @@ void dd_exchange_and_sort_particles(ParticleList *pl) {
 
       if (node_pos[dir] % 2 == 0) {
         send_particles(&send_buf, node_neighbors[2 * dir]);
-        // recv_particles(&recv_buf, node_neighbors[2 * dir + 1]);
         comm_cart.recv(node_neighbors[2 * dir], 0xaa, recv_buf);
       } else {
-        // recv_particles(&recv_buf, node_neighbors[2 * dir + 1]);
         comm_cart.recv(node_neighbors[2 * dir], 0xaa, recv_buf);
         send_particles(&send_buf, node_neighbors[2 * dir]);
       }
