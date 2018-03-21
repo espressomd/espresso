@@ -2,17 +2,19 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from OpenGL.GL import *
 from math import *
+#from PIL import Image
 import numpy as np
 import os
 import time
 import collections
 import sys
 from threading import Thread
-import scipy.spatial
+from matplotlib.pyplot import imsave
 include "myconfig.pxi"
 from copy import deepcopy
 import espressomd
 from espressomd.particle_data import ParticleHandle
+
 
 class openGLLive(object):
 
@@ -199,30 +201,30 @@ class openGLLive(object):
             'redplastic':   [[0, 0, 0], [0.5, 0, 0], [0.7, 0.6, 0.6], 0.25],
             'blueplastic':  [[0, 0, 0], [0.0, 0.0, 0.5], [0.6, 0.6, 0.7], 0.25],
             'whiteplastic': [[0, 0, 0], [0.55, 0.55, 0.55], [0.7, 0.7, 0.7], 0.25],
-            'yellowplastic':[[0, 0, 0], [0.5, 0.5, 0], [0.6, 0.6, 0.5], 0.25]}
+            'yellowplastic': [[0, 0, 0], [0.5, 0.5, 0], [0.6, 0.6, 0.5], 0.25]}
 
         # DEFAULT PROPERTIES
         self.specs = {
             'window_size': [800, 800],
             'name': 'Espresso Visualization',
-            
+
             'background_color': [0, 0, 0],
-            
+
             'draw_fps': False,
             'draw_box': True,
             'draw_axis': True,
             'draw_nodes': False,
             'draw_cells': False,
-            
-            'update_fps': 30, 
-            
+
+            'update_fps': 30,
+
             'periodic_images': [0, 0, 0],
-            
+
             'quality_particles': 20,
             'quality_bonds': 16,
             'quality_arrows': 16,
             'quality_constraints': 32,
-            
+
             'close_cut_distance': 0.1,
             'far_cut_distance': 5,
 
@@ -251,12 +253,12 @@ class openGLLive(object):
             'ext_force_arrows_type_scale': [1.0],
             'ext_force_arrows_type_colors': [[1, 1, 1, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
             'ext_force_arrows_type_radii': [0.2],
-            
+
             'velocity_arrows': False,
             'velocity_arrows_type_scale': [1.0],
             'velocity_arrows_type_colors': [[1, 1, 1, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
             'velocity_arrows_type_radii': [0.2],
-            
+
             'force_arrows': False,
             'force_arrows_type_scale': [1.0],
             'force_arrows_type_colors': [[1, 1, 1, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
@@ -308,23 +310,23 @@ class openGLLive(object):
             self.specs['draw_constraints'] = False
 
         # ESPRESSO RELATED INITS THAT ARE KNOWN ONLY WHEN RUNNING THE
-        # INTEGRATION LOOP ARE CALLED ONCE IN UPDATE LOOP: 
+        # INTEGRATION LOOP ARE CALLED ONCE IN UPDATE LOOP:
         # CONSTRAINTS, NODE BOXES, CELL BOXES, CHARGE RANGE, BONDS
 
         # ESPRESSO RELATED INITS THAT ARE KNOWN ON INSTANTIATION GO HERE:
-        
+
         # CONTENT OF PARTICLE DATA
         self.has_particle_data = {}
         self.has_particle_data['velocity'] = self.specs['velocity_arrows']
         self.has_particle_data['force'] = self.specs['force_arrows']
         self.has_particle_data['ext_force'] = self.specs['ext_force_arrows'] or self.specs['drag_enabled']
         IF ELECTROSTATICS:
-            self.has_particle_data['charge'] = self.specs['particle_coloring'] == 'auto' or self.specs['particle_coloring'] == 'charge' 
-        ELSE: 
+            self.has_particle_data['charge'] = self.specs['particle_coloring'] == 'auto' or self.specs['particle_coloring'] == 'charge'
+        ELSE:
             self.has_particle_data['charge'] = False
         self.has_particle_data['director'] = self.specs['director_arrows']
         self.has_particle_data['node'] = self.specs['particle_coloring'] == 'node'
-        
+
         # PARTICLE INFO OF HIGHLIGHTED PARTICLE: COLLECT PARTICLE ATTRIBUTES
         self.highlighted_particle = {}
         self.particle_attributes = []
@@ -336,15 +338,15 @@ class openGLLive(object):
 
         # FIXED COLORS FROM INVERSE BACKGROUND COLOR FOR GOOD CONTRAST
         self.invBackgroundCol = np.array([1 - self.specs['background_color'][0], 1 -
-                                          self.specs['background_color'][1], 1 - self.specs['background_color'][2],1.0])
-        
+                                          self.specs['background_color'][1], 1 - self.specs['background_color'][2], 1.0])
+
         self.node_box_color = np.copy(self.invBackgroundCol)
-        self.node_box_color[0] += 0.5 * (0.5 - self.node_box_color[0]) 
-        self.node_box_color[3] = 0.6 
-        
+        self.node_box_color[0] += 0.5 * (0.5 - self.node_box_color[0])
+        self.node_box_color[3] = 0.6
+
         self.cell_box_color = np.copy(self.invBackgroundCol)
-        self.cell_box_color[1] += 0.5 * (0.5 - self.cell_box_color[1]) 
-        self.cell_box_color[3] = 0.4 
+        self.cell_box_color[1] += 0.5 * (0.5 - self.cell_box_color[1])
+        self.cell_box_color[3] = 0.4
 
         self.text_color = np.copy(self.invBackgroundCol)
 
@@ -362,12 +364,16 @@ class openGLLive(object):
         self.system = system
         self.last_T = -1
         self.last_box_l = self.system.box_l
-        self.fps_last = 0 
+        self.fps_last = 0
         self.fps = 0
         self.fps_count = 0
         self.started = False
+        self.screenshot_initialized = False
+        self.hasParticleData = False
         self.quit_savely = False
         self.paused = False
+        self.screenshot_mode = False
+        self.take_screenshot = False
         self.keyboardManager = KeyboardManager()
         self.mouseManager = MouseManager()
         self.timers = []
@@ -383,13 +389,31 @@ class openGLLive(object):
 
         self.timers.append((int(interval), cb))
 
+    def screenshot(self, filename):
+        """Renders the current state and into a png with dimensions of
+        specs['window_size'].  """
+
+        self.screenshot_filename = filename
+        self.screenshot_mode = True
+
+        if not self.screenshot_initialized:
+            self.screenshot_initialized = True
+            self.init_opengl()
+            self.reshape_window(self.specs['window_size'][0], self.specs['window_size'][1])
+            glutHideWindow()
+
+        self.init_espresso_visualization()
+        self.init_camera()
+        self.initial_updates()
+        self.display_all()
+
     def run(self, integ_steps=1):
         """Convenience method with a simple integration thread.
         """
 
         def main():
             while True:
-                
+
                 self.update()
 
                 if self.paused:
@@ -420,17 +444,29 @@ class openGLLive(object):
 
         # HANDLE INPUT WITH 60FPS
         def timed_handle_input(data):
-            #glutPostRedisplay()
+            # glutPostRedisplay()
             self.keyboardManager.handle_input()
             glutTimerFunc(17, timed_handle_input, -1)
 
         self.started = True
-        self.hasParticleData = False
 
         glutTimerFunc(17, timed_handle_input, -1)
-        
+
         # START THE BLOCKING MAIN LOOP
         glutMainLoop()
+
+    def initial_updates(self):
+        self.update_particles()
+        if self.has_particle_data['charge']:
+            self.update_charge_color_range()
+        self.update_bonds()
+        if self.specs['draw_constraints']:
+            self.update_constraints()
+        if self.specs['draw_cells'] or self.specs['draw_nodes']:
+            self.update_nodes()
+        if self.specs['draw_cells']:
+            self.update_cells()
+
 
     def update(self):
         """Update method to be called after integration.
@@ -441,17 +477,7 @@ class openGLLive(object):
 
             # UPDATE ON STARTUP
             if not self.hasParticleData:
-                self.update_particles()
-                if self.has_particle_data['charge']:
-                    self.update_charge_color_range()
-                self.update_bonds()
-                if self.specs['draw_constraints']:
-                    self.update_constraints()
-                if self.specs['draw_cells'] or self.specs['draw_nodes']:
-                    self.update_nodes()
-                if self.specs['draw_cells']:
-                    self.update_cells()
-
+                self.initial_updates()
                 self.hasParticleData = True
 
             # UPDATES
@@ -468,21 +494,20 @@ class openGLLive(object):
                     if self.specs['LB']:
                         self.update_lb()
 
-                    # CELLSYSTEM UPDATE 
+                    # CELLSYSTEM UPDATE
                     if self.specs['draw_cells'] or self.specs['draw_nodes']:
                         if not (self.last_box_l == self.system.box_l).all():
                             self.last_box_l = np.copy(self.system.box_l)
                             self.update_nodes()
                             if self.specs['draw_cells']:
                                 self.update_cells()
-                        
 
                 # KEYBOARD CALLBACKS MAY CHANGE ESPRESSO SYSTEM PROPERTIES,
                 # ONLY SAVE TO CHANGE HERE
                 for c in self.keyboardManager.userCallbackStack:
                     c()
                 self.keyboardManager.userCallbackStack = []
-            
+
             self.update_timer = time.time()
 
             # DRAG PARTICLES
@@ -499,7 +524,6 @@ class openGLLive(object):
         # main thread
         if self.quit_savely:
             os._exit(1)
-        
 
     # GET THE PARTICLE DATA
     def update_particles(self):
@@ -527,7 +551,8 @@ class openGLLive(object):
 
         if self.infoId != -1:
             for attr in self.particle_attributes:
-                self.highlighted_particle[attr] = getattr(self.system.part[self.infoId], attr)
+                self.highlighted_particle[attr] = getattr(
+                    self.system.part[self.infoId], attr)
 
     def update_lb(self):
         agrid = self.lb_params['agrid']
@@ -536,7 +561,7 @@ class openGLLive(object):
         for xi in xrange(ng):
             for xj in xrange(ng):
                 pp = np.copy((self.lb_plane_p + xi * 1.0 / ng * self.lb_plane_b1 +
-                      xj * 1.0 / ng * self.lb_plane_b2) % self.system.box_l)
+                              xj * 1.0 / ng * self.lb_plane_b2) % self.system.box_l)
                 i, j, k = (int(ppp / agrid) for ppp in pp)
                 lb_vel = np.copy(self.lb[i, j, k].velocity)
                 self.lb_plane_vel.append([pp, lb_vel])
@@ -552,21 +577,23 @@ class openGLLive(object):
         return edges
 
     def update_cells(self):
-        self.cell_box_origins = [] 
+        self.cell_box_origins = []
         cell_system_state = self.system.cell_system.get_state()
         self.cell_size = cell_system_state['cell_size']
         for i in range(cell_system_state['cell_grid'][0]):
             for j in range(cell_system_state['cell_grid'][1]):
                 for k in range(cell_system_state['cell_grid'][2]):
-                    self.cell_box_origins.append(np.array([i,j,k]) * self.cell_size)
+                    self.cell_box_origins.append(
+                        np.array([i, j, k]) * self.cell_size)
 
     def update_nodes(self):
-        self.node_box_origins = [] 
+        self.node_box_origins = []
         self.local_box_l = self.system.cell_system.get_state()['local_box_l']
         for i in range(self.system.cell_system.node_grid[0]):
             for j in range(self.system.cell_system.node_grid[1]):
                 for k in range(self.system.cell_system.node_grid[2]):
-                    self.node_box_origins.append(np.array([i,j,k]) * self.local_box_l)
+                    self.node_box_origins.append(
+                        np.array([i, j, k]) * self.local_box_l)
 
     # GET THE update_constraints DATA
     def update_constraints(self):
@@ -663,22 +690,16 @@ class openGLLive(object):
                     for p in b[1:]:
                         self.bonds.append([i, p, t])
 
-    def draw_text(self, x,  y, text, color, font = GLUT_BITMAP_9_BY_15):
+    def draw_text(self, x,  y, text, color, font=GLUT_BITMAP_9_BY_15):
         glColor(color)
         glWindowPos2f(x, y)
-        for ch in text :
-            glutBitmapCharacter( font , ctypes.c_int( ord(ch) ) )
+        for ch in text:
+            glutBitmapCharacter(font, ctypes.c_int(ord(ch)))
 
     # DRAW CALLED AUTOMATICALLY FROM GLUT DISPLAY FUNC
     def draw(self):
         if self.specs['LB']:
             self.draw_lb_vel()
-        if self.specs['draw_box']:
-            self.draw_system_box()
-        if self.specs['draw_nodes']:
-            self.draw_nodes()
-        if self.specs['draw_cells']:
-            self.draw_cells()
 
         if self.specs['draw_axis']:
             axis_fac = 0.2
@@ -690,24 +711,34 @@ class openGLLive(object):
             draw_arrow([0, 0, 0], [0, 0, self.system.box_l[2] * axis_fac], axis_r, [
                        0, 0, 1, 1], self.materials['chrome'], self.specs['quality_arrows'])
 
-        self.draw_system_particles()
         if self.specs['draw_bonds']:
             self.draw_bonds()
+        self.draw_system_particles()
 
         if self.specs['draw_constraints']:
             self.draw_constraints()
+        
+        if self.specs['draw_box']:
+            self.draw_system_box()
+        if self.specs['draw_nodes']:
+            self.draw_nodes()
+        if self.specs['draw_cells']:
+            self.draw_cells()
 
     def draw_system_box(self):
-        draw_box([0, 0, 0], self.system.box_l, self.invBackgroundCol, 2.0* self.line_width_fac)
-    
+        draw_box([0, 0, 0], self.system.box_l,
+                 self.invBackgroundCol, 2.0 * self.line_width_fac)
+
     def draw_nodes(self):
         for n in self.node_box_origins:
-            draw_box(n, self.local_box_l, self.node_box_color, 1.5 * self.line_width_fac)
-    
+            draw_box(n, self.local_box_l, self.node_box_color,
+                     1.5 * self.line_width_fac)
+
     def draw_cells(self):
         for n in self.node_box_origins:
             for c in self.cell_box_origins:
-                draw_box(c + n, self.cell_size, self.cell_box_color, 0.75 * self.line_width_fac)
+                draw_box(c + n, self.cell_size, self.cell_box_color,
+                         0.75 * self.line_width_fac)
 
     def draw_constraints(self):
 
@@ -717,7 +748,7 @@ class openGLLive(object):
 
         for s in self.shapes['Shapes::Ellipsoid']:
             draw_ellipsoid(s[0], s[1], s[2], s[3], self.modulo_indexing(self.specs['constraint_type_colors'], s[4]),
-                          self.materials[self.modulo_indexing(self.specs['constraint_type_materials'], s[4])], self.specs['quality_constraints'])
+                           self.materials[self.modulo_indexing(self.specs['constraint_type_materials'], s[4])], self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::Sphere']:
             self.draw_sphere(s[0], s[1], self.modulo_indexing(self.specs['constraint_type_colors'], s[2]), self.materials[self.modulo_indexing(
@@ -727,13 +758,13 @@ class openGLLive(object):
             draw_sphero_cylinder(
                 s[0], s[1], s[2], self.modulo_indexing(
                     self.specs['constraint_type_colors'], s[3]),
-                               self.materials[self.modulo_indexing(self.specs['constraint_type_materials'], s[3])], self.specs['quality_constraints'])
+                self.materials[self.modulo_indexing(self.specs['constraint_type_materials'], s[3])], self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::Wall']:
             draw_plane(
                 s[0], self.modulo_indexing(
                     self.specs['constraint_type_colors'], s[1]),
-                      self.materials[self.modulo_indexing(self.specs['constraint_type_materials'], s[1])])
+                self.materials[self.modulo_indexing(self.specs['constraint_type_materials'], s[1])])
 
         for s in self.shapes['Shapes::Cylinder']:
             draw_cylinder(s[0], s[1], s[2], self.modulo_indexing(self.specs['constraint_type_colors'], s[3]), self.materials[self.modulo_indexing(
@@ -769,7 +800,7 @@ class openGLLive(object):
                 radius = self.radiusByLJ(ptype)
         return radius
 
-    def draw_system_particles(self, colorById = False):
+    def draw_system_particles(self, colorById=False):
         pIds = range(len(self.particles['pos']))
         ptype = -1
         reset_material = False
@@ -781,10 +812,11 @@ class openGLLive(object):
             # Only change material if type/charge has changed, colorById or material was resetted by arrows
             if reset_material or colorById or not ptype == ptype_last or pid == self.dragId or pid == self.infoId or self.specs['particle_coloring'] == 'node':
                 reset_material = False
-                
+
                 radius = self.determine_radius(ptype)
 
-                m = self.modulo_indexing(self.specs['particle_type_materials'], ptype)
+                m = self.modulo_indexing(
+                    self.specs['particle_type_materials'], ptype)
                 material = self.materials[m]
 
                 if colorById:
@@ -794,34 +826,40 @@ class openGLLive(object):
                     if self.specs['particle_coloring'] == 'auto':
                         # Color auto: Charge then Type
                         if self.has_particle_data['charge'] and self.particles['charge'][pid] != 0:
-                            color = self.color_by_charge(self.particles['charge'][pid])
+                            color = self.color_by_charge(
+                                self.particles['charge'][pid])
                             reset_material = True
                         else:
                             color = self.modulo_indexing(
                                 self.specs['particle_type_colors'], ptype)
                     elif self.specs['particle_coloring'] == 'charge':
-                        color = self.color_by_charge(self.particles['charge'][pid])
+                        color = self.color_by_charge(
+                            self.particles['charge'][pid])
                         reset_material = True
                     elif self.specs['particle_coloring'] == 'type':
                         color = self.modulo_indexing(
                             self.specs['particle_type_colors'], ptype)
                     elif self.specs['particle_coloring'] == 'node':
-                        color = self.modulo_indexing(self.specs['particle_type_colors'], self.particles['node'][pid])
-
+                        color = self.modulo_indexing(
+                            self.specs['particle_type_colors'], self.particles['node'][pid])
 
                     # Invert color of highlighted particle
                     if pid == self.dragId or pid == self.infoId:
                         reset_material = True
-                        color = [1 - color[0], 1 - color[1], 1 - color[2], color[3]] 
-                
-                set_solid_material(color[0], color[1], color[2], color[3], material[0], material[1], material[2], material[3])
+                        color = [1 - color[0], 1 - color[1],
+                                 1 - color[2], color[3]]
+
+                set_solid_material(color[0], color[1], color[2], color[3],
+                                   material[0], material[1], material[2], material[3])
 
                 # Create a new display list, used until next material/color change
                 glNewList(self.dl_sphere, GL_COMPILE)
-                glutSolidSphere(radius, self.specs['quality_particles'], self.specs['quality_particles'])
+                glutSolidSphere(
+                    radius, self.specs['quality_particles'], self.specs['quality_particles'])
                 glEndList()
 
-            self.redraw_sphere(self.particles['pos'][pid], radius, self.specs['quality_particles'])
+            self.redraw_sphere(
+                self.particles['pos'][pid], radius, self.specs['quality_particles'])
 
             if self.has_images:
                 for imx in range(-self.specs['periodic_images'][0], self.specs['periodic_images'][0] + 1):
@@ -837,26 +875,31 @@ class openGLLive(object):
                         if pid == self.dragId:
                             sc = 1
                         else:
-                            sc = self.modulo_indexing(self.specs['ext_force_arrows_type_scale'], ptype)
+                            sc = self.modulo_indexing(
+                                self.specs['ext_force_arrows_type_scale'], ptype)
                         if sc > 0:
-                            arrow_col = self.modulo_indexing(self.specs['ext_force_arrows_type_colors'], ptype)
-                            arrow_radius = self.modulo_indexing(self.specs['ext_force_arrows_type_radii'], ptype)
-                            draw_arrow(self.particles['pos'][pid], np.array(self.particles['ext_force'][pid]) * sc, arrow_radius
-                                       ,arrow_col, self.materials['chrome'], self.specs['quality_arrows'])
+                            arrow_col = self.modulo_indexing(
+                                self.specs['ext_force_arrows_type_colors'], ptype)
+                            arrow_radius = self.modulo_indexing(
+                                self.specs['ext_force_arrows_type_radii'], ptype)
+                            draw_arrow(self.particles['pos'][pid], np.array(
+                                self.particles['ext_force'][pid]) * sc, arrow_radius, arrow_col, self.materials['chrome'], self.specs['quality_arrows'])
                             reset_material = True
-            
+
             if self.specs['velocity_arrows']:
-                self.draw_arrow_property(pid, ptype, self.specs['velocity_arrows_type_scale'], self.specs['velocity_arrows_type_colors'], self.specs['velocity_arrows_type_radii'], 'velocity')
-                reset_material = True
-            
-            if self.specs['force_arrows']:
-                self.draw_arrow_property(pid, ptype, self.specs['force_arrows_type_scale'], self.specs['force_arrows_type_colors'], self.specs['force_arrows_type_radii'], 'force')
-                reset_material = True
-            
-            if self.specs['director_arrows']:
-                self.draw_arrow_property(pid, ptype, self.specs['director_arrows_type_scale'], self.specs['director_arrows_type_colors'], self.specs['director_arrows_type_radii'], 'director')
+                self.draw_arrow_property(pid, ptype, self.specs['velocity_arrows_type_scale'], self.specs[
+                                         'velocity_arrows_type_colors'], self.specs['velocity_arrows_type_radii'], 'velocity')
                 reset_material = True
 
+            if self.specs['force_arrows']:
+                self.draw_arrow_property(pid, ptype, self.specs['force_arrows_type_scale'],
+                                         self.specs['force_arrows_type_colors'], self.specs['force_arrows_type_radii'], 'force')
+                reset_material = True
+
+            if self.specs['director_arrows']:
+                self.draw_arrow_property(pid, ptype, self.specs['director_arrows_type_scale'], self.specs[
+                                         'director_arrows_type_colors'], self.specs['director_arrows_type_radii'], 'director')
+                reset_material = True
 
     def draw_arrow_property(self, pid, ptype, type_scale, type_colors, type_radii, prop):
         sc = self.modulo_indexing(type_scale, ptype)
@@ -864,8 +907,8 @@ class openGLLive(object):
             v = self.particles[prop][pid]
             col = self.modulo_indexing(type_colors, ptype)
             radius = self.modulo_indexing(type_radii, ptype)
-            draw_arrow(self.particles['pos'][pid], np.array(v) * sc, radius, col, self.materials['chrome'], self.specs['quality_arrows'])
-
+            draw_arrow(self.particles['pos'][pid], np.array(
+                v) * sc, radius, col, self.materials['chrome'], self.specs['quality_arrows'])
 
     def draw_bonds(self):
         pIds = range(len(self.particles['pos']))
@@ -970,42 +1013,83 @@ class openGLLive(object):
             self.minq = min(self.particles['charge'][:])
             self.maxq = max(self.particles['charge'][:])
 
+    def handle_screenshot(self):
+        if self.take_screenshot or self.screenshot_mode:
+            self.take_screenshot = False
+            glPixelStorei(GL_PACK_ALIGNMENT, 1)
+            data = glReadPixels(0, 0, self.specs['window_size'][0], self.specs['window_size'][1], GL_RGB, GL_FLOAT)
+            basename = os.path.basename(__file__)[:-3]
+            
+            if self.screenshot_mode:
+                fname = self.screenshot_filename
+            else:
+                i = 0
+                while os.path.exists("{}_{}.png".format(basename, i)):
+                    i += 1
+                fname = "{}_{}.png".format(basename, i)
+            data = np.flipud(data.reshape((data.shape[1],data.shape[0],3)))
+            imsave(fname, data)
+            print("Saved screenshot {}".format(fname))
+
+    def display_all(self):
+
+
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+            glLoadMatrixf(self.camera.modelview)
+
+            self.set_camera_spotlight()
+
+            self.draw()
+
+            # DRAW FPS TEXT
+            if self.specs['draw_fps']:
+                t = time.time()
+                if t - self.fps_last > 1.0:
+                    self.fps_last = t
+                    self.fps = self.fps_count
+                    self.fps_count = 0
+
+                self.draw_text(10, 10, "{} fps".format(
+                    self.fps), self.text_color)
+                self.draw_text(
+                    10, 30, "{} ms/frame".format(1000.0/self.fps),  self.text_color)
+                self.fps_count += 1
+
+            # DRAW PARTICLE INFO
+            if self.infoId != -1:
+                y = 0
+                for k, v in self.highlighted_particle.items():
+                    txt = "{} {} {}".format(
+                        k, (self.max_len_attr-len(k)) * ' ',  v)
+                    self.draw_text(
+                        10, self.specs['window_size'][1] - 10 - 15 * y, txt, self.text_color)
+                    y += 1
+
+            self.handle_screenshot()
+            
+            glutSwapBuffers()
+
+
+    # CALLED ION WINDOW POSITION/SIZE CHANGE
+    def reshape_window(self, w, h):
+        glViewport(0, 0, w, h)
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        box_diag = pow(pow(self.system.box_l[0], 2) + pow(
+            self.system.box_l[1], 2) + pow(self.system.box_l[1], 2), 0.5)
+        gluPerspective(
+            40, 1.0 * w / h, self.specs['close_cut_distance'], self.specs['far_cut_distance'] * box_diag)
+        glMatrixMode(GL_MODELVIEW)
+        self.specs['window_size'][0] = w
+        self.specs['window_size'][1] = h
+
     # INITS FOR GLUT FUNCTIONS
     def init_callbacks(self):
         # OpenGl Callbacks
         def display():
-            if self.hasParticleData:
-
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-
-                glLoadMatrixf(self.camera.modelview)
-
-                self.set_camera_spotlight()
-
-                self.draw()
-                
-                # DRAW FPS TEXT
-                if self.specs['draw_fps']:
-                    t = time.time()
-                    if t - self.fps_last > 1.0:
-                        self.fps_last = t
-                        self.fps = self.fps_count
-                        self.fps_count = 0
-
-                    self.draw_text(10, 10, "{} fps".format(self.fps), self.text_color)
-                    self.draw_text(10, 30, "{} ms/frame".format(1000.0/self.fps),  self.text_color)
-                    self.fps_count += 1
-
-                # DRAW PARTICLE INFO
-                if self.infoId != -1:
-                    y = 0
-                    for k, v in self.highlighted_particle.items():
-                        txt = "{} {} {}".format(k, (self.max_len_attr-len(k)) * ' ',  v) 
-                        self.draw_text(10, self.specs['window_size'][1] - 10 - 15 * y, txt, self.text_color)
-                        y += 1
-                    
-
-                glutSwapBuffers()
+            if self.hasParticleData and self.started:
+                self.display_all()
             return
 
         def keyboard_up(button, x, y):
@@ -1029,28 +1113,18 @@ class openGLLive(object):
             return
 
         def redraw_on_idle():
-            
-            # DONT REPOST FASTER THAN 60 FPS  
-            self.draw_elapsed += (time.time() - self.draw_timer)
-            if self.draw_elapsed > 1.0 / 60.0:
-                self.draw_elapsed = 0
-                glutPostRedisplay()
-            self.draw_timer = time.time()
+            if not self.screenshot_mode:
+            # DONT REPOST FASTER THAN 60 FPS
+                self.draw_elapsed += (time.time() - self.draw_timer)
+                if self.draw_elapsed > 1.0 / 60.0:
+                    self.draw_elapsed = 0
+                    glutPostRedisplay()
+                self.draw_timer = time.time()
             return
 
-        # CALLED ION WINDOW POSITION/SIZE CHANGE
-        def reshape_window(w, h):
-            glViewport(0, 0, w, h)
-            glMatrixMode(GL_PROJECTION)
-            glLoadIdentity()
-            box_diag = pow(pow(self.system.box_l[0], 2) + pow(
-                self.system.box_l[1], 2) + pow(self.system.box_l[1], 2), 0.5)
-            gluPerspective(
-                40, 1.0 * w / h, self.specs['close_cut_distance'], self.specs['far_cut_distance'] * box_diag)
-            glMatrixMode(GL_MODELVIEW)
-            self.specs['window_size'][0] = 1.0 * w
-            self.specs['window_size'][1] = 1.0 * h
-            # glPushMatrix()
+        def reshape_callback(w, h):
+            if not self.screenshot_mode:
+                self.reshape_window(w, h)
 
         def close_window():
             os._exit(1)
@@ -1066,7 +1140,7 @@ class openGLLive(object):
         glutKeyboardUpFunc(keyboard_up)
         glutSpecialFunc(keyboard_down)
         glutSpecialUpFunc(keyboard_up)
-        glutReshapeFunc(reshape_window)
+        glutReshapeFunc(reshape_callback)
         glutMotionFunc(motion)
         glutWMCloseFunc(close_window)
 
@@ -1104,14 +1178,14 @@ class openGLLive(object):
         glDisable(GL_LIGHT0)
         if self.specs['spotlight_enabled']:
             glDisable(GL_LIGHT1)
-        self.draw_system_particles(colorById = True)
+        self.draw_system_particles(colorById=True)
         viewport = glGetIntegerv(GL_VIEWPORT)
 
         readPixel = glReadPixelsui(
             pos[0], viewport[3] - pos[1], 1, 1, GL_RGB, GL_FLOAT)[0][0]
         depth = glReadPixelsf(
             pos[0], viewport[3] - pos[1], 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT)[0][0]
-        
+
         pid = self.fcolor_to_id(readPixel)
 
         glEnable(GL_LIGHTING)
@@ -1137,7 +1211,7 @@ class openGLLive(object):
     def set_particle_drag(self, pos, pos_old):
         pid, depth = self.get_particle_id(pos, pos_old)
         self.dragId = pid
-        
+
         if pid != -1:
             self.dragPosInitial = self.particles['pos'][self.dragId]
             self.extForceOld = self.particles['ext_force'][self.dragId][:]
@@ -1150,13 +1224,12 @@ class openGLLive(object):
     def get_particle_info(self, pos, pos_old):
         pid, depth = self.get_particle_id(pos, pos_old)
         self.infoId = pid
-    
-    def next_particle_info(self):
-        self.infoId = (self.infoId + 1) % len(self.particles['pos']) 
-    
-    def previous_particle_info(self):
-        self.infoId = (self.infoId - 1) % len(self.particles['pos']) 
 
+    def next_particle_info(self):
+        self.infoId = (self.infoId + 1) % len(self.particles['pos'])
+
+    def previous_particle_info(self):
+        self.infoId = (self.infoId - 1) % len(self.particles['pos'])
 
     # ALL THE INITS
     def init_espresso_visualization(self):
@@ -1186,16 +1259,16 @@ class openGLLive(object):
 
             if self.specs['LB_plane_axis'] == 0:
                 pn = [1.0, 0.0, 0.0]
-                self.lb_plane_b1 = [0.0,1.0,0.0]
-                self.lb_plane_b2 = [0.0,0.0,1.0]
+                self.lb_plane_b1 = [0.0, 1.0, 0.0]
+                self.lb_plane_b2 = [0.0, 0.0, 1.0]
             elif self.specs['LB_plane_axis'] == 1:
                 pn = [0.0, 1.0, 0.0]
-                self.lb_plane_b1 = [1.0,0.0,0.0]
-                self.lb_plane_b2 = [0.0,0.0,1.0]
+                self.lb_plane_b1 = [1.0, 0.0, 0.0]
+                self.lb_plane_b2 = [0.0, 0.0, 1.0]
             else:
                 pn = [0.0, 0.0, 1.0]
-                self.lb_plane_b1 = [1.0,0.0,0.0]
-                self.lb_plane_b2 = [0.0,1.0,0.0]
+                self.lb_plane_b1 = [1.0, 0.0, 0.0]
+                self.lb_plane_b2 = [0.0, 1.0, 0.0]
 
             self.lb_plane_b1 *= self.system.box_l
             self.lb_plane_b2 *= self.system.box_l
@@ -1211,7 +1284,6 @@ class openGLLive(object):
             self.lb_max_dens = np.array([0] * 3)
 
             self.update_lb()
-
 
         self.box_size_dependence()
 
@@ -1254,7 +1326,7 @@ class openGLLive(object):
                 GLUT_LEFT_BUTTON, MouseFireEvent.ButtonPressed, self.set_particle_drag, True))
             self.mouseManager.register_button(MouseButtonEvent(
                 GLUT_LEFT_BUTTON, MouseFireEvent.ButtonReleased, self.reset_particle_drag, True))
-   
+
         # PARTICLE INFORMATION
         self.mouseManager.register_button(MouseButtonEvent(
             GLUT_LEFT_BUTTON, MouseFireEvent.DoubleClick, self.get_particle_info, True))
@@ -1269,6 +1341,10 @@ class openGLLive(object):
         self.keyboardManager.register_button(KeyboardButtonEvent(
             ' ', KeyboardFireEvent.Pressed, self.pause, True))
         
+        # <RETURN> TAKE SCREENSHOT
+        self.keyboardManager.register_button(KeyboardButtonEvent(
+            '\x0d', KeyboardFireEvent.Pressed, self.trigger_screenshot, True))
+
         # <ESCAPE> QUIT
         self.keyboardManager.register_button(KeyboardButtonEvent(
             '\x1b', KeyboardFireEvent.Pressed, self.quit, True))
@@ -1302,10 +1378,13 @@ class openGLLive(object):
     # CALLED ON ESCAPE PRESSED. TRIGGERS sys.exit() after ES is done
     def quit(self):
         self.quit_savely = True
-    
+
     def pause(self):
         self.paused = not self.paused
 
+    def trigger_screenshot(self):
+        self.take_screenshot = True
+    
     # ASYNCHRONOUS PARALLEL CALLS OF glLight CAUSES SEG FAULTS, SO ONLY CHANGE
     # LIGHT AT CENTRAL display METHOD AND TRIGGER CHANGES
     def set_camera_spotlight(self):
@@ -1332,12 +1411,13 @@ class openGLLive(object):
         cr = np.array(self.specs['camera_right'])
 
         self.camera = Camera(camPos=np.array(cp), camTarget=ct, camRight=cr, moveSpeed=0.5 *
-                              box_diag / 17.0,  center=box_center)
+                             box_diag / 17.0,  center=box_center)
         self.set_camera_spotlight()
 
     def init_opengl(self):
         glutInit(self.specs['name'])
         glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
+        
         glutInitWindowSize(self.specs['window_size'][
                            0], self.specs['window_size'][1])
 
@@ -1352,17 +1432,19 @@ class openGLLive(object):
 
         glEnable(GL_POINT_SMOOTH)
         glEnable(GL_LINE_SMOOTH)
+        glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
 
-        #BAD FOR TRANSPARENT PARTICLES
-        #glEnable(GL_CULL_FACE)
-        #glCullFace(GL_BACK)
+        # BAD FOR TRANSPARENT PARTICLES
+        # glEnable(GL_CULL_FACE)
+        # glCullFace(GL_BACK)
 
         glLineWidth(2.0)
         glutIgnoreKeyRepeat(1)
 
         # setup lighting
         if self.specs['light_size'] == 'auto':
-            box_diag = pow(pow(self.system.box_l[0], 2) + pow(self.system.box_l[1], 2) + pow(self.system.box_l[1], 2), 0.5)
+            box_diag = pow(pow(self.system.box_l[0], 2) + pow(
+                self.system.box_l[1], 2) + pow(self.system.box_l[1], 2), 0.5)
             self.specs['light_size'] = box_diag * 2.0
 
         glEnable(GL_DEPTH_TEST)
@@ -1370,9 +1452,11 @@ class openGLLive(object):
 
         # LIGHT0
         if self.specs['light_pos'] != 'auto':
-            glLightfv(GL_LIGHT0, GL_POSITION, np.array(self.specs['light_pos']).tolist())
+            glLightfv(GL_LIGHT0, GL_POSITION, np.array(
+                self.specs['light_pos']).tolist())
         else:
-            glLightfv(GL_LIGHT0, GL_POSITION, (np.array(self.system.box_l) * 1.1).tolist())
+            glLightfv(GL_LIGHT0, GL_POSITION,
+                      (np.array(self.system.box_l) * 1.1).tolist())
 
         glLightfv(GL_LIGHT0, GL_AMBIENT, self.specs['light_colors'][0])
         glLightfv(GL_LIGHT0, GL_DIFFUSE, self.specs['light_colors'][1])
@@ -1403,9 +1487,9 @@ class openGLLive(object):
             glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.0)
             glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 0.0)
             glEnable(GL_LIGHT1)
-	   
+
         self.dl_sphere = glGenLists(1)
-    
+
 
 # END OF MAIN CLASS
 
@@ -1452,6 +1536,7 @@ def draw_box(p0, s, color, width):
     # glutWireCube(size)
     glPopMatrix()
 
+
 def draw_plane(edges, color, material):
 
     set_solid_material(color[0], color[1], color[2], color[
@@ -1479,7 +1564,7 @@ def draw_triangles(triangles, color, material):
         color = np.random.random(3).tolist()
         color.append(1)
         set_solid_material(color[0], color[1], color[2],
-                          color[3], material[0], material[1], material[2], material[3])
+                           color[3], material[0], material[1], material[2], material[3])
         for p in t:
             glVertex3f(p[0], p[1], p[2])
     glEnd()
@@ -1487,7 +1572,7 @@ def draw_triangles(triangles, color, material):
 
 def draw_points(points, pointsize, color, material):
     set_solid_material(color[0], color[1], color[2], color[3],
-                      material[0], material[1], material[2], material[3])
+                       material[0], material[1], material[2], material[3])
     glPointSize(pointsize)
     glBegin(GL_POINTS)
     for p in points:
@@ -1497,7 +1582,7 @@ def draw_points(points, pointsize, color, material):
 
 def draw_cylinder(posA, posB, radius, color, material, quality, draw_caps=False):
     set_solid_material(color[0], color[1], color[2], color[3],
-                      material[0], material[1], material[2], material[3])
+                       material[0], material[1], material[2], material[3])
     glPushMatrix()
     quadric = gluNewQuadric()
 
@@ -1535,6 +1620,7 @@ def rotation_helper(d):
     ry = d[0] * d[2]
 
     return ax, rx, ry
+
 
 def draw_ellipsoid(pos, semiaxis_a, semiaxis_b, semiaxis_c, color, material, quality):
     set_solid_material(color[0], color[1], color[2], color[3],
@@ -1647,8 +1733,8 @@ class MouseManager(object):
         self.mouseState[GLUT_LEFT_BUTTON] = GLUT_UP
         self.mouseState[GLUT_MIDDLE_BUTTON] = GLUT_UP
         self.mouseState[GLUT_RIGHT_BUTTON] = GLUT_UP
-        self.mouseState['3'] = GLUT_UP #WHEEL
-        self.mouseState['4'] = GLUT_UP #WHEEL
+        self.mouseState['3'] = GLUT_UP  # WHEEL
+        self.mouseState['4'] = GLUT_UP  # WHEEL
         self.pressedTime = {}
         self.pressedTime[GLUT_LEFT_BUTTON] = 0
         self.pressedTime[GLUT_MIDDLE_BUTTON] = 0
@@ -1661,7 +1747,6 @@ class MouseManager(object):
         self.pressedTimeOld[GLUT_RIGHT_BUTTON] = 0
         self.pressedTimeOld[3] = 0
         self.pressedTimeOld[4] = 0
-
 
     def register_button(self, mouseEvent):
         """Register mouse input callbacks.
@@ -1698,8 +1783,8 @@ class MouseManager(object):
                     me.callback()
 
         if state == GLUT_DOWN:
-            self.pressedTimeOld[button] = self.pressedTime[button] 
-            self.pressedTime[button] = time.time() 
+            self.pressedTimeOld[button] = self.pressedTime[button]
+            self.pressedTime[button] = time.time()
 
         for me in self.mouseEventsDoubleClick:
             if me.button == button and state == GLUT_DOWN and self.pressedTime[button] - self.pressedTimeOld[button] < 0.25:
@@ -1974,7 +2059,6 @@ class Camera(object):
         self.camPos = np.array([cXYZ[0, 0], cXYZ[1, 0], cXYZ[2, 0]])
 
 
-
 class Quaternion:
 
     def __init__(self, x, y, z, w):
@@ -1996,7 +2080,7 @@ class Quaternion:
     def mult_q(self, q):
         w = - (self[3] * q[3]) - (self[0] * q[0]) - \
             (self[1] * q[1]) - (self[2] * q[2])
-        x =   (self[0] * q[3]) + (self[3] * q[0]) + \
+        x = (self[0] * q[3]) + (self[3] * q[0]) + \
             (self[1] * q[2]) - (self[2] * q[1])
         y = (self[1] * q[3]) + (self[3] * q[1]) + (
             self[2] * q[0]) - (self[0] * q[2])

@@ -16,8 +16,10 @@ online-visualization:
 
 #. A direct rendering engine based on *pyopengl*. As it is developed for |es|, 
    it supports the visualization of several specific features like
-   external forces or constraints. It has no GUI to setup the
-   appearance, but can be adjusted by a large set of parameters.
+   constraints, particle properties, the cell system, Lattice-Boltzmann and
+   more. It can be adjusted with a large number of parameters to set colors,
+   materials, camera and interactive features like assigning callbacks to user
+   input.
    Additional requirements:
    python module *PyOpenGL*.
 
@@ -106,10 +108,21 @@ Optional keywords:
 OpenGL visualizer
 -----------------
 
+:class:`espressomd.visualization.openGLLive()`
+
+The optional keywords in ``**kwargs`` are used to adjust the appearance of the visualization.
+The parameters have suitable default values for most simulations. 
+
+Required parameters:
+    * `system`: The espressomd.System() object.
+Optional keywords:
+    * Have a look at the attribute list in :class:`espressomd.visualization.openGLLive()`
+
 | :meth:`espressomd.visualization.openGLLive.run()` 
 
-To visually debug your simulation, ``run()`` can be used to conveniently start 
-an integration loop in a separate thread once the visualizer is initialized::
+To visually debug your simulation, ``run(n)`` can be used to conveniently start 
+an integration loop with `n` integration steps in a separate thread once the
+visualizer is initialized::
 
     import espressomd 
     from espressomd import visualization 
@@ -124,16 +137,6 @@ an integration loop in a separate thread once the visualizer is initialized::
 
     visualizer = visualization.openGLLive(system, background_color = [1,1,1])
     visualizer.run(1)
-
-:class:`espressomd.visualization.openGLLive()`
-
-The optional keywords in ``**kwargs`` are used to adjust the appearance of the visualization.
-The parameters have suitable default values for most simulations. 
-
-Required parameters:
-    * `system`: The espressomd.System() object.
-Optional keywords:
-    * Have a look at the attribute list in :class:`espressomd.visualization.openGLLive()`
 
 .. _Colors and Materials:
 
@@ -230,6 +233,7 @@ The camera can be controlled via mouse and keyboard:
     * Double click on a particle: Show particle information
     * Double click in empty space: Disable particle information
     * Left/Right arrows: Cycle through particles
+    * Space: If started with `run(n)`, this pauses the simulation
 
 Additional input functionality for mouse and keyboard is possible by assigning
 callbacks to specified keyboard or mouse buttons. This may be useful for
@@ -267,7 +271,7 @@ by a timer or keyboard input::
     visualizer.keyboardManager.registerButton(KeyboardButtonEvent('t',KeyboardFireEvent.Hold,increaseTemp))
     visualizer.keyboardManager.registerButton(KeyboardButtonEvent('g',KeyboardFireEvent.Hold,decreaseTemp))
 
-Further examples can be found in samples/python/billard.py or samples/python/visualization\_openGL.py.
+Further examples can be found in samples/python/billard.py or samples/python/visualization\_interactive.py.
 
 .. _Dragging particles:
 
@@ -283,30 +287,5 @@ distance of particle and mouse cursor).
 Visualization example scripts
 -----------------------------
 
-Various example scripts can be found in the samples/python folder or in
-some tutorials:
-
--  samples/python/visualization.py: LJ-Liquid with live plotting.
-
--  samples/python/visualization\_bonded.py: Sample for bond
-   visualization.
-
--  samples/python/billard.py: Simple billard game including many
-   features of the openGL visualizer.
-
--  samples/python/visualization\_openGL.py: Timer and keyboard callbacks
-   for the openGL visualizer.
-
--  doc/tutorials/python/02-charged\_system/scripts/nacl\_units\_vis.py:
-   Periodic NaCl crystal, see tutorial “Charged Systems”.
-
--  doc/tutorials/python/02-charged\_system/scripts/nacl\_units\_confined\_vis.py:
-   Confined NaCl with interactively adjustable electric field, see
-   tutorial “Charged Systems”.
-
--  doc/tutorials/python/08-visualization/scripts/visualization.py:
-   LJ-Liquid visualization along with tutorial “Visualization”.
-
-Finally, it is recommended to go through tutorial “Visualization” for
-further code explanations. Also, the tutorial “Charged Systems” has two
-visualization examples.
+Various :ref:`Sample Scripts` can be found in `samples/python/visualization*`
+or in the :ref:`Tutorials` "Visualization" and "Charged Systems".
