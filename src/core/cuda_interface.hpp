@@ -96,7 +96,7 @@ struct CUDA_particle_data {
 
   unsigned int fixed;
 
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+#ifdef VIRTUAL_SITES
   bool is_virtual;
 #endif
 

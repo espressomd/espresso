@@ -332,27 +332,31 @@ on).
 
 To compute the elastic forces, three new bonded interactions are defined ibm\_triel, ibm\_tribend and ibm\_volCons. 
 
-ibm\_triel is used to compute elastic shear forces. To setup an interaction, use:
+ibm_triel is used to compute elastic shear forces. To setup an interaction, use:
 
-tri1 = IBM_Triel(ind1=0, ind2=1, ind3=2, elasticLaw="Skalak", k1=0.1, k2=0, maxDist = 2.4)
+::
 
-where \var{ind1}, \var{ind2} and \var{ind3} represent the indices of the three marker points making up the triangle. The parameter \var{maxDist}
-specifies the maximum stretch above which the bond is considered broken. The parameter \var{elasticLaw} can be either ''NeoHookean'' or ''Skalak''.
-The parameters k1 and k2 are the elastic moduli.
+    tri1 = IBM_Triel(ind1=0, ind2=1, ind3=2, elasticLaw="Skalak", k1=0.1, k2=0, maxDist = 2.4)
 
-ibm\_tribend computes out-of-plane bending forces. To setup an interaction, use:
+where `ind1`, `ind2` and `ind3` represent the indices of the three marker points making up the triangle. The parameter `maxDist`
+specifies the maximum stretch above which the bond is considered broken. The parameter `elasticLaw` can be either `NeoHookean` or `Skalak`.
+The parameters `k1` and `k2` are the elastic moduli.
 
-tribend = IBM_Tribend(ind1=0, ind2=1, ind3=2,ind4=3,kb=1, refShape = "Initial")
+ibm_tribend computes out-of-plane bending forces. To setup an interaction, use:
+::
 
-where \var{ind1}, \var{ind2}, \var{ind3} and \var{ind4} are four marker points corresponding to two neighboring triangles. The indices \var{ind1} and \var{ind3} contain the shared edge. Note that the marker points within a triangle must be labelled such that the normal vector $\vec{n} = (\vec{r}_\text{ind2} - \vec{r}_\text{ind1}) \times (\vec{r}_\text{ind3} - \vec{r}_\text{ind1})$ points outward of the elastic object. 
-The reference (zero energy) shape can be either ''Flat'' or the initial curvature ''Initial''.
-The bending modulus is \var{kb}.
+    tribend = IBM_Tribend(ind1=0, ind2=1, ind3=2,ind4=3,kb=1, refShape = "Initial")
 
-ibm\_volCons is a volume-conservation force. Without this correction, the volume of the soft object tends to shrink over time due to numerical inaccuracies. Therefore, this implements an artificial force intended to keep the volume constant. If volume conservation is to be used for a given soft particle, the interaction must be added to every marker point belonging to that object.
+where `ind1`, `ind2`, `ind3 and `ind4` are four marker points corresponding to two neighboring triangles. The indices `ind1` and `ind3` contain the shared edge. Note that the marker points within a triangle must be labelled such that the normal vector :math:`\vec{n} = (\vec{r}_\text{ind2} - \vec{r}_\text{ind1}) \times (\vec{r}_\text{ind3} - \vec{r}_\text{ind1})` points outward of the elastic object. 
+The reference (zero energy) shape can be either `Flat` or the initial curvature `Initial`.
+The bending modulus is `kb`.
 
-volCons = IBM_VolCons(softID=1, kappaV=kV)
+ibm_volCons is a volume-conservation force. Without this correction, the volume of the soft object tends to shrink over time due to numerical inaccuracies. Therefore, this implements an artificial force intended to keep the volume constant. If volume conservation is to be used for a given soft particle, the interaction must be added to every marker point belonging to that object.
+::
 
-where \var{softID} identifies the soft particle and \var{kv} is a volumetric spring constant.
+    volCons = IBM_VolCons(softID=1, kappaV=kV)
+
+where `softID` identifies the soft particle and `kv` is a volumetric spring constant.
 When adding the interaction to a particle, an arbitrary bond partner must be specified, which is ignored, since ESPResSo does not allow bonds without a partner.
 
 For a more detailed description, see e.g. Guckenberger and Gekle, J. Phys. Cond. Mat. (2017) or contact us.
