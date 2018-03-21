@@ -29,7 +29,7 @@
 namespace ScriptInterface {
 namespace PairCriteria {
 
-class PairCriterion : public AutoParameters {
+class PairCriterion : public AutoParameters<PairCriterion> {
 public:
   virtual std::shared_ptr<::PairCriteria::PairCriterion> pair_criterion() const  =0;
   virtual Variant call_method(std::string const &method,

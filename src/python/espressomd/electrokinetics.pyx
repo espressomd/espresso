@@ -46,6 +46,7 @@ IF ELECTROKINETICS:
 
             return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "prefactor", "stencil", "advection", "fluid_coupling", "fluctuations", "fluctuation_amplitude"
 
+
         def required_keys(self):
             """
             Returns the nessesary options to initialize the electokinetic method.

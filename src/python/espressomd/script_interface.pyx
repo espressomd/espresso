@@ -86,7 +86,7 @@ cdef class PScriptInterface(object):
         cdef shared_ptr[ScriptInterfaceBase] so_ptr = ScriptInterfaceBase.unserialize(state)
         self.set_sip(so_ptr)
 
-    cdef map[string, Variant] _sanitize_params(self, in_params):
+    cdef map[string, Variant] _sanitize_params(self, in_params) except *:
         cdef map[string, Variant] out_params
         cdef Variant v
 

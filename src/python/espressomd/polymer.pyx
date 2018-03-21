@@ -133,6 +133,23 @@ def create_polymer(**kwargs):
             bond_length = 1, 
             bond = fene, 
             val_poly = -1.0)
+
+    Note that a the first monomer of a polymer is always assigned the type `type_poly_charge`.
+    The next `charge_distance` monomers have type `type_poly_neutral`.
+    This process repeats untill all monomers are placed.
+    Afterwards, all monomers of type `type_poly_charge` are assigned the charge `val_poly`.
+    Thus the following example creates a single uncharged polymer where all monomers are of `type=0`:
+
+    >>> fene = interactions.FeneBond(k=10, d_r_max=2)
+    >>> polymer.create_polymer(
+            N_P = 1, 
+            MPC = 10, 
+            bond_length = 1, 
+            bond = fene, 
+            val_poly = 0.0,
+            charge_distance = 1,
+            type_poly_charge = 0)
+
     """
 
     params=dict()

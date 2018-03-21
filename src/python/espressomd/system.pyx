@@ -41,7 +41,6 @@ if CONSTRAINTS == 1:
     from .constraints import Constraints
 
 from .correlators import AutoUpdateCorrelators
-from .observables import AutoUpdateObservables
 from .accumulators import AutoUpdateAccumulators
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
@@ -90,7 +89,6 @@ cdef class System(object):
         analysis
         galilei
         integrator
-        auto_update_observables
         auto_update_correlators
         auto_update_accumulators
         constraints
@@ -122,7 +120,6 @@ cdef class System(object):
             self.analysis = Analysis(self)
             self.galilei = GalileiTransform()
             self.integrator = integrate.Integrator()
-            self.auto_update_observables = AutoUpdateObservables()
             self.auto_update_correlators = AutoUpdateCorrelators()
             self.auto_update_accumulators = AutoUpdateAccumulators()
             if CONSTRAINTS:
@@ -339,7 +336,7 @@ cdef class System(object):
         """
         Sets the seed of the pseudo random number with a list of seeds which is as long as the number of used nodes.
         """
-        
+
         def __set__(self, _seed):
             cdef vector[int] seed_array
             self.__seed = _seed

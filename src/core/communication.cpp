@@ -67,8 +67,6 @@
 #include "morse.hpp"
 #include "io/mpiio/mpiio.hpp"
 #include "npt.hpp"
-#include "observables/LBRadialVelocityProfile.hpp"
-#include "observables/Observable.hpp"
 #include "overlap.hpp"
 #include "p3m-dipolar.hpp"
 #include "p3m.hpp"
@@ -177,6 +175,7 @@ static int terminated = 0;
   CB(mpi_send_out_direction_slave)                                             \
   CB(mpi_send_mu_E_slave)                                                      \
   CB(mpi_bcast_max_mu_slave)                                                   \
+  CB(mpi_send_vs_quat_slave)                                                   \
   CB(mpi_send_vs_relative_slave)                                               \
   CB(mpi_recv_fluid_populations_slave)                                         \
   CB(mpi_send_fluid_populations_slave)                                         \
@@ -194,7 +193,6 @@ static int terminated = 0;
   CB(mpi_external_potential_broadcast_slave)                                   \
   CB(mpi_external_potential_tabulated_read_potential_file_slave)               \
   CB(mpi_external_potential_sum_energies_slave)                                \
-  CB(mpi_observable_lb_radial_velocity_profile_slave)                          \
   CB(mpi_check_runtime_errors_slave)                                           \
   CB(mpi_minimize_energy_slave)                                                \
   CB(mpi_gather_cuda_devices_slave)                                            \
@@ -960,6 +958,32 @@ void mpi_send_virtual_slave(int pnode, int part) {
 }
 
 /********************* REQ_SET_BOND ********/
+void mpi_send_vs_quat(int pnode, int part, double *vs_quat) {
+#ifdef VIRTUAL_SITES_RELATIVE
+  mpi_call(mpi_send_vs_quat_slave, pnode, part);
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    for (int i=0; i<4; ++i) {
+      p->p.vs_quat[i] = vs_quat[i];
+    }
+  } else {
+    MPI_Send(vs_quat, 4, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+  }
+
+  on_particle_change();
+#endif
+}
+void mpi_send_vs_quat_slave(int pnode, int part) {
+#ifdef VIRTUAL_SITES_RELATIVE
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Recv(p->p.vs_quat, 4, MPI_DOUBLE, 0, SOME_TAG,
+             comm_cart, MPI_STATUS_IGNORE);
+  }
+
+  on_particle_change();
+#endif
+}
 
 void mpi_send_vs_relative(int pnode, int part, int vs_relative_to,
                           double vs_distance, double *rel_ori) {
@@ -972,8 +996,9 @@ void mpi_send_vs_relative(int pnode, int part, int vs_relative_to,
     Particle *p = local_particles[part];
     p->p.vs_relative_to_particle_id = vs_relative_to;
     p->p.vs_relative_distance = vs_distance;
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++) {
       p->p.vs_relative_rel_orientation[i] = rel_ori[i];
+    }
   } else {
     MPI_Send(&vs_relative_to, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
     MPI_Send(&vs_distance, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
@@ -1025,17 +1050,6 @@ void mpi_send_rotation_slave(int pnode, int part) {
   on_particle_change();
 }
 
-void mpi_observable_lb_radial_velocity_profile() {
-#ifdef LB
-  mpi_call(mpi_observable_lb_radial_velocity_profile_slave, 0, 0);
-#endif
-}
-
-void mpi_observable_lb_radial_velocity_profile_slave(int pnode, int part) {
-#ifdef LB
-  Observables::mpi_observable_lb_radial_velocity_profile_slave_implementation();
-#endif
-}
 
 /********************* REQ_SET_BOND ********/
 
@@ -1131,21 +1145,10 @@ void mpi_minimize_energy_slave(int a, int b) { minimize_energy(); }
 
 /********************* REQ_INTEGRATE ********/
 int mpi_integrate(int n_steps, int reuse_forces) {
-  if (!Correlators::auto_update_enabled()) {
-    mpi_call(mpi_integrate_slave, n_steps, reuse_forces);
-    integrate_vv(n_steps, reuse_forces);
-    COMM_TRACE(
+  mpi_call(mpi_integrate_slave, n_steps, reuse_forces);
+  integrate_vv(n_steps, reuse_forces);
+  COMM_TRACE(
         fprintf(stderr, "%d: integration task %d done.\n", this_node, n_steps));
-  } else {
-    for (int i = 0; i < n_steps; i++) {
-      mpi_call(mpi_integrate_slave, 1, reuse_forces);
-      integrate_vv(1, reuse_forces);
-      reuse_forces = 0; // makes even less sense after the first time step
-      COMM_TRACE(
-          fprintf(stderr, "%d: integration task %d done.\n", this_node, i));
-      Correlators::auto_update();
-    }
-  }
   return mpi_check_runtime_errors();
 }
 

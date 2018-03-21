@@ -22,6 +22,7 @@ import espressomd
 from espressomd import thermostat
 from espressomd import interactions
 from espressomd import polymer
+from espressomd.io.writer import vtf  # pylint: disable=import-error
 
 # System parameters
 #############################################################
@@ -35,6 +36,7 @@ system.cell_system.skin = 0.4
 system.box_l = [100, 100, 100]
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 system.cell_system.set_n_square(use_verlet_lists=False)
+outfile = open('polymer.vtf', 'w')
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=1, sigma=1,
@@ -43,14 +45,57 @@ system.non_bonded_inter[0, 0].lennard_jones.set_params(
 fene = interactions.FeneBond(k=10, d_r_max=2)
 system.bonded_inter.add(fene)
 
-polymer.create_polymer(N_P=1, bond_length=1.0, MPC=50, bond=fene)
+
+polymer.create_polymer(N_P=1, bond_length=1.0, type_poly_neutral=0, type_poly_charged=0, MPC=50, bond=fene)
+vtf.writevsf(system, outfile)
+
+
+#############################################################
+#      Warmup                                               #
+#############################################################
+
+warm_steps=10
+lj_cap = 1
+system.force_cap = lj_cap
+i = 0
+act_min_dist = system.analysis.min_dist()
+
+# warmp with zero temperature to remove overlaps
+system.thermostat.set_langevin(kT=0.0, gamma=1.0)
+
+# slowly ramp un up the cap
+while ( act_min_dist < 0.95):
+    vtf.writevcf(system, outfile)
+    print("min_dist: {} \t force cap: {}".format(act_min_dist, lj_cap))
+    system.integrator.run(warm_steps)
+    system.part[:].v=[0,0,0]
+    # Warmup criterion
+    act_min_dist = system.analysis.min_dist()
+    lj_cap = lj_cap*1.01
+    system.force_cap = lj_cap
+
+#remove force cap
+lj_cap = 0
+system.force_cap = lj_cap
+system.integrator.run(warm_steps*10)
+
+# restore simulation temperature
+system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.integrator.run(warm_steps*10)
+print("Finished warmup")
+
+
 
 #############################################################
 #      Integration                                          #
 #############################################################
 
-for i in range(20):
-    system.integrator.run(1000)
+print("simulating...")
+t_steps=1000
+for t in range(t_steps):
+    print("step {} of {}".format(t, t_steps))
+    system.integrator.run(warm_steps)
+    vtf.writevcf(system, outfile)
 
-    energies = system.analysis.energy()
-    print(energies)
+outfile.close()
+

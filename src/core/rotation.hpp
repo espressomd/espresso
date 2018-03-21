@@ -67,7 +67,7 @@ void convert_vel_space_to_body(const Particle *p, double *vel_body);
 /** Here we use quaternions to calculate the rotation matrix which
     will be used then to transform torques from the laboratory to
     the body-fixed frames */  
-void define_rotation_matrix(Particle const * p, double A[9]);
+void define_rotation_matrix(Particle const &p, double A[9]);
 
 inline void convert_quat_to_quatu(double quat[4], double quatu[3]) {
   /* director */

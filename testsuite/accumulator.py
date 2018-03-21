@@ -43,7 +43,6 @@ class AccumulatorTest(ut.TestCase):
         self.system.part.add(id=0, pos=[0.0, 0.0, 0.0])
         self.system.integrator.run(steps=0)
         self.pos_obs = espressomd.observables.ParticlePositions(ids=(0,))
-        self.system.auto_update_observables.add(self.pos_obs)
         self.pos_obs_acc = espressomd.accumulators.Accumulator(
             obs=self.pos_obs)
         self.system.auto_update_accumulators.add(self.pos_obs_acc)

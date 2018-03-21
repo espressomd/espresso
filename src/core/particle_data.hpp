@@ -152,8 +152,10 @@ struct ParticleProperties {
   */
   int vs_relative_to_particle_id = 0;
   double vs_relative_distance = 0;
-  // Store relative position of the virtual site
+  // Store relative position of the virtual site.
   double vs_relative_rel_orientation[4] = {0., 0., 0., 0};
+  // Store the orientation of the virtual particle in the body fixed frame.
+  double vs_quat[4] = {0., 0., 0., 0.};
 #endif
 #endif
 
@@ -560,7 +562,10 @@ void realloc_local_particles(int part);
  *   @return Pointer to copy of particle if it exists,
  *          nullptr otherwise;
 */
-const Particle *get_particle_data(int part);
+const Particle &get_particle_data(int part);
+// Helper function for the interface due to cython bug.
+// TODO: remove after we require cython version > 0.26
+const Particle *get_particle_data_ptr(int part);
 
 /**
  * @brief Fetch a range of particle into the fetch cache.
@@ -761,6 +766,7 @@ int set_particle_dipm(int part, double dipm);
 int set_particle_virtual(int part, int isVirtual);
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
+void set_particle_vs_quat(int part, double *vs_quat);
 int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
                              double *rel_ori);
 #endif
@@ -986,6 +992,7 @@ void pointer_to_virtual(Particle const *p, int const *&res);
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
+void pointer_to_vs_quat(Particle const *p, double const *&res);
 void pointer_to_vs_relative(Particle const *p, int const *&res1,
                             double const *&res2, double const *&res3);
 #endif
@@ -1029,5 +1036,10 @@ void pointer_to_rotational_inertia(Particle const *p, double const *&res);
 #endif
 
 bool particle_exists(int part);
+
+/**
+ *  @brief Get the mpi rank which owns the particle with id.
+ */
+int get_particle_node(int id);
 
 #endif
