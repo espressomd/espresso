@@ -23,10 +23,19 @@ Calculate the bending force and add it to the particles
 void IBM_Tribend_CalcForce(Particle *p1, const int numPartners, Particle **const partners, const Bonded_ia_parameters &iaparams)
 {
     // move to separate function
-    if ( numPartners != 3 ) { printf("Error. TriangleNormals bending with != 3 partners!\n"); exit(1); }
+    if ( numPartners != 3 ) { 
+        throw std::runtime_error("IBM_Tribend expects 3 bond partners.");
+    }   
+    
+    
     Particle *p2 = partners[0];
     Particle *p3 = partners[1];
     Particle *p4 = partners[2];
+
+    assert(p1);
+    assert(p2);
+    assert(p3);
+    assert(p4);
     
     // ************* This is Wolfgang's code **************
     // with some corrections by Achim
