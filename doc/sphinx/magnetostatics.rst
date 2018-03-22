@@ -18,8 +18,8 @@ where :math:`r=|\vec{r}|`.
 The prefactor :math:`D` is can be set by the user and is given by
 
 .. math::
-
-  D =\frac{\mu_0 \mu}{4\pi}
+   D =\frac{\mu_0 \mu}{4\pi}
+   :label: dipolar_prefactor
 
 where :math:`\mu_0` and :math:`\mu` are the vacuum permittivity and the relative permittivity of the background material, respectively.
 
@@ -76,7 +76,7 @@ Usage notes:
 
   * The non-periodic direction is always the `z`-direction.
   
-  * The method relies on a slab of the simulation box perpendicular to the z-direction not to contain particles. The size in z-direction of this slab is controlled by the `gap_size` parameter. The user has to ensure that no particles enter this region by menas of constraints or by fixing the particles' z-coordinate. When there is no empty slab of the specified size, the method will silently produce wrong results.
+  * The method relies on a slab of the simulation box perpendicular to the z-direction not to contain particles. The size in z-direction of this slab is controlled by the `gap_size` parameter. The user has to ensure that no particles enter this region by means of constraints or by fixing the particles' z-coordinate. When there is no empty slab of the specified size, the method will silently produce wrong results.
 
   * The method can be tuned using the `accuracy` parameter. In contrast to the elctrostatic method, it refers to the energy. Furthermore, it is assumed that all dipole moment are as larger as the largest of the dipoles in the system. 
 
@@ -92,64 +92,51 @@ The method is used as follows::
 
 
 
-.. _Dipolar all-with-all and no replicas (DAWAANR):
 
-Dipolar all-with-all and no replicas (DAWAANR)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _Dipolar direct sum on gpu:
 
-inter magnetic dawaanr
+Dipolar direct sum
+------------------
 
 This interaction calculates energies and forces between dipoles by
 explicitly summing over all pairs. For the directions in which the
-system is periodic (as defined by ``setmd periodic``), it applies the
+system is periodic (as defined by ``system.periodicity``), it applies the
 minimum image convention, i.e. the interaction is effectively cut off at
 half a box length.
 
-In periodic systems, this method should only be used if it is not
-possible to use dipolar P3M or DLC, because those methods have a far
-better accuracy and are much faster. In a non-periodic system, the
-DAWAANR-method gives the exact result.
+The direct summation methods are mainly intended for non-periodic systems which cannot be solved using the dipolar P3M method. 
+Due to the long-range nature of dipolar interactions, Direct summation with minimum image convention does not yield good accuracy with periodic systems.
 
-.. _Magnetic Dipolar Direct Sum (MDDS) on CPU:
 
-Magnetic Dipolar Direct Sum (MDDS) on CPU
------------------------------------------
+Two methods are available:
 
-inter magnetic mdds n_cut
+* :class:`espressomd.magnetostatics.DipolarDirectSumCpu`
+  performs the calculation in double precision on the Cpu.
 
-The command enables the “magnetic dipolar direct sum”. The dipole-dipole
-interaction is computed by explicitly summing over all pairs. If the
-system is periodic in one or more directions, the interactions with
-further replicas of the system in all periodic directions is explicitly
-computed.
+
+* :class:`espressomd.magnetostatics.DipolarDirectSumGpu`
+  performs the calculations in single precision on a Cuda-capable graphics card.
+  The implementation is optimized for large systems of several thousand
+  particles. It makes use of one thread per particle. When there are fewer
+  particles than the number of threads the gpu can execute simultaneously,
+  the rest of the gpu remains idle. Hence, the method will perform poorly
+  for small systems.
+
+To use the methods, create an instance of either :class:`espressomd.magnetostatics.DipolarDirectSumCpu` or :class:`espressomd.magnetostatics.DipolarDirectSumGpu` and add it to the system's list of active actors. The only required parameter is the Prefactor: (:eq:`dipolar_prefactor`)::
+  
+  from espressomd.magnetostatics import DipolarDirectSumGpu
+  dds=DipolarDirectSumGpu(bjerrum_length=1)
+  system.actors.add(dds)
+
+
+For testing purposes, a variant of the dipolar direct sum is available which adds periodic copies to the system in periodic directions (:class:`espressomd.magnetostatics.DipolarDirectSumWithReplica`).
 
 As it is very slow, this method is not intended to do simulations, but
 rather to check the results you get from more efficient methods like
 P3M.
 
-.. _Dipolar direct sum on gpu:
 
-Dipolar direct sum on gpu
--------------------------
 
-This interaction calculates energies and forces between dipoles by
-explicitly summing over all pairs. For the directions in which the
-system is periodic (as defined by ``setmd periodic``), it applies the
-minimum image convention, i.e. the interaction is effectively cut off at
-half a box length.
-
-The calculations are performed on the gpu in single precision. The
-implementation is optimized for large systems of several thousand
-particles. It makes use of one thread per particle. When there are fewer
-particles than the number of threads the gpu can execute simultaneously,
-the rest of the gpu remains idle. Hence, the method will perform poorly
-for small systems.
-
-To use the method, create an instance of :attr:`espressomd.magnetostatics.DipolarDirectSumGpu` and add it to the system's list of active actors. The only required parameter is the Bjerrum length::
-  
-  from espressomd.magnetostatics import DipolarDirectSumGpu
-  dds=DipolarDirectSumGpu(bjerrum_length=1)
-  system.actors.add(dds)
 
 .. _Barnes-Hut octree sum on gpu:
 
@@ -166,7 +153,7 @@ an additive distance respectively. For the detailed description of the
 Barnes-Hut method application to the dipole-dipole interactions, please
 refer to :cite:`Polyakov2013`.
 
-To use the method, create an instance of :attr:`espressomd.magnetostatics.DipolarBarnesHutGpu` and add it to the system's list of active actors::
+To use the method, create an instance of :class:`espressomd.magnetostatics.DipolarBarnesHutGpu` and add it to the system's list of active actors::
   
   from espressomd.magnetostatics import DipolarBarnesHutGpu
   bh=DipolarBarnesHutGpu(prefactor = pf_dds_gpu, epssq = 200.0, itolsq = 8.0)
@@ -180,8 +167,8 @@ Scafacos Magnetostatics
 Espresso can use the methods from the Scafacos *Scalable fast Coulomb
 solvers* library for dipoles, if the methods support dipolar
 calculations. The feature SCAFACOS_DIPOLES has to be added to
-myconfig.hpp to activate this feature. At the time of this writing (May
-2017) dipolar calculations are only included in the ``dipolar`` branch of the Scafacos code.
+myconfig.hpp to activate this feature. At the time of this writing (Feb
+2018) dipolar calculations are only included in the ``dipolar`` branch of the Scafacos code.
 
 To use SCAFACOS, create an instance of :attr:`espressomd.magnetostatics.Scafacos` and add it to the list of active actors. Three parameters have to be specified:
 * method_name: name of the SCAFACOS method being used.
