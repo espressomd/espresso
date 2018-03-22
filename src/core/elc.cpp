@@ -1500,7 +1500,7 @@ double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1,
     get_mi_vector(d, p2->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
-    eng += p3m_pair_energy(q, d, dist2, dist);
+    eng += p3m_pair_energy(q, dist);
   }
 
   if (p1->r.p[2] > (elc_params.h - elc_params.space_layer)) {
@@ -1511,7 +1511,7 @@ double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1,
     get_mi_vector(d, p2->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
-    eng += p3m_pair_energy(q, d, dist2, dist);
+    eng += p3m_pair_energy(q, dist);
   }
 
   if (tp2 < elc_params.space_layer) {
@@ -1522,7 +1522,7 @@ double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1,
     get_mi_vector(d, p1->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
-    eng += p3m_pair_energy(q, d, dist2, dist);
+    eng += p3m_pair_energy(q, dist);
   }
 
   if (tp2 > (elc_params.h - elc_params.space_layer)) {
@@ -1533,7 +1533,7 @@ double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1,
     get_mi_vector(d, p1->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
-    eng += p3m_pair_energy(q, d, dist2, dist);
+    eng += p3m_pair_energy(q, dist);
   }
 
   // fprintf(stderr,"energy is %f\n",eng);
@@ -1559,7 +1559,7 @@ double ELC_P3M_dielectric_layers_energy_self() {
       get_mi_vector(d, p.r.p, pos);
       dist2 = sqrlen(d);
       dist = sqrt(dist2);
-      eng += p3m_pair_energy(q, d, dist2, dist);
+      eng += p3m_pair_energy(q, dist);
       //	fprintf(stderr,"energy is %f\n",eng);
     }
 
@@ -1571,7 +1571,7 @@ double ELC_P3M_dielectric_layers_energy_self() {
       get_mi_vector(d, p.r.p, pos);
       dist2 = sqrlen(d);
       dist = sqrt(dist2);
-      eng += p3m_pair_energy(q, d, dist2, dist);
+      eng += p3m_pair_energy(q, dist);
       //	fprintf(stderr,"energy is %f\n",eng);
     }
   }

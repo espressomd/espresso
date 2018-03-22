@@ -579,21 +579,21 @@ Parameters are:
         specified by dielectric contrasts on the non-periodic boundaries
         (:cite:`icelc`).  Similar to *MMM2D*, these can be set with the
         keywords ``delta_mid_bot`` and ``delta_mid_top``, setting the dielectric
-        jump from the simulation region (*middle*) to *bottom* (at :math:`z<0`) and
-        from *middle* to *top* (:math:`z > box_l[2] - gap_size`). The fully metallic case
-        :math:`delta_mid_top=delta_mid_bot=-1` would lead to divergence of the
+        jump from the simulation region (*middle*) to *bottom* (at ``z<0``) and
+        from *middle* to *top* (``z > box_l[2] - gap_size``). The fully metallic case
+        ``delta_mid_top=delta_mid_bot=-1`` would lead to divergence of the
         forces/energies in *ELC* and is therefore only possible with the
-        ``const_pot_on`` option.
-    * const_pot_on: 
+        ``const_pot`` option.
+    * const_pot: 
         As described, setting this to ``1`` leads to fully metallic boundaries and
         behaves just like the mmm2d parameter of the same name: It maintains a
         constant potential ``pot_diff`` by countering the total dipole moment of
         the system and adding a homogeneous electric field according to
         ``pot_diff``.
     * pot_diff:
-        Used in conjunction with ``const_pot_on`` set to 1, this sets the potential difference
-        between the boundaries in the z-direction between :math:`z=0` and 
-        :math:`z = box_l[2] - gap_size`.
+        Used in conjunction with ``const_pot`` set to 1, this sets the potential difference
+        between the boundaries in the z-direction between ``z=0`` and 
+        ``z = box_l[2] - gap_size``.
     * far_cut:
         The setting of the far cutoff is only intended for testing and allows to
         directly set the cutoff. In this case, the maximal pairwise error is
@@ -608,10 +608,10 @@ Parameters are:
         energies :cite:`ballenegger09a`. Also, if you add neutralizing walls
         explicitely as constraints, you have to disable the neutralization.
         When using a dielectric contrast or full metallic walls
-        (:math:`delta_mid_top != 0` or :math:`delta_mid_bot != 0` or
-        :math:`const_pot_on=1`), ``neutralize`` is overwritten and switched off internally.
+        (``delta_mid_top != 0`` or ``delta_mid_bot != 0`` or
+        ``const_pot=1``), ``neutralize`` is overwritten and switched off internally.
         Note that the special case of non-neutral systems with a *non-metallic* dielectric jump (eg.
-        ``delta_mid_top`` or ``delta_mid_bot`` in :math:`]-1,1[`) is not covered by the
+        ``delta_mid_top`` or ``delta_mid_bot`` in ``]-1,1[``) is not covered by the
         algorithm and will throw an error.
 
 

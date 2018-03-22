@@ -42,6 +42,8 @@ cdef extern from "random.hpp" namespace "Random":
 
 cdef extern from "utils.hpp":
     void get_mi_vector(double* res,double* a, double* b)
+cdef extern from "utils.hpp":
+    void get_mi_vector(double * res, double * a, double * b)
 
 cdef extern from "rotate_system.hpp":
     void rotate_system(double phi, double theta, double alpha)

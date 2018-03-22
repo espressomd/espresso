@@ -24,4 +24,4 @@ def open(*args, **kwargs):
     -------
     file-like object
     """
-    return tempfile.TemporaryFile()
+    return tempfile.TemporaryFile(mode='w')

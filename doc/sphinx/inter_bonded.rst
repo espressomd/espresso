@@ -158,6 +158,27 @@ where `q1` and `q2` are the charges of the bound particles and `alpha` is the
 Coulomb prefactor. This interaction has no cutoff and acts independently of other
 Coulomb interactions.
 
+.. _Subtract P3M short-range bond:
+
+Subtract P3M short-range bond
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+
+    requires the P3M feature.
+
+This bond can be instantiated via
+:class:`espressomd.interactions.BondedCoulombP3MSRBond`::
+    
+    from espressomd.interactions import BondedCoulombP3MSRBond
+    subtr_p3m_sr = BondedCoulombP3MSRBond(q1q2 = <float>)
+
+The parameter `q1q2` sets the charge factor of the short-range P3M interaction.
+It can differ from the actual partice charges.  This specialized bond can be
+used to cancel or add **only the short-range** electrostatic part 
+of the P3M solver. A use case is descibed in :ref:`Particle polarizability with
+thermalized cold Drude oszillators`.
+
 .. _Subtracted Lennard-Jones bond:
 
 Subtracted Lennard-Jones bond
@@ -391,3 +412,31 @@ Together with appropriate Lennard-Jones interactions, this potential can
 mimic a large number of atomic torsion potentials.
 
 .. |image_dihedral| image:: figures/dihedral-angle.pdf
+
+
+.. _Thermalized distance bond:
+
+Thermalized distance bond
+-------------------------
+
+This bond can be used to apply Langevin thermalization on the centre of mass
+and the distance of a particle pair.  Each thermostat can have it's own
+temperature and friction coefficient. 
+
+The bond is configured with::
+
+    from espressomd.interactions import ThermalizedBond
+    thermalized_bond = ThermalizedBond(temp_com = <float>, gamma_com = <float>, temp_distance = <float>, gamma_distance = <float>, r_cut = <float>)
+    system.bonded_inter.add(thermalized_bond)
+
+The parameters are:
+
+    * temp_com : Temerature of the Langevin thermostat for the COM of the particle pair.
+    * gamma_com: Friction coefficient of the Langevin thermostat for the COM of the particle pair.
+    * temp_distance: Temerature of the Langevin thermostat for the distance vector of the particle pair.
+    * gamma_distance: Friction coefficient of the Langevin thermostat for the distance vector of the particle pair.
+    * r_cut:  Specifies maximum distance beyond which the bond is considered broken.
+
+The bond is closely related to simulating :ref:`Particle polarizability with
+thermalized cold Drude oszillators`. 
+

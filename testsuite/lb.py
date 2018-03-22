@@ -24,9 +24,9 @@ class LBTest(ut.TestCase):
     system.seed = range(n_nodes)
 
     def setUp(self):
-        self.params = {'int_steps': 100,
-                       'int_times': 20,
-                       'time_step': 0.005,
+        self.params = {'int_steps': 25,
+                       'int_times': 1,
+                       'time_step': 0.01,
                        'tau': 0.02,
                        'agrid': 0.5,
                        'box_l': 12.0,
@@ -74,7 +74,7 @@ class LBTest(ut.TestCase):
 
         self.system.thermostat.set_langevin(
             kT=self.params['temp'], gamma=self.params['gamma'])
-        self.system.integrator.run(1000)
+        self.system.integrator.run(50)
         # kill particle motion
         for i in range(self.n_col_part):
             self.system.part[i].v = [0.0, 0.0, 0.0]
@@ -97,7 +97,7 @@ class LBTest(ut.TestCase):
         for i in range(self.n_col_part):
             self.tot_mom = self.tot_mom + self.system.part[i].v
 
-        self.system.integrator.run(1000)
+        self.system.integrator.run(50)
 
         self.max_dmass = 0.0
         self.max_dm = [0, 0, 0]
