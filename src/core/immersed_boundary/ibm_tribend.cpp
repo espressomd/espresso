@@ -97,7 +97,13 @@ void IBM_Tribend_CalcForce(Particle *p1, const int numPartners, Particle **const
     
     double len = sqrt(sqrlen(v1l));
     double v1[3], v2[3];
-    if (len>0) for ( int i = 0;i <3; i++)  v1[i]=v1l[i]/len;
+    if (len>0) {
+      for ( int i = 0;i <3; i++)  v1[i]=v1l[i]/len;
+    }
+    else
+    {
+       throw std::runtime_error("Case len<=0 not handled.");
+    }
     
     // Achim normalizes both with the length of v1, Wolfgang uses v1 and v2
     // However, the length should be identical, so it does not matter
