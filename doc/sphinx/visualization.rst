@@ -189,23 +189,23 @@ which saves it to `<scriptname>_n.png` (with incrementing `n`).
 Colors and Materials
 ~~~~~~~~~~~~~~~~~~~~
 
-Colors for particles, bonds and constraints are specified by RGBA arrays.
-Materials by an array for the ambient, diffuse, specular and shininess (ADSS)
-components. To distinguish particle groups, arrays of RGBA or ADSS entries are
+Colors for particles, bonds and constraints are specified by RGB arrays.
+Materials by an array for the ambient, diffuse, specular and shininess and opacity (ADSSO)
+components. To distinguish particle groups, arrays of RGBA or ADSSO entries are
 used, which are indexed circularly by the numerical particle type::
 
     # Particle type 0 is red, type 1 is blue (type 2 is red etc)..
     visualizer = visualization.openGLLive(system, 
                                           particle_coloring = 'type',
-                                          particle_type_colors = [[1, 0, 0, 1],[0, 0, 1, 1]])
+                                          particle_type_colors = [[1, 0, 0],[0, 0, 1]])
 
 `particle_type_materials` lists the materials by type::
 
     # Particle type 0 is gold, type 1 is blue (type 2 is gold again etc).
     visualizer = visualization.openGLLive(system, 
                                           particle_coloring = 'type',
-                                          particle_type_colors = [[1, 1, 1, 1],[0, 0, 1, 1]],
-                                          particle_type_materials = [gold, bright])
+                                          particle_type_colors = [[1, 1, 1],[0, 0, 1]],
+                                          particle_type_materials = [steel, bright])
 
 Materials are stored in :attr:`espressomd.visualization.openGLLive().materials`. 
 
@@ -243,7 +243,7 @@ feature)::
 	                        director_arrows = True,
 	                        director_arrows_type_scale = [1.5, 1.0], 
 	                        director_arrows_type_radii = [0.1, 0.4], 
-	                        director_arrows_type_colors = [[1.0, 0, 0, 1.0], [0, 1.0, 0, 0.5]])
+	                        director_arrows_type_colors = [[1.0, 0, 0], [0, 1.0, 0]])
 
 	for i in range(10):
 		system.part.add(pos = numpy.random.random(3) * box_l, 

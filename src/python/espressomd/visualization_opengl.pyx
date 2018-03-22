@@ -113,6 +113,8 @@ class openGLLive(object):
                                   List of scale factors of external force arrows for different particle types.
     ext_force_arrows_type_colors : array_like :obj:`float`, optional
                                    Colors of ext_force arrows for different particle types.
+    ext_force_arrows_type_materials : array_like :obj:`float`, optional
+                                      Materils of ext_force arrows for different particle types.
     ext_force_arrows_type_radii : array_like :obj:`float`, optional
                                    List of arrow radii for different particle types.
     force_arrows : :obj:`bool`, optional
@@ -121,6 +123,8 @@ class openGLLive(object):
                               List of scale factors of particle force arrows for different particle types.
     force_arrows_type_colors : array_like :obj:`float`, optional
                                Colors of particle force arrows for different particle types.
+    force_arrows_type_materials : array_like :obj:`float`, optional
+                                  Materials of particle force arrows for different particle types.
     force_arrows_type_radii : array_like :obj:`float`, optional
                                List of arrow radii for different particle types.
     velocity_arrows : :obj:`bool`, optional
@@ -129,6 +133,8 @@ class openGLLive(object):
                                  List of scale factors of particle velocity arrows for different particle types.
     velocity_arrows_type_colors : array_like :obj:`float`, optional
                                   Colors of particle velocity arrows for different particle types.
+    velocity_arrows_type_materials : array_like :obj:`float`, optional
+                                     Materials of particle velocity arrows for different particle types.
     velocity_arrows_type_radii : array_like :obj:`float`, optional
                                   List of arrow radii for different particle types.
     director_arrows : :obj:`bool`, optional
@@ -137,12 +143,23 @@ class openGLLive(object):
                              Scale factor of particle director arrows for different particle types.
     director_arrows_type_colors : array_like :obj:`float`, optional
                                   Colors of particle director arrows for different particle types.
+    director_arrows_type_materials : array_like :obj:`float`, optional
+                                     Materials of particle director arrows for different particle types.
     director_arrows_type_radii : array_like :obj:`float`, optional
                                   List of arrow radii for different particle types.
     drag_enabled : :obj:`bool`, optional
                    Enables mouse-controlled particles dragging (Default: False)
     drag_force : :obj:`bool`, optional
                  Factor for particle dragging
+
+    LB_draw_nodes : :obj:`bool`, optional
+                   Draws a lattice representation of the LB nodes that are no boundaries.
+    LB_draw_node_boundaries : :obj:`bool`, optional
+                             Draws a lattice representation of the LB nodes that are boundaries.
+    LB_draw_boundaries : :obj:`bool`, optional
+                        Draws the LB shapes.
+    LB_draw_velocity_plane : :obj:`bool`, optional
+                             Draws LB node velocity arrows specified by LB_plane_axis, LB_plane_dist, LB_plane_ngrid.
     light_pos : array_like :obj:`float`, optional
                 If auto (default) is used, the light is placed dynamically in
                 the particle barycenter of the system. Otherwise, a fixed
@@ -172,35 +189,17 @@ class openGLLive(object):
     def __init__(self, system, **kwargs):
         # MATERIALS
         self.materials = {
-            'bright':       [[0.9, 0.9, 0.9], [1.0, 1.0, 1.0], [0.8, 0.8, 0.8], 0.6],
-            'medium':       [[0.6, 0.6, 0.6], [0.8, 0.8, 0.8], [0.2, 0.2, 0.2], 0.5],
-            'dark':         [[0.4, 0.4, 0.4], [0.5, 0.5, 0.5], [0.1, 0.1, 0.1], 0.4],
-            'bluerubber':   [[0, 0, 0.05], [0.4, 0.4, 0.5], [0.04, 0.04, 0.7], 0.078125],
-            'redrubber':    [[0.05, 0, 0], [0.5, 0.4, 0.4], [0.7, 0.04, 0.04], 0.078125],
-            'yellowrubber': [[0.05, 0.05, 0], [0.5, 0.5, 0.4], [0.7, 0.7, 0.04], 0.078125],
-            'greenrubber':  [[0, 0.05, 0], [0.4, 0.5, 0.4], [0.04, 0.7, 0.04], 0.078125],
-            'whiterubber':  [[0.05, 0.05, 0.05], [0.5, 0.5, 0.5], [0.7, 0.7, 0.7], 0.078125],
-            'cyanrubber':   [[0, 0.05, 0.05], [0.4, 0.5, 0.5], [0.04, 0.7, 0.7], 0.078125],
-            'blackrubber':  [[0.02, 0.02, 0.02], [0.01, 0.01, 0.01], [0.4, 0.4, 0.4], 0.078125],
-            'emerald':      [[0.0215, 0.1745, 0.0215], [0.07568, 0.61424, 0.07568], [0.633, 0.727811, 0.633], 0.6],
-            'jade':         [[0.135, 0.2225, 0.1575], [0.54, 0.89, 0.63], [0.316228, 0.316228, 0.316228], 0.1],
-            'obsidian':     [[0.05375, 0.05, 0.06625], [0.18275, 0.17, 0.22525], [0.332741, 0.328634, 0.346435], 0.3],
-            'pearl':        [[0.25, 0.20725, 0.20725], [1, 0.829, 0.829], [0.296648, 0.296648, 0.296648], 0.088],
-            'ruby':         [[0.1745, 0.01175, 0.01175], [0.61424, 0.04136, 0.04136], [0.727811, 0.626959, 0.626959], 0.6],
-            'turquoise':    [[0.1, 0.18725, 0.1745], [0.396, 0.74151, 0.69102], [0.297254, 0.30829, 0.306678], 0.1],
-            'brass':        [[0.329412, 0.223529, 0.027451], [0.780392, 0.568627, 0.113725], [0.992157, 0.941176, 0.807843], 0.21794872],
-            'bronze':       [[0.2125, 0.1275, 0.054], [0.714, 0.4284, 0.18144], [0.393548, 0.271906, 0.166721], 0.2],
-            'chrome':       [[0.25, 0.25, 0.25], [0.4, 0.4, 0.4], [0.774597, 0.774597, 0.774597], 0.6],
-            'copper':       [[0.19125, 0.0735, 0.0225], [0.7038, 0.27048, 0.0828], [0.256777, 0.137622, 0.086014], 0.1],
-            'gold':         [[0.24725, 0.1995, 0.0745], [0.75164, 0.60648, 0.22648], [0.628281, 0.555802, 0.366065], 0.4],
-            'silver':       [[0.19225, 0.19225, 0.19225], [0.50754, 0.50754, 0.50754], [0.508273, 0.508273, 0.508273], 0.4],
-            'blackplastic': [[0, 0, 0], [0.01, 0.01, 0.01], [0.5, 0.5, 0.5], 0.25],
-            'cyanplastic':  [[0, 0.1, 0.06], [0, 0.50980392, 0.50980392], [0.50196078, 0.50196078, 0.50196078], 0.25],
-            'greenplastic': [[0, 0, 0], [0.1, 0.35, 0.1], [0.45, 0.55, 0.45], 0.25],
-            'redplastic':   [[0, 0, 0], [0.5, 0, 0], [0.7, 0.6, 0.6], 0.25],
-            'blueplastic':  [[0, 0, 0], [0.0, 0.0, 0.5], [0.6, 0.6, 0.7], 0.25],
-            'whiteplastic': [[0, 0, 0], [0.55, 0.55, 0.55], [0.7, 0.7, 0.7], 0.25],
-            'yellowplastic': [[0, 0, 0], [0.5, 0.5, 0], [0.6, 0.6, 0.5], 0.25]}
+            'bright':       [0.9, 1.0, 0.8, 0.4, 1.0],
+            'medium':       [0.6, 0.8, 0.2, 0.4, 1.0],
+            'dark':         [0.4, 0.5, 0.1, 0.4, 1.0],
+            'transparent1': [0.6, 0.8, 0.2, 0.5, 0.8],
+            'transparent2': [0.6, 0.8, 0.2, 0.5, 0.4],
+            'transparent3': [0.6, 0.8, 0.2, 0.5, 0.2],
+            'rubber':   	[0, 0.4, 0.7, 0.078125, 1.0],
+            'chrome':       [0.25, 0.4, 0.774597, 0.6, 1.0],
+            'plastic': 		[0, 0.55, 0.7, 0.25, 1.0],
+			'steel':		[0.25, 0.38, 0, 0.32, 1.0]
+		}
 
         # DEFAULT PROPERTIES
         self.specs = {
@@ -233,54 +232,65 @@ class openGLLive(object):
 
             'particle_coloring': 'auto',
             'particle_sizes': 'auto',
-            'particle_type_colors': [[1, 1, 0, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 1, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
+            'particle_type_colors': [[1, 1, 0], [1, 0, 1], [0, 0, 1], [0, 1, 1], [1, 1, 1], [1, 0.5, 0], [0.5, 0, 1]],
             'particle_type_materials': ['medium'],
-            'particle_charge_colors': [[1, 0, 0, 1], [0, 1, 0, 1]],
+            'particle_charge_colors': [[1, 0, 0], [0, 1, 0]],
 
             'draw_constraints': True,
             'rasterize_pointsize': 10,
             'rasterize_resolution': 75.0,
-            'constraint_type_colors': [[0.5, 0.5, 0.5, 0.9], [0, 0.5, 0.5, 0.9], [0.5, 0, 0.5, 0.9], [0.5, 0.5, 0, 0.9], [0, 0, 0.5, 0.9], [0.5, 0, 0, 0.9]],
-            'constraint_type_materials': ['medium'],
+            'constraint_type_colors': [[0.5, 0.5, 0.5], [0, 0.5, 0.5], [0.5, 0, 0.5], [0.5, 0.5, 0], [0, 0, 0.5], [0.5, 0, 0]],
+            'constraint_type_materials': ['transparent1'],
 
             'draw_bonds': True,
             'bond_type_radius': [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
-            'bond_type_colors': [[1, 1, 1, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
+            'bond_type_colors': [[1, 1, 1], [1, 0, 1], [0, 0, 1], [0, 1, 1], [1, 1, 0], [1, 0.5, 0], [0.5, 0, 1]],
             'bond_type_materials': ['medium'],
 
             'ext_force_arrows': False,
             'ext_force_arrows_type_scale': [1.0],
-            'ext_force_arrows_type_colors': [[1, 1, 1, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
+            'ext_force_arrows_type_colors': [[1, 1, 1], [1, 0, 1], [0, 0, 1], [0, 1, 1], [1, 1, 0], [1, 0.5, 0], [0.5, 0, 1]],
+            'ext_force_arrows_type_materials': ['transparent2'],
             'ext_force_arrows_type_radii': [0.2],
 
             'velocity_arrows': False,
             'velocity_arrows_type_scale': [1.0],
-            'velocity_arrows_type_colors': [[1, 1, 1, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
+            'velocity_arrows_type_colors': [[1, 1, 1], [1, 0, 1], [0, 0, 1], [0, 1, 1], [1, 1, 0], [1, 0.5, 0], [0.5, 0, 1]],
+            'velocity_arrows_type_materials': ['transparent2'],
             'velocity_arrows_type_radii': [0.2],
 
             'force_arrows': False,
             'force_arrows_type_scale': [1.0],
-            'force_arrows_type_colors': [[1, 1, 1, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
+            'force_arrows_type_colors': [[1, 1, 1], [1, 0, 1], [0, 0, 1], [0, 1, 1], [1, 1, 0], [1, 0.5, 0], [0.5, 0, 1]],
+            'force_arrows_type_materials': ['transparent2'],
             'force_arrows_type_radii': [0.2],
 
             'director_arrows': False,
             'director_arrows_type_scale': [1.0],
-            'director_arrows_type_colors': [[1, 1, 1, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
+            'director_arrows_type_colors': [[1, 1, 1], [1, 0, 1], [0, 0, 1], [0, 1, 1], [1, 1, 0], [1, 0.5, 0], [0.5, 0, 1]],
+            'director_arrows_type_materials': ['transparent2'],
             'director_arrows_type_radii': [0.2],
 
-            'LB': False,
+            'LB_draw_nodes': False,
+            'LB_draw_node_boundaries': False,
+            'LB_draw_boundaries': False,
+            
+            'LB_draw_velocity_plane': False,
             'LB_plane_axis': 2,
             'LB_plane_dist': 0,
             'LB_plane_ngrid': 5,
             'LB_vel_scale': 1.0,
+            'LB_arrow_color': [1, 1, 1],
+            'LB_arrow_material': 'transparent1',
+            'LB_arrow_quality': 16,
 
             'light_pos': 'auto',
-            'light_colors': [[0.1, 0.1, 0.2, 1.0], [0.9, 0.9, 0.9, 1.0], [1.0, 1.0, 1.0, 1.0]],
+            'light_colors': [[0.1, 0.1, 0.2], [0.9, 0.9, 0.9], [1.0, 1.0, 1.0]],
             'light_brightness': 1.0,
             'light_size': 'auto',
 
             'spotlight_enabled': False,
-            'spotlight_colors': [[0.2, 0.2, 0.3, 1.0], [0.5, 0.5, 0.5, 1.0], [1.0, 1.0, 1.0, 1.0]],
+            'spotlight_colors': [[0.2, 0.2, 0.3], [0.5, 0.5, 0.5], [1.0, 1.0, 1.0]],
             'spotlight_angle': 45,
             'spotlight_focus': 1,
             'spotlight_brightness': 0.6,
@@ -307,6 +317,16 @@ class openGLLive(object):
 
         IF not CONSTRAINTS:
             self.specs['draw_constraints'] = False
+
+        IF not LB and not LB_GPU:
+            self.specs['LB_draw_velocity_plane'] = False
+            self.specs['LB_draw_boundaries'] = False
+            self.specs['LB_draw_nodes'] = False
+            self.specs['LB_draw_node_boundaries'] = False
+        
+        IF not LB_BOUNDARIES and not LB_BOUNDARIES_GPU:
+            self.specs['LB_draw_boundaries'] = False
+            self.specs['LB_draw_node_boundaries'] = False
 
         # ESPRESSO RELATED INITS THAT ARE KNOWN ONLY WHEN RUNNING THE
         # INTEGRATION LOOP ARE CALLED ONCE IN UPDATE LOOP:
@@ -341,11 +361,15 @@ class openGLLive(object):
 
         self.node_box_color = np.copy(self.invBackgroundCol)
         self.node_box_color[0] += 0.5 * (0.5 - self.node_box_color[0])
-        self.node_box_color[3] = 0.6
 
         self.cell_box_color = np.copy(self.invBackgroundCol)
         self.cell_box_color[1] += 0.5 * (0.5 - self.cell_box_color[1])
-        self.cell_box_color[3] = 0.4
+
+        self.lb_box_color = np.copy(self.invBackgroundCol)
+        self.lb_box_color[2] = 0.5
+
+        self.lb_box_color_boundary = np.copy(self.invBackgroundCol)
+        self.lb_box_color_boundary[1] = 0.5
 
         self.text_color = np.copy(self.invBackgroundCol)
 
@@ -506,8 +530,8 @@ class openGLLive(object):
                     self._update_particles()
 
                     # LB UPDATE
-                    if self.specs['LB']:
-                        self._update_lb()
+                    if self.specs['LB_draw_velocity_plane']:
+                        self._update_lb_velocity_plane()
 
                     # BOX_L CHANGED
                     if not (self.last_box_l == self.system.box_l).all():
@@ -579,17 +603,38 @@ class openGLLive(object):
                 self.highlighted_particle[attr] = getattr(
                     self.system.part[self.infoId], attr)
 
-    def _update_lb(self):
+    def _update_lb_velocity_plane(self):
+            if self.lb_is_cpu:
+                self._update_lb_velocity_plane_CPU()
+            else:
+                self._update_lb_velocity_plane_GPU()
+
+    def _update_lb_velocity_plane_CPU(self):
         agrid = self.lb_params['agrid']
         self.lb_plane_vel = []
         ng = self.specs['LB_plane_ngrid']
         for xi in xrange(ng):
             for xj in xrange(ng):
                 pp = np.copy((self.lb_plane_p + xi * 1.0 / ng * self.lb_plane_b1 +
-                              xj * 1.0 / ng * self.lb_plane_b2) % self.system.box_l)
+                      xj * 1.0 / ng * self.lb_plane_b2) % self.system.box_l)
                 i, j, k = (int(ppp / agrid) for ppp in pp)
                 lb_vel = np.copy(self.lb[i, j, k].velocity)
                 self.lb_plane_vel.append([pp, lb_vel])
+
+    def _update_lb_velocity_plane_GPU(self):
+        agrid = self.lb_params['agrid']
+        ng = self.specs['LB_plane_ngrid']
+        col_pos = []
+        for xi in xrange(ng):
+            for xj in xrange(ng):
+                p = np.array((self.lb_plane_p + xi * 1.0 / ng * self.lb_plane_b1 +
+                              xj * 1.0 / ng * self.lb_plane_b2) % self.system.box_l)
+                col_pos.append(p)
+
+        lb_vels = self.lb.get_interpolated_fluid_velocity_at_positions(np.array(col_pos))
+        self.lb_plane_vel = []
+        for p, v in zip(col_pos, lb_vels):
+            self.lb_plane_vel.append([p, v])
 
     def _edges_from_pn(self, p, n, diag):
         v1, v2 = self._get_tangents(n)
@@ -620,6 +665,7 @@ class openGLLive(object):
                     self.node_box_origins.append(
                         np.array([i, j, k]) * self.local_box_l)
 
+
     # GET THE _update_constraints DATA
     def _update_constraints(self):
 
@@ -629,18 +675,32 @@ class openGLLive(object):
         self.shapes = collections.defaultdict(list)
 
         # Collect shapes and interaction type (for coloring) from constraints
+        primitive_shapes = ['Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Ellipsoid', 'Shapes::SimplePore', 'Shapes::Sphere', 'Shapes::SpheroCylinder']
+
         coll_shape_obj = collections.defaultdict(list)
         for c in self.system.constraints:
             if type(c) == espressomd.constraints.ShapeBasedConstraint:
                 t = c.get_parameter('particle_type')
                 s = c.get_parameter('shape')
                 n = s.name()
-                if n in ['Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Ellipsoid', 'Shapes::Sphere', 'Shapes::SpheroCylinder']:
+                if n in primitive_shapes:
                     coll_shape_obj[n].append([s, t])
                 else:
                     coll_shape_obj['Shapes::Misc'].append([s, t])
 
-        # TODO: get shapes from lbboundaries
+        if self.specs['LB_draw_boundaries']:
+            ni = 0
+            for c in self.system.lbboundaries:
+                if type(c) == espressomd.ekboundaries.EKBoundary:
+                    t = ni
+                    ni += 1
+                    s = c.get_parameter('shape')
+                    n = s.name()
+                    if n in primitive_shapes:
+                        coll_shape_obj[n].append([s, t])
+                    else:
+                        coll_shape_obj['Shapes::Misc'].append([s, t])
+
         for s in coll_shape_obj['Shapes::Wall']:
             d = s[0].get_parameter('dist')
             n = s[0].get_parameter('normal')
@@ -666,6 +726,15 @@ class openGLLive(object):
             pos = np.array(s[0].get_parameter('center'))
             r = s[0].get_parameter('radius')
             self.shapes['Shapes::Sphere'].append([pos, r, s[1]])
+
+        for s in coll_shape_obj['Shapes::SimplePore']:
+            center = np.array(s[0].get_parameter('center'))
+            axis = np.array(s[0].get_parameter('axis'))
+            length = np.array(s[0].get_parameter('length'))
+            radius = np.array(s[0].get_parameter('radius'))
+            smoothing_radius = np.array(s[0].get_parameter('smoothing_radius'))
+            self.shapes['Shapes::SimplePore'].append(
+                [center, axis, length, radius, smoothing_radius, s[1]])
 
         for s in coll_shape_obj['Shapes::SpheroCylinder']:
             pos = np.array(s[0].get_parameter('center'))
@@ -723,7 +792,7 @@ class openGLLive(object):
 
     # DRAW CALLED AUTOMATICALLY FROM GLUT DISPLAY FUNC
     def _draw_system(self):
-        if self.specs['LB']:
+        if self.specs['LB_draw_velocity_plane']:
             self._draw_lb_vel()
 
         if self.specs['draw_axis']:
@@ -749,21 +818,36 @@ class openGLLive(object):
             self._draw_nodes()
         if self.specs['draw_cells']:
             self._draw_cells()
+        if self.specs['LB_draw_nodes'] or self.specs['LB_draw_node_boundaries']:
+            self._draw_lb_grid()
 
     def _draw_system_box(self):
         draw_box([0, 0, 0], self.system.box_l,
-                 self.invBackgroundCol, 2.0 * self.line_width_fac)
+                 self.invBackgroundCol, self.materials['medium'], 2.0 * self.line_width_fac)
 
     def _draw_nodes(self):
         for n in self.node_box_origins:
-            draw_box(n, self.local_box_l, self.node_box_color,
+            draw_box(n, self.local_box_l, self.node_box_color, self.materials['transparent1'],
                      1.5 * self.line_width_fac)
 
     def _draw_cells(self):
         for n in self.node_box_origins:
             for c in self.cell_box_origins:
-                draw_box(c + n, self.cell_size, self.cell_box_color,
+                draw_box(c + n, self.cell_size, self.cell_box_color, self.materials['transparent1'],
                          0.75 * self.line_width_fac)
+
+    def _draw_lb_grid(self):
+        a = self.lb_params['agrid']
+        cell_size = np.array([a]*3)
+        dims = np.rint(np.array(self.system.box_l) / a)
+        for i in range(int(dims[0])):
+            for j in range(int(dims[1])):
+                for k in range(int(dims[2])):
+                    n = np.array([i, j, k]) * cell_size
+                    if self.specs['LB_draw_node_boundaries'] and self.lb[i,j,k].boundary:
+                        draw_box(n, cell_size, self.lb_box_color_boundary, self.materials['transparent2'], 5.0)
+                    if self.specs['LB_draw_nodes'] and not self.lb[i,j,k].boundary:
+                        draw_box(n, cell_size, self.lb_box_color, self.materials['transparent2'], 1.5)
 
     def _draw_constraints(self):
 
@@ -775,8 +859,12 @@ class openGLLive(object):
             draw_ellipsoid(s[0], s[1], s[2], s[3], self._modulo_indexing(self.specs['constraint_type_colors'], s[4]),
                            self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[4])], self.specs['quality_constraints'])
 
+        for s in self.shapes['Shapes::SimplePore']:
+            draw_simple_pore(s[0], s[1], s[2], s[3], s[4], max(self.system.box_l), self._modulo_indexing(self.specs['constraint_type_colors'], s[5]),
+                             self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[5])], self.specs['quality_constraints'])
+
         for s in self.shapes['Shapes::Sphere']:
-            self.draw_sphere(s[0], s[1], self._modulo_indexing(self.specs['constraint_type_colors'], s[2]), self.materials[self._modulo_indexing(
+            draw_sphere(s[0], s[1], self._modulo_indexing(self.specs['constraint_type_colors'], s[2]), self.materials[self._modulo_indexing(
                 self.specs['constraint_type_materials'], s[2])], self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::SpheroCylinder']:
@@ -872,10 +960,9 @@ class openGLLive(object):
                     if pid == self.dragId or pid == self.infoId:
                         reset_material = True
                         color = [1 - color[0], 1 - color[1],
-                                 1 - color[2], color[3]]
+                                 1 - color[2]]
 
-                set_solid_material(color[0], color[1], color[2], color[3],
-                                   material[0], material[1], material[2], material[3])
+                    set_solid_material(color, material)
 
                 # Create a new display list, used until next material/color change
                 glNewList(self.dl_sphere, GL_COMPILE)
@@ -1009,15 +1096,14 @@ class openGLLive(object):
                 return False
         return True
 
-    # VOXELS FOR LB VELOCITIES
+    # ARROWS IN A PLANE FOR LB VELOCITIES
     def _draw_lb_vel(self):
 
         for lbl in self.lb_plane_vel:
             p = lbl[0]
             v = lbl[1]
             c = np.linalg.norm(v)
-            draw_arrow(p, v * self.specs['LB_vel_scale'], self.lb_arrow_radius, [
-                       1, 1, 1, 1], self.materials['chrome'], 16)
+            draw_arrow(p, v * self.specs['LB_vel_scale'], self.lb_arrow_radius, self.specs['LB_arrow_color'], self.materials[self.specs['LB_arrow_material']], self.specs['LB_arrow_quality'])
 
     # USE MODULO IF THERE ARE MORE PARTICLE TYPES THAN TYPE DEFINITIONS FOR
     # COLORS, MATERIALS ETC..
@@ -1029,11 +1115,11 @@ class openGLLive(object):
     def _color_by_charge(self, q):
         if q < 0:
             c = 1.0 * q / self.minq
-            return np.array(self.specs['particle_charge_colors'][0]) * c + (1 - c) * np.array([1, 1, 1, 1])
+            return np.array(self.specs['particle_charge_colors'][0]) * c + (1 - c) * np.array([1, 1, 1])
         else:
             c = 1.0 * q / self.maxq
 
-            return np.array(self.specs['particle_charge_colors'][1]) * c + (1 - c) * np.array([1, 1, 1, 1])
+            return np.array(self.specs['particle_charge_colors'][1]) * c + (1 - c) * np.array([1, 1, 1])
 
     # ON INITIALIZATION, CHECK q_max/q_min
     def _update_charge_color_range(self):
@@ -1299,13 +1385,24 @@ class openGLLive(object):
         self.imPos = [np.array([self.system.box_l[0], 0, 0]), np.array(
             [0, self.system.box_l[1], 0]), np.array([0, 0, self.system.box_l[2]])]
 
-        if self.specs['LB']:
+        # LOOK FOR LB ACTOR
+        if self.specs['LB_draw_velocity_plane'] or self.specs['LB_draw_nodes'] or self.specs['LB_draw_node_boundaries']:
             for a in self.system.actors:
-                pa = a.get_params()
-                if 'agrid' in pa:
-                    self.lb_params = pa
+                types = []
+                IF LB:
+                    types.append(espressomd.lb.LBFluid)
+                IF LB_GPU:
+                    types.append(espressomd.lb.LBFluidGPU)
+ 
+                #if type(a) == espressomd.lb.LBFluidGPU or type(a) == espressomd.lb.LBFluid
+                if type(a) in types:
+                #if 'agrid' in pa:
+                    self.lb_params = a.get_params()
                     self.lb = a
+                    self.lb_is_cpu = type(a) == espressomd.lb.LBFluid
                     break
+
+        if self.specs['LB_draw_velocity_plane']:
 
             if self.specs['LB_plane_axis'] == 0:
                 pn = [1.0, 0.0, 0.0]
@@ -1332,8 +1429,8 @@ class openGLLive(object):
             self.lb_vel_range = self.lb_max_vel - self.lb_min_vel
             self.lb_min_dens = np.array([0] * 3)
             self.lb_max_dens = np.array([0] * 3)
-
-            self._update_lb()
+           
+            self._update_lb_velocity_plane() 
 
         self._box_size_dependence()
 
@@ -1364,6 +1461,7 @@ class openGLLive(object):
             (self.box_n[5][0], self.box_n[5][1], self.box_n[5][2], self.system.box_l[2] * 1.001))
 
         self.camera.center = np.array(self.system.box_l) * 0.5
+        self.camera.update_modelview()
 
     # DEFAULT CONTROLS
     def _init_controls(self):
@@ -1554,19 +1652,15 @@ class openGLLive(object):
 
 # OPENGL DRAW WRAPPERS
 
-def set_solid_material(r, g, b, a=1.0, ambient=[0.6, 0.6, 0.6], diffuse=[1.0, 1.0, 1.0], specular=[0.1, 0.1, 0.1], shininess=0.4):
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT,  [
-                 ambient[0] * r, ambient[1] * g, ambient[2] * g, a])
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, [
-                 diffuse[0] * r, diffuse[1] * g, diffuse[2] * b, a])
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, [
-                 specular[0] * r, specular[1] * g, specular[2] * g, a])
-    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, int(shininess * 128))
+def set_solid_material(color, material = [0.6, 1.0, 0.1, 0.4, 1.0]):
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT,  [color[0]*material[0], color[1]*material[0], color[2] * material[0], material[4]])
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE,  [color[0]*material[1], color[1]*material[1], color[2] * material[1], material[4]])
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, [color[0]*material[2], color[1]*material[2], color[2] * material[2], material[4]])
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, int(material[3] * 128))
 
-
-def draw_box(p0, s, color, width):
+def draw_box(p0, s, color, material, width):
     glLineWidth(width)
-    set_solid_material(color[0], color[1], color[2], color[3])
+    set_solid_material(color, material)
     glPushMatrix()
     glTranslatef(p0[0], p0[1], p0[2])
     glBegin(GL_LINE_LOOP)
@@ -1598,15 +1692,13 @@ def draw_box(p0, s, color, width):
 def draw_sphere(pos, radius, color, material, quality):
     glPushMatrix()
     glTranslatef(pos[0], pos[1], pos[2])
-    set_solid_material(color[0], color[1], color[2], color[
-                      3], material[0], material[1], material[2], material[3])
+    set_solid_material(color, material)
     glutSolidSphere(radius, quality, quality)
     glPopMatrix()
 
 def draw_plane(edges, color, material):
 
-    set_solid_material(color[0], color[1], color[2], color[
-        3], material[0], material[1], material[2], material[3])
+    set_solid_material(color, material)
 
     glBegin(GL_QUADS)
     for e in edges:
@@ -1614,31 +1706,8 @@ def draw_plane(edges, color, material):
     glEnd()
 
 
-def draw_cube(pos, size, color, alpha):
-    set_solid_material(color[0], color[1], color[2], alpha)
-    glPushMatrix()
-    glTranslatef(pos[0], pos[1], pos[2])
-    glutSolidCube(size)
-    glPopMatrix()
-
-
-def draw_triangles(triangles, color, material):
-    np.random.seed(1)
-
-    glBegin(GL_TRIANGLES)
-    for t in triangles:
-        color = np.random.random(3).tolist()
-        color.append(1)
-        set_solid_material(color[0], color[1], color[2],
-                           color[3], material[0], material[1], material[2], material[3])
-        for p in t:
-            glVertex3f(p[0], p[1], p[2])
-    glEnd()
-
-
 def draw_points(points, pointsize, color, material):
-    set_solid_material(color[0], color[1], color[2], color[3],
-                       material[0], material[1], material[2], material[3])
+    set_solid_material(color, material)
     glPointSize(pointsize)
     glBegin(GL_POINTS)
     for p in points:
@@ -1647,8 +1716,7 @@ def draw_points(points, pointsize, color, material):
 
 
 def draw_cylinder(posA, posB, radius, color, material, quality, draw_caps=False):
-    set_solid_material(color[0], color[1], color[2], color[3],
-                       material[0], material[1], material[2], material[3])
+    set_solid_material(color, material)
     glPushMatrix()
     quadric = gluNewQuadric()
 
@@ -1689,8 +1757,7 @@ def rotation_helper(d):
 
 
 def draw_ellipsoid(pos, semiaxis_a, semiaxis_b, semiaxis_c, color, material, quality):
-    set_solid_material(color[0], color[1], color[2], color[3],
-                       material[0], material[1], material[2])
+    set_solid_material(color, material)
     glPushMatrix()
     glTranslatef(pos[0], pos[1], pos[2])
     glScalef(semiaxis_a, semiaxis_b, semiaxis_c)
@@ -1699,8 +1766,7 @@ def draw_ellipsoid(pos, semiaxis_a, semiaxis_b, semiaxis_c, color, material, qua
 
 
 def draw_simple_pore(center, axis, length, radius, smoothing_radius, max_box_l, color, material, quality):
-    set_solid_material(color[0], color[1], color[2], color[3],
-                       material[0], material[1], material[2])
+    set_solid_material(color, material)
     glPushMatrix()
     quadric = gluNewQuadric()
 
@@ -1739,8 +1805,7 @@ def draw_simple_pore(center, axis, length, radius, smoothing_radius, max_box_l, 
 
 
 def draw_sphero_cylinder(posA, posB, radius, color, material, quality):
-    set_solid_material(color[0], color[1], color[
-        2], color[3], material[0], material[1], material[2], material[3])
+    set_solid_material(color, material)
     glPushMatrix()
     quadric = gluNewQuadric()
 
