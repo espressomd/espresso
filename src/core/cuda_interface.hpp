@@ -69,7 +69,7 @@ struct CUDA_particle_data {
   /** particle position given from md part*/
   float p[3];
 
-#ifdef LB_GPU
+#if defined(LB_GPU) || defined(LEES_EDWARDS)
   /** particle momentum struct velocity p.m->v*/
   float v[3];
 #endif
