@@ -24,7 +24,6 @@ system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=0, sigma=1,
     cutoff=2, shift="auto")
 system.bonded_inter[0] = HarmonicBond(k=0.5, r_0=1.0)
-system.bonded_inter[1] = HarmonicBond(k=0.5, r_0=1.0)
 
 for i in range(n_part):
     system.part.add(id=i, pos=np.random.random(3) * system.box_l)
