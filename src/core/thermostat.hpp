@@ -30,10 +30,12 @@
 #include "particle_data.hpp"
 #include "random.hpp"
 #include "integrate.hpp"
+#include "lees_edwards.hpp"
 
 #include "Vector.hpp"
 
 #include <cmath>
+#include "grid.hpp" 
 
 /** \name Thermostat switches*/
 /************************************************************/

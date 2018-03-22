@@ -49,6 +49,8 @@
 #include "utils.hpp"
 #include "global.hpp"
 #include "cells.hpp"
+#include "global.hpp"
+#include "interaction_data.hpp" 
 
 #include <cassert>
 #include <cstdio>
