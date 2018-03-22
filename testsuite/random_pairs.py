@@ -16,20 +16,28 @@ class RandomPairTest(ut.TestCase):
 
     """
     system = espressomd.System(box_l = 3 * [10.])
-        
-    def setUp(self):
+
+    @classmethod
+    def setUpClass(self):
         s = self.system
         s.time_step = 1.
         s.cell_system.skin = 0.0
+        s.box_l = 10. * self.system.cell_system.get_state()['node_grid']
         s.min_global_cut = 1.5
-        n_part = 500
+        n_part = 100 * s.cell_system.get_state()['n_nodes']
+
+        print("n_part", n_part)
 
         np.random.seed(2)
 
         s.part.add(pos=s.box_l * np.random.random((n_part, 3)))
 
-    def tearDown(self):
-        self.system.part.clear()
+    def reset_parts(self):
+        s = self.system
+
+        n_part = len(s.part)
+        s.part[:].pos = s.box_l * np.random.random((n_part, 3))
+        s.part[:].v = (-0.5 + np.random.random((n_part, 3)))
 
     def pairs_n2(self, dist):
         parts = self.system.part
@@ -40,45 +48,46 @@ class RandomPairTest(ut.TestCase):
                 if self.system.distance(parts[i], parts[j]) < dist:
                     pairs.append((i, j))
 
-        self.assertTrue(len(pairs))
         return set(pairs)
 
     def check_duplicates(self, l):
         for e in collections.Counter(l).values():
             self.assertEqual(e, 1)
 
-    def check_pairs(self, n2_pairs):
+    def check_pairs(self):
+        n2_pairs = self.pairs_n2(1.5)
         cs_pairs = self.system.cell_system.get_pairs_(1.5)
         self.check_duplicates(cs_pairs)
-        self.assertTrue(len(cs_pairs))
-        self.assertEqual(n2_pairs ^ set(cs_pairs), set())
+        self.assertEqual(n2_pairs, set(cs_pairs))
 
-    def check_dd(self, n2_pairs):
-        self.system.cell_system.set_domain_decomposition()
-        self.check_pairs(n2_pairs)
-
-    def check_layered(self, n2_pairs):
-        self.system.cell_system.set_layered()
-        self.check_pairs(n2_pairs)
-
-    def check_n_squared(self, n2_pairs):
-        self.system.cell_system.set_n_square()
-        self.check_pairs(n2_pairs)
-
-    def test(self):
+    def run_checks(self):
         if espressomd.has_features("PARTIAL_PERIODIC"):
             periods = [0, 1]
         else:
             periods = [1]
 
         for periodicity in itertools.product(periods, periods, periods):
+            print(periodicity)
             self.system.periodicity = periodicity
-            n2_pairs = self.pairs_n2(1.5)
+            self.reset_parts()
 
-            self.check_dd(n2_pairs)
-            self.check_layered(n2_pairs)
-            self.check_n_squared(n2_pairs)
+            self.check_pairs()
 
+            self.system.integrator.run(1000)
+
+            self.check_pairs()
+
+    def test_dd(self):
+        self.system.box_l = 10. * self.system.cell_system.get_state()['node_grid']
+        self.system.cell_system.set_domain_decomposition()
+        print(self.system.cell_system.get_state())
+        self.run_checks()
+
+    def test_layered(self):
+        self.system.box_l = [10., 10, 10. * self.system.cell_system.get_state()['n_nodes']]
+        self.system.cell_system.set_layered()
+        print(self.system.cell_system.get_state())
+        self.run_checks()
 
 if __name__ == '__main__':
     print("Features: ", espressomd.features())
