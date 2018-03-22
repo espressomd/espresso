@@ -527,11 +527,14 @@ static int is_recv_op(int comm_type, int node)
           (comm_type == GHOST_RDCE && node == this_node));
 }
 
-void ghost_communicator(GhostCommunicator *gc)
+void ghost_communicator(GhostCommunicator *gc) {
+  ghost_communicator(gc, gc->data_parts);
+}
+
+void ghost_communicator(GhostCommunicator *gc, int data_parts)
 {
   MPI_Status status;
   int n, n2;
-  int data_parts = gc->data_parts;
   /* if ghosts should have uptodate velocities, they have to be updated like
      positions (except for shifting...) */
   if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
@@ -546,7 +549,7 @@ void ghost_communicator(GhostCommunicator *gc)
     int prefetch  = gcn->type & GHOST_PREFETCH;
     int poststore = gcn->type & GHOST_PSTSTORE;
     int node      = gcn->node;
-    
+
     GHOST_TRACE(fprintf(stderr, "%d: ghost_comm round %d, job %x\n", this_node, n, gc->comm[n].type));
     GHOST_TRACE(fprintf(stderr, "%d: ghost_comm shift %f %f %f\n",this_node, gc->comm[n].shift[0], gc->comm[n].shift[1], gc->comm[n].shift[2]));
     if (comm_type == GHOST_LOCL)

@@ -3028,11 +3028,13 @@ void calc_particle_lattice_ia() {
 #endif // ADDITIONAL_CHECKS
     }
 
-    /* communicate the random numbers */
-    ghost_communicator(&cell_structure.ghost_lbcoupling_comm);
+    int data_parts = GHOSTTRANS_COUPLING;
 #ifdef ENGINE
-    ghost_communicator(&cell_structure.ghost_swimming_comm);
+    data_parts |= GHOSTTRANS_SWIMMING;
 #endif
+
+    /* communicate the random numbers */
+    ghost_communicator(&cell_structure.exchange_ghosts_comm, data_parts);
 
     /* local cells */
     for (auto &p : local_cells.particles()) {
