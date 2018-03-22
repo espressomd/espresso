@@ -498,13 +498,10 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts)
   }
 }
 
-void reduce_forces_sum(void *add, void *to, int *len, MPI_Datatype *type)
-{
-  ParticleForce 
-    *cadd = (ParticleForce*)add, 
-    *cto = (ParticleForce*)to;
-  int i, clen = *len/sizeof(ParticleForce);
- 
+void reduce_forces_sum(void *add, void *to, int *len, MPI_Datatype *type) {
+  ParticleForce *cadd = (ParticleForce *)add, *cto = (ParticleForce *)to;
+  int i, clen = *len / sizeof(ParticleForce);
+
   if (*type != MPI_BYTE || (*len % sizeof(ParticleForce)) != 0) {
     fprintf(stderr, "%d: transfer data type wrong\n", this_node);
     errexit();
@@ -546,7 +543,7 @@ void ghost_communicator(GhostCommunicator *gc)
     int prefetch  = gcn->type & GHOST_PREFETCH;
     int poststore = gcn->type & GHOST_PSTSTORE;
     int node      = gcn->node;
-    
+
     GHOST_TRACE(fprintf(stderr, "%d: ghost_comm round %d, job %x\n", this_node, n, gc->comm[n].type));
     GHOST_TRACE(fprintf(stderr, "%d: ghost_comm shift %f %f %f\n",this_node, gc->comm[n].shift[0], gc->comm[n].shift[1], gc->comm[n].shift[2]));
     if (comm_type == GHOST_LOCL)

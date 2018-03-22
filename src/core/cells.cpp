@@ -310,13 +310,32 @@ void fold_and_reset(Particle &p) {
     p.l.p_old[i] = p.r.p[i];
   }
 }
+
+Particle extract_indexed_particle(ParticleList *sl, int i) {
+  Particle *src = &sl->part[i];
+  Particle *end = &sl->part[sl->n - 1];
+
+  Particle p = std::move(*src);
+
+  assert(p.p.identity <= max_seen_particle);
+  local_particles[p.p.identity] = nullptr;
+
+  if (src != end) {
+    new (src) Particle(std::move(*end));
+  }
+
+  if (realloc_particlelist(sl, --sl->n)) {
+    update_local_particles(sl);
+  } else if (src != end) {
+    local_particles[src->p.identity] = src;
+  }
+  return p;
+}
 }
 
 /**
  * @TODO:
- *  - Remove p_old reset from sr loop.
  *  - Swtich to async comm.
- *  - Force global sort for Lees-Edwards.
  */
 
 ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells) {
@@ -331,10 +350,8 @@ ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells) {
       auto target_cell = cs.position_to_cell(p.r.p);
 
       if (target_cell == nullptr) {
-        auto const id = p.identity();
-        move_indexed_particle(&displaced_parts, c, i);
-
-        local_particles[id] = nullptr;
+        append_unindexed_particle(&displaced_parts,
+                                  extract_indexed_particle(c, i));
 
         if (i < c->n) {
           i--;
@@ -361,7 +378,8 @@ void cells_resort_particles(int global_flag) {
   clear_particle_node();
   n_verlet_updates++;
 
-  auto displaced_parts = sort_and_fold_parts(cell_structure, local_cells);
+  ParticleList displaced_parts =
+      sort_and_fold_parts(cell_structure, local_cells);
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED: {
@@ -375,13 +393,24 @@ void cells_resort_particles(int global_flag) {
     break;
   }
 
-  assert(0 == displaced_parts.n);
-
 #ifdef ADDITIONAL_CHECKS
   /* at the end of the day, everything should be consistent again */
+  /* These have to be run before we put the particles that we already
+   * know are displaced back, otherwise they will trigger different errors.*/
   check_particle_consistency();
   check_particle_sorting();
 #endif
+
+  if (0 != displaced_parts.n) {
+    for (int i = 0; i < displaced_parts.n; i++) {
+      auto &part = displaced_parts.part[i];
+      runtimeErrorMsg() << "Particle " << part.identity()
+                        << " moved more than"
+                           " one local box length in one timestep.";
+      resort_particles = Cells::RESORT_GLOBAL;
+      append_indexed_particle(local_cells.cell[0], std::move(part));
+    }
+  }
 
   ghost_communicator(&cell_structure.ghost_cells_comm);
   ghost_communicator(&cell_structure.exchange_ghosts_comm);

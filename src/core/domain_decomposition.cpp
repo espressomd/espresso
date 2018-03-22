@@ -846,19 +846,19 @@ void move_if_local(ParticleList &src, ParticleList &rest) {
   for (int i = 0; i < src.n; i++) {
     auto &part = src.part[i];
 
+    assert(local_particles[src.part[i].p.identity] == nullptr);
+
     auto target_cell = dd_save_position_to_cell(part.r.p);
 
     if (target_cell) {
-      move_indexed_particle(target_cell, &src, i);
+      append_indexed_particle(target_cell, std::move(src.part[i]));
     } else {
-      move_unindexed_particle(&rest, &src, i);
-    }
 
-    if (i < src.n)
-      i--;
+      append_unindexed_particle(&rest, std::move(src.part[i]));
+    }
   }
 
-  assert(src.n == 0);
+  realloc_particlelist(&src, src.n = 0);
 }
 
 void move_left_or_right(ParticleList &src, ParticleList &left,
@@ -866,18 +866,18 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
   for (int i = 0; i < src.n; i++) {
     auto &part = src.part[i];
 
+    assert(local_particles[src.part[i].p.identity] == nullptr);
+
     if (get_mi_coord(part.r.p[dir], my_left[dir], dir) < 0.0) {
       if (PERIODIC(dir) || (boundary[2 * dir] == 0)) {
-        CELL_TRACE(fprintf(stderr, "%d: dd_ex_and_sort_p: send part left %d\n",
-                           this_node, part.p.identity));
+
         move_unindexed_particle(&left, &src, i);
         if (i < src.n)
           i--;
       }
     } else if (get_mi_coord(part.r.p[dir], my_right[dir], dir) >= 0.0) {
       if (PERIODIC(dir) || (boundary[2 * dir + 1] == 0)) {
-        CELL_TRACE(fprintf(stderr, "%d: dd_ex_and_sort_p: send part right %d\n",
-                           this_node, part.p.identity));
+
         move_unindexed_particle(&right, &src, i);
         if (i < src.n)
           i--;
@@ -898,12 +898,14 @@ void exchange_neighbors(ParticleList *pl) {
       move_left_or_right(*pl, send_buf, send_buf, dir);
 
       if (node_pos[dir] % 2 == 0) {
-        send_particles(&send_buf, node_neighbors[2 * dir]);
+        comm_cart.send(node_neighbors[2 * dir], 0xaa, send_buf);
         comm_cart.recv(node_neighbors[2 * dir], 0xaa, recv_buf);
       } else {
         comm_cart.recv(node_neighbors[2 * dir], 0xaa, recv_buf);
-        send_particles(&send_buf, node_neighbors[2 * dir]);
+        comm_cart.send(node_neighbors[2 * dir], 0xaa, send_buf);
       }
+
+      realloc_particlelist(&send_buf, 0);
 
       move_if_local(recv_buf, *pl);
     } else {
@@ -912,16 +914,19 @@ void exchange_neighbors(ParticleList *pl) {
       move_left_or_right(*pl, send_buf_l, send_buf_r, dir);
 
       if (node_pos[dir] % 2 == 0) {
-        send_particles(&send_buf_l, node_neighbors[2 * dir]);
+        comm_cart.send(node_neighbors[2 * dir], 0xaa, send_buf_l);
         comm_cart.recv(node_neighbors[2 * dir + 1], 0xaa, recv_buf_r);
-        send_particles(&send_buf_r, node_neighbors[2 * dir + 1]);
+        comm_cart.send(node_neighbors[2 * dir + 1], 0xaa, send_buf_r);
         comm_cart.recv(node_neighbors[2 * dir], 0xaa, recv_buf_l);
       } else {
         comm_cart.recv(node_neighbors[2 * dir + 1], 0xaa, recv_buf_r);
-        send_particles(&send_buf_l, node_neighbors[2 * dir]);
+        comm_cart.send(node_neighbors[2 * dir], 0xaa, send_buf_l);
         comm_cart.recv(node_neighbors[2 * dir], 0xaa, recv_buf_l);
-        send_particles(&send_buf_r, node_neighbors[2 * dir + 1]);
+        comm_cart.send(node_neighbors[2 * dir + 1], 0xaa, send_buf_r);
       }
+
+      realloc_particlelist(&send_buf_l, 0);
+      realloc_particlelist(&send_buf_r, 0);
 
       move_if_local(recv_buf_l, *pl);
       move_if_local(recv_buf_r, *pl);
@@ -937,8 +942,8 @@ void dd_exchange_and_sort_particles(int global, ParticleList *pl) {
     while (rounds_left--) {
       exchange_neighbors(pl);
 
-      auto left_over = boost::mpi::all_reduce(comm_cart, pl->n,
-                                              std::plus<int>());
+      auto left_over =
+          boost::mpi::all_reduce(comm_cart, pl->n, std::plus<int>());
 
       if (left_over == 0) {
         break;

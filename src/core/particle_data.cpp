@@ -180,7 +180,7 @@ int get_particle_node(int id) {
 
   // Check if particle has a node, if not, we assume it does not exist.
   if (needle == particle_node.end()) {
-    throw std::runtime_error("Particle node not found!");
+    throw std::runtime_error("Particle node for id " + std::to_string(id) + " not found!");
   } else {
     return needle->second;
   }
@@ -266,6 +266,8 @@ Particle *append_indexed_particle(ParticleList *l, Particle &&part) {
   auto const re = realloc_particlelist(l, ++l->n);
   auto p = new (&(l->part[l->n - 1])) Particle(std::move(part));
 
+  assert(p->p.identity <= max_seen_particle);
+
   if (re)
     update_local_particles(l);
   else
@@ -296,6 +298,9 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   Particle *end = &sl->part[sl->n - 1];
 
   new (dst) Particle(std::move(*src));
+
+  assert(dst->p.identity <= max_seen_particle);
+
   if (re) {
     update_local_particles(dl);
   } else {
@@ -304,6 +309,7 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   if (src != end) {
     new (src) Particle(std::move(*end));
   }
+
   if (realloc_particlelist(sl, --sl->n)) {
     update_local_particles(sl);
   } else if (src != end) {
