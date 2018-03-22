@@ -330,6 +330,13 @@ scheme, but instead are propagated using a simple Euler algorithm with
 the local fluid velocity (if the ``IMMERSED_BOUNDARY`` feature is turned
 on).
 
+The immersed boundary method consists of two components, which can be used independently:
+
+  * :ref:`Inertialess Lattice-Boltzmann tracers` implemented as virtual sites
+
+  * Interactions providing the elastic forces for the particles forming the surface. These are described below.
+
+
 To compute the elastic forces, three new bonded interactions are defined ibm\_triel, ibm\_tribend and ibm\_volCons. 
 
 ibm_triel is used to compute elastic shear forces. To setup an interaction, use:
@@ -357,10 +364,18 @@ ibm_volCons is a volume-conservation force. Without this correction, the volume 
     volCons = IBM_VolCons(softID=1, kappaV=kV)
 
 where `softID` identifies the soft particle and `kv` is a volumetric spring constant.
-When adding the interaction to a particle, an arbitrary bond partner must be specified, which is ignored, since ESPResSo does not allow bonds without a partner.
+Note that the `IBM_VolCons` `bond` does not need a bond partner. It is added to a particle as follows::
+
+    s.part[0].add_bond((Volcons,))
+
+The comma is needed to force Python to create a tuple containing a single item.
+
 
 For a more detailed description, see e.g. Guckenberger and Gekle, J. Phys. Cond. Mat. (2017) or contact us.
 This feature probably does not work with advanced LB features such electro kinetics or Shan-Chen.
+
+A sample script is provided in the `samples/immersed_boundary` directory of the source distribution.
+
 
 
 
