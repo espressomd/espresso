@@ -146,6 +146,7 @@ inline double CalcCot(double cosTheta)
 
 /// \brief Calculates the gradient of the cotangens of the angle between xi-xm and xj-xm with respect to the node with ID \p derivativeNodeID.
 
+inline
 void CalcCotDerivativeGompperAnalyt(Vector3D &cosThetaDeriv, const Particle *const xi, const Particle *const xj, const Particle *const xm, const int derivativeNodeID)
 {
   // Goal: Calculate the gradient with respect to the node with ID "derivativeNodeID" of the cotangens of the angle between xi-xj and xi-xm.
