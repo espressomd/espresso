@@ -417,7 +417,7 @@ inline void friction_thermo_langevin_rotation(Particle *p) {
         langevin_pref2_temp[j] * Thermostat::noise();
 #else
     p->f.torque[j] = -langevin_pref1_temp * p->m.omega[j] +
-                     switch_rotate * langevin_pref2_temp * Thermostat::noise();
+                     langevin_pref2_temp * Thermostat::noise();
 #endif
   }
 
