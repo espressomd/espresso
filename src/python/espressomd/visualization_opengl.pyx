@@ -1591,9 +1591,17 @@ def draw_box(p0, s, color, width):
     glVertex3f(0.0, s[1], 0.0)
     glVertex3f(0.0, s[1], s[2])
     glEnd()
-    # glutWireCube(size)
+
     glPopMatrix()
 
+
+def draw_sphere(pos, radius, color, material, quality):
+    glPushMatrix()
+    glTranslatef(pos[0], pos[1], pos[2])
+    set_solid_material(color[0], color[1], color[2], color[
+                      3], material[0], material[1], material[2], material[3])
+    glutSolidSphere(radius, quality, quality)
+    glPopMatrix()
 
 def draw_plane(edges, color, material):
 
@@ -1690,6 +1698,46 @@ def draw_ellipsoid(pos, semiaxis_a, semiaxis_b, semiaxis_c, color, material, qua
     glPopMatrix()
 
 
+def draw_simple_pore(center, axis, length, radius, smoothing_radius, max_box_l, color, material, quality):
+    set_solid_material(color[0], color[1], color[2], color[3],
+                       material[0], material[1], material[2])
+    glPushMatrix()
+    quadric = gluNewQuadric()
+
+    # basic position and orientation
+    glTranslate(center[0], center[1], center[2])
+    ax, rx, ry = rotation_helper(axis)
+    glRotatef(ax, rx, ry, 0.0)
+    # cylinder
+    glTranslate(0, 0, -0.5 * length + smoothing_radius)
+    gluCylinder(quadric, radius, radius, length - 2 *
+                smoothing_radius, quality, quality)
+    # torus segment
+    clip_plane = GL_CLIP_PLANE0 + 6
+    glEnable(clip_plane)
+    glClipPlane(clip_plane, (0, 0, -1, 0))
+    glutSolidTorus(smoothing_radius, (radius +
+                                      smoothing_radius), quality, quality)
+    glDisable(clip_plane)
+    # wall
+    glTranslate(0, 0, -smoothing_radius)
+    gluPartialDisk(quadric, radius + smoothing_radius,
+                   2.0 * max_box_l, quality, 1, 0, 360)
+    # torus segment
+    glTranslate(0, 0, length - smoothing_radius)
+    glEnable(clip_plane)
+    glClipPlane(clip_plane, (0, 0, 1, 0))
+    glutSolidTorus(smoothing_radius, (radius +
+                                      smoothing_radius), quality, quality)
+    glDisable(clip_plane)
+    # wall
+    glTranslate(0, 0, smoothing_radius)
+    gluPartialDisk(quadric, radius + smoothing_radius,
+                   2.0 * max_box_l, quality, 1, 0, 360)
+
+    glPopMatrix()
+
+
 def draw_sphero_cylinder(posA, posB, radius, color, material, quality):
     set_solid_material(color[0], color[1], color[
         2], color[3], material[0], material[1], material[2], material[3])
@@ -1715,7 +1763,7 @@ def draw_sphero_cylinder(posA, posB, radius, color, material, quality):
     glRotatef(ax, rx, ry, 0.0)
 
     # First hemispherical cap
-    clip_plane = GL_CLIP_PLANE0+6
+    clip_plane = GL_CLIP_PLANE0 + 6
     glEnable(clip_plane)
     glClipPlane(clip_plane, (0, 0, -1, 0))
     gluSphere(quadric, radius, quality, quality)
@@ -2141,7 +2189,7 @@ class Quaternion:
     def mult_q(self, q):
         w = - (self[3] * q[3]) - (self[0] * q[0]) - \
             (self[1] * q[1]) - (self[2] * q[2])
-        x = (self[0] * q[3]) + (self[3] * q[0]) + \
+        x =   (self[0] * q[3]) + (self[3] * q[0]) + \
             (self[1] * q[2]) - (self[2] * q[1])
         y = (self[1] * q[3]) + (self[3] * q[1]) + (
             self[2] * q[0]) - (self[0] * q[2])
