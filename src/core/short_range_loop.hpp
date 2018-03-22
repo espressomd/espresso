@@ -90,31 +90,17 @@ void decide_distance(CellIterator first, CellIterator last,
 template <typename ParticleKernel, typename PairKernel>
 void short_range_loop(ParticleKernel &&particle_kernel,
                       PairKernel &&pair_kernel) {
-  using Utils::make_batch;
 
   auto first = boost::make_indirect_iterator(local_cells.begin());
   auto last = boost::make_indirect_iterator(local_cells.end());
 
-  /* In this case we reset l.p_old on the particles */
-  if (rebuild_verletlist) {
-    detail::decide_distance(
-        first, last,
-        /* Create a new functor that first runs the position
-           copy and then the actual kernel. */
-        make_batch(
-            [](Particle &p) { memcpy(p.l.p_old, p.r.p, 3 * sizeof(double)); },
-            std::forward<ParticleKernel>(particle_kernel)),
-        std::forward<PairKernel>(pair_kernel),
-        VerletCriterion{skin, max_cut, coulomb_cutoff, dipolar_cutoff,collision_detection_cutoff()});
-
-    /* Now everything is up-to-date */
-    rebuild_verletlist = 0;
-  } else {
     detail::decide_distance(
         first, last, std::forward<ParticleKernel>(particle_kernel),
         std::forward<PairKernel>(pair_kernel),
-        VerletCriterion{skin, max_cut, coulomb_cutoff, dipolar_cutoff});
-  }
+        VerletCriterion{skin, max_cut, coulomb_cutoff, dipolar_cutoff,
+	collision_detection_cutoff()});
+
+    rebuild_verletlist = 0;
 }
 
 #endif
