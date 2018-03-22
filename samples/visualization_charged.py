@@ -15,7 +15,7 @@ system.time_step = time_step_fs * 1.0e-2
 system.cell_system.skin = 1.2
 
 # TEMPERATURE
-SI_temperature = 300.0
+SI_temperature = 400.0
 kb_kjmol = 0.0083145
 temperature = SI_temperature * kb_kjmol
 
@@ -97,6 +97,6 @@ print("Tune p3m")
 p3m = electrostatics.P3M(prefactor=coulomb_prefactor, accuracy=1e-1)
 system.actors.add(p3m)
 
-system.thermostat.set_langevin(kT=temperature, gamma=5.0)
+system.thermostat.set_langevin(kT=temperature, gamma=2.0)
 
 visualizer.run(1)

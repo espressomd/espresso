@@ -1363,6 +1363,8 @@ class openGLLive(object):
         self.box_eqn.append(
             (self.box_n[5][0], self.box_n[5][1], self.box_n[5][2], self.system.box_l[2] * 1.001))
 
+        self.camera.center = np.array(self.system.box_l) * 0.5
+
     # DEFAULT CONTROLS
     def _init_controls(self):
 

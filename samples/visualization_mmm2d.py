@@ -20,7 +20,7 @@ system.cell_system.set_layered(n_layers=5,use_verlet_lists = False)
 system.periodicity = [1, 1, 0]
 
 qion = 1
-for i in range(200):
+for i in range(300):
     rpos = numpy.random.random(3) * box_l
     system.part.add(pos=rpos, type = 0, q = qion)
     qion *= -1
