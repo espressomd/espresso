@@ -34,13 +34,14 @@
 #include "config.hpp" 
 #include "utils.hpp"
 #include "lb.hpp"
+#include "interaction_data.hpp"
+#include "global.hpp"
 
 #ifdef LB
 
 #include "communication.hpp"
 #include "grid.hpp"
 #include "halo.hpp"
-#include "interaction_data.hpp"
 #include "lb-d3q19.hpp"
 #include "lbboundaries.hpp"
 #include "lb.hpp"
@@ -50,7 +51,6 @@
 #include "global.hpp"
 #include "cells.hpp"
 #include "global.hpp"
-#include "interaction_data.hpp" 
 
 #include <cassert>
 #include <cstdio>
