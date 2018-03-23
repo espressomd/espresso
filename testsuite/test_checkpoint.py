@@ -25,8 +25,8 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(time_step, 0.01)
 
     def test_part(self):
-        np.testing.assert_array_equal(system.part[0].pos, np.array([1.0, 1.0, 1.0]))
-        np.testing.assert_array_equal(system.part[1].pos, np.array([1.0, 1.0, 2.0]))
+        np.testing.assert_array_equal(np.copy(system.part[0].pos), np.array([1.0, 1.0, 1.0]))
+        np.testing.assert_array_equal(np.copy(system.part[1].pos), np.array([1.0, 1.0, 2.0]))
 
     @ut.skipIf(not espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']),
                "Cannot test for virtual site checkpointing because feature not compiled in.")
