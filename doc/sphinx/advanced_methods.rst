@@ -422,7 +422,7 @@ Object-in-fluid
 
 
 Configuring 
-------------
+~~~~~~~~~~~
 
 | To enable various features of |es|, one has to modify myconfig.hpp file by
   uncommenting the desired features. This file should be placed into the
@@ -450,7 +450,7 @@ command::
 in the simulation script.
 
 Triangulations of elastic objects
----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 | To create an elastic object, we need a triangulation of the surface of
   this object. Sample triangulations are provided at
@@ -476,7 +476,7 @@ Triangulations of elastic objects
   node in the second line, has ID 1, etc.
 
 Description of sample script
------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The script described in this section is available at
 http://cell-in-fluid.kst.fri.uniza.sk/en/content/oif-espresso. 
@@ -506,7 +506,7 @@ identical.
 
 
 Specification of immersed objects
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ::
 
     cell_type = OifCellType(nodesfile=“input/rbc374nodes.dat”,
@@ -557,7 +557,7 @@ center in the simulation box.
 
 
 Specification of fluid and movement
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ::
 
     lbf = espressomd.lb.LBFluid(agrid = 1, dens = 1.0, visc = 1.5, 
@@ -587,7 +587,7 @@ transfers specified momentum onto the fluid.
 
 
 Specification of boundaries
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 | To set up the geometry of the channels, we mostly use rhomboids and
   cylinders, but there are also other boundary types available in |es|. 
@@ -645,7 +645,7 @@ visualisation:
 
 
 Specification of interactions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Since we have two cells, we can also set up the cell-cell interactions
 so that they *know* about each other:
@@ -678,7 +678,7 @@ offset, which will always be zero for our purposes.
 
 
 System integration
-~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 And finally, the heart of this script is the integration loop at the
 end:
@@ -719,7 +719,7 @@ should get a message about it.
   
 
 Running the simulation
-~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Make sure that the files *oif\_classes.py, oif\_utils.py* are located in
 the same directory as your simulation script. The script can then be run
@@ -737,7 +737,7 @@ terminal about the creation of cell type, cell and the integration
 steps.
 
 Writing out data
-~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In the script, we have used the commands such as
 
@@ -754,7 +754,7 @@ or data files for further processing and analysis.
 
 
 Visualization in ParaView
--------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 | For visualization we suggest the free software ParaView. All .vtk
   files (boundaries, fluid, objects at all time steps) can be loaded at
@@ -779,7 +779,7 @@ Visualization in ParaView
   would cause “particle out of range” error and crash the simulation.
 
 File format
-~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Paraview (download at http://www.paraview.org) accepts .vtk files. For
 our cells we use the following format:
@@ -815,7 +815,7 @@ our cells we use the following format:
 
 
 Color coding of scalar data by surface points
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 It is possible to save (and visualize) data corresponding to individual
 surface points. These data can be scalar or vector values associated
@@ -849,7 +849,7 @@ following lines:
    
    
 Color coding of scalar data by triangles
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 It is also possible to save (and visualize) data corresponding to
 individual triangles
@@ -891,7 +891,7 @@ triangles is given instead of number of mesh points.
 
 
 Multiple scalar data in one .vtk file
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If one wants to switch between several types of scalar values
 corresponding to mesh nodes, these are specifies consecutively in the
@@ -917,7 +917,7 @@ following example) appear in a drop-down menu in ParaView.
 
 
 Vector data for objects .vtk file
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 | If we want to observe some vector data (e.g. outward normal,
   fig. [fig:vectordata]) at points of the saved objects, we can use the
@@ -943,7 +943,7 @@ Vector data for objects .vtk file
 
 
 Automatic loading
-~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 | Sometimes it is frustrating to reload data in ParaView: manually open
   all the files, click all the properties etc. This however, can be done
@@ -965,7 +965,7 @@ Automatic loading
 
 
 Available Object-in-fluid (OIF) classes
----------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 | Here we describe the currently available OIF classes and commands.
   Note that there are more still being added. We would be pleased to
@@ -975,7 +975,7 @@ Available Object-in-fluid (OIF) classes
 | The keywords do not have to be in a specific order.
 
 class OifCellType
-~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^
 
 For those familiar with earlier version of object-in-fluid framework,
 this class corresponds to the oif_emplate in tcl. It contains a “recipe”
@@ -1086,7 +1086,7 @@ bonds are created here.
 
 
 class OifCell
-~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^
 ::
 
     OifCell.set_origin([x,y,z])
@@ -1264,7 +1264,7 @@ class OifCell
 
 
 Short utility procedures
-~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 | ``get_n_triangle``\ (:math:`\mathbf{a,b,c}`) - returns the normal **n**
   to the triangle given by points (**a, b, c**).
@@ -1338,7 +1338,7 @@ Short utility procedures
 
 
 Description of helper classes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Awareness of these classes is not necessary for a user of OIF module,
 but is essential for developers who wish to modify it because it shows

@@ -358,6 +358,9 @@ both constants are non-zero.
 
 |image2|
 
+.. |image2| image:: figures/stretching.png
+
+
 Bending
 ^^^^^^^
 
@@ -381,6 +384,9 @@ This procedure is done twice, for :math:`i=1` and for
 :math:`i=2`.
 
 |image3|
+
+.. |image3| image:: figures/bending.png
+
 
 Local area conservation
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -431,6 +437,7 @@ larger than :math:`\pi`, then the inner angle is concave.
 
 |image4|
 
+.. |image4| image:: figures/arealocal.png
 
 OIF global forces
 ~~~~~~~~~~~~~~~~~
