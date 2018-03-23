@@ -9,6 +9,34 @@ from espressomd.visualization_opengl import *
 
 # Minimal interactive OpenGL visualization for ESPResSo
 
+print("Press u/j to change temperature")
+
+box_l = 10.0
+system = espressomd.System(box_l=[box_l] * 3)
+visualizer = openGLLive(system, drag_enabled=True, drag_force=100)
+
+system.time_step = 0.00001
+system.cell_system.skin = 3.0
+
+N = 50
+for i in range(N):
+    system.part.add(pos=[0, 0, 0])
+
+system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+
+# Callback for particle positions/velocities
+
+
+def spin():
+    system.part[:].pos = [[box_l * 0.5, box_l *
+                           (i + 1) / (N + 2), box_l * 0.5] for i in range(N)]
+    system.part[:].v = [
+        [np.sin(10.0 * i / N) * 20, 0, np.cos(10.0 * i / N) * 20] for i in range(N)]
+
+
+# Register timed callback
+visualizer.register_callback(spin, interval=5000)
+
 # Callbacks to control temperature
 temperature = 1.0
 
@@ -33,58 +61,14 @@ def decreaseTemp():
         print("T = 0")
 
 
-box_l = 10
-system = espressomd.System(box_l=[box_l]*3)
-system.set_random_state_PRNG()
-#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-np.random.seed(seed=system.seed)
-
-system.time_step = 0.00001
-system.cell_system.skin = 0.4
-
-for i in range(10):
-    rpos = np.random.random(3) * box_l
-    system.part.add(id=i, pos=rpos)
-
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
-
-visualizer = openGLLive(system, drag_enabled = True)
-
-for key, value in visualizer.specs.items():
-    print(str(key) + ":" + (30 - len(key)) * " " + str(value))
-
-# Register buttons
+# Register button callbacks
 visualizer.keyboardManager.register_button(
     KeyboardButtonEvent('u', KeyboardFireEvent.Hold, increaseTemp))
 visualizer.keyboardManager.register_button(
     KeyboardButtonEvent('j', KeyboardFireEvent.Hold, decreaseTemp))
 
+# Set initial position
+spin()
 
-# Register additional callback to run in main thread
-def muu():
-    print("muu")
-
-
-def foo():
-    print("foo")
-
-
-visualizer.register_callback(foo, interval=500)
-visualizer.register_callback(muu)
-
-
-def main():
-
-    while True:
-        system.integrator.run(1)
-        # Update particle information safely here
-        visualizer.update()
-
-
-# Start simulation in seperate thread
-t = Thread(target=main)
-t.daemon = True
-t.start()
-
-# Start blocking visualizer
-visualizer.start()
+# Start the visualizer and run the integration thread
+visualizer.run(1)
