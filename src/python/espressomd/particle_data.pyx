@@ -1766,7 +1766,7 @@ cdef class ParticleList(object):
         """
 
         pickle_attr = copy(particle_attributes)
-        for i in ["director", "dip", "id"]:
+        for i in ["director", "dip", "id", "image_box", "node"]:
             if i in pickle_attr:
                 pickle_attr.remove(i)
         IF MASS == 0:

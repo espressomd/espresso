@@ -65,7 +65,7 @@ IF LEES_EDWARDS == 1:
     setable_properties.append("lees_edwards_offset")
 
 if VIRTUAL_SITES:
-    setable_properties.append("virtual_sites")
+    setable_properties.append("_active_virtual_sites_handle")
 
 cdef bool _system_created = False
 
