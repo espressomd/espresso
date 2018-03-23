@@ -31,10 +31,10 @@
 #include "initialize.hpp"
 #include "interaction_data.hpp"
 #include "layered.hpp"
-#include "lb.hpp"
 #include "lees_edwards.hpp"
 #include "npt.hpp"
 #include "rattle.hpp"
+#include "thermalized_bond.hpp"
 #include "tuning.hpp"
 #include "utils/mpi/all_compare.hpp"
 #include "object-in-fluid/oif_global_forces.hpp" 
@@ -205,9 +205,6 @@ const std::unordered_map<int, Datafield> fields{
      {FIELD_GHMC_SCALE,
       {&ghmc_tscale, Datafield::Type::INT, 1, "ghmc_tscale",
        6}}, /* 48 from ghmc.cpp */
-     {FIELD_LB_COMPONENTS,
-      {&lb_components, Datafield::Type::INT, 1, "lb_components",
-       2}}, /* 49 from ghmc.cpp */
      {FIELD_WARNINGS,
       {&warnings, Datafield::Type::INT, 1, "warnings",
        1}}, /* 50 from global.cpp */
@@ -233,9 +230,11 @@ const std::unordered_map<int, Datafield> fields{
      {FIELD_MAX_OIF_OBJECTS,
        {&max_oif_objects, Datafield::Type::INT, 1, "max_oif_objects"}},
 #endif
-    {FIELD_FORCE_CAP,
-      {&force_cap, Datafield::Type::DOUBLE, 1, "force_cap", 1}}}
-      };
+     {FIELD_THERMALIZEDBONDS,
+      {&n_thermalized_bonds, Datafield::Type::INT, 1, "n_thermalized_bonds",
+       5}}, /* 56 from thermalized_bond.cpp */
+     {FIELD_FORCE_CAP,
+      {&force_cap, Datafield::Type::DOUBLE, 1, "force_cap", 1}}}};
 
 std::size_t hash_value(Datafield const &field) {
   using boost::hash_range;

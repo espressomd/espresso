@@ -2,6 +2,7 @@
 #define CORE_UTILS_SERIALIZATION_LIST_HPP
 
 #include <boost/serialization/split_free.hpp>
+#include <boost/serialization/array.hpp> 
 
 #include "core/utils/List.hpp"
 

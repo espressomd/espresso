@@ -25,15 +25,16 @@
 
 from __future__ import print_function
 
-from espressomd import assert_features, System
-from espressomd.observables import ParticlePositions, ParticleBodyAngularMomentum
-from espressomd.correlators import Correlator
-from espressomd.reaction import Reaction
-
 import numpy as np
 import os
 import sys
 import time
+
+from espressomd import assert_features
+from espressomd.observables import ParticlePositions, ParticleBodyAngularMomentum
+from espressomd.correlators import Correlator
+from espressomd.reaction import Reaction
+
 
 assert_features(["ROTATION",
                  "ROTATIONAL_INERTIA",
@@ -94,8 +95,7 @@ prod_length = 100
 
 dt = 0.01
 
-system = System()
-system.box_l = [box_l, box_l, box_l]
+system = espressomd.System(box_l=[box_l, box_l, box_l])
 system.cell_system.skin = 0.1
 system.time_step = dt
 system.min_global_cut = 1.1*radius

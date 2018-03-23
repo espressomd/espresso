@@ -20,12 +20,12 @@
 #include "config.hpp"
 #include "debug.hpp"
 
-#include "cuda_utils.hpp"
-#include "cuda_interface.hpp"
-#include "random.hpp"
-#include "interaction_data.hpp"
 #include "cuda_init.hpp"
+#include "cuda_interface.hpp"
+#include "cuda_utils.hpp"
 #include "errorhandling.hpp"
+#include "interaction_data.hpp"
+#include "random.hpp"
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
@@ -347,25 +347,23 @@ void gpu_change_number_of_part_to_comm() {
 void gpu_init_particle_comm() {
   if (this_node == 0 && global_part_vars_host.communication_enabled == 0) {
     if (cuda_get_n_gpus() == -1) {
-      fprintf(stderr,
-              "Unable to initialize CUDA as no sufficient GPU is available.\n");
+      runtimeErrorMsg()
+          << "Unable to initialize CUDA as no sufficient GPU is available.";
       errexit();
     }
     if (cuda_get_n_gpus() > 1) {
-      fprintf(stderr, "More than one GPU detected, please note Espresso uses "
-                      "device 0 by default regardless of usage or "
-                      "capability\n");
-      fprintf(stderr, "Note that the GPU to be used can be modified using cuda "
-                      "setdevice <int>\n");
+      runtimeWarningMsg() << "More than one GPU detected, please note ESPResSo "
+                             "uses device 0 by default regardless of usage or "
+                             "capability. The GPU to be used can be modified "
+                             "by setting System.cuda_init_handle.device.";
       if (cuda_check_gpu(0) != ES_OK) {
-        fprintf(stderr, "WARNING!  CUDA device 0 is not capable of running "
-                        "Espresso but is used by default.  Espresso has "
-                        "detected a CUDA capable card but it is not the one "
-                        "used by Espresso by default\n");
-        fprintf(stderr, "Please set the GPU to use with the cuda setdevice "
-                        "<int> command.\n");
-        fprintf(stderr,
-                "A list of available GPUs can be accessed using cuda list.\n");
+        runtimeWarningMsg()
+            << "CUDA device 0 is not capable of running ESPResSo but is used "
+               "by default. Espresso has detected a CUDA capable card but it "
+               "is not the one used by ESPResSo by default. Please set the "
+               "GPU to use by setting System.cuda_init_handle.device. A list "
+               "of avalable GPUs is available through "
+               "System.cuda_init_handle.device_list.";
       }
     }
   }

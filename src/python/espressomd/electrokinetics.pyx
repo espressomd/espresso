@@ -8,6 +8,11 @@ from espressomd.utils import is_valid_type
 
 IF ELECTROKINETICS:
     cdef class Electrokinetics(HydrodynamicInteraction):
+        """
+        Creates the electrokinetic method using the GPU unit.
+        
+        """
+
         species_list = []
 
         def __getitem__(self, key):
@@ -19,6 +24,11 @@ IF ELECTROKINETICS:
 
 
         def validate_params(self):
+            """
+            Checks if the parameters for "stencil" and "fluid_coupling" are valid.
+            
+            """
+
             default_params = self.default_params()
 
             if not (self._params["stencil"] in ["linkcentered", "nonlinear", "nodecentered"]):
@@ -29,12 +39,27 @@ IF ELECTROKINETICS:
 
 
         def valid_keys(self):
+            """
+            Returns the valid options used for the electrokinetic method.
+            
+            """
+
             return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "prefactor", "stencil", "advection", "fluid_coupling"
 
         def required_keys(self):
+            """
+            Returns the nessesary options to initialize the electokinetic method.
+            
+            """
+
             return ["agrid", "lb_density", "viscosity", "friction", "T", "prefactor"]
 
         def default_params(self):
+            """
+            Returns the default paramters.
+            
+            """
+
             return {"agrid": -1,
                     "lb_density": -1,
                     "viscosity": -1,
@@ -103,6 +128,21 @@ IF ELECTROKINETICS:
 
 
         def set_density(self, species=None, density=None, node=None):
+            """
+            Sets the density of a species at a speciffic node.
+            If no node is given the density will be set global for the species.
+            
+            Parameters
+            ----------
+            species : :obj:`integer`
+                      species for which the density will apply.
+            density : :obj:`float`
+                      The value to which the density will be set to.
+            node : numpy-array of type :obj:`integer` of length (3)
+                   If set the density will be only applied on this specific node.
+                   
+            """
+
             if species == None or density == None:
                 raise ValueError("species and density has to be set.")
             if not is_valid_type(species, int):
@@ -124,6 +164,23 @@ IF ELECTROKINETICS:
 
 
         def neutralize_system(self, species):
+            """
+            Sets the global density of a species to a specific value 
+            for which the whole system will have no net charge.
+            
+            Parameters
+            ----------
+            species : :obj:`integer`
+                      The species which will be changed to neutralize the system.
+            
+            note : The previous density of the species will be ignored and 
+                   it will be homogenious distributed over the whole system
+                   The species must be charged to begin with.
+                   If the neutralization would lead to a negative species density
+                   an exeption will be raised.
+                   
+            """
+
             err = ek_neutralize_system(species.id)
 
             if err == 1:
@@ -139,6 +196,12 @@ IF ELECTROKINETICS:
 
 
         def ek_init(self):
+            """
+            Initializes the electrikinetic system.
+            This automatically initializes the lattice Boltzman method on the GPU.
+            
+            """
+
             err = ek_init()
             if err == 2:
                 raise Exception('EK init failed', 'agrid incompatible with box size')
@@ -147,28 +210,105 @@ IF ELECTROKINETICS:
 
 
         def add_species(self, species):
+            """
+            Initializes a new species for the electrokinetic method.
+
+            Parameters
+            ----------
+            species : :obj:`integer`
+                      Species to be initialized.
+
+            """
+
             self.species_list.append(species)
 
         def get_params(self):
+            """
+            Prints out the parameters of the electrokinetic system.
+            
+            """
+
             self._params.update(self._get_params_from_es_core())
             return self._params
 
         def print_vtk_boundary(self, path):
+            """
+            Writes the boundary information into a vtk-file.
+            
+            Parameters
+            ----------
+            path : :obj:`string`
+                   The path and vtk-file name the boundary is written to.
+                   
+            """
+
             lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
 
         def print_vtk_velocity(self, path):
+            """
+            Writes the lattice Boltzmann velocity information into a vtk-file.
+            
+            Parameters
+            ----------
+            path : :obj:`string`
+                   The path and vtk-file name the velocity is written to.
+                   
+            """
+
             ek_lb_print_vtk_velocity(utils.to_char_pointer(path))
 
         def print_vtk_density(self, path):
+            """
+            Writes the LB density information into a vtk-file.
+            
+            Parameters
+            ----------
+            path : :obj:`string`
+                   The path and vtk-file name the LB density is written to.
+                   
+            """
+
             ek_lb_print_vtk_density(utils.to_char_pointer(path))
 
         def print_vtk_potential(self, path):
+            """
+            Writes the electrostatic potential into a vtk-file.
+            
+            Parameters
+            ----------
+            path : :obj:`string`
+                   The path and vtk-file name the electrostatic potential is written to.
+                   
+            """
+
             ek_print_vtk_potential(utils.to_char_pointer(path))
 
         def print_vtk_lbforce(self, path):
+            """
+            Writes the LB force information into a vtk-file.
+            
+            Parameters
+            ----------
+            path : :obj:`string`
+                   The path and vtk-file name the LB force is written to.
+                   
+            """
+
             ek_print_vtk_lbforce(utils.to_char_pointer(path))
 
         def print_vtk_particle_potential(self, path):
+            """
+            Writes the electrostatic particle potential into a vtk-file.
+            
+            Parameters
+            ----------
+            path : :obj:`string`
+                   The path and vtk-file name the electrostatic potential is written to.
+            
+            note : This only works if 'EK_ELECTROSTATIC_COUPLING' is active.
+            
+            """
+
             IF EK_ELECTROSTATIC_COUPLING:
                 ek_print_vtk_particle_potential(utils.to_char_pointer(path))
             ELSE:
@@ -224,7 +364,11 @@ IF ELECTROKINETICS:
                 raise Exception("Not implemented.")
 
     class Species(object):
-        """Creates a species object that is passed to the ek instance"""
+        """
+        Creates a species object that is passed to the ek instance.
+        
+        """
+
         py_number_of_species = 0
         id = -1
         _params = {}
@@ -256,12 +400,27 @@ IF ELECTROKINETICS:
                     raise KeyError("%s is not a vaild key" % k)
 
         def valid_keys(self):
+            """
+            Returns the valid keys for the species.
+            
+            """
+
             return "density", "D", "valency", "ext_force"
 
         def required_keys(self):
+            """
+            Returns the required keys for the species.
+            
+            """
+
             return ["density", "D", "valency"]
 
         def default_params(self):
+            """
+            Returns the default parameters for the species.
+            
+            """
+
             return {"ext_force": [0, 0, 0]}
 
         def _get_params_from_es_core(self):
@@ -282,13 +441,38 @@ IF ELECTROKINETICS:
             self._set_params_in_es_core()
 
         def get_params(self):
+            """
+            Returns the parameters of the species.
+            
+            """
+
             self._params.update(self._get_params_from_es_core())
             return self._params
 
         def print_vtk_density(self, path):
+            """
+            Writes the species density into a vtk-file.
+            
+            Parameters
+            ----------
+            path : :obj:`string`
+                   The path and vtk-file name the species density is written to.
+                   
+            """
+
             ek_print_vtk_density(self.id, utils.to_char_pointer(path))
 
         def print_vtk_flux(self, path):
+            """
+            Writes the species flux into a vtk-file.
+            
+            Parameters
+            ----------
+            path : :obj:`string`
+                   The path and vtk-file name the species flux is written to.
+                   
+            """
+
             ek_print_vtk_flux(self.id, utils.to_char_pointer(path))
 
 

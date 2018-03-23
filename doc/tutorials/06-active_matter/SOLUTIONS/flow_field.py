@@ -25,11 +25,12 @@
 
 from __future__ import print_function
 
-from espressomd import assert_features, lb, System
-
 import numpy as np
 import os
 import sys
+
+from espressomd import assert_features, lb
+
 
 assert_features(["ENGINE","LB_GPU","MASS","ROTATION","ROTATIONAL_INERTIA"])
 
@@ -57,8 +58,7 @@ prod_steps  = 1000
 prod_length = 50
 dt          = 0.01
 
-system = System()
-system.box_l = [length, length, length]
+system = espressomd.System(box_l=[length, length, length])
 system.cell_system.skin = 0.3
 system.time_step = dt
 system.min_global_cut = 1.0

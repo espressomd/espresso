@@ -33,7 +33,7 @@
 namespace ScriptInterface {
 namespace Accumulators {
 
-class Accumulator : public AutoParameters {
+class Accumulator : public AutoParameters<Accumulator> {
 public:
   /* as_const is to make obs read-only. */
   Accumulator() { add_parameters({{"obs", Utils::as_const(m_obs)}}); }
