@@ -10,10 +10,13 @@ checkpoint.register("skin")
 time_step = 0.01
 checkpoint.register("time_step")
 
+min_global_cut = 2.0
+checkpoint.register("min_global_cut")
+
 system = espressomd.System(box_l=[10.0, 10.0, 10.0])
 system.cell_system.skin = skin
 system.time_step = time_step
-system.min_global_cut = 2.0
+system.min_global_cut = min_global_cut
 checkpoint.register("system")
 
 system.part.add(pos=[1.0]*3)

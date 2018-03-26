@@ -19,10 +19,12 @@ class CheckpointTest(ut.TestCase):
         system = espressomd.System(box_l=[10.0, 10.0, 10.0])
         system.cell_system.skin = skin
         system.time_step = time_step
+        system.min_global_cut = min_global_cut
 
     def test_variables(self):
         self.assertEqual(skin, 0.4)
         self.assertEqual(time_step, 0.01)
+        self.assertEqual(min_global_cut, 2.0)
 
     def test_part(self):
         np.testing.assert_array_equal(np.copy(system.part[0].pos), np.array([1.0, 1.0, 1.0]))
