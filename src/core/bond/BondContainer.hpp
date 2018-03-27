@@ -21,7 +21,7 @@ namespace Bond {
     
     //---insert and delete bonds---
     // insert bond in all bonds, energy and force bonds
-    void set_bond_by_type(int bond_map_id, std::unique_ptr<Bond> && bond);
+    void set_bond_by_type(int bond_map_id, const std::shared_ptr<Bond> & bond);
     void delete_bond(int bond_map_id);
 
     //---Different Loops over internal Maps of different kinds of bonds---
@@ -79,7 +79,7 @@ namespace Bond {
   private:
     //---member variables---
     //unordered unique prt
-    std::unordered_map<int, std::unique_ptr<Bond> > m_all_bonds;
+    std::unordered_map<int, std::shared_ptr<Bond> > m_all_bonds;
     //normale pointer mit .get
     std::unordered_map<int, Bond* > m_force_loop_bonds;
     std::unordered_map<int, Bond* > m_energy_loop_bonds;

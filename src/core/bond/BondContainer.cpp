@@ -14,11 +14,11 @@ DerivedClass* cast_base_class(BaseClass* base_class){
 }
 
 //insert bond
-void Bond::BondContainer::set_bond_by_type(int type, std::unique_ptr<Bond> && bond)
+void Bond::BondContainer::set_bond_by_type(int type, const std::shared_ptr<Bond> & bond)
 {
   //add bond to bond map of all bonds
   //if the key already exists it will be deleted!!!
-  m_all_bonds[type] = std::move(bond);
+  m_all_bonds[type] = bond;
   //number of bonds n_bonded_ia is actually not the real number of bonds!
   //it has to be greather than the largest bond_map_id -> see python interface
   if(type + 1 > n_bonded_ia){

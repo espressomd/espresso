@@ -100,7 +100,7 @@ boost::any Bond::HarmonicDumbbell::get_bond_parameters_from_bond() const
 #endif
   
 #ifndef ROTATION
-  return boost:any(-1);
+  return boost::any(-1);
 #endif
   
 }

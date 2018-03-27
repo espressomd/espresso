@@ -33,6 +33,7 @@
 #include "lbboundaries/initialize.hpp"
 #include "collision_detection/initialize.hpp"
 #include "mpiio/initialize.hpp"
+#include "bond/initialize.hpp"
 
 #include "ComFixed.hpp"
 
@@ -61,8 +62,9 @@ void initialize() {
   VirtualSites::initialize();
   MPIIO::initialize();
   CollisionDetection::initialize();
- 
+  Bond::initialize();
 
+  
   ScriptInterface::register_new<Testing::VariantTester>("Testing::VariantTester");
   ScriptInterface::register_new<ComFixed>("ComFixed");
 }

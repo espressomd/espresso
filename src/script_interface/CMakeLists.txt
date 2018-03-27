@@ -10,6 +10,7 @@ set(EspressoScriptInterface_SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/observables/initialize.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/pair_criteria/initialize.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/mpiio/initialize.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/bond/initialize.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/ScriptInterfaceBase.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/shapes/initialize.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/Variant.cpp"

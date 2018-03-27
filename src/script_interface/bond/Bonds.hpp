@@ -19,27 +19,29 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINTS_HPP
-#define SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINTS_HPP
+#ifndef SCRIPT_INTERFACE_BOND_BONDS_HPP
+#define SCRIPT_INTERFACE_BOND_BONDS_HPP
 
-#include "Constraint.hpp"
+#include "Bond.hpp"
 
 #include "ScriptObjectRegistry.hpp"
-#include "core/constraints.hpp"
-#include "script_interface/ScriptInterface.hpp"
+
+#include "core/interaction_data.hpp"
 
 namespace ScriptInterface {
-namespace Constraints {
+namespace Bond {
 
-class Constraints : public ScriptObjectRegistry<Constraint> {
-  void add_in_core(std::shared_ptr<Constraint> obj_ptr) override {
-    ::Constraints::constraints.add(obj_ptr->constraint());
+  class Bonds : public ScriptObjectRegistry<ScriptInterface::Bond::Bond> {
+    void add_in_core(std::shared_ptr<ScriptInterface::Bond::Bond> obj_ptr) override {
+    obj_ptr->id() = n_bonded_ia;
+    bond_container.set_bond_by_type(n_bonded_ia, obj_ptr->bond());
   }
-  void remove_in_core(std::shared_ptr<Constraint> obj_ptr) override {
-    ::Constraints::constraints.remove(obj_ptr->constraint());
+  
+  void remove_in_core(std::shared_ptr<ScriptInterface::Bond::Bond> obj_ptr) override {
+    bond_container.delete_bond(obj_ptr->id());
   };
 };
-} /* namespace Constraints */
+} /* namespace Bond */
 } /* namespace ScriptInterface */
 
 #endif
