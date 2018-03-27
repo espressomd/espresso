@@ -1925,7 +1925,6 @@ class HarmonicBond(BondedInteraction):
 
         """
         return "k", "r_0"
-
     def set_default_params(self):
         """Sets parameters that are not required to their default value.
 

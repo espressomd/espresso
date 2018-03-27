@@ -24,6 +24,10 @@ namespace Bond {
 
     //get parameters
     boost::any get_bond_parameters_from_bond() const override;
+
+    double &k(){return m_k;}
+    double &r(){return m_r;}
+    double &r_cut(){return m_r_cut;}
     
     //bond parameters
   private:

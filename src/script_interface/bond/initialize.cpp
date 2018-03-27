@@ -22,14 +22,24 @@
 #include "Bonds.hpp"
 
 #include "Fene.hpp"
+#include "Harmonic.hpp"
+#include "HarmonicDumbbell.hpp"
+#include "BondedCoulomb.hpp"
+#include "BondedCoulombP3MSR.hpp"
 
 namespace ScriptInterface {
-namespace Bond {
-void initialize() {
-ScriptInterface::register_new<ScriptInterface::Bond::Bonds>(
-      "Bond::Bonds");  
-ScriptInterface::register_new<ScriptInterface::Bond::Fene>(
-      "Bond::Fene");
-}
-} /* namespace Shapes */
+  namespace Bond {
+    void initialize() {
+      ScriptInterface::register_new<ScriptInterface::Bond::Bonds>("Bond::Bonds");
+      ScriptInterface::register_new<ScriptInterface::Bond::Fene>("Bond::Fene");
+      ScriptInterface::register_new<ScriptInterface::Bond::Harmonic>("Bond::Harmonic");
+      ScriptInterface::register_new<ScriptInterface::Bond::HarmonicDumbbell>
+	("Bond::HarmonicDumbbell");
+      ScriptInterface::register_new<ScriptInterface::Bond::BondedCoulomb>
+	("Bond::BondedCoulomb");
+      ScriptInterface::register_new<ScriptInterface::Bond::BondedCoulombP3MSR>
+	("Bond::BondedCoulombP3MSR");
+    }
+    
+  } /* namespace Shapes */
 } /* namespace ScriptInterface */

@@ -19,6 +19,8 @@ public:
 
   boost::any get_bond_parameters_from_bond() const override;
 
+  double &prefactor(){return m_prefactor;}
+  
   //bond parameters
 private:
   double m_prefactor;

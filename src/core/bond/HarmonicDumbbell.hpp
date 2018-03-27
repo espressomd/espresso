@@ -22,6 +22,11 @@ public:
 
   boost::any get_bond_parameters_from_bond() const override;
 
+  double &k1(){return m_k1;}
+  double &k2(){return m_k2;}
+  double &r(){return m_r;}
+  double &r_cut(){return m_r_cut;}
+
   //bond parameters
 private:
   double m_k1;

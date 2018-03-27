@@ -43,5 +43,4 @@ namespace Bond {
 };
 } /* namespace Bond */
 } /* namespace ScriptInterface */
-
 #endif

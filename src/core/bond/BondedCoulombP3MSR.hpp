@@ -17,6 +17,8 @@ namespace Bond{
 				double *_energy) const override;
     
     boost::any get_bond_parameters_from_bond() const override;
+
+    double &q1q2(){return m_q1q2;}
     
   private:
     double m_q1q2;
