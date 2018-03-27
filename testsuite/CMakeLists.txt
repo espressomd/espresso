@@ -15,16 +15,24 @@ if(EXISTS ${MPIEXEC})
 endif()
 
 function(PYTHON_TEST)
-  cmake_parse_arguments(TEST "" "FILE;MAX_NUM_PROC" "" ${ARGN} )
+    cmake_parse_arguments(TEST "" "FILE;MAX_NUM_PROC;RUN_WITH_MPI" "DEPENDENCIES;CONFIGURATIONS" ${ARGN})
   get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
-  set(TEST_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${TEST_FILE}")
+  configure_file(${TEST_FILE} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE})
+  foreach(dependency IN LISTS TEST_DEPENDENCIES)
+      configure_file(${dependency} ${CMAKE_CURRENT_BINARY_DIR}/${dependency})
+  endforeach(dependency)
+  set(TEST_FILE "${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}")
 
+  # Default values
+  if (NOT DEFINED TEST_RUN_WITH_MPI)
+    set(TEST_RUN_WITH_MPI TRUE)
+  endif()
   if(${TEST_MAX_NUM_PROC} LESS 2)
-    set(TEST_CONFIGURATIONS "serial")
+    set(TEST_CONFIGURATIONS ${TEST_CONFIGURATIONS} "serial")
   elseif(${TEST_MAX_NUM_PROC} LESS 3)
-    set(TEST_CONFIGURATIONS "serial;parallel")
+    set(TEST_CONFIGURATIONS ${TEST_CONFIGURATIONS} "serial;parallel")
   else()
-    set(TEST_CONFIGURATIONS "serial;parallel;parallel_odd")
+    set(TEST_CONFIGURATIONS ${TEST_CONFIGURATIONS} "serial;parallel;parallel_odd")
   endif()
 
   if(${TEST_MAX_NUM_PROC} LESS ${TEST_NP})
@@ -33,7 +41,7 @@ function(PYTHON_TEST)
     set(TEST_NUM_PROC ${TEST_NP})
   endif()
 
-  if(EXISTS ${MPIEXEC})
+  if(EXISTS ${MPIEXEC} AND ${TEST_RUN_WITH_MPI})
     add_test(NAME ${TEST_NAME}
       COMMAND
       ${MPIEXEC} ${MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG} ${TEST_NUM_PROC} ${CMAKE_BINARY_DIR}/pypresso ${TEST_FILE}
@@ -47,6 +55,7 @@ function(PYTHON_TEST)
   set(python_tests ${python_tests} ${TEST_FILE} PARENT_SCOPE)
 endfunction(PYTHON_TEST)
 
+python_test(FILE test_checkpoint.py MAX_NUM_PROC 1 RUN_WITH_MPI FALSE DEPENDENCIES save_checkpoint.py)
 python_test(FILE cellsystem.py MAX_NUM_PROC 4)
 python_test(FILE constraint_homogeneous_magnetic_field.py MAX_NUM_PROC 4)
 python_test(FILE constraint_shape_based.py MAX_NUM_PROC 4)
@@ -148,19 +157,20 @@ if(PY_H5PY)
   python_test(FILE h5md.py MAX_NUM_PROC 2)
 endif(PY_H5PY)
 
-add_custom_target(python_tests
-  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+add_custom_target(python_test_data
+  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/data ${CMAKE_CURRENT_BINARY_DIR}/data
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/tests_common.py ${CMAKE_CURRENT_BINARY_DIR})
 
 add_custom_target(check_python_serial COMMAND ${CMAKE_CTEST_COMMAND} -C serial --output-on-failure)
-add_dependencies(check_python_serial pypresso python_tests)
+add_dependencies(check_python_serial pypresso python_test_data)
 
 add_custom_target(check_python_parallel COMMAND ${CMAKE_CTEST_COMMAND} -C parallel --output-on-failure)
-add_dependencies(check_python_parallel pypresso python_tests)
+add_dependencies(check_python_parallel pypresso python_test_data)
 
 add_custom_target(check_python_parallel_odd COMMAND ${CMAKE_CTEST_COMMAND} -C parallel_odd --output-on-failure)
-add_dependencies(check_python_parallel_odd pypresso python_tests)
+add_dependencies(check_python_parallel_odd pypresso python_test_data)
 
 add_custom_target(check_python)
-add_dependencies(check_python pypresso python_tests check_python_serial)
+add_dependencies(check_python pypresso python_test_data check_python_serial)
 
 add_dependencies(check check_python)
