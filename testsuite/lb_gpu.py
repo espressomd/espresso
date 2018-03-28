@@ -180,7 +180,7 @@ class TestLBGPU(ut.TestCase):
     def test_zboundary_slip(self):
         lbf = self.setup_lb_fluid(ext_force = [0.0, 0.0, 0.1])
         wall_shape1 = espressomd.shapes.Wall(normal=[1., 0., 0.], dist=1.0)
-        wall_shape2 = espressomd.shapes.Wall(normal=[-1., 0., 0.], dist=-10.0)
+        wall_shape2 = espressomd.shapes.Wall(normal=[-1., 0., 0.], dist=-9.0)
         boundary1 = espressomd.lbboundaries.LBBoundary(shape=wall_shape1)
         boundary2 = espressomd.lbboundaries.LBBoundary(shape=wall_shape2)
         self.system.lbboundaries.add(boundary1)
