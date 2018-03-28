@@ -176,3 +176,19 @@ BOOST_AUTO_TEST_CASE(swap) {
   BOOST_CHECK(v1 == cv2);
   BOOST_CHECK(v2 == cv1);
 }
+
+BOOST_AUTO_TEST_CASE(decay_to_scalar_test) {
+  {
+    using original_t = Vector<1, int>;
+    using decayed_t = typename decay_to_scalar<original_t>::type;
+
+    static_assert(std::is_same<int, decayed_t>::value, "");
+  }
+
+  {
+    using original_t = Vector<3, int>;
+    using decayed_t = typename decay_to_scalar<original_t>::type;
+
+    static_assert(std::is_same<original_t, decayed_t>::value, "");
+  }
+}

@@ -320,4 +320,13 @@ template <size_t N, typename T> Vector<N, T> sqrt(Vector<N, T> const &a) {
   return ret;
 }
 
+/**
+ * @brief Meta function to turns a Vector<1, T> into T.
+ */
+template <typename T> struct decay_to_scalar {};
+template <typename T, size_t N> struct decay_to_scalar<Vector<N, T>> {
+  using type = Vector<N, T>;
+};
+
+template <typename T> struct decay_to_scalar<Vector<1, T>> { using type = T; };
 #endif
