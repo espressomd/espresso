@@ -94,7 +94,7 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
         self.system.integrator.run(50)
         
         # Sampling
-        loops = 160
+        loops = 16000
         v_stored = np.zeros((N2 * loops, 3))
         for i in range(loops):
             self.system.integrator.run(2)
@@ -138,7 +138,7 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
         self.system.integrator.run(50)
         
         # Sampling
-        loops = 160
+        loops = 16000
         v_stored = np.zeros((N2 * loops, 3))
         for i in range(loops):
             self.system.integrator.run(2)
