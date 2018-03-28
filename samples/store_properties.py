@@ -21,7 +21,6 @@ import numpy as np
 import espressomd
 from espressomd import electrostatics
 from espressomd import electrostatic_extensions
-from samples_common import open
 
 print("""
 =======================================================

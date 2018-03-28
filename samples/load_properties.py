@@ -101,13 +101,11 @@ if not system.non_bonded_inter[0, 0].lennard_jones.is_active():
     print("Reset Lennard-Jones Interactions to:")
     print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
 
-exit()
 
 # Import of particle properties and P3M parameters
 #############################################################
 with open("particle_save", "r") as particle_save:
     pickle.load(particle_save)
-
 act_min_dist = system.analysis.min_dist()
 
 with open("p3m_save", "r") as p3m_save:
@@ -121,7 +119,7 @@ system.actors.add(p3m)
 import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
 pprint.pprint(system.thermostat.get_state(), width=1)
-# pprint.pprint(system.part.__getstate__(), width=1)
+pprint.pprint(system.part.__getstate__(), width=1)
 pprint.pprint(system.__getstate__(), width=1)
 
 
