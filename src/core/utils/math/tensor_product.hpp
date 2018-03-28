@@ -16,6 +16,14 @@ Vector<N, Vector<M, T>> tensor_product(const Vector<N, T> &x,
 
   return ret;
 }
+
+/*
+ * @brief Overload if left operand is scalar.
+ */
+template <typename T, size_t N>
+Vector<N, T> tensor_product(const T &x, const Vector<N, T> &y) {
+  return x * y;
+}
 }
 
 #endif

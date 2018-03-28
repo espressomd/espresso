@@ -69,3 +69,17 @@ BOOST_AUTO_TEST_CASE(non_square) {
     }
 }
 
+BOOST_AUTO_TEST_CASE(left_scalar) {
+  double x = 3.;
+  Vector2d y{1., 2.};
+
+  using expected_type = Vector2d;
+  using actual_type = decltype(tensor_product(x, y));
+
+  /* Check return type */
+  static_assert(std::is_same<expected_type, actual_type>::value, "");
+
+  auto prod = tensor_product(x, y);
+
+  BOOST_CHECK((x * y) == prod);
+}
