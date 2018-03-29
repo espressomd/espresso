@@ -111,7 +111,7 @@ Swimmer Reactions
 -----------------
 
 
-With the help of the feature ``CATALYTIC_REACTIONS``, one can define three particle types to act as reactant (e.g. :math:`\mathrm{H_2 O_2}`), catalyzer (e.g. platinum), and product (e.g. :math:`\mathrm{O_2}` and :math:`\mathrm{H_2 O}`). The current setup allows one to simulate active swimmers and their chemical propulsion.
+With the help of the feature ``SWIMMER_REACTIONS``, one can define three particle types to act as reactant (e.g. :math:`\mathrm{H_2 O_2}`), catalyzer (e.g. platinum), and product (e.g. :math:`\mathrm{O_2}` and :math:`\mathrm{H_2 O}`). The current setup allows one to simulate active swimmers and their chemical propulsion.
 
 For a Janus swimmer consisting of platinum on one hemisphere and gold on the other hemisphere, both surfaces catalytically induce a reaction. We assume an initial abundance of hydrogen peroxide and absence of products, so that back (recombination) reactions seldomly occur at the surface. A typical model for the propulsion of such a particle assumes
 
@@ -183,7 +183,7 @@ can be used.::
 
 *  ``print r``  returns the current reaction parameters.
 
-In future versions of |es| the capabilities of the ``CATALYTIC_REACTIONS`` feature may be generalized
+In future versions of |es| the capabilities of the ``SWIMMER_REACTIONS`` feature may be generalized
 to handle multiple reactant, catalyzer, and product types, as well as
 more general reaction schemes. Other changes may involve merging the
 current implementation with the ``COLLISION_DETECTION`` feature.

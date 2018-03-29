@@ -45,7 +45,7 @@ void reactions_sanity_checks() {
   if (reaction.ct_rate != 0.0) {
 
     if (!cell_structure.use_verlet_list || cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-      runtimeErrorMsg() << "The CATALYTIC_REACTIONS feature requires verlet "
+      runtimeErrorMsg() << "The SWIMMER_REACTIONS feature requires verlet "
                            "lists and domain decomposition";
     }
 

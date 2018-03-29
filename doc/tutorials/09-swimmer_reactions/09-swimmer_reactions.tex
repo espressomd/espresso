@@ -156,7 +156,7 @@ Note: Let the \textit{catalyst} $C^{+}$ (on average) convert more $A$ to $B$. Th
 
 \subsection{Usage in \es}
 
-Catalytic reactions can be enabled in \es\ by compiling in the eponymous feature \code{CATALYTIC_REACTIONS} and the \code{ROTATION} feature to provide the particles with an orientation vector. In \es\ the orientation of the particle is defined by a quaternion; this in turn defines a rotation matrix that acts on the particle's initial orientation (along the $z$-axis), which then defines the particles current orientation~\cite{UG,Limbach_06,Arnold_13}.
+Catalytic reactions can be enabled in \es\ by compiling in the eponymous feature \code{SWIMMER_REACTIONS} and the \code{ROTATION} feature to provide the particles with an orientation vector. In \es\ the orientation of the particle is defined by a quaternion; this in turn defines a rotation matrix that acts on the particle's initial orientation (along the $z$-axis), which then defines the particles current orientation~\cite{UG,Limbach_06,Arnold_13}.
 
 To setup the reaction there is the \es\ command \codees{Reaction}, which operates on particle types. The general syntax is
 \begin{espresso}
@@ -194,7 +194,7 @@ To run all the tutorials you need to uncomment the following \code{FEATURES}:
 #define ROTATION
 #define ROTATIONAL_INERTIA
 #define LANGEVIN_PER_PARTICLE
-#define CATALYTIC_REACTIONS
+#define SWIMMER_REACTIONS
 #define LENNARD_JONES
 \end{lstlisting}
 Now you are ready to build \es.  You have to run \code{cmake} again to process the modified \code{myconfig.hpp}.
