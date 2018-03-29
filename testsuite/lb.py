@@ -20,6 +20,7 @@ class LBTest(ut.TestCase):
     1) check conservation of fluid mass
     2) check conservation of total momentum
     3) measure temperature of colloid and fluid
+    4) no-slip boundary condition
 
     """
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
@@ -198,7 +199,8 @@ class LBTest(ut.TestCase):
 
     def test_thermostat_cpu(self):
         self.perform_thermostat_test()
-
+    
+    @ut.skipIf(not espressomd.has_features("LB_GPU"), "Skipping test because LB_GPU feature not compiled in.")
     def test_thermostat_gpu(self):
         self.perform_thermostat_test(gpu_LB=True)
 
@@ -224,6 +226,7 @@ class LBTest(ut.TestCase):
     def test_zboundary_slip_cpu(self):
         self.perform_zboundary_slip_test()
 
+    @ut.skipIf(not espressomd.has_features("LB_GPU"), "Skipping test because LB_GPU feature not compiled in.")
     def test_zboundary_slip_gpu(self):
         self.perform_zboundary_slip_test(gpu_LB=True)
 
