@@ -36,7 +36,6 @@ class Constraints(ScriptInterfaceHelper):
                      The added constraint
 
         """
-
         if len(args) == 1:
             if isinstance(args[0], Constraint):
                 constraint = args[0]
@@ -57,7 +56,6 @@ class Constraints(ScriptInterfaceHelper):
         constraint : Instance of :class:`espressomd.constraints.Constraint`
 
         """
-
         self.call_method("remove", object=constraint)
 
     def clear(self):
@@ -76,7 +74,6 @@ class Constraint(ScriptInterfaceHelper):
     an energy contribution for a single particle.
 
     """
-
     _so_name = "Constraints::Constraint"
 
 
@@ -118,9 +115,7 @@ class ShapeBasedConstraint(Constraint):
     >>>
 
     """
-
     _so_name = "Constraints::ShapeBasedConstraint"
-
 
     def min_dist(self):
         """
@@ -131,7 +126,6 @@ class ShapeBasedConstraint(Constraint):
         :obj:float: The minimum distance
         """
         return self.call_method("min_dist", object=self)
-
 
     def total_force(self):
         """
@@ -175,5 +169,4 @@ class HomogeneousMagneticField(Constraint):
         strength of the magnetic field (via length of the vector).
 
     """
-
     _so_name = "Constraints::HomogeneousMagneticField"
