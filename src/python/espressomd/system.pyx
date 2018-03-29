@@ -44,7 +44,8 @@ from .correlators import AutoUpdateCorrelators
 from .accumulators import AutoUpdateAccumulators
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
-from .ekboundaries import EKBoundaries
+if EK_BOUNDARIES:
+    from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
 from globals cimport max_seen_particle
 from espressomd.utils import array_locked, is_valid_type
@@ -126,6 +127,7 @@ cdef class System(object):
                 self.constraints = Constraints()
             if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
                 self.lbboundaries = LBBoundaries()
+            if EK_BOUNDARIES:
                 self.ekboundaries = EKBoundaries()
             IF COLLISION_DETECTION==1:
                 self.collision_detection = CollisionDetection()
