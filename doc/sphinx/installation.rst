@@ -383,7 +383,7 @@ General features
    vicinity of a catalyst according to a used-defined reaction rate
    constant. It is also possible to set up a chemical equilibrium
    reaction between the reactants and products, with another rate
-   constant. Be careful the model makes far-fetched usage of the word catalyst. This usage of the word cannot be brought into agreement with the correct usage of the word catalyst.
+   constant. Be careful the model makes usage of the word catalyst. This usage of the word cannot be brought into agreement with the correct usage of the word catalyst.
    
    .. seealso:: :ref:`Swimmer reactions`
 
