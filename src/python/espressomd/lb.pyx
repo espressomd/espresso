@@ -287,8 +287,6 @@ IF LB_GPU:
             ELSE:
                 raise Exception("LB_GPU not compiled in")
             
-
-
         @cython.boundscheck(False)
         @cython.wraparound(False)
         def get_interpolated_fluid_velocity_at_positions(self, np.ndarray[double, ndim=2, mode="c"] positions not None):

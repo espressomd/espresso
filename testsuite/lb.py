@@ -29,7 +29,7 @@ class LBTest(ut.TestCase):
               'int_times': 10,
               'time_step': 0.01,
               'tau': 0.02,
-              'agrid': 0.5,
+              'agrid': 1.0,
               'box_l': 10.0,
               'dens': 0.85,
               'viscosity': 30.0,
@@ -37,7 +37,8 @@ class LBTest(ut.TestCase):
               'temp': 1.5,
               'gamma': 1.5,
               'skin': 0.2,
-              'mom_prec': 1.e-4,
+              'mom_prec_gpu': 1.e-3,
+              'mom_prec_cpu': 1.e-11,
               'mass_prec_per_node': 4.e-8,
               'temp_confidence': 10}
 
@@ -58,8 +59,6 @@ class LBTest(ut.TestCase):
     def tearDown(self):
         self.system.part.clear()
         self.system.actors.clear()
-        print(self.system.lbboundaries[:])
-        self.system.lbboundaries.clear()
         self.system.thermostat.turn_off()
 
     def setup_lb_fluid(self, gpu_LB=False, ext_force = [0.0, 0.0, 0.0]):
@@ -154,11 +153,15 @@ class LBTest(ut.TestCase):
             for j in range(3):
                 if dm[j] > max_dm[j]:
                     max_dm[j] = dm[j]
+            if gpu_LB:
+                mom_prec = self.params['mom_prec_gpu']
+            else:
+                mom_prec = self.params['mom_prec_cpu']
             self.assertTrue(
-                max_dm[0] <= self.params['mom_prec'] and max_dm[1] <= self.params['mom_prec'] and max_dm[2] <= self.params['mom_prec'],
+                max_dm[0] <= mom_prec and max_dm[1] <= mom_prec and max_dm[2] <= mom_prec,
                 msg="Momentum deviation too high\ndeviation: {} accepted deviation: {}".format(
                     max_dm,
-                    self.params['mom_prec']))
+                    mom_prec))
 
             # check temp of particles
             e = system.analysis.energy()
@@ -214,7 +217,6 @@ class LBTest(ut.TestCase):
             zero_slip_positions.append([self.params['agrid'], (y+0.5)*self.params['agrid'], self.params['agrid']])
         if gpu_LB:
             velocities = lbf.get_interpolated_fluid_velocity_at_positions(np.array(zero_slip_positions))
-            print(velocities)
         else:
             velocities = [lbf.get_interpolated_velocity_local(p) for p in zero_slip_positions]
         np.testing.assert_array_equal(velocities, np.zeros_like(velocities))
