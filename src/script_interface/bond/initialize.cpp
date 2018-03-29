@@ -26,6 +26,12 @@
 #include "HarmonicDumbbell.hpp"
 #include "BondedCoulomb.hpp"
 #include "BondedCoulombP3MSR.hpp"
+#include "Quartic.hpp"
+#include "SubtLj.hpp"
+#include "Umbrella.hpp"
+#include "TabulatedBondLength.hpp"
+//#include "OverlapBondLength.hpp"
+#include "ThermalizedBond.hpp"
 
 namespace ScriptInterface {
   namespace Bond {
@@ -39,6 +45,15 @@ namespace ScriptInterface {
 	("Bond::BondedCoulomb");
       ScriptInterface::register_new<ScriptInterface::Bond::BondedCoulombP3MSR>
 	("Bond::BondedCoulombP3MSR");
+      ScriptInterface::register_new<ScriptInterface::Bond::Quartic>("Bond::Quartic");
+      ScriptInterface::register_new<ScriptInterface::Bond::SubtLj>("Bond::SubtLj");
+      ScriptInterface::register_new<ScriptInterface::Bond::Umbrella>("Bond::Umbrella");
+      ScriptInterface::register_new<ScriptInterface::Bond::TabulatedBondLength>
+	("Bond::TabulatedBondLength");
+      //      ScriptInterface::register_new<ScriptInterface::Bond::OverlapBondLength>
+      //("Bond::OverlapBondLength");
+      ScriptInterface::register_new<ScriptInterface::Bond::ThermalizedBond>
+	("Bond::ThermalizedBond");
     }
     
   } /* namespace Shapes */

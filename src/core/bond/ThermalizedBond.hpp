@@ -30,8 +30,16 @@ namespace Bond {
     void thermalized_bond_init();
 
     boost::any get_bond_parameters_from_bond() const override;
+
+    double &temp_com(){return m_temp_com;}
+    double &gamma_com(){return m_gamma_com;}
+    double &temp_distance(){return m_temp_distance;}
+    double &r_cut(){return m_r_cut;}
+    double &pref1_com(){return m_pref1_com;}
+    double &pref2_com(){return m_pref2_com;}
+    double &pref1_dist(){return m_pref1_dist;}
+    double &pref2_dist(){return m_pref2_dist;}
     
-  private:
     double m_temp_com;
     double m_gamma_com;
     double m_temp_distance;

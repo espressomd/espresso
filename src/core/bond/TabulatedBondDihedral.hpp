@@ -9,8 +9,9 @@ namespace Bond {
   public:
 
     //constructor
-    TabulatedBondDihedral(TabulatedPotential tab_pot) : 
-      Tabulated{std::move(tab_pot), TabulatedBondedInteraction::TAB_BOND_DIHEDRAL},
+    TabulatedBondDihedral(double min, double max, std::vector<double> const &energy,
+			  std::vector<double> const &force) : 
+      Tabulated{min, max, energy, force, TabulatedBondedInteraction::TAB_BOND_DIHEDRAL},
       CutoffBond(0.0)
     {m_bondtype = BondType::BONDED_IA_TABULATED;}
 
@@ -23,6 +24,8 @@ namespace Bond {
 					Particle *p4, double *_energy) const override;
 
     boost::any get_bond_parameters_from_bond() const override;
+
+    
     
   private:  
     //internal function

@@ -8,8 +8,9 @@ namespace Bond {
   public:
 
     //constructor
-    TabulatedBondAngle(TabulatedPotential tab_pot) : 
-      Tabulated{std::move(tab_pot), TabulatedBondedInteraction::TAB_BOND_ANGLE}
+    TabulatedBondAngle(double min, double max, std::vector<double> const &energy,
+		       std::vector<double> const &force) : 
+      Tabulated{min, max, energy, force, TabulatedBondedInteraction::TAB_BOND_ANGLE}
     {m_bondtype = BondType::BONDED_IA_TABULATED;}
 
     //force *

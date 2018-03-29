@@ -21,11 +21,18 @@ namespace Bond {
     //variables
     char* m_filename;
     const OverlappedBondedInteraction m_type;
-    const double m_maxval;
-    const int m_noverlaps;
+    double m_maxval;
+    int m_noverlaps;
     double* m_para_a;
     double* m_para_b;
     double* m_para_c;
+
+    char* filename(){return m_filename;}
+    double &maxval(){return m_maxval;}
+    int &noverlaps(){return m_noverlaps;}
+    double &para_a(){return *m_para_a;}
+    double &para_b(){return *m_para_b;}
+    double &para_c(){return *m_para_c;}
 
   };
 }

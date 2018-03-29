@@ -61,31 +61,18 @@ int tabulated_bonded_set_params(int bond_type,
   assert((max == min) || force.size() > 1);
   assert(force.size() == energy.size());
 
-  auto tab_pot = new TabulatedPotential;
-
-  tab_pot->invstepsize = static_cast<double>(force.size() - 1) / (max - min);
-
-  tab_pot->force_tab = force;
-  tab_pot->energy_tab = energy;
-
   switch(tab_type){
   case TAB_BOND_LENGTH:
-    tab_pot->minval = min;
-    tab_pot->maxval = max;
     bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::TabulatedBondLength>
-				    (*tab_pot));
+				    (min, max, energy, force));
     break;
   case TAB_BOND_ANGLE:
-    tab_pot->minval = 0.0;
-    tab_pot->maxval = PI + ROUND_ERROR_PREC;
     bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::TabulatedBondAngle>
-				    (*tab_pot));
+				    (min, max, energy, force));
     break;
   case TAB_BOND_DIHEDRAL:
-    tab_pot->minval = 0.0;
-    tab_pot->maxval = 2.0 * PI + ROUND_ERROR_PREC;
     bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::TabulatedBondDihedral>
-				    (*tab_pot));
+				    (min, max, energy, force));
     break;
   default:
     runtimeError("Unsupported tabulated bond type.");

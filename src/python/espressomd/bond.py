@@ -31,3 +31,54 @@ class BondedCoulomb(ScriptInterfaceHelper):
     """
 
     _so_name = "Bond::BondedCoulomb"
+
+@script_interface_register
+class Quartic(ScriptInterfaceHelper):
+    """
+    Docstring
+    """
+
+    _so_name = "Bond::Quartic"
+
+
+@script_interface_register
+class SubtLj(ScriptInterfaceHelper):
+    """
+    Docstring
+    """
+
+    _so_name = "Bond::SubtLj"
+
+@script_interface_register
+class Umbrella(ScriptInterfaceHelper):
+    """
+    Docstring
+    """
+
+    _so_name = "Bond::Umbrella"
+
+    
+@script_interface_register
+class TabulatedBondLength(ScriptInterfaceHelper):
+    """
+    Docstring
+    """
+
+    _so_name = "Bond::TabulatedBondLength"
+
+
+@script_interface_register
+class OverlapBondLength(ScriptInterfaceHelper):
+    """
+    Docstring
+    """
+
+    _so_name = "Bond::OverlapBondLength"
+
+@script_interface_register
+class ThermalizedBond(ScriptInterfaceHelper):
+    """
+    Docstring
+    """
+
+    _so_name = "Bond::ThermalizedBond"

@@ -23,6 +23,8 @@ namespace Bond {
 
     boost::any get_bond_parameters_from_bond() const override;
 
+    
+    
   };
 
 }

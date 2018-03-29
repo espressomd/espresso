@@ -13,6 +13,10 @@ namespace Bond {
     int calc_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3], 
 				double *_energy) const override;
 
+    double &k(){return m_k;}
+    int &dir(){return m_dir;}
+    double &r(){return m_r;}
+    
   private:
     double m_k;
     int m_dir;

@@ -2732,7 +2732,7 @@ IF OVERLAPPED == 1:
         def _set_params_in_es_core(self):
             overlapped_bonded_set_params(
                 self._bond_id, self._params["overlap_type"], utils.to_char_pointer(self._params["filename"]))
-
+            
 ELSE:
     class Overlapped(BondedInteractionNotDefined):
         name = "OVERLAPPED"
