@@ -20,13 +20,13 @@
 #ifndef OBSERVABLES_CYLINDRICALLBVELOCITYPROFILEATPARTICLEPOSITIONS_HPP
 #define OBSERVABLES_CYLINDRICALLBVELOCITYPROFILEATPARTICLEPOSITIONS_HPP
 
-#include "CylindricalProfileObservable.hpp"
+#include "CylindricalPidProfileObservable.hpp"
 #include "partCfg_global.hpp"
 #include "utils/Histogram.hpp"
 
 namespace Observables {
 class CylindricalLBVelocityProfileAtParticlePositions
-    : public CylindricalProfileObservable {
+    : public CylindricalPidProfileObservable {
 public:
   virtual std::vector<double> operator()(PartCfg &partCfg) const override;
   virtual int n_values() const override {

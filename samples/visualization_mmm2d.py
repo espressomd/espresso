@@ -10,9 +10,8 @@ from espressomd.visualization_opengl import *
 box_l = 20
 system = espressomd.System(box_l=[box_l]*3)
 system.set_random_state_PRNG()
-#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)
-visualizer = openGLLive(system, constraint_type_colors= [[1,1,1,1]], camera_position = [50,15,15], camera_right = [0,0,-1] )
+visualizer = openGLLive(system, constraint_type_colors= [[1,1,1]], camera_position = [50,15,15], camera_right = [0,0,-1] )
 
 system.time_step = 0.02
 system.cell_system.skin = 0.4
@@ -44,17 +43,4 @@ system.thermostat.set_langevin(kT=0.1, gamma=1.0)
 mmm2d = electrostatics.MMM2D(prefactor = 10.0, maxPWerror = 1e-3, const_pot = 1, pot_diff = 50.0)
 system.actors.add(mmm2d)
 
-def main():
-
-    while True:
-        system.integrator.run(1)
-        visualizer.update()
-
-
-# Start simulation in seperate thread
-t = Thread(target=main)
-t.daemon = True
-t.start()
-
-# Start blocking visualizer
-visualizer.start()
+visualizer.run(1)

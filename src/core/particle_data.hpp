@@ -1037,4 +1037,9 @@ void pointer_to_rotational_inertia(Particle const *p, double const *&res);
 
 bool particle_exists(int part);
 
+/**
+ *  @brief Get the mpi rank which owns the particle with id.
+ */
+int get_particle_node(int id);
+
 #endif

@@ -356,6 +356,15 @@ cdef class ParticleHandle(object):
 
             return tuple(bonds)
 
+    property node:
+        """
+        The node the particle is on, identified by its MPI rank.
+        """
+
+        def __get__(self):
+            return get_particle_node(self.id)
+
+
     # Properties that exist only when certain features are activated
     # MULTI_TIMESTEP
     IF MULTI_TIMESTEP == 1:
@@ -1713,7 +1722,10 @@ class ParticleSlice(_ParticleSliceImpl):
 
     """
 
-    pass
+    def __setattr__(self, name, value):
+        if name != "_chunk_size" and not hasattr(ParticleHandle, name):
+            raise AttributeError("ParticleHandle does not have the attribute {}.".format(name))
+        super(ParticleSlice, self).__setattr__(name, value)
 
 
 cdef class ParticleList(object):
@@ -1754,7 +1766,7 @@ cdef class ParticleList(object):
         """
 
         pickle_attr = copy(particle_attributes)
-        for i in ["director", "dip", "id"]:
+        for i in ["director", "dip", "id", "image_box", "node"]:
             if i in pickle_attr:
                 pickle_attr.remove(i)
         IF MASS == 0:

@@ -394,14 +394,14 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
 * ``slice_input.py``
     Uses python array slicing to set and extract various particle properties.
 
+* ``visualization.py``
+    A visualization for mayavi/opengl of the lj-liquid with interactive plotting.
+
 * ``visualization_bonded.py``
     Opengl visualization for bonds.
 
-* ``visualization_openGL.py``
-    Sample for an opengl visualization with user-defined keyboard- and timed callbacks.
-
-* ``visualization.py``
-    A visualization for mayavi/opengl of the lj-liquid with interactive plotting.
+* ``visualization_interactive.py``
+    Sample for an interactive opengl visualization with user-defined keyboard- and timed callbacks.
 
 * ``visualization_npt.py``
     Simple test visualization for the NPT ensemble.
@@ -414,6 +414,12 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
 
 * ``visualization_mmm2d.py``
     A visual sample for a constant potential plate capacitor simulated with mmm2d.
+
+* ``visualization_charged.py``
+    Molten NaCl and larger, charged particles simulated with p3m.
+
+* ``visualization_cellsystem.py``
+    Node grid and cell grid visualization. Run in parallel for particle coloring by node.
 
 .. _On units:
 
