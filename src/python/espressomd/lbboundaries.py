@@ -10,7 +10,6 @@ if any(i in espressomd.code_info.features() for i in ["LB_BOUNDARIES", "LB_BOUND
         Creates a set of lattice Boltzmann boundaries.
         
         """
-
         _so_name = "LBBoundaries::LBBoundaries"
 
         def __getitem__(self, key):
@@ -50,8 +49,16 @@ if any(i in espressomd.code_info.features() for i in ["LB_BOUNDARIES", "LB_BOUND
                          The boundary to be removed from the set.
                          
             """
-
             self.call_method("remove", lbboundary=lbboundary)
+
+        def clear(self):
+            """
+            Remove all LB boundaries.
+
+            """
+            elements = self.call_method("get_elements")
+            for e in elements:
+                self.remove(e)
 
 
     @script_interface_register
@@ -60,6 +67,5 @@ if any(i in espressomd.code_info.features() for i in ["LB_BOUNDARIES", "LB_BOUND
         Creates a LB boundary.
         
         """
-
         _so_name = "LBBoundaries::LBBoundary"
         _so_bind_methods = ("get_force",)

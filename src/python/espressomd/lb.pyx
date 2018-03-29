@@ -108,6 +108,11 @@ IF LB_GPU or LB:
             if lb_set_lattice_switch(1):
                 raise Exception("lb_set_lattice_switch error")
 
+        def _get_lattice_switch(self):
+            cdef int value
+            lb_get_lattice_switch(&value)
+            return value
+
         def _set_params_in_es_core(self):
             default_params = self.default_params()
 
@@ -188,16 +193,61 @@ IF LB_GPU or LB:
                 lb_lbfluid_print_vtk_velocity(utils.to_char_pointer(path), bb1_vec, bb2_vec)
         def print_vtk_boundary(self, path):
             lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
+
         def print_velocity(self, path):
             lb_lbfluid_print_velocity(utils.to_char_pointer(path))
+
         def print_boundary(self, path):
             lb_lbfluid_print_boundary(utils.to_char_pointer(path))
+
         def save_checkpoint(self, path, binary):
             tmp_path = path + ".__tmp__"
             lb_lbfluid_save_checkpoint(utils.to_char_pointer(tmp_path), binary)
             os.rename(tmp_path, path)
+
         def load_checkpoint(self, path, binary):
             lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
+
+        def get_interpolated_velocity_local(self, pos):
+            """Get LB (CPU) fluid velocity at specified position, local version
+            that only works for single core.
+
+            Parameters
+            ----------
+            pos : array_like :obj:`float`
+                  The position at which velocity is requested.
+
+            Returns
+            -------
+            v : array_like :obj:`float`
+                The LB fluid velocity at ``pos``.
+
+            """
+            if self._get_lattice_switch() == 2:
+                raise ValueError("This function is only available for the CPU LB.")
+            cdef double[3] p = pos
+            cdef double[3] v
+            lb_lbfluid_get_interpolated_velocity(p, v)
+            return v
+
+        def get_interpolated_velocity(self, pos):
+            """Get LB (CPU and GPU) fluid velocity at specified position.
+
+            Parameters
+            ----------
+            pos : array_like :obj:`float`
+                  The position at which velocity is requested.
+
+            Returns
+            -------
+            v : array_like :obj:`float`
+                The LB fluid velocity at ``pos``.
+
+            """
+            cdef double[3] p = pos
+            cdef double[3] v
+            lb_lbfluid_get_interpolated_velocity_global(p, v)
+            return v
 
         # Activate Actor
         ####################################################
@@ -237,24 +287,7 @@ IF LB_GPU:
             ELSE:
                 raise Exception("LB_GPU not compiled in")
             
-        def get_interpolated_velocity(self, pos):
-            """Get LB fluid velocity at specified position.
 
-            Parameters
-            ----------
-            pos : array_like :obj:`float`
-                  The position at which velocity is requested.
-
-            Returns
-            -------
-            v : array_like :obj:`float`
-                The LB fluid velocity at ``pos``.
-
-            """
-            cdef double[3] p = pos
-            cdef double[3] v
-            lb_lbfluid_get_interpolated_velocity_global(p, v)
-            return v
 
         @cython.boundscheck(False)
         @cython.wraparound(False)
