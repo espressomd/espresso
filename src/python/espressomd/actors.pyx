@@ -213,5 +213,9 @@ class Actors(object):
         self.remove(actor)
 
     def clear(self):
+        """
+        Remove all actors.
+
+        """
         for a in self.active_actors:
             self.remove(a)
