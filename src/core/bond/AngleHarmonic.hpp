@@ -9,7 +9,8 @@ namespace Bond {
   public:
     //using Angle::Angle;//inherit constructor from Angle class
     //constructor
-    AngleHarmonic(double bend, double phi0) : Angle{bend, phi0} {m_bondtype = BondType::BONDED_IA_ANGLE_HARMONIC;}
+    AngleHarmonic(double bend, double phi0) : Angle{bend, phi0}
+    {m_bondtype = BondType::BONDED_IA_ANGLE_HARMONIC;}
     //force *
     int calc_bonded_three_particle_force(Particle *p1, Particle *p2, Particle *p3, double force[3], double force2[3]) const override;
     //energy *

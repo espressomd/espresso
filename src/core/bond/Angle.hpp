@@ -14,8 +14,12 @@ namespace Bond {
     virtual ~Angle() = default;
 
     // variables
-    const double m_bend;
-    const double m_phi0;
+    double m_bend;
+    double m_phi0;
+
+    double &bend(){return m_bend;}
+    double &phi0(){return m_phi0;}
+    
   };
 
 }

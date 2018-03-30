@@ -30,6 +30,15 @@ namespace Bond {
 
     boost::any get_bond_parameters_from_bond() const override;
     
+    double &phi0(){return m_phi0;}
+    double &kb(){return m_kb;}
+    double &r0(){return m_r0;}
+    double &ks(){return m_ks;}
+    double &kslin(){return m_kslin;}
+    double &A01(){return m_A01;}
+    double &A02(){return m_A02;}
+    double &kal(){return m_kal;}
+    
   private:  
     double m_phi0;
     double m_kb;

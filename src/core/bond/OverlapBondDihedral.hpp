@@ -9,9 +9,11 @@ namespace Bond {
   public:
 
     // constructor
-    OverlapBondDihedral(char* filename, OverlappedBondedInteraction type, double maxval, 
-		      int noverlaps, double* para_a, double* para_b, double* para_c) :
-      Overlap{filename, type, maxval, noverlaps, para_a, para_b, para_c},
+    OverlapBondDihedral(std::string filename, double maxval, int noverlaps,
+			std::vector<double> para_a, std::vector<double> para_b,
+			std::vector<double> para_c) :
+      Overlap{filename, OverlappedBondedInteraction::OVERLAP_BOND_DIHEDRAL, maxval, noverlaps,
+	para_a, para_b, para_c},
       CutoffBond(0.0)
     {m_bondtype = BondType::BONDED_IA_OVERLAPPED;}
 
@@ -22,8 +24,6 @@ namespace Bond {
     //energy calculation
     int calc_bonded_four_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
 					Particle *p4, double *_energy) const override;
-
-    boost::any get_bond_parameters_from_bond() const override;
 
   private:  
     //internal function

@@ -45,9 +45,9 @@ int overlapped_bonded_set_params(int bond_type, OverlappedBondedInteraction over
   char* input_filename;
   double input_maxval;
   int input_noverlaps;
-  double* input_para_a;
-  double* input_para_b;
-  double* input_para_c;
+  std::vector<double> input_para_a;
+  std::vector<double> input_para_b;
+  std::vector<double> input_para_c;
 
   if(bond_type < 0)
     return 1;
@@ -74,9 +74,9 @@ int overlapped_bonded_set_params(int bond_type, OverlappedBondedInteraction over
   input_noverlaps = size;
 
   /* allocate overlapped funciton parameter arrays */
-  input_para_a = (double*)Utils::malloc(size*sizeof(double));
-  input_para_b = (double*)Utils::malloc(size*sizeof(double));
-  input_para_c = (double*)Utils::malloc(size*sizeof(double));
+  input_para_a = std::vector<double>(size);
+  input_para_b = std::vector<double>(size);
+  input_para_c = std::vector<double>(size);
 
    /* Read in the overlapped funciton parameter data */
   for (i=0; i<size; i++) {
@@ -103,16 +103,16 @@ int overlapped_bonded_set_params(int bond_type, OverlappedBondedInteraction over
   switch(overlap_type){
   case OVERLAP_BOND_LENGTH:
     bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::OverlapBondLength>
-		     (input_filename, Bond::OverlappedBondedInteraction::OVERLAP_BOND_LENGTH, 
-		      input_maxval, input_noverlaps, input_para_a, input_para_b, input_para_c));
+		     (input_filename, input_maxval, input_noverlaps, input_para_a, input_para_b,
+		      input_para_c));
   case OVERLAP_BOND_ANGLE:
     bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::OverlapBondAngle>
-		     (input_filename, Bond::OverlappedBondedInteraction::OVERLAP_BOND_ANGLE, 
-		      input_maxval, input_noverlaps, input_para_a, input_para_b, input_para_c));
+		     (input_filename, input_maxval, input_noverlaps, input_para_a, input_para_b,
+		      input_para_c));
   case OVERLAP_BOND_DIHEDRAL:
         bond_container.set_bond_by_type(bond_type, Utils::make_unique<Bond::OverlapBondDihedral>
-		     (input_filename, Bond::OverlappedBondedInteraction::OVERLAP_BOND_DIHEDRAL, 
-		      input_maxval, input_noverlaps, input_para_a, input_para_b, input_para_c));
+		     (input_filename, input_maxval, input_noverlaps, input_para_a, input_para_b,
+		      input_para_c));
 
   case OVERLAP_UNKNOWN:
     return 0;

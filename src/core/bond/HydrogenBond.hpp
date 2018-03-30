@@ -22,7 +22,20 @@ namespace Bond {
     //energy calculation
     int calc_bonded_four_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
 						Particle *p4, double *_energy) const override;
-
+    double &r0(){return m_r0;}
+    double &alpha(){return m_alpha;}
+    double &E0(){return m_E0;}
+    double &kd(){return m_kd;}
+    double &sigma1(){return m_sigma1;}
+    double &sigma2(){return m_sigma2;}
+    double &psi10(){return m_psi10;}
+    double &psi20(){return m_psi20;}
+    double &E0sb(){return m_E0sb;}
+    double &r0sb(){return m_r0sb;}
+    double &alphasb(){return m_alphasb;}
+    double &f2(){return m_f2;}
+    double &f3(){return m_f3;}  
+    
   private:  
     double m_r0;
     double m_alpha;

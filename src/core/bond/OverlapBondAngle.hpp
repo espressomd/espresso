@@ -7,9 +7,10 @@ namespace Bond {
   class OverlapBondAngle : public ThreeParticleBond, public Overlap {
   public:
     // constructor
-    OverlapBondAngle(char* filename, OverlappedBondedInteraction type, double maxval, 
-		      int noverlaps, double* para_a, double* para_b, double* para_c) : 
-      Overlap{filename, type, maxval, noverlaps, para_a, para_b, para_c} 
+    OverlapBondAngle(std::string filename, double maxval, int noverlaps,  std::vector<double> para_a,
+		     std::vector<double> para_b, std::vector<double> para_c) : 
+      Overlap{filename, OverlappedBondedInteraction::OVERLAP_BOND_ANGLE,maxval, noverlaps, para_a,
+	para_b, para_c} 
     {m_bondtype = BondType::BONDED_IA_OVERLAPPED;}
 
     //force *
@@ -17,8 +18,6 @@ namespace Bond {
     //energy *
     int calc_bonded_three_particle_energy(Particle *p1, Particle *p2, Particle *p3, 
 						 double *_energy) const override;
-
-    boost::any get_bond_parameters_from_bond() const override;
   };
 }
 #endif

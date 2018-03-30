@@ -21,6 +21,7 @@
 
 #include "Bonds.hpp"
 
+//pairbonds
 #include "Fene.hpp"
 #include "Harmonic.hpp"
 #include "HarmonicDumbbell.hpp"
@@ -30,12 +31,31 @@
 #include "SubtLj.hpp"
 #include "Umbrella.hpp"
 #include "TabulatedBondLength.hpp"
-//#include "OverlapBondLength.hpp"
+#include "OverlapBondLength.hpp"
 #include "ThermalizedBond.hpp"
+
+//3 particle bonds
+#include "OverlapBondAngle.hpp"
+#include "TabulatedBondAngle.hpp"
+#include "AngleHarmonic.hpp"
+#include "AngleCosine.hpp"
+#include "AngleCosSquare.hpp"
+#include "AngleDist.hpp"
+#include "IbmTriel.hpp"
+
+//4 particle bonds
+#include "OverlapBondDihedral.hpp"
+#include "TabulatedBondDihedral.hpp"
+#include "HydrogenBond.hpp"
+#include "Dihedral.hpp"
+#include "MembraneCollision.hpp"
+#include "OifLocalForces.hpp"
 
 namespace ScriptInterface {
   namespace Bond {
     void initialize() {
+
+      //pair bonds
       ScriptInterface::register_new<ScriptInterface::Bond::Bonds>("Bond::Bonds");
       ScriptInterface::register_new<ScriptInterface::Bond::Fene>("Bond::Fene");
       ScriptInterface::register_new<ScriptInterface::Bond::Harmonic>("Bond::Harmonic");
@@ -50,10 +70,40 @@ namespace ScriptInterface {
       ScriptInterface::register_new<ScriptInterface::Bond::Umbrella>("Bond::Umbrella");
       ScriptInterface::register_new<ScriptInterface::Bond::TabulatedBondLength>
 	("Bond::TabulatedBondLength");
-      //      ScriptInterface::register_new<ScriptInterface::Bond::OverlapBondLength>
-      //("Bond::OverlapBondLength");
+      ScriptInterface::register_new<ScriptInterface::Bond::OverlapBondLength>
+	("Bond::OverlapBondLength");
       ScriptInterface::register_new<ScriptInterface::Bond::ThermalizedBond>
 	("Bond::ThermalizedBond");
+
+      //3 partricle bonds
+      ScriptInterface::register_new<ScriptInterface::Bond::AngleHarmonic>
+	("Bond::AngleHarmonic");
+      ScriptInterface::register_new<ScriptInterface::Bond::AngleCosine>
+	("Bond::AngleCosine");
+      ScriptInterface::register_new<ScriptInterface::Bond::AngleCosSquare>
+	("Bond::AngleCosSquare");
+      ScriptInterface::register_new<ScriptInterface::Bond::OverlapBondAngle>
+	("Bond::OverlapBondAngle");
+      ScriptInterface::register_new<ScriptInterface::Bond::TabulatedBondAngle>
+	("Bond::TabulatedBondAngle");
+      ScriptInterface::register_new<ScriptInterface::Bond::AngleDist>
+	("Bond::AngleDist");
+      ScriptInterface::register_new<ScriptInterface::Bond::IbmTriel>
+	("Bond::IbmTriel");
+
+      //4 partricle bonds
+      ScriptInterface::register_new<ScriptInterface::Bond::HydrogenBond>
+	("Bond::HydrogenBond");
+      ScriptInterface::register_new<ScriptInterface::Bond::OverlapBondDihedral>
+	("Bond::OverlapBondDihedral");
+      ScriptInterface::register_new<ScriptInterface::Bond::TabulatedBondDihedral>
+	("Bond::TabulatedBondDihedral");
+      ScriptInterface::register_new<ScriptInterface::Bond::Dihedral>
+	("Bond::Dihedral");
+      ScriptInterface::register_new<ScriptInterface::Bond::MembraneCollision>
+	("Bond::MembraneCollision");
+      ScriptInterface::register_new<ScriptInterface::Bond::OifLocalForces>
+	("Bond::OifLocalForces");
     }
     
   } /* namespace Shapes */

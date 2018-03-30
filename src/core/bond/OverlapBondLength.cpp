@@ -15,7 +15,7 @@
     Needs feature OVERLAPPED compiled in (see \ref config.hpp).
 */
 int Bond::OverlapBondLength::calc_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], 
-						   double force[3]) const 
+						    double force[3]) const 
 {
 
   int i;
@@ -100,13 +100,4 @@ int Bond::OverlapBondLength::calc_bonded_pair_energy(Particle *p1, Particle *p2,
 
   return 0;
 
-}
-
-boost::any Bond::OverlapBondLength::get_bond_parameters_from_bond() const
-{
-
-  Overlap_bond_parameters params = {m_filename, OVERLAP_BOND_LENGTH, m_maxval, m_noverlaps,
-				    m_para_a, m_para_b, m_para_c};
-  return boost::any(params);
-  
 }

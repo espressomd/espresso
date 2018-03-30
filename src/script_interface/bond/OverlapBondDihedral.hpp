@@ -1,9 +1,9 @@
-#ifndef SCRIPT_INTERFACE_BONDS_OVERLAP_BOND_LENGTH_HPP
-#define SCRIPT_INTERFACE_BONDS_OVERLAP_BOND_LENGTH_HPP
+#ifndef SCRIPT_INTERFACE_BONDS_OVERLAP_BOND_DIHEDRAL_HPP
+#define SCRIPT_INTERFACE_BONDS_OVERLAP_BOND_DIHEDRAL_HPP
 
 #include "Bond.hpp"
 
-#include "core/bond/OverlapBondLength.hpp"
+#include "core/bond/OverlapBondDihedral.hpp"
 #include "core/bond/OverlappedBondedInteraction.hpp"
 #include "get_value.hpp"
 
@@ -11,12 +11,12 @@
   
 namespace ScriptInterface {
 namespace Bond {
-class OverlapBondLength : public AutoParameters<Bond> {
-  using CoreBond = ::Bond::OverlapBondLength;
+class OverlapBondDihedral : public AutoParameters<Bond> {
+  using CoreBond = ::Bond::OverlapBondDihedral;
   std::shared_ptr<CoreBond> m_bond;
 
 public:
-  OverlapBondLength() {
+  OverlapBondDihedral() {
     add_parameters(
 		   {{"filename",
 			 [this](Variant const &v) {m_bond->filename() = get_value<std::string>(v);},

@@ -1,9 +1,9 @@
-#ifndef SCRIPT_INTERFACE_BONDS_TABULATED_BOND_LENGTH_HPP
-#define SCRIPT_INTERFACE_BONDS_TABULATED_BOND_LENGTH_HPP
+#ifndef SCRIPT_INTERFACE_BONDS_TABULATED_BOND_DIHEDRAL_HPP
+#define SCRIPT_INTERFACE_BONDS_TABULATED_BOND_DIHEDRAL_HPP
 
 #include "Bond.hpp"
 
-#include "core/bond/TabulatedBondLength.hpp"
+#include "core/bond/TabulatedBondDihedral.hpp"
 #include "core/TabulatedPotential.hpp"
 #include "get_value.hpp"
 
@@ -11,12 +11,12 @@
   
 namespace ScriptInterface {
 namespace Bond {
-class TabulatedBondLength : public AutoParameters<Bond> {
-  using CoreBond = ::Bond::TabulatedBondLength;
+class TabulatedBondDihedral : public AutoParameters<Bond> {
+  using CoreBond = ::Bond::TabulatedBondDihedral;
   std::shared_ptr<CoreBond> m_bond;
 
 public:
-  TabulatedBondLength() {
+  TabulatedBondDihedral() {
     add_parameters(
 		   {{"min",
 			 [this](Variant const &v) { m_bond->min() = get_value<double>(v); },

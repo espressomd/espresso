@@ -184,12 +184,3 @@ void Bond::OverlapBondDihedral::calc_dihedral_angle(Particle *p1, Particle *p2,
   if( scalar(aXb, c) < 0.0 ) *phi = (2.0*PI) - *phi;
 
 }
-
-boost::any Bond::OverlapBondDihedral::get_bond_parameters_from_bond() const
-{
-
-  Overlap_bond_parameters params = {m_filename, OVERLAP_BOND_DIHEDRAL, m_maxval, m_noverlaps,
-				    m_para_a, m_para_b, m_para_c};
-  return boost::any(params);
-  
-}

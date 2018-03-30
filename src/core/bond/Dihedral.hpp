@@ -27,6 +27,10 @@ namespace Bond {
 				 double force3[3], double force4[3]) const override;
 
     boost::any get_bond_parameters_from_bond() const override;
+
+    double &mult(){return m_mult;}
+    double &bend(){return m_bend;}
+    double &phase(){return m_phase;}
     
   private:  
     //internal function

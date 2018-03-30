@@ -26,6 +26,20 @@ namespace Bond {
     //reset params *
     int ResetParams( const double k1, const double l0);
 
+    double &a1(){return m_a1;}
+    double &a2(){return m_a2;}
+    double &b1(){return m_b1;}
+    double &b2(){return m_b2;}
+    double &l0(){return m_l0;}
+    double &lp0(){return m_lp0;}
+    double &sinPhi0(){return m_sinPhi0;}
+    double &cosPhi0(){return m_cosPhi0;}
+    double &area0(){return m_area0;}
+    double &maxdist(){return m_maxdist;}
+    double &elasticLaw(){return m_elasticLaw;}
+    double &k1(){return m_k1;}
+    double &k2(){return m_k2;}
+    
   private:
 
     // Internal function

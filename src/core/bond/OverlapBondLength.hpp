@@ -9,9 +9,10 @@ namespace Bond {
   class OverlapBondLength : public PairBond, public Overlap, public CutoffBond {
   public:
     // constructor
-    OverlapBondLength(char* filename, OverlappedBondedInteraction type, double maxval, 
-		      int noverlaps, double* para_a, double* para_b, double* para_c) :
-      Overlap{filename, type, maxval, noverlaps, para_a, para_b, para_c},
+    OverlapBondLength(std::string filename, double maxval, int noverlaps, std::vector<double> para_a,
+		      std::vector<double> para_b, std::vector<double> para_c) :
+      Overlap{filename, OverlappedBondedInteraction::OVERLAP_BOND_LENGTH, maxval, noverlaps,
+	para_a, para_b, para_c},
       CutoffBond(maxval)
     {m_bondtype = BondType::BONDED_IA_OVERLAPPED;}
 
@@ -20,8 +21,6 @@ namespace Bond {
 			      double force[3]) const override;
     int calc_bonded_pair_energy(Particle *p1, Particle *p2, 
 			       double dx[3], double *_energy) const override;
-
-    boost::any get_bond_parameters_from_bond() const override;
 
     
     
