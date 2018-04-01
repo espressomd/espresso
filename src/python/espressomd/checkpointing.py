@@ -195,7 +195,7 @@ class Checkpointing(object):
             checkpoint_index = self.get_last_checkpoint_index()
 
         filename = os.path.join(self.checkpoint_dir, "{}.checkpoint".format(checkpoint_index))
-        checkpoint_data = pickle.load(open(filename))
+        checkpoint_data = pickle.load(open(filename,"rb"))
 
         for key in checkpoint_data:
             self.setattr_submodule(self.calling_module, key, checkpoint_data[key])

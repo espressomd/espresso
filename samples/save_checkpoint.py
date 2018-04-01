@@ -3,8 +3,12 @@ from espressomd import electrostatics
 from espressomd import checkpointing
 
 import numpy as np
+import signal
 
 checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")
+
+if not len(checkpoint.checkpoint_signals):
+    checkpoint.register_signal(signal.SIGINT)
 
 # test for user data
 myvar = "some script variable"
