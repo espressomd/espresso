@@ -2,7 +2,7 @@ from __future__ import print_function
 import sys
 import time
 import espressomd
-from espressomd.electrostatics import P3M, P3MGPU
+from espressomd.electrostatics import P3M
 from espressomd.interactions import ThermalizedBond, HarmonicBond
 import os
 import numpy as np
@@ -206,6 +206,7 @@ if not args.drude:
 
 #ELECTROSTATICS
 if args.gpup3m:
+    from espressomd.electrostatics import P3MGPU
     print("\n-->Tune P3M GPU")
     p3m=P3MGPU(prefactor = coulomb_prefactor, accuracy=1e-3)
 else:
@@ -233,12 +234,12 @@ if args.drude:
     drude_helpers.setup_and_add_drude_exclusion_bonds(system)
 
     if args.thole:
-    	print("-->Adding Thole interactions")
+        print("-->Adding Thole interactions")
         drude_helpers.add_all_thole(system)
 
     if args.intra_ex:
         #SETUP BONDS ONCE
-    	print("-->Adding intramolecular exclusions")
+        print("-->Adding intramolecular exclusions")
         drude_helpers.setup_intramol_exclusion_bonds(system, [types["BMIM_C1_D"], types["BMIM_C2_D"], types["BMIM_C3_D"]], [types["BMIM_C1"], types["BMIM_C2"], types["BMIM_C3"]], [charges["BMIM_C1"], charges["BMIM_C2"], charges["BMIM_C3"]])
 
         #ADD SR EX BONDS PER MOLECULE
