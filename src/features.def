@@ -62,7 +62,6 @@ VIRTUAL_SITES
 
 /* DPD features */
 DPD
-TUNABLE_SLIP                    requires EXPERIMENTAL_FEATURES
 
 /* Lattice-Boltzmann features */
 LB
