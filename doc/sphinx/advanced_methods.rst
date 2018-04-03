@@ -586,8 +586,7 @@ Available commands
 
 In order to use the object-in-fluid (OIF) commands and work with
 immersed objects, the following features need to be compiled in:
-``ASS, \ \verb EXTERNAL_FORCES . We do not specifically require \verb LB, \ \verb LB_BOUNDARIES, \ \verb CONSTRAINTS, \ \verb SOFT_SPHERE, \ \verb ``\ EMBRANE\_COLLISION,
- ``IF_L``\ CAL\_FORCES,  ``IF_GL``\ BAL\_FORCES.  They are most likely
+``ASS, \ \verb EXTERNAL_FORCES . We do not specifically require \verb LB, \ \verb LB_BOUNDARIES, \ \verb CONSTRAINTS, \ \verb SOFT_SPHERE, \ \verb ``\ EMBRANE\_COLLISION, ``IF_L``\ CAL\_FORCES,  ``IF_GL``\ BAL\_FORCES.  They are most likely
 to be used (for objects immersed in fluid and interacting with
 boundaries and each other), but they are not necessary for the following
 commands. For up-to-date overview of available oif commands see the OIF
