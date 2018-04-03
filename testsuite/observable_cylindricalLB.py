@@ -76,6 +76,7 @@ class TestCylindricalLBObservable(ut.TestCase):
         self.system.part.add(pos=self.positions)
 
     def set_fluid_velocity(self):
+        del self.positions[:]
         # Choose the cartesian velocities such that each particle gets the same
         # v_r, v_phi and v_z, respectively.
         self.v_r = .75
@@ -198,7 +199,6 @@ class TestCylindricalLBObservable(ut.TestCase):
     
     def LB_velocity_profile_test(self):
         self.set_fluid_velocity_on_all_nodes()
-        self.set_particles()
         # Set up the Observable.
         local_params = self.params.copy()
         del local_params['ids']
@@ -244,11 +244,13 @@ class TestCylindricalLBObservable(ut.TestCase):
         self.LB_fluxdensity_profile_test()
         self.LB_velocity_profile_at_particle_positions_test()
         self.LB_velocity_profile_test()
-        self.system.actors.remove(self.lbf_gpu)
+        self.system.actors.remove(self.lbf)
         self.lbf = self.lbf_cpu
         self.system.actors.add(self.lbf)
+        self.LB_fluxdensity_profile_test()
         self.LB_velocity_profile_test()
-        self.system.actors.remove(self.lbf_cpu)
+        self.LB_velocity_profile_at_particle_positions_test()
+        self.system.actors.remove(self.lbf)
 
     def test_y_axis(self):
         self.params['axis'] = 'y'
@@ -257,10 +259,12 @@ class TestCylindricalLBObservable(ut.TestCase):
         self.LB_fluxdensity_profile_test()
         self.LB_velocity_profile_at_particle_positions_test()
         self.LB_velocity_profile_test()
-        self.system.actors.remove(self.lbf_gpu)
+        self.system.actors.remove(self.lbf)
         self.lbf = self.lbf_cpu
         self.system.actors.add(self.lbf)
+        self.LB_fluxdensity_profile_test()
         self.LB_velocity_profile_test()
+        self.LB_velocity_profile_at_particle_positions_test()
         self.system.actors.remove(self.lbf)
 
     def test_z_axis(self):
@@ -273,7 +277,9 @@ class TestCylindricalLBObservable(ut.TestCase):
         self.system.actors.remove(self.lbf)
         self.lbf = self.lbf_cpu
         self.system.actors.add(self.lbf)
+        self.LB_fluxdensity_profile_test()
         self.LB_velocity_profile_test()
+        self.LB_velocity_profile_at_particle_positions_test()
         self.system.actors.remove(self.lbf)
 
 if __name__ == "__main__":
