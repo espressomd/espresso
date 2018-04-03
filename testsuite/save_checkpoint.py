@@ -4,20 +4,14 @@ import espressomd.virtual_sites
 
 checkpoint = espressomd.checkpointing.Checkpointing(checkpoint_id="mycheckpoint", checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
 
-skin = 0.4
-checkpoint.register("skin")
-
-time_step = 0.01
-checkpoint.register("time_step")
-
-min_global_cut = 2.0
-checkpoint.register("min_global_cut")
-
 system = espressomd.System(box_l=[10.0, 10.0, 10.0])
-system.cell_system.skin = skin
-system.time_step = time_step
-system.min_global_cut = min_global_cut
 checkpoint.register("system")
+system.cell_system.skin = 0.4
+system.time_step = 0.01
+system.min_global_cut = 2.0
+checkpoint.register("system.time_step")
+checkpoint.register("system.cell_system")
+checkpoint.register("system.min_global_cut")
 
 system.part.add(pos=[1.0]*3)
 system.part.add(pos=[1.0, 1.0, 2.0])

@@ -17,14 +17,11 @@ class CheckpointTest(ut.TestCase):
         checkpoint = espressomd.checkpointing.Checkpointing(checkpoint_id="mycheckpoint", checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
         checkpoint.load(0)
         system = espressomd.System(box_l=[10.0, 10.0, 10.0])
-        system.cell_system.skin = skin
-        system.time_step = time_step
-        system.min_global_cut = min_global_cut
 
     def test_variables(self):
-        self.assertEqual(skin, 0.4)
-        self.assertEqual(time_step, 0.01)
-        self.assertEqual(min_global_cut, 2.0)
+        self.assertEqual(system.cell_system.skin, 0.4)
+        self.assertEqual(system.time_step, 0.01)
+        self.assertEqual(system.min_global_cut, 2.0)
 
     def test_part(self):
         np.testing.assert_array_equal(np.copy(system.part[0].pos), np.array([1.0, 1.0, 1.0]))
