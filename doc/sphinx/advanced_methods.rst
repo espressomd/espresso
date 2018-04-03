@@ -316,8 +316,7 @@ University of Bayreuth if you plan to use this feature.
 This section describes an alternative way to include soft elastic
 objects somewhat different from the previous chapter. In the Immersed
 Boundary Method (IBM), soft particles are considered as an infinitely
-thin shell filled with liquid (see e.g.
- :cite:`Peskin2002,Crowl2010,KruegerThesis`). When the
+thin shell filled with liquid (see e.g. :cite:`Peskin2002,Crowl2010,KruegerThesis`). When the
 shell is deformed by an external flow it responds by elastic restoring
 forces which are transmitted into the fluid. In the present case, the
 inner and outer liquid are of the same type and are simulated using
