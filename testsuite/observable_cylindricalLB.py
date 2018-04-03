@@ -38,13 +38,10 @@ class TestCylindricalLBObservable(ut.TestCase):
 
     @classmethod
     def setUpClass(self):
-        self.lbf = espressomd.lb.LBFluidGPU(agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01)
+        self.lbf_gpu = espressomd.lb.LBFluidGPU(agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01)
+        self.lbf_cpu = espressomd.lb.LBFluid(agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01)
     
-    def setUp(self):
-        self.system.actors.add(self.lbf)
-
     def tearDown(self):
-        self.system.actors.remove(self.lbf)
         del self.positions[:]
 
     def swap_axis(self, arr, axis):
@@ -242,22 +239,42 @@ class TestCylindricalLBObservable(ut.TestCase):
 
     def test_x_axis(self):
         self.params['axis'] = 'x'
+        self.lbf = self.lbf_gpu
+        self.system.actors.add(self.lbf)
         self.LB_fluxdensity_profile_test()
         self.LB_velocity_profile_at_particle_positions_test()
         self.LB_velocity_profile_test()
+        self.system.actors.remove(self.lbf_gpu)
+        self.lbf = self.lbf_cpu
+        self.system.actors.add(self.lbf)
+        self.LB_velocity_profile_test()
+        self.system.actors.remove(self.lbf_cpu)
 
     def test_y_axis(self):
         self.params['axis'] = 'y'
+        self.lbf = self.lbf_gpu
+        self.system.actors.add(self.lbf)
         self.LB_fluxdensity_profile_test()
         self.LB_velocity_profile_at_particle_positions_test()
         self.LB_velocity_profile_test()
+        self.system.actors.remove(self.lbf_gpu)
+        self.lbf = self.lbf_cpu
+        self.system.actors.add(self.lbf)
+        self.LB_velocity_profile_test()
+        self.system.actors.remove(self.lbf)
 
     def test_z_axis(self):
         self.params['axis'] = 'z'
+        self.lbf = self.lbf_gpu
+        self.system.actors.add(self.lbf)
         self.LB_fluxdensity_profile_test()
         self.LB_velocity_profile_at_particle_positions_test()
         self.LB_velocity_profile_test()
-
+        self.system.actors.remove(self.lbf)
+        self.lbf = self.lbf_cpu
+        self.system.actors.add(self.lbf)
+        self.LB_velocity_profile_test()
+        self.system.actors.remove(self.lbf)
 
 if __name__ == "__main__":
     suite = ut.TestSuite()
