@@ -63,7 +63,7 @@ operator()(PartCfg &partCfg) const {
       lb_lbfluid_get_interpolated_velocity(pos_tmp, &(velocities[ind + 0]));
     }
   } else {
-    throw std::runtime_error("Either CPU LB or GPU LB has to be active for CylindricalLBVelocityProfile to work.");
+    throw std::runtime_error("Either CPU LB or GPU LB has to be active for this observables to work.");
   }
 #endif
   for (auto &p : folded_positions)
