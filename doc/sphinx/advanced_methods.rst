@@ -396,42 +396,63 @@ ibm\_triel, ibm\_tribend and ibm\_volCons:
 
 Object-in-fluid
 ---------------
+If you plan to use this feature, please contact the Cell-in-fluid Research Group at the
+University of Zilina:
+
+| ivan.cimrak@fri.uniza.sk or iveta.jancigova@fri.uniza.sk.
+
+  If using this module, please cite :cite:`Cimrak2014` (Bibtex key Cimrak2014 in doc/sphinx/zref.bib) and :cite:`Cimrak2012` (Bibtex key Cimrak2012 in doc/sphinx/zref.bib)
 
 | This documentation introduces the features of module Object-in-fluid
-  (OIF). Even though was not primarily intended to work with closed
+  (OIF). Even though ESPResSo was not primarily intended to work with closed
   objects, it is a flexible package and appears very suitable when one
   wants to model closed objects with elastic properties, especially if
   they are immersed in a moving fluid. Here we describe the module
-  itself, offer some additional information to get you started with and
+  itself and offer some additional information to get you started with. Additionally, we 
   provide a step by step tutorial that will show you how to use this
   module.
   
 | The OIF module was developed for simulations of red blood cells
   flowing through microfluidic devices and therefore the elasticity
   features were designed with this application in mind. However, they
-  are completely tunable and can be modified easily to allow the user
+  are completely tunable and can be modified easily to allow the user to
   model any elastic object moving in fluid flow.
   
-  If using this module, please cite :cite:`Cimrak2014` (Bibtex key Cimrak2014 in doc/sphinx/zref.bib) and :cite:`Cimrak2012` (Bibtex key Cimrak2012 in doc/sphinx/zref.bib)
-  
-| If you still have questions after reading this document, please
-  contact
-| ivan.cimrak@fri.uniza.sk or iveta.jancigova@fri.uniza.sk.
+
+   
 
 |image1| |image2| |image3|
 
 
-Configuring 
-~~~~~~~~~~~
 
-| To enable various features of |es|, one has to modify myconfig.hpp file by
-  uncommenting the desired features. This file should be placed into the
-  build directory before running cmake.
+Triangulations of elastic objects
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+| To create an elastic object, we need a triangulation of the surface of
+  this object. Sample triangulations are provided at
+  http://cell-in-fluid.kst.fri.uniza.sk/en/content/oif-espresso. User
+  can create his/her own meshes, for example in gmsh, salome or any other meshing software. The
+  required format is as follows:
   
-| Note: Do not change the myconfig\_default.hpp in the source directory,
-  since this file is created automatically by and is used only if no
-  other myconfig file is found.
+| The file ``some_nodes.dat`` should contain triplets of floats (one
+  triplet per line), where each triplet represents the :math:`x, y` and
+  :math:`z` coordinates of one node of the surface triangulation. No
+  additional information should be written in this file, so this means
+  that the number of lines equals to the number of surface nodes. The
+  coordinates of the nodes should be specified in such a way that the
+  approximate center of mass of the object corresponds to the origin
+  (0,0,0). This is for convenience when placing the objects at desired
+  locations later.
+  
+| The file ``some_triangles.dat`` should also contain triplets of
+  numbers, this time integers. These integers refer to the IDs of the nodes in
+  the ``some_nodes.dat`` file and specify which three nodes form a
+  triangle. Please, note that the nodes’ IDs start at 0, i.e.
+  the node written in the first line of ``some_nodes.dat`` has ID 0, the
+  node in the second line, has ID 1, etc.
 
+Description of sample script
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note:: 
 
@@ -441,44 +462,7 @@ Configuring
     MASS, CONSTRAINTS, OIF_LOCAL_FORCES, 
     OIF_GLOBAL_FORCES, SOFT_SPHERE, MEMBRANE_COLLISION`
 
-
-To check, what features are currently compiled into your , use the
-command::
-
-    code_info.features()
-
-in the simulation script.
-
-Triangulations of elastic objects
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-| To create an elastic object, we need a triangulation of the surface of
-  this object. Sample triangulations are provided at
-  http://cell-in-fluid.kst.fri.uniza.sk/en/content/oif-espresso. User
-  can create her own in gmsh, salome or any other meshing software. The
-  required format is as follows:
-  
-| The file ``some_nodes.dat`` should contain triplets of floats (one
-  triplet per line), where each triplet represents the :math:`x, y` and
-  :math:`z` coordinates of one node of the surface triangulation. No
-  additional information should be written in this file, so this means
-  that the number of lines equals the number of surface nodes. The
-  coordinates of the nodes should be specified in such a way that the
-  approximate center of mass of the object corresponds to the origin
-  (0,0,0). This is for convenience when placing the objects at desired
-  locations later.
-  
-| The file ``some_triangles.dat`` should also contain triplets of
-  numbers, this time integers. These refer to the IDs of the nodes in
-  the ``some_nodes.dat`` file and specify which three nodes form a
-  triangle together. Please, note that the nodes’ IDs start at 0, i.e.
-  the node written in the first line of ``some_nodes.dat`` has ID 0, the
-  node in the second line, has ID 1, etc.
-
-Description of sample script
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The script described in this section is available at
+The script described in this section is available in samples/object-in-fluid/two-cells.py folder and also at
 http://cell-in-fluid.kst.fri.uniza.sk/en/content/oif-espresso. 
 
 In the first few lines, the script includes several imports related to
@@ -489,7 +473,7 @@ have::
     system.time_step = 0.1 
     system.cell_system.skin = 0.2
 
-Here we set up an system and its most important parameters. The ``skin``
+Here we set up a system and its most important parameters. The ``skin``
 depth tunes the system’s performance. The one important thing a user needs to know
 about it is that it has to be strictly less than half the grid size.
 
@@ -545,9 +529,9 @@ multiple lines.
 
     cell = OifCell(cellType=cell_type, partType=0, origin=[5.0,5.0,3.0])
 
-Next, an actual object is created and its initial position saved to a
+Next, an actual object is created and its initial position is saved to a
 *.vtk* file (the directory ``output/sim1`` needs to exist before the
-script is run). Each object has to have a unique ID, specified using the
+script is executed). Each object has to have a unique ID, specified using the
 keyword ``partType``. The IDs have to start at 0 and increase
 consecutively. The other two mandatory arguments are ``cellType`` and
 ``origin``. ``cellType`` specifies which previously defined cell type
@@ -576,10 +560,6 @@ add momentum to fluid is by specifying the velocity on the boundaries.
 
 
 Here we achieved the movement of the fluid by applying external force.
-It can also be done by setting the velocity of the individual
-``lbnodes`` on one side of the channel and letting the flow develop, but
-this is not a very convenient setup because it has to be done at every
-integration step and the tcl-C communication slows down the computation.
 Another alternative is to set up a wall/rhomboid with velocity. This
 does not mean that the physical boundary is moving, but rather that it
 transfers specified momentum onto the fluid.
@@ -721,8 +701,7 @@ should get a message about it.
 Running the simulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Make sure that the files *oif\_classes.py, oif\_utils.py* are located in
-the same directory as your simulation script. The script can then be run
+The script can be executed
 in terminal using
 
 ::
@@ -754,7 +733,7 @@ or data files for further processing and analysis.
 
 
 Visualization in ParaView
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 | For visualization we suggest the free software ParaView. All .vtk
   files (boundaries, fluid, objects at all time steps) can be loaded at
@@ -803,12 +782,12 @@ our cells we use the following format:
     3 p390 p391 p392
 
 | where the cell has 393 surface nodes (particles). After initial
-  specification, comes the list of points, with x, y, z coordinates for
-  each. Then we write the triangulation, since that is how is our
-  surface specified. We need to know the number of triangles
+  specification, the list of points is present, with x, y, z coordinates for
+  each. Then we write the triangulation, since that is how our
+  surface is specified. We need to know the number of triangles
   (``num_triang``) and the each line/triangle is specified by 4 numbers
-  (so we are telling paraview to expect 4 *  ``um_triang``  numbers in
-  the following lines. Each lines begins with 3 (which stands for a
+  (so we are telling paraview to expect 4 *  ``num_triang``  numbers in
+  the following lines. Each line begins with 3 (which stands for a
   triangle) and three point IDs that tell us which three points (from
   the order above) form this specific triangle.
 

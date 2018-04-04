@@ -298,8 +298,7 @@ Object-in-fluid interactions
 ----------------------------
 
 Please cite :cite:`Cimrak2014` when using the interactions in this section in order to
-simulate extended objects embedded in a LB fluid. For more details also
-see the documentation at http://cell-in-fluid.fri.uniza.sk/en/content/oif-espresso.
+simulate extended objects embedded in a LB fluid. For more details we encourage the dedicated OIF documentation available at http://cell-in-fluid.fri.uniza.sk/en/content/oif-espresso.
 
 The following interactions are implemented in order to mimic the
 mechanics of elastic or rigid objects immersed in the LB fluid flow.
