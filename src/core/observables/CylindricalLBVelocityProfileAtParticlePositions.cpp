@@ -50,6 +50,7 @@ operator()(PartCfg &partCfg) const {
     ppos[3 * ind + 2] = (*it)[2];
   }
   std::vector<double> velocities(3 * ids().size());
+#if defined(LB) || defined(LB_GPU)
   if (lattice_switch & LATTICE_LB_GPU) {
     lb_lbfluid_get_interpolated_velocity_at_positions(
         ppos.data(), velocities.data(), ids().size());
@@ -63,7 +64,7 @@ operator()(PartCfg &partCfg) const {
   } else {
     throw std::runtime_error("Either CPU LB or GPU LB has to be active for CylindricalLBVelocityProfile to work.");
   }
-
+#endif
   for (auto &p : folded_positions)
     p -= center;
   for (int ind = 0; ind < ids().size(); ++ind) {
