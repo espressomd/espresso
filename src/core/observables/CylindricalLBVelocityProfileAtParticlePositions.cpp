@@ -50,21 +50,23 @@ operator()(PartCfg &partCfg) const {
     ppos[3 * ind + 2] = (*it)[2];
   }
   std::vector<double> velocities(3 * ids().size());
-#if defined(LB) || defined(LB_GPU)
   if (lattice_switch & LATTICE_LB_GPU) {
+#if defined(LB_GPU)
     lb_lbfluid_get_interpolated_velocity_at_positions(
         ppos.data(), velocities.data(), ids().size());
+#endif
   } else if (lattice_switch & LATTICE_LB) {
+#if defined(LB)
     for (size_t ind=0; ind < ppos.size(); ind +=3) {
       double pos_tmp[3] = {ppos[ind + 0],
                            ppos[ind + 1],
                            ppos[ind + 2]};
       lb_lbfluid_get_interpolated_velocity(pos_tmp, &(velocities[ind + 0]));
     }
+#endif
   } else {
     throw std::runtime_error("Either CPU LB or GPU LB has to be active for this observable to work.");
   }
-#endif
   for (auto &p : folded_positions)
     p -= center;
   for (int ind = 0; ind < ids().size(); ++ind) {
