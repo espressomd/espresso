@@ -15,6 +15,7 @@ system.cell_system.skin = 0.4
 
 lb_fluid = espressomd.lb.LBFluidGPU(agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01, ext_force=[0, 0, 0.15])
 system.actors.add(lb_fluid)
+system.thermostat.set_lb(kT=1.0)
 fluid_obs = espressomd.observables.CylindricalLBVelocityProfile(
         center = [5.0, 5.0, 0.0],
         axis = 'z',
@@ -38,12 +39,12 @@ cylinder_shape = espressomd.shapes.Cylinder(
         length = 20.0)
 cylinder_boundary = espressomd.lbboundaries.LBBoundary(shape=cylinder_shape)
 system.lbboundaries.add(cylinder_boundary)
-system.integrator.run(1000)
+system.integrator.run(5000)
 
 
 accumulator = espressomd.accumulators.Accumulator(obs=fluid_obs)
 system.auto_update_accumulators.add(accumulator)
-system.integrator.run(500)
+system.integrator.run(5000)
 
 lb_fluid_profile = accumulator.get_mean()
 lb_fluid_profile = np.reshape(lb_fluid_profile, (100, 1, 1, 3))

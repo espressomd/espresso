@@ -81,7 +81,7 @@ operator()(PartCfg &partCfg) const {
   auto hist_tmp = histogram.get_histogram();
   auto tot_count = histogram.get_tot_count();
   for (size_t ind = 0; ind < hist_tmp.size(); ++ind) {
-    if (hist_tmp[ind] > 0.0) {
+    if (tot_count[ind] > 0.0) {
       hist_tmp[ind] /= tot_count[ind];
     }
   }

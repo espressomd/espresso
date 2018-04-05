@@ -71,7 +71,7 @@ operator()(PartCfg &partCfg) const {
     if (tot_count[ind] == 0 and not allow_empty_bins)
       throw std::runtime_error("Decrease sampling delta(s), bin without hit "
                                "found!");
-    if (hist_tmp[ind] > 0.0) {
+    if (tot_count[ind] > 0) {
       hist_tmp[ind] /= tot_count[ind];
     }
   }
