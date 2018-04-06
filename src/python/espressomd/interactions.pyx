@@ -98,6 +98,12 @@ cdef class NonBondedInteraction(object):
     def __str__(self):
         return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
 
+    def __getstate__(self):
+        return self.get_params()
+
+    def __setstate__(self, p):
+        self.set_params(p)
+
     def set_params(self, **p):
         """Update the given parameters.
 

@@ -145,6 +145,12 @@ cdef class System(object):
         odict = {}
         for property_ in setable_properties:
             odict[property_] = System.__getattribute__(self, property_)
+        odict['part'] = System.__getattribute__(self, "part")
+        odict['cell_system'] = System.__getattribute__(self, "cell_system")
+        odict['thermostat'] = System.__getattribute__(self, "thermostat")
+        odict['non_bonded_inter'] = System.__getattribute__(self, "non_bonded_inter")
+        IF VIRTUAL_SITES:
+            odict['_active_virtual_sites_handle'] = System.__getattribute__(self, "_active_virtual_sites_handle")
         return odict
 
     def __setstate__(self, params):
