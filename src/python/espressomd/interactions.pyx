@@ -1510,12 +1510,30 @@ IF GAUSSIAN == 1:
             return "eps", "sig", "cutoff"
 
 
+class _NonBondedDummy(NonBondedInteraction):
+    def _get_params_from_es_core(self):
+        pass
+    def _set_params_in_es_core(self):
+        pass
+    def default_params(self):
+        pass
+    def is_active(self):
+        pass
+    def type_name(self):
+        pass
+    def valid_keys(self):
+        pass
+    def required_keys(self):
+        pass
+
+
 class NonBondedInteractionHandle(object):
     """
     Provides access to all Non-bonded interactions between
     two particle types.
 
     """
+    dummy = _NonBondedDummy(-1, -1)
 
     type1 = -1
     type2 = -1
@@ -1537,7 +1555,6 @@ class NonBondedInteractionHandle(object):
     dpd = None
     hat = None
     thole = None
-
 
     def __init__(self, _type1, _type2):
         """Takes two particle types as argument"""
@@ -1602,7 +1619,7 @@ cdef class NonBondedInteractions(object):
     def __getstate__(self):
         # contains info about ALL nonbonded interactions
         odict = NonBondedInteractionHandle(-1, -
-                                           1).lennard_jones.user_interactions
+                                           1).dummy.user_interactions
         return odict
 
     def __setstate__(self, odict):

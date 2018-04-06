@@ -32,6 +32,8 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(system.thermostat.get_state()[0]['kT'], 1.0)
         np.testing.assert_array_equal(system.thermostat.get_state()[0]['gamma'], np.array([2.0, 2.0, 2.0]))
 
+    @ut.skipIf(not espressomd.has_features(['LENNARD_JONES']),
+               "Cannot test for Lennard-Jones checkpointing because feature not compiled in.")
     def test_non_bonded_inter(self):
         state = system.non_bonded_inter.__getstate__()[0][0]
         reference = {'shift': 0.1, 'sigma': 1.3, 'epsilon': 1.2, 'cutoff': 2.0, 'type_name': 'LennardJones', 'offset': 0.0, 'min': 0.0}
