@@ -98,8 +98,6 @@ void on_program_start() {
   /* initially go for domain decomposition */
   topology_init(CELL_STRUCTURE_DOMDEC, &local_cells);
 
-  ghost_init();
-
 #ifdef P3M
   p3m_pre_init();
 #endif
