@@ -17,6 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, absolute_import
+
+from libcpp.string cimport string
+
 include "myconfig.pxi"
 from . import utils
 from espressomd.utils import is_valid_type
@@ -1510,30 +1513,12 @@ IF GAUSSIAN == 1:
             return "eps", "sig", "cutoff"
 
 
-class _NonBondedDummy(NonBondedInteraction):
-    def _get_params_from_es_core(self):
-        pass
-    def _set_params_in_es_core(self):
-        pass
-    def default_params(self):
-        pass
-    def is_active(self):
-        pass
-    def type_name(self):
-        pass
-    def valid_keys(self):
-        pass
-    def required_keys(self):
-        pass
-
-
 class NonBondedInteractionHandle(object):
     """
     Provides access to all Non-bonded interactions between
     two particle types.
 
     """
-    dummy = _NonBondedDummy(-1, -1)
 
     type1 = -1
     type2 = -1
@@ -1599,6 +1584,7 @@ class NonBondedInteractionHandle(object):
         IF THOLE:
             self.thole = TholeInteraction(_type1, _type2)
 
+
 cdef class NonBondedInteractions(object):
     """
     Access to non-bonded interaction parameters via [i,j], where i,j are particle
@@ -1617,29 +1603,13 @@ cdef class NonBondedInteractions(object):
         return NonBondedInteractionHandle(key[0], key[1])
 
     def __getstate__(self):
-        # contains info about ALL nonbonded interactions
-        odict = NonBondedInteractionHandle(-1, -
-                                           1).dummy.user_interactions
-        return odict
+        cdef string state
+        state = ia_params_get_state()
+        return state
 
     def __setstate__(self, odict):
-        for _type1 in odict:
-            for _type2 in odict[_type1]:
-                attrs = dir(NonBondedInteractionHandle(_type1, _type2))
-                for a in attrs:
-                    attr_ref = getattr(
-                        NonBondedInteractionHandle(_type1, _type2), a)
-                    type_name_ref = getattr(attr_ref, "type_name", None)
-                    if callable(type_name_ref) and type_name_ref() == odict[_type1][_type2]['type_name']:
-                        # found nonbonded inter, e.g.
-                        # LennardJonesInteraction(_type1, _type2)
-                        inter_instance = attr_ref
-                        break
-                    else:
-                        continue
-
-                del odict[_type1][_type2]['type_name']
-                inter_instance.set_params(**odict[_type1][_type2])
+        cdef string odict_string  = odict
+        ia_params_set_state(odict_string)
 
 
 cdef class BondedInteraction(object):
