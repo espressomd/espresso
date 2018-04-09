@@ -149,6 +149,8 @@ cdef class System(object):
         odict['cell_system'] = System.__getattribute__(self, "cell_system")
         odict['thermostat'] = System.__getattribute__(self, "thermostat")
         odict['non_bonded_inter'] = System.__getattribute__(self, "non_bonded_inter")
+        odict['integrator'] = System.__getattribute__(self, "integrator")
+        odict['analysis'] = System.__getattribute__(self, "analysis")
         IF VIRTUAL_SITES:
             odict['_active_virtual_sites_handle'] = System.__getattribute__(self, "_active_virtual_sites_handle")
         return odict
