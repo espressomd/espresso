@@ -35,9 +35,9 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf(not espressomd.has_features(['LENNARD_JONES']),
                "Cannot test for Lennard-Jones checkpointing because feature not compiled in.")
     def test_non_bonded_inter(self):
-        state = system.non_bonded_inter.__getstate__()[0][0]
-        reference = {'shift': 0.1, 'sigma': 1.3, 'epsilon': 1.2, 'cutoff': 2.0, 'type_name': 'LennardJones', 'offset': 0.0, 'min': 0.0}
-        self.assertEqual(len(set(state.items()) & set(reference.items())), 7)
+        state = system.non_bonded_inter[0, 0].lennard_jones._get_params_from_es_core()
+        reference = {'shift': 0.1, 'sigma': 1.3, 'epsilon': 1.2, 'cutoff': 2.0, 'offset': 0.0, 'min': 0.0}
+        self.assertEqual(len(set(state.items()) & set(reference.items())), len(reference))
 
     @ut.skipIf(not espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']),
                "Cannot test for virtual site checkpointing because feature not compiled in.")
