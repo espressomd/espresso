@@ -150,8 +150,6 @@ cdef class System(object):
         odict['auto_update_correlators'] = System.__getattribute__(self, "auto_update_correlators")
         odict['bonded_inter'] = System.__getattribute__(self, "bonded_inter")
         odict['cell_system'] = System.__getattribute__(self, "cell_system")
-        IF COLLISION_DETECTION:
-            odict['collision_detection'] = System.__getattribute__(self, "collision_detection")
         odict['comfixed'] = System.__getattribute__(self, "comfixed")
         IF CONSTRAINTS:
             odict['constraints'] = System.__getattribute__(self, "constraints")
