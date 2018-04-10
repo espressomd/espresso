@@ -22,6 +22,7 @@ import unittest as ut
 import espressomd
 import numpy as np
 from time import time
+from itertools import product
 
 @ut.skipIf(not espressomd.has_features("DPD"),"Skipped because feature is disabled")
 class DPDThermostat(ut.TestCase):
@@ -274,6 +275,45 @@ class DPDThermostat(ut.TestCase):
         self.assertTrue(abs(s.part[1].f[1] + omega(0.5, 1.4)**2*gamma*v[1]) < 1e-11)
         self.assertTrue(abs(s.part[1].f[2] + omega(0.5, 1.4)**2*gamma*v[2]) < 1e-11)
 
+    def test_ghosts_have_v(self):
+        s=self.s
+        s.part.clear()
+
+        s.box_l = 3 * [10.]
+
+        r_cut=1.5
+        dx = 0.25 * r_cut
+
+        def f(i):
+            if i == 0:
+                return dx
+            else:
+                return 10. - dx
+
+        # Put a particle in every corner
+        for ind in product([0, 1], [0, 1], [0, 1]):
+            pos = [f(x) for x in ind]
+            v = ind
+            s.part.add(pos=pos, v=v)
+
+        gamma=1.0
+        s.thermostat.set_dpd(kT=0.0)
+        s.non_bonded_inter[0,0].dpd.set_params(
+            weight_function=0, gamma=gamma, r_cut=r_cut,
+            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=r_cut)
+
+        s.integrator.run(0)
+
+        id = 0
+        for ind in product([0, 1], [0, 1], [0, 1]):
+            for i in ind:
+                if ind[i] == 0:
+                    sgn = 1
+                else:
+                    sgn = -1
+
+                self.assertAlmostEqual(sgn*4.0, s.part[id].f[i])
+            id += 1
 
 if __name__ == "__main__":
     ut.main()
