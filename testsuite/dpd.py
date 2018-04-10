@@ -33,6 +33,7 @@ class DPDThermostat(ut.TestCase):
     s.time_step = 0.01
     s.cell_system.skin=0.4
     s.seed=range(s.cell_system.get_state()["n_nodes"])
+    np.random.seed(13)
 
     def single_component_maxwell(self,x1,x2,kT):
         """Integrate the probability density from x1 to x2 using the trapez rule"""
@@ -73,10 +74,10 @@ class DPDThermostat(ut.TestCase):
             weight_function=0, gamma=gamma, r_cut=1.5,
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
         s.integrator.run(100)
-        loops=1000
+        loops=250
         v_stored=np.zeros((N*loops,3))
         for i in range(loops):
-            s.integrator.run(5)
+            s.integrator.run(10)
             v_stored[i*N:(i+1)*N,:]=s.part[:].v
         v_minmax=5
         bins=5
@@ -104,10 +105,10 @@ class DPDThermostat(ut.TestCase):
             weight_function=0, gamma=gamma, r_cut=1.5,
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
         s.integrator.run(100)
-        loops=1000
+        loops=250
         v_stored=np.zeros((N*loops,3))
         for i in range(loops):
-            s.integrator.run(5)
+            s.integrator.run(10)
             v_stored[i*N:(i+1)*N,:]=s.part[:].v
         v_minmax=5
         bins=5
@@ -127,14 +128,14 @@ class DPDThermostat(ut.TestCase):
         s.non_bonded_inter[0,0].dpd.set_params(
             weight_function=0, gamma=gamma, r_cut=1.5,
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
-        s.integrator.run(100)
+        s.integrator.run(10)
 
         s.thermostat.turn_off()
 
         # Reset velocities
         s.part[:].v = [1.,2.,3.]
 
-        s.integrator.run(100)
+        s.integrator.run(10)
 
         # Check that there was neither noise nor friction
         for v in s.part[:].v:
@@ -147,10 +148,13 @@ class DPDThermostat(ut.TestCase):
         # Reset velocities for faster convergence
         s.part[:].v = [0.,0.,0.]
 
-        loops=1000
+        # Equilibrate
+        s.integrator.run(250)
+
+        loops=200
         v_stored=np.zeros((N*loops,3))
         for i in range(loops):
-            s.integrator.run(5)
+            s.integrator.run(10)
             v_stored[i*N:(i+1)*N,:]=s.part[:].v
         v_minmax=5
         bins=5
