@@ -1,5 +1,7 @@
 import numpy as np
 import math
+from espressomd.shapes import Rhomboid
+from espressomd.shapes import Cylinder
 
 small_epsilon = 0.000000001
 large_number = 10000000.0
@@ -371,24 +373,24 @@ def oif_calc_volume_force(kv, pA, pB, pC, V0, V):
     return f
 
 
-def output_vtk_rhomboid(corner, a, b, c, out_file):
+def output_vtk_rhomboid(rhom_shape, out_file):
     """
     Outputs the VTK files for visualisation of a rhomboid in e.g. Paraview.
     
     Parameters
     ----------
-    corner : list of :obj:`float`
-          3 floats specifying position of the corner
-    a : list of :obj:`float`
-          3 floats specifying first edga of the rhomboid
-    b : list of :obj:`float`
-          3 floats specifying second edga of the rhomboid
-    c : list of :obj:`float`
-          3 floats specifying third edga of the rhomboid
+    rhom_shape : :obj:`shape`
+          rhomboid shape
     out_file : :obj:`str`
           filename for the output
 
     """
+
+    corner = rhom_shape.corner
+    a = rhom_shape.a
+    b = rhom_shape.b
+    c = rhom_shape.c
+
     output_file = open(out_file, "w")
     output_file.write("# vtk DataFile Version 3.0\n")
     output_file.write("Data\n")
@@ -421,28 +423,27 @@ def output_vtk_rhomboid(corner, a, b, c, out_file):
     return 0
 
 
-def output_vtk_cylinder(center, axis, length, radius, n, out_file):
+def output_vtk_cylinder(cyl_shape, n, out_file):
     """
     Outputs the VTK files for visualisation of a cylinder in e.g. Paraview.
 
     Parameters
     ----------
-    center : list of :obj:`float`
-          3 floats specifying position of the center
-    axis : list of :obj:`float`
-          3 floats specifying the axis
-    length : :obj:`float`
-          half of the cylinder's height
-    radius : :obj:`float`
-          radius of cylinder
+    cyl_shape : :obj:`shape`
+          cylindrical shape
     n : :obj:`int`
           number of discretization sections
     out_file : :obj:`str`
           filename for the output
           
     """
-    # L is the half height of the cylinder
+    # length is the full height of the cylinder (note: used to be just half in the previous versions)
     # only vertical cylinders are supported for now, i.e. with normal (0.0, 0.0, 1.0)
+
+    axis = cyl_shape.axis
+    length = cyl_shape.length
+    radius = cyl_shape.radius
+    center = cyl_shape.center
 
     check_axis = True
     if axis[0]!=0.0:
@@ -456,11 +457,11 @@ def output_vtk_cylinder(center, axis, length, radius, n, out_file):
     axisZ = 1.0
 
     # setting points on perimeter
-    alpha = 2 * np.pi / n
+    alpha = 2 * pi / n
     points = 2 * n
 
     # shift center to the bottom circle
-    p1 = center - length * np.array(axis)
+    p1 = center - length * np.array(axis) / 2.0
 
     output_file = open(out_file, "w")
     output_file.write("# vtk DataFile Version 3.0\n")
@@ -468,30 +469,32 @@ def output_vtk_cylinder(center, axis, length, radius, n, out_file):
     output_file.write("ASCII\n")
     output_file.write("DATASET POLYDATA\n")
     output_file.write("POINTS " + str(points) + " float\n")
-    for i in range(0,n):
-        output_file.write(str(p1[0] + radius*np.cos(i*alpha)) + " " + str(p1[1] + radius*np.sin(i*alpha)) + " " +
-                          str(p1[2]) + "\n")
-    for i in range(0,n):
-        output_file.write(str(p1[0] + radius*np.cos(i*alpha)) + " " + str(p1[1] + radius*np.sin(i*alpha)) + " " +
-                          str(p1[2]+2*length*axisZ) + "\n")
-    output_file.write("POLYGONS " + str(n+2) + " " + str(5*n+(n+1)*2) + "\n")
+    for i in range(0, n):
+        output_file.write(
+            str(p1[0] + radius * np.cos(i * alpha)) + " " + str(p1[1] + radius * np.sin(i * alpha)) + " " +
+            str(p1[2]) + "\n")
+    for i in range(0, n):
+        output_file.write(
+            str(p1[0] + radius * np.cos(i * alpha)) + " " + str(p1[1] + radius * np.sin(i * alpha)) + " " +
+            str(p1[2] + length * axisZ) + "\n")
+    output_file.write("POLYGONS " + str(n + 2) + " " + str(5 * n + (n + 1) * 2) + "\n")
 
     # writing bottom "circle"
     output_file.write(str(n) + " ")
     for i in range(0, n - 1):
         output_file.write(str(i) + " ")
-    output_file.write(str(n-1) + "\n")
+    output_file.write(str(n - 1) + "\n")
 
     # writing top "circle"
     output_file.write(str(n) + " ")
     for i in range(0, n - 1):
-        output_file.write(str(i+n) + " ")
-    output_file.write(str(2*n - 1) + "\n")
+        output_file.write(str(i + n) + " ")
+    output_file.write(str(2 * n - 1) + "\n")
 
     # writing sides - rectangles
     for i in range(0, n - 1):
-        output_file.write("4 " + str(i) + " " + str(i+1) + " " + str(i+n+1) + " " + str(i+n) + "\n")
-    output_file.write("4 " + str(n-1) + " " + str(0) + " " + str(n) + " " + str(2*n-1) + "\n")
+        output_file.write("4 " + str(i) + " " + str(i + 1) + " " + str(i + n + 1) + " " + str(i + n) + "\n")
+    output_file.write("4 " + str(n - 1) + " " + str(0) + " " + str(n) + " " + str(2 * n - 1) + "\n")
 
     output_file.close()
     return 0
@@ -527,6 +530,132 @@ def output_vtk_lines(lines, out_file):
     output_file.write("LINES " + str(n_lines) + " " + str(3 *n_lines) + "\n")
     for i in range(0,n_lines):
         output_file.write(str(2) + " " + str(2*i) + " " + str(2*i+1) + "\n")
+
+    output_file.close()
+    return 0
+
+def output_vtk_pore(axis, length, outer_rad_left, outer_rad_right, pos, rad_left, rad_right,
+                    smoothing_radius, m, out_file):
+    """
+    Outputs the VTK files for visualisation of a pore in e.g. Paraview.
+
+    Parameters
+    ----------
+    axis : list of :obj:`float`
+          3 floats specifying the axis
+    length : :obj:`float`
+          length of pore
+    outer_rad_left : :obj:`float`
+          outer left radius of pore
+    outer_rad_right : :obj:`float`
+          outer right radius of pore
+    rad_left : :obj:`float`
+          inner left radius of pore
+    rad_right : :obj:`float`
+          inner right radius of pore
+    smoothing_radius : :obj:`float`
+          smoothing radius for surface connecting outer and inner radii of the pore
+    pos : list of :obj:`float`
+          3 floats specifying position of the center of the pore
+    m : :obj:`int`
+          number of discretization sections
+    out_file : :obj:`str`
+          filename for the output
+
+    """
+    # length is the length of the pore without the smoothing part
+
+    # for now, only axis=(1,0,0) is supported
+    # should implement rotation
+    # m is sufficient to be 10
+
+    if ".vtk" not in out_file:
+        print("output_vtk_pore warning: A file with vtk format will be written without .vtk extension.")
+
+    # n must be even therefore:
+    n = 2 * m
+
+    # setting points on perimeter
+    alpha = 2 * pi / n
+    beta = 2 * pi / n
+    number_of_points = 2 * n * (n/2 + 1)
+
+    output_file = open(out_file, "w")
+    output_file.write("# vtk DataFile Version 3.0\n")
+    output_file.write("Data\n")
+    output_file.write("ASCII\n")
+    output_file.write("DATASET POLYDATA\n")
+    output_file.write("POINTS " + str(number_of_points) + " float\n")
+
+    # shift center to the left half torus
+    p1 = pos - length / 2 * np.array(axis)
+
+    # points on the left half torus
+    for j in range(0, n/2 + 1):
+        for i in range(0, n):
+            output_file.write(str(p1[0] - np.sin(j * beta)) + " " +
+                              str(p1[1] + (rad_left + smoothing_radius - np.cos(j * beta)) * np.cos(i * alpha)) + " " +
+                              str(p1[2] + (rad_left + smoothing_radius - np.cos(j * beta)) * np.sin(i * alpha)) + "\n")
+    n_points_left = n * (n/2 + 1)
+
+    # shift center to the right half torus
+    p1 = pos + length / 2 * np.array(axis)
+
+    # points on the right half torus
+    for j in range(0, n / 2 + 1):
+        for i in range(0, n):
+            output_file.write(str(p1[0] + np.sin(j * beta)) + " " +
+                              str(p1[1] + (rad_right + smoothing_radius - np.cos(j * beta)) * np.cos(i * alpha)) + " " +
+                              str(p1[2] + (rad_right + smoothing_radius - np.cos(j * beta)) * np.sin(i * alpha)) + "\n")
+
+    number_of_rectangles = n * n + 2 * n
+    output_file.write("POLYGONS " + str(number_of_rectangles) + " " + str(5 * number_of_rectangles) + "\n")
+
+    # writing inner side rectangles
+    for i in range(0, n - 1):
+        output_file.write("4 " + str(i) + " " +
+                                 str(i + 1) + " " +
+                                 str(i + n_points_left + 1) + " " +
+                                 str(i + n_points_left) + "\n")
+    output_file.write("4 " + str(n - 1) + " " +
+                             str(0) + " " +
+                             str(n_points_left) + " " +
+                             str(n_points_left + n - 1) + "\n")
+
+    # writing outer side rectangles
+    for i in range(0, n - 1):
+        output_file.write("4 " + str(n_points_left - n + i) + " " +
+                                 str(n_points_left - n + i + 1) + " " +
+                                 str(n_points_left - n + i + n_points_left + 1) + " " +
+                                 str(n_points_left - n + i + n_points_left) + "\n")
+    output_file.write("4 " + str(n_points_left - n + n - 1) + " " +
+                      str(n_points_left - n) + " " +
+                      str(n_points_left - n + n_points_left) + " " +
+                      str(n_points_left - n + n_points_left + n - 1) + "\n")
+
+    # writing rectangles on the left half of the torus
+    for j in range(0, n / 2):
+        for i in range(0, n - 1):
+            output_file.write("4 " + str(n * j + i) + " " +
+                                     str(n * j + i + 1) + " " +
+                                     str(n * j + i + n + 1) + " " +
+                                     str(n * j + i + n) + "\n")
+        output_file.write("4 " + str(n * j + n - 1) + " " +
+                      str(n * j) + " " +
+                      str(n * j + n) + " " +
+                      str(n * j + 2 * n - 1) + "\n")
+
+    # writing rectangles on the right half of the torus
+    for j in range(0, n / 2):
+        for i in range(0, n - 1):
+            output_file.write("4 " + str(n_points_left + n * j + i) + " " +
+                                     str(n_points_left + n * j + i + 1) + " " +
+                                     str(n_points_left + n * j + i + n + 1) + " " +
+                                     str(n_points_left + n * j + i + n) + "\n")
+        output_file.write("4 " + str(n_points_left + n * j + n - 1) + " " +
+                      str(n_points_left + n * j) + " " +
+                      str(n_points_left + n * j + n) + " " +
+                      str(n_points_left + n * j + 2 * n - 1) + "\n")
 
     output_file.close()
     return 0
