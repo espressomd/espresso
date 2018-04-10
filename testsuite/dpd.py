@@ -33,8 +33,10 @@ class DPDThermostat(ut.TestCase):
     s.box_l = 3 * [10]
     s.time_step = 0.01
     s.cell_system.skin=0.4
-    s.seed=range(s.cell_system.get_state()["n_nodes"])
-    np.random.seed(13)
+
+    def setUp(self):
+        self.s.seed = range(self.s.cell_system.get_state()["n_nodes"])
+        np.random.seed(13)
 
     def single_component_maxwell(self,x1,x2,kT):
         """Integrate the probability density from x1 to x2 using the trapez rule"""
@@ -152,7 +154,7 @@ class DPDThermostat(ut.TestCase):
         # Equilibrate
         s.integrator.run(250)
 
-        loops=200
+        loops=250
         v_stored=np.zeros((N*loops,3))
         for i in range(loops):
             s.integrator.run(10)
