@@ -13,6 +13,7 @@
 #include "cells.hpp"
 #include "grid.hpp"
 #include "communication.hpp"
+#include "debug.hpp"
 #include "particle_data.hpp"
 #include "integrate.hpp"
 #include "immersed_boundary/ibm_cuda_interface.hpp"

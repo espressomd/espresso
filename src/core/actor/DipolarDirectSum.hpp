@@ -26,7 +26,7 @@ class DipolarDirectSum : public Actor {
 public:
   DipolarDirectSum(SystemInterface &s) {
 
-	k = coulomb.Dbjerrum;
+	k = coulomb.Dprefactor;
 
 	if(!s.requestFGpu())
       std::cerr << "DipolarDirectSum needs access to forces on GPU!" << std::endl;

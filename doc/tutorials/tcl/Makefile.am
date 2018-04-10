@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-SUBDIRS=01-lennard_jones 00-building_espresso 07-electrokinetics 06-active_matter 08-visualization 04-lattice_boltzmann 03-object_in_fluid 05-raspberry_electrophoresis 02-charged_system
+SUBDIRS=01-lennard_jones 00-building_espresso 07-electrokinetics 06-active_matter 08-visualization 04-lattice_boltzmann 03-object_in_fluid 05-raspberry_electrophoresis 02-charged_system 09-catalytic_reactions
 
 if DEVEL_SRC
 

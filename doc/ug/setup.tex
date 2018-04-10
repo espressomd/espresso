@@ -936,7 +936,6 @@ with $P_{\text{cvt}}$ the probability of the conversion and $\Delta t$
 the integration time step. If the equilibrium rate constant is not
 specified it is assumed that \var{k\_eq} = 0.
 
-
 \begin{pysyntax}
   \object{
     espressomd.reaction
@@ -996,8 +995,33 @@ product_type \var{pt} range \var{r} ct_rate \var{k\_ct}
   to $P_{\text{cvt}} = 1 - \exp \left( - n k\Delta t \right)$, with
   $n$ the number of local catalysts. To accomplish this, each reactant
   is considered only once each time step by using the option
-  \texttt{react\_once} \emph{on}. The reaction command is set up such
-  that the different properties may be influenced individually.
+  \texttt{react\_once} \emph{on}.
+
+  In the default setup a particle of type \emph{reactant\_type} is
+  converted to a particle of type \emph{product\_type} and vice versa,
+  when the particle is within the reaction range and a reaction move
+  takes place.  Unfortunately, in this scheme the simulation does not
+  conserve the particle number of each type, respectively.  This is
+  the (default) case when the parameter \texttt{swap} is set to
+  \emph{off}.  Switching it to \emph{on} enables an alternative
+  reaction algorithm in which two particles of opposing types
+  (\emph{reactant\_type} and \emph{product\_type}) have to be within
+  the reaction range.  Imagine the reaction range around the
+  \emph{catalyzer\_type} particle as a sphere.  Upper and lower
+  hemisphere are distinguished by the \texttt{quat} property (i.e.\
+  the direction) of the catalyzer.  In the \texttt{swap} algorithm it
+  does not suffice for these two particles to be anywhere within the
+  reaction range, but a particle of \emph{reactant\_type} has to be in
+  the lower hemisphere and the partner of \emph{product\_type} in the
+  upper hemisphere.  As you may have noticed this scheme models a
+  Janus particle where one hemisphere is coated with a catalyzing
+  surface (in most cases Pt).  When the reaction move takes place the
+  types \emph{and the charges}\footnote{requires
+    \texttt{ELECTROSTATICS}} of the pair are interchanged.  This
+  ensures the conservation of charge and particles per type.
+
+  The reaction command is set up such that the different properties
+  may be influenced individually.
 \item Variant \variant{1} disables the reaction. Note that at the
   moment, there can only be one reaction in the simulation.
 \item Variant \variant{2} returns the current reaction parameters.

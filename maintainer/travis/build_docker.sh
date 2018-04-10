@@ -21,9 +21,7 @@ if [ "$TRAVIS_OS_NAME" = "linux" ]; then
 	image=espressomd/buildenv-espresso-$image
 	docker run -u espresso --env-file $ENV_FILE -v ${PWD}:/travis -it $image /bin/bash -c "git clone /travis && cd travis && maintainer/travis/build_cmake.sh"
 elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
-#	brew update
-#	brew upgrade
-	brew install cmake
+	brew install cmake || brew upgrade cmake
 	case "$image" in
 		python3)
 			brew install python3
@@ -40,37 +38,8 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 			pip install pep8
 		;;
 	esac
-	brew install openmpi
+	brew install boost-mpi
 	brew install fftw
-
-	# The binary version of Boost comes without MPI support, so we have to compile it ourselves.
-	# Boost takes a long time to install, so we have Travis-CI cache it.
-	BOOST_VERSION=$(brew info --json=v1 boost | python -m json.tool | grep linked_keg | awk -F '"' '{print $4}')
-	brew unlink boost
-	brew info --json=v1 boost | python -m json.tool | grep -B 4 "\"version\": \"$BOOST_VERSION\"" | grep -q 'with-mpi' || brew uninstall boost
-	brew install boost --without-single --with-mpi &
-	BOOST_PID=$!
-	START_TIME=$(date +%s)
-	while kill -0 $BOOST_PID; do
-		# boost takes a while to compile, during which there 
-		# is no output, causing Travis-CI to abort eventually
-		echo "Boost is being built..."
-		sleep 30
-	done
-	brew link boost
-	if [ "$(echo $(date +%s)-$START_TIME | bc)" -gt 600 ]; then
-		# Boost was built, i.e. it took more than 10 minutes, so
-		# abort build because we won't be able to complete it
-		# within the time limit
-		echo
-		echo "============================================================================="
-		echo "Boost was built from source, but this took so long that we won't have time to"
-		echo "finish the actual build process before the Travis timeout kills it.
-		echo "Please manually retry the current Travis build!
-		echo "============================================================================="
-		echo
-		exit 2
-	fi
 
 	maintainer/travis/build_cmake.sh
 fi

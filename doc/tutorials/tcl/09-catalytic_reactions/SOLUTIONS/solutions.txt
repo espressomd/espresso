@@ -1,0 +1,35 @@
+Solutions:
+
+For all exercises where you had to complete the code, also consult the
+correct script in the SOLUTION folder.
+
+E1. Simply set all coordinates to [expr .5*$box_l]
+
+E2. The concentration is equivalent to particles per volume.  To
+    obtain the number of particles we evaluate $csmall*$box_l^3.
+    Additionally we apply floor() to the result, because the number of
+    particles has to be an integer.
+
+E3. To generate propulsion we have to break the rotational symmetry of
+    the interaction around the catalyzer.  Here we do this by choosing
+    different cutoffs for the particles.  We could also have set a
+    different epsilon or, in a charged system, different valency.
+
+E4. See solution script
+
+E5. In force-capping warmup one caps all forces to a maximum value.
+    No force cannot exceed this cap and is set to cap if larger.  It
+    is quite hard to find out the ideal step size for increasing the
+    cap and the number of integrations before doing so.  The function
+    minimize_energy unifies all of this in a steepest-descent
+    algorithm, which relaxes the system to an energetic minimum (not
+    necessarily global, so equilibration is still needed).
+
+E6. A thermostat with a finite temperature introduces fluctuations in
+    the system.  This makes it virtually impossible for minimize_energy to
+    relax your system.  Unfortunately, minimize_energy does not know
+    whether you are introducing flutuations on purpose for whatever reason
+    and will thus report some minimum.  Hence your simulation might blow
+    up immediately once you start equilibration.
+
+E7. See solution script
