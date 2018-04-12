@@ -157,7 +157,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
 # Just to see what else we may get from the c code
 import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
-pprint.pprint(system.__getstate__(), width=1)
+pprint.pprint(system.__getstate__())
 
 
 # write parameter file

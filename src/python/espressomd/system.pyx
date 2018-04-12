@@ -111,30 +111,29 @@ cdef class System(object):
                     System.__setattr__(self, arg, kwargs.get(arg))
                 else:
                     raise ValueError("Property {} can not be set via argument to System class.".format(arg))
-            self.part = particle_data.ParticleList()
-            self.non_bonded_inter = interactions.NonBondedInteractions()
-            self.bonded_inter = interactions.BondedInteractions()
-            self.cell_system = CellSystem()
-            self.thermostat = Thermostat()
-            self.minimize_energy = MinimizeEnergy()
             self.actors = Actors(_system=self)
             self.analysis = Analysis(self)
-            self.galilei = GalileiTransform()
-            self.integrator = integrate.Integrator()
-            self.auto_update_correlators = AutoUpdateCorrelators()
             self.auto_update_accumulators = AutoUpdateAccumulators()
+            self.auto_update_correlators = AutoUpdateCorrelators()
+            self.bonded_inter = interactions.BondedInteractions()
+            self.cell_system = CellSystem()
+            IF COLLISION_DETECTION==1:
+                self.collision_detection = CollisionDetection()
+            self.comfixed = ComFixed()
             if CONSTRAINTS:
                 self.constraints = Constraints()
+            IF CUDA:
+                self.cuda_init_handle = cuda_init.CudaInitHandle()
+            self.galilei = GalileiTransform()
+            self.integrator = integrate.Integrator()
             if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
                 self.lbboundaries = LBBoundaries()
             if EK_BOUNDARIES:
                 self.ekboundaries = EKBoundaries()
-            IF COLLISION_DETECTION==1:
-                self.collision_detection = CollisionDetection()
-            IF CUDA:
-                self.cuda_init_handle = cuda_init.CudaInitHandle()
-
-            self.comfixed = ComFixed()
+            self.minimize_energy = MinimizeEnergy()
+            self.non_bonded_inter = interactions.NonBondedInteractions()
+            self.part = particle_data.ParticleList()
+            self.thermostat = Thermostat()
             IF VIRTUAL_SITES:
                 self._active_virtual_sites_handle=ActiveVirtualSitesHandle(implementation=VirtualSitesOff())
             _system_created = True
@@ -147,6 +146,25 @@ cdef class System(object):
         odict = {}
         for property_ in setable_properties:
             odict[property_] = System.__getattribute__(self, property_)
+        odict['actors'] = System.__getattribute__(self, "actors")
+        odict['analysis'] = System.__getattribute__(self, "analysis")
+        odict['auto_update_accumulators'] = System.__getattribute__(self, "auto_update_accumulators")
+        odict['auto_update_correlators'] = System.__getattribute__(self, "auto_update_correlators")
+        odict['bonded_inter'] = System.__getattribute__(self, "bonded_inter")
+        odict['cell_system'] = System.__getattribute__(self, "cell_system")
+        odict['comfixed'] = System.__getattribute__(self, "comfixed")
+        IF CONSTRAINTS:
+            odict['constraints'] = System.__getattribute__(self, "constraints")
+        odict['galilei'] = System.__getattribute__(self, "galilei")
+        odict['integrator'] = System.__getattribute__(self, "integrator")
+        IF LB_BOUNDARIES or LB_BOUNDARIES_GPU:
+            odict['lbboundaries'] = System.__getattribute__(self, "lbboundaries")
+        odict['minimize_energy'] = System.__getattribute__(self, "minimize_energy")
+        odict['non_bonded_inter'] = System.__getattribute__(self, "non_bonded_inter")
+        odict['part'] = System.__getattribute__(self, "part")
+        odict['thermostat'] = System.__getattribute__(self, "thermostat")
+        IF VIRTUAL_SITES:
+            odict['_active_virtual_sites_handle'] = System.__getattribute__(self, "_active_virtual_sites_handle")
         return odict
 
     def __setstate__(self, params):
