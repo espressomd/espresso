@@ -812,6 +812,9 @@ int remove_particle(int p_id) {
   particle_node[p_id] = -1;
   mpi_remove_particle(pnode, p_id);
 
+  auto particle_node_iterator=particle_node.find(p_id);
+  particle_node.erase(particle_node_iterator);
+
   if (p_id == max_seen_particle) {
     max_seen_particle--;
     mpi_bcast_parameter(FIELD_MAXPART);
@@ -854,9 +857,6 @@ void local_remove_particle(int part) {
     /* update the local_particles array for the moved particle */
     local_particles[p->p.identity] = p;
   }
-  auto particle_node_iterator=particle_node.find(part);
-  particle_node.erase(particle_node_iterator);
-
   pl->n--;
 }
 
