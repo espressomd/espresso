@@ -458,7 +458,7 @@ struct IA_parameters {
   double TUNABLE_SLIP_vz = 0.0;
 #endif
 
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
   double REACTION_range = INACTIVE_CUTOFF;
 #endif
 

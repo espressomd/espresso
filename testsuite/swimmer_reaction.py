@@ -3,10 +3,10 @@ import numpy as np
 
 import espressomd
 from espressomd import has_features
-if(has_features(["CATALYTIC_REACTIONS"])):
-    from espressomd.reaction import Reaction
+if(has_features(["SWIMMER_REACTIONS"])):
+    from espressomd.swimmer_reaction import Reaction
 
-@ut.skipIf(not has_features(["CATALYTIC_REACTIONS"]),
+@ut.skipIf(not has_features(["SWIMMER_REACTIONS"]),
            "Features missing")
 class ReactionTest(ut.TestCase):
 

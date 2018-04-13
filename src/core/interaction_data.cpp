@@ -453,7 +453,7 @@ static void recalc_maximal_cutoff_nonbonded() {
         max_cut_current = data->TUNABLE_SLIP_r_cut;
 #endif
 
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
       if (max_cut_current < data->REACTION_range)
         max_cut_current = data->REACTION_range;
 #endif

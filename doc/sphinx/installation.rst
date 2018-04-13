@@ -378,14 +378,14 @@ General features
 
 -  ``METADYNAMICS``
 
--  ``CATALYTIC_REACTIONS`` Allows the user to define three particle types to be reactant,
+-  ``SWIMMER_REACTIONS`` Allows the user to define three particle types to be reactant,
    catalyzer, and product. Reactants get converted into products in the
    vicinity of a catalyst according to a used-defined reaction rate
    constant. It is also possible to set up a chemical equilibrium
    reaction between the reactants and products, with another rate
-   constant. 
+   constant. Be careful the model makes usage of the word catalyst. This usage of the word cannot be brought into agreement with the correct usage of the word catalyst.
    
-   .. seealso:: :ref:`Catalytic reactions`
+   .. seealso:: :ref:`Swimmer reactions`
 
 -  ``OVERLAPPED``
 
@@ -592,9 +592,9 @@ looking directly at the code.
 
 -  ``COMM_DEBUG`` Output from the asynchronous communication code.
 
--  ``EVENT_DEBUG`` Notifications for event calls, i. e. the ``on_...`` functions in
+-  ``EVENT_DEBUG`` Notifications for event calls, i. e. the ``on_...`` functions in
    ``initialize.c``. Useful if some module does not correctly respond to
-   changes of e. g. global variables.
+   changes of e. g. global variables.
 
 -  ``INTEG_DEBUG`` Integrator output.
 
@@ -734,7 +734,7 @@ compilation followed by a call of make:
     $ ccmake .. 
     $ make
 
-Fig. :ref:`ccmake-figure` shows the interactive ccmake UI.
+Fig. :ref:`ccmake-figure` shows the interactive ccmake UI.
 
 .. _ccmake-figure:
 
