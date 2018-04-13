@@ -812,8 +812,7 @@ int remove_particle(int p_id) {
   particle_node[p_id] = -1;
   mpi_remove_particle(pnode, p_id);
 
-  auto particle_node_iterator=particle_node.find(p_id);
-  particle_node.erase(particle_node_iterator);
+  particle_node.erase(p_id);
 
   if (p_id == max_seen_particle) {
     max_seen_particle--;
