@@ -446,18 +446,18 @@ def output_vtk_cylinder(cyl_shape, n, out_file):
     center = cyl_shape.center
 
     check_axis = True
-    if axis[0]!=0.0:
+    if axis[0] != 0.0:
         check_axis = False
-    if axis[1]!=0.0:
+    if axis[1] != 0.0:
         check_axis = False
-    if axis[2]==0.0:
+    if axis[2] == 0.0:
         check_axis = False
     if check_axis is False:
         raise Exception("output_vtk_cylinder: Output for this type of cylinder is not supported yet.")
     axisZ = 1.0
 
     # setting points on perimeter
-    alpha = 2 * pi / n
+    alpha = 2 * np.pi / n
     points = 2 * n
 
     # shift center to the bottom circle
@@ -471,13 +471,13 @@ def output_vtk_cylinder(cyl_shape, n, out_file):
     output_file.write("POINTS " + str(points) + " float\n")
     for i in range(0, n):
         output_file.write(
-            str(p1[0] + radius * np.cos(i * alpha)) + " " + str(p1[1] + radius * np.sin(i * alpha)) + " " +
+            str(p1[0] + radius*np.cos(i*alpha)) + " " + str(p1[1] + radius*np.sin(i*alpha)) + " " +
             str(p1[2]) + "\n")
     for i in range(0, n):
         output_file.write(
-            str(p1[0] + radius * np.cos(i * alpha)) + " " + str(p1[1] + radius * np.sin(i * alpha)) + " " +
-            str(p1[2] + length * axisZ) + "\n")
-    output_file.write("POLYGONS " + str(n + 2) + " " + str(5 * n + (n + 1) * 2) + "\n")
+            str(p1[0] + radius*np.cos(i*alpha)) + " " + str(p1[1] + radius*np.sin(i*alpha)) + " " +
+            str(p1[2] + length*axisZ) + "\n")
+    output_file.write("POLYGONS " + str(n+2) + " " + str(5*n + (n + 1)*2) + "\n")
 
     # writing bottom "circle"
     output_file.write(str(n) + " ")
@@ -523,16 +523,17 @@ def output_vtk_lines(lines, out_file):
     output_file.write("ASCII\n")
     output_file.write("DATASET POLYDATA\n")
     output_file.write("POINTS " + str(2*n_lines) + " float\n")
-    for i in range(0,n_lines):
+    for i in range(0, n_lines):
         one_line = lines[i]
         output_file.write(str(one_line[0]) + " " + str(one_line[1]) + " " + str(one_line[2]) + "\n")
         output_file.write(str(one_line[3]) + " " + str(one_line[4]) + " " + str(one_line[5]) + "\n")
-    output_file.write("LINES " + str(n_lines) + " " + str(3 *n_lines) + "\n")
-    for i in range(0,n_lines):
+    output_file.write("LINES " + str(n_lines) + " " + str(3 * n_lines) + "\n")
+    for i in range(0, n_lines):
         output_file.write(str(2) + " " + str(2*i) + " " + str(2*i+1) + "\n")
 
     output_file.close()
     return 0
+
 
 def output_vtk_pore(axis, length, outer_rad_left, outer_rad_right, pos, rad_left, rad_right,
                     smoothing_radius, m, out_file):
@@ -576,8 +577,8 @@ def output_vtk_pore(axis, length, outer_rad_left, outer_rad_right, pos, rad_left
     n = 2 * m
 
     # setting points on perimeter
-    alpha = 2 * pi / n
-    beta = 2 * pi / n
+    alpha = 2 * np.pi / n
+    beta = 2 * np.pi / n
     number_of_points = 2 * n * (n/2 + 1)
 
     output_file = open(out_file, "w")

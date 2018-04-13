@@ -1343,7 +1343,7 @@ IF MEMBRANE_COLLISION == 1:
     cdef class MembraneCollisionInteraction(NonBondedInteraction):
 
         def validate_params(self):
-            if self._params["membrane_cut"] < 0:
+            if self._params["cutoff"] < 0:
                 raise ValueError("Membrane Collision cutoff has to be >=0")
             return True
 
@@ -1351,37 +1351,37 @@ IF MEMBRANE_COLLISION == 1:
             cdef ia_parameters * ia_params
             ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
             return {
-                "membrane_a": ia_params.membrane_a,
-                "membrane_n": ia_params.membrane_n,
-                "membrane_cut": ia_params.membrane_cut,
-                "membrane_offset": ia_params.membrane_offset}
+                "a": ia_params.membrane_a,
+                "n": ia_params.membrane_n,
+                "cutoff": ia_params.membrane_cut,
+                "offset": ia_params.membrane_offset}
 
         def is_active(self):
-            return (self._params["membrane_a"] > 0)
+            return (self._params["a"] > 0)
 
         def _set_params_in_es_core(self):
             if membrane_collision_set_params(self._part_types[0], self._part_types[1],
-                                        self._params["membrane_a"],
-                                        self._params["membrane_n"],
-                                        self._params["membrane_cut"],
-                                        self._params["membrane_offset"]):
+                                        self._params["a"],
+                                        self._params["n"],
+                                        self._params["cutoff"],
+                                        self._params["offset"]):
                 raise Exception("Could not set Membrane Collision parameters")
 
         def default_params(self):
             return {
-                "membrane_a": 0.,
-                "membrane_n": 1.,
-                "membrane_cut": 0.,
-                "membrane_offset": 0.}
+                "a": 0.,
+                "n": 1.,
+                "cutoff": 0.,
+                "offset": 0.}
 
         def type_name(self):
             return "MembraneCollision"
 
         def valid_keys(self):
-            return "membrane_a", "membrane_n", "membrane_cut", "membrane_offset"
+            return "a", "n", "cutoff", "offset"
 
         def required_keys(self):
-            return "membrane_a", "membrane_n", "membrane_cut"
+            return "a", "n", "cutoff"
 
 # Gay-Berne
 

@@ -153,7 +153,7 @@ class Mesh(object):
 
     """
     def __init__(self, nodes_file=None, triangles_file=None, system=None, resize=(1.0, 1.0, 1.0),
-                 part_type=-1, part_mass=1.0, normal=False, check_orientation=True):
+                 particle_type=-1, particle_mass=1.0, normal=False, check_orientation=True):
         if (system is None) or (not isinstance(system,espressomd.System)):
             raise Exception("Mesh: No system provided or wrong type given. Quitting.")
 
@@ -174,10 +174,10 @@ class Mesh(object):
                 raise TypeError("Mesh: Filenames must be strings.")
             if not ((len(resize) == 3) and isinstance(resize[0],float) and isinstance(resize[1],float) and isinstance(resize[2],float)):
                 raise TypeError("Mesh: Pos must be a list of three floats.") 
-            if not isinstance(part_type,int):
-                raise TypeError("Mesh: part_type must be integer.") 
-            if not isinstance(part_mass,float):
-                raise TypeError("Mesh: part_mass must be float.") 
+            if not isinstance(particle_type,int):
+                raise TypeError("Mesh: particle_type must be integer.")
+            if not isinstance(particle_mass,float):
+                raise TypeError("Mesh: particle_mass must be float.")
             if not isinstance(normal,bool):
                 raise TypeError("Mesh: normal must be bool.") 
             if not isinstance(check_orientation,bool):
@@ -391,7 +391,7 @@ class Mesh(object):
                     selected_neighbors = ThreeNeighbors(point, point, point)
                     self.neighbors.append(selected_neighbors)
 
-    def copy(self, origin=None, part_type=-1, part_mass=1.0, rotate=None):
+    def copy(self, origin=None, particle_type=-1, particle_mass=1.0, rotate=None):
         mesh = Mesh(system=self.system)
         mesh.ids_extremal_points = self.ids_extremal_points
         rotation = np.array([[1.0, 0.0, 0.0],
@@ -421,7 +421,7 @@ class Mesh(object):
             if origin is not None:
                 tmp_pos += np.array(origin)
             new_part_id = len(self.system.part)  # to remember the global id of the ESPResSo particle
-            self.system.part.add(pos=tmp_pos, type=part_type, mass=part_mass, mol_id=part_type)
+            self.system.part.add(pos=tmp_pos, type=particle_type, mass=particle_mass, mol_id=particle_type)
             new_part = self.system.part[new_part_id]
             new_part_point = PartPoint(new_part, len(mesh.points), new_part_id)
             mesh.points.append(new_part_point)
@@ -703,24 +703,24 @@ class OifCell(object):
     Represents a concrete elastic object.
 
     """
-    def __init__(self, cell_type=None, origin=None, part_type=None, part_mass=1.0, rotate=None):
+    def __init__(self, cell_type=None, origin=None, particle_type=None, particle_mass=1.0, rotate=None):
         if (cell_type is None) or (not isinstance(cell_type,OifCellType)):
             raise Exception("OifCell: No cellType provided or wrong type. Quitting.")
         if (origin is None) or \
         (not ((len(origin) == 3) and isinstance(origin[0],float) and isinstance(origin[1],float) and isinstance(origin[2],float))):
             raise TypeError("Origin must be tuple.")
-        if (part_type is None) or (not isinstance(part_type,int)):
-            raise Exception("OifCell: No partType specified or wrong type. Quitting.")
-        if not isinstance(part_mass,float):
-            raise Exception("OifCell: part mass must be float.")
+        if (particle_type is None) or (not isinstance(particle_type,int)):
+            raise Exception("OifCell: No particle_type specified or wrong type. Quitting.")
+        if not isinstance(particle_mass,float):
+            raise Exception("OifCell: particle mass must be float.")
         if (rotate is not None) and not ((len(rotate) == 3) and isinstance(rotate[0],float) and isinstance(rotate[1],float) and isinstance(rotate[2],float)):
             raise TypeError("Rotate must be list of three floats.")
 
         self.cell_type = cell_type
         self.cell_type.system.max_oif_objects =self.cell_type.system.max_oif_objects+1
-        self.mesh = cell_type.mesh.copy(origin=origin, part_type=part_type, part_mass=part_mass, rotate=rotate)
-        self.part_mass = part_mass
-        self.part_type = part_type
+        self.mesh = cell_type.mesh.copy(origin=origin, particle_type=particle_type, particle_mass=particle_mass, rotate=rotate)
+        self.particle_mass = particle_mass
+        self.particle_type = particle_type
         self.origin = origin
         self.rotate = rotate
         for inter in self.cell_type.local_force_interactions:
@@ -966,8 +966,8 @@ class OifCell(object):
 
     def print_info(self):
         print("\nThe following OifCell was created: ")
-        print("\t part_mass: " + custom_str(self.part_mass))
-        print("\t part_type: " + str(self.part_type))
+        print("\t particle_mass: " + custom_str(self.particle_mass))
+        print("\t particle_type: " + str(self.particle_type))
         print("\t rotate: " + str(self.rotate))
         print("\t origin: " + str(self.origin[0]) + " " + str(self.origin[1]) + " " + str(self.origin[2]))
 
