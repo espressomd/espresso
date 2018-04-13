@@ -140,8 +140,6 @@ static int terminated = 0;
   CB(mpi_bcast_n_particle_types_slave)                                         \
   CB(mpi_gather_stats_slave)                                                   \
   CB(mpi_set_time_step_slave)                                                  \
-  CB(mpi_set_smaller_time_step_slave)                                          \
-  CB(mpi_send_smaller_timestep_flag_slave)                                     \
   CB(mpi_bcast_coulomb_params_slave)                                           \
   CB(mpi_bcast_collision_params_slave)                                         \
   CB(mpi_send_ext_force_slave)                                                 \
@@ -405,13 +403,7 @@ void mpi_send_v(int pnode, int part, double v[3]) {
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-#ifdef MULTI_TIMESTEP
-    if (smaller_time_step > 0. && p->p.smaller_timestep) {
-      v[0] *= smaller_time_step / time_step;
-      v[1] *= smaller_time_step / time_step;
-      v[2] *= smaller_time_step / time_step;
-    }
-#endif
+
     memmove(p->m.v, v, 3 * sizeof(double));
   } else
     MPI_Send(v, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
@@ -423,13 +415,6 @@ void mpi_send_v_slave(int pnode, int part) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Recv(p->m.v, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-#ifdef MULTI_TIMESTEP
-    if (smaller_time_step > 0. && p->p.smaller_timestep) {
-      p->m.v[0] *= smaller_time_step / time_step;
-      p->m.v[1] *= smaller_time_step / time_step;
-      p->m.v[2] *= smaller_time_step / time_step;
-    }
-#endif
   }
 
   on_particle_change();
@@ -1436,71 +1421,6 @@ void mpi_set_time_step_slave(int node, int i) {
   time_step_squared = time_step * time_step;
   time_step_squared_half = time_step_squared / 2.;
   time_step_half = time_step / 2.;
-}
-
-/************ REQ_SET_SMALLER_TIME_STEP ************/
-void mpi_set_smaller_time_step(double time_s) {
-#ifdef MULTI_TIMESTEP
-  mpi_call(mpi_set_smaller_time_step_slave, -1, 0);
-
-  smaller_time_step = time_s;
-  MPI_Bcast(&smaller_time_step, 1, MPI_DOUBLE, 0, comm_cart);
-  on_parameter_change(FIELD_SMALLERTIMESTEP);
-#endif
-}
-
-void mpi_set_smaller_time_step_slave(int node, int i) {
-#ifdef MULTI_TIMESTEP
-  MPI_Bcast(&smaller_time_step, 1, MPI_DOUBLE, 0, comm_cart);
-  on_parameter_change(FIELD_SMALLERTIMESTEP);
-#endif
-}
-
-void mpi_send_smaller_timestep_flag(int pnode, int part, int smaller_timestep) {
-#ifdef MULTI_TIMESTEP
-  mpi_call(mpi_send_smaller_timestep_flag_slave, pnode, part);
-
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    if (p->p.smaller_timestep == 0 && smaller_timestep != 0) {
-      p->m.v[0] *= smaller_time_step / time_step;
-      p->m.v[1] *= smaller_time_step / time_step;
-      p->m.v[2] *= smaller_time_step / time_step;
-    } else if (p->p.smaller_timestep != 0 && smaller_timestep == 0) {
-      p->m.v[0] *= time_step / smaller_time_step;
-      p->m.v[1] *= time_step / smaller_time_step;
-      p->m.v[2] *= time_step / smaller_time_step;
-    }
-    p->p.smaller_timestep = smaller_timestep;
-  } else {
-    MPI_Send(&smaller_timestep, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
-  }
-
-  on_particle_change();
-#endif
-}
-
-void mpi_send_smaller_timestep_flag_slave(int pnode, int part) {
-#ifdef MULTI_TIMESTEP
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    int smaller_timestep;
-    MPI_Status status;
-    MPI_Recv(&smaller_timestep, 1, MPI_INT, 0, SOME_TAG, comm_cart, &status);
-    if (p->p.smaller_timestep == 0 && smaller_timestep != 0) {
-      p->m.v[0] *= smaller_time_step / time_step;
-      p->m.v[1] *= smaller_time_step / time_step;
-      p->m.v[2] *= smaller_time_step / time_step;
-    } else if (p->p.smaller_timestep != 0 && smaller_timestep == 0) {
-      p->m.v[0] *= time_step / smaller_time_step;
-      p->m.v[1] *= time_step / smaller_time_step;
-      p->m.v[2] *= time_step / smaller_time_step;
-    }
-    p->p.smaller_timestep = smaller_timestep;
-  }
-
-  on_particle_change();
-#endif
 }
 
 int mpi_check_runtime_errors(void) {

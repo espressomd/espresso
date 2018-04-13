@@ -583,15 +583,6 @@ int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
 }
 #endif
 
-#ifdef MULTI_TIMESTEP
-int set_particle_smaller_timestep(int part, int smaller_timestep) {
-  auto const pnode = get_particle_node(part);
-
-  mpi_send_smaller_timestep_flag(pnode, part, smaller_timestep);
-  return ES_OK;
-}
-#endif
-
 int set_particle_q(int part, double q) {
   auto const pnode = get_particle_node(part);
 
@@ -1269,12 +1260,6 @@ void pointer_to_vs_relative(Particle const *p, int const *&res1,
   res1 = &(p->p.vs_relative_to_particle_id);
   res2 = &(p->p.vs_relative_distance);
   res3 = (p->p.vs_relative_rel_orientation);
-}
-#endif
-
-#ifdef MULTI_TIMESTEP
-void pointer_to_smaller_timestep(Particle const *p, int const *&res) {
-  res = &(p->p.smaller_timestep);
 }
 #endif
 

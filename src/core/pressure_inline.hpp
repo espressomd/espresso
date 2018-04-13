@@ -523,21 +523,6 @@ inline void add_three_body_bonded_stress(Particle *p1) {
 inline void add_kinetic_virials(Particle *p1, int v_comp) {
   int k, l;
   /* kinetic energy */
-#ifdef MULTI_TIMESTEP
-  if (smaller_time_step > 0.) {
-    if (v_comp)
-      virials.data.e[0] += Utils::sqr(time_step / smaller_time_step) *
-                           (Utils::sqr(p1->m.v[0] - p1->f.f[0]) +
-                            Utils::sqr(p1->m.v[1] - p1->f.f[1]) +
-                            Utils::sqr(p1->m.v[2] - p1->f.f[2])) *
-                           (*p1).p.mass;
-    else
-      virials.data.e[0] += Utils::sqr(time_step / smaller_time_step) *
-                           (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) +
-                            Utils::sqr(p1->m.v[2])) *
-                           (*p1).p.mass;
-  } else
-#endif
   {
     if (v_comp)
       virials.data.e[0] += (Utils::sqr(p1->m.v[0] - p1->f.f[0]) +
@@ -554,13 +539,6 @@ inline void add_kinetic_virials(Particle *p1, int v_comp) {
    * each will be done later) */
   for (k = 0; k < 3; k++)
     for (l = 0; l < 3; l++)
-#ifdef MULTI_TIMESTEP
-      if (smaller_time_step > 0.)
-        p_tensor.data.e[k * 3 + l] +=
-            Utils::sqr(time_step / smaller_time_step) * (p1->m.v[k]) *
-            (p1->m.v[l]) * (*p1).p.mass;
-      else
-#endif
         p_tensor.data.e[k * 3 + l] +=
             (p1->m.v[k]) * (p1->m.v[l]) * (*p1).p.mass;
 }

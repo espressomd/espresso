@@ -207,9 +207,6 @@ const std::unordered_map<int, Datafield> fields{
      {FIELD_WARNINGS,
       {&warnings, Datafield::Type::INT, 1, "warnings",
        1}}, /* 50 from global.cpp */
-     {FIELD_SMALLERTIMESTEP,
-      {&smaller_time_step, Datafield::Type::DOUBLE, 1, "smaller_time_step",
-       5}}, /* 52 from integrate.cpp */
      {FIELD_LANGEVIN_TRANS_SWITCH,
       {&langevin_trans, Datafield::Type::BOOL, 1, "langevin_trans_switch",
        1}}, /* 53 from thermostat.cpp */
