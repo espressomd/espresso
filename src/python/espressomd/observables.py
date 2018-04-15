@@ -189,16 +189,47 @@ class MagneticDipoleMoment(Observable):
 @script_interface_register
 class ParticleAngularVelocities(Observable):
     _so_name = "Observables::ParticleAngularVelocities"
+    
+    """Calculates the angular velocity (omega) in the spaced-fixed frame of reference
+   
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+
+    """
 
 
 @script_interface_register
 class ParticleBodyAngularVelocities(Observable):
     _so_name = "Observables::ParticleBodyAngularVelocities"
+    """Calculates the angular velocity (omega) in the particles'  body-fixed frame of reference.
+   
+   For each particle, the body-fixed frame of reference is obtained from the particle's
+   orientation stored in the quaternions.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+
+    """
 
 
 @script_interface_register
 class ParticleBodyVelocities(Observable):
     _so_name = "Observables::ParticleBodyVelocities"
+    """Calculates the particle velocity in the particles'  body-fixed frame of reference.
+   
+   For each particle, the body-fixed frame of reference is obtained from the particle's
+   orientation stored in the quaternions.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+
+    """
 
 
 @script_interface_register
@@ -257,10 +288,10 @@ class ParticleVelocities(Observable):
 class StressTensor(Observable):
     _so_name = "Observables::StressTensor"
 
+    """Calculates the total stress tensor. See :ref:`stress tensor`)
 
-@script_interface_register
-class StressTensorAcf(Observable):
-    _so_name = "Observables::StressTensorAcf"
+    """
+
 
 
 @script_interface_register

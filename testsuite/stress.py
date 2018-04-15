@@ -8,7 +8,7 @@ import espressomd
 from espressomd.interactions import HarmonicBond
 from espressomd.interactions import FeneBond
 from espressomd import analyze
-from espressomd.observables import StressTensor,StressTensorAcf
+from espressomd.observables import StressTensor
 
 import itertools
 from tests_common import fene_force, fene_potential, fene_force2
