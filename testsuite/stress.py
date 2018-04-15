@@ -3,10 +3,13 @@
 from __future__ import print_function
 
 import unittest as ut
+
 import espressomd
 from espressomd.interactions import HarmonicBond
 from espressomd.interactions import FeneBond
 from espressomd import analyze
+from espressomd.observables import StressTensor,StressTensorAcf
+
 import itertools
 from tests_common import fene_force, fene_potential, fene_force2
 
@@ -259,6 +262,12 @@ class stress_test(ut.TestCase):
     self.assertTrue(np.max(np.abs(sim_pressure_total-sim_pressure_kinetic-sim_pressure_bonded-sim_pressure_nonbonded)) < tol, 'total pressure is not given as the sum of all major pressure components')
 
 
+    # Compare stress tensor observable to stress tensor from analysis
+    np.testing.assert_allclose(
+        StressTensor().calculate(),
+         system.analysis.stress_tensor()["total"].reshape(9),
+        atol=1E-10)
+
 @ut.skipIf(not espressomd.has_features(['EXTERNAL_FORCES']),
 'Features not available, skipping test!')
 class stress_test_fene(ut.TestCase):
@@ -312,6 +321,13 @@ class stress_test_fene(ut.TestCase):
         sim_pressure_fene=system.analysis.pressure()['bonded',len(system.bonded_inter)-1]
         anal_pressure_fene=np.einsum("ii",anal_stress_fene)/3.0
         self.assertTrue(np.max(np.abs(sim_pressure_fene-anal_pressure_fene)) < tol, 'bonded pressure for fene does not match analytical result')
+    
+    
+        # Compare stress tensor observable to stress tensor from analysis
+        np.testing.assert_allclose(
+            StressTensor().calculate(),
+            system.analysis.stress_tensor()["total"].reshape(9),
+            atol=1E-10)
         
         system.part.clear()
     
@@ -511,6 +527,11 @@ class stress_lees_edwards_test(ut.TestCase):
     self.assertTrue(np.abs(sim_pressure_nonbonded_intra-anal_pressure_nonbonded_intra) < tol, 'non-bonded intramolecular pressure does not match analytical result')
     self.assertTrue(np.abs(sim_pressure_nonbonded_intra00-anal_pressure_nonbonded_intra) < tol, 'non-bonded intramolecular pressure molecule 0 does not match analytical result')
     self.assertTrue(np.abs(sim_pressure_total-anal_pressure_total) < tol, 'total pressure does not match analytical result')
+    # Compare stress tensor observable to stress tensor from analysis
+    np.testing.assert_allclose(
+        StressTensor().calculate(),
+        system.analysis.stress_tensor()["total"].reshape(9),
+            atol=1E-10)
 
 if __name__ == "__main__":
   ut.main()
