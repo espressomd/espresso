@@ -646,6 +646,14 @@ int set_particle_rotational_inertia(int part, double rinertia[3]);
 */
 int set_particle_rotation(int part, int rot);
 
+/** @brief rotate a particle around an axis
+   
+   @param part particle id
+   @param axis rotation axis
+   @param angle rotation angle
+*/
+int rotate_particle(int part, double axis[3], double angle);
+
 #ifdef AFFINITY
 /** Call only on the master node: set particle affinity.
     @param part the particle.

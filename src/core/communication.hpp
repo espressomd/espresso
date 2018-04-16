@@ -223,6 +223,16 @@ void mpi_send_mu_E(int node, int part, double mu_E[3]);
 */
 void mpi_send_rotational_inertia(int node, int part, double rinertia[3]);
 #endif
+#ifdef ROTATION
+/** Mpi call for rotating a single particle 
+    Also calls \ref on_particle_change.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param axis rotation axis
+    \param angle rotation angle
+*/
+void mpi_rotate_particle(int node, int part, double axis[3],double angle);
+#endif
 
 #ifdef AFFINITY
 /** Issue REQ_SET_AFFINITY: send particle affinity.

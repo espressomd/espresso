@@ -171,7 +171,8 @@ static int terminated = 0;
   CB(mpi_iccp3m_iteration_slave)                                               \
   CB(mpi_iccp3m_init_slave)                                                    \
   CB(mpi_send_rotational_inertia_slave)                                        \
-  CB(mpi_send_affinity_slave)                                                  \
+  CB(mpi_send_rotational_inertia_slave)                                        \
+  CB(mpi_rotate_particle_slave)                                                  \
   CB(mpi_send_out_direction_slave)                                             \
   CB(mpi_send_mu_E_slave)                                                      \
   CB(mpi_bcast_max_mu_slave)                                                   \
@@ -625,7 +626,7 @@ void mpi_send_rotational_inertia(int pnode, int part, double rinertia[3]) {
   on_particle_change();
 #endif
 }
-
+ 
 void mpi_send_rotational_inertia_slave(int pnode, int part) {
 #ifdef ROTATIONAL_INERTIA
   if (pnode == this_node) {
@@ -637,6 +638,39 @@ void mpi_send_rotational_inertia_slave(int pnode, int part) {
   on_particle_change();
 #endif
 }
+
+void mpi_rotate_particle(int pnode, int part, double axis[3],double angle) { 
+#ifdef ROTATION
+  mpi_call(mpi_rotate_particle_slave, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    local_rotate_particle(p,axis,angle);
+  } else {
+    MPI_Send(axis, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+    MPI_Send(&angle, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_rotate_particle_slave(int pnode, int part) {
+#ifdef ROTATION
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    double axis[3],angle;
+    MPI_Recv(axis, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+             MPI_STATUS_IGNORE);
+    MPI_Recv(&angle, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+             MPI_STATUS_IGNORE);
+    local_rotate_particle(p,axis,angle);
+  }
+
+  on_particle_change();
+#endif
+}
+
 
 /********************* REQ_SET_BOND_SITE ********/
 
