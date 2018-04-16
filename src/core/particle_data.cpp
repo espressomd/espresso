@@ -810,8 +810,9 @@ int remove_particle(int p_id) {
   auto const pnode = get_particle_node(p_id);
 
   particle_node[p_id] = -1;
-
   mpi_remove_particle(pnode, p_id);
+
+  particle_node.erase(p_id);
 
   if (p_id == max_seen_particle) {
     max_seen_particle--;
@@ -855,7 +856,6 @@ void local_remove_particle(int part) {
     /* update the local_particles array for the moved particle */
     local_particles[p->p.identity] = p;
   }
-
   pl->n--;
 }
 

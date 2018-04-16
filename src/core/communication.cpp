@@ -73,7 +73,7 @@
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
-#include "reaction.hpp"
+#include "swimmer_reaction.hpp"
 #include "reaction_field.hpp"
 #include "rotation.hpp"
 #include "scafacos.hpp"
@@ -2384,17 +2384,17 @@ void mpi_galilei_transform_slave(int pnode, int i) {
   on_particle_change();
 }
 
-/******************** REQ_CATALYTIC_REACTIONS ********************/
+/******************** REQ_SWIMMER_REACTIONS ********************/
 
 void mpi_setup_reaction() {
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
   mpi_call(mpi_setup_reaction_slave, -1, 0);
   local_setup_reaction();
 #endif
 }
 
 void mpi_setup_reaction_slave(int pnode, int i) {
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
   local_setup_reaction();
 #endif
 }

@@ -24,15 +24,20 @@ system.box_l = [table_dim[0], 3, table_dim[1]]
 
 visualizer = openGLLive(system,
         ext_force_arrows = True, 
-        ext_force_arrows_scale =  [0.02], 
+        ext_force_arrows_type_scale =  [0.02], 
+        ext_force_arrows_type_radii =  [0.01], 
         background_color = [0.5,0.4,0.5], 
         drag_enabled = False, 
-        constraint_type_colors = [[0.039,0.424,0.011,1.0]],
-        particle_type_colors = [[1,1,1,1],[1,0,0,1],[0,0,1,1],[0.2,0.2,0.2,1]],
+        particle_type_materials = ['medium', 'bright', 'bright', 'medium'],
+        particle_type_colors = [[1,1,1],[0.5,0.1,0.1],[0.1,0.2,0.4],[0.2,0.2,0.2]],
+        constraint_type_materials = ['dark'],
+        constraint_type_colors = [[0.1,0.424,0.011], [0.1,0.1,0.1]],
         camera_position = [ 1.12, 2.8, 0.56],
         window_size = [1000,600],
         draw_axis = False,
-        light_brightness = 5.0)
+        light_pos = [table_dim[0]*0.5, 1.0, table_dim[1]*0.5],
+        light_colors = [[0.8, 0.8, 0.8], [0.9, 0.9, 0.9], [1.0, 1.0, 1.0]],
+        light_brightness = 1.0)
 
 stopped = True
 angle = np.pi*0.5

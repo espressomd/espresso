@@ -84,6 +84,7 @@ cdef class ReactionAlgorithm(object):
         """
         self.RE.slab_start_z = slab_start_z
         self.RE.slab_end_z = slab_end_z
+        self.RE.box_has_wall_constraints=True
 
     def get_wall_constraints_in_z_direction(self):
         """

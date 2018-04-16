@@ -156,7 +156,7 @@ read_checkpoint = False
 # Load checkpointed p3m class
 if os.path.isfile("p3m_checkpoint") and read_checkpoint == True:
     print("reading p3m from file")
-    p3m = pickle.load(open("p3m_checkpoint", "r"))
+    p3m = pickle.load(open("p3m_checkpoint", "rb"))
 else:
     p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
     print("Tuning P3M")
@@ -164,7 +164,7 @@ else:
 system.actors.add(p3m)
 
 # Checkpoint AFTER tuning (adding method to actors)
-pickle.dump(p3m, open("p3m_checkpoint", "w"), -1)
+pickle.dump(p3m, open("p3m_checkpoint", "wb"), -1)
 
 print("P3M parameter:\n")
 p3m_params = p3m.get_params()

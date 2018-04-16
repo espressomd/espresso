@@ -608,7 +608,7 @@ void mpi_system_CMS_velocity();
 void mpi_galilei_transform();
 void mpi_observable_lb_radial_velocity_profile();
 
-/** Issue REQ_CATALYTIC_REACTIONS: notify the system of changes to the reaction
+/** Issue REQ_SWIMMER_REACTIONS: notify the system of changes to the reaction
  * parameters
  */
 void mpi_setup_reaction();
