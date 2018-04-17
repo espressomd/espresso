@@ -52,7 +52,9 @@ public:
                      },
                      [this]() {
                        return (m_shape != nullptr) ? m_shape->id() : ObjectId();
-                     }}});
+                     }},
+                     {"reflection_type",m_constraint->reflection_type()}
+                     });
   }
 
   Variant call_method(std::string const &name, VariantMap const &) override {

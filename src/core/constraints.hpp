@@ -24,7 +24,6 @@ inline void add_constraints_forces(Particle *p) {
   double pos[3];
   memcpy(pos, p->r.p, 3 * sizeof(double));
   memcpy(image, p->l.i, 3 * sizeof(int));
-
   fold_position(pos, image);
   for (auto const &c : Constraints::constraints) {
     c->add_force(p, pos);
