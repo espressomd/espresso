@@ -270,7 +270,7 @@ void lb_calc_velprof(double *result, int *params) {
       if (rho < ROUND_ERROR_PREC) {
 	velprof[dir[pdir]-1] = 0.0;
       } else {
-	//velprof[dir[pdir]-1] = local_j / (SQR(lbpar.agrid)*lbpar.tau);
+	//velprof[dir[pdir]-1] = local_j / (Utils::sqr(lbpar.agrid)*lbpar.tau);
 	velprof[dir[pdir]-1] = j[vcomp]/rho * lbpar.agrid/lbpar.tau;
 	//fprintf(stderr,"%f %f %f\n",velprof[dir[pdir]-1],local_j,local_rho);
       }

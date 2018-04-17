@@ -59,7 +59,7 @@ cdef class ParticleHandle(object):
         self.id = _id
 
     cdef int update_particle_data(self) except -1:
-        self.particle_data = get_particle_data(self.id)
+        self.particle_data = get_particle_data_ptr(self.id)
         if not self.particle_data:
             raise Exception(
                 "Particle with id " + str(self.id) + " does not exist.")
@@ -203,6 +203,22 @@ cdef class ParticleHandle(object):
 
             return array_locked([ret[0], ret[1], ret[2]])
 
+    property image_box:
+        """
+        The image box the particles is in.
+
+        This is the number of times
+        the particle position has been folded by the box length in each
+        direction.
+        """
+
+        def __get__(self):
+            self.update_particle_data()
+
+            return array_locked([self.particle_data.l.i[0],
+                                 self.particle_data.l.i[1],
+                                 self.particle_data.l.i[2]])
+
     # Velocity
     property v:
         """
@@ -339,6 +355,15 @@ cdef class ParticleHandle(object):
                 bonds.append(tuple(bond))
 
             return tuple(bonds)
+
+    property node:
+        """
+        The node the particle is on, identified by its MPI rank.
+        """
+
+        def __get__(self):
+            return get_particle_node(self.id)
+
 
     # Properties that exist only when certain features are activated
     # MULTI_TIMESTEP
@@ -650,8 +675,8 @@ cdef class ParticleHandle(object):
     IF VIRTUAL_SITES == 1:
 
         property virtual:
-            """
-            Virtual flag.
+            """ Virtual flag.
+
             Declares the particles as virtual (1) or non-virtual (0, default).
 
             virtual : integer
@@ -675,6 +700,32 @@ cdef class ParticleHandle(object):
                 return x[0]
 
     IF VIRTUAL_SITES_RELATIVE == 1:
+        property vs_quat:
+            """ Virtual site quaternion.
+
+            This quaternion describes the virtual particles orientation in the body
+            fixed frame of the related real particle.
+
+            vs_quat : array_like of :obj:`float`
+
+            .. note::
+               This needs the feature VIRTUAL_SITES_RELATIVE.
+
+            """
+            def __set__(self, q):
+                if len(q) != 4:
+                    raise ValueError("vs_quat has to be an array-like of length 4.")
+                cdef double _q[4]
+                for i in range(4):
+                    _q[i] = q[i]
+                set_particle_vs_quat(self.id, _q)
+
+            def __get__(self):
+                self.update_particle_data()
+                cdef const double *q = NULL
+                pointer_to_vs_quat(self.particle_data, q)
+                return np.array([q[0], q[1], q[2], q[3]])
+
         property vs_relative:
             """
             Virtual sites relative parameters.
@@ -692,7 +743,7 @@ cdef class ParticleHandle(object):
             """
 
             def __set__(self, x):
-                if len(x) != 3:
+                if len(x) < 3:
                     raise ValueError(
                         "vs_relative needs input like id,distance,(q1,q2,q3,q4).")
                 _relto = x[0]
@@ -1312,7 +1363,7 @@ cdef class ParticleHandle(object):
         """
 
         if remove_particle(self.id):
-            raise Exception("Could not delete particle.")
+            raise Exception("Could not remove particle.")
         del self
 
     # Bond related methods
@@ -1671,7 +1722,10 @@ class ParticleSlice(_ParticleSliceImpl):
 
     """
 
-    pass
+    def __setattr__(self, name, value):
+        if name != "_chunk_size" and not hasattr(ParticleHandle, name):
+            raise AttributeError("ParticleHandle does not have the attribute {}.".format(name))
+        super(ParticleSlice, self).__setattr__(name, value)
 
 
 cdef class ParticleList(object):
@@ -1712,7 +1766,7 @@ cdef class ParticleList(object):
         """
 
         pickle_attr = copy(particle_attributes)
-        for i in ["director", "dip", "id"]:
+        for i in ["director", "dip", "id", "image_box", "node"]:
             if i in pickle_attr:
                 pickle_attr.remove(i)
         IF MASS == 0:
@@ -1750,7 +1804,7 @@ cdef class ParticleList(object):
 
         See Also
         --------
-        remove
+        :meth:`espressomd.particle_data.ParticleHandle.remove`
 
         Examples
         --------
@@ -1875,7 +1929,7 @@ Set quat and scalar dipole moment (dipm) instead.")
         See Also
         --------
         add
-        remove
+        :meth:`espressomd.particle_data.ParticleHandle.remove`
 
         """
 

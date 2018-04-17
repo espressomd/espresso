@@ -19,6 +19,9 @@
 # Handling of interactions
 
 from __future__ import print_function, absolute_import
+
+from libcpp.string cimport string
+
 include "myconfig.pxi"
 from espressomd.system cimport *
 cimport numpy as np
@@ -126,9 +129,14 @@ cdef extern from "interaction_data.hpp":
         double HAT_Fmax
         double HAT_r
 
+        double THOLE_scaling_coeff
+        double THOLE_q1q2
+
     cdef ia_parameters * get_ia_param(int i, int j)
     cdef ia_parameters * get_ia_param_safe(int i, int j)
     cdef void make_bond_type_exist(int type)
+    cdef string ia_params_get_state()
+    cdef void ia_params_set_state(string)
 
 cdef extern from "lj.hpp":
     cdef int lennard_jones_set_params(int part_type_a, int part_type_b,
@@ -153,6 +161,10 @@ IF GAY_BERNE:
                                  double eps, double sig, double cut,
                                  double k1, double k2,
                                  double mu, double nu);
+
+IF THOLE:
+    cdef extern from "thole.hpp":
+        int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff, double q1q2);
 
 cdef extern from "ljgen.hpp":
     IF LJGEN_SOFTCORE:
@@ -264,6 +276,22 @@ cdef extern from "interaction_data.hpp":
         double r
         double r_cut
 
+#* Parameters for thermalized  bond */
+    ctypedef struct Thermalized_bond_parameters:
+        double temp_com
+        double gamma_com
+        double temp_distance
+        double gamma_distance
+        double r_cut
+
+#* Parameters for Bonded coulomb */
+    ctypedef struct Bonded_coulomb_bond_parameters:
+        double prefactor
+
+#* Parameters for Bonded coulomb p3m sr */
+    ctypedef struct Bonded_coulomb_p3m_sr_bond_parameters:
+        double q1q2
+
 #* Parameters for three body angular potential (bond-angle potentials).
     ctypedef struct Angle_bond_parameters:
         double bend
@@ -359,6 +387,9 @@ cdef extern from "interaction_data.hpp":
         Fene_bond_parameters fene
         Oif_global_forces_bond_parameters oif_global_forces
         Oif_local_forces_bond_parameters oif_local_forces
+        Thermalized_bond_parameters thermalized_bond
+        Bonded_coulomb_bond_parameters bonded_coulomb
+        Bonded_coulomb_p3m_sr_bond_parameters bonded_coulomb_p3m_sr
         Harmonic_bond_parameters harmonic
         Harmonic_dumbbell_bond_parameters harmonic_dumbbell
         Angle_bond_parameters angle
@@ -402,6 +433,12 @@ cdef extern from "object-in-fluid/oif_global_forces.hpp":
     int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g, double V0, double kv)
 cdef extern from "object-in-fluid/oif_local_forces.hpp":
     int oif_local_forces_set_params(int bond_type, double r0, double ks, double kslin, double phi0, double kb, double A01, double A02, double kal)
+cdef extern from "thermalized_bond.hpp":
+    int thermalized_bond_set_params(int bond_type, double temp_com, double gamma_com, double temp_distance, double gamma_distance, double r_cut)
+cdef extern from "bonded_coulomb.hpp":
+    int bonded_coulomb_set_params(int bond_type, double prefactor)
+cdef extern from "bonded_coulomb_p3m_sr.hpp":
+    int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2)
 
 IF ROTATION:
     cdef extern from "harmonic_dumbbell.hpp":
@@ -427,6 +464,11 @@ IF OVERLAPPED == 1:
         int overlapped_bonded_set_params(int bond_type, OverlappedBondedInteraction overlap_type,
                                          char * filename)
 
+IF ELECTROSTATICS == 1:
+    cdef extern from "bonded_coulomb.hpp":
+        int bonded_coulomb_set_params(int bond_type, double prefactor)
+    
+
 cdef extern from "interaction_data.hpp":
     int virtual_set_params(int bond_type)
 
@@ -437,8 +479,8 @@ cdef extern from "interaction_data.hpp":
         BONDED_IA_FENE,
         BONDED_IA_HARMONIC,
         BONDED_IA_HARMONIC_DUMBBELL,
-        BONDED_IA_QUARTIC,
         BONDED_IA_BONDED_COULOMB,
+        BONDED_IA_BONDED_COULOMB_P3M_SR,
         BONDED_IA_ANGLE_OLD,
         BONDED_IA_DIHEDRAL,
         BONDED_IA_TABULATED,
@@ -459,4 +501,5 @@ cdef extern from "interaction_data.hpp":
         BONDED_IA_IBM_TRIEL,
         BONDED_IA_IBM_VOLUME_CONSERVATION,
         BONDED_IA_IBM_TRIBEND,
-        BONDED_IA_UMBRELLA
+        BONDED_IA_UMBRELLA,
+        BONDED_IA_THERMALIZED_DIST

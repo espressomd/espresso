@@ -37,14 +37,12 @@ class AccumulatorTest(ut.TestCase):
 
     def setUp(self):
         np.random.seed(seed=162)
-        self.system = espressomd.System()
-        self.system.box_l = [10.0] * 3
+        self.system = espressomd.System(box_l = [10.0] * 3)
         self.system.cell_system.skin = 0.4
         self.system.time_step = 0.01
         self.system.part.add(id=0, pos=[0.0, 0.0, 0.0])
         self.system.integrator.run(steps=0)
         self.pos_obs = espressomd.observables.ParticlePositions(ids=(0,))
-        self.system.auto_update_observables.add(self.pos_obs)
         self.pos_obs_acc = espressomd.accumulators.Accumulator(
             obs=self.pos_obs)
         self.system.auto_update_accumulators.add(self.pos_obs_acc)

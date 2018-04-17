@@ -21,76 +21,51 @@
 #include "lbgpu.hpp"
 #include "utils.hpp"
 #include "utils/Histogram.hpp"
+#include "utils/coordinate_transformation.hpp"
 
 namespace Observables {
 
 std::vector<double> CylindricalLBVelocityProfileAtParticlePositions::
 operator()(PartCfg &partCfg) const {
-  std::vector<size_t> n_bins{{static_cast<size_t>(n_r_bins),
-                              static_cast<size_t>(n_phi_bins),
-                              static_cast<size_t>(n_z_bins)}};
-  std::vector<std::pair<double, double>> limits{
+  std::array<size_t, 3> n_bins{{static_cast<size_t>(n_r_bins),
+                                static_cast<size_t>(n_phi_bins),
+                                static_cast<size_t>(n_z_bins)}};
+  std::array<std::pair<double, double>, 3> limits{
       {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
        std::make_pair(min_z, max_z)}};
-  Utils::CylindricalHistogram<double> histogram(n_bins, 3, limits);
+  Utils::CylindricalHistogram<double, 3> histogram(n_bins, 3, limits);
 #ifdef LB_GPU
   // First collect all positions (since we want to call the LB function to
   // get the fluid velocities only once).
+  std::vector<::Vector<3, double>> folded_positions;
+  std::transform(ids().begin(), ids().end(),
+                 std::back_inserter(folded_positions), [&partCfg](int id) {
+                   return ::Vector<3, double>(folded_position(partCfg[id]));
+                 });
   std::vector<double> ppos(3 * ids().size());
-  std::vector<double> ppos_cyl(3 * ids().size());
-  std::vector<double> ppos_shifted(3 * ids().size());
-  for (int index = 0; index < ids().size(); ++index) {
-    auto const ppos_tmp =
-        ::Vector<3, double>(folded_position(partCfg[ids()[index]]));
-    ppos[3 * index + 0] = ppos_tmp[0];
-    ppos[3 * index + 1] = ppos_tmp[1];
-    ppos[3 * index + 2] = ppos_tmp[2];
-    auto const ppos_shifted_tmp = ppos_tmp - center;
-    if (axis == "z") {
-      ppos_shifted[3 * index + 0] = ppos_shifted_tmp[0];
-      ppos_shifted[3 * index + 1] = ppos_shifted_tmp[1];
-      ppos_shifted[3 * index + 2] = ppos_shifted_tmp[2];
-    } else if (axis == "x") {
-      ppos_shifted[3 * index + 0] = -ppos_shifted_tmp[2];
-      ppos_shifted[3 * index + 1] = ppos_shifted_tmp[1];
-      ppos_shifted[3 * index + 2] = ppos_shifted_tmp[0];
-    } else if (axis == "y") {
-      ppos_shifted[3 * index + 0] = ppos_shifted_tmp[0];
-      ppos_shifted[3 * index + 1] = -ppos_shifted_tmp[2];
-      ppos_shifted[3 * index + 2] = ppos_shifted_tmp[1];
-    }
-    auto const ppos_cyl_tmp =
-        Utils::transform_to_cylinder_coordinates(ppos_shifted_tmp);
-    ppos_cyl[3 * index + 0] = ppos_cyl_tmp[0];
-    ppos_cyl[3 * index + 1] = ppos_cyl_tmp[1];
-    ppos_cyl[3 * index + 2] = ppos_cyl_tmp[2];
+  for (auto it = folded_positions.begin(); it != folded_positions.end(); ++it) {
+    size_t ind = std::distance(folded_positions.begin(), it);
+    ppos[3 * ind + 0] = (*it)[0];
+    ppos[3 * ind + 1] = (*it)[1];
+    ppos[3 * ind + 2] = (*it)[2];
   }
   std::vector<double> velocities(3 * ids().size());
   lb_lbfluid_get_interpolated_velocity_at_positions(
       ppos.data(), velocities.data(), ids().size());
-  for (int index = 0; index < ids().size(); ++index) {
-    // Coordinate transform the velocities and divide core velocities by
-    // time_step to get MD units. v_r = (x * v_x + y * v_y) / sqrt(x^2 + y^2)
-    double v_r =
-        (ppos_shifted[3 * index + 0] * velocities[3 * index + 0] +
-         ppos_shifted[3 * index + 1] * velocities[3 * index + 1]) /
-        std::sqrt(ppos_shifted[3 * index + 0] * ppos_shifted[3 * index + 0] +
-                  ppos_shifted[3 * index + 1] * ppos_shifted[3 * index + 1]);
-    // v_phi = (x * v_y - y * v_x ) / (x^2 + y^2)
-    double v_phi = (ppos_shifted[3 * index + 0] * velocities[3 * index + 1] -
-                    ppos_shifted[3 * index + 1] * velocities[3 * index + 0]) /
-                   (ppos_shifted[3 * index + 0] * ppos_shifted[3 * index + 0] +
-                    ppos_shifted[3 * index + 1] * ppos_shifted[3 * index + 1]);
-    // v_z = v_z
-    double v_z = velocities[3 * index + 2];
-    histogram.update(
-      std::vector<double>{{ppos_cyl[3 * index + 0], ppos_cyl[3 * index + 1],
-                             ppos_cyl[3 * index + 2]}},
-      std::vector<double>{{v_r, v_phi, v_z}});
+  for (auto &p : folded_positions)
+    p -= center;
+  for (int ind = 0; ind < ids().size(); ++ind) {
+    histogram.update(Utils::transform_pos_to_cylinder_coordinates(
+                         folded_positions[ind], axis),
+                     Utils::transform_vel_to_cylinder_coordinates(
+                         ::Vector<3, double>{{velocities[3 * ind + 0],
+                                              velocities[3 * ind + 1],
+                                              velocities[3 * ind + 2]}},
+                         axis, folded_positions[ind]));
   }
   auto hist_tmp = histogram.get_histogram();
   auto tot_count = histogram.get_tot_count();
-  for (size_t ind=0; ind < hist_tmp.size(); ++ind) {
+  for (size_t ind = 0; ind < hist_tmp.size(); ++ind) {
     if (hist_tmp[ind] > 0.0) {
       hist_tmp[ind] /= tot_count[ind];
     }

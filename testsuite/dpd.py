@@ -22,17 +22,21 @@ import unittest as ut
 import espressomd
 import numpy as np
 from time import time
+from itertools import product
 
 @ut.skipIf(not espressomd.has_features("DPD"),"Skipped because feature is disabled")
 class DPDThermostat(ut.TestCase):
     """Tests the velocity distribution created by the dpd thermostat against 
        the single component Maxwell distribution."""
 
-    s = espressomd.System()
+    s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     s.box_l = 3 * [10]
     s.time_step = 0.01
     s.cell_system.skin=0.4
-    s.seed=np.random.randint(1,1000,s.cell_system.get_state()["n_nodes"])
+
+    def setUp(self):
+        self.s.seed = range(self.s.cell_system.get_state()["n_nodes"])
+        np.random.seed(13)
 
     def single_component_maxwell(self,x1,x2,kT):
         """Integrate the probability density from x1 to x2 using the trapez rule"""
@@ -73,10 +77,10 @@ class DPDThermostat(ut.TestCase):
             weight_function=0, gamma=gamma, r_cut=1.5,
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
         s.integrator.run(100)
-        loops=6000
+        loops=250
         v_stored=np.zeros((N*loops,3))
         for i in range(loops):
-            s.integrator.run(5)
+            s.integrator.run(10)
             v_stored[i*N:(i+1)*N,:]=s.part[:].v
         v_minmax=5
         bins=5
@@ -104,10 +108,10 @@ class DPDThermostat(ut.TestCase):
             weight_function=0, gamma=gamma, r_cut=1.5,
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
         s.integrator.run(100)
-        loops=6000
+        loops=250
         v_stored=np.zeros((N*loops,3))
         for i in range(loops):
-            s.integrator.run(5)
+            s.integrator.run(10)
             v_stored[i*N:(i+1)*N,:]=s.part[:].v
         v_minmax=5
         bins=5
@@ -127,14 +131,14 @@ class DPDThermostat(ut.TestCase):
         s.non_bonded_inter[0,0].dpd.set_params(
             weight_function=0, gamma=gamma, r_cut=1.5,
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
-        s.integrator.run(100)
+        s.integrator.run(10)
 
         s.thermostat.turn_off()
 
         # Reset velocities
         s.part[:].v = [1.,2.,3.]
 
-        s.integrator.run(100)
+        s.integrator.run(10)
 
         # Check that there was neither noise nor friction
         for v in s.part[:].v:
@@ -147,10 +151,13 @@ class DPDThermostat(ut.TestCase):
         # Reset velocities for faster convergence
         s.part[:].v = [0.,0.,0.]
 
-        loops=6000
+        # Equilibrate
+        s.integrator.run(250)
+
+        loops=250
         v_stored=np.zeros((N*loops,3))
         for i in range(loops):
-            s.integrator.run(5)
+            s.integrator.run(10)
             v_stored[i*N:(i+1)*N,:]=s.part[:].v
         v_minmax=5
         bins=5
@@ -270,6 +277,45 @@ class DPDThermostat(ut.TestCase):
         self.assertTrue(abs(s.part[1].f[1] + omega(0.5, 1.4)**2*gamma*v[1]) < 1e-11)
         self.assertTrue(abs(s.part[1].f[2] + omega(0.5, 1.4)**2*gamma*v[2]) < 1e-11)
 
+    def test_ghosts_have_v(self):
+        s=self.s
+        s.part.clear()
+
+        s.box_l = 3 * [10.]
+
+        r_cut=1.5
+        dx = 0.25 * r_cut
+
+        def f(i):
+            if i == 0:
+                return dx
+            else:
+                return 10. - dx
+
+        # Put a particle in every corner
+        for ind in product([0, 1], [0, 1], [0, 1]):
+            pos = [f(x) for x in ind]
+            v = ind
+            s.part.add(pos=pos, v=v)
+
+        gamma=1.0
+        s.thermostat.set_dpd(kT=0.0)
+        s.non_bonded_inter[0,0].dpd.set_params(
+            weight_function=0, gamma=gamma, r_cut=r_cut,
+            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=r_cut)
+
+        s.integrator.run(0)
+
+        id = 0
+        for ind in product([0, 1], [0, 1], [0, 1]):
+            for i in ind:
+                if ind[i] == 0:
+                    sgn = 1
+                else:
+                    sgn = -1
+
+                self.assertAlmostEqual(sgn*4.0, s.part[id].f[i])
+            id += 1
 
 if __name__ == "__main__":
     ut.main()

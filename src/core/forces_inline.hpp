@@ -41,6 +41,7 @@
 #include "collision.hpp"
 #include "constraints.hpp"
 #include "dihedral.hpp"
+#include "thermalized_bond.hpp"
 #include "elc.hpp"
 #include "endangledist.hpp"
 #include "fene.hpp"
@@ -75,14 +76,17 @@
 #include "steppot.hpp"
 #include "subt_lj.hpp"
 #include "tab.hpp"
+#include "thole.hpp"
 #include "twist_stack.hpp"
 #include "umbrella.hpp"
 #ifdef ELECTROSTATICS
-#include "actor/EwaldGPU_ShortRange.hpp"
 #include "bonded_coulomb.hpp"
 #include "debye_hueckel.hpp"
 #include "reaction_field.hpp"
 #include "scafacos.hpp"
+#endif
+#ifdef P3M
+#include "bonded_coulomb_p3m_sr.hpp"
 #endif
 #ifdef IMMERSED_BOUNDARY
 #include "immersed_boundary/ibm_main.hpp"
@@ -109,8 +113,8 @@ inline void init_ghost_force(Particle *part) {
     part->f.torque[2] = 0;
 
     /* and rescale quaternion, so it is exactly of unit length */
-    scale = sqrt(SQR(part->r.quat[0]) + SQR(part->r.quat[1]) +
-                 SQR(part->r.quat[2]) + SQR(part->r.quat[3]));
+    scale = sqrt(Utils::sqr(part->r.quat[0]) + Utils::sqr(part->r.quat[1]) +
+                 Utils::sqr(part->r.quat[2]) + Utils::sqr(part->r.quat[3]));
     part->r.quat[0] /= scale;
     part->r.quat[1] /= scale;
     part->r.quat[2] /= scale;
@@ -164,8 +168,8 @@ inline void init_local_particle_force(Particle *part) {
 #endif
 
     /* and rescale quaternion, so it is exactly of unit length */
-    scale = sqrt(SQR(part->r.quat[0]) + SQR(part->r.quat[1]) +
-                 SQR(part->r.quat[2]) + SQR(part->r.quat[3]));
+    scale = sqrt(Utils::sqr(part->r.quat[0]) + Utils::sqr(part->r.quat[1]) +
+                 Utils::sqr(part->r.quat[2]) + Utils::sqr(part->r.quat[3]));
     part->r.quat[0] /= scale;
     part->r.quat[1] /= scale;
     part->r.quat[2] /= scale;
@@ -234,6 +238,10 @@ inline void calc_non_bonded_pair_force_parts(
 #ifdef LJCOS2
   add_ljcos2_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
+/* thole damping */
+#ifdef THOLE
+  add_thole_pair_force(p1, p2, ia_params, d, dist, force);
+#endif
 /* tabulated */
 #ifdef TABULATED
   add_tabulated_pair_force(p1, p2, ia_params, d, dist, force);
@@ -272,6 +280,7 @@ inline void calc_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
     @param dist2     distance squared between p1 and p2. */
 inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
                                       double dist, double dist2) {
+
   IA_parameters *ia_params = get_ia_param(p1->p.type, p2->p.type);
   double force[3] = {0., 0., 0.};
   double torque1[3] = {0., 0., 0.};
@@ -393,12 +402,6 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
     if (q1q2)
       add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, force);
     break;
-#ifdef EWALD_GPU
-  case COULOMB_EWALD_GPU:
-    if (q1q2)
-      add_ewald_gpu_coulomb_pair_force(p1, p2, d, dist, force);
-    break;
-#endif
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
     if (q1q2) {
@@ -489,6 +492,7 @@ inline void add_bonded_force(Particle *p1) {
 
     /* fetch particle 2, which is always needed */
     p2 = local_particles[p1->bl.e[i++]];
+    
     if (!p2) {
       runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
                         << " and " << p1->bl.e[i - 1]
@@ -562,9 +566,17 @@ inline void add_bonded_force(Particle *p1) {
     case BONDED_IA_QUARTIC:
       bond_broken = calc_quartic_pair_force(p1, p2, iaparams, dx, force);
       break;
+    case BONDED_IA_THERMALIZED_DIST:
+      bond_broken = calc_thermalized_bond_forces(p1, p2, iaparams, dx, force, force2);
+      break;
 #ifdef ELECTROSTATICS
     case BONDED_IA_BONDED_COULOMB:
       bond_broken = calc_bonded_coulomb_pair_force(p1, p2, iaparams, dx, force);
+      break;
+#endif
+#ifdef P3M
+    case BONDED_IA_BONDED_COULOMB_P3M_SR:
+      bond_broken = calc_bonded_coulomb_p3m_sr_pair_force(p1, p2, iaparams, dx, force);
       break;
 #endif
 #ifdef HYDROGEN_BOND
@@ -767,6 +779,10 @@ inline void add_bonded_force(Particle *p1) {
           p2->f.f[j] += force2[j];
           break;
 #endif // BOND_ENDANGLEDIST
+	    case BONDED_IA_THERMALIZED_DIST:
+          p1->f.f[j] += force[j];
+          p2->f.f[j] += force2[j];
+	      break;
         default:
           p1->f.f[j] += force[j];
           p2->f.f[j] -= force[j];
