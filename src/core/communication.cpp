@@ -171,7 +171,7 @@ static int terminated = 0;
   CB(mpi_iccp3m_iteration_slave)                                               \
   CB(mpi_iccp3m_init_slave)                                                    \
   CB(mpi_send_rotational_inertia_slave)                                        \
-  CB(mpi_send_rotational_inertia_slave)                                        \
+  CB(mpi_send_affinity_slave)                                                  \
   CB(mpi_rotate_particle_slave)                                                  \
   CB(mpi_send_out_direction_slave)                                             \
   CB(mpi_send_mu_E_slave)                                                      \
