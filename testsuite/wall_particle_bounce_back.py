@@ -21,8 +21,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
         self.system.part.clear()
         self.system.constraints.clear()
 
-    def test_bounce_back_wall_one_walls(self):
-        """Checks that a particle is bounced back from a wall it is heading towards.
+    def test_bounce_back_flat_wall(self):
+        """Checks that a particle is bounced back from a flat wall it is heading towards.
 
         """
         system = self.system
@@ -40,7 +40,6 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
         system.integrator.run(20)
         zpos=system.part[0].pos[2]
-        print(zpos)
         self.assertAlmostEqual(zpos-(self.box_l-0.1), 0.00, places=4,
                        msg="difference to analytical expected position too big")
 
