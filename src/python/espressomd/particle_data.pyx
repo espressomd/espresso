@@ -1597,7 +1597,35 @@ cdef class ParticleHandle(object):
             self.update_particle_data()
             res= convert_vector_body_to_space(self.particle_data[0],_v)
             return np.array((res[0],res[1],res[2]))
+        
+        def convert_vector_space_to_body(self, vec):
+            """Converts the given vector from the space frame to the particle's body frame"""
+            cdef Vector3d res
+            cdef Vector3d _v
+            _v[0] = vec[0]
+            _v[1] = vec[1]
+            _v[2] = vec[2]
+            self.update_particle_data()
+            res= convert_vector_space_to_body(self.particle_data[0],_v)
+            return np.array((res[0],res[1],res[2]))
+        
 
+        def rotate(self,axis=None,angle=None):
+            """Rotates the particle around the given axis
+
+            Parameters
+            ----------
+            axis : array-like
+
+            angle : float
+
+            """
+            cdef double[3] a
+            a[0]=axis[0]
+            a[1]=axis[1]
+            a[2]=axis[2]
+
+            rotate_particle(self.id,a,angle)
 
 cdef class _ParticleSliceImpl(object):
     """Handles slice inputs.

@@ -482,6 +482,20 @@ Vector3d convert_vector_body_to_space(const Particle& p, const Vector3d& vec) {
   return res;
 }
 
+Vector3d convert_vector_space_to_body(const Particle& p, const Vector3d& v) {
+  Vector3d res={0,0,0};
+  double A[9];
+  define_rotation_matrix(p, A);
+  res[0] = A[0 + 3 * 0] * v[0] + A[0 + 3 * 1] * v[1] +
+                A[0 + 3 * 2] * v[2];
+  res[1] = A[1 + 3 * 0] * v[0] + A[1 + 3 * 1] * v[1] +
+                A[1 + 3 * 2] * v[2];
+  res[2] = A[2 + 3 * 0] * v[0] + A[2 + 3 * 1] * v[1] +
+                 A[2 + 3 * 2] * v[2];
+  return res;
+}
+
+
 
 void convert_torques_body_to_space(const Particle *p, double *torque) {
   double A[9];
@@ -519,7 +533,7 @@ void convert_vec_space_to_body(Particle *p, double *v, double *res) {
 
 /** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi
  */
-void rotate_particle(Particle *p, double *aSpaceFrame, double phi) {
+void local_rotate_particle(Particle *p, double *aSpaceFrame, double phi) {
   // Convert rotation axis to body-fixed frame
   double a[3];
   convert_vec_space_to_body(p, aSpaceFrame, a);

@@ -521,6 +521,14 @@ int set_particle_rotation(int part, int rot) {
   return ES_OK;
 }
 #endif
+#ifdef ROTATION
+int rotate_particle(int part, double axis[3], double angle) {
+  auto const pnode = get_particle_node(part);
+
+  mpi_rotate_particle(pnode, part, axis, angle);
+  return ES_OK;
+}
+#endif
 
 #ifdef AFFINITY
 int set_particle_affinity(int part, double bond_site[3]) {
