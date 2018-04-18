@@ -57,7 +57,7 @@ public:
 
 private:
   /** Private methods */
-  void reflect_particle(Particle *p, const double *distance_vector,
+  void reflect_particle_from_flat_wall(Particle *p, const double *distance_vector,
                         const double *folded_pos) const;
 
   /** Private data members */

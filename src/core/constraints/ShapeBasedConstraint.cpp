@@ -38,7 +38,7 @@ double ShapeBasedConstraint::min_dist() {
   return global_mindist;
 }
 
-void ShapeBasedConstraint::reflect_particle(Particle *p,
+void ShapeBasedConstraint::reflect_particle_from_flat_wall(Particle *p,
                                             const double *distance_vector,
                                             const double *folded_pos) const {
   double vec[3];
@@ -112,7 +112,7 @@ void ShapeBasedConstraint::add_force(Particle *p, double *folded_pos) {
                                    dist * dist, force, torque1, torque2);
       }
       if (m_reflection_type != (int)ReflectionType::NONE) {
-        reflect_particle(p, vec, folded_pos);
+        reflect_particle_from_flat_wall(p, vec, folded_pos);
         dist=-dist;
       }
     } 
