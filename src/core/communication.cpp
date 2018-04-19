@@ -50,6 +50,7 @@
 #include "initialize.hpp"
 #include "integrate.hpp"
 #include "interaction_data.hpp"
+#include "io/mpiio/mpiio.hpp"
 #include "lb.hpp"
 #include "lbboundaries.hpp"
 #include "lbboundaries/LBBoundary.hpp"
@@ -65,7 +66,6 @@
 #include "mmm2d.hpp"
 #include "molforces.hpp"
 #include "morse.hpp"
-#include "io/mpiio/mpiio.hpp"
 #include "npt.hpp"
 #include "overlap.hpp"
 #include "p3m-dipolar.hpp"
@@ -73,13 +73,13 @@
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
-#include "reaction.hpp"
 #include "reaction_field.hpp"
 #include "rotation.hpp"
 #include "scafacos.hpp"
 #include "statistics.hpp"
 #include "statistics_chain.hpp"
 #include "statistics_fluid.hpp"
+#include "swimmer_reaction.hpp"
 #include "tab.hpp"
 #include "topology.hpp"
 #include "virtual_sites.hpp"
@@ -103,7 +103,7 @@ std::unique_ptr<boost::mpi::environment> mpi_env;
 boost::mpi::communicator comm_cart;
 
 namespace Communication {
-  std::unique_ptr<MpiCallbacks> m_callbacks;
+std::unique_ptr<MpiCallbacks> m_callbacks;
 
 /* We use a singelton callback class for now. */
 MpiCallbacks &mpiCallbacks() {
@@ -172,6 +172,7 @@ static int terminated = 0;
   CB(mpi_iccp3m_init_slave)                                                    \
   CB(mpi_send_rotational_inertia_slave)                                        \
   CB(mpi_send_affinity_slave)                                                  \
+  CB(mpi_rotate_particle_slave)                                                \
   CB(mpi_send_out_direction_slave)                                             \
   CB(mpi_send_mu_E_slave)                                                      \
   CB(mpi_bcast_max_mu_slave)                                                   \
@@ -267,7 +268,8 @@ void mpi_init() {
 #else
   int argc{};
   char **argv{};
-  Communication::mpi_env = Utils::make_unique<boost::mpi::environment>(argc, argv);
+  Communication::mpi_env =
+      Utils::make_unique<boost::mpi::environment>(argc, argv);
 #endif
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
@@ -638,6 +640,36 @@ void mpi_send_rotational_inertia_slave(int pnode, int part) {
 #endif
 }
 
+void mpi_rotate_particle(int pnode, int part, double axis[3], double angle) {
+#ifdef ROTATION
+  mpi_call(mpi_rotate_particle_slave, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    local_rotate_particle(p, axis, angle);
+  } else {
+    MPI_Send(axis, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+    MPI_Send(&angle, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_rotate_particle_slave(int pnode, int part) {
+#ifdef ROTATION
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    double axis[3], angle;
+    MPI_Recv(axis, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    MPI_Recv(&angle, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    local_rotate_particle(p, axis, angle);
+  }
+
+  on_particle_change();
+#endif
+}
+
 /********************* REQ_SET_BOND_SITE ********/
 
 void mpi_send_affinity_slave(int pnode, int part) {
@@ -963,7 +995,7 @@ void mpi_send_vs_quat(int pnode, int part, double *vs_quat) {
   mpi_call(mpi_send_vs_quat_slave, pnode, part);
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    for (int i=0; i<4; ++i) {
+    for (int i = 0; i < 4; ++i) {
       p->p.vs_quat[i] = vs_quat[i];
     }
   } else {
@@ -977,8 +1009,8 @@ void mpi_send_vs_quat_slave(int pnode, int part) {
 #ifdef VIRTUAL_SITES_RELATIVE
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->p.vs_quat, 4, MPI_DOUBLE, 0, SOME_TAG,
-             comm_cart, MPI_STATUS_IGNORE);
+    MPI_Recv(p->p.vs_quat, 4, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+             MPI_STATUS_IGNORE);
   }
 
   on_particle_change();
@@ -1044,12 +1076,12 @@ void mpi_send_rotation_slave(int pnode, int part) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
-    MPI_Recv(&p->p.rotation, 1, MPI_SHORT, 0, SOME_TAG, MPI_COMM_WORLD, &status);
+    MPI_Recv(&p->p.rotation, 1, MPI_SHORT, 0, SOME_TAG, MPI_COMM_WORLD,
+             &status);
   }
 
   on_particle_change();
 }
-
 
 /********************* REQ_SET_BOND ********/
 
@@ -1148,7 +1180,7 @@ int mpi_integrate(int n_steps, int reuse_forces) {
   mpi_call(mpi_integrate_slave, n_steps, reuse_forces);
   integrate_vv(n_steps, reuse_forces);
   COMM_TRACE(
-        fprintf(stderr, "%d: integration task %d done.\n", this_node, n_steps));
+      fprintf(stderr, "%d: integration task %d done.\n", this_node, n_steps));
   return mpi_check_runtime_errors();
 }
 
@@ -2384,17 +2416,17 @@ void mpi_galilei_transform_slave(int pnode, int i) {
   on_particle_change();
 }
 
-/******************** REQ_CATALYTIC_REACTIONS ********************/
+/******************** REQ_SWIMMER_REACTIONS ********************/
 
 void mpi_setup_reaction() {
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
   mpi_call(mpi_setup_reaction_slave, -1, 0);
   local_setup_reaction();
 #endif
 }
 
 void mpi_setup_reaction_slave(int pnode, int i) {
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
   local_setup_reaction();
 #endif
 }

@@ -39,7 +39,7 @@ from espressomd.reaction import Reaction
 assert_features(["ROTATION",
                  "ROTATIONAL_INERTIA",
                  "LANGEVIN_PER_PARTICLE",
-                 "CATALYTIC_REACTIONS",
+                 "SWIMMER_REACTIONS",
                  "LENNARD_JONES"])
 
 ################################################################################

@@ -152,7 +152,7 @@ cdef extern from "npt.hpp":
 cdef extern from "statistics.hpp":
     extern int n_configs
 
-cdef extern from "reaction.hpp":
+cdef extern from "swimmer_reaction.hpp":
     ctypedef struct  reaction_struct:
         int reactant_type
         int product_type

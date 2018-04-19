@@ -303,7 +303,12 @@ include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 list(APPEND LIBRARIES ${Boost_LIBRARIES})
 
 if(Boost_VERSION VERSION_GREATER 106399 AND Boost_VERSION VERSION_LESS 106500)
-  message(FATAL_ERROR "Boost 1.64 is unsupported")
+  # Boost 1.64 has incompatible Serialization and MPI modules, see https://svn.boost.org/trac10/ticket/12723 .
+  # Some distributions, like Fedora, have backported the patch.
+  FILE(READ "${Boost_INCLUDE_DIR}/boost/mpi/detail/mpi_datatype_primitive.hpp" boost_mpi_datatype_file)
+  if(boost_mpi_datatype_file MATCHES "boost::serialization::detail::get_data")
+    message(FATAL_ERROR "Boost 1.64 is unsupported")
+  endif()
 endif()
 
 #######################################################################
