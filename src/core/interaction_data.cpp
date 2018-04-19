@@ -69,7 +69,6 @@
 #include "steppot.hpp"
 #include "tab.hpp"
 #include "thermostat.hpp"
-#include "tunable_slip.hpp"
 #include "umbrella.hpp"
 #include "utils.hpp"
 #include "utils/serialization/IA_parameters.hpp"
@@ -446,11 +445,6 @@ static void recalc_maximal_cutoff_nonbonded() {
 
 #ifdef TABULATED
       max_cut_current = std::max(max_cut_current, data->TAB.cutoff());
-#endif
-
-#ifdef TUNABLE_SLIP
-      if (max_cut_current < data->TUNABLE_SLIP_r_cut)
-        max_cut_current = data->TUNABLE_SLIP_r_cut;
 #endif
 
 #ifdef SWIMMER_REACTIONS
