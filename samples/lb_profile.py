@@ -48,12 +48,12 @@ system.integrator.run(5000)
 
 lb_fluid_profile = accumulator.get_mean()
 lb_fluid_profile = np.reshape(lb_fluid_profile, (100, 1, 1, 3))
-np.save('lb_fluid.npy', lb_fluid_profile)
 
 def poiseuille_flow(r, R, ext_force):
     return ext_force * 1./4 * (R**2.0-r**2.0)
 
 
+# Please note that due to symmetry and interpolation a plateau is seen near r=0.
 n_bins = len(lb_fluid_profile[:, 0, 0, 2])
 r_max = 4.0
 r = np.linspace(0.0, r_max, n_bins)
