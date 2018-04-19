@@ -747,7 +747,7 @@ The following observables are available:
      The particles are ordered according to the list of ids passed to the observable.
    - ParticleForces: Forces on the particles in the form
      :math:`f_{x1},\ f_{y1},\ f_{z1},\ f_{x2},\ f_{y2},\ f_{z2},\ \dots\ f_{xn},\ f_{yn},\ f_{zn}`.
-   - ParticleBodyVelocities: the particles' velocity in their respective body-fixed frames.
+   - ParticleBodyVelocities: the particles' velocities in their respective body-fixed frames (as per their orientation in space stored in their quaternions).
      :math:`v_{x1},\ v_{y1},\ v_{z1},\ v_{x2},\ v_{y2},\ v_{z2},\ \dots\ v_{xn},\ v_{yn},\ v_{zn}`.
      The particles are ordered according to the list of ids passed to the observable.
    - ParticleAngularVelocities: The particles' angular velocities in the space-fixed frame
@@ -779,6 +779,10 @@ The following observables are available:
    -  ForceDensityProfile
 
    -  LBVelocityProfile
+
+- System-wide observables
+  StressTensor: Total stress tensor (see :ref:`stress tensor`)
+
 
 
 .. _Correlations:

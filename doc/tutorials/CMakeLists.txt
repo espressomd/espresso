@@ -27,7 +27,7 @@ add_subdirectory(05-raspberry_electrophoresis)
 add_subdirectory(06-active_matter)
 add_subdirectory(07-electrokinetics)
 add_subdirectory(08-visualization)
-add_subdirectory(09-catalytic_reactions)
+add_subdirectory(09-swimmer_reactions)
 
 
 ### here: add the appropriate tutorial target after DEPENDS
