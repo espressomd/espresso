@@ -521,6 +521,14 @@ int set_particle_rotation(int part, int rot) {
   return ES_OK;
 }
 #endif
+#ifdef ROTATION
+int rotate_particle(int part, double axis[3], double angle) {
+  auto const pnode = get_particle_node(part);
+
+  mpi_rotate_particle(pnode, part, axis, angle);
+  return ES_OK;
+}
+#endif
 
 #ifdef AFFINITY
 int set_particle_affinity(int part, double bond_site[3]) {
@@ -810,8 +818,9 @@ int remove_particle(int p_id) {
   auto const pnode = get_particle_node(p_id);
 
   particle_node[p_id] = -1;
-
   mpi_remove_particle(pnode, p_id);
+
+  particle_node.erase(p_id);
 
   if (p_id == max_seen_particle) {
     max_seen_particle--;
@@ -855,7 +864,6 @@ void local_remove_particle(int part) {
     /* update the local_particles array for the moved particle */
     local_particles[p->p.identity] = p;
   }
-
   pl->n--;
 }
 

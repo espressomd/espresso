@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef REACTION_H
-#define REACTION_H
-/** \file reaction.hpp
+#ifndef SWIMMER_REACTION_H
+#define SWIMMER_REACTION_H
+/** \file swimmer_reaction.hpp
  *
  */
  
@@ -40,7 +40,7 @@ typedef struct {
 
 extern reaction_struct reaction;
 
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
 /** sanity checks for the reaction code */
 void reactions_sanity_checks();
 /** broadcasts reaction parameters and sets up an entry in the ia_params, so
@@ -50,4 +50,4 @@ void local_setup_reaction();
 void integrate_reaction();
 #endif
 
-#endif /* ifdef REACTION_H */
+#endif /* ifdef SWIMMER_REACTION_H */
