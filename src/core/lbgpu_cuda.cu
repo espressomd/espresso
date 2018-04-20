@@ -86,8 +86,10 @@ static LB_rho_v_pi_gpu *device_rho_v_pi= nullptr;
 static LB_rho_v_pi_gpu *print_rho_v_pi= nullptr;
 
 /** structs for velocity densities */
+#ifdef LEES_EDWARDS
 static LB_nodes_gpu nodes_LE_upper = {nullptr, nullptr, nullptr};
 static LB_nodes_gpu nodes_LE_lower = {nullptr, nullptr, nullptr};
+#endif
 static LB_nodes_gpu nodes_a = { nullptr, nullptr, nullptr};
 static LB_nodes_gpu nodes_b = { nullptr, nullptr, nullptr};;
 /** struct for node force */
@@ -629,12 +631,12 @@ __device__ void update_rho_v(float *mode, unsigned int index, LB_node_force_gpu 
 
 
 /** This function computes the equilibrium modes as needed by the LB and
-* and the LB-LeesEdwards implementation
-* equilibrium part of the stress modes (eq13 schiller)
-* @param ii                          LB components
-* @param rho                         density
-* @param u                           velocity (for LE uncluding the LE rate)
-* @param mode_from_pi_equilibium     pointer to equilibroum modes(output)
+ * and the LB-LeesEdwards implementation
+ * equilibrium part of the stress modes (eq13 schiller)
+ * @param ii                          LB components
+ * @param rho                         density
+ * @param u                           velocity (for LE uncluding the LE rate)
+ * @param mode_from_pi_equilibium     pointer to equilibroum modes(output)
 */
 __device__ inline void equilibrium_modes(int ii, float rho, float *u, float *modes_from_pi_eq){
 
@@ -808,7 +810,6 @@ __device__ void normalize_modes(float* mode){
     mode[18 + ii * LBQ] *= 3.0f/4.0f;
   }
 }
-
 
 
 /*-------------------------------------------------------*/
@@ -1053,7 +1054,7 @@ __device__ void calc_n_from_modes_push(LB_nodes_gpu n_b, float *mode, unsigned i
  * @param n_back          nodes for doublebuffering
  * @param nodes_LE_upper  nodes of the upper LE boundary
  * @param nodes_LE_lower  nodes of the lower LE boundary 
- * @param index            index of the corresponding nodes
+ * @param index           index of the corresponding nodes
 */
 
 __device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_front, LB_nodes_gpu n_back, LB_nodes_gpu nodes_LE_upper, LB_nodes_gpu nodes_LE_lower, int index){
@@ -2204,8 +2205,6 @@ __device__ __inline__ void calculate_xyz_nearest_nodes_LE(float* delta_LE, float
   delta_LE[6] = temp_delta[0] * temp_delta[4] * temp_delta[5];
   delta_LE[7] = temp_delta[3] * temp_delta[4] * temp_delta[5];
   
-  //printf("Deltas_LE: %f %f %f %f %f %f %f %f \n", delta_LE[0], delta_LE[1], delta_LE[2], delta_LE[3], delta_LE[4], delta_LE[5], delta_LE[6], delta_LE[7]);
-  
   // modulo for negative numbers is strange at best, shift to make sure we are positive
   *x = left_node_index[0] + para.dim_x;
   *y = left_node_index[1] + para.dim_y;
@@ -2285,32 +2284,24 @@ __device__ __inline__ void interpolation_two_point_coupling( LB_nodes_gpu n_a, f
 }
 
 __device__ __inline__ void interpolation_two_point_coupling_LE( LB_nodes_gpu n_a, float *particle_position, unsigned int* node_index, float* mode, LB_rho_v_gpu *d_v, float* delta, float le_position, float *interpolated_u ) {
-  //printf("Function call \n");
-  //printf("LE position %f, Particle position %f %f %f \n", le_position,  particle_position[0], particle_position[1], particle_position[2] );
   
   int x, y, z;
   float delta_LE[8];
   
   calculate_xyz_nearest_nodes(delta, particle_position, &x, &y, &z);
   calculate_nearest_nodes(x, y, z, n_a, node_index);
-  //printf("Node: %d, %d, %d \n", x, y, z);
-  //printf("Deltas: %f %f %f %f %f %f %f %f \n", delta[0], delta[1], delta[2], delta[3], delta[4], delta[5], delta[6], delta[7]);
+  
   // Calculate new indices for nodes at the boundaries 
   
   particle_position[0] = le_position;
   calculate_xyz_nearest_nodes_LE(delta_LE, particle_position, &x, &y, &z);
  
-  //printf("Deltas_LE: %f %f %f %f %f %f %f %f \n", delta_LE[0], delta_LE[1], delta_LE[2], delta_LE[3], delta_LE[4], delta_LE[5], delta_LE[6], delta_LE[7]);
-  //printf("Deltas: %f %f %f %f %f %f %f %f \n", delta[0], delta[1], delta[2], delta[3], delta[4], delta[5], delta[6], delta[7]);
-  
   if(particle_position[1] > para.dim_y*para.agrid - 0.5f * para.agrid){
     node_index[2] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[3] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[6] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
     node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-    //printf("Upper nodes \n");
-    //printf("LE position %f, Particle position %f %f %f \n", le_position, particle_position[0], particle_position[1], particle_position[2] );
-    //printf("Node: %d, %d, %d \n", x, y, z);
+    
     delta[2]=delta_LE[2];
     delta[3]=delta_LE[3];
     delta[6]=delta_LE[6];
@@ -2322,9 +2313,7 @@ __device__ __inline__ void interpolation_two_point_coupling_LE( LB_nodes_gpu n_a
     node_index[1] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
     node_index[4] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
     node_index[5] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-    //printf("Lower nodes \n");
-    //printf("LE position %f, Particle position %f %f %f \n", le_position, particle_position[0], particle_position[1], particle_position[2] );
-    //printf("Node: %d, %d, %d \n", x, y, z);
+    
     delta[0]=delta_LE[0];
     delta[1]=delta_LE[1];
     delta[4]=delta_LE[4];
@@ -2418,16 +2407,12 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
 
   if(position[1] > para.dim_y - 0.5f * para.agrid) {
     le_position = position[0] - lees_edwards_offset;
-    //le_position = fmodf(position[0] - lees_edwards_offset + para.dim_x*para.agrid, para.dim_x*para.agrid);
     }
   if(position[1] < 0.5f * para.agrid) {
     le_position = position[0] + lees_edwards_offset;
-    //le_position = fmodf(position[0] + lees_edwards_offset + para.dim_x*para.agrid, para.dim_x*para.agrid); 
     }
 #endif
 
-//TODO: delete
-//printf("LE position %f, LE offset %f, Particle position in x-direction %f \n", le_position, lees_edwards_offset, position[0]);
 
   float velocity[3];
   velocity[0] = particle_data[part_index].v[0];
@@ -2447,9 +2432,8 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   // Do the velocity interpolation
   
   interpolation_two_point_coupling(n_a, position, node_index, mode, d_v, delta, interpolated_u);
+
 #ifdef LEES_EDWARDS
-  //float ttt = para.dim_y*para.agrid - 0.5f * para.agrid;
-  //printf("Upper boundary %f \n", ttt);
   if((position[1] < 0.5f * para.agrid) || (position[1] > para.dim_y*para.agrid - 0.5f * para.agrid))
     interpolation_two_point_coupling_LE(n_a, position, node_index, mode, d_v, delta, le_position, interpolated_u);
 #endif
@@ -3337,8 +3321,6 @@ __device__ void calculate_LE_mode_delta(int index, LB_rho_v_gpu *d_v, float lees
   float modes_pi_with_LE[6];
   float* delta_m;
   int delta_index = pos[2]*para.dim_x + pos[0];
-
-//TODO: do both cases at once
 
   if(pos[1] == 0){
 
@@ -4272,8 +4254,10 @@ void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu){
 
 /**integration kernel for the lb gpu fluid update called from host */
 void lb_integrate_GPU() {
+#ifdef LEES_EDWARDS
   LB_nodes_gpu* n_front;
   LB_nodes_gpu* n_back; 
+#endif
 
   /** values for the kernel call */
   int threads_per_block = 64;
@@ -4294,16 +4278,20 @@ void lb_integrate_GPU() {
            it or device_rho_v are nullptr depending on extended_values_flag */ 
   if (intflag == 1)
   {
+#ifdef LEES_EDWARDS
     n_back = &nodes_a;
     n_front = &nodes_b;
+#endif    
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_a, nodes_b, device_rho_v, node_f, lb_ek_parameters_gpu));
     current_nodes = &nodes_b;
     intflag = 0;
   }
   else
   {
+#ifdef LEES_EDWARDS
     n_back = &nodes_b;
     n_front = &nodes_a;
+#endif
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_b, nodes_a, device_rho_v, node_f, lb_ek_parameters_gpu));
     current_nodes = &nodes_a;
     intflag = 1;
