@@ -448,17 +448,7 @@ struct IA_parameters {
   double THOLE_q1q2;
 #endif
 
-#ifdef TUNABLE_SLIP
-  double TUNABLE_SLIP_temp = 0.0;
-  double TUNABLE_SLIP_gamma = 0.0;
-  double TUNABLE_SLIP_r_cut = INACTIVE_CUTOFF;
-  double TUNABLE_SLIP_time = 0.0;
-  double TUNABLE_SLIP_vx = 0.0;
-  double TUNABLE_SLIP_vy = 0.0;
-  double TUNABLE_SLIP_vz = 0.0;
-#endif
-
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
   double REACTION_range = INACTIVE_CUTOFF;
 #endif
 
@@ -904,6 +894,14 @@ inline IA_parameters *get_ia_param(int i, int j) {
     Slower than @ref get_ia_param, but can also be used on not
     yet present particle types*/
 IA_parameters *get_ia_param_safe(int i, int j);
+
+/** @brief Get the state of all non bonded interactions.
+ */
+std::string ia_params_get_state();
+
+/** @brief Set the state of all non bonded interactions.
+ */
+void ia_params_set_state(std::string const&);
 
 bool is_new_particle_type(int type);
 /** Makes sure that ia_params is large enough to cover interactions

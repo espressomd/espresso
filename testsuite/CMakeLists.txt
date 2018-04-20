@@ -90,7 +90,7 @@ python_test(FILE script_interface_object_params.py MAX_NUM_PROC 4)
 python_test(FILE lbgpu_remove_total_momentum.py MAX_NUM_PROC 4)
 python_test(FILE reaction_ensemble.py MAX_NUM_PROC 4)
 python_test(FILE constant_pH.py MAX_NUM_PROC 4)
-python_test(FILE catalytic_reaction.py MAX_NUM_PROC 1)
+python_test(FILE swimmer_reaction.py MAX_NUM_PROC 1)
 python_test(FILE writevtf.py MAX_NUM_PROC 4)
 python_test(FILE lb_stokes_sphere_gpu.py MAX_NUM_PROC 1)
 python_test(FILE ek_eof_one_species_x.py MAX_NUM_PROC 1)
@@ -159,7 +159,8 @@ endif(PY_H5PY)
 
 add_custom_target(python_test_data
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/data ${CMAKE_CURRENT_BINARY_DIR}/data
-  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/tests_common.py ${CMAKE_CURRENT_BINARY_DIR})
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/tests_common.py ${CMAKE_CURRENT_BINARY_DIR}
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ek_common.py ${CMAKE_CURRENT_BINARY_DIR})
 
 add_custom_target(check_python_serial COMMAND ${CMAKE_CTEST_COMMAND} -C serial --output-on-failure)
 add_dependencies(check_python_serial pypresso python_test_data)

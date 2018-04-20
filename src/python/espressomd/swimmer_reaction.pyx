@@ -1,20 +1,20 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 cimport globals
-from . cimport reaction
+from . cimport swimmer_reaction
 from . cimport utils
 from .highlander import ThereCanOnlyBeOne
 from espressomd.utils import is_valid_type
 
-IF CATALYTIC_REACTIONS:
+IF SWIMMER_REACTIONS:
     __reaction_is_initiated = False
 
     cdef class Reaction(object):
         """
-        Class that handles catalytic reactions for self propelled particles.
+        Class that tries to mimic catalytic reactions for self propelled particles.
 
         .. note::
-           Requires the features CATALYTIC_REACTIONS.
+           Requires the features SWIMMER_REACTIONS.
            
            Keep in mind, that there may be only one reaction enabled. 
            There can be only one.
@@ -46,7 +46,7 @@ IF CATALYTIC_REACTIONS:
         Notes
         -----
 
-        Requires the features 'CATALYTIC_REACTIONS'.
+        Requires the features 'SWIMMER_REACTIONS'.
         """
 
         def validate_params(self):

@@ -91,6 +91,8 @@ class ShapeBasedConstraint(Constraint):
       only useful if penetrable is True.
     particle_type : int
       Interaction type of the constraint.
+    particle_velocity : array of :obj:`float`
+      Interaction velocity of the boudary
     penetrable : bool
       Whether particles are allowed to penetrate the
       constraint.
@@ -125,7 +127,7 @@ class ShapeBasedConstraint(Constraint):
     def min_dist(self):
         """
         Calculates the minimum distance to all interacting particles.
-        
+
         Returns
         ----------
         :obj:float: The minimum distance
