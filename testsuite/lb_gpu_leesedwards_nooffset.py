@@ -9,7 +9,7 @@ import unittest as ut
 from tests_common import abspath
 
 # Systemclass
-system = md.System()
+system = md.System(box_l=[9,9,9])
 
 # allowed deviation
 tol = 1.0e-16
