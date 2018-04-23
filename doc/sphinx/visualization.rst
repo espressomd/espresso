@@ -16,8 +16,10 @@ online-visualization:
 
 #. A direct rendering engine based on *pyopengl*. As it is developed for |es|, 
    it supports the visualization of several specific features like
-   external forces or constraints. It has no GUI to setup the
-   appearance, but can be adjusted by a large set of parameters.
+   constraints, particle properties, the cell system, Lattice-Boltzmann and
+   more. It can be adjusted with a large number of parameters to set colors,
+   materials, camera and interactive features like assigning callbacks to user
+   input.
    Additional requirements:
    python module *PyOpenGL*.
 
@@ -106,25 +108,6 @@ Optional keywords:
 OpenGL visualizer
 -----------------
 
-| :meth:`espressomd.visualization.openGLLive.run()` 
-
-To visually debug your simulation, ``run()`` can be used to conveniently start 
-an integration loop in a separate thread once the visualizer is initialized::
-
-    import espressomd 
-    from espressomd import visualization 
-
-    system = espressomd.System() 
-    system.cell_system.skin = 0.4
-    system.time_step = 0.00001
-    system.box_l = [10,10,10]
-
-    system.part.add(pos = [1,1,1], v = [1,0,0]) 
-    system.part.add(pos = [9,9,9], v = [0,1,0])
-
-    visualizer = visualization.openGLLive(system, background_color = [1,1,1])
-    visualizer.run(1)
-
 :class:`espressomd.visualization.openGLLive()`
 
 The optional keywords in ``**kwargs`` are used to adjust the appearance of the visualization.
@@ -135,28 +118,94 @@ Required parameters:
 Optional keywords:
     * Have a look at the attribute list in :class:`espressomd.visualization.openGLLive()`
 
+
+.. _Running the visualizer:
+
+Running the visualizer
+~~~~~~~~~~~~~~~~~~~~~~
+
+| :meth:`espressomd.visualization.openGLLive.run()` 
+
+To visually debug your simulation, ``run(n)`` can be used to conveniently start 
+an integration loop with `n` integration steps in a separate thread once the
+visualizer is initialized::
+
+    import espressomd 
+    from espressomd import visualization 
+
+    system = espressomd.System(box_l = [10,10,10]) 
+    system.cell_system.skin = 0.4
+    system.time_step = 0.00001
+
+    system.part.add(pos = [1,1,1], v = [1,0,0]) 
+    system.part.add(pos = [9,9,9], v = [0,1,0])
+
+    visualizer = visualization.openGLLive(system, background_color = [1,1,1])
+    visualizer.run(1)
+
+
+.. _Screenshots:
+
+Screenshots
+~~~~~~~~~~~
+
+| :meth:`espressomd.visualization.openGLLive.screenshot()`
+
+The openGL visualizer can also be used for offline rendering.
+After creating the visualizer object, call ``screenshot(path)``
+to save an image of your simulation to `path`. Internally, the image is saved
+with `matplotlib.pyplot.imsave`, so the file format is specified by the
+extension of the filename.  The image size is determined by the keyword
+argument `window_size` of the visualizer. This method can be used to create
+screenshots without blocking the simulation script::
+
+    import espressomd
+    from espressomd import visualization
+
+    system = espressomd.System(box_l = [10,10,10])
+    system.cell_system.skin = 1.0
+    system.time_step = 0.1
+
+    for i in range(1000):
+        system.part.add(pos = [5,5,5])
+
+    system.thermostat.set_langevin(kT=1, gamma=1) 
+
+    visualizer = visualization.openGLLive(system, window_size = [500,500])
+
+    for i in range(100):
+        system.integrator.run(1)
+        visualizer.screenshot('screenshot_{}.jpg'.format(i))
+
+    #You may consider creating a video with ffmpeg:
+    #ffmpeg -f image2 -framerate 30 -i 'screenshot_%d.jpg' output.mp4
+
+It is also possible to create a snapshot during online visualization.
+Simply press the *enter* key to create a snapshot of the current window,
+which saves it to `<scriptname>_n.png` (with incrementing `n`).
+
 .. _Colors and Materials:
 
 Colors and Materials
 ~~~~~~~~~~~~~~~~~~~~
 
-Colors for particles, bonds and constraints are specified by RGBA arrays.
-Materials by an array for the ambient, diffuse, specular and shininess (ADSS)
-components. To distinguish particle groups, arrays of RGBA or ADSS entries are
+Colors for particles, bonds and constraints are specified by RGB arrays.
+Materials by an array for the ambient, diffuse, specular and shininess and opacity (ADSSO)
+components. To distinguish particle groups, arrays of RGBA or ADSSO entries are
 used, which are indexed circularly by the numerical particle type::
 
     # Particle type 0 is red, type 1 is blue (type 2 is red etc)..
     visualizer = visualization.openGLLive(system, 
                                           particle_coloring = 'type',
-                                          particle_type_colors = [[1, 0, 0, 1],[0, 0, 1, 1]])
+                                          particle_type_colors = [[1, 0, 0],[0, 0, 1]])
 
 `particle_type_materials` lists the materials by type::
 
     # Particle type 0 is gold, type 1 is blue (type 2 is gold again etc).
     visualizer = visualization.openGLLive(system, 
                                           particle_coloring = 'type',
-                                          particle_type_colors = [[1, 1, 1, 1],[0, 0, 1, 1]],
-                                          particle_type_materials = [gold, bright])
+                                          particle_type_colors = [[1, 1, 1],[0, 0, 1]],
+                                          particle_type_materials = [steel, bright])
 
 Materials are stored in :attr:`espressomd.visualization.openGLLive().materials`. 
 
@@ -194,7 +243,7 @@ feature)::
 	                        director_arrows = True,
 	                        director_arrows_type_scale = [1.5, 1.0], 
 	                        director_arrows_type_radii = [0.1, 0.4], 
-	                        director_arrows_type_colors = [[1.0, 0, 0, 1.0], [0, 1.0, 0, 0.5]])
+	                        director_arrows_type_colors = [[1.0, 0, 0], [0, 1.0, 0]])
 
 	for i in range(10):
 		system.part.add(pos = numpy.random.random(3) * box_l, 
@@ -227,6 +276,11 @@ The camera can be controlled via mouse and keyboard:
     * mouse wheel / key pair TG: zoom
     * WASD-Keyboard control (WS: move forwards/backwards, AD: move sidewards)
     * Key pairs QE, RF, ZC: rotate the system 
+    * Double click on a particle: Show particle information
+    * Double click in empty space: Disable particle information
+    * Left/Right arrows: Cycle through particles
+    * Space: If started with `run(n)`, this pauses the simulation
+    * Enter: Creates a snapshot of the current window and saves it to `<scriptname>_n.png` (with incrementing `n`)
 
 Additional input functionality for mouse and keyboard is possible by assigning
 callbacks to specified keyboard or mouse buttons. This may be useful for
@@ -264,7 +318,7 @@ by a timer or keyboard input::
     visualizer.keyboardManager.registerButton(KeyboardButtonEvent('t',KeyboardFireEvent.Hold,increaseTemp))
     visualizer.keyboardManager.registerButton(KeyboardButtonEvent('g',KeyboardFireEvent.Hold,decreaseTemp))
 
-Further examples can be found in samples/python/billard.py or samples/python/visualization\_openGL.py.
+Further examples can be found in samples/python/billard.py or samples/python/visualization\_interactive.py.
 
 .. _Dragging particles:
 
@@ -280,30 +334,5 @@ distance of particle and mouse cursor).
 Visualization example scripts
 -----------------------------
 
-Various example scripts can be found in the samples/python folder or in
-some tutorials:
-
--  samples/python/visualization.py: LJ-Liquid with live plotting.
-
--  samples/python/visualization\_bonded.py: Sample for bond
-   visualization.
-
--  samples/python/billard.py: Simple billard game including many
-   features of the openGL visualizer.
-
--  samples/python/visualization\_openGL.py: Timer and keyboard callbacks
-   for the openGL visualizer.
-
--  doc/tutorials/python/02-charged\_system/scripts/nacl\_units\_vis.py:
-   Periodic NaCl crystal, see tutorial “Charged Systems”.
-
--  doc/tutorials/python/02-charged\_system/scripts/nacl\_units\_confined\_vis.py:
-   Confined NaCl with interactively adjustable electric field, see
-   tutorial “Charged Systems”.
-
--  doc/tutorials/python/08-visualization/scripts/visualization.py:
-   LJ-Liquid visualization along with tutorial “Visualization”.
-
-Finally, it is recommended to go through tutorial “Visualization” for
-further code explanations. Also, the tutorial “Charged Systems” has two
-visualization examples.
+Various :ref:`Sample Scripts` can be found in `samples/python/visualization*`
+or in the :ref:`Tutorials` "Visualization" and "Charged Systems".

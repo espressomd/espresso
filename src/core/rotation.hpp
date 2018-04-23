@@ -59,6 +59,7 @@ void convert_torques_body_to_space(const Particle *p, double *torque);
 
 
 Vector3d convert_vector_body_to_space(const Particle& p, const Vector3d& v);
+Vector3d convert_vector_space_to_body(const Particle& p, const Vector3d& v);
 
 /** convert velocity form the lab-fixed coordinates
     to the body-fixed frame */
@@ -117,7 +118,7 @@ inline void convert_quatu_to_dip(double quatu[3], double dipm, double dip[3]) {
 #endif
 
 /** Rotate the particle p around the NORMALIZED axis a by amount phi */
-void rotate_particle(Particle *p, double *a, double phi);
+void local_rotate_particle(Particle *p, double *a, double phi);
 /** Rotate the particle p around the body axis "a" by amount phi */
 void rotate_particle_body(Particle* p, double* a, double phi);
 /** Rotate the particle p around the j-th body axis by amount phi */

@@ -145,7 +145,8 @@ while (i < warm_n_times and act_min_dist < min_dist):
 import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
 # pprint.pprint(system.part.__getstate__(), width=1)
-pprint.pprint(system.__getstate__(), width=1)
+state=system.__getstate__()
+pprint.pprint(state)
 
 # write parameter file
 

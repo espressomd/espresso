@@ -51,7 +51,7 @@
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "rattle.hpp"
-#include "reaction.hpp"
+#include "swimmer_reaction.hpp"
 #include "rotation.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
@@ -276,7 +276,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     thermo_cool_down();
 
 #ifdef COLLISION_DETECTION
-    handle_collisions();
+    if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
+        handle_collisions();
+    }
 #endif
   }
 
@@ -373,7 +375,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 #endif
 
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
     integrate_reaction();
 #endif
 
@@ -401,6 +403,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
 // progagate one-step functionalities
+
+if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef LB
     if (lattice_switch & LATTICE_LB)
       lattice_boltzmann_update();
@@ -424,6 +428,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 #endif // LB_GPU
 
+
 // IMMERSED_BOUNDARY
 #ifdef IMMERSED_BOUNDARY
 
@@ -445,6 +450,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
 
 #endif // IMMERSED_BOUNDARY
+}
 
 #ifdef ELECTROSTATICS
     if (coulomb.method == COULOMB_MAGGS) {
@@ -467,10 +473,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
       /* Propagate time: t = t+dt */
       sim_time += time_step;
-    }
 #ifdef COLLISION_DETECTION
     handle_collisions();
 #endif
+    }
     if (check_runtime_errors())
       break;
   }

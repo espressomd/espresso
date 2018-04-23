@@ -69,11 +69,18 @@
 #include "steppot.hpp"
 #include "tab.hpp"
 #include "thermostat.hpp"
-#include "tunable_slip.hpp"
 #include "umbrella.hpp"
 #include "utils.hpp"
+#include "utils/serialization/IA_parameters.hpp"
 #include <cstdlib>
 #include <cstring>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/iostreams/device/array.hpp>
+#include <boost/iostreams/stream.hpp>
+
 
 /****************************************
  * variables
@@ -140,6 +147,22 @@ static void recalc_maximal_cutoff_bonded();
 IA_parameters *get_ia_param_safe(int i, int j) {
   make_particle_type_exist(std::max(i, j));
   return get_ia_param(i, j);
+}
+
+std::string ia_params_get_state() {
+  std::stringstream out;
+  boost::archive::binary_oarchive oa(out);
+  oa << ia_params;
+  return out.str();
+}
+
+void ia_params_set_state(std::string const &state) {
+  namespace iostreams = boost::iostreams;
+  iostreams::array_source src(state.data(), state.size());
+  iostreams::stream<iostreams::array_source> ss(src);
+  boost::archive::binary_iarchive ia(ss);
+  ia_params.clear();
+  ia >> ia_params;
 }
 
 static void recalc_maximal_cutoff_bonded() {
@@ -424,12 +447,7 @@ static void recalc_maximal_cutoff_nonbonded() {
       max_cut_current = std::max(max_cut_current, data->TAB.cutoff());
 #endif
 
-#ifdef TUNABLE_SLIP
-      if (max_cut_current < data->TUNABLE_SLIP_r_cut)
-        max_cut_current = data->TUNABLE_SLIP_r_cut;
-#endif
-
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
       if (max_cut_current < data->REACTION_range)
         max_cut_current = data->REACTION_range;
 #endif

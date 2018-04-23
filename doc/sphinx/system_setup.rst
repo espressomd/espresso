@@ -385,6 +385,12 @@ thermostat acts on the relative velocities between nearest neighbor
 particles. Larger cutoffs including next nearest neighbors or even more
 are unphysical.
 
+Boundary conditions for DPD can be introduced by adding the boundary
+as a particle constraint, and setting a velocity and a type on it, see
+:class:`espressomd.constraints.Constraint`. Then a
+:ref:`DPD interaction` with the type can be defined, which acts as a
+boundary condition.
+
 .. _Isotropic NPT thermostat:
 
 Isotropic NPT thermostat
