@@ -20,7 +20,7 @@ rho = 1.0
 nu = eta / rho
 agrid = 1.0
 fric = 1.0
-lb1 = md.lb.LBFluidGPU(agrid=agrid, dens=rho, visc=eta, fric=fric, tau=time_step)
+lb1 = lb.LBFluidGPU(agrid=agrid, dens=rho, visc=eta, fric=fric, tau=time_step)
 
 # LB parameter for test against Navier-Stokes equation
 eta = 0.27
@@ -30,7 +30,7 @@ v = 0.0087
 k_max = 100
 agrid = 1.0
 fric = 1.1
-lb2 = md.lb.LBFluidGPU(agrid=agrid, dens=rho, visc=eta, fric=fric, tau=time_step)
+lb2 = lb.LBFluidGPU(agrid=agrid, dens=rho, visc=eta, fric=fric, tau=time_step)
 
 box_l = 9
 system = md.System(box_l=[box_l, box_l, box_l], time_step = time_step)
