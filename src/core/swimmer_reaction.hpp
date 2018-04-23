@@ -1,6 +1,6 @@
 /*
   Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
-  Copyright (C) 2009,2010 
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
@@ -18,27 +18,36 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef _TUNABLE_SLIP_H
-#define _TUNABLE_SLIP_H
-
-/** \file tunable_slip.hpp
- *  Routines to generate tunable-slip boundary conditions.
- *  J.Smiatek, M.P. Allen, F. Schmid:
- *  "Tunable-slip boundaries for coarse-grained simulations of fluid flow", Europ. Phys. J. E 26, 115 (2008) 
-*/
-
+#ifndef SWIMMER_REACTION_H
+#define SWIMMER_REACTION_H
+/** \file swimmer_reaction.hpp
+ *
+ */
+ 
 #include "utils.hpp"
-#include "interaction_data.hpp"
 #include "particle_data.hpp"
 
-#ifdef TUNABLE_SLIP
+typedef struct {
+  int reactant_type;
+  int product_type;
+  int catalyzer_type;
+  double range;
+  double ct_rate;
+  double eq_rate;
+  int sing_mult;
+  int swap;
+}  reaction_struct;
 
-int tunable_slip_set_params(int part_type_a, int part_type_b,
-			    double temp, double gamma, double r_cut,
-			    double time, double vx, double vy, double vz);
+extern reaction_struct reaction;
 
-void add_tunable_slip_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params, double d[3], double dist, double force[3]);
-
+#ifdef SWIMMER_REACTIONS
+/** sanity checks for the reaction code */
+void reactions_sanity_checks();
+/** broadcasts reaction parameters and sets up an entry in the ia_params, so
+    that the verlet radius is equal or bigger than the reaction range.
+**/
+void local_setup_reaction();
+void integrate_reaction();
 #endif
 
-#endif
+#endif /* ifdef SWIMMER_REACTION_H */

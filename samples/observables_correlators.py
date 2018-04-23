@@ -26,7 +26,7 @@ print(p.get_params())
 # Calculate and return current value
 print(p.calculate())
 # Return stored current value
-print(p.value())
+print(p.calculate())
 
 
 # Instance a correlator correlating the p observable with itself, calculating the mean squared displacement (msd).

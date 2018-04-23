@@ -52,6 +52,10 @@ void VirtualSitesRelative::update_virtual_particle_quaternion(Particle& p) const
  }
  multiply_quaternions(p_real->r.quat, p.p.vs_quat, p.r.quat);
  convert_quat_to_quatu(p.r.quat, p.r.quatu);
+#ifdef DIPOLES
+  // When dipoles are enabled, update dipole moment
+  convert_quatu_to_dip(p.r.quatu, p.p.dipm, p.r.dip);
+#endif
 }
 
 
@@ -182,7 +186,7 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
 
       // Add forces and torques
       for (int j = 0; j < 3; j++) {
-        p_real->f.torque[j] += tmp[j];
+        p_real->f.torque[j] += tmp[j]+p.f.torque[j];
         p_real->f.f[j] += p.f.f[j];
       }
     }

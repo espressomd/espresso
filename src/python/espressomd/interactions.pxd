@@ -19,6 +19,9 @@
 # Handling of interactions
 
 from __future__ import print_function, absolute_import
+
+from libcpp.string cimport string
+
 include "myconfig.pxi"
 from espressomd.system cimport *
 cimport numpy as np
@@ -132,6 +135,8 @@ cdef extern from "interaction_data.hpp":
     cdef ia_parameters * get_ia_param(int i, int j)
     cdef ia_parameters * get_ia_param_safe(int i, int j)
     cdef void make_bond_type_exist(int type)
+    cdef string ia_params_get_state()
+    cdef void ia_params_set_state(string)
 
 cdef extern from "lj.hpp":
     cdef int lennard_jones_set_params(int part_type_a, int part_type_b,
