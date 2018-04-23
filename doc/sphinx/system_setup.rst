@@ -488,8 +488,9 @@ Note, that the velocity random walk is propagated from zero at each step.
 A rotational motion is implemented similarly. The Velocity Verlet quaternion
 based rotational method implementation is still used, however, had been modified
 for the larger :math:`\Delta t` case to be consistent and still the Velocity Verlet-compliant.
-Note: this Brownian dynamics implementation is compatible with particles which have
-the isotropic moment of inertia tensor only.
+Note: the rotational Brownian dynamics implementation is compatible with particles which have
+the isotropic moment of inertia tensor only. Otherwise, the viscous terminal angular velocity
+is not defined, i.e. it has no constant direction over the time.
 
 .. _CUDA:
 
