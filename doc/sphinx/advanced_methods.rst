@@ -270,6 +270,8 @@ current implementation with the ``COLLISION_DETECTION`` feature.
 Lees-Edwards boundary conditions
 --------------------------------
 
+Lees-Edwards is being re-implemented at this time.
+
 To use the Lees-Edwards boundary conditions, the feature ``LEES_EDWARDS`` is required.
 
 Lees-Edwards boundary conditions can be used to introduce a shear flow to the MD simulation. An introduction can be found in :cite:`lees72`. Compared to NEMD simulations they have two big advantages: First, the bulk behavior of the system remains unchanged. Second, the image boxes are moved, whereas the flow within the primary simulation box has to develop on its own. Hence, this allows two additional phenomena: Shear banding can occur as well as non-linear shear profiles can be observed. This makes Lees-Edwards boundary conditions suitable for comparison with rheological experiments. 
@@ -279,17 +281,6 @@ Lees-Edwards boundary conditions impose a shear flow of speed :math:`\dot\gamma`
 .. math:: v_{\text{x, unfolded}} = v_{\text{x, folded}} + \dot\gamma \cdot y_{\text{imagecount}}
 
 :math:`v_{\text{x, unfolded}}` refers to the velocity of a particle outside the main simulation box, :math:`y_{\text{imagecount}}` is the amount of periodic boundaries crossed in the  :math:`y`-direction. 
-
-The absolute offset of the periodic images can be set via
-
-* :py:attr:`~espressomd.System().lees_edwards_offset`
-
-The following example introduces the usage::
-    
-    import espressomd
-    system = espressomd.System()
-    absolute_offset = 0.2
-    system.lees_edwards_offset = absolute_offset
 
 Lees-Edwards boundary conditions can be used to obtain the shear modulus :math:`G = \frac{\tau}{\gamma}` or the shear viscosity :math:`\eta = \frac{\tau}{\dot\gamma}` outside the linear regime, where Green-Kubo relations are not valid anymore. For this purpose a lees_edwards_offset is set followed by one integration step for multiple times. Strain, strain rate and the shear stress need to be recorded for the calculation. Alternatively a sinusoidal lees_edwards_offset series can be used to carry out oscillatory experiments to calculate viscoelastic moduli (:math:`G', G''`). Furthermore a lees_edwards_offset can be set followed by many integration steps obtain the relaxation behavior of a system. 
 
