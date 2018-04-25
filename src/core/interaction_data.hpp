@@ -448,16 +448,6 @@ struct IA_parameters {
   double THOLE_q1q2;
 #endif
 
-#ifdef TUNABLE_SLIP
-  double TUNABLE_SLIP_temp = 0.0;
-  double TUNABLE_SLIP_gamma = 0.0;
-  double TUNABLE_SLIP_r_cut = INACTIVE_CUTOFF;
-  double TUNABLE_SLIP_time = 0.0;
-  double TUNABLE_SLIP_vx = 0.0;
-  double TUNABLE_SLIP_vy = 0.0;
-  double TUNABLE_SLIP_vz = 0.0;
-#endif
-
 #ifdef SWIMMER_REACTIONS
   double REACTION_range = INACTIVE_CUTOFF;
 #endif
