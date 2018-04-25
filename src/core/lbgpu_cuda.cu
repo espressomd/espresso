@@ -292,13 +292,13 @@ __device__ T xyz_to_index(T* xyz){
 }
 
 template < typename T >
-__device__ void index_to_xyz_LE(T index, T* xyz){
-  xyz[0] = index%para.dim_x;
+__device__ void index_to_xyz_LE(T index, T* xyz_LE){
+  xyz_LE[0] = index%para.dim_x;
   index /= para.dim_x;
-  xyz[1] = index%2;
-  xyz[1] *= para.dim_y-1;
+  xyz_LE[1] = index%2;
+  xyz_LE[1] *= para.dim_y-1;
   index /= 2;
-  xyz[2] = index;
+  xyz_LE[2] = index;
 }
 
 /**calculation of the modes from the velocity densities (space-transform.)
@@ -314,7 +314,7 @@ __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index, float *mode)
     // The following convention is used:
     // The $\hat{c}_i$ form B. Duenweg's paper are given by:
 
-   /* c_0  = { 0, 0, 0}
+    /* c_0  = { 0, 0, 0}
        c_1  = { 1, 0, 0}
        c_2  = {-1, 0, 0}
        c_3  = { 0, 1, 0}
