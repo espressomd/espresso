@@ -14,24 +14,6 @@ tol = 1.0e-5
 time_step = 1.0
 total_time = 1000.0
 
-# LB parameter for offset and particle coupling test
-eta = 1.0
-rho = 1.0
-nu = eta / rho
-agrid = 1.0
-fric = 1.0
-lb1 = lb.LBFluidGPU(agrid=agrid, dens=rho, visc=eta, fric=fric, tau=time_step)
-
-# LB parameter for test against Navier-Stokes equation
-eta = 0.27
-rho = 0.97
-nu = eta / rho
-v = 0.0087
-k_max = 100
-agrid = 1.0
-fric = 1.1
-lb2 = lb.LBFluidGPU(agrid=agrid, dens=rho, visc=eta, fric=fric, tau=time_step)
-
 box_l = 9
 system = md.System(box_l=[box_l, box_l, box_l], time_step = time_step)
 system.cell_system.skin = 0.4
@@ -50,6 +32,14 @@ class LeesEdwardsBoundaryInterpolation(ut.TestCase):
     # Add a fixed particle with a velovity in the y-direction
     system.part.add(pos=[4.5, 7.5, 4.5], fix=[1, 1, 1], type=0)
     system.part[0].v = [0, 0.1, 0]
+
+    # LB parameter for offset and particle coupling test
+    eta = 1.0
+    rho = 1.0
+    nu = eta / rho
+    agrid = 1.0
+    fric = 1.0
+    lb1 = lb.LBFluidGPU(agrid=agrid, dens=rho, visc=eta, fric=fric, tau=time_step)
 
     # Add LB fluid
     system.actors.add(lb1)
@@ -89,6 +79,14 @@ class LeesEdwardsParticleCouplingTest(ut.TestCase):
     system.part.add(pos=[4.5, 8.9, 4.5], type=0)
     system.part[0].v = [0, 0.1, 0]
 
+    # LB parameter for offset and particle coupling test
+    eta = 1.0
+    rho = 1.0
+    nu = eta / rho
+    agrid = 1.0
+    fric = 1.0
+    lb1 = lb.LBFluidGPU(agrid=agrid, dens=rho, visc=eta, fric=fric, tau=time_step)
+    
     # Add LB fluid
     system.actors.add(lb1)
     
@@ -128,6 +126,17 @@ class LBGPUVelocityProfileTest(ut.TestCase):
         u += 1.0 / (np.pi * k) * np.exp(-4 * np.pi ** 2 * nu * k ** 2 / h ** 2 * t) * np.sin(2 * np.pi / h * k * x)
       return v * u
 
+    # LB parameter for test against Navier-Stokes equation
+    eta = 0.27
+    rho = 0.97
+    nu = eta / rho
+    v = 0.0087
+    k_max = 100
+    agrid = 1.0
+    fric = 1.1
+    lb2 = lb.LBFluidGPU(agrid=agrid, dens=rho, visc=eta, fric=fric, tau=time_step)
+
+    #Add LB fluid
     system.actors.add(lb2)
 
     X = np.arange(0, box_l) + 0.5
