@@ -7,7 +7,7 @@ import espressomd
 import unittest as ut
 
 
-@ut.skipIf(not espressomd.has_features(['LEES_EDWARDS']),
+@ut.skipIf(True or not espressomd.has_features(['LEES_EDWARDS']),
   'Feature not available, skipping test!')
 
 class LeesEdwardsTest(ut.TestCase):
