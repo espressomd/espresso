@@ -27,7 +27,7 @@ from . cimport particle_data
 from .interactions import BondedInteraction
 from .interactions import BondedInteractions
 from copy import copy
-from globals cimport max_seen_particle, time_step, smaller_time_step, box_l, n_part, n_rigidbonds, n_particle_types
+from globals cimport max_seen_particle, time_step, box_l, n_part, n_rigidbonds, n_particle_types
 import collections
 import functools
 import types
@@ -244,21 +244,12 @@ cdef class ParticleHandle(object):
                 raise Exception("Set particle position first.")
 
         def __get__(self):
-            global time_step, smaller_time_step
+            global time_step
             self.update_particle_data()
-            IF MULTI_TIMESTEP:
-                if smaller_time_step > 0. and self.smaller_timestep:
-                    return array_locked([self.particle_data.m.v[0] / smaller_time_step,
-                                         self.particle_data.m.v[1] / smaller_time_step,
-                                         self.particle_data.m.v[2] / smaller_time_step])
-                else:
-                    return array_locked([self.particle_data.m.v[0] / time_step,
-                                         self.particle_data.m.v[1] / time_step,
-                                         self.particle_data.m.v[2] / time_step])
-            ELSE:
-                return array_locked([self.particle_data.m.v[0] / time_step,
-                                     self.particle_data.m.v[1] / time_step,
-                                     self.particle_data.m.v[2] / time_step])
+
+            return array_locked([self.particle_data.m.v[0] / time_step,
+                                 self.particle_data.m.v[1] / time_step,
+                                 self.particle_data.m.v[2] / time_step])
 
     # Force
     property f:
@@ -366,31 +357,6 @@ cdef class ParticleHandle(object):
 
 
     # Properties that exist only when certain features are activated
-    # MULTI_TIMESTEP
-    IF MULTI_TIMESTEP == 1:
-        property smaller_timestep:
-            """
-            smaller_timestep : :obj:`int`
-                               Particle flag specifying whether particle trajectory
-                               should be integrated with time_step of small_time_step.
-
-            .. note::
-               This needs the feature MULTI_TIMESTEP.
-
-            """
-
-            def __set__(self, _smaller_timestep):
-                check_type_or_throw_except(
-                    _smaller_timestep, 1, int, "Smaller time step flag has to be 1 ints")
-                if set_particle_smaller_timestep(self.id, _smaller_timestep) == 1:
-                    raise Exception("error setting particle smaller_timestep")
-
-            def __get__(self):
-                self.update_particle_data()
-                cdef const int * x = NULL
-                pointer_to_smaller_timestep(self.particle_data, x)
-                return x[0]
-
     # MASS
     property mass:
         """
