@@ -17,20 +17,20 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "Accumulator.hpp"
+#include "ObservableAccumulator.hpp"
 #include "partCfg_global.hpp"
 
 namespace Accumulators {
-int Accumulator::update() {
+int ObservableAccumulator::update() {
   m_acc(m_obs->operator()(partCfg()));
   return 0;
 }
 
-std::vector<double> Accumulator::get_mean() {
+std::vector<double> ObservableAccumulator::get_mean() {
   return m_acc.get_mean();
 }
 
-std::vector<double> Accumulator::get_variance() {
+std::vector<double> ObservableAccumulator::get_variance() {
   return m_acc.get_variance();
 }
 

@@ -25,7 +25,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "correlators/Correlator.hpp"
-#include "accumulators/Accumulator.hpp"
+#include "accumulators/ObservableAccumulator.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 #include "debye_hueckel.hpp"

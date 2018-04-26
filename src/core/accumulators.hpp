@@ -20,14 +20,13 @@
 #ifndef ESPRESSO_ACCUMULATORS_HPP
 #define ESPRESSO_ACCUMULATORS_HPP
 
-#include "accumulators/Accumulator.hpp"
+#include "accumulators/ObservableAccumulator.hpp"
 #include <vector>
 #include <memory>
 
 namespace Accumulators {
 
-extern std::vector<std::shared_ptr<Accumulators::Accumulator>> auto_update_accumulators;
-
+extern std::vector<std::shared_ptr<Accumulators::ObservableAccumulator>> auto_update_accumulators;
 
 void auto_update();
 
@@ -36,6 +35,5 @@ inline bool auto_update_enabled() {
 }
 
 }
-
 
 #endif //ESPRESSO_ACCUMULATORS_HPP
