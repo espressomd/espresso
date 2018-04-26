@@ -309,7 +309,8 @@ private:
 class WidomInsertion : public ReactionAlgorithm {
 public:
     double measure_excess_chemical_potential(int reaction_id);
-
+    int do_reaction(int reaction_steps)=delete;
+    
 private:
     int number_of_insertions=0;
     double summed_exponentials=0.0;
