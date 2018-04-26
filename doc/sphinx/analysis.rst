@@ -970,7 +970,7 @@ Accumulators
 Observable accumulator
 ~~~~~~~~~~~~~~~~~~~~~~
 
-The observable accumulator :class:`espressomd.accumulators.Accumulator` can
+The observable accumulator :class:`espressomd.accumulators.ObservableAccumulator` can
 be used to calculate the mean and variance of an observable (
 :mod:`espressomd.observables`) in the core::
 
@@ -983,7 +983,7 @@ be used to calculate the mean and variance of an observable (
     system.time_step = 0.01
     system.part.add(id=0, pos=[5.0, 5.0, 5.0])
     position_observable = espressomd.observables.ParticlePositions(ids=(0,))
-    accumulator = espressomd.accumulators.Accumulator(obs=position_observable)
+    accumulator = espressomd.accumulators.ObservableAccumulator(obs=position_observable)
     system.auto_update_accumulators.add(accumulator)
     # Perform integration (not shown)
     print accumulator.get_mean()
@@ -991,7 +991,7 @@ be used to calculate the mean and variance of an observable (
 
 In the example above the automatic update of the accumulator is used. However, 
 it's also possible to manually update the accumulator by calling
-:meth:`espressomd.accumulators.Accumulator.update`.
+:meth:`espressomd.accumulators.ObservableAccumulator.update`.
 Please note that the current core implementation of the accumulator is not
 serializable and therefore can not be checkpointed.
 
