@@ -23,8 +23,7 @@ class Accumulator(ScriptInterfaceHelper):
         Returns the samples variance for the observable.
 
     """
-
-    _so_name = "Accumulators::Accumulator"
+    _so_name = "Accumulators::ObservableAccumulator"
     _so_bind_methods = (
         "update",
         "get_mean",

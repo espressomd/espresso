@@ -23,7 +23,7 @@
 #define SCRIPT_INTERFACE_ACCUMULATORS_ACCUMULATOR_HPP
 
 #include "ScriptInterface.hpp"
-#include "core/accumulators/Accumulator.hpp"
+#include "core/accumulators/ObservableAccumulator.hpp"
 #include "observables/Observable.hpp"
 
 #include "utils/as_const.hpp"
@@ -33,20 +33,20 @@
 namespace ScriptInterface {
 namespace Accumulators {
 
-class Accumulator : public AutoParameters<Accumulator> {
+class ObservableAccumulator : public AutoParameters<ObservableAccumulator> {
 public:
   /* as_const is to make obs read-only. */
-  Accumulator() { add_parameters({{"obs", Utils::as_const(m_obs)}}); }
+  ObservableAccumulator() { add_parameters({{"obs", Utils::as_const(m_obs)}}); }
 
   void construct(VariantMap const &params) override {
     set_from_args(m_obs, params, "obs");
 
     if (m_obs)
       m_accumulator =
-          std::make_shared<::Accumulators::Accumulator>(m_obs->observable());
+          std::make_shared<::Accumulators::ObservableAccumulator>(m_obs->observable());
   }
 
-  std::shared_ptr<::Accumulators::Accumulator> accumulator() {
+  std::shared_ptr<::Accumulators::ObservableAccumulator> accumulator() {
     return m_accumulator;
   }
 
@@ -66,7 +66,7 @@ public:
 
 private:
   /* The actual accumulator */
-  std::shared_ptr<::Accumulators::Accumulator> m_accumulator;
+  std::shared_ptr<::Accumulators::ObservableAccumulator> m_accumulator;
   std::shared_ptr<Observables::Observable> m_obs;
 };
 

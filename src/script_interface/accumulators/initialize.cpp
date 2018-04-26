@@ -20,7 +20,7 @@
 #include "initialize.hpp"
 #include "ScriptInterface.hpp"
 
-#include "Accumulator.hpp"
+#include "ObservableAccumulator.hpp"
 #include "AutoUpdateAccumulators.hpp"
 
 namespace ScriptInterface {
@@ -32,8 +32,8 @@ void initialize() {
       "Accumulators::AutoUpdateAccumulators");
 
   ScriptInterface::register_new<
-      ScriptInterface::Accumulators::Accumulator>(
-      "Accumulators::Accumulator");
+      ScriptInterface::Accumulators::ObservableAccumulator>(
+      "Accumulators::ObservableAccumulator");
 
 }
 } /* namespace Accumulators */

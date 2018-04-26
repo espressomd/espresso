@@ -1,4 +1,4 @@
-set(Accumulators_SRC Accumulator.hpp Accumulator.cpp)
+set(Accumulators_SRC ObservableAccumulator.hpp ObservableAccumulator.cpp)
 add_library(Accumulators SHARED ${Accumulators_SRC})
 install(TARGETS Accumulators LIBRARY DESTINATION ${LIBDIR})
 set_target_properties(Accumulators PROPERTIES SOVERSION ${SOVERSION})

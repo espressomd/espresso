@@ -25,11 +25,11 @@
 
 namespace Accumulators {
 
-class Accumulator {
+class ObservableAccumulator {
 public:
   // The accumulator struct has to be initialized with the correct vector size,
   // therefore the order of init is important.
-  Accumulator(std::shared_ptr<Observables::Observable> const& obs)
+  ObservableAccumulator(std::shared_ptr<Observables::Observable> const& obs)
       : m_obs(obs), m_acc(obs->n_values()) {}
 
   int update();

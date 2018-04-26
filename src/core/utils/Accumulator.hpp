@@ -1,8 +1,6 @@
 #ifndef CORE_UTILS_ACCUMULATOR
 #define CORE_UTILS_ACCUMULATOR
 
-#include <limits>
-
 namespace Utils {
 
 template <typename T> struct AccumulatorData {
@@ -18,7 +16,7 @@ template <typename T> struct AccumulatorData {
 class Accumulator {
 public:
   Accumulator(std::size_t N) : m_n(0), m_acc_data(N) {}
-  void operator()(std::vector<double>);
+  void operator()(const std::vector<double>&);
   std::vector<double> get_mean() const;
   std::vector<double> get_variance() const;
 
@@ -27,7 +25,7 @@ private:
   std::vector<AccumulatorData<double>> m_acc_data;
 };
 
-void Accumulator::operator()(std::vector<double> data) {
+void Accumulator::operator()(const std::vector<double> &data) {
   if (data.size() != m_acc_data.size())
     throw std::runtime_error(
         "The given data size does not fit the initialized size!");
