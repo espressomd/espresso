@@ -27,11 +27,11 @@ int Accumulator::update() {
 }
 
 std::vector<double> Accumulator::get_mean() {
-  return ba::mean(m_acc);
+  return m_acc.get_mean();
 }
 
 std::vector<double> Accumulator::get_variance() {
-  return ba::variance(m_acc);
+  return m_acc.get_variance();
 }
 
 }
