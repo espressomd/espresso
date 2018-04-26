@@ -321,17 +321,6 @@ void mpi_send_vs_relative(int node, int part, int vs_relative_to,
                           double vs_distance, double* rel_ori);
 #endif
 
-#ifdef MULTI_TIMESTEP
-/** Issue REQ_SET_SMALLER_TIMESTEP: send smaller time step value.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param smaller_timestep its new smaller_timestep.
-*/
-void mpi_send_smaller_timestep_flag(int node, int part,
-                                    int smaller_timestep_flag);
-#endif
-
 /** Issue REQ_SET_TYPE: send particle type.
     Also calls \ref on_particle_change.
     \param part the particle.
@@ -472,12 +461,6 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3],
     velocities accordingly.
 */
 void mpi_set_time_step(double time_step);
-
-#ifdef MULTI_TIMESTEP
-/** Issue REQ_SET_SMALLER_TIME_STEP: send new \ref smaller_time_step.
-    Requires MULTI_TIMESTEP feature. */
-void mpi_set_smaller_time_step(double smaller_time_step);
-#endif
 
 /** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
 void mpi_bcast_coulomb_params();

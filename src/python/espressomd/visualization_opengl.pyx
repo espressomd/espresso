@@ -1739,21 +1739,12 @@ def draw_cylinder(posA, posB, radius, color, material, quality, draw_caps=False)
 
 
 def rotation_helper(d):
-    if d[2] == 0.0:
-        d[2] = 0.0001
+    # the rotation axis is the cross product between z and d
+    vz = np.cross([0.0, 0.0, 1.0], d)
+    # get the angle using a dot product
+    angle = 180.0 / np.pi * acos(d[2] / np.linalg.norm(d))
 
-    v = np.linalg.norm(d)
-    if v == 0:
-        ax = 57.2957795
-    else:
-        ax = 57.2957795 * acos(d[2] / v)
-
-    if d[2] < 0.0:
-        ax = -ax
-    rx = -d[1] * d[2]
-    ry = d[0] * d[2]
-
-    return ax, rx, ry
+    return angle, vz[0], vz[1]
 
 
 def draw_ellipsoid(pos, semiaxis_a, semiaxis_b, semiaxis_c, color, material, quality):

@@ -99,10 +99,6 @@ cdef extern from "particle_data.hpp":
     IF ROTATION == 1:
         int set_particle_rotation(int part, int rot)
 
-    IF MULTI_TIMESTEP:
-        int set_particle_smaller_timestep(int part, int small_timestep)
-        void pointer_to_smaller_timestep(const particle * p, const int * & res)
-
     IF MASS:
         int set_particle_mass(int part, double mass)
 
