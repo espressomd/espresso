@@ -25,7 +25,7 @@ private:
   std::vector<AccumulatorData<double>> m_acc_data;
 };
 
-void Accumulator::operator()(const std::vector<double> &data) {
+inline void Accumulator::operator()(const std::vector<double> &data) {
   if (data.size() != m_acc_data.size())
     throw std::runtime_error(
         "The given data size does not fit the initialized size!");
@@ -66,7 +66,7 @@ void Accumulator::operator()(const std::vector<double> &data) {
   }
 }
 
-std::vector<double> Accumulator::get_mean() const {
+inline std::vector<double> Accumulator::get_mean() const {
   std::vector<double> res;
   std::transform(
       m_acc_data.begin(), m_acc_data.end(), std::back_inserter(res),
@@ -74,7 +74,7 @@ std::vector<double> Accumulator::get_mean() const {
   return res;
 }
 
-std::vector<double> Accumulator::get_variance() const {
+inline std::vector<double> Accumulator::get_variance() const {
   std::vector<double> res;
   std::transform(m_acc_data.begin(), m_acc_data.end(), std::back_inserter(res),
                  [](const AccumulatorData<double> &acc_data) {

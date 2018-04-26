@@ -29,7 +29,7 @@ class ObservableAccumulator {
 public:
   // The accumulator struct has to be initialized with the correct vector size,
   // therefore the order of init is important.
-  ObservableAccumulator(std::shared_ptr<Observables::Observable> const& obs)
+  explicit ObservableAccumulator(std::shared_ptr<Observables::Observable> const& obs)
       : m_obs(obs), m_acc(obs->n_values()) {}
 
   int update();

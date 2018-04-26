@@ -4,7 +4,7 @@ import numpy as np
 
 
 @script_interface_register
-class Accumulator(ScriptInterfaceHelper):
+class ObservableAccumulator(ScriptInterfaceHelper):
     """
     Accumulates results from observables.
 
@@ -48,14 +48,14 @@ class AutoUpdateAccumulators(ScriptInterfaceHelper):
 
         """
         if len(args) == 1:
-            if isinstance(args[0], Accumulator):
+            if isinstance(args[0], ObservableAccumulator):
                 accumulator = args[0]
             else:
                 raise TypeError(
                     "Either a Accumulator object or key-value pairs for the \
                     parameters of a Accumulator object need to be passed.")
         else:
-            accumulator = Accumulator(**kwargs)
+            accumulator = ObservableAccumulator(**kwargs)
         self.call_method("add", object=accumulator)
         return accumulator
 
