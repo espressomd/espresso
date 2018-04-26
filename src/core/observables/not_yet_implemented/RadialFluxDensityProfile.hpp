@@ -1,4 +1,4 @@
-int ObservableRadialFluxDensityProfile::actual_calculate() {
+int ObservableRadialFluxDensityProfile::actual_calculate(PartCfg & partCfg) {
   double* A = last_value;
   int binr, binphi, binz;
   double ppos[3];

@@ -1,4 +1,4 @@
-int ObservableParticleForces::actual_calculate() {
+int ObservableParticleForces::actual_calculate(PartCfg & partCfg) {
   double* A = last_value;
   IntList* ids;
   if (!sortPartCfg()) {

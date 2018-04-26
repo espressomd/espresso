@@ -20,11 +20,11 @@
 */
 
 #include "Cylinder.hpp"
+#include "utils.hpp"
 #include <cmath>
 
 using namespace std;
 
-#define SQR(A) ((A) * (A))
 
 namespace Shapes {
 int Cylinder::calculate_dist(const double *ppos, double *dist,
@@ -35,7 +35,7 @@ int Cylinder::calculate_dist(const double *ppos, double *dist,
   d_real = 0.0;
   for (int i = 0; i < 3; i++) {
     d_real_vec[i] = ppos[i] - m_pos[i];
-    d_real += SQR(d_real_vec[i]);
+    d_real += Utils::sqr(d_real_vec[i]);
   }
   d_real = sqrt(d_real);
 
@@ -49,14 +49,14 @@ int Cylinder::calculate_dist(const double *ppos, double *dist,
     d_per_vec[i] = ppos[i] - (m_pos[i] + d_par_vec[i]);
   }
 
-  d_per = sqrt(SQR(d_real) - SQR(d_par));
+  d_per = sqrt(Utils::sqr(d_real) - Utils::sqr(d_par));
   d_par = fabs(d_par);
 
   if (m_direction == -1) {
-    /*apply force towards inside cylinder */
+    /* apply force towards inside cylinder */
     d_per = m_rad - d_per;
     d_par = half_length - d_par;
-    if (d_per < d_par) {
+    if (d_per < d_par or m_open) {
       *dist = d_per;
       for (int i = 0; i < 3; i++) {
         vec[i] = -d_per_vec[i] * d_per / (m_rad - d_per);
@@ -68,7 +68,7 @@ int Cylinder::calculate_dist(const double *ppos, double *dist,
       }
     }
   } else {
-    /*apply force towards outside cylinder */
+    /* apply force towards outside cylinder */
     d_per = d_per - m_rad;
     d_par = d_par - half_length;
     if (d_par < 0) {
@@ -82,7 +82,7 @@ int Cylinder::calculate_dist(const double *ppos, double *dist,
         vec[i] = d_par_vec[i] * d_par / (d_par + half_length);
       }
     } else {
-      *dist = sqrt(SQR(d_par) + SQR(d_per));
+      *dist = sqrt(Utils::sqr(d_par) + Utils::sqr(d_per));
       for (int i = 0; i < 3; i++) {
         vec[i] = d_per_vec[i] * d_per / (d_per + m_rad) +
                  d_par_vec[i] * d_par / (d_par + half_length);

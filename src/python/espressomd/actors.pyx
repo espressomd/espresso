@@ -1,17 +1,16 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from .highlander import ThereCanOnlyBeOne
-
+from .utils import handle_errors
 
 cdef class Actor(object):
-
     # Keys in active_list have to match the method name.
     active_list = dict(ElectrostaticInteraction=False,
                        MagnetostaticInteraction=False,
                        MagnetostaticExtension=False,
                        HydrodynamicInteraction=False,
                        ElectrostaticExtensions=False,
-                       Scafacos=True)
+                       Scafacos=False)
 
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
@@ -42,26 +41,29 @@ cdef class Actor(object):
 
     def _activate(self):
         inter = self._get_interaction_type()
-        if Actor.active_list[inter]:
-            raise ThereCanOnlyBeOne(self.__class__.__bases__[0])
-        Actor.active_list[inter] = True
+        if inter in Actor.active_list:
+            if Actor.active_list[inter]:
+                raise ThereCanOnlyBeOne(self.__class__.__bases__[0])
+            Actor.active_list[inter] = True
+
         self.validate_params()
         self._activate_method()
+        handle_errors("Activation of an actor")
         self._isactive = True
 
     def _deactivate(self):
         self._deactivate_method()
+        handle_errors("Deactivation of an actor")
         self._isactive = False
         inter = self._get_interaction_type()
-        if not Actor.active_list[inter]:
-            raise Exception(
-                "Class not registerd in Actor.active_list " + self.__class__.__bases__[0])
-        Actor.active_list[inter] = False
+        if inter in Actor.active_list:
+            if not Actor.active_list[inter]:
+                raise Exception(
+                    "Class not registerd in Actor.active_list " + self.__class__.__bases__[0])
+            Actor.active_list[inter] = False
 
     def is_valid(self):
         """Check, if the data stored in the instance still matches what is in Espresso"""
-        # check, if the parameters saved in the class still match those
-        # saved in Espresso
         temp_params = self._get_params_from_es_core()
         if self._params != temp_params:
             return False
@@ -73,12 +75,13 @@ cdef class Actor(object):
         """Get interaction parameters"""
         # If this instance refers to an actual interaction defined in the es core, load
         # current parameters from there
-        update = self._get_params_from_es_core()
-        self._params.update(update)
+        if self.is_active():
+            update = self._get_params_from_es_core()
+            self._params.update(update)
         return self._params
 
     def set_params(self, **p):
-        """Update parameters. Only given """
+        """Update the given parameters."""
         # Check, if any key was passed, which is not known
         for k in p.keys():
             if k not in self.valid_keys():
@@ -97,7 +100,8 @@ cdef class Actor(object):
         # vaidate updated parameters
         self.validate_params()
         # Put in values given by the user
-        self._set_params_in_es_core()
+        if self.is_active():
+            self._set_params_in_es_core()
 
     def __str__(self):
         return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
@@ -118,34 +122,42 @@ cdef class Actor(object):
         return self._isactive
 
     def valid_keys(self):
+        """Virtual method."""
         raise Exception(
             "Subclasses of %s must define the valid_keys() method." % self._get_interaction_type())
 
     def required_keys(self):
+        """Virtual method."""
         raise Exception(
             "Subclasses of %s must define the required_keys() method." % self._get_interaction_type())
 
     def validate_params(self):
+        """Virtual method."""
         raise Exception(
             "Subclasses of %s must define the validate_params() method." % self._get_interaction_type())
 
     def _get_params_from_es_core(self):
+        """Virtual method."""
         raise Exception(
             "Subclasses of %s must define the _get_params_from_es_core() method." % self._get_interaction_type())
 
     def _set_params_in_es_core(self):
+        """Virtual method."""
         raise Exception(
             "Subclasses of %s must define the _set_params_in_es_core() method." % self._get_interaction_type())
 
     def default_params(self):
+        """Virtual method."""
         raise Exception(
             "Subclasses of %s must define the default_params() method." % self._get_interaction_type())
 
     def _activate_method(self):
+        """Virtual method."""
         raise Exception(
             "Subclasses of %s must define the _activate_method() method." % self._get_interaction_type())
 
     def _deactivate_method(self):
+        """Virtual method."""
         raise Exception(
             "Subclasses of %s must define the _deactivate_method() method." % self._get_interaction_type())
 
@@ -158,27 +170,42 @@ class Actors(object):
         self.system = _system
 
     def add(self, actor):
+        """
+        Parameters
+        ----------
+        actor : instance of :class:`espressomd.actors.Actor`
+
+        """
         if not actor in Actors.active_actors:
             actor.system = self.system
             Actors.active_actors.append(actor)
             actor._activate()
         else:
             raise ThereCanOnlyBeOne(actor)
-            
+
     def remove(self, actor):
+        """
+        Parameters
+        ----------
+        actor : instance of :class:`espressomd.actors.Actor`
+
+        """
         self._remove_actor(actor)
 
     def _remove_actor(self, actor):
+        """
+        Parameters
+        ----------
+        actor : instance of :class:`espressomd.actors.Actor`
+
+        """
         if not actor in self.active_actors:
             raise Exception("Actor is not active")
         actor._deactivate()
         self.active_actors.remove(actor)
 
     def __str__(self):
-        print("Active Actors:")
-        for actor in Actors.active_actors:
-            print(actor)
-        return ""
+        return "Active Actors: "+Actors.active_actors.__str__()
 
     def __getitem__(self, key):
         return self.active_actors[key]

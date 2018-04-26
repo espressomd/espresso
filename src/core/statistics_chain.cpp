@@ -24,15 +24,14 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
-#include "partCfg.hpp"
+#include "PartCfg.hpp"
 #include "statistics.hpp"
 #include "topology.hpp"
 #include "utils.hpp"
 
-/** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref
- * tclcommand_analyze) */
+/** Particles' initial positions (needed for g1(t), g2(t), g3(t)) */
 /*@{*/
-float *partCoord_g = NULL, *partCM_g = NULL;
+float *partCoord_g = nullptr, *partCM_g = nullptr;
 int n_part_g = 0, n_chains_g = 0;
 /*@}*/
 
@@ -44,27 +43,18 @@ int chain_length = 0;
 /*@}*/
 
 void update_mol_ids_setchains() {
-  Particle *p;
-  int i, np, c;
-  Cell *cell;
-
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      p[i].p.mol_id =
-          floor((p[i].p.identity - chain_start) / (double)chain_length);
-    }
+  for (auto &p : local_cells.particles()) {
+    p.p.mol_id =
+        floor((p.p.identity - chain_start) / (double)chain_length);
   }
 }
 
-void calc_re(double **_re) {
+void calc_re(PartCfg & partCfg, double **_re) {
   int i;
   double dx, dy, dz;
   double dist = 0.0, dist2 = 0.0, dist4 = 0.0;
-  double *re = NULL, tmp;
-  *_re = re = (double *)Utils::realloc(re, 4 * sizeof(double));
+  double *re = nullptr, tmp;
+  *_re = re = Utils::realloc(re, 4 * sizeof(double));
 
   for (i = 0; i < chain_n_chains; i++) {
     dx = partCfg[chain_start + i * chain_length + chain_length - 1].r.p[0] -
@@ -73,7 +63,7 @@ void calc_re(double **_re) {
          partCfg[chain_start + i * chain_length].r.p[1];
     dz = partCfg[chain_start + i * chain_length + chain_length - 1].r.p[2] -
          partCfg[chain_start + i * chain_length].r.p[2];
-    tmp = (SQR(dx) + SQR(dy) + SQR(dz));
+    tmp = (Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
     dist += sqrt(tmp);
     dist2 += tmp;
     dist4 += tmp * tmp;
@@ -89,8 +79,8 @@ void calc_re_av(double **_re) {
   int i, j;
   double dx, dy, dz;
   double dist = 0.0, dist2 = 0.0, dist4 = 0.0;
-  double *re = NULL, tmp;
-  *_re = re = (double *)Utils::realloc(re, 4 * sizeof(double));
+  double *re = nullptr, tmp;
+  *_re = re = Utils::realloc(re, 4 * sizeof(double));
 
   for (j = 0; j < n_configs; j++) {
     for (i = 0; i < chain_n_chains; i++) {
@@ -102,7 +92,7 @@ void calc_re_av(double **_re) {
       dz = configs[j][3 * (chain_start + i * chain_length + chain_length - 1) +
                       2] -
            configs[j][3 * (chain_start + i * chain_length) + 2];
-      tmp = (SQR(dx) + SQR(dy) + SQR(dz));
+      tmp = (Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
       dist += sqrt(tmp);
       dist2 += tmp;
       dist4 += tmp * tmp;
@@ -115,13 +105,13 @@ void calc_re_av(double **_re) {
   re[3] = sqrt(dist4 / tmp - re[2] * re[2]);
 }
 
-void calc_rg(double **_rg) {
+void calc_rg(PartCfg & partCfg, double **_rg) {
   int i, j, p;
   double dx, dy, dz, r_CM_x, r_CM_y, r_CM_z;
   double r_G = 0.0, r_G2 = 0.0, r_G4 = 0.0;
-  double *rg = NULL, IdoubMPC, tmp;
+  double *rg = nullptr, IdoubMPC, tmp;
   double M;
-  *_rg = rg = (double *)Utils::realloc(rg, 4 * sizeof(double));
+  *_rg = rg = Utils::realloc(rg, 4 * sizeof(double));
 
   for (i = 0; i < chain_n_chains; i++) {
     M = 0.0;
@@ -143,7 +133,7 @@ void calc_rg(double **_rg) {
       dx = partCfg[p].r.p[0] - r_CM_x;
       dy = partCfg[p].r.p[1] - r_CM_y;
       dz = partCfg[p].r.p[2] - r_CM_z;
-      tmp += (SQR(dx) + SQR(dy) + SQR(dz));
+      tmp += (Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
     }
     tmp *= IdoubMPC;
     r_G += sqrt(tmp);
@@ -157,13 +147,13 @@ void calc_rg(double **_rg) {
   rg[3] = sqrt(r_G4 / tmp - rg[2] * rg[2]);
 }
 
-void calc_rg_av(double **_rg) {
+void calc_rg_av(PartCfg & partCfg, double **_rg) {
   int i, j, k, p;
   double dx, dy, dz, r_CM_x, r_CM_y, r_CM_z;
   double r_G = 0.0, r_G2 = 0.0, r_G4 = 0.0;
-  double *rg = NULL, IdoubMPC, tmp;
+  double *rg = nullptr, IdoubMPC, tmp;
   double M;
-  *_rg = rg = (double *)Utils::realloc(rg, 4 * sizeof(double));
+  *_rg = rg = Utils::realloc(rg, 4 * sizeof(double));
 
   IdoubMPC = 1. / (double)chain_length;
   for (k = 0; k < n_configs; k++) {
@@ -186,7 +176,7 @@ void calc_rg_av(double **_rg) {
         dx = configs[k][3 * p] - r_CM_x;
         dy = configs[k][3 * p + 1] - r_CM_y;
         dz = configs[k][3 * p + 2] - r_CM_z;
-        tmp += (SQR(dx) + SQR(dy) + SQR(dz));
+        tmp += (Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
       }
       tmp *= IdoubMPC;
       r_G += sqrt(tmp);
@@ -201,13 +191,13 @@ void calc_rg_av(double **_rg) {
   rg[3] = sqrt(r_G4 / tmp - rg[2] * rg[2]);
 }
 
-void calc_rh(double **_rh) {
+void calc_rh(PartCfg & partCfg, double **_rh) {
   int i, j, p;
-  double dx, dy, dz, r_H = 0.0, r_H2 = 0.0, *rh = NULL, ri = 0.0, prefac, tmp;
-  *_rh = rh = (double *)Utils::realloc(rh, 2 * sizeof(double));
+  double dx, dy, dz, r_H = 0.0, r_H2 = 0.0, *rh = nullptr, ri = 0.0, prefac, tmp;
+  *_rh = rh = Utils::realloc(rh, 2 * sizeof(double));
 
   prefac = 0.5 * chain_length *
-           chain_length; /* 1/N^2 is not a normalization factor */
+           (chain_length -1 ); /* 1/N^2 is not a normalization factor */
   for (p = 0; p < chain_n_chains; p++) {
     ri = 0.0;
     for (i = chain_start + chain_length * p;
@@ -233,10 +223,10 @@ void calc_rh(double **_rh) {
 
 void calc_rh_av(double **_rh) {
   int i, j, p, k;
-  double dx, dy, dz, r_H = 0.0, r_H2 = 0.0, *rh = NULL, ri = 0.0, prefac, tmp;
-  *_rh = rh = (double *)Utils::realloc(rh, 2 * sizeof(double));
+  double dx, dy, dz, r_H = 0.0, r_H2 = 0.0, *rh = nullptr, ri = 0.0, prefac, tmp;
+  *_rh = rh = Utils::realloc(rh, 2 * sizeof(double));
 
-  prefac = 0.5 * chain_length * chain_length;
+  prefac = 0.5 * chain_length * (chain_length - 1);
   for (k = 0; k < n_configs; k++) {
     for (p = 0; p < chain_n_chains; p++) {
       ri = 0.0;
@@ -259,11 +249,11 @@ void calc_rh_av(double **_rh) {
   rh[1] = sqrt(r_H2 / tmp - rh[0] * rh[0]);
 }
 
-void calc_internal_dist(double **_idf) {
+void calc_internal_dist(PartCfg & partCfg, double **_idf) {
   int i, j, k;
   double dx, dy, dz;
-  double *idf = NULL;
-  *_idf = idf = (double *)Utils::realloc(idf, chain_length * sizeof(double));
+  double *idf = nullptr;
+  *_idf = idf = Utils::realloc(idf, chain_length * sizeof(double));
 
   idf[0] = 0.0;
   for (k = 1; k < chain_length; k++) {
@@ -276,7 +266,7 @@ void calc_internal_dist(double **_idf) {
              partCfg[chain_start + i * chain_length + j].r.p[1];
         dz = partCfg[chain_start + i * chain_length + j + k].r.p[2] -
              partCfg[chain_start + i * chain_length + j].r.p[2];
-        idf[k] += (SQR(dx) + SQR(dy) + SQR(dz));
+        idf[k] += (Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
       }
     }
     idf[k] = sqrt(idf[k] / (1.0 * (chain_length - k) * chain_n_chains));
@@ -286,8 +276,8 @@ void calc_internal_dist(double **_idf) {
 void calc_internal_dist_av(double **_idf) {
   int i, j, k, n, i1, i2;
   double dx, dy, dz;
-  double *idf = NULL;
-  *_idf = idf = (double *)Utils::realloc(idf, chain_length * sizeof(double));
+  double *idf = nullptr;
+  *_idf = idf = Utils::realloc(idf, chain_length * sizeof(double));
 
   idf[0] = 0.0;
   for (k = 1; k < chain_length; k++) {
@@ -300,7 +290,7 @@ void calc_internal_dist_av(double **_idf) {
           dx = configs[n][3 * i1] - configs[n][3 * i2];
           dy = configs[n][3 * i1 + 1] - configs[n][3 * i2 + 1];
           dz = configs[n][3 * i1 + 2] - configs[n][3 * i2 + 2];
-          idf[k] += (SQR(dx) + SQR(dy) + SQR(dz));
+          idf[k] += (Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
         }
       }
     }
@@ -309,11 +299,11 @@ void calc_internal_dist_av(double **_idf) {
   }
 }
 
-void calc_bond_l(double **_bond_l) {
+void calc_bond_l(PartCfg & partCfg, double **_bond_l) {
   int i, j;
   double dx, dy, dz, tmp;
-  double *bond_l = NULL;
-  *_bond_l = bond_l = (double *)Utils::realloc(bond_l, 4 * sizeof(double));
+  double *bond_l = nullptr;
+  *_bond_l = bond_l = Utils::realloc(bond_l, 4 * sizeof(double));
 
   bond_l[0] = bond_l[1] = bond_l[2] = 0.0;
   bond_l[3] = 20.0;
@@ -325,7 +315,7 @@ void calc_bond_l(double **_bond_l) {
            partCfg[chain_start + i * chain_length + j].r.p[1];
       dz = partCfg[chain_start + i * chain_length + j + 1].r.p[2] -
            partCfg[chain_start + i * chain_length + j].r.p[2];
-      tmp = SQR(dx) + SQR(dy) + SQR(dz);
+      tmp = Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz);
       bond_l[0] += sqrt(tmp);
       bond_l[1] += tmp;
       if (tmp > bond_l[2]) {
@@ -338,7 +328,7 @@ void calc_bond_l(double **_bond_l) {
   }
   tmp = (double)(chain_length - 1) * chain_n_chains;
   bond_l[0] = bond_l[0] / tmp;
-  bond_l[1] = sqrt(bond_l[1] / tmp - SQR(bond_l[0]));
+  bond_l[1] = sqrt(bond_l[1] / tmp - Utils::sqr(bond_l[0]));
   bond_l[2] = sqrt(bond_l[2]);
   bond_l[3] = sqrt(bond_l[3]);
 }
@@ -346,8 +336,8 @@ void calc_bond_l(double **_bond_l) {
 void calc_bond_l_av(double **_bond_l) {
   int i, j, n, i1, i2;
   double dx, dy, dz, tmp;
-  double *bond_l = NULL;
-  *_bond_l = bond_l = (double *)Utils::realloc(bond_l, 4 * sizeof(double));
+  double *bond_l = nullptr;
+  *_bond_l = bond_l = Utils::realloc(bond_l, 4 * sizeof(double));
 
   bond_l[0] = bond_l[1] = bond_l[2] = 0.0;
   bond_l[3] = 20.0;
@@ -359,7 +349,7 @@ void calc_bond_l_av(double **_bond_l) {
         dx = configs[n][3 * i1] - configs[n][3 * i2];
         dy = configs[n][3 * i1 + 1] - configs[n][3 * i2 + 1];
         dz = configs[n][3 * i1 + 2] - configs[n][3 * i2 + 2];
-        tmp = SQR(dx) + SQR(dy) + SQR(dz);
+        tmp = Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz);
         bond_l[0] += sqrt(tmp);
         bond_l[1] += tmp;
         if (tmp > bond_l[2]) {
@@ -373,16 +363,16 @@ void calc_bond_l_av(double **_bond_l) {
   }
   tmp = (double)(chain_length - 1) * chain_n_chains * n_configs;
   bond_l[0] = bond_l[0] / tmp;
-  bond_l[1] = sqrt(bond_l[1] / tmp - SQR(bond_l[0]));
+  bond_l[1] = sqrt(bond_l[1] / tmp - Utils::sqr(bond_l[0]));
   bond_l[2] = sqrt(bond_l[2]);
   bond_l[3] = sqrt(bond_l[3]);
 }
 
-void calc_bond_dist(double **_bdf, int ind_n) {
+void calc_bond_dist(PartCfg & partCfg, double **_bdf, int ind_n) {
   int i, j = ind_n, k;
   double dx, dy, dz;
-  double *bdf = NULL;
-  *_bdf = bdf = (double *)Utils::realloc(bdf, chain_length * sizeof(double));
+  double *bdf = nullptr;
+  *_bdf = bdf = Utils::realloc(bdf, chain_length * sizeof(double));
 
   bdf[0] = 0.0;
   for (k = 1; k < chain_length; k++) {
@@ -395,7 +385,7 @@ void calc_bond_dist(double **_bdf, int ind_n) {
              partCfg[chain_start + i * chain_length + j].r.p[1];
         dz = partCfg[chain_start + i * chain_length + j + k].r.p[2] -
              partCfg[chain_start + i * chain_length + j].r.p[2];
-        bdf[k] += (SQR(dx) + SQR(dy) + SQR(dz));
+        bdf[k] += (Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
       }
     }
     bdf[k] = sqrt(bdf[k] / (1.0 * chain_n_chains));
@@ -405,8 +395,8 @@ void calc_bond_dist(double **_bdf, int ind_n) {
 void calc_bond_dist_av(double **_bdf, int ind_n) {
   int i, j = ind_n, k, n, i1, i2;
   double dx, dy, dz;
-  double *bdf = NULL;
-  *_bdf = bdf = (double *)Utils::realloc(bdf, chain_length * sizeof(double));
+  double *bdf = nullptr;
+  *_bdf = bdf = Utils::realloc(bdf, chain_length * sizeof(double));
 
   bdf[0] = 0.0;
   for (k = 1; k < chain_length; k++) {
@@ -419,7 +409,7 @@ void calc_bond_dist_av(double **_bdf, int ind_n) {
           dx = configs[n][3 * i1] - configs[n][3 * i2];
           dy = configs[n][3 * i1 + 1] - configs[n][3 * i2 + 1];
           dz = configs[n][3 * i1 + 2] - configs[n][3 * i2 + 2];
-          bdf[k] += (SQR(dx) + SQR(dy) + SQR(dz));
+          bdf[k] += (Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
         }
       }
     }
@@ -427,16 +417,16 @@ void calc_bond_dist_av(double **_bdf, int ind_n) {
   }
 }
 
-void init_g123() {
+void init_g123(PartCfg & partCfg) {
   int i, j, p;
   double cm_tmp[3], M;
 
   /* Save particles' current positions
      (which'll be used as initial position later on) */
   partCoord_g =
-      (float *)Utils::realloc(partCoord_g, 3 * n_part * sizeof(float));
+      Utils::realloc(partCoord_g, 3 * n_part * sizeof(float));
   partCM_g =
-      (float *)Utils::realloc(partCM_g, 3 * chain_n_chains * sizeof(float));
+      Utils::realloc(partCM_g, 3 * chain_n_chains * sizeof(float));
   n_part_g = n_part;
   n_chains_g = chain_n_chains;
   for (j = 0; j < chain_n_chains; j++) {
@@ -458,7 +448,7 @@ void init_g123() {
   }
 }
 
-void calc_g123(double *_g1, double *_g2, double *_g3) {
+void calc_g123(PartCfg & partCfg, double *_g1, double *_g2, double *_g3) {
   /* - Mean square displacement of a monomer
      - Mean square displacement in the center of gravity of the chain itself
      - Motion of the center of mass */
@@ -481,19 +471,19 @@ void calc_g123(double *_g1, double *_g2, double *_g3) {
     cm_tmp[2] /= M;
     for (i = 0; i < chain_length; i++) {
       p = chain_start + j * chain_length + i;
-      g1 += SQR(partCfg[p].r.p[0] - partCoord_g[3 * p]) +
-            SQR(partCfg[p].r.p[1] - partCoord_g[3 * p + 1]) +
-            SQR(partCfg[p].r.p[2] - partCoord_g[3 * p + 2]);
-      g2 += SQR((partCfg[p].r.p[0] - partCoord_g[3 * p]) -
+      g1 += Utils::sqr(partCfg[p].r.p[0] - partCoord_g[3 * p]) +
+            Utils::sqr(partCfg[p].r.p[1] - partCoord_g[3 * p + 1]) +
+            Utils::sqr(partCfg[p].r.p[2] - partCoord_g[3 * p + 2]);
+      g2 += Utils::sqr((partCfg[p].r.p[0] - partCoord_g[3 * p]) -
                 (cm_tmp[0] - partCM_g[3 * j])) +
-            SQR((partCfg[p].r.p[1] - partCoord_g[3 * p + 1]) -
+            Utils::sqr((partCfg[p].r.p[1] - partCoord_g[3 * p + 1]) -
                 (cm_tmp[1] - partCM_g[3 * j + 1])) +
-            SQR((partCfg[p].r.p[2] - partCoord_g[3 * p + 2]) -
+            Utils::sqr((partCfg[p].r.p[2] - partCoord_g[3 * p + 2]) -
                 (cm_tmp[2] - partCM_g[3 * j + 2]));
     }
-    g3 += SQR(cm_tmp[0] - partCM_g[3 * j]) +
-          SQR(cm_tmp[1] - partCM_g[3 * j + 1]) +
-          SQR(cm_tmp[2] - partCM_g[3 * j + 2]);
+    g3 += Utils::sqr(cm_tmp[0] - partCM_g[3 * j]) +
+          Utils::sqr(cm_tmp[1] - partCM_g[3 * j + 1]) +
+          Utils::sqr(cm_tmp[2] - partCM_g[3 * j + 2]);
   }
   *_g1 = g1 / (1. * chain_n_chains * chain_length);
   *_g2 = g2 / (1. * chain_n_chains * chain_length);
@@ -502,8 +492,8 @@ void calc_g123(double *_g1, double *_g2, double *_g3) {
 
 void calc_g1_av(double **_g1, int window, double weights[3]) {
   int i, j, p, t, k, cnt;
-  double *g1 = NULL;
-  *_g1 = g1 = (double *)Utils::realloc(g1, n_configs * sizeof(double));
+  double *g1 = nullptr;
+  *_g1 = g1 = Utils::realloc(g1, n_configs * sizeof(double));
 
   for (k = 0; k < n_configs; k++) {
     g1[k] = 0.0;
@@ -512,11 +502,11 @@ void calc_g1_av(double **_g1, int window, double weights[3]) {
       for (j = 0; j < chain_n_chains; j++) {
         for (i = 0; i < chain_length; i++) {
           p = chain_start + j * chain_length + i;
-          g1[k] += weights[0] * SQR(configs[t + k][3 * p] - configs[t][3 * p]) +
+          g1[k] += weights[0] * Utils::sqr(configs[t + k][3 * p] - configs[t][3 * p]) +
                    weights[1] *
-                       SQR(configs[t + k][3 * p + 1] - configs[t][3 * p + 1]) +
+                       Utils::sqr(configs[t + k][3 * p + 1] - configs[t][3 * p + 1]) +
                    weights[2] *
-                       SQR(configs[t + k][3 * p + 2] - configs[t][3 * p + 2]);
+                       Utils::sqr(configs[t + k][3 * p + 2] - configs[t][3 * p + 2]);
         }
       }
     }
@@ -524,11 +514,11 @@ void calc_g1_av(double **_g1, int window, double weights[3]) {
   }
 }
 
-void calc_g2_av(double **_g2, int window, double weights[3]) {
+void calc_g2_av(PartCfg & partCfg, double **_g2, int window, double weights[3]) {
   int i, j, p, t, k, cnt;
-  double *g2 = NULL, cm_tmp[3];
+  double *g2 = nullptr, cm_tmp[3];
   double M;
-  *_g2 = g2 = (double *)Utils::realloc(g2, n_configs * sizeof(double));
+  *_g2 = g2 = Utils::realloc(g2, n_configs * sizeof(double));
 
   for (k = 0; k < n_configs; k++) {
     g2[k] = 0.0;
@@ -554,12 +544,12 @@ void calc_g2_av(double **_g2, int window, double weights[3]) {
           p = chain_start + j * chain_length + i;
           g2[k] +=
               weights[0] *
-                  SQR((configs[t + k][3 * p] - configs[t][3 * p]) - cm_tmp[0]) +
+                  Utils::sqr((configs[t + k][3 * p] - configs[t][3 * p]) - cm_tmp[0]) +
               weights[1] *
-                  SQR((configs[t + k][3 * p + 1] - configs[t][3 * p + 1]) -
+                  Utils::sqr((configs[t + k][3 * p + 1] - configs[t][3 * p + 1]) -
                       cm_tmp[1]) +
               weights[2] *
-                  SQR((configs[t + k][3 * p + 2] - configs[t][3 * p + 2]) -
+                  Utils::sqr((configs[t + k][3 * p + 2] - configs[t][3 * p + 2]) -
                       cm_tmp[2]);
         }
       }
@@ -568,11 +558,11 @@ void calc_g2_av(double **_g2, int window, double weights[3]) {
   }
 }
 
-void calc_g3_av(double **_g3, int window, double weights[3]) {
+void calc_g3_av(PartCfg & partCfg, double **_g3, int window, double weights[3]) {
   int i, j, p, t, k, cnt;
-  double *g3 = NULL, cm_tmp[3];
+  double *g3 = nullptr, cm_tmp[3];
   double M;
-  *_g3 = g3 = (double *)Utils::realloc(g3, n_configs * sizeof(double));
+  *_g3 = g3 = Utils::realloc(g3, n_configs * sizeof(double));
 
   for (k = 0; k < n_configs; k++) {
     g3[k] = 0.0;
@@ -591,20 +581,20 @@ void calc_g3_av(double **_g3, int window, double weights[3]) {
                        (partCfg[p]).p.mass;
           M += (partCfg[p]).p.mass;
         }
-        g3[k] += (weights[0] * SQR(cm_tmp[0]) + weights[1] * SQR(cm_tmp[1]) +
-                  weights[2] * SQR(cm_tmp[2])) /
-                 SQR(M);
+        g3[k] += (weights[0] * Utils::sqr(cm_tmp[0]) + weights[1] * Utils::sqr(cm_tmp[1]) +
+                  weights[2] * Utils::sqr(cm_tmp[2])) /
+                 Utils::sqr(M);
       }
     }
     g3[k] /= ((double)chain_n_chains * cnt);
   }
 }
 
-void analyze_formfactor(double qmin, double qmax, int qbins, double **_ff) {
+void analyze_formfactor(PartCfg & partCfg, double qmin, double qmax, int qbins, double **_ff) {
   int i, j, k, qi, cnt, cnt_max;
-  double q, qfak, qr, dx, dy, dz, *r_ij = NULL, *ff = NULL;
-  *_ff = ff = (double *)Utils::realloc(ff, (qbins + 1) * sizeof(double));
-  r_ij = (double *)Utils::realloc(
+  double q, qfak, qr, dx, dy, dz, *r_ij = nullptr, *ff = nullptr;
+  *_ff = ff = Utils::realloc(ff, (qbins + 1) * sizeof(double));
+  r_ij = Utils::realloc(
       r_ij, chain_length * (chain_length - 1) / 2 * sizeof(double));
 
   qfak = pow((qmax / qmin), (1.0 / qbins));
@@ -645,9 +635,9 @@ void analyze_formfactor(double qmin, double qmax, int qbins, double **_ff) {
 
 void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff) {
   int i, j, k, n, qi, cnt, cnt_max;
-  double q, qfak, qr, dx, dy, dz, *r_ij = NULL, *ff = NULL;
-  *_ff = ff = (double *)Utils::realloc(ff, (qbins + 1) * sizeof(double));
-  r_ij = (double *)Utils::realloc(
+  double q, qfak, qr, dx, dy, dz, *r_ij = nullptr, *ff = nullptr;
+  *_ff = ff = Utils::realloc(ff, (qbins + 1) * sizeof(double));
+  r_ij = Utils::realloc(
       r_ij, chain_length * (chain_length - 1) / 2 * sizeof(double));
 
   qfak = pow((qmax / qmin), (1.0 / qbins));
@@ -688,18 +678,17 @@ void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff) {
   free(r_ij);
 }
 
-void analyze_rdfchain(double r_min, double r_max, int r_bins, double **_f1,
+void analyze_rdfchain(PartCfg & partCfg, double r_min, double r_max, int r_bins, double **_f1,
                       double **_f2, double **_f3) {
   int i, j, ind, c_i, c_j, mon;
   double bin_width, inv_bin_width, factor, r_in, r_out, bin_volume, dist,
-      chain_mass, *cm = NULL, *min_d = NULL, *f1 = NULL, *f2 = NULL, *f3 = NULL;
+      chain_mass, *f1 = nullptr, *f2 = nullptr, *f3 = nullptr;
 
-  *_f1 = f1 = (double *)Utils::realloc(f1, r_bins * sizeof(double));
-  *_f2 = f2 = (double *)Utils::realloc(f2, r_bins * sizeof(double));
-  *_f3 = f3 = (double *)Utils::realloc(f3, r_bins * sizeof(double));
-  cm = (double *)Utils::realloc(cm, (chain_n_chains * 3) * sizeof(double));
-  min_d = (double *)Utils::realloc(
-      min_d, (chain_n_chains * chain_n_chains) * sizeof(double));
+  *_f1 = f1 = Utils::realloc(f1, r_bins * sizeof(double));
+  *_f2 = f2 = Utils::realloc(f2, r_bins * sizeof(double));
+  *_f3 = f3 = Utils::realloc(f3, r_bins * sizeof(double));
+  std::vector<double> cm(chain_n_chains * 3);
+  std::vector<double> min_d(chain_n_chains * chain_n_chains);
   for (i = 0; i < r_bins; i++) {
     f1[i] = f2[i] = f3[i] = 0.0;
   }

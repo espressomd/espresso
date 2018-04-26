@@ -22,8 +22,6 @@
 # Initialize MPI, start the main loop on the slaves
 import espressomd._init
 
-espressomd._init.setup()
-
 from espressomd.system import System
 from espressomd.code_info import features
 

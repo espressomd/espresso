@@ -32,9 +32,9 @@
 #define CONSTRAINTS
 #define MASS
 #define EXCLUSIONS
-#define COMFORCE
-#define COMFIXED
 #define NPT
+#define COLLISION_DETECTION
+#define LANGEVIN_PER_PARTICLE
 
 /* potentials */
 #define TABULATED
@@ -46,6 +46,21 @@
 #define BUCKINGHAM
 #define SOFT_SPHERE
 #define BOND_ANGLE
+#define GAUSSIAN
+#define HERTZIAN
 
-#define MPI_CORE
-#define FORCE_CORE
+// Lattice Boltzmann
+#define LB
+#define LB_BOUNDARIES
+#ifdef CUDA
+  #define LB_GPU
+  #define LB_BOUNDARIES_GPU
+#endif  
+
+// Electrokinetics
+#ifdef CUDA
+  #define ELECTROKINETICS
+  #define EK_BOUNDARIES
+  #define EK_ELECTROSTATIC_COUPLING
+#endif
+

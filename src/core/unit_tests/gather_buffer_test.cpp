@@ -19,6 +19,7 @@
 */
 
 #include <random>
+#include <string>
 #include <vector>
 
 #include <boost/mpi.hpp>
@@ -33,7 +34,7 @@
 using Utils::Mpi::gather_buffer;
 namespace mpi = boost::mpi;
 
-void check_pointer(mpi::communicator comm, int root) {
+void check_pointer(const mpi::communicator & comm, int root) {
   if (comm.rank() == root) {
     auto const n = comm.size();
     const int total_size = n * (n + 1) / 2;
@@ -66,7 +67,7 @@ void check_pointer(mpi::communicator comm, int root) {
   }
 }
 
-void check_vector(mpi::communicator comm, int root) {
+void check_vector(const mpi::communicator & comm, int root) {
   std::vector<int> buf(comm.rank() + 1, comm.rank() + 1);
 
   gather_buffer(buf, comm, root);
@@ -96,7 +97,7 @@ void check_vector(mpi::communicator comm, int root) {
   }
 }
 
-void check_vector_empty(mpi::communicator comm, int empty) {
+void check_vector_empty(const mpi::communicator & comm, int empty) {
   std::vector<int> buf((comm.rank() == empty) ? 0 : 11, comm.rank());
   gather_buffer(buf, comm);
 
@@ -116,7 +117,7 @@ void check_vector_empty(mpi::communicator comm, int empty) {
   }
 }
 
-void check_pointer_empty(mpi::communicator comm, int empty) {
+void check_pointer_empty(const mpi::communicator & comm, int empty) {
   auto const n_elem = (comm.rank() == empty) ? 0 : 11;
   std::vector<int> buf(n_elem, comm.rank());
 
@@ -190,8 +191,29 @@ BOOST_AUTO_TEST_CASE(pointer_empty_root) {
   check_pointer_empty(world, root);
 }
 
+BOOST_AUTO_TEST_CASE(non_trivial_type) {
+  mpi::communicator world;
+
+  std::string s(
+      "A long string that is too long for short-string optimization.");
+  BOOST_CHECK(s.size() > sizeof(std::string));
+
+  std::vector<std::string> buf(world.rank() + 1, s);
+
+  gather_buffer(buf, world);
+
+  if(world.rank() == 0) {
+    auto const n = world.size();
+    BOOST_CHECK(buf.size() == (n * (n+1) / 2));
+
+    for(auto const& e : buf) {
+      BOOST_CHECK(e == s);
+    }
+  }
+}
+
 int main(int argc, char **argv) {
   boost::mpi::environment mpi_env(argc, argv);
 
-  boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

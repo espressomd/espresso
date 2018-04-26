@@ -26,14 +26,8 @@
 #include "communication.hpp"
 #include "constraints.hpp"
 #include "domain_decomposition.hpp"
-#include "energy.hpp"
-#include "energy_inline.hpp"
-#include "forces.hpp"
-#include "forces_inline.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
-#include "integrate.hpp"
-#include "pressure.hpp"
 #include "utils.hpp"
 #include <cstring>
 #include <mpi.h>
@@ -98,18 +92,18 @@ void layered_get_mi_vector(double res[3], double a[3], double b[3]) {
 }
 
 Cell *layered_position_to_cell(double pos[3]) {
-  int cpos = (int)((pos[2] - my_left[2]) * layer_h_i) + 1;
+  int cpos = static_cast<int>(std::floor((pos[2] - my_left[2]) * layer_h_i)) + 1;
   if (cpos < 1) {
     if (!LAYERED_BTM_NEIGHBOR)
       cpos = 1;
     else
-      return NULL;
+      return nullptr;
   } else if (cpos > n_layers) {
     /* not periodic, but at top */
     if (!LAYERED_TOP_NEIGHBOR)
       cpos = n_layers;
     else
-      return NULL;
+      return nullptr;
   }
   return &(cells[cpos]);
 }
@@ -141,8 +135,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
 
     /* always sending/receiving 1 cell per time step */
     for (c = 0; c < n; c++) {
-      comm->comm[c].part_lists =
-          (ParticleList **)Utils::malloc(sizeof(ParticleList *));
+      comm->comm[c].part_lists = (Cell **)Utils::malloc(sizeof(Cell *));
       comm->comm[c].n_part_lists = 1;
       comm->comm[c].mpi_comm = comm_cart;
     }
@@ -263,8 +256,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
     if (n != 0) {
       /* two cells: from and to */
       for (c = 0; c < n; c++) {
-        comm->comm[c].part_lists =
-            (ParticleList **)Utils::malloc(2 * sizeof(ParticleList *));
+        comm->comm[c].part_lists = (Cell **)Utils::malloc(2 * sizeof(Cell *));
         comm->comm[c].n_part_lists = 2;
         comm->comm[c].mpi_comm = comm_cart;
         comm->comm[c].node = this_node;
@@ -311,8 +303,8 @@ void layered_topology_init(CellPList *old) {
   int c, p, np;
 
   CELL_TRACE(fprintf(stderr,
-                     "%d: layered_topology_init, %d old particle lists\n",
-                     this_node, old->n));
+                     "%d: layered_topology_init, %d old particle lists max_range %g\n",
+                     this_node, old->n, max_range));
 
   cell_structure.type = CELL_STRUCTURE_LAYERED;
   cell_structure.position_to_node = map_position_node_array;
@@ -342,21 +334,6 @@ void layered_topology_init(CellPList *old) {
   }
   MPI_Bcast(&n_layers, 1, MPI_INT, 0, comm_cart);
 
-  top = this_node + 1;
-  if (top == n_nodes && (layered_flags & LAYERED_PERIODIC))
-    top = 0;
-  btm = this_node - 1;
-  if (btm == -1 && (layered_flags & LAYERED_PERIODIC))
-    btm = n_nodes - 1;
-
-  layer_h = local_box_l[2] / (double)(n_layers);
-  layer_h_i = 1 / layer_h;
-
-  if (layer_h < max_range) {
-    runtimeErrorMsg() << "layered: maximal interaction range " << max_range
-                      << " larger than layer height " << layer_h;
-  }
-
   /* check wether node is top and/or bottom */
   layered_flags = 0;
   if (this_node == 0)
@@ -367,17 +344,35 @@ void layered_topology_init(CellPList *old) {
   if (PERIODIC(2))
     layered_flags |= LAYERED_PERIODIC;
 
+  top = this_node + 1;
+  if ((top == n_nodes) && (layered_flags & LAYERED_PERIODIC))
+    top = 0;
+  btm = this_node - 1;
+  if ((btm == -1) && (layered_flags & LAYERED_PERIODIC))
+    btm = n_nodes - 1;
+
+  layer_h = local_box_l[2] / (double)(n_layers);
+  layer_h_i = 1 / layer_h;
+
+  if (layer_h < max_range) {
+    runtimeErrorMsg() << "layered: maximal interaction range " << max_range
+                      << " larger than layer height " << layer_h;
+  }
+
   CELL_TRACE(fprintf(stderr, "%d: layered_flags tn %d bn %d \n", this_node,
                      LAYERED_TOP_NEIGHBOR, LAYERED_BTM_NEIGHBOR));
 
   /* allocate cells and mark them */
   realloc_cells(n_layers + 2);
   realloc_cellplist(&local_cells, local_cells.n = n_layers);
-  for (c = 0; c < n_layers; c++)
+  for (c = 0; c < n_layers; c++) {
     local_cells.cell[c] = &cells[c + 1];
+    cells[c + 1].m_neighbors.push_back(std::ref(cells[c]));
+  }
+
   realloc_cellplist(&ghost_cells, ghost_cells.n = 2);
-  ghost_cells.cell[0] = &cells[0];
-  ghost_cells.cell[1] = &cells[n_layers + 1];
+  ghost_cells.cell[0] = &cells.front();
+  ghost_cells.cell[1] = &cells.back();
 
   /* create communicators */
   layered_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM);
@@ -396,9 +391,9 @@ void layered_topology_init(CellPList *old) {
       Cell *nc = layered_position_to_cell(part[p].r.p);
       /* particle does not belong to this node. Just stow away
          somewhere for the moment */
-      if (nc == NULL)
+      if (nc == nullptr)
         nc = local_cells.cell[0];
-      append_unindexed_particle(nc, &part[p]);
+      append_unindexed_particle(nc, std::move(part[p]));
     }
   }
   for (c = 1; c <= n_layers; c++)
@@ -437,15 +432,10 @@ void layered_exchange_and_sort_particles(int global_flag) {
   Cell *nc, *oc;
   int c, p, flag, redo;
   ParticleList send_buf_dn, send_buf_up;
-  ParticleList recv_buf;
+  ParticleList recv_buf_up, recv_buf_dn;;
 
   CELL_TRACE(fprintf(stderr, "%d:layered exchange and sort %d\n", this_node,
                      global_flag));
-
-  init_particlelist(&send_buf_dn);
-  init_particlelist(&send_buf_up);
-
-  init_particlelist(&recv_buf);
 
   /* sort local particles */
   for (c = 1; c <= n_layers; c++) {
@@ -487,12 +477,12 @@ void layered_exchange_and_sort_particles(int global_flag) {
       if (this_node % 2 == 0) {
         /* send down */
         if (LAYERED_BTM_NEIGHBOR) {
-          CELL_TRACE(fprintf(stderr, "%d: send dn\n", this_node));
+          CELL_TRACE(fprintf(stderr, "%d: send dn %d\n", this_node, send_buf_dn.n));
           send_particles(&send_buf_dn, btm);
         }
         if (LAYERED_TOP_NEIGHBOR) {
-          CELL_TRACE(fprintf(stderr, "%d: recv up\n", this_node));
-          recv_particles(&recv_buf, top);
+          recv_particles(&recv_buf_up, top);
+          CELL_TRACE(fprintf(stderr, "%d: recv up %d\n", this_node, recv_buf_up.n));
         }
         /* send up */
         if (LAYERED_TOP_NEIGHBOR) {
@@ -500,21 +490,21 @@ void layered_exchange_and_sort_particles(int global_flag) {
           send_particles(&send_buf_up, top);
         }
         if (LAYERED_BTM_NEIGHBOR) {
-          CELL_TRACE(fprintf(stderr, "%d: recv dn\n", this_node));
-          recv_particles(&recv_buf, btm);
+          recv_particles(&recv_buf_dn, btm);
+          CELL_TRACE(fprintf(stderr, "%d: recv dn %d\n", this_node, recv_buf_dn.n));
         }
       } else {
         if (LAYERED_TOP_NEIGHBOR) {
           CELL_TRACE(fprintf(stderr, "%d: recv up\n", this_node));
-          recv_particles(&recv_buf, top);
+          recv_particles(&recv_buf_up, top);
         }
         if (LAYERED_BTM_NEIGHBOR) {
-          CELL_TRACE(fprintf(stderr, "%d: send dn\n", this_node));
+          CELL_TRACE(fprintf(stderr, "%d: send dn %d\n", this_node, send_buf_dn.n));
           send_particles(&send_buf_dn, btm);
         }
         if (LAYERED_BTM_NEIGHBOR) {
           CELL_TRACE(fprintf(stderr, "%d: recv dn\n", this_node));
-          recv_particles(&recv_buf, btm);
+          recv_particles(&recv_buf_dn, btm);
         }
         if (LAYERED_TOP_NEIGHBOR) {
           CELL_TRACE(fprintf(stderr, "%d: send up\n", this_node));
@@ -522,14 +512,15 @@ void layered_exchange_and_sort_particles(int global_flag) {
         }
       }
     } else {
-      if (recv_buf.n != 0 || send_buf_dn.n != 0 || send_buf_up.n != 0) {
+      if (recv_buf_up.n != 0 || recv_buf_dn.n != 0 || send_buf_dn.n != 0 || send_buf_up.n != 0) {
         fprintf(stderr, "1 node but transfer buffers are not empty. send up "
-                        "%d, down %d, recv %d\n",
-                send_buf_up.n, send_buf_dn.n, recv_buf.n);
+                "%d, down %d, recv up %d recv dn %d\n",
+                send_buf_up.n, send_buf_dn.n, recv_buf_up.n, recv_buf_dn.n);
         errexit();
       }
     }
-    layered_append_particles(&recv_buf, &send_buf_up, &send_buf_dn);
+    layered_append_particles(&recv_buf_up, &send_buf_up, &send_buf_dn);
+    layered_append_particles(&recv_buf_dn, &send_buf_up, &send_buf_dn);
 
     /* handshake redo */
     flag = (send_buf_up.n != 0 || send_buf_dn.n != 0);
@@ -558,164 +549,6 @@ void layered_exchange_and_sort_particles(int global_flag) {
     }
   }
 
-  realloc_particlelist(&recv_buf, 0);
-}
-
-/** nonbonded and bonded force calculation using the verlet list */
-void layered_calculate_ia() {
-  int c, i, j;
-  Cell *celll, *cellb;
-  int npl, npb;
-  Particle *pl, *pb, *p1;
-  double dist2, d[3];
-
-  CELL_TRACE(
-      fprintf(stderr, "%d: rebuild_v=%d\n", this_node, rebuild_verletlist));
-
-  for (c = 1; c <= n_layers; c++) {
-    celll = &cells[c];
-    pl = celll->part;
-    npl = celll->n;
-
-    cellb = &cells[c - 1];
-    pb = cellb->part;
-    npb = cellb->n;
-
-    for (i = 0; i < npl; i++) {
-      p1 = &pl[i];
-
-      if (rebuild_verletlist)
-        memcpy(p1->l.p_old, p1->r.p, 3 * sizeof(double));
-
-      add_single_particle_force(p1);
-
-      /* cell itself and bonded / constraints */
-      for (j = i + 1; j < npl; j++) {
-        layered_get_mi_vector(d, p1->r.p, pl[j].r.p);
-        dist2 = sqrlen(d);
-#ifdef EXCLUSIONS
-        if (do_nonbonded(p1, &pl[j]))
-#endif
-          add_non_bonded_pair_force(p1, &pl[j], d, sqrt(dist2), dist2);
-      }
-
-      /* bottom neighbor */
-      for (j = 0; j < npb; j++) {
-        layered_get_mi_vector(d, p1->r.p, pb[j].r.p);
-        dist2 = sqrlen(d);
-#ifdef EXCLUSIONS
-        if (do_nonbonded(p1, &pb[j]))
-#endif
-          add_non_bonded_pair_force(p1, &pb[j], d, sqrt(dist2), dist2);
-      }
-    }
-  }
-  rebuild_verletlist = 0;
-}
-
-void layered_calculate_energies() {
-  int c, i, j;
-  Cell *celll, *cellb;
-  int npl, npb;
-  Particle *pl, *pb, *p1;
-  double dist2, d[3];
-
-  CELL_TRACE(
-      fprintf(stderr, "%d: rebuild_v=%d\n", this_node, rebuild_verletlist));
-
-  for (c = 1; c <= n_layers; c++) {
-    celll = &cells[c];
-    pl = celll->part;
-    npl = celll->n;
-
-    cellb = &cells[c - 1];
-    pb = cellb->part;
-    npb = cellb->n;
-
-    for (i = 0; i < npl; i++) {
-      p1 = &pl[i];
-
-      if (rebuild_verletlist)
-        memcpy(p1->l.p_old, p1->r.p, 3 * sizeof(double));
-
-      add_single_particle_energy(p1);
-
-      /* cell itself and bonded / constraints */
-      for (j = i + 1; j < npl; j++) {
-        layered_get_mi_vector(d, p1->r.p, pl[j].r.p);
-        dist2 = sqrlen(d);
-#ifdef EXCLUSIONS
-        if (do_nonbonded(p1, &pl[j]))
-#endif
-          add_non_bonded_pair_energy(p1, &pl[j], d, sqrt(dist2), dist2);
-      }
-
-      /* bottom neighbor */
-      for (j = 0; j < npb; j++) {
-        layered_get_mi_vector(d, p1->r.p, pb[j].r.p);
-        dist2 = sqrlen(d);
-#ifdef EXCLUSIONS
-        if (do_nonbonded(p1, &pb[j]))
-#endif
-          add_non_bonded_pair_energy(p1, &pb[j], d, sqrt(dist2), dist2);
-      }
-    }
-  }
-  rebuild_verletlist = 0;
-}
-
-void layered_calculate_virials(int v_comp) {
-  int c, i, j;
-  Cell *celll, *cellb;
-  int npl, npb;
-  Particle *pl, *pb, *p1;
-  double dist2, d[3];
-
-  for (c = 1; c <= n_layers; c++) {
-    celll = &cells[c];
-    pl = celll->part;
-    npl = celll->n;
-
-    cellb = &cells[c - 1];
-    pb = cellb->part;
-    npb = cellb->n;
-
-    for (i = 0; i < npl; i++) {
-      p1 = &pl[i];
-
-      if (rebuild_verletlist)
-        memcpy(p1->l.p_old, p1->r.p, 3 * sizeof(double));
-
-      add_kinetic_virials(p1, v_comp);
-
-      add_bonded_virials(p1);
-#ifdef BOND_ANGLE_OLD
-      add_three_body_bonded_stress(p1);
-#endif
-#ifdef BOND_ANGLE
-      add_three_body_bonded_stress(p1);
-#endif
-
-      /* cell itself and bonded / constraints */
-      for (j = i + 1; j < npl; j++) {
-        layered_get_mi_vector(d, p1->r.p, pl[j].r.p);
-        dist2 = sqrlen(d);
-#ifdef EXCLUSIONS
-        if (do_nonbonded(p1, &pl[j]))
-#endif
-          add_non_bonded_pair_virials(p1, &pl[j], d, sqrt(dist2), dist2);
-      }
-
-      /* bottom neighbor */
-      for (j = 0; j < npb; j++) {
-        layered_get_mi_vector(d, p1->r.p, pb[j].r.p);
-        dist2 = sqrlen(d);
-#ifdef EXCLUSIONS
-        if (do_nonbonded(p1, &pb[j]))
-#endif
-          add_non_bonded_pair_virials(p1, &pb[j], d, sqrt(dist2), dist2);
-      }
-    }
-  }
-  rebuild_verletlist = 0;
+  realloc_particlelist(&recv_buf_up, 0);
+  realloc_particlelist(&recv_buf_dn, 0);
 }

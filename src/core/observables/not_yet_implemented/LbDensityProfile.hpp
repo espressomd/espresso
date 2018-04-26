@@ -1,5 +1,5 @@
 #ifdef LB
-int ObservableLbVelocityProfile::actual_calculate() {
+int ObservableLbVelocityProfile::actual_calculate(PartCfg & partCfg) {
   double* A= last_value;
   void* pdata_ = container;
   unsigned int n_A = n;

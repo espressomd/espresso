@@ -1,6 +1,11 @@
 file(GLOB EspressoCore_SRC
-          "*.cpp"
-          )
+          "*.cpp" "virtual_sites/VirtualSitesRelative.cpp" "io/mpiio/mpiio.cpp")
+
+
+if( WITH_COVERAGE )
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Og --coverage -fprofile-arcs -ftest-coverage")
+  link_libraries(gcov)
+endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -19,22 +24,33 @@ add_custom_command(OUTPUT config-version.cpp
 )
 
 # Custom target for everything that needs to be triggered when the myconfig changes
-add_custom_target(EspressoConfig DEPENDS config-features.hpp config-features.cpp)
-add_dependencies(EspressoConfig myconfig)
+add_library(EspressoConfig SHARED config-features.cpp)
+add_dependencies(EspressoConfig myconfig check_myconfig)
+install(TARGETS EspressoConfig LIBRARY DESTINATION ${LIBDIR})
+set_target_properties(EspressoConfig PROPERTIES SOVERSION ${SOVERSION})
 
-add_library(EspressoCore SHARED ${EspressoCore_SRC} config-features.cpp config-version.cpp)
+add_library(EspressoCore SHARED ${EspressoCore_SRC} config-version.cpp)
 install(TARGETS EspressoCore LIBRARY DESTINATION ${LIBDIR})
 set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
-add_dependencies(EspressoCore EspressoConfig)
 
-target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints EspressoUtils Correlators Observables)
+target_link_libraries(EspressoCore EspressoConfig ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints Correlators Observables Accumulators cluster_analysis)
 
 if(SCAFACOS)
   include_directories(${SCAFACOS_INCLUDE_DIRS})
   target_link_libraries(EspressoCore Scafacos)
 endif(SCAFACOS)
+if(GSL)
+  include_directories(${GSL_INCLUDE_DIRS})
+endif(GSL)
 
-set_target_properties(EspressoCore PROPERTIES MACOSX_RPATH TRUE)
+
+if(GSL)
+  target_link_libraries(EspressoCore gsl gslcblas)
+endif(GSL)
+
+if(GSL)
+  target_link_libraries(EspressoCore gsl gslcblas)
+endif(GSL)
 
 if(CUDA)
   file(GLOB EspressoCuda_SRC
@@ -49,15 +65,14 @@ if(CUDA)
   set_target_properties(EspressoCuda PROPERTIES SOVERSION ${SOVERSION})
   add_dependencies(EspressoCuda EspressoConfig)
 
-  set_target_properties(EspressoCuda PROPERTIES MACOSX_RPATH TRUE)
   CUDA_ADD_CUFFT_TO_TARGET(EspressoCuda)
   target_link_libraries(EspressoCore EspressoCuda)
 endif(CUDA)
 
 # Subdirectories
-add_subdirectory(utils)
 add_subdirectory(observables)
 add_subdirectory(correlators)
+add_subdirectory(accumulators)
 add_subdirectory(io)
 if(HDF5_FOUND)
     target_link_libraries(EspressoCore H5mdCore)
@@ -73,6 +88,7 @@ add_subdirectory(lbboundaries)
 add_subdirectory(object-in-fluid)
 add_subdirectory(shapes)
 add_subdirectory(constraints)
+add_subdirectory(cluster_analysis)
 
 if(SCAFACOS)
   add_subdirectory(scafacos)

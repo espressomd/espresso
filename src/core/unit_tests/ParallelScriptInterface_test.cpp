@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include <boost/mpi.hpp>
 
 #define BOOST_TEST_NO_MAIN
@@ -8,31 +6,18 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "MpiCallbacks.hpp"
+#include "core/MpiCallbacks.hpp"
+#include "core/utils/make_unique.hpp"
 
 #include "../../script_interface/ParallelScriptInterface.hpp"
 
-using Communication::mpiCallbacks;
+namespace mpi = boost::mpi;
+std::unique_ptr<Communication::MpiCallbacks> callbacks;
+
 using namespace ScriptInterface;
 
-namespace Testing {
-
-void reduce_and_check(const boost::mpi::communicator &comm, bool local_value) {
-  if (comm.rank() == 0) {
-    bool total;
-    boost::mpi::reduce(comm, local_value, total, std::logical_and<bool>(), 0);
-    BOOST_CHECK(total);
-  } else {
-    boost::mpi::reduce(comm, local_value, std::logical_and<bool>(), 0);
-  }
-}
-}
-
 struct TestClass : public ScriptInterfaceBase {
-  TestClass() {
-    constructed = true;
-    last_instance = this;
-  }
+  TestClass() { constructed = true; }
   ~TestClass() { destructed = true; }
 
   void set_parameter(const std::string &name, const Variant &value) override {
@@ -58,24 +43,22 @@ struct TestClass : public ScriptInterfaceBase {
     return std::string("TestResult");
   }
 
-  std::pair<std::string, VariantMap> last_method_parameters;
-
-  std::pair<std::string, Variant> last_parameter;
-  static TestClass *last_instance;
+  static std::pair<std::string, VariantMap> last_method_parameters;
+  static std::pair<std::string, Variant> last_parameter;
 
   std::shared_ptr<ScriptInterfaceBase> obj_param;
 
-  const std::string name() const override { return "TestClass"; }
   static bool constructed;
   static bool destructed;
 };
 
 bool TestClass::constructed = false;
 bool TestClass::destructed = false;
-TestClass *TestClass::last_instance = nullptr;
+std::pair<std::string, VariantMap> TestClass::last_method_parameters;
+std::pair<std::string, Variant> TestClass::last_parameter;
 
 /**
- * Check that instances are created and correctly destroyed only
+ * Check that instances are created and correctly destroyed on
  * the slave nodes.
  */
 BOOST_AUTO_TEST_CASE(ctor_dtor) {
@@ -83,54 +66,39 @@ BOOST_AUTO_TEST_CASE(ctor_dtor) {
   TestClass::constructed = false;
   TestClass::destructed = false;
 
-  if (mpiCallbacks().comm().rank() == 0) {
+  if (callbacks->comm().rank() == 0) {
     /* Create an instance everywhere */
     auto so = std::make_shared<ParallelScriptInterface>("TestClass");
     /* Force destruction */
     so = nullptr;
 
-    mpiCallbacks().abort_loop();
+    callbacks->abort_loop();
   } else {
-    mpiCallbacks().loop();
+    callbacks->loop();
   }
 
   /* Check that ctor and dtor were run on all nodes */
-  Testing::reduce_and_check(mpiCallbacks().comm(), TestClass::constructed);
-  Testing::reduce_and_check(mpiCallbacks().comm(), TestClass::destructed);
+  BOOST_CHECK(TestClass::constructed);
+  BOOST_CHECK(TestClass::destructed);
 }
 
 /**
  * Check that parameters are forwarded correctly.
  */
-BOOST_AUTO_TEST_CASE(set_parmeter) {
-  TestClass::last_instance = nullptr;
-
-  if (mpiCallbacks().comm().rank() == 0) {
+BOOST_AUTO_TEST_CASE(set_parameter) {
+  if (callbacks->comm().rank() == 0) {
     auto so = std::make_shared<ParallelScriptInterface>("TestClass");
 
     so->set_parameter("TestParam", std::string("TestValue"));
 
-    mpiCallbacks().abort_loop();
-    Testing::reduce_and_check(mpiCallbacks().comm(),
-                              TestClass::last_instance != nullptr);
-
-    auto const &last_parameter = TestClass::last_instance->last_parameter;
-    Testing::reduce_and_check(mpiCallbacks().comm(),
-                              last_parameter.first == "TestParam");
-    Testing::reduce_and_check(mpiCallbacks().comm(),
-                              boost::get<std::string>(last_parameter.second) ==
-                                  "TestValue");
+    callbacks->abort_loop();
   } else {
-    mpiCallbacks().loop();
-    Testing::reduce_and_check(mpiCallbacks().comm(),
-                              TestClass::last_instance != nullptr);
-    auto const &last_parameter = TestClass::last_instance->last_parameter;
-    Testing::reduce_and_check(mpiCallbacks().comm(),
-                              last_parameter.first == "TestParam");
-    Testing::reduce_and_check(mpiCallbacks().comm(),
-                              boost::get<std::string>(last_parameter.second) ==
-                                  "TestValue");
+    callbacks->loop();
   }
+
+  auto const &last_parameter = TestClass::last_parameter;
+  BOOST_CHECK(last_parameter.first == "TestParam");
+  BOOST_CHECK(boost::get<std::string>(last_parameter.second) == "TestValue");
 }
 
 /*
@@ -142,10 +110,7 @@ BOOST_AUTO_TEST_CASE(call_method) {
   const VariantMap params{{"TestParam", std::string("TestValue")}};
   const std::string method{"TestMethod"};
 
-  /* Reset */
-  TestClass::last_instance = nullptr;
-
-  if (mpiCallbacks().comm().rank() == 0) {
+  if (callbacks->comm().rank() == 0) {
     auto so = std::make_shared<ParallelScriptInterface>("TestClass");
 
     auto result = so->call_method(method, params);
@@ -153,31 +118,18 @@ BOOST_AUTO_TEST_CASE(call_method) {
     /* Check return value */
     BOOST_CHECK(boost::get<std::string>(result) == "TestResult");
 
-    mpiCallbacks().abort_loop();
-    Testing::reduce_and_check(mpiCallbacks().comm(),
-                              TestClass::last_instance != nullptr);
-
-    auto const &last_parameters =
-        TestClass::last_instance->last_method_parameters;
-    Testing::reduce_and_check(mpiCallbacks().comm(),
-                              last_parameters.first == method);
-    Testing::reduce_and_check(mpiCallbacks().comm(),
-                              last_parameters.second == params);
+    callbacks->abort_loop();
   } else {
-    mpiCallbacks().loop();
-    Testing::reduce_and_check(mpiCallbacks().comm(),
-                              TestClass::last_instance != nullptr);
-    auto const &last_parameters =
-        TestClass::last_instance->last_method_parameters;
-    Testing::reduce_and_check(mpiCallbacks().comm(),
-                              last_parameters.first == method);
-    Testing::reduce_and_check(mpiCallbacks().comm(),
-                              last_parameters.second == params);
+    callbacks->loop();
   }
+
+  auto const &last_parameters = TestClass::last_method_parameters;
+  BOOST_CHECK(last_parameters.first == method);
+  BOOST_CHECK(last_parameters.second == params);
 }
 
 BOOST_AUTO_TEST_CASE(parameter_lifetime) {
-  if (mpiCallbacks().comm().rank() == 0) {
+  if (callbacks->comm().rank() == 0) {
     auto host = std::make_shared<ParallelScriptInterface>("TestClass");
     ScriptInterfaceBase *bare_ptr;
 
@@ -196,13 +148,21 @@ BOOST_AUTO_TEST_CASE(parameter_lifetime) {
 
     /* Check that we got the original instance back */
     BOOST_CHECK(parameter.get() == bare_ptr);
+
+    callbacks->abort_loop();
+  } else {
+    callbacks->loop();
   }
 }
 
 int main(int argc, char **argv) {
-  boost::mpi::environment mpi_env(argc, argv);
-  ParallelScriptInterface::initialize();
+  mpi::environment mpi_env;
+  mpi::communicator world;
+  callbacks = Utils::make_unique<Communication::MpiCallbacks>(
+      world, /* abort_on_exit */ false);
+
+  ParallelScriptInterface::initialize(*callbacks);
   register_new<TestClass>("TestClass");
 
-  boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

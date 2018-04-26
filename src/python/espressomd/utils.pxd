@@ -28,24 +28,37 @@ cdef extern from "stdlib.h":
     void * malloc(size_t size)
     void * realloc(void * ptr, size_t size)
 
-cdef extern from "utils.hpp":
-    ctypedef struct int_list "IntList":
+cdef extern from "utils/List.hpp":
+    cppclass int_list "IntList":
+        int_list()
+        int_list(int)
+        int_list(int, int)
+
+        int& operator[](int)
+        void resize(int)
+        void push_back(int)
+
         int * e
         unsigned n
 
-    ctypedef struct double_list "DoubleList":
+    cppclass double_list "DoubleList":
+        double_list()
+        double_list(int)
+        double_list(int, double)
+
+        double& operator[](int)
+
         double * e
         unsigned n
 
-    cdef void init_intlist(int_list * il)
-    cdef void alloc_intlist(int_list * il, int size)
-    cdef void realloc_intlist(int_list * il, int size)
+cdef extern from "utils/Histogram.hpp" namespace "Utils":
+    cdef void unravel_index(const int* const len_dims, const int ndims, const int flattened_index, int* unravelled_index_out)
 
-cdef int_list * create_int_list_from_python_object(obj)
+cdef int_list create_int_list_from_python_object(obj)
 cdef np.ndarray create_nparray_from_int_list(int_list * il)
 cdef np.ndarray create_nparray_from_double_list(double_list * dl)
 cdef np.ndarray create_nparray_from_double_array(double * x, int n)
-cdef check_type_or_throw_except(x, n, t, msg)
+cpdef check_type_or_throw_except(x, n, t, msg)
 cdef check_range_or_except(D, x, v_min, incl_min, v_max, incl_max)
 
 cdef extern from "RuntimeError.hpp" namespace "ErrorHandling::RuntimeError":
@@ -63,9 +76,9 @@ cdef extern from "RuntimeError.hpp" namespace "ErrorHandling":
         ErrorLevel level()
 
 cdef extern from "errorhandling.hpp" namespace "ErrorHandling":
-    cdef vector[RuntimeError]mpi_gather_runtime_errors()
+    cdef vector[RuntimeError] mpi_gather_runtime_errors()
 
-cdef handle_errors(msg)
+cpdef handle_errors(msg)
 
 # https://github.com/cython/cython/blob/master/Cython/Includes/libcpp/limits.pxd
 cdef extern from "<limits>" namespace "std" nogil:

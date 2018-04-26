@@ -60,7 +60,7 @@ typedef struct {
   float gamma_even;
   float friction;
   float T;
-  float bjerrumlength;
+  float prefactor;
   float lb_force[3];
   unsigned int number_of_species;
   int reaction_species[3];
@@ -93,9 +93,6 @@ typedef struct {
   float valency[MAX_NUMBER_OF_SPECIES];
   float ext_force[3][MAX_NUMBER_OF_SPECIES];
   char* node_is_catalyst;
-#ifdef EK_REACTION
-  float* pressure;
-#endif
 } EK_parameters;
 
 #endif
@@ -167,7 +164,7 @@ int ek_set_lb_density(double lb_density);
 int ek_set_viscosity(double viscosity);
 int ek_set_friction(double friction);
 int ek_set_T(double T);
-int ek_set_bjerrumlength(double bjerrumlength);
+int ek_set_prefactor(double prefactor);
 #ifdef EK_ELECTROSTATIC_COUPLING
 int ek_set_electrostatics_coupling( bool electrostatics_coupling );
 void ek_calculate_electrostatic_coupling();
@@ -197,17 +194,6 @@ int ek_load_checkpoint(char* filename);
 void ek_init_species_density_wallcharge(ekfloat* wallcharge_species_density, int wallcharge_species);
 #endif
 
-#ifdef EK_REACTION
-#error The EK_REACTION feature has not been adjusted to the new lb boundaries. Hence, this feature is unavailable at this point.
-
-int ek_print_vtk_reaction_tags(char* filename);
-int ek_set_reaction( int reactant, int product0, int product1, 
-                     float rho_reactant_reservoir, float rho_product0_reservoir, float rho_product1_reservoir, 
-                     float reaction_ct_rate, float reaction_fraction_0, float reaction_fraction_1, 
-                     float mass_reactant, float mass_product0, float mass_product1 );
-int ek_print_vtk_pressure(char* filename);
-int ek_tag_reaction_nodes( LB_Boundary* lbboundary, char reaction_type );
-#endif
 
 #endif /* CUDA */
 

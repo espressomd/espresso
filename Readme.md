@@ -1,4 +1,11 @@
+# Call for Scientific Software Developer
+
+See http://espressomd.org/wordpress/call-for-scientific-software-developer
+
 # ESPResSo
+
+[![GitLab CI](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/badges/doc/pipeline.svg)](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/commits/doc)
+[![codecov](https://codecov.io/gh/espressomd/espresso/branch/python/graph/badge.svg)](https://codecov.io/gh/espressomd/espresso)
 
 This is the Molecular Dynamics software ESPResSo ("Extensible
 Simulation Package for the Research on Soft Matter Systems").
@@ -33,7 +40,7 @@ integrate rotationally non-invariant particles.
 ESPResSo is free, open-source software (GPL). It is parallelized and
 can be employed on desktop machines, convenience clusters as well as
 on supercomputers with hundreds of CPUs. The parallel code is
-controlled via the scripting language Tcl, which gives the software
+controlled via the scripting language Python, which gives the software
 its great flexibility and allows for many unconventional simulation
 protocols, as are often required when studying coarse-grained models.
 
@@ -48,7 +55,7 @@ contributors from all over the world.
 ## Documentation
 
 You can find documentation on how to compile, use and develop ESPResSo
-on the homepage at [http://espressomd.org](http://espressomd.org).
+on the homepage at [http://espressomd.org/html/doc/index.html](http://espressomd.org/html/doc/index.html).
 
 ESPResSo is intended to be used by people that have proper knowledge
 of simulation techniques and know how to use them. We do not take

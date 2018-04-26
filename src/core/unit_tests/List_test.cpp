@@ -240,6 +240,12 @@ BOOST_AUTO_TEST_CASE(resize) {
     l.resize(127);
     BOOST_CHECK(l.size() == 127);
     BOOST_CHECK(l.capacity() == 127);
+    l.resize(42);
+    BOOST_CHECK(l.size() == 42);
+    BOOST_CHECK(l.capacity() == 42);
+    l.resize(0);
+    BOOST_CHECK(l.size() == 0);
+    BOOST_CHECK(l.capacity() == 0);
   }
 
   /* List::resize() with size > capacity */
@@ -264,7 +270,7 @@ BOOST_AUTO_TEST_CASE(resize) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(operator_backets) {
+BOOST_AUTO_TEST_CASE(operator_brackets) {
   /* List::operator[](size_type) */
   {
     auto l = List(32);
@@ -284,6 +290,42 @@ BOOST_AUTO_TEST_CASE(operator_backets) {
     for (List::size_type i = 0; i < l.size(); i++) {
       BOOST_CHECK(l[i] == i);
     }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(comparison) {
+  /* List::operator{!,=}=(List const&), true */
+  {
+    auto l = List(31);
+    std::iota(l.begin(), l.end(), 0);
+    auto m = List(31);
+    std::iota(m.begin(), m.end(), 0);
+
+    BOOST_CHECK(l == m);
+    BOOST_CHECK(not(l != m));
+  }
+
+  /* List::operator{!,=}=(List const&), wrong size */
+  {
+    auto l = List(31);
+    std::iota(l.begin(), l.end(), 0);
+    auto m = List(12);
+    std::iota(m.begin(), m.end(), 0);
+
+    BOOST_CHECK(not(l == m));
+    BOOST_CHECK(l != m);
+  }
+
+  /* List::operator{!,=}=(List const&), wrong values */
+  {
+    auto l = List(31);
+    std::iota(l.begin(), l.end(), 0);
+    auto m = List(31);
+    std::iota(m.begin(), m.end(), 0);
+    m[11] = 0;
+
+    BOOST_CHECK(not(l == m));
+    BOOST_CHECK(l != m);
   }
 }
 
@@ -336,6 +378,7 @@ BOOST_AUTO_TEST_CASE(erase) {
     std::iota(l.begin(), l.end(), 0);
 
     auto r = l.erase(l.end() - 4, l.end());
+    BOOST_CHECK(*r == (31 - 4));
     BOOST_CHECK(l.size() == (32 - 4));
     BOOST_CHECK(l.front() == 0);
     BOOST_CHECK(l.back() == (31 - 4));
@@ -347,6 +390,7 @@ BOOST_AUTO_TEST_CASE(erase) {
     std::iota(l.begin(), l.end(), 0);
 
     auto r = l.erase(l.begin() + 2, l.end() - 2);
+    BOOST_CHECK(*r == 31);
     BOOST_CHECK(l.size() == 4);
     BOOST_CHECK(l.front() == 0);
     BOOST_CHECK(l.back() == 31);

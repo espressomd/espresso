@@ -2,7 +2,7 @@
 #define OBSERVABLES_MAGNETICDIPOLEMOMENT_HPP
 
 #include "PidObservable.hpp"
-#include "partCfg.hpp"
+
 #include <vector>
 
 namespace Observables {
@@ -10,15 +10,16 @@ namespace Observables {
 class MagneticDipoleMoment : public PidObservable {
 public:
   virtual int n_values() const override { return 3; };
-  virtual int actual_calculate() override {
+  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
+    std::vector<double> res(n_values(), 0.0);
     for (int i = 0; i < ids().size(); i++) {
 #ifdef DIPOLES
-      last_value[0] += partCfg[ids()[i]].r.dip[0];
-      last_value[1] += partCfg[ids()[i]].r.dip[1];
-      last_value[2] += partCfg[ids()[i]].r.dip[2];
+      res[0] += partCfg[ids()[i]].r.dip[0];
+      res[1] += partCfg[ids()[i]].r.dip[1];
+      res[2] += partCfg[ids()[i]].r.dip[2];
 #endif
     }
-    return 0;
+    return res;
   }
 };
 

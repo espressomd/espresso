@@ -1,4 +1,4 @@
-int ObbservableSpatialPolymerProperties::actual_calculate() {
+int ObbservableSpatialPolymerProperties::actual_calculate(PartCfg & partCfg) {
     if (!sortPartCfg()) {
       ostringstream errtxt ; //= runtime_error(128);
 	  errtxt << "{094 could not sort partCfg}";

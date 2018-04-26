@@ -20,6 +20,7 @@ from __future__ import print_function, absolute_import
 
 from collections import OrderedDict
 import sys, inspect, os, re, signal
+from espressomd.utils import is_valid_type
 
 try:
     import cPickle as pickle
@@ -59,20 +60,30 @@ class Checkpointing(object):
 
 
     def getattr_submodule(self, obj, name, default):
-        """Generalization of getattr(). getattr_submodule(object, "name1.sub1.sub2", None) will return attribute sub2 if available otherwise None."""
+        """
+        Generalization of getattr(). getattr_submodule(object,
+        "name1.sub1.sub2", None) will return attribute sub2 if available
+        otherwise None.
+        
+        """
         names = name.split('.')
 
-        for i in xrange(len(names)-1):
+        for i in range(len(names)-1):
             obj = getattr(obj, names[i], default)
 
         return getattr(obj, names[-1], default)
 
 
     def setattr_submodule(self, obj, name, value):
-        """Generalization of setattr(). setattr_submodule(object, "name1.sub1.sub2", value) will set attribute sub2 to value. Will raise exception if parent modules do not exist."""
+        """
+        Generalization of setattr(). setattr_submodule(object,
+        "name1.sub1.sub2", value) will set attribute sub2 to value. Will raise
+        exception if parent modules do not exist.
+        
+        """
         names = name.split('.')
         tmp_obj = obj
-        for i in xrange(len(names)-1):
+        for i in range(len(names)-1):
             obj = getattr(obj, names[i], None)
 
         if obj == None:
@@ -81,16 +92,22 @@ class Checkpointing(object):
 
 
     def hasattr_submodule(self, obj, name):
-        """Generalization of hasattr(). hasattr_submodule(object, "name1.sub1.sub2") will return True if submodule sub1 has the attribute sub2."""
+        """
+        Generalization of hasattr(). hasattr_submodule(object, "name1.sub1.sub2") will return True if submodule sub1 has the attribute sub2.
+        
+        """
         names = name.split('.')
-        for i in xrange(len(names)-1):
+        for i in range(len(names)-1):
             obj = getattr(obj, names[i], None)
 
         return hasattr(obj, names[-1])
 
 
     def register(self, *args):
-        """Register python objects for checkpointing."""
+        """
+        Register python objects for checkpointing.
+        
+        """
         for a in args:
             if not isinstance(a, str):
                 raise ValueError("The object that should be checkpointed is identified with its name given as a string.")
@@ -106,7 +123,10 @@ class Checkpointing(object):
 
 
     def unregister(self, *args):
-        """Unregister python objects for checkpointing."""
+        """
+        Unregister python objects for checkpointing.
+        
+        """
         for a in args:
             if not isinstance(a, str) or not a in self.checkpoint_objects:
                 raise KeyError("The given object '{}' was not registered for checkpointing yet.".format(a))
@@ -115,24 +135,40 @@ class Checkpointing(object):
 
 
     def get_registered_objects(self):
-        """Returns a list of all object names that are registered for checkpointing."""
+        """
+        Returns a list of all object names that are registered for
+        checkpointing.
+        
+        """
         return self.checkpoint_objects
 
 
     def has_checkpoints(self):
-        """Returns True if there are any checkpoints in the given checkpoint directory that match the given checkpoint id."""
+        """
+        Returns True if there are any checkpoints in the given checkpoint
+        directory that match the given checkpoint id.
+        
+        """
         return bool(self.counter)
 
 
     def get_last_checkpoint_index(self):
-        """Returns the last index of the given checkpoint id. Will raise exception if no checkpoints are found."""
+        """
+        Returns the last index of the given checkpoint id. Will raise exception
+        if no checkpoints are found.
+        
+        """
         if not self.has_checkpoints():
             raise Exception("No checkpoints found. Cannot return index for last checkpoint.")
         return self.counter-1
 
 
     def save(self, checkpoint_index=None):
-        """Saves all registered python objects in the given checkpoint directory using cPickle."""
+        """
+        Saves all registered python objects in the given checkpoint directory
+        using cPickle.
+        
+        """
 
         #get attributes of registered objects
         checkpoint_data = OrderedDict()
@@ -144,19 +180,23 @@ class Checkpointing(object):
         filename = os.path.join(self.checkpoint_dir, "{}.checkpoint".format(checkpoint_index))
 
         tmpname = filename + ".__tmp__"
-        with open(tmpname,"w") as checkpoint_file:
+        with open(tmpname,"wb") as checkpoint_file:
             pickle.dump(checkpoint_data, checkpoint_file, -1)
         os.rename(tmpname, filename)
 
 
     def load(self, checkpoint_index=None):
-        """Loads the python objects using (c)Pickle and sets them in the calling module."""
+        """
+        Loads the python objects using (c)Pickle and sets them in the calling
+        module.
+        
+        """
         if checkpoint_index == None:
             checkpoint_index = self.get_last_checkpoint_index()
 
         filename = os.path.join(self.checkpoint_dir, "{}.checkpoint".format(checkpoint_index))
-        with open(filename,"r") as checkpoint_file:
-            checkpoint_data = pickle.load(checkpoint_file)
+        with open(filename, "rb") as f:
+            checkpoint_data = pickle.load(f)
 
         for key in checkpoint_data:
             self.setattr_submodule(self.calling_module, key, checkpoint_data[key])
@@ -164,14 +204,21 @@ class Checkpointing(object):
 
 
     def signal_handler(self, signum, frame):
-        """Will be called when a registered signal was sent."""
+        """
+        Will be called when a registered signal was sent.
+        
+        """
         print("Checkpointing module caught signal {}. Write checkpoint and quit.".format(signum))
         self.save()
         exit(signum)
 
 
     def read_signals(self):
-        """Reads all registered signals from the signal file and returns a list of integers."""
+        """
+        Reads all registered signals from the signal file and returns a list of
+        integers.
+        
+        """
         if not os.path.isfile(os.path.join(self.checkpoint_dir, "signals")):
             return []
 
@@ -182,8 +229,12 @@ class Checkpointing(object):
 
 
     def write_signal(self, signum=None):
-        """Writes the given signal integer signum to the signal file."""
-        if not isinstance(signum, int):
+        """
+        Writes the given signal integer signum to the signal file.
+        
+        """
+        signum = int(signum)
+        if not is_valid_type(signum, int):
             raise ValueError("Signal must be an integer number.")
 
         signals = self.read_signals()
@@ -196,8 +247,11 @@ class Checkpointing(object):
 
 
     def register_signal(self, signum=None):
-        """Register a signal that will trigger signal_handler()."""
-        if not isinstance(signum, int):
+        """
+        Register a signal that will trigger signal_handler().
+        
+        """
+        if not is_valid_type(signum, int):
             raise ValueError("Signal must be an integer number.")
 
         if signum in self.checkpoint_signals:

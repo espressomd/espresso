@@ -23,20 +23,21 @@
  *  For more information on ghosts,
  *  see \ref ghosts.hpp "ghosts.hpp" 
 */
-#include <mpi.h>
+#include "ghosts.hpp"
+#include "cells.hpp"
+#include "communication.hpp"
+#include "domain_decomposition.hpp"
+#include "forces_inline.hpp"
+#include "global.hpp"
+#include "grid.hpp"
+#include "particle_data.hpp"
+#include "utils.hpp"
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <mpi.h>
 #include <vector>
-#include <algorithm>
-#include "utils.hpp"
-#include "ghosts.hpp"
-#include "global.hpp"
-#include "cells.hpp"
-#include "communication.hpp"
-#include "grid.hpp"
-#include "particle_data.hpp"
-#include "forces_inline.hpp"
 
 /** Tag for communication in ghost_comm. */
 #define REQ_GHOST_SEND 100
@@ -44,18 +45,16 @@
 static int n_s_buffer = 0;
 static int max_s_buffer = 0;
 /** send buffer. Just grows, which should be ok */
-static char *s_buffer = NULL;
+static char *s_buffer = nullptr;
 
 std::vector<int> s_bondbuffer;
 
 static int n_r_buffer = 0;
 static int max_r_buffer = 0;
 /** recv buffer. Just grows, which should be ok */
-static char *r_buffer = NULL;
+static char *r_buffer = nullptr;
 
 std::vector<int> r_bondbuffer;
-
-static MPI_Op MPI_FORCES_SUM;
 
 /** whether the ghosts should also have velocity information, e. g. for DPD or RATTLE.
     You need this whenever you need the relative velocity of two particles.
@@ -63,29 +62,36 @@ static MPI_Op MPI_FORCES_SUM;
 */
 int ghosts_have_v = 0;
 
+/** add force to another. This is used when collecting ghost forces. */
+inline void add_force(ParticleForce *F_to, ParticleForce *F_add) {
+  for (int i = 0; i < 3; i++)
+    F_to->f[i] += F_add->f[i];
+#ifdef ROTATION
+  for (int i = 0; i < 3; i++)
+    F_to->torque[i] += F_add->torque[i];
+#endif
+}
+
 void prepare_comm(GhostCommunicator *comm, int data_parts, int num)
 {
-  int i;
+  assert(comm);
   comm->data_parts = data_parts;
-
-  /* if ghosts should have uptodate velocities, they have to be updated like positions
-     (except for shifting...) */
-  if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
-    comm->data_parts |= GHOSTTRANS_MOMENTUM;
 
   GHOST_TRACE(fprintf(stderr, "%d: prepare_comm, data_parts = %d\n", this_node, comm->data_parts));
 
   comm->num = num;
   comm->comm = (GhostCommunication*)Utils::malloc(num*sizeof(GhostCommunication));
-  for(i=0; i<num; i++) {
+  for(int i=0; i<num; i++) {
     comm->comm[i].shift[0]=comm->comm[i].shift[1]=comm->comm[i].shift[2]=0.0;
+    comm->comm[i].n_part_lists = 0;
+    comm->comm[i].part_lists = nullptr;
   }
 }
 
 void free_comm(GhostCommunicator *comm)
 {
   int n;
-  GHOST_TRACE(fprintf(stderr,"%d: free_comm: %p has %d ghost communications\n",this_node,comm,comm->num));
+  GHOST_TRACE(fprintf(stderr,"%d: free_comm: %p has %d ghost communications\n",this_node,(void*) comm,comm->num));
   for (n = 0; n < comm->num; n++) free(comm->comm[n].part_lists);
   free(comm->comm);
 }
@@ -134,15 +140,15 @@ int calc_transmit_size(GhostCommunication *gc, int data_parts)
   return n_buffer_new;
 }
 
-void prepare_send_buffer(GhostCommunication *gc, int data_parts)
-{
-  GHOST_TRACE(fprintf(stderr, "%d: prepare sending to/bcast from %d\n", this_node, gc->node));
+void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
+  GHOST_TRACE(fprintf(stderr, "%d: prepare sending to/bcast from %d\n",
+                      this_node, gc->node));
 
   /* reallocate send buffer */
   n_s_buffer = calc_transmit_size(gc, data_parts);
   if (n_s_buffer > max_s_buffer) {
     max_s_buffer = n_s_buffer;
-    s_buffer = (char*)Utils::realloc(s_buffer, max_s_buffer);
+    s_buffer = Utils::realloc(s_buffer, max_s_buffer);
   }
   GHOST_TRACE(fprintf(stderr, "%d: will send %d\n", this_node, n_s_buffer));
 
@@ -151,84 +157,84 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts)
   /* put in data */
   char *insert = s_buffer;
   for (int pl = 0; pl < gc->n_part_lists; pl++) {
-    int np   = gc->part_lists[pl]->n;
+    int np = gc->part_lists[pl]->n;
     if (data_parts & GHOSTTRANS_PARTNUM) {
       *(int *)insert = np;
       insert += sizeof(int);
-      GHOST_TRACE(fprintf(stderr, "%d: %d particles assigned\n",
-			  this_node, np));
-    }
-    else {
+      GHOST_TRACE(
+          fprintf(stderr, "%d: %d particles assigned\n", this_node, np));
+    } else {
       Particle *part = gc->part_lists[pl]->part;
       for (int p = 0; p < np; p++) {
-	Particle *pt = &part[p];
-	if (data_parts & GHOSTTRANS_PROPRTS) {
-	  memmove(insert, &pt->p, sizeof(ParticleProperties));
-	  insert +=  sizeof(ParticleProperties);
+        Particle *pt = &part[p];
+        if (data_parts & GHOSTTRANS_PROPRTS) {
+          memmove(insert, &pt->p, sizeof(ParticleProperties));
+          insert += sizeof(ParticleProperties);
 #ifdef GHOSTS_HAVE_BONDS
           *(int *)insert = pt->bl.n;
-	  insert += sizeof(int);
+          insert += sizeof(int);
           if (pt->bl.n) {
-            s_bondbuffer.insert(s_bondbuffer.end(), pt->bl.e, pt->bl.e + pt->bl.n);
+            s_bondbuffer.insert(s_bondbuffer.end(), pt->bl.e,
+                                pt->bl.e + pt->bl.n);
           }
 #ifdef EXCLUSIONS
           *(int *)insert = pt->el.n;
-	  insert += sizeof(int);
+          insert += sizeof(int);
           if (pt->el.n) {
-            s_bondbuffer.insert(s_bondbuffer.end(), pt->el.e, pt->el.e + pt->el.n);
+            s_bondbuffer.insert(s_bondbuffer.end(), pt->el.e,
+                                pt->el.e + pt->el.n);
           }
 #endif
 #endif
-	}
-	if (data_parts & GHOSTTRANS_POSSHFTD) {
-	  /* ok, this is not nice, but perhaps fast */
-	  ParticlePosition *pp = (ParticlePosition *)insert;
-	  int i;
-	  memmove(pp, &pt->r, sizeof(ParticlePosition));
-	  for (i = 0; i < 3; i++)
-	    pp->p[i] += gc->shift[i];
-      /* No special wrapping for Lees-Edwards here:
-       * LE wrap-on-receive instead, for convenience in
-       * mapping to local cell geometry. */
-	  insert +=  sizeof(ParticlePosition);
-	}
-	else if (data_parts & GHOSTTRANS_POSITION) {
-	  memmove(insert, &pt->r, sizeof(ParticlePosition));
-	  insert +=  sizeof(ParticlePosition);
-	}
-	if (data_parts & GHOSTTRANS_MOMENTUM) {
-	  memmove(insert, &pt->m, sizeof(ParticleMomentum));
-	  insert +=  sizeof(ParticleMomentum);
-	}
-	if (data_parts & GHOSTTRANS_FORCE) {
-	  memmove(insert, &pt->f, sizeof(ParticleForce));
-	  insert +=  sizeof(ParticleForce);
-	}
+        }
+        if (data_parts & GHOSTTRANS_POSSHFTD) {
+          /* ok, this is not nice, but perhaps fast */
+          ParticlePosition *pp = (ParticlePosition *)insert;
+          int i;
+          memmove(pp, &pt->r, sizeof(ParticlePosition));
+          for (i = 0; i < 3; i++)
+            pp->p[i] += gc->shift[i];
+          /* No special wrapping for Lees-Edwards here:
+           * LE wrap-on-receive instead, for convenience in
+           * mapping to local cell geometry. */
+          insert += sizeof(ParticlePosition);
+        } else if (data_parts & GHOSTTRANS_POSITION) {
+          memmove(insert, &pt->r, sizeof(ParticlePosition));
+          insert += sizeof(ParticlePosition);
+        }
+        if (data_parts & GHOSTTRANS_MOMENTUM) {
+          memmove(insert, &pt->m, sizeof(ParticleMomentum));
+          insert += sizeof(ParticleMomentum);
+        }
+        if (data_parts & GHOSTTRANS_FORCE) {
+          memmove(insert, &pt->f, sizeof(ParticleForce));
+          insert += sizeof(ParticleForce);
+        }
 #ifdef LB
-	if (data_parts & GHOSTTRANS_COUPLING) {
-	  memmove(insert, &pt->lc, sizeof(ParticleLatticeCoupling));
-	  insert +=  sizeof(ParticleLatticeCoupling);
-	}
+        if (data_parts & GHOSTTRANS_COUPLING) {
+          memmove(insert, &pt->lc, sizeof(ParticleLatticeCoupling));
+          insert += sizeof(ParticleLatticeCoupling);
+        }
 #endif
 #ifdef ENGINE
-	if (data_parts & GHOSTTRANS_SWIMMING) {
+        if (data_parts & GHOSTTRANS_SWIMMING) {
           memmove(insert, &pt->swim, sizeof(ParticleParametersSwimming));
-          insert +=  sizeof(ParticleParametersSwimming);
+          insert += sizeof(ParticleParametersSwimming);
         }
 #endif
       }
     }
   }
   if (data_parts & GHOSTTRANS_PROPRTS) {
-    GHOST_TRACE(fprintf(stderr, "%d: bond buffer size is %ld\n",
-                        this_node, s_bondbuffer.size()));
+    GHOST_TRACE(fprintf(stderr, "%d: bond buffer size is %ld\n", this_node,
+                        s_bondbuffer.size()));
     *(int *)insert = int(s_bondbuffer.size());
     insert += sizeof(int);
   }
 
   if (insert - s_buffer != n_s_buffer) {
     fprintf(stderr, "%d: INTERNAL ERROR: send buffer size %d "
-            "differs from what I put in (%ld)\n",
+                    "differs from what I put in (%ld)\n",
             this_node, n_s_buffer, insert - s_buffer);
     errexit();
   }
@@ -246,22 +252,14 @@ static void prepare_ghost_cell(Cell *cell, int size)
     }
   }          
 #endif
-  realloc_particlelist(cell, cell->n = size);
+  cell->resize(size);
   // invalidate pointers etc
   {
     int np   = cell->n;
     Particle *part = cell->part;
     for (int p = 0; p < np; p++) {
-      Particle *pt = &part[p];
-      // no bonds or exclusions
-      pt->bl.e = 0;
-      pt->bl.n = 0;
-      pt->bl.max = 0;
-#ifdef EXCLUSIONS
-      pt->el.e = 0;
-      pt->el.n = 0;
-      pt->el.max = 0;
-#endif
+      Particle *pt = new(&part[p]) Particle();
+
       //init ghost variable
       pt->l.ghost=1;
     }
@@ -275,7 +273,7 @@ void prepare_recv_buffer(GhostCommunication *gc, int data_parts)
   n_r_buffer = calc_transmit_size(gc, data_parts);
   if (n_r_buffer > max_r_buffer) {
     max_r_buffer = n_r_buffer;
-    r_buffer = (char*)Utils::realloc(r_buffer, max_r_buffer);
+    r_buffer = Utils::realloc(r_buffer, max_r_buffer);
   }
   GHOST_TRACE(fprintf(stderr, "%d: will get %d\n", this_node, n_r_buffer));
 }
@@ -288,10 +286,10 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
   std::vector<int>::const_iterator bond_retrieve = r_bondbuffer.begin();
 
   for (int pl = 0; pl < gc->n_part_lists; pl++) {
-    ParticleList *cur_list = gc->part_lists[pl];
+    auto cur_list = gc->part_lists[pl];
     if (data_parts & GHOSTTRANS_PARTNUM) {
       GHOST_TRACE(fprintf(stderr, "%d: reallocating cell %p to size %d, assigned to node %d\n",
-			  this_node, cur_list, *(int *)retrieve, gc->node));
+			  this_node, (void*) cur_list, *(int *)retrieve, gc->node));
       prepare_ghost_cell(cur_list, *(int *)retrieve);
       retrieve += sizeof(int);
     }
@@ -308,21 +306,22 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
 	  memmove(&n_bonds, retrieve, sizeof(int));
 	  retrieve +=  sizeof(int);
           if (n_bonds) {
-            realloc_intlist(&pt->bl, pt->bl.n = n_bonds);
-            std::copy(bond_retrieve, bond_retrieve + n_bonds, pt->bl.e);
+	    pt->bl.resize(n_bonds);
+            std::copy_n(bond_retrieve, n_bonds, pt->bl.begin());
             bond_retrieve += n_bonds;
           }
 #ifdef EXCLUSIONS
-	  memmove(&n_bonds, retrieve, sizeof(int));
+          int n_exclusions;
+	  memmove(&n_exclusions, retrieve, sizeof(int));
 	  retrieve +=  sizeof(int);
-          if (n_bonds) {
-            realloc_intlist(&pt->el, pt->el.n = n_bonds);
-            std::copy(bond_retrieve, bond_retrieve + n_bonds, pt->el.e);
-            bond_retrieve += n_bonds;
+          if (n_exclusions) {
+	    pt->el.resize(n_exclusions);
+            std::copy_n(bond_retrieve, n_exclusions, pt->el.begin());
+            bond_retrieve += n_exclusions;
           }
 #endif
 #endif
-	  if (local_particles[pt->p.identity] == NULL) {
+	  if (local_particles[pt->p.identity] == nullptr) {
 	    local_particles[pt->p.identity] = pt;
 	  }
 	}
@@ -445,11 +444,9 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts)
 	if (data_parts & GHOSTTRANS_PROPRTS) {
 	  memmove(&pt2->p, &pt1->p, sizeof(ParticleProperties));
 #ifdef GHOSTS_HAVE_BONDS
-          realloc_intlist(&(pt2->bl), pt2->bl.n = pt1->bl.n);
-	  memmove(pt2->bl.e, pt1->bl.e, pt1->bl.n*sizeof(int));
+	  pt2->bl = pt1->bl;
 #ifdef EXCLUSIONS
-          realloc_intlist(&(pt2->el), pt2->el.n = pt1->el.n);
-	  memmove(pt2->el.e, pt1->el.e, pt1->el.n*sizeof(int));
+	  pt2->el = pt1->el;
 #endif
 #endif
         }
@@ -533,8 +530,13 @@ void ghost_communicator(GhostCommunicator *gc)
   MPI_Status status;
   int n, n2;
   int data_parts = gc->data_parts;
+  /* if ghosts should have uptodate velocities, they have to be updated like
+     positions (except for shifting...) */
+  if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
+    data_parts |= GHOSTTRANS_MOMENTUM;
 
-  GHOST_TRACE(fprintf(stderr, "%d: ghost_comm %p, data_parts %d\n", this_node, gc, data_parts));
+
+  GHOST_TRACE(fprintf(stderr, "%d: ghost_comm %p, data_parts %d\n", this_node, (void*) gc, data_parts));
 
   for (n = 0; n < gc->num; n++) {
     GhostCommunication *gcn = &gc->comm[n];
@@ -639,15 +641,21 @@ void ghost_communicator(GhostCommunicator *gc)
           }
         }
 	break;
-      case GHOST_RDCE:
-	GHOST_TRACE(fprintf(stderr, "%d: ghost_comm reduce to %d (%d bytes)\n", this_node, node, n_s_buffer));
-	if (node == this_node)
-	  MPI_Reduce(s_buffer, r_buffer, n_s_buffer, MPI_BYTE, MPI_FORCES_SUM, node, comm_cart);
-	else
-	  MPI_Reduce(s_buffer, NULL, n_s_buffer, MPI_BYTE, MPI_FORCES_SUM, node, comm_cart);
-	break;
+      case GHOST_RDCE: {
+        GHOST_TRACE(fprintf(stderr, "%d: ghost_comm reduce to %d (%d bytes)\n",
+                            this_node, node, n_s_buffer));
+
+        if (node == this_node)
+          MPI_Reduce(reinterpret_cast<double *>(s_buffer),
+                     reinterpret_cast<double *>(r_buffer),
+                     n_s_buffer / sizeof(double), MPI_DOUBLE, MPI_SUM, node,
+                     comm_cart);
+        else
+          MPI_Reduce(reinterpret_cast<double *>(s_buffer), nullptr,
+                     n_s_buffer / sizeof(double), MPI_DOUBLE, MPI_SUM, node,
+                     comm_cart);
+      } break;
       }
-      //GHOST_TRACE(MPI_Barrier(comm_cart));
       GHOST_TRACE(fprintf(stderr, "%d: ghost_comm done\n", this_node));
 
       /* recv op; write back data directly, if no PSTSTORE delay is requested. */
@@ -695,11 +703,6 @@ void ghost_communicator(GhostCommunicator *gc)
   }
 }
 
-void ghost_init()
-{
-  MPI_Op_create(reduce_forces_sum, 1, &MPI_FORCES_SUM);
-}
-
 /** Go through \ref ghost_cells and remove the ghost entries from \ref
     local_particles. Part of \ref dd_exchange_and_sort_particles.*/
 void invalidate_ghosts()
@@ -715,7 +718,7 @@ void invalidate_ghosts()
 	 if the pointer stored there belongs to a ghost celll
 	 particle array. */
       if( &(part[p]) == local_particles[part[p].p.identity] ) 
-	local_particles[part[p].p.identity] = NULL;
+	local_particles[part[p].p.identity] = nullptr;
       free_particle(part+p);
     }
     ghost_cells.cell[c]->n = 0;

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016,2017 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -18,25 +18,23 @@
 #
 from __future__ import print_function, absolute_import
 import sys
-from . cimport script_interface
+from . import script_interface
 
 cdef extern from "communication.hpp":
-    void mpi_init(int * argc, char ** *argv)
+    void mpi_init()
+    void mpi_loop()
     int this_node
 
-cdef extern from "initialize.hpp":
-    void on_program_start()
-    void mpi_loop()
-
 # Main code
-mpi_init(NULL, NULL)
+mpi_init()
 
-# Main slave loop
+# Initialize script interface
+# Has to be _after_ mpi_init
+script_interface.init()
+
+# Block the slaves in the callback loop
+# The master is just returning to the user script
 if this_node != 0:
-    on_program_start()
     mpi_loop()
-    sys.exit()
+    sys.exit(0)
 
-
-def setup():
-    on_program_start()

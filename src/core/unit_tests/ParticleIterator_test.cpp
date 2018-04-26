@@ -1,7 +1,7 @@
 #include <algorithm>
-#include <random>
 #include <type_traits>
 #include <vector>
+#include <numeric>
 
 #include "core/utils/make_unique.hpp"
 
@@ -82,7 +82,6 @@ BOOST_AUTO_TEST_CASE(skip_empty) {
   cells[2]->n = 1;
 
   auto begin = iterator(cells.begin(), cells.end(), 0);
-  auto end = iterator(cells.end(), cells.end(), 0);
 
   BOOST_CHECK(begin->identity() == 0);
   ++begin;
@@ -119,3 +118,27 @@ BOOST_AUTO_TEST_CASE(order) {
                           [](Particle const &p) { return p.identity() == 1; }));
 }
 
+BOOST_AUTO_TEST_CASE(distance_overload) {
+  using cells_t = std::vector<std::unique_ptr<Cell>>;
+  using iterator = ParticleIterator<typename cells_t::iterator, Particle>;
+  auto const n_cells = 10;
+
+  auto cells = make_cells(n_cells);
+
+  /* Fill the cells */
+  for (int i = 0; i < n_cells; i++) {
+    cells[i % cells.size()]->part.emplace_back(i);
+  }
+
+  /* Set the size */
+  for (auto &c : cells) {
+    c->n = c->part.size();
+  }
+
+  auto begin = iterator(cells.begin(), cells.end(), 0);
+  auto end = iterator(cells.end(), cells.end(), 0);
+
+  BOOST_CHECK(distance(begin, end) == std::distance(begin, end));
+  BOOST_CHECK(distance(begin, begin) == 0);
+  BOOST_CHECK(distance(end, end) == 0);
+}

@@ -1,4 +1,4 @@
-int ObservableInteractsWith::actual_calculate() {
+int ObservableInteractsWith::actual_calculate(PartCfg & partCfg) {
   double* A = last_value;
   iw_params *params=(iw_params*) container;
   IntList* ids1;

@@ -24,6 +24,7 @@
  */
 
 #include <cmath>
+#include <numeric>
 #include <mpi.h>
 #include "utils.hpp"
 #include "communication.hpp"
@@ -109,7 +110,7 @@ static IntList besselCutoff;
 /** cutoffs for the complex sum */
 static int  complexCutoff[COMPLEX_STEP + 1];
 /** bernoulli numbers divided by n */
-static DoubleList  bon;
+static DoubleList bon;
 
 /** inverse box dimensions */
 /*@{*/
@@ -184,13 +185,13 @@ MMM2D_struct mmm2d_params = { 1e100, 10, 1, 0, 0, 0, 0, 1, 1, 1 };
 static int n_localpart = 0;
 
 /** temporary buffers for product decomposition */
-static double *partblk = NULL;
+static double *partblk = nullptr;
 /** for all local cells including ghosts */
-static double *lclcblk = NULL;
+static double *lclcblk = nullptr;
 /** collected data from the cells above the top neighbor
     of a cell rsp. below the bottom neighbor
     (P=below, M=above, as the signs in the exp). */
-static double *gblcblk = NULL;
+static double *gblcblk = nullptr;
 
 /** contribution from the image charges */
 static double lclimge[8]; 
@@ -200,10 +201,10 @@ typedef struct {
 } SCCache;
 
 /** sin/cos caching */ 
-static SCCache *scxcache = NULL;
+static SCCache *scxcache = nullptr;
 static int    n_scxcache;  
 /** sin/cos caching */ 
-static SCCache *scycache = NULL;
+static SCCache *scycache = nullptr;
 static int    n_scycache;  
 
 
@@ -578,9 +579,7 @@ static void setup_z_force()
 
 static void add_z_force()
 {
-  int np, c, i;
   double add;
-  Particle *part;
   double *othcblk;
   int size = 2;
   double field_tot=0;
@@ -589,14 +588,10 @@ static void add_z_force()
   if (mmm2d_params.const_pot_on) {
     double gbl_dm_z = 0;
     double lcl_dm_z = 0;
-
-    for (c = 0; c < local_cells.n; c++) {
-      int npl = local_cells.cell[c]->n;
-      Particle *pl = local_cells.cell[c]->part;
-      for (i = 0; i < npl; i++) {
-      	lcl_dm_z += pl[i].p.q*(pl[i].r.p[2] + pl[i].l.i[2]*box_l[2]);
-      }
+    for (auto const &p : local_cells.particles()) {
+      lcl_dm_z += p.p.q * (p.r.p[2] + p.l.i[2] * box_l[2]);
     }
+
     MPI_Allreduce(&lcl_dm_z, &gbl_dm_z, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
 
     field_induced = gbl_dm_z * coulomb.prefactor*4*M_PI*ux*uy*uz;
@@ -604,12 +599,12 @@ static void add_z_force()
     field_tot = field_induced + field_applied;
   }
 
-  for (c = 1; c <= n_layers; c++) {
+  for (int c = 1; c <= n_layers; c++) {
     othcblk = block(gblcblk, c - 1, size);
     add = othcblk[QQEQQP] - othcblk[QQEQQM];
-    np   = cells[c].n;
-    part = cells[c].part;
-    for (i = 0; i < np; i++) {
+    auto np   = cells[c].n;
+    auto part = cells[c].part;
+    for (int i = 0; i < np; i++) {
       part[i].f.f[2] += part[i].p.q*(add+field_tot);
       LOG_FORCES(fprintf(stderr, "%d: part %d force %10.3g %10.3g %10.3g\n",
 			 this_node, part[i].p.identity, part[i].f.f[0],
@@ -673,18 +668,18 @@ static double z_energy()
     double gbl_dm_z = 0;
     double lcl_dm_z = 0;
 
-    for (c = 0; c < local_cells.n; c++) {
-      int npl = local_cells.cell[c]->n;
-      Particle *pl = local_cells.cell[c]->part;
-      for (i = 0; i < npl; i++) {
-		lcl_dm_z += pl[i].p.q*(pl[i].r.p[2] + pl[i].l.i[2]*box_l[2]);
-      }
+    for (auto &p : local_cells.particles()) {
+      lcl_dm_z += p.p.q * (p.r.p[2] + p.l.i[2] * box_l[2]);
     }
+
     MPI_Allreduce(&lcl_dm_z, &gbl_dm_z, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
-    // zero potential difference contribution
-    eng += gbl_dm_z*gbl_dm_z * coulomb.prefactor*2*M_PI*ux*uy*uz;
-    // external potential shift contribution
-    eng += mmm2d_params.pot_diff * uz * gbl_dm_z;
+    if (this_node == 0)
+    {
+        // zero potential difference contribution
+        eng += gbl_dm_z*gbl_dm_z * coulomb.prefactor*2*M_PI*ux*uy*uz;
+        // external potential shift contribution
+        eng -= mmm2d_params.pot_diff * uz * gbl_dm_z;
+    }
   }
 
   return eng;
@@ -706,7 +701,7 @@ static void setup_P(int p, double omega, double fac)
   double layer_top;
   double e, e_di_l, e_di_h;
   double *llclcblk;
-  double *lclimgebot = NULL, *lclimgetop = NULL;
+  double *lclimgebot = nullptr, *lclimgetop = nullptr;
   int e_size = 2, size = 4;
 
   if (mmm2d_params.dielectric_contrast_on)
@@ -815,7 +810,7 @@ static void setup_Q(int q, double omega, double fac)
   double layer_top;
   double e, e_di_l, e_di_h;
   double *llclcblk;
-  double *lclimgebot=NULL, *lclimgetop=NULL;
+  double *lclimgebot=nullptr, *lclimgetop=nullptr;
   int e_size = 2, size = 4;
  
   if (mmm2d_params.dielectric_contrast_on)
@@ -1018,7 +1013,7 @@ static void setup_PQ(int p, int q, double omega, double fac)
   double layer_top;
   double e, e_di_l, e_di_h;
   double *llclcblk;
-  double *lclimgebot=NULL, *lclimgetop=NULL;
+  double *lclimgebot=nullptr, *lclimgetop=nullptr;
   int e_size = 4, size = 8;
 
   if (mmm2d_params.dielectric_contrast_on)
@@ -1226,7 +1221,7 @@ static void add_force_contribution(int p, int q)
     checkpoint("************distri q", 0, q, 2);
   }
   else {
-    omega = C_2PI*sqrt(SQR(ux*p) + SQR(uy*q));
+    omega = C_2PI*sqrt(Utils::sqr(ux*p) + Utils::sqr(uy*q));
     fac = exp(-omega*layer_h);
     setup_PQ(p, q, omega, fac);
     if (mmm2d_params.dielectric_contrast_on)
@@ -1278,7 +1273,7 @@ static double energy_contribution(int p, int q)
     checkpoint("************distri q", 0, q, 2);
   }
   else {
-    omega = C_2PI*sqrt(SQR(ux*p) + SQR(uy*q));
+    omega = C_2PI*sqrt(Utils::sqr(ux*p) + Utils::sqr(uy*q));
     fac = exp(-omega*layer_h);
     setup_PQ(p, q, omega, fac);
     if (mmm2d_params.dielectric_contrast_on)
@@ -1318,7 +1313,7 @@ double MMM2D_add_far(int f, int e)
     if (p == 0)
       q =  n_scycache;
     else {
-      q2 = mmm2d_params.far_cut2 - SQR(ux*(p - 1));
+      q2 = mmm2d_params.far_cut2 - Utils::sqr(ux*(p - 1));
       if (q2 > 0)
 	q = 1 + (int)ceil(box_l[1]*sqrt(q2));
       else
@@ -1334,7 +1329,7 @@ double MMM2D_add_far(int f, int e)
   for(R = mmm2d_params.far_cut; R > 0; R -= dR) {
     for (p = n_scxcache; p >= 0; p--) {
       for (q = undone[p]; q >= 0; q--) {
-	if (ux2*SQR(p)  + uy2*SQR(q) < SQR(R))
+	if (ux2*Utils::sqr(p)  + uy2*Utils::sqr(q) < Utils::sqr(R))
 	  break;
 	if (f)
 	  add_force_contribution(p, q);
@@ -1379,7 +1374,7 @@ static int MMM2D_tune_far(double error)
     return ERROR_FARC;
   // fprintf(stderr, "far cutoff %g %g %g\n", mmm2d_params.far_cut, err, min_far);
   mmm2d_params.far_cut -= min_inv_boxl;
-  mmm2d_params.far_cut2 = SQR(mmm2d_params.far_cut);
+  mmm2d_params.far_cut2 = Utils::sqr(mmm2d_params.far_cut);
   return 0;
 }
 
@@ -1428,9 +1423,9 @@ static int MMM2D_tune_near(double error)
 
   // fprintf(stderr, "bessel cutoff %d %g\n", P, err);
 
-  realloc_intlist(&besselCutoff, besselCutoff.n = P);
+  besselCutoff.resize(P);
   for (p = 1; p < P; p++)
-    besselCutoff.e[p-1] = (int)floor(((double)P)/(2*p)) + 1;
+    besselCutoff[p-1] = (int)floor(((double)P)/(2*p)) + 1;
 
   /* complex sum, determine cutoffs (dist dependent) */
   T = log(part_error/(16*M_SQRT2)*box_l[0]*box_l[1]);
@@ -1442,7 +1437,7 @@ static int MMM2D_tune_near(double error)
 
   /* polygamma, determine order */
   n = 1;
-  uxrhomax2 = SQR(ux*box_l[1])/2;
+  uxrhomax2 = Utils::sqr(ux*box_l[1])/2;
   uxrho2m2max = 1.0;
   do {
     create_mod_psi_up_to(n+1);
@@ -1486,18 +1481,18 @@ static void prepareBernoulliNumbers(int bon_order)
   if (bon_order < 2)
     bon_order = 2;
 
-  realloc_doublelist(&bon, bon.n = bon_order);
+  bon.resize(bon_order);
 
   /* the ux is multiplied in to bessel, complex and psi at once, not here,
      and we use uy*(z + iy), so the uy is also treated below */
-  for(l = 1; (l <= bon_order) && (l < 34); l++)
-    bon.e[l-1] = 2*uy*bon_table[l];
+  for (l = 1; (l <= bon_order) && (l < 34); l++)
+    bon[l - 1] = 2 * uy * bon_table[l];
 
   for (; l <= bon_order; l++) {
     if (l & 1)
-      bon.e[l-1] =  4.0*uy;
+      bon[l - 1] = 4.0 * uy;
     else
-      bon.e[l-1] = -4.0*uy;      
+      bon[l - 1] = -4.0 * uy;
   }
 }
 
@@ -1795,28 +1790,18 @@ double mmm2d_coulomb_pair_energy(double charge_factor,
   return 0.0;
 }
 
-void MMM2D_self_energy()
-{
-  int c, np, i;
-  Particle *part;
+void MMM2D_self_energy() {
   double dv[3] = {0, 0, 0};
-  double seng = coulomb.prefactor*calc_mmm2d_copy_pair_energy(dv);
-  self_energy = 0;
+  double seng = coulomb.prefactor * calc_mmm2d_copy_pair_energy(dv);
 
   /* this one gives twice the real self energy, as it is used
      in the far formula which counts everything twice and in
      the end divides by two*/
 
-  // fprintf(stderr, "%d: self energy %g\n", this_node, seng);
-
-  for (c = 0; c < local_cells.n; c++) {
-    np   = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
-
-    for (i = 0; i < np; i++) {
-      self_energy += seng*SQR(part[i].p.q);
-     }
-  }
+  auto parts = local_cells.particles();
+  self_energy = std::accumulate(
+      parts.begin(), parts.end(), 0.0,
+      [seng](double sum, Particle const &p) { return sum + seng * Utils::sqr(p.p.q); });
 }
 
 /****************************************
@@ -1872,7 +1857,7 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double
   }
   else {
     mmm2d_params.far_cut = far_cut;
-    mmm2d_params.far_cut2 = SQR(far_cut);
+    mmm2d_params.far_cut2 = Utils::sqr(far_cut);
     if (mmm2d_params.far_cut > 0)
       mmm2d_params.far_calculated = 0;
     else {
@@ -1902,6 +1887,12 @@ int MMM2D_sanity_checks()
       runtimeErrorMsg() <<"MMM2D at present requires layered (or n-square) cellsystem";
     return 1;
   }
+
+  if (cell_structure.use_verlet_list) {
+      runtimeErrorMsg() <<"MMM2D at present does not work with verlet lists";
+    return 1;
+  }
+
   return 0;
 }
 
@@ -1942,12 +1933,12 @@ void MMM2D_on_resort_particles()
     n_localpart = cells_get_n_particles();
     n_scxcache = (int)(ceil(mmm2d_params.far_cut/ux) + 1);
     n_scycache = (int)(ceil(mmm2d_params.far_cut/uy) + 1);
-    scxcache = (SCCache*)Utils::realloc(scxcache, n_scxcache*n_localpart*sizeof(SCCache));
-    scycache = (SCCache*)Utils::realloc(scycache, n_scycache*n_localpart*sizeof(SCCache));
+    scxcache = Utils::realloc(scxcache, n_scxcache*n_localpart*sizeof(SCCache));
+    scycache = Utils::realloc(scycache, n_scycache*n_localpart*sizeof(SCCache));
     
-    partblk   = (double*)Utils::realloc(partblk,  n_localpart*8*sizeof(double));
-    lclcblk   = (double*)Utils::realloc(lclcblk,  cells.size()*8*sizeof(double));
-    gblcblk   = (double*)Utils::realloc(gblcblk,  n_layers*8*sizeof(double));
+    partblk   = Utils::realloc(partblk,  n_localpart*8*sizeof(double));
+    lclcblk   = Utils::realloc(lclcblk,  cells.size()*8*sizeof(double));
+    gblcblk   = Utils::realloc(gblcblk,  n_layers*8*sizeof(double));
   }
   MMM2D_self_energy();
 }

@@ -36,7 +36,7 @@
 #include "halo.hpp"
 
 /** Primitive fieldtypes and their initializers */
-struct _Fieldtype fieldtype_double = { 0, NULL, NULL, sizeof(double), 0, 0, 0, 0, NULL };
+struct _Fieldtype fieldtype_double = { 0, nullptr, nullptr, sizeof(double), 0, 0, 0, 0, nullptr };
 
 /** Creates a fieldtype describing the data layout 
  *  @param count   number of subtypes (Input)
@@ -50,7 +50,7 @@ void halo_create_fieldtype(int count, int* lengths, int *disps, int extent, Fiel
 
   Fieldtype ntype = *newtype = (Fieldtype) Utils::malloc(sizeof(*ntype));
 
-  ntype->subtype = NULL;
+  ntype->subtype = nullptr;
   ntype->vflag   = 0;
 
   ntype->vblocks = 1;
@@ -138,7 +138,7 @@ void halo_create_field_hvector(int vblocks, int vstride, int vskip, Fieldtype ol
 void halo_free_fieldtype(Fieldtype *ftype) {
   if ((*ftype)->count>0) {
     free((*ftype)->lengths);
-    (*ftype)->lengths = NULL;
+    (*ftype)->lengths = nullptr;
   }
   free(*ftype);
 }
@@ -182,11 +182,15 @@ void halo_copy_vector(char *r_buffer, char *s_buffer, int count,
   int vskip   = type->vskip;
   int extent  = type->extent;
 
-  HALO_TRACE(fprintf(stderr, "%d: halo_copy_vector %p %p vblocks=%d vstride=%d vskip=%d extent=%d subtype_extent=%d\n",this_node,r_buffer,s_buffer,vblocks,vstride,vskip,extent,type->subtype->extent));
+  HALO_TRACE(fprintf(stderr, "%d: halo_copy_vector %p %p vblocks=%d vstride=%d "
+                             "vskip=%d extent=%d subtype_extent=%d\n",
+                     this_node, static_cast<void *>(r_buffer),
+                     static_cast<void *>(s_buffer), vblocks, vstride, vskip,
+                     extent, type->subtype->extent));
 
-  if (vflag){
+  if (vflag) {
     vskip *= type->subtype->extent;
-  }  
+  }
 
   for (i = 0; i < count; i++, s_buffer += extent, r_buffer += extent) {
     for (j = 0, dest = r_buffer, src = s_buffer; j<vblocks; j++, dest += vskip, src += vskip) {
@@ -202,30 +206,32 @@ void halo_copy_vector(char *r_buffer, char *s_buffer, int count,
  * @param count    amount of data to copy
  * @param type     field layout type
  */
-void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type) { 
-    int i, j;
+void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type) {
+  int i, j;
 
-    HALO_TRACE(fprintf(stderr, "%d: halo_dtcopy r_buffer=%p s_buffer=%p blocks=%d stride=%d skip=%d\n",this_node,r_buffer,s_buffer,type->vblocks,type->vstride,type->vskip));
+  HALO_TRACE(fprintf(
+      stderr,
+      "%d: halo_dtcopy r_buffer=%p s_buffer=%p blocks=%d stride=%d skip=%d\n",
+      this_node, static_cast<void *>(r_buffer), static_cast<void *>(s_buffer),
+      type->vblocks, type->vstride, type->vskip));
 
-    if (type->subtype) {
-      halo_copy_vector(r_buffer, s_buffer, count, type, type->vflag);
-    } else {
-      
-      for (i=0; i<count; i++, s_buffer+=type->extent, r_buffer+=type->extent) { 
-	if (!type->count) {
-	  memmove(r_buffer,s_buffer,type->extent);
-	} else {
-	    
-	  for (j=0; j<type->count; j++) {
-	    memmove(r_buffer+type->disps[j],s_buffer+type->disps[j],type->lengths[j]);
-	  }
+  if (type->subtype) {
+    halo_copy_vector(r_buffer, s_buffer, count, type, type->vflag);
+  } else {
 
-	}
+    for (i = 0; i < count;
+         i++, s_buffer += type->extent, r_buffer += type->extent) {
+      if (!type->count) {
+        memmove(r_buffer, s_buffer, type->extent);
+      } else {
 
+        for (j = 0; j < type->count; j++) {
+          memmove(r_buffer + type->disps[j], s_buffer + type->disps[j],
+                  type->lengths[j]);
+        }
       }
-
     }
-
+  }
 }
 
 /** Preparation of the halo parallelization scheme. Sets up the
@@ -247,7 +253,7 @@ void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice, Fieldtyp
   num = 2*3; /* two communications in each space direction */
 
   hc->num = num ;
-  hc->halo_info = (HaloInfo*) Utils::realloc(hc->halo_info,num*sizeof(HaloInfo)) ;
+  hc->halo_info = Utils::realloc(hc->halo_info,num*sizeof(HaloInfo)) ;
 
   int extent = fieldtype->extent;
 
@@ -356,69 +362,74 @@ void halo_communication(HaloCommunicator *hc, char *base) {
   MPI_Request request;
   MPI_Status status;
 
-    HALO_TRACE(fprintf(stderr, "%d: halo_comm base=%p num=%d\n", this_node, base, hc->num)) ;
+  HALO_TRACE(fprintf(stderr, "%d: halo_comm base=%p num=%d\n", this_node,
+                     static_cast<void *>(base), hc->num));
 
-    for (n = 0; n < hc->num; n++) {
+  for (n = 0; n < hc->num; n++) {
 
-	HALO_TRACE(fprintf(stderr, "%d: halo_comm round %d\n", this_node, n)) ;
+    HALO_TRACE(fprintf(stderr, "%d: halo_comm round %d\n", this_node, n));
 
-	comm_type = hc->halo_info[n].type ;
-	s_buffer = (char *)base + hc->halo_info[n].s_offset;
-	r_buffer = (char *)base + hc->halo_info[n].r_offset;
+    comm_type = hc->halo_info[n].type;
+    s_buffer = (char *)base + hc->halo_info[n].s_offset;
+    r_buffer = (char *)base + hc->halo_info[n].r_offset;
 
-	switch (comm_type) {
+    switch (comm_type) {
 
-	    case HALO_LOCL:
-	      fieldtype = hc->halo_info[n].fieldtype;
-	      halo_dtcopy(r_buffer,s_buffer,1,fieldtype);
-	      break ;
+    case HALO_LOCL:
+      fieldtype = hc->halo_info[n].fieldtype;
+      halo_dtcopy(r_buffer, s_buffer, 1, fieldtype);
+      break;
 
-	    case HALO_SENDRECV:
-	      datatype = hc->halo_info[n].datatype;
-	      s_node = hc->halo_info[n].source_node ;
-	      r_node = hc->halo_info[n].dest_node ;
-	      
-	      HALO_TRACE(fprintf(stderr,"%d: halo_comm sendrecv %d to %d (%d) (%p)\n",this_node,s_node,r_node,REQ_HALO_SPREAD,&datatype));
+    case HALO_SENDRECV:
+      datatype = hc->halo_info[n].datatype;
+      s_node = hc->halo_info[n].source_node;
+      r_node = hc->halo_info[n].dest_node;
 
-	      MPI_Sendrecv(s_buffer, 1, datatype, r_node, REQ_HALO_SPREAD,
-			   r_buffer, 1, datatype, s_node, REQ_HALO_SPREAD,
-			   comm_cart, &status);
-	      break ;
+      HALO_TRACE(fprintf(stderr, "%d: halo_comm sendrecv %d to %d (%d) (%p)\n",
+                         this_node, s_node, r_node, REQ_HALO_SPREAD,
+                         (void *)&datatype));
 
-	    case HALO_SEND:
-	      datatype = hc->halo_info[n].datatype;
-	      fieldtype = hc->halo_info[n].fieldtype;
-	      s_node = hc->halo_info[n].source_node ;
-	      r_node = hc->halo_info[n].dest_node ;
-	      
-	      HALO_TRACE(fprintf(stderr,"%d: halo_comm send to %d.\n",this_node,r_node));
+      MPI_Sendrecv(s_buffer, 1, datatype, r_node, REQ_HALO_SPREAD, r_buffer, 1,
+                   datatype, s_node, REQ_HALO_SPREAD, comm_cart, &status);
+      break;
 
-	      MPI_Isend(s_buffer, 1, datatype, r_node, REQ_HALO_SPREAD, comm_cart, &request);
-	      halo_dtset(r_buffer,0,fieldtype);
-	      MPI_Wait(&request,&status);
-	      break;
+    case HALO_SEND:
+      datatype = hc->halo_info[n].datatype;
+      fieldtype = hc->halo_info[n].fieldtype;
+      s_node = hc->halo_info[n].source_node;
+      r_node = hc->halo_info[n].dest_node;
 
-	    case HALO_RECV:
-	      datatype = hc->halo_info[n].datatype;
-	      s_node = hc->halo_info[n].source_node ;
-	      r_node = hc->halo_info[n].dest_node ;
+      HALO_TRACE(
+          fprintf(stderr, "%d: halo_comm send to %d.\n", this_node, r_node));
 
-	      HALO_TRACE(fprintf(stderr,"%d: halo_comm recv from %d.\n",this_node,s_node));
+      MPI_Isend(s_buffer, 1, datatype, r_node, REQ_HALO_SPREAD, comm_cart,
+                &request);
+      halo_dtset(r_buffer, 0, fieldtype);
+      MPI_Wait(&request, &status);
+      break;
 
-	      MPI_Irecv(r_buffer, 1, datatype, s_node, REQ_HALO_SPREAD, comm_cart, &request);
-	      MPI_Wait(&request,&status);
-	      break;
+    case HALO_RECV:
+      datatype = hc->halo_info[n].datatype;
+      s_node = hc->halo_info[n].source_node;
+      r_node = hc->halo_info[n].dest_node;
 
-	    case HALO_OPEN:
-	      fieldtype = hc->halo_info[n].fieldtype;
+      HALO_TRACE(
+          fprintf(stderr, "%d: halo_comm recv from %d.\n", this_node, s_node));
 
-	      HALO_TRACE(fprintf(stderr,"%d: halo_comm open boundaries\n",this_node));
+      MPI_Irecv(r_buffer, 1, datatype, s_node, REQ_HALO_SPREAD, comm_cart,
+                &request);
+      MPI_Wait(&request, &status);
+      break;
 
-	      /* \todo this does not work for the n_i - <n_i> */
-	      halo_dtset(r_buffer,0,fieldtype);
-	      break;
-	      
-	}
+    case HALO_OPEN:
+      fieldtype = hc->halo_info[n].fieldtype;
+
+      HALO_TRACE(fprintf(stderr, "%d: halo_comm open boundaries\n", this_node));
+
+      /* \todo this does not work for the n_i - <n_i> */
+      halo_dtset(r_buffer, 0, fieldtype);
+      break;
+    }
 
     }
 

@@ -3,18 +3,32 @@
 
 #include <boost/variant.hpp>
 
+#include "None.hpp"
 #include "core/Vector.hpp"
 #include "utils/AutoObjectId.hpp"
+
+#include <boost/serialization/map.hpp>
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/variant.hpp>
+#include <boost/serialization/vector.hpp>
+
+#include <map>
 
 namespace ScriptInterface {
 class ScriptInterfaceBase;
 using ObjectId = Utils::ObjectId<ScriptInterfaceBase>;
 
 /**
+ * @brief None-"literal".
+ */
+constexpr const None none{};
+
+/**
  * @brief Possible types for parameters.
  */
 typedef boost::make_recursive_variant<
-    bool, int, double, std::string, std::vector<int>, std::vector<double>,
+    None, bool, int, double, std::string, std::vector<int>, std::vector<double>,
     ObjectId, std::vector<boost::recursive_variant_>>::type Variant;
 
 /**
@@ -24,7 +38,8 @@ typedef boost::make_recursive_variant<
  * of Variant. (e.g. Variant(bool{}).which() == VariantType::BOOL).
  */
 enum class VariantType {
-  BOOL = 0,
+  NONE = 0,
+  BOOL,
   INT,
   DOUBLE,
   STRING,
@@ -34,6 +49,8 @@ enum class VariantType {
   VECTOR
 };
 
+typedef std::map<std::string, Variant> VariantMap;
+
 namespace detail {
 /**
  * @brief Implementation of @f infer_type.
@@ -42,7 +59,13 @@ namespace detail {
  * of functions is not allowed. Every specialization deals
  * with a specific type, to extend just add a new one.
  */
-template <typename T> struct infer_type_helper {};
+template <typename T> struct infer_type_helper {
+  static_assert(sizeof(T) == 0, "Type T is not contained in Variant.");
+};
+
+template <> struct infer_type_helper<None> {
+  static constexpr VariantType value{VariantType::NONE};
+};
 
 template <> struct infer_type_helper<bool> {
   static constexpr VariantType value{VariantType::BOOL};
@@ -83,12 +106,18 @@ template <> struct infer_type_helper<std::vector<Variant>> {
 template <> struct infer_type_helper<ObjectId> {
   static constexpr VariantType value{VariantType::OBJECTID};
 };
+
+/* Deduce std::shared_ptr<ScriptInterfaceBase> as ObjectId */
+template <typename T> struct infer_type_helper<std::shared_ptr<T>> {
+  static_assert(std::is_base_of<ScriptInterfaceBase, T>::value, "");
+  static constexpr VariantType value{VariantType::OBJECTID};
+};
 }
 
 /**
  * @brief Infer the variant type id from the c++ type.
  *
- * infer_type<int>() return VariantType::INT an so on.
+ * infer_type<int>() returns VariantType::INT an so on.
  */
 template <typename T> constexpr VariantType infer_type() {
   return detail::infer_type_helper<T>::value;
@@ -104,6 +133,7 @@ std::string get_type_label(Variant const &);
  */
 std::string get_type_label(VariantType);
 
+bool is_none(Variant const &v);
 bool is_bool(Variant const &v);
 bool is_int(Variant const &v);
 bool is_string(Variant const &v);

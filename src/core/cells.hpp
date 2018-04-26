@@ -42,9 +42,6 @@
                   but in z it has a domain decomposition into layers.
     </ul>
 
-    One can switch between different cell systems with the tcl command
-    cellsystem implemented in \ref cells.cpp .
-
     Some structures are common to all cell systems:
 
    <ul>
@@ -57,17 +54,16 @@
    node. \ref ghost_cells contains pointers to all cells containing
    the ghost particles of that node. The size of these lists has to be
    changed with \ref realloc_cellplist
-   <li> An example using the cell pointer lists to access particle data
-   can be found in the function \ref
-   print_local_particle_positions. DO NOT INVENT YOUR OWN WAY!!!
    </ul>
 */
+
+#include <utility>
+#include <vector>
 
 #include "ParticleIterator.hpp"
 #include "ghosts.hpp"
 #include "particle_data.hpp"
 #include "utils/Range.hpp"
-#include "verlet.hpp"
 
 #include "Cell.hpp"
 #include "ParticleRange.hpp"
@@ -98,6 +94,10 @@
 /** Flag for exchange_and_sort_particles : Do neighbor exchange. */
 #define CELL_NEIGHBOR_EXCHANGE 0
 
+namespace Cells {
+enum Resort : unsigned { RESORT_NONE = 0u, RESORT_LOCAL = 1u, RESORT_GLOBAL = 2u };
+}
+
 /** \name Flags for cells_on_geometry_change */
 /*@{*/
 
@@ -122,6 +122,9 @@ struct CellPList {
                              CellParticleIterator(cell + n, cell + n, 0));
   }
 
+  Cell **begin() { return cell; }
+  Cell **end() { return cell + n; }
+
   Cell **cell;
   int n;
   int max;
@@ -136,6 +139,8 @@ struct CellPList {
 struct CellStructure {
   /** type descriptor */
   int type;
+
+  bool use_verlet_list;
 
   /** Communicator to exchange ghost cell information. */
   GhostCommunicator ghost_cells_comm;
@@ -207,6 +212,10 @@ extern int rebuild_verletlist;
 /************************************************************/
 /*@{*/
 
+/** Switch for choosing the topology init function of a certain
+    cell system. */
+void topology_init(int cs, CellPList *local);
+
 /** Reinitialize the cell structures.
     @param new_cs gives the new topology to use afterwards. May be set to
     \ref CELL_STRUCTURE_CURRENT for not changing it.
@@ -220,7 +229,7 @@ void realloc_cells(int size);
 inline void init_cellplist(CellPList *cpl) {
   cpl->n = 0;
   cpl->max = 0;
-  cpl->cell = NULL;
+  cpl->cell = nullptr;
 }
 
 /** Reallocate a list of cell pointers */
@@ -270,11 +279,28 @@ void cells_update_ghosts();
     node. */
 int cells_get_n_particles();
 
-/** Debug function to print particle positions. */
-void print_local_particle_positions();
+/**
+ * @brief Get pairs closer than distance from the cells.
+ *
+ * This is mostly for testing purposes and uses link_cell
+ * to get pairs out of the cellsystem by a simple distance
+ * criterion.
+ *
+ * Pairs are sorted so that first.id < second.id
+ */
+std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
 
-/** Debug function to print ghost positions. */
-void print_ghost_positions();
+/**
+ * @brief Increase the local resort level at least to level.
+ *
+ * The changed level has to be commuicated via annouce_resort_particles.
+ */
+  void set_resort_particles(Cells::Resort level);
+
+/**
+ * @brief Get the currently scheduled resort level.
+  */
+unsigned const &get_resort_particles();
 
 /** spread the particle resorting criterion across the nodes. */
 void announce_resort_particles();

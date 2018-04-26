@@ -86,7 +86,7 @@ The ghost communicators are created in the init routines of the cell systems, th
 \ref nsq_topology_init for further details.
 */
 #include <mpi.h>
-#include "particle_data.hpp"
+#include "Cell.hpp"
 
 /** \name Transfer types, for \ref GhostCommunicator::type */
 /************************************************************/
@@ -157,7 +157,7 @@ typedef struct {
   /** Number of particle lists to communicate. */
   int n_part_lists;
   /** Pointer array to particle lists to communicate. */
-  ParticleList **part_lists;
+  Cell **part_lists;
 
   /** if \ref GhostCommunicator::data_parts has \ref GHOSTTRANS_POSSHFTD, then this is the shift vector.
       Normally this a integer multiple of the box length. The shift is done on the sender side */
@@ -189,9 +189,6 @@ void prepare_comm(GhostCommunicator *comm, int data_parts, int num);
 
 /** Free a communicator. */
 void free_comm(GhostCommunicator *comm);
-
-/** Initialize ghosts. */
-void ghost_init();
 
 /** do a ghost communication */
 void ghost_communicator(GhostCommunicator *gc);

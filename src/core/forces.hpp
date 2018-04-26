@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef _FORCES_HPP
-#define _FORCES_HPP
+#ifndef CORE_FORCES_HPP
+#define CORE_FORCES_HPP
 /** \file forces.hpp Force calculation. 
  *
  *  \todo Preprocessor switches for all forces (Default: everything is turned on).
@@ -28,10 +28,10 @@
  *  For more information see forces.cpp .
  */
 
-#include "iccp3m.hpp"
-#include "external_potential.hpp"
 #include "actor/Actor.hpp"
 #include "actor/ActorList.hpp"
+#include "interaction_data.hpp"
+
 extern ActorList forceActors;
 
 /** \name Exported Functions */
@@ -48,6 +48,32 @@ void init_forces();
  */
 void init_forces_ghosts();
 
+/** Calculate forces.
+ *
+ *  A short list, what the function is doing:
+ *  <ol>
+ *  <li> Initialize forces with: \ref friction_thermo_langevin (ghost forces
+ with zero).
+ *  <li> Calculate bonded interaction forces:<br>
+ *       Loop all local particles (not the ghosts).
+ *       <ul>
+ *       <li> FENE
+ *       <li> ANGLE (cos bend potential)
+ *       </ul>
+ *  <li> Calculate non-bonded short range interaction forces:<br>
+ *       Loop all \ref IA_Neighbor::vList "verlet lists" of all \ref #cells.
+ *       <ul>
+ *       <li> Lennard-Jones.
+ *       <li> Buckingham.
+ *       <li> Real space part: Coulomb.
+ *       <li> Ramp.
+ *       </ul>
+ *  <li> Calculate long range interaction forces:<br>
+ Uses <a href=P3M_calc_kspace_forces> P3M_calc_kspace_forces </a>
+ *  </ol>
+ */
+void force_calc();
+
 /** Check if forces are NAN 
  */
 void check_forces();
@@ -60,8 +86,8 @@ calc_non_bonded_pair_force_from_partcfg(Particle const *p1, Particle const *p2,
                                         IA_parameters *ia_params,
                                         double d[3], double dist, double dist2,
                                         double force[3],
-                                        double torque1[3] = NULL, 
-                                        double torque2[3] = NULL);
+                                        double torque1[3] = nullptr, 
+                                        double torque2[3] = nullptr);
 
 void
 calc_non_bonded_pair_force_from_partcfg_simple(Particle const *p1, Particle const *p2,

@@ -60,8 +60,6 @@ BOOST_AUTO_TEST_CASE(iterator_constructor) {
 }
 
 BOOST_AUTO_TEST_CASE(default_constructor_test) {
-  Vector<0, int> v1;
-  BOOST_CHECK(v1.size() == 0);
   Vector<1, int> v2;
   BOOST_CHECK(v2.size() == 1);
   Vector<2, int> v3;
@@ -84,7 +82,7 @@ BOOST_AUTO_TEST_CASE(normalize) {
   BOOST_CHECK((v.norm2() - 1.0) <= std::numeric_limits<double>::epsilon());
 }
 
-BOOST_AUTO_TEST_CASE(operators) {
+BOOST_AUTO_TEST_CASE(comparison_operators) {
   Vector<5, int> v1{1, 2, 3, 4, 5};
   Vector<5, int> v2{6, 7, 8, 9, 10};
 
@@ -99,4 +97,44 @@ BOOST_AUTO_TEST_CASE(operators) {
   BOOST_CHECK(v1 != v2);
   BOOST_CHECK(!(v1 == v2));
   BOOST_CHECK(v1 == v1);
+}
+
+BOOST_AUTO_TEST_CASE(algebraic_operators) {
+  Vector<3, int> v1{1, 2, 3};
+  Vector<3, int> v2{4, 5, 6};
+
+  BOOST_CHECK((v1 * v2) ==
+              std::inner_product(v1.begin(), v1.end(), v2.begin(), 0));
+
+  BOOST_CHECK(((v1 + v2) == Vector<3, int>{5, 7, 9}));
+  BOOST_CHECK(((v1 - v2) == Vector<3, int>{-3, -3, -3}));
+  BOOST_CHECK(((-v1) == Vector<3, int>{-1, -2, -3}));
+
+  {
+    auto v3 = v1;
+    BOOST_CHECK((v1 + v2) == (v3 += v2));
+  }
+
+  {
+    auto v3 = v1;
+    BOOST_CHECK((v1 - v2) == (v3 -= v2));
+  }
+
+  BOOST_CHECK(((2 * v1) == Vector<3, int>{2, 4, 6}));
+  BOOST_CHECK(((v1 * 2) == Vector<3, int>{2, 4, 6}));
+
+  {
+    Vector<3, int> v1{2, 4, 6};
+    auto v2 = 2 * v1;
+    BOOST_CHECK(v2 == (v1 *= 2));
+  }
+
+  {
+    Vector<3, int> v1{2, 4, 6};
+    auto v2 = v1 / 2;
+    BOOST_CHECK(v2 == (v1 /= 2));
+  }
+
+  BOOST_CHECK((sqrt(Vector<3, double>{1., 2., 3.}) ==
+               Vector<3, double>{sqrt(1.), sqrt(2.), sqrt(3.)}));
 }

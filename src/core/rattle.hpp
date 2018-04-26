@@ -27,9 +27,6 @@
  *
  *  For more information see \ref rattle.cpp "rattle.c".
 */
-#include "global.hpp"
-#include "particle_data.hpp"
-#include "integrate.hpp"
 
 /** number of rigid bonds */
 extern int n_rigidbonds;

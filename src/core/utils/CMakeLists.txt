@@ -1,5 +1,0 @@
-file(GLOB EspressoUtils_SRC *.cpp)
-add_library(EspressoUtils SHARED ${EspressoUtils_SRC})
-install(TARGETS EspressoUtils LIBRARY DESTINATION ${LIBDIR})
-set_target_properties(EspressoUtils PROPERTIES SOVERSION ${SOVERSION})
-set_target_properties(EspressoUtils PROPERTIES MACOSX_RPATH TRUE)

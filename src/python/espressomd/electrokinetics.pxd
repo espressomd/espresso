@@ -26,7 +26,7 @@ IF ELECTROKINETICS and CUDA:
             float gamma_even
             float friction
             float T
-            float bjerrumlength
+            float prefactor 
             float lb_force[3]
             unsigned int number_of_species
             int reaction_species[3]
@@ -58,8 +58,6 @@ IF ELECTROKINETICS and CUDA:
             #     bool es_coupling
             #     float *charge_potential_buffer
             #     float *electric_field
-            # IF EK_REACTION:
-            #     float* pressure
 
         cdef extern EK_parameters ek_parameters
 
@@ -82,7 +80,7 @@ IF ELECTROKINETICS and CUDA:
         int ek_set_viscosity(double viscosity)
         int ek_set_friction(double friction)
         int ek_set_T(double T)
-        int ek_set_bjerrumlength(double bjerrumlength)
+        int ek_set_prefactor(double prefactor)
         int ek_set_bulk_viscosity(double bulk_viscosity)
         int ek_set_gamma_odd(double gamma_odd)
         int ek_set_gamma_even(double gamma_even)
@@ -111,12 +109,6 @@ IF ELECTROKINETICS and CUDA:
 
         IF EK_BOUNDARIES:
             void ek_init_species_density_wallcharge(ekfloat* wallcharge_species_density, int wallcharge_species)
-
-        IF EK_REACTION:
-            int ek_print_vtk_reaction_tags(char* filename)
-            int ek_set_reaction( int reactant, int product0, int product1, float rho_reactant_reservoir, float rho_product0_reservoir, float rho_product1_reservoir, float reaction_ct_rate, float reaction_fraction_0, float reaction_fraction_1, float mass_reactant, float mass_product0, float mass_product1 )
-            int ek_print_vtk_pressure(char* filename)
-            int ek_tag_reaction_nodes( LB_Boundary* lbboundary, char reaction_type )
 
 
     cdef extern from "lb.hpp":
@@ -208,12 +200,6 @@ IF ELECTROKINETICS and CUDA:
     # def print_lb_force_vtk(path):
     #     if ek_print_vtk_lbforce(path):
     #         raise Exception('EK output error', 'could not save lbforce VTK')
-
-    # IF EK_REACTION:
-    #     def print_reaction_tags_vtk(path):
-    #         if ek_print_vtk_reaction_tags(path):
-    #             raise Exception(
-    #                 'EK output error', 'could not save reaction tags VTK')
 
     # def print_lb_density_vtk(path):
     #     if ek_lb_print_vtk_density(path):

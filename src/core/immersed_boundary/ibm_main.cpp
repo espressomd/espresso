@@ -29,7 +29,7 @@ void GetIBMInterpolatedVelocity(double *p, double *const v, double *const forceA
 
 // ***** Internal variables ******
 
-bool *isHaloCache = NULL;
+bool *isHaloCache = nullptr;
 
 // ******** Variables from other espresso files *****
 extern HaloCommunicator update_halo_comm;
@@ -135,7 +135,7 @@ void IBM_UpdateParticlePositions(ParticleRange particles)
   
   
   // Do update: Euler
-  const double skin2 = SQR(0.5 * skin);
+  const double skin2 = Utils::sqr(0.5 * skin);
   // Loop over particles in local cells
   for (int c = 0; c < local_cells.n; c++)
   {
@@ -154,7 +154,7 @@ void IBM_UpdateParticlePositions(ParticleRange particles)
         // Check if the particle might have crossed a box border (criterion see e-mail Axel 28.8.2014)
         // if possible resort_particles = 1
         const double dist2 = distance2( p[j].r.p, p[j].l.p_old);
-        if ( dist2 > skin2 ) { resort_particles = 1; }
+        if ( dist2 > skin2 ) { set_resort_particles(Cells::RESORT_LOCAL); }
       }
   }
   
@@ -339,7 +339,7 @@ Checks for halo - only for CPU
 bool IsHalo(const int indexCheck)
 {
   // First call --> build cache
-  if ( isHaloCache == NULL )
+  if ( isHaloCache == nullptr )
   {
     isHaloCache = new bool[lblattice.halo_grid_volume];
     // Assume everything is a halo and correct in the next step

@@ -30,12 +30,12 @@ class ParallelObject {
 public:
   ParallelObject() = delete;
 
-  static void register_callback() {
-    Communication::mpiCallbacks().add(&mpi_callback);
+  static void register_callback(Communication::MpiCallbacks & cb) {
+    cb.add(&mpi_callback);
   }
 
-  static void make() {
-    Communication::mpiCallbacks().call(&mpi_callback);
+  static void make(Communication::MpiCallbacks & cb) {
+    cb.call(&mpi_callback);
   }
 
 private:

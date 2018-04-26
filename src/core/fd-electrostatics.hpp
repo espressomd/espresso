@@ -20,7 +20,7 @@ typedef void cufftReal;
 class FdElectrostatics {
   public:
     struct InputParameters {
-      float bjerrum_length, kT;
+      float prefactor;
       int dim_x, dim_y, dim_z;
       float agrid;
     };

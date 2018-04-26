@@ -6,10 +6,8 @@
 
 using ScriptInterface::AutoParameters;
 
-struct A : AutoParameters {
+struct A : AutoParameters<A> {
   A(int i_, int j_) : AutoParameters({{"i", i}, {"j", j}}), i(i_), j(j_) {}
-
-  const std::string name() const override { return "A"; }
 
   int i;
   const int j;
@@ -49,11 +47,11 @@ BOOST_AUTO_TEST_CASE(exceptions) {
   A a{0, 42};
 
   BOOST_CHECK_EXCEPTION(a.get_parameter("unknown"),
-                        AutoParameters::UnknownParameter,
+                        AutoParameters<A>::UnknownParameter,
                         [](std::runtime_error const &) { return true; });
   BOOST_CHECK_EXCEPTION(a.set_parameter("unknown", 12),
-                        AutoParameters::UnknownParameter,
+                        AutoParameters<A>::UnknownParameter,
                         [](std::runtime_error const &) { return true; });
-  BOOST_CHECK_EXCEPTION(a.set_parameter("j", 12), AutoParameters::WriteError,
+  BOOST_CHECK_EXCEPTION(a.set_parameter("j", 12), AutoParameters<A>::WriteError,
                         [](std::runtime_error const &) { return true; });
 }

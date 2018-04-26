@@ -22,9 +22,6 @@
 #ifndef __MINIMIZE_ENERGY_HPP
 #define __MINIMIZE_ENERGY_HPP
 
-#include "forces_inline.hpp"
-#include "communication.hpp"
-
 bool minimize_energy(void);
 void minimize_energy_init(const double f_max, const double gamma, const int max_steps, const double max_displacement);
 bool steepest_descent_step(void);

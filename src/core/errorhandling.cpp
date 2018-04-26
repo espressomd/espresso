@@ -41,28 +41,6 @@ namespace ErrorHandling {
 
 void mpi_gather_runtime_errors_slave(int node, int parm);
 
-/* Definitions */
-
-static void sigint_handler(int sig) {
-  /* without this exit handler the nodes might exit asynchronously
-   * without calling MPI_Finalize, which may cause MPI to hang
-   * (e.g. this handler makes CTRL-c work properly with poe)
-   *
-   * NOTE: mpirun installs its own handler for SIGINT/SIGTERM
-   *       and takes care of proper cleanup and exit */
-
-  static int numcalls = 0;
-  if (numcalls++ > 0)
-    exit(sig); // catch sig only once
-
-  /* we use runtime_error to indicate that sig was called;
-   * upon next call of mpi_gather_runtime_errors all nodes
-   * will clean up and exit. */
-  runtimeErrorMsg() << "caught signal " << sig;
-}
-
-void register_sigint_handler() { signal(SIGINT, sigint_handler); }
-
 namespace {
 /** RuntimeErrorCollector instance.
  *  This is a weak pointer so we don't

@@ -2,27 +2,22 @@
 #define OBSERVABLES_PROFILEOBSERVABLE_HPP
 
 #include "Observable.hpp"
+#include "integrate.hpp"
 #include "particle_data.hpp"
 #include <vector>
-#include "integrate.hpp"
 
 namespace Observables {
 
 // Observable which acts on a given list of particle ids
 class ProfileObservable : public Observable {
 public:
-  std::vector<int> ids;
-  double minx;
-  double maxx;
-  double miny;
-  double maxy;
-  double minz;
-  double maxz;
-  int xbins;
-  int ybins;
-  int zbins;
-  std::vector<double> container;
-  virtual int n_values() const override { return xbins * ybins * zbins; };
+  double min_x, max_x;
+  double min_y, max_y;
+  double min_z, max_z;
+  int n_x_bins, n_y_bins, n_z_bins;
+  virtual int n_values() const override {
+    return n_x_bins * n_y_bins * n_z_bins;
+  };
 };
 
 } // Namespace Observables

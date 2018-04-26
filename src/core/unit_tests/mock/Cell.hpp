@@ -2,6 +2,7 @@
 #define CORE_UNIT_TESTS_MOCK_CELL_HPP
 
 #include <vector>
+#include <functional>
 
 namespace Testing {
 template <typename Particle> class Cell {

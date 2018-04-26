@@ -31,7 +31,6 @@
 #include "global.hpp"
 #include "interaction_data.hpp"
 #include "utils.hpp"
-#include "verlet.hpp"
 #include <cmath>
 #include <cstdio>
 
@@ -63,6 +62,7 @@ int boundary[6] = {0, 0, 0, 0, 0, 0};
 int periodic = 7;
 
 double box_l[3] = {1, 1, 1};
+double half_box_l[3] = {.5, .5, .5};
 double box_l_i[3] = {1, 1, 1};
 double min_box_l;
 double local_box_l[3] = {1, 1, 1};
@@ -103,10 +103,10 @@ int calc_node_neighbors(int node) {
 
   int dir, neighbor_count;
 #ifdef LEES_EDWARDS
-  node_neighbors = (int *)Utils::realloc(node_neighbors, 6 * sizeof(int));
-  node_neighbor_lr = (int *)Utils::realloc(node_neighbor_lr, 6 * sizeof(int));
+  node_neighbors = Utils::realloc(node_neighbors, 6 * sizeof(int));
+  node_neighbor_lr = Utils::realloc(node_neighbor_lr, 6 * sizeof(int));
   node_neighbor_wrap =
-      (int *)Utils::realloc(node_neighbor_wrap, 6 * sizeof(int));
+      Utils::realloc(node_neighbor_wrap, 6 * sizeof(int));
 #endif
 
   map_node_array(node, node_pos);
@@ -163,21 +163,21 @@ int calc_node_neighbors(int node) {
 
     if ((boundary[2] == 1 && boundary[3] != -1) ||
         (boundary[3] == -1 && boundary[2] != 1)) {
-      node_neighbors = (int *)Utils::realloc(
+      node_neighbors = Utils::realloc(
           node_neighbors, (neighbor_count + node_grid[0] - 1) * sizeof(int));
-      node_neighbor_lr = (int *)Utils::realloc(
+      node_neighbor_lr = Utils::realloc(
           node_neighbor_lr, (neighbor_count + node_grid[0] - 1) * sizeof(int));
-      node_neighbor_wrap = (int *)Utils::realloc(
+      node_neighbor_wrap = Utils::realloc(
           node_neighbor_wrap,
           (neighbor_count + node_grid[0] - 1) * sizeof(int));
     } else if (boundary[3] == -1 && boundary[2] == 1) {
-      node_neighbors = (int *)Utils::realloc(
+      node_neighbors = Utils::realloc(
           node_neighbors,
           (neighbor_count + 2 * node_grid[0] - 2) * sizeof(int));
-      node_neighbor_lr = (int *)Utils::realloc(
+      node_neighbor_lr = Utils::realloc(
           node_neighbor_lr,
           (neighbor_count + 2 * node_grid[0] - 2) * sizeof(int));
-      node_neighbor_wrap = (int *)Utils::realloc(
+      node_neighbor_wrap = Utils::realloc(
           node_neighbor_wrap,
           (neighbor_count + 2 * node_grid[0] - 2) * sizeof(int));
     }
@@ -263,6 +263,7 @@ void grid_changed_box_l() {
     my_left[i] = node_pos[i] * local_box_l[i];
     my_right[i] = (node_pos[i] + 1) * local_box_l[i];
     box_l_i[i] = 1 / box_l[i];
+    half_box_l[i] = 0.5 * box_l[i];
   }
 
   calc_minimal_box_dimensions();
@@ -280,8 +281,8 @@ void grid_changed_box_l() {
 void grid_changed_n_nodes() {
   GRID_TRACE(fprintf(stderr, "%d: grid_changed_n_nodes:\n", this_node));
 
-  mpi_reshape_communicator({node_grid[0], node_grid[1], node_grid[2]},
-                           { 1, 1, 1});
+  mpi_reshape_communicator({{node_grid[0], node_grid[1], node_grid[2]}},
+                           {{ 1, 1, 1}});
 
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 

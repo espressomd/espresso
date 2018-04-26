@@ -1,4 +1,4 @@
-int ObservablePolymerKDistribution::actual_calculate() {
+int ObservablePolymerKDistribution::actual_calculate(PartCfg & partCfg) {
 	if (!sortPartCfg()) {
 		ostringstream errtxt;
 		errtxt << "{094 could not sort partCfg}";

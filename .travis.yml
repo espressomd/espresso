@@ -5,43 +5,11 @@ matrix:
     - os: linux
       sudo: required
       services: docker
-      env: myconfig=default
+      env: myconfig=maxset python_version=2
     - os: linux
       sudo: required
       services: docker
-      env: myconfig=maxset
-    - os: linux
-      sudo: required
-      services: docker
-      env: myconfig=maxset image=ubuntu-python3
-    - os: linux
-      sudo: required
-      services: docker
-      env: myconfig=maxset image=debian
-    - os: linux
-      sudo: required
-      services: docker
-      env: myconfig=maxset image=ubuntu-cuda make_check=false
-    - os: osx
-      osx_image: xcode8
-      env: myconfig=maxset
-    - os: osx
-      osx_image: xcode8
-      env: myconfig=maxset image=python3
-    - os: linux
-      sudo: required
-      services: docker
-      env: myconfig=rest1
-    - os: linux
-      sudo: required
-      services: docker
-      env: myconfig=rest2
-    - os: linux
-      sudo: required
-      services: docker
-      env: myconfig=nocheck-maxset make_check=false
-
+      env: myconfig=maxset image=ubuntu-python3 python_version=3
 
 script:
-        - maintainer/travis/build_docker.sh
- 
+  - maintainer/CI/build_docker.sh

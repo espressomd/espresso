@@ -43,11 +43,11 @@ int angle_harmonic_set_params(int bond_type, double bend, double phi0);
 /************************************************************/
 
 /** Computes the three body angle interaction force and adds this
-    force to the particle forces (see \ref tclcommand_inter). 
+    force to the particle forces. 
     @param p_mid     Pointer to second/middle particle.
     @param p_left    Pointer to first/left particle.
     @param p_right   Pointer to third/right particle.
-    @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
+    @param iaparams  bond type number of the angle interaction.
     @param force1 returns force of particle 1
     @param force2 returns force of particle 2
     @return 0
@@ -126,7 +126,7 @@ inline void calc_angle_harmonic_3body_forces(Particle *p_mid, Particle *p_left,
   vec31_sqr = sqrlen(vec31);
   vec31_magn = sqrt(vec31_sqr);
   cos_phi = scalar(vec21, vec31) / (vec21_magn * vec31_magn);
-  sin_phi = sqrt(1.0 - SQR(cos_phi));
+  sin_phi = sqrt(1.0 - Utils::sqr(cos_phi));
 
   /* uncomment this block if interested in the angle 
   if(cos_phi < -1.0) cos_phi = -TINY_COS_VALUE;
@@ -162,11 +162,11 @@ inline void calc_angle_harmonic_3body_forces(Particle *p_mid, Particle *p_left,
 }
 
 
-/** Computes the three body angle interaction energy (see \ref tclcommand_inter, \ref tclcommand_analyze). 
+/** Computes the three body angle interaction energy. 
     @param p_mid        Pointer to first particle.
     @param p_left        Pointer to second/middle particle.
     @param p_right        Pointer to third particle.
-    @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
+    @param iaparams  bond type number of the angle interaction.
     @param _energy   return energy pointer.
     @return 0.
 */
@@ -195,7 +195,7 @@ inline int angle_harmonic_energy(Particle *p_mid, Particle *p_left, Particle *p_
   {
     double phi;
     phi =  acos(-cosine);
-    *_energy = 0.5*iaparams->p.angle_harmonic.bend*SQR(phi - iaparams->p.angle_harmonic.phi0);
+    *_energy = 0.5*iaparams->p.angle_harmonic.bend*Utils::sqr(phi - iaparams->p.angle_harmonic.phi0);
   }
   return 0;
 }

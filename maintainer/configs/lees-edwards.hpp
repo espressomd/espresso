@@ -1,4 +1,6 @@
 /* maximal set of features usable at the same time */
+#define EXPERIMENTAL_FEATURES
+
 #define DIPOLES
 #define ROTATION
 #define ROTATIONAL_INERTIA
@@ -6,27 +8,17 @@
 #define CONSTRAINTS
 #define MASS
 #define EXCLUSIONS
-#define COMFORCE
-#define COMFIXED
 #define MOLFORCES
 #define LEES_EDWARDS
 
-#ifdef FFTW
-#define MODES
-#endif
 
-#define BOND_VIRTUAL
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
-#define ROTATION_PER_PARTICLE
-#define CATALYTIC_REACTIONS
+#define SWIMMER_REACTIONS
 
 #define NEMD
-#define NPT 
+#define NPT
 #define GHMC
-
-#define AREA_FORCE_GLOBAL   
-#define VOLUME_FORCE   
 
 #define TABULATED
 #define LENNARD_JONES
@@ -36,7 +28,6 @@
 #define LJCOS2
 #define GAUSSIAN
 #define HAT
-#define LJ_ANGLE
 #define GAY_BERNE
 #define SMOOTH_STEP
 #define HERTZIAN

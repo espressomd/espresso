@@ -2,22 +2,23 @@
 #define OBSERVABLES_PARTICLEVELOCITIES_HPP
 
 #include "PidObservable.hpp"
-#include "partCfg.hpp"
+
 #include <vector>
 
 namespace Observables {
 
 class ParticleVelocities : public PidObservable {
 public:
-  virtual int actual_calculate() override {
-    last_value.resize(3 * ids().size());
+  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
+    std::vector<double> res(n_values());
     for (int i = 0; i < ids().size(); i++) {
-      last_value[3 * i + 0] = partCfg[ids()[i]].m.v[0] / time_step;
-      last_value[3 * i + 1] = partCfg[ids()[i]].m.v[1] / time_step;
-      last_value[3 * i + 2] = partCfg[ids()[i]].m.v[2] / time_step;
+      res[3 * i + 0] = partCfg[ids()[i]].m.v[0] / time_step;
+      res[3 * i + 1] = partCfg[ids()[i]].m.v[1] / time_step;
+      res[3 * i + 2] = partCfg[ids()[i]].m.v[2] / time_step;
     }
-    return 0;
+    return res;
   };
+  virtual int n_values() const override { return 3 * ids().size(); }
 };
 
 } // Namespace Observables

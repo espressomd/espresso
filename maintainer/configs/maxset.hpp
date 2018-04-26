@@ -9,24 +9,19 @@
 #define CONSTRAINTS
 #define MASS
 #define EXCLUSIONS
-#define COMFORCE
-#define COMFIXED
 #define MOLFORCES
 
-#ifdef FFTW
-#define MODES
-#endif
 
-#define BOND_VIRTUAL
+#define BOND_CONSTRAINT
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
-#define ROTATION_PER_PARTICLE
-#define CATALYTIC_REACTIONS
-#define REACTION_ENSEMBLE
+#define SWIMMER_REACTIONS
 
 #define NEMD
 #define NPT 
 #define GHMC
+#define DPD
+#define METADYNAMICS
 
 #define LB
 #define LB_BOUNDARIES
@@ -41,11 +36,7 @@
 #define EK_BOUNDARIES
 #define EK_ELECTROSTATIC_COUPLING
 #define MMM1D_GPU
-#define EWALD_GPU
 #endif
-
-#define AREA_FORCE_GLOBAL   
-#define VOLUME_FORCE   
 
 #define TABULATED
 #define LENNARD_JONES
@@ -55,7 +46,6 @@
 #define LJCOS2
 #define GAUSSIAN
 #define HAT
-#define LJ_ANGLE
 #define GAY_BERNE
 #define SMOOTH_STEP
 #define HERTZIAN
@@ -65,6 +55,7 @@
 #define SOFT_SPHERE
 #define INTER_RF
 #define OVERLAPPED
+#define THOLE
 
 #define TWIST_STACK
 #define HYDROGEN_BOND
@@ -75,10 +66,10 @@
 #define BOND_ENDANGLEDIST
 #define BOND_ENDANGLEDIST_HARMONIC
 
+#define EXPERIMENTAL_FEATURES
+
+
 #define VIRTUAL_SITES_RELATIVE
 #define FLATNOISE
 
-
-
-
-
+#define ADDITIONAL_CHECKS

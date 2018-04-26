@@ -1,9 +1,9 @@
 #include "Variant.hpp"
 
 namespace ScriptInterface {
-static const char *VariantLabels[] = {"BOOL",     "INT",        "DOUBLE",
-                                      "STRING",   "INT_VECTOR", "DOUBLE_VECTOR",
-                                      "OBJECTID", "VECTOR"};
+static const char *VariantLabels[] = {"NONE",          "BOOL",     "INT",
+                                      "DOUBLE",        "STRING",   "INT_VECTOR",
+                                      "DOUBLE_VECTOR", "OBJECTID", "VECTOR"};
 
 std::string get_type_label(Variant const &v) {
   return std::string(VariantLabels[v.which()]);
@@ -11,6 +11,10 @@ std::string get_type_label(Variant const &v) {
 
 std::string get_type_label(VariantType t) {
   return std::string(VariantLabels[static_cast<int>(t)]);
+}
+
+bool is_none(Variant const &v) {
+  return v.which() == static_cast<int>(VariantType::NONE);
 }
 
 bool is_bool(Variant const &v) {
@@ -69,7 +73,7 @@ void transform_vectors(Variant &v) {
       return;
     }
 
-    /* only double, tranform to vector<int> */
+    /* only double, tranform to vector<double> */
     if (std::all_of(variant_vector.begin(), variant_vector.end(), is_double)) {
       v = to_vector<double>(variant_vector);
       return;

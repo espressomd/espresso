@@ -60,7 +60,8 @@
 /** Included needed by callbacks. */
 #include "cuda_init.hpp"
 #include "particle_data.hpp"
-#include "utils/serialization/array.hpp" 
+
+#include "utils/serialization/array.hpp"
 
 /**************************************************
  * exported variables
@@ -83,6 +84,14 @@ extern boost::mpi::communicator comm_cart;
 #define SOME_TAG 42
 #endif
 
+namespace Communication {
+/**
+ * @brief Returns a reference to the global callback class instance.
+ *
+ */
+MpiCallbacks &mpiCallbacks();
+}
+
 /**************************************************
  * for every procedure requesting a MPI negotiation
  * a slave exists which processes this request on
@@ -97,16 +106,13 @@ typedef void(SlaveCallback)(int node, int param);
 /** \name Exported Functions */
 /*@{*/
 /** Initialize MPI and determine \ref n_nodes and \ref this_node. */
-void mpi_init(int *argc = NULL, char ***argv = NULL);
+void mpi_init();
 
 /* Call a slave function. */
 void mpi_call(SlaveCallback cb, int node, int param);
 
 /** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();
-
-/** Stop Espresso, all slave nodes exit. */
-void mpi_stop();
 
 /** Abort Espresso using MPI_Abort. */
 void mpi_abort();
@@ -119,18 +125,8 @@ void mpi_finalize();
  * and node grid.
  */
 void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
-                              std::array<int, 3> const &periodicity = {1, 1,
-                                                                       1});
-
-/** Issue REQ_BCAST_PAR: broadcast a parameter from datafield.
-    @param i the number from \ref global.hpp "global.hpp" referencing the
-   datafield.
-    @return nonzero on error
-*/
-int mpi_bcast_parameter(int i);
-
-/** Issue REQ_WHO_HAS: ask nodes for their attached particles. */
-void mpi_who_has();
+                              std::array<int, 3> const &periodicity = {{1, 1,
+                                                                       1}});
 
 /** Issue REQ_EVENT: tells all clients of some system change.
     The events are:
@@ -227,6 +223,16 @@ void mpi_send_mu_E(int node, int part, double mu_E[3]);
 */
 void mpi_send_rotational_inertia(int node, int part, double rinertia[3]);
 #endif
+#ifdef ROTATION
+/** Mpi call for rotating a single particle 
+    Also calls \ref on_particle_change.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param axis rotation axis
+    \param angle rotation angle
+*/
+void mpi_rotate_particle(int node, int part, double axis[3],double angle);
+#endif
 
 #ifdef AFFINITY
 /** Issue REQ_SET_AFFINITY: send particle affinity.
@@ -263,7 +269,7 @@ void mpi_send_quat(int node, int part, double quat[4]);
     \param pnode the node it is attached to.
     \param rot the rotation flag
 */
-void mpi_send_rotation(int pnode, int part, int rot);
+void mpi_send_rotation(int pnode, int part, short int rot);
 
 /* Issue REQ_SET_LAMBDA: send particle angular velocity.
     Also calls \ref on_particle_change.
@@ -310,19 +316,9 @@ void mpi_send_virtual(int node, int part, int isVirtual);
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
+void mpi_send_vs_quat(int node, int part, double *vs_quat);
 void mpi_send_vs_relative(int node, int part, int vs_relative_to,
-                          double vs_distance, double *rel_ori);
-#endif
-
-#ifdef MULTI_TIMESTEP
-/** Issue REQ_SET_SMALLER_TIMESTEP: send smaller time step value.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param smaller_timestep its new smaller_timestep.
-*/
-void mpi_send_smaller_timestep_flag(int node, int part,
-                                    int smaller_timestep_flag);
+                          double vs_distance, double* rel_ori);
 #endif
 
 /** Issue REQ_SET_TYPE: send particle type.
@@ -377,7 +373,7 @@ void mpi_remove_particle(int node, int id);
     \note Gets a copy of the particle data not a pointer to the actual particle
     used in integration
 */
-void mpi_recv_part(int node, int part, Particle *part_data);
+Particle mpi_recv_part(int node, int part);
 
 /** Issue REQ_INTEGRATE: start integrator.
     @param n_steps how many steps to do.
@@ -466,12 +462,6 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3],
 */
 void mpi_set_time_step(double time_step);
 
-#ifdef MULTI_TIMESTEP
-/** Issue REQ_SET_SMALLER_TIME_STEP: send new \ref smaller_time_step.
-    Requires MULTI_TIMESTEP feature. */
-void mpi_set_smaller_time_step(double smaller_time_step);
-#endif
-
 /** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
 void mpi_bcast_coulomb_params();
 
@@ -495,15 +485,15 @@ void mpi_set_particle_temperature(int pnode, int part, double _T);
 #ifndef PARTICLE_ANISOTROPY
 void mpi_set_particle_gamma(int pnode, int part, double gamma);
 #else
-void mpi_set_particle_gamma(int pnode, int part, double gamma[3]);
+void mpi_set_particle_gamma(int pnode, int part, Vector3d gamma);
 #endif
 
 #ifdef ROTATION
-#ifndef ROTATIONAL_INERTIA
+#ifndef PARTICLE_ANISOTROPY
 void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot);
 #else
-void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot[3]);
-#endif // ROTATIONAL_INERTIA
+void mpi_set_particle_gamma_rot(int pnode, int part, Vector3d gamma_rot);
+#endif // PARTICLE_ANISOTROPY
 #endif
 #endif // LANGEVIN_PER_PARTICLE
 
@@ -511,9 +501,6 @@ void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot[3]);
 /** Issue REQ_LB_BOUNDARY: set up walls for lb fluid */
 void mpi_bcast_lbboundary(int del_num);
 #endif
-
-/** Issue REQ_BCAST_LJFORCECAP: initialize force capping. */
-void mpi_cap_forces(double force_cap);
 
 /** Issue REQ_RESCALE_PART: rescales all particle positions in direction 'dir'
  * by a factor 'scale'. */
@@ -525,9 +512,6 @@ void mpi_bcast_cell_structure(int cs);
 /** Issue REQ_BCAST_NPTISO_GEOM: broadcast nptiso geometry parameter to all
  * nodes. */
 void mpi_bcast_nptiso_geom(void);
-
-/** Issue REQ_BCAST_LJANGLEFORCECAP: initialize LJANGLE force capping. */
-// void mpi_ljangle_cap_forces(double force_cap);
 
 /** Issue REQ_UPDATE_MOL_IDS: Update the molecule ids so that they are
     in sync with the topology.  Note that this only makes sense if you
@@ -543,7 +527,7 @@ int mpi_sync_topo_part_info(void);
  * @param field References the parameter field to be broadcasted. The references
  * are defined in \ref lb.hpp "lb.hpp"
  */
-void mpi_bcast_lb_params(int field);
+void mpi_bcast_lb_params(int field, int value = -1);
 
 /** Issue REQ_BCAST_cuda_global_part_vars: Broadcast a parameter for CUDA
  */
@@ -617,7 +601,7 @@ void mpi_system_CMS_velocity();
 void mpi_galilei_transform();
 void mpi_observable_lb_radial_velocity_profile();
 
-/** Issue REQ_CATALYTIC_REACTIONS: notify the system of changes to the reaction
+/** Issue REQ_SWIMMER_REACTIONS: notify the system of changes to the reaction
  * parameters
  */
 void mpi_setup_reaction();
@@ -633,16 +617,18 @@ void mpi_external_potential_sum_energies_slave();
 std::vector<EspressoGpuDevice> mpi_gather_cuda_devices();
 #endif
 
-/** CPU Thermostat */
-void mpi_thermalize_cpu(int temp);
-
-/** MPI-IO output function.
- *  \param filename Filename prefix for the created files. Must be
- * null-terminated.
- *  \param fields Fields to dump (see mpiio_tcl.hpp).
- *  \param write 1 to write, 0 to read
+/**
+ * @brief Resort the particles.
+ *
+ * This function resorts the particles on the nodes.
+ *
+ * @param global_flag If true a global resort is done,
+ *        if false particles are only exchanges between
+ *        neighbors.
+ * @return The number of particles on the nodes after
+ *         the resort.
  */
-void mpi_mpiio(const char *filename, unsigned fields, int write);
+std::vector<int> mpi_resort_particles(int global_flag);
 
 /*@}*/
 

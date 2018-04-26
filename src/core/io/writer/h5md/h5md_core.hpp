@@ -25,6 +25,7 @@
 #include "cells.hpp"
 #include "global.hpp"
 #include "MpiCallbacks.hpp"
+#include "PartCfg.hpp"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -81,7 +82,7 @@ public:
    * write methods.
    * @param Boolean values for position, velocity, force and mass.
    */
-  void Write(int write_dat);
+  void Write(int write_dat, PartCfg &partCfg);
 
   /**
    * @brief Method to write the energy contributions to the H5MD file.
@@ -125,7 +126,7 @@ private:
   /**
    * @brief Method that extends datasets by the given extent.
    */
-  void ExtendDataset(std::string path, int *change_extent);
+  void ExtendDataset(const std::string & path, int *change_extent);
 
   /**
   * @brief Method that returns chunk dimensions.
@@ -187,7 +188,7 @@ private:
   int m_what;
   bool m_write_ordered;
   std::string m_backup_filename;
-  boost::filesystem::path m_absolute_script_path = "NULL";
+  boost::filesystem::path m_absolute_script_path = "nullptr";
   h5xx::file m_h5md_file;
 
   struct DatasetDescriptor {

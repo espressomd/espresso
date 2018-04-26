@@ -1,33 +1,36 @@
 #ifndef OBSERVABLES_FORCEDENSITYPROFILE_HPP
 #define OBSERVABLES_FORCEDENSITYPROFILE_HPP
 
-#include "ProfileObservable.hpp"
-#include "partCfg.hpp"
+#include "PidProfileObservable.hpp"
+
 #include <vector>
 
 namespace Observables {
 
-class ForceDensityProfile : public ProfileObservable {
+class ForceDensityProfile : public PidProfileObservable {
 public:
-  virtual int n_values() const override { return 3 * xbins * ybins * zbins; }
-  virtual int actual_calculate() override {
-    double bin_volume =
-        (maxx - minx) * (maxy - miny) * (maxz - minz) / xbins / ybins / zbins;
-
-    for (int id : ids) {
-      auto const ppos = folded_position(partCfg[id]);
-
-      int binx = (int)floor(xbins * (ppos[0] - minx) / (maxx - minx));
-      int biny = (int)floor(ybins * (ppos[1] - miny) / (maxy - miny));
-      int binz = (int)floor(zbins * (ppos[2] - minz) / (maxz - minz));
-      if (binx >= 0 && binx < xbins && biny >= 0 && biny < ybins && binz >= 0 &&
-          binz < zbins) {
-        for (int dim = 0; dim < 3; dim++)
-          last_value[3 * (binx * ybins * zbins + biny * zbins + binz) + dim] +=
-              partCfg[id].f.f[dim] / bin_volume;
-      }
+  virtual int n_values() const override {
+    return 3 * n_x_bins * n_y_bins * n_z_bins;
+  }
+  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
+    std::array<size_t, 3> n_bins{{static_cast<size_t>(n_x_bins),
+                                  static_cast<size_t>(n_y_bins),
+                                  static_cast<size_t>(n_z_bins)}};
+    std::array<std::pair<double, double>, 3> limits{
+        {std::make_pair(min_x, max_x), std::make_pair(min_y, max_y),
+         std::make_pair(min_z, max_z)}};
+    Utils::Histogram<double, 3> histogram(n_bins, 3, limits);
+    double scale_fac;
+    for (auto const &id : ids()) {
+      auto const ppos = ::Vector<3, double>(folded_position(partCfg[id]));
+      scale_fac = partCfg[id].p.mass / (0.5 * time_step * time_step);
+      histogram.update(ppos,
+                       ::Vector<3, double>{{partCfg[id].f.f[0] * scale_fac,
+                                            partCfg[id].f.f[1] * scale_fac,
+                                            partCfg[id].f.f[2] * scale_fac}});
     }
-    return 0;
+    histogram.normalize();
+    return histogram.get_histogram();
   }
 };
 

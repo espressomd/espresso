@@ -1,40 +1,42 @@
 /*
   Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
-  
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+  Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021
+  Mainz, Germany
+
   This file is part of ESPResSo.
-  
+
   ESPResSo is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   ESPResSo is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #ifndef GHMC_H
 #define GHMC_H
 /** \file ghmc.hpp
 
-    This file contains the implementation of the GHMC (Generalized 
+    This file contains the implementation of the GHMC (Generalized
     Hybrid Monte Carlo) thermostat.
-    
+
  */
 
-#define GHMC_MFLIP_OFF       0
-#define GHMC_MFLIP_ON        1
-#define GHMC_MFLIP_RAND      2
+#define GHMC_MFLIP_OFF 0
+#define GHMC_MFLIP_ON 1
+#define GHMC_MFLIP_RAND 2
 
-#define GHMC_TSCALE_OFF      0
-#define GHMC_TSCALE_ON       1
+#define GHMC_TSCALE_OFF 0
+#define GHMC_TSCALE_ON 1
 
-#define GHMC_MOVE_REJECT     0
-#define GHMC_MOVE_ACCEPT     1
+#define GHMC_MOVE_REJECT 0
+#define GHMC_MOVE_ACCEPT 1
 
 #ifdef GHMC
 
@@ -45,10 +47,10 @@
 /** Data structure describing a slab and the velocities occuring their in. */
 typedef struct {
 
-	/** MC  statistics variables */
+  /** MC  statistics variables */
   int att, acc;
-	double hmlt_old, hmlt_new;
-	
+  double hmlt_old, hmlt_new;
+
 } Ghmc;
 /*@}*/
 
@@ -73,7 +75,7 @@ extern int ghmc_mc_res;
 /************************************************************/
 /*@{*/
 
-#ifdef GHMC 
+#ifdef GHMC
 
 /**  initilize global thermostat parameters*/
 void thermo_init_ghmc();
