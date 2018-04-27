@@ -48,7 +48,6 @@ std::string ObservableAccumulator::get_internal_state() const {
   std::stringstream ss;
   boost::archive::binary_oarchive oa(ss);
 
-  oa << m_obs;
   oa << m_acc;
 
   return ss.str();
@@ -60,7 +59,6 @@ void ObservableAccumulator::set_internal_state(std::string const &state) {
   iostreams::stream<iostreams::array_source> ss(src);
   boost::archive::binary_iarchive ia(ss);
 
-  ia >> m_obs;
   ia >> m_acc;
 }
 
