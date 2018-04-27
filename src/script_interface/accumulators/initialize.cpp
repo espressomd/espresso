@@ -20,6 +20,8 @@
 #include "initialize.hpp"
 #include "ScriptInterface.hpp"
 
+#include "Correlator.hpp"
+#include "AutoUpdateCorrelators.hpp"
 #include "ObservableAccumulator.hpp"
 #include "AutoUpdateAccumulators.hpp"
 
@@ -34,6 +36,13 @@ void initialize() {
   ScriptInterface::register_new<
       ScriptInterface::Accumulators::ObservableAccumulator>(
       "Accumulators::ObservableAccumulator");
+  
+  ScriptInterface::register_new<
+      ScriptInterface::Accumulators::AutoUpdateCorrelators>(
+      "Accumulators::AutoUpdateCorrelators");
+
+  ScriptInterface::register_new<ScriptInterface::Accumulators::Correlator>(
+      "Accumulators::Correlator");
 
 }
 } /* namespace Accumulators */

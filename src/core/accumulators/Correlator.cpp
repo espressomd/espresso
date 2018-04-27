@@ -37,7 +37,7 @@ namespace {
 int min(int i, unsigned int j) { return std::min(i, static_cast<int>(j)); }
 }
 
-namespace Correlators {
+namespace Accumulators {
 /** The minimal version of compression function */
 std::vector<double> compress_do_nothing(std::vector<double> const &A1,
                                         std::vector<double> const &A2) {

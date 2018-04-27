@@ -23,7 +23,7 @@ import espressomd
 import numpy as np
 from espressomd.interactions import FeneBond
 from time import time
-from espressomd.correlators import Correlator
+from espressomd.accumulators import Correlator
 from espressomd.observables import ParticleVelocities, ParticleBodyAngularVelocities
 
 @ut.skipIf(espressomd.has_features("THERMOSTAT_IGNORE_NON_VIRTUAL"),

@@ -22,12 +22,17 @@
 
 namespace Accumulators {
 std::vector<std::shared_ptr<Accumulators::ObservableAccumulator>> auto_update_accumulators;
+std::vector<std::shared_ptr<Accumulators::Correlator>> auto_update_correlators;
 
 void auto_update() {
   for (auto& c : auto_update_accumulators) {
     c->update();
   }
-
+  for (auto &c : auto_update_correlators) {
+    if (sim_time - c->last_update() > c->dt() * 0.9999) {
+      c->get_data();
+    }
+  }
 }
 
 }

@@ -129,7 +129,7 @@
 #include <map>
 #include <memory>
 
-namespace Correlators {
+namespace Accumulators {
 
 // IDs of different correlations
 

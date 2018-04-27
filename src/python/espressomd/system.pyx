@@ -40,8 +40,7 @@ from .galilei import GalileiTransform
 if CONSTRAINTS == 1:
     from .constraints import Constraints
 
-from .correlators import AutoUpdateCorrelators
-from .accumulators import AutoUpdateAccumulators
+from .accumulators import AutoUpdateAccumulators, AutoUpdateCorrelators
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
 from .ekboundaries import EKBoundaries

@@ -21,17 +21,19 @@
 #define ESPRESSO_ACCUMULATORS_HPP
 
 #include "accumulators/ObservableAccumulator.hpp"
+#include "accumulators/Correlator.hpp"
 #include <vector>
 #include <memory>
 
 namespace Accumulators {
 
 extern std::vector<std::shared_ptr<Accumulators::ObservableAccumulator>> auto_update_accumulators;
+extern std::vector<std::shared_ptr<Accumulators::Correlator>> auto_update_correlators;
 
 void auto_update();
 
 inline bool auto_update_enabled() {
-  return auto_update_accumulators.size() >0;
+  return auto_update_accumulators.size() >0 or auto_update_correlators.size()>0;
 }
 
 }

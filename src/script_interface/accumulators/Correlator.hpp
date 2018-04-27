@@ -25,7 +25,7 @@
 #include "ScriptInterface.hpp"
 #include "auto_parameters/AutoParameters.hpp"
 
-#include "core/correlators/Correlator.hpp"
+#include "core/accumulators/Correlator.hpp"
 #include "observables/Observable.hpp"
 
 #include "core/utils/as_const.hpp"
@@ -33,10 +33,10 @@
 #include <memory>
 
 namespace ScriptInterface {
-namespace Correlators {
+namespace Accumulators {
 
 class Correlator : public AutoParameters<Correlator> {
-  using CoreCorr = ::Correlators::Correlator;
+  using CoreCorr = ::Accumulators::Correlator;
 
 public:
   Correlator() {
@@ -74,7 +74,7 @@ public:
         m_obs2->observable());
   }
 
-  std::shared_ptr<::Correlators::Correlator> correlator() {
+  std::shared_ptr<::Accumulators::Correlator> correlator() {
     return m_correlator;
   }
 

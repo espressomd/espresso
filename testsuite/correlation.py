@@ -24,7 +24,7 @@ import numpy as np
 from numpy.random import random
 from espressomd.interactions import FeneBond
 from espressomd.observables import *
-from espressomd.correlators import *
+from espressomd.accumulators import *
 import pickle
 
 class Observables(ut.TestCase):
