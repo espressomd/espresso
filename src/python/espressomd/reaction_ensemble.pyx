@@ -585,8 +585,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         :meth:`update_maximum_and_minimum_energies_at_current_state` was used.
 
         """
-        self.WLRptr.write_out_preliminary_energy_run_results(
-            "preliminary_energy_run_results")
+        filename="preliminary_energy_run_results".encode("utf-8")
+        self.WLRptr.write_out_preliminary_energy_run_results(filename)
 
     def write_wang_landau_results_to_file(self, filename):
         """
@@ -594,7 +594,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         collective variables.
 
         """
-        self.WLRptr.write_wang_landau_results_to_file(filename)
+        self.WLRptr.write_wang_landau_results_to_file(filename.encode("utf-8"))
 
 
     def displacement_mc_move_for_particles_of_type(self, type_mc, particle_number_to_be_changed=1):
