@@ -38,7 +38,10 @@ double ShapeBasedConstraint::min_dist() {
   return global_mindist;
 }
 
-void ShapeBasedConstraint::reflect_particle_from_flat_wall(Particle *p,
+/**
+ * The function reflect_particle reflects the particle. In the current implementation the behaviour is only strictly correct for a flat wall. Be careful when using it with e.g. a sphere or a cylinder. The algorithm here assumes the wrong (!!) tangential plane for the reflection. For small curvatures (high radii) the error that is made is approaching zero.
+ */
+void ShapeBasedConstraint::reflect_particle(Particle *p,
                                             const double *distance_vector,
                                             const double *folded_pos) const {
   double vec[3];
@@ -54,8 +57,8 @@ void ShapeBasedConstraint::reflect_particle_from_flat_wall(Particle *p,
 
     /* vec seems to be the vector that points from the wall to the particle*/
     /* now normalize it */
-    switch (std::abs(m_reflection_type)) {
-    case (int)ReflectionType::NORMAL: {
+    switch (m_reflection_type) {
+    case ReflectionType::NORMAL: {
       vec[0] /= norm;
       vec[1] /= norm;
       vec[2] /= norm;
@@ -67,13 +70,13 @@ void ShapeBasedConstraint::reflect_particle_from_flat_wall(Particle *p,
       p->m.v[1] = p->m.v[1] - 2 * vec[1] * normal_velocity;
       p->m.v[2] = p->m.v[2] - 2 * vec[2] * normal_velocity;
     } break;
-    case (int)ReflectionType::NORMAL_TANGENTIAL:
+    case ReflectionType::NORMAL_TANGENTIAL:
       /* if bounce back, invert velocity */
       p->m.v[0] = -p->m.v[0];
       p->m.v[1] = -p->m.v[1];
       p->m.v[2] = -p->m.v[2];
       break;
-    case (int)ReflectionType::NONE:
+    case ReflectionType::NONE:
       break;
     }
   }
@@ -111,8 +114,8 @@ void ShapeBasedConstraint::add_force(Particle *p, double *folded_pos) {
         calc_non_bonded_pair_force(p, &part_rep, ia_params, vec, -1.0 * dist,
                                    dist * dist, force, torque1, torque2);
       }
-      if (m_reflection_type != (int)ReflectionType::NONE) {
-        reflect_particle_from_flat_wall(p, vec, folded_pos);
+      if (m_reflection_type != ReflectionType::NONE) {
+        reflect_particle(p, vec, folded_pos);
         dist=-dist;
       }
     } 

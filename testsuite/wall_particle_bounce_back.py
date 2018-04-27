@@ -36,7 +36,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
         normal_reflection=1
 
         ceil = shapes.Wall(normal=[0, 0, -1], dist=-1.0*self.box_l)
-        c2 = system.constraints.add(particle_type=1, penetrable=int(False), only_positive=int(False), shape=ceil, reflection_type=normal_reflection)
+        c2 = system.constraints.add(particle_type=1, penetrable=False, only_positive=False, shape=ceil, reflection_type="NORMAL")
 
         system.integrator.run(20)
         zpos=system.part[0].pos[2]

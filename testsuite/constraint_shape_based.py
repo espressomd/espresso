@@ -64,7 +64,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
             direction=+1)
 
         constraint_e = espressomd.constraints.ShapeBasedConstraint(
-            shape=e, particle_type=1, penetrable=1)
+            shape=e, particle_type=1, penetrable=True)
         const1 = system.constraints.add(constraint_e)
 
         for i in range(N):
@@ -93,7 +93,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
             direction=+1)
 
         constraint_e = espressomd.constraints.ShapeBasedConstraint(
-            shape=e, particle_type=1, penetrable=1)
+            shape=e, particle_type=1, penetrable=True)
         const1 = system.constraints.add(constraint_e)
 
         for i in range(N):
@@ -163,9 +163,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
             2.0,
             length=self.box_l +
             5)  # +5 in order to have no top or bottom
-        penetrability = 0  # inpenetrable
         outer_cylinder_constraint = espressomd.constraints.ShapeBasedConstraint(
-            shape=cylinder_shape, particle_type=1, penetrable=penetrability)
+            shape=cylinder_shape, particle_type=1, penetrable=False)
         outer_cylinder_wall = system.constraints.add(outer_cylinder_constraint)
         system.non_bonded_inter[0, 1].lennard_jones.set_params(
             epsilon=1.0, sigma=1.0, cutoff=2.0, shift=0)

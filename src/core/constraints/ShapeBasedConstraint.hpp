@@ -17,7 +17,7 @@ public:
 
   ShapeBasedConstraint()
       : m_shape(std::make_shared<Shapes::NoWhere>()),
-        m_reflection_type((int)ReflectionType::NONE), m_penetrable(false),
+        m_reflection_type(ReflectionType::NONE), m_penetrable(false),
         m_only_positive(false), m_tuneable_slip(0), m_type(-1) {
     ShapeBasedConstraint::reset_force();
   }
@@ -41,11 +41,11 @@ public:
 
   Shapes::Shape const &shape() const { return *m_shape; }
 
-  int &reflection_type(){return m_reflection_type;}
+  ReflectionType &reflection_type() {return m_reflection_type;}
 
   void reset_force() override { m_local_force = Vector3d{0, 0, 0}; }
-  int &only_positive() { return m_only_positive; }
-  int &penetrable() { return m_penetrable; }
+  bool &only_positive() { return m_only_positive; }
+  bool &penetrable() { return m_penetrable; }
   int &type() { return m_type; }
   
   void set_type(const int &type) {
@@ -57,15 +57,15 @@ public:
 
 private:
   /** Private methods */
-  void reflect_particle_from_flat_wall(Particle *p, const double *distance_vector,
+  void reflect_particle(Particle *p, const double *distance_vector,
                         const double *folded_pos) const;
 
   /** Private data members */
   std::shared_ptr<Shapes::Shape> m_shape;
 
-  int m_reflection_type;
-  int m_penetrable;
-  int m_only_positive;
+  ReflectionType m_reflection_type;
+  bool m_penetrable;
+  bool m_only_positive;
   int m_tuneable_slip;
   int m_type;
   Vector3d m_local_force;
