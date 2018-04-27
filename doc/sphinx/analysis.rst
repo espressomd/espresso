@@ -828,7 +828,7 @@ the script ``samples/observables_correlators.py``.
 Creating a correlation
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Each correlator is represented by an instance of the :class:`espressomd.correlators.Correlator`. Please see its documentation for an explanation of the arguments that have to be passed to the constructor.
+Each correlator is represented by an instance of the :class:`espressomd.accumulators.Correlator`. Please see its documentation for an explanation of the arguments that have to be passed to the constructor.
 
 Correlators can be registered for automatic updating during the
 integration by adding them to :attr:`espressomd.system.System.auto_update_correlators`.

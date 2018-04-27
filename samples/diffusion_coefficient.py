@@ -8,7 +8,7 @@ It uses the Observables/Correlators framework.
 
 from __future__ import division, print_function
 import espressomd
-from espressomd.correlators import Correlator 
+from espressomd.accumulators import Correlator
 from espressomd.observables import ParticlePositions, ParticleVelocities
 import numpy as np
 

@@ -3,7 +3,7 @@
 from __future__ import print_function
 import espressomd
 from espressomd.observables import *
-from espressomd.correlators import *
+from espressomd.accumulators import *
 import numpy as np
 
 # System setup
