@@ -1,6 +1,13 @@
 #ifndef CORE_UTILS_ACCUMULATOR
 #define CORE_UTILS_ACCUMULATOR
 
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/iostreams/device/array.hpp>
+#include <boost/iostreams/stream.hpp>
+
 namespace Utils {
 
 template <typename T> struct AccumulatorData {
@@ -11,6 +18,14 @@ template <typename T> struct AccumulatorData {
   T m_mean_new;
   T m_variance_old;
   T m_variance_new;
+private:
+  // Allow serialization to access non-public data members.
+  friend class boost::serialization::access;
+
+  template<typename Archive>
+  void serialize(Archive& ar, const unsigned version) {
+    ar & m_mean_old & m_mean_new & m_variance_old & m_variance_new;
+  }
 };
 
 class Accumulator {
@@ -23,6 +38,13 @@ public:
 private:
   std::size_t m_n;
   std::vector<AccumulatorData<double>> m_acc_data;
+  // Allow serialization to access non-public data members.
+  friend class boost::serialization::access;
+
+  template<typename Archive>
+  void serialize(Archive& ar, const unsigned version) {
+    ar & m_n & m_acc_data;
+  }
 };
 
 inline void Accumulator::operator()(const std::vector<double> &data) {
@@ -82,6 +104,8 @@ inline std::vector<double> Accumulator::get_variance() const {
                  });
   return res;
 }
+
+
 }
 
 #endif

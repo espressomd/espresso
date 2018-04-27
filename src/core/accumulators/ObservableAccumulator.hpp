@@ -35,6 +35,10 @@ public:
   int update();
   std::vector<double> get_mean();
   std::vector<double> get_variance();
+  /* Partial serialization of state that is not accessible
+     via the interface. */
+  std::string get_internal_state() const;
+  void set_internal_state(std::string const &);
 
 private:
   std::shared_ptr<Observables::Observable> m_obs;
