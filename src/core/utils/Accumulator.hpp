@@ -7,17 +7,17 @@ namespace Utils {
 
 template <typename T> struct AccumulatorData {
   AccumulatorData() = default;
-  T m_mean_old;
-  T m_mean_new;
-  T m_variance_old;
-  T m_variance_new;
+  T mean_old;
+  T mean_new;
+  T variance_old;
+  T variance_new;
 private:
   // Allow serialization to access non-public data members.
   friend class boost::serialization::access;
 
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version) {
-    ar & m_mean_old & m_mean_new & m_variance_old & m_variance_new;
+    ar & mean_old & mean_new & variance_old & variance_new;
   }
 };
 
@@ -50,8 +50,8 @@ inline void Accumulator::operator()(const std::vector<double> &data) {
     auto data_it = data.begin();
     for (; acc_data_it != m_acc_data.end() and data_it != data.end();
          ++acc_data_it, ++data_it) {
-      (*acc_data_it).m_mean_old = (*acc_data_it).m_mean_new = *data_it;
-      (*acc_data_it).m_variance_old = (*acc_data_it).m_variance_new = 0.0;
+      (*acc_data_it).mean_old = (*acc_data_it).mean_new = *data_it;
+      (*acc_data_it).variance_old = (*acc_data_it).variance_new = 0.0;
     }
   } else {
     // Calculate mean value.
@@ -59,24 +59,24 @@ inline void Accumulator::operator()(const std::vector<double> &data) {
     auto data_it = data.begin();
     for (; acc_data_it != m_acc_data.end() and data_it != data.end();
          ++acc_data_it, ++data_it) {
-      (*acc_data_it).m_mean_new = (*acc_data_it).m_mean_old +
-                                  (*data_it - (*acc_data_it).m_mean_old) / m_n;
+      (*acc_data_it).mean_new = (*acc_data_it).mean_old +
+                                  (*data_it - (*acc_data_it).mean_old) / m_n;
     }
     // Calculate variance.
     acc_data_it = m_acc_data.begin();
     data_it = data.begin();
     for (; acc_data_it != m_acc_data.end() and data_it != data.end();
          ++acc_data_it, ++data_it) {
-      (*acc_data_it).m_variance_new =
-          ((m_n - 1) * (*acc_data_it).m_variance_old +
-           (*data_it - (*acc_data_it).m_mean_old) *
-               (*data_it - (*acc_data_it).m_mean_new)) /
+      (*acc_data_it).variance_new =
+          ((m_n - 1) * (*acc_data_it).variance_old +
+           (*data_it - (*acc_data_it).mean_old) *
+               (*data_it - (*acc_data_it).mean_new)) /
           m_n;
     }
     std::for_each(m_acc_data.begin(), m_acc_data.end(),
                    [](AccumulatorData<double> &acc_data) {
-                     acc_data.m_mean_old = acc_data.m_mean_new;
-                     acc_data.m_variance_old = acc_data.m_variance_new;
+                     acc_data.mean_old = acc_data.mean_new;
+                     acc_data.variance_old = acc_data.variance_new;
                    });
   }
 }
@@ -85,7 +85,7 @@ inline std::vector<double> Accumulator::get_mean() const {
   std::vector<double> res;
   std::transform(
       m_acc_data.begin(), m_acc_data.end(), std::back_inserter(res),
-      [](const AccumulatorData<double> &acc_data) { return acc_data.m_mean_new; });
+      [](const AccumulatorData<double> &acc_data) { return acc_data.mean_new; });
   return res;
 }
 
@@ -93,7 +93,7 @@ inline std::vector<double> Accumulator::get_variance() const {
   std::vector<double> res;
   std::transform(m_acc_data.begin(), m_acc_data.end(), std::back_inserter(res),
                  [](const AccumulatorData<double> &acc_data) {
-                   return acc_data.m_variance_new;
+                   return acc_data.variance_new;
                  });
   return res;
 }
