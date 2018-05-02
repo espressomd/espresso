@@ -2199,7 +2199,7 @@ void mpi_set_particle_gamma_rot_slave(int pnode, int part) {
 #if defined(LANGEVIN_PER_PARTICLE) && defined(ROTATION)
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    comm_cart.recv(pnode, SOME_TAG, p->p.gamma_rot);
+    comm_cart.recv(0, SOME_TAG, p->p.gamma_rot);
   }
 
   on_particle_change();
