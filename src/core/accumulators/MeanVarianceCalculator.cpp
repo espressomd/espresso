@@ -27,24 +27,23 @@
 #include <boost/iostreams/stream.hpp>
 
 
-#include "ObservableAccumulator.hpp"
+#include "MeanVarianceCalculator.hpp"
 #include "partCfg_global.hpp"
 
 namespace Accumulators {
-int ObservableAccumulator::update() {
+void MeanVarianceCalculator::update() {
   m_acc(m_obs->operator()(partCfg()));
-  return 0;
 }
 
-std::vector<double> ObservableAccumulator::get_mean() {
+std::vector<double> MeanVarianceCalculator::get_mean() {
   return m_acc.get_mean();
 }
 
-std::vector<double> ObservableAccumulator::get_variance() {
+std::vector<double> MeanVarianceCalculator::get_variance() {
   return m_acc.get_variance();
 }
 
-std::string ObservableAccumulator::get_internal_state() const {
+std::string MeanVarianceCalculator::get_internal_state() const {
   std::stringstream ss;
   boost::archive::binary_oarchive oa(ss);
 
@@ -53,7 +52,7 @@ std::string ObservableAccumulator::get_internal_state() const {
   return ss.str();
 }
 
-void ObservableAccumulator::set_internal_state(std::string const &state) {
+void MeanVarianceCalculator::set_internal_state(std::string const &state) {
   namespace iostreams = boost::iostreams;
   iostreams::array_source src(state.data(), state.size());
   iostreams::stream<iostreams::array_source> ss(src);

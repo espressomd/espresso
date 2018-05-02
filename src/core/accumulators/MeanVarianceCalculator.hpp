@@ -20,19 +20,20 @@
 #ifndef _ACCUMULATORS_ACCUMULATOR_H
 #define _ACCUMULATORS_ACCUMULATOR_H
 
+#include "AccumulatorBase.hpp"
 #include "observables/Observable.hpp"
 #include "utils/Accumulator.hpp"
 
 namespace Accumulators {
 
-class ObservableAccumulator {
+class MeanVarianceCalculator : public AccumulatorBase {
 public:
   // The accumulator struct has to be initialized with the correct vector size,
   // therefore the order of init is important.
-  explicit ObservableAccumulator(std::shared_ptr<Observables::Observable> const& obs)
+  explicit MeanVarianceCalculator(std::shared_ptr<Observables::Observable> const& obs)
       : m_obs(obs), m_acc(obs->n_values()) {}
 
-  int update();
+  void update ();
   std::vector<double> get_mean();
   std::vector<double> get_variance();
   /* Partial serialization of state that is not accessible

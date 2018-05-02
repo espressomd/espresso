@@ -4,7 +4,7 @@ import numpy as np
 
 
 @script_interface_register
-class ObservableAccumulator(ScriptInterfaceHelper):
+class MeanVarianceCalculator(ScriptInterfaceHelper):
     """
     Accumulates results from observables.
 
@@ -23,7 +23,7 @@ class ObservableAccumulator(ScriptInterfaceHelper):
         Returns the samples variance for the observable.
 
     """
-    _so_name = "Accumulators::ObservableAccumulator"
+    _so_name = "Accumulators::MeanVarianceCalculator"
     _so_bind_methods = (
         "update",
         "get_mean",
@@ -33,22 +33,22 @@ class ObservableAccumulator(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class AutoUpdateAccumulators(ScriptInterfaceHelper):
+class AutoUpdateMeanVarianceCalculators(ScriptInterfaceHelper):
     """
-    Class for handling auto-update of accumulators used by
+    Class for handling auto-update of MeanVarianceCalculators used by
     :class:`espressomd.System`.
 
     """
-    _so_name = "Accumulators::AutoUpdateAccumulators"
+    _so_name = "Accumulators::AutoUpdateMeanVarianceCalculators"
     _so_creation_policy = "LOCAL"
 
     def add(self, *args, **kwargs):
         """
-        Adds an accumulator instance to the auto-update list in the system.
+        Adds an MeanVarianceCalculator instance to the auto-update list in the system.
 
         """
         if len(args) == 1:
-            if isinstance(args[0], ObservableAccumulator):
+            if isinstance(args[0], MeanVarianceCalculator):
                 accumulator = args[0]
             else:
                 raise TypeError(
@@ -61,7 +61,7 @@ class AutoUpdateAccumulators(ScriptInterfaceHelper):
 
     def remove(self, Accumulator):
         """
-        Removes an accumulator from the auto-update list.
+        Removes an MeanVarianceCalculator from the auto-update list.
 
         """
         self.call_method("remove", object=Accumulator)

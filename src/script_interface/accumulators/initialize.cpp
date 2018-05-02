@@ -22,20 +22,20 @@
 
 #include "Correlator.hpp"
 #include "AutoUpdateCorrelators.hpp"
-#include "ObservableAccumulator.hpp"
-#include "AutoUpdateAccumulators.hpp"
+#include "MeanVarianceCalculator.hpp"
+#include "AutoUpdateMeanVarianceCalculators.hpp"
 
 namespace ScriptInterface {
 namespace Accumulators {
 
 void initialize() {
   ScriptInterface::register_new<
-      ScriptInterface::Accumulators::AutoUpdateAccumulators>(
-      "Accumulators::AutoUpdateAccumulators");
+      ScriptInterface::Accumulators::AutoUpdateMeanVarianceCalculators>(
+      "Accumulators::AutoUpdateMeanVarianceCalculators");
 
   ScriptInterface::register_new<
-      ScriptInterface::Accumulators::ObservableAccumulator>(
-      "Accumulators::ObservableAccumulator");
+      ScriptInterface::Accumulators::MeanVarianceCalculator>(
+      "Accumulators::MeanVarianceCalculator");
   
   ScriptInterface::register_new<
       ScriptInterface::Accumulators::AutoUpdateCorrelators>(

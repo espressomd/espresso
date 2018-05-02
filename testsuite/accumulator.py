@@ -43,9 +43,9 @@ class AccumulatorTest(ut.TestCase):
         self.system.part.add(id=0, pos=[0.0, 0.0, 0.0])
         self.system.integrator.run(steps=0)
         self.pos_obs = espressomd.observables.ParticlePositions(ids=(0,))
-        self.pos_obs_acc = espressomd.accumulators.ObservableAccumulator(
+        self.pos_obs_acc = espressomd.accumulators.MeanVarianceCalculator(
             obs=self.pos_obs)
-        self.system.auto_update_accumulators.add(self.pos_obs_acc)
+        self.system.auto_update_mean_variance_calculators.add(self.pos_obs_acc)
         self.positions = 10.0 * np.random.rand(10, 3)
 
     def test_accumulator(self):

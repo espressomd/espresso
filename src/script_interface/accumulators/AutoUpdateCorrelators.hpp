@@ -31,18 +31,14 @@ namespace Accumulators {
 
 class AutoUpdateCorrelators : public ScriptObjectRegistry<Correlator> {
   virtual void add_in_core(std::shared_ptr<Correlator> obj_ptr) override {
-    obj_ptr->correlator()->start_auto_update();
-    ::Accumulators::auto_update_correlators.push_back(obj_ptr->correlator());
+    ::Accumulators::auto_update_accumulators.push_back(obj_ptr->correlator());
   }
   virtual void remove_in_core(std::shared_ptr<Correlator> obj_ptr) override {
-    auto it = std::find(::Accumulators::auto_update_correlators.begin(),
-                        ::Accumulators::auto_update_correlators.end(),
+    auto it = std::find(::Accumulators::auto_update_accumulators.begin(),
+                        ::Accumulators::auto_update_accumulators.end(),
                         obj_ptr->correlator());
-
-    if (it != ::Accumulators::auto_update_correlators.end()) {
-      obj_ptr->correlator()->stop_auto_update();
-      ::Accumulators::auto_update_correlators.erase(it);
-
+    if (it != ::Accumulators::auto_update_accumulators.end()) {
+      ::Accumulators::auto_update_accumulators.erase(it);
     } else {
       throw "Could not find Correlator to remove";
     }

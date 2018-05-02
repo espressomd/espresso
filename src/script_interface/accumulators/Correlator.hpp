@@ -81,16 +81,7 @@ public:
   virtual Variant call_method(std::string const &method,
                               VariantMap const &parameters) override {
     if (method == "update") {
-      if (m_correlator->autoupdate) {
-        throw std::runtime_error(
-            "auto_update is enable for the correlator. Cannot update manually");
-      }
-      if (m_correlator->get_data()) {
-        throw std::runtime_error("Correlator update failed");
-      }
-    }
-    if (method == "auto_update") {
-      return m_correlator->autoupdate;
+      m_correlator->update();
     }
     if (method == "finalize")
       m_correlator->finalize();

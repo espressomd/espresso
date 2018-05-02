@@ -23,7 +23,7 @@
 #define SCRIPT_INTERFACE_ACCUMULATORS_ACCUMULATOR_HPP
 
 #include "ScriptInterface.hpp"
-#include "core/accumulators/ObservableAccumulator.hpp"
+#include "core/accumulators/MeanVarianceCalculator.hpp"
 #include "observables/Observable.hpp"
 
 #include "utils/as_const.hpp"
@@ -33,27 +33,27 @@
 namespace ScriptInterface {
 namespace Accumulators {
 
-class ObservableAccumulator : public AutoParameters<ObservableAccumulator> {
+class MeanVarianceCalculator : public AutoParameters<MeanVarianceCalculator> {
 public:
   /* as_const is to make obs read-only. */
-  ObservableAccumulator() { add_parameters({{"obs", Utils::as_const(m_obs)}}); }
+  MeanVarianceCalculator() { add_parameters({{"obs", Utils::as_const(m_obs)}}); }
 
   void construct(VariantMap const &params) override {
     set_from_args(m_obs, params, "obs");
 
     if (m_obs)
       m_accumulator =
-          std::make_shared<::Accumulators::ObservableAccumulator>(m_obs->observable());
+          std::make_shared<::Accumulators::MeanVarianceCalculator>(m_obs->observable());
   }
 
-  std::shared_ptr<::Accumulators::ObservableAccumulator> accumulator() {
+  std::shared_ptr<::Accumulators::MeanVarianceCalculator> accumulator() {
     return m_accumulator;
   }
 
   virtual Variant call_method(std::string const &method,
                               VariantMap const &parameters) override {
     if (method == "update") {
-      return m_accumulator->update();
+      m_accumulator->update();
     }
 
     if (method == "get_mean")
@@ -79,7 +79,7 @@ private:
   }
 
   /* The actual accumulator */
-  std::shared_ptr<::Accumulators::ObservableAccumulator> m_accumulator;
+  std::shared_ptr<::Accumulators::MeanVarianceCalculator> m_accumulator;
   std::shared_ptr<Observables::Observable> m_obs;
 };
 

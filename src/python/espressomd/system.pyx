@@ -40,7 +40,7 @@ from .galilei import GalileiTransform
 if CONSTRAINTS == 1:
     from .constraints import Constraints
 
-from .accumulators import AutoUpdateAccumulators, AutoUpdateCorrelators
+from .accumulators import AutoUpdateMeanVarianceCalculators, AutoUpdateCorrelators
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
 from .ekboundaries import EKBoundaries
@@ -89,7 +89,7 @@ cdef class System(object):
         galilei
         integrator
         auto_update_correlators
-        auto_update_accumulators
+        auto_update_mean_variance_calculators
         constraints
         lbboundaries
         ekboundaries
@@ -111,7 +111,7 @@ cdef class System(object):
                     raise ValueError("Property {} can not be set via argument to System class.".format(arg))
             self.actors = Actors(_system=self)
             self.analysis = Analysis(self)
-            self.auto_update_accumulators = AutoUpdateAccumulators()
+            self.auto_update_mean_variance_calculators = AutoUpdateMeanVarianceCalculators()
             self.auto_update_correlators = AutoUpdateCorrelators()
             self.bonded_inter = interactions.BondedInteractions()
             self.cell_system = CellSystem()
@@ -145,7 +145,7 @@ cdef class System(object):
             odict[property_] = System.__getattribute__(self, property_)
         odict['actors'] = System.__getattribute__(self, "actors")
         odict['analysis'] = System.__getattribute__(self, "analysis")
-        odict['auto_update_accumulators'] = System.__getattribute__(self, "auto_update_accumulators")
+        odict['auto_update_mean_variance_calculators'] = System.__getattribute__(self, "auto_update_mean_variance_calculators")
         odict['auto_update_correlators'] = System.__getattribute__(self, "auto_update_correlators")
         odict['bonded_inter'] = System.__getattribute__(self, "bonded_inter")
         odict['cell_system'] = System.__getattribute__(self, "cell_system")

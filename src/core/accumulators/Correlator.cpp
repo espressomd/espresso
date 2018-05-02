@@ -189,8 +189,6 @@ constexpr const char init_errors[][64] = {
     "fcs_acf requires 3 additional parameters"                       // 19
 };
 
-int correlations_autoupdate = 0;
-
 int Correlator::get_correlation_time(double *correlation_time) {
   // We calculate the correlation time for each m_dim_corr by normalizing the
   // correlation,
@@ -395,10 +393,9 @@ void Correlator::initialize() {
     }
 }
 
-int Correlator::get_data() {
+void Correlator::update() {
   if (finalized) {
     runtimeErrorMsg() << "No data can be added after finalize() was called.";
-    return 0;
   }
   // We must now go through the hierarchy and make sure there is space for the
   // new
@@ -497,7 +494,6 @@ int Correlator::get_data() {
   }
 
   m_last_update = sim_time;
-  return 0;
 }
 
 int Correlator::finalize() {
@@ -593,23 +589,6 @@ int Correlator::finalize() {
   return 0;
 }
 
-void Correlator::start_auto_update() {
-  if (update_frequency > 0) {
-    correlations_autoupdate = 1;
-    autoupdate = 1;
-    m_last_update = sim_time;
-  } else {
-    throw std::runtime_error(
-        "Could not start autoupdate: update frequency not set");
-  }
-}
-
-void Correlator::stop_auto_update() {
-  autoupdate = 0;
-  // Todo
-  // Insert logic to determine if global correlations_auto_update can be set to
-  // 0
-}
 
 std::vector<double> Correlator::get_correlation() {
   std::vector<double> res;

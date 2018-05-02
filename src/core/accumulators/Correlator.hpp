@@ -116,9 +116,6 @@
 #ifndef _STATISTICS_CORRELATION_H
 #define _STATISTICS_CORRELATION_H
 
-#include "Vector.hpp"
-#include "observables/Observable.hpp"
-#include "utils.hpp"
 
 #include <boost/multi_array.hpp>
 #include <boost/serialization/access.hpp>
@@ -129,11 +126,12 @@
 #include <map>
 #include <memory>
 
+#include "AccumulatorBase.hpp"
+#include "Vector.hpp"
+#include "observables/Observable.hpp"
+#include "utils.hpp"
+
 namespace Accumulators {
-
-// IDs of different correlations
-
-void autoupdate_correlations();
 
 /** The struct that is used to calculate correlations *
  *
@@ -146,7 +144,7 @@ void autoupdate_correlations();
  * tau_lin is reached,
  * it starts again from the beginning.
  */
-class Correlator {
+class Correlator : public AccumulatorBase {
   using obs_ptr = std::shared_ptr<Observables::Observable>;
 
 public:
@@ -179,7 +177,7 @@ public:
   Correlator(int tau_lin, double tau_max, double dt,
              std::string const &compress1_, std::string const &compress2_,
              std::string const &corr_operation, const obs_ptr &obs1, const obs_ptr &obs2)
-      : autoupdate(0), finalized(0), t(0), m_tau_lin(tau_lin),
+      : finalized(0), t(0), m_tau_lin(tau_lin),
         m_dt(dt), m_tau_max(tau_max), compressA_name(compress1_),
         compressB_name(compress2_), corr_operation_name(corr_operation),
         A_obs(obs1), B_obs(obs2) {
@@ -203,7 +201,7 @@ public:
    * the correlation estimates have to be updated.
    *
    */
-  int get_data();
+  void update ();
 
   /** At the end of data collection, go through the whole hierarchy and
    * correlate data left there
@@ -257,10 +255,6 @@ public:
   std::string const &correlation_operation() const {
     return corr_operation_name;
   }
-
-  void start_auto_update();
-  void stop_auto_update();
-  int autoupdate;
 
   /* Partial serialization of state that is not accessible
      via the interface. */
@@ -328,8 +322,6 @@ private:
   compression_function compressA;
   compression_function compressB;
 };
-
-extern int correlations_autoupdate;
 
 } // Namespace correlators
 #endif
