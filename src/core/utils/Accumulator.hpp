@@ -1,12 +1,7 @@
 #ifndef CORE_UTILS_ACCUMULATOR
 #define CORE_UTILS_ACCUMULATOR
 
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/serialization/string.hpp>
-#include <boost/serialization/vector.hpp>
-#include <boost/iostreams/device/array.hpp>
-#include <boost/iostreams/stream.hpp>
+#include <boost/serialization/access.hpp>
 
 namespace Utils {
 
