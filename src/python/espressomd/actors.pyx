@@ -190,15 +190,6 @@ class Actors(object):
         actor : instance of :class:`espressomd.actors.Actor`
 
         """
-        self._remove_actor(actor)
-
-    def _remove_actor(self, actor):
-        """
-        Parameters
-        ----------
-        actor : instance of :class:`espressomd.actors.Actor`
-
-        """
         if not actor in self.active_actors:
             raise Exception("Actor is not active")
         actor._deactivate()
@@ -219,4 +210,12 @@ class Actors(object):
 
     def __delitem__(self, idx):
         actor = self[idx]
-        self._remove_actor(actor)
+        self.remove(actor)
+
+    def clear(self):
+        """
+        Remove all actors.
+
+        """
+        for a in self.active_actors:
+            self.remove(a)

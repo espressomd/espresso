@@ -26,8 +26,9 @@ from espressomd.system import System
 from espressomd.code_info import features
 
 def has_features(*args):
-    """Tests whether a list of features is a subset of the compiled-in features"""
+    """Tests whether a list of features is a subset of the compiled-in features.
 
+    """
     if len(args) == 1 and type(args[0]) is not str and hasattr(args[0], "__iter__"):
         return set(args[0]) < set(features())
 
@@ -35,8 +36,9 @@ def has_features(*args):
 
 
 def missing_features(*args):
-    """Returns a list of the missing features in the argument"""
+    """Returns a list of the missing features in the argument.
 
+    """
     if len(args) == 1 and type(args[0]) is not str and hasattr(args[0], "__iter__"):
             return set(args[0]) - set(features())
 
@@ -44,7 +46,8 @@ def missing_features(*args):
 
 
 def assert_features(ExceptionType = Exception, *args):
-    """Raises an excpetion when a list of features is not a subset of the compiled-in features"""
+    """Raises an exception when a list of features is not a subset of the compiled-in features.
 
+    """
     if not has_features(*args):
         raise ExceptionType("Missing features " + ", ".join(missing_features(*args)))
