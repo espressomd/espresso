@@ -26,10 +26,10 @@
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
-#include <boost/serialization/string.hpp>
-#include <boost/serialization/vector.hpp>
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <limits>
 
@@ -567,8 +567,8 @@ int Correlator::finalize() {
 
       // We only need to update correlation estimates for the higher levels
       for (i = ll + 1; i < highest_level_to_compress + 2; i++) {
-        for (j = (m_tau_lin + 1) / 2 + 1;
-             j < min(m_tau_lin + 1, n_vals[i]); j++) {
+        for (j = (m_tau_lin + 1) / 2 + 1; j < min(m_tau_lin + 1, n_vals[i]);
+             j++) {
           index_new = newest[i];
           index_old = (newest[i] - j + m_tau_lin + 1) % (m_tau_lin + 1);
           index_res =
@@ -588,7 +588,6 @@ int Correlator::finalize() {
   }
   return 0;
 }
-
 
 std::vector<double> Correlator::get_correlation() {
   std::vector<double> res;

@@ -20,20 +20,17 @@
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
-#include <boost/serialization/string.hpp>
-#include <boost/serialization/vector.hpp>
-#include <boost/serialization/shared_ptr.hpp>
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
-
+#include <boost/serialization/shared_ptr.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include "MeanVarianceCalculator.hpp"
 #include "partCfg_global.hpp"
 
 namespace Accumulators {
-void MeanVarianceCalculator::update() {
-  m_acc(m_obs->operator()(partCfg()));
-}
+void MeanVarianceCalculator::update() { m_acc(m_obs->operator()(partCfg())); }
 
 std::vector<double> MeanVarianceCalculator::get_mean() {
   return m_acc.get_mean();
@@ -60,5 +57,4 @@ void MeanVarianceCalculator::set_internal_state(std::string const &state) {
 
   ia >> m_acc;
 }
-
 }

@@ -21,21 +21,21 @@
 #define ESPRESSO_ACCUMULATORS_HPP
 
 #include "accumulators/AccumulatorBase.hpp"
-#include "accumulators/MeanVarianceCalculator.hpp"
 #include "accumulators/Correlator.hpp"
-#include <vector>
+#include "accumulators/MeanVarianceCalculator.hpp"
 #include <memory>
+#include <vector>
 
 namespace Accumulators {
 
-extern std::vector<std::shared_ptr<Accumulators::AccumulatorBase>> auto_update_accumulators;
+extern std::vector<std::shared_ptr<Accumulators::AccumulatorBase>>
+    auto_update_accumulators;
 
 void auto_update();
 
 inline bool auto_update_enabled() {
-  return auto_update_accumulators.size() >0;
+  return auto_update_accumulators.size() > 0;
+}
 }
 
-}
-
-#endif //ESPRESSO_ACCUMULATORS_HPP
+#endif // ESPRESSO_ACCUMULATORS_HPP

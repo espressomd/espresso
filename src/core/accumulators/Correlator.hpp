@@ -116,7 +116,6 @@
 #ifndef _STATISTICS_CORRELATION_H
 #define _STATISTICS_CORRELATION_H
 
-
 #include <boost/multi_array.hpp>
 #include <boost/serialization/access.hpp>
 
@@ -176,11 +175,11 @@ public:
    */
   Correlator(int tau_lin, double tau_max, double dt,
              std::string const &compress1_, std::string const &compress2_,
-             std::string const &corr_operation, const obs_ptr &obs1, const obs_ptr &obs2)
-      : finalized(0), t(0), m_tau_lin(tau_lin),
-        m_dt(dt), m_tau_max(tau_max), compressA_name(compress1_),
-        compressB_name(compress2_), corr_operation_name(corr_operation),
-        A_obs(obs1), B_obs(obs2) {
+             std::string const &corr_operation, const obs_ptr &obs1,
+             const obs_ptr &obs2)
+      : finalized(0), t(0), m_tau_lin(tau_lin), m_dt(dt), m_tau_max(tau_max),
+        compressA_name(compress1_), compressB_name(compress2_),
+        corr_operation_name(corr_operation), A_obs(obs1), B_obs(obs2) {
     initialize();
   }
 
@@ -201,7 +200,7 @@ public:
    * the correlation estimates have to be updated.
    *
    */
-  void update ();
+  void update();
 
   /** At the end of data collection, go through the whole hierarchy and
    * correlate data left there

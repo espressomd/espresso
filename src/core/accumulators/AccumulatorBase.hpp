@@ -9,5 +9,4 @@ public:
 };
 }
 
-
 #endif
