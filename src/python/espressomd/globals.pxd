@@ -25,7 +25,6 @@ cdef extern from "global.hpp":
     int FIELD_NODEGRID
     int FIELD_MAXNUMCELLS
     int FIELD_MINNUMCELLS
-    int FIELD_NODEGRID
     int FIELD_NPTISO_PISTON
     int FIELD_NPTISO_PDIFF
     int FIELD_PERIODIC
@@ -34,7 +33,6 @@ cdef extern from "global.hpp":
     int FIELD_LEES_EDWARDS_OFFSET
     int FIELD_TEMPERATURE
     int FIELD_THERMO_SWITCH
-    int FIELD_TEMPERATURE
     int FIELD_LANGEVIN_GAMMA
     IF ROTATION:
         int FIELD_LANGEVIN_GAMMA_ROTATION
