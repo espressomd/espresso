@@ -195,7 +195,7 @@ cdef class ParticleHandle(object):
         """
 
         def __set__(self, pos_folded):
-            raise Exception("setting a folded position is not implemented")
+            raise AttributeError("setting a folded position is not implemented")
 
         def __get__(self):
             self.update_particle_data()
@@ -378,7 +378,7 @@ cdef class ParticleHandle(object):
                 if set_particle_mass(self.id, _mass) == 1:
                     raise Exception("Set particle position first.")
             ELSE:
-                raise Exception("You are trying to set the particle mass \
+                raise AttributeError("You are trying to set the particle mass \
                                      but the mass feature is not compiled in.")
 
         def __get__(self):
@@ -466,7 +466,7 @@ cdef class ParticleHandle(object):
             """
 
             def __set__(self, _q):
-                raise Exception(
+                raise AttributeError(
                     "Setting the director is not implemented in the c++-core of Espresso.")
 
             def __get__(self):
