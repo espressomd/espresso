@@ -6,9 +6,7 @@
 namespace Utils {
 
 template <typename T> struct AccumulatorData {
-  AccumulatorData()
-      : m_mean_old(0.0), m_mean_new(0.0), m_variance_old(0.0),
-        m_variance_new(0.0) {}
+  AccumulatorData() = default;
   T m_mean_old;
   T m_mean_new;
   T m_variance_old;
