@@ -2159,7 +2159,7 @@ def _add_particle_slice_properties():
 
         elif attribute == "vs_relative":
             nlvl = nesting_level(values)
-            if nlvl == 2: 
+            if nlvl in [1, 2]: 
                 set_slice_one_for_all(particle_slice, attribute, values)
             elif nlvl == 3 and len(values) == N:  
                 set_slice_one_for_each(particle_slice, attribute, values)
