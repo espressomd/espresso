@@ -7,24 +7,23 @@ namespace Utils {
 
 template <typename T> struct AccumulatorData {
   AccumulatorData() = default;
-  T mean_old;
-  T mean_new;
-  T variance_old;
-  T variance_new;
+  T mean;
+  T variance;
+
 private:
   // Allow serialization to access non-public data members.
   friend class boost::serialization::access;
 
-  template<typename Archive>
-  void serialize(Archive& ar, const unsigned version) {
-    ar & mean_old & mean_new & variance_old & variance_new;
+  template <typename Archive>
+  void serialize(Archive &ar, const unsigned version) {
+    ar &mean &variance;
   }
 };
 
 class Accumulator {
 public:
   Accumulator(std::size_t N) : m_n(0), m_acc_data(N) {}
-  void operator()(const std::vector<double>&);
+  void operator()(const std::vector<double> &);
   std::vector<double> get_mean() const;
   std::vector<double> get_variance() const;
 
@@ -34,9 +33,9 @@ private:
   // Allow serialization to access non-public data members.
   friend class boost::serialization::access;
 
-  template<typename Archive>
-  void serialize(Archive& ar, const unsigned version) {
-    ar & m_n & m_acc_data;
+  template <typename Archive>
+  void serialize(Archive &ar, const unsigned version) {
+    ar &m_n &m_acc_data;
   }
 };
 
@@ -46,38 +45,21 @@ inline void Accumulator::operator()(const std::vector<double> &data) {
         "The given data size does not fit the initialized size!");
   ++m_n;
   if (m_n == 1) {
-    auto acc_data_it = m_acc_data.begin();
-    auto data_it = data.begin();
-    for (; acc_data_it != m_acc_data.end() and data_it != data.end();
-         ++acc_data_it, ++data_it) {
-      (*acc_data_it).mean_old = (*acc_data_it).mean_new = *data_it;
-      (*acc_data_it).variance_old = (*acc_data_it).variance_new = 0.0;
-    }
-  } else {
-    // Calculate mean value.
-    auto acc_data_it = m_acc_data.begin();
-    auto data_it = data.begin();
-    for (; acc_data_it != m_acc_data.end() and data_it != data.end();
-         ++acc_data_it, ++data_it) {
-      (*acc_data_it).mean_new = (*acc_data_it).mean_old +
-                                  (*data_it - (*acc_data_it).mean_old) / m_n;
-    }
-    // Calculate variance.
-    acc_data_it = m_acc_data.begin();
-    data_it = data.begin();
-    for (; acc_data_it != m_acc_data.end() and data_it != data.end();
-         ++acc_data_it, ++data_it) {
-      (*acc_data_it).variance_new =
-          ((m_n - 1) * (*acc_data_it).variance_old +
-           (*data_it - (*acc_data_it).mean_old) *
-               (*data_it - (*acc_data_it).mean_new)) /
-          m_n;
-    }
-    std::for_each(m_acc_data.begin(), m_acc_data.end(),
-                   [](AccumulatorData<double> &acc_data) {
-                     acc_data.mean_old = acc_data.mean_new;
-                     acc_data.variance_old = acc_data.variance_new;
+    std::transform(data.begin(), data.end(), m_acc_data.begin(),
+                   [](double d) -> AccumulatorData<double> {
+                     return {d, 0.0};
                    });
+  } else {
+    std::transform(
+        m_acc_data.begin(), m_acc_data.end(), data.begin(), m_acc_data.begin(),
+        [this](AccumulatorData<double> &a,
+               double d) -> AccumulatorData<double> {
+          auto const old_mean = a.mean;
+          auto const new_mean = old_mean + (d - old_mean) / m_n;
+          auto const new_variance =
+              ((m_n - 1) * a.variance + (d - old_mean) * (d - new_mean)) / m_n;
+          return {new_mean, new_variance};
+        });
   }
 }
 
@@ -85,7 +67,7 @@ inline std::vector<double> Accumulator::get_mean() const {
   std::vector<double> res;
   std::transform(
       m_acc_data.begin(), m_acc_data.end(), std::back_inserter(res),
-      [](const AccumulatorData<double> &acc_data) { return acc_data.mean_new; });
+      [](const AccumulatorData<double> &acc_data) { return acc_data.mean; });
   return res;
 }
 
@@ -93,12 +75,10 @@ inline std::vector<double> Accumulator::get_variance() const {
   std::vector<double> res;
   std::transform(m_acc_data.begin(), m_acc_data.end(), std::back_inserter(res),
                  [](const AccumulatorData<double> &acc_data) {
-                   return acc_data.variance_new;
+                   return acc_data.variance;
                  });
   return res;
 }
-
-
 }
 
 #endif
