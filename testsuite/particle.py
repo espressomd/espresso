@@ -232,10 +232,15 @@ class ParticleProperties(ut.TestCase):
         # Copy individual properties of particle 0
         print("If this test hangs, there is an mpi deadlock in a particle property setter." )
         for p in espressomd.particle_data.particle_attributes:
-            if p in ["director","image_box","node","vs_relative"  ]: continue
             # Uncomment to identify guilty property
             #print( p)
-            setattr(s.part[:],p,getattr(s.part[0],p))
+            
+            if not hasattr(s.part[0],p):
+                raise Exception("Inconsistency between ParticleHandle and particle_data.particle_attributes")
+            try: 
+                setattr(s.part[:],p,getattr(s.part[0],p))
+            except AttributeError:
+                print("Skipping read-only",p)
             # Cause a differtn mpi callback to uncover deadlock immediately
             x=getattr(s.part[:],p)
             
