@@ -82,17 +82,17 @@ int ReactionAlgorithm::do_reaction(int reaction_steps) {
 * Adds a reaction to the reaction system
 */
 void ReactionAlgorithm::add_reaction(
-    double Gamma, const std::vector<int> &_reactant_types,
-    const std::vector<int> &_reactant_coefficients,
-    const std::vector<int> &_product_types,
-    const std::vector<int> &_product_coefficients) {
+    double Gamma, const std::vector<int> &reactant_types,
+    const std::vector<int> &reactant_coefficients,
+    const std::vector<int> &product_types,
+    const std::vector<int> &product_coefficients) {
   SingleReaction new_reaction;
 
   new_reaction.Gamma = Gamma;
-  new_reaction.reactant_types = _reactant_types;
-  new_reaction.reactant_coefficients = _reactant_coefficients;
-  new_reaction.product_types = _product_types;
-  new_reaction.product_coefficients = _product_coefficients;
+  new_reaction.reactant_types = reactant_types;
+  new_reaction.reactant_coefficients = reactant_coefficients;
+  new_reaction.product_types = product_types;
+  new_reaction.product_coefficients = product_coefficients;
 
   new_reaction.nu_bar = calculate_nu_bar(new_reaction.reactant_coefficients,
                                          new_reaction.product_coefficients);
@@ -1765,13 +1765,13 @@ double ConstantpHEnsemble::calculate_acceptance_probability(
   return bf;
 }
 
-void WidomInsertion::add_reaction (double Gamma, const std::vector<int> &_reactant_types,
-    const std::vector<int> &_reactant_coefficients,
-    const std::vector<int> &_product_types,
-    const std::vector<int> &_product_coefficients) {
+void WidomInsertion::add_reaction (double Gamma, const std::vector<int> &reactant_types,
+    const std::vector<int> &reactant_coefficients,
+    const std::vector<int> &product_types,
+    const std::vector<int> &product_coefficients) {
     number_of_insertions.push_back(0);
     summed_exponentials.push_back(0);
-    ReactionAlgorithm::add_reaction(Gamma, _reactant_types, _reactant_coefficients, _product_types, _product_coefficients);
+    ReactionAlgorithm::add_reaction(Gamma, reactant_types, reactant_coefficients, product_types, product_coefficients);
 }
 
 double WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
