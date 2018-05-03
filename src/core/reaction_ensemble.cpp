@@ -1765,6 +1765,15 @@ double ConstantpHEnsemble::calculate_acceptance_probability(
   return bf;
 }
 
+void WidomInsertion::add_reaction (double Gamma, const std::vector<int> &_reactant_types,
+    const std::vector<int> &_reactant_coefficients,
+    const std::vector<int> &_product_types,
+    const std::vector<int> &_product_coefficients) {
+    number_of_insertions.push_back(0);
+    summed_exponentials.push_back(0);
+    ReactionAlgorithm::add_reaction(Gamma, _reactant_types, _reactant_coefficients, _product_types, _product_coefficients);
+}
+
 double WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
   SingleReaction &current_reaction = reactions[reaction_id];
   const double E_pot_old = calculate_current_potential_energy_of_system();
@@ -1793,9 +1802,9 @@ double WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
   restore_properties(changed_particles_properties, number_of_saved_properties);
 
   double const exponential = exp(-1.0 / temperature * (E_pot_new - E_pot_old));
-  summed_exponentials += exponential;
-  number_of_insertions += 1;
-  double const average_exponential = summed_exponentials / number_of_insertions;
+  summed_exponentials[reaction_id] += exponential;
+  number_of_insertions[reaction_id] += 1;
+  double const average_exponential = summed_exponentials[reaction_id] / number_of_insertions[reaction_id];
   return -temperature * log(average_exponential);
 }
 

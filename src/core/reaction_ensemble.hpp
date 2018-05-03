@@ -114,7 +114,7 @@ public:
   void check_reaction_ensemble();
 
   int delete_particle(int p_id);
-  void add_reaction(double Gamma,
+  virtual void add_reaction(double Gamma,
                     const std::vector<int> & _reactant_types,
                     const std::vector<int> & _reactant_coefficients,
                     const std::vector<int> & _product_types,
@@ -309,10 +309,14 @@ private:
 class WidomInsertion : public ReactionAlgorithm {
 public:
     double measure_excess_chemical_potential(int reaction_id);
-
+    virtual void add_reaction(double Gamma,
+                        const std::vector<int> & _reactant_types,
+                        const std::vector<int> & _reactant_coefficients,
+                        const std::vector<int> & _product_types,
+                        const std::vector<int> & _product_coefficients) override;
 private:
-    int number_of_insertions=0;
-    double summed_exponentials=0.0;
+    std::vector<int> number_of_insertions;
+    std::vector<double> summed_exponentials;
 };
 
 //////////////////////////////////////////////////////////////////free functions
