@@ -228,13 +228,13 @@ cdef extern from "interaction_data.hpp":
     cdef int n_bonded_ia
 
 cdef class ParticleHandle(object):
-    cdef public int id
-    cdef bint valid
+    cdef public int _id
     cdef const particle * particle_data
     cdef int update_particle_data(self) except -1
 
 cdef class _ParticleSliceImpl:
     cdef public id_selection
+    cdef int _chunk_size
 
 cdef extern from "grid.hpp":
     Vector3d folded_position(const particle *)
