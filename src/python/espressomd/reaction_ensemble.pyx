@@ -162,6 +162,9 @@ cdef class ReactionAlgorithm(object):
         default_charges : dictionary
                         A dictionary of default charges for types that occur in the provided reaction.
 
+        check_for_electroneutrality: bool
+                        A boolean value that checks wether the provided reaction is electro neutral.
+
         """
         self._params["check_for_electroneutrality"]=True
         for k in self._required_keys_add():
