@@ -982,8 +982,8 @@ In order to calculate the running mean and variance of an observable
     system.time_step = 0.01
     system.part.add(id=0, pos=[5.0, 5.0, 5.0])
     position_observable = espressomd.observables.ParticlePositions(ids=(0,))
-    accumulator = espressomd.accumulators.MeanVarianceCalculator(obs=position_observable)
-    system.auto_update_mean_variance_calculators.add(accumulator)
+    accumulator = espressomd.accumulators.MeanVarianceCalculator(obs=position_observable, delta_N=1)
+    system.auto_update_accumulators.add(accumulator)
     # Perform integration (not shown)
     print accumulator.get_mean()
     print accumulator.get_variance()

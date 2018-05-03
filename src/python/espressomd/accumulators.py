@@ -5,21 +5,15 @@ import numpy as np
 
 
 @script_interface_register
-class AccumulatorBase(ScriptInterfaceHelper):
-    """
-    Base class for Accumulators.
-
-    """
-    _so_name = "Accumulators::AccumulatorBase"
-
-@script_interface_register
-class MeanVarianceCalculator(AccumulatorBase):
+class MeanVarianceCalculator(ScriptInterfaceHelper):
     """
     Accumulates results from observables.
 
     Parameters
     ----------
     obs : Instance of :class:`espressomd.observables.Observable`.
+    delta_N : :obj:`int`
+        Number of timesteps between subsequent samples for the auto update mechanism.
 
     Methods
     -------
@@ -43,7 +37,7 @@ class MeanVarianceCalculator(AccumulatorBase):
 
 
 @script_interface_register
-class Correlator(AccumulatorBase):
+class Correlator(ScriptInterfaceHelper):
     """
     Calculates correlations based on results from observables.
 
@@ -131,12 +125,8 @@ class Correlator(AccumulatorBase):
                            observables than `ParticlePositions`, the physical
                            meaning of the result is unclear.
     
-    dt : :obj:`float`
-         The time interval of sampling data points. When autoupdate is used,
-         `dt` has to be a multiple of timestep. It is also used to produce time
-         axis in real units. Warning: if `dt` is close to the timestep,
-         autoupdate is strongly recommended. Otherwise cpu time is wasted on
-         passing the control between the script and kernel.
+    delta_N : :obj:`int`
+        Number of timesteps between subsequent samples for the auto update mechanism.
 
     tau_max : :obj:`float`
               This is the maximum value of :math:`\tau` for which the
@@ -213,20 +203,12 @@ class AutoUpdateAccumulators(ScriptInterfaceHelper):
     _so_name = "Accumulators::AutoUpdateAccumulators"
     _so_creation_policy = "LOCAL"
 
-    def add(self, *args, **kwargs):
+    def add(self, Accumulator):
         """
         Adds a Accumulator instance to the auto-update list in the system.
 
         """
-        if len(args) == 1:
-            if isinstance(args[0], AccumulatorBase):
-                accumulator = args[0]
-            else:
-                raise TypeError(
-                    "Either a Accumulator object or key-value pairs for the \
-                    parameters of a Accumulator object need to be passed.")
-        self.call_method("add", object=accumulator)
-        return accumulator
+        self.call_method("add", object=Accumulator)
 
     def remove(self, Accumulator):
         """

@@ -14,7 +14,7 @@ system.min_global_cut = 2.0
 system.part.add(pos=[1.0]*3)
 system.part.add(pos=[1.0, 1.0, 2.0])
 obs = espressomd.observables.ParticlePositions(ids=[0,1])
-acc = espressomd.accumulators.MeanVarianceCalculator(obs=obs, delta_N=1)
+acc = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
 acc.update()
 system.part[0].pos = [1.0, 2.0, 3.0]
 acc.update()

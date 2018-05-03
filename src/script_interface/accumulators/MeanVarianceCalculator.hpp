@@ -47,7 +47,7 @@ public:
       if (m_obs)
         m_accumulator =
             std::make_shared<::Accumulators::MeanVarianceCalculator>(
-                m_obs->observable(), get_value<int>(params, "delta_N"));
+                m_obs->observable(), get_value_or<int>(params, "delta_N", 1));
   }
 
   std::shared_ptr<::Accumulators::MeanVarianceCalculator> mean_variance_calculator() {

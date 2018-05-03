@@ -35,8 +35,8 @@ c_pos = Correlator(obs1=pos_obs, tau_lin=16, tau_max=100., delta_N=10,
     corr_operation="square_distance_componentwise", compress1="discard1")
 c_vel = Correlator(obs1=vel_obs, tau_lin=16, tau_max=20., delta_N=1,
     corr_operation="scalar_product", compress1="discard1")
-system.auto_update_correlators.add(c_pos)
-system.auto_update_correlators.add(c_vel)
+system.auto_update_accumulators.add(c_pos)
+system.auto_update_accumulators.add(c_vel)
 
 system.integrator.run(1000000)
 
