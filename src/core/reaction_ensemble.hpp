@@ -14,7 +14,7 @@ struct SingleReaction {
   std::vector<int> reactant_coefficients;
   std::vector<int> product_types;
   std::vector<int> product_coefficients;
-  double Gamma;
+  double gamma;
   // calculated values that are stored for performance reasons
   int nu_bar;
 };
@@ -114,11 +114,11 @@ public:
   void check_reaction_ensemble();
 
   int delete_particle(int p_id);
-  virtual void add_reaction(double Gamma,
-                    const std::vector<int> & reactant_types,
-                    const std::vector<int> & reactant_coefficients,
-                    const std::vector<int> & product_types,
-                    const std::vector<int> & product_coefficients);
+  void add_reaction(double gamma,
+                    const std::vector<int> & _reactant_types,
+                    const std::vector<int> & _reactant_coefficients,
+                    const std::vector<int> & _product_types,
+                    const std::vector<int> & _product_coefficients);
 
   bool do_global_mc_move_for_particles_of_type(int type,
                                                int particle_number_of_type,
@@ -309,12 +309,7 @@ private:
 class WidomInsertion : public ReactionAlgorithm {
 public:
     double measure_excess_chemical_potential(int reaction_id);
-    virtual void add_reaction(double Gamma,
-                        const std::vector<int> & reactant_types,
-                        const std::vector<int> & reactant_coefficients,
-                        const std::vector<int> & product_types,
-                        const std::vector<int> & product_coefficients) override;
-private:
+
     std::vector<int> number_of_insertions;
     std::vector<double> summed_exponentials;
 };
