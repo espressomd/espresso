@@ -233,24 +233,6 @@ void Correlator::initialize() {
   hierarchy_depth = 0;
   // Class members are assigned via the initializer list
 
-  // Input validation
-  if (m_dt <= 0) {
-    throw std::runtime_error(init_errors[2]);
-  }
-
-  if ((m_dt - time_step) < -1e-6 * time_step) {
-    throw std::runtime_error(init_errors[15]);
-  }
-
-  // check if m_dt is a multiple of the md timestep
-  if (std::abs(m_dt / time_step - round(m_dt / time_step)) > 1e-6) {
-    throw std::runtime_error(init_errors[16]);
-  }
-
-  // Time steps and intervals
-  update_frequency =
-      std::floor(m_dt / time_step + std::numeric_limits<double>::round_error());
-
   if (m_tau_lin == 1) { // use the default
     m_tau_lin = (int)ceil(m_tau_max / m_dt);
     if (m_tau_lin % 2)
@@ -396,6 +378,7 @@ void Correlator::initialize() {
 void Correlator::update() {
   if (finalized) {
     runtimeErrorMsg() << "No data can be added after finalize() was called.";
+    return;
   }
   // We must now go through the hierarchy and make sure there is space for the
   // new

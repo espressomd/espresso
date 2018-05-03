@@ -45,7 +45,11 @@ public:
     add_parameters(
         {{"tau_lin", m_correlator, &CoreCorr::tau_lin},
          {"tau_max", m_correlator, &CoreCorr::tau_max},
-         {"dt", m_correlator, &CoreCorr::dt},
+         {"delta_N",
+          [this](const Variant &v) {
+            m_correlator->delta_N = get_value<int>(v);
+          },
+          [this]() { return m_correlator->delta_N; }},
          {"compress1", m_correlator, &CoreCorr::compress1},
          {"compress2", m_correlator, &CoreCorr::compress2},
          {"corr_operation", m_correlator, &CoreCorr::correlation_operation},
@@ -66,10 +70,10 @@ public:
 
     m_correlator = std::make_shared<CoreCorr>(
         get_value<int>(args, "tau_lin"), get_value<double>(args, "tau_max"),
-        get_value<double>(args, "dt"),
+        get_value<int>(args, "delta_N"),
         /* These two are optional */
-        get_value_or<std::string>(args, "compess1", ""),
-        get_value_or<std::string>(args, "compess2", ""),
+        get_value_or<std::string>(args, "compress1", ""),
+        get_value_or<std::string>(args, "compress2", ""),
         get_value<std::string>(args, "corr_operation"), m_obs1->observable(),
         m_obs2->observable());
   }
@@ -80,14 +84,12 @@ public:
 
   virtual Variant call_method(std::string const &method,
                               VariantMap const &parameters) override {
-    if (method == "update") {
+    if (method == "update")
       m_correlator->update();
-    }
     if (method == "finalize")
       m_correlator->finalize();
-    if (method == "get_correlation") {
+    if (method == "get_correlation")
       return m_correlator->get_correlation();
-    }
 
     return {};
   }

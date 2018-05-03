@@ -26,7 +26,7 @@ std::vector<std::shared_ptr<Accumulators::AccumulatorBase>>
 
 void auto_update() {
   for (auto &c : auto_update_accumulators) {
-    c->update();
+    c->auto_update();
   }
 }
 }

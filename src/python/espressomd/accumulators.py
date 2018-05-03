@@ -220,7 +220,6 @@ class Correlator(ScriptInterfaceHelper):
     _so_name = "Accumulators::Correlator"
     _so_bind_methods = (
         "update",
-        "auto_update",
         "finalize")
     _so_creation_policy = "LOCAL"
 
