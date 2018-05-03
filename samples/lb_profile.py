@@ -42,7 +42,7 @@ system.integrator.run(1000)
 
 
 accumulator = espressomd.accumulators.MeanVarianceCalculator(obs=fluid_obs)
-system.auto_update_mean_variance_calculators.add(accumulator)
+system.auto_update_accumulators.add(accumulator)
 system.integrator.run(500)
 
 lb_fluid_profile = accumulator.get_mean()
