@@ -3,8 +3,17 @@ from .script_interface import ScriptInterfaceHelper, script_interface_register
 import numpy as np
 
 
+
 @script_interface_register
-class MeanVarianceCalculator(ScriptInterfaceHelper):
+class AccumulatorBase(ScriptInterfaceHelper):
+    """
+    Base class for Accumulators.
+
+    """
+    _so_name = "Accumulators::AccumulatorBase"
+
+@script_interface_register
+class MeanVarianceCalculator(AccumulatorBase):
     """
     Accumulates results from observables.
 
@@ -32,42 +41,9 @@ class MeanVarianceCalculator(ScriptInterfaceHelper):
     _so_creation_policy = "LOCAL"
 
 
-@script_interface_register
-class AutoUpdateMeanVarianceCalculators(ScriptInterfaceHelper):
-    """
-    Class for handling auto-update of MeanVarianceCalculators used by
-    :class:`espressomd.System`.
-
-    """
-    _so_name = "Accumulators::AutoUpdateMeanVarianceCalculators"
-    _so_creation_policy = "LOCAL"
-
-    def add(self, *args, **kwargs):
-        """
-        Adds an MeanVarianceCalculator instance to the auto-update list in the system.
-
-        """
-        if len(args) == 1:
-            if isinstance(args[0], MeanVarianceCalculator):
-                accumulator = args[0]
-            else:
-                raise TypeError(
-                    "Either a Accumulator object or key-value pairs for the \
-                    parameters of a Accumulator object need to be passed.")
-        else:
-            accumulator = ObservableAccumulator(**kwargs)
-        self.call_method("add", object=accumulator)
-        return accumulator
-
-    def remove(self, Accumulator):
-        """
-        Removes an MeanVarianceCalculator from the auto-update list.
-
-        """
-        self.call_method("remove", object=Accumulator)
 
 @script_interface_register
-class Correlator(ScriptInterfaceHelper):
+class Correlator(AccumulatorBase):
     """
     Calculates correlations based on results from observables.
 
@@ -228,21 +204,33 @@ class Correlator(ScriptInterfaceHelper):
         return res.reshape((self.n_result, 2 + self.dim_corr))
 
 @script_interface_register
-class AutoUpdateCorrelators(ScriptInterfaceHelper):
-    _so_name = "Accumulators::AutoUpdateCorrelators"
+class AutoUpdateAccumulators(ScriptInterfaceHelper):
+    """
+    Class for handling auto-update of Accumulators used by
+    :class:`espressomd.System`.
+
+    """
+    _so_name = "Accumulators::AutoUpdateAccumulators"
     _so_creation_policy = "LOCAL"
 
     def add(self, *args, **kwargs):
+        """
+        Adds a Accumulator instance to the auto-update list in the system.
+
+        """
         if len(args) == 1:
-            if isinstance(args[0], Correlator):
-                correlator = args[0]
+            if isinstance(args[0], AccumulatorBase):
+                accumulator = args[0]
             else:
                 raise TypeError(
-                    "Either a Correlator object or key-value pairs for the parameters of a Correlator object need to be passed.")
-        else:
-            correlator = Correlator(**kwargs)
-        self.call_method("add", object=correlator)
-        return correlator
+                    "Either a Accumulator object or key-value pairs for the \
+                    parameters of a Accumulator object need to be passed.")
+        self.call_method("add", object=accumulator)
+        return accumulator
 
-    def remove(self, Correlator):
-        self.call_method("remove", object=Correlator)
+    def remove(self, Accumulator):
+        """
+        Removes an MeanVarianceCalculator from the auto-update list.
+
+        """
+        self.call_method("remove", object=Accumulator)

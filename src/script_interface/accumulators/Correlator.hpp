@@ -22,6 +22,7 @@
 #ifndef SCRIPT_INTERFACE_CORRELATORS_CORRELATOR_HPP
 #define SCRIPT_INTERFACE_CORRELATORS_CORRELATOR_HPP
 
+#include "AccumulatorBase.hpp"
 #include "ScriptInterface.hpp"
 #include "auto_parameters/AutoParameters.hpp"
 
@@ -35,7 +36,7 @@
 namespace ScriptInterface {
 namespace Accumulators {
 
-class Correlator : public AutoParameters<Correlator> {
+class Correlator : public AccumulatorBase {
   using CoreCorr = ::Accumulators::Correlator;
 
 public:
@@ -45,11 +46,6 @@ public:
     add_parameters(
         {{"tau_lin", m_correlator, &CoreCorr::tau_lin},
          {"tau_max", m_correlator, &CoreCorr::tau_max},
-         {"delta_N",
-          [this](const Variant &v) {
-            m_correlator->delta_N = get_value<int>(v);
-          },
-          [this]() { return m_correlator->delta_N; }},
          {"compress1", m_correlator, &CoreCorr::compress1},
          {"compress2", m_correlator, &CoreCorr::compress2},
          {"corr_operation", m_correlator, &CoreCorr::correlation_operation},
@@ -85,11 +81,11 @@ public:
   virtual Variant call_method(std::string const &method,
                               VariantMap const &parameters) override {
     if (method == "update")
-      m_correlator->update();
+      correlator()->update();
     if (method == "finalize")
-      m_correlator->finalize();
+      correlator()->finalize();
     if (method == "get_correlation")
-      return m_correlator->get_correlation();
+      return correlator()->get_correlation();
 
     return {};
   }
@@ -100,6 +96,14 @@ public:
     state[1] = m_correlator->get_internal_state();
 
     return state;
+  }
+
+  std::shared_ptr<::Accumulators::AccumulatorBase> accumulator() override {
+    return std::static_pointer_cast<::Accumulators::AccumulatorBase>(m_correlator);
+  }
+
+  std::shared_ptr<const ::Accumulators::AccumulatorBase> accumulator() const override {
+    return std::static_pointer_cast<::Accumulators::AccumulatorBase>(m_correlator);
   }
 
 private:

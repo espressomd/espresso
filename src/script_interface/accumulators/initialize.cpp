@@ -20,8 +20,7 @@
 #include "initialize.hpp"
 #include "ScriptInterface.hpp"
 
-#include "AutoUpdateCorrelators.hpp"
-#include "AutoUpdateMeanVarianceCalculators.hpp"
+#include "AutoUpdateAccumulators.hpp"
 #include "Correlator.hpp"
 #include "MeanVarianceCalculator.hpp"
 
@@ -30,16 +29,12 @@ namespace Accumulators {
 
 void initialize() {
   ScriptInterface::register_new<
-      ScriptInterface::Accumulators::AutoUpdateMeanVarianceCalculators>(
-      "Accumulators::AutoUpdateMeanVarianceCalculators");
+      ScriptInterface::Accumulators::AutoUpdateAccumulators>(
+      "Accumulators::AutoUpdateAccumulators");
 
   ScriptInterface::register_new<
       ScriptInterface::Accumulators::MeanVarianceCalculator>(
       "Accumulators::MeanVarianceCalculator");
-
-  ScriptInterface::register_new<
-      ScriptInterface::Accumulators::AutoUpdateCorrelators>(
-      "Accumulators::AutoUpdateCorrelators");
 
   ScriptInterface::register_new<ScriptInterface::Accumulators::Correlator>(
       "Accumulators::Correlator");

@@ -47,7 +47,7 @@ class CorrelatorTest(ut.TestCase):
                         corr_operation="square_distance_componentwise")
 
         s.integrator.run(1000)
-        s.auto_update_correlators.add(C2)
+        s.auto_update_accumulators.add(C2)
         s.integrator.run(20000)
 
 

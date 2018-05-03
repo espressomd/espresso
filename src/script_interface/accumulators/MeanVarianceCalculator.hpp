@@ -22,6 +22,7 @@
 #ifndef SCRIPT_INTERFACE_ACCUMULATORS_ACCUMULATOR_HPP
 #define SCRIPT_INTERFACE_ACCUMULATORS_ACCUMULATOR_HPP
 
+#include "AccumulatorBase.hpp"
 #include "ScriptInterface.hpp"
 #include "core/accumulators/MeanVarianceCalculator.hpp"
 #include "observables/Observable.hpp"
@@ -33,15 +34,11 @@
 namespace ScriptInterface {
 namespace Accumulators {
 
-class MeanVarianceCalculator : public AutoParameters<MeanVarianceCalculator> {
+class MeanVarianceCalculator : public AccumulatorBase {
 public:
   /* as_const is to make obs read-only. */
   MeanVarianceCalculator() {
-    add_parameters({{"obs", Utils::as_const(m_obs)},
-                    {"delta_N", [this](const Variant &v){
-        m_accumulator->delta_N = get_value<int>(v);},
-                                [this]() {
-        return m_accumulator->delta_N;}}});
+    add_parameters({{"obs", Utils::as_const(m_obs)}});
   }
 
   void construct(VariantMap const &params) override {
@@ -53,41 +50,54 @@ public:
                 m_obs->observable(), get_value<int>(params, "delta_N"));
   }
 
-  std::shared_ptr<::Accumulators::MeanVarianceCalculator> accumulator() {
+  std::shared_ptr<::Accumulators::MeanVarianceCalculator> mean_variance_calculator() {
+      return m_accumulator;
+  }
+  
+  std::shared_ptr<const ::Accumulators::MeanVarianceCalculator> mean_variance_calculator() const {
       return m_accumulator;
   }
 
   virtual Variant call_method(std::string const &method,
                               VariantMap const &parameters) override {
       if (method == "update") {
-        m_accumulator->update();
+        mean_variance_calculator()->update();
       }
       if (method == "get_mean")
-        return m_accumulator->get_mean();
+        return mean_variance_calculator()->get_mean();
 
       if (method == "get_variance")
-        return m_accumulator->get_variance();
+        return mean_variance_calculator()->get_variance();
       return {};
   }
 
   Variant get_state() const override {
       std::vector<Variant> state(2);
       state[0] = ScriptInterfaceBase::get_state();
-      state[1] = m_accumulator->get_internal_state();
+      state[1] = mean_variance_calculator()->get_internal_state();
       return state;
+  }
+  
+  std::shared_ptr<::Accumulators::AccumulatorBase> accumulator() override {
+    return std::static_pointer_cast<::Accumulators::AccumulatorBase>(m_accumulator);
+  }
+
+  std::shared_ptr<const ::Accumulators::AccumulatorBase> accumulator() const override {
+    return std::static_pointer_cast<::Accumulators::AccumulatorBase>(m_accumulator);
   }
 
 private:
   void set_state(Variant const &state) override {
       auto const &state_vec = boost::get<std::vector<Variant>>(state);
       ScriptInterfaceBase::set_state(state_vec.at(0));
-      m_accumulator->set_internal_state(
+      mean_variance_calculator()->set_internal_state(
           boost::get<std::string>(state_vec.at(1)));
   }
 
   /* The actual accumulator */
   std::shared_ptr<::Accumulators::MeanVarianceCalculator> m_accumulator;
   std::shared_ptr<Observables::Observable> m_obs;
+
   };
 
 } /* namespace Accumulator */

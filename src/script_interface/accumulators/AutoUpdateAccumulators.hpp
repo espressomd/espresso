@@ -21,21 +21,21 @@
 #ifndef SCRIPT_INTERFACE_ACCUMULATOR_AUTOUPDATEACCUMULATORS_HPP
 #define SCRIPT_INTERFACE_ACCUMULATOR_AUTOUPDATEACCUMULATORS_HPP
 
-#include "MeanVarianceCalculator.hpp"
+#include "AccumulatorBase.hpp"
 #include "ScriptInterface.hpp"
 #include "ScriptObjectRegistry.hpp"
 #include "core/accumulators.hpp"
 
 namespace ScriptInterface {
 namespace Accumulators {
-class AutoUpdateMeanVarianceCalculators
-    : public ScriptObjectRegistry<MeanVarianceCalculator> {
-  void add_in_core(std::shared_ptr<MeanVarianceCalculator> obj_ptr) override {
+class AutoUpdateAccumulators
+    : public ScriptObjectRegistry<AccumulatorBase> {
+  void add_in_core(std::shared_ptr<AccumulatorBase> obj_ptr) override {
     ::Accumulators::auto_update_accumulators.push_back(obj_ptr->accumulator());
   }
 
   void
-  remove_in_core(std::shared_ptr<MeanVarianceCalculator> obj_ptr) override {
+  remove_in_core(std::shared_ptr<AccumulatorBase> obj_ptr) override {
     auto it = std::find(::Accumulators::auto_update_accumulators.begin(),
                         ::Accumulators::auto_update_accumulators.end(),
                         obj_ptr->accumulator());
