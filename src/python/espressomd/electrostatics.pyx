@@ -31,11 +31,12 @@ from espressomd.utils import is_valid_type
 from . cimport checks
 from .c_analyze cimport partCfg
 
-def check_neutrality(_params):
-    if(_params["check_neutrality"]==True):
-        checks.check_charge_neutrality(partCfg())
 
 IF ELECTROSTATICS == 1:
+    def check_neutrality(_params):
+        if(_params["check_neutrality"]==True):
+            checks.check_charge_neutrality(partCfg())
+
     cdef class ElectrostaticInteraction(actors.Actor):
         def _tune(self):
             raise Exception(
