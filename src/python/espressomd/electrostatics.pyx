@@ -28,24 +28,12 @@ IF SCAFACOS == 1:
     from . cimport scafacos
 from espressomd.utils cimport handle_errors
 from espressomd.utils import is_valid_type
+from . cimport checks
+from .c_analyze cimport partCfg
 
-def check_neutrality(system, _params):
-    if(len(system.part[:].q)>0 and _params["check_neutrality"]==True):
-        charges=system.part[:].q
-        total_charge=np.sum(charges)
-        min_abs_nonzero_charge = np.min(np.abs(charges[np.nonzero(charges)[0]]))
-        if abs(total_charge)/min_abs_nonzero_charge>1e-10:
-            raise ValueError("The system is not charge neutral. Please \
-                    neutralize the system before adding a new actor via adding \
-                    the corresponding counterions to the system. Alternatively \
-                    you can turn off the electroneutrality check via supplying \
-                    check_neutrality=False when creating the actor. In this \
-                    case you may be simulating a non-neutral system which will \
-                    affect physical observables like e.g. the pressure, the \
-                    chemical potentials of charged species or potential \
-                    energies of the system. Since simulations of non charge \
-                    neutral systems are special please make sure you know what \
-                    you are doing.")
+def check_neutrality(_params):
+    if(_params["check_neutrality"]==True):
+        checks.check_charge_neutrality(partCfg())
 
 IF ELECTROSTATICS == 1:
     cdef class ElectrostaticInteraction(actors.Actor):
@@ -146,7 +134,7 @@ IF COULOMB_DEBYE_HUECKEL:
             return params
 
         def _activate_method(self):
-            check_neutrality(self.system, self._params)
+            check_neutrality(self._params)
             coulomb.method = COULOMB_DH
             self._set_params_in_es_core()
 
@@ -203,7 +191,7 @@ ELSE:
                 return params
 
             def _activate_method(self):
-                check_neutrality(self.system, self._params)
+                check_neutrality(self._params)
                 coulomb.method = COULOMB_DH
                 self._set_params_in_es_core()
 
@@ -347,7 +335,7 @@ IF P3M == 1:
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
-            check_neutrality(self.system, self._params)
+            check_neutrality(self._params)
             if self._params["tune"]:
                 self._tune()
             self._set_params_in_es_core()
@@ -464,7 +452,7 @@ IF P3M == 1:
                 self._params.update(self._get_params_from_es_core())
 
             def _activate_method(self):
-                check_neutrality(self.system, self._params)
+                check_neutrality(self._params)
                 python_p3m_gpu_init(self._params)
                 coulomb.method = COULOMB_P3M_GPU
                 if self._params["tune"]:
@@ -547,7 +535,7 @@ IF ELECTROSTATICS:
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
-            check_neutrality(self.system, self._params)
+            check_neutrality(self._params)
             coulomb.method = COULOMB_MMM1D
             self._set_params_in_es_core()
             if self._params["tune"]:
@@ -632,12 +620,11 @@ IF ELECTROSTATICS and MMM1D_GPU:
                               "maxPWerror"], self._params["far_switch_radius"], self._params["bessel_cutoff"])
 
         def _activate_method(self):
-            check_neutrality(self.system, self._params)
+            check_neutrality(self._params)
             self._set_params_in_es_core()
             coulomb.method = COULOMB_MMM1D_GPU
             if self._params["tune"]:
                 self._tune()
-
             self._set_params_in_es_core()
 
 IF ELECTROSTATICS:
@@ -753,7 +740,7 @@ IF ELECTROSTATICS:
                 raise Exception("MMM2D setup failed")
 
         def _activate_method(self):
-            check_neutrality(self.system, self._params)
+            check_neutrality(self._params)
             coulomb.method = COULOMB_MMM2D
             self._set_params_in_es_core()
             MMM2D_init()
@@ -776,7 +763,7 @@ IF ELECTROSTATICS:
                 actors.Actor.__init__(self, *args, **kwargs)
 
             def _activate_method(self):
-                check_neutrality(self.system, self._params)
+                check_neutrality(self._params)
                 coulomb_set_prefactor(self._params["prefactor"])
                 self._set_params_in_es_core()
                 mpi_bcast_coulomb_params()
