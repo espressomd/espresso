@@ -1,21 +1,18 @@
 #include <cmath>
-
-#include "PartCfg.hpp"
+#include <limits>
 
 namespace Utils {
 
-inline void check_charge_neutrality(PartCfg &partCfg) {
-  double total_charge = 0.0;
-  double min_charge = 0.0;
-  for (auto const &particle : partCfg) {
-    total_charge += particle.p.q;
-    double abs_charge = std::abs(particle.p.q);
-    if (min_charge == 0.0 and abs_charge != 0.0)
-      min_charge = abs_charge;
-    if (abs_charge < min_charge and abs_charge != 0.0)
-      min_charge = particle.p.q;
-  }
-  if (std::abs(total_charge) / min_charge > 1e-10)
+template<typename ParticleRange, typename Particle>
+inline void check_charge_neutrality(ParticleRange &prange) {
+  std::vector<double> charges;
+  std::transform(prange.begin(), prange.end(), std::back_inserter(charges),
+          [](Particle const &p){return p.p.q;});
+  double total_charge = std::accumulate(charges.begin(), charges.end(), 0.0);
+  std::nth_element(charges.begin(), charges.begin(), charges.end(),
+          [](double a, double b) {return std::abs(a) < std::abs(b);});
+  double min_abs_charge = charges[0];
+  if (std::abs(total_charge) / min_abs_charge > std::numeric_limits<double>::epsilon())
     throw std::runtime_error(
                         "The system is not charge neutral. Please "
                         "neutralize the system before adding a new actor via adding "
