@@ -682,7 +682,7 @@ int ReactionAlgorithm::create_particle(int desired_type) {
                                       // of almost zero and
                                       // therefore do not contribute
                                       // to ensemble averages.
-  if (min_dist != 0) {
+  if (min_dist > 0.0) {
     while (particle_inserted_too_close_to_another_one &&
            insert_tries < max_insert_tries) {
       pos_vec = get_random_position_in_box();
@@ -717,7 +717,7 @@ int ReactionAlgorithm::create_particle(int desired_type) {
     set_particle_q(p_id, charge);
 #endif
   }
-  if (insert_tries > max_insert_tries) {
+  if (insert_tries >= max_insert_tries) {
     throw std::runtime_error("No particle inserted");
   }
   return p_id;
