@@ -133,15 +133,18 @@ void dd_create_cell_grid() {
   cell_range[0] = cell_range[1] = cell_range[2] = max_range;
 
   if (max_range < ROUND_ERROR_PREC * box_l[0]) {
-/* this is the initialization case */
+    /* this is the non-interacting case */
+    const int cells_per_dir = std::ceil(std::pow(min_num_cells, 1. / 3.));
+
+    dd.cell_grid[0] = cells_per_dir;
+    dd.cell_grid[1] = cells_per_dir;
+    dd.cell_grid[2] = cells_per_dir;
+
 #ifdef LEES_EDWARDS
-    dd.cell_grid[0] = 2;
-    dd.cell_grid[1] = 1;
-    dd.cell_grid[2] = 1;
-    n_local_cells = 2;
-#else
-    n_local_cells = dd.cell_grid[0] = dd.cell_grid[1] = dd.cell_grid[2] = 1;
+    dd.cell_grid[0] = std::max(2, dd.cell_grid[0]);
 #endif
+
+    n_local_cells = dd.cell_grid[0] * dd.cell_grid[1] * dd.cell_grid[2];
   } else {
     /* Calculate initial cell grid */
     volume = local_box_l[0];
@@ -790,7 +793,9 @@ void dd_topology_init(CellPList *old) {
                      "%d: dd_topology_init: Number of recieved cells=%d\n",
                      this_node, old->n));
 
-  min_num_cells = calc_processor_min_num_cells();
+  /* Min num cells can not be smaller than calc_processor_min_num_cells,
+     but may be set to a larger value by the user for performance reasons. */
+  min_num_cells = std::max(min_num_cells, calc_processor_min_num_cells());
 
   cell_structure.type = CELL_STRUCTURE_DOMDEC;
   cell_structure.position_to_node = map_position_node_array;
@@ -1161,7 +1166,6 @@ int calc_processor_min_num_cells() {
 
 /************************************************************/
 
-int dd_full_shell_neigh(int cellidx, int neigh)
-{
-    return cellidx + dd_fs_neigh[neigh];
+int dd_full_shell_neigh(int cellidx, int neigh) {
+  return cellidx + dd_fs_neigh[neigh];
 }

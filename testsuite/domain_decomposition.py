@@ -25,7 +25,7 @@ import numpy as np
 
 
 class DomainDecomposition(ut.TestCase):
-    S = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    S = espressomd.System(box_l=[10.0, 10.0, 10.0])
 
     def setUp(self):
         self.S.part.clear()
@@ -54,6 +54,17 @@ class DomainDecomposition(ut.TestCase):
         # is still in a valid state after the particle exchange
         self.assertEqual(sum(self.S.part[:].type), n_part)
 
+    def test_min_num_cells(self):
+        s = self.S
+        cs = s.cell_system
+        cs.min_num_cells = 23
+
+        self.assertEqual(cs.min_num_cells, 23)
+        cell_grid = cs.get_state()['cell_grid']
+        n_cells = cell_grid[0]*cell_grid[1]*cell_grid[2]
+        # Check that we have neither too few nor too many cells
+        self.assertGreaterEqual(n_cells, cs.min_num_cells)
+        self.assertLessEqual(n_cells, cs.max_num_cells)
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())
