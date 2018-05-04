@@ -1,4 +1,4 @@
-from espressomd.utils import to_char_pointer,to_str
+from espressomd.utils import to_char_pointer, to_str,handle_errors
 import numpy as np
 from espressomd.utils import is_valid_type
 
@@ -72,7 +72,9 @@ cdef class PScriptInterface(object):
         for name in kwargs:
             parameters[to_char_pointer(name)] = self.python_object_to_variant(kwargs[name])
 
-        return self.variant_to_python_object(self.sip.get().call_method(to_char_pointer(method), parameters))
+        res= self.variant_to_python_object(self.sip.get().call_method(to_char_pointer(method), parameters))
+        handle_errors("")
+        return res
 
     def name(self):
         return to_str(self.sip.get().name())
@@ -84,7 +86,7 @@ cdef class PScriptInterface(object):
         cdef shared_ptr[ScriptInterfaceBase] so_ptr = ScriptInterfaceBase.unserialize(state)
         self.set_sip(so_ptr)
 
-    cdef map[string, Variant] _sanitize_params(self, in_params):
+    cdef map[string, Variant] _sanitize_params(self, in_params) except *:
         cdef map[string, Variant] out_params
         cdef Variant v
 
@@ -152,9 +154,9 @@ cdef class PScriptInterface(object):
             return make_variant[string](to_char_pointer(value))
         elif type(value) == type(True):
             return make_variant[bool](value)
-        elif np.issubdtype(np.dtype(type(value)),int):
+        elif np.issubdtype(np.dtype(type(value)), np.signedinteger):
             return make_variant[int](value)
-        elif np.issubdtype(np.dtype(type(value)),float):
+        elif np.issubdtype(np.dtype(type(value)), np.floating):
             return make_variant[float](value)
         else:
             raise TypeError("Unkown type for conversion to Variant")
@@ -186,6 +188,8 @@ cdef class PScriptInterface(object):
                 ptr = get_instance(oid).lock()
                 if ptr != shared_ptr[ScriptInterfaceBase]():
                     so_name=to_str(ptr.get().name())
+                    if not so_name:
+                        raise Exception("Script object without name returned from the core")
                     # Fallback class, if nothing more specific is registered for the script object name
                     pclass=ScriptInterfaceHelper
                     # Look up class

@@ -11,6 +11,7 @@
 #include "integrate.hpp"
 #include "interaction_data.hpp"
 #include "utils/Batch.hpp"
+#include "collision.hpp"
 
 /**
  * @brief Distance vector and length handed to pair kernels.
@@ -104,7 +105,7 @@ void short_range_loop(ParticleKernel &&particle_kernel,
             [](Particle &p) { memcpy(p.l.p_old, p.r.p, 3 * sizeof(double)); },
             std::forward<ParticleKernel>(particle_kernel)),
         std::forward<PairKernel>(pair_kernel),
-        VerletCriterion{skin, max_cut, coulomb_cutoff, dipolar_cutoff});
+        VerletCriterion{skin, max_cut, coulomb_cutoff, dipolar_cutoff,collision_detection_cutoff()});
 
     /* Now everything is up-to-date */
     rebuild_verletlist = 0;

@@ -14,7 +14,7 @@ import math
 class ThermoTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
-    es = espressomd.System()
+    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     def run_test_case(self, test_case):
         seed(2)
@@ -24,6 +24,8 @@ class ThermoTest(ut.TestCase):
         self.es.box_l = [box, box, box]
         if espressomd.has_features(("PARTIAL_PERIODIC")):
             self.es.periodicity = 0, 0, 0
+        self.es.part.clear()
+
         # gamma_tran/gamma_rot matrix: [2 types of particless] x [3 dimensions
         # X Y Z]
         gamma_tran = np.zeros((2, 3))
@@ -162,7 +164,6 @@ class ThermoTest(ut.TestCase):
                     if "ROTATION" in espressomd.features():
                         self.assertLess(abs(
                             self.es.part[k].omega_body[j] - math.exp(- gamma_rot_validate[k, j] * self.es.time / J[j])), tol)
-            self.es.integrator.run(10)
 
         # The drag terminal velocity tests
         ##################################
@@ -392,7 +393,7 @@ class ThermoTest(ut.TestCase):
 
         loops = 200
         print("Thermalizing...")
-        therm_steps = 150
+        therm_steps = 20
         self.es.integrator.run(therm_steps)
         print("Measuring...")
 

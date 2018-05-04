@@ -31,10 +31,10 @@
 #include "initialize.hpp"
 #include "interaction_data.hpp"
 #include "layered.hpp"
-#include "lb.hpp"
 #include "lees_edwards.hpp"
 #include "npt.hpp"
 #include "rattle.hpp"
+#include "thermalized_bond.hpp"
 #include "tuning.hpp"
 #include "utils/mpi/all_compare.hpp"
 
@@ -204,15 +204,9 @@ const std::unordered_map<int, Datafield> fields{
      {FIELD_GHMC_SCALE,
       {&ghmc_tscale, Datafield::Type::INT, 1, "ghmc_tscale",
        6}}, /* 48 from ghmc.cpp */
-     {FIELD_LB_COMPONENTS,
-      {&lb_components, Datafield::Type::INT, 1, "lb_components",
-       2}}, /* 49 from ghmc.cpp */
      {FIELD_WARNINGS,
       {&warnings, Datafield::Type::INT, 1, "warnings",
        1}}, /* 50 from global.cpp */
-     {FIELD_SMALLERTIMESTEP,
-      {&smaller_time_step, Datafield::Type::DOUBLE, 1, "smaller_time_step",
-       5}}, /* 52 from integrate.cpp */
      {FIELD_LANGEVIN_TRANS_SWITCH,
       {&langevin_trans, Datafield::Type::BOOL, 1, "langevin_trans_switch",
        1}}, /* 53 from thermostat.cpp */
@@ -228,6 +222,9 @@ const std::unordered_map<int, Datafield> fields{
       {langevin_gamma_rotation.data(), Datafield::Type::DOUBLE, 3, "gamma_rot",
        1}}, /* 55 from thermostat.cpp */
 #endif
+     {FIELD_THERMALIZEDBONDS,
+      {&n_thermalized_bonds, Datafield::Type::INT, 1, "n_thermalized_bonds",
+       5}}, /* 56 from thermalized_bond.cpp */
      {FIELD_FORCE_CAP,
       {&force_cap, Datafield::Type::DOUBLE, 1, "force_cap", 1}}}};
 

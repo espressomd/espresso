@@ -37,7 +37,7 @@ public:
         m_shape(nullptr) {
     add_parameters({{"only_positive", m_constraint->only_positive()},
                     {"penetrable", m_constraint->penetrable()},
-                    {"particle_type", 
+                    {"particle_type",
                      [this](Variant const &value) {
                        m_constraint->set_type(get_value<int>(value));
                      },
@@ -52,12 +52,20 @@ public:
                      },
                      [this]() {
                        return (m_shape != nullptr) ? m_shape->id() : ObjectId();
-                     }}});
+                     }},
+                    {"particle_velocity",
+                     [this](const Variant &v) {
+                       m_constraint->set_velocity(get_value<Vector3d>(v));
+                     },
+                        [this]() { return m_constraint->velocity(); }}});
   }
 
   Variant call_method(std::string const &name, VariantMap const &) override {
     if (name == "total_force") {
       return shape_based_constraint()->total_force();
+    }
+    if (name == "min_dist") {
+      return shape_based_constraint()->min_dist();
     }
 
     return none;

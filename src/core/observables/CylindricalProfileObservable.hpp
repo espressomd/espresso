@@ -3,14 +3,12 @@
 
 #include <cmath>
 
-#include "PidObservable.hpp"
+#include "Observable.hpp"
 #include "Vector.hpp"
-#include "integrate.hpp"
-#include "particle_data.hpp"
 
 namespace Observables {
 
-class CylindricalProfileObservable : public PidObservable {
+class CylindricalProfileObservable : virtual public Observable {
 public:
   ::Vector<3, double> center;
   std::string axis;

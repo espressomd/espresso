@@ -1,6 +1,10 @@
-#include "energy.hpp" //for calculate_current_potential_energy_of_system
+#ifndef REACTION_ENSEMBLE_H
+#define REACTION_ENSEMBLE_H
+
 #include "utils.hpp"
+#include "energy.hpp"
 #include <string>
+#include <map>
 
 namespace ReactionEnsemble {
 
@@ -10,7 +14,7 @@ struct SingleReaction {
   std::vector<int> reactant_coefficients;
   std::vector<int> product_types;
   std::vector<int> product_coefficients;
-  double equilibrium_constant;
+  double Gamma;
   // calculated values that are stored for performance reasons
   int nu_bar;
 };
@@ -84,9 +88,7 @@ public:
   virtual ~ReactionAlgorithm(){};
 
   std::vector<SingleReaction> reactions;
-  std::vector<int> type_index;
-  std::vector<double> charges_of_types;
-  double standard_pressure_in_simulation_units = -10.0;
+  std::map<int, double> charges_of_types;
   double temperature = -10.0;
   double exclusion_radius =
       0.0; // this is used as a kind of hard sphere radius, if
@@ -112,14 +114,13 @@ public:
   void check_reaction_ensemble();
 
   int delete_particle(int p_id);
-  void add_reaction(double equilibrium_constant,
+  void add_reaction(double Gamma,
                     const std::vector<int> & _reactant_types,
                     const std::vector<int> & _reactant_coefficients,
                     const std::vector<int> & _product_types,
                     const std::vector<int> & _product_coefficients);
 
-  bool do_global_mc_move_for_particles_of_type(int type, int start_id_polymer,
-                                               int end_id_polymer,
+  bool do_global_mc_move_for_particles_of_type(int type,
                                                int particle_number_of_type,
                                                const bool use_wang_landau);
 
@@ -136,20 +137,16 @@ protected:
   virtual void on_mc_accept(int &new_state_index){};
   virtual void on_mc_reject(int &old_state_index){};
   virtual int on_mc_use_WL_get_new_state() { return -10; };
-  
+
+  void make_reaction_attempt(
+      SingleReaction &current_reaction,
+      std::vector<StoredParticleProperty> &changed_particles_properties,
+      std::vector<int> &p_ids_created_particles,
+      std::vector<StoredParticleProperty> &hidden_particles_properties);
+  void restore_properties(std::vector<StoredParticleProperty> &property_list,
+                          const int number_of_saved_properties);  
 private:
-  std::vector<int> save_old_particle_numbers(void);
-  int update_type_index(
-      std::vector<int> &reactant_types,
-      std::vector<int> &product_types); // assign different types an
-  // index in a growing list that
-  // starts at 0 and is
-  // incremented by 1 for each new
-  // type. the entry in the index
-  // at place i is the
-  // "type_value". therefore the
-  // type of type "typevalue" has
-  // the index i;
+  std::map<int, int> save_old_particle_numbers(int reaction_id);
 
   int calculate_nu_bar(
       std::vector<int> &reactant_coefficients,
@@ -166,24 +163,16 @@ private:
 
   void append_particle_property_of_random_particle(
       int type, std::vector<StoredParticleProperty> &list_of_particles);
-  void make_reaction_attempt(
-      SingleReaction &current_reaction,
-      std::vector<StoredParticleProperty> &changed_particles_properties,
-      std::vector<int> &p_ids_created_particles,
-      std::vector<StoredParticleProperty> &hidden_particles_properties);
+
 
   virtual double calculate_acceptance_probability(
       SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
-      std::vector<int> &old_particle_numbers, int old_state_index,
+      std::map<int, int> &old_particle_numbers, int old_state_index,
       int new_state_index, bool only_make_configuration_changing_move) {
     return -10;
   };
 
-  void restore_properties(std::vector<StoredParticleProperty> &property_list,
-                          const int number_of_saved_properties);
   void add_types_to_index(std::vector<int> &type_list);
-  std::vector<double> add_random_vector(double const *vector, int len_vector,
-                         double length_of_displacement);
   std::vector<double> get_random_position_in_box();
   std::vector<double>
   get_random_position_in_box_enhanced_proposal_of_small_radii();
@@ -196,7 +185,7 @@ class ReactionEnsemble : public ReactionAlgorithm {
 private:
   double calculate_acceptance_probability(
       SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
-      std::vector<int> &old_particle_numbers, int dummy_old_state_index,
+      std::map<int, int> &old_particle_numbers, int dummy_old_state_index,
       int dummy_new_state_index,
       bool dummy_only_make_configuration_changing_move) override;
 };
@@ -206,10 +195,6 @@ public:
   bool do_energy_reweighting = false;
   bool do_not_sample_reaction_partition_function = false;
   double final_wang_landau_parameter = 0.00001;
-  int polymer_start_id = -10;
-  int polymer_end_id = -10;
-  bool fix_polymer = false;
-
 
   void
   add_new_CV_degree_of_association(int associated_type, double CV_minimum,
@@ -249,7 +234,7 @@ private:
   void on_end_reaction(int &accepted_state) override;
   double calculate_acceptance_probability(SingleReaction &current_reaction,
                                     double E_pot_old, double E_pot_new,
-                                    std::vector<int> &old_particle_numbers,
+                                    std::map<int, int> &old_particle_numbers,
                                     int old_state_index, int new_state_index,
                                     bool only_make_configuration_changing_move) override;
   void on_mc_rejection_directly_after_entry(int &old_state_index) override;
@@ -306,65 +291,34 @@ private:
                                                       double delta_CV);
 };
 
+
+
 class ConstantpHEnsemble : public ReactionAlgorithm {
 public:
   double m_constant_pH = -10;
+  int do_reaction(int reaction_steps) override;
+private:
   double calculate_acceptance_probability(
       SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
-      std::vector<int> &dummy_old_particle_numbers, int dummy_old_state_index,
+      std::map<int, int> &dummy_old_particle_numbers, int dummy_old_state_index,
       int dummy_new_state_index,
       bool dummy_only_make_configuration_changing_move) override;
-  int do_reaction(int reaction_steps) override;
+  int get_random_valid_p_id();
+};
+
+class WidomInsertion : public ReactionAlgorithm {
+public:
+    double measure_excess_chemical_potential(int reaction_id);
 
 private:
-  int get_random_p_id();
+    int number_of_insertions=0;
+    double summed_exponentials=0.0;
 };
 
 //////////////////////////////////////////////////////////////////free functions
 double
 calculate_factorial_expression(SingleReaction &current_reaction,
-                               int *old_particle_numbers,
-                               ReactionAlgorithm &m_current_reaction_system);
+                               std::map<int,int>& old_particle_numbers);
 double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
-
-/**
-*Calculates the average of an array (used for the histogram of the
-*Wang-Landau algorithm). It excludes values which are initialized to be
-*negative. Those values indicate that the Wang-Landau algorithm should not
-*sample those values. The values still occur in the list because we can only
-*store "rectangular" value ranges.
-*/
-
-template <typename T>
-double average_list_of_allowed_entries(std::vector<T> vector) {
-  double result = 0.0;
-  int counter_allowed_entries = 0;
-  for (int i = 0; i < vector.size(); i++) {
-    if (vector[i] >= 0) { // checks for validity of index i (think of energy
-                          // collective variables, in a cubic memory layout
-                          // there will be indices which are not allowed by
-                          // the energy boundaries. These values will be
-                          // initalized with a negative fill value)
-      result += static_cast<double>(vector[i]);
-      counter_allowed_entries += 1;
-    }
-  }
-  return result / counter_allowed_entries;
 }
-
-/**
-* Checks wether a number is in a std:vector of numbers.
-*/
-template <typename T> bool is_in_list(T value, std::vector<T> list) {
-  for (int i = 0; i < list.size(); i++) {
-    if (std::abs(list[i] - value) < std::numeric_limits<double>::epsilon())
-      return true;
-  }
-  return false;
-}
-
-/**
-* Finds the index of a given type.
-*/
-int find_index_of_type(int type, ReactionAlgorithm* m_current_reaction_system);
-}
+#endif

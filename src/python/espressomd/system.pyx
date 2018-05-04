@@ -41,7 +41,6 @@ if CONSTRAINTS == 1:
     from .constraints import Constraints
 
 from .correlators import AutoUpdateCorrelators
-from .observables import AutoUpdateObservables
 from .accumulators import AutoUpdateAccumulators
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
@@ -51,8 +50,13 @@ from globals cimport max_seen_particle
 from espressomd.utils import array_locked, is_valid_type
 from espressomd.virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 
+IF COLLISION_DETECTION == 1:
+    from .collision_detection import CollisionDetection
+
 import sys
 import random  # for true random numbers from os.urandom()
+cimport tuning
+
 
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
                       "time_step", "timings", "force_cap"]
@@ -61,7 +65,7 @@ IF LEES_EDWARDS == 1:
     setable_properties.append("lees_edwards_offset")
 
 if VIRTUAL_SITES:
-    setable_properties.append("virtual_sites")
+    setable_properties.append("_active_virtual_sites_handle")
 
 cdef bool _system_created = False
 
@@ -85,42 +89,49 @@ cdef class System(object):
         analysis
         galilei
         integrator
-        auto_update_observables
         auto_update_correlators
         auto_update_accumulators
         constraints
         lbboundaries
         ekboundaries
+        collision_detection
         __seed
         cuda_init_handle
         comfixed
         _active_virtual_sites_handle
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         global _system_created
         if (not _system_created):
-            self.part = particle_data.ParticleList()
-            self.non_bonded_inter = interactions.NonBondedInteractions()
-            self.bonded_inter = interactions.BondedInteractions()
-            self.cell_system = CellSystem()
-            self.thermostat = Thermostat()
-            self.minimize_energy = MinimizeEnergy()
+            if 'box_l' not in kwargs:
+                raise ValueError("Required argument box_l not provided.")
+            for arg in kwargs:
+                if arg in setable_properties:
+                    System.__setattr__(self, arg, kwargs.get(arg))
+                else:
+                    raise ValueError("Property {} can not be set via argument to System class.".format(arg))
             self.actors = Actors(_system=self)
             self.analysis = Analysis(self)
-            self.galilei = GalileiTransform()
-            self.integrator = integrate.Integrator()
-            self.auto_update_observables = AutoUpdateObservables()
-            self.auto_update_correlators = AutoUpdateCorrelators()
             self.auto_update_accumulators = AutoUpdateAccumulators()
+            self.auto_update_correlators = AutoUpdateCorrelators()
+            self.bonded_inter = interactions.BondedInteractions()
+            self.cell_system = CellSystem()
+            IF COLLISION_DETECTION==1:
+                self.collision_detection = CollisionDetection()
+            self.comfixed = ComFixed()
             if CONSTRAINTS:
                 self.constraints = Constraints()
+            IF CUDA:
+                self.cuda_init_handle = cuda_init.CudaInitHandle()
+            self.galilei = GalileiTransform()
+            self.integrator = integrate.Integrator()
             if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
                 self.lbboundaries = LBBoundaries()
                 self.ekboundaries = EKBoundaries()
-            IF CUDA:
-                self.cuda_init_handle = cuda_init.CudaInitHandle()
-
-            self.comfixed = ComFixed()
+            self.minimize_energy = MinimizeEnergy()
+            self.non_bonded_inter = interactions.NonBondedInteractions()
+            self.part = particle_data.ParticleList()
+            self.thermostat = Thermostat()
             IF VIRTUAL_SITES:
                 self._active_virtual_sites_handle=ActiveVirtualSitesHandle(implementation=VirtualSitesOff())
             _system_created = True
@@ -133,6 +144,25 @@ cdef class System(object):
         odict = {}
         for property_ in setable_properties:
             odict[property_] = System.__getattribute__(self, property_)
+        odict['actors'] = System.__getattribute__(self, "actors")
+        odict['analysis'] = System.__getattribute__(self, "analysis")
+        odict['auto_update_accumulators'] = System.__getattribute__(self, "auto_update_accumulators")
+        odict['auto_update_correlators'] = System.__getattribute__(self, "auto_update_correlators")
+        odict['bonded_inter'] = System.__getattribute__(self, "bonded_inter")
+        odict['cell_system'] = System.__getattribute__(self, "cell_system")
+        odict['comfixed'] = System.__getattribute__(self, "comfixed")
+        IF CONSTRAINTS:
+            odict['constraints'] = System.__getattribute__(self, "constraints")
+        odict['galilei'] = System.__getattribute__(self, "galilei")
+        odict['integrator'] = System.__getattribute__(self, "integrator")
+        IF LB_BOUNDARIES or LB_BOUNDARIES_GPU:
+            odict['lbboundaries'] = System.__getattribute__(self, "lbboundaries")
+        odict['minimize_energy'] = System.__getattribute__(self, "minimize_energy")
+        odict['non_bonded_inter'] = System.__getattribute__(self, "non_bonded_inter")
+        odict['part'] = System.__getattribute__(self, "part")
+        odict['thermostat'] = System.__getattribute__(self, "thermostat")
+        IF VIRTUAL_SITES:
+            odict['_active_virtual_sites_handle'] = System.__getattribute__(self, "_active_virtual_sites_handle")
         return odict
 
     def __setstate__(self, params):
@@ -226,20 +256,6 @@ cdef class System(object):
             global sim_time
             return sim_time
 
-    property smaller_time_step:
-        """
-        Setting this property to a positive integer value turns on the multi-timestepping algorithm. The ratio :attr:`espressomd.system.System.time_step`/:attr:`espressomd.system.System.smaller_time_step` must be an integer.
-        """
-        def __set__(self, double _smaller_time_step):
-            IF MULTI_TIMESTEP:
-                global smaller_time_step
-                if _smaller_time_step <= 0:
-                    raise ValueError("Smaller time step must be positive")
-                mpi_set_smaller_time_step(_smaller_time_step)
-
-        def __get__(self):
-            return smaller_time_step
-
     property time_step:
         """
         Sets the time step for the integrator. 
@@ -317,14 +333,14 @@ cdef class System(object):
             for j in range(_state_size_plus_one + 1):
                 states_on_node_i.append(
                     rng.randint(0, numeric_limits[int].max()))
-            states[i] = " ".join(map(str, states_on_node_i))
+            states[i] = (" ".join(map(str, states_on_node_i))).encode('utf-8')
         mpi_random_set_stat(states)
 
     property seed:
         """
         Sets the seed of the pseudo random number with a list of seeds which is as long as the number of used nodes.
         """
-        
+
         def __set__(self, _seed):
             cdef vector[int] seed_array
             self.__seed = _seed
@@ -356,14 +372,15 @@ cdef class System(object):
             if(len(rng_state) == n_nodes * _state_size_plus_one):
                 states = string_vec(n_nodes)
                 for i in range(n_nodes):
-                    states[i] = " ".join(
-                        map(str, rng_state[i * _state_size_plus_one:(i + 1) * _state_size_plus_one]))
+                    states[i] = (" ".join(map(str,
+                                 rng_state[i*_state_size_plus_one:(i+1)*_state_size_plus_one])
+                                 )).encode('utf-8')
                 mpi_random_set_stat(states)
             else:
                 raise ValueError("Wrong # of args: Usage: 'random_number_generator_state \"<state(1)> ... <state(n_nodes*(state_size+1))>, where each <state(i)> is an integer. The state size of the PRNG can be obtained by calling _get_PRNG_state_size().")
 
         def __get__(self):
-            rng_state = map(int, (mpi_random_get_stat().c_str()).split())
+            rng_state = list(map(int, (mpi_random_get_stat().c_str()).split()))
             return rng_state
 
     IF LEES_EDWARDS == 1:
@@ -516,7 +533,7 @@ cdef class System(object):
         Returns
         -------
         :obj:`int`
-            The number of particles which share the given type.
+            The number of particles which have the given type.
 
         """
         self.check_valid_type( type)

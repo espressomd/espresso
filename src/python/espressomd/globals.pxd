@@ -25,7 +25,6 @@ cdef extern from "global.hpp":
     int FIELD_NODEGRID
     int FIELD_MAXNUMCELLS
     int FIELD_MINNUMCELLS
-    int FIELD_NODEGRID
     int FIELD_NPTISO_PISTON
     int FIELD_NPTISO_PDIFF
     int FIELD_PERIODIC
@@ -34,7 +33,6 @@ cdef extern from "global.hpp":
     int FIELD_LEES_EDWARDS_OFFSET
     int FIELD_TEMPERATURE
     int FIELD_THERMO_SWITCH
-    int FIELD_TEMPERATURE
     int FIELD_LANGEVIN_GAMMA
     IF ROTATION:
         int FIELD_LANGEVIN_GAMMA_ROTATION
@@ -43,17 +41,15 @@ cdef extern from "global.hpp":
         int FIELD_NPTISO_GV
 
     void mpi_bcast_parameter(int p)
-        
+
 cdef extern from "communication.hpp":
     extern int n_nodes
-    void mpi_set_smaller_time_step(double smaller_time_step)
     void mpi_set_time_step(double time_step)
 
 cdef extern from "integrate.hpp":
     double time_step
     extern int integ_switch
     extern double sim_time
-    extern double smaller_time_step
     extern double verlet_reuse
     extern double skin
 
@@ -152,7 +148,7 @@ cdef extern from "npt.hpp":
 cdef extern from "statistics.hpp":
     extern int n_configs
 
-cdef extern from "reaction.hpp":
+cdef extern from "swimmer_reaction.hpp":
     ctypedef struct  reaction_struct:
         int reactant_type
         int product_type

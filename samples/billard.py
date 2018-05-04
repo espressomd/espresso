@@ -8,7 +8,7 @@ from espressomd import integrate
 from espressomd import electrostatics
 from espressomd import minimize_energy
 from espressomd.interactions import *
-import numpy
+import numpy as np
 from threading import Thread
 from math import *
 from espressomd.visualization_opengl import *
@@ -17,24 +17,30 @@ from espressomd.shapes import *
 print('8Ball BILLARD - An Espresso Visualizer Demo\nControls:\nNumpad 4/6: Adjust Angle\nNumpad 2/8: Adjust Impulse\nNumpad 5: Shoot')
 
 #ESPRESSO
-system = espressomd.System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 table_dim = [2.24,1.12]
 system.box_l = [table_dim[0], 3, table_dim[1]]
 
 visualizer = openGLLive(system,
         ext_force_arrows = True, 
-        ext_force_arrows_scale =  [0.02], 
+        ext_force_arrows_type_scale =  [0.02], 
+        ext_force_arrows_type_radii =  [0.01], 
         background_color = [0.5,0.4,0.5], 
         drag_enabled = False, 
-        constraint_type_colors = [[0.039,0.424,0.011,1.0]],
-        particle_type_colors = [[1,1,1,1],[1,0,0,1],[0,0,1,1],[0.2,0.2,0.2,1]],
+        particle_type_materials = ['medium', 'bright', 'bright', 'medium'],
+        particle_type_colors = [[1,1,1],[0.5,0.1,0.1],[0.1,0.2,0.4],[0.2,0.2,0.2]],
+        constraint_type_materials = ['dark'],
+        constraint_type_colors = [[0.1,0.424,0.011], [0.1,0.1,0.1]],
         camera_position = [ 1.12, 2.8, 0.56],
         window_size = [1000,600],
         draw_axis = False,
-        light_brightness = 5.0)
+        light_pos = [table_dim[0]*0.5, 1.0, table_dim[1]*0.5],
+        light_colors = [[0.8, 0.8, 0.8], [0.9, 0.9, 0.9], [1.0, 1.0, 1.0]],
+        light_brightness = 1.0)
 
 stopped = True
-angle = numpy.pi*0.5
+angle = np.pi*0.5
 impulse = 10.0
 
 def decreaseAngle():
@@ -69,11 +75,11 @@ def fire():
         system.part[0].fix = [0,1,0]
         system.part[0].ext_force = [0,0,0]
 
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('4',KeyboardFireEvent.Hold,decreaseAngle))
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('6',KeyboardFireEvent.Hold,increaseAngle))
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('2',KeyboardFireEvent.Hold,decreaseImpulse))
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('8',KeyboardFireEvent.Hold,increaseImpulse))
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('5',KeyboardFireEvent.Pressed,fire))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('4',KeyboardFireEvent.Hold,decreaseAngle))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('6',KeyboardFireEvent.Hold,increaseAngle))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('2',KeyboardFireEvent.Hold,decreaseImpulse))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('8',KeyboardFireEvent.Hold,increaseImpulse))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('5',KeyboardFireEvent.Pressed,fire))
 
 def main():
     global stopped
@@ -168,7 +174,7 @@ def main():
 
         vsum = 0
         for p in system.part:
-            vsum += numpy.linalg.norm(p.v)
+            vsum += np.linalg.norm(p.v)
 
             for h in hole_pos:
                 

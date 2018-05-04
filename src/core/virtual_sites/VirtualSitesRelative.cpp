@@ -32,14 +32,31 @@ for (auto& p : local_cells.particles()) {
   if (recalc_positions)
     update_pos(p);
 
-  if (have_velocity())
+  if (get_have_velocity())
     update_vel(p);
 
-}
+  if (get_have_quaternion())
+    update_virtual_particle_quaternion(p);
 
 }
 
+}
 
+
+
+void VirtualSitesRelative::update_virtual_particle_quaternion(Particle& p) const {
+ const Particle *p_real = local_particles[p.p.vs_relative_to_particle_id];
+ if (!p_real)
+ {
+   throw std::runtime_error("virtual_sites_relative.cpp - update_mol_pos_particle(): No real particle associated with virtual site.\n");
+ }
+ multiply_quaternions(p_real->r.quat, p.p.vs_quat, p.r.quat);
+ convert_quat_to_quatu(p.r.quat, p.r.quatu);
+#ifdef DIPOLES
+  // When dipoles are enabled, update dipole moment
+  convert_quatu_to_dip(p.r.quatu, p.p.dipm, p.r.dip);
+#endif
+}
 
 
 
@@ -169,7 +186,7 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
 
       // Add forces and torques
       for (int j = 0; j < 3; j++) {
-        p_real->f.torque[j] += tmp[j];
+        p_real->f.torque[j] += tmp[j]+p.f.torque[j];
         p_real->f.f[j] += p.f.f[j];
       }
     }

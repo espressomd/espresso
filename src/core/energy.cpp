@@ -95,6 +95,11 @@ void init_energies(Observable_stat *stat) {
   case DIPOLAR_DS_GPU:
     n_dipolar = 2;
     break;
+#ifdef DIPOLAR_BARNES_HUT
+ case DIPOLAR_BH_GPU:   
+    n_dipolar = 2; 
+    break;
+#endif
   case DIPOLAR_SCAFACOS:
     n_dipolar = 2;
     break;
@@ -145,13 +150,8 @@ void energy_calc(double *result) {
                                                 sqrt(d.dist2), d.dist2);
                    });
 
-/* rescale kinetic energy */
-#ifdef MULTI_TIMESTEP
-  if (smaller_time_step > 0.)
-    energy.data.e[0] /= (2.0 * smaller_time_step * smaller_time_step);
-  else
-#endif
-    energy.data.e[0] /= (2.0 * time_step * time_step);
+  /* rescale kinetic energy */
+  energy.data.e[0] /= (2.0 * time_step * time_step);
 
   calc_long_range_energies();
 
@@ -268,6 +268,11 @@ void calc_long_range_energies() {
   case DIPOLAR_DS_GPU:
     // Do nothing, it's an actor.
     break;
+#ifdef DIPOLAR_BARNES_HUT
+  case DIPOLAR_BH_GPU:
+    // Do nothing, it's an actor.
+    break;
+#endif // DIPOLAR_BARNES_HUT
 #ifdef SCAFACOS_DIPOLES
   case DIPOLAR_SCAFACOS:
     assert(Scafacos::dipolar());

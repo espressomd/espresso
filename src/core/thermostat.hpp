@@ -26,29 +26,28 @@
 
 #include "config.hpp"
 
-#include <cmath>
+#include "Vector.hpp"
+#include "cells.hpp"
 #include "debug.hpp"
-#include "particle_data.hpp"
-#include "random.hpp"
+#include "dpd.hpp"
 #include "global.hpp"
 #include "integrate.hpp"
-#include "cells.hpp"
 #include "lb.hpp"
-#include "dpd.hpp"
+#include "particle_data.hpp"
+#include "random.hpp"
 #include "virtual_sites.hpp"
-#include "Vector.hpp"
+#include <cmath>
 
 /** \name Thermostat switches*/
 /************************************************************/
 /*@{*/
 
-#define THERMO_OFF        0
-#define THERMO_LANGEVIN   1
-#define THERMO_DPD        2
-#define THERMO_NPT_ISO    4
-#define THERMO_LB         8
-#define THERMO_GHMC       32
-#define THERMO_CPU        64
+#define THERMO_OFF 0
+#define THERMO_LANGEVIN 1
+#define THERMO_DPD 2
+#define THERMO_NPT_ISO 4
+#define THERMO_LB 8
+#define THERMO_GHMC 32
 /*@}*/
 
 namespace Thermostat {
@@ -119,11 +118,6 @@ void thermo_heat_up();
 
 /** pendant to \ref thermo_heat_up */
 void thermo_cool_down();
-/** Get current temperature for CPU thermostat */
-int get_cpu_temp();
-
-/** Start the CPU thermostat */
-void set_cpu_temp(int temp);
 
 #ifdef ROTATION
 inline void thermo_define_rotation_matrix(Particle *p, double A[9]) {
@@ -234,13 +228,6 @@ inline void friction_thermo_langevin(Particle *p) {
   extern Thermostat::GammaType langevin_pref1, langevin_pref2;
   Thermostat::GammaType langevin_pref1_temp, langevin_pref2_temp;
 
-#ifdef MULTI_TIMESTEP
-  extern double langevin_pref1_small;
-#ifndef LANGEVIN_PER_PARTICLE
-  extern double langevin_pref2_small;
-#endif /* LANGEVIN_PER_PARTICLE */
-#endif /* MULTI_TIMESTEP */
-
   int j;
   double switch_trans = 1.0;
   if (langevin_trans == false) {
@@ -285,9 +272,9 @@ inline void friction_thermo_langevin(Particle *p) {
     velocity[i] = le_frameV(i, velocity, p->r.p);
   } // for
 
-// Determine prefactors for the friction and the noise term
+  // Determine prefactors for the friction and the noise term
 
-// first, set defaults
+  // first, set defaults
   langevin_pref1_temp = langevin_pref1;
   langevin_pref2_temp = langevin_pref2;
 
@@ -320,29 +307,15 @@ inline void friction_thermo_langevin(Particle *p) {
 
 #endif /* LANGEVIN_PER_PARTICLE */
 
-// Multi-timestep handling
-// This has to be last, as it may set the prefactors to 0.
-#ifdef MULTI_TIMESTEP
-  if (smaller_time_step > 0.) {
-    langevin_pref1_temp *= time_step / smaller_time_step;
-    if (p->p.smaller_timestep == 1 && current_time_step_is_small == 1)
-      langevin_pref2_temp *= sqrt(time_step / smaller_time_step);
-    else if (p->p.smaller_timestep != current_time_step_is_small) {
-      langevin_pref1_temp = 0.;
-      langevin_pref2_temp = 0.;
-    }
-  }
-#endif /* MULTI_TIMESTEP */
-
 #ifdef PARTICLE_ANISOTROPY
   // Particle frictional isotropy check
   auto aniso_flag = (langevin_pref1_temp[0] != langevin_pref1_temp[1]) ||
-               (langevin_pref1_temp[1] != langevin_pref1_temp[2]) ||
-               (langevin_pref2_temp[0] != langevin_pref2_temp[1]) ||
-               (langevin_pref2_temp[1] != langevin_pref2_temp[2]);
+                    (langevin_pref1_temp[1] != langevin_pref1_temp[2]) ||
+                    (langevin_pref2_temp[0] != langevin_pref2_temp[1]) ||
+                    (langevin_pref2_temp[1] != langevin_pref2_temp[2]);
   double velocity_body[3] = {0.0, 0.0, 0.0};
   if (aniso_flag) {
-     thermo_convert_vel_space_to_body(p, velocity, velocity_body);
+    thermo_convert_vel_space_to_body(p, velocity, velocity_body);
   }
 #endif
 

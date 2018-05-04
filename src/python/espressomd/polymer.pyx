@@ -33,6 +33,9 @@ def validate_params(_params, default):
     if _params["bond_length"] < 0 :
         raise ValueError(
                 "bond_length has to be a positive float" )
+    if _params["bond"]._bond_id == -1:
+        raise Exception(
+                "The bonded interaction passed as 'bond' keyword argument has not yet been added to the list of active bonds in Espresso.")
     if _params["start_id"] < 0:
         raise ValueError(
                 "start_id has to be a positive Integer")
@@ -133,6 +136,23 @@ def create_polymer(**kwargs):
             bond_length = 1, 
             bond = fene, 
             val_poly = -1.0)
+
+    Note that a the first monomer of a polymer is always assigned the type `type_poly_charge`.
+    The next `charge_distance` monomers have type `type_poly_neutral`.
+    This process repeats untill all monomers are placed.
+    Afterwards, all monomers of type `type_poly_charge` are assigned the charge `val_poly`.
+    Thus the following example creates a single uncharged polymer where all monomers are of `type=0`:
+
+    >>> fene = interactions.FeneBond(k=10, d_r_max=2)
+    >>> polymer.create_polymer(
+            N_P = 1, 
+            MPC = 10, 
+            bond_length = 1, 
+            bond = fene, 
+            val_poly = 0.0,
+            charge_distance = 1,
+            type_poly_charge = 0)
+
     """
 
     params=dict()

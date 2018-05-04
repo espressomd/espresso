@@ -21,6 +21,7 @@
 cmake_minimum_required(VERSION 3.0)
 include(FeatureSummary)
 project(ESPResSo)
+include(cmake/FindPythonModule.cmake)
 
 enable_language(CXX)
 
@@ -65,9 +66,9 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 # User input options
 ######################################################################
 
-#option(WITH_PYTHON "Build python interface"  ON)
 set(WITH_PYTHON yes)
 
+option(WITH_GSL "Build with GSL support" ON)
 option(WITH_CUDA   "Build with GPU support"  ON)
 option(WITH_HDF5   "Build with HDF5 support" ON)
 option(WITH_TESTS  "Enable tests"            ON)
@@ -171,7 +172,7 @@ if (WITH_CUDA)
       endif()
       SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
 
-      if (APPLE)
+      if (CMAKE_OSX_SYSROOT)
         set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -isysroot -Xcompiler ${CMAKE_OSX_SYSROOT}")
       endif()
     endif(CUDA_FOUND)
@@ -196,7 +197,12 @@ if (WITH_PYTHON)
   else()
     set(CYTHON_FLAGS "-3" CACHE STRING "Flags used by the Cython compiler during all build types.")
   endif()
+
+  if(WARNINGS_ARE_ERRORS)
+    set(CYTHON_FLAGS "--warning-errors;${CYTHON_FLAGS}")
+  endif()
 endif(WITH_PYTHON)
+
 
 find_package(FFTW3)
 if (FFTW3_FOUND)
@@ -251,6 +257,13 @@ if(WITH_SCAFACOS)
   endif(SCAFACOS_FOUND)
 endif(WITH_SCAFACOS)
 
+if(WITH_GSL)
+  find_package(GSL)
+  if (GSL_FOUND)
+    set(GSL 1)
+  endif(GSL_FOUND)
+endif(WITH_GSL)
+
 if(WITH_VALGRIND_INSTRUMENTATION)
   find_package(PkgConfig)
   pkg_check_modules(VALGRIND valgrind)
@@ -283,9 +296,24 @@ if(WITH_TESTS)
   list(APPEND BOOST_COMPONENTS unit_test_framework)
 endif()
 
-find_package(Boost REQUIRED ${BOOST_COMPONENTS})
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+  set(BOOST_MINIMUM_VERSION "1.65.0")
+else()
+  set(BOOST_MINIMUM_VERSION "1.53.0")
+endif()
+
+find_package(Boost ${BOOST_MINIMUM_VERSION} REQUIRED ${BOOST_COMPONENTS})
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 list(APPEND LIBRARIES ${Boost_LIBRARIES})
+
+if(Boost_VERSION VERSION_GREATER 106399 AND Boost_VERSION VERSION_LESS 106500)
+  # Boost 1.64 has incompatible Serialization and MPI modules, see https://svn.boost.org/trac10/ticket/12723 .
+  # Some distributions, like Fedora, have backported the patch.
+  FILE(READ "${Boost_INCLUDE_DIR}/boost/mpi/detail/mpi_datatype_primitive.hpp" boost_mpi_datatype_file)
+  if(boost_mpi_datatype_file MATCHES "boost::serialization::detail::get_data")
+    message(FATAL_ERROR "Boost 1.64 is unsupported")
+  endif()
+endif()
 
 #######################################################################
 # Paths
@@ -335,6 +363,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-sign-compare -Wno-unused-func
 if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "4.8.5")
   # older versions don't support -Wno-pedantic which we need in src/python
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
+endif()
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "16.0")
+  # workaround for compiler crash related to decltype() and variadic template usage inside Boost
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_NO_CXX11_VARIADIC_TEMPLATES")
 endif()
 
 set(CMAKE_MACOSX_RPATH TRUE)

@@ -17,11 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function
-import numpy
+import numpy as np
 import espressomd
 from espressomd import electrostatics
 from espressomd import electrostatic_extensions
-from samples_common import open
 
 print("""
 =======================================================
@@ -51,7 +50,11 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System()
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
+
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
@@ -91,7 +94,7 @@ volume = box_l * box_l * box_l
 n_part = int(volume * density)
 
 for i in range(n_part):
-    system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
+    system.part.add(id=i, pos=np.random.random(3) * system.box_l)
 
 
 print("Simulate {} particles in a cubic simulation box {} at density {}."
@@ -104,7 +107,7 @@ system.cell_system.max_num_cells = 2744
 
 
 # Assingn charge to particles
-for i in range(n_part / 2 - 1):
+for i in range(n_part // 2 - 1):
     system.part[2 * i].q = -1.0
     system.part[2 * i + 1].q = 1.0
 
@@ -149,7 +152,7 @@ import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
 pprint.pprint(system.thermostat.get_state(), width=1)
 # pprint.pprint(system.part.__getstate__(), width=1)
-pprint.pprint(system.__getstate__(), width=1)
+pprint.pprint(system.__getstate__())
 
 
 # Pickle data
@@ -159,19 +162,19 @@ try:
 except ImportError:
     import pickle
 
-with open("particle_save", "w") as particle_save:
+with open("particle_save", "wb") as particle_save:
     pickle.dump(system.part, particle_save, -1)
 
-with open("p3m_save", "w") as p3m_save:
+with open("p3m_save", "wb") as p3m_save:
     pickle.dump(p3m, p3m_save, -1)
 
-with open("system_save", "w") as system_save:
+with open("system_save", "wb") as system_save:
     pickle.dump(system, system_save, -1)
 
-with open("thermostat_save", "w") as thermostat_save:
+with open("thermostat_save", "wb") as thermostat_save:
     pickle.dump(system.thermostat, thermostat_save, -1)
 
-with open("nonBondedInter_save", "w") as bond_save:
+with open("nonBondedInter_save", "wb") as bond_save:
     pickle.dump(system.non_bonded_inter, bond_save, -1)
 
 # terminate program

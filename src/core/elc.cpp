@@ -358,7 +358,7 @@ static double dipole_energy() {
   for (auto &p : local_cells.particles()) {
     gblcblk[0] += p.p.q;
     gblcblk[2] += p.p.q * (p.r.p[2] - shift);
-    gblcblk[4] += p.p.q * (SQR(p.r.p[2] - shift));
+    gblcblk[4] += p.p.q * (Utils::sqr(p.r.p[2] - shift));
     gblcblk[6] += p.p.q * p.r.p[2];
 
     if (elc_params.dielectric_contrast_on) {
@@ -366,14 +366,14 @@ static double dipole_energy() {
         gblcblk[1] += elc_params.delta_mid_bot * p.p.q;
         gblcblk[3] += elc_params.delta_mid_bot * p.p.q * (-p.r.p[2] - shift);
         gblcblk[5] +=
-            elc_params.delta_mid_bot * p.p.q * (SQR(-p.r.p[2] - shift));
+            elc_params.delta_mid_bot * p.p.q * (Utils::sqr(-p.r.p[2] - shift));
       }
       if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
         gblcblk[1] += elc_params.delta_mid_top * p.p.q;
         gblcblk[3] += elc_params.delta_mid_top * p.p.q *
                       (2 * elc_params.h - p.r.p[2] - shift);
         gblcblk[5] += elc_params.delta_mid_top * p.p.q *
-                      (SQR(2 * elc_params.h - p.r.p[2] - shift));
+                      (Utils::sqr(2 * elc_params.h - p.r.p[2] - shift));
       }
     }
   }
@@ -381,18 +381,18 @@ static double dipole_energy() {
   distribute(size);
 
   // Yeh + Berkowitz term
-  double eng = 2 * pref * (SQR(gblcblk[2]) + gblcblk[2] * gblcblk[3]);
+  double eng = 2 * pref * (Utils::sqr(gblcblk[2]) + gblcblk[2] * gblcblk[3]);
 
   if (!elc_params.neutralize) {
     // SUBTRACT the energy of the P3M homogeneous neutralizing background
     eng += 2 * pref * (-gblcblk[0] * gblcblk[4] -
-                       (.25 - .5 / 3.) * SQR(gblcblk[0] * box_l[2]));
+                       (.25 - .5 / 3.) * Utils::sqr(gblcblk[0] * box_l[2]));
   }
 
   if (elc_params.dielectric_contrast_on) {
     if (elc_params.const_pot) {
       // zero potential difference contribution
-      eng += pref * height_inverse / uz * SQR(gblcblk[6]);
+      eng += pref * height_inverse / uz * Utils::sqr(gblcblk[6]);
       // external potential shift contribution
       eng -= elc_params.pot_diff * height_inverse * gblcblk[6];
     }
@@ -401,7 +401,7 @@ static double dipole_energy() {
        boundaries.  We never need that, since a homogeneous background
        spanning the artifical boundary layers is aphysical. */
     eng += pref * (-(gblcblk[1] * gblcblk[4] + gblcblk[0] * gblcblk[5]) -
-                   (1. - 2. / 3.) * gblcblk[0] * gblcblk[1] * SQR(box_l[2]));
+                   (1. - 2. / 3.) * gblcblk[0] * gblcblk[1] * Utils::sqr(box_l[2]));
   }
 
   return this_node == 0 ? eng : 0;
@@ -1072,10 +1072,10 @@ void ELC_add_force() {
   }
 
   for (p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
-    for (q = 1; SQR(ux * (p - 1)) + SQR(uy * (q - 1)) < elc_params.far_cut2 &&
+    for (q = 1; Utils::sqr(ux * (p - 1)) + Utils::sqr(uy * (q - 1)) < elc_params.far_cut2 &&
                 q <= n_scycache;
          q++) {
-      omega = C_2PI * sqrt(SQR(ux * p) + SQR(uy * q));
+      omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
       setup_PQ(p, q, omega);
       distribute(8);
       add_PQ_force(p, q, omega);
@@ -1112,10 +1112,10 @@ double ELC_energy() {
     checkpoint("E************distri q", 0, q, 2);
   }
   for (p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
-    for (q = 1; SQR(ux * (p - 1)) + SQR(uy * (q - 1)) < elc_params.far_cut2 &&
+    for (q = 1; Utils::sqr(ux * (p - 1)) + Utils::sqr(uy * (q - 1)) < elc_params.far_cut2 &&
                 q <= n_scycache;
          q++) {
-      omega = C_2PI * sqrt(SQR(ux * p) + SQR(uy * q));
+      omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
       setup_PQ(p, q, omega);
       distribute(8);
       eng += PQ_energy(omega);
@@ -1154,7 +1154,7 @@ int ELC_tune(double error) {
   if (elc_params.far_cut >= MAXIMAL_FAR_CUT)
     return ES_ERROR;
   elc_params.far_cut -= min_inv_boxl;
-  elc_params.far_cut2 = SQR(elc_params.far_cut);
+  elc_params.far_cut2 = Utils::sqr(elc_params.far_cut);
 
   return ES_OK;
 }
@@ -1316,7 +1316,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
 
   elc_params.far_cut = far_cut;
   if (far_cut != -1) {
-    elc_params.far_cut2 = SQR(far_cut);
+    elc_params.far_cut2 = Utils::sqr(far_cut);
     elc_params.far_calculated = 0;
   } else {
     elc_params.far_calculated = 1;
@@ -1500,7 +1500,7 @@ double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1,
     get_mi_vector(d, p2->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
-    eng += p3m_pair_energy(q, d, dist2, dist);
+    eng += p3m_pair_energy(q, dist);
   }
 
   if (p1->r.p[2] > (elc_params.h - elc_params.space_layer)) {
@@ -1511,7 +1511,7 @@ double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1,
     get_mi_vector(d, p2->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
-    eng += p3m_pair_energy(q, d, dist2, dist);
+    eng += p3m_pair_energy(q, dist);
   }
 
   if (tp2 < elc_params.space_layer) {
@@ -1522,7 +1522,7 @@ double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1,
     get_mi_vector(d, p1->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
-    eng += p3m_pair_energy(q, d, dist2, dist);
+    eng += p3m_pair_energy(q, dist);
   }
 
   if (tp2 > (elc_params.h - elc_params.space_layer)) {
@@ -1533,7 +1533,7 @@ double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1,
     get_mi_vector(d, p1->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
-    eng += p3m_pair_energy(q, d, dist2, dist);
+    eng += p3m_pair_energy(q, dist);
   }
 
   // fprintf(stderr,"energy is %f\n",eng);
@@ -1559,7 +1559,7 @@ double ELC_P3M_dielectric_layers_energy_self() {
       get_mi_vector(d, p.r.p, pos);
       dist2 = sqrlen(d);
       dist = sqrt(dist2);
-      eng += p3m_pair_energy(q, d, dist2, dist);
+      eng += p3m_pair_energy(q, dist);
       //	fprintf(stderr,"energy is %f\n",eng);
     }
 
@@ -1571,7 +1571,7 @@ double ELC_P3M_dielectric_layers_energy_self() {
       get_mi_vector(d, p.r.p, pos);
       dist2 = sqrlen(d);
       dist = sqrt(dist2);
-      eng += p3m_pair_energy(q, d, dist2, dist);
+      eng += p3m_pair_energy(q, dist);
       //	fprintf(stderr,"energy is %f\n",eng);
     }
   }
@@ -1592,19 +1592,19 @@ void ELC_P3M_modify_p3m_sums_both() {
     if (p.p.q != 0.0) {
 
       node_sums[0] += 1.0;
-      node_sums[1] += SQR(p.p.q);
+      node_sums[1] += Utils::sqr(p.p.q);
       node_sums[2] += p.p.q;
 
       if (p.r.p[2] < elc_params.space_layer) {
 
         node_sums[0] += 1.0;
-        node_sums[1] += SQR(elc_params.delta_mid_bot * p.p.q);
+        node_sums[1] += Utils::sqr(elc_params.delta_mid_bot * p.p.q);
         node_sums[2] += elc_params.delta_mid_bot * p.p.q;
       }
       if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
 
         node_sums[0] += 1.0;
-        node_sums[1] += SQR(elc_params.delta_mid_top * p.p.q);
+        node_sums[1] += Utils::sqr(elc_params.delta_mid_top * p.p.q);
         node_sums[2] += elc_params.delta_mid_top * p.p.q;
       }
     }
@@ -1613,7 +1613,7 @@ void ELC_P3M_modify_p3m_sums_both() {
   MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
   p3m.sum_qpart = (int)(tot_sums[0] + 0.1);
   p3m.sum_q2 = tot_sums[1];
-  p3m.square_sum_q = SQR(tot_sums[2]);
+  p3m.square_sum_q = Utils::sqr(tot_sums[2]);
 }
 
 void ELC_P3M_modify_p3m_sums_image() {
@@ -1630,13 +1630,13 @@ void ELC_P3M_modify_p3m_sums_image() {
       if (p.r.p[2] < elc_params.space_layer) {
 
         node_sums[0] += 1.0;
-        node_sums[1] += SQR(elc_params.delta_mid_bot * p.p.q);
+        node_sums[1] += Utils::sqr(elc_params.delta_mid_bot * p.p.q);
         node_sums[2] += elc_params.delta_mid_bot * p.p.q;
       }
       if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
 
         node_sums[0] += 1.0;
-        node_sums[1] += SQR(elc_params.delta_mid_top * p.p.q);
+        node_sums[1] += Utils::sqr(elc_params.delta_mid_top * p.p.q);
         node_sums[2] += elc_params.delta_mid_top * p.p.q;
       }
     }
@@ -1646,7 +1646,7 @@ void ELC_P3M_modify_p3m_sums_image() {
 
   p3m.sum_qpart = (int)(tot_sums[0] + 0.1);
   p3m.sum_q2 = tot_sums[1];
-  p3m.square_sum_q = SQR(tot_sums[2]);
+  p3m.square_sum_q = Utils::sqr(tot_sums[2]);
 }
 
 // this function is required in force.cpp for energy evaluation
@@ -1662,7 +1662,7 @@ void ELC_P3M_restore_p3m_sums() {
     if (p.p.q != 0.0) {
 
       node_sums[0] += 1.0;
-      node_sums[1] += SQR(p.p.q);
+      node_sums[1] += Utils::sqr(p.p.q);
       node_sums[2] += p.p.q;
     }
   }
@@ -1671,7 +1671,7 @@ void ELC_P3M_restore_p3m_sums() {
 
   p3m.sum_qpart = (int)(tot_sums[0] + 0.1);
   p3m.sum_q2 = tot_sums[1];
-  p3m.square_sum_q = SQR(tot_sums[2]);
+  p3m.square_sum_q = Utils::sqr(tot_sums[2]);
 }
 
 #endif

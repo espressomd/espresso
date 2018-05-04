@@ -8,7 +8,7 @@ import numpy as np
 class ParticleSliceTest(ut.TestCase):
 
     state = [[0, 0, 0], [0, 0, 1]]
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.box_l = 10,10,10
 
     def __init__(self, *args, **kwargs):
@@ -354,6 +354,10 @@ class ParticleSliceTest(ut.TestCase):
         self.assertEqual(len(self.system.part[0:0]), 0)
         self.assertEqual(len(self.system.part[0:1]), 1)
         self.assertEqual(len(self.system.part[0:2]), 2)
+
+    def test_non_existing_property(self):
+        with self.assertRaises(AttributeError):
+            self.system.part[:].thispropertydoesnotexist = 1.0
 
 if __name__ == "__main__":
     ut.main()

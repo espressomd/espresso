@@ -152,8 +152,10 @@ struct ParticleProperties {
   */
   int vs_relative_to_particle_id = 0;
   double vs_relative_distance = 0;
-  // Store relative position of the virtual site
+  // Store relative position of the virtual site.
   double vs_relative_rel_orientation[4] = {0., 0., 0., 0};
+  // Store the orientation of the virtual particle in the body fixed frame.
+  double vs_quat[4] = {0., 0., 0., 0.};
 #endif
 #endif
 
@@ -174,15 +176,8 @@ struct ParticleProperties {
 #endif // ROTATION
 #endif // LANGEVIN_PER_PARTICLE
 
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
   int catalyzer_count = 0;
-#endif
-
-#ifdef MULTI_TIMESTEP
-  /** does the particle need a small timestep?
-   * 1= yes
-   * 0 = no (default) */
-  int smaller_timestep = 0;
 #endif
 
 #ifdef EXTERNAL_FORCES
@@ -551,7 +546,7 @@ void update_local_particles(ParticleList *pl);
 void clear_particle_node();
 
 /** Realloc \ref local_particles. */
-void realloc_local_particles();
+void realloc_local_particles(int part);
 
 /**
  * @brief Get particle data.
@@ -560,7 +555,10 @@ void realloc_local_particles();
  *   @return Pointer to copy of particle if it exists,
  *          nullptr otherwise;
 */
-const Particle *get_particle_data(int part);
+const Particle &get_particle_data(int part);
+// Helper function for the interface due to cython bug.
+// TODO: remove after we require cython version > 0.26
+const Particle *get_particle_data_ptr(int part);
 
 /**
  * @brief Fetch a range of particle into the fetch cache.
@@ -641,6 +639,14 @@ int set_particle_rotational_inertia(int part, double rinertia[3]);
 */
 int set_particle_rotation(int part, int rot);
 
+/** @brief rotate a particle around an axis
+   
+   @param part particle id
+   @param axis rotation axis
+   @param angle rotation angle
+*/
+int rotate_particle(int part, double axis[3], double angle);
+
 #ifdef AFFINITY
 /** Call only on the master node: set particle affinity.
     @param part the particle.
@@ -657,15 +663,6 @@ int set_particle_affinity(int part, double bond_site[3]);
  @return ES_OK if particle existed
  */
 int set_particle_out_direction(int part, double out_direction[3]);
-#endif
-
-#ifdef MULTI_TIMESTEP
-/** Call only on the master node: set particle smaller time step flag.
-    @param part the particle.
-    @param small_timestep its new smaller time step.
-    @return TCL_OK if particle existed
-*/
-int set_particle_smaller_timestep(int part, int small_timestep);
 #endif
 
 /** Call only on the master node: set particle charge.
@@ -761,6 +758,7 @@ int set_particle_dipm(int part, double dipm);
 int set_particle_virtual(int part, int isVirtual);
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
+void set_particle_vs_quat(int part, double *vs_quat);
 int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
                              double *rel_ori);
 #endif
@@ -871,7 +869,7 @@ void remove_all_bonds_to(int part);
     @param p    its new position
     @param _new  if true, the particle is allocated, else has to exists already
 */
-void local_place_particle(int part, double p[3], int _new);
+void local_place_particle(int part, const double p[3], int _new);
 
 /** Used by \ref mpi_place_particle, should not be used elsewhere.
     Called if on a different node a new particle was added.
@@ -986,12 +984,9 @@ void pointer_to_virtual(Particle const *p, int const *&res);
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
+void pointer_to_vs_quat(Particle const *p, double const *&res);
 void pointer_to_vs_relative(Particle const *p, int const *&res1,
                             double const *&res2, double const *&res3);
-#endif
-
-#ifdef MULTI_TIMESTEP
-void pointer_to_smaller_timestep(Particle const *p, int const *&res);
 #endif
 
 void pointer_to_dip(Particle const *P, double const *&res);
@@ -1029,5 +1024,10 @@ void pointer_to_rotational_inertia(Particle const *p, double const *&res);
 #endif
 
 bool particle_exists(int part);
+
+/**
+ *  @brief Get the mpi rank which owns the particle with id.
+ */
+int get_particle_node(int id);
 
 #endif
