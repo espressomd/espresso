@@ -29,13 +29,14 @@ IF SCAFACOS == 1:
 from espressomd.utils cimport handle_errors
 from espressomd.utils import is_valid_type
 from . cimport checks
-from .c_analyze cimport partCfg
+from .c_analyze cimport partCfg, PartCfg
+from .particle_data cimport particle
 
 
 IF ELECTROSTATICS == 1:
     def check_neutrality(_params):
         if(_params["check_neutrality"]==True):
-            checks.check_charge_neutrality(partCfg())
+            checks.check_charge_neutrality[PartCfg, particle](partCfg())
 
     cdef class ElectrostaticInteraction(actors.Actor):
         def _tune(self):
