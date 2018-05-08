@@ -2685,49 +2685,6 @@ ELSE:
     class Endangledist(BondedInteractionNotDefined):
         name = "BOND_ENDANGLEDIST"
 
-IF OVERLAPPED == 1:
-    class Overlapped(BondedInteraction):
-
-        def type_number(self):
-            return BONDED_IA_OVERLAPPED
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "OVERLAPPED"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return "overlap_type", "filename"
-
-        def required_keys(self):
-            """Parameters that have to be set.
-
-            """
-            return "overlap_type", "filename"
-
-        def set_default_params(self):
-            """Sets parameters that are not required to their default value.
-
-            """
-            self._params = {"overlap_type": 0, "filename": ""}
-
-        def _get_params_from_es_core(self):
-            make_bond_type_exist(self._bond_id)
-            return \
-                {"bend": bonded_ia_params[self._bond_id].p.overlap.type,
-                 "phi0": utils.to_str(bonded_ia_params[self._bond_id].p.overlap.filename)}
-
-        def _set_params_in_es_core(self):
-            overlapped_bonded_set_params(
-                self._bond_id, self._params["overlap_type"], utils.to_char_pointer(self._params["filename"]))
-
-ELSE:
-    class Overlapped(BondedInteractionNotDefined):
-        name = "OVERLAPPED"
 
 IF BOND_ANGLE == 1:
     class AngleHarmonic(BondedInteraction):
@@ -2979,7 +2936,6 @@ bonded_interaction_classes = {
     int(BONDED_IA_TABULATED): Tabulated,
     int(BONDED_IA_VIRTUAL_BOND): Virtual,
     int(BONDED_IA_ENDANGLEDIST): Endangledist,
-    int(BONDED_IA_OVERLAPPED): Overlapped,
     int(BONDED_IA_ANGLE_HARMONIC): AngleHarmonic,
     int(BONDED_IA_ANGLE_COSINE): AngleCosine,
     int(BONDED_IA_ANGLE_COSSQUARE): AngleCossquare,

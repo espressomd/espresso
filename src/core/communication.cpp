@@ -66,7 +66,6 @@
 #include "molforces.hpp"
 #include "morse.hpp"
 #include "npt.hpp"
-#include "overlap.hpp"
 #include "p3m-dipolar.hpp"
 #include "p3m.hpp"
 #include "partCfg_global.hpp"
@@ -1194,19 +1193,6 @@ void mpi_bcast_ia_params(int i, int j) {
       boost::mpi::broadcast(comm_cart, *bonded_ia_params[i].p.tab.pot, 0);
     }
 #endif
-#ifdef OVERLAPPED
-    /* For overlapped potentials we have to send the ovelapped-functions extra
-     */
-    if (bonded_ia_params[i].type == BONDED_IA_OVERLAPPED) {
-      int size = bonded_ia_params[i].p.overlap.noverlaps;
-      MPI_Bcast(bonded_ia_params[i].p.overlap.para_a, size, MPI_DOUBLE, 0,
-                comm_cart);
-      MPI_Bcast(bonded_ia_params[i].p.overlap.para_b, size, MPI_DOUBLE, 0,
-                comm_cart);
-      MPI_Bcast(bonded_ia_params[i].p.overlap.para_c, size, MPI_DOUBLE, 0,
-                comm_cart);
-    }
-#endif
   }
 
   on_short_range_ia_change();
@@ -1230,26 +1216,6 @@ void mpi_bcast_ia_params_slave(int i, int j) {
       boost::mpi::broadcast(comm_cart, *tab_pot, 0);
 
       bonded_ia_params[i].p.tab.pot = tab_pot;
-    }
-#endif
-#ifdef OVERLAPPED
-    /* For overlapped potentials we have to send the ovelapped-functions extra
-     */
-    if (bonded_ia_params[i].type == BONDED_IA_OVERLAPPED) {
-      int size = bonded_ia_params[i].p.overlap.noverlaps;
-      /* alloc overlapped parameter arrays on slave nodes! */
-      bonded_ia_params[i].p.overlap.para_a =
-          (double *)Utils::malloc(size * sizeof(double));
-      bonded_ia_params[i].p.overlap.para_b =
-          (double *)Utils::malloc(size * sizeof(double));
-      bonded_ia_params[i].p.overlap.para_c =
-          (double *)Utils::malloc(size * sizeof(double));
-      MPI_Bcast(bonded_ia_params[i].p.overlap.para_a, size, MPI_DOUBLE, 0,
-                comm_cart);
-      MPI_Bcast(bonded_ia_params[i].p.overlap.para_b, size, MPI_DOUBLE, 0,
-                comm_cart);
-      MPI_Bcast(bonded_ia_params[i].p.overlap.para_c, size, MPI_DOUBLE, 0,
-                comm_cart);
     }
 #endif
   }
