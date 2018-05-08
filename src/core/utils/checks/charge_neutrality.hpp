@@ -1,33 +1,36 @@
+#ifndef UTILS_CHECKS_CHARGE_NEUTRALITY_HPP
+#define UTILS_CHECKS_CHARGE_NEUTRALITY_HPP
+
+#include <boost/accumulators/accumulators.hpp>
+#include <boost/accumulators/statistics/sum_kahan.hpp>
+
 #include <cmath>
 #include <limits>
+#include <stdexcept>
 
 namespace Utils {
+template <typename ParticleRange>
+bool check_charge_neutrality(
+    ParticleRange &prange,
+    double relative_tolerance = 1e-12) {
+  using namespace boost::accumulators;
+  using KahanSum = accumulator_set<double, features<tag::sum_kahan>>;
 
-template<typename ParticleRange, typename Particle>
-inline void check_charge_neutrality(ParticleRange &prange) {
-  std::vector<double> charges;
-  std::transform(prange.begin(), prange.end(), std::back_inserter(charges),
-          [](Particle const &p){return p.p.q;});
-  double total_charge = std::accumulate(charges.begin(), charges.end(), 0.0);
-  std::sort(charges.begin(), charges.end(),
-          [](double a, double b) {return std::abs(a) < std::abs(b);});
-  //Find first non-zero element.
-  auto result = std::find_if(charges.begin(), charges.end(), [](double a){return std::abs(a) > std::numeric_limits<double>::epsilon();});
-  if (result != charges.end()) {
-    double min_abs_non_zero_charge = std::abs(*result);
-    if (std::abs(total_charge) / min_abs_non_zero_charge > std::numeric_limits<double>::epsilon())
-      throw std::runtime_error(
-                          "The system is not charge neutral. Please "
-                          "neutralize the system before adding a new actor via adding "
-                          "the corresponding counterions to the system. Alternatively "
-                          "you can turn off the electroneutrality check via supplying "
-                          "check_neutrality=False when creating the actor. In this "
-                          "case you may be simulating a non-neutral system which will "
-                          "affect physical observables like e.g. the pressure, the "
-                          "chemical potentials of charged species or potential "
-                          "energies of the system. Since simulations of non charge "
-                          "neutral systems are special please make sure you know what "
-                          "you are doing.");
+  KahanSum q_sum;
+  auto q_min = std::numeric_limits<double>::infinity();
+
+  for (auto const &p : prange) {
+    auto const &q = p.p.q;
+
+    if (q) {
+      q_sum(q);
+      q_min = std::min(q_min, std::abs(q));
+    }
   }
+
+  auto const excess_ratio = std::abs(sum_kahan(q_sum)) / q_min;
+
+  return excess_ratio <= relative_tolerance;
 }
 }
+#endif
