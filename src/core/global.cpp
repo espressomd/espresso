@@ -124,7 +124,7 @@ const std::unordered_map<int, Datafield> fields{
       {&n_part, Datafield::Type::INT, 1, "n_part",
        6}}, /* 17 from particle.cpp */
      {FIELD_NPARTTYPE,
-      {&n_particle_types, Datafield::Type::INT, 1, "n_part_types",
+      {&max_seen_particle_type, Datafield::Type::INT, 1, "max_seen_particle_type",
        8}}, /* 18 from interaction_data.cpp */
      {FIELD_RIGIDBONDS,
       {&n_rigidbonds, Datafield::Type::INT, 1, "n_rigidbonds",

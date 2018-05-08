@@ -79,7 +79,7 @@ cdef extern from "interaction_data.hpp":
     double dpd_r_cut
     extern double max_cut
     extern int max_seen_particle
-    extern int n_particle_types
+    extern int max_seen_particle_type
     extern double max_cut_nonbonded
     extern double max_cut_bonded
     extern double min_global_cut

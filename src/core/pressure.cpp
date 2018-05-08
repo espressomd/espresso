@@ -232,7 +232,7 @@ void init_virials(Observable_stat *stat)
     int n_pre, n_non_bonded, n_coulomb, n_dipolar,n_vs;
 
   n_pre        = 1;
-  n_non_bonded = (n_particle_types*(n_particle_types+1))/2;
+  n_non_bonded = (max_seen_particle_type*(max_seen_particle_type+1))/2;
 
   n_coulomb    = 0;
   n_dipolar    = 0;
@@ -272,7 +272,7 @@ void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb)
 {
   int n_non_bonded;
 
-  n_non_bonded = (n_particle_types*(n_particle_types+1))/2;
+  n_non_bonded = (max_seen_particle_type*(max_seen_particle_type+1))/2;
 
   obsstat_realloc_and_clear_non_bonded(stat_nb, n_non_bonded, 1);
   stat_nb->init_status_nb = 0;
@@ -288,7 +288,7 @@ void init_p_tensor(Observable_stat *stat)
 
 
   n_pre        = 1;
-  n_non_bonded = (n_particle_types*(n_particle_types+1))/2;
+  n_non_bonded = (max_seen_particle_type*(max_seen_particle_type+1))/2;
 
   n_coulomb = 0;
   n_dipolar = 0;
@@ -324,7 +324,7 @@ void init_p_tensor(Observable_stat *stat)
 void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb)
 {
   int n_nonbonded;
-  n_nonbonded = (n_particle_types*(n_particle_types+1))/2;
+  n_nonbonded = (max_seen_particle_type*(max_seen_particle_type+1))/2;
 
   obsstat_realloc_and_clear_non_bonded(stat_nb, n_nonbonded, 9);
   stat_nb->init_status_nb = 0;

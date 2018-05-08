@@ -27,7 +27,7 @@ from . cimport particle_data
 from .interactions import BondedInteraction
 from .interactions import BondedInteractions
 from copy import copy
-from globals cimport max_seen_particle, time_step, box_l, n_part, n_rigidbonds, n_particle_types
+from globals cimport max_seen_particle, time_step, box_l, n_part, n_rigidbonds, max_seen_particle_type
 import collections
 import functools
 import types
@@ -2025,7 +2025,7 @@ Set quat and scalar dipole moment (dipm) instead.")
         """
 
         def __get__(self):
-            return n_particle_types
+            return max_seen_particle_type
 
     property n_rigidbonds:
         """
