@@ -29,7 +29,7 @@ class OifVolumeConservation(ut.TestCase):
 
         # creating the OIF object
         cell0 = oif.OifCell(
-            cell_type=cell_type, part_type=0, origin=[5.0, 5.0, 5.0])
+            cell_type=cell_type, particle_type=0, origin=[5.0, 5.0, 5.0])
         self.assertEqual(system.max_oif_objects,1)
         # cell0.output_vtk_pos_folded(file_name="cell0_0.vtk")
 
