@@ -136,7 +136,7 @@ static int terminated = 0;
   CB(mpi_recv_part_slave)                                                      \
   CB(mpi_integrate_slave)                                                      \
   CB(mpi_bcast_ia_params_slave)                                                \
-  CB(mpi_bcast_n_particle_types_slave)                                         \
+  CB(mpi_bcast_max_seen_particle_type_slave)                                         \
   CB(mpi_gather_stats_slave)                                                   \
   CB(mpi_set_time_step_slave)                                                  \
   CB(mpi_bcast_coulomb_params_slave)                                           \
@@ -1259,12 +1259,12 @@ void mpi_bcast_ia_params_slave(int i, int j) {
 
 /*************** REQ_BCAST_IA_SIZE ************/
 
-void mpi_bcast_n_particle_types(int ns) {
-  mpi_call(mpi_bcast_n_particle_types_slave, -1, ns);
-  mpi_bcast_n_particle_types_slave(-1, ns);
+void mpi_bcast_max_seen_particle_type(int ns) {
+  mpi_call(mpi_bcast_max_seen_particle_type_slave, -1, ns);
+  mpi_bcast_max_seen_particle_type_slave(-1, ns);
 }
 
-void mpi_bcast_n_particle_types_slave(int pnode, int ns) {
+void mpi_bcast_max_seen_particle_type_slave(int pnode, int ns) {
   realloc_ia_params(ns);
 }
 
@@ -2374,7 +2374,7 @@ void mpi_external_potential_broadcast(int number) {
   MPI_Bcast(&external_potentials[number], sizeof(ExternalPotential), MPI_BYTE,
             0, comm_cart);
   MPI_Bcast(external_potentials[number].scale,
-            external_potentials[number].n_particle_types, MPI_DOUBLE, 0,
+            external_potentials[number].max_seen_particle_type, MPI_DOUBLE, 0,
             comm_cart);
 }
 
@@ -2385,9 +2385,9 @@ void mpi_external_potential_broadcast_slave(int node, int number) {
   generate_external_potential(&new_);
   external_potentials[number] = E;
   external_potentials[number].scale =
-      (double *)Utils::malloc(external_potentials[number].n_particle_types);
+      (double *)Utils::malloc(external_potentials[number].max_seen_particle_type);
   MPI_Bcast(external_potentials[number].scale,
-            external_potentials[number].n_particle_types, MPI_DOUBLE, 0,
+            external_potentials[number].max_seen_particle_type, MPI_DOUBLE, 0,
             comm_cart);
 }
 

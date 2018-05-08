@@ -192,7 +192,7 @@ enum DipolarInteraction {
 
 /** field containing the interaction parameters for
  *  nonbonded interactions. Access via
- * get_ia_param(i, j), i,j < n_particle_types */
+ * get_ia_param(i, j), i,j < max_seen_particle_type */
 struct IA_parameters {
   /** maximal cutoff for this pair of particle types. This contains
       contributions from the short-ranged interactions, plus any
@@ -838,7 +838,7 @@ struct Bonded_ia_parameters {
  ************************************************/
 
 /** Maximal particle type seen so far. */
-extern int n_particle_types;
+extern int max_seen_particle_type;
 
 /** Structure containing the coulomb parameters. */
 extern Coulomb_parameters coulomb;
@@ -891,8 +891,8 @@ int dipolar_set_Dprefactor(double prefactor);
 /** get interaction parameters between particle sorts i and j */
 inline IA_parameters *get_ia_param(int i, int j) {
   extern std::vector<IA_parameters> ia_params;
-  extern int n_particle_types;
-  return &ia_params[i * n_particle_types + j];
+  extern int max_seen_particle_type;
+  return &ia_params[i * max_seen_particle_type + j];
 }
 
 /** get interaction parameters between particle sorts i and j.

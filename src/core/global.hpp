@@ -86,7 +86,7 @@ enum Fields {
   FIELD_NNODES,
   /** index of \ref n_part in  \ref #fields */
   FIELD_NPART,
-  /** index of \ref n_particle_types in \ref #fields */
+  /** index of \ref max_seen_particle_type in \ref #fields */
   FIELD_NPARTTYPE,
   /** index of \ref n_rigidbonds in \ref #fields */
   FIELD_RIGIDBONDS,
