@@ -69,9 +69,6 @@ enum BondedInteraction {
   /** Type of bonded interaction is a bond angle -- chain ends have angle with
      wall constraint */
   BONDED_IA_ENDANGLEDIST,
-  /** Type of overlapped bonded interaction potential,
-      may be of bond length, of bond angle or of dihedral type. */
-  BONDED_IA_OVERLAPPED,
   /** Type of bonded interaction is a bond angle cosine potential. */
   BONDED_IA_ANGLE_HARMONIC,
   /** Type of bonded interaction is a bond angle cosine potential. */

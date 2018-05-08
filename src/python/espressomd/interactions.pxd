@@ -455,15 +455,6 @@ IF BOND_ENDANGLEDIST == 1:
     cdef extern from "endangledist.hpp":
         int endangledist_set_params(int bond_type, double bend, double phi0, double distmin, double distmax)
 
-IF OVERLAPPED == 1:
-    cdef extern from "interaction_data.hpp":
-        cdef enum OverlappedBondedInteraction:
-            OVERLAP_UNKNOWN = 0, OVERLAP_BOND_LENGTH, OVERLAP_BOND_ANGLE,\
-                OVERLAP_BOND_DIHEDRAL
-    cdef extern from "overlap.hpp":
-        int overlapped_bonded_set_params(int bond_type, OverlappedBondedInteraction overlap_type,
-                                         char * filename)
-
 IF ELECTROSTATICS == 1:
     cdef extern from "bonded_coulomb.hpp":
         int bonded_coulomb_set_params(int bond_type, double prefactor)
@@ -489,7 +480,6 @@ cdef extern from "interaction_data.hpp":
         BONDED_IA_VIRTUAL_BOND,
         BONDED_IA_ANGLEDIST,
         BONDED_IA_ENDANGLEDIST,
-        BONDED_IA_OVERLAPPED,
         BONDED_IA_ANGLE_HARMONIC,
         BONDED_IA_ANGLE_COSINE,
         BONDED_IA_ANGLE_COSSQUARE,
