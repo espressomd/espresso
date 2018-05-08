@@ -24,7 +24,6 @@ from espressomd cimport actors
 from . import actors
 import numpy as np
 from espressomd.utils cimport handle_errors
-from espressomd.electrostatics import check_neutrality
 
 IF ELECTROSTATICS and P3M:
     cdef class ElectrostaticExtensions(actors.Actor):
