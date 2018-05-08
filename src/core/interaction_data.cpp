@@ -58,7 +58,6 @@
 #include "morse.hpp"
 #include "object-in-fluid/affinity.hpp"
 #include "object-in-fluid/membrane_collision.hpp"
-#include "overlap.hpp"
 #include "p3m-dipolar.hpp"
 #include "p3m.hpp"
 #include "pressure.hpp"

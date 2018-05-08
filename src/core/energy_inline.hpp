@@ -42,7 +42,6 @@
 #include "ljcos.hpp"
 #include "ljcos2.hpp"
 #include "ljgen.hpp"
-#include "overlap.hpp"
 #include "p3m-dipolar.hpp"
 #include "p3m.hpp"
 #include "quartic.hpp"

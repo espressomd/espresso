@@ -69,7 +69,6 @@
 #include "object-in-fluid/oif_global_forces.hpp"
 #include "object-in-fluid/oif_local_forces.hpp"
 #include "object-in-fluid/out_direction.hpp"
-#include "overlap.hpp"
 #include "p3m-dipolar.hpp"
 #include "quartic.hpp"
 #include "soft_sphere.hpp"

@@ -66,7 +66,6 @@
 #include "molforces.hpp"
 #include "morse.hpp"
 #include "npt.hpp"
-#include "overlap.hpp"
 #include "p3m-dipolar.hpp"
 #include "p3m.hpp"
 #include "partCfg_global.hpp"

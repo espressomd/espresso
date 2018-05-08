@@ -111,14 +111,6 @@ enum TabulatedBondedInteraction {
   TAB_BOND_DIHEDRAL = 3
 };
 
-/** Specify overlapped bonded interactions  */
-enum OverlappedBondedInteraction {
-  OVERLAP_UNKNOWN = 0,
-  OVERLAP_BOND_LENGTH,
-  OVERLAP_BOND_ANGLE,
-  OVERLAP_BOND_DIHEDRAL
-};
-
 /** cutoff for deactivated interactions. Below 0, so that even particles on
     top of each other don't interact by chance. */
 #define INACTIVE_CUTOFF -1.0
@@ -660,17 +652,6 @@ typedef struct {
   TabulatedPotential *pot;
 } Tabulated_bond_parameters;
 
-/** Parameters for n-body overlapped potential (n=2,3,4). */
-typedef struct {
-  char *filename;
-  OverlappedBondedInteraction type;
-  double maxval;
-  int noverlaps;
-  double *para_a;
-  double *para_b;
-  double *para_c;
-} Overlap_bond_parameters;
-
 #ifdef UMBRELLA
 /** Parameters for umbrella potential */
 typedef struct {
@@ -797,7 +778,6 @@ typedef union {
   Angle_cossquare_bond_parameters angle_cossquare;
   Dihedral_bond_parameters dihedral;
   Tabulated_bond_parameters tab;
-  Overlap_bond_parameters overlap;
 #ifdef UMBRELLA
   Umbrella_bond_parameters umbrella;
 #endif
