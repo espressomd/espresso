@@ -17,10 +17,9 @@ class OifVolumeConservation(ut.TestCase):
     def test(self):
         import object_in_fluid as oif
 
-        system = espressomd.System()
+        system = espressomd.System(box_l=(10,10,10))
         self.assertEqual(system.max_oif_objects,0)
         system.time_step = 0.1
-        system.box_l = [10.0, 10.0, 10.0]
         system.cell_system.skin = 0.5
         system.thermostat.set_langevin(kT=0, gamma=0.7)
 
