@@ -26,9 +26,8 @@ from oif_utils import AngleBtwTriangles, Distance, AreaTriangle, GetNTriangle, K
 simNo = sys.argv[1]
 os.mkdir("output/sim" + str(simNo))
 
-system = espressomd.System()
+system = espressomd.System(box_l = [22.0, 14.0, 15.0])
 system.time_step = 0.1
-system.box_l = [22.0, 14.0, 15.0]
 system.cell_system.skin = 0.2
 
 # creating the template for RBCs

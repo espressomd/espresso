@@ -25,9 +25,8 @@ boxY = 14.0
 boxZ = 15.0
 time_step = 0.1
 
-system = espressomd.System()
+system = espressomd.System(box_l=(box_l,box_l,box_l))
 system.time_step = time_step
-system.box_l = [boxX, boxY, boxZ]
 system.cell_system.skin = 0.2
 
 # creating the template for RBCs
