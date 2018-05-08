@@ -17,13 +17,47 @@
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "random.hpp"
-#include "statistics.hpp"
-#include "utils.hpp"
+
 #include "utils/Histogram.hpp"
+
 #include <fstream>
 #include <stdio.h>
 
 namespace ReactionEnsemble {
+/**
+*Calculates the average of an array (used for the histogram of the
+*Wang-Landau algorithm). It excludes values which are initialized to be
+*negative. Those values indicate that the Wang-Landau algorithm should not
+*sample those values. The values still occur in the list because we can only
+*store "rectangular" value ranges.
+*/
+template <typename T>
+double average_list_of_allowed_entries(const std::vector<T> &vector) {
+  double result = 0.0;
+  int counter_allowed_entries = 0;
+  for (int i = 0; i < vector.size(); i++) {
+    if (vector[i] >= 0) { // checks for validity of index i (think of energy
+                          // collective variables, in a cubic memory layout
+                          // there will be indices which are not allowed by
+                          // the energy boundaries. These values will be
+                          // initalized with a negative fill value)
+      result += static_cast<double>(vector[i]);
+      counter_allowed_entries += 1;
+    }
+  }
+  return result / counter_allowed_entries;
+}
+
+/**
+* Checks wether a number is in a std:vector of numbers.
+*/
+template <typename T> bool is_in_list(T value, const std::vector<T> &list) {
+  for (int i = 0; i < list.size(); i++) {
+    if (std::abs(list[i] - value) < std::numeric_limits<double>::epsilon())
+      return true;
+  }
+  return false;
+}
 
 void EnergyCollectiveVariable::load_CV_boundaries(
     WangLandauReactionEnsemble &m_current_wang_landau_system) {
@@ -853,7 +887,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   }
 
   //	//correct for enhanced proposal of small radii by using the metropolis
-  //hastings algorithm for asymmetric proposal densities.
+  // hastings algorithm for asymmetric proposal densities.
   //	double
   // old_radius=std::sqrt(std::pow(particle_positions[0]-cyl_x,2)+std::pow(particle_positions[1]-cyl_y,2));
   //	double
@@ -1211,11 +1245,11 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
   // histogram and the wang_landau_potential values is "cuboid")
   if (old_state_index >= 0 && new_state_index >= 0) {
     if (histogram[new_state_index] >= 0 && histogram[old_state_index] >= 0) {
-      bf = std::min(
-          1.0, bf * exp(wang_landau_potential[old_state_index] -
-                        wang_landau_potential[new_state_index])); // modify
-                                                                  // boltzmann
-                                                                  // factor
+      bf = std::min(1.0,
+                    bf * exp(wang_landau_potential[old_state_index] -
+                             wang_landau_potential[new_state_index])); // modify
+      // boltzmann
+      // factor
       // according to wang-landau
       // algorithm, according to
       // grand canonical simulation

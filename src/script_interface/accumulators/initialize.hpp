@@ -18,7 +18,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #ifndef ESPRESSO_SCRIPTINTERFACE_ACCUMULATORS_INITIALIZE_HPP
 #define ESPRESSO_SCRIPTINTERFACE_ACCUMULATORS_INITIALIZE_HPP
 namespace ScriptInterface {
@@ -28,4 +27,4 @@ void initialize();
 
 } /* namespace Accumulators */
 } /* namespace ScriptInterface */
-#endif //ESPRESSO_SCRIPTINTERFACE_ACCUMULATORS_INITIALIZE_HPP
+#endif // ESPRESSO_SCRIPTINTERFACE_ACCUMULATORS_INITIALIZE_HPP

@@ -40,7 +40,6 @@ from .galilei import GalileiTransform
 if CONSTRAINTS == 1:
     from .constraints import Constraints
 
-from .correlators import AutoUpdateCorrelators
 from .accumulators import AutoUpdateAccumulators
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
@@ -93,7 +92,6 @@ cdef class System(object):
         analysis
         galilei
         integrator
-        auto_update_correlators
         auto_update_accumulators
         constraints
         lbboundaries
@@ -117,7 +115,6 @@ cdef class System(object):
             self.actors = Actors(_system=self)
             self.analysis = Analysis(self)
             self.auto_update_accumulators = AutoUpdateAccumulators()
-            self.auto_update_correlators = AutoUpdateCorrelators()
             self.bonded_inter = interactions.BondedInteractions()
             self.cell_system = CellSystem()
             IF COLLISION_DETECTION==1:
@@ -151,7 +148,6 @@ cdef class System(object):
         odict['actors'] = System.__getattribute__(self, "actors")
         odict['analysis'] = System.__getattribute__(self, "analysis")
         odict['auto_update_accumulators'] = System.__getattribute__(self, "auto_update_accumulators")
-        odict['auto_update_correlators'] = System.__getattribute__(self, "auto_update_correlators")
         odict['bonded_inter'] = System.__getattribute__(self, "bonded_inter")
         odict['cell_system'] = System.__getattribute__(self, "cell_system")
         odict['comfixed'] = System.__getattribute__(self, "comfixed")
@@ -258,20 +254,6 @@ cdef class System(object):
         def __get__(self):
             global sim_time
             return sim_time
-
-    property smaller_time_step:
-        """
-        Setting this property to a positive integer value turns on the multi-timestepping algorithm. The ratio :attr:`espressomd.system.System.time_step`/:attr:`espressomd.system.System.smaller_time_step` must be an integer.
-        """
-        def __set__(self, double _smaller_time_step):
-            IF MULTI_TIMESTEP:
-                global smaller_time_step
-                if _smaller_time_step <= 0:
-                    raise ValueError("Smaller time step must be positive")
-                mpi_set_smaller_time_step(_smaller_time_step)
-
-        def __get__(self):
-            return smaller_time_step
 
     property time_step:
         """
@@ -528,7 +510,7 @@ cdef class System(object):
 
 
     def _is_valid_type(self, current_type):
-        return (not (isinstance(current_type, int) or current_type < 0 or current_type > globals.n_particle_types))
+        return (not (isinstance(current_type, int) or current_type < 0 or current_type > globals.max_seen_particle_type))
 
 
     def check_valid_type(self, current_type):

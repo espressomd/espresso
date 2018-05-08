@@ -513,16 +513,6 @@ inline void add_kinetic_energy(Particle *p1) {
 #endif
 
   /* kinetic energy */
-
-  // #ifdef MULTI_TIMESTEP
-  //   if (p1->p.smaller_timestep==1) {
-  //     ostringstream msg;
-  //     msg << "SMALL TIME STEP";
-  //     energy.data.e[0] += Utils::sqr(smaller_time_step/time_step) *
-  //       (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) + Utils::sqr(p1->m.v[2]))*(*p1).p.mass;
-  //   }
-  //   else
-  // #endif
   energy.data.e[0] +=
       (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) + Utils::sqr(p1->m.v[2])) * (*p1).p.mass;
 

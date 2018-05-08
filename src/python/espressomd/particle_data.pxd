@@ -99,10 +99,6 @@ cdef extern from "particle_data.hpp":
     IF ROTATION == 1:
         int set_particle_rotation(int part, int rot)
 
-    IF MULTI_TIMESTEP:
-        int set_particle_smaller_timestep(int part, int small_timestep)
-        void pointer_to_smaller_timestep(const particle * p, const int * & res)
-
     IF MASS:
         int set_particle_mass(int part, double mass)
 
@@ -243,13 +239,13 @@ cdef extern from "interaction_data.hpp":
     cdef int n_bonded_ia
 
 cdef class ParticleHandle(object):
-    cdef public int id
-    cdef bint valid
+    cdef public int _id
     cdef const particle * particle_data
     cdef int update_particle_data(self) except -1
 
 cdef class _ParticleSliceImpl:
     cdef public id_selection
+    cdef int _chunk_size
 
 cdef extern from "grid.hpp":
     Vector3d folded_position(const particle *)
