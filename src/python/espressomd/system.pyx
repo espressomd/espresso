@@ -40,7 +40,6 @@ from .galilei import GalileiTransform
 if CONSTRAINTS == 1:
     from .constraints import Constraints
 
-from .correlators import AutoUpdateCorrelators
 from .accumulators import AutoUpdateAccumulators
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
@@ -89,7 +88,6 @@ cdef class System(object):
         analysis
         galilei
         integrator
-        auto_update_correlators
         auto_update_accumulators
         constraints
         lbboundaries
@@ -113,7 +111,6 @@ cdef class System(object):
             self.actors = Actors()
             self.analysis = Analysis(self)
             self.auto_update_accumulators = AutoUpdateAccumulators()
-            self.auto_update_correlators = AutoUpdateCorrelators()
             self.bonded_inter = interactions.BondedInteractions()
             self.cell_system = CellSystem()
             IF COLLISION_DETECTION==1:
@@ -147,7 +144,6 @@ cdef class System(object):
         odict['actors'] = System.__getattribute__(self, "actors")
         odict['analysis'] = System.__getattribute__(self, "analysis")
         odict['auto_update_accumulators'] = System.__getattribute__(self, "auto_update_accumulators")
-        odict['auto_update_correlators'] = System.__getattribute__(self, "auto_update_correlators")
         odict['bonded_inter'] = System.__getattribute__(self, "bonded_inter")
         odict['cell_system'] = System.__getattribute__(self, "cell_system")
         odict['comfixed'] = System.__getattribute__(self, "comfixed")

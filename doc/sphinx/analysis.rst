@@ -828,7 +828,7 @@ the script ``samples/observables_correlators.py``.
 Creating a correlation
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Each correlator is represented by an instance of the :class:`espressomd.correlators.Correlator`. Please see its documentation for an explanation of the arguments that have to be passed to the constructor.
+Each correlator is represented by an instance of the :class:`espressomd.accumulators.Correlator`. Please see its documentation for an explanation of the arguments that have to be passed to the constructor.
 
 Correlators can be registered for automatic updating during the
 integration by adding them to :attr:`espressomd.system.System.auto_update_correlators`.
@@ -965,14 +965,13 @@ discussion is presented in Ref. :cite:`ramirez10a`.
 Accumulators
 ------------
 
-.. _Observable accumulator:
+.. _Mean-variance calculator:
 
-Observable accumulator
-~~~~~~~~~~~~~~~~~~~~~~
+Mean-variance calculator
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-The observable accumulator :class:`espressomd.accumulators.Accumulator` can
-be used to calculate the mean and variance of an observable (
-:mod:`espressomd.observables`) in the core::
+In order to calculate the running mean and variance of an observable
+:class:`espressomd.accumulators.MeanVarianceCalculator` can be used::
 
     import espressomd
     import espressomd.observables
@@ -983,7 +982,7 @@ be used to calculate the mean and variance of an observable (
     system.time_step = 0.01
     system.part.add(id=0, pos=[5.0, 5.0, 5.0])
     position_observable = espressomd.observables.ParticlePositions(ids=(0,))
-    accumulator = espressomd.accumulators.Accumulator(obs=position_observable)
+    accumulator = espressomd.accumulators.MeanVarianceCalculator(obs=position_observable, delta_N=1)
     system.auto_update_accumulators.add(accumulator)
     # Perform integration (not shown)
     print accumulator.get_mean()
@@ -991,9 +990,7 @@ be used to calculate the mean and variance of an observable (
 
 In the example above the automatic update of the accumulator is used. However, 
 it's also possible to manually update the accumulator by calling
-:meth:`espressomd.accumulators.Accumulator.update`.
-Please note that the current core implementation of the accumulator is not
-serializable and therefore can not be checkpointed.
+:meth:`espressomd.accumulators.MeanVarianceCalculator.update`.
 
 Cluster analysis
 ----------------

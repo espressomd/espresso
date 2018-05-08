@@ -26,10 +26,10 @@
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
-#include <boost/serialization/string.hpp>
-#include <boost/serialization/vector.hpp>
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <limits>
 
@@ -37,7 +37,7 @@ namespace {
 int min(int i, unsigned int j) { return std::min(i, static_cast<int>(j)); }
 }
 
-namespace Correlators {
+namespace Accumulators {
 /** The minimal version of compression function */
 std::vector<double> compress_do_nothing(std::vector<double> const &A1,
                                         std::vector<double> const &A2) {
@@ -189,8 +189,6 @@ constexpr const char init_errors[][64] = {
     "fcs_acf requires 3 additional parameters"                       // 19
 };
 
-int correlations_autoupdate = 0;
-
 int Correlator::get_correlation_time(double *correlation_time) {
   // We calculate the correlation time for each m_dim_corr by normalizing the
   // correlation,
@@ -234,24 +232,6 @@ void Correlator::initialize() {
   unsigned int i, j, k;
   hierarchy_depth = 0;
   // Class members are assigned via the initializer list
-
-  // Input validation
-  if (m_dt <= 0) {
-    throw std::runtime_error(init_errors[2]);
-  }
-
-  if ((m_dt - time_step) < -1e-6 * time_step) {
-    throw std::runtime_error(init_errors[15]);
-  }
-
-  // check if m_dt is a multiple of the md timestep
-  if (std::abs(m_dt / time_step - round(m_dt / time_step)) > 1e-6) {
-    throw std::runtime_error(init_errors[16]);
-  }
-
-  // Time steps and intervals
-  update_frequency =
-      std::floor(m_dt / time_step + std::numeric_limits<double>::round_error());
 
   if (m_tau_lin == 1) { // use the default
     m_tau_lin = (int)ceil(m_tau_max / m_dt);
@@ -395,10 +375,10 @@ void Correlator::initialize() {
     }
 }
 
-int Correlator::get_data() {
+void Correlator::update() {
   if (finalized) {
     runtimeErrorMsg() << "No data can be added after finalize() was called.";
-    return 0;
+    return;
   }
   // We must now go through the hierarchy and make sure there is space for the
   // new
@@ -497,7 +477,6 @@ int Correlator::get_data() {
   }
 
   m_last_update = sim_time;
-  return 0;
 }
 
 int Correlator::finalize() {
@@ -571,8 +550,8 @@ int Correlator::finalize() {
 
       // We only need to update correlation estimates for the higher levels
       for (i = ll + 1; i < highest_level_to_compress + 2; i++) {
-        for (j = (m_tau_lin + 1) / 2 + 1;
-             j < min(m_tau_lin + 1, n_vals[i]); j++) {
+        for (j = (m_tau_lin + 1) / 2 + 1; j < min(m_tau_lin + 1, n_vals[i]);
+             j++) {
           index_new = newest[i];
           index_old = (newest[i] - j + m_tau_lin + 1) % (m_tau_lin + 1);
           index_res =
@@ -591,24 +570,6 @@ int Correlator::finalize() {
     }
   }
   return 0;
-}
-
-void Correlator::start_auto_update() {
-  if (update_frequency > 0) {
-    correlations_autoupdate = 1;
-    autoupdate = 1;
-    m_last_update = sim_time;
-  } else {
-    throw std::runtime_error(
-        "Could not start autoupdate: update frequency not set");
-  }
-}
-
-void Correlator::stop_auto_update() {
-  autoupdate = 0;
-  // Todo
-  // Insert logic to determine if global correlations_auto_update can be set to
-  // 0
 }
 
 std::vector<double> Correlator::get_correlation() {

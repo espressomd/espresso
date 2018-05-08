@@ -35,7 +35,6 @@
 #include "buckingham.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
-#include "correlators.hpp"
 #include "cuda_interface.hpp"
 #include "debye_hueckel.hpp"
 #include "elc.hpp"
