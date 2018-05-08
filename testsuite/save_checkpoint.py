@@ -2,6 +2,8 @@ import espressomd
 import espressomd.checkpointing
 import espressomd.electrostatics
 import espressomd.virtual_sites
+import espressomd.accumulators
+import espressomd.observables
 
 checkpoint = espressomd.checkpointing.Checkpointing(checkpoint_id="mycheckpoint", checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
 
@@ -15,6 +17,11 @@ system.part.add(pos=[1.0, 1.0, 2.0], q=-1)
 if espressomd.has_features('ELECTROSTATICS'):
     p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=0.1, mesh=10, cao=1, alpha=1.0, r_cut=1.0, tune=False)
     system.actors.add(p3m)
+obs = espressomd.observables.ParticlePositions(ids=[0,1])
+acc = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
+acc.update()
+system.part[0].pos = [1.0, 2.0, 3.0]
+acc.update()
 
 system.thermostat.set_langevin(kT=1.0, gamma=2.0)
 
@@ -25,4 +32,5 @@ if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
 if espressomd.has_features(['LENNARD_JONES']):
     system.non_bonded_inter[0, 0].lennard_jones.set_params(epsilon=1.2, sigma=1.3, cutoff=2.0, shift=0.1)
 checkpoint.register("system")
+checkpoint.register("acc")
 checkpoint.save(0)
