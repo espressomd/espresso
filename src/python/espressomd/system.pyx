@@ -22,6 +22,7 @@ include "myconfig.pxi"
 
 from globals cimport *
 import numpy as np
+import collections
 
 from . cimport integrate
 from . import interactions
@@ -138,9 +139,11 @@ cdef class System(object):
 
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
-        odict = {}
+        odict = collections.OrderedDict()
         for property_ in setable_properties:
             odict[property_] = System.__getattribute__(self, property_)
+        IF VIRTUAL_SITES:
+            odict['_active_virtual_sites_handle'] = System.__getattribute__(self, "_active_virtual_sites_handle")
         odict['actors'] = System.__getattribute__(self, "actors")
         odict['analysis'] = System.__getattribute__(self, "analysis")
         odict['auto_update_accumulators'] = System.__getattribute__(self, "auto_update_accumulators")
@@ -157,8 +160,6 @@ cdef class System(object):
         odict['non_bonded_inter'] = System.__getattribute__(self, "non_bonded_inter")
         odict['part'] = System.__getattribute__(self, "part")
         odict['thermostat'] = System.__getattribute__(self, "thermostat")
-        IF VIRTUAL_SITES:
-            odict['_active_virtual_sites_handle'] = System.__getattribute__(self, "_active_virtual_sites_handle")
         return odict
 
     def __setstate__(self, params):
