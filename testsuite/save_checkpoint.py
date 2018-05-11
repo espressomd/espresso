@@ -27,6 +27,7 @@ if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
     system.part[1].vs_auto_relate_to(0)
 if espressomd.has_features(['LENNARD_JONES']):
     system.non_bonded_inter[0, 0].lennard_jones.set_params(epsilon=1.2, sigma=1.3, cutoff=2.0, shift=0.1)
+    system.non_bonded_inter[3, 0].lennard_jones.set_params(epsilon=1.2, sigma=1.7, cutoff=2.0, shift=0.1)
 checkpoint.register("system")
 checkpoint.register("acc")
 checkpoint.save(0)
