@@ -157,9 +157,9 @@ cdef class System(object):
         IF LB_BOUNDARIES or LB_BOUNDARIES_GPU:
             odict['lbboundaries'] = System.__getattribute__(self, "lbboundaries")
         odict['minimize_energy'] = System.__getattribute__(self, "minimize_energy")
-        odict['non_bonded_inter'] = System.__getattribute__(self, "non_bonded_inter")
         odict['part'] = System.__getattribute__(self, "part")
         odict['thermostat'] = System.__getattribute__(self, "thermostat")
+        odict['non_bonded_inter'] = System.__getattribute__(self, "non_bonded_inter")
         return odict
 
     def __setstate__(self, params):

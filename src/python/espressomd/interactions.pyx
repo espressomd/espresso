@@ -19,6 +19,7 @@
 from __future__ import print_function, absolute_import
 
 from libcpp.string cimport string
+import collections
 
 include "myconfig.pxi"
 from . import utils
@@ -37,14 +38,15 @@ cdef class NonBondedInteraction(object):
     """
 
     cdef public object _part_types
-    cdef object _params
+    cdef public object _params
 
     # init dict to access all user defined nonbonded-inters via
     # user_interactions[type1][type2][parameter]
-    user_interactions = {}
+    cdef public object user_interactions
 
     def __init__(self, *args, **kwargs):
-
+        if self.user_interactions == None:
+            self.user_interactions = {}
         # Interaction id as argument
         if len(args) == 2 and is_valid_type(args[0], int) and is_valid_type(args[1], int):
             self._part_types = args
@@ -65,10 +67,7 @@ cdef class NonBondedInteraction(object):
                         "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
 
             self._params.update(kwargs)
-
-            # Validation of parameters
             self.validate_params()
-
         else:
             raise Exception(
                 "The constructor has to be called either with two particle type ids (as integer), or with a set of keyword arguments describing a new interaction")
@@ -77,14 +76,9 @@ cdef class NonBondedInteraction(object):
         """Check, if the data stored in the instance still matches what is in Espresso.
 
         """
-
-        # check, if the bond parameters saved in the class still match those
-        # saved in Espresso
         temp_params = self._get_params_from_es_core()
         if self._params != temp_params:
             return False
-
-        # If we're still here, the instance is valid
         return True
 
     def get_params(self):
@@ -95,17 +89,22 @@ cdef class NonBondedInteraction(object):
         # current parameters from there
         if self._part_types[0] >= 0 and self._part_types[1] >= 0:
             self._params = self._get_params_from_es_core()
-
         return self._params
 
     def __str__(self):
         return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
 
     def __getstate__(self):
-        return self.get_params()
+        odict = collections.OrderedDict()
+        odict['user_interactions'] = self.user_interactions
+        odict['_part_types'] = self._part_types
+        odict['params'] = self.get_params()
+        return odict
 
-    def __setstate__(self, p):
-        self.set_params(p)
+    def __setstate__(self, state):
+        self.user_interactions = state['user_interactions']
+        self._part_types = state['_part_types']
+        self._params = state['params']
 
     def set_params(self, **p):
         """Update the given parameters.
@@ -1573,7 +1572,7 @@ class NonBondedInteractionHandle(object):
             self.hertzian = HertzianInteraction(_type1, _type2)
         IF GAUSSIAN:
             self.gaussian = GaussianInteraction(_type1, _type2)
-        IF TABULATED == 1:
+        IF TABULATED:
             self.tabulated = TabulatedNonBonded(_type1, _type2)
         IF GAY_BERNE:
             self.gay_berne = GayBerneInteraction(_type1, _type2)
@@ -1592,7 +1591,6 @@ cdef class NonBondedInteractions(object):
     Also: access to force capping.
 
     """
-
     def __getitem__(self, key):
         if not isinstance(key, tuple):
             raise ValueError(
@@ -1603,13 +1601,13 @@ cdef class NonBondedInteractions(object):
         return NonBondedInteractionHandle(key[0], key[1])
 
     def __getstate__(self):
-        cdef string state
-        state = ia_params_get_state()
-        return state
+        cdef string core_state
+        core_state = ia_params_get_state()
+        return core_state
 
-    def __setstate__(self, odict):
-        cdef string odict_string  = odict
-        ia_params_set_state(odict_string)
+    def __setstate__(self, core_state):
+        cdef string state = core_state
+        ia_params_set_state(state)
 
 
 cdef class BondedInteraction(object):
