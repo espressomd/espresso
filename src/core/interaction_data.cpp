@@ -58,7 +58,6 @@
 #include "morse.hpp"
 #include "object-in-fluid/affinity.hpp"
 #include "object-in-fluid/membrane_collision.hpp"
-#include "overlap.hpp"
 #include "p3m-dipolar.hpp"
 #include "p3m.hpp"
 #include "pressure.hpp"
@@ -200,14 +199,6 @@ static void recalc_maximal_cutoff_bonded() {
         max_cut_bonded = bonded_ia_params[i].p.tab.pot->cutoff();
       break;
 #endif
-#ifdef OVERLAPPED
-    case BONDED_IA_OVERLAPPED:
-      /* in UNIT Angstrom */
-      if (bonded_ia_params[i].p.overlap.type == OVERLAP_BOND_LENGTH &&
-          max_cut_bonded < bonded_ia_params[i].p.overlap.maxval)
-        max_cut_bonded = bonded_ia_params[i].p.overlap.maxval;
-      break;
-#endif
 #ifdef IMMERSED_BOUNDARY
     case BONDED_IA_IBM_TRIEL:
       if (max_cut_bonded < bonded_ia_params[i].p.ibm_triel.maxdist)
@@ -237,12 +228,6 @@ static void recalc_maximal_cutoff_bonded() {
 #ifdef TABULATED
     case BONDED_IA_TABULATED:
       if (bonded_ia_params[i].p.tab.type == TAB_BOND_DIHEDRAL)
-        max_cut_bonded = max_cut_tmp;
-      break;
-#endif
-#ifdef OVERLAPPED
-    case BONDED_IA_OVERLAPPED:
-      if (bonded_ia_params[i].p.overlap.type == OVERLAP_BOND_DIHEDRAL)
         max_cut_bonded = max_cut_tmp;
       break;
 #endif
@@ -526,17 +511,6 @@ void make_bond_type_exist(int type) {
   int i, ns = type + 1;
 
   if (ns <= n_bonded_ia) {
-#ifdef OVERLAPPED
-    if (bonded_ia_params[type].type == BONDED_IA_OVERLAPPED &&
-        bonded_ia_params[type].p.overlap.noverlaps > 0) {
-      free(bonded_ia_params[type].p.overlap.para_a);
-      free(bonded_ia_params[type].p.overlap.para_b);
-      free(bonded_ia_params[type].p.overlap.para_c);
-      bonded_ia_params[type].p.overlap.para_a = nullptr;
-      bonded_ia_params[type].p.overlap.para_b = nullptr;
-      bonded_ia_params[type].p.overlap.para_c = nullptr;
-    }
-#endif
     return;
   }
   /* else allocate new memory */
