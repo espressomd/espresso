@@ -41,12 +41,12 @@
 /************************************************************/
 /*@{*/
 
-#define THERMO_OFF        0
-#define THERMO_LANGEVIN   1
-#define THERMO_DPD        2
-#define THERMO_NPT_ISO    4
-#define THERMO_LB         8
-#define THERMO_GHMC       32
+#define THERMO_OFF 0
+#define THERMO_LANGEVIN 1
+#define THERMO_DPD 2
+#define THERMO_NPT_ISO 4
+#define THERMO_LB 8
+#define THERMO_GHMC 32
 /*@}*/
 
 namespace Thermostat {
@@ -224,13 +224,6 @@ inline void friction_thermo_langevin(Particle *p) {
   extern Thermostat::GammaType langevin_pref1, langevin_pref2;
   Thermostat::GammaType langevin_pref1_temp, langevin_pref2_temp;
 
-#ifdef MULTI_TIMESTEP
-  extern double langevin_pref1_small;
-#ifndef LANGEVIN_PER_PARTICLE
-  extern double langevin_pref2_small;
-#endif /* LANGEVIN_PER_PARTICLE */
-#endif /* MULTI_TIMESTEP */
-
   if (p->p.is_virtual && !thermo_virtual) {
     for (int j = 0; j < 3; j++)
       p->f.f[j] = 0;
@@ -254,9 +247,9 @@ inline void friction_thermo_langevin(Particle *p) {
     velocity[i] = le_frameV(i, velocity, p->r.p);
   } // for
 
-// Determine prefactors for the friction and the noise term
+  // Determine prefactors for the friction and the noise term
 
-// first, set defaults
+  // first, set defaults
   langevin_pref1_temp = langevin_pref1;
   langevin_pref2_temp = langevin_pref2;
 
@@ -289,29 +282,15 @@ inline void friction_thermo_langevin(Particle *p) {
 
 #endif /* LANGEVIN_PER_PARTICLE */
 
-// Multi-timestep handling
-// This has to be last, as it may set the prefactors to 0.
-#ifdef MULTI_TIMESTEP
-  if (smaller_time_step > 0.) {
-    langevin_pref1_temp *= time_step / smaller_time_step;
-    if (p->p.smaller_timestep == 1 && current_time_step_is_small == 1)
-      langevin_pref2_temp *= sqrt(time_step / smaller_time_step);
-    else if (p->p.smaller_timestep != current_time_step_is_small) {
-      langevin_pref1_temp = 0.;
-      langevin_pref2_temp = 0.;
-    }
-  }
-#endif /* MULTI_TIMESTEP */
-
 #ifdef PARTICLE_ANISOTROPY
   // Particle frictional isotropy check
   auto aniso_flag = (langevin_pref1_temp[0] != langevin_pref1_temp[1]) ||
-               (langevin_pref1_temp[1] != langevin_pref1_temp[2]) ||
-               (langevin_pref2_temp[0] != langevin_pref2_temp[1]) ||
-               (langevin_pref2_temp[1] != langevin_pref2_temp[2]);
+                    (langevin_pref1_temp[1] != langevin_pref1_temp[2]) ||
+                    (langevin_pref2_temp[0] != langevin_pref2_temp[1]) ||
+                    (langevin_pref2_temp[1] != langevin_pref2_temp[2]);
   double velocity_body[3] = {0.0, 0.0, 0.0};
   if (aniso_flag) {
-     thermo_convert_vel_space_to_body(p, velocity, velocity_body);
+    thermo_convert_vel_space_to_body(p, velocity, velocity_body);
   }
 #endif
 

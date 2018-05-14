@@ -521,6 +521,14 @@ int set_particle_rotation(int part, int rot) {
   return ES_OK;
 }
 #endif
+#ifdef ROTATION
+int rotate_particle(int part, double axis[3], double angle) {
+  auto const pnode = get_particle_node(part);
+
+  mpi_rotate_particle(pnode, part, axis, angle);
+  return ES_OK;
+}
+#endif
 
 #ifdef AFFINITY
 int set_particle_affinity(int part, double bond_site[3]) {
@@ -581,15 +589,6 @@ int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
 
   // Send the stuff
   mpi_send_vs_relative(pnode, part, vs_relative_to, vs_distance, rel_ori);
-  return ES_OK;
-}
-#endif
-
-#ifdef MULTI_TIMESTEP
-int set_particle_smaller_timestep(int part, int smaller_timestep) {
-  auto const pnode = get_particle_node(part);
-
-  mpi_send_smaller_timestep_flag(pnode, part, smaller_timestep);
   return ES_OK;
 }
 #endif
@@ -812,8 +811,9 @@ int remove_particle(int p_id) {
   auto const pnode = get_particle_node(p_id);
 
   particle_node[p_id] = -1;
-
   mpi_remove_particle(pnode, p_id);
+
+  particle_node.erase(p_id);
 
   if (p_id == max_seen_particle) {
     max_seen_particle--;
@@ -857,7 +857,6 @@ void local_remove_particle(int part) {
     /* update the local_particles array for the moved particle */
     local_particles[p->p.identity] = p;
   }
-
   pl->n--;
 }
 
@@ -1271,12 +1270,6 @@ void pointer_to_vs_relative(Particle const *p, int const *&res1,
   res1 = &(p->p.vs_relative_to_particle_id);
   res2 = &(p->p.vs_relative_distance);
   res3 = (p->p.vs_relative_rel_orientation);
-}
-#endif
-
-#ifdef MULTI_TIMESTEP
-void pointer_to_smaller_timestep(Particle const *p, int const *&res) {
-  res = &(p->p.smaller_timestep);
 }
 #endif
 

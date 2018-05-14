@@ -24,7 +24,6 @@ import numpy as np
 from espressomd.interactions import FeneBond
 from espressomd.pair_criteria import *
 
-
 class PairCriteria(ut.TestCase):
     """Tests interface and implmentation of pair criteria"""   
 
@@ -76,6 +75,17 @@ class PairCriteria(ut.TestCase):
         self.assertTrue(ec.decide(self.p1,self.p2))
         self.assertTrue(ec.decide(self.p1.id,self.p2.id))
         
+    @ut.skipIf(not espressomd.has_features("LENNARD_JONES") or
+               not espressomd.has_features("PARTIAL_PERIODIC"),
+               "skipped due to missing lj potential")
+    def test_energy_crit_non_periodic(self):
+        # Setup purely repulsive lj
+        self.es.non_bonded_inter[0,0].lennard_jones.set_params(sigma=0.11,epsilon=1,cutoff=2**(1./6.)*0.11,shift="auto")
+        ec=EnergyCriterion(cut_off=0.001)
+        # Interface
+        self.assertEqual(list(ec.get_params().keys()),["cut_off",])
+        self.assertTrue(abs(ec.get_params()["cut_off"]-0.001)<self.epsilon)
+
         # Non-periodic system. Particles out of range
         self.es.periodicity =(0,0,0)
         self.assertTrue(not ec.decide(self.p1,self.p2))

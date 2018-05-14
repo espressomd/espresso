@@ -121,8 +121,8 @@ const std::unordered_map<int, Datafield> fields{
      {FIELD_NPART,
       {&n_part, Datafield::Type::INT, 1, "n_part"}}, /* 17 from particle.cpp */
      {FIELD_NPARTTYPE,
-      {&n_particle_types, Datafield::Type::INT, 1,
-       "n_part_types"}}, /* 18 from interaction_data.cpp */
+      {&max_seen_particle_type, Datafield::Type::INT, 1, "max_seen_particle_type",
+       8}}, /* 18 from interaction_data.cpp */
      {FIELD_RIGIDBONDS,
       {&n_rigidbonds, Datafield::Type::INT, 1,
        "n_rigidbonds"}}, /* 19 from rattle.cpp */
@@ -200,11 +200,14 @@ const std::unordered_map<int, Datafield> fields{
       {&ghmc_tscale, Datafield::Type::INT, 1,
        "ghmc_tscale"}}, /* 48 from ghmc.cpp */
      {FIELD_WARNINGS,
-      {&warnings, Datafield::Type::INT, 1,
-       "warnings"}}, /* 50 from global.cpp */
-     {FIELD_SMALLERTIMESTEP,
-      {&smaller_time_step, Datafield::Type::DOUBLE, 1,
-       "smaller_time_step"}}, /* 52 from integrate.cpp */
+      {&warnings, Datafield::Type::INT, 1, "warnings",
+       1}}, /* 50 from global.cpp */
+     {FIELD_LANGEVIN_TRANS_SWITCH,
+      {&langevin_trans, Datafield::Type::BOOL, 1, "langevin_trans_switch",
+       1}}, /* 53 from thermostat.cpp */
+     {FIELD_LANGEVIN_ROT_SWITCH,
+      {&langevin_rotate, Datafield::Type::BOOL, 1, "langevin_rotate_switch",
+       1}}, /* 54 from thermostat.cpp */
 #ifndef PARTICLE_ANISOTROPY
      {FIELD_LANGEVIN_GAMMA_ROTATION,
       {&langevin_gamma_rotation, Datafield::Type::DOUBLE, 1,

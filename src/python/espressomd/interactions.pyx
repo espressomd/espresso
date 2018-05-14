@@ -17,6 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, absolute_import
+
+from libcpp.string cimport string
+
 include "myconfig.pxi"
 from . import utils
 from espressomd.utils import is_valid_type
@@ -99,6 +102,12 @@ cdef class NonBondedInteraction(object):
 
     def __str__(self):
         return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
+
+    def __getstate__(self):
+        return self.get_params()
+
+    def __setstate__(self, p):
+        self.set_params(p)
 
     def set_params(self, **p):
         """Update the given parameters.
@@ -1534,7 +1543,6 @@ class NonBondedInteractionHandle(object):
     hat = None
     thole = None
 
-
     def __init__(self, _type1, _type2):
         """Takes two particle types as argument"""
         if not (is_valid_type(_type1, int) and is_valid_type(_type2, int)):
@@ -1578,6 +1586,7 @@ class NonBondedInteractionHandle(object):
         IF THOLE:
             self.thole = TholeInteraction(_type1, _type2)
 
+
 cdef class NonBondedInteractions(object):
     """
     Access to non-bonded interaction parameters via [i,j], where i,j are particle
@@ -1596,29 +1605,13 @@ cdef class NonBondedInteractions(object):
         return NonBondedInteractionHandle(key[0], key[1])
 
     def __getstate__(self):
-        # contains info about ALL nonbonded interactions
-        odict = NonBondedInteractionHandle(-1, -
-                                           1).lennard_jones.user_interactions
-        return odict
+        cdef string state
+        state = ia_params_get_state()
+        return state
 
     def __setstate__(self, odict):
-        for _type1 in odict:
-            for _type2 in odict[_type1]:
-                attrs = dir(NonBondedInteractionHandle(_type1, _type2))
-                for a in attrs:
-                    attr_ref = getattr(
-                        NonBondedInteractionHandle(_type1, _type2), a)
-                    type_name_ref = getattr(attr_ref, "type_name", None)
-                    if callable(type_name_ref) and type_name_ref() == odict[_type1][_type2]['type_name']:
-                        # found nonbonded inter, e.g.
-                        # LennardJonesInteraction(_type1, _type2)
-                        inter_instance = attr_ref
-                        break
-                    else:
-                        continue
-
-                del odict[_type1][_type2]['type_name']
-                inter_instance.set_params(**odict[_type1][_type2])
+        cdef string odict_string  = odict
+        ia_params_set_state(odict_string)
 
 
 cdef class BondedInteraction(object):
@@ -2694,49 +2687,6 @@ ELSE:
     class Endangledist(BondedInteractionNotDefined):
         name = "BOND_ENDANGLEDIST"
 
-IF OVERLAPPED == 1:
-    class Overlapped(BondedInteraction):
-
-        def type_number(self):
-            return BONDED_IA_OVERLAPPED
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "OVERLAPPED"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return "overlap_type", "filename"
-
-        def required_keys(self):
-            """Parameters that have to be set.
-
-            """
-            return "overlap_type", "filename"
-
-        def set_default_params(self):
-            """Sets parameters that are not required to their default value.
-
-            """
-            self._params = {"overlap_type": 0, "filename": ""}
-
-        def _get_params_from_es_core(self):
-            make_bond_type_exist(self._bond_id)
-            return \
-                {"bend": bonded_ia_params[self._bond_id].p.overlap.type,
-                 "phi0": utils.to_str(bonded_ia_params[self._bond_id].p.overlap.filename)}
-
-        def _set_params_in_es_core(self):
-            overlapped_bonded_set_params(
-                self._bond_id, self._params["overlap_type"], utils.to_char_pointer(self._params["filename"]))
-
-ELSE:
-    class Overlapped(BondedInteractionNotDefined):
-        name = "OVERLAPPED"
 
 IF BOND_ANGLE == 1:
     class AngleHarmonic(BondedInteraction):
@@ -3140,7 +3090,6 @@ bonded_interaction_classes = {
     int(BONDED_IA_TABULATED): Tabulated,
     int(BONDED_IA_VIRTUAL_BOND): Virtual,
     int(BONDED_IA_ENDANGLEDIST): Endangledist,
-    int(BONDED_IA_OVERLAPPED): Overlapped,
     int(BONDED_IA_ANGLE_HARMONIC): AngleHarmonic,
     int(BONDED_IA_ANGLE_COSINE): AngleCosine,
     int(BONDED_IA_ANGLE_COSSQUARE): AngleCossquare,

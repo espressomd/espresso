@@ -54,27 +54,14 @@ enforce force recalculation.
 Run steepest descent minimization
 ---------------------------------
 
-In Python the ``minimize_energy`` functionality can be imported from
-:mod:`espressomd.minimize_energy` as class
-:class:`espressomd.minimize_energy.MinimizeEnergy`. Alternatively it
-is already part of the :class:`espressomd.system.System` class object
-and can be called from there (second variant)::
+:func:`espressomd.espresso.thermostat.Thermostat.set_steepest_descent`
 
-    espressomd.minimize_energy.init(
-        f_max = <double>,
-        gamma = <double>,
-        max_steps = <double>,
-        max_displacement = <double>)
-    espressomd.minimize_energy.minimize()
 
-    system.minimize_energy.init(
-        f_max = <double>,
-        gamma = <double>,
-        max_steps = <double>,
-        max_displacement = <double>)
-    system.minimize_energy.minimize()
 
-This command runs a steepest descent energy minimization on the system.
+This feature is used to propagate each particle by a small distance parallel to the force acting on it. 
+When only conservative forces for which a potential exists are in use, this is equivalent to a steepest descent energy minimization.
+A common application is removing overlap between randomly placed particles.
+
 Please note that the behavior is undefined if either a thermostat,
 Maggs electrostatics or Lattice-Boltzmann is activated. It runs a simple
 steepest descent algorithm:
@@ -90,8 +77,17 @@ Rotational degrees of freedom are treated similarly: each particle is
 rotated around an axis parallel to the torque acting on the particle.
 Please be aware of the fact that this needs not to converge to a local
 minimum in periodic boundary conditions. Translational and rotational
-coordinates that are fixed using the ``fix`` command or the
-``ROTATION_PER_PARTICLE`` feature are not altered.
+coordinates that are fixed using the ``fix`` and ``rotation`` attribute of particles are not altered.
+
+Usage example::
+
+        system.integrator.set_steepest_descent(
+            f_max=0, gamma=0.1, max_displacement=0.1)
+        system.integrator.run(20)
+        system.integrator.set_vv() # to switch back to velocity verlet
+
+
+
 
 .. _Multi-timestepping:
 

@@ -178,15 +178,8 @@ struct ParticleProperties {
 #endif // ROTATION
 #endif // LANGEVIN_PER_PARTICLE
 
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
   int catalyzer_count = 0;
-#endif
-
-#ifdef MULTI_TIMESTEP
-  /** does the particle need a small timestep?
-   * 1= yes
-   * 0 = no (default) */
-  int smaller_timestep = 0;
 #endif
 
 #ifdef EXTERNAL_FORCES
@@ -648,6 +641,14 @@ int set_particle_rotational_inertia(int part, double rinertia[3]);
 */
 int set_particle_rotation(int part, int rot);
 
+/** @brief rotate a particle around an axis
+   
+   @param part particle id
+   @param axis rotation axis
+   @param angle rotation angle
+*/
+int rotate_particle(int part, double axis[3], double angle);
+
 #ifdef AFFINITY
 /** Call only on the master node: set particle affinity.
     @param part the particle.
@@ -664,15 +665,6 @@ int set_particle_affinity(int part, double bond_site[3]);
  @return ES_OK if particle existed
  */
 int set_particle_out_direction(int part, double out_direction[3]);
-#endif
-
-#ifdef MULTI_TIMESTEP
-/** Call only on the master node: set particle smaller time step flag.
-    @param part the particle.
-    @param small_timestep its new smaller time step.
-    @return TCL_OK if particle existed
-*/
-int set_particle_smaller_timestep(int part, int small_timestep);
 #endif
 
 /** Call only on the master node: set particle charge.
@@ -997,10 +989,6 @@ void pointer_to_virtual(Particle const *p, int const *&res);
 void pointer_to_vs_quat(Particle const *p, double const *&res);
 void pointer_to_vs_relative(Particle const *p, int const *&res1,
                             double const *&res2, double const *&res3);
-#endif
-
-#ifdef MULTI_TIMESTEP
-void pointer_to_smaller_timestep(Particle const *p, int const *&res);
 #endif
 
 void pointer_to_dip(Particle const *P, double const *&res);

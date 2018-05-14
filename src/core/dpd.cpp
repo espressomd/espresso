@@ -73,8 +73,8 @@ int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
 }
 
 void dpd_init() {
-  for (int type_a = 0; type_a < n_particle_types; type_a++) {
-    for (int type_b = 0; type_b < n_particle_types; type_b++) {
+  for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
+    for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
       auto data = get_ia_param(type_a, type_b);
       if ((data->dpd_r_cut != 0) || (data->dpd_tr_cut != 0)) {
         data->dpd_pref1 = data->dpd_gamma / time_step;
@@ -89,8 +89,8 @@ void dpd_init() {
 }
 
 void dpd_switch_off(void) {
-  for (int type_a = 0; type_a < n_particle_types; type_a++) {
-    for (int type_b = 0; type_b < n_particle_types; type_b++) {
+  for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
+    for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
       auto data = get_ia_param(type_a, type_b);
       data->dpd_pref1 = data->dpd_pref3 = 0.0;
     }
@@ -101,8 +101,8 @@ void dpd_update_params(double pref_scale) {
   int type_a, type_b;
   IA_parameters *data;
 
-  for (type_a = 0; type_a < n_particle_types; type_a++) {
-    for (type_b = 0; type_b < n_particle_types; type_b++) {
+  for (type_a = 0; type_a < max_seen_particle_type; type_a++) {
+    for (type_b = 0; type_b < max_seen_particle_type; type_b++) {
       data = get_ia_param(type_a, type_b);
       if ((data->dpd_r_cut != 0) || (data->dpd_tr_cut != 0)) {
         data->dpd_pref2 *= pref_scale;

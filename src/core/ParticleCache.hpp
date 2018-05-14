@@ -242,6 +242,7 @@ class ParticleCache {
 
 public:
   using value_iterator = typename map_type::const_iterator;
+  using value_type = Particle;
 
   ParticleCache() = delete;
   ParticleCache(Communication::MpiCallbacks &cb, GetParticles parts,

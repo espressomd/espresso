@@ -28,7 +28,6 @@
 #include "integrate.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "correlators.hpp"
 #include "domain_decomposition.hpp"
 #include "electrokinetics.hpp"
 #include "errorhandling.hpp"
@@ -49,7 +48,7 @@
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "rattle.hpp"
-#include "reaction.hpp"
+#include "swimmer_reaction.hpp"
 #include "rotation.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
@@ -88,8 +87,6 @@ bool skin_set = false;
 int recalc_forces = 1;
 
 double verlet_reuse = 0.0;
-
-double smaller_time_step = -1.0;
 
 #ifdef ADDITIONAL_CHECKS
 double db_max_force = 0.0, db_max_vel = 0.0;
@@ -299,7 +296,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     thermo_cool_down();
 
 #ifdef COLLISION_DETECTION
-    handle_collisions();
+    if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
+        handle_collisions();
+    }
 #endif
   }
 
@@ -389,8 +388,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     virtual_sites()->after_force_calc();
 #endif
 
-
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
     integrate_reaction();
 #endif
 
@@ -418,6 +416,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
 // progagate one-step functionalities
+
+if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef LB
     if (lattice_switch & LATTICE_LB)
       lattice_boltzmann_update();
@@ -445,6 +445,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 virtual_sites()->after_lb_propagation();
 #endif
 
+}
 
 #ifdef ELECTROSTATICS
     if (coulomb.method == COULOMB_MAGGS) {
@@ -467,11 +468,16 @@ virtual_sites()->after_lb_propagation();
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
       /* Propagate time: t = t+dt */
       sim_time += time_step;
-    }
-}
+
 #ifdef COLLISION_DETECTION
     handle_collisions();
 #endif
+    }
+    
+    
+    if (check_runtime_errors())
+      break;
+  }
 
 #ifdef VALGRIND_INSTRUMENTATION
   CALLGRIND_STOP_INSTRUMENTATION;
@@ -576,11 +582,6 @@ void rescale_forces_propagate_vel() {
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
           nptiso.p_vel[j] += Utils::sqr(p.m.v[j]) * p.p.mass;
-#ifdef MULTI_TIMESTEP
-          if (smaller_time_step > 0. && current_time_step_is_small == 1)
-            p.m.v[j] += p.f.f[j];
-          else
-#endif
             p.m.v[j] += p.f.f[j] + friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
         } else
 #endif
@@ -610,11 +611,6 @@ void finalize_p_inst_npt() {
     nptiso.p_inst = 0.0;
     for (i = 0; i < 3; i++) {
       if (nptiso.geometry & nptiso.nptgeom_dir[i]) {
-#ifdef MULTI_TIMESTEP
-        if (smaller_time_step > 0.)
-          nptiso.p_vel[i] /= Utils::sqr(smaller_time_step);
-        else
-#endif
           nptiso.p_vel[i] /= Utils::sqr(time_step);
         nptiso.p_inst += nptiso.p_vir[i] + nptiso.p_vel[i];
       }
@@ -643,9 +639,6 @@ void propagate_press_box_pos_and_rescale_npt() {
      * vel-rescaling
      */
     if (this_node == 0) {
-#ifdef MULTI_TIMESTEP
-      if (smaller_time_step < 0. || current_time_step_is_small == 0)
-#endif
         nptiso.volume += nptiso.inv_piston * nptiso.p_diff * 0.5 * time_step;
       scal[2] = Utils::sqr(box_l[nptiso.non_const_dim]) /
                 pow(nptiso.volume, 2.0 / nptiso.dimension);
@@ -749,11 +742,6 @@ void propagate_vel() {
 #ifdef NPT
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
-#ifdef MULTI_TIMESTEP
-          if (smaller_time_step > 0. && current_time_step_is_small == 1)
-            p.m.v[j] += p.f.f[j];
-          else
-#endif
             p.m.v[j] += p.f.f[j] + friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
           nptiso.p_vel[j] += Utils::sqr(p.m.v[j]) * p.p.mass;
         } else
@@ -973,8 +961,7 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
   }
 
   /* perform integration */
-  if (!Correlators::auto_update_enabled() &&
-      !Accumulators::auto_update_enabled()) {
+  if (!Accumulators::auto_update_enabled()) {
     if (mpi_integrate(n_steps, reuse_forces))
       return ES_ERROR;
   } else {
@@ -982,7 +969,6 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
       if (mpi_integrate(1, reuse_forces))
         return ES_ERROR;
       reuse_forces = 1;
-      Correlators::auto_update();
       Accumulators::auto_update();
     }
     if (n_steps == 0) {

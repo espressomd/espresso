@@ -116,7 +116,7 @@ bool steepest_descent_step(void) {
         l = sgn(l) * params->max_displacement;
 
       // Rotate the particle around axis dq by amount l
-      rotate_particle(&(p), dq, l);
+      local_rotate_particle(&(p), dq, l);
     }
 #endif
 

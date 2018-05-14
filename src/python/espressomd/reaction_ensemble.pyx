@@ -1,8 +1,6 @@
 include "myconfig.pxi"
 from libcpp.vector cimport vector
 from libcpp.string cimport string
-from libc.string cimport strdup
-from utils import to_char_pointer
 import numpy as np
 
 class WangLandauHasConverged(Exception):
@@ -84,6 +82,7 @@ cdef class ReactionAlgorithm(object):
         """
         self.RE.slab_start_z = slab_start_z
         self.RE.slab_end_z = slab_end_z
+        self.RE.box_has_wall_constraints=True
 
     def get_wall_constraints_in_z_direction(self):
         """
@@ -495,7 +494,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
                     raise ValueError(
                         "At least the following keys have to be given as keyword arguments: " + self._required_keys_add_collective_variable_degree_of_association().__str__() + " got " + kwargs.__str__())
                 self._params[k] = kwargs[k]
-        self.WLRptr.add_new_CV_potential_energy(to_char_pointer(self._params["filename"]), self._params["delta"])
+        filname_potential_energy_boundaries_file=self._params["filename"].encode("utf-8")
+        self.WLRptr.add_new_CV_potential_energy(filname_potential_energy_boundaries_file, self._params["delta"])
 
     def _valid_keys_add_collective_variable_potential_energy(self):
         return "filename", "delta"
@@ -539,7 +539,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
         self.WLRptr.final_wang_landau_parameter = self._params[
             "final_wang_landau_parameter"]
-        self.WLRptr.output_filename = to_char_pointer(self._params["full_path_to_output_filename"])
+        self.WLRptr.output_filename = self._params["full_path_to_output_filename"].encode("utf-8")
         self.WLRptr.do_not_sample_reaction_partition_function = self._params[
             "do_not_sample_reaction_partition_function"]
 
@@ -551,7 +551,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         Loads the dumped wang landau potential file.
 
         """
-        self.WLRptr.load_wang_landau_checkpoint("checkpoint")
+        checkpoint_name="checkpoint".encode("utf-8")
+        self.WLRptr.load_wang_landau_checkpoint(checkpoint_name)
 
     def write_wang_landau_checkpoint(self):
         """
@@ -560,7 +561,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         number of executed trial moves.
 
         """
-        self.WLRptr.write_wang_landau_checkpoint("checkpoint")
+        checkpoint_name="checkpoint".encode("utf-8")
+        self.WLRptr.write_wang_landau_checkpoint(checkpoint_name)
 
     def update_maximum_and_minimum_energies_at_current_state(self):
         """
@@ -583,8 +585,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         :meth:`update_maximum_and_minimum_energies_at_current_state` was used.
 
         """
-        self.WLRptr.write_out_preliminary_energy_run_results(
-            "preliminary_energy_run_results")
+        filename="preliminary_energy_run_results".encode("utf-8")
+        self.WLRptr.write_out_preliminary_energy_run_results(filename)
 
     def write_wang_landau_results_to_file(self, filename):
         """
@@ -592,7 +594,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         collective variables.
 
         """
-        self.WLRptr.write_wang_landau_results_to_file(filename)
+        self.WLRptr.write_wang_landau_results_to_file(filename.encode("utf-8"))
 
 
     def displacement_mc_move_for_particles_of_type(self, type_mc, particle_number_to_be_changed=1):

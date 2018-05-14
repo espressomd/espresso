@@ -86,7 +86,7 @@ enum Fields {
   FIELD_NNODES,
   /** index of \ref n_part in  \ref #fields */
   FIELD_NPART,
-  /** index of \ref n_particle_types in \ref #fields */
+  /** index of \ref max_seen_particle_type in \ref #fields */
   FIELD_NPARTTYPE,
   /** index of \ref n_rigidbonds in \ref #fields */
   FIELD_RIGIDBONDS,
@@ -142,8 +142,10 @@ enum Fields {
   FIELD_GHMC_SCALE,
   /** index of \ref warnings in \ref #fields */
   FIELD_WARNINGS,
-  /** index of \ref smaller_timestep in \ref #fields */
-  FIELD_SMALLERTIMESTEP,
+  /** index of \ref langevin_trans in \ref #fields */
+  FIELD_LANGEVIN_TRANS_SWITCH,
+  /** index of \ref langevin_rotate in \ref #fields */
+  FIELD_LANGEVIN_ROT_SWITCH,
   /** index of \ref langevin_gamma_rotation in  \ref #fields */
   FIELD_LANGEVIN_GAMMA_ROTATION,
   /** index of \ref n_thermalized_bonds in \ref #fields */
