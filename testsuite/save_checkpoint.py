@@ -1,5 +1,6 @@
 import espressomd
 import espressomd.checkpointing
+import espressomd.electrostatics
 import espressomd.virtual_sites
 import espressomd.accumulators
 import espressomd.observables
@@ -13,6 +14,11 @@ system.min_global_cut = 2.0
 
 system.part.add(pos=[1.0]*3)
 system.part.add(pos=[1.0, 1.0, 2.0])
+if espressomd.has_features('ELECTROSTATICS'):
+    system.part[0].q = 1
+    system.part[1].q = -1
+    p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=0.1, mesh=10, cao=1, alpha=1.0, r_cut=1.0, tune=False)
+    system.actors.add(p3m)
 obs = espressomd.observables.ParticlePositions(ids=[0,1])
 acc = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
 acc.update()

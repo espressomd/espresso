@@ -108,7 +108,7 @@ cdef class System(object):
                     System.__setattr__(self, arg, kwargs.get(arg))
                 else:
                     raise ValueError("Property {} can not be set via argument to System class.".format(arg))
-            self.actors = Actors(_system=self)
+            self.actors = Actors()
             self.analysis = Analysis(self)
             self.auto_update_accumulators = AutoUpdateAccumulators()
             self.bonded_inter = interactions.BondedInteractions()
