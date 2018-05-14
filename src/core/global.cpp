@@ -68,7 +68,7 @@ typedef struct {
 */
 
 const std::unordered_map<int, Datafield> fields{
-    {{FIELD_BOXL,
+    {FIELD_BOXL,
       {box_l, Datafield::Type::DOUBLE, 3, "box_l"}}, /* 0  from grid.cpp */
      {FIELD_CELLGRID,
       {dd.cell_grid, Datafield::Type::INT, 3,
@@ -121,8 +121,8 @@ const std::unordered_map<int, Datafield> fields{
      {FIELD_NPART,
       {&n_part, Datafield::Type::INT, 1, "n_part"}}, /* 17 from particle.cpp */
      {FIELD_NPARTTYPE,
-      {&max_seen_particle_type, Datafield::Type::INT, 1, "max_seen_particle_type",
-       8}}, /* 18 from interaction_data.cpp */
+      {&max_seen_particle_type, Datafield::Type::INT, 1, "max_seen_particle_type"
+       }}, /* 18 from interaction_data.cpp */
      {FIELD_RIGIDBONDS,
       {&n_rigidbonds, Datafield::Type::INT, 1,
        "n_rigidbonds"}}, /* 19 from rattle.cpp */
@@ -200,14 +200,8 @@ const std::unordered_map<int, Datafield> fields{
       {&ghmc_tscale, Datafield::Type::INT, 1,
        "ghmc_tscale"}}, /* 48 from ghmc.cpp */
      {FIELD_WARNINGS,
-      {&warnings, Datafield::Type::INT, 1, "warnings",
-       1}}, /* 50 from global.cpp */
-     {FIELD_LANGEVIN_TRANS_SWITCH,
-      {&langevin_trans, Datafield::Type::BOOL, 1, "langevin_trans_switch",
-       1}}, /* 53 from thermostat.cpp */
-     {FIELD_LANGEVIN_ROT_SWITCH,
-      {&langevin_rotate, Datafield::Type::BOOL, 1, "langevin_rotate_switch",
-       1}}, /* 54 from thermostat.cpp */
+      {&warnings, Datafield::Type::INT, 1, "warnings"
+       }}, /* 50 from global.cpp */
 #ifndef PARTICLE_ANISOTROPY
      {FIELD_LANGEVIN_GAMMA_ROTATION,
       {&langevin_gamma_rotation, Datafield::Type::DOUBLE, 1,
@@ -222,7 +216,7 @@ const std::unordered_map<int, Datafield> fields{
        "n_thermalized_bonds"}}, /* 56 from thermalized_bond.cpp */
      {FIELD_FORCE_CAP, {&force_cap, Datafield::Type::DOUBLE, 1, "force_cap"}},
      {FIELD_THERMO_VIRTUAL,
-      {&thermo_virtual, Datafield::Type::BOOL, 1, "thermo_virtual"}}}};
+      {&thermo_virtual, Datafield::Type::BOOL, 1, "thermo_virtual"}}};
 
 std::size_t hash_value(Datafield const &field) {
   using boost::hash_range;
