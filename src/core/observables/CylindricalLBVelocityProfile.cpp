@@ -21,6 +21,7 @@
 #include "CylindricalLBVelocityProfile.hpp"
 #include "utils.hpp"
 #include "utils/Histogram.hpp"
+#include "utils/coordinate_transformation.hpp"
 
 namespace Observables {
 
