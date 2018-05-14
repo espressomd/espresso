@@ -22,100 +22,96 @@
 #ifndef SCRIPT_INTERFACE_OBSERVABLES_CYLINDRICALPROFILEOBSERVABLE_HPP
 #define SCRIPT_INTERFACE_OBSERVABLES_CYLINDRICALPROFILEOBSERVABLE_HPP
 
-#include "ScriptInterface.hpp"
+#include "auto_parameters/AutoParameters.hpp"
 
 #include <memory>
 
-#include "Observable.hpp"
-#include "core/observables/CylindricalDensityProfile.hpp"
-#include "core/observables/CylindricalFluxDensityProfile.hpp"
-#include "core/observables/CylindricalLBFluxDensityProfileAtParticlePositions.hpp"
-#include "core/observables/CylindricalLBVelocityProfileAtParticlePositions.hpp"
 #include "core/observables/CylindricalProfileObservable.hpp"
-#include "core/observables/CylindricalVelocityProfile.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
 
-class CylindricalProfileObservable : public Observable {
+template <typename CoreObs>
+class CylindricalProfileObservable
+    : virtual public AutoParameters<CylindricalProfileObservable<CoreObs>,
+                                    Observable> {
 public:
-  VariantMap get_parameters() const override {
-    return {{"ids", cylindrical_profile_observable()->ids()},
-            {"center", cylindrical_profile_observable()->center},
-            {"axis", cylindrical_profile_observable()->axis},
-            {"n_r_bins", cylindrical_profile_observable()->n_r_bins},
-            {"n_phi_bins", cylindrical_profile_observable()->n_phi_bins},
-            {"n_z_bins", cylindrical_profile_observable()->n_z_bins},
-            {"min_r", cylindrical_profile_observable()->min_r},
-            {"min_phi", cylindrical_profile_observable()->min_phi},
-            {"min_z", cylindrical_profile_observable()->min_z},
-            {"max_r", cylindrical_profile_observable()->max_r},
-            {"max_phi", cylindrical_profile_observable()->max_phi},
-            {"max_z", cylindrical_profile_observable()->max_z}};
+  static_assert(std::is_base_of<::Observables::CylindricalProfileObservable,
+                                CoreObs>::value,
+                "");
+  CylindricalProfileObservable() : m_observable(std::make_shared<CoreObs>()) {
+    this->add_parameters(
+        {{"center",
+          [this](const Variant &v) {
+            cylindrical_profile_observable()->center =
+                get_value<::Vector<3, double>>(v);
+          },
+          [this]() { return cylindrical_profile_observable()->center; }},
+         {"axis",
+          [this](const Variant &v) {
+            cylindrical_profile_observable()->axis = get_value<std::string>(v);
+          },
+          [this]() { return cylindrical_profile_observable()->axis; }},
+         {"n_r_bins",
+          [this](const Variant &v) {
+            cylindrical_profile_observable()->n_r_bins = get_value<double>(v);
+          },
+          [this]() { return cylindrical_profile_observable()->n_r_bins; }},
+         {"n_phi_bins",
+          [this](const Variant &v) {
+            cylindrical_profile_observable()->n_phi_bins = get_value<double>(v);
+          },
+          [this]() { return cylindrical_profile_observable()->n_phi_bins; }},
+         {"n_z_bins",
+          [this](const Variant &v) {
+            cylindrical_profile_observable()->n_z_bins = get_value<double>(v);
+          },
+          [this]() { return cylindrical_profile_observable()->n_z_bins; }},
+         {"min_r",
+          [this](const Variant &v) {
+            cylindrical_profile_observable()->min_r = get_value<double>(v);
+          },
+          [this]() { return cylindrical_profile_observable()->min_r; }},
+         {"min_phi",
+          [this](const Variant &v) {
+            cylindrical_profile_observable()->min_phi = get_value<double>(v);
+          },
+          [this]() { return cylindrical_profile_observable()->min_phi; }},
+         {"min_z",
+          [this](const Variant &v) {
+            cylindrical_profile_observable()->min_z = get_value<double>(v);
+          },
+          [this]() { return cylindrical_profile_observable()->min_z; }},
+         {"max_r",
+          [this](const Variant &v) {
+            cylindrical_profile_observable()->max_r = get_value<double>(v);
+          },
+          [this]() { return cylindrical_profile_observable()->max_r; }},
+         {"max_phi",
+          [this](const Variant &v) {
+            cylindrical_profile_observable()->max_phi = get_value<double>(v);
+          },
+          [this]() { return cylindrical_profile_observable()->max_phi; }},
+         {"max_z",
+          [this](const Variant &v) {
+            cylindrical_profile_observable()->max_z = get_value<double>(v);
+          },
+          [this]() { return cylindrical_profile_observable()->max_z; }}});
   }
 
-  ParameterMap valid_parameters() const override {
-    return {{"ids", {ParameterType::INT_VECTOR, true}},
-            {"center", {ParameterType::DOUBLE_VECTOR, true}},
-            {"axis", {ParameterType::STRING, true}},
-            {"n_r_bins", {ParameterType::INT, true}},
-            {"n_phi_bins", {ParameterType::INT, true}},
-            {"n_z_bins", {ParameterType::INT, true}},
-            {"min_r", {ParameterType::DOUBLE, true}},
-            {"min_phi", {ParameterType::DOUBLE, true}},
-            {"min_z", {ParameterType::DOUBLE, true}},
-            {"max_r", {ParameterType::DOUBLE, true}},
-            {"max_phi", {ParameterType::DOUBLE, true}},
-            {"max_z", {ParameterType::DOUBLE, true}}};
+  std::shared_ptr<::Observables::CylindricalProfileObservable>
+  cylindrical_profile_observable() const {
+    return m_observable;
   }
 
-  void set_parameter(std::string const &name, Variant const &value) override {
-    SET_PARAMETER_HELPER("ids", cylindrical_profile_observable()->ids());
-    SET_PARAMETER_HELPER("center", cylindrical_profile_observable()->center);
-    SET_PARAMETER_HELPER("axis", cylindrical_profile_observable()->axis);
-    SET_PARAMETER_HELPER("n_r_bins",
-                         cylindrical_profile_observable()->n_r_bins);
-    SET_PARAMETER_HELPER("n_phi_bins",
-                         cylindrical_profile_observable()->n_phi_bins);
-    SET_PARAMETER_HELPER("n_z_bins",
-                         cylindrical_profile_observable()->n_z_bins);
-    SET_PARAMETER_HELPER("min_r", cylindrical_profile_observable()->min_r);
-    SET_PARAMETER_HELPER("min_phi", cylindrical_profile_observable()->min_phi);
-    SET_PARAMETER_HELPER("min_z", cylindrical_profile_observable()->min_z);
-    SET_PARAMETER_HELPER("max_r", cylindrical_profile_observable()->max_r);
-    SET_PARAMETER_HELPER("max_phi", cylindrical_profile_observable()->max_phi);
-    SET_PARAMETER_HELPER("max_z", cylindrical_profile_observable()->max_z);
+  std::shared_ptr<::Observables::Observable> observable() const override {
+    return m_observable;
   }
 
-  virtual std::shared_ptr<::Observables::CylindricalProfileObservable>
-  cylindrical_profile_observable() const = 0;
+private:
+  std::shared_ptr<CoreObs> m_observable;
 };
 
-#define NEW_CYLINDRICAL_PROFILE_OBSERVABLE(obs_name)                           \
-  class obs_name : public CylindricalProfileObservable {                       \
-  public:                                                                      \
-    obs_name() : m_observable(new ::Observables::obs_name()){};                \
-                                                                               \
-    std::shared_ptr<::Observables::Observable> observable() const override {   \
-      return m_observable;                                                     \
-    }                                                                          \
-                                                                               \
-    std::shared_ptr<::Observables::CylindricalProfileObservable>               \
-    cylindrical_profile_observable() const override {                          \
-      return m_observable;                                                     \
-    }                                                                          \
-                                                                               \
-  private:                                                                     \
-    std::shared_ptr<::Observables::obs_name> m_observable;                     \
-  };
-
-NEW_CYLINDRICAL_PROFILE_OBSERVABLE(CylindricalDensityProfile)
-NEW_CYLINDRICAL_PROFILE_OBSERVABLE(CylindricalVelocityProfile)
-NEW_CYLINDRICAL_PROFILE_OBSERVABLE(CylindricalFluxDensityProfile)
-NEW_CYLINDRICAL_PROFILE_OBSERVABLE(
-    CylindricalLBFluxDensityProfileAtParticlePositions)
-NEW_CYLINDRICAL_PROFILE_OBSERVABLE(
-    CylindricalLBVelocityProfileAtParticlePositions)
 } /* namespace Observables */
 } /* namespace ScriptInterface */
 

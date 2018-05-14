@@ -24,103 +24,32 @@
 
 #include <memory>
 
-#include "ScriptInterface.hpp"
 #include "auto_parameters/AutoParameters.hpp"
 
+#include "CylindricalProfileObservable.hpp"
 #include "Observable.hpp"
-#include "core/observables/CylindricalDensityProfile.hpp"
-#include "core/observables/CylindricalFluxDensityProfile.hpp"
-#include "core/observables/CylindricalLBFluxDensityProfileAtParticlePositions.hpp"
-#include "core/observables/CylindricalLBVelocityProfileAtParticlePositions.hpp"
+#include "PidObservable.hpp"
 #include "core/observables/CylindricalPidProfileObservable.hpp"
-#include "core/observables/CylindricalVelocityProfile.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
 
 template <typename CoreObs>
 class CylindricalPidProfileObservable
-    : public AutoParameters<CylindricalPidProfileObservable<CoreObs>,
-                            Observable> {
+    : public PidObservable<CoreObs>,
+      public CylindricalProfileObservable<CoreObs> {
 public:
   static_assert(std::is_base_of<::Observables::CylindricalPidProfileObservable,
                                 CoreObs>::value,
                 "");
   CylindricalPidProfileObservable()
-      : m_observable(std::make_shared<CoreObs>()) {
-    this->add_parameters({
-        {"ids",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->ids() =
-               get_value<std::vector<int>>(v);
-         },
-         [this]() { return cylindrical_pid_profile_observable()->ids(); }},
-        {"center",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->center =
-               get_value<::Vector<3, double>>(v);
-         },
-         [this]() { return cylindrical_pid_profile_observable()->center; }},
-        {"axis",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->axis =
-               get_value<std::string>(v);
-         },
-         [this]() { return cylindrical_pid_profile_observable()->axis; }},
-        {"n_r_bins",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->n_r_bins = get_value<int>(v);
-         },
-         [this]() { return cylindrical_pid_profile_observable()->n_r_bins; }},
-        {"n_phi_bins",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->n_phi_bins = get_value<int>(v);
-         },
-         [this]() { return cylindrical_pid_profile_observable()->n_phi_bins; }},
-        {"n_z_bins",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->n_z_bins = get_value<int>(v);
-         },
-         [this]() { return cylindrical_pid_profile_observable()->n_z_bins; }},
-        {"min_r",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->min_r = get_value<double>(v);
-         },
-         [this]() { return cylindrical_pid_profile_observable()->min_r; }},
-        {"min_phi",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->min_phi = get_value<double>(v);
-         },
-         [this]() { return cylindrical_pid_profile_observable()->min_phi; }},
-        {"min_z",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->min_z = get_value<double>(v);
-         },
-         [this]() { return cylindrical_pid_profile_observable()->min_z; }},
-        {"max_r",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->max_r = get_value<double>(v);
-         },
-         [this]() { return cylindrical_pid_profile_observable()->max_r; }},
-        {"max_phi",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->max_phi = get_value<double>(v);
-         },
-         [this]() { return cylindrical_pid_profile_observable()->max_phi; }},
-        {"max_z",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->max_z = get_value<double>(v);
-         },
-         [this]() { return cylindrical_pid_profile_observable()->max_z; }},
-    });
-  };
+      : m_observable(std::make_shared<CoreObs>()) {}
 
-  virtual std::shared_ptr<::Observables::Observable>
-  observable() const override {
+  std::shared_ptr<::Observables::Observable> observable() const override {
     return m_observable;
   }
 
-  virtual std::shared_ptr<::Observables::CylindricalPidProfileObservable>
+  std::shared_ptr<::Observables::CylindricalPidProfileObservable>
   cylindrical_pid_profile_observable() const {
     return m_observable;
   }

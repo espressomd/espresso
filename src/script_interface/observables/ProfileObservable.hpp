@@ -25,7 +25,6 @@
 #include "auto_parameters/AutoParameters.hpp"
 #include <memory>
 
-#include "core/observables/LBVelocityProfile.hpp"
 #include "core/observables/ProfileObservable.hpp"
 
 namespace ScriptInterface {
@@ -33,7 +32,7 @@ namespace Observables {
 
 template <typename CoreObs>
 class ProfileObservable
-    : public AutoParameters<ProfileObservable<CoreObs>, Observable> {
+    : virtual public AutoParameters<ProfileObservable<CoreObs>, Observable> {
 public:
   ProfileObservable() : m_observable(std::make_shared<CoreObs>()) {
     this->add_parameters({{"n_x_bins",

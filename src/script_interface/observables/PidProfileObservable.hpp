@@ -25,71 +25,17 @@
 #include "auto_parameters/AutoParameters.hpp"
 #include <memory>
 
-#include "core/observables/DensityProfile.hpp"
-#include "core/observables/FluxDensityProfile.hpp"
-#include "core/observables/ForceDensityProfile.hpp"
-#include "core/observables/PidProfileObservable.hpp"
+#include "PidObservable.hpp"
+#include "ProfileObservable.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
 
 template <typename CoreObs>
-class PidProfileObservable
-    : public AutoParameters<PidProfileObservable<CoreObs>, Observable> {
+class PidProfileObservable : public PidObservable<CoreObs>,
+                             public ProfileObservable<CoreObs> {
 public:
-  PidProfileObservable() : m_observable(std::make_shared<CoreObs>()) {
-    this->add_parameters(
-        {{"ids",
-          [this](const Variant &v) {
-            pid_profile_observable()->ids() = get_value<std::vector<int>>(v);
-          },
-          [this]() { return pid_profile_observable()->ids(); }},
-         {"n_x_bins",
-          [this](const Variant &v) {
-            pid_profile_observable()->n_x_bins = get_value<int>(v);
-          },
-          [this]() { return pid_profile_observable()->n_x_bins; }},
-         {"n_y_bins",
-          [this](const Variant &v) {
-            pid_profile_observable()->n_y_bins = get_value<int>(v);
-          },
-          [this]() { return pid_profile_observable()->n_y_bins; }},
-         {"n_z_bins",
-          [this](const Variant &v) {
-            pid_profile_observable()->n_z_bins = get_value<int>(v);
-          },
-          [this]() { return pid_profile_observable()->n_z_bins; }},
-         {"min_x",
-          [this](const Variant &v) {
-            pid_profile_observable()->min_x = get_value<double>(v);
-          },
-          [this]() { return pid_profile_observable()->min_x; }},
-         {"min_y",
-          [this](const Variant &v) {
-            pid_profile_observable()->min_y = get_value<double>(v);
-          },
-          [this]() { return pid_profile_observable()->min_y; }},
-         {"min_z",
-          [this](const Variant &v) {
-            pid_profile_observable()->min_z = get_value<double>(v);
-          },
-          [this]() { return pid_profile_observable()->min_z; }},
-         {"max_x",
-          [this](const Variant &v) {
-            pid_profile_observable()->max_x = get_value<double>(v);
-          },
-          [this]() { return pid_profile_observable()->max_x; }},
-         {"max_y",
-          [this](const Variant &v) {
-            pid_profile_observable()->max_y = get_value<double>(v);
-          },
-          [this]() { return pid_profile_observable()->max_y; }},
-         {"max_z",
-          [this](const Variant &v) {
-            pid_profile_observable()->max_z = get_value<double>(v);
-          },
-          [this]() { return pid_profile_observable()->max_z; }}});
-  }
+  PidProfileObservable() : m_observable(std::make_shared<CoreObs>()) {}
 
   std::shared_ptr<::Observables::PidProfileObservable>
   pid_profile_observable() const {

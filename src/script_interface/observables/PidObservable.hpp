@@ -24,7 +24,7 @@
 
 #include "ScriptInterface.hpp"
 
-#include "Observable.hpp"
+#include "auto_parameters/AutoParameters.hpp"
 #include "core/observables/PidObservable.hpp"
 
 #include <memory>
@@ -33,28 +33,23 @@
 namespace ScriptInterface {
 namespace Observables {
 
-template <typename CorePidObs> class PidObservable : public Observable {
+template <typename CorePidObs>
+class PidObservable
+    : virtual public AutoParameters<PidObservable<CorePidObs>, Observable> {
 public:
   static_assert(
       std::is_base_of<::Observables::PidObservable, CorePidObs>::value, "");
 
-  PidObservable() : m_observable(std::make_shared<CorePidObs>()) {}
-
-  VariantMap get_parameters() const override {
-    return {{"ids", m_observable->ids()}};
+  PidObservable() : m_observable(std::make_shared<CorePidObs>()) {
+    this->add_parameters({{"ids",
+                           [this](const Variant &v) {
+                             pid_observable()->ids() =
+                                 get_value<std::vector<int>>(v);
+                           },
+                           [this]() { return pid_observable()->ids(); }}});
   }
 
-  ParameterMap valid_parameters() const override {
-    return {{"ids", {ParameterType::INT_VECTOR, true}}};
-  }
-
-  void set_parameter(std::string const &name, Variant const &value) override {
-    if ("ids" == name) {
-      m_observable->ids() = get_value<std::vector<int>>(value);
-    }
-  }
-
-  virtual std::shared_ptr<::Observables::PidObservable> pid_observable() const {
+  std::shared_ptr<::Observables::PidObservable> pid_observable() const {
     return m_observable;
   }
 
