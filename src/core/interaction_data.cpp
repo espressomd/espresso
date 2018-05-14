@@ -164,6 +164,8 @@ void ia_params_set_state(std::string const &state) {
   ia_params.clear();
   ia >> ia_params;
   ia >> max_seen_particle_type;
+  mpi_bcast_max_seen_particle_type(ia_params.size());
+  boost::mpi::broadcast(comm_cart, ia_params, 0);
 }
 
 static void recalc_maximal_cutoff_bonded() {
