@@ -1022,6 +1022,13 @@ void pointer_to_swimming(Particle const *p,
 #ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle const *p, double const *&res);
 #endif
+#ifdef AFFINITY
+void pointer_to_bond_site(const Particle* p, const double*& res); 
+#endif
+
+#ifdef MEMBRANE_COLLISION
+void pointer_to_out_direction(const Particle* p, const double*& res); 
+#endif
 
 bool particle_exists(int part);
 

@@ -537,20 +537,16 @@ typedef struct {
 
 /** Parameters for oif_local_forces */
 typedef struct {
-  double r0;
-  double ks;
-  double kslin;
-  double phi0;
-  double kb;
-  double A01;
-  double A02;
-  double kal;
+    double r0;
+    double ks;
+    double kslin;
+    double phi0;
+    double kb;
+    double A01;
+    double A02;
+    double kal;
+    double kvisc;
 } Oif_local_forces_bond_parameters;
-
-/** Parameters for oif_out_direction */
-typedef struct {
-
-} Oif_out_direction_bond_parameters;
 
 /** Parameters for harmonic bond Potential */
 typedef struct {
@@ -765,7 +761,6 @@ typedef union {
   Fene_bond_parameters fene;
   Oif_global_forces_bond_parameters oif_global_forces;
   Oif_local_forces_bond_parameters oif_local_forces;
-  Oif_out_direction_bond_parameters oif_out_direction;
   Harmonic_bond_parameters harmonic;
 #ifdef ROTATION
   Harmonic_dumbbell_bond_parameters harmonic_dumbbell;

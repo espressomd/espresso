@@ -531,7 +531,7 @@ int rotate_particle(int part, double axis[3], double angle) {
 #endif
 
 #ifdef AFFINITY
-int set_particle_affinity(int part, double bond_site[3]) {
+int set_particle_affinity(int part, const double bond_site[3]) {
   auto const pnode = get_particle_node(part);
 
   mpi_send_affinity(pnode, part, bond_site);
@@ -1337,6 +1337,20 @@ void pointer_to_rotational_inertia(Particle const *p, double const *&res) {
   res = p->p.rinertia;
 }
 #endif
+
+#ifdef AFFINITY
+void pointer_to_bond_site(const Particle* p, const double*& res) {
+  res =p->p.bond_site;
+}
+#endif
+
+#ifdef MEMBRANE_COLLISION
+void pointer_to_out_direction(const Particle* p, const double*& res) {
+ res = p->p.out_direction;
+}
+#endif
+
+
 
 bool particle_exists(int part_id) {
   if (particle_node.empty())

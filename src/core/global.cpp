@@ -37,6 +37,7 @@
 #include "thermalized_bond.hpp"
 #include "tuning.hpp"
 #include "utils/mpi/all_compare.hpp"
+#include "object-in-fluid/oif_global_forces.hpp" 
 
 #include <boost/functional/hash.hpp>
 
@@ -221,6 +222,10 @@ const std::unordered_map<int, Datafield> fields{
      {FIELD_LANGEVIN_GAMMA_ROTATION,
       {langevin_gamma_rotation.data(), Datafield::Type::DOUBLE, 3, "gamma_rot",
        1}}, /* 55 from thermostat.cpp */
+#endif
+#ifdef OIF_GLOBAL_FORCES
+     {FIELD_MAX_OIF_OBJECTS,
+       {&max_oif_objects, Datafield::Type::INT, 1, "max_oif_objects"}},
 #endif
      {FIELD_THERMALIZEDBONDS,
       {&n_thermalized_bonds, Datafield::Type::INT, 1, "n_thermalized_bonds",
