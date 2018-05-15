@@ -50,6 +50,11 @@ class CheckpointTest(ut.TestCase):
     def test_mean_variance_calculator(self):
         np.testing.assert_array_equal(acc.get_mean(), np.array([1.0, 1.5, 2.0, 1.0, 1.0, 2.0]))
         np.testing.assert_array_equal(acc.get_variance(), np.array([0.0, 0.25, 1.0, 0.0, 0.0, 0.0]))
+    
+    @ut.skipIf(not espressomd.has_features(['ELECTROSTATICS']),
+              "Cannot test for P3M checkpointing because feature not compiled in.")  
+    def test_p3m(self):
+        self.assertTrue(isinstance(system.actors.active_actors[0], espressomd.electrostatics.P3M))
 
 if __name__ == '__main__':
     ut.main()

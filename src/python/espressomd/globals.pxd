@@ -39,6 +39,7 @@ cdef extern from "global.hpp":
     IF NPT:
         int FIELD_NPTISO_G0
         int FIELD_NPTISO_GV
+    int FIELD_MAX_OIF_OBJECTS
 
     void mpi_bcast_parameter(int p)
 
@@ -160,3 +161,6 @@ cdef extern from "swimmer_reaction.hpp":
         int swap
 
     cdef extern reaction_struct reaction
+
+cdef extern from "object-in-fluid/oif_global_forces.hpp": 
+    int max_oif_objects

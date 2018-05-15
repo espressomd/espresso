@@ -136,6 +136,17 @@ cdef extern from "particle_data.hpp":
         void pointer_to_omega_body(const particle * p, const double * & res)
         void pointer_to_torque_lab(const particle * p, const double * & res)
 
+    IF MEMBRANE_COLLISION:
+        int set_particle_out_direction(int part, double out_direction[3])
+        void pointer_to_out_direction(particle*  p, double*& res)
+        
+    IF AFFINITY:
+        int set_particle_affinity(int part, double bond_site[3])
+        void pointer_to_bond_site(particle*  p, double*& res)
+
+    IF MASS == 1:
+        void pointer_to_mass(particle * p, double * & res)
+
     IF DIPOLES:
         int set_particle_dip(int part, double dip[3])
         void pointer_to_dip(const particle * P, const double * & res)
