@@ -167,13 +167,10 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
         vecsub(fp2,fp3,dx);
         len2 = sqrlen(dx);
         len = sqrt(len2);
-          
 
-  
-		/* unscale velocities ! */
-		v[0] = (p3->m.v[0] - p2->m.v[0])/time_step;
-		v[1] = (p3->m.v[1] - p2->m.v[1])/time_step;
-		v[2] = (p3->m.v[2] - p2->m.v[2])/time_step;
+		v[0] = (p3->m.v[0] - p2->m.v[0]);
+		v[1] = (p3->m.v[1] - p2->m.v[1]);
+		v[2] = (p3->m.v[2] - p2->m.v[2]);
  
 		// Variant A
 		// Here the force is in the direction of relative velocity btw points
