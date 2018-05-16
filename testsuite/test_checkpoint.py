@@ -14,6 +14,7 @@ class CheckpointTest(ut.TestCase):
         # Write checkpoint.
         p = subprocess.Popen(['@CMAKE_BINARY_DIR@/pypresso', '@CMAKE_CURRENT_BINARY_DIR@/save_checkpoint.py'])
         p.wait()
+        system = espressomd.System(box_l=[10.0] * 3)
         checkpoint = espressomd.checkpointing.Checkpointing(checkpoint_id="mycheckpoint", checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
         checkpoint.load(0)
 

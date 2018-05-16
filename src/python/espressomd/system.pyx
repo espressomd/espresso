@@ -146,8 +146,6 @@ cdef class System(object):
         odict = collections.OrderedDict()
         for property_ in setable_properties:
             odict[property_] = System.__getattribute__(self, property_)
-        IF VIRTUAL_SITES:
-            odict['_active_virtual_sites_handle'] = System.__getattribute__(self, "_active_virtual_sites_handle")
         odict['actors'] = System.__getattribute__(self, "actors")
         odict['analysis'] = System.__getattribute__(self, "analysis")
         odict['auto_update_accumulators'] = System.__getattribute__(self, "auto_update_accumulators")
