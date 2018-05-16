@@ -145,11 +145,11 @@ void IBM_UpdateParticlePositions(ParticleRange particles)
       if (p[j].p.isVirtual)
       {
         if ( !( p[j].p.ext_flag & 2 ) )
-          p[j].r.p[0] = p[j].r.p[0] + p[j].m.v[0]*time_step;
+          p[j].r.p[0] = p[j].r.p[0] + p[j].m.v[0];
         if ( !( p[j].p.ext_flag & 4 ) )
-          p[j].r.p[1] = p[j].r.p[1] + p[j].m.v[1]*time_step;
+          p[j].r.p[1] = p[j].r.p[1] + p[j].m.v[1];
         if ( !( p[j].p.ext_flag & 8 ) )
-          p[j].r.p[2] = p[j].r.p[2] + p[j].m.v[2]*time_step;
+          p[j].r.p[2] = p[j].r.p[2] + p[j].m.v[2];
         
         // Check if the particle might have crossed a box border (criterion see e-mail Axel 28.8.2014)
         // if possible resort_particles = 1
@@ -172,9 +172,9 @@ void CoupleIBMParticleToFluid(Particle *p)
 {
   // Convert units from MD to LB
   double delta_j[3];
-  delta_j[0] = p->f.f[0]*time_step*lbpar.tau/lbpar.agrid;
-  delta_j[1] = p->f.f[1]*time_step*lbpar.tau/lbpar.agrid;
-  delta_j[2] = p->f.f[2]*time_step*lbpar.tau/lbpar.agrid;
+  delta_j[0] = p->f.f[0] * time_step * lbpar.tau/lbpar.agrid;
+  delta_j[1] = p->f.f[1] * time_step * lbpar.tau/lbpar.agrid;
+  delta_j[2] = p->f.f[2] * time_step * lbpar.tau/lbpar.agrid;
   
   // Get indices and weights of affected nodes using discrete delta function
   index_t node_index[8];
