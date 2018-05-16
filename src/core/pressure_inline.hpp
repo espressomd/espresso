@@ -212,30 +212,6 @@ inline void calc_bonded_force(Particle *p1, Particle *p2,
     }
     break;
 #endif
-#ifdef OVERLAPPED
-  case BONDED_IA_OVERLAPPED:
-    // printf("BONDED OVERLAP, Particle: %d, P2: %d TYPE_OVERLAP:
-    // %d\n",p1->p.identity,p2->p.identity,iparams->p.tab.type);
-    // char *errtxt;
-    switch (iaparams->p.overlap.type) {
-    case OVERLAP_BOND_LENGTH:
-      calc_overlap_bond_force(p1, p2, iaparams, dx, force);
-      break;
-    case OVERLAP_BOND_ANGLE:
-      (*i)++;
-      force[0] = force[1] = force[2] = 0;
-      break;
-    case OVERLAP_BOND_DIHEDRAL:
-      (*i) += 2;
-      force[0] = force[1] = force[2] = 0;
-      break;
-    default:
-      runtimeErrorMsg() << "calc_bonded_force: overlapped bond type of atom "
-                        << p1->p.identity << " unknown\n";
-      return;
-    }
-    break;
-#endif
 #ifdef BOND_CONSTRAINT
   case BONDED_IA_RIGID_BOND:
     force[0] = force[1] = force[2] = 0;

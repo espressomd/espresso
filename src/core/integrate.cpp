@@ -28,7 +28,6 @@
 #include "integrate.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "correlators.hpp"
 #include "domain_decomposition.hpp"
 #include "electrokinetics.hpp"
 #include "errorhandling.hpp"
@@ -957,8 +956,7 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
   }
 
   /* perform integration */
-  if (!Correlators::auto_update_enabled() &&
-      !Accumulators::auto_update_enabled()) {
+  if (!Accumulators::auto_update_enabled()) {
     if (mpi_integrate(n_steps, reuse_forces))
       return ES_ERROR;
   } else {
@@ -966,7 +964,6 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
       if (mpi_integrate(1, reuse_forces))
         return ES_ERROR;
       reuse_forces = 1;
-      Correlators::auto_update();
       Accumulators::auto_update();
     }
     if (n_steps == 0) {

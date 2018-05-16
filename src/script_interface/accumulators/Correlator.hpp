@@ -22,10 +22,11 @@
 #ifndef SCRIPT_INTERFACE_CORRELATORS_CORRELATOR_HPP
 #define SCRIPT_INTERFACE_CORRELATORS_CORRELATOR_HPP
 
+#include "AccumulatorBase.hpp"
 #include "ScriptInterface.hpp"
 #include "auto_parameters/AutoParameters.hpp"
 
-#include "core/correlators/Correlator.hpp"
+#include "core/accumulators/Correlator.hpp"
 #include "observables/Observable.hpp"
 
 #include "core/utils/as_const.hpp"
@@ -33,10 +34,10 @@
 #include <memory>
 
 namespace ScriptInterface {
-namespace Correlators {
+namespace Accumulators {
 
-class Correlator : public AutoParameters<Correlator> {
-  using CoreCorr = ::Correlators::Correlator;
+class Correlator : public AccumulatorBase {
+  using CoreCorr = ::Accumulators::Correlator;
 
 public:
   Correlator() {
@@ -45,7 +46,6 @@ public:
     add_parameters(
         {{"tau_lin", m_correlator, &CoreCorr::tau_lin},
          {"tau_max", m_correlator, &CoreCorr::tau_max},
-         {"dt", m_correlator, &CoreCorr::dt},
          {"compress1", m_correlator, &CoreCorr::compress1},
          {"compress2", m_correlator, &CoreCorr::compress2},
          {"corr_operation", m_correlator, &CoreCorr::correlation_operation},
@@ -66,37 +66,26 @@ public:
 
     m_correlator = std::make_shared<CoreCorr>(
         get_value<int>(args, "tau_lin"), get_value<double>(args, "tau_max"),
-        get_value<double>(args, "dt"),
+        get_value<int>(args, "delta_N"),
         /* These two are optional */
-        get_value_or<std::string>(args, "compess1", ""),
-        get_value_or<std::string>(args, "compess2", ""),
+        get_value_or<std::string>(args, "compress1", ""),
+        get_value_or<std::string>(args, "compress2", ""),
         get_value<std::string>(args, "corr_operation"), m_obs1->observable(),
         m_obs2->observable());
   }
 
-  std::shared_ptr<::Correlators::Correlator> correlator() {
+  std::shared_ptr<::Accumulators::Correlator> correlator() {
     return m_correlator;
   }
 
   virtual Variant call_method(std::string const &method,
                               VariantMap const &parameters) override {
-    if (method == "update") {
-      if (m_correlator->autoupdate) {
-        throw std::runtime_error(
-            "auto_update is enable for the correlator. Cannot update manually");
-      }
-      if (m_correlator->get_data()) {
-        throw std::runtime_error("Correlator update failed");
-      }
-    }
-    if (method == "auto_update") {
-      return m_correlator->autoupdate;
-    }
+    if (method == "update")
+      correlator()->update();
     if (method == "finalize")
-      m_correlator->finalize();
-    if (method == "get_correlation") {
-      return m_correlator->get_correlation();
-    }
+      correlator()->finalize();
+    if (method == "get_correlation")
+      return correlator()->get_correlation();
 
     return {};
   }
@@ -107,6 +96,14 @@ public:
     state[1] = m_correlator->get_internal_state();
 
     return state;
+  }
+
+  std::shared_ptr<::Accumulators::AccumulatorBase> accumulator() override {
+    return std::static_pointer_cast<::Accumulators::AccumulatorBase>(m_correlator);
+  }
+
+  std::shared_ptr<const ::Accumulators::AccumulatorBase> accumulator() const override {
+    return std::static_pointer_cast<::Accumulators::AccumulatorBase>(m_correlator);
   }
 
 private:

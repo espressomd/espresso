@@ -42,16 +42,16 @@ int generate_external_potential(ExternalPotential** e) {
   return ES_OK;
 }     
 
-int external_potential_tabulated_init(int number, char* filename, int n_particle_types, double* scale) {
+int external_potential_tabulated_init(int number, char* filename, int max_seen_particle_type, double* scale) {
   ExternalPotentialTabulated* e = &external_potentials[number].tabulated;
 
   if (strlen(filename)>MAX_FILENAME_SIZE)
     return ES_ERROR;
   strncpy((char*)&(e->filename), filename, MAX_FILENAME_SIZE);
   external_potentials[number].type=EXTERNAL_POTENTIAL_TYPE_TABULATED;
-  external_potentials[number].scale = (double*) Utils::malloc(n_particle_types*sizeof(double));
-  external_potentials[number].n_particle_types = n_particle_types;
-  for (int i = 0; i < n_particle_types; i++) {
+  external_potentials[number].scale = (double*) Utils::malloc(max_seen_particle_type*sizeof(double));
+  external_potentials[number].max_seen_particle_type = max_seen_particle_type;
+  for (int i = 0; i < max_seen_particle_type; i++) {
     external_potentials[number].scale[i]=scale[i];
   }
   mpi_external_potential_broadcast(number);
@@ -236,7 +236,7 @@ int write_local_lattice_to_file(const char* filename_prefix, Lattice* lattice) {
 }
 
 void add_external_potential_tabulated_forces(ExternalPotential* e, Particle* p) {
-  if (p->p.type >= e->n_particle_types || e->scale[p->p.type] == 0 ) {
+  if (p->p.type >= e->max_seen_particle_type || e->scale[p->p.type] == 0 ) {
     return;
   }
   double field[3];
@@ -266,7 +266,7 @@ void add_external_potential_forces(Particle* p) {
 
 
 void add_external_potential_tabulated_energy(ExternalPotential* e, Particle* p) {
-  if (p->p.type >= e->n_particle_types) {
+  if (p->p.type >= e->max_seen_particle_type) {
     return;
   }
   double potential;

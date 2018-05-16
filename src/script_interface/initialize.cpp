@@ -29,7 +29,6 @@
 #endif
 #include "observables/initialize.hpp"
 #include "accumulators/initialize.hpp"
-#include "correlators/initialize.hpp" 
 #include "lbboundaries/initialize.hpp"
 #include "collision_detection/initialize.hpp"
 #include "mpiio/initialize.hpp"
@@ -55,7 +54,6 @@ void initialize() {
   Accumulators::initialize();
   Observables::initialize();
   ClusterAnalysis::initialize();
-  Correlators::initialize();
   LBBoundaries::initialize();
   PairCriteria::initialize();
   VirtualSites::initialize();

@@ -404,7 +404,7 @@ void mpi_bcast_ia_params(int i, int j);
 /** Issue REQ_BCAST_IA_SIZE: send new size of \ref ia_params.
     \param s the new size for \ref ia_params.
 */
-void mpi_bcast_n_particle_types(int s);
+void mpi_bcast_max_seen_particle_type(int s);
 
 /** Issue REQ_GATHER: gather data for analysis in analyze.
     \param job what to do:
