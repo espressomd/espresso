@@ -36,4 +36,6 @@ if espressomd.has_features(['LENNARD_JONES']):
     system.non_bonded_inter[3, 0].lennard_jones.set_params(epsilon=1.2, sigma=1.7, cutoff=2.0, shift=0.1)
 checkpoint.register("system")
 checkpoint.register("acc")
+# calculate forces
+system.integrator.run(0)
 checkpoint.save(0)

@@ -26,6 +26,8 @@ class CheckpointTest(ut.TestCase):
     def test_part(self):
         np.testing.assert_array_equal(np.copy(system.part[0].pos), np.array([1.0, 2.0, 3.0]))
         np.testing.assert_array_equal(np.copy(system.part[1].pos), np.array([1.0, 1.0, 2.0]))
+        np.testing.assert_array_almost_equal(np.copy(system.part[0].f), np.array([46.78868947, 5.022612, -25.68373659]))
+        np.testing.assert_array_almost_equal(np.copy(system.part[1].f), np.array([3.90499511e-16, -1.63522209e+00, -1.71556116e+00]))
 
     def test_thermostat(self):
         self.assertEqual(system.thermostat.get_state()[0]['type'], 'LANGEVIN')
