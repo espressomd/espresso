@@ -265,7 +265,7 @@ class ThermoTest(ut.TestCase):
                 pos0[ind, :] = self.es.part[ind].pos
         dt0 = mass / gamma_tr
 
-        loops = 200
+        loops = 250
         print("Thermalizing...")
         therm_steps = 20
         self.es.integrator.run(therm_steps)
