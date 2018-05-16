@@ -215,14 +215,10 @@ void predict_momentum_particles(double *result) {
     // Due to weird scaling of units the following is actually correct
     auto const mass = p.p.mass;
 
-    momentum[0] += mass * (p.m.v[0] + p.f.f[0]);
-    momentum[1] += mass * (p.m.v[1] + p.f.f[1]);
-    momentum[2] += mass * (p.m.v[2] + p.f.f[2]);
+    momentum[0] += mass * (p.m.v[0] + p.f.f[0] * time_step);
+    momentum[1] += mass * (p.m.v[1] + p.f.f[1] * time_step);
+    momentum[2] += mass * (p.m.v[2] + p.f.f[2] * time_step);
   }
-
-  momentum[0] /= time_step;
-  momentum[1] /= time_step;
-  momentum[2] /= time_step;
 
   MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
