@@ -532,9 +532,9 @@ void rescale_forces() {
 
   for (auto &p : local_cells.particles()) {
     check_particle_force(&p);
-    p.f.f[0] *= scale / p.p.mass;
-    p.f.f[1] *= scale / p.p.mass;
-    p.f.f[2] *= scale / p.p.mass;
+    p.f.f[0] *= 1;
+    p.f.f[1] *= 1;
+    p.f.f[2] *= 1;
 
     ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
         stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
@@ -557,9 +557,9 @@ void rescale_forces_propagate_vel() {
   for (auto &p : local_cells.particles()) {
     check_particle_force(&p);
     /* Rescale forces: f_rescaled = 0.5*dt*dt * f_calculated * (1/mass) */
-    p.f.f[0] *= scale / p.p.mass;
-    p.f.f[1] *= scale / p.p.mass;
-    p.f.f[2] *= scale / p.p.mass;
+    p.f.f[0] *= 1;
+    p.f.f[1] *= 1;
+    p.f.f[2] *= 1;
 
     ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
         stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
@@ -577,11 +577,11 @@ void rescale_forces_propagate_vel() {
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
           nptiso.p_vel[j] += Utils::sqr(p.m.v[j]) * p.p.mass;
-            p.m.v[j] += p.f.f[j] + friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
+            p.m.v[j] += time_step / p.p.mass * p.f.f[j] + friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
         } else
 #endif
           /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
-          p.m.v[j] += p.f.f[j];
+          p.m.v[j] += 0.5 * time_step * p.f.f[j];
 #ifdef EXTERNAL_FORCES
       }
 #endif
@@ -742,7 +742,7 @@ void propagate_vel() {
         } else
 #endif
           /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
-          p.m.v[j] += p.f.f[j];
+          p.m.v[j] += 0.5 * time_step * p.f.f[j];
 
 /* SPECIAL TASKS in particle loop */
 #ifdef NEMD
@@ -793,7 +793,7 @@ void propagate_pos() {
 #endif
           /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
            * v(t+0.5*dt) */
-          p.r.p[j] += p.m.v[j];
+          p.r.p[j] += time_step * p.m.v[j];
         }
       }
       /* Verlet criterion check */
@@ -829,11 +829,11 @@ void propagate_vel_pos() {
 #endif
       {
         /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
-        p.m.v[j] += p.f.f[j];
+        p.m.v[j] += 0.5 * time_step * p.f.f[j];
 
         /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
          * v(t+0.5*dt) */
-        p.r.p[j] += p.m.v[j];
+        p.r.p[j] += time_step * p.m.v[j];
       }
     }
 
