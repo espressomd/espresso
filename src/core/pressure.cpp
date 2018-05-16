@@ -118,7 +118,7 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
       });
 
 /* rescale kinetic energy (=ideal contribution) */
-  virials.data.e[0] /= (3.0*volume*time_step*time_step);
+  virials.data.e[0] /= (3.0*volume);
 
   calc_long_range_virials();
 
@@ -132,7 +132,7 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
 
     
   for(i=0; i<9; i++)
-    p_tensor.data.e[i] /= (volume*time_step*time_step);
+    p_tensor.data.e[i] /= (volume);
 
   for(i=9; i<p_tensor.data.n; i++)
     p_tensor.data.e[i]  /= volume;
