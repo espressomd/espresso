@@ -149,7 +149,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
                         prefactor=1,
                         method_name="p2nfft",
                         method_params={
-                            "tolerance_field": 7E-5,
+                            "tolerance_field": 5E-5,
                             "pnfft_n":"96,96,96",
                             "pnfft_N":"96,96,96",
                             "pnfft_m":3})
