@@ -46,19 +46,19 @@ int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
   data->dpd_gamma = gamma;
   data->dpd_r_cut = r_c;
   data->dpd_wf = wf;
-  data->dpd_pref2 = sqrt(24.0 * temperature * gamma);
+  data->dpd_pref2 = sqrt(24.0 * temperature * gamma / time_step);
   data->dpd_tgamma = tgamma;
   data->dpd_tr_cut = tr_c;
   data->dpd_twf = twf;
-  data->dpd_pref4 = sqrt(24.0 * temperature * tgamma);
+  data->dpd_pref4 = sqrt(24.0 * temperature * tgamma / time_step);
 
   /* Only make active if the DPD thermostat is
      activated, otherwise it will by activated
      by dpd_init() on thermostat change.
   */
   if (thermo_switch & THERMO_DPD) {
-    data->dpd_pref1 = gamma;
-    data->dpd_pref3 = tgamma;
+    data->dpd_pref1 = gamma / time_step;
+    data->dpd_pref3 = tgamma / time_step;
   } else {
     data->dpd_pref1 = 0.0;
     data->dpd_pref3 = 0.0;
@@ -75,12 +75,12 @@ void dpd_init() {
     for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
       auto data = get_ia_param(type_a, type_b);
       if ((data->dpd_r_cut != 0) || (data->dpd_tr_cut != 0)) {
-        data->dpd_pref1 = data->dpd_gamma;
+        data->dpd_pref1 = data->dpd_gamma / time_step;
         data->dpd_pref2 =
-            sqrt(24.0 * temperature * data->dpd_gamma);
-        data->dpd_pref3 = data->dpd_tgamma;
+            sqrt(24.0 * temperature * data->dpd_gamma / time_step);
+        data->dpd_pref3 = data->dpd_tgamma / time_step;
         data->dpd_pref4 =
-            sqrt(24.0 * temperature * data->dpd_tgamma);
+            sqrt(24.0 * temperature * data->dpd_tgamma / time_step);
       }
     }
   }
@@ -139,7 +139,7 @@ void add_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
     // friction force prefactor
     for (j = 0; j < 3; j++)
       vel12_dot_d12 += (p1->m.v[j] - p2->m.v[j]) * d[j];
-    friction = ia_params->dpd_pref1 * omega2 * vel12_dot_d12;
+    friction = ia_params->dpd_pref1 * omega2 * vel12_dot_d12 * time_step;
     // random force prefactor
     noise = ia_params->dpd_pref2 * omega * (d_random() - 0.5);
     for (j = 0; j < 3; j++) {
@@ -174,7 +174,9 @@ void add_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
         f_D[i] += P_times_dist_sqr[i][j] * (p1->m.v[j] - p2->m.v[j]);
         f_R[i] += P_times_dist_sqr[i][j] * noise_vec[j];
       }
-      f_D[i] *= ia_params->dpd_pref3 * omega2;
+      // NOTE: velocity are scaled with time_step
+      f_D[i] *= ia_params->dpd_pref3 * omega2 * time_step;
+      // NOTE: noise force scales with 1/sqrt(time_step
       f_R[i] *= ia_params->dpd_pref4 * omega * dist_inv;
     }
     for (j = 0; j < 3; j++) {
