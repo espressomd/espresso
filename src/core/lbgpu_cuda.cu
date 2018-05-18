@@ -1677,9 +1677,9 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
   interpolation_three_point_coupling(n_a, position, node_index, d_v, delta, interpolated_u);
 
 #ifdef ENGINE
-  velocity[0] -= (particle_data[part_index].swim.v_swim)*particle_data[part_index].swim.quatu[0];
-  velocity[1] -= (particle_data[part_index].swim.v_swim)*particle_data[part_index].swim.quatu[1];
-  velocity[2] -= (particle_data[part_index].swim.v_swim)*particle_data[part_index].swim.quatu[2];
+  velocity[0] -= (particle_data[part_index].swim.v_swim*para.time_step)*particle_data[part_index].swim.quatu[0];
+  velocity[1] -= (particle_data[part_index].swim.v_swim*para.time_step)*particle_data[part_index].swim.quatu[1];
+  velocity[2] -= (particle_data[part_index].swim.v_swim*para.time_step)*particle_data[part_index].swim.quatu[2];
 
   // The first three components are v_center, the last three v_source
   // Do not use within LB, because these have already been converted back to MD units
@@ -1706,9 +1706,9 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
 
   /* Viscous force */
   for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
-    viscforce[0+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[0] - interpolated_u[0]*para.agrid/para.tau)/rhotot;
-    viscforce[1+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[1] - interpolated_u[1]*para.agrid/para.tau)/rhotot;
-    viscforce[2+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[2] - interpolated_u[2]*para.agrid/para.tau)/rhotot;
+    viscforce[0+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[0]/para.time_step - interpolated_u[0]*para.agrid/para.tau)/rhotot;
+    viscforce[1+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[1]/para.time_step - interpolated_u[1]*para.agrid/para.tau)/rhotot;
+    viscforce[2+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[2]/para.time_step - interpolated_u[2]*para.agrid/para.tau)/rhotot;
 
 #ifdef LB_ELECTROHYDRODYNAMICS
     viscforce[0+ii*3] += interpolated_rho[ii]*para.friction[ii] * particle_data[part_index].mu_E[0]/rhotot;
@@ -1746,14 +1746,14 @@ __device__ void calc_viscous_force_three_point_couple(LB_nodes_gpu n_a, float *d
     particle_force[3*part_index+2] += (1-flag_cs) * viscforce[2+ii*3];
 
     // only add to particle_force for particle centre <=> (1-flag_cs) = 1
-    delta_j[0+3*ii] -= (1-flag_cs)*viscforce[0+ii*3]*para.tau/para.agrid;
-    delta_j[1+3*ii] -= (1-flag_cs)*viscforce[1+ii*3]*para.tau/para.agrid;
-    delta_j[2+3*ii] -= (1-flag_cs)*viscforce[2+ii*3]*para.tau/para.agrid;
+    delta_j[0+3*ii] -= (1-flag_cs)*viscforce[0+ii*3]*para.time_step*para.tau/para.agrid;
+    delta_j[1+3*ii] -= (1-flag_cs)*viscforce[1+ii*3]*para.time_step*para.tau/para.agrid;
+    delta_j[2+3*ii] -= (1-flag_cs)*viscforce[2+ii*3]*para.time_step*para.tau/para.agrid;
 #ifdef ENGINE
     // add swimming force to source position
-    delta_j[0+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[0]*para.tau/para.agrid;
-    delta_j[1+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[1]*para.tau/para.agrid;
-    delta_j[2+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[2]*para.tau/para.agrid;
+    delta_j[0+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[0]*para.time_step*para.tau/para.agrid;
+    delta_j[1+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[1]*para.time_step*para.tau/para.agrid;
+    delta_j[2+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[2]*para.time_step*para.tau/para.agrid;
 #endif
   }
 }
@@ -1972,9 +1972,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   interpolation_two_point_coupling(n_a, position, node_index, mode, d_v, delta, interpolated_u);
 
 #ifdef ENGINE
-  velocity[0] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[0];
-  velocity[1] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[1];
-  velocity[2] -= particle_data[part_index].swim.v_swim*particle_data[part_index].swim.quatu[2];
+  velocity[0] -= (particle_data[part_index].swim.v_swim*para.time_step)*particle_data[part_index].swim.quatu[0];
+  velocity[1] -= (particle_data[part_index].swim.v_swim*para.time_step)*particle_data[part_index].swim.quatu[1];
+  velocity[2] -= (particle_data[part_index].swim.v_swim*para.time_step)*particle_data[part_index].swim.quatu[2];
 
   // The first three components are v_center, the last three v_source
   // Do not use within LB, because these have already been converted back to MD units
@@ -2115,9 +2115,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   /* Viscous force */
   for(int ii=0; ii<LB_COMPONENTS; ++ii)
   { 
-    viscforce[0+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[0] - interpolated_u[0]*para.agrid/para.tau)/rhotot;
-    viscforce[1+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[1] - interpolated_u[1]*para.agrid/para.tau)/rhotot;
-    viscforce[2+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[2] - interpolated_u[2]*para.agrid/para.tau)/rhotot;
+    viscforce[0+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[0]/para.time_step - interpolated_u[0]*para.agrid/para.tau)/rhotot;
+    viscforce[1+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[1]/para.time_step - interpolated_u[1]*para.agrid/para.tau)/rhotot;
+    viscforce[2+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(velocity[2]/para.time_step - interpolated_u[2]*para.agrid/para.tau)/rhotot;
 
 #ifdef LB_ELECTROHYDRODYNAMICS
     viscforce[0+ii*3] += interpolated_rho[ii]*para.friction[ii] * particle_data[part_index].mu_E[0]/rhotot;
@@ -2165,15 +2165,15 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
 
     /* note that scforce is zero if SHANCHEN is not #defined */
     // only add to particle_force for particle centre <=> (1-flag_cs) = 1
-    delta_j[0+3*ii] -= (scforce[0+ii*3]+(1-flag_cs)*viscforce[0+ii*3])*para.tau/para.agrid;
-    delta_j[1+3*ii] -= (scforce[1+ii*3]+(1-flag_cs)*viscforce[1+ii*3])*para.tau/para.agrid;
-    delta_j[2+3*ii] -= (scforce[2+ii*3]+(1-flag_cs)*viscforce[2+ii*3])*para.tau/para.agrid;
+    delta_j[0+3*ii] -= (scforce[0+ii*3]+(1-flag_cs)*viscforce[0+ii*3])*para.time_step*para.tau/para.agrid;
+    delta_j[1+3*ii] -= (scforce[1+ii*3]+(1-flag_cs)*viscforce[1+ii*3])*para.time_step*para.tau/para.agrid;
+    delta_j[2+3*ii] -= (scforce[2+ii*3]+(1-flag_cs)*viscforce[2+ii*3])*para.time_step*para.tau/para.agrid;
 
 #ifdef ENGINE
     // add swimming force to source position
-    delta_j[0+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[0]*para.tau/para.agrid;
-    delta_j[1+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[1]*para.tau/para.agrid;
-    delta_j[2+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[2]*para.tau/para.agrid;
+    delta_j[0+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[0]*para.time_step*para.tau/para.agrid;
+    delta_j[1+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[1]*para.time_step*para.tau/para.agrid;
+    delta_j[2+3*ii] -= flag_cs*particle_data[part_index].swim.f_swim*particle_data[part_index].swim.quatu[2]*para.time_step*para.tau/para.agrid;
 #endif
 
   }
@@ -2181,9 +2181,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
 #ifdef SHANCHEN
   for(int node=0 ; node < 8 ; node++ ) { 
     for(int ii=0 ; ii < LB_COMPONENTS ; ii++ ) { 
-      partgrad1[node+ii*8]*=(para.tau/para.agrid);
-      partgrad2[node+ii*8]*=(para.tau/para.agrid);
-      partgrad3[node+ii*8]*=(para.tau/para.agrid);
+      partgrad1[node+ii*8]*=(para.time_step*para.tau/para.agrid);
+      partgrad2[node+ii*8]*=(para.time_step*para.tau/para.agrid);
+      partgrad3[node+ii*8]*=(para.time_step*para.tau/para.agrid);
     }
   }
 #endif

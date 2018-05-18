@@ -151,7 +151,7 @@ void energy_calc(double *result) {
                    });
 
   /* rescale kinetic energy */
-  energy.data.e[0] /= 2.0;
+  energy.data.e[0] /= (2.0 * time_step * time_step);
 
   calc_long_range_energies();
 

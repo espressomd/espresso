@@ -307,11 +307,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
     /* Integration Steps: Step 1 and 2 of Velocity Verlet scheme:
-       v(t+0.5*dt) = v(t) + 0.5*dt * f(t)
+       v(t+0.5*dt) = v(t) + 0.5*dt * a(t)
        p(t + dt)   = p(t) + dt * v(t+0.5*dt)
-       NOTE 1: Prefactors do not occur in formulas since we use
-       rescaled forces and velocities.
-       NOTE 2: Depending on the integration method Step 1 and Step 2
+       NOTE: Depending on the integration method Step 1 and Step 2
        cannot be combined for the translation.
     */
     if (integ_switch == INTEG_METHOD_NPT_ISO
@@ -576,8 +574,8 @@ void rescale_forces_propagate_vel() {
 #ifdef NPT
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
-          nptiso.p_vel[j] += Utils::sqr(p.m.v[j]) * p.p.mass;
-            p.m.v[j] += time_step / p.p.mass * p.f.f[j] + friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
+            nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
+            p.m.v[j] += 0.5 * time_step / p.p.mass * p.f.f[j] + friction_therm0_nptiso(p.m.v[j]*time_step) / p.p.mass;
         } else
 #endif
           /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
@@ -737,8 +735,8 @@ void propagate_vel() {
 #ifdef NPT
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
-            p.m.v[j] += p.f.f[j] + friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
-          nptiso.p_vel[j] += Utils::sqr(p.m.v[j]) * p.p.mass;
+            p.m.v[j] += p.f.f[j] * 0.5 * time_step / p.p.mass + friction_therm0_nptiso(p.m.v[j] * time_step) / p.p.mass;
+            nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
         } else
 #endif
           /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t) */
@@ -801,7 +799,6 @@ void propagate_pos() {
         set_resort_particles(Cells::RESORT_LOCAL);
     }
   }
-
   announce_resort_particles();
 }
 
@@ -828,7 +825,7 @@ void propagate_vel_pos() {
       if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
       {
-        /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t) */
+        /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5 * dt * a(t) */
         p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
 
         /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
