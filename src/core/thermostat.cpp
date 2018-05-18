@@ -89,8 +89,8 @@ double nptiso_pref4;
 #endif
 
 void thermo_init_langevin() {
-  langevin_pref1 = -langevin_gamma;
-  langevin_pref2 = sqrt(24.0 * temperature * langevin_gamma);
+  langevin_pref1 = -langevin_gamma / time_step;
+  langevin_pref2 = sqrt(24.0 * temperature / time_step * langevin_gamma);
 
   /* If gamma_rotation is not set explicitly,
      use the linear one. */
@@ -99,7 +99,7 @@ void thermo_init_langevin() {
   }
 
   langevin_pref2_rotation =
-      sqrt(24.0 * temperature * langevin_gamma_rotation);
+      sqrt(24.0 * temperature * langevin_gamma_rotation / time_step);
 
 #ifdef PARTICLE_ANISOTROPY
 #ifdef ROTATION
@@ -130,11 +130,12 @@ void thermo_init_langevin() {
 #ifdef NPT
 void thermo_init_npt_isotropic() {
   if (nptiso.piston != 0.0) {
-    nptiso_pref1 = -nptiso_gamma0 * 0.5;
-    nptiso_pref2 =
-          sqrt(12.0 * temperature * nptiso_gamma0);
-    nptiso_pref3 = -nptiso_gammav * (1.0 / nptiso.piston) * 0.5;
-    nptiso_pref4 = sqrt(12.0 * temperature * nptiso_gammav);
+    nptiso_pref1 = -nptiso_gamma0 * 0.5 * time_step;
+
+      nptiso_pref2 =
+          sqrt(12.0 * temperature * nptiso_gamma0 * time_step) * time_step;
+    nptiso_pref3 = -nptiso_gammav * (1.0 / nptiso.piston) * 0.5 * time_step;
+    nptiso_pref4 = sqrt(12.0 * temperature * nptiso_gammav * time_step);
     THERMO_TRACE(fprintf(
         stderr, "%d: thermo_init_npt_isotropic: nptiso_pref1=%f, "
                 "nptiso_pref2=%f, nptiso_pref3=%f, nptiso_pref4=%f \n",

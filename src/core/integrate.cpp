@@ -580,8 +580,8 @@ void rescale_forces_propagate_vel() {
             p.m.v[j] += time_step / p.p.mass * p.f.f[j] + friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
         } else
 #endif
-          /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
-          p.m.v[j] += 0.5 * time_step * p.f.f[j];
+          /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
+          p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
 #ifdef EXTERNAL_FORCES
       }
 #endif
@@ -741,8 +741,8 @@ void propagate_vel() {
           nptiso.p_vel[j] += Utils::sqr(p.m.v[j]) * p.p.mass;
         } else
 #endif
-          /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
-          p.m.v[j] += 0.5 * time_step * p.f.f[j];
+          /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t) */
+          p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
 
 /* SPECIAL TASKS in particle loop */
 #ifdef NEMD
@@ -828,8 +828,8 @@ void propagate_vel_pos() {
       if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
       {
-        /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
-        p.m.v[j] += 0.5 * time_step * p.f.f[j];
+        /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t) */
+        p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
 
         /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
          * v(t+0.5*dt) */

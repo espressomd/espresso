@@ -200,8 +200,9 @@ inline double le_frameV(int i, double *vel, double *pos) {
 #ifdef NPT
 /** add velocity-dependend noise and friction for NpT-sims to the particle's
    velocity
-    @param dt_vj  j-component of the velocity
-    @return       j-component of the noise added to the velocity */
+    @param dt_vj  j-component of the velocity scaled by time_step dt
+    @return       j-component of the noise added to the velocity, also scaled by
+   dt (contained in prefactors) */
 inline double friction_therm0_nptiso(double dt_vj) {
   extern double nptiso_pref1, nptiso_pref2;
   if (thermo_switch & THERMO_NPT_ISO)
@@ -286,11 +287,11 @@ inline void friction_thermo_langevin(Particle *p) {
     // Is a particle-specific temperature also specified?
     if (p->p.T >= 0.)
       langevin_pref2_temp =
-          sqrt(langevin_temp_coeff * p->p.T * p->p.gamma);
+          sqrt(langevin_temp_coeff * p->p.T * p->p.gamma / time_step);
     else
       // Default temperature but particle-specific gamma
       langevin_pref2_temp =
-          sqrt(langevin_temp_coeff * temperature * p->p.gamma);
+          sqrt(langevin_temp_coeff * temperature * p->p.gamma / time_step);
 
   } // particle specific gamma
   else {
@@ -298,7 +299,7 @@ inline void friction_thermo_langevin(Particle *p) {
     // No particle-specific gamma, but is there particle-specific temperature
     if (p->p.T >= 0.)
       langevin_pref2_temp =
-          sqrt(langevin_temp_coeff * p->p.T * langevin_gamma);
+          sqrt(langevin_temp_coeff * p->p.T * langevin_gamma / time_step);
     else
       // Defaut values for both
       langevin_pref2_temp = langevin_pref2;
@@ -397,11 +398,11 @@ inline void friction_thermo_langevin_rotation(Particle *p) {
     // Is a particle-specific temperature also specified?
     if (p->p.T >= 0.)
       langevin_pref2_temp =
-          sqrt(langevin_temp_coeff * p->p.T * p->p.gamma_rot);
+          sqrt(langevin_temp_coeff * p->p.T * p->p.gamma_rot / time_step);
     else
       // Default temperature but particle-specific gamma
       langevin_pref2_temp =
-          sqrt(langevin_temp_coeff * temperature * p->p.gamma_rot);
+          sqrt(langevin_temp_coeff * temperature * p->p.gamma_rot / time_step);
 
   } // particle specific gamma
   else {
@@ -409,7 +410,7 @@ inline void friction_thermo_langevin_rotation(Particle *p) {
     // No particle-specific gamma, but is there particle-specific temperature
     if (p->p.T >= 0.)
       langevin_pref2_temp = sqrt(langevin_temp_coeff * p->p.T *
-                                 langevin_gamma_rotation);
+                                 langevin_gamma_rotation / time_step);
     else
       // Default values for both
       langevin_pref2_temp = langevin_pref2_rotation;
