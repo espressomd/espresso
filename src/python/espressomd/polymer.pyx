@@ -33,6 +33,9 @@ def validate_params(_params, default):
     if _params["bond_length"] < 0 :
         raise ValueError(
                 "bond_length has to be a positive float" )
+    if _params["bond"]._bond_id == -1:
+        raise Exception(
+                "The bonded interaction passed as 'bond' keyword argument has not yet been added to the list of active bonds in Espresso.")
     if _params["start_id"] < 0:
         raise ValueError(
                 "start_id has to be a positive Integer")

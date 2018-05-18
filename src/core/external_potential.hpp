@@ -37,7 +37,7 @@ typedef struct {
   int dummy;
   int type;
   double* scale;
-  int n_particle_types;
+  int max_seen_particle_type;
   ExternalPotentialTabulated tabulated;
   double energy;
 } ExternalPotential;
@@ -45,13 +45,13 @@ typedef struct {
 extern ExternalPotential* external_potentials;
 extern int n_external_potentials;
 
-int external_potential_tabulated_init(int number, char* filename, int n_particle_types, double* scale);
+int external_potential_tabulated_init(int number, char* filename, int max_seen_particle_type, double* scale);
 
 void external_potential_init_energies();
 
 int generate_external_potential(ExternalPotential** externalPotential);
 
-int external_potential_init(int number, char* filename, int n_particle_types, double* scale);
+int external_potential_init(int number, char* filename, int max_seen_particle_type, double* scale);
 
 int external_potential_tabulated_read_potential_file(int number);
 
