@@ -211,6 +211,17 @@ cdef class ParticleHandle(object):
 
             return array_locked([ret[0], ret[1], ret[2]])
 
+    
+    property bare_position:
+
+        def __get__(self):
+            self.update_particle_data()
+            return array_locked((
+                self.particle_data.r.p[0],
+                self.particle_data.r.p[1],
+                self.particle_data.r.p[2]))
+            
+    
     property image_box:
         """
         The image box the particles is in.

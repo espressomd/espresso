@@ -397,8 +397,11 @@ cdef class System(object):
                     raise ValueError("Wrong # of args! Usage: lees_edwards_offset { new_offset }")
 
             def __get__(self):
-        # global lees_edwards_offset
                 return lees_edwards_offset
+
+        property lees_edwards_rate:
+            def __get__(self):
+                return lees_edwards_rate
 
     IF VIRTUAL_SITES:
         property virtual_sites:
