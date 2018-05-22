@@ -367,7 +367,7 @@ void layered_topology_init(CellPList *old) {
   realloc_cellplist(&local_cells, local_cells.n = n_layers);
   for (c = 0; c < n_layers; c++) {
     local_cells.cell[c] = &cells[c + 1];
-    cells[c + 1].m_neighbors.push_back(std::ref(cells[c]));
+    cells[c + 1].m_neighbors.push_back(&cells[c]);
   }
 
   realloc_cellplist(&ghost_cells, ghost_cells.n = 2);
