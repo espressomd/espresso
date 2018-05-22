@@ -867,7 +867,7 @@ void dd_topology_init(CellPList *old) {
     part = old->cell[c]->part;
     np = old->cell[c]->n;
     for (p = 0; p < np; p++) {
-      Cell *nc = dd_save_position_to_cell(part[p].r.p);
+      Cell *nc = dd_save_position_to_cell(part[p].r.p.data());
       /* particle does not belong to this node. Just stow away
          somewhere for the moment */
       if (nc == nullptr)
@@ -965,7 +965,7 @@ void dd_exchange_and_sort_particles(int global_flag) {
             }
             /* Sort particles in cells of this node during last direction */
             else if (dir == 2) {
-              sort_cell = dd_save_position_to_cell(part->r.p);
+              sort_cell = dd_save_position_to_cell(part->r.p.data());
               if (sort_cell != cell) {
                 if (sort_cell == nullptr) {
                   CELL_TRACE(fprintf(
@@ -1060,7 +1060,7 @@ void dd_exchange_and_sort_particles(int global_flag) {
               fold_coordinate(part->r.p, part->m.v, part->l.i, dir);
             }
             if (dir == 2) {
-              sort_cell = dd_save_position_to_cell(part->r.p);
+              sort_cell = dd_save_position_to_cell(part->r.p.data());
               if (sort_cell != cell) {
                 if (sort_cell == nullptr) {
                   CELL_TRACE(fprintf(stderr, "%d: "

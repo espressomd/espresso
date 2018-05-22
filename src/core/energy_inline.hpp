@@ -79,7 +79,6 @@
 #endif
 
 #ifdef EXTERNAL_FORCES
-#include "external_potential.hpp"
 #endif
 
 #include "energy.hpp"
@@ -515,9 +514,6 @@ inline void add_single_particle_energy(Particle *p) {
   add_bonded_energy(p);
 #ifdef CONSTRAINTS
   add_constraints_energy(p);
-#endif
-#ifdef EXTERNAL_FORCES
-  add_external_potential_energy(p);
 #endif
 }
 

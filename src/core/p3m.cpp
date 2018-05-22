@@ -244,7 +244,7 @@ static void p3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh[3],
 template <int cao> static void p3m_do_charge_assign();
 
 template <int cao>
-void p3m_do_assign_charge(double q, double real_pos[3], int cp_cnt);
+void p3m_do_assign_charge(double q, Vector3d& real_pos, int cp_cnt);
 /*@}*/
 
 void p3m_pre_init(void) {
@@ -565,7 +565,7 @@ template <int cao> void p3m_do_charge_assign() {
 }
 
 /* Template wrapper for p3m_do_assign_charge() */
-void p3m_assign_charge(double q, double real_pos[3], int cp_cnt) {
+void p3m_assign_charge(double q, Vector3d& real_pos, int cp_cnt) {
   switch (p3m.params.cao) {
   case 1:
     p3m_do_assign_charge<1>(q, real_pos, cp_cnt);
@@ -592,7 +592,7 @@ void p3m_assign_charge(double q, double real_pos[3], int cp_cnt) {
 }
 
 template <int cao>
-void p3m_do_assign_charge(double q, double real_pos[3], int cp_cnt) {
+void p3m_do_assign_charge(double q, Vector3d& real_pos, int cp_cnt) {
   int d, i0, i1, i2;
   double tmp0, tmp1;
   /* position of a particle in local mesh units */

@@ -256,7 +256,7 @@ void calc_particle_lattice_ia();
 /** calculates the fluid velocity at a given position of the
  * lattice. Note that it can lead to undefined behaviour if the
  * position is not within the local lattice. */
-int lb_lbfluid_get_interpolated_velocity(double *p, double *v);
+int lb_lbfluid_get_interpolated_velocity(const Vector3d& p, double* v);
 
 inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
                                  double *pi);

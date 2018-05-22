@@ -47,7 +47,7 @@ namespace LBBoundaries {
 std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
-void lbboundary_mindist_position(double pos[3], double *mindist,
+void lbboundary_mindist_position(const Vector3d& pos, double *mindist,
                                  double distvec[3], int *no) {
 
   double vec[3] = {std::numeric_limits<double>::infinity(),
@@ -58,7 +58,7 @@ void lbboundary_mindist_position(double pos[3], double *mindist,
 
   int n = 0;
   for (auto lbb = lbboundaries.begin(); lbb != lbboundaries.end(); ++lbb, n++) {
-    (**lbb).calc_dist(pos, &dist, vec);
+    (**lbb).calc_dist(pos.data(), &dist, vec);
 
     if (dist < *mindist || lbb == lbboundaries.begin()) {
       *no = n;

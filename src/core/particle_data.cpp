@@ -904,10 +904,10 @@ void local_place_particle(int part, const double p[3], int _new) {
   pt->m.v[2] += vv[2];
 #endif
 
-  memmove(pt->r.p, pp, 3 * sizeof(double));
+  memmove(pt->r.p.data(), pp, 3 * sizeof(double));
   memmove(pt->l.i, i, 3 * sizeof(int));
 #ifdef BOND_CONSTRAINT
-  memmove(pt->r.p_old, pp, 3 * sizeof(double));
+  memmove(pt->r.p_old.data(), pp, 3 * sizeof(double));
 #endif
 }
 
@@ -1241,10 +1241,10 @@ void pointer_to_torque_lab(Particle const *p, double const *&res) {
   res = p->f.torque;
 }
 
-void pointer_to_quat(Particle const *p, double const *&res) { res = p->r.quat; }
+void pointer_to_quat(Particle const *p, double const *&res) { res = p->r.quat.data(); }
 
 void pointer_to_quatu(Particle const *p, double const *&res) {
-  res = p->r.quatu;
+  res = p->r.quatu.data();
 }
 #endif
 
@@ -1272,7 +1272,7 @@ void pointer_to_vs_relative(Particle const *p, int const *&res1,
 #endif
 
 #ifdef DIPOLES
-void pointer_to_dip(Particle const *p, double const *&res) { res = p->r.dip; }
+void pointer_to_dip(Particle const *p, double const *&res) { res = p->r.dip.data(); }
 
 void pointer_to_dipm(Particle const *p, double const *&res) {
   res = &(p->p.dipm);
