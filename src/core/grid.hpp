@@ -371,6 +371,10 @@ Vector3d unfolded_position(const Particle * p) {
 
   return pos;
 }
+template<typename Particle>
+Vector3d unfolded_position(const Particle &p) {
+  return unfolded_position(&p);
+}
 
 /** unfold coordinates to physical position.
     \param pos the position...
