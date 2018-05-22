@@ -353,8 +353,8 @@ inline void unfold_position(double pos[3], double vel[3], int image_box[3]) {
 #endif
 }
 
-template<typename Particle>
-Vector3d unfolded_position(const Particle * p) {
+inline
+Vector3d unfolded_position(Particle const * p) {
   Vector3d pos{p->r.p};
 #ifdef LEES_EDWARDS
   auto const y_img_count = static_cast<int>(floor(pos[1] * box_l_i[1] + p->l.i[1]));
@@ -371,8 +371,8 @@ Vector3d unfolded_position(const Particle * p) {
 
   return pos;
 }
-template<typename Particle>
-Vector3d unfolded_position(const Particle &p) {
+
+inline Vector3d unfolded_position(Particle const &p) {
   return unfolded_position(&p);
 }
 

@@ -492,7 +492,8 @@ char *strcat_alloc(char *left, const char *right);
 
 /** Computes the area of triangle between vectors P1,P2,P3,
  *  by computing the crossproduct P1P2 x P1P3 and taking the half of its norm */
-inline double area_triangle(double *P1, double *P2, double *P3) {
+template <typename T1, typename T2, typename T3>
+inline double area_triangle(T1 P1, T2 P2, T3 P3) {
   double area;
   double u[3], v[3], normal[3], n; // auxiliary variables
   u[0] = P2[0] - P1[0];            // u = P1P2
@@ -508,7 +509,8 @@ inline double area_triangle(double *P1, double *P2, double *P3) {
 }
 
 /** Computes the normal vector to the plane given by points P1P2P3 */
-inline void get_n_triangle(double *p1, double *p2, double *p3, double *n) {
+template <typename T1, typename T2, typename T3>
+void get_n_triangle(T1 p1, T2 p2, T3 p3, double *n) {
   n[0] = (p2[1] - p1[1]) * (p3[2] - p1[2]) - (p2[2] - p1[2]) * (p3[1] - p1[1]);
   n[1] = (p2[2] - p1[2]) * (p3[0] - p1[0]) - (p2[0] - p1[0]) * (p3[2] - p1[2]);
   n[2] = (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0]);
@@ -529,8 +531,8 @@ inline void get_n_triangle(double *p1, double *p2, double *p3, double *n) {
  *  have the access to the order of particles, you are safe to call this
  *  function with exactly this order. Otherwise you need to check the
  *  orientations. */
-inline double angle_btw_triangles(double *P1, double *P2, double *P3,
-                                  double *P4) {
+template <typename T1, typename T2, typename T3, typename T4>
+double angle_btw_triangles(T1 P1, T2 P2, T3 P3, T4 P4) {
   double phi;
   double u[3], v[3], normal1[3], normal2[3]; // auxiliary variables
   u[0] = P1[0] - P2[0];                      // u = P2P1
