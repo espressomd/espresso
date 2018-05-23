@@ -338,7 +338,7 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
     mass[0][particle_index][0] = current_particle.p.mass;
   /* store folded particle positions. */
   if (write_pos) {
-    Vector3d p{{current_particle.r.p}};
+    Vector3d p = current_particle.r.p;
     Vector<3, int> i{{current_particle.l.i}};
     fold_position(p, i);
 
