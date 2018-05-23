@@ -20,6 +20,7 @@ from __future__ import print_function
 import espressomd
 import numpy
 import unittest as ut
+from tests_common import *
 
 
 class InteractionsBondedTest(ut.TestCase):
@@ -57,19 +58,6 @@ class InteractionsBondedTest(ut.TestCase):
         for i, ai in enumerate(a):
             self.assertFractionAlmostEqual(ai, b[i])
 
-    # Analytical Expressions
-    def harmonic_potential(self, r, k, r_0, r_cut):
-        return 0.5 * k * (r - r_0)**2
-
-    def harmonic_force(self, r, k, r_0, r_cut):
-        return -k * (r - r_0)
-
-    def fene_potential(self, r, k, d_r_max, r_0):
-        return -0.5 * k * d_r_max**2 * numpy.log(1 - ((r - r_0) / d_r_max)**2)
-
-    def fene_force(self, r, k, d_r_max, r_0):
-        return k * (r - r_0) * d_r_max**2 / ((r - r_0)**2 - d_r_max**2)
-
     # Test Harmonic Bond
     def test_harmonic(self):
 
@@ -88,14 +76,14 @@ class InteractionsBondedTest(ut.TestCase):
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["bonded"]
-            E_ref = self.harmonic_potential(
-                r=(i + 1) * self.step_width, k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut)
+            E_ref = harmonic_potential(
+                scalar_r=(i + 1) * self.step_width, k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
             f1_ref = self.axis * \
-                self.harmonic_force(r=(i + 1) * self.step_width,
+                harmonic_force(scalar_r=(i + 1) * self.step_width,
                                     k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut)
 
             # Check that energies match, ...
@@ -128,14 +116,14 @@ class InteractionsBondedTest(ut.TestCase):
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["bonded"]
-            E_ref = self.fene_potential(
-                r=(i + 1) * self.step_width, k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0)
+            E_ref = fene_potential(
+                scalar_r=(i + 1) * self.step_width, k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
             f1_ref = self.axis * \
-                self.fene_force(r=(i + 1) * self.step_width,
+                fene_force(scalar_r=(i + 1) * self.step_width,
                                 k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0)
 
             # Check that energies match, ...

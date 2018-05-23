@@ -32,6 +32,9 @@ box_l = 6 * np.sqrt(2)
 # Integration parameters
 #############################################################
 system = espressomd.System(box_l=[box_l]*3)
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
 system.time_step = 0.02
 system.cell_system.skin = 0.4
 system.cell_system.max_num_cells = 2744
@@ -63,7 +66,7 @@ system.part[0].add_bond((h, 1))
 
 
 RE = reaction_ensemble.WangLandauReactionEnsemble(temperature=1, exclusion_radius=0)
-RE.add_reaction(Gamma=K_diss, reactant_types=[0], reactant_coefficients=[
+RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[
        1], product_types=[1, 2], product_coefficients=[1, 1], default_charges={0: 0, 1: -1, 2: +1})
 print(RE.get_status())
 system.setup_type_map([0, 1, 2, 3])

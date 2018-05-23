@@ -31,12 +31,13 @@
 #include "initialize.hpp"
 #include "interaction_data.hpp"
 #include "layered.hpp"
-#include "lb.hpp"
 #include "lees_edwards.hpp"
 #include "npt.hpp"
 #include "rattle.hpp"
+#include "thermalized_bond.hpp"
 #include "tuning.hpp"
 #include "utils/mpi/all_compare.hpp"
+#include "object-in-fluid/oif_global_forces.hpp" 
 
 #include <boost/functional/hash.hpp>
 
@@ -124,7 +125,7 @@ const std::unordered_map<int, Datafield> fields{
       {&n_part, Datafield::Type::INT, 1, "n_part",
        6}}, /* 17 from particle.cpp */
      {FIELD_NPARTTYPE,
-      {&n_particle_types, Datafield::Type::INT, 1, "n_part_types",
+      {&max_seen_particle_type, Datafield::Type::INT, 1, "max_seen_particle_type",
        8}}, /* 18 from interaction_data.cpp */
      {FIELD_RIGIDBONDS,
       {&n_rigidbonds, Datafield::Type::INT, 1, "n_rigidbonds",
@@ -204,15 +205,9 @@ const std::unordered_map<int, Datafield> fields{
      {FIELD_GHMC_SCALE,
       {&ghmc_tscale, Datafield::Type::INT, 1, "ghmc_tscale",
        6}}, /* 48 from ghmc.cpp */
-     {FIELD_LB_COMPONENTS,
-      {&lb_components, Datafield::Type::INT, 1, "lb_components",
-       2}}, /* 49 from ghmc.cpp */
      {FIELD_WARNINGS,
       {&warnings, Datafield::Type::INT, 1, "warnings",
        1}}, /* 50 from global.cpp */
-     {FIELD_SMALLERTIMESTEP,
-      {&smaller_time_step, Datafield::Type::DOUBLE, 1, "smaller_time_step",
-       5}}, /* 52 from integrate.cpp */
      {FIELD_LANGEVIN_TRANS_SWITCH,
       {&langevin_trans, Datafield::Type::BOOL, 1, "langevin_trans_switch",
        1}}, /* 53 from thermostat.cpp */
@@ -228,6 +223,13 @@ const std::unordered_map<int, Datafield> fields{
       {langevin_gamma_rotation.data(), Datafield::Type::DOUBLE, 3, "gamma_rot",
        1}}, /* 55 from thermostat.cpp */
 #endif
+#ifdef OIF_GLOBAL_FORCES
+     {FIELD_MAX_OIF_OBJECTS,
+       {&max_oif_objects, Datafield::Type::INT, 1, "max_oif_objects"}},
+#endif
+     {FIELD_THERMALIZEDBONDS,
+      {&n_thermalized_bonds, Datafield::Type::INT, 1, "n_thermalized_bonds",
+       5}}, /* 56 from thermalized_bond.cpp */
      {FIELD_FORCE_CAP,
       {&force_cap, Datafield::Type::DOUBLE, 1, "force_cap", 1}}}};
 

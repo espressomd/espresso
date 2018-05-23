@@ -248,6 +248,47 @@ call the H5md objects :meth:`espressomd.io.writer.h5md.H5md.write` method withou
 After the last write call, you have to call the close() method to remove
 the backup file and to close the datasets etc.
 
+.. _Writing MPI-IO binary files:
+
+Writing MPI-IO binary files
+---------------------------
+
+This method outputs binary data in parallel and is, thus, also suitable for
+large-scale simulations. Generally, H5MD is the preferred method because the
+data is easier accessible. In contrast to H5MD, the MPI-IO functionality
+outputs data in a *machine dependent format* but has write and read
+capabilities. The usage is quite simple:
+
+.. code:: python
+
+    from espressomd.io.mppiio import mpiio
+    system = espressomd.System()
+    # ... add particles here
+    mpiio.write("/tmp/mydata", positions=True, velocities=True, types=True, bonds=True)
+
+Here, `/tmp/mydata` is the prefix used for several files. The call will output
+particle positions, velocities, types and their bonds to the following files in
+folder `/tmp`:
+
+    - mydata.head
+    - mydata.id
+    - mydata.pos
+    - mydata.pref
+    - mydata.type
+    - mydata.vel
+    - mydata.boff
+    - mydata.bond
+
+Depending on the chosen output, not all of these files might be created.
+To read these in again, simply call :meth:`espressomd.io.mpiio.Mpiio.read`. It has the same signature as
+:meth:`espressomd.io.mpiio.Mpiio.write`.
+There exists a legacy python script in the `tools` directory which can convert
+MPI-IO data to the now unsupported blockfile format. Check it out if you want
+to post-process the data without ESPResSo.
+
+*WARNING* Do not attempt to read these data on a machine with a different
+architecture!
+
 .. _Writing VTF files:
 
 Writing VTF files

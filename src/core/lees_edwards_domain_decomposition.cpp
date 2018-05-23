@@ -78,7 +78,7 @@ void le_dd_init_cell_interactions() {
               ind2 = get_linear_index(r, q, p, dd.ghost_cell_grid);
 
               if (ind2 >= ind1) {
-                cells[ind1].m_neighbors.push_back(std::ref(cells[ind2]));
+                cells[ind1].m_neighbors.push_back(&cells[ind2]);
               }
             }
           }

@@ -62,7 +62,7 @@ class ReactionEnsembleTest(ut.TestCase):
                                 cls.system.box_l, type=cls.type_H)
 
         cls.RE.add_reaction(
-            Gamma=cls.Ka, reactant_types=[
+            gamma=cls.Ka, reactant_types=[
                 cls.type_HA], reactant_coefficients=[1], product_types=[
                 cls.type_A, cls.type_H], product_coefficients=[
                 1, 1], default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1})
@@ -90,7 +90,7 @@ class ReactionEnsembleTest(ut.TestCase):
         average_NA = 0.0
         num_samples = 1000
         for i in range(num_samples):
-            RE.reaction(5)
+            RE.reaction(2)
             average_NH += system.number_of_particles( type=type_H)
             average_NHA += system.number_of_particles( type=type_HA)
             average_NA += system.number_of_particles( type=type_A)

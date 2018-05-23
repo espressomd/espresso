@@ -85,7 +85,7 @@ cdef extern from "particle_data.hpp":
                 double v_swim
 
     # Setter/getter/modifier functions functions
-    const particle* get_particle_data(int part)
+    const particle* get_particle_data_ptr(int part) except +
     void prefetch_particle_data(vector[int] ids)
 
     int place_particle(int part, double p[3])
@@ -98,10 +98,6 @@ cdef extern from "particle_data.hpp":
 
     IF ROTATION == 1:
         int set_particle_rotation(int part, int rot)
-
-    IF MULTI_TIMESTEP:
-        int set_particle_smaller_timestep(int part, int small_timestep)
-        void pointer_to_smaller_timestep(const particle * p, const int * & res)
 
     IF MASS:
         int set_particle_mass(int part, double mass)
@@ -140,6 +136,17 @@ cdef extern from "particle_data.hpp":
         void pointer_to_omega_body(const particle * p, const double * & res)
         void pointer_to_torque_lab(const particle * p, const double * & res)
 
+    IF MEMBRANE_COLLISION:
+        int set_particle_out_direction(int part, double out_direction[3])
+        void pointer_to_out_direction(particle*  p, double*& res)
+        
+    IF AFFINITY:
+        int set_particle_affinity(int part, double bond_site[3])
+        void pointer_to_bond_site(particle*  p, double*& res)
+
+    IF MASS == 1:
+        void pointer_to_mass(particle * p, double * & res)
+
     IF DIPOLES:
         int set_particle_dip(int part, double dip[3])
         void pointer_to_dip(const particle * P, const double * & res)
@@ -172,6 +179,9 @@ cdef extern from "particle_data.hpp":
 
     IF VIRTUAL_SITES_RELATIVE:
         void pointer_to_vs_relative(const particle * P, const int * & res1, const double * & res2, const double * & res3)
+        void pointer_to_vs_quat(const particle *P, const double *& res)
+        int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, double *rel_ori)
+        void set_particle_vs_quat(int part, double *vs_quat)
 
     IF ELECTROSTATICS:
         void pointer_to_q(const particle * P, const double * & res)
@@ -205,16 +215,18 @@ cdef extern from "particle_data.hpp":
 
     bool particle_exists(int part)
 
+    int get_particle_node(int id)
 
 cdef extern from "virtual_sites.hpp":
     IF VIRTUAL_SITES_RELATIVE == 1:
         int vs_relate_to(int part_num, int relate_to)
-        int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, double * vs_quat)
 
 cdef extern from "rotation.hpp":
     void convert_omega_body_to_space(const particle * p, double * omega)
     void convert_torques_body_to_space(const particle * p, double * torque)
     Vector3d convert_vector_body_to_space(const particle& p,const Vector3d& v)
+    Vector3d convert_vector_space_to_body(const particle& p,const Vector3d& v)
+    void rotate_particle(int id, double* axis, double angle)
 
 # The bonded_ia_params stuff has to be included here, because the setter/getter
 # of the particles' bond property needs to now about the correct number of
@@ -227,13 +239,13 @@ cdef extern from "interaction_data.hpp":
     cdef int n_bonded_ia
 
 cdef class ParticleHandle(object):
-    cdef public int id
-    cdef bint valid
+    cdef public int _id
     cdef const particle * particle_data
     cdef int update_particle_data(self) except -1
 
 cdef class _ParticleSliceImpl:
     cdef public id_selection
+    cdef int _chunk_size
 
 cdef extern from "grid.hpp":
     Vector3d folded_position(const particle *)

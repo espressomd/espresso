@@ -28,18 +28,19 @@
 */
 
 #include "../utils.hpp"
+
+#ifdef MEMBRANE_COLLISION
+
 #include "../interaction_data.hpp"
 #include "../particle_data.hpp"
 #include "../integrate.hpp"
 #include "../random.hpp"
 #include "../grid.hpp"
 
-#ifdef MEMBRANE_COLLISION
-
 int membrane_collision_set_params(int part_type_a, int part_type_b,
 			   double a, double n, double cut, double offset);
 
-//** Resultant force due to a sigmoid potential between two
+/** Resultant force due to a sigmoid potential between two
 // particles at interatomic separation r */
 inline double sigmoid_force_r(double a, double n, double r )
 {
@@ -103,3 +104,6 @@ inline void add_membrane_collision_pair_force(const Particle *p1, const Particle
 
 #endif /* ifdef MEMBRANE_COLLISION */
 #endif
+
+
+

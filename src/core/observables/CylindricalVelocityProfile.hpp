@@ -1,21 +1,21 @@
 #ifndef OBSERVABLES_CYLINDRICALVELOCITYPROFILE_HPP
 #define OBSERVABLES_CYLINDRICALVELOCITYPROFILE_HPP
 
-#include "CylindricalProfileObservable.hpp"
+#include "CylindricalPidProfileObservable.hpp"
 #include "utils.hpp"
 #include "utils/Histogram.hpp"
 
 namespace Observables {
-class CylindricalVelocityProfile : public CylindricalProfileObservable {
+class CylindricalVelocityProfile : public CylindricalPidProfileObservable {
 public:
   virtual std::vector<double> operator()(PartCfg &partCfg) const override {
-    std::vector<size_t> n_bins{{static_cast<size_t>(n_r_bins),
-                                static_cast<size_t>(n_phi_bins),
-                                static_cast<size_t>(n_z_bins)}};
-    std::vector<std::pair<double, double>> limits{
+    std::array<size_t, 3> n_bins{{static_cast<size_t>(n_r_bins),
+                                  static_cast<size_t>(n_phi_bins),
+                                  static_cast<size_t>(n_z_bins)}};
+    std::array<std::pair<double, double>, 3> limits{
         {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
          std::make_pair(min_z, max_z)}};
-    Utils::CylindricalHistogram<double> histogram(n_bins, 3, limits);
+    Utils::CylindricalHistogram<double, 3> histogram(n_bins, 3, limits);
     std::vector<::Vector<3, double>> folded_positions;
     std::transform(ids().begin(), ids().end(),
                    std::back_inserter(folded_positions), [&partCfg](int id) {
@@ -41,7 +41,7 @@ public:
     auto hist_tmp = histogram.get_histogram();
     auto tot_count = histogram.get_tot_count();
     for (size_t ind = 0; ind < hist_tmp.size(); ++ind) {
-      if (hist_tmp[ind] > 0.0) {
+      if (tot_count[ind] > 0) {
         hist_tmp[ind] /= tot_count[ind];
       }
     }

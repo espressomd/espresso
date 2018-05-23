@@ -43,6 +43,10 @@ box_l=50.0
 # Integration parameters
 #############################################################
 system = espressomd.System(box_l = [box_l, box_l, box_l])
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
+
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 temperature=1.0
@@ -78,7 +82,7 @@ for type_1 in types:
             cutoff=lj_cut, shift="auto")
 
 RE = reaction_ensemble.ReactionEnsemble(temperature=temperature, exclusion_radius=1.0)
-RE.add(Gamma=cs_bulk**2*np.exp(excess_chemical_potential_pair/temperature), reactant_types=[], reactant_coefficients=[], product_types=[1, 2], product_coefficients=[1, 1], default_charges={1: -1, 2: +1})
+RE.add_reaction(Gamma=cs_bulk**2*np.exp(excess_chemical_potential_pair/temperature), reactant_types=[], reactant_coefficients=[], product_types=[1, 2], product_coefficients=[1, 1], default_charges={1: -1, 2: +1})
 print(RE.get_status())
 system.setup_type_map([0, 1, 2])
 

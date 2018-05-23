@@ -398,12 +398,11 @@ class Analysis(object):
 
         # Total pressure
         cdef int i
-        cdef double tmp
-        tmp = 0
+        total = 0
         for i in range(c_analyze.total_pressure.data.n):
-            tmp += c_analyze.total_pressure.data.e[i]
+            total += c_analyze.total_pressure.data.e[i]
 
-        p["total"] = tmp
+        p["total"] = total
 
         # kinetic
         p["kinetic"] = c_analyze.total_pressure.data.e[0]
@@ -412,7 +411,7 @@ class Analysis(object):
         cdef double total_bonded
         total_bonded = 0
         for i in range(c_analyze.n_bonded_ia):
-            if (bonded_ia_params[i].type != 0):
+            if (bonded_ia_params[i].type != BONDED_IA_NONE):
                 p["bonded", i] = c_analyze.obsstat_bonded( & c_analyze.total_pressure, i)[0]
                 total_bonded += c_analyze.obsstat_bonded(& c_analyze.total_pressure, i)[0]
         p["bonded"] = total_bonded
@@ -426,8 +425,8 @@ class Analysis(object):
         total_intra = 0
         total_non_bonded = 0
 
-        for i in range(c_analyze.n_particle_types):
-            for j in range(i, c_analyze.n_particle_types):
+        for i in range(c_analyze.max_seen_particle_type):
+            for j in range(i, c_analyze.max_seen_particle_type):
                 #      if checkIfParticlesInteract(i, j):
                 p["non_bonded", i, j] = c_analyze.obsstat_nonbonded( & c_analyze.total_pressure, i, j)[0]
                 total_non_bonded += c_analyze.obsstat_nonbonded( & c_analyze.total_pressure, i, j)[0]
@@ -503,12 +502,12 @@ class Analysis(object):
 
         # Total pressure
         cdef int i
-        tmp = np.zeros(9)
+        total = np.zeros(9)
         for i in range(9):
             for k in range(c_analyze.total_p_tensor.data.n // 9):
-                tmp[i] += c_analyze.total_p_tensor.data.e[9 * k + i]
+                total[i] += c_analyze.total_p_tensor.data.e[9 * k + i]
 
-        p["total"] = tmp.reshape((3, 3))
+        p["total"] = total.reshape((3, 3))
 
         # kinetic
         p["kinetic"] = create_nparray_from_double_array(
@@ -518,7 +517,7 @@ class Analysis(object):
         # Bonded
         total_bonded = np.zeros((3, 3))
         for i in range(c_analyze.n_bonded_ia):
-            if (bonded_ia_params[i].type != 0):
+            if (bonded_ia_params[i].type != BONDED_IA_NONE):
                 p["bonded", i] = np.reshape(create_nparray_from_double_array(
                     c_analyze.obsstat_bonded( & c_analyze.total_p_tensor, i), 9),
                     (3, 3))
@@ -531,8 +530,8 @@ class Analysis(object):
         total_non_bonded_intra = np.zeros((3, 3))
         total_non_bonded_inter = np.zeros((3, 3))
 
-        for i in range(c_analyze.n_particle_types):
-            for j in range(i, c_analyze.n_particle_types):
+        for i in range(c_analyze.max_seen_particle_type):
+            for j in range(i, c_analyze.max_seen_particle_type):
                 #      if checkIfParticlesInteract(i, j):
                 p["non_bonded", i, j] = np.reshape(
                     create_nparray_from_double_array(c_analyze.obsstat_nonbonded(
@@ -696,11 +695,10 @@ class Analysis(object):
 
         # Total energy
         cdef int i
-        cdef double tmp
-        tmp = c_analyze.total_energy.data.e[0]
-        tmp += calculate_current_potential_energy_of_system()
+        total = c_analyze.total_energy.data.e[0] #kinetic energy
+        total += calculate_current_potential_energy_of_system()
 
-        e["total"] = tmp
+        e["total"] = total
 
         # Kinetic energy
         e["kinetic"] = c_analyze.total_energy.data.e[0]
@@ -723,8 +721,8 @@ class Analysis(object):
         total_intra = 0
         total_non_bonded = 0.
 
-        for i in range(c_analyze.n_particle_types):
-            for j in range(c_analyze.n_particle_types):
+        for i in range(c_analyze.max_seen_particle_type):
+            for j in range(c_analyze.max_seen_particle_type):
                 #      if checkIfParticlesInteract(i, j):
                 e["non_bonded", i, j] = c_analyze.obsstat_nonbonded( & c_analyze.total_energy, i, j)[0]
                 if i <= j:
@@ -1138,7 +1136,7 @@ class Analysis(object):
         if p_type is not None:
             check_type_or_throw_except(
                 p_type, 1, int, "p_type has to be an int")
-            if (p_type < 0 or p_type >= c_analyze.n_particle_types):
+            if (p_type < 0 or p_type >= c_analyze.max_seen_particle_type):
                 raise ValueError("Particle type", p_type, "does not exist!")
         else:
             p_type = -1
@@ -1177,7 +1175,7 @@ class Analysis(object):
             raise ValueError(
                 "The p_type keyword argument must be provided (particle type)")
         check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
-        if (p_type < 0 or p_type >= c_analyze.n_particle_types):
+        if (p_type < 0 or p_type >= c_analyze.max_seen_particle_type):
             raise ValueError("Particle type", p_type, "does not exist!")
 
         c_analyze.momentofinertiamatrix(

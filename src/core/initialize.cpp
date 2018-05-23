@@ -24,8 +24,6 @@
 #include "initialize.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "correlators/Correlator.hpp"
-#include "accumulators/Accumulator.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 #include "debye_hueckel.hpp"
@@ -58,13 +56,14 @@
 #include "pressure.hpp"
 #include "random.hpp"
 #include "rattle.hpp"
-#include "reaction.hpp"
+#include "swimmer_reaction.hpp"
 #include "reaction_ensemble.hpp"
 #include "reaction_field.hpp"
 #include "rotation.hpp"
 #include "scafacos.hpp"
 #include "statistics.hpp"
 #include "thermostat.hpp"
+#include "thermalized_bond.hpp"
 #include "utils.hpp"
 #include "global.hpp"
 #include "utils/mpi/all_compare.hpp" 
@@ -97,8 +96,6 @@ void on_program_start() {
   /* initially go for domain decomposition */
   topology_init(CELL_STRUCTURE_DOMDEC, &local_cells);
 
-  ghost_init();
-
 #ifdef P3M
   p3m_pre_init();
 #endif
@@ -116,7 +113,7 @@ void on_program_start() {
   lb_pre_init();
 #endif
 
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
   reaction.eq_rate = 0.0;
   reaction.sing_mult = 0;
   reaction.swap = 0;
@@ -147,7 +144,7 @@ void on_integration_start() {
   integrator_npt_sanity_checks();
 #endif
   interactions_sanity_checks();
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
   reactions_sanity_checks();
 #endif
 #ifdef LB
@@ -670,6 +667,14 @@ void on_parameter_change(int field) {
     invalidate_obs();
     recalc_forces = 1;
     break;
+  case FIELD_RIGIDBONDS:
+    /* Rattle bonds needs ghost velocities */
+    on_ghost_flags_change();
+    break;
+  case FIELD_THERMALIZEDBONDS:
+    /* Thermalized distance bonds needs ghost velocities */
+    on_ghost_flags_change();
+    break;
   }
 }
 
@@ -736,9 +741,12 @@ void on_ghost_flags_change() {
 #endif
 #ifdef VIRTUAL_SITES
   // If they have velocities, VIRUTAL_SITES need v to update v of virtual sites
-  if (virtual_sites()->have_velocity()) {
+  if (virtual_sites()->get_have_velocity()) {
     ghosts_have_v = 1;
   };
 #endif
+  //THERMALIZED_DIST_BOND needs v to calculate v_com and v_dist for thermostats
+  if (n_thermalized_bonds)
+    ghosts_have_v = 1;
 
 }

@@ -91,7 +91,7 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
       force[1] = 0.0;
       force[2] = 0.0;
       p3m_add_pair_force(p1->p.q * p2->p.q, d, dist2, dist, force);
-      virials.coulomb[0] += p3m_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
+      virials.coulomb[0] += p3m_pair_energy(p1->p.q * p2->p.q, dist);
       for (k = 0; k < 3; k++)
         for (l = 0; l < 3; l++)
           p_tensor.coulomb[k * 3 + l] += force[k] * d[l];
@@ -207,30 +207,6 @@ inline void calc_bonded_force(Particle *p1, Particle *p2,
       break;
     default:
       runtimeErrorMsg() << "calc_bonded_force: tabulated bond type of atom "
-                        << p1->p.identity << " unknown\n";
-      return;
-    }
-    break;
-#endif
-#ifdef OVERLAPPED
-  case BONDED_IA_OVERLAPPED:
-    // printf("BONDED OVERLAP, Particle: %d, P2: %d TYPE_OVERLAP:
-    // %d\n",p1->p.identity,p2->p.identity,iparams->p.tab.type);
-    // char *errtxt;
-    switch (iaparams->p.overlap.type) {
-    case OVERLAP_BOND_LENGTH:
-      calc_overlap_bond_force(p1, p2, iaparams, dx, force);
-      break;
-    case OVERLAP_BOND_ANGLE:
-      (*i)++;
-      force[0] = force[1] = force[2] = 0;
-      break;
-    case OVERLAP_BOND_DIHEDRAL:
-      (*i) += 2;
-      force[0] = force[1] = force[2] = 0;
-      break;
-    default:
-      runtimeErrorMsg() << "calc_bonded_force: overlapped bond type of atom "
                         << p1->p.identity << " unknown\n";
       return;
     }
@@ -523,21 +499,6 @@ inline void add_three_body_bonded_stress(Particle *p1) {
 inline void add_kinetic_virials(Particle *p1, int v_comp) {
   int k, l;
   /* kinetic energy */
-#ifdef MULTI_TIMESTEP
-  if (smaller_time_step > 0.) {
-    if (v_comp)
-      virials.data.e[0] += Utils::sqr(time_step / smaller_time_step) *
-                           (Utils::sqr(p1->m.v[0] - p1->f.f[0]) +
-                            Utils::sqr(p1->m.v[1] - p1->f.f[1]) +
-                            Utils::sqr(p1->m.v[2] - p1->f.f[2])) *
-                           (*p1).p.mass;
-    else
-      virials.data.e[0] += Utils::sqr(time_step / smaller_time_step) *
-                           (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) +
-                            Utils::sqr(p1->m.v[2])) *
-                           (*p1).p.mass;
-  } else
-#endif
   {
     if (v_comp)
       virials.data.e[0] += (Utils::sqr(p1->m.v[0] - p1->f.f[0]) +
@@ -554,13 +515,6 @@ inline void add_kinetic_virials(Particle *p1, int v_comp) {
    * each will be done later) */
   for (k = 0; k < 3; k++)
     for (l = 0; l < 3; l++)
-#ifdef MULTI_TIMESTEP
-      if (smaller_time_step > 0.)
-        p_tensor.data.e[k * 3 + l] +=
-            Utils::sqr(time_step / smaller_time_step) * (p1->m.v[k]) *
-            (p1->m.v[l]) * (*p1).p.mass;
-      else
-#endif
         p_tensor.data.e[k * 3 + l] +=
             (p1->m.v[k]) * (p1->m.v[l]) * (*p1).p.mass;
 }

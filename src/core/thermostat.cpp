@@ -27,6 +27,7 @@
 #include "npt.hpp"
 #include "ghmc.hpp"
 #include "lb.hpp"
+#include "thermalized_bond.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -74,11 +75,6 @@ int ghmc_nmd = 1;
 // phi parameter for partial momentum update step in GHMC
 double ghmc_phi = 0;
 
-#ifdef MULTI_TIMESTEP
-GammaType langevin_pref1_small, langevin_pref2_small;
-static GammaType langevin_pref2_small_buffer;
-#endif
-
 /** buffers for the work around for the correlated random values which cool the
    system,
     and require a magical heat up whenever reentering the integrator. */
@@ -95,23 +91,6 @@ double nptiso_pref4;
 void thermo_init_langevin() {
   langevin_pref1 = -langevin_gamma / time_step;
   langevin_pref2 = sqrt(24.0 * temperature / time_step * langevin_gamma);
-  ;
-
-#ifdef MULTI_TIMESTEP
-  if (smaller_time_step > 0.) {
-    langevin_pref1_small = -langevin_gamma / smaller_time_step;
-#ifndef LANGEVIN_PER_PARTICLE
-    langevin_pref2_small =
-        sqrt(24.0 * temperature * langevin_gamma / smaller_time_step);
-#endif
-  } else {
-    langevin_pref1_small = -langevin_gamma / time_step;
-#ifndef LANGEVIN_PER_PARTICLE
-    langevin_pref2_small =
-        sqrt(24.0 * temperature * langevin_gamma / time_step);
-#endif
-  }
-#endif
 
   /* If gamma_rotation is not set explicitly,
      use the linear one. */
@@ -152,12 +131,7 @@ void thermo_init_langevin() {
 void thermo_init_npt_isotropic() {
   if (nptiso.piston != 0.0) {
     nptiso_pref1 = -nptiso_gamma0 * 0.5 * time_step;
-#ifdef MULTI_TIMESTEP
-    if (smaller_time_step > 0.)
-      nptiso_pref2 = sqrt(12.0 * temperature * nptiso_gamma0 * time_step) *
-                     smaller_time_step;
-    else
-#endif
+
       nptiso_pref2 =
           sqrt(12.0 * temperature * nptiso_gamma0 * time_step) * time_step;
     nptiso_pref3 = -nptiso_gammav * (1.0 / nptiso.piston) * 0.5 * time_step;
@@ -176,6 +150,12 @@ void thermo_init_npt_isotropic() {
 #endif
 
 void thermo_init() {
+
+  // Init thermalized bond despite of thermostat 
+  if (n_thermalized_bonds) {
+    thermalized_bond_init();
+  }
+
   if (thermo_switch == THERMO_OFF) {
     return;
   }
@@ -199,11 +179,6 @@ void langevin_heat_up() {
 
   langevin_pref2_rotation_buffer = langevin_pref2_rotation;
   langevin_pref2_rotation *= sqrt(3);
-
-#ifdef MULTI_TIMESTEP
-  langevin_pref2_small_buffer = langevin_pref2_small;
-  langevin_pref2_small *= sqrt(3);
-#endif
 }
 
 void thermo_heat_up() {
@@ -215,15 +190,15 @@ void thermo_heat_up() {
     dpd_heat_up();
   }
 #endif
+  if (n_thermalized_bonds) {
+    thermalized_bond_heat_up();
+  }
+
 }
 
 void langevin_cool_down() {
   langevin_pref2 = langevin_pref2_buffer;
   langevin_pref2_rotation = langevin_pref2_rotation_buffer;
-
-#ifdef MULTI_TIMESTEP
-  langevin_pref2_small = langevin_pref2_small_buffer;
-#endif
 }
 
 void thermo_cool_down() {
@@ -235,4 +210,7 @@ void thermo_cool_down() {
     dpd_cool_down();
   }
 #endif
+  if (n_thermalized_bonds) {
+    thermalized_bond_cool_down();
+  }
 }

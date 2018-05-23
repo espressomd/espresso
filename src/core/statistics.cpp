@@ -664,7 +664,7 @@ void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
   ff[2 * order2] = 0;
   twoPI_L = 2 * PI / box_l[0];
 
-  if ((n_types < 0) || (n_types > n_particle_types)) {
+  if ((n_types < 0) || (n_types > max_seen_particle_type)) {
     fprintf(stderr, "WARNING: Wrong number of particle types!");
     fflush(nullptr);
     errexit();

@@ -2,10 +2,13 @@ import espressomd
 from espressomd import electrostatics
 from espressomd import checkpointing
 
-import numpy
+import numpy as np
 import signal
 
 checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")
+
+if not len(checkpoint.checkpoint_signals):
+    checkpoint.register_signal(signal.SIGINT)
 
 # test for user data
 myvar = "some script variable"
@@ -20,6 +23,9 @@ checkpoint.register("skin")
 box_l = 10.7437
 
 system = espressomd.System(box_l=[box_l]*3)
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
 system.time_step = 0.01
 system.cell_system.skin = skin
 
@@ -49,13 +55,13 @@ checkpoint.register("system.non_bonded_inter")
 # test for "system.part"
 n_part = 10
 for i in range(n_part):
-    system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
+    system.part.add(id=i, pos=np.random.random(3) * system.box_l)
 
 checkpoint.register("system.part")
 
 
 # test for "p3m"
-for i in range(n_part / 2 - 1):
+for i in range(n_part // 2 - 1):
     system.part[2 * i].q = -1.0
     system.part[2 * i + 1].q = 1.0
 p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
@@ -63,8 +69,6 @@ system.actors.add(p3m)
 
 checkpoint.register("p3m")
 
-# signal.SIGINT: signal 2, is sent when ctrl+c is pressed
-checkpoint.register_signal(signal.SIGINT)
 
 
 checkpoint.save()
