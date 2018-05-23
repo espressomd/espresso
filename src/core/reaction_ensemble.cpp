@@ -1665,9 +1665,10 @@ int WangLandauReactionEnsemble::load_wang_landau_checkpoint(
 }
 
 int ConstantpHEnsemble::get_random_valid_p_id() {
-  int random_p_id = i_random(max_seen_particle);
-  while (is_in_list(random_p_id, m_empty_p_ids_smaller_than_max_seen_particle))
-    random_p_id = i_random(max_seen_particle);
+  int random_p_id = i_random(max_seen_particle+1);
+  //draw random p_ids till we draw a pid which exists
+  while (not particle_exists(random_p_id))
+    random_p_id = i_random(max_seen_particle+1);
   return random_p_id;
 }
 
@@ -1679,7 +1680,7 @@ int ConstantpHEnsemble::get_random_valid_p_id() {
 * Note that there is a difference in the usecase of the constant pH reactions
 * and the above reaction ensemble. For the constant pH simulation directily the
 * **apparent equilibrium constant which carries a unit** needs to be provided --
-* this is different from the reaction ensemble above, where the dimensionless
+* this is equivalent to the gamma of the reaction ensemble above, where the dimensionless
 * reaction constant needs to be provided. Again: For the constant-pH algorithm
 * not the dimensionless reaction constant needs to be provided here, but the
 * apparent reaction constant.
@@ -1725,7 +1726,6 @@ int ConstantpHEnsemble::do_reaction(int reaction_steps) {
         }
       }
     }
-
     // randomly select a reaction to be performed
     int reaction_id = list_of_reaction_ids_with_given_reactant_type[i_random(
         list_of_reaction_ids_with_given_reactant_type.size())];

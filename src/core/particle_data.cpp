@@ -624,12 +624,10 @@ int set_particle_type(int p_id, int type) {
     // it from the list which contains it
     auto const &cur_par = get_particle_data(p_id);
     int prev_type = cur_par.p.type;
-    if (prev_type != type and
-        particle_type_map.find(prev_type) != particle_type_map.end()) {
+    if (prev_type != type ) {
       // particle existed before so delete it from the list
       remove_id_from_map(p_id, prev_type);
     }
-
     add_id_to_type_map(p_id, type);
   }
 
@@ -1209,7 +1207,8 @@ void init_type_map(int type) {
 }
 
 void remove_id_from_map(int part_id, int type) {
-  particle_type_map.at(type).erase(part_id);
+  if(particle_type_map.find(type)!=particle_type_map.end())
+    particle_type_map.at(type).erase(part_id);
 }
 
 int get_random_p_id(int type) {
@@ -1220,7 +1219,8 @@ int get_random_p_id(int type) {
 }
 
 void add_id_to_type_map(int part_id, int type) {
-  particle_type_map.at(type).insert(part_id);
+  if(particle_type_map.find(type)!=particle_type_map.end())
+    particle_type_map.at(type).insert(part_id);
 }
 
 int number_of_particles_with_type(int type) {
