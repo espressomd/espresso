@@ -55,11 +55,11 @@ class ReactionEnsembleTest(ut.TestCase):
     np.random.seed(69) #make reaction code fully deterministic
     system.cell_system.skin = 0.4
     volume = np.prod(system.box_l)  # cuboid box
-    # Calculate Gamma which should lead to target_alpha with given N0 and V
+    # Calculate gamma which should lead to target_alpha with given N0 and V
     # Requires N0>>1, otherwise discrete character of N changes the statistics (N>20 should suffice)
-    # Gamma = prod_i (N_i / V) = alpha^2 N0 / (1-alpha)*V**(-nubar)
+    # gamma = prod_i (N_i / V) = alpha^2 N0 / (1-alpha)*V**(-nubar)
     # degree of dissociation alpha = N_A / N_HA = N_H / N_0
-    Gamma=target_alpha**2/(1.-target_alpha)*N0/(volume**nubar)
+    gamma=target_alpha**2/(1.-target_alpha)*N0/(volume**nubar)
     RE = reaction_ensemble.ReactionEnsemble(
         temperature=temperature,
         exclusion_radius=exclusion_radius)
@@ -74,7 +74,7 @@ class ReactionEnsembleTest(ut.TestCase):
                                 cls.system.box_l, type=cls.type_H)
 
         cls.RE.add_reaction(
-            Gamma=cls.Gamma,
+            gamma=cls.gamma,
             reactant_types=cls.reactant_types,
             reactant_coefficients=cls.reactant_coefficients,
             product_types=cls.product_types,
@@ -82,10 +82,10 @@ class ReactionEnsembleTest(ut.TestCase):
             default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1}, check_for_electroneutrality=True)
 
     @classmethod
-    def ideal_alpha(cls, Gamma,N0,V,nubar):
-        # Gamma = prod_i (N_i / V) = alpha^2 N0 / (1-alpha)*V**(-nubar)
+    def ideal_alpha(cls, gamma,N0,V,nubar):
+        # gamma = prod_i (N_i / V) = alpha^2 N0 / (1-alpha)*V**(-nubar)
         # degree of dissociation alpha = N_A / N_HA = N_H / N_0
-        X=2*N0/(Gamma*V**nubar);
+        X=2*N0/(gamma*V**nubar);
         return (np.sqrt(1+2*X)-1)/X
     
 
@@ -96,7 +96,7 @@ class ReactionEnsembleTest(ut.TestCase):
         type_HA = ReactionEnsembleTest.type_HA
         box_l = ReactionEnsembleTest.system.box_l
         system = ReactionEnsembleTest.system
-        Gamma = ReactionEnsembleTest.Gamma
+        gamma = ReactionEnsembleTest.gamma
         nubar = ReactionEnsembleTest.nubar
 
         volume = ReactionEnsembleTest.volume
@@ -129,7 +129,7 @@ class ReactionEnsembleTest(ut.TestCase):
             rel_error_alpha,
             0.015,
             msg="\nDeviation from ideal titration curve is too big for the given input parameters.\n"
-            +"  Gamma: "+str(Gamma)
+            +"  gamma: "+str(gamma)
             +"  average_NH: "+str(average_NH)
             +"  average_NA: "+str(average_NA) 
             +"  average_NHA:"+str(average_NHA) 
