@@ -49,8 +49,7 @@ inline int calc_out_direction(Particle *p1, Particle *p2, Particle *p3, Particle
 {		
     double n[3],dn;
 	int j;
-	double fp1[3],fp2[3],fp3[3],fp4[3];
-	int img[3];
+	Vector3d fp1, fp2, fp3, fp4;
     double AA[3],BB[3],CC[3];
 
     // first find out which particle out of p1, p2 (possibly p3, p4) is not a ghost particle. In almost all cases it is p2, however, it might be other one. we call this particle reference particle.
