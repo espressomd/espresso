@@ -69,6 +69,7 @@
 #include "utils.hpp"
 #include "global.hpp"
 #include "utils/mpi/all_compare.hpp" 
+#include "electrokinetics.hpp"
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
 static int reinit_electrostatics = 0;
@@ -277,6 +278,13 @@ void on_observable_calc() {
     reinit_magnetostatics = 0;
   }
 #endif /*ifdef ELECTROSTATICS */
+
+#ifdef ELECTROKINETICS
+      if (ek_initialized) {
+        ek_integrate_electrostatics();
+      }
+#endif
+  
 }
 
 void on_particle_charge_change() {
