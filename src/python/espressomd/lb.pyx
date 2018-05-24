@@ -236,7 +236,7 @@ IF LB_GPU:
                 return
             ELSE:
                 raise Exception("LB_GPU not compiled in")
-            
+
         def get_interpolated_velocity(self, pos):
             """Get LB fluid velocity at specified position.
 
@@ -251,7 +251,7 @@ IF LB_GPU:
                 The LB fluid velocity at ``pos``.
 
             """
-            cdef double[3] p = pos
+            cdef Vector3d p = pos
             cdef double[3] v
             lb_lbfluid_get_interpolated_velocity_global(p, v)
             return v
