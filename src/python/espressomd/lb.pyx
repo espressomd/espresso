@@ -251,8 +251,12 @@ IF LB_GPU:
                 The LB fluid velocity at ``pos``.
 
             """
-            cdef Vector3d p = pos
+            cdef Vector3d p	    
             cdef double[3] v
+
+            for i in range(3):
+                p[i] = pos[i]
+
             lb_lbfluid_get_interpolated_velocity_global(p, v)
             return v
 
