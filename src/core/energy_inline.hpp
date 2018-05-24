@@ -42,7 +42,6 @@
 #include "ljcos.hpp"
 #include "ljcos2.hpp"
 #include "ljgen.hpp"
-#include "overlap.hpp"
 #include "p3m-dipolar.hpp"
 #include "p3m.hpp"
 #include "quartic.hpp"
@@ -436,25 +435,6 @@ inline void add_bonded_energy(Particle *p1) {
         break;
       default:
         runtimeErrorMsg() << "add_bonded_energy: tabulated bond type of atom "
-                          << p1->p.identity << " unknown\n";
-        return;
-      }
-      break;
-#endif
-#ifdef OVERLAPPED
-    case BONDED_IA_OVERLAPPED:
-      switch (iaparams->p.overlap.type) {
-      case OVERLAP_BOND_LENGTH:
-        bond_broken = overlap_bond_energy(p1, p2, iaparams, dx, &ret);
-        break;
-      case OVERLAP_BOND_ANGLE:
-        bond_broken = overlap_angle_energy(p1, p2, p3, iaparams, &ret);
-        break;
-      case OVERLAP_BOND_DIHEDRAL:
-        bond_broken = overlap_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
-        break;
-      default:
-        runtimeErrorMsg() << "add_bonded_energy: overlapped bond type of atom "
                           << p1->p.identity << " unknown\n";
         return;
       }

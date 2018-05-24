@@ -147,16 +147,18 @@ void force_calc() {
                    });
 
 #ifdef OIF_GLOBAL_FORCES
-  double area_volume[2]; // There are two global quantities that need to be
+  if (max_oif_objects) {
+    double area_volume[2]; // There are two global quantities that need to be
                          // evaluated: object's surface and object's volume. One
                          // can add another quantity.
-  area_volume[0] = 0.0;
-  area_volume[1] = 0.0;
-  for (int i = 0; i < MAX_OBJECTS_IN_FLUID; i++) {
-    calc_oif_global(area_volume, i);
-    if (fabs(area_volume[0]) < 1e-100 && fabs(area_volume[1]) < 1e-100)
-      break;
-    add_oif_global_forces(area_volume, i);
+    area_volume[0] = 0.0;
+    area_volume[1] = 0.0;
+    for (int i = 0; i < max_oif_objects; i++) {
+      calc_oif_global(area_volume, i);
+      if (fabs(area_volume[0]) < 1e-100 && fabs(area_volume[1]) < 1e-100)
+        break;
+      add_oif_global_forces(area_volume, i);
+    }
   }
 #endif
 

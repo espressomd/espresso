@@ -47,7 +47,7 @@ void init_energies(Observable_stat *stat) {
   int n_pre, n_non_bonded, n_coulomb, n_dipolar;
 
   n_pre = 1;
-  n_non_bonded = (n_particle_types * (n_particle_types + 1)) / 2;
+  n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
 
   n_coulomb = 0;
 #ifdef ELECTROSTATICS

@@ -69,7 +69,6 @@
 #include "object-in-fluid/oif_global_forces.hpp"
 #include "object-in-fluid/oif_local_forces.hpp"
 #include "object-in-fluid/out_direction.hpp"
-#include "overlap.hpp"
 #include "p3m-dipolar.hpp"
 #include "quartic.hpp"
 #include "soft_sphere.hpp"
@@ -720,27 +719,6 @@ inline void add_bonded_force(Particle *p1) {
         break;
       default:
         runtimeErrorMsg() << "add_bonded_force: tabulated bond type of atom "
-                          << p1->p.identity << " unknown\n";
-        return;
-      }
-      break;
-#endif
-#ifdef OVERLAPPED
-    case BONDED_IA_OVERLAPPED:
-      switch (iaparams->p.overlap.type) {
-      case OVERLAP_BOND_LENGTH:
-        bond_broken = calc_overlap_bond_force(p1, p2, iaparams, dx, force);
-        break;
-      case OVERLAP_BOND_ANGLE:
-        bond_broken =
-            calc_overlap_angle_force(p1, p2, p3, iaparams, force, force2);
-        break;
-      case OVERLAP_BOND_DIHEDRAL:
-        bond_broken = calc_overlap_dihedral_force(p1, p2, p3, p4, iaparams,
-                                                  force, force2, force3);
-        break;
-      default:
-        runtimeErrorMsg() << "add_bonded_force: overlapped bond type of atom "
                           << p1->p.identity << " unknown\n";
         return;
       }
