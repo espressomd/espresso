@@ -331,12 +331,11 @@ int lbboundary_get_force(void *lbb, double *f) {
                              "lbboundary that was not added to "
                              "system.lbboundaries.");
 
-  double *forces =
-      (double *)Utils::malloc(3 * lbboundaries.size() * sizeof(double));
+  std::vector<double> forces(3*lbboundaries.size());
 
   if (lattice_switch & LATTICE_LB_GPU) {
 #if defined(LB_BOUNDARIES_GPU) && defined(LB_GPU)
-    lb_gpu_get_boundary_forces(forces);
+    lb_gpu_get_boundary_forces(forces.data());
 
     f[0] = -forces[3 * no + 0];
     f[1] = -forces[3 * no + 1];
@@ -346,7 +345,7 @@ int lbboundary_get_force(void *lbb, double *f) {
 #endif
   } else {
 #if defined(LB_BOUNDARIES) && defined(LB)
-    mpi_gather_stats(8, forces, nullptr, nullptr, nullptr);
+    mpi_gather_stats(8, forces.data(), nullptr, nullptr, nullptr);
 
     f[0] = forces[3 * no + 0] * lbpar.agrid /
            lbpar.tau; // lbpar.tau; TODO this makes the units wrong and
@@ -359,7 +358,6 @@ int lbboundary_get_force(void *lbb, double *f) {
 #endif
   }
 
-  free(forces);
 #endif
   return 0;
 }
