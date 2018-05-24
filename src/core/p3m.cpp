@@ -593,7 +593,7 @@ void p3m_assign_charge(double q, Vector3d& real_pos, int cp_cnt) {
 
 template <int cao>
 void p3m_do_assign_charge(double q, Vector3d& real_pos, int cp_cnt) {
-  auto const inter = p3m.params.inter == 0;
+  auto const inter = not (p3m.params.inter == 0);
   /* distance to nearest mesh point */
   double dist[3];
   /* index for caf interpolation grid */
