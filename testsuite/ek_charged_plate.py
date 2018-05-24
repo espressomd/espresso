@@ -29,7 +29,7 @@ from ek_common import *
 ##########################################################################
 # Build plates using two ek species.
 
-@ut.skipIf(not espressomd.has_features(["ELECTROKINETICS", "EK_ELECTROSTATIC_COUPLING"]),
+@ut.skipIf(not espressomd.has_features(["ELECTROKINETICS"]),
            "Features not available, skipping test!")
 
 class ek_charged_plate(ut.TestCase):
@@ -55,7 +55,7 @@ class ek_charged_plate(ut.TestCase):
     system.thermostat.turn_off()
 
 #Setup the Fluid
-    ek = electrokinetics.Electrokinetics(agrid = agrid, lb_density = 1.0, viscosity = 1.0, friction = 1.0,   T = 1.0, prefactor = bjerrum_length, stencil = "linkcentered", advection= False)
+    ek = electrokinetics.Electrokinetics(agrid = agrid, lb_density = 1.0, viscosity = 1.0, friction = 1.0,   T = 1.0, prefactor = bjerrum_length, stencil = "linkcentered", advection= False, es_coupling = True)
 
     positive_ions = electrokinetics.Species(density=0.0, D=0.0, valency=1.0)
     negative_ions = electrokinetics.Species(density=0.0, D=0.0, valency=-1.0)
