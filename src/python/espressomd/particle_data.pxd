@@ -26,10 +26,6 @@ from libcpp.memory cimport unique_ptr
 
 include "myconfig.pxi"
 
-cdef extern from "Vector.hpp":
-    cppclass Vector3d:
-        double & operator[](int i)
-
 # Import particle data structures and setter functions from particle_data.hpp
 
 cdef extern from "particle_data.hpp":
