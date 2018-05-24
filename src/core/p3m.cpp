@@ -593,40 +593,32 @@ void p3m_assign_charge(double q, Vector3d& real_pos, int cp_cnt) {
 
 template <int cao>
 void p3m_do_assign_charge(double q, Vector3d& real_pos, int cp_cnt) {
-  int d, i0, i1, i2;
-  double tmp0, tmp1;
-  /* position of a particle in local mesh units */
-  double pos;
-  /* 1d-index of nearest mesh point */
-  int nmp;
+  auto const inter = p3m.params.inter == 0;
   /* distance to nearest mesh point */
   double dist[3];
   /* index for caf interpolation grid */
   int arg[3];
   /* index, index jumps for rs_mesh array */
   int q_ind = 0;
-  double cur_ca_frac_val;
 #ifdef P3M_STORE_CA_FRAC
-  double *cur_ca_frac;
-
   // make sure we have enough space
   if (cp_cnt >= p3m.ca_num)
     p3m_realloc_ca_fields(cp_cnt + 1);
   // do it here, since p3m_realloc_ca_fields may change the address of
   // p3m.ca_frac
-  cur_ca_frac = p3m.ca_frac + cao * cao * cao * cp_cnt;
+  double *cur_ca_frac = p3m.ca_frac + cao * cao * cao * cp_cnt;
 #endif
 
-  for (d = 0; d < 3; d++) {
+  for (int d = 0; d < 3; d++) {
     /* particle position in mesh coordinates */
-    pos = ((real_pos[d] - p3m.local_mesh.ld_pos[d]) * p3m.params.ai[d]) -
+    auto const pos = ((real_pos[d] - p3m.local_mesh.ld_pos[d]) * p3m.params.ai[d]) -
           p3m.pos_shift;
     /* nearest mesh point */
-    nmp = (int)pos;
+    auto const nmp = (int)pos;
     /* 3d-array index of nearest mesh point */
     q_ind = (d == 0) ? nmp : nmp + p3m.local_mesh.dim[d] * q_ind;
 
-    if (p3m.params.inter == 0)
+    if (!inter)
       /* distance to nearest mesh point */
       dist[d] = (pos - nmp) - 0.5;
     else
@@ -654,13 +646,13 @@ void p3m_do_assign_charge(double q, Vector3d& real_pos, int cp_cnt) {
     p3m.ca_fmp[cp_cnt] = q_ind;
 #endif
 
-  if (p3m.params.inter == 0) {
-    for (i0 = 0; i0 < cao; i0++) {
-      tmp0 = p3m_caf(i0, dist[0], cao);
-      for (i1 = 0; i1 < cao; i1++) {
-        tmp1 = tmp0 * p3m_caf(i1, dist[1], cao);
-        for (i2 = 0; i2 < cao; i2++) {
-          cur_ca_frac_val = q * tmp1 * p3m_caf(i2, dist[2], cao);
+  if (!inter) {
+    for (int i0 = 0; i0 < cao; i0++) {
+      auto const tmp0 = p3m_caf(i0, dist[0], cao);
+      for (int i1 = 0; i1 < cao; i1++) {
+        auto const tmp1 = tmp0 * p3m_caf(i1, dist[1], cao);
+        for (int i2 = 0; i2 < cao; i2++) {
+          auto const cur_ca_frac_val = q * tmp1 * p3m_caf(i2, dist[2], cao);
           p3m.rs_mesh[q_ind] += cur_ca_frac_val;
 #ifdef P3M_STORE_CA_FRAC
           /* store current ca frac */
@@ -674,12 +666,12 @@ void p3m_do_assign_charge(double q, Vector3d& real_pos, int cp_cnt) {
       q_ind += p3m.local_mesh.q_21_off;
     }
   } else {
-    for (i0 = 0; i0 < cao; i0++) {
-      tmp0 = p3m.int_caf[i0][arg[0]];
-      for (i1 = 0; i1 < cao; i1++) {
-        tmp1 = tmp0 * p3m.int_caf[i1][arg[1]];
-        for (i2 = 0; i2 < cao; i2++) {
-          cur_ca_frac_val = q * tmp1 * p3m.int_caf[i2][arg[2]];
+    for (int i0 = 0; i0 < cao; i0++) {
+      auto const tmp0 = p3m.int_caf[i0][arg[0]];
+      for (int i1 = 0; i1 < cao; i1++) {
+        auto const tmp1 = tmp0 * p3m.int_caf[i1][arg[1]];
+        for (int i2 = 0; i2 < cao; i2++) {
+          auto const cur_ca_frac_val = q * tmp1 * p3m.int_caf[i2][arg[2]];
           p3m.rs_mesh[q_ind] += cur_ca_frac_val;
 #ifdef P3M_STORE_CA_FRAC
           /* store current ca frac */
