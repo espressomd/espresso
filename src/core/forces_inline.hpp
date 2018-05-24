@@ -31,7 +31,6 @@
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
 #include "p3m.hpp"
-#include "external_potential.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
 #include "angle_harmonic.hpp"
@@ -886,9 +885,6 @@ inline void add_single_particle_force(Particle *p) {
   add_bonded_force(p);
 #ifdef CONSTRAINTS
   add_constraints_forces(p);
-#endif
-#ifdef EXTERNAL_FORCES
-  add_external_potential_forces(p);
 #endif
 }
 

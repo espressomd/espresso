@@ -45,7 +45,7 @@ operator()(PartCfg &partCfg) const {
   } else if (lattice_switch & LATTICE_LB) {
 #if defined(LB)
     for (size_t ind=0; ind < m_sample_positions.size(); ind +=3) {
-      double pos_tmp[3] = {m_sample_positions[ind + 0],
+      Vector3d pos_tmp = {m_sample_positions[ind + 0],
                            m_sample_positions[ind + 1],
                            m_sample_positions[ind + 2]};
       lb_lbfluid_get_interpolated_velocity(pos_tmp, &(velocities[ind + 0]));

@@ -39,7 +39,6 @@
 #include "debye_hueckel.hpp"
 #include "elc.hpp"
 #include "energy.hpp"
-#include "external_potential.hpp"
 #include "forces.hpp"
 #include "galilei.hpp"
 #include "gb.hpp"
@@ -187,9 +186,6 @@ static int terminated = 0;
   CB(mpi_galilei_transform_slave)                                              \
   CB(mpi_setup_reaction_slave)                                                 \
   CB(mpi_send_rotation_slave)                                                  \
-  CB(mpi_external_potential_broadcast_slave)                                   \
-  CB(mpi_external_potential_tabulated_read_potential_file_slave)               \
-  CB(mpi_external_potential_sum_energies_slave)                                \
   CB(mpi_check_runtime_errors_slave)                                           \
   CB(mpi_minimize_energy_slave)                                                \
   CB(mpi_gather_cuda_devices_slave)                                            \
@@ -788,7 +784,7 @@ void mpi_send_quat_slave(int pnode, int part) {
 #ifdef ROTATION
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->r.quat, 4, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->r.quat.data(), 4, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
     convert_quat_to_quatu(p->r.quat, p->r.quatu);
 #ifdef DIPOLES
@@ -893,7 +889,7 @@ void mpi_send_dip_slave(int pnode, int part) {
 #ifdef DIPOLES
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->r.dip, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->r.dip.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
 #ifdef ROTATION
     convert_dip_to_quat(p->r.dip, p->r.quat, &p->p.dipm);
@@ -2334,68 +2330,6 @@ void mpi_abort() {
 }
 
 /*********************** other stuff ****************/
-
-void mpi_external_potential_broadcast(int number) {
-  mpi_call(mpi_external_potential_broadcast_slave, 0, number);
-  MPI_Bcast(&external_potentials[number], sizeof(ExternalPotential), MPI_BYTE,
-            0, comm_cart);
-  MPI_Bcast(external_potentials[number].scale,
-            external_potentials[number].max_seen_particle_type, MPI_DOUBLE, 0,
-            comm_cart);
-}
-
-void mpi_external_potential_broadcast_slave(int node, int number) {
-  ExternalPotential E;
-  MPI_Bcast(&E, sizeof(ExternalPotential), MPI_BYTE, 0, comm_cart);
-  ExternalPotential *new_;
-  generate_external_potential(&new_);
-  external_potentials[number] = E;
-  external_potentials[number].scale =
-      (double *)Utils::malloc(external_potentials[number].max_seen_particle_type);
-  MPI_Bcast(external_potentials[number].scale,
-            external_potentials[number].max_seen_particle_type, MPI_DOUBLE, 0,
-            comm_cart);
-}
-
-void mpi_external_potential_tabulated_read_potential_file(int number) {
-  mpi_call(mpi_external_potential_tabulated_read_potential_file_slave, 0,
-           number);
-  external_potential_tabulated_read_potential_file(number);
-}
-
-void mpi_external_potential_tabulated_read_potential_file_slave(int node,
-                                                                int number) {
-  external_potential_tabulated_read_potential_file(number);
-}
-
-void mpi_external_potential_sum_energies() {
-  mpi_call(mpi_external_potential_sum_energies_slave, 0, 0);
-  double *energies =
-      (double *)Utils::malloc(n_external_potentials * sizeof(double));
-  for (int i = 0; i < n_external_potentials; i++) {
-    energies[i] = external_potentials[i].energy;
-  }
-  double *energies_sum =
-      (double *)Utils::malloc(n_external_potentials * sizeof(double));
-  MPI_Reduce(energies, energies_sum, n_external_potentials, MPI_DOUBLE, MPI_SUM,
-             0, comm_cart);
-  for (int i = 0; i < n_external_potentials; i++) {
-    external_potentials[i].energy = energies_sum[i];
-  }
-  free(energies);
-  free(energies_sum);
-}
-
-void mpi_external_potential_sum_energies_slave(int dummy1, int dummy2) {
-  double *energies =
-      (double *)Utils::malloc(n_external_potentials * sizeof(double));
-  for (int i = 0; i < n_external_potentials; i++) {
-    energies[i] = external_potentials[i].energy;
-  }
-  MPI_Reduce(energies, 0, n_external_potentials, MPI_DOUBLE, MPI_SUM, 0,
-             comm_cart);
-  free(energies);
-}
 
 #ifdef CUDA
 std::vector<EspressoGpuDevice> mpi_gather_cuda_devices() {
