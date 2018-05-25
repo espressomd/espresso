@@ -40,12 +40,10 @@ namespace {
 void pack_particles(ParticleRange particles,
                     IBM_CUDA_ParticleDataInput *buffer) {
   int dummy[3] = {0, 0, 0};
-  double pos[3];
 
   int i = 0;
   for (auto const &part : particles) {
-    memmove(pos, part.r.p, 3 * sizeof(double));
-    fold_position(pos, dummy);
+    Vector3d pos=folded_position(part);
 
     buffer[i].pos[0] = (float)pos[0];
     buffer[i].pos[1] = (float)pos[1];

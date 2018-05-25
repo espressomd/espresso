@@ -216,7 +216,7 @@ void GetIBMInterpolatedVelocity(double *p, double *const v, double *const forceA
   double *f;
   
   double lbboundary_mindist, distvec[3];
-  double pos[3];
+  Vector3d pos;
   
 #ifdef LB_BOUNDARIES
 
@@ -401,7 +401,7 @@ void ParticleVelocitiesFromLB_CPU()
         double dummy[3];
         // Get interpolated velocity and store in the force (!) field
         // for later communication (see below)
-        GetIBMInterpolatedVelocity(p[j].r.p, p[j].f.f, dummy);
+        GetIBMInterpolatedVelocity(p[j].r.p.data(), p[j].f.f.data(), dummy);
       }
   }
   
@@ -425,7 +425,7 @@ void ParticleVelocitiesFromLB_CPU()
         {
           double dummy[3];
           double force[3]={0,0,0}; // The force stemming from the ghost particle
-          GetIBMInterpolatedVelocity(p[j].r.p, dummy, force);
+          GetIBMInterpolatedVelocity(p[j].r.p.data(), dummy, force);
           
           // Rescale and store in the force field of the particle (for communication, see below)
           p[j].f.f[0] = force[0] * lbpar.agrid/lbpar.tau;

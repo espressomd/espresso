@@ -8,7 +8,6 @@
 #include "grid.hpp"
 #include "communication.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"
-#include "immersed_boundary/ibm_tribend_helpers.hpp"
 
 // DEBUG
 /*double maxBendingForce;
