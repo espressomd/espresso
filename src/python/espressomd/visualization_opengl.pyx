@@ -333,7 +333,7 @@ class openGLLive(object):
         # CONSTRAINTS, NODE BOXES, CELL BOXES, CHARGE RANGE, BONDS
 
         # ESPRESSO RELATED INITS THAT ARE KNOWN ON INSTANTIATION GO HERE:
-
+        
         # CONTENT OF PARTICLE DATA
         self.has_particle_data = {}
         self.has_particle_data['velocity'] = self.specs['velocity_arrows']
@@ -354,6 +354,7 @@ class openGLLive(object):
                 if not d in ["pos_folded"]:
                     self.particle_attributes.append(d)
         self.max_len_attr = max([len(a) for a in self.particle_attributes])
+
 
         # FIXED COLORS FROM INVERSE BACKGROUND COLOR FOR GOOD CONTRAST
         self.invBackgroundCol = np.array([1 - self.specs['background_color'][0], 1 -
@@ -412,6 +413,44 @@ class openGLLive(object):
         self.update_timer = 0
         self.draw_elapsed = 0
         self.draw_timer = 0
+
+
+    def update_system_info(self):
+
+        # SYSTEM INFORMATION
+        self.system_info = {}
+        self.system_info['Actors'] = []
+        self.system_info['Non-bonded interactions'] = []
+        self.system_info['Bonded interactions'] = [b for b in self.system.bonded_inter]
+        self.system_info['Constraints'] = []
+        self.system_info['Thermostat'] = self.system.thermostat.get_state()
+
+        # ACTORS
+        for a in self.system.actors:
+           self.system_info['Actors'].append(str(a))
+
+        # COLLECT ALL TYPES FROM PARTICLES AND CONSTRAINTS 
+        all_types = set(self.system.part[:].type)
+        constraint_types = []
+        for c in self.system.constraints[:]:
+            constraint_types.append(c.get_parameter('particle_type'))
+        all_types.update(constraint_types)
+
+        # COLLECT ALL ACTIVCE NONBONDED INTERACTIONS
+        all_non_bonded_inters = [x for x in dir(self.system.non_bonded_inter[0,0]) if not x.startswith('__') and not x == 'type1' and not x == 'type2']
+        for t1 in all_types:
+            for t2 in all_types:
+                for check_nb in all_non_bonded_inters:
+                    nb = getattr(self.system.non_bonded_inter[t1,t2], check_nb)
+                    if not nb == None and nb.is_active():
+                        self.system_info['Non-bonded interactions'].append([t1,t2,nb])
+
+        # COLLECT CONSTRAINTS
+        for c in self.system.constraints[:]:
+            co = c.get_params()
+            co_s = c.get_parameter('shape')
+            co['shape'] = [co_s.name(), co_s.get_params()]
+            self.system_info['Constraints'].append(co)
 
 
     def register_callback(self, cb, interval=1000):
@@ -1177,14 +1216,10 @@ class openGLLive(object):
             self.fps_count += 1
 
         # DRAW PARTICLE INFO
-        if self.infoId != -1:
-            y = 0
-            for k, v in self.highlighted_particle.items():
-                txt = "{} {} {}".format(
-                    k, (self.max_len_attr-len(k)) * ' ',  v)
-                self._draw_text(
-                    10, self.specs['window_size'][1] - 10 - 15 * y, txt, self.text_color)
-                y += 1
+        if self.show_system_info:
+            self._draw_dict(self.system_info, 20)
+        elif self.infoId != -1:
+            self._draw_dict(self.highlighted_particle, self.max_len_attr)
         
         # INDICATE SCREEN CAPTURE
         if self.screenshot_captured and not self.take_screenshot:
@@ -1198,6 +1233,14 @@ class openGLLive(object):
                 self._draw_text( self.specs['window_size'][0] - len(self.screenshot_capture_txt)*9.0 - 15,
                 self.specs['window_size'][1]  - 15, self.screenshot_capture_txt, col)
 
+    def _draw_dict(self,d, maxlen):
+        y = 0
+        for k, v in d.items():
+            txt = "{} {} {}".format(
+                k, (maxlen-len(k)) * ' ',  v)
+            self._draw_text(
+                10, self.specs['window_size'][1] - 10 - 15 * y, txt, self.text_color)
+            y += 1
 
     # CALLED ION WINDOW POSITION/SIZE CHANGE
     def _reshape_window(self, w, h):
@@ -1360,6 +1403,9 @@ class openGLLive(object):
     def _get_particle_info(self, pos, pos_old):
         pid, depth = self._get_particle_id(pos, pos_old)
         self.infoId = pid
+        self.show_system_info = (pid == -1)
+        if self.show_system_info:
+            self.update_system_info()       
 
     def _next_particle_info(self):
         self.infoId = (self.infoId + 1) % len(self.particles['pos'])
@@ -1374,6 +1420,7 @@ class openGLLive(object):
 
         self.dragId = -1
         self.infoId = -1
+        self.show_system_info = False
         self.dragPosInitial = []
         self.extForceOld = []
         self.dragExtForceOld = []
