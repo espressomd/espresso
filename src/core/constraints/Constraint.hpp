@@ -16,7 +16,6 @@ public:
   virtual void add_force(Particle *p, Vector3d& folded_pos) {};
 
   virtual void reset_force() {};
-
 };
 
 } /* namespace Constaints */
