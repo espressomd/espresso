@@ -1131,12 +1131,12 @@ class openGLLive(object):
         if self.take_screenshot:
             self.take_screenshot = False
             data = glReadPixels(0, 0, self.specs['window_size'][0], self.specs['window_size'][1], GL_RGB, GL_FLOAT)
-            basename = os.path.basename(__file__)[:-3]
+            scriptname = os.path.splitext(sys.argv[0])[0]
             
             i = 0
-            while os.path.exists("{}_{}.png".format(basename, i)):
+            while os.path.exists("{}_{num:04d}.png".format(scriptname, num=i)):
                 i += 1
-            fname = "{}_{}.png".format(basename, i)
+            fname = "{}_{num:04d}.png".format(scriptname, num=i)
             
             data = np.flipud(data.reshape((data.shape[1],data.shape[0],3)))
             imsave(fname, data)
