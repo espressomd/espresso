@@ -446,17 +446,15 @@ void mpi_send_swimming_slave(int pnode, int part) {
 }
 
 /****************** REQ_SET_F ************/
-void mpi_send_f(int pnode, int part, double F[3]) {
+void mpi_send_f(int pnode, int part, const Vector3d &F) {
   mpi_call(mpi_send_f_slave, pnode, part);
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    F[0] /= (*p).p.mass;
-    F[1] /= (*p).p.mass;
-    F[2] /= (*p).p.mass;
-    memmove(p->f.f, F, 3 * sizeof(double));
-  } else
-    MPI_Send(F, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+    p->f.f = F / p->p.mass;
+  } else {
+    comm_cart.send(pnode, SOME_TAG, F);
+  }
 
   on_particle_change();
 }
@@ -464,10 +462,10 @@ void mpi_send_f(int pnode, int part, double F[3]) {
 void mpi_send_f_slave(int pnode, int part) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->f.f, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-    p->f.f[0] /= (*p).p.mass;
-    p->f.f[1] /= (*p).p.mass;
-    p->f.f[2] /= (*p).p.mass;
+    Vector3d F;
+    comm_cart.recv(0, SOME_TAG, F);
+
+    p->f.f = F / p->p.mass;
   }
 
   on_particle_change();
