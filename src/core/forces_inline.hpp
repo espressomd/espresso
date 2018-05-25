@@ -31,7 +31,6 @@
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
 #include "p3m.hpp"
-#include "external_potential.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
 #include "angle_harmonic.hpp"
@@ -372,7 +371,8 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
       // forces from the virtual charges
       // they go directly onto the particles, since they are not pairwise forces
       if (elc_params.dielectric_contrast_on)
-        ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f, p2->f.f);
+        ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f.data(),
+                                                     p2->f.f.data());
     }
     break;
   }
@@ -886,9 +886,6 @@ inline void add_single_particle_force(Particle *p) {
   add_bonded_force(p);
 #ifdef CONSTRAINTS
   add_constraints_forces(p);
-#endif
-#ifdef EXTERNAL_FORCES
-  add_external_potential_forces(p);
 #endif
 }
 

@@ -1241,9 +1241,9 @@ int lb_lbnode_get_u(int *ind, double *p_u) {
  * couple to MD beads when near a wall, see
  * lb_lbfluid_get_interpolated_velocity.
  */
-int lb_lbfluid_get_interpolated_velocity_global(double *p, double *v) {
+int lb_lbfluid_get_interpolated_velocity_global(Vector3d& p, double* v) {
   double local_v[3] = {0, 0, 0},
-         delta[6]; // velocity field, relative positions to surrounding nodes
+         delta[6]{}; // velocity field, relative positions to surrounding nodes
   int ind[3] = {0, 0, 0}, tmpind[3]; // node indices
   int x, y, z;                       // counters
 
@@ -2806,7 +2806,7 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
     }
 
     // calculate source position
-    double source_position[3];
+    Vector3d source_position;
     double direction = double(p->swim.push_pull) * p->swim.dipole_length;
     source_position[0] = p->r.p[0] + direction * p->r.quatu[0];
     source_position[1] = p->r.p[1] + direction * p->r.quatu[1];
@@ -2817,8 +2817,8 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
 
     // get lattice cell corresponding to source position and interpolate
     // velocity
-    lblattice.map_position_to_lattice(source_position, node_index, delta);
-    lb_lbfluid_get_interpolated_velocity(source_position, p->swim.v_source);
+    lblattice.map_position_to_lattice(Vector3d(source_position), node_index, delta);
+    lb_lbfluid_get_interpolated_velocity(Vector3d(source_position), p->swim.v_source);
 
     // calculate and set force at source position
     delta_j[0] =
@@ -2846,13 +2846,13 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
 #endif
 }
 
-int lb_lbfluid_get_interpolated_velocity(double *p, double *v) {
+int lb_lbfluid_get_interpolated_velocity(const Vector3d& p, double* v) {
   Lattice::index_t node_index[8], index;
   double delta[6];
   double local_rho, local_j[3], interpolated_u[3];
   double modes[19];
   int x, y, z;
-  double pos[3];
+  Vector3d pos;
 
 #ifdef LB_BOUNDARIES
   double lbboundary_mindist, distvec[3];

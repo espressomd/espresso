@@ -21,10 +21,7 @@ from __future__ import print_function, absolute_import
 from libcpp cimport bool as cbool
 
 include "myconfig.pxi"
-
-cdef extern from "Vector.hpp":
-    cppclass Vector3d:
-        double & operator[](int i)
+from .utils cimport Vector3d
 
 cdef extern from "thermostat.hpp":
     double temperature

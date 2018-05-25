@@ -35,21 +35,22 @@ from .particle_data cimport particle
 
 IF ELECTROSTATICS == 1:
     def check_neutrality(_params):
-        if(_params["check_neutrality"]==True):
-            if not checks.check_charge_neutrality[PartCfg](partCfg()):
-                raise Exception("""
-                The system is not charge neutral. Please
-                neutralize the system before adding a new actor via adding
-                the corresponding counterions to the system. Alternatively
-                you can turn off the electroneutrality check via supplying
-                check_neutrality=False when creating the actor. In this
-                case you may be simulating a non-neutral system which will
-                affect physical observables like e.g. the pressure, the
-                chemical potentials of charged species or potential
-                energies of the system. Since simulations of non charge
-                neutral systems are special please make sure you know what
-                you are doing.
-                """)
+        if "check_neutrality" in _params: 
+            if(_params["check_neutrality"]==True):
+                if not checks.check_charge_neutrality[PartCfg](partCfg()):
+                    raise Exception("""
+                    The system is not charge neutral. Please
+                    neutralize the system before adding a new actor via adding
+                    the corresponding counterions to the system. Alternatively
+                    you can turn off the electroneutrality check via supplying
+                    check_neutrality=False when creating the actor. In this
+                    case you may be simulating a non-neutral system which will
+                    affect physical observables like e.g. the pressure, the
+                    chemical potentials of charged species or potential
+                    energies of the system. Since simulations of non charge
+                    neutral systems are special please make sure you know what
+                    you are doing.
+                    """)
 
     cdef class ElectrostaticInteraction(actors.Actor):
         def _tune(self):

@@ -26,10 +26,6 @@ from libcpp.memory cimport unique_ptr
 
 include "myconfig.pxi"
 
-cdef extern from "Vector.hpp":
-    cppclass Vector3d:
-        double & operator[](int i)
-
 # Import particle data structures and setter functions from particle_data.hpp
 
 cdef extern from "particle_data.hpp":
@@ -50,7 +46,7 @@ cdef extern from "particle_data.hpp":
         double p[3]
 
     ctypedef struct particle_force "ParticleForce":
-        double f[3]
+        Vector3d f
 
     ctypedef struct particle_momentum "ParticleMomentum":
         double v[3]
@@ -92,7 +88,7 @@ cdef extern from "particle_data.hpp":
 
     int set_particle_v(int part, double v[3])
 
-    int set_particle_f(int part, double F[3])
+    int set_particle_f(int part, const Vector3d &F)
 
     int set_particle_solvation(int part, double * solvation)
 
@@ -135,6 +131,17 @@ cdef extern from "particle_data.hpp":
         int set_particle_torque_body(int part, double torque[3])
         void pointer_to_omega_body(const particle * p, const double * & res)
         void pointer_to_torque_lab(const particle * p, const double * & res)
+
+    IF MEMBRANE_COLLISION:
+        int set_particle_out_direction(int part, double out_direction[3])
+        void pointer_to_out_direction(particle*  p, double*& res)
+        
+    IF AFFINITY:
+        int set_particle_affinity(int part, double bond_site[3])
+        void pointer_to_bond_site(particle*  p, double*& res)
+
+    IF MASS == 1:
+        void pointer_to_mass(particle * p, double * & res)
 
     IF DIPOLES:
         int set_particle_dip(int part, double dip[3])

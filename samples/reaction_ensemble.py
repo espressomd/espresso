@@ -69,7 +69,7 @@ if(mode=="reaction_ensemble"):
 elif(mode == "constant_pH_ensemble"):
     RE = reaction_ensemble.ConstantpHEnsemble(temperature=1, exclusion_radius=1)
     RE.constant_pH=2
-RE.add_reaction(Gamma=K_diss, reactant_types=[0], reactant_coefficients=[
+RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[
        1], product_types=[1, 2], product_coefficients=[1, 1], default_charges={0: 0, 1: -1, 2: +1})
 print(RE.get_status())
 system.setup_type_map([0, 1, 2])

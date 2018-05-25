@@ -276,12 +276,12 @@ cdef class ParticleHandle(object):
 
         def __set__(self, _f):
             global time_step
-            cdef double myf[3]
+            cdef Vector3d f
             check_type_or_throw_except(_f, 3, float, "Force has to be floats")
             for i in range(3):
-                myf[i] = _f[i]
-                myf[i] *= (0.5 * time_step**2)
-            if set_particle_f(self._id, myf) == 1:
+                f[i] = (0.5 * time_step**2) * _f[i]
+
+            if set_particle_f(self.id, f) == 1:
                 raise Exception("Set particle position first.")
 
         def __get__(self):
@@ -584,6 +584,46 @@ cdef class ParticleHandle(object):
                 pointer_to_rotational_inertia(
                     self.particle_data, rinertia)
                 return array_locked([rinertia[0], rinertia[1], rinertia[2]])
+
+    IF MEMBRANE_COLLISION == 1:
+        property out_direction:
+            """OIF Outward direction"""
+
+            def __set__(self, _out_direction):
+                cdef double out_direction[3]
+                check_type_or_throw_except(
+                    _out_direction, 3, float, "out_direction has to be 3 floats")
+                for i in range(3):
+                    out_direction[i] = _out_direction[i]
+                if set_particle_out_direction(self.id, out_direction) == 1:
+                    raise Exception("set particle position first")
+
+            def __get__(self):
+                self.update_particle_data()
+                cdef const double * out_direction = NULL
+                pointer_to_out_direction(self.particle_data, out_direction)
+                return np.array([out_direction[0], out_direction[1], out_direction[2]])
+
+    IF AFFINITY == 1:
+        property bond_site:
+            """OIF bond_site"""
+
+            def __set__(self, _bond_site):
+                cdef double bond_site[3]
+                check_type_or_throw_except(
+                    _bond_site, 3, float, "bond_site has to be 3 floats")
+                for i in range(3):
+                    bond_site[i] = _bond_site[i]
+                if set_particle_affinity(self.id, bond_site) == 1:
+                    raise Exception("set particle position first")
+
+            def __get__(self):
+                self.update_particle_data()
+                cdef double * bond_site = NULL
+                self.update_particle_data()
+                pointer_to_bond_site(self.particle_data, bond_site)
+                return np.array([bond_site[0], bond_site[1], bond_site[2]])
+
 
 # Charge
     IF ELECTROSTATICS == 1:
@@ -2057,6 +2097,7 @@ Set quat and scalar dipole moment (dipm) instead.")
             for j in range(i + 1, max_seen_particle + 1, 1):
                 if not (particle_exists(i) and particle_exists(j)):
                     continue
+
                 yield (self[i], self[j])
 
     def select(self,*args, **kwargs):
