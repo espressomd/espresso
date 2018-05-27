@@ -1348,6 +1348,53 @@ IF SOFT_SPHERE == 1:
             """
             return "a", "n", "cutoff"
 
+IF MEMBRANE_COLLISION == 1:
+    cdef class MembraneCollisionInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            if self._params["cutoff"] < 0:
+                raise ValueError("Membrane Collision cutoff has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
+            return {
+                "a": ia_params.membrane_a,
+                "n": ia_params.membrane_n,
+                "cutoff": ia_params.membrane_cut,
+                "offset": ia_params.membrane_offset}
+
+        def is_active(self):
+            return (self._params["a"] > 0)
+
+        def _set_params_in_es_core(self):
+            if membrane_collision_set_params(self._part_types[0], self._part_types[1],
+                                        self._params["a"],
+                                        self._params["n"],
+                                        self._params["cutoff"],
+                                        self._params["offset"]):
+                raise Exception("Could not set Membrane Collision parameters")
+
+        def default_params(self):
+            return {
+                "a": 0.,
+                "n": 1.,
+                "cutoff": 0.,
+                "offset": 0.}
+
+        def type_name(self):
+            return "MembraneCollision"
+
+        def valid_keys(self):
+            return "a", "n", "cutoff", "offset"
+
+        def required_keys(self):
+            return "a", "n", "cutoff"
+
+# Gay-Berne
+
+
 # Hertzian
 
 IF HERTZIAN == 1:
@@ -1536,6 +1583,8 @@ class NonBondedInteractionHandle(object):
     hertzian = None
     gaussian = None
     tabulated = None
+    soft_sphere = None
+    membrane_collision = None
     gay_berne = None
     dpd = None
     hat = None
@@ -1551,6 +1600,12 @@ class NonBondedInteractionHandle(object):
         # Here, add one line for each nonbonded ia
         IF LENNARD_JONES:
             self.lennard_jones = LennardJonesInteraction(_type1, _type2)
+        IF MEMBRANE_COLLISION:
+            self.membrane_collision = MembraneCollisionInteraction(_type1, _type2)
+        IF SOFT_SPHERE:
+            self.soft_sphere = SoftSphereInteraction(_type1, _type2)
+        IF AFFINITY:
+            self.affinity = AffinityInteraction(_type1, _type2)
         IF LENNARD_JONES_GENERIC:
             self.generic_lennard_jones = GenericLennardJonesInteraction(
                 _type1, _type2)
@@ -2685,49 +2740,6 @@ ELSE:
     class Endangledist(BondedInteractionNotDefined):
         name = "BOND_ENDANGLEDIST"
 
-IF OVERLAPPED == 1:
-    class Overlapped(BondedInteraction):
-
-        def type_number(self):
-            return BONDED_IA_OVERLAPPED
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "OVERLAPPED"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return "overlap_type", "filename"
-
-        def required_keys(self):
-            """Parameters that have to be set.
-
-            """
-            return "overlap_type", "filename"
-
-        def set_default_params(self):
-            """Sets parameters that are not required to their default value.
-
-            """
-            self._params = {"overlap_type": 0, "filename": ""}
-
-        def _get_params_from_es_core(self):
-            make_bond_type_exist(self._bond_id)
-            return \
-                {"bend": bonded_ia_params[self._bond_id].p.overlap.type,
-                 "phi0": utils.to_str(bonded_ia_params[self._bond_id].p.overlap.filename)}
-
-        def _set_params_in_es_core(self):
-            overlapped_bonded_set_params(
-                self._bond_id, self._params["overlap_type"], utils.to_char_pointer(self._params["filename"]))
-
-ELSE:
-    class Overlapped(BondedInteractionNotDefined):
-        name = "OVERLAPPED"
 
 IF BOND_ANGLE == 1:
     class AngleHarmonic(BondedInteraction):
@@ -2911,9 +2923,9 @@ class OifGlobalForces(BondedInteraction):
     def _get_params_from_es_core(self):
         return \
             {"A0_g": bonded_ia_params[self._bond_id].p.oif_global_forces.A0_g,
-             "ka_g": bonded_ia_params[self._bond_id].p.oif_global_forces.ka_g,
-             "V0": bonded_ia_params[self._bond_id].p.oif_global_forces.V0,
-             "kv": bonded_ia_params[self._bond_id].p.oif_global_forces.kv}
+            "ka_g": bonded_ia_params[self._bond_id].p.oif_global_forces.ka_g,
+            "V0": bonded_ia_params[self._bond_id].p.oif_global_forces.V0,
+            "kv": bonded_ia_params[self._bond_id].p.oif_global_forces.kv}
 
     def _set_params_in_es_core(self):
         oif_global_forces_set_params(
@@ -2939,20 +2951,20 @@ class OifLocalForces(BondedInteraction):
         """All parameters that can be set.
 
         """
-        return "r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal"
+        return "r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal", "kvisc"
 
     def required_keys(self):
         """Parameters that have to be set.
 
         """
-        return "r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal"
+        return "r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal", "kvisc"
 
     def set_default_params(self):
         """Sets parameters that are not required to their default value.
 
         """
         self._params = {"r0": 1., "ks": 0., "kslin": 0.,
-                        "phi0": 0., "kb": 0., "A01": 0., "A02": 0., "kal": 0.}
+                        "phi0": 0., "kb": 0., "A01": 0., "A02": 0., "kal": 0., "kvisc": 0.}
 
     def _get_params_from_es_core(self):
         return \
@@ -2963,12 +2975,41 @@ class OifLocalForces(BondedInteraction):
              "kb": bonded_ia_params[self._bond_id].p.oif_local_forces.kb,
              "A01": bonded_ia_params[self._bond_id].p.oif_local_forces.A01,
              "A02": bonded_ia_params[self._bond_id].p.oif_local_forces.A02,
-             "kal": bonded_ia_params[self._bond_id].p.oif_local_forces.kal}
+             "kal": bonded_ia_params[self._bond_id].p.oif_local_forces.kal,
+             "kvisc": bonded_ia_params[self._bond_id].p.oif_local_forces.kvisc}
 
     def _set_params_in_es_core(self):
         oif_local_forces_set_params(
-            self._bond_id, self._params["r0"], self._params["ks"], self._params["kslin"], self._params["phi0"], self._params["kb"], self._params["A01"], self._params["A02"], self._params["kal"])
+            self._bond_id, self._params["r0"], self._params["ks"], self._params["kslin"], self._params["phi0"], self._params["kb"], self._params["A01"], self._params["A02"], self._params["kal"], self._params["kvisc"])
 
+IF MEMBRANE_COLLISION == 1:
+    class OifOutDirection(BondedInteraction):
+        def type_number(self):
+            return BONDED_IA_OIF_OUT_DIRECTION
+
+        def type_name(self):
+            return "OIF_OUT_DIRECTION"
+
+        def valid_keys(self):
+            return ""
+
+        def required_keys(self):
+            return ""
+
+        def set_default_params(self):
+            self._params = {}
+
+        def _get_params_from_es_core(self):
+            return \
+                {}
+
+        def _set_params_in_es_core(self):
+            oif_out_direction_set_params(
+                self._bond_id)
+
+ELSE:
+    class OifOutDirection(BondedInteractionNotDefined):
+        name = "OIF_OUT_DIRECTION"
 
 bonded_interaction_classes = {
     int(BONDED_IA_FENE): FeneBond,
@@ -2979,12 +3020,12 @@ bonded_interaction_classes = {
     int(BONDED_IA_TABULATED): Tabulated,
     int(BONDED_IA_VIRTUAL_BOND): Virtual,
     int(BONDED_IA_ENDANGLEDIST): Endangledist,
-    int(BONDED_IA_OVERLAPPED): Overlapped,
     int(BONDED_IA_ANGLE_HARMONIC): AngleHarmonic,
     int(BONDED_IA_ANGLE_COSINE): AngleCosine,
     int(BONDED_IA_ANGLE_COSSQUARE): AngleCossquare,
     int(BONDED_IA_OIF_GLOBAL_FORCES): OifGlobalForces,
     int(BONDED_IA_OIF_LOCAL_FORCES): OifLocalForces,
+    int(BONDED_IA_OIF_OUT_DIRECTION): OifOutDirection,
     int(BONDED_IA_THERMALIZED_DIST): ThermalizedBond
 }
 IF LENNARD_JONES:
