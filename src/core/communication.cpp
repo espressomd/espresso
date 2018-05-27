@@ -35,12 +35,10 @@
 #include "buckingham.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
-#include "correlators.hpp"
 #include "cuda_interface.hpp"
 #include "debye_hueckel.hpp"
 #include "elc.hpp"
 #include "energy.hpp"
-#include "external_potential.hpp"
 #include "forces.hpp"
 #include "galilei.hpp"
 #include "gb.hpp"
@@ -67,7 +65,6 @@
 #include "molforces.hpp"
 #include "morse.hpp"
 #include "npt.hpp"
-#include "overlap.hpp"
 #include "p3m-dipolar.hpp"
 #include "p3m.hpp"
 #include "partCfg_global.hpp"
@@ -137,11 +134,9 @@ static int terminated = 0;
   CB(mpi_recv_part_slave)                                                      \
   CB(mpi_integrate_slave)                                                      \
   CB(mpi_bcast_ia_params_slave)                                                \
-  CB(mpi_bcast_n_particle_types_slave)                                         \
+  CB(mpi_bcast_max_seen_particle_type_slave)                                         \
   CB(mpi_gather_stats_slave)                                                   \
   CB(mpi_set_time_step_slave)                                                  \
-  CB(mpi_set_smaller_time_step_slave)                                          \
-  CB(mpi_send_smaller_timestep_flag_slave)                                     \
   CB(mpi_bcast_coulomb_params_slave)                                           \
   CB(mpi_bcast_collision_params_slave)                                         \
   CB(mpi_send_ext_force_slave)                                                 \
@@ -191,9 +186,6 @@ static int terminated = 0;
   CB(mpi_galilei_transform_slave)                                              \
   CB(mpi_setup_reaction_slave)                                                 \
   CB(mpi_send_rotation_slave)                                                  \
-  CB(mpi_external_potential_broadcast_slave)                                   \
-  CB(mpi_external_potential_tabulated_read_potential_file_slave)               \
-  CB(mpi_external_potential_sum_energies_slave)                                \
   CB(mpi_check_runtime_errors_slave)                                           \
   CB(mpi_minimize_energy_slave)                                                \
   CB(mpi_gather_cuda_devices_slave)                                            \
@@ -407,13 +399,7 @@ void mpi_send_v(int pnode, int part, double v[3]) {
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-#ifdef MULTI_TIMESTEP
-    if (smaller_time_step > 0. && p->p.smaller_timestep) {
-      v[0] *= smaller_time_step / time_step;
-      v[1] *= smaller_time_step / time_step;
-      v[2] *= smaller_time_step / time_step;
-    }
-#endif
+
     memmove(p->m.v, v, 3 * sizeof(double));
   } else
     MPI_Send(v, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
@@ -425,13 +411,6 @@ void mpi_send_v_slave(int pnode, int part) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Recv(p->m.v, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-#ifdef MULTI_TIMESTEP
-    if (smaller_time_step > 0. && p->p.smaller_timestep) {
-      p->m.v[0] *= smaller_time_step / time_step;
-      p->m.v[1] *= smaller_time_step / time_step;
-      p->m.v[2] *= smaller_time_step / time_step;
-    }
-#endif
   }
 
   on_particle_change();
@@ -467,17 +446,15 @@ void mpi_send_swimming_slave(int pnode, int part) {
 }
 
 /****************** REQ_SET_F ************/
-void mpi_send_f(int pnode, int part, double F[3]) {
+void mpi_send_f(int pnode, int part, const Vector3d &F) {
   mpi_call(mpi_send_f_slave, pnode, part);
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    F[0] /= (*p).p.mass;
-    F[1] /= (*p).p.mass;
-    F[2] /= (*p).p.mass;
-    memmove(p->f.f, F, 3 * sizeof(double));
-  } else
-    MPI_Send(F, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+    p->f.f = F / p->p.mass;
+  } else {
+    comm_cart.send(pnode, SOME_TAG, F);
+  }
 
   on_particle_change();
 }
@@ -485,10 +462,10 @@ void mpi_send_f(int pnode, int part, double F[3]) {
 void mpi_send_f_slave(int pnode, int part) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->f.f, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-    p->f.f[0] /= (*p).p.mass;
-    p->f.f[1] /= (*p).p.mass;
-    p->f.f[2] /= (*p).p.mass;
+    Vector3d F;
+    comm_cart.recv(0, SOME_TAG, F);
+
+    p->f.f = F / p->p.mass;
   }
 
   on_particle_change();
@@ -805,7 +782,7 @@ void mpi_send_quat_slave(int pnode, int part) {
 #ifdef ROTATION
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->r.quat, 4, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->r.quat.data(), 4, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
     convert_quat_to_quatu(p->r.quat, p->r.quatu);
 #ifdef DIPOLES
@@ -910,7 +887,7 @@ void mpi_send_dip_slave(int pnode, int part) {
 #ifdef DIPOLES
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->r.dip, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->r.dip.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
 #ifdef ROTATION
     convert_dip_to_quat(p->r.dip, p->r.quat, &p->p.dipm);
@@ -1210,19 +1187,6 @@ void mpi_bcast_ia_params(int i, int j) {
       boost::mpi::broadcast(comm_cart, *bonded_ia_params[i].p.tab.pot, 0);
     }
 #endif
-#ifdef OVERLAPPED
-    /* For overlapped potentials we have to send the ovelapped-functions extra
-     */
-    if (bonded_ia_params[i].type == BONDED_IA_OVERLAPPED) {
-      int size = bonded_ia_params[i].p.overlap.noverlaps;
-      MPI_Bcast(bonded_ia_params[i].p.overlap.para_a, size, MPI_DOUBLE, 0,
-                comm_cart);
-      MPI_Bcast(bonded_ia_params[i].p.overlap.para_b, size, MPI_DOUBLE, 0,
-                comm_cart);
-      MPI_Bcast(bonded_ia_params[i].p.overlap.para_c, size, MPI_DOUBLE, 0,
-                comm_cart);
-    }
-#endif
   }
 
   on_short_range_ia_change();
@@ -1248,26 +1212,6 @@ void mpi_bcast_ia_params_slave(int i, int j) {
       bonded_ia_params[i].p.tab.pot = tab_pot;
     }
 #endif
-#ifdef OVERLAPPED
-    /* For overlapped potentials we have to send the ovelapped-functions extra
-     */
-    if (bonded_ia_params[i].type == BONDED_IA_OVERLAPPED) {
-      int size = bonded_ia_params[i].p.overlap.noverlaps;
-      /* alloc overlapped parameter arrays on slave nodes! */
-      bonded_ia_params[i].p.overlap.para_a =
-          (double *)Utils::malloc(size * sizeof(double));
-      bonded_ia_params[i].p.overlap.para_b =
-          (double *)Utils::malloc(size * sizeof(double));
-      bonded_ia_params[i].p.overlap.para_c =
-          (double *)Utils::malloc(size * sizeof(double));
-      MPI_Bcast(bonded_ia_params[i].p.overlap.para_a, size, MPI_DOUBLE, 0,
-                comm_cart);
-      MPI_Bcast(bonded_ia_params[i].p.overlap.para_b, size, MPI_DOUBLE, 0,
-                comm_cart);
-      MPI_Bcast(bonded_ia_params[i].p.overlap.para_c, size, MPI_DOUBLE, 0,
-                comm_cart);
-    }
-#endif
   }
 
   on_short_range_ia_change();
@@ -1275,12 +1219,12 @@ void mpi_bcast_ia_params_slave(int i, int j) {
 
 /*************** REQ_BCAST_IA_SIZE ************/
 
-void mpi_bcast_n_particle_types(int ns) {
-  mpi_call(mpi_bcast_n_particle_types_slave, -1, ns);
-  mpi_bcast_n_particle_types_slave(-1, ns);
+void mpi_bcast_max_seen_particle_type(int ns) {
+  mpi_call(mpi_bcast_max_seen_particle_type_slave, -1, ns);
+  mpi_bcast_max_seen_particle_type_slave(-1, ns);
 }
 
-void mpi_bcast_n_particle_types_slave(int pnode, int ns) {
+void mpi_bcast_max_seen_particle_type_slave(int pnode, int ns) {
   realloc_ia_params(ns);
 }
 
@@ -1468,71 +1412,6 @@ void mpi_set_time_step_slave(int node, int i) {
   time_step_squared = time_step * time_step;
   time_step_squared_half = time_step_squared / 2.;
   time_step_half = time_step / 2.;
-}
-
-/************ REQ_SET_SMALLER_TIME_STEP ************/
-void mpi_set_smaller_time_step(double time_s) {
-#ifdef MULTI_TIMESTEP
-  mpi_call(mpi_set_smaller_time_step_slave, -1, 0);
-
-  smaller_time_step = time_s;
-  MPI_Bcast(&smaller_time_step, 1, MPI_DOUBLE, 0, comm_cart);
-  on_parameter_change(FIELD_SMALLERTIMESTEP);
-#endif
-}
-
-void mpi_set_smaller_time_step_slave(int node, int i) {
-#ifdef MULTI_TIMESTEP
-  MPI_Bcast(&smaller_time_step, 1, MPI_DOUBLE, 0, comm_cart);
-  on_parameter_change(FIELD_SMALLERTIMESTEP);
-#endif
-}
-
-void mpi_send_smaller_timestep_flag(int pnode, int part, int smaller_timestep) {
-#ifdef MULTI_TIMESTEP
-  mpi_call(mpi_send_smaller_timestep_flag_slave, pnode, part);
-
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    if (p->p.smaller_timestep == 0 && smaller_timestep != 0) {
-      p->m.v[0] *= smaller_time_step / time_step;
-      p->m.v[1] *= smaller_time_step / time_step;
-      p->m.v[2] *= smaller_time_step / time_step;
-    } else if (p->p.smaller_timestep != 0 && smaller_timestep == 0) {
-      p->m.v[0] *= time_step / smaller_time_step;
-      p->m.v[1] *= time_step / smaller_time_step;
-      p->m.v[2] *= time_step / smaller_time_step;
-    }
-    p->p.smaller_timestep = smaller_timestep;
-  } else {
-    MPI_Send(&smaller_timestep, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
-  }
-
-  on_particle_change();
-#endif
-}
-
-void mpi_send_smaller_timestep_flag_slave(int pnode, int part) {
-#ifdef MULTI_TIMESTEP
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    int smaller_timestep;
-    MPI_Status status;
-    MPI_Recv(&smaller_timestep, 1, MPI_INT, 0, SOME_TAG, comm_cart, &status);
-    if (p->p.smaller_timestep == 0 && smaller_timestep != 0) {
-      p->m.v[0] *= smaller_time_step / time_step;
-      p->m.v[1] *= smaller_time_step / time_step;
-      p->m.v[2] *= smaller_time_step / time_step;
-    } else if (p->p.smaller_timestep != 0 && smaller_timestep == 0) {
-      p->m.v[0] *= time_step / smaller_time_step;
-      p->m.v[1] *= time_step / smaller_time_step;
-      p->m.v[2] *= time_step / smaller_time_step;
-    }
-    p->p.smaller_timestep = smaller_timestep;
-  }
-
-  on_particle_change();
-#endif
 }
 
 int mpi_check_runtime_errors(void) {
@@ -2279,7 +2158,7 @@ void mpi_set_particle_gamma_rot_slave(int pnode, int part) {
 #if defined(LANGEVIN_PER_PARTICLE) && defined(ROTATION)
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    comm_cart.recv(pnode, SOME_TAG, p->p.gamma_rot);
+    comm_cart.recv(0, SOME_TAG, p->p.gamma_rot);
   }
 
   on_particle_change();
@@ -2449,68 +2328,6 @@ void mpi_abort() {
 }
 
 /*********************** other stuff ****************/
-
-void mpi_external_potential_broadcast(int number) {
-  mpi_call(mpi_external_potential_broadcast_slave, 0, number);
-  MPI_Bcast(&external_potentials[number], sizeof(ExternalPotential), MPI_BYTE,
-            0, comm_cart);
-  MPI_Bcast(external_potentials[number].scale,
-            external_potentials[number].n_particle_types, MPI_DOUBLE, 0,
-            comm_cart);
-}
-
-void mpi_external_potential_broadcast_slave(int node, int number) {
-  ExternalPotential E;
-  MPI_Bcast(&E, sizeof(ExternalPotential), MPI_BYTE, 0, comm_cart);
-  ExternalPotential *new_;
-  generate_external_potential(&new_);
-  external_potentials[number] = E;
-  external_potentials[number].scale =
-      (double *)Utils::malloc(external_potentials[number].n_particle_types);
-  MPI_Bcast(external_potentials[number].scale,
-            external_potentials[number].n_particle_types, MPI_DOUBLE, 0,
-            comm_cart);
-}
-
-void mpi_external_potential_tabulated_read_potential_file(int number) {
-  mpi_call(mpi_external_potential_tabulated_read_potential_file_slave, 0,
-           number);
-  external_potential_tabulated_read_potential_file(number);
-}
-
-void mpi_external_potential_tabulated_read_potential_file_slave(int node,
-                                                                int number) {
-  external_potential_tabulated_read_potential_file(number);
-}
-
-void mpi_external_potential_sum_energies() {
-  mpi_call(mpi_external_potential_sum_energies_slave, 0, 0);
-  double *energies =
-      (double *)Utils::malloc(n_external_potentials * sizeof(double));
-  for (int i = 0; i < n_external_potentials; i++) {
-    energies[i] = external_potentials[i].energy;
-  }
-  double *energies_sum =
-      (double *)Utils::malloc(n_external_potentials * sizeof(double));
-  MPI_Reduce(energies, energies_sum, n_external_potentials, MPI_DOUBLE, MPI_SUM,
-             0, comm_cart);
-  for (int i = 0; i < n_external_potentials; i++) {
-    external_potentials[i].energy = energies_sum[i];
-  }
-  free(energies);
-  free(energies_sum);
-}
-
-void mpi_external_potential_sum_energies_slave(int dummy1, int dummy2) {
-  double *energies =
-      (double *)Utils::malloc(n_external_potentials * sizeof(double));
-  for (int i = 0; i < n_external_potentials; i++) {
-    energies[i] = external_potentials[i].energy;
-  }
-  MPI_Reduce(energies, 0, n_external_potentials, MPI_DOUBLE, MPI_SUM, 0,
-             comm_cart);
-  free(energies);
-}
 
 #ifdef CUDA
 std::vector<EspressoGpuDevice> mpi_gather_cuda_devices() {

@@ -1344,7 +1344,7 @@ void ELC_P3M_self_forces() {
       get_mi_vector(d, p.r.p, pos);
       dist2 = sqrlen(d);
       dist = sqrt(dist2);
-      p3m_add_pair_force(q, d, dist2, dist, p.f.f);
+      p3m_add_pair_force(q, d, dist2, dist, p.f.f.data());
     }
     if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
       q = elc_params.delta_mid_top * p.p.q * p.p.q;
@@ -1354,7 +1354,7 @@ void ELC_P3M_self_forces() {
       get_mi_vector(d, p.r.p, pos);
       dist2 = sqrlen(d);
       dist = sqrt(dist2);
-      p3m_add_pair_force(q, d, dist2, dist, p.f.f);
+      p3m_add_pair_force(q, d, dist2, dist, p.f.f.data());
     }
   }
 }
@@ -1362,7 +1362,7 @@ void ELC_P3M_self_forces() {
 ////////////////////////////////////////////////////////////////////////////////////
 
 void ELC_p3m_charge_assign_both() {
-  double pos[3];
+  Vector3d pos;
   /* charged particle counter, charge fraction counter */
   int cp_cnt = 0;
   /* prepare local FFT mesh */
@@ -1398,7 +1398,7 @@ void ELC_p3m_charge_assign_both() {
 }
 
 void ELC_p3m_charge_assign_image() {
-  double pos[3];
+  Vector3d pos;
   /* prepare local FFT mesh */
   for (int i = 0; i < p3m.local_mesh.size; i++)
     p3m.rs_mesh[i] = 0.0;
