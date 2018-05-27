@@ -14,7 +14,7 @@ import tests_common as tc
 class ThermoTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
-    es = espressomd.System(box_l=[1.0E5, 1.0E5, 1.0E5])
+    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
     rot_flag = 0
     
     def set_thermo_all(self, test_case, kT, gamma_global, gamma_global_rot):
