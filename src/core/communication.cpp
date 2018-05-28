@@ -451,7 +451,7 @@ void mpi_send_f(int pnode, int part, const Vector3d &F) {
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->.f.f = F;
+    p->f.f = F;
   } else {
     comm_cart.send(pnode, SOME_TAG, F);
   }

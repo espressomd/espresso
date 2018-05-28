@@ -271,11 +271,11 @@ cdef class ParticleHandle(object):
         """
 
         def __set__(self, _f):
-            cdef double myf[3]
+            cdef Vector3d f
             check_type_or_throw_except(_f, 3, float, "Force has to be floats")
             for i in range(3):
-                myf[i] = _f[i]
-            if set_particle_f(self._id, myf) == 1:
+                f[i] = _f[i]
+            if set_particle_f(self._id, f) == 1:
                 raise Exception("Set particle position first.")
 
         def __get__(self):
