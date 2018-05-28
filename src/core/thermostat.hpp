@@ -200,13 +200,13 @@ inline double le_frameV(int i, const Vector3d&  vel, const Vector3d&  pos) {
 #ifdef NPT
 /** add velocity-dependend noise and friction for NpT-sims to the particle's
    velocity
-    @param dt_vj  j-component of the velocity scaled by time_step dt
+    @param vj     j-component of the velocity
     @return       j-component of the noise added to the velocity, also scaled by
    dt (contained in prefactors) */
-inline double friction_therm0_nptiso(double dt_vj) {
+inline double friction_therm0_nptiso(double vj) {
   extern double nptiso_pref1, nptiso_pref2;
   if (thermo_switch & THERMO_NPT_ISO)
-    return (nptiso_pref1 * dt_vj + nptiso_pref2 * Thermostat::noise());
+    return (nptiso_pref1 * vj + nptiso_pref2 * Thermostat::noise());
 
   return 0.0;
 }
