@@ -449,7 +449,7 @@ class openGLLive(object):
                 for check_nb in all_non_bonded_inters:
                     nb = getattr(self.system.non_bonded_inter[t1,t2], check_nb)
                     if not nb == None and nb.is_active():
-                        self.system_info['Non-bonded interactions'].append([t1,t2,nb.get_params()])
+                        self.system_info['Non-bonded interactions'].append([t1,t2,nb.type_name(), nb.get_params()])
         if len(self.system_info['Non-bonded interactions']) == 0:
             self.system_info['Non-bonded interactions'].append('None')
 
