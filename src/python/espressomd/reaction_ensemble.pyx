@@ -357,6 +357,11 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
     def __dealloc__(self):
         del(self.constpHptr)
 
+    def add_reaction(self, *args, **kwargs):
+        if(len(kwargs["product_types"])!=2 or len(kwargs["reactant_types"])!=1):
+            raise ValueError("The constant pH method is not implemented for this kind of reactions.")
+        super(ConstantpHEnsemble, self).add_reaction(*args, **kwargs)
+    
     property constant_pH:
         """
         Sets the input pH for the constant pH ensemble method.
@@ -368,8 +373,8 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
             Sets the pH that the method assumes for the implicit pH bath.
 
             """
-            if(pH<=0):
-                raise ValueError("pH must be strictly positive")
+            if(pH<4 or pH >10):
+                print("Be extremely careful in this extreme pH range when using the constant pH method. The ions which make up the pH (H+ or OH-) are not included in the method. Therefore the method might get screening effects wrong. See paper: Simulation of weak polyelectrolytes: a comparison between the constant pH and the reaction ensemble method by Landsgesell et al.")
             self.constpHptr.m_constant_pH = pH
 
 cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
