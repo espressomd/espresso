@@ -32,7 +32,6 @@ cdef extern from "global.hpp":
     int FIELD_SIMTIME
     int FIELD_MIN_GLOBAL_CUT
     int FIELD_LEES_EDWARDS_OFFSET
-    int FIELD_TEMPERATURE
     int FIELD_THERMO_SWITCH
     int FIELD_THERMO_VIRTUAL
     int FIELD_TEMPERATURE
