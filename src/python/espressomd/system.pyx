@@ -111,6 +111,8 @@ cdef class System(object):
             self.globals = Globals()
             if 'box_l' not in kwargs:
                 raise ValueError("Required argument box_l not provided.")
+            System.__setattr__(self, "box_l", kwargs.get("box_l"))
+            del kwargs["box_l"]
             for arg in kwargs:
                 if arg in setable_properties:
                     System.__setattr__(self, arg, kwargs.get(arg))
