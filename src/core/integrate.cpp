@@ -637,12 +637,12 @@ void propagate_press_box_pos_and_rescale_npt() {
 #endif
           if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
             {
-              p.r.p[j] = scal[1] * (p.r.p[j] + scal[2] * p.m.v[j]);
+              p.r.p[j] = scal[1] * (p.r.p[j] + scal[2] * p.m.v[j] * time_step);
               p.l.p_old[j] *= scal[1];
               p.m.v[j] *= scal[0];
             }
           } else {
-            p.r.p[j] += p.m.v[j];
+            p.r.p[j] += p.m.v[j] * time_step;
           }
 #ifdef EXTERNAL_FORCES
         }
