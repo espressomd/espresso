@@ -14,7 +14,6 @@ class CheckpointTest(ut.TestCase):
         # Write checkpoint.
         p = subprocess.Popen(['@CMAKE_BINARY_DIR@/pypresso', '@CMAKE_CURRENT_BINARY_DIR@/save_checkpoint.py'])
         p.wait()
-        system = espressomd.System(box_l=[10.0] * 3)
         checkpoint = espressomd.checkpointing.Checkpointing(checkpoint_id="mycheckpoint", checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
         checkpoint.load(0)
 
@@ -24,10 +23,10 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(system.min_global_cut, 2.0)
 
     def test_part(self):
-        np.testing.assert_array_equal(np.copy(system.part[0].pos), np.array([1.0, 2.0, 3.0]))
-        np.testing.assert_array_equal(np.copy(system.part[1].pos), np.array([1.0, 1.0, 2.0]))
-        np.testing.assert_array_almost_equal(np.copy(system.part[0].f), np.array([46.78868947, 5.022612, -25.68373659]))
-        np.testing.assert_array_almost_equal(np.copy(system.part[1].f), np.array([3.90499511e-16, -1.63522209e+00, -1.71556116e+00]))
+        np.testing.assert_allclose(system.part[0].pos, np.array([1.0, 2.0, 3.0]))
+        np.testing.assert_allclose(system.part[1].pos, np.array([1.0, 1.0, 2.0]))
+        np.testing.assert_allclose(system.part[0].f, np.array([46.78868947, 5.022612, -25.68373659]))
+        np.testing.assert_allclose(system.part[1].f, np.array([3.90499511e-16, -1.63522209e+00, -1.71556116e+00]))
 
     def test_thermostat(self):
         self.assertEqual(system.thermostat.get_state()[0]['type'], 'LANGEVIN')

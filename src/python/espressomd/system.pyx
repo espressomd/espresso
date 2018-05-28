@@ -47,6 +47,7 @@ if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
 from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
 from globals cimport max_seen_particle
+from .globals import Globals
 from espressomd.utils import array_locked, is_valid_type
 from espressomd.virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 
@@ -83,6 +84,7 @@ cdef class System(object):
 
     """
     cdef public:
+        globals
         part
         non_bonded_inter
         bonded_inter
@@ -106,6 +108,7 @@ cdef class System(object):
     def __init__(self, **kwargs):
         global _system_created
         if (not _system_created):
+            self.globals = Globals()
             if 'box_l' not in kwargs:
                 raise ValueError("Required argument box_l not provided.")
             for arg in kwargs:
@@ -144,8 +147,10 @@ cdef class System(object):
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
         odict = collections.OrderedDict()
+        odict['globals'] = System.__getattribute__(self, "globals")
         for property_ in setable_properties:
-            odict[property_] = System.__getattribute__(self, property_)
+            if not hasattr(self.globals, property_):
+                odict[property_] = System.__getattribute__(self, property_)
         odict['actors'] = System.__getattribute__(self, "actors")
         odict['analysis'] = System.__getattribute__(self, "analysis")
         odict['auto_update_accumulators'] = System.__getattribute__(self, "auto_update_accumulators")
@@ -167,9 +172,11 @@ cdef class System(object):
     def __setstate__(self, params):
         for property_ in params.keys():
             System.__setattr__(self, property_, params[property_])
+
     property box_l:
         """
         Array like, list of three floats
+
         """
 
         def __set__(self, _box_l):
@@ -181,10 +188,10 @@ cdef class System(object):
                         "Box length must be > 0 in all directions")
                 box_l[i] = _box_l[i]
 
-            mpi_bcast_parameter(FIELD_BOXL)
+            self.globals.box_l = box_l
 
         def __get__(self):
-            return array_locked(np.array([box_l[0], box_l[1], box_l[2]]))
+            return self.globals.box_l
 
     property integ_switch:
         def __get__(self):
@@ -199,6 +206,7 @@ cdef class System(object):
 
         """
         def __get__(self):
+            return self.globals.force_cap
             return forcecap_get()
 
         def __set__(self, cap):
@@ -218,7 +226,6 @@ cdef class System(object):
             if len(_periodic) != 3:
                 raise ValueError(
                     "periodicity must be of length 3, got length " + str(len(_periodic)))
-            periodicity = np.zeros(3)
             for i in range(3):
                 if _periodic[i] != 1:
                     IF PARTIAL_PERIODIC:
@@ -226,18 +233,10 @@ cdef class System(object):
                     ELSE:
                         raise ValueError(
                             "The feature PARTIAL_PERIODIC needs to be activated in myconfig.hpp")
-            for i in range(3):
-                periodicity[i] = _periodic[i]
-            periodic = 4 * _periodic[2] + 2 * _periodic[1] + _periodic[0]
-            # first 3 bits of periodic determine the periodicity
-            mpi_bcast_parameter(FIELD_PERIODIC)
+            self.globals.periodicity = _periodic
 
         def __get__(self):
-            periodicity = np.zeros(3)
-            periodicity[0] = periodic % 2
-            periodicity[1] = int(periodic / 2) % 2
-            periodicity[2] = int(periodic / 4) % 2
-            return array_locked(periodicity)
+            return self.globals.periodicity
 
     property time:
         """
@@ -274,21 +273,17 @@ cdef class System(object):
                         lbpar_gpu.tau - _time_step > numeric_limits[float].epsilon() * abs(lbpar_gpu.tau + _time_step)):
                     raise ValueError(
                         "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(lbpar_gpu.tau) + ")")
-            mpi_set_time_step(_time_step)
+            self.globals.time_step = _time_step
 
         def __get__(self):
-            return time_step
+            return self.globals.time_step
 
     property timings:
         def __set__(self, int _timings):
-            global timing_samples
-            if _timings <= 0:
-                timing_samples = 0
-            else:
-                timing_samples = _timings
+            self.globals.timings = _timings
 
         def __get__(self):
-            return timing_samples
+            return self.globals.timings
 
     property max_cut_nonbonded:
         def __get__(self):
@@ -304,12 +299,10 @@ cdef class System(object):
 
     property min_global_cut:
         def __set__(self, _min_global_cut):
-            global min_global_cut
-            min_global_cut = _min_global_cut
-            mpi_bcast_parameter(FIELD_MIN_GLOBAL_CUT)
+            self.globals.min_global_cut = _min_global_cut
 
         def __get__(self):
-            return min_global_cut
+            return self.globals.min_global_cut
 
     def _get_PRNG_state_size(self):
         """
