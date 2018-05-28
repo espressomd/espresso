@@ -104,9 +104,9 @@ struct ParticleProperties {
 
 #ifdef ROTATIONAL_INERTIA
   /** rotational inertia */
-  double rinertia[3] = {1., 1., 1.};
+  Vector3d rinertia = {1., 1., 1.};
 #else
-  static constexpr const double rinertia[3] = {1., 1., 1.};
+  static constexpr const Vector3d rinertia = {1., 1., 1.};
 #endif
 
 #ifdef AFFINITY
@@ -191,11 +191,11 @@ struct ParticleProperties {
   */
   int ext_flag = 0;
   /** External force, apply if \ref ParticleLocal::ext_flag == 1. */
-  double ext_force[3] = {0, 0, 0};
+  Vector3d ext_force = {0, 0, 0};
 
 #ifdef ROTATION
   /** External torque, apply if \ref ParticleLocal::ext_flag == 16. */
-  double ext_torque[3] = {0, 0, 0};
+  Vector3d ext_torque = {0, 0, 0};
 #endif
 #endif
 };
@@ -237,7 +237,7 @@ struct ParticleForce {
 
 #ifdef ROTATION
   /** torque */
-  double torque[3] = {0., 0., 0.};
+  Vector3d torque = {0., 0., 0.};
 #endif
 };
 
@@ -246,12 +246,12 @@ struct ParticleForce {
     be necessary for velocity dependend potentials. */
 struct ParticleMomentum {
   /** velocity. */
-  double v[3] = {0., 0., 0.};
+  Vector3d v = {0., 0., 0.};
 
 #ifdef ROTATION
   /** angular velocity
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
-  double omega[3] = {0., 0., 0.};
+  Vector3d omega = {0., 0., 0.};
 #endif
 };
 

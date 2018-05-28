@@ -1234,11 +1234,11 @@ int number_of_particles_with_type(int type) {
 
 #ifdef ROTATION
 void pointer_to_omega_body(Particle const *p, double const *&res) {
-  res = p->m.omega;
+  res = p->m.omega.data();
 }
 
 void pointer_to_torque_lab(Particle const *p, double const *&res) {
-  res = p->f.torque;
+  res = p->f.torque.data();
 }
 
 void pointer_to_quat(Particle const *p, double const *&res) { res = p->r.quat.data(); }
@@ -1283,13 +1283,13 @@ void pointer_to_dipm(Particle const *p, double const *&res) {
 void pointer_to_ext_force(Particle const *p, int const *&res1,
                           double const *&res2) {
   res1 = &(p->p.ext_flag);
-  res2 = p->p.ext_force;
+  res2 = p->p.ext_force.data();
 }
 #ifdef ROTATION
 void pointer_to_ext_torque(Particle const *p, int const *&res1,
                            double const *&res2) {
   res1 = &(p->p.ext_flag);
-  res2 = p->p.ext_torque;
+  res2 = p->p.ext_torque.data();
 }
 #endif
 void pointer_to_fix(Particle const *p, int const *&res) {
@@ -1334,7 +1334,7 @@ void pointer_to_swimming(Particle const *p,
 
 #ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle const *p, double const *&res) {
-  res = p->p.rinertia;
+  res = p->p.rinertia.data();
 }
 #endif
 
