@@ -96,8 +96,6 @@ int db_maxf_id = 0, db_maxv_id = 0;
 /************************************************************/
 /*@{*/
 
-/** Rescale all particle forces with \f[ 0.5 \Delta t^2 \f]. */
-void rescale_forces();
 /** Propagate the velocities. Integration step 1 of the Velocity Verlet
    integrator:<br>
     \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t f(t) \f] */
@@ -260,7 +258,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
     force_calc();
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      rescale_forces();
 #ifdef ROTATION
       convert_initial_torques();
 #endif
@@ -479,7 +476,6 @@ if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
   /* Steepest descent operatates on unscaled forces,
      so we have to scale them back now. */
   if(integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
-    rescale_forces();
   }
 
   /* verlet list statistics */
@@ -519,30 +515,7 @@ void rescale_velocities(double scale) {
 /* Privat functions */
 /************************************************************/
 
-namespace {
-double calc_scale() { return 0.5 * time_step * time_step; }
-}
-
-void rescale_forces() {
-  auto const scale = calc_scale();
-
-  INTEG_TRACE(fprintf(stderr, "%d: rescale_forces:\n", this_node));
-
-  for (auto &p : local_cells.particles()) {
-    check_particle_force(&p);
-    p.f.f[0] *= 1;
-    p.f.f[1] *= 1;
-    p.f.f[2] *= 1;
-
-    ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
-        stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
-        this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m.v[0], p.m.v[1], p.m.v[2]));
-  }
-}
-
 void rescale_forces_propagate_vel() {
-  auto const scale = calc_scale();
-
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
     nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
@@ -554,10 +527,6 @@ void rescale_forces_propagate_vel() {
 
   for (auto &p : local_cells.particles()) {
     check_particle_force(&p);
-    /* Rescale forces: f_rescaled = 0.5*dt*dt * f_calculated * (1/mass) */
-    p.f.f[0] *= 1;
-    p.f.f[1] *= 1;
-    p.f.f[2] *= 1;
 
     ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
         stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
@@ -575,7 +544,7 @@ void rescale_forces_propagate_vel() {
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
             nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
-            p.m.v[j] += 0.5 * time_step / p.p.mass * p.f.f[j] + friction_therm0_nptiso(p.m.v[j]*time_step) / p.p.mass;
+            p.m.v[j] += 0.5 * time_step / p.p.mass * p.f.f[j] + friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
         } else
 #endif
           /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
@@ -735,7 +704,7 @@ void propagate_vel() {
 #ifdef NPT
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
-            p.m.v[j] += p.f.f[j] * 0.5 * time_step / p.p.mass + friction_therm0_nptiso(p.m.v[j] * time_step) / p.p.mass;
+            p.m.v[j] += p.f.f[j] * 0.5 * time_step / p.p.mass + friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
             nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
         } else
 #endif
