@@ -218,31 +218,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
   immersed_boundaries.init_volume_conservation();
 #endif
 
-#ifdef MULTI_TIMESTEP
-  if (smaller_time_step > 0.) {
-    mts_max = time_step / smaller_time_step;
-#ifdef NPT
-    if (integ_switch == INTEG_METHOD_NPT_ISO) {
-      current_time_step_is_small = 1;
-      // Compute forces for small timestep -> get virial contribution.
-      if (recalc_forces)
-        thermo_heat_up();
-      force_calc();
-      thermo_cool_down();
-      ghost_communicator(&cell_structure.collect_ghost_force_comm);
-      current_time_step_is_small = 0;
-      // Store virial
-      for (int j = 0; j < 3; ++j)
-        virial_store[j] = nptiso.p_vir[j];
-      thermo_heat_up();
-      force_calc();
-      thermo_cool_down();
-      ghost_communicator(&cell_structure.collect_ghost_force_comm);
-      rescale_forces();
-    }
-#endif
-  }
-#endif
 
   /* if any method vetoes (P3M not initialized), immediately bail out */
   if (check_runtime_errors())
