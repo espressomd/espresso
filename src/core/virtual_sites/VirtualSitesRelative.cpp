@@ -85,10 +85,10 @@ void VirtualSitesRelative::update_pos(Particle& p) const
  // This is obtained, by multiplying the quaternion representing the director
  // of the real particle with the quaternion of the virtual particle, which 
  // specifies the relative orientation.
- double q[4];
+ Vector<4,double> q;
  multiply_quaternions(p_real->r.quat,p.p.vs_relative_rel_orientation,q);
  // Calculate the director resulting from the quaternions
- double director[3];
+ Vector3d director={0,0,0};
  convert_quat_to_quatu(q,director);
  // normalize
  double l =sqrt(sqrlen(director));

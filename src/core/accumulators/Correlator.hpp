@@ -116,10 +116,6 @@
 #ifndef _STATISTICS_CORRELATION_H
 #define _STATISTICS_CORRELATION_H
 
-#include "Vector.hpp"
-#include "observables/Observable.hpp"
-#include "utils.hpp"
-
 #include <boost/multi_array.hpp>
 #include <boost/serialization/access.hpp>
 
@@ -129,11 +125,13 @@
 #include <map>
 #include <memory>
 
-namespace Correlators {
+#include "AccumulatorBase.hpp"
+#include "Vector.hpp"
+#include "integrate.hpp"
+#include "observables/Observable.hpp"
+#include "utils.hpp"
 
-// IDs of different correlations
-
-void autoupdate_correlations();
+namespace Accumulators {
 
 /** The struct that is used to calculate correlations *
  *
@@ -146,7 +144,7 @@ void autoupdate_correlations();
  * tau_lin is reached,
  * it starts again from the beginning.
  */
-class Correlator {
+class Correlator : public AccumulatorBase {
   using obs_ptr = std::shared_ptr<Observables::Observable>;
 
 public:
@@ -157,7 +155,7 @@ public:
    * correlation class
    * has to be fed with correct data from the very beginning.
    *
-   * @param _dt: The time interval between subsequent updates
+   * @param _delta_N: The number of time steps between subsequent updates
    * @param _tau_lin: The linear part of the correlation function.
    * @param _tau_max: maximal time delay tau to sample
    * @param _window_distance: The distance in time domain between update of the
@@ -176,13 +174,14 @@ public:
    * @param _args: the parameters of the observables
    *
    */
-  Correlator(int tau_lin, double tau_max, double dt,
+  Correlator(int tau_lin, double tau_max, int delta_N,
              std::string const &compress1_, std::string const &compress2_,
-             std::string const &corr_operation, const obs_ptr &obs1, const obs_ptr &obs2)
-      : autoupdate(0), finalized(0), t(0), m_tau_lin(tau_lin),
-        m_dt(dt), m_tau_max(tau_max), compressA_name(compress1_),
-        compressB_name(compress2_), corr_operation_name(corr_operation),
-        A_obs(obs1), B_obs(obs2) {
+             std::string const &corr_operation, const obs_ptr &obs1,
+             const obs_ptr &obs2)
+      : AccumulatorBase(delta_N), finalized(0), t(0), m_tau_lin(tau_lin),
+        m_dt(delta_N * time_step), m_tau_max(tau_max),
+        compressA_name(compress1_), compressB_name(compress2_),
+        corr_operation_name(corr_operation), A_obs(obs1), B_obs(obs2) {
     initialize();
   }
 
@@ -203,7 +202,7 @@ public:
    * the correlation estimates have to be updated.
    *
    */
-  int get_data();
+  virtual void update() override;
 
   /** At the end of data collection, go through the whole hierarchy and
    * correlate data left there
@@ -258,10 +257,6 @@ public:
     return corr_operation_name;
   }
 
-  void start_auto_update();
-  void stop_auto_update();
-  int autoupdate;
-
   /* Partial serialization of state that is not accessible
      via the interface. */
   std::string get_internal_state() const;
@@ -281,7 +276,6 @@ private:
   double m_dt; // time interval at which samples arrive
   double
       m_tau_max; // maximum time, for which the correlation should be calculated
-  int update_frequency; // time distance between updates in MD timesteps
 
   std::string compressA_name;
   std::string compressB_name;
@@ -328,8 +322,6 @@ private:
   compression_function compressA;
   compression_function compressB;
 };
-
-extern int correlations_autoupdate;
 
 } // Namespace correlators
 #endif

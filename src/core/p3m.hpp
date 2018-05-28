@@ -199,7 +199,7 @@ void p3m_charge_assign();
     which may be smaller than 0, in which case the charge is assumed to be virtual and is not
     stored in the ca_frac arrays. */
 void p3m_assign_charge(double q,
-		       double real_pos[3],
+		       Vector3d& real_pos,
 		       int cp_cnt);
 
 /** shrink wrap the charge grid */

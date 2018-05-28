@@ -55,13 +55,6 @@ int n_part_conf = 0;
 /****************************************************************************************
  *                                 helper functions
  ****************************************************************************************/
-
-double min_distance2(double const pos1[3], double const pos2[3]) {
-  double diff[3];
-  get_mi_vector(diff, pos1, pos2);
-  return sqrlen(diff);
-}
-
 /****************************************************************************************
  *                                 basic observables calculation
  ****************************************************************************************/
@@ -664,7 +657,7 @@ void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
   ff[2 * order2] = 0;
   twoPI_L = 2 * PI / box_l[0];
 
-  if ((n_types < 0) || (n_types > n_particle_types)) {
+  if ((n_types < 0) || (n_types > max_seen_particle_type)) {
     fprintf(stderr, "WARNING: Wrong number of particle types!");
     fflush(nullptr);
     errexit();
