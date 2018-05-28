@@ -1,3 +1,5 @@
+import numpy as np
+
 import espressomd
 import espressomd.checkpointing
 import espressomd.electrostatics
@@ -38,8 +40,8 @@ checkpoint.register("system")
 checkpoint.register("acc")
 # calculate forces
 system.integrator.run(0)
-particle_force0 = system.part[0].f
-particle_force1 = system.part[1].f
+particle_force0 = np.copy(system.part[0].f)
+particle_force1 = np.copy(system.part[1].f)
 checkpoint.register("particle_force0")
 checkpoint.register("particle_force1")
 checkpoint.save(0)
