@@ -33,10 +33,10 @@ inline void init_constraint_forces() {
 }
 
 inline void add_constraints_energy(Particle *p) {
+  auto pos = folded_position(*p);
 
-  //Vector3d pos=folded_position(p);
   for (auto const &c : Constraints::constraints) {
-    c->add_energy(p, p->r.p, energy);
+    c->add_energy(p, pos, energy);
   }
 }
 
