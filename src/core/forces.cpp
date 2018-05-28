@@ -93,16 +93,6 @@ void check_forces() {
 }
 
 void force_calc() {
-  // Communication step: distribute ghost positions
-  cells_update_ghosts();
-
-// VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
-#ifdef VIRTUAL_SITES
-  virtual_sites()->update();
-  if (virtual_sites()->need_ghost_comm_after_pos_update()) {
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-  }
-#endif
 
   
   espressoSystemInterface.update();

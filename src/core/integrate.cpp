@@ -259,6 +259,16 @@ void integrate_vv(int n_steps, int reuse_forces) {
                      "sampling.\n");
 #endif
 
+  // Communication step: distribute ghost positions
+  cells_update_ghosts();
+
+// VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
+#ifdef VIRTUAL_SITES
+  virtual_sites()->update();
+  if (virtual_sites()->need_ghost_comm_after_pos_update()) {
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+  }
+#endif
     force_calc();
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
@@ -357,6 +367,16 @@ void integrate_vv(int n_steps, int reuse_forces) {
     transfer_momentum_gpu = 1;
 #endif
 
+  // Communication step: distribute ghost positions
+  cells_update_ghosts();
+
+// VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
+#ifdef VIRTUAL_SITES
+  virtual_sites()->update();
+  if (virtual_sites()->need_ghost_comm_after_pos_update()) {
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+  }
+#endif
     force_calc();
 
 #ifdef VIRTUAL_SITES
