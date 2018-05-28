@@ -277,7 +277,7 @@ The camera can be controlled via mouse and keyboard:
     * WASD-Keyboard control (WS: move forwards/backwards, AD: move sidewards)
     * Key pairs QE, RF, ZC: rotate the system 
     * Double click on a particle: Show particle information
-    * Double click in empty space: Disable particle information
+    * Double click in empty space: Toggle system information
     * Left/Right arrows: Cycle through particles
     * Space: If started with `run(n)`, this pauses the simulation
     * Enter: Creates a snapshot of the current window and saves it to `<scriptname>_n.png` (with incrementing `n`)
