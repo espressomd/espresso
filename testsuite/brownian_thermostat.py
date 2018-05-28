@@ -16,13 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+# Tests particle property setters/getters
 from __future__ import print_function
 import unittest as ut
 import espressomd
 import numpy as np
 from espressomd.interactions import FeneBond
 from time import time
-from espressomd.correlators import Correlator
+from espressomd.accumulators import Correlator
 from espressomd.observables import ParticleVelocities, ParticleBodyAngularVelocities
 
 #TODO: this test should be as close to langevin_thermostat.py as possible

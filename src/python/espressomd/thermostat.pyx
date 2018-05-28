@@ -100,7 +100,7 @@ cdef class Thermostat(object):
                 self.set_npt(kT=thmst["kT"], p_diff=thmst[
                              "p_diff"], piston=thmst["piston"])
             if thmst["type"] == "DPD":
-                self.set_dpd(kT=thmst["kt"])
+                self.set_dpd(kT=thmst["kT"])
             if thmst["type"] == "BROWNIAN":
                 self.set_brownian(kT=thmst["kT"], gamma=thmst[
                                   "gamma"], gamma_rotation=thmst["gamma_rotation"])

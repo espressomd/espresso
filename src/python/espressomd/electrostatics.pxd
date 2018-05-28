@@ -211,26 +211,6 @@ IF ELECTROSTATICS:
     cdef extern from "interaction_data.hpp":
         int coulomb_set_prefactor(double prefactor)
 
-        ctypedef enum CoulombMethod :
-            COULOMB_NONE, 
-            COULOMB_DH, 
-            COULOMB_P3M, 
-            COULOMB_MMM1D, 
-            COULOMB_MMM2D, 
-            COULOMB_MAGGS, 
-            COULOMB_ELC_P3M,
-            COULOMB_RF, 
-            COULOMB_INTER_RF, 
-            COULOMB_P3M_GPU,
-            COULOMB_MMM1D_GPU,
-            COULOMB_EK 
-
-        ctypedef struct Coulomb_parameters:
-            double prefactor
-            CoulombMethod method
-
-        cdef extern Coulomb_parameters coulomb
-
     cdef inline pyMMM1D_tune():
         cdef char *log = NULL 
         cdef int resp

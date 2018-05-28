@@ -20,39 +20,31 @@
 #ifndef _ACCUMULATORS_ACCUMULATOR_H
 #define _ACCUMULATORS_ACCUMULATOR_H
 
-/* Needed for transform_iterator to work with
-   lambdas on older compilers. */
-#define BOOST_RESULT_OF_USE_DECLTYPE
-#include <boost/accumulators/accumulators.hpp>
-#include <boost/accumulators/numeric/functional/vector.hpp>
-#include <boost/accumulators/statistics/mean.hpp>
-#include <boost/accumulators/statistics/stats.hpp>
-#include <boost/accumulators/statistics/variance.hpp>
-
+#include "AccumulatorBase.hpp"
 #include "observables/Observable.hpp"
-
-#include <memory>
+#include "utils/Accumulator.hpp"
 
 namespace Accumulators {
-namespace ba = boost::accumulators;
-typedef ba::accumulator_set<std::vector<double>,
-                            ba::stats<ba::tag::mean, ba::tag::variance>>
-    acc;
 
-class Accumulator {
+class MeanVarianceCalculator : public AccumulatorBase {
 public:
   // The accumulator struct has to be initialized with the correct vector size,
   // therefore the order of init is important.
-  Accumulator(std::shared_ptr<Observables::Observable> const& obs)
-      : m_obs(obs), m_acc(std::vector<double>(obs->n_values())) {}
+  MeanVarianceCalculator(std::shared_ptr<Observables::Observable> const &obs,
+                         int delta_N)
+      : AccumulatorBase(delta_N), m_obs(obs), m_acc(obs->n_values()) {}
 
-  int update();
+  virtual void update() override;
   std::vector<double> get_mean();
   std::vector<double> get_variance();
+  /* Partial serialization of state that is not accessible
+     via the interface. */
+  std::string get_internal_state() const;
+  void set_internal_state(std::string const &);
 
 private:
   std::shared_ptr<Observables::Observable> m_obs;
-  acc m_acc;
+  ::Utils::Accumulator m_acc;
 };
 
 } // namespace Accumulators
