@@ -520,7 +520,7 @@ void mpi_send_mu_E_slave(int pnode, int part) {
 #ifdef LB_ELECTROHYDRODYNAMICS
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->p.mu_E, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->p.mu_E.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 
@@ -701,7 +701,7 @@ void mpi_send_out_direction_slave(int pnode, int part) {
 #ifdef MEMBRANE_COLLISION
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->p.out_direction, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->p.out_direction.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 

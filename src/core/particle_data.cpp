@@ -903,7 +903,7 @@ void local_place_particle(int part, const double p[3], int _new) {
 #endif
 
   memmove(pt->r.p.data(), pp, 3 * sizeof(double));
-  memmove(pt->l.i, i, 3 * sizeof(int));
+  memmove(pt->l.i.data(), i, 3 * sizeof(int));
 #ifdef BOND_CONSTRAINT
   memmove(pt->r.p_old.data(), pp, 3 * sizeof(double));
 #endif
@@ -1346,7 +1346,7 @@ void pointer_to_bond_site(const Particle* p, const double*& res) {
 
 #ifdef MEMBRANE_COLLISION
 void pointer_to_out_direction(const Particle* p, const double*& res) {
- res = p->p.out_direction;
+ res = p->p.out_direction.data();
 }
 #endif
 
