@@ -24,7 +24,6 @@ cdef class Actor(object):
     def __init__(self, *args, **kwargs):
         self._isactive = False
         self._params = self.default_params()
-        self.system = None
 
         # Check if all required keys are given
         for k in self.required_keys():
@@ -166,8 +165,14 @@ class Actors(object):
 
     active_actors = []
 
-    def __init__(self, _system=None):
-        self.system = _system
+    def __getstate__(self):
+        return self.active_actors
+
+    def __setstate__(self, active_actors):
+        self.active_actors[:] = []
+        for a in active_actors:
+            self.active_actors.append(a)
+            a._activate()
 
     def add(self, actor):
         """
@@ -177,22 +182,12 @@ class Actors(object):
 
         """
         if not actor in Actors.active_actors:
-            actor.system = self.system
-            Actors.active_actors.append(actor)
+            self.active_actors.append(actor)
             actor._activate()
         else:
             raise ThereCanOnlyBeOne(actor)
 
     def remove(self, actor):
-        """
-        Parameters
-        ----------
-        actor : instance of :class:`espressomd.actors.Actor`
-
-        """
-        self._remove_actor(actor)
-
-    def _remove_actor(self, actor):
         """
         Parameters
         ----------
@@ -205,7 +200,7 @@ class Actors(object):
         self.active_actors.remove(actor)
 
     def __str__(self):
-        return "Active Actors: "+Actors.active_actors.__str__()
+        return str(self.active_actors)
 
     def __getitem__(self, key):
         return self.active_actors[key]
@@ -219,4 +214,4 @@ class Actors(object):
 
     def __delitem__(self, idx):
         actor = self[idx]
-        self._remove_actor(actor)
+        self.remove(actor)

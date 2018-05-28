@@ -3,7 +3,7 @@
 from __future__ import print_function
 import espressomd
 from espressomd.observables import *
-from espressomd.correlators import *
+from espressomd.accumulators import *
 import numpy as np
 
 # System setup
@@ -26,21 +26,21 @@ print(p.get_params())
 # Calculate and return current value
 print(p.calculate())
 # Return stored current value
-print(p.value())
+print(p.calculate())
 
 
 # Instance a correlator correlating the p observable with itself, calculating the mean squared displacement (msd).
-c = Correlator(tau_lin=16, tau_max=1000, dt=0.01, obs1=p,
+c = Correlator(tau_lin=16, tau_max=1000, delta_N=1, obs1=p,
                corr_operation="square_distance_componentwise", compress1="discard1")
 # Instance a correlator calculating the FCS autocorrelation function from particle positions, using the symmetric focal spot with wx=wy=wz=10 (sigma)
-fcs = Correlator(tau_lin=16, tau_max=10000, dt=0.1, obs1=p,
+fcs = Correlator(tau_lin=16, tau_max=10000, delta_N=10, obs1=p,
                  corr_operation="fcs_acf", args=[10, 10, 10], compress1="discard2")
 # Ask the correlator for its parameters
 print(c.get_params())
 
 # Register the correlator for auto updating at the interval given by its dt (currently every timestep)
-system.auto_update_correlators.add(c)
-system.auto_update_correlators.add(fcs)
+system.auto_update_accumulators.add(c)
+system.auto_update_accumulators.add(fcs)
 
 # Integrate
 system.integrator.run(300000)

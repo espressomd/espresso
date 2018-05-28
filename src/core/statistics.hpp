@@ -398,7 +398,7 @@ inline double *obsstat_nonbonded(Observable_stat *stat, int p1, int p2) {
     p1 = tmp;
   }
   return stat->non_bonded +
-         stat->chunk_size * (((2 * n_particle_types - 1 - p1) * p1) / 2 + p2);
+         stat->chunk_size * (((2 * max_seen_particle_type - 1 - p1) * p1) / 2 + p2);
 }
 
 inline double *obsstat_nonbonded_intra(Observable_stat_non_bonded *stat, int p1,
@@ -412,7 +412,7 @@ inline double *obsstat_nonbonded_intra(Observable_stat_non_bonded *stat, int p1,
   }
   return stat->non_bonded_intra +
          stat->chunk_size_nb *
-             (((2 * n_particle_types - 1 - p1) * p1) / 2 + p2);
+             (((2 * max_seen_particle_type - 1 - p1) * p1) / 2 + p2);
 }
 
 inline double *obsstat_nonbonded_inter(Observable_stat_non_bonded *stat, int p1,
@@ -426,7 +426,7 @@ inline double *obsstat_nonbonded_inter(Observable_stat_non_bonded *stat, int p1,
   }
   return stat->non_bonded_inter +
          stat->chunk_size_nb *
-             (((2 * n_particle_types - 1 - p1) * p1) / 2 + p2);
+             (((2 * max_seen_particle_type - 1 - p1) * p1) / 2 + p2);
 }
 
 void invalidate_obs();

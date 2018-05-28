@@ -7,6 +7,9 @@ import signal
 
 checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")
 
+if not len(checkpoint.checkpoint_signals):
+    checkpoint.register_signal(signal.SIGINT)
+
 # test for user data
 myvar = "some script variable"
 checkpoint.register("myvar")
@@ -66,8 +69,6 @@ system.actors.add(p3m)
 
 checkpoint.register("p3m")
 
-# signal.SIGINT: signal 2, is sent when ctrl+c is pressed
-checkpoint.register_signal(signal.SIGINT)
 
 
 checkpoint.save()

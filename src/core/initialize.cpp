@@ -24,8 +24,6 @@
 #include "initialize.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "correlators/Correlator.hpp"
-#include "accumulators/Accumulator.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 #include "debye_hueckel.hpp"
@@ -58,7 +56,7 @@
 #include "pressure.hpp"
 #include "random.hpp"
 #include "rattle.hpp"
-#include "reaction.hpp"
+#include "swimmer_reaction.hpp"
 #include "reaction_ensemble.hpp"
 #include "reaction_field.hpp"
 #include "rotation.hpp"
@@ -69,6 +67,7 @@
 #include "utils.hpp"
 #include "global.hpp"
 #include "utils/mpi/all_compare.hpp" 
+#include "electrokinetics.hpp"
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
 static int reinit_electrostatics = 0;
@@ -98,8 +97,6 @@ void on_program_start() {
   /* initially go for domain decomposition */
   topology_init(CELL_STRUCTURE_DOMDEC, &local_cells);
 
-  ghost_init();
-
 #ifdef P3M
   p3m_pre_init();
 #endif
@@ -117,7 +114,7 @@ void on_program_start() {
   lb_pre_init();
 #endif
 
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
   reaction.eq_rate = 0.0;
   reaction.sing_mult = 0;
   reaction.swap = 0;
@@ -148,7 +145,7 @@ void on_integration_start() {
   integrator_npt_sanity_checks();
 #endif
   interactions_sanity_checks();
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
   reactions_sanity_checks();
 #endif
 #ifdef LB
@@ -279,6 +276,13 @@ void on_observable_calc() {
     reinit_magnetostatics = 0;
   }
 #endif /*ifdef ELECTROSTATICS */
+
+#ifdef ELECTROKINETICS
+      if (ek_initialized) {
+        ek_integrate_electrostatics();
+      }
+#endif
+  
 }
 
 void on_particle_charge_change() {

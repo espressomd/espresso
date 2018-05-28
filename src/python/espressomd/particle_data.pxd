@@ -99,10 +99,6 @@ cdef extern from "particle_data.hpp":
     IF ROTATION == 1:
         int set_particle_rotation(int part, int rot)
 
-    IF MULTI_TIMESTEP:
-        int set_particle_smaller_timestep(int part, int small_timestep)
-        void pointer_to_smaller_timestep(const particle * p, const int * & res)
-
     IF MASS:
         int set_particle_mass(int part, double mass)
 
@@ -139,6 +135,17 @@ cdef extern from "particle_data.hpp":
         int set_particle_torque_body(int part, double torque[3])
         void pointer_to_omega_body(const particle * p, const double * & res)
         void pointer_to_torque_lab(const particle * p, const double * & res)
+
+    IF MEMBRANE_COLLISION:
+        int set_particle_out_direction(int part, double out_direction[3])
+        void pointer_to_out_direction(particle*  p, double*& res)
+        
+    IF AFFINITY:
+        int set_particle_affinity(int part, double bond_site[3])
+        void pointer_to_bond_site(particle*  p, double*& res)
+
+    IF MASS == 1:
+        void pointer_to_mass(particle * p, double * & res)
 
     IF DIPOLES:
         int set_particle_dip(int part, double dip[3])
@@ -218,6 +225,8 @@ cdef extern from "rotation.hpp":
     void convert_omega_body_to_space(const particle * p, double * omega)
     void convert_torques_body_to_space(const particle * p, double * torque)
     Vector3d convert_vector_body_to_space(const particle& p,const Vector3d& v)
+    Vector3d convert_vector_space_to_body(const particle& p,const Vector3d& v)
+    void rotate_particle(int id, double* axis, double angle)
 
 # The bonded_ia_params stuff has to be included here, because the setter/getter
 # of the particles' bond property needs to now about the correct number of
@@ -230,13 +239,13 @@ cdef extern from "interaction_data.hpp":
     cdef int n_bonded_ia
 
 cdef class ParticleHandle(object):
-    cdef public int id
-    cdef bint valid
+    cdef public int _id
     cdef const particle * particle_data
     cdef int update_particle_data(self) except -1
 
 cdef class _ParticleSliceImpl:
     cdef public id_selection
+    cdef int _chunk_size
 
 cdef extern from "grid.hpp":
     Vector3d folded_position(const particle *)

@@ -87,9 +87,7 @@ extern EK_parameters* lb_ek_parameters_gpu;
                                   0.0, false,
                                   true,
                                   true,
-#ifdef EK_ELECTROSTATIC_COUPLING
-                                  false
-#endif                                 
+                                  false                                
                                 };
                                 
   static __device__ __constant__ EK_parameters ek_parameters_gpu;
@@ -2164,7 +2162,6 @@ __global__ void ek_gather_particle_charge_density( CUDA_particle_data * particle
     //printf("particle %d (%d):\n  charge %f\n  pos %f %f %f\n  lowernode %d %d %d\n  cellpos %f %f %f\n\n", index, ek_lbparameters_gpu->number_of_particles, particle_data[index].q, particle_data[index].p[0], particle_data[index].p[1], particle_data[index].p[2], lowernode[0], lowernode[1], lowernode[2], cellpos[0], cellpos[1], cellpos[2]); //TODO delete
   }
 }
-#ifdef EK_ELECTROSTATIC_COUPLING
 __global__ void ek_spread_particle_force( CUDA_particle_data * particle_data,
                                           float *particle_forces,
                                           LB_parameters_gpu * ek_lbparameters_gpu ) {
@@ -2274,7 +2271,6 @@ __global__ void ek_calc_electric_field(const float *potential) {
       );
   }
 }
-#endif
 
 __global__ void ek_clear_boundary_densities( LB_nodes_gpu lbnode ) {
 
@@ -2335,7 +2331,6 @@ __global__ void initialize_random_generator(int seed) {
 }
 
 
-#ifdef EK_ELECTROSTATIC_COUPLING
 void ek_calculate_electrostatic_coupling() {
   int blocks_per_grid_x;
   int blocks_per_grid_y = 4;
@@ -2353,7 +2348,6 @@ if((!ek_parameters.es_coupling) || (!initialized))
   KERNELCALL( ek_spread_particle_force, dim_grid, threads_per_block, 
 		(gpu_get_particle_pointer(), gpu_get_particle_force_pointer(), ek_lbparameters_gpu ));
 }
-#endif
 
 void ek_integrate_electrostatics() {
 
@@ -2366,13 +2360,11 @@ void ek_integrate_electrostatics() {
   
   KERNELCALL( ek_gather_species_charge_density, dim_grid, threads_per_block, () );
 
-#ifdef EK_ELECTROSTATIC_COUPLING
     if(ek_parameters.es_coupling) {
-      cuda_safe_mem( cudaMemcpy(ek_parameters.charge_potential_buffer, ek_parameters.charge_potential, ek_parameters.number_of_nodes * sizeof(cufftReal), cudaMemcpyDeviceToDevice));
+      cuda_safe_mem( cudaMemcpy(ek_parameters.charge_potential_buffer, ek_parameters.charge_potential, sizeof(cufftComplex) * ek_parameters.dim_z * ek_parameters.dim_y * (ek_parameters.dim_x / 2 + 1), cudaMemcpyDeviceToDevice));
       electrostatics->calculatePotential((cufftComplex *)ek_parameters.charge_potential_buffer);
       KERNELCALL( ek_calc_electric_field, dim_grid, threads_per_block, (ek_parameters.charge_potential_buffer));
     }
-#endif
 
   if ( lbpar_gpu.number_of_particles != 0 ) //TODO make it an if number_of_charged_particles != 0
   {   
@@ -2619,15 +2611,13 @@ int ek_init() {
                              ek_parameters.number_of_nodes * 3 * sizeof( float ) ) );
 
 
-#ifdef EK_ELECTROSTATIC_COUPLING
     if(ek_parameters.es_coupling) {
     cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.charge_potential_buffer,
-                               ek_parameters.number_of_nodes * sizeof( cufftComplex ) ) );
+                               sizeof( cufftComplex ) * ek_parameters.dim_z * ek_parameters.dim_y * (ek_parameters.dim_x / 2 + 1) ) );
     cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.electric_field,
                                ek_parameters.number_of_nodes * 3 * sizeof( float ) ) );
   }
 
-#endif
 
     lb_get_device_values_pointer( &ek_lb_device_values );
     
@@ -3564,7 +3554,6 @@ LOOKUP_TABLE default\n",
   return 0;
 }
 
-#ifdef EK_ELECTROSTATIC_COUPLING
 int ek_print_vtk_particle_potential( char* filename ) {
 
   FILE* fp = fopen( filename, "w" );
@@ -3614,7 +3603,6 @@ LOOKUP_TABLE default\n",
   
   return 0;
 }
-#endif
 
 int ek_print_vtk_lbforce( char* filename ) {
 #ifndef EK_DEBUG
@@ -3828,12 +3816,10 @@ int ek_set_prefactor( double prefactor ) {
   ek_parameters.prefactor = prefactor;
   return 0;
 }
-#ifdef EK_ELECTROSTATIC_COUPLING
 int ek_set_electrostatics_coupling( bool electrostatics_coupling ) {
   ek_parameters.es_coupling = electrostatics_coupling;
   return 0;
 }
-#endif
 
 int ek_set_viscosity( double viscosity ) {
 
@@ -3959,7 +3945,6 @@ int ek_set_ext_force( int species,
 }
 
 
-#ifdef EK_ELECTROSTATIC_COUPLING
 struct ek_charge_of_particle
 {
   __device__ ekfloat operator()(CUDA_particle_data particle)
@@ -3980,7 +3965,7 @@ ekfloat ek_get_particle_charge () {
       thrust::plus<ekfloat>());
   return particle_charge;
 }
-#endif
+
 
 ekfloat ek_calculate_net_charge() {
   ekfloat charge = 0.0f;
@@ -3998,9 +3983,10 @@ ekfloat ek_calculate_net_charge() {
 
   cuda_safe_mem( cudaMemcpyFromSymbol(&charge, charge_gpu, sizeof(ekfloat), 0, cudaMemcpyDeviceToHost ) );
 
-#ifdef EK_ELECTROSTATIC_COUPLING
+
+if (ek_parameters.es_coupling) {
   charge += ek_get_particle_charge();
-#endif // EK_ELECTROSTATIC_COUPLING
+}
 
   return charge;
 }
@@ -4022,10 +4008,11 @@ int ek_neutralize_system(int species) {
 
   compensating_species_density = ek_parameters.density[species_index] - compensating_species_density / ek_parameters.valency[species_index];
 
-#ifdef EK_ELECTROSTATIC_COUPLING
+
+if (ek_parameters.es_coupling) {
   ekfloat particle_charge = ek_get_particle_charge();
   compensating_species_density -= particle_charge / ek_parameters.valency[species_index]  / (ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid) / double(ek_parameters.number_of_nodes);
-#endif // EK_ELECTROSTATIC_COUPLING
+}
 
 #else
   ekfloat charge = ek_calculate_net_charge();

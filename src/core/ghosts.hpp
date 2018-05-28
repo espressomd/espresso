@@ -190,9 +190,6 @@ void prepare_comm(GhostCommunicator *comm, int data_parts, int num);
 /** Free a communicator. */
 void free_comm(GhostCommunicator *comm);
 
-/** Initialize ghosts. */
-void ghost_init();
-
 /** do a ghost communication */
 void ghost_communicator(GhostCommunicator *gc);
 

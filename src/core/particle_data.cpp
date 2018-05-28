@@ -521,9 +521,17 @@ int set_particle_rotation(int part, int rot) {
   return ES_OK;
 }
 #endif
+#ifdef ROTATION
+int rotate_particle(int part, double axis[3], double angle) {
+  auto const pnode = get_particle_node(part);
+
+  mpi_rotate_particle(pnode, part, axis, angle);
+  return ES_OK;
+}
+#endif
 
 #ifdef AFFINITY
-int set_particle_affinity(int part, double bond_site[3]) {
+int set_particle_affinity(int part, const double bond_site[3]) {
   auto const pnode = get_particle_node(part);
 
   mpi_send_affinity(pnode, part, bond_site);
@@ -583,15 +591,6 @@ int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
 }
 #endif
 
-#ifdef MULTI_TIMESTEP
-int set_particle_smaller_timestep(int part, int smaller_timestep) {
-  auto const pnode = get_particle_node(part);
-
-  mpi_send_smaller_timestep_flag(pnode, part, smaller_timestep);
-  return ES_OK;
-}
-#endif
-
 int set_particle_q(int part, double q) {
   auto const pnode = get_particle_node(part);
 
@@ -625,12 +624,10 @@ int set_particle_type(int p_id, int type) {
     // it from the list which contains it
     auto const &cur_par = get_particle_data(p_id);
     int prev_type = cur_par.p.type;
-    if (prev_type != type and
-        particle_type_map.find(prev_type) != particle_type_map.end()) {
+    if (prev_type != type ) {
       // particle existed before so delete it from the list
       remove_id_from_map(p_id, prev_type);
     }
-
     add_id_to_type_map(p_id, type);
   }
 
@@ -810,8 +807,9 @@ int remove_particle(int p_id) {
   auto const pnode = get_particle_node(p_id);
 
   particle_node[p_id] = -1;
-
   mpi_remove_particle(pnode, p_id);
+
+  particle_node.erase(p_id);
 
   if (p_id == max_seen_particle) {
     max_seen_particle--;
@@ -855,7 +853,6 @@ void local_remove_particle(int part) {
     /* update the local_particles array for the moved particle */
     local_particles[p->p.identity] = p;
   }
-
   pl->n--;
 }
 
@@ -1210,7 +1207,8 @@ void init_type_map(int type) {
 }
 
 void remove_id_from_map(int part_id, int type) {
-  particle_type_map.at(type).erase(part_id);
+  if(particle_type_map.find(type)!=particle_type_map.end())
+    particle_type_map.at(type).erase(part_id);
 }
 
 int get_random_p_id(int type) {
@@ -1221,7 +1219,8 @@ int get_random_p_id(int type) {
 }
 
 void add_id_to_type_map(int part_id, int type) {
-  particle_type_map.at(type).insert(part_id);
+  if(particle_type_map.find(type)!=particle_type_map.end())
+    particle_type_map.at(type).insert(part_id);
 }
 
 int number_of_particles_with_type(int type) {
@@ -1269,12 +1268,6 @@ void pointer_to_vs_relative(Particle const *p, int const *&res1,
   res1 = &(p->p.vs_relative_to_particle_id);
   res2 = &(p->p.vs_relative_distance);
   res3 = (p->p.vs_relative_rel_orientation);
-}
-#endif
-
-#ifdef MULTI_TIMESTEP
-void pointer_to_smaller_timestep(Particle const *p, int const *&res) {
-  res = &(p->p.smaller_timestep);
 }
 #endif
 
@@ -1344,6 +1337,20 @@ void pointer_to_rotational_inertia(Particle const *p, double const *&res) {
   res = p->p.rinertia;
 }
 #endif
+
+#ifdef AFFINITY
+void pointer_to_bond_site(const Particle* p, const double*& res) {
+  res =p->p.bond_site;
+}
+#endif
+
+#ifdef MEMBRANE_COLLISION
+void pointer_to_out_direction(const Particle* p, const double*& res) {
+ res = p->p.out_direction;
+}
+#endif
+
+
 
 bool particle_exists(int part_id) {
   if (particle_node.empty())

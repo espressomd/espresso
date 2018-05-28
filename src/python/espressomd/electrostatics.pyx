@@ -24,35 +24,51 @@ from . import actors
 cimport globals
 import numpy as np
 IF SCAFACOS == 1:
-    from .scafacos import ScafacosConnector 
+    from .scafacos import ScafacosConnector
     from . cimport scafacos
 from espressomd.utils cimport handle_errors
 from espressomd.utils import is_valid_type
+from . cimport checks
+from .c_analyze cimport partCfg, PartCfg
+from .particle_data cimport particle
 
-def check_neutrality(system, _params):
-    if(len(system.part[:].q)>0 and _params["check_neutrality"]==True):
-        charges=system.part[:].q
-        total_charge=np.sum(charges)
-        min_abs_nonzero_charge = np.min(np.abs(charges[np.nonzero(charges)[0]]))
-        if abs(total_charge)/min_abs_nonzero_charge>1e-10:
-            raise ValueError("The system is not charge neutral. Please neutralize the system before adding a new actor via adding the corresponding counterions to the system. Alternatively you can turn off the electroneutrality check via supplying check_neutrality=False when creating the actor. In this case you may be simulating a non-neutral system which will affect physical observables like e.g. the pressure, the chemical potentials of charged species or potential energies of the system. Since simulations of non charge neutral systems are special please make sure you know what you are doing.")
 
-IF ELECTROSTATICS == 1: 
+IF ELECTROSTATICS == 1:
+    def check_neutrality(_params):
+        if "check_neutrality" in _params: 
+            if(_params["check_neutrality"]==True):
+                if not checks.check_charge_neutrality[PartCfg](partCfg()):
+                    raise Exception("""
+                    The system is not charge neutral. Please
+                    neutralize the system before adding a new actor via adding
+                    the corresponding counterions to the system. Alternatively
+                    you can turn off the electroneutrality check via supplying
+                    check_neutrality=False when creating the actor. In this
+                    case you may be simulating a non-neutral system which will
+                    affect physical observables like e.g. the pressure, the
+                    chemical potentials of charged species or potential
+                    energies of the system. Since simulations of non charge
+                    neutral systems are special please make sure you know what
+                    you are doing.
+                    """)
+
     cdef class ElectrostaticInteraction(actors.Actor):
         def _tune(self):
             raise Exception(
-                "Subclasses of ElectrostaticInteraction must define the _tune() method or chosen method does not support tuning.")
-    
+                "Subclasses of ElectrostaticInteraction must define the _tune() \
+                method or chosen method does not support tuning.")
+
         def _set_params_in_es_core(self):
             raise Exception(
-                "Subclasses of ElectrostaticInteraction must define the _set_params_in_es_core() method.")
+                "Subclasses of ElectrostaticInteraction must define the \
+                _set_params_in_es_core() method.")
 
         def _deactivate_method(self):
             deactivate_coulomb_method()
             handle_errors("Coulom method deactivation")
-    
+
         def Tune(self, **subsetTuneParams):
-    
+
             # Override default parmas with subset given by user
             tuneParams = self.default_params()
             if not subsetTuneParams == None:
@@ -60,14 +76,14 @@ IF ELECTROSTATICS == 1:
                     if k not in self.valid_keys():
                         raise ValueError(k + " is not a valid parameter")
                 tuneParams.update(subsetTuneParams)
-    
+
             # If param is 'required', it was set before, so don't change it
             # Do change it if it's given to Tune() by user
             for param in tuneParams.iterkeys():
                 if not param in self.required_keys() or (not subsetTuneParams == None and param in subsetTuneParams.keys()):
                     self._params[param] = tuneParams[param]
             self._tune()
-    
+
 IF COULOMB_DEBYE_HUECKEL:
     cdef class CDH(ElectrostaticInteraction):
         """ Hybrid method to solve electrostatic interactions, on short length
@@ -77,22 +93,24 @@ IF COULOMB_DEBYE_HUECKEL:
 
         Parameters
         ----------
-        prefactor      : float
-                             Electrostatics prefactor (see :eq:`coulomb_prefactor`)
-        kappa               : float
-                              Inverse Debye screening length
-        r_cut               : float 
-                              Cut off radius for this interaction
-        eps_int             : float
-                              Relative permitivity in the interior region r<r1
-        eps_ext             : float
-                              Relative permitivity in the exterior region r>r1
-        r0                  : float
-                              Radius that defines the region where electrostatics are not screened, classical Coulomb potential.
-        r1                  : float
-                              Radius for the transition region from pure Coulomb to Debye-Hueckel
-        alpha               : float
-                              Controls the transition between the pure Coulomb and Debye Hueckel regions
+        prefactor : :obj:`float`
+            Electrostatics prefactor (see :eq:`coulomb_prefactor`).
+        kappa : :obj:`float`
+            Inverse Debye screening length.
+        r_cut : :obj:`float`
+            Cut off radius for this interaction.
+        eps_int : :obj:`float`
+            Relative permitivity in the interior region r<r1.
+        eps_ext : :obj:`float`
+            Relative permitivity in the exterior region r>r1.
+        r0 : :obj:`float`
+            Radius that defines the region where electrostatics are not
+            screened, classical Coulomb potential.
+        r1 : :obj:`float`
+            Radius for the transition region from pure Coulomb to Debye-Hueckel.
+        alpha : :obj:`float`
+            Controls the transition between the pure Coulomb and Debye Hueckel
+            regions.
 
         """
         def validate_params(self):
@@ -132,7 +150,7 @@ IF COULOMB_DEBYE_HUECKEL:
             return params
 
         def _activate_method(self):
-            check_neutrality(self.system, self._params)
+            check_neutrality(self._params)
             coulomb.method = COULOMB_DH
             self._set_params_in_es_core()
 
@@ -151,17 +169,17 @@ ELSE:
     IF ELECTROSTATICS:
         cdef class DH(ElectrostaticInteraction):
             """
-            Solve electrostatics in the Debye-Hueckel framework see :ref:`Debye-Hückel potential`
-            for more details.
+            Solve electrostatics in the Debye-Hueckel framework see
+            :ref:`Debye-Hückel potential` for more details.
 
             Parameters
             ----------
-            prefactor  : float
-                             Electrostatics prefactor (see :eq:`coulomb_prefactor`)
-            kappa           : float
-                              Inverse Debye sreening length
-            r_cut           : float
-                              Cut off radius for this interaction
+            prefactor : :obj:`float`
+                Electrostatics prefactor (see :eq:`coulomb_prefactor`).
+            kappa : :obj:`float`
+                Inverse Debye sreening length.
+            r_cut : :obj:`float`
+                Cut off radius for this interaction.
 
             """
             def validate_params(self):
@@ -189,7 +207,7 @@ ELSE:
                 return params
 
             def _activate_method(self):
-                check_neutrality(self.system, self._params)
+                check_neutrality(self._params)
                 coulomb.method = COULOMB_DH
                 self._set_params_in_es_core()
 
@@ -208,42 +226,34 @@ IF P3M == 1:
             P3M electrostatics solver.
 
             Particle–Particle-Particle–Mesh (P3M) is a Fourier-based Ewald
-            summation method to calculate potentials in N-body simulation.  
+            summation method to calculate potentials in N-body simulation.
 
             Parameters
             ----------
-            prefactor : float
-                    Electrostatics prefactor (see :eq:`coulomb_prefactor`)
-            accuracy : float
-                       P3M tunes its parameters to provide this target accuracy.
-
-            alpha : float, optional 
-                    The Ewald parameter.
-
-            cao : float, optional 
-                  The charge-assignment order, an integer between 0 and 7.
-
-            epsilon : string, optional
-                      Use 'metallic' to set the dielectric constant of the
-                      surrounding medium to infinity (Default).
-
-            epsilon : float, optional
-                      A positive number for the dielectric constant of the
-                      surrounding medium.
-
-            mesh : int, optional 
-                   The number of mesh points
-
+            prefactor : :obj:`float`
+                Electrostatics prefactor (see :eq:`coulomb_prefactor`).
+            accuracy : :obj:`float`
+                P3M tunes its parameters to provide this target accuracy.
+            alpha : :obj:`float`, optional
+                The Ewald parameter.
+            cao : :obj:`float`, optional
+                The charge-assignment order, an integer between 0 and 7.
+            epsilon : :obj:`str`, optional
+                Use 'metallic' to set the dielectric constant of the
+                surrounding medium to infinity (Default).
+            epsilon : :obj:`float`, optional
+                A positive number for the dielectric constant of the
+                surrounding medium.
+            mesh : :obj:`int`, optional
+                The number of mesh points.
             mesh : array_like, optional
-                   The number of mesh points in x, y and z direction. This is
-                   relevant for 8 noncubic boxes.
-
-            r_cut : float, optional
-                    The real space cutoff.
-
-            tune : bool, optional
-                   Used to activate/deactivate the tuning method on activation.
-                   Defaults to True
+                The number of mesh points in x, y and z direction. This is
+                relevant for noncubic boxes.
+            r_cut : :obj:`float`, optional
+                The real space cutoff.
+            tune : :obj:`bool`, optional
+                Used to activate/deactivate the tuning method on activation.
+                Defaults to True.
 
             """
             super(type(self), self).__init__(*args, **kwargs)
@@ -317,11 +327,11 @@ IF P3M == 1:
         def _set_params_in_es_core(self):
             #Sets lb, bcast, resets vars to zero if lb=0
             coulomb_set_prefactor(self._params["prefactor"])
-            #Sets cdef vars and calls p3m_set_params() in core 
+            #Sets cdef vars and calls p3m_set_params() in core
             python_p3m_set_params(self._params["r_cut"],
                         self._params["mesh"], self._params["cao"],
                         self._params["alpha"], self._params["accuracy"])
-            #p3m_set_params()  -> set r_cuts, mesh, cao, validates sanity, bcasts 
+            #p3m_set_params()  -> set r_cuts, mesh, cao, validates sanity, bcasts
             #Careful: bcast calls on_coulomb_change(), which calls p3m_init(),
             #         which resets r_cut if lb is zero. OK.
             #Sets eps, bcast
@@ -341,7 +351,7 @@ IF P3M == 1:
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
-            check_neutrality(self.system, self._params)
+            check_neutrality(self._params)
             if self._params["tune"]:
                 self._tune()
             self._set_params_in_es_core()
@@ -354,42 +364,34 @@ IF P3M == 1:
                 P3M electrostatics solver with GPU support.
 
                 Particle–Particle-Particle–Mesh (P3M) is a Fourier-based Ewald
-                summation method to calculate potentials in N-body simulation.  
+                summation method to calculate potentials in N-body simulation.
 
                 Parameters
                 ----------
-                prefactor : float
-                           Electrostatics prefactor (see :eq:`coulomb_prefactor`)
-                accuracy : float
-                           P3M tunes its parameters to provide this target accuracy.
-
-                alpha : float, optional 
-                        The Ewald parameter.
-
-                cao : float, optional 
-                      The charge-assignment order, an integer between 0 and 7.
-
-                epsilon : string, optional
-                          Use 'metallic' to set the dielectric constant of the
-                          surrounding medium to infinity (Default).
-
-                epsilon : float, optional
-                          A positive number for the dielectric constant of the
-                          surrounding medium.
-
-                mesh : int, optional 
-                       The number of mesh points
-
+                prefactor : :obj:`float`
+                    Electrostatics prefactor (see :eq:`coulomb_prefactor`).
+                accuracy : :obj:`float`
+                    P3M tunes its parameters to provide this target accuracy.
+                alpha : :obj:`float`, optional
+                    The Ewald parameter.
+                cao : :obj:`float`, optional
+                    The charge-assignment order, an integer between 0 and 7.
+                epsilon : :obj:`str`, optional
+                    Use 'metallic' to set the dielectric constant of the
+                    surrounding medium to infinity (Default).
+                epsilon : :obj:`float`, optional
+                    A positive number for the dielectric constant of the
+                    surrounding medium.
+                mesh : :obj:`int`, optional
+                    The number of mesh points.
                 mesh : array_like, optional
-                       The number of mesh points in x, y and z direction. This is
-                       relevant for 8 noncubic boxes.
-
-                r_cut : float, optional
-                        The real space cutoff.
-
-                tune : bool, optional
-                       Used to activate/deactivate the tuning method on activation.
-                       Defaults to True
+                    The number of mesh points in x, y and z direction. This is
+                    relevant for noncubic boxes.
+                r_cut : :obj:`float`, optional
+                    The real space cutoff
+                tune : :obj:`bool`, optional
+                    Used to activate/deactivate the tuning method on activation.
+                    Defaults to True.
 
                 """
                 super(type(self), self).__init__(*args, **kwargs)
@@ -466,7 +468,7 @@ IF P3M == 1:
                 self._params.update(self._get_params_from_es_core())
 
             def _activate_method(self):
-                check_neutrality(self.system, self._params)
+                check_neutrality(self._params)
                 python_p3m_gpu_init(self._params)
                 coulomb.method = COULOMB_P3M_GPU
                 if self._params["tune"]:
@@ -491,15 +493,15 @@ IF ELECTROSTATICS:
 
         Parameters
         ----------
-        prefactor      : float
-                             Electrostatics prefactor (see :eq:`coulomb_prefactor`)
-        maxWPerror          : float
-                              Maximal pairwise error
-        far_switch_radius   : float, optional
-                              Radius where near-field and far-field calculation are switched
-        bessel_cutoff       : int, optional
-        tune                : bool, optional
-                              Specify whether to automatically tune ore not. The default is True.
+        prefactor : :obj:`float`
+            Electrostatics prefactor (see :eq:`coulomb_prefactor`).
+        maxWPerror : :obj:`float`
+            Maximal pairwise error.
+        far_switch_radius : :obj:`float`, optional
+            Radius where near-field and far-field calculation are switched.
+        bessel_cutoff : :obj:`int`, optional
+        tune : :obj:`bool`, optional
+            Specify whether to automatically tune ore not. The default is True.
         """
 
         def validate_params(self):
@@ -549,7 +551,7 @@ IF ELECTROSTATICS:
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
-            check_neutrality(self.system, self._params)
+            check_neutrality(self._params)
             coulomb.method = COULOMB_MMM1D
             self._set_params_in_es_core()
             if self._params["tune"]:
@@ -565,15 +567,15 @@ IF ELECTROSTATICS and MMM1D_GPU:
 
         Parameters
         ----------
-        prefactor      : float
-                             Electrostatics prefactor (see :eq:`coulomb_prefactor`)
-        maxWPerror          : float
-                              Maximal pairwise error
-        far_switch_radius   : float, optional
-                              Radius where near-field and far-field calculation are switched
-        bessel_cutoff       : int, optional
-        tune                : bool, optional
-                              Specify whether to automatically tune ore not. The default is True.
+        prefactor : :obj:`float`
+            Electrostatics prefactor (see :eq:`coulomb_prefactor`).
+        maxWPerror : :obj:`float`
+            Maximal pairwise error.
+        far_switch_radius : :obj:`float`, optional
+            Radius where near-field and far-field calculation are switched
+        bessel_cutoff : :obj:`int`, optional
+        tune : :obj:`bool`, optional
+            Specify whether to automatically tune ore not. The default is True.
         """
         cdef Mmm1dgpuForce * thisptr
         cdef EspressoSystemInterface * interface
@@ -634,67 +636,60 @@ IF ELECTROSTATICS and MMM1D_GPU:
                               "maxPWerror"], self._params["far_switch_radius"], self._params["bessel_cutoff"])
 
         def _activate_method(self):
-            check_neutrality(self.system, self._params)
+            check_neutrality(self._params)
             self._set_params_in_es_core()
             coulomb.method = COULOMB_MMM1D_GPU
             if self._params["tune"]:
                 self._tune()
-
             self._set_params_in_es_core()
 
 IF ELECTROSTATICS:
     cdef class MMM2D(ElectrostaticInteraction):
         """
-        Electrostatics solver for systems with two periodic dimensions. 
+        Electrostatics solver for systems with two periodic dimensions.
         More detail are in the user guide :ref:`MMM2D Theory`
 
         Parameters
         ----------
-        prefactor          : float
-                                  Electrostatics prefactor (see :eq:`coulomb_prefactor`)
-        maxWPerror              : float
-                                  Maximal pairwise error
-        dielectric              : int, optional
-                                  Selector parameter for setting the dielectric
-                                  constants manually (top, mid, bottom), mutually
-                                  exclusive with dielectric-contrast
-        top                     : float, optional
-                                  If dielectric is specified this paramter sets the
-                                  dielectric constant *above* the simulation box
-                                  :math:`\\varepsilon_\\mathrm{top}`
-        mid                     : float, optional
-                                  If dielectric is specified this paramter sets the
-                                  dielectric constant *in* the simulation box
-                                  :math:`\\varepsilon_\\mathrm{mid}`
-        bottom                  : float, optional
-                                  If dielectric is specified this paramter sets the
-                                  dielectric constant *below* the simulation box
-                                  :math:`\\varepsilon_\\mathrm{bot}`
-        dielectric_contrast_on  : int, optional 
-                                  Selector parameter for setting a dielectric
-                                  contrast between the upper simulation boundary
-                                  and the simulation box, and between the lower
-                                  simulation boundary and the simulation box,
-                                  respectively.
-        delta_mid_top           : float, optional
-                                  If dielectric-contrast mode is selected, then
-                                  this parameter sets the dielectric contrast
-                                  between the upper boundary and the simulation
-                                  box :math:`\\Delta_t`.
-        delta_mid_bottom        : float, optional
-                                  If dielectric-contrast mode is selected, then
-                                  this parameter sets the dielectric contrast
-                                  between the lower boundary and the simulation
-                                  box :math:`\\Delta_b`.
-        const_pot               : int, optional
-                                  Selector parameter for setting a constant
-                                  electric potential between the top and bottom
-                                  of the simulation box.
-        pot_diff                : float, optional
-                                  If const_pot mode is selected this parameter
-                                  controls the applied voltage.
-        far_cut                 : float, optional
-                                  Cut off radius, use with care, intended for testing purposes. 
+        prefactor : :obj:`float`
+            Electrostatics prefactor (see :eq:`coulomb_prefactor`).
+        maxWPerror : :obj:`float`
+            Maximal pairwise error.
+        dielectric : :obj:`int`, optional
+            Selector parameter for setting the dielectric constants manually
+            (top, mid, bottom), mutually exclusive with dielectric-contrast
+        top : :obj:`float`, optional
+            If dielectric is specified this paramter sets the dielectric
+            constant *above* the simulation box
+            :math:`\\varepsilon_\\mathrm{top}`
+        mid : :obj:`float`, optional
+            If dielectric is specified this paramter sets the dielectric
+            constant *in* the simulation box :math:`\\varepsilon_\\mathrm{mid}`.
+        bottom : :obj:`float`, optional
+            If dielectric is specified this paramter sets the dielectric
+            constant *below* the simulation box
+            :math:`\\varepsilon_\\mathrm{bot}`.
+        dielectric_contrast_on : :obj:`int`, optional
+            Selector parameter for setting a dielectric contrast between the
+            upper simulation boundary and the simulation box, and between the
+            lower simulation boundary and the simulation box, respectively.
+        delta_mid_top : :obj:`float`, optional
+            If dielectric-contrast mode is selected, then this parameter sets
+            the dielectric contrast between the upper boundary and the
+            simulation box :math:`\\Delta_t`.
+        delta_mid_bottom : :obj:`float`, optional
+            If dielectric-contrast mode is selected, then this parameter sets
+            the dielectric contrast between the lower boundary and the
+            simulation box :math:`\\Delta_b`.
+        const_pot : :obj:`int`, optional
+            Selector parameter for setting a constant electric potential
+            between the top and bottom of the simulation box.
+        pot_diff : :obj:`float`, optional
+            If const_pot mode is selected this parameter controls the applied
+            voltage.
+        far_cut : :obj:`float`, optional
+            Cut off radius, use with care, intended for testing purposes.
+
         """
         def validate_params(self):
             default_params = self.default_params()
@@ -761,7 +756,7 @@ IF ELECTROSTATICS:
                 raise Exception("MMM2D setup failed")
 
         def _activate_method(self):
-            check_neutrality(self.system, self._params)
+            check_neutrality(self._params)
             coulomb.method = COULOMB_MMM2D
             self._set_params_in_es_core()
             MMM2D_init()
@@ -784,7 +779,7 @@ IF ELECTROSTATICS:
                 actors.Actor.__init__(self, *args, **kwargs)
 
             def _activate_method(self):
-                check_neutrality(self.system, self._params)
+                check_neutrality(self._params)
                 coulomb_set_prefactor(self._params["prefactor"])
                 self._set_params_in_es_core()
                 mpi_bcast_coulomb_params()

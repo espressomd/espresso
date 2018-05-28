@@ -81,11 +81,9 @@ typedef struct {
   bool fluctuations;
   bool advection;
   bool fluidcoupling_ideal_contribution;
-#ifdef EK_ELECTROSTATIC_COUPLING
   bool es_coupling;
   float *charge_potential_buffer;
   float *electric_field;
-#endif
   float* charge_potential;
   ekfloat* j;
   float* lb_force_previous;
@@ -154,6 +152,7 @@ extern EK_parameters ek_parameters;
 extern int ek_initialized;
 
 void ek_integrate();
+void ek_integrate_electrostatics();
 void ek_print_parameters();
 void ek_print_lbpar();
 void lb_set_ek_pointer(EK_parameters* pointeradress);
@@ -163,9 +162,7 @@ int ek_print_vtk_flux(int species, char* filename);
 int ek_print_vtk_flux_fluc(int species, char* filename);
 int ek_print_vtk_flux_link(int species, char* filename);
 int ek_print_vtk_potential(char* filename);
-#ifdef EK_ELECTROSTATIC_COUPLING
 int ek_print_vtk_particle_potential( char* filename );
-#endif
 int ek_print_vtk_lbforce(char* filename);
 int ek_lb_print_vtk_density(char* filename);
 int ek_lb_print_vtk_velocity(char* filename);
@@ -176,10 +173,8 @@ int ek_set_viscosity(double viscosity);
 int ek_set_friction(double friction);
 int ek_set_T(double T);
 int ek_set_prefactor(double prefactor);
-#ifdef EK_ELECTROSTATIC_COUPLING
 int ek_set_electrostatics_coupling( bool electrostatics_coupling );
 void ek_calculate_electrostatic_coupling();
-#endif
 int ek_set_bulk_viscosity(double bulk_viscosity);
 int ek_set_gamma_odd(double gamma_odd);
 int ek_set_gamma_even(double gamma_even);

@@ -58,7 +58,7 @@ Hand-in-hand with the extensibility and readability of the code comes the
 flexibility of the whole program. On the one hand, it is provided by the
 generalized functionality of its parts, avoiding highly specialized functions.
 An example can be the implementation of the Generic Lennard-Jones potential
-described in section :ref:`Generic Lennard-Jones interaction` where the user
+described in section :ref:`Generic Lennard-Jones interaction` where the user
 can change all available parameters. Where possible, default values are
 avoided, providing the user with the possibility of choice. |es| cannot be
 aware whether your particles are representing atoms or billard balls, so it
@@ -296,7 +296,7 @@ There is a number of tutorials that guide you through the different features of 
 * `Raspberry electrophoresis              <https://github.com/espressomd/espresso/blob/python/doc/tutorials/05-raspberry_electrophoresis/05-raspberry_electrophoresis.pdf>`_
 * `Electrokinetics                        <https://github.com/espressomd/espresso/blob/python/doc/tutorials/07-electrokinetics/07-electrokinetics.pdf>`_
 * `Visualization                          <https://github.com/espressomd/espresso/blob/python/doc/tutorials/08-visualization/08-visualization.pdf>`_
-* `Catalytic reactions                    <https://github.com/espressomd/espresso/blob/python/doc/tutorials/09-catalytic_reactions/09-catalytic_reactions.pdf>`_
+* `Swimmer reactions                    <https://github.com/espressomd/espresso/blob/python/doc/tutorials/09-swimmer_reactions/09-swimmer_reactions.pdf>`_
 
 You can also find the tutorials and related scripts in the directory ``/doc/tutorials``.
 
@@ -394,14 +394,14 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
 * ``slice_input.py``
     Uses python array slicing to set and extract various particle properties.
 
+* ``visualization.py``
+    A visualization for mayavi/opengl of the lj-liquid with interactive plotting.
+
 * ``visualization_bonded.py``
     Opengl visualization for bonds.
 
-* ``visualization_openGL.py``
-    Sample for an opengl visualization with user-defined keyboard- and timed callbacks.
-
-* ``visualization.py``
-    A visualization for mayavi/opengl of the lj-liquid with interactive plotting.
+* ``visualization_interactive.py``
+    Sample for an interactive opengl visualization with user-defined keyboard- and timed callbacks.
 
 * ``visualization_npt.py``
     Simple test visualization for the NPT ensemble.
@@ -414,6 +414,12 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
 
 * ``visualization_mmm2d.py``
     A visual sample for a constant potential plate capacitor simulated with mmm2d.
+
+* ``visualization_charged.py``
+    Molten NaCl and larger, charged particles simulated with p3m.
+
+* ``visualization_cellsystem.py``
+    Node grid and cell grid visualization. Run in parallel for particle coloring by node.
 
 .. _On units:
 
@@ -588,17 +594,19 @@ report so to the developers.
 +--------------------------------+------------------------+------------------+------------+
 |                               **Miscellaneous**                                         |
 +--------------------------------+------------------------+------------------+------------+
-| Grand canonical feature        | Single                 | Single           | No         |
-+--------------------------------+------------------------+------------------+------------+
 | Electrokinetics                | Group                  | Group            | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 | Collision Detection            | Group                  | Group            | Yes        |
 +--------------------------------+------------------------+------------------+------------+
-| Catalytic Reactions            | Single                 | Single           | Yes        |
+| Swimmer Reactions              | Single                 | Single           | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 | Reaction Ensemble              | Group                  | Group            | Yes        |
 +--------------------------------+------------------------+------------------+------------+
+| Constant pH Method             | Group                  | Group            | Yes        |
++--------------------------------+------------------------+------------------+------------+
 | Object-in-fluid                | Group                  | Group            | Yes        |
++--------------------------------+------------------------+------------------+------------+
+| Immersed boundary method       | Group                  | Group            | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 | DPD                            | Single                 | Good             | Yes        |
 +--------------------------------+------------------------+------------------+------------+

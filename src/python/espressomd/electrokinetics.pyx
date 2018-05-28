@@ -44,8 +44,8 @@ IF ELECTROKINETICS:
             
             """
 
-            return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "prefactor", "stencil", "advection", "fluid_coupling", "fluctuations", "fluctuation_amplitude"
 
+            return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "prefactor", "stencil", "advection", "fluid_coupling", "es_coupling", "fluctuations", "fluctuation_amplitude"
 
         def required_keys(self):
             """
@@ -75,6 +75,7 @@ IF ELECTROKINETICS:
                     "fluid_coupling": "friction",
                     "fluctuations" : False,
                     "fluctuation_amplitude" : 0.0}
+                    "es_coupling": False}
 
         def _get_params_from_es_core(self):
             if ek_parameters.stencil == 0:
@@ -105,6 +106,7 @@ IF ELECTROKINETICS:
                     "fluid_coupling": fluid_coupling,
                     "fluctuations": ek_parameters.fluctuations,
                     "fluctuation_amplitude": ek_parameters.fluctuation_amplitude}
+                    "es_coupling": ek_parameters.es_coupling}
 
 
         def _set_params_in_es_core(self):
@@ -132,6 +134,7 @@ IF ELECTROKINETICS:
             ek_set_advection(self._params["advection"])
             ek_set_fluctuations(self._params["fluctuations"])
             ek_set_fluctuation_amplitude(self._params["fluctuation_amplitude"])
+            ek_set_electrostatics_coupling(self._params["es_coupling"])
 
 
         def set_density(self, species=None, density=None, node=None):
@@ -316,10 +319,10 @@ IF ELECTROKINETICS:
             
             """
 
-            IF EK_ELECTROSTATIC_COUPLING:
+            if self._params["es_coupling"]:
                 ek_print_vtk_particle_potential(utils.to_char_pointer(path))
-            ELSE:
-                raise Exception("'EK_ELECTROSTATIC_COUPLING' ist not active.")
+            else:
+                raise Exception("'es_coupling' is set to false, can't print particle_potential.")
 
 
         # TODO:
