@@ -207,10 +207,9 @@ cdef class System(object):
         """
         def __get__(self):
             return self.globals.force_cap
-            return forcecap_get()
 
         def __set__(self, cap):
-            forcecap_set(cap)
+            self.globals.force_cap = cap
 
     property periodicity:
         """
