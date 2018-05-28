@@ -643,7 +643,7 @@ void dp3m_dipole_assign(void) {
 
   for (auto const &p : local_cells.particles()) {
     if (p.p.dipm != 0.0) {
-      dp3m_assign_dipole(p.r.p, p.p.dipm, p.r.dip, cp_cnt);
+      dp3m_assign_dipole(p.r.p.data(), p.p.dipm, p.r.dip.data(), cp_cnt);
       cp_cnt++;
     }
   }

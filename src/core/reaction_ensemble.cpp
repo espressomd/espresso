@@ -116,13 +116,13 @@ int ReactionAlgorithm::do_reaction(int reaction_steps) {
 * Adds a reaction to the reaction system
 */
 void ReactionAlgorithm::add_reaction(
-    double Gamma, const std::vector<int> &_reactant_types,
+    double gamma, const std::vector<int> &_reactant_types,
     const std::vector<int> &_reactant_coefficients,
     const std::vector<int> &_product_types,
     const std::vector<int> &_product_coefficients) {
   SingleReaction new_reaction;
 
-  new_reaction.Gamma = Gamma;
+  new_reaction.gamma = gamma;
   new_reaction.reactant_types = _reactant_types;
   new_reaction.reactant_coefficients = _reactant_coefficients;
   new_reaction.product_types = _product_types;
@@ -361,7 +361,7 @@ double ReactionEnsemble::calculate_acceptance_probability(
   const double beta = 1.0 / temperature;
   // calculate boltzmann factor
   return std::pow(volume * beta, current_reaction.nu_bar) *
-         current_reaction.Gamma * factorial_expr *
+         current_reaction.gamma * factorial_expr *
          exp(-beta * (E_pot_new - E_pot_old));
 }
 
@@ -713,7 +713,7 @@ int ReactionAlgorithm::create_particle(int desired_type) {
                                       // of almost zero and
                                       // therefore do not contribute
                                       // to ensemble averages.
-  if (min_dist != 0) {
+  if (min_dist > 0.0) {
     while (particle_inserted_too_close_to_another_one &&
            insert_tries < max_insert_tries) {
       pos_vec = get_random_position_in_box();
@@ -748,7 +748,7 @@ int ReactionAlgorithm::create_particle(int desired_type) {
     set_particle_q(p_id, charge);
 #endif
   }
-  if (insert_tries > max_insert_tries) {
+  if (insert_tries >= max_insert_tries) {
     throw std::runtime_error("No particle inserted");
   }
   return p_id;
@@ -1189,13 +1189,13 @@ int WangLandauReactionEnsemble::initialize_wang_landau() {
           collective_variables[new_CV_i]->delta_CV) +
       1; //+1 for collecive variables which are of type degree of association
 
-  // construct (possibly higher dimensional) histogram over Gamma (the room
+  // construct (possibly higher dimensional) histogram over gamma (the room
   // which should be equally sampled when the wang-landau algorithm has
   // converged)
   int needed_bins = get_num_needed_bins();
   histogram.resize(needed_bins, 0); // initialize new values with 0
 
-  // construct (possibly higher dimensional) wang_landau potential over Gamma
+  // construct (possibly higher dimensional) wang_landau potential over gamma
   // (the room which should be equally sampled when the wang-landau algorithm
   // has converged)
   wang_landau_potential.resize(needed_bins, 0); // initialize new values with 0
@@ -1228,7 +1228,7 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
     double factorial_expr =
         calculate_factorial_expression(current_reaction, old_particle_numbers);
     bf = std::pow(volume * beta, current_reaction.nu_bar) *
-         current_reaction.Gamma * factorial_expr;
+         current_reaction.gamma * factorial_expr;
   }
 
   if (!do_energy_reweighting) {
@@ -1236,7 +1236,7 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
   } else {
     // pass
   }
-  // look wether the proposed state lies in the reaction coordinate space Gamma
+  // look wether the proposed state lies in the reaction coordinate space gamma
   // and add the Wang-Landau modification factor, this is a bit nasty due to the
   // energy collective variable case (memory layout of storage array of the
   // histogram and the wang_landau_potential values is "cuboid")
@@ -1259,24 +1259,24 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
     } else {
       if (histogram[new_state_index] >= 0 && histogram[old_state_index] < 0)
         bf = 10; // this makes the reaction get accepted, since we found a state
-                 // in Gamma
+                 // in gamma
       else if (histogram[new_state_index] < 0 && histogram[old_state_index] < 0)
         bf = 10; // accept, in order to be able to sample new configs, which
-                 // might lie in Gamma
+                 // might lie in gamma
       else if (histogram[new_state_index] < 0 &&
                histogram[old_state_index] >= 0)
         bf = -10; // this makes the reaction get rejected, since the new state
-                  // is not in Gamma while the old sate was in Gamma
+                  // is not in gamma while the old sate was in gamma
     }
   } else if (old_state_index < 0 && new_state_index >= 0) {
     bf = 10; // this makes the reaction get accepted, since we found a state in
-             // Gamma
+             // gamma
   } else if (old_state_index < 0 && new_state_index < 0) {
     bf = 10; // accept, in order to be able to sample new configs, which might
-             // lie in Gamma
+             // lie in gamma
   } else if (old_state_index >= 0 && new_state_index < 0) {
     bf = -10; // this makes the reaction get rejected, since the new state is
-              // not in Gamma while the old sate was in Gamma
+              // not in gamma while the old sate was in gamma
   }
   return bf;
 }
@@ -1575,7 +1575,7 @@ int WangLandauReactionEnsemble::
 *sampled.
 *use with caution otherwise you produce unpyhsical results, do only use when you
 *know what you want to do. This can make wang landau converge on a reduced set
-*Gamma. use this function e.g. in do_reaction_wang_landau() for the diprotonic
+*gamma. use this function e.g. in do_reaction_wang_landau() for the diprotonic
 *acid
 *compare "Wang-Landau sampling with self-adaptive range" by Troester and Dellago
 */
@@ -1696,9 +1696,10 @@ int WangLandauReactionEnsemble::load_wang_landau_checkpoint(
 }
 
 int ConstantpHEnsemble::get_random_valid_p_id() {
-  int random_p_id = i_random(max_seen_particle);
-  while (is_in_list(random_p_id, m_empty_p_ids_smaller_than_max_seen_particle))
-    random_p_id = i_random(max_seen_particle);
+  int random_p_id = i_random(max_seen_particle+1);
+  //draw random p_ids till we draw a pid which exists
+  while (not particle_exists(random_p_id))
+    random_p_id = i_random(max_seen_particle+1);
   return random_p_id;
 }
 
@@ -1710,7 +1711,7 @@ int ConstantpHEnsemble::get_random_valid_p_id() {
 * Note that there is a difference in the usecase of the constant pH reactions
 * and the above reaction ensemble. For the constant pH simulation directily the
 * **apparent equilibrium constant which carries a unit** needs to be provided --
-* this is different from the reaction ensemble above, where the dimensionless
+* this is equivalent to the gamma of the reaction ensemble above, where the dimensionless
 * reaction constant needs to be provided. Again: For the constant-pH algorithm
 * not the dimensionless reaction constant needs to be provided here, but the
 * apparent reaction constant.
@@ -1756,7 +1757,6 @@ int ConstantpHEnsemble::do_reaction(int reaction_steps) {
         }
       }
     }
-
     // randomly select a reaction to be performed
     int reaction_id = list_of_reaction_ids_with_given_reactant_type[i_random(
         list_of_reaction_ids_with_given_reactant_type.size())];
@@ -1778,11 +1778,11 @@ double ConstantpHEnsemble::calculate_acceptance_probability(
   double pKa;
   const double beta = 1.0 / temperature;
   if (current_reaction.nu_bar > 0) { // deprotonation of monomer
-    pKa = -log10(current_reaction.Gamma);
+    pKa = -log10(current_reaction.gamma);
     ln_bf =
         (E_pot_new - E_pot_old) - 1.0 / beta * log(10) * (m_constant_pH - pKa);
   } else { // protonation of monomer (yields neutral monomer)
-    pKa = -(-log10(current_reaction.Gamma)); // additional minus,
+    pKa = -(-log10(current_reaction.gamma)); // additional minus,
                                              // since in this
                                              // case 1/Ka is
                                              // stored in the
@@ -1824,9 +1824,9 @@ double WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
   restore_properties(changed_particles_properties, number_of_saved_properties);
 
   double const exponential = exp(-1.0 / temperature * (E_pot_new - E_pot_old));
-  summed_exponentials += exponential;
-  number_of_insertions += 1;
-  double const average_exponential = summed_exponentials / number_of_insertions;
+  summed_exponentials[reaction_id] += exponential;
+  number_of_insertions[reaction_id] += 1;
+  double const average_exponential = summed_exponentials[reaction_id] / number_of_insertions[reaction_id];
   return -temperature * log(average_exponential);
 }
 

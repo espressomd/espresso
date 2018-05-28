@@ -26,10 +26,6 @@ from libcpp.memory cimport unique_ptr
 
 include "myconfig.pxi"
 
-cdef extern from "Vector.hpp":
-    cppclass Vector3d:
-        double & operator[](int i)
-
 # Import particle data structures and setter functions from particle_data.hpp
 
 cdef extern from "particle_data.hpp":
@@ -50,7 +46,7 @@ cdef extern from "particle_data.hpp":
         double p[3]
 
     ctypedef struct particle_force "ParticleForce":
-        double f[3]
+        Vector3d f
 
     ctypedef struct particle_momentum "ParticleMomentum":
         double v[3]
@@ -92,7 +88,7 @@ cdef extern from "particle_data.hpp":
 
     int set_particle_v(int part, double v[3])
 
-    int set_particle_f(int part, double F[3])
+    int set_particle_f(int part, const Vector3d &F)
 
     int set_particle_solvation(int part, double * solvation)
 

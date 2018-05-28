@@ -204,23 +204,23 @@ struct ParticleProperties {
     communicated to calculate interactions with ghost particles. */
 struct ParticlePosition {
   /** periodically folded position. */
-  double p[3] = {0, 0, 0};
+  Vector3d p = {0, 0, 0};
 
 #ifdef ROTATION
   /** quaternions to define particle orientation */
-  double quat[4] = {1., 0., 0., 0.};
+  Vector<4, double> quat = {1., 0., 0., 0.};
   /** unit director calculated from the quaternions */
-  double quatu[3]{0., 0., 1.};
+  Vector3d quatu{0., 0., 1.};
 #endif
 
 #ifdef DIPOLES
   /** dipol moment. This is synchronized with quatu and quat. */
-  double dip[3] = {0., 0., 0.};
+  Vector3d dip = {0., 0., 0.};
 #endif
 
 #ifdef BOND_CONSTRAINT
   /**stores the particle position at the previous time step*/
-  double p_old[3] = {0., 0., 0.};
+  Vector3d p_old = {0., 0., 0.};
 #endif
 
 #ifdef SHANCHEN
@@ -233,7 +233,7 @@ struct ParticlePosition {
     collected and added up to the force of the original particle. */
 struct ParticleForce {
   /** force. */
-  double f[3] = {0., 0., 0.};
+  Vector3d f = {0., 0., 0.};
 
 #ifdef ROTATION
   /** torque */
@@ -259,7 +259,7 @@ struct ParticleMomentum {
     node the particle belongs to */
 struct ParticleLocal {
   /** position in the last time step befor last Verlet list update. */
-  double p_old[3] = {0., 0., 0.};
+  Vector3d p_old={0,0,0};
   /** index of the simulation box image where the particle really sits. */
   int i[3] = {0, 0, 0};
 
@@ -605,7 +605,7 @@ int set_particle_swimming(int part, ParticleParametersSwimming swim);
     @param F its new force.
     @return ES_OK if particle existed
 */
-int set_particle_f(int part, double F[3]);
+int set_particle_f(int part, const Vector3d &F);
 
 /** Call only on the master node: set particle mass.
     @param part the particle.
