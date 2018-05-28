@@ -26,7 +26,9 @@
 */
 
 #include "integrate.hpp"
+#include "accumulators.hpp"
 #include "cells.hpp"
+#include "collision.hpp"
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
 #include "electrokinetics.hpp"
@@ -34,6 +36,7 @@
 #include "forces_inline.hpp"
 #include "ghmc.hpp"
 #include "ghosts.hpp"
+#include "global.hpp"
 #include "grid.hpp"
 #include "initialize.hpp"
 #include "interaction_data.hpp"
@@ -43,26 +46,23 @@
 #include "maggs.hpp"
 #include "minimize_energy.hpp"
 #include "nemd.hpp"
-#include "accumulators.hpp"
+#include "npt.hpp"
 #include "p3m.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "rattle.hpp"
-#include "swimmer_reaction.hpp"
 #include "rotation.hpp"
+#include "swimmer_reaction.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
 #include "virtual_sites.hpp"
-#include "npt.hpp"
-#include "collision.hpp"
-#include "global.hpp"
 
+#include "immersed_boundaries.hpp"
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <mpi.h>
-#include "immersed_boundaries.hpp" 
 
 #ifdef VALGRIND_INSTRUMENTATION
 #include <callgrind.h>
@@ -243,7 +243,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
   }
 #endif
-  
+
   /* if any method vetoes (P3M not initialized), immediately bail out */
   if (check_runtime_errors())
     return;
@@ -297,7 +297,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 #ifdef COLLISION_DETECTION
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-        handle_collisions();
+      handle_collisions();
     }
 #endif
   }
@@ -407,45 +407,37 @@ void integrate_vv(int n_steps, int reuse_forces) {
       correct_vel_shake();
     }
 #endif
-// VIRTUAL_SITES update vel
-#ifdef VIRTUAL_SITES
-    if (virtual_sites()->need_ghost_comm_before_vel_update()) {
-      ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    }
-    virtual_sites()->update(false); // Recalc positions = false
-#endif
 
-// progagate one-step functionalities
+    // progagate one-step functionalities
 
-if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
+    if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef LB
-    if (lattice_switch & LATTICE_LB)
-      lattice_boltzmann_update();
+      if (lattice_switch & LATTICE_LB)
+        lattice_boltzmann_update();
 
-    if (check_runtime_errors())
-      break;
+      if (check_runtime_errors())
+        break;
 #endif
 
 #ifdef LB_GPU
-    if (this_node == 0) {
+      if (this_node == 0) {
 #ifdef ELECTROKINETICS
-      if (ek_initialized) {
-        ek_integrate();
-      } else {
+        if (ek_initialized) {
+          ek_integrate();
+        } else {
 #endif
-        if (lattice_switch & LATTICE_LB_GPU)
-          lattice_boltzmann_update_gpu();
+          if (lattice_switch & LATTICE_LB_GPU)
+            lattice_boltzmann_update_gpu();
 #ifdef ELECTROKINETICS
+        }
+#endif
       }
-#endif
-    }
 #endif // LB_GPU
 
 #ifdef VIRTUAL_SITES
-virtual_sites()->after_lb_propagation();
+      virtual_sites()->after_lb_propagation();
 #endif
-
-}
+    }
 
 #ifdef ELECTROSTATICS
     if (coulomb.method == COULOMB_MAGGS) {
@@ -470,14 +462,20 @@ virtual_sites()->after_lb_propagation();
       sim_time += time_step;
 
 #ifdef COLLISION_DETECTION
-    handle_collisions();
+      handle_collisions();
 #endif
     }
-    
-    
+
     if (check_runtime_errors())
       break;
   }
+// VIRTUAL_SITES update vel
+#ifdef VIRTUAL_SITES
+    if (virtual_sites()->need_ghost_comm_before_vel_update()) {
+      ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    }
+    virtual_sites()->update(false); // Recalc positions = false
+#endif
 
 #ifdef VALGRIND_INSTRUMENTATION
   CALLGRIND_STOP_INSTRUMENTATION;
@@ -485,7 +483,7 @@ virtual_sites()->after_lb_propagation();
 
   /* Steepest descent operatates on unscaled forces,
      so we have to scale them back now. */
-  if(integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
+  if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
     rescale_forces();
   }
 
@@ -582,7 +580,7 @@ void rescale_forces_propagate_vel() {
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
           nptiso.p_vel[j] += Utils::sqr(p.m.v[j]) * p.p.mass;
-            p.m.v[j] += p.f.f[j] + friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
+          p.m.v[j] += p.f.f[j] + friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
         } else
 #endif
           /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
@@ -611,7 +609,7 @@ void finalize_p_inst_npt() {
     nptiso.p_inst = 0.0;
     for (i = 0; i < 3; i++) {
       if (nptiso.geometry & nptiso.nptgeom_dir[i]) {
-          nptiso.p_vel[i] /= Utils::sqr(time_step);
+        nptiso.p_vel[i] /= Utils::sqr(time_step);
         nptiso.p_inst += nptiso.p_vir[i] + nptiso.p_vel[i];
       }
     }
@@ -639,7 +637,7 @@ void propagate_press_box_pos_and_rescale_npt() {
      * vel-rescaling
      */
     if (this_node == 0) {
-        nptiso.volume += nptiso.inv_piston * nptiso.p_diff * 0.5 * time_step;
+      nptiso.volume += nptiso.inv_piston * nptiso.p_diff * 0.5 * time_step;
       scal[2] = Utils::sqr(box_l[nptiso.non_const_dim]) /
                 pow(nptiso.volume, 2.0 / nptiso.dimension);
       nptiso.volume += nptiso.inv_piston * nptiso.p_diff * 0.5 * time_step;
@@ -742,7 +740,7 @@ void propagate_vel() {
 #ifdef NPT
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
-            p.m.v[j] += p.f.f[j] + friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
+          p.m.v[j] += p.f.f[j] + friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
           nptiso.p_vel[j] += Utils::sqr(p.m.v[j]) * p.p.mass;
         } else
 #endif
@@ -897,7 +895,8 @@ void propagate_vel_pos() {
 #endif
 
     /* Verlet criterion check*/
-    if (Utils::sqr(p.r.p[0] - p.l.p_old[0]) + Utils::sqr(p.r.p[1] - p.l.p_old[1]) +
+    if (Utils::sqr(p.r.p[0] - p.l.p_old[0]) +
+            Utils::sqr(p.r.p[1] - p.l.p_old[1]) +
             Utils::sqr(p.r.p[2] - p.l.p_old[2]) >
         skin2)
       set_resort_particles(Cells::RESORT_LOCAL);
