@@ -25,6 +25,8 @@ class CheckpointTest(ut.TestCase):
     def test_part(self):
         np.testing.assert_allclose(np.copy(system.part[0].pos), np.array([1.0, 2.0, 3.0]))
         np.testing.assert_allclose(np.copy(system.part[1].pos), np.array([1.0, 1.0, 2.0]))
+        np.testing.assert_allclose(np.copy(system.part[0].f), particle_force0)
+        np.testing.assert_allclose(np.copy(system.part[1].f), particle_force1)
 
     def test_thermostat(self):
         self.assertEqual(system.thermostat.get_state()[0]['type'], 'LANGEVIN')
