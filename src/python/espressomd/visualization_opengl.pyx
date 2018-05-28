@@ -425,9 +425,15 @@ class openGLLive(object):
         self.system_info['Constraints'] = []
         self.system_info['Thermostat'] = self.system.thermostat.get_state()
 
+        if len(self.system_info['Bonded interactions']) == 0:
+            self.system_info['Bonded interactions'].append('None')
+
         # ACTORS
         for a in self.system.actors:
            self.system_info['Actors'].append(str(a))
+        if len(self.system_info['Actors']) == 0:
+            self.system_info['Actors'].append('None')
+            
 
         # COLLECT ALL TYPES FROM PARTICLES AND CONSTRAINTS 
         all_types = set(self.system.part[:].type)
@@ -443,7 +449,9 @@ class openGLLive(object):
                 for check_nb in all_non_bonded_inters:
                     nb = getattr(self.system.non_bonded_inter[t1,t2], check_nb)
                     if not nb == None and nb.is_active():
-                        self.system_info['Non-bonded interactions'].append([t1,t2,nb])
+                        self.system_info['Non-bonded interactions'].append([t1,t2,nb.get_params()])
+        if len(self.system_info['Non-bonded interactions']) == 0:
+            self.system_info['Non-bonded interactions'].append('None')
 
         # COLLECT CONSTRAINTS
         for c in self.system.constraints[:]:
@@ -451,6 +459,8 @@ class openGLLive(object):
             co_s = c.get_parameter('shape')
             co['shape'] = [co_s.name(), co_s.get_params()]
             self.system_info['Constraints'].append(co)
+        if len(self.system_info['Constraints']) == 0:
+            self.system_info['Constraints'].append('None')
 
 
     def register_callback(self, cb, interval=1000):
@@ -1217,9 +1227,9 @@ class openGLLive(object):
 
         # DRAW PARTICLE INFO
         if self.show_system_info:
-            self._draw_dict(self.system_info, 20)
+            self._draw_sysinfo_dict(self.system_info)
         elif self.infoId != -1:
-            self._draw_dict(self.highlighted_particle, self.max_len_attr)
+            self._draw_particle_dict(self.highlighted_particle, self.max_len_attr)
         
         # INDICATE SCREEN CAPTURE
         if self.screenshot_captured and not self.take_screenshot:
@@ -1233,7 +1243,28 @@ class openGLLive(object):
                 self._draw_text( self.specs['window_size'][0] - len(self.screenshot_capture_txt)*9.0 - 15,
                 self.specs['window_size'][1]  - 15, self.screenshot_capture_txt, col)
 
-    def _draw_dict(self,d, maxlen):
+    def _draw_sysinfo_dict(self,d):
+        y = 0
+        for k, v in d.items():
+            # CATEGORY TITLE
+            self._draw_text(10, self.specs['window_size'][1] - 10 - 15 * y, str(k) + ":", self.text_color)
+            # ITEM LIST
+            for item in v:
+                txt = str(item)
+                # NUMBER OF LINES
+                nl = int(len(txt)*9.0 / self.specs['window_size'][0]) + 1
+                ch_per_line = int(self.specs['window_size'][0] / 9) - 4
+                if ch_per_line < 20:
+                    break
+                ls = 0
+                for li in range(nl):
+                    y += 1
+                    ltxt = txt[ls:ls+ch_per_line]
+                    self._draw_text(30, self.specs['window_size'][1] - 10 - 15 * y, ltxt, self.text_color)
+                    ls += ch_per_line
+            y += 1.5
+
+    def _draw_particle_dict(self,d, maxlen):
         y = 0
         for k, v in d.items():
             txt = "{} {} {}".format(
@@ -1402,10 +1433,12 @@ class openGLLive(object):
 
     def _get_particle_info(self, pos, pos_old):
         pid, depth = self._get_particle_id(pos, pos_old)
-        self.infoId = pid
-        self.show_system_info = (pid == -1)
         if self.show_system_info:
+            self.show_system_info = False
+        elif pid == -1 and self.infoId == -1:
+            self.show_system_info = True
             self.update_system_info()       
+        self.infoId = pid
 
     def _next_particle_info(self):
         self.infoId = (self.infoId + 1) % len(self.particles['pos'])
