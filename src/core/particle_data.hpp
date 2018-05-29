@@ -106,7 +106,7 @@ struct ParticleProperties {
   /** rotational inertia */
   Vector3d rinertia = {1., 1., 1.};
 #else
-  static constexpr const Vector3d rinertia = {1., 1., 1.};
+  static const constexpr double rinertia[3] = {1., 1., 1.};
 #endif
 
 #ifdef AFFINITY
