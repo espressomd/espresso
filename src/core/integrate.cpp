@@ -473,11 +473,6 @@ if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
   CALLGRIND_STOP_INSTRUMENTATION;
 #endif
 
-  /* Steepest descent operatates on unscaled forces,
-     so we have to scale them back now. */
-  if(integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
-  }
-
   /* verlet list statistics */
   if (n_verlet_updates > 0)
     verlet_reuse = n_steps / (double)n_verlet_updates;
