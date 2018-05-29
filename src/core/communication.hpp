@@ -241,7 +241,7 @@ void mpi_rotate_particle(int node, int part, double axis[3],double angle);
     \param node the node it is attached to.
     \param bond_site its new site of the affinity bond.
 */
-void mpi_send_affinity(int node, int part, double bond_site[3]);
+void mpi_send_affinity(int node, int part, const double bond_site[3]);
 #endif
 
 #ifdef MEMBRANE_COLLISION

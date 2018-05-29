@@ -1340,7 +1340,7 @@ void pointer_to_rotational_inertia(Particle const *p, double const *&res) {
 
 #ifdef AFFINITY
 void pointer_to_bond_site(const Particle* p, const double*& res) {
-  res =p->p.bond_site;
+  res =p->p.bond_site.data();
 }
 #endif
 

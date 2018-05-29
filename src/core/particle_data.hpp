@@ -111,7 +111,7 @@ struct ParticleProperties {
 
 #ifdef AFFINITY
   /** parameters for affinity mechanisms */
-  Vector3d bond_site[3] = {-1., -1., -1.};
+  Vector3d bond_site = {-1., -1., -1.};
 #endif
 
 #ifdef MEMBRANE_COLLISION
@@ -1023,7 +1023,7 @@ void pointer_to_swimming(Particle const *p,
 void pointer_to_rotational_inertia(Particle const *p, double const *&res);
 #endif
 #ifdef AFFINITY
-void pointer_to_bond_site(const Particle* p, const double*& res); 
+void pointer_to_bond_site(const Particle* p, double*& res); 
 #endif
 
 #ifdef MEMBRANE_COLLISION

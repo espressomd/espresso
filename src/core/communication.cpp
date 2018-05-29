@@ -653,7 +653,7 @@ void mpi_send_affinity_slave(int pnode, int part) {
 #ifdef AFFINITY
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->p.bond_site, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->p.bond_site.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 
@@ -661,7 +661,7 @@ void mpi_send_affinity_slave(int pnode, int part) {
 #endif
 }
 
-void mpi_send_affinity(int pnode, int part, double bond_site[3]) {
+void mpi_send_affinity(int pnode, int part, const double bond_site[3]) {
 #ifdef AFFINITY
   mpi_call(mpi_send_affinity_slave, pnode, part);
 
