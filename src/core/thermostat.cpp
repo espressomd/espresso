@@ -89,7 +89,7 @@ double nptiso_pref4;
 #endif
 
 void thermo_init_langevin() {
-  langevin_pref1 = -langevin_gamma / time_step;
+  langevin_pref1 = -langevin_gamma;
   langevin_pref2 = sqrt(24.0 * temperature / time_step * langevin_gamma);
 
   /* If gamma_rotation is not set explicitly,
