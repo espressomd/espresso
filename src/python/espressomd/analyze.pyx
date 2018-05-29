@@ -361,7 +361,7 @@ class Analysis(object):
         return buffer
 
     def pressure(self, v_comp=False):
-        """Calculates the pressure (in parallel). This is only sensible in an isotropic system which is homogeneous (on average)! Do not use this in an anisotropic or inhomogeneous system.
+        """Calculates the instantaneous pressure (in parallel). This is only sensible in an isotropic system which is homogeneous (on average)! Do not use this in an anisotropic or inhomogeneous system. In order to obtain the pressure the ensemble average needs to be calculated.
 
         Returns
         -------
@@ -465,7 +465,7 @@ class Analysis(object):
         return p
 
     def stress_tensor(self, v_comp=False):
-        """Calculates the stress tensor (in parallel). This is sensible in an anisotropic system. Still it assumes that the system is homogeneous since the volume averaged stress tensor is used. Do not use this stress tensor in an (on average) inhomogeneous system. If the system is (on average inhomogeneous) then use a local stress tensor.
+        """Calculates the instantaneous stress tensor (in parallel). This is sensible in an anisotropic system. Still it assumes that the system is homogeneous since the volume averaged stress tensor is used. Do not use this stress tensor in an (on average) inhomogeneous system. If the system is (on average inhomogeneous) then use a local stress tensor. In order to obtain the stress tensor the ensemble average needs to be calculated.
 
         Returns
         -------
