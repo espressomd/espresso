@@ -66,11 +66,11 @@ Pressure
 
 :meth:`espressomd.analyze.Analysis.pressure`
 
-Computes the pressure and its contributions in the system. It
-returns all the contributions to the total pressure (see :meth:`espressomd.analyze.Analysis.pressure`).
+Computes the isotropic, homogeneous pressure. Do only use this command for (on average) isotropic and homogeneous systems. It
+returns all the contributions to the total pressure as well as the total pressure (see :meth:`espressomd.analyze.Analysis.pressure`).
 
 The pressure is calculated (if there are no electrostatic interactions)
-by
+by the volume and direction averaged virial pressure
 
 .. math::
      p = \frac{2E_{kinetic}}{Vf} + \frac{\sum_{j>i} {F_{ij}r_{ij}}}{3V}
@@ -89,16 +89,15 @@ central forces. Description of how contributions from other interactions
 are calculated is beyond the scope of this manual. Three body potentials
 are implemented following the procedure in
 Ref. :cite:`thompson09a`. A different formula is used to
-calculate contribution from electrostatic interactions in P3M. For
-electrostatic interactions, the :math:`k`-space contribution is not well
-tested, so use with caution! Anything outside that is currently not
-implemented. Four-body dihedral potentials are not included. Except of 
+calculate contribution from electrostatic interactions. For
+electrostatic interactions in P3M, the :math:`k`-space contribution is implemented according to :cite:`essmann1995smooth`. 
+The implementation of the Coulomb P3M pressure is tested against LAMMPS. 
+
+Four-body dihedral potentials are not included. Except of 
 VIRTUAL\_SITES\_RELATIVE constraints all other
 constraints of any kind are not currently accounted for in the pressure
 calculations. The pressure is no longer correct, e.g., when particles
 are confined to a plane.
-
-The command is implemented in parallel.
 
 .. _Momentum of the system:
 
@@ -464,21 +463,35 @@ Stress Tensor
 :meth:`espressomd.analyze.Analysis.stress_tensor`
 
 Computes the stress tensor of the system with options which are
-described by in :meth: espressomd.System.analysis.stress_tensor. 
-It is called a stress tensor but the sign convention follows that of a pressure tensor.
+described by in :meth: espressomd.System.analysis.stress_tensor. It is called a stress tensor but the sign convention follows that of a pressure tensor.
+In general do only use it for (on average) homogeneous systems. For inhomogeneous systems you need to use the local stress tensor.
 
 The virial stress tensor is calculated by
 
-.. math:: p^{(kl)} = \frac{\sum_{i} {m_{i}v_{i}^{(k)}v_{i}^{(l)}}}{V} + \frac{\sum_{j>i}{F_{ij}^{(k)}r_{ij}^{(l)}}}{V}
+.. math:: p_{(kl)} = \frac{\sum_{i} {m_{i}v_{i}^{(k)}v_{i}^{(l)}}}{V} + \frac{\sum_{j>i}{F_{ij}^{(k)}r_{ij}^{(l)}}}{V}
 
-where the notation is the same as for in and the superscripts :math:`k`
+where the notation is the same as for the pressure. The superscripts :math:`k`
 and :math:`l` correspond to the components in the tensors and vectors.
+
+If electrostatics are present then also the coulombic parts of the stress tensor need to be calculated. If P3M is present, then the stress tensor is implemented in accordance with :cite:`essmann1995smooth` :
+
+.. math :: p^\text{Coulomb, P3M}_{(kl)} =p^\text{Coulomb, P3M, dir}_{(kl)} + p^\text{Coulomb, P3M, rec}_{(kl)},
+
+where the first summand is the short ranged part and the second summand is the long ranged part.
+
+The short ranged part is given by:
+
+.. math :: p^\text{Coulomb, P3M, dir}_{(k,l)}= \frac{1}{4\pi \epsilon_0 \epsilon_r} \frac{1}{2V} \sum_{\vec{n}}^* \sum_{i,j=1}^N q_i q_j \left( \frac{ erfc(\beta |\vec{r}_j-\vec{r}_i+\vec{n}|)}{|\vec{r}_j-\vec{r}_i+\vec{n}|^3} +\frac{2\beta \pi^{-1/2} \exp(-(\beta |\vec{r}_j-\vec{r}_i+\vec{n}|)^2)}{|\vec{r}_j-\vec{r}_i+\vec{n}|^2} \right) (\vec{r}_j-\vec{r}_i+\vec{n})_k (\vec{r}_j-\vec{r}_i+\vec{n})_l,
+
+where :math:`\beta` is the P3M splitting parameter, :math:`\vec{n}` identifies the periodic images, the asterix denotes that terms with :math:`\vec{n}=\vec{0}` and i=j are omitted.
+The long ranged (kspace) part is given by:
+
+.. math :: p^\text{Coulomb, P3M, rec}_{(k,l)}= \frac{1}{4\pi \epsilon_0 \epsilon_r} \frac{1}{2 \pi V^2} \sum_{\vec{k} \neq \vec{0}} \frac{\exp(-\pi^2 \vec{k}^2/\beta^2)}{\vec{k}^2} |S(\vec{k})|^2 *(\delta_{k,l}-2\frac{1+\pi^2\vec{k}^2/\beta^2}{\vec{k}^2} \vec{k}_k \vec{k}_l),
+
+where :math:`S(\vec{k})` is the fourier transformed charge density. Compared to Essmann we do not have a the contribution :math:`p^\text{Corr}_{k,l}` since we want to calculate the pressure that arises from all particles in the system.
 
 Note that the angular velocities of the particles are not included in
 the calculation of the stress tensor.
-
-The command is implemented in parallel.
-
 
 .. _Local Stress Tensor:
 
