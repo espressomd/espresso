@@ -59,48 +59,6 @@ For example, ::
 >>> print(energy["non_bonded"])
 
 
-.. _Pressure:
-
-Pressure
-~~~~~~~~
-
-:meth:`espressomd.analyze.Analysis.pressure`
-
-Computes the instantaneous virial pressure for an isotropic and homogeneous system. It
-returns all the contributions to the total pressure as well as the total pressure (see :meth:`espressomd.analyze.Analysis.pressure`).
-
-The instantaneous pressure is calculated (if there are no electrostatic interactions)
-by the volume averaged, direction averaged instantaneous virial pressure
-
-.. math::
-     p = \frac{2E_{kinetic}}{Vf} + \frac{\sum_{j>i} {F_{ij}r_{ij}}}{3V}
-     :label: eqptens
-
-where :math:`f=3` is the number of translational degrees of freedom of
-each particle, :math:`V` is the volume of the system,
-:math:`E_{kinetic}` is the kinetic energy, :math:`F_{ij}` the force
-between particles i and j, and :math:`r_{ij}` is the distance between
-them. The kinetic energy divided by the degrees of freedom is
-
-.. math:: \frac{2E_{kinetic}}{f} = \frac{1}{3}\sum_{i} {m_{i}v_{i}^{2}}.
-
-Note that Equation :eq:`eqptens` can only be applied to pair potentials and
-central forces. Description of how contributions from other interactions
-are calculated is beyond the scope of this manual. Three body potentials
-are implemented following the procedure in
-Ref. :cite:`thompson09a`. A different formula is used to
-calculate contribution from electrostatic interactions. For
-electrostatic interactions in P3M, the :math:`k`-space contribution is implemented according to :cite:`essmann1995smooth`. 
-The implementation of the Coulomb P3M pressure is tested against LAMMPS. 
-
-Four-body dihedral potentials are not included. Except of 
-VIRTUAL\_SITES\_RELATIVE constraints all other
-constraints of any kind are not currently accounted for in the pressure
-calculations. The pressure is no longer correct, e.g., when particles
-are confined to a plane.
-
-Note: The different contributions which are returned are the summands that arise from force splitting :math:`\vec{F}_{i,j}={\vec{F}_{i,j}}_\text{bonded}+{\vec{F}_{i,j}}_\text{nonbonded}+...` in the virial pressure formula. Later when the user calculates the ensemble average via e.g. :math:`\langle p \rangle \approx 1/N \sum_{i=1}^N p_i` however the ensemble average with all interactions present is performed. That means the contributions are not easy to interpret! Those are the contributions to the stress/pressure in a system where all interactions are present and therefore in a coupled system.
-
 .. _Momentum of the system:
 
 Momentum of the System
@@ -457,6 +415,48 @@ Analyze the gyration tensor of particles of a given type, or of all particles in
 	or are compiled in and boundaries are defined, only the available fluid
 	volume is taken into account.
 
+
+.. _Pressure:
+
+Pressure
+~~~~~~~~
+
+:meth:`espressomd.analyze.Analysis.pressure`
+
+Computes the instantaneous virial pressure for an isotropic and homogeneous system. It
+returns all the contributions to the total pressure as well as the total pressure (see :meth:`espressomd.analyze.Analysis.pressure`).
+
+The instantaneous pressure is calculated (if there are no electrostatic interactions)
+by the volume averaged, direction averaged instantaneous virial pressure
+
+.. math::
+     p = \frac{2E_{kinetic}}{Vf} + \frac{\sum_{j>i} {F_{ij}r_{ij}}}{3V}
+     :label: eqptens
+
+where :math:`f=3` is the number of translational degrees of freedom of
+each particle, :math:`V` is the volume of the system,
+:math:`E_{kinetic}` is the kinetic energy, :math:`F_{ij}` the force
+between particles i and j, and :math:`r_{ij}` is the distance between
+them. The kinetic energy divided by the degrees of freedom is
+
+.. math:: \frac{2E_{kinetic}}{f} = \frac{1}{3}\sum_{i} {m_{i}v_{i}^{2}}.
+
+Note that Equation :eq:`eqptens` can only be applied to pair potentials and
+central forces. Description of how contributions from other interactions
+are calculated is beyond the scope of this manual. Three body potentials
+are implemented following the procedure in
+Ref. :cite:`thompson09a`. A different formula is used to
+calculate contribution from electrostatic interactions. For
+electrostatic interactions in P3M, the :math:`k`-space contribution is implemented according to :cite:`essmann1995smooth`. 
+The implementation of the Coulomb P3M pressure is tested against LAMMPS. 
+
+Four-body dihedral potentials are not included. Except of 
+VIRTUAL\_SITES\_RELATIVE constraints all other
+constraints of any kind are not currently accounted for in the pressure
+calculations. The pressure is no longer correct, e.g., when particles
+are confined to a plane.
+
+Note: The different contributions which are returned are the summands that arise from force splitting :math:`\vec{F}_{i,j}={\vec{F}_{i,j}}_\text{bonded}+{\vec{F}_{i,j}}_\text{nonbonded}+...` in the virial pressure formula. Later when the user calculates the ensemble average via e.g. :math:`\langle p \rangle \approx 1/N \sum_{i=1}^N p_i` however the ensemble average with all interactions present is performed. That means the contributions are not easy to interpret! Those are the contributions to the stress/pressure in a system where all interactions are present and therefore in a coupled system.
 
 .. _Stress Tensor:
 
