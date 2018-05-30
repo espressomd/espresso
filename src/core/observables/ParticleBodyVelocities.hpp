@@ -20,9 +20,9 @@ public:
       double vel_lab[3];
       double vel_body[3];
 
-      vel_lab[0] = partCfg[ids()[i]].m.v[0] / time_step;
-      vel_lab[1] = partCfg[ids()[i]].m.v[1] / time_step;
-      vel_lab[2] = partCfg[ids()[i]].m.v[2] / time_step;
+      vel_lab[0] = partCfg[ids()[i]].m.v[0];
+      vel_lab[1] = partCfg[ids()[i]].m.v[1];
+      vel_lab[2] = partCfg[ids()[i]].m.v[2];
       define_rotation_matrix(partCfg[ids()[i]], RMat);
 
       vel_body[0] = RMat[0 + 3 * 0] * vel_lab[0] +

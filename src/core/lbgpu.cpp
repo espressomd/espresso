@@ -449,11 +449,11 @@ void lb_lbfluid_particles_add_momentum(float momentum[3]) {
   for (auto const &p : parts) {
     double new_velocity[3] = {
         p.m.v[0] +
-            momentum[0] / p.p.mass * time_step / n_part,
+            momentum[0] / p.p.mass / n_part,
         p.m.v[1] +
-            momentum[1] / p.p.mass * time_step / n_part,
+            momentum[1] / p.p.mass / n_part,
         p.m.v[2] +
-            momentum[2] / p.p.mass * time_step / n_part};
+            momentum[2] / p.p.mass / n_part};
     set_particle_v(p.p.identity, new_velocity);
   }
 }
