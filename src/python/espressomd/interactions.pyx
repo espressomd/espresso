@@ -1347,6 +1347,74 @@ IF SOFT_SPHERE == 1:
             """
             return "a", "n", "cutoff"
 
+IF AFFINITY == 1:
+    cdef class AffinityInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            if self._params["affinity_cut"] < 0:
+                raise ValueError("Affinity cutoff has to be >=0")
+            if self._params["affinity_type"] < 0:
+                raise ValueError("Affinity type has to be >=0")
+            if self._params["affinity_kappa"] < 0:
+                raise ValueError("Affinity kappa has to be >=0")
+            if self._params["affinity_r0"] < 0:
+                raise ValueError("Affinity r0 has to be >=0")
+            if self._params["affinity_Kon"] < 0:
+                raise ValueError("Affinity Kon has to be >=0")
+            if self._params["affinity_Koff"] < 0:
+                raise ValueError("Affinity Koff has to be >=0")
+            if self._params["affinity_maxBond"] < 0:
+                raise ValueError("Affinity maxBond has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
+            return {
+                "affinity_type": ia_params.affinity_type,
+                "affinity_kappa": ia_params.affinity_kappa,
+                "affinity_r0": ia_params.affinity_r0,
+                "affinity_Kon": ia_params.affinity_Kon,
+                "affinity_Koff": ia_params.affinity_Koff,
+                "affinity_maxBond": ia_params.affinity_maxBond,
+                "affinity_cut": ia_params.affinity_cut}
+
+        def is_active(self):
+            return (self._params["affinity_kappa"] > 0)
+
+
+        def _set_params_in_es_core(self):
+            if affinity_set_params(self._part_types[0], self._part_types[1],
+                                        self._params["affinity_type"],
+                                        self._params["affinity_kappa"],
+                                        self._params["affinity_r0"],
+                                        self._params["affinity_Kon"],
+                                        self._params["affinity_Koff"],
+                                        self._params["affinity_maxBond"],
+                                        self._params["affinity_cut"]):
+                raise Exception("Could not set Affinity parameters")
+
+        def default_params(self):
+            return {
+                "affinity_type": 0,
+                "affinity_kappa": 0.,
+                "affinity_r0": 0.,
+                "affinity_Kon": 0.,
+                "affinity_Koff": 0.,
+                "affinity_maxBond": 0.,
+                "affinity_cut": 0.}
+
+        def type_name(self):
+            return "Affinity"
+
+        def valid_keys(self):
+            return "affinity_type", "affinity_kappa", "affinity_r0", "affinity_Kon", "affinity_Koff", "affinity_maxBond", "affinity_cut"
+
+        def required_keys(self):
+            return "affinity_type", "affinity_kappa", "affinity_r0", "affinity_Kon", "affinity_Koff", "affinity_maxBond", "affinity_cut"
+
+
+
 IF MEMBRANE_COLLISION == 1:
     cdef class MembraneCollisionInteraction(NonBondedInteraction):
 

@@ -619,10 +619,9 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef double * bond_site = NULL
-                self.update_particle_data()
+                cdef const double * bond_site = NULL
                 pointer_to_bond_site(self.particle_data, bond_site)
-                return np.array([bond_site[0], bond_site[1], bond_site[2]])
+                return array_locked([bond_site[0], bond_site[1], bond_site[2]])
 
 
 # Charge
