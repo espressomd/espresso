@@ -98,7 +98,7 @@ int db_maxf_id = 0, db_maxv_id = 0;
 
 /** Propagate the velocities. Integration step 1 of the Velocity Verlet
    integrator:<br>
-    \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t f(t) \f] */
+    \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t f(t)/m \f] */
 void propagate_vel();
 /** Propagate the positions. Integration step 2 of the Velocity
    Verletintegrator:<br>
@@ -106,14 +106,13 @@ void propagate_vel();
 void propagate_pos();
 /** Propagate the velocities and positions. Integration step 1 and 2
     of the Velocity Verlet integrator: <br>
-    \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t f(t) \f] <br>
+    \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t f(t)/m \f] <br>
     \f[ p(t+\Delta t) = p(t) + \Delta t  v(t+0.5 \Delta t) \f] */
 void propagate_vel_pos();
-/** Rescale all particle forces with \f[ 0.5 \Delta t^2 \f] and propagate the
-   velocities.
-    Integration step 4 of the Velocity Verletintegrator:<br>
-    \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t) \f] */
-void rescale_forces_propagate_vel();
+/** Integration step 4 of the Velocity Verletintegrator and finalize 
+    instantanious pressure calculation:<br>
+    \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t)/m \f] */
+void propagate_vel_finalize_p_inst();
 
 /** Integrator stability check (see compile flag ADDITIONAL_CHECKS). */
 void force_and_velocity_display();
@@ -370,7 +369,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      rescale_forces_propagate_vel();
+      propagate_vel_finalize_p_inst();
 #ifdef ROTATION
       convert_torques_propagate_omega();
 #endif
@@ -510,7 +509,7 @@ void rescale_velocities(double scale) {
 /* Privat functions */
 /************************************************************/
 
-void rescale_forces_propagate_vel() {
+void propagate_vel_finalize_p_inst() {
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
     nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
@@ -518,7 +517,7 @@ void rescale_forces_propagate_vel() {
 #endif
 
   INTEG_TRACE(
-      fprintf(stderr, "%d: rescale_forces_propagate_vel:\n", this_node));
+      fprintf(stderr, "%d: propagate_vel_finalize_p_inst:\n", this_node));
 
   for (auto &p : local_cells.particles()) {
     check_particle_force(&p);
