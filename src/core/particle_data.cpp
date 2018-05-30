@@ -531,7 +531,7 @@ int rotate_particle(int part, double axis[3], double angle) {
 #endif
 
 #ifdef AFFINITY
-int set_particle_affinity(int part, const double bond_site[3]) {
+int set_particle_affinity(int part, double bond_site[3]) {
   auto const pnode = get_particle_node(part);
 
   mpi_send_affinity(pnode, part, bond_site);

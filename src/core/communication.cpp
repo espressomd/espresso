@@ -661,7 +661,7 @@ void mpi_send_affinity_slave(int pnode, int part) {
 #endif
 }
 
-void mpi_send_affinity(int pnode, int part, const double bond_site[3]) {
+void mpi_send_affinity(int pnode, int part, double bond_site[3]) {
 #ifdef AFFINITY
   mpi_call(mpi_send_affinity_slave, pnode, part);
 
