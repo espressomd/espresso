@@ -1023,7 +1023,7 @@ void pointer_to_swimming(Particle const *p,
 void pointer_to_rotational_inertia(Particle const *p, double const *&res);
 #endif
 #ifdef AFFINITY
-void pointer_to_bond_site(const Particle* p, double*& res); 
+void pointer_to_bond_site(Particle const* p, double const*& res);
 #endif
 
 #ifdef MEMBRANE_COLLISION
