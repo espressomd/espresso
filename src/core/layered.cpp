@@ -367,7 +367,7 @@ void layered_topology_init(CellPList *old) {
   realloc_cellplist(&local_cells, local_cells.n = n_layers);
   for (c = 0; c < n_layers; c++) {
     local_cells.cell[c] = &cells[c + 1];
-    cells[c + 1].m_neighbors.push_back(&cells[c]);
+    cells[c + 1].m_neighbors.push_back(std::ref(cells[c]));
   }
 
   realloc_cellplist(&ghost_cells, ghost_cells.n = 2);
@@ -388,7 +388,7 @@ void layered_topology_init(CellPList *old) {
     part = old->cell[c]->part;
     np = old->cell[c]->n;
     for (p = 0; p < np; p++) {
-      Cell *nc = layered_position_to_cell(part[p].r.p.data());
+      Cell *nc = layered_position_to_cell(part[p].r.p);
       /* particle does not belong to this node. Just stow away
          somewhere for the moment */
       if (nc == nullptr)
@@ -419,7 +419,7 @@ static void layered_append_particles(ParticleList *pl, ParticleList *up,
                          this_node, pl->part[p].p.identity));
       move_indexed_particle(up, pl, p);
     } else
-      move_indexed_particle(layered_position_to_cell(pl->part[p].r.p.data()), pl, p);
+      move_indexed_particle(layered_position_to_cell(pl->part[p].r.p), pl, p);
     /* same particle again, as this is now a new one */
     if (p < pl->n)
       p--;
@@ -461,7 +461,7 @@ void layered_exchange_and_sort_particles(int global_flag) {
         /* particle stays here. Fold anyways to get x,y correct */
         fold_position(part->r.p, part->m.v, part->l.i);
 
-        nc = layered_position_to_cell(part->r.p.data());
+        nc = layered_position_to_cell(part->r.p);
         if (nc != oc) {
           move_indexed_particle(nc, oc, p);
           if (p < oc->n)

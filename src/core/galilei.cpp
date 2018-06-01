@@ -70,6 +70,7 @@ void local_kill_particle_forces(int torque) {
 /* Calculate the CMS of the system */
 void local_system_CMS(double *sdata) {
   double x = 0.0, y = 0.0, z = 0.0;
+  double ppos[3];
   int img[3];
 
   double mass = 0.0;
@@ -79,7 +80,9 @@ void local_system_CMS(double *sdata) {
     M = p.p.mass;
     mass += M;
 
-    Vector3d ppos = unfolded_position(p);
+    memmove(ppos, p.r.p, 3 * sizeof(double));
+    memmove(img, p.l.i, 3 * sizeof(int));
+    unfold_position(ppos, img);
 
     x += M * ppos[0];
     y += M * ppos[1];

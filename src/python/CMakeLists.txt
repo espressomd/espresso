@@ -36,7 +36,6 @@ endif(INSTALL_PYPRESSO)
 
 # Make a target for pypresso, so that things can depend on it
 add_custom_target(pypresso ALL)
-add_dependencies(pypresso espressomd object_in_fluid)
+add_dependencies(pypresso espressomd)
 
 add_subdirectory(espressomd)
-add_subdirectory(object_in_fluid)

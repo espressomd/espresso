@@ -67,9 +67,9 @@ double *meta_acc_force = nullptr;
 /** Accumulated free energy profile */
 double *meta_acc_fprofile = nullptr;
 
-Vector3d meta_cur_xi;
+double *meta_cur_xi = nullptr;
 double meta_val_xi = 0.;
-Vector3d meta_apply_direction;
+double *meta_apply_direction = nullptr;
 
 void meta_init() {
   if (meta_switch == META_OFF)
@@ -83,6 +83,10 @@ void meta_init() {
     meta_acc_fprofile =
         (double *)calloc(meta_xi_num_bins * sizeof *meta_acc_fprofile,
                          sizeof *meta_acc_fprofile);
+    meta_cur_xi =
+        (double *)calloc(3 * sizeof *meta_cur_xi, sizeof *meta_cur_xi);
+    meta_apply_direction = (double *)calloc(3 * sizeof *meta_apply_direction,
+                                            sizeof *meta_apply_direction);
   }
 
   /* Check that the simulation uses onle a single processor. Otherwise exit.
@@ -101,11 +105,10 @@ void meta_init() {
 * - apply external force
 */
 void meta_perform() {
-  Vector3d ppos1, ppos2;
-
   if (meta_switch == META_OFF)
     return;
 
+  double ppos1[3] = {0, 0, 0}, ppos2[3] = {0, 0, 0}, factor;
   int img1[3], img2[3], flag1 = 0, flag2 = 0;
   Particle *p1 = nullptr, *p2 = nullptr;
 
@@ -113,22 +116,26 @@ void meta_perform() {
     if (p.p.identity == meta_pid1) {
       flag1 = 1;
       p1 = &p;
-      ppos1=unfolded_position(p);
-      
+      memmove(ppos1, p.r.p, 3 * sizeof(double));
+      memmove(img1, p.l.i, 3 * sizeof(int));
+      unfold_position(ppos1, img1);
+
       if (flag1 && flag2) {
         /* vector r2-r1 - Not a minimal image! Unfolded position */
-        meta_cur_xi = ppos2 - ppos1;
+        vector_subt(meta_cur_xi, ppos2, ppos1);
         break;
       }
     }
     if (p.p.identity == meta_pid2) {
       flag2 = 1;
       p2 = &p;
-      ppos2=unfolded_position(p);
+      memmove(ppos2, p.r.p, 3 * sizeof(double));
+      memmove(img2, p.l.i, 3 * sizeof(int));
+      unfold_position(ppos2, img2);
 
       if (flag1 && flag2) {
         /* vector r2-r1 - Not a minimal image! Unfolded position */
-        meta_cur_xi =ppos2 - ppos1;
+        vector_subt(meta_cur_xi, ppos2, ppos1);
         break;
       }
     }
@@ -157,7 +164,7 @@ void meta_perform() {
       }
 
       // direction of the bias force
-      meta_apply_direction =meta_cur_xi /meta_cur_xi.norm();
+      unit_vector(meta_cur_xi, meta_apply_direction);
     } else if (meta_switch == META_REL_Z) {
       // reaction coordinate value: relative height of z_pid1 with respect to
       // z_pid2
@@ -182,7 +189,6 @@ void meta_perform() {
   /** Apply force */
 
   // Calculate the strength of the applied force
-  double factor=0;
   if (meta_val_xi < meta_xi_min) {
     // below the lower bound
     factor = -1. * meta_f_bound * (meta_xi_min - meta_val_xi) / meta_xi_step;

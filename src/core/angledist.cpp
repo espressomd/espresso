@@ -63,6 +63,7 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
                                    Bonded_ia_parameters *iaparams) {
   double vec1[3], vec2[3], d2i = 0.0, dist2 = 0.0;
 
+  double folded_pos[3];
 
   int img[3];
 
@@ -85,7 +86,9 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
   const double distmx = iaparams->p.angledist.distmax;
 
   /* folds coordinates of p_mid into original box */
-  Vector3d folded_pos =folded_position(*p_mid);
+  memmove(folded_pos, p_mid->r.p, 3 * sizeof(double));
+  memmove(img, p_mid->l.i, 3 * sizeof(int));
+  fold_position(folded_pos, img);
 
   double pwdistmin = std::numeric_limits<double>::infinity();
   double pwdistmin_d = 0.0;

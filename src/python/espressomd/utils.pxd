@@ -87,8 +87,3 @@ cdef extern from "<limits>" namespace "std" nogil:
         T epsilon()
         @staticmethod
         T max()
-
-cdef extern from "Vector.hpp":
-    cppclass Vector3d:
-        double & operator[](int i)
-

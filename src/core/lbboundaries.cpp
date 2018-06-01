@@ -47,7 +47,7 @@ namespace LBBoundaries {
 std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
-void lbboundary_mindist_position(const Vector3d& pos, double *mindist,
+void lbboundary_mindist_position(double pos[3], double *mindist,
                                  double distvec[3], int *no) {
 
   double vec[3] = {std::numeric_limits<double>::infinity(),
@@ -58,7 +58,7 @@ void lbboundary_mindist_position(const Vector3d& pos, double *mindist,
 
   int n = 0;
   for (auto lbb = lbboundaries.begin(); lbb != lbboundaries.end(); ++lbb, n++) {
-    (**lbb).calc_dist(pos.data(), &dist, vec);
+    (**lbb).calc_dist(pos, &dist, vec);
 
     if (dist < *mindist || lbb == lbboundaries.begin()) {
       *no = n;
@@ -331,11 +331,12 @@ int lbboundary_get_force(void *lbb, double *f) {
                              "lbboundary that was not added to "
                              "system.lbboundaries.");
 
-  std::vector<double> forces(3*lbboundaries.size());
+  double *forces =
+      (double *)Utils::malloc(3 * lbboundaries.size() * sizeof(double));
 
   if (lattice_switch & LATTICE_LB_GPU) {
 #if defined(LB_BOUNDARIES_GPU) && defined(LB_GPU)
-    lb_gpu_get_boundary_forces(forces.data());
+    lb_gpu_get_boundary_forces(forces);
 
     f[0] = -forces[3 * no + 0];
     f[1] = -forces[3 * no + 1];
@@ -345,7 +346,7 @@ int lbboundary_get_force(void *lbb, double *f) {
 #endif
   } else {
 #if defined(LB_BOUNDARIES) && defined(LB)
-    mpi_gather_stats(8, forces.data(), nullptr, nullptr, nullptr);
+    mpi_gather_stats(8, forces, nullptr, nullptr, nullptr);
 
     f[0] = forces[3 * no + 0] * lbpar.agrid /
            lbpar.tau; // lbpar.tau; TODO this makes the units wrong and
@@ -358,6 +359,7 @@ int lbboundary_get_force(void *lbb, double *f) {
 #endif
   }
 
+  free(forces);
 #endif
   return 0;
 }

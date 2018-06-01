@@ -30,10 +30,7 @@ IF SCAFACOS == 1:
             self._set_params_in_es_core()
 
         def valid_keys(self):
-            tmp= ["method_name", "method_params", "prefactor"]
-            if not self.dipolar:
-                tmp.append("check_neutrality")
-            return tmp
+            return "method_name", "method_params", "prefactor"
 
         def required_keys(self):
             return "method_name", "method_params", "prefactor"
@@ -115,8 +112,6 @@ IF SCAFACOS == 1:
             handle_errors("Scafacos not initialized.")
 
         def default_params(self):
-            if not self.dipolar: 
-                return {"check_neutrality":True}
             return {}
 
     def available_methods():

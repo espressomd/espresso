@@ -1,13 +1,13 @@
 #ifndef OBSERVABLES_STRESSTENSOR_HPP
 
-#include "Observable.hpp"
+#include "PidObservable.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include <vector>
 
 namespace Observables {
 
-class StressTensor : public Observable {
+class StressTensor : public PidObservable {
 public:
   virtual int n_values() const override { return 9; };
   virtual std::vector<double> operator()(PartCfg &partCfg) const override {

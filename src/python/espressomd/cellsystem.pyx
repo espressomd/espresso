@@ -156,7 +156,7 @@ cdef class CellSystem(object):
     def __setstate__(self, d):
         use_verlet_lists = None
         for key in d:
-            if key == "use_verlet_list":
+            if key == "use_velet_list":
                 use_verlet_lists = d[key]
             elif key == "type":
                 if d[key] == "layered":

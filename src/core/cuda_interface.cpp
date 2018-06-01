@@ -56,9 +56,13 @@ void cuda_bcast_global_part_params() {
 
 static void pack_particles(ParticleRange particles,
                            CUDA_particle_data *buffer) {
+  int dummy[3] = {0, 0, 0};
+  double pos[3];
+
   int i = 0;
   for (auto const &part : particles) {
-    auto const pos = folded_position(part);
+    memmove(pos, part.r.p, 3 * sizeof(double));
+    fold_position(pos, dummy);
 
     buffer[i].p[0] = static_cast<float>(pos[0]);
     buffer[i].p[1] = static_cast<float>(pos[1]);

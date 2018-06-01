@@ -69,7 +69,7 @@ class ReactionEnsembleTest(ut.TestCase):
     system.bonded_inter[0] = h
     system.part[0].add_bond((h, 1))
     RE = reaction_ensemble.WangLandauReactionEnsemble(temperature=temperature, exclusion_radius=0)
-    RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[
+    RE.add_reaction(Gamma=K_diss, reactant_types=[0], reactant_coefficients=[
            1], product_types=[1, 2], product_coefficients=[1, 1], default_charges={0: 0, 1: -1, 2: +1})
     system.setup_type_map([0, 1, 2, 3])
     # initialize wang_landau

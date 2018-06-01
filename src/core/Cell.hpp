@@ -14,13 +14,21 @@
 #include "utils/Range.hpp"
 
 class Cell : public ParticleList {
-  using neighbors_t = std::vector<Cell *>;
+  struct GetReference {
+    template<typename T>
+    T &operator()(std::reference_wrapper<T> & cell_ref) const {
+      return cell_ref.get();
+    }
+  };
+
+  using neighbors_t = std::vector<std::reference_wrapper<Cell>>;
 
 public:
-  using neighbor_iterator = neighbors_t::iterator;
+  using neighbor_iterator =
+      boost::transform_iterator<GetReference, neighbors_t::iterator>;
 
   /** Topological neighbors of the cell */
-  std::vector<Cell *> m_neighbors;
+  std::vector<std::reference_wrapper<Cell>> m_neighbors;
 
   /** Interaction pairs */
   std::vector<std::pair<Particle *, Particle *>> m_verlet_list;

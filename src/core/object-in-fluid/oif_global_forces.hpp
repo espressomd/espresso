@@ -28,10 +28,12 @@
 */
 int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g,
                                  double V0, double kv);
-void calc_oif_global(double *area_volume, int molType);
+
+int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g,
+                                 double V0, double kv);
+
 void add_oif_global_forces(double *area_volume, int molType);
 
 /************************************************************/
 
-extern int max_oif_objects;
 #endif

@@ -1971,7 +1971,7 @@ void  MMM2D_dielectric_layers_force_contribution()
       p1 = &pl[i];
       for(j = 0; j < npl; j++) {
 	a[0]=pl[j].r.p[0]; a[1]=pl[j].r.p[1];a[2]=-pl[j].r.p[2];
-       	layered_get_mi_vector(d, p1->r.p.data(), a);
+       	layered_get_mi_vector(d, p1->r.p, a);
        	dist2 = sqrlen(d);
 	charge_factor=p1->p.q*pl[j].p.q*mmm2d_params.delta_mid_bot;
 	add_mmm2d_coulomb_pair_force(charge_factor, d, sqrt(dist2), dist2, force);
@@ -1995,7 +1995,7 @@ void  MMM2D_dielectric_layers_force_contribution()
       p1 = &pl[i];
       for(j = 0; j < npl; j++) {
 	a[0]=pl[j].r.p[0];  a[1]=pl[j].r.p[1]; a[2]=2*box_l[2]-pl[j].r.p[2];
-	layered_get_mi_vector(d, p1->r.p.data(), a);
+	layered_get_mi_vector(d, p1->r.p, a);
 	dist2 = sqrlen(d);
 	charge_factor=p1->p.q*pl[j].p.q*mmm2d_params.delta_mid_top; 
 	add_mmm2d_coulomb_pair_force(charge_factor, d, sqrt(dist2), dist2, force);
@@ -2034,7 +2034,7 @@ double  MMM2D_dielectric_layers_energy_contribution()
       p1 = &pl[i];
       for(j = 0; j < npl; j++) {
 	a[0]=pl[j].r.p[0];  a[1]=pl[j].r.p[1];a[2]=-pl[j].r.p[2];
-       	layered_get_mi_vector(d, p1->r.p.data(), a);
+       	layered_get_mi_vector(d, p1->r.p, a);
        	dist2 = sqrlen(d);
 	charge_factor = mmm2d_params.delta_mid_bot*p1->p.q*pl[j].p.q;
 	/* last term removes unwanted 2 pi |z| part (cancels due to charge neutrality) */
@@ -2052,7 +2052,7 @@ double  MMM2D_dielectric_layers_energy_contribution()
       p1 = &pl[i];
       for(j = 0; j < npl; j++) {
 	a[0]=pl[j].r.p[0];  a[1]=pl[j].r.p[1]; a[2]=2*box_l[2]-pl[j].r.p[2];
-	layered_get_mi_vector(d, p1->r.p.data(), a);
+	layered_get_mi_vector(d, p1->r.p, a);
 	dist2 = sqrlen(d);
 	charge_factor=mmm2d_params.delta_mid_top*p1->p.q*pl[j].p.q;
 	/* last term removes unwanted 2 pi |z| part (cancels due to charge neutrality) */

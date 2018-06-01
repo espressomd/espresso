@@ -328,7 +328,7 @@ void Lattice::map_halo_index_to_pos(index_t* index_in_halogrid, double* pos) {
     pos[2] = this->local_offset[2] + (index_in_halogrid[2] - this->halo_size)*this->agrid[2];
 }
 
-void Lattice::map_position_to_lattice(const Vector3d& pos, index_t node_index[8], double delta[6]) {
+void Lattice::map_position_to_lattice(const double pos[3], index_t node_index[8], double delta[6]) {
 
     int dir,ind[3] ;
     double lpos, rel;
@@ -395,7 +395,7 @@ void Lattice::set_data_for_local_grid_index(index_t* ind, void* data) {
     memmove(((char*)this->_data) + get_linear_index(ind[0]+this->halo_size, ind[1]+this->halo_size, ind[2]+this->halo_size,  this->halo_grid)*this->element_size, data, this->element_size);
 }
 
-int Lattice::global_pos_to_lattice_halo_index(Vector3d& pos, index_t*  ind) {
+int Lattice::global_pos_to_lattice_halo_index(double* pos, index_t*  ind) {
     for (int i = 0; i<3; i++) {
         ind[i] = (int)dround((pos[i]-this->local_offset[i])/this->agrid[i])+this->halo_size;
         if (ind[i] < 0 || ind[i] >= this->halo_grid[i])
@@ -406,7 +406,7 @@ int Lattice::global_pos_to_lattice_halo_index(Vector3d& pos, index_t*  ind) {
 
 /********************** static Functions **********************/
 
-void Lattice::map_position_to_lattice_global (Vector3d& pos, int ind[3], double delta[6], double tmp_agrid) {
+void Lattice::map_position_to_lattice_global (double pos[3], int ind[3], double delta[6], double tmp_agrid) {
   //not sure why I don't have access to agrid here so I make a temp var and pass it to this function
   int i;
   double rel[3];

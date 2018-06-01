@@ -22,6 +22,14 @@ class DDSGPUTest(ut.TestCase):
     # Handle for espresso system
     es = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
+    def vectorsTheSame(self, a, b):
+        tol = 3E-3
+        vec_len = la.norm(a - b)
+        if vec_len <= tol:
+            return True
+        else:
+            return False
+
     def stopAll(self):
         for i in range(len(self.es.part)):
             self.es.part[i].v = np.array([0.0, 0.0, 0.0])
@@ -110,12 +118,34 @@ class DDSGPUTest(ut.TestCase):
 
             # compare
             for i in range(n):
-                np.testing.assert_allclose(np.array(dawaanr_t[i]),
-                        ratio_dawaanr_dds_gpu * np.array(ddsgpu_t[i]),
-                    err_msg='Torques on particle do not match for particle {}'.format(i), atol=3e-3)
-                np.testing.assert_allclose(np.array(dawaanr_f[i]),
-                        ratio_dawaanr_dds_gpu * np.array(ddsgpu_f[i]),
-                    err_msg='Forces on particle do not match for particle i={}'.format(i), atol=3e-3)
+                self.assertTrue(
+                    self.vectorsTheSame(
+                        np.array(
+                            dawaanr_t[i]),
+                        ratio_dawaanr_dds_gpu *
+                        np.array(
+                            ddsgpu_t[i])),
+                    msg='Torques on particle do not match. i={0} dawaanr_t={1} ratio_dawaanr_dds_gpu*ddsgpu_t={2}'.format(
+                        i,
+                        np.array(
+                            dawaanr_t[i]),
+                        ratio_dawaanr_dds_gpu *
+                        np.array(
+                            ddsgpu_t[i])))
+                self.assertTrue(
+                    self.vectorsTheSame(
+                        np.array(
+                            dawaanr_f[i]),
+                        ratio_dawaanr_dds_gpu *
+                        np.array(
+                            ddsgpu_f[i])),
+                    msg='Forces on particle do not match: i={0} dawaanr_f={1} ratio_dawaanr_dds_gpu*ddsgpu_f={2}'.format(
+                        i,
+                        np.array(
+                            dawaanr_f[i]),
+                        ratio_dawaanr_dds_gpu *
+                        np.array(
+                            ddsgpu_f[i])))
             self.assertAlmostEqual(
                 dawaanr_e,
                 ddsgpu_e *

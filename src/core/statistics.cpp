@@ -55,6 +55,13 @@ int n_part_conf = 0;
 /****************************************************************************************
  *                                 helper functions
  ****************************************************************************************/
+
+double min_distance2(double const pos1[3], double const pos2[3]) {
+  double diff[3];
+  get_mi_vector(diff, pos1, pos2);
+  return sqrlen(diff);
+}
+
 /****************************************************************************************
  *                                 basic observables calculation
  ****************************************************************************************/
@@ -205,12 +212,17 @@ void predict_momentum_particles(double *result) {
   double momentum[3] = {0.0, 0.0, 0.0};
 
   for (auto const &p : local_cells.particles()) {
+    // Due to weird scaling of units the following is actually correct
     auto const mass = p.p.mass;
 
-    momentum[0] += mass * (p.m.v[0] + p.f.f[0] * 0.5 * time_step / p.p.mass);
-    momentum[1] += mass * (p.m.v[1] + p.f.f[1] * 0.5 * time_step / p.p.mass);
-    momentum[2] += mass * (p.m.v[2] + p.f.f[2] * 0.5 * time_step / p.p.mass);
+    momentum[0] += mass * (p.m.v[0] + p.f.f[0]);
+    momentum[1] += mass * (p.m.v[1] + p.f.f[1]);
+    momentum[2] += mass * (p.m.v[2] + p.f.f[2]);
   }
+
+  momentum[0] /= time_step;
+  momentum[1] /= time_step;
+  momentum[2] /= time_step;
 
   MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
@@ -652,7 +664,7 @@ void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
   ff[2 * order2] = 0;
   twoPI_L = 2 * PI / box_l[0];
 
-  if ((n_types < 0) || (n_types > max_seen_particle_type)) {
+  if ((n_types < 0) || (n_types > n_particle_types)) {
     fprintf(stderr, "WARNING: Wrong number of particle types!");
     fflush(nullptr);
     errexit();

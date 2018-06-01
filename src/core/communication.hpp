@@ -180,7 +180,7 @@ void mpi_send_swimming(int node, int part, ParticleParametersSwimming swim);
     \param node the node it is attached to.
     \param F its new force.
 */
-void mpi_send_f(int node, int part, const Vector3d & F);
+void mpi_send_f(int node, int part, double F[3]);
 
 /** issue req_set_solv: send particle solvation free energy
     also calls \ref on_particle_change.
@@ -222,16 +222,6 @@ void mpi_send_mu_E(int node, int part, double mu_E[3]);
     \param rinertia its new rotational inertia.
 */
 void mpi_send_rotational_inertia(int node, int part, double rinertia[3]);
-#endif
-#ifdef ROTATION
-/** Mpi call for rotating a single particle 
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param axis rotation axis
-    \param angle rotation angle
-*/
-void mpi_rotate_particle(int node, int part, double axis[3],double angle);
 #endif
 
 #ifdef AFFINITY
@@ -321,6 +311,17 @@ void mpi_send_vs_relative(int node, int part, int vs_relative_to,
                           double vs_distance, double* rel_ori);
 #endif
 
+#ifdef MULTI_TIMESTEP
+/** Issue REQ_SET_SMALLER_TIMESTEP: send smaller time step value.
+    Also calls \ref on_particle_change.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param smaller_timestep its new smaller_timestep.
+*/
+void mpi_send_smaller_timestep_flag(int node, int part,
+                                    int smaller_timestep_flag);
+#endif
+
 /** Issue REQ_SET_TYPE: send particle type.
     Also calls \ref on_particle_change.
     \param part the particle.
@@ -404,7 +405,7 @@ void mpi_bcast_ia_params(int i, int j);
 /** Issue REQ_BCAST_IA_SIZE: send new size of \ref ia_params.
     \param s the new size for \ref ia_params.
 */
-void mpi_bcast_max_seen_particle_type(int s);
+void mpi_bcast_n_particle_types(int s);
 
 /** Issue REQ_GATHER: gather data for analysis in analyze.
     \param job what to do:
@@ -461,6 +462,12 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3],
     velocities accordingly.
 */
 void mpi_set_time_step(double time_step);
+
+#ifdef MULTI_TIMESTEP
+/** Issue REQ_SET_SMALLER_TIME_STEP: send new \ref smaller_time_step.
+    Requires MULTI_TIMESTEP feature. */
+void mpi_set_smaller_time_step(double smaller_time_step);
+#endif
 
 /** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
 void mpi_bcast_coulomb_params();

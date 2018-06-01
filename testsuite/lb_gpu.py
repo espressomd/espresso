@@ -25,7 +25,7 @@ class TestLBGPU(ut.TestCase):
         #setup parameters
         system = self.system
         int_steps = 5
-        int_times = 10
+        int_times = 1
         time_step = 0.005
         tau = 0.02
         agrid = 1.0

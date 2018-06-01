@@ -44,10 +44,10 @@ void set_virtual_sites(std::shared_ptr<VirtualSites> const& v) {
 
 #ifdef VIRTUAL_SITES_RELATIVE
  
-void calculate_vs_relate_to_params(const Particle& p_current, const Particle& p_relate_to, double& l, Vector<4,double>& quat)
+void calculate_vs_relate_to_params(const Particle& p_current, const Particle& p_relate_to, double& l, double* quat)
 {
     // get teh distance between the particles
-    Vector3d d;
+    double d[3];
     get_mi_vector(d, p_current.r.p,p_relate_to.r.p);
     
     
@@ -82,7 +82,7 @@ void calculate_vs_relate_to_params(const Particle& p_current, const Particle& p_
         d[i]/=l;
 
       // Obtain quaternions from desired director
-      Vector<4,double> quat_director;
+      double quat_director[4];
       convert_quatu_to_quat(d, quat_director);
   
       // Define quat as described above:
@@ -134,13 +134,13 @@ int vs_relate_to(int part_num, int relate_to)
     auto const &p_current = get_particle_data(part_num);
     auto const &p_relate_to = get_particle_data(relate_to);
     
-    Vector<4,double> quat;
+    double quat[4];
     double l;
     calculate_vs_relate_to_params(p_current, p_relate_to, l, quat);
     
     // Set the particle id of the particle we want to relate to, the distance
     // and the relative orientation
-    if (set_particle_vs_relative(part_num, relate_to, l, quat.data()) == ES_ERROR) {
+    if (set_particle_vs_relative(part_num, relate_to, l, quat) == ES_ERROR) {
       runtimeErrorMsg() << "setting the vs_relative attributes failed";
       return ES_ERROR;
     }
@@ -163,7 +163,7 @@ int local_vs_relate_to(int part_num, int relate_to)
       return ES_ERROR;
     }
 
-    Vector<4,double> quat;
+    double quat[4];
     double l;
     calculate_vs_relate_to_params(*p_current, *p_relate_to, l, quat);
     

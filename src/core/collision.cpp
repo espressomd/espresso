@@ -228,7 +228,7 @@ void queue_collision(const int part1, const int part2) {
 /** @brief Calculate position of vs for GLUE_TO_SURFACE mode
 *    Reutnrs id of particle to bind vs to */
 int glue_to_surface_calc_vs_pos(const Particle *const p1,
-                                const Particle *const p2, Vector3d& pos) {
+                                const Particle *const p2, double pos[3]) {
   int bind_vs_to_pid;
   double vec21[3];
   double c;
@@ -255,7 +255,7 @@ int glue_to_surface_calc_vs_pos(const Particle *const p1,
 
 void bind_at_point_of_collision_calc_vs_pos(const Particle *const p1,
                                             const Particle *const p2,
-                                            Vector3d& pos1, Vector3d& pos2) {
+                                            double pos1[3], double pos2[3]) {
   double vec21[3];
   get_mi_vector(vec21, p1->r.p, p2->r.p);
   for (int i = 0; i < 3; i++) {
@@ -365,17 +365,17 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
 
 #ifdef VIRTUAL_SITES_RELATIVE
 void place_vs_and_relate_to_particle(const int current_vs_pid,
-                                     const Vector3d& pos,
+                                     const double *const pos,
                                      const int relate_to,
-                                     const Vector3d& initial_pos) {
+                                     const double *const initial_pos) {
 
   // The virtual site is placed at initial_pos which will be in the local
   // node's domain. It will then be moved to its final position.
   // A resort occurs after vs-based collisions anyway, which will move the vs
   // into the right cell.
   added_particle(current_vs_pid);
-  local_place_particle(current_vs_pid, initial_pos.data(), 1);
-  local_particles[current_vs_pid]->r.p=pos;
+  local_place_particle(current_vs_pid, initial_pos, 1);
+  memmove(local_particles[current_vs_pid]->r.p, pos, 3 * sizeof(double));
   local_vs_relate_to(current_vs_pid, relate_to);
 
   (local_particles[max_seen_particle])->p.isVirtual = 1;
@@ -559,8 +559,8 @@ void three_particle_binding_domain_decomposition(
 
       Particle &p1 = *local_particles[c.pp1];
       Particle &p2 = *local_particles[c.pp2];
-      auto cell1 = cell_structure.position_to_cell(p1.r.p.data());
-      auto cell2 = cell_structure.position_to_cell(p2.r.p.data());
+      auto cell1 = cell_structure.position_to_cell(p1.r.p);
+      auto cell2 = cell_structure.position_to_cell(p2.r.p);
 
       three_particle_binding_dd_do_search(cell1, p1, p2);
       if (cell1 != cell2)
@@ -638,16 +638,16 @@ void handle_collisions() {
         // domain
         // Vs is moved afterwards and resorted after all collision s are handled
         // Use position of non-ghost colliding particle.
-        Vector3d initial_pos;
+        double initial_pos[3];
         if (p1->l.ghost)
-          initial_pos = p2->r.p;
+          memmove(initial_pos, p2->r.p, 3 * sizeof(double));
         else
-          initial_pos= p1->r.p;
+          memmove(initial_pos, p1->r.p, 3 * sizeof(double));
 
         // If we are in the two vs mode
         // Virtual site related to first particle in the collision
         if (collision_params.mode & COLLISION_MODE_VS) {
-          Vector3d pos1, pos2;
+          double pos1[3], pos2[3];
 
           // Enable rotation on the particles to which vs will be attached
           p1->p.rotation = ROTATION_X | ROTATION_Y | ROTATION_Z;
@@ -672,7 +672,7 @@ void handle_collisions() {
           }
         }
         if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF) {
-          Vector3d pos;
+          double pos[3];
           const int pid = glue_to_surface_calc_vs_pos(p1, p2, pos);
 
           // Change type of partilce being attached, to make it inert

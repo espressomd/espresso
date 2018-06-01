@@ -425,8 +425,8 @@ class Analysis(object):
         total_intra = 0
         total_non_bonded = 0
 
-        for i in range(c_analyze.max_seen_particle_type):
-            for j in range(i, c_analyze.max_seen_particle_type):
+        for i in range(c_analyze.n_particle_types):
+            for j in range(i, c_analyze.n_particle_types):
                 #      if checkIfParticlesInteract(i, j):
                 p["non_bonded", i, j] = c_analyze.obsstat_nonbonded( & c_analyze.total_pressure, i, j)[0]
                 total_non_bonded += c_analyze.obsstat_nonbonded( & c_analyze.total_pressure, i, j)[0]
@@ -530,8 +530,8 @@ class Analysis(object):
         total_non_bonded_intra = np.zeros((3, 3))
         total_non_bonded_inter = np.zeros((3, 3))
 
-        for i in range(c_analyze.max_seen_particle_type):
-            for j in range(i, c_analyze.max_seen_particle_type):
+        for i in range(c_analyze.n_particle_types):
+            for j in range(i, c_analyze.n_particle_types):
                 #      if checkIfParticlesInteract(i, j):
                 p["non_bonded", i, j] = np.reshape(
                     create_nparray_from_double_array(c_analyze.obsstat_nonbonded(
@@ -721,8 +721,8 @@ class Analysis(object):
         total_intra = 0
         total_non_bonded = 0.
 
-        for i in range(c_analyze.max_seen_particle_type):
-            for j in range(c_analyze.max_seen_particle_type):
+        for i in range(c_analyze.n_particle_types):
+            for j in range(c_analyze.n_particle_types):
                 #      if checkIfParticlesInteract(i, j):
                 e["non_bonded", i, j] = c_analyze.obsstat_nonbonded( & c_analyze.total_energy, i, j)[0]
                 if i <= j:
@@ -1136,7 +1136,7 @@ class Analysis(object):
         if p_type is not None:
             check_type_or_throw_except(
                 p_type, 1, int, "p_type has to be an int")
-            if (p_type < 0 or p_type >= c_analyze.max_seen_particle_type):
+            if (p_type < 0 or p_type >= c_analyze.n_particle_types):
                 raise ValueError("Particle type", p_type, "does not exist!")
         else:
             p_type = -1
@@ -1175,7 +1175,7 @@ class Analysis(object):
             raise ValueError(
                 "The p_type keyword argument must be provided (particle type)")
         check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
-        if (p_type < 0 or p_type >= c_analyze.max_seen_particle_type):
+        if (p_type < 0 or p_type >= c_analyze.n_particle_types):
             raise ValueError("Particle type", p_type, "does not exist!")
 
         c_analyze.momentofinertiamatrix(

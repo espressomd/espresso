@@ -104,19 +104,19 @@ struct ParticleProperties {
 
 #ifdef ROTATIONAL_INERTIA
   /** rotational inertia */
-  Vector3d rinertia = {1., 1., 1.};
+  double rinertia[3] = {1., 1., 1.};
 #else
-  static const constexpr double rinertia[3] = {1., 1., 1.};
+  static constexpr const double rinertia[3] = {1., 1., 1.};
 #endif
 
 #ifdef AFFINITY
   /** parameters for affinity mechanisms */
-  Vector3d bond_site = {-1., -1., -1.};
+  double bond_site[3] = {-1., -1., -1.};
 #endif
 
 #ifdef MEMBRANE_COLLISION
   /** parameters for membrane collision mechanisms */
-  Vector3d out_direction = {0., 0., 0.};
+  double out_direction[3] = {0., 0., 0.};
 #endif
 
   // Determines, wether a particle's rotational degrees of freedom are
@@ -130,7 +130,7 @@ struct ParticleProperties {
 
 #ifdef LB_ELECTROHYDRODYNAMICS
   /** electrophoretic mobility times E-field: mu_0 * E */
-  Vector3d mu_E = {0., 0., 0.};
+  double mu_E[3] = {0., 0., 0.};
 #endif
 
 #ifdef DIPOLES
@@ -180,6 +180,13 @@ struct ParticleProperties {
   int catalyzer_count = 0;
 #endif
 
+#ifdef MULTI_TIMESTEP
+  /** does the particle need a small timestep?
+   * 1= yes
+   * 0 = no (default) */
+  int smaller_timestep = 0;
+#endif
+
 #ifdef EXTERNAL_FORCES
   /** flag whether to fix a particle in space.
       Values:
@@ -191,11 +198,11 @@ struct ParticleProperties {
   */
   int ext_flag = 0;
   /** External force, apply if \ref ParticleLocal::ext_flag == 1. */
-  Vector3d ext_force = {0, 0, 0};
+  double ext_force[3] = {0, 0, 0};
 
 #ifdef ROTATION
   /** External torque, apply if \ref ParticleLocal::ext_flag == 16. */
-  Vector3d ext_torque = {0, 0, 0};
+  double ext_torque[3] = {0, 0, 0};
 #endif
 #endif
 };
@@ -204,23 +211,23 @@ struct ParticleProperties {
     communicated to calculate interactions with ghost particles. */
 struct ParticlePosition {
   /** periodically folded position. */
-  Vector3d p = {0, 0, 0};
+  double p[3] = {0, 0, 0};
 
 #ifdef ROTATION
   /** quaternions to define particle orientation */
-  Vector<4, double> quat = {1., 0., 0., 0.};
+  double quat[4] = {1., 0., 0., 0.};
   /** unit director calculated from the quaternions */
-  Vector3d quatu{0., 0., 1.};
+  double quatu[3]{0., 0., 1.};
 #endif
 
 #ifdef DIPOLES
   /** dipol moment. This is synchronized with quatu and quat. */
-  Vector3d dip = {0., 0., 0.};
+  double dip[3] = {0., 0., 0.};
 #endif
 
 #ifdef BOND_CONSTRAINT
   /**stores the particle position at the previous time step*/
-  Vector3d p_old = {0., 0., 0.};
+  double p_old[3] = {0., 0., 0.};
 #endif
 
 #ifdef SHANCHEN
@@ -233,11 +240,11 @@ struct ParticlePosition {
     collected and added up to the force of the original particle. */
 struct ParticleForce {
   /** force. */
-  Vector3d f = {0., 0., 0.};
+  double f[3] = {0., 0., 0.};
 
 #ifdef ROTATION
   /** torque */
-  Vector3d torque = {0., 0., 0.};
+  double torque[3] = {0., 0., 0.};
 #endif
 };
 
@@ -246,12 +253,12 @@ struct ParticleForce {
     be necessary for velocity dependend potentials. */
 struct ParticleMomentum {
   /** velocity. */
-  Vector3d v = {0., 0., 0.};
+  double v[3] = {0., 0., 0.};
 
 #ifdef ROTATION
   /** angular velocity
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
-  Vector3d omega = {0., 0., 0.};
+  double omega[3] = {0., 0., 0.};
 #endif
 };
 
@@ -259,9 +266,9 @@ struct ParticleMomentum {
     node the particle belongs to */
 struct ParticleLocal {
   /** position in the last time step befor last Verlet list update. */
-  Vector3d p_old={0,0,0};
+  double p_old[3] = {0., 0., 0.};
   /** index of the simulation box image where the particle really sits. */
-  Vector<3,int> i = {0, 0, 0};
+  int i[3] = {0, 0, 0};
 
   /** check whether a particle is a ghost or not */
   int ghost = 0;
@@ -278,7 +285,7 @@ struct ParticleLocal {
 /** Data related to the Lattice Boltzmann hydrodynamic coupling */
 struct ParticleLatticeCoupling {
   /** fluctuating part of the coupling force */
-  Vector3d f_random;
+  double f_random[3];
 };
 #endif
 
@@ -291,8 +298,8 @@ struct ParticleParametersSwimming {
 #if defined(LB) || defined(LB_GPU)
   int push_pull = 0;
   double dipole_length = 0.;
-  Vector3d v_center;
-  Vector3d v_source;
+  double v_center[3];
+  double v_source[3];
   double rotational_friction = 0.;
 #endif
 #endif
@@ -605,7 +612,7 @@ int set_particle_swimming(int part, ParticleParametersSwimming swim);
     @param F its new force.
     @return ES_OK if particle existed
 */
-int set_particle_f(int part, const Vector3d &F);
+int set_particle_f(int part, double F[3]);
 
 /** Call only on the master node: set particle mass.
     @param part the particle.
@@ -639,14 +646,6 @@ int set_particle_rotational_inertia(int part, double rinertia[3]);
 */
 int set_particle_rotation(int part, int rot);
 
-/** @brief rotate a particle around an axis
-   
-   @param part particle id
-   @param axis rotation axis
-   @param angle rotation angle
-*/
-int rotate_particle(int part, double axis[3], double angle);
-
 #ifdef AFFINITY
 /** Call only on the master node: set particle affinity.
     @param part the particle.
@@ -663,6 +662,15 @@ int set_particle_affinity(int part, double bond_site[3]);
  @return ES_OK if particle existed
  */
 int set_particle_out_direction(int part, double out_direction[3]);
+#endif
+
+#ifdef MULTI_TIMESTEP
+/** Call only on the master node: set particle smaller time step flag.
+    @param part the particle.
+    @param small_timestep its new smaller time step.
+    @return TCL_OK if particle existed
+*/
+int set_particle_smaller_timestep(int part, int small_timestep);
 #endif
 
 /** Call only on the master node: set particle charge.
@@ -989,6 +997,10 @@ void pointer_to_vs_relative(Particle const *p, int const *&res1,
                             double const *&res2, double const *&res3);
 #endif
 
+#ifdef MULTI_TIMESTEP
+void pointer_to_smaller_timestep(Particle const *p, int const *&res);
+#endif
+
 void pointer_to_dip(Particle const *P, double const *&res);
 
 void pointer_to_dipm(Particle const *P, double const *&res);
@@ -1021,13 +1033,6 @@ void pointer_to_swimming(Particle const *p,
 
 #ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle const *p, double const *&res);
-#endif
-#ifdef AFFINITY
-void pointer_to_bond_site(Particle const* p, double const*& res);
-#endif
-
-#ifdef MEMBRANE_COLLISION
-void pointer_to_out_direction(const Particle* p, const double*& res); 
 #endif
 
 bool particle_exists(int part);

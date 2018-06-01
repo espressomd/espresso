@@ -42,6 +42,7 @@
 #include "ljcos.hpp"
 #include "ljcos2.hpp"
 #include "ljgen.hpp"
+#include "overlap.hpp"
 #include "p3m-dipolar.hpp"
 #include "p3m.hpp"
 #include "quartic.hpp"
@@ -79,6 +80,7 @@
 #endif
 
 #ifdef EXTERNAL_FORCES
+#include "external_potential.hpp"
 #endif
 
 #include "energy.hpp"
@@ -439,6 +441,25 @@ inline void add_bonded_energy(Particle *p1) {
       }
       break;
 #endif
+#ifdef OVERLAPPED
+    case BONDED_IA_OVERLAPPED:
+      switch (iaparams->p.overlap.type) {
+      case OVERLAP_BOND_LENGTH:
+        bond_broken = overlap_bond_energy(p1, p2, iaparams, dx, &ret);
+        break;
+      case OVERLAP_BOND_ANGLE:
+        bond_broken = overlap_angle_energy(p1, p2, p3, iaparams, &ret);
+        break;
+      case OVERLAP_BOND_DIHEDRAL:
+        bond_broken = overlap_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
+        break;
+      default:
+        runtimeErrorMsg() << "add_bonded_energy: overlapped bond type of atom "
+                          << p1->p.identity << " unknown\n";
+        return;
+      }
+      break;
+#endif
 #ifdef UMBRELLA
     case BONDED_IA_UMBRELLA:
       bond_broken = umbrella_pair_energy(p1, p2, iaparams, dx, &ret);
@@ -492,8 +513,18 @@ inline void add_kinetic_energy(Particle *p1) {
 #endif
 
   /* kinetic energy */
+
+  // #ifdef MULTI_TIMESTEP
+  //   if (p1->p.smaller_timestep==1) {
+  //     ostringstream msg;
+  //     msg << "SMALL TIME STEP";
+  //     energy.data.e[0] += Utils::sqr(smaller_time_step/time_step) *
+  //       (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) + Utils::sqr(p1->m.v[2]))*(*p1).p.mass;
+  //   }
+  //   else
+  // #endif
   energy.data.e[0] +=
-      (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) + Utils::sqr(p1->m.v[2])) * 0.5 * p1->p.mass;
+      (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) + Utils::sqr(p1->m.v[2])) * (*p1).p.mass;
 
 #ifdef ROTATION
   if (p1->p.rotation)
@@ -501,9 +532,10 @@ inline void add_kinetic_energy(Particle *p1) {
     /* the rotational part is added to the total kinetic energy;
        Here we use the rotational inertia  */
 
-    energy.data.e[0] += 0.5 * (Utils::sqr(p1->m.omega[0]) * p1->p.rinertia[0] +
+    energy.data.e[0] += (Utils::sqr(p1->m.omega[0]) * p1->p.rinertia[0] +
                          Utils::sqr(p1->m.omega[1]) * p1->p.rinertia[1] +
-                         Utils::sqr(p1->m.omega[2]) * p1->p.rinertia[2]);
+                         Utils::sqr(p1->m.omega[2]) * p1->p.rinertia[2]) *
+                        time_step * time_step;
   }
 #endif
 }
@@ -513,6 +545,9 @@ inline void add_single_particle_energy(Particle *p) {
   add_bonded_energy(p);
 #ifdef CONSTRAINTS
   add_constraints_energy(p);
+#endif
+#ifdef EXTERNAL_FORCES
+  add_external_potential_energy(p);
 #endif
 }
 

@@ -422,12 +422,15 @@ calculations should be used with great caution.
 Membrane-collision interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. note::
-     `Feature MEMBRANE_COLLISION required.`
+.. todo::
+    
+    Not implemented yet.
+
+inter membrane
 
 This defines a membrane collision interaction between particles of the
-types *type1* and *type2*, where particle of *type1* belongs to one OIF or OIF-like object and
-particle of *type2* belongs to another such object.
+types *type1* and *type2*, where particle of belongs to one OIF or OIF-like object and
+particle of belongs to another such object.
 
 It is very similar to soft-sphere interaction, but it takes into account
 the local outward normal vectors on the surfaces of the two objects to
@@ -436,8 +439,8 @@ the two membranes are intersected). It is inversely proportional to the
 distance of nodes of membranes that are not crossed and saturating with
 growing distance of nodes of crossed membranes.
 
-In order to work with the OIF objects, both OIF objects need to be created
-using OifCellType class with keyword *normal=1*, because this implicitly sets up the
+In order to work with the OIF objects, both of them need to be created
+using templates with keyword , because this implicitly sets up the
 bonded out-direction interaction, which computes the outward normal
 vector.
 
@@ -484,7 +487,7 @@ which is zero for distances bigger than :math:`r_c` and continuous at distance :
 This is the standard conservative DPD potential and can be used in
 combination with :ref:`Dissipative Particle Dynamics (DPD)`.
 
-
+.. _Hertzian interaction:
 
 Hertzian interaction
 ~~~~~~~~~~~~~~~~~~~~

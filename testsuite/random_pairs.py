@@ -19,7 +19,7 @@ class RandomPairTest(ut.TestCase):
         
     def setUp(self):
         s = self.system
-        s.time_step = .1
+        s.time_step = 1.
         s.cell_system.skin = 0.0
         s.min_global_cut = 1.5
         n_part = 500

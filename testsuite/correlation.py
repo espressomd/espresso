@@ -18,23 +18,21 @@
 #
 # Tests particle property setters/getters
 from __future__ import print_function
-
 import unittest as ut
+import espressomd
 import numpy as np
 from numpy.random import random
-import pickle
-
-import espressomd
 from espressomd.interactions import FeneBond
 from espressomd.observables import *
-from espressomd.accumulators import *
+from espressomd.correlators import *
+import pickle
 
-class CorrelatorTest(ut.TestCase):
+class Observables(ut.TestCase):
     # Handle for espresso system
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
-    def test(self):
-        s = self.system
+    def test_corr(self):
+        s = self.es
         s.box_l = 10, 10, 10
         s.cell_system.skin = 0.4
         # s.periodicity=0,0,0
@@ -43,11 +41,11 @@ class CorrelatorTest(ut.TestCase):
         s.part.add(id=0, pos=(0, 0, 0), v=(1, 2, 3))
 
         O = ParticlePositions(ids=(0,))
-        C2 = Correlator(obs1=O, tau_lin=10, tau_max=10.0, delta_N=1,
+        C2 = Correlator(obs1=O, dt=0.01, tau_lin=10, tau_max=10.0,
                         corr_operation="square_distance_componentwise")
 
         s.integrator.run(1000)
-        s.auto_update_accumulators.add(C2)
+        s.auto_update_correlators.add(C2)
         s.integrator.run(20000)
 
 
@@ -55,7 +53,7 @@ class CorrelatorTest(ut.TestCase):
 
         # Check pickling
         C_unpickeled = pickle.loads(pickle.dumps(C2))
-        np.testing.assert_array_equal(corr, C_unpickeled.result())
+        self.assertTrue(np.array_equal(corr, C_unpickeled.result()))
 
         for i in range(corr.shape[0]):
             t = corr[i, 0]

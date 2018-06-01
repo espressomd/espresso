@@ -26,9 +26,9 @@
 #include "nsquare.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
-#include "debug.hpp"
 #include "ghosts.hpp"
 #include "utils.hpp"
+#include "debug.hpp"
 
 #include <cstring>
 #include <mpi.h>
@@ -100,7 +100,7 @@ void nsq_topology_init(CellPList *old) {
     if (((diff > 0 && (diff % 2) == 0) || (diff < 0 && ((-diff) % 2) == 1))) {
       CELL_TRACE(
           fprintf(stderr, "%d: doing interactions with %d\n", this_node, n));
-      cells[this_node].m_neighbors.push_back(&cells[n]);
+      cells[this_node].m_neighbors.push_back(std::ref(cells[n]));
     }
   }
 
@@ -229,7 +229,8 @@ void nsq_balance_particles(int global_flag) {
 #ifdef ADDITIONAL_CHECKS
       check_particle_consistency();
 #endif
-    } else if (l_node == this_node) {
+    }
+    else if (l_node == this_node) {
       ParticleList recv_buf{};
 
       recv_particles(&recv_buf, s_node);

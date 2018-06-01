@@ -113,7 +113,7 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
 #endif
       },
       [](Particle &p1, Particle &p2, Distance &d) {
-          add_non_bonded_pair_virials(&(p1), &(p2), d.vec21.data(), sqrt(d.dist2),
+          add_non_bonded_pair_virials(&(p1), &(p2), d.vec21, sqrt(d.dist2),
                                       d.dist2);
       });
 
@@ -232,7 +232,7 @@ void init_virials(Observable_stat *stat)
     int n_pre, n_non_bonded, n_coulomb, n_dipolar,n_vs;
 
   n_pre        = 1;
-  n_non_bonded = (max_seen_particle_type*(max_seen_particle_type+1))/2;
+  n_non_bonded = (n_particle_types*(n_particle_types+1))/2;
 
   n_coulomb    = 0;
   n_dipolar    = 0;
@@ -272,7 +272,7 @@ void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb)
 {
   int n_non_bonded;
 
-  n_non_bonded = (max_seen_particle_type*(max_seen_particle_type+1))/2;
+  n_non_bonded = (n_particle_types*(n_particle_types+1))/2;
 
   obsstat_realloc_and_clear_non_bonded(stat_nb, n_non_bonded, 1);
   stat_nb->init_status_nb = 0;
@@ -288,7 +288,7 @@ void init_p_tensor(Observable_stat *stat)
 
 
   n_pre        = 1;
-  n_non_bonded = (max_seen_particle_type*(max_seen_particle_type+1))/2;
+  n_non_bonded = (n_particle_types*(n_particle_types+1))/2;
 
   n_coulomb = 0;
   n_dipolar = 0;
@@ -324,7 +324,7 @@ void init_p_tensor(Observable_stat *stat)
 void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb)
 {
   int n_nonbonded;
-  n_nonbonded = (max_seen_particle_type*(max_seen_particle_type+1))/2;
+  n_nonbonded = (n_particle_types*(n_particle_types+1))/2;
 
   obsstat_realloc_and_clear_non_bonded(stat_nb, n_nonbonded, 9);
   stat_nb->init_status_nb = 0;
@@ -942,7 +942,7 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
 
   auto add_ideal = [&](Particle &p) {
     int bin;
-    whichbin(p.r.p.data(), bins, centre, range, &bin);
+    whichbin(p.r.p, bins, centre, range, &bin);
     if (bin >= 0) {
       for (int k = 0; k < 3; k++) {
         for (int l = 0; l < 3; l++) {
@@ -971,7 +971,7 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
                       this_node, p2->p.identity, force[0], force[1], force[2]));
           if ((pow(force[0], 2) + pow(force[1], 2) + pow(force[2], 2)) > 0) {
             if (distribute_tensors(TensorInBin, force.data(), bins, range_start, range,
-                                   p.r.p.data(), p2->r.p.data()) != 1)
+                                   p.r.p, p2->r.p) != 1)
               return 0;
           }
         }
@@ -989,13 +989,13 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
       add_single_particle_contribution,
       [&centre, &range, &TensorInBin, &range_start,
        &bins](Particle &p1, Particle &p2, Distance &d) {
-        if ((incubewithskin(p1.r.p.data(), centre, range)) &&
-            (incubewithskin(p2.r.p.data(), centre, range))) {
+        if ((incubewithskin(p1.r.p, centre, range)) &&
+            (incubewithskin(p2.r.p, centre, range))) {
           double force[3];
           get_nonbonded_interaction(&p1, &p2, force, d);
           if ((pow(force[0], 2) + pow(force[1], 2) + pow(force[2], 2)) > 0) {
             if (distribute_tensors(TensorInBin, force, bins, range_start, range,
-                                   p1.r.p.data(), p2.r.p.data()) != 1)
+                                   p1.r.p, p2.r.p) != 1)
               return 0;
           }
         }

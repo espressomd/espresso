@@ -197,10 +197,6 @@ if (WITH_PYTHON)
   else()
     set(CYTHON_FLAGS "-3" CACHE STRING "Flags used by the Cython compiler during all build types.")
   endif()
-
-  if(WARNINGS_ARE_ERRORS)
-    set(CYTHON_FLAGS "--warning-errors;${CYTHON_FLAGS}")
-  endif()
 endif(WITH_PYTHON)
 
 

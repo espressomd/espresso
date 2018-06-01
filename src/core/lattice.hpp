@@ -155,7 +155,7 @@ public:
      * \param delta      distance fraction of pos from the surrounding
      *                   elementary cell, 6 directions (Output)
      */
-    void map_position_to_lattice(const Vector3d& pos, index_t node_index[8], double delta[6]);
+    void map_position_to_lattice(const double pos[3], index_t node_index[8], double delta[6]);
 
     void get_data_for_halo_index(index_t* ind, void** data);
 
@@ -167,7 +167,7 @@ public:
 
     void set_data_for_local_grid_index(index_t* ind, void* data);
 
-    int global_pos_to_lattice_halo_index(Vector3d& pos, index_t*  ind);
+    int global_pos_to_lattice_halo_index(double* pos, index_t*  ind);
 
     /********************** Inline Functions **********************/
 
@@ -202,7 +202,7 @@ public:
      *                   elementary cell, 6 directions (Output)
      * \param tmp_agrid  lattice mesh distance
      */
-    static void map_position_to_lattice_global (Vector3d& pos, int ind[3], double delta[6], double tmp_agrid);
+    static void map_position_to_lattice_global (double pos[3], int ind[3], double delta[6], double tmp_agrid);
 };
 
 #endif /* LATTICE_HPP */

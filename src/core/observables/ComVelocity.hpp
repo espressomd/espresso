@@ -20,9 +20,9 @@ public:
       res[2] += mass * partCfg[ids()[i]].m.v[2];
       total_mass += mass;
     }
-    res[0] /= total_mass;
-    res[1] /= total_mass;
-    res[2] /= total_mass;
+    res[0] /= total_mass * time_step;
+    res[1] /= total_mass * time_step;
+    res[2] /= total_mass * time_step;
     return res;
   };
 };

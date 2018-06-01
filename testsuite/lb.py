@@ -25,7 +25,7 @@ class LBTest(ut.TestCase):
 
     def setUp(self):
         self.params = {'int_steps': 25,
-                       'int_times': 10,
+                       'int_times': 1,
                        'time_step': 0.01,
                        'tau': 0.02,
                        'agrid': 0.5,
@@ -131,9 +131,10 @@ class LBTest(ut.TestCase):
                     self.max_dmass,
                     self.params['mass_prec_per_node']))
 
-            # check momentum conservation
+            # check momentum conversation
             c_mom = self.system.analysis.analyze_linear_momentum()
             dm = abs(c_mom - self.tot_mom)
+            #self.assertTrue(dm[0] <= mom_prec and dm[1] <= mom_prec and dm[2] <= mom_prec)
             for j in range(3):
                 if dm[j] > self.max_dm[j]:
                     self.max_dm[j] = dm[j]

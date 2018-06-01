@@ -8,6 +8,7 @@
 #include "interaction_data.hpp"
 
 namespace Constraints {
+
 Vector3d ShapeBasedConstraint::total_force() const {
   Vector3d total_force;
   boost::mpi::all_reduce(comm_cart, m_local_force, total_force,
@@ -24,9 +25,7 @@ double ShapeBasedConstraint::min_dist() {
       parts.begin(), parts.end(), std::numeric_limits<double>::infinity(),
       [this](double min, Particle const &p) {
         IA_parameters *ia_params;
-
-        ia_params = get_ia_param(p.p.type, part_rep.p.type);
-
+        ia_params = get_ia_param(p.p.type, m_type);
         if (checkIfInteraction(ia_params)) {
           double vec[3], dist;
           m_shape->calculate_dist(folded_position(p).data(), &dist, vec);
@@ -39,11 +38,9 @@ double ShapeBasedConstraint::min_dist() {
   return global_mindist;
 }
 
-
 /**
  * The function reflect_particle reflects the particle. In the current implementation the behaviour is only strictly correct for a flat wall. Be careful when using it with e.g. a sphere or a cylinder. The algorithm here assumes the wrong (!!) tangential plane for the reflection. For small curvatures (high radii) the error that is made is approaching zero.
  */
-
 void ShapeBasedConstraint::reflect_particle(Particle *p,
                                             const double *distance_vector,
                                             const double *folded_pos) const {
@@ -85,8 +82,10 @@ void ShapeBasedConstraint::reflect_particle(Particle *p,
   }
 }
 
-void ShapeBasedConstraint::add_force(Particle *p, Vector3d& folded_pos) {
+void ShapeBasedConstraint::add_force(Particle *p, double *folded_pos) {
   double dist, vec[3], force[3], torque1[3], torque2[3];
+  Particle part_rep;
+  part_rep.p.type = m_type;
 
   IA_parameters *ia_params = get_ia_param(p->p.type, part_rep.p.type);
 
@@ -99,37 +98,28 @@ void ShapeBasedConstraint::add_force(Particle *p, Vector3d& folded_pos) {
   }
 
   if (checkIfInteraction(ia_params)) {
-    m_shape->calculate_dist(folded_pos.data(), &dist, vec);
+    m_shape->calculate_dist(folded_pos, &dist, vec);
 
     if (dist > 0) {
-      auto const dist2 = dist * dist;
-      calc_non_bonded_pair_force(p, &part_rep, ia_params, vec, dist, dist2,
-                                 force, torque1, torque2);
-#ifdef DPD
-      if (thermo_switch & THERMO_DPD) {
-        add_dpd_pair_force(p, &part_rep, ia_params, vec, dist, dist2);
+      calc_non_bonded_pair_force(p, &part_rep, ia_params, vec, dist,
+                                 dist * dist, force, torque1, torque2);
+#ifdef TUNABLE_SLIP
+      if (tunable_slip) {
+        add_tunable_slip_pair_force(p1, &constraints[n].part_rep, ia_params,
+                                    vec, dist, force);
       }
 #endif
-
     } else if (dist <= 0) {
       if (m_penetrable && !m_only_positive && (dist != 0.0)) {
-
         calc_non_bonded_pair_force(p, &part_rep, ia_params, vec, -1.0 * dist,
                                    dist * dist, force, torque1, torque2);
-#ifdef DPD
-        if (thermo_switch & THERMO_DPD) {
-          add_dpd_pair_force(p, &part_rep, ia_params, vec, dist, dist2);
-        }
-#endif
       }
       if (m_reflection_type != ReflectionType::NONE) {
-
         reflect_particle(p, vec, folded_pos);
         dist=-dist;
       }
     } 
     if (dist<0 && !m_penetrable) {
-
         runtimeErrorMsg() << "Constraint"
                           << " violated by particle " << p->p.identity
                           << " dist " << dist;
@@ -145,18 +135,19 @@ void ShapeBasedConstraint::add_force(Particle *p, Vector3d& folded_pos) {
   }
 }
 
-
-void ShapeBasedConstraint::add_energy(Particle *p, Vector3d& folded_pos,
+void ShapeBasedConstraint::add_energy(Particle *p, double *folded_pos,
                                       Observable_stat &energy) const {
   double dist, vec[3];
   IA_parameters *ia_params;
   double nonbonded_en = 0.0;
+  Particle part_rep;
+  part_rep.p.type = m_type;
 
   ia_params = get_ia_param(p->p.type, part_rep.p.type);
 
   dist = 0.;
   if (checkIfInteraction(ia_params)) {
-    m_shape->calculate_dist(folded_pos.data(), &dist, vec);
+    m_shape->calculate_dist(folded_pos, &dist, vec);
     if (dist > 0) {
       nonbonded_en = calc_non_bonded_pair_energy(p, &part_rep, ia_params, vec,
                                                  dist, dist * dist);

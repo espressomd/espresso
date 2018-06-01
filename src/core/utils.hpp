@@ -194,8 +194,7 @@ inline void unit_vector(double v[3], double y[3]) {
 }
 
 /** calculates the scalar product of two vectors a nd b */
-template <typename T1, typename T2>
-double scalar(const T1& a, const T2& b) {
+inline double scalar(double a[3], double b[3]) {
   double d2 = 0.0;
   int i;
   for (i = 0; i < 3; i++)
@@ -213,9 +212,8 @@ inline void vector_product(T const &a, U const &b, V &c) {
 }
 
 /** rotates vector around axis by alpha */
-template <typename T1, typename T2, typename T3>
-void vec_rotate(const T1& axis, double alpha, const T2& vector,
-                       T3& result) {
+inline void vec_rotate(double *axis, double alpha, double *vector,
+                       double *result) {
   double sina, cosa, absa, a[3];
   sina = sin(alpha);
   cosa = cos(alpha);
@@ -242,7 +240,7 @@ void vec_rotate(const T1& axis, double alpha, const T2& vector,
 inline ::Vector<3, double> vec_rotate(::Vector<3, double> axis, double alpha,
                                       ::Vector<3, double> vector) {
   ::Vector<3, double> result;
-  vec_rotate(axis, alpha, vector, result);
+  vec_rotate(axis.data(), alpha, vector.data(), result.data());
   return result;
 }
 
@@ -454,8 +452,7 @@ inline double distance(double pos1[3], double pos2[3]) {
  *  \param pos1 Position one.
  *  \param pos2 Position two.
  */
-template <typename T1, typename T2>
-inline double distance2(const T1& pos1, const T2& pos2) {
+inline double distance2(double const pos1[3], double const pos2[3]) {
   return Utils::sqr(pos1[0] - pos2[0]) + Utils::sqr(pos1[1] - pos2[1]) +
          Utils::sqr(pos1[2] - pos2[2]);
 }
@@ -467,9 +464,8 @@ inline double distance2(const T1& pos1, const T2& pos2) {
  *  \param vec  vecotr pos1-pos2.
  *  \return distance squared
 */
-template <typename T1, typename T2, typename T3>
-double distance2vec(T1 const pos1, T2 const pos2,
-                           T3& vec) {
+inline double distance2vec(double const pos1[3], double const pos2[3],
+                           double vec[3]) {
   vec[0] = pos1[0] - pos2[0];
   vec[1] = pos1[1] - pos2[1];
   vec[2] = pos1[2] - pos2[2];
@@ -496,8 +492,7 @@ char *strcat_alloc(char *left, const char *right);
 
 /** Computes the area of triangle between vectors P1,P2,P3,
  *  by computing the crossproduct P1P2 x P1P3 and taking the half of its norm */
-template <typename T1, typename T2, typename T3>
-inline double area_triangle(const T1& P1, const T2& P2, const T3& P3) {
+inline double area_triangle(double *P1, double *P2, double *P3) {
   double area;
   double u[3], v[3], normal[3], n; // auxiliary variables
   u[0] = P2[0] - P1[0];            // u = P1P2
@@ -513,8 +508,7 @@ inline double area_triangle(const T1& P1, const T2& P2, const T3& P3) {
 }
 
 /** Computes the normal vector to the plane given by points P1P2P3 */
-template <typename T1, typename T2, typename T3>
-void get_n_triangle(const T1& p1, const T2& p2, const T3& p3, double *n) {
+inline void get_n_triangle(double *p1, double *p2, double *p3, double *n) {
   n[0] = (p2[1] - p1[1]) * (p3[2] - p1[2]) - (p2[2] - p1[2]) * (p3[1] - p1[1]);
   n[1] = (p2[2] - p1[2]) * (p3[0] - p1[0]) - (p2[0] - p1[0]) * (p3[2] - p1[2]);
   n[2] = (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0]);
@@ -535,8 +529,8 @@ void get_n_triangle(const T1& p1, const T2& p2, const T3& p3, double *n) {
  *  have the access to the order of particles, you are safe to call this
  *  function with exactly this order. Otherwise you need to check the
  *  orientations. */
-template <typename T1, typename T2, typename T3, typename T4>
-double angle_btw_triangles(const T1& P1, const T2& P2, const T3& P3, const T4& P4) {
+inline double angle_btw_triangles(double *P1, double *P2, double *P3,
+                                  double *P4) {
   double phi;
   double u[3], v[3], normal1[3], normal2[3]; // auxiliary variables
   u[0] = P1[0] - P2[0];                      // u = P2P1
@@ -629,8 +623,8 @@ std::vector<T> cross_product(const std::vector<T> &a,
   return c;
 }
 
-template <typename T1, typename T2, typename T3>
-void cross_product(const T1& a, const T2& b, T3& c) {
+template <typename T>
+void cross_product(T const *const a, T const *const b, T *const c) {
   c[0] = a[1] * b[2] - a[2] * b[1];
   c[1] = a[2] * b[0] - a[0] * b[2];
   c[2] = a[0] * b[1] - a[1] * b[0];

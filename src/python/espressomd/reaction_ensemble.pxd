@@ -13,7 +13,7 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         vector[int] reactant_coefficients
         vector[int] product_types
         vector[int] product_coefficients
-        double gamma
+        double Gamma
         int nu_bar
 
     cdef cppclass CReactionAlgorithm "ReactionEnsemble::ReactionAlgorithm":
@@ -24,7 +24,7 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         int m_accepted_configurational_MC_moves
         int m_tried_configurational_MC_moves
         int delete_particle (int p_id)
-        void add_reaction(double gamma, vector[int] _reactant_types, vector[int] _reactant_coefficients, vector[int] _product_types, vector[int] _product_coefficients) except +
+        void add_reaction(double Gamma, vector[int] _reactant_types, vector[int] _reactant_coefficients, vector[int] _product_types, vector[int] _product_coefficients) except +
         
         vector[SingleReaction] reactions
         int nr_different_types
@@ -68,6 +68,4 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
 
     cdef cppclass CWidomInsertion "ReactionEnsemble::WidomInsertion"(CReactionAlgorithm):
         CWidomInsertion()
-        vector[int] number_of_insertions
-        vector[double] summed_exponentials
         double measure_excess_chemical_potential(int reaction_id)

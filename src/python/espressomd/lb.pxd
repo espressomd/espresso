@@ -21,7 +21,6 @@ include "myconfig.pxi"
 from libcpp cimport bool
 from libcpp.vector cimport vector
 from .actors cimport Actor
-from .utils cimport Vector3d
 
 cdef class HydrodynamicInteraction(Actor):
     pass
@@ -103,7 +102,7 @@ IF LB_GPU or LB:
         int lb_lbnode_get_boundary(int * coord, int * int_return)
         int lb_lbfluid_set_couple_flag(int c_couple_flag)
         int lb_lbfluid_get_couple_flag(int * c_couple_flag)
-        int lb_lbfluid_get_interpolated_velocity_global(Vector3d &p, double *v)
+        int lb_lbfluid_get_interpolated_velocity_global(double *p, double *v)
 
     cdef extern from "lbgpu.hpp":
         int lb_lbfluid_remove_total_momentum()

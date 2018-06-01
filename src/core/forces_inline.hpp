@@ -31,6 +31,7 @@
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
 #include "p3m.hpp"
+#include "external_potential.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
 #include "angle_harmonic.hpp"
@@ -68,6 +69,7 @@
 #include "object-in-fluid/oif_global_forces.hpp"
 #include "object-in-fluid/oif_local_forces.hpp"
 #include "object-in-fluid/out_direction.hpp"
+#include "overlap.hpp"
 #include "p3m-dipolar.hpp"
 #include "quartic.hpp"
 #include "soft_sphere.hpp"
@@ -373,8 +375,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
       // forces from the virtual charges
       // they go directly onto the particles, since they are not pairwise forces
       if (elc_params.dielectric_contrast_on)
-        ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f.data(),
-                                                     p2->f.f.data());
+        ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f, p2->f.f);
     }
     break;
   }
@@ -724,6 +725,27 @@ inline void add_bonded_force(Particle *p1) {
       }
       break;
 #endif
+#ifdef OVERLAPPED
+    case BONDED_IA_OVERLAPPED:
+      switch (iaparams->p.overlap.type) {
+      case OVERLAP_BOND_LENGTH:
+        bond_broken = calc_overlap_bond_force(p1, p2, iaparams, dx, force);
+        break;
+      case OVERLAP_BOND_ANGLE:
+        bond_broken =
+            calc_overlap_angle_force(p1, p2, p3, iaparams, force, force2);
+        break;
+      case OVERLAP_BOND_DIHEDRAL:
+        bond_broken = calc_overlap_dihedral_force(p1, p2, p3, p4, iaparams,
+                                                  force, force2, force3);
+        break;
+      default:
+        runtimeErrorMsg() << "add_bonded_force: overlapped bond type of atom "
+                          << p1->p.identity << " unknown\n";
+        return;
+      }
+      break;
+#endif
 #ifdef UMBRELLA
     case BONDED_IA_UMBRELLA:
       bond_broken = calc_umbrella_pair_force(p1, p2, iaparams, dx, force);
@@ -886,6 +908,9 @@ inline void add_single_particle_force(Particle *p) {
   add_bonded_force(p);
 #ifdef CONSTRAINTS
   add_constraints_forces(p);
+#endif
+#ifdef EXTERNAL_FORCES
+  add_external_potential_forces(p);
 #endif
 }
 

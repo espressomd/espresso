@@ -81,7 +81,7 @@ foreach(cython_file ${cython_SRC})
   else()
       list(APPEND cython_generated_SRC "${basename}.cpp")
       add_custom_command(OUTPUT ${outputpath}
-                         COMMAND ${CYTHON_EXECUTABLE} ${CYTHON_FLAGS} --cplus
+                         COMMAND ${CYTHON_EXECUTABLE}  --cplus
                          --directive embedsignature=True
                          --directive binding=True
                          -I ${CMAKE_CURRENT_SOURCE_DIR}

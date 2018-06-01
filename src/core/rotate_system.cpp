@@ -46,7 +46,7 @@ void local_rotate_system(double phi, double theta, double alpha) {
       p.r.p[j] = com[j] + res[j];
     }
 #ifdef ROTATION
-    local_rotate_particle(&p, axis, alpha);
+    rotate_particle(&p, axis, alpha);
 #endif
   }
 

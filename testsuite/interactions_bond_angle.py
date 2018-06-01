@@ -37,7 +37,7 @@ class InteractionsNonBondedTest(ut.TestCase):
 
         self.system.box_l = [self.box_l] * 3
         self.system.cell_system.skin = 0.4
-        self.system.time_step = .1
+        self.system.time_step = 1.
 
         self.system.part.add(id=0, pos=self.start_pos, type=0)
         self.system.part.add(id=1, pos=self.start_pos + self.rel_pos, type=0)

@@ -250,7 +250,7 @@ template <typename T, size_t Dims> void Histogram<T, Dims>::do_normalize() {
   T bin_volume = std::accumulate(m_bin_sizes.begin(), m_bin_sizes.end(),
                                  static_cast<T>(1.0), std::multiplies<T>());
   std::transform(m_hist.begin(), m_hist.end(), m_hist.begin(),
-                 [bin_volume](T v) { return v / bin_volume; });
+                 [this, bin_volume](T v) { return v / bin_volume; });
 }
 
 template <typename T, size_t Dims> class CylindricalHistogram : public Histogram<T, Dims> {

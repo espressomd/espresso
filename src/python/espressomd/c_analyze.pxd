@@ -37,7 +37,7 @@ cdef extern from "partCfg_global.hpp":
     PartCfg & partCfg()
 
 cdef extern from "particle_data.hpp":
-    int max_seen_particle_type
+    int n_particle_types
 
 cdef extern from "statistics.hpp":
     cdef void calc_structurefactor(PartCfg &, int * p_types, int n_types, int order, double ** sf)

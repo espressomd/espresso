@@ -35,12 +35,13 @@ public:
       histogram.update(Utils::transform_pos_to_cylinder_coordinates(
                            folded_positions[ind], axis),
                        Utils::transform_vel_to_cylinder_coordinates(
-                           velocities[ind], axis, folded_positions[ind]));
+                           velocities[ind], axis, folded_positions[ind]) /
+                           time_step);
     }
     auto hist_tmp = histogram.get_histogram();
     auto tot_count = histogram.get_tot_count();
     for (size_t ind = 0; ind < hist_tmp.size(); ++ind) {
-      if (tot_count[ind] > 0) {
+      if (hist_tmp[ind] > 0.0) {
         hist_tmp[ind] /= tot_count[ind];
       }
     }

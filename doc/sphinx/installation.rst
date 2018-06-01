@@ -432,6 +432,10 @@ Fluid dynamics and fluid structure interaction
 
    .. seealso:: :ref:`DPD interaction`
 
+-  ``DPD_MASS_RED``
+
+-  ``DPD_MASS_LIN``
+
 -  ``LB`` Enables the lattice-Boltzmann fluid code.
 
    .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice-Boltzmann`
@@ -560,11 +564,13 @@ DNA Model
 Miscellaneous
 ^^^^^^^^^^^^^
 
--  ``FLATNOISE`` Shape of the noise in ther (LB) thermostat.
+-  ``TUNABLE_SLIP`` (experimental)
 
--  ``GAUSSRANDOM`` Shape of the noise in ther (LB) thermostat.
+-  ``FLATNOISE`` Shape of the noise in ther (Langevin) thermostat.
 
--  ``GAUSSRANDOMCUT`` Shape of the noise in ther (LB) thermostat.
+-  ``GAUSSRANDOM`` Shape of the noise in ther (Langevin) thermostat.
+
+-  ``GAUSSRANDOMCUT`` Shape of the noise in ther (Langevin) thermostat.
 
 
 

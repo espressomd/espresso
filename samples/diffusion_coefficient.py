@@ -8,7 +8,7 @@ It uses the Observables/Correlators framework.
 
 from __future__ import division, print_function
 import espressomd
-from espressomd.accumulators import Correlator
+from espressomd.correlators import Correlator 
 from espressomd.observables import ParticlePositions, ParticleVelocities
 import numpy as np
 
@@ -31,12 +31,12 @@ system.integrator.run(1000)
 pos_obs=ParticlePositions(ids=(0,))
 vel_obs=ParticleVelocities(ids=(0,))
 
-c_pos = Correlator(obs1=pos_obs, tau_lin=16, tau_max=100., delta_N=10,
+c_pos = Correlator(obs1=pos_obs, tau_lin=16, tau_max=100., dt=10*dt,
     corr_operation="square_distance_componentwise", compress1="discard1")
-c_vel = Correlator(obs1=vel_obs, tau_lin=16, tau_max=20., delta_N=1,
+c_vel = Correlator(obs1=vel_obs, tau_lin=16, tau_max=20., dt=dt,
     corr_operation="scalar_product", compress1="discard1")
-system.auto_update_accumulators.add(c_pos)
-system.auto_update_accumulators.add(c_vel)
+system.auto_update_correlators.add(c_pos)
+system.auto_update_correlators.add(c_vel)
 
 system.integrator.run(1000000)
 

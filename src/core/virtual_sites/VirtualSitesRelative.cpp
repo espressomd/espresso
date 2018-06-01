@@ -52,10 +52,6 @@ void VirtualSitesRelative::update_virtual_particle_quaternion(Particle& p) const
  }
  multiply_quaternions(p_real->r.quat, p.p.vs_quat, p.r.quat);
  convert_quat_to_quatu(p.r.quat, p.r.quatu);
-#ifdef DIPOLES
-  // When dipoles are enabled, update dipole moment
-  convert_quatu_to_dip(p.r.quatu, p.p.dipm, p.r.dip);
-#endif
 }
 
 
@@ -85,10 +81,10 @@ void VirtualSitesRelative::update_pos(Particle& p) const
  // This is obtained, by multiplying the quaternion representing the director
  // of the real particle with the quaternion of the virtual particle, which 
  // specifies the relative orientation.
- Vector<4,double> q;
+ double q[4];
  multiply_quaternions(p_real->r.quat,p.p.vs_relative_rel_orientation,q);
  // Calculate the director resulting from the quaternions
- Vector3d director={0,0,0};
+ double director[3];
  convert_quat_to_quatu(q,director);
  // normalize
  double l =sqrt(sqrlen(director));
@@ -152,6 +148,8 @@ void VirtualSitesRelative::update_vel(Particle& p) const
  for (i=0;i<3;i++)
  {
   // Scale the velocity by the distance of virtual particle from the real particle
+  // Also, espresso stores not velocity but velocity * time_step
+  p.m.v[i] *= time_step;
   // Add velocity of real particle
   p.m.v[i] += p_real->m.v[i];
  }
@@ -184,7 +182,7 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
 
       // Add forces and torques
       for (int j = 0; j < 3; j++) {
-        p_real->f.torque[j] += tmp[j]+p.f.torque[j];
+        p_real->f.torque[j] += tmp[j];
         p_real->f.f[j] += p.f.f[j];
       }
     }
@@ -225,6 +223,10 @@ void VirtualSitesRelative::pressure_and_stress_tensor_contribution(double* press
     // but the 1/3 is applied somewhere else.
     *pressure += (p.f.f[0] * d[0] + p.f.f[1] * d[1] + p.f.f[2] * d[2]);
   }
+
+  *pressure /= 0.5 * time_step * time_step;
+  for (int i = 0; i < 9; i++)
+    stress_tensor[i] /= 0.5 * time_step * time_step;
 
 }
 

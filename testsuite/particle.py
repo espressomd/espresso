@@ -33,7 +33,8 @@ class ParticleProperties(ut.TestCase):
     tol = 1E-9
 
     # Handle for espresso system
-    system = espressomd.System(box_l=[100.0, 100.0, 100.0])
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system.box_l = [10.0] * 3
 
     f1 = FeneBond(k=1, d_r_max=5)
     system.bonded_inter.add(f1)
@@ -223,27 +224,6 @@ class ParticleProperties(ut.TestCase):
         def get_pos_prop(handle):
             return handle.pos
         self.assertRaises(RuntimeError, get_pos_prop, handle_to_non_existing_particle)
-
-    def test_parallel_property_setters(self):
-        s= self.system
-        s.part.clear()
-        s.part.add(pos=s.box_l*np.random.random((100,3)))
-
-        # Copy individual properties of particle 0
-        print("If this test hangs, there is an mpi deadlock in a particle property setter." )
-        for p in espressomd.particle_data.particle_attributes:
-            # Uncomment to identify guilty property
-            #print( p)
-            
-            if not hasattr(s.part[0],p):
-                raise Exception("Inconsistency between ParticleHandle and particle_data.particle_attributes")
-            try: 
-                setattr(s.part[:],p,getattr(s.part[0],p))
-            except AttributeError:
-                print("Skipping read-only",p)
-            # Cause a differtn mpi callback to uncover deadlock immediately
-            x=getattr(s.part[:],p)
-            
 
 if __name__ == "__main__":
     #print("Features: ", espressomd.features())

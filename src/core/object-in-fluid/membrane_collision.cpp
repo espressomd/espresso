@@ -24,7 +24,6 @@
  */
 #include "membrane_collision.hpp"
 #include "../communication.hpp"
-#include "interaction_data.hpp" 
 
 #ifdef MEMBRANE_COLLISION
 
@@ -47,5 +46,4 @@ int membrane_collision_set_params(int part_type_a, int part_type_b,
 }
 
 #endif
-
 

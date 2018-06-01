@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(verlet_ia) {
   for (auto &c : cells) {
     for (auto &n : cells) {
       if (&c != &n)
-        c.m_neighbors.push_back(&n);
+        c.m_neighbors.push_back(std::ref(n));
     }
 
     c.part = new Particle[n_part_per_cell];

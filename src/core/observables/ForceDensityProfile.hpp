@@ -20,12 +20,14 @@ public:
         {std::make_pair(min_x, max_x), std::make_pair(min_y, max_y),
          std::make_pair(min_z, max_z)}};
     Utils::Histogram<double, 3> histogram(n_bins, 3, limits);
+    double scale_fac;
     for (auto const &id : ids()) {
       auto const ppos = ::Vector<3, double>(folded_position(partCfg[id]));
+      scale_fac = partCfg[id].p.mass / (0.5 * time_step * time_step);
       histogram.update(ppos,
-                       ::Vector<3, double>{{partCfg[id].f.f[0],
-                                            partCfg[id].f.f[1],
-                                            partCfg[id].f.f[2]}});
+                       ::Vector<3, double>{{partCfg[id].f.f[0] * scale_fac,
+                                            partCfg[id].f.f[1] * scale_fac,
+                                            partCfg[id].f.f[2] * scale_fac}});
     }
     histogram.normalize();
     return histogram.get_histogram();
