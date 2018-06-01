@@ -16,6 +16,14 @@ Vector3d ShapeBasedConstraint::total_force() const {
   return total_force;
 }
 
+double ShapeBasedConstraint::total_summed_outer_normal_force() const {
+  double total_summed_scalar_product_outer_normal_force;
+  boost::mpi::all_reduce(comm_cart, m_summed_scalar_product_outer_normal_force, total_summed_scalar_product_outer_normal_force,
+                         std::plus<double>());
+
+  return total_summed_scalar_product_outer_normal_force;
+}
+
 double ShapeBasedConstraint::min_dist() {
   double global_mindist = std::numeric_limits<double>::infinity();
   auto parts = local_cells.particles();
@@ -77,11 +85,11 @@ void ShapeBasedConstraint::reflect_particle(Particle *p,
 }
 
 void ShapeBasedConstraint::add_force(Particle *p, Vector3d& folded_pos) {
-  double dist, vec[3], force[3], torque1[3], torque2[3];
+  double dist =0.;
+  Vector3d dist_vec, force, torque1, torque2, outer_normal_vec;
 
   IA_parameters *ia_params = get_ia_param(p->p.type, part_rep.p.type);
 
-  dist = 0.;
   for (int j = 0; j < 3; j++) {
     force[j] = 0;
 #ifdef ROTATION
@@ -90,31 +98,32 @@ void ShapeBasedConstraint::add_force(Particle *p, Vector3d& folded_pos) {
   }
 
   if (checkIfInteraction(ia_params)) {
-    m_shape->calculate_dist(folded_pos.data(), &dist, vec);
+    m_shape->calculate_dist(folded_pos.data(), &dist, dist_vec.data());
+    outer_normal_vec=-dist_vec/dist_vec.norm();
 
     if (dist > 0) {
       auto const dist2 = dist * dist;
-      calc_non_bonded_pair_force(p, &part_rep, ia_params, vec, dist, dist2,
-                                 force, torque1, torque2);
+      calc_non_bonded_pair_force(p, &part_rep, ia_params, dist_vec.data(), dist, dist2,
+                                 force.data(), torque1.data(), torque2.data());
 #ifdef DPD
       if (thermo_switch & THERMO_DPD) {
-        add_dpd_pair_force(p, &part_rep, ia_params, vec, dist, dist2);
+        add_dpd_pair_force(p, &part_rep, ia_params, dist_vec, dist, dist2);
       }
 #endif
     } else if (m_penetrable && (dist <= 0)) {
       if ((!m_only_positive) && (dist < 0)) {
         auto const dist2 = dist * dist;
-        calc_non_bonded_pair_force(p, &part_rep, ia_params, vec, -1.0 * dist,
-                                   dist * dist, force, torque1, torque2);
+        calc_non_bonded_pair_force(p, &part_rep, ia_params, dist_vec.data(), -1.0 * dist,
+                                   dist * dist, force.data(), torque1.data(), torque2.data());
 #ifdef DPD
         if (thermo_switch & THERMO_DPD) {
-          add_dpd_pair_force(p, &part_rep, ia_params, vec, dist, dist2);
+          add_dpd_pair_force(p, &part_rep, ia_params, dist_vec.data(), dist, dist2);
         }
 #endif
       }
     } else {
       if (m_reflection_type != ReflectionType::NONE) {
-        reflect_particle(p, vec, folded_pos.data());
+        reflect_particle(p, dist_vec.data(), folded_pos.data());
       } else {
         runtimeErrorMsg() << "Constraint"
                           << " violated by particle " << p->p.identity
@@ -124,12 +133,14 @@ void ShapeBasedConstraint::add_force(Particle *p, Vector3d& folded_pos) {
   }
   for (int j = 0; j < 3; j++) {
     p->f.f[j] += force[j];
-    m_local_force[j] -= force[j];
 #ifdef ROTATION
     p->f.torque[j] += torque1[j];
     part_rep.f.torque[j] += torque2[j];
 #endif
   }
+  force=-force; //Newtons third law. Force acting on constraint due to particle is minus the force acting on the particle
+  m_local_force += force;
+  m_summed_scalar_product_outer_normal_force+=outer_normal_vec.dot(force);  
 }
 
 void ShapeBasedConstraint::add_energy(Particle *p, Vector3d& folded_pos,

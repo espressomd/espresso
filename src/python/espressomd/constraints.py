@@ -166,7 +166,13 @@ class ShapeBasedConstraint(Constraint):
 
         """
         return self.call_method("total_force", constraint=self)
-
+        
+    def total_summed_outer_normal_force(self):
+        """
+        Get the total summed normal force acting on this constraint.
+        
+        """
+        return self.call_method("total_summed_outer_normal_force", constraint=self)
 
 class HomogeneousMagneticField(Constraint):
     """

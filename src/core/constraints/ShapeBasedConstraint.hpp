@@ -45,7 +45,7 @@ public:
 
   ReflectionType const &reflection_type() const;
 
-  void reset_force() override { m_local_force = Vector3d{0, 0, 0}; }
+  void reset_force() override { m_local_force = Vector3d{0, 0, 0}; m_summed_scalar_product_outer_normal_force=0.0;}
   int &only_positive() { return m_only_positive; }
   int &penetrable() { return m_penetrable; }
   int &type() { return part_rep.p.type; }
@@ -63,6 +63,7 @@ public:
   }
 
   Vector3d total_force() const;
+  double total_summed_outer_normal_force() const;
 
 private:
   Particle part_rep;
@@ -78,6 +79,7 @@ private:
   int m_penetrable;
   int m_only_positive;
   Vector3d m_local_force;
+  double m_summed_scalar_product_outer_normal_force;
 };
 
 } /* namespace Constaints */
