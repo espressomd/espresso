@@ -2800,7 +2800,7 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
     // get lattice cell corresponding to source position and interpolate
     // velocity
     lblattice.map_position_to_lattice(Vector3d(source_position), node_index, delta);
-    lb_lbfluid_get_interpolated_velocity(Vector3d(source_position), p->swim.v_source);
+    lb_lbfluid_get_interpolated_velocity(Vector3d(source_position), p->swim.v_source.data());
 
     // calculate and set force at source position
     delta_j[0] =
