@@ -71,7 +71,7 @@ private:
 
   /** Private methods */
   void reflect_particle(Particle *p, const double *distance_vector,
-                        const double *folded_pos) const;
+                        const Vector3d folded_pos) const;
 
   /** Private data members */
   std::shared_ptr<Shapes::Shape> m_shape;

@@ -76,13 +76,15 @@ public:
                             else
                                 throw;                            
                          } //getter
-                         }
-                     });
+                         },
                     {"particle_velocity",
                      [this](const Variant &v) {
                        m_constraint->set_velocity(get_value<Vector3d>(v));
                      },
-                        [this]() { return m_constraint->velocity(); }}});
+                     [this]() { return m_constraint->velocity(); }
+                     }
+                    
+                    });
   }
 
   Variant call_method(std::string const &name, VariantMap const &) override {

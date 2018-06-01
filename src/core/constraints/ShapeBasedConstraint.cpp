@@ -46,7 +46,7 @@ double ShapeBasedConstraint::min_dist() {
 
 void ShapeBasedConstraint::reflect_particle(Particle *p,
                                             const double *distance_vector,
-                                            const double *folded_pos) const {
+                                            const Vector3d folded_pos) const {
   double vec[3];
   double norm;
 
