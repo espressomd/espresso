@@ -137,7 +137,7 @@ class ShapeBasedConstraint(Constraint):
 
     def total_force(self):
         """
-        Get total force acting on this constraint.
+        Get total force acting on this constraint. (This cannot be used to obtain the pressure acting on the constraint).
 
         Examples
         ----------
@@ -169,7 +169,8 @@ class ShapeBasedConstraint(Constraint):
         
     def total_summed_outer_normal_force(self):
         """
-        Get the total summed normal force acting on this constraint.
+        Get the total summed normal force acting on this constraint. Via dividing by the area of the constraint one can obtain the Pressure acting on the constraint. A positive value means that the constraint
+        would want to move in the direction of the outer normal vector if it could do so.
         
         """
         return self.call_method("total_summed_outer_normal_force", constraint=self)
