@@ -232,6 +232,8 @@ struct ParticlePosition {
 /** Force information on a particle. Forces of ghost particles are
     collected and added up to the force of the original particle. */
 struct ParticleForce {
+  ParticleForce() = default;
+  
   /** force. */
   Vector3d f = {0., 0., 0.};
 
@@ -239,6 +241,16 @@ struct ParticleForce {
   /** torque */
   Vector3d torque = {0., 0., 0.};
 #endif
+
+  ParticleForce &operator+=(ParticleForce const &rhs) {
+    f += rhs.f;
+
+#ifdef ROTATION
+    torque += rhs.torque;
+#endif
+
+    return *this;
+  }
 };
 
 /** Momentum information on a particle. Information not contained in
@@ -259,9 +271,9 @@ struct ParticleMomentum {
     node the particle belongs to */
 struct ParticleLocal {
   /** position in the last time step befor last Verlet list update. */
-  Vector3d p_old={0,0,0};
+  Vector3d p_old = {0, 0, 0};
   /** index of the simulation box image where the particle really sits. */
-  Vector<3,int> i = {0, 0, 0};
+  Vector<3, int> i = {0, 0, 0};
 
   /** check whether a particle is a ghost or not */
   int ghost = 0;
@@ -640,7 +652,7 @@ int set_particle_rotational_inertia(int part, double rinertia[3]);
 int set_particle_rotation(int part, int rot);
 
 /** @brief rotate a particle around an axis
-   
+
    @param part particle id
    @param axis rotation axis
    @param angle rotation angle
@@ -930,7 +942,7 @@ inline bool do_nonbonded(Particle const *p1, Particle const *p2) {
   /* check for particle 2 in particle 1's exclusion list. The exclusion list is
      symmetric, so this is sufficient. */
   return std::none_of(p1->el.begin(), p1->el.end(),
-                     [p2](int id) { return p2->p.identity == id; });
+                      [p2](int id) { return p2->p.identity == id; });
 }
 #endif
 
@@ -1023,11 +1035,11 @@ void pointer_to_swimming(Particle const *p,
 void pointer_to_rotational_inertia(Particle const *p, double const *&res);
 #endif
 #ifdef AFFINITY
-void pointer_to_bond_site(Particle const* p, double const*& res);
+void pointer_to_bond_site(Particle const *p, double const *&res);
 #endif
 
 #ifdef MEMBRANE_COLLISION
-void pointer_to_out_direction(const Particle* p, const double*& res); 
+void pointer_to_out_direction(const Particle *p, const double *&res);
 #endif
 
 bool particle_exists(int part);
