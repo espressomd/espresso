@@ -212,6 +212,13 @@ class ShapeBasedConstraintTest(ut.TestCase):
         system = self.system
         system.part.add(id=0,pos=[5., 1.21, 0.83], type=0)
 
+        # Check forces are initialized to zero
+        f_part = system.part[0].f
+
+        self.assertEqual(f_part[0], 0.)
+        self.assertEqual(f_part[1], 0.)
+        self.assertEqual(f_part[2], 0.)
+
         system.non_bonded_inter[0, 1].lennard_jones.set_params(
             epsilon=1.0, sigma=1.0, cutoff=2.0, shift=0)
         system.non_bonded_inter[0, 2].lennard_jones.set_params(
@@ -227,13 +234,6 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
         # (3)
         wall_xy = system.constraints.add(shape=shape_xy, particle_type=2)
-
-        # Check forces
-        f_part = system.part[0].f
-
-        self.assertEqual(f_part[0], 0.)
-        self.assertEqual(f_part[1], 0.)
-        self.assertEqual(f_part[2], 0.)
 
         system.integrator.run(0)  # update forces
         f_part = system.part[0].f
