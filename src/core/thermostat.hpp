@@ -200,13 +200,13 @@ inline double le_frameV(int i, const Vector3d&  vel, const Vector3d&  pos) {
 #ifdef NPT
 /** add velocity-dependend noise and friction for NpT-sims to the particle's
    velocity
-    @param dt_vj  j-component of the velocity scaled by time_step dt
+    @param vj     j-component of the velocity
     @return       j-component of the noise added to the velocity, also scaled by
    dt (contained in prefactors) */
-inline double friction_therm0_nptiso(double dt_vj) {
+inline double friction_therm0_nptiso(double vj) {
   extern double nptiso_pref1, nptiso_pref2;
   if (thermo_switch & THERMO_NPT_ISO)
-    return (nptiso_pref1 * dt_vj + nptiso_pref2 * Thermostat::noise());
+    return (nptiso_pref1 * vj + nptiso_pref2 * Thermostat::noise());
 
   return 0.0;
 }
@@ -265,7 +265,7 @@ inline void friction_thermo_langevin(Particle *p) {
     // In case of the engine feature, the velocity is relaxed
     // towards a swimming velocity oriented parallel to the
     // particles director
-    velocity[i] -= (p->swim.v_swim * time_step) * p->r.quatu[i];
+    velocity[i] -= p->swim.v_swim * p->r.quatu[i];
 #endif
 
     // Local effective velocity for leeds-edwards boundary conditions
@@ -283,7 +283,7 @@ inline void friction_thermo_langevin(Particle *p) {
   auto const constexpr langevin_temp_coeff = 24.0;
 
   if (p->p.gamma >= Thermostat::GammaType{}) {
-    langevin_pref1_temp = -p->p.gamma / time_step;
+    langevin_pref1_temp = -p->p.gamma;
     // Is a particle-specific temperature also specified?
     if (p->p.T >= 0.)
       langevin_pref2_temp =
@@ -295,7 +295,7 @@ inline void friction_thermo_langevin(Particle *p) {
 
   } // particle specific gamma
   else {
-    langevin_pref1_temp = -langevin_gamma / time_step;
+    langevin_pref1_temp = -langevin_gamma;
     // No particle-specific gamma, but is there particle-specific temperature
     if (p->p.T >= 0.)
       langevin_pref2_temp =
