@@ -26,12 +26,11 @@
 #include "ghosts.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "domain_decomposition.hpp"
-#include "forces_inline.hpp"
-#include "global.hpp"
-#include "grid.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
+#include "debug.hpp"
+#include "errorhandling.hpp"
+
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
