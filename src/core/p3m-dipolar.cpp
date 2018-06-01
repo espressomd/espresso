@@ -43,7 +43,7 @@
 #include "fft-dipolar.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "integrate.hpp"
+
 #include "particle_data.hpp"
 #include "thermostat.hpp"
 #include "tuning.hpp"

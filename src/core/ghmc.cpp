@@ -24,7 +24,7 @@
     For more information see \ref ghmc.hpp
  */
 
-#include "integrate.hpp"
+
 #include "thermostat.hpp"
 #include "utils.hpp"
 #include <cmath>

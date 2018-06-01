@@ -9,8 +9,6 @@
 #include "shapes/NoWhere.hpp"
 #include "shapes/Shape.hpp"
 
-extern double time_step;
-
 namespace Constraints {
 
 class ShapeBasedConstraint : public Constraint {

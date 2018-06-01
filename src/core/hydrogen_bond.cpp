@@ -23,7 +23,7 @@
 #include "communication.hpp"
 
 #ifdef CG_DNA_DEBUG
-#include "integrate.hpp"
+
 #endif
 
 #ifdef HYDROGEN_BOND

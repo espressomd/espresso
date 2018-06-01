@@ -25,7 +25,7 @@
  *  see \ref integrate.hpp "integrate.hpp".
 */
 
-#include "integrate.hpp"
+
 #include "cells.hpp"
 #include "communication.hpp"
 #include "domain_decomposition.hpp"

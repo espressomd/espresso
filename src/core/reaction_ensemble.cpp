@@ -13,7 +13,7 @@
 #include "reaction_ensemble.hpp"
 #include "energy.hpp"
 #include "global.hpp"
-#include "integrate.hpp"
+
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "random.hpp"
