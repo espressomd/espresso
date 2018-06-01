@@ -36,7 +36,11 @@ class DPDThermostat(ut.TestCase):
 
     def setUp(self):
         self.s.seed = range(self.s.cell_system.get_state()["n_nodes"])
-        np.random.seed(13)
+        np.random.seed(16)
+
+    def tearDown(self):
+        s = self.s
+        s.part.clear()
 
     def single_component_maxwell(self,x1,x2,kT):
         """Integrate the probability density from x1 to x2 using the trapez rule"""
@@ -68,7 +72,6 @@ class DPDThermostat(ut.TestCase):
         """Test velocity distribution of a dpd fluid with a single type."""
         N=200
         s=self.s
-        s.part.clear()
         s.part.add(pos=s.box_l * np.random.random((N,3)))
         kT=2.3
         gamma=1.5
@@ -92,7 +95,6 @@ class DPDThermostat(ut.TestCase):
         """Test velocity distribution of binary dpd fluid"""
         N=200
         s=self.s
-        s.part.clear()
         s.part.add(pos=s.box_l * np.random.random((N//2,3)), type=N//2*[0])
         s.part.add(pos=s.box_l * np.random.random((N//2,3)), type=N//2*[1])
         kT=2.3
@@ -122,7 +124,6 @@ class DPDThermostat(ut.TestCase):
     def test_disable(self):
         N=200
         s=self.s
-        s.part.clear()
         s.time_step=0.01
         s.part.add(pos=np.random.random((N,3)))
         kT=2.3
@@ -166,7 +167,6 @@ class DPDThermostat(ut.TestCase):
 
     def test_const_weight_function(self):
         s=self.s
-        s.part.clear()
         kT=0.
         gamma=1.42
         s.thermostat.set_dpd(kT=kT)
@@ -215,7 +215,6 @@ class DPDThermostat(ut.TestCase):
 
     def test_linear_weight_function(self):
         s=self.s
-        s.part.clear()
         kT=0.
         gamma=1.42
         s.thermostat.set_dpd(kT=kT)
@@ -279,7 +278,6 @@ class DPDThermostat(ut.TestCase):
 
     def test_ghosts_have_v(self):
         s=self.s
-        s.part.clear()
 
         s.box_l = 3 * [10.]
 
@@ -316,6 +314,31 @@ class DPDThermostat(ut.TestCase):
 
                 self.assertAlmostEqual(sgn*4.0, s.part[id].f[i])
             id += 1
+
+
+    @ut.skipIf(not espressomd.has_features(["CONSTRAINTS", "DPD"]), "Skipped due to missing features.")
+    def test_constraint(self):
+        import espressomd.shapes
+
+        s = self.s
+
+        s.constraints.add(shape=espressomd.shapes.Wall(dist=0, normal=[1,0,0]), particle_type=0, particle_velocity=[1,2,3])
+
+        s.thermostat.set_dpd(kT=0.0)
+        s.non_bonded_inter[0,0].dpd.set_params(
+            weight_function=0, gamma=1., r_cut=1.0,
+            trans_weight_function=0, trans_gamma=1., trans_r_cut=1.0)
+
+        p = s.part.add(pos=[0.5,0,0], type=0, v=[0,0,0])
+
+        s.integrator.run(0)
+
+        self.assertAlmostEqual(p.f[0], 1.)
+        self.assertAlmostEqual(p.f[1], 2.)
+        self.assertAlmostEqual(p.f[2], 3.)
+
+        for c in s.constraints:
+            s.constraints.remove(c)
 
 if __name__ == "__main__":
     ut.main()

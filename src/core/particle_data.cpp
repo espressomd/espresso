@@ -477,7 +477,7 @@ int set_particle_swimming(int part, ParticleParametersSwimming swim) {
 }
 #endif
 
-int set_particle_f(int part, double F[3]) {
+int set_particle_f(int part, const Vector3d &F) {
   auto const pnode = get_particle_node(part);
 
   mpi_send_f(pnode, part, F);
@@ -518,6 +518,14 @@ int set_particle_rotation(int part, int rot) {
   auto const pnode = get_particle_node(part);
 
   mpi_send_rotation(pnode, part, rot);
+  return ES_OK;
+}
+#endif
+#ifdef ROTATION
+int rotate_particle(int part, double axis[3], double angle) {
+  auto const pnode = get_particle_node(part);
+
+  mpi_rotate_particle(pnode, part, axis, angle);
   return ES_OK;
 }
 #endif
@@ -583,15 +591,6 @@ int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
 }
 #endif
 
-#ifdef MULTI_TIMESTEP
-int set_particle_smaller_timestep(int part, int smaller_timestep) {
-  auto const pnode = get_particle_node(part);
-
-  mpi_send_smaller_timestep_flag(pnode, part, smaller_timestep);
-  return ES_OK;
-}
-#endif
-
 int set_particle_q(int part, double q) {
   auto const pnode = get_particle_node(part);
 
@@ -625,12 +624,10 @@ int set_particle_type(int p_id, int type) {
     // it from the list which contains it
     auto const &cur_par = get_particle_data(p_id);
     int prev_type = cur_par.p.type;
-    if (prev_type != type and
-        particle_type_map.find(prev_type) != particle_type_map.end()) {
+    if (prev_type != type ) {
       // particle existed before so delete it from the list
       remove_id_from_map(p_id, prev_type);
     }
-
     add_id_to_type_map(p_id, type);
   }
 
@@ -905,10 +902,10 @@ void local_place_particle(int part, const double p[3], int _new) {
   pt->m.v[2] += vv[2];
 #endif
 
-  memmove(pt->r.p, pp, 3 * sizeof(double));
-  memmove(pt->l.i, i, 3 * sizeof(int));
+  memmove(pt->r.p.data(), pp, 3 * sizeof(double));
+  memmove(pt->l.i.data(), i, 3 * sizeof(int));
 #ifdef BOND_CONSTRAINT
-  memmove(pt->r.p_old, pp, 3 * sizeof(double));
+  memmove(pt->r.p_old.data(), pp, 3 * sizeof(double));
 #endif
 }
 
@@ -1210,7 +1207,8 @@ void init_type_map(int type) {
 }
 
 void remove_id_from_map(int part_id, int type) {
-  particle_type_map.at(type).erase(part_id);
+  if(particle_type_map.find(type)!=particle_type_map.end())
+    particle_type_map.at(type).erase(part_id);
 }
 
 int get_random_p_id(int type) {
@@ -1221,7 +1219,8 @@ int get_random_p_id(int type) {
 }
 
 void add_id_to_type_map(int part_id, int type) {
-  particle_type_map.at(type).insert(part_id);
+  if(particle_type_map.find(type)!=particle_type_map.end())
+    particle_type_map.at(type).insert(part_id);
 }
 
 int number_of_particles_with_type(int type) {
@@ -1235,17 +1234,17 @@ int number_of_particles_with_type(int type) {
 
 #ifdef ROTATION
 void pointer_to_omega_body(Particle const *p, double const *&res) {
-  res = p->m.omega;
+  res = p->m.omega.data();
 }
 
 void pointer_to_torque_lab(Particle const *p, double const *&res) {
-  res = p->f.torque;
+  res = p->f.torque.data();
 }
 
-void pointer_to_quat(Particle const *p, double const *&res) { res = p->r.quat; }
+void pointer_to_quat(Particle const *p, double const *&res) { res = p->r.quat.data(); }
 
 void pointer_to_quatu(Particle const *p, double const *&res) {
-  res = p->r.quatu;
+  res = p->r.quatu.data();
 }
 #endif
 
@@ -1272,14 +1271,8 @@ void pointer_to_vs_relative(Particle const *p, int const *&res1,
 }
 #endif
 
-#ifdef MULTI_TIMESTEP
-void pointer_to_smaller_timestep(Particle const *p, int const *&res) {
-  res = &(p->p.smaller_timestep);
-}
-#endif
-
 #ifdef DIPOLES
-void pointer_to_dip(Particle const *p, double const *&res) { res = p->r.dip; }
+void pointer_to_dip(Particle const *p, double const *&res) { res = p->r.dip.data(); }
 
 void pointer_to_dipm(Particle const *p, double const *&res) {
   res = &(p->p.dipm);
@@ -1290,13 +1283,13 @@ void pointer_to_dipm(Particle const *p, double const *&res) {
 void pointer_to_ext_force(Particle const *p, int const *&res1,
                           double const *&res2) {
   res1 = &(p->p.ext_flag);
-  res2 = p->p.ext_force;
+  res2 = p->p.ext_force.data();
 }
 #ifdef ROTATION
 void pointer_to_ext_torque(Particle const *p, int const *&res1,
                            double const *&res2) {
   res1 = &(p->p.ext_flag);
-  res2 = p->p.ext_torque;
+  res2 = p->p.ext_torque.data();
 }
 #endif
 void pointer_to_fix(Particle const *p, int const *&res) {
@@ -1341,9 +1334,23 @@ void pointer_to_swimming(Particle const *p,
 
 #ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle const *p, double const *&res) {
-  res = p->p.rinertia;
+  res = p->p.rinertia.data();
 }
 #endif
+
+#ifdef AFFINITY
+void pointer_to_bond_site(Particle const* p, double const*& res) {
+  res =p->p.bond_site.data();
+}
+#endif
+
+#ifdef MEMBRANE_COLLISION
+void pointer_to_out_direction(const Particle* p, const double*& res) {
+ res = p->p.out_direction.data();
+}
+#endif
+
+
 
 bool particle_exists(int part_id) {
   if (particle_node.empty())
