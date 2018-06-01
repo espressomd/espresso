@@ -28,12 +28,10 @@
 
 #include "comfixed_global.hpp"
 #include "electrokinetics.hpp"
-#include "forces.hpp"
 #include "forces_inline.hpp"
 #include "iccp3m.hpp"
 #include "maggs.hpp"
 #include "p3m_gpu.hpp"
-#include "partCfg_global.hpp"
 #include "forcecap.hpp"
 #include "short_range_loop.hpp"
 
