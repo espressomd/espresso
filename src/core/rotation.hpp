@@ -59,6 +59,7 @@ void convert_torques_body_to_space(const Particle *p, double *torque);
 
 
 Vector3d convert_vector_body_to_space(const Particle& p, const Vector3d& v);
+Vector3d convert_vector_space_to_body(const Particle& p, const Vector3d& v);
 
 /** convert velocity form the lab-fixed coordinates
     to the body-fixed frame */
@@ -69,7 +70,7 @@ void convert_vel_space_to_body(const Particle *p, double *vel_body);
     the body-fixed frames */  
 void define_rotation_matrix(Particle const &p, double A[9]);
 
-inline void convert_quat_to_quatu(double quat[4], double quatu[3]) {
+inline void convert_quat_to_quatu(const Vector<4,double>&  quat, Vector3d& quatu) {
   /* director */
   quatu[0] = 2 * (quat[1] * quat[3] + quat[0] * quat[2]);
   quatu[1] = 2 * (quat[2] * quat[3] - quat[0] * quat[1]);
@@ -78,7 +79,8 @@ inline void convert_quat_to_quatu(double quat[4], double quatu[3]) {
 }
 
 /** Multiply two quaternions */ 
-inline void multiply_quaternions(const double a[4], const double b[4], double result[4])
+template <typename T1, typename T2, typename T3>
+void multiply_quaternions(const T1& a, const T2& b, T3&  result)
 {
  // Formula from http://www.j3d.org/matrix_faq/matrfaq_latest.html
  result[0] = a[0]*b[0] - a[1]*b[1] - a[2]*b[2] - a[3]*b[3];
@@ -88,12 +90,12 @@ inline void multiply_quaternions(const double a[4], const double b[4], double re
 }
 
 /** Convert director to quaternions */
-int convert_quatu_to_quat(double d[3], double quat[4]);
+int convert_quatu_to_quat(const Vector3d& d, Vector<4,double>& quat);
 
 #ifdef DIPOLES
 
 /** convert a dipole moment to quaternions and dipolar strength  */
-inline int convert_dip_to_quat(double dip[3], double quat[4], double *dipm) {
+inline int convert_dip_to_quat(const Vector3d&  dip, Vector<4,double>&  quat, double *dipm) {
   double dm;
   // Calculate magnitude of dipole moment
   dm = sqrt(dip[0] * dip[0] + dip[1] * dip[1] + dip[2] * dip[2]);
@@ -104,7 +106,7 @@ inline int convert_dip_to_quat(double dip[3], double quat[4], double *dipm) {
 }
 
 /** convert quaternion director to the dipole moment */
-inline void convert_quatu_to_dip(double quatu[3], double dipm, double dip[3]) {
+inline void convert_quatu_to_dip(const Vector3d& quatu, double dipm, Vector3d& dip) {
   /* dipole moment */
   dip[0] = quatu[0] * dipm;
   dip[1] = quatu[1] * dipm;
@@ -114,7 +116,7 @@ inline void convert_quatu_to_dip(double quatu[3], double dipm, double dip[3]) {
 #endif
 
 /** Rotate the particle p around the NORMALIZED axis a by amount phi */
-void rotate_particle(Particle *p, double *a, double phi);
+void local_rotate_particle(Particle *p, double *a, double phi);
 
 inline void normalize_quaternion(double *q) {
   double tmp = sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);

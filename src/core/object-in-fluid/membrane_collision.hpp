@@ -28,18 +28,19 @@
 */
 
 #include "../utils.hpp"
+
+#ifdef MEMBRANE_COLLISION
+
 #include "../interaction_data.hpp"
 #include "../particle_data.hpp"
 #include "../integrate.hpp"
 #include "../random.hpp"
 #include "../grid.hpp"
 
-#ifdef MEMBRANE_COLLISION
-
 int membrane_collision_set_params(int part_type_a, int part_type_b,
 			   double a, double n, double cut, double offset);
 
-//** Resultant force due to a sigmoid potential between two
+/** Resultant force due to a sigmoid potential between two
 // particles at interatomic separation r */
 inline double sigmoid_force_r(double a, double n, double r )
 {
@@ -64,7 +65,7 @@ inline void add_membrane_collision_pair_force(const Particle *p1, const Particle
 	
     int j;
     double r_off, fac=0.0, product, angle, ndir;
-    double out1[3],out2[3],dir[3];
+    Vector3d out1,out2,dir;
     
     if((dist < ia_params->membrane_cut+ia_params->membrane_offset)) {
         
@@ -73,8 +74,8 @@ inline void add_membrane_collision_pair_force(const Particle *p1, const Particle
         
         if(r_off > 0.0) {
             
-            memmove(out1, p1->p.out_direction, 3*sizeof(double));
-            memmove(out2, p2->p.out_direction, 3*sizeof(double));
+            out1 = p1->p.out_direction;
+            out2 = p2->p.out_direction;
 			// check whether out_direction was set
 			if ( fabs(out1[0]) + fabs(out1[1]) + fabs(out1[2]) + fabs(out2[0]) + fabs(out2[1]) + fabs(out2[2]) < SMALL_OIF_MEMBRANE_CUTOFF) 
 			{
@@ -83,11 +84,11 @@ inline void add_membrane_collision_pair_force(const Particle *p1, const Particle
 			}
             
             // this is the direction in which the repulsive forces will be applied and its norm
-            vector_subt(dir,out1,out2);
-            ndir=normr(dir);
+            dir=out1-out2;
+            ndir=dir.norm();
             
             // for very small angles the force should not be applied - these happen at the crossing of the boundary and would result in oscillation
-            product = scalar(out1,out2);
+            product = out1.dot(out2);
             angle = acos(product);
             
             if (fabs(angle)>SMALL_OIF_MEMBRANE_CUTOFF){
@@ -103,3 +104,6 @@ inline void add_membrane_collision_pair_force(const Particle *p1, const Particle
 
 #endif /* ifdef MEMBRANE_COLLISION */
 #endif
+
+
+

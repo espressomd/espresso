@@ -28,7 +28,6 @@
 #include "integrate.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "correlators.hpp"
 #include "domain_decomposition.hpp"
 #include "electrokinetics.hpp"
 #include "errorhandling.hpp"
@@ -88,8 +87,6 @@ int recalc_forces = 1;
 
 double verlet_reuse = 0.0;
 
-double smaller_time_step = -1.0;
-
 #ifdef ADDITIONAL_CHECKS
 double db_max_force = 0.0, db_max_vel = 0.0;
 int db_maxf_id = 0, db_maxv_id = 0;
@@ -99,11 +96,9 @@ int db_maxf_id = 0, db_maxv_id = 0;
 /************************************************************/
 /*@{*/
 
-/** Rescale all particle forces with \f[ 0.5 \Delta t^2 \f]. */
-void rescale_forces();
 /** Propagate the velocities. Integration step 1 of the Velocity Verlet
    integrator:<br>
-    \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t f(t) \f] */
+    \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t f(t)/m \f] */
 void propagate_vel();
 /** Propagate the positions. Integration step 2 of the Velocity
    Verletintegrator:<br>
@@ -111,14 +106,13 @@ void propagate_vel();
 void propagate_pos();
 /** Propagate the velocities and positions. Integration step 1 and 2
     of the Velocity Verlet integrator: <br>
-    \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t f(t) \f] <br>
+    \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t f(t)/m \f] <br>
     \f[ p(t+\Delta t) = p(t) + \Delta t  v(t+0.5 \Delta t) \f] */
 void propagate_vel_pos();
-/** Rescale all particle forces with \f[ 0.5 \Delta t^2 \f] and propagate the
-   velocities.
-    Integration step 4 of the Velocity Verletintegrator:<br>
-    \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t) \f] */
-void rescale_forces_propagate_vel();
+/** Integration step 4 of the Velocity Verletintegrator and finalize 
+    instantanious pressure calculation:<br>
+    \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t)/m \f] */
+void propagate_vel_finalize_p_inst();
 
 /** Integrator stability check (see compile flag ADDITIONAL_CHECKS). */
 void force_and_velocity_display();
@@ -263,7 +257,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
     force_calc();
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      rescale_forces();
 #ifdef ROTATION
       convert_initial_torques();
 #endif
@@ -272,7 +265,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     thermo_cool_down();
 
 #ifdef COLLISION_DETECTION
-    handle_collisions();
+    if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
+        handle_collisions();
+    }
 #endif
   }
 
@@ -308,11 +303,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
     /* Integration Steps: Step 1 and 2 of Velocity Verlet scheme:
-       v(t+0.5*dt) = v(t) + 0.5*dt * f(t)
+       v(t+0.5*dt) = v(t) + 0.5*dt * a(t)
        p(t + dt)   = p(t) + dt * v(t+0.5*dt)
-       NOTE 1: Prefactors do not occur in formulas since we use
-       rescaled forces and velocities.
-       NOTE 2: Depending on the integration method Step 1 and Step 2
+       NOTE: Depending on the integration method Step 1 and Step 2
        cannot be combined for the translation.
     */
     if (integ_switch == INTEG_METHOD_NPT_ISO
@@ -376,7 +369,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      rescale_forces_propagate_vel();
+      propagate_vel_finalize_p_inst();
 #ifdef ROTATION
       convert_torques_propagate_omega();
 #endif
@@ -397,6 +390,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
 // progagate one-step functionalities
+
+if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef LB
     if (lattice_switch & LATTICE_LB)
       lattice_boltzmann_update();
@@ -420,6 +415,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 #endif // LB_GPU
 
+
 // IMMERSED_BOUNDARY
 #ifdef IMMERSED_BOUNDARY
 
@@ -441,6 +437,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
 
 #endif // IMMERSED_BOUNDARY
+}
 
 #ifdef ELECTROSTATICS
     if (coulomb.method == COULOMB_MAGGS) {
@@ -463,10 +460,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
       /* Propagate time: t = t+dt */
       sim_time += time_step;
-    }
 #ifdef COLLISION_DETECTION
     handle_collisions();
 #endif
+    }
     if (check_runtime_errors())
       break;
   }
@@ -474,12 +471,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #ifdef VALGRIND_INSTRUMENTATION
   CALLGRIND_STOP_INSTRUMENTATION;
 #endif
-
-  /* Steepest descent operatates on unscaled forces,
-     so we have to scale them back now. */
-  if(integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
-    rescale_forces();
-  }
 
   /* verlet list statistics */
   if (n_verlet_updates > 0)
@@ -518,30 +509,7 @@ void rescale_velocities(double scale) {
 /* Privat functions */
 /************************************************************/
 
-namespace {
-double calc_scale() { return 0.5 * time_step * time_step; }
-}
-
-void rescale_forces() {
-  auto const scale = calc_scale();
-
-  INTEG_TRACE(fprintf(stderr, "%d: rescale_forces:\n", this_node));
-
-  for (auto &p : local_cells.particles()) {
-    check_particle_force(&p);
-    p.f.f[0] *= scale / p.p.mass;
-    p.f.f[1] *= scale / p.p.mass;
-    p.f.f[2] *= scale / p.p.mass;
-
-    ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
-        stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
-        this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m.v[0], p.m.v[1], p.m.v[2]));
-  }
-}
-
-void rescale_forces_propagate_vel() {
-  auto const scale = calc_scale();
-
+void propagate_vel_finalize_p_inst() {
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
     nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
@@ -549,14 +517,10 @@ void rescale_forces_propagate_vel() {
 #endif
 
   INTEG_TRACE(
-      fprintf(stderr, "%d: rescale_forces_propagate_vel:\n", this_node));
+      fprintf(stderr, "%d: propagate_vel_finalize_p_inst:\n", this_node));
 
   for (auto &p : local_cells.particles()) {
     check_particle_force(&p);
-    /* Rescale forces: f_rescaled = 0.5*dt*dt * f_calculated * (1/mass) */
-    p.f.f[0] *= scale / p.p.mass;
-    p.f.f[1] *= scale / p.p.mass;
-    p.f.f[2] *= scale / p.p.mass;
 
     ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
         stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
@@ -573,17 +537,12 @@ void rescale_forces_propagate_vel() {
 #ifdef NPT
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
-          nptiso.p_vel[j] += Utils::sqr(p.m.v[j]) * p.p.mass;
-#ifdef MULTI_TIMESTEP
-          if (smaller_time_step > 0. && current_time_step_is_small == 1)
-            p.m.v[j] += p.f.f[j];
-          else
-#endif
-            p.m.v[j] += p.f.f[j] + friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
+            nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
+            p.m.v[j] += 0.5 * time_step / p.p.mass * p.f.f[j] + friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
         } else
 #endif
-          /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
-          p.m.v[j] += p.f.f[j];
+          /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
+          p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
 #ifdef EXTERNAL_FORCES
       }
 #endif
@@ -608,11 +567,6 @@ void finalize_p_inst_npt() {
     nptiso.p_inst = 0.0;
     for (i = 0; i < 3; i++) {
       if (nptiso.geometry & nptiso.nptgeom_dir[i]) {
-#ifdef MULTI_TIMESTEP
-        if (smaller_time_step > 0.)
-          nptiso.p_vel[i] /= Utils::sqr(smaller_time_step);
-        else
-#endif
           nptiso.p_vel[i] /= Utils::sqr(time_step);
         nptiso.p_inst += nptiso.p_vir[i] + nptiso.p_vel[i];
       }
@@ -641,9 +595,6 @@ void propagate_press_box_pos_and_rescale_npt() {
      * vel-rescaling
      */
     if (this_node == 0) {
-#ifdef MULTI_TIMESTEP
-      if (smaller_time_step < 0. || current_time_step_is_small == 0)
-#endif
         nptiso.volume += nptiso.inv_piston * nptiso.p_diff * 0.5 * time_step;
       scal[2] = Utils::sqr(box_l[nptiso.non_const_dim]) /
                 pow(nptiso.volume, 2.0 / nptiso.dimension);
@@ -680,12 +631,12 @@ void propagate_press_box_pos_and_rescale_npt() {
 #endif
           if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
             {
-              p.r.p[j] = scal[1] * (p.r.p[j] + scal[2] * p.m.v[j]);
+              p.r.p[j] = scal[1] * (p.r.p[j] + scal[2] * p.m.v[j] * time_step);
               p.l.p_old[j] *= scal[1];
               p.m.v[j] *= scal[0];
             }
           } else {
-            p.r.p[j] += p.m.v[j];
+            p.r.p[j] += p.m.v[j] * time_step;
           }
 #ifdef EXTERNAL_FORCES
         }
@@ -747,17 +698,12 @@ void propagate_vel() {
 #ifdef NPT
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
-#ifdef MULTI_TIMESTEP
-          if (smaller_time_step > 0. && current_time_step_is_small == 1)
-            p.m.v[j] += p.f.f[j];
-          else
-#endif
-            p.m.v[j] += p.f.f[j] + friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
-          nptiso.p_vel[j] += Utils::sqr(p.m.v[j]) * p.p.mass;
+            p.m.v[j] += p.f.f[j] * 0.5 * time_step / p.p.mass + friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
+            nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
         } else
 #endif
-          /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
-          p.m.v[j] += p.f.f[j];
+          /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t) */
+          p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
 
 /* SPECIAL TASKS in particle loop */
 #ifdef NEMD
@@ -808,7 +754,7 @@ void propagate_pos() {
 #endif
           /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
            * v(t+0.5*dt) */
-          p.r.p[j] += p.m.v[j];
+          p.r.p[j] += time_step * p.m.v[j];
         }
       }
       /* Verlet criterion check */
@@ -816,7 +762,6 @@ void propagate_pos() {
         set_resort_particles(Cells::RESORT_LOCAL);
     }
   }
-
   announce_resort_particles();
 }
 
@@ -843,12 +788,12 @@ void propagate_vel_pos() {
       if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
       {
-        /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
-        p.m.v[j] += p.f.f[j];
+        /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5 * dt * a(t) */
+        p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
 
         /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
          * v(t+0.5*dt) */
-        p.r.p[j] += p.m.v[j];
+        p.r.p[j] += time_step * p.m.v[j];
       }
     }
 
@@ -865,7 +810,7 @@ void propagate_vel_pos() {
       int b1, delta_box;
       b1 = (int)floor(p.r.p[1] * box_l_i[1]);
       if (b1 != 0) {
-        delta_box = b1 - (int)floor((p.r.p[1] - p.m.v[1]) * box_l_i[1]);
+        delta_box = b1 - (int)floor((p.r.p[1] - p.m.v[1] * time_step) * box_l_i[1]);
         if (abs(delta_box) > 1) {
           fprintf(stderr,
                   "Error! Particle moved more than one box length in 1 step\n");
@@ -971,8 +916,7 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
   }
 
   /* perform integration */
-  if (!Correlators::auto_update_enabled() &&
-      !Accumulators::auto_update_enabled()) {
+  if (!Accumulators::auto_update_enabled()) {
     if (mpi_integrate(n_steps, reuse_forces))
       return ES_ERROR;
   } else {
@@ -980,7 +924,6 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
       if (mpi_integrate(1, reuse_forces))
         return ES_ERROR;
       reuse_forces = 1;
-      Correlators::auto_update();
       Accumulators::auto_update();
     }
     if (n_steps == 0) {

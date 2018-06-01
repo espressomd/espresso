@@ -24,9 +24,10 @@ from espressomd cimport actors
 from . import actors
 import numpy as np
 from espressomd.utils cimport handle_errors
-from espressomd.electrostatics import check_neutrality
 
 IF ELECTROSTATICS and P3M:
+    from espressomd.electrostatics import check_neutrality
+
     cdef class ElectrostaticExtensions(actors.Actor):
         pass
         
@@ -140,7 +141,7 @@ IF ELECTROSTATICS and P3M:
                 handle_errors("ELC tuning failed, ELC is not set up to work with the GPU P3M")
 
         def _activate_method(self):
-            check_neutrality(self.system, self._params)
+            check_neutrality(self._params)
             self._set_params_in_es_core()
 
         def _deactivate_method(self):
@@ -297,7 +298,7 @@ IF ELECTROSTATICS and P3M:
             mpi_iccp3m_init(0)
 
         def _activate_method(self):
-            check_neutrality(self.system, self._params)
+            check_neutrality(self._params)
             self._set_params_in_es_core()
 
         def _deactivate_method(self):
