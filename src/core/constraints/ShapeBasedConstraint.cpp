@@ -107,7 +107,7 @@ void ShapeBasedConstraint::add_force(Particle *p, Vector3d& folded_pos) {
                                  force.data(), torque1.data(), torque2.data());
 #ifdef DPD
       if (thermo_switch & THERMO_DPD) {
-        add_dpd_pair_force(p, &part_rep, ia_params, dist_vec, dist, dist2);
+        add_dpd_pair_force(p, &part_rep, ia_params, dist_vec.data(), dist, dist2);
       }
 #endif
     } else if (m_penetrable && (dist <= 0)) {
