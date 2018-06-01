@@ -193,7 +193,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
         
         dist_part2=self.box_l-y_part2
         self.assertAlmostEqual(outer_cylinder_wall.total_force()[2],0.0)
-        self.assertAlmostEqual(outer_cylinder_wall.total_summed_outer_normal_force(),2*tests_common.lj_force( espressomd, cutoff=2.0, offset=0., eps=1.0, sig=1.0, r=dist_part2))
+        self.assertAlmostEqual(outer_cylinder_wall.total_normal_force(),2*tests_common.lj_force( espressomd, cutoff=2.0, offset=0., eps=1.0, sig=1.0, r=dist_part2))
         
         # Reset
         system.non_bonded_inter[0, 1].lennard_jones.set_params(
@@ -282,9 +282,9 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 r=0.83),
             places=10)
 
-        #check whether total_summed_outer_normal_force is correct
+        #check whether total_normal_force is correct
         self.assertAlmostEqual(
-        wall_xy.total_summed_outer_normal_force(),
+        wall_xy.total_normal_force(),
         tests_common.lj_force(
             espressomd,
             cutoff=2.0,

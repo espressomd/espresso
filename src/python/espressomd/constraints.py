@@ -167,13 +167,13 @@ class ShapeBasedConstraint(Constraint):
         """
         return self.call_method("total_force", constraint=self)
         
-    def total_summed_outer_normal_force(self):
+    def total_normal_force(self):
         """
         Get the total summed normal force acting on this constraint. Via dividing by the area of the constraint one can obtain the Pressure acting on the constraint. A positive value means that the constraint
         would want to move in the direction of the outer normal vector if it could do so.
         
         """
-        return self.call_method("total_summed_outer_normal_force", constraint=self)
+        return self.call_method("total_normal_force", constraint=self)
 
 class HomogeneousMagneticField(Constraint):
     """

@@ -16,12 +16,12 @@ Vector3d ShapeBasedConstraint::total_force() const {
   return total_force;
 }
 
-double ShapeBasedConstraint::total_summed_outer_normal_force() const {
-  double total_summed_scalar_product_outer_normal_force;
-  boost::mpi::all_reduce(comm_cart, m_summed_scalar_product_outer_normal_force, total_summed_scalar_product_outer_normal_force,
+double ShapeBasedConstraint::total_normal_force() const {
+  double total_normal_force;
+  boost::mpi::all_reduce(comm_cart, m_outer_normal_force, total_normal_force,
                          std::plus<double>());
 
-  return total_summed_scalar_product_outer_normal_force;
+  return total_normal_force;
 }
 
 double ShapeBasedConstraint::min_dist() {
@@ -140,7 +140,7 @@ void ShapeBasedConstraint::add_force(Particle *p, Vector3d& folded_pos) {
   }
   force=-force; //Newtons third law. Force acting on constraint due to particle is minus the force acting on the particle
   m_local_force += force;
-  m_summed_scalar_product_outer_normal_force+=outer_normal_vec.dot(force);  
+  m_outer_normal_force+=outer_normal_vec.dot(force);  
 }
 
 void ShapeBasedConstraint::add_energy(Particle *p, Vector3d& folded_pos,

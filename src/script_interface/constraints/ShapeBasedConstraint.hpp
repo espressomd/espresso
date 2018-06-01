@@ -67,8 +67,8 @@ public:
     if (name == "min_dist") {
       return shape_based_constraint()->min_dist();
     }
-    if (name == "total_summed_outer_normal_force") {
-      return shape_based_constraint()->total_summed_outer_normal_force();
+    if (name == "total_normal_force") {
+      return shape_based_constraint()->total_normal_force();
     }
 
     return none;
