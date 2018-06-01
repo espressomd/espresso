@@ -39,7 +39,7 @@
 #include "ghosts.hpp"
 #include "grid.hpp"
 #include "initialize.hpp"
-#include "integrate.hpp"
+
 #include "interaction_data.hpp"
 #include "p3m.hpp"
 #include "particle_data.hpp"

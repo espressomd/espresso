@@ -31,7 +31,6 @@
 #include "ghosts.hpp"
 #include "grid.hpp"
 #include "initialize.hpp"
-#include "integrate.hpp"
 #include "interaction_data.hpp"
 #include "layered.hpp"
 #include "lees_edwards_domain_decomposition.hpp"

@@ -35,7 +35,7 @@
 #include "communication.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "integrate.hpp"
+
 #include "interaction_data.hpp"
 #include "partCfg_global.hpp"
 #include "rotation.hpp"

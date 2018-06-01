@@ -51,7 +51,7 @@
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "integrate.hpp"
+
 #include "initialize.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"

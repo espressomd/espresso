@@ -23,7 +23,7 @@
 #include "virtual_sites.hpp"
 #include "initialize.hpp" 
 #include "statistics.hpp" 
-#include "integrate.hpp" 
+ 
 #include "rotation.hpp" 
 #ifdef VIRTUAL_SITES
 

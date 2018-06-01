@@ -21,7 +21,7 @@
 
 #include "minimize_energy.hpp"
 #include "initialize.hpp"
-#include "integrate.hpp"
+
 #include "rotation.hpp"
 #include "utils.hpp"
 #include <algorithm>

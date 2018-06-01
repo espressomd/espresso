@@ -31,7 +31,6 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "initialize.hpp"
-#include "integrate.hpp"
 #include "p3m.hpp"
 #include "particle_data.hpp"
 #include "thermostat.hpp"

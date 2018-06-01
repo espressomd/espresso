@@ -22,7 +22,7 @@
 #include "rattle.hpp"
 #include "domain_decomposition.hpp"
 #include "global.hpp"
-#include "integrate.hpp"
+
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
 

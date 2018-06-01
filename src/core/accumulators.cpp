@@ -18,7 +18,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "accumulators.hpp"
-#include "integrate.hpp"
+
 
 namespace Accumulators {
 std::vector<std::shared_ptr<Accumulators::AccumulatorBase>>

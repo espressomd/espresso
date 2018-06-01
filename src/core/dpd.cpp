@@ -25,7 +25,7 @@
 
 #ifdef DPD
 
-#include "integrate.hpp"
+
 #include "random.hpp"
 #include "thermostat.hpp"
 

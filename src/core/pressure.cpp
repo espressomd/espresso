@@ -24,7 +24,7 @@
 
 #include "pressure_inline.hpp"
 #include "cells.hpp"
-#include "integrate.hpp"
+
 #include "initialize.hpp"
 #include "virtual_sites.hpp" 
 #include "npt.hpp"

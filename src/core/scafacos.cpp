@@ -37,7 +37,7 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "initialize.hpp"
-#include "integrate.hpp"
+
 #include "interaction_data.hpp"
 #include "scafacos/Scafacos.hpp"
 #include "tuning.hpp"
