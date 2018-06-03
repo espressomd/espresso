@@ -37,7 +37,7 @@ template <typename CorePidObs> class PidObservable : public Observable {
 public:
   static_assert(
       std::is_base_of<::Observables::PidObservable, CorePidObs>::value, "");
-  
+
   PidObservable() : m_observable(std::make_shared<CorePidObs>()) {}
 
   VariantMap get_parameters() const override {

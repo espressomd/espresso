@@ -15,7 +15,7 @@
 #define BOND_CONSTRAINT
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
-#define CATALYTIC_REACTIONS
+#define SWIMMER_REACTIONS
 
 #define NEMD
 #define NPT 
@@ -46,7 +46,6 @@
 #define LJCOS2
 #define GAUSSIAN
 #define HAT
-#define LJ_ANGLE
 #define GAY_BERNE
 #define SMOOTH_STEP
 #define HERTZIAN
@@ -56,6 +55,7 @@
 #define SOFT_SPHERE
 #define INTER_RF
 #define OVERLAPPED
+#define THOLE
 
 #define TWIST_STACK
 #define HYDROGEN_BOND
@@ -71,5 +71,9 @@
 
 #define VIRTUAL_SITES_RELATIVE
 #define FLATNOISE
+#define OIF_GLOBAL_FORCES
+#define OIF_LOCAL_FORCES
+#define MEMBRANE_COLLISION
+#define AFFINITY
 
 #define ADDITIONAL_CHECKS

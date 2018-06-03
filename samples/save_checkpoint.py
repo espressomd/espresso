@@ -7,6 +7,9 @@ import signal
 
 checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")
 
+if not len(checkpoint.checkpoint_signals):
+    checkpoint.register_signal(signal.SIGINT)
+
 # test for user data
 myvar = "some script variable"
 checkpoint.register("myvar")
@@ -58,7 +61,7 @@ checkpoint.register("system.part")
 
 
 # test for "p3m"
-for i in range(n_part / 2 - 1):
+for i in range(n_part // 2 - 1):
     system.part[2 * i].q = -1.0
     system.part[2 * i + 1].q = 1.0
 p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
@@ -66,8 +69,6 @@ system.actors.add(p3m)
 
 checkpoint.register("p3m")
 
-# signal.SIGINT: signal 2, is sent when ctrl+c is pressed
-checkpoint.register_signal(signal.SIGINT)
 
 
 checkpoint.save()

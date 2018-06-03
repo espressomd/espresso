@@ -1,14 +1,16 @@
 from __future__ import print_function
+
+import math
 import unittest as ut
 import numpy as np
+from numpy import linalg as la
+from numpy.random import random, seed
+
 import espressomd
 from espressomd.interactions import *
 from espressomd.magnetostatics import *
 from espressomd.analyze import *
-import math
 from tests_common import *
-from numpy import linalg as la
-from numpy.random import random, seed
 from espressomd import assert_features, has_features, missing_features
 
 @ut.skipIf(not has_features(["DIPOLAR_BARNES_HUT"]),
@@ -16,7 +18,7 @@ from espressomd import assert_features, has_features, missing_features
 class BHGPUTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
-    es = espressomd.System(box_l=[1,1,1])
+    system = espressomd.System(box_l=[1,1,1])
     
     def vectorsTheSame(self,a,b):
         tol = 5E-2
@@ -28,29 +30,24 @@ class BHGPUTest(ut.TestCase):
             return False
     
     def stopAll(self):
-        for i in range(len(self.es.part)):
-             self.es.part[i].v = np.array([0.0,0.0,0.0])
-             self.es.part[i].omega_body = np.array([0.0,0.0,0.0])
+        for i in range(len(self.system.part)):
+             self.system.part[i].v = np.array([0.0,0.0,0.0])
+             self.system.part[i].omega_body = np.array([0.0,0.0,0.0])
     
     def run_test_case(self):
         seed(1)
-        print("----------------------------------------------")
-        print("- Testcase dawaanr-and-bh-gpu.py")
-        print("----------------------------------------------")
-        
         pf_bh_gpu = 2.34
         pf_dawaanr = 3.524
         ratio_dawaanr_bh_gpu = pf_dawaanr / pf_bh_gpu
         l = 15
-        self.es.box_l = [l, l, l]
-        self.es.periodicity = [0, 0, 0]
-        self.es.time_step = 1E-4
-        self.es.cell_system.skin = 0.1
+        self.system.box_l = [l, l, l]
+        self.system.periodicity = [0, 0, 0]
+        self.system.time_step = 1E-4
+        self.system.cell_system.skin = 0.1
         
         part_dip = np.zeros((3))
         
         for n in [ 110, 111, 540, 541, 5946 ]:
-            print("{0} particles".format(n))
             dipole_modulus = 1.3
             # scale the box for a large number of particles:
             if n > 1000:
@@ -63,57 +60,54 @@ class BHGPUTest(ut.TestCase):
                 part_dip[0] = sintheta * np.cos(phi) * dipole_modulus
                 part_dip[1] = sintheta * np.sin(phi) * dipole_modulus
                 part_dip[2] = costheta * dipole_modulus
-                self.es.part.add(id = i, type = 0, pos = part_pos, dip = part_dip, v = np.array([0,0,0]), omega_body = np.array([0,0,0]))
+                self.system.part.add(id = i, type = 0, pos = part_pos, dip = part_dip, v = np.array([0,0,0]), omega_body = np.array([0,0,0]))
                 
-            self.es.non_bonded_inter[0, 0].lennard_jones.set_params(
+            self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
                 epsilon=10.0, sigma=0.5,
                 cutoff=0.55, shift="auto")
-            self.es.thermostat.set_langevin(kT=0.0, gamma=10.0)
-            
-            self.es.integrator.set_steepest_descent(f_max=0.0, gamma=0.1, max_displacement=0.1)
-            self.es.integrator.run(500)
+            self.system.thermostat.set_langevin(kT=0.0, gamma=10.0)
             self.stopAll()
-            self.es.integrator.set_vv()
+            self.system.integrator.set_vv()
             
-            self.es.non_bonded_inter[0, 0].lennard_jones.set_params(
+            self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
                 epsilon=0.0, sigma=0.0,
                 cutoff=-1, shift=0.0)
 
-            self.es.cell_system.skin = 0.0
-            self.es.time_step = 0.01
-            self.es.thermostat.turn_off()
+            self.system.cell_system.skin = 0.0
+            self.system.time_step = 0.01
+            self.system.thermostat.turn_off()
             
             # gamma should be zero in order to avoid the noise term in force and torque
-            self.es.thermostat.set_langevin(kT=1.297, gamma=0.0)
+            self.system.thermostat.set_langevin(kT=1.297, gamma=0.0)
             
             dds_cpu = DipolarDirectSumCpu(prefactor = pf_dawaanr)
-            self.es.actors.add(dds_cpu)
-            self.es.integrator.run(steps = 0,recalc_forces = True)
+            self.system.actors.add(dds_cpu)
+            self.system.integrator.run(steps = 0,recalc_forces = True)
             
             dawaanr_f = []
             dawaanr_t = []
             
             for i in range(n):
-                dawaanr_f.append(self.es.part[i].f)
-                dawaanr_t.append(self.es.part[i].torque_lab)
-            dawaanr_e = Analysis(self.es).energy()["total"]
+                dawaanr_f.append(self.system.part[i].f)
+                dawaanr_t.append(self.system.part[i].torque_lab)
+            dawaanr_e = Analysis(self.system).energy()["total"]
             
             del dds_cpu
-            for i in range(len(self.es.actors.active_actors)):
-                self.es.actors.remove(self.es.actors.active_actors[i])
+            for i in range(len(self.system.actors.active_actors)):
+                self.system.actors.remove(self.system.actors.active_actors[i])
             
-            self.es.integrator.run(steps = 0,recalc_forces = True)
+            self.system.integrator.run(steps = 0,recalc_forces = True)
             bh_gpu = DipolarBarnesHutGpu(prefactor = pf_bh_gpu, epssq = 200.0, itolsq = 8.0)
-            self.es.actors.add(bh_gpu)
-            self.es.integrator.run(steps = 0,recalc_forces = True)
+            self.system.actors.add(bh_gpu)
+            self.system.integrator.run(steps = 0,recalc_forces = True)
             
             bhgpu_f = []
             bhgpu_t = []
             
             for i in range(n):
-                bhgpu_f.append(self.es.part[i].f)
-                bhgpu_t.append(self.es.part[i].torque_lab)
-            bhgpu_e = Analysis(self.es).energy()["total"]
+                bhgpu_f.append(self.system.part[i].f)
+                bhgpu_t.append(self.system.part[i].torque_lab)
+            bhgpu_e = Analysis(self.system).energy()["total"]
             
             # compare
             for i in range(n):
@@ -124,17 +118,15 @@ class BHGPUTest(ut.TestCase):
             self.assertTrue(abs(dawaanr_e - bhgpu_e * ratio_dawaanr_bh_gpu) <= abs(1E-3 * dawaanr_e), \
                             msg = 'Energies for dawaanr {0} and bh_gpu {1} do not match.'.format(dawaanr_e,ratio_dawaanr_bh_gpu * bhgpu_e))
             
-            self.es.integrator.run(steps = 0,recalc_forces = True)
+            self.system.integrator.run(steps = 0,recalc_forces = True)
             
             del bh_gpu
-            for i in range(len(self.es.actors.active_actors)):
-                self.es.actors.remove(self.es.actors.active_actors[i])
-            #for i in reversed(range(len(self.es.part))):
-            #    self.es.part[i].delete()
-            self.es.part.clear()
+            for i in range(len(self.system.actors.active_actors)):
+                self.system.actors.remove(self.system.actors.active_actors[i])
+            self.system.part.clear()
 
     def test(self):
-        if (self.es.cell_system.get_state()["n_nodes"] > 1):
+        if (self.system.cell_system.get_state()["n_nodes"] > 1):
             print("NOTE: Ignoring testcase for n_nodes > 1")
         else:
             self.run_test_case()

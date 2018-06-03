@@ -422,15 +422,12 @@ calculations should be used with great caution.
 Membrane-collision interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. todo::
-    
-    Not implemented yet.
-
-inter membrane
+.. note::
+     `Feature MEMBRANE_COLLISION required.`
 
 This defines a membrane collision interaction between particles of the
-types *type1* and *type2*, where particle of belongs to one OIF or OIF-like object and
-particle of belongs to another such object.
+types *type1* and *type2*, where particle of *type1* belongs to one OIF or OIF-like object and
+particle of *type2* belongs to another such object.
 
 It is very similar to soft-sphere interaction, but it takes into account
 the local outward normal vectors on the surfaces of the two objects to
@@ -439,8 +436,8 @@ the two membranes are intersected). It is inversely proportional to the
 distance of nodes of membranes that are not crossed and saturating with
 growing distance of nodes of crossed membranes.
 
-In order to work with the OIF objects, both of them need to be created
-using templates with keyword , because this implicitly sets up the
+In order to work with the OIF objects, both OIF objects need to be created
+using OifCellType class with keyword *normal=1*, because this implicitly sets up the
 bonded out-direction interaction, which computes the outward normal
 vector.
 
@@ -487,7 +484,7 @@ which is zero for distances bigger than :math:`r_c` and continuous at distance :
 This is the standard conservative DPD potential and can be used in
 combination with :ref:`Dissipative Particle Dynamics (DPD)`.
 
-.. _Hertzian interaction:
+
 
 Hertzian interaction
 ~~~~~~~~~~~~~~~~~~~~
@@ -612,6 +609,81 @@ The random force by
 The parameters define the strength of the friction and the cutoff in the
 same way as above. Note: This interaction does *not* conserve angular
 momentum.
+
+.. _Thole correction:
+
+Thole correction
+~~~~~~~~~~~~~~~~
+
+.. note::
+
+    Requires features THOLE and ELECTROSTATICS.
+
+.. note::
+
+    THOLE is only implemented for the P3M electrostatics solver.
+
+The Thole correction is closely related to simulations involving 
+:ref:`Particle polarizability with thermalized cold Drude oszillators`.
+In this context, it is used to correct for overestimation of
+induced dipoles at short distances. Ultimately, it alters the short-range
+electrostatics of P3M to result in a damped coulomb interaction potential
+:math:`V(r) = \frac{q_1 q_2}{r} \cdot (1- e^{-s r} (1 + \frac{s r}{2}) )`.  The
+thole scaling coefficient :math:`s` is related to the polarizabilies
+:math:`\alpha` and thole damping parameters :math:`a` of the interacting
+species via :math:`s = \frac{ (a_i + a_j) / 2 }{ (\alpha_i \alpha_j)^{1/6} }`.
+Note that for the Drude oszillators, the Thole correction should be applied
+only for the dipole part :math:`\pm q_d` added by the Drude charge and not on
+the total core charge, which can be different for polarizable ions. Also note
+that the Thole correction acts between all dipoles, intra- and intermolecular.
+Again, the accuracy is related to the P3M accuracy and the split between
+short-range and long-range electrostatics interaction. It is configured by::
+
+    system = espressomd.System()
+    system.non_bonded_inter[type_1,type_2].thole.set_params(scaling_coeff = <float>, q1q2 = <float>)
+
+with parameters:
+    * scaling_coeff: The scaling coefficient :math:`s`.
+    * q1q2: The charge factor of the involved charges.
+
+Because the scaling coefficient depends on the *mixed* polarizabilies and the
+nonbonded interaction is controlled by particle types, each Drude charge with a
+unique polarizability has to have a unique type. Each Drude charge type has
+a Thole correction interaction with all other Drude charges and all Drude
+cores, except the one it's connected to.  This exeption is handeled internally
+by disabling Thole interaction between particles connected via Drude bonds.
+Also, each Drude core has a Thole correction interaction with all other Drude
+cores and Drude charges. To assist with the bookkeeping of mixed scaling
+coefficients, the helper method ``add_drude_particle_to_core()`` (see 
+:ref:`Particle polarizability with thermalized cold Drude oszillators`) 
+collects all core types, drude types and relevant parameters when a drude 
+particle is created. The user already provided all the information when 
+setting up the the drude particles, so the simple call::
+
+    add_all_thole(<system>, <verbose>)
+
+given the espressomd.System() object, uses this information to create all
+necessary Thole interactions. The method calculates the mixed scaling
+coefficient `s` and creates the non-bonded Thole interactions between the
+collected types to cover all the drude-drude, drude-core and core-core
+combinations. No further calls of ``add_drude_particle_to_core()`` should
+follow. Set `verbose` to `True` to print out the coefficients, charge factors
+and involved types.
+
+The samples folder contains the script *drude_bmimpf6.py* with a fully
+polarizable, coarse grained ionic liquid where this approach is applied.
+To use the script, compile espresso with the following features::
+
+    #define EXTERNAL_FORCES
+    #define MASS
+    #define LANGEVIN_PER_PARTICLE
+    #define ROTATION
+    #define ROTATIONAL_INERTIA
+    #define ELECTROSTATICS
+    #define VIRTUAL_SITES_RELATIVE
+    #define LENNARD_JONES
+    #define THOLE
+    #define GHOSTS_HAVE_BONDS
 
 .. _Anisotropic non-bonded interactions:
 

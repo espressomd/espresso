@@ -420,7 +420,7 @@ int maggs_sanity_checks()
     ret = -1;
   }
   /** check if speed of light parameter makes sense */
-  else if (maggs.f_mass < ( 2. * time_step * time_step / maggs.a / maggs.a ) ) {
+  else if (maggs.f_mass < ( 2. / maggs.a / maggs.a ) ) {
       runtimeErrorMsg() <<"MEMD: Speed of light is set too high. Increase f_mass.";
     ret = -1;      
   }

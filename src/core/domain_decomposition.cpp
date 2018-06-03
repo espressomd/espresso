@@ -62,6 +62,9 @@ int max_num_cells = CELLS_MAX_NUM_CELLS;
 int min_num_cells = 1;
 double max_skin = 0.0;
 
+// Full shell neighbor index offsets for dd_full_shell_neigh()
+std::vector<int> dd_fs_neigh;
+
 /*@}*/
 
 /************************************************************/
@@ -544,6 +547,12 @@ void dd_update_communicators_w_boxl() {
 void dd_init_cell_interactions() {
   int m, n, o, p, q, r, ind1, ind2;
 
+  dd_fs_neigh.clear();
+  for (p = -1; p <= 1; p++)
+    for (q = -1; q <= 1; q++)
+      for (r = -1; r <= 1; r++)
+        dd_fs_neigh.push_back(get_linear_index(r, q, p, dd.ghost_cell_grid));
+
   /* loop all local cells */
   DD_LOCAL_CELLS_LOOP(m, n, o) {
 
@@ -558,7 +567,7 @@ void dd_init_cell_interactions() {
         for (r = m - 1; r <= m + 1; r++) {
           ind2 = get_linear_index(r, q, p, dd.ghost_cell_grid);
           if (ind2 > ind1) {
-            cells[ind1].m_neighbors.emplace_back(std::ref(cells[ind2]));
+            cells[ind1].m_neighbors.emplace_back(&cells[ind2]);
           }
         }
 
@@ -599,23 +608,6 @@ Cell *dd_save_position_to_cell(double pos[3]) {
   }
   i = get_linear_index(cpos[0], cpos[1], cpos[2], dd.ghost_cell_grid);
   return &(cells[i]);
-}
-
-void dd_position_to_cell_indices(double pos[3], int *idx) {
-  int i;
-  double lpos;
-
-  for (i = 0; i < 3; i++) {
-    lpos = pos[i] - my_left[i];
-
-    idx[i] = (int)(lpos * dd.inv_cell_size[i]) + 1;
-
-    if (idx[i] < 1) {
-      idx[i] = 1;
-    } else if (idx[i] > dd.cell_grid[i]) {
-      idx[i] = dd.cell_grid[i];
-    }
-  }
 }
 
 /*************************************************/
@@ -875,7 +867,7 @@ void dd_topology_init(CellPList *old) {
     part = old->cell[c]->part;
     np = old->cell[c]->n;
     for (p = 0; p < np; p++) {
-      Cell *nc = dd_save_position_to_cell(part[p].r.p);
+      Cell *nc = dd_save_position_to_cell(part[p].r.p.data());
       /* particle does not belong to this node. Just stow away
          somewhere for the moment */
       if (nc == nullptr)
@@ -973,7 +965,7 @@ void dd_exchange_and_sort_particles(int global_flag) {
             }
             /* Sort particles in cells of this node during last direction */
             else if (dir == 2) {
-              sort_cell = dd_save_position_to_cell(part->r.p);
+              sort_cell = dd_save_position_to_cell(part->r.p.data());
               if (sort_cell != cell) {
                 if (sort_cell == nullptr) {
                   CELL_TRACE(fprintf(
@@ -1068,7 +1060,7 @@ void dd_exchange_and_sort_particles(int global_flag) {
               fold_coordinate(part->r.p, part->m.v, part->l.i, dir);
             }
             if (dir == 2) {
-              sort_cell = dd_save_position_to_cell(part->r.p);
+              sort_cell = dd_save_position_to_cell(part->r.p.data());
               if (sort_cell != cell) {
                 if (sort_cell == nullptr) {
                   CELL_TRACE(fprintf(stderr, "%d: "
@@ -1168,3 +1160,7 @@ int calc_processor_min_num_cells() {
 }
 
 /************************************************************/
+
+int dd_full_shell_neigh(int cellidx, int neigh) {
+  return cellidx + dd_fs_neigh[neigh];
+}

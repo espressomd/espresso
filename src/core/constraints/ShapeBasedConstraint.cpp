@@ -7,41 +7,39 @@
 #include "forces_inline.hpp"
 #include "interaction_data.hpp"
 
-
 namespace Constraints {
-
 Vector3d ShapeBasedConstraint::total_force() const {
-    Vector3d total_force;
-    boost::mpi::all_reduce(comm_cart, m_local_force, total_force,
-            std::plus<Vector3d>());                                                                         
+  Vector3d total_force;
+  boost::mpi::all_reduce(comm_cart, m_local_force, total_force,
+                         std::plus<Vector3d>());
 
-    return total_force;
+  return total_force;
 }
-
 
 double ShapeBasedConstraint::min_dist() {
   double global_mindist = std::numeric_limits<double>::infinity();
   auto parts = local_cells.particles();
 
   auto const local_mindist = std::accumulate(
-        parts.begin(), parts.end(), std::numeric_limits<double>::infinity(),
-        [this](double min, Particle const& p) {
-    IA_parameters *ia_params;
-    ia_params = get_ia_param(p.p.type, m_type);
-    if (checkIfInteraction(ia_params)) {
-        double vec[3], dist;
-        m_shape->calculate_dist(folded_position(p).data(), &dist, vec);
-        return std::min(min, dist);
-    }
-    else return min;
-    });
-  boost::mpi::reduce(comm_cart, local_mindist, global_mindist, boost::mpi::minimum<double>(), 0);
+      parts.begin(), parts.end(), std::numeric_limits<double>::infinity(),
+      [this](double min, Particle const &p) {
+        IA_parameters *ia_params;
+        ia_params = get_ia_param(p.p.type, part_rep.p.type);
+        if (checkIfInteraction(ia_params)) {
+          double vec[3], dist;
+          m_shape->calculate_dist(folded_position(p).data(), &dist, vec);
+          return std::min(min, dist);
+        } else
+          return min;
+      });
+  boost::mpi::reduce(comm_cart, local_mindist, global_mindist,
+                     boost::mpi::minimum<double>(), 0);
   return global_mindist;
 }
 
-
-void ShapeBasedConstraint::reflect_particle(Particle *p, const double *distance_vector,
-                                  const double *folded_pos) const {
+void ShapeBasedConstraint::reflect_particle(Particle *p,
+                                            const double *distance_vector,
+                                            const double *folded_pos) const {
   double vec[3];
   double norm;
 
@@ -78,10 +76,8 @@ void ShapeBasedConstraint::reflect_particle(Particle *p, const double *distance_
   }
 }
 
-void ShapeBasedConstraint::add_force(Particle *p, double *folded_pos) {
+void ShapeBasedConstraint::add_force(Particle *p, Vector3d& folded_pos) {
   double dist, vec[3], force[3], torque1[3], torque2[3];
-  Particle part_rep;
-  part_rep.p.type = m_type;
 
   IA_parameters *ia_params = get_ia_param(p->p.type, part_rep.p.type);
 
@@ -94,25 +90,31 @@ void ShapeBasedConstraint::add_force(Particle *p, double *folded_pos) {
   }
 
   if (checkIfInteraction(ia_params)) {
-    m_shape->calculate_dist(folded_pos, &dist, vec);
+    m_shape->calculate_dist(folded_pos.data(), &dist, vec);
 
     if (dist > 0) {
-      calc_non_bonded_pair_force(p, &part_rep, ia_params, vec, dist,
-                                 dist * dist, force, torque1, torque2);
-#ifdef TUNABLE_SLIP
-      if (tunable_slip) {
-        add_tunable_slip_pair_force(p1, &constraints[n].part_rep, ia_params,
-                                    vec, dist, force);
+      auto const dist2 = dist * dist;
+      calc_non_bonded_pair_force(p, &part_rep, ia_params, vec, dist, dist2,
+                                 force, torque1, torque2);
+#ifdef DPD
+      if (thermo_switch & THERMO_DPD) {
+        add_dpd_pair_force(p, &part_rep, ia_params, vec, dist, dist2);
       }
 #endif
     } else if (m_penetrable && (dist <= 0)) {
       if ((!m_only_positive) && (dist < 0)) {
+        auto const dist2 = dist * dist;
         calc_non_bonded_pair_force(p, &part_rep, ia_params, vec, -1.0 * dist,
                                    dist * dist, force, torque1, torque2);
+#ifdef DPD
+        if (thermo_switch & THERMO_DPD) {
+          add_dpd_pair_force(p, &part_rep, ia_params, vec, dist, dist2);
+        }
+#endif
       }
     } else {
       if (m_reflection_type != ReflectionType::NONE) {
-        reflect_particle(p, vec, folded_pos);
+        reflect_particle(p, vec, folded_pos.data());
       } else {
         runtimeErrorMsg() << "Constraint"
                           << " violated by particle " << p->p.identity
@@ -130,19 +132,17 @@ void ShapeBasedConstraint::add_force(Particle *p, double *folded_pos) {
   }
 }
 
-void ShapeBasedConstraint::add_energy(Particle *p, double *folded_pos,
-                            Observable_stat &energy) const {
+void ShapeBasedConstraint::add_energy(Particle *p, Vector3d& folded_pos,
+                                      Observable_stat &energy) const {
   double dist, vec[3];
   IA_parameters *ia_params;
   double nonbonded_en = 0.0;
-  Particle part_rep;
-  part_rep.p.type = m_type;
 
   ia_params = get_ia_param(p->p.type, part_rep.p.type);
 
   dist = 0.;
   if (checkIfInteraction(ia_params)) {
-    m_shape->calculate_dist(folded_pos, &dist, vec);
+    m_shape->calculate_dist(folded_pos.data(), &dist, vec);
     if (dist > 0) {
       nonbonded_en = calc_non_bonded_pair_energy(p, &part_rep, ia_params, vec,
                                                  dist, dist * dist);

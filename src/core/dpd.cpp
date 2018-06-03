@@ -71,8 +71,8 @@ int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
 }
 
 void dpd_init() {
-  for (int type_a = 0; type_a < n_particle_types; type_a++) {
-    for (int type_b = 0; type_b < n_particle_types; type_b++) {
+  for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
+    for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
       auto data = get_ia_param(type_a, type_b);
       if ((data->dpd_r_cut != 0) || (data->dpd_tr_cut != 0)) {
         data->dpd_pref1 = data->dpd_gamma / time_step;
@@ -87,8 +87,8 @@ void dpd_init() {
 }
 
 void dpd_switch_off(void) {
-  for (int type_a = 0; type_a < n_particle_types; type_a++) {
-    for (int type_b = 0; type_b < n_particle_types; type_b++) {
+  for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
+    for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
       auto data = get_ia_param(type_a, type_b);
       data->dpd_pref1 = data->dpd_pref3 = 0.0;
     }
@@ -99,8 +99,8 @@ void dpd_update_params(double pref_scale) {
   int type_a, type_b;
   IA_parameters *data;
 
-  for (type_a = 0; type_a < n_particle_types; type_a++) {
-    for (type_b = 0; type_b < n_particle_types; type_b++) {
+  for (type_a = 0; type_a < max_seen_particle_type; type_a++) {
+    for (type_b = 0; type_b < max_seen_particle_type; type_b++) {
       data = get_ia_param(type_a, type_b);
       if ((data->dpd_r_cut != 0) || (data->dpd_tr_cut != 0)) {
         data->dpd_pref2 *= pref_scale;
@@ -139,7 +139,7 @@ void add_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
     // friction force prefactor
     for (j = 0; j < 3; j++)
       vel12_dot_d12 += (p1->m.v[j] - p2->m.v[j]) * d[j];
-    friction = ia_params->dpd_pref1 * omega2 * vel12_dot_d12;
+    friction = ia_params->dpd_pref1 * omega2 * vel12_dot_d12 * time_step;
     // random force prefactor
     noise = ia_params->dpd_pref2 * omega * (d_random() - 0.5);
     for (j = 0; j < 3; j++) {
@@ -175,7 +175,7 @@ void add_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
         f_R[i] += P_times_dist_sqr[i][j] * noise_vec[j];
       }
       // NOTE: velocity are scaled with time_step
-      f_D[i] *= ia_params->dpd_pref3 * omega2;
+      f_D[i] *= ia_params->dpd_pref3 * omega2 * time_step;
       // NOTE: noise force scales with 1/sqrt(time_step
       f_R[i] *= ia_params->dpd_pref4 * omega * dist_inv;
     }

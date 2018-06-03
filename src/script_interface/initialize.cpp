@@ -20,14 +20,15 @@
 
 #include "config.hpp"
 #include "initialize.hpp"
+#include "cluster_analysis/initialize.hpp"
 #include "constraints/initialize.hpp"
 #include "shapes/initialize.hpp"
+#include "pair_criteria/initialize.hpp"
 #ifdef H5MD
 #include "h5md/initialize.hpp"
 #endif
 #include "observables/initialize.hpp"
 #include "accumulators/initialize.hpp"
-#include "correlators/initialize.hpp" 
 #include "lbboundaries/initialize.hpp"
 #include "collision_detection/initialize.hpp"
 #include "mpiio/initialize.hpp"
@@ -52,8 +53,9 @@ void initialize() {
 #endif
   Accumulators::initialize();
   Observables::initialize();
-  Correlators::initialize();
+  ClusterAnalysis::initialize();
   LBBoundaries::initialize();
+  PairCriteria::initialize();
   VirtualSites::initialize();
   MPIIO::initialize();
   CollisionDetection::initialize();

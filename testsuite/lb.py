@@ -24,8 +24,8 @@ class LBTest(ut.TestCase):
     system.seed = range(n_nodes)
 
     def setUp(self):
-        self.params = {'int_steps': 50,
-                       'int_times': 20,
+        self.params = {'int_steps': 25,
+                       'int_times': 10,
                        'time_step': 0.01,
                        'tau': 0.02,
                        'agrid': 0.5,
@@ -74,7 +74,7 @@ class LBTest(ut.TestCase):
 
         self.system.thermostat.set_langevin(
             kT=self.params['temp'], gamma=self.params['gamma'])
-        self.system.integrator.run(100)
+        self.system.integrator.run(50)
         # kill particle motion
         for i in range(self.n_col_part):
             self.system.part[i].v = [0.0, 0.0, 0.0]
@@ -97,7 +97,7 @@ class LBTest(ut.TestCase):
         for i in range(self.n_col_part):
             self.tot_mom = self.tot_mom + self.system.part[i].v
 
-        self.system.integrator.run(100)
+        self.system.integrator.run(50)
 
         self.max_dmass = 0.0
         self.max_dm = [0, 0, 0]
@@ -131,10 +131,9 @@ class LBTest(ut.TestCase):
                     self.max_dmass,
                     self.params['mass_prec_per_node']))
 
-            # check momentum conversation
+            # check momentum conservation
             c_mom = self.system.analysis.analyze_linear_momentum()
             dm = abs(c_mom - self.tot_mom)
-            #self.assertTrue(dm[0] <= mom_prec and dm[1] <= mom_prec and dm[2] <= mom_prec)
             for j in range(3):
                 if dm[j] > self.max_dm[j]:
                     self.max_dm[j] = dm[j]

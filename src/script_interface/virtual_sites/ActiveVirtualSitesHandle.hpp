@@ -33,7 +33,7 @@
 namespace ScriptInterface {
 namespace VirtualSites {
 
-class ActiveVirtualSitesHandle : public AutoParameters {
+class ActiveVirtualSitesHandle : public AutoParameters<ActiveVirtualSitesHandle> {
 public:
   ActiveVirtualSitesHandle() {
       add_parameters({

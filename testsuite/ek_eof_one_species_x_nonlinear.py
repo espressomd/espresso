@@ -22,78 +22,13 @@ from espressomd import *
 import numpy as np
 import sys
 import math
+from ek_common import *
 
 ##########################################################################
 #                              Set up the System                               #
 ##########################################################################
 # Set the slit pore geometry the width is the non-periodic part of the geometry
 # the padding is used to ensure that there is no field inside outside the slit
-
-# root finding function
-
-
-def solve(xi, d, bjerrum_length, sigma, valency):
-    pi = math.pi
-    el_char = 1.0
-    return xi * math.tan(xi * d / 2.0) + 2.0 * pi * \
-        bjerrum_length * sigma / (valency * el_char)
-
-# function to calculate the density
-
-
-def density(x, xi, bjerrum_length):
-    pi = math.pi
-    kb = 1.0
-    return (xi * xi) / (2.0 * pi * bjerrum_length *
-                        math.cos(xi * x) * math.cos(xi * x))
-
-# function to calculate the velocity
-
-
-def velocity(
-        x,
-        xi,
-        d,
-        bjerrum_length,
-        force,
-        viscosity_kinematic,
-        density_water):
-    pi = math.pi
-    return force * math.log(math.cos(xi * x) / math.cos(xi * d / 2.0)) / \
-        (2.0 * pi * bjerrum_length * viscosity_kinematic * density_water)
-
-# function to calculate the nonzero component of the pressure tensor
-
-
-def pressure_tensor_offdiagonal(x, xi, bjerrum_length, force):
-    pi = math.pi
-    return force * xi * math.tan(xi * x) / (2.0 * pi * bjerrum_length)
-
-# function to calculate the hydrostatic pressure
-
-# Technically, the LB simulates a compressible fluid, whiches pressure
-# tensor contains an additional term on the diagonal, proportional to
-# the divergence of the velocity. We neglect this contribution, which
-# creates a small error in the direction normal to the wall, which
-# should decay with the simulation time.
-
-
-def hydrostatic_pressure(
-        ek,
-        x,
-        xi,
-        bjerrum_length,
-        tensor_entry,
-        box_x,
-        box_y,
-        box_z,
-        agrid,
-        temperature):
-    offset = ek[int(box_x / (2 * agrid)), int(box_y / (2 * agrid)),
-                int(box_z / (2 * agrid))].pressure[tensor_entry]
-    return temperature * xi * xi * \
-        math.tan(xi * x) * math.tan(xi * x) / (2.0 * math.pi * bjerrum_length) + offset
-
 
 @ut.skipIf(not espressomd.has_features(["ELECTROKINETICS", "EK_BOUNDARIES"]),
            "Features not available, skipping test!")
@@ -134,7 +69,7 @@ class ek_eof_one_species_x(ut.TestCase):
         system.time_step = dt
         system.cell_system.skin = 0.1
         system.thermostat.turn_off()
-        integration_length = 50000
+        integration_length = 10000
 
 # Output density, velocity, and pressure tensor profiles
 
@@ -271,15 +206,15 @@ class ek_eof_one_species_x(ut.TestCase):
 
                 measured_pressure_xx = ek[int(
                     box_x / (2 * agrid)), int(box_y / (2 * agrid)), i].pressure[(0, 0)]
-                calculated_pressure_xx = hydrostatic_pressure(
+                calculated_pressure_xx = hydrostatic_pressure_non_lin(
                     ek, position, xi, bjerrum_length, (0, 0), box_x, box_y, box_z, agrid, temperature)
                 measured_pressure_yy = ek[int(
                     box_x / (2 * agrid)), int(box_y / (2 * agrid)), i].pressure[(1, 1)]
-                calculated_pressure_yy = hydrostatic_pressure(
+                calculated_pressure_yy = hydrostatic_pressure_non_lin(
                     ek, position, xi, bjerrum_length, (1, 1), box_x, box_y, box_z, agrid, temperature)
                 measured_pressure_zz = ek[int(
                     box_x / (2 * agrid)), int(box_y / (2 * agrid)), i].pressure[(2, 2)]
-                calculated_pressure_zz = hydrostatic_pressure(
+                calculated_pressure_zz = hydrostatic_pressure_non_lin(
                     ek, position, xi, bjerrum_length, (2, 2), box_x, box_y, box_z, agrid, temperature)
 
                 pressure_difference_xx = abs(

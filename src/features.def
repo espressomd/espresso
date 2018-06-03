@@ -28,8 +28,7 @@ METADYNAMICS
 NEMD
 NPT
 GHMC
-CATALYTIC_REACTIONS
-MULTI_TIMESTEP                  requires not GAUSSRANDOMCUT and not GAUSSRANDOM and EXPERIMENTAL_FEATURES
+SWIMMER_REACTIONS
 ENGINE                          implies ROTATION, EXTERNAL_FORCES
 PARTICLE_ANISOTROPY
 
@@ -62,7 +61,6 @@ VIRTUAL_SITES
 
 /* DPD features */
 DPD
-TUNABLE_SLIP                    requires EXPERIMENTAL_FEATURES
 
 /* Lattice-Boltzmann features */
 LB
@@ -90,7 +88,6 @@ LJ_WARN_WHEN_CLOSE
 LENNARD_JONES_GENERIC           implies LENNARD_JONES
 LJCOS
 LJCOS2
-LJ_ANGLE
 LJGEN_SOFTCORE
 COS2
 GAY_BERNE
@@ -106,6 +103,8 @@ UMBRELLA                           requires EXPERIMENTAL_FEATURES
 GAY_BERNE                       implies ROTATION
 GAY_BERNE                       requires EXPERIMENTAL_FEATURES
 OVERLAPPED
+THOLE                           implies GHOSTS_HAVE_BONDS
+THOLE                           requires P3M
 
 /* Fluid-Structure Interactions (object in fluid) */
 OIF_LOCAL_FORCES
@@ -147,7 +146,7 @@ GAUSSRANDOMCUT                  requires not GAUSSRANDOM and not FLATNOISE
 /* Strange features. Use only if you know what you are doing! */
 /* activate the old dihedral form */
 OLD_DIHEDRAL                    notest
-/* turn off nonbonded interactions within molecules */
+/* turn off certain nonbonded interactions within molecules */
 NO_INTRA_NB                     notest
 /* ghost particles also have the bond information. */
 GHOSTS_HAVE_BONDS               notest
@@ -188,6 +187,7 @@ LB_DEBUG
 VIRTUAL_SITES_DEBUG
 CUDA_DEBUG
 H5MD_DEBUG
+ICC_DEBUG
 
 
 /* Single particle debugging */
@@ -201,3 +201,4 @@ CUDA external
 FFTW external
 H5MD external
 SCAFACOS external
+GSL external

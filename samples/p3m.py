@@ -107,7 +107,7 @@ system.cell_system.max_num_cells = 2744
 
 
 # Assingn charge to particles
-for i in range(n_part / 2 - 1):
+for i in range(n_part // 2 - 1):
     system.part[2 * i].q = -1.0
     system.part[2 * i + 1].q = 1.0
 # P3M setup after charge assigned
@@ -172,7 +172,8 @@ while (i < warm_n_times and act_min_dist < min_dist):
 import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
 # pprint.pprint(system.part.__getstate__(), width=1)
-pprint.pprint(system.__getstate__(), width=1)
+pprint.pprint(system.__getstate__())
+
 
 # write parameter file
 set_file = open("pylj_liquid.set", "w")

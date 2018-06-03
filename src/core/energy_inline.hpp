@@ -29,6 +29,7 @@
 #include "bmhtf-nacl.hpp"
 #include "buckingham.hpp"
 #include "dihedral.hpp"
+#include "thermalized_bond.hpp"
 #include "fene.hpp"
 #include "gaussian.hpp"
 #include "gb.hpp"
@@ -37,11 +38,9 @@
 #include "hat.hpp"
 #include "hertzian.hpp"
 #include "lj.hpp"
-#include "ljangle.hpp"
 #include "ljcos.hpp"
 #include "ljcos2.hpp"
 #include "ljgen.hpp"
-#include "overlap.hpp"
 #include "p3m-dipolar.hpp"
 #include "p3m.hpp"
 #include "quartic.hpp"
@@ -49,10 +48,14 @@
 #include "statistics.hpp"
 #include "steppot.hpp"
 #include "tab.hpp"
+#include "thole.hpp"
 #include "thermostat.hpp"
 #include "umbrella.hpp"
 #ifdef ELECTROSTATICS
 #include "bonded_coulomb.hpp"
+#endif
+#ifdef P3M
+#include "bonded_coulomb_p3m_sr.hpp"
 #endif
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
@@ -75,7 +78,6 @@
 #endif
 
 #ifdef EXTERNAL_FORCES
-#include "external_potential.hpp"
 #endif
 
 #include "energy.hpp"
@@ -107,11 +109,6 @@ inline double calc_non_bonded_pair_energy(const Particle *p1, const Particle *p2
 #ifdef LENNARD_JONES_GENERIC
   /* Generic lennard jones */
   ret += ljgen_pair_energy(p1, p2, ia_params, d, dist);
-#endif
-
-#ifdef LJ_ANGLE
-  /* Directional LJ */
-  ret += ljangle_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef SMOOTH_STEP
@@ -157,6 +154,11 @@ inline double calc_non_bonded_pair_energy(const Particle *p1, const Particle *p2
 #ifdef LJCOS2
   /* lennard jones */
   ret += ljcos2_pair_energy(p1, p2, ia_params, d, dist);
+#endif
+
+#ifdef THOLE
+  /* thole damping */
+  ret += thole_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef TABULATED
@@ -209,10 +211,10 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 #ifdef P3M
     case COULOMB_P3M_GPU:
     case COULOMB_P3M:
-      ret = p3m_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
+      ret = p3m_pair_energy(p1->p.q * p2->p.q, dist);
       break;
     case COULOMB_ELC_P3M:
-      ret = p3m_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
+      ret = p3m_pair_energy(p1->p.q * p2->p.q, dist);
       if (elc_params.dielectric_contrast_on)
         ret += 0.5 * ELC_P3M_dielectric_layers_energy_contribution(p1, p2);
       break;
@@ -353,9 +355,17 @@ inline void add_bonded_energy(Particle *p1) {
     case BONDED_IA_QUARTIC:
       bond_broken = quartic_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
+    case BONDED_IA_THERMALIZED_DIST:
+      bond_broken = thermalized_bond_energy(p1, p2, iaparams, dx, &ret);
+      break;
 #ifdef ELECTROSTATICS
     case BONDED_IA_BONDED_COULOMB:
       bond_broken = bonded_coulomb_pair_energy(p1, p2, iaparams, dx, &ret);
+      break;
+#endif
+#ifdef P3M
+    case BONDED_IA_BONDED_COULOMB_P3M_SR:
+      bond_broken = bonded_coulomb_p3m_sr_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #endif
 #ifdef LENNARD_JONES
@@ -423,25 +433,6 @@ inline void add_bonded_energy(Particle *p1) {
       }
       break;
 #endif
-#ifdef OVERLAPPED
-    case BONDED_IA_OVERLAPPED:
-      switch (iaparams->p.overlap.type) {
-      case OVERLAP_BOND_LENGTH:
-        bond_broken = overlap_bond_energy(p1, p2, iaparams, dx, &ret);
-        break;
-      case OVERLAP_BOND_ANGLE:
-        bond_broken = overlap_angle_energy(p1, p2, p3, iaparams, &ret);
-        break;
-      case OVERLAP_BOND_DIHEDRAL:
-        bond_broken = overlap_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
-        break;
-      default:
-        runtimeErrorMsg() << "add_bonded_energy: overlapped bond type of atom "
-                          << p1->p.identity << " unknown\n";
-        return;
-      }
-      break;
-#endif
 #ifdef UMBRELLA
     case BONDED_IA_UMBRELLA:
       bond_broken = umbrella_pair_energy(p1, p2, iaparams, dx, &ret);
@@ -495,18 +486,8 @@ inline void add_kinetic_energy(Particle *p1) {
 #endif
 
   /* kinetic energy */
-
-  // #ifdef MULTI_TIMESTEP
-  //   if (p1->p.smaller_timestep==1) {
-  //     ostringstream msg;
-  //     msg << "SMALL TIME STEP";
-  //     energy.data.e[0] += Utils::sqr(smaller_time_step/time_step) *
-  //       (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) + Utils::sqr(p1->m.v[2]))*(*p1).p.mass;
-  //   }
-  //   else
-  // #endif
   energy.data.e[0] +=
-      (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) + Utils::sqr(p1->m.v[2])) * (*p1).p.mass;
+      (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) + Utils::sqr(p1->m.v[2])) * 0.5 * p1->p.mass;
 
 #ifdef ROTATION
   if (p1->p.rotation)
@@ -514,10 +495,9 @@ inline void add_kinetic_energy(Particle *p1) {
     /* the rotational part is added to the total kinetic energy;
        Here we use the rotational inertia  */
 
-    energy.data.e[0] += (Utils::sqr(p1->m.omega[0]) * p1->p.rinertia[0] +
+    energy.data.e[0] += 0.5 * (Utils::sqr(p1->m.omega[0]) * p1->p.rinertia[0] +
                          Utils::sqr(p1->m.omega[1]) * p1->p.rinertia[1] +
-                         Utils::sqr(p1->m.omega[2]) * p1->p.rinertia[2]) *
-                        time_step * time_step;
+                         Utils::sqr(p1->m.omega[2]) * p1->p.rinertia[2]);
   }
 #endif
 }
@@ -527,9 +507,6 @@ inline void add_single_particle_energy(Particle *p) {
   add_bonded_energy(p);
 #ifdef CONSTRAINTS
   add_constraints_energy(p);
-#endif
-#ifdef EXTERNAL_FORCES
-  add_external_potential_energy(p);
 #endif
 }
 

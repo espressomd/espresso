@@ -32,7 +32,6 @@
 #include "mdlc_correction.hpp"
 #include "scafacos.hpp"
 #include <cassert>
-#include "external_potential.hpp"
 
 #include "short_range_loop.hpp"
 
@@ -47,7 +46,7 @@ void init_energies(Observable_stat *stat) {
   int n_pre, n_non_bonded, n_coulomb, n_dipolar;
 
   n_pre = 1;
-  n_non_bonded = (n_particle_types * (n_particle_types + 1)) / 2;
+  n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
 
   n_coulomb = 0;
 #ifdef ELECTROSTATICS
@@ -112,7 +111,6 @@ void init_energies(Observable_stat *stat) {
   stat->init_status = 0;
 
 
-  external_potential_init_energies();
 }
 
 /************************************************************/
@@ -146,17 +144,9 @@ void energy_calc(double *result) {
 
   short_range_loop([](Particle &p) { add_single_particle_energy(&p); },
                    [](Particle &p1, Particle &p2, Distance &d) {
-                     add_non_bonded_pair_energy(&p1, &p2, d.vec21,
+                     add_non_bonded_pair_energy(&p1, &p2, d.vec21.data(),
                                                 sqrt(d.dist2), d.dist2);
                    });
-
-/* rescale kinetic energy */
-#ifdef MULTI_TIMESTEP
-  if (smaller_time_step > 0.)
-    energy.data.e[0] /= (2.0 * smaller_time_step * smaller_time_step);
-  else
-#endif
-    energy.data.e[0] /= (2.0 * time_step * time_step);
 
   calc_long_range_energies();
 
@@ -168,22 +158,6 @@ void energy_calc(double *result) {
   MPI_Reduce(energy.data.e, result, energy.data.n, MPI_DOUBLE, MPI_SUM, 0,
              comm_cart);
 
-  if (n_external_potentials > 0) {
-    double *energies =
-        (double *)Utils::malloc(n_external_potentials * sizeof(double));
-    for (int i = 0; i < n_external_potentials; i++) {
-      energies[i] = external_potentials[i].energy;
-    }
-    double *energies_sum =
-        (double *)Utils::malloc(n_external_potentials * sizeof(double));
-    MPI_Reduce(energies, energies_sum, n_external_potentials, MPI_DOUBLE,
-               MPI_SUM, 0, comm_cart);
-    for (int i = 0; i < n_external_potentials; i++) {
-      external_potentials[i].energy = energies_sum[i];
-    }
-    free(energies);
-    free(energies_sum);
-  }
 }
 
 /************************************************************/
@@ -304,9 +278,6 @@ double calculate_current_potential_energy_of_system(){
 	for(int i=0;i<num_energies;i++){
 		sum_all_energies+= total_energy.data.e[i];
 	}
-	for (int i = 0; i < n_external_potentials; i++) {
-        	sum_all_energies += external_potentials[i].energy;
-        }
 
 	return sum_all_energies-kinetic_energy;
 }

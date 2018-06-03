@@ -25,6 +25,9 @@
 #include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
+#include "domain_decomposition.hpp"
+#include "particle_data.hpp"
+#include "collision.hpp"
 #include "initialize.hpp"
 #include "interaction_data.hpp"
 #include "rotation.hpp"
@@ -225,7 +228,7 @@ void queue_collision(const int part1, const int part2) {
 /** @brief Calculate position of vs for GLUE_TO_SURFACE mode
 *    Reutnrs id of particle to bind vs to */
 int glue_to_surface_calc_vs_pos(const Particle *const p1,
-                                const Particle *const p2, double pos[3]) {
+                                const Particle *const p2, Vector3d& pos) {
   int bind_vs_to_pid;
   double vec21[3];
   double c;
@@ -252,7 +255,7 @@ int glue_to_surface_calc_vs_pos(const Particle *const p1,
 
 void bind_at_point_of_collision_calc_vs_pos(const Particle *const p1,
                                             const Particle *const p2,
-                                            double pos1[3], double pos2[3]) {
+                                            Vector3d& pos1, Vector3d& pos2) {
   double vec21[3];
   get_mi_vector(vec21, p1->r.p, p2->r.p);
   for (int i = 0; i < 3; i++) {
@@ -362,17 +365,17 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
 
 #ifdef VIRTUAL_SITES_RELATIVE
 void place_vs_and_relate_to_particle(const int current_vs_pid,
-                                     const double *const pos,
+                                     const Vector3d& pos,
                                      const int relate_to,
-                                     const double *const initial_pos) {
+                                     const Vector3d& initial_pos) {
 
   // The virtual site is placed at initial_pos which will be in the local
   // node's domain. It will then be moved to its final position.
   // A resort occurs after vs-based collisions anyway, which will move the vs
   // into the right cell.
   added_particle(current_vs_pid);
-  local_place_particle(current_vs_pid, initial_pos, 1);
-  memmove(local_particles[current_vs_pid]->r.p, pos, 3 * sizeof(double));
+  local_place_particle(current_vs_pid, initial_pos.data(), 1);
+  local_particles[current_vs_pid]->r.p=pos;
   local_vs_relate_to(current_vs_pid, relate_to);
 
   (local_particles[max_seen_particle])->p.isVirtual = 1;
@@ -509,17 +512,44 @@ void three_particle_binding_full_search(
   }
 }
 
+static void three_particle_binding_dd_do_search(
+    Cell *basecell, Particle &p1, Particle &p2) {
+  int basecellno = std::distance(&cells[0], basecell);
+  for (int n = 0; n < 27; ++n) {
+    Cell &cell = cells[dd_full_shell_neigh(basecellno, n)];
+    for (int pno = 0; pno < cell.n; ++pno) {
+      Particle &P = cell.part[pno];
+      // Skip collided particles themselves
+      if ((P.p.identity == p1.p.identity) ||
+          (P.p.identity == p2.p.identity)) {
+        continue;
+      }
+
+      // We need all cyclical permutations, here (bond is placed on 1st
+      // particle, order of bond partners does not matter, so we don't need
+      // non-cyclic permutations).
+      // coldet_do_three_particle_bond checks the bonding criterion and if
+      // the involved particles are not already bonded before it binds them.
+      if (!P.l.ghost) {
+        coldet_do_three_particle_bond(P, p1, p2);
+      }
+
+      if (!p1.l.ghost) {
+        coldet_do_three_particle_bond(p1, P, p2);
+      }
+
+      if (!p2.l.ghost) {
+        coldet_do_three_particle_bond(p2, P, p1);
+      }
+    }
+  }
+}
+
 // Goes through the collision queue and for each pair in it
 // looks for a third particle by using the domain decomposition
 // cell system. If found, it performs three particle binding
 void three_particle_binding_domain_decomposition(
     const std::vector<collision_struct> &gathered_queue) {
-  // We have domain decomposition
-
-  // Indices of the cells in which the colliding particles reside
-  int cellIdx[2][3];
-
-  // Iterate over collision queue
 
   for (auto &c : gathered_queue) {
 
@@ -527,68 +557,14 @@ void three_particle_binding_domain_decomposition(
     // indices
     if ((local_particles[c.pp1] != NULL) && (local_particles[c.pp2] != NULL)) {
 
-      Particle *p1 = local_particles[c.pp1];
-      Particle *p2 = local_particles[c.pp2];
-      dd_position_to_cell_indices(p1->r.p, cellIdx[0]);
-      dd_position_to_cell_indices(p2->r.p, cellIdx[1]);
+      Particle &p1 = *local_particles[c.pp1];
+      Particle &p2 = *local_particles[c.pp2];
+      auto cell1 = cell_structure.position_to_cell(p1.r.p.data());
+      auto cell2 = cell_structure.position_to_cell(p2.r.p.data());
 
-      // Iterate over the cells + their neighbors
-      // if p1 and p2 are in the same cell, we don't need to consider it 2x
-      int lim = 1;
-
-      if ((cellIdx[0][0] == cellIdx[1][0]) &&
-          (cellIdx[0][1] == cellIdx[1][1]) && (cellIdx[0][2] == cellIdx[1][2]))
-        lim = 0; // Only consider the 1st cell
-
-      for (int j = 0; j <= lim; j++) {
-
-        // Iterate the cell with indices cellIdx[j][] and all its neighbors.
-        // code taken from dd_init_cell_interactions()
-        for (int p = cellIdx[j][0] - 1; p <= cellIdx[j][0] + 1; p++)
-          for (int q = cellIdx[j][1] - 1; q <= cellIdx[j][1] + 1; q++)
-            for (int r = cellIdx[j][2] - 1; r <= cellIdx[j][2] + 1; r++) {
-              int ind2 = get_linear_index(p, q, r, dd.ghost_cell_grid);
-              Cell *cell = &cells[ind2];
-
-              // Iterate over particles in this cell
-              for (int a = 0; a < cell->n; a++) {
-                Particle *P = &cell->part[a];
-                // for all p:
-                // Check, whether p is equal to one of the particles in the
-                // collision. If so, skip
-                if ((P->p.identity == p1->p.identity) ||
-                    (P->p.identity == p2->p.identity)) {
-                  continue;
-                }
-
-                // The following checks,
-                // if the particle p is closer that the cutoff from p1 and/or
-                // p2.
-                // If yes, three particle bonds are created on all particles
-                // which have two other particles within the cutoff distance,
-                // unless such a bond already exists
-
-                // We need all cyclical permutations, here
-                // (bond is placed on 1st particle, order of bond partners
-                // does not matter, so we don't need non-cyclic permutations):
-
-                if (!P->l.ghost) {
-                  coldet_do_three_particle_bond(*P, *p1, *p2);
-                }
-
-                if (!p1->l.ghost) {
-                  coldet_do_three_particle_bond(*p1, *P, *p2);
-                }
-
-                if (!p2->l.ghost) {
-                  coldet_do_three_particle_bond(*p2, *P, *p1);
-                }
-
-              } // loop over particles in this cell
-
-            } // Loop over cell
-
-      } // Loop over particles if they are in different cells
+      three_particle_binding_dd_do_search(cell1, p1, p2);
+      if (cell1 != cell2)
+        three_particle_binding_dd_do_search(cell2, p1, p2);
 
     } // If local particles exist
 
@@ -662,16 +638,16 @@ void handle_collisions() {
         // domain
         // Vs is moved afterwards and resorted after all collision s are handled
         // Use position of non-ghost colliding particle.
-        double initial_pos[3];
+        Vector3d initial_pos;
         if (p1->l.ghost)
-          memmove(initial_pos, p2->r.p, 3 * sizeof(double));
+          initial_pos = p2->r.p;
         else
-          memmove(initial_pos, p1->r.p, 3 * sizeof(double));
+          initial_pos= p1->r.p;
 
         // If we are in the two vs mode
         // Virtual site related to first particle in the collision
         if (collision_params.mode & COLLISION_MODE_VS) {
-          double pos1[3], pos2[3];
+          Vector3d pos1, pos2;
 
           // Enable rotation on the particles to which vs will be attached
           p1->p.rotation = ROTATION_X | ROTATION_Y | ROTATION_Z;
@@ -696,7 +672,7 @@ void handle_collisions() {
           }
         }
         if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF) {
-          double pos[3];
+          Vector3d pos;
           const int pid = glue_to_surface_calc_vs_pos(p1, p2, pos);
 
           // Change type of partilce being attached, to make it inert

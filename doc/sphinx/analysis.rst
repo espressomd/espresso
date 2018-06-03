@@ -747,7 +747,7 @@ The following observables are available:
      The particles are ordered according to the list of ids passed to the observable.
    - ParticleForces: Forces on the particles in the form
      :math:`f_{x1},\ f_{y1},\ f_{z1},\ f_{x2},\ f_{y2},\ f_{z2},\ \dots\ f_{xn},\ f_{yn},\ f_{zn}`.
-   - ParticleBodyVelocities: the particles' velocity in their respective body-fixed frames.
+   - ParticleBodyVelocities: the particles' velocities in their respective body-fixed frames (as per their orientation in space stored in their quaternions).
      :math:`v_{x1},\ v_{y1},\ v_{z1},\ v_{x2},\ v_{y2},\ v_{z2},\ \dots\ v_{xn},\ v_{yn},\ v_{zn}`.
      The particles are ordered according to the list of ids passed to the observable.
    - ParticleAngularVelocities: The particles' angular velocities in the space-fixed frame
@@ -779,6 +779,10 @@ The following observables are available:
    -  ForceDensityProfile
 
    -  LBVelocityProfile
+
+- System-wide observables
+  StressTensor: Total stress tensor (see :ref:`stress tensor`)
+
 
 
 .. _Correlations:
@@ -824,7 +828,7 @@ the script ``samples/observables_correlators.py``.
 Creating a correlation
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Each correlator is represented by an instance of the :class:`espressomd.correlators.Correlator`. Please see its documentation for an explanation of the arguments that have to be passed to the constructor.
+Each correlator is represented by an instance of the :class:`espressomd.accumulators.Correlator`. Please see its documentation for an explanation of the arguments that have to be passed to the constructor.
 
 Correlators can be registered for automatic updating during the
 integration by adding them to :attr:`espressomd.system.System.auto_update_correlators`.
@@ -961,14 +965,13 @@ discussion is presented in Ref. :cite:`ramirez10a`.
 Accumulators
 ------------
 
-.. _Observable accumulator:
+.. _Mean-variance calculator:
 
-Observable accumulator
-~~~~~~~~~~~~~~~~~~~~~~
+Mean-variance calculator
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-The observable accumulator :class:`espressomd.accumulators.Accumulator` can
-be used to calculate the mean and variance of an observable (
-:mod:`espressomd.observables`) in the core::
+In order to calculate the running mean and variance of an observable
+:class:`espressomd.accumulators.MeanVarianceCalculator` can be used::
 
     import espressomd
     import espressomd.observables
@@ -979,8 +982,7 @@ be used to calculate the mean and variance of an observable (
     system.time_step = 0.01
     system.part.add(id=0, pos=[5.0, 5.0, 5.0])
     position_observable = espressomd.observables.ParticlePositions(ids=(0,))
-    system.auto_update_observables.add(position_observable)
-    accumulator = espressomd.accumulators.Accumulator(obs=position_observable)
+    accumulator = espressomd.accumulators.MeanVarianceCalculator(obs=position_observable, delta_N=1)
     system.auto_update_accumulators.add(accumulator)
     # Perform integration (not shown)
     print accumulator.get_mean()
@@ -988,7 +990,39 @@ be used to calculate the mean and variance of an observable (
 
 In the example above the automatic update of the accumulator is used. However, 
 it's also possible to manually update the accumulator by calling
-:meth:`espressomd.accumulators.Accumulator.update`.
-Please note that the current core implementation of the accumulator is not
-serializable and therefore can not be checkpointed.
+:meth:`espressomd.accumulators.MeanVarianceCalculator.update`.
+
+Cluster analysis
+----------------
+
+|es| provides support for online cluster analysis. Here, a cluster is a group of particles, such that you can get from any particle to any second particle by at least one path of neighboring particles.
+I.e., if particle B is a neighbor of particle A, particle C is a neighbor of A and particle D is a neighbor of particle B, all four particles are part of the same cluster.
+The cluster analysis is available in parallel simulations, but the analysis is carried out on the head node, only.
+
+
+Whether or not two particles are neighbors is defined by a pair criterion. The available criteria can be found in :mod:`espressomd.pair_criteria`.
+For example, a distance criterion which will consider particles as neighbors if they are closer than 0.11 is created as follows::
+
+    from espressomd.pair_criteria import DistanceCriterion
+    dc=DistanceCriterion(cut_off=0.11)
+    
+To obtain the cluster structure of a system, an instance of :class:`espressomd.cluster_analysis.ClusterStructure` has to be created.
+To to create a cluster structure with above criterion:::
+
+    from espressomd.cluster_analysis import ClusterStructure
+    cs=ClusterStructure(distance_criterion=dc)
+
+In most cases, the cluster analysis is carried out by calling the :any:`espressomd.cluster_analysis.ClusterStructure.run_for_all_pairs` method. When the pair criterion is purely based on bonds,  :any:`espressomd.cluster_analysis.ClusterStructure.run_for_bonded_particles` can be used.
+
+The results can be accessed via ClusterStructure.clusters, which is an instance of
+:any:`espressomd.cluster_analysis.Clusters`.
+
+
+Individual clusters are represented by instances of  
+:any:`espressomd.cluster_analysis.Cluster`, which provides access to the particles contained in a cluster as well as per-cluster analysis routines such as radius of gyration, center of mass and longest distance.
+Note that the cluster objects do not contain copies of the particles, but refer to the particles in the simulation. Hence, the objects become outdated if the simulation system changes. On the other hand, it is possible to directly manipulate the particles contained in a cluster.
+
+
+
+
 

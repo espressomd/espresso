@@ -104,7 +104,7 @@ print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
 for i in range(n_part):
     system.part.add(id=i, pos=np.random.random(3) * system.box_l)
 
-for i in range(n_part / 2):
+for i in range(n_part // 2):
     system.part[2 * i].q = -1.0
     system.part[2 * i].type = 1
     system.part[2 * i + 1].q = 1.0
@@ -167,7 +167,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
 import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
 # pprint.pprint(system.part.__getstate__(), width=1)
-pprint.pprint(system.__getstate__(), width=1)
+pprint.pprint(system.__getstate__())
 
 # write parameter file
 

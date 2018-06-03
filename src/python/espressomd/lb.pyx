@@ -138,6 +138,7 @@ IF LB_GPU or LB:
             if not self._params["couple"] == default_params["couple"]:
                 if python_lbfluid_set_couple_flag(self._params["couple"]):
                     raise Exception("lb_lbfluid_set_couple_flag error")
+            utils.handle_errors("LB activation")
 
         # function that calls wrapper functions which get the parameters from C-Level
         ####################################################
@@ -209,6 +210,10 @@ IF LB_GPU or LB:
             ELSE:
                 raise Exception("LB not compiled in")
 
+        def _deactivate_method(self):
+            if lb_set_lattice_switch(0):
+                raise Exception("lb_set_lattice_switch error")
+
 IF LB_GPU:
     cdef class LBFluidGPU(LBFluid):
         """
@@ -231,7 +236,7 @@ IF LB_GPU:
                 return
             ELSE:
                 raise Exception("LB_GPU not compiled in")
-            
+
         def get_interpolated_velocity(self, pos):
             """Get LB fluid velocity at specified position.
 
@@ -246,8 +251,12 @@ IF LB_GPU:
                 The LB fluid velocity at ``pos``.
 
             """
-            cdef double[3] p = pos
+            cdef Vector3d p	    
             cdef double[3] v
+
+            for i in range(3):
+                p[i] = pos[i]
+
             lb_lbfluid_get_interpolated_velocity_global(p, v)
             return v
 
@@ -283,6 +292,7 @@ IF LB or LB_GPU:
     cdef class LBFluidRoutines(object):
         cdef int node[3]
         def __init__(self, key):
+            utils.check_type_or_throw_except(key,3,int, "The index of an lb fluid node consists of three integers.")
             self.node[0] = key[0]
             self.node[1] = key[1]
             self.node[2] = key[2]

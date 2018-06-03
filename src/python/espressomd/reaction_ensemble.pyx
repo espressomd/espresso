@@ -1,8 +1,6 @@
 include "myconfig.pxi"
 from libcpp.vector cimport vector
 from libcpp.string cimport string
-from libc.string cimport strdup
-from utils import to_char_pointer
 import numpy as np
 
 class WangLandauHasConverged(Exception):
@@ -84,6 +82,7 @@ cdef class ReactionAlgorithm(object):
         """
         self.RE.slab_start_z = slab_start_z
         self.RE.slab_end_z = slab_end_z
+        self.RE.box_has_wall_constraints=True
 
     def get_wall_constraints_in_z_direction(self):
         """
@@ -145,8 +144,8 @@ cdef class ReactionAlgorithm(object):
 
         Parameters
         ----------
-        Gamma : :obj:`float`
-                               Equilibrium constant of the reaction, :math:`\Gamma` 
+        gamma : :obj:`float`
+                               Equilibrium constant of the reaction, :math:`\gamma` 
                                (see the User guide, section 6.6 for the definition and further details).
         reactant_types : list of :obj:`int`
                                 List of particle types of reactants in the reaction.
@@ -181,10 +180,10 @@ cdef class ReactionAlgorithm(object):
         self._set_params_in_es_core_add()
 
     def _valid_keys_add(self):
-        return "Gamma", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges", "check_for_electroneutrality"
+        return "gamma", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges", "check_for_electroneutrality"
 
     def _required_keys_add(self):
-        return ["Gamma", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges"]
+        return ["gamma", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges"]
 
     def _check_lengths_of_arrays(self):
         if(len(self._params["reactant_types"])!=len(self._params["reactant_coefficients"])):
@@ -208,9 +207,9 @@ cdef class ReactionAlgorithm(object):
             product_coefficients.push_back(
                 self._params["product_coefficients"][i])
         self.RE.add_reaction(
-            self._params["Gamma"], reactant_types, reactant_coefficients, product_types, product_coefficients)
+            self._params["gamma"], reactant_types, reactant_coefficients, product_types, product_coefficients)
         self.RE.add_reaction(
-            1.0 / self._params["Gamma"], product_types, product_coefficients, reactant_types, reactant_coefficients)
+            1.0 / self._params["gamma"], product_types, product_coefficients, reactant_types, reactant_coefficients)
 
         for key in self._params["default_charges"]: #the keys are the types
             self.RE.charges_of_types[int(key)]=self._params["default_charges"][key]
@@ -292,7 +291,7 @@ cdef class ReactionAlgorithm(object):
                 product_coefficients.append(
                     self.RE.reactions[single_reaction_i].product_coefficients[i])
             reaction = {"reactant_coefficients": reactant_coefficients, "reactant_types": reactant_types, "product_types": product_types, "product_coefficients":
-                        product_coefficients, "reactant_types": reactant_types, "Gamma": self.RE.reactions[single_reaction_i].Gamma}
+                        product_coefficients, "reactant_types": reactant_types, "gamma": self.RE.reactions[single_reaction_i].gamma}
             reactions.append(reaction)
 
         return {"reactions": reactions, "temperature": self.RE.temperature, "exclusion_radius": self.RE.exclusion_radius}
@@ -495,7 +494,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
                     raise ValueError(
                         "At least the following keys have to be given as keyword arguments: " + self._required_keys_add_collective_variable_degree_of_association().__str__() + " got " + kwargs.__str__())
                 self._params[k] = kwargs[k]
-        self.WLRptr.add_new_CV_potential_energy(to_char_pointer(self._params["filename"]), self._params["delta"])
+        filname_potential_energy_boundaries_file=self._params["filename"].encode("utf-8")
+        self.WLRptr.add_new_CV_potential_energy(filname_potential_energy_boundaries_file, self._params["delta"])
 
     def _valid_keys_add_collective_variable_potential_energy(self):
         return "filename", "delta"
@@ -539,7 +539,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
         self.WLRptr.final_wang_landau_parameter = self._params[
             "final_wang_landau_parameter"]
-        self.WLRptr.output_filename = to_char_pointer(self._params["full_path_to_output_filename"])
+        self.WLRptr.output_filename = self._params["full_path_to_output_filename"].encode("utf-8")
         self.WLRptr.do_not_sample_reaction_partition_function = self._params[
             "do_not_sample_reaction_partition_function"]
 
@@ -551,7 +551,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         Loads the dumped wang landau potential file.
 
         """
-        self.WLRptr.load_wang_landau_checkpoint("checkpoint")
+        checkpoint_name="checkpoint".encode("utf-8")
+        self.WLRptr.load_wang_landau_checkpoint(checkpoint_name)
 
     def write_wang_landau_checkpoint(self):
         """
@@ -560,7 +561,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         number of executed trial moves.
 
         """
-        self.WLRptr.write_wang_landau_checkpoint("checkpoint")
+        checkpoint_name="checkpoint".encode("utf-8")
+        self.WLRptr.write_wang_landau_checkpoint(checkpoint_name)
 
     def update_maximum_and_minimum_energies_at_current_state(self):
         """
@@ -583,8 +585,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         :meth:`update_maximum_and_minimum_energies_at_current_state` was used.
 
         """
-        self.WLRptr.write_out_preliminary_energy_run_results(
-            "preliminary_energy_run_results")
+        filename="preliminary_energy_run_results".encode("utf-8")
+        self.WLRptr.write_out_preliminary_energy_run_results(filename)
 
     def write_wang_landau_results_to_file(self, filename):
         """
@@ -592,7 +594,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         collective variables.
 
         """
-        self.WLRptr.write_wang_landau_results_to_file(filename)
+        self.WLRptr.write_wang_landau_results_to_file(filename.encode("utf-8"))
 
 
     def displacement_mc_move_for_particles_of_type(self, type_mc, particle_number_to_be_changed=1):
@@ -615,10 +617,10 @@ cdef class WidomInsertion(ReactionAlgorithm):
     """
     
     cdef CWidomInsertion* WidomInsertionPtr
-    
+
     def __init__(self, *args, **kwargs):
-        self.RE = <CReactionAlgorithm*> new CWangLandauReactionEnsemble()
-        self.WidomInsertionPtr=<CWidomInsertion*> self.RE
+        self.WidomInsertionPtr =new CWidomInsertion()
+        self.RE = <CReactionAlgorithm*> self.WidomInsertionPtr
         self._params = {"temperature": 1,
                         "exclusion_radius": 0}
         for k in self._required_keys():
@@ -644,3 +646,9 @@ cdef class WidomInsertion(ReactionAlgorithm):
         
         """
         return self.WidomInsertionPtr.measure_excess_chemical_potential(int(reaction_id))
+
+    def add_reaction(self, *args, **kwargs):
+        for i in range(2): #for back and forward reaction
+            self.WidomInsertionPtr.number_of_insertions.push_back(0)
+            self.WidomInsertionPtr.summed_exponentials.push_back(0)
+        super(WidomInsertion, self).add_reaction(*args, **kwargs)
