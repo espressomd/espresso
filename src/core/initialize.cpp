@@ -30,7 +30,6 @@
 #include "elc.hpp"
 #include "energy.hpp"
 #include "errorhandling.hpp"
-#include "external_potential.hpp"
 #include "forces.hpp"
 #include "ghmc.hpp"
 #include "ghosts.hpp"
@@ -102,7 +101,6 @@ void on_program_start() {
 #ifdef DP3M
   dp3m_pre_init();
 #endif
-  external_potential_pre_init();
 
 #ifdef LB_GPU
   if (this_node == 0) {

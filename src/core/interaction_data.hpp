@@ -226,26 +226,6 @@ struct IA_parameters {
 /*@}*/
 #endif
 
-#ifdef LJ_ANGLE
-  /** \name Directional Lennard-Jones */
-  /*@{*/
-  double LJANGLE_eps = 0.0;
-  double LJANGLE_sig = 0.0;
-  double LJANGLE_cut = INACTIVE_CUTOFF;
-  /* Locate bonded partners */
-  int LJANGLE_bonded1type = 0.0;
-  int LJANGLE_bonded1pos = 0.0;
-  int LJANGLE_bonded1neg = 0.0;
-  int LJANGLE_bonded2pos = 0.0;
-  int LJANGLE_bonded2neg = 0.0;
-  /* Optional 2nd environment */
-  double LJANGLE_z0 = 0.0;
-  double LJANGLE_dz = -1.0;
-  double LJANGLE_kappa = 0.0;
-  double LJANGLE_epsprime = 0.0;
-/*@}*/
-#endif
-
 #ifdef SMOOTH_STEP
   /** \name smooth step potential */
   /*@{*/

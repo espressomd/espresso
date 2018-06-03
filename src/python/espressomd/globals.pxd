@@ -164,3 +164,7 @@ cdef extern from "swimmer_reaction.hpp":
 
 cdef extern from "object-in-fluid/oif_global_forces.hpp": 
     int max_oif_objects
+
+cdef extern from "forcecap.hpp":
+    double forcecap_get()
+    void forcecap_set(double forcecap)

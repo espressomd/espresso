@@ -164,8 +164,8 @@ inline void thermo_convert_forces_body_to_space(Particle *p, double *force) {
              A[2 + 3 * 2] * p->f.f[2];
 }
 
-inline void thermo_convert_vel_space_to_body(Particle *p, double *vel_space,
-                                             double *vel_body) {
+inline void thermo_convert_vel_space_to_body(Particle *p, const Vector3d& vel_space,
+                                             Vector3d&  vel_body) {
   double A[9];
   thermo_define_rotation_matrix(p, A);
 
@@ -184,7 +184,7 @@ inline void thermo_convert_vel_space_to_body(Particle *p, double *vel_space,
     @param vel    velocity vector
     @param pos    position vector
     @return       adjusted (or not) i^th velocity coordinate */
-inline double le_frameV(int i, double *vel, double *pos) {
+inline double le_frameV(int i, const Vector3d&  vel, const Vector3d&  pos) {
 #ifdef LEES_EDWARDS
 
   if (i == 0) {
@@ -200,13 +200,13 @@ inline double le_frameV(int i, double *vel, double *pos) {
 #ifdef NPT
 /** add velocity-dependend noise and friction for NpT-sims to the particle's
    velocity
-    @param dt_vj  j-component of the velocity scaled by time_step dt
+    @param vj     j-component of the velocity
     @return       j-component of the noise added to the velocity, also scaled by
    dt (contained in prefactors) */
-inline double friction_therm0_nptiso(double dt_vj) {
+inline double friction_therm0_nptiso(double vj) {
   extern double nptiso_pref1, nptiso_pref2;
   if (thermo_switch & THERMO_NPT_ISO)
-    return (nptiso_pref1 * dt_vj + nptiso_pref2 * Thermostat::noise());
+    return (nptiso_pref1 * vj + nptiso_pref2 * Thermostat::noise());
 
   return 0.0;
 }
@@ -257,7 +257,7 @@ inline void friction_thermo_langevin(Particle *p) {
 #endif /* VIRTUAL_SITES */
 
   // Get velocity effective in the thermostatting
-  double velocity[3];
+  Vector3d velocity;
   for (int i = 0; i < 3; i++) {
     // Particle velocity
     velocity[i] = p->m.v[i];
@@ -265,7 +265,7 @@ inline void friction_thermo_langevin(Particle *p) {
     // In case of the engine feature, the velocity is relaxed
     // towards a swimming velocity oriented parallel to the
     // particles director
-    velocity[i] -= (p->swim.v_swim * time_step) * p->r.quatu[i];
+    velocity[i] -= p->swim.v_swim * p->r.quatu[i];
 #endif
 
     // Local effective velocity for leeds-edwards boundary conditions
@@ -283,7 +283,7 @@ inline void friction_thermo_langevin(Particle *p) {
   auto const constexpr langevin_temp_coeff = 24.0;
 
   if (p->p.gamma >= Thermostat::GammaType{}) {
-    langevin_pref1_temp = -p->p.gamma / time_step;
+    langevin_pref1_temp = -p->p.gamma;
     // Is a particle-specific temperature also specified?
     if (p->p.T >= 0.)
       langevin_pref2_temp =
@@ -295,7 +295,7 @@ inline void friction_thermo_langevin(Particle *p) {
 
   } // particle specific gamma
   else {
-    langevin_pref1_temp = -langevin_gamma / time_step;
+    langevin_pref1_temp = -langevin_gamma;
     // No particle-specific gamma, but is there particle-specific temperature
     if (p->p.T >= 0.)
       langevin_pref2_temp =
@@ -313,7 +313,7 @@ inline void friction_thermo_langevin(Particle *p) {
                     (langevin_pref1_temp[1] != langevin_pref1_temp[2]) ||
                     (langevin_pref2_temp[0] != langevin_pref2_temp[1]) ||
                     (langevin_pref2_temp[1] != langevin_pref2_temp[2]);
-  double velocity_body[3] = {0.0, 0.0, 0.0};
+  Vector3d velocity_body = {0.0, 0.0, 0.0};
   if (aniso_flag) {
     thermo_convert_vel_space_to_body(p, velocity, velocity_body);
   }

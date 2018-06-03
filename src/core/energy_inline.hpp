@@ -38,7 +38,6 @@
 #include "hat.hpp"
 #include "hertzian.hpp"
 #include "lj.hpp"
-#include "ljangle.hpp"
 #include "ljcos.hpp"
 #include "ljcos2.hpp"
 #include "ljgen.hpp"
@@ -79,7 +78,6 @@
 #endif
 
 #ifdef EXTERNAL_FORCES
-#include "external_potential.hpp"
 #endif
 
 #include "energy.hpp"
@@ -111,11 +109,6 @@ inline double calc_non_bonded_pair_energy(const Particle *p1, const Particle *p2
 #ifdef LENNARD_JONES_GENERIC
   /* Generic lennard jones */
   ret += ljgen_pair_energy(p1, p2, ia_params, d, dist);
-#endif
-
-#ifdef LJ_ANGLE
-  /* Directional LJ */
-  ret += ljangle_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef SMOOTH_STEP
@@ -494,7 +487,7 @@ inline void add_kinetic_energy(Particle *p1) {
 
   /* kinetic energy */
   energy.data.e[0] +=
-      (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) + Utils::sqr(p1->m.v[2])) * (*p1).p.mass;
+      (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) + Utils::sqr(p1->m.v[2])) * 0.5 * p1->p.mass;
 
 #ifdef ROTATION
   if (p1->p.rotation)
@@ -502,10 +495,9 @@ inline void add_kinetic_energy(Particle *p1) {
     /* the rotational part is added to the total kinetic energy;
        Here we use the rotational inertia  */
 
-    energy.data.e[0] += (Utils::sqr(p1->m.omega[0]) * p1->p.rinertia[0] +
+    energy.data.e[0] += 0.5 * (Utils::sqr(p1->m.omega[0]) * p1->p.rinertia[0] +
                          Utils::sqr(p1->m.omega[1]) * p1->p.rinertia[1] +
-                         Utils::sqr(p1->m.omega[2]) * p1->p.rinertia[2]) *
-                        time_step * time_step;
+                         Utils::sqr(p1->m.omega[2]) * p1->p.rinertia[2]);
   }
 #endif
 }
@@ -515,9 +507,6 @@ inline void add_single_particle_energy(Particle *p) {
   add_bonded_energy(p);
 #ifdef CONSTRAINTS
   add_constraints_energy(p);
-#endif
-#ifdef EXTERNAL_FORCES
-  add_external_potential_energy(p);
 #endif
 }
 

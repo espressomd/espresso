@@ -19,7 +19,7 @@ class LBBoundaryVelocityTest(ut.TestCase):
     n_nodes = system.cell_system.get_state()["n_nodes"]
     system.seed = range(n_nodes)
 
-    system.time_step = 1.0
+    system.time_step = .5
     system.cell_system.skin = 0.1
 
     def test(self):

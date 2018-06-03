@@ -217,9 +217,8 @@ void integrate_reaction_noswap() {
 bool in_lower_half_space(Particle p1, Particle p2) {
   // This function determines whether the particle p2 is in the lower
   // half space of particle p1
-  double distvec[3];
-  get_mi_vector(distvec, p1.r.p, p2.r.p);
-  double dot = Utils::dot_product(p1.r.quatu, distvec);
+  auto const distvec = get_mi_vector(p1.r.p, p2.r.p);
+  double dot = p1.r.quatu * distvec;
   int sgn = Utils::sign(dot);
   return (sgn + 1) / 2;
 }

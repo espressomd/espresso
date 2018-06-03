@@ -182,9 +182,9 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields) {
       pos[i3 + 2] = p.r.p[2];
     }
     if (fields & MPIIO_OUT_VEL) {
-      vel[i3] = p.m.v[0] / time_step;
-      vel[i3 + 1] = p.m.v[1] / time_step;
-      vel[i3 + 2] = p.m.v[2] / time_step;
+      vel[i3] = p.m.v[0];
+      vel[i3 + 1] = p.m.v[1];
+      vel[i3 + 2] = p.m.v[2];
     }
     if (fields & MPIIO_OUT_TYP) {
       type[i1] = p.p.type;
@@ -418,7 +418,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
 
     for (int i = 0; i < nlocalpart; ++i)
       for (int k = 0; k < 3; ++k)
-        local_particles[id[i]]->m.v[k] = vel[3 * i + k] * time_step;
+        local_particles[id[i]]->m.v[k] = vel[3 * i + k];
   }
 
   if (fields & MPIIO_OUT_BND) {

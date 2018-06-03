@@ -24,10 +24,10 @@ public:
     ShapeBasedConstraint::reset_force();
   }
 
-  virtual void add_energy(Particle *p, double *folded_pos,
+  virtual void add_energy(Particle *p, Vector3d& folded_pos,
                           Observable_stat &energy) const override;
 
-  virtual void add_force(Particle *p, double *folded_pos) override;
+  virtual void add_force(Particle *p, Vector3d& folded_pos) override;
 
   /* finds the minimum distance to all particles */
   double min_dist();
@@ -49,7 +49,7 @@ public:
   int &only_positive() { return m_only_positive; }
   int &penetrable() { return m_penetrable; }
   int &type() { return part_rep.p.type; }
-  Vector3d velocity() const { return Vector3d{part_rep.m.v} / time_step; }
+  Vector3d velocity() const { return Vector3d{part_rep.m.v}; }
 
   void set_type(const int &type) {
     part_rep.p.type = type;
@@ -58,7 +58,7 @@ public:
 
   void set_velocity(const Vector3d v) {
     for (int i = 0; i < 3; i++) {
-      part_rep.m.v[i] = time_step * v[i];
+      part_rep.m.v[i] = v[i];
     }
   }
 

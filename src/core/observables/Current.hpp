@@ -15,9 +15,9 @@ public:
     for (int i = 0; i < ids().size(); i++) {
 #ifdef ELECTROSTATICS
       double charge = partCfg[ids()[i]].p.q;
-      res[0] += charge * partCfg[ids()[i]].m.v[0] / time_step;
-      res[1] += charge * partCfg[ids()[i]].m.v[1] / time_step;
-      res[2] += charge * partCfg[ids()[i]].m.v[2] / time_step;
+      res[0] += charge * partCfg[ids()[i]].m.v[0];
+      res[1] += charge * partCfg[ids()[i]].m.v[1];
+      res[2] += charge * partCfg[ids()[i]].m.v[2];
 #endif
     };
     return res;

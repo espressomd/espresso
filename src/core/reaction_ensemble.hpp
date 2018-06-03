@@ -14,7 +14,7 @@ struct SingleReaction {
   std::vector<int> reactant_coefficients;
   std::vector<int> product_types;
   std::vector<int> product_coefficients;
-  double Gamma;
+  double gamma;
   // calculated values that are stored for performance reasons
   int nu_bar;
 };
@@ -114,7 +114,7 @@ public:
   void check_reaction_ensemble();
 
   int delete_particle(int p_id);
-  void add_reaction(double Gamma,
+  void add_reaction(double gamma,
                     const std::vector<int> & _reactant_types,
                     const std::vector<int> & _reactant_coefficients,
                     const std::vector<int> & _product_types,
@@ -310,9 +310,8 @@ class WidomInsertion : public ReactionAlgorithm {
 public:
     double measure_excess_chemical_potential(int reaction_id);
 
-private:
-    int number_of_insertions=0;
-    double summed_exponentials=0.0;
+    std::vector<int> number_of_insertions;
+    std::vector<double> summed_exponentials;
 };
 
 //////////////////////////////////////////////////////////////////free functions
