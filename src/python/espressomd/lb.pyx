@@ -174,6 +174,29 @@ IF LB_GPU or LB:
                     raise Exception("lb_lbfluid_get_couple_flag error")
 
             return self._params
+        def get_interpolated_velocity(self, pos):
+            """Get LB fluid velocity at specified position.
+
+            Parameters
+            ----------
+            pos : array_like :obj:`float`
+                  The position at which velocity is requested.
+
+            Returns
+            -------
+            v : array_like :obj:`float`
+                The LB fluid velocity at ``pos``.
+
+            """
+            cdef Vector3d p	    
+            cdef double[3] v
+
+            for i in range(3):
+                p[i] = pos[i]
+
+            lb_lbfluid_get_interpolated_velocity_global(p, v)
+            return v
+
 
         # input/output function wrappers for whole LB fields
         ####################################################
