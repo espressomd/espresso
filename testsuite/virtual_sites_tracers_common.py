@@ -58,7 +58,7 @@ class VirtualSitesTracersCommon(object):
         
         # Establish steady state flow field
         system.part.add(id=0, pos=(0,5.5,5.5),virtual=1)
-        system.integrator.run(500)
+        system.integrator.run(1000)
             
         # 
         # 
@@ -68,10 +68,10 @@ class VirtualSitesTracersCommon(object):
         ## Perform integration
         
         print("time, actual position, expected position")
-        for i in range(10):
+        for i in range(5):
             system.integrator.run(100)
             # compute expected position
-            X = self.lbf[0,5,5].velocity[0]*system.time
+            X = self.lbf.get_interpolated_velocity(system.part[0].pos)[0]*system.time
             print( system.time, system.part[0].pos[0],X,system.part[0].pos[0]-X)
             self.assertAlmostEqual(system.part[0].pos[0]/X-1,0,delta=0.005)
         
@@ -153,7 +153,7 @@ class VirtualSitesTracersCommon(object):
         
         ## Perform integrat[ion
         last_angle=self.compute_angle()
-        for i in range(8):
+        for i in range(11):
             system.integrator.run(500)
             angle=self.compute_angle()
             print( "Angle after relaxation: ",angle)
@@ -169,7 +169,6 @@ class VirtualSitesTracersCommon(object):
         self.lbf.set_params(ext_force=(0.1,0.,0.)) 
         self.stop_fluid()
         system.virtual_sites=VirtualSitesInertialessTracers()
-        #system.integrator.run(1000)
         
         
         system.part.clear()
@@ -201,7 +200,14 @@ class VirtualSitesTracersCommon(object):
 #        system.part[3:].pos =system.part[3:].pos +random.random((6,3)) -.5
         
         
-        system.integrator.run(15000)
+        system.integrator.run(12000)
+        
+        # For the cpu variant, check particle velocities
+        if isinstance(self.lbf, lb.LBFluid): # as opposed to LBFluidGPU
+            for p in system.part:
+                np.testing.assert_allclose(
+                   p.v, self.lbf.get_interpolated_velocity(p.pos),
+                   atol=2E-2)
         # get new shapes
         dist1non = np.linalg.norm( np.array( system.part[1].pos - system.part[0].pos ) )
         dist2non = np.linalg.norm( np.array( system.part[2].pos - system.part[0].pos ) )

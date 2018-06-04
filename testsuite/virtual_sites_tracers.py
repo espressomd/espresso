@@ -36,12 +36,13 @@ required_features ="VIRTUAL_SITES_INERTIALESS_TRACERS","LB"
 class VirtualSitesTracers(ut.TestCase,VirtualSitesTracersCommon):
     if espressomd.has_features(required_features):
         box_height = 10. 
-        box_lw=10.
+        box_lw=8.
         system = espressomd.System(box_l=(box_lw,box_lw,box_height))
         system.seed = range(system.cell_system.get_state()["n_nodes"])
-        system.time_step = 0.04
+        system.time_step = 0.03
         system.cell_system.skin = 0.1
-        lbf = lb.LBFluid(agrid=1, dens=1, visc=2, tau= system.time_step, fric = 1)
+        lbf = lb.LBFluid(
+            agrid=1, dens=1, visc=2, tau= system.time_step, fric = 1)
         system.actors.add(lbf)
         system.thermostat.set_lb(kT=0,act_on_virtual=False)
            
