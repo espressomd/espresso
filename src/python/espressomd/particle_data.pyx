@@ -241,23 +241,19 @@ cdef class ParticleHandle(object):
         """
 
         def __set__(self, _v):
-            global time_step
             cdef double myv[3]
             check_type_or_throw_except(
                 _v, 3, float, "Velocity has to be floats")
             for i in range(3):
                 myv[i] = _v[i]
-                myv[i] *= time_step
             if set_particle_v(self._id, myv) == 1:
                 raise Exception("Set particle position first.")
 
         def __get__(self):
-            global time_step
             self.update_particle_data()
-
-            return array_locked([self.particle_data.m.v[0] / time_step,
-                                 self.particle_data.m.v[1] / time_step,
-                                 self.particle_data.m.v[2] / time_step])
+            return array_locked([self.particle_data.m.v[0],
+                                 self.particle_data.m.v[1],
+                                 self.particle_data.m.v[2]])
 
     # Force
     property f:
@@ -275,21 +271,18 @@ cdef class ParticleHandle(object):
         """
 
         def __set__(self, _f):
-            global time_step
             cdef Vector3d f
             check_type_or_throw_except(_f, 3, float, "Force has to be floats")
             for i in range(3):
-                f[i] = (0.5 * time_step**2) * _f[i]
-
-            if set_particle_f(self.id, f) == 1:
+                f[i] = _f[i]
+            if set_particle_f(self._id, f) == 1:
                 raise Exception("Set particle position first.")
 
         def __get__(self):
-            global time_step
             self.update_particle_data()
-            return array_locked([self.particle_data.f.f[0] * self.particle_data.p.mass / (0.5 * time_step**2),
-                                 self.particle_data.f.f[1] * self.particle_data.p.mass / (0.5 * time_step**2),
-                                 self.particle_data.f.f[2] * self.particle_data.p.mass / (0.5 * time_step**2)])
+            return array_locked([self.particle_data.f.f[0],
+                                 self.particle_data.f.f[1],
+                                 self.particle_data.f.f[2]])
 
     # Bonds
     property bonds:
@@ -619,10 +612,9 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef double * bond_site = NULL
-                self.update_particle_data()
+                cdef const double * bond_site = NULL
                 pointer_to_bond_site(self.particle_data, bond_site)
-                return np.array([bond_site[0], bond_site[1], bond_site[2]])
+                return array_locked([bond_site[0], bond_site[1], bond_site[2]])
 
 
 # Charge

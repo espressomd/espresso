@@ -53,7 +53,6 @@
 #include "hertzian.hpp"
 #include "hydrogen_bond.hpp"
 #include "lj.hpp"
-#include "ljangle.hpp"
 #include "ljcos.hpp"
 #include "ljcos2.hpp"
 #include "ljgen.hpp"
@@ -344,21 +343,10 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 #endif
 
 /***********************************************/
-/* semi-bonded multi-body potentials            */
-/***********************************************/
-
-/* Directional LJ */
-#ifdef LJ_ANGLE
-  /* This is a multi-body forces that changes the forces of 6 particles */
-  add_ljangle_force(p1, p2, ia_params, d, dist);
-#endif
-
-/***********************************************/
 /* long range electrostatics                   */
 /***********************************************/
 
 #ifdef ELECTROSTATICS
-
   /* real space coulomb */
   const double q1q2 = p1->p.q * p2->p.q;
 

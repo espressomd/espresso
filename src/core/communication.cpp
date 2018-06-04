@@ -53,7 +53,6 @@
 #include "lbboundaries.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 #include "lj.hpp"
-#include "ljangle.hpp"
 #include "ljcos.hpp"
 #include "ljcos2.hpp"
 #include "ljgen.hpp"
@@ -394,13 +393,13 @@ void mpi_place_new_particle_slave(int pnode, int part) {
 }
 
 /****************** REQ_SET_V ************/
-void mpi_send_v(int pnode, int part, double v[3]) {
+void mpi_send_v(int pnode, int part, double* v) {
   mpi_call(mpi_send_v_slave, pnode, part);
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
 
-    memmove(p->m.v, v, 3 * sizeof(double));
+    p->m.v = {v[0],v[1],v[2]};
   } else
     MPI_Send(v, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
 
@@ -410,7 +409,7 @@ void mpi_send_v(int pnode, int part, double v[3]) {
 void mpi_send_v_slave(int pnode, int part) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->m.v, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    MPI_Recv(p->m.v.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
   }
 
   on_particle_change();
@@ -451,7 +450,7 @@ void mpi_send_f(int pnode, int part, const Vector3d &F) {
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->f.f = F / p->p.mass;
+    p->f.f = F;
   } else {
     comm_cart.send(pnode, SOME_TAG, F);
   }
@@ -465,7 +464,7 @@ void mpi_send_f_slave(int pnode, int part) {
     Vector3d F;
     comm_cart.recv(0, SOME_TAG, F);
 
-    p->f.f = F / p->p.mass;
+    p->f.f = F;
   }
 
   on_particle_change();
@@ -520,7 +519,7 @@ void mpi_send_mu_E_slave(int pnode, int part) {
 #ifdef LB_ELECTROHYDRODYNAMICS
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->p.mu_E, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->p.mu_E.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 
@@ -609,7 +608,7 @@ void mpi_send_rotational_inertia_slave(int pnode, int part) {
 #ifdef ROTATIONAL_INERTIA
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->p.rinertia, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->p.rinertia.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 
@@ -653,7 +652,7 @@ void mpi_send_affinity_slave(int pnode, int part) {
 #ifdef AFFINITY
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->p.bond_site, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->p.bond_site.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 
@@ -701,7 +700,7 @@ void mpi_send_out_direction_slave(int pnode, int part) {
 #ifdef MEMBRANE_COLLISION
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->p.out_direction, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->p.out_direction.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 
@@ -818,7 +817,7 @@ void mpi_send_omega_slave(int pnode, int part) {
 #ifdef ROTATION
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->m.omega, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->m.omega.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 
@@ -849,7 +848,7 @@ void mpi_send_torque_slave(int pnode, int part) {
 #ifdef ROTATION
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Recv(p->f.torque, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+    MPI_Recv(p->f.torque.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
   }
 
@@ -1584,7 +1583,7 @@ void mpi_send_ext_torque(int pnode, int part, int flag, int mask,
     p->p.ext_flag |= flag;
 
     if (mask & PARTICLE_EXT_TORQUE)
-      memmove(p->p.ext_torque, torque, 3 * sizeof(double));
+      p->p.ext_torque ={torque[0],torque[1],torque[2]};
   } else {
     s_buf[0] = flag;
     s_buf[1] = mask;
@@ -1611,7 +1610,7 @@ void mpi_send_ext_torque_slave(int pnode, int part) {
     p->p.ext_flag |= s_buf[0];
 
     if (s_buf[1] & PARTICLE_EXT_TORQUE)
-      MPI_Recv(p->p.ext_torque, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+      MPI_Recv(p->p.ext_torque.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
                MPI_STATUS_IGNORE);
   }
 
@@ -1633,7 +1632,7 @@ void mpi_send_ext_force(int pnode, int part, int flag, int mask,
     /* set new values */
     p->p.ext_flag |= flag;
     if (mask & PARTICLE_EXT_FORCE)
-      memmove(p->p.ext_force, force, 3 * sizeof(double));
+      p->p.ext_force ={force[0],force[1],force[2]};
   } else {
     s_buf[0] = flag;
     s_buf[1] = mask;
@@ -1658,7 +1657,7 @@ void mpi_send_ext_force_slave(int pnode, int part) {
     p->p.ext_flag |= s_buf[0];
 
     if (s_buf[1] & PARTICLE_EXT_FORCE)
-      MPI_Recv(p->p.ext_force, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+      MPI_Recv(p->p.ext_force.data(), 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
                MPI_STATUS_IGNORE);
   }
 

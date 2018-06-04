@@ -141,7 +141,7 @@ void add_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
     // friction force prefactor
     for (j = 0; j < 3; j++)
       vel12_dot_d12 += (p1->m.v[j] - p2->m.v[j]) * d[j];
-    friction = ia_params->dpd_pref1 * omega2 * vel12_dot_d12;
+    friction = ia_params->dpd_pref1 * omega2 * vel12_dot_d12 * time_step;
     // random force prefactor
     noise = ia_params->dpd_pref2 * omega * (d_random() - 0.5);
     for (j = 0; j < 3; j++) {
@@ -177,7 +177,7 @@ void add_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
         f_R[i] += P_times_dist_sqr[i][j] * noise_vec[j];
       }
       // NOTE: velocity are scaled with time_step
-      f_D[i] *= ia_params->dpd_pref3 * omega2;
+      f_D[i] *= ia_params->dpd_pref3 * omega2 * time_step;
       // NOTE: noise force scales with 1/sqrt(time_step
       f_R[i] *= ia_params->dpd_pref4 * omega * dist_inv;
     }

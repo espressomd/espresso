@@ -41,7 +41,6 @@
 #define LJCOS2
 #define GAUSSIAN
 #define HAT
-#define LJ_ANGLE
 #define GAY_BERNE
 #define SMOOTH_STEP
 #define HERTZIAN
