@@ -1560,12 +1560,9 @@ Reaction Ensemble
 .. note:: The whole Reaction Ensemble module uses Monte Carlo moves which require potential energies. Therefore the Reaction Ensemble requires support for energy calculations for all interactions which are used in the simulation.
 
 For a description of the available methods see :mod:`espressomd.reaction_ensemble`. 
-Example scripts can be found here:
+An Example script can be found here:
 
 * `Reaction ensemble/ constant pH ensemble                    <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
-* `Wang Landau reaction ensemble                    <https://github.com/espressomd/espresso/blob/python/samples/wang_landau_reaction_ensemble.py>`_
-* `Widom Insertion                    <https://github.com/espressomd/espresso/blob/python/samples/widom_insertion.py>`_
-
 
 The reaction ensemble :cite:`smith94a,turner2008simulation` allows to simulate
 chemical reactions which can be represented by the general equation:
@@ -1702,6 +1699,10 @@ Wang-Landau Reaction Ensemble
 
 .. .. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies in one way or the other.
 
+An Example script can be found here:
+
+* `Wang Landau reaction ensemble                    <https://github.com/espressomd/espresso/blob/python/samples/wang_landau_reaction_ensemble.py>`_
+
 Combination of the Reaction Ensemble with the Wang-Landau algorithm 
 :cite:`wang01a`
 allows for enhanced sampling of the reacting system, and
@@ -1719,6 +1720,10 @@ Constant pH simulation using the Reaction Ensemble
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. .. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies.
+
+An Example script can be found here:
+
+* `Reaction ensemble/ constant pH ensemble                    <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
 
 In the constant pH method due to Reed and Reed
 :cite:`reed92a` it is possible to set the chemical potential
@@ -1815,3 +1820,9 @@ reaction ensemble transition probabilities.
 .. case of an initial excess of acid or base in the simulation box. Note
 .. that this only works for big enough volumes.
 
+Widom Insertion (for homogeneous systems)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An example script can be found here:
+
+* `Widom Insertion                    <https://github.com/espressomd/espresso/blob/python/samples/widom_insertion.py>`_

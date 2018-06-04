@@ -359,7 +359,9 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
 
     def add_reaction(self, *args, **kwargs):
         if(len(kwargs["product_types"])!=2 or len(kwargs["reactant_types"])!=1):
-            raise ValueError("The constant pH method is not implemented for this kind of reactions.")
+            raise ValueError("The constant pH method is only implemented for reactionw with two product types and one educt type.")
+        if(kwargs["reactant_coefficients"][0]!=1 or kwargs["product_coefficients"][0]!=1 or kwargs["product_coefficients"][1]!=1):
+            raise ValueError("All product and reactant coefficients must equal one in the constant pH method as implemented in Espresso.")
         super(ConstantpHEnsemble, self).add_reaction(*args, **kwargs)
     
     property constant_pH:
