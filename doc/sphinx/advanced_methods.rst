@@ -1559,7 +1559,13 @@ Reaction Ensemble
 
 .. note:: The whole Reaction Ensemble module uses Monte Carlo moves which require potential energies. Therefore the Reaction Ensemble requires support for energy calculations for all interactions which are used in the simulation.
 
-For a description of the available methods see :mod:`espressomd.reaction_ensemble`
+For a description of the available methods see :mod:`espressomd.reaction_ensemble`. 
+Example scripts can be found here:
+
+* `Reaction ensemble/ constant pH ensemble                    <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
+* `Wang Landau reaction ensemble                    <https://github.com/espressomd/espresso/blob/python/samples/wang_landau_reaction_ensemble.py>`_
+* `Widom Insertion                    <https://github.com/espressomd/espresso/blob/python/samples/widom_insertion.py>`_
+
 
 The reaction ensemble :cite:`smith94a,turner2008simulation` allows to simulate
 chemical reactions which can be represented by the general equation:
@@ -1758,15 +1764,14 @@ If the reaction contains more than one product, then the reaction constant
 :math:`\Gamma` defines only the sum of their chemical potentials but not the
 chemical potential of each product alone.
 
-.. Since the Reaction Ensemble acceptance transition probability can be
-.. derived from the grand canonical acceptance transition probability we
-.. can use the reaction ensemble to implement grand canonical simulation
-.. moves. This is done via adding reactions that only have reactants (for the
-.. deletion of particles) or only have products (for the creation of
-.. particles). There exists a one to one mapping of the expressions in the
-.. grand canonical transition probabilities and the expressions in the
-.. reaction ensemble transition probabilities.
-
+Since the Reaction Ensemble acceptance transition probability can be
+derived from the grand canonical acceptance transition probability we
+can use the reaction ensemble to implement grand canonical simulation
+moves. This is done via adding reactions that only have reactants (for the
+deletion of particles) or only have products (for the creation of
+particles). There exists a one to one mapping of the expressions in the
+grand canonical transition probabilities and the expressions in the
+reaction ensemble transition probabilities.
 
 .. The text below is commented-out because it is still an open research question how it should be used correctly.
 ..
