@@ -39,6 +39,7 @@ class Constraints : public ScriptObjectRegistry<Constraint> {
   }
   virtual void remove_in_core(std::shared_ptr<Constraint> obj_ptr) override {
     ::Constraints::constraints.remove(obj_ptr->constraint());
+    ::on_constraint_change();
   };
 };
 } /* namespace Constraints */

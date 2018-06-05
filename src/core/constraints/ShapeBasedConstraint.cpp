@@ -9,19 +9,11 @@
 
 namespace Constraints {
 Vector3d ShapeBasedConstraint::total_force() const {
-  Vector3d total_force;
-  boost::mpi::all_reduce(comm_cart, m_local_force, total_force,
-                         std::plus<Vector3d>());
-
-  return total_force;
+  return all_reduce(comm_cart, m_local_force, std::plus<Vector3d>());
 }
 
 double ShapeBasedConstraint::total_normal_force() const {
-  double total_normal_force;
-  boost::mpi::all_reduce(comm_cart, m_outer_normal_force, total_normal_force,
-                         std::plus<double>());
-
-  return total_normal_force;
+  return all_reduce(comm_cart, m_outer_normal_force, std::plus<double>());
 }
 
 double ShapeBasedConstraint::min_dist() {

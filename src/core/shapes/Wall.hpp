@@ -46,7 +46,7 @@ public:
   double &d() { return m_d; }
 
 private:
-  /** normal vector on the plane, facing inwards */
+  /** normal vector on the plane */
   Vector3d m_n;
   /** distance of the wall from the origin. */
   double m_d;
