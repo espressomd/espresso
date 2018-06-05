@@ -127,6 +127,14 @@ bool validate_collision_parameters() {
     return false;
   }
 
+
+  if ((collision_params.mode & COLLISION_MODE_BOND) &&
+      collision_params.bond_centers == -1) {
+    runtimeErrorMsg() << "The bond_centers parameter is unknown. Did you add "
+                         "the interaction using system.bonded_inter.add?";
+    return false;
+  }
+
   // If the bond type to bind particle centers is not a pair bond...
   // Check that the bonds have the right number of partners
   if ((collision_params.mode & COLLISION_MODE_BOND) &&
