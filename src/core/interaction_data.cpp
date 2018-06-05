@@ -40,7 +40,6 @@
 #include "initialize.hpp"
 #include "interaction_data.hpp"
 #include "lj.hpp"
-#include "ljangle.hpp"
 #include "ljcos.hpp"
 #include "ljcos2.hpp"
 #include "ljgen.hpp"
@@ -346,11 +345,6 @@ static void recalc_maximal_cutoff_nonbonded() {
 #ifdef LENNARD_JONES_GENERIC
       if (max_cut_current < (data->LJGEN_cut + data->LJGEN_offset))
         max_cut_current = (data->LJGEN_cut + data->LJGEN_offset);
-#endif
-
-#ifdef LJ_ANGLE
-      if (max_cut_current < (data->LJANGLE_cut))
-        max_cut_current = (data->LJANGLE_cut);
 #endif
 
 #ifdef SMOOTH_STEP

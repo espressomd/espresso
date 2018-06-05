@@ -68,7 +68,6 @@ inline int calc_thermalized_bond_forces(Particle *p1, Particle *p2, Bonded_ia_pa
     double sqrt_mass_tot = sqrt(mass_tot);
     double sqrt_mass_red = sqrt(p1->p.mass * p2->p.mass / mass_tot);
 
-    //printf("forcecalc pref1 %f pref2 %f\n", iaparams->p.thermalized_bond.pref1_com, iaparams->p.thermalized_bond.pref2_com);
     for (int i=0; i<3; i++) {
 
         //Langevin thermostat for center of mass

@@ -99,7 +99,7 @@ double nptiso_pref4;
 #endif
 
 void thermo_init_langevin() {
-  langevin_pref1 = -langevin_gamma / time_step;
+  langevin_pref1 = -langevin_gamma;
   langevin_pref2 = sqrt(24.0 * temperature / time_step * langevin_gamma);
 
   /* If gamma_rotation is not set explicitly,
@@ -143,7 +143,7 @@ void thermo_init_npt_isotropic() {
     nptiso_pref1 = -nptiso_gamma0 * 0.5 * time_step;
 
       nptiso_pref2 =
-          sqrt(12.0 * temperature * nptiso_gamma0 * time_step) * time_step;
+          sqrt(12.0 * temperature * nptiso_gamma0 * time_step);
     nptiso_pref3 = -nptiso_gammav * (1.0 / nptiso.piston) * 0.5 * time_step;
     nptiso_pref4 = sqrt(12.0 * temperature * nptiso_gammav * time_step);
     THERMO_TRACE(fprintf(
@@ -165,9 +165,8 @@ void thermo_init_npt_isotropic() {
 // default particle mass is assumed to be unitary in this global parameters
 void thermo_init_brownian() {
   // Dispersions correspond to the Gaussian noise only which is only valid for the BD.
-  // here, the time_step is used only to align with Espresso default dimensionless model (translational velocity only).
   // Just a square root of kT, see (10.2.17) and comments in 2 paragraphs afterwards, Pottier2010 https://doi.org/10.1007/s10955-010-0114-6
-  brown_sigma_vel = sqrt(temperature) * time_step;
+  brown_sigma_vel = sqrt(temperature);
   // Position dispersion is defined by the second eq. (14.38) of Schlick2010 https://doi.org/10.1007/978-1-4419-6351-2.
   // Its time interval factor will be added in the Brownian Dynamics functions.
   // Its square root is the standard deviation. A multiplicative inverse of the position standard deviation:

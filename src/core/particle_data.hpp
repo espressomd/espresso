@@ -104,19 +104,19 @@ struct ParticleProperties {
 
 #ifdef ROTATIONAL_INERTIA
   /** rotational inertia */
-  double rinertia[3] = {1., 1., 1.};
+  Vector3d rinertia = {1., 1., 1.};
 #else
-  static constexpr const double rinertia[3] = {1., 1., 1.};
+  static const constexpr double rinertia[3] = {1., 1., 1.};
 #endif
 
 #ifdef AFFINITY
   /** parameters for affinity mechanisms */
-  double bond_site[3] = {-1., -1., -1.};
+  Vector3d bond_site = {-1., -1., -1.};
 #endif
 
 #ifdef MEMBRANE_COLLISION
   /** parameters for membrane collision mechanisms */
-  double out_direction[3] = {0., 0., 0.};
+  Vector3d out_direction = {0., 0., 0.};
 #endif
 
   // Determines, wether a particle's rotational degrees of freedom are
@@ -130,7 +130,7 @@ struct ParticleProperties {
 
 #ifdef LB_ELECTROHYDRODYNAMICS
   /** electrophoretic mobility times E-field: mu_0 * E */
-  double mu_E[3] = {0., 0., 0.};
+  Vector3d mu_E = {0., 0., 0.};
 #endif
 
 #ifdef DIPOLES
@@ -191,11 +191,11 @@ struct ParticleProperties {
   */
   int ext_flag = 0;
   /** External force, apply if \ref ParticleLocal::ext_flag == 1. */
-  double ext_force[3] = {0, 0, 0};
+  Vector3d ext_force = {0, 0, 0};
 
 #ifdef ROTATION
   /** External torque, apply if \ref ParticleLocal::ext_flag == 16. */
-  double ext_torque[3] = {0, 0, 0};
+  Vector3d ext_torque = {0, 0, 0};
 #endif
 #endif
 };
@@ -237,7 +237,7 @@ struct ParticleForce {
 
 #ifdef ROTATION
   /** torque */
-  double torque[3] = {0., 0., 0.};
+  Vector3d torque = {0., 0., 0.};
 #endif
 };
 
@@ -246,12 +246,12 @@ struct ParticleForce {
     be necessary for velocity dependend potentials. */
 struct ParticleMomentum {
   /** velocity. */
-  double v[3] = {0., 0., 0.};
+  Vector3d v = {0., 0., 0.};
 
 #ifdef ROTATION
   /** angular velocity
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
-  double omega[3] = {0., 0., 0.};
+  Vector3d omega = {0., 0., 0.};
 #endif
 };
 
@@ -261,7 +261,7 @@ struct ParticleLocal {
   /** position in the last time step befor last Verlet list update. */
   Vector3d p_old={0,0,0};
   /** index of the simulation box image where the particle really sits. */
-  int i[3] = {0, 0, 0};
+  Vector<3,int> i = {0, 0, 0};
 
   /** check whether a particle is a ghost or not */
   int ghost = 0;
@@ -278,7 +278,7 @@ struct ParticleLocal {
 /** Data related to the Lattice Boltzmann hydrodynamic coupling */
 struct ParticleLatticeCoupling {
   /** fluctuating part of the coupling force */
-  double f_random[3];
+  Vector3d f_random;
 };
 #endif
 
@@ -291,8 +291,8 @@ struct ParticleParametersSwimming {
 #if defined(LB) || defined(LB_GPU)
   int push_pull = 0;
   double dipole_length = 0.;
-  double v_center[3];
-  double v_source[3];
+  Vector3d v_center;
+  Vector3d v_source;
   double rotational_friction = 0.;
 #endif
 #endif
@@ -1023,7 +1023,7 @@ void pointer_to_swimming(Particle const *p,
 void pointer_to_rotational_inertia(Particle const *p, double const *&res);
 #endif
 #ifdef AFFINITY
-void pointer_to_bond_site(const Particle* p, const double*& res); 
+void pointer_to_bond_site(Particle const* p, double const*& res);
 #endif
 
 #ifdef MEMBRANE_COLLISION
