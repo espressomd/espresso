@@ -209,7 +209,7 @@ cdef class mayaviLive(object):
             p1 = get_particle_data_ptr(i)
             p2 = get_particle_data_ptr(j)
             bond_coords[n,:3] = numpy.array([p1.r.p[0],p1.r.p[1],p1.r.p[2]])
-            get_mi_vector(bond_vec,p2.r.p,p1.r.p)
+            get_mi_vector(bond_vec, p2.r.p.data(), p1.r.p.data())
             bond_coords[n,3:6] = bond_vec
             bond_coords[n,6] = t
 
