@@ -53,11 +53,38 @@ public:
                      [this]() {
                        return (m_shape != nullptr) ? m_shape->id() : ObjectId();
                      }},
+
+                     {"reflection_type", 
+                         [this](Variant const& value) {
+                            std::string reflection_type_str=get_value<std::string>(value);
+                            if(reflection_type_str=="NORMAL")
+                                m_constraint->reflection_type()=::Constraints::ShapeBasedConstraint::ReflectionType::NORMAL;
+                            else if( reflection_type_str=="NORMAL_TANGENTIAL")
+                                m_constraint->reflection_type()=::Constraints::ShapeBasedConstraint::ReflectionType::NORMAL_TANGENTIAL;
+                            else if(reflection_type_str=="NONE")
+                                m_constraint->reflection_type()=::Constraints::ShapeBasedConstraint::ReflectionType::NONE;
+                            else
+                                throw;   
+                         }, //setter
+                         [this](){
+                            if(m_constraint->reflection_type()==::Constraints::ShapeBasedConstraint::ReflectionType::NORMAL)
+                                return static_cast<std::string>("NORMAL");
+                            else if( m_constraint->reflection_type()==::Constraints::ShapeBasedConstraint::ReflectionType::NORMAL_TANGENTIAL)
+                                return static_cast<std::string>("NORMAL_TANGENTIAL");
+                            else if(m_constraint->reflection_type()==::Constraints::ShapeBasedConstraint::ReflectionType::NONE)
+                                return static_cast<std::string>("NONE");
+                            else
+                                throw;                            
+                         } //getter
+                         },
                     {"particle_velocity",
                      [this](const Variant &v) {
                        m_constraint->set_velocity(get_value<Vector3d>(v));
                      },
-                        [this]() { return m_constraint->velocity(); }}});
+                     [this]() { return m_constraint->velocity(); }
+                     }
+                    
+                    });
   }
 
   Variant call_method(std::string const &name, VariantMap const &) override {

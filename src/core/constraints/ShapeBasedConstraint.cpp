@@ -24,7 +24,9 @@ double ShapeBasedConstraint::min_dist() {
       parts.begin(), parts.end(), std::numeric_limits<double>::infinity(),
       [this](double min, Particle const &p) {
         IA_parameters *ia_params;
+
         ia_params = get_ia_param(p.p.type, part_rep.p.type);
+
         if (checkIfInteraction(ia_params)) {
           double vec[3], dist;
           m_shape->calculate_dist(folded_position(p).data(), &dist, vec);
@@ -37,42 +39,49 @@ double ShapeBasedConstraint::min_dist() {
   return global_mindist;
 }
 
+
+/**
+ * The function reflect_particle reflects the particle. In the current implementation the behaviour is only strictly correct for a flat wall. Be careful when using it with e.g. a sphere or a cylinder. The algorithm here assumes the wrong (!!) tangential plane for the reflection. For small curvatures (high radii) the error that is made is approaching zero.
+ */
+
 void ShapeBasedConstraint::reflect_particle(Particle *p,
                                             const double *distance_vector,
-                                            const double *folded_pos) const {
+                                            const Vector3d folded_pos) const {
   double vec[3];
   double norm;
 
   memcpy(vec, distance_vector, 3 * sizeof(double));
 
   norm = sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-  p->r.p[0] = p->r.p[0] - 2 * vec[0];
-  p->r.p[1] = p->r.p[1] - 2 * vec[1];
-  p->r.p[2] = p->r.p[2] - 2 * vec[2];
+  if ((norm) > 0) {
+    p->r.p[0] = p->r.p[0] - 2 * vec[0];
+    p->r.p[1] = p->r.p[1] - 2 * vec[1];
+    p->r.p[2] = p->r.p[2] - 2 * vec[2];
 
-  /* vec seems to be the vector that points from the wall to the particle*/
-  /* now normalize it */
-  switch (m_reflection_type) {
-  case ReflectionType::NORMAL:
-    vec[0] /= norm;
-    vec[1] /= norm;
-    vec[2] /= norm;
-    /* calculating scalar product - reusing var norm */
-    norm = vec[0] * p->m.v[0] + vec[1] * p->m.v[1] + vec[2] * p->m.v[2];
-    /* now add twice the normal component to the velcity */
-    p->m.v[0] =
-        p->m.v[0] - 2 * vec[0] * norm; /* norm is still the scalar product! */
-    p->m.v[1] = p->m.v[1] - 2 * vec[1] * norm;
-    p->m.v[2] = p->m.v[2] - 2 * vec[2] * norm;
-    break;
-  case ReflectionType::NORMAL_TANGENTIAL:
-    /* if bounce back, invert velocity */
-    p->m.v[0] = -p->m.v[0];
-    p->m.v[1] = -p->m.v[1];
-    p->m.v[2] = -p->m.v[2];
-    break;
-  case ReflectionType::NONE:
-    break;
+    /* vec seems to be the vector that points from the wall to the particle*/
+    /* now normalize it */
+    switch (m_reflection_type) {
+    case ReflectionType::NORMAL: {
+      vec[0] /= norm;
+      vec[1] /= norm;
+      vec[2] /= norm;
+      /* calculating scalar product */
+      double normal_velocity =
+          vec[0] * p->m.v[0] + vec[1] * p->m.v[1] + vec[2] * p->m.v[2];
+      /* now add twice the normal component to the velcity */
+      p->m.v[0] = p->m.v[0] - 2 * vec[0] * normal_velocity;
+      p->m.v[1] = p->m.v[1] - 2 * vec[1] * normal_velocity;
+      p->m.v[2] = p->m.v[2] - 2 * vec[2] * normal_velocity;
+    } break;
+    case ReflectionType::NORMAL_TANGENTIAL:
+      /* if bounce back, invert velocity */
+      p->m.v[0] = -p->m.v[0];
+      p->m.v[1] = -p->m.v[1];
+      p->m.v[2] = -p->m.v[2];
+      break;
+    case ReflectionType::NONE:
+      break;
+    }
   }
 }
 
@@ -101,9 +110,10 @@ void ShapeBasedConstraint::add_force(Particle *p, Vector3d& folded_pos) {
         add_dpd_pair_force(p, &part_rep, ia_params, vec, dist, dist2);
       }
 #endif
-    } else if (m_penetrable && (dist <= 0)) {
-      if ((!m_only_positive) && (dist < 0)) {
-        auto const dist2 = dist * dist;
+
+    } else if (dist <= 0) {
+      if (m_penetrable && !m_only_positive && (dist != 0.0)) {
+
         calc_non_bonded_pair_force(p, &part_rep, ia_params, vec, -1.0 * dist,
                                    dist * dist, force, torque1, torque2);
 #ifdef DPD
@@ -112,14 +122,17 @@ void ShapeBasedConstraint::add_force(Particle *p, Vector3d& folded_pos) {
         }
 #endif
       }
-    } else {
       if (m_reflection_type != ReflectionType::NONE) {
-        reflect_particle(p, vec, folded_pos.data());
-      } else {
+
+        reflect_particle(p, vec, folded_pos);
+        dist=-dist;
+      }
+    } 
+    if (dist<0 && !m_penetrable) {
+
         runtimeErrorMsg() << "Constraint"
                           << " violated by particle " << p->p.identity
                           << " dist " << dist;
-      }
     }
   }
   for (int j = 0; j < 3; j++) {
@@ -131,6 +144,7 @@ void ShapeBasedConstraint::add_force(Particle *p, Vector3d& folded_pos) {
 #endif
   }
 }
+
 
 void ShapeBasedConstraint::add_energy(Particle *p, Vector3d& folded_pos,
                                       Observable_stat &energy) const {

@@ -20,7 +20,9 @@ inline void add_constraints_forces(Particle *p) {
 
   // Copy position and image count so as not to modify particle when folding
   // position
+
   Vector3d pos=folded_position(p);
+
   for (auto const &c : Constraints::constraints) {
     c->add_force(p, pos);
   }

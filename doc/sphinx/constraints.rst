@@ -85,7 +85,7 @@ There are two further optional parameters and that can
 be used to fine tune the behavior of the constraint. If ``penetrable`` is
 set to ``True`` then particles can move through the constraint in this case the
 other option ``only_positive`` controls whether the particle is subject to the interaction
-potential of the wall. If set to then the constraint will only act in
+potential of the wall. If set to ``True`` then the constraint will only act in
 the direction of the normal vector.
 
 If we wanted to add a non-penetrable pore constraint to our simulation,
@@ -452,12 +452,12 @@ particle can go through the constraint surface (|es| will exit if it does).
 
 In variants ``wall``; ``sphere``; ``cylinder``; ``rhomboid`` and ``stomatocyte`` it is
 also possible to specify a flag indicating if the constraints should be
-reflecting. The flags can equal 1 or 2. The flag 1 corresponds to a
+reflecting. The flags can equal "NONE", "NORMAL" or "NORMAL_TANGENTIAL". The flag "NORMAL" corresponds to a
 reflection process where the normal component of the velocity is
-reflected and the tangential component remains unchanged. If the flag is
-2, also the tangential component is turned around, so that a bounce back
-motion is performed. The second variant is useful for boundaries of DPD.
-The reflection property is only activated if an interaction is defined
+reflected and the tangential component remains unchanged (the normal kind of reflection). If the flag is
+"NORMAL_TANGENTIAL", also the tangential component is turned around, so that a bounce back
+motion is performed (useful for boundaries of DPD).
+BE AWARE: The reflection property is only activated if an interaction is defined
 between a particular particle and the constraint! This will usually be a
 Lennard-Jones interaction with :math:`\epsilon=0`, but finite
 interaction range.

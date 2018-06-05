@@ -153,6 +153,8 @@ python_test(FILE thermalized_bond.py MAX_NUM_PROC 4)
 python_test(FILE thole.py MAX_NUM_PROC 4)
 python_test(FILE lb_switch.py MAX_NUM_PROC 1)
 python_test(FILE lb_boundary_velocity.py MAX_NUM_PROC 1)
+python_test(FILE wall_particle_bounce_back.py MAX_NUM_PROC 2)
+
 
 if(PY_H5PY)
   python_test(FILE h5md.py MAX_NUM_PROC 2)
