@@ -30,11 +30,13 @@ from ek_common import *
 # Set the slit pore geometry the width is the non-periodic part of the geometry
 # the padding is used to ensure that there is no field inside outside the slit
 
+
 @ut.skipIf(not espressomd.has_features(["ELECTROKINETICS", "EK_BOUNDARIES"]),
            "Features not available, skipping test!")
 class ek_eof_one_species_x(ut.TestCase):
 
     es = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    es.seed = 42
 
     def test(self):
         system = self.es
@@ -89,7 +91,7 @@ class ek_eof_one_species_x(ut.TestCase):
             viscosity=viscosity_kinematic,
             friction=friction,
             T=temperature,
-            prefactor=bjerrum_length*temperature,
+            prefactor=bjerrum_length * temperature,
             stencil="nonlinear")
 
         counterions = electrokinetics.Species(

@@ -36,6 +36,7 @@ from ek_common import *
 class ek_eof_one_species_x(ut.TestCase):
 
     es = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    es.seed = 42
 
     def test(self):
         system = self.es
@@ -90,7 +91,7 @@ class ek_eof_one_species_x(ut.TestCase):
             viscosity=viscosity_kinematic,
             friction=friction,
             T=temperature,
-            prefactor=bjerrum_length*temperature,
+            prefactor=bjerrum_length * temperature,
             stencil="nonlinear")
 
         counterions = electrokinetics.Species(

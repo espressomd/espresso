@@ -25,8 +25,6 @@ import math
 from ek_common import *
 
 
-
-
 ##########################################################################
 #                              Set up the System                               #
 ##########################################################################
@@ -38,6 +36,7 @@ from ek_common import *
 class ek_eof_one_species_x(ut.TestCase):
 
     es = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    es.seed = 42
 
     def test(self):
         system = self.es
@@ -52,7 +51,7 @@ class ek_eof_one_species_x(ut.TestCase):
 
 # Set the electrokinetic parameters
         agrid = 1.0 / 3.0
-        dt = 1.0 / 8. 
+        dt = 1.0 / 8.
         force = 0.07
         sigma = -0.04
         viscosity_kinematic = 1.7
@@ -92,7 +91,7 @@ class ek_eof_one_species_x(ut.TestCase):
             viscosity=viscosity_kinematic,
             friction=friction,
             T=temperature,
-            prefactor=bjerrum_length*temperature,
+            prefactor=bjerrum_length * temperature,
             stencil="nonlinear")
 
         counterions = electrokinetics.Species(
