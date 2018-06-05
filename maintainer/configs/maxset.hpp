@@ -24,7 +24,7 @@
 #define METADYNAMICS
 
 #define LB
-#define LB_BOUNDARIES
+//#define LB_BOUNDARIES
 #define LB_ELECTROHYDRODYNAMICS
 
 #define ENGINE

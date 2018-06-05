@@ -185,6 +185,19 @@ class LBTest(ut.TestCase):
                     self.params['temp']),
                 temp_prec))
 
+    def test_set_get_u(self):
+        self.system.actors.clear()
+        self.lbf = lb.LBFluid(
+            visc=self.params['viscosity'],
+            dens=self.params['dens'],
+            agrid=self.params['agrid'],
+            tau=self.system.time_step,
+            fric=self.params['friction'])
+        self.system.actors.add(self.lbf)
+        v_fluid = np.array([1.2, 4.3, 0.2])
+        self.lbf[0, 0, 0].velocity = v_fluid
+        np.testing.assert_allclose(self.lbf[0, 0, 0].velocity, v_fluid, atol=1e-4)
+
     def test_viscous_coupling(self):
         self.system.thermostat.turn_off()
         self.system.actors.clear()
