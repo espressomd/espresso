@@ -28,7 +28,7 @@ class LBGPUViscous(ut.TestCase):
         self.system.part.add(pos=[0.5 * self.agrid] * 3, v=v_part, fix=[1, 1, 1])
         self.lbf[0, 0, 0].velocity = v_fluid
         self.system.integrator.run(1)
-        np.testing.assert_allclose(self.system.part[0].f, -self.friction * (v_part - v_fluid), atol=1e-3)
+        np.testing.assert_allclose(np.copy(self.system.part[0].f), -self.friction * (v_part - v_fluid), atol=1e-3)
 
 
 if __name__ == "__main__":
