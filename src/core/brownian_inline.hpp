@@ -44,19 +44,17 @@ inline void bd_drag(Particle &p, double dt) {
     local_gamma = langevin_gamma;
   }
 
-  double scale_f = 0.5 * time_step * time_step / p.p.mass;
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
     {
       // Second (deterministic) term of the Eq. (14.39) of Schlick2010.
-      // scale_f is required to be aligned with rescaled forces
-      // only a conservative part of the force is used here
+      // Only a conservative part of the force is used here
 #ifndef PARTICLE_ANISOTROPY
-      p.r.p[j] += p.f.f[j] * dt / (local_gamma * scale_f);
+      p.r.p[j] += p.f.f[j] * dt / (local_gamma);
 #else
-      p.r.p[j] += p.f.f[j] * dt / (local_gamma[j] * scale_f);
+      p.r.p[j] += p.f.f[j] * dt / (local_gamma[j]);
 #endif // PARTICLE_ANISOTROPY
     }
   }
@@ -80,7 +78,6 @@ inline void bd_drag_vel(Particle &p, double dt) {
     local_gamma = langevin_gamma;
   }
 
-  double scale_f = 0.5 * time_step * time_step / p.p.mass;
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (p.p.ext_flag & COORD_FIXED(j)) {
@@ -89,14 +86,12 @@ inline void bd_drag_vel(Particle &p, double dt) {
 #endif
     {
       // First (deterministic) term of the eq. (14.34) of Schlick2010 taking into account eq. (14.35).
-      // here, the additional time_step is used only to align with ESPResSo default dimensionless model
-      // scale_f is required to be aligned with rescaled forces
-      // only conservative part of the force is used here
+      // Only conservative part of the force is used here
       // NOTE: velocity is assigned here and propagated by thermal part further on top of it
 #ifndef PARTICLE_ANISOTROPY
-      p.m.v[j] = p.f.f[j] * time_step / (local_gamma * scale_f);
+      p.m.v[j] = p.f.f[j] / (local_gamma);
 #else
-      p.m.v[j] = p.f.f[j] * time_step / (local_gamma[j] * scale_f);
+      p.m.v[j] = p.f.f[j] / (local_gamma[j]);
 #endif // PARTICLE_ANISOTROPY
     }
   }
@@ -120,9 +115,8 @@ inline void bd_random_walk_vel(Particle &p, double dt) {
 #ifdef LANGEVIN_PER_PARTICLE
   auto const constexpr langevin_temp_coeff = 1.0;
   // Is a particle-specific temperature specified?
-  // here, the time_step is used only to align with ESPResSo default dimensionless model
   if (p.p.T >= 0.) {
-    brown_sigma_vel_temp = sqrt(langevin_temp_coeff * p.p.T) * time_step;
+    brown_sigma_vel_temp = sqrt(langevin_temp_coeff * p.p.T);
   } else {
     brown_sigma_vel_temp = brown_sigma_vel;
   }

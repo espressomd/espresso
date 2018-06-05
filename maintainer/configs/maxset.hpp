@@ -48,7 +48,6 @@
 #define LJCOS2
 #define GAUSSIAN
 #define HAT
-#define LJ_ANGLE
 #define GAY_BERNE
 #define SMOOTH_STEP
 #define HERTZIAN
@@ -77,5 +76,6 @@
 #define OIF_GLOBAL_FORCES
 #define OIF_LOCAL_FORCES
 #define MEMBRANE_COLLISION
+#define AFFINITY
 
 #define ADDITIONAL_CHECKS
