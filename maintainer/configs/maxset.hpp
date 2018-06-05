@@ -24,7 +24,7 @@
 #define METADYNAMICS
 
 #define LB
-//#define LB_BOUNDARIES
+#define LB_BOUNDARIES
 #define LB_ELECTROHYDRODYNAMICS
 
 #define ENGINE
@@ -46,7 +46,6 @@
 #define LJCOS2
 #define GAUSSIAN
 #define HAT
-#define LJ_ANGLE
 #define GAY_BERNE
 #define SMOOTH_STEP
 #define HERTZIAN
