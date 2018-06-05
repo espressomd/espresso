@@ -1492,9 +1492,9 @@ int lb_lbnode_set_u(int *ind, double *u) {
     /* transform to lattice units */
 
     mpi_recv_fluid(node, index, &rho, j, pi);
-    j[0] = rho * u[0] * lbpar.tau * lbpar.agrid;
-    j[1] = rho * u[1] * lbpar.tau * lbpar.agrid;
-    j[2] = rho * u[2] * lbpar.tau * lbpar.agrid;
+    j[0] = rho * u[0] * lbpar.tau / lbpar.agrid;
+    j[1] = rho * u[1] * lbpar.tau / lbpar.agrid;
+    j[2] = rho * u[2] * lbpar.tau / lbpar.agrid;
     mpi_send_fluid(node, index, rho, j, pi);
 #endif // LB
   }
