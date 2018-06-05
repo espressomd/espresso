@@ -196,7 +196,7 @@ class LBTest(ut.TestCase):
         self.system.actors.add(self.lbf)
         v_fluid = np.array([1.2, 4.3, 0.2])
         self.lbf[0, 0, 0].velocity = v_fluid
-        np.testing.assert_allclose(self.lbf[0, 0, 0].velocity, v_fluid, atol=1e-4)
+        np.testing.assert_allclose(np.copy(self.lbf[0, 0, 0].velocity), v_fluid, atol=1e-4)
 
     def test_viscous_coupling(self):
         self.system.thermostat.turn_off()
@@ -214,7 +214,7 @@ class LBTest(ut.TestCase):
         self.system.part.add(pos=[0.5 * self.params['agrid']] * 3, v=v_part, fix=[1, 1, 1])
         self.lbf[0, 0, 0].velocity = v_fluid
         self.system.integrator.run(1)
-        np.testing.assert_allclose(self.system.part[0].f, -self.params['friction'] * (v_part - v_fluid))
+        np.testing.assert_allclose(np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid))
 
 
 
