@@ -22,37 +22,35 @@ class LBTest(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     n_nodes = system.cell_system.get_state()["n_nodes"]
     system.seed = range(n_nodes)
+    params = {'int_steps': 25,
+              'int_times': 10,
+              'time_step': 0.01,
+              'tau': 0.02,
+              'agrid': 0.5,
+              'box_l': 12.0,
+              'dens': 0.85,
+              'viscosity': 30.0,
+              'friction': 2.0,
+              'temp': 1.5,
+              'gamma': 1.5,
+              'skin': 0.2,
+              'mom_prec': 1.e-11,
+              'mass_prec_per_node': 4.e-8,
+              'temp_confidence': 10}
+    if espressomd.has_features("ROTATION"):
+        dof = 6.
+    else:
+        dof = 3.
 
-    def setUp(self):
-        self.params = {'int_steps': 25,
-                       'int_times': 10,
-                       'time_step': 0.01,
-                       'tau': 0.02,
-                       'agrid': 0.5,
-                       'box_l': 12.0,
-                       'dens': 0.85,
-                       'viscosity': 30.0,
-                       'friction': 2.0,
-                       'temp': 1.5,
-                       'gamma': 1.5,
-                       'skin': 0.2,
-                       'mom_prec': 1.e-11,
-                       'mass_prec_per_node': 4.e-8,
-                       'temp_confidence': 10}
+    system.box_l = [
+        params['box_l'],
+        params['box_l'],
+        params['box_l']]
+    system.periodicity = [1, 1, 1]
+    system.time_step = params['time_step']
+    system.cell_system.skin = params['skin']
 
-        if espressomd.has_features("ROTATION"):
-            self.dof = 6.
-        else:
-            self.dof = 3.
-
-        self.system.box_l = [
-            self.params['box_l'],
-            self.params['box_l'],
-            self.params['box_l']]
-        self.system.periodicity = [1, 1, 1]
-        self.system.time_step = self.params['time_step']
-        self.system.cell_system.skin = self.params['skin']
-
+    def test_mass_momentum_thermostat(self):
         # clear actors that might be left from prev tests
         for i in self.system.actors:
             self.system.actors.remove(i)
@@ -67,7 +65,7 @@ class LBTest(ut.TestCase):
             f = particle[9:]
             v = particle[6:9]
             p=self.system.part.add(id=int(id), pos=pos, v=v, type=int(typ))
-            if espressomd.has_features("ROTATION"): 
+            if espressomd.has_features("ROTATION"):
                 p.rotation=[1,1,1]
 
         self.n_col_part = len(self.system.part)
@@ -104,7 +102,6 @@ class LBTest(ut.TestCase):
         self.avg_temp = 0.0
         self.avg_fluid_temp = 0.0
 
-    def test(self):
         # Integration
         for i in range(self.params['int_times']):
             self.system.integrator.run(self.params['int_steps'])
@@ -187,6 +184,39 @@ class LBTest(ut.TestCase):
                     self.avg_fluid_temp -
                     self.params['temp']),
                 temp_prec))
+
+    def test_set_get_u(self):
+        self.system.actors.clear()
+        self.lbf = lb.LBFluid(
+            visc=self.params['viscosity'],
+            dens=self.params['dens'],
+            agrid=self.params['agrid'],
+            tau=self.system.time_step,
+            fric=self.params['friction'])
+        self.system.actors.add(self.lbf)
+        v_fluid = np.array([1.2, 4.3, 0.2])
+        self.lbf[0, 0, 0].velocity = v_fluid
+        np.testing.assert_allclose(np.copy(self.lbf[0, 0, 0].velocity), v_fluid, atol=1e-4)
+
+    def test_viscous_coupling(self):
+        self.system.thermostat.turn_off()
+        self.system.actors.clear()
+        self.system.part.clear()
+        v_part = np.array([1, 2, 3])
+        v_fluid = np.array([1.2, 4.3, 0.2])
+        self.lbf = lb.LBFluid(
+            visc=self.params['viscosity'],
+            dens=self.params['dens'],
+            agrid=self.params['agrid'],
+            tau=self.system.time_step,
+            fric=self.params['friction'])
+        self.system.actors.add(self.lbf)
+        self.system.part.add(pos=[0.5 * self.params['agrid']] * 3, v=v_part, fix=[1, 1, 1])
+        self.lbf[0, 0, 0].velocity = v_fluid
+        self.system.integrator.run(1)
+        np.testing.assert_allclose(np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid))
+
+
 
 
 if __name__ == "__main__":
