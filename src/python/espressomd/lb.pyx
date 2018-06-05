@@ -304,17 +304,13 @@ IF LB or LB_GPU:
                 lb_lbnode_get_u(self.node, double_return)
                 return array_locked(double_return)
 
-            IF LB_GPU:
-                def __set__(self, value):
-                    cdef double[3] host_velocity
-                    if all(is_valid_type(v, float) for v in value) and len(value) == 3:
-                        host_velocity = value
-                        lb_lbnode_set_u(self.node, host_velocity)
-                    else:
-                        raise ValueError("Velocity has to be of shape 3 and type float.")
-            ELSE:
-                def __set__(self, value):
-                    raise NotImplementedError("Not implemented for CPU LB.")
+            def __set__(self, value):
+                cdef double[3] host_velocity
+                if all(is_valid_type(v, float) for v in value) and len(value) == 3:
+                    host_velocity = value
+                    lb_lbnode_set_u(self.node, host_velocity)
+                else:
+                    raise ValueError("Velocity has to be of shape 3 and type float.")
 
         property density:
             def __get__(self):
