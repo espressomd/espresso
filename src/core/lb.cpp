@@ -1492,9 +1492,9 @@ int lb_lbnode_set_u(int *ind, double *u) {
     /* transform to lattice units */
 
     mpi_recv_fluid(node, index, &rho, j, pi);
-    j[0] = rho * u[0] * lbpar.tau * lbpar.agrid;
-    j[1] = rho * u[1] * lbpar.tau * lbpar.agrid;
-    j[2] = rho * u[2] * lbpar.tau * lbpar.agrid;
+    j[0] = rho * u[0] * lbpar.tau / lbpar.agrid;
+    j[1] = rho * u[1] * lbpar.tau / lbpar.agrid;
+    j[2] = rho * u[2] * lbpar.tau / lbpar.agrid;
     mpi_send_fluid(node, index, rho, j, pi);
 #endif // LB
   }
@@ -2711,9 +2711,9 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
 
 #ifdef ENGINE
   if (p->swim.swimming) {
-    velocity[0] -= (p->swim.v_swim * time_step) * p->r.quatu[0];
-    velocity[1] -= (p->swim.v_swim * time_step) * p->r.quatu[1];
-    velocity[2] -= (p->swim.v_swim * time_step) * p->r.quatu[2];
+    velocity[0] -= p->swim.v_swim * p->r.quatu[0];
+    velocity[1] -= p->swim.v_swim * p->r.quatu[1];
+    velocity[2] -= p->swim.v_swim * p->r.quatu[2];
     p->swim.v_center[0] = interpolated_u[0];
     p->swim.v_center[1] = interpolated_u[1];
     p->swim.v_center[2] = interpolated_u[2];
@@ -2722,15 +2722,15 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
 
 #ifdef LB_ELECTROHYDRODYNAMICS
   force[0] = -lbpar.friction *
-             (velocity[0] / time_step - interpolated_u[0] - p->p.mu_E[0]);
+             (velocity[0] - interpolated_u[0] - p->p.mu_E[0]);
   force[1] = -lbpar.friction *
-             (velocity[1] / time_step - interpolated_u[1] - p->p.mu_E[1]);
+             (velocity[1] - interpolated_u[1] - p->p.mu_E[1]);
   force[2] = -lbpar.friction *
-             (velocity[2] / time_step - interpolated_u[2] - p->p.mu_E[2]);
+             (velocity[2] - interpolated_u[2] - p->p.mu_E[2]);
 #else
-  force[0] = -lbpar.friction * (velocity[0] / time_step - interpolated_u[0]);
-  force[1] = -lbpar.friction * (velocity[1] / time_step - interpolated_u[1]);
-  force[2] = -lbpar.friction * (velocity[2] / time_step - interpolated_u[2]);
+  force[0] = -lbpar.friction * (velocity[0] - interpolated_u[0]);
+  force[1] = -lbpar.friction * (velocity[1] - interpolated_u[1]);
+  force[2] = -lbpar.friction * (velocity[2] - interpolated_u[2]);
 #endif
 
   ONEPART_TRACE(if (p->p.identity == check_id) {
@@ -2800,7 +2800,7 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
     // get lattice cell corresponding to source position and interpolate
     // velocity
     lblattice.map_position_to_lattice(Vector3d(source_position), node_index, delta);
-    lb_lbfluid_get_interpolated_velocity(Vector3d(source_position), p->swim.v_source);
+    lb_lbfluid_get_interpolated_velocity(Vector3d(source_position), p->swim.v_source.data());
 
     // calculate and set force at source position
     delta_j[0] =
