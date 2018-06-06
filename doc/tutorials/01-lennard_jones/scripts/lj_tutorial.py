@@ -33,7 +33,7 @@ print(espressomd.features())
 # System parameters
 #############################################################
 n_part  = 500
-density = 0.2
+density = 0.002
 
 skin        = 0.4
 time_step   = 0.01 

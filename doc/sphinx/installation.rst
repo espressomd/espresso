@@ -523,11 +523,7 @@ following features.
 
 -  ``BOND_ANGLEDIST``
 
--  ``BOND_ENDANGLEDIST``
-
 -  ``BOND_ANGLEDIST_HARMONIC``
-
--  ``BOND_ENDANGLEDIST_HARMONIC``
 
 -  ``LJGEN_SOFTCORE``
 
