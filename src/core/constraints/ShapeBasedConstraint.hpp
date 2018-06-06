@@ -9,8 +9,6 @@
 #include "shapes/NoWhere.hpp"
 #include "shapes/Shape.hpp"
 
-extern double time_step;
-
 namespace Constraints {
 
 class ShapeBasedConstraint : public Constraint {
@@ -45,8 +43,8 @@ public:
 
   void reset_force() override { m_local_force = Vector3d{0, 0, 0}; m_outer_normal_force=0.0;}
 
-  int &only_positive() { return m_only_positive; }
-  int &penetrable() { return m_penetrable; }
+  bool &only_positive() { return m_only_positive; }
+  bool &penetrable() { return m_penetrable; }
   int &type() { return part_rep.p.type; }
   Vector3d &velocity() { return part_rep.m.v; }
 
@@ -64,8 +62,8 @@ private:
     /** Private data members */
   std::shared_ptr<Shapes::Shape> m_shape;
 
-  int m_penetrable;
-  int m_only_positive;
+  bool m_penetrable;
+  bool m_only_positive;
   Vector3d m_local_force;
   double m_outer_normal_force;
 };
