@@ -76,7 +76,7 @@ void ShapeBasedConstraint::reflect_particle(Particle *p,
   }
 }
 
-void ShapeBasedConstraint::add_force(Particle *p, Vector3d& folded_pos) {
+void ShapeBasedConstraint::add_force(Particle *p, const Vector3d &folded_pos) {
   double dist, vec[3], force[3], torque1[3], torque2[3];
 
   IA_parameters *ia_params = get_ia_param(p->p.type, part_rep.p.type);
@@ -132,7 +132,7 @@ void ShapeBasedConstraint::add_force(Particle *p, Vector3d& folded_pos) {
   }
 }
 
-void ShapeBasedConstraint::add_energy(Particle *p, Vector3d& folded_pos,
+void ShapeBasedConstraint::add_energy(Particle *p, const Vector3d &folded_pos,
                                       Observable_stat &energy) const {
   double dist, vec[3];
   IA_parameters *ia_params;
