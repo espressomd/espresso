@@ -66,9 +66,6 @@ enum BondedInteraction {
   /** Type of bonded interaction is a bond angle -- constraint distance
      potential. */
   BONDED_IA_ANGLEDIST,
-  /** Type of bonded interaction is a bond angle -- chain ends have angle with
-     wall constraint */
-  BONDED_IA_ENDANGLEDIST,
   /** Type of bonded interaction is a bond angle cosine potential. */
   BONDED_IA_ANGLE_HARMONIC,
   /** Type of bonded interaction is a bond angle cosine potential. */
@@ -676,14 +673,6 @@ typedef struct {
   double sin_phi0;
 } Angledist_bond_parameters;
 
-/** Parameters for chainend angular potential with wall  */
-typedef struct {
-  double bend;
-  double phi0;
-  double distmin;
-  double distmax;
-} Endangledist_bond_parameters;
-
 typedef enum { NeoHookean, Skalak } tElasticLaw;
 
 /** Parameters for IBM elastic triangle (triel) **/
@@ -771,7 +760,6 @@ typedef union {
 #if defined(CG_DNA) || defined(TWIST_STACK)
   Cg_dna_stacking_parameters twist_stack;
 #endif
-  Endangledist_bond_parameters endangledist;
   IBM_Triel_Parameters ibm_triel;
   IBM_VolCons_Parameters ibmVolConsParameters;
   IBM_Tribend_Parameters ibm_tribend;
