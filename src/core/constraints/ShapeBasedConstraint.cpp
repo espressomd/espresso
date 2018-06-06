@@ -59,7 +59,7 @@ double ShapeBasedConstraint::min_dist() {
                                  force, torque1, torque2);
 #ifdef DPD
       if (thermo_switch & THERMO_DPD) {
-        add_dpd_pair_force(p, &part_rep, ia_params, vec, dist, dist2);
+          dpd_pair_force(p, &part_rep, ia_params, vec, dist, dist2);
       }
 #endif
     } else if (m_penetrable && (dist <= 0)) {
@@ -69,7 +69,7 @@ double ShapeBasedConstraint::min_dist() {
                                    dist * dist, force, torque1, torque2);
 #ifdef DPD
         if (thermo_switch & THERMO_DPD) {
-          add_dpd_pair_force(p, &part_rep, ia_params, vec, dist, dist2);
+            dpd_pair_force(p, &part_rep, ia_params, vec, dist, dist2);
         }
 #endif
       }
