@@ -55,9 +55,9 @@ void calculate_vs_relate_to_params(const Particle& p_current, const Particle& p_
     // Check, if the distance between virtual and non-virtual particles is larger htan minimum global cutoff
     // If so, warn user
     l=sqrt(sqrlen(d));
-    if (l>min_global_cut) {
-        runtimeErrorMsg() << "Warning: The distance between virtual and non-virtual particle (" << l << ") is\nlarger than the minimum global cutoff (" << min_global_cut << "). This may lead to incorrect simulations\nunder certain conditions. Set the \"System()\" class property \"min_global_cut\" to\nincrease the minimum cutoff.\n";
-    }
+    //if (l>min_global_cut) {
+    //    runtimeErrorMsg() << "Warning: The distance between virtual and non-virtual particle (" << l << ") is\nlarger than the minimum global cutoff (" << min_global_cut << "). This may lead to incorrect simulations\nunder certain conditions. Set the \"System()\" class property \"min_global_cut\" to\nincrease the minimum cutoff.\n";
+    //}
 
     // Now, calculate the quaternions which specify the angle between 
     // the director of the particel we relate to and the vector
