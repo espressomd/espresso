@@ -38,6 +38,7 @@ double ShapeBasedConstraint::min_dist() {
 }
 
 ParticleForce ShapeBasedConstraint::force(const Particle *p, const Vector3d &folded_pos) {
+
   double dist =0.;
   Vector3d dist_vec, force, torque1, torque2, outer_normal_vec;
 
@@ -80,7 +81,7 @@ ParticleForce ShapeBasedConstraint::force(const Particle *p, const Vector3d &fol
                           << " dist " << dist;
     }
   }
-
+  
     m_local_force -= force;
     m_outer_normal_force-=outer_normal_vec * force;
 

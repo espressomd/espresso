@@ -133,7 +133,8 @@ static int terminated = 0;
   CB(mpi_recv_part_slave)                                                      \
   CB(mpi_integrate_slave)                                                      \
   CB(mpi_bcast_ia_params_slave)                                                \
-  CB(mpi_bcast_max_seen_particle_type_slave)                                         \
+  CB(mpi_bcast_all_ia_params_slave)                                            \
+  CB(mpi_bcast_max_seen_particle_type_slave)                                   \
   CB(mpi_gather_stats_slave)                                                   \
   CB(mpi_set_time_step_slave)                                                  \
   CB(mpi_bcast_coulomb_params_slave)                                           \
@@ -1168,6 +1169,15 @@ void mpi_integrate_slave(int n_steps, int reuse_forces) {
 }
 
 /*************** REQ_BCAST_IA ************/
+void mpi_bcast_all_ia_params() {
+  mpi_call(mpi_bcast_all_ia_params_slave, -1, -1);
+  boost::mpi::broadcast(comm_cart, ia_params, 0);
+}
+
+void mpi_bcast_all_ia_params_slave(int a, int b) {
+  boost::mpi::broadcast(comm_cart, ia_params, 0);
+}
+
 void mpi_bcast_ia_params(int i, int j) {
   mpi_call(mpi_bcast_ia_params_slave, i, j);
 
