@@ -130,7 +130,7 @@ Getting the force on a constraint
 
 :meth:`espressomd.system.constraints.total_force`
 
-Returns the force acting on the a constraint. Note, however, that this
+Returns the force acting on the constraint. Note, however, that this
 are only forces due to interactions with particles, not with other
 constraints. Also, these forces still do not mean that the constraints
 move, they are just the negative of the sum of forces acting on all
@@ -230,7 +230,7 @@ Pictured is an example constraint with a ``Sphere`` shape created with ::
 :class:`espressomd.shapes.Ellipsoid`
     An ellipsoid.
 
-The resulting surface is an ellipsoid of revolution with center ``center``, semiaxis ``a`` along the symmetry axis. and equatorial semiaxes ``b``. The symmetry axis is aligned parallel to the x-axis.
+The resulting surface is an ellipsoid of revolution with center ``center``, semiaxis ``a`` along the symmetry axis and equatorial semiaxes ``b``. The symmetry axis is aligned parallel to the x-axis.
 The direction ``direction`` determines the force direction, ``-1`` or for inward and ``+1`` for outward. The distance to the surface is determined iteratively via Newton's method.
 
 .. _shape-ellipsoid:
@@ -267,7 +267,7 @@ Pictured is an example constraint with a ``Cylinder`` shape created with ::
     system.constraints.add(shape=cylinder, particle_type=0)
 
 :class:`espressomd.shapes.Rhomboid`
-    A rhomboid or parallelpiped.
+    A rhomboid or parallelepiped.
 
 :todo: `This shape is currently broken. Please do not use.`
 
@@ -307,7 +307,7 @@ Pictured is an example constraint with a ``Maze`` shape created with ::
 
 
 :class:`espressomd.shapes.SimplePore`
-    Two parallel infinite planes, connected by a cylindrical orfice. The cylinder is connected to the
+    Two parallel infinite planes, connected by a cylindrical orifice. The cylinder is connected to the
     planes by torus segments with an adjustable radius.
   
 
@@ -375,7 +375,7 @@ The region is described as a pore (lower vertical part of the "T"-shape) and a c
    :align: center
    :height: 6.00000cm
    
-The parameter ``channel_width`` specifies the distance between the top and the the plateau edge.
+The parameter ``channel_width`` specifies the distance between the top and the plateau edge.
 The parameter ``pore_length`` specifies the distance between the bottom and the plateau edge.
 The parameter ``pore_width`` specifies the distance between the two plateau edges, it is the space between the left and right walls of the pore region.
 The parameter ``pore_mouth`` specifies the location (z-coordinate) of the pore opening (center). It is always centered in the x-direction.
@@ -467,38 +467,79 @@ interaction range.
 Available options
 ~~~~~~~~~~~~~~~~~
 
-There are some options to help control the behaviour of shaped-based constraints. Some of the options, like ``direction`` need to be specified for the shape :class:`espressomd.shapes`, and some options are specified for the constraint  :class:`espressomd.constraints.ShapeBasedConstraint`. We will discuss them together in this section in the context of a specific example.
+There are some options to help control the behaviour of shaped-based
+constraints. Some of the options, like ``direction`` need to be specified for
+the shape :class:`espressomd.shapes`, and some options are specified for the
+constraint  :class:`espressomd.constraints.ShapeBasedConstraint`. We will
+discuss them together in this section in the context of a specific example.
 
-The ``direction`` option typically specifies which volumes are inside versus outside the shape. Consider a constraint based on the sphere shape. If one wishes to place particles inside the sphere, one would usually use ``direction=-1``, if one wishes to place particles outside, one would use ``direction=1``. In this example, we place a sphere centre at position (25,0,0). A particle is continously displaced on the x-axis in order to probe the effect of different options. For this, we need to first define a repulsive interaction between the probe and the constraint.
+The ``direction`` option typically specifies which volumes are inside versus
+outside the shape. Consider a constraint based on the sphere shape. If one
+wishes to place particles inside the sphere, one would usually use
+``direction=-1``, if one wishes to place particles outside, one would use
+``direction=1``. In this example, we place a sphere centre at position
+(25,0,0). A particle is continuously displaced on the x-axis in order to probe
+the effect of different options. For this, we need to first define a repulsive
+interaction between the probe and the constraint.
 
-The plot below demonstrates how the distance between the probe and the constraint surface is calculated when the ``distance`` option is toggled between ``direction=1`` and ``direction=-1``. In the plot, a schematic of a circle centered at x=25 is used to represent the spherical constraint.
+The plot below demonstrates how the distance between the probe and the
+constraint surface is calculated when the ``distance`` option is toggled
+between ``direction=1`` and ``direction=-1``. In the plot, a schematic of a
+circle centered at x=25 is used to represent the spherical constraint.
 
 .. figure:: figures/constraint-distance.png
    :alt: Distance measure from an example spherical constraint.
    :align: center
    :height: 8.00000cm
 
-When the option ``direction=1`` is used for the sphere shape, positive distances are measured whenever the particle is outside the sphere and negative distances are measured whenever the particle is inside the sphere. Conversely, when the option ``direction=-1`` is used for the sphere shape, negative distances are measured whenever the particle is outside the sphere and positive distances are measured whenever the particle is inside the sphere. In other words, this option helps defines the sign of the normal surface vector.
+When the option ``direction=1`` is used for the sphere shape, positive
+distances are measured whenever the particle is outside the sphere and negative
+distances are measured whenever the particle is inside the sphere. Conversely,
+when the option ``direction=-1`` is used for the sphere shape, negative
+distances are measured whenever the particle is outside the sphere and positive
+distances are measured whenever the particle is inside the sphere. In other
+words, this option helps defines the sign of the normal surface vector.
   
-For now, this may not sound useful but it can be practical when used with together with constraint options such as ``penetrable`` or ``only_positive``. In the former case, using non-penetrable surfaces with ``penetrable=0`` will cause |es| to throw an error is any distances between interacting particles and constraints are found to be negative. This can be used to stop a simulation if for one reason or another particles end up in an unwanted location.
+For now, this may not sound useful but it can be practical when used with
+together with constraint options such as ``penetrable`` or ``only_positive``.
+In the former case, using non-penetrable surfaces with ``penetrable=0`` will
+cause |es| to throw an error is any distances between interacting particles and
+constraints are found to be negative. This can be used to stop a simulation if
+for one reason or another particles end up in an unwanted location.
   
-The ``only_positive`` constraint option is used to define if a force should be applied to a particle that has a negative distance. For example, consider the same probe particle as in the previous case. The plot below shows the particle force with ``only_positive=1``. Notice that when the distance is negative, forces are not applied at all to the particle. Thus the constraint surface is either purely radially outwards (when ``direction=1``) or radially inwards (when ``direction=-1``). Note that in both cases the constraint was set to be penetrable with ``penetrable=1`` or else the simulation would crash whenever the particle was found in any location that yeilds a negative distance.
+The ``only_positive`` constraint option is used to define if a force should be
+applied to a particle that has a negative distance. For example, consider the
+same probe particle as in the previous case. The plot below shows the particle
+force with ``only_positive=1``. Notice that when the distance is negative,
+forces are not applied at all to the particle. Thus the constraint surface is
+either purely radially outwards (when ``direction=1``) or radially inwards
+(when ``direction=-1``). Note that in both cases the constraint was set to be
+penetrable with ``penetrable=1`` or else the simulation would crash whenever
+the particle was found in any location that yields a negative distance.
    
 .. figure:: figures/constraint-force.png
    :alt: Force measure from an example spherical constraint.
    :align: center
    :height: 8.00000cm
 
-The next figure shows what happens if we turn off the ``only_positive`` flag by setting ``only_positive=0``. In this case the particle is pushed radially inward if it is inside the sphere and radially outward if it is outside. As with the previous example, the constraint was set to be penetrable for this to make sense.
+The next figure shows what happens if we turn off the ``only_positive`` flag by
+setting ``only_positive=0``. In this case the particle is pushed radially
+inward if it is inside the sphere and radially outward if it is outside. As
+with the previous example, the constraint was set to be penetrable for this to
+make sense.
 
 .. figure:: figures/constraint-force_only_positive.png
    :alt: Force measure from an example spherical constraint.
    :align: center
    :height: 8.00000cm
 
-Most shapes have a clear interpretation of what is inside versus outside with the exception of a planar wall. For this, the ``distance`` simply toggles between which side of the wall should be considered to yield negative/positive distances.
-
-Outside its use in constraints, shapes can also be used as a way to define LB boundary nodes. In this case, negative distances define nodes which are part of a boundary, please refer to :ref:`Using shapes as Lattice-Boltzmann boundary`.
+Most shapes have a clear interpretation of what is inside versus outside with
+the exception of a planar wall. For this, the is no ``direction`` option, but
+the ``normal`` vector of the wall points in the direction that is considered to
+yield positive distances.  Outside its use in constraints, shapes can also be
+used as a way to define LB boundary nodes. In this case, negative distances
+define nodes which are part of a boundary, please refer to :ref:`Using shapes
+as Lattice-Boltzmann boundary`.
 
 
 
