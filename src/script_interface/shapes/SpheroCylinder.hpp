@@ -29,21 +29,18 @@ namespace ScriptInterface {
 namespace Shapes {
 
 class SpheroCylinder : public Shape {
+  using CoreShape = ::Shapes::SpheroCylinder;
+  std::shared_ptr<::Shapes::SpheroCylinder> m_spherocylinder;
 public:
   SpheroCylinder() : m_spherocylinder(new ::Shapes::SpheroCylinder()) {
-    add_parameters({{"center", m_spherocylinder->pos()},
-                    {"axis", m_spherocylinder->axis()},
-                    {"direction", m_spherocylinder->direction()},
-                    {"length", m_spherocylinder->length()},
-                    {"radius", m_spherocylinder->rad()}});
+    add_parameters({{"radius", m_spherocylinder, &CoreShape::set_radius, &CoreShape::radius},
+         {"length", m_spherocylinder, &CoreShape::set_length, &CoreShape::length},
+         {"axis",   m_spherocylinder, &CoreShape::set_axis, &CoreShape::axis},
+         {"direction", m_spherocylinder->direction()},
+         {"center", m_spherocylinder, &CoreShape::center}});
   }
 
-  std::shared_ptr<::Shapes::Shape> shape() const override {
-    return m_spherocylinder;
-  }
-
-private:
-  std::shared_ptr<::Shapes::SpheroCylinder> m_spherocylinder;
+  std::shared_ptr<::Shapes::Shape> shape() const override { return m_spherocylinder; }
 };
 
 } /* namespace Shapes */
