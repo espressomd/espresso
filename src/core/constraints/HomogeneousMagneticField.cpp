@@ -15,7 +15,7 @@ void HomogeneousMagneticField::add_force(Particle *p, const Vector3d &folded_pos
 #endif
 }
 
-void HomogeneousMagneticField::add_energy(Particle *p, const Vector3d &folded_pos, Observable_stat &energy) const {
+void HomogeneousMagneticField::add_energy(const Particle *p, const Vector3d &folded_pos, Observable_stat &energy) const {
 #ifdef DIPOLES
     energy.dipolar[0] += -1.0 * m_field.dot(p->r.dip);
 #endif

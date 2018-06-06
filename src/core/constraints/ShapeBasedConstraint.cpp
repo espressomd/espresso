@@ -132,7 +132,7 @@ void ShapeBasedConstraint::add_force(Particle *p, const Vector3d &folded_pos) {
   }
 }
 
-void ShapeBasedConstraint::add_energy(Particle *p, const Vector3d &folded_pos,
+void ShapeBasedConstraint::add_energy(const Particle *p, const Vector3d &folded_pos,
                                       Observable_stat &energy) const {
   double dist, vec[3];
   IA_parameters *ia_params;

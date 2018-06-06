@@ -24,7 +24,7 @@ public:
     ShapeBasedConstraint::reset_force();
   }
 
-  virtual void add_energy(Particle *p, const Vector3d &folded_pos,
+  virtual void add_energy(const Particle *p, const Vector3d &folded_pos,
                           Observable_stat &energy) const override;
 
   virtual void add_force(Particle *p, const Vector3d &folded_pos) override;
