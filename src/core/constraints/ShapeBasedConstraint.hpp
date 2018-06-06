@@ -49,17 +49,11 @@ public:
   int &only_positive() { return m_only_positive; }
   int &penetrable() { return m_penetrable; }
   int &type() { return part_rep.p.type; }
-  Vector3d velocity() const { return Vector3d{part_rep.m.v}; }
+  Vector3d &velocity() { return part_rep.m.v; }
 
   void set_type(const int &type) {
     part_rep.p.type = type;
     make_particle_type_exist_local(type);
-  }
-
-  void set_velocity(const Vector3d v) {
-    for (int i = 0; i < 3; i++) {
-      part_rep.m.v[i] = v[i];
-    }
   }
 
   Vector3d total_force() const;
