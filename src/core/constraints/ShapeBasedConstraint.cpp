@@ -37,46 +37,7 @@ double ShapeBasedConstraint::min_dist() {
   return global_mindist;
 }
 
-void ShapeBasedConstraint::reflect_particle(Particle *p,
-                                            const double *distance_vector,
-                                            const double *folded_pos) const {
-  double vec[3];
-  double norm;
-
-  memcpy(vec, distance_vector, 3 * sizeof(double));
-
-  norm = sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-  p->r.p[0] = p->r.p[0] - 2 * vec[0];
-  p->r.p[1] = p->r.p[1] - 2 * vec[1];
-  p->r.p[2] = p->r.p[2] - 2 * vec[2];
-
-  /* vec seems to be the vector that points from the wall to the particle*/
-  /* now normalize it */
-  switch (m_reflection_type) {
-  case ReflectionType::NORMAL:
-    vec[0] /= norm;
-    vec[1] /= norm;
-    vec[2] /= norm;
-    /* calculating scalar product - reusing var norm */
-    norm = vec[0] * p->m.v[0] + vec[1] * p->m.v[1] + vec[2] * p->m.v[2];
-    /* now add twice the normal component to the velcity */
-    p->m.v[0] =
-        p->m.v[0] - 2 * vec[0] * norm; /* norm is still the scalar product! */
-    p->m.v[1] = p->m.v[1] - 2 * vec[1] * norm;
-    p->m.v[2] = p->m.v[2] - 2 * vec[2] * norm;
-    break;
-  case ReflectionType::NORMAL_TANGENTIAL:
-    /* if bounce back, invert velocity */
-    p->m.v[0] = -p->m.v[0];
-    p->m.v[1] = -p->m.v[1];
-    p->m.v[2] = -p->m.v[2];
-    break;
-  case ReflectionType::NONE:
-    break;
-  }
-}
-
-void ShapeBasedConstraint::add_force(Particle *p, const Vector3d &folded_pos) {
+    void ShapeBasedConstraint::add_force(Particle *p, const Vector3d &folded_pos) {
   double dist, vec[3], force[3], torque1[3], torque2[3];
 
   IA_parameters *ia_params = get_ia_param(p->p.type, part_rep.p.type);
@@ -113,13 +74,9 @@ void ShapeBasedConstraint::add_force(Particle *p, const Vector3d &folded_pos) {
 #endif
       }
     } else {
-      if (m_reflection_type != ReflectionType::NONE) {
-        reflect_particle(p, vec, folded_pos.data());
-      } else {
         runtimeErrorMsg() << "Constraint"
                           << " violated by particle " << p->p.identity
                           << " dist " << dist;
-      }
     }
   }
   for (int j = 0; j < 3; j++) {
