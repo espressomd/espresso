@@ -232,7 +232,24 @@ struct ParticlePosition {
 /** Force information on a particle. Forces of ghost particles are
     collected and added up to the force of the original particle. */
 struct ParticleForce {
-  /** force. */
+  ParticleForce() = default;
+  ParticleForce(ParticleForce const &) = default;
+  ParticleForce(const Vector3d & f) : f(f) {}
+#ifdef ROTATION
+  ParticleForce(const Vector3d & f,
+                const Vector3d &torque) : f(f), torque(torque) {}
+#endif
+
+ParticleForce & operator+=(ParticleForce const& rhs) {
+    f += rhs.f;
+#ifdef ROTATION
+    torque += rhs.torque;
+#endif
+
+    return *this;
+  }
+
+    /** force. */
   Vector3d f = {0., 0., 0.};
 
 #ifdef ROTATION

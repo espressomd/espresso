@@ -20,9 +20,12 @@ inline void add_constraints_forces(Particle *p) {
   // Copy position and image count so as not to modify particle when folding
   // position
   auto const pos=folded_position(p);
+  ParticleForce force{};
   for (auto const &c : Constraints::constraints) {
-    c->add_force(p, pos);
+    force += c->force(p, pos);
   }
+
+  p->f += force;
 }
 
 inline void init_constraint_forces() {

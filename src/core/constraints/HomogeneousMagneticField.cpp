@@ -3,14 +3,10 @@
 
 namespace Constraints {
 
-void HomogeneousMagneticField::add_force(Particle *p, const Vector3d &folded_pos) {
+ParticleForce HomogeneousMagneticField::force(const Particle *p, const Vector3d &folded_pos) {
 #ifdef ROTATION
 #ifdef DIPOLES
-    double c[3];
-    Utils::cross_product(p->r.dip, &m_field.front(), c);
-    for (int i=0; i<3; ++i) {
-        p->f.torque[i] += c[i];
-    }
+    return {Vector3d{}, Vector3d::cross(p->r.dip, m_field)};
 #endif
 #endif
 }
