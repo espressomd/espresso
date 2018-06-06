@@ -462,18 +462,57 @@ between a particular particle and the constraint! This will usually be a
 Lennard-Jones interaction with :math:`\epsilon=0`, but finite
 interaction range.
 
-..
-    .. _Creating a harmonic trap:
+.. _Available options:
 
-    Creating a harmonic trap
-    ------------------------
+Available options
+~~~~~~~~~~~~~~~~~
 
-    :todo: `This feature is not yet implemented .`
+There are some options to help controll the behaviour of shaped-based contraints. Some of the options, like ``direction`` need to be specified for the shape :class:`espressomd.shapes`, and some options are specified for the contraint  :class:`espressomd.constraints.ShapeBasedConstraint`. We will discuss the them together in this section in the context of a specific example.
 
-    Calculates a spring force for all particles, where the equilibrium
-    position of the spring is at and its force constant is . A more
-    flexible trap can be constructed with constraints, but this one runs on
-    the GPU.
+The ``direction`` option typically specifies inside versus outside. Consider a contraint based on a sphere. If one wishes to place particles inside the spehre, one would usually use ``direction=-1``, if one wishes to place particles outside one would use ``direction=1``. In this example, we the sphere centre at position (25,0,0). The particle is continously displaced on the x-axis in order to probe the effect of different options. For this, we need to first define a repulsive interation between the probe and the contraint.
+
+The plot below demontrates the how the distance between the probe and the contraint surface is calculated when the ``distance`` option is toggled between ``distance=1`` and ``direction=-1``. In the plot, a schematic of a circle centered at x=25 is used to represent the sphereical constraint.
+
+.. figure:: figures/constraint-distance.png
+   :alt: Distance measure from an example spherical constraint.
+   :align: center
+   :height: 8.00000cm
+
+When the option ``distance=1`` is used for the sphere shape, positive distances are measured whenever the particle is outside the sphere, and negative distances are measured whenever the particle is inside the sphere. Conversely, when the option ``distance=-1`` is used for the sphere shape, negative distances are measured whenever the particle is outside the sphere, and positive distances are measured whenever the particle is inside the sphere. In other words, this option helps defines the sign of the normal surface vector.
+  
+For now, this may not sound usefull but it can be practical when used with together with constraint options such as ``penetrable`` or ``only_positive``. In the former case, using non-penetrable surfaces with ``penetrable=0`` will cause |es| to throw an error is any distances between interacting particles and constraints are found to be negative. This can be used to stop a simulation if for one reason or another particles end up in an unphysical location.
+  
+The ``only_positive`` constraint option is used to define if a force should be applied to a particle that has a negative distance. For example, consider the same probe particle as in the previous case. The plot below shows the particle force with ``only_positive=1``. Notice that when the distance is negative, forces are not applied at all to the particle. So the constraint surface is either purely radialy outwards (when ``distance=1``) or radially inwards (when ``distance=1``). Note that in both cases the contraint was set to be penetrable with ``penetrable=1`` or else the simulation would crash whenever the particle was found in a negative (illegal) distance.
+   
+.. figure:: figures/constraint-force.png
+   :alt: Force measure from an example spherical constraint.
+   :align: center
+   :height: 8.00000cm
+
+The next figure shows what happens if we turn off the only_positive flag by setting ``only_positive=0``. In this case the particle is push radially inward if it is inside the sphere and radially outward if it is outside. As with the previous example, the contraint was set to be penetrable for this to make sense.
+
+.. figure:: figures/constraint-force_only_positive.png
+   :alt: Force measure from an example spherical constraint.
+   :align: center
+   :height: 8.00000cm
+
+Most shapes have a clear interpretation of what is inside versus outside witht he exception of a planar wall. For this, the ``distance`` simply toggles between which side of the wall should be considered to yield negative/positive distance.
+
+Outside its use in constraints, shapes can also be used as a way to define LB boundaries nodes. In this case, negative distances define nodes which are part of a boundary, please refer to :ref:`Using shapes as Lattice-Boltzmann boundary`.
+
+
+
+.. _Creating a harmonic trap:
+
+Creating a harmonic trap
+------------------------
+
+:todo: `This feature is not yet implemented .`
+
+Calculates a spring force for all particles, where the equilibrium
+position of the spring is at and its force constant is . A more
+flexible trap can be constructed with constraints, but this one runs on
+the GPU.
 
 .. _Homogeneous Magnetic Field:
 
