@@ -36,7 +36,7 @@ public:
     add_parameters({{"radius", m_spherocylinder, &CoreShape::set_radius, &CoreShape::radius},
          {"length", m_spherocylinder, &CoreShape::set_length, &CoreShape::length},
          {"axis",   m_spherocylinder, &CoreShape::set_axis, &CoreShape::axis},
-         {"direction", m_spherocylinder->direction()},
+         {"direction", m_spherocylinder, &CoreShape::direction},
          {"center", m_spherocylinder, &CoreShape::center}});
   }
 
