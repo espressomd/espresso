@@ -60,7 +60,7 @@ void ShapeBasedConstraint::add_force(Particle *p, const Vector3d& folded_pos) {
                                  force.data(), torque1.data(), torque2.data());
 #ifdef DPD
       if (thermo_switch & THERMO_DPD) {
-          dpd_pair_force(p, &part_rep, ia_params, dist_vec.data(), dist, dist2);
+          force += dpd_pair_force(p, &part_rep, ia_params, dist_vec.data(), dist, dist2);
       }
 #endif
     } else if (m_penetrable && (dist <= 0)) {
@@ -70,7 +70,7 @@ void ShapeBasedConstraint::add_force(Particle *p, const Vector3d& folded_pos) {
                                    dist * dist, force.data(), torque1.data(), torque2.data());
 #ifdef DPD
         if (thermo_switch & THERMO_DPD) {
-            dpd_pair_force(p, &part_rep, ia_params, dist_vec.data(), dist, dist2);
+            force += dpd_pair_force(p, &part_rep, ia_params, dist_vec.data(), dist, dist2);
         }
 #endif
       }
@@ -81,13 +81,13 @@ void ShapeBasedConstraint::add_force(Particle *p, const Vector3d& folded_pos) {
     }
   }
 
-  for (int j = 0; j < 3; j++) {
-    p->f.f[j] += force[j];
+  p->f.f += force;
+
 #ifdef ROTATION
-    p->f.torque[j] += torque1[j];
-    part_rep.f.torque[j] += torque2[j];
+  p->f.torque += torque1;
+  part_rep.f.torque += torque2;
 #endif
-  }
+
   m_local_force -= force;
   m_outer_normal_force-=outer_normal_vec * force;
 }

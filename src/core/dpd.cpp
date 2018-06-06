@@ -120,7 +120,7 @@ static double weight(int type, double r_cut, double dist_inv) {
 
 Vector3d dpd_pair_force(const Particle *p1, const Particle *p2, IA_parameters *ia_params,
                         double *d, double dist, double dist2) {
-  Vector3d f;
+  Vector3d f{};
   auto const dist_inv = 1.0 / dist;
 
   if ((dist < ia_params->dpd_r_cut) && (ia_params->dpd_pref1 > 0.0)) {
