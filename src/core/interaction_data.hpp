@@ -428,6 +428,8 @@ struct IA_parameters {
 
 };
 
+extern std::vector<IA_parameters> ia_params;
+
 /** thermodynamic force parameters */
 
 /** \name Compounds for Coulomb interactions */
