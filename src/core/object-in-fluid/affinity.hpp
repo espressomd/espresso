@@ -148,7 +148,7 @@ inline void add_affinity_pair_force(Particle * p1, Particle * p2, IA_parameters 
 				double folded_pos[3], vec[3], len2, len;
 				int img[3];
 				/* fold the coordinates of the particle */
-				Vector3d unfold_pos=unfolded_position(p1);
+				Vector3d unfolded_pos=unfolded_position(p1);
 				for(j=0;j<3;j++)
 					vec[j] = p1->p.bond_site[j] - unfolded_pos[j]; // Shouldn't be the vec vector normalized? Yes, but with affinity_r0 and not by len!!!
 				len2 = sqrlen(vec);
@@ -212,7 +212,7 @@ inline void add_affinity_pair_force(Particle * p1, Particle * p2, IA_parameters 
 					double folded_pos[3];
 					int img[3];
 					/* fold the coordinates of the particle */
-					Vector3d =unfolded_pos=unfolded_position(p1);
+					Vector3d unfolded_pos=unfolded_position(p1);
 					//printf("folded positions: %f %f %f\n",folded_pos[0],folded_pos[1],folded_pos[2]);
 					//printf("d: %f %f %f\n",d[0],d[1],d[2]);
 					for(j=0;j<3;j++)
@@ -302,7 +302,7 @@ inline void add_affinity_pair_force(Particle * p1, Particle * p2, IA_parameters 
 					double folded_pos[3];
 					int img[3];
 					/* fold the coordinates of the particle */
-					Vector3d unfolded_pos=(unfolded_pos(p1);
+					Vector3d unfolded_pos=unfolded_position(p1);
 					//printf("folded positions: %f %f %f\n",folded_pos[0],folded_pos[1],folded_pos[2]);
 					//printf("d: %f %f %f\n",d[0],d[1],d[2]);
 					for(j=0;j<3;j++)
@@ -406,7 +406,7 @@ inline void add_affinity_pair_force(Particle * p1, Particle * p2, IA_parameters 
 					double folded_pos[3];
 					int img[3];
 					/* fold the coordinates of the particle */
-					Vector3d unfold_pos=unfolded_position(p1);
+					Vector3d unfolded_pos=unfolded_position(p1);
 					for(j=0;j<3;j++)
 						p1->p.bond_site[j] = unfolded_pos[j] - d[j];
 				} else {
@@ -450,7 +450,7 @@ inline void add_affinity_pair_force(Particle * p1, Particle * p2, IA_parameters 
 				double folded_pos[3], vec[3], len2, len;
 				int img[3];
 				/* fold the coordinates of the particle */
-				Vector3d unfold_pos=unfolded_pos(p1);
+				Vector3d unfolded_pos=unfolded_position(p1);
 				for(j=0;j<3;j++)
 					vec[j] = p1->p.bond_site[j] - unfolded_pos[j]; // Shouldn't be the vec vector normalized? Yes, but with affinity_r0 and not by len!!!
 				len2 = sqrlen(vec);
@@ -514,7 +514,7 @@ inline void add_affinity_pair_force(Particle * p1, Particle * p2, IA_parameters 
 					double folded_pos[3];
 					int img[3];
 					/* fold the coordinates of the particle */
-					Vector3d unfold_pos=unfolded_pos(p1);
+					Vector3d unfolded_pos=unfolded_position(p1);
 					//printf("folded positions: %f %f %f\n",folded_pos[0],folded_pos[1],folded_pos[2]);
 					//printf("d: %f %f %f\n",d[0],d[1],d[2]);
 					for(j=0;j<3;j++)
@@ -560,7 +560,7 @@ inline void add_affinity_pair_force(Particle * p1, Particle * p2, IA_parameters 
 				double folded_pos[3], vec[3], len2, len;
 				int img[3];
 				/* fold the coordinates of the particle */
-				Vector3d unfold_pos=unfolded_position(p1);
+				Vector3d unfolded_pos=unfolded_position(p1);
 				//printf("folded positions: %f %f %f\n",folded_pos[0],folded_pos[1],folded_pos[2]);
 				for(j=0;j<3;j++)
 					vec[j] = p1->p.bond_site[j] - unfolded_pos[j]; // Shouldn't be the vec vector normalized? Yes, but with affinity_r0 and not by len!!!
@@ -622,10 +622,8 @@ inline void add_affinity_pair_force(Particle * p1, Particle * p2, IA_parameters 
 				if ( decide < Pon ) 
 				{ // the bond will be created only with probability Pon.
 					//printf("Creating: Pon = %f, decide = %f", Pon, decide);
-					double folded_pos[3];
-					int img[3];
 					/* fold the coordinates of the particle */
-					Vector3d unfolded_pos(unfolded_position(p1);
+					Vector3d unfolded_pos=unfolded_position(p1);
 					//printf("folded positions: %f %f %f\n",folded_pos[0],folded_pos[1],folded_pos[2]);
 					//printf("d: %f %f %f\n",d[0],d[1],d[2]);
 					for(j=0;j<3;j++)

@@ -199,6 +199,14 @@ class Actors(object):
         actor._deactivate()
         self.active_actors.remove(actor)
 
+    def clear(self):
+        """
+        Remove all actors.
+
+        """
+        for a in self.active_actors:
+            self.remove(a)
+
     def __str__(self):
         return str(self.active_actors)
 
