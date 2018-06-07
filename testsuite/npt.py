@@ -31,6 +31,7 @@ class NPTintegrator(ut.TestCase):
     """This compares pressure and compressibility of a LJ system against expected values."""
     S = espressomd.System(box_l=[1.0, 1.0, 1.0])
     p_ext = 2.0
+    S.seed = np.arange(S.cell_system.get_state()['n_nodes']) * 11
 
     def setUp(self):
         
@@ -57,10 +58,10 @@ class NPTintegrator(ut.TestCase):
 
     def test_npt(self):
         avp=0
-        n=1500
+        n=1700
         Vs=[]
         for t in range(n): 
-            self.S.integrator.run(15)
+            self.S.integrator.run(25)
             avp += self.S.analysis.pressure()['total']
             l0 = self.S.box_l[0]
 
