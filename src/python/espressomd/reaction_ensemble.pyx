@@ -375,8 +375,7 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
             Sets the pH that the method assumes for the implicit pH bath.
 
             """
-            if(pH<4 or pH >10):
-                print("Be extremely careful in this extreme pH range when using the constant pH method. The ions which make up the pH (H+ or OH-) are not included in the method. Therefore the method might get screening effects wrong. See paper: Simulation of weak polyelectrolytes: a comparison between the constant pH and the reaction ensemble method by Landsgesell et al.")
+
             self.constpHptr.m_constant_pH = pH
 
 cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
