@@ -1777,21 +1777,8 @@ double ConstantpHEnsemble::calculate_acceptance_probability(
   double ln_bf;
   double pKa;
   const double beta = 1.0 / temperature;
-  if (current_reaction.nu_bar > 0) { // deprotonation of monomer
-    pKa = -log10(current_reaction.gamma);
-    ln_bf =
-        (E_pot_new - E_pot_old) - 1.0 / beta * log(10) * (m_constant_pH - pKa);
-  } else { // protonation of monomer (yields neutral monomer)
-    pKa = -(-log10(current_reaction.gamma)); // additional minus,
-                                             // since in this
-                                             // case 1/Ka is
-                                             // stored in the
-                                             // equilibrium
-                                             // constant
-
-    ln_bf =
-        (E_pot_new - E_pot_old) + 1.0 / beta * log(10) * (m_constant_pH - pKa);
-  }
+  pKa = -current_reaction.nu_bar*log10(current_reaction.gamma);
+  ln_bf = (E_pot_new - E_pot_old) - current_reaction.nu_bar* 1.0 / beta * log(10) * (m_constant_pH - pKa);
   double bf = exp(-beta * ln_bf);
   return bf;
 }
