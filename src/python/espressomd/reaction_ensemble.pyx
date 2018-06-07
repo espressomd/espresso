@@ -357,6 +357,13 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
     def __dealloc__(self):
         del(self.constpHptr)
 
+    def add_reaction(self, *args, **kwargs):
+        if(len(kwargs["product_types"])!=2 or len(kwargs["reactant_types"])!=1):
+            raise ValueError("The constant pH method is only implemented for reactionw with two product types and one educt type.")
+        if(kwargs["reactant_coefficients"][0]!=1 or kwargs["product_coefficients"][0]!=1 or kwargs["product_coefficients"][1]!=1):
+            raise ValueError("All product and reactant coefficients must equal one in the constant pH method as implemented in Espresso.")
+        super(ConstantpHEnsemble, self).add_reaction(*args, **kwargs)
+    
     property constant_pH:
         """
         Sets the input pH for the constant pH ensemble method.
@@ -368,8 +375,7 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
             Sets the pH that the method assumes for the implicit pH bath.
 
             """
-            if(pH<=0):
-                raise ValueError("pH must be strictly positive")
+
             self.constpHptr.m_constant_pH = pH
 
 cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
