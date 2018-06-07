@@ -233,6 +233,21 @@ struct ParticlePosition {
     collected and added up to the force of the original particle. */
 struct ParticleForce {
   ParticleForce() = default;
+  ParticleForce(ParticleForce const &) = default;
+  ParticleForce(const Vector3d & f) : f(f) {}
+#ifdef ROTATION
+  ParticleForce(const Vector3d & f,
+                const Vector3d &torque) : f(f), torque(torque) {}
+#endif
+
+ParticleForce & operator+=(ParticleForce const& rhs) {
+    f += rhs.f;
+#ifdef ROTATION
+    torque += rhs.torque;
+#endif
+
+    return *this;
+  }
   
   /** force. */
   Vector3d f = {0., 0., 0.};
@@ -241,16 +256,6 @@ struct ParticleForce {
   /** torque */
   Vector3d torque = {0., 0., 0.};
 #endif
-
-  ParticleForce &operator+=(ParticleForce const &rhs) {
-    f += rhs.f;
-
-#ifdef ROTATION
-    torque += rhs.torque;
-#endif
-
-    return *this;
-  }
 };
 
 /** Momentum information on a particle. Information not contained in
