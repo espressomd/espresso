@@ -327,7 +327,7 @@ class Analysis(object):
         cdef double binwd_radial = c_radius / c_bins_radial
         cdef double binvolume, pos_radial, pos_axial
 
-        cdef vector[string] names = ["density", "v_r", "v_t"]
+        cdef vector[string] names = [b"density", b"v_r", b"v_t"]
 
         buffer = np.empty(
             [bins_radial * bins_axial, 5 + c_types.size() * names.size()])

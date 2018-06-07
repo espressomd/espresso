@@ -9,8 +9,6 @@
 #include "shapes/NoWhere.hpp"
 #include "shapes/Shape.hpp"
 
-extern double time_step;
-
 namespace Constraints {
 
 class ShapeBasedConstraint : public Constraint {
@@ -19,15 +17,15 @@ public:
 
   ShapeBasedConstraint()
       : m_shape(std::make_shared<Shapes::NoWhere>()),
-        m_reflection_type(ReflectionType::NONE), m_penetrable(false),
+        m_penetrable(false),
         m_only_positive(false) {
     ShapeBasedConstraint::reset_force();
   }
 
-  virtual void add_energy(Particle *p, Vector3d& folded_pos,
+  virtual void add_energy(const Particle *p, const Vector3d &folded_pos,
                           Observable_stat &energy) const override;
 
-  virtual void add_force(Particle *p, Vector3d& folded_pos) override;
+  virtual ParticleForce force(const Particle *p, const Vector3d &folded_pos) override;
 
   /* finds the minimum distance to all particles */
   double min_dist();
@@ -43,41 +41,31 @@ public:
 
   Shapes::Shape const &shape() const { return *m_shape; }
 
-  ReflectionType const &reflection_type() const;
-
-  void reset_force() override { m_local_force = Vector3d{0, 0, 0}; }
-  int &only_positive() { return m_only_positive; }
-  int &penetrable() { return m_penetrable; }
+  void reset_force() override { m_local_force = Vector3d{0, 0, 0}; m_outer_normal_force=0.0;}
+  
+  bool &only_positive() { return m_only_positive; }
+  bool &penetrable() { return m_penetrable; }
   int &type() { return part_rep.p.type; }
-  Vector3d velocity() const { return Vector3d{part_rep.m.v}; }
+  Vector3d &velocity() { return part_rep.m.v; }
 
   void set_type(const int &type) {
     part_rep.p.type = type;
     make_particle_type_exist_local(type);
   }
 
-  void set_velocity(const Vector3d v) {
-    for (int i = 0; i < 3; i++) {
-      part_rep.m.v[i] = v[i];
-    }
-  }
-
   Vector3d total_force() const;
+  double total_normal_force() const;
 
 private:
   Particle part_rep;
 
-  /** Private methods */
-  void reflect_particle(Particle *p, const double *distance_vector,
-                        const double *folded_pos) const;
-
-  /** Private data members */
+    /** Private data members */
   std::shared_ptr<Shapes::Shape> m_shape;
 
-  ReflectionType m_reflection_type;
-  int m_penetrable;
-  int m_only_positive;
+  bool m_penetrable;
+  bool m_only_positive;
   Vector3d m_local_force;
+  double m_outer_normal_force;
 };
 
 } /* namespace Constaints */

@@ -26,12 +26,12 @@
 #include "ghosts.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "domain_decomposition.hpp"
-#include "forces_inline.hpp"
-#include "global.hpp"
-#include "grid.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
+#include "debug.hpp"
+#include "errorhandling.hpp"
+#include "domain_decomposition.hpp"
+
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
@@ -61,16 +61,6 @@ std::vector<int> r_bondbuffer;
     NO CHANGES OF THIS VALUE OUTSIDE OF \ref on_ghost_flags_change !!!!
 */
 int ghosts_have_v = 0;
-
-/** add force to another. This is used when collecting ghost forces. */
-inline void add_force(ParticleForce *F_to, ParticleForce *F_add) {
-  for (int i = 0; i < 3; i++)
-    F_to->f[i] += F_add->f[i];
-#ifdef ROTATION
-  for (int i = 0; i < 3; i++)
-    F_to->torque[i] += F_add->torque[i];
-#endif
-}
 
 void prepare_comm(GhostCommunicator *comm, int data_parts, int num)
 {
@@ -406,7 +396,7 @@ void add_forces_from_recv_buffer(GhostCommunication *gc)
     part = gc->part_lists[pl]->part;
     for (p = 0; p < np; p++) {
       pt = &part[p];
-      add_force(&pt->f, (ParticleForce *)retrieve);
+      pt->f += *((ParticleForce *)retrieve);
       retrieve +=  sizeof(ParticleForce);
     }
   }
@@ -482,7 +472,8 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts)
 #endif
     }
 	if (data_parts & GHOSTTRANS_FORCE)
-	  add_force(&pt2->f, &pt1->f);
+    pt2->f += pt1->f;
+
 #ifdef LB
 	if (data_parts & GHOSTTRANS_COUPLING)
 	  memmove(&pt2->lc, &pt1->lc, sizeof(ParticleLatticeCoupling));
@@ -509,7 +500,7 @@ void reduce_forces_sum(void *add, void *to, int *len, MPI_Datatype *type)
   }
 
   for (i = 0; i < clen; i++)
-    add_force(&cto[i], &cadd[i]);
+    cto[i] += cadd[i];
 }
 
 static int is_send_op(int comm_type, int node)
