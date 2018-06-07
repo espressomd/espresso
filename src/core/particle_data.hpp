@@ -256,16 +256,6 @@ ParticleForce & operator+=(ParticleForce const& rhs) {
   /** torque */
   Vector3d torque = {0., 0., 0.};
 #endif
-
-  ParticleForce &operator+=(ParticleForce const &rhs) {
-    f += rhs.f;
-
-#ifdef ROTATION
-    torque += rhs.torque;
-#endif
-
-    return *this;
-  }
 };
 
 /** Momentum information on a particle. Information not contained in
