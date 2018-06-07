@@ -66,9 +66,6 @@ enum BondedInteraction {
   /** Type of bonded interaction is a bond angle -- constraint distance
      potential. */
   BONDED_IA_ANGLEDIST,
-  /** Type of bonded interaction is a bond angle -- chain ends have angle with
-     wall constraint */
-  BONDED_IA_ENDANGLEDIST,
   /** Type of bonded interaction is a bond angle cosine potential. */
   BONDED_IA_ANGLE_HARMONIC,
   /** Type of bonded interaction is a bond angle cosine potential. */
@@ -223,26 +220,6 @@ struct IA_parameters {
   double LJGEN_b2 = 0.0;
   double LJGEN_lambda = 1.0;
   double LJGEN_softrad = 0.0;
-/*@}*/
-#endif
-
-#ifdef LJ_ANGLE
-  /** \name Directional Lennard-Jones */
-  /*@{*/
-  double LJANGLE_eps = 0.0;
-  double LJANGLE_sig = 0.0;
-  double LJANGLE_cut = INACTIVE_CUTOFF;
-  /* Locate bonded partners */
-  int LJANGLE_bonded1type = 0.0;
-  int LJANGLE_bonded1pos = 0.0;
-  int LJANGLE_bonded1neg = 0.0;
-  int LJANGLE_bonded2pos = 0.0;
-  int LJANGLE_bonded2neg = 0.0;
-  /* Optional 2nd environment */
-  double LJANGLE_z0 = 0.0;
-  double LJANGLE_dz = -1.0;
-  double LJANGLE_kappa = 0.0;
-  double LJANGLE_epsprime = 0.0;
 /*@}*/
 #endif
 
@@ -447,6 +424,8 @@ struct IA_parameters {
 #endif
 
 };
+
+extern std::vector<IA_parameters> ia_params;
 
 /** thermodynamic force parameters */
 
@@ -694,14 +673,6 @@ typedef struct {
   double sin_phi0;
 } Angledist_bond_parameters;
 
-/** Parameters for chainend angular potential with wall  */
-typedef struct {
-  double bend;
-  double phi0;
-  double distmin;
-  double distmax;
-} Endangledist_bond_parameters;
-
 typedef enum { NeoHookean, Skalak } tElasticLaw;
 
 /** Parameters for IBM elastic triangle (triel) **/
@@ -789,7 +760,6 @@ typedef union {
 #if defined(CG_DNA) || defined(TWIST_STACK)
   Cg_dna_stacking_parameters twist_stack;
 #endif
-  Endangledist_bond_parameters endangledist;
   IBM_Triel_Parameters ibm_triel;
   IBM_VolCons_Parameters ibmVolConsParameters;
   IBM_Tribend_Parameters ibm_tribend;

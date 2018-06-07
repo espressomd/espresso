@@ -406,13 +406,6 @@ cdef extern from "interaction_data.hpp":
         double sin_phi0
 
 
-#* Parameters for chainend angular potential with wall  */
-    ctypedef struct Endangledist_bond_parameters:
-        double bend
-        double phi0
-        double distmin
-        double distmax
-
 #* Union in which to store the parameters of an individual bonded interaction */
     ctypedef union bond_parameters "Bond_parameters":
         Fene_bond_parameters fene
@@ -433,7 +426,6 @@ cdef extern from "interaction_data.hpp":
         Subt_lj_bond_parameters subt_lj
         Rigid_bond_parameters rigid_bond
         Angledist_bond_parameters angledist
-        Endangledist_bond_parameters endangledist
 
     ctypedef struct bonded_ia_parameters:
         int type
@@ -484,10 +476,6 @@ IF TABULATED == 1:
     cdef extern from "tab.hpp":
         int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_type, double min, double max, vector[double] energy, vector[double] force)
 
-IF BOND_ENDANGLEDIST == 1:
-    cdef extern from "endangledist.hpp":
-        int endangledist_set_params(int bond_type, double bend, double phi0, double distmin, double distmax)
-
 IF ELECTROSTATICS == 1:
     cdef extern from "bonded_coulomb.hpp":
         int bonded_coulomb_set_params(int bond_type, double prefactor)
@@ -512,7 +500,6 @@ cdef extern from "interaction_data.hpp":
         BONDED_IA_RIGID_BOND,
         BONDED_IA_VIRTUAL_BOND,
         BONDED_IA_ANGLEDIST,
-        BONDED_IA_ENDANGLEDIST,
         BONDED_IA_ANGLE_HARMONIC,
         BONDED_IA_ANGLE_COSINE,
         BONDED_IA_ANGLE_COSSQUARE,

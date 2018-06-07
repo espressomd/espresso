@@ -330,20 +330,21 @@ int calc_radial_density_map(int xbins, int ybins, int thetabins, double xrange,
                             IntList *beadids, DoubleList *density_map,
                             DoubleList *density_profile);
 
-/** returns the minimal squared distance between two positions in the perhaps
- periodic
-    simulation box.
- *  \param pos1  Position one.
- *  \param pos2  Position two.
- */
-double min_distance2(double const pos1[3], double const pos2[3]);
+
+template <typename T1, typename T2>
+double min_distance2(T1 const pos1, T2 const pos2) {
+  double diff[3];
+  get_mi_vector(diff, pos1, pos2);
+  return sqrlen(diff);
+}
 
 /** returns the minimal distance between two positions in the perhaps periodic
     simulation box.
  *  \param pos1  Position one.
  *  \param pos2  Position two.
  */
-inline double min_distance(double const pos1[3], double const pos2[3]) {
+template <typename T1, typename T2>
+double min_distance(T1 const pos1, T2 const pos2) {
   return sqrt(min_distance2(pos1, pos2));
 }
 

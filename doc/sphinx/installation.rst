@@ -488,8 +488,6 @@ section :ref:`Isotropic non-bonded interactions`):
 -  ``LJCOS2`` Same as LJCOS, but using a slightly different way of smoothing the
    connection to 0.
 
--  ``LJ_ANGLE`` Enable the directional Lennard–Jones potential.
-
 -  ``GAY_BERNE`` (experimental)
 
 -  ``HERTZIAN``
@@ -525,11 +523,7 @@ following features.
 
 -  ``BOND_ANGLEDIST``
 
--  ``BOND_ENDANGLEDIST``
-
 -  ``BOND_ANGLEDIST_HARMONIC``
-
--  ``BOND_ENDANGLEDIST_HARMONIC``
 
 -  ``LJGEN_SOFTCORE``
 

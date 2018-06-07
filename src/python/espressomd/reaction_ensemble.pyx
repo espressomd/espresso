@@ -144,8 +144,8 @@ cdef class ReactionAlgorithm(object):
 
         Parameters
         ----------
-        Gamma : :obj:`float`
-                               Equilibrium constant of the reaction, :math:`\Gamma` 
+        gamma : :obj:`float`
+                               Equilibrium constant of the reaction, :math:`\gamma` 
                                (see the User guide, section 6.6 for the definition and further details).
         reactant_types : list of :obj:`int`
                                 List of particle types of reactants in the reaction.
@@ -180,10 +180,10 @@ cdef class ReactionAlgorithm(object):
         self._set_params_in_es_core_add()
 
     def _valid_keys_add(self):
-        return "Gamma", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges", "check_for_electroneutrality"
+        return "gamma", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges", "check_for_electroneutrality"
 
     def _required_keys_add(self):
-        return ["Gamma", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges"]
+        return ["gamma", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges"]
 
     def _check_lengths_of_arrays(self):
         if(len(self._params["reactant_types"])!=len(self._params["reactant_coefficients"])):
@@ -207,9 +207,9 @@ cdef class ReactionAlgorithm(object):
             product_coefficients.push_back(
                 self._params["product_coefficients"][i])
         self.RE.add_reaction(
-            self._params["Gamma"], reactant_types, reactant_coefficients, product_types, product_coefficients)
+            self._params["gamma"], reactant_types, reactant_coefficients, product_types, product_coefficients)
         self.RE.add_reaction(
-            1.0 / self._params["Gamma"], product_types, product_coefficients, reactant_types, reactant_coefficients)
+            1.0 / self._params["gamma"], product_types, product_coefficients, reactant_types, reactant_coefficients)
 
         for key in self._params["default_charges"]: #the keys are the types
             self.RE.charges_of_types[int(key)]=self._params["default_charges"][key]
@@ -291,7 +291,7 @@ cdef class ReactionAlgorithm(object):
                 product_coefficients.append(
                     self.RE.reactions[single_reaction_i].product_coefficients[i])
             reaction = {"reactant_coefficients": reactant_coefficients, "reactant_types": reactant_types, "product_types": product_types, "product_coefficients":
-                        product_coefficients, "reactant_types": reactant_types, "Gamma": self.RE.reactions[single_reaction_i].Gamma}
+                        product_coefficients, "reactant_types": reactant_types, "gamma": self.RE.reactions[single_reaction_i].gamma}
             reactions.append(reaction)
 
         return {"reactions": reactions, "temperature": self.RE.temperature, "exclusion_radius": self.RE.exclusion_radius}
@@ -617,10 +617,10 @@ cdef class WidomInsertion(ReactionAlgorithm):
     """
     
     cdef CWidomInsertion* WidomInsertionPtr
-    
+
     def __init__(self, *args, **kwargs):
-        self.RE = <CReactionAlgorithm*> new CWangLandauReactionEnsemble()
-        self.WidomInsertionPtr=<CWidomInsertion*> self.RE
+        self.WidomInsertionPtr =new CWidomInsertion()
+        self.RE = <CReactionAlgorithm*> self.WidomInsertionPtr
         self._params = {"temperature": 1,
                         "exclusion_radius": 0}
         for k in self._required_keys():
@@ -646,3 +646,9 @@ cdef class WidomInsertion(ReactionAlgorithm):
         
         """
         return self.WidomInsertionPtr.measure_excess_chemical_potential(int(reaction_id))
+
+    def add_reaction(self, *args, **kwargs):
+        for i in range(2): #for back and forward reaction
+            self.WidomInsertionPtr.number_of_insertions.push_back(0)
+            self.WidomInsertionPtr.summed_exponentials.push_back(0)
+        super(WidomInsertion, self).add_reaction(*args, **kwargs)

@@ -323,7 +323,7 @@ int rigid_bond_set_params(int bond_type, double d, double p_tol, double v_tol) {
 
   bonded_ia_params[bond_type].p.rigid_bond.d2 = d * d;
   bonded_ia_params[bond_type].p.rigid_bond.p_tol = 2.0 * p_tol;
-  bonded_ia_params[bond_type].p.rigid_bond.v_tol = v_tol * time_step;
+  bonded_ia_params[bond_type].p.rigid_bond.v_tol = v_tol;
   bonded_ia_params[bond_type].type = BONDED_IA_RIGID_BOND;
   bonded_ia_params[bond_type].num = 1;
   n_rigidbonds += 1;

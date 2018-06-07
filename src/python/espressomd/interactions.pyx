@@ -19,6 +19,7 @@
 from __future__ import print_function, absolute_import
 
 from libcpp.string cimport string
+import collections
 
 include "myconfig.pxi"
 from . import utils
@@ -37,14 +38,15 @@ cdef class NonBondedInteraction(object):
     """
 
     cdef public object _part_types
-    cdef object _params
+    cdef public object _params
 
     # init dict to access all user defined nonbonded-inters via
     # user_interactions[type1][type2][parameter]
-    user_interactions = {}
+    cdef public object user_interactions
 
     def __init__(self, *args, **kwargs):
-
+        if self.user_interactions == None:
+            self.user_interactions = {}
         # Interaction id as argument
         if len(args) == 2 and is_valid_type(args[0], int) and is_valid_type(args[1], int):
             self._part_types = args
@@ -65,10 +67,7 @@ cdef class NonBondedInteraction(object):
                         "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
 
             self._params.update(kwargs)
-
-            # Validation of parameters
             self.validate_params()
-
         else:
             raise Exception(
                 "The constructor has to be called either with two particle type ids (as integer), or with a set of keyword arguments describing a new interaction")
@@ -77,14 +76,9 @@ cdef class NonBondedInteraction(object):
         """Check, if the data stored in the instance still matches what is in Espresso.
 
         """
-
-        # check, if the bond parameters saved in the class still match those
-        # saved in Espresso
         temp_params = self._get_params_from_es_core()
         if self._params != temp_params:
             return False
-
-        # If we're still here, the instance is valid
         return True
 
     def get_params(self):
@@ -95,17 +89,22 @@ cdef class NonBondedInteraction(object):
         # current parameters from there
         if self._part_types[0] >= 0 and self._part_types[1] >= 0:
             self._params = self._get_params_from_es_core()
-
         return self._params
 
     def __str__(self):
         return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
 
     def __getstate__(self):
-        return self.get_params()
+        odict = collections.OrderedDict()
+        odict['user_interactions'] = self.user_interactions
+        odict['_part_types'] = self._part_types
+        odict['params'] = self.get_params()
+        return odict
 
-    def __setstate__(self, p):
-        self.set_params(p)
+    def __setstate__(self, state):
+        self.user_interactions = state['user_interactions']
+        self._part_types = state['_part_types']
+        self._params = state['params']
 
     def set_params(self, **p):
         """Update the given parameters.
@@ -1348,6 +1347,74 @@ IF SOFT_SPHERE == 1:
             """
             return "a", "n", "cutoff"
 
+IF AFFINITY == 1:
+    cdef class AffinityInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            if self._params["affinity_cut"] < 0:
+                raise ValueError("Affinity cutoff has to be >=0")
+            if self._params["affinity_type"] < 0:
+                raise ValueError("Affinity type has to be >=0")
+            if self._params["affinity_kappa"] < 0:
+                raise ValueError("Affinity kappa has to be >=0")
+            if self._params["affinity_r0"] < 0:
+                raise ValueError("Affinity r0 has to be >=0")
+            if self._params["affinity_Kon"] < 0:
+                raise ValueError("Affinity Kon has to be >=0")
+            if self._params["affinity_Koff"] < 0:
+                raise ValueError("Affinity Koff has to be >=0")
+            if self._params["affinity_maxBond"] < 0:
+                raise ValueError("Affinity maxBond has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
+            return {
+                "affinity_type": ia_params.affinity_type,
+                "affinity_kappa": ia_params.affinity_kappa,
+                "affinity_r0": ia_params.affinity_r0,
+                "affinity_Kon": ia_params.affinity_Kon,
+                "affinity_Koff": ia_params.affinity_Koff,
+                "affinity_maxBond": ia_params.affinity_maxBond,
+                "affinity_cut": ia_params.affinity_cut}
+
+        def is_active(self):
+            return (self._params["affinity_kappa"] > 0)
+
+
+        def _set_params_in_es_core(self):
+            if affinity_set_params(self._part_types[0], self._part_types[1],
+                                        self._params["affinity_type"],
+                                        self._params["affinity_kappa"],
+                                        self._params["affinity_r0"],
+                                        self._params["affinity_Kon"],
+                                        self._params["affinity_Koff"],
+                                        self._params["affinity_maxBond"],
+                                        self._params["affinity_cut"]):
+                raise Exception("Could not set Affinity parameters")
+
+        def default_params(self):
+            return {
+                "affinity_type": 0,
+                "affinity_kappa": 0.,
+                "affinity_r0": 0.,
+                "affinity_Kon": 0.,
+                "affinity_Koff": 0.,
+                "affinity_maxBond": 0.,
+                "affinity_cut": 0.}
+
+        def type_name(self):
+            return "Affinity"
+
+        def valid_keys(self):
+            return "affinity_type", "affinity_kappa", "affinity_r0", "affinity_Kon", "affinity_Koff", "affinity_maxBond", "affinity_cut"
+
+        def required_keys(self):
+            return "affinity_type", "affinity_kappa", "affinity_r0", "affinity_Kon", "affinity_Koff", "affinity_maxBond", "affinity_cut"
+
+
+
 IF MEMBRANE_COLLISION == 1:
     cdef class MembraneCollisionInteraction(NonBondedInteraction):
 
@@ -1628,7 +1695,7 @@ class NonBondedInteractionHandle(object):
             self.hertzian = HertzianInteraction(_type1, _type2)
         IF GAUSSIAN:
             self.gaussian = GaussianInteraction(_type1, _type2)
-        IF TABULATED == 1:
+        IF TABULATED:
             self.tabulated = TabulatedNonBonded(_type1, _type2)
         IF GAY_BERNE:
             self.gay_berne = GayBerneInteraction(_type1, _type2)
@@ -1647,7 +1714,6 @@ cdef class NonBondedInteractions(object):
     Also: access to force capping.
 
     """
-
     def __getitem__(self, key):
         if not isinstance(key, tuple):
             raise ValueError(
@@ -1658,13 +1724,13 @@ cdef class NonBondedInteractions(object):
         return NonBondedInteractionHandle(key[0], key[1])
 
     def __getstate__(self):
-        cdef string state
-        state = ia_params_get_state()
-        return state
+        cdef string core_state
+        core_state = ia_params_get_state()
+        return core_state
 
-    def __setstate__(self, odict):
-        cdef string odict_string  = odict
-        ia_params_set_state(odict_string)
+    def __setstate__(self, core_state):
+        cdef string state = core_state
+        ia_params_set_state(state)
 
 
 cdef class BondedInteraction(object):
@@ -2691,56 +2757,6 @@ class Virtual(BondedInteraction):
     def _set_params_in_es_core(self):
         virtual_set_params(self._bond_id)
 
-
-IF BOND_ENDANGLEDIST == 1:
-    class Endangledist(BondedInteraction):
-
-        def type_number(self):
-            return BONDED_IA_ENDANGLEDIST
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "ENDANGLEDIST"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return "bend", "phi0", "distmin", "distmax"
-
-        def required_keys(self):
-            """Parameters that have to be set.
-
-            """
-            return "bend", "phi0", "distmin", "distmax"
-
-        def set_default_params(self):
-            """Sets parameters that are not required to their default value.
-
-            """
-            self._params = {"bend": 0, "phi0": 0, "distmin": 0, "distmax": 1}
-
-        def _get_params_from_es_core(self):
-            return \
-                {"bend": bonded_ia_params[self._bond_id].p.endangledist.bend,
-                 "phi0": bonded_ia_params[self._bond_id].p.endangledist.phi0,
-                 "distmin":
-                     bonded_ia_params[self._bond_id].p.endangledist.distmin,
-                 "distmax": bonded_ia_params[self._bond_id].p.endangledist.distmax}
-
-        def _set_params_in_es_core(self):
-            endangledist_set_params(
-                self._bond_id, self._params["bend"], self._params[
-                    "phi0"], self._params["distmin"],
-                self._params["distmax"])
-
-ELSE:
-    class Endangledist(BondedInteractionNotDefined):
-        name = "BOND_ENDANGLEDIST"
-
-
 IF BOND_ANGLE == 1:
     class AngleHarmonic(BondedInteraction):
         """
@@ -3019,7 +3035,6 @@ bonded_interaction_classes = {
     int(BONDED_IA_DIHEDRAL): Dihedral,
     int(BONDED_IA_TABULATED): Tabulated,
     int(BONDED_IA_VIRTUAL_BOND): Virtual,
-    int(BONDED_IA_ENDANGLEDIST): Endangledist,
     int(BONDED_IA_ANGLE_HARMONIC): AngleHarmonic,
     int(BONDED_IA_ANGLE_COSINE): AngleCosine,
     int(BONDED_IA_ANGLE_COSSQUARE): AngleCossquare,

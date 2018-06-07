@@ -36,7 +36,7 @@ class DPDThermostat(ut.TestCase):
 
     def setUp(self):
         self.s.seed = range(self.s.cell_system.get_state()["n_nodes"])
-        np.random.seed(13)
+        np.random.seed(16)
 
     def tearDown(self):
         s = self.s

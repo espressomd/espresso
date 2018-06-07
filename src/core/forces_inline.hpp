@@ -31,7 +31,6 @@
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
 #include "p3m.hpp"
-#include "external_potential.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
 #include "angle_harmonic.hpp"
@@ -43,7 +42,6 @@
 #include "dihedral.hpp"
 #include "thermalized_bond.hpp"
 #include "elc.hpp"
-#include "endangledist.hpp"
 #include "fene.hpp"
 #include "forces.hpp"
 #include "gaussian.hpp"
@@ -54,7 +52,6 @@
 #include "hertzian.hpp"
 #include "hydrogen_bond.hpp"
 #include "lj.hpp"
-#include "ljangle.hpp"
 #include "ljcos.hpp"
 #include "ljcos2.hpp"
 #include "ljgen.hpp"
@@ -347,21 +344,10 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 #endif
 
 /***********************************************/
-/* semi-bonded multi-body potentials            */
-/***********************************************/
-
-/* Directional LJ */
-#ifdef LJ_ANGLE
-  /* This is a multi-body forces that changes the forces of 6 particles */
-  add_ljangle_force(p1, p2, ia_params, d, dist);
-#endif
-
-/***********************************************/
 /* long range electrostatics                   */
 /***********************************************/
 
 #ifdef ELECTROSTATICS
-
   /* real space coulomb */
   const double q1q2 = p1->p.q * p2->p.q;
 
@@ -374,7 +360,8 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
       // forces from the virtual charges
       // they go directly onto the particles, since they are not pairwise forces
       if (elc_params.dielectric_contrast_on)
-        ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f, p2->f.f);
+        ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f.data(),
+                                                     p2->f.f.data());
     }
     break;
   }
@@ -687,12 +674,6 @@ inline void add_bonded_force(Particle *p1) {
       bond_broken = calc_angledist_force(p1, p2, p3, iaparams, force, force2);
       break;
 #endif
-#ifdef BOND_ENDANGLEDIST
-    case BONDED_IA_ENDANGLEDIST:
-      bond_broken =
-          calc_endangledist_pair_force(p1, p2, iaparams, dx, force, force2);
-      break;
-#endif
     case BONDED_IA_DIHEDRAL:
       bond_broken =
           calc_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
@@ -751,12 +732,6 @@ inline void add_bonded_force(Particle *p1) {
 
       for (j = 0; j < 3; j++) {
         switch (type) {
-#ifdef BOND_ENDANGLEDIST
-        case BONDED_IA_ENDANGLEDIST:
-          p1->f.f[j] += force[j];
-          p2->f.f[j] += force2[j];
-          break;
-#endif // BOND_ENDANGLEDIST
 	    case BONDED_IA_THERMALIZED_DIST:
           p1->f.f[j] += force[j];
           p2->f.f[j] += force2[j];
@@ -886,9 +861,6 @@ inline void add_single_particle_force(Particle *p) {
   add_bonded_force(p);
 #ifdef CONSTRAINTS
   add_constraints_forces(p);
-#endif
-#ifdef EXTERNAL_FORCES
-  add_external_potential_forces(p);
 #endif
 }
 

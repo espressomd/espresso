@@ -20,20 +20,16 @@ from __future__ import print_function, absolute_import
 from espressomd.system cimport *
 # Here we create something to handle particles
 cimport numpy as np
-from espressomd.utils cimport *
+from espressomd.utils cimport Vector3d,int_list
+from espressomd.utils import array_locked
 from libcpp cimport bool
 from libcpp.memory cimport unique_ptr
 
 include "myconfig.pxi"
 
-cdef extern from "Vector.hpp":
-    cppclass Vector3d:
-        double & operator[](int i)
-
 # Import particle data structures and setter functions from particle_data.hpp
 
 cdef extern from "particle_data.hpp":
-
     # DATA STRUCTURES
 
     # Note: Conditional compilation is not possible within ctypedef blocks.
@@ -47,13 +43,13 @@ cdef extern from "particle_data.hpp":
         double mass
 
     ctypedef struct particle_position "ParticlePosition":
-        double p[3]
+        Vector3d p
 
     ctypedef struct particle_force "ParticleForce":
-        double f[3]
+        Vector3d f
 
     ctypedef struct particle_momentum "ParticleMomentum":
-        double v[3]
+        Vector3d v
 
     ctypedef struct particle_local "ParticleLocal":
         int i[3]
@@ -92,7 +88,7 @@ cdef extern from "particle_data.hpp":
 
     int set_particle_v(int part, double v[3])
 
-    int set_particle_f(int part, double F[3])
+    int set_particle_f(int part, const Vector3d &F)
 
     int set_particle_solvation(int part, double * solvation)
 
@@ -252,3 +248,6 @@ cdef extern from "grid.hpp":
     Vector3d unfolded_position(const particle *)
     cdef void fold_position(double *, int*)
     void unfold_position(double pos[3], int image_box[3])
+
+cdef make_array_locked(const Vector3d &v)
+
