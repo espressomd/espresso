@@ -87,6 +87,9 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
 #ifdef P3M
     case COULOMB_P3M_GPU:
     case COULOMB_P3M:
+      /**
+      Here we calculate the short ranged contribution of the electrostatics. These terms are called Pi_{dir, alpha, beta} in the paper by Essmann et al "A smooth particle mesh Ewald method", The Journal of Chemical Physics 103, 8577 (1995); doi: 10.1063/1.470117. The part Pi_{corr, alpha, beta} in the Essmann paper is not present here since M is the empty set in our simulations.
+      */
       force[0] = 0.0;
       force[1] = 0.0;
       force[2] = 0.0;

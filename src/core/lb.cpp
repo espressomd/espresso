@@ -1492,9 +1492,9 @@ int lb_lbnode_set_u(int *ind, double *u) {
     /* transform to lattice units */
 
     mpi_recv_fluid(node, index, &rho, j, pi);
-    j[0] = rho * u[0] * lbpar.tau * lbpar.agrid;
-    j[1] = rho * u[1] * lbpar.tau * lbpar.agrid;
-    j[2] = rho * u[2] * lbpar.tau * lbpar.agrid;
+    j[0] = rho * u[0] * lbpar.tau / lbpar.agrid;
+    j[1] = rho * u[1] * lbpar.tau / lbpar.agrid;
+    j[2] = rho * u[2] * lbpar.tau / lbpar.agrid;
     mpi_send_fluid(node, index, rho, j, pi);
 #endif // LB
   }
@@ -2828,7 +2828,7 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
 #endif
 }
 
-int lb_lbfluid_get_interpolated_velocity(const Vector3d& p, double* v) {
+void lb_lbfluid_get_interpolated_velocity(const Vector3d &p, double *v) {
   Lattice::index_t node_index[8], index;
   double delta[6];
   double local_rho, local_j[3], interpolated_u[3];
@@ -2865,7 +2865,7 @@ int lb_lbfluid_get_interpolated_velocity(const Vector3d& p, double* v) {
            lbpar.agrid / lbpar.tau;
     v[2] = (*LBBoundaries::lbboundaries[boundary_no]).velocity()[2] *
            lbpar.agrid / lbpar.tau;
-    return 0; // we can return without interpolating
+    return; // we can return without interpolating
   }
 #else  // LB_BOUNDARIES
   pos[0] = p[0];
@@ -2951,7 +2951,7 @@ int lb_lbfluid_get_interpolated_velocity(const Vector3d& p, double* v) {
   v[0] *= lbpar.agrid / lbpar.tau;
   v[1] *= lbpar.agrid / lbpar.tau;
   v[2] *= lbpar.agrid / lbpar.tau;
-  return 0;
+  return;
 }
 
 /** Calculate particle lattice interactions.
