@@ -37,7 +37,7 @@ print("system.thermostat.get_state() = {}".format(system.thermostat.get_state())
 # test "p3m"
 print("\n### p3m test ###")
 print("p3m.get_params() = {}".format(p3m.get_params()))
-system.actors.add(p3m)
+
 
 # test registered objects
 # all objects that are registered when writing a checkpoint are automatically registered after loading this checkpoint
