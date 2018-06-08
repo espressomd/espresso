@@ -71,17 +71,7 @@ int Lattice::init(double *agrid, double* offset, int halo_size, size_t dim) {
     this->halo_grid_surface = this->halo_grid_volume - this->grid_volume ;
     this->halo_offset = get_linear_index(halo_size,halo_size,halo_size,this->halo_grid) ;
 
-    this->interpolation_type = INTERPOLATION_LINEAR;
-
-    allocate_memory();
     return ES_OK;
-
-}
-
-void Lattice::allocate_memory() {
-
-    this->_data = Utils::malloc(this->element_size*this->halo_grid_volume);
-    memset(this->_data, (unsigned int)(-1), this->element_size*this->halo_grid_volume);
 
 }
 

@@ -61,7 +61,6 @@ public:
     double local_offset[3];
     int local_index_offset[3];
 
-    unsigned int interpolation_type;
     char flags;
     size_t element_size;/** Size of each element in size units (=bytes) */
     size_t lattice_dim;/** Dimension of the field, assuming entries are arrays */
@@ -82,11 +81,6 @@ public:
      * \param agrid   lattice spacing
      */
     int init(double* agrid, double* offset, int halo_size, size_t dim);
-
-    /** lattice memory allocation.
-     * \param lattice pointer to the lattice
-     */
-    void allocate_memory();
 
     /** Map a spatial position to the surrounding lattice sites.
      *
