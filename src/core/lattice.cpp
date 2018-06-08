@@ -73,16 +73,6 @@ int Lattice::init(double *agrid, double* offset, int halo_size, size_t dim) {
 
 }
 
-int global_pos_in_local_box(double pos[3]) {
-    if (!(pos[0]>my_left[0]  &&  pos[0]<my_right[0] ))
-        return 0;
-    if (!(pos[1]>my_left[1]  &&  pos[1]<my_right[1] ))
-        return 0;
-    if (!(pos[2]>my_left[2]  &&  pos[2]<my_right[2] ))
-        return 0;
-    return 1;
-}
-
 void Lattice::map_position_to_lattice(const Vector3d& pos, index_t node_index[8], double delta[6]) {
 
     int dir,ind[3] ;
