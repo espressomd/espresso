@@ -32,11 +32,11 @@
 #include "grid.hpp"
 #include "halo.hpp"
 #include "immersed_boundary/ibm_main.hpp"
-#include "interaction_data.hpp"
 #include "lb-d3q19.hpp"
 #include "lbboundaries.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
+
 #include <cassert>
 #include <cstdio>
 #include <iostream>
@@ -211,27 +211,6 @@ int lb_lbfluid_set_mobility(double *p_mobility) {
   }
   return 0;
 }
-
-int affinity_set_params(int part_type_a, int part_type_b, double *affinity) {
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
-  data->affinity_on = 0;
-  if (!data)
-    return ES_ERROR;
-  for (int ii = 0; ii < LB_COMPONENTS; ii++) {
-    if (affinity[ii] < 0 || affinity[ii] > 1) {
-      return ES_ERROR;
-    }
-    data->affinity[ii] = affinity[ii];
-    if (data->affinity[ii] > 0)
-      data->affinity_on = 1;
-  }
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-
-  return ES_OK;
-}
-
 #endif // SHANCHEN
 
 int lb_lbfluid_set_density(double *p_dens) {
