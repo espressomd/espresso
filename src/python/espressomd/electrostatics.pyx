@@ -67,21 +67,12 @@ IF ELECTROSTATICS == 1:
             deactivate_coulomb_method()
             handle_errors("Coulom method deactivation")
 
-        def Tune(self, **subsetTuneParams):
-
-            # Override default parmas with subset given by user
-            tuneParams = self.default_params()
-            if not subsetTuneParams == None:
-                for k in subsetTuneParams.iterkeys():
-                    if k not in self.valid_keys():
-                        raise ValueError(k + " is not a valid parameter")
-                tuneParams.update(subsetTuneParams)
-
-            # If param is 'required', it was set before, so don't change it
-            # Do change it if it's given to Tune() by user
-            for param in tuneParams.iterkeys():
-                if not param in self.required_keys() or (not subsetTuneParams == None and param in subsetTuneParams.keys()):
-                    self._params[param] = tuneParams[param]
+        def tune(self, **tune_params_subset):
+            if tune_params_subset is not None:
+                if all (k in self.valid_keys() for k in tune_params_subset):
+                    self._params.update(tune_params_subset)
+                else:
+                    raise ValueError("Invalid parameter given to tune function.")
             self._tune()
 
 IF COULOMB_DEBYE_HUECKEL:
