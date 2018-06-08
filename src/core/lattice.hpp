@@ -51,7 +51,6 @@ public:
 
     int grid[3] ;/** number of local lattice sites in each direction (excluding halo) */
     int global_grid[3];
-    unsigned int dim;
     double agrid[3];/** lattice constant */
 
     int halo_grid[3] ;/** number of lattice sites in each direction including halo */
@@ -61,14 +60,8 @@ public:
     double local_offset[3];
     int local_index_offset[3];
 
-    char flags;
-
-    index_t grid_volume;/** total number (volume) of local lattice sites (excluding halo) */
     index_t halo_grid_volume;/** total number (volume) of lattice sites (including halo) */
-    index_t halo_grid_surface;/** number of lattice sites in the halo region */
     index_t halo_offset;/** offset for number of halo sites stored in front of the local lattice sites */
-
-    void *_data;/** pointer to the actual lattice data. This can be a contiguous field of arbitrary data. */
 
     /** Initialize lattice.
      *

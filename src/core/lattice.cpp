@@ -29,10 +29,7 @@
 
 int lattice_switch = LATTICE_OFF ;
 
-//int Lattice::init(double *agrid, double* offset, int halo_size, size_t dim) {
 int Lattice::init(double *agrid, double* offset, int halo_size, size_t dim) {
-    this->dim=dim;
-
     /* determine the number of local lattice nodes */
     for (int d=0; d<3; d++) {
         this->agrid[d] = agrid[d];
@@ -64,9 +61,7 @@ int Lattice::init(double *agrid, double* offset, int halo_size, size_t dim) {
     this->halo_grid[1] = this->grid[1] + 2*halo_size ;
     this->halo_grid[2] = this->grid[2] + 2*halo_size ;
 
-    this->grid_volume = this->grid[0]*this->grid[1]*this->grid[2] ;
     this->halo_grid_volume = this->halo_grid[0]*this->halo_grid[1]*this->halo_grid[2] ;
-    this->halo_grid_surface = this->halo_grid_volume - this->grid_volume ;
     this->halo_offset = get_linear_index(halo_size,halo_size,halo_size,this->halo_grid) ;
 
     return ES_OK;
