@@ -5,22 +5,21 @@ from espressomd import checkpointing
 checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")
 checkpoint.load()
 
-# necessary for using e.g. system.actors, since explicit checkpointing of actors is not implemented yet
-system = espressomd.System(box_l=[10.7437, 10.7437, 10.7437])
-system.set_random_state_PRNG()
-#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+# print out actors
+
+print("\n### current active actors ###")
+for act in system.actors.active_actors:
+    #print(act.__class__.__name__)
+    print(act)
 
 # test user variable
 print("\n### user variable test ###")
 print("myvar = {}".format(myvar))
-print("skin = {}".format(skin))
 
 # test "system"
 print("\n### system test ###")
 print("system.time = {}".format(system.time))
 print("system.box_l = {}".format(system.box_l))
-# system.cell_system not implemented yet, see sample script store_properties.py
-system.cell_system.skin = skin
 
 # test "system.non_bonded_inter"
 print("\n### system.non_bonded_inter test ###")
