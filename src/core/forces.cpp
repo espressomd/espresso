@@ -28,12 +28,10 @@
 
 #include "comfixed_global.hpp"
 #include "electrokinetics.hpp"
-#include "forces.hpp"
 #include "forces_inline.hpp"
 #include "iccp3m.hpp"
 #include "maggs.hpp"
 #include "p3m_gpu.hpp"
-#include "partCfg_global.hpp"
 #include "forcecap.hpp"
 #include "short_range_loop.hpp"
 
@@ -102,7 +100,6 @@ void force_calc() {
   }
 #endif
 
-  
   espressoSystemInterface.update();
 
 #ifdef COLLISION_DETECTION
@@ -327,23 +324,4 @@ void calc_long_range_forces() {
     break;
   }
 #endif /*ifdef DIPOLES */
-}
-
-void calc_non_bonded_pair_force_from_partcfg(
-    Particle const *p1, Particle const *p2, IA_parameters *ia_params,
-    double d[3], double dist, double dist2, double force[3], double torque1[3],
-    double torque2[3]) {
-  calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist, dist2, force,
-                                   torque1, torque2);
-}
-
-void calc_non_bonded_pair_force_from_partcfg_simple(Particle const *p1,
-                                                    Particle const *p2,
-                                                    double d[3], double dist,
-                                                    double dist2,
-                                                    double force[3]) {
-  IA_parameters *ia_params = get_ia_param(p1->p.type, p2->p.type);
-  double torque1[3] = {0,0,0}, torque2[3] = {0,0,0};
-  calc_non_bonded_pair_force_from_partcfg(p1, p2, ia_params, d, dist, dist2,
-                                          force, torque1, torque2);
 }
