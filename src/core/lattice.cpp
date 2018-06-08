@@ -56,8 +56,6 @@ int Lattice::init(double *agrid, double* offset, int halo_size, size_t dim) {
       }
     }
 
-    this->element_size = this->dim*sizeof(double);
-
     LATTICE_TRACE(fprintf(stderr,"%d: box_l (%.3f,%.3f,%.3f) grid (%d,%d,%d) node_neighbors (%d,%d,%d,%d,%d,%d)\n",this_node,local_box_l[0],local_box_l[1],local_box_l[2],this->grid[0],this->grid[1],this->grid[2],node_neighbors[0],node_neighbors[1],node_neighbors[2],node_neighbors[3],node_neighbors[4],node_neighbors[5]));
 
     this->halo_size = halo_size;

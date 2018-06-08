@@ -62,8 +62,6 @@ public:
     int local_index_offset[3];
 
     char flags;
-    size_t element_size;/** Size of each element in size units (=bytes) */
-    size_t lattice_dim;/** Dimension of the field, assuming entries are arrays */
 
     index_t grid_volume;/** total number (volume) of local lattice sites (excluding halo) */
     index_t halo_grid_volume;/** total number (volume) of lattice sites (including halo) */
