@@ -9,7 +9,6 @@ checkpoint.load()
 
 print("\n### current active actors ###")
 for act in system.actors.active_actors:
-    #print(act.__class__.__name__)
     print(act)
 
 # test user variable
