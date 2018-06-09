@@ -25,6 +25,8 @@
 #include "statistics.hpp" 
 #include "integrate.hpp" 
 #include "rotation.hpp" 
+#include "communication.hpp"
+
 #ifdef VIRTUAL_SITES
 
 namespace {
