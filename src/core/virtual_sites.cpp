@@ -46,18 +46,16 @@ void set_virtual_sites(std::shared_ptr<VirtualSites> const& v) {
  
 void calculate_vs_relate_to_params(const Particle& p_current, const Particle& p_relate_to, double& l, Vector<4,double>& quat)
 {
-    // get teh distance between the particles
+    // get the distance between the particles
     Vector3d d;
     get_mi_vector(d, p_current.r.p,p_relate_to.r.p);
-    
-    
     
     // Check, if the distance between virtual and non-virtual particles is larger htan minimum global cutoff
     // If so, warn user
     l=sqrt(sqrlen(d));
-    //if (l>min_global_cut) {
-    //    runtimeErrorMsg() << "Warning: The distance between virtual and non-virtual particle (" << l << ") is\nlarger than the minimum global cutoff (" << min_global_cut << "). This may lead to incorrect simulations\nunder certain conditions. Set the \"System()\" class property \"min_global_cut\" to\nincrease the minimum cutoff.\n";
-    //}
+    if (l>min_global_cut && n_nodes>1) {
+        runtimeErrorMsg() << "Warning: The distance between virtual and non-virtual particle (" << l << ") is\nlarger than the minimum global cutoff (" << min_global_cut << "). This may lead to incorrect simulations\nunder certain conditions. Set the \"System()\" class property \"min_global_cut\" to\nincrease the minimum cutoff.\n";
+    }
 
     // Now, calculate the quaternions which specify the angle between 
     // the director of the particel we relate to and the vector
