@@ -2,7 +2,6 @@ from __future__ import print_function
 
 import espressomd
 from espressomd import thermostat
-from espressomd import interactions
 from espressomd import integrate
 from espressomd.virtual_sites import VirtualSitesRelative
 from espressomd.io.writer import h5md
@@ -14,7 +13,7 @@ system.set_random_state_PRNG()
 system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
 sim_ID="rigid"
-h5md_file_name = "rigid_body.h5"
+h5md_file_name = "rigid.h5"
 
 system.time_step = 0.01
 skin=10.0
@@ -26,13 +25,6 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 ### Particle types
 type_centre = 0
 type_A = 1
-
-
-for i in xrange(2):
-    for j in xrange(2):
-        system.non_bonded_inter[i, j].lennard_jones.set_params(
-            epsilon=1., sigma=1.,
-            cutoff=2.**(1. / 6.), shift="auto")
 
 
 #############################################################
@@ -48,25 +40,19 @@ x=box_l*0.5
 y=box_l*0.5
 z=box_l*0.5
 
-
-for n in xrange(branch_len):
-    system.part.add(id=p_id, pos=[x+(n+1), y, z], type=type_A)
-    p_id+=1
-for n in xrange(branch_len):
-    system.part.add(id=p_id, pos=[x-(n+1), y, z], type=type_A)
-    p_id+=1
-for n in xrange(branch_len):
-    system.part.add(id=p_id, pos=[x, y+(n+1), z], type=type_A)
-    p_id+=1
-for n in xrange(branch_len):
-    system.part.add(id=p_id, pos=[x, y-(n+1), z], type=type_A)
-    p_id+=1
-for n in xrange(branch_len):
-    system.part.add(id=p_id, pos=[x, y, z+(n+1)], type=type_A)
-    p_id+=1
-for n in xrange(branch_len):
-    system.part.add(id=p_id, pos=[x, y, z-(n+1)], type=type_A)
-    p_id+=1
+# place six branches, pointing +/-x +/-y and +/-z
+for n in range(branch_len):
+    system.part.add(pos=[x+(n+1), y, z], type=type_A, virtual=1)
+for n in range(branch_len):
+    system.part.add(pos=[x-(n+1), y, z], type=type_A, virtual=1)
+for n in range(branch_len):
+    system.part.add(pos=[x, y+(n+1), z], type=type_A, virtual=1)
+for n in range(branch_len):
+    system.part.add(pos=[x, y-(n+1), z], type=type_A, virtual=1)
+for n in range(branch_len):
+    system.part.add(pos=[x, y, z+(n+1)], type=type_A, virtual=1)
+for n in range(branch_len):
+    system.part.add(pos=[x, y, z-(n+1)], type=type_A, virtual=1)
 
 
 #############################################################
@@ -77,14 +63,14 @@ system.virtual_sites= VirtualSitesRelative(have_velocity=True)
 #here we calculate the center of mass position (com) and the moment of inertia (momI) of the object
 com=np.zeros(3)
 momI=0
-for i in range(1, 1+branch_len*6, 1):
-    com+=system.part[i].pos
+for p in system.part:
+    com+=p.pos
 com/=(branch_len*6.)
 
 max_dist=0
-for i in range(1, 1+branch_len*6, 1):
-    momI+=(com-system.part[i].pos)**2
-    dist=np.sum((com-system.part[i].pos)**2)
+for p in system.part:
+    momI+=(com-p.pos)**2
+    dist=np.sum((p.pos)**2)
     if dist>max_dist: max_dist=dist
 max_dist=np.sqrt(max_dist)
 
@@ -94,14 +80,14 @@ print("max dist is {}".format(max_dist))
 print("moment of intertia is", momI)
 
 #place center bead
-system.part.add(id=0, pos=com, mass=branch_len*6, rinertia=momI, rotation=[1,1,1], type=type_centre)
+p_center = system.part.add(pos=com, mass=branch_len*6, rinertia=momI, rotation=[1,1,1], type=type_centre)
 
-for i in range(1, 1+branch_len*6, 1):
-    system.part[i].virtual=1
-    system.part[i].vs_auto_relate_to(0)
+# The virtual particles relate to the center one 
+for p in system.part:
+    if p.virtual:
+        p.vs_auto_relate_to(p_center.id)
 
 ############################################################
-
 
 
 h5_file = h5md.H5md(filename=h5md_file_name, write_pos=True, write_vel=False,
@@ -111,7 +97,7 @@ h5_file = h5md.H5md(filename=h5md_file_name, write_pos=True, write_vel=False,
 h5_file.write()
 h5_file.flush()
 
-for frame in xrange(200):
+for frame in range(200):
     system.integrator.run(100)
     h5_file.write()
     h5_file.flush()
