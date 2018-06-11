@@ -61,13 +61,8 @@ for n in range(branch_len):
 system.virtual_sites= VirtualSitesRelative(have_velocity=True)
 
 #here we calculate the center of mass position (com) and the moment of inertia (momI) of the object
-com=np.zeros(3)
-momI=0
-for p in system.part:
-    com+=p.pos
-com/=(branch_len*6.)
-
-print("center of mass is:", system.analysis.center_of_mass(part_type=type_A))
+com = system.analysis.center_of_mass(part_type=type_A)
+print("center of mass is:", com)
 
 # only change this for multiple GPUS
 #max_dist=0
