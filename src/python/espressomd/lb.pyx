@@ -73,7 +73,7 @@ IF LB_GPU or LB:
         # list of valid keys for parameters
         ####################################################
         def valid_keys(self):
-            return "agrid", "dens", "fric", "ext_force", "visc", "tau", "couple"
+            return "agrid", "dens", "fric", "ext_force_density", "visc", "tau", "couple"
 
         # list of esential keys required for the fluid
         ####################################################
@@ -87,7 +87,7 @@ IF LB_GPU or LB:
                 return {"agrid": -1.0,
                         "dens": [-1.0, -1.0],
                         "fric": [-1.0, -1.0],
-                        "ext_force": [0.0, 0.0, 0.0],
+                        "ext_force_density": [0.0, 0.0, 0.0],
                         "visc": [-1.0, -1.0],
                         "bulk_visc": [-1.0, -1.0],
                         "tau": -1.0,
@@ -96,7 +96,7 @@ IF LB_GPU or LB:
                 return {"agrid": -1.0,
                         "dens": -1.0,
                         "fric": -1.0,
-                        "ext_force": [0.0, 0.0, 0.0],
+                        "ext_force_density": [0.0, 0.0, 0.0],
                         "visc": -1.0,
                         "bulk_visc": -1.0,
                         "tau": -1.0,
@@ -131,9 +131,9 @@ IF LB_GPU or LB:
                 if python_lbfluid_set_friction(self._params["fric"]):
                     raise Exception("lb_lbfluid_set_friction error")
 
-            if not self._params["ext_force"] == default_params["ext_force"]:
-                if python_lbfluid_set_ext_force(self._params["ext_force"]):
-                    raise Exception("lb_lbfluid_set_ext_force error")
+            if not self._params["ext_force_density"] == default_params["ext_force_density"]:
+                if python_lbfluid_set_ext_force_density(self._params["ext_force_density"]):
+                    raise Exception("lb_lbfluid_set_ext_force_density error")
 
             if not self._params["couple"] == default_params["couple"]:
                 if python_lbfluid_set_couple_flag(self._params["couple"]):
@@ -165,9 +165,9 @@ IF LB_GPU or LB:
                 if python_lbfluid_get_friction(self._params["fric"]):
                     raise Exception("lb_lbfluid_set_friction error")
 
-            if not self._params["ext_force"] == default_params["ext_force"]:
-                if python_lbfluid_get_ext_force(self._params["ext_force"]):
-                    raise Exception("lb_lbfluid_set_ext_force error")
+            if not self._params["ext_force_density"] == default_params["ext_force_density"]:
+                if python_lbfluid_get_ext_force_density(self._params["ext_force_density"]):
+                    raise Exception("lb_lbfluid_set_ext_force_density error")
 
             if not self._params["couple"] == default_params["couple"]:
                 if python_lbfluid_get_couple_flag(self._params["couple"]):
