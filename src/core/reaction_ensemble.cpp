@@ -154,6 +154,11 @@ void ReactionAlgorithm::check_reaction_ensemble() {
 #endif
 }
 
+double ReactionAlgorithm::get_excess_chemical_potential_change_during_reaction(int reaction_id){
+    double const average_exponential= summed_exponentials[reaction_id] / number_of_insertions[reaction_id];
+    return -temperature * log(average_exponential);
+}
+
 // boring helper functions
 /**
 * Automatically sets the volume which is used by the reaction ensemble to the
@@ -439,6 +444,10 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
       current_reaction, E_pot_old, E_pot_new, old_particle_numbers,
       old_state_index, new_state_index, only_make_configuration_changing_move);
 
+  double const exponential = exp(-1.0 / temperature * (E_pot_new - E_pot_old));
+  summed_exponentials[reaction_id] += exponential;
+  number_of_insertions[reaction_id] += 1;
+
   if (d_random() < bf) {
     // accept
     accepted_state = new_state_index;
@@ -482,6 +491,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
   on_end_reaction(accepted_state);
   return reaction_is_accepted;
 }
+
 
 /**
 * Calculates the change in particle numbers for the given reaction
@@ -1780,10 +1790,10 @@ double WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
   restore_properties(changed_particles_properties, number_of_saved_properties);
 
   double const exponential = exp(-1.0 / temperature * (E_pot_new - E_pot_old));
-  summed_exponentials[reaction_id] += exponential;
-  number_of_insertions[reaction_id] += 1;
-  double const average_exponential = summed_exponentials[reaction_id] / number_of_insertions[reaction_id];
-  return -temperature * log(average_exponential);
+  summed_exponentials_widom[reaction_id] += exponential;
+  number_of_insertions_widom[reaction_id] += 1;
+  double const average_exponential_widom = summed_exponentials_widom[reaction_id] / number_of_insertions_widom[reaction_id];
+  return -temperature * log(average_exponential_widom);
 }
 
 /////////////////////////////////////////////////////////////////free functions

@@ -123,7 +123,10 @@ public:
   bool do_global_mc_move_for_particles_of_type(int type,
                                                int particle_number_of_type,
                                                const bool use_wang_landau);
-
+  std::vector<int> number_of_insertions;
+  std::vector<double> summed_exponentials;
+  double get_excess_chemical_potential_change_during_reaction(int reaction_id);
+  
 protected:
   std::vector<int> m_empty_p_ids_smaller_than_max_seen_particle;
   bool generic_oneway_reaction(int reaction_id);
@@ -310,8 +313,8 @@ class WidomInsertion : public ReactionAlgorithm {
 public:
     double measure_excess_chemical_potential(int reaction_id);
 
-    std::vector<int> number_of_insertions;
-    std::vector<double> summed_exponentials;
+    std::vector<int> number_of_insertions_widom;
+    std::vector<double> summed_exponentials_widom;
 };
 
 //////////////////////////////////////////////////////////////////free functions

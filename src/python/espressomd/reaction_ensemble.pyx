@@ -211,6 +211,10 @@ cdef class ReactionAlgorithm(object):
         self.RE.add_reaction(
             1.0 / self._params["gamma"], product_types, product_coefficients, reactant_types, reactant_coefficients)
 
+        for i in range(2): #for back and forward reaction
+            self.RE.number_of_insertions.push_back(0)
+            self.RE.summed_exponentials.push_back(0)
+
         for key in self._params["default_charges"]: #the keys are the types
             self.RE.charges_of_types[int(key)]=self._params["default_charges"][key]
         self.RE.check_reaction_ensemble()        
@@ -330,6 +334,14 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
                 raise KeyError("%s is not a vaild key" % k)
 
         self._set_params_in_es_core()
+        
+    def get_excess_chemical_potential_change_during_reaction(self, reaction_id):
+        """
+        Returns the average excess chemical potential change in the system (averaged over all particles).
+        
+        """
+        return self.REptr.get_excess_chemical_potential_change_during_reaction(int(reaction_id))
+    
     def __dealloc__(self):
         del(self.REptr)
 
@@ -641,7 +653,7 @@ cdef class WidomInsertion(ReactionAlgorithm):
             else:
                 raise KeyError("%s is not a vaild key" % k)
 
-        self._set_params_in_es_core()  
+        self._set_params_in_es_core() 
       
     def __dealloc__(self):
         del(self.WidomInsertionPtr)
@@ -652,9 +664,9 @@ cdef class WidomInsertion(ReactionAlgorithm):
         
         """
         return self.WidomInsertionPtr.measure_excess_chemical_potential(int(reaction_id))
-
+        
     def add_reaction(self, *args, **kwargs):
         for i in range(2): #for back and forward reaction
-            self.WidomInsertionPtr.number_of_insertions.push_back(0)
-            self.WidomInsertionPtr.summed_exponentials.push_back(0)
+            self.WidomInsertionPtr.number_of_insertions_widom.push_back(0)
+            self.WidomInsertionPtr.summed_exponentials_widom.push_back(0)
         super(WidomInsertion, self).add_reaction(*args, **kwargs)
