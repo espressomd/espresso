@@ -67,16 +67,20 @@ for p in system.part:
     com+=p.pos
 com/=(branch_len*6.)
 
-max_dist=0
-for p in system.part:
-    momI+=(com-p.pos)**2
-    dist=np.sum((p.pos)**2)
-    if dist>max_dist: max_dist=dist
-max_dist=np.sqrt(max_dist)
+print("center of mass is:", system.analysis.center_of_mass(part_type=type_A))
 
 # only change this for multiple GPUS
+#max_dist=0
+#for p in system.part:
+#    dist=np.sum((p.pos)**2)
+#    if dist>max_dist: max_dist=dist
+#max_dist=np.sqrt(max_dist)
+#print("max dist is {}".format(max_dist))
 #system.min_global_cut = max_dist
-print("max dist is {}".format(max_dist))
+
+mat_I=system.analysis.moment_of_inertia_matrix(p_type=type_A)
+#in this simple case, the cluster has principal axes aligned with the box
+momI=[mat_I[0,0],mat_I[1,1], mat_I[2,2]]
 print("moment of intertia is", momI)
 
 #place center bead
