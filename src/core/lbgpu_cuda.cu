@@ -2740,10 +2740,10 @@ __global__ void lb_shanchen_GPU(LB_nodes_gpu n_a,LB_node_force_density_gpu node_
        node_f.force_density[(0+ii*3)*para.number_of_nodes + index]+=p[0];
        node_f.force_density[(1+ii*3)*para.number_of_nodes + index]+=p[1];
        node_f.force_density[(2+ii*3)*para.number_of_nodes + index]+=p[2];
-/* copy to be used when resetting forces */
-       node_f.scforce_density_density[(0+ii*3)*para.number_of_nodes + index]=p[0];
-       node_f.scforce_density_density[(1+ii*3)*para.number_of_nodes + index]=p[1];
-       node_f.scforce_density_density[(2+ii*3)*para.number_of_nodes + index]=p[2];
+/* copy to be used when resetting force densities */
+       node_f.scforce_density[(0+ii*3)*para.number_of_nodes + index]=p[0];
+       node_f.scforce_density[(1+ii*3)*para.number_of_nodes + index]=p[1];
+       node_f.scforce_density[(2+ii*3)*para.number_of_nodes + index]=p[2];
     }
   }
 #endif 
