@@ -68,14 +68,16 @@ The LBM should
 parameters that were applied.
 
 In the following, we describe a number of optional parameters.
-The parameter ``ext_force`` takes a three dimensional vector as an `array_like`, representing a homogeneous external body force density in MD units to be applied to the fluid. The
+The parameter ``ext_force_density`` takes a three dimensional vector as an
+`array_like`, representing a homogeneous external body force density in MD
+units to be applied to the fluid. The
 parameter ``bulk_visc`` allows one to tune the bulk viscosity of the fluid and is given in
 MD units. In the limit of low Mach number, the flow does not compress the fluid and the resulting flow field is therefore independent of the bulk viscosity. It is however known that the value of the viscosity does affect
 the quality of the implemented link-bounce-back method. ``gamma_even`` and ``gamma_odd`` are the
 relaxation parameters for the kinetic modes. These fluid parameters do not correspond to any macroscopic fluid properties, but do influence numerical properties of the algorithm, such as the magnitude of the error at boundaries. Unless you are an expert, leave their defaults unchanged. If you do change them, note that they are to be given in LB units.
 
 Before running a simulation at least the following parameters must be
-set up: ``agrid``, ``tau``, ``visc``, ``dens``, ``fric``. For the other parameters, the following are taken: ``bulk_visc=0``, ``gamma_odd=0``, ``gamma_even=0``, ``ext_force=[0,0,0]``.
+set up: ``agrid``, ``tau``, ``visc``, ``dens``, ``fric``. For the other parameters, the following are taken: ``bulk_visc=0``, ``gamma_odd=0``, ``gamma_even=0``, ``ext_force_density=[0,0,0]``.
 
 ..
     If the feature ``SHANCHEN`` is activated, the Lattice Boltzmann code (so far GPU

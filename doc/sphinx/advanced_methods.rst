@@ -544,7 +544,7 @@ Specification of fluid and movement
 ::
 
     lbf = espressomd.lb.LBFluid(agrid = 1, dens = 1.0, visc = 1.5, 
-        tau = time_step, fric = 1.5, ext_force = [0.002, 0.0, 0.0])
+        tau = time_step, fric = 1.5, ext_force_density = [0.002, 0.0, 0.0])
     system.actors.add(lbf)
 
 This part of the script specifies the fluid that will get the system
@@ -553,7 +553,7 @@ step, ``tau`` is the time step that will be the same as the time step
 for particles, viscosity ``visc`` and density ``dens`` of the fluid are
 physical parameters scaled to lattice units. ``fric`` is a
 (non-physical) friction parameter that enters the fluid-object
-interaction and has to be set carefully. Finally, ``ext_force`` sets the
+interaction and has to be set carefully. Finally, ``ext_force_density`` sets the
 force-per-unit-volume vector that drives the fluid. Another option to
 add momentum to fluid is by specifying the velocity on the boundaries.
 
@@ -1579,7 +1579,7 @@ Diffusive Species
 ^^^^^^^^^^^^^^^^^
 ::
 
-    species = electrokinetics.Species(density=density, D=D, valency=valency, ext_force=ext_force)
+    species = electrokinetics.Species(density=density, D=D, valency=valency, ext_force_density=ext_force)
 
 :class:`espressomd.electrokinetics.Species` is used to initialize a diffusive species. Here the
 options specify: the number density ``density``, the diffusion coefficient ``D``, the
@@ -1592,8 +1592,11 @@ it is possible to choose parameters for which the LB is more stable. The species
 
     ek.add_species(species)
 
-The LB fluid must be set up before using :class:`espressomd.electrokinetics.Electrokinetics` as shown above, before a diffusive species can be added. The variables ``density``, ``D``, and ``valency`` must be set to properly initialize the diffusive species; the ``ext_force`` is
-optional.
+The LB fluid must be set up before using
+:class:`espressomd.electrokinetics.Electrokinetics` as shown above, before a
+diffusive species can be added. The variables ``density``, ``D``, and
+``valency`` must be set to properly initialize the diffusive species; the
+``ext_force_density`` is optional.
 
 .. _Boundaries:
 
@@ -1613,7 +1616,11 @@ by the option ``charge_density``, with which a boundary can be endowed with a vo
 charge density. To create a surface charge density, a combination of two
 oppositely charged boundaries, one inside the other, can be used.
 However, care should be taken to maintain the surface charge density when the value of ``agrid``
-is changed. Examples for possible shapes are wall, sphere, ellipsoid, cylinder, rhomboid and hollowcone. We refer to the documentation of the :class:`espressomd.shapes` module for more possible shapes and information on the options associated to these shapes. In order to properly set up the boundaries, the ``charge_density`` and ``shape``
+is changed. Examples for possible shapes are wall, sphere, ellipsoid, cylinder,
+rhomboid and hollowcone. We refer to the documentation of the
+:class:`espressomd.shapes` module for more possible shapes and information on
+the options associated to these shapes. In order to properly set up the
+boundaries, the ``charge_density`` and ``shape``
 must be specified.
 
 .. _Output:
