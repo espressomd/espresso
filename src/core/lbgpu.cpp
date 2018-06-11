@@ -165,8 +165,8 @@ static float c_sound_sq = 1.0f/3.0f;
 int i;
 
 
-int n_extern_nodeforces = 0;
-LB_extern_nodeforce_gpu *host_extern_nodeforces = nullptr;
+int n_extern_node_force_densities = 0;
+LB_extern_nodeforcedensity_gpu *host_extern_node_force_densities = nullptr;
 int ek_initialized = 0;
 
 /*-----------------------------------------------------------*/
@@ -385,7 +385,7 @@ void lb_init_gpu() {
 
 /*@}*/
 
-int lb_lbnode_set_extforce_GPU(int ind[3], double f[3])
+int lb_lbnode_set_extforce_density_GPU(int ind[3], double f[3])
 {
   if ( ind[0] < 0 || ind[0] >= int(lbpar_gpu.dim_x) ||
        ind[1] < 0 || ind[1] >= int(lbpar_gpu.dim_y) ||
@@ -395,19 +395,19 @@ int lb_lbnode_set_extforce_GPU(int ind[3], double f[3])
   unsigned int index =
     ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
 
-  size_t  size_of_extforces = (n_extern_nodeforces+1)*sizeof(LB_extern_nodeforce_gpu);
-  host_extern_nodeforces = (LB_extern_nodeforce_gpu*) Utils::realloc(host_extern_nodeforces, size_of_extforces);
+  size_t  size_of_extforces = (n_extern_node_force_densities+1)*sizeof(LB_extern_nodeforcedensity_gpu);
+  host_extern_node_force_densities = (LB_extern_nodeforcedensity_gpu*) Utils::realloc(host_extern_node_force_densities, size_of_extforces);
   
-  host_extern_nodeforces[n_extern_nodeforces].force[0] = (float)f[0];
-  host_extern_nodeforces[n_extern_nodeforces].force[1] = (float)f[1];
-  host_extern_nodeforces[n_extern_nodeforces].force[2] = (float)f[2];
+  host_extern_node_force_densities[n_extern_node_force_densities].force_density[0] = (float)f[0];
+  host_extern_node_force_densities[n_extern_node_force_densities].force_density[1] = (float)f[1];
+  host_extern_node_force_densities[n_extern_node_force_densities].force_density[2] = (float)f[2];
   
-  host_extern_nodeforces[n_extern_nodeforces].index = index;
-  n_extern_nodeforces++;
+  host_extern_node_force_densities[n_extern_node_force_densities].index = index;
+  n_extern_node_force_densities++;
   
-  if(lbpar_gpu.external_force == 0)lbpar_gpu.external_force = 1;
+  if(lbpar_gpu.external_force_density == 0)lbpar_gpu.external_force_density = 1;
 
-  lb_init_extern_nodeforces_GPU(n_extern_nodeforces, host_extern_nodeforces, &lbpar_gpu);
+  lb_init_extern_nodeforcedensities_GPU(n_extern_node_force_densities, host_extern_node_force_densities, &lbpar_gpu);
 
   return ES_OK;
 }
