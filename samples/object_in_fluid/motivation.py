@@ -37,7 +37,7 @@ cell0 = oif.OifCell(cell_type=cell_type, particle_type=0, origin=[5.0,5.0,3.0])
 cell1 = oif.OifCell(cell_type=cell_type, particle_type=1, origin=[5.0,5.0,7.0])
 
 # fluid
-lbf = espressomd.lb.LBFluid(agrid = 1, dens = 1.0, visc = 1.5, tau = 0.1, fric = 1.5 , ext_force = [0.002, 0.0, 0.0])
+lbf = espressomd.lb.LBFluid(agrid = 1, dens = 1.0, visc = 1.5, tau = 0.1, fric = 1.5 , ext_force_density = [0.002, 0.0, 0.0])
 system.actors.add(lbf)
 
 # creating boundaries and obstacles in the channel

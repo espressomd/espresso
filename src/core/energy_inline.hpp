@@ -63,7 +63,6 @@
 #include "angledist.hpp"
 #include "debye_hueckel.hpp"
 #include "elc.hpp"
-#include "endangledist.hpp"
 #include "hydrogen_bond.hpp"
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
@@ -398,11 +397,6 @@ inline void add_bonded_energy(Particle *p1) {
 #ifdef BOND_ANGLEDIST
     case BONDED_IA_ANGLEDIST:
       bond_broken = angledist_energy(p1, p2, p3, iaparams, &ret);
-      break;
-#endif
-#ifdef BOND_ENDANGLEDIST
-    case BONDED_IA_ENDANGLEDIST:
-      bond_broken = endangledist_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #endif
     case BONDED_IA_DIHEDRAL:

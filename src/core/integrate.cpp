@@ -31,7 +31,6 @@
 #include "domain_decomposition.hpp"
 #include "electrokinetics.hpp"
 #include "errorhandling.hpp"
-#include "forces_inline.hpp"
 #include "ghmc.hpp"
 #include "ghosts.hpp"
 #include "grid.hpp"
@@ -57,6 +56,8 @@
 #include "virtual_sites.hpp"
 #include "npt.hpp"
 #include "collision.hpp"
+#include "forces.hpp"
+
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -520,8 +521,6 @@ void propagate_vel_finalize_p_inst() {
       fprintf(stderr, "%d: propagate_vel_finalize_p_inst:\n", this_node));
 
   for (auto &p : local_cells.particles()) {
-    check_particle_force(&p);
-
     ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
         stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
         this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m.v[0], p.m.v[1], p.m.v[2]));
