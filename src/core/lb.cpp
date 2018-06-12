@@ -2072,7 +2072,7 @@ void lb_reinit_force_densities() {
     lbfields[index].force_density[0] = 0.0;
     lbfields[index].force_density[1] = 0.0;
     lbfields[index].force_density[2] = 0.0;
-    lbfields[index].has_force = 0;
+    lbfields[index].has_force_density = 0;
 #endif // EXTERNAL_FORCES
   }
 #ifdef LB_BOUNDARIES
@@ -2342,7 +2342,7 @@ inline void lb_relax_modes(Lattice::index_t index, double *mode) {
  * include one half-step of the force action.  See the
  * Chapman-Enskog expansion in [Ladd & Verberg]. */
 #ifndef EXTERNAL_FORCES
-  if (lbfields[index].has_force || local_cells.particles().size())
+  if (lbfields[index].has_force_density || local_cells.particles().size())
 #endif // !EXTERNAL_FORCES
   {
     j[0] += 0.5 * lbfields[index].force_density[0];
@@ -2472,7 +2472,7 @@ inline void lb_reset_force_densities(Lattice::index_t index) {
   lbfields[index].force_density[0] = 0.0;
   lbfields[index].force_density[1] = 0.0;
   lbfields[index].force_density[2] = 0.0;
-  lbfields[index].has_force = 0;
+  lbfields[index].has_force_density = 0;
 #endif // EXTERNAL_FORCES
 }
 
