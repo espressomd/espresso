@@ -4,16 +4,12 @@ import espressomd
 from espressomd import thermostat
 from espressomd import integrate
 from espressomd.virtual_sites import VirtualSitesRelative
-from espressomd.io.writer import h5md
 
 import numpy as np
 
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 system.set_random_state_PRNG()
 system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-
-sim_ID="rigid"
-h5md_file_name = "rigid.h5"
 
 system.time_step = 0.01
 skin=10.0
@@ -54,24 +50,21 @@ for n in range(branch_len):
 for n in range(branch_len):
     system.part.add(pos=[x, y, z-(n+1)], type=type_A, virtual=1)
 
-
-#############################################################
-# rigid stuff
-#############################################################
 system.virtual_sites= VirtualSitesRelative(have_velocity=True)
 
 #here we calculate the center of mass position (com) and the moment of inertia (momI) of the object
 com = system.analysis.center_of_mass(part_type=type_A)
 print("center of mass is:", com)
 
-# only change this for multiple GPUS
-#max_dist=0
-#for p in system.part:
-#    dist=np.sum((p.pos)**2)
-#    if dist>max_dist: max_dist=dist
-#max_dist=np.sqrt(max_dist)
-#print("max dist is {}".format(max_dist))
-#system.min_global_cut = max_dist
+# if using multiple nodes, we need to change min_global_cut to the largest deparation
+if system.cell_system.get_state()['n_nodes'] >1:
+    max_dist=0
+    for p in system.part:
+        dist=np.sum((p.pos-com)**2)
+        if dist>max_dist: max_dist=dist
+    max_dist=np.sqrt(max_dist)
+    print("max dist is {}".format(max_dist))
+    system.min_global_cut = max_dist
 
 mat_I=system.analysis.moment_of_inertia_matrix(p_type=type_A)
 #in this simple case, the cluster has principal axes aligned with the box
@@ -86,21 +79,12 @@ for p in system.part:
     if p.virtual:
         p.vs_auto_relate_to(p_center.id)
 
-############################################################
 
 
-h5_file = h5md.H5md(filename=h5md_file_name, write_pos=True, write_vel=False,
-                     write_force=False, write_species=True, write_mass=False,
-                     write_charge=True, write_ordered=True)
 
-h5_file.write()
-h5_file.flush()
 
 for frame in range(200):
     system.integrator.run(100)
-    h5_file.write()
-    h5_file.flush()
-h5_file.close()
 
 print("**Simulation finished")
 
