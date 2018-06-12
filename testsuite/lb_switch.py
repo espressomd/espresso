@@ -41,7 +41,7 @@ class LBSwitchActor(ut.TestCase):
 
         system.integrator.run(1)
 
-        force_on_part = -lb_fluid_1_params['fric'] * system.part[0].v
+        force_on_part = -lb_fluid_1_params['fric'] * np.copy(system.part[0].v)
 
         np.testing.assert_allclose(np.copy(system.part[0].f), force_on_part)
 
