@@ -45,6 +45,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <limits>
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_eigen.h>
 
 /** Previous particle configurations (needed for offline analysis and
     correlation analysis) */
@@ -335,7 +337,7 @@ void calc_gyration_tensor(PartCfg &partCfg, int type, std::vector<double> &gt) {
   int i, j, count;
   std::vector<double> com(3);
   double eva[3], eve0[3], eve1[3], eve2[3];
-  double tmp;
+  double rg_sqr;
   double Smatrix[9], p1[3];
 
   for (i = 0; i < 9; i++)
@@ -369,20 +371,34 @@ void calc_gyration_tensor(PartCfg &partCfg, int type, std::vector<double> &gt) {
   for (i = 0; i < 9; i++) {
     Smatrix[i] /= count;
   }
+  // create GSL workspace and populate the system to solve
+  gsl_matrix_view m = gsl_matrix_view_array(Smatrix,3,3);
+  gsl_vector *eval = gsl_vector_alloc (3);
+  gsl_matrix *evec = gsl_matrix_alloc (3, 3);
+  gsl_eigen_symmv_workspace * w =  gsl_eigen_symmv_alloc(3);
+  gsl_eigen_symmv (&m.matrix, eval, evec, w);
+  gsl_eigen_symmv_sort (eval, evec, GSL_EIGEN_SORT_ABS_DESC);
 
-  /* Calculate the eigenvalues of Smatrix */
-  i = calc_eigenvalues_3x3(Smatrix, eva);
-  tmp = 0.0;
+  // save these elements
+  for (i = 0; i < 3; i++) {
+    eva[i] = gsl_vector_get(eval, i);
+    eve0[i] = gsl_matrix_get(evec, 0, i);
+    eve1[i] = gsl_matrix_get(evec, 1, i);
+    eve2[i] = gsl_matrix_get(evec, 2, i);;
+  }
+  // free up GSL stuff: workspace, eigenvals and eigenvecs
+  gsl_eigen_symmv_free (w);
+  gsl_vector_free (eval);
+  gsl_matrix_free (evec);
+  
+  rg_sqr = 0.0;
   for (i = 0; i < 3; i++) {
     /* Eigenvalues */
     gt[i] = eva[i];
-    tmp += eva[i];
+    rg_sqr += eva[i];
   }
-
-  i = calc_eigenvector_3x3(Smatrix, eva[0], eve0);
-  i = calc_eigenvector_3x3(Smatrix, eva[1], eve1);
-  i = calc_eigenvector_3x3(Smatrix, eva[2], eve2);
-  gt[3] = tmp;                              /* Squared Radius of Gyration */
+  
+  gt[3] = rg_sqr;                              /* Squared Radius of Gyration */
   gt[4] = eva[0] - 0.5 * (eva[1] + eva[2]); /* Asphericity */
   gt[5] = eva[1] - eva[2];                  /* Acylindricity */
   gt[6] = (gt[4] * gt[4] + 0.75 * gt[5] * gt[5]) /

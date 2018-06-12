@@ -7,7 +7,6 @@ import espressomd
 from espressomd.interactions import FeneBond
 from espressomd import polymer
 
-@ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "Skipped because LENNARD_JONES turned off.")
 class AnalyzeChain(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
@@ -27,8 +26,8 @@ class AnalyzeChain(ut.TestCase):
         polymer.create_polymer(N_P=self.num_poly,
                                bond_length=0.9,
                                MPC=self.num_mono,
-                               type_neutral=self.type_mono,
-                               type_charged=self.type_mono,
+                               type_poly_neutral=self.type_mono,
+                               type_poly_charged=self.type_mono,
                                bond=fene)
         # bring two polymers to opposite corners:
         # far in centre cell, but mirror images are close
@@ -43,15 +42,15 @@ class AnalyzeChain(ut.TestCase):
 
     # python version of the espresso core function,
     # does not check mirror distances
-   def calc_principal_components():
-        cm=system.analysis.center_of_mass(0)
+    def calc_principal_components(self):
+        cm=self.system.analysis.center_of_mass(0)
         mat=np.zeros(shape=(3,3))
         for i,j in product(range(3),range(3)):
-            mat[i,j]=np.mean(((system.part[:].pos)[:,i]-cm[i])*((system.part[:].pos)[:,j]-cm[j]))
+            mat[i,j]=np.mean(((self.system.part[:].pos)[:,i]-cm[i])*((self.system.part[:].pos)[:,j]-cm[j]))
         w,v=np.linalg.eig(mat)
         rg2=(mat[0,0]+mat[1,1]+mat[2,2])
         # return eigenvalue/vector tuples in order of increasing eigenvalues
-        order=np.argsort(w)
+        order=np.argsort(np.abs(w))[::-1]
         return (w[order[0]], v[order[0]]), (w[order[1]], v[order[1]]), (w[order[2]], v[order[2]]), rg2 
 
     # python version of the espresso core function,
@@ -187,17 +186,21 @@ class AnalyzeChain(ut.TestCase):
         old_pos = self.system.part[:].pos.copy()
         self.system.box_l = self.system.box_l * 2.
         self.system.part[:].pos = old_pos
-        # compare calc_re()
-        eva0, eva1, eva2, rg2 = calc_principal_components()
+        # get results from numpy solver
+        eva0, eva1, eva2, rg2 = self.calc_principal_components()
+        # get ESPResSo's results
         res=self.system.analysis.gyration_tensor(p_type=self.type_mono)
-        res['eva0'][1]
-        self.assertTrue( np.allclose(eva0[0], res['eva0'][0]))
-        self.assertTrue( np.allclose(eva0[1], res['eva0'][1]))
-        self.assertTrue( np.allclose(eva1[0], res['eva1'][0]))
-        self.assertTrue( np.allclose(eva1[1], res['eva1'][1]))
-        self.assertTrue( np.allclose(eva2[0], res['eva2'][0]))
-        self.assertTrue( np.allclose(eva2[1], res['eva2'][1]))
+        # use np.abs() because I don't care about directions
+        self.assertTrue( np.allclose(np.abs(eva0[0]), np.abs(res['eva0'][0])))
+        self.assertTrue( np.allclose(np.abs(eva0[1]), np.abs(res['eva0'][1])))
+        self.assertTrue( np.allclose(np.abs(eva1[0]), np.abs(res['eva1'][0])))
+        self.assertTrue( np.allclose(np.abs(eva1[1]), np.abs(res['eva1'][1])))
+        self.assertTrue( np.allclose(np.abs(eva2[0]), np.abs(res['eva2'][0])))
+        self.assertTrue( np.allclose(np.abs(eva2[1]), np.abs(res['eva2'][1])))
         self.assertTrue( np.allclose(rg2, res['Rg^2']))
+        # restore PBC
+        self.system.box_l = self.system.box_l / 2.
+        self.system.part[:].pos = old_pos
 
 
 
