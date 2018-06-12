@@ -2,17 +2,18 @@ from __future__ import print_function
 import sys
 import unittest as ut
 import numpy as np
+from itertools import product
 import espressomd
 from espressomd.interactions import FeneBond
 from espressomd import polymer
 
-@ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "Skipped because LENNARD_JONES turned off.")
 class AnalyzeChain(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
     np.random.seed(1234)
     num_poly=2
     num_mono=5
+    type_mono=0
 
     @classmethod
     def setUpClass(self):
@@ -25,6 +26,8 @@ class AnalyzeChain(ut.TestCase):
         polymer.create_polymer(N_P=self.num_poly,
                                bond_length=0.9,
                                MPC=self.num_mono,
+                               type_poly_neutral=self.type_mono,
+                               type_poly_charged=self.type_mono,
                                bond=fene)
         # bring two polymers to opposite corners:
         # far in centre cell, but mirror images are close
@@ -36,6 +39,19 @@ class AnalyzeChain(ut.TestCase):
         tail_id = head_id+self.num_mono
         cm=np.mean(self.system.part[head_id:tail_id].pos, axis=0)
         self.system.part[head_id:tail_id].pos -= cm
+
+    # python version of the espresso core function,
+    # does not check mirror distances
+    def calc_principal_components(self):
+        cm=self.system.analysis.center_of_mass(0)
+        mat=np.zeros(shape=(3,3))
+        for i,j in product(range(3),range(3)):
+            mat[i,j]=np.mean(((self.system.part[:].pos)[:,i]-cm[i])*((self.system.part[:].pos)[:,j]-cm[j]))
+        w,v=np.linalg.eig(mat)
+        rg2=(mat[0,0]+mat[1,1]+mat[2,2])
+        # return eigenvalue/vector tuples in order of increasing eigenvalues
+        order=np.argsort(np.abs(w))[::-1]
+        return (w[order[0]], v[order[0]]), (w[order[1]], v[order[1]]), (w[order[2]], v[order[2]]), rg2 
 
     # python version of the espresso core function,
     # does not check mirror distances
@@ -103,7 +119,7 @@ class AnalyzeChain(ut.TestCase):
 
     # test core results versus python variants (no PBC)
     def test_radii(self):
-        # increase PBC for remove mirror images
+        # increase PBC to remove mirror images
         old_pos = self.system.part[:].pos.copy()
         self.system.box_l = self.system.box_l * 2.
         self.system.part[:].pos = old_pos
@@ -128,7 +144,7 @@ class AnalyzeChain(ut.TestCase):
 
     # test core results versus python variants (no PBC)
     def test_chain_rdf(self):
-        # increase PBC for remove mirror images
+        # increase PBC to remove mirror images
         old_pos = self.system.part[:].pos.copy()
         self.system.box_l = self.system.box_l * 2.
         self.system.part[:].pos = old_pos
@@ -163,6 +179,30 @@ class AnalyzeChain(ut.TestCase):
         # restore PBC
         self.system.box_l = self.system.box_l / 2.
         self.system.part[:].pos = old_pos
+
+    # test core results versus python variants (no PBC)
+    def test_gyration_tensor(self):
+        # increase PBC to remove mirror images
+        old_pos = self.system.part[:].pos.copy()
+        self.system.box_l = self.system.box_l * 2.
+        self.system.part[:].pos = old_pos
+        # get results from numpy solver
+        eva0, eva1, eva2, rg2 = self.calc_principal_components()
+        # get ESPResSo's results
+        res=self.system.analysis.gyration_tensor(p_type=self.type_mono)
+        # use np.abs() because I don't care about directions
+        self.assertTrue( np.allclose(np.abs(eva0[0]), np.abs(res['eva0'][0])))
+        self.assertTrue( np.allclose(np.abs(eva0[1]), np.abs(res['eva0'][1])))
+        self.assertTrue( np.allclose(np.abs(eva1[0]), np.abs(res['eva1'][0])))
+        self.assertTrue( np.allclose(np.abs(eva1[1]), np.abs(res['eva1'][1])))
+        self.assertTrue( np.allclose(np.abs(eva2[0]), np.abs(res['eva2'][0])))
+        self.assertTrue( np.allclose(np.abs(eva2[1]), np.abs(res['eva2'][1])))
+        self.assertTrue( np.allclose(rg2, res['Rg^2']))
+        # restore PBC
+        self.system.box_l = self.system.box_l / 2.
+        self.system.part[:].pos = old_pos
+
+
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())
