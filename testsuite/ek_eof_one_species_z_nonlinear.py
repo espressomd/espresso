@@ -99,7 +99,7 @@ class ek_eof_one_species_x(ut.TestCase):
             density=density_counterions,
             D=0.3,
             valency=valency,
-            ext_force=[
+            ext_force_density=[
                 0,
                 0,
                 force])
