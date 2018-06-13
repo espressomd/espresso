@@ -313,8 +313,6 @@ class WidomInsertion : public ReactionAlgorithm {
 public:
     double measure_excess_chemical_potential(int reaction_id);
 
-    std::vector<int> number_of_insertions_widom;
-    std::vector<double> summed_exponentials_widom;
 };
 
 //////////////////////////////////////////////////////////////////free functions

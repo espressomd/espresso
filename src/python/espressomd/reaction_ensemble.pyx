@@ -664,9 +664,3 @@ cdef class WidomInsertion(ReactionAlgorithm):
         
         """
         return self.WidomInsertionPtr.measure_excess_chemical_potential(int(reaction_id))
-        
-    def add_reaction(self, *args, **kwargs):
-        for i in range(2): #for back and forward reaction
-            self.WidomInsertionPtr.number_of_insertions_widom.push_back(0)
-            self.WidomInsertionPtr.summed_exponentials_widom.push_back(0)
-        super(WidomInsertion, self).add_reaction(*args, **kwargs)
