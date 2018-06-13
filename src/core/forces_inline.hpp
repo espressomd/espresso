@@ -375,7 +375,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
     }
 #else
     if (q1q2)
-      p3m_add_pair_force(q1q2, d, dist2, dist, force);
+      p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
 #endif
     break;
   }
@@ -417,7 +417,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
     if (integ_switch == INTEG_METHOD_NPT_ISO)
       nptiso.p_vir[0] += eng;
 #else
-    dp3m_add_pair_force(p1, p2, d, dist2, dist, force);
+    dp3m_add_pair_force(p1, p2, d, dist2, dist, force.data());
 #endif
     break;
   }
