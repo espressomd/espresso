@@ -768,7 +768,7 @@ class openGLLive(object):
             l = s[0].get_parameter('length')
             r = s[0].get_parameter('radius')
             self.shapes['Shapes::Cylinder'].append(
-                [pos - a * l * 0.5, pos + a * l * 0.5, r, s[1]])
+                [pos - a/np.linalg.norm(a) * l * 0.5, pos + a/np.linalg.norm(a) * l * 0.5, r, s[1]])
 
         for s in coll_shape_obj['Shapes::Ellipsoid']:
             pos = np.array(s[0].get_parameter('center'))
@@ -797,7 +797,7 @@ class openGLLive(object):
             l = s[0].get_parameter('length')
             r = s[0].get_parameter('radius')
             self.shapes['Shapes::SpheroCylinder'].append(
-                [pos - a * l * 0.5, pos + a * l * 0.5, r, s[1]])
+                [pos - a/np.linalg.norm(a) * l * 0.5, pos + a/np.linalg.norm(a) * l * 0.5, r, s[1]])
 
         for s in coll_shape_obj['Shapes::Misc']:
             self.shapes['Shapes::Misc'].append(

@@ -11,9 +11,6 @@ import espressomd.virtual_sites
 class CheckpointTest(ut.TestCase):
     @classmethod
     def setUpClass(self):
-        # Write checkpoint.
-        p = subprocess.Popen(['@CMAKE_BINARY_DIR@/pypresso', '@CMAKE_CURRENT_BINARY_DIR@/save_checkpoint.py'])
-        p.wait()
         checkpoint = espressomd.checkpointing.Checkpointing(checkpoint_id="mycheckpoint", checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
         checkpoint.load(0)
 

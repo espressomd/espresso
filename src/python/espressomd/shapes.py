@@ -10,15 +10,17 @@ class Cylinder(ScriptInterfaceHelper):
     ----------
     center : array_like :obj:`float`
              Coordinates of the center of the cylinder.
-    axis : array_like :obj:`int`
+    axis : array_like :obj:`float`
            Axis of the cylinder.
-    direction : :obj:`int`
-                Surface orientation, for +1 the normal points
-                out of the mantel, for -1 it points inward.
     radius : :obj:`float`
              Radius of the cylinder.
     length : :obj:`float`
              Length of the cylinder.
+    direction : :obj:`int`
+                Surface orientation, for +1 the normal points
+                out of the mantel, for -1 it points inward.
+    open : :obj:`bool`
+            cylinder is open or has caps.
 
     """
     _so_name = "Shapes::Cylinder"
@@ -166,13 +168,13 @@ class SpheroCylinder(ScriptInterfaceHelper):
     ----------
     center : array_like :obj:`float`
              Coordinates of the center of the cylinder.
-    axis : array_like :obj:`int`
+    axis : array_like :obj:`float`
            Axis of the cylinder.
+    radius : :obj:`float`
+             Radius of the cylinder.
     direction : :obj:`int`
                 Surface orientation, for +1 the normal points
                 out of the mantel, for -1 it points inward.
-    radius : :obj:`float`
-             Radius of the cylinder.
     length : :obj:`float`
              Length of the cylinder (not including the caps).
 

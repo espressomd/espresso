@@ -23,7 +23,6 @@
  */
 #include "thermostat.hpp"
 #include "communication.hpp"
-#include "lattice.hpp"
 #include "npt.hpp"
 #include "ghmc.hpp"
 #include "lb.hpp"

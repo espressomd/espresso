@@ -86,7 +86,7 @@ void dpd_init() {
   }
 }
 
-void dpd_switch_off(void) {
+void dpd_switch_off() {
   for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
     for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
       auto data = get_ia_param(type_a, type_b);
@@ -110,67 +110,57 @@ void dpd_update_params(double pref_scale) {
   }
 }
 
-void add_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
-                        double d[3], double dist, double dist2) {
-  int j;
-  // velocity difference between p1 and p2
-  double vel12_dot_d12 = 0.0;
-  // weighting functions for friction and random force
-  double omega, omega2; // omega = w_R/dist
-  double friction, noise;
-  // Projection martix
-  int i;
-  double P_times_dist_sqr[3][3] = {{dist2, 0, 0}, {0, dist2, 0}, {0, 0, dist2}},
-         noise_vec[3];
-  double f_D[3], f_R[3];
-  double tmp;
+static double weight(int type, double r_cut, double dist_inv) {
+  if (type == 0) {
+    return dist_inv;
+  } else {
+    return dist_inv - 1.0 / r_cut;
+  }
+}
 
+Vector3d dpd_pair_force(const Particle *p1, const Particle *p2, IA_parameters *ia_params,
+                        double *d, double dist, double dist2) {
+  Vector3d f{};
   auto const dist_inv = 1.0 / dist;
 
   if ((dist < ia_params->dpd_r_cut) && (ia_params->dpd_pref1 > 0.0)) {
-    if (ia_params->dpd_wf == 0) {
-      omega = dist_inv;
-    } else {
-      omega = dist_inv - 1.0 / ia_params->dpd_r_cut;
-    }
-
-    omega2 = Utils::sqr(omega);
+    auto const omega = weight(ia_params->dpd_wf, ia_params->dpd_r_cut, dist_inv);
+    auto const omega2 = Utils::sqr(omega);
     // DPD part
     // friction force prefactor
-    for (j = 0; j < 3; j++)
+    double vel12_dot_d12 = 0.0;
+    for (int j = 0; j < 3; j++)
       vel12_dot_d12 += (p1->m.v[j] - p2->m.v[j]) * d[j];
-    friction = ia_params->dpd_pref1 * omega2 * vel12_dot_d12 * time_step;
+    auto const friction = ia_params->dpd_pref1 * omega2 * vel12_dot_d12 * time_step;
     // random force prefactor
-    noise = ia_params->dpd_pref2 * omega * (d_random() - 0.5);
-    for (j = 0; j < 3; j++) {
-      p1->f.f[j] += (tmp = (noise - friction) * d[j]);
-      p2->f.f[j] -= tmp;
+    auto const noise = ia_params->dpd_pref2 * omega * (d_random() - 0.5);
+    for (int j = 0; j < 3; j++) {
+       f[j] += (noise - friction) * d[j];
     }
   }
   // DPD2 part
   if ((dist < ia_params->dpd_tr_cut) && (ia_params->dpd_pref3 > 0.0)) {
-    if (ia_params->dpd_twf == 0) {
-      omega = dist_inv;
-    } else {
-      omega = dist_inv - 1.0 / ia_params->dpd_tr_cut;
-    }
+    auto const omega = weight(ia_params->dpd_twf, ia_params->dpd_tr_cut, dist_inv);
+    auto const omega2 = Utils::sqr(omega);
 
-    omega2 = Utils::sqr(omega);
-
-    for (i = 0; i < 3; i++) {
+    double P_times_dist_sqr[3][3] = {{dist2, 0, 0}, {0, dist2, 0}, {0, 0, dist2}},
+            noise_vec[3];
+    for (int i = 0; i < 3; i++) {
       // noise vector
       noise_vec[i] = d_random() - 0.5;
       // Projection Matrix
-      for (j = 0; j < 3; j++) {
+      for (int j = 0; j < 3; j++) {
         P_times_dist_sqr[i][j] -= d[i] * d[j];
       }
     }
-    for (i = 0; i < 3; i++) {
+
+    double f_D[3], f_R[3];
+    for (int i = 0; i < 3; i++) {
       // Damping force
       f_D[i] = 0;
       // Random force
       f_R[i] = 0;
-      for (j = 0; j < 3; j++) {
+      for (int j = 0; j < 3; j++) {
         f_D[i] += P_times_dist_sqr[i][j] * (p1->m.v[j] - p2->m.v[j]);
         f_R[i] += P_times_dist_sqr[i][j] * noise_vec[j];
       }
@@ -179,12 +169,12 @@ void add_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
       // NOTE: noise force scales with 1/sqrt(time_step
       f_R[i] *= ia_params->dpd_pref4 * omega * dist_inv;
     }
-    for (j = 0; j < 3; j++) {
-      tmp = f_R[j] - f_D[j];
-      p1->f.f[j] += tmp;
-      p2->f.f[j] -= tmp;
+    for (int j = 0; j < 3; j++) {
+      f[j] += f_R[j] - f_D[j];
     }
   }
+
+  return f;
 }
 
 #endif
