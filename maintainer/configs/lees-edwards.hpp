@@ -5,7 +5,7 @@
 #define ROTATION
 #define ROTATIONAL_INERTIA
 #define EXTERNAL_FORCES
-#define CONSTRAINTS
+
 #define MASS
 #define EXCLUSIONS
 #define MOLFORCES

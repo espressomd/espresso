@@ -38,8 +38,7 @@ from .cellsystem import CellSystem
 from .minimize_energy import MinimizeEnergy
 from .analyze import Analysis
 from .galilei import GalileiTransform
-if CONSTRAINTS == 1:
-    from .constraints import Constraints
+from .constraints import Constraints
 
 from .accumulators import AutoUpdateAccumulators
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
@@ -126,8 +125,7 @@ cdef class System(object):
             IF COLLISION_DETECTION==1:
                 self.collision_detection = CollisionDetection()
             self.comfixed = ComFixed()
-            if CONSTRAINTS:
-                self.constraints = Constraints()
+            self.constraints = Constraints()
             IF CUDA:
                 self.cuda_init_handle = cuda_init.CudaInitHandle()
             self.galilei = GalileiTransform()
@@ -160,8 +158,7 @@ cdef class System(object):
         odict['bonded_inter'] = System.__getattribute__(self, "bonded_inter")
         odict['cell_system'] = System.__getattribute__(self, "cell_system")
         odict['comfixed'] = System.__getattribute__(self, "comfixed")
-        IF CONSTRAINTS:
-            odict['constraints'] = System.__getattribute__(self, "constraints")
+        odict['constraints'] = System.__getattribute__(self, "constraints")
         odict['galilei'] = System.__getattribute__(self, "galilei")
         odict['integrator'] = System.__getattribute__(self, "integrator")
         IF LB_BOUNDARIES or LB_BOUNDARIES_GPU:

@@ -24,6 +24,7 @@
 #include "initialize.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "constraints.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 #include "debye_hueckel.hpp"
@@ -33,6 +34,7 @@
 #include "forces.hpp"
 #include "ghmc.hpp"
 #include "ghosts.hpp"
+#include "global.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "iccp3m.hpp" /* -iccp3m- */
@@ -55,17 +57,16 @@
 #include "pressure.hpp"
 #include "random.hpp"
 #include "rattle.hpp"
-#include "swimmer_reaction.hpp"
 #include "reaction_ensemble.hpp"
 #include "reaction_field.hpp"
 #include "rotation.hpp"
 #include "scafacos.hpp"
 #include "statistics.hpp"
-#include "thermostat.hpp"
+#include "swimmer_reaction.hpp"
 #include "thermalized_bond.hpp"
+#include "thermostat.hpp"
 #include "utils.hpp"
-#include "global.hpp"
-#include "utils/mpi/all_compare.hpp" 
+#include "utils/mpi/all_compare.hpp"
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
 static int reinit_electrostatics = 0;
@@ -200,24 +201,24 @@ void on_integration_start() {
 
 #ifdef ADDITIONAL_CHECKS
 
-  if(!Utils::Mpi::all_compare(comm_cart, cell_structure.type)) {
+  if (!Utils::Mpi::all_compare(comm_cart, cell_structure.type)) {
     runtimeErrorMsg() << "Nodes disagree about cell system type.";
   }
 
-  if(!Utils::Mpi::all_compare(comm_cart, get_resort_particles())) {
+  if (!Utils::Mpi::all_compare(comm_cart, get_resort_particles())) {
     runtimeErrorMsg() << "Nodes disagree about resort type.";
   }
 
-  if(!Utils::Mpi::all_compare(comm_cart, cell_structure.use_verlet_list)) {
+  if (!Utils::Mpi::all_compare(comm_cart, cell_structure.use_verlet_list)) {
     runtimeErrorMsg() << "Nodes disagree about use of verlet lists.";
   }
 
 #ifdef ELECTROSTATICS
-  if (!Utils::Mpi::all_compare(comm_cart,coulomb.method))
+  if (!Utils::Mpi::all_compare(comm_cart, coulomb.method))
     runtimeErrorMsg() << "Nodes disagree about Coulomb long range method";
 #endif
 #ifdef DIPOLES
-  if (!Utils::Mpi::all_compare(comm_cart,coulomb.Dmethod))
+  if (!Utils::Mpi::all_compare(comm_cart, coulomb.Dmethod))
     runtimeErrorMsg() << "Nodes disagree about dipolar long range method";
 #endif
   check_global_consistency();
@@ -477,6 +478,8 @@ void on_boxl_change() {
 #endif
   }
 #endif
+
+  Constraints::constraints.on_boxl_change();
 }
 
 void on_cell_structure_change() {
@@ -553,7 +556,6 @@ void on_temperature_change() {
     }
   }
 #endif
-
 }
 
 void on_parameter_change(int field) {
@@ -564,16 +566,16 @@ void on_parameter_change(int field) {
   case FIELD_BOXL:
     grid_changed_box_l();
 #ifdef SCAFACOS
-    #ifdef ELECTROSTATICS
+#ifdef ELECTROSTATICS
     if (coulomb.method == COULOMB_SCAFACOS) {
-      Scafacos::update_system_params(); 
+      Scafacos::update_system_params();
     }
-    #endif
-    #ifdef DIPOLES
+#endif
+#ifdef DIPOLES
     if (coulomb.Dmethod == DIPOLAR_SCAFACOS) {
-      Scafacos::update_system_params(); 
+      Scafacos::update_system_params();
     }
-    #endif
+#endif
 
 #endif
     /* Electrostatics cutoffs mostly depend on the system size,
@@ -589,16 +591,16 @@ void on_parameter_change(int field) {
     cells_on_geometry_change(0);
   case FIELD_PERIODIC:
 #ifdef SCAFACOS
-    #ifdef ELECTROSTATICS
+#ifdef ELECTROSTATICS
     if (coulomb.method == COULOMB_SCAFACOS) {
-      Scafacos::update_system_params(); 
+      Scafacos::update_system_params();
     }
-    #endif
-    #ifdef DIPOLES
+#endif
+#ifdef DIPOLES
     if (coulomb.Dmethod == DIPOLAR_SCAFACOS) {
-      Scafacos::update_system_params(); 
+      Scafacos::update_system_params();
     }
-    #endif
+#endif
 
 #endif
     cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
@@ -743,8 +745,7 @@ void on_ghost_flags_change() {
     ghosts_have_v = 1;
   };
 #endif
-  //THERMALIZED_DIST_BOND needs v to calculate v_com and v_dist for thermostats
+  // THERMALIZED_DIST_BOND needs v to calculate v_com and v_dist for thermostats
   if (n_thermalized_bonds)
     ghosts_have_v = 1;
-
 }

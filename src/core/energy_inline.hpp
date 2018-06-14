@@ -72,13 +72,6 @@
 #include "subt_lj.hpp"
 #include "twist_stack.hpp"
 
-#ifdef CONSTRAINTS
-#include "constraints.hpp"
-#endif
-
-#ifdef EXTERNAL_FORCES
-#endif
-
 #include "energy.hpp"
 
 /** Calculate non bonded energies between a pair of particles.
@@ -499,9 +492,6 @@ inline void add_kinetic_energy(Particle *p1) {
 inline void add_single_particle_energy(Particle *p) {
   add_kinetic_energy(p);
   add_bonded_energy(p);
-#ifdef CONSTRAINTS
-  add_constraints_energy(p);
-#endif
 }
 
 #endif // ENERGY_INLINE_HPP
