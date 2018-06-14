@@ -51,7 +51,6 @@ class ThermoTest(ut.TestCase):
     def setUp(self):
         self.es.time = 0.0
         self.es.part.clear()
-        print("\n")
 
     def generate_scalar_ranged_rnd(self, min_par, max_par):
         """
@@ -287,10 +286,10 @@ class ThermoTest(ut.TestCase):
         dt0 = self.mass / self.gamma_tran_p_validate
 
         loops = 200
-        print("Thermalizing...")
+        # Thermalizing...
         therm_steps = 20
         self.es.integrator.run(therm_steps)
-        print("Measuring...")
+        # Measuring...
 
         int_steps = 5
         for i in range(loops):
@@ -334,9 +333,6 @@ class ThermoTest(ut.TestCase):
         dr_norm /= (n * loops)
         
         for k in range(2):
-            print("\n")
-            print("k = " + str(k))
-
             self.assertLessEqual(
                 abs(
                     dv[k]),
