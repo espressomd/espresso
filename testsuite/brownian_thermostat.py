@@ -94,7 +94,7 @@ class BrownianThermostat(ut.TestCase):
         s.integrator.run(100)
 
         # Sampling
-        loops = 4000
+        loops = 13
         v_stored = np.zeros((N * loops, 3))
         omega_stored = np.zeros((N * loops, 3))
         for i in range(loops):
