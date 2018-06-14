@@ -532,5 +532,4 @@ class ThermoTest(ut.TestCase):
         self.check_fluctuation_dissipation(n)
 
 if __name__ == '__main__':
-    print("Features: ", espressomd.features())
     ut.main()
