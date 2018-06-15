@@ -82,15 +82,13 @@ inline void vector_subt(double res[3], double a[3], double b[3]) {
 
 /** permute an integer array field of size size about permute positions. */
 inline void permute_ifield(int *field, int size, int permute) {
-  int i, tmp;
-
   if (permute == 0)
     return;
   if (permute < 0)
     permute = (size + permute);
   while (permute > 0) {
-    tmp = field[0];
-    for (i = 1; i < size; i++)
+    int tmp = field[0];
+    for (int i = 1; i < size; i++)
       field[i - 1] = field[i];
     field[size - 1] = tmp;
     permute--;
@@ -183,10 +181,8 @@ template <typename T> double sqrlen(T const &v) {
 
 /** calculates unit vector */
 inline void unit_vector(double v[3], double y[3]) {
-  double d = 0.0;
+  double d = sqrt(sqrlen(v));
   int i;
-  d = sqrt(sqrlen(v));
-
   for (i = 0; i < 3; i++)
     y[i] = v[i] / d;
 
@@ -251,7 +247,7 @@ inline int calc_eigenvalues_3x3(double *q, double *eva) {
   double q11, q22, q33, q12, q13, q23;
   double a, b, c;
   double QQ, R, R2, QQ3;
-  double theta, root1, root2, x1, x2, x3, help;
+  double x1, x2, x3, help;
   int anzdiff = 3;
 
   /* copy tensor to local variables (This is really a fuc off code!) */
@@ -273,9 +269,9 @@ inline int calc_eigenvalues_3x3(double *q, double *eva) {
   R2 = R * R;
 
   if (R2 < QQ3) {
-    theta = acos(R / sqrt(QQ3));
-    root1 = sqrt(QQ) * cos(theta / 3.0);
-    root2 = sqrt(QQ * 3.0) * sin(theta / 3.0);
+    double theta = acos(R / sqrt(QQ3));
+    double root1 = sqrt(QQ) * cos(theta / 3.0);
+    double root2 = sqrt(QQ * 3.0) * sin(theta / 3.0);
     x1 = -2 * root1 - a / 3.0;
     x2 = root1 - root2 - a / 3.0;
     x3 = root1 + root2 - a / 3.0;
@@ -333,7 +329,7 @@ inline int calc_eigenvalues_3x3(double *q, double *eva) {
 /** Calc eigevectors of a 3x3 matrix stored in a as a 9x1 array*/
 /** Given an eigenvalue (eva) returns the corresponding eigenvector (eve)*/
 inline int calc_eigenvector_3x3(double *a, double eva, double *eve) {
-  int i, j, ind1, ind2, ind3, row1, row2;
+  int i, j, ind1, row2;
   double A_x1[3][3], coeff1, coeff2, norm;
 
   /* build (matrix - eva*unity) */
@@ -345,9 +341,9 @@ inline int calc_eigenvector_3x3(double *a, double eva, double *eve) {
 
   /* solve the linear equation system */
   for (ind1 = 0; ind1 < 3; ind1++) {
-    ind2 = (ind1 + 1) % 3;
-    ind3 = (ind1 + 2) % 3;
-    row1 = 0;
+    int ind2 = (ind1 + 1) % 3;
+    int ind3 = (ind1 + 2) % 3;
+    int row1 = 0;
     do {
       row1++;
     } while ((row1 < 3) && (A_x1[ind3][row1] == 0));
@@ -618,7 +614,7 @@ struct vector_size_unequal : public std::exception {
 
 template <typename T>
 std::vector<T> cross_product(const std::vector<T> &a,
-                             const std::vector<T> &b) throw() {
+                             const std::vector<T> &b) {
   if (a.size() != 3 && b.size() != 3)
     throw vector_size_unequal();
 
@@ -641,7 +637,7 @@ void cross_product(const T1& a, const T2& b, T3& c) {
 //
 
 template <typename T>
-double dot_product(const std::vector<T> &a, const std::vector<T> &b) throw() {
+double dot_product(const std::vector<T> &a, const std::vector<T> &b) {
   if (a.size() != b.size())
     throw vector_size_unequal();
 
@@ -665,14 +661,14 @@ template <typename T> double dot_product(T const *const a, T const *const b) {
 template <typename T> double sqrlen(const std::vector<T> &a) {
   double c = 0;
   typename std::vector<T>::const_iterator i;
-  for (i = a.begin(); i != a.end(); i++)
+  for (i = a.begin(); i != a.end(); ++i)
     c += (*i) * (*i);
   return c;
 }
 
 template <typename T> double sqrlen(T const *const a) {
   double c = 0;
-  for (int i = 0; i < 3; i++)
+  for (int i = 0; i < 3; ++i)
     c += a[i] * a[i];
   return c;
 }
@@ -691,7 +687,7 @@ template <typename T> double veclen(T const *const a) {
 
 template <typename T>
 std::vector<T> vecsub(const std::vector<T> &a,
-                      const std::vector<T> &b) throw() {
+                      const std::vector<T> &b) {
   if (a.size() != b.size())
     throw vector_size_unequal();
 

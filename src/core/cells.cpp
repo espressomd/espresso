@@ -288,7 +288,7 @@ void announce_resort_particles() {
                 comm_cart);
 
   INTEG_TRACE(fprintf(stderr,
-                      "%d: announce_resort_particles: resort_particles=%d\n",
+                      "%d: announce_resort_particles: resort_particles=%u\n",
                       this_node, resort_particles));
 }
 
