@@ -214,7 +214,7 @@ class Analysis(object):
         if (p_type < 0 or p_type >= c_analyze.max_seen_particle_type):
             raise ValueError("Particle type", p_type, "does not exist!")
 
-        return c_analyze.centerofmass(c_analyze.partCfg(), part_type)
+        return c_analyze.centerofmass(c_analyze.partCfg(), p_type)
 
     # get all particles in neighborhood r_catch of pos and return their ids
     # in il. plane can be used to specify the distance in the xy, xz or yz
@@ -1142,10 +1142,10 @@ class Analysis(object):
         if (p_type < 0 or p_type >= c_analyze.max_seen_particle_type):
             raise ValueError("Particle type", p_type, "does not exist!")
 
-        cm=system.analysis.center_of_mass(p_type)
+        cm=self.center_of_mass(p_type)
         mat=np.zeros(shape=(3,3))
-        for i,j in product(range(3),range(3)):
-            mat[i,j]=np.mean(((system.part[:].pos)[:,i]-cm[i])*((system.part[:].pos)[:,j]-cm[j]))
+        for i,j in np.ndindex((3,3)):
+            mat[i,j]=np.mean(((self._system.part[:].pos)[:,i]-cm[i])*((self._system.part[:].pos)[:,j]-cm[j]))
         w,v=np.linalg.eig(mat)
         # return eigenvalue/vector tuples in order of increasing eigenvalues
         order = np.argsort(np.abs(w))[::-1]
@@ -1154,13 +1154,13 @@ class Analysis(object):
         acylindric = w[order[1]] - w[order[2]]
         rel_shape_anis = (aspheric**2 +0.75*acylindric**2) / rad_gyr_sqr**2
         return{
-        "Rg^2": (rad_gyr,
-        "shape": [asphericity,
+        "Rg^2": rad_gyr_sqr,
+        "shape": [aspheric,
                   acylindric,
-                  rel_shape_anis]
-        "eva0": w[order[0]], v[:,order[0]])
-        "eva1": w[order[1]], v[:,order[1]])
-        "eva0": w[order[2]], v[:,order[2]])}
+                  rel_shape_anis],
+        "eva0": (w[order[0]], v[:,order[0]]),
+        "eva1": (w[order[1]], v[:,order[1]]),
+        "eva2": (w[order[2]], v[:,order[2]])}
 
     #
     # momentofinertiamatrix
