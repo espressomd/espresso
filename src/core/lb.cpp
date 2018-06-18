@@ -2032,6 +2032,11 @@ void lb_reinit_parameters() {
      */
     lb_coupl_pref = sqrt(12. * 2. * lbpar.friction * temperature / time_step);
     lb_coupl_pref2 = sqrt(2. * lbpar.friction * temperature / time_step);
+    LB_TRACE(fprintf(
+      stderr, "%d: lbpar.gamma_shear=%lf lbpar.gamma_bulk=%lf shear_fluct=%lf "
+              "bulk_fluct=%lf mu=%lf, bulkvisc=%lf, visc=%lf\n",
+      this_node, lbpar.gamma_shear, lbpar.gamma_bulk, lbpar.phi[9],
+      lbpar.phi[4], mu, lbpar.bulk_viscosity, lbpar.viscosity));
   } else {
     /* no fluctuations at zero temperature */
     lbpar.fluct = 0;
@@ -2040,11 +2045,6 @@ void lb_reinit_parameters() {
     lb_coupl_pref = 0.0;
     lb_coupl_pref2 = 0.0;
   }
-  LB_TRACE(fprintf(
-      stderr, "%d: lbpar.gamma_shear=%lf lbpar.gamma_bulk=%lf shear_fluct=%lf "
-              "bulk_fluct=%lf mu=%lf, bulkvisc=%lf, visc=%lf\n",
-      this_node, lbpar.gamma_shear, lbpar.gamma_bulk, lbpar.phi[9],
-      lbpar.phi[4], mu, lbpar.bulk_viscosity, lbpar.viscosity));
 }
 
 /** Resets the forces on the fluid nodes */
