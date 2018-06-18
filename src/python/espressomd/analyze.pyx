@@ -1134,18 +1134,21 @@ class Analysis(object):
         The eigenvalues are sorted in descending order.
 
         """
-        # TODO! p_type is treated like and int now, must generalize for list of ints too
         if p_type is None:
             raise ValueError(
                 "The p_type keyword argument must be provided (particle type)")
-        check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
-        if (p_type < 0 or p_type >= c_analyze.max_seen_particle_type):
-            raise ValueError("Particle type", p_type, "does not exist!")
-
-        cm=self.center_of_mass(p_type)
+        if not hasattr(p_type, '__iter__'):
+            p_type = [p_type]
+        for type in p_type:
+            check_type_or_throw_except(type, 1, int, "particle type has to be an int")
+            if (type < 0 or type >= c_analyze.max_seen_particle_type):
+                raise ValueError("Particle type", type, "does not exist!")
+        selection = np.in1d(self._system.part[:].type, p_type)
+        
+        cm = np.mean(self._system.part[selection].pos, axis=0)
         mat=np.zeros(shape=(3,3))
         for i,j in np.ndindex((3,3)):
-            mat[i,j]=np.mean(((self._system.part[:].pos)[:,i]-cm[i])*((self._system.part[:].pos)[:,j]-cm[j]))
+            mat[i,j]=np.mean(((self._system.part[selection].pos)[:,i]-cm[i])*((self._system.part[selection].pos)[:,j]-cm[j]))
         w,v=np.linalg.eig(mat)
         # return eigenvalue/vector tuples in order of increasing eigenvalues
         order = np.argsort(np.abs(w))[::-1]
