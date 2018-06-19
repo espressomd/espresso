@@ -38,7 +38,9 @@ public:
 
   void set_velocity(Vector3d velocity) {
     m_velocity = velocity;
+#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
     lb_init_boundaries();
+#endif
   }
   void reset_force() { m_force = Vector3d{0,0,0}; }
 
