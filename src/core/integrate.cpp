@@ -806,10 +806,10 @@ void propagate_vel_pos() {
 #ifdef LEES_EDWARDS
     /* test for crossing of a y-pbc: requires adjustment of velocity.*/
     {
-      int b1, delta_box;
+      int b1;
       b1 = (int)floor(p.r.p[1] * box_l_i[1]);
       if (b1 != 0) {
-        delta_box = b1 - (int)floor((p.r.p[1] - p.m.v[1] * time_step) * box_l_i[1]);
+        int delta_box = b1 - (int)floor((p.r.p[1] - p.m.v[1] * time_step) * box_l_i[1]);
         if (abs(delta_box) > 1) {
           fprintf(stderr,
                   "Error! Particle moved more than one box length in 1 step\n");

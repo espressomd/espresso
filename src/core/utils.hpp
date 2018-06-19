@@ -82,15 +82,13 @@ inline void vector_subt(double res[3], double a[3], double b[3]) {
 
 /** permute an integer array field of size size about permute positions. */
 inline void permute_ifield(int *field, int size, int permute) {
-  int i, tmp;
-
-  if (permute == 0)
+   if (permute == 0)
     return;
   if (permute < 0)
     permute = (size + permute);
   while (permute > 0) {
-    tmp = field[0];
-    for (i = 1; i < size; i++)
+    int tmp = field[0];
+    for (int i = 1; i < size; i++)
       field[i - 1] = field[i];
     field[size - 1] = tmp;
     permute--;
@@ -467,7 +465,7 @@ struct vector_size_unequal : public std::exception {
 
 template <typename T>
 std::vector<T> cross_product(const std::vector<T> &a,
-                             const std::vector<T> &b) throw() {
+                             const std::vector<T> &b) {
   if (a.size() != 3 && b.size() != 3)
     throw vector_size_unequal();
 
@@ -490,7 +488,7 @@ void cross_product(const T1& a, const T2& b, T3& c) {
 //
 
 template <typename T>
-double dot_product(const std::vector<T> &a, const std::vector<T> &b) throw() {
+double dot_product(const std::vector<T> &a, const std::vector<T> &b) {
   if (a.size() != b.size())
     throw vector_size_unequal();
 
@@ -514,14 +512,14 @@ template <typename T> double dot_product(T const *const a, T const *const b) {
 template <typename T> double sqrlen(const std::vector<T> &a) {
   double c = 0;
   typename std::vector<T>::const_iterator i;
-  for (i = a.begin(); i != a.end(); i++)
+  for (i = a.begin(); i != a.end(); ++i)
     c += (*i) * (*i);
   return c;
 }
 
 template <typename T> double sqrlen(T const *const a) {
   double c = 0;
-  for (int i = 0; i < 3; i++)
+  for (int i = 0; i < 3; ++i)
     c += a[i] * a[i];
   return c;
 }
@@ -540,7 +538,7 @@ template <typename T> double veclen(T const *const a) {
 
 template <typename T>
 std::vector<T> vecsub(const std::vector<T> &a,
-                      const std::vector<T> &b) throw() {
+                      const std::vector<T> &b) {
   if (a.size() != b.size())
     throw vector_size_unequal();
 

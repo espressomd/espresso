@@ -46,8 +46,6 @@ struct _Fieldtype fieldtype_double = { 0, nullptr, nullptr, sizeof(double), 0, 0
  *  @param newtype newly created fieldtype (Input/Output)
  */
 void halo_create_fieldtype(int count, int* lengths, int *disps, int extent, Fieldtype *newtype) {
-  int i;
-
   Fieldtype ntype = *newtype = (Fieldtype) Utils::malloc(sizeof(*ntype));
 
   ntype->subtype = nullptr;
@@ -65,10 +63,9 @@ void halo_create_fieldtype(int count, int* lengths, int *disps, int extent, Fiel
       ntype->lengths = (int*) Utils::malloc(count*2*sizeof(int));
       ntype->disps = (int *)((char *)ntype->lengths + count*sizeof(int));
 
-      for (i=0;i<count;i++) {
-	  ntype->disps[i] = disps[i];
-	  ntype->lengths[i] = lengths[i];
-
+      for (int i=0;i<count;i++) {
+	    ntype->disps[i] = disps[i];
+	    ntype->lengths[i] = lengths[i];
       }
 
   }
@@ -207,7 +204,6 @@ void halo_copy_vector(char *r_buffer, char *s_buffer, int count,
  * @param type     field layout type
  */
 void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type) {
-  int i, j;
 
   HALO_TRACE(fprintf(
       stderr,
@@ -219,13 +215,13 @@ void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type) {
     halo_copy_vector(r_buffer, s_buffer, count, type, type->vflag);
   } else {
 
-    for (i = 0; i < count;
+    for (int i = 0; i < count;
          i++, s_buffer += type->extent, r_buffer += type->extent) {
       if (!type->count) {
         memmove(r_buffer, s_buffer, type->extent);
       } else {
 
-        for (j = 0; j < type->count; j++) {
+        for (int j = 0; j < type->count; j++) {
           memmove(r_buffer + type->disps[j], s_buffer + type->disps[j],
                   type->lengths[j]);
         }
@@ -354,8 +350,7 @@ void release_halo_communication(HaloCommunicator *hc) {
  * @param base base plane of local node
  */
 void halo_communication(HaloCommunicator *hc, char *base) {
-  int n, comm_type, s_node, r_node;
-  char *s_buffer, *r_buffer ;
+  int s_node, r_node;
 
   Fieldtype fieldtype;
   MPI_Datatype datatype;
@@ -365,13 +360,13 @@ void halo_communication(HaloCommunicator *hc, char *base) {
   HALO_TRACE(fprintf(stderr, "%d: halo_comm base=%p num=%d\n", this_node,
                      static_cast<void *>(base), hc->num));
 
-  for (n = 0; n < hc->num; n++) {
+  for (int n = 0; n < hc->num; n++) {
 
     HALO_TRACE(fprintf(stderr, "%d: halo_comm round %d\n", this_node, n));
 
-    comm_type = hc->halo_info[n].type;
-    s_buffer = (char *)base + hc->halo_info[n].s_offset;
-    r_buffer = (char *)base + hc->halo_info[n].r_offset;
+    int comm_type = hc->halo_info[n].type;
+    char *s_buffer = (char *)base + hc->halo_info[n].s_offset;
+    char *r_buffer = (char *)base + hc->halo_info[n].r_offset;
 
     switch (comm_type) {
 

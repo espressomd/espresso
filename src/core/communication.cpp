@@ -357,9 +357,9 @@ void mpi_place_particle(int pnode, int part, double p[3]) {
 }
 
 void mpi_place_particle_slave(int pnode, int part) {
-  double p[3];
 
   if (pnode == this_node) {
+    double p[3];
     MPI_Recv(p, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
     local_place_particle(part, p, 0);
   }
@@ -381,11 +381,11 @@ void mpi_place_new_particle(int pnode, int part, double p[3]) {
 }
 
 void mpi_place_new_particle_slave(int pnode, int part) {
-  double p[3];
 
   added_particle(part);
 
   if (pnode == this_node) {
+    double p[3];
     MPI_Recv(p, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
     local_place_particle(part, p, 1);
   }
@@ -531,12 +531,11 @@ void mpi_send_mu_E_slave(int pnode, int part) {
 /********************* REQ_SET_SOLV ********/
 void mpi_send_solvation(int pnode, int part, double *solvation) {
 #ifdef SHANCHEN
-  int ii;
   mpi_call(mpi_send_solvation_slave, pnode, part);
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    for (ii = 0; ii < 2 * LB_COMPONENTS; ii++)
+    for (int ii = 0; ii < 2 * LB_COMPONENTS; ii++)
       p->p.solvation[ii] = solvation[ii];
   } else {
     MPI_Send(&solvation, LB_COMPONENTS, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
@@ -1085,10 +1084,11 @@ int mpi_send_bond(int pnode, int part, int *bond, int _delete) {
 }
 
 void mpi_send_bond_slave(int pnode, int part) {
-  int bond_size = 0, *bond, _delete = 0, stat;
+  int bond_size = 0, _delete = 0, stat;
 
   if (pnode == this_node) {
     MPI_Recv(&bond_size, 1, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    int *bond;
     if (bond_size) {
       bond = (int *)Utils::malloc(bond_size * sizeof(int));
       MPI_Recv(bond, bond_size, MPI_INT, 0, SOME_TAG, comm_cart,
@@ -1582,7 +1582,6 @@ void mpi_send_ext_torque(int pnode, int part, int flag, int mask,
                          double torque[3]) {
 #ifdef EXTERNAL_FORCES
 #ifdef ROTATION
-  int s_buf[2];
   mpi_call(mpi_send_ext_torque_slave, pnode, part);
 
   if (pnode == this_node) {
@@ -1595,6 +1594,7 @@ void mpi_send_ext_torque(int pnode, int part, int flag, int mask,
     if (mask & PARTICLE_EXT_TORQUE)
       p->p.ext_torque ={torque[0],torque[1],torque[2]};
   } else {
+    int s_buf[2];
     s_buf[0] = flag;
     s_buf[1] = mask;
     MPI_Send(s_buf, 2, MPI_INT, pnode, SOME_TAG, comm_cart);
@@ -1610,8 +1610,8 @@ void mpi_send_ext_torque(int pnode, int part, int flag, int mask,
 void mpi_send_ext_torque_slave(int pnode, int part) {
 #ifdef EXTERNAL_FORCES
 #ifdef ROTATION
-  int s_buf[2] = {0, 0};
   if (pnode == this_node) {
+    int s_buf[2] = {0, 0};
     Particle *p = local_particles[part];
     MPI_Recv(s_buf, 2, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
     /* mask out old flags */
@@ -1632,7 +1632,6 @@ void mpi_send_ext_torque_slave(int pnode, int part) {
 void mpi_send_ext_force(int pnode, int part, int flag, int mask,
                         double force[3]) {
 #ifdef EXTERNAL_FORCES
-  int s_buf[2];
   mpi_call(mpi_send_ext_force_slave, pnode, part);
 
   if (pnode == this_node) {
@@ -1644,6 +1643,7 @@ void mpi_send_ext_force(int pnode, int part, int flag, int mask,
     if (mask & PARTICLE_EXT_FORCE)
       p->p.ext_force ={force[0],force[1],force[2]};
   } else {
+    int s_buf[2];
     s_buf[0] = flag;
     s_buf[1] = mask;
     MPI_Send(s_buf, 2, MPI_INT, pnode, SOME_TAG, comm_cart);
@@ -1657,8 +1657,8 @@ void mpi_send_ext_force(int pnode, int part, int flag, int mask,
 
 void mpi_send_ext_force_slave(int pnode, int part) {
 #ifdef EXTERNAL_FORCES
-  int s_buf[2] = {0, 0};
   if (pnode == this_node) {
+    int s_buf[2] = {0, 0};
     Particle *p = local_particles[part];
     MPI_Recv(s_buf, 2, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
     /* mask out old flags */
