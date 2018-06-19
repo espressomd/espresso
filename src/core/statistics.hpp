@@ -373,7 +373,6 @@ void angularmomentum(PartCfg &, int type, double *com);
  */
 
 void momentofinertiamatrix(PartCfg & partCfg, int type, double *MofImatrix);
-void calc_gyration_tensor(PartCfg & partCfg, int type, std::vector<double> &gt);
 
 /** returns the momentum of the particles in the simulation box.
  * \param result Momentum of particles.
