@@ -215,8 +215,6 @@ int lb_lbfluid_set_mobility(double *p_mobility) {
 int affinity_set_params(int part_type_a, int part_type_b, double *affinity) {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
   data->affinity_on = 0;
-  if (!data)
-    return ES_ERROR;
   for (int ii = 0; ii < LB_COMPONENTS; ii++) {
     if (affinity[ii] < 0 || affinity[ii] > 1) {
       return ES_ERROR;
@@ -845,7 +843,7 @@ int lb_lbfluid_print_boundary(char *filename) {
       k /= lbpar_gpu.dim_y;
       xyz[2] = k;
       /** print of the calculated phys values */
-      fprintf(fp, "%f %f %f %d\n", (xyz[0] + 0.5) * lbpar_gpu.agrid,
+      fprintf(fp, "%f %f %f %u\n", (xyz[0] + 0.5) * lbpar_gpu.agrid,
               (xyz[1] + 0.5) * lbpar_gpu.agrid,
               (xyz[2] + 0.5) * lbpar_gpu.agrid, bound_array[j]);
     }
@@ -1057,10 +1055,7 @@ int lb_lbfluid_load_checkpoint(char *filename, int binary) {
         assert(fscanf(cpfile, "%u", &host_checkpoint_boundary[n]) != EOF);
       }
       for (int n = 0; n < (3 * int(lbpar_gpu.number_of_nodes)); n++) {
-        if (sizeof(lbForceFloat) == sizeof(float))
-          assert(fscanf(cpfile, "%f", &host_checkpoint_force[n]) != EOF);
-        else
-          assert(fscanf(cpfile, "%f", &host_checkpoint_force[n]) != EOF);
+        assert(fscanf(cpfile, "%f", &host_checkpoint_force[n]) != EOF);
       }
     } else {
       if (fread(host_checkpoint_vd.data(), sizeof(float),
@@ -1073,12 +1068,16 @@ int lb_lbfluid_load_checkpoint(char *filename, int binary) {
         return ES_ERROR;
       if (fread(host_checkpoint_boundary.data(), sizeof(int),
                 int(lbpar_gpu.number_of_nodes),
-                cpfile) != (unsigned int)lbpar_gpu.number_of_nodes)
+                cpfile) != (unsigned int)lbpar_gpu.number_of_nodes) {
+        fclose(cpfile);
         return ES_ERROR;
+      }
       if (fread(host_checkpoint_force.data(), sizeof(lbForceFloat),
                 3 * int(lbpar_gpu.number_of_nodes),
-                cpfile) != (unsigned int)(3 * lbpar_gpu.number_of_nodes))
+                cpfile) != (unsigned int)(3 * lbpar_gpu.number_of_nodes)) {
+        fclose(cpfile);
         return ES_ERROR;
+      }
     }
     lb_load_checkpoint_GPU(
         host_checkpoint_vd.data(), host_checkpoint_seed.data(),
@@ -2002,21 +2001,13 @@ void lb_reinit_parameters() {
   // gamma_odd = 0.0;
   // gamma_even = 0.0;
 
-  // printf("lbpar.gamma_shear=%e\n", lbpar.gamma_shear);
-  // printf("lbpar.gamma_bulk=%e\n", lbpar.gamma_bulk);
-  // printf("gamma_odd=%e\n", gamma_odd);
-  // printf("gamma_even=%e\n", gamma_even);
-  // printf("\n");
-
-  double mu = 0.0;
-
   if (temperature > 0.0) {
     /* fluctuating hydrodynamics ? */
     lbpar.fluct = 1;
 
     /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).
      * Note that the modes are not normalized as in the paper here! */
-    mu = temperature / lbmodel.c_sound_sq * lbpar.tau * lbpar.tau /
+    double mu = temperature / lbmodel.c_sound_sq * lbpar.tau * lbpar.tau /
          (lbpar.agrid * lbpar.agrid);
     // mu *= agrid*agrid*agrid;  // Marcello's conjecture
     double(*e)[19] = d3q19_modebase;
@@ -2041,6 +2032,11 @@ void lb_reinit_parameters() {
      */
     lb_coupl_pref = sqrt(12. * 2. * lbpar.friction * temperature / time_step);
     lb_coupl_pref2 = sqrt(2. * lbpar.friction * temperature / time_step);
+    LB_TRACE(fprintf(
+      stderr, "%d: lbpar.gamma_shear=%lf lbpar.gamma_bulk=%lf shear_fluct=%lf "
+              "bulk_fluct=%lf mu=%lf, bulkvisc=%lf, visc=%lf\n",
+      this_node, lbpar.gamma_shear, lbpar.gamma_bulk, lbpar.phi[9],
+      lbpar.phi[4], mu, lbpar.bulk_viscosity, lbpar.viscosity));
   } else {
     /* no fluctuations at zero temperature */
     lbpar.fluct = 0;
@@ -2049,11 +2045,6 @@ void lb_reinit_parameters() {
     lb_coupl_pref = 0.0;
     lb_coupl_pref2 = 0.0;
   }
-  LB_TRACE(fprintf(
-      stderr, "%d: lbpar.gamma_shear=%lf lbpar.gamma_bulk=%lf shear_fluct=%lf "
-              "bulk_fluct=%lf mu=%lf, bulkvisc=%lf, visc=%lf\n",
-      this_node, lbpar.gamma_shear, lbpar.gamma_bulk, lbpar.phi[9],
-      lbpar.phi[4], mu, lbpar.bulk_viscosity, lbpar.viscosity));
 }
 
 /** Resets the forces on the fluid nodes */
@@ -2988,9 +2979,9 @@ void lb_lbfluid_get_interpolated_velocity(const Vector3d &p, double *v) {
  * probably makes this method preferable compared to the above one.
  */
 void calc_particle_lattice_ia() {
-  double force[3];
 
   if (transfer_momentum) {
+    double force[3];
 
     if (lbpar.resend_halo) { /* first MD step after last LB update */
 

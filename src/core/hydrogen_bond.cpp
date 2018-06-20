@@ -239,22 +239,20 @@ int calc_hydrogen_bond_force(Particle *s1, Particle *b1, Particle *b2, Particle 
   const double factor5 = f_f2*gamma2/Utils::sqr(rcb2_l);
   const double factor6 = f_f2*gamma2/Utils::sqr(rcc_l);
 
-  double fBase1, fSugar2, fBase2, fSugar1;
-  double fr, n1n, n2n;
 
 #ifdef CG_DNA_DEBUG
   int big_force = 0;
 #endif
 
   for(int i = 0; i < 3; i++) {
-    fr = f_r * rhb[i];
-    n1n = n1[i]/n1_l;
-    n2n = n2[i]/n2_l;
+    double fr = f_r * rhb[i];
+    double n1n = n1[i]/n1_l;
+    double n2n = n2[i]/n2_l;
    
-    fBase1  =  factor1*rcc[i]  - factor2 * rcb1[i];
-    fSugar2 =  factor1*rcb1[i] - factor3 * rcc[i];
-    fBase2  = -factor4*rcc[i]  - factor5 * rcb2[i];
-    fSugar1 =  factor4*rcb2[i] + factor6 * rcc[i];
+    double fBase1  =  factor1*rcc[i]  - factor2 * rcb1[i];
+    double fSugar2 =  factor1*rcb1[i] - factor3 * rcc[i];
+    double fBase2  = -factor4*rcc[i]  - factor5 * rcb2[i];
+    double fSugar1 =  factor4*rcb2[i] + factor6 * rcc[i];
 
     f_b1[i] = -fr + dot1*n1n + fBase1 + f_sb1 *rcb1[i];
     f_b2[i] =  fr - dot1*n2n + fBase2 + f_sb2 *rcb2[i];
