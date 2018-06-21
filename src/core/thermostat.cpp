@@ -23,7 +23,6 @@
  */
 #include "thermostat.hpp"
 #include "communication.hpp"
-#include "lattice.hpp"
 #include "npt.hpp"
 #include "ghmc.hpp"
 #include "lb.hpp"
@@ -89,7 +88,7 @@ double nptiso_pref4;
 #endif
 
 void thermo_init_langevin() {
-  langevin_pref1 = -langevin_gamma / time_step;
+  langevin_pref1 = -langevin_gamma;
   langevin_pref2 = sqrt(24.0 * temperature / time_step * langevin_gamma);
 
   /* If gamma_rotation is not set explicitly,
@@ -133,7 +132,7 @@ void thermo_init_npt_isotropic() {
     nptiso_pref1 = -nptiso_gamma0 * 0.5 * time_step;
 
       nptiso_pref2 =
-          sqrt(12.0 * temperature * nptiso_gamma0 * time_step) * time_step;
+          sqrt(12.0 * temperature * nptiso_gamma0 * time_step);
     nptiso_pref3 = -nptiso_gammav * (1.0 / nptiso.piston) * 0.5 * time_step;
     nptiso_pref4 = sqrt(12.0 * temperature * nptiso_gammav * time_step);
     THERMO_TRACE(fprintf(

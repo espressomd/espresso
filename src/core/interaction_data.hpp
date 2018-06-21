@@ -66,12 +66,6 @@ enum BondedInteraction {
   /** Type of bonded interaction is a bond angle -- constraint distance
      potential. */
   BONDED_IA_ANGLEDIST,
-  /** Type of bonded interaction is a bond angle -- chain ends have angle with
-     wall constraint */
-  BONDED_IA_ENDANGLEDIST,
-  /** Type of overlapped bonded interaction potential,
-      may be of bond length, of bond angle or of dihedral type. */
-  BONDED_IA_OVERLAPPED,
   /** Type of bonded interaction is a bond angle cosine potential. */
   BONDED_IA_ANGLE_HARMONIC,
   /** Type of bonded interaction is a bond angle cosine potential. */
@@ -112,14 +106,6 @@ enum TabulatedBondedInteraction {
   TAB_BOND_LENGTH = 1,
   TAB_BOND_ANGLE = 2,
   TAB_BOND_DIHEDRAL = 3
-};
-
-/** Specify overlapped bonded interactions  */
-enum OverlappedBondedInteraction {
-  OVERLAP_UNKNOWN = 0,
-  OVERLAP_BOND_LENGTH,
-  OVERLAP_BOND_ANGLE,
-  OVERLAP_BOND_DIHEDRAL
 };
 
 /** cutoff for deactivated interactions. Below 0, so that even particles on
@@ -192,7 +178,7 @@ enum DipolarInteraction {
 
 /** field containing the interaction parameters for
  *  nonbonded interactions. Access via
- * get_ia_param(i, j), i,j < n_particle_types */
+ * get_ia_param(i, j), i,j < max_seen_particle_type */
 struct IA_parameters {
   /** maximal cutoff for this pair of particle types. This contains
       contributions from the short-ranged interactions, plus any
@@ -234,26 +220,6 @@ struct IA_parameters {
   double LJGEN_b2 = 0.0;
   double LJGEN_lambda = 1.0;
   double LJGEN_softrad = 0.0;
-/*@}*/
-#endif
-
-#ifdef LJ_ANGLE
-  /** \name Directional Lennard-Jones */
-  /*@{*/
-  double LJANGLE_eps = 0.0;
-  double LJANGLE_sig = 0.0;
-  double LJANGLE_cut = INACTIVE_CUTOFF;
-  /* Locate bonded partners */
-  int LJANGLE_bonded1type = 0.0;
-  int LJANGLE_bonded1pos = 0.0;
-  int LJANGLE_bonded1neg = 0.0;
-  int LJANGLE_bonded2pos = 0.0;
-  int LJANGLE_bonded2neg = 0.0;
-  /* Optional 2nd environment */
-  double LJANGLE_z0 = 0.0;
-  double LJANGLE_dz = -1.0;
-  double LJANGLE_kappa = 0.0;
-  double LJANGLE_epsprime = 0.0;
 /*@}*/
 #endif
 
@@ -459,6 +425,8 @@ struct IA_parameters {
 
 };
 
+extern std::vector<IA_parameters> ia_params;
+
 /** thermodynamic force parameters */
 
 /** \name Compounds for Coulomb interactions */
@@ -548,20 +516,16 @@ typedef struct {
 
 /** Parameters for oif_local_forces */
 typedef struct {
-  double r0;
-  double ks;
-  double kslin;
-  double phi0;
-  double kb;
-  double A01;
-  double A02;
-  double kal;
+    double r0;
+    double ks;
+    double kslin;
+    double phi0;
+    double kb;
+    double A01;
+    double A02;
+    double kal;
+    double kvisc;
 } Oif_local_forces_bond_parameters;
-
-/** Parameters for oif_out_direction */
-typedef struct {
-
-} Oif_out_direction_bond_parameters;
 
 /** Parameters for harmonic bond Potential */
 typedef struct {
@@ -663,17 +627,6 @@ typedef struct {
   TabulatedPotential *pot;
 } Tabulated_bond_parameters;
 
-/** Parameters for n-body overlapped potential (n=2,3,4). */
-typedef struct {
-  char *filename;
-  OverlappedBondedInteraction type;
-  double maxval;
-  int noverlaps;
-  double *para_a;
-  double *para_b;
-  double *para_c;
-} Overlap_bond_parameters;
-
 #ifdef UMBRELLA
 /** Parameters for umbrella potential */
 typedef struct {
@@ -719,14 +672,6 @@ typedef struct {
   double cos_phi0;
   double sin_phi0;
 } Angledist_bond_parameters;
-
-/** Parameters for chainend angular potential with wall  */
-typedef struct {
-  double bend;
-  double phi0;
-  double distmin;
-  double distmax;
-} Endangledist_bond_parameters;
 
 typedef enum { NeoHookean, Skalak } tElasticLaw;
 
@@ -787,7 +732,6 @@ typedef union {
   Fene_bond_parameters fene;
   Oif_global_forces_bond_parameters oif_global_forces;
   Oif_local_forces_bond_parameters oif_local_forces;
-  Oif_out_direction_bond_parameters oif_out_direction;
   Harmonic_bond_parameters harmonic;
 #ifdef ROTATION
   Harmonic_dumbbell_bond_parameters harmonic_dumbbell;
@@ -800,7 +744,6 @@ typedef union {
   Angle_cossquare_bond_parameters angle_cossquare;
   Dihedral_bond_parameters dihedral;
   Tabulated_bond_parameters tab;
-  Overlap_bond_parameters overlap;
 #ifdef UMBRELLA
   Umbrella_bond_parameters umbrella;
 #endif
@@ -817,7 +760,6 @@ typedef union {
 #if defined(CG_DNA) || defined(TWIST_STACK)
   Cg_dna_stacking_parameters twist_stack;
 #endif
-  Endangledist_bond_parameters endangledist;
   IBM_Triel_Parameters ibm_triel;
   IBM_VolCons_Parameters ibmVolConsParameters;
   IBM_Tribend_Parameters ibm_tribend;
@@ -838,7 +780,7 @@ struct Bonded_ia_parameters {
  ************************************************/
 
 /** Maximal particle type seen so far. */
-extern int n_particle_types;
+extern int max_seen_particle_type;
 
 /** Structure containing the coulomb parameters. */
 extern Coulomb_parameters coulomb;
@@ -891,8 +833,8 @@ int dipolar_set_Dprefactor(double prefactor);
 /** get interaction parameters between particle sorts i and j */
 inline IA_parameters *get_ia_param(int i, int j) {
   extern std::vector<IA_parameters> ia_params;
-  extern int n_particle_types;
-  return &ia_params[i * n_particle_types + j];
+  extern int max_seen_particle_type;
+  return &ia_params[i * max_seen_particle_type + j];
 }
 
 /** get interaction parameters between particle sorts i and j.
@@ -990,12 +932,10 @@ inline bool pair_bond_exists_on(const Particle* const p, const Particle* const p
 * @param bond        enum bond type */ 
 inline bool pair_bond_enum_exists_on(const Particle * const p_bond, const Particle * const p_partner, BondedInteraction bond)
 {
-    Bonded_ia_parameters *iaparams;
-    int type_num;
     int i = 0;
     while (i < p_bond->bl.n) {
-        type_num = p_bond->bl.e[i];
-        iaparams = &bonded_ia_params[type_num];
+        int type_num = p_bond->bl.e[i];
+        Bonded_ia_parameters *iaparams = &bonded_ia_params[type_num];
         if (iaparams->type == (int)bond && p_bond->bl.e[i+1] == p_partner->p.identity) {
             return true;
         } else {

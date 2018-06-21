@@ -338,8 +338,8 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
     mass[0][particle_index][0] = current_particle.p.mass;
   /* store folded particle positions. */
   if (write_pos) {
-    Vector3d p{{current_particle.r.p}};
-    Vector<3, int> i{{current_particle.l.i}};
+    Vector3d p = current_particle.r.p;
+    Vector<3, int> i= current_particle.l.i;
     fold_position(p, i);
 
     pos[0][particle_index][0] = p[0];
@@ -351,17 +351,14 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
   }
 
   if (write_vel) {
-    // Scale the stored velocity with 1./dt to get MD units.
-    vel[0][particle_index][0] = current_particle.m.v[0] / time_step;
-    vel[0][particle_index][1] = current_particle.m.v[1] / time_step;
-    vel[0][particle_index][2] = current_particle.m.v[2] / time_step;
+    vel[0][particle_index][0] = current_particle.m.v[0];
+    vel[0][particle_index][1] = current_particle.m.v[1];
+    vel[0][particle_index][2] = current_particle.m.v[2];
   }
   if (write_force) {
-    // Scale the stored force with m/(0.5*dt**2.0) to get MD units.
-    double fac = current_particle.p.mass / (0.5 * time_step * time_step);
-    f[0][particle_index][0] = current_particle.f.f[0] * fac;
-    f[0][particle_index][1] = current_particle.f.f[1] * fac;
-    f[0][particle_index][2] = current_particle.f.f[2] * fac;
+    f[0][particle_index][0] = current_particle.f.f[0];
+    f[0][particle_index][1] = current_particle.f.f[1];
+    f[0][particle_index][2] = current_particle.f.f[2];
   }
   if (write_charge) {
 #ifdef ELECTROSTATICS
@@ -589,7 +586,6 @@ void File::WriteScript(std::string const &filename) {
 #endif
   /* First get the number of lines of the script. */
   hsize_t dims[1] = {1};
-  std::string tmp;
   std::ifstream scriptfile(m_absolute_script_path.string());
   /* Read the whole script into a buffer. */
   scriptfile.seekg(0, std::ios::end);

@@ -477,7 +477,7 @@ int set_particle_swimming(int part, ParticleParametersSwimming swim) {
 }
 #endif
 
-int set_particle_f(int part, double F[3]) {
+int set_particle_f(int part, const Vector3d &F) {
   auto const pnode = get_particle_node(part);
 
   mpi_send_f(pnode, part, F);
@@ -902,10 +902,10 @@ void local_place_particle(int part, const double p[3], int _new) {
   pt->m.v[2] += vv[2];
 #endif
 
-  memmove(pt->r.p, pp, 3 * sizeof(double));
-  memmove(pt->l.i, i, 3 * sizeof(int));
+  memmove(pt->r.p.data(), pp, 3 * sizeof(double));
+  memmove(pt->l.i.data(), i, 3 * sizeof(int));
 #ifdef BOND_CONSTRAINT
-  memmove(pt->r.p_old, pp, 3 * sizeof(double));
+  memmove(pt->r.p_old.data(), pp, 3 * sizeof(double));
 #endif
 }
 
@@ -1234,17 +1234,17 @@ int number_of_particles_with_type(int type) {
 
 #ifdef ROTATION
 void pointer_to_omega_body(Particle const *p, double const *&res) {
-  res = p->m.omega;
+  res = p->m.omega.data();
 }
 
 void pointer_to_torque_lab(Particle const *p, double const *&res) {
-  res = p->f.torque;
+  res = p->f.torque.data();
 }
 
-void pointer_to_quat(Particle const *p, double const *&res) { res = p->r.quat; }
+void pointer_to_quat(Particle const *p, double const *&res) { res = p->r.quat.data(); }
 
 void pointer_to_quatu(Particle const *p, double const *&res) {
-  res = p->r.quatu;
+  res = p->r.quatu.data();
 }
 #endif
 
@@ -1272,7 +1272,7 @@ void pointer_to_vs_relative(Particle const *p, int const *&res1,
 #endif
 
 #ifdef DIPOLES
-void pointer_to_dip(Particle const *p, double const *&res) { res = p->r.dip; }
+void pointer_to_dip(Particle const *p, double const *&res) { res = p->r.dip.data(); }
 
 void pointer_to_dipm(Particle const *p, double const *&res) {
   res = &(p->p.dipm);
@@ -1283,13 +1283,13 @@ void pointer_to_dipm(Particle const *p, double const *&res) {
 void pointer_to_ext_force(Particle const *p, int const *&res1,
                           double const *&res2) {
   res1 = &(p->p.ext_flag);
-  res2 = p->p.ext_force;
+  res2 = p->p.ext_force.data();
 }
 #ifdef ROTATION
 void pointer_to_ext_torque(Particle const *p, int const *&res1,
                            double const *&res2) {
   res1 = &(p->p.ext_flag);
-  res2 = p->p.ext_torque;
+  res2 = p->p.ext_torque.data();
 }
 #endif
 void pointer_to_fix(Particle const *p, int const *&res) {
@@ -1334,9 +1334,23 @@ void pointer_to_swimming(Particle const *p,
 
 #ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle const *p, double const *&res) {
-  res = p->p.rinertia;
+  res = p->p.rinertia.data();
 }
 #endif
+
+#ifdef AFFINITY
+void pointer_to_bond_site(Particle const* p, double const*& res) {
+  res =p->p.bond_site.data();
+}
+#endif
+
+#ifdef MEMBRANE_COLLISION
+void pointer_to_out_direction(const Particle* p, const double*& res) {
+ res = p->p.out_direction.data();
+}
+#endif
+
+
 
 bool particle_exists(int part_id) {
   if (particle_node.empty())

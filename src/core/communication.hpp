@@ -180,7 +180,7 @@ void mpi_send_swimming(int node, int part, ParticleParametersSwimming swim);
     \param node the node it is attached to.
     \param F its new force.
 */
-void mpi_send_f(int node, int part, double F[3]);
+void mpi_send_f(int node, int part, const Vector3d & F);
 
 /** issue req_set_solv: send particle solvation free energy
     also calls \ref on_particle_change.
@@ -387,6 +387,8 @@ int mpi_integrate(int n_steps, int reuse_forces);
  */
 int mpi_minimize_energy(void);
 
+void mpi_bcast_all_ia_params();
+
 /** Issue REQ_BCAST_IA: send new ia params.
     Also calls \ref on_short_range_ia_change.
 
@@ -404,7 +406,7 @@ void mpi_bcast_ia_params(int i, int j);
 /** Issue REQ_BCAST_IA_SIZE: send new size of \ref ia_params.
     \param s the new size for \ref ia_params.
 */
-void mpi_bcast_n_particle_types(int s);
+void mpi_bcast_max_seen_particle_type(int s);
 
 /** Issue REQ_GATHER: gather data for analysis in analyze.
     \param job what to do:

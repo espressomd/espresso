@@ -20,20 +20,16 @@ from __future__ import print_function, absolute_import
 from espressomd.system cimport *
 # Here we create something to handle particles
 cimport numpy as np
-from espressomd.utils cimport *
+from espressomd.utils cimport Vector3d,int_list
+from espressomd.utils import array_locked
 from libcpp cimport bool
 from libcpp.memory cimport unique_ptr
 
 include "myconfig.pxi"
 
-cdef extern from "Vector.hpp":
-    cppclass Vector3d:
-        double & operator[](int i)
-
 # Import particle data structures and setter functions from particle_data.hpp
 
 cdef extern from "particle_data.hpp":
-
     # DATA STRUCTURES
 
     # Note: Conditional compilation is not possible within ctypedef blocks.
@@ -47,13 +43,13 @@ cdef extern from "particle_data.hpp":
         double mass
 
     ctypedef struct particle_position "ParticlePosition":
-        double p[3]
+        Vector3d p
 
     ctypedef struct particle_force "ParticleForce":
-        double f[3]
+        Vector3d f
 
     ctypedef struct particle_momentum "ParticleMomentum":
-        double v[3]
+        Vector3d v
 
     ctypedef struct particle_local "ParticleLocal":
         int i[3]
@@ -92,7 +88,7 @@ cdef extern from "particle_data.hpp":
 
     int set_particle_v(int part, double v[3])
 
-    int set_particle_f(int part, double F[3])
+    int set_particle_f(int part, const Vector3d &F)
 
     int set_particle_solvation(int part, double * solvation)
 
@@ -135,6 +131,17 @@ cdef extern from "particle_data.hpp":
         int set_particle_torque_body(int part, double torque[3])
         void pointer_to_omega_body(const particle * p, const double * & res)
         void pointer_to_torque_lab(const particle * p, const double * & res)
+
+    IF MEMBRANE_COLLISION:
+        int set_particle_out_direction(int part, double out_direction[3])
+        void pointer_to_out_direction(particle*  p, double*& res)
+        
+    IF AFFINITY:
+        int set_particle_affinity(int part, double bond_site[3])
+        void pointer_to_bond_site(particle*  p, double*& res)
+
+    IF MASS == 1:
+        void pointer_to_mass(particle * p, double * & res)
 
     IF DIPOLES:
         int set_particle_dip(int part, double dip[3])
@@ -228,16 +235,19 @@ cdef extern from "interaction_data.hpp":
     cdef int n_bonded_ia
 
 cdef class ParticleHandle(object):
-    cdef public int id
-    cdef bint valid
+    cdef public int _id
     cdef const particle * particle_data
     cdef int update_particle_data(self) except -1
 
 cdef class _ParticleSliceImpl:
     cdef public id_selection
+    cdef int _chunk_size
 
 cdef extern from "grid.hpp":
     Vector3d folded_position(const particle *)
     Vector3d unfolded_position(const particle *)
     cdef void fold_position(double *, int*)
     void unfold_position(double pos[3], int image_box[3])
+
+cdef make_array_locked(const Vector3d &v)
+

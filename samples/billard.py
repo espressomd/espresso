@@ -101,14 +101,14 @@ def main():
     types = {'cue_ball': 0,'striped_ball':1, 'solid_ball':2,'black_ball':3, 'table':4,'wall':5,'hole':6}
 
 
-    system.constraints.add(shape=Wall(dist=table_h,normal=[0.0,1.0,0.0]),particle_type=types['table'],penetrable=1)
+    system.constraints.add(shape=Wall(dist=table_h,normal=[0.0,1.0,0.0]),particle_type=types['table'],penetrable=True)
 
-    system.constraints.add(shape=Wall(dist=0.01,normal=[1.0,0.0,0.0]),particle_type=types['wall'],penetrable=1)
-    system.constraints.add(shape=Wall(dist=-(table_dim[0]-0.01),normal=[-1.0,0.0,0.0]),particle_type=types['wall'],penetrable=1)
-    system.constraints.add(shape=Wall(dist=0.01,normal=[0.0,0.0,1.0]),particle_type=types['wall'],penetrable=1)
-    system.constraints.add(shape=Wall(dist=-(table_dim[1]-0.01),normal=[0.0,0.0,-1.0]),particle_type=types['wall'],penetrable=1)
+    system.constraints.add(shape=Wall(dist=0.01,normal=[1.0,0.0,0.0]),particle_type=types['wall'],penetrable=True)
+    system.constraints.add(shape=Wall(dist=-(table_dim[0]-0.01),normal=[-1.0,0.0,0.0]),particle_type=types['wall'],penetrable=True)
+    system.constraints.add(shape=Wall(dist=0.01,normal=[0.0,0.0,1.0]),particle_type=types['wall'],penetrable=True)
+    system.constraints.add(shape=Wall(dist=-(table_dim[1]-0.01),normal=[0.0,0.0,-1.0]),particle_type=types['wall'],penetrable=True)
     for h in hole_pos:
-        system.constraints.add(shape=Cylinder(center=(np.array(h)-np.array([0,table_h*0.5,0])).tolist(), axis=[0,1,0],radius = hole_rad, length = 1.02*table_h, direction = 1),particle_type=types['hole'], penetrable=1)
+        system.constraints.add(shape=Cylinder(center=(np.array(h)-np.array([0,table_h*0.5,0])).tolist(), axis=[0,1,0],radius = hole_rad, length = 1.02*table_h, direction = 1),particle_type=types['hole'], penetrable=True)
 
     lj_eps = np.array([1])
     lj_sig = np.array([ball_diam])

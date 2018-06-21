@@ -8,7 +8,7 @@ system = espressomd.System(box_l=[10.0, 10.0, 5.0])
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 
-lb_fluid = espressomd.lb.LBFluid(agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01, ext_force=[0, 0, 0.15])
+lb_fluid = espressomd.lb.LBFluid(agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01, ext_force_density=[0, 0, 0.15])
 system.actors.add(lb_fluid)
 
 cylinder_shape = espressomd.shapes.Cylinder(

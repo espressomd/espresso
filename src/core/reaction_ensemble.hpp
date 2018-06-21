@@ -320,42 +320,5 @@ double
 calculate_factorial_expression(SingleReaction &current_reaction,
                                std::map<int,int>& old_particle_numbers);
 double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
-
-/**
-*Calculates the average of an array (used for the histogram of the
-*Wang-Landau algorithm). It excludes values which are initialized to be
-*negative. Those values indicate that the Wang-Landau algorithm should not
-*sample those values. The values still occur in the list because we can only
-*store "rectangular" value ranges.
-*/
-
-template <typename T>
-double average_list_of_allowed_entries(std::vector<T> vector) {
-  double result = 0.0;
-  int counter_allowed_entries = 0;
-  for (int i = 0; i < vector.size(); i++) {
-    if (vector[i] >= 0) { // checks for validity of index i (think of energy
-                          // collective variables, in a cubic memory layout
-                          // there will be indices which are not allowed by
-                          // the energy boundaries. These values will be
-                          // initalized with a negative fill value)
-      result += static_cast<double>(vector[i]);
-      counter_allowed_entries += 1;
-    }
-  }
-  return result / counter_allowed_entries;
-}
-
-/**
-* Checks wether a number is in a std:vector of numbers.
-*/
-template <typename T> bool is_in_list(T value, std::vector<T> list) {
-  for (int i = 0; i < list.size(); i++) {
-    if (std::abs(list[i] - value) < std::numeric_limits<double>::epsilon())
-      return true;
-  }
-  return false;
-}
-
 }
 #endif

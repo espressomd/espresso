@@ -11,7 +11,14 @@ namespace LBBoundaries {
 class LBBoundary : public AutoParameters<LBBoundary> {
 public:
   LBBoundary() : m_lbboundary(new ::LBBoundaries::LBBoundary()) {
-    add_parameters({{"velocity", m_lbboundary->velocity()},
+    add_parameters({{"velocity",
+                     [this](Variant const &value) {
+                       m_lbboundary->set_velocity(get_value<Vector3d>(value));
+                     },
+                     [this]() {
+                       return m_lbboundary->velocity();
+                     }
+                    },
                     {"shape",
                      [this](Variant const &value) {
                        m_shape =

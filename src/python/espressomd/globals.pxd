@@ -39,6 +39,7 @@ cdef extern from "global.hpp":
     IF NPT:
         int FIELD_NPTISO_G0
         int FIELD_NPTISO_GV
+    int FIELD_MAX_OIF_OBJECTS
 
     void mpi_bcast_parameter(int p)
 
@@ -79,7 +80,7 @@ cdef extern from "interaction_data.hpp":
     double dpd_r_cut
     extern double max_cut
     extern int max_seen_particle
-    extern int n_particle_types
+    extern int max_seen_particle_type
     extern double max_cut_nonbonded
     extern double max_cut_bonded
     extern double min_global_cut
@@ -160,3 +161,10 @@ cdef extern from "swimmer_reaction.hpp":
         int swap
 
     cdef extern reaction_struct reaction
+
+cdef extern from "object-in-fluid/oif_global_forces.hpp": 
+    int max_oif_objects
+
+cdef extern from "forcecap.hpp":
+    double forcecap_get()
+    void forcecap_set(double forcecap)

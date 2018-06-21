@@ -20,7 +20,7 @@ public:
     unsigned int maxi, maxj, maxk;
     double xoffset, yoffset, zoffset;
     double x_incr, y_incr, z_incr;
-    double p[3], v[3];
+    Vector3d p, v;
     int linear_index;
 
 #ifdef LB_GPU
@@ -68,8 +68,8 @@ public:
             p[0] = xoffset + i * x_incr;
             p[1] = yoffset + j * y_incr;
             p[2] = zoffset + k * z_incr;
-            if (lb_lbfluid_get_interpolated_velocity(p, v) != 0)
-              throw std::runtime_error("LB velocity interpolation failed.");
+            lb_lbfluid_get_interpolated_velocity(p, v.data());
+
             linear_index = 0;
             if (n_x_bins > 1)
               linear_index += i * n_y_bins * n_z_bins;

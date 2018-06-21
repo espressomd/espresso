@@ -215,30 +215,6 @@ inline void calc_bonded_force(Particle *p1, Particle *p2,
     }
     break;
 #endif
-#ifdef OVERLAPPED
-  case BONDED_IA_OVERLAPPED:
-    // printf("BONDED OVERLAP, Particle: %d, P2: %d TYPE_OVERLAP:
-    // %d\n",p1->p.identity,p2->p.identity,iparams->p.tab.type);
-    // char *errtxt;
-    switch (iaparams->p.overlap.type) {
-    case OVERLAP_BOND_LENGTH:
-      calc_overlap_bond_force(p1, p2, iaparams, dx, force);
-      break;
-    case OVERLAP_BOND_ANGLE:
-      (*i)++;
-      force[0] = force[1] = force[2] = 0;
-      break;
-    case OVERLAP_BOND_DIHEDRAL:
-      (*i) += 2;
-      force[0] = force[1] = force[2] = 0;
-      break;
-    default:
-      runtimeErrorMsg() << "calc_bonded_force: overlapped bond type of atom "
-                        << p1->p.identity << " unknown\n";
-      return;
-    }
-    break;
-#endif
 #ifdef BOND_CONSTRAINT
   case BONDED_IA_RIGID_BOND:
     force[0] = force[1] = force[2] = 0;
@@ -528,13 +504,13 @@ inline void add_kinetic_virials(Particle *p1, int v_comp) {
   /* kinetic energy */
   {
     if (v_comp)
-      virials.data.e[0] += (Utils::sqr(p1->m.v[0] - p1->f.f[0]) +
-                            Utils::sqr(p1->m.v[1] - p1->f.f[1]) +
-                            Utils::sqr(p1->m.v[2] - p1->f.f[2])) *
+      virials.data.e[0] += (Utils::sqr(p1->m.v[0] * time_step - p1->f.f[0] * 0.5 * time_step * time_step / p1->p.mass) +
+                            Utils::sqr(p1->m.v[1] * time_step - p1->f.f[1] * 0.5 * time_step * time_step / p1->p.mass) +
+                            Utils::sqr(p1->m.v[2] * time_step - p1->f.f[2] * 0.5 * time_step * time_step / p1->p.mass)) *
                            (*p1).p.mass;
     else
-      virials.data.e[0] += (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) +
-                            Utils::sqr(p1->m.v[2])) *
+      virials.data.e[0] += (Utils::sqr(p1->m.v[0] * time_step) + Utils::sqr(p1->m.v[1] * time_step) +
+                            Utils::sqr(p1->m.v[2] * time_step)) *
                            (*p1).p.mass;
   }
 
@@ -543,7 +519,7 @@ inline void add_kinetic_virials(Particle *p1, int v_comp) {
   for (k = 0; k < 3; k++)
     for (l = 0; l < 3; l++)
         p_tensor.data.e[k * 3 + l] +=
-            (p1->m.v[k]) * (p1->m.v[l]) * (*p1).p.mass;
+            (p1->m.v[k]*time_step) * (p1->m.v[l]*time_step) * (*p1).p.mass;
 }
 
 #endif

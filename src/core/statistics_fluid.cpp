@@ -71,9 +71,9 @@ void lb_calc_fluid_momentum(double *result) {
 		index = get_linear_index(x,y,z,lblattice.halo_grid);
 
 		lb_calc_local_j(index,j);
-		momentum[0] += j[0] + lbfields[index].force[0];
-		momentum[1] += j[1] + lbfields[index].force[1];
-		momentum[2] += j[2] + lbfields[index].force[2];
+		momentum[0] += j[0] + lbfields[index].force_density[0];
+		momentum[1] += j[1] + lbfields[index].force_density[1];
+		momentum[2] += j[2] + lbfields[index].force_density[2];
 
 	    }
 	}

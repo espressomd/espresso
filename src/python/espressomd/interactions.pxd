@@ -64,6 +64,23 @@ cdef extern from "interaction_data.hpp":
         double LJGEN_b2
         double LJGEN_lambda
         double LJGEN_softrad
+        
+        int affinity_type;
+        double affinity_kappa;
+        double affinity_r0;
+        double affinity_Kon;
+        double affinity_Koff;
+        double affinity_maxBond;
+        double affinity_cut;
+        double membrane_a;
+        double membrane_n;
+        double membrane_cut;
+        double membrane_offset;
+        double soft_a;
+        double soft_n;
+        double soft_cut;
+        double soft_offset;
+
 
         TabulatedPotential TAB
 
@@ -103,10 +120,6 @@ cdef extern from "interaction_data.hpp":
         double BUCK_discont
         double BUCK_shift
 
-        double soft_a
-        double soft_n
-        double soft_cut
-        double soft_offset
 
         double Hertzian_eps
         double Hertzian_sig
@@ -229,6 +242,23 @@ IF HAT:
         int hat_set_params(int part_type_a, int part_type_b,
                            double Fmax, double r)
 
+IF MEMBRANE_COLLISION==1:
+    cdef extern from "object-in-fluid/membrane_collision.hpp":
+        cdef int membrane_collision_set_params(int part_type_a, int part_type_b,
+                                               double a, double n, 
+                                               double cut, double offset)
+
+IF SOFT_SPHERE==1:
+    cdef extern from "soft_sphere.hpp":
+        cdef int soft_sphere_set_params(int part_type_a, int part_type_b,
+                                               double a, double n,
+                                               double cut, double offset)
+
+IF AFFINITY==1:
+    cdef extern from "object-in-fluid/affinity.hpp":
+        cdef int affinity_set_params(int part_type_a, int part_type_b,
+                                     int afftype, double kappa, double r0, 
+                                     double Kon, double Koff, double maxBond, double cut)
 IF TABULATED==1:
     cdef extern from "tab.hpp":
         int tabulated_set_params(int part_type_a, int part_type_b,
@@ -262,6 +292,7 @@ cdef extern from "interaction_data.hpp":
         double A01
         double A02
         double kal
+        double kvisc
 
 #* Parameters for harmonic bond Potential */
     ctypedef struct Harmonic_bond_parameters:
@@ -375,13 +406,6 @@ cdef extern from "interaction_data.hpp":
         double sin_phi0
 
 
-#* Parameters for chainend angular potential with wall  */
-    ctypedef struct Endangledist_bond_parameters:
-        double bend
-        double phi0
-        double distmin
-        double distmax
-
 #* Union in which to store the parameters of an individual bonded interaction */
     ctypedef union bond_parameters "Bond_parameters":
         Fene_bond_parameters fene
@@ -402,7 +426,6 @@ cdef extern from "interaction_data.hpp":
         Subt_lj_bond_parameters subt_lj
         Rigid_bond_parameters rigid_bond
         Angledist_bond_parameters angledist
-        Endangledist_bond_parameters endangledist
 
     ctypedef struct bonded_ia_parameters:
         int type
@@ -432,7 +455,9 @@ cdef extern from "subt_lj.hpp":
 cdef extern from "object-in-fluid/oif_global_forces.hpp":
     int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g, double V0, double kv)
 cdef extern from "object-in-fluid/oif_local_forces.hpp":
-    int oif_local_forces_set_params(int bond_type, double r0, double ks, double kslin, double phi0, double kb, double A01, double A02, double kal)
+    int oif_local_forces_set_params(int bond_type, double r0, double ks, double kslin, double phi0, double kb, double A01, double A02, double kal, double kvisc)
+cdef extern from "object-in-fluid/out_direction.hpp":
+    int oif_out_direction_set_params(int bond_type)
 cdef extern from "thermalized_bond.hpp":
     int thermalized_bond_set_params(int bond_type, double temp_com, double gamma_com, double temp_distance, double gamma_distance, double r_cut)
 cdef extern from "bonded_coulomb.hpp":
@@ -450,19 +475,6 @@ IF TABULATED == 1:
             TAB_UNKNOWN = 0, TAB_BOND_LENGTH, TAB_BOND_ANGLE, TAB_BOND_DIHEDRAL
     cdef extern from "tab.hpp":
         int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_type, double min, double max, vector[double] energy, vector[double] force)
-
-IF BOND_ENDANGLEDIST == 1:
-    cdef extern from "endangledist.hpp":
-        int endangledist_set_params(int bond_type, double bend, double phi0, double distmin, double distmax)
-
-IF OVERLAPPED == 1:
-    cdef extern from "interaction_data.hpp":
-        cdef enum OverlappedBondedInteraction:
-            OVERLAP_UNKNOWN = 0, OVERLAP_BOND_LENGTH, OVERLAP_BOND_ANGLE,\
-                OVERLAP_BOND_DIHEDRAL
-    cdef extern from "overlap.hpp":
-        int overlapped_bonded_set_params(int bond_type, OverlappedBondedInteraction overlap_type,
-                                         char * filename)
 
 IF ELECTROSTATICS == 1:
     cdef extern from "bonded_coulomb.hpp":
@@ -488,13 +500,12 @@ cdef extern from "interaction_data.hpp":
         BONDED_IA_RIGID_BOND,
         BONDED_IA_VIRTUAL_BOND,
         BONDED_IA_ANGLEDIST,
-        BONDED_IA_ENDANGLEDIST,
-        BONDED_IA_OVERLAPPED,
         BONDED_IA_ANGLE_HARMONIC,
         BONDED_IA_ANGLE_COSINE,
         BONDED_IA_ANGLE_COSSQUARE,
         BONDED_IA_OIF_LOCAL_FORCES,
         BONDED_IA_OIF_GLOBAL_FORCES,
+        BONDED_IA_OIF_OUT_DIRECTION,
         BONDED_IA_CG_DNA_BASEPAIR,
         BONDED_IA_CG_DNA_STACKING,
         BONDED_IA_CG_DNA_BACKBONE,

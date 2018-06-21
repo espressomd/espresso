@@ -38,11 +38,9 @@
 #include "hat.hpp"
 #include "hertzian.hpp"
 #include "lj.hpp"
-#include "ljangle.hpp"
 #include "ljcos.hpp"
 #include "ljcos2.hpp"
 #include "ljgen.hpp"
-#include "overlap.hpp"
 #include "p3m-dipolar.hpp"
 #include "p3m.hpp"
 #include "quartic.hpp"
@@ -65,7 +63,6 @@
 #include "angledist.hpp"
 #include "debye_hueckel.hpp"
 #include "elc.hpp"
-#include "endangledist.hpp"
 #include "hydrogen_bond.hpp"
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
@@ -80,7 +77,6 @@
 #endif
 
 #ifdef EXTERNAL_FORCES
-#include "external_potential.hpp"
 #endif
 
 #include "energy.hpp"
@@ -112,11 +108,6 @@ inline double calc_non_bonded_pair_energy(const Particle *p1, const Particle *p2
 #ifdef LENNARD_JONES_GENERIC
   /* Generic lennard jones */
   ret += ljgen_pair_energy(p1, p2, ia_params, d, dist);
-#endif
-
-#ifdef LJ_ANGLE
-  /* Directional LJ */
-  ret += ljangle_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef SMOOTH_STEP
@@ -279,23 +270,23 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 */
 
 inline void add_bonded_energy(Particle *p1) {
-  Particle *p2, *p3 = nullptr, *p4 = nullptr;
+  Particle *p3 = nullptr, *p4 = nullptr;
 #ifdef TWIST_STACK
   Particle *p5 = nullptr, *p6 = nullptr, *p7 = nullptr, *p8 = nullptr;
 #endif
   Bonded_ia_parameters *iaparams;
-  int i, type_num, type, n_partners, bond_broken;
+  int i, bond_broken;
   double ret = 0, dx[3] = {0, 0, 0};
 
   i = 0;
   while (i < p1->bl.n) {
-    type_num = p1->bl.e[i++];
+    int type_num = p1->bl.e[i++];
     iaparams = &bonded_ia_params[type_num];
-    type = iaparams->type;
-    n_partners = iaparams->num;
+    int type = iaparams->type;
+    int n_partners = iaparams->num;
 
     /* fetch particle 2, which is always needed */
-    p2 = local_particles[p1->bl.e[i++]];
+    Particle *p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
       runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
                         << " and " << p1->bl.e[i - 1]
@@ -408,11 +399,6 @@ inline void add_bonded_energy(Particle *p1) {
       bond_broken = angledist_energy(p1, p2, p3, iaparams, &ret);
       break;
 #endif
-#ifdef BOND_ENDANGLEDIST
-    case BONDED_IA_ENDANGLEDIST:
-      bond_broken = endangledist_pair_energy(p1, p2, iaparams, dx, &ret);
-      break;
-#endif
     case BONDED_IA_DIHEDRAL:
       bond_broken = dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
       break;
@@ -436,25 +422,6 @@ inline void add_bonded_energy(Particle *p1) {
         break;
       default:
         runtimeErrorMsg() << "add_bonded_energy: tabulated bond type of atom "
-                          << p1->p.identity << " unknown\n";
-        return;
-      }
-      break;
-#endif
-#ifdef OVERLAPPED
-    case BONDED_IA_OVERLAPPED:
-      switch (iaparams->p.overlap.type) {
-      case OVERLAP_BOND_LENGTH:
-        bond_broken = overlap_bond_energy(p1, p2, iaparams, dx, &ret);
-        break;
-      case OVERLAP_BOND_ANGLE:
-        bond_broken = overlap_angle_energy(p1, p2, p3, iaparams, &ret);
-        break;
-      case OVERLAP_BOND_DIHEDRAL:
-        bond_broken = overlap_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
-        break;
-      default:
-        runtimeErrorMsg() << "add_bonded_energy: overlapped bond type of atom "
                           << p1->p.identity << " unknown\n";
         return;
       }
@@ -514,7 +481,7 @@ inline void add_kinetic_energy(Particle *p1) {
 
   /* kinetic energy */
   energy.data.e[0] +=
-      (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) + Utils::sqr(p1->m.v[2])) * (*p1).p.mass;
+      (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) + Utils::sqr(p1->m.v[2])) * 0.5 * p1->p.mass;
 
 #ifdef ROTATION
   if (p1->p.rotation)
@@ -522,10 +489,9 @@ inline void add_kinetic_energy(Particle *p1) {
     /* the rotational part is added to the total kinetic energy;
        Here we use the rotational inertia  */
 
-    energy.data.e[0] += (Utils::sqr(p1->m.omega[0]) * p1->p.rinertia[0] +
+    energy.data.e[0] += 0.5 * (Utils::sqr(p1->m.omega[0]) * p1->p.rinertia[0] +
                          Utils::sqr(p1->m.omega[1]) * p1->p.rinertia[1] +
-                         Utils::sqr(p1->m.omega[2]) * p1->p.rinertia[2]) *
-                        time_step * time_step;
+                         Utils::sqr(p1->m.omega[2]) * p1->p.rinertia[2]);
   }
 #endif
 }
@@ -535,9 +501,6 @@ inline void add_single_particle_energy(Particle *p) {
   add_bonded_energy(p);
 #ifdef CONSTRAINTS
   add_constraints_energy(p);
-#endif
-#ifdef EXTERNAL_FORCES
-  add_external_potential_energy(p);
 #endif
 }
 
