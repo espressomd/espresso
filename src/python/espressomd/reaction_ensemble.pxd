@@ -45,7 +45,6 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
 
     cdef cppclass CReactionEnsemble "ReactionEnsemble::ReactionEnsemble"(CReactionAlgorithm):
         CReactionEnsemble()
-        double get_excess_chemical_potential_change_during_reaction(int reaction_id)
         
     cdef cppclass CWangLandauReactionEnsemble "ReactionEnsemble::WangLandauReactionEnsemble"(CReactionAlgorithm):
         CWangLandauReactionEnsemble()
@@ -71,4 +70,4 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
 
     cdef cppclass CWidomInsertion "ReactionEnsemble::WidomInsertion"(CReactionAlgorithm):
         CWidomInsertion()
-        double measure_excess_chemical_potential(int reaction_id)
+        vector[double] measure_excess_chemical_potential(int reaction_id)

@@ -188,9 +188,12 @@ void ReactionAlgorithm::check_reaction_ensemble() {
 #endif
 }
 
-double ReactionAlgorithm::get_excess_chemical_potential_change_during_reaction(int reaction_id){
-    double const average_exponential= summed_exponentials[reaction_id] / number_of_insertions[reaction_id];
-    return -temperature * log(average_exponential);
+std::vector<double> ReactionAlgorithm::get_excess_chemical_potential_change_during_reaction(int reaction_id){
+    SingleReaction& current_reaction=reactions[reaction_id];
+    std::vector<double> result(2);
+    result[0] = -temperature*log(current_reaction.accumulator_exponentials.get_mean()[0]); //excess chemical potential
+    result[1]=-temperature/std::pow(current_reaction.accumulator_exponentials.get_mean()[0],2)*current_reaction.accumulator_exponentials.get_std_error()[0]; //error excess chemical potential, determined via error propagation
+    return result;
 }
 
 // boring helper functions
@@ -478,9 +481,8 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
       current_reaction, E_pot_old, E_pot_new, old_particle_numbers,
       old_state_index, new_state_index, only_make_configuration_changing_move);
 
-  double const exponential = exp(-1.0 / temperature * (E_pot_new - E_pot_old));
-  summed_exponentials[reaction_id] += exponential;
-  number_of_insertions[reaction_id] += 1;
+  std::vector<double> exponential = {exp(-1.0 / temperature * (E_pot_new - E_pot_old))};
+  current_reaction.accumulator_exponentials(exponential);
 
   if (d_random() < bf) {
     // accept
@@ -1793,7 +1795,7 @@ double ConstantpHEnsemble::calculate_acceptance_probability(
   return bf;
 }
 
-double WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
+std::vector<double> WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
   SingleReaction &current_reaction = reactions[reaction_id];
   const double E_pot_old = calculate_current_potential_energy_of_system();
 
@@ -1820,11 +1822,13 @@ double WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
   // 2)restore previously changed reactant particles
   restore_properties(changed_particles_properties, number_of_saved_properties);
 
-  double const exponential = exp(-1.0 / temperature * (E_pot_new - E_pot_old));
-  summed_exponentials[reaction_id] += exponential;
-  number_of_insertions[reaction_id] += 1;
-  double const average_exponential = summed_exponentials[reaction_id] / number_of_insertions[reaction_id];
-  return -temperature * log(average_exponential);
+  std::vector<double> exponential = {exp(-1.0 / temperature * (E_pot_new - E_pot_old))};
+  current_reaction.accumulator_exponentials(exponential);
+
+  std::vector<double> result(2);
+  result[0] = -temperature*log(current_reaction.accumulator_exponentials.get_mean()[0]); //excess chemical potential
+  result[1]=std::abs(-temperature/current_reaction.accumulator_exponentials.get_mean()[0]*current_reaction.accumulator_exponentials.get_std_error()[0]); //error excess chemical potential, determined via error propagation
+  return result;
 }
 
 /////////////////////////////////////////////////////////////////free functions

@@ -26,6 +26,7 @@ public:
   void operator()(const std::vector<double> &);
   std::vector<double> get_mean() const;
   std::vector<double> get_variance() const;
+  std::vector<double> get_std_error() const;
 
 private:
   std::size_t m_n;
@@ -56,8 +57,7 @@ inline void Accumulator::operator()(const std::vector<double> &data) {
                double d) -> AccumulatorData<double> {
           auto const old_mean = a.mean;
           auto const new_mean = old_mean + (d - old_mean) / m_n;
-          auto const new_variance =
-              ((m_n - 1) * a.variance + (d - old_mean) * (d - new_mean)) / m_n;
+          auto const new_variance = (static_cast<double>(m_n)-2)/(static_cast<double>(m_n)-1)*a.variance+ std::pow((d - old_mean),2)/m_n;//((m_n - 1) * a.variance + (d - old_mean) * (d - new_mean)) / m_n; //(m_n-2)/(m_n-1)*a.variance+ std::pow((d - old_mean),2)/m_n; //sample variance, see https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
           return {new_mean, new_variance};
         });
   }
@@ -71,14 +71,32 @@ inline std::vector<double> Accumulator::get_mean() const {
   return res;
 }
 
+
 inline std::vector<double> Accumulator::get_variance() const {
   std::vector<double> res;
   std::transform(m_acc_data.begin(), m_acc_data.end(), std::back_inserter(res),
                  [](const AccumulatorData<double> &acc_data) {
                    return acc_data.variance;
                  });
+  if(m_n==1){
+    res=std::vector<double>(m_acc_data.size(),std::numeric_limits<double>::max());
+  }
   return res;
 }
+
+/**
+returns the standard error of the mean of uncorrelated data. if data are correlated the correlation time needs to be known...
+*/
+inline std::vector<double> Accumulator::get_std_error() const {
+    std::vector<double> variance=get_variance();
+    std::vector<double> std_error(variance.size());
+    std::transform(variance.begin(), variance.end(), std_error.begin(),
+                       [this](double d) {
+                         return std::sqrt(d/m_n);
+                       });
+    return std_error;
+}
+
 }
 
 #endif
