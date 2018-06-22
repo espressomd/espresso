@@ -649,7 +649,7 @@ cdef class WidomInsertion(ReactionAlgorithm):
     
     def measure_excess_chemical_potential(self, reaction_id=0):
         """
-        Measures the excess chemical potential in a homogeneous system.
+        Measures the excess chemical potential in a homogeneous system. Returns the excess chemical potential and the standard error for the excess chemical potential. It assumes that your samples are uncorrelated.
         
         """
         return self.WidomInsertionPtr.measure_excess_chemical_potential(int(reaction_id))
