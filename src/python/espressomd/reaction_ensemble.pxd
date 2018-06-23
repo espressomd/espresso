@@ -40,8 +40,6 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         double slab_start_z
         double slab_end_z
         int non_interacting_type
-        vector[int] number_of_insertions
-        vector[double] summed_exponentials
 
     cdef cppclass CReactionEnsemble "ReactionEnsemble::ReactionEnsemble"(CReactionAlgorithm):
         CReactionEnsemble()

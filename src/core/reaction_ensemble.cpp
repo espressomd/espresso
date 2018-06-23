@@ -192,7 +192,7 @@ std::vector<double> ReactionAlgorithm::get_excess_chemical_potential_change_duri
     SingleReaction& current_reaction=reactions[reaction_id];
     std::vector<double> result(2);
     result[0] = -temperature*log(current_reaction.accumulator_exponentials.get_mean()[0]); //excess chemical potential
-    result[1]=-temperature/std::pow(current_reaction.accumulator_exponentials.get_mean()[0],2)*current_reaction.accumulator_exponentials.get_std_error()[0]; //error excess chemical potential, determined via error propagation
+    result[1]=std::abs(-temperature/current_reaction.accumulator_exponentials.get_mean()[0]*current_reaction.accumulator_exponentials.get_std_error()[0]); //error excess chemical potential, determined via error propagation. Be careful this number is not sensible for correlated data like they are present here!
     return result;
 }
 
