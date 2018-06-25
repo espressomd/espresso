@@ -850,11 +850,11 @@ Creating a correlation
 Each correlator is represented by an instance of the :class:`espressomd.accumulators.Correlator`. Please see its documentation for an explanation of the arguments that have to be passed to the constructor.
 
 Correlators can be registered for automatic updating during the
-integration by adding them to :attr:`espressomd.system.System.auto_update_correlators`.
+integration by adding them to :attr:`espressomd.system.System.auto_update_accumulators`.
 
 ::
 
-    system.auto_update_correlators.add(corr)
+    system.auto_update_accumulators.add(corr)
 
 Alternatively, an update can triggered by calling the update()-method of the correlator instance. In that case, one has to make sure to call the update in the correct time intervals.
 
@@ -870,13 +870,13 @@ Example: Calculating a particle's diffusion coefficient
 For setting up an observable and correlator to obtain the mean square displacement of particle 0, use::
 
     pos_obs=ParticlePositions(ids=(0,))
-    c_pos = Correlator(obs1=pos_obs, tau_lin=16, tau_max=100., dt=10*dt,
+    c_pos = Correlator(obs1=pos_obs, tau_lin=16, tau_max=100., delta_N=10,
         corr_operation="square_distance_componentwise", compress1="discard1")
 
 To obtain the velocity auto-correlation function of particle 0, use::
 
     obs=ParticleVelocities(ids=(0,))
-    c_vel = Correlator(obs1=vel_obs, tau_lin=16, tau_max=20., dt=dt,
+    c_vel = Correlator(obs1=vel_obs, tau_lin=16, tau_max=20., delta_N=1,
         corr_operation="scalar_product", compress1="discard1")
 
 The full example can be found in ``samples/diffusion_coefficient.py``.
