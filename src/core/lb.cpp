@@ -53,7 +53,7 @@ int transfer_momentum = 0;
 
 /** Struct holding the Lattice Boltzmann parameters */
 // LB_Parameters lbpar = { .rho={0.0}, .viscosity={0.0}, .bulk_viscosity={-1.0},
-// .agrid=-1.0, .tau=-1.0, .friction={0.0}, .ext_force={ 0.0, 0.0,
+// .agrid=-1.0, .tau=-1.0, .friction={0.0}, .ext_force_density={ 0.0, 0.0,
 // 0.0},.rho_lb_units={0.},.gamma_odd={0.}, .gamma_even={0.} };
 LB_Parameters lbpar = {
     // rho
@@ -68,7 +68,7 @@ LB_Parameters lbpar = {
     -1.0,
     // friction
     0.0,
-    // ext_force
+    // ext_force_density
     {0.0, 0.0, 0.0},
     // rho_lb_units
     0.,
@@ -215,8 +215,6 @@ int lb_lbfluid_set_mobility(double *p_mobility) {
 int affinity_set_params(int part_type_a, int part_type_b, double *affinity) {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
   data->affinity_on = 0;
-  if (!data)
-    return ES_ERROR;
   for (int ii = 0; ii < LB_COMPONENTS; ii++) {
     if (affinity[ii] < 0 || affinity[ii] > 1) {
       return ES_ERROR;
@@ -472,7 +470,7 @@ int lb_lbfluid_set_remove_momentum(void) {
 }
 #endif // SHANCHEN
 
-int lb_lbfluid_set_ext_force(int component, double p_fx, double p_fy,
+int lb_lbfluid_set_ext_force_density(int component, double p_fx, double p_fy,
                              double p_fz) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
@@ -483,10 +481,10 @@ int lb_lbfluid_set_ext_force(int component, double p_fx, double p_fy,
       return 3;
 
     /* external force density is stored in MD units */
-    lbpar_gpu.ext_force[3 * component + 0] = (float)p_fx;
-    lbpar_gpu.ext_force[3 * component + 1] = (float)p_fy;
-    lbpar_gpu.ext_force[3 * component + 2] = (float)p_fz;
-    lbpar_gpu.external_force = 1;
+    lbpar_gpu.ext_force_density[3 * component + 0] = (float)p_fx;
+    lbpar_gpu.ext_force_density[3 * component + 1] = (float)p_fy;
+    lbpar_gpu.ext_force_density[3 * component + 2] = (float)p_fz;
+    lbpar_gpu.external_force_density = 1;
     lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
 #endif // LB_GPU
   } else {
@@ -497,9 +495,9 @@ int lb_lbfluid_set_ext_force(int component, double p_fx, double p_fy,
     if (lbpar.rho <= 0.0)
       return 3;
 
-    lbpar.ext_force[0] = p_fx;
-    lbpar.ext_force[1] = p_fy;
-    lbpar.ext_force[2] = p_fz;
+    lbpar.ext_force_density[0] = p_fx;
+    lbpar.ext_force_density[1] = p_fy;
+    lbpar.ext_force_density[2] = p_fz;
     mpi_bcast_lb_params(LBPAR_EXTFORCE);
 #endif // LB
   }
@@ -601,22 +599,22 @@ int lb_lbfluid_get_tau(double *p_tau) {
   return 0;
 }
 
-int lb_lbfluid_get_ext_force(double *p_f) {
+int lb_lbfluid_get_ext_force_density(double *p_f) {
 #ifdef SHANCHEN
   fprintf(stderr, "Not implemented yet (%s:%d) ", __FILE__, __LINE__);
   errexit();
 #endif // SHANCHEN
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    p_f[0] = lbpar_gpu.ext_force[0];
-    p_f[1] = lbpar_gpu.ext_force[1];
-    p_f[2] = lbpar_gpu.ext_force[2];
+    p_f[0] = lbpar_gpu.ext_force_density[0];
+    p_f[1] = lbpar_gpu.ext_force_density[1];
+    p_f[2] = lbpar_gpu.ext_force_density[2];
 #endif // LB_GPU
   } else {
 #ifdef LB
-    p_f[0] = lbpar.ext_force[0];
-    p_f[1] = lbpar.ext_force[1];
-    p_f[2] = lbpar.ext_force[2];
+    p_f[0] = lbpar.ext_force_density[0];
+    p_f[1] = lbpar.ext_force_density[1];
+    p_f[2] = lbpar.ext_force_density[2];
 #endif // LB
   }
   return 0;
@@ -845,7 +843,7 @@ int lb_lbfluid_print_boundary(char *filename) {
       k /= lbpar_gpu.dim_y;
       xyz[2] = k;
       /** print of the calculated phys values */
-      fprintf(fp, "%f %f %f %d\n", (xyz[0] + 0.5) * lbpar_gpu.agrid,
+      fprintf(fp, "%f %f %f %u\n", (xyz[0] + 0.5) * lbpar_gpu.agrid,
               (xyz[1] + 0.5) * lbpar_gpu.agrid,
               (xyz[2] + 0.5) * lbpar_gpu.agrid, bound_array[j]);
     }
@@ -1057,10 +1055,7 @@ int lb_lbfluid_load_checkpoint(char *filename, int binary) {
         assert(fscanf(cpfile, "%u", &host_checkpoint_boundary[n]) != EOF);
       }
       for (int n = 0; n < (3 * int(lbpar_gpu.number_of_nodes)); n++) {
-        if (sizeof(lbForceFloat) == sizeof(float))
-          assert(fscanf(cpfile, "%f", &host_checkpoint_force[n]) != EOF);
-        else
-          assert(fscanf(cpfile, "%f", &host_checkpoint_force[n]) != EOF);
+        assert(fscanf(cpfile, "%f", &host_checkpoint_force[n]) != EOF);
       }
     } else {
       if (fread(host_checkpoint_vd.data(), sizeof(float),
@@ -1073,12 +1068,16 @@ int lb_lbfluid_load_checkpoint(char *filename, int binary) {
         return ES_ERROR;
       if (fread(host_checkpoint_boundary.data(), sizeof(int),
                 int(lbpar_gpu.number_of_nodes),
-                cpfile) != (unsigned int)lbpar_gpu.number_of_nodes)
+                cpfile) != (unsigned int)lbpar_gpu.number_of_nodes) {
+        fclose(cpfile);
         return ES_ERROR;
+      }
       if (fread(host_checkpoint_force.data(), sizeof(lbForceFloat),
                 3 * int(lbpar_gpu.number_of_nodes),
-                cpfile) != (unsigned int)(3 * lbpar_gpu.number_of_nodes))
+                cpfile) != (unsigned int)(3 * lbpar_gpu.number_of_nodes)) {
+        fclose(cpfile);
         return ES_ERROR;
+      }
     }
     lb_load_checkpoint_GPU(
         host_checkpoint_vd.data(), host_checkpoint_seed.data(),
@@ -1534,7 +1533,7 @@ int lb_lbnode_set_pop(int *ind, double *p_pop) {
   return 0;
 }
 
-int lb_lbnode_set_extforce(int *ind, double *f) { return -100; }
+int lb_lbnode_set_extforce_density(int *ind, double *f) { return -100; }
 
 #ifdef LB
 /********************** The Main LB Part *************************************/
@@ -2002,21 +2001,13 @@ void lb_reinit_parameters() {
   // gamma_odd = 0.0;
   // gamma_even = 0.0;
 
-  // printf("lbpar.gamma_shear=%e\n", lbpar.gamma_shear);
-  // printf("lbpar.gamma_bulk=%e\n", lbpar.gamma_bulk);
-  // printf("gamma_odd=%e\n", gamma_odd);
-  // printf("gamma_even=%e\n", gamma_even);
-  // printf("\n");
-
-  double mu = 0.0;
-
   if (temperature > 0.0) {
     /* fluctuating hydrodynamics ? */
     lbpar.fluct = 1;
 
     /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).
      * Note that the modes are not normalized as in the paper here! */
-    mu = temperature / lbmodel.c_sound_sq * lbpar.tau * lbpar.tau /
+    double mu = temperature / lbmodel.c_sound_sq * lbpar.tau * lbpar.tau /
          (lbpar.agrid * lbpar.agrid);
     // mu *= agrid*agrid*agrid;  // Marcello's conjecture
     double(*e)[19] = d3q19_modebase;
@@ -2041,6 +2032,11 @@ void lb_reinit_parameters() {
      */
     lb_coupl_pref = sqrt(12. * 2. * lbpar.friction * temperature / time_step);
     lb_coupl_pref2 = sqrt(2. * lbpar.friction * temperature / time_step);
+    LB_TRACE(fprintf(
+      stderr, "%d: lbpar.gamma_shear=%lf lbpar.gamma_bulk=%lf shear_fluct=%lf "
+              "bulk_fluct=%lf mu=%lf, bulkvisc=%lf, visc=%lf\n",
+      this_node, lbpar.gamma_shear, lbpar.gamma_bulk, lbpar.phi[9],
+      lbpar.phi[4], mu, lbpar.bulk_viscosity, lbpar.viscosity));
   } else {
     /* no fluctuations at zero temperature */
     lbpar.fluct = 0;
@@ -2049,29 +2045,24 @@ void lb_reinit_parameters() {
     lb_coupl_pref = 0.0;
     lb_coupl_pref2 = 0.0;
   }
-  LB_TRACE(fprintf(
-      stderr, "%d: lbpar.gamma_shear=%lf lbpar.gamma_bulk=%lf shear_fluct=%lf "
-              "bulk_fluct=%lf mu=%lf, bulkvisc=%lf, visc=%lf\n",
-      this_node, lbpar.gamma_shear, lbpar.gamma_bulk, lbpar.phi[9],
-      lbpar.phi[4], mu, lbpar.bulk_viscosity, lbpar.viscosity));
 }
 
 /** Resets the forces on the fluid nodes */
-void lb_reinit_forces() {
+void lb_reinit_force_densities() {
   for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
        index++) {
 #ifdef EXTERNAL_FORCES
     // unit conversion: force density
-    lbfields[index].force[0] =
-        lbpar.ext_force[0] * pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
-    lbfields[index].force[1] =
-        lbpar.ext_force[1] * pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
-    lbfields[index].force[2] =
-        lbpar.ext_force[2] * pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
+    lbfields[index].force_density[0] =
+        lbpar.ext_force_density[0] * pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
+    lbfields[index].force_density[1] =
+        lbpar.ext_force_density[1] * pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
+    lbfields[index].force_density[2] =
+        lbpar.ext_force_density[2] * pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
 #else  // EXTERNAL_FORCES
-    lbfields[index].force[0] = 0.0;
-    lbfields[index].force[1] = 0.0;
-    lbfields[index].force[2] = 0.0;
+    lbfields[index].force_density[0] = 0.0;
+    lbfields[index].force_density[1] = 0.0;
+    lbfields[index].force_density[2] = 0.0;
     lbfields[index].has_force = 0;
 #endif // EXTERNAL_FORCES
   }
@@ -2152,7 +2143,7 @@ void lb_init() {
   lb_reinit_fluid();
 
   /* setup the external forces */
-  lb_reinit_forces();
+  lb_reinit_force_densities();
 
   LB_TRACE(printf("Initialzing fluid on CPU successful\n"));
 }
@@ -2345,9 +2336,9 @@ inline void lb_relax_modes(Lattice::index_t index, double *mode) {
   if (lbfields[index].has_force || local_cells.particles().size())
 #endif // !EXTERNAL_FORCES
   {
-    j[0] += 0.5 * lbfields[index].force[0];
-    j[1] += 0.5 * lbfields[index].force[1];
-    j[2] += 0.5 * lbfields[index].force[2];
+    j[0] += 0.5 * lbfields[index].force_density[0];
+    j[1] += 0.5 * lbfields[index].force_density[1];
+    j[2] += 0.5 * lbfields[index].force_density[2];
   }
 
   /* equilibrium part of the stress modes */
@@ -2425,7 +2416,7 @@ inline void lb_apply_forces(Lattice::index_t index, double *mode) {
 
   double rho, *f, u[3], C[6];
 
-  f = lbfields[index].force;
+  f = lbfields[index].force_density;
 
   rho = mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
 
@@ -2458,20 +2449,20 @@ inline void lb_apply_forces(Lattice::index_t index, double *mode) {
   mode[9] += C[4];
 }
 
-inline void lb_reset_forces(Lattice::index_t index) {
+inline void lb_reset_force_densities(Lattice::index_t index) {
 /* reset force */
 #ifdef EXTERNAL_FORCES
   // unit conversion: force density
-  lbfields[index].force[0] =
-      lbpar.ext_force[0] * lbpar.agrid * lbpar.agrid * lbpar.tau * lbpar.tau;
-  lbfields[index].force[1] =
-      lbpar.ext_force[1] * lbpar.agrid * lbpar.agrid * lbpar.tau * lbpar.tau;
-  lbfields[index].force[2] =
-      lbpar.ext_force[2] * lbpar.agrid * lbpar.agrid * lbpar.tau * lbpar.tau;
+  lbfields[index].force_density[0] =
+      lbpar.ext_force_density[0] * lbpar.agrid * lbpar.agrid * lbpar.tau * lbpar.tau;
+  lbfields[index].force_density[1] =
+      lbpar.ext_force_density[1] * lbpar.agrid * lbpar.agrid * lbpar.tau * lbpar.tau;
+  lbfields[index].force_density[2] =
+      lbpar.ext_force_density[2] * lbpar.agrid * lbpar.agrid * lbpar.tau * lbpar.tau;
 #else  // EXTERNAL_FORCES
-  lbfields[index].force[0] = 0.0;
-  lbfields[index].force[1] = 0.0;
-  lbfields[index].force[2] = 0.0;
+  lbfields[index].force_density[0] = 0.0;
+  lbfields[index].force_density[1] = 0.0;
+  lbfields[index].force_density[2] = 0.0;
   lbfields[index].has_force = 0;
 #endif // EXTERNAL_FORCES
 }
@@ -2600,7 +2591,7 @@ inline void lb_collide_stream() {
           /* apply forces */
           lb_apply_forces(index, modes);
 
-          lb_reset_forces(index);
+          lb_reset_force_densities(index);
 
           /* transform back to populations and streaming */
           lb_calc_n_from_modes_push(index, modes);
@@ -2761,7 +2752,7 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   for (z = 0; z < 2; z++) {
     for (y = 0; y < 2; y++) {
       for (x = 0; x < 2; x++) {
-        local_f = lbfields[node_index[(z * 2 + y) * 2 + x]].force;
+        local_f = lbfields[node_index[(z * 2 + y) * 2 + x]].force_density;
 
         local_f[0] +=
             delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] * delta_j[0];
@@ -2813,7 +2804,7 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
     for (z = 0; z < 2; z++) {
       for (y = 0; y < 2; y++) {
         for (x = 0; x < 2; x++) {
-          local_f = lbfields[node_index[(z * 2 + y) * 2 + x]].force;
+          local_f = lbfields[node_index[(z * 2 + y) * 2 + x]].force_density;
 
           local_f[0] += delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] *
                         delta_j[0];
@@ -2828,7 +2819,7 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
 #endif
 }
 
-int lb_lbfluid_get_interpolated_velocity(const Vector3d& p, double* v) {
+void lb_lbfluid_get_interpolated_velocity(const Vector3d &p, double *v) {
   Lattice::index_t node_index[8], index;
   double delta[6];
   double local_rho, local_j[3], interpolated_u[3];
@@ -2865,7 +2856,7 @@ int lb_lbfluid_get_interpolated_velocity(const Vector3d& p, double* v) {
            lbpar.agrid / lbpar.tau;
     v[2] = (*LBBoundaries::lbboundaries[boundary_no]).velocity()[2] *
            lbpar.agrid / lbpar.tau;
-    return 0; // we can return without interpolating
+    return; // we can return without interpolating
   }
 #else  // LB_BOUNDARIES
   pos[0] = p[0];
@@ -2951,7 +2942,7 @@ int lb_lbfluid_get_interpolated_velocity(const Vector3d& p, double* v) {
   v[0] *= lbpar.agrid / lbpar.tau;
   v[1] *= lbpar.agrid / lbpar.tau;
   v[2] *= lbpar.agrid / lbpar.tau;
-  return 0;
+  return;
 }
 
 /** Calculate particle lattice interactions.
@@ -2988,9 +2979,9 @@ int lb_lbfluid_get_interpolated_velocity(const Vector3d& p, double* v) {
  * probably makes this method preferable compared to the above one.
  */
 void calc_particle_lattice_ia() {
-  double force[3];
 
   if (transfer_momentum) {
+    double force[3];
 
     if (lbpar.resend_halo) { /* first MD step after last LB update */
 

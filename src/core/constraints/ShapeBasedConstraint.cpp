@@ -95,7 +95,7 @@ ParticleForce ShapeBasedConstraint::force(const Particle *p, const Vector3d &fol
 
 void ShapeBasedConstraint::add_energy(const Particle *p, const Vector3d &folded_pos,
                                       Observable_stat &energy) const {
-  double dist, vec[3];
+  double dist;
   IA_parameters *ia_params;
   double nonbonded_en = 0.0;
 
@@ -103,6 +103,7 @@ void ShapeBasedConstraint::add_energy(const Particle *p, const Vector3d &folded_
 
   dist = 0.;
   if (checkIfInteraction(ia_params)) {
+    double vec[3];
     m_shape->calculate_dist(folded_pos.data(), &dist, vec);
     if (dist > 0) {
       nonbonded_en = calc_non_bonded_pair_energy(p, &part_rep, ia_params, vec,

@@ -270,23 +270,23 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 */
 
 inline void add_bonded_energy(Particle *p1) {
-  Particle *p2, *p3 = nullptr, *p4 = nullptr;
+  Particle *p3 = nullptr, *p4 = nullptr;
 #ifdef TWIST_STACK
   Particle *p5 = nullptr, *p6 = nullptr, *p7 = nullptr, *p8 = nullptr;
 #endif
   Bonded_ia_parameters *iaparams;
-  int i, type_num, type, n_partners, bond_broken;
+  int i, bond_broken;
   double ret = 0, dx[3] = {0, 0, 0};
 
   i = 0;
   while (i < p1->bl.n) {
-    type_num = p1->bl.e[i++];
+    int type_num = p1->bl.e[i++];
     iaparams = &bonded_ia_params[type_num];
-    type = iaparams->type;
-    n_partners = iaparams->num;
+    int type = iaparams->type;
+    int n_partners = iaparams->num;
 
     /* fetch particle 2, which is always needed */
-    p2 = local_particles[p1->bl.e[i++]];
+    Particle *p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
       runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
                         << " and " << p1->bl.e[i - 1]

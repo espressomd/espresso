@@ -88,13 +88,13 @@ void free_comm(GhostCommunicator *comm)
 
 int calc_transmit_size(GhostCommunication *gc, int data_parts)
 {
-  int p, n_buffer_new;
+  int n_buffer_new;
 
   if (data_parts & GHOSTTRANS_PARTNUM)
     n_buffer_new = sizeof(int)*gc->n_part_lists;
   else {
     int count = 0;
-    for (p = 0; p < gc->n_part_lists; p++)
+    for (int p = 0; p < gc->n_part_lists; p++)
       count += gc->part_lists[p]->n;
 
     n_buffer_new = 0;
@@ -179,7 +179,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
         }
         if (data_parts & GHOSTTRANS_POSSHFTD) {
           /* ok, this is not nice, but perhaps fast */
-          ParticlePosition *pp = (ParticlePosition *)insert;
+          ParticlePosition *pp = reinterpret_cast<ParticlePosition *>(insert);
           int i;
           memmove(pp, &pt->r, sizeof(ParticlePosition));
           for (i = 0; i < 3; i++)
@@ -385,18 +385,18 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
 
 void add_forces_from_recv_buffer(GhostCommunication *gc)
 {
-  int pl, p, np;
+  int pl, p;
   Particle *part, *pt;
   char *retrieve;
 
   /* put back data */
   retrieve = r_buffer;
   for (pl = 0; pl < gc->n_part_lists; pl++) {
-    np   = gc->part_lists[pl]->n;
+    int np = gc->part_lists[pl]->n;
     part = gc->part_lists[pl]->part;
     for (p = 0; p < np; p++) {
       pt = &part[p];
-      pt->f += *((ParticleForce *)retrieve);
+      pt->f += *(reinterpret_cast<ParticleForce *>(retrieve));
       retrieve +=  sizeof(ParticleForce);
     }
   }
@@ -490,8 +490,8 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts)
 void reduce_forces_sum(void *add, void *to, int *len, MPI_Datatype *type)
 {
   ParticleForce 
-    *cadd = (ParticleForce*)add, 
-    *cto = (ParticleForce*)to;
+    *cadd = static_cast<ParticleForce*>(add), 
+    *cto = static_cast<ParticleForce*>(to);
   int i, clen = *len/sizeof(ParticleForce);
  
   if (*type != MPI_BYTE || (*len % sizeof(ParticleForce)) != 0) {
@@ -698,12 +698,11 @@ void ghost_communicator(GhostCommunicator *gc)
     local_particles. Part of \ref dd_exchange_and_sort_particles.*/
 void invalidate_ghosts()
 {
-  Particle *part;
-  int c, np, p;
+  int c, p;
   /* remove ghosts, but keep Real Particles */
   for(c=0; c<ghost_cells.n; c++) {
-    part = ghost_cells.cell[c]->part;
-    np   = ghost_cells.cell[c]->n;
+    Particle *part = ghost_cells.cell[c]->part;
+    int np = ghost_cells.cell[c]->n;
     for(p=0 ; p<np; p++) {
       /* Particle is stored as ghost in the local_particles array,
 	 if the pointer stored there belongs to a ghost celll

@@ -63,9 +63,6 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
                                    Bonded_ia_parameters *iaparams) {
   double vec1[3], vec2[3], d2i = 0.0, dist2 = 0.0;
 
-
-  int img[3];
-
   /* vector from p_left to p_mid */
   get_mi_vector(vec1, p_mid->r.p, p_left->r.p);
   const double dist1 = sqrlen(vec1);
@@ -123,7 +120,7 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
 int calc_angledist_force(Particle *p_mid, Particle *p_left, Particle *p_right,
                          Bonded_ia_parameters *iaparams, double force1[3],
                          double force2[3]) {
-  double cosine = 0.0, vec1[3], vec2[3], fac = 0.0, f1 = 0.0, f2 = 0.0;
+  double cosine = 0.0, vec1[3], vec2[3], fac = 0.0;
 
   /* vector from p_left to p_mid */
   get_mi_vector(vec1, p_mid->r.p, p_left->r.p);
@@ -160,8 +157,8 @@ int calc_angledist_force(Particle *p_mid, Particle *p_left, Particle *p_right,
 #endif
 
   for (int j = 0; j < 3; j++) {
-    f1 = fac * (cosine * vec1[j] - vec2[j]) * d1i;
-    f2 = fac * (cosine * vec2[j] - vec1[j]) * d2i;
+    double f1 = fac * (cosine * vec1[j] - vec2[j]) * d1i;
+    double f2 = fac * (cosine * vec2[j] - vec1[j]) * d2i;
 
     force1[j] = (f1 - f2);
     force2[j] = -f1;
@@ -169,6 +166,7 @@ int calc_angledist_force(Particle *p_mid, Particle *p_left, Particle *p_right,
   return 0;
 }
 
+#ifdef BOND_ANGLEDIST_HARMONIC
 int angledist_energy(Particle *p_mid, Particle *p_left, Particle *p_right,
                      Bonded_ia_parameters *iaparams, double *_energy) {
   int j;
@@ -194,16 +192,15 @@ int angledist_energy(Particle *p_mid, Particle *p_left, Particle *p_right,
   if (cosine < -TINY_COS_VALUE)
     cosine = -TINY_COS_VALUE;
 
-#ifdef BOND_ANGLEDIST_HARMONIC
   {
     double phi;
     double phi0 = calc_angledist_param(p_mid, p_left, p_right, iaparams);
     phi = acos(-cosine);
     *_energy = 0.5 * iaparams->p.angledist.bend * Utils::sqr(phi - phi0);
   }
-#endif
 
   return 0;
 }
+#endif
 
 #endif
