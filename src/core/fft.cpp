@@ -151,9 +151,8 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
 
     /* === send/recv block specifications === */
     for(j=0; j<fft.plan[i].g_size; j++) {
-      int k, node;
       /* send block: this_node to comm-group-node i (identity: node) */
-      node = fft.plan[i].group[j];
+      int node = fft.plan[i].group[j];
       fft.plan[i].send_size[j] 
 	= fft_calc_send_block(my_pos[i-1], n_grid[i-1], &(n_pos[i][3*node]), n_grid[i],
 			      global_mesh_dim, global_mesh_off, &(fft.plan[i].send_block[6*j]));
@@ -165,8 +164,8 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
 	 may have an additional margin outside the actual domain of the
 	 node */
       if(i==1) {
-	for(k=0;k<3;k++) 
-	  fft.plan[1].send_block[6*j+k  ] += ca_mesh_margin[2*k];
+	    for(int k=0;k<3;k++) 
+	      fft.plan[1].send_block[6*j+k  ] += ca_mesh_margin[2*k];
       }
       /* recv block: this_node from comm-group-node i (identity: node) */
       fft.plan[i].recv_size[j] 
@@ -235,7 +234,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
     errexit();
   }
 
-  fftw_complex *c_data     = (fftw_complex *) (*data);
+  fftw_complex *c_data = (fftw_complex *) (*data);
 
   /* === FFT Routines (Using FFTW / RFFTW package)=== */
   for(i=1;i<4;i++) {
@@ -244,7 +243,6 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
        Attention: destroys contents of c_data/data and c_fft.data_buf/data_buf. */
 
     if(fft.init_tag==1) fftw_destroy_plan(fft.plan[i].our_fftw_plan);
-//printf("fft.plan[%d].n_ffts=%d\n",i,fft.plan[i].n_ffts);
     fft.plan[i].our_fftw_plan =
       fftw_plan_many_dft(1,&fft.plan[i].new_mesh[2],fft.plan[i].n_ffts,
                          c_data,nullptr,1,fft.plan[i].new_mesh[2],

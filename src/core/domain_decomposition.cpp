@@ -120,8 +120,8 @@ std::vector<int> dd_fs_neigh;
  *  DomainDecomposition::inv_cell_size, and \ref n_cells.
  */
 void dd_create_cell_grid() {
-  int i, n_local_cells, new_cells, min_ind;
-  double cell_range[3], min_size, scale, volume;
+  int i, n_local_cells, new_cells;
+  double cell_range[3];
   CELL_TRACE(fprintf(stderr, "%d: dd_create_cell_grid: max_range %f\n",
                      this_node, max_range));
   CELL_TRACE(fprintf(
@@ -144,10 +144,10 @@ void dd_create_cell_grid() {
 #endif
   } else {
     /* Calculate initial cell grid */
-    volume = local_box_l[0];
+    double volume = local_box_l[0];
     for (i = 1; i < 3; i++)
       volume *= local_box_l[i];
-    scale = pow(max_num_cells / volume, 1. / 3.);
+    double scale = pow(max_num_cells / volume, 1. / 3.);
     for (i = 0; i < 3; i++) {
       /* this is at least 1 */
       dd.cell_grid[i] = (int)ceil(local_box_l[i] * scale);
@@ -188,8 +188,8 @@ void dd_create_cell_grid() {
         break;
 
       /* find coordinate with the smallest cell range */
-      min_ind = 0;
-      min_size = cell_range[0];
+      int min_ind = 0;
+      double min_size = cell_range[0];
 
 #ifdef LEES_EDWARDS
       for (i = 2; i >= 1;
@@ -583,10 +583,9 @@ void dd_init_cell_interactions() {
     pointer. */
 Cell *dd_save_position_to_cell(double pos[3]) {
   int i, cpos[3];
-  double lpos;
 
   for (i = 0; i < 3; i++) {
-    lpos = pos[i] - my_left[i];
+    double lpos = pos[i] - my_left[i];
 
     cpos[i] = static_cast<int>(std::floor(lpos * dd.inv_cell_size[i])) + 1;
 
@@ -616,7 +615,7 @@ Cell *dd_save_position_to_cell(double pos[3]) {
    local_particles.
     @return 0 if all particles in pl reside in the nodes domain otherwise 1.*/
 int dd_append_particles(ParticleList *pl, int fold_dir) {
-  int p, dir, c, cpos[3], flag = 0, fold_coord = fold_dir / 2;
+  int p, dir, cpos[3], flag = 0, fold_coord = fold_dir / 2;
 
   CELL_TRACE(fprintf(stderr, "%d: dd_append_particles %d\n", this_node, pl->n));
 
@@ -662,7 +661,7 @@ int dd_append_particles(ParticleList *pl, int fold_dir) {
         }
       }
     }
-    c = get_linear_index(cpos[0], cpos[1], cpos[2], dd.ghost_cell_grid);
+    int c = get_linear_index(cpos[0], cpos[1], cpos[2], dd.ghost_cell_grid);
     CELL_TRACE(fprintf(
         stderr,
         "%d: dd_append_particles: Append Part id=%d to cell %d cpos %d %d %d\n",
@@ -782,9 +781,8 @@ void dd_on_geometry_change(int flags) {
 
 /************************************************************/
 void dd_topology_init(CellPList *old) {
-  int c, p, np;
+  int c, p;
   int exchange_data, update_data;
-  Particle *part;
 
   CELL_TRACE(fprintf(stderr,
                      "%d: dd_topology_init: Number of recieved cells=%d\n",
@@ -864,8 +862,8 @@ void dd_topology_init(CellPList *old) {
 
   /* copy particles */
   for (c = 0; c < old->n; c++) {
-    part = old->cell[c]->part;
-    np = old->cell[c]->n;
+    Particle *part = old->cell[c]->part;
+    int np = old->cell[c]->n;
     for (p = 0; p < np; p++) {
       Cell *nc = dd_save_position_to_cell(part[p].r.p.data());
       /* particle does not belong to this node. Just stow away
@@ -1011,11 +1009,10 @@ void dd_exchange_and_sort_particles(int global_flag) {
           send_particles(&send_buf_r, node_neighbors[2 * dir + 1]);
         }
 #else
-        int ii, nn, lr;
+        int ii;
         for (ii = 0; ii < 2; ii++) {
-
-          nn = node_neighbors[2 * dir + ii];
-          lr = node_neighbor_lr[2 * dir + ii];
+          int nn = node_neighbors[2 * dir + ii];
+          int lr = node_neighbor_lr[2 * dir + ii];
 
           if (lr == 1) {
             if (nn > this_node) {

@@ -47,7 +47,7 @@ int check_id = ONEPART_DEBUG_ID;
 void check_particle_consistency() {
   Particle *part;
   Cell *cell;
-  int n, dir, c, p;
+  int n, dir, c;
   int cell_part_cnt = 0, ghost_part_cnt = 0, local_part_cnt = 0;
   int cell_err_cnt = 0;
 
@@ -127,12 +127,12 @@ void check_particle_consistency() {
             this_node, cell_part_cnt, local_part_cnt);
 
     for (c = 0; c < local_cells.n; c++) {
-      for (p = 0; p < local_cells.cell[c]->n; p++)
+      for (int p = 0; p < local_cells.cell[c]->n; p++)
         fprintf(stderr, "%d: got particle %d in cell %d\n", this_node,
                 local_cells.cell[c]->part[p].p.identity, c);
     }
 
-    for (p = 0; p < n_part; p++)
+    for (int p = 0; p < n_part; p++)
       if (local_particles[p])
         fprintf(stderr, "%d: got particle %d in local_particles\n", this_node,
                 p);

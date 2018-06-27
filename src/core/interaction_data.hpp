@@ -66,9 +66,6 @@ enum BondedInteraction {
   /** Type of bonded interaction is a bond angle -- constraint distance
      potential. */
   BONDED_IA_ANGLEDIST,
-  /** Type of bonded interaction is a bond angle -- chain ends have angle with
-     wall constraint */
-  BONDED_IA_ENDANGLEDIST,
   /** Type of bonded interaction is a bond angle cosine potential. */
   BONDED_IA_ANGLE_HARMONIC,
   /** Type of bonded interaction is a bond angle cosine potential. */
@@ -428,6 +425,8 @@ struct IA_parameters {
 
 };
 
+extern std::vector<IA_parameters> ia_params;
+
 /** thermodynamic force parameters */
 
 /** \name Compounds for Coulomb interactions */
@@ -674,14 +673,6 @@ typedef struct {
   double sin_phi0;
 } Angledist_bond_parameters;
 
-/** Parameters for chainend angular potential with wall  */
-typedef struct {
-  double bend;
-  double phi0;
-  double distmin;
-  double distmax;
-} Endangledist_bond_parameters;
-
 typedef enum { NeoHookean, Skalak } tElasticLaw;
 
 /** Parameters for IBM elastic triangle (triel) **/
@@ -769,7 +760,6 @@ typedef union {
 #if defined(CG_DNA) || defined(TWIST_STACK)
   Cg_dna_stacking_parameters twist_stack;
 #endif
-  Endangledist_bond_parameters endangledist;
   IBM_Triel_Parameters ibm_triel;
   IBM_VolCons_Parameters ibmVolConsParameters;
   IBM_Tribend_Parameters ibm_tribend;
@@ -942,12 +932,10 @@ inline bool pair_bond_exists_on(const Particle* const p, const Particle* const p
 * @param bond        enum bond type */ 
 inline bool pair_bond_enum_exists_on(const Particle * const p_bond, const Particle * const p_partner, BondedInteraction bond)
 {
-    Bonded_ia_parameters *iaparams;
-    int type_num;
     int i = 0;
     while (i < p_bond->bl.n) {
-        type_num = p_bond->bl.e[i];
-        iaparams = &bonded_ia_params[type_num];
+        int type_num = p_bond->bl.e[i];
+        Bonded_ia_parameters *iaparams = &bonded_ia_params[type_num];
         if (iaparams->type == (int)bond && p_bond->bl.e[i+1] == p_partner->p.identity) {
             return true;
         } else {

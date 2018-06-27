@@ -208,7 +208,7 @@ int bcast_iccp3m_cfg(void) {
 }
 
 int iccp3m_iteration() {
-  double fdot, hold, hnew, hmax, del_eps, diff = 0.0, difftemp = 0.0, ex, ey,
+  double fdot, hold, hnew, del_eps, diff = 0.0, difftemp = 0.0, ex, ey,
                                           ez, pref;
   Cell *cell;
   int c, np;
@@ -230,7 +230,7 @@ int iccp3m_iteration() {
   iccp3m_cfg.citeration = 0;
 
   for (j = 0; j < iccp3m_cfg.num_iteration; j++) {
-    hmax = 0.;
+    double hmax = 0.;
 
     force_calc_iccp3m(); /* Calculate electrostatic forces (SR+LR) excluding
                             source source interaction*/

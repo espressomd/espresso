@@ -586,7 +586,6 @@ void File::WriteScript(std::string const &filename) {
 #endif
   /* First get the number of lines of the script. */
   hsize_t dims[1] = {1};
-  std::string tmp;
   std::ifstream scriptfile(m_absolute_script_path.string());
   /* Read the whole script into a buffer. */
   scriptfile.seekg(0, std::ios::end);

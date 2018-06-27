@@ -70,13 +70,10 @@ void local_kill_particle_forces(int torque) {
 /* Calculate the CMS of the system */
 void local_system_CMS(double *sdata) {
   double x = 0.0, y = 0.0, z = 0.0;
-  int img[3];
-
   double mass = 0.0;
-  double M;
 
   for (auto const &p : local_cells.particles()) {
-    M = p.p.mass;
+    double M = p.p.mass;
     mass += M;
 
     Vector3d ppos = unfolded_position(p);
@@ -95,12 +92,10 @@ void local_system_CMS(double *sdata) {
 /* Calculate the CMS velocity of the system */
 void local_system_CMS_velocity(double *sdata) {
   double x = 0.0, y = 0.0, z = 0.0;
-
   double mass = 0.0;
-  double M;
 
   for (auto const &p : local_cells.particles()) {
-    M = p.p.mass;
+    double M = p.p.mass;
     mass += M;
 
     x += M * p.m.v[0];

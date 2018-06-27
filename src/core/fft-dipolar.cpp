@@ -158,9 +158,8 @@ int dfft_init(double **data, int *local_mesh_dim, int *local_mesh_margin,
 
     /* === send/recv block specifications === */
     for (j = 0; j < dfft.plan[i].g_size; j++) {
-      int k, node;
       /* send block: this_node to comm-group-node i (identity: node) */
-      node = dfft.plan[i].group[j];
+      int node = dfft.plan[i].group[j];
       dfft.plan[i].send_size[j] = fft_calc_send_block(
           my_pos[i - 1], n_grid[i - 1], &(n_pos[i][3 * node]), n_grid[i],
           global_mesh_dim, global_mesh_off, &(dfft.plan[i].send_block[6 * j]));
@@ -174,7 +173,7 @@ int dfft_init(double **data, int *local_mesh_dim, int *local_mesh_margin,
          may have an additional margin outside the actual domain of the
          node */
       if (i == 1) {
-        for (k = 0; k < 3; k++)
+        for (int k = 0; k < 3; k++)
           dfft.plan[1].send_block[6 * j + k] += local_mesh_margin[2 * k];
       }
       /* recv block: this_node from comm-group-node i (identity: node) */
