@@ -1077,7 +1077,7 @@ class openGLLive(object):
             col = self._modulo_indexing(type_colors, ptype)
             radius = self._modulo_indexing(type_radii, ptype)
             draw_arrow(self.particles['pos'][pid], np.array(
-                v) * sc, radius, col, self.materials['chrome'], self.specs['quality_arrows'])
+                v, dtype=float) * sc, radius, col, self.materials['chrome'], self.specs['quality_arrows'])
 
     def _draw_bonds(self):
         pIds = range(len(self.particles['pos']))
