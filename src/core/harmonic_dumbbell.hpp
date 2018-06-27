@@ -50,7 +50,6 @@ int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r, 
 */
 inline int calc_harmonic_dumbbell_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force[3])
 {
-  int i;
   double fac;
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
@@ -66,8 +65,8 @@ inline int calc_harmonic_dumbbell_pair_force(Particle *p1, Particle *p2, Bonded_
      if (dist > ROUND_ERROR_PREC)  /* Regular case */
         fac /= dist;
      else { /* dx[] == 0: the force is undefined. Let's use a random direction */
-        for(i=0;i<3;i++)
-	  dx[i] = d_random()-0.5;
+        for(int i=0;i<3;i++)
+	      dx[i] = d_random()-0.5;
         fac /= sqrt(sqrlen(dx));
      }
   } else { 
