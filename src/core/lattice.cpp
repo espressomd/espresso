@@ -69,15 +69,13 @@ int Lattice::init(double *agrid, double* offset, int halo_size, size_t dim) {
 }
 
 void Lattice::map_position_to_lattice(const Vector3d& pos, index_t node_index[8], double delta[6]) {
-
-    int dir,ind[3] ;
-    double lpos, rel;
+    int ind[3];
 
     /* determine the elementary lattice cell containing the particle
        and the relative position of the particle in this cell */
-    for (dir=0;dir<3;dir++) {
-        lpos = pos[dir] - my_left[dir];
-        rel = lpos/this->agrid[dir] + 0.5; // +1 for halo offset
+    for (int dir=0;dir<3;dir++) {
+        double lpos = pos[dir] - my_left[dir];
+        double rel = lpos/this->agrid[dir] + 0.5; // +1 for halo offset
         ind[dir] = (int)floor(rel);
 
         /* surrounding elementary cell is not completely inside this box,

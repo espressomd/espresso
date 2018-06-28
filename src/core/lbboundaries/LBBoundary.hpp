@@ -12,6 +12,7 @@
 namespace LBBoundaries {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 int lbboundary_get_force(void* lbb, double *f);
+void lb_init_boundaries();
 #endif
 class LBBoundary {
 public:
@@ -35,7 +36,12 @@ public:
     m_shape = shape;
   }
 
-  void set_velocity(Vector3d velocity) { m_velocity = velocity; }
+  void set_velocity(Vector3d velocity) {
+    m_velocity = velocity;
+#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
+    lb_init_boundaries();
+#endif
+  }
   void reset_force() { m_force = Vector3d{0,0,0}; }
 
   Shapes::Shape const &shape() const { return *m_shape; }

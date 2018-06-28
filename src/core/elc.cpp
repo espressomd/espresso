@@ -153,13 +153,13 @@ void ELC_setup_constants() {
 /* SC Cache */
 /************/
 static void prepare_scx_cache() {
-  int ic, freq, o;
-  double pref, arg;
+  int freq;
+  double arg;
 
   for (freq = 1; freq <= n_scxcache; freq++) {
-    pref = C_2PI * ux * freq;
-    o = (freq - 1) * n_localpart;
-    ic = 0;
+    double pref = C_2PI * ux * freq;
+    int o = (freq - 1) * n_localpart;
+    int ic = 0;
     for (auto const &part : local_cells.particles()) {
       arg = pref * part.r.p[0];
       scxcache[o + ic].s = sin(arg);
@@ -170,13 +170,13 @@ static void prepare_scx_cache() {
 }
 
 static void prepare_scy_cache() {
-  int ic, freq, o;
-  double pref, arg;
+  int freq;
+  double arg;
 
   for (freq = 1; freq <= n_scycache; freq++) {
-    pref = C_2PI * uy * freq;
-    o = (freq - 1) * n_localpart;
-    ic = 0;
+    double pref = C_2PI * uy * freq;
+    int o = (freq - 1) * n_localpart;
+    int ic = 0;
     for (auto const &part : local_cells.particles()) {
       arg = pref * part.r.p[1];
       scycache[o + ic].s = sin(arg);
@@ -508,9 +508,9 @@ static double z_energy() {
 /*****************************************************************/
 static void add_z_force() {
   double pref = coulomb.prefactor * 2 * M_PI * ux * uy;
-  int size = 1;
 
   if (elc_params.dielectric_contrast_on) {
+    int size = 1;
     if (elc_params.const_pot) {
       clear_vec(gblcblk, size);
       /* just counter the 2 pi |z| contribution stemming from P3M */
@@ -563,9 +563,8 @@ static void add_z_force() {
 static void setup_P(int p, double omega) {
   int ic, o = (p - 1) * n_localpart;
   double pref =
-      -coulomb.prefactor * 4 * M_PI * ux * uy / (exp(omega * box_l[2]) - 1);
+      -coulomb.prefactor * 4 * M_PI * ux * uy / (expm1(omega * box_l[2]));
   double pref_di = coulomb.prefactor * 4 * M_PI * ux * uy;
-  double e;
   int size = 4;
   double lclimgebot[4], lclimgetop[4], lclimge[4];
   double fac_delta_mid_bot = 1, fac_delta_mid_top = 1, fac_delta = 1;
@@ -586,7 +585,7 @@ static void setup_P(int p, double omega) {
 
   ic = 0;
   for (auto &p : local_cells.particles()) {
-    e = exp(omega * p.r.p[2]);
+    double e = exp(omega * p.r.p[2]);
 
     partblk[size * ic + POQESM] = p.p.q * scxcache[o + ic].s / e;
     partblk[size * ic + POQESP] = p.p.q * scxcache[o + ic].s * e;
@@ -672,9 +671,8 @@ static void setup_P(int p, double omega) {
 static void setup_Q(int q, double omega) {
   int ic, o = (q - 1) * n_localpart;
   double pref =
-      -coulomb.prefactor * 4 * M_PI * ux * uy / (exp(omega * box_l[2]) - 1);
+      -coulomb.prefactor * 4 * M_PI * ux * uy / (expm1(omega * box_l[2]));
   double pref_di = coulomb.prefactor * 4 * M_PI * ux * uy;
-  double e;
   int size = 4;
   double lclimgebot[4], lclimgetop[4], lclimge[4];
   double fac_delta_mid_bot = 1, fac_delta_mid_top = 1, fac_delta = 1;
@@ -694,7 +692,7 @@ static void setup_Q(int q, double omega) {
   clear_vec(gblcblk, size);
   ic = 0;
   for (auto &p : local_cells.particles()) {
-    e = exp(omega * p.r.p[2]);
+    double e = exp(omega * p.r.p[2]);
 
     partblk[size * ic + POQESM] = p.p.q * scycache[o + ic].s / e;
     partblk[size * ic + POQESP] = p.p.q * scycache[o + ic].s * e;
@@ -850,9 +848,8 @@ static double Q_energy(double omega) {
 static void setup_PQ(int p, int q, double omega) {
   int ic, ox = (p - 1) * n_localpart, oy = (q - 1) * n_localpart;
   double pref =
-      -coulomb.prefactor * 8 * M_PI * ux * uy / (exp(omega * box_l[2]) - 1);
+      -coulomb.prefactor * 8 * M_PI * ux * uy / (expm1(omega * box_l[2]));
   double pref_di = coulomb.prefactor * 8 * M_PI * ux * uy;
-  double e;
   int size = 8;
   double lclimgebot[8], lclimgetop[8], lclimge[8];
   double fac_delta_mid_bot = 1, fac_delta_mid_top = 1, fac_delta = 1;
@@ -872,7 +869,7 @@ static void setup_PQ(int p, int q, double omega) {
 
   ic = 0;
   for (auto &p : local_cells.particles()) {
-    e = exp(omega * p.r.p[2]);
+    double e = exp(omega * p.r.p[2]);
 
     partblk[size * ic + PQESSM] =
         scxcache[ox + ic].s * scycache[oy + ic].s * p.p.q / e;
@@ -1144,10 +1141,10 @@ int ELC_tune(double error) {
     err =
         0.5 * (exp(2 * M_PI * elc_params.far_cut * h) / (lz - h) *
                    (C_2PI * elc_params.far_cut + 2 * (ux + uy) + 1 / (lz - h)) /
-                   (exp(2 * M_PI * elc_params.far_cut * lz) - 1) +
+                   (expm1(2 * M_PI * elc_params.far_cut * lz)) +
                exp(-2 * M_PI * elc_params.far_cut * h) / (lz + h) *
                    (C_2PI * elc_params.far_cut + 2 * (ux + uy) + 1 / (lz + h)) /
-                   (exp(2 * M_PI * elc_params.far_cut * lz) - 1));
+                   (expm1(2 * M_PI * elc_params.far_cut * lz)));
 
     elc_params.far_cut += min_inv_boxl;
   } while (err > error && elc_params.far_cut < MAXIMAL_FAR_CUT);
@@ -1194,7 +1191,6 @@ int ELC_sanity_checks() {
 }
 
 void ELC_init() {
-  double maxsl;
 
   ELC_setup_constants();
 
@@ -1205,7 +1201,7 @@ void ELC_init() {
     // but make sure we leave enough space to not have to bother with
     // overlapping
     // realspace P3M
-    maxsl = elc_params.gap_size - p3m.params.r_cut;
+    double maxsl = elc_params.gap_size - p3m.params.r_cut;
     // and make sure the space layer is not bigger than half the actual
     // simulation box,
     // to avoid overlaps
