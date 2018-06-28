@@ -144,7 +144,8 @@ else:
 mayavi_rotation_angle = 45.
 mayavi_rotation_angle_step = 5.
 
-mayavi_zoom = 35.949120941773977
+mayavi_zoom = 36.
+mayavi_zoom_old = mayavi_zoom
 mayavi_zoom_step = 3.
 
 plot_max_data_len = 20
@@ -214,7 +215,7 @@ class Controls(HasTraits):
 
     MIDI_ROTATE = 0
 
-    MIDI_ZOOM = 176
+    MIDI_ZOOM = 144
 
     _ui = Any
     view = View(
@@ -238,7 +239,9 @@ class Controls(HasTraits):
             label='MIDI devices'
         ),
         buttons=[],
-        title='Control'
+        title='Control',
+        height=0.2,
+        width=0.3
     )
 
     def __init__(self, **traits):
@@ -527,12 +530,12 @@ def midi_thread():
                             mayavi_rotation_angle -= mayavi_rotation_angle_step * \
                                 (data2 - 64)
                     elif status == controls.MIDI_ZOOM:
-                        if data2 < 65:
+                        if data1 == 99 and data2 == 127:
                             # zoom in
-                            mayavi_zoom -= mayavi_zoom_step * data2
-                        elif data2 >= 65:
+                            mayavi_zoom -= mayavi_zoom_step
+                        elif data1 == 98 and data2 == 127:
                             # zoom out
-                            mayavi_zoom += mayavi_zoom_step * (data2 - 64)
+                            mayavi_zoom += mayavi_zoom_step
                     # else:
                     #    print("Unknown Status {0} with data1={1} and data2={2}".format(status, data1, data2))
 
@@ -557,10 +560,19 @@ def rotate_scene():
 
 
 def zoom_scene():
-    global mayavi_zoom
+    global mayavi_zoom, mayavi_zoom_old
 
     if use_mayavi:
         mlab.view(distance=mayavi_zoom)
+    elif use_opengl:
+        if mayavi_zoom_old < mayavi_zoom:
+            vis.camera.move_backward()
+            mayavi_zoom_old = mayavi_zoom
+        elif mayavi_zoom_old > mayavi_zoom:
+            vis.camera.move_forward()
+            help( vis.camera.move_forward)
+            mayavi_zoom_old = mayavi_zoom
+
 
 
 def update_plot():
