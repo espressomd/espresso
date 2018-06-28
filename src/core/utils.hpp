@@ -57,36 +57,6 @@ inline void permute_ifield(int *field, int size, int permute) {
 /** Mathematically rounds 'double'-typed x, returning 'double'. */
 inline double dround(double x) { return floor(x + 0.5); }
 
-/** Calculates the sinc-function as sin(PI*x)/(PI*x).
- *
- * (same convention as in Hockney/Eastwood). In order to avoid
- * divisions by 0, arguments, whose modulus is smaller than epsi, will
- * be evaluated by an 8th order Taylor expansion of the sinc
- * function. Note that the difference between sinc(x) and this
- * expansion is smaller than 0.235e-12, if x is smaller than 0.1. (The
- * next term in the expansion is the 10th order contribution
- * PI^10/39916800 * x^10 = 0.2346...*x^12).  This expansion should
- * also save time, since it reduces the number of function calls to
- * sin().
- */
-inline double sinc(double d) {
-  const constexpr double epsi = 0.1;
-
-  const double PId = PI * d;
-
-  if (std::abs(d) > epsi)
-    return sin(PId) / PId;
-  else {
-    /** Coefficients of the Taylor expansion of sinc */
-    const constexpr double c2 = -0.1666666666667e-0;
-    const constexpr double c4 = 0.8333333333333e-2;
-    const constexpr double c6 = -0.1984126984127e-3;
-    const constexpr double c8 = 0.2755731922399e-5;
-
-    const double PId2 = PId * PId;
-    return 1.0 + PId2 * (c2 + PId2 * (c4 + PId2 * (c6 + PId2 * c8)));
-  }
-}
 /*@}*/
 
 /*************************************************************/

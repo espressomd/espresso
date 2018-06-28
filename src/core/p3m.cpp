@@ -44,6 +44,8 @@
 #endif
 
 #include "utils/math/int_pow.hpp"
+#include "utils/math/sinc.hpp"
+using Utils::sinc;
 #include "utils/strcat_alloc.hpp"
 using Utils::strcat_alloc;
 

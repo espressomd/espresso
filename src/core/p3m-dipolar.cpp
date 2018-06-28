@@ -47,6 +47,8 @@
 
 #include "utils/strcat_alloc.hpp"
 using Utils::strcat_alloc;
+#include "utils/math/sinc.hpp"
+using Utils::sinc;
 
 #include <cstdio>
 #include <cstdlib>
