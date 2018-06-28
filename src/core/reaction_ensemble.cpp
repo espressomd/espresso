@@ -1771,13 +1771,11 @@ std::vector<double> WidomInsertion::measure_excess_chemical_potential(int reacti
          // need to hide the particle and recover it
   make_reaction_attempt(current_reaction, changed_particles_properties,
                         p_ids_created_particles, hidden_particles_properties);
-
   double E_pot_new;
   if(particle_inserted_too_close_to_another_one==true)
     E_pot_new=std::numeric_limits<double>::max();
   else
     E_pot_new= calculate_current_potential_energy_of_system();
-
   // reverse reaction attempt
   // reverse reaction
   // 1) delete created product particles
@@ -1788,11 +1786,10 @@ std::vector<double> WidomInsertion::measure_excess_chemical_potential(int reacti
   restore_properties(hidden_particles_properties, number_of_saved_properties);
   // 2)restore previously changed reactant particles
   restore_properties(changed_particles_properties, number_of_saved_properties);
-
   std::vector<double> exponential = {exp(-1.0 / temperature * (E_pot_new - E_pot_old))};
   current_reaction.accumulator_exponentials(exponential);
 
-  std::vector<double> result;
+  std::vector<double> result(2);
   result[0] = -temperature*log(current_reaction.accumulator_exponentials.get_mean()[0]); //excess chemical potential
   result[1]=std::abs(-temperature/current_reaction.accumulator_exponentials.get_mean()[0]*current_reaction.accumulator_exponentials.get_std_error()[0]); //error excess chemical potential, determined via error propagation
   return result;
