@@ -22,10 +22,10 @@ public:
     ShapeBasedConstraint::reset_force();
   }
 
-  virtual void add_energy(const Particle *p, const Vector3d &folded_pos,
+  virtual void add_energy(const Particle &p, const Vector3d &folded_pos,
                           Observable_stat &energy) const override;
 
-  virtual ParticleForce force(const Particle *p, const Vector3d &folded_pos) override;
+  virtual ParticleForce force(const Particle &p, const Vector3d &folded_pos) override;
 
   /* finds the minimum distance to all particles */
   double min_dist();
