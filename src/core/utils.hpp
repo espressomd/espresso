@@ -36,8 +36,6 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
-#include <exception>
-#include <vector>
 
 namespace Utils {
 /**
@@ -441,10 +439,6 @@ double angle_btw_triangles(const T1& P1, const T2& P2, const T3& P3, const T4& P
 }
 
 namespace Utils {
-
-struct vector_size_unequal : public std::exception {
-  const char *what() const throw() { return "Vector sizes do not match!"; }
-};
 
 // Below you will find some routines for handling vectors.  Note that
 // all the pointer-type overloads assume a pointer of length 3!  Due
