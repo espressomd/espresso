@@ -98,4 +98,5 @@ unit_test(NAME get_value SRC get_value_test.cpp)
 unit_test(NAME accumulator SRC accumulator.cpp)
 unit_test(NAME strcat_alloc SRC strcat_alloc_test.cpp)
 unit_test(NAME int_pow SRC int_pow_test.cpp)
+unit_test(NAME sgn SRC sgn_test.cpp)
 
