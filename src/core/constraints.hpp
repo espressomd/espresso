@@ -22,7 +22,7 @@ inline void add_constraints_forces(Particle *p) {
   auto const pos=folded_position(p);
   ParticleForce force{};
   for (auto const &c : Constraints::constraints) {
-    force += c->force(p, pos);
+    force += c->force(*p, pos);
   }
 
   p->f += force;
@@ -38,7 +38,7 @@ inline void add_constraints_energy(const Particle *p) {
   auto const pos = folded_position(*p);
 
   for (auto const &c : Constraints::constraints) {
-    c->add_energy(p, pos, energy);
+    c->add_energy(*p, pos, energy);
   }
 }
 
