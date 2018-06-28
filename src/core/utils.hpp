@@ -70,7 +70,7 @@ inline double dround(double x) { return floor(x + 0.5); }
  * sin().
  */
 inline double sinc(double d) {
-  constexpr double epsi = 0.1;
+  const constexpr double epsi = 0.1;
 
   const double PId = PI * d;
 
@@ -78,10 +78,10 @@ inline double sinc(double d) {
     return sin(PId) / PId;
   else {
     /** Coefficients of the Taylor expansion of sinc */
-    constexpr double c2 = -0.1666666666667e-0;
-    constexpr double c4 = 0.8333333333333e-2;
-    constexpr double c6 = -0.1984126984127e-3;
-    constexpr double c8 = 0.2755731922399e-5;
+    const constexpr double c2 = -0.1666666666667e-0;
+    const constexpr double c4 = 0.8333333333333e-2;
+    const constexpr double c6 = -0.1984126984127e-3;
+    const constexpr double c8 = 0.2755731922399e-5;
 
     const double PId2 = PId * PId;
     return 1.0 + PId2 * (c2 + PId2 * (c4 + PId2 * (c6 + PId2 * c8)));

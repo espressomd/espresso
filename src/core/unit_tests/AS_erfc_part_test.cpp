@@ -19,16 +19,16 @@
  * Utils::int_pow function.
 */
 
-#define BOOST_TEST_MODULE Utils::sgn test
+#define BOOST_TEST_MODULE Utils::AS_erfc_part test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "utils/math/AS_erf_part.hpp"
+#include "utils/math/AS_erfc_part.hpp"
 using Utils::AS_erfc_part;
 
 BOOST_AUTO_TEST_CASE(approx) {
   for (double x = 0.0; x <= 1.; x += 0.01) {
-    auto const approx = erfc_part(x);
+    auto const approx = AS_erfc_part(x);
     auto const exact = std::exp(x * x) * std::erfc(x);
     BOOST_CHECK(std::abs(approx - exact) < 5.e-7);
   }
