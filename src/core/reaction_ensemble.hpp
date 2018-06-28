@@ -125,8 +125,8 @@ public:
   bool do_global_mc_move_for_particles_of_type(int type,
                                                int particle_number_of_type,
                                                const bool use_wang_landau);
-  std::vector<double> get_excess_chemical_potential_change_during_reaction(int reaction_id);
-  
+
+  bool particle_inserted_too_close_to_another_one;  
 protected:
   std::vector<int> m_empty_p_ids_smaller_than_max_seen_particle;
   bool generic_oneway_reaction(int reaction_id);
