@@ -36,29 +36,6 @@
 #include <cmath>
 
 namespace Utils {
-/**
- * \brief Calculate integer powers.
- * This functions calculates x^n, where
- * n is a positive integer that is known
- * at compile time. It uses exponentiation by
- * squaring to construct a efficient function.
- */
-template <unsigned n, typename T> inline T int_pow(T x) {
-  switch (n) {
-  case 0:
-    return T(1);
-  case 1:
-    return x;
-  default:
-    /** Even branch */
-    if (n % 2 == 0) {
-      return int_pow<n / 2, T>(x * x);
-    } else {
-      return x * int_pow<(n - 1) / 2, T>(x * x);
-    }
-  }
-}
-
 /** Calculate signum of val, if supported by T */
 template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
 
