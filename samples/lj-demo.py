@@ -33,9 +33,12 @@ use_opengl = "opengl" in sys.argv
 use_mayavi = "mayavi" in sys.argv
 if not use_opengl and not use_mayavi:
     use_mayavi = True
+assert use_opengl != use_mayavi
 
 if use_mayavi:
     from espressomd.visualization_mayavi import mlab
+if use_opengl:
+    from pyface.api import GUI
 
 try:
     import midi
@@ -598,4 +601,7 @@ if controls.midi_input is not None:
     t2 = Thread(target=midi_thread)
     t2.daemon = True
     t2.start()
+if use_opengl:
+    gui = GUI()
+    vis.register_callback(gui.process_events, interval=1000)
 vis.start()
