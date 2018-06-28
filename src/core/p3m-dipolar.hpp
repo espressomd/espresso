@@ -35,10 +35,13 @@
  *  </ul>
  *
  */
-#include "interaction_data.hpp"
-#include "p3m-common.hpp"
+
+#include "config.hpp"
 
 #ifdef DP3M
+
+#include "interaction_data.hpp"
+#include "p3m-common.hpp"
 
 typedef struct {
   p3m_parameter_struct params;

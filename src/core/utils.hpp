@@ -34,8 +34,6 @@
 #include "utils/memory.hpp"
 
 #include <cmath>
-#include <cstdio>
-#include <cstring>
 
 namespace Utils {
 /**
@@ -313,17 +311,6 @@ double distance2vec(T1 const pos1, T2 const pos2,
   vec[2] = pos1[2] - pos2[2];
   return Utils::sqr(vec[0]) + Utils::sqr(vec[1]) + Utils::sqr(vec[2]);
 }
-
-/*@}*/
-
-/*************************************************************/
-/** \name String helper functions                            */
-/*************************************************************/
-/*@{*/
-
-/** extend a string with another one. Like strcat, just automatically
-    increases the string space */
-char *strcat_alloc(char *left, const char *right);
 
 /*@}*/
 

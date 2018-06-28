@@ -35,6 +35,9 @@
 #include "tuning.hpp"
 #include "utils.hpp"
 
+#include "utils/strcat_alloc.hpp"
+using Utils::strcat_alloc;
+
 #ifdef ELECTROSTATICS
 
 /** How many trial calculations */

@@ -32,10 +32,7 @@
 
 #include "p3m-dipolar.hpp"
 
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <mpi.h>
+#ifdef DP3M
 
 #include "cells.hpp"
 #include "communication.hpp"
@@ -47,9 +44,14 @@
 #include "particle_data.hpp"
 #include "thermostat.hpp"
 #include "tuning.hpp"
-#include "utils.hpp"
 
-#ifdef DP3M
+#include "utils/strcat_alloc.hpp"
+using Utils::strcat_alloc;
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <mpi.h>
 
 /************************************************
  * DEFINES

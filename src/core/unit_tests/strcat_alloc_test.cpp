@@ -24,8 +24,6 @@
 #include "utils/strcat_alloc.hpp"
 using Utils::strcat_alloc;
 
-#include "utils/print.hpp"
-
 BOOST_AUTO_TEST_CASE(empty_left) {
   const char *right = "right";
   auto res = strcat_alloc(nullptr, right);
