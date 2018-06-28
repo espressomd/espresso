@@ -31,15 +31,8 @@
 #include "Vector.hpp"
 #include "utils/constants.hpp"
 #include "utils/math/sqr.hpp"
-#include "utils/memory.hpp"
 
 #include <cmath>
-
-namespace Utils {
-/** Calculate signum of val, if supported by T */
-template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
-
-} // Namespace Utils
 
 /*************************************************************/
 /** \name Mathematical functions.                            */
@@ -147,14 +140,10 @@ template <typename T> double sqrlen(T const &v) {
 
 /** calculates unit vector */
 inline void unit_vector(double v[3], double y[3]) {
-  double d = 0.0;
-  int i;
-  d = sqrt(sqrlen(v));
+  const double d = sqrt(sqrlen(v));
 
-  for (i = 0; i < 3; i++)
+  for (int i = 0; i < 3; i++)
     y[i] = v[i] / d;
-
-  return;
 }
 
 /** calculates the scalar product of two vectors a nd b */
@@ -418,13 +407,6 @@ void cross_product(const T1& a, const T2& b, T3& c) {
   c[0] = a[1] * b[2] - a[2] * b[1];
   c[1] = a[2] * b[0] - a[0] * b[2];
   c[2] = a[0] * b[1] - a[1] * b[0];
-}
-
-template <typename T> double dot_product(T const *const a, T const *const b) {
-  double c = 0;
-  for (unsigned int i = 0; i < 3; i++)
-    c += a[i] * b[i];
-  return c;
 }
 
 //

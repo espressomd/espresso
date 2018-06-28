@@ -33,6 +33,8 @@
 #include "integrate.hpp"
 #include "grid.hpp"
 
+#include "utils/math/sgn.hpp"
+
 #include <algorithm>
 #include <random>
 #include <vector>

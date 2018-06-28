@@ -19,8 +19,6 @@
  * Utils::int_pow function.
 */
 
-#include <cmath>
-
 #define BOOST_TEST_MODULE int_pow test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
