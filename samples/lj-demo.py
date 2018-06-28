@@ -17,17 +17,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, division
+import matplotlib
+matplotlib.use('WXAgg')
 import espressomd
 from espressomd import thermostat
 from espressomd import visualization
 import numpy as np
-import matplotlib
-matplotlib.use('WXAgg')
 from matplotlib import pyplot
 from threading import Thread
 from traits.api import HasTraits, Button, Any, Range, List, Enum, Float
 from traitsui.api import View, Group, Item, CheckListEditor, RangeEditor, EnumEditor
-from espressomd.visualization_mayavi import mlab
+import sys
+
+use_opengl = "opengl" in sys.argv
+use_mayavi = "mayavi" in sys.argv
+if not use_opengl and not use_mayavi:
+    use_mayavi = True
+
+if use_mayavi:
+    from espressomd.visualization_mayavi import mlab
 
 try:
     import midi
@@ -42,8 +50,6 @@ midi.init()
 pressure_log_flag = True
 
 mayavi_autozoom = False  # autozoom is buggy... works only for rotation
-
-show_real_system_temperature = True
 
 old_pressure = -1
 
@@ -127,7 +133,10 @@ system.analysis.dist_to(0)
 act_min_dist = system.analysis.min_dist()
 system.cell_system.max_num_cells = 2744
 
-mayavi = visualization.mayaviLive(system)
+if use_mayavi:
+    vis = visualization.mayaviLive(system)
+else:
+    vis = visualization.openGLLive(system)
 
 mayavi_rotation_angle = 45.
 mayavi_rotation_angle_step = 5.
@@ -191,8 +200,8 @@ class Controls(HasTraits):
     number_of_particles = Range(min_n, max_n, n_part, )
     ensemble = Enum('NVT', 'NPT')
 
-    midi_input = midi.Input(default_input[0]) if len(inputs) > 1 else None
-    midi_output = midi.Output(default_output[0]) if len(outputs) > 1 else None
+    midi_input = None
+    midi_output = None
 
     MIDI_BASE = 224
     MIDI_NUM_TEMPERATURE = MIDI_BASE + 0
@@ -245,7 +254,8 @@ class Controls(HasTraits):
     def _input_device_fired(self):
         if self.midi_input is not None:
             self.midi_input.close()
-        self.midi_input = midi.Input(self.input_device[0])
+        if len(self.input_device) > 0:
+            self.midi_input = midi.Input(self.input_device[0])
 
     def _output_device_fired(self):
         if self.midi_output is not None:
@@ -319,7 +329,7 @@ system.force_cap = lj_cap
 # #   Increase LJ cap
 #     lj_cap = lj_cap + 10
 #     system.force_cap = lj_cap
-#     mayavi.update()
+#     vis.update()
 
 #############################################################
 #      Integration                                          #
@@ -331,7 +341,7 @@ system.force_cap = lj_cap
 
 # get initial observables
 pressure = system.analysis.pressure()
-temperature = (system.part[:].v**2).sum() / 3.0
+temperature = 0.0
 
 # TODO: this is some terrible polynomial fit, replace it with a better expression
 # equation of state
@@ -404,7 +414,7 @@ def main_loop():
     global energies, plt1_x_data, plt1_y_data, plt2_x_data, plt2_y_data, old_pressure
 
     system.integrator.run(steps=int_steps)
-    mayavi.update()
+    vis.update()
 
     # make sure the parameters are valid
     # not sure if this is necessary after using limit_range
@@ -423,10 +433,10 @@ def main_loop():
         # reset Vkappa when target pressure has changed
 
         if old_pressure != controls.pressure:
-            system.analysis.Vkappa('reset')
+            system.analysis.v_kappa('reset')
             old_pressure = controls.pressure
 
-        newVkappa = system.analysis.Vkappa('read')['Vk1']
+        newVkappa = system.analysis.v_kappa('read')['Vk1']
         newVkappa = newVkappa if newVkappa > 0. else 4.0 / \
             (NPTGamma0 * NPTGamma0 * NPTInitPistonMass)
         pistonMass = limit_range(
@@ -443,7 +453,7 @@ def main_loop():
         new_box = np.ones(3) * controls.volume**(1. / 3.)
         if np.any(np.array(system.box_l) != new_box):
             for i in range(len(system.part)):
-                system.part[i].pos *= new_box / system.box_l[0]
+                system.part[i].pos = system.part[i].pos * new_box / system.box_l[0]
         system.box_l = new_box
 
     new_part = controls.number_of_particles
@@ -453,8 +463,6 @@ def main_loop():
     elif new_part < len(system.part):
         for i in range(new_part, len(system.part)):
             system.part[i].remove()
-    # There should be no gaps in particle numbers
-    assert len(system.part) == system.part.highest_particle_id + 1
 
     plt1_x_data = plot1.get_xdata()
     plt1_y_data = plot1.get_ydata()
@@ -463,12 +471,8 @@ def main_loop():
 
     plt1_x_data = np.append(
         plt1_x_data[-plot_max_data_len + 1:], system.time)
-    if show_real_system_temperature:
-        plt1_y_data = np.append(plt1_y_data[-plot_max_data_len + 1:], 2. / (
-            3. * len(system.part)) * system.analysis.energy()["kinetic"])
-    else:
-        plt1_y_data = np.append(
-            plt1_y_data[-plot_max_data_len + 1:], (system.part[:].v**2).sum())
+    plt1_y_data = np.append(plt1_y_data[-plot_max_data_len + 1:], 2. / (
+        3. * len(system.part)) * system.analysis.energy()["kinetic"])
     plt2_x_data = np.append(
         plt2_x_data[-plot_max_data_len + 1:], system.time)
     plt2_y_data = np.append(
@@ -535,21 +539,10 @@ def midi_thread():
 
 last_plotted = 0
 
-
-def calculate_kinetic_energy():
-    tmp_kin_energy = 0.
-    for i in range(len(system.part)):
-        tmp_kin_energy += 1. / 2. * np.linalg.norm(system.part[i].v)**2.0
-
-    print("tmp_kin_energy={}".format(tmp_kin_energy))
-    print("system.analysis.energy()['kinetic']={}".format(
-        system.analysis.energy(system)["kinetic"]))
-
-
 def rotate_scene():
     global mayavi_rotation_angle
 
-    if mayavi_rotation_angle:
+    if use_mayavi and mayavi_rotation_angle:
         # mlab.yaw(mayavi_rotation_angle)
         if mayavi_autozoom:
             mlab.view(azimuth=mayavi_rotation_angle, distance='auto')
@@ -563,7 +556,8 @@ def rotate_scene():
 def zoom_scene():
     global mayavi_zoom
 
-    mlab.view(distance=mayavi_zoom)
+    if use_mayavi:
+        mlab.view(distance=mayavi_zoom)
 
 
 def update_plot():
@@ -597,11 +591,11 @@ def update_plot():
 
 t = Thread(target=main_thread)
 t.daemon = True
-mayavi.registerCallback(update_plot, interval=1000)
+vis.register_callback(update_plot, interval=1000)
 controls = Controls()
 t.start()
 if controls.midi_input is not None:
     t2 = Thread(target=midi_thread)
     t2.daemon = True
     t2.start()
-mayavi.start()
+vis.start()
