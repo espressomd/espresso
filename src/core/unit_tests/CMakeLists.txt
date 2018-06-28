@@ -99,4 +99,4 @@ unit_test(NAME accumulator SRC accumulator.cpp)
 unit_test(NAME strcat_alloc SRC strcat_alloc_test.cpp)
 unit_test(NAME int_pow SRC int_pow_test.cpp)
 unit_test(NAME sgn SRC sgn_test.cpp)
-
+unit_test(NAME AS_erfc_part SRC AS_erfc_part_test.cpp)

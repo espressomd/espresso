@@ -43,6 +43,8 @@
 #include "interaction_data.hpp"
 #include "p3m-common.hpp"
 
+#include  "utils/math/AS_erfc_part.hpp"
+
 typedef struct {
   p3m_parameter_struct params;
 
@@ -185,7 +187,7 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double *d,
   if (dist < dp3m.params.r_cut && dist > 0) {
     adist = dp3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
-    erfc_part_ri = AS_erfc_part(adist) / dist;
+    erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
 #else
     erfc_part_ri = erfc(adist) / dist;
 #endif
@@ -262,7 +264,7 @@ inline double dp3m_pair_energy(Particle *p1, Particle *p2, double *d,
 /*fac1 = coulomb.Dprefactor;*/
 
 #if USE_ERFC_APPROXIMATION
-    erfc_part_ri = AS_erfc_part(adist) / dist;
+    erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
     /*  fac1 = coulomb.Dprefactor * p1->p.dipm*p2->p.dipm; IT WAS WRONG */ /* *exp(-adist*adist);
                                                                               */
 #else

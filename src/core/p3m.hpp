@@ -49,11 +49,12 @@
  */
 
 #include "config.hpp"
-#include "utils.hpp"
 #include "debug.hpp"
 
 #include "p3m-common.hpp"
 #include "interaction_data.hpp"
+
+#include  "utils/math/AS_erfc_part.hpp"
 
 #ifdef P3M
 
@@ -213,7 +214,7 @@ inline double p3m_add_pair_force(double chgfac, double *d,double dist2,double di
     if (dist > 0.0){		//Vincent
       double adist = p3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
-      double erfc_part_ri = AS_erfc_part(adist) / dist;
+      double erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
       double fac1 = coulomb.prefactor * chgfac  * exp(-adist*adist);
       double fac2 = fac1 * (erfc_part_ri + 2.0*p3m.params.alpha*wupii) / dist2;
 #else
@@ -254,7 +255,7 @@ inline double p3m_pair_energy(double chgfac, double dist)
   if(dist < p3m.params.r_cut && dist != 0) {
     adist = p3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
-    erfc_part_ri = AS_erfc_part(adist) / dist;
+    erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
     return coulomb.prefactor*chgfac*erfc_part_ri*exp(-adist*adist);
 #else
     erfc_part_ri = erfc(adist) / dist;

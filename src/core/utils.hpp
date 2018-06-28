@@ -57,23 +57,6 @@ inline void permute_ifield(int *field, int size, int permute) {
 /** Mathematically rounds 'double'-typed x, returning 'double'. */
 inline double dround(double x) { return floor(x + 0.5); }
 
-/** approximates \f$ \exp(d^2) \mathrm{erfc}(d)\f$ by applying a formula from:
-    Abramowitz/Stegun: Handbook of Mathematical Functions, Dover
-    (9. ed.), chapter 7 */
-inline double AS_erfc_part(double d) {
-#define AS_a1 0.254829592
-#define AS_a2 -0.284496736
-#define AS_a3 1.421413741
-#define AS_a4 -1.453152027
-#define AS_a5 1.061405429
-#define AS_p 0.3275911
-  double t;
-
-  t = 1.0 / (1.0 + AS_p * d);
-
-  return t * (AS_a1 + t * (AS_a2 + t * (AS_a3 + t * (AS_a4 + t * AS_a5))));
-}
-
 /** Calculates the sinc-function as sin(PI*x)/(PI*x).
  *
  * (same convention as in Hockney/Eastwood). In order to avoid
@@ -91,7 +74,7 @@ inline double sinc(double d) {
 
   const double PId = PI * d;
 
-  if (fabs(d) > epsi)
+  if (std::abs(d) > epsi)
     return sin(PId) / PId;
   else {
     /** Coefficients of the Taylor expansion of sinc */
