@@ -63,8 +63,8 @@ mat_I=system.analysis.moment_of_inertia_matrix(p_type=type_A)
 momI=[mat_I[0,0],mat_I[1,1], mat_I[2,2]]
 print("moment of intertia is", momI)
 
-#place center bead
-p_center = system.part.add(pos=com, mass=branch_len*6, rinertia=momI, rotation=[1,1,1], type=type_centre)
+#place center bead 
+p_center = system.part.add(pos=com, mass=branch_len*6+1, rinertia=momI, rotation=[1,1,1], type=type_centre)
 
 # The virtual particles relate to the center one 
 for p in system.part:
