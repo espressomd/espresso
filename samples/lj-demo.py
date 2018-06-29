@@ -28,6 +28,7 @@ from threading import Thread
 from traits.api import HasTraits, Button, Any, Range, List, Enum, Float
 from traitsui.api import View, Group, Item, CheckListEditor, RangeEditor, EnumEditor
 import sys
+import time
 
 use_opengl = "opengl" in sys.argv
 use_mayavi = "mayavi" in sys.argv
@@ -541,6 +542,8 @@ def midi_thread():
 
         except Exception as e:
             print(e)
+
+        time.sleep(0.01)
 
 
 last_plotted = 0
