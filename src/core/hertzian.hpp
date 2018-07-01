@@ -43,13 +43,11 @@ inline void add_hertzian_pair_force(const Particle *const p1,
                                     IA_parameters *ia_params, double d[3],
                                     double dist, double dist2,
                                     double force[3]) {
-  double fac;
-  int j;
   if ((dist < ia_params->Hertzian_sig)) {
-    fac = 5. / 2. * ia_params->Hertzian_eps / ia_params->Hertzian_sig *
+    double fac = 5. / 2. * ia_params->Hertzian_eps / ia_params->Hertzian_sig *
           pow(1 - dist / ia_params->Hertzian_sig, 3. / 2.) / dist;
 
-    for (j = 0; j < 3; j++)
+    for (int j = 0; j < 3; j++)
       force[j] += fac * d[j];
   }
 }

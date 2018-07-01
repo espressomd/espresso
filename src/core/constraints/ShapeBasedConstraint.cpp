@@ -37,12 +37,12 @@ double ShapeBasedConstraint::min_dist() {
   return global_mindist;
 }
 
-ParticleForce ShapeBasedConstraint::force(const Particle *p, const Vector3d &folded_pos) {
+ParticleForce ShapeBasedConstraint::force(const Particle &p, const Vector3d &folded_pos) {
 
   double dist =0.;
   Vector3d dist_vec, force, torque1, torque2, outer_normal_vec;
 
-  IA_parameters *ia_params = get_ia_param(p->p.type, part_rep.p.type);
+  IA_parameters *ia_params = get_ia_param(p.p.type, part_rep.p.type);
 
   for (int j = 0; j < 3; j++) {
     force[j] = 0;
@@ -57,27 +57,27 @@ ParticleForce ShapeBasedConstraint::force(const Particle *p, const Vector3d &fol
 
     if (dist > 0) {
       auto const dist2 = dist * dist;
-      calc_non_bonded_pair_force(p, &part_rep, ia_params, dist_vec.data(), dist, dist2,
+      calc_non_bonded_pair_force(&p, &part_rep, ia_params, dist_vec.data(), dist, dist2,
                                  force.data(), torque1.data(), torque2.data());
 #ifdef DPD
       if (thermo_switch & THERMO_DPD) {
-          force += dpd_pair_force(p, &part_rep, ia_params, dist_vec.data(), dist, dist2);
+          force += dpd_pair_force(&p, &part_rep, ia_params, dist_vec.data(), dist, dist2);
       }
 #endif
     } else if (m_penetrable && (dist <= 0)) {
       if ((!m_only_positive) && (dist < 0)) {
         auto const dist2 = dist * dist;
-        calc_non_bonded_pair_force(p, &part_rep, ia_params, dist_vec.data(), -1.0 * dist,
+        calc_non_bonded_pair_force(&p, &part_rep, ia_params, dist_vec.data(), -1.0 * dist,
                                    dist * dist, force.data(), torque1.data(), torque2.data());
 #ifdef DPD
         if (thermo_switch & THERMO_DPD) {
-            force += dpd_pair_force(p, &part_rep, ia_params, dist_vec.data(), dist, dist2);
+            force += dpd_pair_force(&p, &part_rep, ia_params, dist_vec.data(), dist, dist2);
         }
 #endif
       }
     } else {
         runtimeErrorMsg() << "Constraint"
-                          << " violated by particle " << p->p.identity
+                          << " violated by particle " << p.p.identity
                           << " dist " << dist;
     }
   }
@@ -93,31 +93,32 @@ ParticleForce ShapeBasedConstraint::force(const Particle *p, const Vector3d &fol
 #endif
 }
 
-void ShapeBasedConstraint::add_energy(const Particle *p, const Vector3d &folded_pos,
+void ShapeBasedConstraint::add_energy(const Particle &p, const Vector3d &folded_pos,
                                       Observable_stat &energy) const {
-  double dist, vec[3];
+  double dist;
   IA_parameters *ia_params;
   double nonbonded_en = 0.0;
 
-  ia_params = get_ia_param(p->p.type, part_rep.p.type);
+  ia_params = get_ia_param(p.p.type, part_rep.p.type);
 
   dist = 0.;
   if (checkIfInteraction(ia_params)) {
+    double vec[3];
     m_shape->calculate_dist(folded_pos.data(), &dist, vec);
     if (dist > 0) {
-      nonbonded_en = calc_non_bonded_pair_energy(p, &part_rep, ia_params, vec,
+      nonbonded_en = calc_non_bonded_pair_energy(&p, &part_rep, ia_params, vec,
                                                  dist, dist * dist);
     } else if ((dist <= 0) && m_penetrable) {
       if (!m_only_positive && (dist < 0)) {
-        nonbonded_en = calc_non_bonded_pair_energy(p, &part_rep, ia_params, vec,
+        nonbonded_en = calc_non_bonded_pair_energy(&p, &part_rep, ia_params, vec,
                                                    -1.0 * dist, dist * dist);
       }
     } else {
       runtimeErrorMsg() << "Constraint "
-                        << " violated by particle " << p->p.identity;
+                        << " violated by particle " << p.p.identity;
     }
   }
   if (part_rep.p.type >= 0)
-    *obsstat_nonbonded(&energy, p->p.type, part_rep.p.type) += nonbonded_en;
+    *obsstat_nonbonded(&energy, p.p.type, part_rep.p.type) += nonbonded_en;
 }
 }

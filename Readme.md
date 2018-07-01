@@ -1,7 +1,3 @@
-# Call for Scientific Software Developer
-
-See http://espressomd.org/wordpress/call-for-scientific-software-developer
-
 # ESPResSo
 
 [![GitLab CI](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/badges/doc/pipeline.svg)](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/commits/doc)

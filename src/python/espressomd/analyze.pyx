@@ -192,13 +192,13 @@ class Analysis(object):
     # Analyze center of mass
     #
 
-    def center_of_mass(self, part_type=None):
+    def center_of_mass(self, p_type=None):
         """
         Calculates the systems center of mass.
 
         Parameters
         ----------
-        part_type : :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
+        p_type : :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
                     Particle type for which to calculate the center of mass.    
 
         Returns
@@ -207,7 +207,14 @@ class Analysis(object):
             The center of mass of the system.
 
         """
-        return c_analyze.centerofmass(c_analyze.partCfg(), part_type)
+        if p_type is None:
+            raise ValueError(
+                "The p_type keyword argument must be provided (particle type)")
+        check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
+        if (p_type < 0 or p_type >= c_analyze.max_seen_particle_type):
+            raise ValueError("Particle type", p_type, "does not exist!")
+
+        return c_analyze.centerofmass(c_analyze.partCfg(), p_type)
 
     # get all particles in neighborhood r_catch of pos and return their ids
     # in il. plane can be used to specify the distance in the xy, xz or yz
@@ -1127,24 +1134,36 @@ class Analysis(object):
         The eigenvalues are sorted in descending order.
 
         """
-
-        cdef vector[double] gt
-
-        if p_type is not None:
-            check_type_or_throw_except(
-                p_type, 1, int, "p_type has to be an int")
-            if (p_type < 0 or p_type >= c_analyze.max_seen_particle_type):
-                raise ValueError("Particle type", p_type, "does not exist!")
-        else:
-            p_type = -1
-
-        c_analyze.calc_gyration_tensor(c_analyze.partCfg(), p_type, gt)
-
-        return {"Rg^2": gt[3],
-                "shape": [gt[4], gt[5], gt[6]],
-                "eva0": [gt[0], [gt[7], gt[8], gt[9]]],
-                "eva1": [gt[1], [gt[10], gt[11], gt[12]]],
-                "eva2": [gt[2], [gt[13], gt[14], gt[15]]]}
+        if p_type is None:
+            raise ValueError(
+                "The p_type keyword argument must be provided (particle type)")
+        if not hasattr(p_type, '__iter__'):
+            p_type = [p_type]
+        for type in p_type:
+            check_type_or_throw_except(type, 1, int, "particle type has to be an int")
+            if (type < 0 or type >= c_analyze.max_seen_particle_type):
+                raise ValueError("Particle type", type, "does not exist!")
+        selection = np.in1d(self._system.part[:].type, p_type)
+        
+        cm = np.mean(self._system.part[selection].pos, axis=0)
+        mat=np.zeros(shape=(3,3))
+        for i,j in np.ndindex((3,3)):
+            mat[i,j]=np.mean(((self._system.part[selection].pos)[:,i]-cm[i])*((self._system.part[selection].pos)[:,j]-cm[j]))
+        w,v=np.linalg.eig(mat)
+        # return eigenvalue/vector tuples in order of increasing eigenvalues
+        order = np.argsort(np.abs(w))[::-1]
+        rad_gyr_sqr = mat[0,0]+mat[1,1]+mat[2,2]
+        aspheric = w[order[0]] - 0.5 * (w[order[1]] + w[order[2]])
+        acylindric = w[order[1]] - w[order[2]]
+        rel_shape_anis = (aspheric**2 +0.75*acylindric**2) / rad_gyr_sqr**2
+        return{
+        "Rg^2": rad_gyr_sqr,
+        "shape": [aspheric,
+                  acylindric,
+                  rel_shape_anis],
+        "eva0": (w[order[0]], v[:,order[0]]),
+        "eva1": (w[order[1]], v[:,order[1]]),
+        "eva2": (w[order[2]], v[:,order[2]])}
 
     #
     # momentofinertiamatrix

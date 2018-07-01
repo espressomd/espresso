@@ -55,16 +55,15 @@ inline void add_buck_pair_force(const Particle *const p1,
                                 const Particle *const p2,
                                 IA_parameters *ia_params, double d[3],
                                 double dist, double force[3]) {
-  int j;
-  double fac;
   if ((dist < ia_params->BUCK_cut)) {
     /* case: resulting force/energy greater than discontinuity and
              less than cutoff (true buckingham region) */
+    double fac;
     if (dist > ia_params->BUCK_discont) {
       fac = buck_force_r(ia_params->BUCK_A, ia_params->BUCK_B,
                          ia_params->BUCK_C, ia_params->BUCK_D, dist) /
             dist;
-      for (j = 0; j < 3; j++) {
+      for (int j = 0; j < 3; j++) {
         force[j] += fac * d[j];
       }
 #ifdef LJ_WARN_WHEN_CLOSE
@@ -75,7 +74,7 @@ inline void add_buck_pair_force(const Particle *const p1,
     } else {
       /* resulting force/energy in the linear region*/
       fac = -ia_params->BUCK_F2 / dist;
-      for (j = 0; j < 3; j++) {
+      for (int j = 0; j < 3; j++) {
         force[j] += fac * d[j];
       }
     }
