@@ -23,7 +23,9 @@
 #ifndef UTILS_MATH_SINC_HPP
 #define UTILS_MATH_SINC_HPP
 
-#include "utils/constants.hpp"
+#include <boost/math/constants/constants.hpp>
+
+#include <cmath>
 
 namespace Utils {
 /**
@@ -39,24 +41,24 @@ namespace Utils {
  * also save time, since it reduces the number of function calls to
  * sin().
  */
-inline double sinc(double d) {
-  const constexpr double epsi = 0.1;
+template <typename T> inline T sinc(T d) {
+  const constexpr T epsi = 0.1;
 
-  const double PId = PI * d;
+  const auto PId = boost::math::constants::pi<T>() * d;
 
   if (std::abs(d) > epsi)
-    return sin(PId) / PId;
+    return std::sin(PId) / PId;
   else {
     /** Coefficients of the Taylor expansion of sinc */
-    const constexpr double c2 = -0.1666666666667e-0;
-    const constexpr double c4 = 0.8333333333333e-2;
-    const constexpr double c6 = -0.1984126984127e-3;
-    const constexpr double c8 = 0.2755731922399e-5;
+    const constexpr T c2 = -0.1666666666667e-0;
+    const constexpr T c4 = 0.8333333333333e-2;
+    const constexpr T c6 = -0.1984126984127e-3;
+    const constexpr T c8 = 0.2755731922399e-5;
 
-    const double PId2 = PId * PId;
-    return 1.0 + PId2 * (c2 + PId2 * (c4 + PId2 * (c6 + PId2 * c8)));
+    const auto PId2 = PId * PId;
+    return T(1) + PId2 * (c2 + PId2 * (c4 + PId2 * (c6 + PId2 * c8)));
   }
-}  
+}
 }
 
 #endif
