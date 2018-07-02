@@ -88,7 +88,7 @@ inline std::vector<double> Accumulator::get_variance() const {
 returns the standard error of the mean of uncorrelated data. if data are correlated the correlation time needs to be known...
 */
 inline std::vector<double> Accumulator::get_std_error() const {
-    std::vector<double> variance=get_variance();
+    auto const variance=get_variance();
     std::vector<double> std_error(variance.size());
     std::transform(variance.begin(), variance.end(), std_error.begin(),
                        [this](double d) {
