@@ -311,7 +311,7 @@ private:
 
 class WidomInsertion : public ReactionAlgorithm {
 public:
-    std::vector<double> measure_excess_chemical_potential(int reaction_id);
+    std::pair<double,double> measure_excess_chemical_potential(int reaction_id);
 
 };
 

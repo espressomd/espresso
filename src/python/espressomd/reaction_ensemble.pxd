@@ -2,6 +2,7 @@ include "myconfig.pxi"
 
 from libcpp cimport bool
 from libcpp.vector cimport vector
+from libcpp.pair cimport pair
 from libcpp.string cimport string
 from libcpp.map cimport map
 
@@ -68,4 +69,4 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
 
     cdef cppclass CWidomInsertion "ReactionEnsemble::WidomInsertion"(CReactionAlgorithm):
         CWidomInsertion()
-        vector[double] measure_excess_chemical_potential(int reaction_id)
+        pair[double,double] measure_excess_chemical_potential(int reaction_id)

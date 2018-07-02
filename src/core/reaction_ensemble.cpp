@@ -1757,7 +1757,7 @@ double ConstantpHEnsemble::calculate_acceptance_probability(
   return bf;
 }
 
-std::vector<double> WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
+std::pair<double,double> WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
   SingleReaction &current_reaction = reactions[reaction_id];
   particle_inserted_too_close_to_another_one=false;
   const double E_pot_old = calculate_current_potential_energy_of_system();
@@ -1789,9 +1789,7 @@ std::vector<double> WidomInsertion::measure_excess_chemical_potential(int reacti
   std::vector<double> exponential = {exp(-1.0 / temperature * (E_pot_new - E_pot_old))};
   current_reaction.accumulator_exponentials(exponential);
 
-  std::vector<double> result(2);
-  result[0] = -temperature*log(current_reaction.accumulator_exponentials.get_mean()[0]); //excess chemical potential
-  result[1]=std::abs(-temperature/current_reaction.accumulator_exponentials.get_mean()[0]*current_reaction.accumulator_exponentials.get_std_error()[0]); //error excess chemical potential, determined via error propagation
+  std::pair<double,double> result=std::make_pair(-temperature*log(current_reaction.accumulator_exponentials.get_mean()[0]),std::abs(-temperature/current_reaction.accumulator_exponentials.get_mean()[0]*current_reaction.accumulator_exponentials.get_std_error()[0])); //(excess chemical potential; error excess chemical potential, determined via error propagation)
   return result;
 }
 
