@@ -6,7 +6,7 @@ language: cpp
 script:
   - mkdir build
   - cd build
-  - cmake -DWITH_COVERAGE=ON ..
+  - cmake -DWITH_COVERAGE=ON -DWITH_CLANG_TIDY=ON ..
   - make -j 2
   - make -j 2 check
   - curl -s https://codecov.io/bash | bash -

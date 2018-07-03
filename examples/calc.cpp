@@ -37,13 +37,14 @@ boost::optional<double> evaluate(Iterator first, Iterator last)
 void commandline(int argc, char *argv[])
 {
     std::string expr;
-    for (int i = 1; i < argc; ++i)
+    for (int i = 1; i < argc; ++i) {
         expr += argv[i];
+    }
 
     evaluate(expr.c_str(), expr.c_str() + expr.size());
 }
 
-void sigint_handler(int)
+void sigint_handler(int /*unused*/)
 {
     std::cout << "\n";
     rl_on_new_line();
@@ -61,20 +62,21 @@ void interactive()
     char * input = readline(prompt);
     double res = 0;
 
-    while (input)
+    while (input != nullptr)
     {
         std::size_t len = std::strlen(input);
 
         if (len != 0)
         {
-            if (input[0] == 'q' || input[0] == 'Q')
+            if (input[0] == 'q' || input[0] == 'Q') {
                 break;
+            }
 
             add_history(input);
 
             // Replace % by the last result
             std::string line{input, input + len};
-            std::size_t pos = line.find("%");
+            std::size_t pos = line.find('%');
             if (pos != std::string::npos) {
                 line.replace(pos, 1, boost::lexical_cast<std::string>(res));
             }
@@ -89,8 +91,9 @@ void interactive()
         input = readline(prompt);
     }
 
-    if (!input) // nullptr signals EOF
+    if (input == nullptr) { // nullptr signals EOF
         std::cout << '\n';
+    }
 
     std::free(input);
 }

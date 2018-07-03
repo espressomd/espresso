@@ -10,8 +10,9 @@ int main()
     std::string str;
     while (std::getline(std::cin, str))
     {
-        if (str.empty() || str[0] == 'q' || str[0] == 'Q')
+        if (str.empty() || str[0] == 'q' || str[0] == 'Q') {
             break;
+        }
 
         try {
             auto res = matheval::parse<double>(str, {});

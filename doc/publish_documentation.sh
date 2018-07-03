@@ -37,14 +37,10 @@ function gh_pages_prepare()
 
     git init;
     git remote add origin https://github.com/${TRAVIS_REPO_SLUG};
-    git fetch origin --depth 1;
-    git checkout gh-pages;
+    git checkout -b gh-pages;
 
     git config user.name "Travis CI";
     git config user.email "travis@travis-ci.org";
-
-    rm -f .git/index;
-    git clean -df;
 }
 
 

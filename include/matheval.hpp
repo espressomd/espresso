@@ -132,7 +132,7 @@ public:
      * Deep copies the syntax tree.
      */
     template <typename Expr>
-    expr_ast(Expr const &other) : tree(other) {}
+    expr_ast(Expr other) : tree(std::move(other)) {}
 
     /** @brief Add a tree */
     expr_ast& operator+=(expr_ast const &rhs);
@@ -152,8 +152,8 @@ struct unary_op
     using op_t = std::function<real_t(real_t)>;
 
     /** @brief Save the operator and the argument tree */
-    unary_op(op_t op, expr_ast<real_t> const &rhs)
-        : op(op), rhs(rhs)
+    unary_op(op_t op, expr_ast<real_t> rhs)
+        : op(std::move(op)), rhs(std::move(rhs))
     {}
 
     /** @brief Stored operator */
@@ -170,8 +170,8 @@ struct binary_op
     using op_t = std::function<real_t(real_t,real_t)>;
 
     /** @brief Save the operator and the argument trees */
-    binary_op(op_t op, expr_ast<real_t> const &lhs, expr_ast<real_t> const &rhs)
-        : op(op), lhs(lhs), rhs(rhs)
+    binary_op(op_t op, expr_ast<real_t> lhs, expr_ast<real_t> rhs)
+        : op(std::move(op)), lhs(std::move(lhs)), rhs(std::move(rhs))
     {}
 
     /** @brief Stored operator */
@@ -226,10 +226,10 @@ public:
      *
      * Saves the symbol table to apply variables.
      */
-    eval_ast(symbol_table_t const &sym) : st(sym) {}
+    eval_ast(symbol_table_t sym) : st(std::move(sym)) {}
 
     /** @brief Empty nodes in the tree evaluate to 0 */
-    result_type operator()(nil) const { return 0; }
+    result_type operator()(nil /*unused*/) const { return 0; }
 
     /** @brief Numbers evaluate to themselves */
     result_type operator()(result_type n)  const { return n; }
@@ -238,8 +238,9 @@ public:
     result_type operator()(std::string const &c) const
     {
         auto it = st.find(c);
-        if(it == st.end())
+        if (it == st.end()) {
             throw std::invalid_argument("Unknown variable " + c);
+        }
         return it->second;
     }
 
@@ -273,7 +274,7 @@ private:
 template <typename T> struct holds_alternative_impl {
   using result_type = bool;
 
-  template <typename U> bool operator()(U const &) const {
+  template <typename U> bool operator()(U const & /*unused*/) const {
     return std::is_same<U, T>::value;
   }
 };
@@ -288,7 +289,7 @@ template <typename real_t> struct ConstantFolder {
   using result_type = typename expr_ast<real_t>::tree_t;
 
   /** @brief Empty nodes in the tree evaluate to 0 */
-  result_type operator()(nil) const { return 0; }
+  result_type operator()(nil /*unused*/) const { return 0; }
 
   /** @brief Numbers evaluate to themselves */
   result_type operator()(real_t n) const { return n; }
@@ -310,9 +311,8 @@ template <typename real_t> struct ConstantFolder {
      * else we just update the children with the new expressions. */
     if (holds_alternative<real_t>(lhs) && holds_alternative<real_t>(rhs)) {
       return tree.op(boost::get<real_t>(lhs), boost::get<real_t>(rhs));
-    } else {
-      return binary_op<real_t>(tree.op, lhs, rhs);
     }
+    return binary_op<real_t>(tree.op, lhs, rhs);
   }
 
   /** @brief Evaluate a unary operator and optionally recurse its operand */
@@ -321,9 +321,8 @@ template <typename real_t> struct ConstantFolder {
     /* If the operand is known, we can directly evaluate the function. */
     if (holds_alternative<real_t>(rhs)) {
       return tree.op(boost::get<real_t>(rhs));
-    } else {
-      return unary_op<real_t>(tree.op, rhs);
     }
+    return unary_op<real_t>(tree.op, rhs);
   }
 };
 
