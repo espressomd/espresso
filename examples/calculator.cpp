@@ -8,7 +8,7 @@ int main()
     std::cout << "Type [q or Q] to quit\n";
 
     std::string str;
-    while (std::getline(std::cin, str))
+    while (std::getline(std::cin, str).good())
     {
         if (str.empty() || str[0] == 'q' || str[0] == 'Q') {
             break;
