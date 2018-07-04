@@ -25,7 +25,7 @@ inline void get_mi_vector_const(double res[3], const double a[3], const double b
 #ifdef PARTIAL_PERIODIC
     if (PERIODIC(i))
 #endif
-      res[i] -= dround(res[i]*box_l_i[i])*box_l[i];
+      res[i] -= std::round(res[i]*box_l_i[i])*box_l[i];
   }
 }
 

@@ -589,13 +589,13 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
    
     /* find in which x-bins the line starts and stops */ 
     if (facein == 0) {
-      startx = dround(redentry[0]) - 1 + sign10[0];
+      startx = std::round(redentry[0]) - 1 + sign10[0];
     } else {
       startx = floor(redentry[0]);
     }
     if ((startx < 0) && (range[0]==box_l[0])) startx += bins[0];
     if (faceout == 0) {
-      endx = dround(redexit[0] - sign10[0]);
+      endx = std::round(redexit[0] - sign10[0]);
     } else {
       endx = floor(redexit[0]);
     }
@@ -611,7 +611,7 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
     /* in xbin the line starts in y-bin number starty[xbin-startx] and ends in starty[xbin-startx+1] */
     totoccupiedybins = 0;
     if (facein == 1) {
-      starty[0] = dround(redentry[1]) - 1 + sign10[1];
+      starty[0] = std::round(redentry[1]) - 1 + sign10[1];
     } else {
       starty[0] = floor(redentry[1]);
     }
@@ -637,7 +637,7 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
     /* find in which z-bins the line starts and stops for each y-bin*/
     counter = 0;
     if (facein == 2) {
-      zi = dround(redentry[2]) - 1 + sign10[2];
+      zi = std::round(redentry[2]) - 1 + sign10[2];
     } else {
       zi = floor(redentry[2]);
     }
@@ -659,7 +659,7 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
       ybin = starty[xa+1];
       if (xbin == endx) {
 	if (faceout == 2) {
-	  zi = dround(redexit[2] -sign10[2]);
+	  zi = std::round(redexit[2] -sign10[2]);
 	} else {
 	  zi = floor(redexit[2]);
 	}

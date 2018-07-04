@@ -33,7 +33,7 @@ int Lattice::init(double *agrid, double* offset, int halo_size, size_t dim) {
     /* determine the number of local lattice nodes */
     for (int d=0; d<3; d++) {
         this->agrid[d] = agrid[d];
-        this->global_grid[d] = (int)dround(box_l[d]/agrid[d]);
+        this->global_grid[d] = (int)std::round(box_l[d]/agrid[d]);
         this->offset[d]=offset[d];
         this->local_index_offset[d]=(int) ceil((my_left[d]-this->offset[d])/this->agrid[d]);
         this->local_offset[d] = this->offset[d] +

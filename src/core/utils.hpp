@@ -53,10 +53,6 @@ inline void permute_ifield(int *field, int size, int permute) {
     permute--;
   }
 }
-
-/** Mathematically rounds 'double'-typed x, returning 'double'. */
-inline double dround(double x) { return floor(x + 0.5); }
-
 /*@}*/
 
 /*************************************************************/
