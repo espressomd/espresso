@@ -831,8 +831,8 @@ class openGLLive(object):
     def _update_bonds(self):
         if self.specs['draw_bonds']:
             self.bonds = []
-            for i in range(len(self.system.part)):
-                bs = self.system.part[i].bonds
+            for i, p in enumerate(self.system.part):
+                bs = p.bonds
                 for b in bs:
                     t = b[0].type_number()
                     # b[0]: Bond, b[1:] Partners
