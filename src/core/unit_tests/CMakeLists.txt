@@ -101,4 +101,5 @@ unit_test(NAME int_pow SRC int_pow_test.cpp)
 unit_test(NAME sgn SRC sgn_test.cpp)
 unit_test(NAME AS_erfc_part SRC AS_erfc_part_test.cpp)
 unit_test(NAME sinc SRC sinc_test.cpp)
+unit_test(NAME as_const SRC as_const_test.cpp)
 
