@@ -514,6 +514,19 @@ static void three_particle_binding_do_search(Cell *basecell, Particle &p1,
   }
 }
 
+Cell *responsible_collision_cell(Particle& p)
+{
+  auto c = cell_structure.position_to_cell(p.r.p.data());
+  if (c) {
+    return c;
+  } else if (!p.l.ghost) {
+    // Old pos must lie within the cell system
+    return cell_structure.position_to_cell(p.l.p_old.data());
+  } else {
+    return nullptr;
+  }
+}
+
 // Goes through the collision queue and for each pair in it
 // looks for a third particle by using the domain decomposition
 // cell system. If found, it performs three particle binding
@@ -526,33 +539,15 @@ void three_particle_binding_domain_decomposition(
     if ((local_particles[c.pp1] != NULL) && (local_particles[c.pp2] != NULL)) {
       Particle &p1 = *local_particles[c.pp1];
       Particle &p2 = *local_particles[c.pp2];
-      
-      // Obtain the cells in which the particles are stored
-      auto cell1 = cell_structure.position_to_cell(p1.r.p.data());
-      auto cell2 = cell_structure.position_to_cell(p2.r.p.data());
+      auto cell1 = responsible_collision_cell(p1);
+      auto cell2 = responsible_collision_cell(p2);
 
-      // If particles have moved out of the box (due to skin), use p_old instead
-      if (!cell1)
-         cell1 = cell_structure.position_to_cell(p1.l.p_old.data());
-      if (!cell2)
-         cell2 = cell_structure.position_to_cell(p2.l.p_old.data());
-
-      if (!cell1) {
-;         printf(
-             "Collision detection three particle binding: could not obtain cell for particle %g %g %g, %g %g %g\n",p1.r.p[0],p1.r.p[1],p1.r.p[2],p1.l.p_old[0],p1.l.p_old[1],p1.l.p_old[2]);
-          return;
-      }
-      if (!cell2) {
-;         printf(
-             "Collision detection three particle binding: could not obtain cell for particle \
-             %g %g %g, %g %g %g\n",p2.r.p[0],p2.r.p[1],p2.r.p[2],p2.l.p_old[0],p2.l.p_old[1],p2.l.p_old[2]);
-          return;
-      }
-
-
-      three_particle_binding_do_search(cell1, p1, p2);
-      if (cell1 != cell2)
+      if (cell1)
+        three_particle_binding_do_search(cell1, p1, p2);
+      if (cell2 && cell1 != cell2)
         three_particle_binding_do_search(cell2, p1, p2);
+
+
     } // If local particles exist
   }   // Loop over total collisions
 }
