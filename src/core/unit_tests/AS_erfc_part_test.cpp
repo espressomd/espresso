@@ -15,16 +15,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file int_pow_test.cpp Unit tests for the
- * Utils::int_pow function.
-*/
-
 #define BOOST_TEST_MODULE Utils::AS_erfc_part test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include "utils/math/AS_erfc_part.hpp"
 using Utils::AS_erfc_part;
+
+#include <cmath>
 
 BOOST_AUTO_TEST_CASE(approx) {
   for (double x = 0.0; x <= 1.; x += 0.01) {
