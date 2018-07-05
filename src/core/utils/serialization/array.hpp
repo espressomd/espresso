@@ -1,8 +1,6 @@
 #ifndef UTILS_SERIALIZATION_ARRAY_HPP
 #define UTILS_SERIALIZATION_ARRAY_HPP
 
-#include <array>
-
 #include <boost/version.hpp>
 
 /* New versions of boost alrady containt this
@@ -10,7 +8,6 @@
  * */
 #if BOOST_VERSION < 105600
 #include <array>
-#include <boost/serialization/serialization.hpp>
 
 namespace boost {
 namespace serialization {
@@ -20,9 +17,7 @@ void serialize(Archive &ar, std::array<T, N> &a, const unsigned int) {
 }
 }
 }
-
 #else
-#include <array>
-#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/array.hpp>
 #endif
 #endif
