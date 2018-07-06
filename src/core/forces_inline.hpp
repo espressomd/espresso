@@ -42,7 +42,6 @@
 #include "dihedral.hpp"
 #include "thermalized_bond.hpp"
 #include "elc.hpp"
-#include "endangledist.hpp"
 #include "fene.hpp"
 #include "forces.hpp"
 #include "gaussian.hpp"
@@ -250,12 +249,12 @@ inline void calc_non_bonded_pair_force_parts(
 #endif
 }
 
-inline void calc_non_bonded_pair_force(Particle *p1, Particle *p2,
-                                       IA_parameters *ia_params, double d[3],
+inline void calc_non_bonded_pair_force(const Particle *p1, const Particle *p2,
+                                       IA_parameters *ia_params, double *d,
                                        double dist, double dist2,
-                                       double force[3],
-                                       double torque1[3] = nullptr,
-                                       double torque2[3] = nullptr) {
+                                       double *force,
+                                       double *torque1 = nullptr,
+                                       double *torque2 = nullptr) {
     calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist, dist2, force,
                                      torque1, torque2);
 }
@@ -277,7 +276,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
                                       double dist, double dist2) {
 
   IA_parameters *ia_params = get_ia_param(p1->p.type, p2->p.type);
-  double force[3] = {0., 0., 0.};
+  Vector3d force{};
   double torque1[3] = {0., 0., 0.};
   double torque2[3] = {0., 0., 0.};
   int j;
@@ -293,7 +292,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 
 /*affinity potential*/
 #ifdef AFFINITY
-  add_affinity_pair_force(p1, p2, ia_params, d, dist, force);
+  add_affinity_pair_force(p1, p2, ia_params, d, dist, force.data());
 #endif
 
   FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node,
@@ -306,7 +305,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))
 #endif
-    calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2, force,
+    calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2, force.data(),
                                torque1, torque2);
 
 /***********************************************/
@@ -315,10 +314,10 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 
 #ifdef ELECTROSTATICS
   if (coulomb.method == COULOMB_DH)
-    add_dh_coulomb_pair_force(p1, p2, d, dist, force);
+    add_dh_coulomb_pair_force(p1, p2, d, dist, force.data());
 
   if (coulomb.method == COULOMB_RF)
-    add_rf_coulomb_pair_force(p1, p2, d, dist, force);
+    add_rf_coulomb_pair_force(p1, p2, d, dist, force.data());
 #endif
 
 /*********************************************************************/
@@ -338,7 +337,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 /** The inter dpd force should not be part of the virial */
 #ifdef DPD
   if (thermo_switch & THERMO_DPD) {
-    add_dpd_pair_force(p1, p2, ia_params, d, dist, dist2);
+    force += dpd_pair_force(p1, p2, ia_params, d, dist, dist2);
   }
 #endif
 
@@ -354,7 +353,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 #ifdef P3M
   case COULOMB_ELC_P3M: {
     if (q1q2) {
-      p3m_add_pair_force(q1q2, d, dist2, dist, force);
+      p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
 
       // forces from the virtual charges
       // they go directly onto the particles, since they are not pairwise forces
@@ -368,29 +367,29 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   case COULOMB_P3M: {
 #ifdef NPT
     if (q1q2) {
-      double eng = p3m_add_pair_force(q1q2, d, dist2, dist, force);
+      double eng = p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
       if (integ_switch == INTEG_METHOD_NPT_ISO)
         nptiso.p_vir[0] += eng;
     }
 #else
     if (q1q2)
-      p3m_add_pair_force(q1q2, d, dist2, dist, force);
+      p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
 #endif
     break;
   }
 #endif
   case COULOMB_MMM1D:
     if (q1q2)
-      add_mmm1d_coulomb_pair_force(q1q2, d, dist2, dist, force);
+      add_mmm1d_coulomb_pair_force(q1q2, d, dist2, dist, force.data());
     break;
   case COULOMB_MMM2D:
     if (q1q2)
-      add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, force);
+      add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, force.data());
     break;
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
     if (q1q2) {
-      Scafacos::add_pair_force(p1, p2, d, dist, force);
+      Scafacos::add_pair_force(p1, p2, d, dist, force.data());
     }
     break;
 #endif
@@ -412,11 +411,11 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   // fall trough
   case DIPOLAR_P3M: {
 #ifdef NPT
-    double eng = dp3m_add_pair_force(p1, p2, d, dist2, dist, force);
+    double eng = dp3m_add_pair_force(p1, p2, d, dist2, dist, force.data());
     if (integ_switch == INTEG_METHOD_NPT_ISO)
       nptiso.p_vir[0] += eng;
 #else
-    dp3m_add_pair_force(p1, p2, d, dist2, dist, force);
+    dp3m_add_pair_force(p1, p2, d, dist2, dist, force.data());
 #endif
     break;
   }
@@ -430,9 +429,10 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   /* add total nonbonded forces to particle      */
   /***********************************************/
 
+    p1->f.f += force;
+    p2->f.f -= force;
+
   for (j = 0; j < 3; j++) {
-    p1->f.f[j] += force[j];
-    p2->f.f[j] -= force[j];
 #ifdef ROTATION
     p1->f.torque[j] += torque1[j];
     p2->f.torque[j] += torque2[j];
@@ -464,28 +464,24 @@ inline void add_bonded_force(Particle *p1) {
   double torque1[3] = {0., 0., 0.};
   double torque2[3] = {0., 0., 0.};
 #endif
-  Particle *p2 = nullptr, *p3 = nullptr, *p4 = nullptr;
+  Particle *p3 = nullptr, *p4 = nullptr;
   Bonded_ia_parameters *iaparams;
-  int i, j, type_num, type, n_partners, bond_broken;
+  int i, j, bond_broken;
 
   i = 0;
   while (i < p1->bl.n) {
-    type_num = p1->bl.e[i++];
+    int type_num = p1->bl.e[i++];
     iaparams = &bonded_ia_params[type_num];
-    type = iaparams->type;
-    n_partners = iaparams->num;
+    int type = iaparams->type;
+    int n_partners = iaparams->num;
 
     if (n_partners) 
     {
-      /* fetch particle 2, which is always needed */
       p2 = local_particles[p1->bl.e[i++]];
       if (!p2) {
         runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
-                        << " and " << p1->bl.e[i - 1]
-                        << " (particles are not stored on the same node)";
         return;
       }
-    }
 
     /* fetch particle 3 eventually */
     if (n_partners >= 2) {
@@ -675,12 +671,6 @@ inline void add_bonded_force(Particle *p1) {
       bond_broken = calc_angledist_force(p1, p2, p3, iaparams, force, force2);
       break;
 #endif
-#ifdef BOND_ENDANGLEDIST
-    case BONDED_IA_ENDANGLEDIST:
-      bond_broken =
-          calc_endangledist_pair_force(p1, p2, iaparams, dx, force, force2);
-      break;
-#endif
     case BONDED_IA_DIHEDRAL:
       bond_broken =
           calc_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
@@ -739,12 +729,6 @@ inline void add_bonded_force(Particle *p1) {
 
       for (j = 0; j < 3; j++) {
         switch (type) {
-#ifdef BOND_ENDANGLEDIST
-        case BONDED_IA_ENDANGLEDIST:
-          p1->f.f[j] += force[j];
-          p2->f.f[j] += force2[j];
-          break;
-#endif // BOND_ENDANGLEDIST
 	    case BONDED_IA_THERMALIZED_DIST:
           p1->f.f[j] += force[j];
           p2->f.f[j] += force2[j];
@@ -849,6 +833,7 @@ inline void add_bonded_force(Particle *p1) {
         break;
       }
     }
+  }
   }
 }
 

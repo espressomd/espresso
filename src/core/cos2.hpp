@@ -43,13 +43,12 @@ int cos2_set_params(int part_type_a, int part_type_b,
 inline void add_cos2_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist, double force[3])
 {
-  int j;
-  double fac=0.0;
   if((dist < ia_params->COS2_cut)) { 
+    double fac;
     if (dist > ia_params->COS2_offset) {
       fac = -ia_params->COS2_eps*M_PI/2/ia_params->COS2_w/dist * sin(M_PI*(dist-ia_params->COS2_offset)/ia_params->COS2_w);
     }
-    for(j=0;j<3;j++)
+    for(int j=0;j<3;j++)
       force[j] += fac * d[j];
   }
 }

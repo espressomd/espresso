@@ -11,9 +11,6 @@ import espressomd.virtual_sites
 class CheckpointTest(ut.TestCase):
     @classmethod
     def setUpClass(self):
-        # Write checkpoint.
-        p = subprocess.Popen(['@CMAKE_BINARY_DIR@/pypresso', '@CMAKE_CURRENT_BINARY_DIR@/save_checkpoint.py'])
-        p.wait()
         checkpoint = espressomd.checkpointing.Checkpointing(checkpoint_id="mycheckpoint", checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
         checkpoint.load(0)
 
@@ -51,7 +48,7 @@ class CheckpointTest(ut.TestCase):
 
     def test_mean_variance_calculator(self):
         np.testing.assert_array_equal(acc.get_mean(), np.array([1.0, 1.5, 2.0, 1.0, 1.0, 2.0]))
-        np.testing.assert_array_equal(acc.get_variance(), np.array([0.0, 0.25, 1.0, 0.0, 0.0, 0.0]))
+        np.testing.assert_array_equal(acc.get_variance(), np.array([0. ,  0.5,  2. ,  0. ,  0. ,  0.]))
     
     @ut.skipIf(not espressomd.has_features(['ELECTROSTATICS']),
               "Cannot test for P3M checkpointing because feature not compiled in.")  

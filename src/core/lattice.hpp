@@ -45,16 +45,12 @@ extern int lattice_switch;
 
 #define LATTICE_OFF  0  /** Lattice off */
 
-enum { LATTICE_ANISOTROPIC = 1, 
-       LATTICE_X_NOTEXT = 2, LATTICE_Y_NOTEXT = 4, LATTICE_Z_NOTEXT = 8 };
-
 class Lattice {
 public:
   using index_t = int;
 
     int grid[3] ;/** number of local lattice sites in each direction (excluding halo) */
     int global_grid[3];
-    unsigned int dim;
     double agrid[3];/** lattice constant */
 
     int halo_grid[3] ;/** number of lattice sites in each direction including halo */
@@ -64,25 +60,8 @@ public:
     double local_offset[3];
     int local_index_offset[3];
 
-    unsigned int interpolation_type;
-    char flags;
-    size_t element_size;/** Size of each element in size units (=bytes) */
-    size_t lattice_dim;/** Dimension of the field, assuming entries are arrays */
-
-    index_t grid_volume;/** total number (volume) of local lattice sites (excluding halo) */
     index_t halo_grid_volume;/** total number (volume) of lattice sites (including halo) */
-    index_t halo_grid_surface;/** number of lattice sites in the halo region */
     index_t halo_offset;/** offset for number of halo sites stored in front of the local lattice sites */
-
-    void *_data;/** pointer to the actual lattice data. This can be a contiguous field of arbitrary data. */
-
-    /** particle representation of this lattice. This is needed to
-     *  specify interactions between particles and the lattice.
-     *  Actually used are only the identity and the type. */
-    Particle part_rep;
-
-    /* Constructor */
-    Lattice() {}
 
     /** Initialize lattice.
      *
@@ -93,51 +72,6 @@ public:
      * \param agrid   lattice spacing
      */
     int init(double* agrid, double* offset, int halo_size, size_t dim);
-
-    /** lattice memory allocation.
-     * \param lattice pointer to the lattice
-     */
-    void allocate_memory();
-    void allocate_memory(size_t element_size);
-
-    void interpolate(double* pos, double* value);
-
-    void interpolate_linear(double* pos, double* value);
-
-    void interpolate_gradient(double* pos, double* value);
-
-    void interpolate_linear_gradient(double* pos, double* value);
-
-    void set_data_for_global_position_with_periodic_image(double* pos, void* data);
-
-    int global_pos_in_local_box(double pos[3]);
-
-    int global_pos_in_local_halobox(double pos[3]);
-
-    int global_pos_to_lattice_index_checked(double pos[3], int* index);
-
-    /** Map a local lattice site to the global position.
-     *
-     *  This function determines the processor responsible for
-     *  the specified lattice site. The coordinates of the site are
-     *  taken as global coordinates andcoordinates of the site are
-     *  taken as global coordinates and are returned as local coordinates.
-     *
-     * \param  lattice pointer to the lattice
-     * \param  ind     global coordinates of the lattice site (Input)
-     * \param  grid    local coordinates of the lattice site (Output)
-     * \return         index of the node for the lattice site
-     */
-    /* @TODO: Implement! */
-    int map_lattice_to_position(int *ind, int *grid);
-
-    void map_linear_index_to_global_pos(index_t ind, double* pos);
-
-    void map_local_index_to_pos(index_t* index, double* pos);
-
-    int map_global_index_to_halo_index(index_t* global_index, index_t* halo_index);
-
-    void map_halo_index_to_pos(index_t* index_in_halogrid, double* pos);
 
     /** Map a spatial position to the surrounding lattice sites.
      *
@@ -156,18 +90,6 @@ public:
      *                   elementary cell, 6 directions (Output)
      */
     void map_position_to_lattice(const Vector3d& pos, index_t node_index[8], double delta[6]);
-
-    void get_data_for_halo_index(index_t* ind, void** data);
-
-    void get_data_for_linear_index(index_t ind, void** data);
-
-    void get_data_for_local_index(index_t* ind, void** data);
-
-    void set_data_for_local_halo_grid_index(index_t* ind, void* data);
-
-    void set_data_for_local_grid_index(index_t* ind, void* data);
-
-    int global_pos_to_lattice_halo_index(Vector3d& pos, index_t*  ind);
 
     /********************** Inline Functions **********************/
 

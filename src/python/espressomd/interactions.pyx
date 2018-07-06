@@ -2759,56 +2759,6 @@ class Virtual(BondedInteraction):
     def _set_params_in_es_core(self):
         virtual_set_params(self._bond_id)
 
-
-IF BOND_ENDANGLEDIST == 1:
-    class Endangledist(BondedInteraction):
-
-        def type_number(self):
-            return BONDED_IA_ENDANGLEDIST
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "ENDANGLEDIST"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return "bend", "phi0", "distmin", "distmax"
-
-        def required_keys(self):
-            """Parameters that have to be set.
-
-            """
-            return "bend", "phi0", "distmin", "distmax"
-
-        def set_default_params(self):
-            """Sets parameters that are not required to their default value.
-
-            """
-            self._params = {"bend": 0, "phi0": 0, "distmin": 0, "distmax": 1}
-
-        def _get_params_from_es_core(self):
-            return \
-                {"bend": bonded_ia_params[self._bond_id].p.endangledist.bend,
-                 "phi0": bonded_ia_params[self._bond_id].p.endangledist.phi0,
-                 "distmin":
-                     bonded_ia_params[self._bond_id].p.endangledist.distmin,
-                 "distmax": bonded_ia_params[self._bond_id].p.endangledist.distmax}
-
-        def _set_params_in_es_core(self):
-            endangledist_set_params(
-                self._bond_id, self._params["bend"], self._params[
-                    "phi0"], self._params["distmin"],
-                self._params["distmax"])
-
-ELSE:
-    class Endangledist(BondedInteractionNotDefined):
-        name = "BOND_ENDANGLEDIST"
-
-
 IF BOND_ANGLE == 1:
     class AngleHarmonic(BondedInteraction):
         """
@@ -3239,7 +3189,6 @@ bonded_interaction_classes = {
     int(BONDED_IA_DIHEDRAL): Dihedral,
     int(BONDED_IA_TABULATED): Tabulated,
     int(BONDED_IA_VIRTUAL_BOND): Virtual,
-    int(BONDED_IA_ENDANGLEDIST): Endangledist,
     int(BONDED_IA_ANGLE_HARMONIC): AngleHarmonic,
     int(BONDED_IA_ANGLE_COSINE): AngleCosine,
     int(BONDED_IA_ANGLE_COSSQUARE): AngleCossquare,

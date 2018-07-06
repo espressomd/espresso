@@ -35,12 +35,12 @@ system.part.add(id=np.arange(num_part), pos=ran_pos, type=np.zeros(num_part,dtyp
 # bottom wall, normal pointing in the +z direction, layed on z=0.1
 floor = shapes.Wall(normal=[0, 0, 1], dist=0.1)
 c1 = system.constraints.add(
-    particle_type=0, penetrable=0, only_positive=0, shape=floor)
+    particle_type=0, penetrable=0, only_positive=False, shape=floor)
 
 # top wall, normal pointing in the -z direction, layed on z=49.9, since the normal direction points down, dist is -49.9
 ceil = shapes.Wall(normal=[0, 0, -1], dist=-49.9)
 c2 = system.constraints.add(
-    particle_type=0, penetrable=0, only_positive=0, shape=ceil)
+    particle_type=0, penetrable=0, only_positive=False, shape=ceil)
 
 
 # create_polymer will avoid violating the contraints

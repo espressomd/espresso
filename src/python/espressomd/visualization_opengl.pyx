@@ -768,7 +768,7 @@ class openGLLive(object):
             l = s[0].get_parameter('length')
             r = s[0].get_parameter('radius')
             self.shapes['Shapes::Cylinder'].append(
-                [pos - a * l * 0.5, pos + a * l * 0.5, r, s[1]])
+                [pos - a/np.linalg.norm(a) * l * 0.5, pos + a/np.linalg.norm(a) * l * 0.5, r, s[1]])
 
         for s in coll_shape_obj['Shapes::Ellipsoid']:
             pos = np.array(s[0].get_parameter('center'))
@@ -797,7 +797,7 @@ class openGLLive(object):
             l = s[0].get_parameter('length')
             r = s[0].get_parameter('radius')
             self.shapes['Shapes::SpheroCylinder'].append(
-                [pos - a * l * 0.5, pos + a * l * 0.5, r, s[1]])
+                [pos - a/np.linalg.norm(a) * l * 0.5, pos + a/np.linalg.norm(a) * l * 0.5, r, s[1]])
 
         for s in coll_shape_obj['Shapes::Misc']:
             self.shapes['Shapes::Misc'].append(
@@ -831,8 +831,8 @@ class openGLLive(object):
     def _update_bonds(self):
         if self.specs['draw_bonds']:
             self.bonds = []
-            for i in range(len(self.system.part)):
-                bs = self.system.part[i].bonds
+            for i, p in enumerate(self.system.part):
+                bs = p.bonds
                 for b in bs:
                     t = b[0].type_number()
                     # b[0]: Bond, b[1:] Partners
@@ -1077,7 +1077,7 @@ class openGLLive(object):
             col = self._modulo_indexing(type_colors, ptype)
             radius = self._modulo_indexing(type_radii, ptype)
             draw_arrow(self.particles['pos'][pid], np.array(
-                v) * sc, radius, col, self.materials['chrome'], self.specs['quality_arrows'])
+                v, dtype=float) * sc, radius, col, self.materials['chrome'], self.specs['quality_arrows'])
 
     def _draw_bonds(self):
         pIds = range(len(self.particles['pos']))

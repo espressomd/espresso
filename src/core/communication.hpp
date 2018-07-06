@@ -387,6 +387,8 @@ int mpi_integrate(int n_steps, int reuse_forces);
  */
 int mpi_minimize_energy(void);
 
+void mpi_bcast_all_ia_params();
+
 /** Issue REQ_BCAST_IA: send new ia params.
     Also calls \ref on_short_range_ia_change.
 

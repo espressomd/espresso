@@ -398,6 +398,7 @@ boundary condition.
 Isotropic NPT thermostat
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+This feature allows to simulate an (on average) homogeneous and isotropic system in the NPT ensemble.
 In order to use this feature, ``NPT`` has to be defined in the ``myconfig.hpp``.
 Activate the NPT thermostat with the command :py:func:`~espressomd.thermostat.Thermostat.set_npt`
 and set the following parameters:

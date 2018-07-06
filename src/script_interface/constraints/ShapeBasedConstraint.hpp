@@ -53,11 +53,7 @@ public:
                      [this]() {
                        return (m_shape != nullptr) ? m_shape->id() : ObjectId();
                      }},
-                    {"particle_velocity",
-                     [this](const Variant &v) {
-                       m_constraint->set_velocity(get_value<Vector3d>(v));
-                     },
-                        [this]() { return m_constraint->velocity(); }}});
+                    {"particle_velocity", m_constraint->velocity()}});
   }
 
   Variant call_method(std::string const &name, VariantMap const &) override {
@@ -66,6 +62,9 @@ public:
     }
     if (name == "min_dist") {
       return shape_based_constraint()->min_dist();
+    }
+    if (name == "total_normal_force") {
+      return shape_based_constraint()->total_normal_force();
     }
 
     return none;

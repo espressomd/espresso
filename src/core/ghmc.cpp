@@ -107,8 +107,6 @@ void hamiltonian_calc(int ekin_update_flag) {
    recalculate
    kinetic energy with \ref calc_kinetic(). */
 
-  int i;
-  double result = 0.0;
   double ekt, ekr;
 
   INTEG_TRACE(fprintf(stderr, "%d: hamiltonian_calc:\n", this_node));
@@ -128,8 +126,9 @@ void hamiltonian_calc(int ekin_update_flag) {
 
   // sum up energies on master node, and update ghmcdata struct
   if (this_node == 0) {
+    double result = 0.0;
     ghmcdata.hmlt_old = ghmcdata.hmlt_new;
-    for (i = ekin_update_flag; i < total_energy.data.n; i++) {
+    for (int i = ekin_update_flag; i < total_energy.data.n; i++) {
       result += total_energy.data.e[i];
     }
     if (ekin_update_flag == 1)
@@ -363,8 +362,6 @@ void ghmc_close() {
 void ghmc_mc() {
   INTEG_TRACE(fprintf(stderr, "%d: ghmc_mc:\n", this_node));
 
-  double boltzmann;
-
   int ekin_update_flag = 0;
   hamiltonian_calc(ekin_update_flag);
 
@@ -374,7 +371,7 @@ void ghmc_mc() {
     ghmcdata.att++;
 
     // metropolis algorithm
-    boltzmann = ghmcdata.hmlt_new - ghmcdata.hmlt_old;
+    double boltzmann = ghmcdata.hmlt_new - ghmcdata.hmlt_old;
     if (boltzmann < 0)
       boltzmann = 1.0;
     else if (boltzmann > 30)
