@@ -46,6 +46,9 @@
 #include "random.hpp"
 #include "utils.hpp"
 
+#include "utils/vec_rotate.hpp"
+using  Utils::vec_rotate;
+
 /*************************************************************
  * Functions                                                 *
  * ---------                                                 *
