@@ -195,21 +195,6 @@ inline double distance(double pos1[3], double pos2[3]) {
   return std::sqrt(distance2(pos1, pos2));
 }
 
-/** Returns the distance between two positions squared and stores the
-    distance vector pos1-pos2 in vec.
- *  \param pos1 Position one.
- *  \param pos2 Position two.
- *  \param vec  vecotr pos1-pos2.
- *  \return distance squared
-*/
-template <typename T1, typename T2, typename T3>
-double distance2vec(T1 const pos1, T2 const pos2, T3 &vec) {
-  vec[0] = pos1[0] - pos2[0];
-  vec[1] = pos1[1] - pos2[1];
-  vec[2] = pos1[2] - pos2[2];
-  return sqrlen(vec);
-}
-
 /*@}*/
 
 /*************************************************************/
