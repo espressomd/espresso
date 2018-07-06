@@ -340,26 +340,6 @@ double angle_btw_triangles(const T1& P1, const T2& P2, const T3& P3, const T4& P
   return phi;
 }
 
-namespace Utils {
-
-// Below you will find some routines for handling vectors.  Note that
-// all the pointer-type overloads assume a pointer of length 3!  Due
-// to restrictions on the C-level there is no error checking available
-// for the pointer-type overloads, i.e. you won't trigger an exception
-// in out-of-memory situations but will receive a segfault right away.
-
-//
-// cross_product: Calculate the cross product of two vectors
-//
-template <typename T1, typename T2, typename T3>
-void cross_product(const T1& a, const T2& b, T3& c) {
-  c[0] = a[1] * b[2] - a[2] * b[1];
-  c[1] = a[2] * b[0] - a[0] * b[2];
-  c[2] = a[0] * b[1] - a[1] * b[0];
-}
-
-} // namespace Utils
-
 /*@}*/
 
 #endif

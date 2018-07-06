@@ -123,7 +123,7 @@ void ScafacosData::update_particle_forces() const {
       // field
       // So, the torques are given by m \times B
       double t[3];
-      Utils::cross_product(p.r.dip, &(potentials[it_p]), t);
+      vector_product(p.r.dip, &(potentials[it_p]), t);
       // The force is given by G m, where G is a matrix
       // which comes from teh "fields" output of scafacos like this
       // 0 1 2
