@@ -57,7 +57,7 @@ void thermalized_bond_init();
 inline int calc_thermalized_bond_forces(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force1[3], double force2[3])
 {
     //Bond broke?
-    double dist = Utils::veclen(dx);
+    double dist = normr(dx);
     if (iaparams->p.thermalized_bond.r_cut > 0.0 && dist > iaparams->p.thermalized_bond.r_cut) {
         return 1;
     }
@@ -81,7 +81,6 @@ inline int calc_thermalized_bond_forces(Particle *p1, Particle *p2, Bonded_ia_pa
         //Add forces
         force1[i] = p1->p.mass * mass_tot_inv * force_lv_com - force_lv_dist; 
         force2[i] = p2->p.mass * mass_tot_inv * force_lv_com + force_lv_dist; 
-
     }
 
     ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: THERMALIZED BOND f = (%.3e,%.3e,%.3e)\n",this_node,p1->f.f[0]+force1[0],p1->f.f[1]+force1[1],p1->f.f[2]+force1[2]));

@@ -358,10 +358,6 @@ void cross_product(const T1& a, const T2& b, T3& c) {
   c[2] = a[0] * b[1] - a[1] * b[0];
 }
 
-template <typename T> double veclen(T const *const a) {
-  return sqrt(sqrlen(a));
-}
-
 } // namespace Utils
 
 /*@}*/
