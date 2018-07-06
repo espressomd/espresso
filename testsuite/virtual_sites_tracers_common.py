@@ -53,7 +53,7 @@ class VirtualSitesTracersCommon(object):
         box_height = self.box_height
 
         system.virtual_sites=VirtualSitesInertialessTracers()
-        self.lbf.set_params(ext_force=(0.1,0.,0.)) 
+        self.lbf.set_params(ext_force_density=(0.1,0.,0.)) 
         
         
         # Establish steady state flow field
@@ -114,7 +114,7 @@ class VirtualSitesTracersCommon(object):
 
         system=self.system
         system.virtual_sites=VirtualSitesInertialessTracers()
-        self.lbf.set_params(ext_force=(0.0,0.,0.)) 
+        self.lbf.set_params(ext_force_density=(0.0,0.,0.)) 
         self.stop_fluid()
         
         system.part.clear()
@@ -166,7 +166,7 @@ class VirtualSitesTracersCommon(object):
     def test_triel(self):
         system=self.system
         system.virtual_sites=VirtualSitesInertialessTracers()
-        self.lbf.set_params(ext_force=(0.1,0.,0.)) 
+        self.lbf.set_params(ext_force_density=(0.1,0.,0.)) 
         self.stop_fluid()
         system.virtual_sites=VirtualSitesInertialessTracers()
         

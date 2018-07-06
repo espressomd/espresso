@@ -2878,8 +2878,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
  * @param *fluid_composition Pointer to the local fluid composition for the Shanchen
  * @param *d_v               Pointer to local device values
 */
-__global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float *particle_force, CUDA_fluid_composition * fluid_composition, LB_node_force_gpu node_f, CUDA_particle_seed *part, LB_rho_v_gpu *d_v, bool couple_virtual){
-__global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float *particle_force, CUDA_fluid_composition * fluid_composition, LB_node_force_density_gpu node_f, CUDA_particle_seed *part, LB_rho_v_gpu *d_v){
+__global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float *particle_force, CUDA_fluid_composition * fluid_composition, LB_node_force_density_gpu node_f, CUDA_particle_seed *part, LB_rho_v_gpu *d_v, bool couple_virtual){
 
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   unsigned int node_index[8];
@@ -3064,6 +3063,7 @@ __global__ void lb_print_node(int single_nodeindex, LB_rho_v_pi_gpu *d_p_v, LB_n
     calc_values_in_MD_units(n_a, mode, d_p_v, d_v, node_f, single_nodeindex, 0);
   }
 }
+
 __global__ void momentum(LB_nodes_gpu n_a, LB_rho_v_gpu * d_v, LB_node_force_density_gpu node_f, float *sum) {
 
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;

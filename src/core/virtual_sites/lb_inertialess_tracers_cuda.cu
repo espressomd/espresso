@@ -21,9 +21,9 @@ extern int this_node;
 
 
 // ****** Kernel functions for internal use ********
-__global__ void ResetLBForces_Kernel(LB_node_force_gpu node_f, const LB_parameters_gpu *const paraP);
-__global__ void ParticleVelocitiesFromLB_Kernel(LB_nodes_gpu n_curr, const IBM_CUDA_ParticleDataInput *const particles_input, IBM_CUDA_ParticleDataOutput *const particles_output, LB_node_force_gpu node_f, const float *const lb_boundary_velocity, const LB_parameters_gpu *const para);
-__global__ void ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input, LB_node_force_gpu node_f, const LB_parameters_gpu *const paraP);
+__global__ void ResetLBForces_Kernel(LB_node_force_density_gpu node_f, const LB_parameters_gpu *const paraP);
+__global__ void ParticleVelocitiesFromLB_Kernel(LB_nodes_gpu n_curr, const IBM_CUDA_ParticleDataInput *const particles_input, IBM_CUDA_ParticleDataOutput *const particles_output, LB_node_force_density_gpu node_f, const float *const lb_boundary_velocity, const LB_parameters_gpu *const para);
+__global__ void ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input, LB_node_force_density_gpu node_f, const LB_parameters_gpu *const paraP);
 __device__ inline void atomicadd( float* address,float value);
 
 // ***** Other functions for internal use *****
@@ -35,7 +35,7 @@ IBM_CUDA_ParticleDataOutput *IBM_ParticleDataOutput_device = nullptr;
 int IBM_numParticlesCache = -1;     // To detect a change in particle number which requires reallocation of memory
 
 // ****** These variables are defined in lbgpu_cuda.cu, but we also want them here ****
-extern LB_node_force_gpu node_f;
+extern LB_node_force_density_gpu node_f;
 extern LB_nodes_gpu *current_nodes;
 
 // ** These variables are static in lbgpu_cuda.cu, so we need to duplicate them here
@@ -252,7 +252,7 @@ void ParticleVelocitiesFromLB_GPU(ParticleRange particles)
    ForcesIntoFluid_Kernel
 ****************/
 
-__global__ void ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input, LB_node_force_gpu node_f, const LB_parameters_gpu *const paraP)
+__global__ void ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input, LB_node_force_density_gpu node_f, const LB_parameters_gpu *const paraP)
 {
   const unsigned int particleIndex = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   const LB_parameters_gpu &para = *paraP;
@@ -306,9 +306,9 @@ __global__ void ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const p
     {
 
       // Atomic add is essential because this runs in parallel!
-      atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[i]]), (particleForce[0] * delta[i]));
-      atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[i]]), (particleForce[1] * delta[i]));
-      atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[i]]), (particleForce[2] * delta[i]));
+      atomicadd(&(node_f.force_density[0*para.number_of_nodes + node_index[i]]), (particleForce[0] * delta[i]));
+      atomicadd(&(node_f.force_density[1*para.number_of_nodes + node_index[i]]), (particleForce[1] * delta[i]));
+      atomicadd(&(node_f.force_density[2*para.number_of_nodes + node_index[i]]), (particleForce[2] * delta[i]));
     }
   }
 }
@@ -318,7 +318,7 @@ __global__ void ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const p
    ParticleVelocitiesFromLB_Kernel
 **************/
 
-__global__ void  ParticleVelocitiesFromLB_Kernel(LB_nodes_gpu n_curr, const IBM_CUDA_ParticleDataInput *const particles_input, IBM_CUDA_ParticleDataOutput *const particles_output, LB_node_force_gpu node_f, const float *const lb_boundary_velocity, const LB_parameters_gpu *const paraP)
+__global__ void  ParticleVelocitiesFromLB_Kernel(LB_nodes_gpu n_curr, const IBM_CUDA_ParticleDataInput *const particles_input, IBM_CUDA_ParticleDataOutput *const particles_output, LB_node_force_density_gpu node_f, const float *const lb_boundary_velocity, const LB_parameters_gpu *const paraP)
 {
 
   const unsigned int particleIndex = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
@@ -396,9 +396,9 @@ __global__ void  ParticleVelocitiesFromLB_Kernel(LB_nodes_gpu n_curr, const IBM_
         local_rho = para.rho[0]*para.agrid*para.agrid*para.agrid + mode[0];
 
         // Add the +f/2 contribution!!
-        local_j[0] = mode[1] + node_f.force_buf[0*para.number_of_nodes + node_index[i]]/2.f;
-        local_j[1] = mode[2] + node_f.force_buf[1*para.number_of_nodes + node_index[i]]/2.f;
-        local_j[2] = mode[3] + node_f.force_buf[2*para.number_of_nodes + node_index[i]]/2.f;
+        local_j[0] = mode[1] + node_f.force_density_buf[0*para.number_of_nodes + node_index[i]]/2.f;
+        local_j[1] = mode[2] + node_f.force_density_buf[1*para.number_of_nodes + node_index[i]]/2.f;
+        local_j[2] = mode[3] + node_f.force_density_buf[2*para.number_of_nodes + node_index[i]]/2.f;
 
       }
 
@@ -423,7 +423,7 @@ __global__ void  ParticleVelocitiesFromLB_Kernel(LB_nodes_gpu n_curr, const IBM_
    ResetLBForces_Kernel
 *****************/
 
-__global__ void ResetLBForces_Kernel(LB_node_force_gpu node_f, const LB_parameters_gpu *const paraP)
+__global__ void ResetLBForces_Kernel(LB_node_force_density_gpu node_f, const LB_parameters_gpu *const paraP)
 {
 
   const size_t index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
@@ -435,18 +435,18 @@ __global__ void ResetLBForces_Kernel(LB_node_force_gpu node_f, const LB_paramete
     for(int ii=0;ii<LB_COMPONENTS;++ii)
     {
 #ifdef EXTERNAL_FORCES
-      if(para.external_force)
+      if(para.external_force_density)
       {
-        node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[0 + ii*3 ]*force_factor;
-        node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[1 + ii*3 ]*force_factor;
-        node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[2 + ii*3 ]*force_factor;
+        node_f.force_density[(0 + ii*3 ) * para.number_of_nodes + index] = para.ext_force_density[0 + ii*3 ]*force_factor;
+        node_f.force_density[(1 + ii*3 ) * para.number_of_nodes + index] = para.ext_force_density[1 + ii*3 ]*force_factor;
+        node_f.force_density[(2 + ii*3 ) * para.number_of_nodes + index] = para.ext_force_density[2 + ii*3 ]*force_factor;
       }
       else
 #endif
       {
-        node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
-        node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
-        node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
+        node_f.force_density[(0 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
+        node_f.force_density[(1 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
+        node_f.force_density[(2 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
       }
     }
   }

@@ -477,9 +477,9 @@ inline void add_bonded_force(Particle *p1) {
 
     if (n_partners) 
     {
-      p2 = local_particles[p1->bl.e[i++]];
+      Particle* p2 = local_particles[p1->bl.e[i++]];
       if (!p2) {
-        runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
+        runtimeErrorMsg() << "bond broken between particles " << p1->p.identity;
         return;
       }
 
