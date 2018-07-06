@@ -176,23 +176,13 @@ inline void get_grid_pos(int i, int *a, int *b, int *c, int adim[3]) {
 /*************************************************************/
 /*@{*/
 
-/** returns the distance between two positions squared.
- *  \param pos1 Position one.
- *  \param pos2 Position two.
- */
-template <typename T1, typename T2>
-inline double distance2(const T1 &pos1, const T2 &pos2) {
-  using Utils::sqr;
-  return sqr(pos1[0] - pos2[0]) + sqr(pos1[1] - pos2[1]) +
-         sqr(pos1[2] - pos2[2]);
-}
-
 /** returns the distance between two position.
  *  \param pos1 Position one.
  *  \param pos2 Position two.
  */
-inline double distance(double pos1[3], double pos2[3]) {
-  return std::sqrt(distance2(pos1, pos2));
+inline double distance2(const Vector3d &a, const Vector3d &b) { return a * b; }
+inline double distance(const Vector3d &a, const Vector3d &b) {
+  return std::sqrt(distance2(a, b));
 }
 
 /*@}*/
