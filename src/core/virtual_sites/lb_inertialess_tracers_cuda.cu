@@ -260,7 +260,9 @@ __global__ void ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const p
   if (particleIndex < para.number_of_particles && particle_input[particleIndex].is_virtual)
   {
 
-    const float factor = powf( para.agrid,2)*para.tau*para.tau;
+//    const float factor = powf( para.agrid,2)*para.tau*para.tau; --> Old version. Worked, but not when agrid != 1
+// MD to LB units: mass is not affected, length are scaled by agrid, times by para.tau
+    const float factor = 1/para.agrid * para.tau*para.tau;
     const float particleForce[3] = { particle_input[particleIndex].f[0] * factor, particle_input[particleIndex].f[1] * factor, particle_input[particleIndex].f[2] * factor};
     const float pos[3] = { particle_input[particleIndex].pos[0], particle_input[particleIndex].pos[1], particle_input[particleIndex].pos[2] };
 

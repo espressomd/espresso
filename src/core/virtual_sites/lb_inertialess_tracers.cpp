@@ -167,9 +167,14 @@ void CoupleIBMParticleToFluid(Particle *p)
 {
   // Convert units from MD to LB
   double delta_j[3];
-  delta_j[0] = p->f.f[0]*time_step*lbpar.tau/lbpar.agrid;
+  // Old version. Worked, but not when agrid != 1 and probably also required time_step = lbpar.tau
+/*  delta_j[0] = p->f.f[0]*time_step*lbpar.tau/lbpar.agrid;
   delta_j[1] = p->f.f[1]*time_step*lbpar.tau/lbpar.agrid;
-  delta_j[2] = p->f.f[2]*time_step*lbpar.tau/lbpar.agrid;
+  delta_j[2] = p->f.f[2]*time_step*lbpar.tau/lbpar.agrid;*/
+
+  delta_j[0] = p->f.f[0]*lbpar.tau*lbpar.tau/lbpar.agrid;
+  delta_j[1] = p->f.f[1]*lbpar.tau*lbpar.tau/lbpar.agrid;
+  delta_j[2] = p->f.f[2]*lbpar.tau*lbpar.tau/lbpar.agrid;
   
   // Get indices and weights of affected nodes using discrete delta function
   Lattice::index_t node_index[8];
