@@ -358,29 +358,8 @@ void cross_product(const T1& a, const T2& b, T3& c) {
   c[2] = a[0] * b[1] - a[1] * b[0];
 }
 
-//
-// veclen and sqrlen: Calculate the length and length squared of a vector
-//
-template <typename T> double sqrlen(T const *const a) {
-  double c = 0;
-  for (int i = 0; i < 3; ++i)
-    c += a[i] * a[i];
-  return c;
-}
-
 template <typename T> double veclen(T const *const a) {
   return sqrt(sqrlen(a));
-}
-
-//
-// vecsub: Subtract two vectors
-//
-
-template <typename T>
-void vecsub(T const *const a, T const *const b, T *const c) {
-  // Note the different signature for pointers here!
-  for (unsigned int i = 0; i < 3; i++)
-    c[i] = a[i] - b[i];
 }
 
 } // namespace Utils
