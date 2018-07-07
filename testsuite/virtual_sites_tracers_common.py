@@ -206,7 +206,7 @@ class VirtualSitesTracersCommon(object):
         if isinstance(self.lbf, lb.LBFluid): # as opposed to LBFluidGPU
             for p in system.part:
                 np.testing.assert_allclose(
-                   p.v, self.lbf.get_interpolated_velocity(p.pos),
+                   np.copy(p.v), self.lbf.get_interpolated_velocity(p.pos),
                    atol=2E-2)
         # get new shapes
         dist1non = np.linalg.norm( np.array( system.part[1].pos - system.part[0].pos ) )
