@@ -45,21 +45,24 @@ pagesize,                       % set the pagesize in a DVI document
 
 \section{Introduction}
 
-This tutorial introduces the basic features for simulating tritatable systems via two different methods, the Constant pH method and the Reaction Ensamble method, pointing out differences and similarities between these two approaches and explaining the reasons to prefer the latter in some particular cases.
-The first part of this tutorial will be an homogeneous aqueous solution of a titratable acidic species HA that could dissociate as follows:
-The second part of this tutorial will be instead a polyelectrolytic chain formed by a series of titratable monomers bonded together.
+This tutorial introduces the basic features for simulating tritatable systems via two different methods, the Constant pH method and the Reaction Ensemble method, pointing out differences and similarities between these two approaches and explaining the reasons to prefer the latter in some particular cases.
+The first part of this tutorial will consider a homogeneous aqueous solution of a titratable acidic species HA that can dissociate as follows:
+\begin{equation}\label{disso}
+\ce{HA <--> A- + H+}\text{,}
+\end{equation}
+while second part will consider a polyelectrolyte chain formed by a series of titratable monomers bonded together.
 
 \noindent Both constant pH and Reaction Ensemble methods are implemented via a Monte Carlo algorithm with the classical Metropolis-Hastings acceptation rule. Here we compare both methods based on the paper published by Landsgesell et. al\cite{landsgesell2017simulation}.
 
 \section{Theoretical Background}
 
-In this tutorial we deal with chemical reactions of the following kind.
+In this tutorial we deal with chemical reactions of the following kind:
 \begin{equation}\label{disso}
-\ce{HA <--> A- + H+}
+\ce{HA <--> A- + H+}\text{.}
 \end{equation}
-If $N_0 = N_{HA} + N_{A-}$ is the number of titratable groups in solution, a degree of dissociation $\alpha$ can be defined:
+If $N_0 = N_{\text{HA}} + N_{\text{A}^-}$ is the number of titratable groups in solution, a degree of dissociation $\alpha$ can be defined:
 \begin{equation}\label{alpha}
-\alpha = \frac{N_{A^-}}{N_0}.
+\alpha = \frac{N_{\text{A}^-}}{N_0}.
 \end{equation}
 Another observable is the degree of association which is given by:
 \begin{equation*}
@@ -67,18 +70,19 @@ Another observable is the degree of association which is given by:
 \end{equation*}
 The equilibrium concentration of each species is defined by the equilibrium reaction constant
 \begin{equation}
-K =\exp(\beta \sum_i (\mu_i-\mu_i^0) \nu_i)= \frac{a(\text{A}^-)a(\text{H}^+)}{a(\text{HA})},
+K =\exp(\beta \sum_i \nu_i(\mu_i-\mu_i^0) )= \frac{a(\text{A}^-)a(\text{H}^+)}{a(\text{HA})};
 \end{equation}
-where $a(i)$ denotes the relative activity $a(i)=\exp(\frac{\mu_i-\mu_i^0}{k_BT})$ of the individual species, where $\mu$ is the chemical potential of species $i$ and $\mu_i^0$ the chemical potential of species $i$ under some standard condition. In the case of non-interacting particles (ideal gas) the activities are equal to $c_i/c_i^0$. In chemical equilibrium which is defined by $\Delta G=\sum_i \nu_i \mu_i=0$ we obtain that $K=\exp(\beta \Delta (G-G^0))=\exp(-\beta \sum_i \nu_i \mu_i^0)$.
+fr each species $i$, $a(i)=e^{\beta(\mu_i-\mu_i^0)}$ denotes the relative activity, $\mu_i$ the chemical potential, $\mu_i^0$ is the chemical potential under some standard reference conditions and $\nu_i$ is the stoichiometric coefficient. In the case of non-interacting particles (ideal gas) activities are equal to $c_i/c_{i}^{0}$, where $c_i$ and $c_{i}^{0}$ are the concentration of the species $i$ and its standard concentration , respectively. In chemical equilibrium which is defined by $\Delta G=\sum_i \nu_i \mu_i=0$ we obtain that $K=\exp(\beta \Delta (G-G^0))=\exp(-\beta \sum_i \nu_i \mu_i^0)$.
 Therefore we have (in the case of no interactions):
 \begin{equation}
-\exp(-\beta ( \mu_H^0+\mu_A^0-\mu_{HA}^0))=\prod_i \frac{(c_{H}/c^0_H)(c_{A}/c^0_A)}{(c_{HA}/c^0_{HA})}
+\exp(-\beta ( \mu_\text{H}^0+\mu_\text{A}^0-\mu_{\text{HA}}^0))=
+\prod_i \frac{(c_{\text{H}}/c^0_\text{H})(c_{\text{A}}/c^0_\text{A})}{(c_{\text{HA}}/c^0_{\text{HA}})}
 \end{equation}
 or equivalently:
 \begin{equation}
-K_c:=\prod_i \frac{c_{H}c_{A}}{c_{HA}}=\text{const}:=\Gamma,
+K_{\text{c}} = \prod_i \frac{c_{\text{H}}c_{\text{A}}}{c_{\text{HA}}}=\text{const},
 \end{equation}
-where $K_c$ carries the dimension 1/volume.
+where $K_{\text{c}}$ carries the dimension 1/volume.
 
 
 \subsection{Constant pH method}
@@ -86,12 +90,10 @@ where $K_c$ carries the dimension 1/volume.
 In the constant pH method, the acceptance probability for a reaction is:
 
 \begin{equation} 
-P_{\text{acc}} = \text{min}\left\lbrace  1, e^{\Delta E_\text{pot}/(k_BT) \pm \ln{10} (\text{pH - pK}_\text{a})}\right\rbrace  \text{,}
+P_{\text{acc}} = \text{min}\left\lbrace  1, e^{\beta \Delta E_\text{pot} \pm \ln{10} (\text{pH - pK}_\text{a})}\right\rbrace  \text{,}
 \end{equation}
-and the proposal probability of a reaction is $P_\text{prop}=\frac{N_{HA}}{N0}$ for a dissociation and $P_\text{prop}=\frac{N_{A}}{N0}$ for an association reaction\cite{landsgesell2017simulation}.
- 
-Here $\Delta E_\text{pot}$ is the potential energy change due to the reaction and $\text{pH - pK}_\text{a}$ is an input parameter. The chemical prefactor $\pm 1$ defines the direction of the reaction (+1 dissociation, -1 association).
-When a dissociation move is accepted, the titratable molecule HA is charged and a counterion is randomly placed into the simulation box. When, vice versa, an association move is accepted, the titratable chosen A- is neutralized ad a random counterion is removed from the cell.
+and the proposal probability of a reaction is $P_\text{prop}=\frac{N_{HA}}{N0}$ for a dissociation and $P_\text{prop}=\frac{N_{A}}{N0}$ for an association reaction \cite{landsgesell2017simulation}. Here $\Delta E_\text{pot}$ is the potential energy change due to the reaction and $\text{pH - pK}_\text{a}$ is an input parameter. The chemical prefactor $\pm 1$ defines the direction of the reaction (+1 dissociation, -1 association).
+When a dissociation move is attempted, the titratable molecule HA is charged and a counterion \ce{H+} is randomly placed into the simulation box, while when an association move is attempted, a \ce{A-} is neutralized and a random counterion \ce{A+} is removed from the cell.
 
 
 \subsection{Reaction Ensemble method}
@@ -105,12 +107,12 @@ P_{\text{acc}} = \text{min} \left\lbrace 1, \Gamma^\xi V^{\bar{\nu}\xi} \prod_{i
 \end{equation}
 Here $\Gamma$ is the ideal reacting gas quantity introduced above, $V$ the volume, $\bar{\nu}$ the total change in the number of particles, $N_0^i$ the number of particles prior to the reaction and $\xi$ is the extent of the reaction, which could assume value +1 (forward reaction) or -1 (backward reaction). Each reaction is proposed with uniform probability. 
 
-\noindent For reaction \ref{disso} eq. \ref{RE} can be simplified becoming 
+\noindent For reaction (\ref{disso}) eq. (\ref{RE}) can be simplified: 
 \begin{equation}
-P_{\text{acc}} = \text{min} \left\lbrace 1, (  \Gamma \frac{N_{HA}}{N_A - N_{H+}/V)} e^{-\beta \Delta E_\text{pot}}  \right\rbrace\text{.}
+P_{\text{acc}} = \text{min} \left\lbrace 1, (  \Gamma \frac{N_{\text{HA}}}{N_\text{A} - N_{\text{H}+}/V)} e^{-\beta \Delta E_\text{pot}}  \right\rbrace\text{.}
 \end{equation}
 
-As you could see, the main difference in the two methods consists in the fact that in Reaction Ensemble the pH is determined via the actual proton concentration in the simulation box, while in Constant pH method it represents an input parameter which remains constant during all the simulation.
+The main difference in the two methods consists in the fact that in the Reaction Ensemble the system pH is determined via the actual proton concentration in the simulation box, while in Constant pH method it represents an input parameter which remains constant during all the simulation.
 
 
 \section{First part: homogeneous aqueous solution of acidic species}
@@ -135,7 +137,7 @@ for i in range(N0, 2 * N0):
     system.part.add(id=i, pos=np.random.random(3) * system.box_l, type=2)
 \end{verbatim}
 
-Obviously, for each negative charged \ce{A-} particle (type = 1) we had to put in the simulation box the respective counterion \ce{H+} (type = 2) in order to maintain the electroneutrality of the system.
+For each negative charged \ce{A-} particle (type = 1) we put in the simulation box the respective counterion \ce{H+} (type = 2) in order to maintain the electroneutrality of the system.
 Notice that the implementation in Espresso requires that the dimension of the equilibrium constant is consistent with its internal unit of volume; rules for a correct conversion of $K_a$ (experimental) to $\Gamma$ (in internal units) are explained in the user guide: \url{http://espressomd.org/html/doc/advanced_methods.html}. The next step is to define the reaction:
 
 \begin{verbatim}
@@ -152,7 +154,7 @@ elif(mode=="constant_pH_ensemble"):
 print(RE.get_status())
 system.setup_type_map([0, 1, 2])
 \end{verbatim}
-You can switch from one method to the other simply by changing the "mode" parameter. Now the system is ready for being simulated:
+You can switch from one method to the other simply by changing the ``mode'' parameter. Now the system is ready to be simulated:
 
 \begin{verbatim}
 Nreac = 10**4 #number of association/dissociation attempt to be performed
@@ -160,16 +162,16 @@ for i in range(Nreac):
     RE.reaction()
 \end{verbatim}
 
-Notice that, as this level, we're not taking into account electrostatic interactions between charged species. If  you compare the input equilibrium constant $\Gamma$ with the one can calculat at the end of a simulation run: $K_{sim} = \frac{<[\ce{A-}]><[\ce{H+}]>}{<[\ce{HA}]>}$ one observes that both are equal in the case of no interactions present. This is not true when e.g. electrostatic interaction are enabled due to the fact the latter introduces an excess chemical potential.
+Notice that, as this level, we're not taking into account electrostatic interactions between charged species. If  you compare the input equilibrium constant $\Gamma$ with the one you can calculate at the end of a simulation run: $K_{\text{sim}} = \frac{\langle[\ce{A-}]\rangle \langle[\ce{H+}]\rangle}{\langle[\ce{HA}]\rangle}$ one observes that both are equal in the case of no interactions present. This is not true when e.g. electrostatic interaction are enabled due to the fact the latter introduces an excess chemical potential.
 
 
 \subsection{Dissociation degree versus concentration}
 
-Performing several simulation with constant $N_0$ but varying the dimension of the simulation box it is possible to obtain the dissociation degree $\alpha$ (eq. \ref{alpha}) as a function of the concentration of tritatable units. Results are shown in figure \ref{alpha_vs_C}.
+Performing several simulations with constant $N_0$ but varying the dimension of the simulation box it is possible to obtain the dissociation degree $\alpha$ (eq. \ref{alpha}) as a function of the concentration of titratable units. Results are shown in figure \ref{alpha_vs_C}.
 
 \begin{figure}[tb]
 	\centering
- 	\includegraphics[scale=0.5]{figures/alpha_vs_C.png}
+ 	\includegraphics[scale=0.6]{figures/alpha_vs_C.pdf}
  	\caption{Dissociation degree $\alpha$ as function of the concentration of tritatable groups. Green: Constant pH method; violet: Reaction Ensemble method; black: ideal behavior.}
  	\label{alpha_vs_C}
 \end{figure}
@@ -178,7 +180,7 @@ As you can see, only the curve obtained with the Reaction Ensemble method fits t
 \begin{equation}
 K_{a} = \frac{\alpha^2}{1 - \alpha}c_0\text{,}
 \end{equation}
-and this is due to the fact that the acceptance  rule in Constant pH method does not depend on the volume of the system. As $\alpha$ differs, also the number of counterion in the cell is different, and this could have a strong impact on screening effects when electrostatic interactions are taken into account. Moreover, in Constant pH method the real chemical nature of counterions is unknown. In fact, when a HA molecule dissociates at high pH value, the generated \ce{H+} would react instantaneously with an \ce{OH-} ions, so the positively charged ions that remains in solution must represent a different species (e.g. a \ce{Na+} cation).
+and this is due to the fact that the acceptance  rule in Constant pH method does not depend on the volume of the system. As $\alpha$ differs, so will the number of counterions in the cell. This could have a strong impact on screening effects when electrostatic interactions are taken into account. Moreover, in the Constant pH method the real chemical nature of counterions is unknown. In fact, when a HA molecule dissociates at high pH value, the generated \ce{H+} would react instantaneously with an \ce{OH-} ions, so the positively charged ions that remains in solution must represent a different species (e.g. a \ce{Na+} cation).
 
 
 
@@ -191,7 +193,7 @@ from espressomd import electrostatics
 p3m = electrostatics.P3M(prefactor = l_bjerrum*temperature, accuracy=1e-3) 
 system.actors.add(p3m)
 \end{verbatim}
-First af all, we had to define a few important  parameters:
+First of all, we define a few important  parameters:
 \begin{verbatim}
 # system parameters defined in terms of internal unit sigma = 3.55 Angstrom 
 box_l = 56.134 
@@ -225,7 +227,7 @@ charges[type_OH] = -1
 charges[type_Na] =  1
 charges[type_Cl] = -1 
 \end{verbatim}
-Here, we've defined polymers titratable units (\ce{HA <--> A-}), counterions \ce{H+}, and \ce{Na+OH-} and \ce{H+Cl-} ionic species, which can be inserted inside the simulation box in order to titrate the polymer. Let's set up the polymer, its counterions and bonding interactions between monomers. 
+Here, we've defined the type and the charge of the polymer titratable units (\ce{HA <--> A-}), counterions \ce{H+}, and \ce{Na+OH-} and \ce{H+Cl-} ionic species, which can be inserted inside the simulation box. Let's set up the polymer, its counterions and bonding interactions between monomers. 
 
 \begin{verbatim}
 # bonding interaction parameter
@@ -243,7 +245,7 @@ for i in range(N0):
 system.part.add(pos=np.random.random(3) * system.box_l, type=type_H, q=charges[type_H])
 \end{verbatim}
 
-To titrate a polyelectrolytic chain, which is composed by $N_0$ titratable units with a certain $`\text{p}K_a$, in the Reaction Ensemble we need to modulate the pH of the environment. To do this, we need to add additional \ce{H+} (increasing the pH) or $OH-$ ions (to decrease it). We need also to introduce the respective counterions to preserve the electroneutrality of the system. We need also to take into account also the autoprotolysis of water.
+To titrate a polyelectrolytic chain, which is composed by $N_0$ titratable units with a certain $\text{p}K_a$, in the Reaction Ensemble we need to modulate the pH of the environment. To do this, we need to add additional \ce{H+} (increasing the pH) Obviously, for \ce{OH-} ions (to decrease it). We need also to introduce the respective counterions to preserve the electroneutrality of the system. We need also to take into account also the autoprotolysis of water.
 
 \begin{verbatim}
 K_diss = 0.002694            #eq constant HA <--> A- + H+
@@ -288,23 +290,23 @@ print(i,") HA", system.number_of_particles(type=type_HA), "A-",
 
 \begin{figure}[tb]
 	\centering
-	\includegraphics[scale=0.5]{figures/titration.png}
-	\caption{Titration curves for a weak polyelectrolytic chain composed by $N_0=50$ titratable monomers. Green: Constant pH method; violet: Reaction Ensemble mthod:; black: ideal behavior.}
+	\includegraphics[scale=0.6]{figures/titration.pdf}
+	\caption{Titration curves for a weak polyelectrolyte chain composed by $N_0=50$ titratable monomers. Green: Constant pH method; violet: Reaction Ensemble method:; black: ideal behavior.}
 	\label{titration}
 \end{figure}
 
-For a solution of weak acidic molecules with a certain $\text{p}K_a=-log_{10}{\Gamma/c^0}$, the trend of $\alpha$ as function of pH is described by the Henderson-Hasselbalch equation (black curve in fig. \ref{titration}):
+For a solution of weak acidic molecules with a certain $\text{p}K_\text{a}=-log_{10}{\Gamma/c^0}$, the trend of $\alpha$ as function of pH is described by the Henderson-Hasselbalch equation (black curve in fig. \ref{titration}):
 \begin{equation}
 \text{pH} = -\log_{10}(c(H+)/c^0)
 \end{equation}
-However, when titratable units are bonded together in a polyelectrolytic chain their effective $\text{p}K_{a}^{(eff)}$ differs from the ideal one $\text{p}K_a$; this cam be described by the fact that when the charge carried by a dissociated monomer tends to partially inhibit the dissociation of its neighbors (at electrostatic interaction strengths present in water), and this results into a lower total degree of dissociation with respect to the non-bonded acidic units case. Anyway, this effect can be partially compensated by the presence of counterions, which are able to  screen repulsive interactions between dissociated monomers. As you can observe in figure \ref{titration}, Constant pH and Reaction Ensemble method results are very similar at high pH values, but they show very pronounced differences at low pH values. More in details, $pK_{a}^{(eff)}$ tends to the ideal one when the concentration of \ce{H+} is high. This depends on the fact that with Reaction Ensemble method we have to inject a strong acid (\ce{H+}\ce{Cl-}) in order to titrate the polymer, and this results in a more salty solution with a strong screening power. This behavior would be reversed in case of a weak poly-base, with superimposable curves at low pH values and the Reaction Ensemble one approaching the ideal one when the amount of \ce{OH-} ions becomes relevant.
+However, when titratable units are bonded together in a polyelectrolyte chain their effective $\text{p}K_\text{a}^\text{(eff)}$ differs from the ideal one $\text{p}K_\text{a}$; this cam be described by the fact that when the charge carried by a dissociated monomer tends to partially inhibit the dissociation of its neighbors (at electrostatic interaction strengths present in water), and this results into a lower total degree of dissociation with respect to the non-bonded acidic units case. Anyway, this effect can be partially compensated by the presence of counterions, which are able to  screen repulsive interactions between dissociated monomers. As you can observe in figure \ref{titration}, Constant pH and Reaction Ensemble method results are very similar at high pH values, but they show very pronounced differences at low pH values. More in details, $\text{p}K_\text{a}^\text{(eff)}$ tends to the ideal one when the concentration of \ce{H+} is high. This depends on the fact that with Reaction Ensemble method we have to inject a strong acid (\ce{H+}\ce{Cl-}) in order to titrate the polymer, and this results in a more salty solution with a strong screening power. This behavior would be reversed in case of a weak poly-base, with superimposable curves at low pH values and the Reaction Ensemble one approaching the ideal one when the amount of \ce{OH-} ions becomes relevant.
  
 
 \section{Distribution of charges onto the chain}
 
 \begin{figure}[h]
 	\centering
-	\includegraphics[scale=0.5]{figures/qdistrib.png}
+	\includegraphics[scale=0.6]{figures/qdistrib.pdf}
 	\caption{Mean charges of monomers as function of their position along the chain (calculated via Reaction Ensemble method) at $\text{pH - p}K_a = 2$ Notice that the curve is noisy because of the short duration of the simulation. Make sure to perform longer simulations to achieve a better convergence.}
 	\label{qdistrib}
 \end{figure}
