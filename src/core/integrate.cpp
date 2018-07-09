@@ -40,7 +40,6 @@
 #include "interaction_data.hpp"
 #include "lattice.hpp"
 #include "lb.hpp"
-#include "lees_edwards.hpp"
 #include "maggs.hpp"
 #include "minimize_energy.hpp"
 #include "nemd.hpp"
@@ -803,63 +802,12 @@ void propagate_vel_pos() {
                       fprintf(stderr, "%d: OPT: PPOS p = (%.3e,%.3e,%.3e)\n",
                               this_node, p.r.p[0], p.r.p[1], p.r.p[2]));
 
-#ifdef LEES_EDWARDS
-    /* test for crossing of a y-pbc: requires adjustment of velocity.*/
-    {
-      int b1;
-      b1 = (int)floor(p.r.p[1] * box_l_i[1]);
-      if (b1 != 0) {
-        int delta_box = b1 - (int)floor((p.r.p[1] - p.m.v[1] * time_step) * box_l_i[1]);
-        if (abs(delta_box) > 1) {
-          fprintf(stderr,
-                  "Error! Particle moved more than one box length in 1 step\n");
-          errexit();
-        }
-        p.m.v[0] -= delta_box * lees_edwards_rate;
-        p.r.p[0] -= delta_box * lees_edwards_offset;
-        p.r.p[1] -= delta_box * box_l[1];
-        p.l.i[1] += delta_box;
-        while (p.r.p[1] > box_l[1]) {
-          p.r.p[1] -= box_l[1];
-          p.l.i[1]++;
-        }
-        while (p.r.p[1] < 0.0) {
-          p.r.p[1] += box_l[1];
-          p.l.i[1]--;
-        }
-        set_resort_particles(Cells::RESORT_LOCAL);
-      }
-      /* Branch prediction on most systems should mean there is minimal cost
-       * here */
-      while (p.r.p[0] > box_l[0]) {
-        p.r.p[0] -= box_l[0];
-        p.l.i[0]++;
-      }
-      while (p.r.p[0] < 0.0) {
-        p.r.p[0] += box_l[0];
-        p.l.i[0]--;
-      }
-      while (p.r.p[2] > box_l[2]) {
-        p.r.p[2] -= box_l[2];
-        p.l.i[2]++;
-      }
-      while (p.r.p[2] < 0.0) {
-        p.r.p[2] += box_l[2];
-        p.l.i[2]--;
-      }
-    }
-#endif
-
     /* Verlet criterion check*/
     if (Utils::sqr(p.r.p[0] - p.l.p_old[0]) + Utils::sqr(p.r.p[1] - p.l.p_old[1]) +
             Utils::sqr(p.r.p[2] - p.l.p_old[2]) >
         skin2)
       set_resort_particles(Cells::RESORT_LOCAL);
   }
-
-#ifdef LEES_EDWARDS /* would be nice to be more refined about this */
-  set_resort_particles(Cells::RESORT_GLOBAL);
-#endif
 
   announce_resort_particles();
 

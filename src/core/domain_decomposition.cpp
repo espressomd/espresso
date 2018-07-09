@@ -29,9 +29,6 @@
 #include "errorhandling.hpp"
 
 #include "initialize.hpp"
-#include "lees_edwards.hpp"
-#include "lees_edwards_comms_manager.hpp"
-#include "lees_edwards_domain_decomposition.hpp"
 
 /** Returns pointer to the cell which corresponds to the position if
     the position is in the nodes spatial domain otherwise a nullptr
@@ -53,9 +50,6 @@ Cell *dd_save_position_to_cell(double pos[3]);
 /************************************************/
 /*@{*/
 
-#ifdef LEES_EDWARDS
-le_dd_comms_manager le_mgr;
-#endif
 DomainDecomposition dd;
 
 int max_num_cells = CELLS_MAX_NUM_CELLS;
@@ -86,28 +80,15 @@ std::vector<int> dd_fs_neigh;
 
 /** Convenient replace for inner cell check. usage: if(DD_IS_LOCAL_CELL(m,n,o))
  * {...} */
-#ifdef LEES_EDWARDS
-#define DD_IS_LOCAL_CELL(m, n, o)                                              \
-  (m > 0 && m <= dd.cell_grid[0] && n > 0 && n <= dd.cell_grid[1] && o > 0 &&  \
-   o <= dd.cell_grid[2])
-#else
 #define DD_IS_LOCAL_CELL(m, n, o)                                              \
   (m > 0 && m < dd.ghost_cell_grid[0] - 1 && n > 0 &&                          \
    n < dd.ghost_cell_grid[1] - 1 && o > 0 && o < dd.ghost_cell_grid[2] - 1)
-#endif
 
 /** Convenient replace for ghost cell check. usage: if(DD_IS_GHOST_CELL(m,n,o))
  * {...} */
-#ifdef LEES_EDWARDS
-#define DD_IS_GHOST_CELL(m, n, o)                                              \
-  (m == 0 || m == dd.ghost_cell_grid[0] - 1 || n == 0 ||                       \
-   (n == dd.ghost_cell_grid[1] - 1 || n == dd.ghost_cell_grid[1] - 2) ||       \
-   o == 0 || o == dd.ghost_cell_grid[2] - 1)
-#else
 #define DD_IS_GHOST_CELL(m, n, o)                                              \
   (m == 0 || m == dd.ghost_cell_grid[0] - 1 || n == 0 ||                       \
    n >= dd.ghost_cell_grid[1] - 1 || o == 0 || o == dd.ghost_cell_grid[2] - 1)
-#endif
 
 /** Calculate cell grid dimensions, cell sizes and number of cells.
  *  Calculates the cell grid, based on \ref local_box_l and \ref
@@ -134,14 +115,7 @@ void dd_create_cell_grid() {
 
   if (max_range < ROUND_ERROR_PREC * box_l[0]) {
 /* this is the initialization case */
-#ifdef LEES_EDWARDS
-    dd.cell_grid[0] = 2;
-    dd.cell_grid[1] = 1;
-    dd.cell_grid[2] = 1;
-    n_local_cells = 2;
-#else
     n_local_cells = dd.cell_grid[0] = dd.cell_grid[1] = dd.cell_grid[2] = 1;
-#endif
   } else {
     /* Calculate initial cell grid */
     double volume = local_box_l[0];
@@ -162,15 +136,6 @@ void dd_create_cell_grid() {
               << " is larger than the local box size " << local_box_l[i];
           dd.cell_grid[i] = 1;
         }
-#ifdef LEES_EDWARDS
-        if ((i == 0) && (dd.cell_grid[0] < 2)) {
-          runtimeErrorMsg()
-              << "interaction range " << max_range << " in direction " << i
-              << " is larger than half the local box size " << local_box_l[i]
-              << "/2";
-          dd.cell_grid[0] = 2;
-        }
-#endif
         cell_range[i] = local_box_l[i] / dd.cell_grid[i];
       }
     }
@@ -191,13 +156,7 @@ void dd_create_cell_grid() {
       int min_ind = 0;
       double min_size = cell_range[0];
 
-#ifdef LEES_EDWARDS
-      for (i = 2; i >= 1;
-           i--) { /*preferably have thin slices in z or y... this is more
-                     efficient for Lees Edwards*/
-#else
       for (i = 1; i < 3; i++) {
-#endif
         if (dd.cell_grid[i] > 1 && cell_range[i] < min_size) {
           min_ind = i;
           min_size = cell_range[i];
@@ -231,14 +190,6 @@ void dd_create_cell_grid() {
   new_cells = 1;
   for (i = 0; i < 3; i++) {
     dd.ghost_cell_grid[i] = dd.cell_grid[i] + 2;
-#ifdef LEES_EDWARDS
-    // Hack alert: only the boundary y-layers actually need the extra-thick
-    // ghost cell grid,
-    // so some memory (and copies) are wasted in the name of simpler code.
-    if (i == 0) {
-      dd.ghost_cell_grid[i]++;
-    }
-#endif
     new_cells *= dd.ghost_cell_grid[i];
     dd.cell_size[i] = local_box_l[i] / (double)dd.cell_grid[i];
     dd.inv_cell_size[i] = 1.0 / dd.cell_size[i];
@@ -266,13 +217,6 @@ void dd_mark_cells() {
   int m, n, o, cnt_c = 0, cnt_l = 0, cnt_g = 0;
 
   DD_CELLS_LOOP(m, n, o) {
-
-#ifdef LEES_EDWARDS
-    /* convenient for LE if a cell knows where it is*/
-    cells[cnt_c].myIndex[0] = m;
-    cells[cnt_c].myIndex[1] = n;
-    cells[cnt_c].myIndex[2] = o;
-#endif
 
     if (DD_IS_LOCAL_CELL(m, n, o))
       local_cells.cell[cnt_l++] = &cells[cnt_c++];
@@ -682,39 +626,6 @@ int dd_append_particles(ParticleList *pl, int fold_dir) {
 
 void dd_on_geometry_change(int flags) {
 
-  /* Realignment of comms along the periodic y-direction is needed */
-  if (flags & CELL_FLAG_LEES_EDWARDS) {
-    CELL_TRACE(fprintf(stderr, "%d: dd_on_geometry_change responding to "
-                               "Lees-Edwards offset change.\n",
-                       this_node);)
-
-#ifdef LEES_EDWARDS
-    le_mgr.update_on_le_offset_change();
-
-    le_dd_dynamic_update_comm(&le_mgr, &cell_structure.ghost_cells_comm,
-                              GHOSTTRANS_PARTNUM, LE_COMM_FORWARDS);
-    le_dd_dynamic_update_comm(
-        &le_mgr, &cell_structure.exchange_ghosts_comm,
-        (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD),
-        LE_COMM_FORWARDS);
-    le_dd_dynamic_update_comm(&le_mgr, &cell_structure.update_ghost_pos_comm,
-                              (GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD),
-                              LE_COMM_FORWARDS);
-    le_dd_dynamic_update_comm(&le_mgr, &cell_structure.collect_ghost_force_comm,
-                              GHOSTTRANS_FORCE, LE_COMM_BACKWARDS);
-#ifdef LB
-    le_dd_dynamic_update_comm(&cell_structure.ghost_lbcoupling_comm,
-                              GHOSTTRANS_COUPLING);
-#endif
-
-    /* prefetch status may have changed? */
-    dd_assign_prefetches(&cell_structure.ghost_cells_comm);
-    dd_assign_prefetches(&cell_structure.exchange_ghosts_comm);
-    dd_assign_prefetches(&cell_structure.update_ghost_pos_comm);
-    dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);
-#endif
-  }
-
   /* check that the CPU domains are still sufficiently large. */
   for (int i = 0; i < 3; i++)
     if (local_box_l[i] < max_range) {
@@ -770,11 +681,7 @@ void dd_on_geometry_change(int flags) {
       return;
     }
   }
-#ifdef LEES_EDWARDS
-  le_dd_update_communicators_w_boxl(&le_mgr);
-#else
   dd_update_communicators_w_boxl();
-#endif
   /* tell other algorithms that the box length might have changed. */
   on_boxl_change();
 }
@@ -800,30 +707,15 @@ void dd_topology_init(CellPList *old) {
   dd_mark_cells();
 
 /* create communicators */
-#ifdef LEES_EDWARDS
-  le_mgr.init(my_neighbor_count);
-  le_dd_prepare_comm(&le_mgr, &cell_structure.ghost_cells_comm,
-                     GHOSTTRANS_PARTNUM);
-#else
   dd_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM);
-#endif
 
   exchange_data =
       (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
   update_data = (GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
 
-#ifdef LEES_EDWARDS
-  le_dd_prepare_comm(&le_mgr, &cell_structure.exchange_ghosts_comm,
-                     exchange_data);
-  le_dd_prepare_comm(&le_mgr, &cell_structure.update_ghost_pos_comm,
-                     update_data);
-  le_dd_prepare_comm(&le_mgr, &cell_structure.collect_ghost_force_comm,
-                     GHOSTTRANS_FORCE);
-#else
   dd_prepare_comm(&cell_structure.exchange_ghosts_comm, exchange_data);
   dd_prepare_comm(&cell_structure.update_ghost_pos_comm, update_data);
   dd_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
-#endif
 
   /* collect forces has to be done in reverted order! */
   dd_revert_comm_order(&cell_structure.collect_ghost_force_comm);
@@ -854,11 +746,7 @@ void dd_topology_init(CellPList *old) {
 #endif
 
 /* initialize cell neighbor structures */
-#ifdef LEES_EDWARDS
-  le_dd_init_cell_interactions();
-#else
   dd_init_cell_interactions();
-#endif
 
   /* copy particles */
   for (c = 0; c < old->n; c++) {
@@ -993,8 +881,6 @@ void dd_exchange_and_sort_particles(int global_flag) {
           }
         }
 
-/* Exchange particles */
-#ifndef LEES_EDWARDS
         CELL_TRACE(fprintf(stderr, "%d: send receive %d\n", this_node, dir));
 
         if (node_pos[dir] % 2 == 0) {
@@ -1008,31 +894,6 @@ void dd_exchange_and_sort_particles(int global_flag) {
           recv_particles(&recv_buf_l, node_neighbors[2 * dir]);
           send_particles(&send_buf_r, node_neighbors[2 * dir + 1]);
         }
-#else
-        int ii;
-        for (ii = 0; ii < 2; ii++) {
-          int nn = node_neighbors[2 * dir + ii];
-          int lr = node_neighbor_lr[2 * dir + ii];
-
-          if (lr == 1) {
-            if (nn > this_node) {
-              send_particles(&send_buf_r, nn);
-              recv_particles(&recv_buf_r, nn);
-            } else {
-              recv_particles(&recv_buf_r, nn);
-              send_particles(&send_buf_r, nn);
-            }
-          } else {
-            if (nn > this_node) {
-              send_particles(&send_buf_l, nn);
-              recv_particles(&recv_buf_l, nn);
-            } else {
-              recv_particles(&recv_buf_l, nn);
-              send_particles(&send_buf_l, nn);
-            }
-          }
-        }
-#endif
 
         /* sort received particles to cells, folding of coordinates also happens
          * in here. */
