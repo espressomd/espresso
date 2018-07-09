@@ -111,12 +111,14 @@ public:
 
   inline Scalar norm(void) const { return sqrt(norm2()); }
 
-  inline void normalize(void) {
+  inline Vector& normalize(void) {
     const auto N = norm();
     if (N > Scalar(0)) {
       for (int i = 0; i < n; i++)
         d[i] /= N;
     }
+
+    return *this;
   }
 
   static void cross(const Vector<3, Scalar> &a, const Vector<3, Scalar> &b,
