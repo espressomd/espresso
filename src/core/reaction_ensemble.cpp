@@ -188,6 +188,7 @@ void ReactionAlgorithm::check_reaction_ensemble() {
 #endif
 }
 
+
 // boring helper functions
 /**
 * Automatically sets the volume which is used by the reaction ensemble to the
@@ -425,6 +426,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
 
   SingleReaction &current_reaction = reactions[reaction_id];
   bool reaction_is_accepted = false;
+  particle_inserted_too_close_to_another_one = false;
   int old_state_index = -1; // for Wang-Landau algorithm
   on_reaction_entry(old_state_index);
   if (!all_reactant_particles_exist(reaction_id)) {
@@ -462,7 +464,11 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
   make_reaction_attempt(current_reaction, changed_particles_properties,
                         p_ids_created_particles, hidden_particles_properties);
 
-  const double E_pot_new = calculate_current_potential_energy_of_system();
+  double E_pot_new;
+  if(particle_inserted_too_close_to_another_one==true)
+    E_pot_new=std::numeric_limits<double>::max();
+  else
+    E_pot_new = calculate_current_potential_energy_of_system();
 
   int new_state_index = -1; // save new_state_index for Wang-Landau algorithm
   int accepted_state = -1;  // for Wang-Landau algorithm
@@ -472,6 +478,9 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
   double bf = calculate_acceptance_probability(
       current_reaction, E_pot_old, E_pot_new, old_particle_numbers,
       old_state_index, new_state_index, only_make_configuration_changing_move);
+
+  std::vector<double> exponential = {exp(-1.0 / temperature * (E_pot_new - E_pot_old))};
+  current_reaction.accumulator_exponentials(exponential);
 
   if (d_random() < bf) {
     // accept
@@ -516,6 +525,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
   on_end_reaction(accepted_state);
   return reaction_is_accepted;
 }
+
 
 /**
 * Calculates the change in particle numbers for the given reaction
@@ -700,57 +710,36 @@ int ReactionAlgorithm::create_particle(int desired_type) {
 #ifdef ELECTROSTATICS
   double charge = charges_of_types[desired_type];
 #endif
-  bool particle_inserted_too_close_to_another_one = true;
-  int max_insert_tries = 1000;
-  int insert_tries = 0;
-  double min_dist = exclusion_radius; // setting of a minimal
-                                      // distance is allowed to
-                                      // avoid overlapping
-                                      // configurations if there is
-                                      // a repulsive potential.
-                                      // States with very high
-                                      // energies have a probability
-                                      // of almost zero and
-                                      // therefore do not contribute
-                                      // to ensemble averages.
-  if (min_dist > 0.0) {
-    while (particle_inserted_too_close_to_another_one &&
-           insert_tries < max_insert_tries) {
-      pos_vec = get_random_position_in_box();
-      place_particle(p_id, pos_vec.data());
-      // set type
-      set_particle_type(p_id, desired_type);
+
+  
+  pos_vec = get_random_position_in_box();
+  place_particle(p_id, pos_vec.data());
+  // set type
+  set_particle_type(p_id, desired_type);
 #ifdef ELECTROSTATICS
-      // set charge
-      set_particle_q(p_id, charge);
+  // set charge
+  set_particle_q(p_id, charge);
 #endif
-      // set velocities
-      set_particle_v(p_id, vel);
-      double d_min = distto(partCfg(), pos_vec.data(),
-                            p_id); // TODO also catch constraints with an IFDEF
-                                   // CONSTRAINTS here, but only interesting,
-                                   // when doing MD/ HMC because then the system
-                                   // might explode easily here due to high
-                                   // forces
-      insert_tries += 1;
-      if (d_min > exclusion_radius)
-        particle_inserted_too_close_to_another_one = false;
-    }
-  } else {
-    pos_vec = get_random_position_in_box();
-    place_particle(p_id, pos_vec.data());
-    // set type
-    set_particle_type(p_id, desired_type);
-    // set velocities
-    set_particle_v(p_id, vel);
-#ifdef ELECTROSTATICS
-    // set charge
-    set_particle_q(p_id, charge);
-#endif
-  }
-  if (insert_tries >= max_insert_tries) {
-    throw std::runtime_error("No particle inserted");
-  }
+  // set velocities
+  set_particle_v(p_id, vel);
+  double d_min = distto(partCfg(), pos_vec.data(),
+                        p_id); // TODO also catch constraints with an IFDEF
+                               // CONSTRAINTS here, but only interesting,
+                               // when doing MD/ HMC because then the system
+                               // might explode easily here due to high
+                               // forces
+  if (d_min < exclusion_radius)
+    particle_inserted_too_close_to_another_one = true; // setting of a minimal
+                                                      // distance is allowed to
+                                                      // avoid overlapping
+                                                      // configurations if there is
+                                                      // a repulsive potential.
+                                                      // States with very high
+                                                      // energies have a probability
+                                                      // of almost zero and
+                                                      // therefore do not contribute
+                                                      // to ensemble averages.
+
   return p_id;
 }
 
@@ -783,6 +772,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     int type, int particle_number_of_type_to_be_changed, bool use_wang_landau) {
   m_tried_configurational_MC_moves += 1;
   bool got_accepted = false;
+  particle_inserted_too_close_to_another_one=false;
 
   int old_state_index = -1;
   if (use_wang_landau) {
@@ -803,12 +793,11 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
 
   std::vector<double> particle_positions(3 *
                                          particle_number_of_type_to_be_changed);
-  int changed_particle_counter = 0;
   std::vector<int> p_id_s_changed_particles;
 
   // save old_position
   int p_id = get_random_p_id(type);
-  while (changed_particle_counter < particle_number_of_type_to_be_changed) {
+  for (int i=0; i < particle_number_of_type_to_be_changed;i++) {
     // determine a p_id you have not touched yet
     while (is_in_list(p_id, p_id_s_changed_particles)) {
       p_id = get_random_p_id(
@@ -817,51 +806,36 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
 
     auto part = get_particle_data(p_id);
 
-    particle_positions[3 * changed_particle_counter] = part.r.p[0];
-    particle_positions[3 * changed_particle_counter + 1] = part.r.p[1];
-    particle_positions[3 * changed_particle_counter + 2] = part.r.p[2];
+    particle_positions[3 * i] = part.r.p[0];
+    particle_positions[3 * i + 1] = part.r.p[1];
+    particle_positions[3 * i + 2] = part.r.p[2];
     p_id_s_changed_particles.push_back(p_id);
-    changed_particle_counter += 1;
   }
 
   // propose new positions
-  changed_particle_counter = 0;
-  int max_tries =
-      100 * particle_number_of_type; // important for very dense systems
-                                     // setting of a minimal
-                                     // distance is allowed to
-                                     // avoid overlapping
-                                     // configurations if there is
-                                     // a repulsive potential.
-                                     // States with very high
-                                     // energies have a probability
-                                     // of almost zero and
-                                     // therefore do not contribute
-                                     // to ensemble averages.
-  int attempts = 0;
   std::vector<double> new_pos(3);
-  while (changed_particle_counter < particle_number_of_type_to_be_changed) {
-    p_id = p_id_s_changed_particles[changed_particle_counter];
-    bool particle_inserted_too_close_to_another_one = true;
-    while (particle_inserted_too_close_to_another_one && attempts < max_tries) {
-      // change particle position
-      new_pos = get_random_position_in_box();
-      // new_pos=get_random_position_in_box_enhanced_proposal_of_small_radii();
-      // //enhanced proposal of small radii
-      place_particle(p_id, new_pos.data());
-      double d_min = distto(partCfg(), new_pos.data(), p_id);
-      if (d_min > exclusion_radius) {
-        particle_inserted_too_close_to_another_one = false;
-      }
-      attempts += 1;
-    }
-    changed_particle_counter += 1;
-  }
-  if (attempts >= max_tries) {
-    throw std::runtime_error("Not all particles displaced");
+  for (int i=0; i < particle_number_of_type_to_be_changed; i++) {
+    p_id = p_id_s_changed_particles[i];
+    // change particle position
+    new_pos = get_random_position_in_box();
+    // new_pos=get_random_position_in_box_enhanced_proposal_of_small_radii();
+    // //enhanced proposal of small radii
+    place_particle(p_id, new_pos.data());
+    double d_min = distto(partCfg(), new_pos.data(), p_id); // TODO also catch constraints with an IFDEF
+                               // CONSTRAINTS here, but only interesting,
+                               // when doing MD/ HMC because then the system
+                               // might explode easily here due to high
+    
+    if(d_min<exclusion_radius)
+        particle_inserted_too_close_to_another_one=true;
   }
 
-  const double E_pot_new = calculate_current_potential_energy_of_system();
+  double E_pot_new;
+  if(particle_inserted_too_close_to_another_one==true)
+    E_pot_new=std::numeric_limits<double>::max();
+  else
+    E_pot_new = calculate_current_potential_energy_of_system();
+
   double beta = 1.0 / temperature;
 
   int new_state_index = -1;
@@ -1783,8 +1757,9 @@ double ConstantpHEnsemble::calculate_acceptance_probability(
   return bf;
 }
 
-double WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
+std::pair<double,double> WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
   SingleReaction &current_reaction = reactions[reaction_id];
+  particle_inserted_too_close_to_another_one=false;
   const double E_pot_old = calculate_current_potential_energy_of_system();
 
   // make reaction attempt
@@ -1796,9 +1771,11 @@ double WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
          // need to hide the particle and recover it
   make_reaction_attempt(current_reaction, changed_particles_properties,
                         p_ids_created_particles, hidden_particles_properties);
-
-  const double E_pot_new = calculate_current_potential_energy_of_system();
-
+  double E_pot_new;
+  if(particle_inserted_too_close_to_another_one==true)
+    E_pot_new=std::numeric_limits<double>::max();
+  else
+    E_pot_new= calculate_current_potential_energy_of_system();
   // reverse reaction attempt
   // reverse reaction
   // 1) delete created product particles
@@ -1809,12 +1786,11 @@ double WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
   restore_properties(hidden_particles_properties, number_of_saved_properties);
   // 2)restore previously changed reactant particles
   restore_properties(changed_particles_properties, number_of_saved_properties);
+  std::vector<double> exponential = {exp(-1.0 / temperature * (E_pot_new - E_pot_old))};
+  current_reaction.accumulator_exponentials(exponential);
 
-  double const exponential = exp(-1.0 / temperature * (E_pot_new - E_pot_old));
-  summed_exponentials[reaction_id] += exponential;
-  number_of_insertions[reaction_id] += 1;
-  double const average_exponential = summed_exponentials[reaction_id] / number_of_insertions[reaction_id];
-  return -temperature * log(average_exponential);
+  std::pair<double,double> result=std::make_pair(-temperature*log(current_reaction.accumulator_exponentials.get_mean()[0]),std::abs(-temperature/current_reaction.accumulator_exponentials.get_mean()[0]*current_reaction.accumulator_exponentials.get_std_error()[0])); //(excess chemical potential; error excess chemical potential, determined via error propagation)
+  return result;
 }
 
 /////////////////////////////////////////////////////////////////free functions

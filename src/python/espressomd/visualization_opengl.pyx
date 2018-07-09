@@ -831,8 +831,8 @@ class openGLLive(object):
     def _update_bonds(self):
         if self.specs['draw_bonds']:
             self.bonds = []
-            for i in range(len(self.system.part)):
-                bs = self.system.part[i].bonds
+            for i, p in enumerate(self.system.part):
+                bs = p.bonds
                 for b in bs:
                     t = b[0].type_number()
                     # b[0]: Bond, b[1:] Partners
@@ -1077,7 +1077,7 @@ class openGLLive(object):
             col = self._modulo_indexing(type_colors, ptype)
             radius = self._modulo_indexing(type_radii, ptype)
             draw_arrow(self.particles['pos'][pid], np.array(
-                v) * sc, radius, col, self.materials['chrome'], self.specs['quality_arrows'])
+                v, dtype=float) * sc, radius, col, self.materials['chrome'], self.specs['quality_arrows'])
 
     def _draw_bonds(self):
         pIds = range(len(self.particles['pos']))
