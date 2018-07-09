@@ -45,6 +45,7 @@ struct AutoParameter {
 
   /* Tag types */
   struct ReadOnly {};
+  static constexpr const ReadOnly read_only = ReadOnly{};
 
   /**
    * @brief read-write parameter that is bound to an object
