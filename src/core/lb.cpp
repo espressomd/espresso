@@ -1367,6 +1367,40 @@ int lb_lbnode_get_pi_neq(int *ind, double *p_pi) {
   return 0;
 }
 
+int lb_bulk_get_pi(double *p_pi) {
+
+  for (int l = 0; l < 6; l++) {
+    p_pi[l] = 0.0;
+  }
+
+  lbpar_gpu.dim_x = (unsigned int)rint(box_l[0]/lbpar_gpu.agrid);
+  lbpar_gpu.dim_y = (unsigned int)rint(box_l[1]/lbpar_gpu.agrid);
+  lbpar_gpu.dim_z = (unsigned int)rint(box_l[2]/lbpar_gpu.agrid);
+  int number_of_nodes = lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
+
+  printf("Dimension: %d \n", number_of_nodes);
+
+  for (int i = 0; i <= lbpar_gpu.dim_x; i ++) {
+    for (int j = 0; j <= lbpar_gpu.dim_y; j ++) {
+      for (int k = 0; k <= lbpar_gpu.dim_z; k ++) {
+        int node[3] = {i, j, k};
+        double pi_bulk[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        lb_lbnode_get_pi(node, pi_bulk);
+        for (int l = 0; l < 6; l++) {
+          p_pi[l] += pi_bulk[l];
+        }
+      }
+    }
+  }
+
+  for (int l = 0; l < 6; l++) {
+    p_pi[l] /= number_of_nodes;
+  }
+  
+ return 0;
+
+}
+
 int lb_lbnode_get_boundary(int *ind, int *p_boundary) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU

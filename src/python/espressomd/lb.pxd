@@ -98,6 +98,7 @@ IF LB_GPU or LB:
         int lb_lbnode_get_rho(int * coord, double * double_return)
         int lb_lbnode_get_pi(int * coord, double * double_return)
         int lb_lbnode_get_pi_neq(int * coord, double * double_return)
+        int lb_bulk_get_pi(double *pi)
         int lb_lbnode_get_pop(int * coord, double * double_return)
         int lb_lbnode_set_pop(int * coord, double * double_return)
         int lb_lbnode_get_boundary(int * coord, int * int_return)

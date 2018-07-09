@@ -343,7 +343,7 @@ IF LB or LB_GPU:
 
             def __set__(self, value):
                 raise NotImplementedError
-
+        
         property population:
             def __get__(self):
                 cdef double[19] double_return
@@ -360,5 +360,15 @@ IF LB or LB_GPU:
                 lb_lbnode_get_boundary(self.node, &int_return)
                 return int_return
 
+            def __set__(self, value):
+                raise NotImplementedError
+        
+        property pi_bulk:
+            def __get__(self):
+                cdef double[6] pi
+                lb_bulk_get_pi(pi)
+                return array_locked(np.array([[pi[0],pi[1],pi[3]],
+                                              [pi[1],pi[2],pi[4]],
+                                              [pi[3],pi[4],pi[5]]]))
             def __set__(self, value):
                 raise NotImplementedError
