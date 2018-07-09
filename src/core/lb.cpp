@@ -1380,9 +1380,9 @@ int lb_bulk_get_pi(double *p_pi) {
 
   printf("Dimension: %d \n", number_of_nodes);
 
-  for (int i = 0; i <= lbpar_gpu.dim_x; i ++) {
-    for (int j = 0; j <= lbpar_gpu.dim_y; j ++) {
-      for (int k = 0; k <= lbpar_gpu.dim_z; k ++) {
+  for (int i = 0; i < lbpar_gpu.dim_x; i ++) {
+    for (int j = 0; j < lbpar_gpu.dim_y; j ++) {
+      for (int k = 0; k < lbpar_gpu.dim_z; k ++) {
         int node[3] = {i, j, k};
         double pi_bulk[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
         lb_lbnode_get_pi(node, pi_bulk);
