@@ -97,4 +97,6 @@ unit_test(NAME histogram SRC histogram.cpp)
 unit_test(NAME get_value SRC get_value_test.cpp)
 unit_test(NAME accumulator SRC accumulator.cpp)
 unit_test(NAME tensor_product SRC tensor_product_test.cpp)
+unit_test(NAME interpolation_gradient SRC interpolation_gradient_test.cpp)
+unit_test(NAME interpolation SRC interpolation_test.cpp)
 

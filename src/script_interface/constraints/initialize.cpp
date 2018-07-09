@@ -26,6 +26,10 @@
 #include "ShapeBasedConstraint.hpp"
 #include "HomogeneousMagneticField.hpp"
 
+#include "ExternalField.hpp"
+#include "fields.hpp"
+#include "couplings.hpp"
+
 namespace ScriptInterface {
 namespace Constraints {
 
