@@ -25,12 +25,9 @@
  *  \ref forces.cpp
  */
 
-#include "utils.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "grid.hpp"
-#include "config.hpp"
-#include "integrate.hpp"
 
 #include "utils/math/triangle_functions.hpp"
 using Utils::get_n_triangle;
