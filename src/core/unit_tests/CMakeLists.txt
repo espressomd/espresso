@@ -102,4 +102,5 @@ unit_test(NAME sgn SRC sgn_test.cpp)
 unit_test(NAME AS_erfc_part SRC AS_erfc_part_test.cpp)
 unit_test(NAME sinc SRC sinc_test.cpp)
 unit_test(NAME permute_ifield_test SRC permute_ifield_test.cpp)
+unit_test(NAME vec_rotate SRC vec_rotate_test.cpp)
 

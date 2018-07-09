@@ -2,6 +2,8 @@
 #define UTILS_VEC_ROTATE_HPP
 
 #include "Vector.hpp"
+#include "utils/math/sqr.hpp"
+#include "utils.hpp"
 
 namespace Utils {
 /** rotates vector around axis by alpha */
