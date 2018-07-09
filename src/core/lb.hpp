@@ -30,9 +30,6 @@
 #include "lattice_inline.hpp"
 #include "utils.hpp"
 
-extern int
-    lb_components; // global variable holding the number of fluid components
-
 #ifdef LB
 
 /* For the D3Q19 model most functions have a separate implementation
@@ -53,7 +50,7 @@ extern int
 #define LBPAR_FRICTION                                                         \
   4 /**< friction coefficient for viscous coupling between particles and fluid \
        */
-#define LBPAR_EXTFORCE 5 /**< external force acting on the fluid */
+#define LBPAR_EXTFORCE 5 /**< external force density acting on the fluid */
 #define LBPAR_BULKVISC 6 /**< fluid bulk viscosity */
 
 /** Note these are used for binary logic so should be powers of 2 */
@@ -106,44 +103,24 @@ typedef struct {
 } LB_Model;
 
 /** Data structure for fluid on a local lattice site */
-typedef struct {
-
-  /** flag indicating whether fields have to be recomputed */
-  int recalc_fields;
-
-  /** local density */
-  double rho[1];
-
-  /** local momentum */
-  double j[3];
-
-  /** local stress tensor */
-  double pi[6];
-
-  /* local populations of the velocity directions
-   *  are stored seperately to achieve higher performance */
-
-  /** flag indicating whether a force is acting on the node */
-  int has_force;
-
-  /** local force density */
-  double force[3];
-#ifdef IMMERSED_BOUNDARY
-  // For particle update, we need the force on the nodes in LBM
-  // Yet, Espresso resets the force immediately after the LBM update
-  // Therefore we save it here
-  double force_buf[3];
-#endif
+struct LB_FluidNode {
+  /** flag indicating whether a force density is acting on the node */
+  int has_force_density;
 
 #ifdef LB_BOUNDARIES
   /** flag indicating whether this site belongs to a boundary */
   int boundary;
+#endif // LB_BOUNDARIES
 
-  /** normal vector of the boundary surface */
-  double *nvec; // doesn't work like that any more, I think (georg, 17.08.10)
-#endif          // LB_BOUNDARIES
-
-} LB_FluidNode;
+  /** local force density */
+  double force_density[3];
+#ifdef IMMERSED_BOUNDARY
+  // For particle update, we need the force on the nodes in LBM
+  // Yet, Espresso resets the force immediately after the LBM update
+  // Therefore we save it here
+  double force_density_buf[3];
+#endif
+};
 
 /** Data structure holding the parameters for the Lattice Boltzmann system. */
 typedef struct {
@@ -169,8 +146,8 @@ typedef struct {
    * lead to numerical artifacts with low order integrators */
   double friction;
 
-  /** external force applied to the fluid at each lattice site (MD units) */
-  double ext_force[3]; /* Open question: Do we want a local force or global
+  /** external force density applied to the fluid at each lattice site (MD units) */
+  double ext_force_density[3]; /* Open question: Do we want a local force or global
                           force? */
   double rho_lb_units;
   /** relaxation of the odd kinetic modes */
@@ -225,7 +202,7 @@ extern int transfer_momentum;
 
 /** Updates the Lattice Boltzmann system for one time step.
  * This function performs the collision step and the streaming step.
- * If external forces are present, they are applied prior to the collisions.
+ * If external force densities are present, they are applied prior to the collisions.
  * If boundaries are present, it also applies the boundary conditions.
  */
 void lattice_boltzmann_update();
@@ -246,30 +223,11 @@ void lb_reinit_parameters();
 /** (Re-)initializes the fluid. */
 void lb_reinit_fluid();
 
-/** Resets the forces on the fluid nodes */
-void lb_reinit_forces();
+/** Resets the force densities on the fluid nodes */
+void lb_reinit_force_densities();
 
 /** Checks if all LB parameters are meaningful */
 int lb_sanity_checks();
-
-/** Sets the density and momentum on a local lattice site.
- * @param node  Pointer to the Node of the lattice site within the local domain
- * (Input)
- * @param rho   Local density of the fluid (Input)
- * @param v     Local momentum of the fluid (Input)
- * @param pi    Local pressure of the fluid (Input)
- */
-void lb_set_local_fields(LB_FluidNode *node, const double rho, const double *v,
-                         const double *pi);
-
-/** Returns the mass, momentum and stress of a local lattice site.
- * @param node  The index of the lattice site within the local domain (Input)
- * @param rho   Local density of the fluid (Output)
- * @param j     Local momentum of the fluid (Output)
- * @param pi    Local stress tensor of the fluid (Output)
- */
-void lb_get_local_fields(LB_FluidNode *node, double *rho, double *j,
-                         double *pi);
 
 /** Calculates the equilibrium distributions.
     @param index Index of the local site
@@ -282,7 +240,7 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
 
 /** Propagates the Lattice Boltzmann system for one time step.
  * This function performs the collision step and the streaming step.
- * If external forces are present, they are applied prior to the collisions.
+ * If external force densities are present, they are applied prior to the collisions.
  * If boundaries are present, it also applies the boundary conditions.
  */
 void lb_propagate();
@@ -298,7 +256,7 @@ void calc_particle_lattice_ia();
 /** calculates the fluid velocity at a given position of the
  * lattice. Note that it can lead to undefined behaviour if the
  * position is not within the local lattice. */
-int lb_lbfluid_get_interpolated_velocity(double *p, double *v);
+void lb_lbfluid_get_interpolated_velocity(const Vector3d &p, double *v);
 
 inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
                                  double *pi);
@@ -450,12 +408,12 @@ inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
   j[2] = mode[3];
 
 #ifndef EXTERNAL_FORCES
-  if (lbfields[index].has_force)
+  if (lbfields[index].has_force_density)
 #endif
   {
-    j[0] += 0.5 * lbfields[index].force[0];
-    j[1] += 0.5 * lbfields[index].force[1];
-    j[2] += 0.5 * lbfields[index].force[2];
+    j[0] += 0.5 * lbfields[index].force_density[0];
+    j[1] += 0.5 * lbfields[index].force_density[1];
+    j[2] += 0.5 * lbfields[index].force_density[2];
   }
   if (!pi)
     return;
@@ -498,7 +456,8 @@ inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
 }
 
 #ifdef LB_BOUNDARIES
-inline void lb_local_fields_get_boundary_flag(Lattice::index_t index, int *boundary) {
+inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
+                                              int *boundary) {
 
   if (!(lattice_switch & LATTICE_LB)) {
     runtimeErrorMsg() << "Error in lb_local_fields_get_boundary_flag in "
@@ -519,16 +478,14 @@ inline void lb_local_fields_get_boundary_flag(Lattice::index_t index, int *bound
 inline void lb_get_populations(Lattice::index_t index, double *pop) {
   int i = 0;
   for (i = 0; i < 19; i++) {
-    pop[i] =
-        lbfluid[0][i][index] + lbmodel.coeff[i % 19][0] * lbpar.rho;
+    pop[i] = lbfluid[0][i][index] + lbmodel.coeff[i % 19][0] * lbpar.rho;
   }
 }
 
 inline void lb_set_populations(Lattice::index_t index, double *pop) {
   int i = 0;
   for (i = 0; i < 19; i++) {
-    lbfluid[0][i][index] =
-        pop[i] - lbmodel.coeff[i % 19][0] * lbpar.rho;
+    lbfluid[0][i][index] = pop[i] - lbmodel.coeff[i % 19][0] * lbpar.rho;
   }
 }
 #endif
@@ -546,7 +503,7 @@ int lb_lbfluid_set_gamma_even(double *p_gamma_even);
 int lb_lbfluid_set_friction(double *p_friction);
 int lb_lbfluid_set_couple_flag(int couple_flag);
 int lb_lbfluid_set_agrid(double p_agrid);
-int lb_lbfluid_set_ext_force(int component, double p_fx, double p_fy,
+int lb_lbfluid_set_ext_force_density(int component, double p_fx, double p_fy,
                              double p_fz);
 int lb_lbfluid_set_tau(double p_tau);
 int lb_lbfluid_set_remove_momentum(void);
@@ -556,7 +513,7 @@ int lb_lbfluid_get_visc(double *p_visc);
 int lb_lbfluid_get_bulk_visc(double *p_bulk_visc);
 int lb_lbfluid_get_friction(double *p_friction);
 int lb_lbfluid_get_couple_flag(int *couple_flag);
-int lb_lbfluid_get_ext_force(double *p_f);
+int lb_lbfluid_get_ext_force_density(double *p_f);
 #ifdef SHANCHEN
 int lb_lbfluid_set_shanchen_coupling(double *p_coupling);
 int lb_lbfluid_set_mobility(double *p_mobility);
@@ -593,7 +550,7 @@ int lb_lbnode_set_pop(int *ind, double *pop);
  * lattice. Note that it can lead to undefined behaviour if the
  * position is not within the local lattice. This version of the function
  * can be called without the position needing to be on the local processor */
-int lb_lbfluid_get_interpolated_velocity_global(double *p, double *v);
+int lb_lbfluid_get_interpolated_velocity_global(Vector3d& p, double* v);
 
 #endif
 

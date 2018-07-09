@@ -17,8 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function
-import numpy
-import espressomd._system as es
+import numpy as np
 import espressomd
 from espressomd import thermostat
 from espressomd import electrostatics
@@ -64,16 +63,18 @@ lj_cap = 20
 # Integration parameters
 #############################################################
 system = espressomd.System(box_l=[box_l]*3)
+system.set_random_state_PRNG()
+np.random.seed(seed=system.seed)
+
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 
-#es._espressoHandle.Tcl_Eval('thermostat langevin 1.0 1.0')
 thermostat.Thermostat().set_langevin(1.0, 1.0)
 
 # warmup integration (with capped LJ potential)
 warm_steps = 100
 warm_n_times = 30
-# do the warmup until the particles have at least the distance min__dist
+# do the warmup until the particles have at least the distance min_dist
 min_dist = 0.9
 
 # integration
@@ -101,23 +102,20 @@ print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
 #############################################################
 
 for i in range(n_part):
-    system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
+    system.part.add(id=i, pos=np.random.random(3) * system.box_l)
 
-for i in range(n_part / 2):
+for i in range(n_part // 2):
     system.part[2 * i].q = -1.0
     system.part[2 * i].type = 1
     system.part[2 * i + 1].q = 1.0
     system.part[2 * i + 1].type = 2
-
-# for i in range(n_part-1):
-#    print("Particle {} has charge {} and is of type {}.".format(i,system.part[i].q,system.part[i].type))
 
 # Activating the Debye-Hueckel interaction
 # The Coulomb prefactor is set to one. Assuming the solvent is water, this
 # means that lj_sig is 0.714 nm in SI units.
 coulomb_prefactor =1
 # inverse Debye length for 1:1 electrolyte in water at room temperature (nm)
-dh_kappa = numpy.sqrt(mol_dens) / 0.304
+dh_kappa = np.sqrt(mol_dens) / 0.304
 # convert to MD units
 dh_kappa = dh_kappa / 0.714
 dh = electrostatics.DH(
@@ -142,9 +140,6 @@ system.cell_system.max_num_cells = 2744
 # open Observable file
 obs_file = open("pydebye_hueckel.obs", "w")
 obs_file.write("# Time\tE_tot\tE_kin\tE_pot\n")
-# set obs_file [open "$name$ident.obs" "w"]
-# puts $obs_file "\# System: $name$ident"
-# puts $obs_file "\# Time\tE_tot\tE_kin\t..."
 
 print("""
 Start warmup integration:
@@ -163,25 +158,19 @@ while (i < warm_n_times and act_min_dist < min_dist):
     system.integrator.run(steps=warm_steps)
     # Warmup criterion
     act_min_dist = system.analysis.min_dist()
-#  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,system.time,lj_cap,act_min_dist), end=' ')
     i += 1
-
-#   write observables
-#    puts $obs_file "{ time [setmd time] } [analyze energy]"
 
 #   Increase LJ cap
     lj_cap = lj_cap + 10
     system.force_cap = lj_cap
 
-# Just to see what else we may get from the c code
 import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
 # pprint.pprint(system.part.__getstate__(), width=1)
-pprint.pprint(system.__getstate__(), width=1)
+pprint.pprint(system.__getstate__())
 
 # write parameter file
 
-# polyBlockWrite "$name$ident.set" {box_l time_step skin} ""
 set_file = open("pydebye_hueckel.set", "w")
 set_file.write("box_l %s\ntime_step %s\nskin %s\n" %
                (box_l, system.time_step, system.cell_system.skin))
@@ -204,24 +193,11 @@ j = 0
 for i in range(0, int_n_times):
     print("run %d at time=%f " % (i, system.time))
 
-#  es._espressoHandle.Tcl_Eval('integrate %d' % int_steps)
     system.integrator.run(steps=int_steps)
 
     energies = system.analysis.energy()
     print(energies)
     obs_file.write('{ time %s } %s\n' % (system.time, energies))
-
-#   write observables
-#    set energies [analyze energy]
-#    puts $obs_file "{ time [setmd time] } $energies"
-#    puts -nonewline "temp = [expr [lindex $energies 1 1]/(([degrees_of_freedom]/2.0)*[setmd n_part])]\r"
-#    flush stdout
-
-#   write intermediate configuration
-#    if { $i%10==0 } {
-#	polyBlockWrite "$name$ident.[format %04d $j]" {time box_l} {id pos type}
-#	incr j
-#    }
 
 # write end configuration
 end_file = open("pydebye_hueckel.end", "w")
@@ -230,12 +206,10 @@ end_file.write("{ particles {type q pos} }")
 for i in range(n_part - 1):
     end_file.write("%s\t%s\t%s\n" %
                    (system.part[i].type, system.part[i].q, system.part[i].pos))
-    # id & type not working yet
 
 obs_file.close()
 set_file.close()
 end_file.close()
-# es._espressoHandle.die()
 
 # terminate program
 print("\nFinished.")

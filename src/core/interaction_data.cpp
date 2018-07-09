@@ -29,6 +29,7 @@
 #include "cos2.hpp"
 #include "debye_hueckel.hpp"
 #include "dpd.hpp"
+#include "thermalized_bond.hpp"
 #include "elc.hpp"
 #include "errorhandling.hpp"
 #include "gaussian.hpp"
@@ -39,19 +40,23 @@
 #include "initialize.hpp"
 #include "interaction_data.hpp"
 #include "lj.hpp"
-#include "ljangle.hpp"
 #include "ljcos.hpp"
 #include "ljcos2.hpp"
 #include "ljgen.hpp"
 #include "maggs.hpp"
 #include "magnetic_non_p3m_methods.hpp"
 #include "mdlc_correction.hpp"
+#include "initialize.hpp"
+#include "interaction_data.hpp"
+#include "actor/DipolarDirectSum.hpp"
+#ifdef DIPOLAR_BARNES_HUT
+#include "actor/DipolarBarnesHut.hpp"
+#endif
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
 #include "morse.hpp"
 #include "object-in-fluid/affinity.hpp"
 #include "object-in-fluid/membrane_collision.hpp"
-#include "overlap.hpp"
 #include "p3m-dipolar.hpp"
 #include "p3m.hpp"
 #include "pressure.hpp"
@@ -62,16 +67,23 @@
 #include "steppot.hpp"
 #include "tab.hpp"
 #include "thermostat.hpp"
-#include "tunable_slip.hpp"
 #include "umbrella.hpp"
 #include "utils.hpp"
+#include "utils/serialization/IA_parameters.hpp"
 #include <cstdlib>
 #include <cstring>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/iostreams/device/array.hpp>
+#include <boost/iostreams/stream.hpp>
+
 
 /****************************************
  * variables
  *****************************************/
-int n_particle_types = 0;
+int max_seen_particle_type = 0;
 std::vector<IA_parameters> ia_params;
 
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
@@ -135,6 +147,26 @@ IA_parameters *get_ia_param_safe(int i, int j) {
   return get_ia_param(i, j);
 }
 
+std::string ia_params_get_state() {
+  std::stringstream out;
+  boost::archive::binary_oarchive oa(out);
+  oa << ia_params;
+  oa << max_seen_particle_type;
+  return out.str();
+}
+
+void ia_params_set_state(std::string const &state) {
+  namespace iostreams = boost::iostreams;
+  iostreams::array_source src(state.data(), state.size());
+  iostreams::stream<iostreams::array_source> ss(src);
+  boost::archive::binary_iarchive ia(ss);
+  ia_params.clear();
+  ia >> ia_params;
+  ia >> max_seen_particle_type;
+  mpi_bcast_max_seen_particle_type(max_seen_particle_type);
+  mpi_bcast_all_ia_params();
+}
+
 static void recalc_maximal_cutoff_bonded() {
   int i;
   double max_cut_tmp;
@@ -154,6 +186,11 @@ static void recalc_maximal_cutoff_bonded() {
           (max_cut_bonded < bonded_ia_params[i].p.harmonic.r_cut))
         max_cut_bonded = bonded_ia_params[i].p.harmonic.r_cut;
       break;
+    case BONDED_IA_THERMALIZED_DIST:
+      if ((bonded_ia_params[i].p.thermalized_bond.r_cut > 0) && 
+	  (max_cut_bonded < bonded_ia_params[i].p.thermalized_bond.r_cut))
+    	max_cut_bonded = bonded_ia_params[i].p.thermalized_bond.r_cut;
+      break;
     case BONDED_IA_RIGID_BOND:
       if (max_cut_bonded < sqrt(bonded_ia_params[i].p.rigid_bond.d2))
         max_cut_bonded = sqrt(bonded_ia_params[i].p.rigid_bond.d2);
@@ -163,14 +200,6 @@ static void recalc_maximal_cutoff_bonded() {
       if (bonded_ia_params[i].p.tab.type == TAB_BOND_LENGTH &&
           max_cut_bonded < bonded_ia_params[i].p.tab.pot->cutoff())
         max_cut_bonded = bonded_ia_params[i].p.tab.pot->cutoff();
-      break;
-#endif
-#ifdef OVERLAPPED
-    case BONDED_IA_OVERLAPPED:
-      /* in UNIT Angstrom */
-      if (bonded_ia_params[i].p.overlap.type == OVERLAP_BOND_LENGTH &&
-          max_cut_bonded < bonded_ia_params[i].p.overlap.maxval)
-        max_cut_bonded = bonded_ia_params[i].p.overlap.maxval;
       break;
 #endif
 #ifdef IMMERSED_BOUNDARY
@@ -202,12 +231,6 @@ static void recalc_maximal_cutoff_bonded() {
 #ifdef TABULATED
     case BONDED_IA_TABULATED:
       if (bonded_ia_params[i].p.tab.type == TAB_BOND_DIHEDRAL)
-        max_cut_bonded = max_cut_tmp;
-      break;
-#endif
-#ifdef OVERLAPPED
-    case BONDED_IA_OVERLAPPED:
-      if (bonded_ia_params[i].p.overlap.type == OVERLAP_BOND_DIHEDRAL)
         max_cut_bonded = max_cut_tmp;
       break;
 #endif
@@ -303,8 +326,8 @@ static void recalc_maximal_cutoff_nonbonded() {
 
   max_cut_nonbonded = max_cut_global;
 
-  for (i = 0; i < n_particle_types; i++)
-    for (j = i; j < n_particle_types; j++) {
+  for (i = 0; i < max_seen_particle_type; i++)
+    for (j = i; j < max_seen_particle_type; j++) {
       double max_cut_current = INACTIVE_CUTOFF;
 
       IA_parameters *data = get_ia_param(i, j);
@@ -322,11 +345,6 @@ static void recalc_maximal_cutoff_nonbonded() {
 #ifdef LENNARD_JONES_GENERIC
       if (max_cut_current < (data->LJGEN_cut + data->LJGEN_offset))
         max_cut_current = (data->LJGEN_cut + data->LJGEN_offset);
-#endif
-
-#ifdef LJ_ANGLE
-      if (max_cut_current < (data->LJANGLE_cut))
-        max_cut_current = (data->LJANGLE_cut);
 #endif
 
 #ifdef SMOOTH_STEP
@@ -412,12 +430,7 @@ static void recalc_maximal_cutoff_nonbonded() {
       max_cut_current = std::max(max_cut_current, data->TAB.cutoff());
 #endif
 
-#ifdef TUNABLE_SLIP
-      if (max_cut_current < data->TUNABLE_SLIP_r_cut)
-        max_cut_current = data->TUNABLE_SLIP_r_cut;
-#endif
-
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
       if (max_cut_current < data->REACTION_range)
         max_cut_current = data->REACTION_range;
 #endif
@@ -458,49 +471,49 @@ void recalc_maximal_cutoff() {
     make_particle_type_exist for that.
 */
 void realloc_ia_params(int nsize) {
-  if (nsize <= n_particle_types)
+  if (nsize <= max_seen_particle_type)
     return;
 
   auto new_params = std::vector<IA_parameters>(nsize * nsize);
 
   /* if there is an old field, move entries */
-  for (int i = 0; i < n_particle_types; i++)
-    for (int j = 0; j < n_particle_types; j++) {
+  for (int i = 0; i < max_seen_particle_type; i++)
+    for (int j = 0; j < max_seen_particle_type; j++) {
       new_params[i * nsize + j] =
-          std::move(ia_params[i * n_particle_types + j]);
+          std::move(ia_params[i * max_seen_particle_type + j]);
     }
 
-  n_particle_types = nsize;
+  max_seen_particle_type = nsize;
   std::swap(ia_params, new_params);
 }
 
-void make_particle_type_exist(int type) {
-  int ns = type + 1;
-  if (ns <= n_particle_types)
-    return;
-  mpi_bcast_n_particle_types(ns);
+bool is_new_particle_type(int type) {
+  if ((type + 1) <= max_seen_particle_type)
+    return false;
+  else
+    return true;
 }
+
+void make_particle_type_exist(int type) {
+  if (is_new_particle_type(type))
+    mpi_bcast_max_seen_particle_type(type + 1);
+}
+
+void make_particle_type_exist_local(int type) {
+  if (is_new_particle_type(type))
+    realloc_ia_params(type + 1);
+}
+
 
 void make_bond_type_exist(int type) {
   int i, ns = type + 1;
 
   if (ns <= n_bonded_ia) {
-#ifdef OVERLAPPED
-    if (bonded_ia_params[type].type == BONDED_IA_OVERLAPPED &&
-        bonded_ia_params[type].p.overlap.noverlaps > 0) {
-      free(bonded_ia_params[type].p.overlap.para_a);
-      free(bonded_ia_params[type].p.overlap.para_b);
-      free(bonded_ia_params[type].p.overlap.para_c);
-      bonded_ia_params[type].p.overlap.para_a = nullptr;
-      bonded_ia_params[type].p.overlap.para_b = nullptr;
-      bonded_ia_params[type].p.overlap.para_c = nullptr;
-    }
-#endif
     return;
   }
   /* else allocate new memory */
-  bonded_ia_params = (Bonded_ia_parameters *)Utils::realloc(
-      bonded_ia_params, ns * sizeof(Bonded_ia_parameters));
+  bonded_ia_params = static_cast<Bonded_ia_parameters *>(Utils::realloc(
+      bonded_ia_params, ns * sizeof(Bonded_ia_parameters)));
   /* set bond types not used as undefined */
   for (i = n_bonded_ia; i < ns; i++)
     bonded_ia_params[i].type = BONDED_IA_NONE;
@@ -570,6 +583,12 @@ void set_dipolar_method_local(DipolarInteraction method) {
     deactivate_dipolar_direct_sum_gpu();
   }
 #endif
+#ifdef DIPOLAR_BARNES_HUT
+if ((coulomb.Dmethod == DIPOLAR_BH_GPU) && (method != DIPOLAR_BH_GPU))
+{
+ deactivate_dipolar_barnes_hut();
+}
+#endif // BARNES_HUT
   coulomb.Dmethod = method;
 }
 #endif

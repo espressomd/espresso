@@ -98,20 +98,18 @@ inline void add_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
 #else
 inline void add_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
                                       double dist, double force[3]) {
-  int j;
-  double kappa_dist, fac;
-
   if (dist < dh_params.r_cut) {
+    double fac;
     if (dh_params.kappa > 0.0) {
       /* debye hueckel case: */
-      kappa_dist = dh_params.kappa * dist;
+      double kappa_dist = dh_params.kappa * dist;
       fac = coulomb.prefactor * p1->p.q * p2->p.q *
             (exp(-kappa_dist) / (dist * dist * dist)) * (1.0 + kappa_dist);
     } else {
       /* pure coulomb case: */
       fac = coulomb.prefactor * p1->p.q * p2->p.q / (dist * dist * dist);
     }
-    for (j = 0; j < 3; j++)
+    for (int j = 0; j < 3; j++)
       force[j] += fac * d[j];
 
     ONEPART_TRACE(if (p1->p.identity == check_id)

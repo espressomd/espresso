@@ -10,15 +10,17 @@ class Cylinder(ScriptInterfaceHelper):
     ----------
     center : array_like :obj:`float`
              Coordinates of the center of the cylinder.
-    axis : array_like :obj:`int`
+    axis : array_like :obj:`float`
            Axis of the cylinder.
-    direction : :obj:`int`
-                Surface orientation, for +1 the normal points
-                out of the mantel, for -1 it points inward.
     radius : :obj:`float`
              Radius of the cylinder.
     length : :obj:`float`
              Length of the cylinder.
+    direction : :obj:`int`
+                Surface orientation, for +1 the normal points
+                out of the mantel, for -1 it points inward.
+    open : :obj:`bool`
+            cylinder is open or has caps.
 
     """
     _so_name = "Shapes::Cylinder"
@@ -55,28 +57,20 @@ class HollowCone(ScriptInterfaceHelper):
     Attributes
     ----------
     inner_radius : :obj:`float`
-                   Inner radius of the cone.
+        Inner radius of the cone.
     outer_radius  : :obj:`float`
-                    Outer radius of the cone.
-    opening_angle  : :obj:`float`
-                     Opening angle of the cone (in rad).
-    orientation_x  : :obj:`float`
-                     x component of the orientation of the cone.
-    orientation_y  : :obj:`float`
-                     y component of the orientation of the cone.
-    orientation_z  : :obj:`float`
-                     z component of the orientation of the cone.
-    position_x  : :obj:`float`
-                  x component of the position of the cone.
-    position_y  : :obj:`float`
-                  y component of the position of the cone.
-    position_z  : :obj:`float`
-                  z component of the position of the cone.
+        Outer radius of the cone.
+    opening_angle : :obj:`float`
+        Opening angle of the cone (in rad).
+    axis : array_like :obj:`float`
+        Axis of symmetry, prescribes orientation of the cone.
+    center : array_like :obj:`float`
+        Position of the cone.
     width : :obj:`float`
-            Wall thickness of the cone.
+        Wall thickness of the cone.
     direction : :obj:`int`
-                Surface orientation, for +1 the normal points
-                out of the mantel, for -1 it points inward.
+        Surface orientation, for +1 the normal points
+        out of the mantel, for -1 it points inward.
 
     """
     _so_name = "Shapes::HollowCone"
@@ -174,13 +168,13 @@ class SpheroCylinder(ScriptInterfaceHelper):
     ----------
     center : array_like :obj:`float`
              Coordinates of the center of the cylinder.
-    axis : array_like :obj:`int`
+    axis : array_like :obj:`float`
            Axis of the cylinder.
+    radius : :obj:`float`
+             Radius of the cylinder.
     direction : :obj:`int`
                 Surface orientation, for +1 the normal points
                 out of the mantel, for -1 it points inward.
-    radius : :obj:`float`
-             Radius of the cylinder.
     length : :obj:`float`
              Length of the cylinder (not including the caps).
 
@@ -194,25 +188,18 @@ class Stomatocyte(ScriptInterfaceHelper):
     Attributes
     ----------
     inner_radius : :obj:`float`
-                   Inner radius of the cone.
+        Inner radius of the stomatocyte.
     outer_radius : :obj:`float`
-                   Outer radius of the cone.
-    orientation_x : :obj:`float`
-                    x component of the orientation of the cone.
-    orientation_y : :obj:`float`
-                    y component of the orientation of the cone.
-    orientation_z : :obj:`float`
-                    z component of the orientation of the cone.
-    position_x : :obj:`float`
-                 x component of the position of the cone.
-    position_y : :obj:`float`
-                 y component of the position of the cone.
-    position_z : :obj:`float`
-                 z component of the position of the cone.
+        Outer radius of the stomatocyte.
+    axis : array_like :obj:`float`
+        Symmetry axis, prescribing the orientation of the stomatocyte.
+    center : array_like :obj:`float`
+        Position of the stomatocyte.
     layer_width : :obj:`float`
+        Scaling parameter.
     direction : :obj:`int`
-                Surface orientation, for +1 the normal points
-                out of the mantel, for -1 it points inward.
+        Surface orientation, for +1 the normal points
+        out of the mantel, for -1 it points inward.
 
     """
 

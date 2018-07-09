@@ -14,7 +14,7 @@
 
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
-#define CATALYTIC_REACTIONS
+#define SWIMMER_REACTIONS
 
 #define NEMD
 #define NPT 
@@ -38,7 +38,6 @@
 #define LJCOS2
 #define GAUSSIAN
 #define HAT
-#define LJ_ANGLE
 #define GAY_BERNE
 #define SMOOTH_STEP
 #define HERTZIAN
@@ -52,5 +51,3 @@
 #define BOND_ANGLE
 #define BOND_ANGLEDIST
 #define BOND_ANGLEDIST_HARMONIC
-#define BOND_ENDANGLEDIST
-#define BOND_ENDANGLEDIST_HARMONIC

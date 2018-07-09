@@ -7,6 +7,10 @@ from math import *
 
 box_l = 50
 system = espressomd.System(box_l = [box_l, 15, box_l])
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
+
 yoff = 3
 
 # cup
@@ -128,7 +132,7 @@ system.constraints.add(
             axis=[0, 1, 0],
             direction=1,
             radius=7.5,
-            length=1), particle_type=0, penetrable=1)
+            length=1), particle_type=0, penetrable=True)
 
 
 system.time_step = 0.00022

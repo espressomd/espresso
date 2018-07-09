@@ -101,9 +101,9 @@ To give an example::
     checkpoint.register("myvar")
     checkpoint.register("skin")
 
-    system = espressomd.System()
-    # ... set system properties like box_l or
-    timestep here ... checkpoint.register("system")
+    system = espressomd.System(box_l=[100.0, 100.0, 100.0])
+    # ... set system properties like time_step here ... 
+    checkpoint.register("system")
 
     system.thermostat.set_langevin(kT=1.0, gamma=1.0)
     checkpoint.register("system.thermostat")
@@ -114,8 +114,9 @@ To give an example::
     # ... add particles to the system with system.part.add(...) here ...
     checkpoint.register("system.part")
 
-    # ... set charges of particles here ... from espressomd import
-    electrostatics p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
+    # ... set charges of particles here ... 
+    from espressomd import electrostatics
+    p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
     system.actors.add(p3m)
     checkpoint.register("p3m")
 
@@ -163,7 +164,7 @@ restores the state of all checkpointed objects and registers a signal.
     checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")
     checkpoint.load()
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[100.0, 100.0, 100.0])
     system.cell_system.skin = skin
     system.actors.add(p3m)
 
@@ -194,15 +195,14 @@ details). Currently |es| supports some basic functions for writing simulation
 data to H5MD files. The implementation is MPI-parallelized and is capable
 of dealing with varying numbers of particles.
 
-To write data in a hdf5-file according to the H5MD proposal (see
-http://nongnu.org/h5md/), first an object of the class
+To write data in a hdf5-file according to the H5MD proposal (http://nongnu.org/h5md/), first an object of the class
 :class:`espressomd.io.writer.h5md.H5md` has to be created and linked to the
 respective hdf5-file. This may, for example, look like:
 
 .. code:: python
 
     from espressomd.io.writer import h5md
-    system = espressomd.System()
+    system = espressomd.System(box_l=[100.0, 100.0, 100.0])
     # ... add particles here
     h5 = h5md.H5md(filename="trajectory.h5", write_pos=True, write_vel=True)
 
@@ -238,12 +238,56 @@ simulation please keep in mind that the sequence of particles in general
 changes from timestep to timestep. Therefore you have to always use the
 dataset for the ids to track which position/velocity/force/type/mass
 entry belongs to which particle. To write data to the hdf5 file, simply
-call the H5md objects write method without any arguments.
+call the H5md objects :meth:`espressomd.io.writer.h5md.H5md.write` method without any arguments.
 
-h5.write()
+.. code:: python
 
+    h5.write()
+
+    
 After the last write call, you have to call the close() method to remove
 the backup file and to close the datasets etc.
+
+.. _Writing MPI-IO binary files:
+
+Writing MPI-IO binary files
+---------------------------
+
+This method outputs binary data in parallel and is, thus, also suitable for
+large-scale simulations. Generally, H5MD is the preferred method because the
+data is easier accessible. In contrast to H5MD, the MPI-IO functionality
+outputs data in a *machine dependent format* but has write and read
+capabilities. The usage is quite simple:
+
+.. code:: python
+
+    from espressomd.io.mppiio import mpiio
+    system = espressomd.System()
+    # ... add particles here
+    mpiio.write("/tmp/mydata", positions=True, velocities=True, types=True, bonds=True)
+
+Here, `/tmp/mydata` is the prefix used for several files. The call will output
+particle positions, velocities, types and their bonds to the following files in
+folder `/tmp`:
+
+    - mydata.head
+    - mydata.id
+    - mydata.pos
+    - mydata.pref
+    - mydata.type
+    - mydata.vel
+    - mydata.boff
+    - mydata.bond
+
+Depending on the chosen output, not all of these files might be created.
+To read these in again, simply call :meth:`espressomd.io.mpiio.Mpiio.read`. It has the same signature as
+:meth:`espressomd.io.mpiio.Mpiio.write`.
+There exists a legacy python script in the `tools` directory which can convert
+MPI-IO data to the now unsupported blockfile format. Check it out if you want
+to post-process the data without ESPResSo.
+
+*WARNING* Do not attempt to read these data on a machine with a different
+architecture!
 
 .. _Writing VTF files:
 
@@ -253,7 +297,7 @@ Writing VTF files
 The formats VTF (**V**\ TF **T**\ rajectory **F**\ ormat), VSF
 (**V**\ TF **S**\ tructure **F**\ ormat) and VCF (**V**\ TF
 **C**\ oordinate **F**\ ormat) are formats for the visualization
-software VMD:raw-latex:`\cite{humphrey96a}`. They are intended to
+software VMD: :cite:`humphrey96a`. They are intended to
 be human-readable and easy to produce automatically and modify.
 
 The format distinguishes between *structure blocks* that contain the
@@ -265,27 +309,54 @@ structure block and at least one coordinate block is required.
 
 Files in the VSF format contain a single structure block, files in the
 VCF format contain at least one coordinate block, while files in the VTF
-format contain a single structure block first and an arbitrary number of
-coordinate blocks afterwards, thus allowing to store all information for
+format contain a single structure block (usually as a header) and an arbitrary number of
+coordinate blocks (time frames) afterwards, thus allowing to store all information for
 a whole simulation in a single file. For more details on the format,
-refer to the homepage of the format .
+refer to the VTF homepage (https://github.com/olenz/vtfplugin/wiki).
 
-Creating files in these formats from within is supported by the commands
-and , that write a structure respectively a coordinate block to the
-given Tcl channel. To create a VTF file, first use at the beginning of
-the simulation, and then ``writevcf`` after each timestep to generate a
-trajectory of the whole simulation.
+Creating files in these formats from within is supported by the commands :meth:`espressomd.io.writer.vtf.writevsf`
+and :meth:`espressomd.io.writer.vtf.writevcf`, that write a structure and coordinate block (respectively ) to the
+given file. To create a standalone VTF file, first use ``writevsf`` at the beginning of
+the simulation to write the particle definitions as a header, and then ``writevcf`` 
+to generate a timeframe of the simulation state. For example:
+
+A standalone VTF file can simply be 
+
+.. code:: python
+
+    import espressomd
+    from espressomd.io.writer import vtf
+    system = espressomd.System(box_l=[100.0, 100.0, 100.0])
+    fp = open('trajectory.vtf', mode='w+t')
+
+    # ... add particles here
+    
+    # write structure block as header
+    vtf.writevtf(system, fp)
+    # write initial positions as coordinate block
+    vtf.writevcf(system, fp)
+
+    # integrate and write the frame
+    for n in num_steps:
+        system.integrator.run(100)
+        vtf.writevcf(system, fp)
+    fp.close()
 
 The structure definitions in the VTF/VSF formats are incremental, a user
 can easily add further structure lines to the VTF/VSF file after a
 structure block has been written to specify further particle properties
 for visualization.
 
-Note that the ids of the particles in and VMD may differ. VMD requires
+Note that the ``ids`` of the particles in and VMD may differ. VMD requires
 the particle ids to be enumerated continuously without any holes, while
-this is not required in . When using and , the particle ids are
+this is not required in |es|. When using ``writevsf``
+and ``writevcf``, the particle ids are
 automatically translated into VMD particle ids. The function allows the
-user to get the VMD particle id for a given particle id.
+user to get the VMD particle id for a given |es| particle id.
+
+One can specify the coordinates of which particles should be written using ``types``.
+If ``types='all'`` is used, all coordinates will be written (in the ordered timestep format).
+Otherwise, has to be a list specifying the pids of the particles.
 
 Also note, that these formats can not be used to write trajectories
 where the number of particles or their types varies between the
@@ -295,75 +366,62 @@ timesteps. This is a restriction of VMD itself, not of the format.
 
 ``writevsf``: Writing the topology
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:meth:`espressomd.io.writer.vtf.writevsf`
 
-writevsf(fp,types)
+Writes a structure block describing the system’s structure to the given channel.
+for example
 
+.. code:: python
 
-Writes a structure block describing the system’s structure to the
-channel given by `fp`. `fp` must be an identifier for an open channel such as the
-return value of an invocation of `open`. The output of this command can be
+    import espressomd
+    from espressomd.io.writer import vtf
+    system = espressomd.System(box_l=[100.0, 100.0, 100.0])
+    # ... add particles here
+    fp = open('trajectory.vsf', mode='w+t')
+    vtf.writevsf(system, fp, types='all')
+
+The output of this command can be
 used for a standalone VSF file, or at the beginning of a VTF file that
 contains a trajectory of a whole simulation.
-
-
-Specify the coordinates of which particles should be written. If `types` is
-used, all coordinates will be written (in the ordered timestep format).
-Otherwise, has to be a Tcl-list specifying the pids of the particles.
-The default is `types="all"`. 
-Example
-`pids =[0, 23, 42]`
-`pids="all"`
 
 .. _writevcf\: Writing the coordinates:
 
 ``writevcf``: Writing the coordinates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-``writevcf(fp, types)``
+:meth:`espressomd.io.writer.vtf.writevcf`
 
 Writes a coordinate (or timestep) block that contains all coordinates of
-the system’s particles to the channel given by ``fp``. ``fp`` must be an identifier
-for an open channel such as the return value of an invocation of ``open``.
+the system’s particles.
 
-.. todo:: NOT IMPLEMENTED
+.. code:: python
 
-Specify, whether the output is in a human-readable, but somewhat longer
-format (), or in a more compact form (). The default is .
+    import espressomd
+    from espressomd.io.writer import vtf
+    system = espressomd.System(box_l=[100.0, 100.0, 100.0])
+    # ... add particles here
+    fp = open('trajectory.vcf', mode='w+t')    
+    vtf.writevcf(system, fp, types='all')  
 
-.. todo:: NOT IMPLEMENTED
+.. _vtf_pid_map\: Going back and forth between |es| and VTF indexing:
 
-Specify whether the particle positions are written in absolute
-coordinates () or folded into the central image of a periodic system ().
-The default is .
+:meth:`espressomd.io.writer.vtf.vtf_pid_map`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Generates a dictionary which maps |es| particle ``id`` to VTF indices.
+This is motivated by the fact that the list of |es| particle ``id`` is allowed to contain *holes* but VMD 
+requires increasing and continuous indexing. The |es| ``id`` can be used as *key* to obtain the VTF index as the *value*, for example:
 
-Specify the coordinates of which particles should be written. If ``types`` is
-used, all coordinates will be written (in the ordered timestep format).
-Otherwise, has to be a Tcl-list specifying the pids of the particles.
-The default is ``types="all"``. 
-Example::
+.. code:: python
 
-    pids =[0, 23, 42]
-    pids="all"
+    import espressomd
+    from espressomd.io.writer import vtf
+    system = espressomd.System(box_l=[100.0, 100.0, 100.0])
+    system.part.add(id=5, pos=[0,0,0])
+    system.part.add(id=3, pos=[0,0,0])
+    vtf_index = vtf.vtf_pid_map(system)
+    vtf_index[3]
+    >>> 0
 
-.. todo:: NOT IMPLEMENTED
-
-Specify arbitrary user data for the particles. has to be a Tcl list
-containing the user data for every particle. The user data is appended
-to the coordinate line and can be read into VMD via the VMD plugin
-``VTFTools``. The default is to provide no userdata.
-``userdata {"red" "blue" "green"}``
-
-.. _vtfpid\: Translating particles ids to VMD particle ids:
-
-``vtfpid``: Translating particles ids to VMD particle ids
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-vtfpid
-
-.. todo:: NOT IMPLEMENTED
-
-If is the id of a particle as used in , this command returns the atom id
-used in the VTF, VSF or VCF formats.
+Note that the |es| particles are ordered in increasing order, thus ``id=3`` corresponds to the zeroth VTF index.
 
 .. _Writing various formats using MDAnalysis:
 
@@ -384,7 +442,7 @@ using MDAnalysis. A simple example is the following:
     import espressomd
     import MDAnalysis as mda
     from espressomd import MDA_ESP
-    system = espressomd.System()
+    system = espressomd.System(box_l=[100.0, 100.0, 100.0])
     # ... add particles here
     eos = MDA_ESP.Stream(system) # create the stream
     u =  mda.Universe( eos.topology, eos.trajectory ) # create the MDA universe
@@ -408,4 +466,3 @@ Parsing PDB Files
 -----------------
 
 The feature allows the user to parse simple PDB files, a file format introduced by the protein database to encode molecular structures. Together with a topology file (here ) the structure gets interpolated to the grid. For the input you will need to prepare a PDB file with a force field to generate the topology file. Normally the PDB file extension is , the topology file extension is . Obviously the PDB file is placed instead of and the topology file instead of .
-

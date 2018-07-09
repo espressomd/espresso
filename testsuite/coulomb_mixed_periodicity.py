@@ -150,7 +150,11 @@ class CoulombMixedPeriodicity(ut.TestCase):
                         prefactor=1,
                         method_name="p2nfft",
                         method_params={
-                            "tolerance_field": 1E-5})
+                            "tolerance_field": 5E-5,
+                            "pnfft_n":"96,96,128",
+                            "pnfft_N":"96,96,128",
+                            "r_cut":2.4,
+                            "pnfft_m":3})
                 self.S.actors.add(scafacos)
                 self.S.integrator.run(0)
                 self.compare("scafacos_p2nfft", energy=True)

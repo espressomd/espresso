@@ -2,6 +2,7 @@
 from espressomd import electrokinetics, shapes
 import numpy as np
 import sys
+import espressomd
 
 # Set the slit pore geometry the width is the non-periodic part of the geometry
 # the padding is used to ensure that there is no field outside the slit
@@ -40,7 +41,7 @@ integration_length = int(2e3)
 viscosity_kinematic = viscosity_dynamic / density_water
 ek = electrokinetics.Electrokinetics(agrid = agrid, lb_density = density_water,
                                      viscosity = viscosity_kinematic, friction = 1.0,
-                                     T = kT, bjerrum_length = bjerrum_length)
+                                     T = kT, prefactor = bjerrum_length)
 
 # Set up the charged and neutral species
 density_counterions  = -2.0 * sigma / width

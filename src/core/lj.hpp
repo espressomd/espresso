@@ -45,18 +45,16 @@ inline void add_lj_pair_force(const Particle *const p1,
                               const Particle *const p2,
                               IA_parameters *ia_params, double const d[3],
                               double dist, double force[3]) {
-  int j;
-  double r_off, frac2, frac6, fac = 0.0;
 #ifdef SHANCHEN
   double order;
   double SixtRootOfTwo = 1.12246204830937;
 #endif
   if ((dist < ia_params->LJ_cut + ia_params->LJ_offset) &&
       (dist > ia_params->LJ_min + ia_params->LJ_offset)) {
-    r_off = dist - ia_params->LJ_offset;
-    frac2 = Utils::sqr(ia_params->LJ_sig / r_off);
-    frac6 = frac2 * frac2 * frac2;
-    fac = 48.0 * ia_params->LJ_eps * frac6 * (frac6 - 0.5) / (r_off * dist);
+    double r_off = dist - ia_params->LJ_offset;
+    double frac2 = Utils::sqr(ia_params->LJ_sig / r_off);
+    double frac6 = frac2 * frac2 * frac2;
+    double fac = 48.0 * ia_params->LJ_eps * frac6 * (frac6 - 0.5) / (r_off * dist);
 #ifdef SHANCHEN
     if (ia_params->affinity_on == 1) {
       if (LB_COMPONENTS == 2) {
@@ -75,7 +73,7 @@ inline void add_lj_pair_force(const Particle *const p1,
       }
     }
 #endif
-    for (j = 0; j < 3; j++)
+    for (int j = 0; j < 3; j++)
       force[j] += fac * d[j];
 
 #ifdef LJ_WARN_WHEN_CLOSE
@@ -105,12 +103,11 @@ inline void add_lj_pair_force(const Particle *const p1,
 inline double lj_pair_energy(const Particle *p1, const Particle *p2,
                              const IA_parameters *ia_params, const double d[3],
                              double dist) {
-  double r_off, frac2, frac6;
   if ((dist < ia_params->LJ_cut + ia_params->LJ_offset) &&
       (dist > ia_params->LJ_min + ia_params->LJ_offset)) {
-    r_off = dist - ia_params->LJ_offset;
-    frac2 = Utils::sqr(ia_params->LJ_sig / r_off);
-    frac6 = frac2 * frac2 * frac2;
+    double r_off = dist - ia_params->LJ_offset;
+    double frac2 = Utils::sqr(ia_params->LJ_sig / r_off);
+    double frac6 = frac2 * frac2 * frac2;
     return 4.0 * ia_params->LJ_eps * (Utils::sqr(frac6) - frac6 + ia_params->LJ_shift);
   }
   return 0.0;

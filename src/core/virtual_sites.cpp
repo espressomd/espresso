@@ -44,10 +44,10 @@ void set_virtual_sites(std::shared_ptr<VirtualSites> const& v) {
 
 #ifdef VIRTUAL_SITES_RELATIVE
  
-void calculate_vs_relate_to_params(const Particle& p_current, const Particle& p_relate_to, double& l, double* quat)
+void calculate_vs_relate_to_params(const Particle& p_current, const Particle& p_relate_to, double& l, Vector<4,double>& quat)
 {
     // get teh distance between the particles
-    double d[3];
+    Vector3d d;
     get_mi_vector(d, p_current.r.p,p_relate_to.r.p);
     
     
@@ -82,7 +82,7 @@ void calculate_vs_relate_to_params(const Particle& p_current, const Particle& p_
         d[i]/=l;
 
       // Obtain quaternions from desired director
-      double quat_director[4];
+      Vector<4,double> quat_director;
       convert_quatu_to_quat(d, quat_director);
   
       // Define quat as described above:
@@ -131,20 +131,16 @@ int vs_relate_to(int part_num, int relate_to)
 {
     // Get the data for the particle we act on and the one we wnat to relate
     // it to.
-    auto p_current = get_particle_data(part_num);
-    auto p_relate_to = get_particle_data(relate_to);
-    if (!p_current || !p_relate_to) {
-        runtimeErrorMsg() <<"Could not retrieve particle data for the given id";
-      return ES_ERROR;
-    }
+    auto const &p_current = get_particle_data(part_num);
+    auto const &p_relate_to = get_particle_data(relate_to);
     
-    double quat[4];
+    Vector<4,double> quat;
     double l;
-    calculate_vs_relate_to_params(*p_current,*p_relate_to,l,quat);
+    calculate_vs_relate_to_params(p_current, p_relate_to, l, quat);
     
-    // Set the particle id of the particle we want to relate to, the distnace
+    // Set the particle id of the particle we want to relate to, the distance
     // and the relative orientation
-    if (set_particle_vs_relative(part_num, relate_to, l, quat) == ES_ERROR) {
+    if (set_particle_vs_relative(part_num, relate_to, l, quat.data()) == ES_ERROR) {
       runtimeErrorMsg() << "setting the vs_relative attributes failed";
       return ES_ERROR;
     }
@@ -153,12 +149,12 @@ int vs_relate_to(int part_num, int relate_to)
    return ES_OK;
 }
 
-// Setup the virtual_sites_relative properties of a particle so that the given virtaul particle will follow the given real particle
+// Setup the virtual_sites_relative properties of a particle so that the given virtual particle will follow the given real particle
 // Local version, expects both particles to be accessible through local_particles
 // and only executes the changes on the virtual site locally
 int local_vs_relate_to(int part_num, int relate_to)
 {
-    // Get the data for the particle we act on and the one we wnat to relate
+    // Get the data for the particle we act on and the one we want to relate
     // it to.
     Particle* p_current=local_particles[part_num];
     Particle* p_relate_to=local_particles[relate_to];
@@ -167,9 +163,9 @@ int local_vs_relate_to(int part_num, int relate_to)
       return ES_ERROR;
     }
 
-    double quat[4];
+    Vector<4,double> quat;
     double l;
-    calculate_vs_relate_to_params(*p_current,*p_relate_to,l,quat);
+    calculate_vs_relate_to_params(*p_current, *p_relate_to, l, quat);
     
 
     // Set the particle id of the particle we want to relate to, the distnace

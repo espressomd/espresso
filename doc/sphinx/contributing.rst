@@ -60,35 +60,24 @@ your own code which could be useful to others, you are very welcome to
 contribute it to the community. Before you start making any changes to
 the code, you should obtain the current development version of it. For
 more information about how to obtain the development version, refer to
-the homepage http://espressomd.org.
+the :ref:`Developers guide`.
+
+If you are looking for good ways to get started with contributing, please
+have a look on the information available on github_.
 
 It is also generally a good idea to contact the mailing lists before you
 start major coding projects. It might be that someone else is already
 working on the problem or has a solution at hand.
 
-.. _Developers guide:
+You find more detailed information on our developement processes in the
+:ref:`Developers guide`.
 
-Developers’ guide
------------------
+.. _github: https://github.com/espressomd/espresso/blob/python/CONTRIBUTING.md
 
-Besides the User guide, also contains a Developers’ guide which is a
-programmer documentation automatically built from comments in the source
-code and using Doxygen. It provides a cross-referenced documentation of
-all functions and data structures available in source code. It can be
-built by typing
+.. _Building the User's guide:
 
-make doxygen
-
-in the build directory. Afterwards it can be found in the subdirectory
-of the build directory: ``doc/doxygen/html/index.html``.
-
-A recent version of this guide can also be found on the homepage
-http://espressomd.org/html/dox/.
-
-.. _Users guide:
-
-Users’ guide
---------------------
+Building the User's guide
+-------------------------
 
 If, while reading this documentation, you notice any mistakes or badly (if
 at all) described features or commands, you are very welcome to

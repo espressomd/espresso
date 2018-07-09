@@ -18,10 +18,7 @@
 #
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-
-cdef extern from "Vector.hpp":
-    cppclass Vector3d:
-        double & operator[](int i)
+from .utils cimport Vector3d
 
 cdef extern from "thermostat.hpp":
     double temperature
@@ -30,8 +27,6 @@ cdef extern from "thermostat.hpp":
     int THERMO_LANGEVIN
     int THERMO_LB
     int THERMO_NPT_ISO
-    int THERMO_DPD
-    int THERMO_INTER_DPD
     int THERMO_DPD
 
     IF PARTICLE_ANISOTROPY:

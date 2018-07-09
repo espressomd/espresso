@@ -15,12 +15,13 @@ class RandomPairTest(ut.TestCase):
        repeated for all valid combination of periodicities.
 
     """
-    s = espressomd.System(box_l = 3 * [10.])
-    s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
+    system = espressomd.System(box_l = 3 * [10.])
+    system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
+    np.random.seed(system.seed)
         
     def setUp(self):
-        s = self.s
-        s.time_step = 1.
+        s = self.system
+        s.time_step = .1
         s.cell_system.skin = 0.0
         s.min_global_cut = 1.5
         n_part = 500
@@ -30,15 +31,15 @@ class RandomPairTest(ut.TestCase):
         s.part.add(pos=s.box_l * np.random.random((n_part, 3)))
 
     def tearDown(self):
-        self.s.part.clear()
+        self.system.part.clear()
 
     def pairs_n2(self, dist):
-        parts = self.s.part
+        parts = self.system.part
 
         pairs = []
         for i in range(len(parts)):
             for j in range(i + 1, len(parts)):
-                if self.s.distance(parts[i], parts[j]) < dist:
+                if self.system.distance(parts[i], parts[j]) < dist:
                     pairs.append((i, j))
 
         self.assertTrue(len(pairs))
@@ -49,21 +50,21 @@ class RandomPairTest(ut.TestCase):
             self.assertEqual(e, 1)
 
     def check_pairs(self, n2_pairs):
-        cs_pairs = self.s.cell_system.get_pairs_(1.5)
+        cs_pairs = self.system.cell_system.get_pairs_(1.5)
         self.check_duplicates(cs_pairs)
         self.assertTrue(len(cs_pairs))
         self.assertEqual(n2_pairs ^ set(cs_pairs), set())
 
     def check_dd(self, n2_pairs):
-        self.s.cell_system.set_domain_decomposition()
+        self.system.cell_system.set_domain_decomposition()
         self.check_pairs(n2_pairs)
 
     def check_layered(self, n2_pairs):
-        self.s.cell_system.set_layered()
+        self.system.cell_system.set_layered()
         self.check_pairs(n2_pairs)
 
     def check_n_squared(self, n2_pairs):
-        self.s.cell_system.set_n_square()
+        self.system.cell_system.set_n_square()
         self.check_pairs(n2_pairs)
 
     def test(self):
@@ -73,7 +74,7 @@ class RandomPairTest(ut.TestCase):
             periods = [1]
 
         for periodicity in itertools.product(periods, periods, periods):
-            self.s.periodicity = periodicity
+            self.system.periodicity = periodicity
             n2_pairs = self.pairs_n2(1.5)
 
             self.check_dd(n2_pairs)

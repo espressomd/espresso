@@ -16,20 +16,19 @@ from tests_common import abspath
 @ut.skipIf(not espressomd.has_features(["LB_GPU","LENNARD_JONES"]) or espressomd.has_features("SHANCHEN"),
            "Features not available, skipping test!")
 class TestLBGPU(ut.TestCase):
-
-    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    n_nodes = es.cell_system.get_state()["n_nodes"]
-    es.seed = range(n_nodes)
+    box_l = 30.0
+    system = espressomd.System(box_l=[box_l]*3)
+    n_nodes = system.cell_system.get_state()["n_nodes"]
+    system.seed = range(n_nodes)
 
     def test(self):
         #setup parameters
-        system=self.es
-        int_steps = 100
-        int_times = 20
+        system = self.system
+        int_steps = 5
+        int_times = 10
         time_step = 0.005
         tau = 0.02
         agrid = 1.0
-        box_l = 30.0
         dens = 0.85
         viscosity = 30.0
         friction = 2.0
@@ -45,7 +44,6 @@ class TestLBGPU(ut.TestCase):
         else:
             dof = 3.
 
-        system.box_l = [box_l,box_l,box_l]
         system.periodicity = [1, 1, 1]
         system.time_step = time_step
         system.cell_system.skin = skin
@@ -71,7 +69,7 @@ class TestLBGPU(ut.TestCase):
 
         system.time_step = time_step
         system.thermostat.set_langevin(kT=temp, gamma=gamma)
-        system.integrator.run(1000)
+        system.integrator.run(100)
         #kill particle motion
         for i in range(n_col_part): 
             system.part[i].v=[0.0,0.0,0.0]
@@ -89,7 +87,7 @@ class TestLBGPU(ut.TestCase):
         for i in range(n_col_part):
             tot_mom=tot_mom + system.part[i].v
 
-        system.integrator.run(1000)
+        system.integrator.run(100)
 
         max_dmass = 0.0
         max_dm = [0,0,0]
@@ -105,9 +103,9 @@ class TestLBGPU(ut.TestCase):
             fluid_temp_sim=0.0
             node_v_list = []
             node_dens_list = []
-            for i in range(int(box_l/agrid)):
-                for j in range(int(box_l/agrid)):
-                    for k in range(int(box_l/agrid)):
+            for i in range(int(self.box_l/agrid)):
+                for j in range(int(self.box_l/agrid)):
+                    for k in range(int(self.box_l/agrid)):
                         node_v_list.append(lbf[i,j,k].velocity)
                         node_dens_list.append(lbf[i,j,k].density[0])
 
@@ -136,7 +134,7 @@ class TestLBGPU(ut.TestCase):
             #check temp of fluid
             fluid_temp=0
             for j in range(len(node_dens_list)):
-                fluid_temp = fluid_temp+(1.0/3.0)*(node_v_list[j][0]**2.0+node_v_list[j][1]**2.0+node_v_list[j][2]**2.0)*node_dens_list[j]*(box_l)**3/len(node_dens_list)**2
+                fluid_temp = fluid_temp+(1.0/3.0)*(node_v_list[j][0]**2.0+node_v_list[j][1]**2.0+node_v_list[j][2]**2.0)*node_dens_list[j]*(self.box_l)**3/len(node_dens_list)**2
             avg_fluid_temp=avg_fluid_temp+fluid_temp/int_times
 
 

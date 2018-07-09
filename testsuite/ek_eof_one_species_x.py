@@ -22,76 +22,13 @@ from espressomd import *
 import numpy as np
 import sys
 import math
+from ek_common import *
 
 ##########################################################################
 #                              Set up the System                               #
 ##########################################################################
 # Set the slit pore geometry the width is the non-periodic part of the geometry
 # the padding is used to ensure that there is no field inside outside the slit
-
-# root finding function
-
-
-def solve(xi, d, bjerrum_length, sigma, valency):
-    pi = math.pi
-    el_char = 1.0
-    return xi * math.tan(xi * d / 2.0) + 2.0 * pi * \
-        bjerrum_length * sigma / (valency * el_char)
-
-# function to calculate the density
-
-
-def density(x, xi, bjerrum_length):
-    pi = math.pi
-    kb = 1.0
-    return (xi * xi) / (2.0 * pi * bjerrum_length *
-                        math.cos(xi * x) * math.cos(xi * x))
-
-# function to calculate the velocity
-
-
-def velocity(
-        x,
-        xi,
-        d,
-        bjerrum_length,
-        force,
-        viscosity_kinematic,
-        density_water):
-    pi = math.pi
-    return force * math.log(math.cos(xi * x) / math.cos(xi * d / 2.0)) / \
-        (2.0 * pi * bjerrum_length * viscosity_kinematic * density_water)
-
-# function to calculate the nonzero component of the pressure tensor
-
-
-def pressure_tensor_offdiagonal(x, xi, bjerrum_length, force):
-    pi = math.pi
-    return force * xi * math.tan(xi * x) / (2.0 * pi * bjerrum_length)
-
-# function to calculate the hydrostatic pressure
-
-# Technically, the LB simulates a compressible fluid, whiches pressure
-# tensor contains an additional term on the diagonal, proportional to
-# the divergence of the velocity. We neglect this contribution, which
-# creates a small error in the direction normal to the wall, which
-# should decay with the simulation time.
-
-
-def hydrostatic_pressure(
-        ek,
-        x,
-        xi,
-        bjerrum_length,
-        tensor_entry,
-        box_x,
-        box_y,
-        box_z,
-        agrid):
-    offset = ek[int(box_x / (2 * agrid)), int(box_y / (2 * agrid)),
-                int(box_z / (2 * agrid))].pressure[tensor_entry]
-    return 0.0 + offset
-
 
 @ut.skipIf(not espressomd.has_features(["ELECTROKINETICS", "EK_BOUNDARIES"]),
            "Features not available, skipping test!")
@@ -133,7 +70,7 @@ class ek_eof_one_species_x(ut.TestCase):
         system.time_step = dt
         system.cell_system.skin = 0.1
         system.thermostat.turn_off()
-        integration_length = 50000
+        integration_length = 30000
 
 # Output density, velocity, and pressure tensor profiles
 
@@ -160,7 +97,7 @@ class ek_eof_one_species_x(ut.TestCase):
             density=density_counterions,
             D=0.3,
             valency=valency,
-            ext_force=[
+            ext_force_density=[
                 force,
                 0,
                 0])
@@ -365,21 +302,21 @@ class ek_eof_one_species_x(ut.TestCase):
         print("Pressure deviation xz component: {}".format(
             total_pressure_difference_xz))
 
-        self.assertLess(total_density_difference, 1.5e-05,
+        self.assertLess(total_density_difference,  1.0e-04,
                         "Density accuracy not achieved")
-        self.assertLess(total_velocity_difference, 2.0e-06,
+        self.assertLess(total_velocity_difference,  1.0e-04,
                         "Velocity accuracy not achieved")
-        self.assertLess(total_pressure_difference_xx, 2.0e-05,
+        self.assertLess(total_pressure_difference_xx,  1.0e-04,
                         "Pressure accuracy xx component not achieved")
-        self.assertLess(total_pressure_difference_yy, 1.5e-07,
+        self.assertLess(total_pressure_difference_yy,  1.0e-04,
                         "Pressure accuracy yy component not achieved")
-        self.assertLess(total_pressure_difference_zz, 1.5e-07,
+        self.assertLess(total_pressure_difference_zz,  1.0e-04,
                         "Pressure accuracy zz component not achieved")
-        self.assertLess(total_pressure_difference_xy, 5.0e-10,
+        self.assertLess(total_pressure_difference_xy,  1.0e-04,
                         "Pressure accuracy xy component not achieved")
-        self.assertLess(total_pressure_difference_yz, 2.5e-10,
+        self.assertLess(total_pressure_difference_yz,  1.0e-04,
                         "Pressure accuracy yz component not achieved")
-        self.assertLess(total_pressure_difference_xz, 2.5e-05,
+        self.assertLess(total_pressure_difference_xz,  1.0e-04,
                         "Pressure accuracy xz component not achieved")
 
 

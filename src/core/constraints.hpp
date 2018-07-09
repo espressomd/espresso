@@ -17,18 +17,15 @@ extern ObjectRegistry<std::vector<std::shared_ptr<Constraint>>> constraints;
 #ifdef CONSTRAINTS
 
 inline void add_constraints_forces(Particle *p) {
-
   // Copy position and image count so as not to modify particle when folding
   // position
-  int image[3];
-  double pos[3];
-  memcpy(pos, p->r.p, 3 * sizeof(double));
-  memcpy(image, p->l.i, 3 * sizeof(int));
-
-  fold_position(pos, image);
+  auto const pos=folded_position(p);
+  ParticleForce force{};
   for (auto const &c : Constraints::constraints) {
-    c->add_force(p, pos);
+    force += c->force(*p, pos);
   }
+
+  p->f += force;
 }
 
 inline void init_constraint_forces() {
@@ -37,15 +34,11 @@ inline void init_constraint_forces() {
   }
 }
 
-inline void add_constraints_energy(Particle *p) {
+inline void add_constraints_energy(const Particle *p) {
+  auto const pos = folded_position(*p);
 
-  int image[3];
-  double pos[3];
-  memcpy(pos, p->r.p, 3 * sizeof(double));
-  memcpy(image, p->l.i, 3 * sizeof(int));
-  fold_position(pos, image);
   for (auto const &c : Constraints::constraints) {
-    c->add_energy(p, p->r.p, energy);
+    c->add_energy(*p, pos, energy);
   }
 }
 

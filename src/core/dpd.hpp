@@ -44,8 +44,8 @@ int dpd_set_params(int part_type_a, int part_type_b,
 void dpd_init();
 void dpd_update_params(double pref2_scale);
 
-void add_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
-                              double d[3], double dist, double dist2);
+Vector3d dpd_pair_force(const Particle *p1, const Particle *p2, IA_parameters *ia_params,
+						double *d, double dist, double dist2);
 #endif
 
 #endif

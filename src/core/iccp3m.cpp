@@ -208,7 +208,7 @@ int bcast_iccp3m_cfg(void) {
 }
 
 int iccp3m_iteration() {
-  double fdot, hold, hnew, hmax, del_eps, diff = 0.0, difftemp = 0.0, ex, ey,
+  double fdot, hold, hnew, del_eps, diff = 0.0, difftemp = 0.0, ex, ey,
                                           ez, pref;
   Cell *cell;
   int c, np;
@@ -230,7 +230,7 @@ int iccp3m_iteration() {
   iccp3m_cfg.citeration = 0;
 
   for (j = 0; j < iccp3m_cfg.num_iteration; j++) {
-    hmax = 0.;
+    double hmax = 0.;
 
     force_calc_iccp3m(); /* Calculate electrostatic forces (SR+LR) excluding
                             source source interaction*/
@@ -332,7 +332,7 @@ void force_calc_iccp3m() {
 
   short_range_loop(Utils::NoOp{}, [](Particle &p1, Particle &p2, Distance &d) {
     /* calc non bonded interactions */
-    add_non_bonded_pair_force_iccp3m(&(p1), &(p2), d.vec21, sqrt(d.dist2),
+    add_non_bonded_pair_force_iccp3m(&(p1), &(p2), d.vec21.data(), sqrt(d.dist2),
                                      d.dist2);
   });
 

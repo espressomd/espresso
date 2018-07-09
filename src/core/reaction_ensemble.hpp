@@ -5,6 +5,7 @@
 #include "energy.hpp"
 #include <string>
 #include <map>
+#include "utils/Accumulator.hpp"
 
 namespace ReactionEnsemble {
 
@@ -14,9 +15,10 @@ struct SingleReaction {
   std::vector<int> reactant_coefficients;
   std::vector<int> product_types;
   std::vector<int> product_coefficients;
-  double equilibrium_constant;
+  double gamma;
   // calculated values that are stored for performance reasons
   int nu_bar;
+  Utils::Accumulator accumulator_exponentials = Utils::Accumulator(1);
 };
 
 struct StoredParticleProperty {
@@ -89,7 +91,6 @@ public:
 
   std::vector<SingleReaction> reactions;
   std::map<int, double> charges_of_types;
-  double standard_pressure_in_simulation_units = -10.0;
   double temperature = -10.0;
   double exclusion_radius =
       0.0; // this is used as a kind of hard sphere radius, if
@@ -115,7 +116,7 @@ public:
   void check_reaction_ensemble();
 
   int delete_particle(int p_id);
-  void add_reaction(double equilibrium_constant,
+  void add_reaction(double gamma,
                     const std::vector<int> & _reactant_types,
                     const std::vector<int> & _reactant_coefficients,
                     const std::vector<int> & _product_types,
@@ -125,6 +126,7 @@ public:
                                                int particle_number_of_type,
                                                const bool use_wang_landau);
 
+  bool particle_inserted_too_close_to_another_one;  
 protected:
   std::vector<int> m_empty_p_ids_smaller_than_max_seen_particle;
   bool generic_oneway_reaction(int reaction_id);
@@ -309,11 +311,8 @@ private:
 
 class WidomInsertion : public ReactionAlgorithm {
 public:
-    double measure_excess_chemical_potential(int reaction_id);
+    std::pair<double,double> measure_excess_chemical_potential(int reaction_id);
 
-private:
-    int number_of_insertions=0;
-    double summed_exponentials=0.0;
 };
 
 //////////////////////////////////////////////////////////////////free functions
@@ -321,42 +320,5 @@ double
 calculate_factorial_expression(SingleReaction &current_reaction,
                                std::map<int,int>& old_particle_numbers);
 double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
-
-/**
-*Calculates the average of an array (used for the histogram of the
-*Wang-Landau algorithm). It excludes values which are initialized to be
-*negative. Those values indicate that the Wang-Landau algorithm should not
-*sample those values. The values still occur in the list because we can only
-*store "rectangular" value ranges.
-*/
-
-template <typename T>
-double average_list_of_allowed_entries(std::vector<T> vector) {
-  double result = 0.0;
-  int counter_allowed_entries = 0;
-  for (int i = 0; i < vector.size(); i++) {
-    if (vector[i] >= 0) { // checks for validity of index i (think of energy
-                          // collective variables, in a cubic memory layout
-                          // there will be indices which are not allowed by
-                          // the energy boundaries. These values will be
-                          // initalized with a negative fill value)
-      result += static_cast<double>(vector[i]);
-      counter_allowed_entries += 1;
-    }
-  }
-  return result / counter_allowed_entries;
-}
-
-/**
-* Checks wether a number is in a std:vector of numbers.
-*/
-template <typename T> bool is_in_list(T value, std::vector<T> list) {
-  for (int i = 0; i < list.size(); i++) {
-    if (std::abs(list[i] - value) < std::numeric_limits<double>::epsilon())
-      return true;
-  }
-  return false;
-}
-
 }
 #endif

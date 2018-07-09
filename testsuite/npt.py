@@ -61,7 +61,7 @@ class NPTintegrator(ut.TestCase):
         n=1500
         Vs=[]
         for t in range(n): 
-            self.S.integrator.run(10)
+            self.S.integrator.run(15)
             avp += self.S.analysis.pressure()['total']
             l0 = self.S.box_l[0]
 

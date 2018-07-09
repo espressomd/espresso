@@ -387,11 +387,18 @@ thermostat acts on the relative velocities between nearest neighbor
 particles. Larger cutoffs including next nearest neighbors or even more
 are unphysical.
 
+Boundary conditions for DPD can be introduced by adding the boundary
+as a particle constraint, and setting a velocity and a type on it, see
+:class:`espressomd.constraints.Constraint`. Then a
+:ref:`DPD interaction` with the type can be defined, which acts as a
+boundary condition.
+
 .. _Isotropic NPT thermostat:
 
 Isotropic NPT thermostat
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+This feature allows to simulate an (on average) homogeneous and isotropic system in the NPT ensemble.
 In order to use this feature, ``NPT`` has to be defined in the ``myconfig.hpp``.
 Activate the NPT thermostat with the command :py:func:`~espressomd.thermostat.Thermostat.set_npt`
 and set the following parameters:

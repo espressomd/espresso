@@ -66,12 +66,6 @@ enum BondedInteraction {
   /** Type of bonded interaction is a bond angle -- constraint distance
      potential. */
   BONDED_IA_ANGLEDIST,
-  /** Type of bonded interaction is a bond angle -- chain ends have angle with
-     wall constraint */
-  BONDED_IA_ENDANGLEDIST,
-  /** Type of overlapped bonded interaction potential,
-      may be of bond length, of bond angle or of dihedral type. */
-  BONDED_IA_OVERLAPPED,
   /** Type of bonded interaction is a bond angle cosine potential. */
   BONDED_IA_ANGLE_HARMONIC,
   /** Type of bonded interaction is a bond angle cosine potential. */
@@ -99,7 +93,11 @@ enum BondedInteraction {
   /** Type of bonded interaction is bending force (immersed boundary). */
   BONDED_IA_IBM_TRIBEND,
   /** Type of bonded interaction is umbrella. */
-  BONDED_IA_UMBRELLA
+  BONDED_IA_UMBRELLA,
+  /** Type of bonded interaction is thermalized distance bond. */
+  BONDED_IA_THERMALIZED_DIST,
+  /** Type of bonded interaction is a BONDED_COULOMB_P3M_SR */
+  BONDED_IA_BONDED_COULOMB_P3M_SR,
 };
 
 /** Specify tabulated bonded interactions  */
@@ -108,14 +106,6 @@ enum TabulatedBondedInteraction {
   TAB_BOND_LENGTH = 1,
   TAB_BOND_ANGLE = 2,
   TAB_BOND_DIHEDRAL = 3
-};
-
-/** Specify overlapped bonded interactions  */
-enum OverlappedBondedInteraction {
-  OVERLAP_UNKNOWN = 0,
-  OVERLAP_BOND_LENGTH,
-  OVERLAP_BOND_ANGLE,
-  OVERLAP_BOND_DIHEDRAL
 };
 
 /** cutoff for deactivated interactions. Below 0, so that even particles on
@@ -174,9 +164,12 @@ enum DipolarInteraction {
   DIPOLAR_MDLC_DS,
   /** Direct summation on gpu */
   DIPOLAR_DS_GPU,
+#ifdef DIPOLAR_BARNES_HUT
+  /** Direct summation on gpu by Barnes-Hut algorithm */
+  DIPOLAR_BH_GPU,
+#endif
   /** Scafacos library */
   DIPOLAR_SCAFACOS
-
 };
 #endif
 
@@ -185,7 +178,7 @@ enum DipolarInteraction {
 
 /** field containing the interaction parameters for
  *  nonbonded interactions. Access via
- * get_ia_param(i, j), i,j < n_particle_types */
+ * get_ia_param(i, j), i,j < max_seen_particle_type */
 struct IA_parameters {
   /** maximal cutoff for this pair of particle types. This contains
       contributions from the short-ranged interactions, plus any
@@ -227,26 +220,6 @@ struct IA_parameters {
   double LJGEN_b2 = 0.0;
   double LJGEN_lambda = 1.0;
   double LJGEN_softrad = 0.0;
-/*@}*/
-#endif
-
-#ifdef LJ_ANGLE
-  /** \name Directional Lennard-Jones */
-  /*@{*/
-  double LJANGLE_eps = 0.0;
-  double LJANGLE_sig = 0.0;
-  double LJANGLE_cut = INACTIVE_CUTOFF;
-  /* Locate bonded partners */
-  int LJANGLE_bonded1type = 0.0;
-  int LJANGLE_bonded1pos = 0.0;
-  int LJANGLE_bonded1neg = 0.0;
-  int LJANGLE_bonded2pos = 0.0;
-  int LJANGLE_bonded2neg = 0.0;
-  /* Optional 2nd environment */
-  double LJANGLE_z0 = 0.0;
-  double LJANGLE_dz = -1.0;
-  double LJANGLE_kappa = 0.0;
-  double LJANGLE_epsprime = 0.0;
 /*@}*/
 #endif
 
@@ -436,17 +409,12 @@ struct IA_parameters {
   int rf_on = 0;
 #endif
 
-#ifdef TUNABLE_SLIP
-  double TUNABLE_SLIP_temp = 0.0;
-  double TUNABLE_SLIP_gamma = 0.0;
-  double TUNABLE_SLIP_r_cut = INACTIVE_CUTOFF;
-  double TUNABLE_SLIP_time = 0.0;
-  double TUNABLE_SLIP_vx = 0.0;
-  double TUNABLE_SLIP_vy = 0.0;
-  double TUNABLE_SLIP_vz = 0.0;
+#ifdef THOLE
+  double THOLE_scaling_coeff;
+  double THOLE_q1q2;
 #endif
 
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
   double REACTION_range = INACTIVE_CUTOFF;
 #endif
 
@@ -456,6 +424,8 @@ struct IA_parameters {
 #endif
 
 };
+
+extern std::vector<IA_parameters> ia_params;
 
 /** thermodynamic force parameters */
 
@@ -546,20 +516,16 @@ typedef struct {
 
 /** Parameters for oif_local_forces */
 typedef struct {
-  double r0;
-  double ks;
-  double kslin;
-  double phi0;
-  double kb;
-  double A01;
-  double A02;
-  double kal;
+    double r0;
+    double ks;
+    double kslin;
+    double phi0;
+    double kb;
+    double A01;
+    double A02;
+    double kal;
+    double kvisc;
 } Oif_local_forces_bond_parameters;
-
-/** Parameters for oif_out_direction */
-typedef struct {
-
-} Oif_out_direction_bond_parameters;
 
 /** Parameters for harmonic bond Potential */
 typedef struct {
@@ -567,6 +533,19 @@ typedef struct {
   double r;
   double r_cut;
 } Harmonic_bond_parameters;
+
+/** Parameters for Thermalized bond **/
+typedef struct {
+    double temp_com;
+    double gamma_com;
+    double temp_distance;
+    double gamma_distance;
+    double r_cut;
+    double pref1_com;
+    double pref2_com;
+    double pref1_dist;
+    double pref2_dist;
+} Thermalized_bond_parameters;
 
 #ifdef ROTATION
 /** Parameters for harmonic dumbbell bond Potential */
@@ -587,6 +566,11 @@ typedef struct {
 
 /** Parameters for coulomb bond Potential */
 typedef struct { double prefactor; } Bonded_coulomb_bond_parameters;
+
+#ifdef P3M
+/** Parameters for coulomb bond p3m shortrange Potential */
+typedef struct { double q1q2; } Bonded_coulomb_p3m_sr_bond_parameters;
+#endif
 
 /** Parameters for three body angular potential (bond-angle potentials).
         ATTENTION: Note that there are different implementations of the bond
@@ -643,17 +627,6 @@ typedef struct {
   TabulatedPotential *pot;
 } Tabulated_bond_parameters;
 
-/** Parameters for n-body overlapped potential (n=2,3,4). */
-typedef struct {
-  char *filename;
-  OverlappedBondedInteraction type;
-  double maxval;
-  int noverlaps;
-  double *para_a;
-  double *para_b;
-  double *para_c;
-} Overlap_bond_parameters;
-
 #ifdef UMBRELLA
 /** Parameters for umbrella potential */
 typedef struct {
@@ -699,14 +672,6 @@ typedef struct {
   double cos_phi0;
   double sin_phi0;
 } Angledist_bond_parameters;
-
-/** Parameters for chainend angular potential with wall  */
-typedef struct {
-  double bend;
-  double phi0;
-  double distmin;
-  double distmax;
-} Endangledist_bond_parameters;
 
 typedef enum { NeoHookean, Skalak } tElasticLaw;
 
@@ -767,7 +732,6 @@ typedef union {
   Fene_bond_parameters fene;
   Oif_global_forces_bond_parameters oif_global_forces;
   Oif_local_forces_bond_parameters oif_local_forces;
-  Oif_out_direction_bond_parameters oif_out_direction;
   Harmonic_bond_parameters harmonic;
 #ifdef ROTATION
   Harmonic_dumbbell_bond_parameters harmonic_dumbbell;
@@ -780,9 +744,12 @@ typedef union {
   Angle_cossquare_bond_parameters angle_cossquare;
   Dihedral_bond_parameters dihedral;
   Tabulated_bond_parameters tab;
-  Overlap_bond_parameters overlap;
 #ifdef UMBRELLA
   Umbrella_bond_parameters umbrella;
+#endif
+  Thermalized_bond_parameters thermalized_bond;
+#ifdef P3M
+  Bonded_coulomb_p3m_sr_bond_parameters bonded_coulomb_p3m_sr;
 #endif
   Subt_lj_bond_parameters subt_lj;
   Rigid_bond_parameters rigid_bond;
@@ -793,7 +760,6 @@ typedef union {
 #if defined(CG_DNA) || defined(TWIST_STACK)
   Cg_dna_stacking_parameters twist_stack;
 #endif
-  Endangledist_bond_parameters endangledist;
   IBM_Triel_Parameters ibm_triel;
   IBM_VolCons_Parameters ibmVolConsParameters;
   IBM_Tribend_Parameters ibm_tribend;
@@ -814,7 +780,7 @@ struct Bonded_ia_parameters {
  ************************************************/
 
 /** Maximal particle type seen so far. */
-extern int n_particle_types;
+extern int max_seen_particle_type;
 
 /** Structure containing the coulomb parameters. */
 extern Coulomb_parameters coulomb;
@@ -867,8 +833,8 @@ int dipolar_set_Dprefactor(double prefactor);
 /** get interaction parameters between particle sorts i and j */
 inline IA_parameters *get_ia_param(int i, int j) {
   extern std::vector<IA_parameters> ia_params;
-  extern int n_particle_types;
-  return &ia_params[i * n_particle_types + j];
+  extern int max_seen_particle_type;
+  return &ia_params[i * max_seen_particle_type + j];
 }
 
 /** get interaction parameters between particle sorts i and j.
@@ -876,10 +842,21 @@ inline IA_parameters *get_ia_param(int i, int j) {
     yet present particle types*/
 IA_parameters *get_ia_param_safe(int i, int j);
 
+/** @brief Get the state of all non bonded interactions.
+ */
+std::string ia_params_get_state();
+
+/** @brief Set the state of all non bonded interactions.
+ */
+void ia_params_set_state(std::string const&);
+
+bool is_new_particle_type(int type);
 /** Makes sure that ia_params is large enough to cover interactions
     for this particle type. The interactions are initialized with values
     such that no physical interaction occurs. */
 void make_particle_type_exist(int type);
+
+void make_particle_type_exist_local(int type);
 
 /** Makes sure that \ref bonded_ia_params is large enough to cover the
     parameters for the bonded interaction type. Attention: 1: There is
@@ -921,7 +898,6 @@ int virtual_set_params(int bond_type);
 void set_dipolar_method_local(DipolarInteraction method);
 #endif
 
-
 /** @brief Checks if particle has a pair bond with a given partner  
 *  Note that bonds are stored only on one of the two particles in Espresso
 * 
@@ -946,6 +922,44 @@ inline bool pair_bond_exists_on(const Particle* const p, const Particle* const p
     }
   }
   return false;
+}
+
+/** @brief Checks both particle for a specific bond. Needs GHOSTS_HAVE_BONDS if particles are ghosts.  
+* 
+* @param P
+* @param p1          particle on which the bond may be stored
+* @param p2    	     bond partner
+* @param bond        enum bond type */ 
+inline bool pair_bond_enum_exists_on(const Particle * const p_bond, const Particle * const p_partner, BondedInteraction bond)
+{
+    int i = 0;
+    while (i < p_bond->bl.n) {
+        int type_num = p_bond->bl.e[i];
+        Bonded_ia_parameters *iaparams = &bonded_ia_params[type_num];
+        if (iaparams->type == (int)bond && p_bond->bl.e[i+1] == p_partner->p.identity) {
+            return true;
+        } else {
+            i+= iaparams->num + 1;
+        }
+    }
+    return false;
+}
+
+/** @brief Checks both particle for a specific bond. Needs GHOSTS_HAVE_BONDS if particles are ghosts.  
+* 
+* @param P
+* @param p1          particle on which the bond may be stored
+* @param p2    	     particle on which the bond may be stored
+* @param bond_type   numerical bond type */ 
+inline bool pair_bond_enum_exists_between(const Particle * const p1, const Particle * const p2, BondedInteraction bond)
+{
+    if (p1==p2)
+        return false;
+    else {
+        //Check if particles have bonds (bl.n > 0) and search for the bond of interest with are_bonded().
+        //Could be saved on both sides (and both could have other bonds), so we need to check both.
+        return (p1->bl.n > 0 && pair_bond_enum_exists_on(p1, p2, bond)) || (p2->bl.n > 0 && pair_bond_enum_exists_on(p2, p1, bond)); 
+    }
 }
 
 #include "utils/math/sqr.hpp"

@@ -28,8 +28,7 @@ METADYNAMICS
 NEMD
 NPT
 GHMC
-CATALYTIC_REACTIONS
-MULTI_TIMESTEP                  requires not GAUSSRANDOMCUT and not GAUSSRANDOM and EXPERIMENTAL_FEATURES
+SWIMMER_REACTIONS
 ENGINE                          implies ROTATION, EXTERNAL_FORCES
 PARTICLE_ANISOTROPY
 
@@ -52,6 +51,9 @@ DP3M                            equals DIPOLES and FFTW
 DIPOLAR_DIRECT_SUM              requires CUDA
 DIPOLAR_DIRECT_SUM              equals DIPOLES and ROTATION and CUDA
 
+DIPOLAR_BARNES_HUT              requires CUDA
+DIPOLAR_BARNES_HUT              equals DIPOLES and ROTATION and CUDA
+
 /* Virtual sites features */
 VIRTUAL_SITES_RELATIVE          implies VIRTUAL_SITES
 VIRTUAL_SITES_RELATIVE          implies ROTATION
@@ -59,7 +61,6 @@ VIRTUAL_SITES
 
 /* DPD features */
 DPD
-TUNABLE_SLIP                    requires EXPERIMENTAL_FEATURES
 
 /* Lattice-Boltzmann features */
 LB
@@ -69,7 +70,7 @@ LB_BOUNDARIES_GPU               requires LB_GPU
 LB_ELECTROHYDRODYNAMICS         implies LB
 ELECTROKINETICS                 implies LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
 ELECTROKINETICS                 requires CUDA
-EK_BOUNDARIES                   implies ELECTROKINETICS, LB_GPU, LB_BOUNDARIES_GPU, CONSTRAINTS, EXTERNAL_FORCES, ELECTROSTATICS
+EK_BOUNDARIES                   implies ELECTROKINETICS, LB_GPU, LB_BOUNDARIES_GPU, EXTERNAL_FORCES, ELECTROSTATICS
 EK_BOUNDARIES                   requires CUDA
 EK_ELECTROSTATIC_COUPLING       implies ELECTROKINETICS, LB_GPU, ELECTROSTATICS
 EK_ELECTROSTATIC_COUPLING       requires CUDA and FFTW
@@ -87,7 +88,6 @@ LJ_WARN_WHEN_CLOSE
 LENNARD_JONES_GENERIC           implies LENNARD_JONES
 LJCOS
 LJCOS2
-LJ_ANGLE
 LJGEN_SOFTCORE
 COS2
 GAY_BERNE
@@ -103,6 +103,8 @@ UMBRELLA                           requires EXPERIMENTAL_FEATURES
 GAY_BERNE                       implies ROTATION
 GAY_BERNE                       requires EXPERIMENTAL_FEATURES
 OVERLAPPED
+THOLE                           implies GHOSTS_HAVE_BONDS
+THOLE                           requires P3M
 
 /* Fluid-Structure Interactions (object in fluid) */
 OIF_LOCAL_FORCES
@@ -113,10 +115,7 @@ MEMBRANE_COLLISION
 BOND_ANGLE                      requires not BOND_ANGLE_OLD
 
 BOND_ANGLEDIST
-BOND_ANGLEDIST_HARMONIC         implies BOND_ANGLEDIST, CONSTRAINTS
-
-BOND_ENDANGLEDIST
-BOND_ENDANGLEDIST_HARMONIC      implies BOND_ENDANGLEDIST, CONSTRAINTS
+BOND_ANGLEDIST_HARMONIC         implies BOND_ANGLEDIST
 
 CG_DNA                          implies TWIST_STACK, HYDROGEN_BOND, COULOMB_DEBYE_HUECKEL
 TWIST_STACK
@@ -144,7 +143,7 @@ GAUSSRANDOMCUT                  requires not GAUSSRANDOM and not FLATNOISE
 /* Strange features. Use only if you know what you are doing! */
 /* activate the old dihedral form */
 OLD_DIHEDRAL                    notest
-/* turn off nonbonded interactions within molecules */
+/* turn off certain nonbonded interactions within molecules */
 NO_INTRA_NB                     notest
 /* ghost particles also have the bond information. */
 GHOSTS_HAVE_BONDS               notest
@@ -185,6 +184,7 @@ LB_DEBUG
 VIRTUAL_SITES_DEBUG
 CUDA_DEBUG
 H5MD_DEBUG
+ICC_DEBUG
 
 
 /* Single particle debugging */
@@ -198,3 +198,4 @@ CUDA external
 FFTW external
 H5MD external
 SCAFACOS external
+GSL external

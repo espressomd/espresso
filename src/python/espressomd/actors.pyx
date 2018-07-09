@@ -1,10 +1,9 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from .highlander import ThereCanOnlyBeOne
-
+from .utils import handle_errors
 
 cdef class Actor(object):
-
     # Keys in active_list have to match the method name.
     active_list = dict(ElectrostaticInteraction=False,
                        MagnetostaticInteraction=False,
@@ -25,7 +24,6 @@ cdef class Actor(object):
     def __init__(self, *args, **kwargs):
         self._isactive = False
         self._params = self.default_params()
-        self.system = None
 
         # Check if all required keys are given
         for k in self.required_keys():
@@ -42,21 +40,26 @@ cdef class Actor(object):
 
     def _activate(self):
         inter = self._get_interaction_type()
-        if Actor.active_list[inter]:
-            raise ThereCanOnlyBeOne(self.__class__.__bases__[0])
-        Actor.active_list[inter] = True
+        if inter in Actor.active_list:
+            if Actor.active_list[inter]:
+                raise ThereCanOnlyBeOne(self.__class__.__bases__[0])
+            Actor.active_list[inter] = True
+
         self.validate_params()
         self._activate_method()
+        handle_errors("Activation of an actor")
         self._isactive = True
 
     def _deactivate(self):
         self._deactivate_method()
+        handle_errors("Deactivation of an actor")
         self._isactive = False
         inter = self._get_interaction_type()
-        if not Actor.active_list[inter]:
-            raise Exception(
-                "Class not registerd in Actor.active_list " + self.__class__.__bases__[0])
-        Actor.active_list[inter] = False
+        if inter in Actor.active_list:
+            if not Actor.active_list[inter]:
+                raise Exception(
+                    "Class not registerd in Actor.active_list " + self.__class__.__bases__[0])
+            Actor.active_list[inter] = False
 
     def is_valid(self):
         """Check, if the data stored in the instance still matches what is in Espresso"""
@@ -71,8 +74,9 @@ cdef class Actor(object):
         """Get interaction parameters"""
         # If this instance refers to an actual interaction defined in the es core, load
         # current parameters from there
-        update = self._get_params_from_es_core()
-        self._params.update(update)
+        if self.is_active():
+            update = self._get_params_from_es_core()
+            self._params.update(update)
         return self._params
 
     def set_params(self, **p):
@@ -95,7 +99,8 @@ cdef class Actor(object):
         # vaidate updated parameters
         self.validate_params()
         # Put in values given by the user
-        self._set_params_in_es_core()
+        if self.is_active():
+            self._set_params_in_es_core()
 
     def __str__(self):
         return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
@@ -160,8 +165,14 @@ class Actors(object):
 
     active_actors = []
 
-    def __init__(self, _system=None):
-        self.system = _system
+    def __getstate__(self):
+        return self.active_actors
+
+    def __setstate__(self, active_actors):
+        self.active_actors[:] = []
+        for a in active_actors:
+            self.active_actors.append(a)
+            a._activate()
 
     def add(self, actor):
         """
@@ -171,22 +182,12 @@ class Actors(object):
 
         """
         if not actor in Actors.active_actors:
-            actor.system = self.system
-            Actors.active_actors.append(actor)
+            self.active_actors.append(actor)
             actor._activate()
         else:
             raise ThereCanOnlyBeOne(actor)
-            
+
     def remove(self, actor):
-        """
-        Parameters
-        ----------
-        actor : instance of :class:`espressomd.actors.Actor`
-
-        """
-        self._remove_actor(actor)
-
-    def _remove_actor(self, actor):
         """
         Parameters
         ----------
@@ -198,8 +199,16 @@ class Actors(object):
         actor._deactivate()
         self.active_actors.remove(actor)
 
+    def clear(self):
+        """
+        Remove all actors.
+
+        """
+        for a in self.active_actors:
+            self.remove(a)
+
     def __str__(self):
-        return "Active Actors: "+Actors.active_actors.__str__()
+        return str(self.active_actors)
 
     def __getitem__(self, key):
         return self.active_actors[key]
@@ -213,4 +222,4 @@ class Actors(object):
 
     def __delitem__(self, idx):
         actor = self[idx]
-        self._remove_actor(actor)
+        self.remove(actor)

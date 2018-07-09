@@ -78,7 +78,7 @@ void le_dd_init_cell_interactions() {
               ind2 = get_linear_index(r, q, p, dd.ghost_cell_grid);
 
               if (ind2 >= ind1) {
-                cells[ind1].m_neighbors.push_back(std::ref(cells[ind2]));
+                cells[ind1].m_neighbors.push_back(&cells[ind2]);
               }
             }
           }
@@ -314,7 +314,7 @@ void printAllComms(FILE *ofile, GhostCommunicator *comm, int backwards) {
 void le_dd_prepare_comm(le_dd_comms_manager *mgr, GhostCommunicator *comm,
                         int data_parts) {
   static int le_cells_state_physical = 1;
-  int dir, lr, i, cnt, num, n_comm_cells[3], send_rec, thisCommCount;
+  int dir, lr, i, cnt, num, n_comm_cells[3], send_rec, thisCommCount = 0;
   int lc[3], hc[3], neighbor_index;
 
 #ifdef LE_DEBUG

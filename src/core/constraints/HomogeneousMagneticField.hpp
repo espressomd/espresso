@@ -18,15 +18,16 @@ class HomogeneousMagneticField : public Constraint {
 
   Vector3d const &H() const { return m_field; }
   
-  virtual void add_energy(Particle *p, double *folded_pos,
-      Observable_stat &energy) const override;
+  virtual void add_energy(const Particle &p, const Vector3d &folded_pos,
+                          Observable_stat &energy) const override;
  
-  virtual void add_force(Particle *p, double *folded_pos) override;
+  virtual ParticleForce force(const Particle &p, const Vector3d &folded_pos) override;
 
   private:
     Vector3d m_field;
 
 };
+
 
 } /* namespace Constraints */
 

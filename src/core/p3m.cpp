@@ -244,7 +244,7 @@ static void p3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh[3],
 template <int cao> static void p3m_do_charge_assign();
 
 template <int cao>
-void p3m_do_assign_charge(double q, double real_pos[3], int cp_cnt);
+void p3m_do_assign_charge(double q, Vector3d& real_pos, int cp_cnt);
 /*@}*/
 
 void p3m_pre_init(void) {
@@ -565,7 +565,7 @@ template <int cao> void p3m_do_charge_assign() {
 }
 
 /* Template wrapper for p3m_do_assign_charge() */
-void p3m_assign_charge(double q, double real_pos[3], int cp_cnt) {
+void p3m_assign_charge(double q, Vector3d& real_pos, int cp_cnt) {
   switch (p3m.params.cao) {
   case 1:
     p3m_do_assign_charge<1>(q, real_pos, cp_cnt);
@@ -592,41 +592,33 @@ void p3m_assign_charge(double q, double real_pos[3], int cp_cnt) {
 }
 
 template <int cao>
-void p3m_do_assign_charge(double q, double real_pos[3], int cp_cnt) {
-  int d, i0, i1, i2;
-  double tmp0, tmp1;
-  /* position of a particle in local mesh units */
-  double pos;
-  /* 1d-index of nearest mesh point */
-  int nmp;
+void p3m_do_assign_charge(double q, Vector3d& real_pos, int cp_cnt) {
+  auto const inter = not (p3m.params.inter == 0);
   /* distance to nearest mesh point */
   double dist[3];
   /* index for caf interpolation grid */
   int arg[3];
   /* index, index jumps for rs_mesh array */
   int q_ind = 0;
-  double cur_ca_frac_val;
 #ifdef P3M_STORE_CA_FRAC
-  double *cur_ca_frac;
-
   // make sure we have enough space
   if (cp_cnt >= p3m.ca_num)
     p3m_realloc_ca_fields(cp_cnt + 1);
   // do it here, since p3m_realloc_ca_fields may change the address of
   // p3m.ca_frac
-  cur_ca_frac = p3m.ca_frac + cao * cao * cao * cp_cnt;
+  double *cur_ca_frac = p3m.ca_frac + cao * cao * cao * cp_cnt;
 #endif
 
-  for (d = 0; d < 3; d++) {
+  for (int d = 0; d < 3; d++) {
     /* particle position in mesh coordinates */
-    pos = ((real_pos[d] - p3m.local_mesh.ld_pos[d]) * p3m.params.ai[d]) -
+    auto const pos = ((real_pos[d] - p3m.local_mesh.ld_pos[d]) * p3m.params.ai[d]) -
           p3m.pos_shift;
     /* nearest mesh point */
-    nmp = (int)pos;
+    auto const nmp = (int)pos;
     /* 3d-array index of nearest mesh point */
     q_ind = (d == 0) ? nmp : nmp + p3m.local_mesh.dim[d] * q_ind;
 
-    if (p3m.params.inter == 0)
+    if (!inter)
       /* distance to nearest mesh point */
       dist[d] = (pos - nmp) - 0.5;
     else
@@ -654,13 +646,13 @@ void p3m_do_assign_charge(double q, double real_pos[3], int cp_cnt) {
     p3m.ca_fmp[cp_cnt] = q_ind;
 #endif
 
-  if (p3m.params.inter == 0) {
-    for (i0 = 0; i0 < cao; i0++) {
-      tmp0 = p3m_caf(i0, dist[0], cao);
-      for (i1 = 0; i1 < cao; i1++) {
-        tmp1 = tmp0 * p3m_caf(i1, dist[1], cao);
-        for (i2 = 0; i2 < cao; i2++) {
-          cur_ca_frac_val = q * tmp1 * p3m_caf(i2, dist[2], cao);
+  if (!inter) {
+    for (int i0 = 0; i0 < cao; i0++) {
+      auto const tmp0 = p3m_caf(i0, dist[0], cao);
+      for (int i1 = 0; i1 < cao; i1++) {
+        auto const tmp1 = tmp0 * p3m_caf(i1, dist[1], cao);
+        for (int i2 = 0; i2 < cao; i2++) {
+          auto const cur_ca_frac_val = q * tmp1 * p3m_caf(i2, dist[2], cao);
           p3m.rs_mesh[q_ind] += cur_ca_frac_val;
 #ifdef P3M_STORE_CA_FRAC
           /* store current ca frac */
@@ -674,12 +666,12 @@ void p3m_do_assign_charge(double q, double real_pos[3], int cp_cnt) {
       q_ind += p3m.local_mesh.q_21_off;
     }
   } else {
-    for (i0 = 0; i0 < cao; i0++) {
-      tmp0 = p3m.int_caf[i0][arg[0]];
-      for (i1 = 0; i1 < cao; i1++) {
-        tmp1 = tmp0 * p3m.int_caf[i1][arg[1]];
-        for (i2 = 0; i2 < cao; i2++) {
-          cur_ca_frac_val = q * tmp1 * p3m.int_caf[i2][arg[2]];
+    for (int i0 = 0; i0 < cao; i0++) {
+      auto const tmp0 = p3m.int_caf[i0][arg[0]];
+      for (int i1 = 0; i1 < cao; i1++) {
+        auto const tmp1 = tmp0 * p3m.int_caf[i1][arg[1]];
+        for (int i2 = 0; i2 < cao; i2++) {
+          auto const cur_ca_frac_val = q * tmp1 * p3m.int_caf[i2][arg[2]];
           p3m.rs_mesh[q_ind] += cur_ca_frac_val;
 #ifdef P3M_STORE_CA_FRAC
           /* store current ca frac */
@@ -1426,13 +1418,15 @@ static double p3m_mcr_time(int mesh[3], int cao, double r_cut_iL,
       coulomb.method != COULOMB_P3M_GPU)
     coulomb.method = COULOMB_P3M;
 
+  p3m.params.r_cut = r_cut_iL * box_l[0];
   p3m.params.r_cut_iL = r_cut_iL;
   p3m.params.mesh[0] = mesh[0];
   p3m.params.mesh[1] = mesh[1];
   p3m.params.mesh[2] = mesh[2];
   p3m.params.cao = cao;
   p3m.params.alpha_L = alpha_L;
-  p3m_scaleby_box_l();
+  p3m.params.alpha = p3m.params.alpha_L * box_l_i[0];
+
   /* initialize p3m structures */
   mpi_bcast_coulomb_params();
   /* perform force calculation test */
@@ -1907,12 +1901,14 @@ int p3m_adaptive_tune(char **log) {
 
   /* set tuned p3m parameters */
   p3m.params.tuning = false;
+  p3m.params.r_cut = r_cut_iL * box_l[0];
   p3m.params.r_cut_iL = r_cut_iL;
   p3m.params.mesh[0] = mesh[0];
   p3m.params.mesh[1] = mesh[1];
   p3m.params.mesh[2] = mesh[2];
   p3m.params.cao = cao;
   p3m.params.alpha_L = alpha_L;
+  p3m.params.alpha = p3m.params.alpha_L * box_l_i[0];
   p3m.params.accuracy = accuracy;
   /* broadcast tuned p3m parameters */
   P3M_TRACE(fprintf(stderr, "%d: Broadcasting P3M parameters: mesh: (%d %d "
@@ -2312,6 +2308,9 @@ void p3m_scaleby_box_l() {
 /************************************************/
 
 void p3m_calc_kspace_stress(double *stress) {
+  /**
+  Calculates the long range electrostatics part of the stress tensor. This is part Pi_{dir, alpha,beta} in the paper by Essmann et al "A smooth particle mesh Ewald method", The Journal of Chemical Physics 103, 8577 (1995); doi: 10.1063/1.470117. The part Pi_{corr, alpha, beta} in the Essmann paper is not present here since M is the empty set in our simulations.
+  */
   if (p3m.sum_q2 > 0) {
     double *node_k_space_stress;
     double *k_space_stress;
