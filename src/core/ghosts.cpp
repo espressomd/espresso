@@ -184,9 +184,6 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
           memmove(pp, &pt->r, sizeof(ParticlePosition));
           for (i = 0; i < 3; i++)
             pp->p[i] += gc->shift[i];
-          /* No special wrapping for Lees-Edwards here:
-           * LE wrap-on-receive instead, for convenience in
-           * mapping to local cell geometry. */
           insert += sizeof(ParticlePosition);
         } else if (data_parts & GHOSTTRANS_POSITION) {
           memmove(insert, &pt->r, sizeof(ParticlePosition));
