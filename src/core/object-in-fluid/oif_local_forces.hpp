@@ -32,6 +32,11 @@
 #include "config.hpp"
 #include "integrate.hpp"
 
+#include "utils/math/triangle_functions.hpp"
+using Utils::get_n_triangle;
+using Utils::angle_btw_triangles;
+using Utils::area_triangle;
+
 // set parameters for local forces
 int oif_local_forces_set_params(int bond_type, double r0, double ks, double kslin, double phi0, double kb, double A01, double A02, double kal, double kvisc);
 

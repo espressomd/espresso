@@ -29,9 +29,13 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "interaction_data.hpp"
-#include "lb.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
+
+#include "utils/math/triangle_functions.hpp"
+using Utils::get_n_triangle;
+using Utils::angle_btw_triangles;
+using Utils::area_triangle;
 
 /** set parameters for the OIF_GLOBAL_FORCES potential.
 */

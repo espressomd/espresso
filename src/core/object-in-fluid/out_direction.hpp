@@ -31,6 +31,9 @@
 #include "particle_data.hpp"
 #include "grid.hpp"
 
+#include "utils/math/triangle_functions.hpp"
+using Utils::get_n_triangle;
+
 // set out_direction parameters
 int oif_out_direction_set_params(int bond_type);
 
