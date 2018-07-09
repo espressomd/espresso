@@ -330,6 +330,7 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
                 raise KeyError("%s is not a vaild key" % k)
 
         self._set_params_in_es_core()
+        
     def __dealloc__(self):
         del(self.REptr)
 
@@ -641,20 +642,14 @@ cdef class WidomInsertion(ReactionAlgorithm):
             else:
                 raise KeyError("%s is not a vaild key" % k)
 
-        self._set_params_in_es_core()  
+        self._set_params_in_es_core() 
       
     def __dealloc__(self):
         del(self.WidomInsertionPtr)
     
     def measure_excess_chemical_potential(self, reaction_id=0):
         """
-        Measures the excess chemical potential in a homogeneous system.
+        Measures the excess chemical potential in a homogeneous system. Returns the excess chemical potential and the standard error for the excess chemical potential. It assumes that your samples are uncorrelated.
         
         """
         return self.WidomInsertionPtr.measure_excess_chemical_potential(int(reaction_id))
-
-    def add_reaction(self, *args, **kwargs):
-        for i in range(2): #for back and forward reaction
-            self.WidomInsertionPtr.number_of_insertions.push_back(0)
-            self.WidomInsertionPtr.summed_exponentials.push_back(0)
-        super(WidomInsertion, self).add_reaction(*args, **kwargs)
