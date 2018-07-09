@@ -138,30 +138,20 @@ inline double distance(const Vector3d &a, const Vector3d &b) {
 /*************************************************************/
 /*@{*/
 
-/** Computes the area of triangle between vectors P1,P2,P3,
- *  by computing the crossproduct P1P2 x P1P3 and taking the half of its norm */
-template <typename T1, typename T2, typename T3>
-inline double area_triangle(const T1 &P1, const T2 &P2, const T3 &P3) {
-  double area;
-  double u[3], v[3], normal[3], n; // auxiliary variables
-  u[0] = P2[0] - P1[0];            // u = P1P2
-  u[1] = P2[1] - P1[1];
-  u[2] = P2[2] - P1[2];
-  v[0] = P3[0] - P1[0]; // v = P1P3
-  v[1] = P3[1] - P1[1];
-  v[2] = P3[2] - P1[2];
-  vector_product(u, v, normal);
-  n = normr(normal);
-  area = 0.5 * n;
-  return area;
+/** Computes the normal vector to the plane given by points P1P2P3 */
+inline Vector3d get_n_triangle(const Vector3d &P1, const Vector3d &P2,
+                               const Vector3d &P3) {
+  auto const u = P2 - P1;
+  auto const v = P3 - P1;
+
+  return u.cross(v);
 }
 
-/** Computes the normal vector to the plane given by points P1P2P3 */
-template <typename T1, typename T2, typename T3>
-void get_n_triangle(const T1 &p1, const T2 &p2, const T3 &p3, double *n) {
-  n[0] = (p2[1] - p1[1]) * (p3[2] - p1[2]) - (p2[2] - p1[2]) * (p3[1] - p1[1]);
-  n[1] = (p2[2] - p1[2]) * (p3[0] - p1[0]) - (p2[0] - p1[0]) * (p3[2] - p1[2]);
-  n[2] = (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0]);
+/** Computes the area of triangle between vectors P1,P2,P3,
+ *  by computing the crossproduct P1P2 x P1P3 and taking the half of its norm */
+inline double area_triangle(const Vector3d &P1, const Vector3d &P2,
+                            const Vector3d &P3) {
+  return 0.5 * get_n_triangle(P1, P2, P3).norm();
 }
 
 /** This function returns the angle btw the triangle p1,p2,p3 and p2,p3,p4.  Be
@@ -182,38 +172,17 @@ void get_n_triangle(const T1 &p1, const T2 &p2, const T3 &p3, double *n) {
 template <typename T1, typename T2, typename T3, typename T4>
 double angle_btw_triangles(const T1 &P1, const T2 &P2, const T3 &P3,
                            const T4 &P4) {
-  double phi;
-  double u[3], v[3], normal1[3], normal2[3]; // auxiliary variables
-  u[0] = P1[0] - P2[0];                      // u = P2P1
-  u[1] = P1[1] - P2[1];
-  u[2] = P1[2] - P2[2];
-  v[0] = P3[0] - P2[0]; // v = P2P3
-  v[1] = P3[1] - P2[1];
-  v[2] = P3[2] - P2[2];
-  vector_product(u, v, normal1);
-  u[0] = P3[0] - P2[0]; // u = P2P3
-  u[1] = P3[1] - P2[1];
-  u[2] = P3[2] - P2[2];
-  v[0] = P4[0] - P2[0]; // v = P2P4
-  v[1] = P4[1] - P2[1];
-  v[2] = P4[2] - P2[2];
-  vector_product(u, v, normal2);
+  auto const normal1 = get_n_triangle(P2, P1, P3);
+  auto const normal2 = get_n_triangle(P2, P3, P4);
 
-  double tmp11, tmp22, tmp33;
+  double tmp11;
   // Now we compute the scalar product of n1 and n2 divided by the norms of n1
   // and n2
   // tmp11 = dot(3,normal1,normal2);         // tmp11 = n1.n2
-  tmp11 = scalar(normal1, normal2); // tmp11 = n1.n2
+  tmp11 = normal1 * normal2; // tmp11 = n1.n2
 
-  /*
-  tmp22 = normr(normal1);
-  tmp33 = normr(normal2);
-  tmp11 /= (tmp22*tmp33);  // tmp11 = n1.n2/(|n1||n2|)
-*/
   tmp11 *= fabs(tmp11);     // tmp11 = (n1.n2)^2
-  tmp22 = sqrlen(normal1);  // tmp22 = |n1|^2
-  tmp33 = sqrlen(normal2);  // tmp33 = |n1|^2
-  tmp11 /= (tmp22 * tmp33); // tmp11 = (n1.n2/(|n1||n2|))^2
+  tmp11 /= (normal1.norm2() * normal2.norm2()); // tmp11 = (n1.n2/(|n1||n2|))^2
   if (tmp11 > 0) {
     tmp11 = sqrt(tmp11);
   } else {
@@ -225,9 +194,11 @@ double angle_btw_triangles(const T1 &P1, const T2 &P2, const T3 &P3,
   } else if (tmp11 <= -1.) {
     tmp11 = M_PI;
   }
-  phi = M_PI - acos(tmp11); // The angle between the faces (not considering the
-                            // orientation, always less or equal to Pi) is
-                            // equal to Pi minus angle between the normals
+  auto const phi =
+      M_PI -
+      std::acos(tmp11); // The angle between the faces (not considering the
+                        // orientation, always less or equal to Pi) is
+                        // equal to Pi minus angle between the normals
 
   // Now we need to determine, if the angle btw two triangles is less than Pi or
   // more than Pi. To do this we check,
@@ -241,8 +212,9 @@ double angle_btw_triangles(const T1 &P1, const T2 &P2, const T3 &P3,
   // n_z*P4_z + d >= 0
   tmp11 = -(normal1[0] * P1[0] + normal1[1] * P1[1] + normal1[2] * P1[2]);
   if (normal1[0] * P4[0] + normal1[1] * P4[1] + normal1[2] * P4[2] + tmp11 < 0)
-    phi = 2 * M_PI - phi;
-  return phi;
+    return 2 * M_PI - phi;
+  else
+    return phi;
 }
 
 /*@}*/

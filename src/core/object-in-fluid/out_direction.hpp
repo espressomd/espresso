@@ -47,8 +47,7 @@ int oif_out_direction_set_params(int bond_type);
 inline int calc_out_direction(Particle *p1, Particle *p2, Particle *p3, Particle *p4,
 				 Bonded_ia_parameters *iaparams)// first-fold-then-the-same approach
 {		
-    double n[3],dn;
-	int j;
+
 	Vector3d fp1, fp2, fp3, fp4;
     double AA[3],BB[3],CC[3];
 
@@ -92,14 +91,16 @@ inline int calc_out_direction(Particle *p1, Particle *p2, Particle *p3, Particle
             }
         }
     }
-	
-	get_n_triangle(fp2,fp3,fp4,n);
-	dn=normr(n);
-    if ( fabs(dn) < 0.001 )
+
+    auto const n = get_n_triangle(fp2,fp3,fp4);
+	  auto const dn= n.norm();
+
+    if ( std::abs(dn) < 0.001 ) {
 		printf("out_direction.hpp, calc_out_direction: Length of outward vector is close to zero!\n");
-	for(j=0;j<3;j++){
-            p1->p.out_direction[j] = n[j]/dn;
     }
+
+    p1->p.out_direction = n / dn;
+
     return 0;
 }
 
