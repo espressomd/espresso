@@ -412,7 +412,7 @@ class openGLLive(object):
         self.update_timer = 0
         self.draw_elapsed = 0
         self.draw_timer = 0
-        
+
         # LIST OF [[px,py],[string]] FOR USER DEFINED TEXT
         self.user_texts = []
 
@@ -771,7 +771,7 @@ class openGLLive(object):
             l = s[0].get_parameter('length')
             r = s[0].get_parameter('radius')
             self.shapes['Shapes::Cylinder'].append(
-                [pos - a/np.linalg.norm(a) * l * 0.5, pos + a/np.linalg.norm(a) * l * 0.5, r, s[1]])
+                [pos - a / np.linalg.norm(a) * l * 0.5, pos + a / np.linalg.norm(a) * l * 0.5, r, s[1]])
 
         for s in coll_shape_obj['Shapes::Ellipsoid']:
             pos = np.array(s[0].get_parameter('center'))
@@ -800,7 +800,7 @@ class openGLLive(object):
             l = s[0].get_parameter('length')
             r = s[0].get_parameter('radius')
             self.shapes['Shapes::SpheroCylinder'].append(
-                [pos - a/np.linalg.norm(a) * l * 0.5, pos + a/np.linalg.norm(a) * l * 0.5, r, s[1]])
+                [pos - a / np.linalg.norm(a) * l * 0.5, pos + a / np.linalg.norm(a) * l * 0.5, r, s[1]])
 
         for s in coll_shape_obj['Shapes::Misc']:
             self.shapes['Shapes::Misc'].append(
@@ -927,7 +927,7 @@ class openGLLive(object):
                 s[0], s[1], s[2], self._modulo_indexing(
                     self.specs['constraint_type_colors'], s[3]),
                 self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[3])], self.specs['quality_constraints'])
-        
+
         # RESET CLIP BORDERS
         for i in range(6):
             glEnable(GL_CLIP_PLANE0 + i)
@@ -1867,21 +1867,22 @@ def draw_ellipsoid(pos, semiaxis_a, semiaxis_b, semiaxis_c, color, material, qua
     glutSolidSphere(1, quality, quality)
     glPopMatrix()
 
+
 def get_extra_clip_plane():
-    
+
     # ON SOME HARDWARE (e.g. MAC) only 6 CLIP PLANES ARE ALLOWED,
     # SO CAPPING OF BOX BOUNDARIES AND ADDITIONAL SHAPE CLIP PLANES
-    # ARE NOT POSSIBLE. THIS WILL CAUSE THE SHAPES THAT NEED ADDITIONAL 
+    # ARE NOT POSSIBLE. THIS WILL CAUSE THE SHAPES THAT NEED ADDITIONAL
     # CLIP PLANES TO NOT BE CLIPPED ON ONE FACE OF THE BOX
 
-    if GL_MAX_CLIP_PLANES > 6:         
+    if GL_MAX_CLIP_PLANES > 6:
         return GL_CLIP_PLANE0 + 6
     else:
-        return GL_CLIP_PLANE0 
+        return GL_CLIP_PLANE0
 
 
 def draw_simple_pore(center, axis, length, radius, smoothing_radius, max_box_l, color, material, quality):
-    
+
     clip_plane = get_extra_clip_plane()
 
     set_solid_material(color, material)
@@ -1946,7 +1947,7 @@ def draw_sphero_cylinder(posA, posB, radius, color, material, quality):
     glRotatef(ax, rx, ry, 0.0)
 
     # First hemispherical cap
-    clip_plane = get_extra_clip_plane() 
+    clip_plane = get_extra_clip_plane()
     glEnable(clip_plane)
     glClipPlane(clip_plane, (0, 0, -1, 0))
     gluSphere(quadric, radius, quality, quality)
@@ -2349,6 +2350,7 @@ class Camera(object):
         cXYZ = -1 * np.mat(self.modelview[:3, :3]) * \
             np.mat(self.modelview[3, :3]).T
         self.camPos = np.array([cXYZ[0, 0], cXYZ[1, 0], cXYZ[2, 0]])
+
 
 class Quaternion:
 
