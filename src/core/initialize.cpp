@@ -65,6 +65,9 @@
 #include "thermalized_bond.hpp"
 #include "utils.hpp"
 #include "global.hpp"
+#include "virtual_sites.hpp"
+#include "dpd.hpp"
+
 #include "utils/mpi/all_compare.hpp" 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -614,11 +617,6 @@ void on_parameter_change(int field) {
     on_temperature_change();
     reinit_thermo = 1;
     break;
-#ifdef LEES_EDWARDS
-  case FIELD_LEES_EDWARDS_OFFSET:
-    lees_edwards_step_boundaries();
-    break;
-#endif
   case FIELD_TIMESTEP:
 #ifdef LB_GPU
     if (this_node == 0) {

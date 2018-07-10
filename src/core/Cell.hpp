@@ -34,9 +34,6 @@ public:
     realloc_particlelist(static_cast<ParticleList *>(this), this->n = size);
   }
 
-#ifdef LEES_EDWARDS
-  int myIndex[3];
-#endif
 };
 
 #endif

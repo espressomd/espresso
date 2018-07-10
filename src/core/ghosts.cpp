@@ -184,9 +184,6 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
           memmove(pp, &pt->r, sizeof(ParticlePosition));
           for (i = 0; i < 3; i++)
             pp->p[i] += gc->shift[i];
-          /* No special wrapping for Lees-Edwards here:
-           * LE wrap-on-receive instead, for convenience in
-           * mapping to local cell geometry. */
           insert += sizeof(ParticlePosition);
         } else if (data_parts & GHOSTTRANS_POSITION) {
           memmove(insert, &pt->r, sizeof(ParticlePosition));
@@ -318,31 +315,10 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
 	if (data_parts & GHOSTTRANS_POSITION) {
 	  memmove(&pt->r, retrieve, sizeof(ParticlePosition));
 	  retrieve +=  sizeof(ParticlePosition);
-#ifdef LEES_EDWARDS
-      /* special wrapping conditions for x component of y LE shift */
-      if( gc->shift[1] != 0.0 ){
-               /* LE transforms are wrapped
-                  ---Using this method because its a shortcut to getting a neat-looking verlet list. */
-               if( pt->r.p[0]
-                - (my_left[0] + cur_list->myIndex[0]*dd.cell_size[0]) >  2*dd.cell_size[0] )
-                   pt->r.p[0]-=box_l[0];
-               if( pt->r.p[0]
-                - (my_left[0] + cur_list->myIndex[0]*dd.cell_size[0]) < -2*dd.cell_size[0] )
-                   pt->r.p[0]+=box_l[0];
-      }
-#endif 
 	}
 	if (data_parts & GHOSTTRANS_MOMENTUM) {
 	  memmove(&pt->m, retrieve, sizeof(ParticleMomentum));
 	  retrieve +=  sizeof(ParticleMomentum);
-#ifdef LEES_EDWARDS
-     /* give ghost particles correct velocity for the main
-      * non-ghost LE reference frame */
-      if( gc->shift[1] > 0.0 )
-                pt->m.v[0] += lees_edwards_rate;
-      else if( gc->shift[1] < 0.0 )
-                pt->m.v[0] -= lees_edwards_rate;
-#endif
 	}
 	if (data_parts & GHOSTTRANS_FORCE) {
 	  memmove(&pt->f, retrieve, sizeof(ParticleForce));
@@ -446,30 +422,11 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts)
 	  memmove(&pt2->r, &pt1->r, sizeof(ParticlePosition));
 	  for (i = 0; i < 3; i++)
 	    pt2->r.p[i] += gc->shift[i];
-#ifdef LEES_EDWARDS
-      /* special wrapping conditions for x component of y LE shift */
-      if( gc->shift[1] != 0.0 ){
-        /* LE transforms are wrapped */
-         if(   pt2->r.p[0]
-            - (my_left[0] + dst_list->myIndex[0]*dd.cell_size[0]) >  2*dd.cell_size[0] ) 
-               pt2->r.p[0]-=box_l[0];
-         if( pt2->r.p[0]
-            - (my_left[0] + dst_list->myIndex[0]*dd.cell_size[0]) < -2*dd.cell_size[0] ) 
-               pt2->r.p[0]+=box_l[0];
-      }
-#endif
 	}
 	else if (data_parts & GHOSTTRANS_POSITION)
 	  memmove(&pt2->r, &pt1->r, sizeof(ParticlePosition));
 	if (data_parts & GHOSTTRANS_MOMENTUM) {
 	  memmove(&pt2->m, &pt1->m, sizeof(ParticleMomentum));
-#ifdef LEES_EDWARDS
-            /* special wrapping conditions for x component of y LE shift */
-            if( gc->shift[1] > 0.0 )
-                pt2->m.v[0] += lees_edwards_rate;
-            else if( gc->shift[1] < 0.0 )
-                pt2->m.v[0] -= lees_edwards_rate;
-#endif
     }
 	if (data_parts & GHOSTTRANS_FORCE)
     pt2->f += pt1->f;

@@ -321,7 +321,6 @@ IF LB or LB_GPU:
                     lb_lbnode_set_u(self.node, host_velocity)
                 else:
                     raise ValueError("Velocity has to be of shape 3 and type float.")
-
         property density:
             def __get__(self):
                 cdef double[3] double_return

@@ -386,7 +386,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
   local_particles[current_vs_pid]->r.p=pos;
   local_vs_relate_to(current_vs_pid, relate_to);
 
-  (local_particles[max_seen_particle])->p.isVirtual = 1;
+  (local_particles[max_seen_particle])->p.is_virtual = 1;
   (local_particles[max_seen_particle])->p.type =
       collision_params.vs_particle_type;
 }
@@ -710,6 +710,7 @@ void handle_collisions() {
       if (gathered_queue.size() > 0) {
         on_particle_change();
         announce_resort_particles();
+        cells_update_ghosts();
       }
     }  // total_collision>0
   }    // are we in one of the vs_based methods

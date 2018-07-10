@@ -475,7 +475,7 @@ inline void add_bonded_energy(Particle *p1) {
 */
 inline void add_kinetic_energy(Particle *p1) {
 #ifdef VIRTUAL_SITES
-  if (p1->p.isVirtual)
+  if (p1->p.is_virtual)
     return;
 #endif
 
