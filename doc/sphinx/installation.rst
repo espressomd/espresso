@@ -410,8 +410,6 @@ integrator or thermostat:
 
 -  ``MEMBRANE_COLLISION``
 
--  ``LEES_EDWARDS`` (experimental)
-
 -  ``REACTION_ENSEMBLE``
 
 -  ``GHMC``
@@ -523,11 +521,7 @@ following features.
 
 -  ``BOND_ANGLEDIST``
 
--  ``BOND_ENDANGLEDIST``
-
 -  ``BOND_ANGLEDIST_HARMONIC``
-
--  ``BOND_ENDANGLEDIST_HARMONIC``
 
 -  ``LJGEN_SOFTCORE``
 

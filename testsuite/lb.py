@@ -1,7 +1,9 @@
-
 from __future__ import print_function
+
+import itertools
 import unittest as ut
 import numpy as np
+
 import espressomd
 import espressomd.lb
 from espressomd import *
@@ -51,9 +53,7 @@ class LBTest(ut.TestCase):
     system.cell_system.skin = params['skin']
 
     def test_mass_momentum_thermostat(self):
-        # clear actors that might be left from prev tests
-        for i in self.system.actors:
-            self.system.actors.remove(i)
+        self.system.actors.clear()
         self.system.part.clear()
         # import particle data
         self.data = np.genfromtxt(abspath("data/lb_system.data"))
@@ -83,7 +83,7 @@ class LBTest(ut.TestCase):
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step,
-            fric=self.params['friction'])
+            fric=self.params['friction'], ext_force_density=[0, 0, 0])
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(kT=self.params['temp'])
         # give particles a push
@@ -192,7 +192,7 @@ class LBTest(ut.TestCase):
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step,
-            fric=self.params['friction'])
+            fric=self.params['friction'], ext_force_density=[0, 0, 0])
         self.system.actors.add(self.lbf)
         v_fluid = np.array([1.2, 4.3, 0.2])
         self.lbf[0, 0, 0].velocity = v_fluid
@@ -209,14 +209,32 @@ class LBTest(ut.TestCase):
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step,
-            fric=self.params['friction'])
+            fric=self.params['friction'], ext_force_density=[0, 0, 0])
         self.system.actors.add(self.lbf)
         self.system.part.add(pos=[0.5 * self.params['agrid']] * 3, v=v_part, fix=[1, 1, 1])
         self.lbf[0, 0, 0].velocity = v_fluid
         self.system.integrator.run(1)
         np.testing.assert_allclose(np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid))
 
-
+    def testz_ext_force_density(self):
+        self.system.thermostat.turn_off()
+        self.system.actors.clear()
+        self.system.part.clear()
+        ext_force_density = [2.3, 1.2, 0.1]
+        self.lbf = lb.LBFluid(
+            visc=self.params['viscosity'],
+            dens=self.params['dens'],
+            agrid=self.params['agrid'],
+            tau=self.system.time_step,
+            fric=self.params['friction'], ext_force_density=ext_force_density)
+        self.system.actors.add(self.lbf)
+        n_time_steps = 5
+        self.system.integrator.run(n_time_steps)
+        # ext_force_density is a force density, therefore v = ext_force_density / dens * tau * (n_time_steps - 0.5)
+        # (force is applied only to the second half of the first integration step)
+        fluid_velocity = np.array(ext_force_density) * self.system.time_step * (n_time_steps - 0.5) / self.params['dens']
+        for n in list(itertools.combinations(range(int(self.system.box_l[0]/self.params['agrid'])), 3)):
+            np.testing.assert_allclose(np.copy(self.lbf[n].velocity), fluid_velocity)
 
 
 if __name__ == "__main__":

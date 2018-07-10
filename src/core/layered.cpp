@@ -117,7 +117,6 @@ void layered_topology_release() {
 }
 
 static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
-  int even_odd;
   int c, n;
 
   if (n_nodes > 1) {
@@ -145,7 +144,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
     CELL_TRACE(
         fprintf(stderr, "%d: ghostrec new comm of size %d\n", this_node, n));
     /* downwards */
-    for (even_odd = 0; even_odd < 2; even_odd++) {
+    for (int even_odd = 0; even_odd < 2; even_odd++) {
       /* send */
       if (this_node % 2 == even_odd && LAYERED_BTM_NEIGHBOR) {
         comm->comm[c].type = GHOST_SEND;
@@ -196,7 +195,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
 
     CELL_TRACE(fprintf(stderr, "%d: ghostrec upwards\n", this_node));
     /* upwards */
-    for (even_odd = 0; even_odd < 2; even_odd++) {
+    for (int even_odd = 0; even_odd < 2; even_odd++) {
       /* send */
       if (this_node % 2 == even_odd && LAYERED_TOP_NEIGHBOR) {
         comm->comm[c].type = GHOST_SEND;
@@ -299,8 +298,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
 }
 
 void layered_topology_init(CellPList *old) {
-  Particle *part;
-  int c, p, np;
+  int c, p;
 
   CELL_TRACE(fprintf(stderr,
                      "%d: layered_topology_init, %d old particle lists max_range %g\n",
@@ -385,8 +383,8 @@ void layered_topology_init(CellPList *old) {
 
   /* copy particles */
   for (c = 0; c < old->n; c++) {
-    part = old->cell[c]->part;
-    np = old->cell[c]->n;
+    Particle *part = old->cell[c]->part;
+    int np = old->cell[c]->n;
     for (p = 0; p < np; p++) {
       Cell *nc = layered_position_to_cell(part[p].r.p.data());
       /* particle does not belong to this node. Just stow away

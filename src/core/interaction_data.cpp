@@ -512,8 +512,8 @@ void make_bond_type_exist(int type) {
     return;
   }
   /* else allocate new memory */
-  bonded_ia_params = (Bonded_ia_parameters *)Utils::realloc(
-      bonded_ia_params, ns * sizeof(Bonded_ia_parameters));
+  bonded_ia_params = static_cast<Bonded_ia_parameters *>(Utils::realloc(
+      bonded_ia_params, ns * sizeof(Bonded_ia_parameters)));
   /* set bond types not used as undefined */
   for (i = n_bonded_ia; i < ns; i++)
     bonded_ia_params[i].type = BONDED_IA_NONE;

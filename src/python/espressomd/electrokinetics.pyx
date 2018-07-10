@@ -283,7 +283,7 @@ IF ELECTROKINETICS:
 
             ek_print_vtk_potential(utils.to_char_pointer(path))
 
-        def print_vtk_lbforce(self, path):
+        def print_vtk_lbforce_density(self, path):
             """
             Writes the LB force information into a vtk-file.
             
@@ -294,7 +294,7 @@ IF ELECTROKINETICS:
                    
             """
 
-            ek_print_vtk_lbforce(utils.to_char_pointer(path))
+            ek_print_vtk_lbforce_density(utils.to_char_pointer(path))
 
         def print_vtk_particle_potential(self, path):
             """
@@ -405,7 +405,7 @@ IF ELECTROKINETICS:
             
             """
 
-            return "density", "D", "valency", "ext_force"
+            return "density", "D", "valency", "ext_force_density"
 
         def required_keys(self):
             """
@@ -421,21 +421,21 @@ IF ELECTROKINETICS:
             
             """
 
-            return {"ext_force": [0, 0, 0]}
+            return {"ext_force_density": [0, 0, 0]}
 
         def _get_params_from_es_core(self):
             return {"density": ek_parameters.density[ek_parameters.species_index[self.id]],
                     "D": ek_parameters.D[ek_parameters.species_index[self.id]],
                     "valency": ek_parameters.valency[ek_parameters.species_index[self.id]],
-                    "ext_force": [ek_parameters.ext_force[0][ek_parameters.species_index[self.id]],
-                                  ek_parameters.ext_force[1][ek_parameters.species_index[self.id]],
-                                  ek_parameters.ext_force[2][ek_parameters.species_index[self.id]]]}
+                    "ext_force_density": [ek_parameters.ext_force_density[0][ek_parameters.species_index[self.id]],
+                                  ek_parameters.ext_force_density[1][ek_parameters.species_index[self.id]],
+                                  ek_parameters.ext_force_density[2][ek_parameters.species_index[self.id]]]}
 
         def _set_params_in_es_core(self):
             ek_set_D(self.id, self._params["D"])
             ek_set_valency(self.id, self._params["valency"])
             ek_set_density(self.id, self._params["density"])
-            ek_set_ext_force(self.id, self._params["ext_force"][0], self._params["ext_force"][1], self._params["ext_force"][2])
+            ek_set_ext_force_density(self.id, self._params["ext_force_density"][0], self._params["ext_force_density"][1], self._params["ext_force_density"][2])
 
         def _activate_method(self):
             self._set_params_in_es_core()

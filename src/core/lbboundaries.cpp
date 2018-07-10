@@ -73,10 +73,7 @@ void lbboundary_mindist_position(const Vector3d& pos, double *mindist,
 /** Initialize boundary conditions for all constraints in the system. */
 void lb_init_boundaries() {
 
-  int x, y, z;
-  // char *errtxt;
-  double pos[3], dist, dist_tmp = 0.0, dist_vec[3];
-
+  double pos[3];
   if (lattice_switch & LATTICE_LB_GPU) {
 #if defined(LB_GPU) && defined(LB_BOUNDARIES_GPU)
     int number_of_boundnodes = 0;
@@ -121,15 +118,16 @@ void lb_init_boundaries() {
       }
     }
 #endif
-
-    for (z = 0; z < int(lbpar_gpu.dim_z); z++) {
-      for (y = 0; y < int(lbpar_gpu.dim_y); y++) {
-        for (x = 0; x < int(lbpar_gpu.dim_x); x++) {
+    for (int z = 0; z < int(lbpar_gpu.dim_z); z++) {
+      for (int y = 0; y < int(lbpar_gpu.dim_y); y++) {
+        for (int x = 0; x < int(lbpar_gpu.dim_x); x++) {
           pos[0] = (x + 0.5) * lbpar_gpu.agrid;
           pos[1] = (y + 0.5) * lbpar_gpu.agrid;
           pos[2] = (z + 0.5) * lbpar_gpu.agrid;
 
-          dist = 1e99;
+          double dist = 1e99;
+          double dist_tmp = 0.0;
+          double dist_vec[3];
 
 #ifdef EK_BOUNDARIES
           if (ek_initialized) {
@@ -282,14 +280,16 @@ void lb_init_boundaries() {
     if (lblattice.halo_grid_volume == 0)
       return;
 
-    for (z = 0; z < lblattice.grid[2] + 2; z++) {
-      for (y = 0; y < lblattice.grid[1] + 2; y++) {
-        for (x = 0; x < lblattice.grid[0] + 2; x++) {
+    for (int z = 0; z < lblattice.grid[2] + 2; z++) {
+      for (int y = 0; y < lblattice.grid[1] + 2; y++) {
+        for (int x = 0; x < lblattice.grid[0] + 2; x++) {
           pos[0] = (offset[0] + (x - 0.5)) * lblattice.agrid[0];
           pos[1] = (offset[1] + (y - 0.5)) * lblattice.agrid[1];
           pos[2] = (offset[2] + (z - 0.5)) * lblattice.agrid[2];
 
-          dist = 1e99;
+          double dist = 1e99;
+          double dist_tmp = 0.0;
+          double dist_vec[3];
 
           int n = 0;
           for (auto it = lbboundaries.begin(); it != lbboundaries.end();

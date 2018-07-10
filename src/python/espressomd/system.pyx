@@ -62,9 +62,6 @@ cimport tuning
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
                       "time_step", "timings", "force_cap"]
 
-IF LEES_EDWARDS == 1:
-    setable_properties.append("lees_edwards_offset")
-
 if VIRTUAL_SITES:
     setable_properties.append("_active_virtual_sites_handle")
 
@@ -153,6 +150,7 @@ cdef class System(object):
         for property_ in setable_properties:
             if not hasattr(self.globals, property_):
                 odict[property_] = System.__getattribute__(self, property_)
+        odict['part'] = System.__getattribute__(self, "part")
         odict['actors'] = System.__getattribute__(self, "actors")
         odict['analysis'] = System.__getattribute__(self, "analysis")
         odict['auto_update_accumulators'] = System.__getattribute__(self, "auto_update_accumulators")
@@ -166,7 +164,6 @@ cdef class System(object):
         IF LB_BOUNDARIES or LB_BOUNDARIES_GPU:
             odict['lbboundaries'] = System.__getattribute__(self, "lbboundaries")
         odict['minimize_energy'] = System.__getattribute__(self, "minimize_energy")
-        odict['part'] = System.__getattribute__(self, "part")
         odict['thermostat'] = System.__getattribute__(self, "thermostat")
         odict['non_bonded_inter'] = System.__getattribute__(self, "non_bonded_inter")
         return odict
@@ -374,24 +371,6 @@ cdef class System(object):
         def __get__(self):
             rng_state = list(map(int, (mpi_random_get_stat().c_str()).split()))
             return rng_state
-
-    IF LEES_EDWARDS == 1:
-        property lees_edwards_offset:
-        # defines the lees edwards offset
-            def __set__(self, double _lees_edwards_offset):
-
-                if is_valid_type(_lees_edwards_offset, float):
-                    global lees_edwards_offset
-                    lees_edwards_offset = _lees_edwards_offset
-                    #new_offset = _lees_edwards_offset
-                    mpi_bcast_parameter(FIELD_LEES_EDWARDS_OFFSET)
-
-                else:
-                    raise ValueError("Wrong # of args! Usage: lees_edwards_offset { new_offset }")
-
-            def __get__(self):
-        # global lees_edwards_offset
-                return lees_edwards_offset
 
     IF VIRTUAL_SITES:
         property virtual_sites:

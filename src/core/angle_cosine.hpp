@@ -55,7 +55,7 @@ int angle_cosine_set_params(int bond_type, double bend, double phi0);
 inline int calc_angle_cosine_force(Particle *p_mid, Particle *p_left, Particle *p_right,
 			      Bonded_ia_parameters *iaparams, double force1[3], double force2[3])
 {
-  double cosine, vec1[3], vec2[3], d1i, d2i, dist2,  fac, f1=0.0, f2=0.0;
+  double cosine, vec1[3], vec2[3], d1i, d2i, dist2,  fac;
   int j;
 
   cosine=0.0;
@@ -78,8 +78,8 @@ inline int calc_angle_cosine_force(Particle *p_mid, Particle *p_left, Particle *
   fac *= iaparams->p.angle_cosine.sin_phi0 * (cosine/sqrt(1-Utils::sqr(cosine))) + iaparams->p.angle_cosine.cos_phi0;
   
   for(j=0;j<3;j++) {
-    f1               = fac * (cosine * vec1[j] - vec2[j]) * d1i;
-    f2               = fac * (cosine * vec2[j] - vec1[j]) * d2i;
+    double f1 = fac * (cosine * vec1[j] - vec2[j]) * d1i;
+    double f2 = fac * (cosine * vec2[j] - vec1[j]) * d2i;
 
     force1[j] = (f1-f2);
     force2[j] = -f1;
