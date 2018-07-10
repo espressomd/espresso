@@ -8,15 +8,15 @@ from threading import Thread
 from math import *
 from espressomd.visualization_opengl import *
 
-print("YOUR GOAL IS TO SCOOP ALL BLUE PARTICLES INTO THE RIGHT BOX.\n GREEN/RED SPHERES CAN BE PICKED UP AND INCREASE/DECREASE THE TEMERATURE IN THE CHAMBER WHERE THEY ARE COLLECTED.")
+print("THE CHAMBER GAME\n\nYOUR GOAL IS TO SCOOP ALL BLUE PARTICLES INTO THE RIGHT BOX.\nGREEN/RED SPHERES CAN BE PICKED UP AND INCREASE/DECREASE\nTHE TEMERATURE IN THE CHAMBER WHERE THEY ARE COLLECTED.")
 
 try:
     import pygame
     has_pygame = True
-    print("\nCONTROLS:\nMOVE: (JOYSTICK AXIS), (KEYBOARD i/j/k/l)\nACTION BUTTON: (JOYSTICK A), (KEYBOARD p)")
+    print("\nCONTROLS:\nMOVE: (JOYSTICK AXIS), (KEYBOARD i/j/k/l)\nACTION BUTTON: (JOYSTICK A), (KEYBOARD p)\nRESTART: (JOYSTICK START), (KEYBOARD b)")
 except:
     has_pygame = False
-    print("\nCONTROLS:\nMOVE: (KEYBOARD i/j/k/l)\nACTION BUTTON: (KEYBOARD p)")
+    print("\nCONTROLS:\nMOVE: (KEYBOARD i/j/k/l)\nACTION BUTTON: (KEYBOARD p)\nRESTART: (KEYBOARD b)")
 
 box = np.array([1500.0, 500.0, 150.0])
 system = espressomd.System(box_l=box)
@@ -135,7 +135,6 @@ for i in range(snake_n):
         system.part.add(pos=snake_startpos + np.array([0, -1, 0]) * (0.5 * (snake_head_sigma + snake_bead_sigma) + (i - 1) * snake_bead_sigma), bonds=(
             harmonic_bead if (i > 1) else harmonic_head, i - 1), type=snake_bead_type, fix=[0, 0, 1], mass=snake_bead_mass, temp=temperature_snake, gamma=gamma_snake_bead)
 
-
 # NB INTER
 
 WCA_cut = 2.0**(1. / 6.)
@@ -198,7 +197,6 @@ while (n < bubbles_n):
             snake_head_sigma * 2, np.random.random() * box[1], box[2] * 0.5]
     system.part.add(pos=bpos, type=bubble_type, fix=[
                     0, 0, 1], mass=bubble_mass, temp=temperature_bubbles, gamma=gamma_bubbles)
-    # print(system.analysis.energy()['total'])
     testid = len(system.part) - 1
     n += 1
 
@@ -222,12 +220,14 @@ p_temp_dec = system.part.add(
 # MINIMIZE ENERGY
 
 energy = system.analysis.energy()
-print("Before Minimization: E_total = {}".format(energy['total']))
+#print("Before Minimization: E_total = {}".format(energy['total']))
 system.minimize_energy.init(f_max=100, gamma=30.0,
                             max_steps=10000, max_displacement=0.01)
 system.minimize_energy.minimize()
 energy = system.analysis.energy()
-print("After Minimization: E_total = {}".format(energy['total']))
+#print("After Minimization: E_total = {}".format(energy['total']))
+
+p_startpos = system.part[:].pos
 
 # THERMOSTAT
 system.thermostat.set_langevin(kT=temperature, gamma=gamma)
@@ -279,6 +279,11 @@ def set_particle_force():
     system.part[0].ext_force = move_force * F_control_tot
 
 
+def restart():
+    system.part[:].pos = p_startpos
+    system.galilei.kill_particle_motion()
+    system.galilei.kill_particle_forces()
+
 expl_time = 0
 exploding = False
 
@@ -317,6 +322,8 @@ visualizer.keyboardManager.register_button(KeyboardButtonEvent(
 visualizer.keyboardManager.register_button(
     KeyboardButtonEvent('p', KeyboardFireEvent.Pressed, explode))
 
+visualizer.keyboardManager.register_button(
+    KeyboardButtonEvent('b', KeyboardFireEvent.Pressed, restart))
 
 # MAIN LOOP
 def main():
@@ -336,6 +343,7 @@ def main():
     tdecF = 0
     exploding = False
     button_A_old = 0
+    button_Start_old = 0
     while(True):
 
         # INTEGRATE
@@ -448,10 +456,15 @@ def main():
             axis_r = np.array([joystick.get_axis(3), -joystick.get_axis(4)])
 
             button_A = joystick.get_button(0)
+            button_Start = joystick.get_button(7)
 
             if not button_A_old and button_A:
                 explode()
+            if not button_Start_old and button_Start:
+                restart()
+
             button_A_old = button_A
+            button_Start_old = button_A
 
             hat = joystick.get_hat(0)
             F_act_j = np.clip(np.array(hat) + axis_l + axis_r, -1, 1)
