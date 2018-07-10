@@ -140,15 +140,10 @@ T get_value(VariantMap const &vals, std::string const &name) {
   try {
     return get_value<T>(vals.at(name));
   } catch (boost::bad_get const &) {
-<<<<<<< HEAD
-    /* TODO: Better exceptions. */
-    throw;
-=======
     throw std::runtime_error(std::string("Argument '") + name +
                              "' has wrong type: Is a " +
                              get_type_label(vals.at(name)) + " expected a " +
                              get_type_label(infer_type<T>()));
->>>>>>> 3d05513... script_interface: Fixed get_value for Vector<int>, better error message if wrong type.
   } catch (std::out_of_range const &) {
     /* TODO: Better exceptions. */
     throw;
