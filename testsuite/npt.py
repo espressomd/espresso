@@ -57,15 +57,18 @@ class NPTintegrator(ut.TestCase):
         self.S.integrator.set_isotropic_npt(ext_pressure = self.p_ext, piston = 0.001)
 
     def test_npt(self):
-        avp=0
-        n=1700
+        avp=0.0
+        n=1500
         Vs=[]
+
+        self.S.integrator.run(2500)
+
         for t in range(n): 
             self.S.integrator.run(25)
-            avp += self.S.analysis.pressure()['total']
+            p = self.S.analysis.pressure()['total']
             l0 = self.S.box_l[0]
 
-            #if t > 500:
+            avp+= p
             Vs.append(pow(l0,3))
 
         avp/=n
