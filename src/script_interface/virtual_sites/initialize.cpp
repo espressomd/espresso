@@ -22,6 +22,7 @@
 #include "ScriptInterface.hpp"
 
 #include "VirtualSitesOff.hpp"
+#include "VirtualSitesInertialessTracers.hpp"
 #include "VirtualSitesRelative.hpp"
 #include "ActiveVirtualSitesHandle.hpp"
 
@@ -33,6 +34,10 @@ void initialize() {
 #ifdef VIRTUAL_SITES
   ScriptInterface::register_new<ScriptInterface::VirtualSites::VirtualSitesOff>(
     "VirtualSites::VirtualSitesOff");
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+  ScriptInterface::register_new<ScriptInterface::VirtualSites::VirtualSitesInertialessTracers>(
+    "VirtualSites::VirtualSitesInertialessTracers");
+#endif
 #ifdef VIRTUAL_SITES_RELATIVE
   ScriptInterface::register_new<ScriptInterface::VirtualSites::VirtualSitesRelative>(
     "VirtualSites::VirtualSitesRelative");

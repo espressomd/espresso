@@ -55,7 +55,7 @@ class LBTest(ut.TestCase):
     
     sys.actors.remove(lb1)
 
-@ut.skipIf(not md.has_features(["LB_GPU"]),
+@ut.skipIf(not md.has_features(["LB_GPU"]) or md.has_features(["SHANCHEN"]) ,
           "Features not available, skipping test!")
 class LBTestGPU(ut.TestCase):
 

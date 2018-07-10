@@ -1,5 +1,5 @@
 file(GLOB EspressoCore_SRC
-          "*.cpp" "virtual_sites/VirtualSitesRelative.cpp" "io/mpiio/mpiio.cpp")
+          "*.cpp" "io/mpiio/mpiio.cpp")
 
 
 if( WITH_COVERAGE )
@@ -33,7 +33,7 @@ add_library(EspressoCore SHARED ${EspressoCore_SRC} config-version.cpp)
 install(TARGETS EspressoCore LIBRARY DESTINATION ${LIBDIR})
 set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
 
-target_link_libraries(EspressoCore EspressoConfig ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints Observables Accumulators cluster_analysis)
+target_link_libraries(EspressoCore EspressoConfig ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints Observables Accumulators cluster_analysis VirtualSites)
 
 if(SCAFACOS)
   include_directories(${SCAFACOS_INCLUDE_DIRS})
@@ -83,6 +83,7 @@ endif(WITH_UNIT_TESTS)
 
 add_subdirectory(actor)
 add_subdirectory(immersed_boundary)
+add_subdirectory(virtual_sites)
 add_subdirectory(lbboundaries)
 add_subdirectory(object-in-fluid)
 add_subdirectory(shapes)

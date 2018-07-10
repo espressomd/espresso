@@ -4,6 +4,12 @@ from .script_interface import ScriptInterfaceHelper, script_interface_register
 class VirtualSitesOff(ScriptInterfaceHelper):
     """Virtual sites implementation which does nothing (default)"""
     _so_name = "VirtualSites::VirtualSitesOff"
+@script_interface_register
+class VirtualSitesInertialessTracers(ScriptInterfaceHelper):
+    """Virtual sites which are advected with an lb fluid without inertia. Forces are on them are transferred to the fluid instantly.
+    
+    """
+    _so_name = "VirtualSites::VirtualSitesInertialessTracers"
 
 
 

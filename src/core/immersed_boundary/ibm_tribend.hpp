@@ -9,7 +9,7 @@ extern double maxBendingForce, maxBendingDist, maxX;
 
 // This function is used to set the parameters
 // Also calculates and stores the reference state
-int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const int ind4, const tBendingMethod method, const double kb, const bool flat);
+int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const int ind4, const double kb, const bool flat);
 // For reading checkpoints.
 // Idea: * parameters are set in the run-continue script
 //       * also reference shape is recomputed there
