@@ -141,7 +141,7 @@ We start defining some important input parameters and setting the particles rand
 import espressomd
 from espressomd import reaction_ensemble
 
-box_l = 15        #side length of our cubic
+box_l = 15        #side length of our cubic simul box
 system = espressomd.System(box_l=[box_l]*3)
 
 system.set_random_state_PRNG()
@@ -156,8 +156,7 @@ np.random.seed(seed=system.seed)
 
 N0 = 50             #number of titratable particles
 K_diss = 8.3**(-4)  #dissociation costant 
- simulation box 
-
+ 
 # titratable particles (HA)
 for i in range(N0):
     system.part.add(id=i, pos=np.random.random(3) * system.box_l, type=1)
