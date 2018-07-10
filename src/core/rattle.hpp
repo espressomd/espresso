@@ -31,6 +31,8 @@
 /** number of rigid bonds */
 extern int n_rigidbonds;
 
+#include "config.hpp"
+
 #ifdef BOND_CONSTRAINT
 
 /** Transfers the current particle positions from r.p[3] to r.p_pold[3]

@@ -156,8 +156,8 @@ struct CellStructure {
   // Communicator for particle data used by ENGINE feature
   GhostCommunicator ghost_swimming_comm;
 #endif
-#ifdef IMMERSED_BOUNDARY
-  GhostCommunicator ibm_ghost_force_comm;
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+  GhostCommunicator vs_inertialess_tracers_ghost_force_comm;
 #endif
 
   /** Cell system dependent function to find the right node for a

@@ -65,6 +65,9 @@
 #include "thermalized_bond.hpp"
 #include "utils.hpp"
 #include "global.hpp"
+#include "virtual_sites.hpp"
+#include "dpd.hpp"
+
 #include "utils/mpi/all_compare.hpp" 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;

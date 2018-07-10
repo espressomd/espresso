@@ -18,6 +18,7 @@
 #
 include "myconfig.pxi"
 from libcpp cimport bool
+from interactions cimport ImmersedBoundaries
 
 cdef extern from "global.hpp":
     int FIELD_BOXL
@@ -30,8 +31,9 @@ cdef extern from "global.hpp":
     int FIELD_PERIODIC
     int FIELD_SIMTIME
     int FIELD_MIN_GLOBAL_CUT
-    int FIELD_TEMPERATURE
     int FIELD_THERMO_SWITCH
+    int FIELD_THERMO_VIRTUAL
+    int FIELD_TEMPERATURE
     int FIELD_LANGEVIN_GAMMA
     IF ROTATION:
         int FIELD_LANGEVIN_GAMMA_ROTATION
@@ -157,6 +159,9 @@ cdef extern from "swimmer_reaction.hpp":
         int swap
 
     cdef extern reaction_struct reaction
+
+cdef extern from "immersed_boundaries.hpp":
+    extern ImmersedBoundaries immersed_boundaries
 
 cdef extern from "object-in-fluid/oif_global_forces.hpp": 
     int max_oif_objects
