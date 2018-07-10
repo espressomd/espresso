@@ -32,7 +32,6 @@
 #include "interaction_data.hpp"
 #include "lattice.hpp" 
 #include "layered.hpp"
-#include "lees_edwards.hpp"
 #include "npt.hpp"
 #include "rattle.hpp"
 #include "thermalized_bond.hpp"
@@ -86,9 +85,6 @@ const std::unordered_map<int, Datafield> fields{
       {langevin_gamma.data(), Datafield::Type::DOUBLE, 3,
        "gamma"}}, /* 5  from thermostat.cpp */
 #endif // PARTICLE_ANISOTROPY
-     {FIELD_LEES_EDWARDS_OFFSET,
-      {&lees_edwards_offset, Datafield::Type::DOUBLE, 1,
-       "lees_edwards_offset"}}, /* 6  from lees_edwards.cpp */
      {FIELD_INTEG_SWITCH,
       {&integ_switch, Datafield::Type::INT, 1,
        "integ_switch"}}, /* 7  from integrate.cpp */

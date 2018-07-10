@@ -617,11 +617,6 @@ void on_parameter_change(int field) {
     on_temperature_change();
     reinit_thermo = 1;
     break;
-#ifdef LEES_EDWARDS
-  case FIELD_LEES_EDWARDS_OFFSET:
-    lees_edwards_step_boundaries();
-    break;
-#endif
   case FIELD_TIMESTEP:
 #ifdef LB_GPU
     if (this_node == 0) {

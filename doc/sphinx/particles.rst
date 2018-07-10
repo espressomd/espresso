@@ -240,9 +240,9 @@ Setting up diamond polymer networks
 
 ::
 
-    from espressomd import Diamond
+    from espressomd import diamond
 
-Creates a diamond-shaped polymer network with 8 tetra-functional nodes
+Creates a diamond-structured polymer network with 8 tetra-functional nodes
 connected by :math:`2*8` polymer chains of length (MPC) in a unit cell
 of length :math:`a`. Chain monomers are placed at a mutual distance along the
 vector connecting network nodes. The polymer is created starting from

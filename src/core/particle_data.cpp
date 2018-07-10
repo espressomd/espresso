@@ -898,12 +898,6 @@ void local_place_particle(int part, const double p[3], int _new) {
       stderr, "%d: local_place_particle: got particle id=%d @ %f %f %f\n",
       this_node, part, p[0], p[1], p[2]));
 
-#ifdef LEES_EDWARDS
-  pt->m.v[0] += vv[0];
-  pt->m.v[1] += vv[1];
-  pt->m.v[2] += vv[2];
-#endif
-
   memmove(pt->r.p.data(), pp, 3 * sizeof(double));
   memmove(pt->l.i.data(), i, 3 * sizeof(int));
 #ifdef BOND_CONSTRAINT

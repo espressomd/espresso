@@ -31,7 +31,6 @@ cdef extern from "global.hpp":
     int FIELD_PERIODIC
     int FIELD_SIMTIME
     int FIELD_MIN_GLOBAL_CUT
-    int FIELD_LEES_EDWARDS_OFFSET
     int FIELD_THERMO_SWITCH
     int FIELD_THERMO_VIRTUAL
     int FIELD_TEMPERATURE
@@ -73,9 +72,6 @@ cdef extern from "domain_decomposition.hpp":
 
 cdef extern from "particle_data.hpp":
     extern int n_part
-
-cdef extern from "lees_edwards.hpp":
-    double lees_edwards_offset
 
 cdef extern from "interaction_data.hpp":
     double dpd_gamma
