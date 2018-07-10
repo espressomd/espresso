@@ -80,7 +80,7 @@ dtemp = 1000.0
 zoom = 10
 
 visualizer = openGLLive(system,
-window_size = [1920,1080],
+window_size = [800,600],
 draw_axis = False,
 particle_sizes = [snake_head_sigma*0.5, snake_bead_sigma*0.5, cylinder_sigma, bubble_sigma*0.5, temp_change_radius, temp_change_radius],
 particle_type_colors = [[1, 1, 0], [1, 0, 1], [0, 0, 1], [0, 1, 1], [0, 1, 0], [1, 0, 0], [0.5, 0, 1]],
@@ -99,6 +99,8 @@ if has_pygame:
         joystick = pygame.joystick.Joystick(0)
         joystick.init()
         joystick_control = True
+    else:
+        joystick_control = False
 
 # CELLSYSTEM
 
@@ -155,10 +157,6 @@ system.non_bonded_inter[bubble_type, bubble_type].lennard_jones.set_params(epsil
 
 # CONSTRAINTS
 
-#system.constraints.add(shape=Cylinder(center=0.5*np.array([snake_length, box_l, box_l]), axis=[1, 0, 0], direction=1, radius=15, length=snake_length, open = True), particle_type=cylinder_type, penetrable=1)
-
-#system.constraints.add(shape=Cylinder(center=0.5*np.array([box_l, box_l, box_l]), axis=[1, 1, 0], direction=1, radius=15, length=0.5*snake_length, open = True), particle_type=cylinder_type, penetrable=1)
-
 system.constraints.add(shape=Wall(dist = 0, normal=[1, 0, 0]), particle_type=cylinder_type, penetrable=True)
 system.constraints.add(shape=Wall(dist = -box[0], normal=[-1, 0, 0]), particle_type=cylinder_type, penetrable=True)
 system.constraints.add(shape=Wall(dist = 0, normal=[0, 1, 0]), particle_type=cylinder_type, penetrable=True)
@@ -192,18 +190,6 @@ p_temp_inc = system.part.add(pos = bpos, type = temp_change_inc_type, fix = [1,1
 bpos = [pore_xr +  np.random.random() * (pore_xr - pore_xl - snake_head_sigma*4) + snake_head_sigma * 2, np.random.random() * box[1], box[2]*0.5]
 p_temp_dec = system.part.add(pos = bpos, type = temp_change_dec_type, fix = [1,1,1])
 
-visualizer.keyboardManager.register_button(KeyboardButtonEvent('i', KeyboardFireEvent.Pressed, move_up_set))
-visualizer.keyboardManager.register_button(KeyboardButtonEvent('k', KeyboardFireEvent.Pressed, move_down_set))
-visualizer.keyboardManager.register_button(KeyboardButtonEvent('i', KeyboardFireEvent.Released, move_updown_reset))
-visualizer.keyboardManager.register_button(KeyboardButtonEvent('k', KeyboardFireEvent.Released, move_updown_reset))
-
-visualizer.keyboardManager.register_button(KeyboardButtonEvent('j', KeyboardFireEvent.Pressed, move_left_set))
-visualizer.keyboardManager.register_button(KeyboardButtonEvent('l', KeyboardFireEvent.Pressed, move_right_set))
-visualizer.keyboardManager.register_button(KeyboardButtonEvent('j', KeyboardFireEvent.Released, move_leftright_reset))
-visualizer.keyboardManager.register_button(KeyboardButtonEvent('l', KeyboardFireEvent.Released, move_leftright_reset))
-
-visualizer.keyboardManager.register_button(KeyboardButtonEvent('p', KeyboardFireEvent.Pressed, explode))
-
 # MINIMIZE ENERGY
 
 energy = system.analysis.energy()
@@ -218,50 +204,67 @@ print("After Minimization: E_total = {}".format(energy['total']))
 system.thermostat.set_langevin(kT=temperature, gamma=gamma)
 
 # CONTROL CALLBACKS
-F_act = [0,0,0]
+F_act_k = np.zeros(2)
+F_act_j = np.zeros(2)
 def move_up_set():
-    global F_act
-    F_act[1] = move_force
-    set_particle_forces()
+    global F_act_k
+    F_act_k[1] = 1.0
+    set_particle_force()
 def move_down_set():
-    global F_act
-    F_act[1] = -move_force
-    set_particle_forces()
+    global F_act_k
+    F_act_k[1] = -1.0
+    set_particle_force()
 def move_updown_reset():
-    global F_act
-    F_act[1] = 0
-    set_particle_forces()
+    global F_act_k
+    F_act_k[1] = 0
+    set_particle_force()
 def move_left_set():
-    global F_act
-    F_act[0] = -move_force
-    set_particle_forces()
+    global F_act_k
+    F_act_k[0] = -1.0
+    set_particle_force()
 def move_right_set():
-    global F_act
-    F_act[0] = move_force
-    set_particle_forces()
+    global F_act_k
+    F_act_k[0] = 1.0
+    set_particle_force()
 def move_leftright_reset():
-    global F_act
-    F_act[0] = 0
-    set_particle_forces()
-def set_particle_forces():
-    global F_act
-    system.part[0].ext_force = F_act
+    global F_act_k
+    F_act_k[0] = 0
+    set_particle_force()
+def set_particle_force():
+    global F_act_j, F_act_k
+    F_control_tot = np.append(np.clip( F_act_k + F_act_j, -1, 1), 0)
+    system.part[0].ext_force = move_force * F_control_tot
     
 expl_time = 0
 exploding = False
 def explode(): 
     global exploding, expl_time
-    exploding = True
-    expl_time = time.time()
-    for p in system.part[p_bubbles]:
-        dv = p.pos-p_head.pos
-        lv = np.linalg.norm(dv) 
-        if lv < expl_range:
-            p.v = dv / lv / lv * expl_force
+    if not exploding:
+        exploding = True
+        expl_time = time.time()
+        for p in system.part[p_bubbles]:
+            dv = p.pos-p_head.pos
+            lv = np.linalg.norm(dv) 
+            if lv < expl_range:
+                p.v = dv / lv / lv * expl_force
+
+# KEYBOARD CONTROLS
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('i', KeyboardFireEvent.Pressed, move_up_set))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('k', KeyboardFireEvent.Pressed, move_down_set))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('i', KeyboardFireEvent.Released, move_updown_reset))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('k', KeyboardFireEvent.Released, move_updown_reset))
+
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('j', KeyboardFireEvent.Pressed, move_left_set))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('l', KeyboardFireEvent.Pressed, move_right_set))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('j', KeyboardFireEvent.Released, move_leftright_reset))
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('l', KeyboardFireEvent.Released, move_leftright_reset))
+
+visualizer.keyboardManager.register_button(KeyboardButtonEvent('p', KeyboardFireEvent.Pressed, explode))
+
 
 # MAIN LOOP
 def main():
-    global F_act, temp_l, temp_r, exploding, expl_time
+    global F_act_j, F_act_k, temp_l, temp_r, exploding, expl_time
 
     def T_to_g(temp):
         return 0.1 + 5.0/(1.0+0.001*temp)
@@ -381,23 +384,20 @@ def main():
         visualizer.update()
 
         if joystick_control:
-            pygame.event.get() # User did something
-
+            pygame.event.get() 
             axis_l = np.array([ joystick.get_axis(0), -joystick.get_axis(1) ])
             axis_r = np.array([ joystick.get_axis(3), -joystick.get_axis(4) ])
                 
-            button_A = joystick.get_button( 0 )
+            button_A = joystick.get_button(0)
                        
             if not button_A_old and button_A:
                 explode()
-
             button_A_old = button_A
 
-            hat = joystick.get_hat( 0 )
-            all_axis = np.clip( np.array( hat ) + axis_l + axis_r, -1, 1 )
-            system.part[0].ext_force = move_force * np.array([all_axis[0], all_axis[1], 0])  
+            hat = joystick.get_hat(0)
+            F_act_j = np.clip( np.array(hat) + axis_l + axis_r, -1, 1 )
 
-
+            set_particle_force()
 
 t = Thread(target=main)
 t.daemon = True
