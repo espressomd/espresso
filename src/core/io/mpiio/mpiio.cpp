@@ -299,7 +299,7 @@ static void mpiio_read_array(const std::string & fn, T *arr, size_t len, size_t 
  * \param file Pointer to store the fields to
  */
 static void read_head(const std::string & fn, int rank, unsigned *fields) {
-  FILE *f;
+  FILE *f = nullptr;
   if (rank == 0) {
     if (!(f = fopen(fn.c_str(), "rb"))) {
       fprintf(stderr, "MPI-IO: Could not open %s.head.\n", fn.c_str());
@@ -313,6 +313,7 @@ static void read_head(const std::string & fn, int rank, unsigned *fields) {
   } else {
     MPI_Bcast(fields, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
   }
+  free(f);
 }
 
 /** Reads the pref file and fills pref and nlocalpart with their

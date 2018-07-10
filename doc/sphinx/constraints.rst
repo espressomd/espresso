@@ -450,18 +450,6 @@ ignored or is set to `False`, the constraint cannot be violated, i.e. no
 particle can go through the constraint surface (|es| will exit if it does).
 
 
-In variants ``wall``; ``sphere``; ``cylinder``; ``rhomboid`` and ``stomatocyte`` it is
-also possible to specify a flag indicating if the constraints should be
-reflecting. The flags can equal 1 or 2. The flag 1 corresponds to a
-reflection process where the normal component of the velocity is
-reflected and the tangential component remains unchanged. If the flag is
-2, also the tangential component is turned around, so that a bounce back
-motion is performed. The second variant is useful for boundaries of DPD.
-The reflection property is only activated if an interaction is defined
-between a particular particle and the constraint! This will usually be a
-Lennard-Jones interaction with :math:`\epsilon=0`, but finite
-interaction range.
-
 .. _Available options:
 
 Available options

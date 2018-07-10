@@ -36,8 +36,6 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
-#include <exception>
-#include <vector>
 
 namespace Utils {
 /**
@@ -73,24 +71,15 @@ template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
 /*************************************************************/
 /*@{*/
 
-/** vector difference */
-inline void vector_subt(double res[3], double a[3], double b[3]) {
-  int i;
-  for (i = 0; i < 3; i++)
-    res[i] = a[i] - b[i];
-}
-
 /** permute an integer array field of size size about permute positions. */
 inline void permute_ifield(int *field, int size, int permute) {
-  int i, tmp;
-
-  if (permute == 0)
+   if (permute == 0)
     return;
   if (permute < 0)
     permute = (size + permute);
   while (permute > 0) {
-    tmp = field[0];
-    for (i = 1; i < size; i++)
+    int tmp = field[0];
+    for (int i = 1; i < size; i++)
       field[i - 1] = field[i];
     field[size - 1] = tmp;
     permute--;
@@ -246,157 +235,6 @@ inline ::Vector<3, double> vec_rotate(::Vector<3, double> axis, double alpha,
   return result;
 }
 
-/** Calc eigevalues of a 3x3 matrix stored in q as a 9x1 array*/
-inline int calc_eigenvalues_3x3(double *q, double *eva) {
-  double q11, q22, q33, q12, q13, q23;
-  double a, b, c;
-  double QQ, R, R2, QQ3;
-  double theta, root1, root2, x1, x2, x3, help;
-  int anzdiff = 3;
-
-  /* copy tensor to local variables (This is really a fuc off code!) */
-  q11 = *q++;
-  q12 = *q++;
-  q13 = *q;
-  q22 = *(q += 2);
-  q23 = *(++q);
-  q33 = *(q += 3);
-
-  /* solve the cubic equation of the eigenvalue problem */
-  a = -(q11 + q22 + q33);
-  b = q11 * q22 + q11 * q33 + q22 * q33 - q12 * q12 - q13 * q13 - q23 * q23;
-  c = -(q11 * q22 * q33 + 2 * q12 * q23 * q13 - q12 * q12 * q33 -
-        q13 * q13 * q22 - q23 * q23 * q11);
-  QQ = (a * a - 3 * b) / 9.0;
-  R = (2 * a * a * a - 9 * a * b + 27 * c) / 54;
-  QQ3 = QQ * QQ * QQ;
-  R2 = R * R;
-
-  if (R2 < QQ3) {
-    theta = acos(R / sqrt(QQ3));
-    root1 = sqrt(QQ) * cos(theta / 3.0);
-    root2 = sqrt(QQ * 3.0) * sin(theta / 3.0);
-    x1 = -2 * root1 - a / 3.0;
-    x2 = root1 - root2 - a / 3.0;
-    x3 = root1 + root2 - a / 3.0;
-  } else {
-    double AA, BB, signum = 1.0;
-
-    if (R < 0) {
-      signum = -1.0;
-      R = -R;
-    }
-    AA = -signum * exp(log(R + sqrt(R2 - QQ3)) / 3.0);
-    if (AA == 0.0)
-      BB = 0.0;
-    else
-      BB = QQ / AA;
-
-    /* compute the second way of the diagonalization
-     * remark : a diagonal matrix has to have real eigenvalues (=>x2=x3)
-     * but (!), the general solution of this case can have in general
-     * imaginary solutions for x2,x3 (see numerical recipies p. 185) */
-    x1 = (AA + BB) - a / 3.0;
-    x2 = 0.5 * (AA + BB) - a / 3.0;
-    x3 = x2;
-  }
-
-  /* order the eigenvalues in decreasing order */
-  if (x1 < x2) {
-    help = x1;
-    x1 = x2;
-    x2 = help;
-  }
-  if (x1 < x3) {
-    help = x1;
-    x1 = x3;
-    x3 = help;
-  }
-  if (x2 < x3) {
-    help = x2;
-    x2 = x3;
-    x3 = help;
-  }
-  eva[0] = x1;
-  eva[1] = x2;
-  eva[2] = x3;
-
-  /* calculate number of different eigenvalues */
-  if (x1 == x2)
-    anzdiff--;
-  if (x2 == x3)
-    anzdiff--;
-
-  return anzdiff;
-}
-
-/** Calc eigevectors of a 3x3 matrix stored in a as a 9x1 array*/
-/** Given an eigenvalue (eva) returns the corresponding eigenvector (eve)*/
-inline int calc_eigenvector_3x3(double *a, double eva, double *eve) {
-  int i, j, ind1, ind2, ind3, row1, row2;
-  double A_x1[3][3], coeff1, coeff2, norm;
-
-  /* build (matrix - eva*unity) */
-  for (i = 0; i < 3; i++) {
-    for (j = 0; j < 3; j++)
-      A_x1[i][j] = a[3 * i + j];
-    A_x1[i][i] -= eva;
-  }
-
-  /* solve the linear equation system */
-  for (ind1 = 0; ind1 < 3; ind1++) {
-    ind2 = (ind1 + 1) % 3;
-    ind3 = (ind1 + 2) % 3;
-    row1 = 0;
-    do {
-      row1++;
-    } while ((row1 < 3) && (A_x1[ind3][row1] == 0));
-
-    /* okay, if one whole column is empty then we can take this
-       direction as the eigenvector
-       remember : {eigenvectors} = kernel(A_x1) */
-    if (row1 == 3) {
-      eve[ind3] = 1.0;
-      eve[(ind3 + 1) % 3] = 0.0;
-      eve[(ind3 + 2) % 3] = 0.0;
-      return 1;
-    }
-
-    for (i = 1; i < 3; i++) {
-      row2 = (row1 + i) % 3;
-      coeff1 = A_x1[ind1][row1] * A_x1[ind3][row2] -
-               A_x1[ind1][row2] * A_x1[ind3][row1];
-      coeff2 = A_x1[ind2][row1] * A_x1[ind3][row2] -
-               A_x1[ind2][row2] * A_x1[ind3][row1];
-      if (coeff1 != 0.0) {
-        eve[ind2] = 1.0;
-        eve[ind1] = -coeff2 / coeff1;
-        eve[ind3] = -(A_x1[ind2][row1] + eve[ind1] * A_x1[ind1][row1]) /
-                    A_x1[ind3][row1];
-        norm = sqrt(eve[0] * eve[0] + eve[1] * eve[1] + eve[2] * eve[2]);
-        eve[0] /= norm;
-        eve[1] /= norm;
-        eve[2] /= norm;
-        return 1;
-      } else {
-        if (coeff2 != 0.0) {
-          eve[ind1] = 1.0;
-          eve[ind2] = -coeff1 / coeff2;
-          eve[ind3] = -(A_x1[ind1][row1] + eve[ind2] * A_x1[ind2][row1]) /
-                      A_x1[ind3][row1];
-          norm = sqrt(eve[0] * eve[0] + eve[1] * eve[1] + eve[2] * eve[2]);
-          eve[0] /= norm;
-          eve[1] /= norm;
-          eve[2] /= norm;
-          return (1);
-        }
-      }
-    } /* loop over the different rows */
-  }   /* loop over the different columns */
-
-  /* the try failed => not a singular matrix: only solution is (0,0,0) */
-  return 0;
-}
 /*@}*/
 
 /*************************************************************/
@@ -602,10 +440,6 @@ double angle_btw_triangles(const T1& P1, const T2& P2, const T3& P3, const T4& P
 
 namespace Utils {
 
-struct vector_size_unequal : public std::exception {
-  const char *what() const throw() { return "Vector sizes do not match!"; }
-};
-
 // Below you will find some routines for handling vectors.  Note that
 // all the pointer-type overloads assume a pointer of length 3!  Due
 // to restrictions on the C-level there is no error checking available
@@ -615,40 +449,11 @@ struct vector_size_unequal : public std::exception {
 //
 // cross_product: Calculate the cross product of two vectors
 //
-
-template <typename T>
-std::vector<T> cross_product(const std::vector<T> &a,
-                             const std::vector<T> &b) throw() {
-  if (a.size() != 3 && b.size() != 3)
-    throw vector_size_unequal();
-
-  std::vector<T> c(3);
-  c[0] = a[1] * b[2] - a[2] * b[1];
-  c[1] = a[2] * b[0] - a[0] * b[2];
-  c[2] = a[0] * b[1] - a[1] * b[0];
-  return c;
-}
-
 template <typename T1, typename T2, typename T3>
 void cross_product(const T1& a, const T2& b, T3& c) {
   c[0] = a[1] * b[2] - a[2] * b[1];
   c[1] = a[2] * b[0] - a[0] * b[2];
   c[2] = a[0] * b[1] - a[1] * b[0];
-}
-
-//
-// dot_product: Calculate the dot product of two vectors
-//
-
-template <typename T>
-double dot_product(const std::vector<T> &a, const std::vector<T> &b) throw() {
-  if (a.size() != b.size())
-    throw vector_size_unequal();
-
-  double c = 0;
-  for (unsigned int i = 0; i < a.size(); i++)
-    c += a[i] * b[i];
-  return c;
 }
 
 template <typename T> double dot_product(T const *const a, T const *const b) {
@@ -661,24 +466,11 @@ template <typename T> double dot_product(T const *const a, T const *const b) {
 //
 // veclen and sqrlen: Calculate the length and length squared of a vector
 //
-
-template <typename T> double sqrlen(const std::vector<T> &a) {
-  double c = 0;
-  typename std::vector<T>::const_iterator i;
-  for (i = a.begin(); i != a.end(); i++)
-    c += (*i) * (*i);
-  return c;
-}
-
 template <typename T> double sqrlen(T const *const a) {
   double c = 0;
-  for (int i = 0; i < 3; i++)
+  for (int i = 0; i < 3; ++i)
     c += a[i] * a[i];
   return c;
-}
-
-template <typename T> double veclen(const std::vector<T> &a) {
-  return sqrt(sqrlen(a));
 }
 
 template <typename T> double veclen(T const *const a) {
@@ -690,26 +482,10 @@ template <typename T> double veclen(T const *const a) {
 //
 
 template <typename T>
-std::vector<T> vecsub(const std::vector<T> &a,
-                      const std::vector<T> &b) throw() {
-  if (a.size() != b.size())
-    throw vector_size_unequal();
-
-  std::vector<T> c(a.size());
-  for (unsigned int i = 0; i < a.size(); i++)
-    c[i] = a[i] - b[i];
-  return c;
-}
-
-template <typename T>
 void vecsub(T const *const a, T const *const b, T *const c) {
   // Note the different signature for pointers here!
   for (unsigned int i = 0; i < 3; i++)
     c[i] = a[i] - b[i];
-}
-
-template <typename T> int sign(T value) {
-  return (T(0) < value) - (value < T(0));
 }
 
 } // namespace Utils

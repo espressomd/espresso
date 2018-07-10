@@ -59,47 +59,6 @@ For example, ::
 >>> print(energy["non_bonded"])
 
 
-.. _Pressure:
-
-Pressure
-~~~~~~~~
-
-:meth:`espressomd.analyze.Analysis.pressure`
-
-Computes the pressure and its contributions in the system. It
-returns all the contributions to the total pressure (see :meth:`espressomd.analyze.Analysis.pressure`).
-
-The pressure is calculated (if there are no electrostatic interactions)
-by
-
-.. math::
-     p = \frac{2E_{kinetic}}{Vf} + \frac{\sum_{j>i} {F_{ij}r_{ij}}}{3V}
-     :label: eqptens
-
-where :math:`f=3` is the number of translational degrees of freedom of
-each particle, :math:`V` is the volume of the system,
-:math:`E_{kinetic}` is the kinetic energy, :math:`F_{ij}` the force
-between particles i and j, and :math:`r_{ij}` is the distance between
-them. The kinetic energy divided by the degrees of freedom is
-
-.. math:: \frac{2E_{kinetic}}{f} = \frac{1}{3}\sum_{i} {m_{i}v_{i}^{2}}.
-
-Note that Equation :eq:`eqptens` can only be applied to pair potentials and
-central forces. Description of how contributions from other interactions
-are calculated is beyond the scope of this manual. Three body potentials
-are implemented following the procedure in
-Ref. :cite:`thompson09a`. A different formula is used to
-calculate contribution from electrostatic interactions in P3M. For
-electrostatic interactions, the :math:`k`-space contribution is not well
-tested, so use with caution! Anything outside that is currently not
-implemented. Four-body dihedral potentials are not included. Except of 
-VIRTUAL\_SITES\_RELATIVE constraints all other
-constraints of any kind are not currently accounted for in the pressure
-calculations. The pressure is no longer correct, e.g., when particles
-are confined to a plane.
-
-The command is implemented in parallel.
-
 .. _Momentum of the system:
 
 Momentum of the System
@@ -457,28 +416,88 @@ Analyze the gyration tensor of particles of a given type, or of all particles in
 	volume is taken into account.
 
 
+.. _Pressure:
+
+Pressure
+~~~~~~~~
+
+:meth:`espressomd.analyze.Analysis.pressure`
+
+Computes the instantaneous virial pressure for an isotropic and homogeneous system. It
+returns all the contributions to the total pressure as well as the total pressure (see :meth:`espressomd.analyze.Analysis.pressure`).
+
+The instantaneous pressure is calculated (if there are no electrostatic interactions)
+by the volume averaged, direction averaged instantaneous virial pressure
+
+.. math::
+     p = \frac{2E_{kinetic}}{Vf} + \frac{\sum_{j>i} {F_{ij}r_{ij}}}{3V}
+     :label: eqptens
+
+where :math:`f=3` is the number of translational degrees of freedom of
+each particle, :math:`V` is the volume of the system,
+:math:`E_{kinetic}` is the kinetic energy, :math:`F_{ij}` the force
+between particles i and j, and :math:`r_{ij}` is the distance between
+them. The kinetic energy divided by the degrees of freedom is
+
+.. math:: \frac{2E_{kinetic}}{f} = \frac{1}{3}\sum_{i} {m_{i}v_{i}^{2}}.
+
+Note that Equation :eq:`eqptens` can only be applied to pair potentials and
+central forces. Description of how contributions from other interactions
+are calculated is beyond the scope of this manual. Three body potentials
+are implemented following the procedure in
+Ref. :cite:`thompson09a`. A different formula is used to
+calculate contribution from electrostatic interactions. For
+electrostatic interactions in P3M, the :math:`k`-space contribution is implemented according to :cite:`essmann1995smooth`. 
+The implementation of the Coulomb P3M pressure is tested against LAMMPS. 
+
+Four-body dihedral potentials are not included. Except of 
+VIRTUAL\_SITES\_RELATIVE constraints all other
+constraints of any kind are not currently accounted for in the pressure
+calculations. The pressure is no longer correct, e.g., when particles
+are confined to a plane.
+
+Note: The different contributions which are returned are the summands that arise from force splitting :math:`\vec{F}_{i,j}={\vec{F}_{i,j}}_\text{bonded}+{\vec{F}_{i,j}}_\text{nonbonded}+...` in the virial pressure formula. Later when the user calculates the ensemble average via e.g. :math:`\langle p \rangle \approx 1/N \sum_{i=1}^N p_i` however the ensemble average with all interactions present is performed. That means the contributions are not easy to interpret! Those are the contributions to the stress/pressure in a system where all interactions are present and therefore in a coupled system.
+
 .. _Stress Tensor:
 
 Stress Tensor
 ~~~~~~~~~~~~~
 :meth:`espressomd.analyze.Analysis.stress_tensor`
 
-Computes the stress tensor of the system with options which are
-described by in :meth: espressomd.System.analysis.stress_tensor. 
-It is called a stress tensor but the sign convention follows that of a pressure tensor.
+Computes the volume averaged instantaneous stress tensor of the system with options which are
+described by in :meth: espressomd.System.analysis.stress_tensor. It is called a stress tensor but the sign convention follows that of a pressure tensor.
+In general do only use it for (on average) homogeneous systems. For inhomogeneous systems you need to use the local stress tensor.
 
-The virial stress tensor is calculated by
+The instantaneous virial stress tensor is calculated by
 
-.. math:: p^{(kl)} = \frac{\sum_{i} {m_{i}v_{i}^{(k)}v_{i}^{(l)}}}{V} + \frac{\sum_{j>i}{F_{ij}^{(k)}r_{ij}^{(l)}}}{V}
+.. math:: p_{(k,l)} = \frac{\sum_{i} {m_{i}v_{i}^{(k)}v_{i}^{(l)}}}{V} + \frac{\sum_{j>i}{F_{ij}^{(k)}r_{ij}^{(l)}}}{V}
 
-where the notation is the same as for in and the superscripts :math:`k`
+where the notation is the same as for the pressure. The superscripts :math:`k`
 and :math:`l` correspond to the components in the tensors and vectors.
+
+If electrostatic interactions are present then also the coulombic parts of the stress tensor need to be calculated. If P3M is present, then the instantaneous stress tensor is added to the above equation in accordance with :cite:`essmann1995smooth` :
+
+.. math :: p^\text{Coulomb, P3M}_{(k,l)} =p^\text{Coulomb, P3M, dir}_{(k,l)} + p^\text{Coulomb, P3M, rec}_{(k,l)},
+
+where the first summand is the short ranged part and the second summand is the long ranged part.
+
+The short ranged part is given by:
+
+.. math :: p^\text{Coulomb, P3M, dir}_{(k,l)}= \frac{1}{4\pi \epsilon_0 \epsilon_r} \frac{1}{2V} \sum_{\vec{n}}^* \sum_{i,j=1}^N q_i q_j \left( \frac{ \mathrm{erfc}(\beta |\vec{r}_j-\vec{r}_i+\vec{n}|)}{|\vec{r}_j-\vec{r}_i+\vec{n}|^3} +\frac{2\beta \pi^{-1/2} \exp(-(\beta |\vec{r}_j-\vec{r}_i+\vec{n}|)^2)}{|\vec{r}_j-\vec{r}_i+\vec{n}|^2} \right) (\vec{r}_j-\vec{r}_i+\vec{n})_k (\vec{r}_j-\vec{r}_i+\vec{n})_l,
+
+where :math:`\beta` is the P3M splitting parameter, :math:`\vec{n}` identifies the periodic images, the asterix denotes that terms with :math:`\vec{n}=\vec{0}` and i=j are omitted.
+The long ranged (kspace) part is given by:
+
+.. math :: p^\text{Coulomb, P3M, rec}_{(k,l)}= \frac{1}{4\pi \epsilon_0 \epsilon_r} \frac{1}{2 \pi V^2} \sum_{\vec{k} \neq \vec{0}} \frac{\exp(-\pi^2 \vec{k}^2/\beta^2)}{\vec{k}^2} |S(\vec{k})|^2 \cdot (\delta_{k,l}-2\frac{1+\pi^2\vec{k}^2/\beta^2}{\vec{k}^2} \vec{k}_k \vec{k}_l),
+
+where :math:`S(\vec{k})` is the fourier transformed charge density. Compared to Essmann we do not have a the contribution :math:`p^\text{corr}_{k,l}` since we want to calculate the pressure that arises from all particles in the system.
+
+Note: The different contributions which are returned are the summands that arise from force splitting :math:`\vec{F}_{i,j}={\vec{F}_{i,j}}_\text{bonded}+{\vec{F}_{i,j}}_\text{nonbonded}+...` in the virial stress tensor formula.
+Later when the user calculates the stress tensor via :math:`\langle p_{(k,l)}\rangle  \approx 1/N \sum_{i=1}^N p_{k,l}` however the ensemble average with all interactions present is performed.
+That means the contributions are not easy to interpret! Those are the contributions to the stress/pressure in a system where all interactions are present and therefore in a coupled system.
 
 Note that the angular velocities of the particles are not included in
 the calculation of the stress tensor.
-
-The command is implemented in parallel.
-
 
 .. _Local Stress Tensor:
 
@@ -490,7 +509,7 @@ Local Stress Tensor
 :meth:`espressomd.analyze.Analysis.local_stress_tensor`
 
 A cuboid is defined in the system and divided into bins.
-For each of these bins a stress tensor is calculated using the Irving Kirkwood method.
+For each of these bins an instantaneous stress tensor is calculated using the Irving Kirkwood method.
 That is, a given interaction contributes towards the stress tensor in a bin proportional to the fraction of the line connecting the two particles that is within the bin.
 
 If the P3M and MMM1D electrostatic methods are used, these interactions
@@ -831,11 +850,11 @@ Creating a correlation
 Each correlator is represented by an instance of the :class:`espressomd.accumulators.Correlator`. Please see its documentation for an explanation of the arguments that have to be passed to the constructor.
 
 Correlators can be registered for automatic updating during the
-integration by adding them to :attr:`espressomd.system.System.auto_update_correlators`.
+integration by adding them to :attr:`espressomd.system.System.auto_update_accumulators`.
 
 ::
 
-    system.auto_update_correlators.add(corr)
+    system.auto_update_accumulators.add(corr)
 
 Alternatively, an update can triggered by calling the update()-method of the correlator instance. In that case, one has to make sure to call the update in the correct time intervals.
 
@@ -851,13 +870,13 @@ Example: Calculating a particle's diffusion coefficient
 For setting up an observable and correlator to obtain the mean square displacement of particle 0, use::
 
     pos_obs=ParticlePositions(ids=(0,))
-    c_pos = Correlator(obs1=pos_obs, tau_lin=16, tau_max=100., dt=10*dt,
+    c_pos = Correlator(obs1=pos_obs, tau_lin=16, tau_max=100., delta_N=10,
         corr_operation="square_distance_componentwise", compress1="discard1")
 
 To obtain the velocity auto-correlation function of particle 0, use::
 
     obs=ParticleVelocities(ids=(0,))
-    c_vel = Correlator(obs1=vel_obs, tau_lin=16, tau_max=20., dt=dt,
+    c_vel = Correlator(obs1=vel_obs, tau_lin=16, tau_max=20., delta_N=1,
         corr_operation="scalar_product", compress1="discard1")
 
 The full example can be found in ``samples/diffusion_coefficient.py``.

@@ -32,8 +32,6 @@ inline int Lattice::map_lattice_to_node(int *ind, int *grid) {
   grid[1] = (int)floor(ind[1]*this->agrid[1]*box_l_i[1]*node_grid[1]);
   grid[2] = (int)floor(ind[2]*this->agrid[2]*box_l_i[2]*node_grid[2]);
 
-  //fprintf(stderr,"%d: (%d,%d,%d)\n",this_node,grid[0],grid[1],grid[2]);
-
   /* change from global to local lattice coordinates */
   ind[0] = ind[0] - grid[0]*this->grid[0] + this->halo_size;
   ind[1] = ind[1] - grid[1]*this->grid[1] + this->halo_size;

@@ -284,7 +284,7 @@ class LangevinThermostat(ut.TestCase):
                     corr_operation="componentwise_product", compress1="discard1")
             s.auto_update_accumulators.add(corr_omega)
         
-        s.integrator.run(300000)
+        s.integrator.run(400000)
         
         s.auto_update_accumulators.remove(corr_vel)
         corr_vel.finalize()

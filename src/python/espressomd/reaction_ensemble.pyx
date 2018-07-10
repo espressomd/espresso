@@ -330,6 +330,7 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
                 raise KeyError("%s is not a vaild key" % k)
 
         self._set_params_in_es_core()
+        
     def __dealloc__(self):
         del(self.REptr)
 
@@ -357,6 +358,13 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
     def __dealloc__(self):
         del(self.constpHptr)
 
+    def add_reaction(self, *args, **kwargs):
+        if(len(kwargs["product_types"])!=2 or len(kwargs["reactant_types"])!=1):
+            raise ValueError("The constant pH method is only implemented for reactionw with two product types and one educt type.")
+        if(kwargs["reactant_coefficients"][0]!=1 or kwargs["product_coefficients"][0]!=1 or kwargs["product_coefficients"][1]!=1):
+            raise ValueError("All product and reactant coefficients must equal one in the constant pH method as implemented in Espresso.")
+        super(ConstantpHEnsemble, self).add_reaction(*args, **kwargs)
+    
     property constant_pH:
         """
         Sets the input pH for the constant pH ensemble method.
@@ -368,8 +376,7 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
             Sets the pH that the method assumes for the implicit pH bath.
 
             """
-            if(pH<=0):
-                raise ValueError("pH must be strictly positive")
+
             self.constpHptr.m_constant_pH = pH
 
 cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
@@ -635,20 +642,14 @@ cdef class WidomInsertion(ReactionAlgorithm):
             else:
                 raise KeyError("%s is not a vaild key" % k)
 
-        self._set_params_in_es_core()  
+        self._set_params_in_es_core() 
       
     def __dealloc__(self):
         del(self.WidomInsertionPtr)
     
     def measure_excess_chemical_potential(self, reaction_id=0):
         """
-        Measures the excess chemical potential in a homogeneous system.
+        Measures the excess chemical potential in a homogeneous system. Returns the excess chemical potential and the standard error for the excess chemical potential. It assumes that your samples are uncorrelated.
         
         """
         return self.WidomInsertionPtr.measure_excess_chemical_potential(int(reaction_id))
-
-    def add_reaction(self, *args, **kwargs):
-        for i in range(2): #for back and forward reaction
-            self.WidomInsertionPtr.number_of_insertions.push_back(0)
-            self.WidomInsertionPtr.summed_exponentials.push_back(0)
-        super(WidomInsertion, self).add_reaction(*args, **kwargs)

@@ -373,7 +373,6 @@ void angularmomentum(PartCfg &, int type, double *com);
  */
 
 void momentofinertiamatrix(PartCfg & partCfg, int type, double *MofImatrix);
-void calc_gyration_tensor(PartCfg & partCfg, int type, std::vector<double> &gt);
 
 /** returns the momentum of the particles in the simulation box.
  * \param result Momentum of particles.
@@ -392,9 +391,8 @@ inline double *obsstat_bonded(Observable_stat *stat, int j) {
 }
 
 inline double *obsstat_nonbonded(Observable_stat *stat, int p1, int p2) {
-  int tmp;
   if (p1 > p2) {
-    tmp = p2;
+    int tmp = p2;
     p2 = p1;
     p1 = tmp;
   }
@@ -405,9 +403,8 @@ inline double *obsstat_nonbonded(Observable_stat *stat, int p1, int p2) {
 inline double *obsstat_nonbonded_intra(Observable_stat_non_bonded *stat, int p1,
                                        int p2) {
   /*  return stat->non_bonded_intra + stat->chunk_size*1; */
-  int tmp;
   if (p1 > p2) {
-    tmp = p2;
+    int tmp = p2;
     p2 = p1;
     p1 = tmp;
   }
@@ -419,9 +416,8 @@ inline double *obsstat_nonbonded_intra(Observable_stat_non_bonded *stat, int p1,
 inline double *obsstat_nonbonded_inter(Observable_stat_non_bonded *stat, int p1,
                                        int p2) {
   /*  return stat->non_bonded_inter + stat->chunk_size*1; */
-  int tmp;
   if (p1 > p2) {
-    tmp = p2;
+    int tmp = p2;
     p2 = p1;
     p1 = tmp;
   }
