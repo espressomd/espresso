@@ -46,11 +46,11 @@ pagesize,                       % set the pagesize in a DVI document
 \section{Introduction}
 
 This tutorial introduces the basic features for simulating tritatable systems via two different methods, the Constant pH method and the Reaction Ensemble method, pointing out differences and similarities between these two approaches and explaining the reasons to prefer the latter in some particular cases.
-The first part of this tutorial will consider a homogeneous aqueous solution of a titratable acidic species HA that can dissociate as follows:
+The first part (example one) of this tutorial will consider a homogeneous aqueous solution of a titratable acidic species HA that can dissociate as follows
 \begin{equation}\label{disso}
 \ce{HA <--> A- + H+}\text{,}
 \end{equation}
-while second part will consider a polyelectrolyte chain formed by a series of titratable monomers bonded together.
+while the second part (example two) will consider a polyelectrolyte chain formed by a series of titratable monomers bonded together.
 
 \noindent Both constant pH and Reaction Ensemble methods are implemented via a Monte Carlo algorithm with the classical Metropolis-Hastings acceptation rule. Here we compare both methods based on the paper published by Landsgesell et. al\cite{landsgesell2017simulation}.
 
@@ -72,7 +72,7 @@ The equilibrium concentration of each species is defined by the equilibrium reac
 \begin{equation}
 K =\exp(\beta \sum_i \nu_i(\mu_i-\mu_i^0) )= \frac{a(\text{A}^-)a(\text{H}^+)}{a(\text{HA})};
 \end{equation}
-for each species $i$ $a(i)=e^{\beta (\mu_i-\mu_i^0)} = (c_i/c_{i}^{0})\gamma_i$ denotes the relative activity, $\mu_i$ is the chemical potential, $\mu_i^0$ is the chemical potential under some standard reference conditions, $\nu_i$ is the stoichiometric coefficient, $\gamma_i$ is the activity coefficient of species $i$, $c_{i}$ and $c_{i}^{0}$ are the concentration of the species $i$ and its standard concentration, respectively. In the case of non-interacting particles (ideal gas) or very dilute solutions ($\gamma_i \approx 1$) activities are equal to $c_i/c_{i}^{0}$. In chemical equilibrium, which is defined by $\Delta G=\sum_i \nu_i \mu_i=0$, we obtain that $K=\exp(\beta \Delta (G-G^0))=\exp(-\beta \sum_i \nu_i \mu_i^0)$.
+for each species $i$ $a(i)=e^{\beta (\mu_i-\mu_i^0)} = (c_i/c_{i}^{0})\gamma_i$ denotes the relative activity, $\mu_i$ is the chemical potential, $\mu_i^0$ is the chemical potential under some standard reference conditions, $\nu_i$ is the stoichiometric coefficient, $\gamma_i$ is the activity coefficient, $c_{i}$ and $c_{i}^{0}$ are the concentration of the species $i$ and its standard concentration, respectively. In the case of non-interacting particles (ideal gas) or very dilute solutions ($\gamma_i \approx 1$) activities are equal to $c_i/c_{i}^{0}$. In chemical equilibrium, which is defined by $\Delta G=\sum_i \nu_i \mu_i=0$, we obtain that $K=\exp(\beta \Delta (G-G^0))=\exp(-\beta \sum_i \nu_i \mu_i^0)$.
 Therefore we have (in the case of no interactions):
 \begin{equation}
 \label{(eq5)}
@@ -93,7 +93,7 @@ In the constant pH method, the acceptance probability for a reaction is
 \begin{equation} 
 P_{\text{acc}} = \text{min}\left\lbrace  1, e^{\beta \Delta E_\text{pot} \pm \ln{10} (\text{pH - pK}_\text{a})}\right\rbrace \text{,}
 \end{equation}
-and the acceptance probability of a reaction is $P_\text{acc}=\frac{N_\text{HA}}{N0}$ for a dissociation and $P_\text{acc}=\frac{N_\text{A}}{N0}$ for an association reaction \cite{landsgesell2017simulation}. Here $\Delta E_\text{pot}$ is the potential energy change due to the reaction, and $\text{pH - p}K_\text{a}$ is an input parameter. pH and $K_\text{a}$ represent, respectively, the concentration of \ce{H+} ions in the solution and the thermodynamic dissociation constant for HA species when the system is approximated as a dilute solution ($\gamma_i \approx 1$):
+and the acceptance probability of a reaction is $P_\text{acc}=\frac{N_\text{HA}}{N0}$ for a dissociation and $P_\text{acc}=\frac{N_\text{A}}{N0}$ for an association reaction \cite{landsgesell2017simulation}. Here $\Delta E_\text{pot}$ is the potential energy change due to the reaction, while $\text{pH - p}K_\text{a}$ is an input parameter composed by two terms, pH and -p$K_\text{a}$, that represent, respectively, the concentration of \ce{H+} ions in the solution and the logarithm in base 10 of the thermodynamic dissociation constant for HA when the system is approximated as a dilute solution ($\gamma_i \approx 1$):
 \begin{equation} 
 \text{pH} = -\log_{10} \frac{c_{\text{H}^+}}{c_{\text{H}^+}^0}\text{;}
 \end{equation}
@@ -124,7 +124,15 @@ Notice that in this case you can also define $K_\text{a} = K_c/c_0$ .
 The main difference in the two methods consists in the fact that in the Reaction Ensemble the system pH is determined via the actual proton concentration in the simulation box, while in Constant pH method it represents an input parameter which remains constant during all the simulation.
 
 
-\section{First part: homogeneous aqueous solution of acidic species}
+\section{Example one: homogeneous aqueous solution of acidic species}
+
+Compile Espresso with the following features in your
+myconfig.hpp to be set throughout the whole tutorial:
+
+\begin{verbatim}
+# define LENNARD_JONES
+# define ELECTROSTATICS
+\end{verbatim}
 
 \subsection{System Setup}
 
@@ -132,16 +140,28 @@ We start defining some important input parameters and setting the particles rand
 \begin{verbatim}
 import espressomd
 from espressomd import reaction_ensemble
+
+box_l = 15        #side length of our cubic
 system = espressomd.System(box_l=[box_l]*3)
+
 system.set_random_state_PRNG()
-\np.random.seed(seed=system.seed)
+np.random.seed(seed=system.seed)
 
-N = 50             #number of titratable particles
-K_diss = 8.3**(-4) #dissociation costant 
-box_l = 50         #side length of our cubic simulation box 
 
+# Particle setup
+#############################################################
+# type 0 = HA
+# type 1 = A-
+# type 2 = H+
+
+N0 = 50             #number of titratable particles
+K_diss = 8.3**(-4)  #dissociation costant 
+ simulation box 
+
+# titratable particles (HA)
 for i in range(N0):
     system.part.add(id=i, pos=np.random.random(3) * system.box_l, type=1)
+# counterions (H+)   
 for i in range(N0, 2 * N0):
     system.part.add(id=i, pos=np.random.random(3) * system.box_l, type=2)
 \end{verbatim}
@@ -150,6 +170,9 @@ For each negative charged \ce{A-} particle (type = 1) we put in the simulation b
 Notice that the implementation in Espresso requires that the dimension of the equilibrium constant is consistent with its internal unit of volume; rules for a correct conversion of $K_a$ (experimental) to $K_c$ (in internal units) are explained in the user guide: \url{http://espressomd.org/html/doc/advanced_methods.html}. The next step is to define the reaction:
 
 \begin{verbatim}
+mode="reaction_ensemble"
+#mode="constant_pH_ensemble"
+
 RE=None
 mode=="reaction_ensemble"
 if(mode=="reaction_ensemble"):
@@ -157,43 +180,41 @@ if(mode=="reaction_ensemble"):
 elif(mode=="constant_pH_ensemble"):
     RE = reaction_ensemble.ConstantpHEnsemble(temperature=1, exclusion_radius=1)
     RE.constant_pH=7
-    RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=
-     [1], product_types=[1, 2], product_coefficients=[1, 1], default_charges=
-     {0: 0, 1: -1, 2: +1})
-print(RE.get_status())
+    
+RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1], 
+product_types=[1, 2], product_coefficients=[1, 1], default_charges=
+{0: 0, 1: -1, 2: +1})
+
 system.setup_type_map([0, 1, 2])
 \end{verbatim}
-You can switch from one method to the other simply by changing the ``mode'' parameter. Now the system is ready to be simulated:
+You can switch from one method to the other simply by changing the ``mode'' parameter from ``reaction\textunderscore ensemble'' to ``constant\textunderscore pH\textunderscore ensemble''. Now the system is ready to be simulated.
 
 \begin{verbatim}
 Nreac = 10**4 #number of association/dissociation attempt to be performed
 for i in range(Nreac):
     RE.reaction()
 \end{verbatim}
-
-Notice that, as this level, we're not taking into account electrostatic interactions between charged species. If  you compare the input equilibrium constant $K_c$ with the effective one you can calculate at the end of a simulation run: $K_c^{\text{(eff)}} = \frac{\langle c_{\text{A}^-} \rangle \langle c_{\text{H}^+} \rangle }{\langle c_\text{HA} \rangle}$ one observes that both are equal in the case of no interactions present. This is not true when e.g. electrostatic interaction are enabled due to the fact the latter introduces an excess chemical potential.
+Notice that, as this level, we're not taking into account electrostatic interactions between charged species. Therefore, if you compare the input equilibrium constant $K_c$ and the effective one which can be calculated at the end of a simulation run $K_c^{\text{(eff)}} = \frac{\langle c_{\text{A}^-} \rangle \langle c_{\text{H}^+} \rangle }{\langle c_\text{HA} \rangle}$ you will obtain $K_c \simeq K_c^\text{(eff)}$. This is not true when e.g. electrostatic interactions are enabled due to the fact the latter introduces an excess chemical potential.
 
 
 \subsection{Dissociation degree versus concentration}
 
 Performing several simulations with constant $N_0$ but varying the dimension of the simulation box it is possible to obtain the dissociation degree $\alpha$ (eq. \ref{alpha}) as a function of the concentration of titratable units. Results are shown in figure \ref{alpha_vs_C}.
-
 \begin{figure}[tb]
 	\centering
  	\includegraphics[scale=0.6]{figures/alpha_vs_C.pdf}
- 	\caption{Dissociation degree $\alpha$ as function of the concentration of tritatable groups. Green: Constant pH method; violet: Reaction Ensemble method; black: ideal behavior.}
+ 	\caption{Dissociation degree $\alpha$ as function of the concentration of titratable groups. Yellow squares: Constant pH method; light blue triangles: Reaction Ensemble method; blue solid line: ideal behavior.}
  	\label{alpha_vs_C}
 \end{figure}
-
 As you can see, only the curve obtained with the Reaction Ensemble method fits the ideal behavior described by the dilution law
 \begin{equation}
 K_{a} = \frac{\alpha^2}{1 - \alpha}c_\text{titr}\text{,}
 \end{equation}
-where $c_\text{titr}$ is the concentration of titratable units in solution, and this is due to the fact that the acceptance rule in Constant pH method does not depend on the volume of the system. As $\alpha$ differs, so will the number of counterions in the cell. This could have a strong impact on screening effects when electrostatic interactions are taken into account. Moreover, in the Constant pH method the real chemical nature of counterions is unknown. In fact, when a HA molecule dissociates at high pH value, the generated \ce{H+} would react instantaneously with an \ce{OH-} ions, so the positively charged ions that remains in solution must represent a different species (e.g. a \ce{Na+} cation).
+where $c_\text{titr}$ is the concentration of titratable units in the solution, and this is due to the fact that the acceptance rule in Constant pH method does not depend on the volume of the system. As $\alpha$ differs, so will the number of counterions in the cell. This could have a strong impact on screening effects when electrostatic interactions are taken into account. Moreover, in the Constant pH method the real chemical nature of counterions is unknown. In fact, when a HA molecule dissociates at high pH value, the generated \ce{H+} would react instantaneously with an \ce{OH-} ions, so the positively charged ions that remains in solution must represent a different species (e.g. a \ce{Na+} cation).
 
 
 
-\section{Second part: linear weak polyelectrolyes}
+\section{Example two: linear weak polyelectrolyes}
 Weak polyelectrolytes are a family of responsive materials whose application spans the range from flocculation-induced water purification to tissue targeted drug delivery of expensive or cytotoxic medicines. Their properties, however, depend on their specific chemical environment, with details such as pH, salt concentration and valency, and their topology markedly modifying the chemical behavior of their ionizing groups.
 Here we're going to study the titration curves of a linear weak polyelectrolytes composed by 50 titratable units with both Reaction Ensemble and Constant pH methods. In this case, we'll enable electrostatic interactions between charged species in order to correctly describe their properties.
 \begin{verbatim}
@@ -300,11 +321,11 @@ print(i,") HA", system.number_of_particles(type=type_HA), "A-",
 \begin{figure}[tb]
 	\centering
 	\includegraphics[scale=0.6]{figures/titration.pdf}
-	\caption{Titration curves for a weak polyelectrolyte chain composed by $N_0=50$ titratable monomers. Green: Constant pH method; violet: Reaction Ensemble method:; black: ideal behavior.}
+	\caption{Titration curves for a weak polyelectrolyte chain composed by $N_0=50$ titratable monomers. Yellow squares: Constant pH method; light blue trianges: Reaction Ensemble method:; blue solid line: ideal behavior.}
 	\label{titration}
 \end{figure}
 
-For a solution of weak acidic molecules with a certain $\text{p}K_\text{a}=-\log_{10}(K_c/c^0)$, the trend of $\alpha$ as function of pH is described by the Henderson-Hasselbalch equation (black curve in fig. \ref{titration}):
+For a solution of weak acidic molecules with a certain $\text{p}K_\text{a}=-\log_{10}(K_c/c^0)$, the trend of $\alpha$ as function of pH is described by the Henderson-Hasselbalch equation:
 \begin{equation}
 \text{pH} = -\log_{10}(c_{\text{H}^+})/c^0)
 \end{equation}
