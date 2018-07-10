@@ -29,6 +29,7 @@
 #include "Observable.hpp"
 #include "core/observables/Observable.hpp"
 #include "core/observables/StressTensor.hpp"
+#include "core/observables/LBBulkStress.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
@@ -47,6 +48,7 @@ namespace Observables {
   };
 
 NEW_PARAMLESS_OBSERVABLE(StressTensor)
+NEW_PARAMLESS_OBSERVABLE(LBBulkStress)
 
 } /* namespace Observables */
 } /* namespace ScriptInterface */

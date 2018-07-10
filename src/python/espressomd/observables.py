@@ -172,6 +172,9 @@ class ForceDensityProfile(Observable):
 class LBVelocityProfile(Observable):
     _so_name = "Observables::LBVelocityProfile"
 
+@script_interface_register
+class LBBulkStress(Observable):
+    _so_name = "Observables::LBBulkStress"
 
 @script_interface_register
 class MagneticDipoleMoment(Observable):

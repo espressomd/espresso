@@ -1373,11 +1373,12 @@ int lb_bulk_get_pi(double *p_pi) {
     p_pi[l] = 0.0;
   }
 
+#ifdef LB_GPU
   lbpar_gpu.dim_x = (unsigned int)rint(box_l[0]/lbpar_gpu.agrid);
   lbpar_gpu.dim_y = (unsigned int)rint(box_l[1]/lbpar_gpu.agrid);
   lbpar_gpu.dim_z = (unsigned int)rint(box_l[2]/lbpar_gpu.agrid);
-  int number_of_nodes = lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
-
+  int number_of_nodes_GPU = lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
+  
   for (int i = 0; i < lbpar_gpu.dim_x; i ++) {
     for (int j = 0; j < lbpar_gpu.dim_y; j ++) {
       for (int k = 0; k < lbpar_gpu.dim_z; k ++) {
@@ -1392,11 +1393,35 @@ int lb_bulk_get_pi(double *p_pi) {
   }
 
   for (int l = 0; l < 6; l++) {
+    p_pi[l] /= number_of_nodes_GPU;
+  }
+#endif
+
+#ifdef LB
+  int gridsize[3];
+  gridsize[0] = box_l[0] / lblattice.agrid[0];
+  gridsize[1] = box_l[1] / lblattice.agrid[1];
+  gridsize[2] = box_l[2] / lblattice.agrid[2];
+  int number_of_nodes = gridsize[0]* gridsize[1] * gridsize[2];
+  
+  for (int i = 0; i < gridsize[0]; i ++) {
+    for (int j = 0; j < gridsize[1]; j ++) {
+      for (int k = 0; k < gridsize[2]; k ++) {
+        int node[3] = {i, j, k};
+        double pi_bulk[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        lb_lbnode_get_pi(node, pi_bulk);
+        for (int l = 0; l < 6; l++) {
+          p_pi[l] += pi_bulk[l];
+        }
+      }
+    }
+  }
+
+  for (int l = 0; l < 6; l++) {
     p_pi[l] /= number_of_nodes;
   }
-  
- return 0;
-
+#endif
+  return 0;
 }
 
 int lb_lbnode_get_boundary(int *ind, int *p_boundary) {
