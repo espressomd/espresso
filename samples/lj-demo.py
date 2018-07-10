@@ -97,9 +97,6 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
 system.cell_system.set_n_square(use_verlet_lists=False)
 
-# warmup integration (with capped LJ potential)
-warm_steps = 100
-warm_n_times = 30
 # do the warmup until the particles have at least the distance min_dist
 min_dist = 0.9
 
@@ -138,7 +135,7 @@ system.cell_system.max_num_cells = 2744
 
 if use_mayavi:
     vis = visualization.mayaviLive(system)
-else:
+elif use_opengl:
     vis = visualization.openGLLive(system)
 
 mayavi_rotation_angle = 45.
@@ -316,34 +313,8 @@ class Controls(HasTraits):
             self.midi_output.write_short(144, 3, 127)  # N
 
 #############################################################
-#  Warmup Integration                                       #
-#############################################################
-
-
-# set LJ cap
-lj_cap = 20
-system.force_cap = lj_cap
-
-# # Warmup Integration Loop
-# i = 0
-# while (i < warm_n_times and act_min_dist < min_dist):
-#     system.integrator.run(warm_steps)
-#     # Warmup criterion
-#     act_min_dist = system.analysis.min_dist()
-#     i += 1
-#
-# #   Increase LJ cap
-#     lj_cap = lj_cap + 10
-#     system.force_cap = lj_cap
-#     vis.update()
-
-#############################################################
 #      Integration                                          #
 #############################################################
-
-# remove force capping
-#lj_cap = 0
-# system.force_cap = lj_cap
 
 # get initial observables
 pressure = system.analysis.pressure()
@@ -422,6 +393,14 @@ def main_loop():
     system.integrator.run(steps=int_steps)
     vis.update()
 
+    # increase LJ cap during warmup
+    if system.force_cap > 0:
+        if system.analysis.min_dist() < min_dist:
+            system.force_cap = system.force_cap + 0.1
+        else:
+            system.force_cap = 0
+            print("Switching off force capping")
+
     # make sure the parameters are valid
     # not sure if this is necessary after using limit_range
     if controls.volume == 0:
@@ -434,13 +413,18 @@ def main_loop():
     pressure = system.analysis.pressure()
 
     # update the parameters set in the GUI
-    system.thermostat.set_langevin(kT=controls.temperature, gamma=1.0)
+    if system.thermostat.get_state()[0]['kT'] != controls.temperature:
+        system.thermostat.set_langevin(kT=controls.temperature, gamma=1.0)
+        print("temperature changed")
+        system.force_cap = lj_cap
     if controls.ensemble == 'NPT':
         # reset Vkappa when target pressure has changed
 
         if old_pressure != controls.pressure:
             system.analysis.v_kappa('reset')
+            print("pressure changed")
             old_pressure = controls.pressure
+            system.force_cap = lj_cap
 
         newVkappa = system.analysis.v_kappa('read')['Vk1']
         newVkappa = newVkappa if newVkappa > 0. else 4.0 / \
@@ -460,15 +444,20 @@ def main_loop():
         if np.any(np.array(system.box_l) != new_box):
             for i in range(len(system.part)):
                 system.part[i].pos = system.part[i].pos * new_box / system.box_l[0]
+            print("volume changed")
+            system.force_cap = lj_cap
         system.box_l = new_box
 
     new_part = controls.number_of_particles
     if new_part > len(system.part):
         for i in range(len(system.part), new_part):
             system.part.add(id=i, pos=np.random.random(3) * system.box_l)
+        print("particles added")
+        system.force_cap = lj_cap
     elif new_part < len(system.part):
         for i in range(new_part, len(system.part)):
             system.part[i].remove()
+        print("particles removed")
 
     plt1_x_data = plot1.get_xdata()
     plt1_y_data = plot1.get_ydata()
