@@ -74,8 +74,8 @@ class NPTintegrator(ut.TestCase):
         avp/=n
         compressibility = pow(np.std(Vs),2)/np.average(Vs)
 
-        self.assertAlmostEqual(2.0, avp, places=2)
-        self.assertAlmostEqual(0.2, compressibility, places=1)
+        self.assertAlmostEqual(2.0, avp, delta=0.05*2.0)
+        self.assertAlmostEqual(0.2, compressibility, delta=0.05*0.2)
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())
