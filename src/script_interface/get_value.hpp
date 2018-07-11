@@ -145,8 +145,7 @@ T get_value(VariantMap const &vals, std::string const &name) {
                              get_type_label(vals.at(name)) + " expected a " +
                              get_type_label(infer_type<T>()));
   } catch (std::out_of_range const &) {
-    /* TODO: Better exceptions. */
-    throw;
+    throw std::out_of_range("Parameter '" + name + "' is missing.");
   }
 }
 
