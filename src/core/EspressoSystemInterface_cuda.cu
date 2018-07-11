@@ -89,7 +89,7 @@ __global__ void split_kernel_v(CUDA_particle_data *particles, float *v, int n) {
   v[idx + 1] = p.v[1];
   v[idx + 2] = p.v[2];
 
-#elseif
+#elif
 
   v[0] = 0.0;
   v[1] = 0.0;
