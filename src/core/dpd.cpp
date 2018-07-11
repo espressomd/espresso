@@ -28,6 +28,8 @@
 #include "integrate.hpp"
 #include "random.hpp"
 #include "thermostat.hpp"
+#include "communication.hpp"
+#include "global.hpp"
 
 void dpd_heat_up() {
   double pref_scale = sqrt(3);

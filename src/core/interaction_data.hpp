@@ -693,7 +693,7 @@ typedef struct {
   // These are interaction parameters
   // k1 is used for Neo-Hookean
   // k1 and k2 are used Skalak
-  double maxdist;
+  double maxDist;
   tElasticLaw elasticLaw;
   double k1;
   double k2;
@@ -713,13 +713,10 @@ typedef struct {
   //  bool writeCOM;
 } IBM_VolCons_Parameters;
 
-typedef enum { TriangleNormals, NodeNeighbors } tBendingMethod;
-
 /** Parameters for IBM tribend **/
 typedef struct {
   // Interaction data
   double kb;
-  tBendingMethod method;
 
   // Reference angle
   double theta0;

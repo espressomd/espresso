@@ -277,14 +277,14 @@ Lees-Edwards boundary conditions are not available in the current version of ESP
 Immersed Boundary Method for soft elastic objects
 -------------------------------------------------
 
+
 Please contact the Biofluid Simulation and Modeling Group at the
 University of Bayreuth if you plan to use this feature.
 
-This section describes an alternative way to include soft elastic
-objects somewhat different from the previous chapter. In the Immersed
 Boundary Method (IBM), soft particles are considered as an infinitely
 thin shell filled with liquid (see e.g. :cite:`Peskin2002,Crowl2010,KruegerThesis`). When the
 shell is deformed by an external flow it responds by elastic restoring
+>>>>>>> 86ca06ad32a3dfa71547de702e9933fd6b7f6037
 forces which are transmitted into the fluid. In the present case, the
 inner and outer liquid are of the same type and are simulated using
 Lattice-Boltzmann.
@@ -293,69 +293,59 @@ Numerically, the shell is discretized by a set of marker points
 connected by triangles. The marker points are advected with *exactly*
 the local fluid velocity, i.e., they do not possess a mass nor a
 friction coefficient (this is different from the Object-in-Fluid method
-of the previous chapter). We implement these marker points as virtual
-particles in which are not integrated using the usual velocity-verlet
+below). We implement these marker points as virtual tracer 
+particles which are not integrated using the usual velocity-verlet
 scheme, but instead are propagated using a simple Euler algorithm with
 the local fluid velocity (if the ``IMMERSED_BOUNDARY`` feature is turned
 on).
 
-To compute the elastic forces, three new bonded interactions are defined
-ibm\_triel, ibm\_tribend and ibm\_volCons:
+The immersed boundary method consists of two components, which can be used independently:
 
--  ibm\_triel is a discretized elastic force with the following syntax
+  * :ref:`Inertialess Lattice-Boltzmann tracers` implemented as virtual sites
 
-   inter ibm\_triel
+  * Interactions providing the elastic forces for the particles forming the surface. These are described below.
 
-   where , and represent the indices of the three marker points making
-   up the triangle. The parameter specifies the maximum stretch above
-   which the bond is considered broken. The final parameter can be
-   either
 
-   ::
+To compute the elastic forces, three new bonded interactions are defined ibm\_triel, ibm\_tribend and ibm\_volCons. 
 
-       NeoHookean <k>
+ibm_triel is used to compute elastic shear forces. To setup an interaction, use:
 
-   or
+::
 
-   ::
+    tri1 = IBM_Triel(ind1=0, ind2=1, ind3=2, elasticLaw="Skalak", k1=0.1, k2=0, maxDist = 2.4)
 
-       Skalak <k1> <k2>
+where `ind1`, `ind2` and `ind3` represent the indices of the three marker points making up the triangle. The parameter `maxDist`
+specifies the maximum stretch above which the bond is considered broken. The parameter `elasticLaw` can be either `NeoHookean` or `Skalak`.
+The parameters `k1` and `k2` are the elastic moduli.
 
-   which specifies the elastic law and its corresponding parameters (see
-   e.g. :cite:`KruegerThesis`).
+ibm_tribend computes out-of-plane bending forces. To setup an interaction, use:
+::
 
--  ibm\_tribend is a discretized bending potential with the following
-   syntax
+    tribend = IBM_Tribend(ind1=0, ind2=1, ind3=2,ind4=3,kb=1, refShape = "Initial")
 
-   inter ibm\_tribend
+where `ind1`, `ind2`, `ind3 and `ind4` are four marker points corresponding to two neighboring triangles. The indices `ind1` and `ind3` contain the shared edge. Note that the marker points within a triangle must be labelled such that the normal vector :math:`\vec{n} = (\vec{r}_\text{ind2} - \vec{r}_\text{ind1}) \times (\vec{r}_\text{ind3} - \vec{r}_\text{ind1})` points outward of the elastic object. 
+The reference (zero energy) shape can be either `Flat` or the initial curvature `Initial`.
+The bending modulus is `kb`.
 
-   where , , and are four marker points corresponding to two neighboring
-   triangles. The indices and contain the shared edge. Note that the
-   marker points within a triangle must be labeled such that the normal
-   vector
-   :math:`\vec{n} = (\vec{r}_\text{ind2} - \vec{r}_\text{ind1}) \times (\vec{r}_\text{ind3} - \vec{r}_\text{ind1})`
-   points outward of the elastic object.
+ibm_volCons is a volume-conservation force. Without this correction, the volume of the soft object tends to shrink over time due to numerical inaccuracies. Therefore, this implements an artificial force intended to keep the volume constant. If volume conservation is to be used for a given soft particle, the interaction must be added to every marker point belonging to that object.
+::
 
-   The parameter allows to specify different numerical ways of computing
-   the bending interaction. Currently, two methods are implemented,
-   where the first one () follows :cite:`KruegerThesis` and
-   the second one () follows :cite:`Gompper1996`. In both
-   cases, is the bending modulus. The options or specify whether the
-   reference shape is a flat configuration or whether the initial
-   configuration is taken as reference shape, this option is only
-   available for the method.
+    volCons = IBM_VolCons(softID=1, kappaV=kV)
 
--  ibm\_volCons is a volume-conservation force. Without this correction,
-   the volume of the soft object tends to shrink over time due to
-   numerical inaccuracies. Therefore, this implements an artificial
-   force intended to keep the volume constant. If volume conservation is
-   to be used for a given soft particle, the interaction must be added
-   to every marker point belonging to that object. The syntax is
+where `softID` identifies the soft particle and `kv` is a volumetric spring constant.
+Note that the `IBM_VolCons` `bond` does not need a bond partner. It is added to a particle as follows::
 
-   inter ibm\_volCons
+    s.part[0].add_bond((Volcons,))
 
-   where identifies the soft particle and is a volumetric spring
-   constant :cite:`KruegerThesis`.
+The comma is needed to force Python to create a tuple containing a single item.
+
+
+For a more detailed description, see e.g. Guckenberger and Gekle, J. Phys. Cond. Mat. (2017) or contact us.
+This feature probably does not work with advanced LB features such electro kinetics or Shan-Chen.
+
+A sample script is provided in the `samples/immersed_boundary` directory of the source distribution.
+
+
 
 
 .. _Object-in-fluid:

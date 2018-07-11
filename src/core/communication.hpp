@@ -310,9 +310,9 @@ void mpi_send_dipm(int node, int part, double dipm);
     Also calls \ref on_particle_change.
     \param part the particle.
     \param node the node it is attached to.
-    \param isVirtual its new isVirtual.
+    \param is_virtual its new is_virtual.
 */
-void mpi_send_virtual(int node, int part, int isVirtual);
+void mpi_send_virtual(int node, int part, int is_virtual);
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE

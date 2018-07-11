@@ -6,24 +6,24 @@
 
 #include "config.hpp"
 
-#ifdef IMMERSED_BOUNDARY
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
 #include "lbgpu.hpp"
 #include "lbboundaries.hpp"
 #include "particle_data.hpp"
 #include "cuda_utils.hpp"
 #include "cuda_interface.hpp"
-#include "immersed_boundary/ibm_main.hpp"
-#include "immersed_boundary/ibm_cuda_interface.hpp"
+#include "virtual_sites/lb_inertialess_tracers.hpp"
+#include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
 
-#if defined(OMPI_MPI_H) || defined(_MPI_H)
-#error CU-file includes mpi.h! This should not happen!
-#endif
+// To avoid include of communication.hpp in cuda file
+extern int this_node;
+
 
 // ****** Kernel functions for internal use ********
-__global__ void ResetLBForces_Kernel(LB_node_force_gpu node_f, const LB_parameters_gpu *const paraP);
-__global__ void ParticleVelocitiesFromLB_Kernel(LB_nodes_gpu n_curr, const IBM_CUDA_ParticleDataInput *const particles_input, IBM_CUDA_ParticleDataOutput *const particles_output, LB_node_force_gpu node_f, const float *const lb_boundary_velocity, const LB_parameters_gpu *const para);
-__global__ void ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input, LB_node_force_gpu node_f, const LB_parameters_gpu *const paraP);
+__global__ void ResetLBForces_Kernel(LB_node_force_density_gpu node_f, const LB_parameters_gpu *const paraP);
+__global__ void ParticleVelocitiesFromLB_Kernel(LB_nodes_gpu n_curr, const IBM_CUDA_ParticleDataInput *const particles_input, IBM_CUDA_ParticleDataOutput *const particles_output, LB_node_force_density_gpu node_f, const float *const lb_boundary_velocity, const LB_parameters_gpu *const para);
+__global__ void ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input, LB_node_force_density_gpu node_f, const LB_parameters_gpu *const paraP);
 __device__ inline void atomicadd( float* address,float value);
 
 // ***** Other functions for internal use *****
@@ -32,9 +32,10 @@ void InitCUDA_IBM(const int numParticles);
 // ***** Our own global variables ********
 IBM_CUDA_ParticleDataInput *IBM_ParticleDataInput_device = nullptr;
 IBM_CUDA_ParticleDataOutput *IBM_ParticleDataOutput_device = nullptr;
+int IBM_numParticlesCache = -1;     // To detect a change in particle number which requires reallocation of memory
 
 // ****** These variables are defined in lbgpu_cuda.cu, but we also want them here ****
-extern LB_node_force_gpu node_f;
+extern LB_node_force_density_gpu node_f;
 extern LB_nodes_gpu *current_nodes;
 
 // ** These variables are static in lbgpu_cuda.cu, so we need to duplicate them here
@@ -78,7 +79,8 @@ void IBM_ForcesIntoFluid_GPU(ParticleRange particles)
   const int numParticles = gpu_get_global_particle_vars_pointer_host()->number_of_particles;
 
   // Storage only needed on master and allocated only once at the first time step
-  if ( IBM_ParticleDataInput_host == nullptr && this_node == 0 )
+  //if ( IBM_ParticleDataInput_host == nullptr && this_node == 0 )
+  if ( IBM_ParticleDataInput_host == NULL || numParticles != IBM_numParticlesCache )
     InitCUDA_IBM(numParticles);
 
   // We gather particle positions and forces from all nodes
@@ -113,6 +115,17 @@ void InitCUDA_IBM(const int numParticles)
   if ( this_node == 0)    // GPU only on master
   {
 
+    // Check if we have to delete
+    if ( IBM_ParticleDataInput_host != NULL )
+    {
+      delete []IBM_ParticleDataInput_host;
+      delete []IBM_ParticleDataOutput_host;
+      cuda_safe_mem( cudaFree( IBM_ParticleDataInput_device) );
+      cuda_safe_mem( cudaFree( IBM_ParticleDataOutput_device) );
+      cuda_safe_mem( cudaFree( paraIBM ) );
+      cuda_safe_mem( cudaFree( lb_boundary_velocity_IBM ) );
+    }
+
     // Back and forth communication of positions and velocities
     IBM_ParticleDataInput_host = new IBM_CUDA_ParticleDataInput[numParticles];
     cuda_safe_mem(cudaMalloc((void**)&IBM_ParticleDataInput_device, numParticles*sizeof(IBM_CUDA_ParticleDataInput)));
@@ -129,22 +142,27 @@ void InitCUDA_IBM(const int numParticles)
     // Copy boundary velocities to the GPU
     // First put them into correct format
 #ifdef LB_BOUNDARIES_GPU
-    float* host_lb_boundary_velocity = new float[3*(n_lb_boundaries+1)];
+    float* host_lb_boundary_velocity = new float[3*(LBBoundaries::lbboundaries.size()+1)];
 
-    for (int n=0; n<n_lb_boundaries; n++)
+    for (int n=0; n<LBBoundaries::lbboundaries.size(); n++)
     {
-      host_lb_boundary_velocity[3*n+0]=lb_boundaries[n].velocity[0];
-      host_lb_boundary_velocity[3*n+1]=lb_boundaries[n].velocity[1];
-      host_lb_boundary_velocity[3*n+2]=lb_boundaries[n].velocity[2];
+      host_lb_boundary_velocity[3*n+0] = LBBoundaries::lbboundaries[n]->velocity()[0];
+      host_lb_boundary_velocity[3*n+1] = LBBoundaries::lbboundaries[n]->velocity()[1];
+      host_lb_boundary_velocity[3*n+2] = LBBoundaries::lbboundaries[n]->velocity()[2];
+
     }
 
-    host_lb_boundary_velocity[3*n_lb_boundaries+0] = 0.0f;
-    host_lb_boundary_velocity[3*n_lb_boundaries+1] = 0.0f;
-    host_lb_boundary_velocity[3*n_lb_boundaries+2] = 0.0f;
-    cuda_safe_mem(cudaMalloc((void**)&lb_boundary_velocity_IBM, 3*n_lb_boundaries*sizeof(float)));
-    cuda_safe_mem(cudaMemcpy(lb_boundary_velocity_IBM, host_lb_boundary_velocity, 3*n_lb_boundaries*sizeof(float), cudaMemcpyHostToDevice));
+    host_lb_boundary_velocity[3*LBBoundaries::lbboundaries.size()+0] = 0.0f;
+    host_lb_boundary_velocity[3*LBBoundaries::lbboundaries.size()+1] = 0.0f;
+    host_lb_boundary_velocity[3*LBBoundaries::lbboundaries.size()+2] = 0.0f;
+
+    cuda_safe_mem(cudaMalloc((void**)&lb_boundary_velocity_IBM, 3*LBBoundaries::lbboundaries.size()*sizeof(float)));
+    cuda_safe_mem(cudaMemcpy(lb_boundary_velocity_IBM, host_lb_boundary_velocity, 3*LBBoundaries::lbboundaries.size()*sizeof(float), cudaMemcpyHostToDevice));
+
     delete[] host_lb_boundary_velocity;
 #endif
+
+    IBM_numParticlesCache = numParticles;
   }
 }
 
@@ -234,15 +252,17 @@ void ParticleVelocitiesFromLB_GPU(ParticleRange particles)
    ForcesIntoFluid_Kernel
 ****************/
 
-__global__ void ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input, LB_node_force_gpu node_f, const LB_parameters_gpu *const paraP)
+__global__ void ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input, LB_node_force_density_gpu node_f, const LB_parameters_gpu *const paraP)
 {
   const unsigned int particleIndex = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   const LB_parameters_gpu &para = *paraP;
 
-  if (particleIndex < para.number_of_particles && particle_input[particleIndex].isVirtual)
+  if (particleIndex < para.number_of_particles && particle_input[particleIndex].is_virtual)
   {
 
-    const float factor = powf( para.agrid,2)*para.tau*para.tau;
+//    const float factor = powf( para.agrid,2)*para.tau*para.tau; --> Old version. Worked, but not when agrid != 1
+// MD to LB units: mass is not affected, length are scaled by agrid, times by para.tau
+    const float factor = 1/para.agrid * para.tau*para.tau;
     const float particleForce[3] = { particle_input[particleIndex].f[0] * factor, particle_input[particleIndex].f[1] * factor, particle_input[particleIndex].f[2] * factor};
     const float pos[3] = { particle_input[particleIndex].pos[0], particle_input[particleIndex].pos[1], particle_input[particleIndex].pos[2] };
 
@@ -286,9 +306,9 @@ __global__ void ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const p
     {
 
       // Atomic add is essential because this runs in parallel!
-      atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[i]]), (particleForce[0] * delta[i]));
-      atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[i]]), (particleForce[1] * delta[i]));
-      atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[i]]), (particleForce[2] * delta[i]));
+      atomicadd(&(node_f.force_density[0*para.number_of_nodes + node_index[i]]), (particleForce[0] * delta[i]));
+      atomicadd(&(node_f.force_density[1*para.number_of_nodes + node_index[i]]), (particleForce[1] * delta[i]));
+      atomicadd(&(node_f.force_density[2*para.number_of_nodes + node_index[i]]), (particleForce[2] * delta[i]));
     }
   }
 }
@@ -298,14 +318,14 @@ __global__ void ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const p
    ParticleVelocitiesFromLB_Kernel
 **************/
 
-__global__ void  ParticleVelocitiesFromLB_Kernel(LB_nodes_gpu n_curr, const IBM_CUDA_ParticleDataInput *const particles_input, IBM_CUDA_ParticleDataOutput *const particles_output, LB_node_force_gpu node_f, const float *const lb_boundary_velocity, const LB_parameters_gpu *const paraP)
+__global__ void  ParticleVelocitiesFromLB_Kernel(LB_nodes_gpu n_curr, const IBM_CUDA_ParticleDataInput *const particles_input, IBM_CUDA_ParticleDataOutput *const particles_output, LB_node_force_density_gpu node_f, const float *const lb_boundary_velocity, const LB_parameters_gpu *const paraP)
 {
 
   const unsigned int particleIndex = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   const LB_parameters_gpu &para = *paraP;
 
-  if (particleIndex < para.number_of_particles && particles_input[particleIndex].isVirtual)
+  if (particleIndex < para.number_of_particles && particles_input[particleIndex].is_virtual)
   {
 
     // Get position
@@ -376,9 +396,9 @@ __global__ void  ParticleVelocitiesFromLB_Kernel(LB_nodes_gpu n_curr, const IBM_
         local_rho = para.rho[0]*para.agrid*para.agrid*para.agrid + mode[0];
 
         // Add the +f/2 contribution!!
-        local_j[0] = mode[1] + node_f.force_buf[0*para.number_of_nodes + node_index[i]]/2.f;
-        local_j[1] = mode[2] + node_f.force_buf[1*para.number_of_nodes + node_index[i]]/2.f;
-        local_j[2] = mode[3] + node_f.force_buf[2*para.number_of_nodes + node_index[i]]/2.f;
+        local_j[0] = mode[1] + node_f.force_density_buf[0*para.number_of_nodes + node_index[i]]/2.f;
+        local_j[1] = mode[2] + node_f.force_density_buf[1*para.number_of_nodes + node_index[i]]/2.f;
+        local_j[2] = mode[3] + node_f.force_density_buf[2*para.number_of_nodes + node_index[i]]/2.f;
 
       }
 
@@ -403,7 +423,7 @@ __global__ void  ParticleVelocitiesFromLB_Kernel(LB_nodes_gpu n_curr, const IBM_
    ResetLBForces_Kernel
 *****************/
 
-__global__ void ResetLBForces_Kernel(LB_node_force_gpu node_f, const LB_parameters_gpu *const paraP)
+__global__ void ResetLBForces_Kernel(LB_node_force_density_gpu node_f, const LB_parameters_gpu *const paraP)
 {
 
   const size_t index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
@@ -415,18 +435,18 @@ __global__ void ResetLBForces_Kernel(LB_node_force_gpu node_f, const LB_paramete
     for(int ii=0;ii<LB_COMPONENTS;++ii)
     {
 #ifdef EXTERNAL_FORCES
-      if(para.external_force)
+      if(para.external_force_density)
       {
-        node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[0 + ii*3 ]*force_factor;
-        node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[1 + ii*3 ]*force_factor;
-        node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = para.ext_force[2 + ii*3 ]*force_factor;
+        node_f.force_density[(0 + ii*3 ) * para.number_of_nodes + index] = para.ext_force_density[0 + ii*3 ]*force_factor;
+        node_f.force_density[(1 + ii*3 ) * para.number_of_nodes + index] = para.ext_force_density[1 + ii*3 ]*force_factor;
+        node_f.force_density[(2 + ii*3 ) * para.number_of_nodes + index] = para.ext_force_density[2 + ii*3 ]*force_factor;
       }
       else
 #endif
       {
-        node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
-        node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
-        node_f.force[(2 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
+        node_f.force_density[(0 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
+        node_f.force_density[(1 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
+        node_f.force_density[(2 + ii*3 ) * para.number_of_nodes + index] = 0.0f;
       }
     }
   }
@@ -435,8 +455,6 @@ __global__ void ResetLBForces_Kernel(LB_node_force_gpu node_f, const LB_paramete
 /************
    atomicadd
 This is a copy of the atomicadd from lbgpu_cuda.cu
-It seems that this function is re-implemented in all CUDA files: lbgpu_cuda, electrokinetics_cuda,...
-Why is it not in a header?
 *************/
 
 __device__ inline void atomicadd( float* address, float value)

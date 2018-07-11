@@ -7,14 +7,16 @@
 
 #include "config.hpp"
 
-#ifdef IMMERSED_BOUNDARY
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
 #include "communication.hpp"
 #include "debug.hpp"
 #include "grid.hpp"
-#include "immersed_boundary/ibm_cuda_interface.hpp"
+#include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
+#include "utils/serialization/ibm_cuda_particle_velocities_input.hpp"
+
 #include "utils/mpi/gather_buffer.hpp"
 #include "utils/mpi/scatter_buffer.hpp"
 
@@ -38,12 +40,10 @@ namespace {
 void pack_particles(ParticleRange particles,
                     IBM_CUDA_ParticleDataInput *buffer) {
   int dummy[3] = {0, 0, 0};
-  double pos[3];
 
   int i = 0;
   for (auto const &part : particles) {
-    memmove(pos, part.r.p, 3 * sizeof(double));
-    fold_position(pos, dummy);
+    Vector3d pos=folded_position(part);
 
     buffer[i].pos[0] = (float)pos[0];
     buffer[i].pos[1] = (float)pos[1];
@@ -53,7 +53,7 @@ void pack_particles(ParticleRange particles,
     buffer[i].f[1] = (float)part.f.f[1];
     buffer[i].f[2] = (float)part.f.f[2];
 
-    buffer[i].isVirtual = part.p.isVirtual;
+    buffer[i].is_virtual = part.p.is_virtual;
 
     i++;
   }
@@ -94,8 +94,9 @@ void set_velocities(ParticleRange particles,
                     IBM_CUDA_ParticleDataOutput *buffer) {
   int i = 0;
   for (auto &part : particles) {
-    for (int j = 0; j < 3; j++)
-      part.m.v[j] = buffer[i].v[j];
+    if ( part.p.is_virtual )
+      for (int j = 0; j < 3; j++)
+        part.m.v[j] = buffer[i].v[j];
 
     i++;
   }

@@ -34,6 +34,8 @@
 #include "p3m_gpu.hpp"
 #include "forcecap.hpp"
 #include "short_range_loop.hpp"
+#include "immersed_boundaries.hpp" 
+#include "lb.hpp"
 
 #include <cassert>
 
@@ -89,16 +91,6 @@ void check_forces() {
 }
 
 void force_calc() {
-  // Communication step: distribute ghost positions
-  cells_update_ghosts();
-
-// VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
-#ifdef VIRTUAL_SITES
-  virtual_sites()->update();
-  if (virtual_sites()->need_ghost_comm_after_pos_update()) {
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-  }
-#endif
 
   espressoSystemInterface.update();
 
@@ -117,7 +109,7 @@ void force_calc() {
   // this_node==0 makes sure it is the master node where the gpu exists
   if (lattice_switch & LATTICE_LB_GPU && transfer_momentum_gpu &&
       (this_node == 0))
-    lb_calc_particle_lattice_ia_gpu();
+    lb_calc_particle_lattice_ia_gpu(thermo_virtual);
 #endif // LB_GPU
 
 #ifdef ELECTROSTATICS
@@ -160,7 +152,7 @@ void force_calc() {
 
 #ifdef IMMERSED_BOUNDARY
   // Must be done here. Forces need to be ghost-communicated
-  IBM_VolumeConservation();
+  immersed_boundaries.volume_conservation();
 #endif
 
 #ifdef LB
