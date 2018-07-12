@@ -315,8 +315,6 @@ class DPDThermostat(ut.TestCase):
                 self.assertAlmostEqual(sgn*4.0, s.part[id].f[i])
             id += 1
 
-
-    @ut.skipIf(not espressomd.has_features(["CONSTRAINTS", "DPD"]), "Skipped due to missing features.")
     def test_constraint(self):
         import espressomd.shapes
 
