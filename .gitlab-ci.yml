@@ -122,6 +122,14 @@ maxset:
     - build/
     expire_in: 4 weeks
 
+empty:
+  stage: build
+  except:
+    - doc
+  script:
+    - export myconfig=empty
+    - bash maintainer/CI/build_cmake.sh
+
 osx:
   stage: build
   except:
