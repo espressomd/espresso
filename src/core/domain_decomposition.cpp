@@ -28,8 +28,6 @@
 #include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
 
-#include "initialize.hpp"
-
 /** Returns pointer to the cell which corresponds to the position if
     the position is in the nodes spatial domain otherwise a nullptr
     pointer. */
@@ -682,8 +680,6 @@ void dd_on_geometry_change(int flags) {
     }
   }
   dd_update_communicators_w_boxl();
-  /* tell other algorithms that the box length might have changed. */
-  on_boxl_change();
 }
 
 /************************************************************/

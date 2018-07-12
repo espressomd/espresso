@@ -363,11 +363,10 @@ void cells_on_geometry_change(int flags) {
     cells_re_init(CELL_STRUCTURE_LAYERED);
     break;
   case CELL_STRUCTURE_NSQUARE:
-    /* this cell system doesn't need to react, just tell
-       the others */
-    on_boxl_change();
     break;
   }
+
+  on_boxl_change();
 }
 
 /*************************************************/
