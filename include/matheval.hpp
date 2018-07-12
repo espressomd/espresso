@@ -132,7 +132,7 @@ public:
      * Deep copies the syntax tree.
      */
     template <typename Expr>
-    expr_ast(Expr other) : tree(std::move(other)) {}
+    expr_ast(Expr other) : tree(std::move(other)) {} // NOLINT
 
     /** @brief Add a tree */
     expr_ast& operator+=(expr_ast const &rhs);
@@ -226,7 +226,7 @@ public:
      *
      * Saves the symbol table to apply variables.
      */
-    eval_ast(symbol_table_t sym) : st(std::move(sym)) {}
+    explicit eval_ast(symbol_table_t sym) : st(std::move(sym)) {}
 
     /** @brief Empty nodes in the tree evaluate to 0 */
     result_type operator()(nil /*unused*/) const { return 0; }

@@ -38,10 +38,10 @@ void commandline(int argc, char *argv[])
 {
     std::string expr;
     for (int i = 1; i < argc; ++i) {
-        expr += argv[i];
+        expr.append(argv[i]); // NOLINT
     }
 
-    evaluate(expr.c_str(), expr.c_str() + expr.size());
+    evaluate(expr.begin(), expr.end());
 }
 
 void sigint_handler(int /*unused*/)
@@ -58,8 +58,7 @@ void interactive()
 
     std::cout << "Type [q or Q] to quit\n";
 
-    constexpr char const prompt[] = "> ";
-    char * input = readline(prompt);
+    char * input = readline("> ");
     double res = 0;
 
     while (input != nullptr)
@@ -68,14 +67,14 @@ void interactive()
 
         if (len != 0)
         {
-            if (input[0] == 'q' || input[0] == 'Q') {
+            if (input[0] == 'q' || input[0] == 'Q') { // NOLINT
                 break;
             }
 
             add_history(input);
 
             // Replace % by the last result
-            std::string line{input, input + len};
+            std::string line{input, input + len}; // NOLINT
             std::size_t pos = line.find('%');
             if (pos != std::string::npos) {
                 line.replace(pos, 1, boost::lexical_cast<std::string>(res));
@@ -87,15 +86,15 @@ void interactive()
             }
         }
 
-        std::free(input);
-        input = readline(prompt);
+        std::free(input); // NOLINT
+        input = readline("> ");
     }
 
     if (input == nullptr) { // nullptr signals EOF
         std::cout << '\n';
     }
 
-    std::free(input);
+    std::free(input); // NOLINT
 }
 
 int main(int argc, char *argv[])
