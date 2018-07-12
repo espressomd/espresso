@@ -365,8 +365,6 @@ void cells_on_geometry_change(int flags) {
   case CELL_STRUCTURE_NSQUARE:
     break;
   }
-
-  on_boxl_change();
 }
 
 /*************************************************/
