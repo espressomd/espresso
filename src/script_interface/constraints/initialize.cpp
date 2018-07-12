@@ -18,31 +18,41 @@
 */
 #include "config.hpp"
 
-#include "initialize.hpp"
 #include "ScriptInterface.hpp"
+#include "initialize.hpp"
 
 #include "Constraints.hpp"
 
-#include "ShapeBasedConstraint.hpp"
 #include "HomogeneousMagneticField.hpp"
+#include "ShapeBasedConstraint.hpp"
 
 #include "ExternalField.hpp"
-#include "fields.hpp"
 #include "couplings.hpp"
+#include "fields.hpp"
 
 namespace ScriptInterface {
 namespace Constraints {
+
+using namespace FieldCoupling::Coupling;
+using namespace FieldCoupling::Fields;
+using TabulatedForceField = ExternalField<Scaled, Interpolated<double, 3>>;
+using ConstantForceField = ExternalField<Scaled, Constant<double, 3>>;
+// using LinearElectricField = ExternalField<Charge, AffineMap<double, 3>>;
 
 void initialize() {
 #ifdef CONSTRAINTS
   ScriptInterface::register_new<ScriptInterface::Constraints::Constraints>(
       "Constraints::Constraints");
 
-  ScriptInterface::register_new<ScriptInterface::Constraints::ShapeBasedConstraint>(
+  ScriptInterface::register_new<
+      ScriptInterface::Constraints::ShapeBasedConstraint>(
       "Constraints::ShapeBasedConstraint");
 
-  ScriptInterface::register_new<ScriptInterface::Constraints::HomogeneousMagneticField>(
+  ScriptInterface::register_new<
+      ScriptInterface::Constraints::HomogeneousMagneticField>(
       "Constraints::HomogeneousMagneticField");
+
+  ScriptInterface::register_new<TabulatedForceField>("Constraints::ForceField");
 #endif
 }
 } /* namespace Constraints */

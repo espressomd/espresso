@@ -166,11 +166,10 @@ class ShapeBasedConstraint(Constraint):
 
         """
         return self.call_method("total_force", constraint=self)
-        
     def total_normal_force(self):
         """
         Get the total summed normal force acting on this constraint.
-        
+
         """
         return self.call_method("total_normal_force", constraint=self)
 
@@ -185,3 +184,15 @@ class HomogeneousMagneticField(Constraint):
     """
 
     _so_name = "Constraints::HomogeneousMagneticField"
+
+class ForceField(Constraint):
+    """
+    Attributes
+    ----------
+    H : array of :obj:`float`
+        Magnetic field vector. Describes both field direction and
+        strength of the magnetic field (via length of the vector).
+
+    """
+
+    _so_name = "Constraints::ForceField"
