@@ -15,6 +15,9 @@ class HomogeneousMagneticFieldTest(ut.TestCase):
         self.S.time_step = 0.01
         self.S.cell_system.skin = 0.4
 
+    def tearDown(self):
+        self.S.constraints.clear()
+
     def test_setter_and_getter(self):
         H_field1 = [0.0, 1.0, 0.0]
         H_field2 = [3.533, 5.842, 0.127]
