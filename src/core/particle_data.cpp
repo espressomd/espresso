@@ -567,10 +567,12 @@ int set_particle_dip(int part, double dip[3]) {
 #endif
 
 #ifdef VIRTUAL_SITES
-int set_particle_virtual(int part, int isVirtual) {
+int set_particle_virtual(int part, int is_virtual) {
   auto const pnode = get_particle_node(part);
 
-  mpi_send_virtual(pnode, part, isVirtual);
+  if (pnode == -1)
+    return ES_ERROR;
+  mpi_send_virtual(pnode, part, is_virtual);
   return ES_OK;
 }
 #endif
@@ -895,12 +897,6 @@ void local_place_particle(int part, const double p[3], int _new) {
   PART_TRACE(fprintf(
       stderr, "%d: local_place_particle: got particle id=%d @ %f %f %f\n",
       this_node, part, p[0], p[1], p[2]));
-
-#ifdef LEES_EDWARDS
-  pt->m.v[0] += vv[0];
-  pt->m.v[1] += vv[1];
-  pt->m.v[2] += vv[2];
-#endif
 
   memmove(pt->r.p.data(), pp, 3 * sizeof(double));
   memmove(pt->l.i.data(), i, 3 * sizeof(int));
@@ -1254,7 +1250,7 @@ void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }
 
 #ifdef VIRTUAL_SITES
 void pointer_to_virtual(Particle const *p, int const *&res) {
-  res = &(p->p.isVirtual);
+  res = &(p->p.is_virtual);
 }
 #endif
 

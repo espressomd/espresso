@@ -84,10 +84,8 @@
 #include "bonded_coulomb_p3m_sr.hpp"
 #endif
 #ifdef IMMERSED_BOUNDARY
-#include "immersed_boundary/ibm_main.hpp"
-#include "immersed_boundary/ibm_tribend.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
-#include "immersed_boundary/ibm_volume_conservation.hpp"
+#include "immersed_boundary/ibm_tribend.hpp"
 #endif
 #ifdef DPD
 #include "dpd.hpp"
@@ -465,26 +463,24 @@ inline void add_bonded_force(Particle *p1) {
   double torque1[3] = {0., 0., 0.};
   double torque2[3] = {0., 0., 0.};
 #endif
-  Particle *p2 = nullptr, *p3 = nullptr, *p4 = nullptr;
+  Particle *p3 = nullptr, *p4 = nullptr;
   Bonded_ia_parameters *iaparams;
-  int i, j, type_num, type, n_partners, bond_broken;
+  int i, j, bond_broken;
 
   i = 0;
   while (i < p1->bl.n) {
-    type_num = p1->bl.e[i++];
+    int type_num = p1->bl.e[i++];
     iaparams = &bonded_ia_params[type_num];
-    type = iaparams->type;
-    n_partners = iaparams->num;
+    int type = iaparams->type;
+    int n_partners = iaparams->num;
 
-    /* fetch particle 2, which is always needed */
-    p2 = local_particles[p1->bl.e[i++]];
-    
-    if (!p2) {
-      runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
-                        << " and " << p1->bl.e[i - 1]
-                        << " (particles are not stored on the same node)";
-      return;
-    }
+    if (n_partners) 
+    {
+      Particle* p2 = local_particles[p1->bl.e[i++]];
+      if (!p2) {
+        runtimeErrorMsg() << "bond broken between particles " << p1->p.identity;
+        return;
+      }
 
     /* fetch particle 3 eventually */
     if (n_partners >= 2) {
@@ -836,6 +832,7 @@ inline void add_bonded_force(Particle *p1) {
         break;
       }
     }
+  }
   }
 }
 

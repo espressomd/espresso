@@ -69,7 +69,7 @@ namespace PdbParser {
 	}
       } 
     }
-    catch (ifstream::failure e) { // NOLINT
+    catch (ifstream::failure& e) { // NOLINT
       return false;
     }
 

@@ -64,7 +64,7 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
     def test_com_langevin(self):
         """Test for COM thermalization."""
 
-        N = 100
+        N = 200
         N2 = int(N/2)
         self.system.part.clear()
         self.system.time_step = 0.02
@@ -103,7 +103,7 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
 
         v_minmax = 5
         bins = 50
-        error_tol = 0.015
+        error_tol = 0.017
         self.check_velocity_distribution(
             v_stored, v_minmax, bins, error_tol, t_com)
 

@@ -693,7 +693,7 @@ typedef struct {
   // These are interaction parameters
   // k1 is used for Neo-Hookean
   // k1 and k2 are used Skalak
-  double maxdist;
+  double maxDist;
   tElasticLaw elasticLaw;
   double k1;
   double k2;
@@ -713,13 +713,10 @@ typedef struct {
   //  bool writeCOM;
 } IBM_VolCons_Parameters;
 
-typedef enum { TriangleNormals, NodeNeighbors } tBendingMethod;
-
 /** Parameters for IBM tribend **/
 typedef struct {
   // Interaction data
   double kb;
-  tBendingMethod method;
 
   // Reference angle
   double theta0;
@@ -932,12 +929,10 @@ inline bool pair_bond_exists_on(const Particle* const p, const Particle* const p
 * @param bond        enum bond type */ 
 inline bool pair_bond_enum_exists_on(const Particle * const p_bond, const Particle * const p_partner, BondedInteraction bond)
 {
-    Bonded_ia_parameters *iaparams;
-    int type_num;
     int i = 0;
     while (i < p_bond->bl.n) {
-        type_num = p_bond->bl.e[i];
-        iaparams = &bonded_ia_params[type_num];
+        int type_num = p_bond->bl.e[i];
+        Bonded_ia_parameters *iaparams = &bonded_ia_params[type_num];
         if (iaparams->type == (int)bond && p_bond->bl.e[i+1] == p_partner->p.identity) {
             return true;
         } else {

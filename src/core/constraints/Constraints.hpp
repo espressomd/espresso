@@ -25,7 +25,7 @@ public:
       auto const pos = folded_position(p);
       ParticleForce force{};
       for (auto const &c : *this) {
-        force += c->force(&p, pos);
+        force += c->force(p, pos);
       }
 
       p.f += force;
@@ -37,7 +37,7 @@ public:
       auto const pos = folded_position(p);
 
       for (auto const &c : *this) {
-        c->add_energy(&p, pos, energy);
+        c->add_energy(p, pos, energy);
       }
     }
   }

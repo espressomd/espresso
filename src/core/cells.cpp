@@ -34,7 +34,6 @@
 #include "integrate.hpp"
 #include "interaction_data.hpp"
 #include "layered.hpp"
-#include "lees_edwards_domain_decomposition.hpp"
 #include "nsquare.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
@@ -288,7 +287,7 @@ void announce_resort_particles() {
                 comm_cart);
 
   INTEG_TRACE(fprintf(stderr,
-                      "%d: announce_resort_particles: resort_particles=%d\n",
+                      "%d: announce_resort_particles: resort_particles=%u\n",
                       this_node, resort_particles));
 }
 

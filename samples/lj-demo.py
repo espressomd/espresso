@@ -17,17 +17,29 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, division
+import matplotlib
+matplotlib.use('WXAgg')
 import espressomd
 from espressomd import thermostat
 from espressomd import visualization
 import numpy as np
-import matplotlib
-matplotlib.use('WXAgg')
 from matplotlib import pyplot
 from threading import Thread
 from traits.api import HasTraits, Button, Any, Range, List, Enum, Float
 from traitsui.api import View, Group, Item, CheckListEditor, RangeEditor, EnumEditor
-from espressomd.visualization_mayavi import mlab
+import sys
+import time
+
+use_opengl = "opengl" in sys.argv
+use_mayavi = "mayavi" in sys.argv
+if not use_opengl and not use_mayavi:
+    use_mayavi = True
+assert use_opengl != use_mayavi
+
+if use_mayavi:
+    from espressomd.visualization_mayavi import mlab
+if use_opengl:
+    from pyface.api import GUI
 
 try:
     import midi
@@ -42,8 +54,6 @@ midi.init()
 pressure_log_flag = True
 
 mayavi_autozoom = False  # autozoom is buggy... works only for rotation
-
-show_real_system_temperature = True
 
 old_pressure = -1
 
@@ -88,9 +98,6 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
 system.cell_system.set_n_square(use_verlet_lists=False)
 
-# warmup integration (with capped LJ potential)
-warm_steps = 100
-warm_n_times = 30
 # do the warmup until the particles have at least the distance min_dist
 min_dist = 0.9
 
@@ -127,12 +134,16 @@ system.analysis.dist_to(0)
 act_min_dist = system.analysis.min_dist()
 system.cell_system.max_num_cells = 2744
 
-mayavi = visualization.mayaviLive(system)
+if use_mayavi:
+    vis = visualization.mayaviLive(system)
+elif use_opengl:
+    vis = visualization.openGLLive(system)
 
 mayavi_rotation_angle = 45.
 mayavi_rotation_angle_step = 5.
 
-mayavi_zoom = 35.949120941773977
+mayavi_zoom = 36.
+mayavi_zoom_old = mayavi_zoom
 mayavi_zoom_step = 3.
 
 plot_max_data_len = 20
@@ -191,8 +202,8 @@ class Controls(HasTraits):
     number_of_particles = Range(min_n, max_n, n_part, )
     ensemble = Enum('NVT', 'NPT')
 
-    midi_input = midi.Input(default_input[0]) if len(inputs) > 1 else None
-    midi_output = midi.Output(default_output[0]) if len(outputs) > 1 else None
+    midi_input = None
+    midi_output = None
 
     MIDI_BASE = 224
     MIDI_NUM_TEMPERATURE = MIDI_BASE + 0
@@ -202,7 +213,7 @@ class Controls(HasTraits):
 
     MIDI_ROTATE = 0
 
-    MIDI_ZOOM = 176
+    MIDI_ZOOM = 144
 
     _ui = Any
     view = View(
@@ -226,7 +237,9 @@ class Controls(HasTraits):
             label='MIDI devices'
         ),
         buttons=[],
-        title='Control'
+        title='Control',
+        height=0.2,
+        width=0.3
     )
 
     def __init__(self, **traits):
@@ -245,7 +258,8 @@ class Controls(HasTraits):
     def _input_device_fired(self):
         if self.midi_input is not None:
             self.midi_input.close()
-        self.midi_input = midi.Input(self.input_device[0])
+        if len(self.input_device) > 0:
+            self.midi_input = midi.Input(self.input_device[0])
 
     def _output_device_fired(self):
         if self.midi_output is not None:
@@ -300,38 +314,12 @@ class Controls(HasTraits):
             self.midi_output.write_short(144, 3, 127)  # N
 
 #############################################################
-#  Warmup Integration                                       #
-#############################################################
-
-
-# set LJ cap
-lj_cap = 20
-system.force_cap = lj_cap
-
-# # Warmup Integration Loop
-# i = 0
-# while (i < warm_n_times and act_min_dist < min_dist):
-#     system.integrator.run(warm_steps)
-#     # Warmup criterion
-#     act_min_dist = system.analysis.min_dist()
-#     i += 1
-#
-# #   Increase LJ cap
-#     lj_cap = lj_cap + 10
-#     system.force_cap = lj_cap
-#     mayavi.update()
-
-#############################################################
 #      Integration                                          #
 #############################################################
 
-# remove force capping
-#lj_cap = 0
-# system.force_cap = lj_cap
-
 # get initial observables
 pressure = system.analysis.pressure()
-temperature = (system.part[:].v**2).sum() / 3.0
+temperature = 0.0
 
 # TODO: this is some terrible polynomial fit, replace it with a better expression
 # equation of state
@@ -404,7 +392,15 @@ def main_loop():
     global energies, plt1_x_data, plt1_y_data, plt2_x_data, plt2_y_data, old_pressure
 
     system.integrator.run(steps=int_steps)
-    mayavi.update()
+    vis.update()
+
+    # increase LJ cap during warmup
+    if system.force_cap > 0:
+        if system.analysis.min_dist() < min_dist:
+            system.force_cap = system.force_cap + 0.1
+        else:
+            system.force_cap = 0
+            print("Switching off force capping")
 
     # make sure the parameters are valid
     # not sure if this is necessary after using limit_range
@@ -418,15 +414,20 @@ def main_loop():
     pressure = system.analysis.pressure()
 
     # update the parameters set in the GUI
-    system.thermostat.set_langevin(kT=controls.temperature, gamma=1.0)
+    if system.thermostat.get_state()[0]['kT'] != controls.temperature:
+        system.thermostat.set_langevin(kT=controls.temperature, gamma=1.0)
+        print("temperature changed")
+        system.force_cap = lj_cap
     if controls.ensemble == 'NPT':
         # reset Vkappa when target pressure has changed
 
         if old_pressure != controls.pressure:
-            system.analysis.Vkappa('reset')
+            system.analysis.v_kappa('reset')
+            print("pressure changed")
             old_pressure = controls.pressure
+            system.force_cap = lj_cap
 
-        newVkappa = system.analysis.Vkappa('read')['Vk1']
+        newVkappa = system.analysis.v_kappa('read')['Vk1']
         newVkappa = newVkappa if newVkappa > 0. else 4.0 / \
             (NPTGamma0 * NPTGamma0 * NPTInitPistonMass)
         pistonMass = limit_range(
@@ -443,18 +444,21 @@ def main_loop():
         new_box = np.ones(3) * controls.volume**(1. / 3.)
         if np.any(np.array(system.box_l) != new_box):
             for i in range(len(system.part)):
-                system.part[i].pos *= new_box / system.box_l[0]
+                system.part[i].pos = system.part[i].pos * new_box / system.box_l[0]
+            print("volume changed")
+            system.force_cap = lj_cap
         system.box_l = new_box
 
     new_part = controls.number_of_particles
     if new_part > len(system.part):
         for i in range(len(system.part), new_part):
             system.part.add(id=i, pos=np.random.random(3) * system.box_l)
+        print("particles added")
+        system.force_cap = lj_cap
     elif new_part < len(system.part):
         for i in range(new_part, len(system.part)):
             system.part[i].remove()
-    # There should be no gaps in particle numbers
-    assert len(system.part) == system.part.highest_particle_id + 1
+        print("particles removed")
 
     plt1_x_data = plot1.get_xdata()
     plt1_y_data = plot1.get_ydata()
@@ -463,12 +467,8 @@ def main_loop():
 
     plt1_x_data = np.append(
         plt1_x_data[-plot_max_data_len + 1:], system.time)
-    if show_real_system_temperature:
-        plt1_y_data = np.append(plt1_y_data[-plot_max_data_len + 1:], 2. / (
-            3. * len(system.part)) * system.analysis.energy()["kinetic"])
-    else:
-        plt1_y_data = np.append(
-            plt1_y_data[-plot_max_data_len + 1:], (system.part[:].v**2).sum())
+    plt1_y_data = np.append(plt1_y_data[-plot_max_data_len + 1:], 2. / (
+        3. * len(system.part)) * system.analysis.energy()["kinetic"])
     plt2_x_data = np.append(
         plt2_x_data[-plot_max_data_len + 1:], system.time)
     plt2_y_data = np.append(
@@ -520,36 +520,27 @@ def midi_thread():
                             mayavi_rotation_angle -= mayavi_rotation_angle_step * \
                                 (data2 - 64)
                     elif status == controls.MIDI_ZOOM:
-                        if data2 < 65:
+                        if data1 == 99 and data2 == 127:
                             # zoom in
-                            mayavi_zoom -= mayavi_zoom_step * data2
-                        elif data2 >= 65:
+                            mayavi_zoom -= mayavi_zoom_step
+                        elif data1 == 98 and data2 == 127:
                             # zoom out
-                            mayavi_zoom += mayavi_zoom_step * (data2 - 64)
+                            mayavi_zoom += mayavi_zoom_step
                     # else:
                     #    print("Unknown Status {0} with data1={1} and data2={2}".format(status, data1, data2))
 
         except Exception as e:
             print(e)
 
+        time.sleep(0.01)
+
 
 last_plotted = 0
-
-
-def calculate_kinetic_energy():
-    tmp_kin_energy = 0.
-    for i in range(len(system.part)):
-        tmp_kin_energy += 1. / 2. * np.linalg.norm(system.part[i].v)**2.0
-
-    print("tmp_kin_energy={}".format(tmp_kin_energy))
-    print("system.analysis.energy()['kinetic']={}".format(
-        system.analysis.energy(system)["kinetic"]))
-
 
 def rotate_scene():
     global mayavi_rotation_angle
 
-    if mayavi_rotation_angle:
+    if use_mayavi and mayavi_rotation_angle:
         # mlab.yaw(mayavi_rotation_angle)
         if mayavi_autozoom:
             mlab.view(azimuth=mayavi_rotation_angle, distance='auto')
@@ -561,9 +552,19 @@ def rotate_scene():
 
 
 def zoom_scene():
-    global mayavi_zoom
+    global mayavi_zoom, mayavi_zoom_old
 
-    mlab.view(distance=mayavi_zoom)
+    if use_mayavi:
+        mlab.view(distance=mayavi_zoom)
+    elif use_opengl:
+        if mayavi_zoom_old < mayavi_zoom:
+            vis.camera.move_backward()
+            mayavi_zoom_old = mayavi_zoom
+        elif mayavi_zoom_old > mayavi_zoom:
+            vis.camera.move_forward()
+            help( vis.camera.move_forward)
+            mayavi_zoom_old = mayavi_zoom
+
 
 
 def update_plot():
@@ -597,11 +598,14 @@ def update_plot():
 
 t = Thread(target=main_thread)
 t.daemon = True
-mayavi.registerCallback(update_plot, interval=1000)
+vis.register_callback(update_plot, interval=1000)
 controls = Controls()
 t.start()
 if controls.midi_input is not None:
     t2 = Thread(target=midi_thread)
     t2.daemon = True
     t2.start()
-mayavi.start()
+if use_opengl:
+    gui = GUI()
+    vis.register_callback(gui.process_events, interval=1000)
+vis.start()
