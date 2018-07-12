@@ -239,7 +239,7 @@ public:
     {
         auto it = st.find(c);
         if (it == st.end()) {
-            throw std::invalid_argument("Unknown variable " + c);
+            throw std::invalid_argument("Unknown variable " + c); // NOLINT
         }
         return it->second;
     }
@@ -368,7 +368,7 @@ struct expectation_handler {
            << std::string{first, last}
            << "\"";
 
-       throw std::runtime_error(msg.str());
+       throw std::runtime_error(msg.str()); // NOLINT
     }
 };
 
@@ -568,7 +568,7 @@ detail::expr_ast<real_t> parse(Iterator first, Iterator last) {
 
   if (!r || first != last) {
     std::string rest(first, last);
-    throw std::runtime_error("Parsing failed at " + rest);
+    throw std::runtime_error("Parsing failed at " + rest); // NOLINT
   }
 
   return ast;
