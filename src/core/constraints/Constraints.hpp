@@ -11,6 +11,7 @@ namespace Constraints {
 template <class ParticleRange, class Constraint>
 class Constraints
     : public ObjectRegistry<std::vector<std::shared_ptr<Constraint>>> {
+
   void reset_foces() const {
     for (auto const &c : *this) {
       c->reset_force();
@@ -44,9 +45,9 @@ public:
 
   void on_boxl_change() const {
     if (not this->empty()) {
-      // throw std::runtime_error("The box size can not be changed because there "
-      //                          "are active constraints. " +
-      //                          std::to_string(this->size()));
+      throw std::runtime_error("The box size can not be changed because there "
+                               "are active constraints. " +
+                               std::to_string(this->size()));
     }
   }
 };
