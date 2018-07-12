@@ -24,17 +24,16 @@
 #include "initialize.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "constraints.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 #include "debye_hueckel.hpp"
+#include "dpd.hpp"
 #include "elc.hpp"
 #include "energy.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
 #include "ghmc.hpp"
 #include "ghosts.hpp"
-#include "global.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "iccp3m.hpp" /* -iccp3m- */
@@ -66,12 +65,9 @@
 #include "thermalized_bond.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
-#include "global.hpp"
 #include "virtual_sites.hpp"
-#include "dpd.hpp"
 
-#include "utils/mpi/all_compare.hpp" 
-
+#include "utils/mpi/all_compare.hpp"
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
 static int reinit_electrostatics = 0;
@@ -162,9 +158,9 @@ void on_integration_start() {
   }
 #endif
 
-/********************************************/
-/* end sanity checks                        */
-/********************************************/
+  /********************************************/
+  /* end sanity checks                        */
+  /********************************************/
 
 #ifdef LB_GPU
   if (lattice_switch & LATTICE_LB_GPU && this_node == 0) {
@@ -435,6 +431,12 @@ void on_resort_particles() {
 void on_boxl_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_boxl_change\n", this_node));
 
+  grid_changed_box_l();
+  /* Electrostatics cutoffs mostly depend on the system size,
+     therefore recalculate them. */
+  recalc_maximal_cutoff();
+  cells_on_geometry_change(0);
+
 /* Now give methods a chance to react to the change in box length */
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
@@ -456,6 +458,11 @@ void on_boxl_change() {
   case COULOMB_MAGGS:
     maggs_init();
     break;
+#ifdef SCAFACOS
+  case COULOMB_SCAFACOS:
+    Scafacos::update_system_params();
+    break;
+#endif
   default:
     break;
   }
@@ -468,6 +475,11 @@ void on_boxl_change() {
   // fall through
   case DIPOLAR_P3M:
     dp3m_scaleby_box_l();
+    break;
+#endif
+#ifdef SCAFACOS
+  case DIPOLAR_SCAFACOS:
+    Scafacos::update_system_params();
     break;
 #endif
   default:
@@ -483,8 +495,6 @@ void on_boxl_change() {
 #endif
   }
 #endif
-
-  Constraints::constraints.on_boxl_change();
 }
 
 void on_cell_structure_change() {
@@ -569,24 +579,7 @@ void on_parameter_change(int field) {
 
   switch (field) {
   case FIELD_BOXL:
-    grid_changed_box_l();
-#ifdef SCAFACOS
-#ifdef ELECTROSTATICS
-    if (coulomb.method == COULOMB_SCAFACOS) {
-      Scafacos::update_system_params();
-    }
-#endif
-#ifdef DIPOLES
-    if (coulomb.Dmethod == DIPOLAR_SCAFACOS) {
-      Scafacos::update_system_params();
-    }
-#endif
-
-#endif
-    /* Electrostatics cutoffs mostly depend on the system size,
-       therefore recalculate them. */
-    recalc_maximal_cutoff();
-    cells_on_geometry_change(0);
+    on_boxl_change();
     break;
   case FIELD_MIN_GLOBAL_CUT:
     recalc_maximal_cutoff();
