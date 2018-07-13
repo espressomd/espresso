@@ -46,8 +46,7 @@ public:
   void on_boxl_change() const {
     if (not this->empty()) {
       throw std::runtime_error("The box size can not be changed because there "
-                               "are active constraints. " +
-                               std::to_string(this->size()));
+                               "are active constraints.");
     }
   }
 };
