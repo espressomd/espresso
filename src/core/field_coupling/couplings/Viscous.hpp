@@ -13,10 +13,11 @@ public:
 
   Viscous(double gamma) : m_gamma(gamma) {}
   double &gamma() { return m_gamma; }
+  double const &gamma() const { return m_gamma; }
 
   template <typename Particle>
   Vector3d operator()(Particle const &p, Vector3d const &field) const {
-    return m_gamma * (field - Vector3d{p.m.v});
+    return m_gamma * (field - p.m.v);
   }
 };
 }
