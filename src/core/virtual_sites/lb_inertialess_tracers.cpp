@@ -3,22 +3,17 @@
 
 #include "config.hpp"
 
-#ifdef IMMERSED_BOUNDARY
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
+#include "config.hpp" 
 #include "particle_data.hpp"
 #include "lb.hpp"
 #include "cells.hpp"
 #include "integrate.hpp"
 #include "halo.hpp"
 #include "lbboundaries.hpp"
-#include "immersed_boundary/ibm_main.hpp"
-#include "immersed_boundary/ibm_cuda_interface.hpp"
-
-// Dummy functions. They are required by Espresso, but they don't do anything here.
-// We have our own update functions.
-void update_mol_pos_particle(Particle *) {};
-void update_mol_vel_particle(Particle *) {};
-void distribute_mol_force() {};
+#include "virtual_sites/lb_inertialess_tracers.hpp"
+#include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
 
 // ****** Functions for internal use ********
 
@@ -53,7 +48,7 @@ void IBM_ForcesIntoFluid_CPU()
   }
   
   // Update the forces on the ghost particles
-  ghost_communicator(&cell_structure.ibm_ghost_force_comm);
+  ghost_communicator(&cell_structure.vs_inertialess_tracers_ghost_force_comm);
   
   
   // Loop over local cells
@@ -64,7 +59,7 @@ void IBM_ForcesIntoFluid_CPU()
     const int np = cell->n ;
     
     for (int i = 0; i < np; i++)
-      if (p[i].p.isVirtual)
+      if (p[i].p.is_virtual)
         CoupleIBMParticleToFluid(&p[i]);
   }
   
@@ -88,7 +83,7 @@ void IBM_ForcesIntoFluid_CPU()
           && p[i].r.p[2] < my_right[2]+0.5*lblattice.agrid[2])
       {
         
-        if (p[i].p.isVirtual)
+        if (p[i].p.is_virtual)
           CoupleIBMParticleToFluid(&p[i]);
       }
     }
@@ -107,13 +102,13 @@ void IBM_ResetLBForces_CPU()
   {
 #ifdef EXTERNAL_FORCES
     // unit conversion: force density
-    lbfields[i].force[0] = lbpar.ext_force[0]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
-    lbfields[i].force[1] = lbpar.ext_force[1]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
-    lbfields[i].force[2] = lbpar.ext_force[2]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
+    lbfields[i].force_density[0] = lbpar.ext_force_density[0]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
+    lbfields[i].force_density[1] = lbpar.ext_force_density[1]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
+    lbfields[i].force_density[2] = lbpar.ext_force_density[2]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
 #else
-    lbfields[i].force[0] = 0.0;
-    lbfields[i].force[1] = 0.0;
-    lbfields[i].force[2] = 0.0;
+    lbfields[i].force_density[0] = 0.0;
+    lbfields[i].force_density[1] = 0.0;
+    lbfields[i].force_density[2] = 0.0;
     lbfields[i].has_force = 0;
 #endif
   }
@@ -142,7 +137,7 @@ void IBM_UpdateParticlePositions(ParticleRange particles)
     const Cell *const cell = local_cells.cell[c];
     Particle *const p  = cell->part;
     for(int j = 0; j < cell->n; j++)
-      if (p[j].p.isVirtual)
+      if (p[j].p.is_virtual)
       {
         if ( !( p[j].p.ext_flag & 2 ) )
           p[j].r.p[0] = p[j].r.p[0] + p[j].m.v[0]*time_step;
@@ -172,12 +167,17 @@ void CoupleIBMParticleToFluid(Particle *p)
 {
   // Convert units from MD to LB
   double delta_j[3];
-  delta_j[0] = p->f.f[0]*time_step*lbpar.tau/lbpar.agrid;
+  // Old version. Worked, but not when agrid != 1 and probably also required time_step = lbpar.tau
+/*  delta_j[0] = p->f.f[0]*time_step*lbpar.tau/lbpar.agrid;
   delta_j[1] = p->f.f[1]*time_step*lbpar.tau/lbpar.agrid;
-  delta_j[2] = p->f.f[2]*time_step*lbpar.tau/lbpar.agrid;
+  delta_j[2] = p->f.f[2]*time_step*lbpar.tau/lbpar.agrid;*/
+
+  delta_j[0] = p->f.f[0]*lbpar.tau*lbpar.tau/lbpar.agrid;
+  delta_j[1] = p->f.f[1]*lbpar.tau*lbpar.tau/lbpar.agrid;
+  delta_j[2] = p->f.f[2]*lbpar.tau*lbpar.tau/lbpar.agrid;
   
   // Get indices and weights of affected nodes using discrete delta function
-  index_t node_index[8];
+  Lattice::index_t node_index[8];
   double delta[6];
   lblattice.map_position_to_lattice(p->r.p,node_index,delta);
   
@@ -192,10 +192,10 @@ void CoupleIBMParticleToFluid(Particle *p)
         if ( !IsHalo(node_index[(z*2+y)*2+x]) )
         {
           // Indicate that there is a force, probably only necessary for the unusual case of compliing without EXTERNAL_FORCES
-          lbfields[node_index[(z*2+y)*2+x]].has_force = 1;
+          lbfields[node_index[(z*2+y)*2+x]].has_force_density = 1;
 
           // Add force into the lbfields structure
-          double *local_f = lbfields[node_index[(z*2+y)*2+x]].force;
+          double *local_f = lbfields[node_index[(z*2+y)*2+x]].force_density;
           
           local_f[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[0];
           local_f[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[1];
@@ -213,7 +213,7 @@ Very similar to the velocity interpolation done in standard Espresso, except tha
 
 void GetIBMInterpolatedVelocity(double *p, double *const v, double *const forceAdded)
 {
-  index_t node_index[8], index;
+  Lattice::index_t node_index[8], index;
   double delta[6];
   double local_rho, local_j[3], interpolated_u[3];
   double modes[19];
@@ -221,13 +221,17 @@ void GetIBMInterpolatedVelocity(double *p, double *const v, double *const forceA
   double *f;
   
   double lbboundary_mindist, distvec[3];
-  double pos[3];
+  Vector3d pos;
   
 #ifdef LB_BOUNDARIES
-  int boundary_no;
+
+ // This is the interpolation scheme from lb_lbfluid_get_interpolated_velocity in lb.cpp
+ // It is buggy and has therefore been removed
+
+/* int boundary_no;
   int boundary_flag=-1; // 0 if more than agrid/2 away from the boundary, 1 if 0<dist<agrid/2, 2 if dist <0
   
-  lbboundary_mindist_position(p, &lbboundary_mindist, distvec, &boundary_no);
+  LBBoundaries::lbboundary_mindist_position(p, &lbboundary_mindist, distvec, &boundary_no);
   if (lbboundary_mindist>lbpar.agrid/2) {
     boundary_flag=0;
     pos[0]=p[0];
@@ -242,11 +246,16 @@ void GetIBMInterpolatedVelocity(double *p, double *const v, double *const forceA
     
   } else {
     boundary_flag=2;
-    v[0]= lb_boundaries[boundary_no].velocity[0]*lbpar.agrid/lbpar.tau;
-    v[1]= lb_boundaries[boundary_no].velocity[1]*lbpar.agrid/lbpar.tau;
-    v[2]= lb_boundaries[boundary_no].velocity[2]*lbpar.agrid/lbpar.tau;
+    v[0]= (*LBBoundaries::lbboundaries[boundary_no]).velocity()[0]*lbpar.agrid/lbpar.tau;
+    v[1]= (*LBBoundaries::lbboundaries[boundary_no]).velocity()[1]*lbpar.agrid/lbpar.tau;
+    v[2]= (*LBBoundaries::lbboundaries[boundary_no]).velocity()[2]*lbpar.agrid/lbpar.tau;
     return; // we can return without interpolating
-  }
+  }*/
+  
+  pos[0]=p[0];
+  pos[1]=p[1];
+  pos[2]=p[2];
+  
 #else
   pos[0]=p[0];
   pos[1]=p[1];
@@ -269,23 +278,24 @@ void GetIBMInterpolatedVelocity(double *p, double *const v, double *const forceA
       for (x=0;x<2;x++) {
         
         index = node_index[(z*2+y)*2+x];
-        f = lbfields[index].force_buf;
+        f = lbfields[index].force_density_buf;
         
         // This can be done easier withouth copying the code twice
         // We probably can even set the boundary velocity directly
 #ifdef LB_BOUNDARIES
         if (lbfields[index].boundary) {
-          local_rho=lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid;
-          local_j[0] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
-          local_j[1] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[1];
-          local_j[2] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[2];
+          local_rho=lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
+          local_j[0] = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid* (*LBBoundaries::lbboundaries[lbfields[index].boundary-1]).velocity()[0];
+          local_j[1] = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid* (*LBBoundaries::lbboundaries[lbfields[index].boundary-1]).velocity()[1];
+          local_j[2] = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid* (*LBBoundaries::lbboundaries[lbfields[index].boundary-1]).velocity()[2];
         } else
 #endif
         {
           lb_calc_modes(index, modes);
-          local_rho = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
+          local_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
           
           // Add the +f/2 contribution!!
+          // Guo et al. PRE 2002
           local_j[0] = modes[1] + f[0]/2;
           local_j[1] = modes[2] + f[1]/2;
           local_j[2] = modes[3] + f[2]/2;
@@ -293,7 +303,7 @@ void GetIBMInterpolatedVelocity(double *p, double *const v, double *const forceA
           // Keep track of the forces that we added to the fluid
           // This is necessary for communication because this part is executed for real and ghost particles
           // Later on we sum the real and ghost contributions
-          const double fExt[3] = { lbpar.ext_force[0]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau, lbpar.ext_force[1]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau, lbpar.ext_force[2]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau };
+          const double fExt[3] = { lbpar.ext_force_density[0]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau, lbpar.ext_force_density[1]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau, lbpar.ext_force_density[2]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau };
           
           forceAdded[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*(f[0]-fExt[0])/2/(local_rho);
           forceAdded[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*(f[1]-fExt[1])/2/(local_rho);
@@ -310,16 +320,20 @@ void GetIBMInterpolatedVelocity(double *p, double *const v, double *const forceA
     }
   }
 #ifdef LB_BOUNDARIES
-  if (boundary_flag==1) {
-    v[0]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[0]+(1-lbboundary_mindist/(lbpar.agrid/2.))*lb_boundaries[boundary_no].velocity[0];
-    v[1]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[1]+(1-lbboundary_mindist/(lbpar.agrid/2.))*lb_boundaries[boundary_no].velocity[1];
-    v[2]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[2]+(1-lbboundary_mindist/(lbpar.agrid/2.))*lb_boundaries[boundary_no].velocity[2];
+  // Again the interpolation scheme has been removed
+/*  if (boundary_flag==1) {
+    v[0]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[0]+(1-lbboundary_mindist/(lbpar.agrid/2.))* (*LBBoundaries::lbboundaries[boundary_no]).velocity()[0];
+    v[1]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[1]+(1-lbboundary_mindist/(lbpar.agrid/2.))* (*LBBoundaries::lbboundaries[boundary_no]).velocity()[1];
+    v[2]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[2]+(1-lbboundary_mindist/(lbpar.agrid/2.))* (*LBBoundaries::lbboundaries[boundary_no]).velocity()[2];
     
   } else {
     v[0] = interpolated_u[0];
     v[1] = interpolated_u[1];
     v[2] = interpolated_u[2];
-  }
+  }*/
+  v[0] = interpolated_u[0];
+  v[1] = interpolated_u[1];
+  v[2] = interpolated_u[2];
 #else
   v[0] = interpolated_u[0];
   v[1] = interpolated_u[1];
@@ -387,12 +401,12 @@ void ParticleVelocitiesFromLB_CPU()
     const Cell *const cell = local_cells.cell[c];
     Particle *const p  = cell->part;
     for(int j = 0; j < cell->n; j++)
-      if (p[j].p.isVirtual)
+      if (p[j].p.is_virtual)
       {
         double dummy[3];
         // Get interpolated velocity and store in the force (!) field
         // for later communication (see below)
-        GetIBMInterpolatedVelocity(p[j].r.p, p[j].f.f, dummy);
+        GetIBMInterpolatedVelocity(p[j].r.p.data(), p[j].f.f.data(), dummy);
       }
   }
   
@@ -412,11 +426,11 @@ void ParticleVelocitiesFromLB_CPU()
           && p[j].r.p[2] >= my_left[2]-0.5*lblattice.agrid[2]
           && p[j].r.p[2] < my_right[2]+0.5*lblattice.agrid[2])
       {
-        if (p[j].p.isVirtual)
+        if (p[j].p.is_virtual)
         {
           double dummy[3];
-          double force[3]; // The force stemming from the ghost particle
-          GetIBMInterpolatedVelocity(p[j].r.p, dummy, force);
+          double force[3]={0,0,0}; // The force stemming from the ghost particle
+          GetIBMInterpolatedVelocity(p[j].r.p.data(), dummy, force);
           
           // Rescale and store in the force field of the particle (for communication, see below)
           p[j].f.f[0] = force[0] * lbpar.agrid/lbpar.tau;
@@ -443,7 +457,7 @@ void ParticleVelocitiesFromLB_CPU()
     const Cell *const cell = local_cells.cell[c];
     Particle *const p  = cell->part;
     for(int j = 0; j < cell->n; j++)
-      if (p[j].p.isVirtual)
+      if (p[j].p.is_virtual)
       {
         p[j].m.v[0] = p[j].f.f[0];
         p[j].m.v[1] = p[j].f.f[1];

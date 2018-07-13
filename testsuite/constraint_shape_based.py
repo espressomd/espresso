@@ -9,7 +9,7 @@ import espressomd.shapes
 import tests_common
 
 
-@ut.skipIf(not espressomd.has_features(["CONSTRAINTS", "LENNARD_JONES_GENERIC"]),
+@ut.skipIf(not espressomd.has_features(["LENNARD_JONES_GENERIC"]),
            "Features not available, skipping test!")
 class ShapeBasedConstraintTest(ut.TestCase):
 

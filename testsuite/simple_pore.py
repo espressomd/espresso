@@ -10,7 +10,7 @@ from espressomd.shapes import SimplePore,Cylinder
 # it particles could enter the constraint over the periodic boundarys,
 # leading to force jumps.
 
-@ut.skipIf(not espressomd.has_features(["CONSTRAINTS", "LENNARD_JONES"]),
+@ut.skipIf(not espressomd.has_features(["LENNARD_JONES"]),
            "Features not available, skipping test!")
 class SimplePoreConstraint(ut.TestCase):
     def test(self):

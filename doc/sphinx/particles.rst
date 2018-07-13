@@ -402,6 +402,24 @@ Please note:
 -  The presence of rigid bodies constructed by means of virtual sites
    adds a contribution to the pressure and stress tensor.
 
+.. _Inertialess Lattice-Boltzmann tracers:
+
+Inertialess Lattice-Boltzmann tracers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`espressomd.virtual_sites.VirtualSitesInertialessTracers`
+
+When this implementation is selected, the virtual sites follow the motion of a Lattice Botzmann fluid (both, Cpu and Gpu). This is achieved by integrating their position using the fluid velocity at the virtual sites' position.
+Forces acting on the virtual sites are directly transferred as force density onto the Lattice Boltzmann fluid, making the coupling free of inertia.
+The feature stems from the implementation of the :ref:`Immersed Boundary Method for soft elastic objects`, but can be used independently.
+
+For correct results, the LB thermostat has to be deactivated for virtual sites::
+
+   system.thermostat.set_lb(kT=0,act_on_virtual=False)
+
+Please note that the velocity attribute of the virtual particles does not carry valid information for this virtual sites scheme.
+
+
 ..
     .. _Virtual sites in the center of mass of a molecule:
 

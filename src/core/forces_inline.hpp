@@ -38,7 +38,6 @@
 #include "bmhtf-nacl.hpp"
 #include "buckingham.hpp"
 #include "collision.hpp"
-#include "constraints.hpp"
 #include "dihedral.hpp"
 #include "thermalized_bond.hpp"
 #include "elc.hpp"
@@ -85,10 +84,8 @@
 #include "bonded_coulomb_p3m_sr.hpp"
 #endif
 #ifdef IMMERSED_BOUNDARY
-#include "immersed_boundary/ibm_main.hpp"
-#include "immersed_boundary/ibm_tribend.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
-#include "immersed_boundary/ibm_volume_conservation.hpp"
+#include "immersed_boundary/ibm_tribend.hpp"
 #endif
 #ifdef DPD
 #include "dpd.hpp"
@@ -477,15 +474,13 @@ inline void add_bonded_force(Particle *p1) {
     int type = iaparams->type;
     int n_partners = iaparams->num;
 
-    /* fetch particle 2, which is always needed */
-    Particle *p2 = local_particles[p1->bl.e[i++]];
-    
-    if (!p2) {
-      runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
-                        << " and " << p1->bl.e[i - 1]
-                        << " (particles are not stored on the same node)";
-      return;
-    }
+    if (n_partners) 
+    {
+      Particle* p2 = local_particles[p1->bl.e[i++]];
+      if (!p2) {
+        runtimeErrorMsg() << "bond broken between particles " << p1->p.identity;
+        return;
+      }
 
     /* fetch particle 3 eventually */
     if (n_partners >= 2) {
@@ -838,6 +833,7 @@ inline void add_bonded_force(Particle *p1) {
       }
     }
   }
+  }
 }
 
 inline void check_particle_force(Particle *part) {
@@ -860,9 +856,6 @@ inline void check_particle_force(Particle *part) {
 
 inline void add_single_particle_force(Particle *p) {
   add_bonded_force(p);
-#ifdef CONSTRAINTS
-  add_constraints_forces(p);
-#endif
 }
 
 #endif

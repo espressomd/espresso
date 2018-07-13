@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE(make_from_args_test) {
 
     BOOST_CHECK_THROW(
         (make_from_args<C, int, double, std::string>(vals, "b", "a", "c")),
-        boost::bad_get);
+        std::runtime_error);
   }
 }
 
@@ -188,7 +188,7 @@ BOOST_AUTO_TEST_CASE(make_shared_from_args_test) {
 
     BOOST_CHECK_THROW((make_shared_from_args<C, int, double, std::string>(
                           vals, "b", "a", "c")),
-                      boost::bad_get);
+                      std::runtime_error);
   }
 }
 

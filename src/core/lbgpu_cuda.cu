@@ -529,7 +529,7 @@ __device__ void reset_LB_force_densities(unsigned int index, LB_node_force_densi
   for(int ii=0;ii<LB_COMPONENTS;++ii)
   {
 
-#if defined(IMMERSED_BOUNDARY) || defined(EK_DEBUG)
+#if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) || defined(EK_DEBUG)
 // Store backup of the node forces
     if (buffer)
     {
@@ -2878,7 +2878,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
  * @param *fluid_composition Pointer to the local fluid composition for the Shanchen
  * @param *d_v               Pointer to local device values
 */
-__global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float *particle_force, CUDA_fluid_composition * fluid_composition, LB_node_force_density_gpu node_f, CUDA_particle_seed *part, LB_rho_v_gpu *d_v){
+__global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float *particle_force, CUDA_fluid_composition * fluid_composition, LB_node_force_density_gpu node_f, CUDA_particle_seed *part, LB_rho_v_gpu *d_v, bool couple_virtual){
 
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   unsigned int node_index[8];
@@ -2890,8 +2890,8 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *par
   LB_randomnr_gpu rng_part;
   if(part_index<para.number_of_particles)
   {
-#if defined(IMMERSED_BOUNDARY) || defined(VIRTUAL_SITES_COM)
-    if ( !particle_data[part_index].isVirtual )
+#if defined(VIRTUAL_SITES)
+    if ( !particle_data[part_index].is_virtual || couple_virtual )
 #endif
     {
       rng_part.seed = part[part_index].seed;
@@ -3063,6 +3063,7 @@ __global__ void lb_print_node(int single_nodeindex, LB_rho_v_pi_gpu *d_p_v, LB_n
     calc_values_in_MD_units(n_a, mode, d_p_v, d_v, node_f, single_nodeindex, 0);
   }
 }
+
 __global__ void momentum(LB_nodes_gpu n_a, LB_rho_v_gpu * d_v, LB_node_force_density_gpu node_f, float *sum) {
 
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
@@ -3170,7 +3171,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   free_and_realloc(nodes_a.vd      , lbpar_gpu->number_of_nodes * 19 * LB_COMPONENTS * sizeof(float));
   free_and_realloc(nodes_b.vd      , lbpar_gpu->number_of_nodes * 19 * LB_COMPONENTS * sizeof(float));   
   free_and_realloc(node_f.force_density    , lbpar_gpu->number_of_nodes *  3 * LB_COMPONENTS * sizeof(lbForceFloat));
-#if defined(IMMERSED_BOUNDARY) || defined(EK_DEBUG)
+#if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) || defined(EK_DEBUG)
   free_and_realloc(node_f.force_density_buf    , lbpar_gpu->number_of_nodes *  3 * LB_COMPONENTS * sizeof(lbForceFloat));
 #endif
 #ifdef SHANCHEN
@@ -3343,7 +3344,7 @@ void lb_init_extern_nodeforcedensities_GPU(int n_extern_node_force_densities, LB
 
 /**setup and call particle kernel from the host
 */
-void lb_calc_particle_lattice_ia_gpu(){
+void lb_calc_particle_lattice_ia_gpu(bool couple_virtual){
   if (lbpar_gpu.number_of_particles) 
   {
     /** call of the particle kernel */
@@ -3359,7 +3360,7 @@ void lb_calc_particle_lattice_ia_gpu(){
       KERNELCALL( calc_fluid_particle_ia, dim_grid_particles, threads_per_block_particles, 
                   ( *current_nodes, gpu_get_particle_pointer(), 
                     gpu_get_particle_force_pointer(), gpu_get_fluid_composition_pointer(),
-                    node_f, gpu_get_particle_seed_pointer(), device_rho_v )
+                    node_f, gpu_get_particle_seed_pointer(), device_rho_v, couple_virtual )
                 );
     }
     else { /** only other option is the three point coupling scheme */

@@ -62,6 +62,14 @@ public:
       return ret;
     }
 
+    if(method == "clear") {
+      for(auto const &e: m_elements) {
+        remove_in_core(e);
+      }
+
+      m_elements.clear();
+    }
+
     return true;
   }
 

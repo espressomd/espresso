@@ -104,6 +104,8 @@ python_test(FILE exclusions.py MAX_NUM_PROC 2)
 python_test(FILE langevin_thermostat.py MAX_NUM_PROC 1)
 python_test(FILE nsquare.py MAX_NUM_PROC 4)
 python_test(FILE virtual_sites_relative.py MAX_NUM_PROC 2)
+python_test(FILE virtual_sites_tracers.py MAX_NUM_PROC 2)
+python_test(FILE virtual_sites_tracers_gpu.py MAX_NUM_PROC 2)
 python_test(FILE domain_decomposition.py MAX_NUM_PROC 4)
 python_test(FILE layered.py MAX_NUM_PROC 4)
 python_test(FILE minimize_energy.py MAX_NUM_PROC 4)
@@ -134,7 +136,6 @@ python_test(FILE analyze_chains.py MAX_NUM_PROC 1)
 python_test(FILE analyze_distance.py MAX_NUM_PROC 1)
 python_test(FILE comfixed.py MAX_NUM_PROC 2)
 python_test(FILE rescale.py MAX_NUM_PROC 2)
-python_test(FILE lees_edwards.py MAX_NUM_PROC 4)
 python_test(FILE npt.py MAX_NUM_PROC 4)
 python_test(FILE elc_vs_mmm2d_neutral.py MAX_NUM_PROC 2)
 python_test(FILE elc_vs_mmm2d_nonneutral.py MAX_NUM_PROC 2)
@@ -154,6 +155,7 @@ python_test(FILE thermalized_bond.py MAX_NUM_PROC 4)
 python_test(FILE thole.py MAX_NUM_PROC 4)
 python_test(FILE lb_switch.py MAX_NUM_PROC 1)
 python_test(FILE lb_boundary_velocity.py MAX_NUM_PROC 1)
+python_test(FILE lb_thermo_virtual.py MAX_NUM_PROC 2)
 
 if(PY_H5PY)
   python_test(FILE h5md.py MAX_NUM_PROC 2)
@@ -162,6 +164,7 @@ endif(PY_H5PY)
 add_custom_target(python_test_data
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/data ${CMAKE_CURRENT_BINARY_DIR}/data
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/tests_common.py ${CMAKE_CURRENT_BINARY_DIR}
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/virtual_sites_tracers_common.py ${CMAKE_CURRENT_BINARY_DIR}
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ek_common.py ${CMAKE_CURRENT_BINARY_DIR})
 
 add_custom_target(check_python_serial COMMAND ${CMAKE_CTEST_COMMAND} -C serial --output-on-failure)

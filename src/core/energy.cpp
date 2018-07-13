@@ -31,6 +31,7 @@
 #include "magnetic_non_p3m_methods.hpp"
 #include "mdlc_correction.hpp"
 #include "scafacos.hpp"
+#include "constraints.hpp"
 #include <cassert>
 
 #include "short_range_loop.hpp"
@@ -149,6 +150,9 @@ void energy_calc(double *result) {
                    });
 
   calc_long_range_energies();
+
+  auto local_parts = local_cells.particles();
+  Constraints::constraints.add_energy(local_parts, energy);
 
 #ifdef CUDA
   copy_energy_from_GPU();

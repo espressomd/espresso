@@ -16,8 +16,6 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "config.hpp"
-
 #include "ScriptInterface.hpp"
 #include "initialize.hpp"
 
@@ -37,10 +35,8 @@ using namespace FieldCoupling::Coupling;
 using namespace FieldCoupling::Fields;
 using TabulatedForceField = ExternalField<Scaled, Interpolated<double, 3>>;
 using ConstantForceField = ExternalField<Scaled, Constant<double, 3>>;
-// using LinearElectricField = ExternalField<Charge, AffineMap<double, 3>>;
 
 void initialize() {
-#ifdef CONSTRAINTS
   ScriptInterface::register_new<ScriptInterface::Constraints::Constraints>(
       "Constraints::Constraints");
 
@@ -53,7 +49,6 @@ void initialize() {
       "Constraints::HomogeneousMagneticField");
 
   ScriptInterface::register_new<TabulatedForceField>("Constraints::ForceField");
-#endif
 }
 } /* namespace Constraints */
 } /* namespace ScriptInterface */
