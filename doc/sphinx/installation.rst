@@ -410,8 +410,6 @@ integrator or thermostat:
 
 -  ``MEMBRANE_COLLISION``
 
--  ``LEES_EDWARDS`` (experimental)
-
 -  ``REACTION_ENSEMBLE``
 
 -  ``GHMC``

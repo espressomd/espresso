@@ -112,15 +112,6 @@ shanchen:
     - export myconfig=shanchen with_coverage=true
     - bash maintainer/cuda_build.sh
 
-lees_edwards:
-  stage: build
-  except:
-    - doc
-  script:
-    - export myconfig=lees-edwards with_coverage=true
-    - export run_tests=lees_edwards
-    - bash maintainer/cuda_build.sh
-
 maxset:
   stage: build
   script:
@@ -130,6 +121,14 @@ maxset:
     paths:
     - build/
     expire_in: 4 weeks
+
+empty:
+  stage: build
+  except:
+    - doc
+  script:
+    - export myconfig=empty
+    - bash maintainer/CI/build_cmake.sh
 
 osx:
   stage: build

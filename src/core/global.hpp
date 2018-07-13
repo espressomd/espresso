@@ -62,8 +62,6 @@ enum Fields {
   FIELD_CELLSIZE,
   /** index of \ref langevin_gamma in  \ref #fields */
   FIELD_LANGEVIN_GAMMA,
-  /** index of \ref lees_edwards_offset in \ref #fields */
-  FIELD_LEES_EDWARDS_OFFSET,
   /** index of \ref integ_switch in \ref #fields */
   FIELD_INTEG_SWITCH,
   /** index of \ref local_box_l in \ref #fields */
@@ -151,7 +149,8 @@ enum Fields {
   FIELD_MAX_OIF_OBJECTS, // soft objects as per the object-in-fluid method
   /** index of \ref n_thermalized_bonds in \ref #fields */
   FIELD_THERMALIZEDBONDS,
-  FIELD_FORCE_CAP
+  FIELD_FORCE_CAP,
+  FIELD_THERMO_VIRTUAL
 };
 /*@}*/
 

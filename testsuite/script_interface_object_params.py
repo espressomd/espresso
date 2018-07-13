@@ -7,11 +7,6 @@ import espressomd
 from espressomd.shapes import Wall, Sphere
 from espressomd.constraints import ShapeBasedConstraint
 
-
-@ut.skipIf(
-    not espressomd.has_features(
-        ["CONSTRAINTS"]),
-    "Tests requries CONSTRAINTS")
 class ScriptInterfaceObjectParams(ut.TestCase):
     """Tests that object parameters are assigned the correct python class"""
 

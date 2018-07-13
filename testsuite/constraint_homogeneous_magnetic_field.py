@@ -6,9 +6,6 @@ import espressomd
 import numpy
 import sys
 
-
-@ut.skipIf(not espressomd.has_features(["CONSTRAINTS"]),
-           "Feature CONSTRAINTS not available, skipping test!")
 class HomogeneousMagneticFieldTest(ut.TestCase):
 
     S = espressomd.System(box_l=[1.0, 1.0, 1.0])
@@ -20,6 +17,9 @@ class HomogeneousMagneticFieldTest(ut.TestCase):
         self.S.box_l = [3.0, 3.0, 3.0]
         self.S.time_step = 0.01
         self.S.cell_system.skin = 0.4
+
+    def tearDown(self):
+        self.S.constraints.clear()
 
     def test_setter_and_getter(self):
         H_field1 = [0.0, 1.0, 0.0]

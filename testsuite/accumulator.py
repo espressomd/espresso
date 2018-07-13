@@ -41,7 +41,7 @@ class AccumulatorTest(ut.TestCase):
         self.system.seed = self.system.cell_system.get_state()['n_nodes'] * [1234]
         self.system.cell_system.skin = 0.4
         self.system.time_step = 0.01
-        self.system.part.add(id=0, pos=[0.0, 0.0, 0.0],fix=[1,1,1])
+        self.system.part.add(id=0, pos=[0.0, 0.0, 0.0])
         self.system.integrator.run(steps=0)
         self.pos_obs = espressomd.observables.ParticlePositions(ids=(0,))
         self.pos_obs_acc = espressomd.accumulators.MeanVarianceCalculator(obs=self.pos_obs)

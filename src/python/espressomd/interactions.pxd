@@ -25,6 +25,10 @@ from libcpp.string cimport string
 include "myconfig.pxi"
 from espressomd.system cimport *
 cimport numpy as np
+#force include of config.hpp
+cdef extern from "config.hpp":
+    pass
+
 from espressomd.utils cimport *
 
 cdef extern from "TabulatedPotential.hpp":
@@ -406,6 +410,35 @@ cdef extern from "interaction_data.hpp":
         double sin_phi0
 
 
+#* Parameters for IBM Triel  */
+    ctypedef enum tElasticLaw:
+        NeoHookean, Skalak
+    ctypedef struct IBM_Triel_Parameters:
+        double l0
+        double lp0
+        double sinPhi0
+        double cosPhi0
+        double area0
+        double a1
+        double a2
+        double b1
+        double b2
+        double maxDist
+        tElasticLaw elasticLaw
+        double k1
+        double k2
+
+#* Parameters for IBM Tribend  */
+    ctypedef struct IBM_Tribend_Parameters:
+        double kb
+        double theta0
+
+#* Parameters for IBM VolCons  */
+    ctypedef struct IBM_VolCons_Parameters:
+        int softID
+        double kappaV
+        double volRef
+
 #* Union in which to store the parameters of an individual bonded interaction */
     ctypedef union bond_parameters "Bond_parameters":
         Fene_bond_parameters fene
@@ -426,6 +459,9 @@ cdef extern from "interaction_data.hpp":
         Subt_lj_bond_parameters subt_lj
         Rigid_bond_parameters rigid_bond
         Angledist_bond_parameters angledist
+        IBM_Triel_Parameters ibm_triel
+        IBM_Tribend_Parameters ibm_tribend
+        IBM_VolCons_Parameters ibmVolConsParameters
 
     ctypedef struct bonded_ia_parameters:
         int type
@@ -464,6 +500,18 @@ cdef extern from "bonded_coulomb.hpp":
     int bonded_coulomb_set_params(int bond_type, double prefactor)
 cdef extern from "bonded_coulomb_p3m_sr.hpp":
     int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2)
+
+
+cdef extern from "immersed_boundary/ImmersedBoundaries.hpp":
+    cppclass ImmersedBoundaries:
+        void volume_conservation_set_params(const int bond_type, const int softID, const double kappaV)
+
+
+
+cdef extern from "immersed_boundary/ibm_triel.hpp":
+    int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const double max, const tElasticLaw elasticLaw, const double k1, const double k2)
+cdef extern from "immersed_boundary/ibm_tribend.hpp":
+    int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const int ind4, const double kb, const bool flat)
 
 IF ROTATION:
     cdef extern from "harmonic_dumbbell.hpp":
@@ -510,7 +558,7 @@ cdef extern from "interaction_data.hpp":
         BONDED_IA_CG_DNA_STACKING,
         BONDED_IA_CG_DNA_BACKBONE,
         BONDED_IA_IBM_TRIEL,
-        BONDED_IA_IBM_VOLUME_CONSERVATION,
         BONDED_IA_IBM_TRIBEND,
+        BONDED_IA_IBM_VOLUME_CONSERVATION,
         BONDED_IA_UMBRELLA,
         BONDED_IA_THERMALIZED_DIST

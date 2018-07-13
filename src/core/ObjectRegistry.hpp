@@ -1,7 +1,6 @@
 #ifndef OBJECT_REGISTRY_HPP
 #define OBJECT_REGISTRY_HPP
 
-#include <iterator>
 #include <algorithm>
 
 template <typename Container> class ObjectRegistry {
@@ -9,6 +8,7 @@ public:
   typedef Container container_type;
   typedef typename Container::iterator iterator;
   typedef typename Container::const_iterator const_iterator;
+  using size_type = typename Container::size_type;
 
   void add(typename container_type::value_type const &c) {
     m_container.push_back(c);
@@ -22,10 +22,11 @@ public:
     }
   }
 
+  bool empty() const { return m_container.empty(); }
+  size_type size() const { return m_container.size(); }
+
   const_iterator begin() const { return std::begin(m_container); }
   const_iterator end() const { return std::end(m_container); }
-
-  operator Container const &() { return m_container; }
 
 private:
   Container m_container;

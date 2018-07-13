@@ -27,16 +27,31 @@
  *
  */
 
+#include <mpi.h>
+#include <cassert>
+#include <cstdio>
+#include <iostream>
+#include "config.hpp" 
+#include "utils.hpp"
 #include "lb.hpp"
+#include "interaction_data.hpp"
+#include "global.hpp"
+
+#ifdef LB
+
 #include "communication.hpp"
 #include "grid.hpp"
 #include "halo.hpp"
-#include "immersed_boundary/ibm_main.hpp"
-#include "interaction_data.hpp"
 #include "lb-d3q19.hpp"
 #include "lbboundaries.hpp"
+#include "lb.hpp"
+#include "virtual_sites/lb_inertialess_tracers.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
+#include "global.hpp"
+#include "cells.hpp"
+#include "global.hpp"
+
 #include <cassert>
 #include <cstdio>
 #include <iostream>
@@ -44,9 +59,9 @@
 
 #include "cuda_interface.hpp"
 
-#ifdef LB
-
-void lb_check_halo_regions();
+#ifdef ADDITIONAL_CHECKS
+static void lb_check_halo_regions();
+#endif // ADDITIONAL_CHECKS
 
 /** Flag indicating momentum exchange between particles and fluid */
 int transfer_momentum = 0;
@@ -2063,7 +2078,7 @@ void lb_reinit_force_densities() {
     lbfields[index].force_density[0] = 0.0;
     lbfields[index].force_density[1] = 0.0;
     lbfields[index].force_density[2] = 0.0;
-    lbfields[index].has_force = 0;
+    lbfields[index].has_force_density = 0;
 #endif // EXTERNAL_FORCES
   }
 #ifdef LB_BOUNDARIES
@@ -2333,7 +2348,7 @@ inline void lb_relax_modes(Lattice::index_t index, double *mode) {
  * include one half-step of the force action.  See the
  * Chapman-Enskog expansion in [Ladd & Verberg]. */
 #ifndef EXTERNAL_FORCES
-  if (lbfields[index].has_force || local_cells.particles().size())
+  if (lbfields[index].has_force_density || local_cells.particles().size())
 #endif // !EXTERNAL_FORCES
   {
     j[0] += 0.5 * lbfields[index].force_density[0];
@@ -2463,7 +2478,7 @@ inline void lb_reset_force_densities(Lattice::index_t index) {
   lbfields[index].force_density[0] = 0.0;
   lbfields[index].force_density[1] = 0.0;
   lbfields[index].force_density[2] = 0.0;
-  lbfields[index].has_force = 0;
+  lbfields[index].has_force_density = 0;
 #endif // EXTERNAL_FORCES
 }
 
@@ -2556,15 +2571,18 @@ inline void lb_collide_stream() {
     (**it).reset_force();
   }
 #endif // LB_BOUNDARIES
-
-#ifdef IMMERSED_BOUNDARY
+  
+  
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+// Safeguard the node forces so that we can later use them for the IBM particle update
+// In the following loop the lbfields[XX].force are reset to zero
   // Safeguard the node forces so that we can later use them for the IBM
   // particle update In the following loop the lbfields[XX].force are reset to
   // zero
   for (int i = 0; i < lblattice.halo_grid_volume; ++i) {
-    lbfields[i].force_buf[0] = lbfields[i].force[0];
-    lbfields[i].force_buf[1] = lbfields[i].force[1];
-    lbfields[i].force_buf[2] = lbfields[i].force[2];
+    lbfields[i].force_density_buf[0] = lbfields[i].force_density[0];
+    lbfields[i].force_density_buf[1] = lbfields[i].force_density[1];
+    lbfields[i].force_density_buf[2] = lbfields[i].force_density[2];
   }
 #endif
 
@@ -3027,10 +3045,7 @@ void calc_particle_lattice_ia() {
 
     /* local cells */
     for (auto &p : local_cells.particles()) {
-#ifdef IMMERSED_BOUNDARY
-      // Virtual particles for IBM must not be coupled
-      if (!p.p.isVirtual)
-#endif
+      if (!p.p.is_virtual || thermo_virtual)
       {
         lb_viscous_coupling(&p, force);
 
@@ -3061,10 +3076,7 @@ void calc_particle_lattice_ia() {
           fprintf(stderr, "%d: OPT: LB coupling of ghost particle:\n",
                   this_node);
         });
-#ifdef IMMERSED_BOUNDARY
-        // Virtual particles for IBM must not be coupled
-        if (!p.p.isVirtual)
-#endif
+        if (!p.p.is_virtual || thermo_virtual)
         {
           lb_viscous_coupling(&p, force);
         }
