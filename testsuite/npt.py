@@ -31,13 +31,12 @@ class NPTintegrator(ut.TestCase):
     """This compares pressure and compressibility of a LJ system against expected values."""
     S = espressomd.System(box_l=[1.0, 1.0, 1.0])
     p_ext = 2.0
-    S.seed = np.arange(S.cell_system.get_state()['n_nodes']) * 11
 
     def setUp(self):
         
         box_l = 5.78072780098
         self.S.box_l = [box_l]*3
-        self.S.time_step = 0.01
+        self.S.time_step = 0.02
         self.S.cell_system.skin = 0.4
 
         data = np.genfromtxt(tests_common.abspath(
@@ -53,31 +52,29 @@ class NPTintegrator(ut.TestCase):
             epsilon=1, sigma=1,
             cutoff=1.12246, shift=0.25)
         
-        self.S.thermostat.set_npt(kT = 1.0, gamma0 = 0.5, gammav = 0.001)
+        self.S.thermostat.set_npt(kT = 1.0, gamma0 = 1, gammav = 0.002)
         self.S.integrator.set_isotropic_npt(ext_pressure = self.p_ext, piston = 0.001)
 
     def test_npt(self):
-        avp=0.0
-        n=1500
+        avp=0
+        n=3000
         Vs=[]
-
-        self.S.integrator.run(2500)
-
+        self.S.integrator.run(1000)
         for t in range(n): 
-            self.S.integrator.run(25)
-            p = self.S.analysis.pressure()['total']
+            self.S.integrator.run(15)
+            avp += self.S.analysis.pressure()['total']
             l0 = self.S.box_l[0]
 
-            avp+= p
+            #if t > 500:
             Vs.append(pow(l0,3))
 
         avp/=n
         compressibility = pow(np.std(Vs),2)/np.average(Vs)
+        print(avp,compressibility)
 
-        self.assertAlmostEqual(2.0, avp, delta=0.05*2.0)
-        self.assertAlmostEqual(0.2, compressibility, delta=0.05*0.2)
+        self.assertAlmostEqual(2.0, avp, delta=0.02)
+        self.assertAlmostEqual(0.2, compressibility, delta=0.01)
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()
 
