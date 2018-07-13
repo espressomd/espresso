@@ -315,9 +315,6 @@ class openGLLive(object):
         IF not ROTATION:
             self.specs['director_arrows'] = False
 
-        IF not CONSTRAINTS:
-            self.specs['draw_constraints'] = False
-
         IF not LB and not LB_GPU:
             self.specs['LB_draw_velocity_plane'] = False
             self.specs['LB_draw_boundaries'] = False
