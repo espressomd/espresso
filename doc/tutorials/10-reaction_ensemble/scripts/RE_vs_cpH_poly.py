@@ -45,8 +45,8 @@ system = espressomd.System(box_l=[box_l]*3)
 
 system.set_random_state_PRNG()
 np.random.seed(seed=system.seed)
-system.time_step = 0.02
-system.cell_system.skin = 1. #only for tutorial purposes 
+system.time_step = 0.01
+system.cell_system.skin = 10. #only for tutorial purposes 
 system.cell_system.max_num_cells = 2744
 
 system.thermostat.set_langevin(kT=temperature, gamma=1.0)
@@ -61,17 +61,6 @@ mode="reaction_ensemble"
 #mode="constant_pH_ensemble"
 
 
-# bonding interaction parameter
-bond_l = 1.2       #bond length
-kbond = 100        #force constant for harmonic bond
-harmonic_bond = interactions.HarmonicBond(k=kbond, r_0=bond_l)
-system.bonded_inter.add(harmonic_bond)
-
-# non-bonding interactions (LJ)
-lj_eps   = 1.0
-lj_sig   = 1.0
-lj_cut   = 1.12246
-lj_shift = 0.0
 
 
 
@@ -101,6 +90,8 @@ charges[type_Cl] = -1
 
 
 
+
+
 # setting up the polymer
 polymer.create_polymer(N_P = N_P, bond_length = bond_l, MPC=MPC, start_id=0, bond=harmonic_bond, type_poly_neutral=type_HA, type_poly_charged=type_A, mode=0, val_poly=charges[type_A])
 # setting up counterions
@@ -121,6 +112,26 @@ for i in range(nHCl):
 
 
 
+
+
+# bonding interaction parameter
+bond_l = 1.2       #bond length
+kbond = 100        #force constant for harmonic bond
+harmonic_bond = interactions.HarmonicBond(k=kbond, r_0=bond_l)
+system.bonded_inter.add(harmonic_bond)
+
+# non-bonding interactions (LJ)
+lj_eps   = 1.0
+lj_sig   = 1.0
+lj_cut   = 1.12246
+lj_shift = 0.0
+
+
+
+
+
+
+
 # setting up LJ-interactions
 for i in range(1,5):
     for j in range(i+1,6):
@@ -129,7 +140,8 @@ for i in range(1,5):
 
 
 
-# setting up electrostatics
+# Setting up electrostatics
+#############################################################
 p3m = electrostatics.P3M(prefactor = l_bjerrum*temperature, accuracy=1e-3) 
 system.actors.add(p3m)
 
@@ -165,22 +177,21 @@ c = 0
 
 for i in range(12000):
     RE.reaction()
-    system.integrator.run(300) # this is for tutorial only, too less integrations
-    if(i % 50 == 0):
-        print(i,") HA", system.number_of_particles(type=type_HA), "A-", system.number_of_particles(type=type_A), "H+", system.number_of_particles(type=type_H), 'OH-', system.number_of_particles(type=type_OH), 'Cl-', system.number_of_particles(type=type_Cl), 'NA+', system.number_of_particles(type=type_Na))
-        if (i>2000): #just a bit of thermalization before starting to gain informations abount the properties of the sysem   
-            alpha.append(system.number_of_particles(type=type_A)/N0)
-            nHA.append(system.number_of_particles(type=type_HA))
-            nA.append(system.number_of_particles(type=type_A))
-            nH.append(system.number_of_particles(type=type_H))
-            nOH.append(system.number_of_particles(type=type_OH))          
+    system.integrator.run(500) # this is for tutorial only, too less integrations
+    print(i,") HA", system.number_of_particles(type=type_HA), "A-", system.number_of_particles(type=type_A), "H+", system.number_of_particles(type=type_H), 'OH-', system.number_of_particles(type=type_OH), 'Cl-', system.number_of_particles(type=type_Cl), 'NA+', system.number_of_particles(type=type_Na))
+    if (i>2000): #just a bit of thermalization before starting to gain informations abount the properties of the sysem   
+        alpha.append(system.number_of_particles(type=type_A)/N0)
+        nHA.append(system.number_of_particles(type=type_HA))
+        nA.append(system.number_of_particles(type=type_A))
+        nH.append(system.number_of_particles(type=type_H))
+        nOH.append(system.number_of_particles(type=type_OH))          
   
-            c = c + 1   
+        c = c + 1   
 
-            for n in range (N0):
-                qn = system.part[n].q      
-                qdist[n] = qdist[n] + qn 
-                print(qdist)
+        for n in range (N0):
+            qn = system.part[n].q      
+            qdist[n] = qdist[n] + qn 
+            print(qdist)
     
 
 alpha_av = np.mean(alpha)
@@ -192,10 +203,7 @@ nH_av  = np.mean(nH)
 nOH_av = np.mean(nOH)
 
 
-qdist = qdist/c
 
-for i in range(N0):
-    print(i+1, qdist[i])
 
 
 
@@ -205,6 +213,13 @@ print("\n<nHA> = {} ".format(nHA_av))
 print("\n<nA>  = {} ".format(nA_av))
 print("\n<nH>  = {} ".format(nH_av))
 print("\n<nOH> = {} ".format(nOH_av))
+
+
+qdist = qdist/c
+print('*******************************************')
+print('*** charge distribution along the chain ***')
+for i in range(N0):
+    print(i+1, qdist[i])
 
 
 

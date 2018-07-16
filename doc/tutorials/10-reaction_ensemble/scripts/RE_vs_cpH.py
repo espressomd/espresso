@@ -79,14 +79,13 @@ system.setup_type_map([0, 1, 2])
 alpha = [] 
 
 
-for i in range(10000):
-    RE.reaction()
-    if(i % 100 == 0):
-        print("HA", system.number_of_particles(type=0), "A-",system.number_of_particles(type=1), "H+", system.number_of_particles(type=2))
-        alpha.append(system.number_of_particles(type=1)/N0) 
+for i in range(100):
+    RE.reaction(100)
+    print("HA", system.number_of_particles(type=0), "A-",system.number_of_particles(type=1), "H+", system.number_of_particles(type=2))
+    alpha.append(system.number_of_particles(type=1)/N0) 
 
 alpha_av = np.mean(alpha)
-alpha_err = np.std(alpha)/len(alpha)
+alpha_err = np.std(alpha)/np.sqrt(len(alpha))
 
 print("\n<alpha> = {} (err = {})".format(alpha_av, alpha_err))
 

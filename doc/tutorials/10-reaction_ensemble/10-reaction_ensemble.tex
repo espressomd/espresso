@@ -33,6 +33,7 @@ pagesize,                       % set the pagesize in a DVI document
 \usepackage[version=4]{mhchem}
 \usepackage{hyperref}
 \usepackage{graphicx}
+\usepackage{fancyvrb}
 
 \include{common}
 
@@ -45,7 +46,7 @@ pagesize,                       % set the pagesize in a DVI document
 
 \section{Introduction}
 
-This tutorial introduces the basic features for simulating tritatable systems via two different methods, the Constant pH method and the Reaction Ensemble method, pointing out differences and similarities between these two approaches and explaining the reasons to prefer the latter in some particular cases.
+This tutorial introduces the basic features for simulating titratable systems via two different methods, the Constant pH method and the Reaction Ensemble method, pointing out differences and similarities between these two approaches and explaining the reasons to prefer the latter in some particular cases.
 The first part (example one) of this tutorial will consider a homogeneous aqueous solution of a titratable acidic species HA that can dissociate as follows
 \begin{equation}\label{disso}
 \ce{HA <--> A- + H+}\text{,}
@@ -213,28 +214,22 @@ where $c_\text{titr}$ is the concentration of titratable units in the solution, 
 
 
 
-\section{Example two: linear weak polyelectrolyes}
+\section{Example two: linear weak polyelectrolytes}
 Weak polyelectrolytes are a family of responsive materials whose application spans the range from flocculation-induced water purification to tissue targeted drug delivery of expensive or cytotoxic medicines. Their properties, however, depend on their specific chemical environment, with details such as pH, salt concentration and valency, and their topology markedly modifying the chemical behavior of their ionizing groups.
-Here we're going to study the titration curves of a linear weak polyelectrolytes composed by 50 titratable units with both Reaction Ensemble and Constant pH methods. In this case, we'll enable electrostatic interactions between charged species in order to correctly describe their properties.
+Here we're going to study the titration curves of a linear weak polyelectrolyte composed by 50 titratable units with both Reaction Ensemble and Constant pH methods. In this case, we'll enable electrostatic interactions between charged species in order to correctly describe their properties.
+
+\subsection{System setup}
+
+First of all, we start to define some important variables and create a dictionary containing the type and the charge for all the species in solution (this could be very useful when you have to handle with a lot of different species in your simulations):
 \begin{verbatim}
-# setting up electrostatics
-from espressomd import electrostatics
-p3m = electrostatics.P3M(prefactor = l_bjerrum*temperature, accuracy=1e-3) 
-system.actors.add(p3m)
-\end{verbatim}
-First of all, we define a few important  parameters:
-\begin{verbatim}
-# system parameters defined in terms of internal unit sigma = 3.55 Angstrom 
-box_l = 56.134 
+# system parameters
+box_l = 56.134
 l_bjerrum = 2.0 
-temperature = 1.
+temperature = 1.0
+
 system = espressomd.System(box_l=[box_l]*3)
 
-
-# setup partilcles
-# when you have to handle with many differet type of species in your system,
-# make sure to define variables and dictonaries that can be helpful to reduce
-# mistakes when you write your scripts.
+# particle setup
 N_P = 1       #number of chains
 MPC = 50      #monomers per chain
 N0 = N_P*MPC  #total number of monomers
@@ -256,25 +251,54 @@ charges[type_OH] = -1
 charges[type_Na] =  1
 charges[type_Cl] = -1 
 \end{verbatim}
-Here, we've defined the type and the charge of the polymer titratable units (\ce{HA <--> A-}), counterions \ce{H+}, and \ce{Na+OH-} and \ce{H+Cl-} ionic species, which can be inserted inside the simulation box. Let's set up the polymer, its counterions and bonding interactions between monomers. 
-
+Here, we've defined the type and the charge of polymer titratable units (\ce{HA <--> A-}), counterions \ce{H+}, and additional ionic species (\ce{Na+OH-} and \ce{H+Cl-}) that can be inserted inside the simulation box. Now we have to set up all these particles and to define all the interactions.
 \begin{verbatim}
-# bonding interaction parameter
+# bonding interactions
 bond_l = 1.2       #bond length
 kbond = 100        #force constant for harmonic bond
 harmonic_bond = interactions.HarmonicBond(k=kbond, r_0=bond_l)
 system.bonded_inter.add(harmonic_bond)
 
+# non-bonding interactions parameters
+lj_eps   = 1.0
+lj_sig   = 1.0
+lj_cut   = 1.12246
+lj_shift = 0.0
+
 # setting up the polymer
-polymer.create_polymer(N_P = N_P, bond_length = bond_l, MPC=MPC, start_id=0, 
-bond=harmonic_bond, type_poly_neutral=type_HA, type_poly_charged=type_A, mode=0,
-val_poly=charges[type_A])
+polymer.create_polymer(N_P = N_P, bond_length = bond_l, MPC=MPC, start_id=0,
+ bond=harmonic_bond, type_poly_neutral=type_HA, type_poly_charged=type_A, mode=0,
+  val_poly=charges[type_A])
+  
 # setting up counterions
 for i in range(N0):
-system.part.add(pos=np.random.random(3) * system.box_l, type=type_H, q=charges[type_H])
-\end{verbatim}
+    system.part.add(pos=np.random.random(3) * system.box_l, type=type_H, 
+    q=charges[type_H])
 
-To titrate a polyelectrolytic chain, which is composed by $N_0$ titratable units with a certain $\text{p}K_a$, in the Reaction Ensemble we need to modulate the pH of the environment. To do this, we need to add additional \ce{H+} (increasing the pH) Obviously, for \ce{OH-} ions (to decrease it). We need also to introduce the respective counterions to preserve the electroneutrality of the system. We need also to take into account also the autoprotolysis of water.
+# setting up other background ions
+# - Na+ and OH-
+for i in range(nNaOH):
+    system.part.add(pos=np.random.random(3) * system.box_l, type=type_OH,
+    q=charges[type_OH])
+for i in range(nNaOH):
+    system.part.add(pos=np.random.random(3) * system.box_l, type=type_Na,
+    q=charges[type_Na])
+# - (additional) H+ and Cl-
+for i in range(nHCl):
+    system.part.add(pos=np.random.random(3) * system.box_l, type=type_H, 
+    q=charges[type_H])
+for i in range(nHCl):
+    system.part.add(pos=np.random.random(3) * system.box_l, type=type_Cl, 
+    q=charges[type_Cl])
+\end{verbatim}
+As already explained, we need to enable electrostatic interactions to correctly simulate the physics of this type of system.
+\begin{verbatim}
+# setting up electrostatics
+from espressomd import electrostatics
+p3m = electrostatics.P3M(prefactor = l_bjerrum*temperature, accuracy=1e-3) 
+system.actors.add(p3m)
+\end{verbatim}
+To titrate a weak polyelectrolytic chain, which is composed by $N_0$ titratable units with a certain $\text{p}K_a$, in the Reaction Ensemble, we need to modulate the pH of the environment. To do this, we have to add additional \ce{H+} ions, increasing the pH, or \ce{OH-} ions, to decrease it. We have also to introduce the respective counterions (\ce{Cl-} or \ce{Na+}) to preserve the electroneutrality of the system. Finally, we have to take into account also the autoprotolysis of water (\ce{H2O <--> H+ + OH-}) beside the main dissociation reaction.
 
 \begin{verbatim}
 K_diss = 0.002694            #eq constant HA <--> A- + H+
@@ -291,55 +315,53 @@ RE.add_reaction(gamma=(1/K_w), reactant_types=[type_H, type_OH],
 reactant_coefficients=[1,1], product_types=[],    product_coefficients=[],    
 default_charges={type_H: charges[type_H], type_OH: charges[type_OH]})
 \end{verbatim}
-
 Due to the fact that, at a certain pH, the ionization degree of a weak polyelectrolytes depends on its spatial conformation, in order to obtain  correctly averaged values we have also to couple the reaction algorithm with MD simulations. 
-
 \begin{verbatim}
 # Integration parameters
-system.time_step = 0.02
-system.cell_system.skin = 1. #only for tutorial purposes 
+system.time_step = 0.01
+system.cell_system.skin = 10. #only for tutorial purposes 
 system.cell_system.max_num_cells = 2744
 system.thermostat.set_langevin(kT=temperature, gamma=1.0)
 \end{verbatim}
 Finally, we are ready to run the simulation!
 \begin{verbatim}
 for i in range(12000):
-RE.reaction()
-system.integrator.run(300) # this is for tutorial only, too less integrations
-if(i % 50 == 0):
-print(i,") HA", system.number_of_particles(type=type_HA), "A-",
- system.number_of_particles(type=type_A), "H+",
-  system.number_of_particles(type=type_H), 'OH-',
-   system.number_of_particles(type=type_OH), 'Cl-',
-    system.number_of_particles(type=type_Cl), 'NA+',
-     system.number_of_particles(type=type_Na))
+    RE.reaction(50)
+    system.integrator.run(500) 
+    print(i,") HA", system.number_of_particles(type=type_HA), "A-",
+     system.number_of_particles(type=type_A), "H+",
+      system.number_of_particles(type=type_H), 'OH-',
+       system.number_of_particles(type=type_OH), 'Cl-',
+        system.number_of_particles(type=type_Cl), 'NA+',
+         system.number_of_particles(type=type_Na))
 \end{verbatim}
+
+
 
 \subsection{Titration curves}
 
-\begin{figure}[tb]
+\begin{figure}[h]
 	\centering
 	\includegraphics[scale=0.6]{figures/titration.pdf}
-	\caption{Titration curves for a weak polyelectrolyte chain composed by $N_0=50$ titratable monomers. Yellow squares: Constant pH method; light blue trianges: Reaction Ensemble method:; blue solid line: ideal behavior.}
+	\caption{Titration curves for a linear weak polyelectrolyte chain composed by $N_0=50$ titratable monomers. Yellow squares: Constant pH method; light blue triangles: Reaction Ensemble method; blue solid line: ideal behavior.}
 	\label{titration}
 \end{figure}
-
 For a solution of weak acidic molecules with a certain $\text{p}K_\text{a}=-\log_{10}(K_c/c^0)$, the trend of $\alpha$ as function of pH is described by the Henderson-Hasselbalch equation:
 \begin{equation}
-\text{pH} = -\log_{10}(c_{\text{H}^+})/c^0)
+\text{pH} = -\log_{10}(c_{\text{H}^+})/c^0).
 \end{equation}
-However, when titratable units are bonded together in a polyelectrolyte chain their effective $\text{p}K_\text{a}^\text{(eff)}$ differs from the ideal one $\text{p}K_\text{a}$; this cam be described by the fact that when the charge carried by a dissociated monomer tends to partially inhibit the dissociation of its neighbors (at electrostatic interaction strengths present in water), and this results into a lower total degree of dissociation with respect to the non-bonded acidic units case. Anyway, this effect can be partially compensated by the presence of counterions, which are able to  screen repulsive interactions between dissociated monomers. As you can observe in figure \ref{titration}, Constant pH and Reaction Ensemble method results are very similar at high pH values, but they show very pronounced differences at low pH values. More in details, $\text{p}K_\text{a}^\text{(eff)}$ tends to the ideal one when the concentration of \ce{H+} is high. This depends on the fact that with Reaction Ensemble method we have to inject a strong acid (\ce{H+}\ce{Cl-}) in order to titrate the polymer, and this results in a more salty solution with a strong screening power. This behavior would be reversed in case of a weak poly-base, with superimposable curves at low pH values and the Reaction Ensemble one approaching the ideal one when the amount of \ce{OH-} ions becomes relevant.
+However, when titratable units are bonded together in a polyelectrolyte chain their effective $\text{p}K_\text{a}^\text{(eff)}$ differs from the ideal one ($\text{p}K_\text{a}$); this can be explained by the fact that the charge carried by a dissociated monomer tends to partially inhibit the dissociation of its neighbors, and this results into a lower total degree of dissociation with respect to the non-bonded acidic units case. Anyway, this effect can be partially compensated by the presence of counterions, which are able to  screen repulsive interactions between dissociated monomers. As you can observe in figure \ref{titration}, Constant pH and Reaction Ensemble method results are very similar at high pH values, but they show very pronounced differences at low pH values. More in details, $\text{p}K_\text{a}^\text{(eff)}$ tends to the ideal one when the concentration of \ce{H+} is high. This depends on the fact that with Reaction Ensemble method we have to inject a strong acid (\ce{H+}\ce{Cl-}) in order to titrate the polymer, and this results in a more salty solution with a strong screening power. This behavior would be reversed in case of a weak poly-base, with superimposable curves at low pH values and the Reaction Ensemble one approaching the ideal one when the amount of \ce{OH-} ions becomes relevant.
  
 
-\section{Distribution of charges onto the chain}
+\section{Charge distribution along the chain}
 
 \begin{figure}[h]
 	\centering
 	\includegraphics[scale=0.6]{figures/qdistrib.pdf}
-	\caption{Mean charges of monomers as function of their position along the chain (calculated via Reaction Ensemble method) at $\text{pH - p}K_a = 2$ Notice that the curve is noisy because of the short duration of the simulation. Make sure to perform longer simulations to achieve a better convergence.}
+	\caption{Mean charges of monomers as function of their position along the chain (calculated via Reaction Ensemble method) at $\alpha \simeq 0.4$ Notice that the curve is noisy because of the short duration of the simulation. Make sure to perform longer simulations to achieve a better convergence.}
 	\label{qdistrib}
 \end{figure}
-Figure \ref{qdistrib} shows the mean charge assumed by each monomer during the simulation in function of its position along the chain. As you can observe, monomers lying at the extremities tend to be more charged than those that lie in the innermost regions. This could be easily explained thinking that the ends of the chain can better arrange in space in order to minimize repulsive interactions between charges. This results do not depend on the method, i.e. the shape of the curve at a certain dissociation degree would be te same also with the Constant pH; however, as previously discussed, at a certain value $\text{pH - p}K_a$, the total dissociation degree depends on the method, so the Constant pH curve would results shifted to lower mean charge values for a weak poly-acid at high pH values.
+Figure \ref{qdistrib} shows the mean charge assumed by each monomer during the simulation as a function of its position along the chain. As you can observe, monomers lying at the extremities tend to be more charged than those lying in the innermost regions. This could be easily explained thinking that the ends of the chain can better arrange in space in order to minimize repulsive interactions between charges. This results do not depend on the method, i.e. the shape of the curve at a certain dissociation degree would be te same also with the Constant pH; however, as previously discussed, at a certain value $\text{pH - p}K_\text{a}$, the total dissociation degree is method-dependent, so the Constant pH curve would results shifted to lower mean charge values for a weak poly-acid at high pH values.
 
 \bibliographystyle{unsrt}
 \bibliography{references}
