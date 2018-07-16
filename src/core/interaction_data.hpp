@@ -725,7 +725,7 @@ typedef struct {
 
 /** Union in which to store the parameters of an individual bonded interaction
  */
-typedef union {
+union Bond_parameters {
   Fene_bond_parameters fene;
   Oif_global_forces_bond_parameters oif_global_forces;
   Oif_local_forces_bond_parameters oif_local_forces;
@@ -740,7 +740,9 @@ typedef union {
   Angle_cosine_bond_parameters angle_cosine;
   Angle_cossquare_bond_parameters angle_cossquare;
   Dihedral_bond_parameters dihedral;
+#ifdef TABULATED
   Tabulated_bond_parameters tab;
+#endif
 #ifdef UMBRELLA
   Umbrella_bond_parameters umbrella;
 #endif
@@ -760,7 +762,7 @@ typedef union {
   IBM_Triel_Parameters ibm_triel;
   IBM_VolCons_Parameters ibmVolConsParameters;
   IBM_Tribend_Parameters ibm_tribend;
-} Bond_parameters;
+};
 
 /** Defines parameters for a bonded interaction. */
 struct Bonded_ia_parameters {

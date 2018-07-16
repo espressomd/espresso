@@ -70,7 +70,6 @@
 #include "umbrella.hpp"
 #include "utils.hpp"
 #include "utils/serialization/IA_parameters.hpp"
-#include "utils/serialization/Bonded_ia_parameters.hpp"
 #include <cstdlib>
 #include <cstring>
 #include <boost/archive/binary_iarchive.hpp>
@@ -153,8 +152,6 @@ std::string ia_params_get_state() {
   boost::archive::binary_oarchive oa(out);
   oa << ia_params;
   oa << max_seen_particle_type;
-  oa << bonded_ia_params;
-  oa << n_bonded_ia;
   return out.str();
 }
 
@@ -166,8 +163,6 @@ void ia_params_set_state(std::string const &state) {
   ia_params.clear();
   ia >> ia_params;
   ia >> max_seen_particle_type;
-  ia >> bonded_ia_params;
-  ia >> n_bonded_ia;
   mpi_bcast_max_seen_particle_type(max_seen_particle_type);
   mpi_bcast_all_ia_params();
 }
