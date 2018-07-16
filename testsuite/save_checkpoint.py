@@ -3,6 +3,7 @@ import numpy as np
 import espressomd
 import espressomd.checkpointing
 import espressomd.electrostatics
+import espressomd.interactions
 import espressomd.virtual_sites
 import espressomd.accumulators
 import espressomd.observables
@@ -36,6 +37,10 @@ if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
 if espressomd.has_features(['LENNARD_JONES']):
     system.non_bonded_inter[0, 0].lennard_jones.set_params(epsilon=1.2, sigma=1.3, cutoff=2.0, shift=0.1)
     system.non_bonded_inter[3, 0].lennard_jones.set_params(epsilon=1.2, sigma=1.7, cutoff=2.0, shift=0.1)
+
+harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=1.0)
+system.bonded_inter.add(harmonic_bond)
+system.part[1].add_bond((harmonic_bond, 0))
 checkpoint.register("system")
 checkpoint.register("acc")
 # calculate forces

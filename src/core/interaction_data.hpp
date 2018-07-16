@@ -785,7 +785,7 @@ extern Coulomb_parameters coulomb;
 /** number of bonded interactions. Not used so far. */
 extern int n_bonded_ia;
 /** Field containing the paramters of the bonded ia types */
-extern Bonded_ia_parameters *bonded_ia_params;
+extern std::vector<Bonded_ia_parameters> bonded_ia_params;
 
 /** Maximal interaction cutoff (real space/short range interactions). */
 extern double max_cut;

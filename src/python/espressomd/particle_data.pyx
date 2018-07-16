@@ -1417,7 +1417,7 @@ cdef class ParticleHandle(object):
         if change_particle_bond(self._id, bond_info, 1):
             handle_errors("Deleting the bond failed.")
 
-    def check_bond_or_throw_exception(self, _bond):
+    def check_bond_or_throw_exception(self, bond):
         """
         Checks the validity of the given bond:
 
@@ -1430,9 +1430,6 @@ cdef class ParticleHandle(object):
         Throws an exception if any of these are not met.
 
         """
-
-        bond = _bond
-
         # Has it []-access
         if not hasattr(bond, "__getitem__"):
             raise ValueError(
@@ -1454,7 +1451,7 @@ cdef class ParticleHandle(object):
 
         # Validity of the numeric id
         if bond[0]._bond_id >= n_bonded_ia:
-            raise ValueError("The bond type", bond._bond_id, "does not exist.")
+            raise ValueError("The bond type", bond[0]._bond_id, "does not exist.")
 
         bond_id=bond[0]._bond_id
         # Number of partners

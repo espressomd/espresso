@@ -70,6 +70,7 @@
 #include "umbrella.hpp"
 #include "utils.hpp"
 #include "utils/serialization/IA_parameters.hpp"
+#include "utils/serialization/Bonded_ia_parameters.hpp"
 #include <cstdlib>
 #include <cstring>
 #include <boost/archive/binary_iarchive.hpp>
@@ -108,7 +109,7 @@ double field_applied;
 #endif
 
 int n_bonded_ia = 0;
-Bonded_ia_parameters *bonded_ia_params = nullptr;
+std::vector<Bonded_ia_parameters> bonded_ia_params;
 
 double min_global_cut = 0.0;
 
@@ -152,6 +153,8 @@ std::string ia_params_get_state() {
   boost::archive::binary_oarchive oa(out);
   oa << ia_params;
   oa << max_seen_particle_type;
+  oa << bonded_ia_params;
+  oa << n_bonded_ia;
   return out.str();
 }
 
@@ -163,6 +166,8 @@ void ia_params_set_state(std::string const &state) {
   ia_params.clear();
   ia >> ia_params;
   ia >> max_seen_particle_type;
+  ia >> bonded_ia_params;
+  ia >> n_bonded_ia;
   mpi_bcast_max_seen_particle_type(max_seen_particle_type);
   mpi_bcast_all_ia_params();
 }
@@ -512,8 +517,7 @@ void make_bond_type_exist(int type) {
     return;
   }
   /* else allocate new memory */
-  bonded_ia_params = static_cast<Bonded_ia_parameters *>(Utils::realloc(
-      bonded_ia_params, ns * sizeof(Bonded_ia_parameters)));
+  bonded_ia_params.resize(ns);
   /* set bond types not used as undefined */
   for (i = n_bonded_ia; i < ns; i++)
     bonded_ia_params[i].type = BONDED_IA_NONE;
