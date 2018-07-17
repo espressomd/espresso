@@ -440,7 +440,7 @@ cdef extern from "interaction_data.hpp":
         double volRef
 
 #* Union in which to store the parameters of an individual bonded interaction */
-    ctypedef union Bond_parameters:
+    cdef union Bond_parameters:
         Fene_bond_parameters fene
         Oif_global_forces_bond_parameters oif_global_forces
         Oif_local_forces_bond_parameters oif_local_forces
@@ -463,7 +463,7 @@ cdef extern from "interaction_data.hpp":
         IBM_Tribend_Parameters ibm_tribend
         IBM_VolCons_Parameters ibmVolConsParameters
 
-    ctypedef struct Bonded_ia_parameters:
+    cdef struct Bonded_ia_parameters:
         int type
         int num
         #* union to store the different bonded interaction parameters. */
