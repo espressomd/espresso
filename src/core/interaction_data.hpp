@@ -784,8 +784,6 @@ extern int max_seen_particle_type;
 /** Structure containing the coulomb parameters. */
 extern Coulomb_parameters coulomb;
 
-/** number of bonded interactions. Not used so far. */
-extern int n_bonded_ia;
 /** Field containing the paramters of the bonded ia types */
 extern std::vector<Bonded_ia_parameters> bonded_ia_params;
 

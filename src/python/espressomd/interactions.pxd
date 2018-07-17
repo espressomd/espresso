@@ -39,7 +39,7 @@ cdef extern from "TabulatedPotential.hpp":
         vector[double] force_tab
 
 cdef extern from "interaction_data.hpp":
-    ctypedef struct ia_parameters "IA_parameters":
+    ctypedef struct IA_parameters:
         double LJ_eps
         double LJ_sig
         double LJ_cut
@@ -149,8 +149,8 @@ cdef extern from "interaction_data.hpp":
         double THOLE_scaling_coeff
         double THOLE_q1q2
 
-    cdef ia_parameters * get_ia_param(int i, int j)
-    cdef ia_parameters * get_ia_param_safe(int i, int j)
+    cdef IA_parameters * get_ia_param(int i, int j)
+    cdef IA_parameters * get_ia_param_safe(int i, int j)
     cdef void make_bond_type_exist(int type)
     cdef string ia_params_get_state()
     cdef void ia_params_set_state(string)
@@ -440,7 +440,7 @@ cdef extern from "interaction_data.hpp":
         double volRef
 
 #* Union in which to store the parameters of an individual bonded interaction */
-    ctypedef union bond_parameters "Bond_parameters":
+    ctypedef union Bond_parameters:
         Fene_bond_parameters fene
         Oif_global_forces_bond_parameters oif_global_forces
         Oif_local_forces_bond_parameters oif_local_forces
@@ -463,14 +463,13 @@ cdef extern from "interaction_data.hpp":
         IBM_Tribend_Parameters ibm_tribend
         IBM_VolCons_Parameters ibmVolConsParameters
 
-    ctypedef struct bonded_ia_parameters:
+    ctypedef struct Bonded_ia_parameters:
         int type
         int num
         #* union to store the different bonded interaction parameters. */
-        bond_parameters p
+        Bond_parameters p
 
-    bonded_ia_parameters * bonded_ia_params
-    cdef int n_bonded_ia
+    vector[Bonded_ia_parameters] bonded_ia_params
 
 cdef extern from "fene.hpp":
     int fene_set_params(int bond_type, double k, double drmax, double r0)
