@@ -432,8 +432,9 @@ cdef extern from "interaction_data.hpp":
 
 
 #* Parameters for IBM Triel  */
-    cdef enum tElasticLaw:
-        NeoHookean, Skalak
+    cdef cppclass tElasticLaw:
+        pass
+
     cdef struct IBM_Triel_Parameters:
         double l0
         double lp0
@@ -469,6 +470,7 @@ cdef extern from "interaction_data.hpp":
         Bonded_coulomb_bond_parameters bonded_coulomb
         Bonded_coulomb_p3m_sr_bond_parameters bonded_coulomb_p3m_sr
         Harmonic_bond_parameters harmonic
+        Harmonic_dumbbell_bond_parameters harmonic_dumbbell
         Angle_bond_parameters angle
         Angle_harmonic_bond_parameters angle_harmonic
         Angle_cosine_bond_parameters angle_cosine
@@ -491,6 +493,9 @@ cdef extern from "interaction_data.hpp":
 
     vector[Bonded_ia_parameters] bonded_ia_params
 
+cdef extern from "interaction_data.hpp" namespace "tElasticLaw":
+    cdef tElasticLaw NeoHookean
+    cdef tElasticLaw Skalak
 
 cdef extern from "fene.hpp":
     int fene_set_params(int bond_type, double k, double drmax, double r0)

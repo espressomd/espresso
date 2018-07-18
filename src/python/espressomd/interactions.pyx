@@ -2908,7 +2908,7 @@ ELSE:
         name = "AngleCossquare"
 
 # IBM triel
-IF IMMERSED_BOUNDARY == 1:
+IF IMMERSED_BOUNDARY:
     class IBM_Triel(BondedInteraction):
 
         def __init__(self, *args, **kwargs):
@@ -2952,14 +2952,15 @@ IF IMMERSED_BOUNDARY == 1:
                {"maxDist": bonded_ia_params[self._bond_id].p.ibm_triel.maxDist,
                  "k1": bonded_ia_params[self._bond_id].p.ibm_triel.k1,
                  "k2": bonded_ia_params[self._bond_id].p.ibm_triel.k2,
-                 "elasticLaw": bonded_ia_params[self._bond_id].p.ibm_triel.elasticLaw}
+                 "elasticLaw": <int>bonded_ia_params[self._bond_id].p.ibm_triel.elasticLaw}
 
         def _set_params_in_es_core(self):
+            cdef tElasticLaw el
             if self._params["elasticLaw"] == "NeoHookean":
-                el = 0
+                el = NeoHookean
             if self._params["elasticLaw"] == "Skalak":
-                el = 1
-            IBM_Triel_SetParams(self._bond_id,self._params["ind1"],self._params["ind2"],self._params["ind3"],self._params["maxDist"], int(el), self._params["k1"], self._params["k2"])
+                el = Skalak
+            IBM_Triel_SetParams(self._bond_id,self._params["ind1"],self._params["ind2"],self._params["ind3"],self._params["maxDist"], el, self._params["k1"], self._params["k2"])
 ELSE:
     class IBM_Triel(BondedInteractionNotDefined):
         name = "IBM_TRIEL"
