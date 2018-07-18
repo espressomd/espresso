@@ -1782,6 +1782,10 @@ cdef class BondedInteraction(object):
             raise Exception(
                 "The constructor has to be called either with a bond id (as interger), or with a set of keyword arguments describing a new interaction")
 
+
+    def __reduce__(self):
+        return (self.__class__, (self._bond_id,))
+
     def is_valid(self):
         """Check, if the data stored in the instance still matches what is in Espresso.
 
