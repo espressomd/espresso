@@ -238,7 +238,7 @@ IF LENNARD_JONES == 1:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -348,7 +348,7 @@ IF LENNARD_JONES_GENERIC == 1:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -490,7 +490,7 @@ IF LJCOS:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -570,7 +570,7 @@ IF LJCOS2:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -644,7 +644,7 @@ IF HAT == 1:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0], self._part_types[1])
             return {
@@ -701,7 +701,7 @@ IF GAY_BERNE:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -792,7 +792,7 @@ IF DPD:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0], self._part_types[1])
             return {
@@ -879,7 +879,7 @@ IF SMOOTH_STEP == 1:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -981,7 +981,7 @@ IF BMHTF_NACL == 1:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -1081,7 +1081,7 @@ IF MORSE == 1:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -1173,7 +1173,7 @@ IF BUCKINGHAM == 1:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -1278,7 +1278,7 @@ IF SOFT_SPHERE == 1:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -1370,7 +1370,7 @@ IF AFFINITY == 1:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
             return {
                 "affinity_type": ia_params.affinity_type,
@@ -1426,7 +1426,7 @@ IF MEMBRANE_COLLISION == 1:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
             return {
                 "a": ia_params.membrane_a,
@@ -1481,7 +1481,7 @@ IF HERTZIAN == 1:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -1561,7 +1561,7 @@ IF GAUSSIAN == 1:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
@@ -1781,6 +1781,10 @@ cdef class BondedInteraction(object):
         else:
             raise Exception(
                 "The constructor has to be called either with a bond id (as interger), or with a set of keyword arguments describing a new interaction")
+
+
+    def __reduce__(self):
+        return (self.__class__, (self._bond_id,))
 
     def is_valid(self):
         """Check, if the data stored in the instance still matches what is in Espresso.
@@ -2195,7 +2199,7 @@ IF THOLE:
             return True
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params
+            cdef IA_parameters * ia_params
             ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
             return {
                 "scaling_coeff": ia_params.THOLE_scaling_coeff,
@@ -2620,7 +2624,7 @@ IF TABULATED == 1:
             self._params = {'min': -1., 'max': -1, 'energy': [], 'force': []}
 
         def _get_params_from_es_core(self):
-            cdef ia_parameters * ia_params = get_ia_param_safe(
+            cdef IA_parameters * ia_params = get_ia_param_safe(
                 self._part_types[0],
                 self._part_types[1])
 
@@ -2904,7 +2908,7 @@ ELSE:
         name = "AngleCossquare"
 
 # IBM triel
-IF IMMERSED_BOUNDARY == 1:
+IF IMMERSED_BOUNDARY:
     class IBM_Triel(BondedInteraction):
 
         def __init__(self, *args, **kwargs):
@@ -2948,14 +2952,15 @@ IF IMMERSED_BOUNDARY == 1:
                {"maxDist": bonded_ia_params[self._bond_id].p.ibm_triel.maxDist,
                  "k1": bonded_ia_params[self._bond_id].p.ibm_triel.k1,
                  "k2": bonded_ia_params[self._bond_id].p.ibm_triel.k2,
-                 "elasticLaw": bonded_ia_params[self._bond_id].p.ibm_triel.elasticLaw}
+                 "elasticLaw": <int>bonded_ia_params[self._bond_id].p.ibm_triel.elasticLaw}
 
         def _set_params_in_es_core(self):
+            cdef tElasticLaw el
             if self._params["elasticLaw"] == "NeoHookean":
-                el = 0
+                el = NeoHookean
             if self._params["elasticLaw"] == "Skalak":
-                el = 1
-            IBM_Triel_SetParams(self._bond_id,self._params["ind1"],self._params["ind2"],self._params["ind3"],self._params["maxDist"], int(el), self._params["k1"], self._params["k2"])
+                el = Skalak
+            IBM_Triel_SetParams(self._bond_id,self._params["ind1"],self._params["ind2"],self._params["ind3"],self._params["maxDist"], el, self._params["k1"], self._params["k2"])
 ELSE:
     class IBM_Triel(BondedInteractionNotDefined):
         name = "IBM_TRIEL"
@@ -3220,7 +3225,7 @@ class BondedInteractions(object):
                 "Index to BondedInteractions[] has to be an integer referring to a bond id")
 
         # Find out the type of the interaction from Espresso
-        if key >= n_bonded_ia:
+        if key >= bonded_ia_params.size():
             raise IndexError(
                 "Index to BondedInteractions[] out of range")
         bond_type = bonded_ia_params[key].type
@@ -3257,17 +3262,17 @@ class BondedInteractions(object):
         value._set_params_in_es_core()
 
     def __len__(self):
-        return n_bonded_ia
+        return bonded_ia_params.size()
 
     # Support iteration over active bonded interactions
     def __iter__(self):
-        for i in range(n_bonded_ia):
+        for i in range(bonded_ia_params.size()):
             if bonded_ia_params[i].type != -1:
                 yield self[i]
 
     def add(self, bonded_ia):
         """Add a bonded ia to the simulation>"""
-        self[n_bonded_ia] = bonded_ia
+        self[bonded_ia_params.size()] = bonded_ia
 
     def __getstate__(self):
         params = {}

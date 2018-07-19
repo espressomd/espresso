@@ -40,6 +40,11 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(len(set(state.items()) & set(reference.items())), len(reference))
         self.assertEqual(len(set(state2.items()) & set(reference2.items())), len(reference2))
 
+    def test_bonded_inter(self):
+        state = system.part[1].bonds[0][0].params
+        reference = {'r_0': 0.0, 'k': 1.0}
+        self.assertEqual(len(set(state.items()) & set(reference.items())), len(reference))
+
     @ut.skipIf(not espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']),
                "Cannot test for virtual site checkpointing because feature not compiled in.")
     def test_virtual_sites(self):
