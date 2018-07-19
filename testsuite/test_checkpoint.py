@@ -11,7 +11,7 @@ import espressomd.virtual_sites
 class CheckpointTest(ut.TestCase):
     @classmethod
     def setUpClass(self):
-        checkpoint = espressomd.checkpointing.Checkpointing(checkpoint_id="mycheckpoint", checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
+        checkpoint = espressomd.checkpointing.Checkpoint(checkpoint_id="mycheckpoint", checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
         checkpoint.load(0)
 
     def test_variables(self):

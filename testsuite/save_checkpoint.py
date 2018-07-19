@@ -8,7 +8,7 @@ import espressomd.virtual_sites
 import espressomd.accumulators
 import espressomd.observables
 
-checkpoint = espressomd.checkpointing.Checkpointing(checkpoint_id="mycheckpoint", checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
+checkpoint = espressomd.checkpointing.Checkpoint(checkpoint_id="mycheckpoint", checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
 
 system = espressomd.System(box_l=[10.0, 10.0, 10.0])
 system.cell_system.skin = 0.4
