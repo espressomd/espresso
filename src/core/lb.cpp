@@ -2505,7 +2505,7 @@ inline void lb_calc_n_from_modes_push(Lattice::index_t index, double *m) {
 
   /* normalization factors enter in the back transformation */
   for (int i = 0; i < lbmodel.n_veloc; i++)
-    m[i] = (1. / d3q19_modebase[19][i]) * m[i];
+    m[i] = (1. / lbmodel.e[19][i]) * m[i];
 
   lbfluid[1][0][next[0]] = m[0] - m[4] + m[16];
   lbfluid[1][1][next[1]] =
