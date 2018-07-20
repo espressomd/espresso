@@ -82,27 +82,26 @@
 /** Description of the LB Model in terms of the unit vectors of the
  *  velocity sub-lattice and the corresponding coefficients
  *  of the pseudo-equilibrium distribution */
-typedef struct {
-
+template<size_t N_vel=19>
+struct LB_Model {
   /** number of velocities */
-  int n_veloc;
+  static const int n_veloc = static_cast<int>(N_vel);
 
   /** unit vectors of the velocity sublattice */
-  double (*c)[3];
+  std::array<std::array<double, 3>, N_vel> c;
 
   /** coefficients in the pseudo-equilibrium distribution */
-  double (*coeff)[4];
+  std::array<std::array<double, 4>, N_vel> coeff;
 
   /** weights in the functional for the equilibrium distribution */
-  double(*w);
+  std::array<double, N_vel> w;
 
   /** basis of moment space */
-  double **e;
+  std::array<std::array<double, N_vel>, N_vel + 1> e;
 
   /** speed of sound squared */
   double c_sound_sq;
-
-} LB_Model;
+};
 
 /** Data structure for fluid on a local lattice site */
 struct LB_FluidNode {
@@ -178,7 +177,7 @@ typedef struct {
 } LB_Parameters;
 
 /** The DnQm model to be used. */
-extern LB_Model lbmodel;
+extern LB_Model<> lbmodel;
 
 /** Struct holding the Lattice Boltzmann parameters */
 extern LB_Parameters lbpar;
@@ -190,9 +189,8 @@ extern Lattice lblattice;
  * lbfluid[0] contains pre-collision populations, lbfluid[1]
  * contains post-collision populations*/
 extern double **lbfluid[2];
-
 /** Pointer to the hydrodynamic fields of the fluid */
-extern LB_FluidNode *lbfields;
+extern std::vector<LB_FluidNode> lbfields;
 
 /** Switch indicating momentum exchange between particles and fluid */
 extern int transfer_momentum;
