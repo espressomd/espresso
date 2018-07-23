@@ -50,8 +50,6 @@
 #include "interaction_data.hpp"
 #include "io/mpiio/mpiio.hpp"
 #include "lb.hpp"
-#include "lbboundaries.hpp"
-#include "lbboundaries/LBBoundary.hpp"
 #include "lj.hpp"
 #include "ljcos.hpp"
 #include "ljcos2.hpp"
