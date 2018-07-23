@@ -39,6 +39,7 @@
 #include "lbboundaries/LBBoundary.hpp"
 #include "lbgpu.hpp"
 #include "utils.hpp"
+#include "initialize.hpp"
 
 #include <algorithm>
 #include <memory>
@@ -52,7 +53,7 @@ std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
 void add(const std::shared_ptr<LBBoundary> &b) {
   lbboundaries.emplace_back(b);
 
-  lb_init_boundaries();
+  on_lbboundary_change();
 }
 
 void remove(const std::shared_ptr<LBBoundary> &b) {
@@ -60,7 +61,7 @@ void remove(const std::shared_ptr<LBBoundary> &b) {
 
   lbboundaries.erase(std::remove(lbb.begin(), lbb.end(), b), lbb.end());
 
-  lb_init_boundaries();
+  on_lbboundary_change();
 }
 
 void lbboundary_mindist_position(const Vector3d &pos, double *mindist,

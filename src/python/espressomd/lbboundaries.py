@@ -53,6 +53,20 @@ if any(i in espressomd.code_info.features() for i in ["LB_BOUNDARIES", "LB_BOUND
 
             self.call_method("remove", object=lbboundary)
 
+        def clear(self):
+            """
+            Removes all boundaries.
+
+            """
+
+            self.call_method("clear")
+
+        def size(self):
+            return self.call_method("size")
+
+        def empty(self):
+
+            return self.call_method("empty")
 
     @script_interface_register
     class LBBoundary(ScriptInterfaceHelper):
