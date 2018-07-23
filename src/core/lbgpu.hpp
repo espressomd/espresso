@@ -189,7 +189,7 @@ typedef struct {
 
   lbForceFloat *force_density;
   float *scforce_density;
-#if defined(IMMERSED_BOUNDARY) || defined(EK_DEBUG)
+#if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) || defined(EK_DEBUG)
 
   // We need the node forces for the velocity interpolation at the virtual particles' position
   // However, LBM wants to reset them immediately after the LBM update
@@ -281,7 +281,7 @@ void lb_init_boundaries_GPU(int n_lb_boundaries, int number_of_boundnodes, int* 
 #endif
 void lb_init_extern_nodeforcedensities_GPU(int n_extern_node_force_densities, LB_extern_nodeforcedensity_gpu *host_extern_node_force_densities, LB_parameters_gpu *lbpar_gpu);
 
-void lb_calc_particle_lattice_ia_gpu();
+void lb_calc_particle_lattice_ia_gpu(bool couple_virtual);
 
 void lb_calc_fluid_mass_GPU(double* mass);
 void lb_calc_fluid_momentum_GPU(double* host_mom);

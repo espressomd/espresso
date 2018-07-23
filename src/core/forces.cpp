@@ -27,13 +27,16 @@
 #include "EspressoSystemInterface.hpp"
 
 #include "comfixed_global.hpp"
+#include "constraints.hpp"
 #include "electrokinetics.hpp"
+#include "forcecap.hpp"
 #include "forces_inline.hpp"
 #include "iccp3m.hpp"
 #include "maggs.hpp"
 #include "p3m_gpu.hpp"
-#include "forcecap.hpp"
 #include "short_range_loop.hpp"
+#include "immersed_boundaries.hpp" 
+#include "lb.hpp"
 
 #include <cassert>
 
@@ -63,10 +66,6 @@ void init_forces() {
   for (auto &p : ghost_cells.particles()) {
     init_ghost_force(&p);
   }
-
-#ifdef CONSTRAINTS
-  init_constraint_forces();
-#endif
 }
 
 void init_forces_ghosts() {
@@ -89,16 +88,6 @@ void check_forces() {
 }
 
 void force_calc() {
-  // Communication step: distribute ghost positions
-  cells_update_ghosts();
-
-// VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
-#ifdef VIRTUAL_SITES
-  virtual_sites()->update();
-  if (virtual_sites()->need_ghost_comm_after_pos_update()) {
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-  }
-#endif
 
   espressoSystemInterface.update();
 
@@ -117,7 +106,7 @@ void force_calc() {
   // this_node==0 makes sure it is the master node where the gpu exists
   if (lattice_switch & LATTICE_LB_GPU && transfer_momentum_gpu &&
       (this_node == 0))
-    lb_calc_particle_lattice_ia_gpu();
+    lb_calc_particle_lattice_ia_gpu(thermo_virtual);
 #endif // LB_GPU
 
 #ifdef ELECTROSTATICS
@@ -142,11 +131,14 @@ void force_calc() {
                                                sqrt(d.dist2), d.dist2);
                    });
 
+  auto local_parts = local_cells.particles();
+  Constraints::constraints.add_forces(local_parts);
+
 #ifdef OIF_GLOBAL_FORCES
   if (max_oif_objects) {
     double area_volume[2]; // There are two global quantities that need to be
-                         // evaluated: object's surface and object's volume. One
-                         // can add another quantity.
+    // evaluated: object's surface and object's volume. One
+    // can add another quantity.
     area_volume[0] = 0.0;
     area_volume[1] = 0.0;
     for (int i = 0; i < max_oif_objects; i++) {
@@ -160,7 +152,7 @@ void force_calc() {
 
 #ifdef IMMERSED_BOUNDARY
   // Must be done here. Forces need to be ghost-communicated
-  IBM_VolumeConservation();
+  immersed_boundaries.volume_conservation();
 #endif
 
 #ifdef LB
@@ -179,8 +171,7 @@ void force_calc() {
 
 // VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
-  if (virtual_sites()->need_ghost_comm_before_back_transfer())
-  {
+  if (virtual_sites()->need_ghost_comm_before_back_transfer()) {
     ghost_communicator(&cell_structure.collect_ghost_force_comm);
     init_forces_ghosts();
   }

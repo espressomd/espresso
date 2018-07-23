@@ -8,17 +8,11 @@
 #include "grid.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "immersed_boundary/ibm_volume_conservation.hpp"
+#include "ImmersedBoundaries.hpp" 
 
-// ****** Internal variables & functions ********
-const int MaxNumIBM = 1000;
-double VolumesCurrent[MaxNumIBM] = {0};
-bool VolumeInitDone = false;
 
-void CalcVolumes();
-void CalcVolumeForce();
 
-using std::ostringstream;
+
 
 /************
   IBM_VolumeConservation
@@ -26,12 +20,12 @@ Calculate (1) volumes, (2) volume force and (3) add it to each virtual particle
 This function is called from integrate_vv
  **************/
 
-void IBM_VolumeConservation()
+void ImmersedBoundaries::volume_conservation()
 {
   // Calculate volumes
-  CalcVolumes();
+  calc_volumes();
   
-  CalcVolumeForce();
+  calc_volume_force();
   
   // Center-of-mass output
   //if ( numWriteCOM > 0 )
@@ -42,21 +36,21 @@ void IBM_VolumeConservation()
   IBM_InitVolumeConservation
  *************/
 
-void IBM_InitVolumeConservation()
+void ImmersedBoundaries::init_volume_conservation()
 {
   
   // Check since this function is called at the start of every integrate loop
   // Also check if volume has been set due to reading of a checkpoint
-  if ( !VolumeInitDone /*&& VolumesCurrent[0] == 0 */)
+  if ( !VolumeInitDone )
   {
     
     // Calculate volumes
-    CalcVolumes();
+    calc_volumes();
     
     //numWriteCOM = 0;
     
     // Loop through all bonded interactions and check if we need to set the reference volume
-    for (int i=0; i < n_bonded_ia; i++)
+    for (int i=0; i < bonded_ia_params.size(); i++)
     {
       if ( bonded_ia_params[i].type == BONDED_IA_IBM_VOLUME_CONSERVATION )
       {
@@ -66,7 +60,6 @@ void IBM_InitVolumeConservation()
         {
           const int softID =bonded_ia_params[i].p.ibmVolConsParameters.softID;
           bonded_ia_params[i].p.ibmVolConsParameters.volRef = VolumesCurrent[softID];
-          mpi_bcast_ia_params(i, -1);
         }
       }
       
@@ -83,11 +76,11 @@ void IBM_InitVolumeConservation()
   IBM_VolumeConservation_ResetParams
  *****************/
 
-int IBM_VolumeConservation_ResetParams(const int bond_type, const double volRef)
+int ImmersedBoundaries::volume_conservation_reset_params(const int bond_type, const double volRef)
 {
   
   // Check if bond exists and is of correct type
-  if ( bond_type >= n_bonded_ia ) return ES_ERROR;
+  if ( bond_type >= bonded_ia_params.size() ) return ES_ERROR;
   if ( bonded_ia_params[bond_type].type != BONDED_IA_IBM_VOLUME_CONSERVATION ) return ES_ERROR;
   
   // Specific stuff
@@ -104,14 +97,14 @@ int IBM_VolumeConservation_ResetParams(const int bond_type, const double volRef)
    IBM_VolumeConservation_SetParams
 ************/
 
-int IBM_VolumeConservation_SetParams(const int bond_type, const int softID, const double kappaV)
+int ImmersedBoundaries::volume_conservation_set_params(const int bond_type, const int softID, const double kappaV)
 {
   // Create bond
   make_bond_type_exist(bond_type);
   
   // General bond parameters
   bonded_ia_params[bond_type].type = BONDED_IA_IBM_VOLUME_CONSERVATION;
-  bonded_ia_params[bond_type].num = 1;        // This means that Espresso requires one bond partner. Here we simply ignore it, but Espresso cannot handle 0.
+  bonded_ia_params[bond_type].num = 0;        // This means that Espresso requires one bond partner. Here we simply ignore it, but Espresso cannot handle 0.
   
   // Specific stuff
   if ( softID > MaxNumIBM) { printf("Error: softID (%d) is larger than MaxNumIBM (%d)\n", softID, MaxNumIBM); return ES_ERROR; }
@@ -131,16 +124,16 @@ int IBM_VolumeConservation_SetParams(const int bond_type, const int softID, cons
 }
 
 /****************
-   CalcVolumes
+   calc_volumes
 Calculate partial volumes on all compute nodes
 and call MPI to sum up
 ****************/
 
-void CalcVolumes()
+void ImmersedBoundaries::calc_volumes()
 {
   
   // Partial volumes for each soft particle, to be summed up
-  double tempVol[MaxNumIBM] = {0};
+  std::vector<double> tempVol(MaxNumIBM);
   
   // Loop over all particles on local node
   for (int c = 0; c < local_cells.n; c++)
@@ -165,7 +158,7 @@ void CalcVolumes()
         const int type = iaparams.type;
         if ( type == BONDED_IA_IBM_VOLUME_CONSERVATION )
         {
-          if ( p1.p.isVirtual) softID = iaparams.p.ibmVolConsParameters.softID;
+          if ( p1.p.is_virtual) softID = iaparams.p.ibmVolConsParameters.softID;
           else { printf("Error. Encountered non-virtual particle with VOLUME_CONSERVATION_IBM\n"); exit(1); }
         }
         // Iterate, increase by the number of partners of this bond + 1 for bond type
@@ -190,19 +183,15 @@ void CalcVolumes()
             Particle *p2 = local_particles[p1.bl.e[j+1]];
             if (!p2)
             {
-              ostringstream msg;
-              msg << "{IBM_CalcVolumes: 078 bond broken between particles "
+              runtimeErrorMsg() << "{IBM_calc_volumes: 078 bond broken between particles "
                 << p1.p.identity << " and " << p1.bl.e[j+1] << " (particles not stored on the same node)} ";
-              runtimeError(msg);
               return;
             }
             Particle *p3 = local_particles[p1.bl.e[j+2]];
             if (!p3)
             {
-              ostringstream msg;
-              msg << "{IBM_CalcVolumes: 078 bond broken between particles "
+              runtimeErrorMsg() << "{IBM_calc_volumes: 078 bond broken between particles "
                 << p1.p.identity << " and " << p1.bl.e[j+2] << " (particles not stored on the same node)} ";
-              runtimeError(msg);
               return;
             }
             
@@ -255,16 +244,16 @@ void CalcVolumes()
   for (int i = 0; i < MaxNumIBM; i++) VolumesCurrent[i] = 0;
   
   // Sum up and communicate
-  MPI_Allreduce(tempVol, VolumesCurrent, MaxNumIBM, MPI_DOUBLE, MPI_SUM, comm_cart);
+  MPI_Allreduce(&(tempVol.front()), &(VolumesCurrent.front()), MaxNumIBM, MPI_DOUBLE, MPI_SUM, comm_cart);
   
 }
 
 /*****************
-  CalcVolumeForce
+  calc_volume_force
 Calculate and add the volume force to each node
 *******************/
 
-void CalcVolumeForce()
+void ImmersedBoundaries::calc_volume_force()
 {
   // Loop over all particles on local node
   for (int c = 0; c < local_cells.n; c++)
@@ -290,7 +279,7 @@ void CalcVolumeForce()
         const int type = iaparams.type;
         if ( type == BONDED_IA_IBM_VOLUME_CONSERVATION )
         {
-          if ( !p1.p.isVirtual) { printf("Error. Encountered non-virtual particle with VOLUME_CONSERVATION_IBM\n"); exit(1); }
+          if ( !p1.p.is_virtual) { printf("Error. Encountered non-virtual particle with VOLUME_CONSERVATION_IBM\n"); exit(1); }
           softID = iaparams.p.ibmVolConsParameters.softID;
           volRef = iaparams.p.ibmVolConsParameters.volRef;
           kappaV = iaparams.p.ibmVolConsParameters.kappaV;

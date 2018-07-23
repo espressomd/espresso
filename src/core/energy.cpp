@@ -31,6 +31,7 @@
 #include "magnetic_non_p3m_methods.hpp"
 #include "mdlc_correction.hpp"
 #include "scafacos.hpp"
+#include "constraints.hpp"
 #include <cassert>
 
 #include "short_range_loop.hpp"
@@ -106,7 +107,7 @@ void init_energies(Observable_stat *stat) {
 
 #endif
 
-  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb,
+  obsstat_realloc_and_clear(stat, n_pre, bonded_ia_params.size(), n_non_bonded, n_coulomb,
                             n_dipolar, 0, 1);
   stat->init_status = 0;
 
@@ -149,6 +150,9 @@ void energy_calc(double *result) {
                    });
 
   calc_long_range_energies();
+
+  auto local_parts = local_cells.particles();
+  Constraints::constraints.add_energy(local_parts, energy);
 
 #ifdef CUDA
   copy_energy_from_GPU();

@@ -27,16 +27,31 @@
  *
  */
 
+#include <mpi.h>
+#include <cassert>
+#include <cstdio>
+#include <iostream>
+#include "config.hpp" 
+#include "utils.hpp"
 #include "lb.hpp"
+#include "interaction_data.hpp"
+#include "global.hpp"
+
+#ifdef LB
+
 #include "communication.hpp"
 #include "grid.hpp"
 #include "halo.hpp"
-#include "immersed_boundary/ibm_main.hpp"
-#include "interaction_data.hpp"
 #include "lb-d3q19.hpp"
 #include "lbboundaries.hpp"
+#include "lb.hpp"
+#include "virtual_sites/lb_inertialess_tracers.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
+#include "global.hpp"
+#include "cells.hpp"
+#include "global.hpp"
+
 #include <cassert>
 #include <cstdio>
 #include <iostream>
@@ -44,9 +59,9 @@
 
 #include "cuda_interface.hpp"
 
-#ifdef LB
-
-void lb_check_halo_regions();
+#ifdef ADDITIONAL_CHECKS
+static void lb_check_halo_regions();
+#endif // ADDITIONAL_CHECKS
 
 /** Flag indicating momentum exchange between particles and fluid */
 int transfer_momentum = 0;
@@ -86,8 +101,8 @@ LB_Parameters lbpar = {
     0};
 
 /** The DnQm model to be used. */
-LB_Model lbmodel = {19,      d3q19_lattice, d3q19_coefficients,
-                    d3q19_w, nullptr,       1. / 3.};
+LB_Model<> lbmodel = {d3q19_lattice, d3q19_coefficients,
+                    d3q19_w, d3q19_modebase, 1. / 3.};
 
 #if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
 #define FLATNOISE
@@ -101,7 +116,7 @@ Lattice lblattice;
 double **lbfluid[2] = {nullptr, nullptr};
 
 /** Pointer to the hydrodynamic fields of the fluid nodes */
-LB_FluidNode *lbfields = nullptr;
+std::vector<LB_FluidNode> lbfields;
 
 /** Communicator for halo exchange between processors */
 HaloCommunicator update_halo_comm = {0, nullptr};
@@ -1911,8 +1926,7 @@ static void lb_realloc_fluid() {
     lbfluid[1][i] = lbfluid[1][0] + i * lblattice.halo_grid_volume;
   }
 
-  lbfields =
-      Utils::realloc(lbfields, lblattice.halo_grid_volume * sizeof(*lbfields));
+  lbfields.resize(lblattice.halo_grid_volume);
 }
 
 /** Sets up the structures for exchange of the halo regions.
@@ -2010,19 +2024,18 @@ void lb_reinit_parameters() {
     double mu = temperature / lbmodel.c_sound_sq * lbpar.tau * lbpar.tau /
          (lbpar.agrid * lbpar.agrid);
     // mu *= agrid*agrid*agrid;  // Marcello's conjecture
-    double(*e)[19] = d3q19_modebase;
 
     for (i = 0; i < 4; i++)
       lbpar.phi[i] = 0.0;
     lbpar.phi[4] =
-        sqrt(mu * e[19][4] *
+        sqrt(mu * lbmodel.e[19][4] *
              (1. - Utils::sqr(lbpar.gamma_bulk))); // Utils::sqr(x) == x*x
     for (i = 5; i < 10; i++)
-      lbpar.phi[i] = sqrt(mu * e[19][i] * (1. - Utils::sqr(lbpar.gamma_shear)));
+      lbpar.phi[i] = sqrt(mu * lbmodel.e[19][i] * (1. - Utils::sqr(lbpar.gamma_shear)));
     for (i = 10; i < 16; i++)
-      lbpar.phi[i] = sqrt(mu * e[19][i] * (1 - Utils::sqr(lbpar.gamma_odd)));
+      lbpar.phi[i] = sqrt(mu * lbmodel.e[19][i] * (1 - Utils::sqr(lbpar.gamma_odd)));
     for (i = 16; i < 19; i++)
-      lbpar.phi[i] = sqrt(mu * e[19][i] * (1 - Utils::sqr(lbpar.gamma_even)));
+      lbpar.phi[i] = sqrt(mu * lbmodel.e[19][i] * (1 - Utils::sqr(lbpar.gamma_even)));
 
     /* lb_coupl_pref is stored in MD units (force)
      * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
@@ -2063,7 +2076,7 @@ void lb_reinit_force_densities() {
     lbfields[index].force_density[0] = 0.0;
     lbfields[index].force_density[1] = 0.0;
     lbfields[index].force_density[2] = 0.0;
-    lbfields[index].has_force = 0;
+    lbfields[index].has_force_density = 0;
 #endif // EXTERNAL_FORCES
   }
 #ifdef LB_BOUNDARIES
@@ -2154,7 +2167,6 @@ void lb_release_fluid() {
   free(lbfluid[0]);
   free(lbfluid[1][0]);
   free(lbfluid[1]);
-  free(lbfields);
 }
 
 /** Release fluid and communication. */
@@ -2333,7 +2345,7 @@ inline void lb_relax_modes(Lattice::index_t index, double *mode) {
  * include one half-step of the force action.  See the
  * Chapman-Enskog expansion in [Ladd & Verberg]. */
 #ifndef EXTERNAL_FORCES
-  if (lbfields[index].has_force || local_cells.particles().size())
+  if (lbfields[index].has_force_density || local_cells.particles().size())
 #endif // !EXTERNAL_FORCES
   {
     j[0] += 0.5 * lbfields[index].force_density[0];
@@ -2463,7 +2475,7 @@ inline void lb_reset_force_densities(Lattice::index_t index) {
   lbfields[index].force_density[0] = 0.0;
   lbfields[index].force_density[1] = 0.0;
   lbfields[index].force_density[2] = 0.0;
-  lbfields[index].has_force = 0;
+  lbfields[index].has_force_density = 0;
 #endif // EXTERNAL_FORCES
 }
 
@@ -2493,7 +2505,7 @@ inline void lb_calc_n_from_modes_push(Lattice::index_t index, double *m) {
 
   /* normalization factors enter in the back transformation */
   for (int i = 0; i < lbmodel.n_veloc; i++)
-    m[i] = (1. / d3q19_modebase[19][i]) * m[i];
+    m[i] = (1. / lbmodel.e[19][i]) * m[i];
 
   lbfluid[1][0][next[0]] = m[0] - m[4] + m[16];
   lbfluid[1][1][next[1]] =
@@ -2556,15 +2568,18 @@ inline void lb_collide_stream() {
     (**it).reset_force();
   }
 #endif // LB_BOUNDARIES
-
-#ifdef IMMERSED_BOUNDARY
+  
+  
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+// Safeguard the node forces so that we can later use them for the IBM particle update
+// In the following loop the lbfields[XX].force are reset to zero
   // Safeguard the node forces so that we can later use them for the IBM
   // particle update In the following loop the lbfields[XX].force are reset to
   // zero
   for (int i = 0; i < lblattice.halo_grid_volume; ++i) {
-    lbfields[i].force_buf[0] = lbfields[i].force[0];
-    lbfields[i].force_buf[1] = lbfields[i].force[1];
-    lbfields[i].force_buf[2] = lbfields[i].force[2];
+    lbfields[i].force_density_buf[0] = lbfields[i].force_density[0];
+    lbfields[i].force_density_buf[1] = lbfields[i].force_density[1];
+    lbfields[i].force_density_buf[2] = lbfields[i].force_density[2];
   }
 #endif
 
@@ -2986,7 +3001,7 @@ void calc_particle_lattice_ia() {
     if (lbpar.resend_halo) { /* first MD step after last LB update */
 
       /* exchange halo regions (for fluid-particle coupling) */
-      halo_communication(&update_halo_comm, (char *)**lbfluid);
+      halo_communication(&update_halo_comm, reinterpret_cast<char *>(**lbfluid));
 
 #ifdef ADDITIONAL_CHECKS
       lb_check_halo_regions();
@@ -3027,10 +3042,7 @@ void calc_particle_lattice_ia() {
 
     /* local cells */
     for (auto &p : local_cells.particles()) {
-#ifdef IMMERSED_BOUNDARY
-      // Virtual particles for IBM must not be coupled
-      if (!p.p.isVirtual)
-#endif
+      if (!p.p.is_virtual || thermo_virtual)
       {
         lb_viscous_coupling(&p, force);
 
@@ -3061,10 +3073,7 @@ void calc_particle_lattice_ia() {
           fprintf(stderr, "%d: OPT: LB coupling of ghost particle:\n",
                   this_node);
         });
-#ifdef IMMERSED_BOUNDARY
-        // Virtual particles for IBM must not be coupled
-        if (!p.p.isVirtual)
-#endif
+        if (!p.p.is_virtual || thermo_virtual)
         {
           lb_viscous_coupling(&p, force);
         }

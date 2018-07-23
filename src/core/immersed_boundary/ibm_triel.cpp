@@ -40,8 +40,8 @@ int IBM_Triel_CalcForce(Particle *p1,Particle *p2, Particle *p3, Bonded_ia_param
   const double sinPhi = sqrt(sqrlen(vecpro))/(l*lp);
   
   // Check for sanity
-  if(    (lp-iaparams->p.ibm_triel.lp0 > iaparams->p.ibm_triel.maxdist)
-     ||  (l-iaparams->p.ibm_triel.l0 > iaparams->p.ibm_triel.maxdist))
+  if(    (lp-iaparams->p.ibm_triel.lp0 > iaparams->p.ibm_triel.maxDist)
+     ||  (l-iaparams->p.ibm_triel.l0 > iaparams->p.ibm_triel.maxDist))
   {
     return 1;
   }
@@ -77,7 +77,7 @@ int IBM_Triel_CalcForce(Particle *p1,Particle *p2, Particle *p3, Bonded_ia_param
   // Derivatives of energy density E used in chain rule below: Eq. (C.14)
   double dEdI1;
   double dEdI2;
-  if ( iaparams->p.ibm_triel.elasticLaw == NeoHookean )
+  if ( iaparams->p.ibm_triel.elasticLaw == tElasticLaw::NeoHookean )
   {
     // Neo-Hookean
     dEdI1 = iaparams->p.ibm_triel.k1/6.0;
@@ -195,7 +195,7 @@ int IBM_Triel_ResetParams(const int bond_type, const double k1, const double l0)
 {
   
   // Check if bond exists and is of correct type
-  if ( bond_type >= n_bonded_ia ) { printf("bond does not exist while reading triel checkpoint\n"); return ES_ERROR; }
+  if ( bond_type >= bonded_ia_params.size() ) { printf("bond does not exist while reading triel checkpoint\n"); return ES_ERROR; }
   if ( bonded_ia_params[bond_type].type != BONDED_IA_IBM_TRIEL ) { printf("interaction type does not match while reading triel checkpoint!\n");return ES_ERROR; }
 
   // Check if k1 is correct
@@ -232,17 +232,16 @@ int IBM_Triel_ResetParams(const int bond_type, const double k1, const double l0)
    IBM_Triel_SetParams
 ************/
 
-int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const double max, const tElasticLaw elasticLaw, const double k1, const double k2)
+int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const double maxDist, const tElasticLaw elasticLaw, const double k1, const double k2)
 {
   // Create bond
   make_bond_type_exist(bond_type);
 
-  //Get data (especially location) of three particles
-  Particle part1, part2, part3;
-  get_particle_data(ind1,&part1);
-  get_particle_data(ind2,&part2);
-  get_particle_data(ind3,&part3);
-  
+  // Get data (especially location) of three particles
+  auto part1 = get_particle_data(ind1);
+  auto part2 = get_particle_data(ind2);
+  auto part3 = get_particle_data(ind3);
+
   // Calculate equilibrium lenghts and angle; Note the sequence of the points!
   // lo = lenght between 1 and 3
   double templo[3];
@@ -258,18 +257,18 @@ int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, con
   double vecpro[3];
   vector_product(templo, templpo, vecpro);
   const double sinPhi0 = sqrt(sqrlen(vecpro))/(l0*lp0);
-  
+
   // Use the values determined above for further constants of the stretch-force calculation
   const double area2 = l0 * lp0 * sinPhi0;
   const double a1 = -(l0*sinPhi0)/area2;
   const double a2 = - a1;
   const double b1 = (l0*cosPhi0 - lp0)/area2;
   const double b2 = -(l0*cosPhi0)/area2;
-  
+
   // General stuff
   bonded_ia_params[bond_type].type = BONDED_IA_IBM_TRIEL;
   bonded_ia_params[bond_type].num = 2;
-  
+
   // Specific stuff
   bonded_ia_params[bond_type].p.ibm_triel.a1 = a1;
   bonded_ia_params[bond_type].p.ibm_triel.a2 = a2;
@@ -280,21 +279,15 @@ int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, con
   bonded_ia_params[bond_type].p.ibm_triel.sinPhi0 = sinPhi0;
   bonded_ia_params[bond_type].p.ibm_triel.cosPhi0 = cosPhi0;
   bonded_ia_params[bond_type].p.ibm_triel.area0 = 0.5*area2;
-  bonded_ia_params[bond_type].p.ibm_triel.maxdist = max;
+  bonded_ia_params[bond_type].p.ibm_triel.maxDist = maxDist;
   bonded_ia_params[bond_type].p.ibm_triel.elasticLaw = elasticLaw;
   // Always store two constants, for NeoHookean only k1 is used
   bonded_ia_params[bond_type].p.ibm_triel.k1 = k1;
   bonded_ia_params[bond_type].p.ibm_triel.k2 = k2;
-  
+
   //Communicate this to whoever is interested
   mpi_bcast_ia_params(bond_type, -1);
-  
-  // Free particles's allocated memory
-  // This was in Wolfgang's code, but probably should not be here since particles are local variables
-//  free_particle(&part1);
-//  free_particle(&part2);
-//  free_particle(&part3);
-  
+
   return ES_OK;
 }
 

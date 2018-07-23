@@ -25,6 +25,10 @@ from libcpp.string cimport string
 include "myconfig.pxi"
 from espressomd.system cimport *
 cimport numpy as np
+#force include of config.hpp
+cdef extern from "config.hpp":
+    pass
+
 from espressomd.utils cimport *
 
 cdef extern from "TabulatedPotential.hpp":
@@ -35,7 +39,7 @@ cdef extern from "TabulatedPotential.hpp":
         vector[double] force_tab
 
 cdef extern from "interaction_data.hpp":
-    ctypedef struct ia_parameters "IA_parameters":
+    cdef struct IA_parameters:
         double LJ_eps
         double LJ_sig
         double LJ_cut
@@ -145,8 +149,8 @@ cdef extern from "interaction_data.hpp":
         double THOLE_scaling_coeff
         double THOLE_q1q2
 
-    cdef ia_parameters * get_ia_param(int i, int j)
-    cdef ia_parameters * get_ia_param_safe(int i, int j)
+    cdef IA_parameters * get_ia_param(int i, int j)
+    cdef IA_parameters * get_ia_param_safe(int i, int j)
     cdef void make_bond_type_exist(int type)
     cdef string ia_params_get_state()
     cdef void ia_params_set_state(string)
@@ -242,32 +246,66 @@ IF HAT:
         int hat_set_params(int part_type_a, int part_type_b,
                            double Fmax, double r)
 
-IF MEMBRANE_COLLISION==1:
+IF MEMBRANE_COLLISION:
     cdef extern from "object-in-fluid/membrane_collision.hpp":
         cdef int membrane_collision_set_params(int part_type_a, int part_type_b,
                                                double a, double n, 
                                                double cut, double offset)
 
-IF SOFT_SPHERE==1:
+IF SOFT_SPHERE:
     cdef extern from "soft_sphere.hpp":
         cdef int soft_sphere_set_params(int part_type_a, int part_type_b,
                                                double a, double n,
                                                double cut, double offset)
 
-IF AFFINITY==1:
+IF AFFINITY:
     cdef extern from "object-in-fluid/affinity.hpp":
         cdef int affinity_set_params(int part_type_a, int part_type_b,
                                      int afftype, double kappa, double r0, 
                                      double Kon, double Koff, double maxBond, double cut)
-IF TABULATED==1:
+IF TABULATED:
     cdef extern from "tab.hpp":
         int tabulated_set_params(int part_type_a, int part_type_b,
                                  double min, double max,
                                  vector[double] energy,
                                  vector[double] force);
+IF ROTATION:
+    cdef extern from "interaction_data.hpp":
+    #* Parameters for the harmonic dumbbell bond potential */
+        cdef struct Harmonic_dumbbell_bond_parameters:
+            double k1
+            double k2
+            double r
+            double r_cut
+ELSE:
+    cdef struct Harmonic_dumbbell_bond_parameters:
+        double k1
+        double k2
+        double r
+        double r_cut
+
+IF TABULATED:
+    cdef extern from "interaction_data.hpp":
+    #* Parameters for n-body tabulated potential (n=2,3,4). */
+        cdef struct Tabulated_bond_parameters:
+            int type
+            TabulatedPotential * pot
+ELSE:
+    cdef struct Tabulated_bond_parameters:
+        int type
+        TabulatedPotential * pot
+
+IF P3M:
+    cdef extern from "interaction_data.hpp":
+        #* Parameters for Bonded coulomb p3m sr */
+        cdef struct Bonded_coulomb_p3m_sr_bond_parameters:
+            double q1q2
+ELSE:
+    cdef struct Bonded_coulomb_p3m_sr_bond_parameters:
+        double q1q2
 
 cdef extern from "interaction_data.hpp":
-    ctypedef struct Fene_bond_parameters:
+    cdef struct Fene_bond_parameters:
         double k
         double drmax
         double r0
@@ -276,14 +314,14 @@ cdef extern from "interaction_data.hpp":
 
 
 #* Parameters for oif_global_forces */
-    ctypedef struct Oif_global_forces_bond_parameters:
+    cdef struct Oif_global_forces_bond_parameters:
         double A0_g
         double ka_g
         double V0
         double kv
 
 #* Parameters for oif_local_forces */
-    ctypedef struct Oif_local_forces_bond_parameters:
+    cdef struct Oif_local_forces_bond_parameters:
         double r0
         double ks
         double kslin
@@ -295,20 +333,14 @@ cdef extern from "interaction_data.hpp":
         double kvisc
 
 #* Parameters for harmonic bond Potential */
-    ctypedef struct Harmonic_bond_parameters:
+    cdef struct Harmonic_bond_parameters:
         double k
         double r
         double r_cut
 
-#* Parameters for the harmonic dumbbell bond potential */
-    ctypedef struct Harmonic_dumbbell_bond_parameters:
-        double k1
-        double k2
-        double r
-        double r_cut
 
 #* Parameters for thermalized  bond */
-    ctypedef struct Thermalized_bond_parameters:
+    cdef struct Thermalized_bond_parameters:
         double temp_com
         double gamma_com
         double temp_distance
@@ -316,28 +348,25 @@ cdef extern from "interaction_data.hpp":
         double r_cut
 
 #* Parameters for Bonded coulomb */
-    ctypedef struct Bonded_coulomb_bond_parameters:
+    cdef struct Bonded_coulomb_bond_parameters:
         double prefactor
 
-#* Parameters for Bonded coulomb p3m sr */
-    ctypedef struct Bonded_coulomb_p3m_sr_bond_parameters:
-        double q1q2
 
 #* Parameters for three body angular potential (bond-angle potentials).
-    ctypedef struct Angle_bond_parameters:
+    cdef struct Angle_bond_parameters:
         double bend
         double phi0
         double cos_phi0
         double sin_phi0
 
 #* Parameters for three body angular potential (bond_angle_harmonic).
-    ctypedef struct Angle_harmonic_bond_parameters:
+    cdef struct Angle_harmonic_bond_parameters:
         double bend
         double phi0
 
 
 #* Parameters for three body angular potential (bond_angle_cosine).
-    ctypedef struct Angle_cosine_bond_parameters:
+    cdef struct Angle_cosine_bond_parameters:
         double bend
         double phi0
         double cos_phi0
@@ -345,25 +374,21 @@ cdef extern from "interaction_data.hpp":
 
 
 #* Parameters for three body angular potential (bond_angle_cossquare).
-    ctypedef struct Angle_cossquare_bond_parameters:
+    cdef struct Angle_cossquare_bond_parameters:
         double bend
         double phi0
         double cos_phi0
 
 #* Parameters for four body angular potential (dihedral-angle potentials). */
-    ctypedef struct Dihedral_bond_parameters:
+    cdef struct Dihedral_bond_parameters:
         double mult
         double bend
         double phase
 
 
-#* Parameters for n-body tabulated potential (n=2,3,4). */
-    ctypedef struct Tabulated_bond_parameters:
-        int    type
-        TabulatedPotential * pot
 
 #* Parameters for n-body overlapped potential (n=2,3,4). */
-    ctypedef struct Overlap_bond_parameters:
+    cdef struct Overlap_bond_parameters:
         char * filename
         int    type
         double maxval
@@ -373,19 +398,19 @@ cdef extern from "interaction_data.hpp":
         double * para_c
 
 #* Parameters for one-directional harmonic potential */
-    ctypedef struct Umbrella_bond_parameters:
+    cdef struct Umbrella_bond_parameters:
         double k
         int    dir
         double r
 
 #* Dummy parameters for -LJ Potential */
-    ctypedef struct Subt_lj_bond_parameters:
+    cdef struct Subt_lj_bond_parameters:
         double k
         double r
         double r2
 
 #*Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM*/
-    ctypedef struct Rigid_bond_parameters:
+    cdef struct Rigid_bond_parameters:
         #*Length of rigid bond/Constrained Bond*/
         # double d
         #*Square of the length of Constrained Bond*/
@@ -396,7 +421,7 @@ cdef extern from "interaction_data.hpp":
         double v_tol
 
 #* Parameters for three body angular potential (bond-angle potentials) that
-    ctypedef struct Angledist_bond_parameters:
+    cdef struct Angledist_bond_parameters:
         double bend
         double phimin
         double distmin
@@ -406,8 +431,38 @@ cdef extern from "interaction_data.hpp":
         double sin_phi0
 
 
+#* Parameters for IBM Triel  */
+    cdef cppclass tElasticLaw:
+        pass
+
+    cdef struct IBM_Triel_Parameters:
+        double l0
+        double lp0
+        double sinPhi0
+        double cosPhi0
+        double area0
+        double a1
+        double a2
+        double b1
+        double b2
+        double maxDist
+        tElasticLaw elasticLaw
+        double k1
+        double k2
+
+#* Parameters for IBM Tribend  */
+    cdef struct IBM_Tribend_Parameters:
+        double kb
+        double theta0
+
+#* Parameters for IBM VolCons  */
+    cdef struct IBM_VolCons_Parameters:
+        int softID
+        double kappaV
+        double volRef
+
 #* Union in which to store the parameters of an individual bonded interaction */
-    ctypedef union bond_parameters "Bond_parameters":
+    cdef union Bond_parameters:
         Fene_bond_parameters fene
         Oif_global_forces_bond_parameters oif_global_forces
         Oif_local_forces_bond_parameters oif_local_forces
@@ -426,15 +481,21 @@ cdef extern from "interaction_data.hpp":
         Subt_lj_bond_parameters subt_lj
         Rigid_bond_parameters rigid_bond
         Angledist_bond_parameters angledist
+        IBM_Triel_Parameters ibm_triel
+        IBM_Tribend_Parameters ibm_tribend
+        IBM_VolCons_Parameters ibmVolConsParameters
 
-    ctypedef struct bonded_ia_parameters:
+    cdef struct Bonded_ia_parameters:
         int type
         int num
         #* union to store the different bonded interaction parameters. */
-        bond_parameters p
+        Bond_parameters p
 
-    bonded_ia_parameters * bonded_ia_params
-    cdef int n_bonded_ia
+    vector[Bonded_ia_parameters] bonded_ia_params
+
+cdef extern from "interaction_data.hpp" namespace "tElasticLaw":
+    cdef tElasticLaw NeoHookean
+    cdef tElasticLaw Skalak
 
 cdef extern from "fene.hpp":
     int fene_set_params(int bond_type, double k, double drmax, double r0)
@@ -465,18 +526,30 @@ cdef extern from "bonded_coulomb.hpp":
 cdef extern from "bonded_coulomb_p3m_sr.hpp":
     int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2)
 
+
+cdef extern from "immersed_boundary/ImmersedBoundaries.hpp":
+    cppclass ImmersedBoundaries:
+        void volume_conservation_set_params(const int bond_type, const int softID, const double kappaV)
+
+
+
+cdef extern from "immersed_boundary/ibm_triel.hpp":
+    int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const double max, const tElasticLaw elasticLaw, const double k1, const double k2)
+cdef extern from "immersed_boundary/ibm_tribend.hpp":
+    int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const int ind4, const double kb, const bool flat)
+
 IF ROTATION:
     cdef extern from "harmonic_dumbbell.hpp":
         int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r, double r_cut)
 
-IF TABULATED == 1:
+IF TABULATED:
     cdef extern from "interaction_data.hpp":
         cdef enum TabulatedBondedInteraction:
             TAB_UNKNOWN = 0, TAB_BOND_LENGTH, TAB_BOND_ANGLE, TAB_BOND_DIHEDRAL
     cdef extern from "tab.hpp":
         int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_type, double min, double max, vector[double] energy, vector[double] force)
 
-IF ELECTROSTATICS == 1:
+IF ELECTROSTATICS:
     cdef extern from "bonded_coulomb.hpp":
         int bonded_coulomb_set_params(int bond_type, double prefactor)
     
@@ -510,7 +583,7 @@ cdef extern from "interaction_data.hpp":
         BONDED_IA_CG_DNA_STACKING,
         BONDED_IA_CG_DNA_BACKBONE,
         BONDED_IA_IBM_TRIEL,
-        BONDED_IA_IBM_VOLUME_CONSERVATION,
         BONDED_IA_IBM_TRIBEND,
+        BONDED_IA_IBM_VOLUME_CONSERVATION,
         BONDED_IA_UMBRELLA,
         BONDED_IA_THERMALIZED_DIST
