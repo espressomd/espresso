@@ -47,7 +47,7 @@ namespace LBBoundaries {
 std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
-void lbboundary_mindist_position(const Vector3d& pos, double *mindist,
+void lbboundary_mindist_position(const Vector3d &pos, double *mindist,
                                  double distvec[3], int *no) {
 
   double vec[3] = {std::numeric_limits<double>::infinity(),
@@ -265,50 +265,43 @@ void lb_init_boundaries() {
 #endif /* defined (LB_GPU) && defined (LB_BOUNDARIES_GPU) */
   } else {
 #if defined(LB) && defined(LB_BOUNDARIES)
-    int node_domain_position[3], offset[3];
-    int the_boundary = -1;
-    map_node_array(this_node, node_domain_position);
-
-    offset[0] = node_domain_position[0] * lblattice.grid[0];
-    offset[1] = node_domain_position[1] * lblattice.grid[1];
-    offset[2] = node_domain_position[2] * lblattice.grid[2];
-
-    for (int n = 0; n < lblattice.halo_grid_volume; n++) {
-      lbfields[n].boundary = 0;
+    if (lbboundaries.empty()) {
+      return;
     }
 
-    if (lblattice.halo_grid_volume == 0)
-      return;
+    int node_domain_position[3];
+    map_node_array(this_node, node_domain_position);
+
+    const Vector<3, int> offset = {node_domain_position[0] * lblattice.grid[0],
+                                   node_domain_position[1] * lblattice.grid[1],
+                                   node_domain_position[2] * lblattice.grid[2]};
 
     for (int z = 0; z < lblattice.grid[2] + 2; z++) {
       for (int y = 0; y < lblattice.grid[1] + 2; y++) {
         for (int x = 0; x < lblattice.grid[0] + 2; x++) {
-          pos[0] = (offset[0] + (x - 0.5)) * lblattice.agrid[0];
-          pos[1] = (offset[1] + (y - 0.5)) * lblattice.agrid[1];
-          pos[2] = (offset[2] + (z - 0.5)) * lblattice.agrid[2];
+          const Vector3d pos{(offset[0] + (x - 0.5)) * lblattice.agrid[0],
+                             (offset[1] + (y - 0.5)) * lblattice.agrid[1],
+                             (offset[2] + (z - 0.5)) * lblattice.agrid[2]};
 
-          double dist = 1e99;
-          double dist_tmp = 0.0;
-          double dist_vec[3];
+          auto bc = std::find_if(
+              lbboundaries.begin(), lbboundaries.end(),
+              [&pos](const std::shared_ptr<LBBoundary> &bc) -> bool {
+                double dist_tmp = 0.0;
+                double dist_vec[3];
 
-          int n = 0;
-          for (auto it = lbboundaries.begin(); it != lbboundaries.end();
-               ++it, ++n) {
-            (**it).calc_dist(pos, &dist_tmp, dist_vec);
+                bc->calc_dist(pos.data(), &dist_tmp, dist_vec);
 
-            if (dist_tmp < dist || n == 0) {
-              dist = dist_tmp;
-              the_boundary = n;
-            }
-          }
+                return dist_tmp <= 0.;
+              });
 
-          if (dist <= 0 && the_boundary >= 0 &&
-              LBBoundaries::lbboundaries.size() > 0) {
-            lbfields[get_linear_index(x, y, z, lblattice.halo_grid)].boundary =
-                the_boundary + 1;
+          auto &node = lbfields[get_linear_index(x, y, z, lblattice.halo_grid)];
+
+          if (bc != lbboundaries.end()) {
+            node.boundary = true;
+            node.boundary_velocity =
+                (*bc)->velocity() * lbpar.tau / lbpar.agrid;
           } else {
-            lbfields[get_linear_index(x, y, z, lblattice.halo_grid)].boundary =
-                0;
+            node.boundary = false;
           }
         }
       }
@@ -331,7 +324,7 @@ int lbboundary_get_force(void *lbb, double *f) {
                              "lbboundary that was not added to "
                              "system.lbboundaries.");
 
-  std::vector<double> forces(3*lbboundaries.size());
+  std::vector<double> forces(3 * lbboundaries.size());
 
   if (lattice_switch & LATTICE_LB_GPU) {
 #if defined(LB_BOUNDARIES_GPU) && defined(LB_GPU)
@@ -399,8 +392,6 @@ void lb_bounce_back() {
   int reverse[] = {0, 2,  1,  4,  3,  6,  5,  8,  7, 10,
                    9, 12, 11, 14, 13, 16, 15, 18, 17};
 
-  /* bottom-up sweep */
-  //  for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume;k++)
   for (z = 0; z < lblattice.grid[2] + 2; z++) {
     for (y = 0; y < lblattice.grid[1] + 2; y++) {
       for (x = 0; x < lblattice.grid[0] + 2; x++) {
@@ -412,13 +403,10 @@ void lb_bounce_back() {
           for (i = 0; i < 19; i++) {
             population_shift = 0;
             for (l = 0; l < 3; l++) {
-              population_shift -=
-                  lbpar.agrid * lbpar.agrid * lbpar.agrid * lbpar.rho * 2 *
-                  lbmodel.c[i][l] * lbmodel.w[i] *
-                  (*LBBoundaries::lbboundaries[lbfields[k].boundary - 1])
-                      .velocity()[l] *
-                  (lbpar.tau / lbpar.agrid) / // TODO
-                  lbmodel.c_sound_sq;
+              population_shift -= lbpar.agrid * lbpar.agrid * lbpar.agrid *
+                                  lbpar.rho * 2 * lbmodel.c[i][l] *
+                                  lbmodel.w[i] * lbfields[k].boundary_velocity[l] *
+                                  lbmodel.c_sound_sq;
             }
 
             if (x - lbmodel.c[i][0] > 0 &&
@@ -428,12 +416,6 @@ void lb_bounce_back() {
                 z - lbmodel.c[i][2] > 0 &&
                 z - lbmodel.c[i][2] < lblattice.grid[2] + 1) {
               if (!lbfields[k - next[i]].boundary) {
-                for (l = 0; l < 3; l++) {
-                  (*LBBoundaries::lbboundaries[lbfields[k].boundary - 1])
-                      .force()[l] += // TODO
-                      (2 * lbfluid[1][i][k] + population_shift) *
-                      lbmodel.c[i][l];
-                }
                 lbfluid[1][reverse[i]][k - next[i]] =
                     lbfluid[1][i][k] + population_shift;
               } else {

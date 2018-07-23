@@ -27,30 +27,22 @@
  *
  */
 
-#include <mpi.h>
-#include <cassert>
-#include <cstdio>
-#include <iostream>
-#include "config.hpp" 
-#include "utils.hpp"
 #include "lb.hpp"
-#include "interaction_data.hpp"
-#include "global.hpp"
 
 #ifdef LB
 
+#include "cells.hpp"
 #include "communication.hpp"
+#include "global.hpp"
 #include "grid.hpp"
 #include "halo.hpp"
+#include "interaction_data.hpp"
 #include "lb-d3q19.hpp"
-#include "lbboundaries.hpp"
 #include "lb.hpp"
-#include "virtual_sites/lb_inertialess_tracers.hpp"
+#include "lbboundaries.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
-#include "global.hpp"
-#include "cells.hpp"
-#include "global.hpp"
+#include "virtual_sites/lb_inertialess_tracers.hpp"
 
 #include <cassert>
 #include <cstdio>
@@ -486,7 +478,7 @@ int lb_lbfluid_set_remove_momentum(void) {
 #endif // SHANCHEN
 
 int lb_lbfluid_set_ext_force_density(int component, double p_fx, double p_fy,
-                             double p_fz) {
+                                     double p_fz) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     if (lbpar_gpu.tau < 0.0)
@@ -1240,7 +1232,7 @@ int lb_lbnode_get_u(int *ind, double *p_u) {
  * couple to MD beads when near a wall, see
  * lb_lbfluid_get_interpolated_velocity.
  */
-int lb_lbfluid_get_interpolated_velocity_global(Vector3d& p, double* v) {
+int lb_lbfluid_get_interpolated_velocity_global(Vector3d &p, double *v) {
   double local_v[3] = {0, 0, 0},
          delta[6]{}; // velocity field, relative positions to surrounding nodes
   int ind[3] = {0, 0, 0}, tmpind[3]; // node indices
@@ -2023,7 +2015,7 @@ void lb_reinit_parameters() {
     /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).
      * Note that the modes are not normalized as in the paper here! */
     double mu = temperature / lbmodel.c_sound_sq * lbpar.tau * lbpar.tau /
-         (lbpar.agrid * lbpar.agrid);
+                (lbpar.agrid * lbpar.agrid);
     // mu *= agrid*agrid*agrid;  // Marcello's conjecture
     double(*e)[19] = d3q19_modebase;
 
@@ -2048,10 +2040,11 @@ void lb_reinit_parameters() {
     lb_coupl_pref = sqrt(12. * 2. * lbpar.friction * temperature / time_step);
     lb_coupl_pref2 = sqrt(2. * lbpar.friction * temperature / time_step);
     LB_TRACE(fprintf(
-      stderr, "%d: lbpar.gamma_shear=%lf lbpar.gamma_bulk=%lf shear_fluct=%lf "
-              "bulk_fluct=%lf mu=%lf, bulkvisc=%lf, visc=%lf\n",
-      this_node, lbpar.gamma_shear, lbpar.gamma_bulk, lbpar.phi[9],
-      lbpar.phi[4], mu, lbpar.bulk_viscosity, lbpar.viscosity));
+        stderr,
+        "%d: lbpar.gamma_shear=%lf lbpar.gamma_bulk=%lf shear_fluct=%lf "
+        "bulk_fluct=%lf mu=%lf, bulkvisc=%lf, visc=%lf\n",
+        this_node, lbpar.gamma_shear, lbpar.gamma_bulk, lbpar.phi[9],
+        lbpar.phi[4], mu, lbpar.bulk_viscosity, lbpar.viscosity));
   } else {
     /* no fluctuations at zero temperature */
     lbpar.fluct = 0;
@@ -2068,12 +2061,15 @@ void lb_reinit_force_densities() {
        index++) {
 #ifdef EXTERNAL_FORCES
     // unit conversion: force density
-    lbfields[index].force_density[0] =
-        lbpar.ext_force_density[0] * pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
-    lbfields[index].force_density[1] =
-        lbpar.ext_force_density[1] * pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
-    lbfields[index].force_density[2] =
-        lbpar.ext_force_density[2] * pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
+    lbfields[index].force_density[0] = lbpar.ext_force_density[0] *
+                                       pow(lbpar.agrid, 2) * lbpar.tau *
+                                       lbpar.tau;
+    lbfields[index].force_density[1] = lbpar.ext_force_density[1] *
+                                       pow(lbpar.agrid, 2) * lbpar.tau *
+                                       lbpar.tau;
+    lbfields[index].force_density[2] = lbpar.ext_force_density[2] *
+                                       pow(lbpar.agrid, 2) * lbpar.tau *
+                                       lbpar.tau;
 #else  // EXTERNAL_FORCES
     lbfields[index].force_density[0] = 0.0;
     lbfields[index].force_density[1] = 0.0;
@@ -2108,7 +2104,7 @@ void lb_reinit_fluid() {
     lb_calc_n_from_rho_j_pi(index, rho, j, pi);
 
 #ifdef LB_BOUNDARIES
-    lbfields[index].boundary = 0;
+    lbfields[index].boundary = false;
 #endif // LB_BOUNDARIES
   }
 
@@ -2468,12 +2464,12 @@ inline void lb_reset_force_densities(Lattice::index_t index) {
 /* reset force */
 #ifdef EXTERNAL_FORCES
   // unit conversion: force density
-  lbfields[index].force_density[0] =
-      lbpar.ext_force_density[0] * lbpar.agrid * lbpar.agrid * lbpar.tau * lbpar.tau;
-  lbfields[index].force_density[1] =
-      lbpar.ext_force_density[1] * lbpar.agrid * lbpar.agrid * lbpar.tau * lbpar.tau;
-  lbfields[index].force_density[2] =
-      lbpar.ext_force_density[2] * lbpar.agrid * lbpar.agrid * lbpar.tau * lbpar.tau;
+  lbfields[index].force_density[0] = lbpar.ext_force_density[0] * lbpar.agrid *
+                                     lbpar.agrid * lbpar.tau * lbpar.tau;
+  lbfields[index].force_density[1] = lbpar.ext_force_density[1] * lbpar.agrid *
+                                     lbpar.agrid * lbpar.tau * lbpar.tau;
+  lbfields[index].force_density[2] = lbpar.ext_force_density[2] * lbpar.agrid *
+                                     lbpar.agrid * lbpar.tau * lbpar.tau;
 #else  // EXTERNAL_FORCES
   lbfields[index].force_density[0] = 0.0;
   lbfields[index].force_density[1] = 0.0;
@@ -2571,11 +2567,11 @@ inline void lb_collide_stream() {
     (**it).reset_force();
   }
 #endif // LB_BOUNDARIES
-  
-  
+
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-// Safeguard the node forces so that we can later use them for the IBM particle update
-// In the following loop the lbfields[XX].force are reset to zero
+  // Safeguard the node forces so that we can later use them for the IBM
+  // particle update
+  // In the following loop the lbfields[XX].force are reset to zero
   // Safeguard the node forces so that we can later use them for the IBM
   // particle update In the following loop the lbfields[XX].force are reset to
   // zero
@@ -2730,12 +2726,9 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
-  force[0] = -lbpar.friction *
-             (velocity[0] - interpolated_u[0] - p->p.mu_E[0]);
-  force[1] = -lbpar.friction *
-             (velocity[1] - interpolated_u[1] - p->p.mu_E[1]);
-  force[2] = -lbpar.friction *
-             (velocity[2] - interpolated_u[2] - p->p.mu_E[2]);
+  force[0] = -lbpar.friction * (velocity[0] - interpolated_u[0] - p->p.mu_E[0]);
+  force[1] = -lbpar.friction * (velocity[1] - interpolated_u[1] - p->p.mu_E[1]);
+  force[2] = -lbpar.friction * (velocity[2] - interpolated_u[2] - p->p.mu_E[2]);
 #else
   force[0] = -lbpar.friction * (velocity[0] - interpolated_u[0]);
   force[1] = -lbpar.friction * (velocity[1] - interpolated_u[1]);
@@ -2808,8 +2801,10 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
 
     // get lattice cell corresponding to source position and interpolate
     // velocity
-    lblattice.map_position_to_lattice(Vector3d(source_position), node_index, delta);
-    lb_lbfluid_get_interpolated_velocity(Vector3d(source_position), p->swim.v_source.data());
+    lblattice.map_position_to_lattice(Vector3d(source_position), node_index,
+                                      delta);
+    lb_lbfluid_get_interpolated_velocity(Vector3d(source_position),
+                                         p->swim.v_source.data());
 
     // calculate and set force at source position
     delta_j[0] =
@@ -2837,96 +2832,55 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
 #endif
 }
 
-void lb_lbfluid_get_interpolated_velocity(const Vector3d &p, double *v) {
-  Lattice::index_t node_index[8], index;
-  double delta[6];
-  double local_rho, local_j[3], interpolated_u[3];
+namespace {
+/*  In the bulk we get the node velocity from the populations. */
+std::pair<double, Vector3d> local_rho_j_bulk(Lattice::index_t index) {
   double modes[19];
-  int x, y, z;
-  Vector3d pos;
+  lb_calc_modes(index, modes);
+
+  return {lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid + modes[0],
+          {modes[1], modes[2], modes[3]}};
+}
 
 #ifdef LB_BOUNDARIES
-  double lbboundary_mindist, distvec[3];
-  int boundary_no;
-  int boundary_flag = -1; // 0 if more than agrid/2 away from the boundary, 1 if
-                          // 0<dist<agrid/2, 2 if dist <0
+std::pair<double, Vector3d> local_rho_j_boundary(LB_FluidNode const &node) {
+  return {lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid,
+          lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid *
+              node.boundary_velocity};
+}
+#endif
 
-  LBBoundaries::lbboundary_mindist_position(p, &lbboundary_mindist, distvec,
-                                            &boundary_no);
-  if (lbboundary_mindist > 0.5 * lbpar.agrid) {
-    boundary_flag = 0;
-    pos[0] = p[0];
-    pos[1] = p[1];
-    pos[2] = p[2];
-  } else if (lbboundary_mindist > 0) {
-    boundary_flag = 1;
-    pos[0] =
-        p[0] - distvec[0] + distvec[0] / lbboundary_mindist * lbpar.agrid / 2.;
-    pos[1] =
-        p[1] - distvec[1] + distvec[1] / lbboundary_mindist * lbpar.agrid / 2.;
-    pos[2] =
-        p[2] - distvec[2] + distvec[2] / lbboundary_mindist * lbpar.agrid / 2.;
-  } else {
-    boundary_flag = 2;
-    v[0] = (*LBBoundaries::lbboundaries[boundary_no]).velocity()[0] *
-           lbpar.agrid / lbpar.tau;
-    v[1] = (*LBBoundaries::lbboundaries[boundary_no]).velocity()[1] *
-           lbpar.agrid / lbpar.tau;
-    v[2] = (*LBBoundaries::lbboundaries[boundary_no]).velocity()[2] *
-           lbpar.agrid / lbpar.tau;
-    return; // we can return without interpolating
+std::pair<double, Vector3d> local_rho_j(Lattice::index_t index) {
+#ifdef LB_BOUNDARIES
+  auto const &node = lbfields[index];
+  if (node.boundary) {
+    return local_rho_j_boundary(node);
   }
-#else  // LB_BOUNDARIES
-  pos[0] = p[0];
-  pos[1] = p[1];
-  pos[2] = p[2];
-#endif // LB_BOUNDARIES
+#endif
+  return local_rho_j_bulk(index);
+}
+}
 
+void lb_lbfluid_get_interpolated_velocity(const Vector3d &p, double *v) {
   /* determine elementary lattice cell surrounding the particle
      and the relative position of the particle in this cell */
-  lblattice.map_position_to_lattice(pos, node_index, delta);
+  Lattice::index_t node_index[8];
+  double delta[6];
+  lblattice.map_position_to_lattice(p, node_index, delta);
 
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0;
+  double interpolated_u[3] = {0, 0, 0};
 
-  for (z = 0; z < 2; z++) {
-    for (y = 0; y < 2; y++) {
-      for (x = 0; x < 2; x++) {
-        index = node_index[(z * 2 + y) * 2 + x];
+  for (int z = 0; z < 2; z++) {
+    for (int y = 0; y < 2; y++) {
+      for (int x = 0; x < 2; x++) {
+        auto const index = node_index[(z * 2 + y) * 2 + x];
+        auto const rho_j = local_rho_j(index);
+        auto const &local_rho = rho_j.first;
+        auto const &local_j = rho_j.second;
 
-#ifdef LB_BOUNDARIES
-        if (lbfields[index].boundary) {
-          local_rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
-          local_j[0] =
-              lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid *
-              (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
-                  .velocity()[0]; // TODO
-          local_j[1] =
-              lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid *
-              (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
-                  .velocity()[1]; // TODO This might not work properly
-          local_j[2] =
-              lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid *
-              (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
-                  .velocity()[2]; // TODO
-        } else {
-          lb_calc_modes(index, modes);
-          local_rho =
-              lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid + modes[0];
-          local_j[0] = modes[1];
-          local_j[1] = modes[2];
-          local_j[2] = modes[3];
-        }
-#else  // LB_BOUNDARIES
-        lb_calc_modes(index, modes);
-        local_rho =
-            lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid + modes[0];
-        local_j[0] = modes[1];
-        local_j[1] = modes[2];
-        local_j[2] = modes[3];
-#endif // LB_BOUNDARIES
         interpolated_u[0] += delta[3 * x + 0] * delta[3 * y + 1] *
                              delta[3 * z + 2] * local_j[0] / (local_rho);
         interpolated_u[1] += delta[3 * x + 0] * delta[3 * y + 1] *
@@ -2936,30 +2890,10 @@ void lb_lbfluid_get_interpolated_velocity(const Vector3d &p, double *v) {
       }
     }
   }
-#ifdef LB_BOUNDARIES
-  if (boundary_flag == 1) {
-    v[0] = lbboundary_mindist / (0.5 * lbpar.agrid) * interpolated_u[0] +
-           (1 - lbboundary_mindist / (0.5 * lbpar.agrid)) *
-               (*LBBoundaries::lbboundaries[boundary_no]).velocity()[0];
-    v[1] = lbboundary_mindist / (0.5 * lbpar.agrid) * interpolated_u[1] +
-           (1 - lbboundary_mindist / (0.5 * lbpar.agrid)) *
-               (*LBBoundaries::lbboundaries[boundary_no]).velocity()[1];
-    v[2] = lbboundary_mindist / (0.5 * lbpar.agrid) * interpolated_u[2] +
-           (1 - lbboundary_mindist / (0.5 * lbpar.agrid)) *
-               (*LBBoundaries::lbboundaries[boundary_no]).velocity()[2];
-  } else {
-    v[0] = interpolated_u[0];
-    v[1] = interpolated_u[1];
-    v[2] = interpolated_u[2];
-  }
-#else  // LB_BOUNDARIES
-  v[0] = interpolated_u[0];
-  v[1] = interpolated_u[1];
-  v[2] = interpolated_u[2];
-#endif // LB_BOUNDARIES
-  v[0] *= lbpar.agrid / lbpar.tau;
-  v[1] *= lbpar.agrid / lbpar.tau;
-  v[2] *= lbpar.agrid / lbpar.tau;
+
+  v[0] = lbpar.agrid / lbpar.tau * interpolated_u[0];
+  v[1] = lbpar.agrid / lbpar.tau * interpolated_u[1];
+  v[2] = lbpar.agrid / lbpar.tau * interpolated_u[2];
   return;
 }
 
@@ -3045,8 +2979,7 @@ void calc_particle_lattice_ia() {
 
     /* local cells */
     for (auto &p : local_cells.particles()) {
-      if (!p.p.is_virtual || thermo_virtual)
-      {
+      if (!p.p.is_virtual || thermo_virtual) {
         lb_viscous_coupling(&p, force);
 
         /* add force to the particle */
@@ -3076,8 +3009,7 @@ void calc_particle_lattice_ia() {
           fprintf(stderr, "%d: OPT: LB coupling of ghost particle:\n",
                   this_node);
         });
-        if (!p.p.is_virtual || thermo_virtual)
-        {
+        if (!p.p.is_virtual || thermo_virtual) {
           lb_viscous_coupling(&p, force);
         }
 
