@@ -70,9 +70,9 @@ class Checkpoint(object):
             self.register_signal(signum)
 
 
-    def _getattr_submodule(self, obj, name, default):
+    def __getattr_submodule(self, obj, name, default):
         """
-        Generalization of getattr(). _getattr_submodule(object,
+        Generalization of getattr(). __getattr_submodule(object,
         "name1.sub1.sub2", None) will return attribute sub2 if available
         otherwise None.
         
@@ -85,9 +85,9 @@ class Checkpoint(object):
         return getattr(obj, names[-1], default)
 
 
-    def _setattr_submodule(self, obj, name, value):
+    def __setattr_submodule(self, obj, name, value):
         """
-        Generalization of setattr(). _setattr_submodule(object,
+        Generalization of setattr(). __setattr_submodule(object,
         "name1.sub1.sub2", value) will set attribute sub2 to value. Will raise
         exception if parent modules do not exist.
         
@@ -102,9 +102,9 @@ class Checkpoint(object):
         setattr(obj, names[-1], value)
 
 
-    def _hasattr_submodule(self, obj, name):
+    def __hasattr_submodule(self, obj, name):
         """
-        Generalization of hasattr(). _hasattr_submodule(object,
+        Generalization of hasattr(). __hasattr_submodule(object,
         "name1.sub1.sub2") will return True if submodule sub1 has the attribute
         sub2.
         
@@ -130,7 +130,7 @@ class Checkpoint(object):
                 raise ValueError("The object that should be checkpointed is identified with its name given as a string.")
 
             #if not a in dir(self.calling_module):
-            if not self._hasattr_submodule(self.calling_module, a):
+            if not self.__hasattr_submodule(self.calling_module, a):
                 raise KeyError("The given object '{}' was not found in the current scope.".format(a))
 
             if a in self.checkpoint_objects:
@@ -196,7 +196,7 @@ class Checkpoint(object):
         #get attributes of registered objects
         checkpoint_data = OrderedDict()
         for obj_name in self.checkpoint_objects:
-            checkpoint_data[obj_name] = self._getattr_submodule(self.calling_module, obj_name, None)
+            checkpoint_data[obj_name] = self.__getattr_submodule(self.calling_module, obj_name, None)
 
         if checkpoint_index is None:
             checkpoint_index = self.counter
@@ -227,11 +227,11 @@ class Checkpoint(object):
             checkpoint_data = pickle.load(f)
 
         for key in checkpoint_data:
-            self._setattr_submodule(self.calling_module, key, checkpoint_data[key])
+            self.__setattr_submodule(self.calling_module, key, checkpoint_data[key])
             self.checkpoint_objects.append(key)
 
 
-    def _signal_handler(self, signum, frame):
+    def __signal_handler(self, signum, frame):
         """
         Will be called when a registered signal was sent.
         
@@ -255,7 +255,7 @@ class Checkpoint(object):
         return signals
 
 
-    def _write_signal(self, signum=None):
+    def __write_signal(self, signum=None):
         """Writes the given signal integer signum to the signal file.
         
         """
@@ -287,6 +287,6 @@ class Checkpoint(object):
         if signum in self.checkpoint_signals:
             raise KeyError("The signal {} is already registered for checkpointing.".format(signum))
 
-        signal.signal(signum, self._signal_handler)
+        signal.signal(signum, self.__signal_handler)
         self.checkpoint_signals.append(signum)
-        self._write_signal(signum)
+        self.__write_signal(signum)
