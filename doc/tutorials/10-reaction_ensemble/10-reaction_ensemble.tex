@@ -214,6 +214,7 @@ where $c_\text{titr}$ is the concentration of titratable units in the solution, 
 
 
 
+
 \section{Example two: linear weak polyelectrolytes}
 Weak polyelectrolytes are a family of responsive materials whose application spans the range from flocculation-induced water purification to tissue targeted drug delivery of expensive or cytotoxic medicines. Their properties, however, depend on their specific chemical environment, with details such as pH, salt concentration and valency, and their topology markedly modifying the chemical behavior of their ionizing groups.
 Here we're going to study the titration curves of a linear weak polyelectrolyte composed by 50 titratable units with both Reaction Ensemble and Constant pH methods. In this case, we'll enable electrostatic interactions between charged species in order to correctly describe their properties.
@@ -301,8 +302,13 @@ system.actors.add(p3m)
 To titrate a weak polyelectrolytic chain, which is composed by $N_0$ titratable units with a certain $\text{p}K_a$, in the Reaction Ensemble, we need to modulate the pH of the environment. To do this, we have to add additional \ce{H+} ions, increasing the pH, or \ce{OH-} ions, to decrease it. We have also to introduce the respective counterions (\ce{Cl-} or \ce{Na+}) to preserve the electroneutrality of the system. Finally, we have to take into account also the autoprotolysis of water (\ce{H2O <--> H+ + OH-}) beside the main dissociation reaction.
 
 \begin{verbatim}
-K_diss = 0.002694            #eq constant HA <--> A- + H+
-K_w = 10.**(-14)*0.02694**2  #eq constant for autoprotolysis
+K_diss = 1.0*0.002694         #eq constant HA <--> A- + H+
+# 0.00269 is the conversion constant from mol/L to internal units
+# when sigma is 3.55 angstrom
+
+K_w = 10.0**(-14)*0.02694**2  #eq constant for autoprotolysis
+# notice that here we converted the value from (mol/L)^2 to 
+# internal units 
 
 #HA <--> A- + H+
 RE.add_reaction(gamma=K_diss, reactant_types=[type_HA],
@@ -315,6 +321,8 @@ RE.add_reaction(gamma=(1/K_w), reactant_types=[type_H, type_OH],
 reactant_coefficients=[1,1], product_types=[],    product_coefficients=[],    
 default_charges={type_H: charges[type_H], type_OH: charges[type_OH]})
 \end{verbatim}
+Please notice that the order in which the species are written in reactants and products lists is very important because, when a reaction is performed, the first species in the reactants list is replaced by the first species in the product lists, the second reactant species is replaced by the second product species, and so on. Moreover, if the reactant list has more species than the products list, reactant molecules in excess are deleted from the system, while if the products list have more species than the reactants list, products molecules in excess are created and randomly placed inside the simulation box. For example, reversing the order of products in our reaction (i.e. from  \verb|product_types=[type_H, type_A]| to \verb|product_types=[type_A, type_H]|), a neutral monomer would be positively charged and a negative monovalent counterion would be randomly placed inside the cell. 
+
 Due to the fact that, at a certain pH, the ionization degree of a weak polyelectrolytes depends on its spatial conformation, in order to obtain  correctly averaged values we have also to couple the reaction algorithm with MD simulations. 
 \begin{verbatim}
 # Integration parameters
