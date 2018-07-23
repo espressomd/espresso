@@ -195,7 +195,7 @@ void CoupleIBMParticleToFluid(Particle *p)
           lbfields[node_index[(z*2+y)*2+x]].has_force_density = 1;
 
           // Add force into the lbfields structure
-          double *local_f = lbfields[node_index[(z*2+y)*2+x]].force_density;
+          auto &local_f = lbfields[node_index[(z*2+y)*2+x]].force_density;
           
           local_f[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[0];
           local_f[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[1];
@@ -218,7 +218,6 @@ void GetIBMInterpolatedVelocity(double *p, double *const v, double *const forceA
   double local_rho, local_j[3], interpolated_u[3];
   double modes[19];
   int x,y,z;
-  double *f;
   
   double lbboundary_mindist, distvec[3];
   Vector3d pos;
@@ -278,7 +277,7 @@ void GetIBMInterpolatedVelocity(double *p, double *const v, double *const forceA
       for (x=0;x<2;x++) {
         
         index = node_index[(z*2+y)*2+x];
-        f = lbfields[index].force_density_buf;
+        auto const& f = lbfields[index].force_density_buf;
         
         // This can be done easier withouth copying the code twice
         // We probably can even set the boundary velocity directly

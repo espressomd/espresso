@@ -117,12 +117,12 @@ struct LB_FluidNode {
 #endif // LB_BOUNDARIES
 
   /** local force density */
-  double force_density[3];
+  Vector3d force_density;
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS 
   // For particle update, we need the force on the nodes in LBM
   // Yet, Espresso resets the force immediately after the LBM update
   // Therefore we save it here
-  double force_density_buf[3];
+  Vector3d force_density_buf;
 #endif
 };
 

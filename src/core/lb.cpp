@@ -2425,9 +2425,9 @@ inline void lb_thermalize_modes(Lattice::index_t index, double *mode) {
 
 inline void lb_apply_forces(Lattice::index_t index, double *mode) {
 
-  double rho, *f, u[3], C[6];
+  double rho, u[3], C[6];
 
-  f = lbfields[index].force_density;
+  auto const& f = lbfields[index].force_density;
 
   rho = mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
 
@@ -2672,7 +2672,7 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   int x, y, z;
   Lattice::index_t node_index[8];
   double delta[6];
-  double *local_f, interpolated_u[3], delta_j[3];
+  double interpolated_u[3], delta_j[3];
 
 #ifdef EXTERNAL_FORCES
   if (!(p->p.ext_flag & COORD_FIXED(0)) && !(p->p.ext_flag & COORD_FIXED(1)) &&
@@ -2763,7 +2763,7 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   for (z = 0; z < 2; z++) {
     for (y = 0; y < 2; y++) {
       for (x = 0; x < 2; x++) {
-        local_f = lbfields[node_index[(z * 2 + y) * 2 + x]].force_density;
+        auto & local_f = lbfields[node_index[(z * 2 + y) * 2 + x]].force_density;
 
         local_f[0] +=
             delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] * delta_j[0];
@@ -2817,7 +2817,7 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
     for (z = 0; z < 2; z++) {
       for (y = 0; y < 2; y++) {
         for (x = 0; x < 2; x++) {
-          local_f = lbfields[node_index[(z * 2 + y) * 2 + x]].force_density;
+          auto & local_f = lbfields[node_index[(z * 2 + y) * 2 + x]].force_density;
 
           local_f[0] += delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] *
                         delta_j[0];
@@ -2838,8 +2838,10 @@ std::pair<double, Vector3d> local_rho_j_bulk(Lattice::index_t index) {
   double modes[19];
   lb_calc_modes(index, modes);
 
+  // auto const & f = lbfields[index].force_density_buf;
+
   return {lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid + modes[0],
-          {modes[1], modes[2], modes[3]}};
+          Vector3d{modes[1], modes[2], modes[3]}};
 }
 
 #ifdef LB_BOUNDARIES
