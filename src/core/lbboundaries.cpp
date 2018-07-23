@@ -39,6 +39,8 @@
 #include "lbboundaries/LBBoundary.hpp"
 #include "lbgpu.hpp"
 #include "utils.hpp"
+
+#include <algorithm>
 #include <memory>
 #include <vector>
 
@@ -47,7 +49,21 @@ namespace LBBoundaries {
 std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
-void lbboundary_mindist_position(const Vector3d& pos, double *mindist,
+void add(const std::shared_ptr<LBBoundary> &b) {
+  lbboundaries.emplace_back(b);
+
+  lb_init_boundaries();
+}
+
+void remove(const std::shared_ptr<LBBoundary> &b) {
+  auto &lbb = lbboundaries;
+
+  lbboundaries.erase(std::remove(lbb.begin(), lbb.end(), b), lbb.end());
+
+  lb_init_boundaries();
+}
+
+void lbboundary_mindist_position(const Vector3d &pos, double *mindist,
                                  double distvec[3], int *no) {
 
   double vec[3] = {std::numeric_limits<double>::infinity(),
@@ -331,7 +347,7 @@ int lbboundary_get_force(void *lbb, double *f) {
                              "lbboundary that was not added to "
                              "system.lbboundaries.");
 
-  std::vector<double> forces(3*lbboundaries.size());
+  std::vector<double> forces(3 * lbboundaries.size());
 
   if (lattice_switch & LATTICE_LB_GPU) {
 #if defined(LB_BOUNDARIES_GPU) && defined(LB_GPU)
