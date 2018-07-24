@@ -151,7 +151,7 @@ class Drude(ut.TestCase):
             dm_C2 = []
             dm_C3 = []
             
-            system.integrator.run(100)
+            system.integrator.run(115)
             
             for i in range(100): 
                 system.integrator.run(1)
