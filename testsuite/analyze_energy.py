@@ -1,16 +1,13 @@
 from __future__ import print_function
 import sys
 import unittest as ut
-import numpy as np
 import espressomd
 from espressomd.interactions import HarmonicBond
 
 
 @ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "Skipped because LENNARD_JONES turned off.")
-
 class AnalyzeEnergy(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    np.random.seed(seed=system.seed)
 
     harmonic = HarmonicBond(r_0=0.0, k=3)
 

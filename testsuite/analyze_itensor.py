@@ -10,7 +10,7 @@ class AnalyzeITensor(ut.TestCase):
     
     box_l = 50.0
     system = espressomd.System(box_l = [box_l, box_l, box_l])
-    np.random.seed(seed=system.seed)
+    np.random.seed(seed=123)
 
     @classmethod
     def setUpClass(self):
