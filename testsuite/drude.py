@@ -1,6 +1,6 @@
-from __future__ import print_function
 import numpy as np
 import unittest as ut
+
 import espressomd
 import espressomd.electrostatics 
 import espressomd.interactions
