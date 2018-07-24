@@ -2056,26 +2056,13 @@ void lb_reinit_parameters() {
   }
 }
 
+void lb_reset_force_densities(Lattice::index_t index);
+
 /** Resets the forces on the fluid nodes */
 void lb_reinit_force_densities() {
   for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
        index++) {
-#ifdef EXTERNAL_FORCES
-    // unit conversion: force density
-    lbfields[index].force_density[0] = lbpar.ext_force_density[0] *
-                                       pow(lbpar.agrid, 2) * lbpar.tau *
-                                       lbpar.tau;
-    lbfields[index].force_density[1] = lbpar.ext_force_density[1] *
-                                       pow(lbpar.agrid, 2) * lbpar.tau *
-                                       lbpar.tau;
-    lbfields[index].force_density[2] = lbpar.ext_force_density[2] *
-                                       pow(lbpar.agrid, 2) * lbpar.tau *
-                                       lbpar.tau;
-#else  // EXTERNAL_FORCES
-    lbfields[index].force_density[0] = 0.0;
-    lbfields[index].force_density[1] = 0.0;
-    lbfields[index].force_density[2] = 0.0;
-#endif // EXTERNAL_FORCES
+    lb_reset_force_densities(index);
   }
 #ifdef LB_BOUNDARIES
   for (auto it = LBBoundaries::lbboundaries.begin();
@@ -2327,13 +2314,14 @@ void lb_calc_modes(Lattice::index_t index, double *mode) {
   mode[18] = -n1p - n2p - n6p - n7p - n8p - n9p + 2. * (n3p + n4p + n5p);
 }
 
-inline void lb_relax_modes(double *mode, const Vector3d & f) {
+inline void lb_relax_modes(double *mode, const Vector3d &f) {
   double pi_eq[6];
 
   /* re-construct the real density
    * remember that the populations are stored as differences to their
    * equilibrium value */
-  auto const rho = mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+  auto const rho =
+      mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
 
   const double j[3] = {mode[1] + 0.5 * f[0], mode[2] + 0.5 * f[1],
                        mode[3] + 0.5 * f[2]};
@@ -2368,22 +2356,22 @@ inline void lb_relax_modes(double *mode, const Vector3d & f) {
 }
 
 inline void lb_thermalize_modes(double *mode) {
-  const double rootrho = std::sqrt(
-      std::fabs(mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid));
+  const double rho =
+      mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
 #ifdef GAUSSRANDOM
-  constexpr double variance = 1.0;
+  constexpr const double variance = 1.0;
   auto rng = []() -> double { return gaussian_random(); };
 #elif defined(GAUSSRANDOMCUT)
-  constexpr double variance = 1.0;
+  constexpr const double variance = 1.0;
   auto rng = []() -> double { return gaussian_random_cut(); };
 #elif defined(FLATNOISE)
-  constexpr double variance = 1. / 12.0;
+  constexpr const double variance = 1. / 12.0;
   auto rng = []() -> double { return d_random() - 0.5; };
 #else // GAUSSRANDOM
 #error No noise type defined for the CPU LB
 #endif // GAUSSRANDOM
 
-  auto const pref = std::sqrt(1. / variance) * rootrho;
+  auto const pref = std::sqrt(std::abs(rho) * (1. / variance));
 
   /* stress modes */
   mode[4] += pref * lbpar.phi[4] * rng();
@@ -2411,7 +2399,8 @@ inline void lb_thermalize_modes(double *mode) {
 
 inline void lb_apply_forces(double *mode, const Vector3d &f) {
   double u[3], C[6];
-  auto const rho = mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+  auto const rho =
+      mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
 
   /* hydrodynamic momentum density is redefined when external forces present */
   u[0] = (mode[1] + 0.5 * f[0]) / rho;
@@ -2443,8 +2432,9 @@ inline void lb_apply_forces(double *mode, const Vector3d &f) {
 }
 
 inline void lb_reset_force_densities(Lattice::index_t index) {
-/* reset force */
-#ifdef EXTERNAL_FORCES
+  /* reset force */
+  /* Conversion factor from force density flux to force. */
+  auto const pref = lbpar.agrid * lbpar.agrid * lbpar.tau;
   // unit conversion: force density
   lbfields[index].force_density[0] = lbpar.ext_force_density[0] * lbpar.agrid *
                                      lbpar.agrid * lbpar.tau * lbpar.tau;
@@ -2452,11 +2442,6 @@ inline void lb_reset_force_densities(Lattice::index_t index) {
                                      lbpar.agrid * lbpar.tau * lbpar.tau;
   lbfields[index].force_density[2] = lbpar.ext_force_density[2] * lbpar.agrid *
                                      lbpar.agrid * lbpar.tau * lbpar.tau;
-#else  // EXTERNAL_FORCES
-  lbfields[index].force_density[0] = 0.0;
-  lbfields[index].force_density[1] = 0.0;
-  lbfields[index].force_density[2] = 0.0;
-#endif // EXTERNAL_FORCES
 }
 
 std::array<double, 19> lb_calc_n_from_modes(double *m) {
@@ -2505,7 +2490,6 @@ void lb_push_n(Lattice::index_t index, Populations const &f) {
 }
 
 inline void lb_calc_n_from_modes_push(Lattice::index_t index, double *m) {
-
   /* normalization factors enter in the back transformation */
   for (int i = 0; i < lbmodel.n_veloc; i++)
     m[i] = (1. / lbmodel.e[19][i]) * m[i];
