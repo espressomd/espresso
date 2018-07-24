@@ -65,7 +65,7 @@ lj_cap = 5
 
 # System setup
 #############################################################
-system              = espressomd.Systembox_l=([1.0, 1.0, 1.0])
+system              = espressomd.System(box_l=[1.0, 1.0, 1.0])
 system.seed         = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(system.seed)
 
