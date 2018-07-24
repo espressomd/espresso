@@ -1829,7 +1829,7 @@ void mpi_bcast_lb_params_slave(int field, int value) {
 }
 
 void mpi_lb_init_slave(int a, int b) {
-#if defined(LB) || defined(LB_GPU) 
+#if defined(LB) 
   lb_init();
 #endif
 }
