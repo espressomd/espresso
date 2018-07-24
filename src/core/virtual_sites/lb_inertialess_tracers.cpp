@@ -109,7 +109,6 @@ void IBM_ResetLBForces_CPU()
     lbfields[i].force_density[0] = 0.0;
     lbfields[i].force_density[1] = 0.0;
     lbfields[i].force_density[2] = 0.0;
-    lbfields[i].has_force = 0;
 #endif
   }
 }
@@ -191,9 +190,6 @@ void CoupleIBMParticleToFluid(Particle *p)
         // Do not put force into a halo node
         if ( !IsHalo(node_index[(z*2+y)*2+x]) )
         {
-          // Indicate that there is a force, probably only necessary for the unusual case of compliing without EXTERNAL_FORCES
-          lbfields[node_index[(z*2+y)*2+x]].has_force_density = 1;
-
           // Add force into the lbfields structure
           auto &local_f = lbfields[node_index[(z*2+y)*2+x]].force_density;
           

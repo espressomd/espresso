@@ -105,9 +105,6 @@ struct LB_Model {
 
 /** Data structure for fluid on a local lattice site */
 struct LB_FluidNode {
-  /** flag indicating whether a force density is acting on the node */
-  int has_force_density;
-
 #ifdef LB_BOUNDARIES
   /** flag indicating whether this site belongs to a boundary */
   bool boundary;

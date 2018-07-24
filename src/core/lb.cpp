@@ -2075,7 +2075,6 @@ void lb_reinit_force_densities() {
     lbfields[index].force_density[0] = 0.0;
     lbfields[index].force_density[1] = 0.0;
     lbfields[index].force_density[2] = 0.0;
-    lbfields[index].has_force_density = 0;
 #endif // EXTERNAL_FORCES
   }
 #ifdef LB_BOUNDARIES
@@ -2457,7 +2456,6 @@ inline void lb_reset_force_densities(Lattice::index_t index) {
   lbfields[index].force_density[0] = 0.0;
   lbfields[index].force_density[1] = 0.0;
   lbfields[index].force_density[2] = 0.0;
-  lbfields[index].has_force_density = 0;
 #endif // EXTERNAL_FORCES
 }
 
