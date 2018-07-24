@@ -33,12 +33,15 @@
 #include "constraints.hpp"
 #include "electrokinetics.hpp"
 #include "electrokinetics_pdb_parse.hpp"
+#include "initialize.hpp"
 #include "interaction_data.hpp"
 #include "lb.hpp"
 #include "lbboundaries.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 #include "lbgpu.hpp"
 #include "utils.hpp"
+
+#include <algorithm>
 #include <memory>
 #include <vector>
 
@@ -354,70 +357,49 @@ int lbboundary_get_force(void *lbb, double *f) {
 #endif
   return 0;
 }
-
 #endif /* LB_BOUNDARIES or LB_BOUNDARIES_GPU */
 
 #ifdef LB_BOUNDARIES
+double population_shift(Vector3d const &v, int mode) {
+  double pop_shift = 0.;
+
+  for (int l = 0; l < 3; l++) {
+    pop_shift -= lbpar.agrid * lbpar.agrid * lbpar.agrid * lbpar.rho * 2 *
+                 lbmodel.c[mode][l] * lbmodel.w[mode] * v[l] *
+                 (lbpar.tau / lbpar.agrid) / lbmodel.c_sound_sq;
+  }
+
+  return pop_shift;
+}
 
 void lb_bounce_back() {
+  auto const yperiod = lblattice.halo_grid[0];
+  auto const zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
+  auto const next = lb_push_shift(yperiod, zperiod);
 
-#ifdef D3Q19
-#ifndef PULL
-  int k, i, l;
-  int yperiod = lblattice.halo_grid[0];
-  int zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
-  int next[19];
-  int x, y, z;
-  double population_shift;
-  double modes[19];
-  next[0] = 0;                     // ( 0, 0, 0) =
-  next[1] = 1;                     // ( 1, 0, 0) +
-  next[2] = -1;                    // (-1, 0, 0)
-  next[3] = yperiod;               // ( 0, 1, 0) +
-  next[4] = -yperiod;              // ( 0,-1, 0)
-  next[5] = zperiod;               // ( 0, 0, 1) +
-  next[6] = -zperiod;              // ( 0, 0,-1)
-  next[7] = (1 + yperiod);         // ( 1, 1, 0) +
-  next[8] = -(1 + yperiod);        // (-1,-1, 0)
-  next[9] = (1 - yperiod);         // ( 1,-1, 0)
-  next[10] = -(1 - yperiod);       // (-1, 1, 0) +
-  next[11] = (1 + zperiod);        // ( 1, 0, 1) +
-  next[12] = -(1 + zperiod);       // (-1, 0,-1)
-  next[13] = (1 - zperiod);        // ( 1, 0,-1)
-  next[14] = -(1 - zperiod);       // (-1, 0, 1) +
-  next[15] = (yperiod + zperiod);  // ( 0, 1, 1) +
-  next[16] = -(yperiod + zperiod); // ( 0,-1,-1)
-  next[17] = (yperiod - zperiod);  // ( 0, 1,-1)
-  next[18] = -(yperiod - zperiod); // ( 0,-1, 1) +
-  int reverse[] = {0, 2,  1,  4,  3,  6,  5,  8,  7, 10,
-                   9, 12, 11, 14, 13, 16, 15, 18, 17};
+  constexpr const int reverse[] = {0, 2,  1,  4,  3,  6,  5,  8,  7, 10,
+                                   9, 12, 11, 14, 13, 16, 15, 18, 17};
 
-  for (z = 0; z < lblattice.grid[2] + 2; z++) {
-    for (y = 0; y < lblattice.grid[1] + 2; y++) {
-      for (x = 0; x < lblattice.grid[0] + 2; x++) {
-        k = get_linear_index(x, y, z, lblattice.halo_grid);
+  /* bottom-up sweep */
+  for (int z = 0; z < lblattice.grid[2] + 2; z++) {
+    for (int y = 0; y < lblattice.grid[1] + 2; y++) {
+      for (int x = 0; x < lblattice.grid[0] + 2; x++) {
+        auto const k = get_linear_index(x, y, z, lblattice.halo_grid);
 
         if (lbfields[k].boundary) {
-          lb_calc_modes(k, modes);
-
-          for (i = 0; i < 19; i++) {
-            population_shift = 0;
-            for (l = 0; l < 3; l++) {
-              population_shift -= lbpar.agrid * lbpar.agrid * lbpar.agrid *
-                                  lbpar.rho * 2 * lbmodel.c[i][l] *
-                                  lbmodel.w[i] * lbfields[k].boundary_velocity[l] /
-                                  lbmodel.c_sound_sq;
-            }
-
+          for (int i = 0; i < 19; i++) {
             if (x - lbmodel.c[i][0] > 0 &&
-                x - lbmodel.c[i][0] < lblattice.grid[0] + 1 &&
+                x + lbmodel.c[i][0] < lblattice.grid[0] + 1 &&
                 y - lbmodel.c[i][1] > 0 &&
-                y - lbmodel.c[i][1] < lblattice.grid[1] + 1 &&
+                y + lbmodel.c[i][1] < lblattice.grid[1] + 1 &&
                 z - lbmodel.c[i][2] > 0 &&
-                z - lbmodel.c[i][2] < lblattice.grid[2] + 1) {
+                z + lbmodel.c[i][2] < lblattice.grid[2] + 1) {
+              auto const pop_shift =
+                  population_shift(lbfields[k].boundary_velocity, i);
+
               if (!lbfields[k - next[i]].boundary) {
                 lbfluid[1][reverse[i]][k - next[i]] =
-                    lbfluid[1][i][k] + population_shift;
+                    lbfluid[1][i][k] + pop_shift;
               } else {
                 lbfluid[1][reverse[i]][k - next[i]] = lbfluid[1][i][k] = 0.0;
               }
@@ -427,12 +409,6 @@ void lb_bounce_back() {
       }
     }
   }
-#else
-#error Bounce back boundary conditions are only implemented for PUSH scheme!
-#endif
-#else
-#error Bounce back boundary conditions are only implemented for D3Q19!
-#endif
 }
 
 #endif

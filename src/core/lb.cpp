@@ -93,8 +93,8 @@ LB_Parameters lbpar = {
     0};
 
 /** The DnQm model to be used. */
-LB_Model<> lbmodel = {d3q19_lattice, d3q19_coefficients,
-                    d3q19_w, d3q19_modebase, 1. / 3.};
+LB_Model<> lbmodel = {d3q19_lattice, d3q19_coefficients, d3q19_w,
+                      d3q19_modebase, 1. / 3.};
 
 #if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
 #define FLATNOISE
@@ -2023,11 +2023,14 @@ void lb_reinit_parameters() {
         sqrt(mu * lbmodel.e[19][4] *
              (1. - Utils::sqr(lbpar.gamma_bulk))); // Utils::sqr(x) == x*x
     for (i = 5; i < 10; i++)
-      lbpar.phi[i] = sqrt(mu * lbmodel.e[19][i] * (1. - Utils::sqr(lbpar.gamma_shear)));
+      lbpar.phi[i] =
+          sqrt(mu * lbmodel.e[19][i] * (1. - Utils::sqr(lbpar.gamma_shear)));
     for (i = 10; i < 16; i++)
-      lbpar.phi[i] = sqrt(mu * lbmodel.e[19][i] * (1 - Utils::sqr(lbpar.gamma_odd)));
+      lbpar.phi[i] =
+          sqrt(mu * lbmodel.e[19][i] * (1 - Utils::sqr(lbpar.gamma_odd)));
     for (i = 16; i < 19; i++)
-      lbpar.phi[i] = sqrt(mu * lbmodel.e[19][i] * (1 - Utils::sqr(lbpar.gamma_even)));
+      lbpar.phi[i] =
+          sqrt(mu * lbmodel.e[19][i] * (1 - Utils::sqr(lbpar.gamma_even)));
 
     /* lb_coupl_pref is stored in MD units (force)
      * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
@@ -2424,7 +2427,7 @@ inline void lb_apply_forces(Lattice::index_t index, double *mode) {
 
   double rho, u[3], C[6];
 
-  auto const& f = lbfields[index].force_density;
+  auto const &f = lbfields[index].force_density;
 
   rho = mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
 
@@ -2475,81 +2478,60 @@ inline void lb_reset_force_densities(Lattice::index_t index) {
 #endif // EXTERNAL_FORCES
 }
 
+std::array<double, 19> lb_calc_n_from_modes(double *m) {
+  return {m[0] - m[4] + m[16],
+          m[0] + m[1] + m[5] + m[6] - m[17] - m[18] - 2. * (m[10] + m[16]),
+          m[0] - m[1] + m[5] + m[6] - m[17] - m[18] + 2. * (m[10] - m[16]),
+          m[0] + m[2] - m[5] + m[6] + m[17] - m[18] - 2. * (m[11] + m[16]),
+          m[0] - m[2] - m[5] + m[6] + m[17] - m[18] + 2. * (m[11] - m[16]),
+          m[0] + m[3] - 2. * (m[6] + m[12] + m[16] - m[18]),
+          m[0] - m[3] - 2. * (m[6] - m[12] + m[16] - m[18]),
+          m[0] + m[1] + m[2] + m[4] + 2. * m[6] + m[7] + m[10] + m[11] + m[13] +
+              m[14] + m[16] + 2. * m[18],
+          m[0] - m[1] - m[2] + m[4] + 2. * m[6] + m[7] - m[10] - m[11] - m[13] -
+              m[14] + m[16] + 2. * m[18],
+          m[0] + m[1] - m[2] + m[4] + 2. * m[6] - m[7] + m[10] - m[11] + m[13] -
+              m[14] + m[16] + 2. * m[18],
+          m[0] - m[1] + m[2] + m[4] + 2. * m[6] - m[7] - m[10] + m[11] - m[13] +
+              m[14] + m[16] + 2. * m[18],
+          m[0] + m[1] + m[3] + m[4] + m[5] - m[6] + m[8] + m[10] + m[12] -
+              m[13] + m[15] + m[16] + m[17] - m[18],
+          m[0] - m[1] - m[3] + m[4] + m[5] - m[6] + m[8] - m[10] - m[12] +
+              m[13] - m[15] + m[16] + m[17] - m[18],
+          m[0] + m[1] - m[3] + m[4] + m[5] - m[6] - m[8] + m[10] - m[12] -
+              m[13] - m[15] + m[16] + m[17] - m[18],
+          m[0] - m[1] + m[3] + m[4] + m[5] - m[6] - m[8] - m[10] + m[12] +
+              m[13] + m[15] + m[16] + m[17] - m[18],
+          m[0] + m[2] + m[3] + m[4] - m[5] - m[6] + m[9] + m[11] + m[12] -
+              m[14] - m[15] + m[16] - m[17] - m[18],
+          m[0] - m[2] - m[3] + m[4] - m[5] - m[6] + m[9] - m[11] - m[12] +
+              m[14] + m[15] + m[16] - m[17] - m[18],
+          m[0] + m[2] - m[3] + m[4] - m[5] - m[6] - m[9] + m[11] - m[12] -
+              m[14] + m[15] + m[16] - m[17] - m[18],
+          m[0] - m[2] + m[3] + m[4] - m[5] - m[6] - m[9] - m[11] + m[12] +
+              m[14] - m[15] + m[16] - m[17] - m[18]};
+}
+
+template <class Populations>
+void lb_push_n(Lattice::index_t index, Populations const &f) {
+  const int yperiod = lblattice.halo_grid[0];
+  const int zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
+  auto const next = lb_push_shift(yperiod, zperiod);
+
+  /* weights enter in the back transformation */
+  for (int i = 0; i < 19; i++)
+    lbfluid[1][i][index + next[i]] = lbmodel.w[i] * f[i];
+}
+
 inline void lb_calc_n_from_modes_push(Lattice::index_t index, double *m) {
-  int yperiod = lblattice.halo_grid[0];
-  int zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
-  Lattice::index_t next[19];
-  next[0] = index;
-  next[1] = index + 1;
-  next[2] = index - 1;
-  next[3] = index + yperiod;
-  next[4] = index - yperiod;
-  next[5] = index + zperiod;
-  next[6] = index - zperiod;
-  next[7] = index + (1 + yperiod);
-  next[8] = index - (1 + yperiod);
-  next[9] = index + (1 - yperiod);
-  next[10] = index - (1 - yperiod);
-  next[11] = index + (1 + zperiod);
-  next[12] = index - (1 + zperiod);
-  next[13] = index + (1 - zperiod);
-  next[14] = index - (1 - zperiod);
-  next[15] = index + (yperiod + zperiod);
-  next[16] = index - (yperiod + zperiod);
-  next[17] = index + (yperiod - zperiod);
-  next[18] = index - (yperiod - zperiod);
 
   /* normalization factors enter in the back transformation */
   for (int i = 0; i < lbmodel.n_veloc; i++)
     m[i] = (1. / lbmodel.e[19][i]) * m[i];
 
-  lbfluid[1][0][next[0]] = m[0] - m[4] + m[16];
-  lbfluid[1][1][next[1]] =
-      m[0] + m[1] + m[5] + m[6] - m[17] - m[18] - 2. * (m[10] + m[16]);
-  lbfluid[1][2][next[2]] =
-      m[0] - m[1] + m[5] + m[6] - m[17] - m[18] + 2. * (m[10] - m[16]);
-  lbfluid[1][3][next[3]] =
-      m[0] + m[2] - m[5] + m[6] + m[17] - m[18] - 2. * (m[11] + m[16]);
-  lbfluid[1][4][next[4]] =
-      m[0] - m[2] - m[5] + m[6] + m[17] - m[18] + 2. * (m[11] - m[16]);
-  lbfluid[1][5][next[5]] = m[0] + m[3] - 2. * (m[6] + m[12] + m[16] - m[18]);
-  lbfluid[1][6][next[6]] = m[0] - m[3] - 2. * (m[6] - m[12] + m[16] - m[18]);
-  lbfluid[1][7][next[7]] = m[0] + m[1] + m[2] + m[4] + 2. * m[6] + m[7] +
-                           m[10] + m[11] + m[13] + m[14] + m[16] + 2. * m[18];
-  lbfluid[1][8][next[8]] = m[0] - m[1] - m[2] + m[4] + 2. * m[6] + m[7] -
-                           m[10] - m[11] - m[13] - m[14] + m[16] + 2. * m[18];
-  lbfluid[1][9][next[9]] = m[0] + m[1] - m[2] + m[4] + 2. * m[6] - m[7] +
-                           m[10] - m[11] + m[13] - m[14] + m[16] + 2. * m[18];
-  lbfluid[1][10][next[10]] = m[0] - m[1] + m[2] + m[4] + 2. * m[6] - m[7] -
-                             m[10] + m[11] - m[13] + m[14] + m[16] + 2. * m[18];
-  lbfluid[1][11][next[11]] = m[0] + m[1] + m[3] + m[4] + m[5] - m[6] + m[8] +
-                             m[10] + m[12] - m[13] + m[15] + m[16] + m[17] -
-                             m[18];
-  lbfluid[1][12][next[12]] = m[0] - m[1] - m[3] + m[4] + m[5] - m[6] + m[8] -
-                             m[10] - m[12] + m[13] - m[15] + m[16] + m[17] -
-                             m[18];
-  lbfluid[1][13][next[13]] = m[0] + m[1] - m[3] + m[4] + m[5] - m[6] - m[8] +
-                             m[10] - m[12] - m[13] - m[15] + m[16] + m[17] -
-                             m[18];
-  lbfluid[1][14][next[14]] = m[0] - m[1] + m[3] + m[4] + m[5] - m[6] - m[8] -
-                             m[10] + m[12] + m[13] + m[15] + m[16] + m[17] -
-                             m[18];
-  lbfluid[1][15][next[15]] = m[0] + m[2] + m[3] + m[4] - m[5] - m[6] + m[9] +
-                             m[11] + m[12] - m[14] - m[15] + m[16] - m[17] -
-                             m[18];
-  lbfluid[1][16][next[16]] = m[0] - m[2] - m[3] + m[4] - m[5] - m[6] + m[9] -
-                             m[11] - m[12] + m[14] + m[15] + m[16] - m[17] -
-                             m[18];
-  lbfluid[1][17][next[17]] = m[0] + m[2] - m[3] + m[4] - m[5] - m[6] - m[9] +
-                             m[11] - m[12] - m[14] + m[15] + m[16] - m[17] -
-                             m[18];
-  lbfluid[1][18][next[18]] = m[0] - m[2] + m[3] + m[4] - m[5] - m[6] - m[9] -
-                             m[11] + m[12] + m[14] - m[15] + m[16] - m[17] -
-                             m[18];
+  auto const f = lb_calc_n_from_modes(m);
 
-  /* weights enter in the back transformation */
-  for (int i = 0; i < lbmodel.n_veloc; i++)
-    lbfluid[1][i][next[i]] *= lbmodel.w[i];
+  lb_push_n(index, f);
 }
 
 /* Collisions and streaming (push scheme) */
@@ -2760,7 +2742,7 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
   for (z = 0; z < 2; z++) {
     for (y = 0; y < 2; y++) {
       for (x = 0; x < 2; x++) {
-        auto & local_f = lbfields[node_index[(z * 2 + y) * 2 + x]].force_density;
+        auto &local_f = lbfields[node_index[(z * 2 + y) * 2 + x]].force_density;
 
         local_f[0] +=
             delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] * delta_j[0];
@@ -2814,7 +2796,8 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
     for (z = 0; z < 2; z++) {
       for (y = 0; y < 2; y++) {
         for (x = 0; x < 2; x++) {
-          auto & local_f = lbfields[node_index[(z * 2 + y) * 2 + x]].force_density;
+          auto &local_f =
+              lbfields[node_index[(z * 2 + y) * 2 + x]].force_density;
 
           local_f[0] += delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] *
                         delta_j[0];
@@ -2937,7 +2920,8 @@ void calc_particle_lattice_ia() {
     if (lbpar.resend_halo) { /* first MD step after last LB update */
 
       /* exchange halo regions (for fluid-particle coupling) */
-      halo_communication(&update_halo_comm, reinterpret_cast<char *>(**lbfluid));
+      halo_communication(&update_halo_comm,
+                         reinterpret_cast<char *>(**lbfluid));
 
 #ifdef ADDITIONAL_CHECKS
       lb_check_halo_regions();

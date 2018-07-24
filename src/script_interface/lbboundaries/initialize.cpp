@@ -27,11 +27,13 @@ namespace ScriptInterface {
 namespace LBBoundaries {
 
 void initialize() {
+#ifdef LB_BOUNDARIES
   ScriptInterface::register_new<ScriptInterface::LBBoundaries::LBBoundaries>(
       "LBBoundaries::LBBoundaries");
 
   ScriptInterface::register_new<ScriptInterface::LBBoundaries::LBBoundary>(
       "LBBoundaries::LBBoundary");
+#endif
 }
 } /* namespace LBBoundaries */
 } /* namespace ScriptInterface */

@@ -112,7 +112,7 @@ struct LB_FluidNode {
   /** flag indicating whether this site belongs to a boundary */
   bool boundary;
   /** Boundary velocity */
-  Vector3d boundary_velocity = {0.,0.,0.}; 
+  Vector3d boundary_velocity = {0.,0.,0.};
 #endif // LB_BOUNDARIES
 
   /** local force density */
@@ -149,9 +149,11 @@ typedef struct {
    * lead to numerical artifacts with low order integrators */
   double friction;
 
-  /** external force density applied to the fluid at each lattice site (MD units) */
-  double ext_force_density[3]; /* Open question: Do we want a local force or global
-                          force? */
+  /** external force density applied to the fluid at each lattice site (MD
+   * units) */
+  double
+      ext_force_density[3]; /* Open question: Do we want a local force or global
+                       force? */
   double rho_lb_units;
   /** relaxation of the odd kinetic modes */
   double gamma_odd;
@@ -204,7 +206,8 @@ extern int transfer_momentum;
 
 /** Updates the Lattice Boltzmann system for one time step.
  * This function performs the collision step and the streaming step.
- * If external force densities are present, they are applied prior to the collisions.
+ * If external force densities are present, they are applied prior to the
+ * collisions.
  * If boundaries are present, it also applies the boundary conditions.
  */
 void lattice_boltzmann_update();
@@ -242,7 +245,8 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
 
 /** Propagates the Lattice Boltzmann system for one time step.
  * This function performs the collision step and the streaming step.
- * If external force densities are present, they are applied prior to the collisions.
+ * If external force densities are present, they are applied prior to the
+ * collisions.
  * If boundaries are present, it also applies the boundary conditions.
  */
 void lb_propagate();
@@ -472,6 +476,36 @@ inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
 }
 #endif
 
+/**
+ * @brief Calculate linear indices of streaming targets.
+ *
+ * This calculates the streaming targets for all nodes,
+ * assuming 3d c memory ordering.
+ */
+template <class T> std::array<T, 19> lb_push_shift(T ystride, T zstride) {
+  return {
+      0,                    // ( 0, 0, 0)
+      1,                    // ( 1, 0, 0) +
+      -1,                   // (-1, 0, 0)
+      ystride,              // ( 0, 1, 0) +
+      -ystride,             // ( 0,-1, 0)
+      zstride,              // ( 0, 0, 1) +
+      -zstride,             // ( 0, 0,-1)
+      (1 + ystride),        // ( 1, 1, 0) +
+      -(1 + ystride),       // (-1,-1, 0)
+      (1 - ystride),        // ( 1,-1, 0)
+      -(1 - ystride),       // (-1, 1, 0) +
+      (1 + zstride),        // ( 1, 0, 1) +
+      -(1 + zstride),       // (-1, 0,-1)
+      (1 - zstride),        // ( 1, 0,-1)
+      -(1 - zstride),       // (-1, 0, 1) +
+      (ystride + zstride),  // ( 0, 1, 1) +
+      -(ystride + zstride), // ( 0,-1,-1)
+      (ystride - zstride),  // ( 0, 1,-1)
+      -(ystride - zstride)  // ( 0,-1, 1) +
+  };
+}
+
 /** Calculate the local fluid momentum.
  * The calculation is implemented explicitly for the special case of D3Q19.
  * @param index The local lattice site (Input).
@@ -506,7 +540,7 @@ int lb_lbfluid_set_friction(double *p_friction);
 int lb_lbfluid_set_couple_flag(int couple_flag);
 int lb_lbfluid_set_agrid(double p_agrid);
 int lb_lbfluid_set_ext_force_density(int component, double p_fx, double p_fy,
-                             double p_fz);
+                                     double p_fz);
 int lb_lbfluid_set_tau(double p_tau);
 int lb_lbfluid_set_remove_momentum(void);
 int lb_lbfluid_get_agrid(double *p_agrid);
@@ -552,7 +586,7 @@ int lb_lbnode_set_pop(int *ind, double *pop);
  * lattice. Note that it can lead to undefined behaviour if the
  * position is not within the local lattice. This version of the function
  * can be called without the position needing to be on the local processor */
-int lb_lbfluid_get_interpolated_velocity_global(Vector3d& p, double* v);
+int lb_lbfluid_get_interpolated_velocity_global(Vector3d &p, double *v);
 
 #endif
 
