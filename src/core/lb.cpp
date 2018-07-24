@@ -2328,29 +2328,16 @@ void lb_calc_modes(Lattice::index_t index, double *mode) {
   mode[18] = -n1p - n2p - n6p - n7p - n8p - n9p + 2. * (n3p + n4p + n5p);
 }
 
-inline void lb_relax_modes(Lattice::index_t index, double *mode) {
-  double rho, j[3], pi_eq[6];
+inline void lb_relax_modes(double *mode, const Vector3d & f) {
+  double pi_eq[6];
 
   /* re-construct the real density
    * remember that the populations are stored as differences to their
    * equilibrium value */
-  rho = mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+  auto const rho = mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
 
-  j[0] = mode[1];
-  j[1] = mode[2];
-  j[2] = mode[3];
-
-/* if forces are present, the momentum density is redefined to
- * include one half-step of the force action.  See the
- * Chapman-Enskog expansion in [Ladd & Verberg]. */
-#ifndef EXTERNAL_FORCES
-  if (lbfields[index].has_force_density || local_cells.particles().size())
-#endif // !EXTERNAL_FORCES
-  {
-    j[0] += 0.5 * lbfields[index].force_density[0];
-    j[1] += 0.5 * lbfields[index].force_density[1];
-    j[2] += 0.5 * lbfields[index].force_density[2];
-  }
+  const double j[3] = {mode[1] + 0.5 * f[0], mode[2] + 0.5 * f[1],
+                       mode[3] + 0.5 * f[2]};
 
   /* equilibrium part of the stress modes */
   pi_eq[0] = scalar(j, j) / rho;
@@ -2565,17 +2552,19 @@ inline void lb_collide_stream() {
   for (int z = 1; z <= lblattice.grid[2]; z++) {
     for (int y = 1; y <= lblattice.grid[1]; y++) {
       for (int x = 1; x <= lblattice.grid[0]; x++) {
-// as we only want to apply this to non-boundary nodes we can throw out
-// the if-clause if we have a non-bounded domain
+        // as we only want to apply this to non-boundary nodes we can throw out
+        // the if-clause if we have a non-bounded domain
+        auto const &node = lbfields[index];
+
 #ifdef LB_BOUNDARIES
-        if (!lbfields[index].boundary)
+        if (!node.boundary)
 #endif // LB_BOUNDARIES
         {
           /* calculate modes locally */
           lb_calc_modes(index, modes);
 
           /* deterministic collisions */
-          lb_relax_modes(index, modes);
+          lb_relax_modes(modes, node.force_density);
 
           /* fluctuating hydrodynamics */
           if (lbpar.fluct)
