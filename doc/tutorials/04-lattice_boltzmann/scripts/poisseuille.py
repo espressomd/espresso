@@ -6,7 +6,6 @@ import numpy as np
 
 # System setup
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
 system.time_step = 0.01
 system.cell_system.skin = 0.2
 

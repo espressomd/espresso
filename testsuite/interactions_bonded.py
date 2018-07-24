@@ -25,7 +25,6 @@ from tests_common import *
 
 class InteractionsBondedTest(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
     numpy.random.seed(seed=system.seed)
 
     box_l = 10.

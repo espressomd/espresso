@@ -6,7 +6,6 @@ import espressomd
 
 class AnalyzeGyration(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
     np.random.seed(1234)
     cube_len=4
     type_cube=0

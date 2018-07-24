@@ -16,8 +16,6 @@ class RandomPairTest(ut.TestCase):
 
     """
     system = espressomd.System(box_l = 3 * [10.])
-    system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
-    np.random.seed(system.seed)
         
     def setUp(self):
         s = self.system

@@ -17,7 +17,6 @@ class TestCylindricalLBObservable(ut.TestCase):
 
     """
     system = espressomd.System(box_l=(10,10,10))
-    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
     system.time_step = 0.01
     system.cell_system.skin = 0.4
     positions = []

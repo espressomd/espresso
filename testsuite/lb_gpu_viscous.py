@@ -10,8 +10,6 @@ import espressomd.lb
            "Features not available, skipping test!")
 class LBGPUViscous(ut.TestCase):
     system = espressomd.System(box_l=[10.0]*3)
-    system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
-    np.random.seed(system.seed)
     system.time_step = 0.01
     system.cell_system.skin = 0.4
     agrid = 0.5

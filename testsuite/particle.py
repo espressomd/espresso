@@ -34,7 +34,6 @@ class ParticleProperties(ut.TestCase):
 
     # Handle for espresso system
     system = espressomd.System(box_l=[100.0, 100.0, 100.0])
-    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
     f1 = FeneBond(k=1, d_r_max=5)
     system.bonded_inter.add(f1)

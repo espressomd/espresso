@@ -30,7 +30,6 @@ class ParticleProperties(ut.TestCase):
     #    self.pid=particleId
     # the system which will be tested
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
     # Particle id to work on
     pid = 17

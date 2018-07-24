@@ -66,7 +66,6 @@ def stress_nonbonded_intra(particle_pairs, box_l):
   return stress
 
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
 @ut.skipIf(not espressomd.has_features(['LENNARD_JONES']),
 'Features not available, skipping test!')

@@ -10,7 +10,6 @@ class AnalyzeITensor(ut.TestCase):
     
     box_l = 50.0
     system = espressomd.System(box_l = [box_l, box_l, box_l])
-    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
     np.random.seed(seed=system.seed)
 
     @classmethod

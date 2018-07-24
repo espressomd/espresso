@@ -30,7 +30,6 @@ class Stokes(ut.TestCase):
         real_width = box_width + 2 * agrid
         box_length = 64
         system = espressomd.System(box_l=[real_width, real_width, box_length])
-        system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
         system.box_l = [real_width, real_width, box_length]
         system.time_step = 0.2
         system.cell_system.skin = 0.4
