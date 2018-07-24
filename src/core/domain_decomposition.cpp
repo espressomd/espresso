@@ -629,7 +629,6 @@ int dd_append_particles(ParticleList *pl, int fold_dir) {
 /************************************************************/
 
 void dd_on_geometry_change(int flags) {
-
   /* check that the CPU domains are still sufficiently large. */
   for (int i = 0; i < 3; i++)
     if (local_box_l[i] < max_range) {
@@ -642,6 +641,10 @@ void dd_on_geometry_change(int flags) {
   if (flags & CELL_FLAG_GRIDCHANGED) {
     CELL_TRACE(
         fprintf(stderr, "%d: dd_on_geometry_change full redo\n", this_node));
+
+    /* Reset min num cells to default */
+    min_num_cells = calc_processor_min_num_cells();
+
     cells_re_init(CELL_STRUCTURE_CURRENT);
     return;
   }
