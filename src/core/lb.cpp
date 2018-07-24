@@ -2368,7 +2368,7 @@ inline void lb_relax_modes(double *mode, const Vector3d & f) {
   mode[18] = lbpar.gamma_even * mode[18];
 }
 
-inline void lb_thermalize_modes(Lattice::index_t index, double *mode) {
+inline void lb_thermalize_modes(double *mode) {
   const double rootrho = std::sqrt(
       std::fabs(mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid));
 #ifdef GAUSSRANDOM
@@ -2410,13 +2410,9 @@ inline void lb_thermalize_modes(Lattice::index_t index, double *mode) {
 #endif // ADDITIONAL_CHECKS
 }
 
-inline void lb_apply_forces(Lattice::index_t index, double *mode) {
-
-  double rho, u[3], C[6];
-
-  auto const &f = lbfields[index].force_density;
-
-  rho = mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+inline void lb_apply_forces(double *mode, const Vector3d &f) {
+  double u[3], C[6];
+  auto const rho = mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
 
   /* hydrodynamic momentum density is redefined when external forces present */
   u[0] = (mode[1] + 0.5 * f[0]) / rho;
@@ -2568,10 +2564,10 @@ inline void lb_collide_stream() {
 
           /* fluctuating hydrodynamics */
           if (lbpar.fluct)
-            lb_thermalize_modes(index, modes);
+            lb_thermalize_modes(modes);
 
           /* apply forces */
-          lb_apply_forces(index, modes);
+          lb_apply_forces(modes, node.force_density);
 
           lb_reset_force_densities(index);
 
