@@ -2096,7 +2096,10 @@ void lb_reinit_force_densities() {
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid() {
   if (lattice_switch == LATTICE_LB_GPU){
-    lb_reinit_fluid_gpu();
+    
+    #ifdef LB_GPU
+      lb_reinit_fluid_gpu();
+    #endif
   }
   else if (lattice_switch == LATTICE_LB) {
   auto old_size=lbfields.size();
