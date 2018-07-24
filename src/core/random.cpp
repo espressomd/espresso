@@ -39,7 +39,6 @@ std::normal_distribution<double> normal_distribution(0, 1);
 std::uniform_real_distribution<double> uniform_real_distribution(0, 1);
 
 bool user_has_seeded = false;
-bool unseeded_error_thrown = false;
 
 /** Local functions */
 
