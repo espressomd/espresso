@@ -71,10 +71,9 @@ class NPTintegrator(ut.TestCase):
 
         avp/=n
         compressibility = pow(np.std(Vs),2)/np.average(Vs)
-        print(avp,compressibility)
 
         self.assertAlmostEqual(2.0, avp, delta=0.02)
-        self.assertAlmostEqual(0.2, compressibility, delta=0.013)
+        self.assertAlmostEqual(0.2, compressibility, delta=0.01)
 
 if __name__ == "__main__":
     ut.main()
