@@ -240,6 +240,7 @@ void lb_reinit_fluid_gpu() {
 //#endif 
   if(lbpar_gpu.number_of_nodes != 0){
     lb_reinit_GPU(&lbpar_gpu);
+    lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
     lbpar_gpu.reinit = 1;
   }
 

@@ -156,6 +156,7 @@ static int terminated = 0;
   CB(mpi_send_solvation_slave)                                                 \
   CB(mpi_send_exclusion_slave)                                                 \
   CB(mpi_bcast_lb_params_slave)                                                \
+  CB(mpi_lb_init_slave)                                                \
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
   CB(mpi_send_dip_slave)                                                       \
   CB(mpi_send_dipm_slave)                                                      \
@@ -1825,6 +1826,10 @@ void mpi_bcast_lb_params_slave(int field, int value) {
   MPI_Bcast(&lbpar, sizeof(LB_Parameters), MPI_BYTE, 0, comm_cart);
   on_lb_params_change(field);
 #endif
+}
+
+void mpi_lb_init_slave(int a, int b) {
+  lb_init();
 }
 
 /******************* REQ_BCAST_CUDA_GLOBAL_PART_VARS ********************/

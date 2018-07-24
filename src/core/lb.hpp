@@ -214,6 +214,7 @@ void lb_pre_init();
  *  the Lattice Boltzmann system. All derived parameters
  *  and the fluid are reset to their default values. */
 void lb_init();
+void mpi_lb_init();
 
 /** (Re-)initializes the derived parameters
  *  for the Lattice Boltzmann system.

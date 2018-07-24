@@ -14,11 +14,11 @@ import espressomd.lb as lb
 
 
 if espressomd.has_features("LB_GPU"): 
-    lb_common.TestLB.lb_class=lb.LBFluidGPU
-    lb_common.TestLB.params.update({"mom_prec":1E-3,"mass_prec_per_node":1E-5})
+    lb_common.TestLB.lb_class=lb.LBFluid
+    lb_common.TestLB.params.update({"mom_prec":1E-9,"mass_prec_per_node":5E-8})
 @ut.skipIf(not espressomd.has_features(["LB_GPU"]),
            "Features not available, skipping test!")
-class TestLBGPU(lb_common.TestLB):
+class TestLBCPU(lb_common.TestLB):
     pass
 if __name__ == "__main__":
   ut.main()
