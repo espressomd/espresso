@@ -66,10 +66,10 @@ class LBBoundariesBase(object):
         rng = range(20)
         lbf = self.lbf
 
-        for i in product(range(5), rng, rng):
+        for i in product(range(0, 5), rng, rng):
             self.assertEqual(lbf[i].boundary, 1)
 
-        for i in product(range(6, 15), rng, rng):
+        for i in product(range(5, 15), rng, rng):
             self.assertEqual(lbf[i].boundary, 0)
 
         for i in product(range(15, 20), rng, rng):
@@ -82,14 +82,17 @@ class LBBoundariesBase(object):
 @ut.skipIf(not espressomd.has_features(["LB_BOUNDARIES"]),
            "Features not available, skipping test!")
 class LBBoundariesCPU(ut.TestCase, LBBoundariesBase):
-    lbf = espressomd.lb.LBFluid(
-        visc=1.0,
-        dens=1.0,
-        agrid=0.5,
-        tau=1.0,
-        fric=1.0)
+    lbf = None
 
     def setUp(self):
+        if not self.lbf:
+            self.lbf = espressomd.lb.LBFluid(
+                visc=1.0,
+                dens=1.0,
+                agrid=0.5,
+                tau=1.0,
+                fric=1.0)
+
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
@@ -99,14 +102,17 @@ class LBBoundariesCPU(ut.TestCase, LBBoundariesBase):
 @ut.skipIf(not espressomd.has_features(["LB_BOUNDARIES_GPU"]),
            "Features not available, skipping test!")
 class LBBoundariesGPU(ut.TestCase, LBBoundariesBase):
-    lbf = espressomd.lb.LBFluidGPU(
-        visc=1.0,
-        dens=1.0,
-        agrid=0.5,
-        tau=1.0,
-        fric=1.0)
+    lbf = None
 
     def setUp(self):
+        if not self.lbf:
+            self.lbf = espressomd.lb.LBFluidGPU(
+                visc=1.0,
+                dens=1.0,
+                agrid=0.5,
+                tau=1.0,
+                fric=1.0)
+
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
