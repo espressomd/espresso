@@ -79,7 +79,9 @@ class Observables(ut.TestCase):
                 part_data = part_data.flatten()
 
             # Data from observable
-            obs_data = obs_name(ids=id_list).calculate()
+            observable = obs_name(ids=id_list)
+            obs_data = observable.calculate()
+            self.assertEqual(observable.n_values(), len(part_data))
             np.testing.assert_array_almost_equal(
                 obs_data,
                 part_data, err_msg="Data did not agree for observable " +
@@ -107,6 +109,7 @@ class Observables(ut.TestCase):
     def test_stress_tensor(self):
         s = self.system.analysis.stress_tensor()["total"].reshape(9)
         obs_data = np.array(espressomd.observables.StressTensor().calculate())
+        self.assertEqual(espressomd.observables.StressTensor().n_values(), len(s))
         np.testing.assert_array_almost_equal(
             s,
             obs_data,
@@ -117,6 +120,7 @@ class Observables(ut.TestCase):
     def test_current(self):
         obs_data = espressomd.observables.Current(ids=range(self.N_PART)).calculate()
         part_data = self.system.part[:].q.dot(self.system.part[:].v)
+        self.assertEqual(espressomd.observables.Current(ids=range(self.N_PART)).n_values(), len(part_data.flatten()))
         np.testing.assert_array_almost_equal(obs_data, part_data, err_msg="Data did not agree for observable 'Current'", decimal=9)
 
 

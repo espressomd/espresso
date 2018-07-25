@@ -6,7 +6,7 @@ from .script_interface import ScriptInterfaceHelper, script_interface_register
 @script_interface_register
 class Observable(ScriptInterfaceHelper):
     _so_name = "Observables::Observable"
-    _so_bind_methods = ("calculate",)
+    _so_bind_methods = ("calculate", "n_values")
     _so_creation_policy = "LOCAL"
 
 
