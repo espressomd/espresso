@@ -84,7 +84,7 @@ class Observables(ut.TestCase):
     test_v = generate_test_for_pid_observable(ParticleVelocities, "v")
     test_f = generate_test_for_pid_observable(ParticleForces, "f")
 
-    com_force = generate_test_for_pid_observable(ComForce, "f", "sum")
+    test_com_force = generate_test_for_pid_observable(ComForce, "f", "sum")
 
     if espressomd.has_features(["DIPOLES"]):
         test_mag_dip = generate_test_for_pid_observable(
