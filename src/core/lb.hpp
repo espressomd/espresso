@@ -214,7 +214,6 @@ void lb_pre_init();
  *  the Lattice Boltzmann system. All derived parameters
  *  and the fluid are reset to their default values. */
 void lb_init();
-void mpi_lb_init();
 
 /** (Re-)initializes the derived parameters
  *  for the Lattice Boltzmann system.
@@ -552,6 +551,9 @@ int lb_lbnode_set_pop(int *ind, double *pop);
  * position is not within the local lattice. This version of the function
  * can be called without the position needing to be on the local processor */
 int lb_lbfluid_get_interpolated_velocity_global(Vector3d& p, double* v);
+
+/** Re-init lb fluid on all nodes */
+void mpi_lb_init();
 
 #endif
 

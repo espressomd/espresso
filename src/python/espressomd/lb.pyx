@@ -60,6 +60,9 @@ IF LB_GPU or LB:
             default_params = self.default_params()
 
             IF SHANCHEN:
+                if not hasattr(self._params["dens"],"__getitem__"):
+                    raise ValueError(
+                        "Density must be two positive double (ShanChen)")
                 if not (self._params["dens"][0] > 0.0 and self._params["dens"][1] > 0.0):
                     raise ValueError(
                         "Density must be two positive double (ShanChen)")

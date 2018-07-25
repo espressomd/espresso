@@ -1414,6 +1414,23 @@ int lb_lbnode_get_boundary(int *ind, int *p_boundary) {
   }
   return 0;
 }
+
+void mpi_lb_init() {
+  if (lattice_switch == LATTICE_LB_GPU){
+    #ifdef LB_GPU
+      lb_reinit_fluid_gpu();
+    #endif
+  }
+  else if (lattice_switch == LATTICE_LB){
+    #ifdef LB
+      mpi_call(mpi_lb_init_slave, 0, 0);
+      lb_init();
+    #endif
+  }
+  else {
+    throw std::runtime_error("lb_reinit_fluid called without an LB fluid being active");
+  }
+}
 #endif // defined (LB) || defined (LB_GPU)
 
 int lb_lbnode_get_pop(int *ind, double *p_pop) {
@@ -2095,12 +2112,6 @@ void lb_reinit_force_densities() {
 
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid() {
-  if (lattice_switch == LATTICE_LB_GPU){
-    #ifdef LB_GPU
-      lb_reinit_fluid_gpu();
-    #endif
-  }
-  else if (lattice_switch == LATTICE_LB) {
   std::fill(lbfields.begin(), lbfields.end(), LB_FluidNode());
   /* default values for fields in lattice units */
   /* here the conversion to lb units is performed */
@@ -2128,14 +2139,7 @@ void lb_reinit_fluid() {
   LBBoundaries::lb_init_boundaries();
 #endif // LB_BOUNDARIES
 }
-else
-  throw std::runtime_error("lb_reinit_fluid called without an LB fluid being active");
-}
 
-void mpi_lb_init() {
-  mpi_call(mpi_lb_init_slave, 0, 0);
-  lb_init();
-}
 /** Performs a full initialization of
  *  the Lattice Boltzmann system. All derived parameters
  *  and the fluid are reset to their default values. */

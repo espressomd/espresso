@@ -38,7 +38,9 @@ class TestLB(ut.TestCase):
               'gamma': 1.5,
               'skin': 0.2,
               'temp_confidence': 10}
-    
+    if espressomd.has_features("SHANCHEN"):
+       params.update({"dens":2*[params["dens"]]})
+     
     if espressomd.has_features("ROTATION"):
         dof = 6.
     else:
