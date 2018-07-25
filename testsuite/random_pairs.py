@@ -28,7 +28,6 @@ class RandomPairTest(ut.TestCase):
 
         s.part.add(pos=s.box_l * np.random.random((n_part, 3)))
         self.all_pairs=[]
-        parts = self.system.part
 
         dist_func=self.system.distance
         for pair in self.system.part.pairs():
