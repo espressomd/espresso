@@ -37,8 +37,8 @@ class Observables(ut.TestCase):
     # Error tolerance when comparing arrays/tuples...
     TOL = 1E-9
     # Handle for espresso system
-    es = espressomd.System(box_l=[10.0, 10.0, 10.0])
-    es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
     
     def setUp(self):
         if not len(self.system.part):
