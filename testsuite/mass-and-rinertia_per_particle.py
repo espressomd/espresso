@@ -14,7 +14,8 @@ import math
 class ThermoTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
-    es = espressomd.System(box_l=[1.0,1.0,1.0])
+    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
     es.cell_system.skin = 5.0
     
     # The NVT thermostat parameters

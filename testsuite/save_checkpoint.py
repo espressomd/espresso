@@ -12,6 +12,7 @@ checkpoint = espressomd.checkpointing.Checkpoint(checkpoint_id="mycheckpoint", c
 
 system = espressomd.System(box_l=[10.0, 10.0, 10.0])
 system.cell_system.skin = 0.4
+system.seed = system.cell_system.get_state()["n_nodes"] *[1234]
 system.time_step = 0.01
 system.min_global_cut = 2.0
 

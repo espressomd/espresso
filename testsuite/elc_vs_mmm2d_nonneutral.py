@@ -10,7 +10,6 @@ from espressomd import electrostatic_extensions
 
 class ELC_vs_MMM2D_neutral(ut.TestCase):
     # Handle to espresso system
-
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     acc = 1e-6
     elc_gap = 5.0

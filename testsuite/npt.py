@@ -30,6 +30,7 @@ import tests_common
 class NPTintegrator(ut.TestCase):
     """This compares pressure and compressibility of a LJ system against expected values."""
     S = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    S.seed = S.cell_system.get_state()['n_nodes'] * [1234]
     p_ext = 2.0
 
     def setUp(self):
@@ -73,7 +74,7 @@ class NPTintegrator(ut.TestCase):
         print(avp,compressibility)
 
         self.assertAlmostEqual(2.0, avp, delta=0.02)
-        self.assertAlmostEqual(0.2, compressibility, delta=0.01)
+        self.assertAlmostEqual(0.2, compressibility, delta=0.013)
 
 if __name__ == "__main__":
     ut.main()

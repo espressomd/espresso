@@ -135,7 +135,12 @@ Vector3d dpd_pair_force(const Particle *p1, const Particle *p2, IA_parameters *i
       vel12_dot_d12 += (p1->m.v[j] - p2->m.v[j]) * d[j];
     auto const friction = ia_params->dpd_pref1 * omega2 * vel12_dot_d12 * time_step;
     // random force prefactor
-    auto const noise = ia_params->dpd_pref2 * omega * (d_random() - 0.5);
+    double noise;
+    if (ia_params->dpd_pref2 > 0.0) {
+      noise = ia_params->dpd_pref2 * omega * (d_random() - 0.5);
+    } else {
+      noise = 0.0;
+    }
     for (int j = 0; j < 3; j++) {
        f[j] += (noise - friction) * d[j];
     }
@@ -149,7 +154,11 @@ Vector3d dpd_pair_force(const Particle *p1, const Particle *p2, IA_parameters *i
             noise_vec[3];
     for (int i = 0; i < 3; i++) {
       // noise vector
-      noise_vec[i] = d_random() - 0.5;
+      if (ia_params->dpd_pref2 > 0.0) {
+        noise_vec[i] = d_random() - 0.5;
+      } else {
+        noise_vec[i] = 0.0;
+      }
       // Projection Matrix
       for (int j = 0; j < 3; j++) {
         P_times_dist_sqr[i][j] -= d[i] * d[j];

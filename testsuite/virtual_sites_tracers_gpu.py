@@ -38,7 +38,6 @@ class VirtualSitesTracers(ut.TestCase,VirtualSitesTracersCommon):
         box_height = 10. 
         box_lw=8.
         system = espressomd.System(box_l=(box_lw,box_lw,box_height))
-        system.seed = range(system.cell_system.get_state()["n_nodes"])
         system.time_step = 0.03
         system.cell_system.skin = 0.1
         lbf = lb.LBFluidGPU(

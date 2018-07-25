@@ -3019,18 +3019,22 @@ void calc_particle_lattice_ia() {
 
     /* draw random numbers for local particles */
     for (auto &p : local_cells.particles()) {
+      if (lb_coupl_pref2 > 0.0) {
 #ifdef GAUSSRANDOM
-      p.lc.f_random[0] = lb_coupl_pref2 * gaussian_random();
-      p.lc.f_random[1] = lb_coupl_pref2 * gaussian_random();
-      p.lc.f_random[2] = lb_coupl_pref2 * gaussian_random();
+        p.lc.f_random[0] = lb_coupl_pref2 * gaussian_random();
+        p.lc.f_random[1] = lb_coupl_pref2 * gaussian_random();
+        p.lc.f_random[2] = lb_coupl_pref2 * gaussian_random();
 #elif defined(GAUSSRANDOMCUT)
-      p.lc.f_random[0] = lb_coupl_pref2 * gaussian_random_cut();
-      p.lc.f_random[1] = lb_coupl_pref2 * gaussian_random_cut();
-      p.lc.f_random[2] = lb_coupl_pref2 * gaussian_random_cut();
+        p.lc.f_random[0] = lb_coupl_pref2 * gaussian_random_cut();
+        p.lc.f_random[1] = lb_coupl_pref2 * gaussian_random_cut();
+        p.lc.f_random[2] = lb_coupl_pref2 * gaussian_random_cut();
 #elif defined(FLATNOISE)
-      p.lc.f_random[0] = lb_coupl_pref * (d_random() - 0.5);
-      p.lc.f_random[1] = lb_coupl_pref * (d_random() - 0.5);
-      p.lc.f_random[2] = lb_coupl_pref * (d_random() - 0.5);
+        p.lc.f_random[0] = lb_coupl_pref * (d_random() - 0.5);
+        p.lc.f_random[1] = lb_coupl_pref * (d_random() - 0.5);
+        p.lc.f_random[2] = lb_coupl_pref * (d_random() - 0.5);
+      } else {
+        p.lc.f_random = {0.0, 0.0, 0.0};
+      }
 #else // GAUSSRANDOM
 #error No noise type defined for the CPU LB
 #endif // GAUSSRANDOM

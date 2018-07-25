@@ -37,6 +37,8 @@ a_eff   = 0.32 # effective hydrodynamic radius of a bead due to the discreteness
 # System setup
 #############################################################
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
 system.box_l = [box_l, box_l, box_l]
 system.cell_system.skin = skin
 system.periodicity = [1, 1, 1]

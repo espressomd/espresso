@@ -28,6 +28,5 @@ class ScriptInterfaceObjectParams(ut.TestCase):
         with self.assertRaises(ValueError):
             c.shape = Wall(thisparameterdoesnotexist=0)
 
-
 if __name__ == "__main__":
     ut.main()

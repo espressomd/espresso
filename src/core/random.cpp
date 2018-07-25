@@ -38,6 +38,8 @@ std::mt19937 generator;
 std::normal_distribution<double> normal_distribution(0, 1);
 std::uniform_real_distribution<double> uniform_real_distribution(0, 1);
 
+bool user_has_seeded = false;
+
 /** Local functions */
 
 /**
@@ -70,7 +72,7 @@ int get_state_size_of_generator() {
 /** Communication */
 
 void mpi_random_seed_slave(int pnode, int cnt) {
-  int this_seed;
+  int this_seed;  user_has_seeded=true;
 
   MPI_Scatter(nullptr, 1, MPI_INT, &this_seed, 1, MPI_INT, 0, comm_cart);
 
@@ -80,6 +82,7 @@ void mpi_random_seed_slave(int pnode, int cnt) {
 
 void mpi_random_seed(int cnt, vector<int> &seeds) {
   int this_seed;
+  user_has_seeded = true;
   mpi_call(mpi_random_seed_slave, -1, cnt);
 
   MPI_Scatter(&seeds[0], 1, MPI_INT, &this_seed, 1, MPI_INT, 0, comm_cart);
@@ -90,6 +93,7 @@ void mpi_random_seed(int cnt, vector<int> &seeds) {
 }
 
 void mpi_random_set_stat_slave(int, int) {
+  user_has_seeded = true;
   string msg;
   mpiCallbacks().comm().recv(0, SOME_TAG, msg);
 
@@ -97,6 +101,7 @@ void mpi_random_set_stat_slave(int, int) {
 }
 
 void mpi_random_set_stat(const vector<string> &stat) {
+  user_has_seeded = true;
   mpi_call(mpi_random_set_stat_slave, 0, 0);
 
   for (int i = 1; i < n_nodes; i++) {

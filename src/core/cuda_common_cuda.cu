@@ -25,13 +25,13 @@
 #include "cuda_utils.hpp"
 #include "errorhandling.hpp"
 #include "interaction_data.hpp"
-#include "random.hpp"
+
+#include <random>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
 #endif
 
-static int max_ran = 1000000;
 static CUDA_global_part_vars global_part_vars_host = {0, 0, 0};
 static __device__ __constant__ CUDA_global_part_vars global_part_vars_device;
 
@@ -197,7 +197,7 @@ void gpu_change_number_of_part_to_comm() {
   if (global_part_vars_host.number_of_particles != n_part &&
       global_part_vars_host.communication_enabled == 1 && this_node == 0) {
 
-    global_part_vars_host.seed = (unsigned int)i_random(max_ran);
+    global_part_vars_host.seed = (unsigned int)std::random_device{}();
     global_part_vars_host.number_of_particles = n_part;
 
     cuda_safe_mem(cudaMemcpyToSymbol(global_part_vars_device,
