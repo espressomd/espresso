@@ -499,8 +499,14 @@ int lb_lbfluid_set_ext_force_density(int component, double p_fx, double p_fy,
     lbpar_gpu.ext_force_density[3 * component + 0] = (float)p_fx;
     lbpar_gpu.ext_force_density[3 * component + 1] = (float)p_fy;
     lbpar_gpu.ext_force_density[3 * component + 2] = (float)p_fz;
-    lbpar_gpu.external_force_density = 1;
+    if (p_fx != 0 || p_fy !=0 || p_fz != 0) {
+      lbpar_gpu.external_force_density = 1;
+    }
+    else {
+      lbpar_gpu.external_force_density = 0;
+    }
     lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
+
 #endif // LB_GPU
   } else {
 #ifdef LB
@@ -1408,6 +1414,7 @@ int lb_lbnode_get_boundary(int *ind, int *p_boundary) {
   }
   return 0;
 }
+
 #endif // defined (LB) || defined (LB_GPU)
 
 int lb_lbnode_get_pop(int *ind, double *p_pop) {
@@ -2089,6 +2096,7 @@ void lb_reinit_force_densities() {
 
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid() {
+  std::fill(lbfields.begin(), lbfields.end(), LB_FluidNode());
   /* default values for fields in lattice units */
   /* here the conversion to lb units is performed */
   double rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
@@ -2155,8 +2163,6 @@ void lb_init() {
   /* setup the initial particle velocity distribution */
   lb_reinit_fluid();
 
-  /* setup the external forces */
-  lb_reinit_force_densities();
 
   LB_TRACE(printf("Initialzing fluid on CPU successful\n"));
 }

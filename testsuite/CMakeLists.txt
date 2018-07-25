@@ -112,7 +112,7 @@ python_test(FILE minimize_energy.py MAX_NUM_PROC 4)
 python_test(FILE mmm1d.py MAX_NUM_PROC 4)
 python_test(FILE variant_conversion.py MAX_NUM_PROC 1)
 python_test(FILE dipolar_mdlc_p3m_scafacos_p2nfft.py MAX_NUM_PROC 1)
-python_test(FILE lb.py MAX_NUM_PROC 4)
+python_test(FILE lb_cpu.py MAX_NUM_PROC 4)
 python_test(FILE lb_gpu.py MAX_NUM_PROC 2)
 python_test(FILE lb_gpu_viscous.py MAX_NUM_PROC 2)
 python_test(FILE force_cap.py MAX_NUM_PROC 2)
@@ -164,6 +164,7 @@ endif(PY_H5PY)
 add_custom_target(python_test_data
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/data ${CMAKE_CURRENT_BINARY_DIR}/data
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/tests_common.py ${CMAKE_CURRENT_BINARY_DIR}
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lb_common.py ${CMAKE_CURRENT_BINARY_DIR}
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/virtual_sites_tracers_common.py ${CMAKE_CURRENT_BINARY_DIR}
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ek_common.py ${CMAKE_CURRENT_BINARY_DIR})
 
