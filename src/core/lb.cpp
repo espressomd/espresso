@@ -2096,15 +2096,12 @@ void lb_reinit_force_densities() {
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid() {
   if (lattice_switch == LATTICE_LB_GPU){
-    
     #ifdef LB_GPU
       lb_reinit_fluid_gpu();
     #endif
   }
   else if (lattice_switch == LATTICE_LB) {
-  auto old_size=lbfields.size();
-  lbfields.resize(0);
-  lbfields.resize(old_size);
+  std::fill(lbfields.begin(), lbfields.end(), LB_FluidNode());
   /* default values for fields in lattice units */
   /* here the conversion to lb units is performed */
   double rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
@@ -2132,7 +2129,7 @@ void lb_reinit_fluid() {
 #endif // LB_BOUNDARIES
 }
 else
-  throw std::runtime_error("lb_reinit_fluid called without an lb being active");
+  throw std::runtime_error("lb_reinit_fluid called without an LB fluid being active");
 }
 
 void mpi_lb_init() {

@@ -1,10 +1,3 @@
-
-# Basic tests of the Lattice Boltzmann implementation
-#
-# 1) check conservation of fluid mass
-# 2) check conservation of total momentum
-# 3) measure temperature of colloid and fluid
-
 from __future__ import print_function
 import unittest as ut
 import lb_common

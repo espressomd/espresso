@@ -15,9 +15,11 @@ class TestLB(ut.TestCase):
     """
     Basic tests of the Lattice Boltzmann implementation
 
-    1) check conservation of fluid mass
-    2) check conservation of total momentum
-    3) measure temperature of colloid and fluid
+    * mass and momentum conservation
+    * temperature
+    * particle viscous coupling
+    * application of external force densities
+    * setting and retrieving lb node velocities
 
     """
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
@@ -82,9 +84,7 @@ class TestLB(ut.TestCase):
             agrid=self.params['agrid'],
             tau=self.system.time_step,
             fric=self.params['friction'], ext_force_density=[0, 0, 0])
-        print("0",self.system.analysis.analyze_linear_momentum())
         self.system.actors.add(self.lbf)
-        print("1",self.system.analysis.analyze_linear_momentum())
         self.system.thermostat.set_lb(kT=self.params['temp'])
         # give particles a push
         for i in range(self.n_col_part):

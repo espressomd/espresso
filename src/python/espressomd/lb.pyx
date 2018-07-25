@@ -136,7 +136,7 @@ IF LB_GPU or LB:
 
             if python_lbfluid_set_couple_flag(self._params["couple"]):
                 raise Exception("lb_lbfluid_set_couple_flag error")
-            utils.handle_errors("lb activation")
+            utils.handle_errors("LB fluid activation")
 
         # function that calls wrapper functions which get the parameters from C-Level
         ####################################################
@@ -227,7 +227,7 @@ IF LB_GPU or LB:
             self._set_lattice_switch()
             self._set_params_in_es_core()
             mpi_lb_init()
-            utils.handle_errors("lb activation")
+            utils.handle_errors("LB fluid activation")
             IF LB:
                 return
             ELSE:
@@ -246,6 +246,7 @@ IF LB_GPU:
 
         def remove_total_momentum(self):
             lb_lbfluid_remove_total_momentum()
+        
         def _set_lattice_switch(self):
             if lb_set_lattice_switch(2):
                 raise Exception("lb_set_lattice_switch error")
