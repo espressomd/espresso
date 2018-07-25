@@ -6,7 +6,7 @@ from .script_interface import ScriptInterfaceHelper, script_interface_register
 @script_interface_register
 class Observable(ScriptInterfaceHelper):
     _so_name = "Observables::Observable"
-    _so_bind_methods = ("calculate",)
+    _so_bind_methods = ("calculate", "n_values")
     _so_creation_policy = "LOCAL"
 
 
@@ -230,19 +230,6 @@ class ParticleBodyVelocities(Observable):
           The ids of (existing) particles to take into account.
 
     """
-
-
-@script_interface_register
-class ParticleCurrent(Observable):
-    """Calculates the particle current for particles with given ids.
-
-    Parameters
-    ----------
-    ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
-
-    """
-    _so_name = "Observables::ParticleCurrent"
 
 
 @script_interface_register

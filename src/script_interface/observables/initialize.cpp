@@ -36,7 +36,6 @@
 #include "core/observables/ParticleAngularVelocities.hpp"
 #include "core/observables/ParticleBodyAngularVelocities.hpp"
 #include "core/observables/ParticleBodyVelocities.hpp"
-#include "core/observables/ParticleCurrents.hpp"
 #include "core/observables/ParticleForces.hpp"
 #include "core/observables/ParticlePositions.hpp"
 #include "core/observables/ParticleVelocities.hpp"
@@ -81,7 +80,6 @@ void initialize() {
   REGISTER_PID_OBS(ParticleBodyVelocities);
   REGISTER_PID_OBS(ParticleAngularVelocities);
   REGISTER_PID_OBS(ParticleBodyAngularVelocities);
-  REGISTER_PID_OBS(ParticleCurrent);
   REGISTER_PID_OBS(Current);
   REGISTER_PID_OBS(DipoleMoment);
   REGISTER_PID_OBS(MagneticDipoleMoment);
