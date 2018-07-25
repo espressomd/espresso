@@ -233,19 +233,6 @@ class ParticleBodyVelocities(Observable):
 
 
 @script_interface_register
-class ParticleCurrent(Observable):
-    """Calculates the particle current for particles with given ids.
-
-    Parameters
-    ----------
-    ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
-
-    """
-    _so_name = "Observables::ParticleCurrent"
-
-
-@script_interface_register
 class ParticleForces(Observable):
     """Calculates the particle forces for particles with given ids.
 
