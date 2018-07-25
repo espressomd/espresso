@@ -229,7 +229,6 @@ IF LB_GPU or LB:
             self.validate_params()
             self._set_lattice_switch()
             self._set_params_in_es_core()
-            mpi_lb_init()
             utils.handle_errors("LB fluid activation")
             IF LB:
                 return

@@ -1415,22 +1415,6 @@ int lb_lbnode_get_boundary(int *ind, int *p_boundary) {
   return 0;
 }
 
-void mpi_lb_init() {
-  if (lattice_switch == LATTICE_LB_GPU){
-    #ifdef LB_GPU
-      lb_reinit_fluid_gpu();
-    #endif
-  }
-  else if (lattice_switch == LATTICE_LB){
-    #ifdef LB
-      mpi_call(mpi_lb_init_slave, 0, 0);
-      lb_init();
-    #endif
-  }
-  else {
-    throw std::runtime_error("lb_reinit_fluid called without an LB fluid being active");
-  }
-}
 #endif // defined (LB) || defined (LB_GPU)
 
 int lb_lbnode_get_pop(int *ind, double *p_pop) {

@@ -552,9 +552,6 @@ int lb_lbnode_set_pop(int *ind, double *pop);
  * can be called without the position needing to be on the local processor */
 int lb_lbfluid_get_interpolated_velocity_global(Vector3d& p, double* v);
 
-/** Re-init lb fluid on all nodes */
-void mpi_lb_init();
-
 #endif
 
 #endif /* _LB_H */
