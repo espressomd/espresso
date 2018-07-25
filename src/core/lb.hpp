@@ -240,14 +240,6 @@ int lb_sanity_checks();
 void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
                              const double *j, double *pi);
 
-/** Propagates the Lattice Boltzmann system for one time step.
- * This function performs the collision step and the streaming step.
- * If external force densities are present, they are applied prior to the
- * collisions.
- * If boundaries are present, it also applies the boundary conditions.
- */
-void lb_propagate();
-
 /** Calculates the coupling of MD particles to the LB fluid.
  * This function  is called from \ref force_calc. The force is added
  * to the particle force and the corresponding momentum exchange is

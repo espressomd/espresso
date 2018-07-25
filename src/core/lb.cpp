@@ -51,6 +51,11 @@
 
 #include "cuda_interface.hpp"
 
+#include "lb/Array.hpp"
+#include "lb/PopulationView.hpp"
+#include "lb/modes_from_pop.hpp"
+#include "lb/stress_eq.hpp"
+
 #ifdef ADDITIONAL_CHECKS
 static void lb_check_halo_regions();
 #endif // ADDITIONAL_CHECKS
@@ -2314,6 +2319,33 @@ void lb_calc_modes(Lattice::index_t index, double *mode) {
   mode[18] = -n1p - n2p - n6p - n7p - n8p - n9p + 2. * (n3p + n4p + n5p);
 }
 
+namespace LB {
+template <typename T>
+void relax_modes(Array<T, 6> &stress, Array<T, 9> &kinetic,
+                 Array<T, 6> const &pi_eq, T gamma_bulk, T gamma_shear,
+                 T gamma_odd, T gamma_even) {
+  /* relax the stress modes */
+  stress[0] = pi_eq[0] + gamma_bulk * (stress[0] - pi_eq[0]);
+  stress[1] = pi_eq[1] + gamma_shear * (stress[1] - pi_eq[1]);
+  stress[2] = pi_eq[2] + gamma_shear * (stress[2] - pi_eq[2]);
+  stress[3] = pi_eq[3] + gamma_shear * (stress[3] - pi_eq[3]);
+  stress[4] = pi_eq[4] + gamma_shear * (stress[4] - pi_eq[4]);
+  stress[5] = pi_eq[5] + gamma_shear * (stress[5] - pi_eq[5]);
+
+  /* relax the ghost modes (project them out) */
+  /* ghost modes have no equilibrium part due to orthogonality */
+  kinetic[0] = gamma_odd * kinetic[0];
+  kinetic[1] = gamma_odd * kinetic[1];
+  kinetic[2] = gamma_odd * kinetic[2];
+  kinetic[3] = gamma_odd * kinetic[3];
+  kinetic[4] = gamma_odd * kinetic[4];
+  kinetic[5] = gamma_odd * kinetic[5];
+  kinetic[6] = gamma_even * kinetic[6];
+  kinetic[7] = gamma_even * kinetic[7];
+  kinetic[8] = gamma_even * kinetic[8];
+}
+}
+
 inline void lb_relax_modes(double *mode, const Vector3d &f) {
   double pi_eq[6];
 
@@ -2353,6 +2385,114 @@ inline void lb_relax_modes(double *mode, const Vector3d &f) {
   mode[16] = lbpar.gamma_even * mode[16];
   mode[17] = lbpar.gamma_even * mode[17];
   mode[18] = lbpar.gamma_even * mode[18];
+}
+
+namespace LB {
+namespace NoiseType {
+struct Gauss;
+struct GaussCut;
+struct Flat;
+}
+
+template <typename T, typename Tag> struct Noise;
+
+template <typename T> struct Noise<T, NoiseType::Flat> {
+  using noise_type = NoiseType::Flat;
+
+  static constexpr const T variance = 1. / 12.;
+
+  T operator()() const { return d_random(); }
+};
+
+template <typename T> struct Noise<T, NoiseType::Gauss> {
+  using noise_type = NoiseType::Gauss;
+
+  static constexpr const T variance = 1.;
+
+  T operator()() const { return gaussian_random(); }
+};
+
+template <class T>
+Array<T, 19> calc_phi(T temperature, T tau, T agrid, T gamma_bulk,
+                      T gamma_shear, T gamma_odd, T gamma_even) {
+  Array<T, 19> phi;
+
+  /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).
+   * Note that the modes are not normalized as in the paper here! */
+  auto const mu =
+      temperature / lbmodel.c_sound_sq * tau * tau / (agrid * agrid);
+
+  using std::sqrt;
+  using Utils::sqr;
+
+  for (int i = 0; i < 4; i++)
+    phi[i] = 0.0;
+  phi[4] = sqrt(mu * lbmodel.e[19][4] * (1. - sqr(gamma_bulk)));
+  for (int i = 5; i < 10; i++)
+    phi[i] = sqrt(mu * lbmodel.e[19][i] * (1. - sqr(gamma_shear)));
+  for (int i = 10; i < 16; i++)
+    phi[i] = sqrt(mu * lbmodel.e[19][i] * (1 - sqr(gamma_odd)));
+  for (int i = 16; i < 19; i++)
+    phi[i] = sqrt(mu * lbmodel.e[19][i] * (1 - sqr(gamma_even)));
+
+  return phi;
+}
+
+template <class T, class Noise>
+void thermalize_modes(T rho, Array<T, 6> &stress, Array<T, 9> &kinetic,
+                      Noise const &noise, Array<T, 19> const &phi) {
+  auto const pref = std::sqrt(std::abs(rho) * (1. / Noise::variance));
+
+  stress[0] += pref * phi[4] * noise();
+  stress[1] += pref * phi[5] * noise();
+  stress[2] += pref * phi[6] * noise();
+  stress[3] += pref * phi[7] * noise();
+  stress[4] += pref * phi[8] * noise();
+  stress[5] += pref * phi[9] * noise();
+
+  kinetic[0] += pref * phi[10] * noise();
+  kinetic[1] += pref * phi[11] * noise();
+  kinetic[2] += pref * phi[12] * noise();
+  kinetic[3] += pref * phi[13] * noise();
+  kinetic[4] += pref * phi[14] * noise();
+  kinetic[5] += pref * phi[15] * noise();
+  kinetic[6] += pref * phi[16] * noise();
+  kinetic[7] += pref * phi[17] * noise();
+  kinetic[8] += pref * phi[18] * noise();
+}
+
+template <class T>
+void apply_force(T rho, Array<T, 3> &momentum, Array<T, 6> &stress,
+                 Array<T, 3> const &f, T gamma_bulk, T gamma_shear) {
+  Array<T, 3> u = {momentum[0] + 0.5 * f[0] / rho,
+                   momentum[1] + 0.5 * f[1] / rho,
+                   momentum[2] + 0.5 * f[2] / rho};
+
+  auto const uf = u[0] * f[0] + u[1] * f[1] + u[2] * f[2];
+
+  Array<T, 6> C;
+  C[0] = (1. + gamma_bulk) * u[0] * f[0] +
+         1. / 3. * (gamma_bulk - gamma_shear) * uf;
+  C[2] = (1. + gamma_bulk) * u[1] * f[1] +
+         1. / 3. * (gamma_bulk - gamma_shear) * uf;
+  C[5] = (1. + gamma_bulk) * u[2] * f[2] +
+         1. / 3. * (gamma_bulk - gamma_shear) * uf;
+  C[1] = 1. / 2. * (1. + gamma_shear) * (u[0] * f[1] + u[1] * f[0]);
+  C[3] = 1. / 2. * (1. + gamma_shear) * (u[0] * f[2] + u[2] * f[0]);
+  C[4] = 1. / 2. * (1. + gamma_shear) * (u[1] * f[2] + u[2] * f[1]);
+
+  momentum[0] += f[0];
+  momentum[1] += f[1];
+  momentum[2] += f[2];
+
+  /* update stress stresss */
+  stress[4] += C[0] + C[2] + C[5];
+  stress[5] += C[0] - C[2];
+  stress[6] += C[0] + C[2] - 2. * C[5];
+  stress[7] += C[1];
+  stress[8] += C[3];
+  stress[9] += C[4];
+}
 }
 
 inline void lb_thermalize_modes(double *mode) {
@@ -2478,15 +2618,48 @@ std::array<double, 19> lb_calc_n_from_modes(double *m) {
               m[14] - m[15] + m[16] - m[17] - m[18]};
 }
 
-template <class Populations>
-void lb_push_n(Lattice::index_t index, Populations const &f) {
-  const int yperiod = lblattice.halo_grid[0];
-  const int zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
-  auto const next = lb_push_shift(yperiod, zperiod);
+namespace LB {
+template <class T> Array<T, 19> calc_pop_from_modes(const Modes<T> &m) {
+  return {m[0] - m[4] + m[16],
+          m[0] + m[1] + m[5] + m[6] - m[17] - m[18] - 2. * (m[10] + m[16]),
+          m[0] - m[1] + m[5] + m[6] - m[17] - m[18] + 2. * (m[10] - m[16]),
+          m[0] + m[2] - m[5] + m[6] + m[17] - m[18] - 2. * (m[11] + m[16]),
+          m[0] - m[2] - m[5] + m[6] + m[17] - m[18] + 2. * (m[11] - m[16]),
+          m[0] + m[3] - 2. * (m[6] + m[12] + m[16] - m[18]),
+          m[0] - m[3] - 2. * (m[6] - m[12] + m[16] - m[18]),
+          m[0] + m[1] + m[2] + m[4] + 2. * m[6] + m[7] + m[10] + m[11] + m[13] +
+              m[14] + m[16] + 2. * m[18],
+          m[0] - m[1] - m[2] + m[4] + 2. * m[6] + m[7] - m[10] - m[11] - m[13] -
+              m[14] + m[16] + 2. * m[18],
+          m[0] + m[1] - m[2] + m[4] + 2. * m[6] - m[7] + m[10] - m[11] + m[13] -
+              m[14] + m[16] + 2. * m[18],
+          m[0] - m[1] + m[2] + m[4] + 2. * m[6] - m[7] - m[10] + m[11] - m[13] +
+              m[14] + m[16] + 2. * m[18],
+          m[0] + m[1] + m[3] + m[4] + m[5] - m[6] + m[8] + m[10] + m[12] -
+              m[13] + m[15] + m[16] + m[17] - m[18],
+          m[0] - m[1] - m[3] + m[4] + m[5] - m[6] + m[8] - m[10] - m[12] +
+              m[13] - m[15] + m[16] + m[17] - m[18],
+          m[0] + m[1] - m[3] + m[4] + m[5] - m[6] - m[8] + m[10] - m[12] -
+              m[13] - m[15] + m[16] + m[17] - m[18],
+          m[0] - m[1] + m[3] + m[4] + m[5] - m[6] - m[8] - m[10] + m[12] +
+              m[13] + m[15] + m[16] + m[17] - m[18],
+          m[0] + m[2] + m[3] + m[4] - m[5] - m[6] + m[9] + m[11] + m[12] -
+              m[14] - m[15] + m[16] - m[17] - m[18],
+          m[0] - m[2] - m[3] + m[4] - m[5] - m[6] + m[9] - m[11] - m[12] +
+              m[14] + m[15] + m[16] - m[17] - m[18],
+          m[0] + m[2] - m[3] + m[4] - m[5] - m[6] - m[9] + m[11] - m[12] -
+              m[14] + m[15] + m[16] - m[17] - m[18],
+          m[0] - m[2] + m[3] + m[4] - m[5] - m[6] - m[9] - m[11] + m[12] +
+              m[14] - m[15] + m[16] - m[17] - m[18]};
+}
+}
 
+template <class T, class Next, class Populations>
+void lb_push_n(LB::PopulationView<T> &pop, Next const &next,
+               Populations const &f) {
   /* weights enter in the back transformation */
   for (int i = 0; i < 19; i++)
-    lbfluid[1][i][index + next[i]] = lbmodel.w[i] * f[i];
+    pop(i, next[i]) = lbmodel.w[i] * f[i];
 }
 
 inline void lb_calc_n_from_modes_push(Lattice::index_t index, double *m) {
@@ -2496,7 +2669,21 @@ inline void lb_calc_n_from_modes_push(Lattice::index_t index, double *m) {
 
   auto const f = lb_calc_n_from_modes(m);
 
-  lb_push_n(index, f);
+  const int yperiod = lblattice.halo_grid[0];
+  const int zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
+  auto const next = lb_push_shift(yperiod, zperiod);
+
+  auto to = LB::PopulationView<double>(lbfluid[1], index);
+  lb_push_n(to, next, f);
+}
+
+template <class T> T lb_calc_rho(T mass_mode, T rho_bulk, T agrid) {
+  return mass_mode + rho_bulk * agrid * agrid * agrid;
+}
+
+template <class T>
+Array<T, 3> lb_calc_j(const Array<T, 3> &m, const Array<T, 3> &f) {
+  return {m[0] + 0.5 * f[0], m[1] + 0.5 * f[1], m[2] + 0.5 * f[2]};
 }
 
 /* Collisions and streaming (push scheme) */
@@ -2526,6 +2713,14 @@ inline void lb_collide_stream() {
   }
 #endif
 
+  auto const phi =
+      LB::calc_phi(temperature, lbpar.tau, lbpar.agrid, lbpar.gamma_bulk,
+                   lbpar.gamma_shear, lbpar.gamma_odd, lbpar.gamma_even);
+
+  const int yperiod = lblattice.halo_grid[0];
+  const int zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
+  auto const stencil = lb_push_shift(yperiod, zperiod);
+
   index = lblattice.halo_offset;
   for (int z = 1; z <= lblattice.grid[2]; z++) {
     for (int y = 1; y <= lblattice.grid[1]; y++) {
@@ -2541,6 +2736,21 @@ inline void lb_collide_stream() {
           /* calculate modes locally */
           lb_calc_modes(index, modes);
 
+          auto f_ = LB::PopulationView<double>(lbfluid[0], index);
+          auto modes_ = LB::modes_from_pop(f_);
+
+          const Array<double, 3> f = {node.force_density[0],
+                                      node.force_density[1],
+                                      node.force_density[2]};
+
+          auto const rho = lb_calc_rho(modes_.mass, lbpar.rho, lbpar.agrid);
+          auto const j = lb_calc_j(modes_.momentum, f);
+          auto const pi_eq = LB::stress_eq(rho, j);
+
+          LB::relax_modes(modes_.stress, modes_.kinetic, pi_eq,
+                          lbpar.gamma_bulk, lbpar.gamma_shear, lbpar.gamma_odd,
+                          lbpar.gamma_even);
+
           /* deterministic collisions */
           lb_relax_modes(modes, node.force_density);
 
@@ -2548,8 +2758,18 @@ inline void lb_collide_stream() {
           if (lbpar.fluct)
             lb_thermalize_modes(modes);
 
+          /* fluctuating hydrodynamics */
+          if (lbpar.fluct)
+            LB::thermalize_modes(rho, modes_.stress, modes_.kinetic,
+                                 LB::Noise<double, LB::NoiseType::Flat>{}, phi);
+
           /* apply forces */
           lb_apply_forces(modes, node.force_density);
+
+          LB::apply_force(rho, modes_.momentum, modes_.stress, f,
+                          lbpar.gamma_bulk, lbpar.gamma_shear);
+
+          auto const f_start = LB::calc_pop_from_modes(modes_);
 
           lb_reset_force_densities(index);
 
