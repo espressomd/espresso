@@ -169,6 +169,9 @@ public:
     if (method == "calculate") {
       return cylindrical_profile_observable()->operator()(partCfg());
     }
+    if (method == "n_values") {
+      return cylindrical_profile_observable()->n_values();
+    }
     return {};
   }
 

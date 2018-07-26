@@ -164,6 +164,7 @@ class TestCylindricalLBObservable(ut.TestCase):
         np.testing.assert_array_almost_equal(
             np_hist * self.v_phi, core_hist_v_phi)
         np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
+        self.assertEqual(p.n_values(), len(np_hist.flatten())*3)
 
     def LB_velocity_profile_at_particle_positions_test(self):
         self.set_fluid_velocity()
@@ -196,6 +197,7 @@ class TestCylindricalLBObservable(ut.TestCase):
         np.testing.assert_array_almost_equal(np_hist * self.v_r, core_hist_v_r)
         np.testing.assert_array_almost_equal(np_hist * self.v_phi, core_hist_v_phi)
         np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
+        self.assertEqual(p.n_values(), len(np_hist.flatten())*3)
     
     def LB_velocity_profile_test(self):
         self.set_fluid_velocity_on_all_nodes()
@@ -236,6 +238,7 @@ class TestCylindricalLBObservable(ut.TestCase):
         np.testing.assert_array_almost_equal(np_hist * self.v_r, core_hist_v_r)
         np.testing.assert_array_almost_equal(np_hist * self.v_phi, core_hist_v_phi)
         np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
+        self.assertEqual(p.n_values(), len(np_hist.flatten())*3)
 
     def test_x_axis(self):
         self.params['axis'] = 'x'

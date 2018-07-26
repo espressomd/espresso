@@ -34,8 +34,6 @@ def calc_com_x(system, x):
 
 class Observables(ut.TestCase):
     N_PART = 1000
-    # Error tolerance when comparing arrays/tuples...
-    TOL = 1E-9
     # Handle for espresso system
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
@@ -123,6 +121,14 @@ class Observables(ut.TestCase):
         part_data = self.system.part[:].q.dot(self.system.part[:].v)
         self.assertEqual(espressomd.observables.Current(ids=range(self.N_PART)).n_values(), len(part_data.flatten()))
         np.testing.assert_array_almost_equal(obs_data, part_data, err_msg="Data did not agree for observable 'Current'", decimal=9)
+
+    @ut.skipIf(not espressomd.has_features('ELECTROSTATICS'), "Skipping test for DipoleMoment observable due to missing features.")
+    def test_dipolemoment(self):
+        obs = espressomd.observables.DipoleMoment(ids=range(self.N_PART))
+        obs_data = obs.calculate()
+        part_data = self.system.part[:].q.dot(self.system.part[:].pos)
+        self.assertEqual(obs.n_values(), len(part_data.flatten()))
+        np.testing.assert_array_almost_equal(obs_data, part_data, err_msg="Data did not agree for observable 'DipoleMoment'", decimal=9)
 
 
 if __name__ == "__main__":
