@@ -1,4 +1,4 @@
-from oif_classes import \
+from .oif_classes import \
     FixedPoint, \
     PartPoint, \
     Edge, \
@@ -9,7 +9,7 @@ from oif_classes import \
     OifCellType,\
     OifCell
 
-from oif_utils import \
+from .oif_utils import \
     custom_str, \
     get_triangle_normal, \
     norm, \
