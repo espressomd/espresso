@@ -64,13 +64,13 @@ class LBPoiseuilleCommon(object):
         rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured)))
         self.assertLess(rmsd, 0.1*AGRID/TIME_STEP)
 
-@ut.SkipIf(not espressomd.has_features(['LB', 'LB_BOUNDARIES'], "Skipping test due to missing features.")
+@ut.skipIf(not espressomd.has_features(['LB', 'LB_BOUNDARIES']), "Skipping test due to missing features.")
 class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
     lbf = espressomd.lb.LBFluid(agrid=AGRID, dens=DENS, visc=VISC,
                                 fric=1.0, tau=TIME_STEP, ext_force_density=[0.0, 0.0, EXT_FORCE])
 
 
-@ut.SkipIf(not espressomd.has_features(['LB_GPU', 'LB_BOUNDARIES_GPU'], "Skipping test due to missing features.")
+@ut.skipIf(not espressomd.has_features(['LB_GPU', 'LB_BOUNDARIES_GPU']), "Skipping test due to missing features.")
 class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
     lbf = espressomd.lb.LBFluidGPU(agrid=AGRID, dens=DENS, visc=VISC,
                                    fric=1.0, tau=TIME_STEP, ext_force_density=[0.0, 0.0, EXT_FORCE])
