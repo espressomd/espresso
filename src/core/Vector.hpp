@@ -77,8 +77,14 @@ public:
     std::copy(begin, end, d.begin());
   }
 
-  Scalar &operator[](int i) { return d[i]; }
-  Scalar const &operator[](int i) const { return d[i]; }
+  Scalar &operator[](int i) {
+    assert(i < n);
+    return d[i];
+  }
+  Scalar const &operator[](int i) const {
+    assert(i < n);
+    return d[i];
+  }
 
   iterator begin() { return d.begin(); }
   const_iterator begin() const { return d.begin(); }
