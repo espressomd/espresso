@@ -48,6 +48,7 @@ no_cuda_default:
 
 no_cuda_maxset:
   stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu:latest
   except:
     - doc
   script:
