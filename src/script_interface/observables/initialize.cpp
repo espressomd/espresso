@@ -75,7 +75,7 @@ void initialize() {
   //    register_new("Observables::ParticleVelocities");
 
   REGISTER(StressTensor);
-  REGISTER(LBBulkStress);
+  REGISTER(LBFluidStress);
   REGISTER_PID_OBS(ParticlePositions);
   REGISTER_PID_OBS(ParticleVelocities);
   REGISTER_PID_OBS(ParticleForces);

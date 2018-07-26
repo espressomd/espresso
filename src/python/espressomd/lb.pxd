@@ -98,13 +98,13 @@ IF LB_GPU or LB:
         int lb_lbnode_get_rho(int * coord, double * double_return)
         int lb_lbnode_get_pi(int * coord, double * double_return)
         int lb_lbnode_get_pi_neq(int * coord, double * double_return)
-        int lb_bulk_get_pi(double *pi)
         int lb_lbnode_get_pop(int * coord, double * double_return)
         int lb_lbnode_set_pop(int * coord, double * double_return)
         int lb_lbnode_get_boundary(int * coord, int * int_return)
         int lb_lbfluid_set_couple_flag(int c_couple_flag)
         int lb_lbfluid_get_couple_flag(int * c_couple_flag)
         int lb_lbfluid_get_interpolated_velocity_global(Vector3d &p, double *v)
+        int lb_lbfluid_get_pi(double *pi)
 
     cdef extern from "lbgpu.hpp":
         int lb_lbfluid_remove_total_momentum()

@@ -1382,7 +1382,10 @@ int lb_lbnode_get_pi_neq(int *ind, double *p_pi) {
   return 0;
 }
 
-int lb_bulk_get_pi(double *p_pi) {
+/** calculates the average stress of all nodes by iterating 
+ * over all nodes and deviding by the number_of_nodes.
+ */
+int lb_lbfluid_get_pi(double *p_pi) {
 
   for (int l = 0; l < 6; l++) {
     p_pi[l] = 0.0;
@@ -1390,10 +1393,6 @@ int lb_bulk_get_pi(double *p_pi) {
 
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    lbpar_gpu.dim_x = (unsigned int)rint(box_l[0]/lbpar_gpu.agrid);
-    lbpar_gpu.dim_y = (unsigned int)rint(box_l[1]/lbpar_gpu.agrid);
-    lbpar_gpu.dim_z = (unsigned int)rint(box_l[2]/lbpar_gpu.agrid);
-    int number_of_nodes_GPU = lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
     
     for (int i = 0; i < lbpar_gpu.dim_x; i ++) {
       for (int j = 0; j < lbpar_gpu.dim_y; j ++) {
@@ -1409,7 +1408,7 @@ int lb_bulk_get_pi(double *p_pi) {
     }
 
     for (int l = 0; l < 6; l++) {
-      p_pi[l] /= number_of_nodes_GPU;
+      p_pi[l] /= lbpar_gpu.number_of_nodes;
     }
 #endif
   } else {

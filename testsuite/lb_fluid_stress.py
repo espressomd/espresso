@@ -22,7 +22,7 @@ class LBTest(ut.TestCase):
     sys.actors.add(lb1)
     sys.integrator.run(100)
     
-    bulk_stress_observable = np.copy(lb1.pi_bulk)
+    bulk_stress_observable = np.copy(lb1.pi_fluid)
     bulk_stress_manual = 0.0
     
     for i in range(box_l):
@@ -36,7 +36,7 @@ class LBTest(ut.TestCase):
     sys.thermostat.set_lb(1.0)
     sys.integrator.run(100)
     
-    bulk_stress_observable = np.copy(lb1.pi_bulk)
+    bulk_stress_observable = np.copy(lb1.pi_fluid)
     bulk_stress_manual = 0.0
     
     for i in range(box_l):
@@ -47,7 +47,7 @@ class LBTest(ut.TestCase):
     
     np.testing.assert_allclose(bulk_stress_observable, bulk_stress_manual, err_msg= 'Stresses after integration with thermalized LB are not equal for the GPU implementation')
 
-    obs = observables.LBBulkStress()
+    obs = observables.LBFluidStress()
     a = obs.calculate()
     bulk_stress_obs = np.array([[a[0],a[1],a[3]], [a[1],a[2],a[4]], [a[3], a[4], a[5]]])
 
@@ -65,7 +65,7 @@ class LBTestGPU(ut.TestCase):
     sys.actors.add(lb2)
     sys.integrator.run(100)
     
-    bulk_stress_observable = np.copy(lb2.pi_bulk)
+    bulk_stress_observable = np.copy(lb2.pi_fluid)
     bulk_stress_manual = 0.0
     
     for i in range(box_l):
@@ -79,7 +79,7 @@ class LBTestGPU(ut.TestCase):
     sys.thermostat.set_lb(1.0)
     sys.integrator.run(100)
     
-    bulk_stress_observable = np.copy(lb2.pi_bulk)
+    bulk_stress_observable = np.copy(lb2.pi_fluid)
     bulk_stress_manual = 0.0
     
     for i in range(box_l):
@@ -90,7 +90,7 @@ class LBTestGPU(ut.TestCase):
     
     np.testing.assert_allclose(bulk_stress_observable, bulk_stress_manual, err_msg= 'Stresses after integration with thermalized LB are not equal for the CPU implementation')
 
-    obs = observables.LBBulkStress()
+    obs = observables.LBFluidStress()
     a = obs.calculate()
     bulk_stress_obs = np.array([[a[0],a[1],a[3]], [a[1],a[2],a[4]], [a[3], a[4], a[5]]])
 

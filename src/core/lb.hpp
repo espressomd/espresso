@@ -535,13 +535,14 @@ int lb_lbfluid_print_velocity(char *filename);
 int lb_lbfluid_save_checkpoint(char *filename, int binary);
 int lb_lbfluid_load_checkpoint(char *filename, int binary);
 
+int lb_lbfluid_get_pi(double *pi);
+
 int lb_lbnode_get_rho(int *ind, double *p_rho);
 int lb_lbnode_get_u(int *ind, double *u);
 int lb_lbnode_get_pi(int *ind, double *pi);
 int lb_lbnode_get_pi_neq(int *ind, double *pi_neq);
 int lb_lbnode_get_boundary(int *ind, int *p_boundary);
 int lb_lbnode_get_pop(int *ind, double *pop);
-int lb_bulk_get_pi(double *pi);
 
 int lb_lbnode_set_rho(int *ind, double *rho);
 int lb_lbnode_set_u(int *ind, double *u);

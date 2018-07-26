@@ -237,10 +237,10 @@ IF LB_GPU or LB:
             if lb_set_lattice_switch(0):
                 raise Exception("lb_set_lattice_switch error")
 
-        property pi_bulk:
+        property pi_fluid:
             def __get__(self):
                 cdef double[6] pi
-                lb_bulk_get_pi(pi)
+                lb_lbfluid_get_pi(pi)
                 return array_locked(np.array([[pi[0],pi[1],pi[3]],
                                               [pi[1],pi[2],pi[4]],
                                               [pi[3],pi[4],pi[5]]]))
@@ -352,7 +352,7 @@ IF LB or LB_GPU:
 
             def __set__(self, value):
                 raise NotImplementedError
-        
+
         property population:
             def __get__(self):
                 cdef double[19] double_return
