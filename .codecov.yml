@@ -16,13 +16,11 @@ coverage:
       default: false
       tests:
         paths:
-          - testsuite/
           - src/core/unit_tests/
         enabled: yes
         threshold: 1%
       core:
         paths:
-          - !testsuite/
           - !src/core/unit_tests/
         enabled: yes
         threshold: 1%
