@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import scipy.optimize
 import unittest as ut
@@ -62,7 +61,7 @@ class LBPoiseuilleCommon(object):
         v_expected = poiseuille_flow(velocities[1:-1, 0] + 0.5 * AGRID - 0.5 *
                                      self.system.box_l[0], self.system.box_l[0] - 2.0 * AGRID, EXT_FORCE, VISC * DENS)
         rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured)))
-        self.assertLess(rmsd, 0.1*AGRID/TIME_STEP)
+        self.assertLess(rmsd, 0.02*AGRID/TIME_STEP)
 
 @ut.skipIf(not espressomd.has_features(['LB', 'LB_BOUNDARIES']), "Skipping test due to missing features.")
 class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
