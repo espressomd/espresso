@@ -1,5 +1,4 @@
 import numpy as np
-import scipy.optimize
 import unittest as ut
 
 import espressomd.lb
