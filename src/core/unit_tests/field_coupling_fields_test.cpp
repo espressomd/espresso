@@ -1,0 +1,431 @@
+#define BOOST_TEST_MODULE AutoParameter test
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
+
+#include "core/field_coupling/fields/AffineMap.hpp"
+#include "core/field_coupling/fields/Constant.hpp"
+#include "core/field_coupling/fields/Interpolated.hpp"
+#include "core/field_coupling/fields/gradient_type.hpp"
+
+#include "core/utils/interpolation/bspline_3d.hpp"
+#include "core/utils/interpolation/bspline_3d_gradient.hpp"
+
+#include <limits>
+
+using namespace FieldCoupling::Fields;
+
+template <bool linear> struct Id {
+  static constexpr const bool is_linear = linear;
+  mutable int count = 0;
+
+  template <typename T> T operator()(T x) const {
+    count++;
+    return x;
+  }
+};
+
+BOOST_AUTO_TEST_CASE(gradient_type_test) {
+  using FieldCoupling::Fields::detail::gradient_type;
+  using std::is_same;
+
+  static_assert(is_same<gradient_type<double, 1>, Vector3d>::value, "");
+  static_assert(is_same<gradient_type<double, 2>, Vector<2, Vector3d>>::value,
+                "");
+}
+
+BOOST_AUTO_TEST_CASE(constant_scalar_field) {
+  using Field = Constant<double, 1>;
+
+  /* Types */
+  {
+    static_assert(std::is_same<Field::value_type, double>::value, "");
+    static_assert(std::is_same<Field::gradient_type, Vector3d>::value, "");
+  }
+
+  /* ctor */
+  {
+    const double val = 1.23;
+    Field field(val);
+
+    BOOST_CHECK(val == field.value());
+  }
+
+  /* setter */
+  {
+    Field field(0.);
+
+    const double val = 1.23;
+    field.value() = val;
+
+    BOOST_CHECK(val == field.value());
+  }
+
+  /* Field value */
+  {
+    Field field(5.);
+
+    BOOST_CHECK(5. == field(Id<true>{}, {1., 2., 3.}));
+    BOOST_CHECK(5. == field(Id<false>{}, {1., 2., 3.}));
+  }
+
+  /* Gradient */
+  {
+    Field field(5.);
+
+    BOOST_CHECK(Vector3d{} == field.gradient(Id<true>{}, {1., 2., 3.}));
+    BOOST_CHECK(Vector3d{} == field.gradient(Id<false>{}, {1., 2., 3.}));
+  }
+}
+
+BOOST_AUTO_TEST_CASE(constant_vector_field) {
+  using Field = Constant<double, 2>;
+
+  /* Types */
+  {
+    static_assert(std::is_same<Field::value_type, Vector2d>::value, "");
+    static_assert(
+        std::is_same<Field::gradient_type, Vector<2, Vector3d>>::value, "");
+  }
+
+  /* ctor */
+  {
+    const Vector2d val = {1.23, 4.56};
+    Field field(val);
+
+    BOOST_CHECK(val == field.value());
+  }
+
+  /* setter */
+  {
+    Field field({});
+
+    const Vector2d val = {1.23, 4.56};
+    field.value() = val;
+
+    BOOST_CHECK(val == field.value());
+  }
+
+  /* Field value */
+  {
+    const Vector2d field_val = {5., 6.};
+
+    Field field(field_val);
+
+    BOOST_CHECK(field_val == field(Id<true>{}, {1., 2., 3.}));
+    BOOST_CHECK(field_val == field(Id<false>{}, {1., 2., 3.}));
+  }
+
+  /* Gradient */
+  {
+    const auto zero = Field::gradient_type{};
+    Field field({5., 6.});
+
+    BOOST_CHECK(zero == field.gradient(Id<true>{}, {1., 2., 3.}));
+    BOOST_CHECK(zero == field.gradient(Id<false>{}, {1., 2., 3.}));
+  }
+}
+
+BOOST_AUTO_TEST_CASE(affine_scalar_field) {
+  using Field = AffineMap<double, 1>;
+
+  /* Types */
+  {
+    static_assert(std::is_same<Field::value_type, double>::value, "");
+    static_assert(
+        std::is_same<Field::gradient_type, Vector<3, Field::value_type>>::value,
+        "");
+  }
+
+  /* ctor */
+  {
+    const Vector3d A = {1., 2., 3.};
+    const double b = 4.;
+    Field field(A, b);
+
+    BOOST_CHECK(A == field.A());
+    BOOST_CHECK(b == field.b());
+  }
+
+  /* setter */
+  {
+    Field field({}, {});
+
+    const Vector3d A = {1., 2., 3.};
+    const double b = 4.;
+    field.A() = A;
+    field.b() = b;
+
+    BOOST_CHECK(A == field.A());
+    BOOST_CHECK(b == field.b());
+  }
+
+  /* Field value */
+  {
+    const Vector3d A = {1., 2., 3.};
+    const double b = 4.;
+    Field field(A, b);
+
+    const Vector3d x = {1., 2., 3.};
+
+    BOOST_CHECK((A * x + b) == field(Id<true>{}, x));
+    BOOST_CHECK((A * x + b) == field(Id<false>{}, x));
+  }
+
+  /* Gradient */
+  {
+    const Vector3d A = {1., 2., 3.};
+    const double b = 4.;
+    Field field(A, b);
+
+    BOOST_CHECK(A == field.gradient(Id<true>{}, {1., 2., 3.}));
+    BOOST_CHECK(A == field.gradient(Id<false>{}, {1., 2., 3.}));
+  }
+}
+
+template <size_t N, size_t M, typename T>
+using Matrix = Vector<N, Vector<M, T>>;
+
+BOOST_AUTO_TEST_CASE(affine_vector_field) {
+  using Field = AffineMap<double, 2>;
+
+  /* Types */
+  {
+    static_assert(std::is_same<Field::value_type, Vector2d>::value, "");
+    static_assert(
+        std::is_same<Field::gradient_type, Matrix<2, 3, double>>::value, "");
+  }
+
+  /* Field value unshifted */
+  {
+    const Vector<2, Vector3d> A = {{1., 2., 3}, {4., 5., 6.}};
+    const Vector2d b = {7., 8.};
+    Field field(A, b);
+
+    const Vector3d x = {1., 1., 1.};
+
+    auto const res = field(Id<true>{}, x);
+
+    BOOST_CHECK((A[0][0] + A[0][1] + A[0][2] + b[0]) == res[0]);
+    BOOST_CHECK((A[1][0] + A[1][1] + A[1][2] + b[1]) == res[1]);
+  }
+
+  /* Gradient */
+  {
+    const Vector<2, Vector3d> A = {{1., 2., 3}, {4., 5., 6.}};
+    const Vector2d b = {7., 8.};
+    Field field(A, b);
+
+    BOOST_CHECK(A == field.gradient(Id<true>{}, {1., 2., 3.}));
+    BOOST_CHECK(A == field.gradient(Id<false>{}, {1., 2., 3.}));
+  }
+}
+
+#include "common/gaussian.hpp"
+
+BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
+  using Field = Interpolated<double, 1>;
+
+  /* Types */
+  {
+    static_assert(std::is_same<Field::value_type, double>::value, "");
+    static_assert(std::is_same<Field::gradient_type, Vector<3, double>>::value,
+                  "");
+  }
+
+  /* Ctor */
+  {
+    boost::multi_array<double, 3> data(Vector<3, int>{10, 11, 12});
+    data[5][5][5] = -1. / 12.;
+
+    const int order = 3;
+    const Vector3d grid_spacing = {.1, .2, .3};
+    const Vector3d origin = {-1., 2., -3.};
+
+    Field field(data, order, grid_spacing, origin);
+
+    BOOST_CHECK(data == field.field_data());
+    BOOST_CHECK(order == field.interpolation_order());
+    BOOST_CHECK(grid_spacing == field.grid_spacing());
+    BOOST_CHECK(origin == field.origin());
+  }
+
+  /* linear logic */
+  {
+    const boost::multi_array<double, 3> data(Vector<3, int>{10, 10, 10});
+    const int order = 3;
+    const Vector3d grid_spacing = {1., 1., 1.};
+
+    Field field(data, order, grid_spacing, {});
+
+    /* linear, only called once */
+    {
+      auto id = Id<true>{};
+      field(id, {5., 5., 5.});
+
+      BOOST_CHECK(1 == id.count);
+    }
+
+    /* non-linear, called for every interpolation point */
+    {
+      auto id = Id<false>{};
+      field(id, {5., 5., 5.});
+
+      BOOST_CHECK((3 * 3 * 3) == id.count);
+    }
+  }
+
+  /* field value */
+  {
+    using Utils::Interpolation::bspline_3d_accumulate;
+
+    const int order = 3;
+    const Vector3d grid_spacing = {.1, .2, .3};
+    const Vector3d origin = {-1., 2., -1.4};
+    const int n_nodes = 10;
+
+    auto const x0 = origin + 0.5 * n_nodes * grid_spacing;
+    auto const sigma = 2.;
+
+    auto const data = gaussian_field(n_nodes, grid_spacing, origin, x0, sigma);
+
+    Field field(data, order, grid_spacing, origin);
+
+    auto const p = Vector3d{-.4, 3.14, 0.1};
+
+    auto const interpolated_value = bspline_3d_accumulate(
+        p, [&data](const std::array<int, 3> &ind) { return data(ind); },
+        grid_spacing, origin, order, 0.0);
+
+    auto const field_value_lin = field(Id<true>{}, p);
+    auto const field_value_non_lin = field(Id<false>{}, p);
+
+    BOOST_CHECK(std::abs(interpolated_value - field_value_lin) <
+                std::numeric_limits<double>::epsilon());
+    BOOST_CHECK(std::abs(interpolated_value - field_value_non_lin) <
+                std::numeric_limits<double>::epsilon());
+  }
+
+  /* gradient value */
+  {
+    using Utils::Interpolation::bspline_3d_gradient_accumulate;
+
+    const int order = 3;
+    const Vector3d grid_spacing = {.1, .2, .3};
+    const Vector3d origin = {-1., 2., -1.4};
+    const int n_nodes = 10;
+
+    auto const x0 = origin + 0.57 * n_nodes * grid_spacing;
+    auto const sigma = 2.;
+
+    auto const data = gaussian_field(n_nodes, grid_spacing, origin, x0, sigma);
+
+    Field field(data, order, grid_spacing, origin);
+
+    auto const p = Vector3d{-.4, 3.14, 0.1};
+
+    auto const field_value_lin = field.gradient(Id<true>{}, p);
+    auto const field_value_non_lin = field.gradient(Id<false>{}, p);
+
+    auto const interpolated_value = bspline_3d_gradient_accumulate(
+        p, [&data](const std::array<int, 3> &ind) { return data(ind); },
+        grid_spacing, origin, order, Vector3d{});
+
+    BOOST_CHECK((interpolated_value - field_value_lin).norm() <
+                std::numeric_limits<double>::epsilon());
+    BOOST_CHECK((interpolated_value - field_value_non_lin).norm() <
+                std::numeric_limits<double>::epsilon());
+  }
+}
+
+BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
+  using Field = Interpolated<double, 2>;
+
+  /* Types */
+  {
+    static_assert(std::is_same<Field::value_type, Vector2d>::value, "");
+    static_assert(
+        std::is_same<Field::gradient_type, Vector<2, Vector3d>>::value, "");
+  }
+
+  /* field value */
+  {
+    using Utils::Interpolation::bspline_3d_accumulate;
+
+    const int order = 3;
+    const Vector3d grid_spacing = {.1, .2, .3};
+    const Vector3d origin = {-1., 2., -1.4};
+    const int n_nodes = 10;
+
+    auto const a = origin + 0.37 * n_nodes * grid_spacing;
+    Vector3d x0[2] = {0.12 * a, -3. * a};
+    auto const sigma = Vector2d{2., 3.};
+
+    boost::multi_array<Vector2d, 3> data(
+        Vector<3, int>{n_nodes, n_nodes, n_nodes});
+    for (int i = 0; i < n_nodes; i++)
+      for (int j = 0; j < n_nodes; j++)
+        for (int k = 0; k < n_nodes; k++) {
+          auto const &h = grid_spacing;
+          auto const x = origin + Vector3d{i * h[0], j * h[1], k * h[2]};
+          data[i][j][k] = {gaussian(x, x0[0], sigma[0]),
+                           gaussian(x, x0[1], sigma[1])};
+        }
+
+    Field field(data, order, grid_spacing, origin);
+
+    auto const p = Vector3d{-.4, 3.14, 0.1};
+
+    auto const field_value_lin = field(Id<true>{}, p);
+    auto const field_value_non_lin = field(Id<false>{}, p);
+
+    auto const interpolated_value = bspline_3d_accumulate(
+        p, [&data](const std::array<int, 3> &ind) { return data(ind); },
+        grid_spacing, origin, order, Vector2d{});
+
+    BOOST_CHECK_SMALL((interpolated_value - field_value_lin).norm(),
+                      std::numeric_limits<double>::epsilon());
+    BOOST_CHECK_SMALL((interpolated_value - field_value_non_lin).norm(),
+                      std::numeric_limits<double>::epsilon());
+  }
+
+  /* gradient value */
+  {
+    using Utils::Interpolation::bspline_3d_gradient_accumulate;
+
+    const int order = 3;
+    const Vector3d grid_spacing = {.1, .2, .3};
+    const Vector3d origin = {-1., 2., -1.4};
+    const int n_nodes = 10;
+
+    auto const a = origin + 0.37 * n_nodes * grid_spacing;
+    Vector3d x0[2] = {0.12 * a, -3. * a};
+    auto const sigma = Vector2d{2., 3.};
+
+    boost::multi_array<Vector2d, 3> data(
+        Vector<3, int>{n_nodes, n_nodes, n_nodes});
+    for (int i = 0; i < n_nodes; i++)
+      for (int j = 0; j < n_nodes; j++)
+        for (int k = 0; k < n_nodes; k++) {
+          auto const &h = grid_spacing;
+          auto const x = origin + Vector3d{i * h[0], j * h[1], k * h[2]};
+          data[i][j][k] = {gaussian(x, x0[0], sigma[0]),
+                           gaussian(x, x0[1], sigma[1])};
+        }
+
+    Field field(data, order, grid_spacing, origin);
+
+    auto const p = Vector3d{-.4, 3.14, 0.1};
+
+    auto const field_value_lin = field.gradient(Id<true>{}, p);
+    auto const field_value_non_lin = field.gradient(Id<false>{}, p);
+
+    auto const interpolated_value = bspline_3d_gradient_accumulate(
+        p, [&data](const std::array<int, 3> &ind) { return data(ind); },
+        grid_spacing, origin, order, Field::gradient_type{});
+
+    BOOST_CHECK_SMALL((interpolated_value[0] - field_value_lin[0]).norm(),
+                      std::numeric_limits<double>::epsilon());
+    BOOST_CHECK_SMALL((interpolated_value[1] - field_value_non_lin[1]).norm(),
+                      std::numeric_limits<double>::epsilon());
+  }
+}
