@@ -101,9 +101,18 @@ class Observables(ut.TestCase):
         test_mag_dip = generate_test_for_pid_observable(
             espressomd.observables.MagneticDipoleMoment, "dip", "sum")
 
-    # This is disabled as it does not currently work
-    # if espressomd.has_features(["ROTATION"]):
-    #    test_omega_body = generate_test_for_pid_observable(ParticleBodyVelocities,"omega_body")
+    if espressomd.has_features(["ROTATION"]):
+        test_body_angular_velocity = generate_test_for_pid_observable(espressomd.observables.ParticleBodyAngularVelocities, "omega_body")
+        test_lab_angular_velocity = generate_test_for_pid_observable(espressomd.observables.ParticleAngularVelocities, "omega_lab")
+
+        def test_particle_body_velocities(self):
+            obs = espressomd.observables.ParticleBodyVelocities(ids=range(self.N_PART))
+            obs_data = obs.calculate()
+            part_data = np.array([p.convert_vector_space_to_body(p.v) for p in self.system.part])
+            np.testing.assert_array_almost_equal(part_data.flatten(), obs_data,
+                err_msg="Data did not agree for observable ParticleBodyVelocities and particle derived values.",
+                decimal=9)
+
 
     def test_stress_tensor(self):
         s = self.system.analysis.stress_tensor()["total"].reshape(9)

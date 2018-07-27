@@ -498,7 +498,6 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-
                 cdef const double *o = NULL
                 pointer_to_omega_body(self.particle_data, o)
                 return array_locked([o[0], o[1], o[2]])

@@ -218,11 +218,10 @@ class ParticleBodyAngularVelocities(Observable):
 
 @script_interface_register
 class ParticleBodyVelocities(Observable):
-    _so_name = "Observables::ParticleBodyVelocities"
     """Calculates the particle velocity in the particles'  body-fixed frame of reference.
    
-   For each particle, the body-fixed frame of reference is obtained from the particle's
-   orientation stored in the quaternions.
+    For each particle, the body-fixed frame of reference is obtained from the particle's
+    orientation stored in the quaternions.
 
     Parameters
     ----------
@@ -230,6 +229,7 @@ class ParticleBodyVelocities(Observable):
           The ids of (existing) particles to take into account.
 
     """
+    _so_name = "Observables::ParticleBodyVelocities"
 
 
 @script_interface_register
