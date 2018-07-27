@@ -12,8 +12,8 @@ DENS = 1.7
 TIME_STEP = 0.1
 
 
-def poiseuille_flow(z, H, ext_force, dyn_visc):
-    return ext_force * 1. / (2 * dyn_visc) * (H**2.0 / 4.0 - z**2.0)
+def poiseuille_flow(z, H, ext_force_density, dyn_visc):
+    return ext_force_density * 1. / (2 * dyn_visc) * (H**2.0 / 4.0 - z**2.0)
 
 
 class LBPoiseuilleCommon(object):
@@ -64,13 +64,15 @@ class LBPoiseuilleCommon(object):
 
 @ut.skipIf(not espressomd.has_features(['LB', 'LB_BOUNDARIES']), "Skipping test due to missing features.")
 class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
-    lbf = espressomd.lb.LBFluid(agrid=AGRID, dens=DENS, visc=VISC,
+    def setUp(self):
+        self.lbf = espressomd.lb.LBFluid(agrid=AGRID, dens=DENS, visc=VISC,
                                 fric=1.0, tau=TIME_STEP, ext_force_density=[0.0, 0.0, EXT_FORCE])
 
 
 @ut.skipIf(not espressomd.has_features(['LB_GPU', 'LB_BOUNDARIES_GPU']), "Skipping test due to missing features.")
 class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
-    lbf = espressomd.lb.LBFluidGPU(agrid=AGRID, dens=DENS, visc=VISC,
+    def setUp(self):
+        self.lbf = espressomd.lb.LBFluidGPU(agrid=AGRID, dens=DENS, visc=VISC,
                                    fric=1.0, tau=TIME_STEP, ext_force_density=[0.0, 0.0, EXT_FORCE])
 
 
