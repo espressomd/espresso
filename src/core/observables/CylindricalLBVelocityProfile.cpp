@@ -52,7 +52,7 @@ operator()(PartCfg &partCfg) const {
     }
 #endif
   } else {
-    throw std::runtime_error("Either CPU LB or GPU LB has to be active for this observable to work.");
+    return histogram.get_histogram();
   }
   for (size_t ind = 0; ind < m_sample_positions.size(); ind += 3) {
     const Vector3d pos_shifted = {{m_sample_positions[ind + 0] - center[0],
