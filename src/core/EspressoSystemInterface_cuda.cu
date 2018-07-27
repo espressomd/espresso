@@ -73,6 +73,7 @@ __global__ void split_kernel_r(CUDA_particle_data *particles, float *r, int n) {
   r[idx + 2] = p.p[2];
 }
 
+#ifdef LB_GPU
 // Velocity
 __global__ void split_kernel_v(CUDA_particle_data *particles, float *v, int n) {
   int idx = blockDim.x*blockIdx.x + threadIdx.x;
@@ -96,7 +97,7 @@ __global__ void split_kernel_v(CUDA_particle_data *particles, float *v, int n) {
   v[2] = 0.0;
 #endif  
 }
-
+#endif
 
 #ifdef DIPOLES
 // Dipole moment
@@ -186,8 +187,10 @@ void EspressoSystemInterface::split_particle_struct() {
     split_kernel_q<<<grid,block>>>(gpu_get_particle_pointer(), m_q_gpu_begin,n);
   if(!m_needsQGpu && m_needsRGpu)
     split_kernel_r<<<grid,block>>>(gpu_get_particle_pointer(), m_r_gpu_begin,n);
+#ifdef LB_GPU
   if(m_needsVGpu)
     split_kernel_v<<<grid,block>>>(gpu_get_particle_pointer(), m_v_gpu_begin,n);
+#endif
 #ifdef DIPOLES
   if(m_needsDipGpu)
     split_kernel_dip<<<grid,block>>>(gpu_get_particle_pointer(), m_dip_gpu_begin,n);

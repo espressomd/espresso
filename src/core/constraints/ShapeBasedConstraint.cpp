@@ -81,9 +81,9 @@ ParticleForce ShapeBasedConstraint::force(const Particle &p, const Vector3d &fol
                           << " dist " << dist;
     }
   }
-  
-    m_local_force -= force;
-    m_outer_normal_force-=outer_normal_vec * force;
+
+  m_local_force -= force;
+  m_outer_normal_force -= outer_normal_vec * force;
 
 #ifdef ROTATION
   part_rep.f.torque += torque2;

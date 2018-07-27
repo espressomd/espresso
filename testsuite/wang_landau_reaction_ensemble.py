@@ -49,6 +49,8 @@ class ReactionEnsembleTest(ut.TestCase):
     # Integration parameters
     #
     system = espressomd.System(box_l = [box_l, box_l, box_l])
+    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+    np.random.seed(seed=system.seed)
     system.time_step = 0.01
     system.cell_system.skin = 0.4
 
@@ -90,7 +92,7 @@ class ReactionEnsembleTest(ut.TestCase):
         while True:
             try:
                 self.RE.reaction()
-                for i in range(7):
+                for i in range(3):
                     self.RE.displacement_mc_move_for_particles_of_type(3)
             except reaction_ensemble.WangLandauHasConverged:  # only catch my exception
                 break

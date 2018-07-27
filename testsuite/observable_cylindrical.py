@@ -122,7 +122,7 @@ class TestCylindricalObservable(ut.TestCase):
         np_hist = self.calculate_numpy_histogram()
         np_hist = self.normalize_with_bin_volume(np_hist)
         np.testing.assert_array_almost_equal(np_hist, core_hist)
-
+        self.assertEqual(len(core_hist), len(np_hist))
 
     def velocity_profile_test(self):
         self.set_particles()
@@ -144,6 +144,7 @@ class TestCylindricalObservable(ut.TestCase):
         np.testing.assert_array_almost_equal(np_hist * self.v_r, core_hist_v_r)
         np.testing.assert_array_almost_equal(np_hist * self.v_phi, core_hist_v_phi)
         np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
+        self.assertEqual(len(core_hist), len(np_hist))
 
     def flux_density_profile_test(self):
         self.set_particles()
@@ -163,6 +164,7 @@ class TestCylindricalObservable(ut.TestCase):
         np.testing.assert_array_almost_equal(np_hist * self.v_r, core_hist_v_r)
         np.testing.assert_array_almost_equal(np_hist * self.v_phi, core_hist_v_phi)
         np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
+        self.assertEqual(len(core_hist), len(np_hist))
 
     def test_hist_x(self):
         self.params['axis'] = 'x'

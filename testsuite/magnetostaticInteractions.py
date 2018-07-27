@@ -29,7 +29,6 @@ from tests_common import *
 class MagnetostaticsInteractionsTests(ut.TestCase):
     # Handle to espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-
     def setUp(self):
         self.system.box_l = 10, 10, 10
         if not self.system.part.exists(0):

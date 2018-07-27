@@ -24,7 +24,6 @@ import unittest as ut
 
 class InteractionsNonBondedTest(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-
     box_l = 10.
 
     start_pos = numpy.random.rand(3) * box_l

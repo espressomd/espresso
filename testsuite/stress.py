@@ -69,7 +69,7 @@ system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
 @ut.skipIf(not espressomd.has_features(['LENNARD_JONES']),
 'Features not available, skipping test!')
-class stress_test(ut.TestCase):
+class Stress(ut.TestCase):
 
   def test(self):
     # system parameters
@@ -142,101 +142,6 @@ class stress_test(ut.TestCase):
     anal_pressure_nonbonded_intra = np.einsum('ii', anal_stress_nonbonded_intra)/3.0
     anal_pressure_total = anal_pressure_kinetic + anal_pressure_bonded + anal_pressure_nonbonded
 
-    print('particle positions')
-    print(pos)
-    print('particle velocities')
-    print(vel)
-
-    print('\nsimulated kinetic pressure=')
-    print(sim_pressure_kinetic)
-    print('analytical kinetic pressure=')
-    print(anal_pressure_kinetic)
-
-    print('\nsimulated bonded pressure=')
-    print(sim_pressure_bonded)
-    print('analytical bonded pressure=')
-    print(anal_pressure_bonded)
-
-    print('\nsimulated bonded pressure harmonic bond =')
-    print(sim_pressure_bonded_harmonic)
-    print('analytical bonded pressure bond harmonic=')
-    print(anal_pressure_bonded)
-
-    print('\nsimulated non-bonded pressure=')
-    print(sim_pressure_nonbonded)
-    print('analytic non-bonded pressure=')
-    print(anal_pressure_nonbonded)
-
-    print('\nsimulated non-bonded intermolecular pressure=')
-    print(sim_pressure_nonbonded_inter)
-    print('analytic non-bonded intermolecular pressure=')
-    print(anal_pressure_nonbonded_inter)
-
-    print('\nsimulated non-bonded intermolecular pressure molecule 1 and 2=')
-    print(sim_pressure_nonbonded_inter12)
-    print('analytic non-bonded intermolecular pressure molecule 1 and 2=')
-    print(anal_pressure_nonbonded_inter)
-
-    print('\nsimulated non-bonded intramolecular pressure=')
-    print(sim_pressure_nonbonded_intra)
-    print('analytic non-bonded intramolecular pressure=')
-    print(anal_pressure_nonbonded_intra)
-
-    print('\nsimulated non-bonded intramolecular pressure molecule 0=')
-    print(sim_pressure_nonbonded_intra00)
-    print('analytic non-bonded intramolecular pressure molecule 0=')
-    print(anal_pressure_nonbonded_intra)
-
-    print('\nsimulated total pressure=')
-    print(sim_pressure_total)
-    print('analytic total pressure=')
-    print(anal_pressure_total)
-
-    print('\nsimulated kinetic stress=')
-    print(sim_stress_kinetic)
-    print('analytic kinetic stress=')
-    print(anal_stress_kinetic)
-
-    print('\nsimulated bonded stress=')
-    print(sim_stress_bonded)
-    print('analytic bonded stress=')
-    print(anal_stress_bonded)
-
-    print('\nsimulated bonded stress harmonic bond=')
-    print(sim_stress_bonded_harmonic)
-    print('analytic bonded stress harmonic bond=')
-    print(anal_stress_bonded)
-
-    print('\nsimulated non-bonded stress=')
-    print(sim_stress_nonbonded)
-    print('analytic non-bonded stress=')
-    print(anal_stress_nonbonded)
-
-    print('\nsimulated non-bonded intermolecular stress=')
-    print(sim_stress_nonbonded_inter)
-    print('analytic non-bonded intermolecular stress=')
-    print(anal_stress_nonbonded_inter)
-
-    print('\nsimulated non-bonded intermolecular stress between molecule 1 and 2=')
-    print(sim_stress_nonbonded_inter12)
-    print('analytic non-bonded intermolecular stress between molecule 1 and 2=')
-    print(anal_stress_nonbonded_inter)
-
-    print('\nsimulated total non-bonded intramolecular stress=')
-    print(sim_stress_nonbonded_intra)
-    print('analytic total non-bonded intramolecular stress=')
-    print(anal_stress_nonbonded_intra)
-
-    print('\nsimulated non-bonded intramolecular stress molecule 0=')
-    print(sim_stress_nonbonded_intra00)
-    print('analytic non-bonded intramolecular stress molecule 0=')
-    print(anal_stress_nonbonded_intra)
-
-    print('\nsimulated total stress=')
-    print(sim_stress_total)
-    print('analytic total stress=')
-    print(anal_stress_total)
-
     system.part.clear()
 
     self.assertTrue(np.max(np.abs(sim_stress_kinetic-anal_stress_kinetic)) < tol, 'kinetic stress does not match analytical result')
@@ -269,7 +174,7 @@ class stress_test(ut.TestCase):
 
 @ut.skipIf(not espressomd.has_features(['EXTERNAL_FORCES']),
 'Features not available, skipping test!')
-class stress_test_fene(ut.TestCase):
+class StressFENE(ut.TestCase):
     
     def get_anal_stress_fene(self, pos_1, pos_2, k, d_r_max, r_0):
       stress = np.zeros([3,3])

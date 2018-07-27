@@ -19,6 +19,7 @@ except:
 
 # System setup
 system = espressomd.System(box_l=[box_l, box_l, box_l])
+system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
 system.time_step = time_step
 system.cell_system.skin = 0.4
 

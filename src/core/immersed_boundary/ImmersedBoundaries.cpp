@@ -50,7 +50,7 @@ void ImmersedBoundaries::init_volume_conservation()
     //numWriteCOM = 0;
     
     // Loop through all bonded interactions and check if we need to set the reference volume
-    for (int i=0; i < n_bonded_ia; i++)
+    for (int i=0; i < bonded_ia_params.size(); i++)
     {
       if ( bonded_ia_params[i].type == BONDED_IA_IBM_VOLUME_CONSERVATION )
       {
@@ -80,7 +80,7 @@ int ImmersedBoundaries::volume_conservation_reset_params(const int bond_type, co
 {
   
   // Check if bond exists and is of correct type
-  if ( bond_type >= n_bonded_ia ) return ES_ERROR;
+  if ( bond_type >= bonded_ia_params.size() ) return ES_ERROR;
   if ( bonded_ia_params[bond_type].type != BONDED_IA_IBM_VOLUME_CONSERVATION ) return ES_ERROR;
   
   // Specific stuff

@@ -12,6 +12,7 @@ step_per_loop = 100
 
 # System setup
 system = espressomd.System(box_l=[32, 32, 32])
+system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 system.cell_system.skin = 0.4
 
 try:

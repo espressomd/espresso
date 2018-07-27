@@ -29,7 +29,7 @@ class Non_bonded_interactionsTests(ut.TestCase):
     #    self.pid=particleId
 
     # Handle to espresso system
-    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     def intersMatch(self, inType, outType, inParams, outParams):
         """Check, if the interaction type set and gotten back as well as the bond
@@ -71,12 +71,12 @@ class Non_bonded_interactionsTests(ut.TestCase):
             # which was there, when the outer function was called
 
             # Set parameters
-            getattr(self.es.non_bonded_inter[partType1, partType2], interName).set_params(
+            getattr(self.system.non_bonded_inter[partType1, partType2], interName).set_params(
                 **params)
 
             # Read them out again
             outInter = getattr(
-                self.es.non_bonded_inter[partType1, partType2], interName)
+                self.system.non_bonded_inter[partType1, partType2], interName)
             outParams = outInter.get_params()
 
             self.assertTrue(

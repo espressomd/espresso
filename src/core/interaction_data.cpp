@@ -107,8 +107,7 @@ double field_induced;
 double field_applied;
 #endif
 
-int n_bonded_ia = 0;
-Bonded_ia_parameters *bonded_ia_params = nullptr;
+std::vector<Bonded_ia_parameters> bonded_ia_params;
 
 double min_global_cut = 0.0;
 
@@ -173,7 +172,7 @@ static void recalc_maximal_cutoff_bonded() {
 
   max_cut_bonded = 0.0;
 
-  for (i = 0; i < n_bonded_ia; i++) {
+  for (i = 0; i < bonded_ia_params.size(); i++) {
     switch (bonded_ia_params[i].type) {
     case BONDED_IA_FENE:
       max_cut_tmp =
@@ -223,7 +222,7 @@ static void recalc_maximal_cutoff_bonded() {
      cutoff is TWO TIMES the maximal cutoff! That's what the following
      lines assure. */
   max_cut_tmp = 2.0 * max_cut_bonded;
-  for (i = 0; i < n_bonded_ia; i++) {
+  for (i = 0; i < bonded_ia_params.size(); i++) {
     switch (bonded_ia_params[i].type) {
     case BONDED_IA_DIHEDRAL:
       max_cut_bonded = max_cut_tmp;
@@ -507,18 +506,15 @@ void make_particle_type_exist_local(int type) {
 
 void make_bond_type_exist(int type) {
   int i, ns = type + 1;
-
-  if (ns <= n_bonded_ia) {
+  const auto old_size = bonded_ia_params.size();
+  if (ns <= bonded_ia_params.size()) {
     return;
   }
   /* else allocate new memory */
-  bonded_ia_params = static_cast<Bonded_ia_parameters *>(Utils::realloc(
-      bonded_ia_params, ns * sizeof(Bonded_ia_parameters)));
+  bonded_ia_params.resize(ns);
   /* set bond types not used as undefined */
-  for (i = n_bonded_ia; i < ns; i++)
+  for (i = old_size; i < ns; i++)
     bonded_ia_params[i].type = BONDED_IA_NONE;
-
-  n_bonded_ia = ns;
 }
 
 int interactions_sanity_checks() {

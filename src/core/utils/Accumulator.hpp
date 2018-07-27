@@ -2,6 +2,7 @@
 #define CORE_UTILS_ACCUMULATOR
 
 #include <boost/serialization/access.hpp>
+#include <cmath>
 
 namespace Utils {
 

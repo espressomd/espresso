@@ -34,6 +34,8 @@ import tests_common
 class CoulombCloudWallTune(ut.TestCase):
     """This compares p3m, p3m_gpu electrostatic forces against stored data."""
     S = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    S.seed  = S.cell_system.get_state()['n_nodes'] * [1234]
+
     tolerance = 1E-3
 
     def setUp(self):

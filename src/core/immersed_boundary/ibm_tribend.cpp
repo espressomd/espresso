@@ -154,7 +154,7 @@ int IBM_Tribend_ResetParams(const int bond_type, const double kb)
 {
   
   // Check if bond exists and is of correct type
-  if ( bond_type >= n_bonded_ia ) { printf("bond does not exist while reading tribend checkpoint\n"); return ES_ERROR; }
+  if ( bond_type >= bonded_ia_params.size() ) { printf("bond does not exist while reading tribend checkpoint\n"); return ES_ERROR; }
   if ( bonded_ia_params[bond_type].type != BONDED_IA_IBM_TRIBEND ) { printf("interaction type does not match while reading tribend checkpoint!\n"); return ES_ERROR; }
 
   // Check if k is correct
