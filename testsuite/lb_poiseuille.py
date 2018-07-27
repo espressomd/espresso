@@ -1,5 +1,5 @@
-import numpy as np
 import unittest as ut
+import numpy as np
 
 import espressomd.lb
 import espressomd.lbboundaries
@@ -12,8 +12,6 @@ by comparing to the analytical solution.
 
 
 """
-
-
 
 
 AGRID = .25
@@ -49,12 +47,18 @@ def poiseuille_flow(z, H, ext_force_density, dyn_visc):
 
 
 class LBPoiseuilleCommon(object):
+    """Base class of the test that holds the test logic."""
     lbf = None
     system = espressomd.System(box_l=[10.0, 3.0, 3.0])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
 
     def prepare(self):
+        """
+        Integrate the LB fluid until steady state is reached within a certain
+        accuracy.
+
+        """
         self.system.actors.clear()
         self.system.actors.add(self.lbf)
         wall_shape1 = espressomd.shapes.Wall(normal=[1, 0, 0], dist=AGRID)
@@ -78,6 +82,10 @@ class LBPoiseuilleCommon(object):
             old_val = new_val
 
     def test_profile(self):
+        """
+        Compare against analytical function by calculating the RMSD.
+
+        """
         self.prepare()
         velocities = np.zeros((int(self.system.box_l[0] / AGRID), 2))
 
@@ -102,6 +110,7 @@ class LBPoiseuilleCommon(object):
 @ut.skipIf(not espressomd.has_features(
     ['LB', 'LB_BOUNDARIES']), "Skipping test due to missing features.")
 class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
+    """Test for the CPU implementation of the LB."""
     def setUp(self):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
 
@@ -109,6 +118,7 @@ class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 @ut.skipIf(not espressomd.has_features(
     ['LB_GPU', 'LB_BOUNDARIES_GPU']), "Skipping test due to missing features.")
 class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
+    """Test for the GPU implementation of the LB."""
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
 
