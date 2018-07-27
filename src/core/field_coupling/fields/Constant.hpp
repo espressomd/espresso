@@ -2,6 +2,7 @@
 #define CORE_EXTERNAL_FIELD_FIELDS_CONSTANT_HPP
 
 #include "Vector.hpp"
+#include "gradient_type.hpp"
 
 namespace FieldCoupling {
 namespace Fields {
@@ -11,7 +12,7 @@ namespace Fields {
 template <typename T, size_t codim> class Constant {
 public:
   using value_type = typename decay_to_scalar<Vector<codim, T>>::type;
-  using gradient_type = Vector<3, value_type>;
+  using gradient_type = detail::gradient_type<T, codim>;
 
 private:
   value_type m_value;

@@ -13,9 +13,9 @@
 #endif
 #include <boost/multi_array.hpp>
 
-#include <array>
+#include "gradient_type.hpp"
 
-#include "utils/print.hpp"
+#include <array>
 
 namespace FieldCoupling {
 namespace Fields {
@@ -42,7 +42,7 @@ void deep_copy(boost::multi_array<T, 3> &dst,
 template <typename T, size_t codim> class Interpolated {
 public:
   using value_type = typename decay_to_scalar<Vector<codim, T>>::type;
-  using gradient_type = Vector<3, value_type>;
+  using gradient_type = detail::gradient_type<T, codim>;
   using storage_type = boost::multi_array<value_type, 3>;
 
 private:
@@ -77,8 +77,8 @@ public:
   int interpolation_order() const { return m_order; }
   Vector3d grid_spacing() const { return m_grid_spacing; }
   storage_type &field_data() { return m_global_field; }
-  Vector3d origin() { return m_origin; }
-  Vector<3, int> shape() {
+  Vector3d origin() const { return m_origin; }
+  Vector<3, int> shape() const {
     return {m_global_field.shape(), m_global_field.shape() + 3};
   }
 
@@ -87,29 +87,22 @@ public:
    */
   template <typename F>
   value_type operator()(const F &f, const Vector3d &pos) const {
-    value_type value{};
+    using Utils::Interpolation::bspline_3d_accumulate;
 
     /* If F is linear we can first interpolate the field value and
        then evaluate the function once on the result. */
     if (F::is_linear) {
-      auto const kernel = [&value, this](const std::array<int, 3> &ind,
-                                         double weight) {
-        value += weight * m_global_field(ind);
-      };
-      Utils::Interpolation::bspline_3d(pos, kernel, m_grid_spacing, -m_origin,
-                                       m_order);
-
-      return f(value);
+      return f(bspline_3d_accumulate(
+          pos,
+          [this](const std::array<int, 3> &ind) { return m_global_field(ind); },
+          m_grid_spacing, m_origin, m_order, value_type{}));
     } else {
-      auto const kernel = [&value, &f, this](const std::array<int, 3> &ind,
-                                             double weight) {
-        value += weight * f(m_global_field(ind));
-      };
-
-      Utils::Interpolation::bspline_3d(pos, kernel, m_grid_spacing, {},
-                                       m_order);
-
-      return value;
+      return bspline_3d_accumulate(pos,
+                                   [this, &f](const std::array<int, 3> &ind) {
+                                     return f(m_global_field(ind));
+                                   },
+                                   m_grid_spacing, m_origin, m_order,
+                                   value_type{});
     }
   }
 
@@ -118,18 +111,23 @@ public:
    */
   template <typename F>
   gradient_type gradient(const F &f, const Vector3d &pos) const {
-    gradient_type gradient{};
-    auto kernel = [&gradient, &f, this](const std::array<int, 3> &ind,
-                                        const Vector3d &weight) {
-      auto const field_val = m_global_field(ind);
-      auto const f_val = f(Utils::tensor_product(field_val, weight));
-      gradient += f_val;
-    };
+    using Utils::Interpolation::bspline_3d_gradient_accumulate;
 
-    Utils::Interpolation::bspline_3d_gradient(pos, kernel, m_grid_spacing, {},
-                                              m_order);
-
-    return gradient;
+    /* If F is linear we can first interpolate the field value and
+       then evaluate the function once on the result. */
+    if (F::is_linear) {
+      return f(bspline_3d_gradient_accumulate(
+          pos,
+          [this](const std::array<int, 3> &ind) { return m_global_field(ind); },
+          m_grid_spacing, m_origin, m_order, gradient_type{}));
+    } else {
+      return bspline_3d_gradient_accumulate(
+          pos,
+          [this, &f](const std::array<int, 3> &ind) {
+            return f(m_global_field(ind));
+          },
+          m_grid_spacing, m_origin, m_order, gradient_type{});
+    }
   }
 
   bool fits_in_box(const Vector3d &box) const {

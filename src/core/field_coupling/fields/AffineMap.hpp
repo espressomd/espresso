@@ -1,10 +1,32 @@
-#ifndef CORE_EXTERNAL_FIELD_FIELDS_CONSTANT_HPP
-#define CORE_EXTERNAL_FIELD_FIELDS_CONSTANT_HPP
+#ifndef CORE_EXTERNAL_FIELD_FIELDS_AFFINE_MAP_HPP
+#define CORE_EXTERNAL_FIELD_FIELDS_AFFINE_MAP_HPP
 
 #include "Vector.hpp"
+#include "gradient_type.hpp"
 
 namespace FieldCoupling {
 namespace Fields {
+
+namespace detail {
+/* Matrix * Vector overload */
+template <typename T, size_t codim>
+Vector<codim, T> axb(const Vector<codim, Vector<3, T>> &A, Vector3d const &x,
+                     Vector<codim, T> const &b) {
+  Vector<codim, T> ret;
+
+  for(int i = 0; i < codim; i++)
+    ret[i] = A[i] * x;
+
+  return ret + b;
+}
+
+/* Scalar overload */
+template <typename T>
+T axb(const Vector<3, T> &A, Vector3d const &x, T const &b) {
+  return A * x + b;
+}
+}
+
 /**
  * @brief Affine transform of an vector field.
  *
@@ -13,7 +35,7 @@ namespace Fields {
 template <typename T, size_t codim> class AffineMap {
 public:
   using value_type = typename decay_to_scalar<Vector<codim, T>>::type;
-  using gradient_type = Vector<3, Vector3d>;
+  using gradient_type = detail::gradient_type<T, codim>;
 
 private:
   gradient_type m_A;
@@ -27,15 +49,9 @@ public:
 
   template <typename F>
   value_type operator()(const F &f, const Vector3d &pos) const {
+    auto const axb = detail::axb(m_A, pos, m_b);
 
-    value_type ret;
-
-    std::transform(m_A.begin(), m_A.end(), m_b.begin(), ret.begin(),
-                   [&pos](const value_type &A_i, const T &b_i) -> T {
-                     return A_i * pos + b_i;
-                   });
-
-    return f(ret);
+    return f(axb);
   }
 
   template <typename F>
