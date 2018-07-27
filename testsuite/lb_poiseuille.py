@@ -15,7 +15,7 @@ by comparing to the analytical solution.
 
 
 AGRID = .25
-EXT_FORCE = .2
+EXT_FORCE = .1
 VISC = .7
 DENS = 1.7
 TIME_STEP = 0.1
@@ -49,7 +49,7 @@ def poiseuille_flow(z, H, ext_force_density, dyn_visc):
 class LBPoiseuilleCommon(object):
     """Base class of the test that holds the test logic."""
     lbf = None
-    system = espressomd.System(box_l=[10.0, 3.0, 3.0])
+    system = espressomd.System(box_l=[12.0, 3.0, 3.0])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
 
