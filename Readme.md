@@ -183,7 +183,6 @@ testsuite/pe_micelle.data
 testsuite/tabulated_system.data
 testsuite/thermostat.data
 testsuite/thermostat_rot.data
-testsuite/uwerr.data
 ```
 
 > "Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
