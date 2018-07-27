@@ -11,6 +11,7 @@ box_l = 9
 sys = md.System(box_l=[box_l, box_l, box_l])
 sys.time_step = 0.01
 sys.cell_system.skin = 0.4
+sys.set_random_state_PRNG()
 
 def FluidStressNodes(lb, box_l, fluid_stress_nodes):
     
