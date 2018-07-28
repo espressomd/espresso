@@ -270,7 +270,8 @@ void ImmersedBoundaries::calc_volume_force()
       // Loop over all bonds of this particle
       // Actually j loops over the bond-list, i.e. the bond partners (see particle_data.hpp)
       int softID = -1;
-      double volRef, kappaV;
+      double volRef = 0.;
+      double kappaV = 0.;
       int j = 0;
       while ( j < p1.bl.n )
       {
