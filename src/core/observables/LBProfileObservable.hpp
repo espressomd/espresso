@@ -1,7 +1,7 @@
 #ifndef OBSERVABLES_LBPROFILEOBSERVABLE_HPP
 #define OBSERVABLES_LBPROFILEOBSERVABLE_HPP
 
-#include "Observable.hpp"
+#include "LBObservable.hpp"
 #include "ProfileObservable.hpp"
 
 namespace Observables {

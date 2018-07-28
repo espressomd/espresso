@@ -1,8 +1,7 @@
 #ifndef OBSERVABLES_LBVELOCITYPROFILE_HPP
 #define OBSERVABLES_LBVELOCITYPROFILE_HPP
 
-#include "LBObservable.hpp"
-#include "ProfileObservable.hpp"
+#include "LBProfileObservable.hpp"
 #include "lb.hpp"
 #include "particle_data.hpp"
 

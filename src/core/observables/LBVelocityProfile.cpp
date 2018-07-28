@@ -25,7 +25,7 @@ operator()(PartCfg &partCfg) const {
   } else if (lattice_switch & LATTICE_LB) {
 #if defined(LB)
     for (size_t ind=0; ind < m_sample_positions.size(); ind +=3) {
-      double pos_tmp[3] = {m_sample_positions[ind + 0],
+      Vector3d pos_tmp = {m_sample_positions[ind + 0],
                            m_sample_positions[ind + 1],
                            m_sample_positions[ind + 2]};
       lb_lbfluid_get_interpolated_velocity(pos_tmp, &(velocities[ind + 0]));
@@ -42,11 +42,12 @@ operator()(PartCfg &partCfg) const {
     histogram.update(position, velocity);
   }
   auto hist_tmp = histogram.get_histogram();
-  auto tot_count = histogram.get_tot_count();
+  auto const tot_count = histogram.get_tot_count();
   for (size_t ind = 0; ind < hist_tmp.size(); ++ind) {
-    if (tot_count[ind] == 0 and not allow_empty_bins)
-      throw std::runtime_error("Decrease sampling delta(s), bin without hit "
-                               "found!");
+    if (tot_count[ind] == 0 and not allow_empty_bins) {
+      auto const error = "Decrease sampling delta(s), bin " + std::to_string(ind) + " has no hit";
+      throw std::runtime_error(error);
+    }
     if (tot_count[ind] > 0) {
       hist_tmp[ind] /= tot_count[ind];
     }

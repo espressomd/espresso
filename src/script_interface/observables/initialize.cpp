@@ -41,6 +41,7 @@
 #include "core/observables/ParticlePositions.hpp"
 #include "core/observables/ParticleVelocities.hpp"
 #include "core/observables/CylindricalLBVelocityProfile.hpp"
+#include "core/observables/LBVelocityProfile.hpp"
 
 
 namespace ScriptInterface {
