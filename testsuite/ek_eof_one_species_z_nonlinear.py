@@ -38,6 +38,7 @@ from ek_common import *
 class ek_eof_one_species_x(ut.TestCase):
 
     es = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    es.seed  = es.cell_system.get_state()['n_nodes'] * [1234]
 
     def test(self):
         system = self.es

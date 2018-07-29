@@ -72,12 +72,19 @@ inline int calc_thermalized_bond_forces(Particle *p1, Particle *p2, Bonded_ia_pa
 
         //Langevin thermostat for center of mass
         com_vel = mass_tot_inv * (p1->p.mass * p1->m.v[i] + p2->p.mass * p2->m.v[i]);
-        force_lv_com = -iaparams->p.thermalized_bond.pref1_com * com_vel + sqrt_mass_tot * iaparams->p.thermalized_bond.pref2_com * (d_random()-0.5);
+        if (iaparams->p.thermalized_bond.pref2_com > 0.0) {
+          force_lv_com = -iaparams->p.thermalized_bond.pref1_com * com_vel + sqrt_mass_tot * iaparams->p.thermalized_bond.pref2_com * (d_random()-0.5);
+        } else {
+          force_lv_com = -iaparams->p.thermalized_bond.pref1_com * com_vel;
+        }
 
         //Langevin thermostat for distance p1->p2
         dist_vel = p2->m.v[i] - p1->m.v[i];
-        force_lv_dist =  -iaparams->p.thermalized_bond.pref1_dist * dist_vel + sqrt_mass_red * iaparams->p.thermalized_bond.pref2_dist * (d_random()-0.5);
-
+        if (iaparams->p.thermalized_bond.pref2_dist > 0.0) {
+          force_lv_dist =  -iaparams->p.thermalized_bond.pref1_dist * dist_vel + sqrt_mass_red * iaparams->p.thermalized_bond.pref2_dist * (d_random()-0.5);
+        } else {
+          force_lv_dist =  -iaparams->p.thermalized_bond.pref1_dist * dist_vel;
+        }
         //Add forces
         force1[i] = p1->p.mass * mass_tot_inv * force_lv_com - force_lv_dist; 
         force2[i] = p2->p.mass * mass_tot_inv * force_lv_com + force_lv_dist; 

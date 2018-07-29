@@ -96,9 +96,6 @@ cdef extern from "statistics_chain.hpp":
     void calc_rg(PartCfg&, double ** rg)
     void calc_rh(PartCfg&, double ** rh)
 
-cdef extern from "interaction_data.hpp":
-    int n_bonded_ia
-
 cdef extern from "statistics.hpp":
     void calc_rdf(PartCfg &, vector[int] p1_types, vector[int] p2_types,
                   double r_min, double r_max, int r_bins, vector[double] rdf)

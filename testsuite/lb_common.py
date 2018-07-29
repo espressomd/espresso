@@ -10,15 +10,16 @@ from espressomd import *
 from tests_common import abspath
 
 
-@ut.skipIf(not espressomd.has_features(["LB"]),
-           "Features not available, skipping test!")
-class LBTest(ut.TestCase):
+class TestLB(ut.TestCase):
+
     """
     Basic tests of the Lattice Boltzmann implementation
-    
-    1) check conservation of fluid mass
-    2) check conservation of total momentum
-    3) measure temperature of colloid and fluid
+
+    * mass and momentum conservation
+    * temperature
+    * particle viscous coupling
+    * application of external force densities
+    * setting and retrieving lb node velocities
 
     """
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
@@ -36,9 +37,10 @@ class LBTest(ut.TestCase):
               'temp': 1.5,
               'gamma': 1.5,
               'skin': 0.2,
-              'mom_prec': 1.e-11,
-              'mass_prec_per_node': 4.e-8,
               'temp_confidence': 10}
+    if espressomd.has_features("SHANCHEN"):
+       params.update({"dens":2*[params["dens"]]})
+     
     if espressomd.has_features("ROTATION"):
         dof = 6.
     else:
@@ -64,9 +66,9 @@ class LBTest(ut.TestCase):
             pos = particle[3:6]
             f = particle[9:]
             v = particle[6:9]
-            p=self.system.part.add(id=int(id), pos=pos, v=v, type=int(typ))
+            p = self.system.part.add(id=int(id), pos=pos, v=v, type=int(typ))
             if espressomd.has_features("ROTATION"):
-                p.rotation=[1,1,1]
+                p.rotation = [1, 1, 1]
 
         self.n_col_part = len(self.system.part)
 
@@ -78,7 +80,7 @@ class LBTest(ut.TestCase):
             self.system.part[i].v = [0.0, 0.0, 0.0]
         self.system.thermostat.turn_off()
 
-        self.lbf = lb.LBFluid(
+        self.lbf = self.lb_class(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
             agrid=self.params['agrid'],
@@ -135,7 +137,8 @@ class LBTest(ut.TestCase):
                 if dm[j] > self.max_dm[j]:
                     self.max_dm[j] = dm[j]
             self.assertTrue(
-                self.max_dm[0] <= self.params['mom_prec'] and self.max_dm[1] <= self.params['mom_prec'] and self.max_dm[2] <= self.params['mom_prec'],
+                self.max_dm[0] <= self.params['mom_prec'] and self.max_dm[1] <= self.params[
+                    'mom_prec'] and self.max_dm[2] <= self.params['mom_prec'],
                 msg="momentum deviation too high\ndeviation: {}  accepted deviation: {}".format(
                     self.max_dm,
                     self.params['mom_prec']))
@@ -187,7 +190,7 @@ class LBTest(ut.TestCase):
 
     def test_set_get_u(self):
         self.system.actors.clear()
-        self.lbf = lb.LBFluid(
+        self.lbf = self.lb_class(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
             agrid=self.params['agrid'],
@@ -196,7 +199,8 @@ class LBTest(ut.TestCase):
         self.system.actors.add(self.lbf)
         v_fluid = np.array([1.2, 4.3, 0.2])
         self.lbf[0, 0, 0].velocity = v_fluid
-        np.testing.assert_allclose(np.copy(self.lbf[0, 0, 0].velocity), v_fluid, atol=1e-4)
+        np.testing.assert_allclose(
+            np.copy(self.lbf[0, 0, 0].velocity), v_fluid, atol=1e-4)
 
     def test_viscous_coupling(self):
         self.system.thermostat.turn_off()
@@ -204,24 +208,26 @@ class LBTest(ut.TestCase):
         self.system.part.clear()
         v_part = np.array([1, 2, 3])
         v_fluid = np.array([1.2, 4.3, 0.2])
-        self.lbf = lb.LBFluid(
+        self.lbf = self.lb_class(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step,
             fric=self.params['friction'], ext_force_density=[0, 0, 0])
         self.system.actors.add(self.lbf)
-        self.system.part.add(pos=[0.5 * self.params['agrid']] * 3, v=v_part, fix=[1, 1, 1])
+        self.system.part.add(
+            pos=[0.5 * self.params['agrid']] * 3, v=v_part, fix=[1, 1, 1])
         self.lbf[0, 0, 0].velocity = v_fluid
         self.system.integrator.run(1)
-        np.testing.assert_allclose(np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid))
+        np.testing.assert_allclose(
+            np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid),atol=1E-6)
 
-    def testz_ext_force_density(self):
+    def test_a_ext_force_density(self):
         self.system.thermostat.turn_off()
         self.system.actors.clear()
         self.system.part.clear()
         ext_force_density = [2.3, 1.2, 0.1]
-        self.lbf = lb.LBFluid(
+        self.lbf = self.lb_class(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
             agrid=self.params['agrid'],
@@ -232,10 +238,9 @@ class LBTest(ut.TestCase):
         self.system.integrator.run(n_time_steps)
         # ext_force_density is a force density, therefore v = ext_force_density / dens * tau * (n_time_steps - 0.5)
         # (force is applied only to the second half of the first integration step)
-        fluid_velocity = np.array(ext_force_density) * self.system.time_step * (n_time_steps - 0.5) / self.params['dens']
-        for n in list(itertools.combinations(range(int(self.system.box_l[0]/self.params['agrid'])), 3)):
-            np.testing.assert_allclose(np.copy(self.lbf[n].velocity), fluid_velocity)
+        fluid_velocity = np.array(ext_force_density) * self.system.time_step * (
+            n_time_steps - 0.5) / self.params['dens']
+        for n in list(itertools.combinations(range(int(self.system.box_l[0] / self.params['agrid'])), 3)):
+            np.testing.assert_allclose(
+                np.copy(self.lbf[n].velocity), fluid_velocity,atol=1E-6)
 
-
-if __name__ == "__main__":
-    ut.main()

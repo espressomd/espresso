@@ -60,6 +60,9 @@ IF LB_GPU or LB:
             default_params = self.default_params()
 
             IF SHANCHEN:
+                if not hasattr(self._params["dens"],"__getitem__"):
+                    raise ValueError(
+                        "Density must be two positive double (ShanChen)")
                 if not (self._params["dens"][0] > 0.0 and self._params["dens"][1] > 0.0):
                     raise ValueError(
                         "Density must be two positive double (ShanChen)")
@@ -120,25 +123,23 @@ IF LB_GPU or LB:
             if python_lbfluid_set_visc(self._params["visc"]):
                 raise Exception("lb_lbfluid_set_visc error")
 
-            if not self._params["bulk_visc"] == default_params["bulk_visc"]:
+            if self._params["bulk_visc"] != self.default_params()["bulk_visc"]:
                 if python_lbfluid_set_bulk_visc(self._params["bulk_visc"]):
                     raise Exception("lb_lbfluid_set_bulk_visc error")
 
             if python_lbfluid_set_agrid(self._params["agrid"]):
                 raise Exception("lb_lbfluid_set_agrid error")
 
-            if not self._params["fric"] == default_params["fric"]:
+            if self._params["fric"]!=default_params["fric"]:
                 if python_lbfluid_set_friction(self._params["fric"]):
                     raise Exception("lb_lbfluid_set_friction error")
 
-            if not self._params["ext_force_density"] == default_params["ext_force_density"]:
-                if python_lbfluid_set_ext_force_density(self._params["ext_force_density"]):
-                    raise Exception("lb_lbfluid_set_ext_force_density error")
+            if python_lbfluid_set_ext_force_density(self._params["ext_force_density"]):
+                raise Exception("lb_lbfluid_set_ext_force_density error")
 
-            if not self._params["couple"] == default_params["couple"]:
-                if python_lbfluid_set_couple_flag(self._params["couple"]):
-                    raise Exception("lb_lbfluid_set_couple_flag error")
-            utils.handle_errors("LB activation")
+            if python_lbfluid_set_couple_flag(self._params["couple"]):
+                raise Exception("lb_lbfluid_set_couple_flag error")
+            utils.handle_errors("LB fluid activation")
 
         # function that calls wrapper functions which get the parameters from C-Level
         ####################################################
@@ -226,8 +227,9 @@ IF LB_GPU or LB:
         ####################################################
         def _activate_method(self):
             self.validate_params()
-            self._set_params_in_es_core()
             self._set_lattice_switch()
+            self._set_params_in_es_core()
+            utils.handle_errors("LB fluid activation")
             IF LB:
                 return
             ELSE:
@@ -244,12 +246,13 @@ IF LB_GPU:
 
         """
 
+        def remove_total_momentum(self):
+            lb_lbfluid_remove_total_momentum()
+        
         def _set_lattice_switch(self):
             if lb_set_lattice_switch(2):
                 raise Exception("lb_set_lattice_switch error")
 
-        def remove_total_momentum(self):
-            lb_lbfluid_remove_total_momentum()
 
         def _activate_method(self):
             self.validate_params()

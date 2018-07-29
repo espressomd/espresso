@@ -1534,6 +1534,7 @@ static double p3m_mc_time(char **log, int mesh[3], int cao, double r_cut_iL_min,
             mesh[0], cao, r_cut_iL, *_alpha_L, *_accuracy, rs_err, ks_err);
     *log = strcat_alloc(*log, b);
   }
+
   int_time = p3m_mcr_time(mesh, cao, r_cut_iL, *_alpha_L);
   if (int_time == -1) {
     *log = strcat_alloc(*log, "tuning failed, test integration not possible\n");

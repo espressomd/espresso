@@ -88,6 +88,7 @@ class SwimmerTest(ut.TestCase):
         self.sampsteps = 2000
 
         S = espressomd.System(box_l=[1.0, 1.0, 1.0])
+        S.seed = S.cell_system.get_state()['n_nodes'] * [1234]
         self.prepare(S)
 
         lbm = espressomd.lb.LBFluid(

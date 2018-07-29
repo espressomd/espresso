@@ -1,5 +1,6 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
+from .interactions cimport bonded_ia_params
 from espressomd.utils cimport handle_errors
 from espressomd.utils import is_valid_type
 
@@ -83,7 +84,7 @@ cdef class Diamond(object):
                 "The distance between two charged monomers' indices must be integer ", self._params[valid_keys[7]])
         if(self._params[valid_keys[7]] == "nonet"):
             self._params[valid_keys[7]] = 1
-        if(n_bonded_ia == 0):
+        if(bonded_ia_params.size() == 0):
             raise ValueError(
                 "Please define a bonded interaction [0] before setting up polymers!")
 

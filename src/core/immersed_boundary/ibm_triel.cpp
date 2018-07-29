@@ -77,7 +77,7 @@ int IBM_Triel_CalcForce(Particle *p1,Particle *p2, Particle *p3, Bonded_ia_param
   // Derivatives of energy density E used in chain rule below: Eq. (C.14)
   double dEdI1;
   double dEdI2;
-  if ( iaparams->p.ibm_triel.elasticLaw == NeoHookean )
+  if ( iaparams->p.ibm_triel.elasticLaw == tElasticLaw::NeoHookean )
   {
     // Neo-Hookean
     dEdI1 = iaparams->p.ibm_triel.k1/6.0;
@@ -195,7 +195,7 @@ int IBM_Triel_ResetParams(const int bond_type, const double k1, const double l0)
 {
   
   // Check if bond exists and is of correct type
-  if ( bond_type >= n_bonded_ia ) { printf("bond does not exist while reading triel checkpoint\n"); return ES_ERROR; }
+  if ( bond_type >= bonded_ia_params.size() ) { printf("bond does not exist while reading triel checkpoint\n"); return ES_ERROR; }
   if ( bonded_ia_params[bond_type].type != BONDED_IA_IBM_TRIEL ) { printf("interaction type does not match while reading triel checkpoint!\n");return ES_ERROR; }
 
   // Check if k1 is correct
