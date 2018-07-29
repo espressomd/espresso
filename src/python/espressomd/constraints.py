@@ -193,3 +193,16 @@ class ForceField(Constraint):
     """
 
     _so_name = "Constraints::ForceField"
+
+
+class PotentialField(Constraint):
+    """
+    Attributes
+    ----------
+    H : array of :obj:`float`
+        Magnetic field vector. Describes both field direction and
+        strength of the magnetic field (via length of the vector).
+
+    """
+
+    _so_name = "Constraints::PotentialField"

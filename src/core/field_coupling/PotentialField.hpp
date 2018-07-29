@@ -9,26 +9,24 @@
 namespace FieldCoupling {
 template <typename Coupling, typename Field>
 class PotentialField : public detail::Base<Coupling, Field> {
-  using field_gradient_type = typename Field::gradient_type;
-  using field_value_type = typename Field::value_type;
+  using Base = detail::Base<Coupling, Field>;
+
+  using Base::m_coupling;
+  using Base::m_field;
 
 public:
   using Base::Base;
 
+  template <typename Particle>
   Vector3d force(const Particle &p, const Vector3d &folded_pos) const {
-    return m_field.gradient(
-        [p, this](const field_gradient_type &field) {
-          return m_coupling(p, field);
-        },
-        folded_pos);
+    using detail::make_bind_coupling;
+    return m_field.gradient(make_bind_coupling(m_coupling, p), folded_pos);
   }
 
+  template <typename Particle>
   double energy(const Particle &p, const Vector3d &folded_pos) const {
-    return m_field(
-        [p, this](const field_value_type &field) {
-          return m_coupling(p, field);
-        },
-        folded_pos);
+    using detail::make_bind_coupling;
+    return m_field(make_bind_coupling(m_coupling, p), folded_pos);
   }
 };
 } /* namespace FieldCoupling */

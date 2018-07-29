@@ -10,7 +10,6 @@ namespace FieldCoupling {
 template <typename Coupling, typename Field>
 class ForceField : public detail::Base<Coupling, Field> {
   using Base = detail::Base<Coupling, Field>;
-  using field_value_type = typename Field::value_type;
 
   using Base::m_coupling;
   using Base::m_field;

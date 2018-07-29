@@ -10,10 +10,10 @@ namespace detail {
 template <typename Coupling, typename Particle> struct BindCoupling {
   static const constexpr bool is_linear = Coupling::is_linear;
 
-  const Particle &p;
   const Coupling &c;
+  const Particle &p;
 
-  BindCoupling(const Coupling &c, const Particle &p) : p(p), c(c) {}
+  BindCoupling(const Coupling &c, const Particle &p) : c(c), p(p) {}
 
   template <typename T> auto operator()(const T &x) const -> decltype(c(p, x)) {
     return c(p, x);

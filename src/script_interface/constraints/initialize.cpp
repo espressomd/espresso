@@ -16,8 +16,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "ScriptInterface.hpp"
 #include "initialize.hpp"
+#include "ScriptInterface.hpp"
 
 #include "Constraints.hpp"
 
@@ -25,6 +25,8 @@
 #include "ShapeBasedConstraint.hpp"
 
 #include "ExternalField.hpp"
+// #include "ExternalPotential.hpp"
+
 #include "couplings.hpp"
 #include "fields.hpp"
 

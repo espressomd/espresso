@@ -33,8 +33,17 @@
 
 namespace ScriptInterface {
 namespace Constraints {
+
+namespace ExternalFieldType {
+  struct Force;
+  struct Potential;
+}
+
+template <typename Coupling, typename Field, class Tag = ExternalFieldType::Force> class ExternalField;
+
 template <typename Coupling, typename Field>
-class ExternalField : public Constraint {
+class ExternalField<Coupling, Field, ExternalFieldType::Force>
+    : public Constraint {
   using CoreField = ::Constraints::ExternalField<Coupling, Field>;
 
 public:
