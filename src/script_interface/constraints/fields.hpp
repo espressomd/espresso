@@ -51,16 +51,33 @@ struct field_params_impl<AffineMap<T, codim>> {
 template <typename T, size_t codim>
 struct field_params_impl<Interpolated<T, codim>> {
   static Interpolated<T, codim> make(const VariantMap &params) {
-    auto const field = get_value<std::vector<double>>(params, "field");
-    auto const shape = get_value<Vector<3, int>>(params, "shape");
+    auto const field_data =
+        get_value<std::vector<double>>(params, "_field_data");
+    auto const field_shape = get_value<Vector<3, int>>(params, "_field_shape");
+    auto const field_codim = get_value<int>(params, "_field_codim");
+
+    if (field_codim != codim) {
+      throw std::runtime_error(
+          "Field data has the wrong dimensions, needs to be [n, m, o, " +
+          std::to_string(codim) + ']');
+    }
+
     auto const order = get_value<int>(params, "interpolation_order");
-    auto const origin = get_value<Vector3d>(params, "origin");
+    if (*std::min_element(field_shape.begin(), field_shape.end()) <
+        (order / 2)) {
+      throw std::runtime_error("Field is to small, needs to be at least " +
+                               std::to_string(order / 2) +
+                               " in all directions.");
+    }
+
     auto const grid_spacing = get_value<Vector3d>(params, "grid_spacing");
+    auto const halo_points = static_cast<double>(order) / 2.;
+    auto const origin = -halo_points * grid_spacing;
 
     using field_data_type = typename decay_to_scalar<Vector<codim, T>>::type;
-
     auto array_ref = boost::const_multi_array_ref<field_data_type, 3>(
-        reinterpret_cast<const field_data_type *>(field.data()), shape);
+        reinterpret_cast<const field_data_type *>(field_data.data()),
+        field_shape);
 
     return Interpolated<T, codim>{array_ref, order, grid_spacing, origin};
   }
@@ -73,14 +90,16 @@ struct field_params_impl<Interpolated<T, codim>> {
              [this_]() { return this_().grid_spacing(); }},
             {"origin", AutoParameter::read_only,
              [this_]() { return this_().origin(); }},
-            {"shape", AutoParameter::read_only,
+            {"_field_shape", AutoParameter::read_only,
              [this_]() { return this_().shape(); }},
-            {"field", AutoParameter::read_only, [this_]() {
+            {"_field_codim", AutoParameter::read_only,
+             []() { return static_cast<int>(codim); }},
+            {"_field_data", AutoParameter::read_only, [this_]() {
               auto &field_data = this_().field_data();
               auto data_ptr =
                   reinterpret_cast<const double *>(field_data.data());
               return std::vector<double>(data_ptr,
-                                         data_ptr + field_data.num_elements());
+                                         data_ptr + codim * field_data.num_elements());
             }}};
   }
 };

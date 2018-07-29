@@ -1,7 +1,8 @@
 from __future__ import print_function, absolute_import
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 from espressomd.utils import is_valid_type
-
+import numpy as np
+from itertools import product
 
 @script_interface_register
 class Constraints(ScriptInterfaceHelper):
@@ -170,6 +171,7 @@ class ShapeBasedConstraint(Constraint):
         """
         return self.call_method("total_normal_force", constraint=self)
 
+@script_interface_register
 class HomogeneousMagneticField(Constraint):
     """
     Attributes
@@ -182,33 +184,117 @@ class HomogeneousMagneticField(Constraint):
 
     _so_name = "Constraints::HomogeneousMagneticField"
 
-class ForceField(Constraint):
+class _Interpolated:
+    """
+    Tabulated field data.
+    The actual field value is calculated by cardinal b-spline
+    intepolation (force fields) or gradient cardinal b-splins
+    interpolation.
+
+    The provided field data grid has to be larger than the box
+    by a margin depending on the interpolation order:
+    In each dimension the provided grid has to be
+    (order//2 + 1) * grid_spacing larger than the box.
+    For example if the box is 10 in x direction, and the interpolation
+    order is 2 and a grid spacing of .1 is to be used, (2//2) = 1 extra
+    point is needed on each side, and the grid spans the range
+    [-1 * 0.1, 10 + 1 * 0.1]. Please be aware that the periodicity is not
+    taken into account automatically, to this is also true for periodic
+    directions.
+
+    Attributes
+    ----------
+    interpolation_order: array_like :obj:`int`
+        The order of the b-splines top be used. This is equivalent
+        to the number of points to be used in each direction. E.g.
+        order 2 corresponds to linear interpolation, 3 to quadratic
+        and so on.
+
+    field_data: array_like :obj:`float`:
+        The actual field please be aware that depending on the interpolation
+        order additional points are used on the boundaries.
+
+    grid_spacing: array_like :obj:`float`:
+        The spacing of the grid points.
+
+    """
+
+    @classmethod
+    def field_from_fn(cls, shape_, grid_spacing, order, f):
+        halo_points = order // 2
+        shape = [x + 2 * halo_points for x in shape_]
+
+        field = np.zeros((shape[0], shape[1], shape[2], cls._codim))
+
+        for i in product(*map(range,shape)):
+	        field[i] = f((np.array(i) - halo_points)*grid_spacing)
+
+        return field
+
+    def _unpack_dims(self, a):
+        s = a.shape
+        shape = s[:3]
+        codim = s[3]
+
+        return (shape, codim)
+
+    @property
+    def field(self):
+        shape = self._field_shape
+        return np.reshape(self._field_data, (shape[0], shape[1], shape[2], self._field_codim))
+
+class _Scaled:
     """
     Attributes
     ----------
-    H : array of :obj:`float`
-        Magnetic field vector. Describes both field direction and
-        strength of the magnetic field (via length of the vector).
+    default_scale : :obj:`float`
+        Scaling factor for particles that have no
+        individual scaling factor.
+    particle_scales: array_like (:obj:`int`, :obj:`float`)
+        A list of tuples of ids and scaling factors. For
+        particles in the list the interaction is scaled with
+        their individual scaling factor befor it is applied.
 
     """
 
+    pass
+
+@script_interface_register
+class ForceField(Constraint, _Scaled, _Interpolated):
+    """
+    A generic tabulated force field that applies a per particle
+    scaling factor.
+
+    """
+
+    def __init__(self, field, **kwargs):
+        shape, codim = self._unpack_dims(field)
+
+        super(ForceField, self).__init__(_field_shape=shape, _field_codim=codim,
+                                         _field_data=field.flatten(), **kwargs)
+
+    _codim = 3
     _so_name = "Constraints::ForceField"
 
 
-class PotentialField(Constraint):
+@script_interface_register
+class PotentialField(Constraint, _Scaled, _Interpolated):
     """
-    Attributes
-    ----------
-    H : array of :obj:`float`
-        Magnetic field vector. Describes both field direction and
-        strength of the magnetic field (via length of the vector).
+    A generic tabulated force field that applies a per particle
+    scaling factor.
 
     """
 
+    _codim = 1
     _so_name = "Constraints::PotentialField"
 
+
+@script_interface_register
 class Gravity(Constraint):
     """
+    Gravity force
+      F = m * g
+
     Attributes
     ----------
     g : array of :obj:`float`
@@ -217,22 +303,87 @@ class Gravity(Constraint):
     """
 
     def __init__(self, g):
-        super(Gravity, self).__init__(A=g)
+        super(Gravity, self).__init__(value=g)
+
+    @property
+    def g(self):
+        return self.value
 
     _so_name = "Constraints::Gravity"
 
 
-class HomogeneousElectricField(Constraint):
+@script_interface_register
+class LinearElectricPotential(Constraint):
     """
+    Electric potential of the form
+
+      phi = E * x + phi0,
+
+    resulting in the force
+
+      F = E
+
+    everywhere. (E.g. in a plate capacitor).
+
+
     Attributes
     ----------
     E : array of :obj:`float`
-        The electric field acceleration.
+        The electric field.
+
+    phi0 : :obj:`float`
+           The potential at the origin
 
     """
 
-    def __init__(self, E):
-        super(HomogeneousElectricField, self).__init__(value=E)
+    def __init__(self, E, phi0 = 0):
+        super(LinearElectricPotential, self).__init__(A=E, b=phi0)
 
-    _so_name = "Constraints::HomogeneousElectricField"
+    @property
+    def E(self):
+        return self.A
 
+    @property
+    def phi0(self):
+        return self.b
+
+    _so_name = "Constraints::LinearElectricPotential"
+
+
+@script_interface_register
+class FlowField(Constraint, _Interpolated):
+    """
+    Viscous coupling to a flow field that is
+    interpolated from tabulated data like
+
+      F = -gamma * (u(r) - v)
+
+    wher v is the velocity of the particle.
+    """
+
+    _so_name = "Constraints::FlowField"
+
+
+@script_interface_register
+class HomogeneousFlowField(Constraint):
+    """
+    Viscous coupling to a flow field that is
+    constant in space with the force
+
+      F = -gamma * (u - v)
+
+    wher v is the velocity of the particle.
+
+    Attributes
+    ----------
+    gamma : :obj:`float`
+        The coupling constant
+    u : array_like :obj:`float`
+        The velocity of the field.
+
+    """
+
+    def __init__(self, u, gamma):
+        super(HomogeneousFlowField, self).__init__(value=u, gamma=gamma)
+
+    _so_name = "Constraints::HomogeneousFlowField"
