@@ -5,6 +5,7 @@
 #include "core/field_coupling/couplings/Charge.hpp"
 #include "core/field_coupling/couplings/Direct.hpp"
 #include "core/field_coupling/couplings/Scaled.hpp"
+#include "core/field_coupling/couplings/Mass.hpp"
 
 #include "ScriptInterface.hpp"
 
@@ -29,8 +30,7 @@ template <> struct coupling_parameters_impl<Viscous> {
     return {{
         "gamma",
         [this_](const Variant &v) { this_().gamma() = get_value<double>(v); },
-        [this_]() { return this_().gamma(); },
-    }};
+        [this_]() { return this_().gamma(); }, }};
   }
 };
 
@@ -38,11 +38,11 @@ template <> struct coupling_parameters_impl<Scaled> {
   template <typename This>
   static std::vector<AutoParameter> params(const This &this_) {
     return {{
-                "default_scale",
-                [this_](const Variant &v) {
-                  this_().default_scale() = get_value<double>(v);
-                },
-                [this_]() { return this_().default_scale(); },
+             "default_scale",
+             [this_](const Variant &v) {
+               this_().default_scale() = get_value<double>(v);
+             },
+             [this_]() { return this_().default_scale(); },
             },
             {"particle_scales",
              [this_](const Variant &v) {

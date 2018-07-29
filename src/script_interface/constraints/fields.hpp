@@ -2,6 +2,7 @@
 #define SCRIPT_INTERFACE_CONSTRAINTS_DETAIL_FIELDS_HPP
 
 #include "core/field_coupling/fields/Constant.hpp"
+#include "core/field_coupling/fields/AffineMap.hpp"
 #include "core/field_coupling/fields/Interpolated.hpp"
 
 #include "ScriptInterface.hpp"
@@ -24,7 +25,26 @@ struct field_params_impl<Constant<T, codim>> {
   }
   template <typename This>
   static std::vector<AutoParameter> params(const This &this_) {
-    return {{"value", this_().value()}};
+    return {{"value", AutoParameter::read_only,
+             [this_]() { return this_().value(); }}};
+  }
+};
+
+template <typename T, size_t codim>
+struct field_params_impl<AffineMap<T, codim>> {
+  using gradient_type = typename AffineMap<T, codim>::gradient_type;
+  using value_type = typename AffineMap<T, codim>::value_type;
+
+  static AffineMap<T, codim> make(const VariantMap &params) {
+    return AffineMap<T, codim>{
+        get_value<gradient_type>(params, "A"),
+        get_value_or<value_type>(params, "b", value_type{})};
+  }
+
+  template <typename This>
+  static std::vector<AutoParameter> params(const This &this_) {
+    return {{"A", AutoParameter::read_only, [this_]() { return this_().A(); }},
+            {"b", AutoParameter::read_only, [this_]() { return this_().b(); }}};
   }
 };
 
@@ -42,8 +62,6 @@ struct field_params_impl<Interpolated<T, codim>> {
     auto array_ref = boost::const_multi_array_ref<field_data_type, 3>(
         reinterpret_cast<const field_data_type *>(field.data()), shape);
 
-    array_ref.reindex(origin);
-
     return Interpolated<T, codim>{array_ref, order, grid_spacing, origin};
   }
 
@@ -58,11 +76,12 @@ struct field_params_impl<Interpolated<T, codim>> {
             {"shape", AutoParameter::read_only,
              [this_]() { return this_().shape(); }},
             {"field", AutoParameter::read_only, [this_]() {
-               auto &field_data = this_().field_data();
-               double *data_ptr = reinterpret_cast<double *>(field_data.data());
-               return std::vector<double>(data_ptr,
-                                          data_ptr + field_data.num_elements());
-             }}};
+              auto &field_data = this_().field_data();
+              auto data_ptr =
+                  reinterpret_cast<const double *>(field_data.data());
+              return std::vector<double>(data_ptr,
+                                         data_ptr + field_data.num_elements());
+            }}};
   }
 };
 

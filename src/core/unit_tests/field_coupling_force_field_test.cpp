@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(FieldBase_test) {
   }
 }
 
-struct DummyField {
+struct DummyVectorField {
   template <class Binder>
   Vector3d operator()(const Binder &b, const Vector3d &x) const {
     (void)(b(x));
@@ -94,6 +94,16 @@ struct DummyField {
     return 2. * x;
   }
 };
+
+BOOST_AUTO_TEST_CASE(ForceField_test) {
+  auto ff =
+      ForceField<Id<true>, DummyVectorField>(Id<true>{}, DummyVectorField{});
+  const Vector3d x{1., 2., 3.};
+  const int p = 5;
+
+  BOOST_CHECK((2. * x) == ff.force(5, x));
+  BOOST_CHECK(1 == ff.coupling().count);
+}
 
 struct DummyScalarField {
   template <class Binder>
@@ -110,15 +120,6 @@ struct DummyScalarField {
     return 3. * x;
   }
 };
-
-BOOST_AUTO_TEST_CASE(ForceField_test) {
-  auto ff = ForceField<Id<true>, DummyField>(Id<true>{}, DummyField{});
-  const Vector3d x{1., 2., 3.};
-  const int p = 5;
-
-  BOOST_CHECK((2. * x) == ff.force(5, x));
-  BOOST_CHECK(1 == ff.coupling().count);
-}
 
 BOOST_AUTO_TEST_CASE(PotentialField_test) {
   auto pf = PotentialField<Id<true>, DummyScalarField>(Id<true>{},

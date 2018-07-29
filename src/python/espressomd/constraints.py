@@ -206,3 +206,33 @@ class PotentialField(Constraint):
     """
 
     _so_name = "Constraints::PotentialField"
+
+class Gravity(Constraint):
+    """
+    Attributes
+    ----------
+    g : array of :obj:`float`
+        The gravitational acceleration.
+
+    """
+
+    def __init__(self, g):
+        super(Gravity, self).__init__(A=g)
+
+    _so_name = "Constraints::Gravity"
+
+
+class HomogeneousElectricField(Constraint):
+    """
+    Attributes
+    ----------
+    E : array of :obj:`float`
+        The electric field acceleration.
+
+    """
+
+    def __init__(self, E):
+        super(HomogeneousElectricField, self).__init__(value=E)
+
+    _so_name = "Constraints::HomogeneousElectricField"
+

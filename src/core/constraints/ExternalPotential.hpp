@@ -17,8 +17,11 @@ public:
   ExternalPotential(Args... args)
       : impl(std::forward<Args>(args)...) {}
 
-  Coupling &coupling() { return impl.coupling(); }
-  Field &field() { return impl.field(); }
+  const Coupling &coupling() const { return impl.coupling(); }
+  const Field &field() const { return impl.field(); }
+
+  void add_energy(const Particle &, const Vector3d &,
+                  Observable_stat &) const override {}
 
   ParticleForce force(const Particle &p, Vector3d const &folded_pos) override {
     return impl.force(p, folded_pos);

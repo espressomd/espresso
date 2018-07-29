@@ -1,6 +1,8 @@
 #ifndef CORE_EXTERNAL_FIELD_FIELDS_INTERPOLATED_HPP
 #define CORE_EXTERNAL_FIELD_FIELDS_INTERPOLATED_HPP
 
+#include "gradient_type.hpp"
+
 #include "Vector.hpp"
 
 #include "utils/interpolation/bspline_3d.hpp"
@@ -12,8 +14,6 @@
 #define BOOST_DISABLE_ASSERTS
 #endif
 #include <boost/multi_array.hpp>
-
-#include "gradient_type.hpp"
 
 #include <array>
 
@@ -76,7 +76,7 @@ public:
 
   int interpolation_order() const { return m_order; }
   Vector3d grid_spacing() const { return m_grid_spacing; }
-  storage_type &field_data() { return m_global_field; }
+  storage_type const &field_data() const { return m_global_field; }
   Vector3d origin() const { return m_origin; }
   Vector<3, int> shape() const {
     return {m_global_field.shape(), m_global_field.shape() + 3};
@@ -92,17 +92,15 @@ public:
     /* If F is linear we can first interpolate the field value and
        then evaluate the function once on the result. */
     if (F::is_linear) {
-      return f(bspline_3d_accumulate(
-          pos,
-          [this](const std::array<int, 3> &ind) { return m_global_field(ind); },
-          m_grid_spacing, m_origin, m_order, value_type{}));
+      return f(
+          bspline_3d_accumulate(pos, [this](const std::array<int, 3> &ind) {
+            return m_global_field(ind);
+          }, m_grid_spacing, m_origin, m_order, value_type{}));
     } else {
-      return bspline_3d_accumulate(pos,
-                                   [this, &f](const std::array<int, 3> &ind) {
-                                     return f(m_global_field(ind));
-                                   },
-                                   m_grid_spacing, m_origin, m_order,
-                                   value_type{});
+      return bspline_3d_accumulate(
+          pos, [this, &f](const std::array<int, 3> &ind) {
+            return f(m_global_field(ind));
+          }, m_grid_spacing, m_origin, m_order, value_type{});
     }
   }
 
@@ -117,28 +115,18 @@ public:
        then evaluate the function once on the result. */
     if (F::is_linear) {
       return f(bspline_3d_gradient_accumulate(
-          pos,
-          [this](const std::array<int, 3> &ind) { return m_global_field(ind); },
-          m_grid_spacing, m_origin, m_order, gradient_type{}));
+          pos, [this](const std::array<int, 3> &ind) {
+            return m_global_field(ind);
+          }, m_grid_spacing, m_origin, m_order, gradient_type{}));
     } else {
       return bspline_3d_gradient_accumulate(
-          pos,
-          [this, &f](const std::array<int, 3> &ind) {
+          pos, [this, &f](const std::array<int, 3> &ind) {
             return f(m_global_field(ind));
-          },
-          m_grid_spacing, m_origin, m_order, gradient_type{});
+          }, m_grid_spacing, m_origin, m_order, gradient_type{});
     }
   }
 
-  bool fits_in_box(const Vector3d &box) const {
-    auto const halo_size = (0.5 * m_order) * m_grid_spacing;
-
-    /* Not enough halo on the left side */
-    if (m_origin > -halo_size)
-      return false;
-
-    return true;
-  }
+  bool fits_in_box(const Vector3d &) const { return false; }
 };
 }
 }
