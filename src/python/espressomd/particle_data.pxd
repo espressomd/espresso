@@ -224,16 +224,6 @@ cdef extern from "rotation.hpp":
     Vector3d convert_vector_space_to_body(const particle& p,const Vector3d& v)
     void rotate_particle(int id, double* axis, double angle)
 
-# The bonded_ia_params stuff has to be included here, because the setter/getter
-# of the particles' bond property needs to now about the correct number of
-# bond partners
-cdef extern from "interaction_data.hpp":
-    ctypedef struct bonded_ia_parameters "Bonded_ia_parameters":
-        int num
-        pass
-    bonded_ia_parameters * bonded_ia_params
-    cdef int n_bonded_ia
-
 cdef class ParticleHandle(object):
     cdef public int _id
     cdef const particle * particle_data

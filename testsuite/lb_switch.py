@@ -11,8 +11,6 @@ from itertools import product
            "Features not available, skipping test!")
 class LBSwitchActor(ut.TestCase):
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
-    n_nodes = system.cell_system.get_state()["n_nodes"]
-    system.seed = range(n_nodes)
 
     system.time_step = 0.01
     system.cell_system.skin = 0.1

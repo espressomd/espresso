@@ -22,12 +22,11 @@
  * C file for the Lattice Boltzmann implementation on GPUs.
  * Header file for \ref lbgpu.hpp.
  */
-//#include <mpi.h>
-#include <cstdio>
-#include <cmath>
-#include <cstdlib>
-#include <ctime>
-#include <cstring>
+
+#include "config.hpp"
+
+#ifdef LB_GPU
+
 #include "lbgpu.hpp"
 #include "utils.hpp"
 #include "communication.hpp"
@@ -41,8 +40,14 @@
 #include "cuda_interface.hpp"
 #include "statistics.hpp"
 #include "partCfg_global.hpp"
-#ifdef LB_GPU
+#include "lb.hpp"
 
+#include <cstdio>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include <cstring>
+#include <random>
 
 #ifndef D3Q19
 #error The implementation only works for D3Q19 so far!
@@ -214,11 +219,7 @@ void lb_realloc_particles_gpu(){
 
   lbpar_gpu.number_of_particles = n_part;
   LB_TRACE (printf("#particles realloc\t %u \n", lbpar_gpu.number_of_particles));
-  //fprintf(stderr, "%u \t \n", lbpar_gpu.number_of_particles);
-  /**-----------------------------------------------------*/
-  /** allocating of the needed memory for several structs */
-  /**-----------------------------------------------------*/
-  lbpar_gpu.your_seed = (unsigned int)i_random(max_ran);
+  lbpar_gpu.your_seed = (unsigned int)std::random_device{}();
 
   LB_TRACE (fprintf(stderr,"test your_seed %u \n", lbpar_gpu.your_seed));
 
@@ -228,14 +229,10 @@ void lb_realloc_particles_gpu(){
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid_gpu() {
 
-  //lbpar_gpu.your_seed = (unsigned int)i_random(max_ran);
   lb_reinit_parameters_gpu();
-//#ifdef SHANCHEN
-//  lb_calc_particle_lattice_ia_gpu();
-//  copy_forces_from_GPU();
-//#endif 
   if(lbpar_gpu.number_of_nodes != 0){
     lb_reinit_GPU(&lbpar_gpu);
+    lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
     lbpar_gpu.reinit = 1;
   }
 

@@ -63,6 +63,7 @@ prod_length = 50
 dt = 0.01
 
 system = espressomd.System(box_l=[length, length, length])
+system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
 system.cell_system.skin = 0.3
 system.time_step = dt
 system.min_global_cut = 1.0

@@ -18,7 +18,6 @@
 #
 from __future__ import print_function
 import espressomd
-from espressomd import thermostat
 import numpy
 import unittest as ut
 from tests_common import abspath

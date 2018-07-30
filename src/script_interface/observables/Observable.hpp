@@ -43,6 +43,9 @@ public:
     if (method == "calculate") {
       return observable()->operator()(partCfg());
     }
+    if (method == "n_values") {
+      return observable()->n_values();
+    }
     return {};
   }
 };

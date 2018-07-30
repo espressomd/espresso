@@ -20,9 +20,6 @@ public:
   double r_bin_size() const { return (max_r - min_r) / n_r_bins; }
   double phi_bin_size() const { return (max_phi - min_phi) / n_phi_bins; }
   double z_bin_size() const { return (max_z - min_z) / n_z_bins; }
-  virtual int n_values() const override {
-    return n_r_bins * n_phi_bins * n_z_bins;
-  };
 };
 
 } // Namespace Observables

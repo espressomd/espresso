@@ -25,6 +25,7 @@ from tests_common import *
 
 class InteractionsBondedTest(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    numpy.random.seed(seed=system.seed)
 
     box_l = 10.
 

@@ -38,6 +38,7 @@ from ek_common import *
 class ek_eof_one_species_x(ut.TestCase):
 
     es = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    es.seed  = es.cell_system.get_state()['n_nodes'] * [1234]
 
     def test(self):
         system = self.es
@@ -310,21 +311,21 @@ class ek_eof_one_species_x(ut.TestCase):
         print("Pressure deviation xz component: {}".format(
             total_pressure_difference_xz))
 
-        self.assertLess(total_density_difference, 1.5e-06,
+        self.assertLess(total_density_difference,  1.0e-04,
                         "Density accuracy not achieved")
-        self.assertLess(total_velocity_difference, 4.0e-07,
+        self.assertLess(total_velocity_difference,  1.0e-04,
                         "Velocity accuracy not achieved")
-        self.assertLess(total_pressure_difference_xx, 5.0e-06,
+        self.assertLess(total_pressure_difference_xx,  1.0e-04,
                         "Pressure accuracy xx component not achieved")
-        self.assertLess(total_pressure_difference_yy, 5.0e-06,
+        self.assertLess(total_pressure_difference_yy,  1.0e-04,
                         "Pressure accuracy yy component not achieved")
-        self.assertLess(total_pressure_difference_zz, 4.0e-06,
+        self.assertLess(total_pressure_difference_zz,  1.0e-04,
                         "Pressure accuracy zz component not achieved")
-        self.assertLess(total_pressure_difference_xy, 1.0e-10,
+        self.assertLess(total_pressure_difference_xy,  1.0e-04,
                         "Pressure accuracy xy component not achieved")
-        self.assertLess(total_pressure_difference_yz, 1.5e-06,
+        self.assertLess(total_pressure_difference_yz,  1.0e-04,
                         "Pressure accuracy yz component not achieved")
-        self.assertLess(total_pressure_difference_xz, 1.0e-10,
+        self.assertLess(total_pressure_difference_xz,  1.0e-04,
                         "Pressure accuracy xz component not achieved")
 
 

@@ -25,13 +25,13 @@
 #include "cuda_utils.hpp"
 #include "errorhandling.hpp"
 #include "interaction_data.hpp"
-#include "random.hpp"
+
+#include <random>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
 #endif
 
-static int max_ran = 1000000;
 static CUDA_global_part_vars global_part_vars_host = {0, 0, 0};
 static __device__ __constant__ CUDA_global_part_vars global_part_vars_device;
 
@@ -197,7 +197,7 @@ void gpu_change_number_of_part_to_comm() {
   if (global_part_vars_host.number_of_particles != n_part &&
       global_part_vars_host.communication_enabled == 1 && this_node == 0) {
 
-    global_part_vars_host.seed = (unsigned int)i_random(max_ran);
+    global_part_vars_host.seed = (unsigned int)std::random_device{}();
     global_part_vars_host.number_of_particles = n_part;
 
     cuda_safe_mem(cudaMemcpyToSymbol(global_part_vars_device,
@@ -205,34 +205,54 @@ void gpu_change_number_of_part_to_comm() {
                                      sizeof(CUDA_global_part_vars)));
 
     // if the arrays exists free them to prevent memory leaks
-    if (particle_forces_host)
-      cudaFreeHost(particle_forces_host);
-    if (particle_data_host)
-      cudaFreeHost(particle_data_host);
-    if (particle_forces_device)
+    if (particle_forces_host){
+      cuda_safe_mem(cudaFreeHost(particle_forces_host));
+      particle_forces_host=nullptr;
+    }
+    if (particle_data_host) {
+      cuda_safe_mem(cudaFreeHost(particle_data_host));
+      particle_data_host=nullptr;
+    }
+    if (particle_forces_device) {
       cudaFree(particle_forces_device);
-    if (particle_data_device)
+      particle_forces_device=nullptr;
+    }
+    if (particle_data_device) {
       cudaFree(particle_data_device);
-    if (particle_seeds_device)
-      cudaFree(particle_seeds_device);
+      particle_data_device=nullptr;
+    }
+    if (particle_seeds_device){
+      cuda_safe_mem(cudaFree(particle_seeds_device));
+      particle_seeds_device=nullptr;
+    }
 #ifdef ENGINE
-    if (host_v_cs)
+    if (host_v_cs) {
       cudaFreeHost(host_v_cs);
+      host_v_cs=nullptr;
+    }
 #endif
 #if (defined DIPOLES || defined ROTATION)
-    if (particle_torques_host)
+    if (particle_torques_host) {
       cudaFreeHost(particle_torques_host);
+      particle_torques_host=nullptr;
+    }
 #endif
 #ifdef SHANCHEN
-    if (fluid_composition_host)
-      cudaFreeHost(fluid_composition_host);
-    if (fluid_composition_device)
-      cudaFree(fluid_composition_device);
+    if (fluid_composition_host) {
+      cuda_safe_mem(cudaFreeHost(fluid_composition_host));
+      fluid_composition_host=nullptr;
+    }
+    if (fluid_composition_device) {
+      cuda_safe_mem(cudaFree(fluid_composition_device));
+      fluid_composition_device=nullptr;
+    }
 #endif
 
 #ifdef ROTATION
-    if (particle_torques_device)
-      cudaFree(particle_torques_device);
+    if (particle_torques_device) {
+      cuda_safe_mem(cudaFree(particle_torques_device));
+      particle_torques_device=nullptr;
+    }
 #endif
 
     if (global_part_vars_host.number_of_particles) {
