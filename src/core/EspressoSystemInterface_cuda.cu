@@ -20,6 +20,8 @@
 #include "EspressoSystemInterface.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
+#include "cuda_init.hpp"
+#include "errorhandling.hpp"
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
@@ -49,7 +51,7 @@ __global__ void split_kernel_q(CUDA_particle_data *particles,float *q, int n) {
   if(idx >= n)
     return;
 
-#ifdef ELECTROSTRATICS
+#ifdef ELECTROSTATICS
   CUDA_particle_data p = particles[idx];
 
   q[idx] = p.q;
@@ -71,6 +73,7 @@ __global__ void split_kernel_r(CUDA_particle_data *particles, float *r, int n) {
   r[idx + 2] = p.p[2];
 }
 
+#ifdef LB_GPU
 // Velocity
 __global__ void split_kernel_v(CUDA_particle_data *particles, float *v, int n) {
   int idx = blockDim.x*blockIdx.x + threadIdx.x;
@@ -85,7 +88,7 @@ __global__ void split_kernel_v(CUDA_particle_data *particles, float *v, int n) {
   v[idx + 1] = p.v[1];
   v[idx + 2] = p.v[2];
 }
-
+#endif
 
 #ifdef DIPOLES
 // Dipole moment
@@ -121,14 +124,13 @@ __global__ void split_kernel_quatu(CUDA_particle_data *particles, float *quatu, 
 }
 
 void EspressoSystemInterface::reallocDeviceMemory(int n) {
-
   if(m_needsRGpu && ((n != m_gpu_npart) || (m_r_gpu_begin == 0))) {
     if(m_r_gpu_begin != 0)
       cuda_safe_mem(cudaFree(m_r_gpu_begin));
     cuda_safe_mem(cudaMalloc(&m_r_gpu_begin, 3*n*sizeof(float)));
     m_r_gpu_end = m_r_gpu_begin + 3*n;
   }
-#ifdef DIPOLES  
+#ifdef DIPOLES
   if(m_needsDipGpu && ((n != m_gpu_npart) || (m_dip_gpu_begin == 0))) {
     if(m_dip_gpu_begin != 0)
       cuda_safe_mem(cudaFree(m_dip_gpu_begin));
@@ -176,8 +178,10 @@ void EspressoSystemInterface::split_particle_struct() {
     split_kernel_q<<<grid,block>>>(gpu_get_particle_pointer(), m_q_gpu_begin,n);
   if(!m_needsQGpu && m_needsRGpu)
     split_kernel_r<<<grid,block>>>(gpu_get_particle_pointer(), m_r_gpu_begin,n);
+#ifdef LB_GPU
   if(m_needsVGpu)
     split_kernel_v<<<grid,block>>>(gpu_get_particle_pointer(), m_v_gpu_begin,n);
+#endif
 #ifdef DIPOLES
   if(m_needsDipGpu)
     split_kernel_dip<<<grid,block>>>(gpu_get_particle_pointer(), m_dip_gpu_begin,n);

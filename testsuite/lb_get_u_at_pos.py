@@ -25,7 +25,7 @@ class TestLBGetUAtPos(ut.TestCase):
             'friction': 2.0,
             'gamma': 1.5
         }
-        self.system = espressomd.System()
+        self.system = espressomd.System(box_l=[1.0, 1.0, 1.0])
         self.system.box_l = self.params['box_l']
         self.system.cell_system.skin = 0.4
         self.system.time_step = 0.01
@@ -36,7 +36,7 @@ class TestLBGetUAtPos(ut.TestCase):
                                  pos=[(p + 1) * self.params['agrid'],
                                       0.5 * self.params['agrid'],
                                       0.5 * self.params['agrid']])
-        self.lb_fluid = lb.LBFluid_GPU(
+        self.lb_fluid = lb.LBFluidGPU(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
             agrid=self.params['agrid'],

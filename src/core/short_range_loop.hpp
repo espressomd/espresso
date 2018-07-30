@@ -11,12 +11,13 @@
 #include "integrate.hpp"
 #include "interaction_data.hpp"
 #include "utils/Batch.hpp"
+#include "collision.hpp"
 
 /**
  * @brief Distance vector and length handed to pair kernels.
  */
 struct Distance {
-  double vec21[3];
+  Vector3d vec21;
   double dist2;
 };
 
@@ -101,10 +102,10 @@ void short_range_loop(ParticleKernel &&particle_kernel,
         /* Create a new functor that first runs the position
            copy and then the actual kernel. */
         make_batch(
-            [](Particle &p) { memcpy(p.l.p_old, p.r.p, 3 * sizeof(double)); },
+            [](Particle &p) { p.l.p_old=p.r.p; },
             std::forward<ParticleKernel>(particle_kernel)),
         std::forward<PairKernel>(pair_kernel),
-        VerletCriterion{skin, max_cut, coulomb_cutoff, dipolar_cutoff});
+        VerletCriterion{skin, max_cut, coulomb_cutoff, dipolar_cutoff,collision_detection_cutoff()});
 
     /* Now everything is up-to-date */
     rebuild_verletlist = 0;

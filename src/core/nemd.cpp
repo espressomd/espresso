@@ -39,7 +39,7 @@
 /************************************************************/
 
 int nemd_method = NEMD_METHOD_OFF;
-Nemd nemddata = {-1, 0, 0, 0.0, 1.0, NULL, 0, 0, NULL, 0.0, 0.0, 0.0, 0};
+Nemd nemddata = {-1, 0, 0, 0.0, 1.0, nullptr, 0, 0, nullptr, 0.0, 0.0, 0.0, 0};
 
 /** \name Privat Functions */
 /************************************************************/
@@ -59,10 +59,10 @@ int nemd_free(void) {
   nemddata.top_slab = 0;
   nemddata.thickness = 0.0;
   nemddata.invthickness = 1.0;
-  nemddata.velocity_profile = NULL;
+  nemddata.velocity_profile = nullptr;
   nemddata.profile_norm = 0;
   nemddata.n_exchange = 0;
-  nemddata.slab = NULL;
+  nemddata.slab = nullptr;
   nemddata.shear_rate = 0.0;
   nemddata.slab_vel = 0.0;
   return ES_OK;
@@ -116,7 +116,7 @@ void nemd_init(int n_slabs, int n_exchange, double shear_rate) {
     nemddata.slab[i].n_parts_in_slab = 0;
     nemddata.slab[i].v_min = 0.0;
     nemddata.slab[i].ind_min = 0;
-    nemddata.slab[i].fastest = NULL;
+    nemddata.slab[i].fastest = nullptr;
     nemddata.slab[i].n_fastest = 0;
     nemddata.slab[i].vel_diff = 0.0;
   }

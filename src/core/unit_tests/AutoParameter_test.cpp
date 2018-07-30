@@ -57,3 +57,65 @@ BOOST_AUTO_TEST_CASE(user_provided) {
   BOOST_CHECK(boost::get<int>(p.get()) == 42);
   BOOST_CHECK(i == 42);
 }
+
+BOOST_AUTO_TEST_CASE(pointer_to_method) {
+  using namespace ScriptInterface;
+  struct C {
+    C() = default;
+    C(int i) : m_i(i) {}
+    int m_i;
+
+    void setter(int const &i) { m_i = i; }
+    int &setter_getter() { return m_i; }
+    int value_getter() const { return m_i; }
+    int const &ref_getter() const { return m_i; }
+  };
+
+  {
+    auto c_ptr = std::make_shared<C>();
+
+    auto p = AutoParameter("name", c_ptr, &C::setter, &C::value_getter);
+    p.set(5);
+    BOOST_CHECK(5 == boost::get<int>(p.get()));
+  }
+
+  {
+    auto c_ptr = std::make_shared<C>();
+
+    auto p = AutoParameter("name", c_ptr, &C::setter, &C::value_getter);
+    p.set(5);
+    BOOST_CHECK(5 == boost::get<int>(p.get()));
+  }
+
+  {
+    auto c_ptr = std::make_shared<C>();
+
+    auto p = AutoParameter("name", c_ptr, &C::setter, &C::ref_getter);
+    p.set(5);
+    BOOST_CHECK(5 == boost::get<int>(p.get()));
+  }
+
+  {
+    auto c_ptr = std::make_shared<C>();
+
+    auto p_setter_getter = AutoParameter("name", c_ptr, &C::setter_getter);
+    p_setter_getter.set(5);
+    BOOST_CHECK(5 == boost::get<int>(p_setter_getter.get()));
+  }
+
+  {
+    auto c_ptr = std::make_shared<C>(5);
+
+    auto p = AutoParameter("name", c_ptr, &C::value_getter);
+    BOOST_CHECK_THROW(p.set(5), AutoParameter::WriteError);
+    BOOST_CHECK(5 == boost::get<int>(p.get()));
+  }
+
+  {
+    auto c_ptr = std::make_shared<C>(5);
+
+    auto p = AutoParameter("name", c_ptr, &C::ref_getter);
+    BOOST_CHECK_THROW(p.set(5), AutoParameter::WriteError);
+    BOOST_CHECK(5 == boost::get<int>(p.get()));
+  }
+}

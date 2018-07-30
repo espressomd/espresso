@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE(update) {
 }
 
 BOOST_AUTO_TEST_CASE(update_with_bonds) {
-  auto const bond_lengths = std::array<int, 6>{1, 2, 4, 9, 21, 0};
+  auto const bond_lengths = std::array<int, 6>{{1, 2, 4, 9, 21, 0}};
 
   Particles local_parts;
   mpi::communicator world;

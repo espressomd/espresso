@@ -24,22 +24,19 @@
 #include "initialize.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "correlators/Correlator.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 #include "debye_hueckel.hpp"
-#include "domain_decomposition.hpp"
+#include "dpd.hpp"
 #include "elc.hpp"
 #include "energy.hpp"
 #include "errorhandling.hpp"
-#include "external_potential.hpp"
 #include "forces.hpp"
 #include "ghmc.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "iccp3m.hpp" /* -iccp3m- */
-#include "interaction_data.hpp"
 #include "lattice.hpp"
 #include "lb.hpp"
 #include "lbboundaries.hpp"
@@ -59,16 +56,18 @@
 #include "pressure.hpp"
 #include "random.hpp"
 #include "rattle.hpp"
-#include "reaction.hpp"
 #include "reaction_ensemble.hpp"
 #include "reaction_field.hpp"
 #include "rotation.hpp"
 #include "scafacos.hpp"
 #include "statistics.hpp"
+#include "swimmer_reaction.hpp"
+#include "thermalized_bond.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
-#include "global.hpp"
-#include "utils/mpi/all_compare.hpp" 
+#include "virtual_sites.hpp"
+
+#include "utils/mpi/all_compare.hpp"
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
 static int reinit_electrostatics = 0;
@@ -84,12 +83,6 @@ static int reinit_particle_comm_gpu = 1;
 void on_program_start() {
   EVENT_TRACE(fprintf(stderr, "%d: on_program_start\n", this_node));
 
-/* tell Electric fence that we do realloc(0) on purpose. */
-#ifdef EFENCE
-  extern int EF_ALLOW_MALLOC_0;
-  EF_ALLOW_MALLOC_0 = 1;
-#endif
-
 #ifdef CUDA
   cuda_init();
 #endif
@@ -100,23 +93,16 @@ void on_program_start() {
   Random::init_random();
 
   init_node_grid();
-  /* calculate initial minimal number of cells (see tclcallback_min_num_cells)
-   */
-  min_num_cells = calc_processor_min_num_cells();
 
   /* initially go for domain decomposition */
-  dd_topology_init(&local_cells);
+  topology_init(CELL_STRUCTURE_DOMDEC, &local_cells);
 
-  ghost_init();
-  /* Initialise force and energy tables */
-  force_and_energy_tables_init();
 #ifdef P3M
   p3m_pre_init();
 #endif
 #ifdef DP3M
   dp3m_pre_init();
 #endif
-  external_potential_pre_init();
 
 #ifdef LB_GPU
   if (this_node == 0) {
@@ -127,7 +113,7 @@ void on_program_start() {
   lb_pre_init();
 #endif
 
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
   reaction.eq_rate = 0.0;
   reaction.sing_mult = 0;
   reaction.swap = 0;
@@ -147,7 +133,7 @@ void on_integration_start() {
   INTEG_TRACE(fprintf(
       stderr,
       "%d: on_integration_start: reinit_thermo = %d, resort_particles=%d\n",
-      this_node, reinit_thermo, resort_particles));
+      this_node, reinit_thermo, get_resort_particles()));
 
   /********************************************/
   /* sanity checks                            */
@@ -158,7 +144,7 @@ void on_integration_start() {
   integrator_npt_sanity_checks();
 #endif
   interactions_sanity_checks();
-#ifdef CATALYTIC_REACTIONS
+#ifdef SWIMMER_REACTIONS
   reactions_sanity_checks();
 #endif
 #ifdef LB
@@ -172,9 +158,9 @@ void on_integration_start() {
   }
 #endif
 
-/********************************************/
-/* end sanity checks                        */
-/********************************************/
+  /********************************************/
+  /* end sanity checks                        */
+  /********************************************/
 
 #ifdef LB_GPU
   if (lattice_switch & LATTICE_LB_GPU && this_node == 0) {
@@ -212,23 +198,32 @@ void on_integration_start() {
    */
   invalidate_obs();
   partCfg().invalidate();
+  invalidate_fetch_cache();
 
 #ifdef ADDITIONAL_CHECKS
-  check_global_consistency();
-#endif
 
-#ifdef ADDITIONAL_CHECKS
+  if (!Utils::Mpi::all_compare(comm_cart, cell_structure.type)) {
+    runtimeErrorMsg() << "Nodes disagree about cell system type.";
+  }
+
+  if (!Utils::Mpi::all_compare(comm_cart, get_resort_particles())) {
+    runtimeErrorMsg() << "Nodes disagree about resort type.";
+  }
+
+  if (!Utils::Mpi::all_compare(comm_cart, cell_structure.use_verlet_list)) {
+    runtimeErrorMsg() << "Nodes disagree about use of verlet lists.";
+  }
+
 #ifdef ELECTROSTATICS
-  if (!Utils::Mpi::all_compare(comm_cart,coulomb.method))
+  if (!Utils::Mpi::all_compare(comm_cart, coulomb.method))
     runtimeErrorMsg() << "Nodes disagree about Coulomb long range method";
 #endif
-#ifdef DIPOLES 
-  if (!Utils::Mpi::all_compare(comm_cart,coulomb.Dmethod))
+#ifdef DIPOLES
+  if (!Utils::Mpi::all_compare(comm_cart, coulomb.Dmethod))
     runtimeErrorMsg() << "Nodes disagree about dipolar long range method";
 #endif
-#endif
-
-   
+  check_global_consistency();
+#endif /* ADDITIONAL_CHECKS */
 
   on_observable_calc();
 }
@@ -238,8 +233,7 @@ void on_observable_calc() {
   /* Prepare particle structure: Communication step: number of ghosts and ghost
    * information */
 
-  if (resort_particles)
-    cells_resort_particles(CELL_GLOBAL_EXCHANGE);
+  cells_update_ghosts();
 
 #ifdef ELECTROSTATICS
   if (reinit_electrostatics) {
@@ -283,10 +277,18 @@ void on_observable_calc() {
 #endif /*ifdef ELECTROSTATICS */
 }
 
+void on_particle_charge_change() {
+  reinit_electrostatics = 1;
+  invalidate_obs();
+
+  /* the particle information is no longer valid */
+  partCfg().invalidate();
+}
+
 void on_particle_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_particle_change\n", this_node));
 
-  resort_particles = 1;
+  set_resort_particles(Cells::RESORT_LOCAL);
   reinit_electrostatics = 1;
   reinit_magnetostatics = 1;
 
@@ -300,13 +302,14 @@ void on_particle_change() {
 
   /* the particle information is no longer valid */
   partCfg().invalidate();
+
+  /* the particle information is no longer valid */
+  invalidate_fetch_cache();
 }
 
 void on_coulomb_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_coulomb_change\n", this_node));
   invalidate_obs();
-
-  recalc_coulomb_prefactor();
 
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
@@ -385,6 +388,7 @@ void on_constraint_change() {
 void on_lbboundary_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_lbboundary_change\n", this_node));
   invalidate_obs();
+  
 
 #ifdef LB_BOUNDARIES
   if (lattice_switch & LATTICE_LB) {
@@ -428,6 +432,12 @@ void on_resort_particles() {
 void on_boxl_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_boxl_change\n", this_node));
 
+  grid_changed_box_l();
+  /* Electrostatics cutoffs mostly depend on the system size,
+     therefore recalculate them. */
+  recalc_maximal_cutoff();
+  cells_on_geometry_change(0);
+
 /* Now give methods a chance to react to the change in box length */
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
@@ -449,6 +459,11 @@ void on_boxl_change() {
   case COULOMB_MAGGS:
     maggs_init();
     break;
+#ifdef SCAFACOS
+  case COULOMB_SCAFACOS:
+    Scafacos::update_system_params();
+    break;
+#endif
   default:
     break;
   }
@@ -461,6 +476,11 @@ void on_boxl_change() {
   // fall through
   case DIPOLAR_P3M:
     dp3m_scaleby_box_l();
+    break;
+#endif
+#ifdef SCAFACOS
+  case DIPOLAR_SCAFACOS:
+    Scafacos::update_system_params();
     break;
 #endif
   default:
@@ -552,26 +572,15 @@ void on_temperature_change() {
     }
   }
 #endif
-
-#ifdef ELECTROSTATICS
-  recalc_coulomb_prefactor();
-#endif
 }
 
 void on_parameter_change(int field) {
   EVENT_TRACE(
-      fprintf(stderr, "%d: on_parameter_change %d\n", this_node, field));
+      fprintf(stderr, "%d: shon_parameter_change %d\n", this_node, field));
 
   switch (field) {
   case FIELD_BOXL:
-    grid_changed_box_l();
-#ifdef SCAFACOS
-    Scafacos::update_system_params();
-#endif
-    /* Electrostatics cutoffs mostly depend on the system size,
-       therefore recalculate them. */
-    recalc_maximal_cutoff();
-    cells_on_geometry_change(0);
+    on_boxl_change();
     break;
   case FIELD_MIN_GLOBAL_CUT:
     recalc_maximal_cutoff();
@@ -581,7 +590,17 @@ void on_parameter_change(int field) {
     cells_on_geometry_change(0);
   case FIELD_PERIODIC:
 #ifdef SCAFACOS
+#ifdef ELECTROSTATICS
+    if (coulomb.method == COULOMB_SCAFACOS) {
       Scafacos::update_system_params();
+    }
+#endif
+#ifdef DIPOLES
+    if (coulomb.Dmethod == DIPOLAR_SCAFACOS) {
+      Scafacos::update_system_params();
+    }
+#endif
+
 #endif
     cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
     break;
@@ -596,11 +615,6 @@ void on_parameter_change(int field) {
     on_temperature_change();
     reinit_thermo = 1;
     break;
-#ifdef LEES_EDWARDS
-  case FIELD_LEES_EDWARDS_OFFSET:
-    lees_edwards_step_boundaries();
-    break;
-#endif
   case FIELD_TIMESTEP:
 #ifdef LB_GPU
     if (this_node == 0) {
@@ -647,6 +661,14 @@ void on_parameter_change(int field) {
     invalidate_obs();
     recalc_forces = 1;
     break;
+  case FIELD_RIGIDBONDS:
+    /* Rattle bonds needs ghost velocities */
+    on_ghost_flags_change();
+    break;
+  case FIELD_THERMALIZEDBONDS:
+    /* Thermalized distance bonds needs ghost velocities */
+    on_ghost_flags_change();
+    break;
   }
 }
 
@@ -689,8 +711,6 @@ void on_ghost_flags_change() {
   /* that's all we change here */
   extern int ghosts_have_v;
 
-  const int old_have_v = ghosts_have_v;
-
   ghosts_have_v = 0;
 
 /* DPD and LB need also ghost velocities */
@@ -714,10 +734,12 @@ void on_ghost_flags_change() {
     ghosts_have_v = 1;
 #endif
 #ifdef VIRTUAL_SITES
-  // VIRUTAL_SITES need v to update v of virtual sites
-  ghosts_have_v = 1;
+  // If they have velocities, VIRUTAL_SITES need v to update v of virtual sites
+  if (virtual_sites()->get_have_velocity()) {
+    ghosts_have_v = 1;
+  };
 #endif
-
-  if (old_have_v != ghosts_have_v)
-    cells_re_init(CELL_STRUCTURE_CURRENT);
+  // THERMALIZED_DIST_BOND needs v to calculate v_com and v_dist for thermostats
+  if (n_thermalized_bonds)
+    ghosts_have_v = 1;
 }

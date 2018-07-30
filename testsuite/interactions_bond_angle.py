@@ -23,8 +23,7 @@ import unittest as ut
 
 
 class InteractionsNonBondedTest(ut.TestCase):
-    system = espressomd.System()
-
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     box_l = 10.
 
     start_pos = numpy.random.rand(3) * box_l
@@ -37,7 +36,7 @@ class InteractionsNonBondedTest(ut.TestCase):
 
         self.system.box_l = [self.box_l] * 3
         self.system.cell_system.skin = 0.4
-        self.system.time_step = 1.
+        self.system.time_step = .1
 
         self.system.part.add(id=0, pos=self.start_pos, type=0)
         self.system.part.add(id=1, pos=self.start_pos + self.rel_pos, type=0)
@@ -77,7 +76,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         ah_bend = 1.
         ah_phi0 = 0.4327 * numpy.pi
 
-        angle_harmonic = espressomd.interactions.Angle_Harmonic(
+        angle_harmonic = espressomd.interactions.AngleHarmonic(
             bend=ah_bend, phi0=ah_phi0)
         self.system.bonded_inter.add(angle_harmonic)
         self.system.part[0].add_bond((angle_harmonic, 1, 2))

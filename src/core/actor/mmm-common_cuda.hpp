@@ -27,8 +27,8 @@ const int modpsi_order = 30;
 const int modpsi_constant_size = modpsi_order*modpsi_order*2;
 
 // linearized array on host
-int *linModPsi_offsets = NULL, *linModPsi_lengths = NULL;
-mmm1dgpu_real *linModPsi = NULL;
+int *linModPsi_offsets = nullptr, *linModPsi_lengths = nullptr;
+mmm1dgpu_real *linModPsi = nullptr;
 
 // linearized array on device
 __constant__ int device_n_modPsi = 0;
@@ -89,9 +89,9 @@ int modpsi_destroy()
 	free(linModPsi_offsets);
 	free(linModPsi_lengths);
 	free(linModPsi);
-	linModPsi_offsets = NULL;
-	linModPsi_lengths = NULL;
-	linModPsi = NULL;
+	linModPsi_offsets = nullptr;
+	linModPsi_lengths = nullptr;
+	linModPsi = nullptr;
 	return 0;
 }
 

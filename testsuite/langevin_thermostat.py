@@ -23,7 +23,7 @@ import espressomd
 import numpy as np
 from espressomd.interactions import FeneBond
 from time import time
-from espressomd.correlators import Correlator
+from espressomd.accumulators import Correlator
 from espressomd.observables import ParticleVelocities, ParticleBodyAngularVelocities
 
 @ut.skipIf(espressomd.has_features("THERMOSTAT_IGNORE_NON_VIRTUAL"),
@@ -32,7 +32,7 @@ class LangevinThermostat(ut.TestCase):
     """Tests the velocity distribution created by the Langevin thermostat against
        the single component Maxwell distribution."""
 
-    s = espressomd.System()
+    s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     s.cell_system.set_n_square()
     s.cell_system.skin = 0.3
     s.seed = range(s.cell_system.get_state()["n_nodes"])
@@ -73,7 +73,7 @@ class LangevinThermostat(ut.TestCase):
         N = 200
         s = self.s
         s.part.clear()
-        s.time_step = 0.02
+        s.time_step = 0.04
         
         # Place particles
         s.part.add(pos=np.random.random((N, 3)))
@@ -94,7 +94,7 @@ class LangevinThermostat(ut.TestCase):
         v_stored = np.zeros((N * loops, 3))
         omega_stored = np.zeros((N * loops, 3))
         for i in range(loops):
-            s.integrator.run(2)
+            s.integrator.run(1)
             v_stored[i * N:(i + 1) * N, :] = s.part[:].v
             if espressomd.has_features("ROTATION"):
                 omega_stored[i * N:(i + 1) * N, :] = s.part[:].omega_body
@@ -117,7 +117,7 @@ class LangevinThermostat(ut.TestCase):
         N = 200
         s = self.s
         s.part.clear()
-        s.time_step = 0.02
+        s.time_step = 0.04
         s.part.add(pos=np.random.random((N, 3)))
         if espressomd.has_features("ROTATION"): 
             s.part[:].rotation = 1,1,1
@@ -146,7 +146,7 @@ class LangevinThermostat(ut.TestCase):
             omega_kT2 = np.zeros((int(N / 2 * loops), 3))
 
         for i in range(loops):
-            s.integrator.run(2)
+            s.integrator.run(1)
             v_kT[int(i * N / 2):int((i + 1) * N / 2),
                  :] = s.part[:int(N / 2)].v
             v_kT2[int(i * N / 2):int((i + 1) * N / 2),
@@ -182,7 +182,7 @@ class LangevinThermostat(ut.TestCase):
         s.part.clear()
 
         kT=1.37
-        dt=0.05
+        dt=0.1
         s.time_step=dt
         
         # Translational gamma. We cannot test per-component, if rotation is on,
@@ -272,24 +272,25 @@ class LangevinThermostat(ut.TestCase):
             all_particles.append(p_kT)
             all_particles.append(p_both)
 
-        for p in all_particles:
-            # linear vel
-            vel_obs[p]=ParticleVelocities(ids=(p.id,))
-            corr_vel[p] = Correlator(obs1=vel_obs[p], tau_lin=32, tau_max=4., dt=2*dt,
+        # linear vel
+        vel_obs=ParticleVelocities(ids=s.part[:].id)
+        corr_vel = Correlator(obs1=vel_obs, tau_lin=20, tau_max=1.9, delta_N=1,
                 corr_operation="componentwise_product", compress1="discard1")
-            s.auto_update_correlators.add(corr_vel[p])
-            # angular vel
-            if espressomd.has_features("ROTATION"):
-                omega_obs[p]=ParticleBodyAngularVelocities(ids=(p.id,))
-                corr_omega[p] = Correlator(obs1=omega_obs[p], tau_lin=32, tau_max=4, dt=2*dt,
+        s.auto_update_accumulators.add(corr_vel)
+        # angular vel
+        if espressomd.has_features("ROTATION"):
+            omega_obs=ParticleBodyAngularVelocities(ids=s.part[:].id)
+            corr_omega = Correlator(obs1=omega_obs, tau_lin=40, tau_max=3.9, delta_N=1,
                     corr_operation="componentwise_product", compress1="discard1")
-                s.auto_update_correlators.add(corr_omega[p])
+            s.auto_update_accumulators.add(corr_omega)
         
-        s.integrator.run(800000)
-        for c in corr_vel.values():
-            s.auto_update_correlators.remove(c)
-        for c in corr_omega.values():
-            s.auto_update_correlators.remove(c)
+        s.integrator.run(400000)
+        
+        s.auto_update_accumulators.remove(corr_vel)
+        corr_vel.finalize()
+        if espressomd.has_features("ROTATION"):
+            s.auto_update_accumulators.remove(corr_omega)
+            corr_omega.finalize()
 
         # Verify diffusion
         # Translation
@@ -330,14 +331,17 @@ class LangevinThermostat(ut.TestCase):
            p: particle, corr: dict containing correltor with particle as key,
            kT=kT, gamma=gamma as 3 component vector.
         """
-        c=corr[p]
+        c=corr
         # Integral of vacf via Green-Kubo
         #D= int_0^infty <v(t_0)v(t_0+t)> dt     (o 1/3, since we work componentwise)
-        acf=c.result()
+        i=p.id
+        acf=c.result()[:,[0,2+3*i,2+3*i+1,2+3*i+2]]
+        np.savetxt("acf.dat",acf)
+
         #Integrate w. trapez rule
-        for coord in 2,3,4:
+        for coord in 1,2,3:
             I=np.trapz(acf[:,coord],acf[:,0])
-            ratio = I/(kT/gamma[coord-2])
+            ratio = I/(kT/gamma[coord-1])
             self.assertAlmostEqual(ratio,1.,delta=0.07)
         
  
@@ -409,7 +413,27 @@ class LangevinThermostat(ut.TestCase):
                     self.assertAlmostEqual(s.part[0].omega_body[j],o0*np.exp(-gamma_r_i/rinertia[j]*s.time),places=2)
 
 
+    @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES"), "Skipped for lack of VIRTUAL_SITES" )
+    def test_virtual(self):
+        s = self.s
+        s.time_step = 0.01
+        s.part.clear()
 
+        virtual = s.part.add(pos=[0,0,0], virtual=True, v=[1,0,0])
+        physical = s.part.add(pos=[0,0,0], virtual=False, v=[1,0,0])
+
+        s.thermostat.set_langevin(kT=0, gamma=1, gamma_rotation=1., act_on_virtual=False)
+
+        s.integrator.run(0)
+
+        np.testing.assert_almost_equal(np.copy(virtual.f), [0,0,0])
+        np.testing.assert_almost_equal(np.copy(physical.f), [-1,0,0])
+
+        s.thermostat.set_langevin(kT=0, gamma=1, gamma_rotation=1., act_on_virtual=True)
+        s.integrator.run(0)
+
+        np.testing.assert_almost_equal(np.copy(virtual.f), [-1,0,0])
+        np.testing.assert_almost_equal(np.copy(physical.f), [-1,0,0])
 
 if __name__ == "__main__":
     ut.main()

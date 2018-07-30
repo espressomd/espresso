@@ -30,7 +30,7 @@
 
 /** \name Exported Variables */
 /************************************************************/
-/** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref tclcommand_analyze) */
+/** Particles' initial positions (needed for g1(t), g2(t), g3(t)) */
 /*@{*/
 extern float *partCoord_g;
 extern float *partCM_g;

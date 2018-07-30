@@ -39,7 +39,7 @@
 int subt_lj_set_params(int bond_type);
 
 /** Computes the negative of the LENNARD-JONES pair forces
-    and adds this force to the particle forces (see \ref tclcommand_inter).
+    and adds this force to the particle forces.
     @param p1        Pointer to first particle.
     @param p2        Pointer to second/middle particle.
     @param iaparams  Parameters of interaction
@@ -56,7 +56,7 @@ inline int calc_subt_lj_pair_force(Particle *p1, Particle *p2,
     dx[i] *= -1;
   }
 
-  add_lj_pair_force(p1, p2, ia_params, dx, utils::veclen(dx), force);
+  add_lj_pair_force(p1, p2, ia_params, dx, Utils::veclen(dx), force);
 
   return ES_OK;
 }
@@ -66,7 +66,7 @@ inline int subt_lj_pair_energy(Particle *p1, Particle *p2,
                                double *_energy) {
   auto ia_params = get_ia_param(p1->p.type, p2->p.type);
 
-  *_energy = -lj_pair_energy(p1, p2, ia_params, dx, utils::veclen(dx));
+  *_energy = -lj_pair_energy(p1, p2, ia_params, dx, Utils::veclen(dx));
   return ES_OK;
 }
 
