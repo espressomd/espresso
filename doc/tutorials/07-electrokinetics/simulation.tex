@@ -86,9 +86,9 @@ We first set up a periodic simulation box of the desired dimensions. Note that t
 
 \begin{lstlisting}
 # Initializing espresso modules and the numpy package
-from espressomd import System, electrokinetics, shapes
-import numpy as np
 import sys
+import numpy as np
+from espressomd import System, electrokinetics, shapes
 
 # Set the slit pore geometry the width is the non-periodic part of the geometry
 # the padding is used to ensure that there is no field outside the slit
