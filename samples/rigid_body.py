@@ -1,3 +1,8 @@
+"""Demonstrates the construction of a rigid object by means of the
+VIRTUAL_SITES_RELATIVE feature.
+
+"""
+
 from __future__ import print_function
 
 import espressomd
@@ -6,6 +11,10 @@ from espressomd import integrate
 from espressomd.virtual_sites import VirtualSitesRelative
 
 import numpy as np
+
+required_features = ["VIRTUAL_SITES_RELATIVE","MASS","ROTATIONAL_INERTIA"]
+espressomd.assert_features(required_features)
+
 
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 system.set_random_state_PRNG()
@@ -45,7 +54,7 @@ for direction in np.array([[1,0,0], [0,1,0], [0,0,1]]):
 system.virtual_sites= VirtualSitesRelative(have_velocity=True)
 
 #here we calculate the center of mass position (com) and the moment of inertia (momI) of the object
-com = system.analysis.center_of_mass(part_type=type_A)
+com = system.analysis.center_of_mass(p_type=type_A)
 print("center of mass is:", com)
 
 # if using multiple nodes, we need to change min_global_cut to the largest deparation
