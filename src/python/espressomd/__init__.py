@@ -43,8 +43,8 @@ def missing_features(*args):
     return set(args) - set(features())
 
 
-def assert_features(ExceptionType = Exception, *args):
+def assert_features(*args):
     """Raises an excpetion when a list of features is not a subset of the compiled-in features"""
-
-    if not has_features(*args):
-        raise ExceptionType("Missing features " + ", ".join(missing_features(*args)))
+    
+    if len(missing_features(*args))!=0:
+        raise Exception("Missing features " + ", ".join(missing_features(*args)))
