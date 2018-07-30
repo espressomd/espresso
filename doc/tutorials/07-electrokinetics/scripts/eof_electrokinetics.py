@@ -1,7 +1,7 @@
 # Initializing espresso modules and the numpy package
-from espressomd import electrokinetics, shapes
-import numpy as np
 import sys
+import numpy as np
+from espressomd import electrokinetics, shapes
 import espressomd
 
 # Set the slit pore geometry the width is the non-periodic part of the geometry
