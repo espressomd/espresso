@@ -24,8 +24,11 @@
     Various procedures concerning interactions between particles.
 */
 
-#include "particle_data.hpp" /* needed for constraints */
+#include "particle_data.hpp"
 #include "utils.hpp"
+
+#include "TabulatedPotential.hpp"
+
 
 /** \name Type codes of bonded interactions
     Enumeration of implemented bonded interactions.
@@ -63,12 +66,6 @@ enum BondedInteraction {
   /** Type of bonded interaction is a bond angle -- constraint distance
      potential. */
   BONDED_IA_ANGLEDIST,
-  /** Type of bonded interaction is a bond angle -- chain ends have angle with
-     wall constraint */
-  BONDED_IA_ENDANGLEDIST,
-  /** Type of overlapped bonded interaction potential,
-      may be of bond length, of bond angle or of dihedral type. */
-  BONDED_IA_OVERLAPPED,
   /** Type of bonded interaction is a bond angle cosine potential. */
   BONDED_IA_ANGLE_HARMONIC,
   /** Type of bonded interaction is a bond angle cosine potential. */
@@ -96,23 +93,19 @@ enum BondedInteraction {
   /** Type of bonded interaction is bending force (immersed boundary). */
   BONDED_IA_IBM_TRIBEND,
   /** Type of bonded interaction is umbrella. */
-  BONDED_IA_UMBRELLA
+  BONDED_IA_UMBRELLA,
+  /** Type of bonded interaction is thermalized distance bond. */
+  BONDED_IA_THERMALIZED_DIST,
+  /** Type of bonded interaction is a BONDED_COULOMB_P3M_SR */
+  BONDED_IA_BONDED_COULOMB_P3M_SR,
 };
 
 /** Specify tabulated bonded interactions  */
-enum TabulatedBondedInteraction{
-    TAB_UNKNOWN = 0,
-    TAB_BOND_LENGTH = 1,
-    TAB_BOND_ANGLE = 2,
-    TAB_BOND_DIHEDRAL = 3
-};
-
-/** Specify overlapped bonded interactions  */
-enum OverlappedBondedInteraction {
-  OVERLAP_UNKNOWN = 0,
-  OVERLAP_BOND_LENGTH,
-  OVERLAP_BOND_ANGLE,
-  OVERLAP_BOND_DIHEDRAL
+enum TabulatedBondedInteraction {
+  TAB_UNKNOWN = 0,
+  TAB_BOND_LENGTH = 1,
+  TAB_BOND_ANGLE = 2,
+  TAB_BOND_DIHEDRAL = 3
 };
 
 /** cutoff for deactivated interactions. Below 0, so that even particles on
@@ -140,9 +133,8 @@ enum CoulombMethod {
   COULOMB_RF,        //< Coulomb method is Reaction-Field
   COULOMB_INTER_RF,  //< Coulomb method is Reaction-Field BUT as interaction
   COULOMB_P3M_GPU,   //< Coulomb method is P3M with GPU based long range part
-                     //calculation
+                     // calculation
   COULOMB_MMM1D_GPU, //< Coulomb method is one-dimensional MMM running on GPU
-  COULOMB_EWALD_GPU, //< Coulomb method is Ewald running on GPU
   COULOMB_EK,        //< Coulomb method is electrokinetics
   COULOMB_SCAFACOS,  //< Coulomb method is scafacos
 };
@@ -172,9 +164,12 @@ enum DipolarInteraction {
   DIPOLAR_MDLC_DS,
   /** Direct summation on gpu */
   DIPOLAR_DS_GPU,
+#ifdef DIPOLAR_BARNES_HUT
+  /** Direct summation on gpu by Barnes-Hut algorithm */
+  DIPOLAR_BH_GPU,
+#endif
   /** Scafacos library */
   DIPOLAR_SCAFACOS
-
 };
 #endif
 
@@ -183,305 +178,254 @@ enum DipolarInteraction {
 
 /** field containing the interaction parameters for
  *  nonbonded interactions. Access via
- * get_ia_param(i, j), i,j < n_particle_types */
-typedef struct {
-
-  /** flag that tells whether there is any short-ranged interaction,
-   i.e. one that contributes to the "nonbonded" section of the
-   energy/pressure. Note that even if there is no short-ranged
-   interaction present, the \ref max_cut can be non-zero due to
-   e.g. electrostatics. */
-  int particlesInteract;
-
+ * get_ia_param(i, j), i,j < max_seen_particle_type */
+struct IA_parameters {
   /** maximal cutoff for this pair of particle types. This contains
       contributions from the short-ranged interactions, plus any
       cutoffs from global interactions like electrostatics.
   */
-  double max_cut;
+  double max_cut = INACTIVE_CUTOFF;
 
+#ifdef LENNARD_JONES
   /** \name Lennard-Jones with shift */
   /*@{*/
-  double LJ_eps;
-  double LJ_sig;
-  double LJ_cut;
-  double LJ_shift;
-  double LJ_offset;
-  double LJ_capradius;
-  double LJ_min;
-  /*@}*/
-
-  /** \name Generic Lennard-Jones with shift */
-  /*@{*/
-  double LJGEN_eps;
-  double LJGEN_sig;
-  double LJGEN_cut;
-  double LJGEN_shift;
-  double LJGEN_offset;
-  double LJGEN_capradius;
-  double LJGEN_a1;
-  double LJGEN_a2;
-  double LJGEN_b1;
-  double LJGEN_b2;
-  double LJGEN_lambda;
-  double LJGEN_softrad;
+  double LJ_eps = 0.0;
+  double LJ_sig = 0.0;
+  double LJ_cut = 0.0;
+  double LJ_shift = 0.0;
+  double LJ_offset = 0.0;
+  double LJ_min = 0.0;
 /*@}*/
 
-#ifdef LJ_ANGLE
-  /** \name Directional Lennard-Jones */
+#endif
+
+  /** flag that tells whether there is any short-ranged interaction,
+      i.e. one that contributes to the "nonbonded" section of the
+      energy/pressure. Note that even if there is no short-ranged
+      interaction present, the \ref max_cut can be non-zero due to
+      e.g. electrostatics. */
+  int particlesInteract;
+
+#ifdef LENNARD_JONES_GENERIC
+  /** \name Generic Lennard-Jones with shift */
   /*@{*/
-  double LJANGLE_eps;
-  double LJANGLE_sig;
-  double LJANGLE_cut;
-  /* Locate bonded partners */
-  int LJANGLE_bonded1type;
-  int LJANGLE_bonded1pos;
-  int LJANGLE_bonded1neg;
-  int LJANGLE_bonded2pos;
-  int LJANGLE_bonded2neg;
-  /* Cap */
-  double LJANGLE_capradius;
-  /* Optional 2nd environment */
-  double LJANGLE_z0;
-  double LJANGLE_dz;
-  double LJANGLE_kappa;
-  double LJANGLE_epsprime;
+  double LJGEN_eps = 0.0;
+  double LJGEN_sig = 0.0;
+  double LJGEN_cut = INACTIVE_CUTOFF;
+  double LJGEN_shift = 0.0;
+  double LJGEN_offset = 0.0;
+  double LJGEN_a1 = 0.0;
+  double LJGEN_a2 = 0.0;
+  double LJGEN_b1 = 0.0;
+  double LJGEN_b2 = 0.0;
+  double LJGEN_lambda = 1.0;
+  double LJGEN_softrad = 0.0;
 /*@}*/
 #endif
 
 #ifdef SMOOTH_STEP
   /** \name smooth step potential */
   /*@{*/
-  double SmSt_eps;
-  double SmSt_sig;
-  double SmSt_cut;
-  double SmSt_d;
-  int SmSt_n;
-  double SmSt_k0;
+  double SmSt_eps = 0.0;
+  double SmSt_sig = 0.0;
+  double SmSt_cut = INACTIVE_CUTOFF;
+  double SmSt_d = 0.0;
+  int SmSt_n = 0.0;
+  double SmSt_k0 = 0.0;
 /*@}*/
 #endif
 
 #ifdef HERTZIAN
   /** \name Hertzian potential */
   /*@{*/
-  double Hertzian_eps;
-  double Hertzian_sig;
+  double Hertzian_eps = 0.0;
+  double Hertzian_sig = INACTIVE_CUTOFF;
 /*@}*/
 #endif
 
 #ifdef GAUSSIAN
   /** \name Gaussian potential */
   /*@{*/
-  double Gaussian_eps;
-  double Gaussian_sig;
-  double Gaussian_cut;
+  double Gaussian_eps = 0.0;
+  double Gaussian_sig = 1.0;
+  double Gaussian_cut = INACTIVE_CUTOFF;
 /*@}*/
 #endif
 
 #ifdef BMHTF_NACL
   /** \name BMHTF NaCl potential */
   /*@{*/
-  double BMHTF_A;
-  double BMHTF_B;
-  double BMHTF_C;
-  double BMHTF_D;
-  double BMHTF_sig;
-  double BMHTF_cut;
-  double BMHTF_computed_shift;
+  double BMHTF_A = 0.0;
+  double BMHTF_B = 0.0;
+  double BMHTF_C = 0.0;
+  double BMHTF_D = 0.0;
+  double BMHTF_sig = 0.0;
+  double BMHTF_cut = INACTIVE_CUTOFF;
+  double BMHTF_computed_shift = 0.0;
 /*@}*/
 #endif
 
 #ifdef MORSE
   /** \name Morse potential */
   /*@{*/
-  double MORSE_eps;
-  double MORSE_alpha;
-  double MORSE_rmin;
-  double MORSE_cut;
-  double MORSE_rest;
-  double MORSE_capradius;
+  double MORSE_eps = INACTIVE_CUTOFF;
+  double MORSE_alpha = INACTIVE_CUTOFF;
+  double MORSE_rmin = INACTIVE_CUTOFF;
+  double MORSE_cut = INACTIVE_CUTOFF;
+  double MORSE_rest = INACTIVE_CUTOFF;
 /*@}*/
 #endif
 
 #ifdef BUCKINGHAM
   /** \name Buckingham potential */
   /*@{*/
-  double BUCK_A;
-  double BUCK_B;
-  double BUCK_C;
-  double BUCK_D;
-  double BUCK_cut;
-  double BUCK_discont;
-  double BUCK_shift;
-  double BUCK_capradius;
-  double BUCK_F1;
-  double BUCK_F2;
+  double BUCK_A = 0.0;
+  double BUCK_B = 0.0;
+  double BUCK_C = 0.0;
+  double BUCK_D = 0.0;
+  double BUCK_cut = INACTIVE_CUTOFF;
+  double BUCK_discont = 0.0;
+  double BUCK_shift = 0.0;
+  double BUCK_F1 = 0.0;
+  double BUCK_F2 = 0.0;
 /*@}*/
 #endif
 
 #ifdef SOFT_SPHERE
   /** \name soft-sphere potential */
   /*@{*/
-  double soft_a;
-  double soft_n;
-  double soft_cut;
-  double soft_offset;
+  double soft_a = 0.0;
+  double soft_n = 0.0;
+  double soft_cut = INACTIVE_CUTOFF;
+  double soft_offset = 0.0;
 /*@}*/
 #endif
 
 #ifdef AFFINITY
   /** \name affinity potential */
   /*@{*/
-  int affinity_type;
-  double affinity_kappa;
-  double affinity_r0;
-  double affinity_Kon;
-  double affinity_Koff;
-  double affinity_maxBond;
-  double affinity_cut;
+  int affinity_type = INACTIVE_CUTOFF;
+  double affinity_kappa = INACTIVE_CUTOFF;
+  double affinity_r0 = INACTIVE_CUTOFF;
+  double affinity_Kon = INACTIVE_CUTOFF;
+  double affinity_Koff = INACTIVE_CUTOFF;
+  double affinity_maxBond = INACTIVE_CUTOFF;
+  double affinity_cut = INACTIVE_CUTOFF;
 /*@}*/
 #endif
 
 #ifdef MEMBRANE_COLLISION
   /** \name membrane collision potential */
   /*@{*/
-  double membrane_a;
-  double membrane_n;
-  double membrane_cut;
-  double membrane_offset;
+  double membrane_a = 0.0;
+  double membrane_n = 0.0;
+  double membrane_cut = INACTIVE_CUTOFF;
+  double membrane_offset = 0.0;
 /*@}*/
 #endif
 
 #ifdef HAT
   /** \name hat potential */
   /*@{*/
-  double HAT_Fmax;
-  double HAT_r;
+  double HAT_Fmax = 0.0;
+  double HAT_r = INACTIVE_CUTOFF;
 /*@}*/
 #endif
 
 #ifdef LJCOS
   /** \name Lennard-Jones+Cos potential */
   /*@{*/
-  double LJCOS_eps;
-  double LJCOS_sig;
-  double LJCOS_cut;
-  double LJCOS_offset;
-  double LJCOS_alfa;
-  double LJCOS_beta;
-  double LJCOS_rmin;
+  double LJCOS_eps = 0.0;
+  double LJCOS_sig = 0.0;
+  double LJCOS_cut = INACTIVE_CUTOFF;
+  double LJCOS_offset = 0.0;
+  double LJCOS_alfa = 0.0;
+  double LJCOS_beta = 0.0;
+  double LJCOS_rmin = 0.0;
 /*@}*/
 #endif
 
 #ifdef LJCOS2
   /** \name Lennard-Jones with a different Cos potential */
   /*@{*/
-  double LJCOS2_eps;
-  double LJCOS2_sig;
-  double LJCOS2_cut;
-  double LJCOS2_offset;
-  double LJCOS2_w;
-  double LJCOS2_rchange;
-  double LJCOS2_capradius;
+  double LJCOS2_eps = 0.0;
+  double LJCOS2_sig = 0.0;
+  double LJCOS2_cut = INACTIVE_CUTOFF;
+  double LJCOS2_offset = 0.0;
+  double LJCOS2_w = 0.0;
+  double LJCOS2_rchange = 0.0;
 /*@}*/
 #endif
 
 #ifdef COS2
   /** \name Cos2 potential */
   /*@{*/
-  double COS2_eps;
-  double COS2_cut;
-  double COS2_offset;
-  double COS2_w;
+  double COS2_eps = INACTIVE_CUTOFF;
+  double COS2_cut = INACTIVE_CUTOFF;
+  double COS2_offset = INACTIVE_CUTOFF;
+  double COS2_w = INACTIVE_CUTOFF;
 /*@}*/
 #endif
 
 #ifdef GAY_BERNE
   /** \name Gay-Berne potential */
   /*@{*/
-  double GB_eps;
-  double GB_sig;
-  double GB_cut;
-  double GB_k1;
-  double GB_k2;
-  double GB_mu;
-  double GB_nu;
-  double GB_chi1;
-  double GB_chi2;
+  double GB_eps = 0.0;
+  double GB_sig = 0.0;
+  double GB_cut = INACTIVE_CUTOFF;
+  double GB_k1 = 0.0;
+  double GB_k2 = 0.0;
+  double GB_mu = 0.0;
+  double GB_nu = 0.0;
+  double GB_chi1 = 0.0;
+  double GB_chi2 = 0.0;
 /*@}*/
 #endif
 
 #ifdef TABULATED
   /** \name Tabulated potential */
   /*@{*/
-  int TAB_npoints;
-  int TAB_startindex;
-  double TAB_minval;
-  double TAB_minval2;
-  double TAB_maxval;
-  double TAB_stepsize;
-/** The maximum allowable filename length for a tabulated potential file*/
-#define MAXLENGTH_TABFILE_NAME 256
-  char TAB_filename[MAXLENGTH_TABFILE_NAME];
+  TabulatedPotential TAB;
 /*@}*/
 #endif
 
-#ifdef COMFORCE
-  /** \name center of mass directed force */
-  /*@{*/
-  int COMFORCE_flag;
-  int COMFORCE_dir;
-  double COMFORCE_force;
-  double COMFORCE_fratio;
-/*@}*/
-#endif
-
-#ifdef COMFIXED
-  /** \name center of mass directed force */
-  /*@{*/
-  int COMFIXED_flag;
-/*@}*/
-#endif
-
-#ifdef INTER_DPD
+#ifdef DPD
   /** \name DPD as interaction */
   /*@{*/
-  double dpd_gamma;
-  double dpd_r_cut;
-  int dpd_wf;
-  double dpd_pref1;
-  double dpd_pref2;
-  double dpd_tgamma;
-  double dpd_tr_cut;
-  int dpd_twf;
-  double dpd_pref3;
-  double dpd_pref4;
+  int dpd_wf = 0;
+  int dpd_twf = 0;
+  double dpd_gamma = 0.0;
+  double dpd_r_cut = INACTIVE_CUTOFF;
+  double dpd_pref1 = 0.0;
+  double dpd_pref2 = 0.0;
+  double dpd_tgamma = 0.0;
+  double dpd_tr_cut = INACTIVE_CUTOFF;
+  double dpd_pref3 = 0.0;
+  double dpd_pref4 = 0.0;
 /*@}*/
 #endif
 
 #ifdef INTER_RF
-  int rf_on;
+  int rf_on = 0;
 #endif
 
-#ifdef TUNABLE_SLIP
-  double TUNABLE_SLIP_temp;
-  double TUNABLE_SLIP_gamma;
-  double TUNABLE_SLIP_r_cut;
-  double TUNABLE_SLIP_time;
-  double TUNABLE_SLIP_vx;
-  double TUNABLE_SLIP_vy;
-  double TUNABLE_SLIP_vz;
+#ifdef THOLE
+  double THOLE_scaling_coeff;
+  double THOLE_q1q2;
 #endif
 
-#ifdef CATALYTIC_REACTIONS
-  double REACTION_range;
+#ifdef SWIMMER_REACTIONS
+  double REACTION_range = INACTIVE_CUTOFF;
 #endif
 
 #ifdef SHANCHEN
   double affinity[LB_COMPONENTS];
-  int affinity_on;
+  int affinity_on = 0;
 #endif
 
-} IA_parameters;
+};
+
+extern std::vector<IA_parameters> ia_params;
 
 /** thermodynamic force parameters */
 
@@ -490,11 +434,9 @@ typedef struct {
 
 /** field containing the interaction parameters for
  *  the coulomb  interaction.  */
-typedef struct {
+struct Coulomb_parameters {
 
 #ifdef ELECTROSTATICS
-  /** Bjerrum length. */
-  double bjerrum;
   /** bjerrum length times temperature. */
   double prefactor;
 
@@ -503,12 +445,11 @@ typedef struct {
 #endif
 
 #ifdef DIPOLES
-  double Dbjerrum;
   double Dprefactor;
   DipolarInteraction Dmethod;
 #endif
 
-} Coulomb_parameters;
+};
 
 #ifdef ELECTROSTATICS
 
@@ -526,19 +467,19 @@ drmax - maximal bond streching.
 r0 - equilibrium bond length.
 drmax2 - square of drmax (internal parameter).
 */
-typedef struct {
+struct Fene_bond_parameters {
   double k;
   double drmax;
   double r0;
   double drmax2;
   double drmax2i;
-} Fene_bond_parameters;
+};
 
 #ifdef HYDROGEN_BOND
 /** Parameters for the cg_dna potential
     Insert documentation here.
 **/
-typedef struct {
+struct Cg_dna_basepair_parameters {
   double r0;
   double alpha;
   double E0;
@@ -553,69 +494,83 @@ typedef struct {
   double alphasb;
   double f2;
   double f3;
-} Cg_dna_basepair_parameters;
+};
 #endif
 #ifdef TWIST_STACK
-typedef struct {
+struct Cg_dna_stacking_parameters {
   double rm;
   double epsilon;
   double ref_pot;
   double a[8];
   double b[7];
-} Cg_dna_stacking_parameters;
+};
 #endif
 
 /** Parameters for oif_global_forces */
-typedef struct {
+struct Oif_global_forces_bond_parameters {
   double A0_g;
   double ka_g;
   double V0;
   double kv;
-} Oif_global_forces_bond_parameters;
+};
 
 /** Parameters for oif_local_forces */
-typedef struct {
-  double r0;
-  double ks;
-  double kslin;
-  double phi0;
-  double kb;
-  double A01;
-  double A02;
-  double kal;
-} Oif_local_forces_bond_parameters;
-
-/** Parameters for oif_out_direction */
-typedef struct {
-
-} Oif_out_direction_bond_parameters;
+struct Oif_local_forces_bond_parameters {
+    double r0;
+    double ks;
+    double kslin;
+    double phi0;
+    double kb;
+    double A01;
+    double A02;
+    double kal;
+    double kvisc;
+};
 
 /** Parameters for harmonic bond Potential */
-typedef struct {
+struct Harmonic_bond_parameters {
   double k;
   double r;
   double r_cut;
-} Harmonic_bond_parameters;
+};
+
+/** Parameters for Thermalized bond **/
+struct Thermalized_bond_parameters {
+    double temp_com;
+    double gamma_com;
+    double temp_distance;
+    double gamma_distance;
+    double r_cut;
+    double pref1_com;
+    double pref2_com;
+    double pref1_dist;
+    double pref2_dist;
+};
 
 #ifdef ROTATION
 /** Parameters for harmonic dumbbell bond Potential */
-typedef struct {
+struct Harmonic_dumbbell_bond_parameters {
   double k1;
   double k2;
   double r;
   double r_cut;
-} Harmonic_dumbbell_bond_parameters;
+};
 #endif
 
 /** Parameters for quartic bond Potential */
-typedef struct {
+struct Quartic_bond_parameters {
   double k0, k1;
   double r;
   double r_cut;
-} Quartic_bond_parameters;
+};
 
 /** Parameters for coulomb bond Potential */
-typedef struct { double prefactor; } Bonded_coulomb_bond_parameters;
+struct Bonded_coulomb_bond_parameters { double prefactor; };
+
+#ifdef P3M
+/** Parameters for coulomb bond p3m shortrange Potential */
+struct Bonded_coulomb_p3m_sr_bond_parameters { double q1q2; };
+#endif
 
 /** Parameters for three body angular potential (bond-angle potentials).
         ATTENTION: Note that there are different implementations of the bond
@@ -624,91 +579,69 @@ typedef struct { double prefactor; } Bonded_coulomb_bond_parameters;
    config.hpp !
         bend - bending constant.
         phi0 - equilibrium angle (default is 180 degrees / Pi) */
-typedef struct {
+struct Angle_bond_parameters {
   double bend;
   double phi0;
   double cos_phi0;
   double sin_phi0;
 
-} Angle_bond_parameters;
+};
 
 /** Parameters for three body angular potential (bond_angle_harmonic).
     bend - bending constant.
     phi0 - equilibrium angle (default is 180 degrees / Pi) */
-typedef struct {
+struct Angle_harmonic_bond_parameters {
   double bend;
   double phi0;
-} Angle_harmonic_bond_parameters;
+};
 
 /** Parameters for three body angular potential (bond_angle_cosine).
     bend - bending constant.
     phi0 - equilibrium angle (default is 180 degrees / Pi) */
-typedef struct {
+struct Angle_cosine_bond_parameters {
   double bend;
   double phi0;
   double cos_phi0;
   double sin_phi0;
-} Angle_cosine_bond_parameters;
+};
 
 /** Parameters for three body angular potential (bond_angle_cossquare).
     bend - bending constant.
     phi0 - equilibrium angle (default is 180 degrees / Pi) */
-typedef struct {
+struct Angle_cossquare_bond_parameters {
   double bend;
   double phi0;
   double cos_phi0;
-} Angle_cossquare_bond_parameters;
+};
 
 /** Parameters for four body angular potential (dihedral-angle potentials). */
-typedef struct {
+struct Dihedral_bond_parameters {
   double mult;
   double bend;
   double phase;
-} Dihedral_bond_parameters;
+};
 
 /** Parameters for n-body tabulated potential (n=2,3,4). */
-typedef struct {
-  char *filename;
+struct Tabulated_bond_parameters {
   TabulatedBondedInteraction type;
-  int npoints;
-  double minval;
-  double maxval;
-  double invstepsize;
-  double *f;
-  double *e;
-} Tabulated_bond_parameters;
-
-/** Parameters for n-body overlapped potential (n=2,3,4). */
-typedef struct {
-  char *filename;
-  OverlappedBondedInteraction type;
-  double maxval;
-  int noverlaps;
-  double *para_a;
-  double *para_b;
-  double *para_c;
-} Overlap_bond_parameters;
+  TabulatedPotential *pot;
+};
 
 #ifdef UMBRELLA
 /** Parameters for umbrella potential */
-typedef struct {
+struct Umbrella_bond_parameters {
   double k;
   int dir;
   double r;
-} Umbrella_bond_parameters;
+};
 #endif
 
 /** Dummy parameters for -LJ Potential */
-typedef struct {
-  double k;
-  double r;
-  double r2;
-} Subt_lj_bond_parameters;
+struct Subt_lj_bond_parameters {
+};
 
 /**Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM*/
-typedef struct {
-  /**Length of rigid bond/Constrained Bond*/
-  // double d;
+struct Rigid_bond_parameters {
   /**Square of the length of Constrained Bond*/
   double d2;
   /**Positional Tolerance/Accuracy value for termination of RATTLE/SHAKE
@@ -717,7 +650,7 @@ typedef struct {
   /**Velocity Tolerance/Accuracy for termination of RATTLE/SHAKE iterations
    * during velocity corrections */
   double v_tol;
-} Rigid_bond_parameters;
+};
 
 /** Parameters for three body angular potential (bond-angle potentials) that
     depends on distance to wall constraint.
@@ -728,7 +661,7 @@ typedef struct {
         bend - bending constant.
         phi0 - equilibrium angle (default is 180 degrees / Pi)
         dist0 - equilibrium distance (no default) */
-typedef struct {
+struct Angledist_bond_parameters {
   double bend;
   double phimin;
   double distmin;
@@ -736,20 +669,12 @@ typedef struct {
   double distmax;
   double cos_phi0;
   double sin_phi0;
-} Angledist_bond_parameters;
+};
 
-/** Parameters for chainend angular potential with wall  */
-typedef struct {
-  double bend;
-  double phi0;
-  double distmin;
-  double distmax;
-} Endangledist_bond_parameters;
-
-typedef enum { NeoHookean, Skalak } tElasticLaw;
+enum class tElasticLaw { NeoHookean, Skalak };
 
 /** Parameters for IBM elastic triangle (triel) **/
-typedef struct {
+struct IBM_Triel_Parameters {
   // These values encode the reference state
   double l0;
   double lp0;
@@ -766,15 +691,15 @@ typedef struct {
   // These are interaction parameters
   // k1 is used for Neo-Hookean
   // k1 and k2 are used Skalak
-  double maxdist;
+  double maxDist;
   tElasticLaw elasticLaw;
   double k1;
   double k2;
 
-} IBM_Triel_Parameters;
+};
 
 /** Parameters for IBM volume conservation bond **/
-typedef struct {
+struct IBM_VolCons_Parameters {
   int softID; // ID of the large soft particle to which this node belongs
   // Reference volume
   double volRef;
@@ -784,28 +709,24 @@ typedef struct {
   // Actually this is more of an analysis function and does not strictly belong
   // to volume conservation
   //  bool writeCOM;
-} IBM_VolCons_Parameters;
-
-typedef enum { TriangleNormals, NodeNeighbors } tBendingMethod;
+};
 
 /** Parameters for IBM tribend **/
-typedef struct {
+struct IBM_Tribend_Parameters {
   // Interaction data
   double kb;
-  tBendingMethod method;
 
   // Reference angle
   double theta0;
 
-} IBM_Tribend_Parameters;
+};
 
 /** Union in which to store the parameters of an individual bonded interaction
  */
-typedef union {
+union Bond_parameters {
   Fene_bond_parameters fene;
   Oif_global_forces_bond_parameters oif_global_forces;
   Oif_local_forces_bond_parameters oif_local_forces;
-  Oif_out_direction_bond_parameters oif_out_direction;
   Harmonic_bond_parameters harmonic;
 #ifdef ROTATION
   Harmonic_dumbbell_bond_parameters harmonic_dumbbell;
@@ -817,10 +738,15 @@ typedef union {
   Angle_cosine_bond_parameters angle_cosine;
   Angle_cossquare_bond_parameters angle_cossquare;
   Dihedral_bond_parameters dihedral;
+#ifdef TABULATED
   Tabulated_bond_parameters tab;
-  Overlap_bond_parameters overlap;
+#endif
 #ifdef UMBRELLA
   Umbrella_bond_parameters umbrella;
+#endif
+  Thermalized_bond_parameters thermalized_bond;
+#ifdef P3M
+  Bonded_coulomb_p3m_sr_bond_parameters bonded_coulomb_p3m_sr;
 #endif
   Subt_lj_bond_parameters subt_lj;
   Rigid_bond_parameters rigid_bond;
@@ -831,43 +757,33 @@ typedef union {
 #if defined(CG_DNA) || defined(TWIST_STACK)
   Cg_dna_stacking_parameters twist_stack;
 #endif
-  Endangledist_bond_parameters endangledist;
   IBM_Triel_Parameters ibm_triel;
   IBM_VolCons_Parameters ibmVolConsParameters;
   IBM_Tribend_Parameters ibm_tribend;
-} Bond_parameters;
+};
 
 /** Defines parameters for a bonded interaction. */
-typedef struct {
+struct Bonded_ia_parameters {
   /** bonded interaction type. See \ref BONDED_IA_FENE "Type code for bonded" */
   BondedInteraction type;
   /** (Number of particles - 1) interacting for that type */
   int num;
   /** union to store the different bonded interaction parameters. */
   Bond_parameters p;
-} Bonded_ia_parameters;
+};
 
 /************************************************
  * exported variables
  ************************************************/
 
 /** Maximal particle type seen so far. */
-extern int n_particle_types;
-/* Number of nonbonded (short range) interactions. Not used so far.*/
-extern int n_interaction_types;
+extern int max_seen_particle_type;
 
 /** Structure containing the coulomb parameters. */
 extern Coulomb_parameters coulomb;
 
-/** number of bonded interactions. Not used so far. */
-extern int n_bonded_ia;
 /** Field containing the paramters of the bonded ia types */
-extern Bonded_ia_parameters *bonded_ia_params;
-
-/** Array containing all tabulated forces*/
-extern DoubleList tabulated_forces;
-/** Array containing all tabulated energies*/
-extern DoubleList tabulated_energies;
+extern std::vector<Bonded_ia_parameters> bonded_ia_params;
 
 /** Maximal interaction cutoff (real space/short range interactions). */
 extern double max_cut;
@@ -892,25 +808,28 @@ extern int ia_excl;
 /************************************************
  * exported functions
  ************************************************/
-/** Function for initializing force and energy tables */
-void force_and_energy_tables_init();
 
 #ifdef ELECTROSTATICS
-int coulomb_set_bjerrum(double bjerrum);
+/** @brief Set the electrostatics prefactor */
+int coulomb_set_prefactor(double prefactor);
+
+
+/** @brief Deactivates the current Coulomb mhthod 
+    This was part of coulomb_set_bjerrum()
+*/
+void deactivate_coulomb_method();
 #endif
 
 #ifdef DIPOLES
-int dipolar_set_Dbjerrum(double bjerrum);
+/** @brief Set the dipolar prefactor */
+int dipolar_set_Dprefactor(double prefactor);
 #endif
-
-/** copy a set of interaction parameters. */
-void copy_ia_params(IA_parameters *dst, IA_parameters *src);
 
 /** get interaction parameters between particle sorts i and j */
 inline IA_parameters *get_ia_param(int i, int j) {
-  extern IA_parameters *ia_params;
-  extern int n_particle_types;
-  return &ia_params[i * n_particle_types + j];
+  extern std::vector<IA_parameters> ia_params;
+  extern int max_seen_particle_type;
+  return &ia_params[i * max_seen_particle_type + j];
 }
 
 /** get interaction parameters between particle sorts i and j.
@@ -918,10 +837,21 @@ inline IA_parameters *get_ia_param(int i, int j) {
     yet present particle types*/
 IA_parameters *get_ia_param_safe(int i, int j);
 
+/** @brief Get the state of all non bonded interactions.
+ */
+std::string ia_params_get_state();
+
+/** @brief Set the state of all non bonded interactions.
+ */
+void ia_params_set_state(std::string const&);
+
+bool is_new_particle_type(int type);
 /** Makes sure that ia_params is large enough to cover interactions
     for this particle type. The interactions are initialized with values
     such that no physical interaction occurs. */
 void make_particle_type_exist(int type);
+
+void make_particle_type_exist_local(int type);
 
 /** Makes sure that \ref bonded_ia_params is large enough to cover the
     parameters for the bonded interaction type. Attention: 1: There is
@@ -940,12 +870,8 @@ void realloc_ia_params(int nsize);
     electrostatics. The result is stored in the global variable
     max_cut. The maximal cutoff of the non-bonded + real space
     electrostatic interactions is stored in max_cut_non_bonded. This
-    value is used in the verlet pair list algorithm (see \ref
-    verlet.hpp). */
+    value is used in the verlet pair list algorithm. */
 void recalc_maximal_cutoff();
-
-/** call when the temperature changes, for Bjerrum length adjusting. */
-void recalc_coulomb_prefactor();
 
 /** check whether all force calculation routines are properly initialized. */
 int interactions_sanity_checks();
@@ -961,15 +887,128 @@ inline int checkIfParticlesInteract(int i, int j) {
   return checkIfInteraction(get_ia_param(i, j));
 }
 
-///
-const char *get_name_of_bonded_ia(BondedInteraction type);
-
-#ifdef BOND_VIRTUAL
 int virtual_set_params(int bond_type);
-#endif
 
 #ifdef DIPOLES
 void set_dipolar_method_local(DipolarInteraction method);
 #endif
 
+/** @brief Checks if particle has a pair bond with a given partner  
+*  Note that bonds are stored only on one of the two particles in Espresso
+* 
+* @param P
+* @param p          particle on which the bond may be stored
+* @param partner    bond partner 
+* @param bond_type  numerical bond type */ 
+inline bool pair_bond_exists_on(const Particle* const p, const Particle* const partner, int bond_type)
+{
+  // First check the bonds of p1
+  if (p->bl.e) {
+    int i = 0;
+    while(i < p->bl.n) {
+      int size = bonded_ia_params[p->bl.e[i]].num;
+      
+      if (p->bl.e[i] == bond_type &&
+          p->bl.e[i + 1] == partner->p.identity) {
+        // There's a bond, already. Nothing to do for these particles
+        return true;
+      }
+      i += size + 1;
+    }
+  }
+  return false;
+}
+
+/** @brief Checks both particle for a specific bond. Needs GHOSTS_HAVE_BONDS if particles are ghosts.  
+* 
+* @param P
+* @param p1          particle on which the bond may be stored
+* @param p2    	     bond partner
+* @param bond        enum bond type */ 
+inline bool pair_bond_enum_exists_on(const Particle * const p_bond, const Particle * const p_partner, BondedInteraction bond)
+{
+    int i = 0;
+    while (i < p_bond->bl.n) {
+        int type_num = p_bond->bl.e[i];
+        Bonded_ia_parameters *iaparams = &bonded_ia_params[type_num];
+        if (iaparams->type == (int)bond && p_bond->bl.e[i+1] == p_partner->p.identity) {
+            return true;
+        } else {
+            i+= iaparams->num + 1;
+        }
+    }
+    return false;
+}
+
+/** @brief Checks both particle for a specific bond. Needs GHOSTS_HAVE_BONDS if particles are ghosts.  
+* 
+* @param P
+* @param p1          particle on which the bond may be stored
+* @param p2    	     particle on which the bond may be stored
+* @param bond_type   numerical bond type */ 
+inline bool pair_bond_enum_exists_between(const Particle * const p1, const Particle * const p2, BondedInteraction bond)
+{
+    if (p1==p2)
+        return false;
+    else {
+        //Check if particles have bonds (bl.n > 0) and search for the bond of interest with are_bonded().
+        //Could be saved on both sides (and both could have other bonds), so we need to check both.
+        return (p1->bl.n > 0 && pair_bond_enum_exists_on(p1, p2, bond)) || (p2->bl.n > 0 && pair_bond_enum_exists_on(p2, p1, bond)); 
+    }
+}
+
+#include "utils/math/sqr.hpp"
+
+/** Returns true if the particles are to be considered for short range
+    interactions */
+class VerletCriterion {
+  const double m_skin;
+  const double m_eff_max_cut2;
+  const double m_eff_coulomb_cut2 = 0.;
+  const double m_eff_dipolar_cut2 = 0.;
+  const double m_collision_cut2 =0.;
+
+public:
+  VerletCriterion(double skin, double max_cut, double coulomb_cut = 0.,
+                  double dipolar_cut = 0., double collision_detection_cutoff=0.)
+      : m_skin(skin), m_eff_max_cut2(Utils::sqr(max_cut + m_skin)),
+        m_eff_coulomb_cut2(Utils::sqr(coulomb_cut + m_skin)),
+        m_eff_dipolar_cut2(Utils::sqr(dipolar_cut + m_skin)), 
+        m_collision_cut2(Utils::sqr(collision_detection_cutoff))
+        {}
+
+  template <typename Distance>
+  bool operator()(const Particle &p1, const Particle &p2,
+                  Distance const &dist) const {
+    auto const &dist2 = dist.dist2;
+    if (dist2 > m_eff_max_cut2)
+      return false;
+
+// Within real space cutoff of electrostatics and both charged
+#ifdef ELECTROSTATICS
+    if ((dist2 <= m_eff_coulomb_cut2) && (p1.p.q != 0) && (p2.p.q != 0))
+      return true;
+#endif
+
+// Within dipolar cutoff and both cary magnetic moments
+#ifdef DIPOLES
+    if ((dist2 <= m_eff_dipolar_cut2) && (p1.p.dipm != 0) && (p2.p.dipm != 0))
+      return true;
+#endif
+
+
+// Collision detectoin
+#ifdef COLLISION_DETECTION
+if (dist2 <= m_collision_cut2)
+  return true;
+#endif
+
+    // Within short-range distance (incl dpd and the like)
+    auto const max_cut = get_ia_param(p1.p.type, p2.p.type)->max_cut;
+    if ((max_cut != INACTIVE_CUTOFF) && (dist2 <= Utils::sqr(max_cut + m_skin)))
+      return true;
+
+    return false;
+  }
+};
 #endif

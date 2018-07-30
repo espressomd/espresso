@@ -22,6 +22,9 @@ from __future__ import print_function, absolute_import
 
 from libcpp.vector cimport vector
 
+from libcpp.vector cimport vector
+from libcpp.pair cimport pair
+
 cdef extern from "communication.hpp":
     void mpi_bcast_cell_structure(int cs)
     int n_nodes
@@ -33,10 +36,11 @@ cdef extern from "cells.hpp":
     int CELL_STRUCTURE_NSQUARE
     int CELL_STRUCTURE_LAYERED
 
+    vector[pair[int, int]] mpi_get_pairs(double distance)
+
 cdef extern from "layered.hpp":
     int determine_n_layers
     int n_layers_ "n_layers"
-    int determine_n_layers
 
 cdef extern from "grid.hpp":
     int node_grid[3]

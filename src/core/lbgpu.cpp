@@ -22,18 +22,16 @@
  * C file for the Lattice Boltzmann implementation on GPUs.
  * Header file for \ref lbgpu.hpp.
  */
-//#include <mpi.h>
-#include <cstdio>
-#include <cmath>
-#include <cstdlib>
-#include <ctime>
-#include <cstring>
+
+#include "config.hpp"
+
+#ifdef LB_GPU
+
 #include "lbgpu.hpp"
 #include "utils.hpp"
 #include "communication.hpp"
 #include "thermostat.hpp"
 #include "grid.hpp"
-#include "domain_decomposition.hpp"
 #include "integrate.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
@@ -42,8 +40,14 @@
 #include "cuda_interface.hpp"
 #include "statistics.hpp"
 #include "partCfg_global.hpp"
-#ifdef LB_GPU
+#include "lb.hpp"
 
+#include <cstdio>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include <cstring>
+#include <random>
 
 #ifndef D3Q19
 #error The implementation only works for D3Q19 so far!
@@ -145,9 +149,9 @@ LB_parameters_gpu lbpar_gpu = {
 };
 
 /** this is the array that stores the hydrodynamic fields for the output */
-LB_rho_v_pi_gpu *host_values = NULL;
+LB_rho_v_pi_gpu *host_values = nullptr;
 
-LB_nodes_gpu *host_nodes = NULL;
+LB_nodes_gpu *host_nodes = nullptr;
 
 /** Flag indicating momentum exchange between particles and fluid */
 int transfer_momentum_gpu = 0;
@@ -166,8 +170,8 @@ static float c_sound_sq = 1.0f/3.0f;
 int i;
 
 
-int n_extern_nodeforces = 0;
-LB_extern_nodeforce_gpu *host_extern_nodeforces = NULL;
+int n_extern_node_force_densities = 0;
+LB_extern_nodeforcedensity_gpu *host_extern_node_force_densities = nullptr;
 int ek_initialized = 0;
 
 /*-----------------------------------------------------------*/
@@ -215,11 +219,7 @@ void lb_realloc_particles_gpu(){
 
   lbpar_gpu.number_of_particles = n_part;
   LB_TRACE (printf("#particles realloc\t %u \n", lbpar_gpu.number_of_particles));
-  //fprintf(stderr, "%u \t \n", lbpar_gpu.number_of_particles);
-  /**-----------------------------------------------------*/
-  /** allocating of the needed memory for several structs */
-  /**-----------------------------------------------------*/
-  lbpar_gpu.your_seed = (unsigned int)i_random(max_ran);
+  lbpar_gpu.your_seed = (unsigned int)std::random_device{}();
 
   LB_TRACE (fprintf(stderr,"test your_seed %u \n", lbpar_gpu.your_seed));
 
@@ -229,14 +229,10 @@ void lb_realloc_particles_gpu(){
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid_gpu() {
 
-  //lbpar_gpu.your_seed = (unsigned int)i_random(max_ran);
   lb_reinit_parameters_gpu();
-//#ifdef SHANCHEN
-//  lb_calc_particle_lattice_ia_gpu();
-//  copy_forces_from_GPU();
-//#endif 
   if(lbpar_gpu.number_of_nodes != 0){
     lb_reinit_GPU(&lbpar_gpu);
+    lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
     lbpar_gpu.reinit = 1;
   }
 
@@ -249,10 +245,10 @@ void lb_reinit_fluid_gpu() {
   only the fluid-related memory on the gpu.*/
 void lb_release_gpu(){
 
-  if(host_nodes !=NULL) { free(host_nodes); host_nodes=NULL ;} 
-  if(host_values!=NULL) { free(host_values); host_values=NULL;}
-//  if(host_forces!=NULL) free(host_forces);
-//  if(host_data  !=NULL) free(host_data);
+  if(host_nodes !=nullptr) { free(host_nodes); host_nodes=nullptr ;} 
+  if(host_values!=nullptr) { free(host_values); host_values=nullptr;}
+//  if(host_forces!=nullptr) free(host_forces);
+//  if(host_data  !=nullptr) free(host_data);
 }
 /** (Re-)initializes the fluid. */
 void lb_reinit_parameters_gpu() {
@@ -320,8 +316,8 @@ void lb_reinit_parameters_gpu() {
        * time_step comes from the discretization.
        */
   
-      lbpar_gpu.lb_coupl_pref[ii] = sqrt(12.f*2.f*lbpar_gpu.friction[ii]*(float)temperature/lbpar_gpu.time_step);
-      lbpar_gpu.lb_coupl_pref2[ii] = sqrt(2.f*lbpar_gpu.friction[ii]*(float)temperature/lbpar_gpu.time_step);
+      lbpar_gpu.lb_coupl_pref[ii] = sqrtf(12.f*2.f*lbpar_gpu.friction[ii]*(float)temperature/lbpar_gpu.time_step);
+      lbpar_gpu.lb_coupl_pref2[ii] = sqrtf(2.f*lbpar_gpu.friction[ii]*(float)temperature/lbpar_gpu.time_step);
   
     } else {
       /* no fluctuations at zero temperature */
@@ -386,7 +382,7 @@ void lb_init_gpu() {
 
 /*@}*/
 
-int lb_lbnode_set_extforce_GPU(int ind[3], double f[3])
+int lb_lbnode_set_extforce_density_GPU(int ind[3], double f[3])
 {
   if ( ind[0] < 0 || ind[0] >= int(lbpar_gpu.dim_x) ||
        ind[1] < 0 || ind[1] >= int(lbpar_gpu.dim_y) ||
@@ -396,19 +392,19 @@ int lb_lbnode_set_extforce_GPU(int ind[3], double f[3])
   unsigned int index =
     ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
 
-  size_t  size_of_extforces = (n_extern_nodeforces+1)*sizeof(LB_extern_nodeforce_gpu);
-  host_extern_nodeforces = (LB_extern_nodeforce_gpu*) Utils::realloc(host_extern_nodeforces, size_of_extforces);
+  size_t  size_of_extforces = (n_extern_node_force_densities+1)*sizeof(LB_extern_nodeforcedensity_gpu);
+  host_extern_node_force_densities = (LB_extern_nodeforcedensity_gpu*) Utils::realloc(host_extern_node_force_densities, size_of_extforces);
   
-  host_extern_nodeforces[n_extern_nodeforces].force[0] = (float)f[0];
-  host_extern_nodeforces[n_extern_nodeforces].force[1] = (float)f[1];
-  host_extern_nodeforces[n_extern_nodeforces].force[2] = (float)f[2];
+  host_extern_node_force_densities[n_extern_node_force_densities].force_density[0] = (float)f[0];
+  host_extern_node_force_densities[n_extern_node_force_densities].force_density[1] = (float)f[1];
+  host_extern_node_force_densities[n_extern_node_force_densities].force_density[2] = (float)f[2];
   
-  host_extern_nodeforces[n_extern_nodeforces].index = index;
-  n_extern_nodeforces++;
+  host_extern_node_force_densities[n_extern_node_force_densities].index = index;
+  n_extern_node_force_densities++;
   
-  if(lbpar_gpu.external_force == 0)lbpar_gpu.external_force = 1;
+  if(lbpar_gpu.external_force_density == 0)lbpar_gpu.external_force_density = 1;
 
-  lb_init_extern_nodeforces_GPU(n_extern_nodeforces, host_extern_nodeforces, &lbpar_gpu);
+  lb_init_extern_nodeforcedensities_GPU(n_extern_node_force_densities, host_extern_node_force_densities, &lbpar_gpu);
 
   return ES_OK;
 }
@@ -450,11 +446,11 @@ void lb_lbfluid_particles_add_momentum(float momentum[3]) {
   for (auto const &p : parts) {
     double new_velocity[3] = {
         p.m.v[0] +
-            momentum[0] / p.p.mass * time_step / n_part,
+            momentum[0] / p.p.mass / n_part,
         p.m.v[1] +
-            momentum[1] / p.p.mass * time_step / n_part,
+            momentum[1] / p.p.mass / n_part,
         p.m.v[2] +
-            momentum[2] / p.p.mass * time_step / n_part};
+            momentum[2] / p.p.mass / n_part};
     set_particle_v(p.p.identity, new_velocity);
   }
 }

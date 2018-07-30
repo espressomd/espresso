@@ -93,14 +93,14 @@ cdef class Thermostat(object):
                 self.turn_off()
             if thmst["type"] == "LANGEVIN":
                 self.set_langevin(kT=thmst["kT"], gamma=thmst[
-                                  "gamma"], gamma_rotation=thmst["gamma_rotation"])
+                                  "gamma"], gamma_rotation=thmst["gamma_rotation"], act_on_virtual=thmst["act_on_virtual"])
             if thmst["type"] == "LB":
-                self.set_lb(kT=thmst["kT"])
+                self.set_lb(kT=thmst["kT"], act_on_virtual=thmst["act_on_virtual"])
             if thmst["type"] == "NPT_ISO":
                 self.set_npt(kT=thmst["kT"], p_diff=thmst[
                              "p_diff"], piston=thmst["piston"])
-            if thmst["type"] == "DPD" or thmst["type"] == "INTER_DPD":
-                pass
+            if thmst["type"] == "DPD":
+                self.set_dpd(kT=thmst["kT"])
 
     def get_ts(self):
         return thermo_switch
@@ -116,6 +116,7 @@ cdef class Thermostat(object):
             lang_dict = {}
             lang_dict["type"] = "LANGEVIN"
             lang_dict["kT"] = temperature
+            lang_dict["act_on_virtual"] = thermo_virtual
             IF PARTICLE_ANISOTROPY:
                 lang_dict["gamma"] = [langevin_gamma[0],
                                       langevin_gamma[1],
@@ -137,6 +138,7 @@ cdef class Thermostat(object):
             lb_dict = {}
             lb_dict["type"] = "LB"
             lb_dict["kT"] = temperature
+            lb_dict["act_on_virtual"] = thermo_virtual
             thermo_list.append(lb_dict)
         if thermo_switch & THERMO_NPT_ISO:
             npt_dict = {}
@@ -151,24 +153,18 @@ cdef class Thermostat(object):
             # thermo_dict["piston"] = nptiso.piston
             # thermo_dict["p_diff"] = nptiso.p_diff
             thermo_list.append(npt_dict)
-        if (thermo_switch & THERMO_DPD) or (thermo_switch & THERMO_INTER_DPD):
+        if (thermo_switch & THERMO_DPD):
             dpd_dict = {}
-            if (thermo_switch & THERMO_DPD):
-                dpd_dict["type"] = "DPD"
-            else:
-                dpd_dict["type"] = "INTER_DPD"
+            dpd_dict["type"] = "DPD"
             dpd_dict["kT"] = temperature
-            dpd_dict["gamma"] = dpd_gamma
-            dpd_dict["r_cut"] = dpd_r_cut
-            dpd_dict["wf"] = dpd_wf
-            dpd_dict["tgamma"] = dpd_tgamma
-            dpd_dict["tr_cut"] = dpd_tr_cut
-            dpd_dict["twf"] = dpd_twf
             thermo_list.append(dpd_dict)
         return thermo_list
 
     def turn_off(self):
-        """Turns off all the thermostat and sets all the thermostat variables to zero"""
+        """
+        Turns off all the thermostat and sets all the thermostat variables to zero.
+
+        """
 
         global temperature
         temperature = 0.
@@ -196,37 +192,38 @@ cdef class Thermostat(object):
         return True
 
     @AssertThermostatType(THERMO_LANGEVIN)
-    def set_langevin(self, kT=None, gamma=None, gamma_rotation=None):
-        """Sets the Langevin thermostat with required parameters 'kT' 'gamma'
+    def set_langevin(self, kT=None, gamma=None, gamma_rotation=None, act_on_virtual=False):
+        """
+        Sets the Langevin thermostat with required parameters 'kT' 'gamma'
         and optional parameter 'gamma_rotation'.
 
         Parameters
         -----------
-        'kT' : float
-            Thermal energy of the simulated heat bath.
-
-        'gamma' : float
-            Contains the friction coefficient of the bath. If the feature 'PARTICLE_ANISOTROPY'
-            is compiled in then 'gamma' can be a list of three positive floats, for the friction
-            coefficient in each cardinal direction.
-
-        gamma_rotation : float, optional
-            The same applies to 'gamma_rotation', which requires the feature
-            'ROTATION' to work properly. But also accepts three floating point numbers
-            if 'PARTICLE_ANISOTROPY' is also compiled in.
+        kT : :obj:`float`
+             Thermal energy of the simulated heat bath.
+        gamma : :obj:`float`
+                Contains the friction coefficient of the bath. If the feature 'PARTICLE_ANISOTROPY'
+                is compiled in then 'gamma' can be a list of three positive floats, for the friction
+                coefficient in each cardinal direction.
+        gamma_rotation : :obj:`float`, optional
+                         The same applies to 'gamma_rotation', which requires the feature
+                         'ROTATION' to work properly. But also accepts three floating point numbers
+                         if 'PARTICLE_ANISOTROPY' is also compiled in.
+        act_on_virtual : :obj:`bool`, optional
+                If true the thermostat will act on virtual sites, default is off.
 
         """
 
         scalar_gamma_def = True
         scalar_gamma_rot_def = True
         IF PARTICLE_ANISOTROPY:
-            if isinstance(gamma, list):
+            if hasattr(gamma, "__iter__"):
                 scalar_gamma_def = False
             else:
                 scalar_gamma_def = True
 
         IF PARTICLE_ANISOTROPY:
-            if isinstance(gamma_rotation, list):
+            if hasattr(gamma_rotation, "__iter__"):
                 scalar_gamma_rot_def = False
             else:
                 scalar_gamma_rot_def = True
@@ -318,13 +315,18 @@ cdef class Thermostat(object):
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
         mpi_bcast_parameter(FIELD_TEMPERATURE)
         mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA)
+
+        global thermo_virtual
+        thermo_virtual = act_on_virtual
+        mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
+
         IF ROTATION:
             mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION)
         return True
 
     IF LB_GPU or LB:
         @AssertThermostatType(THERMO_LB)
-        def set_lb(self, kT=None):
+        def set_lb(self, kT=None, act_on_virtual=False):
             """
             Sets the LB thermostat with required parameter 'kT'.
 
@@ -332,8 +334,10 @@ cdef class Thermostat(object):
 
             Parameters
             ----------
-            'kT' : float
-                Specifies the thermal energy of the heat bath
+            kT : :obj:`float`
+                 Specifies the thermal energy of the heat bath.
+            act_on_virtual : :obj:`bool`, optional
+                If true the thermostat will act on virtual sites, default is off.
 
             """
 
@@ -350,6 +354,11 @@ cdef class Thermostat(object):
             thermo_switch = (thermo_switch or THERMO_LB)
             mpi_bcast_parameter(FIELD_THERMO_SWITCH)
             mpi_bcast_parameter(FIELD_TEMPERATURE)
+
+            global thermo_virtual
+            thermo_virtual = act_on_virtual
+            mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
+
             return True
 
     IF NPT:
@@ -360,15 +369,13 @@ cdef class Thermostat(object):
 
             Parameters
             ----------
-
-            'kT' : float
-                Thermal energy of the heat bath
-
-            'gamma0' : float
-                Friction coefficient of the bath
-
-            'gammav' : float
-                Artificial friction coefficient for the volume fluctuations. Mass of the artificial piston
+            kT : :obj:`float`
+                 Thermal energy of the heat bath
+            gamma0 : :obj:`float`
+                     Friction coefficient of the bath
+            gammav : :obj:`float`
+                     Artificial friction coefficient for the volume
+                     fluctuations. Mass of the artificial piston.
 
             """
 
@@ -390,37 +397,28 @@ cdef class Thermostat(object):
             mpi_bcast_parameter(FIELD_NPTISO_G0)
             mpi_bcast_parameter(FIELD_NPTISO_GV)
 
-    IF DPD or INTER_DPD:
-        @AssertThermostatType(THERMO_DPD, THERMO_INTER_DPD)
-        def set_dpd(self, **kwargs):
+    IF DPD:
+        def set_dpd(self, kT=None):
             """
-            Sets the DPD thermostat with required parameters 'kT' 'gamma' 'r_cut'.
+            Sets the DPD thermostat with required parameters 'kT'.
+            This also activates the DPD interactions.
 
             Parameters
             ----------
             'kT' : float
                 Thermal energy of the heat bath, floating point number
 
-            'gamma' : float
-                Friction the particles experience in the bath, floating point number
-
-            'r_cut' : float
-                Cut off value, floating point number
-
-            'wf' : integer, optional
-                Integer value zero or one, affects scaling of the random forces
-
-            'tgamma' : float, optional
-                Friction coefficient for the transverse DPD algorithm
-
-            'tr_cut' : float, optional
-                Cut off radius for the transverse DPD
-
-            'twf' : integer
-                Interger value zero or one, affects the scaling of the random forces
-                in the transverse DPD algorithm
-
             """
-            req = ["kT", "gamma", "r_cut"]
-            valid = ["kT", "gamma", "r_cut", "tgamma", "tr_cut", "wf", "twf"]
-            raise Exception("Not implemented yet.")
+
+            if kT is None:
+                raise ValueError(
+                    "kT has to be given as keyword args")
+            if not isinstance(kT, float):
+                raise ValueError("temperature must be a positive number")
+            global temperature
+            temperature = float(kT)
+            global thermo_switch
+            thermo_switch = (thermo_switch | THERMO_DPD)
+
+            mpi_bcast_parameter(FIELD_THERMO_SWITCH)
+            mpi_bcast_parameter(FIELD_TEMPERATURE)

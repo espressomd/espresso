@@ -24,7 +24,6 @@
 #include "Variant.hpp"
 
 namespace ScriptInterface {
-
 namespace detail {
 /**
  * @brief Implementation of get_value.
@@ -36,10 +35,44 @@ template <typename T, typename = void> struct get_value_helper {
   T operator()(Variant const &v) const { return boost::get<T>(v); }
 };
 
-/* Vector case */
+/* Vector<N,T> case */
 template <size_t N, typename T> struct get_value_helper<Vector<N, T>, void> {
   Vector<N, T> operator()(Variant const &v) const {
     return Vector<N, T>(boost::get<std::vector<double>>(v));
+  }
+};
+
+template <typename T>
+struct GetVectorOrEmpty : boost::static_visitor<std::vector<T>> {
+  /* Catch all case -> wrong type. */
+  template <typename U> std::vector<T> operator()(U const &) const {
+    throw boost::bad_get{};
+  }
+
+  /* Standard case, correct type */
+  std::vector<T> operator()(std::vector<T> const &v) const { return v; }
+  /* Variant is an empty vector<Variant> -> return empty vector<T> instead,
+   *  else throw wrong type. */
+  std::vector<T> operator()(std::vector<Variant> const &vv) const {
+    if (vv.empty()) {
+      return {};
+    } else {
+      throw boost::bad_get{};
+    }
+  }
+};
+
+/* std::vector cases
+* We implicitly transform an empty vector<Variant> into a empty vector<T>. */
+template <> struct get_value_helper<std::vector<int>, void> {
+  std::vector<int> operator()(Variant const &v) const {
+    return boost::apply_visitor(GetVectorOrEmpty<int>{}, v);
+  }
+};
+
+template <> struct get_value_helper<std::vector<double>, void> {
+  std::vector<double> operator()(Variant const &v) const {
+    return boost::apply_visitor(GetVectorOrEmpty<double>{}, v);
   }
 };
 
@@ -47,14 +80,14 @@ template <size_t N, typename T> struct get_value_helper<Vector<N, T>, void> {
    an ObjectId variant. If the type is a derived type, the type is
    also checked.
 
-   We do a couple of checks: First we chack if the id is actualy the
+   We do a couple of checks: First we check if the id is actualy the
    empty id, which means None and is a valid value, represented by
    an empty ptr.
    If the id is not empty, we try to retieve an instance for that id.
    If it does not exist we throw, this means the caller supplied an id
    with no corresponding instance.
-   If we can find an instance, we check if it actualy has the right
-   type, and if so, we return it, therwise we throw.
+   If we can find an instance, we check if it has the right
+   type, and if so, we return it, otherwise we throw.
 */
 template <typename T>
 struct get_value_helper<
@@ -76,7 +109,7 @@ struct get_value_helper<
       if (t_ptr) {
         return t_ptr;
       } else {
-        throw std::runtime_error("Wrong type.");
+        throw std::runtime_error("Wrong type: " + so_ptr->name());
       }
     }
   }
@@ -96,6 +129,92 @@ template <typename T> T get_value(Variant const &v) {
   return detail::get_value_helper<T>{}(v);
 }
 
+/**
+ * @brief Get a value from a VariantMap by name, or throw
+ *        if it does not exist or is not convertiable to
+ *        the target type.
+ *
+ */
+template <typename T>
+T get_value(VariantMap const &vals, std::string const &name) {
+  try {
+    return get_value<T>(vals.at(name));
+  } catch (boost::bad_get const &) {
+    /* TODO: Better exceptions. */
+    throw;
+  } catch (std::out_of_range const &) {
+    /* TODO: Better exceptions. */
+    throw;
+  }
+}
+
+/**
+ * @brief Get a value from a VariantMap by name, or return a default
+ *        value if it does not exsist.
+ */
+template <typename T>
+T get_value_or(VariantMap const &vals, std::string const &name,
+               T const &default_) {
+  if (vals.count(name)) {
+    return get_value<T>(vals.at(name));
+  } else {
+    return default_;
+  }
+}
+
+/**
+ * @brief Make a new T with arguments extracted from a VariantMap.
+ */
+template <typename T, typename... Types, typename... ArgNames>
+T make_from_args(VariantMap const &vals, ArgNames &&... args) {
+  return T{get_value<Types>(vals, std::forward<ArgNames>(args))...};
+}
+
+/**
+ * @brief Make a new std::shared_ptr<T> with arguments extracted from a
+ * VariantMap.
+ */
+template <typename T, typename... Types, typename... ArgNames>
+std::shared_ptr<T> make_shared_from_args(VariantMap const &vals,
+                                         ArgNames &&... args) {
+  return std::make_shared<T>(
+      get_value<Types>(vals, std::forward<ArgNames>(args))...);
+}
+
+/**
+ * @brief Call a function with parameters fetched from a VariantMap.
+ *
+ * If not provided the types of the arguments are deduced from the
+ * function signature.
+ *
+ * (In R (T::*m)(Args...), m is a pointer to member function of a T,
+ * returning R and taking Args as parameters.)
+ */
+template <typename T, typename R, typename... Args, typename... ArgNames>
+auto call_with_args(T &this_, R (T::*m)(Args...), VariantMap const &vals,
+                    ArgNames &&... args) -> R {
+  return (this_.*m)(get_value<Args>(vals, std::forward<ArgNames>(args))...);
+}
+
+/**
+ * @brief Call a function with parameters fetched from a VariantMap.
+ *
+ * If not provided the types of the arguments are deduced from the
+ * function signature.
+ *
+ * (In R (*m)(Args...), m is a function pointer,
+ * returning R and taking Args as parameters.)
+ */
+template <typename R, typename... Args, typename... ArgNames>
+auto call_with_args(R (*m)(Args...), VariantMap const &vals,
+                    ArgNames &&... args) -> R {
+  return (*m)(get_value<Args>(vals, std::forward<ArgNames>(args))...);
+}
+
+template <typename T>
+void set_from_args(T &dst, VariantMap const &vals, const char *name) {
+  dst = get_value<T>(vals, name);
+}
 } /* namespace ScriptInterface */
 
 #endif

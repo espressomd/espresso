@@ -1,5 +1,7 @@
-Getting involved
-================
+.. _Contributing:
+
+Contributing
+============
 
 Up to date information about the development of can be found at the web
 page http://espressomd.org As the important information can change in
@@ -18,6 +20,8 @@ information about the following topics there:
 -  Registering to mailing lists
 
 -  Submitting a bug report
+
+.. _Community support and mailing lists:
 
 Community support and mailing lists
 -----------------------------------
@@ -46,6 +50,8 @@ Please remember that this is a community mailing list. It is other users
 and developers who are answering your questions. They do it in their
 free time and are not paid for doing it.
 
+.. _Contributing your own code:
+
 Contributing your own code
 --------------------------
 
@@ -54,43 +60,31 @@ your own code which could be useful to others, you are very welcome to
 contribute it to the community. Before you start making any changes to
 the code, you should obtain the current development version of it. For
 more information about how to obtain the development version, refer to
-the homepage http://espressomd.org.
+the :ref:`Developers guide`.
+
+If you are looking for good ways to get started with contributing, please
+have a look on the information available on github_.
 
 It is also generally a good idea to contact the mailing lists before you
 start major coding projects. It might be that someone else is already
 working on the problem or has a solution at hand.
 
-Developers’ guide
------------------
+You find more detailed information on our developement processes in the
+:ref:`Developers guide`.
 
-Besides the User guide, also contains a Developers’ guide which is a
-programmer documentation automatically built from comments in the source
-code and using Doxygen. It provides a cross-referenced documentation of
-all functions and data structures available in source code. It can be
-built by typing
+.. _github: https://github.com/espressomd/espresso/blob/python/CONTRIBUTING.md
 
-make dg
+.. _Building the User's guide:
 
-in the build directory. Afterwards it can be found in the subdirectory
-of the build directory: ``doc/dg/html/index.html``.
+Building the User's guide
+-------------------------
 
-A recent version of this guide can also be found on the homepage
-http://espressomd.org.
-
-User’s guide
-------------
-
-If, while reading this user guide, you notice any mistakes or badly (if
+If, while reading this documentation, you notice any mistakes or badly (if
 at all) described features or commands, you are very welcome to
 contribute to the guide and have others benefit from your knowledge.
 
 For this, you should also checkout the development version as described
-on the homepage. As the user guide, like all code, is always in flow and
-changes are made regularly, there are already many paragraphs marked
-with a “todo” box. To turn on these boxes, edit the main file
-``doc/ug/ug.tex`` and adapt the inclusion of the LaTeX package
-``todonotes``.
+on the homepage. You can then build the documentation by typing
 
-You can then build the user guide by typing
+make sphinx
 
-make ug

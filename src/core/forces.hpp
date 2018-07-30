@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef _FORCES_HPP
-#define _FORCES_HPP
+#ifndef CORE_FORCES_HPP
+#define CORE_FORCES_HPP
 /** \file forces.hpp Force calculation. 
  *
  *  \todo Preprocessor switches for all forces (Default: everything is turned on).
@@ -28,10 +28,10 @@
  *  For more information see forces.cpp .
  */
 
-#include "iccp3m.hpp"
-#include "external_potential.hpp"
 #include "actor/Actor.hpp"
 #include "actor/ActorList.hpp"
+#include "interaction_data.hpp"
+
 extern ActorList forceActors;
 
 /** \name Exported Functions */
@@ -72,7 +72,6 @@ void init_forces_ghosts();
  Uses <a href=P3M_calc_kspace_forces> P3M_calc_kspace_forces </a>
  *  </ol>
  */
-
 void force_calc();
 
 /** Check if forces are NAN 
@@ -81,19 +80,6 @@ void check_forces();
 
 /** Calculate long range forces (P3M, MMM2d...). */
 void calc_long_range_forces();
-
-void 
-calc_non_bonded_pair_force_from_partcfg(Particle const *p1, Particle const *p2, 
-                                        IA_parameters *ia_params,
-                                        double d[3], double dist, double dist2,
-                                        double force[3],
-                                        double torque1[3] = NULL, 
-                                        double torque2[3] = NULL);
-
-void
-calc_non_bonded_pair_force_from_partcfg_simple(Particle const *p1, Particle const *p2,
-                                               double d[3], double dist,
-                                               double dist2, double force[3]);
 /*@}*/
 
 #endif

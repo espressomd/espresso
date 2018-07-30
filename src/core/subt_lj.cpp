@@ -27,20 +27,17 @@
 #ifdef LENNARD_JONES
 #include "communication.hpp"
 
-int subt_lj_set_params(int bond_type, double k, double r)
+int subt_lj_set_params(int bond_type)
 {
   if(bond_type < 0)
     return ES_ERROR;
-  
+
   make_bond_type_exist(bond_type);
 
-  bonded_ia_params[bond_type].p.subt_lj.k = k;
-  bonded_ia_params[bond_type].p.subt_lj.r = r;
-  bonded_ia_params[bond_type].type = BONDED_IA_SUBT_LJ;  
-  bonded_ia_params[bond_type].p.subt_lj.r2 = SQR(bonded_ia_params[bond_type].p.subt_lj.r);
+  bonded_ia_params[bond_type].type = BONDED_IA_SUBT_LJ;
   bonded_ia_params[bond_type].num = 1;
 
-  mpi_bcast_ia_params(bond_type, -1); 
+  mpi_bcast_ia_params(bond_type, -1);
 
   return ES_OK;
 }

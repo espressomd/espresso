@@ -18,18 +18,19 @@
 */
 
 #include "initialize.hpp"
-#include "NoWhere.hpp"
-#include "ScriptInterface.hpp"
-#include "Wall.hpp"
-#include "Sphere.hpp"
 #include "Cylinder.hpp"
-#include "SpheroCylinder.hpp"
-#include "Maze.hpp"
+#include "Ellipsoid.hpp"
 #include "HollowCone.hpp"
-#include "Pore.hpp"
+#include "Maze.hpp"
+#include "NoWhere.hpp"
 #include "Rhomboid.hpp"
+#include "ScriptInterface.hpp"
+#include "SimplePore.hpp"
 #include "Slitpore.hpp"
+#include "Sphere.hpp"
+#include "SpheroCylinder.hpp"
 #include "Stomatocyte.hpp"
+#include "Wall.hpp"
 
 namespace ScriptInterface {
 namespace Shapes {
@@ -37,6 +38,8 @@ void initialize() {
   ScriptInterface::register_new<ScriptInterface::Shapes::NoWhere>(
       "Shapes::NoWhere");
   ScriptInterface::register_new<ScriptInterface::Shapes::Wall>("Shapes::Wall");
+  ScriptInterface::register_new<ScriptInterface::Shapes::Ellipsoid>(
+      "Shapes::Ellipsoid");
   ScriptInterface::register_new<ScriptInterface::Shapes::Sphere>(
       "Shapes::Sphere");
   ScriptInterface::register_new<ScriptInterface::Shapes::Cylinder>(
@@ -46,13 +49,14 @@ void initialize() {
   ScriptInterface::register_new<ScriptInterface::Shapes::Maze>("Shapes::Maze");
   ScriptInterface::register_new<ScriptInterface::Shapes::HollowCone>(
       "Shapes::HollowCone");
-  ScriptInterface::register_new<ScriptInterface::Shapes::Pore>("Shapes::Pore");
   ScriptInterface::register_new<ScriptInterface::Shapes::Rhomboid>(
       "Shapes::Rhomboid");
   ScriptInterface::register_new<ScriptInterface::Shapes::Slitpore>(
       "Shapes::Slitpore");
   ScriptInterface::register_new<ScriptInterface::Shapes::Stomatocyte>(
       "Shapes::Stomatocyte");
+  ScriptInterface::register_new<ScriptInterface::Shapes::SimplePore>(
+      "Shapes::SimplePore");
 }
 } /* namespace Shapes */
 } /* namespace ScriptInterface */

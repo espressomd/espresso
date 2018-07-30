@@ -23,9 +23,12 @@
  */
 #include "thermostat.hpp"
 #include "communication.hpp"
-#include "lattice.hpp"
 #include "npt.hpp"
 #include "ghmc.hpp"
+#include "lb.hpp"
+#include "thermalized_bond.hpp"
+#include "dpd.hpp"
+
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
@@ -34,6 +37,9 @@
 int thermo_switch = THERMO_OFF;
 /** Temperature */
 double temperature = 0.0;
+
+/** True if the thermostat should acton on virtual particles. */
+bool thermo_virtual = false;
 
 using Thermostat::GammaType;
 
@@ -55,11 +61,6 @@ GammaType langevin_pref1;
 GammaType langevin_pref2;
 GammaType langevin_pref2_rotation;
 
-/* Langevin for translations */
-bool langevin_trans = true;
-/* Langevin for rotations */
-bool langevin_rotate = true;
-
 /* NPT ISOTROPIC THERMOSTAT */
 // INSERT COMMENT
 double nptiso_gamma0 = 0.0;
@@ -72,16 +73,10 @@ int ghmc_nmd = 1;
 // phi parameter for partial momentum update step in GHMC
 double ghmc_phi = 0;
 
-#ifdef MULTI_TIMESTEP
-GammaType langevin_pref1_small, langevin_pref2_small;
-static GammaType langevin_pref2_small_buffer;
-#endif
-
 /** buffers for the work around for the correlated random values which cool the
    system,
     and require a magical heat up whenever reentering the integrator. */
 static GammaType langevin_pref2_buffer;
-
 static GammaType langevin_pref2_rotation_buffer;
 
 #ifdef NPT
@@ -92,25 +87,8 @@ double nptiso_pref4;
 #endif
 
 void thermo_init_langevin() {
-  langevin_pref1 = -langevin_gamma / time_step;
+  langevin_pref1 = -langevin_gamma;
   langevin_pref2 = sqrt(24.0 * temperature / time_step * langevin_gamma);
-  ;
-
-#ifdef MULTI_TIMESTEP
-  if (smaller_time_step > 0.) {
-    langevin_pref1_small = -langevin_gamma / smaller_time_step;
-#ifndef LANGEVIN_PER_PARTICLE
-    langevin_pref2_small =
-        sqrt(24.0 * temperature * langevin_gamma / smaller_time_step);
-#endif
-  } else {
-    langevin_pref1_small = -langevin_gamma / time_step;
-#ifndef LANGEVIN_PER_PARTICLE
-    langevin_pref2_small =
-        sqrt(24.0 * temperature * langevin_gamma / time_step);
-#endif
-  }
-#endif
 
   /* If gamma_rotation is not set explicitly,
      use the linear one. */
@@ -121,6 +99,20 @@ void thermo_init_langevin() {
   langevin_pref2_rotation =
       sqrt(24.0 * temperature * langevin_gamma_rotation / time_step);
 
+#ifdef PARTICLE_ANISOTROPY
+#ifdef ROTATION
+  THERMO_TRACE(
+      fprintf(stderr, "%d: thermo_init_langevin: langevin_gamma_rotation=(%f,%f,%f), "
+                      "langevin_pref2_rotation=(%f,%f,%f)",
+              this_node, langevin_gamma_rotation[0], langevin_gamma_rotation[1],
+              langevin_gamma_rotation[2], langevin_pref2_rotation[0],
+              langevin_pref2_rotation[1], langevin_pref2_rotation[2]));
+#endif
+  THERMO_TRACE(fprintf(
+      stderr, "%d: thermo_init_langevin: langevin_pref1=(%f,%f,%f), langevin_pref2=(%f,%f,%f)",
+      this_node, langevin_pref1[0], langevin_pref1[1], langevin_pref1[2],
+      langevin_pref2[0], langevin_pref2[1], langevin_pref2[2]));
+#else
 #ifdef ROTATION
   THERMO_TRACE(
       fprintf(stderr, "%d: thermo_init_langevin: langevin_gamma_rotation=%f, "
@@ -130,20 +122,16 @@ void thermo_init_langevin() {
   THERMO_TRACE(fprintf(
       stderr, "%d: thermo_init_langevin: langevin_pref1=%f, langevin_pref2=%f",
       this_node, langevin_pref1, langevin_pref2));
+#endif
 }
 
 #ifdef NPT
 void thermo_init_npt_isotropic() {
   if (nptiso.piston != 0.0) {
     nptiso_pref1 = -nptiso_gamma0 * 0.5 * time_step;
-#ifdef MULTI_TIMESTEP
-    if (smaller_time_step > 0.)
-      nptiso_pref2 = sqrt(12.0 * temperature * nptiso_gamma0 * time_step) *
-                     smaller_time_step;
-    else
-#endif
+
       nptiso_pref2 =
-          sqrt(12.0 * temperature * nptiso_gamma0 * time_step) * time_step;
+          sqrt(12.0 * temperature * nptiso_gamma0 * time_step);
     nptiso_pref3 = -nptiso_gammav * (1.0 / nptiso.piston) * 0.5 * time_step;
     nptiso_pref4 = sqrt(12.0 * temperature * nptiso_gammav * time_step);
     THERMO_TRACE(fprintf(
@@ -160,18 +148,18 @@ void thermo_init_npt_isotropic() {
 #endif
 
 void thermo_init() {
+
+  // Init thermalized bond despite of thermostat 
+  if (n_thermalized_bonds) {
+    thermalized_bond_init();
+  }
+
   if (thermo_switch == THERMO_OFF) {
     return;
   }
-#ifdef INTER_DPD
-  if (thermo_switch & THERMO_INTER_DPD)
-    inter_dpd_init();
-#endif
-  if (thermo_switch & THERMO_LANGEVIN)
-    thermo_init_langevin();
+  if(thermo_switch & THERMO_LANGEVIN ) thermo_init_langevin();
 #ifdef DPD
-  if (thermo_switch & THERMO_DPD)
-    thermo_init_dpd();
+  if(thermo_switch & THERMO_DPD) dpd_init();
 #endif
 #ifdef NPT
   if (thermo_switch & THERMO_NPT_ISO)
@@ -189,11 +177,6 @@ void langevin_heat_up() {
 
   langevin_pref2_rotation_buffer = langevin_pref2_rotation;
   langevin_pref2_rotation *= sqrt(3);
-
-#ifdef MULTI_TIMESTEP
-  langevin_pref2_small_buffer = langevin_pref2_small;
-  langevin_pref2_small *= sqrt(3);
-#endif
 }
 
 void thermo_heat_up() {
@@ -205,20 +188,15 @@ void thermo_heat_up() {
     dpd_heat_up();
   }
 #endif
-#ifdef INTER_DPD
-  if (thermo_switch & THERMO_INTER_DPD) {
-    inter_dpd_heat_up();
+  if (n_thermalized_bonds) {
+    thermalized_bond_heat_up();
   }
-#endif
+
 }
 
 void langevin_cool_down() {
   langevin_pref2 = langevin_pref2_buffer;
   langevin_pref2_rotation = langevin_pref2_rotation_buffer;
-
-#ifdef MULTI_TIMESTEP
-  langevin_pref2_small = langevin_pref2_small_buffer;
-#endif
 }
 
 void thermo_cool_down() {
@@ -230,34 +208,7 @@ void thermo_cool_down() {
     dpd_cool_down();
   }
 #endif
-#ifdef INTER_DPD
-  if (thermo_switch & THERMO_INTER_DPD)
-    inter_dpd_cool_down();
-#endif
-}
-
-int get_cpu_temp() {
-  std::ifstream f("/sys/class/thermal/thermal_zone0/temp");
-  int temp;
-  f >> temp;
-  f.close();
-  return (temp + 273150) / 1000;
-}
-
-static int volatile cpu_temp_count = 0;
-void set_cpu_temp(int temp) {
-  while (temp != get_cpu_temp()) {
-    if (temp < get_cpu_temp()) {
-      // printf("Cooling down CPU from %dK to %dK\n", get_cpu_temp(), temp);
-      // pause for 1 second to give the CPU time to cool down
-      usleep(1e6);
-    } else {
-      // printf("Heating up CPU from %dK to %dK\n", get_cpu_temp(), temp);
-      // crunch some numbers to heat up the CPU
-      cpu_temp_count = 0;
-      for (int i = 0; i < 1e9; ++i) {
-        cpu_temp_count += i;
-      }
-    }
+  if (n_thermalized_bonds) {
+    thermalized_bond_cool_down();
   }
 }

@@ -240,6 +240,12 @@ BOOST_AUTO_TEST_CASE(resize) {
     l.resize(127);
     BOOST_CHECK(l.size() == 127);
     BOOST_CHECK(l.capacity() == 127);
+    l.resize(42);
+    BOOST_CHECK(l.size() == 42);
+    BOOST_CHECK(l.capacity() == 42);
+    l.resize(0);
+    BOOST_CHECK(l.size() == 0);
+    BOOST_CHECK(l.capacity() == 0);
   }
 
   /* List::resize() with size > capacity */
@@ -372,6 +378,7 @@ BOOST_AUTO_TEST_CASE(erase) {
     std::iota(l.begin(), l.end(), 0);
 
     auto r = l.erase(l.end() - 4, l.end());
+    BOOST_CHECK(*r == (31 - 4));
     BOOST_CHECK(l.size() == (32 - 4));
     BOOST_CHECK(l.front() == 0);
     BOOST_CHECK(l.back() == (31 - 4));
@@ -383,6 +390,7 @@ BOOST_AUTO_TEST_CASE(erase) {
     std::iota(l.begin(), l.end(), 0);
 
     auto r = l.erase(l.begin() + 2, l.end() - 2);
+    BOOST_CHECK(*r == 31);
     BOOST_CHECK(l.size() == 4);
     BOOST_CHECK(l.front() == 0);
     BOOST_CHECK(l.back() == 31);

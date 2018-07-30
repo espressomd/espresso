@@ -21,6 +21,7 @@ from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from . cimport polymer
 import numpy as np
+from espressomd.utils import is_valid_type
 
 def validate_params(_params, default):
     if _params["N_P"] <= 0:
@@ -32,13 +33,16 @@ def validate_params(_params, default):
     if _params["bond_length"] < 0 :
         raise ValueError(
                 "bond_length has to be a positive float" )
+    if _params["bond"]._bond_id == -1:
+        raise Exception(
+                "The bonded interaction passed as 'bond' keyword argument has not yet been added to the list of active bonds in Espresso.")
     if _params["start_id"] < 0:
         raise ValueError(
                 "start_id has to be a positive Integer")
     if not isinstance(_params["start_pos"], np.ndarray) or len(_params["start_pos"]) != 3:
         raise ValueError(
                 "start_pos has to be an numpy array with 3 Elements" )
-    if not isinstance(_params["mode"], int):
+    if not is_valid_type(_params["mode"], int):
         raise ValueError(
                 "mode has to be a positive Integer" )
     if _params["shield"] < 0 and default["shield"] != _params["shield"]:
@@ -47,7 +51,7 @@ def validate_params(_params, default):
     if _params["max_tries"] < 0 and default["max_tries"] != _params["max_tries"]:
         raise ValueError(
                 "max_tries has to be a positive Integer")
-    if not isinstance(_params["val_poly"], float) and default["val_poly"] != _params["val_poly"]:
+    if not is_valid_type(_params["val_poly"], float) and default["val_poly"] != _params["val_poly"]:
         raise ValueError(
                 "val_poly has to be a float")
     if _params["charge_distance"] < 0:
@@ -71,51 +75,86 @@ def validate_params(_params, default):
 
 # wrapper function to expose to the user interface
 def create_polymer(**kwargs):
-    """
-    Wrapper function to setup polymers.
+    """ Generators have a ``Yields`` section instead of a ``Returns`` section.
 
     Parameters
     ----------
-    N_P                 : int
-                          Number of polymer chains
-    MPC                 : int
-                          Number of monomers per chain
-    bond_length         : float
-                          distance between adjacent monomers in a chain
-    start_id            : int, optional
-                          Particle ID of the first monomer, all other particles will have larger IDs
-    start_pos           : array_like
-                          Position of the first monomer
-    mode                : int, optional
-                          Selects a specific random walk procedure for the
-                          polymer setup mode = 1 uses a common random walk,
-                          mode = 2 produces a pruned self-avoiding random walk,
-                          and mode = 0 a self-avoiding random walk. Note that
-                          mode = 2 does not produce a true self- avoiding
-                          random walk distribution but is much faster than mode = 0
-    shield              : float, optional
-                          Shielding radius for the pruned self-avoiding walk mode
-    max_tries           : int, optional
-                          Maximal number of attempts to set up a polymer,
-                          default value is 30,000. Depending on the random walk
-                          mode and the polymer length this value needs to be
-                          adapted. 
-    val_poly            : float, optional
-                          Valency of the monomers, default is 0.0
-    charge_distance     : int, optional
-                          Distance between charged monomers along the chain. 
-    type_poly_neutral   : int, optional
-                          Particle type of neutal monomers
-    type_poly_charged   : int, optional
-                          Particle type for charged monomers
-    angle               : float, optional
-    angle2              : float, optional
-                          The both angles angle and angle2 allow to set up
-                          planar or helical polymers, they fix the angles
-                          between adjacent bonds.
-    pos2                : array_like, optional
-                          Sets the position of the second monomer. 
+    n : :obj:`intd`
+        The upper limit of the range to generate, from 0 to `n` - 1.
+    N_P : :obj:`int`
+        Number of polymer chains
+    MPC : :obj:`int`
+        Number of monomers per chain
+    bond_length : :obj:`float`
+        distance between adjacent monomers in a chain
+    bond : :obj:`espressomd.interactions.BondedInteraction`
+        The bonded interaction to be set up between the monomers. 
+    start_id : :obj:`int`, optional
+        Particle ID of the first monomer, all other particles will have larger IDs. Defaults to 0
+    start_pos : array_like :obj:`float`. Defaults to numpy.array([0, 0, 0])
+        Position of the first monomer
+    mode : :obj:`int`, optional
+        Selects a specific random walk procedure for the
+        polymer setup mode = 1 uses a common random walk,
+        mode = 2 produces a pruned self-avoiding random walk,
+        and mode = 0 a self-avoiding random walk. Note that
+        mode = 2 does not produce a true self-avoiding
+        random walk distribution but is much faster than mode = 0. Defaults to 1
+    shield : :obj:`float`, optional
+        Shielding radius for the pruned self-avoiding walk mode. Defaults to 0
+    max_tries : :obj:`int`, optional
+        Maximal number of attempts to set up a polymer,
+        default value is 1,000. Depending on the random walk
+        mode and the polymer length this value needs to be
+        adapted. 
+    val_poly : :obj:`float`, optional
+        Valency of the monomers, default is 0.0
+    charge_distance : :obj:`int`, optional
+        Distance between charged monomers along the chain. Default is 1
+    type_poly_neutral : :obj:`int`, optional
+        Particle type of neutal monomers, default is 0.
+    type_poly_charged : :obj:`int`, optional
+        Particle type for charged monomers, default is 1
+    angle : :obj:`float`, optional
+    angle2 : :obj:`float`, optional
+        The both angles angle and angle2 allow to set up
+        planar or helical polymers, they fix the angles
+        between adjacent bonds.
+    pos2 : array_like, optional
+        Sets the position of the second monomer. Defaults to numpy.array([0, 0, 0]).
+    constraints : :obj:`int`, optional
+        Either 0 or 1, default is 0. If 1, the particle setup-up tries to obey previously defined constraints.
+        
+    Examples
+    --------
+    This example sets 2 polyelectrolyte chains of the length 10. Beads are connected by FENE potential.
+
+    >>> fene = interactions.FeneBond(k=10, d_r_max=2)
+    >>> polymer.create_polymer(
+            N_P = 2, 
+            MPC = 10, 
+            bond_length = 1, 
+            bond = fene, 
+            val_poly = -1.0)
+
+    Note that a the first monomer of a polymer is always assigned the type `type_poly_charge`.
+    The next `charge_distance` monomers have type `type_poly_neutral`.
+    This process repeats untill all monomers are placed.
+    Afterwards, all monomers of type `type_poly_charge` are assigned the charge `val_poly`.
+    Thus the following example creates a single uncharged polymer where all monomers are of `type=0`:
+
+    >>> fene = interactions.FeneBond(k=10, d_r_max=2)
+    >>> polymer.create_polymer(
+            N_P = 1, 
+            MPC = 10, 
+            bond_length = 1, 
+            bond = fene, 
+            val_poly = 0.0,
+            charge_distance = 1,
+            type_poly_charge = 0)
+
     """
+
     params=dict()
     default_params=dict()
     default_params["N_P"] = 0 
@@ -167,9 +206,3 @@ def create_polymer(**kwargs):
              params["val_poly"], params["charge_distance"], params["type_poly_neutral"], \
              params["type_poly_charged"], bond_id, params["angle"], \
              params["angle2"], start_pos2, params["constraints"])
-
-    #poly=Polymer(**kwargs)
-
-
-
-

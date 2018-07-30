@@ -133,8 +133,8 @@ __global__ void createGreensfcn() {
       fde_parameters_gpu.greensfcn[index] = 0.0f;
     } else {
       fde_parameters_gpu.greensfcn[index] =
-          -4.0f * PI_FLOAT * fde_parameters_gpu.bjerrum_length *
-          fde_parameters_gpu.kT * fde_parameters_gpu.agrid *
+          -4.0f * PI_FLOAT * fde_parameters_gpu.prefactor *
+          fde_parameters_gpu.agrid *
           fde_parameters_gpu.agrid * 0.5f /
           (cos(2.0f * PI_FLOAT * coord[0] /
                (cufftReal)fde_parameters_gpu.dim_x) +

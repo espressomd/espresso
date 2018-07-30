@@ -26,6 +26,7 @@ IF SCAFACOS == 1:
     from . cimport scafacos
 
 from espressomd.utils cimport handle_errors
+from espressomd.utils import is_valid_type
 
 IF DIPOLES == 1:
     cdef class MagnetostaticInteraction(Actor):
@@ -33,15 +34,8 @@ IF DIPOLES == 1:
 
         Attributes
         ----------
-        bjerrum_length : float
-            Similar to the Bjerrum length in electrostatics.
-            Gives the separation at which the dipolar interaction energy
-            corrensponds to a thermal energy of :math:`1 k_B T`.
-            If not set, an explicit choice for the `prefactor` has to be made.
-
-        prefactor : float, optional
-            If given, the magnetostatic prefactor is explicitly set to
-            this value. Non-optional if `bjerrum_length` is not set.
+        prefactor : :obj:`float`
+                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
 
         """
 
@@ -49,43 +43,17 @@ IF DIPOLES == 1:
             """Check validity of given parameters.
 
             """
-            if not (("bjerrum_length" in self._params) ^ ("prefactor" in self._params)):
-                raise ValueError(
-                    "Either the bjerrum length or the explicit prefactor has to be given")
-
-            if "bjerrum_length" in self._params:
-                if not (self._params["bjerrum_length"] > 0.0):
-                    raise ValueError(
-                        "Bjerrum_length should be a positive double")
-            if "prefactor" in self._params:
-                if not self._params["prefactor"] > 0:
-                    raise ValueError("prefactor should be a positive double")
+            if not self._params["prefactor"] >= 0:
+                raise ValueError("prefactor should be a positive float")
 
         def set_magnetostatics_prefactor(self):
-            """Set the magnetostatics prefactor using either the `bjrerrum_length`
-            or, if given, `prefactor`.
-
             """
-            if "bjerrum_length" in self._params:
-                if temperature == 0:
+            Set the magnetostatics prefactor 
+            
+            """
+            if dipolar_set_Dprefactor(self._params["prefactor"]):
                     raise Exception(
-                        "Bjerrum length is not defined, if temperature is zero")
-                if dipolar_set_Dbjerrum(self._params["bjerrum_length"]):
-                    raise Exception(
-                        "Could not set magnetostatic bjerrum length")
-                return True
-            if "prefactor" in self._params:
-                if temperature == 0.:
-                    if dipolar_set_Dbjerrum(self._params["prefactor"]):
-                        raise Exception(
-                            "Could not set magnetostatic prefactor")
-                else:
-                    if dipolar_set_Dbjerrum(self._params["prefactor"] / temperature):
-                        raise Exception(
-                            "Could not set magnetostatic prefactor")
-                    else:
-                        self._params["bjerrum_length"] = self.params[
-                            "prefactor"] / temperature
+                        "Could not set magnetostatic prefactor")
             # also necessary on 1 CPU or GPU, does more than just broadcasting
             mpi_bcast_coulomb_params()
 
@@ -97,7 +65,7 @@ IF DIPOLES == 1:
             return coulomb.Dmethod
 
         def _deactivate_method(self):
-            dipolar_set_Dbjerrum(0.0)
+            dipolar_set_Dprefactor(0.0)
             coulomb.Dmethod = DIPOLAR_NONE
             mpi_bcast_coulomb_params()
 
@@ -107,27 +75,23 @@ IF DP3M == 1:
 
         Attributes
         ----------
-        accuracy : float
-            P3M tunes its parameters to provide this target accuracy.
-
-        alpha : float
-            Ewald parameter.
-
-        cao : int
-            Charge-assignment order, an integer between -1 and 7.
-
-        mesh : int or array_like
-            Number of mesh points.
-
+        prefactor : :obj:`float`
+                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+        accuracy : :obj:`float`
+                   P3M tunes its parameters to provide this target accuracy.
+        alpha : :obj:`float`
+                Ewald parameter.
+        cao : :obj:`int`
+              Charge-assignment order, an integer between -1 and 7.
+        mesh : :obj:`int` or array_like
+               Number of mesh points.
         mesh_off : array_like
-            Mesh offset.
-
-        r_cut : float
-            Real space cutoff.
-
-        tune : bool, optional
-            Activate/deactivate the tuning method on activation
-            (default is True, i.e., activated).
+                   Mesh offset.
+        r_cut : :obj:`float`
+                Real space cutoff.
+        tune : :obj:`bool`, optional
+               Activate/deactivate the tuning method on activation
+               (default is True, i.e., activated).
 
         """
 
@@ -141,7 +105,7 @@ IF DP3M == 1:
             if not (self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
                 raise ValueError("P3M r_cut has to be >=0")
 
-            if not (isinstance(self._params["mesh"], int) or len(self._params["mesh"])):
+            if not (is_valid_type(self._params["mesh"], int) or len(self._params["mesh"])):
                 raise ValueError(
                     "P3M mesh has to be an integer or integer list of length 3")
 
@@ -160,7 +124,7 @@ IF DP3M == 1:
             if self._params["epsilon"] == "metallic":
                 self._params["epsilon"] = 0.0
 
-            if not (isinstance(self._params["epsilon"], float) or self._params["epsilon"] == "metallic"):
+            if not (is_valid_type(self._params["epsilon"], float) or self._params["epsilon"] == "metallic"):
                 raise ValueError("epsilon should be a double or 'metallic'")
 
             if not (self._params["inter"] == default_params["inter"] or self._params["inter"] > 0):
@@ -171,7 +135,7 @@ IF DP3M == 1:
                     "mesh_off should be a list of length 3 and values between 0.0 and 1.0")
 
         def valid_keys(self):
-            return "prefactor", "alpha_L", "r_cut_iL", "mesh", "mesh_off", "cao", "inter", "accuracy", "epsilon", "cao_cut", "a", "ai", "alpha", "r_cut", "inter2", "cao3", "additional_mesh", "bjerrum_length", "tune"
+            return "prefactor", "alpha_L", "r_cut_iL", "mesh", "mesh_off", "cao", "inter", "accuracy", "epsilon", "cao_cut", "a", "ai", "alpha", "r_cut", "inter2", "cao3", "additional_mesh", "tune"
 
         def required_keys(self):
             return ["accuracy", ]
@@ -272,6 +236,12 @@ IF DIPOLES == 1:
 
         If the system has periodic boundaries, the minimum image convention is applied
         in the respective directions.
+        
+        Attributes
+        ----------
+        
+        prefactor : :obj:`float`
+                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
 
         """
 
@@ -282,7 +252,7 @@ IF DIPOLES == 1:
             return ()
 
         def valid_keys(self):
-            return ("bjerrum_length", "prefactor")
+            return ("prefactor",) 
 
         def _get_params_from_es_core(self):
             return {"prefactor": coulomb.Dprefactor}
@@ -305,8 +275,10 @@ IF DIPOLES == 1:
 
         Attributes
         ----------
-        n_replica : int
-            Number of replicas to be taken into account at periodic boundaries.
+        prefactor : :obj:`float`
+                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+        n_replica : :obj:`int`
+                    Number of replicas to be taken into account at periodic boundaries.
 
         """
 
@@ -317,7 +289,7 @@ IF DIPOLES == 1:
             return ("n_replica",)
 
         def valid_keys(self):
-            return ("bjerrum_length", "prefactor", "n_replica")
+            return ("prefactor", "n_replica")
 
         def _get_params_from_es_core(self):
             return {"prefactor": coulomb.Dprefactor, "n_replica": Ncut_off_magnetic_dipolar_direct_sum}
@@ -333,7 +305,18 @@ IF DIPOLES == 1:
                     "Could not activate magnetostatics method " + self.__class__.__name__)
     IF SCAFACOS_DIPOLES == 1:
         class Scafacos(ScafacosConnector, MagnetostaticInteraction):
-            """Calculates dipolar interactions using dipoles-capable method from the SCAFACOs library."""
+            """
+            Calculates dipolar interactions using dipoles-capable method from the SCAFACOs library.
+            prefactor : :obj:`float`
+                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+            method_name : :obj:`str`
+                Name of the method as defined in Scafacos
+            method_params : :obj:`dict`
+                Dictionary with the key-value pairs of the method parameters as defined in Scafacos. Note that the values are cast to strings to match Scafacos' interface
+
+
+            
+            """
 
             dipolar = True
 
@@ -342,10 +325,8 @@ IF DIPOLES == 1:
                 Actor.__init__(self, *args, **kwargs)
 
             def _activate_method(self):
-                coulomb.Dmethod = DIPOLAR_SCAFACOS
-                dipolar_set_Dbjerrum(self._params["bjerrum_length"])
+                dipolar_set_Dprefactor(self._params["prefactor"])
                 self._set_params_in_es_core()
-                mpi_bcast_coulomb_params()
             
             def _deactivate_method(self):
                 coulomb.Dmethod = DIPOLAR_NONE
@@ -362,7 +343,12 @@ IF DIPOLES == 1:
             If the system has periodic boundaries, the minimum image convention is applied
             in the respective directions.
 
-            GPU version of :class:`espressomd.magnetostatics.DipolarDirectSumCpu`.
+            This is the GPU version of :class:`espressomd.magnetostatics.DipolarDirectSumCpu` but uses floating point precision.
+            
+            Attributes
+            ----------
+            prefactor : :obj:`float`
+                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
 
             """
 
@@ -373,7 +359,7 @@ IF DIPOLES == 1:
                 return ()
     
             def valid_keys(self):
-                return ("bjerrum_length", "prefactor")
+                return ("prefactor",)
     
             def _get_params_from_es_core(self):
                 return {"prefactor": coulomb.Dprefactor}
@@ -388,3 +374,35 @@ IF DIPOLES == 1:
             def _set_params_in_es_core(self):
                 self.set_magnetostatics_prefactor()
                 activate_dipolar_direct_sum_gpu()
+
+    IF (DIPOLAR_BARNES_HUT == 1):
+        cdef class DipolarBarnesHutGpu(MagnetostaticInteraction):
+    
+            """Calculates magnetostatic interactions by direct summation over all
+            pairs. TODO: If the system has periodic boundaries, the minimum image
+            convention is applied."""
+    
+            def default_params(self):
+                return {"epssq": 100.0,
+                        "itolsq": 4.0}
+    
+            def required_keys(self):
+                return ()
+    
+            def valid_keys(self):
+                return ("prefactor", "epssq", "itolsq")
+    
+            def _get_params_from_es_core(self):
+                return {"prefactor": coulomb.Dprefactor}
+    
+            def _activate_method(self):
+                self._set_params_in_es_core()
+            
+            def _deactivate_method(self):
+                super(type(self),self)._deactivate_method()
+                deactivate_dipolar_barnes_hut()
+    
+            def _set_params_in_es_core(self):
+                self.set_magnetostatics_prefactor()
+                activate_dipolar_barnes_hut(self._params["epssq"],self._params["itolsq"])
+                #activate_dipolar_barnes_hut()

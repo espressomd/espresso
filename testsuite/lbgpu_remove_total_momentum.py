@@ -16,7 +16,8 @@ class RemoveTotalMomentumTest(ut.TestCase):
         visc = 1.0
         dens = 12.0
 
-        s = espressomd.System()
+        s = espressomd.System(box_l=[1.0, 1.0, 1.0])
+        s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
         s.box_l = [10, 10, 10]
         s.time_step = dt
         s.cell_system.skin = skin
@@ -31,7 +32,7 @@ class RemoveTotalMomentumTest(ut.TestCase):
             # Avoid masses too small for the time step
             s.part[:].mass = 2. * (0.1 + np.random.random(100))
 
-        lbf = espressomd.lb.LBFluid_GPU(
+        lbf = espressomd.lb.LBFluidGPU(
             agrid=agrid, fric=fric, dens=dens, visc=visc, tau=dt)
 
         s.actors.add(lbf)

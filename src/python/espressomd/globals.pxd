@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 include "myconfig.pxi"
+from libcpp cimport bool
+from interactions cimport ImmersedBoundaries
 
 cdef extern from "global.hpp":
     int FIELD_BOXL
@@ -24,15 +26,13 @@ cdef extern from "global.hpp":
     int FIELD_NODEGRID
     int FIELD_MAXNUMCELLS
     int FIELD_MINNUMCELLS
-    int FIELD_NODEGRID
     int FIELD_NPTISO_PISTON
     int FIELD_NPTISO_PDIFF
     int FIELD_PERIODIC
     int FIELD_SIMTIME
     int FIELD_MIN_GLOBAL_CUT
-    int FIELD_LEES_EDWARDS_OFFSET
-    int FIELD_TEMPERATURE
     int FIELD_THERMO_SWITCH
+    int FIELD_THERMO_VIRTUAL
     int FIELD_TEMPERATURE
     int FIELD_LANGEVIN_GAMMA
     IF ROTATION:
@@ -40,34 +40,26 @@ cdef extern from "global.hpp":
     IF NPT:
         int FIELD_NPTISO_G0
         int FIELD_NPTISO_GV
+    int FIELD_MAX_OIF_OBJECTS
 
     void mpi_bcast_parameter(int p)
-        
+
 cdef extern from "communication.hpp":
     extern int n_nodes
-    void mpi_set_smaller_time_step(double smaller_time_step)
     void mpi_set_time_step(double time_step)
 
 cdef extern from "integrate.hpp":
     double time_step
     extern int integ_switch
     extern double sim_time
-    extern double smaller_time_step
     extern double verlet_reuse
-
-cdef extern from "verlet.hpp":
-    double skin
+    extern double skin
 
 cdef extern from "lattice.hpp":
     extern int lattice_switch
 
 cdef extern from "domain_decomposition.hpp":
-    ctypedef struct IA_Neighbor:
-        pass
-    ctypedef struct IA_Neighbor_List:
-        pass
     ctypedef struct  DomainDecomposition:
-        int use_vList
         int cell_grid[3]
         double cell_size[3]
 
@@ -81,15 +73,12 @@ cdef extern from "domain_decomposition.hpp":
 cdef extern from "particle_data.hpp":
     extern int n_part
 
-cdef extern from "lees_edwards.hpp":
-    double lees_edwards_offset    
-
 cdef extern from "interaction_data.hpp":
     double dpd_gamma
     double dpd_r_cut
     extern double max_cut
     extern int max_seen_particle
-    extern int n_particle_types
+    extern int max_seen_particle_type
     extern double max_cut_nonbonded
     extern double max_cut_bonded
     extern double min_global_cut
@@ -124,6 +113,8 @@ cdef extern from "cells.hpp":
     extern double max_range
     ctypedef struct CellStructure:
         int type
+        bool use_verlet_list
+
     CellStructure cell_structure
 
 cdef extern from "layered.hpp":
@@ -156,7 +147,7 @@ cdef extern from "npt.hpp":
 cdef extern from "statistics.hpp":
     extern int n_configs
 
-cdef extern from "reaction.hpp":
+cdef extern from "swimmer_reaction.hpp":
     ctypedef struct  reaction_struct:
         int reactant_type
         int product_type
@@ -168,3 +159,13 @@ cdef extern from "reaction.hpp":
         int swap
 
     cdef extern reaction_struct reaction
+
+cdef extern from "immersed_boundaries.hpp":
+    extern ImmersedBoundaries immersed_boundaries
+
+cdef extern from "object-in-fluid/oif_global_forces.hpp": 
+    int max_oif_objects
+
+cdef extern from "forcecap.hpp":
+    double forcecap_get()
+    void forcecap_set(double forcecap)

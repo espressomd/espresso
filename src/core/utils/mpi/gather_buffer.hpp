@@ -21,13 +21,15 @@
 #ifndef UTILS_MPI_GATHER_BUFFER_HPP
 #define UTILS_MPI_GATHER_BUFFER_HPP
 
-#include <algorithm>
-#include <vector>
+#include "detail/size_and_offset.hpp"
+#include "gatherv.hpp"
 
 #include <boost/mpi/collectives.hpp>
 #include <boost/mpi/communicator.hpp>
 
-#include "detail/size_and_offset.hpp"
+#include <algorithm>
+#include <type_traits>
+#include <vector>
 
 namespace Utils {
 namespace Mpi {
@@ -53,23 +55,23 @@ namespace Mpi {
 template <typename T>
 int gather_buffer(T *buffer, int n_elem, boost::mpi::communicator comm,
                   int root = 0) {
+  static_assert(std::is_pod<T>::value, "");
   if (comm.rank() == root) {
     static std::vector<int> sizes;
     static std::vector<int> displ;
 
     auto const total_size =
-      detail::size_and_offset<T>(sizes, displ, n_elem, comm, root);
+        detail::size_and_offset<T>(sizes, displ, n_elem, comm, root);
 
     /* Gather data */
-    MPI_Gatherv(MPI_IN_PLACE, 0, MPI_BYTE, buffer, sizes.data(), displ.data(),
-                MPI_BYTE, root, comm);
+    gatherv(comm, buffer, 0, buffer, sizes.data(), displ.data(), root);
 
     return total_size;
   } else {
     detail::size_and_offset(n_elem, comm, root);
     /* Send data */
-    MPI_Gatherv(buffer, n_elem * sizeof(T), MPI_BYTE, nullptr, nullptr, nullptr,
-                MPI_BYTE, root, comm);
+    gatherv(comm, buffer, n_elem, static_cast<T *>(nullptr),
+            nullptr, nullptr, root);
 
     return 0;
   }
@@ -99,20 +101,19 @@ void gather_buffer(std::vector<T> &buffer, boost::mpi::communicator comm,
     static std::vector<int> displ;
 
     auto const tot_size =
-        detail::size_and_offset<T>(sizes, displ, n_elem, comm);
+      detail::size_and_offset<T>(sizes, displ, n_elem, comm, root);
 
     /* Resize the buffer */
     buffer.resize(tot_size);
 
     /* Gather data */
-    MPI_Gatherv(MPI_IN_PLACE, 0, MPI_BYTE, buffer.data(), sizes.data(),
-                displ.data(), MPI_BYTE, root, comm);
+    gatherv(comm, buffer.data(), buffer.size(), buffer.data(), sizes.data(),
+            displ.data(), root);
   } else {
     /* Send local size */
     detail::size_and_offset(n_elem, comm, root);
     /* Send data */
-    MPI_Gatherv(buffer.data(), n_elem * sizeof(T), MPI_BYTE, nullptr, nullptr,
-                nullptr, MPI_BYTE, root, comm);
+    gatherv(comm, buffer.data(), n_elem, static_cast<T *>(nullptr), 0, 0, root);
   }
 }
 }
