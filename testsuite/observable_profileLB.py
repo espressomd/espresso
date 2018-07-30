@@ -72,7 +72,7 @@ class ObservableProfileLBCommon(object):
                     self.assertAlmostEqual(obs_data[x, y, z, 0], float(x), places=5)
 
 @ut.skipIf(not espressomd.has_features(
-    ['LB']), "Skipping test due to missing features.")
+    'LB') or espressomd.has_features('SHANCHEN'), "Skipping test due to missing features.")
 class LBCPU(ut.TestCase, ObservableProfileLBCommon):
     """Test for the CPU implementation of the LB."""
     def setUp(self):
@@ -80,7 +80,7 @@ class LBCPU(ut.TestCase, ObservableProfileLBCommon):
 
 
 @ut.skipIf(not espressomd.has_features(
-    ['LB_GPU']), "Skipping test due to missing features.")
+    'LB_GPU') or espressomd.has_features('SHANCHEN'), "Skipping test due to missing features.")
 class LBGPU(ut.TestCase, ObservableProfileLBCommon):
     """Test for the GPU implementation of the LB."""
     def setUp(self):
