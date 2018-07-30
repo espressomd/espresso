@@ -139,6 +139,41 @@ class InteractionsBondedTest(ut.TestCase):
         with self.assertRaisesRegexp(Exception, "Encoutered errors during integrate"):
             self.system.integrator.run(recalc_forces=True, steps=0)
 
+    # Test Coulomb Bond
+    def test_coulomb(self):
+
+        coulomb_k = 1
+        q1 = 1
+        q2 = -1
+        self.system.part[0].q = q1
+        self.system.part[1].q = q2
+
+        coulomb = espressomd.interactions.BondedCoulomb(prefactor = coulomb_k)
+        self.system.bonded_inter.add(coulomb)
+        self.system.part[0].add_bond((coulomb, 1))
+
+        for i in range(445):
+            self.system.part[1].pos = self.system.part[1].pos + self.step
+            self.system.integrator.run(recalc_forces=True, steps=0)
+
+            # Calculate energies
+            E_sim = self.system.analysis.energy()["bonded"]
+            E_ref = coulomb_potential(
+                scalar_r=(i + 1) * self.step_width, k=coulomb_k, q1 = q1, q2 = q2)
+
+            # Calculate forces
+            f0_sim = self.system.part[0].f
+            f1_sim = self.system.part[1].f
+            f1_ref = self.axis * coulomb_force(scalar_r=(i + 1) * self.step_width,
+                                k=coulomb_k, q1 = q1, q2 = q2)
+
+            # Check that energies match, ...
+            self.assertFractionAlmostEqual(E_sim, E_ref)
+            # force equals minus the counter-force  ...
+            self.assertTrue((f0_sim == -f1_sim).all())
+            # and has correct value.
+            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
+
 
 if __name__ == '__main__':
     print("Features: ", espressomd.features())
