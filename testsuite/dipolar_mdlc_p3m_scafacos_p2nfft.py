@@ -38,7 +38,8 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
        2d: as long as this test AND the scafacos_dipolar_1d_2d test passes, we are save.
        3d: As long as the independently written p3m and p2nfft agree, we are save.
     """
-    s = espressomd.System()
+    s = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    s.seed  = s.cell_system.get_state()['n_nodes'] * [1234]
     s.time_step = 0.01
     s.cell_system.skin = .4
     s.periodicity = 1, 1, 1
@@ -162,7 +163,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
             s.part.add(id=int(p[0]), pos=p[1:4], dip=p[4:7],rotation=(1,1,1))
 
         scafacos = magnetostatics.Scafacos(
-            bjerrum_length=1,
+            prefactor=1,
             method_name="p2nfft",
             method_params={
                 "p2nfft_verbose_tuning": 0,

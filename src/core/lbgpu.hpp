@@ -28,7 +28,6 @@
 
 #include "utils.hpp"
 #include "config.hpp"
-#include "observables/profiles.hpp" 
 #ifdef LB_GPU
 
 /* For the D3Q19 model most functions have a separate implementation
@@ -55,9 +54,7 @@
 #define LBPAR_FRICTION  4 /**< friction coefficient for viscous coupling between particles and fluid */
 #define LBPAR_EXTFORCE  5 /**< external force acting on the fluid */
 #define LBPAR_BULKVISC  6 /**< fluid bulk viscosity */
-#ifdef CONSTRAINTS
 #define LBPAR_BOUNDARY  7 /**< boundary parameters */
-#endif
 #ifdef SHANCHEN
 #define LBPAR_COUPLING 8
 #define LBPAR_MOBILITY 9
@@ -127,9 +124,9 @@ typedef struct {
   /**to calc and print out phys values */
   int calc_val;
 
-  int external_force;
+  int external_force_density;
 
-  float ext_force[3*LB_COMPONENTS];
+  float ext_force_density[3*LB_COMPONENTS];
 
   unsigned int your_seed;
 
@@ -190,25 +187,25 @@ typedef struct {
 
 typedef struct {
 
-  lbForceFloat *force;
-  float *scforce;
-#if defined(IMMERSED_BOUNDARY) || defined(EK_DEBUG)
+  lbForceFloat *force_density;
+  float *scforce_density;
+#if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) || defined(EK_DEBUG)
 
   // We need the node forces for the velocity interpolation at the virtual particles' position
   // However, LBM wants to reset them immediately after the LBM update
   // This variable keeps a backup
-  lbForceFloat *force_buf;
+  lbForceFloat *force_density_buf;
 #endif
 
-} LB_node_force_gpu;
+} LB_node_force_density_gpu;
 
 typedef struct {
 
-  float force[3];
+  float force_density[3];
 
   unsigned int index;
 
-} LB_extern_nodeforce_gpu;
+} LB_extern_nodeforcedensity_gpu;
 
 
 void on_lb_params_change_gpu(int field);
@@ -225,9 +222,9 @@ void on_lb_params_change_gpu(int field);
 extern LB_parameters_gpu lbpar_gpu;
 extern LB_rho_v_pi_gpu *host_values;
 extern int transfer_momentum_gpu;
-extern LB_extern_nodeforce_gpu *extern_nodeforces_gpu;
+extern LB_extern_nodeforcedensity_gpu *extern_node_force_densities_gpu;
 #ifdef ELECTROKINETICS
-extern LB_node_force_gpu node_f;
+extern LB_node_force_density_gpu node_f;
 extern int ek_initialized;
 #endif
 
@@ -264,7 +261,7 @@ void lb_reinit_parameters_gpu();
 void lb_reinit_fluid_gpu();
 
 /** Resets the forces on the fluid nodes */
-void reset_LB_forces_GPU(bool buffer = true);
+void reset_LB_force_densities_GPU(bool buffer = true);
 
 /** (Re-)initializes the particle array*/
 void lb_realloc_particles_gpu();
@@ -282,9 +279,9 @@ void lb_print_node_GPU(int single_nodeindex, LB_rho_v_pi_gpu *host_print_values)
 #ifdef LB_BOUNDARIES_GPU
 void lb_init_boundaries_GPU(int n_lb_boundaries, int number_of_boundnodes, int* host_boundary_node_list, int* host_boundary_index_list, float* lb_bounday_velocity);
 #endif
-void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_gpu *host_extern_nodeforces, LB_parameters_gpu *lbpar_gpu);
+void lb_init_extern_nodeforcedensities_GPU(int n_extern_node_force_densities, LB_extern_nodeforcedensity_gpu *host_extern_node_force_densities, LB_parameters_gpu *lbpar_gpu);
 
-void lb_calc_particle_lattice_ia_gpu();
+void lb_calc_particle_lattice_ia_gpu(bool couple_virtual);
 
 void lb_calc_fluid_mass_GPU(double* mass);
 void lb_calc_fluid_momentum_GPU(double* host_mom);
@@ -299,7 +296,7 @@ void lb_set_node_rho_GPU(int single_nodeindex, float* host_rho);
 void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu);
-int lb_lbnode_set_extforce_GPU(int ind[3], double f[3]);
+int lb_lbnode_set_extforce_density_GPU(int ind[3], double f[3]);
 void lb_gpu_get_boundary_forces(double* forces);
 void lb_save_checkpoint_GPU(float *host_checkpoint_vd, unsigned int *host_checkpoint_seed, unsigned int *host_checkpoint_boundary, lbForceFloat *host_checkpoint_force);
 void lb_load_checkpoint_GPU(float *host_checkpoint_vd, unsigned int *host_checkpoint_seed, unsigned int *host_checkpoint_boundary, lbForceFloat *host_checkpoint_force);
@@ -314,7 +311,7 @@ void lb_lbfluid_particles_add_momentum(float velocity[3]);
 void lb_lbfluid_set_population(int[3], float[LBQ], int);
 void lb_lbfluid_get_population(int[3], float[LBQ], int);
 
-void lb_lbfluid_get_interpolated_velocity_at_positions(double *positions, double *velocities, int length);
+void lb_lbfluid_get_interpolated_velocity_at_positions(double const *positions, double *velocities, int length);
 
 /*@{*/
 

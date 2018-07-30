@@ -84,9 +84,9 @@ inline int quartic_pair_energy(Particle *p1, Particle *p2, Bonded_ia_parameters 
       (dist > iaparams->p.quartic.r_cut)) 
     return 1;
  
-  double dr2 = SQR(dist - iaparams->p.quartic.r);
+  double dr2 = Utils::sqr(dist - iaparams->p.quartic.r);
 
-  *_energy = 0.5*iaparams->p.quartic.k0*dr2 + 0.25 * iaparams->p.quartic.k1 * SQR(dr2);
+  *_energy = 0.5*iaparams->p.quartic.k0*dr2 + 0.25 * iaparams->p.quartic.k1 * Utils::sqr(dr2);
   return 0;
 }
 

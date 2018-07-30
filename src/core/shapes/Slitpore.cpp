@@ -20,12 +20,11 @@
 */
 
 #include "Slitpore.hpp"
+#include "utils.hpp"
 /* For box_l */
 #include "grid.hpp"
 
 #include <cmath>
-
-#define SQR(A) ((A) * (A))
 
 using namespace std;
 
@@ -64,8 +63,9 @@ int Slitpore::calculate_dist(const double *ppos, double *dist,
   if (ppos[2] > c11[1]) {
     // Feel the upper smoothing
     if (ppos[0] < box_l_x / 2) {
-      *dist = sqrt(SQR(c11[0] - ppos[0]) + SQR(c11[1] - ppos[2])) -
-              m_upper_smoothing_radius;
+      *dist =
+          sqrt(Utils::sqr(c11[0] - ppos[0]) + Utils::sqr(c11[1] - ppos[2])) -
+          m_upper_smoothing_radius;
       vec[0] =
           -(c11[0] - ppos[0]) * (*dist) / (*dist + m_upper_smoothing_radius);
       vec[1] = 0;
@@ -73,8 +73,9 @@ int Slitpore::calculate_dist(const double *ppos, double *dist,
           -(c11[1] - ppos[2]) * (*dist) / (*dist + m_upper_smoothing_radius);
       return 0;
     } else {
-      *dist = sqrt(SQR(c21[0] - ppos[0]) + SQR(c21[1] - ppos[2])) -
-              m_upper_smoothing_radius;
+      *dist =
+          sqrt(Utils::sqr(c21[0] - ppos[0]) + Utils::sqr(c21[1] - ppos[2])) -
+          m_upper_smoothing_radius;
       vec[0] =
           -(c21[0] - ppos[0]) * (*dist) / (*dist + m_upper_smoothing_radius);
       vec[1] = 0;
@@ -110,14 +111,14 @@ int Slitpore::calculate_dist(const double *ppos, double *dist,
   // Else
   // Feel the lower smoothing
   if (ppos[0] < box_l_x / 2) {
-    *dist = -sqrt(SQR(c12[0] - ppos[0]) + SQR(c12[1] - ppos[2])) +
+    *dist = -sqrt(Utils::sqr(c12[0] - ppos[0]) + Utils::sqr(c12[1] - ppos[2])) +
             m_lower_smoothing_radius;
     vec[0] = (c12[0] - ppos[0]) * (*dist) / (-*dist + m_lower_smoothing_radius);
     vec[1] = 0;
     vec[2] = (c12[1] - ppos[2]) * (*dist) / (-*dist + m_lower_smoothing_radius);
     return 0;
   } else {
-    *dist = -sqrt(SQR(c22[0] - ppos[0]) + SQR(c22[1] - ppos[2])) +
+    *dist = -sqrt(Utils::sqr(c22[0] - ppos[0]) + Utils::sqr(c22[1] - ppos[2])) +
             m_lower_smoothing_radius;
     vec[0] = (c22[0] - ppos[0]) * (*dist) / (-*dist + m_lower_smoothing_radius);
     vec[1] = 0;
@@ -127,4 +128,4 @@ int Slitpore::calculate_dist(const double *ppos, double *dist,
 
   return 0;
 }
-}
+} // namespace Shapes

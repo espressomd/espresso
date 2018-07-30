@@ -1,24 +1,22 @@
 #ifndef OBSERVABLES_STRESSTENSOR_HPP
 
-#include "PidObservable.hpp"
-#include "particle_data.hpp" 
-#include <vector>
+#include "Observable.hpp"
+#include "particle_data.hpp"
 #include "pressure.hpp"
-
+#include <vector>
 
 namespace Observables {
 
-
-class StressTensor : public PidObservable {
+class StressTensor : public Observable {
 public:
-    virtual int n_values() const override { return 9;};
-    virtual int actual_calculate(PartCfg & partCfg) override {
-  observable_compute_stress_tensor(1,&(last_value[0]));
-  return 0;
-}
+  virtual int n_values() const override { return 9; };
+  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
+    std::vector<double> res(n_values());
+    observable_compute_stress_tensor(1, res.data());
+    return res;
+  }
 };
 
 } // Namespace Observables
 
 #endif
-

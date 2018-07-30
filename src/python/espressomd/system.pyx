@@ -22,6 +22,7 @@ include "myconfig.pxi"
 
 from globals cimport *
 import numpy as np
+import collections
 
 from . cimport integrate
 from . import interactions
@@ -37,25 +38,35 @@ from .cellsystem import CellSystem
 from .minimize_energy import MinimizeEnergy
 from .analyze import Analysis
 from .galilei import GalileiTransform
-if CONSTRAINTS == 1:
-    from .constraints import Constraints
+from .constraints import Constraints
 
-from .correlators import AutoUpdateCorrelators
-from .observables import AutoUpdateObservables
+from .accumulators import AutoUpdateAccumulators
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
 from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
+from globals cimport max_seen_particle
+from .globals import Globals
+from espressomd.utils import array_locked, is_valid_type
+from espressomd.virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 
+IF COLLISION_DETECTION == 1:
+    from .collision_detection import CollisionDetection
 
 import sys
 import random  # for true random numbers from os.urandom()
+cimport tuning
+
 
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
                       "time_step", "timings", "force_cap"]
 
-IF LEES_EDWARDS == 1:
-    setable_properties.append("lees_edwards_offset")
+if VIRTUAL_SITES:
+    setable_properties.append("_active_virtual_sites_handle")
+
+
+if OIF_GLOBAL_FORCES:
+    setable_properties.append("max_oif_objects")
 
 cdef bool _system_created = False
 
@@ -69,6 +80,7 @@ cdef class System(object):
 
     """
     cdef public:
+        globals
         part
         non_bonded_inter
         bonded_inter
@@ -79,39 +91,51 @@ cdef class System(object):
         analysis
         galilei
         integrator
-        auto_update_observables
-        auto_update_correlators
+        auto_update_accumulators
         constraints
         lbboundaries
         ekboundaries
+        collision_detection
         __seed
         cuda_init_handle
         comfixed
+        _active_virtual_sites_handle
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         global _system_created
         if (not _system_created):
-            self.part = particle_data.ParticleList()
-            self.non_bonded_inter = interactions.NonBondedInteractions()
+            self.globals = Globals()
+            if 'box_l' not in kwargs:
+                raise ValueError("Required argument box_l not provided.")
+            System.__setattr__(self, "box_l", kwargs.get("box_l"))
+            del kwargs["box_l"]
+            for arg in kwargs:
+                if arg in setable_properties:
+                    System.__setattr__(self, arg, kwargs.get(arg))
+                else:
+                    raise ValueError("Property {} can not be set via argument to System class.".format(arg))
+            self.actors = Actors()
+            self.analysis = Analysis(self)
+            self.auto_update_accumulators = AutoUpdateAccumulators()
             self.bonded_inter = interactions.BondedInteractions()
             self.cell_system = CellSystem()
-            self.thermostat = Thermostat()
-            self.minimize_energy = MinimizeEnergy()
-            self.actors = Actors(_system=self)
-            self.analysis = Analysis(self)
+            IF COLLISION_DETECTION==1:
+                self.collision_detection = CollisionDetection()
+            self.comfixed = ComFixed()
+            self.constraints = Constraints()
+            IF CUDA:
+                self.cuda_init_handle = cuda_init.CudaInitHandle()
             self.galilei = GalileiTransform()
             self.integrator = integrate.Integrator()
-            self.auto_update_observables = AutoUpdateObservables()
-            self.auto_update_correlators = AutoUpdateCorrelators()
-            if CONSTRAINTS:
-                self.constraints = Constraints()
             if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
                 self.lbboundaries = LBBoundaries()
                 self.ekboundaries = EKBoundaries()
-            IF CUDA:
-                self.cuda_init_handle = cuda_init.CudaInitHandle()
-
-            self.comfixed = ComFixed()
+            self.minimize_energy = MinimizeEnergy()
+            self.non_bonded_inter = interactions.NonBondedInteractions()
+            self.part = particle_data.ParticleList()
+            self.thermostat = Thermostat()
+            IF VIRTUAL_SITES:
+                self._active_virtual_sites_handle=ActiveVirtualSitesHandle(implementation=VirtualSitesOff())
             _system_created = True
         else:
             raise RuntimeError(
@@ -119,9 +143,26 @@ cdef class System(object):
 
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
-        odict = {}
+        odict = collections.OrderedDict()
+        odict['globals'] = System.__getattribute__(self, "globals")
         for property_ in setable_properties:
-            odict[property_] = System.__getattribute__(self, property_)
+            if not hasattr(self.globals, property_):
+                odict[property_] = System.__getattribute__(self, property_)
+        odict['non_bonded_inter'] = System.__getattribute__(self, "non_bonded_inter")
+        odict['bonded_inter'] = System.__getattribute__(self, "bonded_inter")
+        odict['part'] = System.__getattribute__(self, "part")
+        odict['actors'] = System.__getattribute__(self, "actors")
+        odict['analysis'] = System.__getattribute__(self, "analysis")
+        odict['auto_update_accumulators'] = System.__getattribute__(self, "auto_update_accumulators")
+        odict['cell_system'] = System.__getattribute__(self, "cell_system")
+        odict['comfixed'] = System.__getattribute__(self, "comfixed")
+        odict['constraints'] = System.__getattribute__(self, "constraints")
+        odict['galilei'] = System.__getattribute__(self, "galilei")
+        odict['integrator'] = System.__getattribute__(self, "integrator")
+        IF LB_BOUNDARIES or LB_BOUNDARIES_GPU:
+            odict['lbboundaries'] = System.__getattribute__(self, "lbboundaries")
+        odict['minimize_energy'] = System.__getattribute__(self, "minimize_energy")
+        odict['thermostat'] = System.__getattribute__(self, "thermostat")
         return odict
 
     def __setstate__(self, params):
@@ -131,6 +172,7 @@ cdef class System(object):
     property box_l:
         """
         Array like, list of three floats
+
         """
 
         def __set__(self, _box_l):
@@ -142,10 +184,10 @@ cdef class System(object):
                         "Box length must be > 0 in all directions")
                 box_l[i] = _box_l[i]
 
-            mpi_bcast_parameter(FIELD_BOXL)
+            self.globals.box_l = box_l
 
         def __get__(self):
-            return np.array([box_l[0], box_l[1], box_l[2]])
+            return self.globals.box_l
 
     property integ_switch:
         def __get__(self):
@@ -160,10 +202,10 @@ cdef class System(object):
 
         """
         def __get__(self):
-            return forcecap_get()
+            return self.globals.force_cap
 
         def __set__(self, cap):
-            forcecap_set(cap)
+            self.globals.force_cap = cap
 
     property periodicity:
         """
@@ -171,6 +213,7 @@ cdef class System(object):
         [x, y, z]
         zero for no periodicity in this direction
         one for periodicity
+
         """
 
         def __set__(self, _periodic):
@@ -178,7 +221,6 @@ cdef class System(object):
             if len(_periodic) != 3:
                 raise ValueError(
                     "periodicity must be of length 3, got length " + str(len(_periodic)))
-            periodicity = np.zeros(3)
             for i in range(3):
                 if _periodic[i] != 1:
                     IF PARTIAL_PERIODIC:
@@ -186,18 +228,10 @@ cdef class System(object):
                     ELSE:
                         raise ValueError(
                             "The feature PARTIAL_PERIODIC needs to be activated in myconfig.hpp")
-            for i in range(3):
-                periodicity[i] = _periodic[i]
-            periodic = 4 * _periodic[2] + 2 * _periodic[1] + _periodic[0]
-            # first 3 bits of periodic determine the periodicity
-            mpi_bcast_parameter(FIELD_PERIODIC)
+            self.globals.periodicity = _periodic
 
         def __get__(self):
-            periodicity = np.zeros(3)
-            periodicity[0] = periodic % 2
-            periodicity[1] = int(periodic / 2) % 2
-            periodicity[2] = int(periodic / 4) % 2
-            return periodicity
+            return self.globals.periodicity
 
     property time:
         """
@@ -213,20 +247,6 @@ cdef class System(object):
         def __get__(self):
             global sim_time
             return sim_time
-
-    property smaller_time_step:
-        """
-        Setting this property to a positive integer value turns on the multi-timestepping algorithm. The ratio :attr:`espressomd.system.System.time_step`/:attr:`espressomd.system.System.smaller_time_step` must be an integer.
-        """
-        def __set__(self, double _smaller_time_step):
-            IF MULTI_TIMESTEP:
-                global smaller_time_step
-                if _smaller_time_step <= 0:
-                    raise ValueError("Smaller time step must be positive")
-                mpi_set_smaller_time_step(_smaller_time_step)
-
-        def __get__(self):
-            return smaller_time_step
 
     property time_step:
         """
@@ -248,21 +268,17 @@ cdef class System(object):
                         lbpar_gpu.tau - _time_step > numeric_limits[float].epsilon() * abs(lbpar_gpu.tau + _time_step)):
                     raise ValueError(
                         "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(lbpar_gpu.tau) + ")")
-            mpi_set_time_step(_time_step)
+            self.globals.time_step = _time_step
 
         def __get__(self):
-            return time_step
+            return self.globals.time_step
 
     property timings:
         def __set__(self, int _timings):
-            global timing_samples
-            if _timings <= 0:
-                timing_samples = 0
-            else:
-                timing_samples = _timings
+            self.globals.timings = _timings
 
         def __get__(self):
-            return timing_samples
+            return self.globals.timings
 
     property max_cut_nonbonded:
         def __get__(self):
@@ -278,12 +294,10 @@ cdef class System(object):
 
     property min_global_cut:
         def __set__(self, _min_global_cut):
-            global min_global_cut
-            min_global_cut = _min_global_cut
-            mpi_bcast_parameter(FIELD_MIN_GLOBAL_CUT)
+            self.globals.min_global_cut = _min_global_cut
 
         def __get__(self):
-            return min_global_cut
+            return self.globals.min_global_cut
 
     def _get_PRNG_state_size(self):
         """
@@ -305,18 +319,18 @@ cdef class System(object):
             for j in range(_state_size_plus_one + 1):
                 states_on_node_i.append(
                     rng.randint(0, numeric_limits[int].max()))
-            states[i] = " ".join(map(str, states_on_node_i))
+            states[i] = (" ".join(map(str, states_on_node_i))).encode('utf-8')
         mpi_random_set_stat(states)
 
     property seed:
         """
         Sets the seed of the pseudo random number with a list of seeds which is as long as the number of used nodes.
         """
-        
+
         def __set__(self, _seed):
             cdef vector[int] seed_array
             self.__seed = _seed
-            if(isinstance(_seed, int) and n_nodes == 1):
+            if(is_valid_type(_seed, int) and n_nodes == 1):
                 seed_array.resize(1)
                 seed_array[0] = int(_seed)
                 mpi_random_seed(0, seed_array)
@@ -344,34 +358,40 @@ cdef class System(object):
             if(len(rng_state) == n_nodes * _state_size_plus_one):
                 states = string_vec(n_nodes)
                 for i in range(n_nodes):
-                    states[i] = " ".join(
-                        map(str, rng_state[i * _state_size_plus_one:(i + 1) * _state_size_plus_one]))
+                    states[i] = (" ".join(map(str,
+                                 rng_state[i*_state_size_plus_one:(i+1)*_state_size_plus_one])
+                                 )).encode('utf-8')
                 mpi_random_set_stat(states)
             else:
                 raise ValueError("Wrong # of args: Usage: 'random_number_generator_state \"<state(1)> ... <state(n_nodes*(state_size+1))>, where each <state(i)> is an integer. The state size of the PRNG can be obtained by calling _get_PRNG_state_size().")
 
         def __get__(self):
-            rng_state = map(int, (mpi_random_get_stat().c_str()).split())
+            rng_state = list(map(int, (mpi_random_get_stat().c_str()).split()))
             return rng_state
 
-    IF LEES_EDWARDS == 1:
-        property lees_edwards_offset:
-        # defines the lees edwards offset
-            def __set__(self, double _lees_edwards_offset):
-
-                if isinstance(_lees_edwards_offset, float):
-                    global lees_edwards_offset
-                    lees_edwards_offset = _lees_edwards_offset
-                    #new_offset = _lees_edwards_offset
-                    mpi_bcast_parameter(FIELD_LEES_EDWARDS_OFFSET)
-
-                else:
-                    raise ValueError("Wrong # of args! Usage: lees_edwards_offset { new_offset }")
-
+    IF VIRTUAL_SITES:
+        property virtual_sites:
+            def __set__(self,v):
+                self._active_virtual_sites_handle.implementation=v
             def __get__(self):
-        # global lees_edwards_offset
-                return lees_edwards_offset
+                return self._active_virtual_sites_handle.implementation
 
+    
+    IF OIF_GLOBAL_FORCES:
+        property max_oif_objects:
+            """Maximum number of objects as per the object_in_fluid method.
+
+            """
+            
+            def __get__(self):
+                return max_oif_objects
+
+            def __set__(self,v):
+                global max_oif_objects
+                max_oif_objects=v
+                mpi_bcast_parameter(FIELD_MAX_OIF_OBJECTS)
+
+    
     def change_volume_and_rescale_particles(self, d_new, dir="xyz"):
         """Change box size and rescale particle coordinates.
 
@@ -424,6 +444,24 @@ cdef class System(object):
         get_mi_vector(res, b, a)
         return np.array((res[0], res[1], res[2]))
 
+    def rotate_system(self, **kwargs):
+        """Rotate the particles in the system about the center of mass.
+
+           If ROTATION is activated, the internal rotation degrees of
+           freedom are rotated accordingly.
+
+        Parameters
+        ----------
+        phi : :obj:`float`
+                Angle between the z-axis and the roation axis.
+        theta : :obj:`float`
+                Rotaton of the axis around the y-axis.
+        alpha : :obj:`float`
+                How much to rotate
+
+        """
+        rotate_system(kwargs['phi'], kwargs['theta'], kwargs['alpha'])
+
     IF EXCLUSIONS:
         def auto_exclusions(self, distance):
             """Automatically adds exclusions between particles
@@ -439,3 +477,56 @@ cdef class System(object):
             """
             auto_exclusions(distance)
 
+
+    def _is_valid_type(self, current_type):
+        return (not (isinstance(current_type, int) or current_type < 0 or current_type > globals.max_seen_particle_type))
+
+
+    def check_valid_type(self, current_type):
+        if self._is_valid_type(current_type):
+            raise ValueError("type", current_type, "does not exist!")
+
+
+    def setup_type_map(self, type_list=None):
+        """
+        For using Espresso conveniently for simulations in the grand canonical
+        ensemble, or other purposes, when particles of certain types are created
+        and deleted frequently. Particle ids can be stored in lists for each
+        individual type and so random ids of particles of a certain type can be
+        drawn. If you want Espresso to keep track of particle ids of a certain type
+        you have to initialize the method by calling the setup function. After that
+        Espresso will keep track of particle ids of that type.
+
+        """
+        if not hasattr(type_list, "__iter__"):
+            raise ValueError("type_list has to be iterable.")
+
+        for current_type in type_list:
+            init_type_map(current_type)
+
+    def number_of_particles(self, type=None):
+        """
+        Parameters
+        ----------
+        current_type : :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
+                       Particle type to count the number for. 
+
+        Returns
+        -------
+        :obj:`int`
+            The number of particles which have the given type.
+
+        """
+        self.check_valid_type( type)
+        number=number_of_particles_with_type(type)
+        return int(number)
+
+    def find_particle(self, type=None):
+        """
+        The command will return a randomly chosen particle id, for a particle of
+        the given type.
+        
+        """
+        self.check_valid_type(type)
+        pid=get_random_p_id(type)
+        return int(pid)

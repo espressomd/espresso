@@ -20,11 +20,6 @@
 #include "ParallelScriptInterface.hpp"
 
 #include <boost/mpi/collectives.hpp>
-#include <boost/serialization/map.hpp>
-#include <boost/serialization/serialization.hpp>
-#include <boost/serialization/string.hpp>
-#include <boost/serialization/variant.hpp>
-#include <boost/serialization/vector.hpp>
 
 #include "ParallelScriptInterfaceSlave.hpp"
 #include "utils/parallel/ParallelObject.hpp"
@@ -44,12 +39,13 @@ ParallelScriptInterface::ParallelScriptInterface(std::string const &name) {
   m_callback_id =
       m_cb->add(Communication::MpiCallbacks::function_type([](int, int) {}));
 
+  call(CallbackAction::NEW);
+
   /* Create local object */
   m_p = ScriptInterfaceBase::make_shared(
       name, ScriptInterfaceBase::CreationPolicy::LOCAL);
 
   /* Bcast class name and global id to the slaves */
-  call(CallbackAction::CREATE);
   std::pair<ObjectId, std::string> what = std::make_pair(m_p->id(), name);
   boost::mpi::broadcast(m_cb->comm(), what, 0);
 }
@@ -75,12 +71,21 @@ void ParallelScriptInterface::initialize(Communication::MpiCallbacks &cb) {
       ParallelScriptInterfaceSlave>::register_callback(cb);
 }
 
+void ParallelScriptInterface::construct(VariantMap const &params) {
+  call(CallbackAction::CONSTRUCT);
+
+  auto p = unwrap_variant_map(params);
+  boost::mpi::broadcast(m_cb->comm(), p, 0);
+
+  m_p->construct(p);
+}
+
 void ParallelScriptInterface::set_parameter(const std::string &name,
                                             const Variant &value) {
   std::pair<std::string, Variant> d(name, Variant());
 
   if (is_objectid(value)) {
-    d.second = map_parallel_to_local_id(name, value);
+    d.second = map_parallel_to_local_id(value);
   } else {
     d.second = value;
   }
@@ -97,15 +102,7 @@ void ParallelScriptInterface::set_parameter(const std::string &name,
 void ParallelScriptInterface::set_parameters(const VariantMap &parameters) {
   call(CallbackAction::SET_PARAMETERS);
 
-  /* Copy parameters into a non-const buffer, needed by boost::mpi */
-  auto p = parameters;
-
-  /* Unwrap the object ids */
-  for (auto &it : p) {
-    if (is_objectid(it.second)) {
-      it.second = map_parallel_to_local_id(it.first, it.second);
-    }
-  }
+  auto p = unwrap_variant_map(parameters);
 
   boost::mpi::broadcast(m_cb->comm(), p, 0);
 
@@ -117,39 +114,44 @@ void ParallelScriptInterface::set_parameters(const VariantMap &parameters) {
 Variant ParallelScriptInterface::call_method(const std::string &name,
                                              const VariantMap &parameters) {
   call(CallbackAction::CALL_METHOD);
-  VariantMap p = parameters;
-
-  /* Unwrap the object ids */
-  for (auto &it : p) {
-    if (is_objectid(it.second)) {
-      it.second = map_parallel_to_local_id(it.first, it.second);
-    }
-  }
+  VariantMap p = unwrap_variant_map(parameters);
 
   auto d = std::make_pair(name, p);
   /* Broadcast method name and parameters */
   boost::mpi::broadcast(m_cb->comm(), d, 0);
 
-  return m_p->call_method(name, p);
+  auto ret = map_local_to_parallel_id(m_p->call_method(name, p));
+
+  collect_garbage();
+
+  return ret;
 }
 
 Variant ParallelScriptInterface::get_parameter(std::string const &name) const {
   auto p = m_p->get_parameter(name);
 
-  if (is_objectid(p)) {
-    return map_local_to_parallel_id(name, p);
-  } else {
-    return p;
-  }
+  return map_local_to_parallel_id(p);
 }
 
-std::map<std::string, Variant> ParallelScriptInterface::get_parameters() const {
+VariantMap ParallelScriptInterface::get_parameters() const {
   auto p = m_p->get_parameters();
 
   /* Wrap the object ids */
   for (auto &it : p) {
+    it.second = map_local_to_parallel_id(it.second);
+  }
+
+  return p;
+}
+
+VariantMap ParallelScriptInterface::unwrap_variant_map(VariantMap const &map) {
+  /* Copy parameters into a non-const buffer, needed by boost::mpi */
+  auto p = map;
+
+  /* Unwrap the object ids */
+  for (auto &it : p) {
     if (is_objectid(it.second)) {
-      it.second = map_local_to_parallel_id(it.first, it.second);
+      it.second = map_parallel_to_local_id(it.second);
     }
   }
 
@@ -157,22 +159,35 @@ std::map<std::string, Variant> ParallelScriptInterface::get_parameters() const {
 }
 
 Variant
-ParallelScriptInterface::map_local_to_parallel_id(std::string const &name,
-                                                  Variant const &value) const {
-  /** Check if the objectid is the empty object (ObjectId()),
-   * if so it does not need translation, the empty object
-   * has the same id everywhere.
-   */
-  if (boost::get<ObjectId>(value) != ObjectId()) {
-    return obj_map.at(name)->id();
+ParallelScriptInterface::map_local_to_parallel_id(Variant const &value) const {
+  if (is_objectid(value)) {
+    /** Check if the objectid is the empty object (ObjectId()),
+     * if so it does not need translation, the empty object
+     * has the same id everywhere.
+     */
+    auto oid = boost::get<ObjectId>(value);
+
+    if (oid != ObjectId()) {
+      return obj_map.at(oid)->id();
+    } else {
+      return oid;
+    }
+  } else if (is_vector(value)) {
+    auto const &in_vec = boost::get<std::vector<Variant>>(value);
+    std::vector<Variant> out_vec;
+
+    for (auto const &e : in_vec) {
+      out_vec.emplace_back(map_local_to_parallel_id(e));
+    }
+
+    return out_vec;
   } else {
     return value;
   }
 }
 
 Variant
-ParallelScriptInterface::map_parallel_to_local_id(std::string const &name,
-                                                  Variant const &value) {
+ParallelScriptInterface::map_parallel_to_local_id(Variant const &value) {
   const auto outer_id = boost::get<ObjectId>(value);
 
   auto so_ptr = get_instance(outer_id).lock();
@@ -180,14 +195,16 @@ ParallelScriptInterface::map_parallel_to_local_id(std::string const &name,
   auto po_ptr = std::dynamic_pointer_cast<ParallelScriptInterface>(so_ptr);
 
   if (po_ptr != nullptr) {
+    auto inner_id = po_ptr->get_underlying_object()->id();
+
     /* Store a pointer to the object */
-    obj_map[name] = po_ptr;
+    obj_map[inner_id] = po_ptr;
 
     /* and return the id of the underlying object */
-    return po_ptr->get_underlying_object()->id();
+    return inner_id;
   } else if (so_ptr == nullptr) {
     /* Release the object */
-    obj_map.erase(name);
+    obj_map.erase(outer_id);
 
     /* Return None */
     return ObjectId();
@@ -214,7 +231,6 @@ void ParallelScriptInterface::collect_garbage() {
     ++it;
   }
 }
-
 Communication::MpiCallbacks *ParallelScriptInterface::m_cb = nullptr;
 
 } /* namespace ScriptInterface */

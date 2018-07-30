@@ -28,14 +28,9 @@
 /* global features */
 #define PARTIAL_PERIODIC
 #define ELECTROSTATICS
-#ifdef CUDA
-  #define EWALD_GPU
-#endif
 #define EXTERNAL_FORCES
-#define CONSTRAINTS
 #define MASS
 #define EXCLUSIONS
-#define COMFIXED
 #define NPT
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE

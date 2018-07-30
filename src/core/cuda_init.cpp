@@ -98,7 +98,7 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus(void) {
     }
     /* Copy unique devices to result, if any */
     std::copy(device_set.begin(), device_set.end(), std::inserter(g_devices, g_devices.begin()));
-    delete n_gpu_array;
+    delete[] n_gpu_array;
   } else {
     /* Send number of devices to master */
     MPI_Gather(&n_gpus, 1, MPI_INT, n_gpu_array, 1, MPI_INT, 0, MPI_COMM_WORLD);

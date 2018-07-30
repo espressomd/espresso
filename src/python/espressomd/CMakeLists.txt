@@ -40,8 +40,9 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi
                    DEPENDS gen_pxiconfig
                    )
 
-include_directories(${PYTHON_INCLUDE_DIRS})
-include_directories(${NUMPY_INCLUDE_DIR})
+
+include_directories(SYSTEM ${PYTHON_INCLUDE_DIRS})
+include_directories(SYSTEM ${NUMPY_INCLUDE_DIR})
 
 add_custom_target(espressomd)
 add_custom_command(OUTPUT code_info.pyx
@@ -67,21 +68,21 @@ list(REMOVE_DUPLICATES cython_SRC)
 foreach(cython_file ${cython_SRC})
   get_filename_component(basename ${cython_file} NAME_WE)
   file(RELATIVE_PATH relpath ${CMAKE_CURRENT_SOURCE_DIR} ${cython_file})
-  if("${basename}" STREQUAL "code_info")
+  if(basename STREQUAL "code_info")
       file(RELATIVE_PATH relpath ${CMAKE_CURRENT_BINARY_DIR} ${cython_file})
   endif()
   get_filename_component(relpath ${relpath} DIRECTORY)
-  if("${relpath}" STREQUAL "")
+  if(relpath STREQUAL "")
       string(CONCAT outputpath ${CMAKE_CURRENT_BINARY_DIR} "/" ${basename} ".cpp")
   else()
       string(CONCAT outputpath ${CMAKE_CURRENT_BINARY_DIR} "/" ${relpath} "/" ${basename} ".cpp")
   endif()
-  if("${basename}" STREQUAL "")
+  if(basename STREQUAL "")
       message( FATAL_ERROR "Internal error empty basename of file ${cython_file}")
   else()
       list(APPEND cython_generated_SRC "${basename}.cpp")
       add_custom_command(OUTPUT ${outputpath}
-                         COMMAND ${CYTHON_EXECUTABLE}  --cplus
+                         COMMAND ${CYTHON_EXECUTABLE} ${CYTHON_FLAGS} --cplus
                          --directive embedsignature=True
                          --directive binding=True
                          -I ${CMAKE_CURRENT_SOURCE_DIR}
@@ -98,15 +99,19 @@ foreach(cython_file ${cython_SRC})
       else()
           set_target_properties(${basename} PROPERTIES PREFIX "")
       endif()
-      set_target_properties(${basename} PROPERTIES MACOSX_RPATH TRUE)
       if (APPLE)
          set_target_properties(${basename} PROPERTIES SUFFIX ".so")
       endif()
       if ( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
-          set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS "-Wno-cpp")
+          set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS "-Wno-pedantic -Wno-cpp -Wno-strict-aliasing -Wno-maybe-uninitialized -Wno-unused-variable")
       elseif( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" )
-          set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS "-Wno-#warnings")
+          set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS "-Wno-pedantic -Wno-#warnings -Wno-sometimes-uninitialized -Wno-unused-variable")
+      elseif( CMAKE_CXX_COMPILER_ID STREQUAL "Intel" )
+          set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS "-wd1224")
+      else()
+          set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS "-Wno-pedantic -Wno-unused-variable")
       endif()
+      set_target_properties(${basename} PROPERTIES CXX_CLANG_TIDY "")
       target_link_libraries(${basename} EspressoCore EspressoScriptInterface ${LIBRARIES})
       add_dependencies(espressomd ${basename})
   endif()
