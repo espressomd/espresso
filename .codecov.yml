@@ -5,6 +5,7 @@ codecov:
     require_ci_to_pass: yes
   ci:
     - !travis-ci.org
+    - gitlab.icp.uni-stuttgart.de
 
 coverage:
   precision: 0
