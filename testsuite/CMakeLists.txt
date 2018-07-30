@@ -160,6 +160,7 @@ python_test(FILE lb_poiseuille.py MAX_NUM_PROC 4)
 python_test(FILE analyze_gyration_tensor.py MAX_NUM_PROC 1)
 python_test(FILE oif_volume_conservation.py MAX_NUM_PROC 2)
 python_test(FILE simple_pore.py MAX_NUM_PROC 1)
+python_test(FILE lb_boundary.py MAX_NUM_PROC 2)
 
 if(PY_H5PY)
   python_test(FILE h5md.py MAX_NUM_PROC 2)
