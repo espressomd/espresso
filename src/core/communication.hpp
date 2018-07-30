@@ -60,6 +60,7 @@
 /** Included needed by callbacks. */
 #include "cuda_init.hpp"
 #include "particle_data.hpp"
+
 #include "utils/serialization/array.hpp"
 
 /**************************************************
@@ -124,8 +125,8 @@ void mpi_finalize();
  * and node grid.
  */
 void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
-                              std::array<int, 3> const &periodicity = {1, 1,
-                                                                       1});
+                              std::array<int, 3> const &periodicity = {{1, 1,
+                                                                       1}});
 
 /** Issue REQ_EVENT: tells all clients of some system change.
     The events are:
@@ -179,7 +180,7 @@ void mpi_send_swimming(int node, int part, ParticleParametersSwimming swim);
     \param node the node it is attached to.
     \param F its new force.
 */
-void mpi_send_f(int node, int part, double F[3]);
+void mpi_send_f(int node, int part, const Vector3d & F);
 
 /** issue req_set_solv: send particle solvation free energy
     also calls \ref on_particle_change.
@@ -222,6 +223,16 @@ void mpi_send_mu_E(int node, int part, double mu_E[3]);
 */
 void mpi_send_rotational_inertia(int node, int part, double rinertia[3]);
 #endif
+#ifdef ROTATION
+/** Mpi call for rotating a single particle 
+    Also calls \ref on_particle_change.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param axis rotation axis
+    \param angle rotation angle
+*/
+void mpi_rotate_particle(int node, int part, double axis[3],double angle);
+#endif
 
 #ifdef AFFINITY
 /** Issue REQ_SET_AFFINITY: send particle affinity.
@@ -258,7 +269,7 @@ void mpi_send_quat(int node, int part, double quat[4]);
     \param pnode the node it is attached to.
     \param rot the rotation flag
 */
-void mpi_send_rotation(int pnode, int part, int rot);
+void mpi_send_rotation(int pnode, int part, short int rot);
 
 /* Issue REQ_SET_LAMBDA: send particle angular velocity.
     Also calls \ref on_particle_change.
@@ -299,25 +310,15 @@ void mpi_send_dipm(int node, int part, double dipm);
     Also calls \ref on_particle_change.
     \param part the particle.
     \param node the node it is attached to.
-    \param isVirtual its new isVirtual.
+    \param is_virtual its new is_virtual.
 */
-void mpi_send_virtual(int node, int part, int isVirtual);
+void mpi_send_virtual(int node, int part, int is_virtual);
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
+void mpi_send_vs_quat(int node, int part, double *vs_quat);
 void mpi_send_vs_relative(int node, int part, int vs_relative_to,
-                          double vs_distance, double *rel_ori);
-#endif
-
-#ifdef MULTI_TIMESTEP
-/** Issue REQ_SET_SMALLER_TIMESTEP: send smaller time step value.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param smaller_timestep its new smaller_timestep.
-*/
-void mpi_send_smaller_timestep_flag(int node, int part,
-                                    int smaller_timestep_flag);
+                          double vs_distance, double* rel_ori);
 #endif
 
 /** Issue REQ_SET_TYPE: send particle type.
@@ -372,7 +373,7 @@ void mpi_remove_particle(int node, int id);
     \note Gets a copy of the particle data not a pointer to the actual particle
     used in integration
 */
-void mpi_recv_part(int node, int part, Particle *part_data);
+Particle mpi_recv_part(int node, int part);
 
 /** Issue REQ_INTEGRATE: start integrator.
     @param n_steps how many steps to do.
@@ -385,6 +386,8 @@ int mpi_integrate(int n_steps, int reuse_forces);
     @return nonzero on error
  */
 int mpi_minimize_energy(void);
+
+void mpi_bcast_all_ia_params();
 
 /** Issue REQ_BCAST_IA: send new ia params.
     Also calls \ref on_short_range_ia_change.
@@ -403,7 +406,7 @@ void mpi_bcast_ia_params(int i, int j);
 /** Issue REQ_BCAST_IA_SIZE: send new size of \ref ia_params.
     \param s the new size for \ref ia_params.
 */
-void mpi_bcast_n_particle_types(int s);
+void mpi_bcast_max_seen_particle_type(int s);
 
 /** Issue REQ_GATHER: gather data for analysis in analyze.
     \param job what to do:
@@ -460,12 +463,6 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3],
     velocities accordingly.
 */
 void mpi_set_time_step(double time_step);
-
-#ifdef MULTI_TIMESTEP
-/** Issue REQ_SET_SMALLER_TIME_STEP: send new \ref smaller_time_step.
-    Requires MULTI_TIMESTEP feature. */
-void mpi_set_smaller_time_step(double smaller_time_step);
-#endif
 
 /** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
 void mpi_bcast_coulomb_params();
@@ -606,7 +603,7 @@ void mpi_system_CMS_velocity();
 void mpi_galilei_transform();
 void mpi_observable_lb_radial_velocity_profile();
 
-/** Issue REQ_CATALYTIC_REACTIONS: notify the system of changes to the reaction
+/** Issue REQ_SWIMMER_REACTIONS: notify the system of changes to the reaction
  * parameters
  */
 void mpi_setup_reaction();
@@ -621,17 +618,6 @@ void mpi_external_potential_sum_energies_slave();
 /** Gather CUDA devices from all nodes */
 std::vector<EspressoGpuDevice> mpi_gather_cuda_devices();
 #endif
-
-/** CPU Thermostat */
-void mpi_thermalize_cpu(int temp);
-
-/** MPI-IO output function.
- *  \param filename Filename prefix for the created files. Must be
- * null-terminated.
- *  \param fields Fields to dump (see mpiio_tcl.hpp).
- *  \param write 1 to write, 0 to read
- */
-void mpi_mpiio(const char *filename, unsigned fields, int write);
 
 /**
  * @brief Resort the particles.

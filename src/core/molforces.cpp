@@ -27,6 +27,8 @@
 #include "particle_data.hpp"
 #include "topology.hpp"
 #include "utils.hpp"
+#include "utils/list_contains.hpp"
+
 #include <mpi.h>
 
 /** \file molforces.cpp
@@ -63,8 +65,6 @@ void apply_mol_constraints() {
 
 /* calculates the force applies by traps on all molecules */
 void calc_trap_force() {
-  Molecule *m;
-  int mi, j;
 #ifdef EXTERNAL_FORCES
   double trappos;
 #endif
@@ -75,50 +75,45 @@ void calc_trap_force() {
     return;
   } else {
 
-    m = &topology[0];
-
-    for (mi = 0; mi < n_molecules; mi++) {
-      m = &topology[mi];
-      for (j = 0; j < 3; j++) {
+    for (auto &m : topology) {
+      for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
-        if (m->trap_flag & COORD_FIXED(j)) {
+        if (m.trap_flag & COORD_FIXED(j)) {
           /* Is the molecule trapped at a certain position in space? */
-          if (m->isrelative == 1) {
+          if (m.isrelative == 1) {
             /* Is the trap set to absolute coordinates... */
-            trappos = m->trap_center[j] * box_l[j];
+            trappos = m.trap_center[j] * box_l[j];
           } else {
             /* or to relative ones? */
-            trappos = m->trap_center[j];
+            trappos = m.trap_center[j];
           }
-          m->trap_force[j] = 0;
+          m.trap_force[j] = 0;
           /* the trap_force holding the molecule to the set position in
            * calculated */
-          m->trap_force[j] +=
-              -((m->com[j] - trappos) * m->trap_spring_constant) /
-              (double)(m->part.n);
+          m.trap_force[j] += -((m.com[j] - trappos) * m.trap_spring_constant) /
+                             (double)(m.part.n);
           /* the drag force applied to the molecule is calculated */
-          m->trap_force[j] +=
-              -(m->v[j] * m->drag_constant) / (double)(m->part.n);
+          m.trap_force[j] += -(m.v[j] * m.drag_constant) / (double)(m.part.n);
           /* the force applies by the traps is added to fav */
           /* favcounter counts how many times we have added the force to fav
            * since last time "analyze mol force" was called */
           /* upon Espresso initialization it is set to -1 because in the first
            * call of "integrate" there is an extra initial time step */
           /* calling "analyze mol force" resets favcounter to 0 */
-          if (m->favcounter > -1)
-            m->fav[j] -= m->v[j] * m->drag_constant +
-                         (m->com[j] - trappos) * m->trap_spring_constant;
+          if (m.favcounter > -1)
+            m.fav[j] -= m.v[j] * m.drag_constant +
+                        (m.com[j] - trappos) * m.trap_spring_constant;
         }
-        if (m->noforce_flag & COORD_FIXED(j)) {
+        if (m.noforce_flag & COORD_FIXED(j)) {
           /* the trap force required to cancel out the total force acting on the
            * molecule is calculated */
-          m->trap_force[j] -= m->f[j] / (double)m->part.n;
-          if (m->favcounter > -1)
-            m->fav[j] -= m->f[j];
+          m.trap_force[j] -= m.f[j] / (double)m.part.n;
+          if (m.favcounter > -1)
+            m.fav[j] -= m.f[j];
         }
 #endif
       }
-      m->favcounter++;
+      m.favcounter++;
     }
   }
 }
@@ -128,29 +123,24 @@ void calc_trap_force() {
 void get_local_trapped_mols(IntList *local_trapped_mols) {
   for (auto const &p : local_cells.particles()) {
     auto const mol = p.p.mol_id;
-    if (mol >= n_molecules) {
-      runtimeErrorMsg() << "can't calculate molforces no such molecule as "
-                        << mol;
-      return;
-    }
+
+    assert(mol < topology.size());
 
     /* Check to see if this molecule is fixed */
     auto fixed = 0;
     for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
-      if (topology[mol].trap_flag & COORD_FIXED(j))
+      if (topology.at(mol).trap_flag & COORD_FIXED(j))
         fixed = 1;
-      if (topology[mol].noforce_flag & COORD_FIXED(j))
+      if (topology.at(mol).noforce_flag & COORD_FIXED(j))
         fixed = 1;
 #endif
     }
     if (fixed) {
       /* if this molecule isn't already in local_trapped_mols then add it in
        */
-      if (!intlist_contains(local_trapped_mols, mol)) {
-        realloc_intlist(local_trapped_mols, local_trapped_mols->max + 1);
-        local_trapped_mols->e[local_trapped_mols->max - 1] = mol;
-        local_trapped_mols->n = local_trapped_mols->max;
+      if (!list_contains(*local_trapped_mols, mol)) {
+        local_trapped_mols->push_back(mol);
       }
     }
   }
@@ -159,50 +149,37 @@ void get_local_trapped_mols(IntList *local_trapped_mols) {
 /* Calculate forces, mass,  and unnormalized center of mass and velocity*/
 /* This is only done for the trapped molecules to save time */
 void calc_local_mol_info(IntList *local_trapped_mols) {
-  int mi, i, j, mol;
-  Particle *p;
-  int np, c;
-  Cell *cell;
-  int lm;
-  int fixed;
-
   /* First reset all molecule masses,forces,centers of mass*/
-  for (mi = 0; mi < n_molecules; mi++) {
-    topology[mi].mass = 0;
-    for (i = 0; i < 3; i++) {
-      topology[mi].f[i] = 0.0;
-      topology[mi].com[i] = 0.0;
-      topology[mi].v[i] = 0.0;
+  for (auto &m : topology) {
+    m.mass = 0;
+    for (int i = 0; i < 3; i++) {
+      m.f[i] = 0.0;
+      m.com[i] = 0.0;
+      m.v[i] = 0.0;
     }
   }
 
   for (auto &p : local_cells.particles()) {
-    mol = p.p.mol_id;
-    if (mol >= n_molecules) {
-      runtimeErrorMsg() << "can't calculate molforces no such molecule as "
-                        << mol;
-      return;
-    }
-
+    auto &mol = topology.at(p.p.mol_id);
     /* Check to see if this molecule is fixed */
-    fixed = 0;
-    for (j = 0; j < 3; j++) {
+    auto fixed = 0;
+    for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
-      if (topology[mol].trap_flag & COORD_FIXED(j))
+      if (mol.trap_flag & COORD_FIXED(j))
         fixed = 1;
-      if (topology[mol].noforce_flag & COORD_FIXED(j))
+      if (mol.noforce_flag & COORD_FIXED(j))
         fixed = 1;
 #endif
     }
     if (fixed) {
-      topology[mol].mass += (p).p.mass;
+      mol.mass += (p).p.mass;
       /* Unfold the particle */
       unfold_position(p.r.p, p.m.v, p.l.i);
 
-      for (j = 0; j < 3; j++) {
-        topology[mol].f[j] += p.f.f[j];
-        topology[mol].com[j] += p.r.p[j] * (p).p.mass;
-        topology[mol].v[j] += p.m.v[j] * (p).p.mass;
+      for (int j = 0; j < 3; j++) {
+        mol.f[j] += p.f.f[j];
+        mol.com[j] += p.r.p[j] * (p).p.mass;
+        mol.v[j] += p.m.v[j] * (p).p.mass;
       }
       /* Fold the particle back */
       fold_position(p.r.p, p.l.i);
@@ -210,10 +187,11 @@ void calc_local_mol_info(IntList *local_trapped_mols) {
   }
 
   /* Final normalisation of centers of mass and velocity*/
-  for (lm = 0; lm < local_trapped_mols->n; lm++) {
-    mi = local_trapped_mols->e[lm];
-    for (i = 0; i < 3; i++) {
-      topology[mi].com[i] = topology[mi].com[i] / (double)(topology[mi].mass);
+  for (int lm = 0; lm < local_trapped_mols->n; lm++) {
+    auto mi = local_trapped_mols->e[lm];
+    for (int i = 0; i < 3; i++) {
+      topology.at(mi).com[i] =
+          topology[mi].com[i] / (double)(topology[mi].mass);
       topology[mi].v[i] = topology[mi].v[i] / (double)(topology[mi].mass);
     }
   }
@@ -230,15 +208,13 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
   double f[3] = {0, 0, 0};
   double mass = 0;
   /* number of trapped molecules on each node */
-  int *n_local_mols;
+  std::vector<int> n_local_mols(n_nodes);
   /* sum of all elements of n_local_mols */
   int sum_n_local_mols;
   /* lists of which molecules are on each node in order of ascending node number
    */
-  int *local_mols;
   MPI_Status status;
 
-  n_local_mols = (int *)Utils::malloc(n_nodes * sizeof(int));
   sum_n_local_mols = 0;
 
   /* Everyone tells me how many trapped molecules are on their node */
@@ -249,7 +225,7 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
   for (i = 1; i < n_nodes; i++) {
     sum_n_local_mols += n_local_mols[i];
   }
-  local_mols = (int *)Utils::malloc(sum_n_local_mols * sizeof(int));
+  std::vector<int>local_mols(sum_n_local_mols);
 
   /* Everyone tells me which trapped molecules are on their node */
   count = 0;
@@ -264,17 +240,16 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
      local values on the master node
      The centre of masses and velocities are weighted by the total mass on the
      master node */
-  for (i = 0; i < n_molecules; i++) {
-    mol = i;
-    if (intlist_contains(local_trapped_mols, i)) {
-      for (j = 0; j < 3; j++) {
-        topology[mol].com[j] = topology[mol].com[j] * topology[mol].mass;
+  for (std::size_t mol = 0; topology.size(); i++) {
+    if (Utils::list_contains<int>(*local_trapped_mols, mol)) {
+      for (int j = 0; j < 3; j++) {
+        topology.at(mol).com[j] = topology[mol].com[j] * topology[mol].mass;
         topology[mol].v[j] = topology[mol].v[j] * topology[mol].mass;
         topology[mol].f[j] = topology[mol].f[j];
       }
     } else {
       topology[mol].mass = 0;
-      for (j = 0; j < 3; j++) {
+      for (int j = 0; j < 3; j++) {
         topology[mol].com[j] = 0;
         topology[mol].v[j] = 0;
         topology[mol].f[j] = 0;
@@ -286,8 +261,8 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
      from the slave nodes.
      They are added into the running sums in topology[mol] */
   count = 0;
-  for (i = 1; i < n_nodes; i++) {
-    for (j = 0; j < n_local_mols[i]; j++) {
+  for (int i = 1; i < n_nodes; i++) {
+    for (int j = 0; j < n_local_mols[i]; j++) {
       mol = local_mols[count];
       count += 1;
       MPI_Recv(&mass, 1, MPI_DOUBLE, i, 99, comm_cart, &status);
@@ -305,10 +280,10 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
 
   /* The centre of masses and velocities are renormalized by the total molecular
    * weights */
-  for (mol = 0; mol < n_molecules; mol++) {
+  for (auto &mol : topology) {
     for (k = 0; k < 3; k++) {
-      topology[mol].com[k] = topology[mol].com[k] / topology[mol].mass;
-      topology[mol].v[k] = topology[mol].v[k] / topology[mol].mass;
+      mol.com[k] = mol.com[k] / mol.mass;
+      mol.v[k] = mol.v[k] / mol.mass;
     }
   }
 
@@ -329,9 +304,6 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
       MPI_Send(topology[mol].trap_force, 3, MPI_DOUBLE, i, 99, comm_cart);
     }
   }
-
-  free(local_mols);
-  free(n_local_mols);
 }
 
 /* Send molecule information to the master node.
@@ -387,8 +359,6 @@ void calc_mol_info() {
     return;
   }
 
-  init_intlist(&local_trapped_mols);
-
   /* Find out which trapped molecules are on this node */
   get_local_trapped_mols(&local_trapped_mols);
 
@@ -405,8 +375,6 @@ void calc_mol_info() {
   } else {
     mpi_comm_mol_info_slave(&local_trapped_mols);
   }
-
-  realloc_intlist(&local_trapped_mols, 0);
 }
 
 void calc_and_apply_mol_constraints() {

@@ -10,7 +10,8 @@
 # in z direction. We create walls in the xz and yz plane at the box
 # boundaries, where the velocity is fixed to $v.
 #
-from espressomd import System, lb, lbboundaries, shapes, has_features
+import espressomd
+from espressomd import lb, lbboundaries, shapes, has_features
 import unittest as ut
 import numpy as np
 import sys
@@ -20,17 +21,15 @@ import sys
            "Features not available, skipping test!")
 class Stokes(ut.TestCase):
 
-    es = System()
 
     def test_stokes(self):
         # System setup
-        #system = System()
-        system = self.es
         agrid = 1
         radius = 5.5
         box_width = 64
         real_width = box_width + 2 * agrid
         box_length = 64
+        system = espressomd.System(box_l=[real_width, real_width, box_length])
         system.box_l = [real_width, real_width, box_length]
         system.time_step = 0.2
         system.cell_system.skin = 0.4
@@ -43,7 +42,7 @@ class Stokes(ut.TestCase):
         kinematic_visc = 1.0
 
         # Invoke LB fluid
-        lbf = lb.LBFluid_GPU(visc=kinematic_visc, dens=1,
+        lbf = lb.LBFluidGPU(visc=kinematic_visc, dens=1,
                              agrid=agrid, tau=system.time_step, fric=1)
         system.actors.add(lbf)
 

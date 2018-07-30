@@ -47,7 +47,7 @@ int check_id = ONEPART_DEBUG_ID;
 void check_particle_consistency() {
   Particle *part;
   Cell *cell;
-  int n, dir, c, p;
+  int n, dir, c;
   int cell_part_cnt = 0, ghost_part_cnt = 0, local_part_cnt = 0;
   int cell_err_cnt = 0;
 
@@ -78,7 +78,8 @@ void check_particle_consistency() {
                         "mismatch for part id %d: local: %p cell: %p in cell "
                         "%d\n",
                 this_node, part[n].p.identity,
-                local_particles[part[n].p.identity], &part[n], c);
+                static_cast<void *>(local_particles[part[n].p.identity]),
+                static_cast<void *>(&part[n]), c);
         errexit();
       }
     }
@@ -98,7 +99,7 @@ void check_particle_consistency() {
                      this_node, cell_part_cnt, ghost_part_cnt));
   /* checks: local particle id */
   for (n = 0; n < max_seen_particle + 1; n++) {
-    if (local_particles[n] != NULL) {
+    if (local_particles[n] != nullptr) {
       local_part_cnt++;
       if (local_particles[n]->p.identity != n) {
         fprintf(stderr, "%d: check_particle_consistency: ERROR: "
@@ -126,12 +127,12 @@ void check_particle_consistency() {
             this_node, cell_part_cnt, local_part_cnt);
 
     for (c = 0; c < local_cells.n; c++) {
-      for (p = 0; p < local_cells.cell[c]->n; p++)
+      for (int p = 0; p < local_cells.cell[c]->n; p++)
         fprintf(stderr, "%d: got particle %d in cell %d\n", this_node,
                 local_cells.cell[c]->part[p].p.identity, c);
     }
 
-    for (p = 0; p < n_part; p++)
+    for (int p = 0; p < n_part; p++)
       if (local_particles[p])
         fprintf(stderr, "%d: got particle %d in local_particles\n", this_node,
                 p);
@@ -149,9 +150,9 @@ void check_particle_consistency() {
 
 void check_particles() {
   Particle *part;
-  int *is_here;
+
   Cell *cell;
-  int n, dir, c, p;
+  int n, dir, c;
   int cell_part_cnt = 0, local_part_cnt = 0;
   int cell_err_cnt = 0;
   double skin2 = (skin != -1) ? skin / 2 : 0;
@@ -185,7 +186,8 @@ void check_particles() {
         fprintf(stderr, "%d: check_particles: ERROR: address mismatch for part "
                         "id %d: local: %p cell: %p in cell %d\n",
                 this_node, part[n].p.identity,
-                local_particles[part[n].p.identity], &part[n], c);
+                static_cast<void *>(local_particles[part[n].p.identity]),
+                static_cast<void *>(&part[n]), c);
         errexit();
       }
     }
@@ -196,7 +198,7 @@ void check_particles() {
 
   /* checks: local particle id */
   for (n = 0; n <= max_seen_particle; n++) {
-    if (local_particles[n] != NULL) {
+    if (local_particles[n] != nullptr) {
       local_part_cnt++;
       if (local_particles[n]->p.identity != n) {
         fprintf(stderr, "%d: check_particles: ERROR: local_particles part %d "
@@ -219,4 +221,24 @@ void check_particles() {
   }
 
   CELL_TRACE(fprintf(stderr, "%d: leaving check_particles\n", this_node));
+}
+
+/**
+ * @brief Check if particles are in correct cells.
+ *
+ * Check that particles are in the cells the cellsystem says
+ * they should be.
+ */
+void check_particle_sorting() {
+  for (int c = 0; c < local_cells.n; c++) {
+    auto cell = local_cells.cell[c];
+    for (int n = 0; n < cell->n; n++) {
+      auto p = cell->part[n];
+      if (cell_structure.position_to_cell(p.r.p.data()) != cell) {
+        fprintf(stderr, "%d: misplaced part id %d. %p != %p\n", this_node,
+                p.p.identity, (void*)cell, (void*)cell_structure.position_to_cell(p.r.p.data()));
+        errexit();
+      }
+    }
+  }
 }

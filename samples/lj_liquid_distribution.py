@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function
-import numpy
+import numpy as np
 import espressomd
 from espressomd import thermostat
 from samples_common import open
@@ -49,7 +49,11 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System()
+system = espressomd.System(box_l=[box_l]*3)
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
+
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
@@ -81,14 +85,13 @@ distr_int_flag = 1
 
 distr_file = open("pylj_liquid_distribution.dat", "w")
 distr_file.write("# r\tdistribution\n")
-distr_r = numpy.zeros(distr_r_bins)
-distr_values = numpy.zeros(distr_r_bins)
+distr_r = np.zeros(distr_r_bins)
+distr_values = np.zeros(distr_r_bins)
 
 
 # Interaction setup
 #############################################################
 
-system.box_l = [box_l, box_l, box_l]
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
@@ -107,16 +110,16 @@ n_part = int(volume * density)
 for i in range(n_part):
     if i < n_part / 2.0:
         system.part.add(
-            type=0, id=i, pos=numpy.random.random(3) * system.box_l)
+            type=0, id=i, pos=np.random.random(3) * system.box_l)
     else:
         system.part.add(
-            type=1, id=i, pos=numpy.random.random(3) * system.box_l)
+            type=1, id=i, pos=np.random.random(3) * system.box_l)
 
 
 print("Simulate {} particles in a cubic simulation box {} at density {}."
       .format(n_part, box_l, density).strip())
 print("Interactions:\n")
-act_min_dist = system.analysis.mindist()
+act_min_dist = system.analysis.min_dist()
 print("Start with minimal distance {}".format(act_min_dist))
 
 system.cell_system.max_num_cells = 2744
@@ -148,7 +151,7 @@ i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
     system.integrator.run(warm_steps)
     # Warmup criterion
-    act_min_dist = system.analysis.mindist()
+    act_min_dist = system.analysis.min_dist()
 #  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,system.time,lj_cap,act_min_dist), end=' ')
     i += 1
 
@@ -163,7 +166,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
 import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
 # pprint.pprint(system.part.__getstate__(), width=1)
-pprint.pprint(system.__getstate__(), width=1)
+pprint.pprint(system.__getstate__())
 
 # write parameter file
 

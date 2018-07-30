@@ -8,10 +8,17 @@
 
 namespace ScriptInterface {
 namespace LBBoundaries {
-class LBBoundary : public AutoParameters {
+class LBBoundary : public AutoParameters<LBBoundary> {
 public:
   LBBoundary() : m_lbboundary(new ::LBBoundaries::LBBoundary()) {
-    add_parameters({{"velocity", m_lbboundary->velocity()},
+    add_parameters({{"velocity",
+                     [this](Variant const &value) {
+                       m_lbboundary->set_velocity(get_value<Vector3d>(value));
+                     },
+                     [this]() {
+                       return m_lbboundary->velocity();
+                     }
+                    },
                     {"shape",
                      [this](Variant const &value) {
                        m_shape =
@@ -41,13 +48,12 @@ public:
 #endif
   }
 
-  Variant call_method(const std::string &name, const VariantMap &) {
+  Variant call_method(const std::string &name, const VariantMap &) override {
     if (name == "get_force") {
       return m_lbboundary->get_force();
     }
+    return none;
   }
-
-  const std::string name() const override { return "LBBoundaries:LBBoundary"; }
 
   std::shared_ptr<::LBBoundaries::LBBoundary> lbboundary() {
     return m_lbboundary;

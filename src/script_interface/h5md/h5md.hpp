@@ -32,17 +32,13 @@
 namespace ScriptInterface {
 namespace Writer {
 
-class H5mdScript : public AutoParameters {
+class H5mdScript : public AutoParameters<H5mdScript> {
 public:
   H5mdScript() : m_h5md(new ::Writer::H5md::File()) {
     add_parameters({{"filename", m_h5md->filename()},
                     {"scriptname", m_h5md->scriptname()},
                     {"what", m_h5md->what()},
                     {"write_ordered", m_h5md->write_ordered()}});
-  };
-
-  const std::string name() const override {
-    return "ScriptInterface::Writer::H5mdScript";
   };
 
   Variant call_method(const std::string &name,

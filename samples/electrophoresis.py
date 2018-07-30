@@ -31,17 +31,20 @@ import os
 
 print(espressomd.features())
 
-# Seed
-#############################################################
-np.random.seed(42)
 
 # System parameters
 #############################################################
 
-system = espressomd.System()
+system = espressomd.System(box_l=[100.0, 100.0, 100.0])
+
+# Seed
+#############################################################
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
+
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-system.box_l = [100, 100, 100]
 system.periodicity = [1, 1, 1]
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 # system.cell_system.set_n_square(use_verlet_lists=False)
@@ -75,7 +78,7 @@ system.non_bonded_inter[1, 2].lennard_jones.set_params(
 # fene = interactions.FeneBond(k=10, d_r_max=2)
 # system.bonded_inter.add(fene)
 harmonic = interactions.HarmonicBond(k=10, r_0=2)
-harmonicangle = interactions.Angle_Harmonic(bend=10, phi0=np.pi)
+harmonicangle = interactions.AngleHarmonic(bend=10, phi0=np.pi)
 system.bonded_inter.add(harmonic)
 system.bonded_inter.add(harmonicangle)
 
@@ -90,25 +93,24 @@ init_polymer_pos = np.dstack((np.arange(n_monomers), np.zeros(n_monomers), np.ze
 system.part.add(pos=init_polymer_pos)
 
 
-system.part[:-1].add_bond((harmonic, np.arange(n_monomers)[1:]))
-system.part[1:-1].add_bond((harmonicangle, np.arange(n_monomers)
-                            [:-2], np.arange(n_monomers)[2:]))
+# system.part[:-1].add_bond((harmonic, np.arange(n_monomers)[1:]))
+# system.part[1:-1].add_bond((harmonicangle, np.arange(n_monomers)[:-2], np.arange(n_monomers)[2:]))
 
 # Particle creation with loops:
-# for i in range(n_monomers):
-#     if i > 0:
-#         system.part[i].add_bond((harmonic, i - 1))
+for i in range(n_monomers):
+    if i > 0:
+        system.part[i].add_bond((harmonic, i - 1))
 
-# for i in range(1,n_monomers-1):
-#     system.part[i].add_bond((harmonicangle,i - 1, i + 1))
+for i in range(1,n_monomers-1):
+    system.part[i].add_bond((harmonicangle,i - 1, i + 1))
 
 system.part[:n_monomers].q = -np.ones(n_monomers)
 
 # Create counterions
 ###################################################################
 system.part.add(pos=np.random.random((n_monomers, 3)) * system.box_l,
-                q=1,
-                type=1)
+                q=np.ones(n_monomers,dtype=int),
+                type=np.ones(n_monomers,dtype=int))
 
 # Create ions
 ###############################################################
@@ -154,15 +156,15 @@ read_checkpoint = False
 # Load checkpointed p3m class
 if os.path.isfile("p3m_checkpoint") and read_checkpoint == True:
     print("reading p3m from file")
-    p3m = pickle.load(open("p3m_checkpoint", "r"))
+    p3m = pickle.load(open("p3m_checkpoint", "rb"))
 else:
-    p3m = electrostatics.P3M(bjerrum_length=1.0, accuracy=1e-2)
+    p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
     print("Tuning P3M")
 
 system.actors.add(p3m)
 
 # Checkpoint AFTER tuning (adding method to actors)
-pickle.dump(p3m, open("p3m_checkpoint", "w"), -1)
+pickle.dump(p3m, open("p3m_checkpoint", "wb"), -1)
 
 print("P3M parameter:\n")
 p3m_params = p3m.get_params()
@@ -262,7 +264,7 @@ ax = fig1.add_subplot(111)
 for i in range(3):
     ax.plot(COM[:-500, i], label="COM pos %s" % direction[i])
 ax.legend(loc="best")
-ax.set_xlabel("time_step")
+ax.set_xlabel("time step")
 ax.set_ylabel("r")
 
 fig2 = pp.figure()
@@ -270,7 +272,7 @@ ax = fig2.add_subplot(111)
 for i in range(3):
     ax.plot(COM_v[:-500, i], label="COM v %s" % direction[i])
 ax.legend(loc="best")
-ax.set_xlabel("time_step")
+ax.set_xlabel("time step")
 ax.set_ylabel("v")
 
 if float(np.version.version.split(".")[1]) >= 10:
@@ -280,7 +282,7 @@ if float(np.version.version.split(".")[1]) >= 10:
     ax.plot(c_length, decay(c_length, fit[0]), label="fit")
     ax.legend(loc="best")
     ax.set_xlabel("contour length")
-    ax.set_ylabel("<cos(theta)>")
+    ax.set_ylabel(r"$\langle \cos(\theta) \rangle$")
 
 pp.show()
 

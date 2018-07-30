@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function
-import numpy
+import numpy as np
 from matplotlib import pyplot
 from threading import Thread
 import espressomd
@@ -52,7 +52,11 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System()
+system = espressomd.System(box_l=[box_l]*3)
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
+
 system.time_step = 0.001
 system.cell_system.skin = 0.4
 #es._espressoHandle.Tcl_Eval('thermostat langevin 1.0 1.0')
@@ -75,9 +79,6 @@ int_n_times = 50000
 
 # Interaction setup
 #############################################################
-
-system.box_l = [box_l, box_l, box_l]
-
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
     cutoff=lj_cut, shift="auto")
@@ -93,14 +94,14 @@ volume = box_l * box_l * box_l
 n_part = int(volume * density)
 
 for i in range(n_part):
-    system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
+    system.part.add(id=i, pos=np.random.random(3) * system.box_l)
 
-system.analysis.distto(0)
+system.analysis.dist_to(0)
 
 print("Simulate {} particles in a cubic simulation box {} at density {}."
       .format(n_part, box_l, density).strip())
 print("Interactions:\n")
-act_min_dist = system.analysis.mindist()
+act_min_dist = system.analysis.min_dist()
 print("Start with minimal distance {}".format(act_min_dist))
 
 system.cell_system.max_num_cells = 2744
@@ -129,7 +130,7 @@ i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
     system.integrator.run(warm_steps)
     # Warmup criterion
-    act_min_dist = system.analysis.mindist()
+    act_min_dist = system.analysis.min_dist()
 #  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,system.time,lj_cap,act_min_dist), end=' ')
     i += 1
 
@@ -186,8 +187,8 @@ def main_loop():
     visualizer.update()
 
     energies = system.analysis.energy()
-    plot.set_xdata(numpy.append(plot.get_xdata(), system.time))
-    plot.set_ydata(numpy.append(plot.get_ydata(), energies['total']))
+    plot.set_xdata(np.append(plot.get_xdata(), system.time))
+    plot.set_ydata(np.append(plot.get_ydata(), energies['total']))
 
 def main_thread():
     for i in range(0, int_n_times):
@@ -212,7 +213,7 @@ def update_plot():
 t = Thread(target=main_thread)
 t.daemon = True
 t.start()
-visualizer.registerCallback(update_plot, interval=1000)
+visualizer.register_callback(update_plot, interval=1000)
 visualizer.start()
 
 # terminate program

@@ -1,27 +1,34 @@
-Welcome to the ESPResSo documentation!
-======================================
+ESPResSo documentation
+======================
 
-Contents:
+.. _Users Guide:
 
-.. toctree::
-    :maxdepth: 2
-
-    User's Guide <ug>
-
-    Developer's Guide <dg>
-
-espressomd package
-==================
+User's Guide
+------------
 
 .. toctree::
     :maxdepth: 1
 
-    modules.rst
+    ug.rst
 
-.. automodule:: espressomd
-    :noindex: espressomd.assert_features, espressomd.has_features, espressomd.missing_features
-    :members: 
-    :private-members:
+.. _Developers Guide:
+
+Developer's Guide
+-----------------
+
+.. toctree::
+    :numbered:
+    :maxdepth: 1
+
+    dg.rst
+
+Python module documentation
+===========================
+
+.. toctree::
+    :maxdepth: 3
+
+    modules.rst
 
 Indices and tables
 ==================

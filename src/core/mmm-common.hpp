@@ -27,6 +27,8 @@
 #include "polynom.hpp"
 #include "specfunc.hpp"
 
+#include <vector>
+
 /** \name Math Constants */
 /*@{*/
 #define C_2PI     (2*M_PI)
@@ -36,7 +38,7 @@
 /*@}*/
 
 /** table of the Taylor expansions of the modified polygamma functions */
-extern Polynom *modPsi;
+extern std::vector<Polynom> modPsi;
 extern int      n_modPsi;
 
 /** modified polygamma for even order 2*n, n >= 0 */

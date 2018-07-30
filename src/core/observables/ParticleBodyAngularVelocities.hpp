@@ -10,18 +10,18 @@ namespace Observables {
 
 class ParticleBodyAngularVelocities : public PidObservable {
 public:
-  virtual int actual_calculate(PartCfg & partCfg) override {
-    last_value.resize(3 * ids().size());
+  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
+    std::vector<double> res(n_values());
     for (int i = 0; i < ids().size(); i++) {
 #ifdef ROTATION
-
-      last_value[3 * i + 0] = partCfg[ids()[i]].m.omega[0];
-      last_value[3 * i + 1] = partCfg[ids()[i]].m.omega[1];
-      last_value[3 * i + 2] = partCfg[ids()[i]].m.omega[2];
+      res[3 * i + 0] = partCfg[ids()[i]].m.omega[0];
+      res[3 * i + 1] = partCfg[ids()[i]].m.omega[1];
+      res[3 * i + 2] = partCfg[ids()[i]].m.omega[2];
 #endif
     }
-    return 0;
+    return res;
   }
+  virtual int n_values() const override { return 3 * ids().size(); }
 };
 
 } // Namespace Observables

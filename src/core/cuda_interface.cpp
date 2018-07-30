@@ -56,23 +56,22 @@ void cuda_bcast_global_part_params() {
 
 static void pack_particles(ParticleRange particles,
                            CUDA_particle_data *buffer) {
-  int dummy[3] = {0, 0, 0};
-  double pos[3];
-
   int i = 0;
   for (auto const &part : particles) {
-    memmove(pos, part.r.p, 3 * sizeof(double));
-    fold_position(pos, dummy);
+    auto const pos = folded_position(part);
 
     buffer[i].p[0] = static_cast<float>(pos[0]);
     buffer[i].p[1] = static_cast<float>(pos[1]);
     buffer[i].p[2] = static_cast<float>(pos[2]);
 
+#ifdef LB_GPU
     buffer[i].v[0] = static_cast<float>(part.m.v[0]);
     buffer[i].v[1] = static_cast<float>(part.m.v[1]);
     buffer[i].v[2] = static_cast<float>(part.m.v[2]);
-#ifdef IMMERSED_BOUNDARY
-    buffer[i].isVirtual = part.p.isVirtual;
+#ifdef VIRTUAL_SITES
+    buffer[i].is_virtual = part.p.is_virtual;
+
+#endif
 #endif
 
 #ifdef DIPOLES
@@ -267,8 +266,10 @@ on mpi.h. */
 void copy_CUDA_energy_to_energy(CUDA_energy energy_host) {
   energy.bonded[0] += energy_host.bonded;
   energy.non_bonded[0] += energy_host.non_bonded;
-  energy.coulomb[0] += energy_host.coulomb;
-  energy.dipolar[1] += energy_host.dipolar;
+  if (energy.n_coulomb>=1)
+    energy.coulomb[0] += energy_host.coulomb;
+  if (energy.n_dipolar >=2)
+    energy.dipolar[1] += energy_host.dipolar;
 }
 
 #endif /* ifdef CUDA */

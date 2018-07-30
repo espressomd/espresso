@@ -9,14 +9,16 @@ namespace Observables {
 
 class ParticlePositions : public PidObservable {
 public:
-  virtual int actual_calculate(PartCfg & partCfg) override {
+  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
+    std::vector<double> res(n_values());
     for (int i = 0; i < ids().size(); i++) {
-      last_value[3 * i + 0] = partCfg[ids()[i]].r.p[0];
-      last_value[3 * i + 1] = partCfg[ids()[i]].r.p[1];
-      last_value[3 * i + 2] = partCfg[ids()[i]].r.p[2];
+      res[3 * i + 0] = partCfg[ids()[i]].r.p[0];
+      res[3 * i + 1] = partCfg[ids()[i]].r.p[1];
+      res[3 * i + 2] = partCfg[ids()[i]].r.p[2];
     }
-    return 0;
+    return res;
   }
+  virtual int n_values() const override { return 3 * ids().size(); }
 };
 
 } // Namespace Observables

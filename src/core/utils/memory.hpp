@@ -36,7 +36,7 @@ template <typename T> inline T *realloc(T *old, size_t size) {
 }
 
 /** used instead of malloc.
-    Makes sure that a zero size allocation returns a NULL pointer */
+    Makes sure that a zero size allocation returns a nullptr pointer */
 inline void *malloc(size_t size) {
   if (size == 0) {
     return nullptr;

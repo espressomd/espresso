@@ -31,8 +31,8 @@
 #include "magnetic_non_p3m_methods.hpp"
 #include "mdlc_correction.hpp"
 #include "scafacos.hpp"
+#include "constraints.hpp"
 #include <cassert>
-#include "external_potential.hpp"
 
 #include "short_range_loop.hpp"
 
@@ -47,7 +47,7 @@ void init_energies(Observable_stat *stat) {
   int n_pre, n_non_bonded, n_coulomb, n_dipolar;
 
   n_pre = 1;
-  n_non_bonded = (n_particle_types * (n_particle_types + 1)) / 2;
+  n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
 
   n_coulomb = 0;
 #ifdef ELECTROSTATICS
@@ -55,7 +55,6 @@ void init_energies(Observable_stat *stat) {
   case COULOMB_NONE:
     n_coulomb = 0;
     break;
-#ifdef P3M
   case COULOMB_ELC_P3M:
     n_coulomb = 3;
     break;
@@ -63,12 +62,9 @@ void init_energies(Observable_stat *stat) {
   case COULOMB_P3M:
     n_coulomb = 2;
     break;
-#endif
-#ifdef SCAFACOS
   case COULOMB_SCAFACOS:
     n_coulomb = 2;
     break;
-#endif
   default:
     n_coulomb = 1;
   }
@@ -79,16 +75,14 @@ void init_energies(Observable_stat *stat) {
 
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE:
-    n_dipolar = 1;
+    n_dipolar = 1; // because there may be an external magnetic field
     break;
-#ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     n_dipolar = 3;
     break;
   case DIPOLAR_P3M:
     n_dipolar = 2;
     break;
-#endif
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
     n_dipolar = 2;
     break;
@@ -101,27 +95,29 @@ void init_energies(Observable_stat *stat) {
   case DIPOLAR_DS_GPU:
     n_dipolar = 2;
     break;
-#ifdef SCAFACOS_DIPOLES
+#ifdef DIPOLAR_BARNES_HUT
+ case DIPOLAR_BH_GPU:   
+    n_dipolar = 2; 
+    break;
+#endif
   case DIPOLAR_SCAFACOS:
     n_dipolar = 2;
     break;
-#endif
   }
 
 #endif
 
-  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb,
+  obsstat_realloc_and_clear(stat, n_pre, bonded_ia_params.size(), n_non_bonded, n_coulomb,
                             n_dipolar, 0, 1);
   stat->init_status = 0;
 
 
-  external_potential_init_energies();
 }
 
 /************************************************************/
 
 void master_energy_calc() {
-  mpi_gather_stats(1, total_energy.data.e, NULL, NULL, NULL);
+  mpi_gather_stats(1, total_energy.data.e, nullptr, nullptr, nullptr);
 
   total_energy.init_status = 1;
 }
@@ -149,19 +145,14 @@ void energy_calc(double *result) {
 
   short_range_loop([](Particle &p) { add_single_particle_energy(&p); },
                    [](Particle &p1, Particle &p2, Distance &d) {
-                     add_non_bonded_pair_energy(&p1, &p2, d.vec21,
+                     add_non_bonded_pair_energy(&p1, &p2, d.vec21.data(),
                                                 sqrt(d.dist2), d.dist2);
                    });
 
-/* rescale kinetic energy */
-#ifdef MULTI_TIMESTEP
-  if (smaller_time_step > 0.)
-    energy.data.e[0] /= (2.0 * smaller_time_step * smaller_time_step);
-  else
-#endif
-    energy.data.e[0] /= (2.0 * time_step * time_step);
-
   calc_long_range_energies();
+
+  auto local_parts = local_cells.particles();
+  Constraints::constraints.add_energy(local_parts, energy);
 
 #ifdef CUDA
   copy_energy_from_GPU();
@@ -171,22 +162,6 @@ void energy_calc(double *result) {
   MPI_Reduce(energy.data.e, result, energy.data.n, MPI_DOUBLE, MPI_SUM, 0,
              comm_cart);
 
-  if (n_external_potentials > 0) {
-    double *energies =
-        (double *)Utils::malloc(n_external_potentials * sizeof(double));
-    for (int i = 0; i < n_external_potentials; i++) {
-      energies[i] = external_potentials[i].energy;
-    }
-    double *energies_sum =
-        (double *)Utils::malloc(n_external_potentials * sizeof(double));
-    MPI_Reduce(energies, energies_sum, n_external_potentials, MPI_DOUBLE,
-               MPI_SUM, 0, comm_cart);
-    for (int i = 0; i < n_external_potentials; i++) {
-      external_potentials[i].energy = energies_sum[i];
-    }
-    free(energies);
-    free(energies_sum);
-  }
 }
 
 /************************************************************/
@@ -276,6 +251,11 @@ void calc_long_range_energies() {
   case DIPOLAR_DS_GPU:
     // Do nothing, it's an actor.
     break;
+#ifdef DIPOLAR_BARNES_HUT
+  case DIPOLAR_BH_GPU:
+    // Do nothing, it's an actor.
+    break;
+#endif // DIPOLAR_BARNES_HUT
 #ifdef SCAFACOS_DIPOLES
   case DIPOLAR_SCAFACOS:
     assert(Scafacos::dipolar());
@@ -302,9 +282,6 @@ double calculate_current_potential_energy_of_system(){
 	for(int i=0;i<num_energies;i++){
 		sum_all_energies+= total_energy.data.e[i];
 	}
-	for (int i = 0; i < n_external_potentials; i++) {
-        	sum_all_energies += external_potentials[i].energy;
-        }
 
 	return sum_all_energies-kinetic_energy;
 }

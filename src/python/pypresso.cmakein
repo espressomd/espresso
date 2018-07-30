@@ -7,7 +7,6 @@
 # without any warranty.
 #
 
-
 if test -n "$PYTHONPATH"; then
   PYTHONPATH=@PYTHON_DIR@:$PYTHONPATH
 else
@@ -15,15 +14,53 @@ else
 fi
 export PYTHONPATH
 
-if [ "$1" = "--gdb" ]; then
-  shift
-  exec gdb -ex run --args @PYTHON_FRONTEND@ $@
-elif [ "$1" = "--lldb" ]; then
-  shift
-  exec lldb -o "run $@" @PYTHON_FRONTEND@
-elif [ "$1" = "--cuda-gdb" ]; then
-  shift
-  exec cuda-gdb -ex run --args @PYTHON_FRONTEND@ $@
-fi
-
-exec @PYTHON_FRONTEND@ $@
+case $1 in
+    --gdb)
+        shift
+        exec gdb --args @PYTHON_FRONTEND@ $@
+        ;;
+    --lldb)
+        shift
+        exec lldb -- @PYTHON_FRONTEND@ $@
+        ;;
+    --valgrind)
+        shift
+        exec valgrind --leak-check=full @PYTHON_FRONTEND@ $@
+        ;;
+    --cuda-gdb)
+        shift
+        exec cuda-gdb --args @PYTHON_FRONTEND@ $@
+        ;;
+    --cuda-memcheck)
+        shift
+        exec cuda-memcheck @PYTHON_FRONTEND@ $@
+        ;;
+    --gdb=*)
+        options="${1#*=}"
+        shift
+        exec gdb ${options} --args @PYTHON_FRONTEND@ $@
+        ;;
+    --lldb=*)
+        options="${1#*=}"
+        shift
+        exec lldb ${options} -- @PYTHON_FRONTEND@ $@
+        ;;
+    --valgrind=*)
+        options="${1#*=}"
+        shift
+        exec valgrind ${options} @PYTHON_FRONTEND@ $@
+        ;;
+    --cuda-gdb=*)
+        options="${1#*=}"
+        shift
+        exec cuda-gdb ${options} --args @PYTHON_FRONTEND@ $@
+        ;;
+    --cuda-memcheck=*)
+        options="${1#*=}"
+        shift
+        exec cuda-memcheck ${options} @PYTHON_FRONTEND@ $@
+        ;;
+    *)
+        exec @PYTHON_FRONTEND@ $@
+        ;;
+esac

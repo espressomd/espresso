@@ -20,41 +20,42 @@
 #include "config.hpp"
 #include "debug.hpp"
 
-#include "cuda_utils.hpp"
-#include "cuda_interface.hpp"
-#include "random.hpp"
-#include "interaction_data.hpp"
 #include "cuda_init.hpp"
+#include "cuda_interface.hpp"
+#include "cuda_utils.hpp"
+#include "errorhandling.hpp"
+#include "interaction_data.hpp"
+
+#include <random>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
 #endif
 
-static int max_ran = 1000000;
 static CUDA_global_part_vars global_part_vars_host = {0, 0, 0};
 static __device__ __constant__ CUDA_global_part_vars global_part_vars_device;
 
 /** struct for particle force */
-static float *particle_forces_device = NULL;
-static float *particle_torques_device = NULL;
+static float *particle_forces_device = nullptr;
+static float *particle_torques_device = nullptr;
 
 /** struct for particle position and veloctiy */
-static CUDA_particle_data *particle_data_device = NULL;
+static CUDA_particle_data *particle_data_device = nullptr;
 /** struct for storing particle rn seed */
-static CUDA_particle_seed *particle_seeds_device = NULL;
+static CUDA_particle_seed *particle_seeds_device = nullptr;
 /** struct for fluid composition */
-static CUDA_fluid_composition *fluid_composition_device = NULL;
+static CUDA_fluid_composition *fluid_composition_device = nullptr;
 /** struct for energies */
-static CUDA_energy *energy_device = NULL;
+static CUDA_energy *energy_device = nullptr;
 
-CUDA_particle_data *particle_data_host = NULL;
-float *particle_forces_host = NULL;
+CUDA_particle_data *particle_data_host = nullptr;
+float *particle_forces_host = nullptr;
 CUDA_energy energy_host;
-float *particle_torques_host = NULL;
+float *particle_torques_host = nullptr;
 
-CUDA_fluid_composition *fluid_composition_host = NULL;
+CUDA_fluid_composition *fluid_composition_host = nullptr;
 #ifdef ENGINE
-CUDA_v_cs *host_v_cs = NULL;
+CUDA_v_cs *host_v_cs = nullptr;
 #endif
 
 /**cuda streams for parallel computing on cpu and gpu */
@@ -196,7 +197,7 @@ void gpu_change_number_of_part_to_comm() {
   if (global_part_vars_host.number_of_particles != n_part &&
       global_part_vars_host.communication_enabled == 1 && this_node == 0) {
 
-    global_part_vars_host.seed = (unsigned int)i_random(max_ran);
+    global_part_vars_host.seed = (unsigned int)std::random_device{}();
     global_part_vars_host.number_of_particles = n_part;
 
     cuda_safe_mem(cudaMemcpyToSymbol(global_part_vars_device,
@@ -204,34 +205,54 @@ void gpu_change_number_of_part_to_comm() {
                                      sizeof(CUDA_global_part_vars)));
 
     // if the arrays exists free them to prevent memory leaks
-    if (particle_forces_host)
-      cudaFreeHost(particle_forces_host);
-    if (particle_data_host)
-      cudaFreeHost(particle_data_host);
-    if (particle_forces_device)
+    if (particle_forces_host){
+      cuda_safe_mem(cudaFreeHost(particle_forces_host));
+      particle_forces_host=nullptr;
+    }
+    if (particle_data_host) {
+      cuda_safe_mem(cudaFreeHost(particle_data_host));
+      particle_data_host=nullptr;
+    }
+    if (particle_forces_device) {
       cudaFree(particle_forces_device);
-    if (particle_data_device)
+      particle_forces_device=nullptr;
+    }
+    if (particle_data_device) {
       cudaFree(particle_data_device);
-    if (particle_seeds_device)
-      cudaFree(particle_seeds_device);
+      particle_data_device=nullptr;
+    }
+    if (particle_seeds_device){
+      cuda_safe_mem(cudaFree(particle_seeds_device));
+      particle_seeds_device=nullptr;
+    }
 #ifdef ENGINE
-    if (host_v_cs)
+    if (host_v_cs) {
       cudaFreeHost(host_v_cs);
+      host_v_cs=nullptr;
+    }
 #endif
 #if (defined DIPOLES || defined ROTATION)
-    if (particle_torques_host)
+    if (particle_torques_host) {
       cudaFreeHost(particle_torques_host);
+      particle_torques_host=nullptr;
+    }
 #endif
 #ifdef SHANCHEN
-    if (fluid_composition_host)
-      cudaFreeHost(fluid_composition_host);
-    if (fluid_composition_device)
-      cudaFree(fluid_composition_device);
+    if (fluid_composition_host) {
+      cuda_safe_mem(cudaFreeHost(fluid_composition_host));
+      fluid_composition_host=nullptr;
+    }
+    if (fluid_composition_device) {
+      cuda_safe_mem(cudaFree(fluid_composition_device));
+      fluid_composition_device=nullptr;
+    }
 #endif
 
 #ifdef ROTATION
-    if (particle_torques_device)
-      cudaFree(particle_torques_device);
+    if (particle_torques_device) {
+      cuda_safe_mem(cudaFree(particle_torques_device));
+      particle_torques_device=nullptr;
+    }
 #endif
 
     if (global_part_vars_host.number_of_particles) {
@@ -346,25 +367,23 @@ void gpu_change_number_of_part_to_comm() {
 void gpu_init_particle_comm() {
   if (this_node == 0 && global_part_vars_host.communication_enabled == 0) {
     if (cuda_get_n_gpus() == -1) {
-      fprintf(stderr,
-              "Unable to initialize CUDA as no sufficient GPU is available.\n");
+      runtimeErrorMsg()
+          << "Unable to initialize CUDA as no sufficient GPU is available.";
       errexit();
     }
     if (cuda_get_n_gpus() > 1) {
-      fprintf(stderr, "More than one GPU detected, please note Espresso uses "
-                      "device 0 by default regardless of usage or "
-                      "capability\n");
-      fprintf(stderr, "Note that the GPU to be used can be modified using cuda "
-                      "setdevice <int>\n");
+      runtimeWarningMsg() << "More than one GPU detected, please note ESPResSo "
+                             "uses device 0 by default regardless of usage or "
+                             "capability. The GPU to be used can be modified "
+                             "by setting System.cuda_init_handle.device.";
       if (cuda_check_gpu(0) != ES_OK) {
-        fprintf(stderr, "WARNING!  CUDA device 0 is not capable of running "
-                        "Espresso but is used by default.  Espresso has "
-                        "detected a CUDA capable card but it is not the one "
-                        "used by Espresso by default\n");
-        fprintf(stderr, "Please set the GPU to use with the cuda setdevice "
-                        "<int> command.\n");
-        fprintf(stderr,
-                "A list of available GPUs can be accessed using cuda list.\n");
+        runtimeWarningMsg()
+            << "CUDA device 0 is not capable of running ESPResSo but is used "
+               "by default. Espresso has detected a CUDA capable card but it "
+               "is not the one used by ESPResSo by default. Please set the "
+               "GPU to use by setting System.cuda_init_handle.device. A list "
+               "of avalable GPUs is available through "
+               "System.cuda_init_handle.device_list.";
       }
     }
   }
@@ -482,7 +501,7 @@ void clear_energy_on_GPU() {
   if (!global_part_vars_host.communication_enabled)
     // || !global_part_vars_host.number_of_particles )
     return;
-  if (energy_device == NULL)
+  if (energy_device == nullptr)
     cuda_safe_mem(cudaMalloc((void **)&energy_device, sizeof(CUDA_energy)));
   cuda_safe_mem(cudaMemset(energy_device, 0, sizeof(CUDA_energy)));
 }

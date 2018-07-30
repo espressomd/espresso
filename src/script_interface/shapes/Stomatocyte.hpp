@@ -31,19 +31,21 @@ namespace Shapes {
 class Stomatocyte : public Shape {
 public:
   Stomatocyte() : m_stomatocyte(new ::Shapes::Stomatocyte()) {
-    add_parameters({{"position_x", m_stomatocyte->position_x()},
-         {"position_y", m_stomatocyte->position_y()},
-         {"position_z", m_stomatocyte->position_z()},
-         {"orientation_x", m_stomatocyte->orientation_x()},
-         {"orientation_y", m_stomatocyte->orientation_y()},
-         {"orientation_z", m_stomatocyte->orientation_z()},
-         {"outer_radius", m_stomatocyte->outer_radius()},
-         {"inner_radius", m_stomatocyte->inner_radius()},
-         {"layer_width", m_stomatocyte->layer_width()},
-         {"direction", m_stomatocyte->direction()}});
+    add_parameters({{"center",
+                     [this](Variant const &v) {
+                       m_stomatocyte->set_position(get_value<Vector3d>(v));
+                     },
+                     [this]() { return m_stomatocyte->position(); }},
+                    {"axis",
+                     [this](Variant const &v) {
+                       m_stomatocyte->set_orientation(get_value<Vector3d>(v));
+                     },
+                     [this]() { return m_stomatocyte->orientation(); }},
+                    {"outer_radius", m_stomatocyte->outer_radius()},
+                    {"inner_radius", m_stomatocyte->inner_radius()},
+                    {"layer_width", m_stomatocyte->layer_width()},
+                    {"direction", m_stomatocyte->direction()}});
   }
-
-  const std::string name() const override { return "Shapes::Stomatocyte"; }
 
   std::shared_ptr<::Shapes::Shape> shape() const override {
     return m_stomatocyte;
@@ -52,8 +54,9 @@ public:
 private:
   std::shared_ptr<::Shapes::Stomatocyte> m_stomatocyte;
 };
-
-} /* namespace Shapes */
-} /* namespace ScriptInterface */
+}
+/* namespace Shapes */
+}
+/* namespace ScriptInterface */
 
 #endif
