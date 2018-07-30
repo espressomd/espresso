@@ -4,7 +4,6 @@
 #include "Vector.hpp"
 
 #include "detail/ll_and_dist.hpp"
-#include "detail/pos_shift.hpp"
 
 #include "utils/math/bspline.hpp"
 

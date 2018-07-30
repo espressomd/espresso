@@ -50,6 +50,15 @@ public:
         detail::make_coupling<Coupling>(args), detail::make_field<Field>(args));
   }
 
+  Variant call_method(const std::string &name,
+                      VariantMap const &args) override {
+    if (name == "_eval_field") {
+      return m_constraint->field()([](Vector3d const &x) { return x; },
+                                   get_value<Vector3d>(args, "x"));
+    }
+    return none;
+  }
+
   std::shared_ptr<::Constraints::Constraint> constraint() override {
     return std::static_pointer_cast<::Constraints::Constraint>(m_constraint);
   }

@@ -227,7 +227,7 @@ class _Interpolated:
         field = np.zeros((shape[0], shape[1], shape[2], cls._codim))
 
         for i in product(*map(range,shape)):
-	        field[i] = f((np.array(i) - halo_points)*grid_spacing)
+	        field[i] = f((np.array(i) - halo_points - 0.5)*grid_spacing)
 
         return field
 
