@@ -38,7 +38,7 @@ system.non_bonded_inter[0,0].dpd.set_params(
 system.non_bonded_inter[0,0].hat.set_params(F_max=F_max,
                                        cutoff=r_cut)
 
-# Add the particles that are randomly distributed over the box
+# Add particles that are randomly distributed over the box
 system.part.add(pos=system.box_l * np.random.random((n_part,3)))
 
 # As a usage example, we calculate the pressure at several

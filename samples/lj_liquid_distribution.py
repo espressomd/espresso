@@ -27,7 +27,7 @@ required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
 from espressomd import thermostat
-#from samples_common import open
+from samples_common import open
 
 print("""
 =======================================================
@@ -87,7 +87,7 @@ distr_r_min = 0.1
 distr_r_max = box_l / 2.0
 distr_r_bins = 200
 distr_log_flag = 0
-distr_int_flag = 0
+distr_int_flag = 1
 
 
 distr_file = open("pylj_liquid_distribution.dat", "w")

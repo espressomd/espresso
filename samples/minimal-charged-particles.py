@@ -1,5 +1,5 @@
 """
-This sample simulates equal number of positively and negatively charged particles to the system the using P3M method. The system is maintained at a constant temperature by using a Langevin thermostat.
+This sample simulates equal number of positively and negatively charged particles using the P3M solver. The system is maintained at a constant temperature by using a Langevin thermostat.
 """
 
 #

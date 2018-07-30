@@ -1,5 +1,5 @@
 """
-This sample simulates chardged particles that interact via repulsive WCA potential. Electrostatic interactions are included using the P3M method. Relevant properties of the simulation is stored as a pickle file.
+This sample simulates charged particles that interact via repulsive WCA potential. Electrostatic interactions are included using the P3M solver. Relevant properties of the simulation is stored as a pickle file.
 """
 
 #

@@ -1,6 +1,6 @@
-## A script to simulate planar Poisseuille flow in Espresso
-# a spherical RBC-like partice is added and advected
-# with and without volume conservation
+"""
+This sample simulates planar Poisseuille flow in Espresso. A spherical RBC-like particle is added and advected with and without volume conservation.
+"""
 import espressomd
 
 required_features = ["LB","LB_BOUNDARIES"]
@@ -9,8 +9,6 @@ espressomd.assert_features(required_features)
 from espressomd import System, lb, shapes, lbboundaries
 import numpy as np
 from espressomd.virtual_sites import VirtualSitesInertialessTracers
-
-print("This sample simulates Poisseuille flow. A spherical RBC-like particle is added and advected with and without volume conservation.")
 
 # System setup
 boxZ = 20

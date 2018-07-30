@@ -1,5 +1,5 @@
 """
-This sample simulates the reaciton ensemble. It also illustrates how the constant pH method can be used.
+This sample simulates the reaction ensemble. It also illustrates how the constant pH method can be used.
 """
 
 #
