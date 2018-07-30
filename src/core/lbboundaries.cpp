@@ -262,11 +262,10 @@ void lb_init_boundaries() {
     boundary_velocity[3 * lbboundaries.size() + 1] = 0.0f;
     boundary_velocity[3 * lbboundaries.size() + 2] = 0.0f;
 
-    if (lbboundaries.size() || pdb_boundary_lattice) {
-      lb_init_boundaries_GPU(lbboundaries.size(), number_of_boundnodes,
+    lb_init_boundaries_GPU(lbboundaries.size(), number_of_boundnodes,
                              host_boundary_node_list, host_boundary_index_list,
                              boundary_velocity);
-    }
+
     free(boundary_velocity);
     free(host_boundary_node_list);
     free(host_boundary_index_list);
