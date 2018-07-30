@@ -1,3 +1,7 @@
+"""
+This sample illustrates how bond information can be stored.
+"""
+
 from __future__ import print_function
 import espressomd
 from espressomd.interactions import *

@@ -1,3 +1,6 @@
+"""
+This sample simulates a Lennard-Jones fluid maintained at a fixed temperature by a Langevin thermostat.
+"""
 #
 # Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
@@ -19,8 +22,12 @@
 from __future__ import print_function
 import numpy as np
 import espressomd
+
+required_features = ["LENNARD_JONES"]
+espressomd.assert_features(required_features)
+
 from espressomd import thermostat
-from samples_common import open
+#from samples_common import open
 
 print("""
 =======================================================
@@ -62,7 +69,7 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 # warmup integration (with capped LJ potential)
 warm_steps = 100
 warm_n_times = 30
-# do the warmup until the particles have at least the distance min__dist
+# do the warmup until the particles have at least the distance min_dist
 min_dist = 0.9
 
 # integration
@@ -95,7 +102,7 @@ for i in range(n_part):
 
 system.analysis.dist_to(0)
 
-print("Simulate {} particles in a cubic simulation box {} at density {}."
+print("Simulate {} particles in a cubic simulation box of length {} at density {}."
       .format(n_part, box_l, density).strip())
 print("Interactions:\n")
 act_min_dist = system.analysis.min_dist()

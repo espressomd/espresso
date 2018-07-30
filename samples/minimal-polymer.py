@@ -1,4 +1,6 @@
-
+"""
+This sample sets up a polymer.
+"""
 #
 # Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
@@ -23,13 +25,15 @@ from espressomd import thermostat
 from espressomd import interactions
 from espressomd import polymer
 from espressomd.io.writer import vtf  # pylint: disable=import-error
+import numpy as np
 
 # System parameters
 #############################################################
 
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 system.set_random_state_PRNG()
-system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4

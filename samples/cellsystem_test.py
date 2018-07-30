@@ -1,3 +1,7 @@
+"""
+This sample sets up a polymer and tests the available cell systems.
+"""
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -24,7 +28,6 @@ from espressomd import polymer
 from espressomd import interactions
 import time
 import numpy as np
-
 
 def profile():
     cs.skin = skin

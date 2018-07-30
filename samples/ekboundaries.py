@@ -1,3 +1,11 @@
+"""
+This sample sets up an electrokinetics (LB) fluid confined between charged walls.
+"""
+
+import espressomd
+
+required_features = ["ELECTROKINETICS","EK_BOUNDARIES","EXTERNAL_FORCES"] 
+espressomd.assert_features(required_features)
 
 from espressomd import System, shapes, electrokinetics
 import sys
@@ -14,9 +22,9 @@ ek = electrokinetics.Electrokinetics(
     lb_density=1, friction=1, agrid=1, viscosity=1, T=1, prefactor=1)
 
 pos = electrokinetics.Species(
-    density=0.05, D=0.1, valency=1, ext_force=[0, 0, 1.])
+    density=0.05, D=0.1, valency=1, ext_force_density=[0, 0, 1.])
 neg = electrokinetics.Species(
-    density=0.05, D=0.1, valency=-1, ext_force=[0, 0, -1.])
+    density=0.05, D=0.1, valency=-1, ext_force_density=[0, 0, -1.])
 ek.add_species(pos)
 ek.add_species(neg)
 system.actors.add(ek)

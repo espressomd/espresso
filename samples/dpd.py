@@ -1,6 +1,13 @@
-# A minimal DPD fluid
+"""
+This sample sets up a DPD fluid and calculates pressure as a function of varying density. The fluid is thermalized using a DPD thermostat.
+"""
+
 from __future__ import print_function
 import espressomd
+
+required_features = ["DPD"]
+espressomd.assert_features(required_features)
+
 import numpy as np
 
 # Set up the box and time step
@@ -10,11 +17,11 @@ system.cell_system.skin = 0.4
 
 # DPD parameters
 n_part = 200
-kT=1.
-gamma=1.5
-r_cut=1.
+kT = 1.
+gamma = 1.5
+r_cut = 1.
 # Repulsive parameter
-F_max=1.
+F_max = 1.
 
 # Activate the thermostat
 system.thermostat.set_dpd(kT=kT)
@@ -31,10 +38,10 @@ system.non_bonded_inter[0,0].dpd.set_params(
 system.non_bonded_inter[0,0].hat.set_params(F_max=F_max,
                                        cutoff=r_cut)
 
-# Add the particles randomly distributed over the box
+# Add the particles that are randomly distributed over the box
 system.part.add(pos=system.box_l * np.random.random((n_part,3)))
 
-# As a usage example, we calculate the pressure at serveral
+# As a usage example, we calculate the pressure at several
 # particle densities.
 for V in range(100, 1000, 100):
     # Rescale the system to the new volume
@@ -48,7 +55,7 @@ for V in range(100, 1000, 100):
 
     # Average pressure
     p_avg = np.mean(p_samples)
-    # And std
+    # Standard deviation of pressure
     p_std = np.std(p_samples)
 
     print('rho {:.2f} p {:.2f} ({:.2f})'.format(float(n_part) / V, p_avg, p_std))

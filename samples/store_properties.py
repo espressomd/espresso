@@ -1,3 +1,7 @@
+"""
+This sample simulates chardged particles that interact via repulsive WCA potential. Electrostatic interactions are included using the P3M method. Relevant properties of the simulation is stored as a pickle file.
+"""
+
 #
 # Copyright (C) 2013,2014 The ESPResSo project
 #
@@ -19,6 +23,10 @@
 from __future__ import print_function
 import numpy as np
 import espressomd
+
+required_features = ["ELECTROSTATICS", "LENNARD_JONES"]
+espressomd.assert_features(required_features)
+
 from espressomd import electrostatics
 from espressomd import electrostatic_extensions
 
@@ -29,7 +37,6 @@ print("""
 
 Program Information:""")
 print(espressomd.features())
-espressomd.assert_features(["ELECTROSTATICS"])
 
 dev = "cpu"
 

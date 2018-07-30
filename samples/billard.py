@@ -2,6 +2,10 @@
 
 from __future__ import print_function
 import espressomd
+
+required_features = ["LENNARD_JONES","EXTERNAL_FORCES"]
+espressomd.assert_features(required_features)
+
 from espressomd import thermostat
 from espressomd import analyze
 from espressomd import integrate
