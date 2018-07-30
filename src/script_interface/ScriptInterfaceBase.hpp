@@ -33,7 +33,6 @@ namespace ScriptInterface {
 /**
  * Convinience typedefs.
  */
-typedef std::map<std::string, Variant> VariantMap;
 typedef std::map<std::string, Parameter> ParameterMap;
 
 /**
@@ -56,7 +55,10 @@ class ScriptInterfaceBase : public Utils::AutoObjectId<ScriptInterfaceBase> {
 public:
   enum class CreationPolicy { LOCAL, GLOBAL };
 
+protected:
   ScriptInterfaceBase() = default;
+
+public:
   /* Copy has unclear semantics, so it should not be allowed. */
   ScriptInterfaceBase(ScriptInterfaceBase const &) = delete;
   ScriptInterfaceBase(ScriptInterfaceBase &&) = delete;
@@ -66,17 +68,52 @@ public:
 
   static std::weak_ptr<ScriptInterfaceBase> &get_instance(ObjectId id);
 
+private:
+  /* Memers related to object construction, they are
+     only to be used internally. */
+
+  std::string m_name;
+  CreationPolicy m_policy;
+
+  void set_name(std::string const &name) { m_name = name; }
+  void set_policy(CreationPolicy policy) { m_policy = policy; }
+
+public:
   /**
    * @brief Name of the object.
    *
-   * Should be the name of the derived type including
-   * namespace qualifiers. Must be unique.
+   * This is the name by which this instance was construted.
    *
    * @return Name of the object.
    */
-  // return boost::core::demangle(typeid(*this).name()) ?
-  virtual const std::string name() const = 0;
+  std::string const &name() const { return m_name; }
 
+  /**
+   * @brief The construction policy of this instance.
+   */
+  CreationPolicy policy() const { return m_policy; }
+
+  /**
+   * @brief Constructor
+   *
+   * This function is called on object creation with user
+   * provided parameters. This can be used if the SO has required parameters,
+   * it represents some type that can not reasonably be default constructed,
+   * or if the core implementation has to be chosen by a parameter.
+   * It is guarantueed that no getter or setter functions from this interface
+   * is called before construct (only name() and valid_parameters()),
+   * and it is only called once.
+   *
+   * The default implementation just calls set_parameters.
+   *
+   * @param params The parameters to the constructor. Only parameters that
+   *               are valid for a default-constructed object are valid.
+   */
+  virtual void construct(VariantMap const &params) {
+    this->set_parameters(params);
+  }
+
+public:
   /**
    * @brief get current parameters.
    * @return Parameters set in class.
@@ -148,8 +185,20 @@ public:
    *
    */
   static std::shared_ptr<ScriptInterfaceBase>
-  make_shared(std::string const &name,
-              CreationPolicy policy = CreationPolicy::LOCAL);
+  make_shared(std::string const &name, CreationPolicy policy);
+
+  /**
+   * @brief Get a new reference counted instance of a script interface by
+   * name, restoring the state of the object
+   *
+   */
+  static std::shared_ptr<ScriptInterfaceBase>
+  make_shared(std::string const &name, CreationPolicy policy,
+              Variant const &state) {
+    auto so_ptr = make_shared(name, policy);
+    so_ptr->set_state(state);
+    return so_ptr;
+  }
 
   /**
    * @brief Get a new reference counted instance of a script interface by
@@ -170,6 +219,14 @@ public:
 
     return sp;
   }
+
+public:
+  std::string serialize() const;
+  static std::shared_ptr<ScriptInterfaceBase> unserialize(std::string const& state);
+  virtual Variant get_state() const;
+
+protected:
+  virtual void set_state(Variant const &state);
 };
 
 /**

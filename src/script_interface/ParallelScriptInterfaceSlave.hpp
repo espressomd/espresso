@@ -32,7 +32,8 @@ class ParallelScriptInterfaceSlaveBase {};
 class ParallelScriptInterfaceSlave : private ParallelScriptInterfaceSlaveBase {
 public:
   enum class CallbackAction {
-    CREATE,
+    NEW,
+    CONSTRUCT,
     SET_PARAMETER,
     SET_PARAMETERS,
     CALL_METHOD,
@@ -41,7 +42,7 @@ public:
 
 private:
   friend class ParallelScriptInterface;
-  static Communication::MpiCallbacks * m_cb;
+  static Communication::MpiCallbacks *m_cb;
   friend Utils::Parallel::ParallelObject<ParallelScriptInterfaceSlave>;
   ParallelScriptInterfaceSlave();
 
@@ -57,10 +58,11 @@ private:
     }
   }
 
+  VariantMap bcast_variant_map() const;
+
 private:
   void mpi_slave(int action, int);
 };
-
 } /* namespace ScriptInterface */
 
 #endif

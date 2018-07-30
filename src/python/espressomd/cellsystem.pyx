@@ -22,6 +22,7 @@ from . cimport integrate
 from globals cimport *
 import numpy as np
 from espressomd.utils cimport handle_errors
+from espressomd.utils import is_valid_type
 
 cdef class CellSystem(object):
     def set_domain_decomposition(self, use_verlet_lists=True):
@@ -79,7 +80,7 @@ cdef class CellSystem(object):
         cell_structure.use_verlet_list = use_verlet_lists
 
         if n_layers:
-            if not isinstance(n_layers, int):
+            if not is_valid_type(n_layers, int):
                 raise ValueError("layer height should be positive")
 
             if not n_layers > 0:
@@ -135,6 +136,39 @@ cdef class CellSystem(object):
 
         return s
 
+    def __getstate__(self):
+        s = {"use_verlet_list" : cell_structure.use_verlet_list}
+
+        if cell_structure.type == CELL_STRUCTURE_LAYERED:
+            s["type"] = "layered"
+            s["n_layers"] = n_layers
+        if cell_structure.type == CELL_STRUCTURE_DOMDEC:
+            s["type"] = "domain_decomposition"
+        if cell_structure.type == CELL_STRUCTURE_NSQUARE:
+            s["type"] = "nsquare"
+
+        s["skin"] = skin
+        s["node_grid"] = np.array([node_grid[0], node_grid[1], node_grid[2]])
+        s["max_num_cells"] = max_num_cells
+        s["min_num_cells"] = min_num_cells
+        return s
+
+    def __setstate__(self, d):
+        use_verlet_lists = None
+        for key in d:
+            if key == "use_verlet_list":
+                use_verlet_lists = d[key]
+            elif key == "type":
+                if d[key] == "layered":
+                    self.set_layered(n_layers=d['n_layers'], use_verlet_lists=use_verlet_lists)
+                elif d[key] == "domain_decomposition":
+                    self.set_domain_decomposition(use_verlet_lists=use_verlet_lists)
+                elif d[key] == "nsquare":
+                    self.set_n_square(use_verlet_lists=use_verlet_lists)
+        self.skin = d['skin']
+        self.node_grid = d['node_grid']
+        self.max_num_cells = d['max_num_cells']
+        self.min_num_cells = d['min_num_cells']
 
     def get_pairs_(self, distance):
         return mpi_get_pairs(distance)
@@ -199,7 +233,16 @@ cdef class CellSystem(object):
 
         """
         def __set__(self, _node_grid):
-            raise Exception('node_grid is not settable by the user.')
+            if not np.prod(_node_grid) == n_nodes:
+                raise ValueError("Number of available nodes " + str(n_nodes) + " and imposed node grid " + str(_node_grid) + " do not agree.")
+            else:
+                node_grid[0] = _node_grid[0]
+                node_grid[1] = _node_grid[1]
+                node_grid[2] = _node_grid[2]
+                mpi_err = mpi_bcast_parameter(FIELD_NODEGRID)
+                handle_errors("mpi_bcast_parameter for node_grid failed")
+                if mpi_err:
+                    raise Exception("Broadcasting the node grid failed")
 
         def __get__(self):
             return np.array([node_grid[0], node_grid[1], node_grid[2]])

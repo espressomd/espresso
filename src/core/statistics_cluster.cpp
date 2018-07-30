@@ -46,7 +46,6 @@ Needs feature LENNARD_JONES compiled in. */
 int test_mesh_elements(PartCfg & partCfg, double pos[3], int probe_part_type) 
 {
 #ifdef LENNARD_JONES
-  int i;
   double dist,vec[3];
 
   for (auto &p: partCfg) {

@@ -43,11 +43,11 @@ int angle_cosine_set_params(int bond_type, double bend, double phi0);
 /************************************************************/
 
 /** Computes the three body angle interaction force and adds this
-    force to the particle forces (see \ref tclcommand_inter). 
+    force to the particle forces. 
     @param p_mid     Pointer to second/middle particle.
     @param p_left    Pointer to first/left particle.
     @param p_right   Pointer to third/right particle.
-    @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
+    @param iaparams  bond type number of the angle interaction.
     @param force1 returns force of particle 1
     @param force2 returns force of particle 2
     @return 0
@@ -55,7 +55,7 @@ int angle_cosine_set_params(int bond_type, double bend, double phi0);
 inline int calc_angle_cosine_force(Particle *p_mid, Particle *p_left, Particle *p_right,
 			      Bonded_ia_parameters *iaparams, double force1[3], double force2[3])
 {
-  double cosine, vec1[3], vec2[3], d1i, d2i, dist2,  fac, f1=0.0, f2=0.0;
+  double cosine, vec1[3], vec2[3], d1i, d2i, dist2,  fac;
   int j;
 
   cosine=0.0;
@@ -75,11 +75,11 @@ inline int calc_angle_cosine_force(Particle *p_mid, Particle *p_left, Particle *
 
   if ( cosine >  TINY_COS_VALUE ) cosine = TINY_COS_VALUE;
   if ( cosine < -TINY_COS_VALUE)  cosine = -TINY_COS_VALUE;
-  fac *= iaparams->p.angle_cosine.sin_phi0 * (cosine/sqrt(1-SQR(cosine))) + iaparams->p.angle_cosine.cos_phi0;
+  fac *= iaparams->p.angle_cosine.sin_phi0 * (cosine/sqrt(1-Utils::sqr(cosine))) + iaparams->p.angle_cosine.cos_phi0;
   
   for(j=0;j<3;j++) {
-    f1               = fac * (cosine * vec1[j] - vec2[j]) * d1i;
-    f2               = fac * (cosine * vec2[j] - vec1[j]) * d2i;
+    double f1 = fac * (cosine * vec1[j] - vec2[j]) * d1i;
+    double f2 = fac * (cosine * vec2[j] - vec1[j]) * d2i;
 
     force1[j] = (f1-f2);
     force2[j] = -f1;
@@ -118,7 +118,7 @@ inline void calc_angle_cosine_3body_forces(Particle *p_mid, Particle *p_left,
   vec31_sqr = sqrlen(vec31);
   vec31_magn = sqrt(vec31_sqr);
   cos_phi = scalar(vec21, vec31) / (vec21_magn * vec31_magn);
-  sin_phi = sqrt(1.0 - SQR(cos_phi));
+  sin_phi = sqrt(1.0 - Utils::sqr(cos_phi));
 
   /* uncomment this block if interested in the angle 
   if(cos_phi < -1.0) cos_phi = -TINY_COS_VALUE;
@@ -153,11 +153,11 @@ inline void calc_angle_cosine_3body_forces(Particle *p_mid, Particle *p_left,
 }
 
 
-/** Computes the three body angle interaction energy (see \ref tclcommand_inter, \ref tclcommand_analyze). 
+/** Computes the three body angle interaction energy. 
     @param p_mid        Pointer to first particle.
     @param p_left        Pointer to second/middle particle.
     @param p_right        Pointer to third particle.
-    @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
+    @param iaparams  bond type number of the angle interaction.
     @param _energy   return energy pointer.
     @return 0.
 */
@@ -184,7 +184,7 @@ inline int angle_cosine_energy(Particle *p_mid, Particle *p_left, Particle *p_ri
   if ( cosine < -TINY_COS_VALUE)  cosine = -TINY_COS_VALUE;
   /* bond angle energy */
 
-  *_energy = iaparams->p.angle_cosine.bend*(cosine*iaparams->p.angle_cosine.cos_phi0 - sqrt(1-SQR(cosine))*iaparams->p.angle_cosine.sin_phi0+1);
+  *_energy = iaparams->p.angle_cosine.bend*(cosine*iaparams->p.angle_cosine.cos_phi0 - sqrt(1-Utils::sqr(cosine))*iaparams->p.angle_cosine.sin_phi0+1);
 
   return 0;
 }

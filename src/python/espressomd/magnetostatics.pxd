@@ -16,11 +16,10 @@ IF DIPOLES == 1:
             DIPOLAR_MDLC_DS,
             DIPOLAR_SCAFACOS
 
-        int dipolar_set_Dbjerrum(double bjerrum)
+        int dipolar_set_Dprefactor(double prefactor)
 
         ctypedef struct coulomb_parameters "Coulomb_parameters":
             double Dprefactor
-            double Dbjerrum
             dipolar_interaction Dmethod
         cdef extern coulomb_parameters coulomb
 
@@ -33,6 +32,12 @@ IF DIPOLES == 1:
         cdef extern from "actor/DipolarDirectSum.hpp":
             void activate_dipolar_direct_sum_gpu()
             void deactivate_dipolar_direct_sum_gpu()
+
+    IF (DIPOLAR_BARNES_HUT == 1):
+        cdef extern from "actor/DipolarBarnesHut.hpp":
+            void activate_dipolar_barnes_hut(float epssq, float itolsq)
+            #void activate_dipolar_barnes_hut()
+            void deactivate_dipolar_barnes_hut()
 
 IF DP3M == 1:
     from p3m_common cimport p3m_parameter_struct

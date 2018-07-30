@@ -28,6 +28,7 @@
 #include <stdexcept>
 
 #include "core/observables/Observable.hpp"
+#include "partCfg_global.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
@@ -36,39 +37,15 @@ typedef ::Observables::Observable CoreObs;
 
 class Observable : public ScriptInterfaceBase {
 public:
-  const std::string name() const override { return "Observables::Observable"; }
-
   virtual std::shared_ptr<CoreObs> observable() const = 0;
   virtual Variant call_method(std::string const &method,
                               VariantMap const &parameters) override {
     if (method == "calculate") {
-      observable()->calculate();
-      return observable()->last_value;
+      return observable()->operator()(partCfg());
     }
-
-    if (method == "value") {
-      return observable()->last_value;
+    if (method == "n_values") {
+      return observable()->n_values();
     }
-    if (method == "auto_write_to") {
-      std::string filename;
-      bool binary;
-
-      try {
-        filename = get_value<std::string>(parameters.at("filename"));
-      } catch (std::out_of_range &e) {
-        return {};
-      }
-
-      try {
-        binary = get_value<bool>(parameters.at("binary"));
-      } catch (std::out_of_range &e) {
-        binary = false;
-      }
-
-      observable()->set_filename(filename, binary);
-      return {};
-    }
-
     return {};
   }
 };

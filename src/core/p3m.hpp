@@ -125,8 +125,6 @@ extern p3m_data_struct p3m;
 
 void p3m_pre_init(void);
 
-void p3m_set_bjerrum(void);
-
 int p3m_adaptive_tune(char **log);
 
 /** Initialize all structures, parameters and arrays needed for the 
@@ -161,9 +159,6 @@ void p3m_count_charged_particles();
 enum P3M_TUNE_ERROR { P3M_TUNE_FAIL = 1, P3M_TUNE_NOCUTOFF = 2, P3M_TUNE_CAOTOLARGE = 4, P3M_TUNE_ELCTEST = 8, P3M_TUNE_CUTOFF_TOO_LARGE = 16 };
 
 /** Tune P3M parameters to desired accuracy.
-
-    Usage:
-    \verbatim inter coulomb <bjerrum> p3m tune accuracy <value> [r_cut <value> mesh <value> cao <value>] \endverbatim
 
     The parameters are tuned to obtain the desired accuracy in best
     time, by running mpi_integrate(0) for several parameter sets.
@@ -204,7 +199,7 @@ void p3m_charge_assign();
     which may be smaller than 0, in which case the charge is assumed to be virtual and is not
     stored in the ca_frac arrays. */
 void p3m_assign_charge(double q,
-		       double real_pos[3],
+		       Vector3d& real_pos,
 		       int cp_cnt);
 
 /** shrink wrap the charge grid */
@@ -214,21 +209,19 @@ void p3m_shrink_wrap_charge_grid(int n_charges);
     If NPT is compiled in, it returns the energy, which is needed for NPT. */
 inline double p3m_add_pair_force(double chgfac, double *d,double dist2,double dist,double force[3])
 {
-  int j;
-  double fac1,fac2, adist, erfc_part_ri;
   if(dist < p3m.params.r_cut) {
     if (dist > 0.0){		//Vincent
-      adist = p3m.params.alpha * dist;
+      double adist = p3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
-      erfc_part_ri = AS_erfc_part(adist) / dist;
-      fac1 = coulomb.prefactor * chgfac  * exp(-adist*adist);
-      fac2 = fac1 * (erfc_part_ri + 2.0*p3m.params.alpha*wupii) / dist2;
+      double erfc_part_ri = AS_erfc_part(adist) / dist;
+      double fac1 = coulomb.prefactor * chgfac  * exp(-adist*adist);
+      double fac2 = fac1 * (erfc_part_ri + 2.0*p3m.params.alpha*wupii) / dist2;
 #else
       erfc_part_ri = erfc(adist) / dist;
-      fac1 = coulomb.prefactor * chgfac;
-      fac2 = fac1 * (erfc_part_ri + 2.0*p3m.params.alpha*wupii*exp(-adist*adist)) / dist2;
+      double fac1 = coulomb.prefactor * chgfac;
+      double fac2 = fac1 * (erfc_part_ri + 2.0*p3m.params.alpha*wupii*exp(-adist*adist)) / dist2;
 #endif
-      for(j=0;j<3;j++)
+      for(int j=0;j<3;j++)
 	force[j] += fac2 * d[j];
       ESR_TRACE(fprintf(stderr,"%d: RSE: Pair dist=%.3f: force (%.3e,%.3e,%.3e)\n",this_node,
 			dist,fac2*d[0],fac2*d[1],fac2*d[2]));
@@ -254,11 +247,11 @@ int p3m_set_ninterpol(int n);
 
 
 /** Calculate real space contribution of coulomb pair energy. */
-inline double p3m_pair_energy(double chgfac, double *d,double dist2,double dist)
+inline double p3m_pair_energy(double chgfac, double dist)
 {
   double adist, erfc_part_ri;
 
-  if(dist < p3m.params.r_cut) {
+  if(dist < p3m.params.r_cut && dist != 0) {
     adist = p3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
     erfc_part_ri = AS_erfc_part(adist) / dist;

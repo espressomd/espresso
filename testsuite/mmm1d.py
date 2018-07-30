@@ -27,7 +27,7 @@ if espressomd.has_features("ELECTROSTATICS", "PARTIAL_PERIODIC"):
 @ut.skipIf(not espressomd.has_features("ELECTROSTATICS", "PARTIAL_PERIODIC"),"Skipped because of feature turned off.")
 class ElectrostaticInteractionsTests(ut.TestCase):
     # Handle to espresso system
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     def paramsMatch(self, inParams, outParams):
         """Check, if the parameters set and gotten back match.
@@ -84,7 +84,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         return func
 
     if espressomd.has_features("ELECTROSTATICS", "PARTIAL_PERIODIC"):
-        test_mmm1d = generateTestForElectrostaticInteraction(MMM1D, dict(bjerrum_length=2.0,
+        test_mmm1d = generateTestForElectrostaticInteraction(MMM1D, dict(prefactor=2.0,
                                                                     maxPWerror= 0.001, 
                                                                     far_switch_radius = 3, 
                                                                     tune=False))

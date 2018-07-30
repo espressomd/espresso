@@ -29,8 +29,7 @@
 #include "topology.hpp"
 #include "utils.hpp"
 
-/** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref
- * tclcommand_analyze) */
+/** Particles' initial positions (needed for g1(t), g2(t), g3(t)) */
 /*@{*/
 float *partCoord_g = nullptr, *partCM_g = nullptr;
 int n_part_g = 0, n_chains_g = 0;
@@ -64,7 +63,7 @@ void calc_re(PartCfg & partCfg, double **_re) {
          partCfg[chain_start + i * chain_length].r.p[1];
     dz = partCfg[chain_start + i * chain_length + chain_length - 1].r.p[2] -
          partCfg[chain_start + i * chain_length].r.p[2];
-    tmp = (SQR(dx) + SQR(dy) + SQR(dz));
+    tmp = (Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
     dist += sqrt(tmp);
     dist2 += tmp;
     dist4 += tmp * tmp;
@@ -93,7 +92,7 @@ void calc_re_av(double **_re) {
       dz = configs[j][3 * (chain_start + i * chain_length + chain_length - 1) +
                       2] -
            configs[j][3 * (chain_start + i * chain_length) + 2];
-      tmp = (SQR(dx) + SQR(dy) + SQR(dz));
+      tmp = (Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
       dist += sqrt(tmp);
       dist2 += tmp;
       dist4 += tmp * tmp;
@@ -134,7 +133,7 @@ void calc_rg(PartCfg & partCfg, double **_rg) {
       dx = partCfg[p].r.p[0] - r_CM_x;
       dy = partCfg[p].r.p[1] - r_CM_y;
       dz = partCfg[p].r.p[2] - r_CM_z;
-      tmp += (SQR(dx) + SQR(dy) + SQR(dz));
+      tmp += (Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
     }
     tmp *= IdoubMPC;
     r_G += sqrt(tmp);
@@ -177,7 +176,7 @@ void calc_rg_av(PartCfg & partCfg, double **_rg) {
         dx = configs[k][3 * p] - r_CM_x;
         dy = configs[k][3 * p + 1] - r_CM_y;
         dz = configs[k][3 * p + 2] - r_CM_z;
-        tmp += (SQR(dx) + SQR(dy) + SQR(dz));
+        tmp += (Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
       }
       tmp *= IdoubMPC;
       r_G += sqrt(tmp);
@@ -198,7 +197,7 @@ void calc_rh(PartCfg & partCfg, double **_rh) {
   *_rh = rh = Utils::realloc(rh, 2 * sizeof(double));
 
   prefac = 0.5 * chain_length *
-           chain_length; /* 1/N^2 is not a normalization factor */
+           (chain_length -1 ); /* 1/N^2 is not a normalization factor */
   for (p = 0; p < chain_n_chains; p++) {
     ri = 0.0;
     for (i = chain_start + chain_length * p;
@@ -227,7 +226,7 @@ void calc_rh_av(double **_rh) {
   double dx, dy, dz, r_H = 0.0, r_H2 = 0.0, *rh = nullptr, ri = 0.0, prefac, tmp;
   *_rh = rh = Utils::realloc(rh, 2 * sizeof(double));
 
-  prefac = 0.5 * chain_length * chain_length;
+  prefac = 0.5 * chain_length * (chain_length - 1);
   for (k = 0; k < n_configs; k++) {
     for (p = 0; p < chain_n_chains; p++) {
       ri = 0.0;
@@ -267,7 +266,7 @@ void calc_internal_dist(PartCfg & partCfg, double **_idf) {
              partCfg[chain_start + i * chain_length + j].r.p[1];
         dz = partCfg[chain_start + i * chain_length + j + k].r.p[2] -
              partCfg[chain_start + i * chain_length + j].r.p[2];
-        idf[k] += (SQR(dx) + SQR(dy) + SQR(dz));
+        idf[k] += (Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
       }
     }
     idf[k] = sqrt(idf[k] / (1.0 * (chain_length - k) * chain_n_chains));
@@ -291,7 +290,7 @@ void calc_internal_dist_av(double **_idf) {
           dx = configs[n][3 * i1] - configs[n][3 * i2];
           dy = configs[n][3 * i1 + 1] - configs[n][3 * i2 + 1];
           dz = configs[n][3 * i1 + 2] - configs[n][3 * i2 + 2];
-          idf[k] += (SQR(dx) + SQR(dy) + SQR(dz));
+          idf[k] += (Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
         }
       }
     }
@@ -316,7 +315,7 @@ void calc_bond_l(PartCfg & partCfg, double **_bond_l) {
            partCfg[chain_start + i * chain_length + j].r.p[1];
       dz = partCfg[chain_start + i * chain_length + j + 1].r.p[2] -
            partCfg[chain_start + i * chain_length + j].r.p[2];
-      tmp = SQR(dx) + SQR(dy) + SQR(dz);
+      tmp = Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz);
       bond_l[0] += sqrt(tmp);
       bond_l[1] += tmp;
       if (tmp > bond_l[2]) {
@@ -329,7 +328,7 @@ void calc_bond_l(PartCfg & partCfg, double **_bond_l) {
   }
   tmp = (double)(chain_length - 1) * chain_n_chains;
   bond_l[0] = bond_l[0] / tmp;
-  bond_l[1] = sqrt(bond_l[1] / tmp - SQR(bond_l[0]));
+  bond_l[1] = sqrt(bond_l[1] / tmp - Utils::sqr(bond_l[0]));
   bond_l[2] = sqrt(bond_l[2]);
   bond_l[3] = sqrt(bond_l[3]);
 }
@@ -350,7 +349,7 @@ void calc_bond_l_av(double **_bond_l) {
         dx = configs[n][3 * i1] - configs[n][3 * i2];
         dy = configs[n][3 * i1 + 1] - configs[n][3 * i2 + 1];
         dz = configs[n][3 * i1 + 2] - configs[n][3 * i2 + 2];
-        tmp = SQR(dx) + SQR(dy) + SQR(dz);
+        tmp = Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz);
         bond_l[0] += sqrt(tmp);
         bond_l[1] += tmp;
         if (tmp > bond_l[2]) {
@@ -364,7 +363,7 @@ void calc_bond_l_av(double **_bond_l) {
   }
   tmp = (double)(chain_length - 1) * chain_n_chains * n_configs;
   bond_l[0] = bond_l[0] / tmp;
-  bond_l[1] = sqrt(bond_l[1] / tmp - SQR(bond_l[0]));
+  bond_l[1] = sqrt(bond_l[1] / tmp - Utils::sqr(bond_l[0]));
   bond_l[2] = sqrt(bond_l[2]);
   bond_l[3] = sqrt(bond_l[3]);
 }
@@ -386,7 +385,7 @@ void calc_bond_dist(PartCfg & partCfg, double **_bdf, int ind_n) {
              partCfg[chain_start + i * chain_length + j].r.p[1];
         dz = partCfg[chain_start + i * chain_length + j + k].r.p[2] -
              partCfg[chain_start + i * chain_length + j].r.p[2];
-        bdf[k] += (SQR(dx) + SQR(dy) + SQR(dz));
+        bdf[k] += (Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
       }
     }
     bdf[k] = sqrt(bdf[k] / (1.0 * chain_n_chains));
@@ -410,7 +409,7 @@ void calc_bond_dist_av(double **_bdf, int ind_n) {
           dx = configs[n][3 * i1] - configs[n][3 * i2];
           dy = configs[n][3 * i1 + 1] - configs[n][3 * i2 + 1];
           dz = configs[n][3 * i1 + 2] - configs[n][3 * i2 + 2];
-          bdf[k] += (SQR(dx) + SQR(dy) + SQR(dz));
+          bdf[k] += (Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
         }
       }
     }
@@ -472,19 +471,19 @@ void calc_g123(PartCfg & partCfg, double *_g1, double *_g2, double *_g3) {
     cm_tmp[2] /= M;
     for (i = 0; i < chain_length; i++) {
       p = chain_start + j * chain_length + i;
-      g1 += SQR(partCfg[p].r.p[0] - partCoord_g[3 * p]) +
-            SQR(partCfg[p].r.p[1] - partCoord_g[3 * p + 1]) +
-            SQR(partCfg[p].r.p[2] - partCoord_g[3 * p + 2]);
-      g2 += SQR((partCfg[p].r.p[0] - partCoord_g[3 * p]) -
+      g1 += Utils::sqr(partCfg[p].r.p[0] - partCoord_g[3 * p]) +
+            Utils::sqr(partCfg[p].r.p[1] - partCoord_g[3 * p + 1]) +
+            Utils::sqr(partCfg[p].r.p[2] - partCoord_g[3 * p + 2]);
+      g2 += Utils::sqr((partCfg[p].r.p[0] - partCoord_g[3 * p]) -
                 (cm_tmp[0] - partCM_g[3 * j])) +
-            SQR((partCfg[p].r.p[1] - partCoord_g[3 * p + 1]) -
+            Utils::sqr((partCfg[p].r.p[1] - partCoord_g[3 * p + 1]) -
                 (cm_tmp[1] - partCM_g[3 * j + 1])) +
-            SQR((partCfg[p].r.p[2] - partCoord_g[3 * p + 2]) -
+            Utils::sqr((partCfg[p].r.p[2] - partCoord_g[3 * p + 2]) -
                 (cm_tmp[2] - partCM_g[3 * j + 2]));
     }
-    g3 += SQR(cm_tmp[0] - partCM_g[3 * j]) +
-          SQR(cm_tmp[1] - partCM_g[3 * j + 1]) +
-          SQR(cm_tmp[2] - partCM_g[3 * j + 2]);
+    g3 += Utils::sqr(cm_tmp[0] - partCM_g[3 * j]) +
+          Utils::sqr(cm_tmp[1] - partCM_g[3 * j + 1]) +
+          Utils::sqr(cm_tmp[2] - partCM_g[3 * j + 2]);
   }
   *_g1 = g1 / (1. * chain_n_chains * chain_length);
   *_g2 = g2 / (1. * chain_n_chains * chain_length);
@@ -503,11 +502,11 @@ void calc_g1_av(double **_g1, int window, double weights[3]) {
       for (j = 0; j < chain_n_chains; j++) {
         for (i = 0; i < chain_length; i++) {
           p = chain_start + j * chain_length + i;
-          g1[k] += weights[0] * SQR(configs[t + k][3 * p] - configs[t][3 * p]) +
+          g1[k] += weights[0] * Utils::sqr(configs[t + k][3 * p] - configs[t][3 * p]) +
                    weights[1] *
-                       SQR(configs[t + k][3 * p + 1] - configs[t][3 * p + 1]) +
+                       Utils::sqr(configs[t + k][3 * p + 1] - configs[t][3 * p + 1]) +
                    weights[2] *
-                       SQR(configs[t + k][3 * p + 2] - configs[t][3 * p + 2]);
+                       Utils::sqr(configs[t + k][3 * p + 2] - configs[t][3 * p + 2]);
         }
       }
     }
@@ -545,12 +544,12 @@ void calc_g2_av(PartCfg & partCfg, double **_g2, int window, double weights[3]) 
           p = chain_start + j * chain_length + i;
           g2[k] +=
               weights[0] *
-                  SQR((configs[t + k][3 * p] - configs[t][3 * p]) - cm_tmp[0]) +
+                  Utils::sqr((configs[t + k][3 * p] - configs[t][3 * p]) - cm_tmp[0]) +
               weights[1] *
-                  SQR((configs[t + k][3 * p + 1] - configs[t][3 * p + 1]) -
+                  Utils::sqr((configs[t + k][3 * p + 1] - configs[t][3 * p + 1]) -
                       cm_tmp[1]) +
               weights[2] *
-                  SQR((configs[t + k][3 * p + 2] - configs[t][3 * p + 2]) -
+                  Utils::sqr((configs[t + k][3 * p + 2] - configs[t][3 * p + 2]) -
                       cm_tmp[2]);
         }
       }
@@ -582,9 +581,9 @@ void calc_g3_av(PartCfg & partCfg, double **_g3, int window, double weights[3]) 
                        (partCfg[p]).p.mass;
           M += (partCfg[p]).p.mass;
         }
-        g3[k] += (weights[0] * SQR(cm_tmp[0]) + weights[1] * SQR(cm_tmp[1]) +
-                  weights[2] * SQR(cm_tmp[2])) /
-                 SQR(M);
+        g3[k] += (weights[0] * Utils::sqr(cm_tmp[0]) + weights[1] * Utils::sqr(cm_tmp[1]) +
+                  weights[2] * Utils::sqr(cm_tmp[2])) /
+                 Utils::sqr(M);
       }
     }
     g3[k] /= ((double)chain_n_chains * cnt);
@@ -683,14 +682,13 @@ void analyze_rdfchain(PartCfg & partCfg, double r_min, double r_max, int r_bins,
                       double **_f2, double **_f3) {
   int i, j, ind, c_i, c_j, mon;
   double bin_width, inv_bin_width, factor, r_in, r_out, bin_volume, dist,
-      chain_mass, *cm = nullptr, *min_d = nullptr, *f1 = nullptr, *f2 = nullptr, *f3 = nullptr;
+      chain_mass, *f1 = nullptr, *f2 = nullptr, *f3 = nullptr;
 
   *_f1 = f1 = Utils::realloc(f1, r_bins * sizeof(double));
   *_f2 = f2 = Utils::realloc(f2, r_bins * sizeof(double));
   *_f3 = f3 = Utils::realloc(f3, r_bins * sizeof(double));
-  cm = Utils::realloc(cm, (chain_n_chains * 3) * sizeof(double));
-  min_d = Utils::realloc(
-      min_d, (chain_n_chains * chain_n_chains) * sizeof(double));
+  std::vector<double> cm(chain_n_chains * 3);
+  std::vector<double> min_d(chain_n_chains * chain_n_chains);
   for (i = 0; i < r_bins; i++) {
     f1[i] = f2[i] = f3[i] = 0.0;
   }

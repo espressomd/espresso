@@ -47,7 +47,7 @@ inline void cross(double *x1, double *x2, double *x3)
 }
 
 inline double norm2(double *x) {
-  return SQR(x[0]) + SQR(x[1]) + SQR(x[2]);
+  return Utils::sqr(x[0]) + Utils::sqr(x[1]) + Utils::sqr(x[2]);
 }
 
 inline double norm(double *x) {
@@ -183,24 +183,24 @@ int calc_hydrogen_bond_force(Particle *s1, Particle *b1, Particle *b2, Particle 
   dpsi1 = psi1 - params.p.hydrogen_bond.psi10;
   dpsi2 = psi2 - params.p.hydrogen_bond.psi20;
 
-  const double sigma1sqr = (SQR(params.p.hydrogen_bond.sigma1));
-  const double sigma2sqr = (SQR(params.p.hydrogen_bond.sigma2));
+  const double sigma1sqr = (Utils::sqr(params.p.hydrogen_bond.sigma1));
+  const double sigma2sqr = (Utils::sqr(params.p.hydrogen_bond.sigma2));
 
-  f_f1 = -dpsi1 / sqrt(1. - SQR(gamma1)) * params.p.hydrogen_bond.E0/sigma1sqr;
-  f_f2 = -dpsi2 / sqrt(1. - SQR(gamma2)) * params.p.hydrogen_bond.E0/sigma2sqr;
+  f_f1 = -dpsi1 / sqrt(1. - Utils::sqr(gamma1)) * params.p.hydrogen_bond.E0/sigma1sqr;
+  f_f2 = -dpsi2 / sqrt(1. - Utils::sqr(gamma2)) * params.p.hydrogen_bond.E0/sigma2sqr;
   
   tau_rd = tau_r * tau_d;
 
   if(dpsi1 > 0 && dpsi2 > 0) {
-    tau_flip = exp(-(SQR(dpsi1)/(2.*sigma1sqr)+
-		     SQR(dpsi2)/(2.*sigma2sqr)));
+    tau_flip = exp(-(Utils::sqr(dpsi1)/(2.*sigma1sqr)+
+		     Utils::sqr(dpsi2)/(2.*sigma2sqr)));
     f_f1 *= tau_flip * tau_rd;
     f_f2 *= tau_flip * tau_rd;
   } else if (dpsi1 > 0.) {
-    tau_flip = exp(-(SQR(dpsi1)/(2.*sigma1sqr)));
+    tau_flip = exp(-(Utils::sqr(dpsi1)/(2.*sigma1sqr)));
     f_f1 *= tau_flip * tau_rd;
   } else if (dpsi2 > 0.) {
-    tau_flip = exp(-(SQR(dpsi2)/(2.*sigma2sqr)));
+    tau_flip = exp(-(Utils::sqr(dpsi2)/(2.*sigma2sqr)));
     f_f2 *= tau_flip * tau_rd;
   } else {
     tau_flip = 1.;
@@ -212,10 +212,10 @@ int calc_hydrogen_bond_force(Particle *s1, Particle *b1, Particle *b2, Particle 
   const double k_constraint = 50.;
 
   if(psi1 > psi_cutoff) {
-    f_f1 += k_constraint*(psi1-psi_cutoff)/sqrt(1. - SQR(gamma1));
+    f_f1 += k_constraint*(psi1-psi_cutoff)/sqrt(1. - Utils::sqr(gamma1));
   }
   if(psi2 > psi_cutoff) {
-    f_f2 += k_constraint*(psi2-psi_cutoff)/sqrt(1. - SQR(gamma2));
+    f_f2 += k_constraint*(psi2-psi_cutoff)/sqrt(1. - Utils::sqr(gamma2));
   }
 
   f_r *= tau_d*tau_flip;  
@@ -232,29 +232,27 @@ int calc_hydrogen_bond_force(Particle *s1, Particle *b1, Particle *b2, Particle 
   const double dot5 = dot1 + dot3;
 
   const double factor1 = f_f1/(rcc_l * rcb1_l);
-  const double factor2 = f_f1*gamma1/SQR(rcb1_l);
-  const double factor3 = f_f1*gamma1/SQR(rcc_l);
+  const double factor2 = f_f1*gamma1/Utils::sqr(rcb1_l);
+  const double factor3 = f_f1*gamma1/Utils::sqr(rcc_l);
 
   const double factor4 = f_f2/(rcc_l * rcb2_l);
-  const double factor5 = f_f2*gamma2/SQR(rcb2_l);
-  const double factor6 = f_f2*gamma2/SQR(rcc_l);
+  const double factor5 = f_f2*gamma2/Utils::sqr(rcb2_l);
+  const double factor6 = f_f2*gamma2/Utils::sqr(rcc_l);
 
-  double fBase1, fSugar2, fBase2, fSugar1;
-  double fr, n1n, n2n;
 
 #ifdef CG_DNA_DEBUG
   int big_force = 0;
 #endif
 
   for(int i = 0; i < 3; i++) {
-    fr = f_r * rhb[i];
-    n1n = n1[i]/n1_l;
-    n2n = n2[i]/n2_l;
+    double fr = f_r * rhb[i];
+    double n1n = n1[i]/n1_l;
+    double n2n = n2[i]/n2_l;
    
-    fBase1  =  factor1*rcc[i]  - factor2 * rcb1[i];
-    fSugar2 =  factor1*rcb1[i] - factor3 * rcc[i];
-    fBase2  = -factor4*rcc[i]  - factor5 * rcb2[i];
-    fSugar1 =  factor4*rcb2[i] + factor6 * rcc[i];
+    double fBase1  =  factor1*rcc[i]  - factor2 * rcb1[i];
+    double fSugar2 =  factor1*rcb1[i] - factor3 * rcc[i];
+    double fBase2  = -factor4*rcc[i]  - factor5 * rcb2[i];
+    double fSugar1 =  factor4*rcb2[i] + factor6 * rcc[i];
 
     f_b1[i] = -fr + dot1*n1n + fBase1 + f_sb1 *rcb1[i];
     f_b2[i] =  fr - dot1*n2n + fBase2 + f_sb2 *rcb2[i];
@@ -434,20 +432,20 @@ int calc_hydrogen_bond_energy(Particle *s1, Particle *b1, Particle *b2, Particle
   dpsi1 = psi1 - params.p.hydrogen_bond.psi10;
   dpsi2 = psi2 - params.p.hydrogen_bond.psi20;
 
-  const double sigma1sqr = (SQR(params.p.hydrogen_bond.sigma1));
-  const double sigma2sqr = (SQR(params.p.hydrogen_bond.sigma2));
+  const double sigma1sqr = (Utils::sqr(params.p.hydrogen_bond.sigma1));
+  const double sigma2sqr = (Utils::sqr(params.p.hydrogen_bond.sigma2));
   
   if(dpsi1 > 0 && dpsi2 > 0) {
-    tau_flip = exp(-(SQR(dpsi1)/(2.*sigma1sqr)+SQR(dpsi2)/(2.*sigma2sqr)));
+    tau_flip = exp(-(Utils::sqr(dpsi1)/(2.*sigma1sqr)+Utils::sqr(dpsi2)/(2.*sigma2sqr)));
   } else if (dpsi1 > 0.) {
-    tau_flip = exp(-(SQR(dpsi1)/(2.*sigma1sqr)));
-    potential += SQR(dpsi2)*(-0.5*E0/sigma2sqr);
+    tau_flip = exp(-(Utils::sqr(dpsi1)/(2.*sigma1sqr)));
+    potential += Utils::sqr(dpsi2)*(-0.5*E0/sigma2sqr);
   } else if (dpsi2 > 0.) {
-    tau_flip = exp(-(SQR(dpsi2)/(2.*sigma2sqr)));
-    potential += SQR(dpsi1)*(-0.5*E0/sigma1sqr);
+    tau_flip = exp(-(Utils::sqr(dpsi2)/(2.*sigma2sqr)));
+    potential += Utils::sqr(dpsi1)*(-0.5*E0/sigma1sqr);
   } else {
     tau_flip = 1.;
-    potential += SQR(dpsi2)*(-0.5*E0/sigma2sqr) + SQR(dpsi1)*(-0.5*E0/sigma1sqr);
+    potential += Utils::sqr(dpsi2)*(-0.5*E0/sigma2sqr) + Utils::sqr(dpsi1)*(-0.5*E0/sigma1sqr);
   }
 
   /* Angle at which the constraint sets in */
@@ -456,10 +454,10 @@ int calc_hydrogen_bond_energy(Particle *s1, Particle *b1, Particle *b2, Particle
   const double k_constraint = 50.;
 
   if(psi1 > psi_cutoff) {
-    potential += 0.5*k_constraint*SQR(psi1-psi_cutoff);
+    potential += 0.5*k_constraint*Utils::sqr(psi1-psi_cutoff);
   }
   if(psi2 > psi_cutoff) {
-    potential += 0.5*k_constraint*SQR(psi2-psi_cutoff);
+    potential += 0.5*k_constraint*Utils::sqr(psi2-psi_cutoff);
   }
  
   potential += tau_r * tau_flip * tau_d * E0;

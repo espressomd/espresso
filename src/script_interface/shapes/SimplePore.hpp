@@ -32,20 +32,18 @@ class SimplePore : public Shape {
 
 public:
   SimplePore() : m_simple_pore(new ::Shapes::SimplePore()) {
-    auto pp = m_simple_pore.get();
-    add_parameters({{"radius", pp, &CoreShape::set_radius, &CoreShape::radius},
-                    {"length", pp, &CoreShape::set_length, &CoreShape::length},
-                    {"smoothing_radius", pp, &CoreShape::set_smoothing_radius,
-                     &CoreShape::smoothing_radius},
-                    {"axis", pp, &CoreShape::set_axis, &CoreShape::axis},
-                    {"center", pp->center()}});
+    add_parameters(
+        {{"radius", m_simple_pore, &CoreShape::set_radius, &CoreShape::radius},
+         {"length", m_simple_pore, &CoreShape::set_length, &CoreShape::length},
+         {"smoothing_radius", m_simple_pore, &CoreShape::set_smoothing_radius,
+          &CoreShape::smoothing_radius},
+         {"axis", m_simple_pore, &CoreShape::set_axis, &CoreShape::axis},
+         {"center", m_simple_pore, &CoreShape::center}});
   }
 
   std::shared_ptr<::Shapes::Shape> shape() const override {
     return m_simple_pore;
   }
-
-  const std::string name() const override { return "Shapes::SimplePore"; }
 };
 }
 }

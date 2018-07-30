@@ -41,6 +41,7 @@
 #include "p3m-dipolar.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
+#include "debug.hpp"
 
 #ifdef DIPOLES
 
@@ -123,40 +124,29 @@ double slab_dip_count_mu(double *mt, double *mx, double *my) {
    ****************************************************************************************************
    */
 
-double get_DLC_dipolar(int kcut, double *fx, double *fy, double *fz, double *tx,
-                       double *ty, double *tz) {
+double get_DLC_dipolar(int kcut, std::vector<double> & fx, std::vector<double> & fy, std::vector<double> & fz,
+                       std::vector<double> & tx, std::vector<double> & ty, std::vector<double> & tz) {
 
   int ix, iy, ip;
   double gx, gy, gr;
 
   double S[4] = {0.0, 0.0, 0.0, 0.0}; // S of Brodka methode, oder is S[4] =
                                       // {Re(S+), Im(S+), Re(S-), Im(S-)}
-  double *ReSjp = nullptr, *ReSjm = nullptr;
-  double *ImSjp = nullptr, *ImSjm = nullptr;
-  double *ReGrad_Mup = nullptr, *ImGrad_Mup = nullptr;
-  double *ReGrad_Mum = nullptr, *ImGrad_Mum = nullptr;
+  std::vector<double> ReSjp(n_local_particles), ReSjm(n_local_particles);
+  std::vector<double> ImSjp(n_local_particles), ImSjm(n_local_particles);
+  std::vector<double> ReGrad_Mup(n_local_particles), ImGrad_Mup(n_local_particles);
+  std::vector<double> ReGrad_Mum(n_local_particles), ImGrad_Mum(n_local_particles);
   double a, b, c, d, er, ez, f, fa1;
   double s1, s2, s3, s4;
   double s1z, s2z, s3z, s4z;
   double ss;
   double energy, piarea, facux, facuy;
-  int cc, j, np;
-  Cell *cell = nullptr;
-  Particle *p1;
+  int j;
 
   facux = 2.0 * M_PI / box_l[0];
   facuy = 2.0 * M_PI / box_l[1];
 
   energy = 0.0;
-
-  ReSjp = (double *)Utils::malloc(sizeof(double) * n_local_particles);
-  ReSjm = (double *)Utils::malloc(sizeof(double) * n_local_particles);
-  ImSjp = (double *)Utils::malloc(sizeof(double) * n_local_particles);
-  ImSjm = (double *)Utils::malloc(sizeof(double) * n_local_particles);
-  ReGrad_Mup = (double *)Utils::malloc(sizeof(double) * n_local_particles);
-  ImGrad_Mup = (double *)Utils::malloc(sizeof(double) * n_local_particles);
-  ReGrad_Mum = (double *)Utils::malloc(sizeof(double) * n_local_particles);
-  ImGrad_Mum = (double *)Utils::malloc(sizeof(double) * n_local_particles);
 
   for (ix = -kcut; ix <= +kcut; ix++) {
     for (iy = -kcut; iy <= +kcut; iy++) {
@@ -300,15 +290,6 @@ double get_DLC_dipolar(int kcut, double *fx, double *fy, double *fz, double *tx,
 
   // fclose(FilePtr);
 
-  free(ReSjp);
-  free(ReSjm);
-  free(ImSjp);
-  free(ImSjm);
-  free(ReGrad_Mup);
-  free(ImGrad_Mup);
-  free(ReGrad_Mum);
-  free(ImGrad_Mum);
-
   // printf("Energy0= %20.15le \n",energy);
 
   return energy;
@@ -331,7 +312,6 @@ double get_DLC_energy_dipolar(int kcut) {
   double a, b, c, d, er, ez, f, fa1;
   double s1;
   double energy, piarea, facux, facuy;
-  int cc, j, np;
 
   n_local_particles = local_cells.particles().size();
 
@@ -406,13 +386,10 @@ double get_DLC_energy_dipolar(int kcut) {
 ************************************************************************** */
 
 void add_mdlc_force_corrections() {
-  Cell *cell;
-  Particle *p;
-  int i, c, np, ip;
-  int cc;
+  int i, ip;
   int dip_DLC_kcut;
-  double *dip_DLC_f_x = nullptr, *dip_DLC_f_y = nullptr, *dip_DLC_f_z = nullptr;
-  double *dip_DLC_t_x = nullptr, *dip_DLC_t_y = nullptr, *dip_DLC_t_z = nullptr;
+  std::vector<double> dip_DLC_f_x(n_part), dip_DLC_f_y(n_part), dip_DLC_f_z(n_part);
+  std::vector<double> dip_DLC_t_x(n_part), dip_DLC_t_y(n_part), dip_DLC_t_z(n_part);
   double dip_DLC_energy = 0.0;
   double mz = 0.0, mx = 0.0, my = 0.0, volume, mtot = 0.0;
 #if defined(ROTATION) && defined(DP3M)
@@ -427,14 +404,6 @@ void add_mdlc_force_corrections() {
 
   // --- Create arrays that should contain the corrections to
   //     the forces and torques, and set them to zero.
-
-  dip_DLC_f_x = (double *)Utils::malloc(sizeof(double) * n_part);
-  dip_DLC_f_y = (double *)Utils::malloc(sizeof(double) * n_part);
-  dip_DLC_f_z = (double *)Utils::malloc(sizeof(double) * n_part);
-
-  dip_DLC_t_x = (double *)Utils::malloc(sizeof(double) * n_part);
-  dip_DLC_t_y = (double *)Utils::malloc(sizeof(double) * n_part);
-  dip_DLC_t_z = (double *)Utils::malloc(sizeof(double) * n_part);
 
   for (i = 0; i < n_local_particles; i++) {
     dip_DLC_f_x[i] = 0.0;
@@ -532,15 +501,6 @@ void add_mdlc_force_corrections() {
     }
     ip++;
   }
-
-  //--- Free the memory used for computing the corrections ----------------
-
-  free(dip_DLC_f_x);
-  free(dip_DLC_f_y);
-  free(dip_DLC_f_z);
-  free(dip_DLC_t_x);
-  free(dip_DLC_t_y);
-  free(dip_DLC_t_z);
 }
 /* ***************************************************************** */
 

@@ -30,9 +30,10 @@ class P3MGPU_test(ut.TestCase):
     def runTest(self):
         from espressomd.electrostatics import P3MGPU
 
-        es = espressomd.System()
+        es = espressomd.System(box_l=[10.0, 10.0, 10.0])
+        es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
         test_params = {}
-        test_params["bjerrum_length"] = 2
+        test_params["prefactor"] = 2
         test_params["cao"] = 2
         test_params["r_cut"] = 0.9
         test_params["accuracy"] = 1e-1

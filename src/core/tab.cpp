@@ -27,188 +27,67 @@
 #ifdef TABULATED
 #include "communication.hpp"
 
-int tabulated_set_params(int part_type_a, int part_type_b, char *filename) {
-  IA_parameters *data;
-  FILE *fp;
-  int npoints;
-  double minval, maxval;
-  int i, newsize;
-  int token;
-  double dummr;
-  token = 0;
+int tabulated_set_params(int part_type_a, int part_type_b, double min,
+                         double max, std::vector<double> const &energy,
+                         std::vector<double> const &force) {
+  auto data = get_ia_param_safe(part_type_a, part_type_b);
+  assert(max >= min);
+  assert((max == min) || force.size() > 1);
+  assert(force.size() == energy.size());
 
-  data = get_ia_param_safe(part_type_a, part_type_b);
+  data->TAB.maxval = max;
+  data->TAB.minval = min;
+  data->TAB.invstepsize = static_cast<double>(force.size() - 1) / (max - min);
 
-  if (!data)
-    return 1;
+  data->TAB.force_tab = force;
+  data->TAB.energy_tab = energy;
 
-  if (strlen(filename) > MAXLENGTH_TABFILE_NAME - 1)
-    return 2;
-
-  /* Open the file containing force and energy tables */
-  fp = fopen(filename, "r");
-  if (!fp)
-    return 3;
-
-  /* Look for a line starting with # */
-  while (token != EOF) {
-    token = fgetc(fp);
-    if (token == '#') {
-      break;
-    }
-  }
-  if (token == EOF) {
-    fclose(fp);
-    return 4;
-  }
-
-  /* First read two important parameters we read in the data later*/
-  if (fscanf(fp, "%d %lf %lf", &npoints, &minval, &maxval) != 3)
-    return 5;
-
-  // Set the newsize to the same as old size : only changed if a new force table
-  // is being added.
-  newsize = tabulated_forces.max;
-
-  if (data->TAB_npoints == 0) {
-    // A new potential will be added so set the number of points, the startindex
-    // and newsize
-    data->TAB_npoints = npoints;
-    data->TAB_startindex = tabulated_forces.max;
-    newsize += npoints;
-  } else {
-    // We have existing data for this pair of monomer types check array sizing
-    if (data->TAB_npoints != npoints) {
-      fclose(fp);
-      return 6;
-    }
-  }
-
-  /* Update parameters symmetrically */
-  data->TAB_maxval = maxval;
-  data->TAB_minval = minval;
-  strcpy(data->TAB_filename, filename);
-
-  /* Calculate dependent parameters */
-  data->TAB_stepsize = (maxval - minval) / (double)(data->TAB_npoints - 1);
-
-  /* Allocate space for new data */
-  realloc_doublelist(&tabulated_forces, newsize);
-  realloc_doublelist(&tabulated_energies, newsize);
-
-  /* Read in the new force and energy table data */
-  for (i = 0; i < npoints; i++) {
-    if (fscanf(fp, "%lf %lf %lf", &dummr,
-               &(tabulated_forces.e[i + data->TAB_startindex]),
-               &(tabulated_energies.e[i + data->TAB_startindex])) != 3)
-      return 5;
-  }
-
-  fclose(fp);
-
-  /* broadcast interaction parameters including force and energy tables*/
   mpi_bcast_ia_params(part_type_a, part_type_b);
 
   return 0;
 }
 
 int tabulated_bonded_set_params(int bond_type,
-                                TabulatedBondedInteraction tab_type,
-                                char *filename) {
-  int i, token = 0, size;
-  double dummr;
-  FILE *fp;
-
+                                TabulatedBondedInteraction tab_type, double min,
+                                double max, std::vector<double> const &energy,
+                                std::vector<double> const &force) {
   if (bond_type < 0)
     return 1;
 
+  assert(max >= min);
+  assert((max == min) || force.size() > 1);
+  assert(force.size() == energy.size());
+
   make_bond_type_exist(bond_type);
-
-  fp = fopen(filename, "r");
-  if (!fp)
-    return 3;
-
-  /*Look for a line starting with # */
-  while (token != EOF) {
-    token = fgetc(fp);
-    if (token == '#') {
-      break;
-    } // magic number for # symbol
-  }
-  if (token == EOF) {
-    fclose(fp);
-    return 4;
-  }
 
   /* set types */
   bonded_ia_params[bond_type].type = BONDED_IA_TABULATED;
   bonded_ia_params[bond_type].p.tab.type = tab_type;
+  bonded_ia_params[bond_type].p.tab.pot = new TabulatedPotential;
+  auto tab_pot = bonded_ia_params[bond_type].p.tab.pot;
 
   /* set number of interaction partners */
-  if (tab_type == TAB_BOND_LENGTH)
+  if (tab_type == TAB_BOND_LENGTH) {
+    tab_pot->minval = min;
+    tab_pot->maxval = max;
     bonded_ia_params[bond_type].num = 1;
-  else if (tab_type == TAB_BOND_ANGLE)
+  } else if (tab_type == TAB_BOND_ANGLE) {
+    tab_pot->minval = 0.0;
+    tab_pot->maxval = PI + ROUND_ERROR_PREC;
     bonded_ia_params[bond_type].num = 2;
-  else if (tab_type == TAB_BOND_DIHEDRAL)
+  } else if (tab_type == TAB_BOND_DIHEDRAL) {
+    tab_pot->minval = 0.0;
+    tab_pot->maxval = 2.0 * PI + ROUND_ERROR_PREC;
     bonded_ia_params[bond_type].num = 3;
-  else {
+  } else {
     runtimeError("Unsupported tabulated bond type.");
     return 1;
   }
 
-  /* copy filename */
-  size = strlen(filename);
-  bonded_ia_params[bond_type].p.tab.filename =
-      (char *)Utils::malloc((size + 1) * sizeof(char));
-  strcpy(bonded_ia_params[bond_type].p.tab.filename, filename);
+  tab_pot->invstepsize = static_cast<double>(force.size() - 1) / (max - min);
 
-  /* read basic parameters from file */
-  if (fscanf(fp, "%d %lf %lf", &size, &bonded_ia_params[bond_type].p.tab.minval,
-             &bonded_ia_params[bond_type].p.tab.maxval) != 3)
-    return 5;
-  bonded_ia_params[bond_type].p.tab.npoints = size;
-
-  /* Check interval for angle and dihedral potentials.  With adding
-     ROUND_ERROR_PREC to the upper boundary we make sure, that during
-     the calculation we do not leave the defined table!
-  */
-  if (tab_type == TAB_BOND_ANGLE) {
-    if (bonded_ia_params[bond_type].p.tab.minval != 0.0 ||
-        std::abs(bonded_ia_params[bond_type].p.tab.maxval - PI) > 1e-5) {
-      fclose(fp);
-      return 6;
-    }
-    bonded_ia_params[bond_type].p.tab.maxval = PI + ROUND_ERROR_PREC;
-  }
-  /* check interval for angle and dihedral potentials */
-  if (tab_type == TAB_BOND_DIHEDRAL) {
-    if (bonded_ia_params[bond_type].p.tab.minval != 0.0 ||
-        std::abs(bonded_ia_params[bond_type].p.tab.maxval - (2 * PI)) > 1e-5) {
-      fclose(fp);
-      return 6;
-    }
-    bonded_ia_params[bond_type].p.tab.maxval = (2 * PI) + ROUND_ERROR_PREC;
-  }
-
-  /* calculate dependent parameters */
-  bonded_ia_params[bond_type].p.tab.invstepsize =
-      (double)(size - 1) / (bonded_ia_params[bond_type].p.tab.maxval -
-                            bonded_ia_params[bond_type].p.tab.minval);
-
-  /* allocate force and energy tables */
-  bonded_ia_params[bond_type].p.tab.f =
-      (double *)Utils::malloc(size * sizeof(double));
-  bonded_ia_params[bond_type].p.tab.e =
-      (double *)Utils::malloc(size * sizeof(double));
-
-  /* Read in the new force and energy table data */
-  for (i = 0; i < size; i++) {
-    if (fscanf(fp, "%lf %lf %lf", &dummr,
-               &bonded_ia_params[bond_type].p.tab.f[i],
-               &bonded_ia_params[bond_type].p.tab.e[i]) != 3)
-      return 5;
-  }
-  fclose(fp);
+  tab_pot->force_tab = force;
+  tab_pot->energy_tab = energy;
 
   mpi_bcast_ia_params(bond_type, -1);
 

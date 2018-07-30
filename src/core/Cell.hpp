@@ -14,21 +14,13 @@
 #include "utils/Range.hpp"
 
 class Cell : public ParticleList {
-  struct GetReference {
-    template<typename T>
-    T &operator()(std::reference_wrapper<T> & cell_ref) const {
-      return cell_ref.get();
-    }
-  };
-
-  using neighbors_t = std::vector<std::reference_wrapper<Cell>>;
+  using neighbors_t = std::vector<Cell *>;
 
 public:
-  using neighbor_iterator =
-      boost::transform_iterator<GetReference, neighbors_t::iterator>;
+  using neighbor_iterator = neighbors_t::iterator;
 
   /** Topological neighbors of the cell */
-  std::vector<std::reference_wrapper<Cell>> m_neighbors;
+  std::vector<Cell *> m_neighbors;
 
   /** Interaction pairs */
   std::vector<std::pair<Particle *, Particle *>> m_verlet_list;
@@ -42,9 +34,6 @@ public:
     realloc_particlelist(static_cast<ParticleList *>(this), this->n = size);
   }
 
-#ifdef LEES_EDWARDS
-  int myIndex[3];
-#endif
 };
 
 #endif

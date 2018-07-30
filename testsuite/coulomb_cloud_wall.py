@@ -33,7 +33,9 @@ import tests_common
 class CoulombCloudWall(ut.TestCase):
     """This compares p3m, p3m_gpu, scafacos_p3m and scafacos_p2nfft
        electrostatic forces and energy against stored data."""
-    S = espressomd.System()
+    S = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    S.seed  = S.cell_system.get_state()['n_nodes'] * [1234]
+
     forces = {}
     tolerance = 1E-3
 
@@ -62,20 +64,20 @@ class CoulombCloudWall(ut.TestCase):
             self.S.part.add(id=int(id), pos=pos, q=q)
             self.forces[id] = f
 
-    def compare(self, method_name, energy=True):
+    def compare(self, method_name, energy=True,prefactor=None):
         # Compare forces and energy now in the system to stored ones
 
         # Force
         force_abs_diff = 0.
         for p in self.S.part:
-            force_abs_diff += abs(np.sqrt(sum((p.f - self.forces[p.id])**2)))
+            force_abs_diff += abs(np.sqrt(sum((p.f/prefactor - self.forces[p.id])**2)))
         force_abs_diff /= len(self.S.part)
 
         print(method_name, "force difference", force_abs_diff)
 
         # Energy
         if energy:
-            energy_abs_diff = abs(self.S.analysis.energy()["total"] - self.reference_energy)
+            energy_abs_diff = abs(self.S.analysis.energy()["total"]/prefactor - self.reference_energy)
             print(method_name, "energy difference", energy_abs_diff)
             self.assertLessEqual(
                 energy_abs_diff,
@@ -96,16 +98,16 @@ class CoulombCloudWall(ut.TestCase):
 
     if espressomd.has_features(["P3M"]):
         def test_p3m(self):
-            self.S.actors.add(P3M(bjerrum_length=1, r_cut=1.001, accuracy=1e-3,
+            self.S.actors.add(P3M(prefactor=3, r_cut=1.001, accuracy=1e-3,
                                   mesh=64, cao=7, alpha=2.70746, tune=False))
             self.S.integrator.run(0)
-            self.compare("p3m", energy=True)
+            self.compare("p3m", energy=True,prefactor=3)
 
     if espressomd.has_features(["ELECTROSTATICS", "CUDA"]):
         def test_p3m_gpu(self):
             self.S.actors.add(
                 P3MGPU(
-                    bjerrum_length=1,
+                    prefactor=2.2,
                     r_cut=1.001,
                     accuracy=1e-3,
                     mesh=64,
@@ -113,14 +115,14 @@ class CoulombCloudWall(ut.TestCase):
                     alpha=2.70746,
                     tune=False))
             self.S.integrator.run(0)
-            self.compare("p3m_gpu", energy=False)
+            self.compare("p3m_gpu", energy=False,prefactor=2.2)
 
     if espressomd.has_features(["SCAFACOS"]):
         if "p3m" in scafacos.available_methods():
             def test_scafacos_p3m(self):
                 self.S.actors.add(
                     Scafacos(
-                        bjerrum_length=1,
+                        prefactor=0.5,
                         method_name="p3m",
                         method_params={
                             "p3m_r_cut": 1.001,
@@ -128,23 +130,27 @@ class CoulombCloudWall(ut.TestCase):
                             "p3m_cao": 7,
                             "p3m_alpha": 2.70746}))
                 self.S.integrator.run(0)
-                self.compare("scafacos_p3m", energy=True)
+                self.compare("scafacos_p3m", energy=True,prefactor=0.5)
 
         if "p2nfft" in scafacos.available_methods():
             def test_scafacos_p2nfft(self):
                 self.S.actors.add(
                     Scafacos(
-                        bjerrum_length=1,
+                        prefactor=2.8,
                         method_name="p2nfft",
                         method_params={
                             "p2nfft_r_cut": 1.001,
                             "tolerance_field": 1E-4}))
                 self.S.integrator.run(0)
-                self.compare("scafacos_p2nfft", energy=True)
+                self.compare("scafacos_p2nfft", energy=True,prefactor=2.8)
 
     def test_zz_deactivation(self):
-        # Is the energy 0, if no methods active
+        # Is the energy and force 0, if no methods active
         self.assertEqual(self.S.analysis.energy()["total"], 0.0)
+        self.S.integrator.run(0,recalc_forces=True)
+        for p in self.S.part:
+            self.assertAlmostEqual(np.linalg.norm(p.f),0,places=11)
+
 
 
 if __name__ == "__main__":
