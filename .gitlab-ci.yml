@@ -1,4 +1,4 @@
-image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-cuda:latest
+image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu:18.04
 
 stages:
   - permission
@@ -24,81 +24,111 @@ status_pending:
   stage: prepare
   script: bash maintainer/gh_post_status.sh pending
 
-no_cuda_default:
+### Builds without CUDA
+
+default:
   stage: build
   script:
-    - export with_cuda=false
-    - export myconfig=default with_coverage=true
+    - export with_cuda=false myconfig=default with_coverage=true
     - bash maintainer/CI/build_cmake.sh
 
-no_cuda_maxset:
+maxset:
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu:latest
   script:
-    - export with_cuda=false
-    - export myconfig=maxset with_coverage=true
+    - export with_cuda=false myconfig=maxset with_coverage=true
     - bash maintainer/CI/build_cmake.sh
 
-no_cuda_maxset_python3:
+maxset_python3:
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:latest
   script:
-    - export with_cuda=false
-    - export myconfig=maxset python_version=3
+    - export with_cuda=false myconfig=maxset with_coverage=true python_version=3
     - bash maintainer/CI/build_cmake.sh
 
-no_cuda_maxset_debian:
+nocheckmaxset:
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/debian:latest
   script:
-    - export with_cuda=false
-    - export myconfig=maxset make_check=false
+    - export with_cuda=false myconfig=nocheck-maxset make_check=false
     - bash maintainer/CI/build_cmake.sh
 
-no_cuda_maxset_opensuse:
-  stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/opensuse:latest
-  script:
-    - export with_cuda=false
-    - export myconfig=maxset make_check=false
-    - bash maintainer/CI/build_cmake.sh
+### Builds with different Distributions
 
-no_cuda_maxset_centos:
+#debian:8 removed: similar to ubuntu:1404
+
+debian:9:
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/centos:latest
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
     - export with_cuda=false
     - export myconfig=maxset make_check=false
     - bash maintainer/CI/build_cmake.sh
 
-no_cuda_nocheckmaxset:
+opensuse:42.3:
   stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
-    - export with_cuda=false
-    - export myconfig=nocheck-maxset make_check=false
+    - export with_cuda=false myconfig=maxset make_check=false
     - bash maintainer/CI/build_cmake.sh
 
-shanchen:
+opensuse:15.0:
   stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
+  script:
+    - export with_cuda=false myconfig=maxset make_check=false
+    - bash maintainer/CI/build_cmake.sh
+
+centos:7:
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
+  script:
+    - export with_cuda=false myconfig=maxset make_check=false
+    - bash maintainer/CI/build_cmake.sh
+
+fedora:
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/centos:next
+  script:
+    - export with_cuda=false myconfig=maxset make_check=false
+    - bash maintainer/CI/build_cmake.sh
+
+#ubuntu:1404 not needed: used in cuda:8.0
+#ubuntu:1604 not needed: used in cuda:9.0
+#ubuntu:1804 not needed: default used in non-CUDA builds
+
+### Builds with CUDA
+
+cuda-shanchen:
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   script:
     - export myconfig=shanchen with_coverage=true
     - bash maintainer/cuda_build.sh
 
-maxset:
+cuda-maxset:
   stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   script:
     - export myconfig=maxset with_coverage=true
     - bash maintainer/cuda_build.sh
   artifacts:
     paths:
     - build/
-    expire_in: 4 weeks
+    expire_in: 1 week
+
+cuda8-maxset:
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
+  script:
+    - export myconfig=maxset with_coverage=true
+    - bash maintainer/cuda_build.sh
 
 empty:
   stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   script:
     - export myconfig=empty
     - bash maintainer/CI/build_cmake.sh
+
+### Builds with OS X
 
 osx:
   stage: build
@@ -124,39 +154,46 @@ osx-cuda:
   tags:
     - mac
 
-clang-static-analysis:
+### Builds with different compilers
+
+clang:6.0:
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-clang-cuda:latest
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
-    - export myconfig=maxset with_coverage=false with_static_analysis=true
+    - export myconfig=maxset with_coverage=true with_static_analysis=true
     - bash maintainer/cuda_build.sh
 
-intel:
+intel:15:
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-intel:latest
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
-    - export myconfig=maxset with_coverage=false
+    - export myconfig=maxset with_coverage=true
     - bash maintainer/cuda_build.sh
+
+### Other builds
 
 check_sphinx:
   stage: additional_checks
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   dependencies:
-  - maxset
+  - cuda-maxset
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}; cd build && find ./ -exec touch -c -t 203901010000 {} \; && make sphinx
 
 check_with_odd_no_of_processors:
   stage: additional_checks
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   when: on_success
   dependencies:
-  - maxset
+  - cuda-maxset
   script:
-    - export build_procs=3 check_procs=3 check_odd_only=true
+    - export build_procs=3 check_procs=3 check_odd_only=true with_coverage=true
     - bash maintainer/cuda_build.sh
 
 deploy_documentation:
   stage: deploy
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   only:
     - python
   before_script:
@@ -182,3 +219,4 @@ status_failure:
   stage: result
   script: bash maintainer/gh_post_status.sh failure
   when: on_failure
+
