@@ -353,9 +353,6 @@ void p3m_init() {
     p3m.send_grid = Utils::realloc(p3m.send_grid, sizeof(double) * p3m.sm.max);
     p3m.recv_grid = Utils::realloc(p3m.recv_grid, sizeof(double) * p3m.sm.max);
 
-    /* fix box length dependent constants */
-    p3m_scaleby_box_l();
-
     if (p3m.params.inter > 0)
       p3m_interpolate_charge_assignment_function();
 
@@ -373,6 +370,10 @@ void p3m_init() {
         fft_init(&p3m.rs_mesh, p3m.local_mesh.dim, p3m.local_mesh.margin,
                  p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum);
     p3m.ks_mesh = Utils::realloc(p3m.ks_mesh, ca_mesh_size * sizeof(double));
+    
+    /* fix box length dependent constants */
+    p3m_scaleby_box_l();
+
 
     P3M_TRACE(
         fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node, (void*) p3m.rs_mesh));
