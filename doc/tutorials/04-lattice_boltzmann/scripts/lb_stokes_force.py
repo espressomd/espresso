@@ -10,10 +10,10 @@
 # in z direction. We create walls in the xz and yz plane at the box 
 # boundaries, where the velocity is fixed to $v. 
 #
-from espressomd import lb, lbboundaries, shapes
-import espressomd
 import numpy as np
 import sys
+from espressomd import lb, lbboundaries, shapes
+import espressomd
 # System setup
 agrid = 1
 radius = 5.5

@@ -1,10 +1,9 @@
+import numpy as np
+import sys
 from espressomd import lb
 from espressomd.observables import ParticlePositions
 from espressomd.accumulators import Correlator
 import espressomd
-
-import numpy as np
-import sys
 
 # Constants
 

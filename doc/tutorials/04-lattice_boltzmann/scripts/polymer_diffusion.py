@@ -1,10 +1,9 @@
+import sys
+from numpy import savetxt, zeros
 from espressomd import interactions, lb, polymer
 from espressomd.observables import ComPosition
 from espressomd.accumulators import Correlator
 import espressomd
-
-from numpy import savetxt, zeros
-import sys
 
 # Setup constant
 time_step = 0.01

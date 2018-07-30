@@ -1,6 +1,6 @@
 ## A script to simulate planar Poisseuille flow in Espresso
-from espressomd import lb, shapes, lbboundaries
 import numpy as np
+from espressomd import lb, shapes, lbboundaries
 import espressomd
 
 
