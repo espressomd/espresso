@@ -1,5 +1,6 @@
 import unittest as ut
 import numpy as np
+import copy
 
 import espressomd
 import espressomd.lb
@@ -47,10 +48,6 @@ class ObservableProfileLBCommon(object):
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
 
-    def prepare(self):
-        self.system.actors.clear()
-        self.system.actors.add(self.lbf)
-
     def set_fluid_velocities(self):
         """Set an x dependent fluid velocity."""
         for x in range(int(self.system.box_l[0] / AGRID)):
@@ -59,7 +56,6 @@ class ObservableProfileLBCommon(object):
                     self.lbf[x, y, z].velocity = [float(x), 0.0, 0.0]
 
     def test_velocity_profile(self):
-        self.prepare()
         self.set_fluid_velocities()
         obs = espressomd.observables.LBVelocityProfile(**LB_VELOCITY_PROFILE_PARAMS)
         obs_data = np.array(obs.calculate())
@@ -70,6 +66,29 @@ class ObservableProfileLBCommon(object):
             for y in range(obs_data.shape[1]):
                 for z in range(obs_data.shape[2]):
                     self.assertAlmostEqual(obs_data[x, y, z, 0], float(x), places=5)
+        self.assertEqual(obs.n_values(), LB_VELOCITY_PROFILE_PARAMS['n_x_bins'] * LB_VELOCITY_PROFILE_PARAMS['n_y_bins'] * LB_VELOCITY_PROFILE_PARAMS['n_z_bins'] * 3)
+
+    def test_error_sampling_delta_of_0(self):
+        lb_velocity_params_local = copy.copy(LB_VELOCITY_PROFILE_PARAMS)
+        lb_velocity_params_local['sampling_delta_x'] = 0.0
+        lb_velocity_params_local['sampling_delta_y'] = 0.0
+        lb_velocity_params_local['sampling_delta_z'] = 0.0
+        with self.assertRaises(RuntimeError):
+            obs2 = espressomd.observables.LBVelocityProfile(**lb_velocity_params_local)
+
+    def test_error_if_no_LB(self):
+        self.system.actors.clear()
+        obs = espressomd.observables.LBVelocityProfile(**LB_VELOCITY_PROFILE_PARAMS)
+        with self.assertRaises(RuntimeError):
+            obs.calculate()
+
+    def test_error_if_empty_bin(self):
+        lb_velocity_params_local = copy.copy(LB_VELOCITY_PROFILE_PARAMS)
+        lb_velocity_params_local['sampling_delta_x'] = 3.0
+        obs = espressomd.observables.LBVelocityProfile(**lb_velocity_params_local)
+        with self.assertRaises(RuntimeError):
+            obs.calculate()
+        
 
 @ut.skipIf(not espressomd.has_features(
     'LB') or espressomd.has_features('SHANCHEN'), "Skipping test due to missing features.")
@@ -77,7 +96,8 @@ class LBCPU(ut.TestCase, ObservableProfileLBCommon):
     """Test for the CPU implementation of the LB."""
     def setUp(self):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
-
+        self.system.actors.clear()
+        self.system.actors.add(self.lbf)
 
 @ut.skipIf(not espressomd.has_features(
     'LB_GPU') or espressomd.has_features('SHANCHEN'), "Skipping test due to missing features.")
@@ -85,6 +105,8 @@ class LBGPU(ut.TestCase, ObservableProfileLBCommon):
     """Test for the GPU implementation of the LB."""
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
+        self.system.actors.clear()
+        self.system.actors.add(self.lbf)
 
 
 if __name__ == "__main__":
