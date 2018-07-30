@@ -70,6 +70,7 @@ class ObservableProfileLBCommon(object):
             for y in range(obs_data.shape[1]):
                 for z in range(obs_data.shape[2]):
                     self.assertAlmostEqual(obs_data[x, y, z, 0], float(x), places=5)
+        self.assertEqual(obs.n_values(), LB_VELOCITY_PROFILE_PARAMS['n_x_bins'] * LB_VELOCITY_PROFILE_PARAMS['n_y_bins'] * LB_VELOCITY_PROFILE_PARAMS['n_z_bins'] * 3)
 
 @ut.skipIf(not espressomd.has_features(
     'LB') or espressomd.has_features('SHANCHEN'), "Skipping test due to missing features.")
