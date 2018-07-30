@@ -38,8 +38,7 @@ from .cellsystem import CellSystem
 from .minimize_energy import MinimizeEnergy
 from .analyze import Analysis
 from .galilei import GalileiTransform
-if CONSTRAINTS == 1:
-    from .constraints import Constraints
+from .constraints import Constraints
 
 from .accumulators import AutoUpdateAccumulators
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
@@ -123,8 +122,7 @@ cdef class System(object):
             IF COLLISION_DETECTION==1:
                 self.collision_detection = CollisionDetection()
             self.comfixed = ComFixed()
-            if CONSTRAINTS:
-                self.constraints = Constraints()
+            self.constraints = Constraints()
             IF CUDA:
                 self.cuda_init_handle = cuda_init.CudaInitHandle()
             self.galilei = GalileiTransform()
@@ -150,22 +148,21 @@ cdef class System(object):
         for property_ in setable_properties:
             if not hasattr(self.globals, property_):
                 odict[property_] = System.__getattribute__(self, property_)
+        odict['non_bonded_inter'] = System.__getattribute__(self, "non_bonded_inter")
+        odict['bonded_inter'] = System.__getattribute__(self, "bonded_inter")
         odict['part'] = System.__getattribute__(self, "part")
         odict['actors'] = System.__getattribute__(self, "actors")
         odict['analysis'] = System.__getattribute__(self, "analysis")
         odict['auto_update_accumulators'] = System.__getattribute__(self, "auto_update_accumulators")
-        odict['bonded_inter'] = System.__getattribute__(self, "bonded_inter")
         odict['cell_system'] = System.__getattribute__(self, "cell_system")
         odict['comfixed'] = System.__getattribute__(self, "comfixed")
-        IF CONSTRAINTS:
-            odict['constraints'] = System.__getattribute__(self, "constraints")
+        odict['constraints'] = System.__getattribute__(self, "constraints")
         odict['galilei'] = System.__getattribute__(self, "galilei")
         odict['integrator'] = System.__getattribute__(self, "integrator")
         IF LB_BOUNDARIES or LB_BOUNDARIES_GPU:
             odict['lbboundaries'] = System.__getattribute__(self, "lbboundaries")
         odict['minimize_energy'] = System.__getattribute__(self, "minimize_energy")
         odict['thermostat'] = System.__getattribute__(self, "thermostat")
-        odict['non_bonded_inter'] = System.__getattribute__(self, "non_bonded_inter")
         return odict
 
     def __setstate__(self, params):

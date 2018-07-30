@@ -2,7 +2,6 @@ image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-cuda:latest
 
 stages:
   - permission
-  - clone
   - prepare
   - build
   - additional_checks
@@ -10,7 +9,7 @@ stages:
   - result
 
 variables:
-  GIT_STRATEGY: none
+  GIT_SUBMODULE_STRATEGY: recursive
 
 check_permission:
   stage: permission
@@ -21,26 +20,13 @@ check_permission:
   script:
     - exit 0
 
-git_clone:
-  stage: clone
-  variables:
-    GIT_STRATEGY: clone
-  script:
-    - cd ${CI_PROJECT_DIR}; git submodule update --init --recursive
-  artifacts:
-    paths:
-    - ${CI_PROJECT_DIR}
-    expire_in: 4 weeks
-
 status_pending:
   stage: prepare
   script: bash maintainer/gh_post_status.sh pending
 
-
 no_cuda_default:
   stage: build
-  except:
-    - doc
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu:latest
   script:
     - export with_cuda=false
     - export myconfig=default with_coverage=true
@@ -48,8 +34,7 @@ no_cuda_default:
 
 no_cuda_maxset:
   stage: build
-  except:
-    - doc
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu:latest
   script:
     - export with_cuda=false
     - export myconfig=maxset with_coverage=true
@@ -57,8 +42,6 @@ no_cuda_maxset:
 
 no_cuda_maxset_python3:
   stage: build
-  except:
-    - doc
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:latest
   script:
     - export with_cuda=false
@@ -67,8 +50,6 @@ no_cuda_maxset_python3:
 
 no_cuda_maxset_debian:
   stage: build
-  except:
-    - doc
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/debian:latest
   script:
     - export with_cuda=false
@@ -77,8 +58,6 @@ no_cuda_maxset_debian:
 
 no_cuda_maxset_opensuse:
   stage: build
-  except:
-    - doc
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/opensuse:latest
   script:
     - export with_cuda=false
@@ -87,8 +66,6 @@ no_cuda_maxset_opensuse:
 
 no_cuda_maxset_centos:
   stage: build
-  except:
-    - doc
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/centos:latest
   script:
     - export with_cuda=false
@@ -97,8 +74,6 @@ no_cuda_maxset_centos:
 
 no_cuda_nocheckmaxset:
   stage: build
-  except:
-    - doc
   script:
     - export with_cuda=false
     - export myconfig=nocheck-maxset make_check=false
@@ -106,8 +81,6 @@ no_cuda_nocheckmaxset:
 
 shanchen:
   stage: build
-  except:
-    - doc
   script:
     - export myconfig=shanchen with_coverage=true
     - bash maintainer/cuda_build.sh
@@ -122,10 +95,14 @@ maxset:
     - build/
     expire_in: 4 weeks
 
+empty:
+  stage: build
+  script:
+    - export myconfig=empty
+    - bash maintainer/CI/build_cmake.sh
+
 osx:
   stage: build
-  except:
-    - doc
   script:
     - export myconfig=maxset with_cuda=false
     - bash maintainer/CI/build_cmake.sh
@@ -134,8 +111,6 @@ osx:
 
 osx-python3:
   stage: build
-  except:
-    - doc
   script:
     - export myconfig=maxset with_cuda=false python_version=3
     - bash maintainer/CI/build_cmake.sh
@@ -144,8 +119,6 @@ osx-python3:
 
 osx-cuda:
   stage: build
-  except:
-    - doc
   script:
     - export myconfig=maxset with_cuda=true make_check=false
     - bash maintainer/CI/build_cmake.sh
@@ -154,8 +127,6 @@ osx-cuda:
 
 clang-static-analysis:
   stage: build
-  except:
-    - doc
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-clang-cuda:latest
   script:
     - export myconfig=maxset with_coverage=false with_static_analysis=true
@@ -163,8 +134,6 @@ clang-static-analysis:
 
 intel:
   stage: build
-  except:
-    - doc
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-intel:latest
   script:
     - export myconfig=maxset with_coverage=false
@@ -172,10 +141,7 @@ intel:
 
 check_sphinx:
   stage: additional_checks
-  except:
-    - doc
   dependencies:
-  - git_clone
   - maxset
   when: on_success
   script:
@@ -183,11 +149,8 @@ check_sphinx:
 
 check_with_odd_no_of_processors:
   stage: additional_checks
-  except:
-    - doc
   when: on_success
   dependencies:
-  - git_clone
   - maxset
   script:
     - export build_procs=3 check_procs=3 check_odd_only=true
@@ -196,7 +159,7 @@ check_with_odd_no_of_processors:
 deploy_documentation:
   stage: deploy
   only:
-    - doc
+    - python
   before_script:
     - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
     - eval $(ssh-agent -s)
@@ -215,12 +178,8 @@ status_success:
   stage: result
   script: bash maintainer/gh_post_status.sh success
   when: on_success
-  dependencies:
-  - git_clone
 
 status_failure:
   stage: result
   script: bash maintainer/gh_post_status.sh failure
   when: on_failure
-  dependencies:
-  - git_clone

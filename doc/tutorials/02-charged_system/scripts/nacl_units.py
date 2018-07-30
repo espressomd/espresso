@@ -24,6 +24,8 @@ import numpy
 assert_features(["ELECTROSTATICS", "MASS", "LENNARD_JONES"])
 
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
+numpy.random.seed(system.seed)
 
 print("\n--->Setup system")
 
@@ -172,3 +174,5 @@ for i in range(rdf_bins):
 rdf_fp.close()
 print("\n--->Written rdf.data")
 print("\n--->Done")
+
+

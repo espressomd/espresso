@@ -434,7 +434,7 @@ extern std::vector<IA_parameters> ia_params;
 
 /** field containing the interaction parameters for
  *  the coulomb  interaction.  */
-typedef struct {
+struct Coulomb_parameters {
 
 #ifdef ELECTROSTATICS
   /** bjerrum length times temperature. */
@@ -449,7 +449,7 @@ typedef struct {
   DipolarInteraction Dmethod;
 #endif
 
-} Coulomb_parameters;
+};
 
 #ifdef ELECTROSTATICS
 
@@ -467,19 +467,19 @@ drmax - maximal bond streching.
 r0 - equilibrium bond length.
 drmax2 - square of drmax (internal parameter).
 */
-typedef struct {
+struct Fene_bond_parameters {
   double k;
   double drmax;
   double r0;
   double drmax2;
   double drmax2i;
-} Fene_bond_parameters;
+};
 
 #ifdef HYDROGEN_BOND
 /** Parameters for the cg_dna potential
     Insert documentation here.
 **/
-typedef struct {
+struct Cg_dna_basepair_parameters {
   double r0;
   double alpha;
   double E0;
@@ -494,28 +494,28 @@ typedef struct {
   double alphasb;
   double f2;
   double f3;
-} Cg_dna_basepair_parameters;
+};
 #endif
 #ifdef TWIST_STACK
-typedef struct {
+struct Cg_dna_stacking_parameters {
   double rm;
   double epsilon;
   double ref_pot;
   double a[8];
   double b[7];
-} Cg_dna_stacking_parameters;
+};
 #endif
 
 /** Parameters for oif_global_forces */
-typedef struct {
+struct Oif_global_forces_bond_parameters {
   double A0_g;
   double ka_g;
   double V0;
   double kv;
-} Oif_global_forces_bond_parameters;
+};
 
 /** Parameters for oif_local_forces */
-typedef struct {
+struct Oif_local_forces_bond_parameters {
     double r0;
     double ks;
     double kslin;
@@ -525,17 +525,17 @@ typedef struct {
     double A02;
     double kal;
     double kvisc;
-} Oif_local_forces_bond_parameters;
+};
 
 /** Parameters for harmonic bond Potential */
-typedef struct {
+struct Harmonic_bond_parameters {
   double k;
   double r;
   double r_cut;
-} Harmonic_bond_parameters;
+};
 
 /** Parameters for Thermalized bond **/
-typedef struct {
+struct Thermalized_bond_parameters {
     double temp_com;
     double gamma_com;
     double temp_distance;
@@ -545,31 +545,31 @@ typedef struct {
     double pref2_com;
     double pref1_dist;
     double pref2_dist;
-} Thermalized_bond_parameters;
+};
 
 #ifdef ROTATION
 /** Parameters for harmonic dumbbell bond Potential */
-typedef struct {
+struct Harmonic_dumbbell_bond_parameters {
   double k1;
   double k2;
   double r;
   double r_cut;
-} Harmonic_dumbbell_bond_parameters;
+};
 #endif
 
 /** Parameters for quartic bond Potential */
-typedef struct {
+struct Quartic_bond_parameters {
   double k0, k1;
   double r;
   double r_cut;
-} Quartic_bond_parameters;
+};
 
 /** Parameters for coulomb bond Potential */
-typedef struct { double prefactor; } Bonded_coulomb_bond_parameters;
+struct Bonded_coulomb_bond_parameters { double prefactor; };
 
 #ifdef P3M
 /** Parameters for coulomb bond p3m shortrange Potential */
-typedef struct { double q1q2; } Bonded_coulomb_p3m_sr_bond_parameters;
+struct Bonded_coulomb_p3m_sr_bond_parameters { double q1q2; };
 #endif
 
 /** Parameters for three body angular potential (bond-angle potentials).
@@ -579,71 +579,69 @@ typedef struct { double q1q2; } Bonded_coulomb_p3m_sr_bond_parameters;
    config.hpp !
         bend - bending constant.
         phi0 - equilibrium angle (default is 180 degrees / Pi) */
-typedef struct {
+struct Angle_bond_parameters {
   double bend;
   double phi0;
   double cos_phi0;
   double sin_phi0;
 
-} Angle_bond_parameters;
+};
 
 /** Parameters for three body angular potential (bond_angle_harmonic).
     bend - bending constant.
     phi0 - equilibrium angle (default is 180 degrees / Pi) */
-typedef struct {
+struct Angle_harmonic_bond_parameters {
   double bend;
   double phi0;
-} Angle_harmonic_bond_parameters;
+};
 
 /** Parameters for three body angular potential (bond_angle_cosine).
     bend - bending constant.
     phi0 - equilibrium angle (default is 180 degrees / Pi) */
-typedef struct {
+struct Angle_cosine_bond_parameters {
   double bend;
   double phi0;
   double cos_phi0;
   double sin_phi0;
-} Angle_cosine_bond_parameters;
+};
 
 /** Parameters for three body angular potential (bond_angle_cossquare).
     bend - bending constant.
     phi0 - equilibrium angle (default is 180 degrees / Pi) */
-typedef struct {
+struct Angle_cossquare_bond_parameters {
   double bend;
   double phi0;
   double cos_phi0;
-} Angle_cossquare_bond_parameters;
+};
 
 /** Parameters for four body angular potential (dihedral-angle potentials). */
-typedef struct {
+struct Dihedral_bond_parameters {
   double mult;
   double bend;
   double phase;
-} Dihedral_bond_parameters;
+};
 
 /** Parameters for n-body tabulated potential (n=2,3,4). */
-typedef struct {
+struct Tabulated_bond_parameters {
   TabulatedBondedInteraction type;
   TabulatedPotential *pot;
-} Tabulated_bond_parameters;
+};
 
 #ifdef UMBRELLA
 /** Parameters for umbrella potential */
-typedef struct {
+struct Umbrella_bond_parameters {
   double k;
   int dir;
   double r;
-} Umbrella_bond_parameters;
+};
 #endif
 
 /** Dummy parameters for -LJ Potential */
-typedef struct {
-} Subt_lj_bond_parameters;
+struct Subt_lj_bond_parameters {
+};
 
 /**Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM*/
-typedef struct {
-  /**Length of rigid bond/Constrained Bond*/
-  // double d;
+struct Rigid_bond_parameters {
   /**Square of the length of Constrained Bond*/
   double d2;
   /**Positional Tolerance/Accuracy value for termination of RATTLE/SHAKE
@@ -652,7 +650,7 @@ typedef struct {
   /**Velocity Tolerance/Accuracy for termination of RATTLE/SHAKE iterations
    * during velocity corrections */
   double v_tol;
-} Rigid_bond_parameters;
+};
 
 /** Parameters for three body angular potential (bond-angle potentials) that
     depends on distance to wall constraint.
@@ -663,7 +661,7 @@ typedef struct {
         bend - bending constant.
         phi0 - equilibrium angle (default is 180 degrees / Pi)
         dist0 - equilibrium distance (no default) */
-typedef struct {
+struct Angledist_bond_parameters {
   double bend;
   double phimin;
   double distmin;
@@ -671,12 +669,12 @@ typedef struct {
   double distmax;
   double cos_phi0;
   double sin_phi0;
-} Angledist_bond_parameters;
+};
 
-typedef enum { NeoHookean, Skalak } tElasticLaw;
+enum class tElasticLaw { NeoHookean, Skalak };
 
 /** Parameters for IBM elastic triangle (triel) **/
-typedef struct {
+struct IBM_Triel_Parameters {
   // These values encode the reference state
   double l0;
   double lp0;
@@ -698,10 +696,10 @@ typedef struct {
   double k1;
   double k2;
 
-} IBM_Triel_Parameters;
+};
 
 /** Parameters for IBM volume conservation bond **/
-typedef struct {
+struct IBM_VolCons_Parameters {
   int softID; // ID of the large soft particle to which this node belongs
   // Reference volume
   double volRef;
@@ -711,21 +709,21 @@ typedef struct {
   // Actually this is more of an analysis function and does not strictly belong
   // to volume conservation
   //  bool writeCOM;
-} IBM_VolCons_Parameters;
+};
 
 /** Parameters for IBM tribend **/
-typedef struct {
+struct IBM_Tribend_Parameters {
   // Interaction data
   double kb;
 
   // Reference angle
   double theta0;
 
-} IBM_Tribend_Parameters;
+};
 
 /** Union in which to store the parameters of an individual bonded interaction
  */
-typedef union {
+union Bond_parameters {
   Fene_bond_parameters fene;
   Oif_global_forces_bond_parameters oif_global_forces;
   Oif_local_forces_bond_parameters oif_local_forces;
@@ -740,7 +738,9 @@ typedef union {
   Angle_cosine_bond_parameters angle_cosine;
   Angle_cossquare_bond_parameters angle_cossquare;
   Dihedral_bond_parameters dihedral;
+#ifdef TABULATED
   Tabulated_bond_parameters tab;
+#endif
 #ifdef UMBRELLA
   Umbrella_bond_parameters umbrella;
 #endif
@@ -760,7 +760,7 @@ typedef union {
   IBM_Triel_Parameters ibm_triel;
   IBM_VolCons_Parameters ibmVolConsParameters;
   IBM_Tribend_Parameters ibm_tribend;
-} Bond_parameters;
+};
 
 /** Defines parameters for a bonded interaction. */
 struct Bonded_ia_parameters {
@@ -782,10 +782,8 @@ extern int max_seen_particle_type;
 /** Structure containing the coulomb parameters. */
 extern Coulomb_parameters coulomb;
 
-/** number of bonded interactions. Not used so far. */
-extern int n_bonded_ia;
 /** Field containing the paramters of the bonded ia types */
-extern Bonded_ia_parameters *bonded_ia_params;
+extern std::vector<Bonded_ia_parameters> bonded_ia_params;
 
 /** Maximal interaction cutoff (real space/short range interactions). */
 extern double max_cut;

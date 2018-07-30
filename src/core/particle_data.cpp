@@ -784,7 +784,7 @@ int change_particle_bond(int part, int *bond, int _delete) {
     _delete = 1;
 
   if (bond != nullptr) {
-    if (bond[0] < 0 || bond[0] >= n_bonded_ia) {
+    if (bond[0] < 0 || bond[0] >= bonded_ia_params.size()) {
       runtimeErrorMsg() << "invalid/unknown bonded interaction type "
                         << bond[0];
       return ES_ERROR;

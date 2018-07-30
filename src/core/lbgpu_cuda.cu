@@ -2523,24 +2523,9 @@ __global__ void reinit_node_force(LB_node_force_density_gpu node_f){
     #pragma unroll
     for(int ii=0;ii<LB_COMPONENTS;++ii)
     {
-#ifdef EXTERNAL_FORCES
-      if(para.external_force_density)
-      {
-        node_f.force_density[(0+ii*3)*para.number_of_nodes + index] = para.ext_force_density[0+ii*3]*para.agrid*para.agrid*para.tau*para.tau;
-        node_f.force_density[(1+ii*3)*para.number_of_nodes + index] = para.ext_force_density[1+ii*3]*para.agrid*para.agrid*para.tau*para.tau;
-        node_f.force_density[(2+ii*3)*para.number_of_nodes + index] = para.ext_force_density[2+ii*3]*para.agrid*para.agrid*para.tau*para.tau;
-      }
-      else
-      {
-        node_f.force_density[(0+ii*3)*para.number_of_nodes + index] = 0.0f;
-        node_f.force_density[(1+ii*3)*para.number_of_nodes + index] = 0.0f;
-        node_f.force_density[(2+ii*3)*para.number_of_nodes + index] = 0.0f;
-      }
-#else
       node_f.force_density[(0+ii*3)*para.number_of_nodes + index] = 0.0f;
       node_f.force_density[(1+ii*3)*para.number_of_nodes + index] = 0.0f;
       node_f.force_density[(2+ii*3)*para.number_of_nodes + index] = 0.0f;
-#endif
     }
   }
 }
@@ -3148,8 +3133,8 @@ void lb_get_device_values_pointer(LB_rho_v_gpu** pointeradress) {
  * @param *lbpar_gpu  Pointer to parameters to setup the lb field
 */
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
-#define free_and_realloc(var,size)\
-  { if( (var) != nullptr ) cudaFree((var)); cuda_safe_mem(cudaMalloc((void**)&var, size)); } 
+#define free_realloc_and_clear(var,size)\
+  { if( (var) != nullptr ) cuda_safe_mem(cudaFree((var))); cuda_safe_mem(cudaMalloc((void**)&var, size)); cudaMemset(var,0,size); } 
 
   size_of_rho_v     = lbpar_gpu->number_of_nodes * sizeof(LB_rho_v_gpu);
   size_of_rho_v_pi  = lbpar_gpu->number_of_nodes * sizeof(LB_rho_v_pi_gpu);
@@ -3159,35 +3144,35 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   /* see the notes to the stucture device_rho_v_pi above...*/
   if(extended_values_flag==0) 
   {
-    free_and_realloc(device_rho_v, size_of_rho_v);
+    free_realloc_and_clear(device_rho_v, size_of_rho_v);
   }
   else 
   {
-    free_and_realloc(device_rho_v_pi, size_of_rho_v_pi);
+    free_realloc_and_clear(device_rho_v_pi, size_of_rho_v_pi);
   }
 
   /* TODO: this is a almost a copy copy of  device_rho_v think about eliminating it, and maybe pi can be added to device_rho_v in this case*/
-  free_and_realloc(print_rho_v_pi  , size_of_rho_v_pi);
-  free_and_realloc(nodes_a.vd      , lbpar_gpu->number_of_nodes * 19 * LB_COMPONENTS * sizeof(float));
-  free_and_realloc(nodes_b.vd      , lbpar_gpu->number_of_nodes * 19 * LB_COMPONENTS * sizeof(float));   
-  free_and_realloc(node_f.force_density    , lbpar_gpu->number_of_nodes *  3 * LB_COMPONENTS * sizeof(lbForceFloat));
+  free_realloc_and_clear(print_rho_v_pi  , size_of_rho_v_pi);
+  free_realloc_and_clear(nodes_a.vd      , lbpar_gpu->number_of_nodes * 19 * LB_COMPONENTS * sizeof(float));
+  free_realloc_and_clear(nodes_b.vd      , lbpar_gpu->number_of_nodes * 19 * LB_COMPONENTS * sizeof(float));   
+  free_realloc_and_clear(node_f.force_density    , lbpar_gpu->number_of_nodes *  3 * LB_COMPONENTS * sizeof(lbForceFloat));
 #if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) || defined(EK_DEBUG)
-  free_and_realloc(node_f.force_density_buf    , lbpar_gpu->number_of_nodes *  3 * LB_COMPONENTS * sizeof(lbForceFloat));
+  free_realloc_and_clear(node_f.force_density_buf    , lbpar_gpu->number_of_nodes *  3 * LB_COMPONENTS * sizeof(lbForceFloat));
 #endif
 #ifdef SHANCHEN
-  free_and_realloc(node_f.scforce_density  , lbpar_gpu->number_of_nodes *  3 * LB_COMPONENTS * sizeof(float));
+  free_realloc_and_clear(node_f.scforce_density  , lbpar_gpu->number_of_nodes *  3 * LB_COMPONENTS * sizeof(float));
 #endif
 
-  free_and_realloc(nodes_a.seed    , lbpar_gpu->number_of_nodes * sizeof( unsigned int));
-  free_and_realloc(nodes_a.boundary, lbpar_gpu->number_of_nodes * sizeof( unsigned int));
-  free_and_realloc(nodes_b.seed    , lbpar_gpu->number_of_nodes * sizeof( unsigned int));
-  free_and_realloc(nodes_b.boundary, lbpar_gpu->number_of_nodes * sizeof( unsigned int));
+  free_realloc_and_clear(nodes_a.seed    , lbpar_gpu->number_of_nodes * sizeof( unsigned int));
+  free_realloc_and_clear(nodes_a.boundary, lbpar_gpu->number_of_nodes * sizeof( unsigned int));
+  free_realloc_and_clear(nodes_b.seed    , lbpar_gpu->number_of_nodes * sizeof( unsigned int));
+  free_realloc_and_clear(nodes_b.boundary, lbpar_gpu->number_of_nodes * sizeof( unsigned int));
 
   /**write parameters in const memory*/
   cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
 
   /**check flag if lb gpu init works*/
-  free_and_realloc(gpu_check, sizeof(int));
+  free_realloc_and_clear(gpu_check, sizeof(int));
 
   if(h_gpu_check!=nullptr)
     free(h_gpu_check);  
@@ -3329,8 +3314,7 @@ void lb_init_extern_nodeforcedensities_GPU(int n_extern_node_force_densities, LB
   cuda_safe_mem(cudaMalloc((void**)&extern_node_force_densities, size_of_extern_node_force_densities));
   cuda_safe_mem(cudaMemcpy(extern_node_force_densities, host_extern_node_force_densities, size_of_extern_node_force_densities, cudaMemcpyHostToDevice));
 
-  if(lbpar_gpu->external_force_density == 0)
-    cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu))); 
+  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu))); 
 
   int threads_per_block_exf = 64;
   int blocks_per_grid_exf_y = 4;

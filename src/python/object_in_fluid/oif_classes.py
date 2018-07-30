@@ -1,6 +1,6 @@
 import espressomd
 import numpy as np
-from oif_utils import *
+from .oif_utils import *
 from espressomd.interactions import OifLocalForces
 from espressomd.interactions import OifGlobalForces
 from espressomd.interactions import OifOutDirection

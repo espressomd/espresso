@@ -101,8 +101,8 @@ LB_Parameters lbpar = {
     0};
 
 /** The DnQm model to be used. */
-LB_Model lbmodel = {19,      d3q19_lattice, d3q19_coefficients,
-                    d3q19_w, nullptr,       1. / 3.};
+LB_Model<> lbmodel = {d3q19_lattice, d3q19_coefficients,
+                    d3q19_w, d3q19_modebase, 1. / 3.};
 
 #if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
 #define FLATNOISE
@@ -116,7 +116,7 @@ Lattice lblattice;
 double **lbfluid[2] = {nullptr, nullptr};
 
 /** Pointer to the hydrodynamic fields of the fluid nodes */
-LB_FluidNode *lbfields = nullptr;
+std::vector<LB_FluidNode> lbfields;
 
 /** Communicator for halo exchange between processors */
 HaloCommunicator update_halo_comm = {0, nullptr};
@@ -499,8 +499,14 @@ int lb_lbfluid_set_ext_force_density(int component, double p_fx, double p_fy,
     lbpar_gpu.ext_force_density[3 * component + 0] = (float)p_fx;
     lbpar_gpu.ext_force_density[3 * component + 1] = (float)p_fy;
     lbpar_gpu.ext_force_density[3 * component + 2] = (float)p_fz;
-    lbpar_gpu.external_force_density = 1;
+    if (p_fx != 0 || p_fy !=0 || p_fz != 0) {
+      lbpar_gpu.external_force_density = 1;
+    }
+    else {
+      lbpar_gpu.external_force_density = 0;
+    }
     lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
+
 #endif // LB_GPU
   } else {
 #ifdef LB
@@ -1408,6 +1414,7 @@ int lb_lbnode_get_boundary(int *ind, int *p_boundary) {
   }
   return 0;
 }
+
 #endif // defined (LB) || defined (LB_GPU)
 
 int lb_lbnode_get_pop(int *ind, double *p_pop) {
@@ -1926,8 +1933,7 @@ static void lb_realloc_fluid() {
     lbfluid[1][i] = lbfluid[1][0] + i * lblattice.halo_grid_volume;
   }
 
-  lbfields =
-      Utils::realloc(lbfields, lblattice.halo_grid_volume * sizeof(*lbfields));
+  lbfields.resize(lblattice.halo_grid_volume);
 }
 
 /** Sets up the structures for exchange of the halo regions.
@@ -2025,19 +2031,18 @@ void lb_reinit_parameters() {
     double mu = temperature / lbmodel.c_sound_sq * lbpar.tau * lbpar.tau /
          (lbpar.agrid * lbpar.agrid);
     // mu *= agrid*agrid*agrid;  // Marcello's conjecture
-    double(*e)[19] = d3q19_modebase;
 
     for (i = 0; i < 4; i++)
       lbpar.phi[i] = 0.0;
     lbpar.phi[4] =
-        sqrt(mu * e[19][4] *
+        sqrt(mu * lbmodel.e[19][4] *
              (1. - Utils::sqr(lbpar.gamma_bulk))); // Utils::sqr(x) == x*x
     for (i = 5; i < 10; i++)
-      lbpar.phi[i] = sqrt(mu * e[19][i] * (1. - Utils::sqr(lbpar.gamma_shear)));
+      lbpar.phi[i] = sqrt(mu * lbmodel.e[19][i] * (1. - Utils::sqr(lbpar.gamma_shear)));
     for (i = 10; i < 16; i++)
-      lbpar.phi[i] = sqrt(mu * e[19][i] * (1 - Utils::sqr(lbpar.gamma_odd)));
+      lbpar.phi[i] = sqrt(mu * lbmodel.e[19][i] * (1 - Utils::sqr(lbpar.gamma_odd)));
     for (i = 16; i < 19; i++)
-      lbpar.phi[i] = sqrt(mu * e[19][i] * (1 - Utils::sqr(lbpar.gamma_even)));
+      lbpar.phi[i] = sqrt(mu * lbmodel.e[19][i] * (1 - Utils::sqr(lbpar.gamma_even)));
 
     /* lb_coupl_pref is stored in MD units (force)
      * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
@@ -2078,7 +2083,7 @@ void lb_reinit_force_densities() {
     lbfields[index].force_density[0] = 0.0;
     lbfields[index].force_density[1] = 0.0;
     lbfields[index].force_density[2] = 0.0;
-    lbfields[index].has_force = 0;
+    lbfields[index].has_force_density = 0;
 #endif // EXTERNAL_FORCES
   }
 #ifdef LB_BOUNDARIES
@@ -2091,6 +2096,7 @@ void lb_reinit_force_densities() {
 
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid() {
+  std::fill(lbfields.begin(), lbfields.end(), LB_FluidNode());
   /* default values for fields in lattice units */
   /* here the conversion to lb units is performed */
   double rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
@@ -2157,8 +2163,6 @@ void lb_init() {
   /* setup the initial particle velocity distribution */
   lb_reinit_fluid();
 
-  /* setup the external forces */
-  lb_reinit_force_densities();
 
   LB_TRACE(printf("Initialzing fluid on CPU successful\n"));
 }
@@ -2169,7 +2173,6 @@ void lb_release_fluid() {
   free(lbfluid[0]);
   free(lbfluid[1][0]);
   free(lbfluid[1]);
-  free(lbfields);
 }
 
 /** Release fluid and communication. */
@@ -2348,7 +2351,7 @@ inline void lb_relax_modes(Lattice::index_t index, double *mode) {
  * include one half-step of the force action.  See the
  * Chapman-Enskog expansion in [Ladd & Verberg]. */
 #ifndef EXTERNAL_FORCES
-  if (lbfields[index].has_force || local_cells.particles().size())
+  if (lbfields[index].has_force_density || local_cells.particles().size())
 #endif // !EXTERNAL_FORCES
   {
     j[0] += 0.5 * lbfields[index].force_density[0];
@@ -2478,7 +2481,7 @@ inline void lb_reset_force_densities(Lattice::index_t index) {
   lbfields[index].force_density[0] = 0.0;
   lbfields[index].force_density[1] = 0.0;
   lbfields[index].force_density[2] = 0.0;
-  lbfields[index].has_force = 0;
+  lbfields[index].has_force_density = 0;
 #endif // EXTERNAL_FORCES
 }
 
@@ -2508,7 +2511,7 @@ inline void lb_calc_n_from_modes_push(Lattice::index_t index, double *m) {
 
   /* normalization factors enter in the back transformation */
   for (int i = 0; i < lbmodel.n_veloc; i++)
-    m[i] = (1. / d3q19_modebase[19][i]) * m[i];
+    m[i] = (1. / lbmodel.e[19][i]) * m[i];
 
   lbfluid[1][0][next[0]] = m[0] - m[4] + m[16];
   lbfluid[1][1][next[1]] =
@@ -3004,7 +3007,7 @@ void calc_particle_lattice_ia() {
     if (lbpar.resend_halo) { /* first MD step after last LB update */
 
       /* exchange halo regions (for fluid-particle coupling) */
-      halo_communication(&update_halo_comm, (char *)**lbfluid);
+      halo_communication(&update_halo_comm, reinterpret_cast<char *>(**lbfluid));
 
 #ifdef ADDITIONAL_CHECKS
       lb_check_halo_regions();
@@ -3016,18 +3019,22 @@ void calc_particle_lattice_ia() {
 
     /* draw random numbers for local particles */
     for (auto &p : local_cells.particles()) {
+      if (lb_coupl_pref2 > 0.0) {
 #ifdef GAUSSRANDOM
-      p.lc.f_random[0] = lb_coupl_pref2 * gaussian_random();
-      p.lc.f_random[1] = lb_coupl_pref2 * gaussian_random();
-      p.lc.f_random[2] = lb_coupl_pref2 * gaussian_random();
+        p.lc.f_random[0] = lb_coupl_pref2 * gaussian_random();
+        p.lc.f_random[1] = lb_coupl_pref2 * gaussian_random();
+        p.lc.f_random[2] = lb_coupl_pref2 * gaussian_random();
 #elif defined(GAUSSRANDOMCUT)
-      p.lc.f_random[0] = lb_coupl_pref2 * gaussian_random_cut();
-      p.lc.f_random[1] = lb_coupl_pref2 * gaussian_random_cut();
-      p.lc.f_random[2] = lb_coupl_pref2 * gaussian_random_cut();
+        p.lc.f_random[0] = lb_coupl_pref2 * gaussian_random_cut();
+        p.lc.f_random[1] = lb_coupl_pref2 * gaussian_random_cut();
+        p.lc.f_random[2] = lb_coupl_pref2 * gaussian_random_cut();
 #elif defined(FLATNOISE)
-      p.lc.f_random[0] = lb_coupl_pref * (d_random() - 0.5);
-      p.lc.f_random[1] = lb_coupl_pref * (d_random() - 0.5);
-      p.lc.f_random[2] = lb_coupl_pref * (d_random() - 0.5);
+        p.lc.f_random[0] = lb_coupl_pref * (d_random() - 0.5);
+        p.lc.f_random[1] = lb_coupl_pref * (d_random() - 0.5);
+        p.lc.f_random[2] = lb_coupl_pref * (d_random() - 0.5);
+      } else {
+        p.lc.f_random = {0.0, 0.0, 0.0};
+      }
 #else // GAUSSRANDOM
 #error No noise type defined for the CPU LB
 #endif // GAUSSRANDOM

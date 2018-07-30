@@ -7,7 +7,7 @@
 #define ROTATIONAL_INERTIA
 #define PARTICLE_ANISOTROPY
 #define EXTERNAL_FORCES
-#define CONSTRAINTS
+
 #define MASS
 #define EXCLUSIONS
 #define MOLFORCES

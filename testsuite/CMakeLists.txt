@@ -112,7 +112,7 @@ python_test(FILE minimize_energy.py MAX_NUM_PROC 4)
 python_test(FILE mmm1d.py MAX_NUM_PROC 4)
 python_test(FILE variant_conversion.py MAX_NUM_PROC 1)
 python_test(FILE dipolar_mdlc_p3m_scafacos_p2nfft.py MAX_NUM_PROC 1)
-python_test(FILE lb.py MAX_NUM_PROC 4)
+python_test(FILE lb_cpu.py MAX_NUM_PROC 4)
 python_test(FILE lb_gpu.py MAX_NUM_PROC 2)
 python_test(FILE lb_gpu_viscous.py MAX_NUM_PROC 2)
 python_test(FILE force_cap.py MAX_NUM_PROC 2)
@@ -144,6 +144,7 @@ python_test(FILE wang_landau_reaction_ensemble.py MAX_NUM_PROC 1)
 python_test(FILE array_properties.py MAX_NUM_PROC 4)
 python_test(FILE analyze_distribution.py MAX_NUM_PROC 1)
 python_test(FILE observable_profile.py MAX_NUM_PROC 4)
+python_test(FILE observable_profileLB.py MAX_NUM_PROC 1)
 python_test(FILE rotate_system.py MAX_NUM_PROC 4)
 python_test(FILE random_pairs.py MAX_NUM_PROC 4)
 python_test(FILE lb_electrohydrodynamics.py MAX_NUM_PROC 4)
@@ -156,6 +157,11 @@ python_test(FILE thole.py MAX_NUM_PROC 4)
 python_test(FILE lb_switch.py MAX_NUM_PROC 1)
 python_test(FILE lb_boundary_velocity.py MAX_NUM_PROC 1)
 python_test(FILE lb_thermo_virtual.py MAX_NUM_PROC 2)
+python_test(FILE lb_poiseuille.py MAX_NUM_PROC 4)
+python_test(FILE analyze_gyration_tensor.py MAX_NUM_PROC 1)
+python_test(FILE oif_volume_conservation.py MAX_NUM_PROC 2)
+python_test(FILE simple_pore.py MAX_NUM_PROC 1)
+python_test(FILE lb_boundary.py MAX_NUM_PROC 2)
 
 if(PY_H5PY)
   python_test(FILE h5md.py MAX_NUM_PROC 2)
@@ -164,6 +170,7 @@ endif(PY_H5PY)
 add_custom_target(python_test_data
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/data ${CMAKE_CURRENT_BINARY_DIR}/data
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/tests_common.py ${CMAKE_CURRENT_BINARY_DIR}
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lb_common.py ${CMAKE_CURRENT_BINARY_DIR}
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/virtual_sites_tracers_common.py ${CMAKE_CURRENT_BINARY_DIR}
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ek_common.py ${CMAKE_CURRENT_BINARY_DIR})
 

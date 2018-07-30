@@ -38,7 +38,6 @@
 #include "bmhtf-nacl.hpp"
 #include "buckingham.hpp"
 #include "collision.hpp"
-#include "constraints.hpp"
 #include "dihedral.hpp"
 #include "thermalized_bond.hpp"
 #include "elc.hpp"
@@ -857,9 +856,6 @@ inline void check_particle_force(Particle *part) {
 
 inline void add_single_particle_force(Particle *p) {
   add_bonded_force(p);
-#ifdef CONSTRAINTS
-  add_constraints_forces(p);
-#endif
 }
 
 #endif

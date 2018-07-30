@@ -85,7 +85,7 @@ are "0-9", "a-zA-Z", "-", "_".
 Specifies the relative or absolute path where the checkpoints are
 stored.
 
-For example ``checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")``
+For example ``checkpoint = checkpointing.Checkpoint(checkpoint_id="mycheckpoint")``
 would create the new checkpoint with id "mycheckpoint" and all the
 checkpointing data will be stored in the current directory.
 
@@ -161,7 +161,7 @@ restores the state of all checkpointed objects and registers a signal.
 
     import espressomd from espressomd import checkpointing import signal
 
-    checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")
+    checkpoint = checkpointing.Checkpoint(checkpoint_id="mycheckpoint")
     checkpoint.load()
 
     system = espressomd.System(box_l=[100.0, 100.0, 100.0])
@@ -169,7 +169,7 @@ restores the state of all checkpointed objects and registers a signal.
     system.actors.add(p3m)
 
     #signal.SIGINT: signal 2, is sent when ctrl+c is pressed
-    checkpoint.register\_signal(signal.SIGINT)
+    checkpoint.register_signal(signal.SIGINT)
 
     # integrate system until user presses ctrl+c while True:
     system.integrator.run(1000)

@@ -165,7 +165,7 @@ cdef class mayaviLive(object):
         cdef int t 
         cdef int partner
         cdef const particle* p
-        cdef ia_parameters* ia
+        cdef IA_parameters* ia
         cdef vector[int] bonds
 
     # Using (additional) untyped variables and python constructs in the loop 

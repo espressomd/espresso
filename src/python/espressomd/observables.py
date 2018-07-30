@@ -6,7 +6,7 @@ from .script_interface import ScriptInterfaceHelper, script_interface_register
 @script_interface_register
 class Observable(ScriptInterfaceHelper):
     _so_name = "Observables::Observable"
-    _so_bind_methods = ("calculate",)
+    _so_bind_methods = ("calculate", "n_values")
     _so_creation_policy = "LOCAL"
 
 
@@ -170,6 +170,52 @@ class ForceDensityProfile(Observable):
 
 @script_interface_register
 class LBVelocityProfile(Observable):
+    """Calculates the LB fluid velocity profile.
+
+    This observable samples the fluid in on a regular grid defined by the variables
+    ``sampling*``. Note that a small delta leads to a large number of sample
+    points and carries a performance cost.
+
+    .. WARNING::
+        In case of the CPU version of the LB fluid implementation, this observable
+        currently only works for a single core.
+
+    Parameters
+    ----------
+    n_x_bins : :obj:`int`
+        Number of bins in ``x`` direction.
+    n_y_bins : :obj:`int`
+        Number of bins in ``y`` direction.
+    n_z_bins : :obj:`int`
+        Number of bins in ``z`` direction.
+    min_x : :obj:`float`
+        Minimum ``x`` to consider.
+    min_y : :obj:`float`
+        Minimum ``y`` to consider.
+    min_z : :obj:`float`
+        Minimum ``z`` to consider.
+    max_x : :obj:`float`
+        Maximum ``x`` to consider.
+    max_y : :obj:`float`
+        Maximum ``y`` to consider.
+    max_z : :obj:`float`
+        Maximum ``z`` to consider.
+    sampling_delta_x : :obj:`float`, default=1.0
+        Spacing for the sampling grid in ``x``-direction.
+    sampling_delta_y : :obj:`float`, default=1.0
+        Spacing for the sampling grid in ``y``-direction.
+    sampling_delta_z : :obj:`float`, default=1.0
+        Spacing for the sampling grid in ``z``-direction.
+    sampling_offset_x : :obj:`float`, default=0.0
+        Offset for the sampling grid in ``x``-direction.
+    sampling_offset_y : :obj:`float`, default=0.0
+        Offset for the sampling grid in ``y``-direction.
+    sampling_offset_z : :obj:`float`, default=0.0
+        Offset for the sampling grid in ``z``-direction.
+    allow_empty_bins : :obj:`bool`, default=False
+        Wether or not to allow bins that will not be sampled at all.
+
+    """
     _so_name = "Observables::LBVelocityProfile"
 
 
@@ -218,11 +264,10 @@ class ParticleBodyAngularVelocities(Observable):
 
 @script_interface_register
 class ParticleBodyVelocities(Observable):
-    _so_name = "Observables::ParticleBodyVelocities"
     """Calculates the particle velocity in the particles'  body-fixed frame of reference.
    
-   For each particle, the body-fixed frame of reference is obtained from the particle's
-   orientation stored in the quaternions.
+    For each particle, the body-fixed frame of reference is obtained from the particle's
+    orientation stored in the quaternions.
 
     Parameters
     ----------
@@ -230,19 +275,7 @@ class ParticleBodyVelocities(Observable):
           The ids of (existing) particles to take into account.
 
     """
-
-
-@script_interface_register
-class ParticleCurrent(Observable):
-    """Calculates the particle current for particles with given ids.
-
-    Parameters
-    ----------
-    ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
-
-    """
-    _so_name = "Observables::ParticleCurrent"
+    _so_name = "Observables::ParticleBodyVelocities"
 
 
 @script_interface_register

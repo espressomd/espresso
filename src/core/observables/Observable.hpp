@@ -34,7 +34,7 @@ public:
   virtual ~Observable() = default;
   // In the call operator the calculation is performed.
   virtual std::vector<double> operator()(PartCfg &partCfg) const = 0;
-  virtual int n_values() const { return 0; }
+  virtual int n_values() const = 0;
 };
 
 } // Namespace Observables
