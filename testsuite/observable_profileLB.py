@@ -66,11 +66,11 @@ class ObservableProfileLBCommon(object):
         obs_data = obs_data.reshape((LB_VELOCITY_PROFILE_PARAMS['n_x_bins'],
                                      LB_VELOCITY_PROFILE_PARAMS['n_y_bins'],
                                      LB_VELOCITY_PROFILE_PARAMS['n_z_bins'], 3))
-        print obs_data[:, 0, 0]
         for x in range(obs_data.shape[0]):
             for y in range(obs_data.shape[1]):
                 for z in range(obs_data.shape[2]):
-                    self.assertAlmostEqual(obs_data[x, y, z, 0], float(x), places=9)
+                    self.assertAlmostEqual(obs_data[x, y, z, 0], float(x), places=5)
+
 @ut.skipIf(not espressomd.has_features(
     ['LB']), "Skipping test due to missing features.")
 class LBCPU(ut.TestCase, ObservableProfileLBCommon):
