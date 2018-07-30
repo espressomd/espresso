@@ -37,18 +37,10 @@ y=box_l*0.5
 z=box_l*0.5
 
 # place six branches, pointing +/-x +/-y and +/-z
-for n in range(branch_len):
-    system.part.add(pos=[x+(n+1), y, z], type=type_A, virtual=1)
-for n in range(branch_len):
-    system.part.add(pos=[x-(n+1), y, z], type=type_A, virtual=1)
-for n in range(branch_len):
-    system.part.add(pos=[x, y+(n+1), z], type=type_A, virtual=1)
-for n in range(branch_len):
-    system.part.add(pos=[x, y-(n+1), z], type=type_A, virtual=1)
-for n in range(branch_len):
-    system.part.add(pos=[x, y, z+(n+1)], type=type_A, virtual=1)
-for n in range(branch_len):
-    system.part.add(pos=[x, y, z-(n+1)], type=type_A, virtual=1)
+for direction in np.array([[1,0,0], [0,1,0], [0,0,1]]):
+    for n in range(branch_len):
+        system.part.add(pos=[x, y, z]+(n+1)*direction, type=type_A, virtual=1)
+        system.part.add(pos=[x, y, z]-(n+1)*direction, type=type_A, virtual=1)
 
 system.virtual_sites= VirtualSitesRelative(have_velocity=True)
 
@@ -71,17 +63,13 @@ mat_I=system.analysis.moment_of_inertia_matrix(p_type=type_A)
 momI=[mat_I[0,0],mat_I[1,1], mat_I[2,2]]
 print("moment of intertia is", momI)
 
-#place center bead
-p_center = system.part.add(pos=com, mass=branch_len*6, rinertia=momI, rotation=[1,1,1], type=type_centre)
+#place center bead 
+p_center = system.part.add(pos=com, mass=branch_len*6+1, rinertia=momI, rotation=[1,1,1], type=type_centre)
 
 # The virtual particles relate to the center one 
 for p in system.part:
     if p.virtual:
         p.vs_auto_relate_to(p_center.id)
-
-
-
-
 
 for frame in range(200):
     system.integrator.run(100)
