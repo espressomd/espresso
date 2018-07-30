@@ -26,7 +26,8 @@ class RescaleTest(ut.TestCase):
     """Test the global box and particle rescaling.
 
     """
-    s = espressomd.System()
+    s = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
     s.cell_system.skin=0.0
     s.time_step = 0.01
 
@@ -65,6 +66,7 @@ class RescaleTest(ut.TestCase):
                 max_diff = np.max(np.abs(new_pos[:, i] / old_pos[:, i] - scale))
             else:
                 max_diff = np.max(np.abs(new_pos[:, i] - old_pos[:, i]))
+
             self.assertAlmostEqual(0., max_diff, places=10)
 
     def test_x(self):

@@ -31,7 +31,8 @@ from numpy import random
 @ut.skipIf(not espressomd.has_features("ROTATION"),
            "Test requires ROTATION")
 class Rotation(ut.TestCase):
-    s = espressomd.System()
+    s = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
     s.cell_system.skin=0
     s.time_step=0.01
 
@@ -57,6 +58,7 @@ class Rotation(ut.TestCase):
             #self.assertEqual(self.s.part[0].torque_body[coord],0)
             self.assertEqual(self.s.part[0].omega_body[coord],0)
 
+    @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"),"Requires EXTERNAL_FORCES")
     def test_axes_changes(self):
         """Verifies that rotation axes in body and space frame stay the same and other axes dont"""
         s=self.s
@@ -86,7 +88,56 @@ class Rotation(ut.TestCase):
                     self.assertLess(np.dot(axis,s.part[0].convert_vector_body_to_space(axis)),0.95)
 
                     
-                 
+
+
+    def test_frame_conversion_and_rotation(self):
+        s=self.s
+        s.part.clear()
+        p=s.part.add(pos=np.random.random(3),rotation=(1,1,1))
+        
+        # Space and body frame co-incide?
+        np.testing.assert_allclose(p.director,p.convert_vector_body_to_space((0,0,1)),atol=1E-10)
+
+        # Random vector should still co-incide
+        v=(1.,5.5,17)
+        np.testing.assert_allclose(v,p.convert_vector_space_to_body(v),atol=1E-10)
+        np.testing.assert_allclose(v,p.convert_vector_body_to_space(v),atol=1E-10)
+
+        # Particle rotation
+        
+        p.rotate((1,2,0),np.pi/4)
+        # Check angle for director
+        self.assertAlmostEqual(np.arccos(np.dot(p.director, (0,0,1))),np.pi/4,delta=1E-10)
+        # Check other vector
+        v=(5,-7,3)
+        v_r=p.convert_vector_body_to_space(v)
+        self.assertAlmostEqual(np.dot(v,v),np.dot(v_r,v_r),delta=1e-10)
+        np.testing.assert_allclose(p.convert_vector_space_to_body(v_r),v,atol=1E-10)
+
+        # Rotation axis should co-incide
+        np.testing.assert_allclose((1,2,0),p.convert_vector_body_to_space((1,2,0)))
+        
+        
+        # Check rotation axis with all elements set
+        p.rotate(axis=(-5,2,17),angle=1.)
+        v=(5,-7,3)
+        v_r=p.convert_vector_body_to_space(v)
+        self.assertAlmostEqual(np.dot(v,v),np.dot(v_r,v_r),delta=1e-10)
+        np.testing.assert_allclose(p.convert_vector_space_to_body(v_r),v,atol=1E-10)
+
+
+
+
+
+
+
+
+
+
+        # 
+
+
+
 
         
 

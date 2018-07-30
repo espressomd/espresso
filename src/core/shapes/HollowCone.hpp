@@ -23,27 +23,27 @@
 #define __HOLLOWCONE_HPP
 
 #include "Shape.hpp"
+#include "Vector.hpp"
 
 namespace Shapes {
 
 class HollowCone : public Shape {
 public:
   HollowCone()
-      : m_position_x(0.0), m_position_y(0.0), m_position_z(0.0),
-        m_orientation_x(0.0), m_orientation_y(0.0), m_orientation_z(0.0),
+      : m_position({0.0, 0.0, 0.0}), m_orientation({1.0, 0.0, 0.0}),
         m_outer_radius(0.0), m_inner_radius(0.0), m_width(0.0),
         m_opening_angle(0.0), m_direction(0.0) {}
 
   int calculate_dist(const double *ppos, double *dist,
                      double *vec) const override;
 
-  double &position_x() { return m_position_x; }
-  double &position_y() { return m_position_y; }
-  double &position_z() { return m_position_z; }
+  Vector3d const &position() const { return m_position; }
+  void set_position(Vector3d const &position) { m_position = position; }
 
-  double &orientation_x() { return m_orientation_x; }
-  double &orientation_y() { return m_orientation_y; }
-  double &orientation_z() { return m_orientation_z; }
+  Vector3d const &orientation() const { return m_orientation; }
+  void set_orientation(Vector3d const &orientation) {
+    m_orientation = orientation;
+  }
 
   double &outer_radius() { return m_outer_radius; }
   double &inner_radius() { return m_inner_radius; }
@@ -53,14 +53,10 @@ public:
 
 private:
   /** Hollow cone position. */
-  double m_position_x;
-  double m_position_y;
-  double m_position_z;
+  Vector3d m_position;
 
   /** Hollow cone orientation. */
-  double m_orientation_x;
-  double m_orientation_y;
-  double m_orientation_z;
+  Vector3d m_orientation;
 
   /** Hollow cone dimensions. */
   double m_outer_radius;
@@ -71,6 +67,6 @@ private:
   /** Inside/Outside (+1 outside -1 inside interaction direction)*/
   double m_direction;
 };
-};
+} // namespace Shapes
 
 #endif

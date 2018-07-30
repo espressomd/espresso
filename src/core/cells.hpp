@@ -42,9 +42,6 @@
                   but in z it has a domain decomposition into layers.
     </ul>
 
-    One can switch between different cell systems with the tcl command
-    cellsystem implemented in \ref cells.cpp .
-
     Some structures are common to all cell systems:
 
    <ul>
@@ -60,11 +57,13 @@
    </ul>
 */
 
+#include <utility>
+#include <vector>
+
 #include "ParticleIterator.hpp"
 #include "ghosts.hpp"
 #include "particle_data.hpp"
 #include "utils/Range.hpp"
-#include "verlet.hpp"
 
 #include "Cell.hpp"
 #include "ParticleRange.hpp"
@@ -95,6 +94,10 @@
 /** Flag for exchange_and_sort_particles : Do neighbor exchange. */
 #define CELL_NEIGHBOR_EXCHANGE 0
 
+namespace Cells {
+enum Resort : unsigned { RESORT_NONE = 0u, RESORT_LOCAL = 1u, RESORT_GLOBAL = 2u };
+}
+
 /** \name Flags for cells_on_geometry_change */
 /*@{*/
 
@@ -102,8 +105,6 @@
 #define CELL_FLAG_GRIDCHANGED 1
 /** Flag for cells_on_geometry_change: skip shrinking of cells. */
 #define CELL_FLAG_FAST 2
-/** Flag for cells_on_geometry_change: Lees-Edwards offset has changed. */
-#define CELL_FLAG_LEES_EDWARDS 4
 
 /*@}*/
 
@@ -119,6 +120,9 @@ struct CellPList {
                              CellParticleIterator(cell + n, cell + n, 0));
   }
 
+  Cell **begin() { return cell; }
+  Cell **end() { return cell + n; }
+
   Cell **cell;
   int n;
   int max;
@@ -133,6 +137,8 @@ struct CellPList {
 struct CellStructure {
   /** type descriptor */
   int type;
+
+  bool use_verlet_list;
 
   /** Communicator to exchange ghost cell information. */
   GhostCommunicator ghost_cells_comm;
@@ -150,8 +156,8 @@ struct CellStructure {
   // Communicator for particle data used by ENGINE feature
   GhostCommunicator ghost_swimming_comm;
 #endif
-#ifdef IMMERSED_BOUNDARY
-  GhostCommunicator ibm_ghost_force_comm;
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+  GhostCommunicator vs_inertialess_tracers_ghost_force_comm;
 #endif
 
   /** Cell system dependent function to find the right node for a
@@ -204,6 +210,10 @@ extern int rebuild_verletlist;
 /************************************************************/
 /*@{*/
 
+/** Switch for choosing the topology init function of a certain
+    cell system. */
+void topology_init(int cs, CellPList *local);
+
 /** Reinitialize the cell structures.
     @param new_cs gives the new topology to use afterwards. May be set to
     \ref CELL_STRUCTURE_CURRENT for not changing it.
@@ -217,7 +227,7 @@ void realloc_cells(int size);
 inline void init_cellplist(CellPList *cpl) {
   cpl->n = 0;
   cpl->max = 0;
-  cpl->cell = NULL;
+  cpl->cell = nullptr;
 }
 
 /** Reallocate a list of cell pointers */
@@ -250,11 +260,8 @@ void cells_resort_particles(int global_flag);
     has changed, i. e. the grid or periodicity. In this case a full
     reorganization is due.
 
-    If bit CELL_FLAG_LEES_EDWARDS is set, it means the nodes' topology
-    has changed, but only on the period wrap in the y direction.
-
     @param flags a bitmask of CELL_FLAG_GRIDCHANGED,
-    CELL_FLAG_FAST, and/or CELL_FLAG_LEES_EDWARDS, see above.
+    and/or CELL_FLAG_FAST, see above.
 
 */
 void cells_on_geometry_change(int flags);
@@ -266,6 +273,29 @@ void cells_update_ghosts();
 /** Calculate and return the total number of particles on this
     node. */
 int cells_get_n_particles();
+
+/**
+ * @brief Get pairs closer than distance from the cells.
+ *
+ * This is mostly for testing purposes and uses link_cell
+ * to get pairs out of the cellsystem by a simple distance
+ * criterion.
+ *
+ * Pairs are sorted so that first.id < second.id
+ */
+std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
+
+/**
+ * @brief Increase the local resort level at least to level.
+ *
+ * The changed level has to be commuicated via annouce_resort_particles.
+ */
+  void set_resort_particles(Cells::Resort level);
+
+/**
+ * @brief Get the currently scheduled resort level.
+  */
+unsigned const &get_resort_particles();
 
 /** spread the particle resorting criterion across the nodes. */
 void announce_resort_particles();

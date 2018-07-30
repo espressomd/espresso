@@ -14,204 +14,270 @@ import math
 class ThermoTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
-    es = espressomd.System()
+    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
+    es.cell_system.skin = 5.0
+    
+    # The NVT thermostat parameters
+    kT = 0.0
+    gamma_global = np.zeros((3))
+    gamma_global_rot = np.zeros((3))
+    
+    # Particle properties
+    mass = 0.0
+    J = 0.0,0.0,0.0
+    
+    ## Per-particle type parameters.
+    # 2 different langevin parameters for particles.
+    kT_p = np.zeros((2))
+    # gamma_tran/gamma_rot matrix: [2 kinds of particles] x [3 dimensions X Y Z]
+    # These matrices are assigning per-particle in corresponding test cases.
+    gamma_tran_p = np.zeros((2, 3))
+    gamma_rot_p = np.zeros((2, 3))
+    
+    ## These variables will take the values to compare with.
+    # Depending on the test case following matrices either equals to the previous
+    # or the global corresponding parameters. The corresponding setting effect is an essence of
+    # all the test cases' differentiation here.
+    halfkT_p_validate = np.zeros((2))
+    gamma_tran_p_validate = np.zeros((2, 3))
+    gamma_rot_p_validate = np.zeros((2, 3))
+    # Diffusivity
+    D_tran_p_validate = np.zeros((2,3))
+    
+    @classmethod
+    def setUpClass(cls):
+        np.random.seed(15)
 
-    def run_test_case(self, test_case):
-        gamma = np.array([1.0, 1.0])
-
-        # Decelleration
-        self.es.time_step = 0.007
-        self.es.thermostat.set_langevin(kT=0.0, gamma=gamma[0])
-        self.es.cell_system.skin = 5.0
-        seed(1)
-        mass = 12.74
-        J = [10.0, 10.0, 10.0]
-
-        for i in range(len(self.es.part)):
-            self.es.part[i].remove()
-
-        for i in range(2):
-            self.es.part.add(rotation=(1,1,1), pos=np.array([0.0, 0.0, 0.0]), id=i)
-            self.es.part[i].v = np.array([1.0, 1.0, 1.0])
-            if "ROTATION" in espressomd.features():
-                self.es.part[i].omega_body = np.array([1.0, 1.0, 1.0])
-            self.es.part[i].mass = mass
-            self.es.part[i].rinertia = np.array(J)
-
+    def setUp(self):
+        self.es.time = 0.0
+        self.es.part.clear()
         print("\n")
 
-        if test_case == 0:
-            print("------------------------------------------------")
-            print("Test " + str(test_case) + ": no particle specific values")
-            print("------------------------------------------------")
-            gamma[1] = gamma[0]
+    def generate_scalar_ranged_rnd(self, min_par, max_par):
+        """
+        Generate the scaled random scalar in the range between
+        min_par*max_par and (min_par+1.0)*max_par.
+    
+        Parameters
+        ----------
+        min_par : :obj:`int`
+                  Minimal value parameter.
+        max_par : :obj:`int`
+                  Maximal value parameter.
 
-        if test_case == 1:
-            print("------------------------------------------------")
-            print("Test " + str(test_case) +
-                  ": particle specific gamma but not temperature")
-            print("------------------------------------------------")
-            if "PARTICLE_ANISOTROPY" in espressomd.features():
-                self.es.part[0].gamma = np.array(
-                    [gamma[0], gamma[0], gamma[0]])
-                self.es.part[1].gamma = np.array(
-                    [gamma[1], gamma[1], gamma[1]])
-            else:
-                self.es.part[0].gamma = gamma[0]
-                self.es.part[1].gamma = gamma[1]
-            if "ROTATION" in espressomd.features():
-                self.es.part[0].gamma_rot = np.array(
-                    [gamma[0], gamma[0], gamma[0]])
-                self.es.part[1].gamma_rot = np.array(
-                    [gamma[1], gamma[1], gamma[1]])
+        """
 
-        if test_case == 2:
-            print("------------------------------------------------")
-            print("Test " + str(test_case) +
-                  ": particle specific temperature but not gamma")
-            print("------------------------------------------------")
-            self.es.part[0].temp = 0.0
-            self.es.part[1].temp = 0.0
-            gamma[1] = gamma[0]
+        res = (min_par + np.random.random()) * max_par
+        return res
 
-        if test_case == 3:
-            print("------------------------------------------------")
-            print("Test " + str(test_case) +
-                  ": both particle specific gamma and temperature")
-            print("------------------------------------------------")
-            self.es.part[0].temp = 0.0
-            self.es.part[1].temp = 0.0
-            if "PARTICLE_ANISOTROPY" in espressomd.features():
-                self.es.part[0].gamma = np.array(
-                    [gamma[0], gamma[0], gamma[0]])
-                self.es.part[1].gamma = np.array(
-                    [gamma[1], gamma[1], gamma[1]])
-            else:
-                self.es.part[0].gamma = gamma[0]
-                self.es.part[1].gamma = gamma[1]
-            if "ROTATION" in espressomd.features():
-                self.es.part[0].gamma_rot = np.array(
-                    [gamma[0], gamma[0], gamma[0]])
-                self.es.part[1].gamma_rot = np.array(
-                    [gamma[1], gamma[1], gamma[1]])
+    def generate_vec_ranged_rnd(self, min_par, max_par):
+        """
+        Generate the scaled random 3D vector with a magnitude
+        in the range between sqrt(3)*min_par*max_par and
+        sqrt(3)*(min_par+1.0)*max_par.
+    
+        Parameters
+        ----------
+        min_par : :obj:`int`
+                  Minimal value parameter.
+        max_par : :obj:`int`
+                  Maximal value parameter.
 
-        self.es.time = 0.0
+        """
 
-        tol = 1.25E-4
-        for i in range(100):
-            for k in range(3):
-                self.assertLess(
-                    abs(self.es.part[0].v[k] - math.exp(- gamma[0] * self.es.time / mass)), tol)
-                self.assertLess(
-                    abs(self.es.part[1].v[k] - math.exp(- gamma[1] * self.es.time / mass)), tol)
-                if "ROTATION" in espressomd.features():
-                    self.assertLess(abs(
-                        self.es.part[0].omega_body[k] - math.exp(- gamma[0] * self.es.time / J[k])), tol)
-                    self.assertLess(abs(
-                        self.es.part[1].omega_body[k] - math.exp(- gamma[1] * self.es.time / J[k])), tol)
-            self.es.integrator.run(10)
+        res = (min_par + np.random.random(3)) * max_par
+        return res
+    
+    def set_langevin_global_defaults(self):
+        """
+        Setup the NVT thermostat viscous friction parameters.
 
-        for i in range(len(self.es.part)):
-            self.es.part[i].remove()
+        """
 
-        # thermalization
-        # Checks if every degree of freedom has 1/2 kT of energy, even when
-        # mass and inertia tensor are active
-
-        # 2 different langevin parameters for particles
-        temp = np.array([2.5, 2.0])
-        # gamma_tran/gamma_rot matrix: [2 types of particless] x [3 dimensions
-        # X Y Z]
-        gamma_tran = np.zeros((2, 3))
-        gamma_tr = np.zeros((2, 3))
-        gamma_rot = np.zeros((2, 3))
-        D_tr = np.zeros((2, 3))
+        # Global NVT thermostat parameters are assigning by default
         for k in range(2):
-            if "PARTICLE_ANISOTROPY" in espressomd.features():
-                gamma_tran[k, :] = np.array((0.4 + random(3)) * 10)
-            else:
-                gamma_tran[k, 0] = np.array((0.4 + random(1)) * 10)
-                gamma_tran[k, 1] = gamma_tran[k, 0]
-                gamma_tran[k, 2] = gamma_tran[k, 0]
-            gamma_rot[k, :] = np.array((0.2 + random(3)) * 20)
+            self.gamma_tran_p_validate[k, :] = self.gamma_global[:]
+            self.gamma_rot_p_validate[k, :] = self.gamma_global[:]
+            self.halfkT_p_validate[k] = self.kT / 2.0
 
-        box = 10.0
-        self.es.box_l = [box, box, box]
+    def set_langevin_global_defaults_rot_differ(self):
+        """
+        Setup the NVT thermostat viscous friction parameters
+        with a rotation-specific gamma.
+
+        """
+
+        # Global NVT thermostat parameters are assigning by default
+        for k in range(2):
+            self.gamma_tran_p_validate[k, :] = self.gamma_global[:]
+            self.gamma_rot_p_validate[k, :] = self.gamma_global_rot[:]
+            self.halfkT_p_validate[k] = self.kT / 2.0
+
+    def dissipation_param_setup(self):
+        """
+        Setup the parameters for the following dissipation
+        test.
+
+        """
+
+        ## Time
+        self.es.time_step = 0.007
+        
+        ## Space
+        box = 1.0
+        self.es.box_l = box,box,box
         if espressomd.has_features(("PARTIAL_PERIODIC",)):
-            self.es.periodicity = 0, 0, 0
-        kT = 1.5
-        gamma_global = np.ones((3))
+            self.es.periodicity = 0,0,0
+        
+        ## NVT thermostat
+        self.kT = 0.0
+        # The translational gamma isotropy is required here.
+        # Global gamma for tests without particle-specific gammas.
+        #
+        # As far as the problem characteristic time is t0 ~ mass / gamma
+        # and the Langevin equation finite-difference approximation is stable
+        # only for time_step << t0, it is needed to set the gamma less than
+        # some maximal value according to the value max_gamma_param.
+        # Also, it cannot be very small (min_gamma_param), otherwise the thermalization will require
+        # too much of the CPU time. Same: for all such gamma assignments throughout the test.
+        #
+        min_gamma_param = 0.5
+        max_gamma_param = 2.0/3.0
+        gamma_rnd = self.generate_scalar_ranged_rnd(min_gamma_param, max_gamma_param)
+        self.gamma_global = gamma_rnd, gamma_rnd, gamma_rnd
+        # Additional test case for the specific global rotational gamma set.
+        self.gamma_global_rot = self.generate_vec_ranged_rnd(0.5,2.0/3.0)
+        # Per-paricle values:
+        self.kT_p = 0.0,0.0
+        # Either translational friction isotropy is required
+        # or both translational and rotational ones.
+        # Otherwise these types of motion will interfere.
+        # ..Let's test both cases depending on the particle index.
+        self.gamma_tran_p[0, 0] = self.generate_scalar_ranged_rnd(0.5,1.0)
+        self.gamma_tran_p[0, 1] = self.gamma_tran_p[0, 0]
+        self.gamma_tran_p[0, 2] = self.gamma_tran_p[0, 0]
+        self.gamma_rot_p[0, :] = self.generate_vec_ranged_rnd(0.5,2.0/3.0)
+        self.gamma_tran_p[1, 0] = self.generate_scalar_ranged_rnd(0.5,1.0)
+        self.gamma_tran_p[1, 1] = self.gamma_tran_p[1, 0]
+        self.gamma_tran_p[1, 2] = self.gamma_tran_p[1, 0]
+        self.gamma_rot_p[1, 0] = self.generate_scalar_ranged_rnd(0.5,2.0/3.0)
+        self.gamma_rot_p[1, 1] = self.gamma_rot_p[1, 0]
+        self.gamma_rot_p[1, 2] = self.gamma_rot_p[1, 0]
+        
+        ## Particles
+        self.mass = 12.74
+        self.J = 10.0,10.0,10.0
+        for i in range(2):
+            self.es.part.add(rotation=(1,1,1), pos=(0.0,0.0,0.0), id=i)
+            self.es.part[i].v = 1.0,1.0,1.0
+            if "ROTATION" in espressomd.features():
+                self.es.part[i].omega_body = 1.0,1.0,1.0
+            self.es.part[i].mass = self.mass
+            self.es.part[i].rinertia = self.J
 
-        if test_case == 2 or test_case == 3:
-            halfkT = temp / 2.0
-        else:
-            halfkT = np.array([kT, kT]) / 2.0
+    def fluctuation_dissipation_param_setup(self,n):
+        """
+        Setup the parameters for the following fluctuation-dissipation
+        test.
+    
+        Parameters
+        ----------
+        n : :obj:`int`
+            Number of particles of the each type. There are 2 types.
 
-        if test_case == 1 or test_case == 3:
-            gamma_tr = gamma_tran
-        else:
-            for k in range(2):
-                gamma_tr[k, :] = gamma_global[:]
+        """
 
-        # translational diffusion
-        for k in range(2):
-            D_tr[k, :] = 2.0 * halfkT[k] / gamma_tr[k, :]
-
-        if "PARTICLE_ANISOTROPY" in espressomd.features():
-            self.es.thermostat.set_langevin(
-                kT=kT,
-                gamma=[
-                    gamma_global[0],
-                    gamma_global[1],
-                    gamma_global[2]])
-        else:
-            self.es.thermostat.set_langevin(kT=kT, gamma=gamma_global[0])
-
-        # no need to rebuild Verlet lists, avoid it
-        self.es.cell_system.skin = 5.0
+        ## Time
         self.es.time_step = 0.03
-        n = 200
-        mass = (0.2 + random()) * 7.0
-        J = np.array((0.2 + random(3)) * 7.0)
-
+        
+        ## Space
+        box = 10.0
+        self.es.box_l = box,box,box
+        if espressomd.has_features(("PARTIAL_PERIODIC",)):
+            self.es.periodicity = 0,0,0
+        
+        ## NVT thermostat
+        # Just some temperature range to cover by the test:
+        self.kT = self.generate_scalar_ranged_rnd(0.3,5)
+        # See the above comment regarding the gamma assignments.
+        # Note: here & hereinafter specific variations in these ranges are related to
+        # the test execution duration to achieve the required statistical averages faster.
+        self.gamma_global = self.generate_vec_ranged_rnd(0.5,2.0/3.0)
+        self.gamma_global_rot = self.generate_vec_ranged_rnd(0.2,20)
+        # Per-particle parameters
+        self.kT_p = 2.5,2.0
+        for k in range(2):
+            self.gamma_tran_p[k, :] = self.generate_vec_ranged_rnd(0.4,10.0)
+            self.gamma_rot_p[k, :] = self.generate_vec_ranged_rnd(0.2,20.0)
+        
+        ## Particles
+        # As far as the problem characteristic time is t0 ~ mass / gamma
+        # and the Langevin equation finite-difference approximation is stable
+        # only for time_step << t0, it is needed to set the mass higher than
+        # some minimal value according to the value min_mass_param.
+        # Also, it is expected to test the large enough mass (max_mass_param).
+        # It should be not very large, otherwise the thermalization will require
+        # too much of the CPU time.
+        min_mass_param = 0.2
+        max_mass_param = 7.0
+        self.mass = self.generate_scalar_ranged_rnd(min_mass_param,max_mass_param)
+        self.J = self.generate_vec_ranged_rnd(min_mass_param,max_mass_param)
         for i in range(n):
             for k in range(2):
                 ind = i + k * n
-                part_pos = np.array(random(3) * box)
-                part_v = np.array([0.0, 0.0, 0.0])
-                part_omega_body = np.array([0.0, 0.0, 0.0])
-                self.es.part.add(rotation=(1,1,1), id=ind, mass=mass, rinertia=J,
+                part_pos = np.random.random(3) * box
+                part_v = 0.0,0.0,0.0
+                part_omega_body = 0.0,0.0,0.0
+                self.es.part.add(rotation=(1,1,1), id=ind, mass=self.mass, rinertia=self.J,
                                  pos=part_pos, v=part_v)
                 if "ROTATION" in espressomd.features():
                     self.es.part[ind].omega_body = part_omega_body
-                if test_case == 1:
-                    if "PARTICLE_ANISOTROPY" in espressomd.features():
-                        self.es.part[ind].gamma = gamma_tran[k, :]
-                    else:
-                        self.es.part[ind].gamma = gamma_tran[k, 0]
+
+    def check_dissipation(self):
+        """
+        Check the dissipation relations: the simple viscous decelleration test.
+
+        """
+
+        tol = 1.25E-4
+        for i in range(100):
+            for k in range(2):
+                for j in range(3):
+                    # Note: velocity is defined in the lab frame of reference
+                    # while gamma_tr is defined in the body one.
+                    # Hence, only isotropic gamma_tran_p_validate could be tested here.
+                    self.assertLess(
+                        abs(self.es.part[k].v[j] - math.exp(- self.gamma_tran_p_validate[k, j] * self.es.time / self.mass)), tol)
                     if "ROTATION" in espressomd.features():
-                        self.es.part[ind].gamma_rot = gamma_rot[k, :]
+                        self.assertLess(abs(
+                            self.es.part[k].omega_body[j] - math.exp(- self.gamma_rot_p_validate[k, j] * self.es.time / self.J[j])), tol)
 
-                if test_case == 2:
-                    self.es.part[ind].temp = temp[k]
-                if test_case == 3:
-                    if "PARTICLE_ANISOTROPY" in espressomd.features():
-                        self.es.part[ind].gamma = gamma_tran[k, :]
-                    else:
-                        self.es.part[ind].gamma = gamma_tran[k, 0]
-                    if "ROTATION" in espressomd.features():
-                        self.es.part[ind].gamma_rot = gamma_rot[k, :]
-                    self.es.part[ind].temp = temp[k]
+    def check_fluctuation_dissipation(self,n):
+        """
+        Check the fluctuation-dissipation relations: thermalization
+        and diffusion properties.
+    
+        Parameters
+        ----------
+        n : :obj:`int`
+            Number of particles of the each type. There are 2 types.
 
-        # Get rid of short range calculations if exclusions are on
-        # if espressomd.has_features("EXCLUSIONS"):
+        """
 
+        ## The thermalization and diffusion test
+        # Checks if every degree of freedom has 1/2 kT of energy, even when
+        # mass and inertia tensor are active
+        # Check the factual translational diffusion.
+        #
         # matrices: [2 types of particless] x [3 dimensions X Y Z]
         # velocity^2, omega^2, position^2
         v2 = np.zeros((2, 3))
         o2 = np.zeros((2, 3))
         dr2 = np.zeros((2, 3))
+        # Variance to compare with:
         sigma2_tr = np.zeros((2))
+        # Comparable variance:
         dr_norm = np.zeros((2))
 
         pos0 = np.zeros((2 * n, 3))
@@ -219,11 +285,11 @@ class ThermoTest(ut.TestCase):
             for k in range(2):
                 ind = p + k * n
                 pos0[ind, :] = self.es.part[ind].pos
-        dt0 = mass / gamma_tr
+        dt0 = self.mass / self.gamma_tran_p_validate
 
-        loops = 200
+        loops = 250
         print("Thermalizing...")
-        therm_steps = 150
+        therm_steps = 20
         self.es.integrator.run(therm_steps)
         print("Measuring...")
 
@@ -244,55 +310,33 @@ class ThermoTest(ut.TestCase):
                     dt = (int_steps * (i + 1) + therm_steps) * \
                         self.es.time_step
                     # translational diffusion variance: after a closed-form
-                    # integration of the Langevin EOM
+                    # integration of the Langevin EOM;
+                    # ref. the eq. (10.2.26) N. Pottier, https://doi.org/10.1007/s10955-010-0114-6 (2010)
+                    # after simple transformations and the dimensional model matching (cf. eq. (10.1.1) there):
                     sigma2_tr[k] = 0.0
                     for j in range(3):
-                        sigma2_tr[k] = sigma2_tr[k] + D_tr[k,
-                                                           j] * (2 * dt + dt0[k,
-                                                                              j] * (- 3 + 4 * math.exp(- dt / dt0[k,
-                                                                                                                  j]) - math.exp(- 2 * dt / dt0[k,
+                        sigma2_tr[k] += self.D_tran_p_validate[k,
+                                                           j] * (2.0 * dt + dt0[k,
+                                                                              j] * (- 3.0 + 4.0 * math.exp(- dt / dt0[k,
+                                                                                                                  j]) - math.exp(- 2.0 * dt / dt0[k,
                                                                                                                                                 j])))
-                    dr_norm[k] = dr_norm[k] + \
-                        (sum(dr2[k, :]) - sigma2_tr[k]) / sigma2_tr[k]
+                    dr_norm[k] += (sum(dr2[k, :]) - sigma2_tr[k]) / sigma2_tr[k]
 
         tolerance = 0.15
-        Ev = 0.5 * mass * v2 / (n * loops)
-        Eo = 0.5 * J * o2 / (n * loops)
+        Ev = 0.5 * self.mass * v2 / (n * loops)
+        Eo = 0.5 * self.J * o2 / (n * loops)
         dv = np.zeros((2))
         do = np.zeros((2))
         do_vec = np.zeros((2, 3))
         for k in range(2):
-            dv[k] = sum(Ev[k, :]) / (3 * halfkT[k]) - 1.0
-            do[k] = sum(Eo[k, :]) / (3 * halfkT[k]) - 1.0
-            do_vec[k, :] = Eo[k, :] / halfkT[k] - 1.0
-        dr_norm = dr_norm / (n * loops)
+            dv[k] = sum(Ev[k, :]) / (3.0 * self.halfkT_p_validate[k]) - 1.0
+            do[k] = sum(Eo[k, :]) / (3.0 * self.halfkT_p_validate[k]) - 1.0
+            do_vec[k, :] = Eo[k, :] / self.halfkT_p_validate[k] - 1.0
+        dr_norm /= (n * loops)
+        
         for k in range(2):
             print("\n")
             print("k = " + str(k))
-            print("mass = " + str(mass))
-            print("gamma_tr = {0} {1} {2}".format(
-                gamma_tr[k, 0], gamma_tr[k, 1], gamma_tr[k, 2]))
-            if test_case == 1 or test_case == 3:
-                print("gamma_rot = {0} {1} {2}".format(
-                    gamma_rot[k, 0], gamma_rot[k, 1], gamma_rot[k, 2]))
-            else:
-                print("gamma_global = {0} {1} {2}".format(
-                    gamma_global[0], gamma_global[1], gamma_global[2]))
-            print("Moment of inertia principal components: = " + str(J))
-            print("1/2 kT = " + str(halfkT[k]))
-            print("Translational energy: {0} {1} {2}".format(
-                Ev[k, 0], Ev[k, 1], Ev[k, 2]))
-            print("Rotational energy: {0} {1} {2}".format(
-                Eo[k, 0], Eo[k, 1], Eo[k, 2]))
-
-            print("Deviation in translational energy: " + str(dv[k]))
-            if "ROTATION" in espressomd.features():
-                print("Deviation in rotational energy: " + str(do[k]))
-                print("Deviation in rotational energy per degrees of freedom: {0} {1} {2}".format(
-                    do_vec[k, 0], do_vec[k, 1], do_vec[k, 2]))
-            print(
-                "Deviation in translational diffusion: {0} ".format(
-                    dr_norm[k]))
 
             self.assertLessEqual(
                 abs(
@@ -320,10 +364,177 @@ class ThermoTest(ut.TestCase):
                 msg='Relative deviation in translational diffusion is too large: {0}'.format(
                     dr_norm[k]))
 
-    def test(self):
-        for i in range(4):
-            self.run_test_case(i)
+    def set_particle_specific_gamma(self,n):
+        """
+        Set the particle-specific gamma.
+    
+        Parameters
+        ----------
+        n : :obj:`int`
+            Number of particles of the each type. There are 2 types.
 
+        """
+
+        for k in range(2):
+            self.gamma_tran_p_validate[k, :] = self.gamma_tran_p[k, :]
+            self.gamma_rot_p_validate[k, :] = self.gamma_rot_p[k, :]
+            for i in range(n):
+                ind = i + k * n
+                self.es.part[ind].gamma = self.gamma_tran_p[k, :]
+                if "ROTATION" in espressomd.features():
+                    self.es.part[ind].gamma_rot = self.gamma_rot_p[k, :]
+
+    def set_particle_specific_temperature(self,n):
+        """
+        Set the particle-specific temperature.
+    
+        Parameters
+        ----------
+        n : :obj:`int`
+            Number of particles of the each type. There are 2 types.
+
+        """
+
+        for k in range(2):
+            self.halfkT_p_validate[k] = self.kT_p[k] / 2.0
+            for i in range(n):
+                ind = i + k * n
+                self.es.part[ind].temp = self.kT_p[k]
+
+    def set_diffusivity_tran(self):
+        """
+        Set the translational diffusivity to validate further.
+
+        """
+
+        for k in range(2):
+            # Translational diffusivity for a validation
+            self.D_tran_p_validate[k, :] = 2.0 * self.halfkT_p_validate[k] / self.gamma_tran_p_validate[k, :]
+
+    # Test case 0.0: no particle specific values / dissipation only
+    def test_case_00(self):
+        # Each of 2 kind of particles will be represented by n instances:
+        n = 1
+        self.dissipation_param_setup()
+        self.set_langevin_global_defaults()
+        # The test case-specific thermostat and per-particle parameters
+        self.es.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
+        # Actual integration and validation run
+        self.check_dissipation()
+    
+    # Test case 0.1: no particle specific values / fluctuation & dissipation
+    def test_case_01(self):
+        # Each of 2 kind of particles will be represented by n instances:
+        n = 200
+        self.fluctuation_dissipation_param_setup(n)
+        self.set_langevin_global_defaults()
+        # The test case-specific thermostat and per-particle parameters
+        self.es.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
+        self.set_diffusivity_tran()
+        # Actual integration and validation run
+        self.check_fluctuation_dissipation(n)
+
+    # Test case 1.0: particle specific gamma but not temperature / dissipation only
+    def test_case_10(self):
+        # Each of 2 kind of particles will be represented by n instances:
+        n = 1
+        self.dissipation_param_setup()
+        self.set_langevin_global_defaults()
+        # The test case-specific thermostat and per-particle parameters
+        self.es.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
+        self.set_particle_specific_gamma(n)
+        # Actual integration and validation run
+        self.check_dissipation()
+
+    # Test case 1.1: particle specific gamma but not temperature / fluctuation & dissipation
+    def test_case_11(self):
+        # Each of 2 kind of particles will be represented by n instances:
+        n = 200
+        self.fluctuation_dissipation_param_setup(n)
+        self.set_langevin_global_defaults()
+        # The test case-specific thermostat and per-particle parameters
+        self.es.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
+        self.set_particle_specific_gamma(n)
+        self.set_diffusivity_tran()
+        # Actual integration and validation run
+        self.check_fluctuation_dissipation(n)
+
+    # Test case 2.0: particle specific temperature but not gamma / dissipation only
+    def test_case_20(self):
+        # Each of 2 kind of particles will be represented by n instances:
+        n = 1
+        self.dissipation_param_setup()
+        self.set_langevin_global_defaults()
+        # The test case-specific thermostat and per-particle parameters
+        self.es.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
+        self.set_particle_specific_temperature(n)
+        # Actual integration and validation run
+        self.check_dissipation()
+
+    # Test case 2.1: particle specific temperature but not gamma / fluctuation & dissipation
+    def test_case_21(self):
+        # Each of 2 kind of particles will be represented by n instances:
+        n = 200
+        self.fluctuation_dissipation_param_setup(n)
+        self.set_langevin_global_defaults()
+        # The test case-specific thermostat and per-particle parameters
+        self.es.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
+        self.set_particle_specific_temperature(n)
+        self.set_diffusivity_tran()
+        # Actual integration and validation run
+        self.check_fluctuation_dissipation(n)
+
+    # Test case 3.0: both particle specific gamma and temperature / dissipation only
+    def test_case_30(self):
+        # Each of 2 kind of particles will be represented by n instances:
+        n = 1
+        self.dissipation_param_setup()
+        self.set_langevin_global_defaults()
+        # The test case-specific thermostat and per-particle parameters
+        self.es.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
+        self.set_particle_specific_gamma(n)
+        self.set_particle_specific_temperature(n)
+        # Actual integration and validation run
+        self.check_dissipation()
+
+    # Test case 3.1: both particle specific gamma and temperature / fluctuation & dissipation
+    def test_case_31(self):
+        # Each of 2 kind of particles will be represented by n instances:
+        n = 200
+        self.fluctuation_dissipation_param_setup(n)
+        self.set_langevin_global_defaults()
+        # The test case-specific thermostat and per-particle parameters
+        self.es.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
+        self.set_particle_specific_gamma(n)
+        self.set_particle_specific_temperature(n)
+        self.set_diffusivity_tran()
+        # Actual integration and validation run
+        self.check_fluctuation_dissipation(n)
+
+    # Test case 4.0: no particle specific values / rotational specific global thermostat / dissipation only
+    def test_case_40(self):
+        # Each of 2 kind of particles will be represented by n instances:
+        n = 1
+        self.dissipation_param_setup()
+        self.set_langevin_global_defaults_rot_differ()
+        # The test case-specific thermostat and per-particle parameters
+        self.es.thermostat.turn_off()
+        self.es.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global, gamma_rotation=self.gamma_global_rot)
+        # Actual integration and validation run
+        self.check_dissipation()
+    
+    # Test case 4.1: no particle specific values / rotational specific global thermostat / fluctuation & dissipation
+    def test_case_41(self):
+        # Each of 2 kind of particles will be represented by n instances:
+        n = 200
+        self.fluctuation_dissipation_param_setup(n)
+        self.set_langevin_global_defaults_rot_differ()
+        # The test case-specific thermostat and per-particle parameters
+        self.es.thermostat.turn_off()
+        self.es.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global, gamma_rotation=self.gamma_global_rot)
+        self.set_diffusivity_tran()
+        # Actual integration and validation run
+        self.check_fluctuation_dissipation(n)
 
 if __name__ == '__main__':
     print("Features: ", espressomd.features())

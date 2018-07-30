@@ -1,88 +1,26 @@
-/*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
+#ifndef VIRTUAL_SITES_HPP
+#define VIRTUAL_SITES_HPP
 
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-#ifndef _VIRTUAL_SITES_H
-#define _VIRTUAL_SITES_H
-
-#include "particle_data.hpp"
-
-/** \file virtual_sites.hpp
- *  This file contains routine to handle virtual sites
- *  Virtual sites are like particles, but they will be not integrated.
- *  Step performed for virtual sites:
- *  - update virtual sites
- *  - calculate forces
- *  - distribute forces
- *  - move no-virtual particles
- *  - update virtual sites
- */
+#include "config.hpp"
 
 #ifdef VIRTUAL_SITES
-// Recalculate position and velocity for all virtual particles
-void update_mol_vel_pos();
-// Recalc velocities for virtual particles
-void update_mol_vel();
-// Recalc positions of virtual particles
-void update_mol_pos();
+#include "virtual_sites/VirtualSites.hpp" 
 
-// The following three functions have to be provided by all implementations
-// of virtual sites
-// Update the vel/pos of the given virtual particle as defined by the real
-// particles in the same molecule
-// void update_mol_pos_particle(Particle *);
-// void update_mol_vel_particle(Particle *);
+/** @brief get active virtual sites implementation */
+const std::shared_ptr<VirtualSites>& virtual_sites();
 
-// Distribute forces that have accumulated on virtual particles to the
-// associated real particles
-//void distribute_mol_force();
+/** @brief Set active virtual sites implementation */
+void set_virtual_sites(std::shared_ptr<VirtualSites> const& v);
 
-
-// Checks, if a particle is virtual
-inline int ifParticleIsVirtual(Particle const*p){
-   if (p->p.isVirtual == 0) {
-      return 0;
-   }
-   else{
-      return 1;
-   }
-}
-
-inline int ifParticleIsVirtual(Particle  const& p){
-   return ifParticleIsVirtual(&p);
-}
-
-
-// According to what rules the virtual particles are placed and the forces and
-// torques accumulating on the virtual particles distributed back to real
-// particles, is decided by a specific implementation.
-
-// Virtual particles in center of mass of molecule
-#ifdef VIRTUAL_SITES_COM
- #include "virtual_sites_com.hpp"
-#endif
-
-// Virtual particles relative to position and orientation of a real particle
 #ifdef VIRTUAL_SITES_RELATIVE
- #include "virtual_sites_relative.hpp"
-#endif
+int vs_relate_to(int part_num, int relate_to);
+
+// Setup the virtual_sites_relative properties of a particle so that the given virtaul particle will follow the given real particle
+// Local version, expects both particles to be accessible through local_particles
+// and only executes the changes on the virtual site locally
+int local_vs_relate_to(int part_num, int relate_to);
+
 
 #endif
-
+#endif
 #endif

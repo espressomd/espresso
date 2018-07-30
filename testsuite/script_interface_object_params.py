@@ -7,11 +7,6 @@ import espressomd
 from espressomd.shapes import Wall, Sphere
 from espressomd.constraints import ShapeBasedConstraint
 
-
-@ut.skipIf(
-    not espressomd.has_features(
-        ["CONSTRAINTS"]),
-    "Tests requries CONSTRAINTS")
 class ScriptInterfaceObjectParams(ut.TestCase):
     """Tests that object parameters are assigned the correct python class"""
 
@@ -30,7 +25,8 @@ class ScriptInterfaceObjectParams(ut.TestCase):
         self.assertEqual(c.shape.__class__, Sphere)
         # Test parameter retrieval
         self.assertAlmostEqual(c.shape.radius, 1, places=8)
-
+        with self.assertRaises(ValueError):
+            c.shape = Wall(thisparameterdoesnotexist=0)
 
 if __name__ == "__main__":
     ut.main()

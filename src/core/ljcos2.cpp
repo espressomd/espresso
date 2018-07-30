@@ -31,8 +31,6 @@
 #ifdef LJCOS2
 #include <cmath>
 
-// we use lj's force capping
-#include "lj.hpp"
 #include "communication.hpp"
 
 int ljcos2_set_params(int part_type_a, int part_type_b,
@@ -55,55 +53,7 @@ int ljcos2_set_params(int part_type_a, int part_type_b,
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
 
-  mpi_cap_forces(force_cap);
-
   return ES_OK;
-}
-
-/** calculate ljcos2_capradius from force_cap */
-void calc_ljcos2_cap_radii()
-{
-  /* do not compute cap radii if force capping is "individual" */
-  if( force_cap != -1.0){
-    int i,j,cnt=0;
-    IA_parameters *params;
-    double force=0.0, rad=0.0, step, frac2, frac6;
-
-    for(i=0; i<n_particle_types; i++) {
-      for(j=0; j<n_particle_types; j++) {
-        params = get_ia_param(i,j);
-        if(force_cap > 0.0 && params->LJCOS2_eps > 0.0) {
-    /* I think we have to solve this numerically... and very crude as well */
-    cnt=0;
-    rad = params->LJCOS2_sig;
-    step = -0.1 * params->LJCOS2_sig;
-    force=0.0;
-    
-    while(step != 0) {
-      frac2 = SQR(params->LJCOS2_sig/rad);
-      frac6 = frac2*frac2*frac2;
-            if (rad < params->LJCOS2_rchange) {
-              force = 48.0 * params->LJCOS2_eps * frac6*(frac6 - 0.5)/rad;
-            }
-            else {
-        force = 0;
-      }
-      if((step < 0 && force_cap < force) || (step > 0 && force_cap > force)) {
-        step = - (step/2.0); 
-      }
-      if(fabs(force-force_cap) < 1.0e-6) step=0;
-      rad += step; cnt++;
-    } 
-          params->LJCOS2_capradius = rad;
-        }
-        else {
-    params->LJCOS2_capradius = 0.0; 
-        }
-        FORCE_TRACE(fprintf(stderr,"%d: Ptypes %d-%d have cap_radius %f and cap_force %f (iterations: %d)\n",
-          this_node,i,j,rad,force,cnt));
-      }
-    }
-  }
 }
 
 #endif /* ifdef LJCOS2 */

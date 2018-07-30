@@ -61,6 +61,9 @@ void on_observable_calc();
 /** called every time a particle property is changed via Tcl. */
 void on_particle_change();
 
+/** called every time the charge of a particle has changed. */
+void on_particle_charge_change();
+
 /** called every time the particles are resorted from node to node. */
 void on_resort_particles();
 
@@ -98,7 +101,7 @@ void on_temperature_change();
 void on_parameter_change(int parameter);
 
 /** called every time the number of particle types has changed (increased) */
-void on_n_particle_types_change();
+void on_max_seen_particle_type_change();
 
 /** call this if you want to change ghost flags, e.g. wether ghosts
     have velocities or not.  This is a opt-in process, i. e. all

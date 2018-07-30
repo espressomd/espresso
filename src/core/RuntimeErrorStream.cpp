@@ -18,7 +18,8 @@ RuntimeErrorStream::RuntimeErrorStream(RuntimeErrorCollector &ec,
       m_function(function) {}
 
 RuntimeErrorStream::~RuntimeErrorStream() {
-  m_ec.message(m_level, m_buff.str(), m_function.c_str(), m_file.c_str(), m_line);
+  m_ec.message(m_level, m_buff.str(), m_function.c_str(), m_file.c_str(),
+               m_line);
 }
 
 } /* ErrorHandling */

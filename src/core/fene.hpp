@@ -61,7 +61,7 @@ inline int calc_fene_pair_force(Particle *p1, Particle *p2,
   double fac = -iaparams->p.fene.k * dr / ((1.0 - dr*dr*iaparams->p.fene.drmax2i));
   if (fabs(dr) > ROUND_ERROR_PREC) {
      if(len > ROUND_ERROR_PREC) {  /* Regular case */
-	fac /= len ; 
+       fac /= len;
      } else { /* dx[] == 0: the force is undefined. Let's use a random direction */
         for(int i = 0;i < 3;i++) dx[i] = d_random()-0.5;
         fac /= sqrt(sqrlen(dx));

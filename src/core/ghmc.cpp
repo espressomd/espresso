@@ -37,6 +37,7 @@
 #include "random.hpp"
 #include "statistics.hpp"
 #include "virtual_sites.hpp"
+#include "global.hpp"
 
 /************************************************************/
 
@@ -106,8 +107,6 @@ void hamiltonian_calc(int ekin_update_flag) {
    recalculate
    kinetic energy with \ref calc_kinetic(). */
 
-  int i;
-  double result = 0.0;
   double ekt, ekr;
 
   INTEG_TRACE(fprintf(stderr, "%d: hamiltonian_calc:\n", this_node));
@@ -127,8 +126,9 @@ void hamiltonian_calc(int ekin_update_flag) {
 
   // sum up energies on master node, and update ghmcdata struct
   if (this_node == 0) {
+    double result = 0.0;
     ghmcdata.hmlt_old = ghmcdata.hmlt_new;
-    for (i = ekin_update_flag; i < total_energy.data.n; i++) {
+    for (int i = ekin_update_flag; i < total_energy.data.n; i++) {
       result += total_energy.data.e[i];
     }
     if (ekin_update_flag == 1)
@@ -144,9 +144,9 @@ double calc_local_temp() {
 
   for (auto &p : local_cells.particles()) {
     for (int j = 0; j < 3; j++) {
-      temp += p.p.mass * SQR(p.m.v[j] / time_step);
+      temp += p.p.mass * Utils::sqr(p.m.v[j] / time_step);
 #ifdef ROTATION
-      temp += SQR(p.m.omega[j]);
+      temp += Utils::sqr(p.m.omega[j]);
 #endif
     }
   }
@@ -163,18 +163,18 @@ void calc_kinetic(double *ek_trans, double *ek_rot) {
 
   for (auto &p : local_cells.particles()) {
 #ifdef VIRTUAL_SITES
-    if (ifParticleIsVirtual(&p))
+    if (p.p.is_virtual)
       continue;
 #endif
 
     /* kinetic energy */
-    et += (SQR(p.m.v[0]) + SQR(p.m.v[1]) + SQR(p.m.v[2])) * (p).p.mass;
+    et += (Utils::sqr(p.m.v[0]) + Utils::sqr(p.m.v[1]) + Utils::sqr(p.m.v[2])) * (p).p.mass;
 
 /* rotational energy */
 #ifdef ROTATION
-    er += SQR(p.m.omega[0]) * p.p.rinertia[0] +
-          SQR(p.m.omega[1]) * p.p.rinertia[1] +
-          SQR(p.m.omega[2]) * p.p.rinertia[2];
+    er += Utils::sqr(p.m.omega[0]) * p.p.rinertia[0] +
+          Utils::sqr(p.m.omega[1]) * p.p.rinertia[1] +
+          Utils::sqr(p.m.omega[2]) * p.p.rinertia[2];
 #endif
   }
 
@@ -236,7 +236,7 @@ void tscale_momentum_update() {
 
   for (auto &p : local_cells.particles()) {
 #ifdef VIRTUAL_SITES
-    if (ifParticleIsVirtual(&p))
+    if (p.p.is_virtual)
       continue;
 #endif
 
@@ -258,7 +258,7 @@ void simple_momentum_update() {
 
   for (auto &p : local_cells.particles()) {
 #ifdef VIRTUAL_SITES
-    if (ifParticleIsVirtual(&p))
+    if (p.p.is_virtual)
       continue;
 #endif
 
@@ -266,12 +266,16 @@ void simple_momentum_update() {
     sigmat = sqrt(temperature / (p).p.mass);
 #endif
     for (int j = 0; j < 3; j++) {
-      p.m.v[j] = sigmat * gaussian_random() * time_step;
+      if (sigmat > 0.0) {
+        p.m.v[j] = sigmat * gaussian_random() * time_step;
+      }
 #ifdef ROTATION
 #ifdef ROTATIONAL_INERTIA
       sigmar = sqrt(temperature / p.p.rinertia[j]);
 #endif
-      p.m.omega[j] = sigmar * gaussian_random();
+      if (sigmar > 0.0) {
+        p.m.omega[j] = sigmar * gaussian_random();
+      }
 #endif
     }
   }
@@ -289,14 +293,22 @@ void partial_momentum_update() {
     sigmat = sqrt(temperature / (p).p.mass);
 #endif
     for (int j = 0; j < 3; j++) {
-      p.m.v[j] =
+      if (sigmat > 0.0) {
+        p.m.v[j] =
           cosp * (p.m.v[j]) + sinp * (sigmat * gaussian_random() * time_step);
+      } else {
+        p.m.v[j] = cosp * p.m.v[j];
+      }
 #ifdef ROTATION
 #ifdef ROTATIONAL_INERTIA
       sigmar = sqrt(temperature / p.p.rinertia[j]);
 #endif
-      p.m.omega[j] =
+      if (sigmar > 0.0) {
+        p.m.omega[j] =
           cosp * (p.m.omega[j]) + sinp * (sigmar * gaussian_random());
+      } else {
+        p.m.omega[j] = cosp * p.m.omega[j];
+      }
 #endif
     }
   }
@@ -362,8 +374,6 @@ void ghmc_close() {
 void ghmc_mc() {
   INTEG_TRACE(fprintf(stderr, "%d: ghmc_mc:\n", this_node));
 
-  double boltzmann;
-
   int ekin_update_flag = 0;
   hamiltonian_calc(ekin_update_flag);
 
@@ -373,16 +383,13 @@ void ghmc_mc() {
     ghmcdata.att++;
 
     // metropolis algorithm
-    boltzmann = ghmcdata.hmlt_new - ghmcdata.hmlt_old;
+    double boltzmann = ghmcdata.hmlt_new - ghmcdata.hmlt_old;
     if (boltzmann < 0)
       boltzmann = 1.0;
     else if (boltzmann > 30)
       boltzmann = 0.0;
     else
       boltzmann = exp(-beta * boltzmann);
-
-    // fprintf(stderr,"old hamiltonian : %f, new hamiltonian: % f, boltzmann
-    // factor: %f\n",ghmcdata.hmlt_old,ghmcdata.hmlt_new,boltzmann);
 
     if (d_random() < boltzmann) {
       ghmcdata.acc++;

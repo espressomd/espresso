@@ -30,7 +30,10 @@ class CoulombCloudWall(ut.TestCase):
     if "ELECTROSTATICS" in espressomd.features():
         """This compares p3m, p3m_gpu, scafacos_p3m and scafacos_p2nfft 
            electrostatic forces and energy against stored data."""
-        S = espressomd.System()
+        S = espressomd.System(box_l=[1.0, 1.0, 1.0])
+        S.seed  = S.cell_system.get_state()['n_nodes'] * [1234]
+        np.random.seed(S.seed)
+
         forces = {}
         tolerance = 1E-3
 
@@ -82,7 +85,7 @@ class CoulombCloudWall(ut.TestCase):
 
         if "P3M" in espressomd.features():
             def test_p3m(self):
-                self.S.actors.add(P3M(bjerrum_length=1, r_cut=1.001, accuracy = 1e-3,
+                self.S.actors.add(P3M(prefactor=1, r_cut=1.001, accuracy = 1e-3,
                                       mesh=[64, 64, 128], cao=7, alpha=2.70746, tune=False))
                 self.S.integrator.run(0)
                 self.compare("p3m", energy=True)
@@ -90,8 +93,8 @@ class CoulombCloudWall(ut.TestCase):
         if espressomd.has_features(["ELECTROSTATICS", "CUDA"]):
             def test_p3m_gpu(self):
                 self.S.actors.add(
-                    P3M_GPU(
-                        bjerrum_length=1,
+                    P3MGPU(
+                        prefactor=1,
                         r_cut=1.001,
                         accuracy=1e-3,
                         mesh=[64, 64, 128],

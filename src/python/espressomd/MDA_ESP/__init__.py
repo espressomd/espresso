@@ -30,7 +30,12 @@ A minimal working example is the following:
 <Universe with 1 atoms>
 
 """
-import cStringIO
+
+try:
+    import cStringIO as StringIO
+except ImportError:
+    from io import StringIO
+
 import numpy as np
 import MDAnalysis
 
@@ -49,11 +54,6 @@ from MDAnalysis.core.topologyattrs import (
     Resids, Resnums, Segids, Resnames, AltLocs,
     ICodes, Occupancies, Tempfactors, Charges
 )
-
-try:
-    LooseVersion(MDAnalysis.__version__) >= LooseVersion('0.16')
-except:
-    raise RuntimeError("MDAnalysis version should be >= 0.16")
 
 
 class Stream(object):
@@ -107,7 +107,7 @@ class Stream(object):
             _xyz+=str(_p.v)+'\n'
         for _p in self.system.part:
             _xyz+=str(_p.f)+'\n'
-        return  NamedStream(cStringIO.StringIO(_xyz), "__.ESP")
+        return  NamedStream(StringIO(_xyz), "__.ESP")
 
 class ESPParser(TopologyReaderBase):
     """
@@ -207,7 +207,7 @@ class ESPReader(SingleFrameReaderBase):
                     self.ts = ts = self._Timestep(self.n_atoms, **self._ts_kwargs)
                     self.ts.time = time
                 elif(pos==-1):
-                    self.ts._unitcell[:3] = np.array(map(float,line[1:-2].split()))
+                    self.ts._unitcell[:3] = np.array(list(map(float,line[1:-2].split())))
                 elif(pos < n_atoms):
                     positions[pos] = np.array(list(map(float, line[1:-2].split())))
                 elif(pos < 2*n_atoms):

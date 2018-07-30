@@ -37,7 +37,7 @@ cdef extern from "partCfg_global.hpp":
     PartCfg & partCfg()
 
 cdef extern from "particle_data.hpp":
-    int n_particle_types
+    int max_seen_particle_type
 
 cdef extern from "statistics.hpp":
     cdef void calc_structurefactor(PartCfg &, int * p_types, int n_types, int order, double ** sf)
@@ -50,17 +50,19 @@ cdef extern from "statistics.hpp":
         int n_coulomb
         int n_dipolar
         int n_non_bonded
+        int n_virtual_sites
         double * bonded
         double * non_bonded
         double * coulomb
         double * dipolar
-        double * vs_relative
+        double * virtual_sites
 
 cdef extern from "statistics.hpp":
     ctypedef struct Observable_stat_non_bonded:
         pass
-    cdef double mindist(PartCfg &, int_list * set1, int_list * set2)
-    cdef void nbhood(PartCfg &, double pos[3], double r_catch, int_list * il, int planedims[3])
+    cdef double mindist(PartCfg &, const int_list & set1, const int_list & set2)
+    cdef double min_distance2(double pos1[3], double pos2[3])
+    cdef int_list nbhood(PartCfg &, double pos[3], double r_catch, int planedims[3])
     cdef double distto(PartCfg &, double pos[3], int pid)
     cdef double * obsstat_bonded(Observable_stat * stat, int j)
     cdef double * obsstat_nonbonded(Observable_stat * stat, int i, int j)
@@ -94,9 +96,6 @@ cdef extern from "statistics_chain.hpp":
     void calc_rg(PartCfg&, double ** rg)
     void calc_rh(PartCfg&, double ** rh)
 
-cdef extern from "interaction_data.hpp":
-    int n_bonded_ia
-
 cdef extern from "statistics.hpp":
     void calc_rdf(PartCfg &, vector[int] p1_types, vector[int] p2_types,
                   double r_min, double r_max, int r_bins, vector[double] rdf)
@@ -105,7 +104,6 @@ cdef extern from "statistics.hpp":
                      double r_min, double r_max, int r_bins, vector[double] rdf, int n_conf)
 
     void angularmomentum(PartCfg &, int p_type, double * com)
-    void calc_gyration_tensor(PartCfg &, int p_type, vector[double] gt)
     void momentofinertiamatrix(PartCfg &, int p_type, double * MofImatrix)
     void analyze_rdfchain(PartCfg &, double r_min, double r_max, int r_bins, double ** f1, double ** f2, double ** f3)
 

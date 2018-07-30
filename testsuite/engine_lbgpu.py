@@ -87,10 +87,11 @@ class SwimmerTest(ut.TestCase):
         self.new_configuration = False
         self.sampsteps = 2000
 
-        S = espressomd.System()
+        S = espressomd.System(box_l=[1.0, 1.0, 1.0])
+        S.seed  = S.cell_system.get_state()['n_nodes'] * [1234]
         self.prepare(S)
 
-        lbm = espressomd.lb.LBFluid_GPU(
+        lbm = espressomd.lb.LBFluidGPU(
             agrid=1.0,
             tau=S.time_step,
             fric=0.5,
@@ -99,15 +100,6 @@ class SwimmerTest(ut.TestCase):
             couple="2pt")
         S.actors.add(lbm)
         self.run_and_check(S, lbm, tests_common.abspath("data/engine_lbgpu_2pt.vtk"))
-
-        lbm = espressomd.lb.LBFluid_GPU(
-            agrid=1.0,
-            tau=S.time_step,
-            fric=0.5,
-            visc=1.0,
-            dens=1.0,
-            couple="3pt")
-        self.run_and_check(S, lbm, tests_common.abspath("data/engine_lbgpu_3pt.vtk"))
 
 if __name__ == '__main__':
     ut.main()

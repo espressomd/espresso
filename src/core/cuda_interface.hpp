@@ -59,7 +59,7 @@ typedef struct {
 
 /** data structure which must be copied to the GPU at each step run on the GPU
  */
-typedef struct {
+struct CUDA_particle_data {
 
 //   // This has to stay in front of the struct for memmove reasons
 #ifdef ENGINE
@@ -68,8 +68,11 @@ typedef struct {
 
   /** particle position given from md part*/
   float p[3];
+
+#if defined(LB_GPU) 
   /** particle momentum struct velocity p.m->v*/
   float v[3];
+#endif
 
 #ifdef ROTATION
   float quatu[3];
@@ -79,7 +82,7 @@ typedef struct {
   float solvation[2 * LB_COMPONENTS];
 #endif
 
-#ifdef LB_ELECTROHYDRODYNAMICS
+#if defined(LB_ELECTROHYDRODYNAMICS) && defined(LB_GPU)
   float mu_E[3];
 #endif
 
@@ -93,15 +96,14 @@ typedef struct {
 
   unsigned int fixed;
 
-#if defined(IMMERSED_BOUNDARY) || defined(VIRTUAL_SITES_COM)
-  bool isVirtual;
+#ifdef VIRTUAL_SITES
+  bool is_virtual;
 #endif
 
 #ifdef DIPOLES
   float dip[3];
 #endif
-
-} CUDA_particle_data;
+};
 
 /** data structure for the different kinds of energies */
 typedef struct { float bonded, non_bonded, coulomb, dipolar; } CUDA_energy;

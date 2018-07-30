@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function
-import numpy
+import numpy as np
 import espressomd
 from espressomd import thermostat
 from espressomd import electrostatics
@@ -31,8 +31,6 @@ print("""
 
 Program Information:""")
 print(espressomd.features())
-
-dev = "cpu"
 
 # System parameters
 #############################################################
@@ -51,10 +49,13 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System()
+system = espressomd.System(box_l=[box_l]*3)
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
+
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-#es._espressoHandle.Tcl_Eval('thermostat langevin 1.0 1.0')
 thermostat.Thermostat().set_langevin(1.0, 1.0)
 
 # warmup integration (with capped LJ potential)
@@ -75,12 +76,11 @@ int_n_times = 10
 # Interaction setup
 #############################################################
 
-system.box_l = [box_l, box_l, box_l]
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
     cutoff=lj_cut, shift="auto")
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 
 
 print("LJ-parameters:")
@@ -93,29 +93,29 @@ volume = box_l * box_l * box_l
 n_part = int(volume * density)
 
 for i in range(n_part):
-    system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
+    system.part.add(id=i, pos=np.random.random(3) * system.box_l)
 
-system.analysis.distto(0)
+system.analysis.dist_to(0)
 
 print("Simulate {} particles in a cubic simulation box {} at density {}."
       .format(n_part, box_l, density).strip())
 print("Interactions:\n")
-act_min_dist = system.analysis.mindist()
+act_min_dist = system.analysis.min_dist()
 print("Start with minimal distance {}".format(act_min_dist))
 
 system.cell_system.max_num_cells = 2744
 
 
 # Assingn charge to particles
-for i in range(n_part / 2 - 1):
+for i in range(n_part // 2 - 1):
     system.part[2 * i].q = -1.0
     system.part[2 * i + 1].q = 1.0
 # P3M setup after charge assigned
 #############################################################
 
 print("\nSCRIPT--->Create p3m\n")
-#p3m = electrostatics.P3M_GPU(bjerrum_length=2.0, accuracy=1e-2)
-p3m = electrostatics.P3M(bjerrum_length=2.0, accuracy=1e-2)
+#p3m = electrostatics.P3M_GPU(prefactor=2.0, accuracy=1e-2)
+p3m = electrostatics.P3M(prefactor=2.0, accuracy=1e-2)
 
 print("\nSCRIPT--->Add actor\n")
 system.actors.add(p3m)
@@ -126,7 +126,7 @@ for key in list(p3m_params.keys()):
     print("{} = {}".format(key, p3m_params[key]))
 
 print("\nSCRIPT--->Explicit tune call\n")
-p3m.Tune(accuracy=1e3)
+p3m.tune(accuracy=1e3)
 
 print("\nSCRIPT--->P3M parameter:\n")
 p3m_params = p3m.get_params()
@@ -153,7 +153,7 @@ Stop if minimal distance is larger than {}
 
 # set LJ cap
 lj_cap = 20
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
 # Warmup Integration Loop
@@ -161,18 +161,19 @@ i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
     system.integrator.run(warm_steps)
     # Warmup criterion
-    act_min_dist = system.analysis.mindist()
+    act_min_dist = system.analysis.min_dist()
     i += 1
 
 #   Increase LJ cap
     lj_cap = lj_cap + 10
-    system.non_bonded_inter.set_force_cap(lj_cap)
+    system.force_cap = lj_cap
 
 # Just to see what else we may get from the c code
 import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
 # pprint.pprint(system.part.__getstate__(), width=1)
-pprint.pprint(system.__getstate__(), width=1)
+pprint.pprint(system.__getstate__())
+
 
 # write parameter file
 set_file = open("pylj_liquid.set", "w")
@@ -186,7 +187,7 @@ print("\nStart integration: run %d times %d steps" % (int_n_times, int_steps))
 
 # remove force capping
 lj_cap = 0
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
 # print(initial energies)

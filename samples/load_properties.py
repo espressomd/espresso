@@ -20,7 +20,6 @@ from __future__ import print_function
 import espressomd
 from espressomd import electrostatics
 from espressomd import electrostatic_extensions
-import numpy
 try:
     import cPickle as pickle
 except ImportError:
@@ -54,23 +53,27 @@ lj_cap = 20
 
 # Import system properties
 #############################################################
-system = espressomd.System()
-with open("system_save", "r") as system_save:
+system = espressomd.System(box_l=[box_l]*3)
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+
+
+with open("system_save", "rb") as system_save:
     pickle.load(system_save)
 
-with open("nonBondedInter_save", "r") as bond_save:
+with open("nonBondedInter_save", "rb") as bond_save:
     pickle.load(bond_save)
 
 print("Non-bonded interactions from checkpoint:")
 print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
 
 print("Force cap from checkpoint:")
-print(system.non_bonded_inter.get_force_cap())
+print(system.force_cap)
 
 
 # Integration parameters
 #############################################################
-with open("thermostat_save", "r") as thermostat_save:
+with open("thermostat_save", "rb") as thermostat_save:
     pickle.load(thermostat_save)
 
 
@@ -94,20 +97,18 @@ if not system.non_bonded_inter[0, 0].lennard_jones.is_active():
     system.non_bonded_inter[0, 0].lennard_jones.set_params(
         epsilon=lj_eps, sigma=lj_sig,
         cutoff=lj_cut, shift="auto")
-    system.non_bonded_inter.set_force_cap(lj_cap)
+    system.force_cap = lj_cap
     print("Reset Lennard-Jones Interactions to:")
     print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
 
-exit()
 
 # Import of particle properties and P3M parameters
 #############################################################
-with open("particle_save", "r") as particle_save:
+with open("particle_save", "rb") as particle_save:
     pickle.load(particle_save)
+act_min_dist = system.analysis.min_dist()
 
-act_min_dist = system.analysis.mindist()
-
-with open("p3m_save", "r") as p3m_save:
+with open("p3m_save", "rb") as p3m_save:
     p3m = pickle.load(p3m_save)
 print(p3m.get_params())
 
@@ -118,8 +119,7 @@ system.actors.add(p3m)
 import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
 pprint.pprint(system.thermostat.get_state(), width=1)
-# pprint.pprint(system.part.__getstate__(), width=1)
-pprint.pprint(system.__getstate__(), width=1)
+pprint.pprint(system.__getstate__())
 
 
 print("P3M parameters:\n")
@@ -136,7 +136,7 @@ print("\nStart integration: run %d times %d steps" % (int_n_times, int_steps))
 
 # remove force capping
 lj_cap = 0
-system.non_bonded_inter.set_force_cap(lj_cap)
+system.force_cap = lj_cap
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
 # print(initial energies)

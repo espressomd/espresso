@@ -1,6 +1,7 @@
 from __future__ import print_function
 import sys
 import unittest as ut
+import numpy as np
 
 from espressomd import script_interface
 
@@ -59,8 +60,10 @@ class test_variant_conversion(ut.TestCase):
         self.assertTrue(self.vt.call_method("check_parameter_type", type="none", value=None))
         self.assertTrue(self.vt.call_method("check_parameter_type", type="bool", value=True))
         self.assertTrue(self.vt.call_method("check_parameter_type", type="int", value=42))
+        self.assertTrue(self.vt.call_method("check_parameter_type", type="int", value=np.int64(42)))
         self.assertTrue(self.vt.call_method("check_parameter_type", type="string", value='blub'))
         self.assertTrue(self.vt.call_method("check_parameter_type", type="double", value=12.5))
+        self.assertTrue(self.vt.call_method("check_parameter_type", type="double", value=np.float64(12.5)))
         self.assertTrue(self.vt.call_method("check_parameter_type", type="objectid", value=self.vt))
         self.assertTrue(self.vt.call_method("check_parameter_type", type="double_vector", value=[1.1, 2.2, 3.3]))
         self.assertTrue(self.vt.call_method("check_parameter_type", type="int_vector", value=[1,2,3]))
