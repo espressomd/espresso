@@ -19,9 +19,8 @@
 from __future__ import print_function
 import numpy as np
 import espressomd
-from espressomd import visualization
 from espressomd import thermostat
-#from samples_common import open
+from samples_common import open
 
 print("""
 =======================================================
@@ -55,8 +54,6 @@ system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)
 
-visualizer = visualization.openGLLive(system)
-
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
@@ -78,12 +75,12 @@ int_n_times = 5
 
 # distribution file
 distr_type_list_a = [0]
-distr_type_list_b = [0]
+distr_type_list_b = [1]
 distr_r_min = 0.1
-distr_r_max = box_l
+distr_r_max = box_l / 2.0
 distr_r_bins = 200
 distr_log_flag = 0
-distr_int_flag = 0
+distr_int_flag = 1
 
 
 distr_file = open("pylj_liquid_distribution.dat", "w")
@@ -188,7 +185,6 @@ print("\nStart integration: run %d times %d steps" % (int_n_times, int_steps))
 lj_cap = 0
 system.force_cap = lj_cap
 print(system.non_bonded_inter[0, 0].lennard_jones)
-#visualizer.run(1)
 
 # print(initial energies)
 energies = system.analysis.energy()
@@ -203,8 +199,6 @@ for i in range(0, int_n_times):
     r, dist = system.analysis.distribution(type_list_a=distr_type_list_a, type_list_b=distr_type_list_b,
                                            r_min=distr_r_min, r_max=distr_r_max, r_bins=distr_r_bins,
                                            log_flag=distr_log_flag, int_flag=distr_int_flag)
-    print(dist)
-    exit()
     distr_r = r
     distr_values += dist
 
