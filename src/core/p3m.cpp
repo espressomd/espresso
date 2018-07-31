@@ -361,7 +361,7 @@ void p3m_init() {
 
     /* position offset for calc. of first meshpoint */
     p3m.pos_shift =
-        (double)((p3m.params.cao - 1) / 2) - (p3m.params.cao % 2) / 2.0;
+        std::floor((p3m.params.cao - 1) / 2) - (p3m.params.cao % 2) / 2.0;
     P3M_TRACE(
         fprintf(stderr, "%d: p3m.pos_shift = %f\n", this_node, p3m.pos_shift));
 
