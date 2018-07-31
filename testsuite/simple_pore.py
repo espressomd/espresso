@@ -10,11 +10,12 @@ from espressomd.shapes import SimplePore,Cylinder
 # it particles could enter the constraint over the periodic boundarys,
 # leading to force jumps.
 
-@ut.skipIf(not espressomd.has_features(["CONSTRAINTS", "LENNARD_JONES"]),
+@ut.skipIf(not espressomd.has_features(["LENNARD_JONES"]),
            "Features not available, skipping test!")
 class SimplePoreConstraint(ut.TestCase):
     def test(self):
         s = espressomd.System(box_l=[1.0, 1.0, 1.0])
+        s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
         box_yz = 15.
         box_x = 20.
         s.box_l = [box_x, box_yz, box_yz]
@@ -25,8 +26,8 @@ class SimplePoreConstraint(ut.TestCase):
         lj_sig = 1.0
         lj_cut = lj_sig * 2**(1./6.)
 
-        s.constraints.add(particle_type=0, penetrable=0, only_positive=0, shape=SimplePore(axis=[1.,0.5,0.5], radius=3., smoothing_radius=.1,length=5, center=[.5*box_x, .5*box_yz,.5*box_yz]))
-        s.constraints.add(particle_type=0, penetrable=0, only_positive=0, shape=Cylinder(axis=[1.,0.0,0], radius=0.5*box_yz,length=4*lj_cut+box_x, center=[.5*box_x, .5*box_yz,.5*box_yz],direction=-1))
+        s.constraints.add(particle_type=0, penetrable=False, only_positive=False, shape=SimplePore(axis=[1.,0.5,0.5], radius=3., smoothing_radius=.1,length=5, center=[.5*box_x, .5*box_yz,.5*box_yz]))
+        s.constraints.add(particle_type=0, penetrable=False, only_positive=False, shape=Cylinder(axis=[1.,0.0,0], radius=0.5*box_yz,length=4*lj_cut+box_x, center=[.5*box_x, .5*box_yz,.5*box_yz],direction=-1))
 
         s.non_bonded_inter[0, 1].lennard_jones.set_params(
             epsilon=lj_eps, sigma=lj_sig,

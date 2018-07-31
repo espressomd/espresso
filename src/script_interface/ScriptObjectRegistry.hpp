@@ -62,7 +62,23 @@ public:
       return ret;
     }
 
-    return true;
+    if (method == "clear") {
+      for (auto const &e : m_elements) {
+        remove_in_core(e);
+      }
+
+      m_elements.clear();
+    }
+
+    if (method == "size") {
+      return static_cast<int>(m_elements.size());
+    }
+
+    if (method == "empty") {
+      return m_elements.empty();
+    }
+
+    return none;
   }
 
 private:

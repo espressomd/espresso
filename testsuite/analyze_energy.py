@@ -1,7 +1,6 @@
 from __future__ import print_function
 import sys
 import unittest as ut
-import numpy as np
 import espressomd
 from espressomd.interactions import HarmonicBond
 
@@ -9,6 +8,7 @@ from espressomd.interactions import HarmonicBond
 @ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "Skipped because LENNARD_JONES turned off.")
 class AnalyzeEnergy(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+
     harmonic = HarmonicBond(r_0=0.0, k=3)
 
     @classmethod
@@ -54,6 +54,7 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["non_bonded"], 0., delta=1e-7)
         self.system.part[0].v = [0, 0, 0]
         self.system.part[1].v = [0, 0, 0]
+
 
     def test_non_bonded(self):
         self.system.part[0].pos = [1, 2, 2]

@@ -53,6 +53,7 @@ dt = 0.01
 # Setup the MD parameters
 
 system = espressomd.System(box_l=[length, diameter + 4, diameter + 4])
+system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
 system.cell_system.skin = 0.1
 system.time_step = dt
 system.min_global_cut = 0.5

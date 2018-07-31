@@ -11,7 +11,7 @@ import espressomd.virtual_sites
 class CheckpointTest(ut.TestCase):
     @classmethod
     def setUpClass(self):
-        checkpoint = espressomd.checkpointing.Checkpointing(checkpoint_id="mycheckpoint", checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
+        checkpoint = espressomd.checkpointing.Checkpoint(checkpoint_id="mycheckpoint", checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
         checkpoint.load(0)
 
     def test_variables(self):
@@ -40,6 +40,11 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(len(set(state.items()) & set(reference.items())), len(reference))
         self.assertEqual(len(set(state2.items()) & set(reference2.items())), len(reference2))
 
+    def test_bonded_inter(self):
+        state = system.part[1].bonds[0][0].params
+        reference = {'r_0': 0.0, 'k': 1.0}
+        self.assertEqual(len(set(state.items()) & set(reference.items())), len(reference))
+
     @ut.skipIf(not espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']),
                "Cannot test for virtual site checkpointing because feature not compiled in.")
     def test_virtual_sites(self):
@@ -48,7 +53,7 @@ class CheckpointTest(ut.TestCase):
 
     def test_mean_variance_calculator(self):
         np.testing.assert_array_equal(acc.get_mean(), np.array([1.0, 1.5, 2.0, 1.0, 1.0, 2.0]))
-        np.testing.assert_array_equal(acc.get_variance(), np.array([0.0, 0.25, 1.0, 0.0, 0.0, 0.0]))
+        np.testing.assert_array_equal(acc.get_variance(), np.array([0. ,  0.5,  2. ,  0. ,  0. ,  0.]))
     
     @ut.skipIf(not espressomd.has_features(['ELECTROSTATICS']),
               "Cannot test for P3M checkpointing because feature not compiled in.")  

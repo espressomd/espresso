@@ -16,8 +16,6 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "config.hpp"
-
 #include "initialize.hpp"
 #include "ScriptInterface.hpp"
 
@@ -30,7 +28,6 @@ namespace ScriptInterface {
 namespace Constraints {
 
 void initialize() {
-#ifdef CONSTRAINTS
   ScriptInterface::register_new<ScriptInterface::Constraints::Constraints>(
       "Constraints::Constraints");
 
@@ -39,7 +36,6 @@ void initialize() {
 
   ScriptInterface::register_new<ScriptInterface::Constraints::HomogeneousMagneticField>(
       "Constraints::HomogeneousMagneticField");
-#endif
 }
 } /* namespace Constraints */
 } /* namespace ScriptInterface */

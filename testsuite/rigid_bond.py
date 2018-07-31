@@ -33,6 +33,7 @@ class RigidBondTest(ut.TestCase):
         target_acc = 1E-3
         tol = 1.2 * target_acc
         s = espressomd.System(box_l=[1.0, 1.0, 1.0])
+        s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
         s.box_l = 10, 10, 10
         s.cell_system.skin = 0.4
         s.time_step = 0.01

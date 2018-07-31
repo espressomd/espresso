@@ -70,6 +70,8 @@ lj_cut_mixed =2**(1./6.) * lj_sig
 # System setup
 #############################################################
 system              = espressomd.System(box_l=[1.0, 1.0, 1.0])
+system.seed         = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(system.seed)
 
 if not os.path.exists('data') :
     os.mkdir('data')

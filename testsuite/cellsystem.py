@@ -25,19 +25,17 @@ import numpy as np
 
 
 class CellSystem(ut.TestCase):
-    S = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     def test_cell_system(self):
-        self.S.cell_system.set_n_square(use_verlet_lists=False)
-        s = self.S.cell_system.get_state()
+        self.system.cell_system.set_n_square(use_verlet_lists=False)
+        s = self.system.cell_system.get_state()
         self.assertEqual([s['use_verlet_list'], s['type']], [0, "nsquare"])
-        self.S.cell_system.set_layered(n_layers=5)
-        s = self.S.cell_system.get_state()
+        self.system.cell_system.set_layered(n_layers=5)
+        s = self.system.cell_system.get_state()
         self.assertEqual([s['type'], s['n_layers']], ["layered", 5])
-
-        self.S.cell_system.set_domain_decomposition(use_verlet_lists=True)
-        s = self.S.cell_system.get_state()
-
+        self.system.cell_system.set_domain_decomposition(use_verlet_lists=True)
+        s = self.system.cell_system.get_state()
         self.assertEqual(
             [s['use_verlet_list'], s['type']], [1, "domain_decomposition"])
 

@@ -22,10 +22,10 @@ public:
     ShapeBasedConstraint::reset_force();
   }
 
-  virtual void add_energy(const Particle *p, const Vector3d &folded_pos,
+  virtual void add_energy(const Particle &p, const Vector3d &folded_pos,
                           Observable_stat &energy) const override;
 
-  virtual ParticleForce force(const Particle *p, const Vector3d &folded_pos) override;
+  virtual ParticleForce force(const Particle &p, const Vector3d &folded_pos) override;
 
   /* finds the minimum distance to all particles */
   double min_dist();
@@ -42,7 +42,7 @@ public:
   Shapes::Shape const &shape() const { return *m_shape; }
 
   void reset_force() override { m_local_force = Vector3d{0, 0, 0}; m_outer_normal_force=0.0;}
-  
+
   bool &only_positive() { return m_only_positive; }
   bool &penetrable() { return m_penetrable; }
   int &type() { return part_rep.p.type; }
