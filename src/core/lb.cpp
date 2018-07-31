@@ -2302,10 +2302,6 @@ void lb_calc_modes(Lattice::index_t index, double *mode) {
   n8m = lbfluid[0][15][index] - lbfluid[0][16][index];
   n9p = lbfluid[0][17][index] + lbfluid[0][18][index];
   n9m = lbfluid[0][17][index] - lbfluid[0][18][index];
-  //  printf("n: ");
-  //  for (i=0; i<19; i++)
-  //    printf("%f ", lbfluid[1][i][index]);
-  //  printf("\n");
 
   /* mass mode */
   mode[0] = n0 + n1p + n2p + n3p + n4p + n5p + n6p + n7p + n8p + n9p;
