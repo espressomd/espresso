@@ -57,9 +57,10 @@ The following features will likely not be part of the ESPResSo 4.0 release, but 
 * Virtual sites located at the center of mass of a group of particles
 * Metadynamics, umbrella sampling and parallel tempering
 * Non-equilibrium molecular dynamics (shear boundary conditions implemented by moving slabs of particles at the boundaries)
-* The memd/meggs electrostatic solver
+* The memd/maggs electrostatic solver
 * The com_force feature
 * The Chan Shen lattice Boltzmann extension
+* Lees-Edwards (shear) boundary conditions
 
 The following functionality is removed permanently:
 * Blockfile support, which is replaced by support for the h5md format as well as checkpointing based on the pickle Python module.
