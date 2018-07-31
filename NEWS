@@ -2,42 +2,53 @@
 = ESPRESSO NEWS =
 =================
 
-ESPResSo 3.4
+ESPResSo 4.0
 ============
 
-New user-visible features
--------------------------
+ESPResSo 4.0 is the first release of ESPResSo with a Python interface.
+I.e., the language in which simulation scripts are written is now Python,
+and support for the TCL-Interface has been dropped.
+We recommend all users switch to ESPResSo 4.0, there will be no more fixes to
+TCL-based versions.
 
-* New quartic bonded interaction
-* New bonded coulomb interaction
-* Lees Edwards boundaries for sheer stuff
-* Espresso can now read pdb and gromacs topology files.
-* Checkpointing for the correlator
-* New polymer observables
-* Using the rotation_per_particle feature, it is now possible to switch the integration of the rotational degrees of freedom per individual axis in the particle's body-fixed frame.
-* The rotational degrees of freedom of virtual sites is now integrated. Virtual sites no longer use the quaternion attributes to store their relative orientation
+Transitioning from TCL-based versions
+-------------------------------------
+
+The following can serve as a starting point for the new interface: 
+* The "Introduction" chapter in the user's guide
+* The tutorials in the /doc/tutorials directory of the distribution.
+
+Please note that, starting from ESPResSo 4.0, enabling additoinal features in myconfig.hpp no longer changes the behavior of a simulation scripts. Features such as particle rotation and virtual sites have to be activated explicitly in the simulation scripts.
+
+New features:
+-------------
+* Reaction ensemble method for the modelling of chemical reactions
+* Polarisable particles via the Drude-oscillator scheme
+* Steepest-descent energy minimization scheme 
+* Methods for active particles (swimmer_reaction, dipolar swimmers)
+* GPU-accererated P3M method for electrostatic interactions
+* GPU-accelerated direct summation of dipolar interactoins under open boundary conditions
+* Support for the electrostatic and magnetostatics method provided by the ScaFaCos library
+* New bonded quartic and Coulomb interactions
+* Possibility to tune the skin parameter 
+* Support for saving to the h5md file format for molecular dynamics data.
+* Connection to the MD Analysis Python package
 * A rotate_system command was added, which rotates the particle positions around the system's center of mass
-* Steepest descent energy minimization for translational and rotational degrees of freedom
-* Multiple time step integration that allows one of two time steps per particle
-* Stokesian Dynamics support (GPU only)
-* Dipolar direct sum on gpu for large systems (more particles than the max number of threads the gpu runs in parallel)
-* analyze momentum now returns the total momentum including the fluid momentum.
-* CMake build system
-* Support for the Scafacos library for electrostatis
-* Random number generator changed to Mersenne Twister as implemented by C++11.
-* Espresso now depends on Boost MPI.
 
-Known bugs
-----------
-* Correlator checkpointing does not work with certain combination of features.
+Visualisation
+-------------
+Espresso contains two online visualizers, one based on Mayavi, one on the OpenGl Python module.
+Support for online visualization in VMD has been dropped, but particle data can be stored in file formats which VMD can read (vcf/vtf, h5md).
 
 User-visible changes
 --------------------
-* bit_random tcl command removed.
 
-Changes visible for developers
-------------------------------
-* CMake build system
+* When the ROTATION feature is compiled in, the rotation of a particle around each of its Cartesian axes in the body-fixed frame can be enabled
+* The rotational degrees of freedom of virtual sites is now integrated. Virtual sites no longer use the quaternion attributes to store their relative orientation
+* Alternatively, the orientation of the virtual site can be specified relative to that of the particle it is derived from.
+* The random number generator was changed to Mersenne Twister as implemented by C++11.
+* Espresso now depends on the Boost library including Boost-Mpi and a C++11 capable compiler
+* The build system is now based on CMake.
 
 ESPResSo 3.3
 ============
