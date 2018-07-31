@@ -7,7 +7,7 @@ ESPResSo 4.0
 
 ESPResSo 4.0 is the first release of ESPResSo with a Python interface.
 I.e., the language in which simulation scripts are written is now Python,
-and support for the TCL-Interface has been dropped.
+and support for the TCL-interface has been dropped.
 We recommend all users switch to ESPResSo 4.0, there will be no more fixes to
 TCL-based versions.
 
@@ -18,7 +18,7 @@ The following can serve as a starting point for the new interface:
 * The "Introduction" chapter in the user's guide
 * The tutorials in the /doc/tutorials directory of the distribution.
 
-Please note that, starting from ESPResSo 4.0, enabling additoinal features in myconfig.hpp no longer changes the behavior of a simulation scripts. Features such as particle rotation and virtual sites have to be activated explicitly in the simulation scripts.
+Please note that, starting from ESPResSo 4.0, enabling additional features in myconfig.hpp no longer changes the behavior of a simulation scripts. Features such as particle rotation and virtual sites have to be activated explicitly in the simulation scripts.
 
 New features:
 -------------
@@ -26,9 +26,9 @@ New features:
 * Polarisable particles via the Drude-oscillator scheme
 * Steepest-descent energy minimization scheme 
 * Methods for active particles (swimmer_reaction, dipolar swimmers)
-* GPU-accererated P3M method for electrostatic interactions
-* GPU-accelerated direct summation of dipolar interactoins under open boundary conditions
-* Support for the electrostatic and magnetostatics method provided by the ScaFaCos library
+* GPU-accelerated P3M method for electrostatic interactions
+* GPU-accelerated direct summation of dipolar interactions under open boundary conditions
+* Support for the electrostatic and magnetostatics method provided by the ScaFaCoS library
 * New bonded quartic and Coulomb interactions
 * Possibility to tune the skin parameter 
 * Support for saving to the h5md file format for molecular dynamics data.
@@ -49,6 +49,26 @@ User-visible changes
 * The random number generator was changed to Mersenne Twister as implemented by C++11.
 * Espresso now depends on the Boost library including Boost-Mpi and a C++11 capable compiler
 * The build system is now based on CMake.
+
+Removed featues
+---------------
+The following features will likely not be part of the ESPResSo 4.0 release, but support is expected to be re-added in a subsequent release.
+* Generalized hybrid Monte Carlo thermostat
+* Virtual sites located at the center of mass of a group of particles
+* Metadynamics, umbrella sampling and parallel tempering
+* Non-equilibrium molecular dynamics (shear boundary conditions implemented by moving slabs of particles at the boundaries)
+* The memd/meggs electrostatic solver
+* The com_force feature
+* The Chan Shen lattice Boltzmann extension
+
+The following functionality is removed permanently:
+* Blockfile support, which is replaced by support for the h5md format as well as checkpointing based on the pickle Python module.
+* Some of the convenience functions for particle creation such as salt and counterions, as these can be replaced by a very few lines of Python in the simulation script.
+* The lj_angle and angledist (not-qutie)-pair potentials
+* The following analysis methods:
+  diffusion_profile, cwvac, p_isnt, ..._mol, cel_gpb, dipmom_normal, MSd, angularmomentum, cluster_size_dist, mol, lipid_orient_order, get_lipid_oriends, current, wall_stuff,
+  necklace, bilayer, modes2d
+
 
 ESPResSo 3.3
 ============
