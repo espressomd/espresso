@@ -403,6 +403,10 @@ class HomogeneousFlowField(Constraint):
     def __init__(self, u, gamma):
         super(HomogeneousFlowField, self).__init__(value=u, gamma=gamma)
 
+    @property
+    def u(self):
+        return self.value
+
     _so_name = "Constraints::HomogeneousFlowField"
 
 @script_interface_register

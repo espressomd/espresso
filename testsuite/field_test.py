@@ -55,7 +55,9 @@ class FieldTest(ut.TestCase):
         np.testing.assert_almost_equal(q_part * E, p.f)
 
         self.assertAlmostEqual(self.system.analysis.energy()['total'],
-                               np.dot(E, p.pos) + phi0)
+                               q_part * (- np.dot(E, p.pos) + phi0))
+        self.assertAlmostEqual(self.system.analysis.energy()['total'],
+                               self.system.analysis.energy()['external_fields']
 
     def test_homogeneous_flow_field(self):
         u = np.array([1.,2.,3.])
@@ -71,7 +73,6 @@ class FieldTest(ut.TestCase):
         self.system.integrator.run(0)
         np.testing.assert_almost_equal(gamma * (u - p.v) , p.f)
 
-        print(self.system.analysis.energy())
         self.assertAlmostEqual(self.system.analysis.energy()['total'],
                                self.system.analysis.energy()['kinetic'])
 
