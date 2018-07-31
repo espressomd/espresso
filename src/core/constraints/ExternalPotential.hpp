@@ -14,14 +14,15 @@ class ExternalPotential : public Constraint {
 
 public:
   template <typename... Args>
-  ExternalPotential(Args... args)
-      : impl(std::forward<Args>(args)...) {}
+  ExternalPotential(Args... args) : impl(std::forward<Args>(args)...) {}
 
   const Coupling &coupling() const { return impl.coupling(); }
   const Field &field() const { return impl.field(); }
 
-  void add_energy(const Particle &, const Vector3d &,
-                  Observable_stat &) const override {}
+  void add_energy(const Particle &p, const Vector3d &folded_pos,
+                  Observable_stat &e) const override {
+    e.external_fields[0] += impl.energy(p, folded_pos);
+  }
 
   ParticleForce force(const Particle &p, Vector3d const &folded_pos) override {
     return impl.force(p, folded_pos);
