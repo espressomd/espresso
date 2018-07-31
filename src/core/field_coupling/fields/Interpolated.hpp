@@ -104,12 +104,12 @@ public:
           [this](const std::array<int, 3> &ind) { return m_global_field(ind); },
           m_grid_spacing, m_origin, m_order, value_type{}));
     } else {
-      return bspline_3d_accumulate(pos,
-                                   [this, &f](const std::array<int, 3> &ind) {
-                                     return f(m_global_field(ind));
-                                   },
-                                   m_grid_spacing, m_origin, m_order,
-                                   value_type{});
+      return bspline_3d_accumulate(
+          pos,
+          [this, &f](const std::array<int, 3> &ind) {
+            return f(m_global_field(ind));
+          },
+          m_grid_spacing, m_origin, m_order, value_type{});
     }
   }
 

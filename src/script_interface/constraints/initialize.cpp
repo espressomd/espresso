@@ -72,6 +72,8 @@ void initialize() {
   ScriptInterface::register_new<HomogeneousFlowField>(
       "Constraints::HomogeneousFlowField");
 
+  ScriptInterface::register_new<ElectricPotential>(
+      "Constraints::ElectricPotential");
   ScriptInterface::register_new<LinearElectricPotential>(
       "Constraints::LinearElectricPotential");
 }

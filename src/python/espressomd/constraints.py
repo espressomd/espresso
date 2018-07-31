@@ -184,7 +184,7 @@ class HomogeneousMagneticField(Constraint):
 
     _so_name = "Constraints::HomogeneousMagneticField"
 
-class _Interpolated:
+class _Interpolated(Constraint):
     """
     Tabulated field data.
     The actual field value is calculated by cardinal b-spline
@@ -199,7 +199,7 @@ class _Interpolated:
     order is 2 and a grid spacing of .1 is to be used, (2//2) = 1 extra
     point is needed on each side, and the grid spans the range
     [-1 * 0.1, 10 + 1 * 0.1]. Please be aware that the periodicity is not
-    taken into account automatically, to this is also true for periodic
+    taken into account automatically, so this is also true for periodic
     directions.
 
     Attributes
@@ -227,9 +227,20 @@ class _Interpolated:
         field = np.zeros((shape[0], shape[1], shape[2], cls._codim))
 
         for i in product(*map(range,shape)):
-	        field[i] = f((np.array(i) - halo_points - 0.5)*grid_spacing)
+	        field[i] = f((np.array(i) - halo_points + 0.5)*grid_spacing)
+
 
         return field
+
+    @classmethod
+    def field_coordinates(cls, shape_, grid_spacing, order):
+        return cls.field_from_fn(shape, grid_spacing, order, lambda x: x)
+
+    def __init__(self, field, **kwargs):
+        shape, codim = self._unpack_dims(field)
+
+        super(_Interpolated, self).__init__(_field_shape=shape, _field_codim=codim,
+                                         _field_data=field.flatten(), **kwargs)
 
     def _unpack_dims(self, a):
         s = a.shape
@@ -243,8 +254,12 @@ class _Interpolated:
         shape = self._field_shape
         return np.reshape(self._field_data, (shape[0], shape[1], shape[2], self._field_codim))
 
-class _Scaled:
+@script_interface_register
+class ForceField(_Interpolated):
     """
+    A generic tabulated force field that applies a per particle
+    scaling factor.
+
     Attributes
     ----------
     default_scale : :obj:`float`
@@ -257,33 +272,33 @@ class _Scaled:
 
     """
 
-    pass
-
-@script_interface_register
-class ForceField(Constraint, _Scaled, _Interpolated):
-    """
-    A generic tabulated force field that applies a per particle
-    scaling factor.
-
-    """
-
     def __init__(self, field, **kwargs):
-        shape, codim = self._unpack_dims(field)
-
-        super(ForceField, self).__init__(_field_shape=shape, _field_codim=codim,
-                                         _field_data=field.flatten(), **kwargs)
+        super(ForceField, self).__init__(**kwargs)
 
     _codim = 3
     _so_name = "Constraints::ForceField"
 
 
 @script_interface_register
-class PotentialField(Constraint, _Scaled, _Interpolated):
+class PotentialField(_Interpolated):
     """
     A generic tabulated force field that applies a per particle
     scaling factor.
 
+    Attributes
+    ----------
+    default_scale : :obj:`float`
+        Scaling factor for particles that have no
+        individual scaling factor.
+    particle_scales: array_like (:obj:`int`, :obj:`float`)
+        A list of tuples of ids and scaling factors. For
+        particles in the list the interaction is scaled with
+        their individual scaling factor befor it is applied.
+
     """
+
+    def __init__(self, field, **kwargs):
+        super(PotentialField, self).__init__(**kwargs)
 
     _codim = 1
     _so_name = "Constraints::PotentialField"
@@ -317,12 +332,9 @@ class LinearElectricPotential(Constraint):
     """
     Electric potential of the form
 
-      phi = E * x + phi0,
+      phi = -E * x + phi0,
 
-    resulting in the force
-
-      F = E
-
+    resulting in the electic field E
     everywhere. (E.g. in a plate capacitor).
 
 
@@ -337,21 +349,21 @@ class LinearElectricPotential(Constraint):
     """
 
     def __init__(self, E, phi0 = 0):
-        super(LinearElectricPotential, self).__init__(A=E, b=phi0)
+        super(LinearElectricPotential, self).__init__(A=-E, b=phi0)
 
     @property
     def E(self):
-        return self.A
+        return -np.array(self.A)
 
     @property
     def phi0(self):
-        return self.b
+        return np.array(self.b)
 
     _so_name = "Constraints::LinearElectricPotential"
 
 
 @script_interface_register
-class FlowField(Constraint, _Interpolated):
+class FlowField(_Interpolated):
     """
     Viscous coupling to a flow field that is
     interpolated from tabulated data like
@@ -359,8 +371,13 @@ class FlowField(Constraint, _Interpolated):
       F = -gamma * (u(r) - v)
 
     wher v is the velocity of the particle.
+
     """
 
+    def __init__(self, field, **kwargs):
+        super(FlowField, self).__init__(**kwargs)
+
+    _codim = 3
     _so_name = "Constraints::FlowField"
 
 
@@ -387,3 +404,16 @@ class HomogeneousFlowField(Constraint):
         super(HomogeneousFlowField, self).__init__(value=u, gamma=gamma)
 
     _so_name = "Constraints::HomogeneousFlowField"
+
+@script_interface_register
+class ElectricPotential(_Interpolated):
+    """
+    Electric potential.
+
+    """
+
+    def __init__(self, field, **kwargs):
+        super(ElectricPotential, self).__init__(**kwargs)
+
+    _codim = 1
+    _so_name = "Constraints::ElectricPotential"
