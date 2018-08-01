@@ -101,14 +101,14 @@ cuda-shanchen:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   script:
-    - export myconfig=shanchen with_coverage=true
+    - export myconfig=shanchen with_coverage=true python_version=3
     - bash maintainer/cuda_build.sh
 
 cuda-maxset:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   script:
-    - export myconfig=maxset with_coverage=true
+    - export myconfig=maxset with_coverage=true python_version=3
     - bash maintainer/cuda_build.sh
   artifacts:
     paths:
@@ -126,7 +126,7 @@ empty:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   script:
-    - export myconfig=empty
+    - export myconfig=empty python_version=3
     - bash maintainer/CI/build_cmake.sh
 
 ### Builds with OS X
