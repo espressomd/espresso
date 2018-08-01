@@ -50,7 +50,8 @@ class Scafacos1d2d(ut.TestCase):
                     1.0 / 3.0) * particle_radius
         skin = 0.5
 
-        s = espressomd.System()
+        s = espressomd.System(box_l=[1.0, 1.0, 1.0])
+        s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
         # give Espresso some parameters
         s.time_step = 0.01
         s.cell_system.skin = skin
@@ -79,7 +80,7 @@ class Scafacos1d2d(ut.TestCase):
 
             if dim == 2:
                 scafacos = magnetostatics.Scafacos(
-                    bjerrum_length=1,
+                    prefactor=1,
                     method_name="p2nfft",
                     method_params={
                         "p2nfft_verbose_tuning": 0,
@@ -100,7 +101,7 @@ class Scafacos1d2d(ut.TestCase):
                 if dim == 1:
                     # 1d periodic in x
                     scafacos = magnetostatics.Scafacos(
-                        bjerrum_length=1,
+                        prefactor=1,
                         method_name="p2nfft",
                         method_params={
                             "p2nfft_verbose_tuning": 1,

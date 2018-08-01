@@ -41,7 +41,6 @@ cdef extern from "cells.hpp":
 cdef extern from "layered.hpp":
     int determine_n_layers
     int n_layers_ "n_layers"
-    int determine_n_layers
 
 cdef extern from "grid.hpp":
     int node_grid[3]

@@ -27,6 +27,7 @@
 #include "ScriptObjectRegistry.hpp"
 #include "core/constraints.hpp"
 #include "script_interface/ScriptInterface.hpp"
+#include "core/initialize.hpp"
 
 namespace ScriptInterface {
 namespace Constraints {
@@ -34,14 +35,11 @@ namespace Constraints {
 class Constraints : public ScriptObjectRegistry<Constraint> {
   virtual void add_in_core(std::shared_ptr<Constraint> obj_ptr) override {
     ::Constraints::constraints.add(obj_ptr->constraint());
+    ::on_constraint_change();
   }
   virtual void remove_in_core(std::shared_ptr<Constraint> obj_ptr) override {
     ::Constraints::constraints.remove(obj_ptr->constraint());
-  };
-
-public:
-  virtual const std::string name() const override {
-    return "Constraints::Constraints";
+    ::on_constraint_change();
   };
 };
 } /* namespace Constraints */

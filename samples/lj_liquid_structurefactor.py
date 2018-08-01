@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function
-import numpy
+import numpy as np
 import espressomd
 from espressomd import thermostat
 from espressomd import analyze
@@ -50,7 +50,11 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System()
+system = espressomd.System(box_l=[box_l]*3)
+system.set_random_state_PRNG()
+#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(seed=system.seed)
+
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 #es._espressoHandle.Tcl_Eval('thermostat langevin 1.0 1.0')
@@ -79,15 +83,12 @@ structurefactor_file = open("pylj_liquid_structurefactor.dat", "w")
 structurefactor_file.write("# k\tS(k)\n")
 structurefactor_bins = len(system.analysis.structure_factor(
     [0], structurefactor_order)[0])
-structurefactor_k = numpy.zeros(structurefactor_bins)
-structurefactor_Sk = numpy.zeros(structurefactor_bins)
+structurefactor_k = np.zeros(structurefactor_bins)
+structurefactor_Sk = np.zeros(structurefactor_bins)
 
 
 # Interaction setup
 #############################################################
-
-system.box_l = [box_l, box_l, box_l]
-
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
     cutoff=lj_cut, shift="auto")
@@ -105,18 +106,18 @@ n_part = int(volume * density)
 for i in range(n_part):
     if i < n_part / 2.0:
         system.part.add(
-            type=0, id=i, pos=numpy.random.random(3) * system.box_l)
+            type=0, id=i, pos=np.random.random(3) * system.box_l)
     else:
         system.part.add(
-            type=1, id=i, pos=numpy.random.random(3) * system.box_l)
+            type=1, id=i, pos=np.random.random(3) * system.box_l)
 
 
-system.analysis.distto(0)
+system.analysis.dist_to(0)
 
 print("Simulate {} particles in a cubic simulation box {} at density {}."
       .format(n_part, box_l, density).strip())
 print("Interactions:\n")
-act_min_dist = system.analysis.mindist()
+act_min_dist = system.analysis.min_dist()
 print("Start with minimal distance {}".format(act_min_dist))
 
 system.cell_system.max_num_cells = 2744
@@ -145,7 +146,7 @@ i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
     system.integrator.run(warm_steps)
     # Warmup criterion
-    act_min_dist = system.analysis.mindist()
+    act_min_dist = system.analysis.min_dist()
     i += 1
 
 
@@ -156,7 +157,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
 # Just to see what else we may get from the c code
 import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
-pprint.pprint(system.__getstate__(), width=1)
+pprint.pprint(system.__getstate__())
 
 
 # write parameter file

@@ -19,27 +19,29 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <exception>
-
-#include <boost/mpi.hpp>
-
 #include "MpiCallbacks.hpp"
 
 #include "utils/make_unique.hpp"
 #include "utils/serialization/array.hpp"
 
+#include <boost/mpi.hpp>
+
+#include <stdexcept>
+
 namespace Communication {
 
 void MpiCallbacks::call(int id, int par1, int par2) const {
   /** Can only be call from master */
-  assert(m_comm.rank() == 0);
+  if (m_comm.rank() != 0) {
+    throw std::logic_error("Callbacks can only be invoked on rank 0.");
+  }
 
   /** Check if callback exists */
   if (m_callbacks.find(id) == m_callbacks.end()) {
     throw std::out_of_range("Callback does not exists.");
   }
 
-  std::array<int, 3> request{id, par1, par2};
+  std::array<int, 3> request{{id, par1, par2}};
 
   /** Send request to slaves */
   boost::mpi::broadcast(m_comm, request.data(), request.size(), 0);

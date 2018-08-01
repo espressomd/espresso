@@ -35,7 +35,9 @@ struct TestClass {
   virtual void method() {}
 };
 
- struct DerivedTestClass : public TestClass {};
+struct DerivedTestClass : public TestClass {
+  virtual void method() {}
+};
 
 struct OtherDerivedTestClass : public TestClass {};
 

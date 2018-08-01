@@ -20,15 +20,9 @@ from espressomd import has_features
 class DDSGPUTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
-    es = espressomd.System()
+    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    es.seed  = es.cell_system.get_state()['n_nodes'] * [1234]
 
-    def vectorsTheSame(self, a, b):
-        tol = 3E-3
-        vec_len = la.norm(a - b)
-        if vec_len <= tol:
-            return True
-        else:
-            return False
 
     def stopAll(self):
         for i in range(len(self.es.part)):
@@ -37,7 +31,7 @@ class DDSGPUTest(ut.TestCase):
 
     def run_test_case(self):
         print("----------------------------------------------")
-        print("- Testcase dawaanr-and-dds-gpu.tcl")
+        print("- Testcase dawaanr-and-dds-gpu.py")
         print("----------------------------------------------")
 
         pf_dds_gpu = 2.34
@@ -87,7 +81,7 @@ class DDSGPUTest(ut.TestCase):
             # and torque
             self.es.thermostat.set_langevin(kT=1.297, gamma=0.0)
 
-            dds_cpu = DipolarDirectSumCpu(bjerrum_length=pf_dawaanr)
+            dds_cpu = DipolarDirectSumCpu(prefactor=pf_dawaanr)
             self.es.actors.add(dds_cpu)
             self.es.integrator.run(steps=0, recalc_forces=True)
 
@@ -104,7 +98,7 @@ class DDSGPUTest(ut.TestCase):
                 self.es.actors.remove(self.es.actors.active_actors[i])
 
             self.es.integrator.run(steps=0, recalc_forces=True)
-            dds_gpu = DipolarDirectSumGpu(bjerrum_length=pf_dds_gpu)
+            dds_gpu = DipolarDirectSumGpu(prefactor=pf_dds_gpu)
             self.es.actors.add(dds_gpu)
             self.es.integrator.run(steps=0, recalc_forces=True)
 
@@ -118,39 +112,17 @@ class DDSGPUTest(ut.TestCase):
 
             # compare
             for i in range(n):
-                self.assertTrue(
-                    self.vectorsTheSame(
-                        np.array(
-                            dawaanr_t[i]),
-                        ratio_dawaanr_dds_gpu *
-                        np.array(
-                            ddsgpu_t[i])),
-                    msg='Torques on particle do not match. i={0} dawaanr_t={1} ratio_dawaanr_dds_gpu*ddsgpu_t={2}'.format(
-                        i,
-                        np.array(
-                            dawaanr_t[i]),
-                        ratio_dawaanr_dds_gpu *
-                        np.array(
-                            ddsgpu_t[i])))
-                self.assertTrue(
-                    self.vectorsTheSame(
-                        np.array(
-                            dawaanr_f[i]),
-                        ratio_dawaanr_dds_gpu *
-                        np.array(
-                            ddsgpu_f[i])),
-                    msg='Forces on particle do not match: i={0} dawaanr_f={1} ratio_dawaanr_dds_gpu*ddsgpu_f={2}'.format(
-                        i,
-                        np.array(
-                            dawaanr_f[i]),
-                        ratio_dawaanr_dds_gpu *
-                        np.array(
-                            ddsgpu_f[i])))
+                np.testing.assert_allclose(np.array(dawaanr_t[i]),
+                        ratio_dawaanr_dds_gpu * np.array(ddsgpu_t[i]),
+                    err_msg='Torques on particle do not match for particle {}'.format(i), atol=3e-3)
+                np.testing.assert_allclose(np.array(dawaanr_f[i]),
+                        ratio_dawaanr_dds_gpu * np.array(ddsgpu_f[i]),
+                    err_msg='Forces on particle do not match for particle i={}'.format(i), atol=3e-3)
             self.assertAlmostEqual(
                 dawaanr_e,
                 ddsgpu_e *
                 ratio_dawaanr_dds_gpu,
-                places=3,
+                places=2,
                 msg='Energies for dawaanr {0} and dds_gpu {1} do not match.'.format(
                     dawaanr_e,
                     ratio_dawaanr_dds_gpu *

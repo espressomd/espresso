@@ -34,7 +34,6 @@
 #include "integrate.hpp"
 #include "interaction_data.hpp"
 #include "layered.hpp"
-#include "lees_edwards_domain_decomposition.hpp"
 #include "nsquare.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
@@ -51,16 +50,19 @@
 std::vector<Cell> cells;
 /** list of pointers to all cells containing particles physically on the local
  * node. */
-CellPList local_cells = {NULL, 0, 0};
+CellPList local_cells = {nullptr, 0, 0};
 /** list of pointers to all cells containing ghosts. */
-CellPList ghost_cells = {NULL, 0, 0};
+CellPList ghost_cells = {nullptr, 0, 0};
 
 /** Type of cell structure in use */
 CellStructure cell_structure = {/* type */ CELL_STRUCTURE_NONEYET,
-                                /* use_verlet_list*/ false};
+                                /* use_verlet_list*/ true};
 
 double max_range = 0.0;
 
+/** On of Cells::Resort, annouces the level of resort needed.
+ */
+unsigned resort_particles = Cells::RESORT_NONE;
 int rebuild_verletlist = 1;
 
 /**
@@ -72,10 +74,11 @@ int rebuild_verletlist = 1;
  *
  * Pairs are sorted so that first.id < second.id
  */
-std::vector<std::pair<int, int>>
-get_pairs(double distance) {
+std::vector<std::pair<int, int>> get_pairs(double distance) {
   std::vector<std::pair<int, int>> ret;
   auto const cutoff2 = distance * distance;
+
+  cells_update_ghosts();
 
   auto pair_kernel = [&ret, &cutoff2](Particle const &p1, Particle const &p2,
                                       double dist2) {
@@ -111,7 +114,7 @@ get_pairs(double distance) {
                            get_mi_vector(vec21, p1.r.p, p2.r.p);
                            vec21[2] = p1.r.p[2] - p2.r.p[2];
 
-                             return sqrlen(vec21);
+                           return sqrlen(vec21);
                          });
   }
 
@@ -180,7 +183,10 @@ static void topology_release(int cs) {
 
 /** Switch for choosing the topology init function of a certain
     cell system. */
-static void topology_init(int cs, CellPList *local) {
+void topology_init(int cs, CellPList *local) {
+  /** broadcast the flag for using verlet list */
+  boost::mpi::broadcast(comm_cart, cell_structure.use_verlet_list, 0);
+
   switch (cs) {
   case CELL_STRUCTURE_NONEYET:
     break;
@@ -242,7 +248,7 @@ void cells_re_init(int new_cs) {
   CELL_TRACE(fprintf(stderr, "%d: old cells deallocated\n", this_node));
 
   /* to enforce initialization of the ghost cells */
-  resort_particles = 1;
+  resort_particles = Cells::RESORT_GLOBAL;
 
   on_cell_structure_change();
 }
@@ -269,14 +275,19 @@ void realloc_cells(int size) {
 
 /*************************************************/
 
-void announce_resort_particles() {
-  int sum;
+void set_resort_particles(Cells::Resort level) {
+  resort_particles |= level;
+  assert(resort_particles & level);
+}
 
-  MPI_Allreduce(&resort_particles, &sum, 1, MPI_INT, MPI_SUM, comm_cart);
-  resort_particles = (sum > 0) ? 1 : 0;
+unsigned const &get_resort_particles() { return resort_particles; }
+
+void announce_resort_particles() {
+  MPI_Allreduce(MPI_IN_PLACE, &resort_particles, 1, MPI_UNSIGNED, MPI_BOR,
+                comm_cart);
 
   INTEG_TRACE(fprintf(stderr,
-                      "%d: announce_resort_particles: resort_particles=%d\n",
+                      "%d: announce_resort_particles: resort_particles=%u\n",
                       this_node, resort_particles));
 }
 
@@ -314,6 +325,7 @@ void cells_resort_particles(int global_flag) {
 #ifdef ADDITIONAL_CHECKS
   /* at the end of the day, everything should be consistent again */
   check_particle_consistency();
+  check_particle_sorting();
 #endif
 
   ghost_communicator(&cell_structure.ghost_cells_comm);
@@ -321,7 +333,7 @@ void cells_resort_particles(int global_flag) {
 
   /* Particles are now sorted, but verlet lists are invalid
      and p_old has to be reset. */
-  resort_particles = 0;
+  resort_particles = Cells::RESORT_NONE;
   rebuild_verletlist = 1;
 
   on_resort_particles();
@@ -351,9 +363,6 @@ void cells_on_geometry_change(int flags) {
     cells_re_init(CELL_STRUCTURE_LAYERED);
     break;
   case CELL_STRUCTURE_NSQUARE:
-    /* this cell system doesn't need to react, just tell
-       the others */
-    on_boxl_change();
     break;
   }
 }
@@ -361,32 +370,29 @@ void cells_on_geometry_change(int flags) {
 /*************************************************/
 
 void check_resort_particles() {
-  const double skin2 = SQR(skin / 2.0);
+  const double skin2 = Utils::sqr(skin / 2.0);
 
-  resort_particles =
-      std::any_of(local_cells.particles().begin(),
-                  local_cells.particles().end(), [&skin2](Particle const &p) {
-                    return distance2(p.r.p, p.l.p_old) > skin2;
-                  });
+  resort_particles |= (std::any_of(local_cells.particles().begin(),
+                                   local_cells.particles().end(),
+                                   [&skin2](Particle const &p) {
+                                     return distance2(p.r.p, p.l.p_old) > skin2;
+                                   }))
+                          ? Cells::RESORT_LOCAL
+                          : Cells::RESORT_NONE;
 
   announce_resort_particles();
 }
 
 /*************************************************/
 void cells_update_ghosts() {
-  /* if dd.use_vList is set, it so far means we want EXACT sorting of the
-   * particles.*/
-  if (dd.use_vList == 0)
-    resort_particles = 1;
-
   if (resort_particles) {
-#ifdef LEES_EDWARDS
+    int global = (resort_particles & Cells::RESORT_GLOBAL)
+                     ? CELL_GLOBAL_EXCHANGE
+                     : CELL_NEIGHBOR_EXCHANGE;
+
     /* Communication step:  number of ghosts and ghost information */
-    cells_resort_particles(CELL_GLOBAL_EXCHANGE);
-#else
-    /* Communication step:  number of ghosts and ghost information */
-    cells_resort_particles(CELL_NEIGHBOR_EXCHANGE);
-#endif
+    cells_resort_particles(global);
+
   } else
     /* Communication step: ghost information */
     ghost_communicator(&cell_structure.update_ghost_pos_comm);

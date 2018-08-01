@@ -29,7 +29,6 @@
 #include "Observable.hpp"
 #include "core/observables/Observable.hpp"
 #include "core/observables/StressTensor.hpp"
-#include "core/observables/StressTensorAcf.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
@@ -39,10 +38,6 @@ namespace Observables {
   public:                                                                      \
     obs_name() : m_observable(new ::Observables::obs_name()){};                \
                                                                                \
-    const std::string name() const override {                                  \
-      return "Observables::" #obs_name;                                        \
-    }                                                                          \
-                                                                               \
     std::shared_ptr<::Observables::Observable> observable() const override {   \
       return m_observable;                                                     \
     };                                                                         \
@@ -51,8 +46,7 @@ namespace Observables {
     std::shared_ptr<::Observables::obs_name> m_observable;                     \
   };
 
-NEW_PARAMLESS_OBSERVABLE(StressTensor);
-NEW_PARAMLESS_OBSERVABLE(StressTensorAcf);
+NEW_PARAMLESS_OBSERVABLE(StressTensor)
 
 } /* namespace Observables */
 } /* namespace ScriptInterface */

@@ -19,7 +19,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <vector>
 #include "h5md_core.hpp"
+#include "core/interaction_data.hpp"
 
 namespace Writer {
 namespace H5md {
@@ -163,7 +165,7 @@ void File::init_filestructure() {
                  "parameters/files"};
   h5xx::datatype type_double = h5xx::datatype(H5T_NATIVE_DOUBLE);
   h5xx::datatype type_int = h5xx::datatype(H5T_NATIVE_INT);
-  hsize_t npart = static_cast<hsize_t>(n_part);
+
   dataset_descriptors = {
       // path, dim, type
       {"particles/atoms/box/edges", 1, type_double},
@@ -203,8 +205,13 @@ void File::create_datasets(bool only_load) {
       auto dims = create_dims(descr.dim, creation_size_dataset);
       auto chunk_dims = create_chunk_dims(descr.dim, chunk_size, 1);
       auto maxdims = create_maxdims(descr.dim);
-      auto storage = h5xx::policy::storage::chunked(chunk_dims)
-                         .set(h5xx::policy::storage::fill_value(-10));
+      auto storage = h5xx::policy::storage::chunked(chunk_dims);
+      if(descr.type.get_type_id()==H5T_NATIVE_INT)
+        storage.set(h5xx::policy::storage::fill_value(static_cast<int>(-10)));
+      else if(descr.type.get_type_id()==H5T_NATIVE_DOUBLE)
+        storage.set(h5xx::policy::storage::fill_value(static_cast<double>(-10)));
+      else
+        throw std::runtime_error("H5MD writing dataset of this type is not implemented\n");
       auto dataspace = h5xx::dataspace(dims, maxdims);
       hid_t lcpl_id = H5Pcreate(H5P_LINK_CREATE);
       H5Pset_create_intermediate_group(lcpl_id, 1);
@@ -275,6 +282,15 @@ void File::create_new_file(const std::string &filename) {
   m_h5md_file =
       h5xx::file(filename, m_hdf5_comm, MPI_INFO_NULL, h5xx::file::out);
 
+  auto h5md_group = h5xx::group(m_h5md_file, "h5md");
+  std::vector<int> h5md_version = {1, 1};
+  h5xx::write_attribute(h5md_group, "version", h5md_version);
+  auto h5md_creator_group = h5xx::group(h5md_group, "creator");
+  h5xx::write_attribute(h5md_creator_group, "name", "ESPResSo");
+  h5xx::write_attribute(h5md_creator_group, "version", ESPRESSO_VERSION);
+  auto h5md_author_group = h5xx::group(h5md_group, "author");
+  h5xx::write_attribute(h5md_author_group, "name", "N/A");
+
   bool only_load = false;
   create_datasets(only_load);
 
@@ -322,8 +338,8 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
     mass[0][particle_index][0] = current_particle.p.mass;
   /* store folded particle positions. */
   if (write_pos) {
-    Vector3d p{{current_particle.r.p}};
-    Vector<3, int> i{{current_particle.l.i}};
+    Vector3d p = current_particle.r.p;
+    Vector<3, int> i= current_particle.l.i;
     fold_position(p, i);
 
     pos[0][particle_index][0] = p[0];
@@ -335,17 +351,14 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
   }
 
   if (write_vel) {
-    vel[0][particle_index][0] = current_particle.m.v[0] / time_step;
-    vel[0][particle_index][1] = current_particle.m.v[1] / time_step;
-    vel[0][particle_index][2] = current_particle.m.v[2] / time_step;
+    vel[0][particle_index][0] = current_particle.m.v[0];
+    vel[0][particle_index][1] = current_particle.m.v[1];
+    vel[0][particle_index][2] = current_particle.m.v[2];
   }
   if (write_force) {
-    /* Scale the stored force with m/(0.5*dt**2.0) to get a real
-     * world force. */
-    double fac = current_particle.p.mass / (0.5 * time_step * time_step);
-    f[0][particle_index][0] = current_particle.f.f[0] * fac;
-    f[0][particle_index][1] = current_particle.f.f[1] * fac;
-    f[0][particle_index][2] = current_particle.f.f[2] * fac;
+    f[0][particle_index][0] = current_particle.f.f[0];
+    f[0][particle_index][1] = current_particle.f.f[1];
+    f[0][particle_index][2] = current_particle.f.f[2];
   }
   if (write_charge) {
 #ifdef ELECTROSTATICS
@@ -355,15 +368,24 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
 
   if (!m_already_wrote_bonds) {
     int nbonds_local = bond.shape()[1];
-    for (int i = 1; i < current_particle.bl.n; i = i + 2) {
-      bond.resize(boost::extents[1][nbonds_local + 1][2]);
-      bond[0][nbonds_local][0] = current_particle.p.identity;
-      bond[0][nbonds_local][1] = current_particle.bl.e[i];
+    for (auto it = current_particle.bl.begin();
+         it != current_particle.bl.end();) {
+
+      auto const n_partners = bonded_ia_params[*it++].num;
+
+      if (1 == n_partners) {
+        bond.resize(boost::extents[1][nbonds_local + 1][2]);
+        bond[0][nbonds_local][0] = current_particle.p.identity;
+        bond[0][nbonds_local][1] = *it++;
+        nbonds_local++;
+      } else {
+        it += n_partners;
+      }
     }
   }
 }
 
-  void File::Write(int write_dat, PartCfg & partCfg) {
+void File::Write(int write_dat, PartCfg &partCfg) {
 #ifdef H5MD_DEBUG
   std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
@@ -439,7 +461,6 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
   hsize_t count_3d[3] = {1, (hsize_t)num_particles_to_be_written, 3};
 
   // calculate the change of the extent for fluctuating particle numbers
-  int n_part = max_seen_particle + 1;
   int old_max_n_part =
       std::max(m_max_n_part, (int)dims_id[1]); // check that dataset is not
                                                // shrinked: take into account
@@ -514,21 +535,21 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
   }
 }
 
-void File::ExtendDataset(std::string path, int *change_extent) {
+void File::ExtendDataset(const std::string & path, int *change_extent) {
   /* Until now the h5xx does not support dataset extending, so we
      have to use the lower level hdf5 library functions. */
   auto &dataset = datasets[path];
   /* Get the current dimensions of the dataspace. */
   hid_t ds = H5Dget_space(dataset.hid());
   hsize_t rank = H5Sget_simple_extent_ndims(ds);
-  hsize_t dims[rank], maxdims[rank];
-  H5Sget_simple_extent_dims(ds, dims, maxdims);
+  std::vector<hsize_t> dims(rank), maxdims(rank);
+  H5Sget_simple_extent_dims(ds, dims.data(), maxdims.data());
   H5Sclose(ds);
   /* Extend the dataset for another timestep (extent = 1) */
   for (int i = 0; i < rank; i++) {
-    dims[i] += change_extent[i];
+    dims[i] += change_extent[i]; // NOLINT
   }
-  H5Dset_extent(dataset.hid(), dims); // extend all dims is collective
+  H5Dset_extent(dataset.hid(), dims.data()); // extend all dims is collective
 }
 
 /* data is assumed to be three dimensional */
@@ -545,13 +566,13 @@ void File::WriteDataset(T &data, const std::string &path, int *change_extent,
   auto &dataset = datasets[path];
   hid_t ds = H5Dget_space(dataset.hid());
   hsize_t rank = H5Sget_simple_extent_ndims(ds);
-  hsize_t maxdims[rank];
+  std::vector<hsize_t> maxdims(rank);
   for (int i = 0; i < rank; i++) {
     maxdims[i] = H5S_UNLIMITED;
   }
-  H5Sselect_hyperslab(ds, H5S_SELECT_SET, offset, NULL, count, NULL);
+  H5Sselect_hyperslab(ds, H5S_SELECT_SET, offset, nullptr, count, nullptr);
   /* Create a temporary dataspace. */
-  hid_t ds_new = H5Screate_simple(rank, count, maxdims);
+  hid_t ds_new = H5Screate_simple(rank, count, maxdims.data());
   /* Finally write the data to the dataset. */
   H5Dwrite(dataset.hid(), dataset.get_type(), ds_new, ds, H5P_DEFAULT,
            data.origin());
@@ -565,7 +586,6 @@ void File::WriteScript(std::string const &filename) {
 #endif
   /* First get the number of lines of the script. */
   hsize_t dims[1] = {1};
-  std::string tmp;
   std::ifstream scriptfile(m_absolute_script_path.string());
   /* Read the whole script into a buffer. */
   scriptfile.seekg(0, std::ios::end);
@@ -576,14 +596,14 @@ void File::WriteScript(std::string const &filename) {
   buffer.assign(std::istreambuf_iterator<char>(scriptfile),
                 std::istreambuf_iterator<char>());
 
-  hid_t filetype, dtype, space, dset, file_id;
+  hid_t dtype, space, dset, file_id;
   file_id =
       H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
   dtype = H5Tcopy(H5T_C_S1);
   H5Tset_size(dtype, filelen * sizeof(char));
 
-  space = H5Screate_simple(1, dims, NULL);
+  space = H5Screate_simple(1, dims, nullptr);
   /* Create the dataset. */
   hid_t link_crt_plist = H5Pcreate(H5P_LINK_CREATE);
   H5Pset_create_intermediate_group(
