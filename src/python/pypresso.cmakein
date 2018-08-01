@@ -14,6 +14,32 @@ else
 fi
 export PYTHONPATH
 
+if [ "@CMAKE_CXX_COMPILER_ID@" != "GNU" -a "@WITH_ASAN@" = "ON" ]; then
+  asan_lib=$("@CMAKE_CXX_COMPILER@" /dev/null -### -o /dev/null -fsanitize=address 2>&1 | grep -o '[" ][^" ]*libclang_rt.asan[^" ]*[^s][" ]' | sed 's/[" ]//g' | sed 's/\.a$/.so/g')
+  for lib in $asan_lib; do
+      test -f $lib && LD_PRELOAD="$lib $LD_PRELOAD"
+  done
+fi
+if [ "@CMAKE_CXX_COMPILER_ID@" != "GNU" -a "@WITH_UBSAN@" = "ON" -a "@WITH_ASAN@" != "ON" ]; then
+  ubsan_lib=$("@CMAKE_CXX_COMPILER@" /dev/null -### -o /dev/null -fsanitize=undefined 2>&1 | grep -o '[" ][^" ]*libclang_rt.ubsan[^" ]*[^s][" ]' | sed 's/[" ]//g' | sed 's/\.a$/.so/g')
+  for lib in $ubsan_lib; do
+    test -f $lib && LD_PRELOAD="$lib $LD_PRELOAD"
+  done
+fi
+export LD_PRELOAD
+if [ "@WITH_UBSAN@" = "ON" ]; then
+  export UBSAN_OPTIONS="$UBSAN_OPTIONS suppressions=@CMAKE_SOURCE_DIR@/tools/ubsan-suppressions.txt"
+fi
+if [ "@WITH_ASAN@" = "ON" ]; then
+  ASAN_OPTIONS="$ASAN_OPTIONS protect_shadow_gap=0"
+  if [ "$1" = "--leaks" ]; then
+    shift
+  else
+    ASAN_OPTIONS="$ASAN_OPTIONS detect_leaks=0"
+  fi
+  export ASAN_OPTIONS
+fi
+
 case $1 in
     --gdb)
         shift
