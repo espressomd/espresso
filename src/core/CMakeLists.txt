@@ -36,7 +36,6 @@ set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
 target_link_libraries(EspressoCore EspressoConfig ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints Observables Accumulators cluster_analysis VirtualSites)
 
 if(SCAFACOS)
-  include_directories(${SCAFACOS_INCLUDE_DIRS})
   target_link_libraries(EspressoCore Scafacos)
 endif(SCAFACOS)
 if(GSL)

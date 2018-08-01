@@ -26,6 +26,7 @@ status_pending:
 
 no_cuda_default:
   stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu:latest
   script:
     - export with_cuda=false
     - export myconfig=default with_coverage=true
