@@ -1550,6 +1550,7 @@ int lb_lbnode_set_pop(int *ind, double *p_pop) {
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
     mpi_send_fluid_populations(node, index, p_pop);
+    lbpar.resend_halo = 1;
 #endif // LB
   }
   return 0;

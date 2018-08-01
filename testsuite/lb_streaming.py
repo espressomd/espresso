@@ -37,6 +37,11 @@ VELOCITY_VECTORS = np.array([
 
 
 class LBStreamingCommon(object):
+    """
+    Check the streaming step of the LB fluid implementation by setting all populations
+    to zero except one. Relaxation is supressed by choosing appropriate parameters.
+
+    """
     lbf = None
     system = espressomd.System(box_l=[3.0]*3)
     system.cell_system.skin = 0.4 * AGRID
@@ -49,8 +54,7 @@ class LBStreamingCommon(object):
         self.reset_fluid_populations()
 
     def reset_fluid_populations(self):
-        """First set all populations to 0.0 then set populations to 1 for a
-        single grid node.
+        """Set all populations to 0.0.
 
         """
         for i in itertools.product(range(self.grid[0]), range(self.grid[1]), range(self.grid[2])):
@@ -66,13 +70,13 @@ class LBStreamingCommon(object):
 
     def test_population_streaming(self):
         self.prepare()
-        grid_index = [0,0,0]
-        n_v = 1
-        self.set_fluid_populations(grid_index,n_v)
-        self.system.integrator.run(1)
-        target_node = np.mod(grid_index + VELOCITY_VECTORS[n_v], self.grid[0])
-        np.testing.assert_almost_equal(self.lbf[grid_index+VELOCITY_VECTORS[n_v]].population[n_v], 1.0)
-        self.reset_fluid_populations()
+        for grid_index in itertools.product(range(self.grid[0]), range(self.grid[1]), range(self.grid[2])):
+            for n_v in range(19):
+                self.set_fluid_populations(grid_index,n_v)
+                self.system.integrator.run(1)
+                target_node = np.mod(grid_index + VELOCITY_VECTORS[n_v], self.grid[0])
+                np.testing.assert_almost_equal(self.lbf[grid_index+VELOCITY_VECTORS[n_v]].population[n_v], 1.0)
+                self.reset_fluid_populations()
 
 @ut.skipIf(not espressomd.has_features('LB') or espressomd.has_features('SHANCHEN'),
         "Skipping test due to missing features.")
