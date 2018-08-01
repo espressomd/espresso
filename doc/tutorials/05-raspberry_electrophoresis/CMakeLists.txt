@@ -1,16 +1,3 @@
-get_filename_component(BASENAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-
-# we assume the tex filename is the same as the directory name
-add_custom_command( 
-  OUTPUT ${BASENAME}.pdf
-  COMMAND sh ../../latexit.sh
-          ${CMAKE_CURRENT_SOURCE_DIR}:${CMAKE_CURRENT_SOURCE_DIR}/../common
-          ${BASENAME}
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${BASENAME}.tex
-          ${CMAKE_CURRENT_SOURCE_DIR}
-          ${CMAKE_CURRENT_SOURCE_DIR}/../common
-)
-
-
-add_custom_target(tutorials_05 DEPENDS ${BASENAME}.pdf)
-
+configure_file(scripts/simulate_raspberry_electrophoresis.py ${CMAKE_CURRENT_BINARY_DIR}/scripts/simulate_raspberry_electrophoresis.py COPYONLY)
+configure_file(05-raspberry_electrophoresis.ipynb ${CMAKE_CURRENT_BINARY_DIR}/05-raspberry_electrophoresis.ipynb COPYONLY)
+configure_file(figures/raspberry_snapshot.pdf ${CMAKE_CURRENT_BINARY_DIR}/figures/raspberry_snapshot.pdf COPYONLY)
