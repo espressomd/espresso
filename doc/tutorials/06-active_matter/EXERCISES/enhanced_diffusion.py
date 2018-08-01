@@ -104,7 +104,7 @@ for ...:
     pos_id = ParticlePositions(ids=[0])
     msd = Correlator(obs1=pos_id,
                      corr_operation="square_distance_componentwise",
-                     dt=tstep,
+                     delta_N=1,
                      tau_max=tmax,
                      tau_lin=16)
     system.auto_update_accumulators.add(msd)
