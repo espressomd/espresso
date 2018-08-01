@@ -5,7 +5,8 @@ import espressomd
 @ut.skipIf(not espressomd.has_features(["LENNARD_JONES"]),
            "Features not available, skipping test!")
 class PairTest(ut.TestCase):
-    s = espressomd.System()
+    s = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
 
     def setUp(self):
         self.s.time_step = 0.1

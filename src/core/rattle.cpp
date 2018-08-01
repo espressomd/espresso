@@ -20,21 +20,25 @@
 */
 
 #include "rattle.hpp"
-#include "domain_decomposition.hpp"
+
+int n_rigidbonds = 0;
+
+#ifdef BOND_CONSTRAINT
+
 #include "global.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
+#include "errorhandling.hpp"
+#include "communication.hpp"
+#include "grid.hpp"
+#include "cells.hpp"
 
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <mpi.h>
-
-int n_rigidbonds = 0;
-
-#ifdef BOND_CONSTRAINT
 
 /** \name Private functions */
 /************************************************************/
@@ -106,7 +110,7 @@ void init_correction_vector() {
 /**Compute positional corrections*/
 void compute_pos_corr_vec(int *repeat_) {
   Bonded_ia_parameters *ia_params;
-  int i, j, k, c, np, cnt = -1;
+  int j, k, cnt = -1;
   Particle *p1, *p2;
   double r_ij_t[3], r_ij[3], r_ij_dot, G, pos_corr, r_ij2;
 
@@ -215,7 +219,7 @@ void transfer_force_init_vel() {
 /** Velocity correction vectors are computed*/
 void compute_vel_corr_vec(int *repeat_) {
   Bonded_ia_parameters *ia_params;
-  int i, j, k, c, np;
+  int j, k;
   Particle *p1, *p2;
   double v_ij[3], r_ij[3], K, vel_corr;
 
@@ -323,7 +327,7 @@ int rigid_bond_set_params(int bond_type, double d, double p_tol, double v_tol) {
 
   bonded_ia_params[bond_type].p.rigid_bond.d2 = d * d;
   bonded_ia_params[bond_type].p.rigid_bond.p_tol = 2.0 * p_tol;
-  bonded_ia_params[bond_type].p.rigid_bond.v_tol = v_tol * time_step;
+  bonded_ia_params[bond_type].p.rigid_bond.v_tol = v_tol;
   bonded_ia_params[bond_type].type = BONDED_IA_RIGID_BOND;
   bonded_ia_params[bond_type].num = 1;
   n_rigidbonds += 1;

@@ -8,8 +8,7 @@ from espressomd import polymer
 
 @ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "Skipped because LENNARD_JONES turned off.")
 class AnalyzeChain(ut.TestCase):
-    system = espressomd.System()
-    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     np.random.seed(1234)
     num_poly=2
     num_mono=5
@@ -31,8 +30,7 @@ class AnalyzeChain(ut.TestCase):
         head_id = 0
         tail_id = head_id+self.num_mono
         cm=np.mean(self.system.part[head_id:tail_id].pos, axis=0)
-        self.system.part[head_id:tail_id].pos -= cm
-        self.system.part[head_id:tail_id].pos += self.system.box_l
+        self.system.part[head_id:tail_id].pos = self.system.part[head_id:tail_id].pos - cm + self.system.box_l
         head_id = self.num_mono+1
         tail_id = head_id+self.num_mono
         cm=np.mean(self.system.part[head_id:tail_id].pos, axis=0)
@@ -71,9 +69,9 @@ class AnalyzeChain(ut.TestCase):
             ij = np.triu_indices(len(r), k=1)
             r_ij = r[ij[0]] - r[ij[1]]
             dist = np.sqrt(np.sum(r_ij**2, axis=1))
-            rh.append(self.num_mono*self.num_mono*0.5/(np.sum(1./dist)))
+            #rh.append(self.num_mono*self.num_mono*0.5/(np.sum(1./dist)))
             # the other way do it, with the proper prefactor of N(N-1)
-            #rh.append(np.mean(1./dist))
+            rh.append(1./np.mean(1./dist))
         rh = np.array(rh)
         return np.mean(rh), np.std(rh)
 
@@ -106,7 +104,7 @@ class AnalyzeChain(ut.TestCase):
     def test_radii(self):
         # increase PBC for remove mirror images
         old_pos = self.system.part[:].pos.copy()
-        self.system.box_l *= 2.
+        self.system.box_l = self.system.box_l * 2.
         self.system.part[:].pos = old_pos
         # compare calc_re()
         core_re = self.system.analysis.calc_re(chain_start=0,
@@ -124,14 +122,14 @@ class AnalyzeChain(ut.TestCase):
                                                chain_length=self.num_mono)
         self.assertTrue( np.allclose(core_rh, self.calc_rh()))
         # restore PBC
-        self.system.box_l /= 2.
+        self.system.box_l = self.system.box_l / 2.
         self.system.part[:].pos = old_pos
 
     # test core results versus python variants (no PBC)
     def test_chain_rdf(self):
         # increase PBC for remove mirror images
         old_pos = self.system.part[:].pos.copy()
-        self.system.box_l *= 2.
+        self.system.box_l = self.system.box_l * 2.
         self.system.part[:].pos = old_pos
         r_min = 0.0
         r_max = 100.0
@@ -162,7 +160,7 @@ class AnalyzeChain(ut.TestCase):
         # min rdf
         self.assertTrue( np.allclose(core_rdf[:,3]*bin_volume*num_pair_poly/box_volume, rdf[2]))
         # restore PBC
-        self.system.box_l /= 2.
+        self.system.box_l = self.system.box_l / 2.
         self.system.part[:].pos = old_pos
 
 if __name__ == "__main__":

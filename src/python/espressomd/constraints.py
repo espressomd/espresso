@@ -1,5 +1,6 @@
 from __future__ import print_function, absolute_import
 from .script_interface import ScriptInterfaceHelper, script_interface_register
+from espressomd.utils import is_valid_type
 
 
 @script_interface_register
@@ -14,6 +15,11 @@ class Constraints(ScriptInterfaceHelper):
 
     def __getitem__(self, key):
         return self.call_method("get_elements")[key]
+
+    def __iter__(self):
+        elements = self.call_method("get_elements")
+        for e in elements:
+            yield e
 
     def add(self, *args, **kwargs):
         """
@@ -52,8 +58,14 @@ class Constraints(ScriptInterfaceHelper):
 
         """
 
-        self.call_method("remove", constraint=constraint)
+        self.call_method("remove", object=constraint)
 
+    def clear(self):
+        """
+        Remove all constraints.
+
+        """
+        self.call_method("clear")
 
 class Constraint(ScriptInterfaceHelper):
     """
@@ -76,6 +88,8 @@ class ShapeBasedConstraint(Constraint):
       only useful if penetrable is True.
     particle_type : int
       Interaction type of the constraint.
+    particle_velocity : array of :obj:`float`
+      Interaction velocity of the boudary
     penetrable : bool
       Whether particles are allowed to penetrate the
       constraint.
@@ -105,6 +119,18 @@ class ShapeBasedConstraint(Constraint):
     """
 
     _so_name = "Constraints::ShapeBasedConstraint"
+
+
+    def min_dist(self):
+        """
+        Calculates the minimum distance to all interacting particles.
+
+        Returns
+        ----------
+        :obj:float: The minimum distance
+        """
+        return self.call_method("min_dist", object=self)
+
 
     def total_force(self):
         """
@@ -137,7 +163,13 @@ class ShapeBasedConstraint(Constraint):
 
         """
         return self.call_method("total_force", constraint=self)
-
+        
+    def total_normal_force(self):
+        """
+        Get the total summed normal force acting on this constraint.
+        
+        """
+        return self.call_method("total_normal_force", constraint=self)
 
 class HomogeneousMagneticField(Constraint):
     """

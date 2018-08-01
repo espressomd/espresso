@@ -38,9 +38,6 @@ public:
       auto obj_ptr =
           get_value<std::shared_ptr<ManagedType>>(parameters.at("object"));
 
-      if (obj_ptr == nullptr)
-        throw std::runtime_error("Wrong type");
-
       add_in_core(obj_ptr);
       m_elements.push_back(obj_ptr);
     }
@@ -65,7 +62,23 @@ public:
       return ret;
     }
 
-    return true;
+    if (method == "clear") {
+      for (auto const &e : m_elements) {
+        remove_in_core(e);
+      }
+
+      m_elements.clear();
+    }
+
+    if (method == "size") {
+      return static_cast<int>(m_elements.size());
+    }
+
+    if (method == "empty") {
+      return m_elements.empty();
+    }
+
+    return none;
   }
 
 private:

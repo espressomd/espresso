@@ -21,10 +21,24 @@ cmake_minimum_required(VERSION 2.8)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
+if(SCAFACOS)
+  include_directories(${SCAFACOS_INCLUDE_DIRS})
+endif(SCAFACOS)
 
 configure_file(${CMAKE_SOURCE_DIR}/cmake/cmake_config.cmakein
                cmake_config.hpp
 )
+
+add_custom_target(check_myconfig
+  COMMAND ${PYTHON_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_myconfig.py
+  ${CMAKE_CXX_COMPILER}
+  ${CMAKE_CURRENT_SOURCE_DIR}/features.def
+  ${CMAKE_CURRENT_BINARY_DIR}/core/myconfig-final.hpp
+  cmake_config.hpp
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/features.def
+          myconfig
+  )
 
 add_subdirectory(core)
 

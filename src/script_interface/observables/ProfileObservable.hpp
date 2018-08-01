@@ -22,101 +22,78 @@
 #ifndef SCRIPT_INTERFACE_OBSERVABLES_PROFILEOBSERVABLE_HPP
 #define SCRIPT_INTERFACE_OBSERVABLES_PROFILEOBSERVABLE_HPP
 
-#include "ScriptInterface.hpp"
-
+#include "auto_parameters/AutoParameters.hpp"
 #include <memory>
 
-#include "Observable.hpp"
+#include "core/observables/LBVelocityProfile.hpp"
 #include "core/observables/ProfileObservable.hpp"
-#include "core/observables/DensityProfile.hpp"
-#include "core/observables/ForceDensityProfile.hpp"
-#include "core/observables/FluxDensityProfile.hpp"
-#include "core/observables/LbVelocityProfile.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
 
-class ProfileObservable : public Observable {
+template <typename CoreObs>
+class ProfileObservable
+    : public AutoParameters<ProfileObservable<CoreObs>, Observable> {
 public:
-  const std::string name() const override {
-    return "Observables::ProfileObservable";
-  };
+  ProfileObservable() : m_observable(std::make_shared<CoreObs>()) {
+    this->add_parameters({{"n_x_bins",
+                           [this](const Variant &v) {
+                             profile_observable()->n_x_bins = get_value<int>(v);
+                           },
+                           [this]() { return profile_observable()->n_x_bins; }},
+                          {"n_y_bins",
+                           [this](const Variant &v) {
+                             profile_observable()->n_y_bins = get_value<int>(v);
+                           },
+                           [this]() { return profile_observable()->n_y_bins; }},
+                          {"n_z_bins",
+                           [this](const Variant &v) {
+                             profile_observable()->n_z_bins = get_value<int>(v);
+                           },
+                           [this]() { return profile_observable()->n_z_bins; }},
+                          {"min_x",
+                           [this](const Variant &v) {
+                             profile_observable()->min_x = get_value<double>(v);
+                           },
+                           [this]() { return profile_observable()->min_x; }},
+                          {"min_y",
+                           [this](const Variant &v) {
+                             profile_observable()->min_y = get_value<double>(v);
+                           },
+                           [this]() { return profile_observable()->min_y; }},
+                          {"min_z",
+                           [this](const Variant &v) {
+                             profile_observable()->min_z = get_value<double>(v);
+                           },
+                           [this]() { return profile_observable()->min_z; }},
+                          {"max_x",
+                           [this](const Variant &v) {
+                             profile_observable()->max_x = get_value<double>(v);
+                           },
+                           [this]() { return profile_observable()->max_x; }},
+                          {"max_y",
+                           [this](const Variant &v) {
+                             profile_observable()->max_y = get_value<double>(v);
+                           },
+                           [this]() { return profile_observable()->max_y; }},
+                          {"max_z",
+                           [this](const Variant &v) {
+                             profile_observable()->max_z = get_value<double>(v);
+                           },
+                           [this]() { return profile_observable()->max_z; }}});
+  }
 
-  VariantMap get_parameters() const override {
-    return {{"ids", profile_observable()->ids},
+  std::shared_ptr<::Observables::ProfileObservable> profile_observable() const {
+    return m_observable;
+  }
 
-            {"xbins", profile_observable()->xbins},
-            {"ybins", profile_observable()->ybins},
-            {"zbins", profile_observable()->zbins},
+  std::shared_ptr<::Observables::Observable> observable() const override {
+    return m_observable;
+  }
 
-            {"minx", profile_observable()->minx},
-            {"miny", profile_observable()->miny},
-            {"minz", profile_observable()->minz},
-
-            {"maxx", profile_observable()->maxx},
-            {"maxy", profile_observable()->maxy},
-            {"maxz", profile_observable()->maxz}};
-  };
-
-  ParameterMap valid_parameters() const override {
-    return {{"ids", {ParameterType::INT_VECTOR, true}},
-            {"xbins", {ParameterType::INT, true}},
-            {"ybins", {ParameterType::INT, true}},
-            {"zbins", {ParameterType::INT, true}},
-            {"minx", {ParameterType::DOUBLE, true}},
-            {"miny", {ParameterType::DOUBLE, true}},
-            {"minz", {ParameterType::DOUBLE, true}},
-            {"maxx", {ParameterType::DOUBLE, true}},
-            {"maxy", {ParameterType::DOUBLE, true}},
-            {"maxz", {ParameterType::DOUBLE, true}}};
-  };
-
-  void set_parameter(std::string const &name, Variant const &value) override {
-    SET_PARAMETER_HELPER("ids", profile_observable()->ids);
-
-    SET_PARAMETER_HELPER("xbins", profile_observable()->xbins);
-    SET_PARAMETER_HELPER("ybins", profile_observable()->ybins);
-    SET_PARAMETER_HELPER("zbins", profile_observable()->zbins);
-
-    SET_PARAMETER_HELPER("minx", profile_observable()->minx);
-    SET_PARAMETER_HELPER("miny", profile_observable()->miny);
-    SET_PARAMETER_HELPER("minz", profile_observable()->minz);
-
-    SET_PARAMETER_HELPER("maxx", profile_observable()->maxx);
-    SET_PARAMETER_HELPER("maxy", profile_observable()->maxy);
-    SET_PARAMETER_HELPER("maxz", profile_observable()->maxz);
-  };
-
-  virtual std::shared_ptr<::Observables::ProfileObservable>
-  profile_observable() const = 0;
+private:
+  std::shared_ptr<CoreObs> m_observable;
 };
-
-#define NEW_PROFILE_OBSERVABLE(obs_name)                                       \
-  class obs_name : public ProfileObservable {                                  \
-  public:                                                                      \
-    obs_name() : m_observable(new ::Observables::obs_name()){};                \
-                                                                               \
-    const std::string name() const override {                                  \
-      return "Observables::" #obs_name;                                        \
-    }                                                                          \
-                                                                               \
-    std::shared_ptr<::Observables::Observable> observable() const override {   \
-      return m_observable;                                                     \
-    }                                                                          \
-                                                                               \
-    std::shared_ptr<::Observables::ProfileObservable>                          \
-    profile_observable() const override {                                      \
-      return m_observable;                                                     \
-    }                                                                          \
-                                                                               \
-  private:                                                                     \
-    std::shared_ptr<::Observables::obs_name> m_observable;                     \
-  };
-
-NEW_PROFILE_OBSERVABLE(DensityProfile)
-NEW_PROFILE_OBSERVABLE(ForceDensityProfile)
-NEW_PROFILE_OBSERVABLE(FluxDensityProfile)
-NEW_PROFILE_OBSERVABLE(LBVelocityProfile)
 
 } /* namespace Observables */
 } /* namespace ScriptInterface */

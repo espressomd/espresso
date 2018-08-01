@@ -37,18 +37,15 @@ class AccumulatorTest(ut.TestCase):
 
     def setUp(self):
         np.random.seed(seed=162)
-        self.system = espressomd.System()
-        self.system.box_l = [10.0] * 3
+        self.system = espressomd.System(box_l = [10.0] * 3)
         self.system.cell_system.skin = 0.4
         self.system.time_step = 0.01
         self.system.part.add(id=0, pos=[0.0, 0.0, 0.0])
         self.system.integrator.run(steps=0)
         self.pos_obs = espressomd.observables.ParticlePositions(ids=(0,))
-        self.system.auto_update_observables.add(self.pos_obs)
-        self.pos_obs_acc = espressomd.accumulators.Accumulator(
-            obs=self.pos_obs)
+        self.pos_obs_acc = espressomd.accumulators.MeanVarianceCalculator(obs=self.pos_obs)
         self.system.auto_update_accumulators.add(self.pos_obs_acc)
-        self.positions = 10.0 * np.random.rand(10, 3)
+        self.positions = np.copy(self.system.box_l * np.random.rand(10, 3))
 
     def test_accumulator(self):
         """Check that accumulator results are the same as the respective numpy result.
@@ -57,12 +54,13 @@ class AccumulatorTest(ut.TestCase):
         for i in range(self.positions.shape[0]):
             self.system.part[0].pos = self.positions[i]
             self.system.integrator.run(1)
+        self.assertEqual(self.pos_obs, self.pos_obs_acc.get_params()['obs'])
         np.testing.assert_allclose(
             self.pos_obs_acc.get_mean(), np.mean(
                 self.positions, axis=0), atol=1e-4)
         np.testing.assert_allclose(
             self.pos_obs_acc.get_variance(), np.var(
-                self.positions, axis=0), atol=1e-4)
+                self.positions, axis=0,ddof=1), atol=1e-4)
 
 
 if __name__ == "__main__":

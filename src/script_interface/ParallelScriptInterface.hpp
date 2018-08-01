@@ -24,8 +24,8 @@
 
 #include <utility>
 
-#include "ScriptInterface.hpp"
 #include "ParallelScriptInterfaceSlave.hpp"
+#include "ScriptInterface.hpp"
 
 namespace ScriptInterface {
 
@@ -53,8 +53,8 @@ public:
     return std::static_pointer_cast<ScriptInterfaceBase>(m_p);
   }
 
-  /* Script interface implementation */
-  const std::string name() const override { return m_p->name(); }
+  void construct(VariantMap const &params) override;
+  const std::string name() const { return m_p->name(); }
   void set_parameter(const std::string &name, const Variant &value) override;
   void
   set_parameters(const std::map<std::string, Variant> &parameters) override;
@@ -68,16 +68,16 @@ public:
                       const VariantMap &parameters) override;
 
   /* Id mapping */
-  Variant map_local_to_parallel_id(std::string const &name,
-                                   Variant const &value) const;
-  Variant map_parallel_to_local_id(std::string const &name,
-                                   Variant const &value);
+  Variant map_local_to_parallel_id(Variant const &value) const;
+  Variant map_parallel_to_local_id(Variant const &value);
 
 private:
-  using map_t = std::map<std::string, std::shared_ptr<ParallelScriptInterface>>;
+  using map_t = std::map<ObjectId, std::shared_ptr<ParallelScriptInterface>>;
 
-  void call(CallbackAction action) {
-    m_cb->call(m_callback_id, static_cast<int>(action));
+  VariantMap unwrap_variant_map(VariantMap const &map);
+
+  void call(CallbackAction action, int has_params = 0) {
+    m_cb->call(m_callback_id, static_cast<int>(action), has_params);
   }
 
   /**
