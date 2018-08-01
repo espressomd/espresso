@@ -139,11 +139,14 @@ IF LB_GPU or LB:
             if python_lbfluid_set_couple_flag(self._params["couple"]):
                 raise Exception("lb_lbfluid_set_couple_flag error")
 
-            if python_lbfluid_set_gamma_odd(self._params["gamma_odd"]):
-                raise Exception("lb_lbfluid_set_gamma_odd error")
+            if "gamma_odd" in self._params:
+                if python_lbfluid_set_gamma_odd(self._params["gamma_odd"]):
+                    raise Exception("lb_lbfluid_set_gamma_odd error")
 
-            if python_lbfluid_set_gamma_even(self._params["gamma_even"]):
-                raise Exception("lb_lbfluid_set_gamma_even error")
+            if "gamma_even" in self._params:
+                if python_lbfluid_set_gamma_even(self._params["gamma_even"]):
+                    raise Exception("lb_lbfluid_set_gamma_even error")
+
             utils.handle_errors("LB fluid activation")
 
         # function that calls wrapper functions which get the parameters from C-Level
