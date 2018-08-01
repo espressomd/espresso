@@ -177,7 +177,7 @@ msd = Correlator(obs1=pos_id,
                    dt=tstep,
                    tau_max=tmax,
                    tau_lin=16)
-system.auto_update_correlators.add(msd)
+system.auto_update_accumulators.add(msd)
 
 # Integrate
 
@@ -186,17 +186,17 @@ for i in range(sampsteps):
 
 # Finalize the correlator and write to disk
 
-system.auto_update_correlators.remove(msd)
+system.auto_update_accumulators.remove(msd)
 msd.finalize()
 numpy.savetxt("output.dat",msd.result())
 \end{espresso}
 Here, the observable \codees{pos_id} is set to the particle positions of the only particle in the simulation (with ID 0). Then an MSD correlation is created on the next line. Since the MSD is an auto-correlation function, we only require one entry for the observables, see the User Guide for additional information~\cite{UG}. The command \codees{corr_operation} allows one to choose the type of correlation, in this case \codees{"square_distance_componentwise"}, which gives the MSD for each component (x, y, and z). The time step \codees{dt} is set next, followed by the value of the maximum time (\codees{tmax}) over which the correlation is to be computed. This maximum can be set to the total integrated time. However, it is recommended --- as in the script --- not to do so, since this will give very limited sampling for the longest times (one or even zero samples). In the tutorial only a 1000th of the total run length is used for \codees{tmax}, which means at least 1000 samples are gathered for the longest time in the correlation function. You can play with this parameter to see the effect on the quality of the sampling. The command \codees{tau_lin=16} indicates that the intervals of sampling are chosen by the correlator according to an exponential distribution, see the User Guide~\cite{UG}. Next the command
 \begin{espresso}
-system.auto_update_correlators.add(msd)
+system.auto_update_accumulators.add(msd)
 \end{espresso}
 lets \es{} know to start measuring the correlation function and to do so automatically during integration. After integration, the commands
 \begin{espresso}
-system.auto_update_correlators.remove(msd)
+system.auto_update_accumulators.remove(msd)
 msd.finalize()
 \end{espresso}
 ensure that the auto updating is terminated and that any available information used to create the auto correlation. That is, information that has not yet been used is processed. Finally, the correlation allows you to write output to disk in a format that depends on the specific choice of correlation.

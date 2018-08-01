@@ -30,8 +30,9 @@ import os
 import sys
 import time
 
+import espressomd
 from espressomd.observables import ParticlePositions
-from espressomd.correlators import Correlator
+from espressomd.accumulators import Correlator
 
 
 # create an output folder
@@ -106,10 +107,10 @@ for ...:
                      dt=tstep,
                      tau_max=tmax,
                      tau_lin=16)
-    system.auto_update_correlators.add(msd)
+    system.auto_update_accumulators.add(msd)
 
 ## Exercise 3 ##
-# Construct the auto-correlators for the VACF and AVACF,
+# Construct the auto-accumulators for the VACF and AVACF,
 # using the example of the MSD
 
     # Initialize the velocity auto-correlation function (VACF) correlator
@@ -126,9 +127,9 @@ for ...:
     for i in range(sampsteps):
         system.integrator.run(samplength)
 
-    # Finalize the correlators and write to disk
+    # Finalize the accumulators and write to disk
 
-    system.auto_update_correlators.remove(msd)
+    system.auto_update_accumulators.remove(msd)
     msd.finalize()
     np.savetxt("{}/msd_{}_{}.dat".format(outdir, vel, run), msd.result())
 
