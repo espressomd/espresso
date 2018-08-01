@@ -361,7 +361,9 @@ IF LB or LB_GPU:
                 return array_locked(double_return)
 
             def __set__(self, value):
-                cdef double[19] double_return = value
+                cdef double[19] double_return
+                for i in range(19):
+                    double_return[i] = value[i]
                 lb_lbnode_set_pop(self.node, double_return)
 
         property boundary:

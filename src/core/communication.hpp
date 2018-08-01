@@ -542,7 +542,7 @@ void mpi_bcast_cuda_global_part_vars();
  * @param j     local fluid velocity
  * @param pi    local fluid pressure
  */
-void mpi_send_fluid(int node, int index, double rho, double *j, double *pi);
+void mpi_send_fluid(int node, int index, double rho, const std::array<double, 3> j, const std::array<double, 6> pi);
 
 /** Issue REQ_GET_FLUID: Receive a single lattice site from a processor.
  * @param node  processor to send to

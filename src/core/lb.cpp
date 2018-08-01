@@ -60,7 +60,8 @@
 #include "cuda_interface.hpp"
 
 #ifdef ADDITIONAL_CHECKS
-static void lb_check_halo_regions();
+void lb_check_halo_regions();
+void print_fluid();
 #endif // ADDITIONAL_CHECKS
 
 /** Flag indicating momentum exchange between particles and fluid */
@@ -1463,8 +1464,8 @@ int lb_lbnode_set_rho(int *ind, double *p_rho) {
     Lattice::index_t index;
     int node, grid[3], ind_shifted[3];
     double rho;
-    double j[3];
-    double pi[6];
+    std::array<double, 3> j;
+    std::array<double, 6> pi;
 
     ind_shifted[0] = ind[0];
     ind_shifted[1] = ind[1];
@@ -1473,7 +1474,7 @@ int lb_lbnode_set_rho(int *ind, double *p_rho) {
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
-    mpi_recv_fluid(node, index, &rho, j, pi);
+    mpi_recv_fluid(node, index, &rho, j.data(), pi.data());
     rho = (*p_rho) * lbpar.agrid * lbpar.agrid * lbpar.agrid;
     mpi_send_fluid(node, index, rho, j, pi);
 
@@ -1500,8 +1501,8 @@ int lb_lbnode_set_u(int *ind, double *u) {
     Lattice::index_t index;
     int node, grid[3], ind_shifted[3];
     double rho;
-    double j[3];
-    double pi[6];
+    std::array<double, 3> j;
+    std::array<double, 6> pi;
 
     ind_shifted[0] = ind[0];
     ind_shifted[1] = ind[1];
@@ -1512,7 +1513,7 @@ int lb_lbnode_set_u(int *ind, double *u) {
 
     /* transform to lattice units */
 
-    mpi_recv_fluid(node, index, &rho, j, pi);
+    mpi_recv_fluid(node, index, &rho, j.data(), pi.data());
     j[0] = rho * u[0] * lbpar.tau / lbpar.agrid;
     j[1] = rho * u[1] * lbpar.tau / lbpar.agrid;
     j[2] = rho * u[2] * lbpar.tau / lbpar.agrid;
@@ -1540,6 +1541,7 @@ int lb_lbnode_set_pop(int *ind, double *p_pop) {
 #endif // LB_GPU
   } else {
 #ifdef LB
+    printf("Called set_pop\n");
     Lattice::index_t index;
     int node, grid[3], ind_shifted[3];
 
@@ -1550,7 +1552,6 @@ int lb_lbnode_set_pop(int *ind, double *p_pop) {
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
     mpi_send_fluid_populations(node, index, p_pop);
-    lbpar.resend_halo = 1;
 #endif // LB
   }
   return 0;
@@ -2101,16 +2102,13 @@ void lb_reinit_fluid() {
   /* default values for fields in lattice units */
   /* here the conversion to lb units is performed */
   double rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
-  double j[3] = {0., 0., 0.};
-  // double pi[6] = { rho*lbmodel.c_sound_sq, 0., rho*lbmodel.c_sound_sq, 0.,
-  // 0., rho*lbmodel.c_sound_sq };
-  double pi[6] = {0., 0., 0., 0., 0., 0.};
+  std::array<double, 3> j = {{0., 0., 0.}};
+  std::array<double, 6> pi = {{0., 0., 0., 0., 0., 0.}};
 
   LB_TRACE(fprintf(stderr,
                    "Initialising the fluid with equilibrium populations\n"););
-
   for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
-       index++) {
+       ++index) {
     // calculate equilibrium distribution
     lb_calc_n_from_rho_j_pi(index, rho, j, pi);
 
@@ -2187,7 +2185,7 @@ void lb_release() {
 /***********************************************************************/
 /*@{*/
 void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
-                             const double *j, double *pi) {
+                             const std::array<double, 3> j, const std::array<double, 6> pi) {
   int i;
   double local_rho, local_j[3], local_pi[6], trace;
   const double avg_rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
@@ -3130,6 +3128,19 @@ void lb_calc_average_rho() {
 }
 
 /*@}*/
+void print_fluid() {
+  for (int x=0; x < lblattice.halo_grid[0]; ++x) {
+    for (int y=0; y < lblattice.halo_grid[1]; ++y) {
+        for (int z=0; z<lblattice.halo_grid[2]; ++z) {
+            int index = get_linear_index(x, y, z, lblattice.halo_grid);
+            for (int p=0; p < lbmodel.n_veloc; ++p) {
+                printf("x %d y %d z %d pop %d: %f\n", x, y, z, p, lbfluid[1][p][index]);
+            }
+        }
+    }
+  }
+}
+
 
 static int compare_buffers(double *buf1, double *buf2, int size) {
   int ret;

@@ -72,11 +72,11 @@ class LBStreamingCommon(object):
         self.prepare()
         for grid_index in itertools.product(range(self.grid[0]), range(self.grid[1]), range(self.grid[2])):
             for n_v in range(19):
-                self.set_fluid_populations(grid_index,n_v)
+                self.set_fluid_populations(grid_index, n_v)
                 self.system.integrator.run(1)
-                target_node = np.mod(grid_index + VELOCITY_VECTORS[n_v], self.grid[0])
-                np.testing.assert_almost_equal(self.lbf[grid_index+VELOCITY_VECTORS[n_v]].population[n_v], 1.0)
-                self.reset_fluid_populations()
+                target_node_index = np.mod(grid_index + VELOCITY_VECTORS[n_v], self.grid)
+                np.testing.assert_almost_equal(self.lbf[target_node_index].population[n_v], 1.0)
+                self.lbf[target_node_index].population = np.zeros(19)
 
 @ut.skipIf(not espressomd.has_features('LB') or espressomd.has_features('SHANCHEN'),
         "Skipping test due to missing features.")
