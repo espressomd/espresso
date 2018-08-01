@@ -136,7 +136,7 @@ or the other by running one of the following two commands:
     ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall)"
 
 If your Mac has an Nvidia graphics card, you should also download and install the
-CUDA SDK [6] to make use of GPU computation.
+CUDA SDK [6]_ to make use of GPU computation.
 
 .. _Installing python dependencies:
 
