@@ -53,17 +53,6 @@ class InteractionsNonBondedTest(ut.TestCase):
             np.sin(phi) + k * np.dot(k, v) * (1 - np.cos(phi))
         return vrot
 
-    # Required, since assertAlmostEqual does NOT check significant places
-    def assertFractionAlmostEqual(self, a, b, places=10):
-        if abs(b) < 1E-8:
-            self.assertAlmostEqual(a, b)
-        else:
-            self.assertAlmostEqual(a / b, 1., places=4)
-
-    def assertItemsFractionAlmostEqual(self, a, b):
-        for i, ai in enumerate(a):
-            self.assertFractionAlmostEqual(ai, b[i])
-
     # Analytical Expression
     # for Angle Harmonic Potential
     def angle_harmonic_potential(self, phi, bend=1.0, phi0=np.pi):
@@ -101,7 +90,7 @@ class InteractionsNonBondedTest(ut.TestCase):
                 phi=i * d_phi, bend=ah_bend, phi0=ah_phi0)
 
             # Check that energies match
-            self.assertFractionAlmostEqual(E_sim, E_ref)
+            np.testing.assert_almost_equal(E_sim, E_ref, decimal = 4)
 
     # Test Angle Cosine Potential
     def test_angle_cosine(self):
@@ -127,7 +116,7 @@ class InteractionsNonBondedTest(ut.TestCase):
                 phi = i*d_phi, bend = ac_bend, phi0 = ac_phi0)
 
             # Check that energies match
-            self.assertFractionAlmostEqual(E_sim, E_ref)
+            np.testing.assert_almost_equal(E_sim, E_ref, decimal = 4)
 
     # Test Angle Cosine Squared Potential
     def test_angle_cos_squared(self):
@@ -153,7 +142,7 @@ class InteractionsNonBondedTest(ut.TestCase):
                 phi = i*d_phi, bend = acs_bend, phi0 = acs_phi0)
 
             # Check that energies match
-            self.assertFractionAlmostEqual(E_sim, E_ref)
+            np.testing.assert_almost_equal(E_sim, E_ref)
 
 
 if __name__ == '__main__':

@@ -54,17 +54,6 @@ class InteractionsBondedTest(ut.TestCase):
     def tearDown(self):
         self.system.part.clear()
 
-    # Required, since assertAlmostEqual does NOT check significant places
-    def assertFractionAlmostEqual(self, a, b, places=10):
-        if abs(b) < 1E-8:
-            self.assertAlmostEqual(a, b)
-        else:
-            self.assertAlmostEqual(a / b, 1.)
-
-    def assertItemsFractionAlmostEqual(self, a, b):
-        for i, ai in enumerate(a):
-            self.assertFractionAlmostEqual(ai, b[i])
-
     def rotate_vector(self, v, k, phi):
         """Rotates vector v around unit vector k by angle phi.
         Uses Rodrigues' rotation formula."""
@@ -171,9 +160,10 @@ class InteractionsBondedTest(ut.TestCase):
                                     self.system.part[3].pos)
 
             # Check that energies match, ...
-            self.assertFractionAlmostEqual(E_sim, E_ref)
+            np.testing.assert_almost_equal(E_sim, E_ref)
             # and has correct value.
-            self.assertItemsFractionAlmostEqual(f2_sim, f2_ref)
+            f2_sim_copy = np.copy(f2_sim)
+            np.testing.assert_almost_equal(f2_sim_copy, f2_ref)
 
 
 

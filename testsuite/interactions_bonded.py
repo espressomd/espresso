@@ -48,17 +48,6 @@ class InteractionsBondedTest(ut.TestCase):
 
         self.system.part.clear()
 
-    # Required, since assertAlmostEqual does NOT check significant places
-    def assertFractionAlmostEqual(self, a, b, places=10):
-        if abs(b) < 1E-8:
-            self.assertAlmostEqual(a, b)
-        else:
-            self.assertAlmostEqual(a / b, 1.)
-
-    def assertItemsFractionAlmostEqual(self, a, b):
-        for i, ai in enumerate(a):
-            self.assertFractionAlmostEqual(ai, b[i])
-
     # Test Harmonic Bond
     def test_harmonic(self):
 
@@ -88,11 +77,12 @@ class InteractionsBondedTest(ut.TestCase):
                                     k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut)
 
             # Check that energies match, ...
-            self.assertFractionAlmostEqual(E_sim, E_ref)
+            np.testing.assert_almost_equal(E_sim, E_ref)
             # force equals minus the counter-force  ...
             self.assertTrue((f0_sim == -f1_sim).all())
             # and has correct value.
-            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
+            f1_sim_copy = np.copy(f1_sim)
+            np.testing.assert_almost_equal(f1_sim_copy, f1_ref)
 
         # Check that bond breaks when distance > r_cut
         self.system.part[1].pos = self.system.part[1].pos + self.step
@@ -128,11 +118,12 @@ class InteractionsBondedTest(ut.TestCase):
                                 k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0)
 
             # Check that energies match, ...
-            self.assertFractionAlmostEqual(E_sim, E_ref)
+            np.testing.assert_almost_equal(E_sim, E_ref)
             # force equals minus the counter-force  ...
             self.assertTrue((f0_sim == -f1_sim).all())
             # and has correct value.
-            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
+            f1_sim_copy = np.copy(f1_sim)
+            np.testing.assert_almost_equal(f1_sim_copy, f1_ref)
 
         # Check that bond breaks when distance > r_cut
         self.system.part[1].pos = self.system.part[1].pos + self.step
@@ -168,11 +159,12 @@ class InteractionsBondedTest(ut.TestCase):
                                 k=coulomb_k, q1 = q1, q2 = q2)
 
             # Check that energies match, ...
-            self.assertFractionAlmostEqual(E_sim, E_ref)
+            np.testing.assert_almost_equal(E_sim, E_ref)
             # force equals minus the counter-force  ...
             self.assertTrue((f0_sim == -f1_sim).all())
             # and has correct value.
-            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
+            f1_sim_copy = np.copy(f1_sim)
+            np.testing.assert_almost_equal(f1_sim_copy, f1_ref)
 
 
 if __name__ == '__main__':
