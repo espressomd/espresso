@@ -72,7 +72,18 @@ outp insource srcdir builddir make_check \
     python_version with_cuda
 
 # check indentation of python files
-pep8 --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
+pep8_command () {
+    if hash pep8 2> /dev/null; then
+        pep8 "$@"
+    elif hash pycodestyle 2> /dev/null; then
+        pycodestyle "$@"
+    else
+        echo "pep8 not found";
+        exit 1
+    fi
+}
+
+pep8_command --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
 ec=$?
 if [ $ec -eq 0 ]; then
     echo ""
@@ -90,6 +101,10 @@ pylint_command () {
         pylint "$@"
     elif hash pylint3 2> /dev/null; then
         pylint3 "$@"
+    elif hash pylint-2 2> /dev/null; then
+        pylint-2 "$@"
+    elif hash pylint-3 2> /dev/null; then
+        pylint-3 "$@"
     else
         echo "pylint not found";
         exit 1
@@ -116,7 +131,7 @@ fi
 # load MPI module if necessary
 if [ -f "/etc/os-release" ]; then
     grep -q suse /etc/os-release && source /etc/profile.d/modules.sh && module load gnu-openmpi
-    grep -q rhel /etc/os-release && source /etc/profile.d/modules.sh && module load mpi
+    grep -q 'rhel\|fedora' /etc/os-release && for f in /etc/profile.d/*module*.sh; do source $f; done && module load mpi
 fi
 
 # CONFIGURE
