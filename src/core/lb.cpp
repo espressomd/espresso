@@ -115,8 +115,8 @@ Lattice lblattice;
 /** Pointer to the velocity populations of the fluid.
  * lbfluid_pre contains pre-collision populations, lbfluid_post
  * contains post-collision */
-LB_Fluid lbfluid_pre = 0;
-static LB_Fluid lbfluid_post = 0;
+LB_Fluid lbfluid_pre;
+static LB_Fluid lbfluid_post;
 
 /** Pointer to the hydrodynamic fields of the fluid nodes */
 std::vector<LB_FluidNode> lbfields;
@@ -1562,7 +1562,7 @@ int lb_lbnode_set_extforce_density(int *ind, double *f) { return -100; }
 #ifdef LB
 /********************** The Main LB Part *************************************/
 /* Halo communication for push scheme */
-static void halo_push_communication(const LB_Fluid& lbfluid) {
+static void halo_push_communication(LB_Fluid& lbfluid) {
   Lattice::index_t index;
   int x, y, z, count;
   int rnode, snode;
@@ -1905,36 +1905,13 @@ int lb_sanity_checks() {
 
 /***********************************************************************/
 
-/** (Pre-)allocate memory for data structures */
-void lb_pre_init() {
-  lbfluid_pre = (double **)Utils::malloc(lbmodel.n_veloc * sizeof(double *));
-  lbfluid_pre[0] = (double *)Utils::malloc(lblattice.halo_grid_volume *
-                                           lbmodel.n_veloc * sizeof(double));
-  lbfluid_post = (double **)Utils::malloc(lbmodel.n_veloc * sizeof(double *));
-  lbfluid_post[0] = (double *)Utils::malloc(lblattice.halo_grid_volume *
-                                            lbmodel.n_veloc * sizeof(double));
-}
-
 /** (Re-)allocate memory for the fluid and initialize pointers. */
 static void lb_realloc_fluid() {
-  int i;
-
   LB_TRACE(printf("reallocating fluid\n"));
+  const std::array<int, 2> size = {lbmodel.n_veloc, lblattice.halo_grid_volume};
 
-  lbfluid_pre = Utils::realloc(lbfluid_pre, lbmodel.n_veloc * sizeof(double *));
-  lbfluid_post =
-      Utils::realloc(lbfluid_post, lbmodel.n_veloc * sizeof(double *));
-  lbfluid_pre[0] =
-      Utils::realloc(lbfluid_pre[0], lblattice.halo_grid_volume *
-                                         lbmodel.n_veloc * sizeof(double));
-  lbfluid_post[0] =
-      Utils::realloc(lbfluid_post[0], lblattice.halo_grid_volume *
-                                          lbmodel.n_veloc * sizeof(double));
-
-  for (i = 0; i < lbmodel.n_veloc; ++i) {
-    lbfluid_pre[i] = lbfluid_pre[0] + i * lblattice.halo_grid_volume;
-    lbfluid_post[i] = lbfluid_post[0] + i * lblattice.halo_grid_volume;
-  }
+  lbfluid_pre.resize(size);
+  lbfluid_post.resize(size);
 
   lbfields.resize(lblattice.halo_grid_volume);
 }
@@ -2146,17 +2123,8 @@ void lb_init() {
   LB_TRACE(printf("Initialzing fluid on CPU successful\n"));
 }
 
-/** Release the fluid. */
-void lb_release_fluid() {
-  free(lbfluid_pre[0]);
-  free(lbfluid_pre);
-  free(lbfluid_post[0]);
-  free(lbfluid_post);
-}
-
 /** Release fluid and communication. */
 void lb_release() {
-  lb_release_fluid();
   release_halo_communication(&update_halo_comm);
 }
 
@@ -2441,7 +2409,7 @@ inline void lb_reset_force_densities(Lattice::index_t index) {
                                      lbpar.agrid * lbpar.tau * lbpar.tau;
 }
 
-inline void lb_calc_n_from_modes_push(const LB_Fluid& lbfluid, Lattice::index_t index,
+inline void lb_calc_n_from_modes_push(LB_Fluid& lbfluid, Lattice::index_t index,
                                       double *m) {
   int yperiod = lblattice.halo_grid[0];
   int zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
@@ -2971,7 +2939,7 @@ void calc_particle_lattice_ia() {
 
       /* exchange halo regions (for fluid-particle coupling) */
       halo_communication(&update_halo_comm,
-                         reinterpret_cast<char *>(*lbfluid_pre));
+                         reinterpret_cast<char *>(lbfluid_pre.data()));
 
 #ifdef ADDITIONAL_CHECKS
       lb_check_halo_regions(lbfluid_pre);

@@ -186,7 +186,8 @@ extern Lattice lblattice;
 /** Pointer to the velocity populations of the fluid.
  * lbfluid_pre contains pre-collision populations, lbfluid_post
  * contains post-collision populations*/
-using LB_Fluid = double**;
+// using LB_Fluid = double **;
+using LB_Fluid = boost::multi_array<double, 2>;
 extern LB_Fluid lbfluid_pre;
 //extern boost::multi_array<double, 2> lbfluid_pre;
 
@@ -207,9 +208,6 @@ extern int transfer_momentum;
  * If boundaries are present, it also applies the boundary conditions.
  */
 void lattice_boltzmann_update();
-
-/** (Pre-)initializes data structures. */
-void lb_pre_init();
 
 /** Performs a full initialization of
  *  the Lattice Boltzmann system. All derived parameters
