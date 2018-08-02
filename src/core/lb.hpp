@@ -29,10 +29,12 @@
 
 #include "config.hpp"
 
+#ifdef LB
+
 #include "lattice_inline.hpp"
 #include "utils.hpp"
 
-#ifdef LB
+#include <boost/multi_array.hpp>
 
 /* For the D3Q19 model most functions have a separate implementation
  * where the coefficients and the velocity vectors are hardcoded
@@ -122,7 +124,6 @@ struct LB_FluidNode {
 
 /** Data structure holding the parameters for the Lattice Boltzmann system. */
 typedef struct {
-
   /** number density (LJ units) */
   double rho;
 
@@ -185,7 +186,9 @@ extern Lattice lblattice;
 /** Pointer to the velocity populations of the fluid.
  * lbfluid_pre contains pre-collision populations, lbfluid_post
  * contains post-collision populations*/
-extern double **lbfluid_pre;
+using LB_Fluid = double**;
+extern LB_Fluid lbfluid_pre;
+//extern boost::multi_array<double, 2> lbfluid_pre;
 
 /** Pointer to the hydrodynamic fields of the fluid */
 extern std::vector<LB_FluidNode> lbfields;

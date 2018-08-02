@@ -60,7 +60,7 @@
 #include "cuda_interface.hpp"
 
 #ifdef ADDITIONAL_CHECKS
-static void lb_check_halo_regions(double **lbfluid);
+static void lb_check_halo_regions(const LB_Fluid& lbfluid);
 #endif // ADDITIONAL_CHECKS
 
 /** Flag indicating momentum exchange between particles and fluid */
@@ -115,8 +115,8 @@ Lattice lblattice;
 /** Pointer to the velocity populations of the fluid.
  * lbfluid_pre contains pre-collision populations, lbfluid_post
  * contains post-collision */
-double **lbfluid_pre = 0;
-static double **lbfluid_post = 0;
+LB_Fluid lbfluid_pre = 0;
+static LB_Fluid lbfluid_post = 0;
 
 /** Pointer to the hydrodynamic fields of the fluid nodes */
 std::vector<LB_FluidNode> lbfields;
@@ -1562,7 +1562,7 @@ int lb_lbnode_set_extforce_density(int *ind, double *f) { return -100; }
 #ifdef LB
 /********************** The Main LB Part *************************************/
 /* Halo communication for push scheme */
-static void halo_push_communication(double **lbfluid) {
+static void halo_push_communication(const LB_Fluid& lbfluid) {
   Lattice::index_t index;
   int x, y, z, count;
   int rnode, snode;
@@ -2441,7 +2441,7 @@ inline void lb_reset_force_densities(Lattice::index_t index) {
                                      lbpar.agrid * lbpar.tau * lbpar.tau;
 }
 
-inline void lb_calc_n_from_modes_push(double **lbfluid, Lattice::index_t index,
+inline void lb_calc_n_from_modes_push(const LB_Fluid& lbfluid, Lattice::index_t index,
                                       double *m) {
   int yperiod = lblattice.halo_grid[0];
   int zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
@@ -3111,7 +3111,7 @@ void calc_particle_lattice_ia() {
       This function can be used as an additional check. It test whether the
       halo regions have been exchanged correctly.
   */
-  void lb_check_halo_regions(double **lbfluid) {
+  void lb_check_halo_regions(const LB_Fluid& lbfluid) {
     Lattice::index_t index;
     int i, x, y, z, s_node, r_node, count = lbmodel.n_veloc;
     double *s_buffer, *r_buffer;
