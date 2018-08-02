@@ -28,7 +28,6 @@ status_pending:
 
 default:
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu:latest
   script:
     - export with_cuda=false myconfig=default with_coverage=true
     - bash maintainer/CI/build_cmake.sh
@@ -173,14 +172,14 @@ intel:15:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
-    - export myconfig=maxset with_coverage=false
+    - export myconfig=maxset with_coverage=false I_MPI_SHM_LMT=shm
     - bash maintainer/cuda_build.sh
 
 intel:17:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
-    - export myconfig=maxset with_coverage=false
+    - export myconfig=maxset with_coverage=false I_MPI_SHM_LMT=shm
     - bash maintainer/cuda_build.sh
 
 ### Other builds
