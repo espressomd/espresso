@@ -206,7 +206,7 @@ check_with_odd_no_of_processors:
 
 deploy_documentation:
   stage: deploy
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
   only:
     - python
   dependencies:
