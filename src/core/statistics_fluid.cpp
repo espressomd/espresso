@@ -265,7 +265,7 @@ void lb_calc_velprof(double *result, int *params) {
       index = get_linear_index(dir[0],dir[1],dir[2],lblattice.halo_grid);
       lb_calc_local_fields(index, &rho, j, nullptr);
       
-      //fprintf(stderr,"%p %d %.12e %.12e %d\n",lbfluid[0],index,rho,j[0],vcomp);
+      //fprintf(stderr,"%p %d %.12e %.12e %d\n",lbfluid_pre,index,rho,j[0],vcomp);
 
       if (rho < ROUND_ERROR_PREC) {
 	velprof[dir[pdir]-1] = 0.0;

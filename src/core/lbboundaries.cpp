@@ -447,13 +447,13 @@ void lb_bounce_back() {
                 for (l = 0; l < 3; l++) {
                   (*LBBoundaries::lbboundaries[lbfields[k].boundary - 1])
                       .force()[l] += // TODO
-                      (2 * lbfluid[1][i][k] + population_shift) *
+                      (2 * lbfluid_post[i][k] + population_shift) *
                       lbmodel.c[i][l];
                 }
-                lbfluid[1][reverse[i]][k - next[i]] =
-                    lbfluid[1][i][k] + population_shift;
+                lbfluid_post[reverse[i]][k - next[i]] =
+                    lbfluid_post[i][k] + population_shift;
               } else {
-                lbfluid[1][reverse[i]][k - next[i]] = lbfluid[1][i][k] = 0.0;
+                lbfluid_post[reverse[i]][k - next[i]] = lbfluid_post[i][k] = 0.0;
               }
             }
           }

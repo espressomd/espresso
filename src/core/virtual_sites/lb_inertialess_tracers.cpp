@@ -390,7 +390,7 @@ void ParticleVelocitiesFromLB_CPU()
   // Exchange halo. This is necessary because we have done LB collide-stream
   if ( lbpar.resend_halo )
   {
-    halo_communication(&update_halo_comm, (char*)**lbfluid);
+    halo_communication(&update_halo_comm, (char*)*lbfluid_pre);
     lbpar.resend_halo = 0;
   }
   
