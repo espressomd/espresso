@@ -381,6 +381,9 @@ endif()
 
 set(CMAKE_MACOSX_RPATH TRUE)
 
+if( WITH_ASAN AND WITH_MSAN )
+  message(FATAL_ERROR "Address sanitizer and memory sanitizer cannot be enabled simultaneously")
+endif()
 if( WITH_ASAN )
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -O1")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
