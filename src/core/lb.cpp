@@ -112,7 +112,9 @@ LB_Model<> lbmodel = {d3q19_lattice, d3q19_coefficients, d3q19_w,
 /** The underlying lattice structure */
 Lattice lblattice;
 
-/** Pointer to the velocity populations of the fluid nodes */
+/** Pointer to the velocity populations of the fluid.
+ * lbfluid_pre contains pre-collision populations, lbfluid_post
+ * contains post-collision */
 double **lbfluid_pre = 0;
 double **lbfluid_post = 0;
 
@@ -2626,7 +2628,7 @@ inline void lb_collide_stream() {
 
 #ifdef LB_BOUNDARIES
   /* boundary conditions for links */
-  LBBoundaries::lb_bounce_back();
+  LBBoundaries::lb_bounce_back(lbfluid_post);
 #endif // LB_BOUNDARIES
 
   /* swap the pointers for old and new population fields */
