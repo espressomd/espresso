@@ -43,6 +43,8 @@ function cmd {
 [ -z "$with_fftw" ] && with_fftw="true"
 [ -z "$with_python_interface" ] && with_python_interface="true"
 [ -z "$with_coverage" ] && with_coverage="false"
+[ -z "$with_ubsan" ] && with_ubsan="false"
+[ -z "$with_asan" ] && with_asan="false"
 [ -z "$with_static_analysis" ] && with_static_analysis="false"
 [ -z "$myconfig" ] && myconfig="default"
 [ -z "$check_procs" ] && check_procs=2
@@ -66,7 +68,10 @@ fi
 
 outp insource srcdir builddir make_check \
     cmake_params with_fftw \
-    with_python_interface with_coverage with_static_analysis myconfig check_procs build_procs  check_odd_only \
+    with_python_interface with_coverage \
+    with_ubsan with_asan \
+    with_static_analysis myconfig check_procs \
+    build_procs check_odd_only \
     with_static_analysis myconfig \
     check_procs build_procs \
     python_version with_cuda
@@ -151,6 +156,14 @@ fi
 
 if [ $with_coverage = "true" ]; then
     cmake_params="-DWITH_COVERAGE=ON $cmake_params"
+fi
+
+if [ $with_asan = "true" ]; then
+    cmake_params="-DWITH_ASAN=ON $cmake_params"
+fi
+
+if [ $with_ubsan = "true" ]; then
+    cmake_params="-DWITH_UBSAN=ON $cmake_params"
 fi
 
 if [ $with_static_analysis = "true" ]; then
