@@ -91,22 +91,14 @@ Usually the reset would be done by Espresso after the LB update. But we need to
 keep the forces till after the position update for the f/2 term
 ****************/
 
-void IBM_ResetLBForces_CPU() {
-  for (int i = 0; i < lblattice.halo_grid_volume; ++i) {
-#ifdef EXTERNAL_FORCES
+void IBM_ResetLBForces_CPU()
+{
+  for (int i = 0; i<lblattice.halo_grid_volume; ++i)
+  {
     // unit conversion: force density
-    lbfields[i].force_density[0] = lbpar.ext_force_density[0] *
-                                   pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
-    lbfields[i].force_density[1] = lbpar.ext_force_density[1] *
-                                   pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
-    lbfields[i].force_density[2] = lbpar.ext_force_density[2] *
-                                   pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
-#else
-    lbfields[i].force_density[0] = 0.0;
-    lbfields[i].force_density[1] = 0.0;
-    lbfields[i].force_density[2] = 0.0;
-    lbfields[i].has_force = 0;
-#endif
+    lbfields[i].force_density[0] = lbpar.ext_force_density[0]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
+    lbfields[i].force_density[1] = lbpar.ext_force_density[1]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
+    lbfields[i].force_density[2] = lbpar.ext_force_density[2]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
   }
 }
 
@@ -184,21 +176,14 @@ void CoupleIBMParticleToFluid(Particle *p) {
     for (int y = 0; y < 2; y++) {
       for (int x = 0; x < 2; x++) {
         // Do not put force into a halo node
-        if (!IsHalo(node_index[(z * 2 + y) * 2 + x])) {
-          // Indicate that there is a force, probably only necessary for the
-          // unusual case of compliing without EXTERNAL_FORCES
-          lbfields[node_index[(z * 2 + y) * 2 + x]].has_force_density = 1;
-
+        if ( !IsHalo(node_index[(z*2+y)*2+x]) )
+        {
           // Add force into the lbfields structure
-          double *local_f =
-              lbfields[node_index[(z * 2 + y) * 2 + x]].force_density;
+          double *local_f = lbfields[node_index[(z*2+y)*2+x]].force_density;
 
-          local_f[0] += delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] *
-                        delta_j[0];
-          local_f[1] += delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] *
-                        delta_j[1];
-          local_f[2] += delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] *
-                        delta_j[2];
+          local_f[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[0];
+          local_f[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[1];
+          local_f[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[2];
         }
       }
     }

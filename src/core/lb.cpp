@@ -2074,36 +2074,6 @@ void lb_reinit_parameters() {
   }
 }
 
-/** Resets the forces on the fluid nodes */
-void lb_reinit_force_densities() {
-  for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
-       index++) {
-#ifdef EXTERNAL_FORCES
-    // unit conversion: force density
-    lbfields[index].force_density[0] = lbpar.ext_force_density[0] *
-                                       pow(lbpar.agrid, 2) * lbpar.tau *
-                                       lbpar.tau;
-    lbfields[index].force_density[1] = lbpar.ext_force_density[1] *
-                                       pow(lbpar.agrid, 2) * lbpar.tau *
-                                       lbpar.tau;
-    lbfields[index].force_density[2] = lbpar.ext_force_density[2] *
-                                       pow(lbpar.agrid, 2) * lbpar.tau *
-                                       lbpar.tau;
-#else  // EXTERNAL_FORCES
-    lbfields[index].force_density[0] = 0.0;
-    lbfields[index].force_density[1] = 0.0;
-    lbfields[index].force_density[2] = 0.0;
-    lbfields[index].has_force_density = 0;
-#endif // EXTERNAL_FORCES
-  }
-#ifdef LB_BOUNDARIES
-  for (auto it = LBBoundaries::lbboundaries.begin();
-       it != LBBoundaries::lbboundaries.end(); ++it) {
-    (**it).reset_force();
-  }
-#endif // LB_BOUNDARIES
-}
-
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid() {
   std::fill(lbfields.begin(), lbfields.end(), LB_FluidNode());
@@ -2348,21 +2318,9 @@ inline void lb_relax_modes(Lattice::index_t index, double *mode) {
    * equilibrium value */
   rho = mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
 
-  j[0] = mode[1];
-  j[1] = mode[2];
-  j[2] = mode[3];
-
-/* if forces are present, the momentum density is redefined to
- * include one half-step of the force action.  See the
- * Chapman-Enskog expansion in [Ladd & Verberg]. */
-#ifndef EXTERNAL_FORCES
-  if (lbfields[index].has_force_density || local_cells.particles().size())
-#endif // !EXTERNAL_FORCES
-  {
-    j[0] += 0.5 * lbfields[index].force_density[0];
-    j[1] += 0.5 * lbfields[index].force_density[1];
-    j[2] += 0.5 * lbfields[index].force_density[2];
-  }
+  j[0] = mode[1] + 0.5 * lbfields[index].force_density[0];
+  j[1] = mode[2] + 0.5 * lbfields[index].force_density[1];
+  j[2] = mode[3] + 0.5 * lbfields[index].force_density[2];
 
   /* equilibrium part of the stress modes */
   pi_eq[0] = scalar(j, j) / rho;
@@ -2474,7 +2432,6 @@ inline void lb_apply_forces(Lattice::index_t index, double *mode) {
 
 inline void lb_reset_force_densities(Lattice::index_t index) {
 /* reset force */
-#ifdef EXTERNAL_FORCES
   // unit conversion: force density
   lbfields[index].force_density[0] = lbpar.ext_force_density[0] * lbpar.agrid *
                                      lbpar.agrid * lbpar.tau * lbpar.tau;
@@ -2482,12 +2439,6 @@ inline void lb_reset_force_densities(Lattice::index_t index) {
                                      lbpar.agrid * lbpar.tau * lbpar.tau;
   lbfields[index].force_density[2] = lbpar.ext_force_density[2] * lbpar.agrid *
                                      lbpar.agrid * lbpar.tau * lbpar.tau;
-#else  // EXTERNAL_FORCES
-  lbfields[index].force_density[0] = 0.0;
-  lbfields[index].force_density[1] = 0.0;
-  lbfields[index].force_density[2] = 0.0;
-  lbfields[index].has_force_density = 0;
-#endif // EXTERNAL_FORCES
 }
 
 inline void lb_calc_n_from_modes_push(double **lbfluid, Lattice::index_t index,
@@ -2659,6 +2610,21 @@ void lattice_boltzmann_update() {
 
     lb_collide_stream();
   }
+}
+
+/** Resets the forces on the fluid nodes */
+void lb_reinit_force_densities() {
+  for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
+
+       index++) {
+    lb_reset_force_densities(index);
+  }
+#ifdef LB_BOUNDARIES
+  for (auto it = LBBoundaries::lbboundaries.begin();
+       it != LBBoundaries::lbboundaries.end(); ++it) {
+    (**it).reset_force();
+  }
+#endif // LB_BOUNDARIES
 }
 
 /***********************************************************************/
