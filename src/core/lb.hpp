@@ -189,7 +189,6 @@ extern Lattice lblattice;
  * lbfluid_pre contains pre-collision populations, lbfluid_post
  * contains post-collision populations*/
 extern double **lbfluid_pre;
-extern double **lbfluid_post;
 
 /** Pointer to the hydrodynamic fields of the fluid */
 extern std::vector<LB_FluidNode> lbfields;

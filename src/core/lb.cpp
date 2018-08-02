@@ -116,7 +116,7 @@ Lattice lblattice;
  * lbfluid_pre contains pre-collision populations, lbfluid_post
  * contains post-collision */
 double **lbfluid_pre = 0;
-double **lbfluid_post = 0;
+static double **lbfluid_post = 0;
 
 /** Pointer to the hydrodynamic fields of the fluid nodes */
 std::vector<LB_FluidNode> lbfields;
