@@ -1541,10 +1541,8 @@ int lb_lbnode_set_pop(int *ind, double *p_pop) {
 #endif // LB_GPU
   } else {
 #ifdef LB
-    printf("Called set_pop\n");
     Lattice::index_t index;
     int node, grid[3], ind_shifted[3];
-
     ind_shifted[0] = ind[0];
     ind_shifted[1] = ind[1];
     ind_shifted[2] = ind[2];
@@ -1934,7 +1932,6 @@ static void lb_realloc_fluid() {
     lbfluid[0][i] = lbfluid[0][0] + i * lblattice.halo_grid_volume;
     lbfluid[1][i] = lbfluid[1][0] + i * lblattice.halo_grid_volume;
   }
-
   lbfields.resize(lblattice.halo_grid_volume);
 }
 
@@ -3134,7 +3131,7 @@ void print_fluid() {
         for (int z=0; z<lblattice.halo_grid[2]; ++z) {
             int index = get_linear_index(x, y, z, lblattice.halo_grid);
             for (int p=0; p < lbmodel.n_veloc; ++p) {
-                printf("x %d y %d z %d pop %d: %f\n", x, y, z, p, lbfluid[1][p][index]);
+                printf("x %d y %d z %d pop %d: %f\n", x, y, z, p, lbfluid[0][p][index]);
             }
         }
     }
