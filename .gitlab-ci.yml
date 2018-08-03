@@ -32,7 +32,6 @@ status_pending:
 
 default:
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu:latest
   script:
     - export with_cuda=false myconfig=default with_coverage=true
     - bash maintainer/CI/build_cmake.sh
@@ -225,7 +224,7 @@ intel:15:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
-    - export myconfig=maxset with_coverage=false
+    - export myconfig=maxset with_coverage=false I_MPI_SHM_LMT=shm
     - bash maintainer/cuda_build.sh
   tags:
     - docker
@@ -236,7 +235,7 @@ intel:17:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
-    - export myconfig=maxset with_coverage=false
+    - export myconfig=maxset with_coverage=false I_MPI_SHM_LMT=shm
     - bash maintainer/cuda_build.sh
   tags:
     - docker
@@ -274,9 +273,11 @@ check_with_odd_no_of_processors:
 
 deploy_documentation:
   stage: deploy
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
   only:
     - python
+  dependencies:
+    - cuda8-maxset
   before_script:
     - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
     - eval $(ssh-agent -s)
@@ -301,6 +302,7 @@ status_success:
   when: on_success
   tags:
     - linux
+  dependencies: []
 
 status_failure:
   stage: result
@@ -308,4 +310,5 @@ status_failure:
   when: on_failure
   tags:
     - linux
+  dependencies: []
 
