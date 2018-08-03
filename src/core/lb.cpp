@@ -138,6 +138,11 @@ static int rancounter = 0;
 
 #if defined(LB) || defined(LB_GPU)
 
+#include "global.hpp"
+#include "errorhandling.hpp"
+#include "grid.hpp"
+#include "interaction_data.hpp"
+
 /* *********************** C Interface part
  * *************************************/
 /* ******************************************************************************/
