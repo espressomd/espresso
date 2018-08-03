@@ -11,7 +11,7 @@ import espressomd.lb
 
 checkpoint = espressomd.checkpointing.Checkpoint(checkpoint_id="mycheckpoint", checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
 
-system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+system = espressomd.System(box_l=[12.0, 12.0, 12.0])
 system.cell_system.skin = 0.1
 system.seed = system.cell_system.get_state()["n_nodes"] *[1234]
 system.time_step = 0.01
