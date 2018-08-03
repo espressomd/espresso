@@ -113,9 +113,9 @@ LB_Model<> lbmodel = {d3q19_lattice, d3q19_coefficients, d3q19_w,
 Lattice lblattice;
 
 /** Pointer to the velocity populations of the fluid.
- * lbfluid_pre contains pre-collision populations, lbfluid_post
+ * lbfluid contains pre-collision populations, lbfluid_post
  * contains post-collision */
-LB_Fluid lbfluid_pre;
+LB_Fluid lbfluid;
 static LB_Fluid lbfluid_post;
 
 /** Pointer to the hydrodynamic fields of the fluid nodes */
@@ -1910,7 +1910,7 @@ static void lb_realloc_fluid() {
   LB_TRACE(printf("reallocating fluid\n"));
   const std::array<int, 2> size = {lbmodel.n_veloc, lblattice.halo_grid_volume};
 
-  lbfluid_pre.resize(size);
+  lbfluid.resize(size);
   lbfluid_post.resize(size);
 
   lbfields.resize(lblattice.halo_grid_volume);
@@ -2153,22 +2153,22 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
   double tmp1, tmp2;
 
   /* update the q=0 sublattice */
-  lbfluid_pre[0][index] = 1. / 3. * (local_rho - avg_rho) - 1. / 2. * trace;
+  lbfluid[0][index] = 1. / 3. * (local_rho - avg_rho) - 1. / 2. * trace;
 
   /* update the q=1 sublattice */
   rho_times_coeff = 1. / 18. * (local_rho - avg_rho);
 
-  lbfluid_pre[1][index] = rho_times_coeff + 1. / 6. * local_j[0] +
+  lbfluid[1][index] = rho_times_coeff + 1. / 6. * local_j[0] +
                           1. / 4. * local_pi[0] - 1. / 12. * trace;
-  lbfluid_pre[2][index] = rho_times_coeff - 1. / 6. * local_j[0] +
+  lbfluid[2][index] = rho_times_coeff - 1. / 6. * local_j[0] +
                           1. / 4. * local_pi[0] - 1. / 12. * trace;
-  lbfluid_pre[3][index] = rho_times_coeff + 1. / 6. * local_j[1] +
+  lbfluid[3][index] = rho_times_coeff + 1. / 6. * local_j[1] +
                           1. / 4. * local_pi[2] - 1. / 12. * trace;
-  lbfluid_pre[4][index] = rho_times_coeff - 1. / 6. * local_j[1] +
+  lbfluid[4][index] = rho_times_coeff - 1. / 6. * local_j[1] +
                           1. / 4. * local_pi[2] - 1. / 12. * trace;
-  lbfluid_pre[5][index] = rho_times_coeff + 1. / 6. * local_j[2] +
+  lbfluid[5][index] = rho_times_coeff + 1. / 6. * local_j[2] +
                           1. / 4. * local_pi[5] - 1. / 12. * trace;
-  lbfluid_pre[6][index] = rho_times_coeff - 1. / 6. * local_j[2] +
+  lbfluid[6][index] = rho_times_coeff - 1. / 6. * local_j[2] +
                           1. / 4. * local_pi[5] - 1. / 12. * trace;
 
   /* update the q=2 sublattice */
@@ -2177,48 +2177,48 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
   tmp1 = local_pi[0] + local_pi[2];
   tmp2 = 2.0 * local_pi[1];
 
-  lbfluid_pre[7][index] = rho_times_coeff +
+  lbfluid[7][index] = rho_times_coeff +
                           1. / 12. * (local_j[0] + local_j[1]) +
                           1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid_pre[8][index] = rho_times_coeff -
+  lbfluid[8][index] = rho_times_coeff -
                           1. / 12. * (local_j[0] + local_j[1]) +
                           1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid_pre[9][index] = rho_times_coeff +
+  lbfluid[9][index] = rho_times_coeff +
                           1. / 12. * (local_j[0] - local_j[1]) +
                           1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  lbfluid_pre[10][index] = rho_times_coeff -
+  lbfluid[10][index] = rho_times_coeff -
                            1. / 12. * (local_j[0] - local_j[1]) +
                            1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
 
   tmp1 = local_pi[0] + local_pi[5];
   tmp2 = 2.0 * local_pi[3];
 
-  lbfluid_pre[11][index] = rho_times_coeff +
+  lbfluid[11][index] = rho_times_coeff +
                            1. / 12. * (local_j[0] + local_j[2]) +
                            1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid_pre[12][index] = rho_times_coeff -
+  lbfluid[12][index] = rho_times_coeff -
                            1. / 12. * (local_j[0] + local_j[2]) +
                            1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid_pre[13][index] = rho_times_coeff +
+  lbfluid[13][index] = rho_times_coeff +
                            1. / 12. * (local_j[0] - local_j[2]) +
                            1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  lbfluid_pre[14][index] = rho_times_coeff -
+  lbfluid[14][index] = rho_times_coeff -
                            1. / 12. * (local_j[0] - local_j[2]) +
                            1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
 
   tmp1 = local_pi[2] + local_pi[5];
   tmp2 = 2.0 * local_pi[4];
 
-  lbfluid_pre[15][index] = rho_times_coeff +
+  lbfluid[15][index] = rho_times_coeff +
                            1. / 12. * (local_j[1] + local_j[2]) +
                            1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid_pre[16][index] = rho_times_coeff -
+  lbfluid[16][index] = rho_times_coeff -
                            1. / 12. * (local_j[1] + local_j[2]) +
                            1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid_pre[17][index] = rho_times_coeff +
+  lbfluid[17][index] = rho_times_coeff +
                            1. / 12. * (local_j[1] - local_j[2]) +
                            1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  lbfluid_pre[18][index] = rho_times_coeff -
+  lbfluid[18][index] = rho_times_coeff -
                            1. / 12. * (local_j[1] - local_j[2]) +
                            1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
 }
@@ -2230,25 +2230,25 @@ void lb_calc_modes(Lattice::index_t index, double *mode) {
   double n0, n1p, n1m, n2p, n2m, n3p, n3m, n4p, n4m, n5p, n5m, n6p, n6m, n7p,
       n7m, n8p, n8m, n9p, n9m;
 
-  n0 = lbfluid_pre[0][index];
-  n1p = lbfluid_pre[1][index] + lbfluid_pre[2][index];
-  n1m = lbfluid_pre[1][index] - lbfluid_pre[2][index];
-  n2p = lbfluid_pre[3][index] + lbfluid_pre[4][index];
-  n2m = lbfluid_pre[3][index] - lbfluid_pre[4][index];
-  n3p = lbfluid_pre[5][index] + lbfluid_pre[6][index];
-  n3m = lbfluid_pre[5][index] - lbfluid_pre[6][index];
-  n4p = lbfluid_pre[7][index] + lbfluid_pre[8][index];
-  n4m = lbfluid_pre[7][index] - lbfluid_pre[8][index];
-  n5p = lbfluid_pre[9][index] + lbfluid_pre[10][index];
-  n5m = lbfluid_pre[9][index] - lbfluid_pre[10][index];
-  n6p = lbfluid_pre[11][index] + lbfluid_pre[12][index];
-  n6m = lbfluid_pre[11][index] - lbfluid_pre[12][index];
-  n7p = lbfluid_pre[13][index] + lbfluid_pre[14][index];
-  n7m = lbfluid_pre[13][index] - lbfluid_pre[14][index];
-  n8p = lbfluid_pre[15][index] + lbfluid_pre[16][index];
-  n8m = lbfluid_pre[15][index] - lbfluid_pre[16][index];
-  n9p = lbfluid_pre[17][index] + lbfluid_pre[18][index];
-  n9m = lbfluid_pre[17][index] - lbfluid_pre[18][index];
+  n0 = lbfluid[0][index];
+  n1p = lbfluid[1][index] + lbfluid[2][index];
+  n1m = lbfluid[1][index] - lbfluid[2][index];
+  n2p = lbfluid[3][index] + lbfluid[4][index];
+  n2m = lbfluid[3][index] - lbfluid[4][index];
+  n3p = lbfluid[5][index] + lbfluid[6][index];
+  n3m = lbfluid[5][index] - lbfluid[6][index];
+  n4p = lbfluid[7][index] + lbfluid[8][index];
+  n4m = lbfluid[7][index] - lbfluid[8][index];
+  n5p = lbfluid[9][index] + lbfluid[10][index];
+  n5m = lbfluid[9][index] - lbfluid[10][index];
+  n6p = lbfluid[11][index] + lbfluid[12][index];
+  n6m = lbfluid[11][index] - lbfluid[12][index];
+  n7p = lbfluid[13][index] + lbfluid[14][index];
+  n7m = lbfluid[13][index] - lbfluid[14][index];
+  n8p = lbfluid[15][index] + lbfluid[16][index];
+  n8m = lbfluid[15][index] - lbfluid[16][index];
+  n9p = lbfluid[17][index] + lbfluid[18][index];
+  n9m = lbfluid[17][index] - lbfluid[18][index];
 
   /* mass mode */
   mode[0] = n0 + n1p + n2p + n3p + n4p + n5p + n6p + n7p + n8p + n9p;
@@ -2551,7 +2551,7 @@ inline void lb_collide_stream() {
 #endif // LB_BOUNDARIES
 
   /* swap the pointers for old and new population fields */
-  std::swap(lbfluid_pre, lbfluid_post);
+  std::swap(lbfluid, lbfluid_post);
 
   /* halo region is invalid after update */
   lbpar.resend_halo = 1;
@@ -2939,10 +2939,10 @@ void calc_particle_lattice_ia() {
 
       /* exchange halo regions (for fluid-particle coupling) */
       halo_communication(&update_halo_comm,
-                         reinterpret_cast<char *>(lbfluid_pre.data()));
+                         reinterpret_cast<char *>(lbfluid.data()));
 
 #ifdef ADDITIONAL_CHECKS
-      lb_check_halo_regions(lbfluid_pre);
+      lb_check_halo_regions(lbfluid);
 #endif
 
       /* halo is valid now */

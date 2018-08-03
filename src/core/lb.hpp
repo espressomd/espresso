@@ -184,12 +184,12 @@ extern LB_Parameters lbpar;
 extern Lattice lblattice;
 
 /** Pointer to the velocity populations of the fluid.
- * lbfluid_pre contains pre-collision populations, lbfluid_post
+ * lbfluid contains pre-collision populations, lbfluid_post
  * contains post-collision populations*/
 // using LB_Fluid = double **;
 using LB_Fluid = boost::multi_array<double, 2>;
-extern LB_Fluid lbfluid_pre;
-//extern boost::multi_array<double, 2> lbfluid_pre;
+extern LB_Fluid lbfluid;
+//extern boost::multi_array<double, 2> lbfluid;
 
 /** Pointer to the hydrodynamic fields of the fluid */
 extern std::vector<LB_FluidNode> lbfields;
@@ -288,13 +288,13 @@ inline void lb_calc_local_rho(Lattice::index_t index, double *rho) {
 
   double avg_rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
 
-  *rho = avg_rho + lbfluid_pre[0][index] + lbfluid_pre[1][index] +
-         lbfluid_pre[2][index] + lbfluid_pre[3][index] + lbfluid_pre[4][index] +
-         lbfluid_pre[5][index] + lbfluid_pre[6][index] + lbfluid_pre[7][index] +
-         lbfluid_pre[8][index] + lbfluid_pre[9][index] + lbfluid_pre[10][index] +
-         lbfluid_pre[11][index] + lbfluid_pre[12][index] + lbfluid_pre[13][index] +
-         lbfluid_pre[14][index] + lbfluid_pre[15][index] + lbfluid_pre[16][index] +
-         lbfluid_pre[17][index] + lbfluid_pre[18][index];
+  *rho = avg_rho + lbfluid[0][index] + lbfluid[1][index] +
+         lbfluid[2][index] + lbfluid[3][index] + lbfluid[4][index] +
+         lbfluid[5][index] + lbfluid[6][index] + lbfluid[7][index] +
+         lbfluid[8][index] + lbfluid[9][index] + lbfluid[10][index] +
+         lbfluid[11][index] + lbfluid[12][index] + lbfluid[13][index] +
+         lbfluid[14][index] + lbfluid[15][index] + lbfluid[16][index] +
+         lbfluid[17][index] + lbfluid[18][index];
 }
 
 /** Calculate the local fluid momentum.
@@ -314,18 +314,18 @@ inline void lb_calc_local_j(Lattice::index_t index, double *j) {
     return;
   }
 
-  j[0] = lbfluid_pre[1][index] - lbfluid_pre[2][index] + lbfluid_pre[7][index] -
-         lbfluid_pre[8][index] + lbfluid_pre[9][index] - lbfluid_pre[10][index] +
-         lbfluid_pre[11][index] - lbfluid_pre[12][index] + lbfluid_pre[13][index] -
-         lbfluid_pre[14][index];
-  j[1] = lbfluid_pre[3][index] - lbfluid_pre[4][index] + lbfluid_pre[7][index] -
-         lbfluid_pre[8][index] - lbfluid_pre[9][index] + lbfluid_pre[10][index] +
-         lbfluid_pre[15][index] - lbfluid_pre[16][index] + lbfluid_pre[17][index] -
-         lbfluid_pre[18][index];
-  j[2] = lbfluid_pre[5][index] - lbfluid_pre[6][index] + lbfluid_pre[11][index] -
-         lbfluid_pre[12][index] - lbfluid_pre[13][index] + lbfluid_pre[14][index] +
-         lbfluid_pre[15][index] - lbfluid_pre[16][index] - lbfluid_pre[17][index] +
-         lbfluid_pre[18][index];
+  j[0] = lbfluid[1][index] - lbfluid[2][index] + lbfluid[7][index] -
+         lbfluid[8][index] + lbfluid[9][index] - lbfluid[10][index] +
+         lbfluid[11][index] - lbfluid[12][index] + lbfluid[13][index] -
+         lbfluid[14][index];
+  j[1] = lbfluid[3][index] - lbfluid[4][index] + lbfluid[7][index] -
+         lbfluid[8][index] - lbfluid[9][index] + lbfluid[10][index] +
+         lbfluid[15][index] - lbfluid[16][index] + lbfluid[17][index] -
+         lbfluid[18][index];
+  j[2] = lbfluid[5][index] - lbfluid[6][index] + lbfluid[11][index] -
+         lbfluid[12][index] - lbfluid[13][index] + lbfluid[14][index] +
+         lbfluid[15][index] - lbfluid[16][index] - lbfluid[17][index] +
+         lbfluid[18][index];
 }
 
 /** Calculate the local fluid stress.
@@ -469,14 +469,14 @@ inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
 inline void lb_get_populations(Lattice::index_t index, double *pop) {
   int i = 0;
   for (i = 0; i < 19; i++) {
-    pop[i] = lbfluid_pre[i][index] + lbmodel.coeff[i % 19][0] * lbpar.rho;
+    pop[i] = lbfluid[i][index] + lbmodel.coeff[i % 19][0] * lbpar.rho;
   }
 }
 
 inline void lb_set_populations(Lattice::index_t index, double *pop) {
   int i = 0;
   for (i = 0; i < 19; i++) {
-    lbfluid_pre[i][index] = pop[i] - lbmodel.coeff[i % 19][0] * lbpar.rho;
+    lbfluid[i][index] = pop[i] - lbmodel.coeff[i % 19][0] * lbpar.rho;
   }
 }
 #endif
