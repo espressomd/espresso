@@ -30,7 +30,6 @@
 #define _LATTICE_HPP
 
 #include "Vector.hpp"
-#include "grid.hpp"
 
 /** Switch determining the type of lattice dynamics. A value of zero
  *  means that there is no lattice dynamics. Different types can be
@@ -104,22 +103,7 @@ public:
      * \param  grid     local coordinates of the lattice site (Output)
      * \return         index of the node for the lattice site
      */
-
-  int map_lattice_to_node(int *ind, int *grid) const {
-    /* determine coordinates in node_grid */
-    grid[0] = (int)floor(ind[0]*this->agrid[0]*box_l_i[0]*node_grid[0]);
-    grid[1] = (int)floor(ind[1]*this->agrid[1]*box_l_i[1]*node_grid[1]);
-    grid[2] = (int)floor(ind[2]*this->agrid[2]*box_l_i[2]*node_grid[2]);
-
-    /* change from global to local lattice coordinates */
-    ind[0] = ind[0] - grid[0]*this->grid[0] + this->halo_size;
-    ind[1] = ind[1] - grid[1]*this->grid[1] + this->halo_size;
-    ind[2] = ind[2] - grid[2]*this->grid[2] + this->halo_size;
-
-    /* return linear index into node array */
-    return map_array_node(grid);
-  }
-
+    int map_lattice_to_node(int *ind, int *grid) const;
 
     /********************** static Functions **********************/
 
