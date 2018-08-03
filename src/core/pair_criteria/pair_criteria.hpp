@@ -25,6 +25,7 @@ class PairCriterion {
       const bool res = decide(p1, p2);
       return res;
     }
+    virtual ~PairCriterion() {}
 };
 
 /** @brief True if two particles are closer than a cut off distance, respecting minimum image convention */

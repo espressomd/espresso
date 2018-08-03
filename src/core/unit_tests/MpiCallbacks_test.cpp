@@ -35,9 +35,9 @@
 namespace Testing {
 void reduce_and_check(const boost::mpi::communicator &comm, bool local_value) {
   if (comm.rank() == 0) {
-    bool total;
+    bool total = false;
     boost::mpi::reduce(comm, local_value, total, std::logical_and<bool>(), 0);
-    BOOST_CHECK(total); // NOLINT
+    BOOST_CHECK(total);
   } else {
     boost::mpi::reduce(comm, local_value, std::logical_and<bool>(), 0);
   }
