@@ -103,7 +103,7 @@ public:
      * \param  grid     local coordinates of the lattice site (Output)
      * \return         index of the node for the lattice site
      */
-    int map_lattice_to_node(int *ind, int *grid);
+    int map_lattice_to_node(int *ind, int *grid) const;
 
     /********************** static Functions **********************/
 
