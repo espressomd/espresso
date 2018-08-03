@@ -360,7 +360,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     transfer_momentum = (n_part > 0);
 #endif
 #ifdef LB_GPU
-    transfer_momentum_gpu = = (n_part > 0);
+    transfer_momentum_gpu = (n_part > 0);
 #endif
 
   // Communication step: distribute ghost positions
