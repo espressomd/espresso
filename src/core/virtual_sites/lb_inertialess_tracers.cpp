@@ -6,7 +6,6 @@
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
 #include "cells.hpp"
-#include "config.hpp"
 #include "halo.hpp"
 #include "integrate.hpp"
 #include "lb.hpp"
@@ -14,6 +13,7 @@
 #include "particle_data.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 #include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
+#include "grid.hpp"
 
 // ****** Functions for internal use ********
 

@@ -29,9 +29,12 @@
 
 #include "config.hpp"
 
+#include "lattice.hpp"
+
 #ifdef LB
 
-#include "lattice_inline.hpp"
+#include "errorhandling.hpp"
+
 #include "utils.hpp"
 
 #include <boost/multi_array.hpp>
@@ -273,11 +276,6 @@ void lb_calc_modes(Lattice::index_t index, double *mode);
  * @param rho   local fluid density
  */
 inline void lb_calc_local_rho(Lattice::index_t index, double *rho) {
-
-#ifndef D3Q19
-#error Only D3Q19 is implemened!
-#endif
-
   // unit conversion: mass density
   if (!(lattice_switch & LATTICE_LB)) {
     runtimeErrorMsg() << "Error in lb_calc_local_rho in " << __FILE__

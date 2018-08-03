@@ -28,20 +28,11 @@
  */
 
 #include "lb.hpp"
-#include "config.hpp"
-#include "global.hpp"
-#include "interaction_data.hpp"
-#include "utils.hpp"
-#include <cassert>
-#include <cstdio>
-#include <iostream>
-#include <mpi.h>
 
 #ifdef LB
 
 #include "cells.hpp"
 #include "communication.hpp"
-#include "global.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "halo.hpp"
@@ -49,8 +40,8 @@
 #include "lb.hpp"
 #include "lbboundaries.hpp"
 #include "thermostat.hpp"
-#include "utils.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
+#include "interaction_data.hpp"
 
 #include <cassert>
 #include <cstdio>
