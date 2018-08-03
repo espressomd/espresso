@@ -29,10 +29,15 @@
 
 #include "config.hpp"
 
-#include "lattice_inline.hpp"
-#include "utils.hpp"
+#include "lattice.hpp"
 
 #ifdef LB
+
+#include "errorhandling.hpp"
+
+#include "utils.hpp"
+
+#include <boost/multi_array.hpp>
 
 /* For the D3Q19 model most functions have a separate implementation
  * where the coefficients and the velocity vectors are hardcoded
@@ -126,7 +131,6 @@ struct LB_FluidNode {
 
 /** Data structure holding the parameters for the Lattice Boltzmann system. */
 typedef struct {
-
   /** number density (LJ units) */
   double rho;
 
@@ -187,9 +191,13 @@ extern LB_Parameters lbpar;
 extern Lattice lblattice;
 
 /** Pointer to the velocity populations of the fluid.
- * lbfluid[0] contains pre-collision populations, lbfluid[1]
+ * lbfluid contains pre-collision populations, lbfluid_post
  * contains post-collision populations*/
-extern double **lbfluid[2];
+// using LB_Fluid = double **;
+using LB_Fluid = boost::multi_array<double, 2>;
+extern LB_Fluid lbfluid;
+//extern boost::multi_array<double, 2> lbfluid;
+
 /** Pointer to the hydrodynamic fields of the fluid */
 extern std::vector<LB_FluidNode> lbfields;
 
@@ -207,9 +215,6 @@ extern int transfer_momentum;
  * If boundaries are present, it also applies the boundary conditions.
  */
 void lattice_boltzmann_update();
-
-/** (Pre-)initializes data structures. */
-void lb_pre_init();
 
 /** Performs a full initialization of
  *  the Lattice Boltzmann system. All derived parameters
@@ -275,11 +280,6 @@ void lb_calc_modes(Lattice::index_t index, double *mode);
  * @param rho   local fluid density
  */
 inline void lb_calc_local_rho(Lattice::index_t index, double *rho) {
-
-#ifndef D3Q19
-#error Only D3Q19 is implemened!
-#endif
-
   // unit conversion: mass density
   if (!(lattice_switch & LATTICE_LB)) {
     runtimeErrorMsg() << "Error in lb_calc_local_rho in " << __FILE__
@@ -290,13 +290,13 @@ inline void lb_calc_local_rho(Lattice::index_t index, double *rho) {
 
   double avg_rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
 
-  *rho = avg_rho + lbfluid[0][0][index] + lbfluid[0][1][index] +
-         lbfluid[0][2][index] + lbfluid[0][3][index] + lbfluid[0][4][index] +
-         lbfluid[0][5][index] + lbfluid[0][6][index] + lbfluid[0][7][index] +
-         lbfluid[0][8][index] + lbfluid[0][9][index] + lbfluid[0][10][index] +
-         lbfluid[0][11][index] + lbfluid[0][12][index] + lbfluid[0][13][index] +
-         lbfluid[0][14][index] + lbfluid[0][15][index] + lbfluid[0][16][index] +
-         lbfluid[0][17][index] + lbfluid[0][18][index];
+  *rho = avg_rho + lbfluid[0][index] + lbfluid[1][index] +
+         lbfluid[2][index] + lbfluid[3][index] + lbfluid[4][index] +
+         lbfluid[5][index] + lbfluid[6][index] + lbfluid[7][index] +
+         lbfluid[8][index] + lbfluid[9][index] + lbfluid[10][index] +
+         lbfluid[11][index] + lbfluid[12][index] + lbfluid[13][index] +
+         lbfluid[14][index] + lbfluid[15][index] + lbfluid[16][index] +
+         lbfluid[17][index] + lbfluid[18][index];
 }
 
 /** Calculate the local fluid momentum.
@@ -316,18 +316,18 @@ inline void lb_calc_local_j(Lattice::index_t index, double *j) {
     return;
   }
 
-  j[0] = lbfluid[0][1][index] - lbfluid[0][2][index] + lbfluid[0][7][index] -
-         lbfluid[0][8][index] + lbfluid[0][9][index] - lbfluid[0][10][index] +
-         lbfluid[0][11][index] - lbfluid[0][12][index] + lbfluid[0][13][index] -
-         lbfluid[0][14][index];
-  j[1] = lbfluid[0][3][index] - lbfluid[0][4][index] + lbfluid[0][7][index] -
-         lbfluid[0][8][index] - lbfluid[0][9][index] + lbfluid[0][10][index] +
-         lbfluid[0][15][index] - lbfluid[0][16][index] + lbfluid[0][17][index] -
-         lbfluid[0][18][index];
-  j[2] = lbfluid[0][5][index] - lbfluid[0][6][index] + lbfluid[0][11][index] -
-         lbfluid[0][12][index] - lbfluid[0][13][index] + lbfluid[0][14][index] +
-         lbfluid[0][15][index] - lbfluid[0][16][index] - lbfluid[0][17][index] +
-         lbfluid[0][18][index];
+  j[0] = lbfluid[1][index] - lbfluid[2][index] + lbfluid[7][index] -
+         lbfluid[8][index] + lbfluid[9][index] - lbfluid[10][index] +
+         lbfluid[11][index] - lbfluid[12][index] + lbfluid[13][index] -
+         lbfluid[14][index];
+  j[1] = lbfluid[3][index] - lbfluid[4][index] + lbfluid[7][index] -
+         lbfluid[8][index] - lbfluid[9][index] + lbfluid[10][index] +
+         lbfluid[15][index] - lbfluid[16][index] + lbfluid[17][index] -
+         lbfluid[18][index];
+  j[2] = lbfluid[5][index] - lbfluid[6][index] + lbfluid[11][index] -
+         lbfluid[12][index] - lbfluid[13][index] + lbfluid[14][index] +
+         lbfluid[15][index] - lbfluid[16][index] - lbfluid[17][index] +
+         lbfluid[18][index];
 }
 
 /** Calculate the local fluid stress.
@@ -465,13 +465,13 @@ inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
 
 inline void lb_get_populations(Lattice::index_t index, double *pop) {
   for (int i = 0; i < lbmodel.n_veloc; ++i) {
-    pop[i] = lbfluid[0][i][index] + lbmodel.coeff[i][0] * lbpar.rho;
+    pop[i] = lbfluid[i][index] + lbmodel.coeff[i][0] * lbpar.rho;
   }
 }
 
 inline void lb_set_populations(Lattice::index_t index, double *pop) {
   for (int i = 0; i < lbmodel.n_veloc; ++i) {
-    lbfluid[0][i][index] = pop[i] - lbmodel.coeff[i][0] * lbpar.rho;
+    lbfluid[i][index] = pop[i] - lbmodel.coeff[i][0] * lbpar.rho;
   }
 }
 #endif

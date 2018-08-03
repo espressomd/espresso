@@ -27,6 +27,8 @@
 #include "debug.hpp"
 #include "lattice_inline.hpp"
 
+#include "grid.hpp"
+
 int lattice_switch = LATTICE_OFF ;
 
 int Lattice::init(double *agrid, double* offset, int halo_size, size_t dim) {

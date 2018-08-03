@@ -29,8 +29,7 @@
 #ifndef _LATTICE_HPP
 #define _LATTICE_HPP
 
-#include "grid.hpp"
-#include "particle_data.hpp"
+#include "Vector.hpp"
 
 /** Switch determining the type of lattice dynamics. A value of zero
  *  means that there is no lattice dynamics. Different types can be

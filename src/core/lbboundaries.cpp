@@ -33,13 +33,13 @@
 #include "constraints.hpp"
 #include "electrokinetics.hpp"
 #include "electrokinetics_pdb_parse.hpp"
+#include "initialize.hpp"
 #include "interaction_data.hpp"
 #include "lb.hpp"
 #include "lbboundaries.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 #include "lbgpu.hpp"
 #include "utils.hpp"
-#include "initialize.hpp"
 
 #include <algorithm>
 #include <memory>
@@ -263,8 +263,8 @@ void lb_init_boundaries() {
     boundary_velocity[3 * lbboundaries.size() + 2] = 0.0f;
 
     lb_init_boundaries_GPU(lbboundaries.size(), number_of_boundnodes,
-                             host_boundary_node_list, host_boundary_index_list,
-                             boundary_velocity);
+                           host_boundary_node_list, host_boundary_index_list,
+                           boundary_velocity);
 
     free(boundary_velocity);
     free(host_boundary_node_list);
@@ -382,7 +382,7 @@ int lbboundary_get_force(void *lbb, double *f) {
 
 #ifdef LB_BOUNDARIES
 
-void lb_bounce_back() {
+void lb_bounce_back(LB_Fluid& lbfluid) {
 
 #ifdef D3Q19
 #ifndef PULL
@@ -447,13 +447,12 @@ void lb_bounce_back() {
                 for (l = 0; l < 3; l++) {
                   (*LBBoundaries::lbboundaries[lbfields[k].boundary - 1])
                       .force()[l] += // TODO
-                      (2 * lbfluid[1][i][k] + population_shift) *
-                      lbmodel.c[i][l];
+                      (2 * lbfluid[i][k] + population_shift) * lbmodel.c[i][l];
                 }
-                lbfluid[1][reverse[i]][k - next[i]] =
-                    lbfluid[1][i][k] + population_shift;
+                lbfluid[reverse[i]][k - next[i]] =
+                    lbfluid[i][k] + population_shift;
               } else {
-                lbfluid[1][reverse[i]][k - next[i]] = lbfluid[1][i][k] = 0.0;
+                lbfluid[reverse[i]][k - next[i]] = lbfluid[i][k] = 0.0;
               }
             }
           }

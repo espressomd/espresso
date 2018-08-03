@@ -41,6 +41,7 @@
 #include "utils.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 
+#include <boost/multi_array.hpp>
 
 namespace LBBoundaries {
 extern std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
@@ -68,7 +69,7 @@ void remove(const std::shared_ptr<LBBoundary> &);
  *
  * [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
  */
-void lb_bounce_back();
+  void lb_bounce_back(boost::multi_array<double, 2> &lbfluid);
 
 #endif /* LB_BOUNDARIES */
 

@@ -25,6 +25,8 @@
 
 #include "lattice.hpp"
 
+#include "grid.hpp"
+
 inline int Lattice::map_lattice_to_node(int *ind, int *grid) {
 
   /* determine coordinates in node_grid */
