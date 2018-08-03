@@ -37,7 +37,10 @@ int tabulated_set_params(int part_type_a, int part_type_b, double min,
 
   data->TAB.maxval = max;
   data->TAB.minval = min;
-  data->TAB.invstepsize = static_cast<double>(force.size() - 1) / (max - min);
+  if (max == min)
+    data->TAB.invstepsize = 0;
+  else
+    data->TAB.invstepsize = static_cast<double>(force.size() - 1) / (max - min);
 
   data->TAB.force_tab = force;
   data->TAB.energy_tab = energy;
