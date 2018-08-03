@@ -855,22 +855,12 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
      ****************************/
     /* Force preparation */
     ind = 0;
-    if(p3m.params.tuning) {
-      /* apply a fake influence function during tuning because p3m.g_force hasn't been resized to the new size yet */
-      for (i = 0; i < fft.plan[3].new_size; i++) {
-        p3m.ks_mesh[ind] = p3m.rs_mesh[ind] * p3m.rs_mesh[ind];
-        ind++;
-        p3m.ks_mesh[ind] = p3m.rs_mesh[ind] * p3m.rs_mesh[ind];
-        ind++;
-      }
-    } else {
-      /* apply the influence function */
-      for (i = 0; i < fft.plan[3].new_size; i++) {
-        p3m.ks_mesh[ind] = p3m.g_force[i] * p3m.rs_mesh[ind];
-        ind++;
-        p3m.ks_mesh[ind] = p3m.g_force[i] * p3m.rs_mesh[ind];
-        ind++;
-      }
+    /* apply the influence function */
+    for (i = 0; i < fft.plan[3].new_size; i++) {
+      p3m.ks_mesh[ind] = p3m.g_force[i] * p3m.rs_mesh[ind];
+      ind++;
+      p3m.ks_mesh[ind] = p3m.g_force[i] * p3m.rs_mesh[ind];
+      ind++;
     }
 
     /* === 3 Fold backward 3D FFT (Force Component Meshs) === */
@@ -1181,12 +1171,6 @@ template <int cao> void calc_influence_function_force() {
   for (i = 0; i < 3; i++) {
     size *= fft.plan[3].new_mesh[i];
     end[i] = fft.plan[3].start[i] + fft.plan[3].new_mesh[i];
-  }
-
-  if(size == 0) {
-    free(p3m.g_force);
-    p3m.g_force = nullptr;
-    return;
   }
 
   p3m.g_force = Utils::realloc(p3m.g_force, size * sizeof(double));
