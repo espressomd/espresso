@@ -25,6 +25,7 @@
 using Utils::Span;
 
 #include <vector>
+#include <numeric>
 
 BOOST_AUTO_TEST_CASE(ctor) {
   /* from ptr + size */
