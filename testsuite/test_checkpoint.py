@@ -19,7 +19,7 @@ class CheckpointTest(ut.TestCase):
 
     @ut.skipIf(not espressomd.has_features('LB'),"Skipping test due to missing features.")
     def test_LB(self):
-        np.testing.assert_almost_equal(self.lbf[1,1,1].velocity, np.array([0.1, 0.2, 0.3]))
+        np.testing.assert_almost_equal(np.copy(self.lbf[1,1,1].velocity), np.array([0.1, 0.2, 0.3]))
         state = self.lbf.get_params()
         reference = {'agrid': 0.5, 'visc': 1.3, 'dens': 1.5, 'tau': 0.01, 'fric': 2.0}
         self.assertDictContainsSubset(reference, state)
