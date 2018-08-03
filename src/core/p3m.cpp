@@ -353,15 +353,6 @@ void p3m_init() {
     p3m.send_grid = Utils::realloc(p3m.send_grid, sizeof(double) * p3m.sm.max);
     p3m.recv_grid = Utils::realloc(p3m.recv_grid, sizeof(double) * p3m.sm.max);
 
-    if (p3m.params.inter > 0)
-      p3m_interpolate_charge_assignment_function();
-
-    /* position offset for calc. of first meshpoint */
-    p3m.pos_shift =
-        std::floor((p3m.params.cao - 1) / 2.0) - (p3m.params.cao % 2) / 2.0;
-    P3M_TRACE(
-        fprintf(stderr, "%d: p3m.pos_shift = %f\n", this_node, p3m.pos_shift));
-
     /* FFT */
     P3M_TRACE(
         fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node, (void*) p3m.rs_mesh));
@@ -370,16 +361,24 @@ void p3m_init() {
         fft_init(&p3m.rs_mesh, p3m.local_mesh.dim, p3m.local_mesh.margin,
                  p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum);
     p3m.ks_mesh = Utils::realloc(p3m.ks_mesh, ca_mesh_size * sizeof(double));
-    
+
+    P3M_TRACE(
+        fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node, (void*) p3m.rs_mesh));
+
     /* k-space part: */
     p3m_calc_differential_operator();
 
     /* fix box length dependent constants */
     p3m_scaleby_box_l();
 
+    if (p3m.params.inter > 0)
+      p3m_interpolate_charge_assignment_function();
 
+    /* position offset for calc. of first meshpoint */
+    p3m.pos_shift =
+        std::floor((p3m.params.cao - 1) / 2.0) - (p3m.params.cao % 2) / 2.0;
     P3M_TRACE(
-        fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node, (void*) p3m.rs_mesh));
+        fprintf(stderr, "%d: p3m.pos_shift = %f\n", this_node, p3m.pos_shift));
 
     p3m_count_charged_particles();
 
