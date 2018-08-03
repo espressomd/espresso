@@ -109,9 +109,6 @@ struct LB_Model {
 
 /** Data structure for fluid on a local lattice site */
 struct LB_FluidNode {
-  /** flag indicating whether a force density is acting on the node */
-  int has_force_density;
-
 #ifdef LB_BOUNDARIES
   /** flag indicating whether this site belongs to a boundary */
   int boundary;
@@ -407,18 +404,10 @@ inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
 
   *rho = mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
 
-  j[0] = mode[1];
-  j[1] = mode[2];
-  j[2] = mode[3];
+  j[0] = mode[1] + 0.5 * lbfields[index].force_density[0];
+  j[1] = mode[2] + 0.5 * lbfields[index].force_density[1];
+  j[2] = mode[3] + 0.5 * lbfields[index].force_density[2];
 
-#ifndef EXTERNAL_FORCES
-  if (lbfields[index].has_force_density)
-#endif
-  {
-    j[0] += 0.5 * lbfields[index].force_density[0];
-    j[1] += 0.5 * lbfields[index].force_density[1];
-    j[2] += 0.5 * lbfields[index].force_density[2];
-  }
   if (!pi)
     return;
 
