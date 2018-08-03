@@ -103,11 +103,15 @@ LB_Model<> lbmodel = {d3q19_lattice, d3q19_coefficients, d3q19_w,
 /** The underlying lattice structure */
 Lattice lblattice;
 
+using LB_FluidData = boost::multi_array<double, 2>;
+static LB_FluidData lbfluid_a;
+static LB_FluidData lbfluid_b;
+
 /** Pointer to the velocity populations of the fluid.
  * lbfluid contains pre-collision populations, lbfluid_post
  * contains post-collision */
-LB_Fluid lbfluid;
-static LB_Fluid lbfluid_post;
+LB_Fluid lbfluid(lbfluid_a) ;
+LB_Fluid lbfluid_post(lbfluid_b);
 
 /** Pointer to the hydrodynamic fields of the fluid nodes */
 std::vector<LB_FluidNode> lbfields;
@@ -1906,8 +1910,8 @@ static void lb_realloc_fluid() {
   LB_TRACE(printf("reallocating fluid\n"));
   const std::array<int, 2> size = {{lbmodel.n_veloc, lblattice.halo_grid_volume}};
 
-  lbfluid.resize(size);
-  lbfluid_post.resize(size);
+  lbfluid_a.resize(size);
+  lbfluid_b.resize(size);
 
   lbfields.resize(lblattice.halo_grid_volume);
 }

@@ -189,7 +189,7 @@ extern Lattice lblattice;
 /** Pointer to the velocity populations of the fluid.
  * lbfluid contains pre-collision populations, lbfluid_post
  * contains post-collision populations*/
-using LB_Fluid = boost::multi_array<double, 2>;
+using LB_Fluid = boost::multi_array_ref<double, 2>;
 extern LB_Fluid lbfluid;
 
 /** Pointer to the hydrodynamic fields of the fluid */
