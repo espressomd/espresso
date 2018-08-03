@@ -371,15 +371,15 @@ void p3m_init() {
                  p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum);
     p3m.ks_mesh = Utils::realloc(p3m.ks_mesh, ca_mesh_size * sizeof(double));
     
+    /* k-space part: */
+    p3m_calc_differential_operator();
+
     /* fix box length dependent constants */
     p3m_scaleby_box_l();
 
 
     P3M_TRACE(
         fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node, (void*) p3m.rs_mesh));
-
-    /* k-space part: */
-    p3m_calc_differential_operator();
 
     p3m_count_charged_particles();
 
