@@ -82,8 +82,8 @@ if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GN
   option(WITH_ASAN "Build with address sanitizer" OFF)
   option(WITH_UBSAN "Build with undefined behavior sanitizer" OFF)
 endif()
-if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
-  option(WITH_MSAN "Build with memory sanitizer" OFF)
+if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT APPLE )
+  option(WITH_MSAN "Build with memory sanitizer (experimental; requires a memory-sanitized Python interpreter)" OFF)
 endif()
 option(WARNINGS_ARE_ERRORS "Treat warnings as errors during compilation" OFF)
 
