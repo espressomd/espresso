@@ -2182,7 +2182,7 @@ void lb_release() {
 /***********************************************************************/
 /*@{*/
 void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
-                             const std::array<double, 3> j, const std::array<double, 6> pi) {
+                             const std::array<double, 3> &j, const std::array<double, 6> &pi) {
   int i;
   double local_rho, local_j[3], local_pi[6], trace;
   const double avg_rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;

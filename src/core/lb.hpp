@@ -240,7 +240,7 @@ int lb_sanity_checks();
     @param pi local fluid pressure
 */
 void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
-                             const std::array<double, 3> j, const std::array<double, 6> pi);
+                             const std::array<double, 3> &j, const std::array<double, 6> &pi);
 
 /** Propagates the Lattice Boltzmann system for one time step.
  * This function performs the collision step and the streaming step.
