@@ -114,7 +114,7 @@ void propagate_pos();
     \f[ p(t+\Delta t) = p(t) + \Delta t  v(t+0.5 \Delta t) \f] */
 void propagate_vel_pos();
 /** Integration step 4 of the Velocity Verletintegrator and finalize
-    instantaneous pressure calculation:<br>
+    instantanious pressure calculation:<br>
     \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t)/m \f] */
 void propagate_vel_finalize_p_inst();
 
@@ -805,12 +805,17 @@ void propagate_vel_pos() {
                       fprintf(stderr, "%d: OPT: PPOS p = (%.3e,%.3e,%.3e)\n",
                               this_node, p.r.p[0], p.r.p[1], p.r.p[2]));
 
-    /* Verlet criterion check*/
-    if (Utils::sqr(p.r.p[0] - p.l.p_old[0]) +
-            Utils::sqr(p.r.p[1] - p.l.p_old[1]) +
-            Utils::sqr(p.r.p[2] - p.l.p_old[2]) >
-        skin2)
-      set_resort_particles(Cells::RESORT_LOCAL);
+    set_resort_particles(Cells::RESORT_LOCAL);
+
+    /* LE Push */
+    {
+      auto const sheer_rate = 0.1;
+      if (p.r.p[2] > box_l[2]) {
+        p.m.v[1] += sheer_rate;
+      } else if (p.r.p[2] < 0.) {
+        p.m.v[1] -= sheer_rate;
+      }
+    }
   }
 
   announce_resort_particles();

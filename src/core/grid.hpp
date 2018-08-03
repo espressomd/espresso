@@ -181,10 +181,22 @@ void rescale_boxl(int dir, double d_new);
 
 template <typename T, typename U, typename V>
 inline void get_mi_vector(T &res, U const &a, V const &b) {
-  for (int i = 0; i < 3; i++) {
+  for(int i = 0; i < 3; i++)
     res[i] = a[i] - b[i];
+
+  for (int i = 0; i < 2; i++) {
     if (std::fabs(res[i]) > half_box_l[i] && PERIODIC(i))
       res[i] -= dround(res[i] * box_l_i[i]) * box_l[i];
+  }
+
+  if (std::fabs(res[2]) > half_box_l[2]) {
+    res[2] -= dround(res[2] * box_l_i[2]) * box_l[2];
+
+    extern double sim_time;
+    auto const sheer_rate = 0.1;
+    auto const offset = sim_time*sheer_rate;
+
+    res[1] += Utils::sgn(res[2]) * offset;
   }
 }
 
