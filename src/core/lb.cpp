@@ -1899,7 +1899,7 @@ int lb_sanity_checks() {
 /** (Re-)allocate memory for the fluid and initialize pointers. */
 static void lb_realloc_fluid() {
   LB_TRACE(printf("reallocating fluid\n"));
-  const std::array<int, 2> size = {lbmodel.n_veloc, lblattice.halo_grid_volume};
+  const std::array<int, 2> size = {{lbmodel.n_veloc, lblattice.halo_grid_volume}};
 
   lbfluid.resize(size);
   lbfluid_post.resize(size);
