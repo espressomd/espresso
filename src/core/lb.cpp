@@ -3061,7 +3061,7 @@ void print_fluid() {
         for (int z=0; z<lblattice.halo_grid[2]; ++z) {
             int index = get_linear_index(x, y, z, lblattice.halo_grid);
             for (int p=0; p < lbmodel.n_veloc; ++p) {
-                printf("x %d y %d z %d pop %d: %f\n", x, y, z, p, lbfluid[0][p][index]);
+                printf("x %d y %d z %d pop %d: %f\n", x, y, z, p, lbfluid[p][index]);
             }
         }
     }
