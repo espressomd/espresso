@@ -1207,7 +1207,12 @@ template <int cao> void calc_influence_function_force() {
                  Utils::sqr(p3m.d_op[RY][n[KY]] / box_l[RY]) +
                  Utils::sqr(p3m.d_op[RZ][n[KZ]] / box_l[RZ]);
 
-          fak3 = fak1 / (fak2 * Utils::sqr(denominator));
+          if(fak2 == 0) {
+            fak3 = 0;	
+          }	
+          else	
+            fak3 = fak1 / (fak2 * Utils::sqr(denominator));
+
           p3m.g_force[ind] = 2 * fak3 / (PI);
         }
       }
