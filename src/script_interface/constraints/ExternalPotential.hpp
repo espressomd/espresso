@@ -54,6 +54,7 @@ public:
       return m_constraint->field()([](double const &x) { return x; },
                                    get_value<Vector3d>(args, "x"));
     }
+
     return none;
   }
 

@@ -73,7 +73,7 @@ struct field_params_impl<Interpolated<T, codim>> {
     }
 
     auto const grid_spacing = get_value<Vector3d>(params, "grid_spacing");
-    auto const halo_points = order / 2;
+    auto const halo_points = order / 2 + 1;
     auto const origin = -(halo_points + 0.5) * grid_spacing;
 
     using field_data_type = typename decay_to_scalar<Vector<codim, T>>::type;
