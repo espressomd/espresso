@@ -229,10 +229,9 @@ class _Interpolated(Constraint):
     def required_dims(cls, box_size, grid_spacing, order):
         """Calculate the grid size needed for specified box size, grid spacing and order.
         """
-        halo_points = (order) // 2
+        halo_points = (order) // 2 + 1
         shape= np.array(np.ceil(box_size/grid_spacing), dtype=int) + 2 * halo_points
-        origin = np.array(-(halo_points + 0.5)*grid_spacing)
-
+        origin = np.array(-(halo_points + 0.5) * grid_spacing)
         return shape, origin
 
     @classmethod
@@ -310,7 +309,7 @@ class PotentialField(_Interpolated):
     """
 
     def __init__(self, field, **kwargs):
-        super(PotentialField, self).__init__(**kwargs)
+        super(PotentialField, self).__init__(field, **kwargs)
 
     _codim = 1
     _so_name = "Constraints::PotentialField"
@@ -387,7 +386,7 @@ class FlowField(_Interpolated):
     """
 
     def __init__(self, field, **kwargs):
-        super(FlowField, self).__init__(**kwargs)
+        super(FlowField, self).__init__(field,**kwargs)
 
     _codim = 3
     _so_name = "Constraints::FlowField"
@@ -429,7 +428,7 @@ class ElectricPotential(_Interpolated):
     """
 
     def __init__(self, field, **kwargs):
-        super(ElectricPotential, self).__init__(**kwargs)
+        super(ElectricPotential, self).__init__(field, **kwargs)
 
     _codim = 1
     _so_name = "Constraints::ElectricPotential"
