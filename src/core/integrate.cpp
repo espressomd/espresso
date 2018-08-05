@@ -805,19 +805,21 @@ void propagate_vel_pos() {
                       fprintf(stderr, "%d: OPT: PPOS p = (%.3e,%.3e,%.3e)\n",
                               this_node, p.r.p[0], p.r.p[1], p.r.p[2]));
 
-    set_resort_particles(Cells::RESORT_LOCAL);
-
     /* LE Push */
     {
-      auto const sheer_rate = 0.1;
+      auto const sheer_rate = 0.5;
+      auto const offset = sim_time * sheer_rate;
       if (p.r.p[2] > box_l[2]) {
-        p.m.v[1] += sheer_rate;
-      } else if (p.r.p[2] < 0.) {
         p.m.v[1] -= sheer_rate;
+        p.r.p[1] += (offset - dround(offset * box_l_i[1]) * box_l[1]);
+      } else if (p.r.p[2] < 0.) {
+        p.m.v[1] += sheer_rate;
+        p.r.p[1] -= (offset - dround(offset * box_l_i[1]) * box_l[1]);
       }
     }
   }
 
+  set_resort_particles(Cells::RESORT_LOCAL);
   announce_resort_particles();
 
 #ifdef ADDITIONAL_CHECKS
