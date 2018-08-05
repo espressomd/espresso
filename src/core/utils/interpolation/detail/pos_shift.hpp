@@ -13,7 +13,7 @@ namespace detail {
  * so there is no shift.
  */
 template <size_t order> constexpr double pos_shift() {
-  return (order % 2 == 0) ? 0.0 : 0.5;
+  return ((order - 1) / 2) - (order % 2) / 2.0;
 }
 }
 }
