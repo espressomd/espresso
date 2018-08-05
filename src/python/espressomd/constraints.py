@@ -194,7 +194,7 @@ class _Interpolated(Constraint):
     The provided field data grid has to be larger than the box
     by a margin depending on the interpolation order:
     In each dimension the provided grid has to be
-    (order//2 + 1) * grid_spacing larger than the box.
+    order//2 * grid_spacing larger than the box.
     For example if the box is 10 in x direction, and the interpolation
     order is 2 and a grid spacing of .1 is to be used, (2//2) = 1 extra
     point is needed on each side, and the grid spans the range
@@ -219,28 +219,40 @@ class _Interpolated(Constraint):
 
     """
 
-    @classmethod
-    def field_from_fn(cls, shape_, grid_spacing, order, f):
-        halo_points = order // 2
-        shape = [x + 2 * halo_points for x in shape_]
-
-        field = np.zeros((shape[0], shape[1], shape[2], cls._codim))
-
-        for i in product(*map(range,shape)):
-	        field[i] = f((np.array(i) - halo_points + 0.5)*grid_spacing)
-
-
-        return field
-
-    @classmethod
-    def field_coordinates(cls, shape_, grid_spacing, order):
-        return cls.field_from_fn(shape, grid_spacing, order, lambda x: x)
-
     def __init__(self, field, **kwargs):
         shape, codim = self._unpack_dims(field)
 
         super(_Interpolated, self).__init__(_field_shape=shape, _field_codim=codim,
                                          _field_data=field.flatten(), **kwargs)
+
+    @classmethod
+    def required_dims(cls, box_size, grid_spacing, order):
+        """Calculate the grid size needed for specified box size, grid spacing and order.
+        """
+        halo_points = (order) // 2
+        shape= np.array(np.ceil(box_size/grid_spacing), dtype=int) + 2 * halo_points
+        origin = np.array(-(halo_points + 0.5)*grid_spacing)
+
+        return shape, origin
+
+    @classmethod
+    def field_from_fn(cls, box_size, grid_spacing, order, f, codim=None):
+        shape, origin = cls.required_dims(box_size, grid_spacing, order)
+
+        if not codim:
+            codim = cls._codim
+
+        field = np.zeros((shape[0], shape[1], shape[2], codim))
+
+        for i in product(*map(range,shape)):
+            x = origin + np.array(i)*grid_spacing
+            field[i] = f(x)
+
+        return field
+
+    @classmethod
+    def field_coordinates(cls, box_size, grid_spacing, order):
+        return cls.field_from_fn(box_size, grid_spacing, order, lambda x: x, 3)
 
     def _unpack_dims(self, a):
         s = a.shape
@@ -273,7 +285,7 @@ class ForceField(_Interpolated):
     """
 
     def __init__(self, field, **kwargs):
-        super(ForceField, self).__init__(**kwargs)
+        super(ForceField, self).__init__(field, **kwargs)
 
     _codim = 3
     _so_name = "Constraints::ForceField"

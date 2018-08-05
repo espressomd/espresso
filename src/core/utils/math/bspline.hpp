@@ -3,10 +3,54 @@
 
 #include "sqr.hpp"
 
-#include <stdexcept>
 #include <cassert>
+#include <stdexcept>
 
 namespace Utils {
+namespace detail {
+template <class T, int i, int k> struct impl {
+  T operator()(T x) {
+    return (x - i) / (k - 1) * impl<T, i, k - 1>{}(x) +
+           ((i + k) - x) / (k - 1) * impl<T, i + 1, k - 1>{}(x);
+  }
+};
+
+template <class T, int i> struct impl<T, i, 1> {
+  T operator()(T x) { return ((i <= x) && x < (i + 1)) ? T{1} : T{}; }
+};
+
+template <int k, int i> using dimpl = detail::impl<double, k, i>;
+}
+
+double bspline_rec(int k, int i, double x) {
+  using detail::dimpl;
+
+  switch (k) {
+  case 1:
+    return dimpl<0, 1>{}(x);
+  case 2: {
+    switch (i) {
+    case 0:
+      return dimpl<0, 2>{}(x);
+    case 1:
+      return dimpl<1, 2>{}(x);
+    }
+  }
+  case 3: {
+    switch (i) {
+    case 0:
+      return dimpl<0, 3>{}(x);
+    case 1:
+      return dimpl<1, 3>{}(x);
+    case 2:
+      return dimpl<2, 3>{}(x);
+    }
+  }
+  default:
+    return 0.;
+  }
+}
+
 template <int order, typename T = double> inline T bspline(int i, T x) {
   static_assert(order <= 7, "");
   assert(i < order);
@@ -144,6 +188,27 @@ template <int order, typename T = double> inline T bspline(int i, T x) {
   }
 
   throw std::runtime_error("Internal interpolation error.");
+}
+
+inline double bspline(int k, int i, double x) {
+  switch (k) {
+  case 1:
+    return bspline<1>(i, x);
+  case 2:
+    return bspline<2>(i, x);
+  case 3:
+    return bspline<3>(i, x);
+  case 4:
+    return bspline<4>(i, x);
+  case 5:
+    return bspline<5>(i, x);
+  case 6:
+    return bspline<6>(i, x);
+  case 7:
+    return bspline<7>(i, x);
+  }
+
+  return 0.0;
 }
 
 template <int order, typename T = double> inline T bspline_d(int i, T x) {

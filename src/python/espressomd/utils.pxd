@@ -92,3 +92,7 @@ cdef extern from "Vector.hpp":
     cppclass Vector3d:
         double & operator[](int i)
         double * data()
+
+cdef extern from "utils/math/bspline.hpp" namespace "Utils":
+    cdef double bspline(int k,int i, double x)
+    cdef double bspline_rec(int k, int i, double x)
