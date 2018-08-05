@@ -37,6 +37,11 @@ cdef class HydrodynamicInteraction(Actor):
         raise Exception(
             "Subclasses of HydrodynamicInteraction must define the _lb_init() method.")
 
+def _construct(cls, params):
+    obj = cls(**params)
+    obj._params = params
+    return obj
+
 # LBFluid main class
 ####################################################
 IF LB_GPU or LB:
@@ -45,6 +50,9 @@ IF LB_GPU or LB:
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the CPU.
 
         """            
+
+        def __reduce__(self):
+            return _construct, (self.__class__, self._params), None
 
         def __getitem__(self, key):
             if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
