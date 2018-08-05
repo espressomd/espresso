@@ -62,15 +62,23 @@ public:
       return ret;
     }
 
-    if(method == "clear") {
-      for(auto const &e: m_elements) {
+    if (method == "clear") {
+      for (auto const &e : m_elements) {
         remove_in_core(e);
       }
 
       m_elements.clear();
     }
 
-    return true;
+    if (method == "size") {
+      return static_cast<int>(m_elements.size());
+    }
+
+    if (method == "empty") {
+      return m_elements.empty();
+    }
+
+    return none;
   }
 
 private:

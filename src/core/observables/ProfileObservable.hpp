@@ -9,7 +9,7 @@
 namespace Observables {
 
 // Observable which acts on a given list of particle ids
-class ProfileObservable : public Observable {
+class ProfileObservable : virtual public Observable {
 public:
   double min_x, max_x;
   double min_y, max_y;

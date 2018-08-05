@@ -57,7 +57,8 @@ void lbboundary_mindist_position(const Vector3d& pos, double *mindist,
 
 int lbboundary_get_force(int no, double *f);
 
-
+void add(const std::shared_ptr<LBBoundary> &);
+void remove(const std::shared_ptr<LBBoundary> &);
 
 #ifdef LB_BOUNDARIES
 /** Bounce back boundary conditions.
