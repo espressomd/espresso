@@ -72,7 +72,7 @@ class LBStreamingCommon(object):
             self.lbf[i].population = np.zeros(19)
 
     def set_fluid_populations(self, grid_index):
-        """Set the population of direction n_v of grid_index to 1.0.
+        """Set the population of direction n_v of grid_index to n_v+1.
 
         """
         pop = np.arange(1,20)
