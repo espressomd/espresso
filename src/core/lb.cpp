@@ -53,7 +53,7 @@
 #include "cuda_interface.hpp"
 
 #ifdef ADDITIONAL_CHECKS
-void lb_check_halo_regions(const LB_Fluid &lbfluid);
+static void lb_check_halo_regions(const LB_Fluid &lbfluid);
 void print_fluid();
 #endif // ADDITIONAL_CHECKS
 
@@ -144,8 +144,8 @@ static int rancounter = 0;
 
 #if defined(LB) || defined(LB_GPU)
 
-#include "global.hpp"
 #include "errorhandling.hpp"
+#include "global.hpp"
 #include "grid.hpp"
 #include "interaction_data.hpp"
 
