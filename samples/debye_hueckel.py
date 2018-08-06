@@ -23,7 +23,7 @@ This sample simulates monovalent salt (equal number of positive and negative uni
 from __future__ import print_function
 import espressomd
 
-required_features = ["ELECTROSTATICS","COULOMB_DEBYE_HUECKEL","LENNARD_JONES"]
+required_features = ["ELECTROSTATICS","DEBYE_HUECKEL","LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
 from espressomd import electrostatics
