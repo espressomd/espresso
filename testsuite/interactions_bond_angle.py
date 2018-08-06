@@ -21,6 +21,8 @@ import espressomd
 import numpy as np
 import unittest as ut
 
+@ut.skipIf(not espressomd.has_features(["BOND_ANGLE"]),
+           "Features not available, skipping test!")
 
 class InteractionsNonBondedTest(ut.TestCase):
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
@@ -65,8 +67,6 @@ class InteractionsNonBondedTest(ut.TestCase):
         return 0.5*bend*(np.cos(phi) - np.cos(phi0))**2
 
     # Test Angle Harmonic Potential
-    @ut.skipIf(not espressomd.has_features(["BOND_ANGLE"]),
-               "Features not available, skipping test!")
     def test_angle_harmonic(self):
 
         ah_bend = 1.
