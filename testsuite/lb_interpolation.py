@@ -12,7 +12,7 @@ DENS = 1.0
 FRIC = 1.0
 TAU = 0.1
 EXT_FORCE_DENSITY = [0.0, 0.0, 0.0]
-BOX_L = 10.0
+BOX_L = 12.0
 TIME_STEP = TAU
 LB_PARAMETERS = {
     'agrid': AGRID,
@@ -23,7 +23,7 @@ LB_PARAMETERS = {
     'ext_force_density': EXT_FORCE_DENSITY}
 
 def velocity_profile(x):
-    return 1./8. * (x - AGRID)
+    return 1./(BOX_L- 2.) * (x - AGRID)
 
 class LBInterpolation(object):
     """
@@ -32,7 +32,7 @@ class LBInterpolation(object):
 
     """
     lbf = None
-    system = espressomd.System(box_l=[10.0] * 3)
+    system = espressomd.System(box_l=[BOX_L] * 3)
     system.cell_system.skin = 0.4 * AGRID
     system.time_step = TIME_STEP
 
