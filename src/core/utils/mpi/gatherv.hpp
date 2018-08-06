@@ -15,6 +15,9 @@ template <typename T>
 void gatherv_impl(const boost::mpi::communicator &comm, const T *in_values,
                   int in_size, T *out_values, const int *sizes,
                   const int *displs, int root, boost::mpl::true_) {
+  if (in_values == nullptr)
+    return;
+
   MPI_Datatype type = boost::mpi::get_mpi_datatype<T>(*in_values);
 
   /* in-place ? */

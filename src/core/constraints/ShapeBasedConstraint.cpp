@@ -53,9 +53,9 @@ ParticleForce ShapeBasedConstraint::force(const Particle &p, const Vector3d &fol
 
   if (checkIfInteraction(ia_params)) {
     m_shape->calculate_dist(folded_pos.data(), &dist, dist_vec.data());
-    outer_normal_vec=-dist_vec/dist_vec.norm();
 
     if (dist > 0) {
+      outer_normal_vec=-dist_vec/dist;
       auto const dist2 = dist * dist;
       calc_non_bonded_pair_force(&p, &part_rep, ia_params, dist_vec.data(), dist, dist2,
                                  force.data(), torque1.data(), torque2.data());

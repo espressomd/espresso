@@ -37,6 +37,11 @@ cdef class HydrodynamicInteraction(Actor):
         raise Exception(
             "Subclasses of HydrodynamicInteraction must define the _lb_init() method.")
 
+def _construct(cls, params):
+    obj = cls(**params)
+    obj._params = params
+    return obj
+
 # LBFluid main class
 ####################################################
 IF LB_GPU or LB:
@@ -45,6 +50,9 @@ IF LB_GPU or LB:
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the CPU.
 
         """            
+
+        def __reduce__(self):
+            return _construct, (self.__class__, self._params), None
 
         def __getitem__(self, key):
             if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
@@ -76,7 +84,7 @@ IF LB_GPU or LB:
         # list of valid keys for parameters
         ####################################################
         def valid_keys(self):
-            return "agrid", "dens", "fric", "ext_force_density", "visc", "tau", "couple", "bulk_visc", "gamma_odd", "gamma_even"
+            return "agrid", "dens", "fric", "ext_force_density", "visc", "tau", "couple", "bulk_visc"
 
         # list of esential keys required for the fluid
         ####################################################
@@ -113,6 +121,7 @@ IF LB_GPU or LB:
 
         def _set_params_in_es_core(self):
             default_params = self.default_params()
+
             if python_lbfluid_set_density(self._params["dens"]):
                 raise Exception("lb_lbfluid_set_density error")
 

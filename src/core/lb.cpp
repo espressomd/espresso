@@ -1893,10 +1893,6 @@ int lb_sanity_checks() {
                          "lattice-Boltzmann grid spacing";
     ret = -1;
   }
-  if (thermo_switch & ~THERMO_LB) {
-    runtimeErrorMsg() << "LB must not be used with other thermostats";
-    ret = 1;
-  }
   return ret;
 }
 
