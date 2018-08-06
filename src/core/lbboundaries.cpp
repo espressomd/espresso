@@ -382,7 +382,7 @@ int lbboundary_get_force(void *lbb, double *f) {
 
 #ifdef LB_BOUNDARIES
 
-void lb_bounce_back(LB_Fluid& lbfluid) {
+void lb_bounce_back(LB_Fluid &lbfluid) {
 
 #ifdef D3Q19
 #ifndef PULL

@@ -41,10 +41,14 @@
 #include "utils.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 
-#include <boost/multi_array.hpp>
+#include "utils/Span.hpp"
+
+#include <array>
 
 namespace LBBoundaries {
-extern std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
+  using LB_Fluid = std::array<Utils::Span<double>, 19>;
+
+  extern std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 /*@}*/
 
@@ -69,7 +73,7 @@ void remove(const std::shared_ptr<LBBoundary> &);
  *
  * [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
  */
-  void lb_bounce_back(boost::multi_array<double, 2> &lbfluid);
+  void lb_bounce_back(LB_Fluid &lbfluid);
 
 #endif /* LB_BOUNDARIES */
 

@@ -37,7 +37,7 @@
 
 #include "utils.hpp"
 
-#include <boost/multi_array.hpp>
+#include <utils/Span.hpp>
 
 /* For the D3Q19 model most functions have a separate implementation
  * where the coefficients and the velocity vectors are hardcoded
@@ -193,7 +193,7 @@ extern Lattice lblattice;
 /** Pointer to the velocity populations of the fluid.
  * lbfluid contains pre-collision populations, lbfluid_post
  * contains post-collision populations*/
-using LB_Fluid = boost::multi_array<double, 2>;
+using LB_Fluid = std::array<Utils::Span<double>, 19>;
 extern LB_Fluid lbfluid;
 
 /** Pointer to the hydrodynamic fields of the fluid */
