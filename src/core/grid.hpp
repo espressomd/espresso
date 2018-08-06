@@ -184,19 +184,20 @@ inline void get_mi_vector(T &res, U const &a, V const &b) {
   for (int i = 0; i < 3; i++)
     res[i] = a[i] - b[i];
 
-  auto const dz = res[2];
+  auto const dy = res[2];
 
-  for (int i = 0; i < 2; i++) {
-    if (std::fabs(res[i]) > half_box_l[i] && PERIODIC(i))
-      res[i] -= dround(res[i] * box_l_i[i]) * box_l[i];
-  }
+  if (std::fabs(res[0]) > half_box_l[0] && PERIODIC(0))
+    res[0] -= dround(res[0] * box_l_i[0]) * box_l[0];
 
-  if (std::abs(dz) > 0.5 * box_l[2]) {
+  if (std::fabs(res[2]) > half_box_l[2] && PERIODIC(2))
+    res[2] -= dround(res[2] * box_l_i[2]) * box_l[2];
+  
+  if (std::abs(dy) > 0.5 * box_l[1]) {
     extern double sim_time;
-    auto const sheer_rate = 0.5;
-    double const offset = sim_time * sheer_rate;
+    auto const shear_rate = 0.5;
+    double const offset = sim_time * shear_rate;
     auto const shift =
-        Utils::sgn(dz) * (offset - dround(offset * box_l_i[1]) * box_l[1]);
+        Utils::sgn(dy) * (offset - dround(offset * box_l_i[1]) * box_l[1]);
     res[1] += shift;
   }
 }

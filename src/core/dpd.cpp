@@ -125,9 +125,9 @@ static Vector3d vel_diff(Vector3d const &x, Vector3d const &y,
   auto const sheer_rate = 0.5;
   auto ret = u - v;
 
-  auto const dz = std::abs(x[2] - y[2]);
-  if(dz > 0.5 * box_l[2] ) {
-    ret[1] += Utils::sgn(dz) * sheer_rate;
+  auto const dy = std::abs(x[1] - y[1]);
+  if(dy > 0.5 * box_l[1] ) {
+    ret[0] += Utils::sgn(dy) * sheer_rate;
   }
 
   return ret;

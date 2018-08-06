@@ -807,14 +807,14 @@ void propagate_vel_pos() {
 
     /* LE Push */
     {
-      auto const sheer_rate = 0.5;
-      auto const offset = sim_time * sheer_rate;
-      if (p.r.p[2] > box_l[2]) {
-        p.m.v[1] -= sheer_rate;
-        p.r.p[1] += (offset - dround(offset * box_l_i[1]) * box_l[1]);
-      } else if (p.r.p[2] < 0.) {
-        p.m.v[1] += sheer_rate;
-        p.r.p[1] -= (offset - dround(offset * box_l_i[1]) * box_l[1]);
+      auto const shear_rate = 0.5;
+      auto const offset = sim_time * shear_rate;
+      if (p.r.p[1] > box_l[1]) {
+        p.m.v[0] -= shear_rate;
+        p.r.p[0] += (offset - dround(offset * box_l_i[0]) * box_l[0]);
+      } else if (p.r.p[1] < 0.) {
+        p.m.v[0] += shear_rate;
+        p.r.p[0] -= (offset - dround(offset * box_l_i[0]) * box_l[0]);
       }
     }
   }
