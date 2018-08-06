@@ -50,7 +50,7 @@ fene = interactions.FeneBond(k=10, d_r_max=2)
 system.bonded_inter.add(fene)
 
 
-polymer.create_polymer(N_P=1, bond_length=1.0, type_poly_neutral=0, type_poly_charged=0, MPC=50, bond=fene)
+polymer.create_polymer(N_P=1, bond_length=1.0, type_poly_neutral=0, type_poly_charged=0, MPC=50, bond=fene, start_pos=[0.,0.,0.])
 vtf.writevsf(system, outfile)
 
 
