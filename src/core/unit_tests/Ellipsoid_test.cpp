@@ -35,7 +35,7 @@ bool check_distance_function(const Shapes::Shape &s) {
   for (int i = 0; i < N; i++) {
     for (int j = 0; j < N; j++) {
       double theta = 2. * i / N * M_PI;
-      double v = j / (N - 1);
+      double v = j / (N - 1.);
 
       double dist[3];
       double d;

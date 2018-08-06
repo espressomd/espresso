@@ -43,6 +43,8 @@ function cmd {
 [ -z "$with_fftw" ] && with_fftw="true"
 [ -z "$with_python_interface" ] && with_python_interface="true"
 [ -z "$with_coverage" ] && with_coverage="false"
+[ -z "$with_ubsan" ] && with_ubsan="false"
+[ -z "$with_asan" ] && with_asan="false"
 [ -z "$with_static_analysis" ] && with_static_analysis="false"
 [ -z "$myconfig" ] && myconfig="default"
 [ -z "$check_procs" ] && check_procs=2
@@ -66,13 +68,27 @@ fi
 
 outp insource srcdir builddir make_check \
     cmake_params with_fftw \
-    with_python_interface with_coverage with_static_analysis myconfig check_procs build_procs  check_odd_only \
+    with_python_interface with_coverage \
+    with_ubsan with_asan \
+    with_static_analysis myconfig check_procs \
+    build_procs check_odd_only \
     with_static_analysis myconfig \
     check_procs build_procs \
     python_version with_cuda
 
 # check indentation of python files
-pep8 --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
+pep8_command () {
+    if hash pep8 2> /dev/null; then
+        pep8 "$@"
+    elif hash pycodestyle 2> /dev/null; then
+        pycodestyle "$@"
+    else
+        echo "pep8 not found";
+        exit 1
+    fi
+}
+
+pep8_command --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
 ec=$?
 if [ $ec -eq 0 ]; then
     echo ""
@@ -90,6 +106,10 @@ pylint_command () {
         pylint "$@"
     elif hash pylint3 2> /dev/null; then
         pylint3 "$@"
+    elif hash pylint-2 2> /dev/null; then
+        pylint-2 "$@"
+    elif hash pylint-3 2> /dev/null; then
+        pylint-3 "$@"
     else
         echo "pylint not found";
         exit 1
@@ -116,7 +136,7 @@ fi
 # load MPI module if necessary
 if [ -f "/etc/os-release" ]; then
     grep -q suse /etc/os-release && source /etc/profile.d/modules.sh && module load gnu-openmpi
-    grep -q rhel /etc/os-release && source /etc/profile.d/modules.sh && module load mpi
+    grep -q 'rhel\|fedora' /etc/os-release && for f in /etc/profile.d/*module*.sh; do source $f; done && module load mpi
 fi
 
 # CONFIGURE
@@ -136,6 +156,14 @@ fi
 
 if [ $with_coverage = "true" ]; then
     cmake_params="-DWITH_COVERAGE=ON $cmake_params"
+fi
+
+if [ $with_asan = "true" ]; then
+    cmake_params="-DWITH_ASAN=ON $cmake_params"
+fi
+
+if [ $with_ubsan = "true" ]; then
+    cmake_params="-DWITH_UBSAN=ON $cmake_params"
 fi
 
 if [ $with_static_analysis = "true" ]; then

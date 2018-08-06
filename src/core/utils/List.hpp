@@ -59,11 +59,11 @@ public:
   List(List &&rhs) noexcept : List() { move(std::move(rhs)); }
   List &operator=(List const &rhs) {
     copy(rhs);
-    return *this; // NOLINT
+    return *this;
   }
   List &operator=(List &&rhs) noexcept {
     move(std::move(rhs));
-    return *this; // NOLINT
+    return *this;
   }
 
   T *begin() { return e; }

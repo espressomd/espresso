@@ -202,6 +202,8 @@ class TestLB(ut.TestCase):
         np.testing.assert_allclose(
             np.copy(self.lbf[0, 0, 0].velocity), v_fluid, atol=1e-4)
 
+    @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"),
+               "Features not available, skipping test!")
     def test_viscous_coupling(self):
         self.system.thermostat.turn_off()
         self.system.actors.clear()
