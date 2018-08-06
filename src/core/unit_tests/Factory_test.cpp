@@ -33,6 +33,7 @@ namespace Testing {
 
 struct TestClass {
   virtual void method() {}
+  virtual ~TestClass() {}
 };
 
 struct DerivedTestClass : public TestClass {

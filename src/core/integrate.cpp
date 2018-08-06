@@ -243,7 +243,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 #ifdef LB
     transfer_momentum = 0;
-    if (lattice_switch & LATTICE_LB && this_node == 0)
+    if (lattice_switch & LATTICE_LB && this_node == 0 && n_part)
       runtimeWarning("Recalculating forces, so the LB coupling forces are not "
                      "included in the particle force the first time step. This "
                      "only matters if it happens frequently during "
@@ -251,7 +251,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 #ifdef LB_GPU
     transfer_momentum_gpu = 0;
-    if (lattice_switch & LATTICE_LB_GPU && this_node == 0)
+    if (lattice_switch & LATTICE_LB_GPU && this_node == 0 && n_part)
       runtimeWarning("Recalculating forces, so the LB coupling forces are not "
                      "included in the particle force the first time step. This "
                      "only matters if it happens frequently during "
@@ -357,10 +357,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
    v(t+0.5*dt) ) */
 
 #ifdef LB
-    transfer_momentum = 1;
+    transfer_momentum = (n_part > 0);
 #endif
 #ifdef LB_GPU
-    transfer_momentum_gpu = 1;
+    transfer_momentum_gpu = (n_part > 0);
 #endif
 
   // Communication step: distribute ghost positions

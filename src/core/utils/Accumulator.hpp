@@ -75,12 +75,13 @@ inline std::vector<double> Accumulator::get_mean() const {
 
 inline std::vector<double> Accumulator::get_variance() const {
   std::vector<double> res;
-  std::transform(m_acc_data.begin(), m_acc_data.end(), std::back_inserter(res),
+  if(m_n==1){
+    res=std::vector<double>(m_acc_data.size(),std::numeric_limits<double>::max());
+  } else {
+    std::transform(m_acc_data.begin(), m_acc_data.end(), std::back_inserter(res),
                  [this](const AccumulatorData<double> &acc_data) {
                    return acc_data.m/(static_cast<double>(m_n)-1); //numerically stable sample variance, see https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
                  });
-  if(m_n==1){
-    res=std::vector<double>(m_acc_data.size(),std::numeric_limits<double>::max());
   }
   return res;
 }

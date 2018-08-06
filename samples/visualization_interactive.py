@@ -1,3 +1,6 @@
+""" Visualization samples with keyboard control and particle repositioning via timed callback.
+"""
+
 from __future__ import print_function
 import espressomd
 from espressomd import thermostat
@@ -7,12 +10,14 @@ from threading import Thread
 from math import *
 from espressomd.visualization_opengl import *
 
-# Minimal interactive OpenGL visualization for ESPResSo
+required_features = []
+espressomd.assert_features(required_features)
 
 print("Press u/j to change temperature")
 
 box_l = 10.0
 system = espressomd.System(box_l=[box_l] * 3)
+system.set_random_state_PRNG()
 visualizer = openGLLive(system, drag_enabled=True, drag_force=100)
 
 system.time_step = 0.00001
