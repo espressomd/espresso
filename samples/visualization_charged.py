@@ -1,13 +1,21 @@
+""" Visualization sample for charged particles. Simulates a pool of particles with various charges, LJ parameters and masses.  
+"""
+
 import espressomd
 from espressomd.visualization_opengl import openGLLive
 from espressomd import electrostatics
 import numpy as np
+
+required_features = ["ELECTROSTATICS", "LENNARD_JONES", "MASS"]
+espressomd.assert_features(required_features)
 
 box = [40, 40, 40]
 system = espressomd.System(box_l=box)
 system.cell_system.set_domain_decomposition(use_verlet_lists=True)
 visualizer = openGLLive(system, background_color=[
                         1, 1, 1], drag_enabled=True, drag_force=10)
+
+system.set_random_state_PRNG()
 
 # TIMESTEP
 time_step_fs = 1.0

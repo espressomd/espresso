@@ -1,3 +1,6 @@
+""" ESPResSo as a game engine.
+"""
+
 from __future__ import print_function
 import espressomd
 from espressomd import thermostat
@@ -7,6 +10,9 @@ import numpy as np
 from threading import Thread
 from math import *
 from espressomd.visualization_opengl import *
+
+required_features = ["LENNARD_JONES", "MASS", "EXTERNAL_FORCES", "LANGEVIN_PER_PARTICLE"]
+espressomd.assert_features(required_features)
 
 print("THE CHAMBER GAME\n\nYOUR GOAL IS TO SCOOP ALL BLUE PARTICLES INTO THE RIGHT BOX.\nGREEN/RED SPHERES CAN BE PICKED UP AND INCREASE/DECREASE\nTHE TEMERATURE IN THE CHAMBER WHERE THEY ARE COLLECTED.")
 
@@ -20,6 +26,7 @@ except:
 
 box = np.array([1500.0, 500.0, 150.0])
 system = espressomd.System(box_l=box)
+system.set_random_state_PRNG()
 
 # PARAMETERS
 

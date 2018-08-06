@@ -383,7 +383,7 @@ void dp3m_init() {
       dp3m_interpolate_dipole_assignment_function();
 
     dp3m.pos_shift =
-        (double)((dp3m.params.cao - 1) / 2) - (dp3m.params.cao % 2) / 2.0;
+        std::floor((dp3m.params.cao - 1) / 2.0) - (dp3m.params.cao % 2) / 2.0;
     P3M_TRACE(fprintf(stderr, "%d: dipolar pos_shift = %f\n", this_node,
                       dp3m.pos_shift));
 

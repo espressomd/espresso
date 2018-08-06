@@ -1,3 +1,6 @@
+""" Particle polarization with cold drude oscillators on a coarse grained ionic liquid.
+"""
+
 from __future__ import print_function
 import sys
 import time
@@ -12,6 +15,9 @@ from threading import Thread
 from time import sleep
 from espressomd import drude_helpers
 from espressomd.virtual_sites import VirtualSitesRelative
+
+required_features = ["LENNARD_JONES" , "P3M", "MASS", "ROTATION", "ROTATIONAL_INERTIA", "VIRTUAL_SITES_RELATIVE", "THOLE", "LANGEVIN_PER_PARTICLE"]
+espressomd.assert_features(required_features)
 
 print("\nThis script demonstrates particle polarization with cold drude\n\
 oscillators. It is a coarse grained simulation of the ionic liquid BMIM PF6.\n\
@@ -48,6 +54,7 @@ print("\n-->Ion pairs:", n_ionpairs, "Box size:", box_l)
 
 system=espressomd.System(box_l=[box_l,box_l,box_l])
 system.virtual_sites=VirtualSitesRelative(have_velocity=True)
+system.set_random_state_PRNG()
 
 if args.visu:
     d_scale= 0.988*0.5

@@ -120,13 +120,13 @@ private:
    * positions to the dataset.
    */
   template <typename T>
-  void WriteDataset(T &data, const std::string &path, int *change_extent,
+  void WriteDataset(T &data, const std::string &path, const std::vector<int> & change_extent,
                     hsize_t *offset, hsize_t *count);
 
   /**
    * @brief Method that extends datasets by the given extent.
    */
-  void ExtendDataset(const std::string & path, int *change_extent);
+  void ExtendDataset(const std::string & path, const std::vector<int> & change_extent);
 
   /**
   * @brief Method that returns chunk dimensions.

@@ -216,6 +216,38 @@ IF LB_GPU or LB:
 
         return 0
 
+    cdef inline python_lbfluid_set_gamma_odd(gamma_odd):
+        IF SHANCHEN:
+            cdef double c_gamma_odd[2]
+        ELSE:
+            cdef double c_gamma_odd[1]
+        # get pointers
+        if isinstance(gamma_odd, float) or isinstance(gamma_odd, int):
+            c_gamma_odd[0] = <float > gamma_odd
+        else:
+            c_gamma_odd = gamma_odd
+        # call c-function
+        if(lb_lbfluid_set_gamma_odd(c_gamma_odd)):
+            raise Exception("lb_fluid_set_gamma_odd error at C-level interface")
+
+        return 0
+
+    cdef inline python_lbfluid_set_gamma_even(gamma_even):
+        IF SHANCHEN:
+            cdef double c_gamma_even[2]
+        ELSE:
+            cdef double c_gamma_even[1]
+        # get pointers
+        if isinstance(gamma_even, float) or isinstance(gamma_even, int):
+            c_gamma_even[0] = <float > gamma_even
+        else:
+            c_gamma_even = gamma_even
+        # call c-function
+        if(lb_lbfluid_set_gamma_even(c_gamma_even)):
+            raise Exception("lb_fluid_set_gamma_even error at C-level interface")
+
+        return 0
+
 ###############################################
 
     cdef inline python_lbfluid_set_ext_force_density(p_ext_force_density):
