@@ -123,13 +123,15 @@ class InteractionsBondedTest(ut.TestCase):
             self.assertTrue((f0_sim == -f1_sim).all())
             # and has correct value.
             f1_sim_copy = np.copy(f1_sim)
-            np.testing.assert_almost_equal(f1_sim_copy, f1_ref)
+            np.testing.assert_almost_equal(f1_sim_copy, f1_ref, decimal = 6)
 
         # Check that bond breaks when distance > r_cut
         self.system.part[1].pos = self.system.part[1].pos + self.step
         with self.assertRaisesRegexp(Exception, "Encoutered errors during integrate"):
             self.system.integrator.run(recalc_forces=True, steps=0)
 
+    @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
+               "ELECTROSTATICS feature is not available, skipping coulomb test.")
     # Test Coulomb Bond
     def test_coulomb(self):
 

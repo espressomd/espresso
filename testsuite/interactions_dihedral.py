@@ -61,6 +61,9 @@ class InteractionsBondedTest(ut.TestCase):
             np.sin(phi) + k * np.dot(k, v) * (1.0 - np.cos(phi))
         return vrot
 
+    @ut.skipIf(not espressomd.has_features(["BOND_ANGLE"]),
+               "Features not available, skipping test!")
+
     # Analytical Expression
     def dihedral_angle(self,p1,p2,p3,p4):
         """
