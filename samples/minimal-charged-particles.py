@@ -1,3 +1,7 @@
+"""
+This sample simulates equal number of positively and negatively charged particles using the P3M solver. The system is maintained at a constant temperature by using a Langevin thermostat.
+"""
+
 #
 # Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
@@ -18,7 +22,10 @@
 #
 from __future__ import print_function
 import espressomd
-from espressomd import thermostat
+
+required_features = ["ELECTROSTATICS","LENNARD_JONES"]
+espressomd.assert_features(required_features)
+
 from espressomd import electrostatics
 import numpy as np
 
@@ -45,7 +52,7 @@ np.random.seed(seed=system.seed)
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-thermostat.Thermostat().set_langevin(1.0, 1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
 # warmup integration (with capped LJ potential)
 warm_steps = 100
@@ -57,16 +64,13 @@ min_dist = 0.9
 int_steps = 1000
 int_n_times = 10
 
-
 # Non-Bonded Interaction setup
 #############################################################
-
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
     cutoff=lj_cut, shift="auto")
 system.force_cap = lj_cap
-
 
 # Particle setup
 #############################################################
@@ -105,7 +109,6 @@ system.force_cap = lj_cap
 #############################################################
 p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
 system.actors.add(p3m)
-
 
 #############################################################
 #      Integration                                          #

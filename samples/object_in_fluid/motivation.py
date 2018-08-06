@@ -1,4 +1,11 @@
+"""
+This sample loads model red blood cells and simulates its motion in a complex geometry.
+"""
+
 import espressomd
+
+required_features = ["LB","LB_BOUNDARIES","EXTERNAL_FORCES","SOFT_SPHERE","MEMBRANE_COLLISION","OIF_GLOBAL_FORCES","OIF_LOCAL_FORCES","MASS"]
+espressomd.assert_features(required_features)
 
 from espressomd import lb
 from espressomd import lbboundaries
@@ -46,7 +53,6 @@ system.actors.add(lbf)
 # constraints created boundaries for the cells
 
 boundaries = []
-
 
 # bottom of the channel
 bottom_shape = shapes.Rhomboid(corner=[0.0,0.0,0.0], a=[boxX,0.0,0.0], b=[0.0,boxY,0.0], c=[0.0,0.0,1.0], direction = 1)
@@ -102,5 +108,5 @@ for i in range(1,maxCycle):
     system.integrator.run(steps=500)
     cell0.output_vtk_pos_folded(file_name="output/sim" + str(simNo) + "/cell0_" + str(i) + ".vtk")
     cell1.output_vtk_pos_folded(file_name="output/sim" + str(simNo) + "/cell1_" + str(i) + ".vtk")
-    print "time: ", str(i*time_step)
-print "Simulation completed."
+    print("time: ", str(i*time_step))
+print("Simulation completed.")
