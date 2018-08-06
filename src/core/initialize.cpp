@@ -109,9 +109,6 @@ void on_program_start() {
     //   lb_pre_init_gpu();
   }
 #endif
-#ifdef LB
-  lb_pre_init();
-#endif
 
 #ifdef SWIMMER_REACTIONS
   reaction.eq_rate = 0.0;
