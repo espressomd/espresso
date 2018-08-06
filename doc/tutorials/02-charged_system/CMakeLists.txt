@@ -9,3 +9,5 @@ configure_file(figures/nacl_units.jpg ${CMAKE_CURRENT_BINARY_DIR}/figures/nacl_u
 configure_file(figures/salt.png ${CMAKE_CURRENT_BINARY_DIR}/figures/salt.png COPYONLY)
 configure_file(02-charged_system-1.ipynb ${CMAKE_CURRENT_BINARY_DIR}/02-charged_system-1.ipynb COPYONLY)
 configure_file(02-charged_system-2.ipynb ${CMAKE_CURRENT_BINARY_DIR}/02-charged_system-2.ipynb COPYONLY)
+
+add_custom_target(tutorials_02)
