@@ -59,11 +59,11 @@ static std::vector<AutoParameter> coupling_parameters(const This &this_) {
 }
 
 template <typename T> T make_coupling(const VariantMap &) { return T{}; }
-template <> Viscous make_coupling<Viscous>(const VariantMap &params) {
+template <> inline Viscous make_coupling<Viscous>(const VariantMap &params) {
   return Viscous{get_value<double>(params, "gamma")};
 }
 
-template <> Scaled make_coupling<Scaled>(const VariantMap &params) {
+template <> inline Scaled make_coupling<Scaled>(const VariantMap &params) {
   auto scales_packed =
       get_value_or<std::vector<Variant>>(params, "particle_scales", {});
 
