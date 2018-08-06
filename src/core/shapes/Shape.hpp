@@ -28,6 +28,7 @@ class Shape {
 public:
   virtual int calculate_dist(const double *ppos, double *dist,
                              double *vec) const = 0;
+  virtual ~Shape() {}
 };
 
 } /* namespace Shapes */

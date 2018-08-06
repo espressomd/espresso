@@ -29,6 +29,13 @@ class GetLocalParts {
 
 public:
   Range operator()() const {
+    if (local_particles == nullptr) {
+      auto begin =
+        skip_it(nullptr, nullptr, SkipIfNullOrGhost());
+      return Utils::make_range(make_indirect_iterator(begin),
+                               make_indirect_iterator(begin));
+    }
+
     auto begin =
         skip_it(local_particles, local_particles + max_seen_particle + 1,
                 SkipIfNullOrGhost());

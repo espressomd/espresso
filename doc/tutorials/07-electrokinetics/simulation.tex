@@ -75,22 +75,22 @@ ESPResSo determines the strength of the electrostatic interactions via the Bjerr
 k_B T=\frac{e^2}{4\pi\varepsilon_0\varepsilon_r}\cdot\frac 1 {l_B}.
 \end{align*}
 %
-For water at $300\U{K}$ with $\varepsilon_r = 78.54$ it is $l_B\approx0.7095\U{nm}$.
+This yields for water at $300\U{K}$, with $\varepsilon_r = 78.54$, a Bjerrum length of $l_B\approx0.7095\U{nm}$.
 
 
 \subsection{Setting up the slip pore system}
 
 The script for this simulation comes with this tutorial and is called \texttt{eof\_electrokinetics.py}. All used commands are documented in the User's Guide in the section called ``Electrokinetics''.
 
-We first set up a periodic simulation box of the desired dimensions. Note that the dimensions are of course given in simulation units.
+We first set up a periodic simulation box of the desired dimensions. Note that the dimensions are, of course, given in simulation units.
 
 \begin{lstlisting}
 # Initializing espresso modules and the numpy package
 from espressomd import System, electrokinetics, shapes
 import numpy as np
 
-# Set the slit pore geometry the width is the non-periodic part of the geometry
-# the padding is used to ensure that there is no field outside the slit
+# Set the slit pore geometry where the width is the non-periodic part of the geometry
+# the padding is used to ensure that there is no field outside the slit since the electrostatics is used with a 3D periodic FFT solver.
 
 box_x = 6
 box_y = 6
