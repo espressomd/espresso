@@ -65,6 +65,10 @@
 #define LB_COUPLE_TWO_POINT 2
 #define LB_COUPLE_THREE_POINT 4
 
+
+#ifdef ADDITIONAL_CHECKS
+void print_fluid();
+#endif
 /*@}*/
 /** Some general remarks:
  * This file implements the LB D3Q19 method to Espresso. The LB_Model
@@ -236,7 +240,7 @@ int lb_sanity_checks();
     @param pi local fluid pressure
 */
 void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
-                             const double *j, double *pi);
+                             const std::array<double, 3> &j, const std::array<double, 6> &pi);
 
 /** Propagates the Lattice Boltzmann system for one time step.
  * This function performs the collision step and the streaming step.
@@ -457,22 +461,15 @@ inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
 }
 #endif
 
-/** Calculate the local fluid momentum.
- * The calculation is implemented explicitly for the special case of D3Q19.
- * @param index The local lattice site (Input).
- * @param pop fluid population
- */
 inline void lb_get_populations(Lattice::index_t index, double *pop) {
-  int i = 0;
-  for (i = 0; i < 19; i++) {
-    pop[i] = lbfluid[i][index] + lbmodel.coeff[i % 19][0] * lbpar.rho;
+  for (int i = 0; i < lbmodel.n_veloc; ++i) {
+    pop[i] = lbfluid[i][index] + lbmodel.coeff[i][0] * lbpar.rho;
   }
 }
 
 inline void lb_set_populations(Lattice::index_t index, double *pop) {
-  int i = 0;
-  for (i = 0; i < 19; i++) {
-    lbfluid[i][index] = pop[i] - lbmodel.coeff[i % 19][0] * lbpar.rho;
+  for (int i = 0; i < lbmodel.n_veloc; ++i) {
+    lbfluid[i][index] = pop[i] - lbmodel.coeff[i][0] * lbpar.rho;
   }
 }
 #endif
