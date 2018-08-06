@@ -105,7 +105,7 @@ LB_parameters_gpu lbpar_gpu = {
   // bulk_viscosity
   SCM1,
   // agrid
-  0.0,
+  -1.0,
   // tau
   -1.0,
   // time_step

@@ -1,9 +1,14 @@
-## A script to simulate planar Poisseuille flow in Espresso
+""" Visualization sample for Poisseuille flow with Lattice Boltzmann.  
+"""
+
 from __future__ import print_function
 from espressomd import System, lb, shapes, lbboundaries
 import numpy as np
 from threading import Thread
 from espressomd.visualization_opengl import *
+
+required_features = ["LB", "LB_BOUNDARIES", "EXTERNAL_FORCES"]
+espressomd.assert_features(required_features)
 
 # System setup
 box_l = 16

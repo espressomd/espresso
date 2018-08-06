@@ -84,7 +84,7 @@ IF LB_GPU or LB:
         # list of valid keys for parameters
         ####################################################
         def valid_keys(self):
-            return "agrid", "dens", "fric", "ext_force_density", "visc", "tau", "couple", "bulk_visc"
+            return "agrid", "dens", "fric", "ext_force_density", "visc", "tau", "couple", "bulk_visc", "gamma_odd", "gamma_even"
 
         # list of esential keys required for the fluid
         ####################################################
@@ -147,6 +147,15 @@ IF LB_GPU or LB:
 
             if python_lbfluid_set_couple_flag(self._params["couple"]):
                 raise Exception("lb_lbfluid_set_couple_flag error")
+
+            if "gamma_odd" in self._params:
+                if python_lbfluid_set_gamma_odd(self._params["gamma_odd"]):
+                    raise Exception("lb_lbfluid_set_gamma_odd error")
+
+            if "gamma_even" in self._params:
+                if python_lbfluid_set_gamma_even(self._params["gamma_even"]):
+                    raise Exception("lb_lbfluid_set_gamma_even error")
+
             utils.handle_errors("LB fluid activation")
 
         # function that calls wrapper functions which get the parameters from C-Level
@@ -361,7 +370,9 @@ IF LB or LB_GPU:
                 return array_locked(double_return)
 
             def __set__(self, value):
-                cdef double[19] double_return = value
+                cdef double[19] double_return
+                for i in range(19):
+                    double_return[i] = value[i]
                 lb_lbnode_set_pop(self.node, double_return)
 
         property boundary:
