@@ -34,6 +34,7 @@ struct CollectiveVariable {
   virtual double determine_current_state() = 0; // use pure virtual, otherwise
                                                 // this will be used in vector
                                                 // of collective variables
+  virtual ~CollectiveVariable() {}
 };
 
 class WangLandauReactionEnsemble;

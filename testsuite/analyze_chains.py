@@ -10,6 +10,8 @@ from espressomd import polymer
 class AnalyzeChain(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     np.random.seed(1234)
+    system.set_random_state_PRNG()
+
     num_poly=2
     num_mono=5
 
@@ -21,7 +23,7 @@ class AnalyzeChain(ut.TestCase):
         self.system.cell_system.set_n_square(use_verlet_lists=False)
         fene=FeneBond(k=30, d_r_max=2)
         self.system.bonded_inter.add(fene)
-        polymer.create_polymer(N_P=self.num_poly,
+        polymer.create_polymer(start_pos=[0,0,0], N_P=self.num_poly,
                                bond_length=0.9,
                                MPC=self.num_mono,
                                bond=fene)
