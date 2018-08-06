@@ -26,7 +26,6 @@ import espressomd
 required_features = ["ELECTROSTATICS","COULOMB_DEBYE_HUECKEL","LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
-from espressomd import thermostat
 from espressomd import electrostatics
 from samples_common import open
 import numpy as np
@@ -77,7 +76,7 @@ np.random.seed(seed=system.seed)
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 
-thermostat.Thermostat().set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
 # warmup integration (with capped LJ potential)
 warm_steps = 100
