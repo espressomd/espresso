@@ -23,7 +23,6 @@ import unittest as ut
 
 @ut.skipIf(not espressomd.has_features(["BOND_ANGLE"]),
            "Features not available, skipping test!")
-
 class InteractionsNonBondedTest(ut.TestCase):
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     box_l = 10.
@@ -35,7 +34,6 @@ class InteractionsNonBondedTest(ut.TestCase):
     rel_pos /= np.linalg.norm(rel_pos)
 
     def setUp(self):
-
         self.system.box_l = [self.box_l] * 3
         self.system.cell_system.skin = 0.4
         self.system.time_step = .1
@@ -45,30 +43,28 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.part.add(id=2, pos=self.start_pos + self.rel_pos, type=0)
 
     def tearDown(self):
-
         self.system.part.clear()
 
     def rotate_vector(self, v, k, phi):
-        """Rotates vector v around unit vector k by angle phi.
-        Uses Rodrigues' rotation formula."""
+        """Rotates vector v around unit vector k by angle phi
+        using Rodrigues' rotation formula.
+        
+        """
         vrot = v * np.cos(phi) + np.cross(k, v) * \
             np.sin(phi) + k * np.dot(k, v) * (1 - np.cos(phi))
         return vrot
 
-    # Analytical Expression
-    # for Angle Harmonic Potential
+    # Analytical expressions
     def angle_harmonic_potential(self, phi, bend=1.0, phi0=np.pi):
         return 0.5 * bend * np.power(phi - phi0, 2)
-    # for Angle Cosine Potential
+
     def angle_cosine_potential(self, phi, bend=1.0, phi0 = np.pi):
         return bend*(1-np.cos(phi - phi0))
-    # for Angle Cosine Squared Potential
+
     def angle_cos_squared_potential(self, phi, bend = 1.0, phi0 = np.pi):
         return 0.5*bend*(np.cos(phi) - np.cos(phi0))**2
 
-    # Test Angle Harmonic Potential
     def test_angle_harmonic(self):
-
         ah_bend = 1.
         ah_phi0 = 0.4327 * np.pi
 
@@ -94,7 +90,6 @@ class InteractionsNonBondedTest(ut.TestCase):
 
     # Test Angle Cosine Potential
     def test_angle_cosine(self):
-
         ac_bend = 1
         ac_phi0 = 1
 
@@ -118,9 +113,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Check that energies match
             np.testing.assert_almost_equal(E_sim, E_ref, decimal = 4)
 
-    # Test Angle Cosine Squared Potential
     def test_angle_cos_squared(self):
-
         acs_bend = 1
         acs_phi0 = 1
 
