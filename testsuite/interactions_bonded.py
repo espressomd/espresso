@@ -17,9 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function
-import espressomd
-import numpy
+
 import unittest as ut
+import numpy
+
+import espressomd
 from tests_common import *
 
 
@@ -132,9 +134,7 @@ class InteractionsBondedTest(ut.TestCase):
 
     @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
                "ELECTROSTATICS feature is not available, skipping coulomb test.")
-    # Test Coulomb Bond
     def test_coulomb(self):
-
         coulomb_k = 1
         q1 = 1
         q2 = -1
@@ -170,5 +170,4 @@ class InteractionsBondedTest(ut.TestCase):
 
 
 if __name__ == '__main__':
-    print("Features: ", espressomd.features())
     ut.main()
