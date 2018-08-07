@@ -237,14 +237,12 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
     boost::multi_array<double, 3> data(Vector<3, int>{10, 11, 12});
     data[5][5][5] = -1. / 12.;
 
-    const int order = 3;
     const Vector3d grid_spacing = {.1, .2, .3};
     const Vector3d origin = {-1., 2., -3.};
 
-    Field field(data, order, grid_spacing, origin);
+    Field field(data, grid_spacing, origin);
 
     BOOST_CHECK(data == field.field_data());
-    BOOST_CHECK(order == field.interpolation_order());
     BOOST_CHECK(grid_spacing == field.grid_spacing());
     BOOST_CHECK(origin == field.origin());
   }
@@ -252,10 +250,9 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
   /* linear logic */
   {
     const boost::multi_array<double, 3> data(Vector<3, int>{10, 10, 10});
-    const int order = 3;
     const Vector3d grid_spacing = {1., 1., 1.};
 
-    Field field(data, order, grid_spacing, {});
+    Field field(data, grid_spacing, {});
 
     /* linear, only called once */
     {
@@ -270,7 +267,7 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
       auto id = Id<false>{};
       field(id, {5., 5., 5.});
 
-      BOOST_CHECK((3 * 3 * 3) == id.count);
+      BOOST_CHECK((8) == id.count);
     }
   }
 
@@ -278,7 +275,6 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
   {
     using Utils::Interpolation::bspline_3d_accumulate;
 
-    const int order = 3;
     const Vector3d grid_spacing = {.1, .2, .3};
     const Vector3d origin = {-1., 2., -1.4};
     const int n_nodes = 10;
@@ -288,13 +284,13 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
 
     auto const data = gaussian_field(n_nodes, grid_spacing, origin, x0, sigma);
 
-    Field field(data, order, grid_spacing, origin);
+    Field field(data, grid_spacing, origin);
 
     auto const p = Vector3d{-.4, 3.14, 0.1};
 
     auto const interpolated_value = bspline_3d_accumulate(
         p, [&data](const std::array<int, 3> &ind) { return data(ind); },
-        grid_spacing, origin, order, 0.0);
+        grid_spacing, origin, 2, 0.0);
 
     auto const field_value_lin = field(Id<true>{}, p);
     auto const field_value_non_lin = field(Id<false>{}, p);
@@ -309,7 +305,6 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
   {
     using Utils::Interpolation::bspline_3d_gradient_accumulate;
 
-    const int order = 3;
     const Vector3d grid_spacing = {.1, .2, .3};
     const Vector3d origin = {-1., 2., -1.4};
     const int n_nodes = 10;
@@ -319,7 +314,7 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
 
     auto const data = gaussian_field(n_nodes, grid_spacing, origin, x0, sigma);
 
-    Field field(data, order, grid_spacing, origin);
+    Field field(data, grid_spacing, origin);
 
     auto const p = Vector3d{-.4, 3.14, 0.1};
 
@@ -328,7 +323,7 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
 
     auto const interpolated_value = bspline_3d_gradient_accumulate(
         p, [&data](const std::array<int, 3> &ind) { return data(ind); },
-        grid_spacing, origin, order, Vector3d{});
+        grid_spacing, origin, 2, Vector3d{});
 
     BOOST_CHECK((interpolated_value - field_value_lin).norm() <
                 std::numeric_limits<double>::epsilon());
@@ -351,7 +346,6 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
   {
     using Utils::Interpolation::bspline_3d_accumulate;
 
-    const int order = 3;
     const Vector3d grid_spacing = {.1, .2, .3};
     const Vector3d origin = {-1., 2., -1.4};
     const int n_nodes = 10;
@@ -371,7 +365,7 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
                            gaussian(x, x0[1], sigma[1])};
         }
 
-    Field field(data, order, grid_spacing, origin);
+    Field field(data, grid_spacing, origin);
 
     auto const p = Vector3d{-.4, 3.14, 0.1};
 
@@ -380,7 +374,7 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
 
     auto const interpolated_value = bspline_3d_accumulate(
         p, [&data](const std::array<int, 3> &ind) { return data(ind); },
-        grid_spacing, origin, order, Vector2d{});
+        grid_spacing, origin, 2, Vector2d{});
 
     BOOST_CHECK_SMALL((interpolated_value - field_value_lin).norm(),
                       std::numeric_limits<double>::epsilon());
@@ -392,7 +386,6 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
   {
     using Utils::Interpolation::bspline_3d_gradient_accumulate;
 
-    const int order = 3;
     const Vector3d grid_spacing = {.1, .2, .3};
     const Vector3d origin = {-1., 2., -1.4};
     const int n_nodes = 10;
@@ -412,7 +405,7 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
                            gaussian(x, x0[1], sigma[1])};
         }
 
-    Field field(data, order, grid_spacing, origin);
+    Field field(data, grid_spacing, origin);
 
     auto const p = Vector3d{-.4, 3.14, 0.1};
 
@@ -421,7 +414,7 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
 
     auto const interpolated_value = bspline_3d_gradient_accumulate(
         p, [&data](const std::array<int, 3> &ind) { return data(ind); },
-        grid_spacing, origin, order, Field::gradient_type{});
+        grid_spacing, origin, 2, Field::gradient_type{});
 
     BOOST_CHECK_SMALL((interpolated_value[0] - field_value_lin[0]).norm(),
                       std::numeric_limits<double>::epsilon());

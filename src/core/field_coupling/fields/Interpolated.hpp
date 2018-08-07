@@ -97,13 +97,13 @@ public:
       return f(bspline_3d_accumulate(
           pos,
           [this](const std::array<int, 3> &ind) { return m_global_field(ind); },
-          m_grid_spacing, m_origin, 1, value_type{}));
+          m_grid_spacing, m_origin, 2, value_type{}));
     } else {
       return bspline_3d_accumulate(pos,
                                    [this, &f](const std::array<int, 3> &ind) {
                                      return f(m_global_field(ind));
                                    },
-                                   m_grid_spacing, m_origin, 1, value_type{});
+                                   m_grid_spacing, m_origin, 2, value_type{});
     }
   }
 
@@ -120,14 +120,14 @@ public:
       return f(bspline_3d_gradient_accumulate(
           pos,
           [this](const std::array<int, 3> &ind) { return m_global_field(ind); },
-          m_grid_spacing, m_origin, 1, gradient_type{}));
+          m_grid_spacing, m_origin, 2, gradient_type{}));
     } else {
       return bspline_3d_gradient_accumulate(
           pos,
           [this, &f](const std::array<int, 3> &ind) {
             return f(m_global_field(ind));
           },
-          m_grid_spacing, m_origin, 1, gradient_type{});
+          m_grid_spacing, m_origin, 2, gradient_type{});
     }
   }
 
