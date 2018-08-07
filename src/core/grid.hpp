@@ -187,7 +187,7 @@ inline void get_mi_vector(T &res, U const &a, V const &b) {
   auto const dy = res[1];
 
   for (int i = 0; i < 3; i++)
-    res[i] -= dround(res[i] * box_l_i[0]) * box_l[0];
+    res[i] -= dround(res[i] * box_l_i[i]) * box_l[i];
   
   if (std::abs(dy) > half_box_l[1]) {
     extern double sim_time;
