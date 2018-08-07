@@ -174,6 +174,8 @@ template <int order, typename T = double> inline T bspline_d(int i, T x) {
   assert(x <= 0.5);
 
   switch (order - 1) {
+  case 0:
+    return 0.;
   case 1:
     switch (i) {
     case 0:

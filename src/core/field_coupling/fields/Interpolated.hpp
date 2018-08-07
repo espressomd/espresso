@@ -1,13 +1,12 @@
 #ifndef CORE_EXTERNAL_FIELD_FIELDS_INTERPOLATED_HPP
 #define CORE_EXTERNAL_FIELD_FIELDS_INTERPOLATED_HPP
 
-#include "gradient_type.hpp"
-
-#include "Vector.hpp"
-
 #include "utils/interpolation/bspline_3d.hpp"
 #include "utils/interpolation/bspline_3d_gradient.hpp"
 #include "utils/math/tensor_product.hpp"
+
+#include "Vector.hpp"
+#include "gradient_type.hpp"
 
 /* Turn off range checks if release build. */
 #if defined(NDEBUG) && !defined(BOOST_DISABLE_ASSERTS)
@@ -54,22 +53,19 @@ public:
 
 private:
   storage_type m_global_field;
-  int m_order;
   Vector3d m_grid_spacing;
   Vector3d m_origin;
 
 public:
   Interpolated(const boost::const_multi_array_ref<value_type, 3> &global_field,
-               int interpolation_order, const Vector3d &grid_spacing,
-               const Vector3d &origin)
-      : m_global_field(global_field), m_order(interpolation_order),
-        m_grid_spacing(grid_spacing), m_origin(origin) {}
+               const Vector3d &grid_spacing, const Vector3d &origin)
+      : m_global_field(global_field), m_grid_spacing(grid_spacing),
+        m_origin(origin) {}
 
 private:
   void copy(const Interpolated &rhs) {
     detail::deep_copy(m_global_field, rhs.m_global_field);
 
-    m_order = rhs.m_order;
     m_grid_spacing = rhs.m_grid_spacing;
     m_origin = rhs.m_origin;
   }
@@ -81,7 +77,6 @@ public:
     return *this;
   }
 
-  int interpolation_order() const { return m_order; }
   Vector3d grid_spacing() const { return m_grid_spacing; }
   storage_type const &field_data() const { return m_global_field; }
   Vector3d origin() const { return m_origin; }
@@ -102,14 +97,13 @@ public:
       return f(bspline_3d_accumulate(
           pos,
           [this](const std::array<int, 3> &ind) { return m_global_field(ind); },
-          m_grid_spacing, m_origin, m_order, value_type{}));
+          m_grid_spacing, m_origin, 1, value_type{}));
     } else {
-      return bspline_3d_accumulate(
-          pos,
-          [this, &f](const std::array<int, 3> &ind) {
-            return f(m_global_field(ind));
-          },
-          m_grid_spacing, m_origin, m_order, value_type{});
+      return bspline_3d_accumulate(pos,
+                                   [this, &f](const std::array<int, 3> &ind) {
+                                     return f(m_global_field(ind));
+                                   },
+                                   m_grid_spacing, m_origin, 1, value_type{});
     }
   }
 
@@ -126,14 +120,14 @@ public:
       return f(bspline_3d_gradient_accumulate(
           pos,
           [this](const std::array<int, 3> &ind) { return m_global_field(ind); },
-          m_grid_spacing, m_origin, m_order, gradient_type{}));
+          m_grid_spacing, m_origin, 1, gradient_type{}));
     } else {
       return bspline_3d_gradient_accumulate(
           pos,
           [this, &f](const std::array<int, 3> &ind) {
             return f(m_global_field(ind));
           },
-          m_grid_spacing, m_origin, m_order, gradient_type{});
+          m_grid_spacing, m_origin, 1, gradient_type{});
     }
   }
 

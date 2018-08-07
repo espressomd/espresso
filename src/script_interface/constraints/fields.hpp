@@ -64,31 +64,25 @@ struct field_params_impl<Interpolated<T, codim>> {
           std::to_string(codim) + ']');
     }
 
-    auto const order = get_value<int>(params, "interpolation_order");
-    if (*std::min_element(field_shape.begin(), field_shape.end()) <=
-        (order / 2)) {
-      throw std::runtime_error("Field is to small, needs to be at least " +
-                               std::to_string(order / 2 + 1) +
-                               " in all directions.");
+    if (*std::min_element(field_shape.begin(), field_shape.end()) < 1) {
+      throw std::runtime_error("Field is to small, needs to be at least "
+                               "one in all directions.");
     }
 
     auto const grid_spacing = get_value<Vector3d>(params, "grid_spacing");
-    auto const halo_points = order / 2 + 1;
-    auto const origin = -(halo_points + 0.5) * grid_spacing;
+    auto const origin = -0.5 * grid_spacing;
 
     using field_data_type = typename decay_to_scalar<Vector<codim, T>>::type;
     auto array_ref = boost::const_multi_array_ref<field_data_type, 3>(
         reinterpret_cast<const field_data_type *>(field_data.data()),
         field_shape);
 
-    return Interpolated<T, codim>{array_ref, order, grid_spacing, origin};
+    return Interpolated<T, codim>{array_ref, grid_spacing, origin};
   }
 
   template <typename This>
   static std::vector<AutoParameter> params(const This &this_) {
-    return {{"interpolation_order", AutoParameter::read_only,
-             [this_]() { return this_().interpolation_order(); }},
-            {"grid_spacing", AutoParameter::read_only,
+    return {{"grid_spacing", AutoParameter::read_only,
              [this_]() { return this_().grid_spacing(); }},
             {"origin", AutoParameter::read_only,
              [this_]() { return this_().origin(); }},
