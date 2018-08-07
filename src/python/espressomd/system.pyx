@@ -453,6 +453,17 @@ cdef class System(object):
         get_mi_vector(res, b, a)
         return np.array((res[0], res[1], res[2]))
 
+    def distance_vec_folded(self, p1, p2):
+        """Return the distance vector between the particles, using folded coordinates.
+
+        """
+        cdef double[3] res, a, b
+        a = p1.pos_folded
+        b = p2.pos_folded
+
+        get_mi_vector(res, b, a)
+        return np.array((res[0], res[1], res[2]))
+    
     def rotate_system(self, **kwargs):
         """Rotate the particles in the system about the center of mass.
 
