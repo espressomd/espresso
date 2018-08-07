@@ -84,9 +84,13 @@ IF SCAFACOS == 1:
             
             # Re-add the prefactor to the parameter set
             if self.dipolar: 
-                res["prefactor"] =magnetostatics.coulomb.Dprefactor
+                IF DIPOLES == 1:
+                    res["prefactor"] = magnetostatics.coulomb.Dprefactor
+                pass
             else:
-                res["prefactor"] =electrostatics.coulomb.prefactor
+                IF ELECTROSTATICS == 1:
+                    res["prefactor"] = electrostatics.coulomb.prefactor
+                pass
             return res
 
         def _set_params_in_es_core(self):

@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+""" Visualization sample for a Lennard Jones liquid with live plotting via matplotlib.  
+"""
+
 from __future__ import print_function
 import numpy as np
 from matplotlib import pyplot
@@ -24,6 +28,10 @@ import espressomd
 from espressomd import thermostat
 from espressomd import integrate
 from espressomd import visualization
+
+required_features = ["LENNARD_JONES"]
+espressomd.assert_features(required_features)
+
 
 print("""
 =======================================================

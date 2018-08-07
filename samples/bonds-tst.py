@@ -1,8 +1,13 @@
+"""
+This sample demonstrates how new bonds can be added between particles and how existing bond between particles can be deleted.
+"""
+
 from __future__ import print_function
 import espressomd
 from espressomd.interactions import *
+from espressomd import assert_features
 
-system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+system = espressomd.System(box_l=[10.0, 10.0, 10.0])
 system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
 h = HarmonicBond(r_0=0, k=1)
