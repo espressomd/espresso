@@ -204,11 +204,6 @@ class _Interpolated(Constraint):
 
     Attributes
     ----------
-    interpolation_order: array_like :obj:`int`
-        The order of the b-splines top be used. This is equivalent
-        to the number of points to be used in each direction. E.g.
-        order 2 corresponds to linear interpolation, 3 to quadratic
-        and so on.
 
     field_data: array_like :obj:`float`:
         The actual field please be aware that depending on the interpolation
@@ -226,17 +221,16 @@ class _Interpolated(Constraint):
                                          _field_data=field.flatten(), **kwargs)
 
     @classmethod
-    def required_dims(cls, box_size, grid_spacing, order):
+    def required_dims(cls, box_size, grid_spacing):
         """Calculate the grid size needed for specified box size, grid spacing and order.
         """
-        halo_points = (order) // 2 + 1
-        shape= np.array(np.ceil(box_size/grid_spacing), dtype=int) + 2 * halo_points
-        origin = np.array(-(halo_points + 0.5) * grid_spacing)
+        shape = np.array(np.ceil(box_size/grid_spacing), dtype=int)
+        origin = -0.5 * grid_spacing
         return shape, origin
 
     @classmethod
-    def field_from_fn(cls, box_size, grid_spacing, order, f, codim=None):
-        shape, origin = cls.required_dims(box_size, grid_spacing, order)
+    def field_from_fn(cls, box_size, grid_spacing, f, codim=None):
+        shape, origin = cls.required_dims(box_size, grid_spacing)
 
         if not codim:
             codim = cls._codim
@@ -250,8 +244,8 @@ class _Interpolated(Constraint):
         return field
 
     @classmethod
-    def field_coordinates(cls, box_size, grid_spacing, order):
-        return cls.field_from_fn(box_size, grid_spacing, order, lambda x: x, 3)
+    def field_coordinates(cls, box_size, grid_spacing):
+        return cls.field_from_fn(box_size, grid_spacing, lambda x: x, 3)
 
     def _unpack_dims(self, a):
         s = a.shape
