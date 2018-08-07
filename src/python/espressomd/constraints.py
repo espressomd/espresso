@@ -222,14 +222,42 @@ class _Interpolated(Constraint):
 
     @classmethod
     def required_dims(cls, box_size, grid_spacing):
-        """Calculate the grid size needed for specified box size, grid spacing and order.
+        """Calculate the grid size and origin needed for specified box size and grid spacing.
+           Returns the shape and origin (coordinates of [0][0][0]) needed.
+
+        Arguments
+        ---------
+        box_size : array_like obj:`float`
+            The box the field should be used.
+
+        grid_spacing : array_like obj:`float`
+            The desired grid spacing.
+
         """
+
         shape = np.array(np.ceil(box_size/grid_spacing), dtype=int)
-        origin = -0.5 * grid_spacing
+        origin = 0.5 * grid_spacing
         return shape, origin
 
     @classmethod
     def field_from_fn(cls, box_size, grid_spacing, f, codim=None):
+        """Generate field data for a desired box size and grid spacing
+        by evaluating a function at the coordinates.
+
+        Arguments
+        ---------
+        box_size : array_like obj:`float`
+            The box the field should be used.
+
+        grid_spacing : array_like obj:`float`
+            The desired grid spacing.
+
+        f : callable
+           A function that is called with the coordinates of every
+           grid point to populate the grid.
+
+        """
+
         shape, origin = cls.required_dims(box_size, grid_spacing)
 
         if not codim:

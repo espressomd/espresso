@@ -1,6 +1,8 @@
 #ifndef UTILS_INTERPOLATION_DETAIL_POS_SHIFT_HPP
 #define UTILS_INTERPOLATION_DETAIL_POS_SHIFT_HPP
 
+#include <cmath>
+
 namespace Utils {
 namespace Interpolation {
 namespace detail {
@@ -12,8 +14,8 @@ namespace detail {
  * constant. For odd size, distances are relative to the central point,
  * so there is no shift.
  */
-template <size_t order> constexpr double pos_shift() {
-  return ((order - 1) / 2) - (order % 2) / 2.0;
+template <unsigned order> constexpr double pos_shift() {
+  return std::floor((order - 1) / 2.) - 0.5 * (order % 2);
 }
 }
 }

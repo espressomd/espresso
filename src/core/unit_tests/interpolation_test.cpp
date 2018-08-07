@@ -32,8 +32,8 @@ using Utils::Interpolation::detail::ll_and_dist;
 #include <limits>
 
 BOOST_AUTO_TEST_CASE(pos_shift_test) {
-  static_assert(pos_shift<2>() == 0.0, "");
-  static_assert(pos_shift<3>() == 0.5, "");
+  static_assert(pos_shift<2>() == 0.5, "");
+  static_assert(pos_shift<3>() == 0.0, "");
 }
 
 BOOST_AUTO_TEST_CASE(ll_and_dist_test) {

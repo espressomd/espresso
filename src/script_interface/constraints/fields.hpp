@@ -5,8 +5,6 @@
 #include "core/field_coupling/fields/Constant.hpp"
 #include "core/field_coupling/fields/Interpolated.hpp"
 
-#include "utils/print.hpp"
-
 #include "ScriptInterface.hpp"
 
 #include <boost/multi_array.hpp>
@@ -70,7 +68,8 @@ struct field_params_impl<Interpolated<T, codim>> {
     }
 
     auto const grid_spacing = get_value<Vector3d>(params, "grid_spacing");
-    auto const origin = -0.5 * grid_spacing;
+    // auto const origin = 0.5 * grid_spacing;
+    auto const origin = 0.5 * grid_spacing;
 
     using field_data_type = typename decay_to_scalar<Vector<codim, T>>::type;
     auto array_ref = boost::const_multi_array_ref<field_data_type, 3>(
@@ -91,12 +90,12 @@ struct field_params_impl<Interpolated<T, codim>> {
             {"_field_codim", AutoParameter::read_only,
              []() { return static_cast<int>(codim); }},
             {"_field_data", AutoParameter::read_only, [this_]() {
-               auto &field_data = this_().field_data();
-               auto data_ptr =
-                   reinterpret_cast<const double *>(field_data.data());
-               return std::vector<double>(
-                   data_ptr, data_ptr + codim * field_data.num_elements());
-             }}};
+              auto &field_data = this_().field_data();
+              auto data_ptr =
+                  reinterpret_cast<const double *>(field_data.data());
+              return std::vector<double>(
+                  data_ptr, data_ptr + codim * field_data.num_elements());
+            }}};
   }
 };
 
