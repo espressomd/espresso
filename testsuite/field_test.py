@@ -88,14 +88,12 @@ class FieldTest(ut.TestCase):
     def test_potential_field(self):
         h = np.array([.2, .2, .2])
         box = np.array([10.,10.,10.])
-        order = 3
         scaling = 2.6
 
-        field_data = constraints.PotentialField.field_from_fn(box, h, order, self.potential)
+        field_data = constraints.PotentialField.field_from_fn(box, h, self.potential)
 
         F = constraints.PotentialField(field=field_data,
                                        grid_spacing=h,
-                                       interpolation_order=order,
                                        default_scale=scaling)
 
         p = self.system.part.add(pos=[0,0,0])
@@ -104,23 +102,21 @@ class FieldTest(ut.TestCase):
         for i in product(*map(range, 3*[10])):
             x=(h*i)
             f_val = F.call_method("_eval_field", x=x)
-            np.testing.assert_allclose(f_val, self.potential(x), rtol=0.1)
+            np.testing.assert_allclose(f_val, self.potential(x), rtol=1e-3)
             p.pos = x
 
             self.system.integrator.run(0)
             self.assertAlmostEqual(self.system.analysis.energy()['total'], scaling*f_val, places=5)
-            np.testing.assert_allclose(np.copy(p.f), scaling*self.force(x), rtol=0.1)
+            np.testing.assert_allclose(np.copy(p.f), scaling*self.force(x), rtol=1e-5)
 
     def test_electric_potential_field(self):
         h = np.array([.2, .2, .2])
         box = np.array([10.,10.,10.])
-        order = 3
 
-        field_data = constraints.ElectricPotential.field_from_fn(box, h, order, self.potential)
+        field_data = constraints.ElectricPotential.field_from_fn(box, h, self.potential)
 
         F = constraints.ElectricPotential(field=field_data,
-                                       grid_spacing=h,
-                                       interpolation_order=order)
+                                       grid_spacing=h)
 
         p = self.system.part.add(pos=[0,0,0])
         if espressomd.has_features("ELECTROSTATICS"):
@@ -134,25 +130,23 @@ class FieldTest(ut.TestCase):
         for i in product(*map(range, 3*[10])):
             x=(h*i)
             f_val = F.call_method("_eval_field", x=x)
-            np.testing.assert_allclose(f_val, self.potential(x), rtol=0.1)
+            np.testing.assert_allclose(f_val, self.potential(x), rtol=1e-3)
             p.pos = x
 
             self.system.integrator.run(0)
             self.assertAlmostEqual(self.system.analysis.energy()['total'], q_part*f_val, places=5)
-            np.testing.assert_allclose(np.copy(p.f), q_part*self.force(x), rtol=0.1)
+            np.testing.assert_allclose(np.copy(p.f), q_part*self.force(x),rtol=1e-5)
 
 
     def test_force_field(self):
         h = np.array([.2, .2, .2])
         box = np.array([10.,10.,10.])
-        order = 3
         scaling = 2.6
 
-        field_data = constraints.ForceField.field_from_fn(box, h, order, self.force)
+        field_data = constraints.ForceField.field_from_fn(box, h, self.force)
 
         F = constraints.ForceField(field=field_data,
                                    grid_spacing=h,
-                                   interpolation_order=order,
                                    default_scale=scaling)
 
         p = self.system.part.add(pos=[0,0,0])
@@ -161,7 +155,7 @@ class FieldTest(ut.TestCase):
         for i in product(*map(range, 3*[10])):
             x=(h*i)
             f_val = np.array(F.call_method("_eval_field", x=x))
-            np.testing.assert_allclose(f_val, self.force(x), rtol=0.1)
+            np.testing.assert_allclose(f_val, self.force(x))
 
             p.pos = x
             self.system.integrator.run(0)
@@ -170,14 +164,12 @@ class FieldTest(ut.TestCase):
     def test_flow_field(self):
         h = np.array([.2, .2, .2])
         box = np.array([10.,10.,10.])
-        order = 3
         gamma = 2.6
 
-        field_data = constraints.FlowField.field_from_fn(box, h, order, self.force)
+        field_data = constraints.FlowField.field_from_fn(box, h, self.force)
 
         F = constraints.FlowField(field=field_data,
                                    grid_spacing=h,
-                                   interpolation_order=order,
                                    gamma=gamma)
 
         p = self.system.part.add(pos=[0,0,0], v=[1,2,3])
@@ -186,7 +178,7 @@ class FieldTest(ut.TestCase):
         for i in product(*map(range, 3*[10])):
             x=(h*i)
             f_val = np.array(F.call_method("_eval_field", x=x))
-            np.testing.assert_allclose(f_val, self.force(x), rtol=0.1)
+            np.testing.assert_allclose(f_val, self.force(x))
 
             p.pos = x
             self.system.integrator.run(0)
