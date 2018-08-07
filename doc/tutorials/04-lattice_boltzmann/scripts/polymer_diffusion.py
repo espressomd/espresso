@@ -1,9 +1,9 @@
+import sys
+from numpy import savetxt, zeros
 from espressomd import interactions, lb, polymer
 from espressomd.observables import ComPosition
-from espressomd.correlators import Correlator
-
-from numpy import savetxt, zeros
-import sys
+from espressomd.accumulators import Correlator
+import espressomd
 
 # Setup constant
 time_step = 0.01
@@ -12,7 +12,7 @@ step_per_loop = 100
 
 # System setup
 system = espressomd.System(box_l=[32, 32, 32])
-system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 system.cell_system.skin = 0.4
 
 try:
@@ -41,7 +41,7 @@ system.time_step = 0.002
 system.thermostat.set_langevin(kT=1.0, gamma=10)
 
 for i in range(100):
-    system.force_cap = i
+    system.force_cap = i+1
     system.integrator.run(1000)
 
 print("Warmup finished.")
@@ -65,9 +65,9 @@ print("LB fluid warming finished.")
 
 # configure correlators
 com_pos = ComPosition(ids=(0,))
-c = Correlator(obs1 = com_pos, tau_lin=16, tau_max=1500, dt=time_step,
+c = Correlator(obs1 = com_pos, tau_lin=16, tau_max=1500, delta_N=1,
         corr_operation="square_distance_componentwise", compress1="discard1")
-system.auto_update_correlators.add(c)
+system.auto_update_accumulators.add(c)
 
 print("Sampling started.")
 for i in range(loops):

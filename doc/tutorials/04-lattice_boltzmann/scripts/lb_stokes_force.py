@@ -10,17 +10,17 @@
 # in z direction. We create walls in the xz and yz plane at the box 
 # boundaries, where the velocity is fixed to $v. 
 #
-from espressomd import lb, lbboundaries, shapes
 import numpy as np
 import sys
+from espressomd import lb, lbboundaries, shapes
+import espressomd
 # System setup
-system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 agrid = 1
 radius = 5.5
 box_width = 64
 real_width = box_width+2*agrid
 box_length = 64
-system.box_l = [real_width, real_width, box_length]
+system = espressomd.System(box_l = [real_width, real_width, box_length])
 system.time_step = 0.2
 system.cell_system.skin = 0.4
 
@@ -32,7 +32,7 @@ v = [0,0,0.01] # The boundary slip
 kinematic_visc = 1.0
 
 # Invoke LB fluid
-lbf = lb.LBFluid(visc=kinematic_visc, dens=1, agrid=agrid, tau=system.time_step, fric=1)
+lbf = lb.LBFluidGPU(visc=kinematic_visc, dens=1, agrid=agrid, tau=system.time_step, fric=1)
 system.actors.add(lbf)
 
 # Setup walls

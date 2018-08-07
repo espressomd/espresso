@@ -53,7 +53,7 @@ per direction from \texttt{box\_l}. {\em They have to be compatible.} \\
   \texttt{tau} & The time step of LB. It has to be an integer multiple of
   \texttt{System.time\_step}. \\
 \texttt{fric} & The friction coefficient $\gamma$ for the coupling scheme. \\
-\texttt{ext\_force} & An external force applied to every node. This is given as
+\texttt{ext\_force_density} & An external force applied to every node. This is given as
 a list, tuple or array with three components.%\\
 %\texttt{gamma\_odd} & Relaxation parameter for the odd kinetic modes. \\
 %\texttt{gamma\_even} & Relaxation parameter for the even kinetic modes.
@@ -68,18 +68,17 @@ example.
   from espressomd import system, lb
 
   # initialize the System and set the necessary MD parameters for LB.
-  s = system.System()
-  s.box_l = [31, 41, 59]
+  s = system.System(box_l = [31, 41, 59])
   s.time_step = 0.01
   s.cell_system.skin = 0.4
 
   # Initialize and LBFluid with the minimum set of valid parameters.
-  lbf = lb.LBFluid(agrid = 1, dens = 10, visc = .1, tau = 0.01)
+  lbf = lb.LBFluidGPU(agrid = 1, dens = 10, visc = .1, tau = 0.01)
   # Activate the LB by adding it to the System's actor list.
   s.actor.add(lbf)
 \end{pypresso}
 \vspace{0,2cm}
-Note: The same applies for the class \texttt{LBFluid\_GPU}.
+Note: The same applies for the class \texttt{LBFluid}.
 
 \subsection*{Sampling data from a node}
 The \texttt{LBFluid} class also provides a set of methods which can be used to

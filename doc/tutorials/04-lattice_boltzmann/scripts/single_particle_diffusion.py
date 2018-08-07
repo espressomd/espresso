@@ -1,9 +1,9 @@
-from espressomd import lb
-from espressomd.observables import ParticlePositions
-from espressomd.correlators import Correlator
-
 import numpy as np
 import sys
+from espressomd import lb
+from espressomd.observables import ParticlePositions
+from espressomd.accumulators import Correlator
+import espressomd
 
 # Constants
 
@@ -19,7 +19,7 @@ except:
 
 # System setup
 system = espressomd.System(box_l=[box_l, box_l, box_l])
-system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
+system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 system.time_step = time_step
 system.cell_system.skin = 0.4
 
@@ -38,9 +38,9 @@ print("Equlibration finished.")
 
 # Setup observable correlator
 pos = ParticlePositions(ids=(0,))
-c = Correlator(obs1=pos, tau_lin = 16, tau_max = 1000, dt = time_step,
+c = Correlator(obs1=pos, tau_lin = 16, tau_max = 1000, delta_N = 1,
         corr_operation="square_distance_componentwise", compress1="discard1")
-system.auto_update_correlators.add(c)
+system.auto_update_accumulators.add(c)
 
 print("Sampling started.")
 for i in range(loops):

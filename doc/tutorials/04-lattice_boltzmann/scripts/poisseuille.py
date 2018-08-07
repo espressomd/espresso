@@ -1,18 +1,17 @@
 ## A script to simulate planar Poisseuille flow in Espresso
-from espressomd import lb, shapes, lbboundaries
 import numpy as np
+from espressomd import lb, shapes, lbboundaries
+import espressomd
 
 
 
 # System setup
-system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+box_l = 16
+system = espressomd.System(box_l=[box_l, box_l, box_l])
 system.time_step = 0.01
 system.cell_system.skin = 0.2
 
-box_l = 16
-system.box_l = [box_l] * 3
-
-lbf = lb.LBFluidGPU(agrid=1, dens=1, visc=1, tau=0.01, ext_force=[0, 0.001, 0])
+lbf = lb.LBFluidGPU(agrid=1, dens=1, visc=1, tau=0.01, ext_force_density=[0, 0.001, 0])
 system.actors.add(lbf)
 system.thermostat.set_lb(kT=0)
 
