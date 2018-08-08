@@ -713,8 +713,8 @@ void density_profile_av(PartCfg &partCfg, int n_conf, int n_bin, double density,
 }
 
 int calc_cylindrical_average(
-    PartCfg &partCfg, std::vector<double> center_,
-    std::vector<double> direction_, double length, double radius,
+    PartCfg &partCfg, std::vector<double> const & center_,
+    std::vector<double> const& direction_, double length, double radius,
     int bins_axial, int bins_radial, std::vector<int> types,
     std::map<std::string, std::vector<std::vector<std::vector<double>>>>
         &distribution) {
