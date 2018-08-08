@@ -1,4 +1,9 @@
-set(Accumulators_SRC Correlator.hpp Correlator.cpp MeanVarianceCalculator.hpp MeanVarianceCalculator.cpp)
+set(Accumulators_SRC
+    Correlator.hpp
+    Correlator.cpp
+    MeanVarianceCalculator.hpp
+    MeanVarianceCalculator.cpp
+)
 add_library(Accumulators SHARED ${Accumulators_SRC})
 install(TARGETS Accumulators LIBRARY DESTINATION ${LIBDIR})
 set_target_properties(Accumulators PROPERTIES SOVERSION ${SOVERSION})

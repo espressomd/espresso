@@ -164,9 +164,16 @@ if(GSL)
 endif(GSL)
 
 if(CUDA)
-  file(GLOB EspressoCuda_SRC
-          "*.cu"
-          )
+    set(EspressoCuda_SRC
+        cuda_common_cuda.cu
+        cuda_init_cuda.cu
+        electrokinetics_cuda.cu
+        EspressoSystemInterface_cuda.cu
+        fd-electrostatics_cuda.cu
+        lbgpu_cuda.cu
+        p3m_gpu_cuda.cu
+        p3m_gpu_error_cuda.cu
+    )
 
   cuda_include_directories(${CMAKE_CURRENT_SOURCE_DIR})
   cuda_include_directories(${CMAKE_CURRENT_BINARY_DIR})

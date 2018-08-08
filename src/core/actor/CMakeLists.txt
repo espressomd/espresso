@@ -1,4 +1,11 @@
-file(GLOB Actor_SRC *.cpp)
+set(Actor_SRC
+    ActorList.cpp
+    DipolarBarnesHut.cpp
+    DipolarDirectSum.cpp
+    HarmonicOrientationWell.cpp
+    HarmonicWell.cpp
+    Mmm1dgpuForce.cpp
+)
 
 add_library(Actor SHARED ${Actor_SRC})
 install(TARGETS Actor LIBRARY DESTINATION ${LIBDIR} ARCHIVE DESTINATION ${LIBDIR})
@@ -6,7 +13,14 @@ set_target_properties(Actor PROPERTIES SOVERSION ${SOVERSION})
 add_dependencies(Actor EspressoConfig)
 
 if(CUDA)
-  file(GLOB ActorCuda_SRC *.cu)
+  set(ActorCuda_SRC
+        DipolarBarnesHut_cuda.cu
+        DipolarBarnesHut_cuda.cuh
+        DipolarDirectSum_cuda.cu
+        HarmonicOrientationWell_cuda.cu
+        HarmonicWell_cuda.cu
+        Mmm1dgpuForce_cuda.cu
+  )
   cuda_add_library(ActorCuda SHARED ${ActorCuda_SRC})
   install(TARGETS ActorCuda DESTINATION ${LIBDIR})
   set_target_properties(ActorCuda PROPERTIES SOVERSION ${SOVERSION})
