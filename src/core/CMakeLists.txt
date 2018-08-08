@@ -1,18 +1,14 @@
 set(EspressoCore_SRC
     accumulators.cpp
-    bmhtf-nacl.cpp
-    buckingham.cpp
     cells.cpp
     collision.cpp
     comfixed_global.cpp
     communication.cpp
     constraints.cpp
-    cos2.cpp
     cuda_init.cpp
     cuda_interface.cpp
     debug.cpp
     debye_hueckel.cpp
-    dihedral.cpp
     domain_decomposition.cpp
     dpd.cpp
     elc.cpp
@@ -21,24 +17,18 @@ set(EspressoCore_SRC
     energy.cpp
     errorhandling.cpp
     EspressoSystemInterface.cpp
-    fene.cpp
     fft-common.cpp
     fft.cpp
     fft-dipolar.cpp
     forcecap.cpp
     forces.cpp
     galilei.cpp
-    gaussian.cpp
-    gb.cpp
     Geometry.cpp
     ghmc.cpp
     ghosts.cpp
     global.cpp
     grid.cpp
     halo.cpp
-    harmonic_dumbbell.cpp
-    hat.cpp
-    hertzian.cpp
     hydrogen_bond.cpp
     iccp3m.cpp
     immersed_boundaries.cpp
@@ -60,7 +50,6 @@ set(EspressoCore_SRC
     mmm2d.cpp
     mmm-common.cpp
     molforces.cpp
-    morse.cpp
     MpiCallbacks.cpp
     nemd.cpp
     npt.cpp
@@ -86,13 +75,11 @@ set(EspressoCore_SRC
     RuntimeError.cpp
     RuntimeErrorStream.cpp
     scafacos.cpp
-    soft_sphere.cpp
     specfunc.cpp
     statistics_chain.cpp
     statistics_cluster.cpp
     statistics.cpp
     statistics_fluid.cpp
-    steppot.cpp
     swimmer_reaction.cpp
     SystemInterface.cpp
     tab.cpp

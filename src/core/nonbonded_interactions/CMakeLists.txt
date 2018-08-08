@@ -1,12 +1,17 @@
 add_library(nonbonded_interactions SHARED
+    bmhtf-nacl.cpp
+    buckingham.cpp
+    cos2.cpp
+    gaussian.cpp
+    gb.cpp
+    hat.cpp
+    hertzian.cpp
     ljcos2.cpp
-    ljcos2.hpp
     ljcos.cpp
-    ljcos.hpp
     lj.cpp
     ljgen.cpp
-    ljgen.hpp
-    lj.hpp
+    morse.cpp
+    soft_sphere.cpp
+    steppot.cpp
     thole.cpp
-    thole.hpp
 )

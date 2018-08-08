@@ -37,7 +37,7 @@
 #include "particle_data.hpp"
 #include "utils.hpp"
 
-#include "dihedral.hpp"
+#include "bonded_interactions/dihedral.hpp"
 
 /** Non-Bonded tabulated potentials:
     Reads tabulated parameters and force and energy tables from a file.
