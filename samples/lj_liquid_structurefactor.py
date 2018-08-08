@@ -19,6 +19,10 @@
 from __future__ import print_function
 import numpy as np
 import espressomd
+
+required_features = ["LENNARD_JONES"]
+espressomd.assert_features(required_features)
+
 from espressomd import thermostat
 from espressomd import analyze
 from samples_common import open
@@ -63,7 +67,7 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 # warmup integration (with capped LJ potential)
 warm_steps = 100
 warm_n_times = 30
-# do the warmup until the particles have at least the distance min__dist
+# do the warmup until the particles have at least the distance min_dist
 min_dist = 0.9
 
 # integration
@@ -75,7 +79,7 @@ int_n_times = 20
 #  Setup System                                             #
 #############################################################
 
-# structurefactor file
+# structure factor file
 structurefactor_type_list = [0, 1]
 structurefactor_order = 20
 

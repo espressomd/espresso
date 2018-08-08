@@ -1,11 +1,19 @@
+"""
+This samples demonstrates how to checkpoint a simulation.
+"""
+
 import espressomd
+
+required_features = ["ELECTROSTATICS","LENNARD_JONES"]
+espressomd.assert_features(required_features)
+
 from espressomd import electrostatics
 from espressomd import checkpointing
 
 import numpy as np
 import signal
 
-checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")
+checkpoint = checkpointing.Checkpoint(checkpoint_id="mycheckpoint")
 
 if not len(checkpoint.checkpoint_signals):
     checkpoint.register_signal(signal.SIGINT)
