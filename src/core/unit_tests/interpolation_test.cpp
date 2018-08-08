@@ -32,8 +32,8 @@ using Utils::Interpolation::detail::ll_and_dist;
 #include <limits>
 
 BOOST_AUTO_TEST_CASE(pos_shift_test) {
-  static_assert(pos_shift<2>() == 0.0, "");
-  static_assert(pos_shift<3>() == 0.5, "");
+  BOOST_CHECK(pos_shift<2>() == 0.0);  
+  BOOST_CHECK(pos_shift<3>() == 0.5);
 }
 
 BOOST_AUTO_TEST_CASE(ll_and_dist_test) {
@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE(nearest_point) {
 
   bspline_3d<1>({.1, .2, .3}, save_ind, {0.5, 0.5, 0.5}, {});
 
-  BOOST_CHECK((std::array<int, 3>{0, 0, 1} == nmp));
+  BOOST_CHECK((std::array<int, 3>{{0, 0, 1}} == nmp));
   BOOST_CHECK_CLOSE(weight, 1., std::numeric_limits<double>::epsilon());
 }
 
@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(interpolation_points_3) {
   /* pos - offset = {-5., 6., -8} */
   /* nmp = {-5, 3, -3 } @ pos {-5., 6., -9.} */
   /* minus order / 2 (= 1) = {-6, 2, -4} */
-  std::array<int, 3> lower_left = {-5, 2, -3};
+  std::array<int, 3> lower_left = {{-5, 2, -3}};
   /* upper limit = {-6, 2, -4} + order = {-3, 5, -1} */
 
   auto it = int_points.begin();
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE(interpolation_points_3) {
     for (int j = 0; j < 3; j++)
       for (int k = 0; k < 3; k++) {
         auto const expected = std::array<int, 3>{
-            lower_left[0] + i, lower_left[1] + j, lower_left[2] + k};
+		{lower_left[0] + i, lower_left[1] + j, lower_left[2] + k}};
         BOOST_CHECK(*it == expected);
         ++it;
       }
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(interpolation_points_2) {
   /* shited pos = {-4.5, 6.5, -7.5} */
   /* nmp = {-4, 4, -2 } @ pos {-4., 8., -6.} */
   /* ll = nmp - order / 2 (= 1) = {-5, 3, -3} */
-  std::array<int, 3> lower_left = {-5, 3, -2};
+  std::array<int, 3> lower_left = {{-5, 3, -2}};
   /* upper limit = {-5, 2, -3} + order = {-3, 4, -1} */
 
   auto it = int_points.begin();
@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_CASE(interpolation_points_2) {
     for (int j = 0; j < 2; j++)
       for (int k = 0; k < 2; k++) {
         auto const expected = std::array<int, 3>{
-            lower_left[0] + i, lower_left[1] + j, lower_left[2] + k};
+		{lower_left[0] + i, lower_left[1] + j, lower_left[2] + k}};
         BOOST_CHECK(*it == expected);
         ++it;
       }

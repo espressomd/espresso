@@ -723,8 +723,8 @@ int calc_cylindrical_average(
   double binwd_axial = length / bins_axial;
   double binwd_radial = radius / bins_radial;
 
-  auto center = Vector3d{std::move(center_)};
-  auto direction = Vector3d{std::move(direction_)};
+  auto center = Vector3d{center_};
+  auto direction = Vector3d{direction_};
 
   // Select all particle types if the only entry in types is -1
   bool all_types = false;
