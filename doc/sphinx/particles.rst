@@ -391,9 +391,10 @@ Please note:
 
 -  In a simulation on more than one CPU, the effective cell size needs
    to be larger than the largest distance between a non-virtual particle
-   and its associated virtual sites. To this aim, you need to set the
-   system's :attr:`espressomd.system.System.min_global_cut` attribute to this largest distance. issues a warning when
-   creating a virtual site with and the cutoff is insufficient.
+   and its associated virtual sites. To this aim, when running on more than one core,
+   you need to set the
+   system's :attr:`espressomd.system.System.min_global_cut` attribute to this largest distance. 
+   An error is generated when this requirement is not met.
 
 -  If the virtual sites represent actual particles carrying a mass, the
    inertia tensor of the non-virtual particle in the center of mass
