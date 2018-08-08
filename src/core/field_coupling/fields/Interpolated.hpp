@@ -28,7 +28,7 @@ void deep_copy(boost::multi_array<T, 3> &dst,
 
   auto *b = src.index_bases();
   dst.reindex(std::array<typename boost::multi_array<T, 3>::index, 3>{
-      b[0], b[1], b[2]});
+      {b[0], b[1], b[2]}});
 }
 
 template <typename F, class = void>
