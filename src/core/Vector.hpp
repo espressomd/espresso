@@ -53,7 +53,7 @@ public:
   void swap(Vector &rhs) { std::swap(d, rhs.d); }
 
   template <typename Container>
-  explicit Vector(Container &&v) : Vector(std::begin(v), std::end(v)) {}
+  explicit Vector(Container const &v) : Vector(std::begin(v), std::end(v)) {}
 
   explicit Vector(Scalar const (&v)[n]) {
     std::copy_n(std::begin(v), n, d.begin());
