@@ -272,13 +272,6 @@ extern int check_id;
 #define POLY_TRACE(cmd)
 #endif
 
-#ifdef MOLFORCES_DEBUG
-#define MOLFORCES_TRACE(cmd)                                                   \
-  { cmd; }
-#else
-#define MOLFORCES_TRACE(cmd)
-#endif
-
 #ifdef PTENSOR_DEBUG
 #define PTENSOR_TRACE(cmd)                                                     \
   { cmd; }

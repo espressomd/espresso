@@ -9,8 +9,6 @@
 
 #define MASS
 #define EXCLUSIONS
-#define MOLFORCES
-
 
 #define BOND_CONSTRAINT
 #define COLLISION_DETECTION

@@ -9,8 +9,6 @@
 
 #define MASS
 #define EXCLUSIONS
-#define MOLFORCES
-
 
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE

@@ -59,7 +59,6 @@
 #include "minimize_energy.hpp"
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
-#include "molforces.hpp"
 #include "morse.hpp"
 #include "npt.hpp"
 #include "p3m-dipolar.hpp"
@@ -1744,22 +1743,6 @@ int mpi_sync_topo_part_info() {
     molsize = topology[i].part.n;
     moltype = topology[i].type;
 
-#ifdef MOLFORCES
-    MPI_Bcast(&(topology[i].trap_flag), 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(topology[i].trap_center, 3, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&(topology[i].trap_spring_constant), 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&(topology[i].drag_constant), 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&(topology[i].noforce_flag), 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(&(topology[i].isrelative), 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(&(topology[i].favcounter), 1, MPI_INT, 0, comm_cart);
-    if (topology[i].favcounter == -1)
-      MPI_Bcast(topology[i].fav, 3, MPI_DOUBLE, 0, comm_cart);
-    /* check if any molecules are trapped */
-    if ((topology[i].trap_flag != 32) && (topology[i].noforce_flag != 32)) {
-      IsTrapped = 1;
-    }
-#endif
-
     MPI_Bcast(&molsize, 1, MPI_INT, 0, comm_cart);
     MPI_Bcast(&moltype, 1, MPI_INT, 0, comm_cart);
     MPI_Bcast(topology[i].part.e, topology[i].part.n, MPI_INT, 0, comm_cart);
@@ -1780,22 +1763,6 @@ void mpi_sync_topo_part_info_slave(int node, int parm) {
   MPI_Bcast(&n_mols, 1, MPI_INT, 0, comm_cart);
   realloc_topology(n_mols);
   for (i = 0; i < n_mols; i++) {
-
-#ifdef MOLFORCES
-    MPI_Bcast(&(topology[i].trap_flag), 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(topology[i].trap_center, 3, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&(topology[i].trap_spring_constant), 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&(topology[i].drag_constant), 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&(topology[i].noforce_flag), 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(&(topology[i].isrelative), 1, MPI_INT, 0, comm_cart);
-    MPI_Bcast(&(topology[i].favcounter), 1, MPI_INT, 0, comm_cart);
-    if (topology[i].favcounter == -1)
-      MPI_Bcast(topology[i].fav, 3, MPI_DOUBLE, 0, comm_cart);
-    /* check if any molecules are trapped */
-    if ((topology[i].trap_flag != 32) && (topology[i].noforce_flag != 32)) {
-      IsTrapped = 1;
-    }
-#endif
 
     MPI_Bcast(&molsize, 1, MPI_INT, 0, comm_cart);
     MPI_Bcast(&moltype, 1, MPI_INT, 0, comm_cart);

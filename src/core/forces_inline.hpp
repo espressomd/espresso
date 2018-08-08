@@ -23,10 +23,6 @@
 
 #include "config.hpp"
 
-#ifdef MOLFORCES
-#include "topology.hpp"
-#endif
-
 #include "thermostat.hpp"
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
@@ -57,7 +53,6 @@
 #include "magnetic_non_p3m_methods.hpp"
 #include "mdlc_correction.hpp"
 #include "metadynamics.hpp"
-#include "molforces.hpp"
 #include "morse.hpp"
 #include "npt.hpp"
 #include "object-in-fluid/affinity.hpp"
