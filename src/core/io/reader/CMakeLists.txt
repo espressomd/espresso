@@ -1,1 +1,1 @@
-add_library(pdpreader SHARED readpdb.cpp)
+add_library(pdbreader SHARED readpdb.cpp)

@@ -128,6 +128,7 @@ add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/src/core/config-features.hpp ${CMA
   ${CMAKE_BINARY_DIR}/src/core/config-features.cpp
   DEPENDS ${CMAKE_SOURCE_DIR}/src/features.def ${CMAKE_SOURCE_DIR}/src/core/gen_featureconfig.py
   )
+add_custom_target(generate_config_features DEPENDS ${CMAKE_BINARY_DIR}/src/core/config-features.hpp)
 
 add_custom_command(OUTPUT config-version.cpp
                    COMMAND ${CMAKE_SOURCE_DIR}/config/genversion.sh -c > ${CMAKE_BINARY_DIR}/src/core/config-version.cpp
@@ -140,6 +141,7 @@ install(TARGETS EspressoConfig LIBRARY DESTINATION ${LIBDIR})
 set_target_properties(EspressoConfig PROPERTIES SOVERSION ${SOVERSION})
 
 add_library(EspressoCore SHARED ${EspressoCore_SRC} config-version.cpp)
+add_dependencies(EspressoCore generate_config_features)
 install(TARGETS EspressoCore LIBRARY DESTINATION ${LIBDIR})
 set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
 
@@ -186,7 +188,7 @@ if(HDF5_FOUND)
     target_link_libraries(EspressoCore H5mdCore)
 endif(HDF5_FOUND)
 target_link_libraries(EspressoCore mpiio)
-target_link_libraries(EspressoCore pdpreader)
+target_link_libraries(EspressoCore pdbreader)
 target_link_libraries(EspressoCore bonded_interactions)
 target_link_libraries(EspressoCore nonbonded_interactions)
 
