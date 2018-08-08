@@ -11,7 +11,6 @@ VISC = 1.0
 DENS = 1.0
 FRIC = 1.0
 TAU = 0.1
-EXT_FORCE_DENSITY = [0.0, 0.0, 0.0]
 BOX_L = 12.0
 TIME_STEP = TAU
 LB_PARAMETERS = {
@@ -19,11 +18,11 @@ LB_PARAMETERS = {
     'visc': VISC,
     'dens': DENS,
     'fric': FRIC,
-    'tau': TAU,
-    'ext_force_density': EXT_FORCE_DENSITY}
+    'tau': TAU
+}
 
 def velocity_profile(x):
-    return 1./(BOX_L- 2.) * (x - AGRID)
+    return 1./(BOX_L- 2.*AGRID) * (x - AGRID)
 
 class LBInterpolation(object):
     """
@@ -57,12 +56,15 @@ class LBInterpolation(object):
         """
         self.set_boundaries()
         self.system.integrator.run(1000)
-        for pos in itertools.product((AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
-            np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2], 0.0)
-        for pos in itertools.product((1.5 * AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
+        # Shear plane for boundary 1
+        #for pos in itertools.product((AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
+        #    np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2], 0.0)
+        # Bulk
+        for pos in itertools.product(np.arange(1.5 * AGRID, BOX_L - 1.5*AGRID, 0.5 * AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
             np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2], velocity_profile(pos[0]), decimal=4)
-        for pos in itertools.product((9 * AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
-            np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2], 1.0, decimal=4)
+        # Shear plane for boundary 2
+        #for pos in itertools.product((9 * AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
+        #    np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2], 1.0, decimal=4)
 
 
 
