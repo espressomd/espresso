@@ -50,31 +50,27 @@ public:
   Vector(Vector const &) = default;
   Vector &operator=(Vector const &) = default;
 
-  void swap(Vector &rhs) {
-    auto tmp = rhs;
-    rhs = *this;
-    *this = tmp;
-  }
+  void swap(Vector &rhs) { std::swap(d, rhs.d); }
 
   template <typename Container> explicit Vector(Container v) {
     assert(std::distance(std::begin(v), std::end(v)) == n);
-    std::copy(std::begin(v), std::end(v), d.begin());
+    std::copy_n(std::begin(v), n, d.begin());
   }
 
   explicit Vector(Scalar const (&v)[n]) {
-    std::copy(std::begin(v), std::end(v), d.begin());
+    std::copy_n(std::begin(v), n, d.begin());
   }
 
   Vector(std::initializer_list<Scalar> v) {
     /* Convert to static_assert in C++14 */
     assert(v.size() == n);
-    std::copy(std::begin(v), std::end(v), d.begin());
+    std::copy_n(std::begin(v), n, d.begin());
   }
 
   template <typename InputIterator>
   Vector(InputIterator begin, InputIterator end) {
     assert(std::distance(begin, end) == n);
-    std::copy(begin, end, d.begin());
+    std::copy_n(begin, n, d.begin());
   }
 
   Scalar &operator[](int i) {
