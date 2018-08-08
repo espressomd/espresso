@@ -1,10 +1,14 @@
 #include "readpdb.hpp"
 #include "grid.hpp"
-#include "lj.hpp"
+#include "nonbonded_interactions/lj.hpp"
 
 #include <iostream>
 #include <cmath>
 #include <set>
+
+
+namespace Reader {
+namespace PDB {
 
 #ifdef READPDB_DEBUG
 #define READPDB_TRACE(A) A
@@ -182,4 +186,6 @@ int pdb_add_particles_from_file(char *pdb_file, int first_id, int type, std::vec
   return n_part;
 }
 
+}
+}
 

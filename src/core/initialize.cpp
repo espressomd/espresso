@@ -62,7 +62,7 @@
 #include "scafacos.hpp"
 #include "statistics.hpp"
 #include "swimmer_reaction.hpp"
-#include "thermalized_bond.hpp"
+#include "bonded_interactions/thermalized_bond.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
 #include "virtual_sites.hpp"

@@ -34,9 +34,9 @@
 #include "layered.hpp"
 #include "npt.hpp"
 #include "rattle.hpp"
-#include "thermalized_bond.hpp"
 #include "tuning.hpp"
 #include "utils/mpi/all_compare.hpp"
+#include "bonded_interactions/thermalized_bond.hpp"
 #include "object-in-fluid/oif_global_forces.hpp" 
 
 #include <boost/functional/hash.hpp>

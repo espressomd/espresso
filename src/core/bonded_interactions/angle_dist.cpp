@@ -22,7 +22,7 @@
  *
  *  Implementation of \ref angledist.hpp
  */
-#include "angledist.hpp"
+#include "angle_dist.hpp"
 
 #ifdef BOND_ANGLEDIST
 

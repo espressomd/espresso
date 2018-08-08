@@ -1,5 +1,110 @@
-file(GLOB EspressoCore_SRC
-          "*.cpp" "io/mpiio/mpiio.cpp")
+set(EspressoCore_SRC
+    accumulators.cpp
+    bmhtf-nacl.cpp
+    buckingham.cpp
+    cells.cpp
+    collision.cpp
+    comfixed_global.cpp
+    communication.cpp
+    constraints.cpp
+    cos2.cpp
+    cuda_init.cpp
+    cuda_interface.cpp
+    debug.cpp
+    debye_hueckel.cpp
+    dihedral.cpp
+    domain_decomposition.cpp
+    dpd.cpp
+    elc.cpp
+    electrokinetics.cpp
+    electrokinetics_pdb_parse.cpp
+    energy.cpp
+    errorhandling.cpp
+    EspressoSystemInterface.cpp
+    fene.cpp
+    fft-common.cpp
+    fft.cpp
+    fft-dipolar.cpp
+    forcecap.cpp
+    forces.cpp
+    galilei.cpp
+    gaussian.cpp
+    gb.cpp
+    Geometry.cpp
+    ghmc.cpp
+    ghosts.cpp
+    global.cpp
+    grid.cpp
+    halo.cpp
+    harmonic_dumbbell.cpp
+    hat.cpp
+    hertzian.cpp
+    hydrogen_bond.cpp
+    iccp3m.cpp
+    immersed_boundaries.cpp
+    initialize.cpp
+    integrate.cpp
+    interaction_data.cpp
+    lattice.cpp
+    layered.cpp
+    lbboundaries.cpp
+    lb.cpp
+    lb-d3q19.cpp
+    lbgpu.cpp
+    maggs.cpp
+    magnetic_non_p3m_methods.cpp
+    mdlc_correction.cpp
+    metadynamics.cpp
+    minimize_energy.cpp
+    mmm1d.cpp
+    mmm2d.cpp
+    mmm-common.cpp
+    molforces.cpp
+    morse.cpp
+    MpiCallbacks.cpp
+    nemd.cpp
+    npt.cpp
+    nsquare.cpp
+    p3m-common.cpp
+    p3m.cpp
+    p3m-dipolar.cpp
+    p3m_gpu.cpp
+    partCfg_global.cpp
+    particle_data.cpp
+    PdbParser.cpp
+    polymer.cpp
+    polynom.cpp
+    pressure.cpp
+    quartic.cpp
+    random.cpp
+    rattle.cpp
+    reaction_ensemble.cpp
+    reaction_field.cpp
+    rotate_system.cpp
+    rotation.cpp
+    RuntimeErrorCollector.cpp
+    RuntimeError.cpp
+    RuntimeErrorStream.cpp
+    scafacos.cpp
+    soft_sphere.cpp
+    specfunc.cpp
+    statistics_chain.cpp
+    statistics_cluster.cpp
+    statistics.cpp
+    statistics_fluid.cpp
+    steppot.cpp
+    swimmer_reaction.cpp
+    SystemInterface.cpp
+    tab.cpp
+    thermostat.cpp
+    topology.cpp
+    tuning.cpp
+    twist_stack.cpp
+    umbrella.cpp
+    utils.cpp
+    Vector.cpp
+    virtual_sites.cpp
+)
 
 
 if( WITH_COVERAGE )
@@ -44,7 +149,7 @@ if(SCAFACOS)
   target_link_libraries(EspressoCore Scafacos)
 endif(SCAFACOS)
 if(GSL)
-  include_directories(${GSL_INCLUDE_DIRS})
+  target_include_directories(EspressoCore PUBLIC ${GSL_INCLUDE_DIRS})
 endif(GSL)
 
 
@@ -80,15 +185,21 @@ add_subdirectory(io)
 if(HDF5_FOUND)
     target_link_libraries(EspressoCore H5mdCore)
 endif(HDF5_FOUND)
+target_link_libraries(EspressoCore mpiio)
+target_link_libraries(EspressoCore pdpreader)
+target_link_libraries(EspressoCore bonded_interactions)
+target_link_libraries(EspressoCore nonbonded_interactions)
 
 if(WITH_UNIT_TESTS)
   add_subdirectory(unit_tests)
 endif(WITH_UNIT_TESTS)
 
 add_subdirectory(actor)
+add_subdirectory(bonded_interactions)
 add_subdirectory(immersed_boundary)
 add_subdirectory(virtual_sites)
 add_subdirectory(lbboundaries)
+add_subdirectory(nonbonded_interactions)
 add_subdirectory(object-in-fluid)
 add_subdirectory(shapes)
 add_subdirectory(constraints)

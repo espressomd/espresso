@@ -24,6 +24,9 @@
 #include "PdbParser.hpp"
 #include "particle_data.hpp"
 
+namespace Reader {
+namespace PDB {
+
 struct PdbLJInteraction {
   int other_type;
   double epsilon,sigma;
@@ -42,4 +45,6 @@ struct PdbLJInteraction {
 
 int pdb_add_particles_from_file(char *pdb_file, int first_id, int type, std::vector<PdbLJInteraction> &ljInteractions, double lj_rel_cutoff=2.5,
 				char *itp_file=nullptr, int first_type=0, bool fit = false, bool lj_internal = false, bool lj_diagonal = false);
+}
+}
 #endif

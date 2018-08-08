@@ -21,7 +21,7 @@
 #ifdef H5MD
 #include "initialize.hpp"
 #include "ParallelScriptInterface.hpp"
-#include "io/writer/h5md/h5md_core.hpp"
+#include "io/writer/h5md_core.hpp"
 #include "h5md.hpp"
 
 namespace ScriptInterface {

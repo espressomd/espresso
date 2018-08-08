@@ -32,7 +32,7 @@
 
 #include "debug.hpp"
 #include "interaction_data.hpp"
-#include "lj.hpp"
+#include "nonbonded_interactions/lj.hpp"
 #include "utils.hpp"
 
 /// set the parameters for the subtract LJ potential

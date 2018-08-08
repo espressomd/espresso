@@ -26,7 +26,7 @@
 #include "npt.hpp"
 #include "ghmc.hpp"
 #include "lb.hpp"
-#include "thermalized_bond.hpp"
+#include "bonded_interactions/thermalized_bond.hpp"
 #include "dpd.hpp"
 
 #include <iostream>
