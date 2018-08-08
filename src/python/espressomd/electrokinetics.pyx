@@ -1,7 +1,6 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from .lb cimport HydrodynamicInteraction
-from .ekboundaries import EKBoundary
 from . import utils
 import numpy as np
 from espressomd.utils import is_valid_type
