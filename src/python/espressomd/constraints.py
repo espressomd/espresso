@@ -235,8 +235,8 @@ class _Interpolated(Constraint):
 
         """
 
-        shape = np.array(np.ceil(box_size/grid_spacing), dtype=int)
-        origin = 0.5 * grid_spacing
+        shape = np.array(np.ceil(box_size/grid_spacing), dtype=int) + 2
+        origin = -0.5 * grid_spacing
         return shape, origin
 
     @classmethod

@@ -11,8 +11,6 @@ using namespace FieldCoupling;
 
 #include "Vector.hpp"
 
-#include "core/utils/print.hpp"
-
 template <bool linear> struct Id {
   static constexpr const bool is_linear = linear;
   mutable int count = 0;
@@ -130,6 +128,6 @@ BOOST_AUTO_TEST_CASE(PotentialField_test) {
   BOOST_CHECK((2. * x.norm()) == pf.energy(5, x));
   BOOST_CHECK(1 == pf.coupling().count);
 
-  BOOST_CHECK((3. * x) == pf.force(5, x));
+  BOOST_CHECK(-(3. * x) == pf.force(5, x));
   BOOST_CHECK(2 == pf.coupling().count);
 }

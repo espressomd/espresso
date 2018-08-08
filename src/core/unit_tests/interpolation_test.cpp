@@ -32,8 +32,8 @@ using Utils::Interpolation::detail::ll_and_dist;
 #include <limits>
 
 BOOST_AUTO_TEST_CASE(pos_shift_test) {
-  static_assert(pos_shift<2>() == 0.5, "");
-  static_assert(pos_shift<3>() == 0.0, "");
+  static_assert(pos_shift<2>() == 0.0, "");
+  static_assert(pos_shift<3>() == 0.5, "");
 }
 
 BOOST_AUTO_TEST_CASE(ll_and_dist_test) {
@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(sum_of_weights) {
 
   bspline_3d<5>({.1, .2, .3}, summer, {4, 5, 6}, {7, 8, 9});
 
-  BOOST_CHECK_CLOSE(sum, 1.0, std::numeric_limits<double>::epsilon());
+  BOOST_CHECK_CLOSE(sum, 1.0, 1e-12);
 }
 
 BOOST_AUTO_TEST_CASE(nearest_point) {
@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(interpolation_points_3) {
   /* pos - offset = {-5., 6., -8} */
   /* nmp = {-5, 3, -3 } @ pos {-5., 6., -9.} */
   /* minus order / 2 (= 1) = {-6, 2, -4} */
-  std::array<int, 3> lower_left = {-6, 2, -4};
+  std::array<int, 3> lower_left = {-5, 2, -3};
   /* upper limit = {-6, 2, -4} + order = {-3, 5, -1} */
 
   auto it = int_points.begin();
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(interpolation_points_2) {
   /* shited pos = {-4.5, 6.5, -7.5} */
   /* nmp = {-4, 4, -2 } @ pos {-4., 8., -6.} */
   /* ll = nmp - order / 2 (= 1) = {-5, 3, -3} */
-  std::array<int, 3> lower_left = {-5, 3, -3};
+  std::array<int, 3> lower_left = {-5, 3, -2};
   /* upper limit = {-5, 2, -3} + order = {-3, 4, -1} */
 
   auto it = int_points.begin();
