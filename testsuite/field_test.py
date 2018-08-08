@@ -42,6 +42,7 @@ class FieldTest(ut.TestCase):
         np.testing.assert_almost_equal(g_const, np.copy(p.f) / p.mass)
         self.assertAlmostEqual(self.system.analysis.energy()['total'], 0.)
 
+    @ut.skipIf(not espressomd.has_features("ELECTROSTATICS"), "Skipping")
     def test_linear_electric_potential(self):
         E = np.array([1.,2.,3.])
         phi0 = 4.
@@ -109,6 +110,7 @@ class FieldTest(ut.TestCase):
             self.assertAlmostEqual(self.system.analysis.energy()['total'], scaling*f_val, places=5)
             np.testing.assert_allclose(np.copy(p.f), scaling*self.force(x), rtol=1e-5)
 
+    @ut.skipIf(not espressomd.has_features("ELECTROSTATICS"), "Skipping")
     def test_electric_potential_field(self):
         h = np.array([.2, .2, .2])
         box = np.array([10.,10.,10.])

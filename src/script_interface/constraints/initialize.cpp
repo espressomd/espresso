@@ -72,10 +72,12 @@ void initialize() {
   ScriptInterface::register_new<HomogeneousFlowField>(
       "Constraints::HomogeneousFlowField");
 
+#ifdef ELECTROSTATICS
   ScriptInterface::register_new<ElectricPotential>(
       "Constraints::ElectricPotential");
   ScriptInterface::register_new<LinearElectricPotential>(
       "Constraints::LinearElectricPotential");
+#endif
 }
 } /* namespace Constraints */
 } /* namespace ScriptInterface */
